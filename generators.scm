@@ -809,6 +809,14 @@
 	      (+ 1.0 (* r r) (* -2 r (cos y)))))))
 
 #|
+
+; make-sine-summation (:frequency 440.0) (:initial-phase 0.0) (:n 1) (:a 0.5) (:ratio 1.0) ->
+;  (make-nrxysin frequency (* ratio frequency) n a)
+;    (if (not (= initial-phase 0.0)) 
+;        (begin 
+;          (set! (nrxysin-xangle g) initial-phase) 
+;          (set! (nrxysin-yangle gen) (* initial-phase (/ nrxysin-yfrequency g) (nrxysin-xfrequency g))))
+
 (with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
   (let ((gen (make-nrxysin 1000 100 5 0.5)))
     (run 

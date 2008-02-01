@@ -86,6 +86,7 @@
 ;;; Song sparrow
 ;;; Sage sparrow
 ;;; House sparrow
+;;; Black-throated sparrow
 ;;; Dark-eyed junco
 ;;; Purple finch
 ;;; House finch
@@ -3039,8 +3040,8 @@
 	 (buzz-end (+ buzz-start (seconds->samples (vct-ref durs 4))))
 	 (buzz-ampf (make-env '(0.000 0.000  0.095 0.953  0.114 0.182  0.158 0.822 0.236 0.996 0.332 1.000 0.848 0.589 0.957 0.372 1.000 0.000)
 			      :duration (vct-ref durs 4) :scaler amp))
-	 (buzzer (make-sine-summation 40 :n 5 :a .5)) ; sawtooth not great here due to broad spectrum
-	 (buzzer-index (hz->radians 2000))
+	 (buzzer (make-sine-summation 40 :n 5 :a .5)) ; sawtooth not great here due to broad spectrum  ;(buzzer (make-nrxysin 40 40 :n 5 :r .5))
+	 (buzzer-index (hz->radians 2000))   
 	 (buzzer-amp (make-triangle-wave 40 0.8)))
 
     (do ((i 0 (1+ i)))
@@ -3071,7 +3072,7 @@
 	 (outa i (* (env buzz-ampf)
 		    (+ 0.2 (abs (triangle-wave buzzer-amp)))
 		    (oscil gen1 (* buzzer-index
-				   (sine-summation buzzer))))
+				   (sine-summation buzzer))))   ;(nrxysin buzzer 0.0)
 	       *output*))))))
 
 ;(with-sound (:play #t) (grasshopper-sparrow 0 .25))
@@ -10169,6 +10170,97 @@
 ;(with-sound (:play #t) (pine-warbler 0 .5))
 
 
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Black-throated sparrow
+
+(define (black-throated-sparrow beg1 amp1)
+  ;; south 85 2
+
+  (definstrument (black-throated-sparrow-1 beg amp)
+    (let* ((start (seconds->samples beg))
+	   (dur .034)
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0.000 0.000 0.057 0.806 0.073 0.857 0.111 0.783 0.139 0.988 0.216 0.817 0.235 0.574 
+			     0.324 0.333 0.473 0.216 0.725 0.679 0.805 0.649 0.887 0.484 1.000 0.000)
+			   :duration dur :scaler amp))
+	   (frqf (make-env '(0.000 0.301 0.059 0.288 0.090 0.281 0.123 0.286 0.149 0.299 0.189 0.303 0.250 0.299 
+			     0.341 0.292 0.568 0.296 0.746 0.299 1.000 0.296)
+			   :duration dur :scaler (hz->radians 22000.0)))
+	   (gen1 (make-polyshape 0.0 :partials (list 1 .99  2 .007  3 .003))))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf)
+		      (polyshape gen1 1.0 (env frqf)))
+		 *output*))))))
+  
+  (definstrument (black-throated-sparrow-2 beg amp)
+    (let* ((start (seconds->samples beg))
+	   (dur .11)
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0.000 0.000 0.026 0.514 0.080 0.667 0.120 0.618 0.183 0.000 0.223 0.000 0.260 0.913 
+			     0.281 0.977 0.311 0.895 0.343 0.631 0.399 0.000 0.444 0.000 0.504 0.130 0.514 0.070 
+			     0.533 0.173 0.567 0.128 0.576 0.217 0.587 0.202 0.596 0.117 0.613 0.171 0.640 0.104 
+			     0.654 0.166 0.677 0.087 0.729 0.000 0.820 0.000 0.844 0.940 0.865 1.000 0.909 0.927 
+			     0.968 0.499 1.000 0.000)
+			   :duration dur :scaler amp))
+	   (frqf (make-env '(0.000 0.176 0.167 0.176 0.196 0.158 0.246 0.160 0.272 0.174 0.407 0.169 0.487 0.093 
+			     0.504 0.117 0.518 0.093 0.543 0.117 0.562 0.093 0.579 0.117 0.599 0.093 0.615 0.113 
+			     0.635 0.090 0.656 0.115 0.671 0.088 0.689 0.111 0.705 0.088 0.809 0.172 0.835 0.176 1.000 0.176)
+			   :duration dur :scaler (hz->radians 22000.0)))
+	   (gen1 (make-polyshape 0.0 :partials (list 1 .99  2 .007  3 .003))))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf)
+		      (polyshape gen1 1.0 (env frqf)))
+		 *output*))))))
+  
+  (definstrument (black-throated-sparrow-3 beg amp)
+    (let* ((start (seconds->samples beg))
+	   (dur .153)
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0.000 0.000 0.099 0.442 0.124 0.456 0.146 0.372 0.164 0.203 0.243 0.061 0.257 0.352 
+			     0.294 0.433 0.371 0.221 0.380 0.000 0.525 0.000 0.552 0.138 0.559 0.068 0.579 0.314 
+			     0.595 0.074 0.621 0.643 0.636 0.738 0.649 0.542 0.660 0.147 0.670 0.853 0.681 0.986 
+			     0.690 0.941 0.717 0.149 0.728 0.862 0.743 0.995 0.751 0.950 0.777 0.149 0.790 0.853 
+			     0.799 0.901 0.805 0.840 0.825 0.056 0.835 0.609 0.851 0.822 0.858 0.795 0.873 0.061 
+			     0.885 0.738 0.894 0.813 0.903 0.745 0.919 0.097 0.925 0.438 0.945 0.591 0.957 0.149 
+			     0.971 0.289 0.985 0.065 1.000 0.000)
+			   :duration dur :scaler amp))
+	   (frqf (make-env '(0.000 0.192 0.090 0.195 0.119 0.197 0.156 0.211 0.163 0.142 0.242 0.128 0.254 0.211 
+			     0.276 0.178 0.326 0.169 0.355 0.169 0.379 0.181 0.542 0.238 0.563 0.247 0.586 0.240 
+			     0.618 0.245 0.640 0.238 0.664 0.247 0.690 0.240 0.721 0.240 0.748 0.233 0.782 0.243 
+			     0.809 0.238 0.832 0.243 0.858 0.233 0.880 0.245 0.903 0.233 0.923 0.245 0.944 0.238 1.000 0.240)
+			   :duration dur :scaler (hz->radians 22000.0)))
+	   (gen1 (make-polyshape 0.0 :partials (list 1 .99  2 .007  3 .003))))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf)
+		      (polyshape gen1 1.0 (env frqf)))
+		 *output*))))))
+  
+
+  (black-throated-sparrow-3 beg1 (* .4 amp1))
+
+  (let ((ampf (make-env '(0 .4  5 1.0 7 .9) :length 7)))
+    (do ((call 0 (1+ call)))
+	((= call 7))
+      (black-throated-sparrow-1 (+ beg1 .2 (* call .042) (random .003)) (* amp1 (env ampf)))))
+
+  (do ((call 0 (1+ call)))
+      ((= call 3))
+    (black-throated-sparrow-2 (+ beg1 .53 (* call .134)) (* 0.6 amp1))))
+
+;(with-sound (:play #t) (black-throated-sparrow 0 .5))
+
+
+
 ;;; ================ calling-all-animals ================
 
 (define* (calling-all-frogs :optional (beg 0.0))
@@ -10374,7 +10466,8 @@
   (canada-goose-1                (+ beg 237.5) .25)
   (canada-goose-3                (+ beg 238.0) .25)
   (pine-warbler                  (+ beg 238.5) .25)
-  (+ beg 241))
+  (black-throated-sparrow        (+ beg 241.0) .25)
+  (+ beg 242))
 
 
 (define (calling-all-animals)
@@ -10384,3 +10477,6 @@
       (set! beg (calling-all-mammals beg))
       (set! beg (calling-all-insects beg))
       (set! beg (calling-all-birds beg)))))
+
+
+

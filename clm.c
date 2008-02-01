@@ -4,13 +4,15 @@
 /* clm4:
  *
  *   perhaps add pm args alongside the fm args, as in oscil?
- *   perhaps remove all the initial-phase args (oscil->1sin and 1cos or something)
+ *   perhaps remove all the initial-phase args [these are sometimes useful -- sine-summation init phases in animals.scm]
  *
  *   all the make-* funcs that have a frequency arg should put that first (make-formant in particular), use "n" not cosines, "r" not "a"
  *         the "n" and "r" renaming could be parallel for now -- backwards compatible for a while 
  *         ["a" used only in sine-summation, "sines" used only in sum-of-sines, "cosines" used only in sum-of-cosines]
+ *         and ideally all of these are going away
+ *
  *      make-sum-of-cosines freq n [no init-phase]
- *      make-sine-summation freq n r ratio [no init-phase]
+ *      make-sine-summation freq n r ratio [no init-phase?] (can't replace with nrxycos because actual waveforms differ, could use nrxysin)
  *      make-sum-of-sines freq n [no init-phase]
  *      make-ssb-am freq n
  *      make-formant freq r gain
@@ -21,9 +23,15 @@
  *
  *   sum-of-cosines -> ncos
  *   sum-of-sines -> nsin
- *   sine-summation -> nrssb?  is nrssb really different from sine-summation?
+ *   sine-summation -> nrxysin
  *     what about oscil? [sine?]
  *   asymmetric-fm -> generators.scm (not built-in)
+ *
+ *   perhaps one gen: if n=1 oscil, n>1 r=1 sum-of-cosines, n!=inf nr[xy]cos, n=inf, r<1 r[xy]cos, r>=1 r[xy]k!cos or rkcos
+ *    this could be "cosines" ("cosine-sum"?), sine case "sines", maybe xy cases: "ssb-cosines" "ssb-sines"
+ *    if r is a list|vct, polyshape, if xy polyshape*cos
+ *    would like to avoid run-time switch (on algorithm choice), yet still be optimizable
+ *    and the resultant code would be opaque -- a long sequence of (sines...)
  *
  *   can the def-clm-struct method/make lists be used with built-in gens?
  *

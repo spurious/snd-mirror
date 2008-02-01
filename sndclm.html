@@ -2083,6 +2083,10 @@ See also the <a href="#nrxysin">nrxysin</a> and <a href="#nrxycos">nrxycos</a> g
 <p>The peak amplitude of this generator is very hard to predict, and Moorer's suggested normalization
 is not helpful.  See the code (clm.c) for a long comment.  If "a" &lt; 1.0, the output will never go over 1.0, but
 it also will almost never reach that peak either.  
+<a href="#nrxycos">nrxycos</a> is normalized correctly, and gives you the same kinds of controls you get in sine-summation.
+</p>
+
+<p>
 Besides the usual FM input, you can also vary the "a" parameter (via mus-scaler) to get changing spectra.  In the
 next example, we add a glissando envelope, and use the same envelope to vary "a" so that as the frequency
 goes up, "a" goes down (to avoid foldover, or whatever).
@@ -2112,10 +2116,11 @@ goes up, "a" goes down (to avoid foldover, or whatever).
 </td></tr></table>
 
 <p>
-"sine-summation" is a borderline vacuous name; it should be "nrxysin".  We should use
+"sine-summation" is a borderline vacuous name; it should be "nrxysin"; using a sum of sines (rather than cosines)
+was a mistake (nrxycos is the right thing in this regard).  We should use
 "ncos" for "sum-of-cosines", and "nsin" for "sum-of-sines".
 And "oscil" is a contentious name, since some people think it means "table-lookup",
-but I can't think of a good replacement.
+but I can't think of a good replacement ("1sin"? "sine"?).
 </p>
 
 
@@ -5479,7 +5484,10 @@ In the nrssb-interp generator, the "interp" argument interpolates between the up
 and "r" in place of "a").  The nrxycos generator is the cosine version of the same thing.
 </p>
 
-<br>
+<img src="sceq8.png" alt="sine summation formulas" hspace=40>
+
+
+<br><br>
 
 <pre>
   <A class=def NAME="make-nkssb">make-nkssb</A> <a class=quiet href="#optional-key">:optional-key</a> (carfreq 0.0) (modfreq 0.0) (n 1)
