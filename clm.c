@@ -7,7 +7,8 @@
  *   perhaps remove all the initial-phase args (oscil->1sin and 1cos or something)
  *
  *   all the make-* funcs that have a frequency arg should put that first (make-formant in particular), use "n" not cosines, "r" not "a"
- *         the "n" and "r" renaming could be parallel for now -- backwards compatible for a while
+ *         the "n" and "r" renaming could be parallel for now -- backwards compatible for a while 
+ *         ["a" used only in sine-summation, "sines" used only in sum-of-sines, "cosines" used only in sum-of-cosines]
  *      make-sum-of-cosines freq n [no init-phase]
  *      make-sine-summation freq n r ratio [no init-phase]
  *      make-sum-of-sines freq n [no init-phase]
@@ -1881,6 +1882,8 @@ static char *describe_sss(mus_any *ptr)
 
 Float mus_sine_summation(mus_any *ptr, Float fm)
 {
+  /* Jolley 475 but 0..n rather than 0..n-1, "y" is treated as x*ratio = x*b */
+  /*   see also Durell and Robson "Advanced Trigonometry" p 175 */
   sss *gen = (sss *)ptr;
   Float B, thB, result, divisor;
   B = gen->b * gen->phase;

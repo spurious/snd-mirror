@@ -2047,7 +2047,14 @@ kosine95
 	 (outa i (sine-summation gen 0.0) *output*))))))
 -->
 
-<img src="sceq8.png" alt="sine summation formula">
+<!-- Jolley 475 is different [it runs 0 .. n-1 in our terminology, whereas Moorer's runs 0 .. n] -->
+
+<!-- LATEX:
+& \sum_{k=0}^{n} r^{k}\sin(x+ky) = \frac{\sin(x) - r\sin(x-y) - r^{n+1}\Big(\sin(x+(n+1)y) - r\sin(x+ny)\Big)}{1+r^{2}-2r\cos(y)} \\
+& \sum_{k=0}^{n} r^{k}\cos(x+ky) = \frac{\cos(x) - r\cos(x-y) - r^{n+1}\Big(\cos(x+(n+1)y) - r\cos(x+ny)\Big)}{1+r^{2}-2r\cos(y)} \\
+-->
+
+<img src="sceq8.png" alt="sine summation formulas">
 </td></tr>
 <tr><td>
 
@@ -2070,6 +2077,7 @@ A "ratio" of 2 would give odd-numbered harmonics for a (vaguely) clarinet-like s
 The basic idea is very similar to that used in the
 <a href="#sum-of-cosines">sum-of-cosines</a> generator, but you have control of the
 fall-off of the spectrum and the spacing of the partials.
+See also the <a href="#nrxysin">nrxysin</a> and <a href="#nrxycos">nrxycos</a> generators in generators.scm.
 </p>
 
 <p>The peak amplitude of this generator is very hard to predict, and Moorer's suggested normalization
@@ -2104,11 +2112,9 @@ goes up, "a" goes down (to avoid foldover, or whatever).
 </td></tr></table>
 
 <p>
-"sine-summation" is a borderline vacuous name; generators.scm defines the alternate name "nrsin", as well
-as "ncos" for "sum-of-cosines" (which ought to be "sum-of-equal-cosines"), and "nsin" for "sum-of-sines"
-("sum-of-equal-sines").  
-It also provides <a href="#nrssb">nrssb</a>, the single side-band version of sine-summation.
-Similary, "oscil" is a contentious name, since some people think it means "table-lookup",
+"sine-summation" is a borderline vacuous name; it should be "nrxysin".  We should use
+"ncos" for "sum-of-cosines", and "nsin" for "sum-of-sines".
+And "oscil" is a contentious name, since some people think it means "table-lookup",
 but I can't think of a good replacement.
 </p>
 
@@ -5459,6 +5465,21 @@ In the nrssb-interp generator, the "interp" argument interpolates between the up
 
 <br>
 
+<pre>
+  <A class=def NAME="make-nrxycos">make-nrxycos</A> <a class=quiet href="#optional-key">:optional-key</a> (xfrequency 0.0) (yfrequency 0.0) (n 1) (r 0.0)
+  <A class=def NAME="nrxycos">nrxycos</A> gen fm
+  <A class=def NAME="nrxycos?">nrxycos?</A> gen
+
+  <A class=def NAME="make-nrxysin">make-nrxysin</A> <a class=quiet href="#optional-key">:optional-key</a> (xfrequency 0.0) (yfrequency 0.0) (n 1) (r 0.0)
+  <A class=def NAME="nrxysin">nrxysin</A> gen fm
+  <A class=def NAME="nrxysin?">nrxysin?</A> gen
+</pre>
+
+<p>The nrxysin generator is equivalent to the sine-summation generator (with "yfrequency" in place of "ratio",
+and "r" in place of "a").  The nrxycos generator is the cosine version of the same thing.
+</p>
+
+<br>
 
 <pre>
   <A class=def NAME="make-nkssb">make-nkssb</A> <a class=quiet href="#optional-key">:optional-key</a> (carfreq 0.0) (modfreq 0.0) (n 1)

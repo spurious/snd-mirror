@@ -16,6 +16,7 @@
 
 /* HISTORY:
  *
+ *  --------
  *  12-Dec-07: Gauche uses COMPNUM, not COMPLEX (after 0.8.7?), NUMBERP for complex?
  *  21-Nov-07: XEN_HAVE_COMPLEX_NUMBERS.
  *  18-Jul-07: Gauche error handling changes.

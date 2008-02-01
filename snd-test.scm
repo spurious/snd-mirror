@@ -53359,6 +53359,22 @@ EDITS: 1
 			     ((= i 10000))
 			   (outa i (nxy1sin gen 0.0) *output*))))))
 
+	(with-sound (:clipped #f :statistics #t)
+		    (let ((gen (make-nrxysin 1000 100 5 0.5)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 2000))
+			   (outa i (nrxysin gen 0.0) *output*))))))
+	
+	(with-sound (:clipped #f :statistics #t)
+		    (let ((gen (make-nrxycos 1000 100 5 0.5)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 2000))
+			   (outa i (nrxycos gen 0.0) *output*))))))
+
 	(with-sound (:clipped #f)
 		    (let ((black4 (make-blackman 440.0)))
 		      (run (lambda ()

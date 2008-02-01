@@ -6,7 +6,7 @@
 
 ;;; these try to mimic existing gens (mainly oscil), so "frequency" is placed first.
 ;;;   Where a factor is involved, I'll try to use "r".
-;;;   Where the limit of the sum is settable, I'll use "n".
+;;;   Where the number of terms in the sum is settable, I'll use "n".
 
 
 (define nearly-zero 1.0e-12) ; 1.0e-14 in clm.c, but that is trouble here (noddcos)
@@ -777,6 +777,150 @@
 
 ;;; .85 .15 (* 2 freq) 300, 2400 + 0.5*vib
 |#
+
+
+;;; --------------------------------------------------------------------------------
+;;; 
+;;; nrxysin (equivalent to sine-summation) and nrxycos
+
+(def-clm-struct (nrxysin
+		 :make-wrapper (lambda (g)
+				 (set! (nrxysin-xincr g) (hz->radians (nrxysin-xfrequency g))) ; can be 0 if just x=pi/2 for example
+				 (set! (nrxysin-yincr g) (hz->radians (nrxysin-yfrequency g)))
+				 g))
+  (xfrequency 0.0) (yfrequency 1.0) (n 1 :type int) (r 0.0)
+  (xangle 0.0) (xincr 0.0) (yangle 0.0) (yincr 0.0))
+
+(define (nrxysin gen fm)
+  (declare (gen nrxysin) (fm float))
+  (let* ((x (nrxysin-xangle gen))
+	 (y (nrxysin-yangle gen))
+	 (n (nrxysin-n gen))
+	 (r (nrxysin-r gen))
+	 (norm (/ (- (expt r n) 1) (- r 1)))) ; taken from sine-summation gen (just a stab in the dark)
+    (set! (nrxysin-xangle gen) (+ x (nrxysin-xincr gen) (* fm (/ (nrxysin-xincr gen) (nrxysin-yincr gen)))))
+    (set! (nrxysin-yangle gen) (+ y (nrxysin-yincr gen) fm))
+    (/ (- (sin x)
+	  (* r (sin (- x y)))
+	      (* (expt r (1+ n))
+		 (- (sin (+ x (* (1+ n) y)))
+		    (* r (sin (+ x (* n y)))))))
+	   (* norm
+	      (+ 1.0 (* r r) (* -2 r (cos y)))))))
+
+#|
+(with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
+  (let ((gen (make-nrxysin 1000 100 5 0.5)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 20000))
+	 (outa i (nrxysin gen 0.0) *output*))))))
+|#
+
+
+(def-clm-struct (nrxycos
+		 :make-wrapper (lambda (g)
+				 (set! (nrxycos-xincr g) (hz->radians (nrxycos-xfrequency g))) ; can be 0 if just x=pi/2 for example
+				 (set! (nrxycos-yincr g) (hz->radians (nrxycos-yfrequency g)))
+				 g))
+  (xfrequency 0.0) (yfrequency 1.0) (n 1 :type int) (r 0.0)
+  (xangle 0.0) (xincr 0.0) (yangle 0.0) (yincr 0.0))
+
+(define (nrxycos gen fm)
+  (declare (gen nrxycos) (fm float))
+  (let* ((x (nrxycos-xangle gen))
+	 (y (nrxycos-yangle gen))
+	 (n (nrxycos-n gen))
+	 (r (nrxycos-r gen))
+	 (norm (/ (- (expt r (+ n 1)) 1) (- r 1))))
+    (set! (nrxycos-xangle gen) (+ x (nrxycos-xincr gen) (* fm (/ (nrxycos-xincr gen) (nrxycos-yincr gen)))))
+    (set! (nrxycos-yangle gen) (+ y (nrxycos-yincr gen) fm))
+    (/ (- (cos x)
+	  (* r (cos (- x y)))
+	      (* (expt r (1+ n))
+		 (- (cos (+ x (* (1+ n) y)))
+		    (* r (cos (+ x (* n y)))))))
+	   (* norm 
+	      (+ 1.0 (* r r) (* -2 r (cos y)))))))
+
+#|
+(with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
+  (let ((gen (make-nrxycos 1000 100 5 0.5)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 20000))
+	 (outa i (nrxycos gen 0.0) *output*))))))
+|#
+
+
+#|
+;;; the sine version is from Moorer, the n-1 version from Jolley (475), the cosine version (plus a
+;;;   derivation) from Durell and Robson
+
+(define (ss-test x y a n)
+  (list (/ (- (sin x)
+	      (* a (sin (- x y)))
+	      (* (expt a (1+ n))
+		 (- (sin (+ x (* (1+ n) y)))
+		    (* a (sin (+ x (* n y)))))))
+	   (+ 1.0 (* a a) (* -2 a (cos y))))
+	
+	(let ((sum 0.0))
+	  (do ((i 0 (1+ i)))
+	      ((> i n))
+	    (set! sum (+ sum (* (expt a i)
+				(sin (+ x (* i y)))))))
+	  sum)
+
+	(/ (+ (- (sin x)
+		 (* a (sin (- x y)))
+		 (* (expt a n)
+		    (sin (+ x (* n y)))))
+	      (* (expt a (1+ n))
+		 (sin (+ x (* (- n 1) y)))))
+	   (+ 1.0 (* a a) (* -2 a (cos y))))
+
+	(let ((sum 0.0))
+	  (do ((i 0 (1+ i)))
+	      ((= i n))
+	    (set! sum (+ sum (* (expt a i)
+				(sin (+ x (* i y)))))))
+	  sum)))
+
+
+  (define (sc-test x y a n)
+  (list (/ (- (cos x)
+	      (* a (cos (- x y)))
+	      (* (expt a (1+ n))
+		 (- (cos (+ x (* (1+ n) y)))
+		    (* a (cos (+ x (* n y)))))))
+	   (+ 1.0 (* a a) (* -2 a (cos y))))
+	
+	(let ((sum 0.0))
+	  (do ((i 0 (1+ i)))
+	      ((> i n))
+	    (set! sum (+ sum (* (expt a i)
+				(cos (+ x (* i y)))))))
+	  sum)
+
+	(/ (+ (- (cos x)
+		 (* a (cos (- x y)))
+		 (* (expt a n)
+		    (cos (+ x (* n y)))))
+	      (* (expt a (1+ n))
+		 (cos (+ x (* (- n 1) y)))))
+	   (+ 1.0 (* a a) (* -2 a (cos y))))
+
+	(let ((sum 0.0))
+	  (do ((i 0 (1+ i)))
+	      ((= i n))
+	    (set! sum (+ sum (* (expt a i)
+				(cos (+ x (* i y)))))))
+	  sum)))
+|#
+
 
 
 ;;; --------------------------------------------------------------------------------

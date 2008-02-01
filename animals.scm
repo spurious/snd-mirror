@@ -116,6 +116,7 @@
 ;;; Magnolia warbler
 ;;; Chestnut-sided warbler
 ;;; Black-throated blue warbler
+;;; Pine warbler
 ;;; Verdin
 ;;; Townsend's solitaire
 ;;; Cedar waxwing
@@ -10023,6 +10024,7 @@
 ;;; Canada goose
 
 (definstrument (canada-goose-1 beg amp)
+  ;; east 21 28
   (let* ((start (seconds->samples beg))
 	 (dur 0.375)
 	 (stop (+ start (seconds->samples dur)))
@@ -10070,7 +10072,101 @@
 
 ;(with-sound (:play #t) (canada-goose-1 0 .5))
 
+(definstrument (canada-goose-3 beg amp)
+  ;; east 21 29
+  (let* ((start (seconds->samples beg))
+	 (dur 0.33)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.082 0.112 0.207 0.158 0.218 0.089 0.246 0.214 0.278 0.181  .32 .3  
+			   0.364 0.944 0.374 1.000 0.384 0.974 0.394 0.757 0.431 0.645 0.584 0.201 0.639 0.688 
+			   0.657 0.717 0.714 0.477 0.800 0.319 0.882 0.253 0.902 0.164 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0.000 0.291 0.311 0.299 0.338 0.299 0.358 0.414 0.395 0.443 0.454 0.455 0.547 0.418 
+			   0.596 0.389 0.614 0.414 0.634 0.393 0.682 0.418 0.764 0.426 0.846 0.410 0.874 0.369 
+			   0.907 0.352 1.000 0.307)
+			 :duration dur :scaler (hz->radians (* 0.5 3600))))
+	 (gen1 (make-oscil 0.0))
+	 (ampf1 (make-env '(0 .1 .5 .2 .6 1 .65 .3 1 1) :duration dur :scaler .3))
+	 (gen2 (make-oscil 0.0))
+	 (gen3 (make-oscil 0.0))
+	 (ampf3 (make-env '(0 .1 .3 .2 .4 1 1 1) :duration dur :scaler .1))
+	 (gen4 (make-polyshape 0.0 :partials (list 4 .8 5 .2)))
+	 (ampf4 (make-env '(0 0 .3 0 .4 1 .9 1 1 0) :duration dur :scaler .05))
+	 (gen5 (make-sine-summation 0.0 0.0 12 .7 1/6))
+	 (ampf5 (make-env '(0 0 .3 0 .4 1 .5 .1 .55 0 .6 .1 .63 1  .85 0 1 0) :duration dur :scaler .3))
+	 (trem (make-triangle-wave (* 0.5 170)))
+	 (tremf (make-env '(0 1 .3 1 .35 .1 .6 .2 .65 1 .7 .2 1 .2) :duration dur))
+	 (hum (make-oscil 0.0))
+	 (humf (make-env '(0 .5  .45 .4  .5 1 .6 .5  .7 0  1 0) :duration dur :scaler .2))
+	 (humfrq (make-env '(0 150 .6 190 1 200) :duration dur :scaler (hz->radians 1.0)))
+	 (tri1 (make-triangle-wave 75 .75))
+	 (rnd (make-rand-interp 2000))
+	 (rndf (make-env '(0 .1 .3 1 .35 .1 .4 .01 .55 .01 .6 1  .65 .01 1 .01) :duration dur :scaler (hz->radians 200))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((trmf (env tremf))
+	       (frq (+ (env frqf)
+		       (* (env rndf) (rand-interp rnd)))))
+	   (outa i (* (env ampf)
+		      (+ (- 1.0 trmf) (* trmf (abs (triangle-wave trem))))
+		      (+ (* (env ampf1) (oscil gen1 frq))
+			 (* .5 (oscil gen2 (* 2 frq)))
+			 (* (env ampf3) (oscil gen3 (* 3 frq)))
+			 (* (env ampf4) (polyshape gen4 1.0 frq))
+			 (* (env ampf5) (sine-summation gen5 (* 6 frq)))
+			 (* (env humf) 
+			    (+ .25 (abs (triangle-wave tri1)))
+			    (oscil hum (env humfrq)))))
+		 *output*)))))))
 
+;(with-sound (:play #t) (canada-goose-3 0 .5))
+
+;;; TODO: east 21 27.5 (mid canada goose)
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Pine warbler
+
+(definstrument (pine-warbler beg amp)
+  ;; east 21 3
+
+  (let ((call-ampf (make-env '(0 .05 1 .2  3 .8 5 1 10 1 16 .4) :length 16))
+	(call-frqf (make-env '(0 1.1 4 1.0 13 .98 15 1.0) :length 16)))
+    (do ((call 0 (1+ call)))
+	((= call 16))
+      (let* ((start (seconds->samples (+ beg (* call .115) (random .01))))
+	     (dur (+ .105 (random .01)))
+	     (stop (+ start (seconds->samples dur)))
+	     (ampf (make-env '(0.000 0.000 0.147 0.356 0.216 0.403 0.257 0.135 0.310 0.000 0.347 0.000 0.447 0.468 
+			       0.474 0.694 0.489 0.656 0.500 0.729 0.514 0.632 0.529 0.815 0.562 0.644 0.578 0.809 
+			       0.590 0.626 0.602 0.982 0.621 0.765 0.629 0.950 0.639 0.829 0.648 0.982 0.662 0.818 
+			       0.669 0.644 0.675 0.824 0.685 0.932 0.699 0.579 0.706 0.353 0.723 0.800 0.737 1.000 
+			       0.753 0.959 0.765 0.529 0.773 0.638 0.781 0.971 0.790 0.941 0.798 0.547 0.803 0.591 
+			       0.808 0.806 0.822 0.832 0.833 0.124 0.839 0.415 0.874 0.132 0.887 0.206 0.923 0.062 
+			       0.933 0.174 0.939 0.091 0.948 0.159 0.960 0.079 0.967 0.176 0.981 0.062 1.000 0.000)
+			     :duration dur :scaler (* amp (env call-ampf))))
+	     (frqf (make-env '(0.000 0.118 0.056 0.132 0.133 0.146 0.190 0.148 0.233 0.134 0.261 0.132 0.288 0.137 
+			       0.311 0.154 0.332 0.176 0.365 0.151 0.415 0.151 0.477 0.164 0.526 0.171 0.636 0.199 
+			       0.730 0.204 0.855 0.221 0.962 0.218 1.000 0.199)
+			     :duration dur :scaler (hz->radians (* 22000.0 (env call-frqf)))))
+	     (gen1 (make-oscil 0.0))
+	     (gen2 (make-polyshape 0.0 :partials (list 2 .005  3 .03  4 .003)))
+	     (ampf2 (make-env '(0 0 .3 0 .4 1 1 1) :duration dur)))
+	(run
+	 (lambda ()
+	   (do ((i start (1+ i)))
+	       ((= i stop))
+	     (let ((frq (env frqf)))
+	       (outa i (* (env ampf)
+			  (+ (* .97 (oscil gen1 frq))
+			     (* (env ampf2)
+				(polyshape gen2 1.0 frq))))
+		     *output*)))))))))
+
+;(with-sound (:play #t) (pine-warbler 0 .5))
 
 
 ;;; ================ calling-all-animals ================
@@ -10276,7 +10372,9 @@
   (cedar-waxwing                 (+ beg 235.5) .25)
   (townsends-solitaire           (+ beg 236.0) .25)
   (canada-goose-1                (+ beg 237.5) .25)
-  (+ beg 238))
+  (canada-goose-3                (+ beg 238.0) .25)
+  (pine-warbler                  (+ beg 238.5) .25)
+  (+ beg 241))
 
 
 (define (calling-all-animals)
