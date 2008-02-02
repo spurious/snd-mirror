@@ -53438,12 +53438,28 @@ EDITS: 1
 			       (outa i (nsincos gen 0.0) *output*))))))
 
 	(with-sound ()
-		    (let ((gen (make-pulse-wave 100 .2 .5)))
+		    (let ((gen (make-adjustable-square-wave 100 .2 .5)))
 		      (run
 		       (lambda ()
 			 (do ((i 0 (1+ i)))
 			     ((= i 200))
-			   (outa i (pulse-wave gen 0.0) *output*))))))
+			   (outa i (adjustable-square-wave gen 0.0) *output*))))))
+
+	(with-sound ()
+		    (let ((gen (make-adjustable-triangle-wave 100 .2 .5)))
+		      (run
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 22050))
+			   (outa i (adjustable-triangle-wave gen 0.0) *output*))))))
+
+	(with-sound ()
+		    (let ((gen (make-adjustable-sawtooth-wave 100 .2 .5)))
+		      (run
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 22050))
+			   (outa i (adjustable-sawtooth-wave gen 0.0) *output*))))))
 
 	
 	(if (provided? 'snd-guile) (begin

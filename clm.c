@@ -16,10 +16,7 @@
  *      make-sum-of-sines freq n [no init-phase]
  *      make-ssb-am freq n
  *      make-formant freq r gain
- *
- *   polyshape/waveshape should put the "index" arg last, or just forget it (use mus-scaler)
- *     mus-scaler is free in wave|polyshape, but needs field in struct, decision on how to use it in the mus_wave|polyshape* funcs
- *     remove waveshape, partials->waveshape
+ *      also cases like make-mfilter in dsp.scm
  *
  *   sum-of-cosines -> ncos
  *   sum-of-sines -> nsin
@@ -31,7 +28,11 @@
  *    this could be "cosines" ("cosine-sum"?), sine case "sines", maybe xy cases: "ssb-cosines" "ssb-sines"
  *    if r is a list|vct, polyshape, if xy polyshape*cos
  *    would like to avoid run-time switch (on algorithm choice), yet still be optimizable
- *    and the resultant code would be opaque -- a long sequence of (sines...)
+ *    and the resultant code would be opaque -- a long sequence of (sines...) -- use the variable name
+ *
+ *   polyshape/waveshape should put the "index" arg last, or just forget it (use mus-scaler)
+ *     mus-scaler is free in wave|polyshape, but needs field in struct, decision on how to use it in the mus_wave|polyshape* funcs
+ *     remove waveshape, partials->waveshape
  *
  *   can the def-clm-struct method/make lists be used with built-in gens?
  *
@@ -45,7 +46,7 @@
  *      if the vector from the object to the speaker projected onto the vector from the speaker to the user is positive
  *        then the object is in front of the speaker(?)
  *
- *   perhaps built-in: blackman rk!cos rxyk!cos nrcos rcos rxycos nxycos nrssb rk!ssb
+ *   perhaps built-in: blackman rk!cos rxyk!cos nrcos rcos rxycos nxycos nrssb rk!ssb nrxysin|cos
  *   perhaps phaser = the phase+incr+fm+pm portion of nearly every generator
  *
  *   wave-train needs a way to set the initial counter (current notion of initial-phase seems useless)
@@ -53,6 +54,7 @@
  * done:
  *   :dur and :end -> :length in make-env
  */
+
 
 #include <mus-config.h>
 

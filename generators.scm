@@ -4172,35 +4172,95 @@ index 10 (so 10/2 is the bes-jn arg):
 
 ;;; --------------------------------------------------------------------------------
 
-(def-clm-struct (pulse-wave 
+(def-clm-struct (adjustable-square-wave 
 		 :make-wrapper 
 		 (lambda (g)
-		   (set! (pulse-wave-p1 g) (make-pulse-train 
-					    (pulse-wave-frequency g) 
-					    (pulse-wave-amplitude g)))
-		   (set! (pulse-wave-p2 g) (make-pulse-train 
-					    (pulse-wave-frequency g) 
-					    (- (pulse-wave-amplitude g))
-					    (* 2.0 pi (- 1.0 (pulse-wave-duty-factor g)))))
+		   (set! (adjustable-square-wave-p1 g) (make-pulse-train 
+					    (adjustable-square-wave-frequency g) 
+					    (adjustable-square-wave-amplitude g)))
+		   (set! (adjustable-square-wave-p2 g) (make-pulse-train 
+					    (adjustable-square-wave-frequency g) 
+					    (- (adjustable-square-wave-amplitude g))
+					    (* 2.0 pi (- 1.0 (adjustable-square-wave-duty-factor g)))))
 		   g))
   (frequency 0.0) (duty-factor 0.5) (amplitude 1.0)
   (sum 0.0) (p1 #f :type clm) (p2 #f :type clm))
 
-(define (pulse-wave gen fm)
-  (declare (gen pulse-wave) (fm float))
-  (set! (pulse-wave-sum gen) (+ (pulse-wave-sum gen)
-				(pulse-train (pulse-wave-p1 gen) fm)
-				(pulse-train (pulse-wave-p2 gen) fm)))
-  (pulse-wave-sum gen))
+(define (adjustable-square-wave gen fm)
+  (declare (gen adjustable-square-wave) (fm float))
+  (set! (adjustable-square-wave-sum gen) (+ (adjustable-square-wave-sum gen)
+				(pulse-train (adjustable-square-wave-p1 gen) fm)
+				(pulse-train (adjustable-square-wave-p2 gen) fm)))
+  (adjustable-square-wave-sum gen))
 
 #|
 (with-sound ()
-  (let ((gen (make-pulse-wave 100 .2 .5)))
+  (let ((gen (make-adjustable-square-wave 100 .2 .5)))
     (run
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 22050))
-	 (outa i (pulse-wave gen 0.0) *output*))))))
+	 (outa i (adjustable-square-wave gen 0.0) *output*))))))
+|#
+
+
+(def-clm-struct (adjustable-triangle-wave 
+		 :make-wrapper 
+		 (lambda (g)
+		   (let ((df (adjustable-triangle-wave-duty-factor g)))
+		     (set! (adjustable-triangle-wave-gen g) (make-triangle-wave (adjustable-triangle-wave-frequency g)))
+		     (set! (adjustable-triangle-wave-top g) (- 1.0 df))
+		     (if (not (= df 0.0))
+			 (set! (adjustable-triangle-wave-scl g) (/ (adjustable-triangle-wave-amplitude g) df)))
+		     g)))
+  (frequency 0.0) (duty-factor 0.5) (amplitude 1.0) 
+  (gen #f :type clm) (top 0.0) (scl 0.0))
+
+(define (adjustable-triangle-wave gen fm)
+  (declare (gen adjustable-triangle-wave) (fm float))
+  (let* ((val (triangle-wave (adjustable-triangle-wave-gen gen) fm))
+	 (top (adjustable-triangle-wave-top gen))
+	 (scl (adjustable-triangle-wave-scl gen)))
+    (* scl (- val (max (- top) (min top val))))))
+
+#|
+(with-sound ()
+  (let ((gen (make-adjustable-triangle-wave 100 .2 .5)))
+    (run
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 22050))
+	 (outa i (adjustable-triangle-wave gen 0.0) *output*))))))
+|#
+
+
+(def-clm-struct (adjustable-sawtooth-wave 
+		 :make-wrapper 
+		 (lambda (g)
+		   (let ((df (adjustable-sawtooth-wave-duty-factor g)))
+		     (set! (adjustable-sawtooth-wave-gen g) (make-sawtooth-wave (adjustable-sawtooth-wave-frequency g)))
+		     (set! (adjustable-sawtooth-wave-top g) (- 1.0 df))
+		     (if (not (= df 0.0))
+			 (set! (adjustable-sawtooth-wave-scl g) (/ (adjustable-sawtooth-wave-amplitude g) df)))
+		     g)))
+  (frequency 0.0) (duty-factor 0.5) (amplitude 1.0) 
+  (gen #f :type clm) (top 0.0) (scl 0.0))
+
+(define (adjustable-sawtooth-wave gen fm)
+  (declare (gen adjustable-sawtooth-wave) (fm float))
+  (let* ((val (sawtooth-wave (adjustable-sawtooth-wave-gen gen) fm))
+	 (top (adjustable-sawtooth-wave-top gen))
+	 (scl (adjustable-sawtooth-wave-scl gen)))
+    (* scl (- val (max (- top) (min top val))))))
+
+#|
+(with-sound ()
+  (let ((gen (make-adjustable-sawtooth-wave 100 .2 .5)))
+    (run
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 22050))
+	 (outa i (adjustable-sawtooth-wave gen 0.0) *output*))))))
 |#
 
 

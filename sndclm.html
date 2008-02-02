@@ -580,7 +580,7 @@ To get a cosine (as opposed to sine), set the initial-phase to (/ pi 2).
 (the phase-vocoder in particular).
 </p>
 
-<table border=1 align=left hspace=40 cellpadding=4>
+<table border=1 align=left hspace=40 vspace=10 cellpadding=4>
 <tr><td colspan=2 bgcolor="beige"><center>oscil methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
@@ -799,7 +799,7 @@ To goof around with FM from a graphical interface, see bess.scm and bess1.scm.
   <a class=def name="env-interp">env-interp</a> x env :optional (base 1.0) ;value of env at x
 </pre>
 
-<table border=0 hspace=40><tr><td>
+<table border=0 hspace=40 vspace=10><tr><td>
 <table border=1 cellpadding=4>
 <tr><td colspan=2 bgcolor="beige"><center>env methods</center></td></tr>
 <tr><td><em class=gen>mus-location</em></td><td>number of calls so far on this env</td></tr>
@@ -992,7 +992,7 @@ The "type" argument sets the type of interpolation used: <code>mus-interp-none</
 <code>mus-interp-linear</code>, <code>mus-interp-lagrange</code>, <code>mus-interp-bezier</code>, or <code>mus-interp-hermite</code>.
 </p>
 
-<table border=1 align=left hspace=40 cellpadding=4>
+<table border=1 align=left hspace=40 vspace=10 cellpadding=4>
 <tr><td colspan=2 bgcolor="beige"><center>table-lookup methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
@@ -1165,7 +1165,7 @@ is used internally:  mus-chebyshev-first-kind or mus-chebyshev-second-kind. (The
 Chebyshev polynomials of the fourth kind).  
 </p>
 
-<table border=1 align=left hspace=40 cellpadding=4>
+<table border=1 align=left hspace=40 vspace=10 cellpadding=4>
 <tr><td colspan=2 bgcolor="beige"><center>waveshape methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
@@ -1662,6 +1662,7 @@ reasonable backwards compatibility with old instruments, but someday I think I'l
 remove the waveshape generator.
 </p>
 
+
 <br><br>
 
 
@@ -1690,7 +1691,7 @@ remove the waveshape generator.
   <a class=def name="pulse-train?">pulse-train?</a> s
 </pre>
 
-<table border=1 align=left hspace=40 cellpadding=4>
+<table border=1 align=left hspace=40 vspace=10 cellpadding=4>
 <tr><td colspan=2 bgcolor="beige"><center>saw-tooth and friends' methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
@@ -1720,7 +1721,7 @@ To get a square-wave with control over the "duty-factor":
 <table border=0 hspace=40>
 <tr><td>
 <pre>
-(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> ()             ; see also <a href="#pulse-wave">pulse-wave</a> in generators.scm
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> ()
   (let* ((duty-factor .25) ; ratio of pulse duration to pulse period
 	 (p-on (<em class=red>make-pulse-train</em> 100 0.5))
 	 (p-off (<em class=red>make-pulse-train</em> 100 -0.5 (* 2 pi (- 1.0 duty-factor))))
@@ -1734,7 +1735,10 @@ To get a square-wave with control over the "duty-factor":
 </table>
 
 <p>
-These generators do not produce band-limited output; if the frequency is too high, you can get foldover.
+This is the <a href="#adjustable-square-wave">adjustable-square-wave</a> generator in generators.scm.
+That file also defines <a href="#adjustable-triangle-wave">adjustable-triangle-wave</a> and
+<a href="#adjustable-sawtooth-wave">adjustable-sawtooth-wave</a>.
+All of these generators produce non-band-limited output; if the frequency is too high, you can get foldover.
 A more reasonable square-wave can be generated via
 <code>(tanh (* n (sin theta)))</code>, where "n" (a float) sets how squared-off it is:
 </p>
@@ -1878,7 +1882,7 @@ formula 2sin(a)cos(b) = sin(b+a)-sin(b-a), and notice that all the terms in the 
 cancel except the last. 
 </p>
 
-<table border=1 align=left hspace=40 cellpadding=4>
+<table border=1 align=left hspace=40 vspace=10 cellpadding=4>
 <tr><td colspan=2 bgcolor="beige"><center>sum-of-cosines methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
@@ -2171,7 +2175,7 @@ but I can't think of a good replacement ("1sin"? "sine"?).
 <p>sum-of-sines produces a sum of sines.  It is very similar (good and bad) to <a href="#sum-of-cosines">sum-of-cosines</a>.
 </p>
 
-<table border=1 align=left hspace=40 cellpadding=4>
+<table border=1 align=left hspace=40 vspace=10 cellpadding=4>
 <tr><td colspan=2 bgcolor="beige"><center>sum-of-sines methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
@@ -2600,7 +2604,7 @@ When this works, which it does more often than I expected, it is much better tha
 phase-vocoder or granular synthesis kludges.
 </p>
 
-<table border=1 align=left hspace=40 cellpadding=4>
+<table border=1 align=left hspace=40 vspace=10 cellpadding=4>
 <tr><td colspan=2 bgcolor="beige"><center>ssb-am methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase (of embedded sin osc) in radians</td></tr>
@@ -2780,7 +2784,7 @@ wave train can be viewed either as an extension of pulse-train and table-lookup,
 or as a primitive form of granular synthesis.
 </p>
 
-<table border=1 cellpadding=4 hspace=40 align=left>
+<table border=1 cellpadding=4 hspace=40 vspace=10 align=left>
 <tr><td colspan=2 bgcolor="beige"><center>wave-train methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
@@ -2941,7 +2945,7 @@ mus-random returns a random number between -amplitude and amplitude.
 mus-rand-seed provides access to the seed for mus-random's random number generator.
 </p>
 
-<table border=1 align=left hspace=40 cellpadding=4>
+<table border=1 align=left hspace=40 vspace=10 cellpadding=4>
 <tr><td colspan=2 bgcolor="beige"><center>rand and rand-interp methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
@@ -3313,7 +3317,7 @@ and <a href="sndscm.html#greendoc">green.scm</a> (bounded Brownian noise).
 For everything you want to know about filters, see Julius Smith's <A HREF="http://ccrma.stanford.edu/~jos">home page</a>.
 </p>
 
-<table border=1 align=left hspace=40 cellpadding=4>
+<table border=1 align=left hspace=40 vspace=10 cellpadding=4>
 <tr><td colspan=2 bgcolor="beige"><center>simple filter methods</center></td></tr>
 <tr><td><em class=gen>mus-xcoeff</em></td><td>a0, a1, a2 in equations</td></tr>
 <tr><td><em class=gen>mus-ycoeff</em></td><td>b1, b2 in equations</td></tr>
@@ -3694,7 +3698,7 @@ mus-interp-none, mus-interp-linear, mus-interp-all-pass,
 mus-interp-lagrange, mus-interp-bezier, or mus-interp-hermite.
 </p>
 
-<table border=1 align=left hspace=40 cellpadding=4>
+<table border=1 align=left hspace=40 vspace=10 cellpadding=4>
 <tr><td colspan=2 bgcolor="beige"><center>delay methods</center></td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>length of delay</td></tr>
 <tr><td><em class=gen>mus-order</em></td><td>same as mus-length</td></tr>
@@ -3970,7 +3974,7 @@ an added scaler on the input ("feedforward" is Julius Smith's suggested name for
 comb filter.  If both scale terms are 0.0, we get a pure delay line. 
 </p>
 
-<table border=1 align=left hspace=40 cellpadding=4>
+<table border=1 align=left hspace=40 vspace=10 cellpadding=4>
 <tr><td colspan=2 bgcolor="beige"><center>all-pass methods</center></td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>length of delay</td></tr>
 <tr><td><em class=gen>mus-order</em></td><td>same as mus-length</td></tr>
@@ -4007,7 +4011,7 @@ see <a href="sndscm.html#jcrevdoc">jcrev.ins</a> or <a href="sndscm.html#nrev">n
 <p>The moving-average or moving window average generator returns the average of the last "size" values input to it.
 </p>
 
-<table align=left border=1 hspace=40 cellpadding=4>
+<table align=left border=1 hspace=40 vspace=10 cellpadding=4>
 <tr><td colspan=2 bgcolor="beige"><center>moving-average methods</center></td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>length of table</td></tr>
 <tr><td><em class=gen>mus-order</em></td><td>same as mus-length</td></tr>
@@ -4067,7 +4071,7 @@ that are squelched and those that are unchanged (to avoid clicks):
   <a class=def name="src?">src?</a> s
 </pre>
 
-<table border=1 cellpadding=4 hspace=40>
+<table border=1 cellpadding=4 hspace=40 vspace=10>
 <tr><td colspan=2 bgcolor="beige"><center>src methods</center></td></tr>
 <tr><td><em class=gen>mus-increment</em></td><td>srate arg to make-src</td></tr>
 </table>
@@ -4176,7 +4180,7 @@ envelope so that the result has a given duration, use <a href="sndscm.html#srcfi
   <a class=def name="convolvefiles">convolve-files</a> file1 file2 :optional (maxamp 1.0) (output-file "tmp.snd")
 </pre>
 
-<table border=1 cellpadding=4 hspace=40>
+<table border=1 cellpadding=4 hspace=40 vspace=10>
 <tr><td colspan=2 bgcolor="beige"><center>convolve methods</center></td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>fft size used in the convolution</td></tr>
 </table>
@@ -4242,7 +4246,7 @@ but convolve uses an FFT internally, rather than a laborious dot-product.
   <a class=def name="granulate?">granulate?</a> e
 </pre>
 
-<table align=left border=1 cellpadding=4 hspace=40>
+<table align=left border=1 cellpadding=4 hspace=40 vspace=10>
 <tr><td colspan=2 bgcolor="beige"><center>granulate methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>time (seconds) between output grains (hop)</td></tr>
 <tr><td><em class=gen>mus-ramp</em></td><td>length (samples) of grain envelope ramp segment</td></tr>
@@ -4383,7 +4387,7 @@ In the following example, we use the edit function to reverse every other grain:
   <a class=def name="phase-vocoder?">phase-vocoder?</a> pv
 </pre>
 
-<table border=1 cellpadding=4 hspace=40>
+<table border=1 cellpadding=4 hspace=40 vspace=10>
 <tr><td colspan=2 bgcolor="beige"><center>phase-vocoder methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>pitch shift</td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>fft-size</td></tr>
@@ -4456,7 +4460,7 @@ generator).
   <a class=def name="asymmetric-fm?">asymmetric-fm?</a> af
 </pre>
 
-<table align=left border=1 cellpadding=4 hspace=40>
+<table align=left border=1 cellpadding=4 hspace=40 vspace=10>
 <tr><td colspan=2 bgcolor="beige"><center>asymmetric-fm methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
@@ -4778,7 +4782,7 @@ The "output" argument can be a vct or a sound-data object, as well as the more u
  <a class=def name="readin?">readin?</a> rd
 </pre>
 
-<table border=1 cellpadding=4 hspace=40>
+<table border=1 cellpadding=4 hspace=40 vspace=10>
 <tr><td colspan=2 bgcolor="beige"><center>readin methods</center></td></tr>
 <tr><td><em class=gen>mus-channel</em></td><td>channel arg to make-readin (no set!)</td></tr>
 <tr><td><em class=gen>mus-location</em></td><td>current location in file</td></tr>
@@ -5018,7 +5022,7 @@ dlocsig macro.  All the necessary data is packaged up in a list:
 
 <!-- ---------------------------------------- OTHER GENERATORS ---------------------------------------- -->
 
-<p>in progress... (generators.scm, etc)
+<p>(this section is work in progress...)
 </p>
 
 <p>There are dozens of generators scattered around the *.scm files that come with Snd.  Some that come to mind:
@@ -5138,13 +5142,22 @@ This produces a Blackman-Harris sum of cosines of order 'n'.
 
 
 <pre>
-  <A class=def NAME="make-pulse-wave">make-pulse-wave</A> <a class=quiet href="#optional-key">:optional-key</a> frequency (duty-factor 0.5) (amplitude 1.0)
-  <A class=def NAME="pulse-wave">pulse-wave</A> gen fm
-  <A class=def NAME="pulse-wave?">pulse-wave?</A> gen
+  <A class=def NAME="make-adjustable-square-wave">make-adjustable-square-wave</A> <a class=quiet href="#optional-key">:optional-key</a> frequency (duty-factor 0.5) (amplitude 1.0)
+  <A class=def NAME="adjustable-square-wave">adjustable-square-wave</A> gen fm
+  <A class=def NAME="adjustable-square-wave?">adjustable-square-wave?</A> gen
+
+  <A class=def NAME="make-adjustable-triangle-wave">make-adjustable-triangle-wave</A> <a class=quiet href="#optional-key">:optional-key</a> frequency (duty-factor 0.5) (amplitude 1.0)
+  <A class=def NAME="adjustable-triangle-wave">adjustable-triangle-wave</A> gen fm
+  <A class=def NAME="adjustable-triangle-wave?">adjustable-triangle-wave?</A> gen
+
+  <A class=def NAME="make-adjustable-sawtooth-wave">make-adjustable-sawtooth-wave</A> <a class=quiet href="#optional-key">:optional-key</a> frequency (duty-factor 0.5) (amplitude 1.0)
+  <A class=def NAME="adjustable-sawtooth-wave">adjustable-sawtooth-wave</A> gen fm
+  <A class=def NAME="adjustable-sawtooth-wave?">adjustable-sawtooth-wave?</A> gen
 </pre>
 
 <p>
-This produces a square-wave with optional "duty-factor" (ratio of pulse duration to pulse period).
+adjustable-square-wave produces a square-wave with optional "duty-factor" (ratio of pulse duration to pulse period).
+The other two are similar, producing triangle and sawtooth waves.
 </p>
 <br>
 
