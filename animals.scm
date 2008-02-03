@@ -44,6 +44,7 @@
 ;;; Red-spotted toad
 ;;; Green toad
 ;;; Little grass frog
+;;; Sonoran desert toad
 
 ;;; -------- mammals --------
 ;;; Indri
@@ -64,9 +65,10 @@
 ;;; Snowy tree cricket
 ;;; Pine tree cricket
 ;;; Davis's tree cricket
-;;; Broad-winged tree-cricket
+;;; Broad-winged tree cricket
 ;;; Fast-calling tree cricket
 ;;; Black-horned tree cricket
+;;; Narrow-winged tree cricket
 ;;; Marsh meadow grasshopper
 ;;; Carolina grasshopper
 ;;; Slightly musical conehead
@@ -96,10 +98,10 @@
 ;;; Tufted titmouse
 ;;; Oak titmouse
 ;;; Bushtit
+;;; Wrentit
 ;;; California towhee
 ;;; Green-tailed towhee
 ;;; Carolina wren
-;;; Wrentit
 ;;; Warbling vireo
 ;;; Plumbeous vireo (2)
 ;;; Cassin's vireo
@@ -217,7 +219,8 @@
 
 ;;; some of these need srate=44100 since various frequencies are (well) over 10KHz
 ;;;   also, I have bare indices scattered around -- ideally these would be wrapped in hz->radians
-
+;;; these were done more or less in the order they occur within a section, so in many cases
+;;;   the earlier ones are clumsy.
 
 
 ;;; ================ Frogs and Toads ================
@@ -1328,6 +1331,62 @@
 ;(with-sound (:play #t) (little-grass-frog 0 .5))
 
 
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Sonoran desert toad
+
+(definstrument (sonoran-desert-toad beg dur amp)
+  ;; rocky 13 1
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env (list 0.000 0.000 0.011 0.201 0.193 0.704 0.338 0.878 0.593 0.986 0.865 0.972 0.954 0.895 
+			       0.970 0.645 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env (list 0.000 0.360 0.069 0.387 0.144 0.411 0.500 0.428 0.649 0.432 0.746 0.425 0.877 0.435 
+			       0.974 0.418 1.000 0.291)
+			 :duration dur :scaler (hz->radians 2800.0)))
+	 (gen1 (make-oscil 0.0))
+	 (gen2 (make-oscil 0.0))
+	 (ampf2 (make-env (list 0 .1 .05 1 .2 .1 .3 .01 (- dur .1) .1 dur 1) :duration dur :scaler .2))
+	 (gen3 (make-polyshape 0.0 :partials (list 3 .5  4 .2 5 .1  6 .08  7 .05  9 .03)))
+	 (ampf3 (make-env (list 0 .2  .1 1 (- dur .2) 1  dur .5) :duration dur :scaler .1))
+	 (rnd (make-rand-interp 4000 (hz->radians 200)))
+
+	 (env1 (vct 0 0  .6 1   1 0))
+	 (env2 (vct 0 0  .3 .7  .5 1  .8 .9  1 0))
+	 (env3 (vct 0 0  .2 .7 .3 .1 .5 1 .7 .8 1 0))
+
+	 (next-pulse start)
+	 (pulse-samps 0)
+	 (pulse-ampf #f))
+  (do ((i start (+ i pulse-samps)))
+      ((>= i stop))
+    (if (>= i next-pulse)
+	(let* ((pulse-dur (+ .01 (random .003)))
+	       (env-choice (random 3)))
+	  (set! pulse-ampf (make-env (if (= env-choice 0) env1
+					 (if (= env-choice 1) env2
+					     env3))
+				     :duration pulse-dur
+				     :scaler (+ .7 (random .3))))
+	  (set! pulse-samps (seconds->samples (+ pulse-dur (random 0.005))))
+	  (set! next-pulse (+ next-pulse pulse-samps))))
+    (run
+     (lambda ()
+       (do ((k 0 (1+ k)))
+	   ((= k pulse-samps))
+	 (let ((frq (+ (env frqf)
+		       (rand-interp rnd))))
+	 (outa (+ i k)
+	       (* (env ampf)
+		  (env pulse-ampf)
+		  (+ (* .7 (oscil gen1 frq))
+		     (* (env ampf2) (oscil gen2 (* 2 frq)))
+		     (* (env ampf3) (polyshape gen3 1.0 frq))))
+	       *output*))))))))
+
+;(with-sound (:play #t) (sonoran-desert-toad 0 .8 .5))
+
 
 
 ;;; ================ Mammals? ================
@@ -2199,6 +2258,33 @@
 	       *output*))))))
 
 ;(with-sound (:play #t) (black-horned-tree-cricket 0 2 .25))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Narrow-winged tree-cricket
+
+(definstrument (narrow-winged-tree-cricket beg dur amp)
+  ;; insects 18 4
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0 0 .1 1 20 1 20.1 0) :duration dur :scaler amp))
+	 (pulser (make-wave-train-with-env 43.0 
+					   '(0.000 0.000 0.144 0.332 0.269 0.715 0.361 0.838 0.459 0.866 0.609 0.727 
+					     0.652 0.530 0.780 0.194 1.000 0.000)
+					   (seconds->samples .0185)))
+	 (gen1 (make-polyshape 1900 :partials (list 1 .8 2 .07 3 .13)))
+	 (rnd (make-rand-interp 150 (hz->radians 20))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (wave-train pulser)
+		    (polyshape gen1 1.0 (rand-interp rnd)))
+	       *output*))))))
+
+;(with-sound (:play #t) (narrow-winged-tree-cricket 0 2 .25))
 
 
 
@@ -10335,7 +10421,8 @@
   (red-spotted-toad        (+ beg 35) 4 .25)           (set! beg (+ beg spacing))
   (green-toad              (+ beg 39.5) 2 .25)         (set! beg (+ beg spacing))
   (little-grass-frog       (+ beg 42.0) .25)           (set! beg (+ beg spacing))
-  (+ beg 42.5))
+  (sonoran-desert-toad     (+ beg 43.0) .8 .25)        (set! beg (+ beg spacing))
+  (+ beg 44))
 
 
 (define* (calling-all-mammals :optional (beg 0.0) (spacing 0.0))
@@ -10366,7 +10453,8 @@
   (davis-tree-cricket          (+ beg 60) 2 0.125)     (set! beg (+ beg spacing))
   (carolina-grasshopper        (+ beg 62.5) 1.5 1.0)   (set! beg (+ beg spacing))
   (black-horned-tree-cricket   (+ beg 64.5) 2 0.125)   (set! beg (+ beg spacing))
-  (+ beg 67))
+  (narrow-winged-tree-cricket  (+ beg 67.0) 2.0 .25)   (set! beg (+ beg spacing))
+  (+ beg 69.5))
 
 
 (define* (calling-all-birds :optional (beg 0.0) (spacing .25))

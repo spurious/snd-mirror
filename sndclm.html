@@ -1769,7 +1769,7 @@ A more reasonable square-wave can be generated via
 \tanh(\sin(x)) = 140069/172800 \sin(x) + 13319/241920 \sin(3x) + 1973/483840 \sin(5x) + 799/1451520 \sin(7x) - 71/7257600 \sin(9x) + 691/79833600 \sin(11x) + \cdots -->
 
 <center>
-<table hspace=50 border=1 vspace=10 cellpadding=8 width="70%">
+<table hspace=40 border=0 vspace=10 cellpadding=8>
 <tr><td>
 <p>The spectrum of tanh(sin) can be obtained by expanding tanh as a power series:
 </p>
@@ -1794,7 +1794,8 @@ we got .006).
 </td></tr></table>
 </center>
 
-<p>Another choice is <a href="#eoddcos">eoddcos</a> in <a href="#othergenerators">generators.scm</a>, based on atan; as its "r" parameter approaches 0.0, you get closer to a square wave.
+<p>Another square-wave choice is <a href="#eoddcos">eoddcos</a> in <a href="#othergenerators">generators.scm</a>, 
+based on atan; as its "r" parameter approaches 0.0, you get closer to a square wave.
 Even more amusing is this algorithm:
 <img src="sceq13.png" alt="square" align=absmiddle hspace=10>
 <!-- CMJ 37 4 sept 2006 p326 -->
@@ -5028,8 +5029,17 @@ dlocsig macro.  All the necessary data is packaged up in a list:
 <p>There are dozens of generators scattered around the *.scm files that come with Snd.  Some that come to mind:
 </p>
 
-
 <pre>
+analog-filter.scm:
+    filter: <a class=quiet href="sndscm.html#analogfilterdoc">butterworth-lowpass|highpass|bandpass|bandstop</a>, 
+            <a class=quiet href="sndscm.html#analogfilterdoc">chebyshev-lowpass|highpass|bandpass|bandstop</a>, 
+            <a class=quiet href="sndscm.html#analogfilterdoc">inverse-chebyshev-lowpass|highpass|bandpass|bandstop</a>, 
+            <a class=quiet href="sndscm.html#analogfilterdoc">elliptic-lowpass|highpass|bandpass|bandstop</a>,
+            <a class=quiet href="sndscm.html#analogfilterdoc">bessel-lowpass|highpass|bandpass|bandstop</a>
+
+clm-ins.scm:
+    <a class=quiet href="sndscm.html#rmsgain">rms gain balance</a>
+
 dsp.scm:
     fir-filter: <a class=quiet href="sndscm.html#hilberttransform">hilbert-transform</a>, 
                 <a class=quiet href="sndscm.html#makehighpass">highpass, lowpass, bandpass, bandstop</a>, 
@@ -5048,15 +5058,11 @@ dsp.scm:
     <a class=quiet href="sndscm.html#mfilter">mfilter</a> 
     <a class=quiet href="sndscm.html#volterrafilter">volterra-filter</a>
 
-analog-filter.scm:
-    filter: <a class=quiet href="sndscm.html#analogfilterdoc">butterworth-lowpass|highpass|bandpass|bandstop</a>, 
-            <a class=quiet href="sndscm.html#analogfilterdoc">chebyshev-lowpass|highpass|bandpass|bandstop</a>, 
-            <a class=quiet href="sndscm.html#analogfilterdoc">inverse-chebyshev-lowpass|highpass|bandpass|bandstop</a>, 
-            <a class=quiet href="sndscm.html#analogfilterdoc">elliptic-lowpass|highpass|bandpass|bandstop</a>,
-            <a class=quiet href="sndscm.html#analogfilterdoc">bessel-lowpass|highpass|bandpass|bandstop</a>
-
 env.scm:
     <a class=quiet href="sndscm.html#powerenv">power-env</a> (and many env makers/modifiers)
+
+extensions.scm:
+    <a class=quiet href="sndscm.html#envexptchannel">env-expt-channel</a> (and many related env modifiers)
 
 examp.scm:
     <a class=quiet href="sndscm.html#makeramp">ramp</a>, 
@@ -5076,9 +5082,6 @@ sndclm.html:
     <a class=quiet href="sndclm.html#sumofoddsines">sum-of-odd-sines</a>, 
     <a class=quiet href="sndclm.html#make-rand">1f-noise</a>,
     <a class=quiet href="sndclm.html#polynomial">blackman4</a>
-
-clm-ins.scm:
-    <a class=quiet href="sndscm.html#rmsgain">rms gain balance</a>
 
 zip.scm:
     <a class=quiet href="sndscm.html#zipper">zipper</a>
@@ -5157,7 +5160,7 @@ This produces a Blackman-Harris sum of cosines of order 'n'.
 
 <p>
 adjustable-square-wave produces a square-wave with optional "duty-factor" (ratio of pulse duration to pulse period).
-The other two are similar, producing triangle and sawtooth waves.
+The other two are similar, producing triangle and sawtooth waves.  There is also an adjustable-oscil.
 </p>
 <br>
 

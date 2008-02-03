@@ -4264,6 +4264,50 @@ index 10 (so 10/2 is the bes-jn arg):
 |#
 
 
+;;; and just for laughs... (almost anything would fit in this hack)
+(def-clm-struct (adjustable-oscil 
+		 :make-wrapper 
+		 (lambda (g)
+		   (let ((df (adjustable-oscil-duty-factor g)))
+		     (set! (adjustable-oscil-gen g) (make-oscil (adjustable-oscil-frequency g)))
+		     (set! (adjustable-oscil-top g) (- 1.0 df))
+		     (if (not (= df 0.0))
+			 (set! (adjustable-oscil-scl g) (/ 1.0 df)))
+		     g)))
+  (frequency 0.0) (duty-factor 0.5)
+  (gen #f :type clm) (top 0.0) (scl 0.0))
+
+(define (adjustable-oscil gen fm)
+  (declare (gen adjustable-oscil) (fm float))
+  (let* ((val (oscil (adjustable-oscil-gen gen) fm))
+	 (top (adjustable-oscil-top gen))
+	 (scl (adjustable-oscil-scl gen)))
+    (* scl (- val (max (- top) (min top val))))))
+
+#|
+(with-sound ()
+  (let ((gen (make-adjustable-oscil 100 .2)))
+    (run
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 22050))
+	 (outa i (adjustable-oscil gen 0.0) *output*))))))
+|#
+
+;;;--------------------------------------------------------------------------------
+
+(def-optkey-fun (make-wave-train-with-env frequency pulse-env size)
+  (let* ((len (or size 512))
+	 (ve (make-vct len))
+	 (e (make-env pulse-env :length len)))
+    (do ((i 0 (1+ i)))
+	((= i len))
+      (vct-set! ve i (env e)))
+    (make-wave-train frequency 0.0 ve len)))
+
+;;; TODO: decide what to do with make-wave-train-with-env and doc/snd-test
+
+
 ;;; --------------------------------------------------------------------------------
 
 (define (calling-all-generators)
