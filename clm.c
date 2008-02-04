@@ -1,82 +1,5 @@
 /* CLM (Music V) implementation */
 
-
-/* clm4:
- *
- *   perhaps add pm args alongside the fm args, as in oscil?
- *   perhaps remove all the initial-phase args [these are sometimes useful -- sine-summation init phases in animals.scm]
- *
- *   all the make-* funcs that have a frequency arg should put that first (make-formant in particular), use "n" not cosines, "r" not "a"
- *         the "n" and "r" renaming could be parallel for now -- backwards compatible for a while 
- *         ["a" used only in sine-summation, "sines" used only in sum-of-sines, "cosines" used only in sum-of-cosines]
- *         ["a" (also "k") is used in generators.scm especially where "r" is already in use, and abcos]
- *         and ideally all of these are going away
- *      currently mus-cosines accesses "n" -- "mus-n"? [or use "mus-order" instead? -- jargon]  
- *                mus-scaler sometimes = "r" -- "mus-r" or "mus-amplitude"?
- *      mus-amplitude to parallel mus-frequency/mus-phase
- *      mus-documentation [mus-describe shows current state -- if we had this, snd-help might be able to use it for generators.scm]
- *        (the info is in clm2xen, but the class slot is in clm and it would be nice if it worked from C)
- *        PERHAPS: include the main added gens in the index
- *      for "xy" cases, we need mus-[x|y]frequency or some equivalent [also currently using "carfreq" "modfreq"]
- *
- *      make-sum-of-cosines freq n [no init-phase]
- *      make-sine-summation freq n r ratio [no init-phase?] (can't replace with nrxycos because actual waveforms differ, could use nrxysin)
- *      make-sum-of-sines freq n [no init-phase]
- *      make-ssb-am freq n
- *      make-formant freq r gain
- *      also cases like make-mfilter in dsp.scm
- *
- *   sum-of-cosines -> ncos
- *   sum-of-sines -> nsin
- *   sine-summation -> nrxysin
- *     what about oscil? [sine?|cosine] -- this would fit with "sines"|"cosines" below
- *   asymmetric-fm -> generators.scm (not built-in)
- *
- *   perhaps one gen: if n=1 oscil, n>1 r=1 sum-of-cosines, n!=inf nr[xy]cos, n=inf, r<1 r[xy]cos, r>=1 r[xy]k!cos or rkcos
- *    this could be "cosines" ("cosine-sum"?), sine case "sines", maybe xy cases: "ssb-cosines" "ssb-sines"
- *    if r is a list|vct, polyshape, if xy polyshape*cos
- *    would like to avoid run-time switch (on algorithm choice), yet still be optimizable
- *    and the resultant code would be opaque -- a long sequence of (sines...) -- use the variable name
- *
- *   polyshape/waveshape should put the "index" arg last, or just forget it (use mus-scaler)
- *     mus-scaler is free in wave|polyshape, but needs field in struct, decision on how to use it in the mus_wave|polyshape* funcs
- *     remove waveshape, partials->waveshape
- *
- *   remove phase-vocoder as gen [move to the "functions" section]? (it has state, but is really more at the instrument level than generator)
- *
- *   can the def-clm-struct method/make lists be used with built-in gens?
- *
- *   "fm" arg to formant -> set frequency so it's easier to have moving formants
- *      but it's a direct freq, not an increment -- see mus_formant_with_frequency below
- *
- *   do something debonair about move-sound -- another mistake -- elastic-delay + vector arithmetic = dlocsig?
- *   elastic-delay (and inelastic) -> delay with run-time length, if len expands so quickly as to drop
- *      a sample, interpolate, if compresses too quickly, create shock -- a slight extension of the current delay pm arg
- *      it should be possible to collapse nearly all of dlocsig into these lines -- no envelopes need to be precalulated etc
- *      if the vector from the object to the speaker projected onto the vector from the speaker to the user is positive
- *        then the object is in front of the speaker(?)
- *
- *   perhaps built-in: blackman rk!cos rxyk!cos nrcos rcos rxycos nxycos nrssb rk!ssb nrxysin|cos
- *   perhaps phaser = the phase+incr+fm+pm portion of nearly every generator
- *
- *   wave-train needs a way to set the initial counter (current notion of initial-phase seems useless)
- *    mus-offset? or settable mus-location?
- *
- *   The env-expt-channel funcs should be disconnected from ptree-channel somehow (or the process documented)
- *   TODO: find the rest of these hidden gens
- *
- *   TODO: shouldn't the table-lookup doc have dicussion of interp-type? [table-lookup ssb-am wave-train delay and friends]
- *            there's probably a JOS url for this
- *
- *   optional interp-type for array-interp? rand-interp? (at least base arg for rand-interp, and exp interp for table-lookup) [interp for env?]
- *   wave-train would be more useful if coupled with the env you want "trained" -- an env-wave-train (make-)gen
- *   :base as list in env = if up use car else cdr as base? or if > 2, use next on each segment
- *
- * done:
- *   :dur and :end -> :length in make-env
- */
-
-
 #include <mus-config.h>
 
 #if USE_SND
@@ -10862,4 +10785,84 @@ void init_mus_module(void)
   data_format_zero[MUS_UBSHORT] = USHORT_ZERO;
   data_format_zero[MUS_ULSHORT] = USHORT_ZERO;
 }
+
+
+
+/* clm4:
+ *
+ *   all the make-* funcs that have a frequency arg should put that first (make-formant in particular), use "n" not cosines, "r" not "a"
+ *         the "n" and "r" renaming could be parallel for now -- backwards compatible for a while 
+ *         ["a" used only in sine-summation, "sines" used only in sum-of-sines, "cosines" used only in sum-of-cosines]
+ *         ["a" (also "k") is used in generators.scm especially where "r" is already in use, and abcos]
+ *         and ideally all of these are going away
+ *      currently mus-cosines accesses "n" -- "mus-n"? [or use "mus-order" instead? -- jargon]  
+ *                mus-scaler sometimes = "r" -- "mus-r" or "mus-amplitude"?
+ *      mus-amplitude to parallel mus-frequency/mus-phase
+ *      mus-documentation [mus-describe shows current state -- if we had this, snd-help might be able to use it for generators.scm]
+ *        (the info is in clm2xen, but the class slot is in clm and it would be nice if it worked from C)
+ *        PERHAPS: include the main added gens in the index
+ *      for "xy" cases, we need mus-[x|y]frequency or some equivalent [also currently using "carfreq" "modfreq"]
+ *
+ *      make-sum-of-cosines freq n [no init-phase]
+ *      make-sine-summation freq n r ratio [no init-phase?] (can't replace with nrxycos because actual waveforms differ, could use nrxysin)
+ *      make-sum-of-sines freq n [no init-phase]
+ *      make-ssb-am freq n
+ *      make-formant freq r gain, or maybe amplitude? [gain used only in make-formant]
+ *      also cases like make-mfilter in dsp.scm
+ *      perhaps add pm args alongside the fm args, as in oscil?
+ *      perhaps remove all the initial-phase args [these are sometimes useful -- sine-summation init phases in animals.scm]
+ *
+ *   sum-of-cosines -> ncos
+ *   sum-of-sines -> nsin
+ *   sine-summation -> nrxysin
+ *     what about oscil? [sine?|cosine] -- this would fit with "sines"|"cosines" below
+ *   asymmetric-fm -> generators.scm (not built-in)
+ *
+ *   perhaps one gen: if n=1 oscil, n>1 r=1 sum-of-cosines, n!=inf nr[xy]cos, n=inf, r<1 r[xy]cos, r>=1 r[xy]k!cos or rkcos
+ *    this could be "cosines" ("cosine-sum"?), sine case "sines", maybe xy cases: "ssb-cosines" "ssb-sines"
+ *    if r is a list|vct, polyshape, if xy polyshape*cos
+ *    would like to avoid run-time switch (on algorithm choice), yet still be optimizable
+ *    and the resultant code would be opaque -- a long sequence of (sines...) -- use the variable name
+ *
+ *   polyshape/waveshape should put the "index" arg last, or just forget it (use mus-scaler)
+ *     mus-scaler is free in wave|polyshape, but needs field in struct, decision on how to use it in the mus_wave|polyshape* funcs
+ *     remove waveshape, partials->waveshape
+ *     also polyshape "kind" arg should be "type" [kind used only in make-polyshape]
+ *
+ *   remove phase-vocoder as gen [move to the "functions" section]? (it has state, but is really more at the instrument level than generator)
+ *
+ *   can the def-clm-struct method/make lists be used with built-in gens?
+ *
+ *   the simple filter args are inconsistent with other names
+ *
+ *   "fm" arg to formant -> set frequency so it's easier to have moving formants
+ *      but it's a direct freq, not an increment -- see mus_formant_with_frequency below
+ *
+ *   do something debonair about move-sound -- another mistake -- elastic-delay + vector arithmetic = dlocsig?
+ *   elastic-delay (and inelastic) -> delay with run-time length, if len expands so quickly as to drop
+ *      a sample, interpolate, if compresses too quickly, create shock -- a slight extension of the current delay pm arg
+ *      it should be possible to collapse nearly all of dlocsig into these lines -- no envelopes need to be precalulated etc
+ *      if the vector from the object to the speaker projected onto the vector from the speaker to the user is positive
+ *        then the object is in front of the speaker(?)
+ *
+ *   perhaps built-in: blackman rk!cos rxyk!cos nrcos rcos rxycos nxycos nrssb rk!ssb nrxysin|cos
+ *   perhaps phaser = the phase+incr+fm+pm portion of nearly every generator
+ *
+ *   wave-train needs a way to set the initial counter (current notion of initial-phase seems useless)
+ *    mus-offset? or settable mus-location?
+ *
+ *   The env-expt-channel funcs should be disconnected from ptree-channel somehow (or the process documented)
+ *   TODO: find the rest of these hidden gens
+ *
+ *   TODO: shouldn't the table-lookup doc have dicussion of interp-type? [table-lookup ssb-am wave-train delay and friends]
+ *            there's probably a JOS url for this
+ *
+ *   optional interp-type for array-interp? rand-interp? (at least base arg for rand-interp, and exp interp for table-lookup) [interp for env?]
+ *   wave-train would be more useful if coupled with the env you want "trained" -- an env-wave-train (make-)gen
+ *   :base as list in env = if up use car else cdr as base? or if > 2, use next on each segment
+ *
+ * done:
+ *   :dur and :end -> :length in make-env
+ */
+
 

@@ -57,9 +57,9 @@
 ;;; Linnaeus' cicada
 ;;; Lyric cicada
 ;;; Southern mole cricket
-;;; Confused ground-cricket
-;;; Tinkling ground-cricket
-;;; Striped ground-cricket
+;;; Confused ground cricket
+;;; Tinkling ground cricket
+;;; Striped ground cricket
 ;;; Sphagnum ground cricket
 ;;; Southeastern field cricket
 ;;; Snowy tree cricket
@@ -69,6 +69,7 @@
 ;;; Fast-calling tree cricket
 ;;; Black-horned tree cricket
 ;;; Narrow-winged tree cricket
+;;; Four-spotted tree cricket
 ;;; Marsh meadow grasshopper
 ;;; Carolina grasshopper
 ;;; Slightly musical conehead
@@ -219,6 +220,7 @@
 
 ;;; some of these need srate=44100 since various frequencies are (well) over 10KHz
 ;;;   also, I have bare indices scattered around -- ideally these would be wrapped in hz->radians
+;;;   (use radians->hz to back out of the current form)
 ;;; these were done more or less in the order they occur within a section, so in many cases
 ;;;   the earlier ones are clumsy.
 
@@ -1501,7 +1503,7 @@
 
 ;;; --------------------------------------------------------------------------------
 ;;;
-;;; Broad-winged Tree-cricket
+;;; Broad-winged Tree cricket
 
 (definstrument (broad-winged-tree-cricket beg dur amp)
   (let* ((start (seconds->samples beg))
@@ -1795,7 +1797,7 @@
 
 ;;; --------------------------------------------------------------------------------
 ;;;
-;;; Confused ground-cricket
+;;; Confused ground cricket
 
 (definstrument (confused-ground-cricket beg dur amp)
   (let* ((start (seconds->samples beg))
@@ -1835,7 +1837,7 @@
 
 ;;; ------------------------------------------------------------------------------------------
 ;;;
-;;; Tinkling ground-cricket
+;;; Tinkling ground cricket
 ;;;
 ;;;  There's a secondary (slower) peep -- is this part of our cricket's song, or another cricket in the background?
 
@@ -2262,7 +2264,7 @@
 
 ;;; --------------------------------------------------------------------------------
 ;;;
-;;; Narrow-winged tree-cricket
+;;; Narrow-winged tree cricket
 
 (definstrument (narrow-winged-tree-cricket beg dur amp)
   ;; insects 18 4
@@ -2285,6 +2287,43 @@
 	       *output*))))))
 
 ;(with-sound (:play #t) (narrow-winged-tree-cricket 0 2 .25))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Four-spotted tree cricket
+
+(definstrument (four-spotted-tree-cricket beg dur amp)
+  ;; insects 16 4
+  (let* ((start (seconds->samples beg))
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0 0 .3 1 20 1 20.3 0) :duration dur :scaler amp))
+	 (amp-pulser (make-table-lookup-with-env 40.0 
+					   '(0.000 0.000 0.071 0.518 0.174 0.783 0.315 0.885 0.492 0.727 0.579 0.466 
+					     0.625 0.186 0.671 0.028 0.755 0.083 0.848 0.024 0.935 0.126 1.000 0.000 1.5 0)
+					   (seconds->samples .025)))
+	 (index (hz->radians 400))
+	 (frq-pulser (make-table-lookup-with-env 40.0 (list 0 index 1 0 2 0) (seconds->samples .025)))
+	 (gen1 (make-polyshape 3220 :partials (list 1 .92  2 .07  3 .01)))
+	 (gen2 (make-oscil 5000))
+	 (gen3 (make-oscil 2200))
+	 (rnd1 (make-rand-interp 8000 (hz->radians 2000)))
+	 (rnd (make-rand-interp 200 (hz->radians 30))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((noise (rand-interp rnd1)))
+	 (outa i (* (env ampf)
+		    (+ (* (table-lookup amp-pulser)
+			  (polyshape gen1 1.0 (+ (rand-interp rnd)
+						 (table-lookup frq-pulser))))
+		       (* .05
+			  (+ (oscil gen2 noise)
+			     (* .2 (oscil gen3 (* .2 noise)))))))
+	       *output*)))))))
+
+;(with-sound (:play #t) (four-spotted-tree-cricket 0 1 .5))
 
 
 
@@ -10454,7 +10493,8 @@
   (carolina-grasshopper        (+ beg 62.5) 1.5 1.0)   (set! beg (+ beg spacing))
   (black-horned-tree-cricket   (+ beg 64.5) 2 0.125)   (set! beg (+ beg spacing))
   (narrow-winged-tree-cricket  (+ beg 67.0) 2.0 .25)   (set! beg (+ beg spacing))
-  (+ beg 69.5))
+  (four-spotted-tree-cricket   (+ beg 69.5) 1.0 .25)   (set! beg (+ beg spacing))
+  (+ beg 71))
 
 
 (define* (calling-all-birds :optional (beg 0.0) (spacing .25))
