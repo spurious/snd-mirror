@@ -121,6 +121,7 @@
 ;;; Chestnut-sided warbler
 ;;; Black-throated blue warbler
 ;;; Pine warbler
+;;; Cape May warbler
 ;;; Verdin
 ;;; Townsend's solitaire
 ;;; Cedar waxwing
@@ -10432,6 +10433,64 @@
 ;(with-sound (:play #t) (black-throated-sparrow 0 .5))
 
 
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Cape May warbler
+
+(definstrument (cape-may-warbler beg amp)
+  ;; east 14 2
+  
+  ;; note #1
+  (let* ((start (seconds->samples beg))
+	 (dur 0.234)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.115 0.517 0.170 0.326 0.214 0.400 0.272 0.397 0.298 0.289 0.486 0.674 
+			   0.529 0.564 0.537 0.744 0.554 0.605 0.570 0.871 0.617 0.637 0.646 0.986 0.664 0.857 
+			   0.675 1.000 0.697 0.279 0.713 0.626 0.756 0.522 0.772 0.342 0.792 0.600 0.813 0.319 
+			   0.825 0.667 0.856 0.330 0.864 0.642 0.890 0.568 0.899 0.242 0.920 0.573 0.983 0.323 1.000 0.000)
+			 :duration dur :scaler (* .2 amp)))
+	 (frqf (make-env '(0.000 0.357 0.070 0.364 0.119 0.362 0.246 0.378 0.318 0.380 0.397 0.387 0.538 0.398 
+			   0.628 0.416 0.733 0.430 0.811 0.437 0.852 0.443 0.912 0.441 1.000 0.441)
+			 :duration dur :scaler (hz->radians 22000.0)))
+	 (gen1 (make-oscil 0.0)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (oscil gen1 (env frqf)))
+	       *output*)))))
+  
+  ;; next 4 notes
+  (let* ((begs (vct 0.31 0.61 0.86 1.11))
+	 (durs (vct 0.23 0.19 0.18 0.18))
+	 (amps (vct 0.6  0.95 1.0  0.8))
+	 (ampenv '(0.000 0.000 0.081 0.593 0.118 0.676 0.139 0.952 0.174 1.000 0.198 0.762 0.255 0.701 0.276 0.824 
+		   0.316 0.572 0.372 0.794 0.411 0.572 0.506 0.663 0.550 0.514 0.582 0.622 0.633 0.337 0.653 0.520 
+		   0.685 0.536 0.700 0.389 0.780 0.462 0.796 0.267 0.804 0.380 0.814 0.231 0.832 0.330 0.895 0.310 
+		   0.942 0.238 1.000 0.000))
+	 (frqenv '(0.000 0.326 0.102 0.344 0.182 0.351 0.269 0.360 0.352 0.373 0.503 0.382 0.614 0.394 0.730 0.410 
+		   0.833 0.423 1.000 0.434))
+	 (gen1 (make-oscil 0.0)))
+    (do ((call 0 (1+ call)))
+	((= call 4))
+      (let* ((start (seconds->samples (+ beg (vct-ref begs call))))
+	     (dur (vct-ref durs call))
+	     (stop (+ start (seconds->samples dur)))
+	     (ampf (make-env ampenv :duration dur :scaler (* amp (vct-ref amps call))))
+	     (frqf (make-env frqenv :duration dur :scaler (hz->radians 22000))))
+	(run
+	 (lambda ()
+	   (do ((i start (1+ i)))
+	       ((= i stop))
+	     (outa i (* (env ampf)
+			(oscil gen1 (env frqf)))
+		   *output*))))))))
+		 
+;(with-sound (:play #t) (cape-may-warbler 0 .5))
+
+
+
 
 ;;; ================ calling-all-animals ================
 
@@ -10641,7 +10700,8 @@
   (canada-goose                  (+ beg 237.5) .25)      (set! beg (+ beg spacing))
   (pine-warbler                  (+ beg 239.0) .25)      (set! beg (+ beg spacing))
   (black-throated-sparrow        (+ beg 241.5) .25)      (set! beg (+ beg spacing))
-  (+ beg 242.5))
+  (cape-may-warbler              (+ beg 242.4) .25)      (set! beg (+ beg spacing))
+  (+ beg 244))
 
 
 (define (calling-all-animals)

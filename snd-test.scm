@@ -1033,6 +1033,9 @@
     (set! (clm-table-size) (clm-table-size))
     (if (not (equal? (clm-table-size) 512)) 
 	(snd-display ";clm-table-size set def: ~A" (clm-table-size)))
+    (set! (clm-default-frequency) (clm-default-frequency))
+    (if (fneq (clm-default-frequency) 440.0)
+	(snd-display ";clm-default-frequency set def: ~A" (clm-default-frequency)))
     (set! (with-verbose-cursor) (with-verbose-cursor))
     (if (not (equal? (with-verbose-cursor)  #f)) 
 	(snd-display ";with-verbose-cursor set def: ~A" (with-verbose-cursor)))
@@ -1156,6 +1159,7 @@
       'channel-style (channel-style) 1
       'clipping (clipping) #f 
       'clm-table-size (clm-table-size) 512
+      'clm-default-frequency (clm-default-frequency) 440.0
       'color-cutoff (color-cutoff) 0.003 
       'color-inverted (color-inverted) #t
       'color-scale (color-scale) 1.0 
@@ -2034,7 +2038,7 @@
 		       'channel-properties 'channel-style 'channel-widgets 'channels 'channels-combined
 		       'channels-separate 'channels-superimposed 'chans 'clear-array 'clear-listener
 		       'clear-minibuffer 'clear-sincs 'clip-hook 'clipping 'clm-channel 'clm-print
-		       'clm-table-size 'close-hook 'close-sound 'color->list
+		       'clm-table-size 'clm-default-frequency 'close-hook 'close-sound 'color->list
 		       'color-cutoff 'color-dialog 'color-hook 'color-inverted 'color-scale
 		       'color? 'colormap 'colormap-name 'colormap-ref 'colormap-size
 		       'colormap? 'comb 'comb? 'comment 'connes-window
@@ -65784,7 +65788,7 @@ EDITS: 1
 		     start-progress-report stop-player stop-playing swap-channels syncd-marks sync sync-max sound-properties temp-dir
 		     text-focus-color tiny-font region-sample-reader? transform-dialog transform-sample
 		     transform->vct transform-frames transform-type trap-segfault with-file-monitor optimization unbind-key undo
-		     update-transform-graph update-time-graph update-lisp-graph update-sound run-safety clm-table-size
+		     update-transform-graph update-time-graph update-lisp-graph update-sound run-safety clm-table-size clm-default-frequency
 		     with-verbose-cursor view-sound wavelet-type
 		     time-graph?  time-graph-type wavo-hop wavo-trace window-height window-width window-x window-y
 		     with-mix-tags with-relative-panes with-gl write-peak-env-info-file x-axis-style beats-per-measure
@@ -65903,7 +65907,7 @@ EDITS: 1
 			 mus-cosines mus-data mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop
 			 mus-increment mus-length mus-location mus-phase mus-ramp mus-scaler vct-ref x-axis-label
 			 filter-control-coeffs locsig-type mus-file-buffer-size 
-			 mus-rand-seed mus-width clm-table-size run-safety mus-offset mus-reset
+			 mus-rand-seed mus-width clm-table-size clm-default-frequency run-safety mus-offset mus-reset
 			 phase-vocoder-amp-increments phase-vocoder-amps 
 			 phase-vocoder-freqs phase-vocoder-phase-increments phase-vocoder-phases 
 			 quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
@@ -66669,7 +66673,7 @@ EDITS: 1
 			    show-selection-transform sinc-width temp-dir text-focus-color tiny-font
 			    trap-segfault with-file-monitor optimization unbind-key with-verbose-cursor window-height beats-per-measure
 			    window-width window-x window-y with-gl with-mix-tags x-axis-style beats-per-minute zoom-color mix-tag-height
-			    mix-tag-width with-relative-panes run-safety clm-table-size mark-tag-width mark-tag-height
+			    mix-tag-width with-relative-panes run-safety clm-table-size clm-default-frequency mark-tag-width mark-tag-height
 			    quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
 			    ))
 	    (gc)(gc))

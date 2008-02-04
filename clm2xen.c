@@ -366,6 +366,44 @@ static void init_keywords(void)
 
 
 
+/* ---------------- *clm-table-size* ---------------- */
+
+static int clm_table_size = MUS_CLM_DEFAULT_TABLE_SIZE;
+
+int clm_default_table_size_c(void) {return(clm_table_size);}
+
+static XEN g_clm_table_size(void) {return(C_TO_XEN_INT(clm_table_size));}
+
+static XEN g_set_clm_table_size(XEN val) 
+{
+  int size;
+  #define H_clm_table_size "(" S_clm_table_size "): the default table size for most generators (512)"
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_clm_table_size, "an integer");
+  size = XEN_TO_C_INT(val);
+  if ((size <= 0) || (size > MAX_TABLE_SIZE))
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_clm_table_size, XEN_ARG_1, val, "invalid size: ~A");
+  clm_table_size = size;
+  return(C_TO_XEN_INT(clm_table_size));
+}
+
+
+/* ---------------- *clm-default-frequency* ---------------- */
+
+static double clm_default_frequency = MUS_CLM_DEFAULT_FREQUENCY;
+
+double clm_default_frequency_c(void) {return(clm_default_frequency);}
+
+static XEN g_clm_default_frequency(void) {return(C_TO_XEN_DOUBLE(clm_default_frequency));}
+
+static XEN g_set_clm_default_frequency(XEN val) 
+{
+  #define H_clm_default_frequency "(" S_clm_default_frequency "): the default frequency for most generators (440.0)"
+  XEN_ASSERT_TYPE(XEN_DOUBLE_P(val), val, XEN_ONLY_ARG, S_setB S_clm_default_frequency, "a number");
+  clm_default_frequency = XEN_TO_C_DOUBLE(val);
+  return(val);
+}
+
+
 /* ---------------- AM and simple stuff ---------------- */
 
 static char *fft_window_xen_names[MUS_NUM_FFT_WINDOWS] = 
@@ -1594,13 +1632,14 @@ static XEN g_mus_file_name(XEN gen)
 
 static XEN g_make_oscil(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  #define H_make_oscil "(" S_make_oscil " (:frequency 440.0) (:initial-phase 0.0)): return a new " S_oscil " (sinewave) generator"
+  #define H_make_oscil "(" S_make_oscil " (:frequency clm-default-frequency) (:initial-phase 0.0)): return a new " S_oscil " (sinewave) generator"
   mus_any *ge;
   int vals;
   XEN args[4]; 
   XEN keys[2];
   int orig_arg[2] = {0, 0};
-  Float freq = 440.0, phase = 0.0;
+  Float freq, phase = 0.0;
+  freq = clm_default_frequency;
   keys[0] = kw_frequency;
   keys[1] = kw_initial_phase;
   args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; 
@@ -2099,7 +2138,7 @@ static XEN g_sum_of_cosines_p(XEN obj)
 
 static XEN g_make_sum_of_cosines(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
 {
-  #define H_make_sum_of_cosines "(" S_make_sum_of_cosines " (:cosines 1) (:frequency 440.0) (:initial-phase 0.0)): \
+  #define H_make_sum_of_cosines "(" S_make_sum_of_cosines " (:cosines 1) (:frequency clm-default-frequency) (:initial-phase 0.0)): \
 return a new " S_sum_of_cosines " generator, producing a band-limited pulse train."
 
   mus_any *ge;
@@ -2108,8 +2147,9 @@ return a new " S_sum_of_cosines " generator, producing a band-limited pulse trai
   int orig_arg[3] = {0, 0, 0};
   int vals;
   int cosines = 1;
-  Float freq = 440.0;
-  Float phase = 0.0;
+  Float freq, phase = 0.0;
+
+  freq = clm_default_frequency;
 
   keys[0] = kw_cosines;
   keys[1] = kw_frequency;
@@ -2160,7 +2200,7 @@ static XEN g_sum_of_sines_p(XEN obj)
 
 static XEN g_make_sum_of_sines(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
 {
-  #define H_make_sum_of_sines "(" S_make_sum_of_sines " (:sines 1) (:frequency 440.0) (:initial-phase 0.0)): \
+  #define H_make_sum_of_sines "(" S_make_sum_of_sines " (:sines 1) (:frequency clm-default-frequency) (:initial-phase 0.0)): \
 return a new " S_sum_of_sines " generator."
 
   mus_any *ge;
@@ -2169,8 +2209,9 @@ return a new " S_sum_of_sines " generator."
   int orig_arg[3] = {0, 0, 0};
   int vals;
   int sines = 1;
-  Float freq = 440.0;
-  Float phase = 0.0;
+  Float freq, phase = 0.0;
+
+  freq = clm_default_frequency;
 
   keys[0] = kw_sines;
   keys[1] = kw_frequency;
@@ -2294,12 +2335,13 @@ static XEN g_make_noi(bool rand_case, const char *caller, XEN arglist)
   XEN keys[5];
   int orig_arg[5] = {0, 0, 0, 0, 0};
   int i, vals, arglist_len;
-  Float freq = 440.0;
-  Float base = 1.0;
+  Float freq, base = 1.0;
   Float *distribution = NULL;
   vct *v = NULL;
   XEN orig_v = XEN_FALSE;
   int distribution_size = RANDOM_DISTRIBUTION_TABLE_SIZE;
+
+  freq = clm_default_frequency;
 
   keys[0] = kw_frequency;
   keys[1] = kw_amplitude;
@@ -2383,7 +2425,7 @@ static XEN g_make_noi(bool rand_case, const char *caller, XEN arglist)
 
 static XEN g_make_rand_interp(XEN arglist)
 {
-  #define H_make_rand_interp "(" S_make_rand_interp " (:frequency 440.0) (:amplitude 1.0) :envelope :distribution :size): \
+  #define H_make_rand_interp "(" S_make_rand_interp " (:frequency clm-default-frequency) (:amplitude 1.0) :envelope :distribution :size): \
 return a new " S_rand_interp " generator, producing linearly interpolated random numbers. \
 frequency is the rate at which new end-points are chosen."
 
@@ -2393,7 +2435,7 @@ frequency is the rate at which new end-points are chosen."
 
 static XEN g_make_rand(XEN arglist)
 {
-  #define H_make_rand "(" S_make_rand " (:frequency 440.0) (:amplitude 1.0) :envelope :distribution :size): \
+  #define H_make_rand "(" S_make_rand " (:frequency clm-default-frequency) (:amplitude 1.0) :envelope :distribution :size): \
 return a new " S_rand " generator, producing a sequence of random numbers (a step  function). \
 frequency is the rate at which new numbers are chosen."
 
@@ -2468,25 +2510,6 @@ static XEN g_mus_set_rand_seed(XEN a)
 
 
 /* ---------------- table lookup ---------------- */
-
-static int clm_table_size = MUS_DEFAULT_CLM_TABLE_SIZE;
-
-int clm_table_size_c(void) {return(clm_table_size);}
-
-static XEN g_clm_table_size(void) {return(C_TO_XEN_INT((int)clm_table_size));}
-
-static XEN g_set_clm_table_size(XEN val) 
-{
-  int size;
-  #define H_clm_table_size "(" S_clm_table_size "): the default table size for most generators (512)"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_clm_table_size, "an integer");
-  size = XEN_TO_C_INT(val);
-  if ((size <= 0) || (size > MAX_TABLE_SIZE))
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_clm_table_size, XEN_ARG_1, val, "invalid size: ~A");
-  clm_table_size = size;
-  return(C_TO_XEN_INT(clm_table_size));
-}
-
 
 static XEN g_table_lookup_p(XEN obj) 
 {
@@ -2650,7 +2673,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
 
 static XEN g_make_table_lookup(XEN arglist)
 {
-  #define H_make_table_lookup "(" S_make_table_lookup " (:frequency 440.0) (:initial-phase 0.0) :wave :size :type): \
+  #define H_make_table_lookup "(" S_make_table_lookup " (:frequency clm-default-frequency) (:initial-phase 0.0) :wave (:size clm-table-size) :type): \
 return a new " S_table_lookup " generator.  This is known as an oscillator in other synthesis systems. \
 The default table size is 512; use :size to set some other size, or pass your own vct as the 'wave'.\n\
    (set! gen (" S_make_table_lookup " 440.0 :wave (" S_partials_to_wave " '(1 1.0)))\n\
@@ -2661,11 +2684,13 @@ is the same in effect as " S_make_oscil ".  'type' sets the interpolation choice
   XEN args[MAX_ARGLIST_LEN]; 
   XEN keys[5];
   int orig_arg[5] = {0, 0, 0, 0, MUS_INTERP_LINEAR};
-  Float freq = 440.0, phase = 0.0;
+  Float freq, phase = 0.0;
   Float *table = NULL;
   vct *v = NULL;
   XEN orig_v = XEN_FALSE;
+
   mus_interp_t type = MUS_INTERP_LINEAR;
+  freq = clm_default_frequency;
 
   keys[0] = kw_frequency;
   keys[1] = kw_initial_phase;
@@ -2751,10 +2776,9 @@ static XEN g_make_sw(xclm_wave_t type, Float def_phase, XEN arg1, XEN arg2, XEN 
   XEN keys[3];
   int orig_arg[3] = {0, 0, 0};
   int vals;
-  Float freq = 440.0;
-  Float base = 1.0;
-  Float phase;
+  Float freq, base = 1.0, phase;
 
+  freq = clm_default_frequency;
   phase = def_phase;
 
   switch (type)
@@ -2796,7 +2820,7 @@ static XEN g_make_sw(xclm_wave_t type, Float def_phase, XEN arg1, XEN arg2, XEN 
 
 static XEN g_make_sawtooth_wave(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6) 
 {
-  #define H_make_sawtooth_wave "(" S_make_sawtooth_wave " (:frequency 440.0) (:amplitude 1.0) (:initial-phase 0.0)): \
+  #define H_make_sawtooth_wave "(" S_make_sawtooth_wave " (:frequency clm-default-frequency) (:amplitude 1.0) (:initial-phase 0.0)): \
 return a new " S_sawtooth_wave " generator."
 
   return(g_make_sw(G_SAWTOOTH_WAVE, M_PI, arg1, arg2, arg3, arg4, arg5, arg6));
@@ -2805,7 +2829,7 @@ return a new " S_sawtooth_wave " generator."
 
 static XEN g_make_square_wave(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6) 
 {
-  #define H_make_square_wave "(" S_make_square_wave " (:frequency 440.0) (:amplitude 1.0) (:initial-phase 0.0)): \
+  #define H_make_square_wave "(" S_make_square_wave " (:frequency clm-default-frequency) (:amplitude 1.0) (:initial-phase 0.0)): \
 return a new " S_square_wave " generator."
 
   return(g_make_sw(G_SQUARE_WAVE, 0.0, arg1, arg2, arg3, arg4, arg5, arg6));
@@ -2814,7 +2838,7 @@ return a new " S_square_wave " generator."
 
 static XEN g_make_triangle_wave(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6) 
 {
-  #define H_make_triangle_wave "(" S_make_triangle_wave " (:frequency 440.0) (:amplitude 1.0) (:initial-phase 0.0)): \
+  #define H_make_triangle_wave "(" S_make_triangle_wave " (:frequency clm-default-frequency) (:amplitude 1.0) (:initial-phase 0.0)): \
 return a new " S_triangle_wave " generator."
 
   return(g_make_sw(G_TRIANGLE_WAVE, 0.0, arg1, arg2, arg3, arg4, arg5, arg6));
@@ -2823,7 +2847,7 @@ return a new " S_triangle_wave " generator."
 
 static XEN g_make_pulse_train(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6) 
 {
-  #define H_make_pulse_train "(" S_make_pulse_train " (:frequency 440.0) (:amplitude 1.0) (:initial-phase 0.0)): \
+  #define H_make_pulse_train "(" S_make_pulse_train " (:frequency clm-default-frequency) (:amplitude 1.0) (:initial-phase 0.0)): \
 return a new " S_pulse_train " generator.  This produces a sequence of impulses."
 
   return(g_make_sw(G_PULSE_TRAIN, TWO_PI, arg1, arg2, arg3, arg4, arg5, arg6));
@@ -2903,7 +2927,7 @@ static XEN g_pulse_train_p(XEN obj)
 
 static XEN g_make_asymmetric_fm(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
 {
-  #define H_make_asymmetric_fm "(" S_make_asymmetric_fm " (:frequency 440.0) (:initial-phase 0.0) (:r 1.0) (:ratio 1.0)): \
+  #define H_make_asymmetric_fm "(" S_make_asymmetric_fm " (:frequency clm-default-frequency) (:initial-phase 0.0) (:r 1.0) (:ratio 1.0)): \
 return a new " S_asymmetric_fm " generator."
 
   mus_any *ge;
@@ -2911,10 +2935,9 @@ return a new " S_asymmetric_fm " generator."
   XEN keys[4];
   int orig_arg[4] = {0, 0, 0, 0};
   int vals;
-  Float freq = 440.0;
-  Float phase = 0.0;
-  Float r = 1.0;
-  Float ratio = 1.0;
+  Float freq, phase = 0.0, r = 1.0, ratio = 1.0;
+
+  freq = clm_default_frequency;
 
   keys[0] = kw_frequency;
   keys[1] = kw_initial_phase;
@@ -3758,7 +3781,7 @@ static XEN g_make_mixer_unchecked(XEN arglist)
 
 static XEN g_make_wave_train(XEN arglist)
 {
-  #define H_make_wave_train "(" S_make_wave_train " (:frequency 440.0) (:initial-phase 0.0) :wave :size :type): \
+  #define H_make_wave_train "(" S_make_wave_train " (:frequency clm-default-frequency) (:initial-phase 0.0) :wave (:size clm-table-size) :type): \
 return a new wave-train generator (an extension of pulse-train).   Frequency is \
 the repetition rate of the wave found in wave. Successive waves can overlap."
 
@@ -3769,10 +3792,11 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
   int vals, i, arglist_len, wsize = clm_table_size;
   vct *v = NULL;
   XEN orig_v = XEN_FALSE;
-  Float freq = 440.0;
-  Float phase = 0.0;
+  Float freq, phase = 0.0;
   Float *wave = NULL;
+
   mus_interp_t type = MUS_INTERP_LINEAR;
+  freq = clm_default_frequency;
 
   keys[0] = kw_frequency;
   keys[1] = kw_initial_phase;
@@ -3988,7 +4012,7 @@ static XEN g_make_waveshape(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XE
     #define make_waveshape_example "440.0 '( 1 1.0 ) make-waveshape"
   #endif
 
-  #define H_make_waveshape "(" S_make_waveshape " (:frequency 440.0) (:partials '(1 1)) (:size 512) :wave): \
+  #define H_make_waveshape "(" S_make_waveshape " (:frequency clm-default-frequency) (:partials '(1 1)) (:size clm-table-size) :wave): \
 return a new waveshaping generator (essentially table-lookup driven by a sinewave)\n  " make_waveshape_example " \n\
 is the same in effect as " S_make_oscil
 
@@ -4000,9 +4024,11 @@ is the same in effect as " S_make_oscil
   bool partials_allocated = false;
   vct *v = NULL;
   XEN orig_v = XEN_FALSE;
-  Float freq = 440.0;
+  Float freq;
   Float *wave = NULL, *partials = NULL;
+
   wsize = clm_table_size;
+  freq = clm_default_frequency;
 
   keys[0] = kw_frequency;
   keys[1] = kw_partials;
@@ -4208,7 +4234,7 @@ static XEN g_polyshape_p(XEN obj)
 
 static XEN g_make_polyshape(XEN arglist)
 {
-  #define H_make_polyshape "(" S_make_polyshape " (:frequency 440.0) (:initial-phase 0.0) :coeffs (:partials '(1 1)) (:kind " S_mus_chebyshev_first_kind ")): \
+  #define H_make_polyshape "(" S_make_polyshape " (:frequency clm-default-frequency) (:initial-phase 0.0) :coeffs (:partials '(1 1)) (:kind " S_mus_chebyshev_first_kind ")): \
 return a new polynomial-based waveshaping generator ('polyshaper...')\n\
    (" S_make_polyshape " :coeffs (" S_partials_to_polynomial " '(1 1.0)))\n\
 is the same in effect as " S_make_oscil
@@ -4221,7 +4247,7 @@ is the same in effect as " S_make_oscil
   int i, ck, vals, csize = 0, npartials = 0;
   vct *v = NULL;
   XEN orig_v = XEN_FALSE;
-  Float freq = 440.0, phase = 0.0; 
+  Float freq, phase = 0.0; 
   /* 
    * if we followed the definition directly, the initial phase default would be M_PI_2 (pi/2) so that
    *   we drive the Tn's with a cosine.  But I've always used sine instead, so I think I'll leave
@@ -4231,7 +4257,9 @@ is the same in effect as " S_make_oscil
    *   where we started.  This also does not affect "signification".
    */
   Float *coeffs = NULL, *partials = NULL;
+
   mus_polynomial_t kind = MUS_CHEBYSHEV_FIRST_KIND;
+  freq = clm_default_frequency;
 
   keys[0] = kw_frequency;
   keys[1] = kw_initial_phase;
@@ -4331,7 +4359,7 @@ static XEN g_sine_summation(XEN obj, XEN fm)
 
 static XEN g_make_sine_summation(XEN arglist)
 {
-  #define H_make_sine_summation "(" S_make_sine_summation " (:frequency 440.0) (:initial-phase 0.0) (:n 1) (:a 0.5) (:ratio 1.0)): \
+  #define H_make_sine_summation "(" S_make_sine_summation " (:frequency clm-default-frequency) (:initial-phase 0.0) (:n 1) (:a 0.5) (:ratio 1.0)): \
 return a new sine summation synthesis generator."
 
   mus_any *ge;
@@ -4339,8 +4367,10 @@ return a new sine summation synthesis generator."
   XEN keys[5];
   int orig_arg[5] = {0, 0, 0, 0, 0};
   int vals, i, arglist_len;
-  Float freq = 440.0, phase = 0.0, a=.5, ratio = 1.0;
+  Float freq, phase = 0.0, a=.5, ratio = 1.0;
   int n = 1;
+
+  freq = clm_default_frequency;
 
   keys[0] = kw_frequency;
   keys[1] = kw_initial_phase;
@@ -6838,7 +6868,7 @@ static XEN g_ssb_am_p(XEN obj)
 
 static XEN g_make_ssb_am(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  #define H_make_ssb_am "(" S_make_ssb_am " (:frequency 440.0) (:order 40)): \
+  #define H_make_ssb_am "(" S_make_ssb_am " (:frequency clm-default-frequency) (:order 40)): \
 return a new " S_ssb_am " generator."
   #define MUS_MAX_SSB_ORDER 65536
 
@@ -6848,7 +6878,9 @@ return a new " S_ssb_am " generator."
   int orig_arg[2] = {0, 0};
   int vals;
   int order = 40;
-  Float freq = 440.0;
+  Float freq;
+
+  freq = clm_default_frequency;
 
   keys[0] = kw_frequency;
   keys[1] = kw_order;
@@ -7189,6 +7221,8 @@ XEN_NARGIFY_1(g_ssb_am_p_w, g_ssb_am_p)
 XEN_NARGIFY_4(g_ssb_bank_w, g_ssb_bank)
 XEN_NARGIFY_0(g_clm_table_size_w, g_clm_table_size)
 XEN_NARGIFY_1(g_set_clm_table_size_w, g_set_clm_table_size)
+XEN_NARGIFY_0(g_clm_default_frequency_w, g_clm_default_frequency)
+XEN_NARGIFY_1(g_set_clm_default_frequency_w, g_set_clm_default_frequency)
 XEN_NARGIFY_1(g_mus_generator_p_w, g_mus_generator_p)
 XEN_NARGIFY_1(g_mus_frandom_w, g_mus_frandom)
 XEN_NARGIFY_1(g_mus_irandom_w, g_mus_irandom)
@@ -7468,6 +7502,8 @@ XEN_NARGIFY_2(g_mus_equalp_w, equalp_mus_xen)
 #define g_ssb_bank_w g_ssb_bank
 #define g_clm_table_size_w g_clm_table_size
 #define g_set_clm_table_size_w g_set_clm_table_size
+#define g_clm_default_frequency_w g_clm_default_frequency
+#define g_set_clm_default_frequency_w g_set_clm_default_frequency
 #define g_mus_generator_p_w g_mus_generator_p
 #define g_mus_frandom_w g_mus_frandom
 #define g_mus_irandom_w g_mus_irandom
@@ -7571,6 +7607,8 @@ void mus_xen_init(void)
 				   S_setB S_mus_array_print_length, g_mus_set_array_print_length_w, 0, 0, 1, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_clm_table_size, g_clm_table_size_w, H_clm_table_size,
 				   S_setB S_clm_table_size, g_set_clm_table_size_w, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_clm_default_frequency, g_clm_default_frequency_w, H_clm_default_frequency,
+				   S_setB S_clm_default_frequency, g_set_clm_default_frequency_w, 0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE(S_radians_to_hz,        g_radians_to_hz_w,        1, 0, 0, H_radians_to_hz);
   XEN_DEFINE_PROCEDURE(S_hz_to_radians,        g_hz_to_radians_w,        1, 0, 0, H_hz_to_radians);

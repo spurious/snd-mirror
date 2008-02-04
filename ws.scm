@@ -187,6 +187,7 @@ returning you to the true top-level."
 (define *clm-player* #f) ; default is play-and-wait (takes index of newly created sound, not the sound's file name)
 (define *clm-notehook* #f)
 (define *clm-with-sound-depth* 0) ; for CM, not otherwise used
+(define *clm-default-frequency* 440.0)
 
 (define *to-snd* #t)
 
@@ -268,6 +269,7 @@ returning you to the true top-level."
        (set! *clm-verbose* verbose)
        (set! *clm-notehook* notehook)
        (set! (clm-table-size) *clm-table-size*)
+       (set! (clm-default-frequency) *clm-default-frequency*)
        (set! (mus-file-buffer-size) *clm-file-buffer-size*)
        (set! (locsig-type) *clm-locsig-type*)
        (set! (mus-array-print-length) *clm-array-print-length*)

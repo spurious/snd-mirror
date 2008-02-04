@@ -345,7 +345,7 @@ in the function definitions in this document to indicate that the arguments are
 keywords, but the keywords themselves are optional.
 Take the make-oscil call, defined as:</p>
 <pre>
-    make-oscil :optional-key (frequency 440.0) (initial-phase 0.0)
+    make-oscil :optional-key (frequency *clm-default-frequency*) (initial-phase 0.0)
 </pre>
 <p>This says that make-oscil has two optional arguments, frequency (in Hz), and
 initial-phase (in radians).  The keywords associated with these values are
@@ -559,7 +559,7 @@ you can use <a href="sndscm.html#def-clm-struct">def-clm-struct</a>.
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>oscil</h3></center></td></tr></table>
 <br>
 <pre>
-  <a class=def name="make-oscil">make-oscil</a> <a class=quiet href="#optional-key">:optional-key</a> (frequency 440.0) (initial-phase 0.0)
+  <a class=def name="make-oscil">make-oscil</a> <a class=quiet href="#optional-key">:optional-key</a> (frequency *clm-default-frequency*) (initial-phase 0.0)
   <a class=def name="oscil">oscil</a> os :optional (fm-input 0.0) (pm-input 0.0)
   <a class=def name="oscil?">oscil?</a> os
   <a class=def name="sine-bank">sine-bank</a> amps phases
@@ -971,11 +971,11 @@ envelope with <a href="sndclm.html#sum-of-cosines">sum-of-cosines</a> connection
 
 <pre>
   <a class=def name="make-table-lookup">make-table-lookup</a> <a class=quiet href="#optional-key">:optional-key</a> 
-        (frequency 440.0)   ; in Hz
-        (initial-phase 0.0) ; in radians 
-        wave                ; a vct
-        size                ; table size if wave not specified
-        type                ; interpolation type (mus-interp-linear)
+        (frequency *clm-default-frequency*) ; in Hz
+        (initial-phase 0.0)                 ; in radians 
+        wave                                ; a vct
+        (size *clm-table-size*)             ; table size if wave not specified
+        (type mus-interp-linear)            ; interpolation type
 
   <a class=def name="table-lookup">table-lookup</a> tl :optional (fm-input 0.0)
   <a class=def name="table-lookup?">table-lookup?</a> tl
@@ -1120,14 +1120,22 @@ See also <a href="sndscm.html#granidoc">grani</a> and <a href="sndscm.html#displ
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>waveshape</h3></center></td></tr></table>
 <br>
 <pre>
-  <a class=def name="make-waveshape">make-waveshape</a> <a class=quiet href="#optional-key">:optional-key</a> (frequency 440.0) (partials '(1 1)) wave size
+  <a class=def name="make-waveshape">make-waveshape</a> <a class=quiet href="#optional-key">:optional-key</a> 
+         (frequency *clm-default-frequency*) 
+         (partials '(1 1)) 
+         wave 
+         (size *clm-table-size*)
+
   <a class=def name="waveshape">waveshape</a> w :optional (index 1.0) (fm 0.0)
   <a class=def name="waveshape?">waveshape?</a> w
 
   <a class=def name="make-polyshape">make-polyshape</a> <a class=quiet href="#optional-key">:optional-key</a> 
-     (frequency 440.0) (initial-phase 0.0) coeffs 
-     (partials '(1 1)) 
-     (kind mus-chebyshev-first-kind)
+        (frequency *clm-default-frequency*) 
+        (initial-phase 0.0) 
+        coeffs 
+        (partials '(1 1)) 
+        (kind mus-chebyshev-first-kind)
+
   <a class=def name="polyshape">polyshape</a> w :optional (index 1.0) (fm 0.0)
   <a class=def name="polyshape?">polyshape?</a> w
 
@@ -1278,7 +1286,7 @@ technique.  Here is a simplified example:
 </p>
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(def-optkey-fun (make-band-limited-triangle-wave (frequency 440.0) (order 1))
+(def-optkey-fun (make-band-limited-triangle-wave (frequency *clm-default-frequency*) (order 1))
   (let ((freqs '()))
     (do ((i 1 (1+ i))
 	 (j 1 (+ j 2)))
@@ -1674,19 +1682,23 @@ remove the waveshape generator.
 <table width="70%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>sawtooth-wave, triangle-wave, pulse-train, square-wave</h3></center></td></tr></table>
 <br>
 <pre>
-  <a class=def name="make-triangle-wave">make-triangle-wave</a> <a class=quiet href="#optional-key">:optional-key</a> (frequency 440.0) (amplitude 1.0) (initial-phase pi)
+  <a class=def name="make-triangle-wave">make-triangle-wave</a> <a class=quiet href="#optional-key">:optional-key</a> 
+        (frequency *clm-default-frequency*) (amplitude 1.0) (initial-phase pi)
   <a class=def name="triangle-wave">triangle-wave</a> s :optional (fm 0.0)
   <a class=def name="triangle-wave?">triangle-wave?</a> s
 
-  <a class=def name="make-square-wave">make-square-wave</a> <a class=quiet href="#optional-key">:optional-key</a> (frequency 440.0) (amplitude 1.0) (initial-phase 0)
+  <a class=def name="make-square-wave">make-square-wave</a> <a class=quiet href="#optional-key">:optional-key</a> 
+        (frequency *clm-default-frequency*) (amplitude 1.0) (initial-phase 0)
   <a class=def name="square-wave">square-wave</a> s :optional (fm  0.0)
   <a class=def name="square-wave?">square-wave?</a> s
 
-  <a class=def name="make-sawtooth-wave">make-sawtooth-wave</a> <a class=quiet href="#optional-key">:optional-key</a> (frequency 440.0) (amplitude 1.0) (initial-phase pi)
+  <a class=def name="make-sawtooth-wave">make-sawtooth-wave</a> <a class=quiet href="#optional-key">:optional-key</a> 
+        (frequency *clm-default-frequency*) (amplitude 1.0) (initial-phase pi)
   <a class=def name="sawtooth-wave">sawtooth-wave</a> s :optional (fm 0.0)
   <a class=def name="sawtooth-wave?">sawtooth-wave?</a> s
 
-  <a class=def name="make-pulse-train">make-pulse-train</a> <a class=quiet href="#optional-key">:optional-key</a> (frequency 440.0) (amplitude 1.0) (initial-phase (* 2 pi))
+  <a class=def name="make-pulse-train">make-pulse-train</a> <a class=quiet href="#optional-key">:optional-key</a> 
+        (frequency *clm-default-frequency*) (amplitude 1.0) (initial-phase (* 2 pi))
   <a class=def name="pulse-train">pulse-train</a> s :optional (fm 0.0)
   <a class=def name="pulse-train?">pulse-train?</a> s
 </pre>
@@ -1868,7 +1880,8 @@ band-limited-triangle-wave above (waveshaping), and band-limited pulse-train via
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>sum-of-cosines</h3></center></td></tr></table>
 <br>
 <pre>
-  <a class=def name="make-sum-of-cosines">make-sum-of-cosines</a> <a class=quiet href="#optional-key">:optional-key</a> (cosines 1) (frequency 440.0) (initial-phase 0.0)
+  <a class=def name="make-sum-of-cosines">make-sum-of-cosines</a> <a class=quiet href="#optional-key">:optional-key</a> 
+        (cosines 1) (frequency *clm-default-frequency*) (initial-phase 0.0)
   <a class=def name="sum-of-cosines">sum-of-cosines</a> cs :optional (fm 0.0)
   <a class=def name="sum-of-cosines?">sum-of-cosines?</a> cs
 </pre>
@@ -1932,7 +1945,7 @@ see also <a href="#othergenerators">generators.scm</a>
 </p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
-<pre>(define* (make-sinc-train :optional (frequency 440.0) (width #f))
+<pre>(define* (make-sinc-train :optional (frequency *clm-default-frequency*) (width #f))
   (let ((range (or width (* pi (- (* 2 (inexact-&gt;exact (floor (/ (<a class=quiet href="#mussrate">mus-srate</a>) (* 2.2 frequency))))) 1)))))
     ;; 2.2 leaves a bit of space before srate/2, (* 3 pi) is the minimum width, normally
     (list (- (* range 0.5))
@@ -2019,7 +2032,8 @@ kosine95
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>sine-summation</h3></center></td></tr></table>
 <br>
 <pre>
-  <a class=def name="make-sine-summation">make-sine-summation</a> <a class=quiet href="#optional-key">:optional-key</a> (frequency 440.0) (initial-phase 0.0) (n 1) (a .5) (ratio 1.0)
+  <a class=def name="make-sine-summation">make-sine-summation</a> <a class=quiet href="#optional-key">:optional-key</a> 
+        (frequency *clm-default-frequency*) (initial-phase 0.0) (n 1) (a .5) (ratio 1.0)
   <a class=def name="sine-summation">sine-summation</a> s :optional (fm 0.0)
   <a class=def name="sine-summation?">sine-summation?</a> s
 </pre>
@@ -2168,7 +2182,8 @@ but I can't think of a good replacement ("1sin"? "sine"?).
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>sum-of-sines</h3></center></td></tr></table>
 <br>
 <pre>
-  <a class=def name="make-sum-of-sines">make-sum-of-sines</a> <a class=quiet href="#optional-key">:optional-key</a> (sines 1) (frequency 440.0) (initial-phase 0.0)
+  <a class=def name="make-sum-of-sines">make-sum-of-sines</a> <a class=quiet href="#optional-key">:optional-key</a> 
+        (sines 1) (frequency *clm-default-frequency*) (initial-phase 0.0)
   <a class=def name="sum-of-sines">sum-of-sines</a> cs :optional (fm 0.0)
   <a class=def name="sum-of-sines?">sum-of-sines?</a> cs
 </pre>
@@ -2594,7 +2609,7 @@ reflection, please send it to me, and I'll add it to this collection.
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>ssb-am</h3></center></td></tr></table>
 <br>
 <pre>
-  <a class=def name="make-ssb-am">make-ssb-am</a> <a class=quiet href="#optional-key">:optional-key</a> (frequency 440.0) (order 40)
+  <a class=def name="make-ssb-am">make-ssb-am</a> <a class=quiet href="#optional-key">:optional-key</a> (frequency *clm-default-frequency*) (order 40)
   <a class=def name="ssb-am">ssb-am</a> gen :optional (insig 0.0) (fm 0.0)
   <a class=def name="ssb-am?">ssb-am?</a> gen
 </pre>
@@ -2774,7 +2789,13 @@ And the fourth used the ssb-am-bank function in dsp.scm rewritten here for with-
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>wave-train</h3></center></td></tr></table>
 
 <pre>
-  <a class=def name="make-wave-train">make-wave-train</a> <a class=quiet href="#optional-key">:optional-key</a> (frequency 440.0) (initial-phase 0.0) wave size type
+  <a class=def name="make-wave-train">make-wave-train</a> <a class=quiet href="#optional-key">:optional-key</a> 
+        (frequency *clm-default-frequency*) 
+        (initial-phase 0.0) 
+        wave 
+        (size *clm-table-size*) 
+        (type mus-interp-linear)
+
   <a class=def name="wave-train">wave-train</a> w :optional (fm 0.0)
   <a class=def name="wave-train?">wave-train?</a> w
 </pre>
@@ -2916,18 +2937,20 @@ using the same frequency envelope as the wave-train, so we have some idea when t
 
 <pre>
   <a class=def name="make-rand">make-rand</a> <a class=quiet href="#optional-key">:optional-key</a> 
-        (frequency 440.0)          ; frequency at which new random numbers occur
-        (amplitude 1.0)            ; numbers are between -amplitude and amplitude
-        (envelope '(-1 1 1 1))     ; distribution envelope (uniform distribution is the default)
-        distribution               ; pre-computed distribution
+        (frequency *clm-default-frequency*) ; frequency at which new random numbers occur
+        (amplitude 1.0)                     ; numbers are between -amplitude and amplitude
+        (envelope '(-1 1 1 1))              ; distribution envelope (uniform distribution is the default)
+        distribution                        ; pre-computed distribution
+
   <a class=def name="rand">rand</a> r :optional (sweep 0.0)
   <a class=def name="rand?">rand?</a> r
 
   <a class=def name="make-rand-interp">make-rand-interp</a> <a class=quiet href="#optional-key">:optional-key</a> 
-        (frequency 440.0) 
+        (frequency *clm-default-frequency*) 
         (amplitude 1.0)
         (envelope '(-1 1 1 1)
         distribution)
+
   <a class=def name="rand-interp">rand-interp</a> r :optional (sweep 0.0)
   <a class=def name="rand-interp?">rand-interp?</a> r
 
@@ -3962,10 +3985,13 @@ in the feedback loop:
 
 <pre>
   <a class=def name="make-all-pass">make-all-pass</a> <a class=quiet href="#optional-key">:optional-key</a> 
-        (feedback 0.0) (feedforward 0.0)
+        (feedback 0.0) 
+        (feedforward 0.0)
         size 
-        initial-contents (initial-element 0.0) 
+        initial-contents 
+        (initial-element 0.0) 
         max-size
+
   <a class=def name="all-pass">all-pass</a> f input :optional (pm 0.0)
   <a class=def name="all-pass?">all-pass?</a> f
 </pre>
@@ -4243,6 +4269,7 @@ but convolve uses an FFT internally, rather than a laborious dot-product.
         (jitter 1.0)      ; affects spacing of successive grains
         max-size          ; internal buffer size
         edit              ; grain editing function
+
   <a class=def name="granulate">granulate</a> e :optional input-function edit-function
   <a class=def name="granulate?">granulate?</a> e
 </pre>
@@ -4456,7 +4483,8 @@ generator).
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>asymmetric-fm</h3></center></td></tr></table>
 
 <pre>
-  <a class=def name="make-asymmetric-fm">make-asymmetric-fm</a> <a class=quiet href="#optional-key">:optional-key</a> (frequency 440.0) (initial-phase 0.0) (r 1.0) (ratio 1.0)
+  <a class=def name="make-asymmetric-fm">make-asymmetric-fm</a> <a class=quiet href="#optional-key">:optional-key</a> 
+        (frequency *clm-default-frequency*) (initial-phase 0.0) (r 1.0) (ratio 1.0)
   <a class=def name="asymmetric-fm">asymmetric-fm</a> af index :optional (fm 0.0)
   <a class=def name="asymmetric-fm?">asymmetric-fm?</a> af
 </pre>

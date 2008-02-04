@@ -16,8 +16,10 @@ typedef struct mus_xen {
 
 #define XEN_TO_MUS_XEN(arg) ((mus_xen *)XEN_OBJECT_REF(arg))
 #define XEN_TO_MUS_ANY(obj) ((mus_any *)((XEN_TO_MUS_XEN(obj))->gen))
-#define MUS_DEFAULT_CLM_TABLE_SIZE 512
-int clm_table_size_c(void);
+#define MUS_CLM_DEFAULT_TABLE_SIZE 512
+#define MUS_CLM_DEFAULT_FREQUENCY 440.0
+int clm_default_table_size_c(void);
+double clm_default_frequency_c(void);
 
 bool mus_xen_p(XEN obj);
 void mus_xen_init(void);
