@@ -1,27 +1,40 @@
-Snd 9.6:
+Snd 9.7:
 
-Many more Ruby improvements thanks to Mike.
+added Kjetil's article, sndrt_lac2008.pdf
 
-Fernando fixed a help-system bug.
+added SNDLIB_JACK_DONT_AUTOCONNECT and SNDLIB_NUM_JACK_CHANNELS thanks to Kjetil
 
-5 more generators in generators.scm.
+Forth improvements thanks to Mike
 
-102 more calls in animals.scm -- (calling-all-animals) plays them all.
+OSS v4 (audio.c) changes thanks to Yair K.
 
-"Open recent" item in File menu.
+oldmacdonald.lisp (CL/CLM) thanks to William Andrew Burnson
 
-completions dialog changed to be a drop-down list in the listener
-  (in Motif -- I haven't decided how to display it in Gtk).
+77 more animals in animals.scm
+  (Trumpeter swan, Whooping crane, and Sage sparrow are my favorites so far)
+  (I'd call these "musical aphorisms" except it sounds pompous -- working for
+  3 or 4 hours on a 1/4 second of sound is addictive -- you wonder how anyone
+  could have enough to say to fill 30 seconds).
 
-make-env can take a vct rather than a list for the breakpoint data
-  (to make it easier to use at run time).  Also, there are set!
-  methods for envelope scaler, offset, and duration.
+6 more generators in generators.scm
+  (including the cosine form of sine-summation)
 
-clear-selection and with-temporary-selection in extensions.scm.
+make-waveshape and make-polyshape partials argument can be a vct,
+  as can the partials argument to partials->*
 
-added fft-with-phases -- a normal FFT display but with colors to
-  try to show phase info (actually less useful than I hoped).
+make-table-lookup|wave-train-with-env (generators.scm)
 
-checked: Fedora 8, sbcl 1.0.11|2, clisp 2.43, gtk 2.12.2|3
+:dur arg to make-env is now :length (:end will eventually go away)
+  (other changes in CLM are in the works -- see the end of clm.c,
+  under "clm4" -- any comments or other ideas are always welcome)
 
-Thanks!: Fernando Lopez-Lezcano, Mike Scholz
+clm finally works in the sbcl x86-64 linux and mac ppc cases
+  (thanks to Rick and a bottle of aspirin)
+
+*clm-default-frequency* (0.0; the old default was 440.0)
+   (changing the default to 0.0 simplifies the use of the make-* functions)
+
+checked: gtk 2.12.5|7, cairo 1.4.14
+
+Thanks!: Rick Taube, Kjetil Matheussen, Mike Scholz, Yair K., 
+         Howard Gilbert, Jelena Zoran, William Andrew Burnson

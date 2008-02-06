@@ -10867,10 +10867,11 @@ void init_mus_module(void)
  *
  * CL/CLM:
  *   get rid of the sound-* funcs (use just mus-sound-*)
- *   get the in-lisp with-sound working again
+ *   make the in-lisp with-sound work again
  *
  *
  * done:
+ *   (9.7)
  *   :dur and :end -> :length in make-env
  *   *clm-default-frequency* = 0.0
  *   make-wave-train|table-lookup-with-env
