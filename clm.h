@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 47
-#define MUS_DATE "7-Jan-08"
+#define MUS_REVISION 48
+#define MUS_DATE "4-Feb-08"
 
 /*
+ * 4-Feb:      clm_default_frequency (clm2xen) and *clm-default-frequency* (ws.scm).
  * 7-Jan-08:   :dur replaced by :length in make-env.
  * --------
  * 19-Oct:     all *_0 *_1 *_2 names now use _fm|_pm|_unmodulated|_no_input.
@@ -269,7 +270,7 @@ typedef struct mus_any_class {
 typedef enum {MUS_INTERP_NONE, MUS_INTERP_LINEAR, MUS_INTERP_SINUSOIDAL, MUS_INTERP_ALL_PASS, 
 	      MUS_INTERP_LAGRANGE, MUS_INTERP_BEZIER, MUS_INTERP_HERMITE, MUS_NUM_INTERPS} mus_interp_t;
 
-#define MUS_INTERP_TYPE_OK(Interp) ((Interp) <= MUS_NUM_INTERPS)
+#define MUS_INTERP_TYPE_OK(Interp) (((Interp) >= MUS_INTERP_NONE) && ((Interp) < MUS_NUM_INTERPS))
 
 typedef enum {MUS_RECTANGULAR_WINDOW, MUS_HANN_WINDOW, MUS_WELCH_WINDOW, MUS_PARZEN_WINDOW, MUS_BARTLETT_WINDOW,
 	      MUS_HAMMING_WINDOW, MUS_BLACKMAN2_WINDOW, MUS_BLACKMAN3_WINDOW, MUS_BLACKMAN4_WINDOW,

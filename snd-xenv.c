@@ -28,6 +28,7 @@ static axis_info *gray_ap = NULL;
 static bool FIR_p = true;
 static bool old_clip_p = false;
 static bool ignore_button_release = false;
+static bool cancelling = true;
 
 
 static void fixup_axis_context(axis_context *ax, Widget w, GC gc)
@@ -156,8 +157,11 @@ void new_active_channel_alert(void)
 
 static void dismiss_enved_callback(Widget w, XtPointer context, XtPointer info) 
 {
-  if (ss->checking_explicitly)
-    ss->stopped_explicitly = true;
+  if (!cancelling)
+    {
+      if (ss->checking_explicitly)
+	ss->stopped_explicitly = true;
+    }
   else XtUnmanageChild(enved_dialog);
 }
 
@@ -183,6 +187,7 @@ static void apply_enved(void)
 	  set_sensitive(applyB, false);
 	  set_sensitive(apply2B, false);
 	  set_button_label(cancelB, _("Stop"));
+	  cancelling = false;
 	  check_for_event();
 	  switch (enved_target(ss))
 	    {
@@ -249,6 +254,7 @@ static void apply_enved(void)
 	  set_sensitive(applyB, true);
 	  set_sensitive(apply2B, true);
 	  set_button_label(cancelB, _("Go Away"));
+	  cancelling = true;
 	}
     }
 }
@@ -1506,6 +1512,7 @@ Widget create_envelope_editor(void)
       XtManageChild(enved_dialog); /* needed so that window is valid when resize callback is invoked */
       applyB = XmMessageBoxGetChild(enved_dialog, XmDIALOG_OK_BUTTON);
       cancelB = XmMessageBoxGetChild(enved_dialog, XmDIALOG_CANCEL_BUTTON);
+      cancelling = true;
 
       XtAddCallback(drawer, XmNresizeCallback, drawer_resize, NULL);
       XtAddCallback(drawer, XmNexposeCallback, drawer_resize, NULL);

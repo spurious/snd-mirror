@@ -19,7 +19,7 @@
 
 
 (definstrument (oscilator start duration)
-  (let ((osc (make-oscil))
+  (let ((osc (make-oscil 440.0))
 	(vol 4/6))
     (<rt-play> start duration
 	       (lambda ()

@@ -28,7 +28,7 @@
 			(string=? (car n) (file-name snd)))
 		      saved-peak-info))))))
     
-    (define (clean-string str)
+    (define (pk-clean-string str)
       ;; full file name should be unique, so I think we need only fix it up to look like a flat name
       (let* ((len (string-length str))
 	     (new-str (make-string len #\.)))
@@ -41,7 +41,7 @@
 		(string-set! new-str i c))))))
     
     (define (peak-env-info-file-name snd chn)	
-      (format #f "~~/peaks/~A-peaks-~D" (clean-string (file-name snd)) chn))
+      (format #f "~~/peaks/~A-peaks-~D" (pk-clean-string (file-name snd)) chn))
     
     (define (restore-peak-env-info-upon-open snd chn dur)
       ;; intended as an initial-graph-hook-function

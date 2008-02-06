@@ -7271,6 +7271,13 @@ static void ripple_mixes_1(chan_info *cp, off_t beg, off_t len, off_t change, Fl
 		  if (old_ms)
 		    {
 		      mix_state *new_ms;
+#if MUS_DEBUGGING
+		      if (old_ms->mix_id < low_id)
+			{
+			  fprintf(stderr, "ripple_mixes (snd-edits 7277): old_ms->mix_id (%d) < low_id (%d)?\n", old_ms->mix_id, low_id);
+			  abort();
+			}
+#endif
 		      new_ms = current_states[old_ms->mix_id - low_id];
 		      if (!new_ms)
 			{
@@ -7281,7 +7288,7 @@ static void ripple_mixes_1(chan_info *cp, off_t beg, off_t len, off_t change, Fl
 			  else
 			    {
 			      if (new_ms->mix_id > high_id)
-				fprintf(stderr, "copy_mix_state new mix id: %d, high: %d, old: %d\n",
+				fprintf(stderr, "ripple_mixes new mix id: %d, high: %d, old: %d\n",
 					new_ms->mix_id, high_id, old_ms->mix_id);
 			    }
 #endif

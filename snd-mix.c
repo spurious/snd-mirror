@@ -2758,7 +2758,7 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id, 
 	  else 
 	    name = S_mix_vct; 
 	  new_origin = mus_format("%.*s " OFF_TD " snd chn %s to -mix-%d", 
-				  strlen(edname) - strlen(name) - 1, edname, 
+				  (int)(strlen(edname) - strlen(name) - 1), edname, 
 				  bg, name, mix_infos_ctr); 
 	} 
       else new_origin = mus_format("vct( 0 ) " OFF_TD " snd chn %s to -mix-%d", bg, S_mix_vct, mix_infos_ctr); 

@@ -10817,12 +10817,10 @@ void init_mus_module(void)
  *    this could be "cosines" ("cosine-sum"?), sine case "sines", maybe xy cases: "ssb-cosines" "ssb-sines"
  *    if r is a list|vct, polyshape, if xy polyshape*cos
  *    would like to avoid run-time switch (on algorithm choice), yet still be optimizable
- *    and the resultant code would be opaque -- a long sequence of (sines...) -- use the variable name
+ *    in ssb case, how to say which side wins? does yfreq<0 work?
  *
  *   perhaps built-in: blackman rk!cos rxyk!cos nrcos rcos rxycos nxycos nrssb rk!ssb nrxysin|cos
  *   perhaps phaser = the phase+incr+fm+pm portion of nearly every generator
- *
- *   remove phase-vocoder as gen [move to the "functions" section]? (it has state, but is really more at the instrument level than generator)
  *
  *   can the def-clm-struct method/make lists be used with built-in gens?
  *
@@ -10858,17 +10856,14 @@ void init_mus_module(void)
  *   the simple filter args are inconsistent with other names
  *
  *   "fm" arg to formant -> set frequency so it's easier to have moving formants
- *      but it's a direct freq, not an increment -- see mus_formant_with_frequency below
+ *      but it's a direct freq, not an increment -- see mus_formant_with_frequency
  *
  *   optional interp-type for array-interp? rand-interp? (at least base arg for rand-interp, and exp interp for table-lookup) [interp for env?]
  *   TODO: shouldn't the table-lookup doc have dicussion of interp-type? [table-lookup ssb-am wave-train delay and friends]
  *            there's probably a JOS url for this
  *
- *   wave-train would be more useful if coupled with the env you want "trained" -- an env-wave-train (make-)gen
- *
  *   :base as list in env = if up use car else cdr as base? or if > 2, use next on each segment
  *
- *   default frequency should be 0.0
  *
  * CL/CLM:
  *   get rid of the sound-* funcs (use just mus-sound-*)
@@ -10877,7 +10872,8 @@ void init_mus_module(void)
  *
  * done:
  *   :dur and :end -> :length in make-env
- *   *clm-default-frequency*
+ *   *clm-default-frequency* = 0.0
+ *   make-wave-train|table-lookup-with-env
  */
 
 

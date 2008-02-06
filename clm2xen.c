@@ -397,7 +397,7 @@ static XEN g_clm_default_frequency(void) {return(C_TO_XEN_DOUBLE(clm_default_fre
 
 static XEN g_set_clm_default_frequency(XEN val) 
 {
-  #define H_clm_default_frequency "(" S_clm_default_frequency "): the default frequency for most generators (440.0)"
+  #define H_clm_default_frequency "(" S_clm_default_frequency "): the default frequency for most generators (0.0)"
   XEN_ASSERT_TYPE(XEN_DOUBLE_P(val), val, XEN_ONLY_ARG, S_setB S_clm_default_frequency, "a number");
   clm_default_frequency = XEN_TO_C_DOUBLE(val);
   return(val);

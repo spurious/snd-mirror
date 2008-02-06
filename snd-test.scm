@@ -37,7 +37,7 @@
 (define tests 1)
 (define keep-going #f)
 (define all-args #f)
-(define test-at-random 0)
+(define test-at-random 200)
 ;(show-ptree 1)
 
 (if (and (provided? 'snd-guile) (provided? 'snd-gauche)) (display ";both switches are on?"))
@@ -1034,7 +1034,7 @@
     (if (not (equal? (clm-table-size) 512)) 
 	(snd-display ";clm-table-size set def: ~A" (clm-table-size)))
     (set! (clm-default-frequency) (clm-default-frequency))
-    (if (fneq (clm-default-frequency) 440.0)
+    (if (fneq (clm-default-frequency) 0.0)
 	(snd-display ";clm-default-frequency set def: ~A" (clm-default-frequency)))
     (set! (with-verbose-cursor) (with-verbose-cursor))
     (if (not (equal? (with-verbose-cursor)  #f)) 
@@ -1159,7 +1159,7 @@
       'channel-style (channel-style) 1
       'clipping (clipping) #f 
       'clm-table-size (clm-table-size) 512
-      'clm-default-frequency (clm-default-frequency) 440.0
+      'clm-default-frequency (clm-default-frequency) 0.0
       'color-cutoff (color-cutoff) 0.003 
       'color-inverted (color-inverted) #t
       'color-scale (color-scale) 1.0 
@@ -2437,7 +2437,7 @@
 	(if (not (= size 2)) (snd-display ";oboe: mus-sound-datum-size ~D?" size))
 	(if (not (= bytes 2)) (snd-display ";oboe: sound-bytes ~D?" bytes))
 	(if (not (= sr 22050)) (snd-display ";oboe: mus-sound-srate ~D?" sr))
-	(if (and m1 (= clmtest 0)) (snd-display ";oboe: mus-sound-maxamp-exists before maxamp: ~A" m1))
+	(if (and (not m1) (= clmtest 0)) (snd-display ";oboe: mus-sound-maxamp-exists before maxamp: ~A" m1))
 	(if (not (mus-sound-maxamp-exists? "oboe.snd")) 
 	    (snd-display ";oboe: mus-sound-maxamp-exists after maxamp: ~A" (mus-sound-maxamp-exists? "oboe.snd")))
 	
@@ -29340,7 +29340,8 @@ EDITS: 2
 	    (snd-display ";add-to-main-menu non-thunk: ~A" tag)))
       (let ((tag (catch #t (lambda () (add-to-menu 3 "oops" (make-delay 12)))
 			(lambda args (car args)))))
-	(if (not (eq? tag 'bad-arity))
+	(if (and (not (eq? tag 'bad-arity))
+		 (not (eq? tag 'wrong-type-arg)))
 	    (snd-display ";add-to-menu non-thunk: ~A" tag)))
     
       (set! (cursor fd) 2000)
@@ -47461,7 +47462,7 @@ EDITS: 1
 	
 	(let ((v (make-vct 10))
 	      (gen1 (make-oscil 440))
-	      (gen2 (make-oscil)))
+	      (gen2 (make-oscil 440)))
 	  (vct-map! v (lambda () (+ (gen1) (gen2))))
 	  (if (not (vequal v (vct 0.000 0.250 0.496 0.735 0.962 1.173 1.367 1.538 1.686 1.807))) (snd-display ";gen+gen vct-map: ~A" v)))
 	
@@ -47473,7 +47474,7 @@ EDITS: 1
 	
 	(let ((v (make-vct 10))
 	      (gen1 (make-oscil 440))
-	      (gen2 (make-oscil))
+	      (gen2 (make-oscil 440))
 	      (gen3 (make-oscil 440 :initial-phase 0.0)))
 	  (vct-map! v (lambda () (+ (gen1) (gen2) (gen3))))
 	  (if (not (vequal v (vct 0.000 0.375 0.744 1.102 1.442 1.760 2.050 2.308 2.529 2.711))) (snd-display ";gen+gen+gen vct-map: ~A" v)))
@@ -48938,7 +48939,7 @@ EDITS: 1
 		(let ((val (run (lambda () (format #f "~A ~A" (string-append "a" "b") (number? "c"))))))
 		  (if (not (string=? val "ab #f")) (snd-display ";run format ab #f l: ~A" val)))
 		(let ((val (run (lambda () (format #f "~A ~A" (make-sound-data 1 1) (make-oscil))))))
-		  (if (not (string=? val "#<sound-data[chans=1, length=1]:\n    (0.000)> #<oscil freq: 440.000Hz, phase: 0.000>"))
+		  (if (not (string=? val "#<sound-data[chans=1, length=1]:\n    (0.000)> #<oscil freq: 0.000Hz, phase: 0.000>"))
 		      (snd-display ";run format sd osc: ~A" val)))
 		(let ((val (run (lambda () (format #f "~A ~A" (+ 1 2) (* 3 4))))))
 		  (if (not (string=? val "3 12")) (snd-display ";run format 3 12 l: ~A" val)))
@@ -49001,13 +49002,13 @@ EDITS: 1
 		    (snd-display ";run format sound-data 2: ~A" val)))
 	      
 	      (let ((val (run-eval '(format #f "~A" (make-oscil)))))
-		(if (not (string=? val "#<oscil freq: 440.000Hz, phase: 0.000>"))
+		(if (not (string=? val "#<oscil freq: 0.000Hz, phase: 0.000>"))
 		    (snd-display ";run format gen 0: ~A" val)))
 	      (let ((val (run (lambda () (format #f "~A" unique-generator)))))
-		(if (not (string=? val "#<oscil freq: 440.000Hz, phase: 0.125>"))
+		(if (not (string=? val "#<oscil freq: 0.000Hz, phase: 0.000>"))
 		    (snd-display ";run format gen phase 1: ~A" val)))
 	      (let ((val (run-eval '(format #f "~A" unique-generator))))
-		(if (not (string=? val "#<oscil freq: 440.000Hz, phase: 0.125>"))
+		(if (not (string=? val "#<oscil freq: 0.000Hz, phase: 0.000>"))
 		    (snd-display ";run format gen phase 2: ~A" val)))
 	      
 	      (let ((make-procs (list
@@ -53650,18 +53651,6 @@ EDITS: 1
 	   (axis-y1 (list-ref axis 3)))
       (inexact->exact (floor (- axis-y0 (* y (- axis-y0 axis-y1)))))))
   
-  (define (clean-string str)
-    ;; full file name should be unique, so I think we need only fix it up to look like a flat name
-    (let* ((len (string-length str))
-	   (new-str (make-string len #\.)))
-      (do ((i 0 (1+ i)))
-	  ((= i len) new-str)
-	(let ((c (string-ref str i)))
-	  (if (or (char=? c #\\)
-		  (char=? c #\/))
-	      (string-set! new-str i #\_)
-	      (string-set! new-str i c))))))
-  
   (define* (widget-string widget text :optional (cleared #t))
     (define (shifted? ch)
       (if (or (and (char>=? ch #\A) (char<=? ch #\Z))
@@ -57041,6 +57030,18 @@ EDITS: 1
 	  (make-color-with-catch (/ (.red col) 65535.0)
 				 (/ (.green col) 65535.0)
 				 (/ (.blue col) 65535.0)))))
+
+  (define (snd-test-clean-string str)
+    ;; full file name should be unique, so I think we need only fix it up to look like a flat name
+    (let* ((len (string-length str))
+	   (new-str (make-string len #\.)))
+      (do ((i 0 (1+ i)))
+	  ((= i len) new-str)
+	(let ((c (string-ref str i)))
+	  (if (or (char=? c #\\)
+		  (char=? c #\/))
+	      (string-set! new-str i #\_)
+	      (string-set! new-str i c))))))
   
   (define (tagged-p val sym)  (or (eq? val #f) (and (list? val) (not (null? val)) (eq? (car val) sym))))
   (define (array-p val type)  (and (list? val) (or (null? val) (type (car val)))))
@@ -60387,7 +60388,7 @@ EDITS: 1
 					       (if (char=? (string-ref filename i) #\/)
 						   (return (my-substring filename (+ i 1))))))))
 					(format #f "~~/peaks/~A-peaks-~D" 
-						(clean-string (mus-expand-filename file))
+						(snd-test-clean-string (mus-expand-filename file))
 						chn))
 				      (list "oboe.snd" "pistol.snd" "cardinal.snd" "storm.snd")
 				      '())))

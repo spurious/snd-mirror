@@ -80,8 +80,8 @@
   "(screen-depth) returns the current screen depth"
   (DefaultDepthOfScreen (current-screen)))
 
-(define (clean-string str)
-  "(clean-string str) changes slash to underbar in the filename 'str' (for the peak env file)"
+(define (xm-clean-string str)
+  "(xm-clean-string str) changes slash to underbar in the filename 'str' (for the peak env file)"
   ;; full file name should be unique, so I think we need only fix it up to look like a flat name
   (let* ((len (string-length str))
 	 (new-str (make-string len #\.)))
@@ -1604,7 +1604,7 @@ Reverb-feedback sets the scaler on the feedback.
      (open-sound file))
    (lambda (file chn)
      (format #f "~~/peaks/~A-peaks-~D"                              
-	     (clean-string (mus-expand-filename file))
+	     (xm-clean-string (mus-expand-filename file))
 	     chn))
    (sound-files-in-directory dir)
    '()))
