@@ -250,7 +250,7 @@ static void sy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
   /* see note above -- context may be garbage!! -- this is a huge bug in gtk */
   chan_info *cp;
   cp = (chan_info *)get_user_data(G_OBJECT(adj));
-  if (cp->active)
+  if (cp->active == CHANNEL_HAS_AXES)
     sy_changed(1.0 - adj->value, cp);
 }
 
@@ -259,7 +259,7 @@ static void sx_valuechanged_callback(GtkAdjustment *adj, gpointer context)
 {
   chan_info *cp;
   cp = (chan_info *)get_user_data(G_OBJECT(adj));
-  if (cp->active)
+  if (cp->active == CHANNEL_HAS_AXES)
     sx_changed(adj->value, cp);
 }
 
@@ -268,7 +268,7 @@ static void zy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
 {
   chan_info *cp;
   cp = (chan_info *)get_user_data(G_OBJECT(adj));
-  if (cp->active)
+  if (cp->active == CHANNEL_HAS_AXES)
     zy_changed(1.0 - adj->value, cp);
 }
 
@@ -277,7 +277,7 @@ static void zx_valuechanged_callback(GtkAdjustment *adj, gpointer context)
 {
   chan_info *cp;
   cp = (chan_info *)get_user_data(G_OBJECT(adj));
-  if (cp->active)
+  if (cp->active == CHANNEL_HAS_AXES)
     zx_changed(adj->value, cp);
 }
 
@@ -287,7 +287,7 @@ static void gzy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
   chan_info *cp;
   cp = (chan_info *)get_user_data(G_OBJECT(adj));
   cp->gzy = adj->value;
-  if (cp->active)
+  if (cp->active == CHANNEL_HAS_AXES)
     {
       GTK_ADJUSTMENT(gsy_adj(cp))->page_size = 1.0 - adj->value; 
       if (cp->gsy > cp->gzy)
@@ -306,7 +306,7 @@ static void gsy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
   chan_info *cp;
   cp = (chan_info *)get_user_data(G_OBJECT(adj));
   cp->gsy = adj->value;
-  if (cp->active)
+  if (cp->active == CHANNEL_HAS_AXES)
     for_each_sound_chan(cp->sound, update_graph_or_warn);
 }
 
@@ -353,7 +353,7 @@ static gboolean channel_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpoint
   chan_info *cp;
   snd_info *sp;
   cp = (chan_info *)data;
-  if ((cp == NULL) || (!(cp->active)) || (cp->sound == NULL)) return(false);
+  if ((cp == NULL) || (cp->active < CHANNEL_HAS_AXES) || (cp->sound == NULL)) return(false);
   if ((ev->area.height < MIN_REGRAPH_Y) || 
       (ev->area.width < MIN_REGRAPH_X)) 
     return(false);
@@ -441,7 +441,7 @@ static void remake_edit_history(chan_info *cp)
   snd_info *sp;
   int i, eds;
   slist *lst;
-  if ((!cp) || (!(cp->cgx)) || (!(cp->active))) return;
+  if ((!cp) || (!(cp->cgx)) || (cp->active < CHANNEL_HAS_AXES)) return;
   if (cp->squelch_update) return;
   lst = EDIT_HISTORY_LIST(cp);
   if (!lst) return;

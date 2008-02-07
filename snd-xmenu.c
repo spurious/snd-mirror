@@ -199,6 +199,7 @@ static void view_files_item_callback(Widget w, XtPointer context, XtPointer info
 static void view_files_callback(Widget w, XtPointer info, XtPointer context) 
 {
   int size;
+
   size = view_files_dialog_list_length();
   if (size == 0)
     {
@@ -208,6 +209,10 @@ static void view_files_callback(Widget w, XtPointer info, XtPointer context)
     {
       int i;
       char **view_files_names;
+
+      if ((XmIsPushButton(view_files_menu)) && /* autotest check */
+	  (!view_files_cascade_menu))
+	return;
 
       view_files_names = view_files_dialog_titles();
       view_files_names[size++] = copy_string(_("new viewer"));

@@ -6105,7 +6105,7 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
   int len, i;
   off_t curlen;
   snd_data *first_snd = NULL;
-  if (!(cp->active)) return(NULL);
+  if (cp->active < CHANNEL_HAS_EDIT_LIST) return(NULL);
   if ((edit_position < 0) || (edit_position >= cp->edit_size)) return(NULL); /* was ">" not ">=": 6-Jan-05 */
   ed = cp->edits[edit_position];
   if (!ed) return(NULL);
@@ -6241,7 +6241,7 @@ Float chn_sample(off_t samp, chan_info *cp, int pos)
   Float val = 0.0;
 
   /* pos is assumed to be right here, not AT_CURRENT_EDIT_POSITION for example */
-  if ((!(cp->active)) || 
+  if ((cp->active < CHANNEL_HAS_EDIT_LIST) || 
       (samp < 0) || 
       (pos < 0) || 
       (pos >= cp->edit_size) || 
@@ -6272,7 +6272,8 @@ static void previous_sound_1(snd_fd *sf)
 {
   off_t ind0, ind1, indx;
   bool at_start;
-  if ((sf->cp) && (!(sf->cp->active)))
+  if ((sf->cp) && 
+      (sf->cp->active < CHANNEL_HAS_EDIT_LIST))
     {
       reader_out_of_data(sf);
       return;
@@ -6363,7 +6364,8 @@ static void next_sound_1(snd_fd *sf)
   off_t ind0, ind1, indx;
   bool at_end = false;
 
-  if ((sf->cp) && (!(sf->cp->active)))
+  if ((sf->cp) && 
+      (sf->cp->active < CHANNEL_HAS_EDIT_LIST))
     {
       reader_out_of_data(sf);
       return;
@@ -7723,7 +7725,7 @@ char *sample_reader_to_string(snd_fd *fd)
 	name = ((fd->local_sp)->hdr)->name;
       else
 	{
-	  if ((cp) && (cp->sound) && (cp->active) && (!(fd->at_eof)))
+	  if ((cp) && (cp->sound) && (cp->active >= CHANNEL_HAS_EDIT_LIST) && (!(fd->at_eof)))
 	    {
 	      if (fd->type == SAMPLE_READER)
 		{
@@ -7815,8 +7817,10 @@ static void list_reader(snd_fd *fd)
 static void unlist_reader(snd_fd *fd)
 {
   if ((fd) && 
-      (fd->cp) && (fd->cp->active) &&
-      (fd->current_state) && (fd->current_state->readers))
+      (fd->cp) && 
+      (fd->cp->active >= CHANNEL_HAS_EDIT_LIST) &&
+      (fd->current_state) && 
+      (fd->current_state->readers))
     {
       int i;
       ed_list *ed;
@@ -7887,7 +7891,9 @@ static XEN g_sample_reader_position(XEN obj)
       snd_fd *fd = NULL;
       fd = TO_SAMPLE_READER(obj);
       if (fd->at_eof) return(XEN_ZERO); /* -1? frames? */
-      if ((fd->cp) && (fd->cp->active) && (fd->cp->sound))
+      if ((fd->cp) && 
+	  (fd->cp->active >= CHANNEL_HAS_EDIT_LIST) && 
+	  (fd->cp->sound))
 	{
 	  if (fd->type == SAMPLE_READER)
 	    return(C_TO_XEN_OFF_T(current_location(fd)));
@@ -7909,7 +7915,9 @@ if 'obj' is a mix-sample-reader, the id of underlying mix"
     {
       snd_fd *fd = NULL;
       fd = TO_SAMPLE_READER(obj);
-      if ((fd->cp) && (fd->cp->active) && (fd->cp->sound))
+      if ((fd->cp) && 
+	  (fd->cp->active >= CHANNEL_HAS_EDIT_LIST) && 
+	  (fd->cp->sound))
 	{
 	  if (fd->type == SAMPLE_READER)
 	    return(XEN_LIST_2(C_TO_XEN_INT(fd->cp->sound->index),
@@ -8070,7 +8078,9 @@ static XEN g_copy_sample_reader(XEN obj)
     {
       snd_fd *fd = NULL;
       fd = TO_SAMPLE_READER(obj);
-      if ((fd->cp) && (fd->cp->active) && (fd->cp->sound))
+      if ((fd->cp) && 
+	  (fd->cp->active >= CHANNEL_HAS_EDIT_LIST) && 
+	  (fd->cp->sound))
 	{
 	  if (fd->type == SAMPLE_READER)
 	    return(g_make_sample_reader(C_TO_XEN_OFF_T(current_location(fd)),
@@ -8489,7 +8499,7 @@ Float channel_local_maxamp(chan_info *cp, off_t beg, off_t num, int edpos, off_t
 	  if (j > 1000000)
 	    {
 	      check_for_event();
-	      if ((ss->stopped_explicitly) || (!(cp->active)))
+	      if ((ss->stopped_explicitly) || (cp->active < CHANNEL_HAS_EDIT_LIST))
 		{
 		  ss->stopped_explicitly = false;
 		  string_to_minibuffer(cp->sound, _("maxamp check interrupted..."));

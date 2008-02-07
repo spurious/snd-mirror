@@ -31,7 +31,7 @@
 
 static mus_error_handler_t *mus_error_handler = NULL;
 
-mus_error_handler_t *mus_error_set_handler(mus_error_handler_t *new_error_handler) 
+mus_error_handler_t *mus_error_set_handler(mus_error_handler_t *new_error_handler)
 {
   mus_error_handler_t *old_handler;
   old_handler = mus_error_handler;
@@ -70,6 +70,7 @@ int mus_error(int error, const char *format, ...)
 #endif
       va_end(ap);
     }
+
   if (mus_error_handler)
     (*mus_error_handler)(error, mus_error_buffer);
   else 

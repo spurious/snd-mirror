@@ -545,7 +545,7 @@ static void update_graph_1(chan_info *cp, bool warn)
   snd_info *sp;
   axis_info *ap;
   if ((updating) || 
-      (!(cp->active)) ||
+      (cp->active != CHANNEL_HAS_AXES) ||
       (cp->cgx == NULL) || 
       (cp->sounds == NULL) || 
       (cp->sounds[cp->sound_ctr] == NULL)) 
@@ -626,6 +626,8 @@ void add_channel_data_1(chan_info *cp, int srate, off_t frames, channel_graph_t 
   cp->sound_size = INITIAL_EDIT_SIZE;
   cp->sound_ctr = 0;
   cp->sounds = (snd_data **)CALLOC(cp->sound_size, sizeof(snd_data *));
+
+  cp->active = CHANNEL_HAS_EDIT_LIST;
 
   x0 = 0.0;
   x1 = 0.1;
@@ -747,6 +749,8 @@ void add_channel_data_1(chan_info *cp, int srate, off_t frames, channel_graph_t 
   cp->axis = ap;
   if (graphed == WITH_GRAPH) 
     initialize_scrollbars(cp);
+
+  cp->active = CHANNEL_HAS_AXES;
 }
 
 
@@ -1540,7 +1544,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
 		  if (samps > 10000000)
 		    {
 		      check_for_event();
-		      if ((ap->changed) || (ss->stopped_explicitly) || (!(cp->active)))
+		      if ((ap->changed) || (ss->stopped_explicitly) || (cp->active < CHANNEL_HAS_EDIT_LIST))
 			{
 			  ss->stopped_explicitly = false;
 			  ap->changed = false;
@@ -2535,7 +2539,7 @@ static void make_sonogram(chan_info *cp)
 	  if (cp->printing)
 	    {
 	      check_for_event();
-	      if ((ss->stopped_explicitly) || (!(cp->active))) /* user closed file while trying to print */
+	      if ((ss->stopped_explicitly) || (cp->active < CHANNEL_HAS_EDIT_LIST)) /* user closed file while trying to print */
 		{
 		  ss->stopped_explicitly = false;
 		  string_to_minibuffer(cp->sound, _("stopped"));
@@ -3082,7 +3086,7 @@ static bool make_spectrogram(chan_info *cp)
 	  if (color_map(ss) == BLACK_AND_WHITE_COLORMAP)
 	    ps_draw_grf_points(fap, bins, 0.0, cp->transform_graph_style, cp->dot_size);
 	  check_for_event();
-	  if ((ss->stopped_explicitly) || (!(cp->active)))
+	  if ((ss->stopped_explicitly) || (cp->active < CHANNEL_HAS_EDIT_LIST))
 	    {
 	      ss->stopped_explicitly = false;
 	      string_to_minibuffer(sp, _("stopped"));
@@ -3809,7 +3813,7 @@ static void display_channel_data_1(chan_info *cp, bool just_fft, bool just_lisp,
   int width, height;
   sp = cp->sound;
   if ((sp->inuse == SOUND_IDLE) ||
-      (!(cp->active)) ||
+      (cp->active < CHANNEL_HAS_AXES) ||
       (!(sp->active)) ||
       (!(channel_graph_is_visible(cp))))
     return;
@@ -4629,7 +4633,7 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
   snd_info *sp;
 
   sp = cp->sound;
-  if ((!(cp->active)) || (sp == NULL)) return; /* autotest silliness */
+  if ((cp->active < CHANNEL_HAS_AXES) || (sp == NULL)) return; /* autotest silliness */
 
   /* if combining, figure out which virtual channel the mouse is in */
   if (sp->channel_style == CHANNELS_COMBINED) cp = which_channel(sp, y);
@@ -4696,7 +4700,7 @@ void graph_button_release_callback(chan_info *cp, int x, int y, int key_state, i
   snd_info *sp;
 
   sp = cp->sound;
-  if ((!(cp->active)) || (sp == NULL)) return; /* autotest silliness */
+  if ((cp->active < CHANNEL_HAS_AXES) || (sp == NULL)) return; /* autotest silliness */
 
   if (sp->channel_style == CHANNELS_COMBINED)
     {
@@ -4902,7 +4906,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
   if ((x == press_x) && (y == press_y)) return;
 #endif
   sp = cp->sound;
-  if ((!(cp->active)) || (sp == NULL)) return; /* autotest silliness */
+  if ((cp->active < CHANNEL_HAS_AXES) || (sp == NULL)) return; /* autotest silliness */
   if (sp->channel_style == CHANNELS_COMBINED) /* in united chans, dragging mark shouldn't change channel */
     {
       if (dragged_cp)
@@ -5062,7 +5066,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 void channel_resize(chan_info *cp)
 {
   snd_info *sp;
-  if ((cp == NULL) || (!(cp->active)) || (cp->sound == NULL)) return;
+  if ((cp == NULL) || (cp->active < CHANNEL_HAS_AXES) || (cp->sound == NULL)) return;
   sp = cp->sound;
   if (sp->channel_style != CHANNELS_SEPARATE)
     {
@@ -6443,7 +6447,7 @@ static void update_db_graph(chan_info *cp, Float new_db)
 {
   cp->min_dB = new_db;
   cp->lin_dB = pow(10.0, cp->min_dB * 0.05); 
-  if ((!(cp->active)) ||
+  if ((cp->active < CHANNEL_HAS_AXES) ||
       (cp->cgx == NULL) || 
       (cp->sounds == NULL) || 
       (cp->sounds[cp->sound_ctr] == NULL) ||

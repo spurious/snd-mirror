@@ -185,7 +185,7 @@ static bool execute_named_macro_1(chan_info *cp, const char *name, off_t count)
 		mc = nm->cmds[i];
 		if (mc->keysym != 0)
 		  {
-		    if ((!(cp->active)) || (!(cp->sound))) return(1);
+		    if ((cp->active < CHANNEL_HAS_EDIT_LIST) || (!(cp->sound))) return(1);
 		    /* it's possible for a command in the macro sequence to close cp */
 		    keyboard_command(cp, mc->keysym, mc->state);
 		  }
@@ -1412,7 +1412,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
   snd_info *sp;
   axis_info *ap;
   /* fprintf(stderr, "(%s %d%s) ", KEY_TO_NAME(keysym), unmasked_state, (extended_mode) ? " (c-x)" : ""); */
-  if ((!cp) || (!(cp->sound)) || (!(cp->active))) return;
+  if ((!cp) || (!(cp->sound)) || (cp->active < CHANNEL_HAS_EDIT_LIST)) return;
   sp = cp->sound;
   if ((!sp) || (sp->inuse != SOUND_NORMAL)) return;
   ap = cp->axis;
@@ -2127,7 +2127,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		  else
 		    {
 		      execute_last_macro(cp, (!got_ext_count) ? 1 : ext_count);
-		      if ((cp) && (cp->sound) && (cp->active)) handle_cursor(cp, cursor_decision(cp)); else return;
+		      if ((cp) && (cp->sound) && (cp->active >= CHANNEL_HAS_EDIT_LIST)) handle_cursor(cp, cursor_decision(cp)); else return;
 		    }
 		  break;
 

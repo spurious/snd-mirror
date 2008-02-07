@@ -39,7 +39,7 @@ void reflect_regions_in_region_browser(void)
       rsp->active = true;
       if (rsp->chans)
 	for (i = 0; i < rsp->nchans; i++)
-	  rsp->chans[i]->active = true;
+	  rsp->chans[i]->active = CHANNEL_HAS_AXES;
     }
 }
 
@@ -52,7 +52,7 @@ void reflect_no_regions_in_region_browser(void)
       rsp->active = false;
       if (rsp->chans)
 	for (i = 0; i < rsp->nchans; i++)
-	  rsp->chans[i]->active = false;
+	  rsp->chans[i]->active = CHANNEL_INACTIVE;
     }
 }
 

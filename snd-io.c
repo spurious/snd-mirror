@@ -394,17 +394,11 @@ static void close_temp_files(chan_info *cp, int *closed)
 	      (sd->io) && 
 	      (sd->open == FD_OPEN))
 	    {
-#if MUS_DEBUGGING
 	      int fd;
 	      fd = sd->io->fd;
 	      sd->open = FD_CLOSED;
 	      sd->io->fd = -1;
 	      mus_file_close(fd);
-#else
-	      mus_file_close(sd->io->fd);
-	      sd->open = FD_CLOSED;
-	      sd->io->fd = -1;
-#endif
 	      rtn++;
 	    }
 	}

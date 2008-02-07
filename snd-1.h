@@ -359,7 +359,8 @@ typedef struct chan_info {
   XEN after_edit_hook;
   XEN properties;
   int cursor_proc_loc, edit_hook_loc, undo_hook_loc, after_edit_hook_loc, properties_loc;
-  bool selection_visible, active;
+  bool selection_visible;
+  channel_state_t active;
   int old_x0, old_x1;
   Float *amp_control; /* local amp controls in snd-dac; should it be extended to other controls? */
   search_result_t last_search_result;

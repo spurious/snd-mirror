@@ -1008,7 +1008,7 @@ static void display_fft(fft_state *fs)
   int i, j, lo, hi;
 
   cp = fs->cp;
-  if ((cp == NULL) || (!(cp->active))) return;
+  if ((cp == NULL) || (cp->active < CHANNEL_HAS_AXES)) return;
 
   fp = cp->fft;
   if (fp == NULL) return; /* can happen if selection transform set, but no selection */
@@ -1659,6 +1659,7 @@ static sono_slice_t run_all_ffts(sonogram_state *sg)
   if (si->active_slices < si->total_slices) 
     si->begs[si->active_slices] = sg->beg + fs->beg;
   sg->msg_ctr--;
+
   if (sg->msg_ctr == 0)
     {
       progress_report(cp->sound, 
@@ -1668,8 +1669,11 @@ static sono_slice_t run_all_ffts(sonogram_state *sg)
 		      NOT_FROM_ENVED);
       sg->minibuffer_needs_to_be_cleared = true;
       sg->msg_ctr = 8;
-      if ((!(cp->graph_transform_p)) || !(cp->active)) return(SONO_QUIT);
+      if ((!(cp->graph_transform_p)) || 
+	  (cp->active < CHANNEL_HAS_AXES))
+	return(SONO_QUIT);
     }
+
   if (si->active_slices < si->total_slices)
     {
       if (cp->transform_type == FOURIER)
@@ -1713,7 +1717,7 @@ static void finish_sonogram(sonogram_state *sg)
     {
       chan_info *cp;
       cp = sg->cp;
-      if ((!(cp->active)) ||
+      if ((cp->active < CHANNEL_HAS_AXES) ||
 	  (!(cp->graph_transform_p)))
 	{
 	  if (sg->fs) 
@@ -1753,7 +1757,7 @@ idle_func_t sonogram_in_slices(void *sono)
   chan_info *cp;
   cp = sg->cp;
   cp->temp_sonogram = NULL;
-  if ((!(cp->active)) ||
+  if ((cp->active < CHANNEL_HAS_AXES) ||
       (!(cp->graph_transform_p)))
     {
       if ((sg) && (sg->fs)) sg->fs = free_fft_state(sg->fs);
@@ -2207,7 +2211,7 @@ static XEN g_delete_transform(XEN type)
 
 static void update_log_freq_fft_graph(chan_info *cp)
 {
-  if ((!(cp->active)) ||
+  if ((cp->active < CHANNEL_HAS_AXES) ||
       (cp->cgx == NULL) || 
       (cp->sounds == NULL) || 
       (cp->sounds[cp->sound_ctr] == NULL) ||

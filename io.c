@@ -520,6 +520,7 @@ int mus_file_open_descriptors(int tfd, const char *name, int format, int size /*
 #endif
       strcpy(fd->name, name);
     }
+  /* fprintf(stderr,"open %d %s\n", tfd, fd->name); */
   return(MUS_NO_ERROR);
 }
 
@@ -670,11 +671,13 @@ int mus_file_close(int fd)
   int close_result = 0;
   if ((io_fds == NULL) || (fd >= io_fd_size) || (fd < 0) || (io_fds[fd] == NULL)) return(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED);
   fdp = io_fds[fd];
+
 #if USE_SND
   CLOSE(fd, fdp->name);
 #else
   close_result = close(fd);
 #endif
+
   if (fdp->name) {FREE(fdp->name); fdp->name = NULL;}
   FREE(fdp);
   io_fds[fd] = NULL;

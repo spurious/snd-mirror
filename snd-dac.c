@@ -2791,7 +2791,7 @@ void clear_players(void)
       if (sp)
 	for (j = 0; j < sp->nchans; j++)
 	  if ((sp->chans[j] == NULL) ||
-	      (!(sp->chans[j]->active)) ||
+	      (sp->chans[j]->active < CHANNEL_HAS_EDIT_LIST) ||
 	      (sp->chans[j]->sound == NULL))
 	    {
 	      int k;

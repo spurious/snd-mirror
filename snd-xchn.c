@@ -314,7 +314,7 @@ static void sy_drag_callback(Widget w, XtPointer context, XtPointer info)
 {
   chan_info *cp = (chan_info *)(context);
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
-  if (cp->active)
+  if (cp->active == CHANNEL_HAS_AXES)
     sy_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
 }
 
@@ -323,7 +323,7 @@ static void sy_valuechanged_callback(Widget w, XtPointer context, XtPointer info
 {
   chan_info *cp = (chan_info *)(context);
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
-  if (cp->active)
+  if (cp->active == CHANNEL_HAS_AXES)
     sy_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
 }
 
@@ -332,7 +332,7 @@ static void sx_drag_callback(Widget w, XtPointer context, XtPointer info)
 {
   chan_info *cp = (chan_info *)(context);
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
-  if (cp->active)
+  if (cp->active == CHANNEL_HAS_AXES)
     sx_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
 }
 
@@ -341,7 +341,7 @@ static void sx_valuechanged_callback(Widget w, XtPointer context, XtPointer info
 {
   chan_info *cp = (chan_info *)(context);
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
-  if (cp->active)
+  if (cp->active == CHANNEL_HAS_AXES)
     sx_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
 }
 
@@ -351,7 +351,7 @@ static void sx_increment_callback(Widget w, XtPointer context, XtPointer info)
   /* problem here is that in large files these increments, if determined via scrollbar values, are huge */
   /* so, move ahead one windowfull on each tick */
   chan_info *cp = (chan_info *)(context);
-  if (cp->active)
+  if (cp->active == CHANNEL_HAS_AXES)
     sx_incremented(cp, 1.0);
 }
 
@@ -359,7 +359,7 @@ static void sx_increment_callback(Widget w, XtPointer context, XtPointer info)
 static void sx_decrement_callback(Widget w, XtPointer context, XtPointer info) 
 {
   chan_info *cp = (chan_info *)(context);
-  if (cp->active)
+  if (cp->active == CHANNEL_HAS_AXES)
     sx_incremented(cp, -1.0);
 }
 
@@ -368,7 +368,7 @@ static void zy_drag_callback(Widget w, XtPointer context, XtPointer info)
 {
   chan_info *cp = (chan_info *)(context);
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
-  if (cp->active)
+  if (cp->active == CHANNEL_HAS_AXES)
     zy_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
 }
 
@@ -377,7 +377,7 @@ static void zy_valuechanged_callback(Widget w, XtPointer context, XtPointer info
 {
   chan_info *cp = (chan_info *)(context);
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
-  if (cp->active)
+  if (cp->active == CHANNEL_HAS_AXES)
     zy_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
 }
 
@@ -386,7 +386,7 @@ static void zx_drag_callback(Widget w, XtPointer context, XtPointer info)
 {
   chan_info *cp = (chan_info *)(context);
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
-  if (cp->active)
+  if (cp->active == CHANNEL_HAS_AXES)
     zx_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
 }
 
@@ -402,7 +402,7 @@ static void gzy_drag_callback(Widget w, XtPointer context, XtPointer info)
 {
   chan_info *cp = (chan_info *)(context);
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
-  if (cp->active)
+  if (cp->active == CHANNEL_HAS_AXES)
     gzy_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
 }
 
@@ -411,7 +411,7 @@ static void gsy_drag_callback(Widget w, XtPointer context, XtPointer info)
 {
   chan_info *cp = (chan_info *)(context);
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
-  if (cp->active)
+  if (cp->active == CHANNEL_HAS_AXES)
     gsy_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
 }
 
@@ -420,7 +420,7 @@ static void gsy_valuechanged_callback(Widget w, XtPointer context, XtPointer inf
 {
   chan_info *cp = (chan_info *)(context);
   ASSERT_WIDGET_TYPE(XmIsScrollBar(w), w);
-  if (cp->active)
+  if (cp->active == CHANNEL_HAS_AXES)
     gsy_changed(((XmScrollBarCallbackStruct *)info)->value, cp);
 }
 
@@ -466,7 +466,7 @@ static void channel_expose_callback(Widget w, XtPointer context, XtPointer info)
   oclock_t curtime;
 
   ASSERT_WIDGET_TYPE(XmIsDrawingArea(w), w);
-  if ((cp == NULL) || (!(cp->active)) || (cp->sound == NULL)) return;
+  if ((cp == NULL) || (cp->active < CHANNEL_HAS_AXES) || (cp->sound == NULL)) return;
 
   ev = (XExposeEvent *)(cb->event);
 

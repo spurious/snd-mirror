@@ -22,6 +22,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
       cp->undo_hook_loc = NOT_A_GC_LOC;
       cp->properties = XEN_FALSE; /* will be a vector of 1 element if it's ever used */
       cp->properties_loc = NOT_A_GC_LOC;
+      cp->active = CHANNEL_INACTIVE;
     }
   else cp = cip;
   cp->tcgx = NULL;
@@ -110,7 +111,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
       FREE(cp->last_sonogram); 
       cp->last_sonogram = NULL;
     }
-  cp->active = true;
+  cp->active = CHANNEL_INITIALIZED;
   return(cp);
 }
 
@@ -118,7 +119,7 @@ chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound)
 static chan_info *free_chan_info(chan_info *cp)
 {
   /* this does not free the associated widgets -- they are merely unmanaged */
-  cp->active = false;
+  cp->active = CHANNEL_INACTIVE;
   /* need an indication right away that this channel is being deleted -- during free_snd_info (close-sound),
    *   an error may occur (an edit list temp file might have vanished for example), and normally Snd
    *   attempts to post an error message in the sound's minibuffer.  To force this out, we have to
@@ -460,6 +461,7 @@ snd_info *completely_free_snd_info(snd_info *sp)
 	      snd_unprotect_at(cp->properties_loc);
 	      cp->properties_loc = NOT_A_GC_LOC;
 	    }
+	  cp->active = CHANNEL_FREED;
 	  FREE(cp);
 	  /* it's possible to have dangling readers (snd_fd) with pointers to this channel (see note in snd-edits.c under unlist_reader) */
 	}
@@ -816,7 +818,8 @@ chan_info *any_selected_channel(snd_info *sp)
   int chan = 0;
   if (sp->selected_channel != NO_SELECTION) 
     chan = sp->selected_channel;
-  if ((sp->chans[chan]) && (sp->chans[chan]->active))
+  if ((sp->chans[chan]) && 
+      (sp->chans[chan]->active > CHANNEL_INITIALIZED))
     return(sp->chans[chan]);
   return(NULL);
 }

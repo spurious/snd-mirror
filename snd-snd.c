@@ -372,7 +372,8 @@ idle_func_t get_peak_env(any_pointer_t ptr)
   if ((!cp) || (!(cp->cgx))) return(BACKGROUND_QUIT);
   cgx = cp->cgx;
   pos = cp->edit_ctr;
-  if ((pos == -1) || (!(cp->active)))
+  if ((pos == -1) || 
+      (cp->active < CHANNEL_HAS_EDIT_LIST))
     {
       free_peak_env_state(cp);
       return(BACKGROUND_QUIT);
@@ -5122,8 +5123,18 @@ If 'filename' is a sound index (an integer), 'size' is interpreted as an edit-po
       env_state *es;
       XEN peak = XEN_FALSE;
       cp = sp->chans[chn];
-      cp->edit_ctr = 0;
-      cp->active = true;
+#if MUS_DEBUGGING
+      if (cp->active < CHANNEL_HAS_EDIT_LIST)
+	{
+	  fprintf(stderr, "channel after make_sound_readable has no edit list?");
+	  abort();
+	}
+      if (cp->edit_ctr != 0)
+	{
+	  fprintf(stderr, "channel after make_sound_readable has %d edits?", cp->edit_ctr);
+	  abort();
+	}
+#endif
       es = make_env_state(cp, cp->edits[0]->samples);
       if (es)
 	{
@@ -5145,7 +5156,7 @@ If 'filename' is a sound index (an integer), 'size' is interpreted as an edit-po
 	  FREE(es);
 	  peak = g_env_info_to_vcts(cp->edits[0]->peak_env, len);
 	}
-      cp->active = false;
+      cp->active = CHANNEL_INACTIVE;
       completely_free_snd_info(sp);
       return(xen_return_first(peak, peak_func));
     }

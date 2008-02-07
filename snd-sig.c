@@ -64,7 +64,7 @@ int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos
 					    C_TO_XEN_INT(cp->chan),
 					    caller),
 				 AT_CURRENT_EDIT_POSITION);
-      if (!(cp->active)) /* edpos proc clobbered channel somehow... */
+      if (cp->active < CHANNEL_HAS_EDIT_LIST) /* edpos proc clobbered channel somehow... */
 	XEN_ERROR(NO_SUCH_CHANNEL,
 		  XEN_LIST_3(C_TO_XEN_STRING(caller),
 			     C_TO_XEN_STRING("edpos arg (a function) clobbered the current sound!"),
@@ -731,7 +731,8 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur, 
 		{
 		  progress_report(sp0, S_swap_channels, 1, 1, (Float)((double)k / (double)dur), NOT_FROM_ENVED);
 		  if (ss->stopped_explicitly) break;
-		  if ((!(cp0->active)) || (!(cp1->active)))
+		  if ((cp0->active < CHANNEL_HAS_EDIT_LIST) || 
+		      (cp1->active < CHANNEL_HAS_EDIT_LIST))
 		    {
 		      ss->stopped_explicitly = true;
 		      break;
@@ -3640,7 +3641,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 	    ss->stopped_explicitly = false;
 	  else
 	    {
-	      if (!(cp->active))
+	      if (cp->active < CHANNEL_HAS_EDIT_LIST)
 		{
 		  snd_remove(filename, REMOVE_FROM_CACHE);
 		  FREE(filename);
@@ -3725,7 +3726,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 		}
 	    }
 	  sf = free_snd_fd(sf);
-	  if (!(cp->active))
+	  if (cp->active < CHANNEL_HAS_EDIT_LIST)
 	    {
 	     if (data) {FREE(data); data = NULL;} 
 	      XEN_ERROR(NO_SUCH_CHANNEL,

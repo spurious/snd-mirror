@@ -61,7 +61,6 @@
 
 static int local_error_type = MUS_NO_ERROR;
 static char *local_error_msg = NULL;
-static mus_error_handler_t *old_error_handler;
 
 static void local_mus_error(int type, char *msg)
 {
@@ -227,11 +226,6 @@ static bool local_arity_ok(XEN proc, int args) /* from snd-xen.c minus (inconven
 #if HAVE_RUBY
   rargs = XEN_TO_C_INT(arity);
   return(xen_rb_arity_ok(rargs, args));
-  /*
-  if ((rargs > args) ||
-      ((rargs < 0) && (-rargs > args)))
-    return(false);
-  */
 #endif
 
 #if HAVE_FORTH
@@ -259,6 +253,7 @@ static bool local_arity_ok(XEN proc, int args) /* from snd-xen.c minus (inconven
     if ((rargs + oargs) < args) return(false);
   }
 #endif
+
   return(true);
 }
 
@@ -278,7 +273,7 @@ XEN mus_optkey_to_procedure(XEN key, const char *caller, int n, XEN def, int req
   return(def);
 }
 
-/* mus_optkey_to_mus_any is below where MUS_XEN_P et al are defined */
+/* mus_optkey_to_mus_any and mus_optkey_to_input_procedure are below where MUS_XEN_P et al are defined */
 
 
 /* ---------------- clm keywords ---------------- */
@@ -1152,6 +1147,28 @@ mus_any *mus_optkey_to_mus_any(XEN key, const char *caller, int n, mus_any *def)
 }
 
 
+static XEN mus_optkey_to_input_procedure(XEN key, const char *caller, int n, XEN def, int required_args, const char *err)
+{
+  if ((!(XEN_KEYWORD_P(key))) && 
+      (!(XEN_FALSE_P(key))))
+    {
+      XEN_ASSERT_TYPE(XEN_PROCEDURE_P(key), key, n, caller, "a procedure");
+      if (!(local_arity_ok(key, required_args)))
+	XEN_BAD_ARITY_ERROR(caller, n, key, err);
+
+      if (MUS_VCT_P(key))
+	XEN_WRONG_TYPE_ARG_ERROR(caller, n, key, "an input procedure");
+
+      if ((MUS_XEN_P(key)) &&
+	  (!(mus_input_p(XEN_TO_MUS_ANY(key)))))
+	XEN_WRONG_TYPE_ARG_ERROR(caller, n, key, "an input generator");
+      return(key);
+    }
+  return(def);
+}
+
+
+
 /* ---------------- wrappers ---------------- */
 
 mus_xen *mus_any_to_mus_xen(mus_any *ge)
@@ -1903,17 +1920,21 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
       line = initial_contents->data;
     }
 
-  old_error_handler = mus_error_set_handler(local_mus_error);
-  switch (choice)
-    {
-    case G_DELAY:    ge = mus_make_delay(size, line, max_size, interp_type); break;
-    case G_MOVING_AVERAGE:  ge = mus_make_moving_average(size, line); break;
-    case G_COMB:     ge = mus_make_comb(scaler, size, line, max_size, interp_type); break;
-    case G_NOTCH:    ge = mus_make_notch(scaler, size, line, max_size, interp_type); break;
-    case G_ALL_PASS: ge = mus_make_all_pass(feedback, feedforward, size, line, max_size, interp_type); break;
-    case G_FCOMB:    ge = mus_make_filtered_comb(scaler, size, line, max_size, interp_type, filt); break;
-    }
-  mus_error_set_handler(old_error_handler);
+  {
+    mus_error_handler_t *old_error_handler;
+    old_error_handler = mus_error_set_handler(local_mus_error);
+    switch (choice)
+      {
+      case G_DELAY:    ge = mus_make_delay(size, line, max_size, interp_type); break;
+      case G_MOVING_AVERAGE:  ge = mus_make_moving_average(size, line); break;
+      case G_COMB:     ge = mus_make_comb(scaler, size, line, max_size, interp_type); break;
+      case G_NOTCH:    ge = mus_make_notch(scaler, size, line, max_size, interp_type); break;
+      case G_ALL_PASS: ge = mus_make_all_pass(feedback, feedforward, size, line, max_size, interp_type); break;
+      case G_FCOMB:    ge = mus_make_filtered_comb(scaler, size, line, max_size, interp_type, filt); break;
+      }
+    mus_error_set_handler(old_error_handler);
+  }
+
   if (ge) 
     {
       if (choice != G_FCOMB)
@@ -4780,9 +4801,12 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
       end = dur - 1;
     }
 
-  old_error_handler = mus_error_set_handler(local_mus_error);
-  ge = mus_make_env(brkpts, npts, scaler, offset, base, duration, end, odata);
-  mus_error_set_handler(old_error_handler);
+  {
+    mus_error_handler_t *old_error_handler;
+    old_error_handler = mus_error_set_handler(local_mus_error);
+    ge = mus_make_env(brkpts, npts, scaler, offset, base, duration, end, odata);
+    mus_error_set_handler(old_error_handler);
+  }
 
   FREE(brkpts);
   if (ge) return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, xen_make_vct(mus_env_breakpoints(ge) * 2, odata))));
@@ -5952,8 +5976,14 @@ static Float funcall1(void *ptr, int direction) /* intended for "as-needed" inpu
    *   it returns a float which we then return to C
    */
   mus_xen *gn = (mus_xen *)ptr;
-  if ((gn) && (gn->vcts) && (XEN_BOUND_P(gn->vcts[MUS_INPUT_FUNCTION])) && (XEN_PROCEDURE_P(gn->vcts[MUS_INPUT_FUNCTION])))
-    return(XEN_TO_C_DOUBLE(XEN_CALL_1_NO_CATCH(gn->vcts[MUS_INPUT_FUNCTION], C_TO_XEN_INT(direction))));
+  if ((gn) && 
+      (gn->vcts) && 
+      (XEN_BOUND_P(gn->vcts[MUS_INPUT_FUNCTION])) && 
+      (XEN_PROCEDURE_P(gn->vcts[MUS_INPUT_FUNCTION])))
+    return(XEN_TO_C_DOUBLE_OR_ELSE(XEN_CALL_1_NO_CATCH(gn->vcts[MUS_INPUT_FUNCTION], C_TO_XEN_INT(direction)), 0.0));
+  /* the "or else" is crucial here -- this can be called unprotected in clm.c make_src during setup, and
+   *   an uncaught error there clobbers our local error chain.
+   */
   else return(0.0);
 }
 
@@ -6028,7 +6058,7 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
   vals = mus_optkey_unscramble(S_make_src, 3, keys, args, orig_arg);
   if (vals > 0)
     {
-      in_obj = mus_optkey_to_procedure(keys[0], S_make_src, orig_arg[0], XEN_UNDEFINED, 1, "src input procedure takes 1 arg");
+      in_obj = mus_optkey_to_input_procedure(keys[0], S_make_src, orig_arg[0], XEN_UNDEFINED, 1, "src input procedure takes 1 arg");
 
       srate = mus_optkey_to_float(keys[1], S_make_src, orig_arg[1], srate);
       if (srate < 0) 
@@ -6046,9 +6076,12 @@ width (effectively the steepness of the low-pass filter), normally between 10 an
   gn->nvcts = MUS_MAX_VCTS;
   gn->vcts = make_vcts(gn->nvcts);
   gn->vcts[MUS_INPUT_FUNCTION] = in_obj;
-  old_error_handler = mus_error_set_handler(local_mus_error);
-  ge = mus_make_src(funcall1, srate, wid, gn);
-  mus_error_set_handler(old_error_handler);
+  {
+    mus_error_handler_t *old_error_handler;
+    old_error_handler = mus_error_set_handler(local_mus_error);
+    ge = mus_make_src(funcall1, srate, wid, gn);
+    mus_error_set_handler(old_error_handler);
+  }
   if (ge)
     {
       gn->gen = ge;
@@ -6171,7 +6204,7 @@ The edit function, if any, should return the length in samples of the grain, or 
   vals = mus_optkey_unscramble(S_make_granulate, 9, keys, args, orig_arg);
   if (vals > 0)
     {
-      in_obj = mus_optkey_to_procedure(keys[0], S_make_granulate, orig_arg[0], XEN_UNDEFINED, 1, "granulate input procedure takes 1 arg");
+      in_obj = mus_optkey_to_input_procedure(keys[0], S_make_granulate, orig_arg[0], XEN_UNDEFINED, 1, "granulate input procedure takes 1 arg");
 
       expansion = mus_optkey_to_float(keys[1], S_make_granulate, orig_arg[1], expansion);
       if (expansion <= 0.0) 
@@ -6210,12 +6243,15 @@ The edit function, if any, should return the length in samples of the grain, or 
     }
 
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-  old_error_handler = mus_error_set_handler(local_mus_error);
-  ge = mus_make_granulate(funcall1, 
-			  expansion, segment_length, segment_scaler, output_hop, ramp_time, jitter, maxsize, 
-			  (XEN_NOT_BOUND_P(edit_obj) ? NULL : grnedit),
-			  (void *)gn);
-  mus_error_set_handler(old_error_handler);
+  {
+    mus_error_handler_t *old_error_handler;
+    old_error_handler = mus_error_set_handler(local_mus_error);
+    ge = mus_make_granulate(funcall1, 
+			    expansion, segment_length, segment_scaler, output_hop, ramp_time, jitter, maxsize, 
+			    (XEN_NOT_BOUND_P(edit_obj) ? NULL : grnedit),
+			    (void *)gn);
+    mus_error_set_handler(old_error_handler);
+  }
   if (ge)
     {
       gn->nvcts = MUS_MAX_VCTS;
@@ -6293,7 +6329,7 @@ return a new convolution generator which convolves its input with the impulse re
   vals = mus_optkey_unscramble(S_make_convolve, 3, keys, args, orig_arg);
   if (vals > 0)
     {
-      in_obj = mus_optkey_to_procedure(keys[0], S_make_convolve, orig_arg[0], XEN_UNDEFINED, 1, "convolve input procedure takes 1 arg");
+      in_obj = mus_optkey_to_input_procedure(keys[0], S_make_convolve, orig_arg[0], XEN_UNDEFINED, 1, "convolve input procedure takes 1 arg");
 
       filter = mus_optkey_to_vct(keys[1], S_make_convolve, orig_arg[1], NULL);
       if (filter) filt = keys[1];
@@ -6316,9 +6352,12 @@ return a new convolution generator which convolves its input with the impulse re
   if (fft_size < fftlen) fft_size = fftlen;
 
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-  old_error_handler = mus_error_set_handler(local_mus_error);
-  ge = mus_make_convolve(funcall1, filter->data, fft_size, filter->length, gn);
-  mus_error_set_handler(old_error_handler);
+  {
+    mus_error_handler_t *old_error_handler;
+    old_error_handler = mus_error_set_handler(local_mus_error);
+    ge = mus_make_convolve(funcall1, filter->data, fft_size, filter->length, gn);
+    mus_error_set_handler(old_error_handler);
+  }
   if (ge)
     {
       gn->nvcts = MUS_MAX_VCTS;
@@ -6523,7 +6562,7 @@ output. \n\n  " pv_example "\n\n  " pv_edit_example
   vals = mus_optkey_unscramble(S_make_phase_vocoder, 8, keys, args, orig_arg);
   if (vals > 0)
     {
-      in_obj = mus_optkey_to_procedure(keys[0], S_make_phase_vocoder, orig_arg[0], XEN_UNDEFINED, 1, S_phase_vocoder " input procedure takes 1 arg");
+      in_obj = mus_optkey_to_input_procedure(keys[0], S_make_phase_vocoder, orig_arg[0], XEN_UNDEFINED, 1, S_phase_vocoder " input procedure takes 1 arg");
 
       fft_size = mus_optkey_to_int(keys[1], S_make_phase_vocoder, orig_arg[1], fft_size);
       if (fft_size <= 1) 
@@ -6549,14 +6588,17 @@ output. \n\n  " pv_example "\n\n  " pv_edit_example
     }
 
   gn = (mus_xen *)CALLOC(1, sizeof(mus_xen));
-  old_error_handler = mus_error_set_handler(local_mus_error);
-  ge = mus_make_phase_vocoder(funcall1,
-			      fft_size, overlap, interp, pitch,
-			      (XEN_NOT_BOUND_P(analyze_obj) ? NULL : pvanalyze),
-			      (XEN_NOT_BOUND_P(edit_obj) ? NULL : pvedit),
-			      (XEN_NOT_BOUND_P(synthesize_obj) ? NULL : pvsynthesize),
-			      (void *)gn);
-  mus_error_set_handler(old_error_handler);
+  {
+    mus_error_handler_t *old_error_handler;
+    old_error_handler = mus_error_set_handler(local_mus_error);
+    ge = mus_make_phase_vocoder(funcall1,
+				fft_size, overlap, interp, pitch,
+				(XEN_NOT_BOUND_P(analyze_obj) ? NULL : pvanalyze),
+				(XEN_NOT_BOUND_P(edit_obj) ? NULL : pvedit),
+				(XEN_NOT_BOUND_P(synthesize_obj) ? NULL : pvsynthesize),
+				(void *)gn);
+    mus_error_set_handler(old_error_handler);
+  }
   if (ge)
     {
       gn->nvcts = MUS_MAX_VCTS;
@@ -8068,6 +8110,7 @@ void mus_xen_init(void)
 	       S_clear_array,
 	       S_clear_sincs,
 	       S_clm_print,
+	       S_clm_default_frequency,
 	       S_clm_table_size,
 	       S_comb,
 	       S_comb_p,
