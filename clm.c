@@ -10868,6 +10868,7 @@ void init_mus_module(void)
  * CL/CLM:
  *   get rid of the sound-* funcs (use just mus-sound-*)
  *   make the in-lisp with-sound work again
+ *   definstrument could write actual C functions (with normal args) rather than the packaged int/double-array form
  *
  *
  * done:

@@ -24923,6 +24923,7 @@ EDITS: 2
 			     (snd-display ";[~A] ~A: ~A ~A ~A" (if (= k 0) 'run 'apply) name i old-val new-val))))
 		     (if (and (not (eq? name 'polyshape))
 			      (not (eq? name 'waveshape))
+			      (not (eq? name 'ssb-am))
 			      (not not-zero))
 			 (snd-display ";~A not much of a reset test!" name)))))))
 	 make-procs run-procs func-names))

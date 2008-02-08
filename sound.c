@@ -1083,7 +1083,9 @@ int mus_sound_set_maxamps(const char *ifile, int chans, mus_sample_t *vals, off_
       int i, ichans = 0;
       if (sf->maxamps)
 	{
-	  if (chans > sf->chans) ichans = sf->chans; else ichans = chans;
+	  if (chans > sf->chans) 
+	    ichans = sf->chans; 
+	  else ichans = chans;
 	  for (i = 0; i < ichans; i++)
 	    {
 	      sf->maxtimes[i] = times[i];
@@ -1092,13 +1094,21 @@ int mus_sound_set_maxamps(const char *ifile, int chans, mus_sample_t *vals, off_
 	}
       else
 	{
-	  ichans = mus_sound_chans(ifile);
+	  ichans = sf->chans; /* mus_sound_chans(ifile) */
 	  if (sf->maxamps == NULL) 
 	    {
-	      sf->maxamps = (mus_sample_t *)CALLOC(ichans, sizeof(mus_sample_t));
-	      sf->maxtimes = (off_t *)CALLOC(ichans, sizeof(off_t));
+	      /* here we need to use the max, since the caller may be confused */
+	      int max_chans;
+	      max_chans = ichans;
+	      if (max_chans < chans)
+		max_chans = chans;
+
+	      sf->maxamps = (mus_sample_t *)CALLOC(max_chans, sizeof(mus_sample_t));
+	      sf->maxtimes = (off_t *)CALLOC(max_chans, sizeof(off_t));
 	    }
-	  if (ichans > chans) ichans = chans;
+
+	  if (ichans > chans) 
+	    ichans = chans;
 	  for (i = 0; i < ichans; i++)
 	    {
 	      sf->maxtimes[i] = times[i];

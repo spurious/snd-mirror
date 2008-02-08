@@ -7,7 +7,7 @@
 ;;; Bret Whitney et al, "Voices of New World Parrots" (Cornell)
 ;;; Carlos Davidson, "Frog and Toad Calls of the Rocky Mountains" (Cornell)
 ;;; Geoffrey Keller, "Bird Songs of the Lower Rio Grande Valley" (Cornell)
-;;; "Voices of North American Owls" (Cornell)
+;;; Vyn, Budney, "Voices of North American Owls" (Cornell)
 ;;; Roche and Chevereau, "Guide to the Sounds of the Birds of Europe"
 ;;; from Richard Mankin, Reference Library of Digitized Insect Sounds, http://www.ars.usda.gov/sp2UserFiles/person/3559/soundlibrary.html
 ;;; Lang Elliott, Donald and Lillian Stokes, "Stokes Field Guide to Bird Songs, Eastern Region"
@@ -17,6 +17,7 @@
 ;;; Cocroft, Morales, McDiarmid "Frogs of Tambopata, Peru" (Cornell)
 ;;; Ross, Whitney, "Voices of Costa Rican Birds" (Cornell)
 ;;; Rebolledo, Ramirez, Cuervo, "A Guide to the Bird Sounds of the Colombian Andes" (Humboldt and Cornell)
+;;; Emmons, Whitney, Ross, "Sounds of Neotropical Rainforest Mammals" (Cornell)
 
 
 
@@ -45,6 +46,7 @@
 ;;; Green toad
 ;;; Little grass frog
 ;;; Sonoran desert toad
+;;; Amargosa toad
 
 ;;; -------- mammals --------
 ;;; Indri
@@ -122,6 +124,7 @@
 ;;; Black-throated blue warbler
 ;;; Pine warbler
 ;;; Cape May warbler
+;;; Kirtland's warbler
 ;;; Verdin
 ;;; Townsend's solitaire
 ;;; Cedar waxwing
@@ -202,6 +205,7 @@
 ;;; Sandhill crane
 ;;; Trumpeter swan
 ;;; Canada goose
+;;; Wood duck
 ;;; Least bittern
 ;;; Black rail
 ;;; Virginia rail
@@ -1431,6 +1435,65 @@
 		 *output*)))))))
 
 ;(with-sound () (indri 0 .5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Amargosa toad
+
+(define (amargosa-toad beg1 amp1)
+  ;; rocky 17 0
+  
+  (definstrument (amargosa-toad-1 beg dur frqscl frqenv ampscl ampenv)
+    (let* ((start (seconds->samples beg))
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env ampenv :duration dur :scaler ampscl))
+	   (frqf (make-env frqenv :duration dur :scaler (hz->radians frqscl)))
+	   (gen1 (make-polyshape 
+		  :partials 
+		  (normalize-partials 
+		   (list 1 1  2 .18  3 .19  4 .04  5 .03  6 .04  8 .01  9 .01 10 .005 11 .01 12 .005)))))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf)
+		      (polyshape gen1 1.0 (env frqf)))
+		 *output*))))))
+
+  (let* ((begs (vct 0.0 0.15 0.325 0.47 0.61))
+	 (durs (vct 0.027 0.06 0.065 0.042 0.05))
+	 (amps (vct 0.9 1.0 1.0 0.4 0.1))
+	 (frqs (vct 14800 14020 (* 1/3 14800) 14800 (* 1/2 14800)))
+
+	 (ampenvs (vector '(0.000 0.000 0.085 0.906 0.117 1.000 0.328 0.909 0.715 0.464 0.892 0.118 1.000 0.000)
+			  '(0.000 0.000 0.025 1.000 0.056 0.201 0.121 0.848 0.151 0.503 0.217 0.395 0.441 0.556 
+			    0.602 0.868 0.642 0.870 0.734 0.726 0.808 0.456 0.964 0.141 1.000 0.000)
+			  '(0.000 0.000 0.026 0.053 0.047 1.000 0.063 0.809 0.079 0.181 0.106 0.637 0.151 0.442 
+			    0.180 0.604 0.346 0.507 0.463 0.511 0.582 0.694 0.641 0.663 0.697 0.519 0.744 0.331 
+			    0.806 0.087 1.000 0.000)
+			  '(0.000 0.000 0.037 0.108 0.070 1.000 0.090 0.700 0.117 0.067 0.144 0.462 0.166 0.523 
+			    0.209 0.168 0.234 0.410 0.639 0.278 0.823 0.373 1.000 0.000)
+			  '(0.000 0.000 0.091 0.302 0.184 0.083 0.243 0.639 0.286 0.120 0.364 0.465 0.570 0.187 
+			    0.739 0.434 1.000 0.000)))
+	 (frqenvs (vector '(0.000 0.075 0.317 0.073 1.000 0.065)
+			  '(0.000 0.076 0.031 0.106 0.064 0.085 0.098 0.073 0.158 0.079 0.821 0.076 1.000 0.067)
+			  '(0.000 0.201 0.050 0.209 0.090 0.213 0.257 0.217 0.377 0.215 0.486 0.221 0.548 0.231 
+			    0.669 0.233 0.751 0.225 0.852 0.215 1.000 0.227)
+			  '(0.000 0.071 0.063 0.081 0.097 0.083 0.155 0.073 0.195 0.069 0.832 0.069 1.000 0.053)
+			  '(0.000 0.120 0.132 0.128 0.218 0.126 0.272 0.120 0.326 0.120 0.513 0.120 0.730 0.118 
+			    1.000 0.096))))
+    (do ((call 0 (1+ call)))
+	((= call 5))
+      (amargosa-toad-1 (+ beg1 (vct-ref begs call))
+		       (vct-ref durs call)
+		       (vct-ref frqs call)
+		       (vector-ref frqenvs call)
+		       (* amp1 (vct-ref amps call))
+		       (vector-ref ampenvs call)))))
+
+;(with-sound (:play #t) (amargosa-toad 0 .5))
+
 
 
 
@@ -10492,6 +10555,157 @@
 ;(with-sound (:play #t) (cape-may-warbler 0 .5))
 
 
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Kirtland's warbler
+
+(define (kirtlands-warbler beg1 amp1)
+  ;; east 22 3
+
+  (definstrument (kirtlands-warbler-1 beg dur frqscl frqenv ampscl ampenv)
+    (let* ((start (seconds->samples beg))
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env ampenv :duration dur :scaler ampscl))
+	   (frqf (make-env frqenv :duration dur :scaler (hz->radians frqscl)))
+	   (gen1 (make-polyshape :partials (normalize-partials (list 1 1.0  2 .08  3 .1  4 .03  5 .05)))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (polyshape gen1 1.0 (env frqf)))
+	       *output*))))))
+
+  (let* ((begs (vct 0.0  0.25 0.47 0.65 0.79 0.99 1.17 1.33))
+         (durs (vct 0.05 0.05 0.06 0.07 0.14 0.14 0.12 0.11))
+         (amps (vct 0.04 0.6  0.8  0.80 1.0  0.94 0.92 0.75))
+	 (frqs (vct 6020 6020 13370  13360  13360  13360  13360  13360))
+
+	 (ampenvs (vector '(0.000 0.000 0.063 0.289 0.098 0.838 0.139 0.960 0.217 0.213 0.389 0.115 0.484 0.775 
+			    0.524 0.530 0.546 0.842 0.587 0.375 0.630 0.909 0.739 0.613 0.764 0.320 0.829 0.443 
+			    0.910 0.356 0.929 0.162 1.000 0.000)
+			  '(0.000 0.000 0.049 0.166 0.083 0.204 0.111 0.348 0.149 0.271 0.190 0.665 0.238 0.671 
+			    0.303 0.477 0.390 0.032 0.570 0.026 0.614 0.277 0.643 0.591 0.664 0.527 0.695 0.785 
+			    0.732 0.492 0.767 0.856 0.809 0.933 0.853 0.576 0.907 0.346 0.960 0.140 1.000 0.000)
+			  '(0.000 0.000 0.097 0.340 0.127 0.181 0.157 0.578 0.185 0.426 0.234 0.718 0.267 0.624 
+			    0.300 0.613 0.416 0.041 0.506 0.034 0.554 0.232 0.575 0.561 0.609 0.318 0.651 0.865 
+			    0.696 0.884 0.763 0.763 0.821 0.533 0.862 0.340 0.919 0.148 1.000 0.000)
+			  '(0.000 0.000 0.077 0.052 0.138 0.196 0.159 0.368 0.178 0.067 0.210 0.589 0.224 0.256 
+			    0.251 0.658 0.286 0.529 0.324 0.751 0.345 0.578 0.374 0.477 0.453 0.043 0.524 0.043 
+			    0.595 0.413 0.609 0.258 0.635 0.333 0.654 0.667 0.685 0.852 0.703 0.871 0.725 0.789 
+			    0.748 0.837 0.813 0.602 0.845 0.329 0.904 0.110 1.000 0.000)
+			  '(0.000 0.000 0.063 0.075 0.109 0.275 0.125 0.262 0.135 0.146 0.166 0.523 0.184 0.503
+			    0.194 0.157 0.203 0.477 0.231 0.725 0.263 0.804 0.282 0.613 0.350 0.561 0.387 0.295 
+			    0.442 0.060 0.489 0.054 0.545 0.303 0.562 0.140 0.632 0.583 0.669 0.594 0.705 0.923 
+			    0.813 0.540 0.857 0.118 0.921 0.039 1.000 0.000)
+			  '(0.000 0.000 0.085 0.308 0.096 0.153 0.143 0.477 0.154 0.239 0.161 0.443 0.196 0.755 
+			    0.264 0.903 0.282 0.804 0.315 0.796 0.357 0.325 0.407 0.047 0.469 0.049 0.519 0.310 
+			    0.543 0.159 0.552 0.480 0.657 0.908 0.769 0.570 0.828 0.142 0.882 0.071 1.000 0.000)
+			  '(0.000 0.000 0.315 0.112 0.450 0.310 0.710 0.963 0.805 0.862 0.913 0.460 0.952 0.099 
+			    1.000 0.000)
+			  '(0.000 0.000 0.264 0.138 0.326 0.135 0.510 0.688 0.621 0.766 0.656 0.768 0.697 0.923 
+			    0.717 0.809 0.743 0.892 0.824 0.871 0.877 0.725 1.000 0.000)))
+	 
+	 (frqenvs (vector '(0.000 0.314 0.074 0.394 0.101 0.462 0.127 0.486 0.157 0.458 0.178 0.372 0.243 0.310 
+			    0.348 0.299 0.425 0.323 0.463 0.413 0.496 0.505 0.522 0.533 0.552 0.492 0.567 0.415 
+			    0.597 0.389 0.633 0.426 0.654 0.486 0.686 0.495 0.732 0.389 0.820 0.344 1.000 0.314)
+			  '(0.000 0.394 0.044 0.458 0.059 0.578 0.085 0.606 0.113 0.542 0.125 0.475 0.150 0.462 
+			    0.182 0.518 0.210 0.551 0.238 0.516 0.266 0.465 0.305 0.411 0.356 0.381 0.428 0.323 
+			    0.508 0.312 0.588 0.348 0.628 0.426 0.646 0.499 0.669 0.525 0.695 0.510 0.713 0.469 
+			    0.736 0.454 0.761 0.480 0.793 0.512 0.824 0.480 0.863 0.415 0.934 0.387 1.000 0.340)
+			  '(0.000 0.204 0.027 0.258 0.053 0.267 0.077 0.224 0.096 0.196 0.119 0.222 0.136 0.252 
+			    0.160 0.265 0.183 0.247 0.211 0.224 0.250 0.200 0.304 0.191 0.387 0.157 0.441 0.146 
+			    0.494 0.168 0.528 0.178 0.548 0.206 0.564 0.243 0.584 0.265 0.609 0.245 0.646 0.217 
+			    0.695 0.228 0.744 0.204 0.771 0.194 0.799 0.194 0.879 0.163 1.000 0.144)
+			  '(0.000 0.202 0.138 0.204 0.162 0.273 0.186 0.314 0.201 0.273 0.211 0.237 0.229 0.224 
+			    0.252 0.239 0.275 0.260 0.303 0.239 0.332 0.209 0.392 0.185 0.434 0.161 0.490 0.144 
+			    0.547 0.170 0.588 0.198 0.600 0.239 0.624 0.265 0.650 0.241 0.677 0.228 0.716 0.245 
+			    0.752 0.219 0.801 0.198 1.000 0.140)
+			  '(0.000 0.161 0.050 0.163 0.075 0.237 0.095 0.363 0.119 0.398 0.160 0.396 0.190 0.391 
+			    0.207 0.363 0.240 0.323 0.263 0.303 0.292 0.258 0.320 0.241 0.376 0.228 0.430 0.224 
+			    0.466 0.247 0.481 0.327 0.498 0.381 0.530 0.398 0.570 0.385 0.599 0.359 0.659 0.329 
+			    0.701 0.286 0.765 0.219 0.822 0.191 0.857 0.168 0.899 0.151 1.000 0.135)
+			  '(0.000 0.245 0.021 0.353 0.047 0.402 0.087 0.406 0.122 0.381 0.147 0.353 0.180 0.329 
+			    0.222 0.267 0.263 0.247 0.360 0.228 0.382 0.243 0.404 0.226 0.422 0.222 0.438 0.241 
+			    0.463 0.314 0.488 0.376 0.521 0.387 0.553 0.381 0.570 0.361 0.599 0.353 0.622 0.329 
+			    0.656 0.312 0.689 0.286 0.769 0.213 0.813 0.194 0.857 0.170 1.000 0.142)
+			  '(0.000 0.110 0.160 0.138 0.284 0.159 0.389 0.172 0.504 0.196 0.555 0.215 0.628 0.239 
+			    0.693 0.256 0.744 0.277 0.796 0.286 0.828 0.308 0.867 0.299 0.894 0.305 0.922 0.297 
+			    1.000 0.267)
+			  '(0.000 0.123 0.079 0.148 0.131 0.153 0.274 0.168 0.340 0.170 0.432 0.194 0.494 0.200 
+			    0.520 0.215 0.595 0.219 0.628 0.241 0.675 0.245 0.752 0.273 0.864 0.310 0.898 0.297
+			    0.930 0.292 0.964 0.269 1.000 0.247))))
+    (do ((call 0 (1+ call)))
+	((= call 8))
+      (kirtlands-warbler-1 (+ beg1 (vct-ref begs call))
+			   (vct-ref durs call)
+			   (vct-ref frqs call)
+			   (vector-ref frqenvs call)
+			   (* amp1 (vct-ref amps call))
+			   (vector-ref ampenvs call)))))
+ 
+;(with-sound (:play #t) (kirtlands-warbler 0 .5))
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Wood duck
+;;;
+;;; reverb in original makes this hard to match
+
+(definstrument (wood-duck beg amp)
+  ;; east 22 19
+  (let* ((start (seconds->samples beg))
+	 (dur 0.75)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.022 0.070 0.027 0.433 0.041 0.441 0.047 0.256 .06 .1 0.088 0.888 0.1 0 
+			   0.115 0.692 0.120 0.266 0.132 0.379 0.149 0.277 0.166 0.360 0.174 0.269 0.203 0.386
+			   0.219 0.295 0.269 0.413 0.316 0.287 0.338 0.428 0.354 0.292 0.369 0.397 0.424 0.290 
+			   0.476 0.368 0.52 .01 0.53 0.029  0.58 0.916 0.634 0.875 0.657 0.781 0.682 1.000 
+			   0.718 0.961 0.734 0.705 0.761 0.864 0.785 0.841 0.830 0.606 0.85 0.454 0.87 0.0 
+			   .88 0.0 0.919 0.292 0.966 0.240 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0.000 0.110 0.029 0.174 0.048 0.232 0.075 0.256 0.096 0.238 0.120 0.191 0.199 0.168 
+			   0.272 0.168 0.369 0.186 0.522 0.226 0.528 0.368 0.539 0.345 0.714 0.339 0.847 0.328 
+			   0.879 0.325 0.885 0.200 0.956 0.157 1.000 0.122)
+			 :duration dur :scaler (hz->radians 4890.0)))
+	 (gen1 (make-oscil))
+	 (ampf1 (make-env '(0 .2  .45 .15  .5 .25  .53 1  .85 1 .88 .4 1 .1) :duration dur :scaler .8))
+	 (gen2 (make-oscil))
+	 (ampf2 (make-env '(0 1  .1 1  .15 .75  .4 .75  .5 .1  .6 .75  .8 .75  .85 .1 .88 .5  .95 .5 1 .2) :duration dur :scaler .6))
+	 (gen3 (make-oscil))
+	 (ampf3 (make-env '(0 1  .2 .3  .4 .1  .5 1  .52 1  .7 1  .75 .3  1 .1) :duration dur :scaler .1))
+	 (gen4 (make-oscil))
+	 (gen5 (make-oscil))
+	 (ampf4 (make-env '(0 .2  .4 .05 .5 .2  .55 0 1 0) :duration dur :scaler .1))
+
+	 (rnd (make-rand-interp 400 (hz->radians 40)))
+	 (rndf (make-env '(0 0  .05 4  .1 .5  .9 .1  1 1) :duration dur))
+
+	 (rnd1 (make-rand-interp 500 .1))
+
+	 (att (make-polyshape :partials (list 3 .3 5 .5 7 .1 9 .1)))
+	 (attf (make-env '(0 0 .05 1 .1 0 1 0) :duration dur :scaler .125)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((frq (+ (env frqf)
+		       (* (env rndf) (rand-interp rnd)))))
+	   (outa i (* (env ampf)
+		      (+ .9 (abs (rand-interp rnd1)))
+		      (+ (* (env attf) (polyshape att 1.0 (* 0.5 frq)))
+		         (* (env ampf1) (oscil gen1 frq))
+			 (* (env ampf2) (oscil gen2 (* 2 frq)))
+			 (* (env ampf3) (oscil gen3 (* 3 frq)))
+			 (* (env ampf4) (+ (oscil gen4 (* 4 frq))
+					   (oscil gen5 (* 5 frq))))))
+		 *output*)))))))
+
+;(with-sound (:play #t) (wood-duck 0 .5))
+
+
+
 
 
 ;;; ================ calling-all-animals ================
@@ -10522,7 +10736,8 @@
   (green-toad              (+ beg 39.5) 2 .25)         (set! beg (+ beg spacing))
   (little-grass-frog       (+ beg 42.0) .25)           (set! beg (+ beg spacing))
   (sonoran-desert-toad     (+ beg 43.0) .8 .25)        (set! beg (+ beg spacing))
-  (+ beg 44))
+  (amargosa-toad           (+ beg 44.0) 0.5)           (set! beg (+ beg spacing))
+  (+ beg 45))
 
 
 (define* (calling-all-mammals :optional (beg 0.0) (spacing 0.0))
@@ -10702,8 +10917,10 @@
   (canada-goose                  (+ beg 237.5) .25)      (set! beg (+ beg spacing))
   (pine-warbler                  (+ beg 239.0) .25)      (set! beg (+ beg spacing))
   (black-throated-sparrow        (+ beg 241.5) .25)      (set! beg (+ beg spacing))
-  (cape-may-warbler              (+ beg 242.4) .25)      (set! beg (+ beg spacing))
-  (+ beg 244))
+  (cape-may-warbler              (+ beg 242.5) .25)      (set! beg (+ beg spacing))
+  (kirtlands-warbler             (+ beg 244.0) .25)      (set! beg (+ beg spacing))
+  (wood-duck                     (+ beg 245.5) .25)      (set! beg (+ beg spacing))
+  (+ beg 246.5))
 
 
 (define (calling-all-animals)
