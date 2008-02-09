@@ -989,7 +989,7 @@ fm-input argument to make its table size appear to be two pi.
 The intention here is that table-lookup with a sinusoid in the table and a given FM signal
 produces the same output as oscil with that FM signal.
 The "type" argument sets the type of interpolation used: <code>mus-interp-none</code>,
-<code>mus-interp-linear</code>, <code>mus-interp-lagrange</code>, <code>mus-interp-bezier</code>, or <code>mus-interp-hermite</code>.
+<code>mus-interp-linear</code>, <code>mus-interp-lagrange</code>, or <code>mus-interp-hermite</code>.
 </p>
 
 <table border=1 align=left hspace=40 vspace=10 cellpadding=4>
@@ -1099,6 +1099,60 @@ adds a factor of (2*pi)/srate; so we've cancelled the internal 2*pi and table-le
 an actual deviation of mfreq*2*pi*index/srate, which looks like FM; hmmm.  See <a href="#srcer">srcer</a>
 below for an <a href="#src">src</a>-based way to do the same thing.
 </p>
+
+<p>The interpolation type primarily affects the cleanliness of the table-lookup output.
+Here are the four choices applied to a pulse, the resultant spectrum, and then
+the spectrum of the interpolation applied to a stored sine wave (y axes are in dB).
+</p>
+
+<table border=0 hspace=20>
+<tr><td>
+<img src="interp1.png" alt="interp choices">
+</td><td>
+<img src="interp2.png" alt="interp choices">
+</td></tr>
+</table>
+
+<!--
+(with-sound (:channels 4 :clipped #f :statistics #t)
+  (let* ((pitch 1000.0)
+	 (size 64)
+	 (tbl1 (make-table-lookup pitch 0.0 (partials->wave '(1 1) (make-vct size)) size mus-interp-none))
+	 (tbl2 (make-table-lookup pitch 0.0 (partials->wave '(1 1) (make-vct size)) size mus-interp-linear))
+	 (tbl3 (make-table-lookup pitch 0.0 (partials->wave '(1 1) (make-vct size)) size mus-interp-lagrange))
+	 (tbl4 (make-table-lookup pitch 0.0 (partials->wave '(1 1) (make-vct size)) size mus-interp-hermite)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 100000))
+	 (outa i (table-lookup tbl1) *output*)
+	 (outb i (table-lookup tbl2) *output*)
+	 (out-any i (table-lookup tbl3) 2 *output*)
+	 (out-any i (table-lookup tbl4) 3 *output*))))))
+
+(with-sound (:channels 5 :clipped #f :statistics #t)
+  (let* ((pitch 2.0)
+	 (size 64)
+	 (wave (let ((v (make-vct size 0.0)))
+		 (vct-set! v (/ size 2) 1.0)
+		 v))
+	 (tbl1 (make-table-lookup pitch 0.0 wave size mus-interp-none))
+	 (tbl2 (make-table-lookup pitch 0.0 wave size mus-interp-linear))
+	 (tbl3 (make-table-lookup pitch 0.0 wave size mus-interp-lagrange))
+	 (tbl4 (make-table-lookup pitch 0.0 wave size mus-interp-hermite))
+	 (tbl5 (make-table-lookup pitch 0.0 wave size mus-interp-all-pass)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 100000))
+	 (outa i (table-lookup tbl1) *output*)
+	 (outb i (table-lookup tbl2) *output*)
+	 (out-any i (table-lookup tbl3) 2 *output*)
+	 (out-any i (table-lookup tbl4) 3 *output*)
+	 (out-any i (table-lookup tbl5) 4 *output*))))))
+-->
+
+
 
 <p><a href="spectr.clm">spectr.clm</a> has a steady state spectra of
 several standard orchestral instruments, courtesy of James A. Moorer.

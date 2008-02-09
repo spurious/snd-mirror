@@ -7685,75 +7685,40 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_mus_frandom,          g_mus_frandom_w,          1, 0, 0, "internal testing function");
   XEN_DEFINE_PROCEDURE(S_mus_irandom,          g_mus_irandom_w,          1, 0, 0, "internal testing function");
 
-  #define H_rectangular_window     "The un-window, so to speak"
-  #define H_hann_window            "A simple raised cosine window"
-  #define H_welch_window           "A triangular window squared"
-  #define H_parzen_window          "A triangular window"
-  #define H_bartlett_window        "A triangular window"
-  #define H_bartlett_hann_window   "A combination of the bartlett and hann windows"
-  #define H_bohman_window          "A weighted cosine window"
-  #define H_flat_top_window        "A sum of cosines window"
-  #define H_hamming_window         "A raised cosine"
-  #define H_blackman2_window       "2nd order cosine window"
-  #define H_blackman3_window       "3rd order cosine window"
-  #define H_blackman4_window       "4th order cosine window"
-  #define H_blackman5_window       "5th order cosine window"
-  #define H_blackman6_window       "6th order cosine window"
-  #define H_blackman7_window       "7th order cosine window"
-  #define H_blackman8_window       "8th order cosine window"
-  #define H_blackman9_window       "9th order cosine window"
-  #define H_blackman10_window      "10th order cosine window"
-  #define H_exponential_window     "An inverted triangle from exp"
-  #define H_riemann_window         "sinc-based window"
-  #define H_kaiser_window          "Bessel I0 based window"
-  #define H_cauchy_window          "window based on 1/(1+sqr(angle)"
-  #define H_poisson_window         "window based on exp(-angle)"
-  #define H_gaussian_window        "window based on exp(-sqr(angle))"
-  #define H_tukey_window           "window based on truncated cosine"
-  #define H_dolph_chebyshev_window "window from inverse fft (using Chebyshev Tn)"
-  #define H_connes_window          "triangle window squared twice"
-  #define H_hann_poisson_window    "poisson window * hann window"
-  #define H_samaraki_window        "window from inverse fft (using Chebyshev Un)"
-  #define H_ultraspherical_window  "window from inverse fft (using Ultraspherical Cn)"
-  #define H_rv2_window             "Rife-Vincent 2nd order window (Hann extension)"
-  #define H_rv3_window             "Rife-Vincent 3rd order window (Hann extension)"
-  #define H_rv4_window             "Rife-Vincent 4th order window (Hann extension)"
-  #define H_mlt_sine_window        "modulated lapped transform sine window"
-
-  XEN_DEFINE_CONSTANT(S_rectangular_window,     MUS_RECTANGULAR_WINDOW,     H_rectangular_window);
-  XEN_DEFINE_CONSTANT(S_hann_window,            MUS_HANN_WINDOW,            H_hann_window);
-  XEN_DEFINE_CONSTANT(S_welch_window,           MUS_WELCH_WINDOW,           H_welch_window);
-  XEN_DEFINE_CONSTANT(S_parzen_window,          MUS_PARZEN_WINDOW,          H_parzen_window);
-  XEN_DEFINE_CONSTANT(S_bartlett_window,        MUS_BARTLETT_WINDOW,        H_bartlett_window);
-  XEN_DEFINE_CONSTANT(S_bartlett_hann_window,   MUS_BARTLETT_HANN_WINDOW,   H_bartlett_hann_window);
-  XEN_DEFINE_CONSTANT(S_bohman_window,          MUS_BOHMAN_WINDOW,          H_bohman_window);
-  XEN_DEFINE_CONSTANT(S_flat_top_window,        MUS_FLAT_TOP_WINDOW,        H_flat_top_window);
-  XEN_DEFINE_CONSTANT(S_hamming_window,         MUS_HAMMING_WINDOW,         H_hamming_window);
-  XEN_DEFINE_CONSTANT(S_blackman2_window,       MUS_BLACKMAN2_WINDOW,       H_blackman2_window);
-  XEN_DEFINE_CONSTANT(S_blackman3_window,       MUS_BLACKMAN3_WINDOW,       H_blackman3_window);
-  XEN_DEFINE_CONSTANT(S_blackman4_window,       MUS_BLACKMAN4_WINDOW,       H_blackman4_window);
-  XEN_DEFINE_CONSTANT(S_blackman5_window,       MUS_BLACKMAN5_WINDOW,       H_blackman5_window);
-  XEN_DEFINE_CONSTANT(S_blackman6_window,       MUS_BLACKMAN6_WINDOW,       H_blackman6_window);
-  XEN_DEFINE_CONSTANT(S_blackman7_window,       MUS_BLACKMAN7_WINDOW,       H_blackman7_window);
-  XEN_DEFINE_CONSTANT(S_blackman8_window,       MUS_BLACKMAN8_WINDOW,       H_blackman8_window);
-  XEN_DEFINE_CONSTANT(S_blackman9_window,       MUS_BLACKMAN9_WINDOW,       H_blackman9_window);
-  XEN_DEFINE_CONSTANT(S_blackman10_window,      MUS_BLACKMAN10_WINDOW,      H_blackman10_window);
-  XEN_DEFINE_CONSTANT(S_exponential_window,     MUS_EXPONENTIAL_WINDOW,     H_exponential_window);
-  XEN_DEFINE_CONSTANT(S_riemann_window,         MUS_RIEMANN_WINDOW,         H_riemann_window);
-  XEN_DEFINE_CONSTANT(S_kaiser_window,          MUS_KAISER_WINDOW,          H_kaiser_window);
-  XEN_DEFINE_CONSTANT(S_cauchy_window,          MUS_CAUCHY_WINDOW,          H_cauchy_window);
-  XEN_DEFINE_CONSTANT(S_poisson_window,         MUS_POISSON_WINDOW,         H_poisson_window);
-  XEN_DEFINE_CONSTANT(S_gaussian_window,        MUS_GAUSSIAN_WINDOW,        H_gaussian_window);
-  XEN_DEFINE_CONSTANT(S_tukey_window,           MUS_TUKEY_WINDOW,           H_tukey_window);
-  XEN_DEFINE_CONSTANT(S_dolph_chebyshev_window, MUS_DOLPH_CHEBYSHEV_WINDOW, H_dolph_chebyshev_window);
-  XEN_DEFINE_CONSTANT(S_connes_window,          MUS_CONNES_WINDOW,          H_connes_window);
-  XEN_DEFINE_CONSTANT(S_hann_poisson_window,    MUS_HANN_POISSON_WINDOW,    H_hann_poisson_window);
-  XEN_DEFINE_CONSTANT(S_samaraki_window,        MUS_SAMARAKI_WINDOW,        H_samaraki_window);
-  XEN_DEFINE_CONSTANT(S_ultraspherical_window,  MUS_ULTRASPHERICAL_WINDOW,  H_ultraspherical_window);
-  XEN_DEFINE_CONSTANT(S_rv2_window,             MUS_RV2_WINDOW,             H_rv2_window);
-  XEN_DEFINE_CONSTANT(S_rv3_window,             MUS_RV3_WINDOW,             H_rv3_window);
-  XEN_DEFINE_CONSTANT(S_rv4_window,             MUS_RV4_WINDOW,             H_rv4_window);
-  XEN_DEFINE_CONSTANT(S_mlt_sine_window,        MUS_MLT_SINE_WINDOW,        H_mlt_sine_window);
+  XEN_DEFINE_CONSTANT(S_rectangular_window,     MUS_RECTANGULAR_WINDOW,     "The un-window, so to speak");
+  XEN_DEFINE_CONSTANT(S_hann_window,            MUS_HANN_WINDOW,            "A simple raised cosine window");
+  XEN_DEFINE_CONSTANT(S_welch_window,           MUS_WELCH_WINDOW,           "A triangular window squared");
+  XEN_DEFINE_CONSTANT(S_parzen_window,          MUS_PARZEN_WINDOW,          "A triangular window");
+  XEN_DEFINE_CONSTANT(S_bartlett_window,        MUS_BARTLETT_WINDOW,        "A triangular window");
+  XEN_DEFINE_CONSTANT(S_bartlett_hann_window,   MUS_BARTLETT_HANN_WINDOW,   "A combination of the bartlett and hann windows");
+  XEN_DEFINE_CONSTANT(S_bohman_window,          MUS_BOHMAN_WINDOW,          "A weighted cosine window");
+  XEN_DEFINE_CONSTANT(S_flat_top_window,        MUS_FLAT_TOP_WINDOW,        "A sum of cosines window");
+  XEN_DEFINE_CONSTANT(S_hamming_window,         MUS_HAMMING_WINDOW,         "A raised cosine");
+  XEN_DEFINE_CONSTANT(S_blackman2_window,       MUS_BLACKMAN2_WINDOW,       "2nd order cosine window");
+  XEN_DEFINE_CONSTANT(S_blackman3_window,       MUS_BLACKMAN3_WINDOW,       "3rd order cosine window");
+  XEN_DEFINE_CONSTANT(S_blackman4_window,       MUS_BLACKMAN4_WINDOW,       "4th order cosine window");
+  XEN_DEFINE_CONSTANT(S_blackman5_window,       MUS_BLACKMAN5_WINDOW,       "5th order cosine window");
+  XEN_DEFINE_CONSTANT(S_blackman6_window,       MUS_BLACKMAN6_WINDOW,       "6th order cosine window");
+  XEN_DEFINE_CONSTANT(S_blackman7_window,       MUS_BLACKMAN7_WINDOW,       "7th order cosine window");
+  XEN_DEFINE_CONSTANT(S_blackman8_window,       MUS_BLACKMAN8_WINDOW,       "8th order cosine window");
+  XEN_DEFINE_CONSTANT(S_blackman9_window,       MUS_BLACKMAN9_WINDOW,       "9th order cosine window");
+  XEN_DEFINE_CONSTANT(S_blackman10_window,      MUS_BLACKMAN10_WINDOW,      "10th order cosine window");
+  XEN_DEFINE_CONSTANT(S_exponential_window,     MUS_EXPONENTIAL_WINDOW,     "An inverted triangle from exp");
+  XEN_DEFINE_CONSTANT(S_riemann_window,         MUS_RIEMANN_WINDOW,         "sinc-based window");
+  XEN_DEFINE_CONSTANT(S_kaiser_window,          MUS_KAISER_WINDOW,          "Bessel I0 based window");
+  XEN_DEFINE_CONSTANT(S_cauchy_window,          MUS_CAUCHY_WINDOW,          "window based on 1/(1+sqr(angle)");
+  XEN_DEFINE_CONSTANT(S_poisson_window,         MUS_POISSON_WINDOW,         "window based on exp(-angle)");
+  XEN_DEFINE_CONSTANT(S_gaussian_window,        MUS_GAUSSIAN_WINDOW,        "window based on exp(-sqr(angle))");
+  XEN_DEFINE_CONSTANT(S_tukey_window,           MUS_TUKEY_WINDOW,           "window based on truncated cosine");
+  XEN_DEFINE_CONSTANT(S_dolph_chebyshev_window, MUS_DOLPH_CHEBYSHEV_WINDOW, "window from inverse fft (using Chebyshev Tn)");
+  XEN_DEFINE_CONSTANT(S_connes_window,          MUS_CONNES_WINDOW,          "triangle window squared twice");
+  XEN_DEFINE_CONSTANT(S_hann_poisson_window,    MUS_HANN_POISSON_WINDOW,    "poisson window * hann window");
+  XEN_DEFINE_CONSTANT(S_samaraki_window,        MUS_SAMARAKI_WINDOW,        "window from inverse fft (using Chebyshev Un)");
+  XEN_DEFINE_CONSTANT(S_ultraspherical_window,  MUS_ULTRASPHERICAL_WINDOW,  "window from inverse fft (using Ultraspherical Cn)");
+  XEN_DEFINE_CONSTANT(S_rv2_window,             MUS_RV2_WINDOW,             "Rife-Vincent 2nd order window (Hann extension)");
+  XEN_DEFINE_CONSTANT(S_rv3_window,             MUS_RV3_WINDOW,             "Rife-Vincent 3rd order window (Hann extension)");
+  XEN_DEFINE_CONSTANT(S_rv4_window,             MUS_RV4_WINDOW,             "Rife-Vincent 4th order window (Hann extension)");
+  XEN_DEFINE_CONSTANT(S_mlt_sine_window,        MUS_MLT_SINE_WINDOW,        "modulated lapped transform sine window");
 
   XEN_DEFINE_CONSTANT(S_mus_interp_linear,      MUS_INTERP_LINEAR,          "locsig/delay linear interpolation");
   XEN_DEFINE_CONSTANT(S_mus_interp_sinusoidal,  MUS_INTERP_SINUSOIDAL,      "locsig sinusoidal interpolation");

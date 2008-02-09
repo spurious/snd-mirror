@@ -66052,7 +66052,7 @@ EDITS: 1
 			    (set! a-hook (make-sum-of-sines 3 100)))
 			  (if (= test-28 5)
 			      (begin
-				(set! delay-32 (make-delay 32))
+				(set! delay-32 '(1 2))
 				(set! color-95 (make-color-with-catch .9 .9 .9))
 				(set! vector-0 (make-vector 1))
 				(set! car-main (make-moving-average 3))

@@ -927,12 +927,16 @@ static Float *array_normalize(Float *table, int table_size)
 {
   Float amp = 0.0;
   int i;
+
   for (i = 0; i < table_size; i++) 
     if (amp < (fabs(table[i]))) 
       amp = fabs(table[i]);
-  if ((amp > 0.0) && (amp != 1.0))
+
+  if ((amp > 0.0) && 
+      (amp != 1.0))
     for (i = 0; i < table_size; i++) 
       table[i] /= amp;
+
   return(table);
 }
 
@@ -967,7 +971,7 @@ Float mus_array_interp(Float *wave, Float phase, int size)
 
 static Float mus_array_all_pass_interp(Float *wave, Float phase, int size, Float yn1)
 {
-  /* from Perry Cook */
+  /* this is intended for delay lines where you have a stream of values; in table-lookup it can be a mess */
   int int_part, inx;
   Float frac_part;
   if ((phase < 0.0) || (phase > size))
@@ -980,9 +984,17 @@ static Float mus_array_all_pass_interp(Float *wave, Float phase, int size, Float
   if (int_part == size) int_part = 0;
   inx = int_part + 1;
   if (inx >= size) inx -= size;
+#if 1
+  /* from DAFX */
+  if (frac_part == 0.0)
+    return(wave[inx] - yn1);
+  return(wave[int_part] * frac_part + (1.0 - frac_part) * (wave[inx] - yn1));
+#else
+  /* from Perry Cook */
   if (frac_part == 0.0) 
     return(wave[int_part] + wave[inx] - yn1);
   else return(wave[int_part] + ((1.0 - frac_part) / (1 + frac_part)) * (wave[inx] - yn1));
+#endif
 }
 
 
@@ -1004,7 +1016,7 @@ static Float mus_array_lagrange_interp(Float *wave, Float x, int size)
   xp1 = x0 + 1;
   if (xp1 >= size) xp1 -= size;
   xm1 = x0 - 1;
-  if (xm1 < 0) xm1 = size - 1;
+  if (xm1 < 0) xm1 += size;
   pp = p * p;
   return((wave[xm1] * 0.5 * (pp - p)) + 
 	 (wave[x0] * (1.0 - pp)) + 
@@ -1944,13 +1956,13 @@ Float *mus_partials_to_wave(Float *partial_data, int partials, Float *table, int
   mus_clear_array(table, table_size);
   for (partial = 0, k = 1; partial < partials; partial++, k += 2)
     {
-      Float amp;
+      double amp;
       amp = partial_data[k];
       if (amp != 0.0)
 	{
 	  int i;
-	  Float freq, angle;
-	  freq = (partial_data[partial * 2] * TWO_PI) / (Float)table_size;
+	  double freq, angle;
+	  freq = (partial_data[partial * 2] * TWO_PI) / (double)table_size;
 	  for (i = 0, angle = 0.0; i < table_size; i++, angle += freq) 
 	    table[i] += amp * sin(angle);
 	}
@@ -1967,13 +1979,13 @@ Float *mus_phase_partials_to_wave(Float *partial_data, int partials, Float *tabl
   mus_clear_array(table, table_size);
   for (partial = 0, k = 1, n = 2; partial < partials; partial++, k += 3, n += 3)
     {
-      Float amp;
+      double amp;
       amp = partial_data[k];
       if (amp != 0.0)
 	{
 	  int i;
-	  Float freq, angle;
-	  freq = (partial_data[partial * 3] * TWO_PI) / (Float)table_size;
+	  double freq, angle;
+	  freq = (partial_data[partial * 3] * TWO_PI) / (double)table_size;
 	  for (i = 0, angle = partial_data[n]; i < table_size; i++, angle += freq) 
 	    table[i] += amp * sin(angle);
 	}
