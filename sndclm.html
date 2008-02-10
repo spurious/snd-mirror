@@ -138,7 +138,7 @@ note lists and instruments are described in sndscm.html.
 
 <tr><td colspan=3><center><a href="#othergenerators">Other Generators</a></center></td></tr>
 
-<tr><td colspan=3><center><a href="#functions">Functions</a></center></td></tr>
+<tr><td colspan=3><center><a href="#genericfunctions">Functions</a></center></td></tr>
 
 <tr><td width=20 bgcolor="#f6f8ff"></td><td>
 <table border=0 cellpadding=0>
@@ -2189,11 +2189,20 @@ goes up, "a" goes down (to avoid foldover, or whatever).
 </td></tr></table>
 
 <p>
-"sine-summation" is a borderline vacuous name; it should be "nrxysin"; using a sum of sines (rather than cosines)
-was a mistake (nrxycos is the right thing in this regard).  We should use
+"sine-summation" is a borderline vacuous name; it should be "nrxysin".  Using a sum of sines (rather than cosines)
+was a mistake; it should use <a href="#nrxycos">nrxycos</a>.  Similarly, we should use
 "ncos" for "sum-of-cosines", and "nsin" for "sum-of-sines".
-And "oscil" is a contentious name, since some people think it means "table-lookup",
-but I can't think of a good replacement ("1sin"? "sine"?).
+While we're on the topic, "oscil" is a contentious name, since some people think it means "table-lookup",
+but I can't think of a good replacement ("1sin"? "sine"?).  Even "waveshaping" is ambiguous;
+some consider it a synonym of "distortion synthesis" (a wretched name for array-interp),
+and others confuse it with "wavetable synthesis".  I don't know the history of the term; perhaps
+CLM should retire "waveshape" and use "polyshape" instead.
+At least one such case is funny:  the claim that "frequency
+modulation" should really be called "phase modulation" because the phase changes!
+But computer musicians are not the only ones
+with screwed up terminology: CLM uses the term "scaler" instead of "scalar" because
+the execrable name "scalar product" confuses beginners.
+Perhaps "amplitude" would sidestep this problem.
 </p>
 
 
@@ -3192,7 +3201,9 @@ but 0.5 should happen three times as often as either of the others:
 generator, but all of them produce white noise (all frequencies are equally
 likely).  
 You can, of course, filter the output of rand to get a different
-frequency distribution.
+frequency distribution.  See, for example, <a href="#round-interp">round-interp</a> in generators.scm.
+It uses a <a href="#moving-average">moving-average</a> generator to low-pass filter the output of a rand-interp
+generator; the result is a rand-interp signal with rounded corners.
 Orfanidis also mentions a clever way to get reasonably good 1/f noise:
 sum together n rand's, where each rand is running an octave slower
 than the preceding:
@@ -5247,6 +5258,19 @@ The other two are similar, producing triangle and sawtooth waves.  There is also
 <br>
 
 
+<pre>
+  <A class=def NAME="make-round-interp">make-round-interp</A> <a class=quiet href="#optional-key">:optional-key</a> frequency n amplitude
+  <A class=def NAME="round-interp">round-interp</A> gen fm
+  <A class=def NAME="round-interp?">round-interp?</A> gen
+</pre>
+
+<p>
+This is a rand-interp generator feeding a moving-average generator.  "n" is the length of the moving-average;
+the higher "n", the more low-passed the output.
+</p>
+<br>
+
+
 <!-- bessel functions -->
 <table border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>Bessel functions</h5></center></td></tr></table>
 
@@ -6054,7 +6078,6 @@ a generator.
 A generator defined via <a href="sndscm.html#def-clm-struct">def-clm-struct</a> can take part in these methods.
 If the last element of the list (returned by def-clm-struct) is an association list, the generic functions
 will search that list for their name, and use the functions that follow to implement their method.
-These added methods are not currently optimizable via the run macro.
 </p>
 <br>
 

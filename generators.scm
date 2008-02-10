@@ -4317,6 +4317,33 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;; TODO: decide what to do with make-wave-train-with-env and doc/snd-test
 
 
+
+;;; --------------------------------------------------------------------------------
+
+(def-clm-struct (round-interp 
+		 :make-wrapper 
+		 (lambda (g)
+		   (set! (round-interp-rnd g) (make-rand-interp (round-interp-frequency g) (round-interp-amplitude g)))
+		   (set! (round-interp-flt g) (make-moving-average (round-interp-n g)))
+		   g))
+  (frequency 0.0) (n 1) (amplitude 1.0)
+  (rnd #f :type clm) (flt #f :type clm))
+
+(define (round-interp gen fm)
+  (declare (gen round-interp) (fm float))
+  (moving-average (round-interp-flt gen) (rand-interp (round-interp-rnd gen) fm)))
+
+#|
+(with-sound ()
+  (let ((gen (make-round-interp 100 1)))
+    (run
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 22050))
+	 (outa i (round-interp gen 0.0) *output*))))))
+|#
+
+
 ;;; --------------------------------------------------------------------------------
 
 (define (calling-all-generators)

@@ -10830,6 +10830,7 @@ void init_mus_module(void)
  *    if r is a list|vct, polyshape, if xy polyshape*cos
  *    would like to avoid run-time switch (on algorithm choice), yet still be optimizable
  *    in ssb case, how to say which side wins? does yfreq<0 work?
+ *    another problem: cosines->polyshape+pi/2 phase, sines->polyshape cheby2, how to describe current case?
  *
  *   perhaps built-in: blackman rk!cos rxyk!cos nrcos rcos rxycos nxycos nrssb rk!ssb nrxysin|cos
  *   perhaps phaser = the phase+incr+fm+pm portion of nearly every generator
@@ -10869,10 +10870,6 @@ void init_mus_module(void)
  *
  *   "fm" arg to formant -> set frequency so it's easier to have moving formants
  *      but it's a direct freq, not an increment -- see mus_formant_with_frequency
- *
- *   optional interp-type for array-interp? rand-interp? (at least base arg for rand-interp, and exp interp for table-lookup) [interp for env?]
- *   TODO: shouldn't the table-lookup doc have dicussion of interp-type? [table-lookup ssb-am wave-train delay and friends]
- *            there's probably a JOS url for this
  *
  *   :base as list in env = if up use car else cdr as base? or if > 2, use next on each segment
  *
