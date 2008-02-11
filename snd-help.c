@@ -512,6 +512,8 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+11-Feb:  the 'stream' arg to outa and friends now defaults to *output*.\n\
+ 7-Feb:  Snd 9.7.\n\
 26-Dec:  Snd 9.6.\n\
 17-Nov:  fft-with-phases.\n\
 12-Nov:  Open recent item in File menu\n\

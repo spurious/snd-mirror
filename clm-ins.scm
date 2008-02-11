@@ -79,7 +79,7 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
 					  (one-zero allp val))))
 	   (set! ctr (+ ctr 1))
 	   (if (>= ctr dlen) (set! ctr 0))
-	   (outa i (* amp val) *output*)))))))
+	   (outa i (* amp val))))))))
 
 
 ;;; -------- mlbvoi
@@ -216,8 +216,7 @@ synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
 	     ((= i end))
 	   (outa i (* (env ampf) 
 		      (wave-train wt0 (* (env vibf) 
-					 (oscil vibr)))) 
-		 *output*))))))
+					 (oscil vibr))))))))))
 
 
 
@@ -422,7 +421,7 @@ vocal sounds using phase quadrature waveshaping"
 						       (* fax (oscil (vector-ref cos-evens k) even-freq))))
 					(* odd-amp (- (* yfax (oscil (vector-ref sin-odds k) odd-freq))
 						      (* fax (oscil (vector-ref cos-odds k) odd-freq)))))))))))
-	   (outa i (* (env ampf) sum) *output*)))))))
+	   (outa i (* (env ampf) sum))))))))
 
 ;;; (pqw-vox 0 1 300 300 .1 '(0 0 50 1 100 0) '(0 0 100 0) 0 '(0 L 100 L) '(.33 .33 .33) '((1 1 2 .5) (1 .5 2 .5 3 1) (1 1 4 .5)))
 ;;; (a test to see if the cancellation is working -- sounds like a mosquito)
@@ -507,8 +506,8 @@ is a physical model of a flute:
 	 ;; but the result is not fed back into the system.
 	 (set! dc-blocked-a (+ (- out-sig previous-out-sig) (* 0.995 previous-dc-blocked-a)))
 	 (set! dc-blocked-b (+ (- tap-sig previous-tap-sig) (* 0.995 previous-dc-blocked-b)))
-	 (outa i (* out-scl dc-blocked-a) *output*)
-	 (if (> chns 1) (outb i (* out-scl dc-blocked-b) *output*))
+	 (outa i (* out-scl dc-blocked-a))
+	 (if (> chns 1) (outb i (* out-scl dc-blocked-b)))
 	 (set! previous-out-sig out-sig)
 	 (set! previous-dc-blocked-a dc-blocked-a)
 	 (set! previous-tap-sig tap-sig)
@@ -552,8 +551,7 @@ is a physical model of a flute:
 						     (oscil mod3))))))
 			 (* .15 (oscil car3 (* fmenv 
 					       fmInd4 
-					       (oscil mod4))))))
-		 *output*)))))))
+					       (oscil mod4)))))))))))))
 
 
 ;(define fbell '(0 1 2 1.1000 25 .7500 75 .5000 100 .2000 ))
@@ -730,7 +728,7 @@ is a physical model of a flute:
 	   (set! y (+ y (* dt (+ x (* a y)))))
 	   (set! z (+ z (* dt (- (+ b (* x z)) (* c z)))))
 	   (set! x x1)
-	   (outa i (* scale x) *output*)))))))
+	   (outa i (* scale x))))))))
 
 
 ;;; -------- PQW
@@ -807,8 +805,7 @@ is a physical model of a flute:
 	   ((= i nd))
 	 (outa i (* (+ (* .007 (oscil ampmod)) .993)
 		    (+ (* g0 (env ampenv1) (oscil osc0 (* g1 (oscil osc1))))
-		       (* g2 (env ampenv2) (oscil osc2 (* g3 (oscil osc3))))))
-	       *output*))))))
+		       (* g2 (env ampenv2) (oscil osc2 (* g3 (oscil osc3))))))))))))
 
 
 (definstrument (wurley beg dur freq amp)
@@ -835,8 +832,7 @@ is a physical model of a flute:
 	 (outa i (* (env ampenv)
 		    (+ 1.0 (* .007 (oscil ampmod)))
 		    (+ (* g0 (oscil osc0 (* g1 (oscil osc1))))
-		       (* (env resenv) g2 (oscil osc2 (* g3 (env indenv) (oscil osc3))))))
-	       *output*))))))
+		       (* (env resenv) g2 (oscil osc2 (* g3 (env indenv) (oscil osc3))))))))))))
 
 
 (definstrument (rhodey beg dur freq amp :optional (base .5))
@@ -860,8 +856,7 @@ is a physical model of a flute:
        (do ((i st (1+ i)))
 	   ((= i nd))
 	 (outa i (+ (* g0 (env ampenv1) (oscil osc0 (* g1 (oscil osc1))))
-		    (* g2 (env ampenv2) (oscil osc2 (* (env ampenv3) g3 (oscil osc3)))))
-	       *output*))))))
+		    (* g2 (env ampenv2) (oscil osc2 (* (env ampenv3) g3 (oscil osc3)))))))))))
 
 
 (definstrument (hammondoid beg dur freq amp)
@@ -887,8 +882,7 @@ is a physical model of a flute:
 		       (+ (* g0 (oscil osc0))
 			  (* g1 (oscil osc1))
 			  (* g2 (oscil osc2))))
-		    (* (env ampenv2) g3 (oscil osc3)))
-	       *output*))))))
+		    (* (env ampenv2) g3 (oscil osc3)))))))))
 
 
 (definstrument (metal beg dur freq amp)
@@ -919,8 +913,7 @@ is a physical model of a flute:
 					(* g2 (env ampenv2) 
 					   (oscil osc2))))
 			      (* g3 (env ampenv3) 
-				 (oscil osc3)))))
-	       *output*))))))
+				 (oscil osc3)))))))))))
 
 
 (definstrument (drone startime dur frequency amp ampfun synth ampat ampdc amtrev deg dis rvibamt rvibfreq)
@@ -1066,10 +1059,10 @@ is a physical model of a flute:
 									       (comb comb4 rev)
 									       (comb comb5 rev)
 									       (comb comb6 rev)))))))))
-	     (outa i (all-pass allpass5 outrev) *output*)
-	     (if chan2 (outb i (all-pass allpass6 outrev) *output*))
-	     (if chan4 (outc i (all-pass allpass7 outrev) *output*))
-	     (if chan4 (outd i (all-pass allpass8 outrev) *output*)))))))))
+	     (outa i (all-pass allpass5 outrev))
+	     (if chan2 (outb i (all-pass allpass6 outrev)))
+	     (if chan4 (outc i (all-pass allpass7 outrev)))
+	     (if chan4 (outd i (all-pass allpass8 outrev))))))))))
 
 
 (definstrument (reson startime dur pitch amp numformants indxfun skewfun pcskew skewat skewdc
@@ -1214,8 +1207,8 @@ is a physical model of a flute:
 		    (comb comb2 allpass-sum)
 		    (comb comb3 allpass-sum)
 		    (comb comb4 allpass-sum)))
-	   (outa i (delay outdel1 comb-sum) *output*)
-	   (if (> chns 1) (outb i (delay outdel2 comb-sum) *output*))))))))
+	   (outa i (delay outdel1 comb-sum))
+	   (if (> chns 1) (outb i (delay outdel2 comb-sum)))))))))
 
 
 (definstrument (gran-synth start-time duration audio-freq grain-dur grain-interval amp)
@@ -1234,7 +1227,7 @@ is a physical model of a flute:
      (lambda ()
        (do ((i beg (1+ i)))
 	   ((= i end))
-	 (outa i (* amp (wave-train grains)) *output*))))))
+	 (outa i (* amp (wave-train grains))))))))
 	 
 ;;; (with-sound () (gran-synth 0 2 100 .0189 .02 .4))
 
@@ -1261,7 +1254,7 @@ is a physical model of a flute:
 	 (lambda ()
 	   (do ((j beg (1+ j)))
 	       ((= j end))
-	     (outa j (* 0.1 (+ (oscil frq1) (oscil frq2))) *output*))))))))
+	     (outa j (* 0.1 (+ (oscil frq1) (oscil frq2)))))))))))
 
 ;;; (with-sound () (touch-tone 0.0 '(7 2 3 4 9 7 1))
 ;;; I think the dial tone is 350 + 440
@@ -1933,7 +1926,7 @@ is a physical model of a flute:
 		     (set! turning 0))))
 	   (set! last-val2 last-val)
 	   (set! last-val val)
-	   (outa i val *output*)))))))
+	   (outa i val)))))))
 
 ;;; (with-sound () (scratch 0.0 "now.snd" 1.5 '(0.0 .5 .25 1.0)))
 
@@ -2013,7 +2006,7 @@ is a physical model of a flute:
 	       ;; there is in fact no way to model some attacks successfully in this manner, so this block
 	       ;; simply splices the original attack on to the rest of the note.  "attack" is the number
 	       ;; of samples to include bodily.
-	       (outa i (* amp (file->sample fil filptr)) *output*)
+	       (outa i (* amp (file->sample fil filptr)))
 	       (set! filptr (1+ filptr))
 	       (if (> filptr attack-size)
 		   (let ((mult 1.0))
@@ -2162,7 +2155,7 @@ is a physical model of a flute:
 		       (set! sum (+ sum (* (vct-ref amps k) (oscil (vector-ref resynth-oscils k) (vct-ref freqs k)))))
 		       (vct-set! amps k (+ (vct-ref amps k) (vct-ref rates k)))
 		       (vct-set! freqs k (+ (vct-ref freqs k) (vct-ref sweeps k))))))
-	       (outa i (* amp sum) *output*))))))))
+	       (outa i (* amp sum)))))))))
 
 
 (definstrument (zc time dur freq amp length1 length2 feedback)
@@ -2176,7 +2169,7 @@ is a physical model of a flute:
      (lambda ()
        (do ((i beg (1+ i)))
 	   ((= i end))
-	 (outa i (comb d0 (* amp (pulse-train s)) (env zenv)) *output*))))))
+	 (outa i (comb d0 (* amp (pulse-train s)) (env zenv))))))))
 
 ;;(with-sound () (zc 0 3 100 .1 20 100 .95) (zc 3.5 3 100 .1 100 20 .95))
 
@@ -2195,7 +2188,7 @@ is a physical model of a flute:
      (lambda ()
        (do ((i beg (1+ i)))
 	   ((= i end))
-	 (outa i (notch d0 (* amp (pulse-train s)) (env zenv)) *output*))))))
+	 (outa i (notch d0 (* amp (pulse-train s)) (env zenv))))))))
 
 ;;(with-sound () (zn 0 1 100 .1 20 100 .995) (zn 1.5 1 100 .1 100 20 .995))
 
@@ -2211,7 +2204,7 @@ is a physical model of a flute:
      (lambda ()
        (do ((i beg (1+ i)))
 	   ((= i end))
-	 (outa i (all-pass d0 (* amp (pulse-train s)) (env zenv)) *output*))))))
+	 (outa i (all-pass d0 (* amp (pulse-train s)) (env zenv))))))))
 
 ;;(with-sound () (za 0 1 100 .1 20 100 .95 .95) (za 1.5 1 100 .1 100 20 .95 .95))
 
@@ -2234,8 +2227,8 @@ is a physical model of a flute:
        (do ((i st (1+ i))) ((= i nd))
 	 (let ((valA               (* amp (src srcA 0.0 (lambda (dir) (granulate exA (lambda (dir) (readin fdA)))))))
 	       (valB (if two-chans (* amp (src srcB 0.0 (lambda (dir) (granulate exB (lambda (dir) (readin fdB)))))) 0.0)))
-	 (out-any i valA 0 *output*)
-	 (if two-chans (out-any i valB 1 *output*))
+	 (out-any i valA 0)
+	 (if two-chans (out-any i valB 1))
 	 (if revit (out-any i (* rev-amp (+ valA valB)) 0 *reverb*))))))))
 
 
@@ -2318,8 +2311,8 @@ is a physical model of a flute:
 		       (set! valA1 (* vol (granulate exA (lambda (dir) (readin f0)))))
 		       (set! ex-samp (1+ ex-samp)))))
 	       (if (= next-samp ex-samp)
-		   (outa i valA0 *output*)
-		   (outa i (+ valA0 (* (- next-samp ex-samp) (- valA1 valA0))) *output*)))))))))
+		   (outa i valA0)
+		   (outa i (+ valA0 (* (- next-samp ex-samp) (- valA1 valA0))))))))))))
 
 ;;; (with-sound () (exp-snd "fyow.snd" 0 3 1 '(0 1 1 3) 0.4 .15 '(0 2 1 .5) 0.05))
 ;;; (with-sound () (exp-snd "oboe.snd" 0 3 1 '(0 1 1 3) 0.4 .15 '(0 2 1 .5) 0.2))
@@ -2424,7 +2417,7 @@ is a physical model of a flute:
 		     (begin
 		       (set! (grn-trigger grn2) 0)
 		       (set! out2 (+ out2 hop))))))
-	   (outa i val *output*)))))))
+	   (outa i val)))))))
 
 ;;; (with-sound () (expfil 0 2 .2 .01 .1 "oboe.snd" "fyow.snd"))
 
@@ -2529,7 +2522,7 @@ nil doesnt print anything, which will speed up a bit the process.
 	     (if if-list-in-gain
 		 (set! (mus-xcoeff (vector-ref frm-size k) 0) (* (env (vector-ref env-size k)) (- 1.0 a1))))
 	     (set! outval (+ outval (formant (vector-ref frm-size k) inval))))
-	   (outa i (* (env ampenv) outval) *output*)))))))
+	   (outa i (* (env ampenv) outval))))))))
 
 
 (definstrument (anoi infile start dur :optional (fftsize 128) (amp-scaler 1.0) (r (* 2.0 pi)))
@@ -2587,7 +2580,7 @@ nil doesnt print anything, which will speed up a bit the process.
 	       (let ((cur-scale (vct-ref scales ctr)))
 		 (set! outval (+ outval (* cur-scale (formant (vector-ref fs ctr) inval))))
 		 (vct-set! scales ctr (+ (vct-ref scales ctr) (vct-ref diffs ctr)))))
-	     (outa i (* amp outval) *output*))))))))
+	     (outa i (* amp outval)))))))))
 
 
 #|
@@ -2738,7 +2731,7 @@ mjkoskin@sci.fi
      (lambda ()
        (do ((i st (1+ i)))
 	   ((= i nd))
-	 (outa i (* (env ampenv) (bes-j1 car-ph)) *output*)
+	 (outa i (* (env ampenv) (bes-j1 car-ph)))
 	 (set! car-ph (+ car-ph car-incr (* index (bes-j1 mod-ph))))
 	 (set! mod-ph (+ mod-ph mod-incr)))))))
 

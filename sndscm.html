@@ -1301,9 +1301,9 @@ tracks the RMS signal.  An example is worth a zillion words:
 	  (do ((i 0 (1+ i)))
 	      ((= i 10000))
 	    (let ((sig (<a class=quiet href="sndclm.html#env">env</a> e)))
-	      (<a class=quiet href="sndclm.html#outa">outa</a> i (balance rg sig (<a class=quiet href="sndclm.html#env">env</a> e2)) *output*)
-	      (<a class=quiet href="sndclm.html#outa">outb</a> i (balance rg1 sig (<a class=quiet href="sndclm.html#env">env</a> e1)) *output*)
-	      (<a class=quiet href="sndclm.html#outa">outc</a> i (balance rg2 (* .1 (<a class=quiet href="sndclm.html#oscil">oscil</a> o)) (<a class=quiet href="sndclm.html#env">env</a> e2)) *output*)))))
+	      (<a class=quiet href="sndclm.html#outa">outa</a> i (balance rg sig (<a class=quiet href="sndclm.html#env">env</a> e2)))
+	      (<a class=quiet href="sndclm.html#outa">outb</a> i (balance rg1 sig (<a class=quiet href="sndclm.html#env">env</a> e1)))
+	      (<a class=quiet href="sndclm.html#outa">outc</a> i (balance rg2 (* .1 (<a class=quiet href="sndclm.html#oscil">oscil</a> o)) (<a class=quiet href="sndclm.html#env">env</a> e2)))))))
 </pre></td></tr></table>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -2260,7 +2260,7 @@ by <a href="#maxfdoc">maxf</a>.
     (run (lambda () 
 	   (do ((i 0 (1+ i))) 
 	       ((= i 10000))
-	     (<a class=quiet href="sndclm.html#outa">outa</a> i (<em class=red>mfilter</em> m (* .1 (rd))) *output*))))))
+	     (<a class=quiet href="sndclm.html#outa">outa</a> i (<em class=red>mfilter</em> m (* .1 (rd)))))))))
 
 (<a class=quiet href="#wsdoc">with-sound</a> ()    ; sweep center freq from 100Hz to 2000Hz
   (let ((rd (<a class=quiet href="extsnd.html#makesamplereader">make-sample-reader</a> 0 "oboe.snd")) 
@@ -2269,7 +2269,7 @@ by <a href="#maxfdoc">maxf</a>.
     (run (lambda () 
 	   (do ((i 0 (1+ i))) 
 	       ((= i 10000))
-	     (<a class=quiet href="sndclm.html#outa">outa</a> i (<em class=red>mfilter</em> m (* .1 (rd))) *output*) 
+	     (<a class=quiet href="sndclm.html#outa">outa</a> i (<em class=red>mfilter</em> m (* .1 (rd)))) 
 	     (set! (<em class=red>mflt-eps</em> m) (* 2.0 (sin (/ (* pi (<a class=quiet href="sndclm.html#env">env</a> e)) (<a class=quiet href="sndclm.html#mussrate">mus-srate</a>))))))))))
 </pre>
 </td></tr><tr><td colspan=2 height=32></td></tr>
@@ -2295,7 +2295,7 @@ given the index 'a', and harmonic coefficients 'coeffs' (the 0th element is DC a
       (let ((gen (<a class=quiet href="sndclm.html#make-polyshape">make-polyshape</a> 1000.0 :partials (list 1 .5  2 .25  3 .125  4 .125))))
         (do ((i 0 (1+ i)))
 	    ((= i 88200))
-          (<a class=quiet href="sndclm.html#outa">outa</a> i (* .5 (<a class=quiet href="sndclm.html#polyshape">polyshape</a> gen 0.25)) *output*))))
+          (<a class=quiet href="sndclm.html#outa">outa</a> i (* .5 (<a class=quiet href="sndclm.html#polyshape">polyshape</a> gen 0.25))))))
 
     (<em class=red>cheby-hka</em> 1 0.25 (vct 0 .5 .25 .125 .125)) ; returns 1st partial (fundamental) amplitude
 </pre>
@@ -5404,8 +5404,7 @@ Here's an instrument that fuzzes up its amplitude envelope a bit using green noi
 	   ((= i end))
 	 (<a class=quiet href="sndclm.html#outa">outa</a> i (* (<a class=quiet href="sndclm.html#env">env</a> e) 
 		    (+ 1.0 (<em class=red>green-noise-interp</em> grn 0.0))
-		    (<a class=quiet href="sndclm.html#oscil">oscil</a> osc)) 
-	       *output*))))))
+		    (<a class=quiet href="sndclm.html#oscil">oscil</a> osc))))))))
 
 (<a class=quiet href="#wsdoc">with-sound</a> () (green3 0 2.0 440 .5 '(0 0 1 1 2 1 3 0) 100 .2 .02))
 </pre></td></tr></table>
@@ -5758,7 +5757,7 @@ jcrev.scm version assumes it is being called within with-sound:
         (with-sound (:reverb jc-reverb) (fm-violin 0 .1 440 .1 :reverb-amount .1))
 
     Ruby:
-        with_sound(:reverb, :jc_reverb) do fm_violin(0, 0.1, 440, 0.1) end
+        with_sound(:reverb, :jc_reverb) do fm_violin_rb(0, 0.1, 440, 0.1) end
 
     Forth:
         0 1 440 0.2 ' fm-violin :reverb ' jc-reverb with-sound
@@ -8722,7 +8721,7 @@ primarily on the Samson box.  It was developed in Mus10 (ca 1977) based on ideas
 </p>
 <pre>
   Scheme:    (with-sound () (fm-violin 0 1 440 .1))
-  Ruby:      with_sound() do fm_violin(0, 1, 440, .1, [[:fm_index, 2.0]]) end
+  Ruby:      with_sound() do fm_violin_rb(0, 1, 440, .1, [[:fm_index, 2.0]]) end
 </pre>
 <p>
 fm-violin sets up several parallel modulators of one carrier (see <A HREF="fm.html">fm.html</A>
@@ -9620,8 +9619,8 @@ everything after that is evaluated as a note list.
 
 <pre>
     :<em class=typing>with_sound(:channels, 2, :play, false, :statistics, true) do 
-      fm_violin(0, 1, 440, 0.1); 
-      fm_violin(1, 1, 660, 0.1);
+      fm_violin_rb(0, 1, 440, 0.1); 
+      fm_violin_rb(1, 1, 660, 0.1);
       end</em>
     <em class=listener># filename: "test.snd"
     #    chans: 2, srate: 22050
@@ -9767,7 +9766,7 @@ So, an instrument that wants to cooperate fully with with-sound and Common Music
       (lambda ()
         (do ((i start (1+ i)))
             ((= i end))
-          (<a class=quiet href="sndclm.html#outa">outa</a> i ... *output*))))))
+          (<a class=quiet href="sndclm.html#outa">outa</a> i ...))))))
 </pre></td></tr></table>
 
 <p>The <a href="sndclm.html#optional-key">optional-key</a> feature can be used with definstrument via def-optkey-instrument:
@@ -9778,7 +9777,7 @@ So, an instrument that wants to cooperate fully with with-sound and Common Music
   (let* ((os (make-oscil frequency)))
     (run (lambda ()
       (do ((i 0 (1+ i))) ((= i dur))
-	(outa (+ i beg) (* amplitude (oscil os)) *output*))))))
+	(outa (+ i beg) (* amplitude (oscil os))))))))
 
 (<a class=quiet href="#wsdoc">with-sound</a> () 
   (simp 0 10000) 
@@ -9813,7 +9812,7 @@ by calling the oscils and whatnot directly in the with-sound body:
 				     (<a class=quiet href="sndclm.html#oscil">oscil</a> (vector-ref oscs i) 
 					    (<a class=quiet href="sndclm.html#hztoradians">hz-&gt;radians</a> (expt 2.0 (+ 2 (* loc 12.0)))))))))) ; (- 1.0 loc) to go down
 	     (set! x (+ x incr))
-	     (<a class=quiet href="sndclm.html#outa">outa</a> samp (* .1 sum) *output*))))))))
+	     (<a class=quiet href="sndclm.html#outa">outa</a> samp (* .1 sum)))))))))
 </pre></td></tr></table>
 <img src="shepard.png" alt="shepard tone spectrum" vspace=10 hspace=40>
 
@@ -9883,13 +9882,13 @@ Here's another example:
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
 with_sound() do
   clm_mix(with_sound(:output, "hiho.snd") do
-            fm_violin(0, 1, 440, 0.1)
+            fm_violin_rb(0, 1, 440, 0.1)
           end.output, :scale, 0.5)
 end
 
 with_sound() do
   with_mix "s1", %Q{
-  sound_let(lambda do fm_violin(0, 1, 440, 0.1) end) do |tmp|
+  sound_let(lambda do fm_violin_rb(0, 1, 440, 0.1) end) do |tmp|
     clm_mix(tmp)
   end
   }
@@ -10021,7 +10020,7 @@ you could also use a vct &mdash; see <a href="sndclm.html#make-my-oscil">make-my
      (lambda ()
        (do ((i start (1+ i)))
 	   ((= i end))
-	 (<a class=quiet href="sndclm.html#outa">outa</a> i (* amp (<em class=red>osc</em> carrier (* index (<em class=red>osc</em> modulator 0.0)))) *output*))))))
+	 (<a class=quiet href="sndclm.html#outa">outa</a> i (* amp (<em class=red>osc</em> carrier (* index (<em class=red>osc</em> modulator 0.0))))))))))
 
 (with-sound () (osc-fm 0 1 440 .1 1 1))
 </pre></td></tr></table>

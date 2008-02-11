@@ -86,7 +86,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
-	 (outa i (nssb gen 0.0) *output*))))))
+	 (outa i (nssb gen 0.0)))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-nssb 1000.0 100.0 3))
@@ -98,8 +98,7 @@
 	   ((= i 20000))
 	 (outa i (* (env ampf) 
 		    (nssb gen (* (hz->radians 10.0) 
-				 (oscil vib))))
-	       *output*))))))
+				 (oscil vib))))))))))
 |#
 
 
@@ -137,7 +136,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 20000))
-	 (outa i (nxysin gen 0.0) *output*))))))
+	 (outa i (nxysin gen 0.0)))))))
 |#
 
 (def-clm-struct (nxycos
@@ -169,7 +168,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 20000))
-	 (outa i (nxycos gen 0.0) *output*))))))
+	 (outa i (nxycos gen 0.0)))))))
 |#
 
 ;;; does ssb make any sense here?  x=carrier effectively
@@ -209,7 +208,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 20000))
-	 (outa i (nxy1cos gen 0.0) *output*))))))
+	 (outa i (nxy1cos gen 0.0)))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-nxy1cos 300 100 3))
@@ -218,13 +217,13 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 20000))
-	 (outa i (* 0.4 (+ (nxycos gen1 0.0) (nxy1cos gen 0.0))) *output*))))))
+	 (outa i (* 0.4 (+ (nxycos gen1 0.0) (nxy1cos gen 0.0)))))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-nxy1cos (radians->hz (* .01 pi)) (radians->hz (* .01 pi)) 3)))
        (do ((i 0 (1+ i)))
 	   ((= i 20000))
-	 (outa i (nxy1cos gen 0.0) *output*))))
+	 (outa i (nxy1cos gen 0.0)))))
 |#
 
 
@@ -256,7 +255,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 20000))
-	 (outa i (nxy1sin gen 0.0) *output*))))))
+	 (outa i (nxy1sin gen 0.0)))))))
 |#
 
 
@@ -301,7 +300,7 @@
 		       (let ((gen (make-noddsin (radians->hz .002) :n i)))
 			 (do ((k 0 (1+ k)))
 			     ((= k 1000))
-			   (outa k (noddsin gen 0.0) *output*))))))
+			   (outa k (noddsin gen 0.0)))))))
     (let ((pos 0)
 	  (pk (vct-peak v)))
       (do ((k 0 (1+ k)))
@@ -323,7 +322,7 @@
     (run (lambda ()
       (do ((i 0 (1+ i)))
 	  ((= i 40000))
-	(outa i (* (env ampf) (noddsin gen 0.0)) *output*))))))
+	(outa i (* (env ampf) (noddsin gen 0.0))))))))
 |#
 
 
@@ -357,7 +356,7 @@
     (run (lambda ()
       (do ((i 0 (1+ i)))
 	  ((= i 10000))
-	(outa i (noddcos gen 0.0) *output*))))))
+	(outa i (noddcos gen 0.0)))))))
 |#
 
 (def-clm-struct (noddssb
@@ -392,7 +391,7 @@
     (run (lambda ()
       (do ((i 0 (1+ i)))
 	  ((= i 10000))
-	(outa i (noddssb gen 0.0) *output*))))))
+	(outa i (noddssb gen 0.0)))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-noddssb 1000.0 100.0 5))
@@ -400,7 +399,7 @@
     (run (lambda ()
       (do ((i 0 (1+ i)))
 	  ((= i 10000))
-	(outa i (noddssb gen (* (hz->radians 10.0) (oscil vib))) *output*))))))
+	(outa i (noddssb gen (* (hz->radians 10.0) (oscil vib)))))))))
 |#
 
 
@@ -445,7 +444,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 20000))
-	 (outa i (ncos2 gen 0.0) *output*))))))
+	 (outa i (ncos2 gen 0.0)))))))
 |#
 
 
@@ -465,7 +464,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 20000))
-	 (outa i (ncos4 gen 0.0) *output*))))))
+	 (outa i (ncos4 gen 0.0)))))))
 |#
 
 
@@ -503,7 +502,7 @@
   (let ((gen (make-npcos 100.0 :n 10)))
     (run (lambda () (do ((i 0 (1+ i)))
 	((= i 20000))
-      (outa i (npcos gen 0.0) *output*))))))
+      (outa i (npcos gen 0.0)))))))
 |#
 
 
@@ -539,8 +538,7 @@
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
 	 (outa i (* .125 (+ (nrsin gen1 0.0)
-			    (* .3 (sine-summation gen2 0.0))))
-	       *output*))))))
+			    (* .3 (sine-summation gen2 0.0))))))))))
 |#
 
 
@@ -574,7 +572,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
-	 (outa i (nrcos gen 0.0) *output*))))))
+	 (outa i (nrcos gen 0.0)))))))
 
 (with-sound (:clipped #f :statistics #t :play #t :scaled-to .1)
   (let ((gen (make-nrcos 1200.0 :n 3 :r 0.99))
@@ -584,7 +582,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 30000))
-	 (outa i (nrcos gen (* index (oscil mod))) *output*))))))
+	 (outa i (nrcos gen (* index (oscil mod)))))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-nrcos 2000.0 :n 3 :r 0.5))
@@ -594,7 +592,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 30000))
-	 (outa i (nrcos gen (* index (oscil mod))) *output*))))))
+	 (outa i (nrcos gen (* index (oscil mod)))))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-nrcos 2000.0 :n 3 :r 0.5))
@@ -604,7 +602,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 30000))
-	 (outa i (nrcos gen (* (env index) (oscil mod))) *output*))))))
+	 (outa i (nrcos gen (* (env index) (oscil mod)))))))))
 |#
 
 (definstrument (lutish beg dur freq amp)
@@ -623,8 +621,7 @@
 	 (let ((ind (env index)))
 	   (set! (nrcos-r gen) ind)
 	   (outa i (* (env amplitude)
-		      (nrcos gen (* ind (oscil mod))))
-		 *output*)))))))
+		      (nrcos gen (* ind (oscil mod)))))))))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -715,7 +712,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
-	 (outa i (nrssb gen 0.0) *output*))))))
+	 (outa i (nrssb gen 0.0)))))))
 |#
 
 (definstrument (oboish beg dur freq amp aenv)
@@ -749,7 +746,7 @@
 				 (oscil gen2 (+ (* vib res2)
 						(* (hz->radians freq)
 						   (oscil gen3 vib)))))))))
-	   (outa i result *output*)
+	   (outa i result)
 	   (if *reverb* (outa i (* .01 result) *reverb*))))))))
 
 #|
@@ -823,7 +820,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 20000))
-	 (outa i (nrxysin gen 0.0) *output*))))))
+	 (outa i (nrxysin gen 0.0)))))))
 |#
 
 
@@ -859,7 +856,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 20000))
-	 (outa i (nrxycos gen 0.0) *output*))))))
+	 (outa i (nrxycos gen 0.0)))))))
 |#
 
 
@@ -1006,7 +1003,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
-	 (outa i (nkssb gen 0.0) *output*))))))
+	 (outa i (nkssb gen 0.0)))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-nkssb 1000.0 100.0 5))
@@ -1016,7 +1013,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 30000))
-	 (outa i (nkssb gen (* vibamp (oscil vib))) *output*))))))
+	 (outa i (nkssb gen (* vibamp (oscil vib)))))))))
 
 |#
 (definstrument (nkssber beg dur freq mfreq n vibfreq amp)
@@ -1035,7 +1032,7 @@
 		    (nkssb-interp gen 
 				  (* vibamp (oscil vib))
 				  (env move))) ; interp env
-	       *output*))))))
+	      ))))))
 #|
 (with-sound (:play #t)
   (nkssber 0 1 1000 100 5 5 0.5)
@@ -1057,7 +1054,7 @@
 	 (outa i (* 0.5 (nkssb-interp gen 
 				      (* vibamp (oscil vib))
 				      (env move))) ; interp env
-	       *output*))))))
+	      ))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-nkssb 600.0 100.0 4))
@@ -1070,8 +1067,7 @@
 	 (let ((intrp (oscil vib)))
 	   (outa i (* 0.5 (nkssb-interp gen 
 					(* vibamp intrp)
-					intrp))
-		 *output*)))))))
+					intrp)))))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-nkssb 1000.0 540.0 3))
@@ -1083,8 +1079,7 @@
 	   ((= i 100000)) (let ((intrp (oscil vib)))
 	 (outa i (* 0.5 (nkssb-interp gen 
 				      (* vibamp intrp)
-				      intrp))
-	       *output*)))))))
+				      intrp)))))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-nkssb 300.0 120.0 2))
@@ -1096,8 +1091,7 @@
 	   ((= i 300000)) (let ((intrp (oscil vib)))
 	 (outa i (* 0.5 (nkssb-interp gen 
 				      (* vibamp intrp)
-				      intrp))
-	       *output*)))))))
+				      intrp)))))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-nkssb 30.0 4.0 40))
@@ -1109,8 +1103,7 @@
 	   ((= i 300000)) (let ((intrp (oscil vib)))
 	 (outa i (* 0.5 (nkssb-interp gen 
 				      (* vibamp intrp)
-				      intrp))
-	       *output*)))))))
+				      intrp)))))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-nkssb 20.0 6.0 80)) ; 120 8 80 (100), 6 400
@@ -1123,8 +1116,7 @@
 	   ((= i 300000)) (let ((intrp (oscil vib)))
 	 (outa i (* 0.5 (nkssb-interp gen 
 				      (* vibamp intrp)
-				      intrp))
-	       *output*)))))))
+				      intrp)))))))))
 |#
 
 
@@ -1167,7 +1159,7 @@
     (run (lambda () 
 	   (do ((i 0 (1+ i)))
 	       ((= i 20000))
-	     (outa i (nsincos gen 0.0) *output*))))))
+	     (outa i (nsincos gen 0.0)))))))
 |#
 
 
@@ -1210,7 +1202,7 @@
     (run (lambda () 
 	   (do ((i 0 (1+ i)))
 	       ((= i 20000))
-	     (outa i (npos1cos gen 0.0) *output*))))))
+	     (outa i (npos1cos gen 0.0)))))))
 |#
 
 
@@ -1245,7 +1237,7 @@
     (run (lambda () 
 	   (do ((i 0 (1+ i)))
 	       ((= i 20000))
-	     (outa i (npos3cos gen 0.0) *output*))))))
+	     (outa i (npos3cos gen 0.0)))))))
 |#
 
 
@@ -1279,7 +1271,7 @@
     (run (lambda () 
 	   (do ((i 0 (1+ i)))
 	       ((= i 20000))
-	     (outa i (rcos gen 0.0) *output*))))))
+	     (outa i (rcos gen 0.0)))))))
 |#
 
 (definstrument (stringy beg dur freq amp)
@@ -1302,8 +1294,7 @@
 	 (outa i (+ (* (env clangf)
 		       (rkoddssb clang 0.0))
 		    (* (env ampf)
-		       (rcos carrier 0.0)))
-	       *output*))))))
+		       (rcos carrier 0.0)))))))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -1383,8 +1374,7 @@
 	     (outa i (* (env ampf)
 			(+ (* .85 (rssb-interp gen1 vib -1))
 			   (* .1 (rssb-interp gen2 vib 0))
-			   (* .05 (rssb-interp gen3 vib 1))))
-		   *output*)))))))
+			   (* .05 (rssb-interp gen3 vib 1)))))))))))
 
 #|
 (with-sound (:play #t)
@@ -1426,8 +1416,7 @@
 	     (outa (+ i (* k 30000)) (* (env ampf)
 					(+ (* .85 (rssb-interp gen1 vib -1))
 					   (* .1 (rssb-interp gen2 vib 0))
-					   (* .05 (rssb-interp gen3 vib 1))))
-		   *output*))))))))
+					   (* .05 (rssb-interp gen3 vib 1))))))))))))
 
 (with-sound (:clipped #f :statistics #t :play #t) 
   (do ((k 0 (1+ k))) 
@@ -1457,8 +1446,7 @@
 	     (outa (+ i (* k 30000)) (* (env ampf)
 					(+ (* .85 (rk!ssb gen1 vib))
 					   (* .1 (rssb-interp gen2 vib 0))
-					   (* .05 (rssb-interp gen3 vib 1))))
-		   *output*))))))))
+					   (* .05 (rssb-interp gen3 vib 1))))))))))))
 
 (with-sound (:clipped #f :statistics #t :play #t) 
   (do ((k 0 (1+ k))) 
@@ -1487,8 +1475,7 @@
 	     (outa (+ i (* k 30000)) (* (env ampf)
 					(+ (* .85 (rk!ssb gen1 vib))
 					   (* .1 (rk!ssb gen2 vib))
-					   (* .05 (rk!ssb gen3 vib))))
-		   *output*))))))))
+					   (* .05 (rk!ssb gen3 vib))))))))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-rssb 2000.0 103.0 0.5)))
@@ -1496,7 +1483,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
-	 (outa i (rssb gen 0.0) *output*))))))
+	 (outa i (rssb gen 0.0)))))))
 |#
 
 
@@ -1532,7 +1519,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
-	 (outa i (rxysin gen 0.0) *output*))))))
+	 (outa i (rxysin gen 0.0)))))))
 |#
 
 
@@ -1568,7 +1555,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
-	 (outa i (rxycos gen 0.0) *output*))))))
+	 (outa i (rxycos gen 0.0)))))))
 |#
 
 
@@ -1602,7 +1589,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
-	 (outa i (rxyk!sin gen 0.0) *output*))))))
+	 (outa i (rxyk!sin gen 0.0)))))))
 |#
 
 
@@ -1634,7 +1621,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
-	 (outa i (rxyk!cos gen 0.0) *output*))))))
+	 (outa i (rxyk!cos gen 0.0)))))))
 |#
 
 
@@ -1669,7 +1656,7 @@
     (run (lambda ()
       (do ((i 0 (1+ i)))
 	  ((= i 10000))
-	(outa i (ercos gen 0.0) *output*))))))
+	(outa i (ercos gen 0.0)))))))
 |#
 
 (definstrument (ercoser beg dur freq amp r)
@@ -1686,7 +1673,7 @@
 	  (let ((exp-t (exp (- (ercos-r gen)))))
 	    (set! (ercos-offset gen) (/ (- 1.0 exp-t) (* 2.0 exp-t)))
 	    (set! (ercos-scaler gen) (* (sinh (ercos-r gen)) (ercos-offset gen))))
-	  (outa i (* amp (ercos gen 0.0)) *output*))))))
+	  (outa i (* amp (ercos gen 0.0))))))))
 
 #|
 ;; change "t" during note -- smoothly changing sum-of-cosines spectra (damped "lute-stop" effect)
@@ -1728,7 +1715,7 @@
     (run (lambda ()
       (do ((i 0 (1+ i)))
 	  ((= i 20000))
-	(outa i (erssb gen 0.0) *output*))))))
+	(outa i (erssb gen 0.0)))))))
 |#
 
 
@@ -1764,7 +1751,7 @@
   (let ((gen (make-r2sin 100.0 :r 0.5)))
     (run (lambda () (do ((i 0 (1+ i)))
 	((= i 20000))
-      (outa i (r2sin gen 0.0) *output*))))))
+      (outa i (r2sin gen 0.0)))))))
 |#
 
 
@@ -1796,7 +1783,7 @@
   (let ((gen (make-r2cos 100.0 :r 0.5)))
     (run (lambda () (do ((i 0 (1+ i)))
 	((= i 20000))
-      (outa i (r2cos gen 0.0) *output*))))))
+      (outa i (r2cos gen 0.0)))))))
 |#
 
 
@@ -1836,7 +1823,7 @@
      (lambda () 
        (do ((i 0 (1+ i)))
 	   ((= i 20000))
-	 (outa i (r2ssb gen 0.0) *output*))))))
+	 (outa i (r2ssb gen 0.0)))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-r2ssb 1000.0 100.0 0.5))
@@ -1845,7 +1832,7 @@
      (lambda () 
        (do ((i 0 (1+ i)))
 	   ((= i 20000))
-	 (outa i (r2ssb gen (* (hz->radians 10.0) (oscil vib))) *output*))))))
+	 (outa i (r2ssb gen (* (hz->radians 10.0) (oscil vib)))))))))
 |#
 
 
@@ -1877,7 +1864,7 @@
   (let ((gen (make-eoddcos 400.0 :r 1.0)))
     (run (lambda () (do ((i 0 (1+ i)))
 	((= i 10000))
-      (outa i (eoddcos gen 0.0) *output*))))))
+      (outa i (eoddcos gen 0.0)))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-eoddcos 400.0 :r 0.0))
@@ -1886,7 +1873,7 @@
 	   (do ((i 0 (1+ i)))
 	       ((= i 10000))
 	     (set! (eoddcos-r gen) (env a-env))
-	     (outa i (eoddcos gen 0.0) *output*))))))
+	     (outa i (eoddcos gen 0.0)))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen1 (make-eoddcos 400.0 :r 0.0))
@@ -1896,7 +1883,7 @@
 	   (do ((i 0 (1+ i)))
 	       ((= i 10000))
 	     (set! (eoddcos-r gen1) (env a-env))
-	     (outa i (* .5 (eoddcos gen1 (* .1 (oscil gen2)))) *output*))))))
+	     (outa i (* .5 (eoddcos gen1 (* .1 (oscil gen2))))))))))
 |#
 
 
@@ -1921,7 +1908,7 @@
     (run (lambda ()
 	   (do ((i 0 (1+ i)))
 	       ((= i 10000))
-	     (outa i (* .3 (koddcos gen 0.0)) *output*))))))
+	     (outa i (* .3 (koddcos gen 0.0))))))))
 |#
 
 ;;; as printed in J, this is not usable -- 1-2sin can be 3 so acos will be complex -- looks like we're missing: x < pi
@@ -1959,7 +1946,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
-	 (outa i (rkcos gen 0.0) *output*))))))
+	 (outa i (rkcos gen 0.0)))))))
 |#
 
 
@@ -1992,7 +1979,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
-	 (outa i (rksin gen 0.0) *output*))))))
+	 (outa i (rksin gen 0.0)))))))
 |#
 
 (def-clm-struct (rkssb
@@ -2031,8 +2018,7 @@
        (do ((i 0 (1+ i)))
 	   ((= i 20000))
 	 (outa i (* (env ampf) 
-		    (rkssb gen 0.0))
-	       *output*))))))
+		    (rkssb gen 0.0))))))))
 |#
 
 
@@ -2069,7 +2055,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
-	 (outa i (rk!cos gen 0.0) *output*))))))
+	 (outa i (rk!cos gen 0.0)))))))
 |#
 
 ;;; the k! denominator dominates, so r * modfreq = formant center approximately; (n!)^(1/n) 
@@ -2086,7 +2072,7 @@
 	   ((= i 100000)) 
 	 (set! (rk!cos-r gen) r) 
 	 (set! r (+ r incr))
-	 (outa i (rk!cos gen 0.0) *output*))))))
+	 (outa i (rk!cos gen 0.0)))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-rk!cos 300.0 :r 10.0)) 
@@ -2099,7 +2085,7 @@
 	   ((= i 10000)) 
 	 (set! (rk!cos-r gen) r) 
 	 (set! r (+ r incr))
-	 (outa i (* (env ampf) (rk!cos gen 0.0)) *output*))))))
+	 (outa i (* (env ampf) (rk!cos gen 0.0))))))))
 
 (with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
   (let ((gen (make-rk!cos 1000.0 :r 8.0)) 
@@ -2108,7 +2094,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000)) 
-	 (outa i (rk!cos gen (env frqf)) *output*))))))
+	 (outa i (rk!cos gen (env frqf))))))))
 
 (with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
   (let ((gen (make-rk!cos 3000.0 :r 1.0)) (ampf (make-env '(0 0 1 1 10 1 11 0) :length 10000))
@@ -2117,7 +2103,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000)) 
-	 (outa i (* (env ampf) (rk!cos gen (env frqf))) *output*))))))
+	 (outa i (* (env ampf) (rk!cos gen (env frqf)))))))))
 
 (with-sound (:play #t :scaled-to .5)
   (do ((k 0 (1+ k)))
@@ -2130,8 +2116,7 @@
 	     ((= i 3000)) 
 	   (outa (+ i (* k 4000)) 
 		 (* (env ampf) 
-		    (rk!cos gen (env frqf))) 
-		 *output*)))))))
+		    (rk!cos gen (env frqf))))))))))
 
 (with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
   (do ((k 0 (1+ k)))
@@ -2142,7 +2127,7 @@
        (lambda ()
 	 (do ((i 0 (1+ i)))
 	     ((= i 3000)) 
-	   (outa (+ i (* k 10000)) (* (env ampf) (rk!cos gen (env frqf))) *output*)))))))
+	   (outa (+ i (* k 10000)) (* (env ampf) (rk!cos gen (env frqf))))))))))
 
 (with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
   (do ((k 0 (1+ k)))
@@ -2153,7 +2138,7 @@
        (lambda ()
 	 (do ((i 0 (1+ i)))
 	     ((= i 3000)) 
-	   (outa (+ i (* k 10000)) (* (env ampf) (rk!cos gen (env frqf))) *output*)))))))
+	   (outa (+ i (* k 10000)) (* (env ampf) (rk!cos gen (env frqf))))))))))
 |#
 
 (def-clm-struct (rk!ssb
@@ -2188,7 +2173,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 20000))
-	 (outa i (* (env ampf) (rk!ssb gen 0.0)) *output*))))))
+	 (outa i (* (env ampf) (rk!ssb gen 0.0))))))))
 
 ; (make-rk!ssb 0.0 120.0 :r 15) gives a widely separated wave-train of pulses
 ;   so (make-rk!ssb 0.0 40.0 :r 70) is insecty (:r 100)
@@ -2212,8 +2197,7 @@
 					 (oscil gen1))) 
 				 (env rf)))
 	 (outa i (* (env ampf)
-		    (rk!ssb gen 0.0)) 
-	       *output*))))))
+		    (rk!ssb gen 0.0))))))))
 
 #|
 (with-sound (:statistics #t :play #t :clipped #f)
@@ -2262,7 +2246,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
-	 (outa i (r2k!cos gen 0.0) *output*))))))
+	 (outa i (r2k!cos gen 0.0)))))))
 
 (with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
   (let ((gen (make-r2k!cos 440.0 :r 0.5 :k 3.0)) 
@@ -2272,7 +2256,7 @@
        (do ((i 0 (1+ i)))
 	   ((= i 80000)) 
 	 (set! (r2k!cos-k gen) (env indf))
-	 (outa i (r2k!cos gen 0.0) *output*))))))
+	 (outa i (r2k!cos gen 0.0)))))))
 |#
 
 (definstrument (pianoy beg dur freq amp)
@@ -2285,8 +2269,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (r2k!cos gen 0.0)) 
-	       *output*))))))
+		    (r2k!cos gen 0.0))))))))
 
 #|
 (with-sound (:statistics #t :play #t :clipped #f)
@@ -2310,8 +2293,7 @@
 					 (oscil gen1)))
 				 (env rf)))
 	 (outa i (* (env ampf)
-		    (r2k!cos gen 0.0)) 
-	       *output*))))))
+		    (r2k!cos gen 0.0))))))))
 
 #|
 (with-sound (:statistics #t :play #t :clipped #f)
@@ -2334,8 +2316,7 @@
 	 (outa i (+ (* (env ampf)
 		       (r2k!cos gen 0.0))
 		    (* (env kmpf) 
-		       (fmssb knock 0.0)))
-	       *output*))))))
+		       (fmssb knock 0.0)))))))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t) 
@@ -2374,7 +2355,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
-	 (outa i (k2sin gen 0.0) *output*))))))
+	 (outa i (k2sin gen 0.0)))))))
 |#
 
 
@@ -2404,7 +2385,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
-	 (outa i (k2cos gen 0.0) *output*))))))
+	 (outa i (k2cos gen 0.0)))))))
 |#
 
 
@@ -2437,7 +2418,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
-	 (outa i (k2ssb gen 0.0) *output*))))))
+	 (outa i (k2ssb gen 0.0)))))))
 |#
 
 
@@ -2471,7 +2452,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
-	 (outa i (dblsum gen 0.0) *output*))))))
+	 (outa i (dblsum gen 0.0)))))))
 |#
 
 
@@ -2517,7 +2498,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
-	 (outa i (rkoddssb gen 0.0) *output*))))))
+	 (outa i (rkoddssb gen 0.0)))))))
 |#
 
 (definstrument (glassy beg dur freq amp)
@@ -2534,8 +2515,7 @@
 	   ((= i stop))
 	 (set! (rkoddssb-r clang) (env crf))
 	 (outa i (* (env clangf)
-		    (rkoddssb clang 0.0))
-	       *output*))))))
+		    (rkoddssb clang 0.0))))))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -2554,7 +2534,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
-	 (outa i (* (env ampf) (sin (rkoddssb gen (rand noi)))) *output*))))))
+	 (outa i (* (env ampf) (sin (rkoddssb gen (rand noi))))))))))
 |#
 
 
@@ -2593,7 +2573,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
-	 (outa i (krksin gen 0.0) *output*))))))
+	 (outa i (krksin gen 0.0)))))))
 
 (with-sound (:clipped #f :statistics #t :scaled-to .5 :play #t)
   (let ((gen (make-krksin 6.0 0.965))) ; 60 .6 also
@@ -2601,7 +2581,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 100000))
-	 (outa i (krksin gen 0.0) *output*))))))
+	 (outa i (krksin gen 0.0)))))))
 
 (do ((i 0 (1+ i)))
     ((= i 10))
@@ -2611,7 +2591,7 @@
 				     (lambda ()
 				       (do ((i 0 (1+ i)))
 					   ((= i 10000))
-					 (outa i (krksin gen 0.0) *output*)))))))))
+					 (outa i (krksin gen 0.0))))))))))
     (snd-display ";~A: ~A" (* 0.1 i) mx)))
 |#
 
@@ -2646,7 +2626,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
-	 (outa i (abssin gen 0.0) *output*))))))
+	 (outa i (abssin gen 0.0)))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((vib (make-abssin 100.0)) ; spacing will be 200, if FM you get index-proportional amount as constant offset
@@ -2658,8 +2638,7 @@
 	   ((= i 10000))
 	 (outa i 
 	       (* (env ampf)
-		  (oscil gen 0.0 (* 3 (abssin vib 0.0))))
-	       *output*))))))
+		  (oscil gen 0.0 (* 3 (abssin vib 0.0))))))))))
 
 ;;; pitch is 2*freq, 200 1, 400 .203, 600 .087, 800 .049, 1000 .031, 1200 .021
 ;;;                      1      .2        .086      .048       .030       .021 -- (/ 3.0 (- (* 4 (* 6 6)) 1))
@@ -2703,7 +2682,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
-	 (outa i (abcos gen 0.0) *output*))))))
+	 (outa i (abcos gen 0.0)))))))
 |#
 
 
@@ -2733,7 +2712,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
-	 (outa i (absin gen 0.0) *output*))))))
+	 (outa i (absin gen 0.0)))))))
 |#
 
 
@@ -2781,7 +2760,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
-	 (outa i (r2k2cos gen 0.0) *output*))))))
+	 (outa i (r2k2cos gen 0.0)))))))
 |#
 
 
@@ -2833,7 +2812,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
-	 (outa i (blsaw gen 0.0) *output*))))))
+	 (outa i (blsaw gen 0.0)))))))
 |#
 
 ;;; needs normalization
@@ -2875,7 +2854,7 @@
      (lambda () 
        (do ((i 0 (1+ i)))
 	   ((= i 1000))
-	 (outa i (asyfm-J gen 0.0) *output*))))))
+	 (outa i (asyfm-J gen 0.0)))))))
 
 (with-sound (:clipped #f :statistics #t :play #t) 
   (let ((gen (make-asyfm 2000.0 :ratio .1 :index 1))
@@ -2885,7 +2864,7 @@
        (do ((i 0 (1+ i)))
 	   ((= i 20000))
 	 (set! (asyfm-r gen) (env r-env))
-	 (outa i (asyfm-J gen 0.0) *output*))))))
+	 (outa i (asyfm-J gen 0.0)))))))
 
 (define (val index r)
   (let ((sum 0.0))
@@ -2905,7 +2884,7 @@
 					   (lambda () 
 					     (do ((i 0 (1+ i)))
 						 ((= i 1000))
-					       (outa i (asymmetric-fm gen index) *output*)))))))))
+					       (outa i (asymmetric-fm gen index))))))))))
 	(if (> (abs (- peak 1.0)) .1)
 	    (snd-display ";asymmetric-fm peak: ~A, index: ~A, r: ~A" peak index r))))
     (list -10.0 -1.5 -0.5 0.5 1.0 1.5 10.0)))
@@ -2932,7 +2911,7 @@
      (lambda () 
        (do ((i 0 (1+ i)))
 	   ((= i 1000))
-	 (outa i (asyfm-I gen 0.0) *output*))))))
+	 (outa i (asyfm-I gen 0.0)))))))
 |#
 
 
@@ -2966,7 +2945,7 @@
   (let ((gen (make-bess 100.0 :n 0)))
     (run (lambda () (do ((i 0 (1+ i)))
 	((= i 1000))
-      (outa i (bess gen 0.0) *output*))))))
+      (outa i (bess gen 0.0)))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen1 (make-bess 400.0 :n 1))
@@ -2974,7 +2953,7 @@
 	(vol (make-env '(0 0 1 1 9 1 10 0) :scaler 2.0 :length 20000)))
     (run (lambda () (do ((i 0 (1+ i)))
 	((= i 20000))
-      (outa i (bess gen1 (* (env vol) (bess gen2 0.0))) *output*))))))
+      (outa i (bess gen1 (* (env vol) (bess gen2 0.0)))))))))
 
 ;;; max amps:
 (do ((i 1 (1+ i)))
@@ -2993,7 +2972,7 @@
 	(vol (make-env '(0 1 1 0) :scaler 1.0 :length 20000)))
     (run (lambda () (do ((i 0 (1+ i)))
 	((= i 20000))
-      (outa i (bess gen1 (* (env vol) (oscil gen2 0.0))) *output*))))))
+      (outa i (bess gen1 (* (env vol) (oscil gen2 0.0)))))))))
 
 ;;; also gen2 800, env scl 0.2
 |#
@@ -3040,7 +3019,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
-	 (outa i (jjcos gen 0.0) *output*))))))
+	 (outa i (jjcos gen 0.0)))))))
 
 ;;; example:
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -3049,7 +3028,7 @@
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 20000))
-	 (outa i (jjcos gen 0.0) *output*))))))
+	 (outa i (jjcos gen 0.0)))))))
 
 :(* (bes-jn 1 1) (bes-jn 1 2))
 0.253788089467046
@@ -3116,7 +3095,7 @@ which again matches
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
-	 (outa i (jjsin gen 0.0) *output*))))))
+	 (outa i (jjsin gen 0.0)))))))
 
 (define (jjesin gen fm)
   (declare (gen jjcos) (fm float))
@@ -3135,7 +3114,7 @@ which again matches
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
-	 (outa i (jjesin gen 0.0) *output*))))))
+	 (outa i (jjesin gen 0.0)))))))
 
 |#
 
@@ -3170,7 +3149,7 @@ which again matches
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 30000))
-	 (outa i (j0evencos gen 0.0) *output*))))))
+	 (outa i (j0evencos gen 0.0)))))))
 
 index 10 (so 10/2 is the bes-jn arg):
 
@@ -3197,7 +3176,7 @@ index 10 (so 10/2 is the bes-jn arg):
        (do ((i 0 (1+ i)))
 	   ((= i 30000)) 
 	 (set! (j0evencos-index gen) (env indf))
-	 (outa i (* 0.5 (j0evencos gen 0.0)) *output*))))))
+	 (outa i (* 0.5 (j0evencos gen 0.0))))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-j0evencos 100.0 0.0)) 
@@ -3208,7 +3187,7 @@ index 10 (so 10/2 is the bes-jn arg):
        (do ((i 0 (1+ i)))
 	   ((= i 30000)) 
 	 (set! (j0evencos-index gen) (env indf))
-	 (outa i (* 0.5 (oscil carrier) (j0evencos gen 0.0)) *output*))))))
+	 (outa i (* 0.5 (oscil carrier) (j0evencos gen 0.0))))))))
 
 ;;; why no "carrier"?  I subtracted DC out above -- to make this look right, I need to use the bes(sin) without any fixup.
 
@@ -3221,7 +3200,7 @@ index 10 (so 10/2 is the bes-jn arg):
        (do ((i 0 (1+ i)))
 	   ((= i 30000)) 
 	 (set! (j0evencos-index gen) (env indf))
-	 (outa i (* 0.5 (j0evencos gen (oscil carrier))) *output*))))))
+	 (outa i (* 0.5 (j0evencos gen (oscil carrier)))))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-j0evencos 100.0 0.0))                 ; also 20 800, 20 200 (less index mvt), or 200 50 
@@ -3232,7 +3211,7 @@ index 10 (so 10/2 is the bes-jn arg):
        (do ((i 0 (1+ i)))
 	   ((= i 30000)) 
 	 (set! (j0evencos-index gen) (env indf))
-	 (outa i (* 0.5 (j0evencos gen (* .1 (oscil carrier)))) *output*))))))
+	 (outa i (* 0.5 (j0evencos gen (* .1 (oscil carrier))))))))))
 
 (define (j0even beg dur freq amp mc-ratio index)
   (let* ((gen (make-j0evencos (* mc-ratio freq) 0.0)) 
@@ -3245,7 +3224,7 @@ index 10 (so 10/2 is the bes-jn arg):
        (do ((i start (1+ i)))
 	   ((= i end))
 	 (set! (j0evencos-index gen) (env indf))
-	 (outa i (* 0.5 (j0evencos gen (* index (oscil carrier)))) *output*))))))
+	 (outa i (* 0.5 (j0evencos gen (* index (oscil carrier))))))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
 	    (do ((i 0 (1+ i)))
@@ -3288,7 +3267,7 @@ index 10 (so 10/2 is the bes-jn arg):
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
-	 (outa i (j2cos gen 0.0) *output*))))))
+	 (outa i (j2cos gen 0.0)))))))
 |#
 
 
@@ -3329,7 +3308,7 @@ index 10 (so 10/2 is the bes-jn arg):
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 210000))
-	 (outa i (jpcos gen 0.0) *output*))))))
+	 (outa i (jpcos gen 0.0)))))))
 
 ;;; -.725, 1/.275
 |#
@@ -3367,7 +3346,7 @@ index 10 (so 10/2 is the bes-jn arg):
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 41000))
-	 (outa i (jncos gen 0.0) *output*))))))
+	 (outa i (jncos gen 0.0)))))))
 |#
 
 
@@ -3427,7 +3406,7 @@ index 10 (so 10/2 is the bes-jn arg):
 		  (lambda ()
 		    (do ((i 0 (1+ i)))
 			((= i 10000))
-		      (outa i (j0j1cos gen 0.0) *output*)))))))))
+		      (outa i (j0j1cos gen 0.0))))))))))
     (snd-display ";~A: ~A" i pk)))
 ;0: 0.0
 ;1: 0.555559098720551
@@ -3454,7 +3433,7 @@ index 10 (so 10/2 is the bes-jn arg):
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 30000))
-	 (outa i (j0j1cos gen 0.0) *output*))))))
+	 (outa i (j0j1cos gen 0.0)))))))
 |#
 
 ;;; --------------------------------------------------------------------------------
@@ -3496,7 +3475,7 @@ index 10 (so 10/2 is the bes-jn arg):
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 30000))
-	 (outa i (jycos gen 0.0) *output*))))))
+	 (outa i (jycos gen 0.0)))))))
 
 :(* (bes-yn 1 1.5) (bes-jn 1 1.0))
 -0.181436652807559
@@ -3539,7 +3518,7 @@ index 10 (so 10/2 is the bes-jn arg):
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 30000))
-	 (outa i (jcos gen 0.0) *output*))))))
+	 (outa i (jcos gen 0.0)))))))
 |#
 
 
@@ -3570,7 +3549,7 @@ index 10 (so 10/2 is the bes-jn arg):
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 30000))
-	 (outa i (sin2n gen 0.0) *output*))))))
+	 (outa i (sin2n gen 0.0)))))))
 |#
 
 
@@ -3738,7 +3717,7 @@ index 10 (so 10/2 is the bes-jn arg):
     (run (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 20000))
-	 (outa i (blackman black4 0.0) *output*))))))
+	 (outa i (blackman black4 0.0)))))))
 |#
 
 
@@ -3786,8 +3765,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	((= i end))
       (let ((val (sin (+ cr (* fm-index (sin md))))))
         (outa i (* amp (+ (* (- 1.0 interp) (real-part val))
-                          (* interp (imag-part val))))
-              *output*)
+                          (* interp (imag-part val)))))
         (set! cr (+ cr cr-incr))
         (set! md (+ md md-incr))))))
 
@@ -3799,7 +3777,7 @@ index 10 (so 10/2 is the bes-jn arg):
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
-	 (outa i (* .3 (fmssb gen 0.0)) *output*))))))
+	 (outa i (* .3 (fmssb gen 0.0))))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-fmssb 1000.0 100.0 :index 8.0)) 
@@ -3810,7 +3788,7 @@ index 10 (so 10/2 is the bes-jn arg):
        (do ((i 0 (1+ i)))
 	   ((= i 30000)) 
 	 (set! (fmssb-index gen) (env indf))
-	 (outa i (* (env ampf) (fmssb gen 0.0)) *output*))))))
+	 (outa i (* (env ampf) (fmssb gen 0.0))))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-fmssb 1000.0 50.0 :index 1.0)) 
@@ -3821,7 +3799,7 @@ index 10 (so 10/2 is the bes-jn arg):
        (do ((i 0 (1+ i)))
 	   ((= i 30000)) 
 	 (set! (fmssb-index gen) (env indf))
-	 (outa i (* (env ampf) (fmssb gen 0.0)) *output*))))))
+	 (outa i (* (env ampf) (fmssb gen 0.0))))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-fmssb 100.0 540.0 :index 1.0)) ; also 100 700
@@ -3835,7 +3813,7 @@ index 10 (so 10/2 is the bes-jn arg):
        (do ((i 0 (1+ i)))
 	   ((= i 30000)) 
 	 (set! (fmssb-index gen) (env indf))
-	 (outa i (* (env ampf) (fmssb gen 0.0)) *output*))))))
+	 (outa i (* (env ampf) (fmssb gen 0.0))))))))
 
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-fmssb 10.0 20.0 :index 1.0)) 
@@ -3846,7 +3824,7 @@ index 10 (so 10/2 is the bes-jn arg):
        (do ((i 0 (1+ i)))
 	   ((= i 30000)) 
 	 (set! (fmssb-index gen) (env indf))
-	 (outa i (* (env ampf) (fmssb gen 0.0)) *output*))))))
+	 (outa i (* (env ampf) (fmssb gen 0.0))))))))
 
 (with-sound (:statistics #t :scaled-to .5 :play #t)
   (let ((gen1 (make-fmssb 500 500))
@@ -3862,8 +3840,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	   (set! (fmssb-index gen2) ind)
 	   (outa i (* (env ampf)
 		      (+ (fmssb gen1 0.0)
-			 (fmssb gen2 0.0)))
-		 *output*)))))))
+			 (fmssb gen2 0.0))))))))))
 
 
 ;;; imaginary machines (also imaginary beasts)
@@ -3881,7 +3858,7 @@ index 10 (so 10/2 is the bes-jn arg):
        (do ((i start (1+ i)))
 	   ((= i stop)) 
 	 (set! (fmssb-index gen) (env indf))
-	 (outa i (* (env ampf) (fmssb gen (env frqf))) *output*))))))
+	 (outa i (* (env ampf) (fmssb gen (env frqf)))))))))
 #|
 
 (with-sound (:statistics #t :play #t)
@@ -3921,8 +3898,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	   ((= i (* 12 44100)))
 	 (outa i (* (env ampf) 
 		    (+ (rkoddssb gen1 (env frqf))
-		       (* .2 (sin (rkoddssb gen (rand noi))))))
-	       *output*)))))
+		       (* .2 (sin (rkoddssb gen (rand noi)))))))))))
   (do ((i 0.0 (+ i 2)))
       ((>= i 10.0))
     (machine1 i 3 100 700 0.5 4.0 0.0)
@@ -3972,7 +3948,7 @@ index 10 (so 10/2 is the bes-jn arg):
 			(* (sin cx)
 			   (* (sin (* index (sin mx))))))) 
 	                   ;; use -index for reflection
-	    *output*)
+	   )
       (set! cx (+ cx car-incr))
       (set! mx (+ mx mod-incr)))))
 
@@ -4010,7 +3986,7 @@ index 10 (so 10/2 is the bes-jn arg):
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 30000))
-	 (outa i (k3sin gen 0.0) *output*))))))
+	 (outa i (k3sin gen 0.0)))))))
 |#
 
 
@@ -4084,7 +4060,7 @@ index 10 (so 10/2 is the bes-jn arg):
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 30000))
-	 (outa i (izcos gen 0.0) *output*))))))
+	 (outa i (izcos gen 0.0)))))))
 |#
 
 
@@ -4138,7 +4114,7 @@ index 10 (so 10/2 is the bes-jn arg):
 				 (oscil (vector-ref carriers k)
 					(+ (* n vib)
 					   (polyshape (vector-ref fmoscs k) 1.0 (* n vib))))))))
-	   (outa i sum *output*)))))))
+	   (outa i sum)))))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -4200,7 +4176,7 @@ index 10 (so 10/2 is the bes-jn arg):
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 22050))
-	 (outa i (adjustable-square-wave gen 0.0) *output*))))))
+	 (outa i (adjustable-square-wave gen 0.0)))))))
 |#
 
 
@@ -4230,7 +4206,7 @@ index 10 (so 10/2 is the bes-jn arg):
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 22050))
-	 (outa i (adjustable-triangle-wave gen 0.0) *output*))))))
+	 (outa i (adjustable-triangle-wave gen 0.0)))))))
 |#
 
 
@@ -4260,7 +4236,7 @@ index 10 (so 10/2 is the bes-jn arg):
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 22050))
-	 (outa i (adjustable-sawtooth-wave gen 0.0) *output*))))))
+	 (outa i (adjustable-sawtooth-wave gen 0.0)))))))
 |#
 
 
@@ -4291,7 +4267,7 @@ index 10 (so 10/2 is the bes-jn arg):
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 22050))
-	 (outa i (adjustable-oscil gen 0.0) *output*))))))
+	 (outa i (adjustable-oscil gen 0.0)))))))
 |#
 
 ;;;--------------------------------------------------------------------------------
@@ -4340,7 +4316,7 @@ index 10 (so 10/2 is the bes-jn arg):
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 22050))
-	 (outa i (round-interp gen 0.0) *output*))))))
+	 (outa i (round-interp gen 0.0)))))))
 |#
 
 

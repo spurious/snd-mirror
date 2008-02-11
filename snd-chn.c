@@ -8116,7 +8116,7 @@ given channel.  Currently, this must be a channel (sound) created by " S_make_va
     int i, loc;
     result = make_sound_data(1, cp->edits[0]->samples); /* need actual gc-able object here */
     loc = snd_protect(result);
-    sd = (sound_data *)XEN_OBJECT_REF(result);
+    sd = XEN_TO_SOUND_DATA(result);
     for (i = 0; i < sd->length; i++)
       sd->data[0][i] = MUS_SAMPLE_TO_DOUBLE(cp->sounds[0]->buffered_data[i]);
     snd_unprotect_at(loc);

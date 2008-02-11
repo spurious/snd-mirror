@@ -2442,7 +2442,7 @@ static xen_value *add_value_to_ptree(ptree *prog, XEN val, int type)
     case R_FLOAT:      v = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, XEN_TO_C_DOUBLE(val)), R_VARIABLE);                          break;
     case R_BOOL:       v = make_xen_value(R_BOOL, add_int_to_ptree(prog, (Int)XEN_TO_C_BOOLEAN(val)), R_VARIABLE);                     break;
     case R_VCT:        v = make_xen_value(R_VCT, add_vct_to_ptree(prog, xen_to_vct(val)), R_VARIABLE);                                 break;
-    case R_SOUND_DATA: v = make_xen_value(R_SOUND_DATA, add_sound_data_to_ptree(prog, (sound_data *)XEN_OBJECT_REF(val)), R_VARIABLE); break;
+    case R_SOUND_DATA: v = make_xen_value(R_SOUND_DATA, add_sound_data_to_ptree(prog, XEN_TO_SOUND_DATA(val)), R_VARIABLE);            break;
     case R_READER:     v = make_xen_value(R_READER, add_reader_to_ptree(prog, xen_to_sample_reader(val)), R_VARIABLE);                 break;
     case R_MIX_READER: v = make_xen_value(R_MIX_READER, add_mix_reader_to_ptree(prog, (struct mix_fd *)xen_to_mix_sample_reader(val)), R_VARIABLE); break;
     case R_CHAR:       v = make_xen_value(R_CHAR, add_int_to_ptree(prog, (Int)(XEN_TO_C_CHAR(val))), R_VARIABLE);                      break;
@@ -9694,8 +9694,7 @@ static void out_any_sound_data_4(int *args, ptree *pt)
   FLOAT_RESULT = FLOAT_ARG_2;
 }
 
-
-static xen_value *outa_1(ptree *prog, xen_value **args, int num_args) 
+static xen_value *outa_2(ptree *prog, xen_value **args, int num_args) 
 {
   if (args[3]->type == R_CLM)
     return(package(prog, R_FLOAT, outa_3, "outa_3", args, 3));
@@ -9706,7 +9705,7 @@ static xen_value *outa_1(ptree *prog, xen_value **args, int num_args)
   return(package(prog, R_FLOAT, out_f_3, "out_f_3", args, 3));  
 }
 
-static xen_value *outb_1(ptree *prog, xen_value **args, int num_args) 
+static xen_value *outb_2(ptree *prog, xen_value **args, int num_args) 
 {
   if (args[3]->type == R_CLM)
     return(package(prog, R_FLOAT, outb_3, "outb_3", args, 3));
@@ -9715,7 +9714,7 @@ static xen_value *outb_1(ptree *prog, xen_value **args, int num_args)
   return(package(prog, R_FLOAT, out_f_3, "out_f_3", args, 3));  
 }
 
-static xen_value *outc_1(ptree *prog, xen_value **args, int num_args) 
+static xen_value *outc_2(ptree *prog, xen_value **args, int num_args) 
 {
   if (args[3]->type == R_CLM)
     return(package(prog, R_FLOAT, outc_3, "outc_3", args, 3));
@@ -9724,7 +9723,7 @@ static xen_value *outc_1(ptree *prog, xen_value **args, int num_args)
   return(package(prog, R_FLOAT, out_f_3, "out_f_3", args, 3));  
 }
 
-static xen_value *outd_1(ptree *prog, xen_value **args, int num_args) 
+static xen_value *outd_2(ptree *prog, xen_value **args, int num_args) 
 {
   if (args[3]->type == R_CLM)
     return(package(prog, R_FLOAT, outd_3, "outd_3", args, 3));
@@ -9733,7 +9732,57 @@ static xen_value *outd_1(ptree *prog, xen_value **args, int num_args)
   return(package(prog, R_FLOAT, out_f_3, "out_f_3", args, 3));  
 }
 
-static xen_value *out_any_1(ptree *prog, xen_value **args, int num_args)
+static xen_value *outn_1(ptree *prog, xen_value **args, int num_args, xen_value *(*out_func)(ptree *prog, xen_value **args, int num_args))
+{
+  if (num_args == 2)
+    {
+      xen_value *true_args[4];
+      xen_value *rtn;
+      int k;
+      XEN output;
+      output = mus_clm_output();
+      if (mus_xen_p(output))
+	true_args[3] = make_xen_value(R_CLM, add_clm_to_ptree(prog, XEN_TO_MUS_ANY(output), XEN_FALSE), R_VARIABLE);
+      else
+	{
+	  if (mus_vct_p(output))
+	    true_args[3] = make_xen_value(R_VCT, add_vct_to_ptree(prog, XEN_TO_VCT(output)), R_VARIABLE);
+	  else
+	    {
+	      if (sound_data_p(output))
+		true_args[3] = make_xen_value(R_SOUND_DATA, add_sound_data_to_ptree(prog, XEN_TO_SOUND_DATA(output)), R_VARIABLE);
+	      else true_args[3] = make_xen_value(R_XEN, add_xen_to_ptree(prog, output), R_VARIABLE);
+	    }
+	}
+      for (k = 0; k < 3; k++) true_args[k] = args[k];
+      rtn = out_func(prog, true_args, 3);
+      FREE(true_args[3]);
+      return(rtn);
+    }
+  return(out_func(prog, args, num_args));
+}
+
+static xen_value *outa_1(ptree *prog, xen_value **args, int num_args) 
+{
+  return(outn_1(prog, args, num_args, outa_2));
+}
+
+static xen_value *outb_1(ptree *prog, xen_value **args, int num_args) 
+{
+  return(outn_1(prog, args, num_args, outb_2));
+}
+
+static xen_value *outc_1(ptree *prog, xen_value **args, int num_args) 
+{
+  return(outn_1(prog, args, num_args, outc_2));
+}
+
+static xen_value *outd_1(ptree *prog, xen_value **args, int num_args) 
+{
+  return(outn_1(prog, args, num_args, outd_2));
+}
+
+static xen_value *out_any_2(ptree *prog, xen_value **args, int num_args)
 {
   if (args[4]->type == R_CLM)
     return(package(prog, R_FLOAT, out_any_4, "out_any_4", args, 4));
@@ -9742,6 +9791,36 @@ static xen_value *out_any_1(ptree *prog, xen_value **args, int num_args)
   if (args[4]->type == R_SOUND_DATA)
     return(package(prog, R_FLOAT, out_any_sound_data_4, "out_any_sound_data_4", args, 4));
   return(package(prog, R_FLOAT, out_any_f_4, "out_any_f_4", args, 4));  
+}
+
+static xen_value *out_any_1(ptree *prog, xen_value **args, int num_args)
+{
+  if (num_args == 3)
+    {
+      xen_value *true_args[5];
+      xen_value *rtn;
+      int k;
+      XEN output;
+      output = mus_clm_output();
+      if (mus_xen_p(output))
+	true_args[4] = make_xen_value(R_CLM, add_clm_to_ptree(prog, XEN_TO_MUS_ANY(output), XEN_FALSE), R_VARIABLE);
+      else
+	{
+	  if (mus_vct_p(output))
+	    true_args[4] = make_xen_value(R_VCT, add_vct_to_ptree(prog, XEN_TO_VCT(output)), R_VARIABLE);
+	  else
+	    {
+	      if (sound_data_p(output))
+		true_args[4] = make_xen_value(R_SOUND_DATA, add_sound_data_to_ptree(prog, XEN_TO_SOUND_DATA(output)), R_VARIABLE);
+	      else true_args[4] = make_xen_value(R_XEN, add_xen_to_ptree(prog, output), R_VARIABLE);
+	    }
+	}
+      for (k = 0; k < 4; k++) true_args[k] = args[k];
+      rtn = out_any_2(prog, true_args, 4);
+      FREE(true_args[4]);
+      return(rtn);
+    }
+  return(out_any_2(prog, args, num_args));
 }
 
 
@@ -10896,7 +10975,7 @@ static XEN xen_value_to_xen(ptree *pt, xen_value *v)
 	  sd = sound_data_copy(pt->sds[v->addr]);
 	  val = wrap_sound_data(sd->chans, sd->length, sd->data);
 	  FREE(sd);
-	  sd = (sound_data *)XEN_OBJECT_REF(val);
+	  sd = XEN_TO_SOUND_DATA(val);
 	  sd->wrapped = false;
 	}
       break;
@@ -11333,7 +11412,7 @@ static int xen_to_addr(ptree *pt, XEN arg, int type, int addr)
     case R_CHAR:         pt->ints[addr] = (Int)XEN_TO_C_CHAR(arg);          break;
     case R_BOOL:         pt->ints[addr] = (Int)XEN_TO_C_BOOLEAN(arg);       break;
     case R_VCT:          pt->vcts[addr] = xen_to_vct(arg);                  break;
-    case R_SOUND_DATA:   pt->sds[addr] = (sound_data *)XEN_OBJECT_REF(arg); break;
+    case R_SOUND_DATA:   pt->sds[addr] = XEN_TO_SOUND_DATA(arg);            break;
     case R_CLM:          pt->clms[addr] = XEN_TO_MUS_ANY(arg);              break;
     case R_READER:       pt->readers[addr] = xen_to_sample_reader(arg);     break;
     case R_MIX_READER:   pt->mix_readers[addr] = (struct mix_fd *)xen_to_mix_sample_reader(arg); break;
@@ -12164,7 +12243,7 @@ Float evaluate_ptreec(struct ptree *pt, Float arg, XEN object, bool dir, int typ
 	case R_BOOL:         pt->ints[addr] = (Int)XEN_TO_C_BOOLEAN(object);                                break;
 	case R_VCT:          if (pt->vcts) pt->vcts[addr] = (vct *)XEN_OBJECT_REF(object);                  break;
 	  /* dumb cases force the pt->vcts check -- vct returned, but never used for example */
-	case R_SOUND_DATA:   if (pt->sds) pt->sds[addr] = (sound_data *)XEN_OBJECT_REF(object);             break;
+	case R_SOUND_DATA:   if (pt->sds) pt->sds[addr] = XEN_TO_SOUND_DATA(object);                        break;
 	case R_CLM:          if (pt->clms) pt->clms[addr] = XEN_TO_MUS_ANY(object);                         break;
 	case R_READER:       if (pt->readers) pt->readers[addr] = xen_to_sample_reader(object);             break;
 	case R_MIX_READER:   if (pt->mix_readers) pt->mix_readers[addr] = (struct mix_fd *)xen_to_mix_sample_reader(object); break;
@@ -12492,11 +12571,11 @@ static void init_walkers(void)
   INIT_WALKER(S_oscil, make_walker(oscil_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_one_zero, make_walker(one_zero_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_one_pole, make_walker(one_pole_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_out_any, make_walker(out_any_1, NULL, NULL, 4, 4, R_FLOAT, false, 4, R_NUMBER, R_NUMBER, R_INT, R_ANY));
-  INIT_WALKER(S_outa, make_walker(outa_1, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_NUMBER, R_NUMBER, R_ANY));
-  INIT_WALKER(S_outb, make_walker(outb_1, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_NUMBER, R_NUMBER, R_ANY));
-  INIT_WALKER(S_outc, make_walker(outc_1, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_NUMBER, R_NUMBER, R_ANY));
-  INIT_WALKER(S_outd, make_walker(outd_1, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_NUMBER, R_NUMBER, R_ANY));
+  INIT_WALKER(S_out_any, make_walker(out_any_1, NULL, NULL, 3, 4, R_FLOAT, false, 4, R_NUMBER, R_NUMBER, R_INT, R_ANY));
+  INIT_WALKER(S_outa, make_walker(outa_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_NUMBER, R_NUMBER, R_ANY));
+  INIT_WALKER(S_outb, make_walker(outb_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_NUMBER, R_NUMBER, R_ANY));
+  INIT_WALKER(S_outc, make_walker(outc_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_NUMBER, R_NUMBER, R_ANY));
+  INIT_WALKER(S_outd, make_walker(outd_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_NUMBER, R_NUMBER, R_ANY));
   INIT_WALKER(S_env, make_walker(env_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_CLM));
   INIT_WALKER(S_env_interp, make_walker(env_interp_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_FLOAT, R_CLM));
   INIT_WALKER(S_notch, make_walker(notch_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));

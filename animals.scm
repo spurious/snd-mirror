@@ -112,6 +112,7 @@
 ;;; Gray vireo (5)
 ;;; Yellow-green vireo
 ;;; Red-eyed vireo
+;;; White-eyed vireo
 ;;; Nashville warbler
 ;;; Orange-crowned warbler
 ;;; Yellow warbler
@@ -253,8 +254,7 @@
 	 (outa i (* (env ampf)
 		    (pulsed-env pulse 0.0)
 		    (oscil base (+ (if frqf (env frqf) 0.0) 
-				   (if modm (* index (oscil modm)) 0.0))))
-	       *output*))))))
+				   (if modm (* index (oscil modm)) 0.0))))))))))
 
 (define (knudsens-frog beg amp)
   (a-frog beg .25 480 amp '(0 0 1 1 3 1 4 0) 
@@ -298,8 +298,7 @@
 	 (outa i (* (env ampf)
 		    (pulsed-env pulse 0.0)
 		    (+ (* .8 (oscil base 0.0))
-		       (* .2 (oscil base1 0.0))))
-	       *output*))))))
+		       (* .2 (oscil base1 0.0))))))))))
 
 ;(with-sound (:play #t) (a-cricket 0 .12 4500 5400 .5 '(0 0 1 1 3 1 4 0) (/ .11 3) '(0 0 1 .8 5 1 6 0 15 0)))
 
@@ -324,8 +323,7 @@
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polyshape gen1 1.0 (+ (env frqf)
-					   (rand-interp noise))))
-	       *output*))))))
+					   (rand-interp noise))))))))))
 #|
 (with-sound (:play #t)
   (let ((last-beg 0.0))
@@ -361,8 +359,7 @@
 	   (outa i (* (env ampf)
 		      (pulsed-env pulse 0.0)
 		      (+ (* (env f1) (oscil gen1 fm))
-			 (* (env f2) (oscil gen2 (* 2 fm)))))
-	       *output*)))))))
+			 (* (env f2) (oscil gen2 (* 2 fm))))))))))))
 
 ;(with-sound () (southern-cricket-frog 0 0.5))
 
@@ -411,7 +408,7 @@
 			      (* (- 1.0 gentrp) (+ (* (- 1.0 gen4trp) (oscil gen1 (env gen2f)))
 						   (* gen4trp (oscil gen3 (+ (env gen3f)
 									     (* .075 (oscil gen6)))))))))))
-	   (outa i result *output*)))))))
+	   (outa i result)))))))
 
 ;(with-sound (:statistics #t :play #t) (northern-leopard-frog-1 0 .5))
 
@@ -480,8 +477,7 @@
 			 (formant frm2 val))
 		      (formant frm3 val)
 		      (* (env ampfr4)
-			 (formant frm4 val)))
-		 *output*)))))))
+			 (formant frm4 val))))))))))
 
 ;(with-sound (:play #t :statistics #t :clipped #f) (northern-leopard-frog-2 0 .5))
 
@@ -516,8 +512,7 @@
 		      (+ (* .78 (polyshape poly 1.0 frq))
 			 (* .2 (oscil gen2770 (* 10 (+ frq md))))
 			 (* .02 (oscil gen7479 (* 27 (+ frq md))))
-			 (* .25 (polyshape poly2 1.0 (* 3 frq)))))
-		 *output*)))))))
+			 (* .25 (polyshape poly2 1.0 (* 3 frq))))))))))))
 
 ;(with-sound () (green-tree-frog 0 .5))
 
@@ -581,8 +576,7 @@
 		      pulse-amp
 		      (+ (* .9 (oscil gen1 (* .1 noise)))
 			 (* .08 (oscil gen3 (* .18 noise)))
-			 (* .02 (oscil gen4 (* .28 noise)))))
-		 *output*))
+			 (* .02 (oscil gen4 (* .28 noise)))))))
 	 (set! next-pulse (1- next-pulse)))))))
 
 ;(with-sound (:play #t) (pinewoods-tree-frog 0 1 .5))
@@ -630,8 +624,7 @@
 		      (+ (* intrp (oscil gen2 (* 10 ind)))
 			 (* (- 1.0 intrp) (oscil gen3 (* 24 ind)))
 			 (* .1 (oscil gen5 (* 14 ind)))
-			 (* .1 (oscil gen6 (* 6 ind)))))
-		 *output*)))))))
+			 (* .1 (oscil gen6 (* 6 ind))))))))))))
 
 ;(with-sound (:play #t) (squirrel-tree-frog-1 0 1.0 .5))
 
@@ -662,8 +655,7 @@
 		   (set! next-pulse (+ next-pulse (seconds->samples .4))))))
 	 (outa i (* (env ampf)
 		    (env pulsef)
-		    (polyshape gen1 1.0))
-	       *output*))))))
+		    (polyshape gen1 1.0))))))))
 
 ;(with-sound (:play #t) (ornate-chorus-frog 0 4 .5))
 
@@ -702,14 +694,12 @@
 		      (oscil gen1 (+ frq 
 				     (* index
 					(+ (* 0.2 (oscil gen2 (* 0.5 frq))) 
-					   (* 1.5 (oscil gen2a frq)))))))
-		 *output*))) ; end is not quite right (original has a catch)
+					   (* 1.5 (oscil gen2a frq)))))))))) ; end is not quite right (original has a catch)
        (do ((i start2 (1+ i)))
 	   ((= i stop2))
 	 (let* ((frq (env frqf2)))
 	   (outa i (* (env ampf2)
-		      (oscil gen3 (+ frq (* index (oscil gen4 (* 0.5 frq))))))
-		 *output*)))))))
+		      (oscil gen3 (+ frq (* index (oscil gen4 (* 0.5 frq)))))))))))))
 
 ;(with-sound () (spring-peeper 0 .5))
 
@@ -749,8 +739,7 @@
 		      (+ (* .5 (oscil gen1 (+ frq 
 					      (* index (oscil fmd (/ frq 15))))))
 			 (* wha (polyshape poly1 1.0 frq))
-			 (* (- 0.2 wha) (polyshape poly2 1.0 frq))))
-		 *output*)))))))
+			 (* (- 0.2 wha) (polyshape poly2 1.0 frq)))))))))))
 
 ;(with-sound () (crawfish-frog 0 .5))
 
@@ -805,8 +794,7 @@
 		      (+ (* (- 1.0 intrp)
 			    (polyshape poly1 1.0 frq))
 			 (* intrp 
-			    (polyshape poly2 1.0 frq))))
-		 *output*)))))))
+			    (polyshape poly2 1.0 frq)))))))))))
 
 ;(with-sound () (river-frog 0 .5))
 
@@ -852,8 +840,7 @@
 	   (set! (mus-frequency frm2) (+ 1000 (* intrp 200)))
 	   (outa i (+ (formant frm1 val)
 		      (formant frm2 val)
-		      (formant frm3 val))
-		 *output*)))))))
+		      (formant frm3 val)))))))))
 
 ;(with-sound (:play #t) (bullfrog 0 .5))
 
@@ -885,8 +872,7 @@
 	   (outa i (* (env ampf)
 		      (env pulsef)
 		      (blackman pulse2 0.0)
-		      (polyshape gen 1.0 (rand-interp rnd)))
-		 *output*))))))
+		      (polyshape gen 1.0 (rand-interp rnd)))))))))
 
   (let ((last-dur 0.0)
 	(last-call (+ beg1 dur1 (- 0.4))))
@@ -926,8 +912,7 @@
 	 (outa i (* (env ampf)
 		    (env pulsef)
 		    (polyshape gen1 1.0 (+ (env frqf)
-					   (env pulse-frqf))))
-	       *output*))))))
+					   (env pulse-frqf))))))))))
 
 ;(with-sound (:play #t) (american-toad 0 2 .25))
 
@@ -964,8 +949,7 @@
 		      (env pulsef)
 		      (+ (oscil gen1 frq)
 			 (* (env ampf2)
-			    (polyshape gen2 1.0 (* 0.25 frq)))))
-		 *output*)))))))
+			    (polyshape gen2 1.0 (* 0.25 frq))))))))))))
 
 ;(with-sound (:play #t) (plains-spadefoot 0 .5))
 
@@ -1005,8 +989,7 @@
 						 (rand-interp rnd)))
 			  (* .02 (oscil gen2 (env frqf2)))))
 		    (* (env attackf)
-		       (oscil gen3 (rand-interp attack))))
-	       *output*))))))
+		       (oscil gen3 (rand-interp attack))))))))))
 
 ;(with-sound (:play #t) (barking-tree-frog 0 .5))
 
@@ -1047,8 +1030,7 @@
 	     (outa (+ cur-start i)
 		   (* (env ampf)
 		      (env pulse-ampf)
-		      (polyshape gen 1.0 (env pulse-frqf)))
-		   *output*))))
+		      (polyshape gen 1.0 (env pulse-frqf)))))))
 
 	(if cur-is-long
 	    (set! cur-start (+ cur-start pulse-samps (seconds->samples (+ .015 (if (> (random 1.0) .8) 
@@ -1090,8 +1072,7 @@
 		    (env pulse-ampf)
 		    (polyshape gen1 1.0 (+ (env frqf)
 					   (env pulse-frqf)
-					   (rand-interp rnd))))
-	       *output*))))))
+					   (rand-interp rnd))))))))))
 
 ;(with-sound (:play #t) (southwestern-toad 0 2 .5))
 
@@ -1136,8 +1117,7 @@
        (do ((i start (1+ i)))
 	   ((= i attack-stop))
 	 (outa i (* (env attack-ampf)
-		    (polyshape attack-gen1 1.0 (env attack-frqf)))
-	       *output*))))
+		    (polyshape attack-gen1 1.0 (env attack-frqf)))))))
 
     ;; main portion
     (let* ((dur (- dur1 attack-dur))
@@ -1169,8 +1149,7 @@
 			(+ (* (env low-ampf)
 			      (+ (oscil gen3 (* 9 frq2))
 				 (oscil gen4 (* 4 frq2))))
-			   (polyshape gen1 1.0 frq)))
-		   *output*))))))))
+			   (polyshape gen1 1.0 frq)))))))))))
 
 ;(with-sound (:play #t) (great-plains-narrow-mouthed-toad 0 2 .25))
 
@@ -1206,8 +1185,7 @@
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polyshape gen1 1.0 (+ (env frqf)
-					   (rand-interp rnd))))
-	       *output*))))))
+					   (rand-interp rnd))))))))))
 
 ;(with-sound (:play #t) (pacific-chorus-frog 0 .5))
 
@@ -1241,8 +1219,7 @@
 	 (outa i (* (env ampf)
 		    (env pulse-ampf)
 		    (polyshape gen1 1.0 (+ (env frqf)
-					   (rand-interp rnd))))
-	       *output*))))))
+					   (rand-interp rnd))))))))))
 
 ;(with-sound (:play #t) (red-spotted-toad 0 4 .5))
 
@@ -1283,8 +1260,7 @@
 		      (+ (wave-train pulse1 fluct)
 			 (wave-train pulse2 fluct))
 		      (polyshape gen1 1.0 (+ (env frqf)
-					     (rand-interp rnd1))))
-		 *output*)))))))
+					     (rand-interp rnd1)))))))))))
 
 ;(with-sound (:play #t) (green-toad 0 1 .5))
 
@@ -1311,8 +1287,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*)))))
+		    (polyshape gen1 1.0 (env frqf))))))))
 
   ;; 4 tinks
   (let ((begs (vct 0.085 0.118 0.141 0.162))
@@ -1334,8 +1309,7 @@
 	   (do ((i start (1+ i)))
 	       ((= i stop))
 	     (outa i (* (env ampf)
-			(polyshape gen1 1.0 frq))
-		   *output*))))))))
+			(polyshape gen1 1.0 frq))))))))))
 
 ;(with-sound (:play #t) (little-grass-frog 0 .5))
 
@@ -1391,8 +1365,7 @@
 		  (env pulse-ampf)
 		  (+ (* .7 (oscil gen1 frq))
 		     (* (env ampf2) (oscil gen2 (* 2 frq)))
-		     (* (env ampf3) (polyshape gen3 1.0 frq))))
-	       *output*))))))))
+		     (* (env ampf3) (polyshape gen3 1.0 frq))))))))))))
 
 ;(with-sound (:play #t) (sonoran-desert-toad 0 .8 .5))
 
@@ -1431,8 +1404,7 @@
 	   (outa i (* (env ampf)
 		      (+ (* .9 (oscil gen1 md))
 			 (* .1 (oscil gen2 (+ (* 8 frq) 
-					      (* .2 (oscil gen3 frq)))))))
-		 *output*)))))))
+					      (* .2 (oscil gen3 frq))))))))))))))
 
 ;(with-sound () (indri 0 .5))
 
@@ -1458,8 +1430,7 @@
 	 (do ((i start (1+ i)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
-		      (polyshape gen1 1.0 (env frqf)))
-		 *output*))))))
+		      (polyshape gen1 1.0 (env frqf)))))))))
 
   (let* ((begs (vct 0.0 0.15 0.325 0.47 0.61))
 	 (durs (vct 0.027 0.06 0.065 0.042 0.05))
@@ -1528,8 +1499,7 @@
 	   (outa i (* amp
 		      (+ (* 0.6 (oscil modulator1 (+ (* 2 frq) (* index1 pitch))))
 			 (* 0.3 (oscil modulator3 (+ (* 3 frq) (* index3 pitch))))
-			 (* 0.1 (oscil modulator2 (+ (* 8 frq) (* index2 pitch))))))
-		 *output*)))))))
+			 (* 0.1 (oscil modulator2 (+ (* 8 frq) (* index2 pitch)))))))))))))
 
 
 ;(with-sound (:play #t) (mosquito 0 5 560 .2) (mosquito 1 3 880 .05))
@@ -1561,8 +1531,7 @@
 			    (+ (* .95 (oscil gen1 noise))
 			       (* .05 (oscil gen4 noise))))
 			 (* (max (- 1.0 pval) 0.0)
-			    (* .05 aval (oscil gen2 (* 2.4 noise))))))
-		 *output*)))))))
+			    (* .05 aval (oscil gen2 (* 2.4 noise)))))))))))))
 
 ;(with-sound () (southern-mole-cricket 0 3 .5))
 
@@ -1607,8 +1576,7 @@
 			   (* .04 (oscil base2 (* 3 buzz)))
 			   (* (env indf)
 			      (+ (* .02 (oscil base3 (* 4 buzz)))
-				 (* .02 (oscil base4 (* 5 buzz)))))))
-		   *output*))))))))
+				 (* .02 (oscil base4 (* 5 buzz)))))))))))))))
 
 ;(with-sound (:play #t) (broad-winged-tree-cricket 0 1.0 0.3))
 
@@ -1647,8 +1615,7 @@
 		      md md
 		      (sine-summation carrier (+ (* frq (/ 13200 16))
 					       (* .1 (rand-interp noise))
-					       (* .1 md))))
-		 *output*)))))))
+					       (* .1 md)))))))))))
 
 ;(with-sound () (long-spurred-meadow-katydid 0 .5))
 
@@ -1711,8 +1678,7 @@
 	     (set! sum (+ sum (* (vct-ref amps k) (oscil (vector-ref gens k))))))
 	   (outa i (* (env ampf) 
 		      (env pulsef)
-		      sum) 
-		 *output*)))))))
+		      sum))))))))
 
 ;(with-sound () (handsome-trig 0 2 .5))
 
@@ -1748,9 +1714,7 @@
 		      (oscil gen1 
 			     (rand-interp rnd)
 			     (+ (* .1 (oscil md))
-				(* .2 (oscil md1)))))
-
-		 *output*)))))))
+				(* .2 (oscil md1))))))))))))
 
 ;(with-sound () (fast-calling-tree-cricket 0 2 .5))
 
@@ -1781,8 +1745,7 @@
 		      (* .5 (+ (oscil gen1 (+ frq
 					      (* (env rndf) (rand-interp rnd))
 					      (* .15 (oscil gen2))))
-			       (rxyk!cos rx 0.0))))
-	       *output*)))))))
+			       (rxyk!cos rx 0.0)))))))))))
 		     
 
 
@@ -1816,8 +1779,7 @@
 			 (* .15 (oscil gen2 (* md (/ 1100 1280))))
 			 (* .07 (oscil gen3 (* md (/ 1460 1280))))
 			 (* .02 (oscil gen4 (* 2 md)))
-			 (* .02 (oscil gen5 (* 3 md)))))
-		 *output*)))))))
+			 (* .02 (oscil gen5 (* 3 md))))))))))))
 
 
 ;;; --------------------------------------------------------------------------------
@@ -1856,8 +1818,7 @@
 	 (outa i (* (env ampf)
 		    (env pulsef)
 		    (oscil gen1 (+ (* .15 (oscil gen2))
-				   (rand-interp rnd))))
-	       *output*)))))))
+				   (rand-interp rnd)))))))))))
 
 
 
@@ -1893,8 +1854,7 @@
 		    (env songf)
 		    (env pulsef)
 		    (oscil gen1 (+ (* .01 (oscil gen2))
-				   (rand-interp rnd))))
-	       *output*)
+				   (rand-interp rnd)))))
 	 (set! song-ctr (1- song-ctr))
 	 (set! pulse-ctr (1- pulse-ctr)))))))
 
@@ -1924,8 +1884,7 @@
 	       (mus-reset pulsef))
 	   (outa i (* (env ampf)
 		      (env pulsef)
-		      (oscil gen1 (* .01 (oscil gen2))))
-		 *output*)))))))
+		      (oscil gen1 (* .01 (oscil gen2)))))))))))
 
 ;(with-sound (:play #t) (tinkling-ground-cricket 0 3 .3))
 
@@ -1960,7 +1919,7 @@
 	   (let ((this-val (* (env ampf)
 			      (env pulsef)
 			      (- 1.0 (random 2.0)))))
-	     (outa i (- last-val this-val) *output*)
+	     (outa i (- last-val this-val))
 	     (set! last-val this-val))))))))
 
 ;(with-sound (:play #t) (marsh-meadow-grasshopper 0 .3))
@@ -1998,7 +1957,7 @@
 				(* .6 (sum-of-sines spikes1a noi))
 				(* .4 (sum-of-sines spikes2 frq))
 				(* .3 (sum-of-sines spikes3 frq))))))
-	   (outa i (- this-val last-val) *output*)
+	   (outa i (- this-val last-val))
 	   (set! last-val this-val)))))))
 
 ;(with-sound (:play #t) (carolina-grasshopper 0 1.5 1.0))
@@ -2046,8 +2005,7 @@
 		      (env pulsef)
 		      (+ (* .2 (oscil gen1 (* .075 (oscil gen2))))
 			 (* .8 (oscil gen3 (+ (* .0125 (oscil gen4))
-					      (rand-interp rnd))))))
-		 *output*)))))))
+					      (rand-interp rnd)))))))))))))
 
 ;(with-sound (:play #t) (striped-ground-cricket 0 3 .5))
 
@@ -2075,8 +2033,7 @@
 	 (outa i (* (env ampf)
 		    (env pulsef)
 		    (+ (* .9 (oscil gen1 (rand-interp rnd1)))
-		       (* .1 (oscil gen2 (rand-interp rnd2))))) ; I can't hear this unless transposed down 
-	       *output*))))))
+		       (* .1 (oscil gen2 (rand-interp rnd2))))))))))) ; I can't hear this unless transposed down 
 
 ;(with-sound (:play #t) (sphagnum-ground-cricket 0 2 .3))
 
@@ -2127,8 +2084,7 @@
 		      pulse-amp
 		      (+ (* .8 (oscil gen1 0.0 rn))
 			 (* .1 (oscil gen2 0.0 (* 2 rn)))
-			 (* .1 (oscil gen3 0.0 (* 3 rn)))))
-		 *output*))
+			 (* .1 (oscil gen3 0.0 (* 3 rn)))))))
 	 (set! pulse-ctr (1- pulse-ctr)))))))
 
 
@@ -2177,8 +2133,7 @@
 		      (env pulsef)
 		      (+ (* .9 (oscil gen1 rn))
 			 (* .05 (oscil gen2 (* 2 rn)))
-			 (* .05 (oscil gen3 (* 3 rn)))))
-		 *output*)))))))
+			 (* .05 (oscil gen3 (* 3 rn))))))))))))
 
 ;(with-sound (:play #t) (snowy-tree-cricket 0 2 .3))
 
@@ -2218,8 +2173,7 @@
 		      (+ .6 (rand-interp rnd2))
 		      (oscil gen1 
 			     (+ (* .05 (oscil gen2 (* 5 rn)))
-				(* .1 (oscil gen3 rn)))))
-	       *output*)))))))
+				(* .1 (oscil gen3 rn))))))))))))
 
 ;(with-sound (:play #t) (slightly-musical-conehead 0 2 .4))
 
@@ -2255,8 +2209,7 @@
 	   (outa i (* (env ampf)
 		      (env pulsef)
 		      (+ (* .97 (oscil gen1 noise))
-			 (* .03 (oscil gen2 (* 3 noise)))))
-		 *output*)))))))
+			 (* .03 (oscil gen2 (* 3 noise))))))))))))
 
 ;(with-sound (:play #t) (pine-tree-cricket 0 2 .25))
 
@@ -2289,8 +2242,7 @@
 	   (outa i (* (env ampf)
 		      (env pulsef)
 		      (+ (* .93 (oscil gen1 noise))
-			 (* .07 (oscil gen2 (* 2 noise)))))
-		 *output*)))))))
+			 (* .07 (oscil gen2 (* 2 noise))))))))))))
 
 ;(with-sound (:play #t) (davis-tree-cricket 0 2 .25))
 
@@ -2322,8 +2274,7 @@
 	       (set! next-pulse (+ next-pulse pulse-samps))))
 	 (outa i (* (env ampf)
 		    (env pulse-ampf)
-		    (polyshape gen1 1.0 (rand-interp rnd)))
-	       *output*))))))
+		    (polyshape gen1 1.0 (rand-interp rnd)))))))))
 
 ;(with-sound (:play #t) (black-horned-tree-cricket 0 2 .25))
 
@@ -2349,8 +2300,7 @@
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (wave-train pulser)
-		    (polyshape gen1 1.0 (rand-interp rnd)))
-	       *output*))))))
+		    (polyshape gen1 1.0 (rand-interp rnd)))))))))
 
 ;(with-sound (:play #t) (narrow-winged-tree-cricket 0 2 .25))
 
@@ -2386,8 +2336,7 @@
 						 (table-lookup frq-pulser))))
 		       (* .05
 			  (+ (oscil gen2 noise)
-			     (* .2 (oscil gen3 (* .2 noise)))))))
-	       *output*)))))))
+			     (* .2 (oscil gen3 (* .2 noise))))))))))))))
 
 ;(with-sound (:play #t) (four-spotted-tree-cricket 0 1 .5))
 
@@ -2470,8 +2419,7 @@
 		       (rand-interp rnd))))
 	   (outa i (* (env (vector-ref amp-envs peep))
 		      (oscil gen1 frq 
-			     (* .03 (oscil gen2 (* 2 frq)))))
-		 *output*)))))))
+			     (* .03 (oscil gen2 (* 2 frq))))))))))))
 
 ;(with-sound (:play #t) (fox-sparrow 0 3 .25))
 
@@ -2521,8 +2469,7 @@
 	   (outa i (* (env ampf)
 		      (+ (* .9 (oscil gen1 frq))
 			 (* .025 (oscil gen2 (* 2 frq)))
-			 (* .075 (oscil gen3 (* 3 frq)))))
-		 *output*)))))))
+			 (* .075 (oscil gen3 (* 3 frq))))))))))))
 
 ;(with-sound (:play #t) (white-throated-sparrow 0 .25))
 
@@ -2560,8 +2507,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (oscil gen1 (env frqf)))
-	       *output*))))))
+		    (oscil gen1 (env frqf)))))))))
 
 ;(with-sound (:play #t) (henslows-sparrow 0 .25))
 
@@ -2596,8 +2542,7 @@
 	   (outa i (* (env ampf)
 		      (+ (* .905 (oscil gen1 frq))
 			 (* .025 (oscil gen2 (* 2 frq)))
-			 (* .025 (oscil gen3 (* 3 frq)))))
-	       *output*)))))))
+			 (* .025 (oscil gen3 (* 3 frq))))))))))))
 
 ;(with-sound (:play #t) (eastern-wood-pewee-1 0 .25))
 
@@ -2627,8 +2572,7 @@
 	   (outa i (* (env ampf)
 		      (+ (* .9 (oscil gen1 frq))
 			 (* ind .1 (oscil gen2 (* 2 frq)))
-			 (* (- 1.0 ind) .075 (oscil gen3 (* 3 frq)))))
-	       *output*)))))))
+			 (* (- 1.0 ind) .075 (oscil gen3 (* 3 frq))))))))))))
 
 ;(with-sound (:play #t) (eastern-wood-pewee-2 0 .25))
 
@@ -2686,8 +2630,7 @@
 	 (let ((frq (env frqf)))
 	   (outa i (* (env ampf)
 		      (+ (* .99 (oscil gen1 frq))
-			 (* .01 (oscil gen2 (* 2 frq)))))
-	       *output*)))))))
+			 (* .01 (oscil gen2 (* 2 frq))))))))))))
 
 ;(with-sound (:play #t) (field-sparrow 0 .25))
 
@@ -2718,8 +2661,7 @@
 	 (let ((frq (env frqf)))
 	   (outa i (* (env ampf)
 		      (+ (* .99 (oscil gen1 frq))
-			 (* .01 (oscil gen2 (* frq 2)))))
-	       *output*)))))))
+			 (* .01 (oscil gen2 (* frq 2))))))))))))
 
 ;(with-sound (:play #t) (tufted-titmouse 0 .3))
 
@@ -2752,8 +2694,7 @@
 	     (outa i (* (env ampf)
 			(+ .8 (* .2 (abs (oscil gen3))))
 			(+ (* .98 (oscil gen1 frq))
-			   (* .02 (oscil gen2 (* 2 frq)))))
-	       *output*)))))))
+			   (* .02 (oscil gen2 (* 2 frq))))))))))))
 
   (define (savannah-2 beg amp pitch)
     ;; buzz
@@ -2773,8 +2714,7 @@
 	     ((= i stop))
 	   (outa i (* (env ampf) 
 		      (oscil gen1 (+ (env frqf)
-				     (rand-interp rnd))))
-		 *output*))))))
+				     (rand-interp rnd))))))))))
 
   (define (savannah-3 beg amp)
     ;; ticks
@@ -2789,8 +2729,7 @@
 	 (do ((i start (1+ i)))
 	     ((= i stop))
 	   (outa i (* (env ampf) 
-		      (oscil gen1 (rand rnd)))
-		 *output*))))))
+		      (oscil gen1 (rand rnd)))))))))
       
     
   (define (savannah-4 beg amp)
@@ -2812,8 +2751,7 @@
 	 (do ((i start (1+ i)))
 	     ((= i stop))
 	   (outa i (* (env ampf) 
-		      (oscil gen1 (+ (env frqf) (rand rnd))))
-		 *output*))))))
+		      (oscil gen1 (+ (env frqf) (rand rnd))))))))))
       
   (define (savannah-5 beg amp)
     (let* ((start (seconds->samples beg))
@@ -2833,8 +2771,7 @@
 	 (do ((i start (1+ i)))
 	     ((= i stop))
 	   (outa i (* (env ampf) 
-		      (oscil gen1 (rand rnd)))
-		 *output*))))))
+		      (oscil gen1 (rand rnd)))))))))
       
   (define (savannah-6 beg amp)
     (let* ((start (seconds->samples beg))
@@ -2850,8 +2787,7 @@
 	 (do ((i start (1+ i)))
 	     ((= i stop))
 	   (outa i (* (env ampf) 
-		      (oscil gen1 (rand rnd)))
-		 *output*))))))
+		      (oscil gen1 (rand rnd)))))))))
     
   (define (savannah-7 beg amp)
     (let* ((start (seconds->samples beg))
@@ -2870,8 +2806,7 @@
 	   (let ((frq (env frqf)))
 	     (outa i (* (env ampf)
 			(+ .25 (* .75 (abs (oscil gen2))))
-			(oscil gen1 frq))
-	       *output*)))))))
+			(oscil gen1 frq)))))))))
 
   (define (savannah-8 beg amp)
     (let* ((start (seconds->samples beg))
@@ -2888,8 +2823,7 @@
 	 (do ((i start (1+ i)))
 	     ((= i stop))
 	   (outa i (* (env ampf) 
-		      (oscil gen1 0.0 (* 2.0 (oscil gen2))))
-		 *output*))))))
+		      (oscil gen1 0.0 (* 2.0 (oscil gen2))))))))))
     
   ;; -------- 
   (savannah-1 beg (* amp .21))
@@ -2976,8 +2910,7 @@
 		 (mus-reset frqf)))
 	   (outa i (* (env ampf)
 		      (env pulsef)
-		      (oscil gen1 frq))
-	       *output*)))))))
+		      (oscil gen1 frq)))))))))
 
 ;(with-sound (:play #t) (chipping-sparrow 0 .3))
 
@@ -3016,15 +2949,13 @@
 	 (let ((frq (env frqf1)))
 	   (outa i (* (env ampf1)
 		      (+ (* .9 (oscil gen1 frq))
-			 (* .1 (oscil gen11 (* 2 frq)))))
-	       *output*)))
+			 (* .1 (oscil gen11 (* 2 frq))))))))
        (do ((i start2 (+ i 1)))
 	   ((= i stop2))
 	 (let ((noise (rand-interp gen22)))
 	 (outa i (* (env ampf2)
 		    (+ (* .7 (oscil gen2 noise))
-		       (* .3 (oscil gen21 noise))))
-	       *output*)))))))
+		       (* .3 (oscil gen21 noise)))))))))))
 
 ;(with-sound (:play #t) (least-flycatcher 0 .5))
 
@@ -3052,8 +2983,7 @@
 	 (let ((frq (env frqf)))
 	   (outa i (* (env ampf)
 		      (+ (* .95 (oscil gen1 frq))
-			 (* .05 (oscil gen2 (* 2 frq)))))
-	       *output*)))))))
+			 (* .05 (oscil gen2 (* 2 frq))))))))))))
 
 ;(with-sound (:play #t) (acadian-flycatcher 0 .25))
 
@@ -3112,8 +3042,7 @@
 	       (intrp (env intrpf)))
 	   (outa i (* (env ampf)
 		      (+ (* intrp (polyshape gen1 1.0 frq))
-			 (* (- 1.0 intrp) (oscil gen2 frq))))
-	       *output*)))))))
+			 (* (- 1.0 intrp) (oscil gen2 frq)))))))))))
 
 ;(with-sound (:play #t) (swainsons-thrush 0 .5))
 
@@ -3152,8 +3081,7 @@
 		 (mus-reset frqf)))
 	   (outa i (* (env ampf)
 		      (env pulsef)
-		      (polyshape gen1 1.0 (env frqf)))
-		 *output*)))))))
+		      (polyshape gen1 1.0 (env frqf))))))))))
 
 ;(with-sound (:play #t) (carolina-wren 0 .25))
 
@@ -3194,7 +3122,7 @@
 	   ((= i stop1))
 	 (outa i (* (env ampf1)
 		    (polyshape gen1 1.0 (env frqf1)))
-	       *output*))
+	       ))
        (do ((i stop1 (1+ i)))
 	   ((= i stop2))
 	 (let ((pulse (pulse-train pulser)))
@@ -3204,8 +3132,7 @@
 		 (mus-reset frqf2)))
 	   (outa i (* (env ampf2)
 		      (env ampf)
-		      (polyshape gen1 1.0 (env frqf2)))
-		 *output*)))))))
+		      (polyshape gen1 1.0 (env frqf2))))))))))
 	 
 ;(with-sound (:play #t) (bachmans-sparrow 0 .25))
 
@@ -3253,8 +3180,7 @@
 	   (do ((i (vector-ref starts tone) (1+ i)))
 	       ((= i end))
 	     (outa i (* (env ampf)
-			(oscil gen1))
-	       *output*))))
+			(oscil gen1))))))
 
        ;; then the buzz
        (set! (mus-frequency gen1) 8000.0)
@@ -3263,8 +3189,7 @@
 	 (outa i (* (env buzz-ampf)
 		    (+ 0.2 (abs (triangle-wave buzzer-amp)))
 		    (oscil gen1 (* buzzer-index
-				   (sine-summation buzzer))))   ;(nrxysin buzzer 0.0)
-	       *output*))))))
+				   (sine-summation buzzer))))))))))
 
 ;(with-sound (:play #t) (grasshopper-sparrow 0 .25))
 
@@ -3347,8 +3272,7 @@
 	   (do ((i (vector-ref starts tone) (1+ i)))
 	       ((= i end))
 	     (outa i (* (env ampf)
-			(polyshape gen1 1.0 (env frqf)))
-	       *output*))))))))
+			(polyshape gen1 1.0 (env frqf)))))))))))
 
 ;(with-sound (:play #t) (american-robin 0 .25))
 
@@ -3373,8 +3297,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*))))))
+		    (polyshape gen1 1.0 (env frqf)))))))))
 
 ;(with-sound (:play #t) (common-loon-1 0 .25))
 
@@ -3404,8 +3327,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*))))))
+		    (polyshape gen1 1.0 (env frqf)))))))))
 
 ;(with-sound (:play #t) (common-loon-2 0 .25))
 
@@ -3511,8 +3433,7 @@
 	       ((= i end))
 	     (outa i (* (env ampf)
 			(+ (* .55 (polyshape gen1 1.0 (env frqf1)))
-			   (* .45 (polyshape gen2 1.0 (env frqf2)))))
-	       *output*))))))))
+			   (* .45 (polyshape gen2 1.0 (env frqf2)))))))))))))
 
 ;(with-sound (:play #t) (hermit-thrush 0 .25))
 
@@ -3547,8 +3468,7 @@
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (+ .75 (abs (rand-interp rnd)))
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*))))))
+		    (polyshape gen1 1.0 (env frqf)))))))))
 
 ;(with-sound (:play #t) (chuck-wills-widow 0 .25))
 
@@ -3594,8 +3514,7 @@
 	       (mus-reset frqf)))
 	 (outa i (* (env ampf)
 		    peep-amp
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*))))))
+		    (polyshape gen1 1.0 (env frqf)))))))))
 
 ;(with-sound (:play #t) (california-towhee 0 .25))
 
@@ -3656,15 +3575,14 @@
 
        (do ((i start (1+ i)))
 	   ((= i initial-stop))
-	 (outa i (* (env initial-ampf) (oscil initial-gen)) *output*))
+	 (outa i (* (env initial-ampf) (oscil initial-gen)) ))
 
        (do ((i initial-stop (1+ i)))
 	   ((= i buzz-stop))
 	 (let* ((frq (env buzz-frq)))
 	   (outa i (* (env buzz-amp)
 		      (table-lookup buzz-ampf frq)
-		      (polyshape buzz-gen 1.0 (table-lookup buzz-frqf frq)))
-		 *output*)))))))
+		      (polyshape buzz-gen 1.0 (table-lookup buzz-frqf frq))))))))))
 
 ;(with-sound (:play #t) (black-chinned-sparrow 0 .25 #t))
 
@@ -3698,8 +3616,7 @@
 	 (outa i (* (env ampf)
 		    (+ (* .95 (polyshape gen1 1.0 (env frqf)))
 		       (* (env rndf)
-			  (oscil gen2 (rand-interp rnd)))))
-	       *output*))))))
+			  (oscil gen2 (rand-interp rnd)))))))))))
 
 ;(with-sound (:play #t) (mourning-dove 0 .25))
 
@@ -3746,14 +3663,12 @@
        (do ((i call1-start (1+ i)))
 	   ((= i call1-stop))
 	 (outa i (* (env call1-ampf)
-		    (oscil call1-gen (env call1-frqf)))
-	       *output*))
+		    (oscil call1-gen (env call1-frqf)))))
 
        (do ((i call2-start (1+ i)))
 	   ((= i call2-stop))
 	 (outa i (* (env call2-ampf)
-		    (polyshape call2-gen 1.0 (env call2-frqf)))
-	       *output*))
+		    (polyshape call2-gen 1.0 (env call2-frqf)))))
 
        (do ((i call3-start (1+ i)))
 	   ((= i call3-stop))
@@ -3762,8 +3677,7 @@
 	       (frq (env call3-frqf)))
 	   (outa i (* (env call3-ampf)
 		      (+ (* f1 (polyshape call3-gen 1.0 frq))
-			 (* f2 (polyshape call4-gen 1.0 (* 0.5 frq)))))
-		 *output*)))))))
+			 (* f2 (polyshape call4-gen 1.0 (* 0.5 frq))))))))))))
 
 ;(with-sound (:play #t) (bobwhite 0 .5))
 
@@ -3814,8 +3728,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (oscil gen1 (env frqf)))
-	       *output*))))))
+		    (oscil gen1 (env frqf)))))))))
 
 ;(with-sound (:play #t) (warbling-vireo 0 .25))
 
@@ -3843,8 +3756,7 @@
 	       ((= i stop))
 	     (outa i (* (env ampf)
 			(polyshape gen 1.0 (+ (env frqf)
-					      (rand-interp rnd))))
-		   *output*))))))))
+					      (rand-interp rnd))))))))))))
 
 ;(with-sound (:play #t) (great-horned-owl 0 .5))
 
@@ -3911,8 +3823,7 @@
 	   (do ((i start (1+ i)))
 	       ((= i stop))
 	     (outa i (* (env ampf)
-			(polyshape gen 1.0 (env frqf)))
-		   *output*))))))))
+			(polyshape gen 1.0 (env frqf)))))))))))
 
 ;(with-sound (:play #t) (western-tanager 0 .5))
 
@@ -3945,8 +3856,7 @@
 	       (set! (mus-frequency gen) (- (env pulse-off) 300.0))))
 	 (outa i (* (env ampf)
 		    (env pulse-ampf)
-		    (polyshape gen 1.0 (env pulse-frqf)))
-		   *output*))))))
+		    (polyshape gen 1.0 (env pulse-frqf)))))))))
 
 ;(with-sound (:play #t) (pileated-woodpecker 0 .5))
 
@@ -3980,8 +3890,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*))))))
+		    (polyshape gen1 1.0 (env frqf)))))))))
 
 ;(with-sound (:play #t) (whip-poor-will 0 .25))
 
@@ -4010,8 +3919,7 @@
 	   (outa i (* (env ampf)
 		      (+ (rxyk!cos gen1 (- fm))
 			 (rxyk!cos gen2 fm)
-			 (* .25 (polyshape gen3 1.0 fm))))
-		 *output*)))))))
+			 (* .25 (polyshape gen3 1.0 fm)))))))))))
 
 ;(with-sound (:play #t) (varied-thrush 0 .25))
 
@@ -4041,8 +3949,7 @@
 	 (do ((i start (1+ i)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
-		      (polyshape gen1 1.0 (env frqf)))
-		 *output*))))))
+		      (polyshape gen1 1.0 (env frqf)))))))))
 
   (define (nashville-warbler-2 beg dur amp)
     (let* ((start (seconds->samples beg))
@@ -4060,8 +3967,7 @@
 	 (do ((i start (1+ i)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
-		      (polyshape gen1 1.0 (env frqf)))
-		 *output*))))))
+		      (polyshape gen1 1.0 (env frqf)))))))))
 
   (define (nashville-warbler-3 beg amp)
     (let* ((start (seconds->samples beg))
@@ -4075,8 +3981,7 @@
 	 (do ((i start (1+ i)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
-		      (polyshape gen1 1.0 (env frqf)))
-		 *output*))))))
+		      (polyshape gen1 1.0 (env frqf)))))))))
 
   (define (nashville-warbler-4 beg amp)
     (let* ((start (seconds->samples beg))
@@ -4094,8 +3999,7 @@
 	 (do ((i start (1+ i)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
-		      (polyshape gen1 1.0 (env frqf)))
-		 *output*))))))
+		      (polyshape gen1 1.0 (env frqf)))))))))
 
   (let* ((amps1 (vct .2 .5 .7 .9 1.0 1.0)))
 
@@ -4161,7 +4065,7 @@
 		 (mus-reset bump)
 		 (do ((k i (1+ k)))
 		     ((= k bump-stop))
-		   (outa k (* bump-amp (env bump)) *output*))))))))))
+		   (outa k (* bump-amp (env bump))))))))))))
 	      
 ;(with-sound (:play #t :statistics #t) (ruffed-grouse 0 0.5))
 
@@ -4204,8 +4108,7 @@
 			    (oscil gen1a (* 2 frq)))
 			 (* (env ampf2) 
 			    (polyshape gen2 1.0 (+ (env frqf2)
-						   (rand-interp buzz))))))
-		 *output*)))))))
+						   (rand-interp buzz)))))))))))))
 
 ;(with-sound (:play #t) (plumbeous-vireo-1 0 .25))
 
@@ -4254,8 +4157,7 @@
 			 (* (env ampf2)
 			    (oscil gen2 (* 1.5 frq)))
 			 (* (env ampf3)
-			    (oscil gen3 (* 2 frq)))))
-		 *output*)))))))
+			    (oscil gen3 (* 2 frq))))))))))))
 
 ;(with-sound (:play #t) (plumbeous-vireo-2 0 .5))
 
@@ -4294,8 +4196,7 @@
 		      (+ (polyshape gen1 1.0 (+ pit
 						(env pulse-frqf)
 						(rand-interp rnd)))
-			 (rand-interp pulse-rnd)))
-		 *output*)))))))
+			 (rand-interp pulse-rnd))))))))))
 
 ;(with-sound (:play #t) (least-bittern 0 .5))
 
@@ -4329,8 +4230,7 @@
 				     (rand-interp rnd))))))
 	   (outa i (+ (formant frm1 inp)
 		      (formant frm2 inp)
-		      (formant frm3 inp))
-		 *output*)))))))
+		      (formant frm3 inp)))))))))
 
 ;(with-sound (:play #t) (american-crow 0 .5))
 
@@ -4379,14 +4279,12 @@
 		 (mus-reset pulse-frqf1)))
 	   (outa i (* vol
 		      (env pulse-ampf1)
-		      (oscil gen1 (+ frq (env pulse-frqf1))))
-		 *output*)))
+		      (oscil gen1 (+ frq (env pulse-frqf1)))))))
 
        (do ((i call2-start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env pulse-ampf2)
-		    (oscil gen1 (env pulse-frqf2)))
-	       *output*))))))
+		    (oscil gen1 (env pulse-frqf2)))))))))
 
 ;(with-sound (:play #t) (orange-crowned-warbler 0 .5))
 
@@ -4430,8 +4328,7 @@
 	 (outa i (* (env open-ampf)
 		    (env ampf)
 		    (oscil gen1 (+ (env frqf) 
-				   (env open-frqf))))
-	       *output*))
+				   (env open-frqf))))))
 
        (do ((i open-stop (1+ i)))
 	   ((= i stop))
@@ -4444,8 +4341,7 @@
 		    (+ .5 (* .5 (abs (oscil trem (rand-interp rnd1)))))
 		    (oscil gen1 (+ (env frqf)
 				   (env pulse-frqf)
-				   (rand-interp rnd))))
-	       *output*))))))
+				   (rand-interp rnd))))))))))
 
 ;(with-sound (:play #t) (loggerhead-shrike-1 0 .5))
 
@@ -4496,8 +4392,7 @@
 		      (+ (* (env ampf1)
 			    (polyshape gen1 1.0 (* pulse-frq (+ noise (env frqf1)))))
 			 (* (env ampf2)
-			    (polyshape gen2 1.0 (* pulse-frq (+ noise (env frqf2)))))))
-		 *output*)))))))
+			    (polyshape gen2 1.0 (* pulse-frq (+ noise (env frqf2))))))))))))))
 
 ;(with-sound (:play #t) (loggerhead-shrike-2 0 .5))
 
@@ -4550,8 +4445,7 @@
 			   (sine-summation gen (env frqf)))))
 	       (outa i (+ (formant frm1 val)
 			  (formant frm2 val)
-			  (formant frm3 val))
-		     *output*)))))))))
+			  (formant frm3 val)))))))))))
 
 ;(with-sound (:play #t) (california-quail 0 .25))
 
@@ -4586,8 +4480,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*))))))
+		    (polyshape gen1 1.0 (env frqf)))))))))
 
 ;(with-sound (:play #t) (vermillion-flycatcher 0 .5))
 
@@ -4642,8 +4535,7 @@
 		     (* (env call1-ampf)
 			(polyshape gen1 1.0 (env call1-frqf)))
 		     (* (env call2-ampf)
-			(polyshape gen1 1.0 (env call2-frqf))))
-	       *output*))))))
+			(polyshape gen1 1.0 (env call2-frqf))))))))))
 
 ;(with-sound (:play #t) (cardinal 0 .5))
 
@@ -4675,8 +4567,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*))))))
+		    (polyshape gen1 1.0 (env frqf)))))))))
 
 ;(with-sound (:play #t) (black-phoebe 0 .25))
 
@@ -4711,8 +4602,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (oscil gen1 (env frqf)))
-	       *output*))))))
+		    (oscil gen1 (env frqf)))))))))
 
 ;(with-sound (:play #t) (yellow-warbler 0 .25))
 
@@ -4760,8 +4650,7 @@
 	   (set! (mus-frequency frm3) (+ 2300 (* intrp 150)))
 	   (outa i (+ (formant frm1 inp)
 		      (formant frm2 inp)
-		      (formant frm3 inp))
-		 *output*)))))))
+		      (formant frm3 inp)))))))))
 
 ;(with-sound (:play #t) (barred-owl-1 0 .5))
 
@@ -4789,8 +4678,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*))))))
+		    (polyshape gen1 1.0 (env frqf)))))))))
 
 ;(with-sound (:play #t) (says-phoebe 0 .25))
 
@@ -4845,8 +4733,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*))))))
+		    (polyshape gen1 1.0 (env frqf)))))))))
 
 ;(with-sound (:play #t) (yellow-rumped-warbler 0 .5))
 
@@ -4927,8 +4814,7 @@
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polyshape gen1 1.0 (+ (env frqf)
-					   (rand-interp rnd))))
-	       *output*))))))
+					   (rand-interp rnd))))))))))
 
 ;(with-sound (:play #t) (purple-finch 0 .5))
 
@@ -4951,8 +4837,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*))))))
+		    (polyshape gen1 1.0 (env frqf)))))))))
 
 ;(with-sound (:play #t) (northern-goshawk 0 .25))
 
@@ -4997,8 +4882,7 @@
 	   (outa i (+ (formant frm1 val)
 		      (formant frm2 val)
 		      (formant frm3 val)
-		      (formant frm4 val))
-		 *output*)))))))
+		      (formant frm4 val)))))))))
 
 ;(with-sound (:play #t :scaled-to .5) (common-gull 0 .5))
 
@@ -5039,8 +4923,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*))))))
+		    (polyshape gen1 1.0 (env frqf)))))))))
 
 ;(with-sound (:play #t) (ash-throated-flycatcher 0 .25))
 
@@ -5086,8 +4969,7 @@
 		    (+ (* .8 (polyshape gen1 1.0 (+ (env frqf1)
 						    noise)))
 		       (* .2 (polyshape gen2 1.0 (+ (env frqf2)
-						    (* 10 noise))))))
-	       *output*)))))))
+						    (* 10 noise)))))))))))))
 
 ;(with-sound (:play #t) (white-headed-woodpecker 0 .5))
 
@@ -5116,8 +4998,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*))))))
+		    (polyshape gen1 1.0 (env frqf)))))))))
 
 ;(with-sound (:play #t) (phainopepla 0 .5))
 
@@ -5148,8 +5029,7 @@
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polyshape gen1 1.0 (+ (env frqf)
-					   (rand-interp vib))))
-	       *output*))))))
+					   (rand-interp vib))))))))))
 
 ;(with-sound (:play #t) (golden-crowned-sparrow 0 .5))
 
@@ -5220,8 +5100,7 @@
 			  (+ .1 (* .9 (abs (oscil buzz bfrq))))
 			  (polyshape gen2 1.0 (+ frq
 						 (* bsweep (sine-summation buzzsweep bfrq))
-						 (rand-interp rnd))))))
-	       *output*)))))))
+						 (rand-interp rnd)))))))))))))
 
 ;(with-sound (:play #t) (house-finch 0 .5))
 
@@ -5260,8 +5139,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*))))))
+		    (polyshape gen1 1.0 (env frqf)))))))))
 
 ;(with-sound (:play #t) (ruby-crowned-kinglet 0 .5))
 
@@ -5332,8 +5210,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (oscil gen1 (env frqf)))
-	       *output*))))))
+		    (oscil gen1 (env frqf)))))))))
 
 ;(with-sound (:play #t) (green-tailed-towhee 0 .5))
 
@@ -5370,8 +5247,7 @@
 	   (set! (mus-frequency frm3) (env frm3f))
 	   (outa i (+ (formant frm1 inp)
 		      (formant frm2 inp)
-		      (formant frm3 inp))
-		 *output*)))))))
+		      (formant frm3 inp)))))))))
 
 ;(with-sound (:play #t) (white-faced-ibis 0 .5))
 
@@ -5420,8 +5296,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*))))))
+		    (polyshape gen1 1.0 (env frqf)))))))))
 
 ;(with-sound (:play #t) (lucys-warbler 0 .25))
 
@@ -5475,8 +5350,7 @@
 			 (* (env f2) (oscil gen2 (* 2 frq)))
 			 (* (env f3) (oscil gen3 (* 3 frq)))
 			 (* .005 (oscil gen4 (* 4 frq)))
-			 (* .005 (oscil gen5 (* 5 frq)))))
-		 *output*)))))))
+			 (* .005 (oscil gen5 (* 5 frq))))))))))))
 
 ;;; formants sounded bad here, polyshape worse
 
@@ -5516,8 +5390,7 @@
 				       (* vib-index (blackman vib 0.0)))))))
 	     (outa i (+ (formant frm1 inp)
 			(formant frm2 inp)
-			(formant frm3 inp))
-		   *output*)))))))
+			(formant frm3 inp)))))))))
 
   (plain-chacalaca-1 beg1 0.17    (* .7 amp) 1700 (list 0 450  1 680))
   (plain-chacalaca-1 (+ beg1 0.20) 0.12 amp  1400 (list 0 500  1 680  2 660))
@@ -5554,8 +5427,7 @@
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polyshape gen1 1.0 (+ (env frqf)
-					   (rand-interp rnd))))
-	       *output*))))))
+					   (rand-interp rnd))))))))))
 
 ;(with-sound (:play #t) (black-billed-cuckoo 0 .5))
 
@@ -5590,8 +5462,7 @@
 			 (* (env f2) (oscil gen2 (* 2 frq)))
 			 (* (env f3) (oscil gen3 (* 3 frq)))
 			 (* (env f4) (oscil gen4 (* 4 frq)))
-			 (* .005 (oscil gen5 (* 5 frq)))))
-		 *output*))))))
+			 (* .005 (oscil gen5 (* 5 frq)))))))))))
 
   ;; note #2
   (let* ((start (seconds->samples (+ beg 0.29)))
@@ -5609,8 +5480,7 @@
 	 (let ((frq (env frqf)))
 	   (outa i (* (env ampf)
 		      (+ (* (env f1) (oscil gen1 frq))
-			 (* .01 (oscil gen2 (* 2 frq)))))
-		 *output*))))))
+			 (* .01 (oscil gen2 (* 2 frq)))))))))))
 
   ;; note #3
   (let* ((start (seconds->samples (+ beg 0.446)))
@@ -5638,8 +5508,7 @@
 		      (+ (* (env f1) (oscil gen1 (* 2 frq1)))
 			 (* (env f2) (oscil gen2 frq1))
 			 (* (env f3) (oscil gen3 (* 3 frq1)))
-			 (* (env f4) (oscil gen4 (env frqf2)))))
-		 *output*)))))))
+			 (* (env f4) (oscil gen4 (env frqf2))))))))))))
 
 
 ;(with-sound (:play #t :statistics #t) (eared-grebe 0 .5))
@@ -5672,8 +5541,7 @@
 		       (rand-interp rnd))))
 	   (outa i (* (env ampf)
 		      (+ (* intrp (polyshape gen1 1.0 frq))
-			 (* (- 1.0 intrp) (polyshape gen2 1.0 frq))))
-	       *output*)))))))
+			 (* (- 1.0 intrp) (polyshape gen2 1.0 frq)))))))))))
 
 ;(with-sound (:play #t) (brown-jay 0 .5))
 
@@ -5736,8 +5604,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*))))))
+		    (polyshape gen1 1.0 (env frqf)))))))))
 
 ;(with-sound (:play #t) (blue-grosbeak 0 .5))
 
@@ -5768,8 +5635,7 @@
 			(+ (polyshape gen1 1.0 (* 2 frq))
 			   (* amp2 (polyshape gen2 1.0 frq))
 			   (* (- 1.0 amp2) 2 (polyshape gen3 1.0 (* 2 frq)))
-			   (* (env ampf4) (oscil gen4 (* 6 frq)))))
-		   *output*)))))))
+			   (* (env ampf4) (oscil gen4 (* 6 frq))))))))))))
   ;; note #1
   (let ((dur1 0.36))
     (acorn-woodpecker-1 beg1 dur1 amp1
@@ -5831,8 +5697,7 @@
 	       (mus-reset pulsef)))
 	 (outa i (* (env ampf)
 		    (env pulsef)
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*))))))
+		    (polyshape gen1 1.0 (env frqf)))))))))
 
 ;(with-sound (:play #t) (lesser-nighthawk 0 1 .5))
 
@@ -5863,8 +5728,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*))))))
+		    (polyshape gen1 1.0 (env frqf)))))))))
 
 ;(with-sound (:play #t) (olive-sided-flycatcher 0 .5))
 
@@ -5913,8 +5777,7 @@
 		      (formant frm1 val) 
 		      (formant frm2 val) 
 		      (formant frm3 val)
-		      (formant frm4 val))
-	       *output*)))))))
+		      (formant frm4 val)))))))))
 
 ;(with-sound (:play #t) (red-shouldered-hawk 0 .5))
 
@@ -5946,8 +5809,7 @@
 	 (do ((i start (1+ i)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
-		      (polyshape gen1 1.0 (env frqf)))
-		 *output*))))))
+		      (polyshape gen1 1.0 (env frqf)))))))))
 
   (common-yellowthroat-1 beg1 (* 0.4 amp1))
   (common-yellowthroat-1 (+ beg1 0.44) amp1)
@@ -5989,8 +5851,7 @@
 	   (outa i (* (env ampf)
 		      (env pulse-ampf)
 		      (polyshape gen1 1.0 (+ (env pulse-frqf)
-					     (env frqf))))
-		 *output*)))))
+					     (env frqf)))))))))
 
   ;; buzz2
   (let* ((start (seconds->samples (+ beg .2)))
@@ -6014,8 +5875,7 @@
 		 (mus-reset pulse-frqf)))
 	   (outa i (* (env pulse-ampf)
 		      (polyshape gen1 1.0 (+ (env pulse-frqf)
-					     (rand-interp rnd))))
-		 *output*)))))
+					     (rand-interp rnd)))))))))
 
   ;; buzz3
   (let* ((start (seconds->samples (+ beg .425)))
@@ -6043,8 +5903,7 @@
 		      (env pulse-ampf)
 		      (polyshape gen1 1.0 (+ (env pulse-frqf)
 					     (env frqf)
-					     (rand-interp rnd))))
-		 *output*)))))
+					     (rand-interp rnd)))))))))
 
   ;; 4 long pitches
   (let* ((start (seconds->samples (+ beg .95)))
@@ -6066,8 +5925,7 @@
 	 (do ((i start (1+ i)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
-		      (polyshape gen1 1.0 (env frqf)))
-		 *output*)))))
+		      (polyshape gen1 1.0 (env frqf))))))))
 
   ;; last buzz
   (let* ((start (seconds->samples (+ beg 1.73)))
@@ -6083,8 +5941,7 @@
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (+ .25 (* .75 (abs (oscil buzz))))
-		      (oscil gen1 (rand-interp rnd)))
-		 *output*))))))
+		      (oscil gen1 (rand-interp rnd)))))))))
 
 ;(with-sound (:play #t) (cassins-sparrow 0 .5))
 
@@ -6139,8 +5996,7 @@
 			(* (- 1.0 fintrp)
 			   (formant frm1 val))
 			(* fintrp (formant frm2 val))
-			(formant frm3 val))
-		   *output*)))))))
+			(formant frm3 val)))))))))
 
   (do ((beg beg1 (+ beg .15))
        (i 0 (1+ i)))
@@ -6178,8 +6034,7 @@
 		    (+ .8 (* .2 (oscil buzz)))
 		    (polyshape gen1 1.0 (+ (env frqf)
 					   (* (hz->radians 20)
-					      (oscil buzz1)))))
-	       *output*)))))
+					      (oscil buzz1))))))))))
 
   ;; note 3
   (let* ((start (seconds->samples (+ beg .254)))
@@ -6203,8 +6058,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*))))))
+		    (polyshape gen1 1.0 (env frqf)))))))))
 
 ;(with-sound (:play #t) (black-rail 0 .5))
 
@@ -6237,8 +6091,7 @@
 	   (outa i (* (env ampf)
 		      (+ (polyshape gen1 1.0 frq)
 			 (* (env ampf2)
-			    (oscil gen2 (* 3 frq)))))
-		 *output*)))))))
+			    (oscil gen2 (* 3 frq))))))))))))
 
 ;(with-sound (:play #t) (pinyon-jay 0 .5))
 
@@ -6264,8 +6117,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*))))))
+		    (polyshape gen1 1.0 (env frqf)))))))))
 
 ;(with-sound (:play #t) (sora 0 .5))
 
@@ -6302,8 +6154,7 @@
 	   (outa i (* (env ampf)
 		      (+ (polyshape gen1 1.0 (* 2 frq))
 			 (* (env ampf2)
-			    (polyshape gen2 1.0 frq))))
-		 *output*)))))))
+			    (polyshape gen2 1.0 frq)))))))))))
 
 ;(with-sound (:play #t) (killdeer 0 .5))
 
@@ -6338,8 +6189,7 @@
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polyshape gen1 1.0 (+ (env frqf)
-					   (* vib-amp (oscil gen2)))))
-	       *output*))))))
+					   (* vib-amp (oscil gen2)))))))))))
 
   (definstrument (oak-titmouse-2 beg amp)
     (let* ((start (seconds->samples beg))
@@ -6363,8 +6213,7 @@
 	 (outa i (* (env ampf)
 		    (+ (polyshape gen1 1.0 frq)
 		       (* (env ampf2)
-			  (polyshape gen2 1.0 frq))))
-	       *output*)))))))
+			  (polyshape gen2 1.0 frq)))))))))))
 
   (let ((amps (vct .5 1.0 1.0 .9)))
     (do ((i 0 (1+ i))
@@ -6418,8 +6267,7 @@
 		      (+ (* (env ampf1)
 			    (polyshape gen1 1.0 (env frqf1)))
 			 (* (env ampf2)
-			    (polyshape gen2 1.0 (env frqf2)))))
-		 *output*))))))
+			    (polyshape gen2 1.0 (env frqf2)))))))))))
 
   (definstrument (macgillivrays-warbler-2 beg amp)
     ;; 3 of these to end
@@ -6458,8 +6306,7 @@
 			    (polyshape gen1 1.0 (env frqf1)))
 			 (* (env ampf2)
 			    (polyshape gen2 1.0 (+ (env frqf2)
-						   (rand-interp rnd1))))))
-		 *output*))))))
+						   (rand-interp rnd1))))))))))))
 
   (let ((amps (vct .4 .6 .8 .9 1.0)))
     (do ((note 0 (1+ note))
@@ -6526,8 +6373,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*))))))
+		    (polyshape gen1 1.0 (env frqf)))))))))
 
 ;(with-sound (:play #t) (huttons-vireo 0 .5))
 
@@ -6562,8 +6408,7 @@
 	 (do ((i start (1+ i)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
-		      (oscil gen1 (env frqf)))
-		 *output*))))))
+		      (oscil gen1 (env frqf)))))))))
 
   ;; 2nd sequence of notes
   (definstrument (western-meadowlark-2 beg amp)
@@ -6597,8 +6442,7 @@
 	 (do ((i start (1+ i)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
-		      (polyshape gen1 1.0 (env frqf)))
-		 *output*))))))
+		      (polyshape gen1 1.0 (env frqf)))))))))
 
 
   (western-meadowlark-1 beg1 (* 0.6 amp1))
@@ -6652,8 +6496,7 @@
 	 (let ((rnd (env noisef)))
 	 (outa i (* (env ampf)
 		    (polyshape gen1 1.0 (+ (env frqf)
-					   (* rnd (rand-interp noise)))))
-	       *output*)))))))
+					   (* rnd (rand-interp noise))))))))))))
 
 ;(with-sound (:play #t) (northern-beardless-tyrannulet 0 .5))
 
@@ -6696,8 +6539,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*))))))
+		    (polyshape gen1 1.0 (env frqf)))))))))
 
 ;(with-sound (:play #t) (scotts-oriole 0 .5))
 
@@ -6740,8 +6582,7 @@
 			      (oscil gen1 (+ (env frqf1)
 					     noise)))
 			   (* (env ampf2)
-			      (oscil gen2 (env frqf2)))))
-		   *output*)))))))
+			      (oscil gen2 (env frqf2))))))))))))
 
   (definstrument (wilsons-warbler-2 beg dur frq amp)
     (let* ((start (seconds->samples beg))
@@ -6764,8 +6605,7 @@
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (oscil gen1 (+ (env frqf)
-				     (rand-interp rnd))))
-		 *output*))))))
+				     (rand-interp rnd))))))))))
 
 
   (definstrument (wilsons-warbler-3 beg amp)
@@ -6792,8 +6632,7 @@
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (oscil gen1 (+ (env frqf)
-				     (rand-interp rnd))))
-		 *output*))))))
+				     (rand-interp rnd))))))))))
 
   (wilsons-warbler-1 beg1 .046 (* .05 amp1))
   (wilsons-warbler-1 (+ beg1 .147) .05 (* .1 amp1))
@@ -6863,8 +6702,7 @@
 	   (outa i (* (env ampf)
 		      (+ (polyshape gen1 1.0 frq)
 			 (* (env ampf2)
-			    (oscil gen2 (* 2 frq)))))
-	       *output*)))))))
+			    (oscil gen2 (* 2 frq))))))))))))
 
 ;(with-sound (:play #t) (willow-flycatcher 0 .5))
 
@@ -6899,8 +6737,7 @@
 	   (outa i (* (env ampf)
 		      (+ (polyshape gen1 1.0 frq)
 			 (* (env ampf2)
-			    (polyshape gen2 1.0 (* 0.5 frq)))))
-		 *output*)))))))
+			    (polyshape gen2 1.0 (* 0.5 frq))))))))))))
 
 ;(with-sound (:play #t) (black-necked-stilt 0 .5))
 
@@ -6948,8 +6785,7 @@
 		    (if pulse2
 			(* (env pulse-ampf2)
 			   (polyshape gen2 1.0 (env pulse-frqf2)))
-			0.0))
-	       *output*))))))
+			0.0))))))))
 
 ;(with-sound (:play #t) (bushtit 0 .5))
 
@@ -6979,8 +6815,7 @@
 		       (rand-interp rnd))))
 	   (outa i (* (env ampf)
 		      (polyshape gen1 1.0 (+ (* 5 frq)
-					     (* index (oscil mod1 frq)))))
-		 *output*)))))))
+					     (* index (oscil mod1 frq))))))))))))
 
 ;(with-sound (:play #t) (red-breasted-nuthatch 0 .5))
 
@@ -7019,8 +6854,7 @@
 		      (+ .7 (* .3 (abs vb)))
 		      (+ (polyshape gen1 1.0 mfrq)
 			 (* (env ampf2)
-			    (polyshape gen2 1.0 mfrq))))
-		 *output*)))))))
+			    (polyshape gen2 1.0 mfrq)))))))))))
 
 ;(with-sound (:play #t) (white-breasted-nuthatch 0 .5))
 
@@ -7047,8 +6881,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*))))))
+		    (polyshape gen1 1.0 (env frqf)))))))))
 
 ;(with-sound (:play #t) (pygmy-nuthatch 0 .5))
 
@@ -7070,8 +6903,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*))))))
+		    (polyshape gen1 1.0 (env frqf)))))))))
 
 ;(with-sound (:play #t) (flammulated-owl 0 .5))
 
@@ -7119,8 +6951,7 @@
 			      (env ampf2)
 			      (polyshape gen-down 1.0 (+ frq (hz->radians -600)
 							 (* (hz->radians 800)
-							    moddown))))))
-		   *output*)))))))
+							    moddown)))))))))))))
 
   (definstrument (song-sparrow-clear-tone beg frq amp)
     (let* ((start (seconds->samples beg))
@@ -7138,8 +6969,7 @@
 	 (do ((i start (1+ i)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
-		      (polyshape gen1 1.0 (env frqf)))
-		 *output*))))))
+		      (polyshape gen1 1.0 (env frqf)))))))))
 
   (definstrument (song-sparrow-sweep-tone beg amp)
     (let* ((start (seconds->samples beg))
@@ -7158,8 +6988,7 @@
 	 (do ((i start (1+ i)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
-		      (polyshape gen1 1.0 (env frqf)))
-		 *output*))))))
+		      (polyshape gen1 1.0 (env frqf)))))))))
 
   (definstrument (song-sparrow-sweep-caw beg amp)
     (let* ((start (seconds->samples beg))
@@ -7180,8 +7009,7 @@
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (polyshape gen 1.0 (+ (* .5 (env frqf))
-					    (rand-interp rnd))))
-		 *output*))))))
+					    (rand-interp rnd))))))))))
 
   (definstrument (song-sparrow-little-buzz beg amp)
     (let* ((start (seconds->samples beg))
@@ -7199,8 +7027,7 @@
 	   (outa i (* (env ampf)
 		      (+ .4 (abs (triangle-wave tri)))
 		      (polyshape gen 1.0 (+ (env frqf)
-					    (rand-interp rnd))))
-		 *output*))))))
+					    (rand-interp rnd))))))))))
 
   (definstrument (song-sparrow-sweep-down beg amp)
     (let* ((start (seconds->samples beg))
@@ -7220,8 +7047,7 @@
 	 (do ((i start (1+ i)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
-		      (polyshape gen1 1.0 (env frqf)))
-		 *output*))))))
+		      (polyshape gen1 1.0 (env frqf)))))))))
 
   (definstrument (song-sparrow-sweep-up beg amp)
     (let* ((start (seconds->samples beg))
@@ -7237,8 +7063,7 @@
 	 (do ((i start (1+ i)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
-		      (polyshape gen1 1.0 (env frqf)))
-		 *output*))))))
+		      (polyshape gen1 1.0 (env frqf)))))))))
 
   (definstrument (song-sparrow-2nd-buzz beg amp)
     (let* ((start (seconds->samples beg))
@@ -7262,8 +7087,7 @@
 	     (outa i (* (env ampf)
 			(+ .4 (* .6 vb))
 			(polyshape gen1 1.0 (+ (env frqf)
-					       (* (hz->radians 200) vb))))
-		   *output*)))))))
+					       (* (hz->radians 200) vb)))))))))))
 
 
   (definstrument (song-sparrow-chiff beg amp)
@@ -7279,8 +7103,7 @@
 	 (do ((i start (1+ i)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
-		      (polyshape gen1 1.0 (env frqf)))
-		 *output*))))))
+		      (polyshape gen1 1.0 (env frqf)))))))))
 
   (song-sparrow-little-buzz beg1 (* .25 amp1))
   (song-sparrow-clear-tone (+ beg1 0.2) 1.0 (* 0.9 amp1))
@@ -7338,8 +7161,7 @@
 		       (* (env ampf2)
 			  (polyshape gen2 1.0 frq))
 		       (* (env ampf3)
-			  (oscil gen3 (* 5 frq)))))
-	       *output*)))))))
+			  (oscil gen3 (* 5 frq))))))))))))
 
 ;(with-sound (:play #t) (burrowing-owl 0 .5))
 
@@ -7380,8 +7202,7 @@
 		      (+ (* interp
 			    (oscil gen1 frq))
 			 (* (- 1.0 interp)
-			    (oscil gen2 (* 2 frq)))))
-		 *output*)))))))
+			    (oscil gen2 (* 2 frq))))))))))))
 
 ;(with-sound (:play #t) (gray-vireo-1 0 .5))
 
@@ -7425,8 +7246,7 @@
 			    (oscil gen1 frq))
 			 (* 0.5 (- 1.0 interp)
 			    (+ (oscil gen2 (* 2 frq))
-			       (oscil gen3 (* 3 frq))))))
-		 *output*)))))))
+			       (oscil gen3 (* 3 frq)))))))))))))
 
 ;(with-sound (:play #t) (gray-vireo-2 0 .5))
 
@@ -7475,7 +7295,7 @@
 	   (do ((k 0 (1+ k)))
 	       ((= k 5))
 	     (set! sum (+ sum (* (env (vector-ref ampfs k)) (oscil (vector-ref oscs k) (* (1+ k) frq))))))
-	   (outa i (* (env ampf) sum) *output*))))))
+	   (outa i (* (env ampf) sum) ))))))
 
   ;; part 2
   (let* ((start (seconds->samples (+ beg 0.1)))
@@ -7496,8 +7316,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*))))))
+		    (polyshape gen1 1.0 (env frqf)))))))))
 
 ;(with-sound (:play #t) (gray-vireo-3 0 .5))
 
@@ -7530,8 +7349,7 @@
 		      (+ (* (env ampf1)
 			    (polyshape gen1 1.0 frq))
 			 (* (env ampf2)
-			    (polyshape gen2 1.0 (* 0.5 frq)))))
-		 *output*)))))))
+			    (polyshape gen2 1.0 (* 0.5 frq))))))))))))
 
 ;(with-sound (:play #t) (gray-vireo-4 0 .5))
 
@@ -7564,8 +7382,7 @@
 			 (* (env ampf2)
 			    (oscil gen2 (* frq 2)))
 			 (* (env ampf3)
-			    (oscil gen3 (* frq 3)))))
-		 *output*)))))))
+			    (oscil gen3 (* frq 3))))))))))))
 
 ;(with-sound (:play #t) (gray-vireo-5 0 .5))
 
@@ -7616,8 +7433,7 @@
 			(+ (* intrp (polyshape gen1 1.0 (+ (env frqf1)
 							   noise)))
 			   (* (- 1.0 intrp) (polyshape gen2 1.0 (+ (env frqf2)
-								   (* 2 noise))))))
-		   *output*)))))))
+								   (* 2 noise)))))))))))))
   
   (definstrument (bald-eagle-2 beg amp)
     (let* ((start (seconds->samples beg))
@@ -7641,8 +7457,7 @@
 	   (outa i (* (env ampf)
 		      (polyshape gen1 1.0 (+ (env frqf)
 					     (* (env rndf)
-						(rand-interp rnd)))))
-		 *output*))))))
+						(rand-interp rnd)))))))))))
   
   (definstrument (bald-eagle-3 beg amp)
     (let* ((start (seconds->samples beg))
@@ -7669,8 +7484,7 @@
 	     (outa i (* (env ampf)
 			(+ (polyshape gen1 1.0 frq)
 			   (* (env ampf2)
-			      (polyshape gen2 1.0 (* 2 frq)))))
-		   *output*)))))))
+			      (polyshape gen2 1.0 (* 2 frq))))))))))))
   
   (definstrument (bald-eagle-4 beg frqscl amp)
     (let* ((start (seconds->samples beg))
@@ -7693,8 +7507,7 @@
 	   (let ((frq (+ (env frqf)
 			 (rand-interp rnd))))
 	     (outa i (* (env ampf)
-			(polyshape gen1 1.0 frq))
-		   *output*)))))))
+			(polyshape gen1 1.0 frq)))))))))
   
   
   (bald-eagle-1 beg (* amp .8))
@@ -7741,8 +7554,7 @@
 	 (outa i (* (env ampf)
 		    (polyshape gen1 1.0 (+ (env frqf)
 					   (* (env buzzf)
-					      (oscil buzz)))))
-	       *output*))))))
+					      (oscil buzz)))))))))))
 
 ;(with-sound (:play #t) (eastern-meadowlark 0 .5))
 
@@ -7777,8 +7589,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*))))))
+		    (polyshape gen1 1.0 (env frqf)))))))))
 
 ;(with-sound (:play #t) (yellow-green-vireo 0 .5))
 
@@ -7823,8 +7634,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*))))))
+		    (polyshape gen1 1.0 (env frqf)))))))))
 
 ;(with-sound (:play #t) (magnolia-warbler 0 .5))
 
@@ -7864,8 +7674,7 @@
 	     (outa i (* (env ampf)
 			(+ (polyshape gen1 1.0 frq)
 			   (* (env ampf2)
-			      (polyshape gen2 1.0 (* 1.5 frq)))))
-		   *output*)))))))
+			      (polyshape gen2 1.0 (* 1.5 frq))))))))))))
 
   (definstrument (eastern-bluebird-2 beg amp)
     (let* ((start (seconds->samples beg))
@@ -7893,8 +7702,7 @@
 	   (outa i (* (env ampf)
 		      (+ (polyshape gen1 1.0 (env frqf))
 			 (* (env ampf2)
-			    (polyshape gen2 1.0 (env frqf2)))))
-		 *output*))))))
+			    (polyshape gen2 1.0 (env frqf2)))))))))))
 
   (eastern-bluebird-1 beg1 amp1)
   (eastern-bluebird-2 (+ beg1 0.33) amp1))
@@ -7931,8 +7739,7 @@
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (+ .7 (abs (rand-interp rnd)))
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*))))))
+		    (polyshape gen1 1.0 (env frqf)))))))))
 
 ;(with-sound (:play #t) (greater-roadrunner 0 .5))
 
@@ -7972,8 +7779,7 @@
 	   (outa i (* (env ampf)
 		      (+ (polyshape gen1 1.0 frq)
 			 (* (env emphf)
-			    (oscil emph (* 2 frq)))))
-		 *output*)))))))
+			    (oscil emph (* 2 frq))))))))))))
 
 ;(with-sound (:play #t) (evening-grosbeak 0 .5))
 
@@ -8002,8 +7808,7 @@
 	 (do ((i start (1+ i)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
-		      (polyshape gen1 1.0 (env frqf)))
-		 *output*))))))
+		      (polyshape gen1 1.0 (env frqf)))))))))
 
   (let ((amps (vct .3 .5 .8 .8 .8 .8 .8 1.0 .8 .8 .4)))
     (do ((call 0 (1+ call)))
@@ -8044,8 +7849,7 @@
 	 (outa i (* (env ampf)
 		    (+ (polyshape gen1 1.0 frq)
 		       (* (env ampf2)
-			  (polyshape gen2 1.0 frq))))
-	       *output*))))))
+			  (polyshape gen2 1.0 frq))))))))))
 
   ;; second note
   (let* ((start (seconds->samples (+ beg 0.27)))
@@ -8079,8 +7883,7 @@
 		       (* (env ampf2) 
 			  (oscil gen2 (* 2 frq)))
 		       (* (env ampf3) 
-			  (oscil gen3 (* 3 frq)))))
-	       *output*)))))))
+			  (oscil gen3 (* 3 frq))))))))))))
 
 ;(with-sound (:play #t) (groove-billed-ani 0 .5))
 
@@ -8111,8 +7914,7 @@
 	 (outa i (* (env ampf)
 		    (polyshape gen1 1.0 (+ (env frqf)
 					   (* (env vibf)
-					      (oscil vib)))))
-	       *output*))))))
+					      (oscil vib)))))))))))
 
 ;(with-sound (:play #t) (common-pauraque 0 .5))
 
@@ -8147,8 +7949,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*))))))
+		    (polyshape gen1 1.0 (env frqf)))))))))
 
 ;(with-sound (:play #t) (hammonds-flycatcher 0 .5))
 
@@ -8197,8 +7998,7 @@
 		      (formant frm2 val)
 		      (formant frm3 val)
 		      (formant frm4 val)
-		      (formant frm5 val))
-		 *output*)))))))
+		      (formant frm5 val)))))))))
 
 ;(with-sound (:play #t :statistics #t) (barn-owl 0 .5))
 
@@ -8222,8 +8022,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*))))))
+		    (polyshape gen1 1.0 (env frqf)))))))))
 
 ;(with-sound (:play #t) (long-eared-owl 0 .5))
 
@@ -8250,8 +8049,7 @@
 	   (let ((rf (env rndf)))
 	     (outa i (* (env ampf)
 			(+ (- 1.0 rf) (* rf (rand-interp rnd)))
-			(polyshape gen1 1.0 (env frqf)))
-		   *output*)))))))
+			(polyshape gen1 1.0 (env frqf))))))))))
 
   (summer-tanager-1 beg1 .29 (* .4 amp1)
 		    '(0.000 0.000 0.123 0.450 0.194 0.404 0.210 0.055 0.232 0.437 0.251 0.193 0.277 0.263 
@@ -8396,8 +8194,7 @@
 						   (* (env rndf2) rn))))
 			 (* (env ampf3) 
 			    (polyshape gen3 1.0 (+ frq1
-						   (* (env rndf3) rn))))))
-	       *output*)))))))
+						   (* (env rndf3) rn)))))))))))))
 
 ;(with-sound (:play #t) (whooping-crane 0 .5))
 
@@ -8443,8 +8240,7 @@
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polyshape gen1 1.0 (+ (env frqf)
-					   (rand-interp rnd))))
-	       *output*))))))
+					   (rand-interp rnd))))))))))
 
 ;(with-sound (:play #t) (sandhill-crane 0 .5))
 
@@ -8486,7 +8282,7 @@
 		      (+ (polyshape gen1 1.0 (+ rn (env frqf1)))
 			 (* (env ampf2)
 			    (oscil gen2 (+ rn (env frqf2))))))
-		 *output*)))))))
+		 )))))))
 
 ;(with-sound (:play #t) (gray-crowned-rosy-finch 0 .5))
 
@@ -8519,8 +8315,7 @@
 	   (let ((frq (rand-interp rnd)))
 	     (outa i (* (env ampf)
 			(+ (* .55 (polyshape gen1 1.0 frq))
-			   (* .45 (polyshape gen2 1.0))))
-		   *output*)))))))
+			   (* .45 (polyshape gen2 1.0)))))))))))
 
   (definstrument (virginia-rail-2 beg amp)
     (let* ((start (seconds->samples beg))
@@ -8544,8 +8339,7 @@
 	   (let ((frq (rand-interp rnd)))
 	     (outa i (* (env ampf)
 			(+ (* .45 (polyshape gen1 1.0 frq))
-			   (* .55 (polyshape gen2 1.0 frq))))
-		   *output*)))))))
+			   (* .55 (polyshape gen2 1.0 frq)))))))))))
 
   (definstrument (virginia-rail-3 beg amp)
     (let* ((start (seconds->samples beg))
@@ -8569,8 +8363,7 @@
 	     (outa i (* (env ampf)
 			(+ (* .5 (polyshape gen1 1.0 frq))
 			   (* .4 (polyshape gen2 1.0 frq))
-			   (* .1 (polyshape gen3 1.0 frq))))
-		   *output*)))))))
+			   (* .1 (polyshape gen3 1.0 frq)))))))))))
 
   (virginia-rail-1 beg amp)
 
@@ -8613,8 +8406,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1))
-	       *output*)))))
+		    (polyshape gen1)))))))
   
   ;; 3 buzzes
   (let* ((start (seconds->samples (+ beg 0.264)))
@@ -8647,8 +8439,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*)))))
+		    (polyshape gen1 1.0 (env frqf))))))))
 
   ;; next pure tone (overlaps next)
   (let* ((start (seconds->samples (+ beg 0.517)))
@@ -8662,8 +8453,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1))
-	       *output*)))))
+		    (polyshape gen1)))))))
 
   ;; another buzz
   (let* ((start (seconds->samples (+ beg 0.627)))
@@ -8695,8 +8485,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*)))))
+		    (polyshape gen1 1.0 (env frqf))))))))
 
 
   ;; 2 more buzzes 
@@ -8726,8 +8515,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*)))))
+		    (polyshape gen1 1.0 (env frqf))))))))
 
   ;; two tones
   (let* ((start (seconds->samples (+ beg 1.123)))
@@ -8745,8 +8533,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*)))))
+		    (polyshape gen1 1.0 (env frqf))))))))
 
   ;; last buzz
   (let* ((start (seconds->samples (+ beg 1.25)))
@@ -8788,8 +8575,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*))))))
+		    (polyshape gen1 1.0 (env frqf)))))))))
 
 ;(with-sound (:play #t) (sage-sparrow 0 .5))
 
@@ -8822,8 +8608,7 @@
 	   (outa i (* (env ampf)
 		      (+ (polyshape gen1 1.0 frq)
 			 (* (env ampf2)
-			    (polyshape gen2 1.0 (* 0.5 frq)))))
-		 *output*)))))))
+			    (polyshape gen2 1.0 (* 0.5 frq))))))))))))
 
 ;(with-sound (:play #t) (hairy-woodpecker 0 .5))
 
@@ -8853,8 +8638,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*))))))
+		    (polyshape gen1 1.0 (env frqf)))))))))
 
 ;(with-sound (:play #t) (pacific-slope-flycatcher 0 .5))
 
@@ -8884,8 +8668,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*))))))
+		    (polyshape gen1 1.0 (env frqf)))))))))
 
 ;(with-sound (:play #t) (dusky-flycatcher 0 .5))
 
@@ -8917,8 +8700,7 @@
 	 (outa i (* (env ampf)
 		    (polyshape gen1 1.0 (+ (env frqf)
 					   (* (env rndf)
-					      (rand-interp rnd)))))
-	       *output*))))))
+					      (rand-interp rnd)))))))))))
 
 ;(with-sound (:play #t) (inca-dove-1 0 .5))
 
@@ -8973,15 +8755,15 @@
      (lambda ()
        (do ((i start1 (1+ i)))
 	   ((= i stop1))
-	 (outa i (* (env ampf1) (polyshape gen1 1.0 (env frqf1))) *output*))
+	 (outa i (* (env ampf1) (polyshape gen1 1.0 (env frqf1)))))
 
        (do ((i start2 (1+ i)))
 	   ((= i stop2))
-	 (outa i (* (env ampf2) (polyshape gen1 1.0 (env frqf2))) *output*))
+	 (outa i (* (env ampf2) (polyshape gen1 1.0 (env frqf2)))))
 
        (do ((i start3 (1+ i)))
 	   ((= i stop3))
-	 (outa i (* (env ampf3) (polyshape gen1 1.0 (+ (env frqf3) (rand-interp rnd)))) *output*))))))
+	 (outa i (* (env ampf3) (polyshape gen1 1.0 (+ (env frqf3) (rand-interp rnd))))))))))
 
 ;(with-sound (:play #t) (inca-dove-2 0 .5))
 
@@ -9022,8 +8804,7 @@
 	   (outa i (* (env ampf)
 		      (+ (* (env ampf1)
 			    (polyshape gen1 1.0 frq))
-			 (polyshape gen2 1.0 frq)))
-	       *output*))))))
+			 (polyshape gen2 1.0 frq)))))))))
 
 
   ;; note #2
@@ -9049,8 +8830,7 @@
 		      (+ (* (env ampf1)
 			    (polyshape gen1 1.0 frq))
 			 (* (env ampf2)
-			    (polyshape gen2 1.0 frq))))
-		 *output*)))))))
+			    (polyshape gen2 1.0 frq)))))))))))
 
 ;(with-sound (:play #t) (great-kiskadee 0 .5))
 
@@ -9084,8 +8864,7 @@
 	 (do ((i start (1+ i)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
-		      (polyshape gen1 1.0 (env frqf)))
-		 *output*))))))
+		      (polyshape gen1 1.0 (env frqf)))))))))
 
   (definstrument (chestnut-sided-warbler-2 beg amp)
     ;; notes 7 and 8
@@ -9110,8 +8889,7 @@
 	 (do ((i start (1+ i)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
-		      (polyshape gen1 1.0 (env frqf)))
-		 *output*))))))
+		      (polyshape gen1 1.0 (env frqf)))))))))
 
   (definstrument (chestnut-sided-warbler-3 beg amp)
     ;; last note
@@ -9135,8 +8913,7 @@
 	 (do ((i start (1+ i)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
-		      (polyshape gen1 1.0 (env frqf)))
-		 *output*))))))
+		      (polyshape gen1 1.0 (env frqf)))))))))
 
   (let ((amps (vct .1 .3 .6  .8 .9 1.0))
 	(begs (vct 0.0 0.156 .311 .454  .594 .731)))
@@ -9199,8 +8976,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*))))))
+		    (polyshape gen1 1.0 (env frqf)))))))))
 
 ;(with-sound (:play #t) (yellow-bellied-flycatcher 0 .5))
 
@@ -9234,8 +9010,7 @@
 	     (outa i (* (env ampf)
 			(+ .25 (* .45 (abs (+ noise (* .7 (oscil trem))))))
 			(polyshape gen1 1.0 (+ (env frqf)
-					       (* vib-index vbf vb))))
-		   *output*)))))))
+					       (* vib-index vbf vb)))))))))))
 
   (let ((main-ampf '(0.000 0.000 0.321 0.215 0.679 0.569 0.826 0.992 0.874 1.000 1.000 0.000))
 	(main-frqf '(0.000 0.228 0.795 0.210 0.816 0.235 0.827 0.199 0.846 0.217 0.882 0.181 1.000 0.206))
@@ -9308,8 +9083,7 @@
 			  (polyshape gen1 1.0 (env frqf1)))
 		       (* (env ampf2)
 			  (+ .3 (abs (rand-interp rnd)))
-			  (polyshape gen2 1.0 (env frqf2)))))
-	       *output*))))))
+			  (polyshape gen2 1.0 (env frqf2)))))))))))
 
 ;(with-sound (:play #t) (great-crested-flycatcher 0 .5))
 
@@ -9360,9 +9134,7 @@
 			 (* rf (abs (rand-interp rnd1))))
 		      (+ (* (env ampf1) (oscil gen1 frq))
 			 (* (env ampf2) (oscil gen2 (* 2 frq)))
-			 (* (env ampf3) (oscil gen3 (* 3 frq)))
-			 ))
-	       *output*)))))))
+			 (* (env ampf3) (oscil gen3 (* 3 frq))))))))))))
 
 ;(with-sound (:play #t) (house-sparrow-1 0 .5))
 
@@ -9395,8 +9167,7 @@
 	   (outa i (* (env ampf)
 		      (+ (polyshape gen1 1.0 frq)
 			 (* (env ampf2) (polyshape gen2 1.0 frq))
-			 (* (env ampf3) (polyshape gen3 1.0 frq))))
-		 *output*)))))))
+			 (* (env ampf3) (polyshape gen3 1.0 frq)))))))))))
 
 ;(with-sound (:play #t) (gambels-quail 0 .5))
 
@@ -9456,8 +9227,7 @@
 			      (* (env ampf6) (polyshape gen6 1.0 frq))))))
 	       (outa i (+ (* frm (+ (formant frm1 val)
 				    (formant frm2 val)))
-			  (* (- 1.0 frm) val))
-		     *output*))))))))
+			  (* (- 1.0 frm) val))))))))))
 
   (scaled-quail-1 beg1 .18 amp1 4200 
 		  2300 6400 '(0 0 .1 1 .45 1 .5 0 .7 0 .8 1 1 1)
@@ -9505,8 +9275,7 @@
 		    (+ .5 (abs (rand-interp rnd)))
 		    (polyshape gen1 1.0 (+ (env frqf)
 					   (* (env vibf) (+ (oscil vib)
-							    (rand-interp vibr))))))
-	       *output*))))))
+							    (rand-interp vibr))))))))))))
 
 ;(with-sound (:play #t) (montezuma-quail 0 .5))
 
@@ -9540,8 +9309,7 @@
 		       (* (env rndf) (rand-interp rnd)))))
 	   (outa i (* (env ampf)
 		      (+ (oscil gen1 frq)
-			 (* (env ampf2) (polyshape gen2 1.0 frq))))
-		 *output*)))))))
+			 (* (env ampf2) (polyshape gen2 1.0 frq)))))))))))
 
 ;(with-sound (:play #t) (mountain-quail 0 .5))
 
@@ -9575,8 +9343,7 @@
 	   (do ((i start (1+ i)))
 	       ((= i stop))
 	     (outa i (* (env ampf)
-			(polyshape gen1 1.0 (env frqf)))
-		   *output*))))))))
+			(polyshape gen1 1.0 (env frqf)))))))))))
 
 ;(with-sound (:play #t) (verdin 0 .5))
 
@@ -9601,8 +9368,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*))))))
+		    (polyshape gen1 1.0 (env frqf)))))))))
 
 ;(with-sound (:play #t) (white-tipped-dove 0 .5))
 
@@ -9654,8 +9420,7 @@
 	   (outa i (* (env ampf)
 		      (+ (* .5 (polyshape gen1 1.0 frq1))
 			 (* (env ampf2) (oscil gen2 frq2))
-			 (* (env ampf3) (polyshape gen3 1.0 frq3))))
-		 *output*)))))))
+			 (* (env ampf3) (polyshape gen3 1.0 frq3)))))))))))
 
 ;(with-sound (:play #t) (zone-tailed-hawk 0 .5))
 
@@ -9691,8 +9456,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*))))))
+		    (polyshape gen1 1.0 (env frqf)))))))))
 
 ;(with-sound (:play #t) (red-eyed-vireo 0 .5))
 
@@ -9726,8 +9490,7 @@
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (polyshape gen1 1.0 (* index (+ (polyshape gen2)
-						      (rand-interp rnd)))))
-		 *output*)))))))
+						      (rand-interp rnd))))))))))))
 
 ;(with-sound (:play #t) (crested-caracara 0 .5))
 
@@ -9758,8 +9521,7 @@
 	 (do ((i start (1+ i)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
-		      (polyshape gen1 1.0 (* index (oscil vib))))
-		 *output*))))))
+		      (polyshape gen1 1.0 (* index (oscil vib))))))))))
 
   (definstrument (trumpeter-swan-b beg amp)
     (let* ((start (seconds->samples beg))
@@ -9792,8 +9554,7 @@
 			   (* (env ampf1)
 			      (oscil gen1 frq))
 			   (* (env ampf3)
-			      (sine-summation gen3 (* frq 9)))))
-		   *output*)))))))
+			      (sine-summation gen3 (* frq 9))))))))))))
   
   (definstrument (trumpeter-swan-c beg amp)
     (let* ((start (seconds->samples beg))
@@ -9821,8 +9582,7 @@
 			      (polyshape gen1 1.0 frq))
 			   (* (- 1.0 intrp)
 			      (+ (polyshape gen2 1.0 frq)
-				 (* .03 (sine-summation gen3 (* frq 9)))))))
-		   *output*)))))))
+				 (* .03 (sine-summation gen3 (* frq 9))))))))))))))
 
   (definstrument (trumpeter-swan-d beg amp)
     (let* ((start (seconds->samples beg))
@@ -9860,8 +9620,7 @@
 			   (* (env ampf3)
 			      (sine-summation gen3 (* 8 frq)))
 			   (* (env ampf4)
-			      (polyshape gen4 1.0 frq))))
-		   *output*)))))))
+			      (polyshape gen4 1.0 frq)))))))))))
   
   (definstrument (trumpeter-swan-e beg amp)
     (let* ((start (seconds->samples beg))
@@ -9884,8 +9643,7 @@
 	     (outa i (* (env ampf)
 			(+ (polyshape gen1 1.0 vb)
 			   (* (env ampf2)
-			      (sine-summation gen2 vb))))
-		   *output*)))))))
+			      (sine-summation gen2 vb)))))))))))
 
   (trumpeter-swan-a beg (* amp .6))
   (trumpeter-swan-b (+ beg .126) (* amp .9))
@@ -9919,8 +9677,7 @@
 	 (do ((i start (1+ i)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
-		      (polyshape gen1 1.0 (env frqf)))
-		 *output*))))))
+		      (polyshape gen1 1.0 (env frqf)))))))))
 
   (definstrument (wrentit-2 beg dur amp frqscl)
     (let* ((start (seconds->samples beg))
@@ -9949,8 +9706,7 @@
 			      (polyshape gen1 1.0 frq))
 			   (* .9 (oscil gen2 (* 2 frq)))
 			   (* (env ampf3)
-			      (oscil gen3 (* 3 frq)))))
-		   *output*)))))))
+			      (oscil gen3 (* 3 frq))))))))))))
 
   (wrentit-1 beg1 .041 (* amp1 0.6) 1.0)
 
@@ -10014,8 +9770,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*))))))
+		    (polyshape gen1 1.0 (env frqf)))))))))
 
 ;(with-sound (:play #t) (western-wood-pewee-1 0 .5))
 
@@ -10045,8 +9800,7 @@
 	   (outa i (* (env ampf)
 		      (- 1.0 (* vbf (abs (triangle-wave trem))))
 		      (polyshape gen1 1.0 (+ (env frqf)
-					     (* vbf index (oscil vib)))))
-		 *output*)))))))
+					     (* vbf index (oscil vib))))))))))))
 
 ;(with-sound (:play #t) (western-wood-pewee-2 0 .5))
 
@@ -10073,7 +9827,7 @@
      (lambda ()
        (do ((i start (1+ i)))
 	   ((= i stop))
-	 (outa i (* (env ampf) (polyshape gen1 1.0 (env frqf))) *output*))))))
+	 (outa i (* (env ampf) (polyshape gen1 1.0 (env frqf)))))))))
 
 ;(with-sound (:play #t) (cedar-waxwing 0 .5))
 
@@ -10104,8 +9858,7 @@
 	 (do ((i start (1+ i)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
-		      (polyshape gen1 1.0 (env frqf)))
-		 *output*))))))
+		      (polyshape gen1 1.0 (env frqf)))))))))
     
   (definstrument (townsends-solitaire-2 beg amp)
     (let* ((start (seconds->samples beg))
@@ -10124,8 +9877,7 @@
 	 (do ((i start (1+ i)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
-		      (polyshape gen1 1.0 (env frqf)))
-		 *output*))))))
+		      (polyshape gen1 1.0 (env frqf)))))))))
   
   (definstrument (townsends-solitaire-3 beg amp)
     (let* ((start (seconds->samples beg))
@@ -10152,8 +9904,7 @@
 	 (do ((i start (1+ i)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
-		      (polyshape gen1 1.0 (env frqf)))
-		 *output*))))))
+		      (polyshape gen1 1.0 (env frqf)))))))))
   
   (definstrument (townsends-solitaire-4 beg amp)
     (let* ((start (seconds->samples beg))
@@ -10178,8 +9929,7 @@
 	 (do ((i start (1+ i)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
-		      (polyshape gen1 1.0 (env frqf)))
-		 *output*))))))
+		      (polyshape gen1 1.0 (env frqf)))))))))
   
   (definstrument (townsends-solitaire-5 beg amp)
     (let* ((start (seconds->samples beg))
@@ -10193,8 +9943,7 @@
 	 (do ((i start (1+ i)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
-		      (polyshape gen1 1.0 (env frqf)))
-		 *output*))))))
+		      (polyshape gen1 1.0 (env frqf)))))))))
   
   
   (townsends-solitaire-3 beg1 (* amp1 .7))
@@ -10259,8 +10008,7 @@
 			 (* (env ampf4) (polyshape gen4 1.0 frq))
 			 (* (env ampf5) (sine-summation gen5 (* 6 frq)))
 			 (* (env ampf6) (sine-summation gen6 (* 3 frq)))
-			 (* (env humf) (oscil hum (* .25 frq)))))
-		 *output*)))))))
+			 (* (env humf) (oscil hum (* .25 frq))))))))))))
 
 (definstrument (canada-goose-2 beg amp)
   (let* ((start (seconds->samples beg))
@@ -10305,8 +10053,7 @@
 			 (* (env ampf4) (polyshape gen4 1.0 frq))
 			 (* (env ampf5) (sine-summation gen5 (* 6 frq)))
 			 (* (env ampf6) (sine-summation gen6 (* 3 frq)))
-			 (* (env humf) (oscil hum (* .25 frq)))))
-		 *output*)))))))
+			 (* (env humf) (oscil hum (* .25 frq))))))))))))
 
 (definstrument (canada-goose-3 beg amp)
   ;; east 21 29
@@ -10354,8 +10101,7 @@
 			 (* (env ampf5) (sine-summation gen5 (* 6 frq)))
 			 (* (env humf) 
 			    (+ .25 (abs (triangle-wave tri1)))
-			    (oscil hum (env humfrq)))))
-		 *output*)))))))
+			    (oscil hum (env humfrq))))))))))))
 
 (define (canada-goose beg1 amp1)
   (canada-goose-1 beg1 amp1)
@@ -10402,8 +10148,7 @@
 	       (outa i (* (env ampf)
 			  (+ (* .97 (oscil gen1 frq))
 			     (* (env ampf2)
-				(polyshape gen2 1.0 frq))))
-		     *output*)))))))))
+				(polyshape gen2 1.0 frq)))))))))))))
 
 ;(with-sound (:play #t) (pine-warbler 0 .5))
 
@@ -10431,8 +10176,7 @@
 	 (do ((i start (1+ i)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
-		      (polyshape gen1 1.0 (env frqf)))
-		 *output*))))))
+		      (polyshape gen1 1.0 (env frqf)))))))))
   
   (definstrument (black-throated-sparrow-2 beg amp)
     (let* ((start (seconds->samples beg))
@@ -10454,8 +10198,7 @@
 	 (do ((i start (1+ i)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
-		      (polyshape gen1 1.0 (env frqf)))
-		 *output*))))))
+		      (polyshape gen1 1.0 (env frqf)))))))))
   
   (definstrument (black-throated-sparrow-3 beg amp)
     (let* ((start (seconds->samples beg))
@@ -10480,8 +10223,7 @@
 	 (do ((i start (1+ i)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
-		      (polyshape gen1 1.0 (env frqf)))
-		 *output*))))))
+		      (polyshape gen1 1.0 (env frqf)))))))))
   
 
   (black-throated-sparrow-3 beg1 (* .4 amp1))
@@ -10523,8 +10265,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (oscil gen1 (env frqf)))
-	       *output*)))))
+		    (oscil gen1 (env frqf))))))))
   
   ;; next 4 notes
   (let* ((begs (vct 0.31 0.61 0.86 1.11))
@@ -10549,8 +10290,7 @@
 	   (do ((i start (1+ i)))
 	       ((= i stop))
 	     (outa i (* (env ampf)
-			(oscil gen1 (env frqf)))
-		   *output*))))))))
+			(oscil gen1 (env frqf)))))))))))
 		 
 ;(with-sound (:play #t) (cape-may-warbler 0 .5))
 
@@ -10573,8 +10313,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polyshape gen1 1.0 (env frqf)))
-	       *output*))))))
+		    (polyshape gen1 1.0 (env frqf)))))))))
 
   (let* ((begs (vct 0.0  0.25 0.47 0.65 0.79 0.99 1.17 1.33))
          (durs (vct 0.05 0.05 0.06 0.07 0.14 0.14 0.12 0.11))
@@ -10699,11 +10438,139 @@
 			 (* (env ampf2) (oscil gen2 (* 2 frq)))
 			 (* (env ampf3) (oscil gen3 (* 3 frq)))
 			 (* (env ampf4) (+ (oscil gen4 (* 4 frq))
-					   (oscil gen5 (* 5 frq))))))
-		 *output*)))))))
+					   (oscil gen5 (* 5 frq)))))))))))))
 
 ;(with-sound (:play #t) (wood-duck 0 .5))
 
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; White-eyed vireo
+
+(definstrument (white-eyed-vireo beg amp)
+  ;; south 41 2
+  
+  ;; note #1
+  (let* ((start (seconds->samples beg))
+	 (dur 0.1)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.067 0.143 0.150 0.431 0.174 0.392 0.215 0.866 0.243 1.000 0.265 1.000 
+			   0.309 0.589 0.322 0.742 0.347 1.000 0.371 0.487 0.415 0.617 0.496 0.457 0.546 0.604 
+			   0.644 0.686 0.677 0.593 0.703 0.721 0.741 0.745 0.757 0.693 0.772 0.500 0.828 0.615 
+			   0.838 0.766 0.875 0.965 0.897 0.905 0.912 0.461 0.932 0.868 0.952 0.855 1.000 0.000)
+			 :duration dur :scaler (* .5 amp)))
+	 (frqf (make-env '(0.000 0.109 0.076 0.131 0.112 0.144 0.155 0.156 0.235 0.193 0.259 0.198 0.287 0.215 
+				 0.352 0.232 0.382 0.257 0.462 0.270 0.599 0.273 0.748 0.272 0.776 0.262 0.798 
+				 0.260 0.897 0.227 0.927 0.211 0.960 0.195 1.000 0.191)
+			 :duration dur :scaler (hz->radians 22000.0)))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .99  2 .01  3 .005))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf) (polyshape gen1 1.0 (env frqf))))))))
+
+  ;; note #2
+  (let* ((start (seconds->samples (+ beg 0.23)))
+	 (dur 0.046)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.052 0.258 0.111 0.138 0.273 0.508 0.356 0.992 0.419 0.569 0.493 0.547 
+			   0.584 0.374 0.668 0.629 0.703 0.659 0.732 0.884 0.813 0.077 0.857 0.190 0.913 0.087 1.000 0.000)
+			 :duration dur :scaler (* .6 amp)))
+	 (frqf (make-env '(0.000 0.203 0.071 0.200 0.111 0.203 0.134 0.227 0.200 0.238 0.249 0.255 0.329 0.263 
+			   0.469 0.265 0.627 0.245 0.728 0.233 0.891 0.146 0.948 0.131 1.000 0.144)
+			 :duration dur :scaler (hz->radians (* 1/3 22000.0))))
+	 (gen1 (make-polyshape :partials (normalize-partials (list  2 1  3 .05  4 .02  5 .005  6 .01  7 .005))))
+	 (gen2 (make-oscil))
+	 (ampf2 (make-env '(0 .5  .4 1  .7 1 .8 0 1 0) :duration dur :scaler .05))
+	 (gen3 (make-oscil))
+	 (ampf3 (make-env '(0 1 .1 0 1 0) :duration dur :scaler .1)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((frq (env frqf)))
+	   (outa i (* (env ampf)
+		      (+ (* (env ampf2) (oscil gen2 frq))
+			 (* (env ampf3) (oscil gen3 (* 3 frq)))
+			 (polyshape gen1 1.0 frq)))))))))
+
+  ;; note #3
+  (let* ((start (seconds->samples (+ beg 0.33)))
+	 (dur 0.078)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.054 0.208 0.443 0.794 0.762 0.943 0.848 0.901 0.922 0.586 0.967 0.104 1.000 0.000)
+			 :duration dur :scaler (* 0.3 amp)))
+	 (frqf (make-env '(0.000 0.111 0.853 0.135 1.000 0.114)
+			 :duration dur :scaler (hz->radians 22000.0)))
+	 (gen1 (make-polyshape 0.0 :partials (list 1 .95  2 .01  3 .03  4 .01  5 .005 )))
+
+	 (vib (make-oscil 370))
+	 (vib-index (hz->radians 300))
+	 (rnd (make-rand-interp 4000 (hz->radians 200))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((frq (+ (env frqf)
+		       (* vib-index (oscil vib))
+		       (rand-interp rnd))))
+	   (outa i (* (env ampf)
+		      (polyshape gen1 1.0 frq))))))))
+
+  ;; note #4
+  (let* ((start (seconds->samples (+ beg 0.426)))
+	 (dur 0.2)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.023 0.147 0.041 0.537 0.063 0.716 0.077 0.179 0.092 0.812 0.121 0.710 
+			   0.128 0.625 0.163 0.959 0.251 0.161 0.338 0.504 0.355 0.551 0.366 0.689 0.383 0.507 
+			   0.393 0.845 0.406 0.806 0.410 0.601 0.421 0.815 0.444 0.856 0.456 0.575 0.500 0.742 
+			   0.510 0.619 0.515 0.408 0.524 0.754 0.537 0.563 0.546 0.331 0.551 0.683 0.564 0.625 
+			   0.572 0.493 0.580 0.704 0.593 0.639 0.597 0.396 0.604 0.721 0.621 0.551 0.624 0.413 
+			   0.630 0.660 0.647 0.557 0.650 0.416 0.660 0.707 0.678 0.472 0.685 0.686 0.703 0.496 
+			   0.716 0.733 0.732 0.575 0.740 0.739 0.750 0.648 0.765 0.762 0.771 0.727 0.777 0.636 
+			   0.792 0.809 0.806 0.648 0.830 0.845 0.841 0.745 0.875 0.982 0.906 1.000 0.931 0.944 
+			   0.970 0.645 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0.000 0.197 0.042 0.463 0.047 0.513 0.060 0.492 0.067 0.553 0.076 0.624 0.086 0.592 
+			   0.100 0.513 0.135 0.453 0.186 0.411 0.224 0.395 0.250 0.403 0.281 0.368 0.357 0.366 
+			   0.370 0.397 0.384 0.376 0.396 0.426 0.412 0.400 0.426 0.445 0.440 0.421 0.449 0.476 
+			   0.463 0.437 0.478 0.497 0.490 0.453 0.503 0.503 0.515 0.447 0.531 0.503 0.545 0.461 
+			   0.557 0.511 0.569 0.463 0.580 0.516 0.595 0.455 0.608 0.505 0.625 0.455 0.638 0.505 
+			   0.649 0.455 0.665 0.495 0.679 0.455 0.693 0.500 0.707 0.447 0.721 0.487 0.735 0.455 
+			   0.750 0.479 0.766 0.453 0.778 0.479 0.793 0.439 0.808 0.461 0.821 0.437 0.837 0.458 
+			   0.861 0.437 1.000 0.408)
+			 :duration dur :scaler (hz->radians 7800.0)))
+	 (gen1 (make-polyshape :partials (list 1 .98  2 .01  3 .01  4 .005  5 .005))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (polyshape gen1 1.0 (env frqf))))))))
+
+  ;; note #5
+  (let* ((start (seconds->samples (+ beg 0.65)))
+	 (dur 0.14)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.033 0.216 0.110 0.247 0.218 0.800 0.263 0.734 0.301 0.889 0.370 0.966 
+			   0.470 0.905 0.494 0.658 0.531 0.666 0.727 0.508 1.000 0.000)
+			 :duration dur :scaler (* .3 amp)))
+	 (frqf (make-env '(0.124 0.214 0.222 0.265 0.311 0.310 0.400 0.317 0.501 0.307 0.651 0.283 0.752 0.262 1.000 0.198)
+			 :duration dur :scaler (hz->radians 8100.0)))
+	 (gen1 (make-polyshape 0.0 :partials (normalize-partials (list 1 1.5  2 .01  3 .01  4 .07  5 .04  6 .05  8 .005))))
+	 (rnd (make-rand-interp 3000))
+	 (rndf (make-env '(0 1  .2 0  .7 0  .8 1  1 1) :duration dur :scaler (hz->radians 200))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (polyshape gen1 1.0 (+ (env frqf)
+					   (* (env rndf)
+					      (rand-interp rnd)))))))))))
+
+;(with-sound (:play #t) (white-eyed-vireo 0 .5))
 
 
 
@@ -10920,7 +10787,8 @@
   (cape-may-warbler              (+ beg 242.5) .25)      (set! beg (+ beg spacing))
   (kirtlands-warbler             (+ beg 244.0) .25)      (set! beg (+ beg spacing))
   (wood-duck                     (+ beg 245.5) .25)      (set! beg (+ beg spacing))
-  (+ beg 246.5))
+  (white-eyed-vireo              (+ beg 246.5) .25)      (set! beg (+ beg spacing))
+  (+ beg 247.5))
 
 
 (define (calling-all-animals)

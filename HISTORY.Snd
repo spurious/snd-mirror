@@ -1,5 +1,6 @@
 Snd change log
 
+ 11-Feb:     the "stream" arg to outa and friends now defaults to *output*.
  7-Feb:      Snd 9.7.
 
 2008 ----------------------------------------------------------------

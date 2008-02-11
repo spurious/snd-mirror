@@ -8264,7 +8264,7 @@ of the speed of CL+run+C in CLM.  Currently, only Guile and Gauche support this 
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 100))
-	 (<a class=quiet href="sndclm.html#outa">outa</a> i (<a class=quiet href="sndclm.html#oscil">oscil</a> o) *output*))))))
+	 (<a class=quiet href="sndclm.html#outa">outa</a> i (<a class=quiet href="sndclm.html#oscil">oscil</a> o)))))))
 </pre></td></tr></table>
 
 <A NAME="declare"></A>
@@ -8686,7 +8686,7 @@ it's probably simpler to use <a href="sndscm.html#withsound">with-sound</a> (see
 		     (<a class=quiet href="sndscm.html#run">run</a> (lambda ()
 			    (do ((samp 0 (1+ samp)))
 				((or (c-g?) (<a class=quiet href="#samplereaderatendQ">sample-reader-at-end?</a> rd)))
-			      (<a class=quiet href="sndclm.html#out-any">out-any</a> samp (<a class=quiet href="sndclm.html#src">src</a> s incr (lambda (dir) (<a class=quiet href="#readsample">read-sample</a> rd))) 0 *output*)
+			      (<a class=quiet href="sndclm.html#out-any">out-any</a> samp (<a class=quiet href="sndclm.html#src">src</a> s incr (lambda (dir) (<a class=quiet href="#readsample">read-sample</a> rd))) 0)
 			      (if (= (modulo samp 2205) 0)
 				  (set! incr (+ 2.0 (<a class=quiet href="sndclm.html#oscil">oscil</a> o)))))))))
 	 (len (<a class=quiet href="#mussoundframes">mus-sound-frames</a> tempfile)))

@@ -37,6 +37,8 @@ XEN mus_optkey_to_procedure(XEN key, const char *caller, int n, XEN def, int req
 mus_xen *mus_any_to_mus_xen(mus_any *ge);
 Float mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *loc_gen, off_t pos, Float fval, bool from_locsig);
 Float *mus_vct_to_partials(vct *v, int *npartials, int *error_code);
+XEN mus_clm_output(void);
+XEN mus_clm_reverb(void);
 
 void Init_sndlib(void);
 

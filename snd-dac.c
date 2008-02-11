@@ -1725,7 +1725,7 @@ static int fill_dac_buffers(int write_ok)
 	    int i, j;
 	    sdobj = make_sound_data(snd_dacp->channels, snd_dacp->frames);
 	    sdobj_loc = snd_protect(sdobj);
-	    sd = (sound_data *)XEN_OBJECT_REF(sdobj);
+	    sd = XEN_TO_SOUND_DATA(sdobj);
 	    for (j = 0; j < sd->chans; j++)
 	      for (i = 0; i < sd->length; i++)
 		sd->data[j][i] = MUS_SAMPLE_TO_DOUBLE(dac_buffers[j][i]);

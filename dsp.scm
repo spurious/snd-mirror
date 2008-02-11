@@ -1945,7 +1945,7 @@ and replaces it with the spectrum given in coeffs"
 				      (set! pos (- pos num))))
 				(set! intrp (+ pos sr))
 				(+ last (* pos (- next last))))
-			      0 *output*))))))
+			      0))))))
 	 (len (mus-sound-frames tempfile)))
     (set-samples 0 (1- len) tempfile snd chn #t "linear-src" 0 #f #t)
     ;; first #t=truncate to new length, #f=at current edpos, #t=auto delete temp file
@@ -1990,7 +1990,7 @@ and replaces it with the spectrum given in coeffs"
     (run (lambda () 
 	   (do ((i 0 (1+ i))) 
 	       ((= i 10000))
-	     (outa i (mfilter m (* .1 (rd))) *output*))))))
+	     (outa i (mfilter m (* .1 (rd)))))))))
 
 ;;; sweep center freq:
 (with-sound () 
@@ -2000,7 +2000,7 @@ and replaces it with the spectrum given in coeffs"
     (run (lambda () 
 	   (do ((i 0 (1+ i))) 
 	       ((= i 10000))
-	     (outa i (mfilter m (* .1 (rd))) *output*) 
+	     (outa i (mfilter m (* .1 (rd)))) 
 	     (set! (mflt-eps m) (* 2.0 (sin (/ (* pi (env e)) (mus-srate))))))))))
 
 ;;; harmonics:
@@ -2020,7 +2020,7 @@ and replaces it with the spectrum given in coeffs"
 	   (do ((j 0 (1+ j)))
 	       ((= j 9))
 	     (set! sum (+ sum (* (/ 1.0 (+ j 1)) (mfilter (vector-ref filters j) input)))))
-	   (outa i sum *output*)))))))
+	   (outa i sum)))))))
 |#
 
 
@@ -2706,7 +2706,7 @@ the multi-modulator FM case described by the list of modulator frequencies and i
   (let ((gen (make-polyshape 1000.0 :partials (list 1 .5  2 .25  3 .125  4 .125))))
     (do ((i 0 (1+ i)))
 	((= i 88200))
-      (outa i (* .5 (polyshape gen 0.25)) *output*))))
+      (outa i (* .5 (polyshape gen 0.25))))))
 
 (cheby-hka 1 0.25 (vct 0 .5 .25 .125 .125))
 |#

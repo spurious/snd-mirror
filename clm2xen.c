@@ -1472,7 +1472,7 @@ static XEN g_mus_length(XEN gen)
   if (MUS_VCT_P(gen))
     return(C_TO_XEN_INT(((vct *)XEN_OBJECT_REF(gen))->length));
   if (sound_data_p(gen))
-    return(C_TO_XEN_INT(((sound_data *)XEN_OBJECT_REF(gen))->length));
+    return(C_TO_XEN_INT((XEN_TO_SOUND_DATA(gen))->length));
 
   XEN_ASSERT_TYPE(false, gen, XEN_ONLY_ARG, S_mus_length, "a generator, vct, or sound-data object");
   return(XEN_FALSE); /* make compiler happy */
@@ -4827,6 +4827,20 @@ static XEN g_env_interp(XEN x, XEN env1) /* "env" causes trouble in Objective-C!
 
 /* ---------------- io ---------------- */
 
+#if (!HAVE_RUBY)
+  #define S_output "*output*"
+  #define S_reverb "*reverb*"
+#else
+  #define S_output "ws_output"
+  #define S_reverb "ws_reverb"
+#endif
+
+static XEN clm_output, clm_reverb; /* *output* and *reverb* at extlang level -- these can be output streams, vct, sound-data objects etc */
+
+XEN mus_clm_output(void) {return(XEN_VARIABLE_REF(clm_output));}
+XEN mus_clm_reverb(void) {return(XEN_VARIABLE_REF(clm_reverb));}
+
+
 static XEN g_input_p(XEN obj) 
 {
   #define H_mus_input_p "(" S_mus_input_p " gen): " PROC_TRUE " if gen is an input generator"
@@ -4873,17 +4887,21 @@ static XEN g_in_any_1(const char *caller, XEN frame, XEN chan, XEN inp)
 {
   off_t pos;
   int in_chan;
+
   XEN_ASSERT_TYPE(XEN_NUMBER_P(frame), frame, XEN_ARG_1, caller, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_2, caller, "an integer");
+
   pos = XEN_TO_C_OFF_T(frame);
   if (pos < 0) 
     XEN_OUT_OF_RANGE_ERROR(caller, XEN_ARG_1, frame, "must be >= 0");    
   in_chan = XEN_TO_C_INT(chan);
+
   if (MUS_XEN_P(inp))
     {
       XEN_ASSERT_TYPE(mus_input_p(XEN_TO_MUS_ANY(inp)), inp, XEN_ARG_3, caller, "an input gen");
       return(C_TO_XEN_DOUBLE(mus_in_any(pos, in_chan, (mus_any *)XEN_TO_MUS_ANY(inp))));
     }
+
   if (MUS_VCT_P(inp))
     {
       vct *v;
@@ -4892,16 +4910,19 @@ static XEN g_in_any_1(const char *caller, XEN frame, XEN chan, XEN inp)
 	return(C_TO_XEN_DOUBLE(v->data[pos]));
       return(C_TO_XEN_DOUBLE(0.0));
     }
+
   if (in_chan < 0) 
     XEN_OUT_OF_RANGE_ERROR(caller, XEN_ARG_2, chan, "must be >= 0");    
+
   if (sound_data_p(inp))
     {
       sound_data *sd;
-      sd = (sound_data *)XEN_OBJECT_REF(inp);
+      sd = XEN_TO_SOUND_DATA(inp);
       if ((in_chan < sd->chans) && 
 	  (pos < sd->length))
 	return(C_TO_XEN_DOUBLE(sd->data[in_chan][pos]));
     }
+
   return(C_TO_XEN_DOUBLE(0.0));
 }
 
@@ -4932,9 +4953,14 @@ static XEN g_out_any_1(const char *caller, XEN frame, XEN chan, XEN val, XEN out
   int chn;
   off_t pos;
   Float inv;
+
   XEN_ASSERT_TYPE(XEN_NUMBER_P(frame), frame, XEN_ARG_1, caller, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_2, caller, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, caller, "a number");
+
+  if (XEN_NOT_BOUND_P(outp))
+    outp = XEN_VARIABLE_REF(clm_output);
+    
   if (MUS_XEN_P(outp))
     {
       XEN_ASSERT_TYPE(mus_output_p(XEN_TO_MUS_ANY(outp)), outp, XEN_ARG_4, caller, "an output gen");
@@ -4943,6 +4969,7 @@ static XEN g_out_any_1(const char *caller, XEN frame, XEN chan, XEN val, XEN out
 					 XEN_TO_C_INT(chan),
 					 (mus_any *)XEN_TO_MUS_ANY(outp))));
     }
+
   /* adds to existing! */
   pos = XEN_TO_C_OFF_T(frame);
   if (pos < 0) 
@@ -4966,7 +4993,7 @@ static XEN g_out_any_1(const char *caller, XEN frame, XEN chan, XEN val, XEN out
 	  sound_data *sd;
 	  if (chn < 0) 
 	    XEN_OUT_OF_RANGE_ERROR(caller, XEN_ARG_2, chan, "must be >= 0");    
-	  sd = (sound_data *)XEN_OBJECT_REF(outp);
+	  sd = XEN_TO_SOUND_DATA(outp);
 	  if ((chn < sd->chans) &&
 	      (pos < sd->length))
 	    sd->data[chn][pos] += inv;
@@ -4982,20 +5009,6 @@ static XEN g_out_any(XEN frame, XEN val, XEN chan, XEN outp)
   return(g_out_any_1(S_out_any, frame, chan, val, outp));
 }
 
-/* PERHAPS: make outa a macro in clm2xen fixing up *output*? 
- *          or register-output|reverb in with-sound and pick it up here?
- *          or find it as a symbol? -- does this work in nested with-sounds? -- perhaps way too slow (symbol table lookup on every call)
- *
- *  XEN_EVAL_C_STRING("(defmacro* " S_outa " (loc val :optional output) `(outa-internal ,loc ,val ,(or output *output*)))");
- *  XEN_DEFINE_PROCEDURE(S_outa "-internal",                    g_outa_w,                    3, 0, 0, H_outa);
- *
- * gauche-optargs.scm defines defmacro*, so presumably this would work both places if we could load it before the init proc runs
- * or alternatively, add these macros to ws.scm, and document them -- out0..4? outn? in0..4, in-n?  to-reverb? revout0..1? etc
- *   (defmacro* (out0 loc val :optional output) `(outa ,loc ,val ,(or output *output*)))
- * -- would this work correctly in run?  we can't use:
- *   (define* (out0 loc val :optional (output *output*)) (outa loc val output))
- * because run currently wouldn't handle the optional fallback arg correctly, I think
- */
 
 static XEN g_outa(XEN frame, XEN val, XEN outp)
 {
@@ -5523,7 +5536,7 @@ Float mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *loc_ge
 	    {
 	      sound_data *sd;
 	      int i;
-	      sd = (sound_data *)XEN_OBJECT_REF(ms->vcts[G_LOCSIG_OUT]);
+	      sd = XEN_TO_SOUND_DATA(ms->vcts[G_LOCSIG_OUT]);
 	      if (pos < sd->length)
 		for (i = 0; i < sd->chans; i++)
 		  sd->data[i][pos] += mus_frame_ref(outfr, i);
@@ -5545,7 +5558,7 @@ Float mus_locsig_or_move_sound_to_vct_or_sound_data(mus_xen *ms, mus_any *loc_ge
 	    {
 	      sound_data *sd;
 	      int i;
-	      sd = (sound_data *)XEN_OBJECT_REF(ms->vcts[G_LOCSIG_REVOUT]);
+	      sd = XEN_TO_SOUND_DATA(ms->vcts[G_LOCSIG_REVOUT]);
 	      if (pos < sd->length)
 		for (i = 0; i < sd->chans; i++)
 		  sd->data[i][pos] += mus_frame_ref(revfr, i);
@@ -5660,7 +5673,7 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
 		  if (sound_data_p(keys[3]))
 		    {
 		      ov = keys[3];
-		      out_chans = ((sound_data *)XEN_OBJECT_REF(ov))->chans;
+		      out_chans = (XEN_TO_SOUND_DATA(ov))->chans;
 		    }
 		  else XEN_ASSERT_TYPE(XEN_FALSE_P(keys[3]), keys[3], orig_arg[3], S_make_locsig, "an output gen, vct, or sound-data object");
 		}
@@ -5686,7 +5699,7 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
 		  if (sound_data_p(keys[4]))
 		    {
 		      rv = keys[4];
-		      rev_chans = ((sound_data *)XEN_OBJECT_REF(rv))->chans;
+		      rev_chans = (XEN_TO_SOUND_DATA(rv))->chans;
 		    }
 		  else XEN_ASSERT_TYPE(XEN_FALSE_P(keys[4]), keys[4], orig_arg[4], S_make_locsig, "a reverb output gen");
 		}
@@ -5745,7 +5758,7 @@ static XEN g_mus_channels(XEN obj)
   if (MUS_VCT_P(obj))
     return(C_TO_XEN_INT(1));
   if (sound_data_p(obj))
-    return(C_TO_XEN_INT(((sound_data *)XEN_OBJECT_REF(obj))->chans));
+    return(C_TO_XEN_INT((XEN_TO_SOUND_DATA(obj))->chans));
   XEN_ASSERT_TYPE(false, obj, XEN_ONLY_ARG, S_mus_channels, "an output generator, vct, or sound-data object");
   return(XEN_FALSE); /* make compiler happy */
 }
@@ -7983,11 +7996,11 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_in_any,                  g_in_any_w,                  3, 0, 0, H_in_any);
   XEN_DEFINE_PROCEDURE(S_ina,                     g_ina_w,                     2, 0, 0, H_ina);  
   XEN_DEFINE_PROCEDURE(S_inb,                     g_inb_w,                     2, 0, 0, H_inb);
-  XEN_DEFINE_PROCEDURE(S_out_any,                 g_out_any_w,                 4, 0, 0, H_out_any);
-  XEN_DEFINE_PROCEDURE(S_outa,                    g_outa_w,                    3, 0, 0, H_outa);
-  XEN_DEFINE_PROCEDURE(S_outb,                    g_outb_w,                    3, 0, 0, H_outb);
-  XEN_DEFINE_PROCEDURE(S_outc,                    g_outc_w,                    3, 0, 0, H_outc);
-  XEN_DEFINE_PROCEDURE(S_outd,                    g_outd_w,                    3, 0, 0, H_outd);
+  XEN_DEFINE_PROCEDURE(S_out_any,                 g_out_any_w,                 3, 1, 0, H_out_any);
+  XEN_DEFINE_PROCEDURE(S_outa,                    g_outa_w,                    2, 1, 0, H_outa);
+  XEN_DEFINE_PROCEDURE(S_outb,                    g_outb_w,                    2, 1, 0, H_outb);
+  XEN_DEFINE_PROCEDURE(S_outc,                    g_outc_w,                    2, 1, 0, H_outc);
+  XEN_DEFINE_PROCEDURE(S_outd,                    g_outd_w,                    2, 1, 0, H_outd);
   XEN_DEFINE_PROCEDURE(S_mus_close,               g_mus_close_w,               1, 0, 0, H_mus_close);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_file_buffer_size, g_mus_file_buffer_size_w, H_mus_file_buffer_size,
@@ -8041,6 +8054,9 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE("mus-ssb-bank",  g_ssb_bank_w,      4, 0, 0, "an experiment");
 
   XEN_DEFINE_PROCEDURE(S_mus_generator_p, g_mus_generator_p_w, 1, 0, 0, H_mus_generator_p);
+
+  XEN_DEFINE_VARIABLE(S_output, clm_output, XEN_FALSE);
+  XEN_DEFINE_VARIABLE(S_reverb, clm_reverb, XEN_FALSE);
 
   XEN_YES_WE_HAVE("clm");
 

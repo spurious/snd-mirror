@@ -152,7 +152,7 @@ functions that there is no difference in run-time computational expense or accur
 	     ;; no integration in phase modulation
 	(set! carrier-phase (+ carrier-phase carrier-phase-incr))
 	(set! modulator-phase (+ modulator-phase modulator-phase-incr))
-	(outa i pm-val *output*)))))
+	(outa i pm-val)))))
 
 (define (fm beg end freq amp mc-ratio index)
   (let* ((carrier-phase 0.0)
@@ -168,7 +168,7 @@ functions that there is no difference in run-time computational expense or accur
 	    (fm-val (* amp (sin carrier-phase))))
 	(set! carrier-phase (+ carrier-phase modulation carrier-phase-incr))
 	(set! modulator-phase (+ modulator-phase modulator-phase-incr))
-	(outb i fm-val *output*)))))
+	(outb i fm-val)))))
 
 (with-sound (:channels 2) 
   (pm 0 10000 1000 .5 0.25 4)
@@ -574,10 +574,9 @@ For an explanation of the connection between planetary motion and FM, see Benson
      (lambda ()
        (do ((i start (1+ i)))
 	   ((= i end))
-	 (outa i (* (env ampf)                  ; amplitude env
-                    (oscil cr (* (env indf)     ; carrier + modulation env
-                                 (oscil md))))  ; modulation
-               *output*))))))
+	 (outa i (* (env ampf)                       ; amplitude env
+                    (oscil cr (* (env indf)          ; carrier + modulation env
+                                 (oscil md)))))))))) ; modulation
 </pre>
 <!-- -->
 </td></tr></table>
@@ -699,7 +698,7 @@ real and imaginary parts &mdash; unexplored territory!
          (fm-index (/ (* 2 pi index mc-ratio freq) (mus-srate)))) ; hz->radians with complex arg and result
     (do ((i start (1+ i)))
 	((= i end))
-      (outa i (* amp (real-part (sin cr))) *output*) ; or magnitude in place of real-part
+      (outa i (* amp (real-part (sin cr)))) ; or magnitude in place of real-part
       (set! cr (+ cr cr-incr (* fm-index (sin md))))
       (set! md (+ md md-incr)))))
 
@@ -714,7 +713,7 @@ real and imaginary parts &mdash; unexplored territory!
 	 (md 0.0))
     (do ((i start (1+ i)))
 	((= i end))
-      (outa i (* amp (real-part (sin (+ cr (* fm-index (sin md)))))) *output*)
+      (outa i (* amp (real-part (sin (+ cr (* fm-index (sin md)))))))
       (set! cr (+ cr cr-incr))
       (set! md (+ md md-incr)))))
 
@@ -731,8 +730,7 @@ real and imaginary parts &mdash; unexplored territory!
 	((= i end))
       (let ((val (sin (+ cr (* fm-index (sin md))))))
         (outa i (* amp (+ (* (- 1.0 interp) (real-part val))
-                          (* interp (imag-part val))))
-              *output*)
+                          (* interp (imag-part val)))))
         (set! cr (+ cr cr-incr))
         (set! md (+ md md-incr))))))
 
@@ -962,8 +960,7 @@ instrument:
        (do ((i start (1+ i)))
 	   ((= i end))
 	 (outa i (* amp (oscil cr 0.0 
-                          (* fm-index (oscil md)))) 
-               *output*))))))
+                          (* fm-index (oscil md))))))))))
 
 (with-sound () (pm 0 1.0 100 .5 8 0))
 (with-sound () (pm 0 1.0 100 .5 8 (* .5 pi)))
@@ -1022,7 +1019,7 @@ CLM instrument that shows this (subtle) effect:
      (lambda ()
        (do ((i start (1+ i)))
 	   ((= i end))
-        (outa i (* amp (oscil cr 0.0 (* index (oscil md 0.0 (env skewf))))) *output*))))))
+        (outa i (* amp (oscil cr 0.0 (* index (oscil md 0.0 (env skewf)))))))))))
 
 (with-sound () (fm 0 2 100 0.5 1.0 30.0))
 </pre>
@@ -1089,8 +1086,7 @@ but not anything we'd claim was single side-band.
       (outa i (* amp (- (* (cos cx)  ; cos * sum-of-cos
 			   (sin (* index (cos mx))))
 			(* (sin cx)  ; sin * sum-of-sin
-			   (* (sin (* index (sin mx))))))) 
-	    *output*)
+			   (* (sin (* index (sin mx))))))))
       (set! cx (+ cx car-incr))
       (set! mx (+ mx mod-incr)))))
 
@@ -1128,7 +1124,7 @@ examples which come from a collection of "imaginary machines":
        (do ((i start (1+ i)))
 	   ((= i stop)) 
 	 (set! (fmssb-index gen) (env indf))
-	 (outa i (* (env ampf) (fmssb gen (env frqf))) *output*))))))
+	 (outa i (* (env ampf) (fmssb gen (env frqf)))))))))
 
 (with-sound (:play #t)
   (do ((i 0.0 (+ i .2)))
@@ -1152,8 +1148,7 @@ examples which come from a collection of "imaginary machines":
 	   ((= i (* 12 44100)))
 	 (outa i (* (env ampf) 
 		    (+ (rkoddssb gen1 (env frqf))
-		       (* .2 (sin (rkoddssb gen (rand noi))))))
-	       *output*)))))
+		       (* .2 (sin (rkoddssb gen (rand noi)))))))))))
   (do ((i 0.0 (+ i 2)))
       ((&gt;= i 10.0))
     (machine1 i 3 100 700 0.5 4.0 0.0)
@@ -1195,7 +1190,7 @@ any exponential in the numerator, so we can get many interesting effects: moving
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 10000))
-	 (outa i (rxyk!cos gen 0.0) *output*))))))
+	 (outa i (rxyk!cos gen 0.0)))))))
 -->
 
 <p>
@@ -1258,8 +1253,7 @@ Asymmetric FM with index=2.0, r=0.5:
       (lambda ()
         (do ((i 0 (1+ i)))
 	    ((= i 20000))
-          (outa i (asymmetric-fm gen 2.0) 
-                *output*))))))
+          (outa i (asymmetric-fm gen 2.0)))))))
 </pre>
 </td>
 
@@ -1389,7 +1383,7 @@ In general:
 	   (do ((k 0 (1+ k)))
 	       ((= k n))
 	     (set! sum (+ sum (* (vct-ref fm-indices k) (oscil (vector-ref modulators k))))))
-	   (outa i (* amp (oscil cr sum)) *output*)))))))
+	   (outa i (* amp (oscil cr sum)))))))))
 
 (with-sound () (fm 0 2.0 440 .3 '(1 3 4) '(1.0 0.5 0.1) 0.0 '(0.0 0.0 0.0)))
 </pre>
@@ -1528,8 +1522,7 @@ A pared down version of the fm-violin is:
 			     (+ vib 
 				(* (env indf1) (oscil fmosc1 vib))
 				(* (env indf2) (oscil fmosc2 (* 3.0 vib)))
-				(* (env indf3) (oscil fmosc3 (* 4.0 vib))))))
-		 *output*)))))))
+				(* (env indf3) (oscil fmosc3 (* 4.0 vib)))))))))))))
 
 (with-sound () (violin 0 1.0 440 .1 1.0))
 </pre>
@@ -1585,8 +1578,7 @@ cascade.png:
 	 (outa i (* amp 
                     (oscil cr (* fm-ind0 
                                  (oscil md (* fm-ind1 
-                                              (oscil ca))))))
-                 *output*))))))	
+                                              (oscil ca))))))))))))	
 
 (with-sound () 
   (cascade1 0 1.0 2000 .25  500 1.5 (* 0.5 (+ pi (hz->radians 500)))  50 1.0 (+ pi (* 0.5 (hz->radians 550)))))
@@ -1685,8 +1677,7 @@ to show how strong this effect is:
 	 (outa i (* amp 
                     (oscil cr (* fm-ind0 
                                  (oscil md (* fm-ind1 
-                                              (oscil ca)))))) 
-               *output*))))))
+                                              (oscil ca))))))))))))
 
 (with-sound () 
   (cascade 0 1.0 400 .25 1.0 1.0 1.0 1.0 0)
@@ -1714,7 +1705,7 @@ it seems to be approaching a square wave as k heads into the stratosphere:
 	    ((= k 2))
 	  (set! result (sin result)))
 	(set! angle (+ angle incr))
-	(outa i result *output*)))))
+	(outa i result)))))
 -->
 
 <table border=1 hspace=40 vspace=10>
@@ -1814,7 +1805,7 @@ so, just as in normal FM, if the index is 0, we get a pure sine wave.
 	    (x 0.0 (+ x x-incr)))
 	   ((= i end))
 	 (set! y (+ x (* index (sin y))))
-	 (outa i (* amp (sin y)) *output*))))))
+	 (outa i (* amp (sin y))))))))
 
 (with-sound () (feedbk 0 1 100.0 1.0 1.0))
 </pre>
@@ -1884,13 +1875,13 @@ The take-home message is: "keep the index below 1.0!".
        (do ((i start (1+ i))
 	    (x 0.0 (+ x x-incr)))
 	   ((= i end))
-	 (out-any i y 0 *output*)                    ;0: previous y (effective phase)
-	 (out-any i x 1 *output*)                    ;1: x (carrier phase) = old x + x-incr
+	 (out-any i y 0)                    ;0: previous y (effective phase)
+	 (out-any i x 1)                    ;1: x (carrier phase) = old x + x-incr
 	 (let ((md (* index (sin y))))
-	   (out-any i (- (+ x md) y) 2 *output*)     ;2: new y - old y
+	   (out-any i (- (+ x md) y) 2)     ;2: new y - old y
 	   (set! y (+ x md))
-	   (out-any i md 3 *output*)                 ;3: output (* amp (sin y))
-	   (out-any i y 4 *output*)))))))            ;4: new y
+	   (out-any i md 3)                 ;3: output (* amp (sin y))
+	   (out-any i y 4)))))))            ;4: new y
 
 (with-sound (:srate 44100 :data-format mus-ldouble :channels 5 :statistics #t :clipped #f) (feedbk 0 2 100.0 1.0 1.22))
  channel 2 (outc) is our actual per-sample phase increment; notice that at the trouble spot it
@@ -1941,9 +1932,9 @@ we can use the phase to minimize the difference with the sum:
 				    (sin (* n x)))
 				 (* n index)))))
 
-	   (outb i (* amp sum) *output*)
-	   (outc i (- sum (sin (+ y pha1))) *output*)
-	   (outa i (* amp (sin (+ y pha1))) *output*)))))))
+	   (outb i (* amp sum))
+	   (outc i (- sum (sin (+ y pha1))))
+	   (outa i (* amp (sin (+ y pha1))))))))))
 
 (with-sound (:channels 3 :statistics #t :clipped #f) (feedbk 0 1 100 1.0 0.5 100 0.01265)) ; .0005 0.1 100
 the sum has DC! and the difference is a pulse train, but higher srate fixes that
@@ -1972,7 +1963,7 @@ random number frequency times its index &mdash; is this just Mr Carson again?):
 	(index (hz-&gt;radians 1000))) ; index=1.0 so bandwith=4 Khz (2 Khz on each side)
     (do ((i 0 (1+ i)))
 	((= i 50000))
-      (outa i (oscil gen (* index (rand noise))) *output*))))
+      (outa i (oscil gen (* index (rand noise)))))))
 </pre>
 </td></tr>
 <tr>
@@ -2060,10 +2051,10 @@ FM(e^x) = PM(e^x).  FM(square-wave) is <img src="fmeq58.png" alt="fm(noise)" ali
 	 (let ((vol (env ampf))
 	       (sq (* fm-index (- (square-wave fm-modulator) 1.0)))
                (tri (* index (triangle-wave pm-modulator))))
-	   (outa i (* vol (oscil fm-carrier sq)) *output*)
-	   (outb i (* vol (oscil pm-carrier 0.0 tri)) *output*)
-           (outc i sqsum *output*)
-           (outd i tri *output*)
+	   (outa i (* vol (oscil fm-carrier sq)))
+	   (outb i (* vol (oscil pm-carrier 0.0 tri)))
+           (outc i sqsum)
+           (outd i tri)
            (set! sqsum (+ sqsum sq))))))))
 
 (with-sound (:clipped #f :statistics #t :channels 4) (fmpmsq 0 1 1000 .5 .1 1 (+ (* 0.5 pi) .005)))
@@ -2086,10 +2077,10 @@ FM(e^x) = PM(e^x).  FM(square-wave) is <img src="fmeq58.png" alt="fm(noise)" ali
 	   ((= i end))
 	 (let ((vol (env ampf))
                (ex (exp x)))
-	   (outa i (* vol (oscil fm-carrier (* .0001 ex))) *output*) ; sampled ex...
-	   (outb i (* vol (oscil pm-carrier 0.0 ex)) *output*)
-	   (outc i ex *output*)
-	   (outd i sumex *output*)
+	   (outa i (* vol (oscil fm-carrier (* .0001 ex)))) ; sampled ex...
+	   (outb i (* vol (oscil pm-carrier 0.0 ex)))
+	   (outc i ex)
+	   (outd i sumex)
 	   (set! sumex (+ sumex (* .0001 ex)))))))))
 
 (with-sound (:clipped #f :statistics #t :channels 4) (fmpmex 0 1 1000 .5))
@@ -2111,10 +2102,10 @@ FM(e^x) = PM(e^x).  FM(square-wave) is <img src="fmeq58.png" alt="fm(noise)" ali
 	   ((= i end))
 	 (let ((vol (env ampf))
                (ex (- (random 2.0) 1.0)))
-	   (outa i (* vol (oscil fm-carrier (* fm-index ex))) *output*)
-	   (outb i (* vol (oscil pm-carrier 0.0 (* index sumex))) *output*)
-	   (outc i ex *output*)
-	   (outd i sumex *output*)
+	   (outa i (* vol (oscil fm-carrier (* fm-index ex))))
+	   (outb i (* vol (oscil pm-carrier 0.0 (* index sumex))))
+	   (outc i ex)
+	   (outd i sumex)
 	   (set! sumex (+ sumex (* fm-index ex)))))))))
 
 (with-sound (:clipped #f :statistics #t :channels 4) (fmpmran 0 1 1000 .5 1))
@@ -2137,10 +2128,10 @@ FM(e^x) = PM(e^x).  FM(square-wave) is <img src="fmeq58.png" alt="fm(noise)" ali
 	 (let ((vol (env ampf))
 	       (pulse (* index (nxy1sin fm-modulator 0.0)))
                (sq (* index (square-wave pm-modulator))))
-	   (outa i (* vol (oscil fm-carrier pulse)) *output*)
-	   (outb i (* vol (oscil pm-carrier 0.0 sq)) *output*)
-           (outc i sqsum *output*)
-           (outd i sq *output*)
+	   (outa i (* vol (oscil fm-carrier pulse)))
+	   (outb i (* vol (oscil pm-carrier 0.0 sq)))
+           (outc i sqsum)
+           (outd i sq)
            (set! sqsum (+ sqsum pulse))))))))
 
 (with-sound (:clipped #f :statistics #t :channels 4) (fmpmodd 0 1 1000 .5 .1 1))
@@ -2286,7 +2277,7 @@ used in "Colony" and other pieces:
 					 (* odd-amp 
 					    (oscil (vector-ref odds k) 
 						   (+ odd-freq (* (vct-ref indices k) car)))))))))))
-	   (outa i (* (env ampf) sum) *output*)))))))
+	   (outa i (* (env ampf) sum))))))))
 
 (with-sound () 
   (vox 0 1.0 220.0 0.5)
@@ -2372,8 +2363,7 @@ special cases:
        (do ((i start (1+ i)))
 	   ((= i end))
 	 (outa i (* (env ampf)
-		    (oscil carrier (* fm-index (triangle-wave modulator))))
-	       *output*))))))
+		    (oscil carrier (* fm-index (triangle-wave modulator))))))))))
 
 ;(with-sound (:clipped #f :statistics #t) (fmtri 0 1 1000 .5 .1 1))
 
@@ -2392,8 +2382,7 @@ special cases:
        (do ((i start (1+ i)))
 	   ((= i end))
 	 (outa i (* (env ampf)
-		    (oscil carrier (* fm-index (* 2 (- (square-wave modulator) 0.5)))))
-	       *output*))))))
+		    (oscil carrier (* fm-index (* 2 (- (square-wave modulator) 0.5)))))))))))
 
 ;(with-sound (:clipped #f :statistics #t) (fmsq 0 1 1000 .5 .1 1))
 
@@ -2415,8 +2404,7 @@ a single pulse is swallowed up by the mod 2 pi:
        (do ((i start (1+ i)))
 	   ((= i end))
 	 (outa i (* (env ampf)
-		    (oscil carrier (* fm-index (pulse-train modulator))))
-	       *output*))))))
+		    (oscil carrier (* fm-index (pulse-train modulator))))))))))
 
 ;(with-sound (:clipped #f :statistics #t) (fmpulse 0 1 1000 .5 .1 1))
 ;  but as index goes up, I think it's pushed over by about index/5?
@@ -2435,8 +2423,7 @@ similarly
        (do ((i start (1+ i)))
 	   ((= i end))
 	 (outa i (* (env ampf)
-		    (oscil carrier (* fm-index (sum-of-cosines modulator))))
-	       *output*))))))
+		    (oscil carrier (* fm-index (sum-of-cosines modulator))))))))))
 
 ;(with-sound (:clipped #f :statistics #t) (fmsum 0 1 1000 .5 .1 1))
 
@@ -2465,8 +2452,7 @@ case in Klapper p103 (except there x=1/4)
        (do ((i start (1+ i)))
 	   ((= i end))
 	 (outa i (* (env ampf)
-		    (oscil carrier (* fm-index (oscil modulator))))
-	       *output*))))))
+		    (oscil carrier (* fm-index (oscil modulator))))))))))
 
 ;(with-sound (:clipped #f :statistics #t) (fmsin 0 1 4000 .5 .025 5))
 
@@ -2482,8 +2468,7 @@ case in Klapper p103 (except there x=1/4)
        (do ((i start (1+ i)))
 	   ((= i end))
 	 (outa i (* (env ampf)
-		    (- (square-wave carrier (* fm-index (* 2 (- (square-wave modulator) 0.5)))) 0.5))
-	       *output*))))))
+		    (- (square-wave carrier (* fm-index (* 2 (- (square-wave modulator) 0.5)))) 0.5))))))))
 
 ;(with-sound (:clipped #f :statistics #t :srate 4410000) (sqsq 0 1 4000 .5 .01 5))
 ;  huge srate because aliasing is a real problem -- does replicate

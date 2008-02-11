@@ -33,4 +33,6 @@ sound_data *sound_data_reverse(sound_data *sd);
 sound_data *sound_data_add(sound_data *sd1, sound_data *sd2);
 sound_data *sound_data_multiply(sound_data *sd1, sound_data *sd2);
 sound_data *sound_data_offset(sound_data *sd, Float off);
+
+#define XEN_TO_SOUND_DATA(Obj) (sound_data *)XEN_OBJECT_REF(Obj)
 #endif

@@ -10881,6 +10881,8 @@ void init_mus_module(void)
  *
  *
  * done:
+ *   (9.8)
+ *   out* last arg defaults to *output*
  *   (9.7)
  *   :dur and :end -> :length in make-env
  *   *clm-default-frequency* = 0.0
