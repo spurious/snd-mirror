@@ -10825,9 +10825,7 @@ void init_mus_module(void)
  *         ["a" used only in sine-summation, "sines" used only in sum-of-sines, "cosines" used only in sum-of-cosines]
  *         ["a" (also "k") is used in generators.scm especially where "r" is already in use, and abcos]
  *
- *      make-sum-of-cosines freq n [no init-phase]
  *      make-sine-summation freq n r ratio [no init-phase?] (can't replace with nrxycos because actual waveforms differ, could use nrxysin)
- *      make-sum-of-sines freq n [no init-phase]
  *      make-ssb-am freq n
  *      make-formant freq r gain, or maybe amplitude? [gain used only in make-formant]
  *      also cases like make-mfilter in dsp.scm
@@ -10836,8 +10834,6 @@ void init_mus_module(void)
  *      polyshape "kind" arg should be "type" [kind used only in make-polyshape]
  *
  * generators:
- *   sum-of-cosines -> ncos
- *   sum-of-sines -> nsin
  *   sine-summation -> nrxysin
  *     what about oscil? [sine?|cosine] -- this would fit with "sines"|"cosines" below
  *   asymmetric-fm -> generators.scm (not built-in)
@@ -10866,7 +10862,7 @@ void init_mus_module(void)
  *
  *
  * generic funcs:
- *   currently mus-cosines accesses "n" -- "mus-n"? [or use "mus-order" instead? -- jargon]  
+ *   currently mus-cosines accesses "n" -- "mus-n"? [or use "mus-order" instead? -- jargon, and should be an int, not off_t!]  
  *                mus-scaler sometimes = "r" -- "mus-r" or "mus-amplitude"?
  *      mus-amplitude to parallel mus-frequency/mus-phase
  *      mus-documentation [mus-describe shows current state -- if we had this, snd-help might be able to use it for generators.scm]
@@ -10897,10 +10893,17 @@ void init_mus_module(void)
  *   definstrument could write actual C functions (with normal args) rather than the packaged int/double-array form
  *
  *
+ * underway:
+ *   ncos, nsin
+ *      sum-of-cosines -> ncos [in progress -- todo: clm.html/rb/fs]
+ *      sum-of-sines -> nsin   [in progress]
+ *      make-ncos freq n
+ *      make-nsin freq n
+ *
  * done:
  *   (9.8)
  *   out* last arg defaults to *output*
- *   ncos, nsin [clm.c]
+ *
  *   (9.7)
  *   :dur and :end -> :length in make-env
  *   *clm-default-frequency* = 0.0

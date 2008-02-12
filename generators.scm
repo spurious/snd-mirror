@@ -19,42 +19,7 @@
 
 ;;; --------------------------------------------------------------------------------
 
-;;; n sinusoids, equal amps: ncos, nsin, nssb
-
-;;; can't use these because they use "cosines" rather than "n"
-;;; (define ncos sum-of-cosines)
-;;; (define make-ncos make-sum-of-cosines)
-;;; (define ncos? sum-of-cosines?)
-;;; 
-;;; (define nsin sum-of-sines)
-;;; (define make-nsin make-sum-of-sines)
-;;; (define nsin? sum-of-sines?)
-
-(def-clm-struct (ncos
-		 :make-wrapper (lambda (g)
-				 (set! (ncos-gen g) (make-sum-of-cosines (ncos-n g) (ncos-frequency g)))
-				 g))
-  (frequency 0.0) (n 1 :type int)
-  (gen #f :type clm))
-
-(define (ncos gen fm)
-  (declare (gen ncos) (fm float))
-  (sum-of-cosines (ncos-gen gen) fm))
-
-
-(def-clm-struct (nsin
-		 :make-wrapper (lambda (g)
-				 (set! (nsin-gen g) (make-sum-of-sines (nsin-n g) (nsin-frequency g)))
-				 g))
-  (frequency 0.0) (n 1 :type int)
-  (gen #f :type clm))
-
-(define (nsin gen fm)
-  (declare (gen nsin) (fm float))
-  (sum-of-sines (nsin-gen gen) fm))
-
-
-
+;;; nssb (see nxycos)
 
 (def-clm-struct (nssb 
 		 :make-wrapper (lambda (g)
@@ -2231,7 +2196,7 @@
   (osc #f :type clm))
 
 (define (r2k!cos gen fm)
-  "r2k!cos is a variant of sum-of-cosines; 'r' controls successive sinusoid amplitude; 'k' controls how many sinusoids are produced"
+  "r2k!cos is a variant of ncos; 'r' controls successive sinusoid amplitude; 'k' controls how many sinusoids are produced"
   (declare (gen r2k!cos) (fm float))
   (let* ((r (r2k!cos-r gen))
 	 (k (r2k!cos-k gen))
@@ -3559,98 +3524,6 @@ index 10 (so 10/2 is the bes-jn arg):
 
 
 ;;; --------------------------------------------------------------------------------
-
-
-#|
-(let ((test-zero-stability 
-       (lambda (make-func run-func angle-func zero)
-	 (let ((gen (make-func)))
-	   (angle-func gen zero)
-	   (let ((zero-val (run-func gen zero)))
-	     (for-each
-	      (lambda (val)
-		(set! gen (make-func)) ; remake else carrier drifts away in ssb cases
-		(angle-func gen (+ zero val))
-		(let ((new-val (run-func gen 0.0)))
-		  (if (> (abs (- new-val zero-val)) .01)
-		      (snd-display ";~A:~%;   zero check at (+ ~A ~A): ~A ~A~%" gen zero val zero-val new-val))))
-	      (list 1.0e-11 1.0e-10 1.0e-9 1.0e-8 1.0e-7 1.0e-6
-		    -1.0e-11 -1.0e-10 -1.0e-9 -1.0e-8 -1.0e-7 -1.0e-6)))))))
-  
-  (for-each
-   (lambda (zero)
-     (test-zero-stability (lambda () (make-oscil 0.0)) oscil (lambda (gen val) (set! (mus-phase gen) val)) zero)
-     
-     (for-each
-      (lambda (n)
-	(test-zero-stability (lambda () (make-sum-of-sines n 0.0)) sum-of-sines (lambda (gen val) (set! (mus-phase gen) val)) zero)
-	(test-zero-stability (lambda () (make-sum-of-cosines n 0.0)) sum-of-cosines (lambda (gen val) (set! (mus-phase gen) val)) zero)
-	(test-zero-stability (lambda () (make-sine-summation 0.0 :n n)) sine-summation (lambda (gen val) (set! (mus-phase gen) val)) zero)
-	
-	(test-zero-stability (lambda () (make-nssb 0.0 1.0 n)) nssb (lambda (gen val) (set! (nssb-modangle gen) val)) zero)
-	(test-zero-stability (lambda () (make-noddssb 0.0 1.0 n)) noddssb (lambda (gen val) (set! (noddssb-modangle gen) val)) zero)
-	(test-zero-stability (lambda () (make-nrssb 0.0 1.0 n)) nrssb (lambda (gen val) (set! (nrssb-modangle gen) val)) zero)
-	(test-zero-stability (lambda () (make-nxycos 0.0 1.0 :n n)) nxycos (lambda (gen val) (set! (nxycos-yangle gen) val)) zero)
-	(test-zero-stability (lambda () (make-nxy1sin 0.0 1.0 :n n)) nxy1sin (lambda (gen val) (set! (nxy1sin-yangle gen) val)) zero)
-	(test-zero-stability (lambda () (make-nxy1cos 0.0 1.0 :n n)) nxy1cos (lambda (gen val) (set! (nxy1cos-yangle gen) val)) zero)
-	(test-zero-stability (lambda () (make-nxysin 0.0 1.0 :n n)) nxysin (lambda (gen val) (set! (nxysin-yangle gen) val)) zero)
-
-	(test-zero-stability (lambda () (make-nssb 0.0 1.0 n)) nssb (lambda (gen val) (set! (nssb-modangle gen) val) (set! (nssb-carangle gen) val)) zero)
-	(test-zero-stability (lambda () (make-noddssb 0.0 1.0 n)) noddssb (lambda (gen val) (set! (noddssb-modangle gen) val) (set! (noddssb-carangle gen) val)) zero)
-	(test-zero-stability (lambda () (make-nrssb 0.0 1.0 n)) nrssb (lambda (gen val) (set! (nrssb-modangle gen) val) (set! (nrssb-carangle gen) val)) zero)
-	(test-zero-stability (lambda () (make-nxycos 0.0 1.0 :n n)) nxycos (lambda (gen val) (set! (nxycos-yangle gen) val) (set! (nxycos-xangle gen) val)) zero)
-	(test-zero-stability (lambda () (make-nxy1sin 0.0 1.0 :n n)) nxy1sin (lambda (gen val) (set! (nxy1sin-yangle gen) val) (set! (nxy1sin-xangle gen) val)) zero)
-	(test-zero-stability (lambda () (make-nxy1cos 0.0 1.0 :n n)) nxy1cos (lambda (gen val) (set! (nxy1cos-yangle gen) val) (set! (nxy1cos-xangle gen) val)) zero)
-	(test-zero-stability (lambda () (make-nxysin 0.0 1.0 :n n)) nxysin (lambda (gen val) (set! (nxysin-yangle gen) val) (set! (nxysin-xangle gen) val)) zero)
-
-	(test-zero-stability (lambda () (make-nkssb 0.0 1.0 n)) nkssb (lambda (gen val) (set! (nkssb-modangle gen) val)) zero)
-	(test-zero-stability (lambda () (make-nkssb 0.0 1.0 n)) nkssb (lambda (gen val) (set! (nkssb-modangle gen) val) (set! (nkssb-carangle gen) val)) zero)
-
-	(test-zero-stability (lambda () (make-noddsin :n n)) noddsin (lambda (gen val) (set! (noddsin-angle gen) val)) zero)
-	(test-zero-stability (lambda () (make-noddcos :n n)) noddcos (lambda (gen val) (set! (noddcos-angle gen) val)) zero)
-	(test-zero-stability (lambda () (make-ncos2 :n n)) ncos2 (lambda (gen val) (set! (ncos2-angle gen) val)) zero)
-	(test-zero-stability (lambda () (make-npcos :n n)) npcos (lambda (gen val) (set! (npcos-angle gen) val)) zero)
-	(test-zero-stability (lambda () (make-nrcos :n n)) nrcos (lambda (gen val) (set! (nrcos-angle gen) val)) zero))
-      (list 1 10 3 30))
-     
-     (test-zero-stability (lambda () (make-krksin :r 0.1)) krksin (lambda (gen val) (set! (krksin-angle gen) val)) zero)
-     (test-zero-stability (lambda () (make-k2sin)) k2sin (lambda (gen val) (set! (k2sin-angle gen) val)) zero)
-     (test-zero-stability (lambda () (make-k2cos)) k2cos (lambda (gen val) (set! (k2cos-angle gen) val)) zero)
-     (test-zero-stability (lambda () (make-k2ssb 0.0 1.0)) k2ssb (lambda (gen val) (set! (k2ssb-modangle gen) val)) zero)
-     (test-zero-stability (lambda () (make-abcos :a 1.0 :b 0.5)) abcos (lambda (gen val) (set! (abcos-angle gen) val)) zero)
-     (test-zero-stability (lambda () (make-absin :a 1.0 :b 0.5)) absin (lambda (gen val) (set! (absin-angle gen) val)) zero)
-     
-     (for-each
-      (lambda (r)
-	(test-zero-stability (lambda () (make-rcos :r r)) rcos (lambda (gen val) (set! (mus-phase (rcos-osc gen)) val)) zero)
-	(test-zero-stability (lambda () (make-ercos :r r)) ercos (lambda (gen val) (set! (mus-phase (ercos-osc gen)) val)) zero)
-	(test-zero-stability (lambda () (make-r2sin :r r)) r2sin (lambda (gen val) (set! (r2sin-angle gen) val)) zero)
-	(test-zero-stability (lambda () (make-r2cos :r r)) r2cos (lambda (gen val) (set! (r2cos-angle gen) val)) zero)
-	(test-zero-stability (lambda () (make-eoddcos  :r r)) eoddcos  (lambda (gen val) (set! (mus-phase (eoddcos-osc gen)) val)) zero)
-	(test-zero-stability (lambda () (make-rkcos  :r r)) rkcos  (lambda (gen val) (set! (mus-phase (rkcos-osc gen)) val)) zero)
-	(test-zero-stability (lambda () (make-rksin :r r)) rksin (lambda (gen val) (set! (rksin-angle gen) val)) zero)
-	(test-zero-stability (lambda () (make-rk!cos :r r)) rk!cos (lambda (gen val) (set! (rk!cos-angle gen) val)) zero)
-	(test-zero-stability (lambda () (make-r2k!cos :r r)) r2k!cos (lambda (gen val) (set! (mus-phase (r2k!cos-osc gen)) val)) zero)
-	(test-zero-stability (lambda () (make-r2k2cos :r r)) r2k2cos (lambda (gen val) (set! (r2k2cos-angle gen) val)) zero)
-	
-	(test-zero-stability (lambda () (make-rssb 0.0 1.0 :r r)) rssb (lambda (gen val) (set! (rssb-angle2 gen) val)) zero)
-	(test-zero-stability (lambda () (make-erssb 0.0 1.0 :r r)) erssb (lambda (gen val) (set! (erssb-modangle gen) val)) zero)
-	(test-zero-stability (lambda () (make-rkssb 0.0 1.0 :r r)) rkssb (lambda (gen val) (set! (rkssb-modangle gen) val)) zero)
-	(test-zero-stability (lambda () (make-rk!ssb 0.0 1.0 :r r)) rk!ssb (lambda (gen val) (set! (rk!ssb-modangle gen) val)) zero)
-	(test-zero-stability (lambda () (make-rkoddssb 0.0 1.0 :r r)) rkoddssb (lambda (gen val) (set! (rkoddssb-modangle gen) val)) zero)
-	(test-zero-stability (lambda () (make-r2ssb 0.0 1.0 :r r)) r2ssb (lambda (gen val) (set! (r2ssb-modangle gen) val)) zero)
-
-	(test-zero-stability (lambda () (make-rssb 0.0 1.0 :r r)) rssb (lambda (gen val) (set! (rssb-angle2 gen) val) (set! (rssb-angle1 gen) val)) zero)
-	(test-zero-stability (lambda () (make-erssb 0.0 1.0 :r r)) erssb (lambda (gen val) (set! (erssb-modangle gen) val) (set! (erssb-carangle gen) val)) zero)
-	(test-zero-stability (lambda () (make-rkssb 0.0 1.0 :r r)) rkssb (lambda (gen val) (set! (rkssb-modangle gen) val) (set! (rkssb-carangle gen) val)) zero)
-	(test-zero-stability (lambda () (make-rk!ssb 0.0 1.0 :r r)) rk!ssb (lambda (gen val) (set! (rk!ssb-modangle gen) val) (set! (rk!ssb-carangle gen) val)) zero)
-	(test-zero-stability (lambda () (make-rkoddssb 0.0 1.0 :r r)) rkoddssb (lambda (gen val) (set! (rkoddssb-modangle gen) val) (set! (rkoddssb-carangle gen) val)) zero)
-	(test-zero-stability (lambda () (make-r2ssb 0.0 1.0 :r r)) r2ssb (lambda (gen val) (set! (r2ssb-modangle gen) val) (set! (r2ssb-carangle gen) val)) zero)
-	)
-      (list 0.1 0.5 .99)))
-   (list 0.0 (* 0.5 pi) pi (* 2.0 pi) (* -0.5 pi) (- pi) (* -2.0 pi) (* 1.5 pi) (* -1.5 pi))))
-|#
-
 
 #|
 ;;; do we need fmod 2*pi for the angles? (it is not used in clm.c)

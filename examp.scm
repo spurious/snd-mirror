@@ -1447,15 +1447,15 @@ selected sound: (map-channel (cross-synthesis 1 .5 128 6.0))"
 		     (format #f "voiced->unvoiced ~A ~A ~A ~A" amp fftsize r tempo))))))
 
 
-;;; very similar but use sum-of-cosines (glottal pulse train?) instead of white noise
+;;; very similar but use ncos (glottal pulse train?) instead of white noise
 
 (define* (pulse-voice cosines :optional (freq 440.0) (amp 1.0) (fftsize 256) (r 2.0) snd chn)
-  "(pulse-voice cosines :optional (freq 440) (amp 1.0) (fftsize 256) (r 2.0) snd chn) uses sum-of-cosines to manipulate speech sounds"
+  "(pulse-voice cosines :optional (freq 440) (amp 1.0) (fftsize 256) (r 2.0) snd chn) uses ncos to manipulate speech sounds"
   (let* ((freq-inc (/ fftsize 2))
 	 (fdr (make-vct fftsize))
 	 (fdi (make-vct fftsize))
 	 (spectr (make-vct freq-inc))
-	 (pulse (make-sum-of-cosines cosines freq))
+	 (pulse (make-ncos freq cosines))
 	 (inctr 0)
 	 (ctr freq-inc)
 	 (radius (- 1.0 (/ r fftsize)))
@@ -1486,7 +1486,7 @@ selected sound: (map-channel (cross-synthesis 1 .5 128 6.0))"
 		 (set! ctr 0)))
 	   (set! ctr (+ ctr 1))
 	   (vct-add! spectr fdr)
-	   (set! outval (formant-bank spectr formants (sum-of-cosines pulse)))
+	   (set! outval (formant-bank spectr formants (ncos pulse)))
 	   (if (> (abs outval) new-peak-amp) (set! new-peak-amp (abs outval)))
 	   (vct-set! out-data k outval)))
        (vct-scale! out-data (* amp (/ old-peak-amp new-peak-amp)))

@@ -3660,8 +3660,8 @@ Cross fade in frequency domain: <a href="#fadedoc">fade.scm</a><br>
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <em class=emdef>pulse-voice</em> <code>cosines :optional (freq 440.0) (amp 1.0) (fftsize 256) (r 2.0) snd chn</code>
 </td></tr><tr><td></td><td>
-This function is a form of cross-synthesis which drives the resynthesis with a <a href="sndclm.html#sum-of-cosines">sum-of-cosines</a> pulse train.
-'freq' is the <a href="sndclm.html#sum-of-cosines">sum-of-cosines</a> frequency; 'amp' is an overall amplitude scaler;
+This function is a form of cross-synthesis which drives the resynthesis with a <a href="sndclm.html#ncos">ncos</a> pulse train.
+'freq' is the <a href="sndclm.html#ncos">ncos</a> frequency; 'amp' is an overall amplitude scaler;
 'cosines' is the number of cosines in the pulse (the more the spikier);
 'fftsize' and 'r' (radius) control the <a href="sndclm.html#formant">formant</a> bank
 used to get the current spectrum.

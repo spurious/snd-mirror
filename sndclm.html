@@ -124,8 +124,8 @@ note lists and instruments are described in sndscm.html.
   <tr><td><a href="#sawtoothdoc">square-wave</a></td><td></td><td>square wave</td></tr>
   <tr><td><a href="#srcdoc">src</a></td><td></td><td>sampling rate conversion</td></tr>
   <tr><td><a href="#ssb-amdoc">ssb-am</a></td><td></td><td>single sideband amplitude modulation</td></tr>
-  <tr><td><a href="#sum-of-cosinesdoc">sum-of-cosines</a></td><td></td><td>band-limited pulse train</td></tr>
-  <tr><td><a href="#sum-of-sinesdoc">sum-of-sines</a></td><td></td><td>sum of sines</td></tr>
+  <tr><td><a href="#ncosdoc">ncos, sum-of-cosines</a></td><td></td><td>sum of n equal amplitude cosines</td></tr>
+  <tr><td><a href="#ncosdoc">nsin, sum-of-sines</a></td><td></td><td>sum of n equal amplitude sines</td></tr>
   <tr><td><a href="#table-lookupdoc">table-lookup</a></td><td></td><td>interpolated table lookup</td></tr>
   <tr><td><a href="#delaydoc">tap</a></td><td></td><td>delay line tap</td></tr>
   <tr><td><a href="#sawtoothdoc">triangle-wave</a></td><td></td><td>triangle wave</td></tr>
@@ -755,8 +755,8 @@ void c_bird(double start, double dur, double frequency, double freqskew, double 
 
 
 <p>Related generators are 
-<a href="#sum-of-cosines">sum-of-cosines</a>, 
-<a href="#sum-of-sines">sum-of-sines</a>,
+<a href="#ncos">ncos</a>, 
+<a href="#nsin">nsin</a>,
 <a href="#asymmetric-fm">asymmetric-fm</a>, 
 <a href="#sine-summation">sine-summation</a>, and
 <a href="#waveshape">waveshape</a>.  
@@ -953,7 +953,7 @@ envelope with sinusoidal connections between points: <a href="sndscm.html#sineen
 envelope with separate base for each segment: <a href="extsnd.html#powenvchannel">powenv-channel</a><br>
 envelope with x^2 connections: <a href="sndscm.html#envsquaredchannel">env-squared-channel</a><br>
 envelope with x^n connections: <a href="sndscm.html#envexptchannel">env-expt-channel</a><br>
-envelope with <a href="sndclm.html#sum-of-cosines">sum-of-cosines</a> connections: <a href="sndscm.html#blackman4envchannel">blackman4-env-channel</a><br>
+envelope with <a href="sndclm.html#ncos">ncos</a> connections: <a href="sndscm.html#blackman4envchannel">blackman4-env-channel</a><br>
 <br>
 </small></blockquote>
 </td></tr></table>
@@ -1220,7 +1220,7 @@ waveshape uses an internal <a href="#table-lookup">table-lookup</a> generator, w
 the <a href="#polynomial">polynomial</a> function.  The "partials" argument to either make function can
 be either a list or a vct.
 The "kind" argument determines which kind of Chebyshev polynomial
-is used internally:  mus-chebyshev-first-kind or mus-chebyshev-second-kind. (The <a href="#sum-of-cosines">sum-of-cosines</a> generator produces
+is used internally:  mus-chebyshev-first-kind or mus-chebyshev-second-kind. (The <a href="#ncos">ncos</a> generator produces
 Chebyshev polynomials of the fourth kind).  
 </p>
 
@@ -1379,8 +1379,8 @@ we absolutely insist on using waveshaping, we could do it this way:
 <tr><td>
 The "fm" argument to these two generators is intended mainly for vibrato and frequency envelopes. 
 If you use it for frequency modulation, you'll notice that the result is not the necessarily same as applying that
-modulation to the equivalent bank of oscillators, but it is the same as (for example) applying it to a sum-of-cosines
-generator, or most of the other generators (table-lookup, sum-of-sines, etc).  The polynomial in cos(x) produces
+modulation to the equivalent bank of oscillators, but it is the same as (for example) applying it to a ncos
+generator, or most of the other generators (table-lookup, nsin, etc).  The polynomial in cos(x) produces
 a sum of cos(nx) for various "n", but if "x" is itself a sinusoid, its
 effective index includes the factor of "n" (the partial number). 
 This is what you want
@@ -1392,9 +1392,9 @@ with sinusoidal FM with an index of 1.
 </td></tr>
 </table>
 
-<p>The same thing happens if you use polyshape or sum-of-cosines (or whatever) as the (complex) modulating signal to an oscil
+<p>The same thing happens if you use polyshape or ncos (or whatever) as the (complex) modulating signal to an oscil
 (the reverse of the situation above).
-The effective index of each partial is divided by the partial number (and in sum-of-cosines, for example, the output
+The effective index of each partial is divided by the partial number (and in ncos, for example, the output
 is scaled to be -1..1, so that adds another layer of confusion). 
 </p>
 
@@ -1911,41 +1911,60 @@ triggering a new peep each time the pulse goes by.
 <p>I think just about every combination of oscil/triangle-wave/sawtooth-wave/square-wave has been
 used.  Even triangle-wave(square-wave) can make funny noises. Along these lines, there's
 a <a href="#blsaw">band-limited sawtooth</a> generator in generators.scm, 
-band-limited-triangle-wave above (waveshaping), and band-limited pulse-train via <a href="#sum-of-cosines">sum-of-cosines</a>.
+band-limited-triangle-wave above (waveshaping), and band-limited pulse-train via <a href="#ncos">ncos</a>.
 </p>
 
 <br><br>
 
 
 
-<A NAME="sum-of-cosinesdoc"></A>
-<!-- ---------------------------------------- SUM-OF-COSINES ---------------------------------------- -->
+<A NAME="ncosdoc"></A>
+<!-- ---------------------------------------- NCOS, SUM-OF-COSINES, NSIN, SUM-OF-SINES ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>sum-of-cosines</h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>ncos (sum-of-cosines) and nsin (sum-of-sines)</h3></center></td></tr></table>
 <br>
+
 <pre>
+  <a class=def name="make-ncos">make-ncos</a> <a class=quiet href="#optional-key">:optional-key</a> (frequency *clm-default-frequency*) (n 1)
+  <a class=def name="ncos">ncos</a> cs :optional (fm 0.0)
+  <a class=def name="ncos?">ncos?</a> cs
+
+  <a class=def name="make-nsin">make-nsin</a> <a class=quiet href="#optional-key">:optional-key</a> (frequency *clm-default-frequency*) (n 1)
+  <a class=def name="nsin">nsin</a> cs :optional (fm 0.0)
+  <a class=def name="nsin?">nsin?</a> cs
+
+
   <a class=def name="make-sum-of-cosines">make-sum-of-cosines</a> <a class=quiet href="#optional-key">:optional-key</a> 
         (cosines 1) (frequency *clm-default-frequency*) (initial-phase 0.0)
   <a class=def name="sum-of-cosines">sum-of-cosines</a> cs :optional (fm 0.0)
   <a class=def name="sum-of-cosines?">sum-of-cosines?</a> cs
+
+  <a class=def name="make-sum-of-sines">make-sum-of-sines</a> <a class=quiet href="#optional-key">:optional-key</a> 
+        (sines 1) (frequency *clm-default-frequency*) (initial-phase 0.0)
+  <a class=def name="sum-of-sines">sum-of-sines</a> cs :optional (fm 0.0)
+  <a class=def name="sum-of-sines?">sum-of-sines?</a> cs
 </pre>
-<p>sum-of-cosines produces a band-limited pulse train containing
-"cosines" cosines.  I think this was originally viewed as a way to get a speech-oriented
+
+<p>ncos is the new form of sum-of-cosines, and nsin is the new form of sum-of sines.
+</p>
+
+<p>ncos produces a band-limited pulse train containing
+"n" cosines.  I think this was originally viewed as a way to get a speech-oriented
 pulse train that would then be passed through formant filters (see pulse-voice in examp.scm).  There are many similar formulas:
 see <a href="#ncos2">ncos2</a> and friends in <a href="#othergenerators">generators.scm</a>. "Trigonometric Delights" by Eli Maor has
-a derivation of a sum-of-sines formula and a neat
-geometric explanation.  For a derivation of the sum-of-cosines formula, see "Fourier
+a derivation of a nsin formula and a neat
+geometric explanation.  For a derivation of the ncos formula, see "Fourier
 Analysis" by Stein and Shakarchi, or (in the formula given below) multiply the left side (the cosines) by sin(x/2), use the trig
 formula 2sin(a)cos(b) = sin(b+a)-sin(b-a), and notice that all the terms in the series
 cancel except the last. 
 </p>
 
 <table border=1 align=left hspace=40 vspace=10 cellpadding=4>
-<tr><td colspan=2 bgcolor="beige"><center>sum-of-cosines methods</center></td></tr>
+<tr><td colspan=2 bgcolor="beige"><center>ncos methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
 <tr><td><em class=gen>mus-scaler</em></td><td>(/ 1.0 cosines)</td></tr>
-<tr><td><em class=gen>mus-cosines</em></td><td>cosines arg  used in make-&lt;gen&gt;</td></tr>
+<tr><td><em class=gen>mus-cosines</em></td><td>n or cosines arg  used in make-&lt;gen&gt;</td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>same as mus-cosines</td></tr>
 <tr><td><em class=gen>mus-increment</em></td><td>frequency in radians per sample</td></tr>
 </table>
@@ -1970,13 +1989,13 @@ see also <a href="#othergenerators">generators.scm</a>
 <td bgcolor="#fafafa">
 <pre>
 (define (simple-soc beg dur freq amp)
-  (let* ((os (<em class=red>make-sum-of-cosines</em> 10 freq 0.0))
+  (let* ((os (<em class=red>make-ncos</em> freq 10))
 	 (start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
 	 (end (+ start (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur))))
     (<a class=quiet href="extsnd.html#run">run</a>
      (lambda ()
        (do ((i start (1+ i))) ((= i end))
-	 (outa i (* amp (<em class=red>sum-of-cosines</em> os))))))))
+	 (outa i (* amp (<em class=red>ncos</em> os))))))))
 
 (<a class=quiet href="sndscm.html#wsdoc">with-sound</a> () (simple-soc 0 1 100 1.0))
 </pre></td>
@@ -2008,16 +2027,16 @@ see also <a href="#othergenerators">generators.scm</a>
     val))
 </pre></td></tr></table>
 
-<p>If you sweep sum-of-cosines upwards in frequency, you'll eventually
+<p>If you sweep ncos upwards in frequency, you'll eventually
 get foldover; the generator produces its preset number of cosines no
 matter what.  It is possible to vary the spectrum smoothly:
 </p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td><pre>
-(let ((os (<em class=red>make-sum-of-cosines</em> 4 100.0))
+(let ((os (<em class=red>make-ncos</em> 100.0 4))
       (pow (make-env '(0 1.0 1 30.0) :length 10000))) ; our "index" envelope in FM jargon
    (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (lambda (y) 
-		  (let ((val (<em class=red>sum-of-cosines</em> os 0.0))) 
+		  (let ((val (<em class=red>ncos</em> os 0.0))) 
 		    (* (signum val) 
 		       (expt (abs val) (env pow)))))))
 </pre></td></tr></table>
@@ -2068,186 +2087,15 @@ kosine95
 <br><br>
 
 
-
-<A NAME="sine-summationdoc"></A>
-<!-- ---------------------------------------- SINE-SUMMATION ---------------------------------------- -->
-
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>sine-summation</h3></center></td></tr></table>
-<br>
-<pre>
-  <a class=def name="make-sine-summation">make-sine-summation</a> <a class=quiet href="#optional-key">:optional-key</a> 
-        (frequency *clm-default-frequency*) (initial-phase 0.0) (n 1) (a .5) (ratio 1.0)
-  <a class=def name="sine-summation">sine-summation</a> s :optional (fm 0.0)
-  <a class=def name="sine-summation?">sine-summation?</a> s
-</pre>
-
-<table border=0 hspace=20>
-
-<tr><td>
-<table align=left border=1 cellpadding=4>
-<tr><td colspan=2 bgcolor="beige"><center>sine-summation methods</center></td></tr>
-<tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
-<tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
-<tr><td><em class=gen>mus-scaler</em></td><td>"a" parameter; sideband scaler</td></tr>
-<tr><td><em class=gen>mus-cosines</em></td><td>"n" parameter</td></tr>
-<tr><td><em class=gen>mus-increment</em></td><td>frequency in radians per sample</td></tr>
-<tr><td><em class=gen>mus-offset</em></td><td>"ratio" parameter</td></tr>
-</table>
-
-</td>
-<td>
-
-<table border=0 cellspacing=20>
-<tr><td>
-<!-- sinesummation.png:
-(with-sound (:clipped #f)
-  (let ((gen (make-sine-summation 400.0 0.0 5 0.5)))
-    (run 
-     (lambda ()
-       (do ((i 0 (1+ i)))
-	   ((= i 30000))
-	 (outa i (sine-summation gen 0.0)))))))
--->
-
-<!-- Jolley 475 is different [it runs 0 .. n-1 in our terminology, whereas Moorer's runs 0 .. n] -->
-
-<!-- LATEX:
-& \sum_{k=0}^{n} r^{k}\sin(x+ky) = \frac{\sin(x) - r\sin(x-y) - r^{n+1}\Big(\sin(x+(n+1)y) - r\sin(x+ny)\Big)}{1+r^{2}-2r\cos(y)} \\
-& \sum_{k=0}^{n} r^{k}\cos(x+ky) = \frac{\cos(x) - r\cos(x-y) - r^{n+1}\Big(\cos(x+(n+1)y) - r\cos(x+ny)\Big)}{1+r^{2}-2r\cos(y)} \\
--->
-
-<img src="sceq8.png" alt="sine summation formulas">
-</td></tr>
-<tr><td>
-
-<table border=1 hspace=40><tr><td>
-<img src="sinesummation.png" alt="sine summation formula">
-</td></tr>
-<tr><td bgcolor="#f6f8ff"><center>n=5, a=0.5</center></td></tr>
-</table></td></tr>
-</table>
-
-</td></tr></table>
-
-<p>sine-summation produces a kind of additive synthesis.
-See J.A.Moorer, "Signal Processing Aspects of Computer Music" and "The
-Synthesis of Complex Audio Spectra by means of Discrete Summation Formulae"
-(Stan-M-5).  "n" is the number of sidebands (0 gives a sine wave), "a" is the amplitude
-ratio between successive sidebands (don't set it to 1.0), and "ratio" is the ratio between the
-carrier frequency and the spacing between successive sidebands.
-A "ratio" of 2 would give odd-numbered harmonics for a (vaguely) clarinet-like sound.
-The basic idea is very similar to that used in the
-<a href="#sum-of-cosines">sum-of-cosines</a> generator, but you have control of the
-fall-off of the spectrum and the spacing of the partials.
-See also the <a href="#nrxysin">nrxysin</a> and <a href="#nrxycos">nrxycos</a> generators in generators.scm.
-</p>
-
-<p>The peak amplitude of this generator is very hard to predict, and Moorer's suggested normalization
-is not helpful.  See the code (clm.c) for a long comment.  If "a" &lt; 1.0, the output will never go over 1.0, but
-it also will almost never reach that peak either.  
-<a href="#nrxycos">nrxycos</a> is normalized correctly, and gives you the same kinds of controls you get in sine-summation.
-</p>
-
-<p>
-Besides the usual FM input, you can also vary the "a" parameter (via mus-scaler) to get changing spectra.  In the
-next example, we add a glissando envelope, and use the same envelope to vary "a" so that as the frequency
-goes up, "a" goes down (to avoid foldover, or whatever).
-</p>
-
-<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
-<pre>
-(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (ss beg dur freq amp :optional (N 1) (a .5) (B-ratio 1.0) (frqf #f))
-  (let* ((st (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
-         (nd (+ st (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
-         (sgen (<em class=red>make-sine-summation</em> :n N :a a :ratio B-ratio :frequency freq))
-	 (frq-env (if frqf (<a class=quiet href="#make-env">make-env</a> frqf :scaler (<a class=quiet href="#hztoradians">hz-&gt;radians</a> freq) :duration dur) #f))
-	 (spectr-env (if frqf (<a class=quiet href="#make-env">make-env</a> frqf :duration dur) #f))
-	 (amp-env (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1 2 1 3 0) :scaler amp :duration dur)))
-    (<a class=quiet href="extsnd.html#run">run</a>
-     (lambda ()
-       (do ((i st (1+ i))) 
-	   ((= i nd))
-	 (if spectr-env
-	     (set! (<em class=red>mus-scaler</em> sgen) (* a (exp (- (<a class=quiet href="#env">env</a> spectr-env))))))
-         (<a class=quiet href="#outa">outa</a> i (* (<a class=quiet href="#env">env</a> amp-env)
-		    (<em class=red>sine-summation</em> sgen (if frq-env (<a class=quiet href="#env">env</a> frq-env) 0.0)))))))))
-
-(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> () (ss 0 1 400.0 1.0 5 0.5 1.0 '(0 0 1 2)))
-</pre>
-</td></tr></table>
-
-<p>
-"sine-summation" is a borderline vacuous name; it should be "nrxysin".  Using a sum of sines (rather than cosines)
-was a mistake; it should use <a href="#nrxycos">nrxycos</a>.  Similarly, we should use
-"ncos" for "sum-of-cosines", and "nsin" for "sum-of-sines".
-While we're on the topic, "oscil" is a contentious name, since some people think it means "table-lookup",
-but I can't think of a good replacement ("1sin"? "sine"?).  Even "waveshaping" is ambiguous;
-some consider it a synonym of "distortion synthesis" (a wretched name for array-interp),
-and others confuse it with "wavetable synthesis".  I don't know the history of the term; perhaps
-CLM should retire "waveshape" and use "polyshape" instead.
-At least one such case is funny:  the claim that "frequency
-modulation" should really be called "phase modulation" because the phase changes!
-But computer musicians are not the only ones
-with screwed up terminology: CLM uses the term "scaler" instead of "scalar" because
-the execrable name "scalar product" confuses beginners.
-Perhaps "amplitude" would sidestep this problem.
-</p>
-
-
-<!-- MLB's index idea is not so great:
-(with-sound (:clipped #f :statistics #t)
-  (let* ((dur 2.0)
-	 (ampf (make-env '(0 1 10 1 11 0) :duration dur :scaler .5))
-	 (indf (make-env '(0 0 1 .999) :duration dur))
-	 (samps (seconds->samples dur))
-	 (N 60))
-
-    (do ((i 0 (1+ i))
-	 (th 0.0 (+ th (hz->radians 1000.0))))
-	((= i samps))
-  
-      (let* ((a .999)
-	     (index (env indf))
-	     (a2 (+ 1.0 (* a a)))
-	     (an (expt a (+ N 1)))
-	     (b 1/10)
-	     (B (* b th))
-	     (thB (- th B))
-	     (divisor (* (- a2 (* 2 a index (cos B)))
-			 (/ (- (expt a N) 1.0)
-			    (- a 1.0))))
-	     (val (/ (- (sin th) (* a (sin thB))
-			(* an (- (sin (+ th (* (+ N 1) B))) 
-				 (* a (sin (+ th (* N B)))))))
-		     divisor)))
-	(outa i (* (env ampf) val))))))
--->
-
-<br><br>
-
-
-
-<A NAME="sum-of-sinesdoc"></A>
-<!-- ---------------------------------------- SUM-OF-SINES ---------------------------------------- -->
-
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>sum-of-sines</h3></center></td></tr></table>
-<br>
-<pre>
-  <a class=def name="make-sum-of-sines">make-sum-of-sines</a> <a class=quiet href="#optional-key">:optional-key</a> 
-        (sines 1) (frequency *clm-default-frequency*) (initial-phase 0.0)
-  <a class=def name="sum-of-sines">sum-of-sines</a> cs :optional (fm 0.0)
-  <a class=def name="sum-of-sines?">sum-of-sines?</a> cs
-</pre>
-
-<p>sum-of-sines produces a sum of sines.  It is very similar (good and bad) to <a href="#sum-of-cosines">sum-of-cosines</a>.
+<p>nsin produces a sum of equal amplitude sines.  It is very similar (good and bad) to <a href="#ncos">ncos</a>.
 </p>
 
 <table border=1 align=left hspace=40 vspace=10 cellpadding=4>
-<tr><td colspan=2 bgcolor="beige"><center>sum-of-sines methods</center></td></tr>
+<tr><td colspan=2 bgcolor="beige"><center>nsin methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
 <tr><td><em class=gen>mus-scaler</em></td><td>dependent on number of sines</td></tr>
-<tr><td><em class=gen>mus-cosines</em></td><td>sines arg  used in make-&lt;gen&gt;</td></tr>
+<tr><td><em class=gen>mus-cosines</em></td><td>n or sines arg used in make-&lt;gen&gt;</td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>same as mus-cosines</td></tr>
 <tr><td><em class=gen>mus-increment</em></td><td>frequency in radians per sample</td></tr>
 </table>
@@ -2269,30 +2117,7 @@ the conjugate Dirichlet kernel
 <p>See also the <a href="#sine-summation">sine-summation</a> generator, 
 and <a href="#othergenerators">generators.scm</a>.
 The original motivation for this generator was the restriction that the sine-summation generator's ratio ("a") can't be 1.0.
-But it's so easy to define a generator, that I'm sorry I made sum-of-sines a built-in case.
-For example, here is a generator based on a formula giving a sum of n odd sines:
 </p>
-
-<A NAME="sumofoddsines"></A>
-<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
-<pre>
-(define (make-sum-of-odd-sines frequency n)
-  (vct 0.0 (<a class=quiet href="#hztoradians">hz-&gt;radians</a> frequency) (exact-&gt;inexact n)))
-
-(define (sum-of-odd-sines gen fm)
-  (let* ((angle (<a class=quiet href="extsnd.html#vctref">vct-ref</a> gen 0))
-	 (a2 (* angle 0.5))
-	 (n (<a class=quiet href="extsnd.html#vctref">vct-ref</a> gen 2))
-	 (den (* n (sin a2)))
-	 (result (if (&lt; (abs den) 1.0e-9)
-		     0.0
-		     (/ (* (sin (* n a2)) 
-			   (sin (* (1+ n) a2)))
-			den))))
-    (<a class=quiet href="extsnd.html#vctset">vct-set!</a> gen 0 (+ (<a class=quiet href="extsnd.html#vctref">vct-ref</a> gen 0) (<a class=quiet href="extsnd.html#vctref">vct-ref</a> gen 1) fm))
-    result))
-</pre>
-</td></tr></table>
 
 
 <!-- LATEX:
@@ -2649,6 +2474,163 @@ done nobody any good being buried for a generation, so I say: dig them up!  If
 you know of any curious formula, anything that might trigger an interesting train of
 reflection, please send it to me, and I'll add it to this collection. 
 </p>
+
+<br><br>
+
+
+
+<A NAME="sine-summationdoc"></A>
+<!-- ---------------------------------------- SINE-SUMMATION ---------------------------------------- -->
+
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>sine-summation</h3></center></td></tr></table>
+<br>
+<pre>
+  <a class=def name="make-sine-summation">make-sine-summation</a> <a class=quiet href="#optional-key">:optional-key</a> 
+        (frequency *clm-default-frequency*) (initial-phase 0.0) (n 1) (a .5) (ratio 1.0)
+  <a class=def name="sine-summation">sine-summation</a> s :optional (fm 0.0)
+  <a class=def name="sine-summation?">sine-summation?</a> s
+</pre>
+
+<table border=0 hspace=20>
+
+<tr><td>
+<table align=left border=1 cellpadding=4>
+<tr><td colspan=2 bgcolor="beige"><center>sine-summation methods</center></td></tr>
+<tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
+<tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
+<tr><td><em class=gen>mus-scaler</em></td><td>"a" parameter; sideband scaler</td></tr>
+<tr><td><em class=gen>mus-cosines</em></td><td>"n" parameter</td></tr>
+<tr><td><em class=gen>mus-increment</em></td><td>frequency in radians per sample</td></tr>
+<tr><td><em class=gen>mus-offset</em></td><td>"ratio" parameter</td></tr>
+</table>
+
+</td>
+<td>
+
+<table border=0 cellspacing=20>
+<tr><td>
+<!-- sinesummation.png:
+(with-sound (:clipped #f)
+  (let ((gen (make-sine-summation 400.0 0.0 5 0.5)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 30000))
+	 (outa i (sine-summation gen 0.0)))))))
+-->
+
+<!-- Jolley 475 is different [it runs 0 .. n-1 in our terminology, whereas Moorer's runs 0 .. n] -->
+
+<!-- LATEX:
+& \sum_{k=0}^{n} r^{k}\sin(x+ky) = \frac{\sin(x) - r\sin(x-y) - r^{n+1}\Big(\sin(x+(n+1)y) - r\sin(x+ny)\Big)}{1+r^{2}-2r\cos(y)} \\
+& \sum_{k=0}^{n} r^{k}\cos(x+ky) = \frac{\cos(x) - r\cos(x-y) - r^{n+1}\Big(\cos(x+(n+1)y) - r\cos(x+ny)\Big)}{1+r^{2}-2r\cos(y)} \\
+-->
+
+<img src="sceq8.png" alt="sine summation formulas">
+</td></tr>
+<tr><td>
+
+<table border=1 hspace=40><tr><td>
+<img src="sinesummation.png" alt="sine summation formula">
+</td></tr>
+<tr><td bgcolor="#f6f8ff"><center>n=5, a=0.5</center></td></tr>
+</table></td></tr>
+</table>
+
+</td></tr></table>
+
+<p>sine-summation produces a kind of additive synthesis.
+See J.A.Moorer, "Signal Processing Aspects of Computer Music" and "The
+Synthesis of Complex Audio Spectra by means of Discrete Summation Formulae"
+(Stan-M-5).  "n" is the number of sidebands (0 gives a sine wave), "a" is the amplitude
+ratio between successive sidebands (don't set it to 1.0), and "ratio" is the ratio between the
+carrier frequency and the spacing between successive sidebands.
+A "ratio" of 2 would give odd-numbered harmonics for a (vaguely) clarinet-like sound.
+The basic idea is very similar to that used in the
+<a href="#ncos">ncos</a> generator, but you have control of the
+fall-off of the spectrum and the spacing of the partials.
+See also the <a href="#nrxysin">nrxysin</a> and <a href="#nrxycos">nrxycos</a> generators in generators.scm.
+</p>
+
+<p>The peak amplitude of this generator is very hard to predict, and Moorer's suggested normalization
+is not helpful.  See the code (clm.c) for a long comment.  If "a" &lt; 1.0, the output will never go over 1.0, but
+it also will almost never reach that peak either.  
+<a href="#nrxycos">nrxycos</a> is normalized correctly, and gives you the same kinds of controls you get in sine-summation.
+</p>
+
+<p>
+Besides the usual FM input, you can also vary the "a" parameter (via mus-scaler) to get changing spectra.  In the
+next example, we add a glissando envelope, and use the same envelope to vary "a" so that as the frequency
+goes up, "a" goes down (to avoid foldover, or whatever).
+</p>
+
+<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
+<pre>
+(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (ss beg dur freq amp :optional (N 1) (a .5) (B-ratio 1.0) (frqf #f))
+  (let* ((st (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
+         (nd (+ st (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
+         (sgen (<em class=red>make-sine-summation</em> :n N :a a :ratio B-ratio :frequency freq))
+	 (frq-env (if frqf (<a class=quiet href="#make-env">make-env</a> frqf :scaler (<a class=quiet href="#hztoradians">hz-&gt;radians</a> freq) :duration dur) #f))
+	 (spectr-env (if frqf (<a class=quiet href="#make-env">make-env</a> frqf :duration dur) #f))
+	 (amp-env (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1 2 1 3 0) :scaler amp :duration dur)))
+    (<a class=quiet href="extsnd.html#run">run</a>
+     (lambda ()
+       (do ((i st (1+ i))) 
+	   ((= i nd))
+	 (if spectr-env
+	     (set! (<em class=red>mus-scaler</em> sgen) (* a (exp (- (<a class=quiet href="#env">env</a> spectr-env))))))
+         (<a class=quiet href="#outa">outa</a> i (* (<a class=quiet href="#env">env</a> amp-env)
+		    (<em class=red>sine-summation</em> sgen (if frq-env (<a class=quiet href="#env">env</a> frq-env) 0.0)))))))))
+
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> () (ss 0 1 400.0 1.0 5 0.5 1.0 '(0 0 1 2)))
+</pre>
+</td></tr></table>
+
+<p>
+"sine-summation" is a borderline vacuous name; it should be "nrxysin".  Using a sum of sines (rather than cosines)
+was a mistake; it should use <a href="#nrxycos">nrxycos</a>.
+While we're on the topic, "oscil" is a contentious name, since some people think it means "table-lookup",
+but I can't think of a good replacement ("1sin"? "sine"?).  Even "waveshaping" is ambiguous;
+some consider it a synonym of "distortion synthesis" (a wretched name for array-interp),
+and others confuse it with "wavetable synthesis".  I don't know the history of the term; perhaps
+CLM should retire "waveshape" and use "polyshape" instead.
+At least one such case is funny:  the claim that "frequency
+modulation" should really be called "phase modulation" because the phase changes!
+But computer musicians are not the only ones
+with screwed up terminology: CLM uses the term "scaler" instead of "scalar" because
+the execrable name "scalar product" confuses beginners.
+Perhaps "amplitude" would sidestep this problem.
+</p>
+
+
+<!-- MLB's index idea is not so great:
+(with-sound (:clipped #f :statistics #t)
+  (let* ((dur 2.0)
+	 (ampf (make-env '(0 1 10 1 11 0) :duration dur :scaler .5))
+	 (indf (make-env '(0 0 1 .999) :duration dur))
+	 (samps (seconds->samples dur))
+	 (N 60))
+
+    (do ((i 0 (1+ i))
+	 (th 0.0 (+ th (hz->radians 1000.0))))
+	((= i samps))
+  
+      (let* ((a .999)
+	     (index (env indf))
+	     (a2 (+ 1.0 (* a a)))
+	     (an (expt a (+ N 1)))
+	     (b 1/10)
+	     (B (* b th))
+	     (thB (- th B))
+	     (divisor (* (- a2 (* 2 a index (cos B)))
+			 (/ (- (expt a N) 1.0)
+			    (- a 1.0))))
+	     (val (/ (- (sin th) (* a (sin thB))
+			(* an (- (sin (+ th (* (+ N 1) B))) 
+				 (* a (sin (+ th (* N B)))))))
+		     divisor)))
+	(outa i (* (env ampf) val))))))
+-->
 
 <br><br>
 
@@ -5159,7 +5141,6 @@ prc95.scm:
 
 sndclm.html:
     <a class=quiet href="sndclm.html#sinc-train">sinc-train</a>, 
-    <a class=quiet href="sndclm.html#sumofoddsines">sum-of-odd-sines</a>, 
     <a class=quiet href="sndclm.html#make-rand">1f-noise</a>,
     <a class=quiet href="sndclm.html#polynomial">blackman4</a>
 
@@ -5385,7 +5366,7 @@ This uses J0(index * cos(x)) + J1(index * cos(x)) to produce a full set of cosin
   <A class=def NAME="sin2n?">sin2n?</A> gen
 </pre>
 
-<p>This is hard to explain, from any point of view...  The output looks similar to the various kernel sum-of-cosines.
+<p>This is hard to explain, from any point of view...  The output looks similar to the various kernel ncos.
 </p>
 
 
@@ -5399,25 +5380,13 @@ This uses J0(index * cos(x)) + J1(index * cos(x)) to produce a full set of cosin
 
 
 <pre>
-  <A class=def NAME="make-ncos">make-ncos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (n 1)
-  <A class=def NAME="ncos">ncos</A> gen fm
-  <A class=def NAME="ncos?">ncos?</A> gen
-
-  <A class=def NAME="make-nsin">make-nsin</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (n 1)
-  <A class=def NAME="nsin">nsin</A> gen fm
-  <A class=def NAME="nsin?">nsin?</A> gen
-
   <A class=def NAME="make-nssb">make-nssb</A> <a class=quiet href="#optional-key">:optional-key</a> (carfreq 0.0) (modfreq 0.0) (n 1)
   <A class=def NAME="nssb">nssb</A> gen fm
   <A class=def NAME="nssb?">nssb?</A> gen
 </pre>
 
-<p>These generators produce a sum of "n" equal amplitude sinusoids.  ncos is the same as <a href="#sum-of-cosines">sum-of-cosines</a>, nsin
-is <a href="#sum-of-sines">sum-of-sines</a>, and nssb is the single side-band version of ncos + nsin.
+<p>nssb is the single side-band version of ncos + nsin.
 </p>
-
-<img src="sceq1.png" alt="sum of cosines" hspace=40><br>
-<img src="sceq2.png" alt="sum of cosines" hspace=40><br>
 
 <br>
 
@@ -5737,7 +5706,7 @@ The bump instrument uses rssb-interp: <code>bump beg dur freq amp f0 f1 f2</code
   <A class=def NAME="koddcos?">koddcos?</A> gen
 </pre>
 
-<p>This produces a sum of odd harmonics with a complicated scaling &mdash; it is the 3rd Jolley case, 1st column, in the sum-of-sines table.
+<p>This produces a sum of odd harmonics with a complicated scaling &mdash; it is the 3rd Jolley case, 1st column, in the nsin table.
 This generator's output is not normalized, and looks incorrect...
 </p>
 <br>

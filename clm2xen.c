@@ -2270,6 +2270,132 @@ static XEN g_sum_of_sines(XEN obj, XEN fm)
 }
 
 
+/* these are the new forms of sum-of-cosines and sum-of sines, but we can't just replace them
+ *   at this level because def-optkey-fun (for make-*) is defined in ws.scm, so a replacement
+ *   in the init function is problematic, especially for Forth and Ruby.
+ */
+
+/* -------- ncos -------- */
+
+#define MUS_MAX_SINUSOIDS 65536
+
+static XEN g_ncos_p(XEN obj) 
+{
+  #define H_ncos_p "(" S_ncos_p " gen): " PROC_TRUE " if gen is an " S_ncos " generator"
+  return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && 
+			  (mus_ncos_p(XEN_TO_MUS_ANY(obj)))));
+}
+
+
+static XEN g_make_ncos(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+{
+  #define H_make_ncos "(" S_make_ncos " (:frequency clm-default-frequency) (:n 1)): \
+return a new " S_ncos " generator, producing a sum of 'n' equal amplitude cosines."
+
+  mus_any *ge;
+  XEN args[4]; 
+  XEN keys[2];
+  int orig_arg[2] = {0, 0};
+  int vals, n = 1;
+  Float freq;
+
+  freq = clm_default_frequency;
+
+  keys[0] = kw_frequency;
+  keys[1] = kw_n;
+  args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4;
+
+  vals = mus_optkey_unscramble(S_make_ncos, 2, keys, args, orig_arg);
+  if (vals > 0)
+    {
+      freq = mus_optkey_to_float(keys[0], S_make_ncos, orig_arg[0], freq);
+      if (freq > (0.5 * mus_srate()))
+	XEN_OUT_OF_RANGE_ERROR(S_make_ncos, orig_arg[0], keys[0], "freq ~A > srate/2?");
+
+      n = mus_optkey_to_int(keys[1], S_make_ncos, orig_arg[1], n);
+      if ((n <= 0) || (n > MUS_MAX_SINUSOIDS))
+	XEN_OUT_OF_RANGE_ERROR(S_make_ncos, orig_arg[1], keys[1], "n: ~A?");
+    }
+
+  ge = mus_make_ncos(freq, n);
+  if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
+  return(XEN_FALSE);
+}
+
+
+static XEN g_ncos(XEN obj, XEN fm)
+{
+  #define H_ncos "(" S_ncos " gen :optional (fm 0.0)): get the next sample from 'gen', an " S_ncos " generator"
+
+  Float fm1 = 0.0;
+  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_ncos_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_ncos, "an " S_ncos " gen");
+  if (XEN_NUMBER_P(fm)) 
+    fm1 = XEN_TO_C_DOUBLE(fm); 
+  else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(fm), fm, XEN_ARG_2, S_ncos, "a number");
+  return(C_TO_XEN_DOUBLE(mus_ncos(XEN_TO_MUS_ANY(obj), fm1)));
+}
+
+
+
+/* -------- nsin -------- */
+
+static XEN g_nsin_p(XEN obj) 
+{
+  #define H_nsin_p "(" S_nsin_p " gen): " PROC_TRUE " if gen is an " S_nsin " generator"
+  return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && 
+			  (mus_nsin_p(XEN_TO_MUS_ANY(obj)))));
+}
+
+
+static XEN g_make_nsin(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+{
+  #define H_make_nsin "(" S_make_nsin " (:frequency clm-default-frequency) (:n 1)): \
+return a new " S_nsin " generator, producing a sum of 'n' equal amplitude sines"
+
+  mus_any *ge;
+  XEN args[4]; 
+  XEN keys[2];
+  int orig_arg[2] = {0, 0};
+  int vals, n = 1;
+  Float freq;
+
+  freq = clm_default_frequency;
+
+  keys[0] = kw_frequency;
+  keys[1] = kw_n;
+  args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4;
+
+  vals = mus_optkey_unscramble(S_make_nsin, 2, keys, args, orig_arg);
+  if (vals > 0)
+    {
+      freq = mus_optkey_to_float(keys[0], S_make_nsin, orig_arg[0], freq);
+      if (freq > (0.5 * mus_srate()))
+	XEN_OUT_OF_RANGE_ERROR(S_make_nsin, orig_arg[0], keys[0], "freq ~A > srate/2?");
+
+      n = mus_optkey_to_int(keys[1], S_make_nsin, orig_arg[1], n);
+      if ((n <= 0) || (n > MUS_MAX_SINUSOIDS))
+	XEN_OUT_OF_RANGE_ERROR(S_make_nsin, orig_arg[1], keys[1], "n: ~A?");
+    }
+
+  ge = mus_make_nsin(freq, n);
+  if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
+  return(XEN_FALSE);
+}
+
+
+static XEN g_nsin(XEN obj, XEN fm)
+{
+  #define H_nsin "(" S_nsin " gen :optional (fm 0.0)): get the next sample from 'gen', an " S_nsin " generator"
+
+  Float fm1 = 0.0;
+  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_nsin_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_nsin, "an " S_nsin " gen");
+  if (XEN_NUMBER_P(fm)) 
+    fm1 = XEN_TO_C_DOUBLE(fm); 
+  else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(fm), fm, XEN_ARG_2, S_nsin, "a number");
+  return(C_TO_XEN_DOUBLE(mus_nsin(XEN_TO_MUS_ANY(obj), fm1)));
+}
+
+
 
 /* ---------------- rand, rand_interp ---------------- */
 
@@ -7087,12 +7213,21 @@ XEN_NARGIFY_1(g_comb_p_w, g_comb_p)
 XEN_NARGIFY_1(g_filtered_comb_p_w, g_filtered_comb_p)
 XEN_NARGIFY_1(g_all_pass_p_w, g_all_pass_p)
 XEN_NARGIFY_1(g_moving_average_p_w, g_moving_average_p)
+
 XEN_ARGIFY_6(g_make_sum_of_cosines_w, g_make_sum_of_cosines)
 XEN_ARGIFY_2(g_sum_of_cosines_w, g_sum_of_cosines)
 XEN_NARGIFY_1(g_sum_of_cosines_p_w, g_sum_of_cosines_p)
 XEN_ARGIFY_6(g_make_sum_of_sines_w, g_make_sum_of_sines)
 XEN_ARGIFY_2(g_sum_of_sines_w, g_sum_of_sines)
 XEN_NARGIFY_1(g_sum_of_sines_p_w, g_sum_of_sines_p)
+
+XEN_ARGIFY_4(g_make_ncos_w, g_make_ncos)
+XEN_ARGIFY_2(g_ncos_w, g_ncos)
+XEN_NARGIFY_1(g_ncos_p_w, g_ncos_p)
+XEN_ARGIFY_4(g_make_nsin_w, g_make_nsin)
+XEN_ARGIFY_2(g_nsin_w, g_nsin)
+XEN_NARGIFY_1(g_nsin_p_w, g_nsin_p)
+
 XEN_VARGIFY(g_make_rand_w, g_make_rand)
 XEN_VARGIFY(g_make_rand_interp_w, g_make_rand_interp)
 XEN_ARGIFY_2(g_rand_w, g_rand)
@@ -7368,12 +7503,21 @@ XEN_NARGIFY_2(g_mus_equalp_w, equalp_mus_xen)
 #define g_filtered_comb_p_w g_filtered_comb_p
 #define g_all_pass_p_w g_all_pass_p
 #define g_moving_average_p_w g_moving_average_p
+
 #define g_make_sum_of_cosines_w g_make_sum_of_cosines
 #define g_sum_of_cosines_w g_sum_of_cosines
 #define g_sum_of_cosines_p_w g_sum_of_cosines_p
 #define g_make_sum_of_sines_w g_make_sum_of_sines
 #define g_sum_of_sines_w g_sum_of_sines
 #define g_sum_of_sines_p_w g_sum_of_sines_p
+
+#define g_make_ncos_w g_make_ncos
+#define g_ncos_w g_ncos
+#define g_ncos_p_w g_ncos_p
+#define g_make_nsin_w g_make_nsin
+#define g_nsin_w g_nsin
+#define g_nsin_p_w g_nsin_p
+
 #define g_make_rand_w g_make_rand
 #define g_make_rand_interp_w g_make_rand_interp
 #define g_rand_w g_rand
@@ -7820,6 +7964,13 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_sum_of_sines,        g_sum_of_sines_w,        1, 1, 0, H_sum_of_sines);
   XEN_DEFINE_PROCEDURE(S_sum_of_sines_p,      g_sum_of_sines_p_w,      1, 0, 0, H_sum_of_sines_p);
 
+  XEN_DEFINE_PROCEDURE(S_make_ncos,           g_make_ncos_w,           0, 4, 0, H_make_ncos); 
+  XEN_DEFINE_PROCEDURE(S_ncos,                g_ncos_w,                1, 1, 0, H_ncos);
+  XEN_DEFINE_PROCEDURE(S_ncos_p,              g_ncos_p_w,              1, 0, 0, H_ncos_p);
+  XEN_DEFINE_PROCEDURE(S_make_nsin,           g_make_nsin_w,           0, 4, 0, H_make_nsin); 
+  XEN_DEFINE_PROCEDURE(S_nsin,                g_nsin_w,                1, 1, 0, H_nsin);
+  XEN_DEFINE_PROCEDURE(S_nsin_p,              g_nsin_p_w,              1, 0, 0, H_nsin_p);
+
   XEN_DEFINE_PROCEDURE(S_table_lookup_p,     g_table_lookup_p_w,     1, 0, 0, H_table_lookup_p);
   XEN_DEFINE_PROCEDURE(S_make_table_lookup,  g_make_table_lookup_w,  0, 0, 1, H_make_table_lookup);
   XEN_DEFINE_PROCEDURE(S_table_lookup,       g_table_lookup_w,       1, 1, 0, H_table_lookup);
@@ -8205,6 +8356,8 @@ void mus_xen_init(void)
 	       S_make_ssb_am,
 	       S_make_sum_of_cosines,
 	       S_make_sum_of_sines,
+	       S_make_ncos,
+	       S_make_nsin,
 	       S_make_table_lookup,
 	       S_make_triangle_wave,
 	       S_make_two_pole,
@@ -8348,6 +8501,10 @@ void mus_xen_init(void)
 	       S_sum_of_cosines_p,
 	       S_sum_of_sines,
 	       S_sum_of_sines_p,
+	       S_ncos,
+	       S_ncos_p,
+	       S_nsin,
+	       S_nsin_p,
 	       S_sine_bank,
 	       S_table_lookup,
 	       S_table_lookup_p,

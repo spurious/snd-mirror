@@ -34,7 +34,7 @@
 ;;;   of the nth cos involves hypergeometric series (looks like r^n/n! (~=e^n?) with a million other terms).
 
 (define (kosine-summation gen r k)
-  "(kosine-summation gen r k) is a variant of sum-of-cosines; 'r' controls successive sinusoid amplitude; 'k' controls how many sinusoids are produced"
+  "(kosine-summation gen r k) is a variant of ncos; 'r' controls successive sinusoid amplitude; 'k' controls how many sinusoids are produced"
   (* (expt (- (+ 1.0 (* r r))
 	      (* 2 r (oscil gen)))
 	   (- k))
@@ -94,7 +94,7 @@
 
 
 
-;;; -------- variations on sum-of-cosines
+;;; -------- variations on ncos
 ;;; from "Trigonometric Delights" by Eli Maor
 
 (define (sum-of-n-sines angle n)

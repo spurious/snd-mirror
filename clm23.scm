@@ -153,6 +153,26 @@
        (do ((i start (1+ i))) ((= i end))
 	 (out-any i (* amp (sum-of-cosines os)) 0))))))
 
+(define (simple-nsin beg dur amp)
+  "(simple-nsin beg dur amp) test instrument for nsin"
+  (let* ((os (make-nsin 440 10))
+	 (start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i))) ((= i end))
+	 (out-any i (* amp (nsin os)) 0))))))
+
+(define (simple-ncos beg dur freq amp)
+  "(simple-ncos beg dur freq amp) test instrument for ncos"
+  (let* ((os (make-ncos freq 10))
+	 (start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i))) ((= i end))
+	 (out-any i (* amp (ncos os)) 0))))))
+
 (define (simple-osc beg dur freq amp)
   "(simple-osc beg dur freq amp) test instrument for oscil"
   (let* ((start (seconds->samples beg))
@@ -1525,6 +1545,8 @@
 	    (simple-ssb 0 .2 440 .1)
 	    (simple-sos .25 .2 .1)
 	    (simple-soc 0.5 .2 440 .1)
+	    (simple-nsin .6 .2 .1)
+	    (simple-ncos 0.7 .2 440 .1)
 	    (simple-osc 0.75 .2 440 .1)
 	    (simple-sss 1.0 .2 .1)
 	    (simple-asy 1.25 .2 .1)
