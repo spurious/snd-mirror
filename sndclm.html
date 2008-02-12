@@ -384,7 +384,7 @@ could be rewritten:
   (let ((os (<a class=quiet href="#make-oscil">make-oscil</a> freq)))
     (do ((i start (1+ i))) 
         ((= i end))
-      (<a class=quiet href="#outa">outa</a> i (* amp (<a class=quiet href="#oscil">oscil</a> os))))))
+      (<a class=quiet href="#outa">outa</a> i (* amp (<a class=quiet href="#oscil">oscil</a> os)))))) ; outa output defaults to *output* so we can omit it
 </pre>
 </td></tr></table>
 
@@ -4808,11 +4808,11 @@ Here is one that uses file-&gt;sample to mix in a sound file (there are a zillio
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>in-any, out-any</h3></center></td></tr></table>
 
 <pre>
-  <a class=def name="out-any">out-any</a> loc data channel (output)
-  <a class=def name="outa">outa</a> loc data (output)
-  <em class=emdef>outb</em> loc data (output)
-  <em class=emdef>outc</em> loc data (output)
-  <em class=emdef>outd</em> loc data (output)
+  <a class=def name="out-any">out-any</a> loc data channel (output *output*)
+  <a class=def name="outa">outa</a> loc data (output *output*)
+  <em class=emdef>outb</em> loc data (output *output*)
+  <em class=emdef>outc</em> loc data (output *output*)
+  <em class=emdef>outd</em> loc data (output *output*)
 
   <a class=def name="in-any">in-any</a> loc channel input
   <a class=def name="ina">ina</a> loc input

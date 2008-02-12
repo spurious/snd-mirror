@@ -847,7 +847,7 @@ static XEN g_autocorrelate(XEN reals)
   /* assumes length is power of 2 */
   vct *v1 = NULL;
   XEN_ASSERT_TYPE(MUS_VCT_P(reals), reals, XEN_ONLY_ARG, S_autocorrelate, "a vct");
-  v1 = (vct *)XEN_OBJECT_REF(reals);
+  v1 = XEN_TO_VCT(reals);
   mus_autocorrelate(v1->data, v1->length);
   return(reals);
 }
@@ -862,8 +862,8 @@ static XEN g_correlate(XEN data1, XEN data2)
   XEN_ASSERT_TYPE(MUS_VCT_P(data1), data1, XEN_ARG_1, S_correlate, "a vct");
   XEN_ASSERT_TYPE(MUS_VCT_P(data2), data2, XEN_ARG_2, S_correlate, "a vct");
 
-  v1 = (vct *)XEN_OBJECT_REF(data1);
-  v2 = (vct *)XEN_OBJECT_REF(data2);
+  v1 = XEN_TO_VCT(data1);
+  v2 = XEN_TO_VCT(data2);
   if (v1->length < v2->length)
     size = v1->length;
   else size = v2->length;
@@ -1470,7 +1470,7 @@ static XEN g_mus_length(XEN gen)
   if (MUS_XEN_P(gen))
     return(C_TO_XEN_OFF_T(mus_length(XEN_TO_MUS_ANY(gen))));
   if (MUS_VCT_P(gen))
-    return(C_TO_XEN_INT(((vct *)XEN_OBJECT_REF(gen))->length));
+    return(C_TO_XEN_INT((XEN_TO_VCT(gen))->length));
   if (sound_data_p(gen))
     return(C_TO_XEN_INT((XEN_TO_SOUND_DATA(gen))->length));
 
@@ -1499,7 +1499,7 @@ static XEN g_mus_set_length(XEN gen, XEN val)
 	  if ((ms->vcts) && (!(XEN_EQ_P(ms->vcts[MUS_DATA_WRAPPER], XEN_UNDEFINED))))
 	    {
 	      vct *v;
-	      v = (vct *)XEN_OBJECT_REF(ms->vcts[MUS_DATA_WRAPPER]);
+	      v = XEN_TO_VCT(ms->vcts[MUS_DATA_WRAPPER]);
 	      if ((v) && (len > v->length))
 		XEN_OUT_OF_RANGE_ERROR(S_setB S_mus_length, XEN_ONLY_ARG, val, "must be <= current data size");
 	      /* set_offset refers only to env, set_width only to square_wave et al, set_location only readin */
@@ -1554,7 +1554,7 @@ static XEN g_mus_set_data(XEN gen, XEN val)
     {
       vct *v;
       mus_any *ma;
-      v = (vct *)XEN_OBJECT_REF(val);
+      v = XEN_TO_VCT(val);
       ma = ms->gen;
       mus_set_data(ma, v->data);  /* TO REMEMBER: if allocated, should have freed, and set to not allocated */
       ms->vcts[MUS_DATA_WRAPPER] = val;

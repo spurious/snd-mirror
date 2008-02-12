@@ -770,7 +770,7 @@ filling sound-data sdata's buffers starting at beg (buffer location), going to e
   XEN_ASSERT_TYPE(XEN_NUMBER_P(end), end, XEN_ARG_3, S_mus_sound_read, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chans), chans, XEN_ARG_4, S_mus_sound_read, "an integer");
   XEN_ASSERT_TYPE(sound_data_p(sv), sv, XEN_ARG_5, S_mus_sound_read, "a sound-data object");
-  sd = (sound_data *)(XEN_OBJECT_REF(sv));
+  sd = XEN_TO_SOUND_DATA(sv);
   bg = XEN_TO_C_INT_OR_ELSE(beg, 0);
   nd = XEN_TO_C_INT_OR_ELSE(end, 0);
   if ((nd - bg) >= sd->length)
@@ -812,7 +812,7 @@ starting at beg (buffer location), going to end"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chans), chans, XEN_ARG_4, S_mus_sound_write, "an integer");
   XEN_ASSERT_TYPE(sound_data_p(sv), sv, XEN_ARG_5, S_mus_sound_write, "a sound-data object");
   /* even here we can write memory that doesn't belong to us if clipping */
-  sd = (sound_data *)(XEN_OBJECT_REF(sv));
+  sd = XEN_TO_SOUND_DATA(sv);
   bg = XEN_TO_C_INT_OR_ELSE(beg, 0);
   nd = XEN_TO_C_INT_OR_ELSE(end, 0);
   if ((nd - bg) >= sd->length)

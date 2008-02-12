@@ -12241,7 +12241,7 @@ Float evaluate_ptreec(struct ptree *pt, Float arg, XEN object, bool dir, int typ
 	case R_INT:          pt->ints[addr] = R_XEN_TO_C_INT(object);                                       break;
 	case R_CHAR:         pt->ints[addr] = (Int)XEN_TO_C_CHAR(object);                                   break;
 	case R_BOOL:         pt->ints[addr] = (Int)XEN_TO_C_BOOLEAN(object);                                break;
-	case R_VCT:          if (pt->vcts) pt->vcts[addr] = (vct *)XEN_OBJECT_REF(object);                  break;
+	case R_VCT:          if (pt->vcts) pt->vcts[addr] = XEN_TO_VCT(object);                             break;
 	  /* dumb cases force the pt->vcts check -- vct returned, but never used for example */
 	case R_SOUND_DATA:   if (pt->sds) pt->sds[addr] = XEN_TO_SOUND_DATA(object);                        break;
 	case R_CLM:          if (pt->clms) pt->clms[addr] = XEN_TO_MUS_ANY(object);                         break;

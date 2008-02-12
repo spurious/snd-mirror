@@ -8000,7 +8000,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
 	  if (XEN_LIST_P(ldata))
 	    data = XEN_LIST_REF(ldata, graph);
 	  else data = ldata;
-	  v = (vct *)XEN_OBJECT_REF(data);
+	  v = XEN_TO_VCT(data);
 	  len = v->length;
 	  if (lg->len[graph] != len)
 	    {

@@ -7707,7 +7707,7 @@ bool sample_reader_p(XEN obj) {return(XEN_OBJECT_TYPE_P(obj, sf_tag));}
 #define ANY_SAMPLE_READER_P(Obj) ((sample_reader_p(Obj)) || (mix_sample_reader_p(Obj)))
 
 snd_fd *xen_to_sample_reader(XEN obj) {if (SAMPLE_READER_P(obj)) return((snd_fd *)XEN_OBJECT_REF(obj)); else return(NULL);}
-#define TO_SAMPLE_READER(obj) ((snd_fd *)XEN_OBJECT_REF(obj))
+#define XEN_TO_SAMPLE_READER(obj) ((snd_fd *)XEN_OBJECT_REF(obj))
 
 
 char *sample_reader_to_string(snd_fd *fd)
@@ -7865,7 +7865,7 @@ static XEN g_sample_reader_at_end(XEN obj)
   if (sample_reader_p(obj))
     {
       snd_fd *sf;
-      sf = TO_SAMPLE_READER(obj);
+      sf = XEN_TO_SAMPLE_READER(obj);
       return(C_TO_XEN_BOOLEAN(sf->at_eof));
     }
   if (mix_sample_reader_p(obj))
@@ -7889,7 +7889,7 @@ static XEN g_sample_reader_position(XEN obj)
   if (sample_reader_p(obj))
     {
       snd_fd *fd = NULL;
-      fd = TO_SAMPLE_READER(obj);
+      fd = XEN_TO_SAMPLE_READER(obj);
       if (fd->at_eof) return(XEN_ZERO); /* -1? frames? */
       if ((fd->cp) && 
 	  (fd->cp->active >= CHANNEL_HAS_EDIT_LIST) && 
@@ -7914,7 +7914,7 @@ if 'obj' is a mix-sample-reader, the id of underlying mix"
   if (sample_reader_p(obj))
     {
       snd_fd *fd = NULL;
-      fd = TO_SAMPLE_READER(obj);
+      fd = XEN_TO_SAMPLE_READER(obj);
       if ((fd->cp) && 
 	  (fd->cp->active >= CHANNEL_HAS_EDIT_LIST) && 
 	  (fd->cp->sound))
@@ -8050,7 +8050,7 @@ static XEN g_sample_reader_p(XEN obj)
   if (sample_reader_p(obj))
     {
       snd_fd *fd;
-      fd = TO_SAMPLE_READER(obj);
+      fd = XEN_TO_SAMPLE_READER(obj);
       return(C_TO_XEN_BOOLEAN(fd->type == SAMPLE_READER));
     }
   return(XEN_FALSE);
@@ -8063,7 +8063,7 @@ static XEN g_region_sample_reader_p(XEN obj)
   if (sample_reader_p(obj))
     {
       snd_fd *fd;
-      fd = TO_SAMPLE_READER(obj);
+      fd = XEN_TO_SAMPLE_READER(obj);
       return(C_TO_XEN_BOOLEAN(fd->type == REGION_READER));
     }
   return(XEN_FALSE);
@@ -8077,7 +8077,7 @@ static XEN g_copy_sample_reader(XEN obj)
   if (sample_reader_p(obj))
     {
       snd_fd *fd = NULL;
-      fd = TO_SAMPLE_READER(obj);
+      fd = XEN_TO_SAMPLE_READER(obj);
       if ((fd->cp) && 
 	  (fd->cp->active >= CHANNEL_HAS_EDIT_LIST) && 
 	  (fd->cp->sound))
@@ -8105,7 +8105,7 @@ static XEN g_next_sample(XEN obj)
 {
   #define H_next_sample "(" S_next_sample " reader): next sample from reader"
   XEN_ASSERT_TYPE(SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_next_sample, "a sample-reader");
-  return(C_TO_XEN_DOUBLE(protected_next_sample(TO_SAMPLE_READER(obj))));
+  return(C_TO_XEN_DOUBLE(protected_next_sample(XEN_TO_SAMPLE_READER(obj))));
 }
 
 
@@ -8113,7 +8113,7 @@ static XEN g_read_sample(XEN obj)
 {
   #define H_read_sample "(" S_read_sample " reader): read sample from reader"
   XEN_ASSERT_TYPE(SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_read_sample, "a sample-reader");
-  return(C_TO_XEN_DOUBLE(read_sample(TO_SAMPLE_READER(obj))));
+  return(C_TO_XEN_DOUBLE(read_sample(XEN_TO_SAMPLE_READER(obj))));
 }
 
 
@@ -8121,7 +8121,7 @@ static XEN g_previous_sample(XEN obj)
 {
   #define H_previous_sample "(" S_previous_sample " reader): previous sample from reader"
   XEN_ASSERT_TYPE(SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_previous_sample, "a sample-reader");
-  return(C_TO_XEN_DOUBLE(protected_previous_sample(TO_SAMPLE_READER(obj))));
+  return(C_TO_XEN_DOUBLE(protected_previous_sample(XEN_TO_SAMPLE_READER(obj))));
 }
 
 
@@ -8133,7 +8133,7 @@ static XEN g_free_sample_reader(XEN obj)
     {
       snd_info *sp = NULL;
       snd_fd *fd;
-      fd = TO_SAMPLE_READER(obj);
+      fd = XEN_TO_SAMPLE_READER(obj);
       unlist_reader(fd);
       sp = fd->local_sp; 
       fd->local_sp = NULL;

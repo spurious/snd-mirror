@@ -3,6 +3,11 @@
 
 
 ;;; TODO: make and runtime function help strings -- could this use mus-documentation or some such method?
+;;;   (set-procedure-property! make-nxycos 'documentation "this is a test")
+;;;   (procedure-property make-nxycos 'documentation) -> "this is a test"
+;;;   so presumably the make-* funcs could have a :documentation slot in def-clm-struct 
+;;;   or would it be better to include field accessor docs and so on?
+
 
 ;;; these try to mimic existing gens (mainly oscil), so "frequency" is placed first.
 ;;;   Where a factor is involved, I'll try to use "r".

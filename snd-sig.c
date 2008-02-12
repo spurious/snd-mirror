@@ -5075,8 +5075,8 @@ If sign is -1, perform inverse fft.  Incoming data is in vcts."
   XEN_ASSERT_TYPE(MUS_VCT_P(reals), reals, XEN_ARG_1, S_fft, "vct");
   XEN_ASSERT_TYPE(MUS_VCT_P(imag), imag, XEN_ARG_2, S_fft, "vct");
   isign = XEN_TO_C_INT_OR_ELSE(sign, 1);
-  v1 = (vct *)XEN_OBJECT_REF(reals);
-  v2 = (vct *)XEN_OBJECT_REF(imag);
+  v1 = XEN_TO_VCT(reals);
+  v2 = XEN_TO_VCT(imag);
   n = v1->length;
   if (v2->length < n) n = v2->length;
   if (n == 0) return(XEN_ZERO);

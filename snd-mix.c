@@ -2950,13 +2950,13 @@ bool mix_sample_reader_p(XEN obj)
 }
 
 
-#define TO_MIX_SAMPLE_READER(obj) ((mix_fd *)XEN_OBJECT_REF(obj))
+#define XEN_TO_MIX_SAMPLE_READER(obj) ((mix_fd *)XEN_OBJECT_REF(obj))
 #define MIX_SAMPLE_READER_P(Obj) XEN_OBJECT_TYPE_P(Obj, mf_tag)
 
 void *xen_to_mix_sample_reader(XEN obj) 
 {
   if (MIX_SAMPLE_READER_P(obj)) 
-    return(TO_MIX_SAMPLE_READER(obj)); 
+    return(XEN_TO_MIX_SAMPLE_READER(obj)); 
   return(NULL);
 }
 
@@ -3047,7 +3047,7 @@ static XEN g_read_mix_sample(XEN obj)
   mix_fd *mf;
   #define H_read_mix_sample "(" S_read_mix_sample " reader): read sample from mix reader"
   XEN_ASSERT_TYPE(MIX_SAMPLE_READER_P(obj), obj, XEN_ONLY_ARG, S_read_mix_sample, "a mix-sample-reader");
-  mf = TO_MIX_SAMPLE_READER(obj);
+  mf = XEN_TO_MIX_SAMPLE_READER(obj);
   return(C_TO_XEN_DOUBLE(read_sample(mf->sf)));
 }
 
@@ -3057,7 +3057,7 @@ static XEN g_read_mix_sample(XEN obj)
 XEN g_copy_mix_sample_reader(XEN obj)
 {
   mix_fd *mf;
-  mf = TO_MIX_SAMPLE_READER(obj);
+  mf = XEN_TO_MIX_SAMPLE_READER(obj);
   return(g_make_mix_sample_reader(C_TO_XEN_INT(mf->md->id),
 				  C_TO_XEN_OFF_T(current_location(mf->sf))));
 }
@@ -3066,7 +3066,7 @@ XEN g_copy_mix_sample_reader(XEN obj)
 XEN g_mix_sample_reader_home(XEN obj)
 {
   mix_fd *mf;
-  mf = TO_MIX_SAMPLE_READER(obj);
+  mf = XEN_TO_MIX_SAMPLE_READER(obj);
   return(C_TO_XEN_INT(mf->md->id));
 }
 
@@ -3081,7 +3081,7 @@ bool mix_sample_reader_at_end_p(void *ptr)
 XEN g_mix_sample_reader_at_end_p(XEN obj)
 {
   mix_fd *mf;
-  mf = TO_MIX_SAMPLE_READER(obj);
+  mf = XEN_TO_MIX_SAMPLE_READER(obj);
   return(C_TO_XEN_BOOLEAN(mix_sample_reader_at_end_p(mf)));
 }
 
@@ -3089,7 +3089,7 @@ XEN g_mix_sample_reader_at_end_p(XEN obj)
 XEN g_mix_sample_reader_position(XEN obj)
 {
   mix_fd *mf;
-  mf = TO_MIX_SAMPLE_READER(obj);
+  mf = XEN_TO_MIX_SAMPLE_READER(obj);
   if (mix_sample_reader_at_end_p(mf)) return(XEN_ZERO);
   return(C_TO_XEN_OFF_T(current_location(mf->sf)));
 }
@@ -3098,7 +3098,7 @@ XEN g_mix_sample_reader_position(XEN obj)
 XEN g_free_mix_sample_reader(XEN obj)
 {
   mix_fd *mf;
-  mf = TO_MIX_SAMPLE_READER(obj);
+  mf = XEN_TO_MIX_SAMPLE_READER(obj);
 
   if (mf)
     {

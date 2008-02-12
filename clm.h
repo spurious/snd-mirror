@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 48
-#define MUS_DATE "4-Feb-08"
+#define MUS_REVISION 49
+#define MUS_DATE "12-Feb-08"
 
 /*
+ * 12-Feb:     nsin for sum_of_sines, ncos for sum_of_cosines.
  * 4-Feb:      clm_default_frequency (clm2xen) and *clm-default-frequency* (ws.scm).
  * 7-Jan-08:   :dur replaced by :length in make-env.
  * --------
@@ -398,12 +399,20 @@ Float mus_oscil_pm(mus_any *ptr, Float pm);
 bool mus_oscil_p(mus_any *ptr);
 mus_any *mus_make_oscil(Float freq, Float phase);
 
-Float mus_sum_of_cosines(mus_any *gen, Float fm);
-bool mus_sum_of_cosines_p(mus_any *ptr);
+mus_any *mus_make_ncos(Float freq, int n);
+Float mus_ncos(mus_any *ptr, Float fm);
+bool mus_ncos_p(mus_any *ptr);
+mus_any *mus_make_nsin(Float freq, int n);
+Float mus_nsin(mus_any *ptr, Float fm);
+bool mus_nsin_p(mus_any *ptr);
+
+/* previous forms (changed 12-Feb-08) */
 mus_any *mus_make_sum_of_cosines(int cosines, Float freq, Float phase);
-Float mus_sum_of_sines(mus_any *ptr, Float fm);
+#define mus_sum_of_cosines(Gen, Fm) mus_ncos(Gen, Fm)
+#define mus_sum_of_cosines_p(Ptr) mus_ncos_p(Ptr)
 mus_any *mus_make_sum_of_sines(int sines, Float freq, Float phase);
-bool mus_sum_of_sines_p(mus_any *ptr);
+#define mus_sum_of_sines(Gen, Fm) mus_nsin(Gen, Fm)
+#define mus_sum_of_sines_p(Ptr) mus_nsin_p(Ptr)
 
 Float mus_delay(mus_any *gen, Float input, Float pm);
 Float mus_delay_unmodulated(mus_any *ptr, Float input);

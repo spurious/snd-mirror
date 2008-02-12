@@ -113,6 +113,7 @@
 ;;; Yellow-green vireo
 ;;; Red-eyed vireo
 ;;; White-eyed vireo
+;;; Philadelphia vireo
 ;;; Nashville warbler
 ;;; Orange-crowned warbler
 ;;; Yellow warbler
@@ -10573,6 +10574,40 @@
 ;(with-sound (:play #t) (white-eyed-vireo 0 .5))
 
 
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Philadelphia vireo
+
+(definstrument (philadelphia-vireo beg amp)
+  ;; east 58 3
+  (let* ((start (seconds->samples beg))
+	 (dur 0.364)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.051 0.03 0.078 0.168 0.100 0.358 0.120 0.179 0.146 0.059 0.166 0.551 
+			   0.175 0.363 0.188 0.486 0.197 0.441 0.212 0.559 0.226 1.000 0.311 0.105 0.317 0.227 
+			   0.348 0.152 0.380 0.142 0.408 0.067 0.469 0.000 0.615 0.000 0.637 0.094 0.702 0.138 
+			   0.731 0.055 0.784 0.028 0.835 0.168 0.899 0.429 0.928 0.323 0.942 0.220 0.953 0.309 
+			   0.957 0.050 0.968 0.264 0.984 0.032 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0.000 0.912 0.033 0.904 0.060 0.664 0.092 0.555 0.110 0.499 0.148 0.403 0.167 0.480 
+			   0.178 0.567 0.198 0.593 0.221 0.563 0.236 0.510 0.254 0.465 0.283 0.430 0.331 0.373 
+			   0.385 0.338 0.444 0.296 0.509 0.306 0.635 0.396 0.653 0.443 0.667 0.456 0.683 0.437 
+			   0.719 0.351 0.745 0.296 0.765 0.281 0.802 0.298 0.835 0.358 0.868 0.452 0.904 0.507 
+			   0.955 0.505 0.966 0.488 0.971 0.520 0.980 0.493 1.000 0.510)
+			 :duration dur :scaler (hz->radians 7400.0)))
+	 (gen1 (make-polyshape :partials (list 1 .98  2 .015  3 .005))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (polyshape gen1 1.0 (env frqf)))))))))
+
+;(with-sound (:play #t) (philadelphia-vireo 0 .5))
+
+
+
+
 
 
 ;;; ================ calling-all-animals ================
@@ -10788,7 +10823,8 @@
   (kirtlands-warbler             (+ beg 244.0) .25)      (set! beg (+ beg spacing))
   (wood-duck                     (+ beg 245.5) .25)      (set! beg (+ beg spacing))
   (white-eyed-vireo              (+ beg 246.5) .25)      (set! beg (+ beg spacing))
-  (+ beg 247.5))
+  (philadelphia-vireo            (+ beg 247.5) .25)      (set! beg (+ beg spacing))
+  (+ beg 248))
 
 
 (define (calling-all-animals)

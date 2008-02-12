@@ -940,10 +940,10 @@ void peak_env_ptree(chan_info *cp, struct ptree *pt, int pos, XEN init_func)
       if (XEN_PROCEDURE_P(init_func))
 	{
 	  /* probably faster to copy locally than protect from GC */
-	  vlo = mus_vct_copy((vct *)(XEN_OBJECT_REF(XEN_CALL_2(init_func,
-							     C_TO_XEN_OFF_T(0),
-							     C_TO_XEN_OFF_T(new_ep->peak_env_size),
-							     S_ptree_channel " init func"))));
+	  vlo = mus_vct_copy(XEN_TO_VCT(XEN_CALL_2(init_func,
+						   C_TO_XEN_OFF_T(0),
+						   C_TO_XEN_OFF_T(new_ep->peak_env_size),
+						   S_ptree_channel " init func")));
 	  vhi = mus_vct_copy(vlo);
 	}
       for (i = 0; i < new_ep->peak_env_size; i++) 
@@ -1025,10 +1025,10 @@ void peak_env_ptree_selection(chan_info *cp, struct ptree *pt, off_t beg, off_t 
 		    {
 		      if (!inited)
 			{
-			  vlo = mus_vct_copy((vct *)(XEN_OBJECT_REF(XEN_CALL_2(init_func,
-									     C_TO_XEN_OFF_T((off_t)((Float)(cursamp - beg) / (Float)(num))),
-									     C_TO_XEN_OFF_T((off_t)(num / new_ep->samps_per_bin)),
-									     S_ptree_channel " init func"))));
+			  vlo = mus_vct_copy(XEN_TO_VCT(XEN_CALL_2(init_func,
+								   C_TO_XEN_OFF_T((off_t)((Float)(cursamp - beg) / (Float)(num))),
+								   C_TO_XEN_OFF_T((off_t)(num / new_ep->samps_per_bin)),
+								   S_ptree_channel " init func")));
 			  vhi = mus_vct_copy(vlo);
 			  inited = true;
 			}

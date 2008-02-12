@@ -35,7 +35,7 @@
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
 (define tests 1)
-(define keep-going #t)
+(define keep-going #f)
 (define all-args #f)
 (define test-at-random 0)
 ;(show-ptree 1)
@@ -18232,8 +18232,8 @@ EDITS: 2
 	  (gen1 (make-sum-of-cosines 10 440.0))
 	  (v1 (make-vct 10)))
       (print-and-check gen 
-		       "sum-of-cosines"
-		       "sum-of-cosines freq: 440.000Hz, phase: 0.000, cosines: 10")
+		       "ncos"
+		       "ncos freq: 440.000Hz, phase: 0.000, n: 10")
       (do ((i 0 (1+ i)))
 	  ((= i 10))
 	(vct-set! v0 i (sum-of-cosines gen 0.0)))
@@ -18283,8 +18283,8 @@ EDITS: 2
 	  (gen1 (make-sum-of-sines 10 440.0))
 	  (v1 (make-vct 10)))
       (print-and-check gen 
-		       "sum-of-sines"
-		       "sum-of-sines freq: 440.000Hz, phase: 0.000, sines: 10")
+		       "nsin"
+		       "nsin freq: 440.000Hz, phase: 0.000, n: 10")
       (do ((i 0 (1+ i)))
 	  ((= i 10))
 	(vct-set! v0 i (sum-of-sines gen 0.0)))

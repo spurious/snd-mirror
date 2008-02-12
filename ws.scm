@@ -1082,7 +1082,6 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 				    (list (car n) (cadr n))
 				    (list n 0.0)))
 			      fields))
-	 "clm struct make function"
 	 (,wrapper (if (list? ,methods)
 		       (list ',(string->symbol sname)
 			     ,@(map string->symbol field-names)

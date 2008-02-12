@@ -227,7 +227,7 @@ XEN_MAKE_OBJECT_PRINT_PROCEDURE(vct, print_vct, mus_vct_to_string)
 static XEN equalp_vct(XEN obj1, XEN obj2)
 {
   if ((!(MUS_VCT_P(obj1))) || (!(MUS_VCT_P(obj2)))) return(XEN_FALSE);
-  return(xen_return_first(C_TO_XEN_BOOLEAN(mus_vct_equalp((vct *)XEN_OBJECT_REF(obj1), (vct *)XEN_OBJECT_REF(obj2))), obj1, obj2));
+  return(xen_return_first(C_TO_XEN_BOOLEAN(mus_vct_equalp(XEN_TO_VCT(obj1), XEN_TO_VCT(obj2))), obj1, obj2));
 }
 
 
@@ -830,7 +830,7 @@ static XEN g_vct_each(XEN obj)
 {
   long i;
   vct *v;
-  v = (vct *)XEN_OBJECT_REF(obj);
+  v = XEN_TO_VCT(obj);
   for (i = 0; i < v->length; i++)
     rb_yield(C_TO_XEN_DOUBLE(v->data[i]));
   return(obj);
@@ -843,8 +843,8 @@ static XEN g_vct_compare(XEN vr1, XEN vr2)
   vct *v1, *v2;
   if ((MUS_VCT_P(vr1)) && (MUS_VCT_P(vr2)))
     {
-      v1 = (vct *)XEN_OBJECT_REF(vr1);
-      v2 = (vct *)XEN_OBJECT_REF(vr2);
+      v1 = XEN_TO_VCT(vr1);
+      v2 = XEN_TO_VCT(vr2);
       len = v1->length;
       if (len > v2->length) len = v2->length;
       for (i = 0; i < len; i++) 
