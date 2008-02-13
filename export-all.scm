@@ -130,6 +130,8 @@ make-src
 make-ssb-am
 make-sum-of-cosines
 make-sum-of-sines
+make-ncos
+make-nsin
 make-table-lookup
 make-triangle-wave
 make-two-pole
@@ -269,6 +271,10 @@ sum-of-cosines
 sum-of-cosines?
 sum-of-sines
 sum-of-sines?
+ncos
+ncos?
+nsin
+nsin?
 table-lookup
 table-lookup?
 tap

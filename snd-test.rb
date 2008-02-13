@@ -12491,7 +12491,7 @@ def test008
     a += incr
   end
   #
-  if (res = Snd.catch do harmonicizer(550.0, [0.5, 0.3, 0.2], 10) end).first != :bad_type
+  if (res = Snd.catch do harmonicizer(550.0, [0.5, 0.3, 0.2], 10) end).first != :no_data
     snd_display("odd length arg to partials2polynomial: %s", res.inspect)
   end
   #
@@ -13886,6 +13886,8 @@ def test038
   fm_test(make_triangle_wave)
   fm_test(make_sum_of_cosines)
   fm_test(make_sum_of_sines)
+  fm_test(make_ncos)
+  fm_test(make_nsin)
   fm_test(make_sawtooth_wave)
   fm_test(make_rand)
   fm_test(make_rand_interp)

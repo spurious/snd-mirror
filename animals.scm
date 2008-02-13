@@ -201,6 +201,7 @@
 ;;; Loggerhead shrike (2)
 ;;; Greater roadrunner
 ;;; Common Gull
+;;; Willet
 ;;; Black-necked stilt
 ;;; White-faced ibis
 ;;; Whooping crane
@@ -1244,22 +1245,18 @@
 		    (vct-set! v i (env pulse-ampf)))
 		  v))
 	 (pulse1 (make-wave-train 56.0 :wave pulse))
-	 (pulse2 (make-wave-train 56.0 :wave pulse))
-	 (offset (seconds->samples .0078))
+	 (pulse2 (make-delay (seconds->samples .0078))) ; pulses come in pairs
 	 (gen1 (make-polyshape :partials (list 1 .95  2 .04  3 .01)))
 	 (rnd (make-rand-interp 100 (hz->radians 2.0)))
 	 (rnd1 (make-rand-interp 1000 (hz->radians 80))))
     (run
      (lambda ()
-       (do ((i 0 (1+ i)))  ; offset 2nd by .0078 (the pulses come in pairs)
-	   ((= i offset))
-	 (wave-train pulse2))
        (do ((i start (1+ i)))
 	   ((= i stop))
-	 (let ((fluct (rand-interp rnd)))
+	 (let ((val (wave-train pulse1 (rand-interp rnd))))
 	   (outa i (* (env ampf)
-		      (+ (wave-train pulse1 fluct)
-			 (wave-train pulse2 fluct))
+		      (+ val
+			 (delay pulse2 val))
 		      (polyshape gen1 1.0 (+ (env frqf)
 					     (rand-interp rnd1)))))))))))
 
@@ -10576,6 +10573,50 @@
 
 ;;; --------------------------------------------------------------------------------
 ;;;
+;;; Willet
+
+(definstrument (willet beg amp)
+  ;; calif2 36 2
+
+  ;; note #1
+  (let* ((start (seconds->samples beg))
+	 (dur 0.037)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.017 0.603 0.397 0.986 0.531 0.915 0.750 0.255 0.836 0.383 0.913 0.420 1.000 0.000)
+			 :duration dur :scaler (* .25 amp)))
+	 (frqf (make-env '(0.000 0.172 0.152 0.172 0.401 0.188 0.667 0.201 0.808 0.205 0.951 0.227 1.000 0.234)
+		:duration dur :scaler (hz->radians (* 1/3 13000.0))))
+	 (gen1 (make-polyshape :partials (normalize-partials (list 1 .03  2 .1  3 1  4 .6  5 .5  6 .4  7 .1  8 .04  9 .01  10 .01  11 .005)))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (polyshape gen1 1.0 (env frqf))))))))
+
+  ;; note #2
+  (let* ((start (seconds->samples (+ beg 0.054)))
+	 (dur 0.029)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.063 0.263 0.086 0.656 0.113 0.877 0.429 0.753 0.681 0.578 0.830 0.224 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0.000 0.178 0.849 0.156 1.000 0.156)
+		:duration dur :scaler (hz->radians (* 1/2 14900.0))))
+	 (gen1 (make-polyshape :partials (normalize-partials (list 1 .07  2 1  3 .8  4 .47  5 .14  6 .04  7 .03  8 .01)))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (polyshape gen1 1.0 (env frqf)))))))))
+
+;(with-sound (:play #t) (willet 0 .5))
+
+
+
+
+;;; --------------------------------------------------------------------------------
+;;;
 ;;; Philadelphia vireo
 
 (definstrument (philadelphia-vireo beg amp)
@@ -10824,7 +10865,8 @@
   (wood-duck                     (+ beg 245.5) .25)      (set! beg (+ beg spacing))
   (white-eyed-vireo              (+ beg 246.5) .25)      (set! beg (+ beg spacing))
   (philadelphia-vireo            (+ beg 247.5) .25)      (set! beg (+ beg spacing))
-  (+ beg 248))
+  (willet                        (+ beg 248.3) .25)      (set! beg (+ beg spacing))
+  (+ beg 249.0))
 
 
 (define (calling-all-animals)
