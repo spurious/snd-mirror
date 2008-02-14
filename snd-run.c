@@ -8841,6 +8841,8 @@ GEN2(pulse_train)
 GEN2(square_wave)
 GEN2(triangle_wave)
 GEN2(sine_summation)
+GEN2(nrxysin)
+GEN2(nrxycos)
 GEN2(one_zero)
 GEN2(one_pole)
 GEN2(two_zero)
@@ -11333,6 +11335,8 @@ CLM_MAKE_FUNC(readin)
 CLM_MAKE_FUNC(sample_to_file)
 CLM_MAKE_FUNC(sawtooth_wave)
 CLM_MAKE_FUNC(sine_summation)
+CLM_MAKE_FUNC(nrxysin)
+CLM_MAKE_FUNC(nrxycos)
 CLM_MAKE_FUNC(square_wave)
 CLM_MAKE_FUNC(src)
 CLM_MAKE_FUNC(sum_of_cosines)
@@ -12518,6 +12522,8 @@ static void init_walkers(void)
   INIT_WALKER(S_triangle_wave_p, make_walker(triangle_wave_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
   INIT_WALKER(S_asymmetric_fm_p, make_walker(asymmetric_fm_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
   INIT_WALKER(S_sine_summation_p, make_walker(sine_summation_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_nrxysin_p, make_walker(nrxysin_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_nrxycos_p, make_walker(nrxycos_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
   INIT_WALKER(S_one_zero_p, make_walker(one_zero_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
   INIT_WALKER(S_one_pole_p, make_walker(one_pole_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
   INIT_WALKER(S_two_zero_p, make_walker(two_zero_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
@@ -12604,6 +12610,8 @@ static void init_walkers(void)
   INIT_WALKER(S_sawtooth_wave, make_walker(sawtooth_wave_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_square_wave, make_walker(square_wave_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_sine_summation, make_walker(sine_summation_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_nrxysin, make_walker(nrxysin_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_nrxycos, make_walker(nrxycos_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_sample_to_file, make_walker(sample_to_file_1, NULL, NULL, 4, 4, R_FLOAT, false, 4, R_CLM, R_NUMBER, R_INT, R_NUMBER));
   INIT_WALKER(S_table_lookup, make_walker(table_lookup_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_triangle_wave, make_walker(triangle_wave_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
@@ -12713,6 +12721,8 @@ static void init_walkers(void)
   INIT_WALKER(S_make_sample_to_file, make_walker(make_sample_to_file_1, NULL, NULL, 4, 5, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_sawtooth_wave, make_walker(make_sawtooth_wave_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_sine_summation, make_walker(make_sine_summation_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_nrxysin, make_walker(make_nrxysin_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_nrxycos, make_walker(make_nrxycos_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_square_wave, make_walker(make_square_wave_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_src, make_walker(make_src_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_sum_of_cosines, make_walker(make_sum_of_cosines_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));

@@ -1649,7 +1649,7 @@ static XEN g_mus_file_name(XEN gen)
 
 static XEN g_make_oscil(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  #define H_make_oscil "(" S_make_oscil " (:frequency clm-default-frequency) (:initial-phase 0.0)): return a new " S_oscil " (sinewave) generator"
+  #define H_make_oscil "(" S_make_oscil " (:frequency *clm-default-frequency*) (:initial-phase 0.0)): return a new " S_oscil " (sinewave) generator"
   mus_any *ge;
   int vals;
   XEN args[4]; 
@@ -2159,7 +2159,7 @@ static XEN g_sum_of_cosines_p(XEN obj)
 
 static XEN g_make_sum_of_cosines(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
 {
-  #define H_make_sum_of_cosines "(" S_make_sum_of_cosines " (:cosines 1) (:frequency clm-default-frequency) (:initial-phase 0.0)): \
+  #define H_make_sum_of_cosines "(" S_make_sum_of_cosines " (:cosines 1) (:frequency *clm-default-frequency*) (:initial-phase 0.0)): \
 return a new " S_sum_of_cosines " generator, producing a band-limited pulse train."
 
   mus_any *ge;
@@ -2221,7 +2221,7 @@ static XEN g_sum_of_sines_p(XEN obj)
 
 static XEN g_make_sum_of_sines(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
 {
-  #define H_make_sum_of_sines "(" S_make_sum_of_sines " (:sines 1) (:frequency clm-default-frequency) (:initial-phase 0.0)): \
+  #define H_make_sum_of_sines "(" S_make_sum_of_sines " (:sines 1) (:frequency *clm-default-frequency*) (:initial-phase 0.0)): \
 return a new " S_sum_of_sines " generator."
 
   mus_any *ge;
@@ -2289,7 +2289,7 @@ static XEN g_ncos_p(XEN obj)
 
 static XEN g_make_ncos(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  #define H_make_ncos "(" S_make_ncos " (:frequency clm-default-frequency) (:n 1)): \
+  #define H_make_ncos "(" S_make_ncos " (:frequency *clm-default-frequency*) (:n 1)): \
 return a new " S_ncos " generator, producing a sum of 'n' equal amplitude cosines."
 
   mus_any *ge;
@@ -2349,7 +2349,7 @@ static XEN g_nsin_p(XEN obj)
 
 static XEN g_make_nsin(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  #define H_make_nsin "(" S_make_nsin " (:frequency clm-default-frequency) (:n 1)): \
+  #define H_make_nsin "(" S_make_nsin " (:frequency *clm-default-frequency*) (:n 1)): \
 return a new " S_nsin " generator, producing a sum of 'n' equal amplitude sines"
 
   mus_any *ge;
@@ -2572,7 +2572,7 @@ static XEN g_make_noi(bool rand_case, const char *caller, XEN arglist)
 
 static XEN g_make_rand_interp(XEN arglist)
 {
-  #define H_make_rand_interp "(" S_make_rand_interp " (:frequency clm-default-frequency) (:amplitude 1.0) :envelope :distribution :size): \
+  #define H_make_rand_interp "(" S_make_rand_interp " (:frequency *clm-default-frequency*) (:amplitude 1.0) :envelope :distribution :size): \
 return a new " S_rand_interp " generator, producing linearly interpolated random numbers. \
 frequency is the rate at which new end-points are chosen."
 
@@ -2582,7 +2582,7 @@ frequency is the rate at which new end-points are chosen."
 
 static XEN g_make_rand(XEN arglist)
 {
-  #define H_make_rand "(" S_make_rand " (:frequency clm-default-frequency) (:amplitude 1.0) :envelope :distribution :size): \
+  #define H_make_rand "(" S_make_rand " (:frequency *clm-default-frequency*) (:amplitude 1.0) :envelope :distribution :size): \
 return a new " S_rand " generator, producing a sequence of random numbers (a step  function). \
 frequency is the rate at which new numbers are chosen."
 
@@ -2820,7 +2820,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
 
 static XEN g_make_table_lookup(XEN arglist)
 {
-  #define H_make_table_lookup "(" S_make_table_lookup " (:frequency clm-default-frequency) (:initial-phase 0.0) :wave (:size clm-table-size) :type): \
+  #define H_make_table_lookup "(" S_make_table_lookup " (:frequency *clm-default-frequency*) (:initial-phase 0.0) :wave (:size clm-table-size) :type): \
 return a new " S_table_lookup " generator.  This is known as an oscillator in other synthesis systems. \
 The default table size is 512; use :size to set some other size, or pass your own vct as the 'wave'.\n\
    (set! gen (" S_make_table_lookup " 440.0 :wave (" S_partials_to_wave " '(1 1.0)))\n\
@@ -2967,7 +2967,7 @@ static XEN g_make_sw(xclm_wave_t type, Float def_phase, XEN arg1, XEN arg2, XEN 
 
 static XEN g_make_sawtooth_wave(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6) 
 {
-  #define H_make_sawtooth_wave "(" S_make_sawtooth_wave " (:frequency clm-default-frequency) (:amplitude 1.0) (:initial-phase 0.0)): \
+  #define H_make_sawtooth_wave "(" S_make_sawtooth_wave " (:frequency *clm-default-frequency*) (:amplitude 1.0) (:initial-phase 0.0)): \
 return a new " S_sawtooth_wave " generator."
 
   return(g_make_sw(G_SAWTOOTH_WAVE, M_PI, arg1, arg2, arg3, arg4, arg5, arg6));
@@ -2976,7 +2976,7 @@ return a new " S_sawtooth_wave " generator."
 
 static XEN g_make_square_wave(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6) 
 {
-  #define H_make_square_wave "(" S_make_square_wave " (:frequency clm-default-frequency) (:amplitude 1.0) (:initial-phase 0.0)): \
+  #define H_make_square_wave "(" S_make_square_wave " (:frequency *clm-default-frequency*) (:amplitude 1.0) (:initial-phase 0.0)): \
 return a new " S_square_wave " generator."
 
   return(g_make_sw(G_SQUARE_WAVE, 0.0, arg1, arg2, arg3, arg4, arg5, arg6));
@@ -2985,7 +2985,7 @@ return a new " S_square_wave " generator."
 
 static XEN g_make_triangle_wave(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6) 
 {
-  #define H_make_triangle_wave "(" S_make_triangle_wave " (:frequency clm-default-frequency) (:amplitude 1.0) (:initial-phase 0.0)): \
+  #define H_make_triangle_wave "(" S_make_triangle_wave " (:frequency *clm-default-frequency*) (:amplitude 1.0) (:initial-phase 0.0)): \
 return a new " S_triangle_wave " generator."
 
   return(g_make_sw(G_TRIANGLE_WAVE, 0.0, arg1, arg2, arg3, arg4, arg5, arg6));
@@ -2994,7 +2994,7 @@ return a new " S_triangle_wave " generator."
 
 static XEN g_make_pulse_train(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6) 
 {
-  #define H_make_pulse_train "(" S_make_pulse_train " (:frequency clm-default-frequency) (:amplitude 1.0) (:initial-phase 0.0)): \
+  #define H_make_pulse_train "(" S_make_pulse_train " (:frequency *clm-default-frequency*) (:amplitude 1.0) (:initial-phase 0.0)): \
 return a new " S_pulse_train " generator.  This produces a sequence of impulses."
 
   return(g_make_sw(G_PULSE_TRAIN, TWO_PI, arg1, arg2, arg3, arg4, arg5, arg6));
@@ -3074,7 +3074,7 @@ static XEN g_pulse_train_p(XEN obj)
 
 static XEN g_make_asymmetric_fm(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
 {
-  #define H_make_asymmetric_fm "(" S_make_asymmetric_fm " (:frequency clm-default-frequency) (:initial-phase 0.0) (:r 1.0) (:ratio 1.0)): \
+  #define H_make_asymmetric_fm "(" S_make_asymmetric_fm " (:frequency *clm-default-frequency*) (:initial-phase 0.0) (:r 1.0) (:ratio 1.0)): \
 return a new " S_asymmetric_fm " generator."
 
   mus_any *ge;
@@ -3928,7 +3928,7 @@ static XEN g_make_mixer_unchecked(XEN arglist)
 
 static XEN g_make_wave_train(XEN arglist)
 {
-  #define H_make_wave_train "(" S_make_wave_train " (:frequency clm-default-frequency) (:initial-phase 0.0) :wave (:size clm-table-size) :type): \
+  #define H_make_wave_train "(" S_make_wave_train " (:frequency *clm-default-frequency*) (:initial-phase 0.0) :wave (:size clm-table-size) :type): \
 return a new wave-train generator (an extension of pulse-train).   Frequency is \
 the repetition rate of the wave found in wave. Successive waves can overlap."
 
@@ -4159,7 +4159,7 @@ static XEN g_make_waveshape(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XE
     #define make_waveshape_example "440.0 '( 1 1.0 ) make-waveshape"
   #endif
 
-  #define H_make_waveshape "(" S_make_waveshape " (:frequency clm-default-frequency) (:partials '(1 1)) (:size clm-table-size) :wave): \
+  #define H_make_waveshape "(" S_make_waveshape " (:frequency *clm-default-frequency*) (:partials '(1 1)) (:size clm-table-size) :wave): \
 return a new waveshaping generator (essentially table-lookup driven by a sinewave)\n  " make_waveshape_example " \n\
 is the same in effect as " S_make_oscil
 
@@ -4381,7 +4381,7 @@ static XEN g_polyshape_p(XEN obj)
 
 static XEN g_make_polyshape(XEN arglist)
 {
-  #define H_make_polyshape "(" S_make_polyshape " (:frequency clm-default-frequency) (:initial-phase 0.0) :coeffs (:partials '(1 1)) (:kind " S_mus_chebyshev_first_kind ")): \
+  #define H_make_polyshape "(" S_make_polyshape " (:frequency *clm-default-frequency*) (:initial-phase 0.0) :coeffs (:partials '(1 1)) (:kind " S_mus_chebyshev_first_kind ")): \
 return a new polynomial-based waveshaping generator ('polyshaper...')\n\
    (" S_make_polyshape " :coeffs (" S_partials_to_polynomial " '(1 1.0)))\n\
 is the same in effect as " S_make_oscil
@@ -4506,7 +4506,7 @@ static XEN g_sine_summation(XEN obj, XEN fm)
 
 static XEN g_make_sine_summation(XEN arglist)
 {
-  #define H_make_sine_summation "(" S_make_sine_summation " (:frequency clm-default-frequency) (:initial-phase 0.0) (:n 1) (:a 0.5) (:ratio 1.0)): \
+  #define H_make_sine_summation "(" S_make_sine_summation " (:frequency *clm-default-frequency*) (:initial-phase 0.0) (:n 1) (:a 0.5) (:ratio 1.0)): \
 return a new sine summation synthesis generator."
 
   mus_any *ge;
@@ -4558,6 +4558,114 @@ return a new sine summation synthesis generator."
   return(XEN_FALSE);
 }
 
+
+/* ---------------- nrxysin and nrxycos ---------------- */
+
+static XEN g_nrxysin_p(XEN obj) 
+{
+  #define H_nrxysin_p "(" S_nrxysin_p " gen): " PROC_TRUE " if gen is an " S_nrxysin " generator"
+  return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && 
+			  (mus_nrxysin_p(XEN_TO_MUS_ANY(obj)))));
+}
+
+
+static XEN g_nrxycos_p(XEN obj) 
+{
+  #define H_nrxycos_p "(" S_nrxycos_p " gen): " PROC_TRUE " if gen is an " S_nrxycos " generator"
+  return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && 
+			  (mus_nrxycos_p(XEN_TO_MUS_ANY(obj)))));
+}
+
+
+static XEN g_nrxysin(XEN obj, XEN fm)
+{
+  #define H_nrxysin "(" S_nrxysin " gen :optional (fm 0.0)): next sample of nrxysin generator"
+  Float fm1 = 0.0;
+  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_nrxysin_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_nrxysin, "an " S_nrxysin " gen");
+  if (XEN_NUMBER_P(fm)) 
+    fm1 = XEN_TO_C_DOUBLE(fm); 
+  else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(fm), fm, XEN_ARG_2, S_nrxysin, "a number");
+  return(C_TO_XEN_DOUBLE(mus_nrxysin(XEN_TO_MUS_ANY(obj), fm1)));
+}
+
+static XEN g_nrxycos(XEN obj, XEN fm)
+{
+  #define H_nrxycos "(" S_nrxycos " gen :optional (fm 0.0)): next sample of nrxycos generator"
+  Float fm1 = 0.0;
+  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_nrxycos_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_nrxycos, "an " S_nrxycos " gen");
+  if (XEN_NUMBER_P(fm)) 
+    fm1 = XEN_TO_C_DOUBLE(fm); 
+  else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(fm), fm, XEN_ARG_2, S_nrxycos, "a number");
+  return(C_TO_XEN_DOUBLE(mus_nrxycos(XEN_TO_MUS_ANY(obj), fm1)));
+}
+
+
+static XEN g_make_nrxy(bool sin_case, const char *caller, XEN arglist)
+{
+  mus_any *ge;
+  XEN args[MAX_ARGLIST_LEN]; 
+  XEN keys[4];
+  int orig_arg[4] = {0, 0, 0, 0};
+  int vals, i, arglist_len;
+  Float freq, r = 0.5, ratio = 1.0;
+  int n = 1;
+
+  freq = clm_default_frequency;
+
+  keys[0] = kw_frequency;
+  keys[1] = kw_ratio;
+  keys[2] = kw_n;
+  keys[3] = kw_r;
+
+  arglist_len = XEN_LIST_LENGTH(arglist);
+  if (arglist_len > MAX_ARGLIST_LEN)
+    XEN_ERROR(CLM_ERROR,
+	      XEN_LIST_3(C_TO_XEN_STRING(caller), 
+			 C_TO_XEN_STRING("too many args!"),
+			 arglist));
+  for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
+  for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = XEN_UNDEFINED;
+
+  vals = mus_optkey_unscramble(caller, 4, keys, args, orig_arg);
+  if (vals > 0)
+    {
+      freq = mus_optkey_to_float(keys[0], caller, orig_arg[0], freq);
+      if (freq > (0.5 * mus_srate()))
+	XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[0], keys[0], "freq ~A > srate/2?");
+
+      ratio = mus_optkey_to_float(keys[1], caller, orig_arg[1], ratio);
+
+      n = mus_optkey_to_int(keys[2], caller, orig_arg[2], n);
+      if ((n < 0) || (n > MUS_MAX_SINUSOIDS))
+	XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[2], keys[2], "n (sidebands): ~A?");
+
+      r = mus_optkey_to_float(keys[3], caller, orig_arg[3], r);
+      if (r == 1.0)
+	XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[3], keys[3], "r (sideband amp ratio): ~A?");
+    }
+  if (sin_case)
+    ge = mus_make_nrxysin(freq, ratio, n, r);
+  else ge = mus_make_nrxycos(freq, ratio, n, r);
+  if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
+  return(XEN_FALSE);
+}
+
+
+static XEN g_make_nrxysin(XEN arglist)
+{
+  #define H_make_nrxysin "(" S_make_nrxysin " (:frequency *clm-default-frequency*) (:ratio 1.0) (:n 1) (:r 0.5)): \
+return a new nrxysin generator."
+
+  return(g_make_nrxy(true, S_make_nrxysin, arglist));
+}
+
+static XEN g_make_nrxycos(XEN arglist)
+{
+  #define H_make_nrxycos "(" S_make_nrxycos " (:frequency *clm-default-frequency*) (:ratio 1.0) (:n 1) (:r 0.5)): \
+return a new nrxycos generator."
+
+  return(g_make_nrxy(false, S_make_nrxycos, arglist));
+}
 
 
 
@@ -7049,7 +7157,7 @@ static XEN g_ssb_am_p(XEN obj)
 
 static XEN g_make_ssb_am(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  #define H_make_ssb_am "(" S_make_ssb_am " (:frequency clm-default-frequency) (:order 40)): \
+  #define H_make_ssb_am "(" S_make_ssb_am " (:frequency *clm-default-frequency*) (:order 40)): \
 return a new " S_ssb_am " generator."
   #define MUS_MAX_SSB_ORDER 65536
 
@@ -7304,9 +7412,17 @@ XEN_ARGIFY_3(g_polyshape_w, g_polyshape)
 XEN_NARGIFY_1(g_polyshape_p_w, g_polyshape_p)
 XEN_ARGIFY_2(g_partials_to_waveshape_w, g_partials_to_waveshape)
 XEN_ARGIFY_2(g_partials_to_polynomial_w, g_partials_to_polynomial)
+
 XEN_VARGIFY(g_make_sine_summation_w, g_make_sine_summation)
 XEN_ARGIFY_2(g_sine_summation_w, g_sine_summation)
 XEN_NARGIFY_1(g_sine_summation_p_w, g_sine_summation_p)
+XEN_VARGIFY(g_make_nrxysin_w, g_make_nrxysin)
+XEN_ARGIFY_2(g_nrxysin_w, g_nrxysin)
+XEN_NARGIFY_1(g_nrxysin_p_w, g_nrxysin_p)
+XEN_VARGIFY(g_make_nrxycos_w, g_make_nrxycos)
+XEN_ARGIFY_2(g_nrxycos_w, g_nrxycos)
+XEN_NARGIFY_1(g_nrxycos_p_w, g_nrxycos_p)
+
 XEN_ARGIFY_6(g_make_filter_w, g_make_filter)
 XEN_NARGIFY_2(g_filter_w, g_filter)
 XEN_NARGIFY_1(g_filter_p_w, g_filter_p)
@@ -7594,9 +7710,17 @@ XEN_NARGIFY_2(g_mus_equalp_w, equalp_mus_xen)
 #define g_polyshape_p_w g_polyshape_p
 #define g_partials_to_waveshape_w g_partials_to_waveshape
 #define g_partials_to_polynomial_w g_partials_to_polynomial
+
 #define g_make_sine_summation_w g_make_sine_summation
 #define g_sine_summation_w g_sine_summation
 #define g_sine_summation_p_w g_sine_summation_p
+#define g_make_nrxysin_w g_make_nrxysin
+#define g_nrxysin_w g_nrxysin
+#define g_nrxysin_p_w g_nrxysin_p
+#define g_make_nrxycos_w g_make_nrxycos
+#define g_nrxycos_w g_nrxycos
+#define g_nrxycos_p_w g_nrxycos_p
+
 #define g_make_filter_w g_make_filter
 #define g_filter_w g_filter
 #define g_filter_p_w g_filter_p
@@ -8075,6 +8199,12 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_make_sine_summation, g_make_sine_summation_w, 0, 0, 1, H_make_sine_summation);
   XEN_DEFINE_PROCEDURE(S_sine_summation,      g_sine_summation_w,      1, 1, 0, H_sine_summation);
   XEN_DEFINE_PROCEDURE(S_sine_summation_p,    g_sine_summation_p_w,    1, 0, 0, H_sine_summation_p);
+  XEN_DEFINE_PROCEDURE(S_make_nrxysin,        g_make_nrxysin_w,        0, 0, 1, H_make_nrxysin);
+  XEN_DEFINE_PROCEDURE(S_nrxysin,             g_nrxysin_w,             1, 1, 0, H_nrxysin);
+  XEN_DEFINE_PROCEDURE(S_nrxysin_p,           g_nrxysin_p_w,           1, 0, 0, H_nrxysin_p);
+  XEN_DEFINE_PROCEDURE(S_make_nrxycos,        g_make_nrxycos_w,        0, 0, 1, H_make_nrxycos);
+  XEN_DEFINE_PROCEDURE(S_nrxycos,             g_nrxycos_w,             1, 1, 0, H_nrxycos);
+  XEN_DEFINE_PROCEDURE(S_nrxycos_p,           g_nrxycos_p_w,           1, 0, 0, H_nrxycos_p);
 
 
 #if HAVE_SCHEME
@@ -8351,6 +8481,8 @@ void mus_xen_init(void)
 	       S_make_sawtooth_wave,
 	       S_make_scalar_mixer,
 	       S_make_sine_summation,
+	       S_make_nrxycos,
+	       S_make_nrxysin,
 	       S_make_square_wave,
 	       S_make_src,
 	       S_make_ssb_am,
@@ -8490,6 +8622,10 @@ void mus_xen_init(void)
 	       S_seconds_to_samples,
 	       S_sine_summation,
 	       S_sine_summation_p,
+	       S_nrxycos,
+	       S_nrxycos_p,
+	       S_nrxysin,
+	       S_nrxysin_p,
 	       S_spectrum,
 	       S_square_wave,
 	       S_square_wave_p,

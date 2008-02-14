@@ -102,12 +102,12 @@ memmove (void *dest0, void const *source0, size_t length)
 enum {MUS_OSCIL, MUS_NCOS, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PASS,
       MUS_TABLE_LOOKUP, MUS_SQUARE_WAVE, MUS_SAWTOOTH_WAVE, MUS_TRIANGLE_WAVE, MUS_PULSE_TRAIN,
       MUS_RAND, MUS_RAND_INTERP, MUS_ASYMMETRIC_FM, MUS_ONE_ZERO, MUS_ONE_POLE, MUS_TWO_ZERO, MUS_TWO_POLE, MUS_FORMANT,
-      MUS_WAVESHAPE, MUS_SRC, MUS_GRANULATE, MUS_SINE_SUMMATION, MUS_WAVE_TRAIN, 
+      MUS_WAVESHAPE, MUS_SRC, MUS_GRANULATE, MUS_WAVE_TRAIN, 
       MUS_FILTER, MUS_FIR_FILTER, MUS_IIR_FILTER, MUS_CONVOLVE, MUS_ENV, MUS_LOCSIG,
       MUS_FRAME, MUS_READIN, MUS_FILE_TO_SAMPLE, MUS_FILE_TO_FRAME,
       MUS_SAMPLE_TO_FILE, MUS_FRAME_TO_FILE, MUS_MIXER, MUS_PHASE_VOCODER,
       MUS_MOVING_AVERAGE, MUS_NSIN, MUS_SSB_AM, MUS_POLYSHAPE, MUS_FILTERED_COMB,
-      MUS_MOVE_SOUND,
+      MUS_MOVE_SOUND, MUS_NRXYSIN, MUS_NRXYCOS,
       MUS_INITIAL_GEN_TAG};
 
 
@@ -1271,8 +1271,7 @@ mus_any *mus_make_oscil(Float freq, Float phase)
 typedef struct {
   mus_any_class *core;
   int n;
-  Float scaler, cos5;
-  double phase, freq;
+  double scaler, cos5, phase, freq;
 } cosp;
 
 #define DIVISOR_NEAR_ZERO(Den) MUS_UNLIKELY(fabs(Den) < 1.0e-14)
@@ -1281,7 +1280,7 @@ Float mus_ncos(mus_any *ptr, Float fm)
 {
   /* changed 25-Apr-04: use less stupid formula */
   /*   (/ (- (/ (sin (* (+ n 0.5) angle)) (* 2 (sin (* 0.5 angle)))) 0.5) n) */
-  Float val, den;
+  double val, den;
   cosp *gen = (cosp *)ptr;
   den = sin(gen->phase * 0.5);
   if (DIVISOR_NEAR_ZERO(den))    /* see note -- this was den == 0.0 1-Aug-07 */
@@ -1295,7 +1294,7 @@ Float mus_ncos(mus_any *ptr, Float fm)
       /*   this check is actually incomplete, since we can be much below the correct value also, but the den check should fix those cases too */
     }
   gen->phase += (gen->freq + fm);
-  return(val);
+  return((Float)val);
 }
 
 #if 0
@@ -1551,7 +1550,7 @@ Float mus_nsin(mus_any *ptr, Float fm)
 	   0.0
 	   (/ (* (sin (* n a2)) (sin (* (1+ n) a2))) den)))
   */
-  Float val, den, a2;
+  double val, den, a2;
   cosp *gen = (cosp *)ptr;
   a2 = gen->phase * 0.5;
   den = sin(a2);
@@ -1559,7 +1558,7 @@ Float mus_nsin(mus_any *ptr, Float fm)
     val = 0.0;
   else val = gen->scaler * sin(gen->n * a2) * sin(a2 * gen->cos5) / den;
   gen->phase += (gen->freq + fm);
-  return(val);
+  return((Float)val);
 }
 
 
@@ -1625,8 +1624,7 @@ typedef struct {
   Float r;
   double freq, phase;
   Float ratio;
-  Float cosr;
-  Float sinr;
+  double cosr, sinr;
   Float one;
 } asyfm;
 
@@ -1791,94 +1789,124 @@ mus_any *mus_make_asymmetric_fm(Float freq, Float phase, Float r, Float ratio) /
 
 
 
-/*---------------- sine-summation ---------------- */
+
+/*---------------- nrxysin (sine-summation) and nrxycos ---------------- */
+
+/* the generator uses x and y (frequencies), but it's very common to start up with 0 freqs
+ *   and let the fm arg set the frequency, so it seems like we want to give the ratio between
+ *   the frequencies at make time, rather than two (possibly dummy) frequencies).
+ *   TODO: can xy-ratio be negative to build (via r) backwards)?
+ */
 
 typedef struct {
   mus_any_class *core;
   double freq, phase;
-  Float a, b, an, a2, normalization;
   int n;
-} sss;
+  double norm, r, r_to_n_plus_1, r_squared_plus_1, y_over_x;
+} nrxy;
 
 
-static int free_sss(mus_any *ptr) {if (ptr) FREE(ptr); return(0);}
-static void sss_reset(mus_any *ptr) {((sss *)ptr)->phase = 0.0;}
+static int free_nrxy(mus_any *ptr) {if (ptr) FREE(ptr); return(0);}
+static void nrxy_reset(mus_any *ptr) {((nrxy *)ptr)->phase = 0.0;}
 
-static Float sss_freq(mus_any *ptr) {return(mus_radians_to_hz(((sss *)ptr)->freq));}
-static Float sss_set_freq(mus_any *ptr, Float val) {((sss *)ptr)->freq = mus_hz_to_radians(val); return(val);}
+static Float nrxy_freq(mus_any *ptr) {return(mus_radians_to_hz(((nrxy *)ptr)->freq));}
+static Float nrxy_set_freq(mus_any *ptr, Float val) {((nrxy *)ptr)->freq = mus_hz_to_radians(val); return(val);}
 
-static Float sss_increment(mus_any *ptr) {return(((sss *)ptr)->freq);}
-static Float sss_set_increment(mus_any *ptr, Float val) {((sss *)ptr)->freq = val; return(val);}
+static Float nrxy_increment(mus_any *ptr) {return(((nrxy *)ptr)->freq);}
+static Float nrxy_set_increment(mus_any *ptr, Float val) {((nrxy *)ptr)->freq = val; return(val);}
 
-static Float sss_phase(mus_any *ptr) {return(fmod(((sss *)ptr)->phase, TWO_PI));}
-static Float sss_set_phase(mus_any *ptr, Float val) {((sss *)ptr)->phase = val; return(val);}
+static Float nrxy_phase(mus_any *ptr) {return(fmod(((nrxy *)ptr)->phase, TWO_PI));}
+static Float nrxy_set_phase(mus_any *ptr, Float val) {((nrxy *)ptr)->phase = val; return(val);}
 
-static off_t sss_n(mus_any *ptr) {return((off_t)(((sss *)ptr)->n));}
+static off_t nrxy_n(mus_any *ptr) {return((off_t)(((nrxy *)ptr)->n));}
 
-static Float sss_b(mus_any *ptr) {return(((sss *)ptr)->b);}
-static Float sss_set_b(mus_any *ptr, Float val) {((sss *)ptr)->b = val; return(val);}
+static Float nrxy_y_over_x(mus_any *ptr) {return(((nrxy *)ptr)->y_over_x);}
 
-static Float sss_a(mus_any *ptr) {return(((sss *)ptr)->a);}
-
-static Float sss_set_a(mus_any *ptr, Float val) 
+static Float nrxy_set_y_over_x(mus_any *ptr, Float val) 
 {
-  sss *gen = (sss *)ptr;
+  nrxy *gen = (nrxy *)ptr;
+  gen->y_over_x = val;
+  return(val);
+}
+
+static Float nrxy_r(mus_any *ptr) {return(((nrxy *)ptr)->r);}
+
+static Float nrxy_set_r(mus_any *ptr, Float val) 
+{
+  nrxy *gen = (nrxy *)ptr;
   if (gen->n > 0)
-    gen->normalization = (pow(val, gen->n) - 1.0) / (val - 1.0); 
-  gen->a = val;
-  gen->a2 = 1.0 + val * val;
-  gen->an = pow(val, gen->n + 1);
+    gen->norm = (pow(val, gen->n) - 1.0) / (val - 1.0); 
+  gen->r = val;
+  gen->r_squared_plus_1 = 1.0 + val * val;
+  gen->r_to_n_plus_1 = pow(val, gen->n + 1);
   return(val);
 }
 
 
-static bool sss_equalp(mus_any *p1, mus_any *p2)
+static bool nrxy_equalp(mus_any *p1, mus_any *p2)
 {
-  sss *g1 = (sss *)p1;
-  sss *g2 = (sss *)p2;
+  nrxy *g1 = (nrxy *)p1;
+  nrxy *g2 = (nrxy *)p2;
   return((p1 == p2) ||
 	 (((g1->core)->type == (g2->core)->type) &&
 	  (g1->freq == g2->freq) &&
 	  (g1->phase == g2->phase) &&
 	  (g1->n == g2->n) &&
-	  (g1->a == g2->a) &&
-	  (g1->b == g2->b)));
+	  (g1->r == g2->r) &&
+	  (g1->y_over_x == g2->y_over_x)));
 }
 
 
-bool mus_sine_summation_p(mus_any *ptr) 
+bool mus_nrxysin_p(mus_any *ptr) 
 {
   return((ptr) && 
-	 (ptr->core->type == MUS_SINE_SUMMATION));
+	 (ptr->core->type == MUS_NRXYSIN));
 }
 
 
-static char *describe_sss(mus_any *ptr)
+static char *describe_nrxysin(mus_any *ptr)
 {
-  sss *gen = (sss *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_sine_summation ": frequency: %.3f, phase: %.3f, n: %d, a: %.3f, ratio: %.3f",
+  nrxy *gen = (nrxy *)ptr;
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_nrxysin ": frequency: x: %.3f, y: %.3f (ratio: %.3f), phase: %.3f, n: %d, r: %.3f",
 	       mus_frequency(ptr),
+	       gen->y_over_x * mus_frequency(ptr),
+	       gen->y_over_x,
 	       mus_phase(ptr),
 	       gen->n, 
-	       sss_a(ptr),
-	       gen->b);
+	       nrxy_r(ptr));
   return(describe_buffer);
 }
 
 
-Float mus_sine_summation(mus_any *ptr, Float fm)
+Float mus_nrxysin(mus_any *ptr, Float fm)
 {
-  /* Jolley 475 but 0..n rather than 0..n-1, "y" is treated as x*ratio = x*b */
+  /* Jolley 475 but 0..n rather than 0..n-1 */
   /*   see also Durell and Robson "Advanced Trigonometry" p 175 */
-  sss *gen = (sss *)ptr;
-  Float B, thB, result, divisor;
-  B = gen->b * gen->phase;
-  thB = gen->phase - B;
-  divisor = gen->normalization * (gen->a2 - (2 * gen->a * cos(B)));
-  if (DIVISOR_NEAR_ZERO(divisor))           /* was (divisor == 0.0) -- see note under ncos */
-    result = 0.0;
+
+  nrxy *gen = (nrxy *)ptr;
+  double x, y, r, divisor;
+  int n;
+
+  x = gen->phase;
+  y = x * gen->y_over_x;
+  n = gen->n;
+  r = gen->r;
+
+  gen->phase += (gen->freq + fm);
+  
+  divisor = gen->norm * (gen->r_squared_plus_1 - (2 * r * cos(y)));
+  if (DIVISOR_NEAR_ZERO(divisor))
+    return(0.0);
+
+ return((sin(x) - 
+	 r * sin(x - y) - 
+	 gen->r_to_n_plus_1 * (sin (x + (n + 1) * y) - 
+			       r * sin(x + n * y))) / 
+	divisor);
+}
+
   /* 
-   * if a=1.0, the formula given by Moorer is extremely unstable anywhere near phase=0.0 
+   * if r=1.0, the formula given by Moorer is extremely unstable anywhere near phase=0.0 
    *   (map-channel (let ((gen (make-sine-summation 100.0 0.0 1 1 1.0))) (lambda (y) (sine-summation gen))))
    * or even worse:
    *   (map-channel (let ((gen (make-sine-summation 100.0 0.0 0 1 1.0))) (lambda (y) (sine-summation gen))))
@@ -1887,69 +1915,163 @@ Float mus_sine_summation(mus_any *ptr, Float fm)
    * also, his amplitude normalization formula is wrong: we're trying to set the peak amp to 1.0,
    *   but he's calculating RMS amps.  If we assume (incorrectly, but following Moorer) that all
    *   the components peak together somewhere in the waveform, the sum of the amps is 
-   *   (/ (- (expt a n) 1) (- a 1)), but this is always too high -- as far as I can tell,
+   *   (/ (- (expt r n) 1) (- r 1)), but this is always too high -- as far as I can tell,
    *   the components never line up.  We can't just pre-run the durned generator because
-   *   weird b-ratio values can create a very low frequency drift -- the actual maxamp can
+   *   weird ratio values can create a very low frequency drift -- the actual maxamp can
    *   be anywhere.  Sigh. We could (theoretically!) differentiate this formula, find all
    *   the 0's (? -- can this actually be done?), then look at all the max/mins, but that's
    *   as much work as running a simulation.  In "normal" cases, it's sufficient to run
    *   the generator through 64 points.  For now, I'll use the geometric progression.
    *   
    */
-  else result = (sin(gen->phase) - (gen->a * sin(thB)) - 
-		 (gen->an * (sin(gen->phase + (B * (gen->n + 1))) - 
-			     (gen->a * sin(gen->phase + (B * gen->n)))))) / divisor; /* Moorer's formula (1) */
-  gen->phase += (gen->freq + fm);
-  return(result);
-}
-
-static Float run_sine_summation(mus_any *ptr, Float fm, Float unused) {return(mus_sine_summation(ptr, fm));}
 
 
-static mus_any_class SINE_SUMMATION_CLASS = {
-  MUS_SINE_SUMMATION,
-  S_sine_summation,
-  &free_sss,
-  &describe_sss,
-  &sss_equalp,
+static Float run_nrxysin(mus_any *ptr, Float fm, Float unused) {return(mus_nrxysin(ptr, fm));}
+
+
+static mus_any_class NRXYSIN_CLASS = {
+  MUS_NRXYSIN,
+  S_nrxysin,
+  &free_nrxy,
+  &describe_nrxysin,
+  &nrxy_equalp,
   0, 0, 0, 0,
-  &sss_freq,
-  &sss_set_freq,
-  &sss_phase,
-  &sss_set_phase,
-  &sss_a,
-  &sss_set_a,
-  &sss_increment,
-  &sss_set_increment,
-  &run_sine_summation,
+  &nrxy_freq,
+  &nrxy_set_freq,
+  &nrxy_phase,
+  &nrxy_set_phase,
+  &nrxy_r,
+  &nrxy_set_r,
+  &nrxy_increment,
+  &nrxy_set_increment,
+  &run_nrxysin,
   MUS_NOT_SPECIAL, 
   NULL, 0,
-  &sss_b, &sss_set_b,
+  &nrxy_y_over_x, &nrxy_set_y_over_x,
   0, 0, 0, 0, 
-  &sss_n, /* mus-cosines */
+  &nrxy_n, /* mus-cosines */
   0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
-  &sss_reset,
+  &nrxy_reset,
   0
 };
 
 
-mus_any *mus_make_sine_summation(Float frequency, Float phase, int n, Float a, Float b_ratio)
+mus_any *mus_make_nrxysin(Float frequency, Float y_over_x, int n, Float r)
 {
-  sss *gen;
-  gen = (sss *)clm_calloc(1, sizeof(sss), S_make_sine_summation);
-  gen->core = &SINE_SUMMATION_CLASS;
+  nrxy *gen;
+  gen = (nrxy *)clm_calloc(1, sizeof(nrxy), S_make_nrxysin);
+  gen->core = &NRXYSIN_CLASS;
   gen->freq = mus_hz_to_radians(frequency);
-  gen->phase = phase;
-  gen->an = pow(a, n + 1);
-  gen->a2 = 1.0 + a * a;
-  gen->a = a;
+  gen->y_over_x = y_over_x;
+  gen->phase = 0.0;
+  gen->r = r;
   gen->n = n;
-  gen->b = b_ratio;
+  gen->r_to_n_plus_1 = pow(r, n + 1);
+  gen->r_squared_plus_1 = 1.0 + r * r;
   if (n == 0)
-    gen->normalization = 1.0;
-  else gen->normalization = (pow(a, n) - 1.0) / (a - 1.0); /* see note above! */
+    gen->norm = 1.0;
+  else gen->norm = (pow(r, n) - 1.0) / (r - 1.0);
+  return((mus_any *)gen);
+}
+
+
+mus_any *mus_make_sine_summation(Float frequency, Float phase, int n, Float a, Float ratio)
+{
+  nrxy *gen;
+  gen = (nrxy *)mus_make_nrxysin(frequency, ratio, n, a);
+  gen->phase = phase;
+  return((mus_any *)gen);
+}
+
+
+bool mus_nrxycos_p(mus_any *ptr) 
+{
+  return((ptr) && 
+	 (ptr->core->type == MUS_NRXYCOS));
+}
+
+
+static char *describe_nrxycos(mus_any *ptr)
+{
+  nrxy *gen = (nrxy *)ptr;
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_nrxycos ": frequency: x: %.3f, y: %.3f (ratio: %.3f), phase: %.3f, n: %d, r: %.3f",
+	       mus_frequency(ptr),
+	       gen->y_over_x * mus_frequency(ptr),
+	       gen->y_over_x,
+	       mus_phase(ptr),
+	       gen->n, 
+	       nrxy_r(ptr));
+  return(describe_buffer);
+}
+
+
+Float mus_nrxycos(mus_any *ptr, Float fm)
+{
+  nrxy *gen = (nrxy *)ptr;
+  double x, y, r, divisor;
+  int n;
+
+  x = gen->phase;
+  y = x * gen->y_over_x;
+  n = gen->n;
+  r = gen->r;
+
+  gen->phase += (gen->freq + fm);
+  
+  divisor = gen->norm * (gen->r_squared_plus_1 - (2 * r * cos(y)));
+  if (DIVISOR_NEAR_ZERO(divisor))
+    return(0.0);
+
+ return((cos(x) - 
+	 r * cos(x - y) - 
+	 gen->r_to_n_plus_1 * (cos (x + (n + 1) * y) - 
+			       r * cos(x + n * y))) / 
+	divisor);
+}
+
+
+static Float run_nrxycos(mus_any *ptr, Float fm, Float unused) {return(mus_nrxycos(ptr, fm));}
+
+
+static mus_any_class NRXYCOS_CLASS = {
+  MUS_NRXYCOS,
+  S_nrxycos,
+  &free_nrxy,
+  &describe_nrxycos,
+  &nrxy_equalp,
+  0, 0, 0, 0,
+  &nrxy_freq,
+  &nrxy_set_freq,
+  &nrxy_phase,
+  &nrxy_set_phase,
+  &nrxy_r,
+  &nrxy_set_r,
+  &nrxy_increment,
+  &nrxy_set_increment,
+  &run_nrxycos,
+  MUS_NOT_SPECIAL, 
+  NULL, 0,
+  &nrxy_y_over_x, &nrxy_set_y_over_x,
+  0, 0, 0, 0, 
+  &nrxy_n, /* mus-cosines */
+  0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0,
+  &nrxy_reset,
+  0
+};
+
+
+mus_any *mus_make_nrxycos(Float frequency, Float y_over_x, int n, Float r)
+{
+  nrxy *gen;
+  gen = (nrxy *)mus_make_nrxysin(frequency, y_over_x, n, r);
+  gen->core = &NRXYCOS_CLASS;
+  if (n != 0)
+    gen->norm = (pow(r, n + 1) - 1.0) / (r - 1.0); /* the nrxysin norm is deliberately off by 1 to try to reflect lack of synchronous peaks */
+
   return((mus_any *)gen);
 }
 
@@ -1959,9 +2081,7 @@ mus_any *mus_make_sine_summation(Float frequency, Float phase, int n, Float a, F
 
 typedef struct {
   mus_any_class *core;
-  Float freq;
-  Float internal_mag;
-  Float phase;
+  double freq, internal_mag, phase;
   Float *table;
   int table_size;
   mus_interp_t type;
@@ -2021,10 +2141,12 @@ Float mus_table_lookup(mus_any *ptr, Float fm)
   tbl *gen = (tbl *)ptr;
   gen->yn1 = mus_interpolate(gen->type, gen->phase, gen->table, gen->table_size, gen->yn1);
   gen->phase += (gen->freq + (fm * gen->internal_mag));
-  if ((gen->phase >= gen->table_size) || (gen->phase < 0.0))
+  if ((gen->phase >= gen->table_size) || 
+      (gen->phase < 0.0))
     {
       gen->phase = fmod(gen->phase, (double)(gen->table_size));
-      if (gen->phase < 0.0) gen->phase += gen->table_size;
+      if (gen->phase < 0.0) 
+	gen->phase += gen->table_size;
     }
   return(gen->yn1);
 }
@@ -2035,10 +2157,12 @@ Float mus_table_lookup_unmodulated(mus_any *ptr)
   tbl *gen = (tbl *)ptr;
   gen->yn1 = mus_interpolate(gen->type, gen->phase, gen->table, gen->table_size, gen->yn1);
   gen->phase += gen->freq;
-  if ((gen->phase >= gen->table_size) || (gen->phase < 0.0))
+  if ((gen->phase >= gen->table_size) || 
+      (gen->phase < 0.0))
     {
       gen->phase = fmod(gen->phase, (double)(gen->table_size));
-      if (gen->phase < 0.0) gen->phase += gen->table_size;
+      if (gen->phase < 0.0) 
+	gen->phase += gen->table_size;
     }
   return(gen->yn1);
 }
@@ -2549,8 +2673,7 @@ bool mus_polyshape_p(mus_any *ptr)
 
 typedef struct {
   mus_any_class *core;
-  Float freq;
-  Float phase;
+  double freq, phase;
   Float *wave;        /* passed in from caller */
   int wave_size;
   Float *out_data;
@@ -3477,10 +3600,7 @@ mus_any *mus_make_filtered_comb(Float scaler, int size, Float *line, int line_si
 typedef struct {
   mus_any_class *core;
   Float current_value;
-  Float freq;
-  Float phase;
-  Float base;
-  Float width;
+  double freq, phase, base, width;
 } sw;
 
 
@@ -3616,7 +3736,9 @@ Float mus_square_wave(mus_any *ptr, Float fm)
       gen->phase = fmod(gen->phase, TWO_PI);
       if (gen->phase < 0.0) gen->phase += TWO_PI;
     }
-  if (gen->phase < gen->width) gen->current_value = gen->base; else gen->current_value = 0.0;
+  if (gen->phase < gen->width) 
+    gen->current_value = gen->base; 
+  else gen->current_value = 0.0;
   return(result);
 }
 
@@ -3853,11 +3975,8 @@ mus_any *mus_make_pulse_train(Float freq, Float amp, Float phase) /* TWO_PI init
 
 typedef struct {
   mus_any_class *core;
-  Float freq;
-  Float base;
-  Float phase;
+  double freq, phase, base, incr;
   Float output;
-  Float incr;
   Float *distribution;
   int distribution_size;
 } noi;
@@ -4217,6 +4336,7 @@ Float mus_one_zero(mus_any *ptr, Float input)
 
 
 static Float run_one_zero(mus_any *ptr, Float input, Float unused) {return(mus_one_zero(ptr, input));}
+
 static off_t one_length(mus_any *ptr) {return(1);}
 static off_t two_length(mus_any *ptr) {return(2);}
 
@@ -9029,8 +9149,8 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 
   midn = size >> 1;
   midp1 = (size + 1) / 2;
-  freq = TWO_PI / (Float)size;
-  rate = 1.0 / (Float)midn;
+  freq = TWO_PI / (double)size;
+  rate = 1.0 / (double)midn;
 
   switch (type)
     {
@@ -9073,7 +9193,7 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 
     case MUS_BARTLETT_HANN_WINDOW:
       {
-	Float ramp;
+	double ramp;
 	rate *= 0.5;
 	/* this definition taken from mathworks docs: they use size - 1 throughout -- this makes very little
 	 *    difference unless you're using a small window.  I decided to be consistent with all the other
@@ -9089,7 +9209,7 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 
     case MUS_BOHMAN_WINDOW:
       {
-	Float ramp;
+	double ramp;
 	/* definition from diracdelta docs and "DSP Handbook" -- used in bispectrum ("minimum bispectrum bias supremum") */
 	for (i = 0, j = size - 1, angle = M_PI, ramp = 0.0; i <= midn; i++, j--, angle -= freq, ramp += rate)
 	  {
@@ -9316,8 +9436,8 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 
     case MUS_EXPONENTIAL_WINDOW:
       {
-	Float expn, expsum = 1.0;
-	expn = log(2) / (Float)midn + 1.0;
+	double expn, expsum = 1.0;
+	expn = log(2) / (double)midn + 1.0;
 	for (i = 0, j = size - 1; i <= midn; i++, j--) 
 	  {
 	    window[i] = expsum - 1.0; 
@@ -9329,7 +9449,7 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 
     case MUS_KAISER_WINDOW:
       {
-	Float I0beta;
+	double I0beta;
 	I0beta = mus_bessi0(beta); /* Harris multiplies beta by pi */
 	for (i = 0, j = size - 1, angle = 1.0; i <= midn; i++, j--, angle -= rate)
 	  {
@@ -9358,7 +9478,7 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
     case MUS_HANN_POISSON_WINDOW:
       /* Hann * Poisson -- from JOS */
       {
-	Float angle1;
+	double angle1;
 	for (i = 0, j = size - 1, angle = 1.0, angle1 = 0.0; i <= midn; i++, j--, angle -= rate, angle1 += freq)
 	  {
 	    window[i] = exp((-beta) * angle) * (0.5 - 0.5 * cos(angle1));
@@ -9369,8 +9489,8 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 
     case MUS_RIEMANN_WINDOW:
       {
-	Float sr1;
-	sr1 = TWO_PI / (Float)size;
+	double sr1;
+	sr1 = TWO_PI / (double)size;
 	for (i = 0, j = size - 1; i <= midn; i++, j--) 
 	  {
 	    if (i == midn) 
@@ -9406,8 +9526,8 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 
     case MUS_MLT_SINE_WINDOW:
       {
-	Float scl;
-	scl = M_PI / (Float)size;
+	double scl;
+	scl = M_PI / (double)size;
 	for (i = 0, j = size - 1; i <= midn; i++, j--)
 	  {
 	    window[i] = sin((i + 0.5) * scl);
@@ -9587,11 +9707,13 @@ const char **mus_fft_window_names(void)
 Float *mus_spectrum(Float *rdat, Float *idat, Float *window, int n, mus_spectrum_t type)
 {
   int i;
-  Float maxa, todb, lowest;
-  double val;
+  Float maxa, lowest;
+  double val, todb;
+
   if (window) mus_multiply_arrays(rdat, window, n);
   mus_clear_array(idat, n);
   mus_fft(rdat, idat, n, 1);
+
   lowest = 0.000001;
   maxa = 0.0;
   n = (int)(n * 0.5);
@@ -10830,9 +10952,10 @@ void init_mus_module(void)
  *
  *      make-sine-summation freq n r ratio [no init-phase?] (can't replace with nrxycos because actual waveforms differ, could use nrxysin)
  *      make-formant freq r gain, or maybe amplitude? [gain used only in make-formant]
+ *      make-two-pole|zero freq r
  *      also cases like make-mfilter in dsp.scm
  *      perhaps add pm args alongside the fm args, as in oscil?
- *      perhaps remove all the initial-phase args [these are sometimes useful -- sine-summation init phases in animals.scm]
+ *      perhaps remove all the initial-phase args
  *      polyshape "kind" arg should be "type" [kind used only in make-polyshape]
  *
  * generators:
@@ -10841,12 +10964,8 @@ void init_mus_module(void)
  *   perhaps one gen: if n=1 oscil, n>1 r=1 sum-of-cosines, n!=inf nr[xy]cos, n=inf, r<1 r[xy]cos, r>=1 r[xy]k!cos or rkcos
  *    this could be "cosines" ("cosine-sum"?), sine case "sines", maybe xy cases: "ssb-cosines" "ssb-sines"
  *    if r is a list|vct, polyshape, if xy polyshape*cos
- *    would like to avoid run-time switch (on algorithm choice), yet still be optimizable
  *    in ssb case, how to say which side wins? does yfreq<0 work?
  *    another problem: cosines->polyshape+pi/2 phase, sines->polyshape cheby2, how to describe current case?
- *
- *   perhaps built-in: blackman rk!cos rxyk!cos nrcos rcos rxycos nxycos nrssb rk!ssb
- *   perhaps phaser = the phase+incr+fm+pm portion of nearly every generator
  *
  *   can the def-clm-struct method/make lists be used with built-in gens?
  *
@@ -10876,7 +10995,7 @@ void init_mus_module(void)
  *     mus-scaler is free in wave|polyshape, but needs field in struct, decision on how to use it in the mus_wave|polyshape* funcs
  *     remove waveshape, partials->waveshape
  *
- *   the simple filter args are inconsistent with other names
+ *   the simple filter args are inconsistent with other names -- didn't I deprecate the :a's and :b's a long time ago?
  *
  *   "fm" arg to formant -> set frequency so it's easier to have moving formants
  *      but it's a direct freq, not an increment -- see mus_formant_with_frequency

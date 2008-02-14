@@ -104,13 +104,17 @@ note lists and instruments are described in sndscm.html.
   <tr><td><a href="#locsigdoc">locsig</a></td><td></td><td>static sound placement</td></tr>
   <tr><td><a href="#move-sounddoc">move-sound</a></td><td></td><td>sound motion</td></tr>
   <tr><td><a href="#moving-averagedoc">moving-average</a></td><td></td><td>moving window average</td></tr>
+  <tr><td><a href="#ncosdoc">ncos (sum-of-cosines)</a></td><td></td><td>sum of n equal amplitude cosines</td></tr>
   <tr><td><a href="#notchdoc">notch</a></td><td></td><td>notch filter</td></tr>
-  <tr><td><a href="#one-poledoc">one-pole</a></td><td></td><td>one pole filter</td></tr>
-  <tr><td><a href="#one-zerodoc">one-zero</a></td><td></td><td>one zero filter</td></tr>
+  <tr><td><a href="#ncosdoc">nsin (sum-of-sines)</a></td><td></td><td>sum of n equal amplitude sines</td></tr>
+  <tr><td><a href="#nrxydoc">nrxycos</a></td><td></td><td>sum of n scaled cosines</td></tr>
 </table>
 </td>
 <td>
 <table border=0 cellpadding=0>
+  <tr><td><a href="#nrxydoc">nrxysin (sine-summation)</a></td><td></td><td>sum of n scaled sines</td></tr>
+  <tr><td><a href="#one-poledoc">one-pole</a></td><td></td><td>one pole filter</td></tr>
+  <tr><td><a href="#one-zerodoc">one-zero</a></td><td></td><td>one zero filter</td></tr>
   <tr><td><a href="#oscildoc">oscil</a></td><td></td><td>sine wave and FM</td></tr>
   <tr><td><a href="#out-anydoc">out-any</a></td><td width=20></td><td>sound output</td></tr>
   <tr><td><a href="#polyshapedoc">polyshape</a></td><td></td><td>waveshaping</td></tr>
@@ -120,12 +124,9 @@ note lists and instruments are described in sndscm.html.
   <tr><td><a href="#randdoc">rand,rand-interp</a></td><td></td><td>random numbers, noise</td></tr>
   <tr><td><a href="#readindoc">readin</a></td><td></td><td>sound input</td></tr>
   <tr><td><a href="#sawtoothdoc">sawtooth-wave</a></td><td></td><td>sawtooth</td></tr>
-  <tr><td><a href="#sine-summationdoc">sine-summation</a></td><td></td><td>sine summation synthesis</td></tr>
   <tr><td><a href="#sawtoothdoc">square-wave</a></td><td></td><td>square wave</td></tr>
   <tr><td><a href="#srcdoc">src</a></td><td></td><td>sampling rate conversion</td></tr>
   <tr><td><a href="#ssb-amdoc">ssb-am</a></td><td></td><td>single sideband amplitude modulation</td></tr>
-  <tr><td><a href="#ncosdoc">ncos, sum-of-cosines</a></td><td></td><td>sum of n equal amplitude cosines</td></tr>
-  <tr><td><a href="#ncosdoc">nsin, sum-of-sines</a></td><td></td><td>sum of n equal amplitude sines</td></tr>
   <tr><td><a href="#table-lookupdoc">table-lookup</a></td><td></td><td>interpolated table lookup</td></tr>
   <tr><td><a href="#delaydoc">tap</a></td><td></td><td>delay line tap</td></tr>
   <tr><td><a href="#sawtoothdoc">triangle-wave</a></td><td></td><td>triangle wave</td></tr>
@@ -758,7 +759,7 @@ void c_bird(double start, double dur, double frequency, double freqskew, double 
 <a href="#ncos">ncos</a>, 
 <a href="#nsin">nsin</a>,
 <a href="#asymmetric-fm">asymmetric-fm</a>, 
-<a href="#sine-summation">sine-summation</a>, and
+<a href="#nrxydoc">nrxysin</a>, and
 <a href="#waveshape">waveshape</a>.  
 Some instruments that use oscil are 
 <a href="sndscm.html#birddoc">bird and bigbird</a>,
@@ -2114,9 +2115,8 @@ the conjugate Dirichlet kernel
 </td></tr></table>
 
 
-<p>See also the <a href="#sine-summation">sine-summation</a> generator, 
+<p>See also the <a href="#nrxydoc">nrxycos</a> generator, 
 and <a href="#othergenerators">generators.scm</a>.
-The original motivation for this generator was the restriction that the sine-summation generator's ratio ("a") can't be 1.0.
 </p>
 
 
@@ -2479,12 +2479,20 @@ reflection, please send it to me, and I'll add it to this collection.
 
 
 
-<A NAME="sine-summationdoc"></A>
-<!-- ---------------------------------------- SINE-SUMMATION ---------------------------------------- -->
+<A NAME="nrxydoc"></A>
+<!-- ---------------------------------------- NRXYSIN and NRXYCOS ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>sine-summation</h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>nrxysin (sine-summation) and nrxycos</h3></center></td></tr></table>
 <br>
 <pre>
+  <a class=def name="make-nrxysin">make-nrxysin</a> <a class=quiet href="#optional-key">:optional-key</a> (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (r .5)
+  <a class=def name="nrxysin">nrxysin</a> s :optional (fm 0.0)
+  <a class=def name="nrxysin?">nrxysin?</a> s
+
+  <a class=def name="make-nrxycos">make-nrxycos</a> <a class=quiet href="#optional-key">:optional-key</a> (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (r .5)
+  <a class=def name="nrxycos">nrxycos</a> s :optional (fm 0.0)
+  <a class=def name="nrxycos?">nrxycos?</a> s
+
   <a class=def name="make-sine-summation">make-sine-summation</a> <a class=quiet href="#optional-key">:optional-key</a> 
         (frequency *clm-default-frequency*) (initial-phase 0.0) (n 1) (a .5) (ratio 1.0)
   <a class=def name="sine-summation">sine-summation</a> s :optional (fm 0.0)
@@ -2495,10 +2503,10 @@ reflection, please send it to me, and I'll add it to this collection.
 
 <tr><td>
 <table align=left border=1 cellpadding=4>
-<tr><td colspan=2 bgcolor="beige"><center>sine-summation methods</center></td></tr>
+<tr><td colspan=2 bgcolor="beige"><center>nrxysin methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
-<tr><td><em class=gen>mus-scaler</em></td><td>"a" parameter; sideband scaler</td></tr>
+<tr><td><em class=gen>mus-scaler</em></td><td>"r" parameter; sideband scaler</td></tr>
 <tr><td><em class=gen>mus-cosines</em></td><td>"n" parameter</td></tr>
 <tr><td><em class=gen>mus-increment</em></td><td>frequency in radians per sample</td></tr>
 <tr><td><em class=gen>mus-offset</em></td><td>"ratio" parameter</td></tr>
@@ -2526,50 +2534,48 @@ reflection, please send it to me, and I'll add it to this collection.
 & \sum_{k=0}^{n} r^{k}\cos(x+ky) = \frac{\cos(x) - r\cos(x-y) - r^{n+1}\Big(\cos(x+(n+1)y) - r\cos(x+ny)\Big)}{1+r^{2}-2r\cos(y)} \\
 -->
 
-<img src="sceq8.png" alt="sine summation formulas">
+<img src="sceq8.png" alt="nxry formulas">
 </td></tr>
 <tr><td>
 
 <table border=1 hspace=40><tr><td>
-<img src="sinesummation.png" alt="sine summation formula">
+<img src="sinesummation.png" alt="nxry formula">
 </td></tr>
-<tr><td bgcolor="#f6f8ff"><center>n=5, a=0.5</center></td></tr>
+<tr><td bgcolor="#f6f8ff"><center>nrxysin, n=5, a=0.5</center></td></tr>
 </table></td></tr>
 </table>
 
 </td></tr></table>
 
-<p>sine-summation produces a kind of additive synthesis.
-See J.A.Moorer, "Signal Processing Aspects of Computer Music" and "The
-Synthesis of Complex Audio Spectra by means of Discrete Summation Formulae"
-(Stan-M-5).  "n" is the number of sidebands (0 gives a sine wave), "a" is the amplitude
+<p>nxrysin is the new form of sine-summation.  These three generators 
+produce a kind of additive synthesis.
+"n" is the number of sidebands (0 gives a sine wave), "r" is the amplitude
 ratio between successive sidebands (don't set it to 1.0), and "ratio" is the ratio between the
 carrier frequency and the spacing between successive sidebands.
-A "ratio" of 2 would give odd-numbered harmonics for a (vaguely) clarinet-like sound.
+A "ratio" of 2 gives odd-numbered harmonics for a (vaguely) clarinet-like sound.
 The basic idea is very similar to that used in the
 <a href="#ncos">ncos</a> generator, but you have control of the
 fall-off of the spectrum and the spacing of the partials.
-See also the <a href="#nrxysin">nrxysin</a> and <a href="#nrxycos">nrxycos</a> generators in generators.scm.
 </p>
 
-<p>The peak amplitude of this generator is very hard to predict, and Moorer's suggested normalization
-is not helpful.  See the code (clm.c) for a long comment.  If "a" &lt; 1.0, the output will never go over 1.0, but
+<p>The peak amplitude of the nrxysin and sine-summation generators is very hard to predict, and Moorer's suggested normalization
+is not helpful.  See the code (clm.c) for a long comment.  If "r" &lt; 1.0, the output will never go over 1.0, but
 it also will almost never reach that peak either.  
 <a href="#nrxycos">nrxycos</a> is normalized correctly, and gives you the same kinds of controls you get in sine-summation.
 </p>
 
 <p>
-Besides the usual FM input, you can also vary the "a" parameter (via mus-scaler) to get changing spectra.  In the
-next example, we add a glissando envelope, and use the same envelope to vary "a" so that as the frequency
-goes up, "a" goes down (to avoid foldover, or whatever).
+Besides the usual FM input, you can also vary the "r" parameter (via mus-scaler) to get changing spectra.  In the
+next example, we add a glissando envelope, and use the same envelope to vary "r" so that as the frequency
+goes up, "r" goes down (to avoid foldover, or whatever).
 </p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (ss beg dur freq amp :optional (N 1) (a .5) (B-ratio 1.0) (frqf #f))
+(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (ss beg dur freq amp :optional (n 1) (r .5) (ratio 1.0) (frqf #f))
   (let* ((st (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
          (nd (+ st (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur)))
-         (sgen (<em class=red>make-sine-summation</em> :n N :a a :ratio B-ratio :frequency freq))
+         (sgen (<em class=red>make-nrxysin</em> freq ratio n r))
 	 (frq-env (if frqf (<a class=quiet href="#make-env">make-env</a> frqf :scaler (<a class=quiet href="#hztoradians">hz-&gt;radians</a> freq) :duration dur) #f))
 	 (spectr-env (if frqf (<a class=quiet href="#make-env">make-env</a> frqf :duration dur) #f))
 	 (amp-env (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1 2 1 3 0) :scaler amp :duration dur)))
@@ -2578,18 +2584,17 @@ goes up, "a" goes down (to avoid foldover, or whatever).
        (do ((i st (1+ i))) 
 	   ((= i nd))
 	 (if spectr-env
-	     (set! (<em class=red>mus-scaler</em> sgen) (* a (exp (- (<a class=quiet href="#env">env</a> spectr-env))))))
+	     (set! (<em class=red>mus-scaler</em> sgen) (* r (exp (- (<a class=quiet href="#env">env</a> spectr-env))))))
          (<a class=quiet href="#outa">outa</a> i (* (<a class=quiet href="#env">env</a> amp-env)
-		    (<em class=red>sine-summation</em> sgen (if frq-env (<a class=quiet href="#env">env</a> frq-env) 0.0)))))))))
+		    (<em class=red>nrxysin</em> sgen (if frq-env (<a class=quiet href="#env">env</a> frq-env) 0.0)))))))))
 
 (<a class=quiet href="sndscm.html#wsdoc">with-sound</a> () (ss 0 1 400.0 1.0 5 0.5 1.0 '(0 0 1 2)))
 </pre>
 </td></tr></table>
 
+<!--
 <p>
-"sine-summation" is a borderline vacuous name; it should be "nrxysin".  Using a sum of sines (rather than cosines)
-was a mistake; it should use <a href="#nrxycos">nrxycos</a>.
-While we're on the topic, "oscil" is a contentious name, since some people think it means "table-lookup",
+"oscil" is a contentious name, since some people think it means "table-lookup",
 but I can't think of a good replacement ("1sin"? "sine"?).  Even "waveshaping" is ambiguous;
 some consider it a synonym of "distortion synthesis" (a wretched name for array-interp),
 and others confuse it with "wavetable synthesis".  I don't know the history of the term; perhaps
@@ -2601,6 +2606,7 @@ with screwed up terminology: CLM uses the term "scaler" instead of "scalar" beca
 the execrable name "scalar product" confuses beginners.
 Perhaps "amplitude" would sidestep this problem.
 </p>
+-->
 
 
 <!-- MLB's index idea is not so great:
@@ -5512,7 +5518,6 @@ component is multiplied by -1, and "n" produces 2n-1 components.
 </pre>
 
 <p>These produce the sum of "n" sinusoids, with successive sinusoids scaled by "r".  (The nth component has amplitude r^n).
-nrsin is the same as <a href="#sine-summation">sine-summation</a>.
 In the nrssb-interp generator, the "interp" argument interpolates between the upper (interp=1.0) and lower (interp=-1.0) side bands.
 </p>
 
@@ -5548,24 +5553,6 @@ In the nrssb-interp generator, the "interp" argument interpolates between the up
 
 <br>
 
-<pre>
-  <A class=def NAME="make-nrxycos">make-nrxycos</A> <a class=quiet href="#optional-key">:optional-key</a> (xfrequency 0.0) (yfrequency 0.0) (n 1) (r 0.0)
-  <A class=def NAME="nrxycos">nrxycos</A> gen fm
-  <A class=def NAME="nrxycos?">nrxycos?</A> gen
-
-  <A class=def NAME="make-nrxysin">make-nrxysin</A> <a class=quiet href="#optional-key">:optional-key</a> (xfrequency 0.0) (yfrequency 0.0) (n 1) (r 0.0)
-  <A class=def NAME="nrxysin">nrxysin</A> gen fm
-  <A class=def NAME="nrxysin?">nrxysin?</A> gen
-</pre>
-
-<p>The nrxysin generator is equivalent to the sine-summation generator (with "yfrequency" in place of "ratio",
-and "r" in place of "a").  The nrxycos generator is the cosine version of the same thing.
-</p>
-
-<img src="sceq8.png" alt="sine summation formulas" hspace=40>
-
-
-<br><br>
 
 <pre>
   <A class=def NAME="make-nkssb">make-nkssb</A> <a class=quiet href="#optional-key">:optional-key</a> (carfreq 0.0) (modfreq 0.0) (n 1)

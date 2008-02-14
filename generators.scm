@@ -747,158 +747,6 @@
 
 
 ;;; --------------------------------------------------------------------------------
-;;; 
-;;; nrxysin (equivalent to sine-summation) and nrxycos
-
-(def-clm-struct (nrxysin
-		 :make-wrapper (lambda (g)
-				 (set! (nrxysin-xincr g) (hz->radians (nrxysin-xfrequency g))) ; can be 0 if just x=pi/2 for example
-				 (set! (nrxysin-yincr g) (hz->radians (nrxysin-yfrequency g)))
-				 g))
-  (xfrequency 0.0) (yfrequency 1.0) (n 1 :type int) (r 0.0)
-  (xangle 0.0) (xincr 0.0) (yangle 0.0) (yincr 0.0))
-
-(define (nrxysin gen fm)
-  (declare (gen nrxysin) (fm float))
-  (let* ((x (nrxysin-xangle gen))
-	 (y (nrxysin-yangle gen))
-	 (n (nrxysin-n gen))
-	 (r (nrxysin-r gen))
-	 (norm (/ (- (expt r n) 1) (- r 1)))) ; taken from sine-summation gen (just a stab in the dark)
-    (set! (nrxysin-xangle gen) (+ x (nrxysin-xincr gen) (* fm (/ (nrxysin-xincr gen) (nrxysin-yincr gen)))))
-    (set! (nrxysin-yangle gen) (+ y (nrxysin-yincr gen) fm))
-    (/ (- (sin x)
-	  (* r (sin (- x y)))
-	      (* (expt r (1+ n))
-		 (- (sin (+ x (* (1+ n) y)))
-		    (* r (sin (+ x (* n y)))))))
-	   (* norm
-	      (+ 1.0 (* r r) (* -2 r (cos y)))))))
-
-#|
-
-; make-sine-summation (:frequency 440.0) (:initial-phase 0.0) (:n 1) (:a 0.5) (:ratio 1.0) ->
-;  (make-nrxysin frequency (* ratio frequency) n a)
-;    (if (not (= initial-phase 0.0)) 
-;        (begin 
-;          (set! (nrxysin-xangle g) initial-phase) 
-;          (set! (nrxysin-yangle gen) (* initial-phase (/ nrxysin-yfrequency g) (nrxysin-xfrequency g))))
-
-(with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
-  (let ((gen (make-nrxysin 1000 100 5 0.5)))
-    (run 
-     (lambda ()
-       (do ((i 0 (1+ i)))
-	   ((= i 20000))
-	 (outa i (nrxysin gen 0.0)))))))
-|#
-
-
-(def-clm-struct (nrxycos
-		 :make-wrapper (lambda (g)
-				 (set! (nrxycos-xincr g) (hz->radians (nrxycos-xfrequency g))) ; can be 0 if just x=pi/2 for example
-				 (set! (nrxycos-yincr g) (hz->radians (nrxycos-yfrequency g)))
-				 g))
-  (xfrequency 0.0) (yfrequency 1.0) (n 1 :type int) (r 0.0)
-  (xangle 0.0) (xincr 0.0) (yangle 0.0) (yincr 0.0))
-
-(define (nrxycos gen fm)
-  (declare (gen nrxycos) (fm float))
-  (let* ((x (nrxycos-xangle gen))
-	 (y (nrxycos-yangle gen))
-	 (n (nrxycos-n gen))
-	 (r (nrxycos-r gen))
-	 (norm (/ (- (expt r (+ n 1)) 1) (- r 1))))
-    (set! (nrxycos-xangle gen) (+ x (nrxycos-xincr gen) (* fm (/ (nrxycos-xincr gen) (nrxycos-yincr gen)))))
-    (set! (nrxycos-yangle gen) (+ y (nrxycos-yincr gen) fm))
-    (/ (- (cos x)
-	  (* r (cos (- x y)))
-	      (* (expt r (1+ n))
-		 (- (cos (+ x (* (1+ n) y)))
-		    (* r (cos (+ x (* n y)))))))
-	   (* norm 
-	      (+ 1.0 (* r r) (* -2 r (cos y)))))))
-
-#|
-(with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
-  (let ((gen (make-nrxycos 1000 100 5 0.5)))
-    (run 
-     (lambda ()
-       (do ((i 0 (1+ i)))
-	   ((= i 20000))
-	 (outa i (nrxycos gen 0.0)))))))
-|#
-
-
-#|
-;;; the sine version is from Moorer, the n-1 version from Jolley (475), the cosine version (plus a
-;;;   derivation) from Durell and Robson
-
-(define (ss-test x y a n)
-  (list (/ (- (sin x)
-	      (* a (sin (- x y)))
-	      (* (expt a (1+ n))
-		 (- (sin (+ x (* (1+ n) y)))
-		    (* a (sin (+ x (* n y)))))))
-	   (+ 1.0 (* a a) (* -2 a (cos y))))
-	
-	(let ((sum 0.0))
-	  (do ((i 0 (1+ i)))
-	      ((> i n))
-	    (set! sum (+ sum (* (expt a i)
-				(sin (+ x (* i y)))))))
-	  sum)
-
-	(/ (+ (- (sin x)
-		 (* a (sin (- x y)))
-		 (* (expt a n)
-		    (sin (+ x (* n y)))))
-	      (* (expt a (1+ n))
-		 (sin (+ x (* (- n 1) y)))))
-	   (+ 1.0 (* a a) (* -2 a (cos y))))
-
-	(let ((sum 0.0))
-	  (do ((i 0 (1+ i)))
-	      ((= i n))
-	    (set! sum (+ sum (* (expt a i)
-				(sin (+ x (* i y)))))))
-	  sum)))
-
-
-  (define (sc-test x y a n)
-  (list (/ (- (cos x)
-	      (* a (cos (- x y)))
-	      (* (expt a (1+ n))
-		 (- (cos (+ x (* (1+ n) y)))
-		    (* a (cos (+ x (* n y)))))))
-	   (+ 1.0 (* a a) (* -2 a (cos y))))
-	
-	(let ((sum 0.0))
-	  (do ((i 0 (1+ i)))
-	      ((> i n))
-	    (set! sum (+ sum (* (expt a i)
-				(cos (+ x (* i y)))))))
-	  sum)
-
-	(/ (+ (- (cos x)
-		 (* a (cos (- x y)))
-		 (* (expt a n)
-		    (cos (+ x (* n y)))))
-	      (* (expt a (1+ n))
-		 (cos (+ x (* (- n 1) y)))))
-	   (+ 1.0 (* a a) (* -2 a (cos y))))
-
-	(let ((sum 0.0))
-	  (do ((i 0 (1+ i)))
-	      ((= i n))
-	    (set! sum (+ sum (* (expt a i)
-				(cos (+ x (* i y)))))))
-	  sum)))
-|#
-
-
-
-;;; --------------------------------------------------------------------------------
 
 ;;; n sinusoids scaled by k: nkssb
 
@@ -4030,12 +3878,12 @@ index 10 (so 10/2 is the bes-jn arg):
 		 :make-wrapper 
 		 (lambda (g)
 		   (set! (adjustable-square-wave-p1 g) (make-pulse-train 
-					    (adjustable-square-wave-frequency g) 
-					    (adjustable-square-wave-amplitude g)))
+							(adjustable-square-wave-frequency g) 
+							(adjustable-square-wave-amplitude g)))
 		   (set! (adjustable-square-wave-p2 g) (make-pulse-train 
-					    (adjustable-square-wave-frequency g) 
-					    (- (adjustable-square-wave-amplitude g))
-					    (* 2.0 pi (- 1.0 (adjustable-square-wave-duty-factor g)))))
+							(adjustable-square-wave-frequency g) 
+							(- (adjustable-square-wave-amplitude g))
+							(* 2.0 pi (- 1.0 (adjustable-square-wave-duty-factor g)))))
 		   g))
   (frequency 0.0) (duty-factor 0.5) (amplitude 1.0)
   (sum 0.0) (p1 #f :type clm) (p2 #f :type clm))
@@ -4043,8 +3891,8 @@ index 10 (so 10/2 is the bes-jn arg):
 (define (adjustable-square-wave gen fm)
   (declare (gen adjustable-square-wave) (fm float))
   (set! (adjustable-square-wave-sum gen) (+ (adjustable-square-wave-sum gen)
-				(pulse-train (adjustable-square-wave-p1 gen) fm)
-				(pulse-train (adjustable-square-wave-p2 gen) fm)))
+					    (pulse-train (adjustable-square-wave-p1 gen) fm)
+					    (pulse-train (adjustable-square-wave-p2 gen) fm)))
   (adjustable-square-wave-sum gen))
 
 #|

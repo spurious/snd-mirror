@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 49
-#define MUS_DATE "12-Feb-08"
+#define MUS_REVISION 50
+#define MUS_DATE "15-Feb-08"
 
 /*
+ * 15-Feb:     nrxysin and nrxycos for sine-summation.
  * 12-Feb:     nsin for sum_of_sines, ncos for sum_of_cosines.
  * 4-Feb:      clm_default_frequency (clm2xen) and *clm-default-frequency* (ws.scm).
  * 7-Jan-08:   :dur replaced by :length in make-env.
@@ -414,6 +415,19 @@ mus_any *mus_make_sum_of_sines(int sines, Float freq, Float phase);
 #define mus_sum_of_sines(Gen, Fm) mus_nsin(Gen, Fm)
 #define mus_sum_of_sines_p(Ptr) mus_nsin_p(Ptr)
 
+mus_any *mus_make_nrxysin(Float frequency, Float y_over_x, int n, Float r);
+Float mus_nrxysin(mus_any *ptr, Float fm);
+bool mus_nrxysin_p(mus_any *ptr);
+mus_any *mus_make_nrxycos(Float frequency, Float y_over_x, int n, Float r);
+Float mus_nrxycos(mus_any *ptr, Float fm);
+bool mus_nrxycos_p(mus_any *ptr);
+
+/* previous form (15-Feb-08) */
+mus_any *mus_make_sine_summation(Float frequency, Float phase, int n, Float a, Float ratio);
+#define mus_sine_summation(Obj, Fm) mus_nrxysin(Obj, Fm)
+#define mus_sine_summation_p(Obj) mus_nrxysin_p(Obj)
+
+
 Float mus_delay(mus_any *gen, Float input, Float pm);
 Float mus_delay_unmodulated(mus_any *ptr, Float input);
 Float mus_tap(mus_any *gen, Float loc);
@@ -512,10 +526,6 @@ Float mus_formant_bank(Float *amps, mus_any **formants, Float inval, int size);
 mus_any *mus_make_formant(Float radius, Float frequency, Float gain);
 bool mus_formant_p(mus_any *ptr);
 void mus_set_formant_radius_and_frequency(mus_any *ptr, Float radius, Float frequency);
-
-Float mus_sine_summation(mus_any *ptr, Float fm);
-mus_any *mus_make_sine_summation(Float frequency, Float phase, int n, Float a, Float b_ratio);
-bool mus_sine_summation_p(mus_any *ptr);
 
 Float mus_filter(mus_any *ptr, Float input);
 mus_any *mus_make_filter(int order, Float *xcoeffs, Float *ycoeffs, Float *state);
