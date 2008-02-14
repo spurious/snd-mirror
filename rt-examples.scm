@@ -18,20 +18,19 @@
 ;; Oscilator
 
 
-(definstrument (oscilator start duration)
-  (let ((osc (make-oscil 440.0))
-	(vol 4/6))
-    (<rt-play> start duration
-	       (lambda ()
-		 (out (* (oscil osc)
-			 vol))))))
+(definstrument (oscillator start duration)
+  (let ((osc (make-oscil))
+	(vol 2/3))
+    (<rt-out> :dur start duration
+	      (* (oscil osc)
+		 vol))))
 
 #!
-(define i (oscilator 0 10))
+(define i (oscillator 0 10))
 (set! (-> i vol) 0.3)
 (set! (mus-frequency (-> i osc)) 200)
 (-> i stop)
-(rt-macroexpand '(oscil osc))
+(rte-silence!)
 !#
 
 
@@ -66,10 +65,9 @@
 	 (len (inexact->exact (round (* (mus-srate) dur))))
 	 (end (+ beg len)))
     (ws-interrupt?)
-    (<rt-play> start dur
-	       (lambda ()
-		 (out (* (env amp-env)
-			 (polyshape os 1.0 (env gls-env))))))))
+    (<rt-out> :dur start dur
+	      (* (env amp-env)
+		 (polyshape os 1.0 (env gls-env))))))
 
 (define bird-org bird)
 (definstrument (bird-new start dur frequency freqskew amplitude freq-envelope amp-envelope)
@@ -81,10 +79,9 @@
 	 (beg (inexact->exact (round (* (mus-srate) start))))
 	 (end (+ beg len)))
     (ws-interrupt?)
-    (<rt-play> start dur
-	       (lambda ()
-		 (out (* (env amp-env)
-			 (oscil os (env gls-env))))))))
+    (<rt-out> :dur start dur
+	      (* (env amp-env)
+		 (oscil os (env gls-env))))))
 
 
 (define with-sound-org with-sound)
@@ -123,9 +120,9 @@
 	    (freq (make-glide-var 440 1))
 	    (das-vol 0.4)
 	    (vol (make-glide-var das-vol 0.001))
-	    (instrument (<rt-play> (lambda ()
-				     (out (* (read-glide-var vol)
-					     (oscil osc (hz->radians (read-glide-var freq))))))))
+	    (instrument (<rt-out>
+			 (* (read-glide-var vol)
+			    (oscil osc (hz->radians (read-glide-var freq))))))
 	    (exit (lambda ()
 		    (-> instrument stop)
 		    (-> d hide)))
@@ -151,10 +148,9 @@
 	    (carrier (make-oscil freq))
 	    (fm_index (* (hz->radians freq) mc-ratio index))
 	    
-	    (instrument (<rt-play> (lambda ()
-				     (out (* amp
-					     (oscil carrier (* fm_index
-							       (oscil fm))))))))
+	    (instrument (<rt-out> (* amp
+				     (oscil carrier (* fm_index
+						       (oscil fm))))))
 	    (exit (lambda ()
 		    (-> instrument stop)
 		    (-> d hide)))
@@ -193,7 +189,7 @@
 
 #!
 ;; gui.scm requires gtk:
-(c-load-from-path gui)
+;;(c-load-from-path gui)
 
 (make-osc-gui)
 (make-fm-gui 200)
@@ -264,10 +260,8 @@
 (set! (-> p pan) 1)
 (-> p stop)
 
-(rte-silence!)
-
 (define p (play-once-st filename))
-
+(rte-silence!)
 
 !#
 
@@ -725,7 +719,6 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
   :attack-env
   :release-env)
 
-
 (definstrument (midisoftsampler filename middlenote #:key (attack 1.5) (release 0.5) (src-width 5))
   (let* ((num-synths 16)
 	 (num-playing 0)
@@ -750,6 +743,7 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 					       (mus-reset (=> synth :sr))
 					       (mus-reset (=> synth :attack-env))
 					       (mus-reset (=> synth :release-env))
+					       ;;(set! status :is-playing #t)
 					       (set! (=> status :is-playing) #t)
 					       (set! (=> status :is-playing) #t)
 					       (set! (=> status :is-playing) #t)
@@ -816,6 +810,7 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 #!
 (define filename "/gammelhd/home/kjetil/flute2.wav")
 (define filename "/hom/kjetism/Blub_mono16.wav")
+(define filename "/home/kjetil/Blub_mono16.wav")
 (midisoftsampler filename 60)
 (midisoftsampler filename 68)
 (midisoftsampler filename 78)

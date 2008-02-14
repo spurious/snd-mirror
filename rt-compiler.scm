@@ -58,6 +58,19 @@ and run simple lisp[4] functions.
 
 (c-load-from-path eval-c)
 
+;; Check if jack is loaded.
+(if (not (defined? 'JACK_API))
+    (eval-c (string-append "-I" snd-header-files-path)
+	    "#include <_sndlib.h>"
+	    (proto->public "int mus_audio_api(void)")
+	    (variables->public
+	     (<int> JACK_API))))
+
+(if (not (= (mus_audio_api) (JACK_API)))
+    (throw 'jack-not-running))
+
+
+
 ;; general functions and macros
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -2435,8 +2448,8 @@ and run simple lisp[4] functions.
 
 
 #!
-
-(rt-insert-types2 '(lambda ()
+(pretty-print
+ (rt-insert-types2 '(lambda ()
 		     (lambda ()
 		       (let* ((rt_gen498__1 <float>)
 			      (rt_gen500__2 <undefined>)
@@ -2455,6 +2468,9 @@ and run simple lisp[4] functions.
 			  (setter!-mus-environ/mus_set_environ rt_gen500__2 (rt-get-environ))
 			  (set! rt_gen498__1 (rt-mus-src/mus_src rt_gen500__2 renamed_var__5 (rt-begin rt_gen501__6)))
 			  (setter!-mus-environ/mus_set_environ rt_gen500__2 rt_gen499__4) rt_gen498__1)))))
+ )
+
+
 
 (-> (hashq-ref rt-funcs 'rt-mus-src/mus_src) arg-type 1)
 
@@ -3046,7 +3062,6 @@ and run simple lisp[4] functions.
   (<rt-func> 'rt-setjmp/setjmp '<int> '(<jmp_buf>))
   (<rt-func> 'rt-break/longjmp '<void> '(<jmp_buf>))
   (<rt-func> 'rt-continue/longjmp '<void> '(<jmp_buf>))
-  (<rt-func> 'rt-printf/fprintf '<int> '(<char-*> <float>) #:min-arguments 1)
 
   (<rt-func> 'rt-mus-any?/mus_xen_p '<mus_any-*> '(<SCM>) #:needs-rt-globals #t)
 
@@ -3343,14 +3358,24 @@ and run simple lisp[4] functions.
 
 (define-macro (=> object das-method . rest)
   (define method (keyword->symbol das-method))
-  (let ((struct-name (string->symbol (car (string-split (symbol->string object) #\:)))))
-    `(,(append-various 'access- struct-name ":" method) ,object ,@rest)))
+  (define object-decomposed (map string->symbol (string-split (symbol->string object) #\:)))
+  (let ()
+    (define struct-name (car object-decomposed))
+    (define object-name (if (null? (cdr object-decomposed))
+			    (car object-decomposed)
+			    (cadr object-decomposed)))
+    `(,(append-various 'access- struct-name ":" method) ,object-name ,@rest)))
 
 
 (define-rt-macro (setter!-=> object das-method . rest)
   (define method (keyword->symbol das-method))
-  (let ((struct-name (string->symbol (car (string-split (symbol->string object) #\:)))))
-    `(,(append-various 'setter!- struct-name ":" method) ,object ,@rest)))
+  (define object-decomposed (map string->symbol (string-split (symbol->string object) #\:)))
+  (let ()
+    (define struct-name (car object-decomposed))
+    (define object-name (if (null? (cdr object-decomposed))
+			    (car object-decomposed)
+			    (cadr object-decomposed)))
+    `(,(append-various 'setter!- struct-name ":" method) ,object-name ,@rest)))
 
 (define-rt-macro (=> object das-method)
   (if (or (not (symbol? object))
@@ -3358,9 +3383,15 @@ and run simple lisp[4] functions.
       (begin
 	(c-display "Syntax error" `(=> ,object ,das-method))
 	(throw 'syntax-error)))
-  (let ((method (keyword->symbol das-method)))
-    (let ((struct-name (string->symbol (car (string-split (symbol->string object) #\:)))))
-      `(,(append-various 'getter- struct-name ":" method) ,object))))
+  (let ()
+    (define method (keyword->symbol das-method))
+    (define object-decomposed (map string->symbol (string-split (symbol->string object) #\:)))
+    (let ()
+      (define struct-name (car object-decomposed))
+      (define object-name (if (null? (cdr object-decomposed))
+			      (car object-decomposed)
+			      (cadr object-decomposed)))
+      `(,(append-various 'getter- struct-name ":" method) ,object-name))))
 
 
 (define-macro (define-rt-something-struct something name . das-slots)
@@ -3419,6 +3450,10 @@ and run simple lisp[4] functions.
 (define-rt-vct-struct str
   :a 1
   :b)
+(set! (=> str:str) 200)
+(set! (=> str :b) 200)
+(=> str:str)
+(=> str :b)
 !#
 
 
@@ -3431,6 +3466,10 @@ and run simple lisp[4] functions.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define-rt-macro (inc! var how-much)
+  `(begin
+     (set! ,var (+ ,how-much ,var))
+     ,var))
 
 (define-c-macro (the type somethingmore)
   (let ((c-type (hashq-ref rt-types type)))
@@ -3818,11 +3857,15 @@ and run simple lisp[4] functions.
 
 (<rt-func> 'rt-or/|| '<int> '(<float>) #:min-arguments 1)
 (define-c-macro (rt-or/|| . rest)
-  `(|| ,@rest))
+  (if (null? (cdr rest))
+      (car rest)
+      `(|| ,@rest)))
 
 (<rt-func> 'rt-and/&& '<int> '(<float>) #:min-arguments 1)
 (define-c-macro (rt-and/&& . rest)
-  `(&& ,@rest))
+  (if (null? (cdr rest))
+      (car rest)
+      `(&& ,@rest)))
 
 ;; if is a macro, rt-if is a special form
 (define-rt-macro (if a b . c)
@@ -3850,6 +3893,11 @@ and run simple lisp[4] functions.
 (define-c-macro (rt-if . rest)
   `(?kolon ,@rest))
 
+(define-rt-macro (when a . b)
+  `(if ,a
+       (begin
+	 ,@b)))
+
 (define (rt-cond->if terms)
   (let ((term (car terms)))
     (if (and (symbol? (car term))
@@ -3865,6 +3913,8 @@ and run simple lisp[4] functions.
 (define-rt-macro (cond . terms)
   (rt-cond->if terms))
 
+
+;; Note the 'else hack here. Unless the case block has an else, '(else 0) is added at the end. (@$#@! static typing)
 (define-rt-macro (case key . terms)
   (let ((das-key (rt-gensym)))
     `(let ((,das-key ,key))
@@ -3877,7 +3927,9 @@ and run simple lisp[4] functions.
 					   `(= ,das-key ,datum))
 					 datums))
 			      ,@expr))))
-		    terms)))))
+		    (if (eq? 'else (car (last terms)))
+			terms
+			(append terms (list '(else 0)))))))))
 
 ;; begin and begin_p are macros, while rt-begin is a special form
 (define-rt-macro (begin . rest)
@@ -4075,7 +4127,8 @@ and run simple lisp[4] functions.
 (define-c-macro (rt-printf/fprintf string . rest)
 ;;  `(listener_append ,string))
   `(fprintf stderr ,string ,@rest))
-			  
+(<rt-func> 'rt-printf/fprintf '<int> '(<char-*> <float>) #:min-arguments 1)
+
 
 ;; let is implemented as a macro to easier be able to support named let. The real name for non-named let is rt-let/let*
 (define-rt-macro (let a b . c)
@@ -4496,20 +4549,22 @@ and run simple lisp[4] functions.
 
 ;;;;;; CLM Generators ;;;;;;;;;;;;;;;
 
-(define rt-clm-generators '((all-pass     (input (pm 0)))
+(define rt-clm-generators `((all-pass     (input (pm 0)))
 			    (asymmetric-fm (index (fm 0)))
-			    (moving-average      (input))
 			    (comb         (input (pm 0)))
 			    (convolve     (input-function)) ;; redefined later
 			    (delay        (input (pm 0)))
 			    (env          ())
 			    (filter       (input))
+			    (filtered-comb (input (pm 0)))
 			    (fir-filter   (input))
 			    (formant      (input))
 			    (granulate    (input-function (edit-function 0))) ;; redefined later
 			    (iir-filter   (input))
 			    ;;(in-any       (
 			    (locsig       (input)) ;; redefined later to use out instead of out-any
+			    ;;(move-sound   (input)) ;; Lots of work to support.
+			    (moving-average      (input))
 			    (notch        (input (pm 0)))
 			    (one-pole     (input))
 			    (one-zero     (input))
@@ -4526,6 +4581,10 @@ and run simple lisp[4] functions.
 			    (square-wave    ((fm 0)))
 			    (src            (sr-change input-function)) ;; redefined later
 			    (ssb-am         ((insig 0) (fm 0)))
+			    ,@(if (defined? 'ncos?) ;; Snd-ls uses an older version of Snd.
+				  '((ncos           ((fm 0)))
+				    (nsin           ((nsin 0))))
+				  '())
 			    (sum-of-cosines ((fm 0)))
 			    (sum-of-sines   ((fm 0)))
 			    (table-lookup   ((fm 0)))
@@ -4538,6 +4597,7 @@ and run simple lisp[4] functions.
 
 (for-each (lambda (clm-generator)
 	    (let* ((name (car clm-generator))              ;; all-pass
+		   (name2 (symbol-append name '-internal))              ;; all-pass-internal
 		   (args (cadr clm-generator))             ;; (input (fm 0))
 		   (args1 (remove list? args))             ;; (input)
 		   (args2 (filter-org list? args))         ;; ((fm 0))
@@ -4565,12 +4625,13 @@ and run simple lisp[4] functions.
 		   
 		   (c-transformfuncname (symbol-append macro-belongsto-name '?)) ;; rt-all-pass/mus_all_pass?
 		   (c-transformfuncname2 (symbol-append 'mus_ c-belongsto-name '_p)) ;; all_pass_p
+
 		   )
 	      
 	      (if (eq? belongsto-name name)
 		  (<rt-type> etype testfunc c-transformfuncname #:c-type '<mus_any-*> #:transformfunc XEN_TO_MUS_ANY #:subtype-of '<mus_any-*>))
 	      (<rt-func> macroname '<float> (cons etype (map (lambda (a) '<float>) args)))
-	      (primitive-eval `(define-rt-macro (,name osc ,@args1 . rest)
+	      (primitive-eval `(define-rt-macro (,name2 osc ,@args1 . rest)
 				 (if (> (length rest) ,(length args2))
 				     (begin
 				       (c-display "rt-macro, too many arguments for " ',name ":" rest)
@@ -4584,6 +4645,11 @@ and run simple lisp[4] functions.
 								   (list-ref rest n)
 								   arg))
 							     (list ,@(map cadr args2))))))))
+	      (primitive-eval `(define-rt-macro (,name . rest)
+				 (if (null? rest)
+				     `(,',name2 (extern (,(symbol-append 'make- ',name))))
+				     `(,',name2 ,@rest))))
+
 	      (primitive-eval `(define-c-macro (,macroname osc . rest)
 				 `(,',c-func ,osc ,@rest)))
 	      (if (eq? belongsto-name name)
@@ -5659,8 +5725,12 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; (wait w 50)  waits 50 samples
+;; (wait w 50 thunk)  waits 50 samples
 
+
+
+#!
+old syntax: (not very nice)
 (define (make-wait)
   (vct 0 0 0))
 
@@ -5677,42 +5747,24 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 		 (begin
 		   (vct-set! ,w 2 2)
 		   (,thunk)))))))
+!#
+
+
+(define-rt-macro (wait len thunk)
+  (define counter (rt-gensym))
+  `(when (>= (extern ,counter ,len) 0)
+     (declare (<int> ,counter))
+     (set! ,counter (1- ,counter))
+     (when (= ,counter 0)
+       (set! ,counter -1)
+       (,thunk))))
 
 #!
-
-	  
-(define ai
-  (let ((w (make-wait))
-	(w2 (make-wait)))
-    (<rt-play> (lambda ()
-		 (wait w (mus-srate)
-		       (lambda ()
-			 (printf "1\\n")))
-		 (wait w2 (* 2 (mus-srate))
-		       (lambda ()
-			 (printf "2\\n")
-			 (remove-me)))))))
-
-;; Or with dynamic control rate (chuck inspired):
 (<rt-play> (lambda ()
-	     (dynamic-control-rate
-	      (wait (mus-srate))
-	      (print "1\\n"))
-	      (wait (mus-srate))
-	      (print "2\\n")))
-
-=>
-(let ((w (make-wait)))
-  (<rt-play> (lambda ()
-	       (wait2 w (mus-srate)))))
-
-
-
-
-		 
-(rte-silence!)
-(rte-info)
-
+	     (wait (* 1 (mus-srate))
+		   (lambda ()
+		     (printf "1\\n")
+		     (remove-me)))))
 !#
 
 
@@ -6809,6 +6861,45 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Extern variables
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define rt-extern-variables '())
+(define (add-extern-variable name var)
+  (push-back! (list name var) rt-extern-variables))
+
+#!
+(add-extern-variables '(a (make-oscil) b 3))
+(rt-extern-reset)
+!#
+(define-rt-macro (extern . rest)
+  (fix-defines
+   (cond ((null? (cdr rest))
+	  (define varname (rt-gensym))
+	  (add-extern-variable varname (car rest))
+	  varname)
+	 ((null? (cddr rest))
+	  (add-extern-variable (car rest) (cadr rest))
+	  (car rest))
+	 (else
+	  (add-extern-variable (car rest) (cadr rest))
+	  `(extern ,@(cddr rest))))))
+(define-rt-macro (external . rest)
+  `(extern ,@rest))
+
+#!
+(rte-silence!)
+(rt-gensym)
+(rt-gensym-reset)
+(rt-macroexpand '(extern ai (make-oscil) b 2 c 3))
+(begin rt-extern-variables)
+(rt-extern-reset)
+(<rt-out> :len 2 (oscil))
+(<rt-out> :len 2 (oscil))
+!#
+(define (rt-extern-reset)
+  (set! rt-extern-variables '()))
+
 
 
 
@@ -7512,11 +7603,12 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 								  `(->2 ,type transform ,name ',name)))
 							      (append extnumbers-writing extpointers extnumbers))
 						       ,@(cdr x))))))))
+	       (externs (list-copy rt-extern-variables))
 	       (rt-callmacro (procedure->macro
 			      (lambda (x env)
 				(let ((isoutdefined? (defined? 'out-bus env))
 				      (isindefined? (defined? 'in-bus env)))
-				  `(let ()
+				  `(letrec* ,externs
 				     (let* ((extra-gc-vars (make-hash-table 19))
 					    (buses (make-hash-table 19))
 					    (procarg (,make-globals-func (-> *rt-engine* engine-c)))
@@ -7656,7 +7748,7 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 				       
 				       ret)))))))
 	  
-	  (apply eval-c-non-macro (append (list (<-> "-I" snd-header-files-path " -fargument-noalias-global -ffast-math ") ;; "-ffast-math") ;; " -Werror "
+	  (apply eval-c-non-macro (append (list (<-> "-I" snd-header-files-path " -ffast-math ") ;; "-ffast-math") ;; " -Werror "
 						#f
 						"#include <mus-config.h>"
 						"#include <math.h>"
@@ -7712,15 +7804,17 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
       `((setter (<- ,@(cdr var))) ,val)
       `(,rt-old-set! ,var ,val)))
 
-
+		
 ;; rt-1 + compiled code cache handling.
 (define rt-cached-funcs (make-hash-table 997))
 (define* (rt-1 term #:key (engine *rt-engine*))
   (rt-gensym-reset)
-  (let* ((key (list term
+  (rt-extern-reset)
+  (let* ((key (list (deep-list-copy term)     ;; Hmm. That shouldn't be necesarry. (but it is) Is the list manipulated later?
 		    (rt-safety)               ;; Everything that can change the compiled output must be in the key.
 		    (-> engine samplerate))) ;; If saving to disk, the result of (version) and (snd-version) must be added as well. (and probably some more)
 	 (cached (hash-ref rt-cached-funcs key)))
+    ;;(c-display "term/cached" term cached)
     (if cached
 	cached
 	(let ((new-rt (rt-2 term)))
@@ -7811,7 +7905,10 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 	    ((eq? '<rt> (car term))
 	     (let ((func (add-rt-func (cadr term))))
 	       `((caddr ,func))))
-	    
+
+	    ((eq? '<rt-out> (car term))
+	     (find-rt (macroexpand-1 term)))
+
 	    ((eq? '<rt-play> (car term))
 	     (let ((func (add-rt-func (last term))))
 	       `(rt-play-macro play ((caddr ,func)) ,(cdr (c-butlast term)))))
@@ -7867,8 +7964,40 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 !#
 
 
+(define-macro (<rt-out> . body)
+  (define start #f)
+  (define len #f)
+  (let loop ((body body))
+    (cond ((keyword? (car body))
+	   (cond ((eqv? :start (car body))
+		  (set! start (cadr body))
+		  (loop (cddr body)))
+		 ((or (eqv? :len (car body))
+		      (eqv? :length (car body)))
+		  (set! len (cadr body))
+		  (loop (cddr body)))
+		 ((eqv? :dur (car body))
+		  (set! start (cadr body))
+		  (set! len (caddr body))
+		  (loop (cdddr body)))
+		 (else
+		  (error (list "Unknown keyword" (car body) "legal keywords are start/len/dur")))))
+	  ((and start len)
+	   `(<rt-play> ,start ,len (lambda () (out ,@body))))
+	  (start
+	   `(<rt-play> ,start (lambda () (out ,@body))))
+	  (len 
+	   `(<rt-play> 0 ,len (lambda () (out ,@body))))
+	  (else
+	   `(<rt-play> (lambda () (out ,@body)))))))
+#!
+(<rt-out> :start 3 :len 1 (oscil (extern (make-oscil))))
+(<rt-out> :dur 3 1 (oscil (extern (make-oscil))))
+!#
+
 
 (c-display "#:RT-Compiler loaded successfully...")
+
 
 
 #!
@@ -8031,6 +8160,8 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 
 
 (provided? 'snd-pd-external)
+
+(rt-macroexpand '(< a 3))
 
 !#
 

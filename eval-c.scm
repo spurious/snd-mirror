@@ -159,8 +159,6 @@ Usually just "", but can be "-lsnd" or something if needed.
 
 (if (not (defined? '*eval-c-compiler*))
     (primitive-eval '(define *eval-c-compiler* "gcc")))
-(if (not (defined? '*eval-c-CFLAGS*))
-    (primitive-eval '(define *eval-c-CFLAGS* "")))
 
 
 (if (not (defined? 'snd-header-files-path))
@@ -1516,6 +1514,7 @@ int fgetc (FILE
 
 #!
 
+;; neverending loop!
 (eval-c ""
 	(run-now
 	 (for-each 10 != 5 1 
@@ -1674,7 +1673,9 @@ int fgetc (FILE
 	(catch #t
 	       (lambda ()
 		 (c-display "Linking" (car ret))
-		 (dynamic-call "das_init" (dynamic-link (car ret))))
+		 (if (defined? 'c-dynamic-call)
+		     (c-dynamic-call "das_init" (car ret))
+		     (dynamic-call "das_init" (dynamic-link (car ret)))))
 	       (lambda x
 		 (c-display x)
 		 (set! ret #f))))
@@ -1702,6 +1703,9 @@ int fgetc (FILE
 
 ;;;;;;;;;;;;;;;;;; Compiling and stuff
 
+;;(define (ec-waitforfile filename)
+;;  (while (not (access? filename X_OK))
+;;	 (usleep 100)))
 
 (define eval-c-filestobedeleted '())
 
@@ -1735,13 +1739,13 @@ int fgetc (FILE
 	(c-display (<-> *eval-c-compiler* " -O3 -fPIC -shared -o " libfile " " sourcefile " "
 			(if (string=? *eval-c-compiler* "icc")
 			    "-L/opt/intel_cc_80/lib /opt/intel_cc_80/lib/libimf.a"
-			    (<-> "-Wall " (if (getenv "CFLAGS") (getenv "CFLAGS") "") " " *eval-c-CFLAGS* " " (if (getenv "LDFLAGS") (getenv "LDFLAGS") "") " "))
+			    (<-> "-Wall " (if (getenv "CFLAGS") (getenv "CFLAGS") "") " " (if (getenv "LDFLAGS") (getenv "LDFLAGS") "") " "))
 			(string #\`) guile-config " compile" (string #\`) " "
 			compile-options)))
     (if (not (= 0 (system (<-> *eval-c-compiler* " -O3 -fPIC -shared -o " libfile " " sourcefile " "
 			       (if (string=? *eval-c-compiler* "icc")
 				   "-L/opt/intel_cc_80/lib /opt/intel_cc_80/lib/libimf.a"
-				   (<-> "-Wall " (if (getenv "CFLAGS") (getenv "CFLAGS") "") " " *eval-c-CFLAGS* " " (if (getenv "LDFLAGS") (getenv "LDFLAGS") "") " "))
+				   (<-> "-Wall " (if (getenv "CFLAGS") (getenv "CFLAGS") "") " " (if (getenv "LDFLAGS") (getenv "LDFLAGS") "") " "))
 			       (string #\`) guile-config " compile" (string #\`) " "
 			       compile-options))))
 	(begin
@@ -1749,7 +1753,10 @@ int fgetc (FILE
 	      (set! eval-c-filestobedeleted (cons sourcefile eval-c-filestobedeleted)))
 	  (throw 'compilation-failed)))
 
-    (dynamic-call "das_init" (dynamic-link libfile))
+    ;;(ec-waitforfile libfile)
+    (if (defined? 'c-dynamic-call)
+	(c-dynamic-call "das_init" libfile)
+	(dynamic-call "das_init" (dynamic-link libfile)))
     (if (not *eval-c-do-cache*)
 	(system (<-> "rm " libfile)))
 
@@ -1761,23 +1768,6 @@ int fgetc (FILE
 
 
 
-#!
-(eval-c ""
-	"#include <dlfcn.h>"
-	"#include <unistd.h>"
-
-	"typedef void (*functype)()"
-
-	(public
-	 (<void> c-dynamic-call (lambda ((<char-*> funcname)
-					 (<char-*> filename))
-				  (let* ((handle <void-*> (dlopen filename RTLD_NOW)))
-				    (if (== handle NULL)
-					(printf (string "Handle null\\n"))
-					(let* ((func <functype> (dlsym handle funcname)))
-					  (if (!= func NULL)
-					      (func)))))))))
-!#
 
 (define (eval-c-parse-file terms)
   (define temp #f)
@@ -1867,6 +1857,29 @@ int fgetc (FILE
 				     ,@(eval-c-parse-file terms)))))
 
 
+
+(eval-c ""
+	"#include <dlfcn.h>"
+	"#include <unistd.h>"
+
+	"typedef void (*functype)()"
+
+	(public
+	 (<void> c-dynamic-call (lambda ((<char-*> funcname)
+					 (<char-*> filename))
+				  (printf (string "linking %s %s\\n") funcname filename)
+				  (let* ((handle <void-*> (dlopen filename RTLD_GLOBAL|RTLD_NOW)))
+				    (if (== handle NULL)
+					(begin
+					  (printf (string "Handle null (%s)\\n") (dlerror))
+					  ;;(throw 'gakk)
+					  )
+						  
+					(let* ((func <functype> (dlsym handle funcname)))
+					  (if (== func NULL)
+					      (printf (string "func null (%s)\\n") (dlerror))
+					      (func)))))))))
+
 ;(define-macro (define-c ret-type def . body)
 ;  `(eval-c ""
 ;	   (public (,(car def) ,(cadr def) (lambda ,(cdr def)
@@ -1924,7 +1937,10 @@ int fgetc (FILE
 	 (<void-*> ec-pointer-to-pointer (lambda ((<void-*> pointer))
 					   (set! a_pointer pointer)
 					   (return &a_pointer)))
-	
+	 ;; careful
+	 (<void> ec-free (lambda ((<void-*> pointer))
+			   (free pointer)))
+
 	;; No. This is dangerous, ugly and unnecesarry. #f is the same as NULL from the guile-side.
 	;;(<SCM> c_NULL (lambda ()
 	;;		(return (MAKE_POINTER NULL))))
@@ -2001,7 +2017,7 @@ int fgetc (FILE
 
 #!
 (define a (ec-make-array '(0 1 2 3 4 5) #:das-make-func ec-make-ints))
-(ec-get-ints a 6)
+(ec-get-ints a 10)
 
 (define b (ec-make-array (list a a a a a a) #:das-make-func ec-make-pointers))
 (begin b)
@@ -2150,6 +2166,67 @@ int fgetc (FILE
     ))
 
 #!
+(define-ec-struct <struct_name>
+  <int> one
+  <float-*> twos
+  <char-*> three)
+(define test (<struct_name> :one 1
+			    :twos '(2)
+			    :three "three"))
+
+(-> test one)
+=> 1
+
+(-> test one 4)
+(-> test one)
+=> 4
+
+(-> test twos)
+=> (2.0)
+
+(-> test twos '(2 3 4))
+(-> test twos)
+=> (2.0 3.0 4.0)
+
+(-> test three "four")
+(-> test three)
+-> "four"
+
+
+(define-ec-struct <test>
+  <SCM> val)
+
+(define test (<test> :val (list 2 3 4)))
+(gc)
+(-> test val)
+
+
+(define-ec-struct <test_struct>
+  <int> one
+  <float-*> floats)
+
+
+(define test (<test_struct> :one 1
+			    :floats '(2 3 4)))
+=> #<unspecified>
+
+(-> test scm test)
+(-> test scm)
+
+(-> test one)
+=> 1
+
+(-> test one 10)
+=> #<unspecified>
+
+(-> test one)
+=> 10
+
+(-> test get-c-object)
+
+(define-ec-struct test
+
+
 (define-ec-struct <Jack_Arg>
   <int> num_inports
   <int-*> ai

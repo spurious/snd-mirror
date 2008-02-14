@@ -11013,6 +11013,7 @@ void init_mus_module(void)
  *   (9.8)
  *   out* last arg defaults to *output*
  *   ncos, nsin
+ *   nrxycos, nrxysin [todo: clm.html/mus.lisp/snd-tests]
  *
  *   (9.7)
  *   :dur and :end -> :length in make-env

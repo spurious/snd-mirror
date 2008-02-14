@@ -178,7 +178,7 @@ writing one period later[1]: bus[n]=v
   (eval-c-add-int-type "jack_port_id_t")
   (eval-c-add-float-type "jack_default_audio_sample_t")
   
-  (eval-c ""
+  (eval-c "-ljack"
 	  
 	  "#include <jack/jack.h>"
 	  "#include <jack/ringbuffer.h>"
@@ -413,10 +413,11 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 	      (if num-outports
 		  (-> jack-arg num_outports num-outports))
 
-	      (set! this->in-bus (make-bus num-inports))
-	      (set! this->out-bus (make-bus num-outports))
-	      (-> jack-arg in_bus (SCM_SMOB_DATA this->in-bus))
-	      (-> jack-arg out_bus (SCM_SMOB_DATA this->out-bus))
+	      (c-display "num-inports:" num-inports)
+	      (set! in-bus (make-bus num-inports))
+	      (set! out-bus (make-bus num-outports))
+	      (-> jack-arg in_bus (SCM_SMOB_DATA in-bus))
+	      (-> jack-arg out_bus (SCM_SMOB_DATA out-bus))
 	      
 	      (jack_set_process_callback client process-func (-> jack-arg get-c-object))
 	      
@@ -535,20 +536,20 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 
 
 
-(def-class (<jack-rt-driver> num-inputs num-outputs rt_callback rt_arg #:key (autoconnect #t))
+(def-class (<jack-rt-driver> num-inputs num-outputs rt_callback rt_arg #:key (autoconnect (not (getenv "SNDLIB_JACK_DONT_AUTOCONNECT"))))
 
   (Super (<jack> *rt-jackname-prefix*
 		 (jack_rt_process)
 		 (<Jack_Arg> #:rt_callback rt_callback #:rt_arg rt_arg)
 		 num-inputs
 		 num-outputs
-		 autoconnect))
+		 :autoconnect autoconnect))
 
   (-> super samplerate (-> super get-samplerate))
   (set! (mus-srate) (-> super get-samplerate))
-  
-  (def-var num-inputs num-inputs)
-  (def-var num-outputs num-outputs)
+
+  (def-var num-inputs)
+  (def-var num-outputs)
 
   (define jack-arg #f)
 
@@ -1365,13 +1366,14 @@ procfuncs=sorted
 									   
   (def-var engine-c (-> engine get-c-object))
 
-  (rt_init_engine this->engine-c)
-  
-  (define driver (initdriver this->engine-c))
+  (rt_init_engine engine-c)
+
+  (define driver (initdriver engine-c))
   
   (def-method (add-event frame-time func arg #:key after-run-func)
     (set! num-events (1+ num-events))
-    ;; Write to realtime thread. (This function should be written in C with signalling from the rt-thread to avoid usleeping...
+    ;; Write to realtime thread.
+    ;; (This function should be written in C with signalling from the rt-thread to avoid usleeping...
     ;; (ec-pointer-to-pointer isn't thread-safe either...))
     (let ((event (<RT_Event> #:time frame-time #:func func #:arg arg)))
       (while (< (jack_ringbuffer_write_space (-> engine ringbuffer_to_rt)) rt-pointer-size)
@@ -1384,13 +1386,15 @@ procfuncs=sorted
 
       ;; Read from realtime thread
       ;;(c-display "non1")
-      (rt_non_check_non_rt this->engine-c)
+      (rt_non_check_non_rt engine-c)
       ;;(c-display "non2")
       )
     )
 
   (def-method (start)
-    (-> engine next_switchtime 4096)      ;; These numbers doesn't matter much as they'll adjust themself automatically, but next_next needs to be larger than next:
+    (-> engine next_switchtime 4096)      ;; These numbers doesn't matter much as they'll
+    ;;                                       adjust themself automatically, but next_next needs
+    ;;                                       to be larger than next.
     (-> engine next_next_switchtime 8192)
     (-> driver start))
   

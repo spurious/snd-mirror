@@ -135,6 +135,8 @@
      (set! ,var (+ ,how-much ,var))
      ,var))
 
+(define-macro (when cond . rest)
+  `(cond (,cond ,@rest)))
 
 (define (c-atleast1.7?)
   (or (>= (string->number (major-version)) 2)
@@ -151,6 +153,23 @@
   (if (null? l)
       l
       (reverse! (cdr (reverse l)))))
+
+
+
+(define (hash-table->alist table)
+  (hash-fold (lambda (key value s) (cons (cons key value) s)) '() 
+	     table))
+(define hash->list hash-table->alist)
+
+
+(define (deep-list-copy list)
+  (cond ((null? list) '())
+	((pair? (car list))
+	 (cons (deep-list-copy (car list))
+	       (deep-list-copy (cdr list))))
+	(else
+	 (cons (car list)
+	       (deep-list-copy (cdr list))))))
 
 
 
@@ -261,6 +280,281 @@
 !#
 	       
 
+(define-macro (c-time form)
+     `(let* ((t1 (rte-time))
+	     (r ,form)
+	     (t2 (rte-time)))
+	(display "Time: ")
+	(display (- t2 t1))
+	(newline)
+	r))
+
+
+(define (make-container)
+  (let ((container (make-hash-table 219)))
+    (hashq-set! container 'hash-table container)
+    (hashq-set! container 'reset (lambda ()
+				   (set! container (make-hash-table 219))))
+    (lambda (which . rest)
+      (if (null? rest)
+          (hashq-ref container which)
+          (hashq-set! container which (car rest))))))
+
+
+#!
+(define c (make-container))
+(c 'gakk 45)
+(c 'gakk)
+
+((c 'reset))
+
+(-> c gakk)
+(-> c hash-table)
+
+(-> c hash-table (make-hash-table 219))
+!#
+
+
+
+(define schemecodeparser-varlist '())
+
+(define (schemecodeparser-get-varlist)
+  schemecodeparser-varlist)
+
+
+
+(define* (schemecodeparser expr :key elsefunc symbolfunc atomfunc nullfunc pairfunc use-customsymbolhandler? customsymbolhandler blockhandler symbolhandler (varlist '()))
+
+  (let parse ((varlist varlist)
+	      (expr expr))
+
+    (define (blockhandlerfunc varlist expr)
+      (if (not blockhandler)
+	  (map (lambda (expr)
+		 (parse varlist expr))
+	       expr)
+	  (begin
+	    (set! schemecodeparser-varlist varlist)
+	    (blockhandler expr))))
+
+    ;; Like append, but varlist1 might not be a valid list (in case of optional arguments)
+    (define (append-varlists varlist1 varlist2)
+      (append (let append ((varlist varlist1))
+		(cond ((null? varlist) varlist)
+		      ((not (pair? varlist)) (list varlist))
+		      (else (cons (car varlist)
+				  (append (cdr varlist))))))
+	      varlist2))
+		       
+    (set! schemecodeparser-varlist varlist)
+
+    ;;(c-display "scp/expr:" expr)
+
+    (cond ((and (symbol? expr)
+		symbolfunc)
+	   (symbolfunc expr))
+	  ((not (pair? expr)) 
+	   (if atomfunc
+	       (atomfunc expr)
+	       expr))
+	  ((null? expr) 
+	   (if nullfunc
+	       (nullfunc expr)
+	       expr))
+	  ((pair? (car expr))
+	   (if pairfunc
+	       (pairfunc expr)
+	       (blockhandlerfunc varlist expr)))
+	  ((and use-customsymbolhandler?
+		(use-customsymbolhandler? expr))
+	   (customsymbolhandler expr))
+	  ((eq? 'lambda (car expr))
+	   `(lambda ,(cadr expr)
+	      ,@(blockhandlerfunc (append-varlists (cadr expr) varlist) (cddr expr))))
+	  ((eq? 'define (car expr))
+	   `(define ,(cadr expr)
+	      ,@(blockhandlerfunc (append-varlists (cadr expr) varlist) (cddr expr))))
+	  ((eq? 'delay (car expr))
+	   `(delay ,@(blockhandlerfunc varlist (cdr expr))))
+	  ((eq? 'force (car expr))
+	   `(force ,@(blockhandlerfunc varlist (cdr expr))))
+	  ((eq? 'do (car expr))
+	   (let* ((newvars (append (map car (cadr expr)) varlist))
+		  (first (map (lambda (a)
+				(let ((second (parse varlist (cadr a))))
+				  `(,(car a) ,second ,@(blockhandlerfunc newvars (cddr a)))))
+			      (cadr expr))))
+	     `(do ,first
+		  ,@(blockhandlerfunc newvars (cddr expr)))))
+	  ;; named let
+	  ((and (eq? 'let (car expr))
+		(symbol? (cadr expr)))
+	   (let* ((newvars (append (cons (car expr) (map car (caddr expr)))
+				   varlist))
+		  (vars (map (lambda (a)
+			       `(,(car a) ,@(blockhandlerfunc varlist (cdr a))))
+			     (caddr expr))))
+	     `(let ,(cadr expr) ,vars
+		   ,@(blockhandlerfunc newvars (cdddr expr)))))
+	  ((eq? 'let (car expr))
+	   (let ((vars (map (lambda (a)
+			 `(,(car a) ,@(blockhandlerfunc varlist (cdr a))))
+		       (cadr expr))))
+	     `(let ,vars
+		,@(blockhandlerfunc (append (map car (cadr expr))
+					    varlist)
+				    (cddr expr)))))
+	  ((eq? 'let* (car expr))
+	   (let* ((newvars varlist)
+		  ;; This needs to be generated outside quasiquote, because quasiqote elements does not need to be generated in order. (@#$@#$@#$@!!!#$@)
+		  (let*vars (map (lambda (a)
+				   (let ((ret `(,(car a) ,@(blockhandlerfunc newvars (cdr a)))))
+				     (push! (car a) newvars)
+				     ret))
+				 (cadr expr))))
+	     `(let* ,let*vars
+		,@(blockhandlerfunc newvars (cddr expr)))))
+	  ((eq? 'letrec (car expr))
+	   (let* ((newvars (append (map car (cadr expr))
+				   varlist))
+		  (vars (map (lambda (a)
+			      `(,(car a) ,@(blockhandlerfunc newvars (cdr a)))) ;; Not entily correct...
+			     (cadr expr)))) 
+	     `(letrec ,vars
+		,@(blockhandlerfunc newvars (cddr expr)))))
+	  ((or (eq? 'quote (car expr))
+	       (eq? 'QUOTE (car expr)))
+	   expr)
+	  ((or (eq? 'quasiquote (car expr))
+	       (eq? 'QUASIQUOTE (car expr)))
+	   ;;(c-display "Warning in macros.scm/schemecodeparser: quasiquote not handled")
+	   expr)
+	  ((eq? 'cond (car expr))
+	   `(cond ,@(map (lambda (exprs)
+			   (let ((test (parse varlist (car exprs))))
+			     `(,test ,@(blockhandlerfunc varlist (cdr exprs)))))
+			 (cdr expr))))
+	  ((eq? 'case (car expr))
+	   (let ((first (parse varlist (cadr expr))))
+	     `(case ,first
+		,@(map (lambda (expr)
+			 `(,(car expr) ,@(blockhandlerfunc varlist (cdr expr))))
+		       (cddr expr)))))
+	  ((and symbolhandler
+		(eq? (car expr) (car symbolhandler)))
+	   ((cadr symbolhandler) expr))
+	  (else
+	   (if elsefunc
+	       (elsefunc expr)
+	       `(,(car expr) ,@(map (lambda (expr)
+				      (parse varlist expr))
+				    (cdr expr))))))))
+
+(define (fix-defines-do terms)
+  ;;(c-display terms)
+  (schemecodeparser terms
+		    :blockhandler
+		    (lambda (terms)
+		      ;(if (not (eq? 'define (car terms)))
+		;	  (let ((temp (c-macroexpand-1 terms)))
+		;	    (if (eq? 'define (car temp))
+		;		(set! terms temp))))
+		      ;;(c-display "terms fdd" terms)
+		      (let* ((defines '())
+			     (newterms (map (lambda (terms)
+						       (if (and (pair? terms)
+								(eq? 'define (car terms)))
+							   (if (pair? (cadr terms))
+							       (begin
+								 (push! (car (cadr terms)) defines)
+								 `(set! ,(car (cadr terms)) (lambda ,(cdr (cadr terms)) ,@(cddr terms))))
+							       (begin
+								 (push! (cadr terms) defines)
+								 `(set! ,(cadr terms) ,@(cddr terms))))
+							   terms))
+						     terms)))
+			(if (null? defines)
+			    (map fix-defines-do terms)
+			    `((let* ,(delete-duplicates (map (lambda (name)
+							       `(,name #f))
+							     (reverse! defines)))
+				,@(map fix-defines-do newterms))))))))
+
+
+(define-macro (fix-defines . terms)
+  `(let ()
+     ,@(fix-defines-do terms)))
+
+
+#!
+(fix-defines-do '(let ()
+		   (set! a 5)
+		   (define b 6)
+		   (define (c) 7)))
+
+
+(macroexpand '(fix-defines 
+	       (set! a 5)
+	       (define b 6)
+	       (define (c) 7)))
+
+
+!#
+
+
+(define-macro (c-loop var min-val check-func max-val inc-val . body)
+  (define das-min (gensym))
+  (define das-max (gensym))
+  (define loop (gensym))
+  `(let ((,das-min ,min-val)
+	 (,das-max ,max-val))
+     (let ,loop ((,var ,das-min))
+	  (if (,check-func ,var ,das-max)
+	      (begin
+		(let ((,(symbol-append var '.scale) (lambda (das-matches . das-rest)
+						      (if (not (null? das-rest))
+							  (c-scale ,var ,das-min ,das-max das-matches (car das-rest))
+							  (fix-defines
+							   (define get-time car)
+							    (define get-val cadr)
+							    (define das-first (car das-matches))
+							    (define das-last (last das-matches))
+							    (define matches (map (lambda (match)
+										   (cons (c-scale (get-time match)
+												  (get-time das-first) (get-time das-last)
+												  ,das-min ,das-max)
+											 (cdr match)))
+										 das-matches))
+							    (define (find-matchpointer matches)
+							      (if (or (null? (cddr matches))
+								      (and (>= ,var (get-time (car matches)))
+									   (<= ,var (get-time (cadr matches)))))
+								  matches
+								  (find-matchpointer (cdr matches))))
+							    (define matchpointer (find-matchpointer matches))
+							    (define match (car matchpointer))
+							    (define time (get-time match))
+							    (define val (get-val match))
+							    (define next-match (cadr matchpointer))
+							    (define next-time (get-time next-match))
+							    (define next-val (get-val next-match))
+							    (c-scale ,var time next-time val next-val))))))
+		  ,@body
+		  (,loop (+ ,var ,inc-val))))))))
+
+#!
+(c-loop i 0 < 20 (i.scale `((1 1) (2 0.5) (3 1)))
+	(c-display i))
+!#
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;; Class definition, etc. ;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (define-macro (def-class def . body)
 
   (define newvars '())
@@ -311,13 +605,18 @@
 					     `(set! ,defname (add-method2* ,nameandvars ,@body))
 					     `(set! ,defname (add-method2 ,nameandvars ,@body)))))
 				      ((eq? (car t) 'def-var)
-				       (let* ((name (cadr t))
-					      (initial (caddr t))
-					      (thisname (symbol-append 'this-> name)))
-					 (set! newvars (cons thisname newvars))
-					 `(begin
-					    (add-method2 (,name . rest) (if (null? rest) ,thisname (set! ,thisname (car rest))))
-					    (set! ,thisname ,initial))))
+				       (if (= 2 (length t))
+					   `(add-method2* ',(cadr t) (lambda rest
+								       (if (null? rest)
+									   ,(cadr t)
+									   (set! ,(cadr t) (car rest)))))
+					   (let* ((name (cadr t))
+						  (initial (caddr t))
+						  (thisname name));;(symbol-append 'this-> name)))
+					     (set! newvars (cons thisname newvars))
+					     `(begin
+						(add-method2 (,name . rest) (if (null? rest) ,thisname (set! ,thisname (car rest))))
+						(set! ,thisname ,initial)))))
 				      ((eq? (car t) 'def-constructor)
 				       (let* ((nameandvars (cadr t))
 					      (body (cddr t))
@@ -367,7 +666,7 @@
 	 (add-method-do name func))
        
        (def-method (dir)
-	 (append (cons this->class-name
+	 (append (cons class-name
 		       (hash-fold (lambda (key value s) (cons key s)) '() 
 				  methods))
 		 (map (lambda (super) (-> super dir))
@@ -376,16 +675,16 @@
 	 (or (hashq-ref methods name)
 	     (any (lambda (super) (-> super get-method name))
 		  supers)))
-       (def-method (instance? class-name)
-	 (or (eq? class-name this->class-name)
-	     (any (lambda (super) (-> super instance? class-name))
+       (def-method (instance? class-name*)
+	 (or (eq? class-name* class-name)
+	     (any (lambda (super) (-> super instance? class-name*))
 		  supers)))
        
        (define (this name . rest)
 	 (apply (or (hashq-ref methods name)
 		    (any (lambda (super) (-> super get-method name))
 			 supers)
-		    (lambda x (format #t "No such method: \"~A\" in class \"~A\".~%" name this->class-name)))
+		    (lambda x (format #t "No such method: \"~A\" in class \"~A\".~%" name class-name)))
 		rest))
        
        (define (this-with-custom-dispatchers m . rest)
@@ -399,7 +698,7 @@
 	    (apply (or (hashq-ref methods m)
 		       (any (lambda (super) (-> super get-method m))
 			    supers)
-		       (lambda x (format #t "No such method: \"~A\" in class \"~A\".~%" m this->class-name)))
+		       (lambda x (format #t "No such method: \"~A\" in class \"~A\".~%" m class-name)))
 		   rest))))
        
        (define (this-with-custom-dispatcher m . rest)
@@ -408,7 +707,7 @@
 	     (apply (or (hashq-ref methods m)
 			(any (lambda (super) (-> super get-method m))
 			     supers)
-			(lambda x (format #t "No such method: \"~A\" in class \"~A\".~%" m this->class-name)))
+			(lambda x (format #t "No such method: \"~A\" in class \"~A\".~%" m class-name)))
 		    rest)))
        
        ,@newbody
@@ -454,17 +753,23 @@
       `(define ,(symbol-append 'this-> (car nameandvars))
 	 (add-method2 ,nameandvars ,@body))))
 
-(define-macro (def-var name initial)
-  (let ((thisname (symbol-append 'this-> name)))
-    `(define ,thisname
-       (begin
-	 (add-method2 (,name . rest) (if (null? rest) ,thisname (set! ,thisname (car rest))))
-	 ,initial))))
+(define-macro (def-var name . initial)
+  (if (null? initial)
+      `(add-method ',name (lambda rest
+			    (if (null? rest)
+				,name
+				(set! ,name (car rest)))))
+      (let ((thisname name ));;(symbol-append 'this-> name)))
+	`(define ,thisname
+	   (begin
+	     (add-method2 (,name . rest) (if (null? rest) ,thisname (set! ,thisname (car rest))))
+	     ,(car initial))))))
+
 
 (define-macro (def-constructor nameandvars . body)
   (let* ((name (car nameandvars))
-	(args (cdr nameandvars))
-	(name2 (symbol-append 'constructor- name)))
+	 (args (cdr nameandvars))
+	 (name2 (symbol-append 'constructor- name)))
     `(add-method2* ,(cons name2 args) ,@body)))
 
 (define (object? o)
