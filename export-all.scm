@@ -132,6 +132,8 @@ make-sum-of-cosines
 make-sum-of-sines
 make-ncos
 make-nsin
+make-nrxycos
+make-nrxysin
 make-table-lookup
 make-triangle-wave
 make-two-pole
@@ -275,6 +277,10 @@ ncos
 ncos?
 nsin
 nsin?
+nrxycos
+nrxycos?
+nrxysin
+nrxysin?
 table-lookup
 table-lookup?
 tap

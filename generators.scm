@@ -481,23 +481,16 @@
 
 ;;; n sinusoids scaled by r: nrsin, nrcos, nrssb
 
-;;; (define nrsin sine-summation)
-;;; (define make-nrsin make-sine-summation)
-;;; (define nrsin? sine-summation?)
-;;; make-sine-summation args in wrong order etc
-
-;;; actually, isn't sine-summation equivalent to nrssb? (ratio => modfreq)
-
 (def-clm-struct (nrsin
 		 :make-wrapper (lambda (g)
-				 (set! (nrsin-gen g) (make-sine-summation (nrsin-frequency g) 0.0 (nrsin-n g) (nrsin-r g) 1.0))
+				 (set! (nrsin-gen g) (make-nrxysin (nrsin-frequency g) 1.0 (nrsin-n g) (nrsin-r g)))
 				 g))
   (frequency 0.0) (n 1 :type int) (r 0.0)
   (gen #f :type clm))
 
 (define (nrsin gen fm)
   (declare (gen nrsin) (fm float))
-  (sine-summation (nrsin-gen gen) fm))
+  (nrxysin (nrsin-gen gen) fm))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)

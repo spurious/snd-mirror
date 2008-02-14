@@ -1821,13 +1821,7 @@ static Float nrxy_set_phase(mus_any *ptr, Float val) {((nrxy *)ptr)->phase = val
 static off_t nrxy_n(mus_any *ptr) {return((off_t)(((nrxy *)ptr)->n));}
 
 static Float nrxy_y_over_x(mus_any *ptr) {return(((nrxy *)ptr)->y_over_x);}
-
-static Float nrxy_set_y_over_x(mus_any *ptr, Float val) 
-{
-  nrxy *gen = (nrxy *)ptr;
-  gen->y_over_x = val;
-  return(val);
-}
+static Float nrxy_set_y_over_x(mus_any *ptr, Float val) {((nrxy *)ptr)->y_over_x = val; return(val);}
 
 static Float nrxy_r(mus_any *ptr) {return(((nrxy *)ptr)->r);}
 
@@ -1922,7 +1916,6 @@ Float mus_nrxysin(mus_any *ptr, Float fm)
    *   the 0's (? -- can this actually be done?), then look at all the max/mins, but that's
    *   as much work as running a simulation.  In "normal" cases, it's sufficient to run
    *   the generator through 64 points.  For now, I'll use the geometric progression.
-   *   
    */
 
 
@@ -2071,7 +2064,6 @@ mus_any *mus_make_nrxycos(Float frequency, Float y_over_x, int n, Float r)
   gen->core = &NRXYCOS_CLASS;
   if (n != 0)
     gen->norm = (pow(r, n + 1) - 1.0) / (r - 1.0); /* the nrxysin norm is deliberately off by 1 to try to reflect lack of synchronous peaks */
-
   return((mus_any *)gen);
 }
 
@@ -10950,7 +10942,6 @@ void init_mus_module(void)
  *         ["a" used only in sine-summation, "sines" used only in sum-of-sines, "cosines" used only in sum-of-cosines]
  *         ["a" (also "k") is used in generators.scm especially where "r" is already in use, and abcos]
  *
- *      make-sine-summation freq n r ratio [no init-phase?] (can't replace with nrxycos because actual waveforms differ, could use nrxysin)
  *      make-formant freq r gain, or maybe amplitude? [gain used only in make-formant]
  *      make-two-pole|zero freq r
  *      also cases like make-mfilter in dsp.scm
@@ -10959,8 +10950,6 @@ void init_mus_module(void)
  *      polyshape "kind" arg should be "type" [kind used only in make-polyshape]
  *
  * generators:
- *   sine-summation -> nrxysin + nrxycos
- *
  *   perhaps one gen: if n=1 oscil, n>1 r=1 sum-of-cosines, n!=inf nr[xy]cos, n=inf, r<1 r[xy]cos, r>=1 r[xy]k!cos or rkcos
  *    this could be "cosines" ("cosine-sum"?), sine case "sines", maybe xy cases: "ssb-cosines" "ssb-sines"
  *    if r is a list|vct, polyshape, if xy polyshape*cos
@@ -10986,8 +10975,6 @@ void init_mus_module(void)
  *      mus-amplitude to parallel mus-frequency/mus-phase
  *      mus-documentation [mus-describe shows current state -- if we had this, snd-help might be able to use it for generators.scm]
  *        (the info is in clm2xen, but the class slot is in clm and it would be nice if it worked from C)
- *        PERHAPS: include the main added gens in the index
- *      for "xy" cases, we need mus-[x|y]frequency or some equivalent [also currently using "carfreq" "modfreq"]
  *
  *
  * arguments:
@@ -11013,7 +11000,7 @@ void init_mus_module(void)
  *   (9.8)
  *   out* last arg defaults to *output*
  *   ncos, nsin
- *   nrxycos, nrxysin [todo: clm.html/mus.lisp/snd-tests]
+ *   nrxycos, nrxysin [todo: snd-tests/change animals?]
  *
  *   (9.7)
  *   :dur and :end -> :length in make-env

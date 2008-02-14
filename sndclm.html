@@ -2558,8 +2558,8 @@ The basic idea is very similar to that used in the
 fall-off of the spectrum and the spacing of the partials.
 </p>
 
-<p>The peak amplitude of the nrxysin and sine-summation generators is very hard to predict, and Moorer's suggested normalization
-is not helpful.  See the code (clm.c) for a long comment.  If "r" &lt; 1.0, the output will never go over 1.0, but
+<p>The peak amplitude of the nrxysin and sine-summation generators is very hard to predict.
+If "r" &lt; 1.0, the output will not go over 1.0, but
 it also will almost never reach that peak either.  
 <a href="#nrxycos">nrxycos</a> is normalized correctly, and gives you the same kinds of controls you get in sine-summation.
 </p>

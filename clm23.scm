@@ -173,6 +173,26 @@
        (do ((i start (1+ i))) ((= i end))
 	 (out-any i (* amp (ncos os)) 0))))))
 
+(define (simple-nrxysin beg dur amp)
+  "(simple-nrxysin beg dur amp) test instrument for nrxysin"
+  (let* ((os (make-nrxysin 440 1.0 10))
+	 (start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i))) ((= i end))
+	 (out-any i (* amp (nrxysin os)) 0))))))
+
+(define (simple-nrxycos beg dur freq amp)
+  "(simple-nrxycos beg dur freq amp) test instrument for nrxycos"
+  (let* ((os (make-nrxycos freq 1.0 10))
+	 (start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i))) ((= i end))
+	 (out-any i (* amp (nrxycos os)) 0))))))
+
 (define (simple-osc beg dur freq amp)
   "(simple-osc beg dur freq amp) test instrument for oscil"
   (let* ((start (seconds->samples beg))
@@ -1547,6 +1567,8 @@
 	    (simple-soc 0.5 .2 440 .1)
 	    (simple-nsin .6 .2 .1)
 	    (simple-ncos 0.7 .2 440 .1)
+	    (simple-nrxysin .6 .2 .1)
+	    (simple-nrxycos 0.7 .2 440 .1)
 	    (simple-osc 0.75 .2 440 .1)
 	    (simple-sss 1.0 .2 .1)
 	    (simple-asy 1.25 .2 .1)

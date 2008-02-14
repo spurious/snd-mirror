@@ -209,6 +209,7 @@
 ;;; Trumpeter swan
 ;;; Canada goose
 ;;; Wood duck
+;;; Black-crowned night heron
 ;;; Least bittern
 ;;; Black rail
 ;;; Virginia rail
@@ -1612,8 +1613,8 @@
 		      (pulsed-env peep frq)
 		      md md
 		      (sine-summation carrier (+ (* frq (/ 13200 16))
-					       (* .1 (rand-interp noise))
-					       (* .1 md)))))))))))
+						 (* .1 (rand-interp noise))
+						 (* .1 md)))))))))))
 
 ;(with-sound () (long-spurred-meadow-katydid 0 .5))
 
@@ -10647,6 +10648,43 @@
 ;(with-sound (:play #t) (philadelphia-vireo 0 .5))
 
 
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Black-crowned night heron
+
+(definstrument (black-crowned-night-heron beg amp)
+  ;; east 15 6
+  (let* ((start (seconds->samples beg))
+	 (dur 0.145)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.045 0.233 0.289 0.674 0.508 0.865 0.762 1.000 0.847 0.900 0.929 0.368 
+			   0.958 0.100 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0.000 0.119 0.219 0.149 0.385 0.168 0.501 0.182 0.555 0.201 0.708 0.190 1.000 0.168)
+			 :duration dur :scaler (hz->radians (* 1/2 7150.0))))
+	 (gen1 (make-oscil))
+	 (gens (make-nrxycos 0.0 1/6 15 .9))
+	 (gens0 (make-nrcos 0.0 6 .5))
+	 (rf (make-env '(0 .5 .4 .9 .7 .8 1 .5) :duration dur))
+	 (rnd (make-rand-interp 1000 (hz->radians 50)))
+	 (vib (make-triangle-wave 500 (hz->radians 30)))
+	 (rnd1 (make-rand-interp 1000 .5)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((frq (+ (env frqf)
+		       (triangle-wave vib)
+		       (rand-interp rnd))))
+	   (set! (mus-scaler gens) (env rf)) ;scaler=r
+	   (outa i (* (env ampf)
+		      (+ .5 (abs (rand-interp rnd1)))
+		      (+ (oscil gen1 (* 2 frq))
+			 (* .2 (nrcos gens0 frq))
+			 (nrxycos gens (* 6 frq)))))))))))
+
+;(with-sound (:play #t) (black-crowned-night-heron 0 .5))
+
 
 
 
@@ -10866,7 +10904,8 @@
   (white-eyed-vireo              (+ beg 246.5) .25)      (set! beg (+ beg spacing))
   (philadelphia-vireo            (+ beg 247.5) .25)      (set! beg (+ beg spacing))
   (willet                        (+ beg 248.3) .25)      (set! beg (+ beg spacing))
-  (+ beg 249.0))
+  (black-crowned-night-heron     (+ beg 249.0) .25)      (set! beg (+ beg spacing))
+  (+ beg 249.5))
 
 
 (define (calling-all-animals)
