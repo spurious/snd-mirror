@@ -1795,7 +1795,7 @@ mus_any *mus_make_asymmetric_fm(Float freq, Float phase, Float r, Float ratio) /
 /* the generator uses x and y (frequencies), but it's very common to start up with 0 freqs
  *   and let the fm arg set the frequency, so it seems like we want to give the ratio between
  *   the frequencies at make time, rather than two (possibly dummy) frequencies).
- *   TODO: can xy-ratio be negative to build (via r) backwards)?
+ *   xy-ratio negative to build (via r) backwards.
  */
 
 typedef struct {
@@ -1828,6 +1828,10 @@ static Float nrxy_r(mus_any *ptr) {return(((nrxy *)ptr)->r);}
 static Float nrxy_set_r(mus_any *ptr, Float val) 
 {
   nrxy *gen = (nrxy *)ptr;
+  if (val >= 1.0)
+    val = 0.999;
+  if (val < 0.0)
+    val = 0.0;
   if (gen->n > 0)
     gen->norm = (pow(val, gen->n) - 1.0) / (val - 1.0); 
   gen->r = val;
@@ -1892,31 +1896,12 @@ Float mus_nrxysin(mus_any *ptr, Float fm)
   if (DIVISOR_NEAR_ZERO(divisor))
     return(0.0);
 
- return((sin(x) - 
-	 r * sin(x - y) - 
-	 gen->r_to_n_plus_1 * (sin (x + (n + 1) * y) - 
-			       r * sin(x + n * y))) / 
-	divisor);
+  return((sin(x) - 
+	  r * sin(x - y) - 
+	  gen->r_to_n_plus_1 * (sin (x + (n + 1) * y) - 
+				r * sin(x + n * y))) / 
+	 divisor);
 }
-
-  /* 
-   * if r=1.0, the formula given by Moorer is extremely unstable anywhere near phase=0.0 
-   *   (map-channel (let ((gen (make-sine-summation 100.0 0.0 1 1 1.0))) (lambda (y) (sine-summation gen))))
-   * or even worse:
-   *   (map-channel (let ((gen (make-sine-summation 100.0 0.0 0 1 1.0))) (lambda (y) (sine-summation gen))))
-   * which should be a sine wave! 
-   *
-   * also, his amplitude normalization formula is wrong: we're trying to set the peak amp to 1.0,
-   *   but he's calculating RMS amps.  If we assume (incorrectly, but following Moorer) that all
-   *   the components peak together somewhere in the waveform, the sum of the amps is 
-   *   (/ (- (expt r n) 1) (- r 1)), but this is always too high -- as far as I can tell,
-   *   the components never line up.  We can't just pre-run the durned generator because
-   *   weird ratio values can create a very low frequency drift -- the actual maxamp can
-   *   be anywhere.  Sigh. We could (theoretically!) differentiate this formula, find all
-   *   the 0's (? -- can this actually be done?), then look at all the max/mins, but that's
-   *   as much work as running a simulation.  In "normal" cases, it's sufficient to run
-   *   the generator through 64 points.  For now, I'll use the geometric progression.
-   */
 
 
 static Float run_nrxysin(mus_any *ptr, Float fm, Float unused) {return(mus_nrxysin(ptr, fm));}
@@ -1959,13 +1944,15 @@ mus_any *mus_make_nrxysin(Float frequency, Float y_over_x, int n, Float r)
   gen->freq = mus_hz_to_radians(frequency);
   gen->y_over_x = y_over_x;
   gen->phase = 0.0;
+  if (r >= 1.0) r = 0.99999;
+  if (r < 0.0) r = 0.0;
   gen->r = r;
   gen->n = n;
   gen->r_to_n_plus_1 = pow(r, n + 1);
   gen->r_squared_plus_1 = 1.0 + r * r;
   if (n == 0)
     gen->norm = 1.0;
-  else gen->norm = (pow(r, n) - 1.0) / (r - 1.0);
+  else gen->norm = (pow(r, n + 1) - 1.0) / (r - 1.0); 
   return((mus_any *)gen);
 }
 
@@ -1975,6 +1962,8 @@ mus_any *mus_make_sine_summation(Float frequency, Float phase, int n, Float a, F
   nrxy *gen;
   gen = (nrxy *)mus_make_nrxysin(frequency, ratio, n, a);
   gen->phase = phase;
+  if (n > 0)
+    gen->norm = (pow(a, n) - 1.0) / (a - 1.0); /* backwards compatibility; this actually peaks slightly over 1 as often as not */
   return((mus_any *)gen);
 }
 
@@ -2014,14 +2003,14 @@ Float mus_nrxycos(mus_any *ptr, Float fm)
   gen->phase += (gen->freq + fm);
   
   divisor = gen->norm * (gen->r_squared_plus_1 - (2 * r * cos(y)));
-  if (DIVISOR_NEAR_ZERO(divisor))
-    return(0.0);
+  if (DIVISOR_NEAR_ZERO(divisor)) /* this can happen if --with-doubles and r>0.9999999 or thereabouts */
+    return(1.0);
 
- return((cos(x) - 
-	 r * cos(x - y) - 
-	 gen->r_to_n_plus_1 * (cos (x + (n + 1) * y) - 
-			       r * cos(x + n * y))) / 
-	divisor);
+  return((cos(x) - 
+	  r * cos(x - y) - 
+	  gen->r_to_n_plus_1 * (cos (x + (n + 1) * y) - 
+				r * cos(x + n * y))) / 
+	 divisor);
 }
 
 
@@ -2062,8 +2051,6 @@ mus_any *mus_make_nrxycos(Float frequency, Float y_over_x, int n, Float r)
   nrxy *gen;
   gen = (nrxy *)mus_make_nrxysin(frequency, y_over_x, n, r);
   gen->core = &NRXYCOS_CLASS;
-  if (n != 0)
-    gen->norm = (pow(r, n + 1) - 1.0) / (r - 1.0); /* the nrxysin norm is deliberately off by 1 to try to reflect lack of synchronous peaks */
   return((mus_any *)gen);
 }
 
@@ -11000,7 +10987,7 @@ void init_mus_module(void)
  *   (9.8)
  *   out* last arg defaults to *output*
  *   ncos, nsin
- *   nrxycos, nrxysin [todo: snd-tests/change animals?]
+ *   nrxycos, nrxysin [todo: snd-tests]
  *
  *   (9.7)
  *   :dur and :end -> :length in make-env

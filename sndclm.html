@@ -2553,14 +2553,15 @@ produce a kind of additive synthesis.
 ratio between successive sidebands (don't set it to 1.0), and "ratio" is the ratio between the
 carrier frequency and the spacing between successive sidebands.
 A "ratio" of 2 gives odd-numbered harmonics for a (vaguely) clarinet-like sound.
+A negative ratio puts the side-bands below the carrier.
 The basic idea is very similar to that used in the
 <a href="#ncos">ncos</a> generator, but you have control of the
 fall-off of the spectrum and the spacing of the partials.
 </p>
 
-<p>The peak amplitude of the nrxysin and sine-summation generators is very hard to predict.
-If "r" &lt; 1.0, the output will not go over 1.0, but
-it also will almost never reach that peak either.  
+<p>The peak amplitude of the nrxysin and sine-summation generators is hard to predict.
+I think nrxysin is close to the -1.0..1.0 ideal, and won't go over 1.0, whereas sine-summation,
+for historical reasons, is less well behaved.
 <a href="#nrxycos">nrxycos</a> is normalized correctly, and gives you the same kinds of controls you get in sine-summation.
 </p>
 

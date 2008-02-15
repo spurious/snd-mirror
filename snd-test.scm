@@ -1,36 +1,36 @@
 ;;; Snd tests
 ;;;
 ;;;  test 0: constants                          [539]
-;;;  test 1: defaults                           [1104]
-;;;  test 2: headers                            [1304]
-;;;  test 3: variables                          [1620]
-;;;  test 4: sndlib                             [2267]
-;;;  test 5: simple overall checks              [4793]
-;;;  test 6: vcts                               [13749]
-;;;  test 7: colors                             [14027]
-;;;  test 8: clm                                [14517]
-;;;  test 9: mix                                [25208]
-;;;  test 10: marks                             [27426]
-;;;  test 11: dialogs                           [28387]
-;;;  test 12: extensions                        [28632]
-;;;  test 13: menus, edit lists, hooks, etc     [28903]
-;;;  test 14: all together now                  [30609]
-;;;  test 15: chan-local vars                   [31643]
-;;;  test 16: regularized funcs                 [33255]
-;;;  test 17: dialogs and graphics              [38246]
-;;;  test 18: enved                             [38336]
-;;;  test 19: save and restore                  [38355]
-;;;  test 20: transforms                        [40140]
-;;;  test 21: new stuff                         [42109]
-;;;  test 22: run                               [44100]
-;;;  test 23: with-sound                        [50098]
-;;;  test 24: user-interface                    [53086]
-;;;  test 25: X/Xt/Xm                           [56492]
-;;;  test 26: Gtk                               [61088]
-;;;  test 27: GL                                [64940]
-;;;  test 28: errors                            [65064]
-;;;  test all done                              [67349]
-;;;  test the end                               [67585]
+;;;  test 1: defaults                           [1110]
+;;;  test 2: headers                            [1312]
+;;;  test 3: variables                          [1628]
+;;;  test 4: sndlib                             [2276]
+;;;  test 5: simple overall checks              [4802]
+;;;  test 6: vcts                               [13769]
+;;;  test 7: colors                             [14037]
+;;;  test 8: clm                                [14527]
+;;;  test 9: mix                                [25455]
+;;;  test 10: marks                             [27673]
+;;;  test 11: dialogs                           [28634]
+;;;  test 12: extensions                        [28879]
+;;;  test 13: menus, edit lists, hooks, etc     [29150]
+;;;  test 14: all together now                  [30859]
+;;;  test 15: chan-local vars                   [31894]
+;;;  test 16: regularized funcs                 [33533]
+;;;  test 17: dialogs and graphics              [38524]
+;;;  test 18: enved                             [38614]
+;;;  test 19: save and restore                  [38633]
+;;;  test 20: transforms                        [40418]
+;;;  test 21: new stuff                         [42401]
+;;;  test 22: run                               [44393]
+;;;  test 23: with-sound                        [50606]
+;;;  test 24: user-interface                    [53859]
+;;;  test 25: X/Xt/Xm                           [57253]
+;;;  test 26: Gtk                               [61861]
+;;;  test 27: GL                                [65713]
+;;;  test 28: errors                            [65837]
+;;;  test all done                              [68137]
+;;;  test the end                               [68375]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -18477,7 +18477,6 @@ EDITS: 2
       (if (not (nrxysin? gen)) (snd-display ";~A not nrxysin?" gen))
       (if (fneq (mus-phase gen) 1.253787) (snd-display ";nrxysin phase: ~F?" (mus-phase gen)))
       (if (fneq (mus-frequency gen) 440.0) (snd-display ";nrxysin frequency: ~F?" (mus-frequency gen)))
-      (if (or (fneq (vct-ref v0 1) 0.249) (fneq (vct-ref v0 8) 1.296)) (snd-display ";nrxysin output: ~A" v0))
       (if (fneq (mus-scaler gen) 0.5) (snd-display ";mus-scaler (a) nrxysin: ~A" (mus-scaler gen)))
       (set! (mus-scaler gen) 0.75)
       (if (fneq (mus-scaler gen) 0.75) (snd-display ";mus-scaler (set a) nrxysin: ~A" (mus-scaler gen)))
@@ -18487,6 +18486,15 @@ EDITS: 2
     (test-gen-equal (make-nrxysin 440.0) (make-nrxysin 440.0) (make-nrxysin 100.0))
     (test-gen-equal (make-nrxysin 440.0) (make-nrxysin 440.0) (make-nrxysin 440.0 1.5))
     (test-gen-equal (make-nrxysin 440.0) (make-nrxysin 440.0) (make-nrxysin 440.0 :n 3))
+
+    (let ((v1 (make-vct 10)))
+      (with-sound (:output v1 :srate 44100)
+			  (let ((gen (make-nrxysin 1000 :n 10 :r .99)))
+			    (do ((i 0 (1+ i)))
+				((= i 10))
+			      (outa i (nrxysin gen)))))
+      (if (not (vequal v1 (vct 0.000 0.671 0.637 0.186 0.017 0.169 0.202 0.048 0.007 0.105)))
+	  (snd-display ";ws nrxysin output: ~A" v1)))
     
 
     (let ((gen (make-nrxycos 440.0))
@@ -18504,7 +18512,6 @@ EDITS: 2
       (if (not (nrxycos? gen)) (snd-display ";~A not nrxycos?" gen))
       (if (fneq (mus-phase gen) 1.253787) (snd-display ";nrxycos phase: ~F?" (mus-phase gen)))
       (if (fneq (mus-frequency gen) 440.0) (snd-display ";nrxycos frequency: ~F?" (mus-frequency gen)))
-      (if (or (fneq (vct-ref v0 1) 0.249) (fneq (vct-ref v0 8) 1.296)) (snd-display ";nrxycos output: ~A" v0))
       (if (fneq (mus-scaler gen) 0.5) (snd-display ";mus-scaler (a) nrxycos: ~A" (mus-scaler gen)))
       (set! (mus-scaler gen) 0.75)
       (if (fneq (mus-scaler gen) 0.75) (snd-display ";mus-scaler (set a) nrxycos: ~A" (mus-scaler gen)))
@@ -18514,9 +18521,15 @@ EDITS: 2
     (test-gen-equal (make-nrxycos 440.0) (make-nrxycos 440.0) (make-nrxycos 100.0))
     (test-gen-equal (make-nrxycos 440.0) (make-nrxycos 440.0) (make-nrxycos 440.0 1.5))
     (test-gen-equal (make-nrxycos 440.0) (make-nrxycos 440.0) (make-nrxycos 440.0 :n 3))
-    
-    ;; TODO: gens nrxysin tests -> snd-test
-    
+
+    (let ((v1 (with-sound (:output (make-vct 10) :srate 44100)
+			  (let ((gen (make-nrxycos 1000 :n 10 :r .99)))
+			    (do ((i 0 (1+ i)))
+				((= i 10))
+			      (outa i (nrxycos gen)))))))
+      (if (not (vequal v1 (vct 1.000 0.602 -0.067 -0.242 -0.007 0.071 -0.087 -0.128 -0.007 0.012)))
+	  (snd-display ";ws nrxycos output: ~A" v1)))
+
 
     (let ((ind (new-sound "test.snd" mus-next mus-bfloat)))
       (pad-channel 0 1000)
@@ -53776,7 +53789,10 @@ EDITS: 1
 		(test-zero-stability (lambda () (make-ncos 0.0 n)) ncos (lambda (gen val) (set! (mus-phase gen) val)) zero)
 		(test-zero-stability (lambda () (make-sine-summation 0.0 :n n)) sine-summation (lambda (gen val) (set! (mus-phase gen) val)) zero)
 
-		;; TODO: nrxysin|cos zero check
+		(test-zero-stability (lambda () (make-nrxysin :n n)) nrxysin (lambda (gen val) (set! (mus-phase gen) val)) zero)
+		(test-zero-stability (lambda () (make-nrxycos :n n)) nrxycos (lambda (gen val) (set! (mus-phase gen) val)) zero)
+		(test-zero-stability (lambda () (make-nrxysin :n n :r .999999)) nrxysin (lambda (gen val) (set! (mus-phase gen) val)) zero)
+		(test-zero-stability (lambda () (make-nrxycos :n n :r .999999)) nrxycos (lambda (gen val) (set! (mus-phase gen) val)) zero)
 		
 		(test-zero-stability (lambda () (make-nssb 0.0 1.0 n)) nssb (lambda (gen val) (set! (nssb-modangle gen) val)) zero)
 		(test-zero-stability (lambda () (make-noddssb 0.0 1.0 n)) noddssb (lambda (gen val) (set! (noddssb-modangle gen) val)) zero)
@@ -53821,7 +53837,10 @@ EDITS: 1
 		(test-zero-stability (lambda () (make-rk!cos :r r)) rk!cos (lambda (gen val) (set! (rk!cos-angle gen) val)) zero)
 		(test-zero-stability (lambda () (make-r2k!cos :r r)) r2k!cos (lambda (gen val) (set! (mus-phase (r2k!cos-osc gen)) val)) zero)
 		(test-zero-stability (lambda () (make-r2k2cos :r r)) r2k2cos (lambda (gen val) (set! (r2k2cos-angle gen) val)) zero)
-		
+
+		(test-zero-stability (lambda () (make-nrxysin :n 3 :r r)) nrxysin (lambda (gen val) (set! (mus-phase gen) val)) zero)
+		(test-zero-stability (lambda () (make-nrxycos :n 3 :r r)) nrxycos (lambda (gen val) (set! (mus-phase gen) val)) zero)
+
 		(test-zero-stability (lambda () (make-rssb 0.0 1.0 :r r)) rssb (lambda (gen val) (set! (rssb-angle2 gen) val)) zero)
 		(test-zero-stability (lambda () (make-erssb 0.0 1.0 :r r)) erssb (lambda (gen val) (set! (erssb-modangle gen) val)) zero)
 		(test-zero-stability (lambda () (make-rkssb 0.0 1.0 :r r)) rkssb (lambda (gen val) (set! (rkssb-modangle gen) val)) zero)
@@ -53836,7 +53855,7 @@ EDITS: 1
 		(test-zero-stability (lambda () (make-rkoddssb 0.0 1.0 :r r)) rkoddssb (lambda (gen val) (set! (rkoddssb-modangle gen) val) (set! (rkoddssb-carangle gen) val)) zero)
 		(test-zero-stability (lambda () (make-r2ssb 0.0 1.0 :r r)) r2ssb (lambda (gen val) (set! (r2ssb-modangle gen) val) (set! (r2ssb-carangle gen) val)) zero)
 		)
-	      (list 0.1 0.5 .99)))
+	      (list 0.1 0.5 .99 .999)))
 	   (list 0.0 (* 0.5 pi) pi (* 2.0 pi) (* -0.5 pi) (- pi) (* -2.0 pi) (* 1.5 pi) (* -1.5 pi))))
 	));end snd-guile block
 

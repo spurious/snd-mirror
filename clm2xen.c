@@ -4640,8 +4640,10 @@ static XEN g_make_nrxy(bool sin_case, const char *caller, XEN arglist)
 	XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[2], keys[2], "n (sidebands): ~A?");
 
       r = mus_optkey_to_float(keys[3], caller, orig_arg[3], r);
-      if (r == 1.0)
+      if ((r >= 1.0) ||
+	  (r < 0.0))  /* this actually gives the same spectra as (abs r) but the peak amps are out of range */
 	XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[3], keys[3], "r (sideband amp ratio): ~A?");
+      /* if not --with-doubles, this actually maxes out around .99999999 because mus_optkey_to_float (apparently) rounds up */
     }
   if (sin_case)
     ge = mus_make_nrxysin(freq, ratio, n, r);
@@ -5071,9 +5073,13 @@ static XEN g_env_interp(XEN x, XEN env1) /* "env" causes trouble in Objective-C!
 
 static XEN clm_output, clm_reverb; /* *output* and *reverb* at extlang level -- these can be output streams, vct, sound-data objects etc */
 
+#if HAVE_GUILE
 XEN mus_clm_output(void) {return(XEN_VARIABLE_REF(clm_output));}
 XEN mus_clm_reverb(void) {return(XEN_VARIABLE_REF(clm_reverb));}
-
+#else
+XEN mus_clm_output(void) {return(XEN_VARIABLE_REF(S_output));}
+XEN mus_clm_reverb(void) {return(XEN_VARIABLE_REF(S_reverb));}
+#endif
 
 static XEN g_input_p(XEN obj) 
 {
@@ -5192,8 +5198,13 @@ static XEN g_out_any_1(const char *caller, XEN frame, XEN chan, XEN val, XEN out
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_2, caller, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, caller, "a number");
 
+#if HAVE_GUILE
   if (XEN_NOT_BOUND_P(outp))
     outp = XEN_VARIABLE_REF(clm_output);
+#else
+  if (XEN_NOT_BOUND_P(outp))
+    outp = XEN_VARIABLE_REF(S_output);
+#endif
     
   if (MUS_XEN_P(outp))
     {

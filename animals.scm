@@ -21,7 +21,7 @@
 ;;; Marantz, Zimmer, "Bird Voices of the Alta Floresta" (Cornell)
 
 
-;;; -------- frogs and toads
+;;; -------- frogs and toads --------
 ;;; Oak toad
 ;;; Knudsen's frog
 ;;; Southern cricket frog
@@ -1597,7 +1597,7 @@
 	 (stop (+ start (seconds->samples dur)))
 	 ;; looks like the same basic pulse throughout, almost same speed at start but every other one is squelched
 	 ;; slow startup pulse starts much faster (.06 mid-pulse duration, .0013 base pulse)
-	 (carrier (make-sine-summation 13200 0 4 .7 (/ 800 13200))) 
+	 (carrier (make-nrxysin 13200 (/ 800 13200) 4 .7)) 
 	 (modulator (make-oscil 1500 (* 0.5 pi)))
 	 (noise (make-rand-interp 5000))
 	 (peep (make-pulsed-env '(0 0 1 0 2 .2 3 0 5 .75 8 1 10 0 11 0) .06 (/ 1.0 .06)))
@@ -1612,9 +1612,9 @@
 	   (outa i (* (env ampf)
 		      (pulsed-env peep frq)
 		      md md
-		      (sine-summation carrier (+ (* frq (/ 13200 16))
-						 (* .1 (rand-interp noise))
-						 (* .1 md)))))))))))
+		      (nrxysin carrier (+ (* frq (/ 13200 16))
+					  (* .1 (rand-interp noise))
+					  (* .1 md)))))))))))
 
 ;(with-sound () (long-spurred-meadow-katydid 0 .5))
 
@@ -3157,7 +3157,7 @@
 	 (buzz-end (+ buzz-start (seconds->samples (vct-ref durs 4))))
 	 (buzz-ampf (make-env '(0.000 0.000  0.095 0.953  0.114 0.182  0.158 0.822 0.236 0.996 0.332 1.000 0.848 0.589 0.957 0.372 1.000 0.000)
 			      :duration (vct-ref durs 4) :scaler amp))
-	 (buzzer (make-sine-summation 40 :n 5 :a .5)) ; sawtooth not great here due to broad spectrum  ;(buzzer (make-nrxysin 40 40 :n 5 :r .5))
+	 (buzzer (make-nrxysin 40 :n 5 :r .5)) ; sawtooth not great here due to broad spectrum
 	 (buzzer-index (hz->radians 2000))   
 	 (buzzer-amp (make-triangle-wave 40 0.8)))
 
@@ -3188,7 +3188,7 @@
 	 (outa i (* (env buzz-ampf)
 		    (+ 0.2 (abs (triangle-wave buzzer-amp)))
 		    (oscil gen1 (* buzzer-index
-				   (sine-summation buzzer))))))))))
+				   (nrxysin buzzer))))))))))
 
 ;(with-sound (:play #t) (grasshopper-sparrow 0 .25))
 
@@ -4417,9 +4417,9 @@
       (vector-set! starts i (seconds->samples (+ beg (vct-ref begs i))))
       (vector-set! stops i (+ (vector-ref starts i) (seconds->samples (vct-ref durs i)))))
     
-    (vector-set! gens 0 (make-sine-summation 530 0.0 8 .5))
-    (vector-set! gens 1 (make-sine-summation 450 0.0 15 .6))
-    (vector-set! gens 2 (make-sine-summation 400 0.0 8 .5))
+    (vector-set! gens 0 (make-nrxysin 530 1.0 8 .5))
+    (vector-set! gens 1 (make-nrxysin 450 1.0 15 .6))
+    (vector-set! gens 2 (make-nrxysin 400 1.0 8 .5))
 
     (vector-set! ampfs 0 (make-env '(0 0 1.25 1 1.75 1 3 0) :base 10 :duration (vct-ref durs 0) :scaler (* amp 0.25)))
     (vector-set! ampfs 1 (make-env '(0.000 0.000 0.208 0.719 0.292 0.965 0.809 0.869 0.928 0.682 1.000 0.000) :base 10 :duration (vct-ref durs 1) :scaler (* 0.5 amp)))
@@ -4441,7 +4441,7 @@
 	   (do ((i start (1+ i)))
 	       ((= i stop))
 	     (let ((val (* (env ampf)
-			   (sine-summation gen (env frqf)))))
+			   (nrxysin gen (env frqf)))))
 	       (outa i (+ (formant frm1 val)
 			  (formant frm2 val)
 			  (formant frm3 val)))))))))))
@@ -5080,7 +5080,7 @@
 	 (gen1 (make-polyshape :partials (list 1 .98 2 .01 3 .01)))
 	 (gen2 (make-polyshape :partials (list 1 .98 2 .005)))
 	 (buzz (make-oscil 0))
-	 (buzzsweep (make-sine-summation 0 :n 5 :a .5))
+	 (buzzsweep (make-nrxysin :n 5 :r .5))
 	 (bsweep (hz->radians 500))
 	 (buzzf (make-env '(0 0 .14 0 .15 1 .19 1 .20 0  .66 0 .67 1 1 1) :duration dur))
 	 (buzzfrqf (make-env '(0 110  .5 110  .6 70 .85 70 .86 130 1 130) :duration dur :scaler (hz->radians 1.0)))
@@ -5098,7 +5098,7 @@
 		       (* buzzing
 			  (+ .1 (* .9 (abs (oscil buzz bfrq))))
 			  (polyshape gen2 1.0 (+ frq
-						 (* bsweep (sine-summation buzzsweep bfrq))
+						 (* bsweep (nrxysin buzzsweep bfrq))
 						 (rand-interp rnd)))))))))))))
 
 ;(with-sound (:play #t) (house-finch 0 .5))
@@ -7660,7 +7660,7 @@
 	   (gen1 (make-polyshape :partials (list 1 .8  2 .01 3 .05  4 .01  5 .005)))
 	   (gen2 (make-polyshape :partials (list 1 .92  2 .01 3 .05  4 .01  5 .005)))
 	   (ampf2 (make-env '(0 1 .2 0 1 0) :duration dur))
-	   (rnd (make-sine-summation 200 :n 2 :a .5))
+	   (rnd (make-nrxysin 200 :n 2 :r .5))
 	   (rndf (make-env '(0 0 .1 1 .25 0 .45 0 .5 1 .6 0 1 0) :duration dur :scaler (hz->radians 200)))
 	   (rndfrqf (make-env '(0 1 .45 1 .5 .2 .6 .2 1 0) :duration dur :scaler (hz->radians 200))))
       (run
@@ -7669,7 +7669,7 @@
 	     ((= i stop))
 	   (let ((frq (+ (env frqf)
 			 (* (env rndf)
-			    (sine-summation rnd (env rndfrqf))))))
+			    (nrxysin rnd (env rndfrqf))))))
 	     (outa i (* (env ampf)
 			(+ (polyshape gen1 1.0 frq)
 			   (* (env ampf2)
@@ -9537,7 +9537,7 @@
 	   (gen2 (make-polyshape 0.0 (* 0.5 pi) :partials (normalize-partials (list  2 1.0  3 .25))))
 	   (gen2a (make-polyshape 0.0 (* 0.5 pi) :partials (normalize-partials (list  4 .35  5 .19  6 .12  7 .03  8 .02))))
 	   (ampf2a (make-env '(0 1 .6 1 1 0) :duration dur :scaler .4 :base 10))
-	   (gen3 (make-sine-summation 0.0 0.0 12 .85 1/9))
+	   (gen3 (make-nrxysin :n 12 :r .85 :ratio 1/9))
 	   (ampf3 (make-env '(0 0 .1 0  .15 .5 .2 0 .4 0 .45 .7 .5 0 .55 1 .7 1 .8 0 .9 .1 1 0) :duration dur :scaler .02))
 	   (gen1 (make-oscil))
 	   (ampf1 (make-env '(0 0 .5 0 .6 1 .9 1 1 0) :duration dur :scaler .2)))
@@ -9553,7 +9553,7 @@
 			   (* (env ampf1)
 			      (oscil gen1 frq))
 			   (* (env ampf3)
-			      (sine-summation gen3 (* frq 9))))))))))))
+			      (nrxysin gen3 (* frq 9))))))))))))
   
   (definstrument (trumpeter-swan-c beg amp)
     (let* ((start (seconds->samples beg))
@@ -9568,7 +9568,7 @@
 			   :duration dur :scaler (hz->radians (* 0.5 8650.0))))
 	   (gen1 (make-polyshape :partials (normalize-partials (list 1 .01 2 .98 3 .05 4 .02 5 .005 6 .005))))
 	   (gen2 (make-polyshape 0.0 (* 0.5 pi) :partials (normalize-partials (list 1 .44  2 1.0  3 .34  4 .31  5 .19  6 .075  7 .04  8 .03))))
-	   (gen3 (make-sine-summation 0.0 0.0 12 .85 1/9))  ; frq phase n "a" ratio -> nrssb in new nomenclature
+	   (gen3 (make-nrxysin :n 12 :r .85 :ratio 1/9))
 	   (intrpf (make-env '(0 1 .19 1 .2 0 1 0) :duration dur)))
       (run
        (lambda ()
@@ -9581,7 +9581,7 @@
 			      (polyshape gen1 1.0 frq))
 			   (* (- 1.0 intrp)
 			      (+ (polyshape gen2 1.0 frq)
-				 (* .03 (sine-summation gen3 (* frq 9))))))))))))))
+				 (* .03 (nrxysin gen3 (* frq 9))))))))))))))
 
   (definstrument (trumpeter-swan-d beg amp)
     (let* ((start (seconds->samples beg))
@@ -9601,7 +9601,7 @@
 	   (gen2 (make-oscil))
 	   (ampf2 (make-env '(0 1 .45 1 .5 .5 .6 .8 .7 .8 .75 .1 .8 .5 1 0) :duration dur :scaler .5))
 
-	   (gen3 (make-sine-summation 0.0 0.0 12 .8 1/8))
+	   (gen3 (make-nrxysin :n 12 :r .8 :ratio 1/8))
 	   (ampf3 (make-env '(0 0 .1 1 .6 1 .8 0 1 0) :duration dur :scaler .15))
 
 	   (gen4 (make-polyshape :partials (normalize-partials (list 3 .4  4 .4  5 .2  6 .1  7 .05))))
@@ -9617,7 +9617,7 @@
 			   (* (env ampf2)
 			      (oscil gen2 (* 2 frq)))
 			   (* (env ampf3)
-			      (sine-summation gen3 (* 8 frq)))
+			      (nrxysin gen3 (* 8 frq)))
 			   (* (env ampf4)
 			      (polyshape gen4 1.0 frq)))))))))))
   
@@ -9630,7 +9630,7 @@
 			   :duration dur :scaler amp))
 	   (frq 434)
 	   (gen1 (make-polyshape frq :partials (list 1 .05  2 .85  3 .1  5 .01)))
-	   (gen2 (make-sine-summation (* frq 7) 0.0 10 .8 1/7))
+	   (gen2 (make-nrxysin (* frq 7) 1/7 10 .8))
 	   (ampf2 (make-env '(0 0 .1 1 .4 0 1 0) :duration dur :scaler .2))
 	   (vib (make-rand-interp 200))
 	   (index (hz->radians 40)))
@@ -9642,7 +9642,7 @@
 	     (outa i (* (env ampf)
 			(+ (polyshape gen1 1.0 vb)
 			   (* (env ampf2)
-			      (sine-summation gen2 vb)))))))))))
+			      (nrxysin gen2 vb)))))))))))
 
   (trumpeter-swan-a beg (* amp .6))
   (trumpeter-swan-b (+ beg .126) (* amp .9))
@@ -9982,7 +9982,7 @@
 	 (ampf3 (make-env '(0 .2 .4 .2 .5 1 .68 1 .7 .5 .9 .5 1 0) :duration dur :scaler .3))
 	 (gen4 (make-polyshape :partials (list 4 .8 5 .2)))
 	 (ampf4 (make-env '(0 0 .4 .1 .5 1 .75 1 .9 0 1 0) :duration dur :scaler .05))
-	 (gen5 (make-sine-summation 0.0 0.0 12 .8 1/6))
+	 (gen5 (make-nrxysin :n 12 :r .8 :ratio 1/6))
 	 (ampf5 (make-env '(0 0 .4 0 .5 1 .65 .1 .7 1  .9 0 1 0) :duration dur :scaler .2))
 	 (trem (make-triangle-wave (* 0.5 170)))
 	 (tremf (make-env '(0 1 .45 1 .5 .3 .65 .2 .7 1 .75 .2 1 .2) :duration dur))
@@ -9990,7 +9990,7 @@
 	 (humf (make-env '(0 .1 .1 1 .2 .1 .3 1 .4 1 .45 .1 .8 0 1 0) :duration dur :scaler .4))
 	 (rnd (make-rand-interp 2000))
 	 (rndf (make-env '(0 .1 .3 .2 .4 1 .45 1 .5 .1 .6 .01 .65 1  .7 .1 1 .25) :duration dur :scaler (hz->radians 200)))
-	 (gen6 (make-sine-summation 0.0 0.0 12 .8 1/6))
+	 (gen6 (make-nrxysin :n 12 :r .8 :ratio 1/6))
 	 (ampf6 (make-env '(0 0 .4 0 .45 1 .5 0 .65 0 .7 1 .75 0 1 0) :duration dur :scaler .2)))
     (run
      (lambda ()
@@ -10005,8 +10005,8 @@
 			 (* .5 (oscil gen2 (* 2 frq)))
 			 (* (env ampf3) (oscil gen3 (* 3 frq)))
 			 (* (env ampf4) (polyshape gen4 1.0 frq))
-			 (* (env ampf5) (sine-summation gen5 (* 6 frq)))
-			 (* (env ampf6) (sine-summation gen6 (* 3 frq)))
+			 (* (env ampf5) (nrxysin gen5 (* 6 frq)))
+			 (* (env ampf6) (nrxysin gen6 (* 3 frq)))
 			 (* (env humf) (oscil hum (* .25 frq))))))))))))
 
 (definstrument (canada-goose-2 beg amp)
@@ -10031,13 +10031,13 @@
 	 (ampf3 (make-env '(0 .2  .6 .1 .65 1 .75 1 .9 0 1 0) :duration dur :scaler .3))
 	 (gen4 (make-polyshape :partials (list 4 .8 5 .2)))
 	 (ampf4 (make-env '(0 0 .4 .1 .65 1 .75 1 .8 0 .85 1 .9 .5 1 .5) :duration dur :scaler .1))
-	 (gen5 (make-sine-summation 0.0 0.0 12 .8 1/6))
+	 (gen5 (make-nrxysin :n 12 :r .8 :ratio 1/6))
 	 (ampf5 (make-env '(0 0 .5 0 .55 1 .6 0  .65  1 .7 1  .8 0 1 0) :duration dur :scaler .2))
 	 (hum (make-oscil))
 	 (humf (make-env '(0 1 .4 1 .42 .1  .6 0 1 0) :duration dur :scaler .4))
 	 (rnd (make-rand-interp 2000))
 	 (rndf (make-env '(0 .1 .3 .2 .65 1  .7 .1 1 .25) :duration dur :scaler (hz->radians 100)))
-	 (gen6 (make-sine-summation 0.0 0.0 12 .8 1/6))
+	 (gen6 (make-nrxysin :n 12 :r .8 :ratio 1/6))
 	 (ampf6 (make-env '(0 0 .65 0 .7 1 .75 0 1 0) :duration dur :scaler .3)))
     (run
      (lambda ()
@@ -10050,8 +10050,8 @@
 			 (* (env ampf2) (oscil gen2 (* 2 frq)))
 			 (* (env ampf3) (oscil gen3 (* 3 frq)))
 			 (* (env ampf4) (polyshape gen4 1.0 frq))
-			 (* (env ampf5) (sine-summation gen5 (* 6 frq)))
-			 (* (env ampf6) (sine-summation gen6 (* 3 frq)))
+			 (* (env ampf5) (nrxysin gen5 (* 6 frq)))
+			 (* (env ampf6) (nrxysin gen6 (* 3 frq)))
 			 (* (env humf) (oscil hum (* .25 frq))))))))))))
 
 (definstrument (canada-goose-3 beg amp)
@@ -10074,7 +10074,7 @@
 	 (ampf3 (make-env '(0 .1 .3 .2 .4 1 1 1) :duration dur :scaler .1))
 	 (gen4 (make-polyshape :partials (list 4 .8 5 .2)))
 	 (ampf4 (make-env '(0 0 .3 0 .4 1 .9 1 1 0) :duration dur :scaler .05))
-	 (gen5 (make-sine-summation 0.0 0.0 12 .7 1/6))
+	 (gen5 (make-nrxysin :n 12 :r .7 :ratio 1/6))
 	 (ampf5 (make-env '(0 0 .3 0 .4 1 .5 .1 .55 0 .6 .1 .63 1  .85 0 1 0) :duration dur :scaler .3))
 	 (trem (make-triangle-wave (* 0.5 170)))
 	 (tremf (make-env '(0 1 .3 1 .35 .1 .6 .2 .65 1 .7 .2 1 .2) :duration dur))
@@ -10097,7 +10097,7 @@
 			 (* .5 (oscil gen2 (* 2 frq)))
 			 (* (env ampf3) (oscil gen3 (* 3 frq)))
 			 (* (env ampf4) (polyshape gen4 1.0 frq))
-			 (* (env ampf5) (sine-summation gen5 (* 6 frq)))
+			 (* (env ampf5) (nrxysin gen5 (* 6 frq)))
 			 (* (env humf) 
 			    (+ .25 (abs (triangle-wave tri1)))
 			    (oscil hum (env humfrq))))))))))))
