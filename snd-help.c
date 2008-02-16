@@ -512,6 +512,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+17-Feb:  polywave generator.\n\
 15-Feb:  nrxysin and nrxycos generators.\n\
 14-Feb:  nsin and ncos generators.\n\
 11-Feb:  the 'stream' arg to outa and friends now defaults to *output*.\n\

@@ -9,28 +9,28 @@
 ;;;  test 6: vcts                               [13769]
 ;;;  test 7: colors                             [14037]
 ;;;  test 8: clm                                [14527]
-;;;  test 9: mix                                [25455]
-;;;  test 10: marks                             [27673]
-;;;  test 11: dialogs                           [28634]
-;;;  test 12: extensions                        [28879]
-;;;  test 13: menus, edit lists, hooks, etc     [29150]
-;;;  test 14: all together now                  [30859]
-;;;  test 15: chan-local vars                   [31894]
-;;;  test 16: regularized funcs                 [33533]
-;;;  test 17: dialogs and graphics              [38524]
-;;;  test 18: enved                             [38614]
-;;;  test 19: save and restore                  [38633]
-;;;  test 20: transforms                        [40418]
-;;;  test 21: new stuff                         [42401]
-;;;  test 22: run                               [44393]
-;;;  test 23: with-sound                        [50606]
-;;;  test 24: user-interface                    [53859]
-;;;  test 25: X/Xt/Xm                           [57253]
-;;;  test 26: Gtk                               [61861]
-;;;  test 27: GL                                [65713]
-;;;  test 28: errors                            [65837]
-;;;  test all done                              [68137]
-;;;  test the end                               [68375]
+;;;  test 9: mix                                [25571]
+;;;  test 10: marks                             [27789]
+;;;  test 11: dialogs                           [28750]
+;;;  test 12: extensions                        [28995]
+;;;  test 13: menus, edit lists, hooks, etc     [29266]
+;;;  test 14: all together now                  [30975]
+;;;  test 15: chan-local vars                   [32010]
+;;;  test 16: regularized funcs                 [33649]
+;;;  test 17: dialogs and graphics              [38640]
+;;;  test 18: enved                             [38730]
+;;;  test 19: save and restore                  [38749]
+;;;  test 20: transforms                        [40534]
+;;;  test 21: new stuff                         [42517]
+;;;  test 22: run                               [44509]
+;;;  test 23: with-sound                        [50732]
+;;;  test 24: user-interface                    [53990]
+;;;  test 25: X/Xt/Xm                           [57384]
+;;;  test 26: Gtk                               [61992]
+;;;  test 27: GL                                [65844]
+;;;  test 28: errors                            [65968]
+;;;  test all done                              [68268]
+;;;  test the end                               [68506]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -2106,7 +2106,7 @@
 		       'make-file->sample 'make-filter 'make-fir-coeffs 'make-fir-filter 'make-formant
 		       'make-frame 'make-frame->file 'make-granulate 'make-graph-data 'make-iir-filter
 		       'make-locsig 'make-mix-sample-reader 'make-mixer 'make-move-sound 'make-notch 'make-one-pole
-		       'make-one-zero 'make-oscil 'make-phase-vocoder 'make-player 'make-polyshape
+		       'make-one-zero 'make-oscil 'make-phase-vocoder 'make-player 'make-polyshape 'make-polywave
 		       'make-pulse-train 'make-rand 'make-rand-interp 'make-readin
 		       'make-region 'make-region-sample-reader 'make-sample->file 'make-sample-reader 'make-sawtooth-wave
 		       'make-scalar-mixer 'make-sine-summation 'make-nrxysin 'make-nrxycos 'make-snd->sample 'make-sound-data 'make-square-wave
@@ -2180,8 +2180,8 @@
 		       'phase-vocoder-phase-increments 'phase-vocoder-phases 'phase-vocoder? 'play
 		       'play-and-wait 'play-channel 'play-hook 'play-mix 'play-region
 		       'play-selection 'player-home 'player? 'players
-		       'playing 'poisson-window 'polar->rectangular 'polynomial 'polyshape
-		       'polyshape? 'position->x 'position->y 'position-color 'preferences-dialog
+		       'playing 'poisson-window 'polar->rectangular 'polynomial 'polyshape 'polywave
+		       'polyshape? 'polywave? 'position->x 'position->y 'position-color 'preferences-dialog
 		       'previous-sample 'print-dialog 'print-hook 'print-length 'progress-report
 		       'prompt-in-minibuffer 'ptree-channel 'pulse-train
 		       'pulse-train? 'pushed-button-color 'quit-button-color 'radians->degrees 'radians->hz
@@ -21530,6 +21530,7 @@ EDITS: 2
 	  (do ((i beg (1+ i)))
 	      ((= i end))
 	    (outa i (* amp (polyshape pol))))))
+
       
       (define (test-wav beg end freq amp partials)
 	(let ((pol (make-waveshape freq :wave (partials->waveshape partials))))
@@ -21541,6 +21542,108 @@ EDITS: 2
 	    (v2 (with-sound (:output (make-vct size) :srate 44100) (test-wav 0 size 200 1 '(1 .5 2 .3 3 .2)))))
 	(if (not (vequal v1 v2))
 	    (snd-display ";pol/wav+coeffs peak diff (1 1): ~A" (vct-peak (vct-subtract! v1 v2))))))
+      
+      ;; polywave
+    (let ((gen0 (make-polywave 440.0 '(1 1)))
+	  (gen (make-polywave 440.0 :partials '(1 1) :type mus-chebyshev-first-kind))
+	  (v0 (make-vct 10))
+	  (gen1 (make-polywave 440.0))
+	  (v1 (make-vct 10)))
+      (print-and-check gen 
+		       "polywave"
+		       "polywave freq: 440.000Hz, phase: 0.000, coeffs[2]: [0.000 1.000]")
+      (if (not (= (mus-length gen) 2)) (snd-display ";polywave length: ~A?" (mus-length gen)))
+      (do ((i 0 (1+ i)))
+	  ((= i 10))
+	(let ((val0 (polywave gen0 0.0))
+	      (val (polywave gen 0.0)))
+	  (if (fneq val val0) (snd-display ";polywave: ~A /= ~F?" val val0))
+	  (vct-set! v0 i val)))
+      (vct-map! v1 (lambda () (if (polywave? gen1) (polywave gen1 0.0) -1.0)))
+      (if (not (vequal v0 v1)) (snd-display ";map polywave: ~A ~A" v0 v1))
+      (set! gen1 (make-polywave 440.0 (vct 1 1)))
+      (vct-map! v1 (lambda () (polywave gen1)))
+      (if (not (vequal v0 v1)) (snd-display ";1 map polywave: ~A ~A" v0 v1))
+      (if (not (polywave? gen)) (snd-display ";~A not polywave?" gen))
+      (if (fneq (mus-phase gen) 1.253787) (snd-display ";polywave phase: ~F?" (mus-phase gen)))
+      (set! (mus-phase gen) 1.0)
+      (if (fneq (mus-phase gen) 1.0) (snd-display ";set! polywave phase: ~F?" (mus-phase gen)))
+      (if (fneq (mus-frequency gen) 440.0) (snd-display ";polywave frequency: ~F?" (mus-frequency gen)))
+      (set! (mus-frequency gen) 100.0)
+      (if (fneq (mus-frequency gen) 100.0) (snd-display ";polywave frequency: ~F?" (mus-frequency gen)))
+      (if (not (vct? (mus-data gen))) (snd-display ";mus-data polywave: ~A" (mus-data gen)))
+      (if (or (fneq (vct-ref v0 1) 0.125) (fneq (vct-ref v0 8) .843)) (snd-display ";polywave output: ~A" v0)))
+    
+    (test-gen-equal (make-polywave 440.0 :partials '(1 1)) 
+		    (make-polywave 440.0) 
+		    (make-polywave 100.0 :partials '(1 1)))
+    (test-gen-equal (make-polywave 440.0 '(1 1)) 
+		    (make-polywave 440.0)
+		    (make-polywave 440.0 '(1 1 2 .5)))
+    (test-gen-equal (make-polywave 440.0 '(1 1)) 
+		    (make-polywave 440.0 (vct 1 1))
+		    (make-polywave 440.0 '(1 .5)))
+    (test-gen-equal (make-polywave 440.0 (list 1 .1 2 1 3 .5))
+		    (make-polywave 440.0 (vct 1 .1 2 1 3 .5))
+		    (make-polywave 440.0 '(1 .1 2 .1 3 .5)))
+    
+    (let ((gen (make-polywave 440.0 '(1 1)))
+	  (happy #t))
+      (do ((i 0 (1+ i)))
+	  ((or (not happy) (= i 1100)))
+	(let* ((a (mus-phase gen))
+	       (val1 (sin a))
+	       (val2 (gen 0.0)))
+	  (if (fneq val1 val2)
+	      (begin
+		(snd-display ";polywaver (1 1) ~A: ~A ~A" i val1 val2)
+		(set! happy #f))))))
+    
+    (let ((gen (make-polywave 440.0))) ; check default for partials: '(1 1)
+      (do ((i 0 (1+ i)))
+	  ((= i 1100))
+	(let* ((a (mus-phase gen))
+	       (val1 (sin a))
+	       (val2 (gen 0.0)))
+	  (if (fneq val1 val2)
+	      (snd-display ";polywaver default: '(1 1) ~A: ~A ~A" i val1 val2)))))
+    
+    (let ((gen (make-polywave 440.0 (vct 1 1)))
+	  (happy #t))
+      (set! (mus-scaler gen) 0.5)
+      (do ((i 0 (1+ i)))
+	  ((or (not happy) (= i 1100)))
+	(let* ((a (mus-phase gen))
+	       (val1 (* .5 (sin a)))
+	       (val2 (gen 0.0)))
+	  (if (fneq val1 val2)
+	      (begin
+		(snd-display ";polywaver (1 1) .5 index ~A: ~A ~A" i val1 val2)
+		(set! happy #f))))))
+    
+    (let ((var (catch #t (lambda () (make-polywave 440.0 3.14)) (lambda args args))))
+      (if (not (eq? (car var) 'wrong-type-arg))
+	  (snd-display ";make-polywave bad coeffs: ~A" var)))
+    
+    (let ((size 1000))
+      
+      (define (test-pol beg end freq amp partials)
+	(let ((pol (make-polywave freq :partials partials)))
+	  (do ((i beg (1+ i)))
+	      ((= i end))
+	    (outa i (* amp (polywave pol))))))
+      
+      (define (test-wav beg end freq amp partials)
+	(let ((pol (make-waveshape freq :partials partials)))
+	  (do ((i beg (1+ i)))
+	      ((= i end))
+	    (outa i (* amp (waveshape pol))))))
+            
+      (let ((v1 (with-sound (:output (make-vct size) :srate 44100) (test-pol 0 size 200 1 '(1 .5 2 .3 3 .2))))
+	    (v2 (with-sound (:output (make-vct size) :srate 44100) (test-wav 0 size 200 1 '(1 .5 2 .3 3 .2)))))
+	(if (not (vequal v1 v2))
+	    (snd-display ";1 pol/wav peak diff (1 1): ~A" (vct-peak (vct-subtract! v1 v2))))))
+
 
     (let ((gen (make-wave-train 440.0 0.0 (make-vct 20)))
 	  (v0 (make-vct 10))
@@ -25164,7 +25267,7 @@ EDITS: 2
 					make-comb make-convolve make-delay make-env make-fft-window
 					make-filter make-filtered-comb make-fir-filter make-formant make-frame make-granulate
 					make-iir-filter make-locsig make-mixer make-notch make-one-pole make-one-zero make-oscil make-ppolar
-					make-pulse-train make-rand make-rand-interp make-sawtooth-wave make-polyshape
+					make-pulse-train make-rand make-rand-interp make-sawtooth-wave make-polyshape make-polywave
 					make-sine-summation make-square-wave make-src make-sum-of-cosines make-sum-of-sines 
 					make-two-pole make-two-zero make-wave-train make-waveshape make-zpolar make-phase-vocoder make-ssb-am)))
 	      
@@ -46904,6 +47007,7 @@ EDITS: 1
 	(btst '(let ((gen (make-wave-train))) (wave-train? gen)) #t)
 	(btst '(let ((gen (make-waveshape))) (waveshape? gen)) #t)
 	(btst '(let ((gen (make-polyshape))) (polyshape? gen)) #t)
+	(btst '(let ((gen (make-polywave))) (polywave? gen)) #t)
 	
 	(btst '(let ((win (make-fft-window hamming-window 8))) (vct? win)) #t)
 	(btst '(if #f (oscil #f) #t) #t)
@@ -46974,8 +47078,8 @@ EDITS: 1
 	(ftst '(let ((gen (make-sine-summation))) (gen)) 0.0)
 	(ftst '(let ((gen (make-nrxysin))) (nrxysin gen)) 0.0)
 	(ftst '(let ((gen (make-nrxysin))) (gen)) 0.0)
-	(ftst '(let ((gen (make-nrxycos))) (nrxycos gen)) 0.0)
-	(ftst '(let ((gen (make-nrxycos))) (gen)) 0.0)
+	(ftst '(let ((gen (make-nrxycos))) (nrxycos gen)) 1.0)
+	(ftst '(let ((gen (make-nrxycos))) (gen)) 1.0)
 	(ftst '(let ((gen (make-square-wave))) (square-wave gen)) 1.0)
 	(ftst '(let ((gen (make-square-wave))) (gen)) 1.0)
 	(ftst '(let ((gen (make-src))) (src gen)) 0.0)
@@ -47004,6 +47108,8 @@ EDITS: 1
 	(ftst '(let ((gen (make-waveshape))) (gen)) 0.0)
 	(ftst '(let ((gen (make-polyshape))) (polyshape gen)) 0.0)
 	(ftst '(let ((gen (make-polyshape))) (gen)) 0.0)
+	(ftst '(let ((gen (make-polywave))) (polywave gen)) 0.0)
+	(ftst '(let ((gen (make-polywave))) (gen)) 0.0)
 	
 	(ftst '(let ((win (make-fft-window hamming-window 8))) (vct-ref win 0)) 0.08)
 	
@@ -47840,7 +47946,7 @@ EDITS: 1
 		 make-locsig make-mixer make-notch make-oscil make-pulse-train make-rand make-rand-interp make-sawtooth-wave
 		 make-sine-summation make-nrxysin make-nrxycos make-square-wave make-src make-sum-of-cosines make-ncos 
 		 make-sum-of-sines make-nsin make-table-lookup make-triangle-wave
-		 make-wave-train make-waveshape make-phase-vocoder make-ssb-am make-polyshape))
+		 make-wave-train make-waveshape make-phase-vocoder make-ssb-am make-polyshape make-polywave))
 	  (close-sound ind))
 	
 	(let ((frm (make-formant .1 440.0))
@@ -49227,7 +49333,7 @@ EDITS: 1
 				 make-pulse-train make-rand make-rand-interp make-sawtooth-wave
 				 make-sine-summation make-nrxysin make-nrxycos make-square-wave make-src make-sum-of-cosines make-ncos 
 				 make-sum-of-sines make-nsin make-table-lookup make-triangle-wave
-				 make-two-pole make-two-zero make-wave-train make-waveshape make-phase-vocoder make-ssb-am make-polyshape
+				 make-two-pole make-two-zero make-wave-train make-waveshape make-phase-vocoder make-ssb-am make-polyshape make-polywave
 				 (lambda () (make-filter :ycoeffs (vct 0.0 .1 .2)))
 				 (lambda () (make-filter :xcoeffs (vct 1.0 2.0 3.0) :ycoeffs (vct 0.0 1.0 2.0))))))
 		(for-each
@@ -49463,6 +49569,13 @@ EDITS: 1
 	      (let ((val1 (run-eval '(format #f "~A" (make-polyshape ))))
 		    (val2 (run (lambda () (let ((gen (make-polyshape ))) (format #f "~A" gen)))))
 		    (val3 (format #f "~A" (make-polyshape ))))
+		(if (or (not (string=? val1 val2))
+			(not (string=? val2 val3)))
+		    (snd-display ";run-eval format: ~A ~A ~A" val1 val2 val3)))
+	      
+	      (let ((val1 (run-eval '(format #f "~A" (make-polywave ))))
+		    (val2 (run (lambda () (let ((gen (make-polywave ))) (format #f "~A" gen)))))
+		    (val3 (format #f "~A" (make-polywave ))))
 		(if (or (not (string=? val1 val2))
 			(not (string=? val2 val3)))
 		    (snd-display ";run-eval format: ~A ~A ~A" val1 val2 val3)))
@@ -51923,6 +52036,7 @@ EDITS: 1
 		    (simple-frm 3.75 .2 440.0 .1)
 		    (simple-wav 4.0 .2 440.0 .1)
 		    (simple-poly 4.25 .2 440.0 .1)
+		    (simple-polyw 4.5 .2 440.0 .1)
 		    (simple-dly 4.75 .2 440.0 .1)
 		    (simple-cmb 5.0 .2 440.0 .1)
 		    (simple-filtered-cmb 5.125 .2 440.0 .1)
@@ -66078,7 +66192,7 @@ EDITS: 1
 		     make-sum-of-sines make-nsin make-ssb-am make-table-lookup make-triangle-wave
 		     make-two-pole make-two-zero make-wave-train make-waveshape mixer* mixer-ref mixer-set! mixer? mixer+
 		     move-sound make-move-sound move-sound? mus-float-equal-fudge-factor
-		     multiply-arrays mus-array-print-length mus-channel mus-channels make-polyshape polyshape polyshape?
+		     multiply-arrays mus-array-print-length mus-channel mus-channels make-polyshape polyshape polyshape? make-polywave polywave polywave?
 		     mus-close mus-cosines mus-data mus-feedback mus-feedforward mus-fft mus-formant-radius mus-frequency
 		     mus-hop mus-increment mus-input? mus-file-name mus-length mus-location mus-mix mus-order mus-output?  mus-phase
 		     mus-ramp mus-random mus-scaler mus-srate mus-xcoeff mus-xcoeffs mus-ycoeff mus-ycoeffs notch notch? one-pole one-pole?
@@ -66177,7 +66291,7 @@ EDITS: 1
 			  make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
 			  make-sine-summation make-nrxysin make-nrxycos make-square-wave 
 			  make-src make-sum-of-cosines make-ncos make-sum-of-sines make-nsin make-table-lookup make-triangle-wave
-			  make-two-pole make-two-zero make-wave-train make-waveshape make-phase-vocoder make-ssb-am make-polyshape
+			  make-two-pole make-two-zero make-wave-train make-waveshape make-phase-vocoder make-ssb-am make-polyshape make-polywave
 			  make-color make-player make-region make-scalar-mixer
 			  ))
 	     
@@ -66524,7 +66638,7 @@ EDITS: 1
 					make-sawtooth-wave make-sine-summation make-nrxysin make-nrxycos make-square-wave make-src 
 					make-sum-of-cosines make-ncos make-sum-of-sines make-nsin
 					make-table-lookup make-triangle-wave make-two-pole make-two-zero make-wave-train make-ssb-am
-					make-waveshape mus-channel mus-channels make-polyshape
+					make-waveshape mus-channel mus-channels make-polyshape make-polywave
 					mus-cosines mus-data mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop
 					mus-increment mus-length mus-file-name mus-location mus-order mus-phase mus-ramp mus-random mus-run
 					mus-scaler mus-xcoeffs mus-ycoeffs notch one-pole one-zero make-moving-average seconds->samples samples->seconds
@@ -66557,7 +66671,7 @@ EDITS: 1
 			  make-sine-summation make-nrxysin make-nrxycos make-square-wave make-src make-sum-of-cosines make-ncos 
 			  make-sum-of-sines make-nsin make-table-lookup make-triangle-wave
 			  make-two-pole make-two-zero make-wave-train make-waveshape mixer* mixer+ multiply-arrays
-			  notch one-pole one-zero oscil partials->polynomial partials->wave partials->waveshape make-polyshape
+			  notch one-pole one-zero oscil partials->polynomial partials->wave partials->waveshape make-polyshape make-polywave
 			  phase-partials->wave phase-vocoder polynomial pulse-train rand rand-interp rectangular->polar
 			  ring-modulate sample->frame sawtooth-wave sine-summation nrxysin nrxycos square-wave src sum-of-cosines ncos sum-of-sines nsin
 			  sine-bank table-lookup tap triangle-wave two-pole two-zero wave-train waveshape ssb-am make-ssb-am))

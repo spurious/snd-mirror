@@ -117,7 +117,7 @@ note lists and instruments are described in sndscm.html.
   <tr><td><a href="#one-zerodoc">one-zero</a></td><td></td><td>one zero filter</td></tr>
   <tr><td><a href="#oscildoc">oscil</a></td><td></td><td>sine wave and FM</td></tr>
   <tr><td><a href="#out-anydoc">out-any</a></td><td width=20></td><td>sound output</td></tr>
-  <tr><td><a href="#polyshapedoc">polyshape</a></td><td></td><td>waveshaping</td></tr>
+  <tr><td><a href="#polyshapedoc">polyshape and polywave</a></td><td></td><td>waveshaping</td></tr>
   <tr><td><a href="#phase-vocoderdoc">phase-vocoder</a></td><td></td><td>vocoder analysis and resynthesis</td></tr>
   <tr><td><a href="#sampletofile">sample-&gt;file</a></td><td></td><td>output sample to file</td></tr>
   <tr><td><a href="#sawtoothdoc">pulse-train</a></td><td></td><td>pulse train</td></tr>
@@ -1167,11 +1167,20 @@ See also <a href="sndscm.html#granidoc">grani</a> and <a href="sndscm.html#displ
 
 <A NAME="waveshapedoc"></A>
 <A NAME="polyshapedoc"></A>
-<!-- ---------------------------------------- WAVESHAPE ---------------------------------------- -->
+<A NAME="polywavedoc"></A>
+<!-- ---------------------------------------- POLYWAVE, POLYSHAPE, WAVESHAPE ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>waveshape</h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>polywave (polyshape and waveshape)</h3></center></td></tr></table>
 <br>
 <pre>
+  <a class=def name="make-polywave">make-polywave</a> <a class=quiet href="#optional-key">:optional-key</a> 
+         (frequency *clm-default-frequency*) 
+         (partials '(1 1)) 
+         (type mus-chebyshev-first-kind)
+
+  <a class=def name="polywave">polywave</a> w :optional (fm 0.0)
+  <a class=def name="polywave?">polywave?</a> w
+
   <a class=def name="make-waveshape">make-waveshape</a> <a class=quiet href="#optional-key">:optional-key</a> 
          (frequency *clm-default-frequency*) 
          (partials '(1 1)) 
@@ -1204,7 +1213,9 @@ See also <a href="sndscm.html#granidoc">grani</a> and <a href="sndscm.html#displ
 A&S 22.3.15
 -->
 
-<p>waveshape and polyshape perform waveshaping; waveshaping drives a sum of scaled Chebyshev polynomials with
+<p>polywave is the new form of polyshape; waveshape will soon be deprecated. 
+These three generators
+drive a sum of scaled Chebyshev polynomials with
 a sinusoid, creating a sort of cross between additive synthesis and FM; see
 "Digital Waveshaping Synthesis" by Marc Le Brun in JAES 1979 April, vol 27, no 4, p250.
 The basic idea is:
@@ -1217,10 +1228,10 @@ input (cos theta) to get effects similar to those of FM.
 </p>
 
 <p>
-waveshape uses an internal <a href="#table-lookup">table-lookup</a> generator, whereas polyshape uses
-the <a href="#polynomial">polynomial</a> function.  The "partials" argument to either make function can
+waveshape uses an internal <a href="#table-lookup">table-lookup</a> generator, whereas polyshape and polywave use
+the <a href="#polynomial">polynomial</a> function.  The "partials" argument to the make function can
 be either a list or a vct.
-The "kind" argument determines which kind of Chebyshev polynomial
+The "type" or "kind" argument determines which kind of Chebyshev polynomial
 is used internally:  mus-chebyshev-first-kind or mus-chebyshev-second-kind. (The <a href="#ncos">ncos</a> generator produces
 Chebyshev polynomials of the fourth kind).  
 </p>
@@ -1267,7 +1278,7 @@ Chebyshev polynomials of the fourth kind).
 </tr></table>
 
 <p>we can also use
-partials-&gt;polynomial with polyshape:
+partials-&gt;polynomial with polyshape and polywave:
 </p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
@@ -1378,7 +1389,7 @@ we absolutely insist on using waveshaping, we could do it this way:
 
 <table border=0>
 <tr><td>
-The "fm" argument to these two generators is intended mainly for vibrato and frequency envelopes. 
+The "fm" argument to these generators is intended mainly for vibrato and frequency envelopes. 
 If you use it for frequency modulation, you'll notice that the result is not the necessarily same as applying that
 modulation to the equivalent bank of oscillators, but it is the same as (for example) applying it to a ncos
 generator, or most of the other generators (table-lookup, nsin, etc).  The polynomial in cos(x) produces

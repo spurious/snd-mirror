@@ -107,7 +107,7 @@ enum {MUS_OSCIL, MUS_NCOS, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PASS,
       MUS_FRAME, MUS_READIN, MUS_FILE_TO_SAMPLE, MUS_FILE_TO_FRAME,
       MUS_SAMPLE_TO_FILE, MUS_FRAME_TO_FILE, MUS_MIXER, MUS_PHASE_VOCODER,
       MUS_MOVING_AVERAGE, MUS_NSIN, MUS_SSB_AM, MUS_POLYSHAPE, MUS_FILTERED_COMB,
-      MUS_MOVE_SOUND, MUS_NRXYSIN, MUS_NRXYCOS,
+      MUS_MOVE_SOUND, MUS_NRXYSIN, MUS_NRXYCOS, MUS_POLYWAVE,
       MUS_INITIAL_GEN_TAG};
 
 
@@ -2538,25 +2538,162 @@ Float *mus_partials_to_polynomial(int npartials, Float *partials, mus_polynomial
 }
 
 
+/* ---------------- polywave ---------------- */
 
-/* ---------------- polyshape ---------------- */
+typedef struct {
+  mus_any_class *core;
+  mus_any *o;
+  Float *coeffs;
+  int n;
+  Float index;
+} pw;
 
-static void poly_reset(mus_any *ptr)
+
+static int free_pw(mus_any *pt) 
 {
-  ws *gen = (ws *)ptr;
+  pw *ptr = (pw *)pt;
+  if (ptr) 
+    {
+      mus_free(ptr->o);
+      FREE(ptr); 
+    }
+  return(0);
+}
+
+
+static void pw_reset(mus_any *ptr)
+{
+  pw *gen = (pw *)ptr;
   oscil_reset(gen->o);
 }
 
 
+static bool pw_equalp(mus_any *p1, mus_any *p2)
+{
+  pw *w1 = (pw *)p1;
+  pw *w2 = (pw *)p2;
+  if (p1 == p2) return(true);
+  return((w1) && (w2) &&
+	 (w1->core->type == w2->core->type) &&
+	 (mus_equalp(w1->o, w2->o)) &&
+	 (w1->n == w2->n) &&
+	 (w1->index == w2->index) &&
+	 (clm_arrays_are_equal(w1->coeffs, w2->coeffs, w1->n)));
+}
+
+
+static Float pw_freq(mus_any *ptr) {return(mus_frequency(((pw *)ptr)->o));}
+static Float pw_set_freq(mus_any *ptr, Float val) {return(mus_set_frequency(((pw *)ptr)->o, val));}
+
+static Float pw_increment(mus_any *ptr) {return(mus_increment(((pw *)ptr)->o));}
+static Float pw_set_increment(mus_any *ptr, Float val) {return(mus_set_increment(((pw *)ptr)->o, val));}
+
+static Float pw_phase(mus_any *ptr) {return(mus_phase(((pw *)ptr)->o));}
+static Float pw_set_phase(mus_any *ptr, Float val) {return(mus_set_phase(((pw *)ptr)->o, val));}
+
+static off_t pw_n(mus_any *ptr) {return(((pw *)ptr)->n);}
+static off_t pw_set_n(mus_any *ptr, off_t val) {((pw *)ptr)->n = (int)val; return(val);}
+
+static Float *pw_data(mus_any *ptr) {return(((pw *)ptr)->coeffs);}
+static Float *pw_set_data(mus_any *ptr, Float *val) {((pw *)ptr)->coeffs = val; return(val);}
+
+static Float pw_index(mus_any *ptr) {return(((pw *)ptr)->index);}
+static Float pw_set_index(mus_any *ptr, Float val) {((pw *)ptr)->index = val; return(val);}
+
+static Float run_polywave(mus_any *ptr, Float fm, Float ignored) {return(mus_polywave(ptr, fm));}
+
+static char *describe_polywave(mus_any *ptr)
+{
+  pw *gen = (pw *)ptr;
+  char *str;
+  str = float_array_to_string(gen->coeffs, gen->n, 0);
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_polywave " freq: %.3fHz, phase: %.3f, coeffs[%d]: %s",
+	       mus_frequency(ptr),
+	       mus_phase(ptr),
+	       gen->n,
+	       str);
+  FREE(str);
+  return(describe_buffer);
+}
+
+
+Float mus_polywave(mus_any *ptr, Float fm)
+{
+  pw *gen = (pw *)ptr;
+  return(mus_polynomial(gen->coeffs,
+			gen->index * mus_oscil_fm(gen->o, fm), 
+			gen->n));
+}
+
+
+Float mus_polywave_unmodulated(mus_any *ptr)
+{
+  pw *gen = (pw *)ptr;
+  return(mus_polynomial(gen->coeffs,
+			gen->index * mus_oscil_unmodulated(gen->o), 
+			gen->n));
+}
+
+
+static mus_any_class POLYWAVE_CLASS = {
+  MUS_POLYWAVE,
+  S_polywave,
+  &free_pw,
+  &describe_polywave,
+  &pw_equalp,
+  &pw_data,
+  &pw_set_data,
+  &pw_n,
+  &pw_set_n,
+  &pw_freq,
+  &pw_set_freq,
+  &pw_phase,
+  &pw_set_phase,
+  &pw_index, pw_set_index,
+  &pw_increment,
+  &pw_set_increment,
+  &run_polywave,
+  MUS_NOT_SPECIAL, 
+  NULL, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0,
+  &pw_reset,
+  0
+};
+
+
+mus_any *mus_make_polywave(Float frequency, Float *coeffs, int n)
+{
+  pw *gen;
+  gen = (pw *)clm_calloc(1, sizeof(pw), S_make_polywave);
+  gen->core = &POLYWAVE_CLASS;
+  gen->o = mus_make_oscil(frequency, 0.0);
+  gen->coeffs = coeffs;
+  gen->n = n;
+  gen->index = 1.0;
+  return((mus_any *)gen);
+}
+
+
+bool mus_polywave_p(mus_any *ptr) 
+{
+  return((ptr) && 
+	 (ptr->core->type == MUS_POLYWAVE));
+}
+
+
+/* ---------------- polyshape ---------------- */
+
 static char *describe_polyshape(mus_any *ptr)
 {
-  ws *gen = (ws *)ptr;
+  pw *gen = (pw *)ptr;
   char *str;
-  str = float_array_to_string(gen->table, gen->table_size, 0);
+  str = float_array_to_string(gen->coeffs, gen->n, 0);
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_polyshape " freq: %.3fHz, phase: %.3f, coeffs[%d]: %s",
 	       mus_frequency(ptr),
 	       mus_phase(ptr),
-	       gen->table_size,
+	       gen->n,
 	       str);
   FREE(str);
   return(describe_buffer);
@@ -2565,78 +2702,53 @@ static char *describe_polyshape(mus_any *ptr)
 
 Float mus_polyshape(mus_any *ptr, Float index, Float fm)
 {
-  ws *gen = (ws *)ptr;
-  return(mus_polynomial(gen->table,
-			index * mus_oscil_fm(gen->o, fm), 
-			gen->table_size));
-}
-
-
-Float mus_polyshape_fm(mus_any *ptr, Float fm)
-{
-  ws *gen = (ws *)ptr;
-  return(mus_polynomial(gen->table,
-			mus_oscil_fm(gen->o, fm), 
-			gen->table_size));
+  pw_set_index(ptr, index);
+  return(mus_polywave(ptr, fm));
 }
 
 
 Float mus_polyshape_unmodulated(mus_any *ptr, Float index)
 {
-  ws *gen = (ws *)ptr;
-  return(mus_polynomial(gen->table,
-			index * mus_oscil_unmodulated(gen->o), 
-			gen->table_size));
-}
-
-
-Float mus_polyshape_no_input(mus_any *ptr)
-{
-  ws *gen = (ws *)ptr;
-  return(mus_polynomial(gen->table,
-			mus_oscil_unmodulated(gen->o), 
-			gen->table_size));
+  pw_set_index(ptr, index);
+  return(mus_polywave_unmodulated(ptr));
 }
 
 
 static mus_any_class POLYSHAPE_CLASS = {
   MUS_POLYSHAPE,
   S_polyshape,
-  &free_ws,
+  &free_pw,
   &describe_polyshape,
-  &ws_equalp,
-  &ws_data,
-  &ws_set_data,
-  &ws_size,
-  &ws_set_size,
-  &ws_freq,
-  &ws_set_freq,
-  &ws_phase,
-  &ws_set_phase,
-  &fallback_scaler, 0,
-  &ws_increment,
-  &ws_set_increment,
+  &pw_equalp,
+  &pw_data,
+  &pw_set_data,
+  &pw_n,
+  &pw_set_n,
+  &pw_freq,
+  &pw_set_freq,
+  &pw_phase,
+  &pw_set_phase,
+  &pw_index, &pw_set_index,
+  &pw_increment,
+  &pw_set_increment,
   &mus_polyshape,
   MUS_NOT_SPECIAL, 
   NULL, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
-  &poly_reset,
+  &pw_reset,
   0
 };
 
 
 mus_any *mus_make_polyshape(Float frequency, Float phase, Float *coeffs, int size)
 {
-  ws *gen;
-  gen = (ws *)clm_calloc(1, sizeof(ws), S_make_polyshape);
+  mus_any *gen;
+  gen = mus_make_polywave(frequency, coeffs, size);
   gen->core = &POLYSHAPE_CLASS;
-  gen->o = mus_make_oscil(frequency, phase);
-  gen->table = coeffs;
-  gen->table_allocated = false;
-  gen->table_size = size;
-  return((mus_any *)gen);
+  pw_set_phase(gen, phase);
+  return(gen);
 }
 
 
@@ -2645,6 +2757,8 @@ bool mus_polyshape_p(mus_any *ptr)
   return((ptr) && 
 	 (ptr->core->type == MUS_POLYSHAPE));
 }
+
+
 
 
 
@@ -10934,7 +11048,6 @@ void init_mus_module(void)
  *      also cases like make-mfilter in dsp.scm
  *      perhaps add pm args alongside the fm args, as in oscil?
  *      perhaps remove all the initial-phase args
- *      polyshape "kind" arg should be "type" [kind used only in make-polyshape]
  *
  * generators:
  *   perhaps one gen: if n=1 oscil, n>1 r=1 sum-of-cosines, n!=inf nr[xy]cos, n=inf, r<1 r[xy]cos, r>=1 r[xy]k!cos or rkcos
@@ -10965,10 +11078,6 @@ void init_mus_module(void)
  *
  *
  * arguments:
- *   polyshape/waveshape should put the "index" arg last, or just forget it (use mus-scaler)
- *     mus-scaler is free in wave|polyshape, but needs field in struct, decision on how to use it in the mus_wave|polyshape* funcs
- *     remove waveshape, partials->waveshape
- *
  *   the simple filter args are inconsistent with other names -- didn't I deprecate the :a's and :b's a long time ago?
  *
  *   "fm" arg to formant -> set frequency so it's easier to have moving formants
@@ -10987,7 +11096,8 @@ void init_mus_module(void)
  *   (9.8)
  *   out* last arg defaults to *output*
  *   ncos, nsin
- *   nrxycos, nrxysin [todo: snd-tests]
+ *   nrxycos, nrxysin
+ *   polywave [todo: *.scm]
  *
  *   (9.7)
  *   :dur and :end -> :length in make-env

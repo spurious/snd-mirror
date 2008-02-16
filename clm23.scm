@@ -371,6 +371,16 @@
        (do ((i start (1+ i))) ((= i end))
 	 (out-any i (* amp (polyshape w1 1.0)) 0))))))
 
+(define (simple-polyw beg dur freq amp)
+  "(simple-poly beg dur freq amp) test instrument for polywave"
+  (let* ((w1 (make-polywave :frequency freq :partials '(1 1 2 1 3 1)))
+	 (start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i))) ((= i end))
+	 (out-any i (* amp (polywave w1)) 0))))))
+
 (define (simple-dly beg dur freq amp)
   "(simple-dly beg dur freq amp) test instrument for delay"
   (let* ((start (seconds->samples beg))

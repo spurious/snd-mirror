@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 3
-#define MUS_REVISION 50
-#define MUS_DATE "15-Feb-08"
+#define MUS_REVISION 51
+#define MUS_DATE "17-Feb-08"
 
 /*
+ * 17-Feb:     polywave for polyshape and waveshape.
  * 15-Feb:     nrxysin and nrxycos for sine-summation.
  * 12-Feb:     nsin for sum_of_sines, ncos for sum_of_cosines.
  * 4-Feb:      clm_default_frequency (clm2xen) and *clm-default-frequency* (ws.scm).
@@ -331,6 +332,7 @@ Float mus_dot_product(Float *data1, Float *data2, int size);
 #if HAVE_COMPLEX_TRIG
 complex double mus_edot_product(complex double freq, complex double *data, int size);
 #endif
+
 void mus_clear_array(Float *arr, int size);
 bool mus_arrays_are_equal(Float *arr1, Float *arr2, Float fudge, int len);
 Float mus_polynomial(Float *coeffs, Float x, int ncoeffs);
@@ -342,7 +344,8 @@ double mus_bessi0(Float x);
 Float mus_interpolate(mus_interp_t type, Float x, Float *table, int table_size, Float y);
 
 
-/* generic functions */
+/* -------- generic functions -------- */
+
 int mus_free(mus_any *ptr);
 char *mus_describe(mus_any *gen);
 bool mus_equalp(mus_any *g1, mus_any *g2);
@@ -392,6 +395,7 @@ Float mus_set_feedback(mus_any *rd, Float dir);
 Float mus_formant_radius(mus_any *gen);
 Float mus_set_formant_radius(mus_any *gen, Float val);
 
+  /* -------- generators -------- */
 
 Float mus_oscil(mus_any *o, Float fm, Float pm);
 Float mus_oscil_unmodulated(mus_any *ptr);
@@ -403,6 +407,7 @@ mus_any *mus_make_oscil(Float freq, Float phase);
 mus_any *mus_make_ncos(Float freq, int n);
 Float mus_ncos(mus_any *ptr, Float fm);
 bool mus_ncos_p(mus_any *ptr);
+
 mus_any *mus_make_nsin(Float freq, int n);
 Float mus_nsin(mus_any *ptr, Float fm);
 bool mus_nsin_p(mus_any *ptr);
@@ -411,6 +416,7 @@ bool mus_nsin_p(mus_any *ptr);
 mus_any *mus_make_sum_of_cosines(int cosines, Float freq, Float phase);
 #define mus_sum_of_cosines(Gen, Fm) mus_ncos(Gen, Fm)
 #define mus_sum_of_cosines_p(Ptr) mus_ncos_p(Ptr)
+
 mus_any *mus_make_sum_of_sines(int sines, Float freq, Float phase);
 #define mus_sum_of_sines(Gen, Fm) mus_nsin(Gen, Fm)
 #define mus_sum_of_sines_p(Ptr) mus_nsin_p(Ptr)
@@ -418,6 +424,7 @@ mus_any *mus_make_sum_of_sines(int sines, Float freq, Float phase);
 mus_any *mus_make_nrxysin(Float frequency, Float y_over_x, int n, Float r);
 Float mus_nrxysin(mus_any *ptr, Float fm);
 bool mus_nrxysin_p(mus_any *ptr);
+
 mus_any *mus_make_nrxycos(Float frequency, Float y_over_x, int n, Float r);
 Float mus_nrxycos(mus_any *ptr, Float fm);
 bool mus_nrxycos_p(mus_any *ptr);
@@ -426,7 +433,6 @@ bool mus_nrxycos_p(mus_any *ptr);
 mus_any *mus_make_sine_summation(Float frequency, Float phase, int n, Float a, Float ratio);
 #define mus_sine_summation(Obj, Fm) mus_nrxysin(Obj, Fm)
 #define mus_sine_summation_p(Obj) mus_nrxysin_p(Obj)
-
 
 Float mus_delay(mus_any *gen, Float input, Float pm);
 Float mus_delay_unmodulated(mus_any *ptr, Float input);
@@ -561,13 +567,21 @@ Float mus_waveshape_unmodulated(mus_any *ptr, Float index);
 Float mus_waveshape_no_input(mus_any *ptr);
 bool mus_waveshape_p(mus_any *ptr);
 Float *mus_partials_to_waveshape(int npartials, Float *partials, int size, Float *table);
+
 Float *mus_partials_to_polynomial(int npartials, Float *partials, mus_polynomial_t kind);
+
 mus_any *mus_make_polyshape(Float frequency, Float phase, Float *coeffs, int size);
 Float mus_polyshape(mus_any *ptr, Float index, Float fm);
-Float mus_polyshape_fm(mus_any *ptr, Float fm);
+#define mus_polyshape_fm(Obj, Fm) mus_polywave(Obj, Fm)
 Float mus_polyshape_unmodulated(mus_any *ptr, Float index);
-Float mus_polyshape_no_input(mus_any *ptr);
+#define mus_polyshape_no_input(Obj) mus_polywave_unmodulated(Obj)
 bool mus_polyshape_p(mus_any *ptr);
+
+mus_any *mus_make_polywave(Float frequency, Float *coeffs, int n);
+bool mus_polywave_p(mus_any *ptr);
+Float mus_polywave_unmodulated(mus_any *ptr);
+Float mus_polywave(mus_any *ptr, Float fm);
+
 
 Float mus_env(mus_any *ptr);
 mus_any *mus_make_env(Float *brkpts, int npts, double scaler, double offset, double base, double duration, off_t end, Float *odata);
@@ -671,6 +685,7 @@ Float mus_src_05(mus_any *srptr, Float (*input)(void *arg, int direction));
 bool mus_convolve_p(mus_any *ptr);
 Float mus_convolve(mus_any *ptr, Float (*input)(void *arg, int direction));
 mus_any *mus_make_convolve(Float (*input)(void *arg, int direction), Float *filter, int fftsize, int filtersize, void *closure);
+
 Float *mus_spectrum(Float *rdat, Float *idat, Float *window, int n, mus_spectrum_t type);
 void mus_fft(Float *rl, Float *im, int n, int is);
 void mus_big_fft(Float *rl, Float *im, off_t n, int is);
@@ -681,6 +696,7 @@ Float *mus_make_fft_window(mus_fft_window_t type, int size, Float beta);
 Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float beta, Float mu, Float *window);
 const char *mus_fft_window_name(mus_fft_window_t win);
 const char **mus_fft_window_names(void);
+
 Float *mus_autocorrelate(Float *data, int n);
 Float *mus_correlate(Float *data1, Float *data2, int n);
 Float *mus_convolution(Float* rl1, Float* rl2, int n);

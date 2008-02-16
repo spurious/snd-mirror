@@ -3992,7 +3992,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;;--------------------------------------------------------------------------------
 
 (def-optkey-fun (make-table-lookup-with-env frequency pulse-env size)
-  (let* ((len (or size 512))
+  (let* ((len (or size (clm-table-size)))
 	 (ve (make-vct len))
 	 (e (make-env pulse-env :length len)))
     (do ((i 0 (1+ i)))
@@ -4001,7 +4001,7 @@ index 10 (so 10/2 is the bes-jn arg):
     (make-table-lookup frequency 0.0 ve len)))
 
 (def-optkey-fun (make-wave-train-with-env frequency pulse-env size)
-  (let* ((len (or size 512))
+  (let* ((len (or size (clm-table-size)))
 	 (ve (make-vct len))
 	 (e (make-env pulse-env :length len)))
     (do ((i 0 (1+ i)))
@@ -4037,6 +4037,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	   ((= i 22050))
 	 (outa i (round-interp gen 0.0)))))))
 |#
+
 
 
 ;;; --------------------------------------------------------------------------------

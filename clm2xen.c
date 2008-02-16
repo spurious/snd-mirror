@@ -4382,7 +4382,7 @@ static XEN g_polyshape_p(XEN obj)
 static XEN g_make_polyshape(XEN arglist)
 {
   #define H_make_polyshape "(" S_make_polyshape " (:frequency *clm-default-frequency*) (:initial-phase 0.0) :coeffs (:partials '(1 1)) (:kind " S_mus_chebyshev_first_kind ")): \
-return a new polynomial-based waveshaping generator ('polyshaper...')\n\
+return a new polynomial-based waveshaping generator:\n\
    (" S_make_polyshape " :coeffs (" S_partials_to_polynomial " '(1 1.0)))\n\
 is the same in effect as " S_make_oscil
 
@@ -4479,6 +4479,108 @@ is the same in effect as " S_make_oscil
 	}
     }
   ge = mus_make_polyshape(freq, phase, coeffs, csize);
+  if (ge) return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, orig_v)));
+  return(XEN_FALSE);
+}
+
+
+
+/* ---------------- polywave ---------------- */
+
+static XEN g_polywave(XEN obj, XEN fm)
+{
+  #define H_polywave "(" S_polywave " gen :optional (fm 0.0)): next sample of polynomial-based waveshaper"
+  Float fm1 = 0.0;
+  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_polywave_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_polywave, "a polywave gen");
+  if (XEN_NUMBER_P(fm)) fm1 = XEN_TO_C_DOUBLE(fm); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(fm), fm, XEN_ARG_3, S_polywave, "a number");
+  return(C_TO_XEN_DOUBLE(mus_polywave(XEN_TO_MUS_ANY(obj), fm1)));
+}
+
+
+static XEN g_polywave_p(XEN obj) 
+{
+  #define H_polywave_p "(" S_polywave_p " gen): " PROC_TRUE " if gen is a " S_polywave " generator"
+  return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_polywave_p(XEN_TO_MUS_ANY(obj)))));
+}
+
+
+static XEN g_make_polywave(XEN arglist)
+{
+  #define H_make_polywave "(" S_make_polywave " (:frequency *clm-default-frequency*) (:partials '(1 1)) (:type " S_mus_chebyshev_first_kind ")): \
+return a new polynomial-based waveshaping generator.  (" S_make_polywave " :partials (vct 1 1.0)) is the same in effect as " S_make_oscil "."
+
+  mus_any *ge;
+  XEN args[MAX_ARGLIST_LEN]; 
+  int arglist_len;
+  XEN keys[3];
+  int orig_arg[3] = {0, 0, 0};
+  int i, type, vals, n = 0, npartials = 0;
+  XEN orig_v = XEN_FALSE;
+  Float freq; 
+  Float *coeffs = NULL, *partials = NULL;
+  mus_polynomial_t kind = MUS_CHEBYSHEV_FIRST_KIND;
+
+  freq = clm_default_frequency;
+
+  keys[0] = kw_frequency;
+  keys[1] = kw_partials;
+  keys[2] = kw_type;
+
+  arglist_len = XEN_LIST_LENGTH(arglist);
+  if (arglist_len > MAX_ARGLIST_LEN)
+    XEN_ERROR(CLM_ERROR,
+	      XEN_LIST_3(C_TO_XEN_STRING(S_make_polywave), 
+			 C_TO_XEN_STRING("too many args!"),
+			 arglist));
+  for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
+  for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = XEN_UNDEFINED;
+
+  vals = mus_optkey_unscramble(S_make_polywave, 3, keys, args, orig_arg);
+  if (vals > 0)
+    {
+      freq = mus_optkey_to_float(keys[0], S_make_polywave, orig_arg[0], freq);
+      if (freq > (0.5 * mus_srate()))
+	XEN_OUT_OF_RANGE_ERROR(S_make_polywave, orig_arg[0], keys[0], "freq ~A > srate/2?");
+
+      type = mus_optkey_to_int(keys[2], S_make_polywave, orig_arg[2], (int)kind);
+      if ((type >= MUS_CHEBYSHEV_OBSOLETE_KIND) && 
+	  (type <= MUS_CHEBYSHEV_SECOND_KIND))
+	kind = (mus_polynomial_t)type;
+      else XEN_OUT_OF_RANGE_ERROR(S_make_polywave, orig_arg[2], keys[2], "~A: unknown Chebyshev polynomial kind");
+
+      if (!(XEN_KEYWORD_P(keys[1])))
+	{
+	  int error = NO_PROBLEM_IN_LIST;
+	  if (MUS_VCT_P(keys[1]))
+	    partials = mus_vct_to_partials(XEN_TO_VCT(keys[1]), &npartials, &error);
+	  else
+	    {
+	      XEN_ASSERT_TYPE(XEN_LIST_P(keys[1]), keys[1], orig_arg[1], S_make_polywave, "a list or a vct");
+	      partials = list_to_partials(keys[1], &npartials, &error);
+	    }
+	  if (partials == NULL)
+	    XEN_ERROR(NO_DATA, 
+		      XEN_LIST_3(C_TO_XEN_STRING(S_make_polywave), 
+				 C_TO_XEN_STRING(list_to_partials_error_to_string(error)), 
+				 keys[1]));
+	  coeffs = mus_partials_to_polynomial(npartials, partials, kind);
+	  n = npartials;
+	  /* coeffs = partials here, so don't delete */ 
+	}
+      if (!partials)
+	{
+	  /* clm.html says '(1 1) is the default */
+	  Float *data;
+	  data = (Float *)CALLOC(2, sizeof(Float));
+	  data[0] = 0.0;
+	  data[1] = 1.0;
+	  coeffs = mus_partials_to_polynomial(2, data, kind);
+	  n = 2;
+	}
+      orig_v = xen_make_vct(n, coeffs);
+    }
+
+  ge = mus_make_polywave(freq, coeffs, n);
   if (ge) return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, orig_v)));
   return(XEN_FALSE);
 }
@@ -7423,6 +7525,9 @@ XEN_ARGIFY_3(g_polyshape_w, g_polyshape)
 XEN_NARGIFY_1(g_polyshape_p_w, g_polyshape_p)
 XEN_ARGIFY_2(g_partials_to_waveshape_w, g_partials_to_waveshape)
 XEN_ARGIFY_2(g_partials_to_polynomial_w, g_partials_to_polynomial)
+XEN_VARGIFY(g_make_polywave_w, g_make_polywave)
+XEN_ARGIFY_3(g_polywave_w, g_polywave)
+XEN_NARGIFY_1(g_polywave_p_w, g_polywave_p)
 
 XEN_VARGIFY(g_make_sine_summation_w, g_make_sine_summation)
 XEN_ARGIFY_2(g_sine_summation_w, g_sine_summation)
@@ -7721,6 +7826,9 @@ XEN_NARGIFY_2(g_mus_equalp_w, equalp_mus_xen)
 #define g_polyshape_p_w g_polyshape_p
 #define g_partials_to_waveshape_w g_partials_to_waveshape
 #define g_partials_to_polynomial_w g_partials_to_polynomial
+#define g_make_polywave_w g_make_polywave
+#define g_polywave_w g_polywave
+#define g_polywave_p_w g_polywave_p
 
 #define g_make_sine_summation_w g_make_sine_summation
 #define g_sine_summation_w g_sine_summation
@@ -8205,6 +8313,9 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_polyshape_p,            g_polyshape_p_w,            1, 0, 0, H_polyshape_p);
   XEN_DEFINE_PROCEDURE(S_partials_to_waveshape,  g_partials_to_waveshape_w,  1, 1, 0, H_partials_to_waveshape);
   XEN_DEFINE_PROCEDURE(S_partials_to_polynomial, g_partials_to_polynomial_w, 1, 1, 0, H_partials_to_polynomial);
+  XEN_DEFINE_PROCEDURE(S_make_polywave,          g_make_polywave_w,          0, 0, 1, H_make_polywave);
+  XEN_DEFINE_PROCEDURE(S_polywave,               g_polywave_w,               1, 1, 0, H_polywave);
+  XEN_DEFINE_PROCEDURE(S_polywave_p,             g_polywave_p_w,             1, 0, 0, H_polywave_p);
 
 
   XEN_DEFINE_PROCEDURE(S_make_sine_summation, g_make_sine_summation_w, 0, 0, 1, H_make_sine_summation);
@@ -8484,6 +8595,7 @@ void mus_xen_init(void)
 	       S_make_oscil,
 	       S_make_phase_vocoder,
 	       S_make_polyshape,
+	       S_make_polywave,
 	       S_make_pulse_train,
 	       S_make_rand,
 	       S_make_rand_interp,
@@ -8601,6 +8713,8 @@ void mus_xen_init(void)
 	       S_polynomial,
 	       S_polyshape,
 	       S_polyshape_p,
+	       S_polywave,
+	       S_polywave_p,
 	       S_pulse_train,
 	       S_pulse_train_p,
 	       S_phase_vocoder_amp_increments,
