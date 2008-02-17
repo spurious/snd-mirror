@@ -3390,12 +3390,20 @@ control."
 }
 
 
-static XEN g_formant(XEN gen, XEN input)
+static XEN g_formant(XEN gen, XEN input, XEN freq)
 {
-  #define H_formant "(" S_formant " gen :optional (input 0.0)): next sample from resonator gen"
+  #define H_formant "(" S_formant " gen :optional (input 0.0) freq-in-radians): next sample from resonator gen"
   Float in1 = 0.0;
+
   XEN_ASSERT_TYPE((MUS_XEN_P(gen) && (mus_formant_p(XEN_TO_MUS_ANY(gen)))), gen, XEN_ARG_1, S_formant, "a formant gen");
-  if (XEN_NUMBER_P(input)) in1 = XEN_TO_C_DOUBLE(input); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(input), input, XEN_ARG_2, S_formant, "a number");
+
+  if (XEN_NUMBER_P(input)) 
+    in1 = XEN_TO_C_DOUBLE(input); 
+  else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(input), input, XEN_ARG_2, S_formant, "a number");
+
+  if (XEN_NUMBER_P(freq)) 
+    return(C_TO_XEN_DOUBLE(mus_formant_with_frequency(XEN_TO_MUS_ANY(gen), in1, XEN_TO_C_DOUBLE(freq))));
+
   return(C_TO_XEN_DOUBLE(mus_formant(XEN_TO_MUS_ANY(gen), in1)));
 }
 
@@ -7493,7 +7501,7 @@ XEN_NARGIFY_1(g_two_pole_p_w, g_two_pole_p)
 XEN_ARGIFY_3(g_formant_bank_w, g_formant_bank)
 XEN_NARGIFY_1(g_formant_p_w, g_formant_p)
 XEN_ARGIFY_6(g_make_formant_w, g_make_formant)
-XEN_ARGIFY_2(g_formant_w, g_formant)
+XEN_ARGIFY_3(g_formant_w, g_formant)
 XEN_NARGIFY_3(g_set_formant_radius_and_frequency_w, g_set_formant_radius_and_frequency)
 XEN_VARGIFY(g_make_frame_w, g_make_frame)
 XEN_VARGIFY(g_make_frame_unchecked_w, g_make_frame_unchecked)
@@ -8297,7 +8305,7 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_formant_bank, g_formant_bank_w, 2, 1, 0, H_formant_bank);
   XEN_DEFINE_PROCEDURE(S_formant_p,    g_formant_p_w,    1, 0, 0, H_formant_p);
   XEN_DEFINE_PROCEDURE(S_make_formant, g_make_formant_w, 0, 6, 0, H_make_formant);
-  XEN_DEFINE_PROCEDURE(S_formant,      g_formant_w,      1, 1, 0, H_formant);
+  XEN_DEFINE_PROCEDURE(S_formant,      g_formant_w,      1, 2, 0, H_formant);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_formant_radius, g_mus_formant_radius_w, H_mus_formant_radius,
 				   S_setB S_mus_formant_radius, g_mus_set_formant_radius_w,  1, 0, 2, 0);

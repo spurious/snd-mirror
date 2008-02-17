@@ -73,10 +73,10 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 	   (carrier (make-oscil frequency))
 	   (fmosc1  (if modulate 
 			(if easy-case 
-			    (make-polyshape :frequency (* fm1-rat frequency) 
-					    :coeffs (partials->polynomial (list (inexact->exact fm1-rat) index1
-										(inexact->exact (floor (/ fm2-rat fm1-rat))) index2
-										(inexact->exact (floor (/ fm3-rat fm1-rat))) index3)))
+			    (make-polywave (* fm1-rat frequency) 
+					   (list (inexact->exact fm1-rat) index1
+						 (inexact->exact (floor (/ fm2-rat fm1-rat))) index2
+						 (inexact->exact (floor (/ fm3-rat fm1-rat))) index3))
 			    (make-oscil (* fm1-rat frequency)))
 			#f))
 	   (fmosc2  (and modulate (or easy-case (make-oscil (* fm2-rat frequency)))))
@@ -118,7 +118,7 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 		   (if easy-case
 		       (set! modulation
 			     (* (env indf1) 
-				(polyshape fmosc1 1.0 vib)))
+				(polywave fmosc1 vib)))
 		       (set! modulation
 			     (+ (* (env indf1) (oscil fmosc1 (+ (* fm1-rat vib) fuzz)))
 				(* (env indf2) (oscil fmosc2 (+ (* fm2-rat vib) fuzz)))
@@ -132,7 +132,7 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 	       (let* ((vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib))))
 		 (locsig locs i (* (env ampf) 
 				   (oscil carrier (+ vib (* (env indf1) 
-							    (polyshape fmosc1 1.0 vib)))))))))))))
+							    (polywave fmosc1 vib)))))))))))))
 
 
 ; (fm-violin 0 1 440 .1 :fm-index 2.0)

@@ -174,3 +174,78 @@ the amp (more or less), 'N'  is 1..10 or thereabouts, 'fi' is the phase incremen
    (lambda (gen val) 
      (set! (mus-location gen) val))))
 
+
+
+;;; -------- mfilter -- this has now been implemented in CLM as firmant
+
+;;; Mathews/Smith High-Q filter as described in http://ccrma.stanford.edu/~jos/smac03maxjos/
+
+(def-clm-struct mflt
+  (decay 0.99 :type float)
+  (frequency 1000.0 :type float)
+  (eps 0.0 :type float)
+  (xn 0.0 :type float)
+  (yn 0.0 :type float))
+
+(def-optkey-fun (make-mfilter (decay .99) (frequency 1000.0))
+  (make-mflt :decay decay 
+	     :frequency frequency 
+	     :eps (* 2.0 (sin (/ (* pi frequency) (mus-srate))))))
+
+(define (mfilter-1 m x-input y-input)
+  ;; no optional args, for 'run'
+  (let* ((xn1 (+ x-input
+		 (* (mflt-decay m) (- (mflt-xn m) 
+				      (* (mflt-eps m) (mflt-yn m))))))
+	 (yn1 (+ y-input
+		 (* (mflt-decay m) (+ (* (mflt-eps m) xn1) (mflt-yn m))))))
+    (set! (mflt-xn m) xn1)
+    (set! (mflt-yn m) yn1)
+    yn1))
+
+(define* (mfilter m :optional (x-input 0.0) (y-input 0.0))
+  ;; assume the "b1" business is handled by the caller
+  (mfilter-1 m x-input y-input))
+
+#|
+(with-sound () 
+  (let ((rd (make-sample-reader 0 "now.snd")) 
+	(m (make-mfilter))) 
+    (run (lambda () 
+	   (do ((i 0 (1+ i))) 
+	       ((= i 10000))
+	     (outa i (mfilter m (* .1 (rd)))))))))
+
+;;; sweep center freq:
+(with-sound () 
+  (let ((rd (make-sample-reader 0 "oboe.snd")) 
+        (m (make-mfilter :decay .99 :frequency 1000)) 
+        (e (make-env '(0 100 1 2000) :length 10000))) 
+    (run (lambda () 
+	   (do ((i 0 (1+ i))) 
+	       ((= i 10000))
+	     (outa i (mfilter m (* .1 (rd)))) 
+	     (set! (mflt-eps m) (* 2.0 (sin (/ (* pi (env e)) (mus-srate))))))))))
+
+;;; harmonics:
+(with-sound (:statistics #t)
+  (let* ((filters (make-vector 9))
+	 (noi (make-rand 10000)))
+    (do ((i 0 (1+ i)))
+	((= i 9))
+      (vector-set! filters i (make-mfilter :decay .999 :frequency (* 400 (+ i 1)))))
+    (run
+     (lambda ()
+       (declare (clm-vector filters))
+       (do ((i 0 (1+ i)))
+	   ((= i 10000))
+	 (let ((sum 0.0)
+	       (input (* .01 (rand noi))))
+	   (do ((j 0 (1+ j)))
+	       ((= j 9))
+	     (set! sum (+ sum (* (/ 1.0 (+ j 1)) (mfilter (vector-ref filters j) input)))))
+	   (outa i sum)))))))
+|#
+
+
+

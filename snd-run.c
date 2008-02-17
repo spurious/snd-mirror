@@ -8781,6 +8781,28 @@ static xen_value *oscil_1(ptree *prog, xen_value **args, int num_args)
   return(package(prog, R_FLOAT, oscil_2f, "oscil_2f", args, 3));
 }
 
+
+static void formant_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_formant(CLM_ARG_1, 0.0);}
+
+static void formant_1f(int *args, ptree *pt) {FLOAT_RESULT = mus_formant(CLM_ARG_1, FLOAT_ARG_2);}
+
+static void formant_2f(int *args, ptree *pt) {FLOAT_RESULT = mus_formant_with_frequency(CLM_ARG_1, FLOAT_ARG_2, FLOAT_ARG_3);}
+
+GEN_P(formant)
+
+static xen_value *formant_1(ptree *prog, xen_value **args, int num_args)
+{
+  if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, formant_check, "formant_check", args, num_args);
+  if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2);
+  if ((num_args > 2) && (args[3]->type == R_INT)) single_to_float(prog, args, 3);
+  if (num_args == 1)
+    return(package(prog, R_FLOAT, formant_0f, "formant_0f", args, 1));
+  if (num_args == 2)
+    return(package(prog, R_FLOAT, formant_1f, "formant_1f", args, 2));
+  return(package(prog, R_FLOAT, formant_2f, "formant_2f", args, 3));
+}
+
+
 #define GEN2(Name) \
   GEN2_0(Name) \
   GEN2_1(Name) \
@@ -8849,7 +8871,6 @@ GEN2(one_zero)
 GEN2(one_pole)
 GEN2(two_zero)
 GEN2(two_pole)
-GEN2(formant)
 GEN2(filter)
 GEN2(fir_filter)
 GEN2(iir_filter)
@@ -12632,7 +12653,7 @@ static void init_walkers(void)
   INIT_WALKER(S_phase_vocoder_phases, make_walker(phase_vocoder_phases_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_CLM));
   INIT_WALKER(S_phase_vocoder_phase_increments, make_walker(phase_vocoder_phase_increments_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_CLM));
 
-  INIT_WALKER(S_formant, make_walker(formant_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_formant, make_walker(formant_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_filter, make_walker(filter_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_fir_filter, make_walker(fir_filter_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_file_to_sample, make_walker(file_to_sample_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_INT));

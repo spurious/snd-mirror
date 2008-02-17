@@ -6,7 +6,7 @@
 #define MUS_DATE "17-Feb-08"
 
 /*
- * 17-Feb:     polywave for polyshape and waveshape.
+ * 17-Feb:     polywave for polyshape and waveshape.  mus_formant_with_frequency. firmant generator.
  * 15-Feb:     nrxysin and nrxycos for sine-summation.
  * 12-Feb:     nsin for sum_of_sines, ncos for sum_of_cosines.
  * 4-Feb:      clm_default_frequency (clm2xen) and *clm-default-frequency* (ws.scm).
@@ -532,6 +532,12 @@ Float mus_formant_bank(Float *amps, mus_any **formants, Float inval, int size);
 mus_any *mus_make_formant(Float radius, Float frequency, Float gain);
 bool mus_formant_p(mus_any *ptr);
 void mus_set_formant_radius_and_frequency(mus_any *ptr, Float radius, Float frequency);
+Float mus_formant_with_frequency(mus_any *ptr, Float input, Float freq_in_radians);
+
+Float mus_firmant(mus_any *ptr, Float input);
+mus_any *mus_make_firmant(Float frequency, Float radius);
+bool mus_firmant_p(mus_any *ptr);
+Float mus_firmant_with_frequency(mus_any *ptr, Float input, Float freq_in_radians);
 
 Float mus_filter(mus_any *ptr, Float input);
 mus_any *mus_make_filter(int order, Float *xcoeffs, Float *ycoeffs, Float *state);

@@ -107,7 +107,7 @@ enum {MUS_OSCIL, MUS_NCOS, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PASS,
       MUS_FRAME, MUS_READIN, MUS_FILE_TO_SAMPLE, MUS_FILE_TO_FRAME,
       MUS_SAMPLE_TO_FILE, MUS_FRAME_TO_FILE, MUS_MIXER, MUS_PHASE_VOCODER,
       MUS_MOVING_AVERAGE, MUS_NSIN, MUS_SSB_AM, MUS_POLYSHAPE, MUS_FILTERED_COMB,
-      MUS_MOVE_SOUND, MUS_NRXYSIN, MUS_NRXYCOS, MUS_POLYWAVE,
+      MUS_MOVE_SOUND, MUS_NRXYSIN, MUS_NRXYCOS, MUS_POLYWAVE, MUS_FIRMANT,
       MUS_INITIAL_GEN_TAG};
 
 
@@ -4775,7 +4775,7 @@ static char *describe_formant(mus_any *ptr)
   smpflt *gen = (smpflt *)ptr;
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
 	       S_formant ": radius: %.3f, frequency: %.3f, (gain: %.3f)",
-	       gen->radius, gen->frequency, gen->gain);
+	       gen->radius, mus_radians_to_hz(gen->frequency), gen->gain);
   return(describe_buffer);
 }
 
@@ -4808,60 +4808,64 @@ Float mus_formant_bank(Float *amps, mus_any **formants, Float inval, int size)
 }
 
 
-void mus_set_formant_radius_and_frequency(mus_any *ptr, Float radius, Float frequency)
+static void mus_set_formant_radius_and_frequency_in_radians(mus_any *ptr, Float radius, Float freq_in_radians)
 {
-  Float fw;
   smpflt *gen = (smpflt *)ptr;
-  fw = mus_hz_to_radians(frequency);
   gen->radius = radius;
-  gen->frequency = frequency;
+  gen->frequency = freq_in_radians;
   gen->ys[2] = radius * radius;
-  gen->xs[0] = gen->gain * sin(fw) * (1.0 - gen->ys[2]);
+  gen->xs[0] = gen->gain * sin(freq_in_radians) * (1.0 - gen->ys[2]);
   gen->xs[2] = -radius;
-  gen->ys[1] = -2.0 * radius * cos(fw);
+  gen->ys[1] = -2.0 * radius * cos(freq_in_radians);
 }
 
 
-static Float formant_frequency(mus_any *ptr)
+void mus_set_formant_radius_and_frequency(mus_any *ptr, Float radius, Float freq_in_hz)
+{
+  mus_set_formant_radius_and_frequency_in_radians(ptr, radius, mus_hz_to_radians(freq_in_hz));
+}
+
+
+static Float formant_frequency(mus_any *ptr) {return(mus_radians_to_hz(((smpflt *)ptr)->frequency));}
+
+static Float formant_set_frequency(mus_any *ptr, Float freq_in_hz)
 {
   smpflt *gen = (smpflt *)ptr;
-  return(gen->frequency);
+  Float fw;
+  fw = mus_hz_to_radians(freq_in_hz);
+  gen->frequency = fw;
+  gen->xs[0] = gen->gain * sin(fw) * (1.0 - gen->ys[2]);
+  gen->ys[1] = -2.0 * gen->radius * cos(fw);
+  return(freq_in_hz);
 }
 
 
-static Float formant_set_frequency(mus_any *ptr, Float val)
+Float mus_formant_with_frequency(mus_any *ptr, Float input, Float freq_in_radians)
 {
   smpflt *gen = (smpflt *)ptr;
-  mus_set_formant_radius_and_frequency(ptr, gen->radius, val);
-  return(val);
-}
-
-
-#if 0
-Float mus_formant_with_frequency(mus_any *ptr, Float input, Float freq)
-{
-  formant_set_frequency(ptr, freq);
+  gen->frequency = freq_in_radians;
+  gen->xs[0] = gen->gain * sin(freq_in_radians) * (1.0 - gen->ys[2]);
+  gen->ys[1] = -2.0 * gen->radius * cos(freq_in_radians);
   return(mus_formant(ptr, input));
 }
-#endif
 
 
-static Float f_radius(mus_any *ptr) {return(((smpflt *)ptr)->radius);}
+static Float formant_radius(mus_any *ptr) {return(((smpflt *)ptr)->radius);}
 
-static Float f_set_radius(mus_any *ptr, Float val) 
+static Float formant_set_radius(mus_any *ptr, Float val) 
 {
-  mus_set_formant_radius_and_frequency(ptr, val, ((smpflt *)ptr)->frequency); 
+  mus_set_formant_radius_and_frequency_in_radians(ptr, val, ((smpflt *)ptr)->frequency);
   return(val);
 }
 
-static Float f_gain(mus_any *ptr) {return(((smpflt *)ptr)->gain);}
+static Float formant_gain(mus_any *ptr) {return(((smpflt *)ptr)->gain);}
 
-static Float f_set_gain(mus_any *ptr, Float val)
+static Float formant_set_gain(mus_any *ptr, Float val)
 {
   smpflt *gen = (smpflt *)ptr;
   if (gen->gain != 0.0)
     gen->xs[0] *= (val / gen->gain);
-  else gen->xs[0] = val * sin(mus_hz_to_radians(gen->frequency)) * (1.0 - gen->ys[2]);
+  else gen->xs[0] = val * sin(gen->frequency) * (1.0 - gen->ys[2]);
   gen->gain = val;
   return(val);
 }
@@ -4875,11 +4879,9 @@ static mus_any_class FORMANT_CLASS = {
   &smpflt_equalp,
   0, 0,
   &two_length, 0,
-  &formant_frequency,
-  &formant_set_frequency,
-  &f_radius,
-  &f_set_radius,
-  &f_gain, &f_set_gain,
+  &formant_frequency, &formant_set_frequency,
+  &formant_radius, &formant_set_radius,
+  &formant_gain, &formant_set_gain,
   0, 0,
   &run_formant,
   MUS_SIMPLE_FILTER, 
@@ -11045,17 +11047,10 @@ void init_mus_module(void)
  *
  *      make-formant freq r gain, or maybe amplitude? [gain used only in make-formant]
  *      make-two-pole|zero freq r
- *      also cases like make-mfilter in dsp.scm
  *      perhaps add pm args alongside the fm args, as in oscil?
  *      perhaps remove all the initial-phase args
  *
  * generators:
- *   perhaps one gen: if n=1 oscil, n>1 r=1 sum-of-cosines, n!=inf nr[xy]cos, n=inf, r<1 r[xy]cos, r>=1 r[xy]k!cos or rkcos
- *    this could be "cosines" ("cosine-sum"?), sine case "sines", maybe xy cases: "ssb-cosines" "ssb-sines"
- *    if r is a list|vct, polyshape, if xy polyshape*cos
- *    in ssb case, how to say which side wins? does yfreq<0 work?
- *    another problem: cosines->polyshape+pi/2 phase, sines->polyshape cheby2, how to describe current case?
- *
  *   can the def-clm-struct method/make lists be used with built-in gens?
  *
  *   do something debonair about move-sound -- another mistake -- elastic-delay + vector arithmetic = dlocsig?
@@ -11080,9 +11075,6 @@ void init_mus_module(void)
  * arguments:
  *   the simple filter args are inconsistent with other names -- didn't I deprecate the :a's and :b's a long time ago?
  *
- *   "fm" arg to formant -> set frequency so it's easier to have moving formants
- *      but it's a direct freq, not an increment -- see mus_formant_with_frequency
- *
  *   :base as list in env = if up use car else cdr as base? or if > 2, use next on each segment
  *
  *
@@ -11097,7 +11089,9 @@ void init_mus_module(void)
  *   out* last arg defaults to *output*
  *   ncos, nsin
  *   nrxycos, nrxysin
- *   polywave [todo: *.scm]
+ *   polywave
+ *   added freq arg to formant [todo: lisp, doc, test, mus-scaler -> radius and no special func, and document these guys!]
+ *   firmant (Mathews/Smith form of the formant generator) [todo: everything...]
  *
  *   (9.7)
  *   :dur and :end -> :length in make-env
