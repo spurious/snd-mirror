@@ -1160,9 +1160,9 @@ an oscil or a sawtooth-wave:
 
 (define formants
   (lambda (r1 f1 r2 f2 r3 f3)
-    (let ((fr1 (<a class=quiet href="sndclm.html#make-formant">make-formant</a> r1 f1))
-	  (fr2 (<a class=quiet href="sndclm.html#make-formant">make-formant</a> r2 f2))
-	  (fr3 (<a class=quiet href="sndclm.html#make-formant">make-formant</a> r3 f3)))
+    (let ((fr1 (<a class=quiet href="sndclm.html#make-formant">make-formant</a> f1 r1))
+	  (fr2 (<a class=quiet href="sndclm.html#make-formant">make-formant</a> f2 r2))
+	  (fr3 (<a class=quiet href="sndclm.html#make-formant">make-formant</a> f3 r3)))
       (lambda (x)
 	(+ (<a class=quiet href="sndclm.html#formant">formant</a> fr1 x)
 	   (<a class=quiet href="sndclm.html#formant">formant</a> fr2 x)
@@ -1174,7 +1174,7 @@ an oscil or a sawtooth-wave:
 
 (define moving-formant
   (lambda (radius move)
-    (let ((frm (<a class=quiet href="sndclm.html#make-formant">make-formant</a> radius (cadr move)))
+    (let ((frm (<a class=quiet href="sndclm.html#make-formant">make-formant</a> (cadr move) radius))
 	  (menv (<a class=quiet href="sndclm.html#make-env">make-env</a> move :length (<a class=quiet href="extsnd.html#frames">frames</a>))))
       (lambda (x)
         (let ((val (<a class=quiet href="sndclm.html#formant">formant</a> frm x)))

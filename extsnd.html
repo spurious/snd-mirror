@@ -6624,7 +6624,7 @@ CLM filtering to a sound.  See also <a href="#clmchannel">clm-channel</a>.
 (<em class=red>filter-sound</em> (<a class=quiet href="#vct">vct</a> .1 .2 .3 .3 .2 .1) 6)                   ; FIR filter given actual coefficients
 (<em class=red>filter-sound</em> (<a class=quiet href="sndclm.html#make-fir-filter">make-fir-filter</a> 6 (<a class=quiet href="#vct">vct</a> .1 .2 .3 .3 .2 .1))) ; CLM FIR filter
 (<em class=red>filter-sound</em> (<a class=quiet href="sndclm.html#make-delay">make-delay</a> 120))                            ; CLM delay (same as insert-silence)
-(<em class=red>filter-sound</em> (<a class=quiet href="sndclm.html#make-formant">make-formant</a> .99 1200))                     ; CLM formant
+(<em class=red>filter-sound</em> (<a class=quiet href="sndclm.html#make-formant">make-formant</a> 1200 .99))                     ; CLM formant
 (<em class=red>filter-sound</em> (<a class=quiet href="sndclm.html#make-filter">make-filter</a> 2 (<a class=quiet href="#vct">vct</a> 1 -1) (<a class=quiet href="#vct">vct</a> 0 -0.99)))    ; remove DC
 </pre></td></tr></table>
 

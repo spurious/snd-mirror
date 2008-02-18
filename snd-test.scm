@@ -19594,8 +19594,8 @@ EDITS: 2
       (if (not (formant? gen)) (snd-display ";~A not formant?" gen))
       (if (not (= (mus-order gen) 2)) (snd-display ";formant order: ~D?" (mus-order gen)))
       (if (fneq (mus-frequency gen) 1200.0) (snd-display ";formant frequency: ~F?" (mus-frequency gen)))
-      (if (or (fneq (vct-ref v0 0) .064) (fneq (vct-ref v0 1) .108)) (snd-display ";formant output: ~A" v0))
-      (if (fneq (mus-scaler gen) 1.0) (snd-display ";formant gain: ~F?" (mus-scaler gen)))
+      (if (or (fneq (vct-ref v0 0) .190) (fneq (vct-ref v0 1) .322)) (snd-display ";formant output: ~A" v0))
+      (if (fneq (mus-scaler gen) 0.9) (snd-display ";formant gain: ~F?" (mus-scaler gen)))
       
       (set! (mus-scaler gen) 2.0)
       (if (fneq (mus-scaler gen) 2.0) (snd-display ";formant set gain: ~F?" (mus-scaler gen))))
@@ -19656,7 +19656,7 @@ EDITS: 2
       (vct-set! amps 0 0.5)
       (vct-set! amps 1 0.25)
       (vct-map! v (lambda () (let ((res (formant-bank amps fs val))) (set! val 0.0) res)))
-      (if (not (vequal v (vct 0.146 0.029 -0.011 -0.003 -0.000))) (snd-display ";run formant-bank: ~A" v)))
+      (if (not (vequal v (vct 0.735 0.191 -0.693 -0.182 -0.040))) (snd-display ";run formant-bank: ~A" v)))
     
     (let ((fs (make-vector 1))
 	  (amps (make-vct 1 1.0)))
