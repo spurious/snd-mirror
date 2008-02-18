@@ -1949,7 +1949,7 @@ of silence added at the cursor position.",
       ctr = freq_inc
       radius = 1.0 - r / fftsize.to_f
       bin = srate() / fftsize.to_f
-      formants = make_array(freq_inc) do |i| make_formant(radius, i * bin) end
+      formants = make_array(freq_inc) do |i| make_formant(i * bin, radius) end
       lambda do |inval|
         if ctr == freq_inc
           fdr = channel2vct(inctr, fftsize, cross_snd, 0)

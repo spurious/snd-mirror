@@ -2421,9 +2421,10 @@ def graph_eq(file, *args)
     if gval.kind_of?(Array)
       env_size[i] = make_env(:envelope, gval, :scaler, filt_gain_scale,
                              :duration, durata, :base, filt_gain_base)
-      frm_size[i] = make_formant(a1, fval)
+      frm_size[i] = make_formant(fval, a1)
     else
-      frm_size[i] = make_formant(a, fval, [offset_gain + gval, 0].max)
+      frm_size[i] = make_formant(fval, a1)
+# [offset_gain + gval, 0].max
     end
   end
   run_instrument(start, durata) do
@@ -2468,7 +2469,7 @@ def anoi(infile, start, dur, fftsize = 128, amp_scaler = 1.0, r = TWO_PI)
   file = make_file2sample(infile)
   radius = 1.0 - r / fftsize.to_f
   bin = @srate / fftsize
-  fs = make_array(freq_inc) do |i| make_formant(radius, i * bin) end
+  fs = make_array(freq_inc) do |i| make_formant(i * bin, radius) end
   samp = 0
   run_instrument(start, dur) do
     inval = file2sample(file, samp)

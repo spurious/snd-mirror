@@ -322,7 +322,7 @@ HELP
   end
 
   def hp(freq)
-    flt = make_formant(0.99, freq)
+    flt = make_formant(freq, 0.99)
     vobj = make_vct(@shorts)
     @func = lambda do |data|
       @shorts.times do |i|

@@ -15112,9 +15112,9 @@ def test068
   snd_display("f2zpolar freq: %s?", gen.frequency) if fneq(gen.frequency, 1200.0)
   snd_display("f2zpolar scaler: %s?", gen.scaler) if fneq(gen.scaler, 0.1)
   # 
-  gen = make_formant(0.9, 1200.0, 1.0)
-  gen1 = make_formant(0.9, 1200.0, 1.0)
-  print_and_check(gen, "formant", "formant: radius: 0.900, frequency: 1200.000, (gain: 1.000)")
+  gen = make_formant(1200.0, 0.9)
+  gen1 = make_formant(1200.0, 0.9)
+  print_and_check(gen, "formant", "formant: radius: 0.900, frequency: 1200.000")
   v0 = make_vct!(10) do |i| formant(gen, i.zero? ? 1.0 : 0.0) end
   v1 = make_vct(10)
   inp = -1
@@ -15158,46 +15158,39 @@ def test068
   end
   gen.scaler = 2.0
   snd_display("formant set_gain: %s?", gen.scaler) if fneq(gen.scaler, 2.0)
-  f1 = make_formant(0.9, 1200.0, 1.0)
-  f2 = make_formant(0.9, 1200.0, 1.0)
-  f3 = make_formant(0.9,  600.0, 1.0)
+  f1 = make_formant(1200.0, 0.9)
+  f2 = make_formant(1200.0, 0.9)
+  f3 = make_formant(600.0, 0.9)
   formant(f1, 1.0)
   formant(f2, 1.0)
   formant(f3, 1.0)
   test_gen_equal(f1, f2, f3)
-  f1 = make_formant(0.90, 1200.0, 1.0)
-  f2 = make_formant(0.90, 1200.0, 1.0)
-  f3 = make_formant(0.99, 1200.0, 1.0)
+  f1 = make_formant(1200.0, 0.9)
+  f2 = make_formant(1200.0, 0.9)
+  f3 = make_formant(1200.0, 0.99)
   formant(f1, 1.0)
   formant(f2, 1.0)
   formant(f3, 1.0)
-  test_gen_equal(f1, f2, f3)
-  f1 = make_formant(0.9, 1200.0, 1.0)
-  f2 = make_formant(0.9, 1200.0, 1.0)
-  f3 = make_formant(0.9, 1200.0, 0.5)
-  formant(f1, 1.0)
-  formant(f2, 1.0)
-  formant(f3, 0.5)
   test_gen_equal(f1, f2, f3)
   # 
-  frm = make_formant(0.1, 440.0)
+  frm = make_formant(440.0, 0.1)
   mus_set_formant_radius_and_frequency(frm, 2.0, 100.0)
-  if fneq(res = mus_formant_radius(frm), 2.0)
+  if fneq(res = mus_scaler(frm), 2.0)
     snd_display("set_formant_radius_and_frequency (radius): %s?", res)
   end
   if fneq(res = mus_frequency(frm), 100.0)
     snd_display("set_formant_radius_and_frequency (freq): %s?", res)
   end
-  fs = make_array(1) do make_formant(0.1, 1000.0) end
-  f0 = make_formant(0.1, 1000.0)
+  fs = make_array(1) do make_formant(1000.0, 0.1) end
+  f0 = make_formant(1000.0, 0.1)
   amps = make_array(1, 1.0)
   v0 = make_vct!(10) do |i| formant(f0, i.zero? ? 1.0 : 0.0) end
   v1 = make_vct!(10) do |i| old_formant_bank(amps, fs, i.zero? ? 1.0 : 0.0) end
   snd_display("formant_bank: %s %s?", v0, v1) unless vequal(v0, v1)
   # 
-  fs = [make_formant(0.1, 1000.0), make_formant(0.2, 100.0)]
-  f0 = make_formant(0.1, 1000.0)
-  f1 = make_formant(0.2, 100.0)
+  fs = [make_formant(1000.0, 0.1), make_formant(100.0, 0.2)]
+  f0 = make_formant(1000.0, 0.1)
+  f1 = make_formant(100.0, 0.2)
   amps = [0.5, 0.25]
   v0 = make_vct!(10) do |i|
     val = i.zero? ? 1.0 : 0.0
@@ -15206,7 +15199,7 @@ def test068
   v1 = make_vct!(10) do |i| old_formant_bank(amps, fs, i.zero? ? 1.0 : 0.0) end
   snd_display("formant_bank 1: %s %s?", v0, v1) unless vequal(v0, v1)
   # 
-  fs = [make_formant(0.1, 1000.0), make_formant(0.2, 100.0)]
+  fs = [make_formant(1000.0, 0.1), make_formant(100.0, 0.2)]
   amps = vct(0.5, 0.25)
   v = make_vct!(5) do |i| old_formant_bank(amps, fs, i.zero? ? 1.0 : 0.0) end
   unless vequal(v, vct(0.146, 0.029, -0.011, -0.003, 0.000))
@@ -15222,11 +15215,11 @@ def test068
   ob = open_sound("oboe.snd")
   poltergeist = lambda do |frek, amp, r, gain, frek_env, r_env|
     # test courtesy of Anders Vinjar
-    filt = make_formant(r, frek, gain)
+    filt = make_formant(frek, r)
     fe = make_env(:envelope, frek_env, :length, frames, :offset, frek)
     re = make_env(:envelope, r_env, :length, frames, :offset, r)
     lambda do |y|
-      outval = formant(filt, amp * y)
+      outval = gain * formant(filt, amp * y)
       mus_set_formant_radius_and_frequency(filt, env(re), env(fe))
       outval
     end

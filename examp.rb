@@ -3929,7 +3929,7 @@ map_channel(zcomb(0.8, 32, [0, 0, 1, 10]))")
   add_help(:formant_filter,
                    "formant_filter(radius, frequency) \
 returns a formant generator: map_channel(formant_filter(0.99, 2400)). \
-Faster is: filter_sound(make_formant(0.99, 2400))")
+Faster is: filter_sound(make_formant(2400, 0.99))")
   def formant_filter(radius, freq)
     frm = make_formant(radius, freq)
     lambda do |inval| formant(frm, inval) end
@@ -3941,9 +3941,9 @@ Faster is: filter_sound(make_formant(0.99, 2400))")
            "formants(r1, f1, r2, f2, r3, f3) \
 returns 3 formant filters in parallel: map_channel(formants(0.99, 900, 0.98, 1800, 0.99 2700))")
   def formants(r1, f1, r2, f2, r3, f3)
-    fr1 = make_formant(r1, f1)
-    fr2 = make_formant(r2, f2)
-    fr3 = make_formant(r3, f3)
+    fr1 = make_formant(f1, r1)
+    fr2 = make_formant(f2, r2)
+    fr3 = make_formant(f3, r3)
     lambda do |inval| formant(fr1, inval) + formant(fr1, inval) + formant(fr1, inval) end
   end
 
@@ -3952,7 +3952,7 @@ returns 3 formant filters in parallel: map_channel(formants(0.99, 900, 0.98, 180
 returns a time-varying (in frequency) formant filter: \
 map_channel(moving_formant(0.99, [0, 1200, 1, 2400]))")
   def moving_formant(radius, move)
-    frm = make_formant(radius, move[1])
+    frm = make_formant(move[1], radius)
     menv = make_env(:envelope, move, :length, frames)
     lambda do |inval|
       val = formant(frm, inval)
@@ -3967,7 +3967,7 @@ set up any number of independently oscillating formants, then calls map_channel:
 osc_formants(0.99, vct(400, 800, 1200), vct(400, 800, 1200), vct(4, 2, 3))")
   def osc_formants(radius, bases, amounts, freqs)
     len = bases.length
-    frms = make_array(len) do |i| make_formant(radius, bases[i]) end
+    frms = make_array(len) do |i| make_formant(bases[i], radius) end
     oscs = make_array(len) do |i| make_oscil(freqs[i]) end
     map_channel_rb() do |x|
       val = 0.0
@@ -4179,7 +4179,7 @@ map_channel(cross_synthesis(1, 0.5, 128, 6.0))")
     ctr = freq_inc
     radius = 1.0 - r / fftsize.to_f
     bin = srate() / fftsize.to_f
-    formants = make_array(freq_inc) do |i| make_formant(radius, i * bin) end
+    formants = make_array(freq_inc) do |i| make_formant(i * bin, radius) end
     lambda do |inval|
       if ctr == freq_inc
         fdr = channel2vct(inctr, fftsize, cross_snd, 0)
@@ -4214,7 +4214,7 @@ turns a vocal sound into whispering: voiced2unvoiced(1.0, 256, 2.0, 2.0)")
     outlen = (len / tempo).floor
     hop = (freq_inc * tempo).floor
     out_data = make_vct([len, outlen].max)
-    formants = make_array(freq_inc) do |i| make_formant(radius, i * bin) end
+    formants = make_array(freq_inc) do |i| make_formant(i * bin, radius) end
     old_peak_amp = new_peak_amp = 0.0
     callcc do |brk|
       outlen.times do |i|
@@ -4263,7 +4263,7 @@ uses sum-of-cosines to manipulate speech sounds")
     len = frames(snd, chn)
     out_data = make_vct(len)
     old_peak_amp = new_peak_amp = 0.0
-    formants = make_array(freq_inc) do |i| make_formant(radius, i * bin) end
+    formants = make_array(freq_inc) do |i| make_formant(i * bin, radius) end
     callcc do |brk|
       out_data.map do |i|
         outval = 0.0

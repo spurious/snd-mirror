@@ -11197,8 +11197,8 @@ void init_mus_module(void)
  *   ncos, nsin
  *   nrxycos, nrxysin
  *   polywave
- *   added freq arg to formant [todo: test (clm/snd), doc]
- *      removed gain arg from mus_make_formant and reversed order of frequency and radius args [todo: fs rb]
+ *   added freq arg to formant [todo: test (clm/snd), doc, check lisp case]
+ *      removed gain arg from mus_make_formant and reversed order of frequency and radius args
  *      fixed incorrect gain calculation in formant
  *   firmant (Mathews/Smith form of the formant generator) [todo: lisp rb fs firmant/formant/mus-formant-radius]
  *

@@ -1090,7 +1090,7 @@ If you're in a hurry use: 0.8 32 make-comb clm-channel instead."
 
 : formant-filter ( radius frequency -- prc; x self -- val )
   doc" Returns a formant generator: 0.99 2400 formant-filter map-channel.  \
-Faster is:  0.99 2400 make-formant filter-sound"
+Faster is:  2400 0.99 make-formant filter-sound"
   make-formant { gen }
   1 proc-create gen ,
  does> { x self -- val }
@@ -1100,9 +1100,9 @@ Faster is:  0.99 2400 make-formant filter-sound"
 : formants ( r1 f1 r2 f2 r3 f3 -- prc; x self -- val )
   doc" Returns 3 formant filters in parallel: 0.99 900 0.98 1800 0.99 2700 formants map-channel"
   { r1 f1 r2 f2 r3 f3 }
-  r1 f1 make-formant { fr1 }
-  r2 f2 make-formant { fr2 }
-  r3 f3 make-formant { fr3 }
+  f1 r1 make-formant { fr1 }
+  f2 r2 make-formant { fr2 }
+  f3 r3 make-formant { fr3 }
   1 proc-create fr1 , fr2 , fr3 ,
  does> { x self -- val }
   self           @ x formant
@@ -1114,7 +1114,7 @@ Faster is:  0.99 2400 make-formant filter-sound"
   doc" Returns a time-varying (in frequency) formant filter:\n\
 0.99 '( 0 1200 1 2400 ) moving-formant map-channel"
   { radius move }
-  radius move cadr make-formant { frm }
+  move cadr radius make-formant { frm }
   :envelope move :length #f #f #f frames make-env { menv }
   1 proc-create frm , menv ,
  does> { x self -- val }
@@ -1128,7 +1128,7 @@ Faster is:  0.99 2400 make-formant filter-sound"
 0.99 '( 0 1200 1 2400 ) moving-formant map-channel"
   { radius bases amounts freqs }
   bases vct-length { len }
-  len make-array map! radius bases i vct-ref make-formant end-map { frms }
+  len make-array map! bases i vct-ref radius make-formant end-map { frms }
   len make-array map!        freqs i vct-ref make-oscil   end-map { oscs }
   1 proc-create frms , amounts , oscs , bases ,
  does> { x self -- val }
@@ -1395,7 +1395,7 @@ previous
   freq-inc 0.0 make-vct { spectr }
   1.0 r fftsize f/ f- { radius }
   #f srate fftsize / { bin }
-  freq-inc make-array map! radius i bin * make-formant end-map { formants }
+  freq-inc make-array map! i bin * radius make-formant end-map { formants }
   1 proc-create fdr , fdi , spectr , formants , amp , freq-inc , cross-snd , fftsize , 0 , ( prc )
  does> { y self -- val }
   self @ { fdr }
@@ -1433,7 +1433,7 @@ previous
   freq-inc tempo f* fround->s { hop }
   0.0 0.0 { old-peak-amp new-peak-amp }
   $" %s %s %s %s %s" '( amp fftsize r tempo get-func-name ) string-format { origin }
-  freq-inc make-array map! radius i bin * make-formant end-map { formants }
+  freq-inc make-array map! i bin * radius make-formant end-map { formants }
   out-len 0.0 make-vct map!
     i freq-inc mod 0= if
       c-g? if "interrupted" leave then	\ ;; if C-g exit the loop returning the string "interrupted"
@@ -1461,7 +1461,7 @@ previous
   snd chn #f frames { len }
   0.0 0.0 { old-peak-amp new-peak-amp }
   $" %s %s %s %s %s %s" '( cosines freq amp fftsize r get-func-name ) string-format { origin }
-  freq-inc make-array map! radius i bin * make-formant end-map { formants }
+  freq-inc make-array map! i bin * radius make-formant end-map { formants }
   len 0.0 make-vct map!
     i freq-inc mod 0= if
       c-g? if "interrupted" leave then	\ ;; if C-g exit the loop returning the string "interrupted"

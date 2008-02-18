@@ -2487,7 +2487,7 @@ nil doesnt print anything, which will speed up a bit the process.
 		       #f))
 	 (if-list-in-gain (list? (car gain-list)))
 	 (frm-size (make-vector (length freq-list)))
-	 (gains (make-vct (length freq-list)))
+	 (gains (make-vct (length freq-list) 1.0))
 	 (samp -1))
 
     (do ((k 0 (1+ k)))
@@ -2500,10 +2500,11 @@ nil doesnt print anything, which will speed up a bit the process.
 					      :scaler filt-gain-scale
 					      :duration durata :base filt-gain-base))
 	    (vector-set! frm-size k (make-formant fval a1)))
-	  (vector-set! frm-size k (make-formant fval a1))
-	  (vct-set! gains (if (< (+ offset-gain gval) 0) 
-			      0
-			      (+ offset-gain gval))))))
+	  (begin
+	    (vector-set! frm-size k (make-formant fval a1))
+	    (vct-set! gains (if (< (+ offset-gain gval) 0) 
+				0
+				(+ offset-gain gval)))))))
     (ws-interrupt?)
     (run
      (lambda ()
