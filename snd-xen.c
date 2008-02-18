@@ -2933,6 +2933,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 #endif
 
   XEN_YES_WE_HAVE("snd");
+  XEN_YES_WE_HAVE("snd" SND_MAJOR_VERSION);
 
 #if WITH_MODULES
   scm_c_use_module("snd sndlib");

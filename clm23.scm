@@ -339,7 +339,7 @@
   (let* ((start (seconds->samples beg))
 	 (end (+ start (seconds->samples dur)))
 	 (os (make-oscil freq))
-	 (oz (make-formant .95 1200.0 1.0)))
+	 (oz (make-formant 1200.0 0.95)))
     (run
      (lambda ()
        (do ((i start (1+ i))) ((= i end))
@@ -2869,7 +2869,7 @@
     (let ((start-frq (env menv)))
       (do ((i 0 (1+ i)))
 	  ((= i num-formants))
-	(vector-set! frms i (make-formant radius (* (+ i 1) start-frq)))))
+	(vector-set! frms i (make-formant (* (+ i 1) start-frq) radius))))
     (run
      (lambda ()
        (do ((k beg (1+ k)))

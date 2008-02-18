@@ -55,6 +55,8 @@ filtered-comb?
 fir-filter
 fir-filter?
 flat-top-window
+firmant
+firmant?
 formant
 formant-bank
 formant?
@@ -102,6 +104,7 @@ make-filter
 make-filtered-comb
 make-fir-coeffs
 make-fir-filter
+make-firmant
 make-formant
 make-frame
 make-frame->file
@@ -168,7 +171,6 @@ mus-fft
 mus-file-buffer-size
 mus-file-name
 mus-float-equal-fudge-factor
-mus-formant-radius
 mus-frequency
 mus-generator?
 mus-hop

@@ -3491,11 +3491,11 @@ as the response at that frequency (in terms of a sampling rate of 1.0):
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>formant</h3></center></td></tr></table>
 
 <pre>
-  <a class=def name="make-formant">make-formant</a> <a class=quiet href="#optional-key">:optional-key</a> radius frequency (gain 1.0)
+  <a class=def name="make-formant">make-formant</a> <a class=quiet href="#optional-key">:optional-key</a> frequency radius
   <a class=def name="formant">formant</a> f input :optional center-frequency-in-radians
   <a class=def name="formant?">formant?</a> f
 
-  <a class=def name="make-firmant">make-firmant</a> <a class=quiet href="#optional-key">:optional-key</a> frequency radius ; args reversed from formant!
+  <a class=def name="make-firmant">make-firmant</a> <a class=quiet href="#optional-key">:optional-key</a> frequency radius
   <a class=def name="firmant">firmant</a> f input :optional center-frequency-in-radians
   <a class=def name="firmant?">firmant?</a> f
 </pre>
@@ -3507,12 +3507,11 @@ as the response at that frequency (in terms of a sampling rate of 1.0):
 <tr><td>
 <table border=1 hspace=40 vspace=16 cellpadding=4 align=left>
 <tr><td colspan=2 bgcolor="beige"><center>formant methods</center></td></tr>
-<tr><td><em class=gen>mus-xcoeff</em></td><td>a0, a1, a2 in equations</td></tr>
-<tr><td><em class=gen>mus-ycoeff</em></td><td>b1, b2 in equations</td></tr>
-<tr><td><em class=gen>mus-formant-radius</em></td><td>formant radius</td></tr>
+<tr><td><em class=gen>mus-xcoeff</em></td><td>input coefficients</td></tr>
+<tr><td><em class=gen>mus-ycoeff</em></td><td>output feedback coefficients</td></tr>
+<tr><td><em class=gen>mus-phase</em></td><td>formant radius</td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>formant center frequency</td></tr>
 <tr><td><em class=gen>mus-order</em></td><td>2 (no set!)</td></tr>
-<tr><td><em class=gen>mus-scaler</em></td><td>gain</td></tr>
 </table>
 
 </td><td>
@@ -3526,31 +3525,22 @@ as the response at that frequency (in terms of a sampling rate of 1.0):
 
 <p>The formant generator is described in "A Constant-gain Digital Resonator Tuned By a Single Coefficient" by Julius
 O. Smith and James B. Angell in Computer Music Journal Vol. 6 No. 4 (winter
-1982).
-The filter coefficients are set as a function of the "radius",
-"frequency", and "gain". 
-The bandwidth of the resonance is (* 2 (- 1.0 radius)), so as the radius approaches 1.0 (the unit circle), the
+1982) and "A note on
+Constant-Gain Digital Resonators" by Ken Steiglitz, CMJ vol 18 No. 4 pp.8-10
+(winter 1994).
+The formant bandwidth is a function of the "radius", and its center frequency is set by "frequency".
+As the radius approaches 1.0 (the unit circle), the
 resonance gets narrower.
-Use <a href="sndclm.html#mus-frequency">mus-frequency</a> to change the center frequency, and <a href="sndclm.html#mus-formant-radius">mus-formant-radius</a> to change the radius.
-In the paper mentioned above,
-radius can be set in terms of desired bandwidth in Hz, via:
+Use <a href="sndclm.html#mus-frequency">mus-frequency</a> to change the center frequency, and <a href="sndclm.html#mus-scaler">mus-scaler</a> to change the radius.
+The radius can be set in terms of desired bandwidth in Hz via:
 </p>
 <pre>
     (exp (* -0.5 (hz-&gt;radians bandwidth)))
 </pre>
 
-<p>See also "A note on
-Constant-Gain Digital Resonators" by Ken Steiglitz, CMJ vol 18 No. 4 pp.8-10
-(winter 1994).
-The "gain" argument to make-formant is not used directly; it becomes
-<code>gain * (1 - radius)</code> or some variant thereof (see mus_make_formant in clm.c).
-When you set mus-formant-radius, the gain is also adjusted.
-</p>
-
-<p>If you sweep either the radius or the frequency of formant, the peak amplitude 
-of the output changes.  Max Mathews and Julius Smith came up with a variant of
-formant that maintains a steady output as the frequency changes, called "firmant"
-in CLM.  Here are some graphs showing the two generators filtering white noise
+<p>If you change the radius, the peak amplitude 
+of the output changes.  
+Here are some graphs showing the formant and firmant filtering white noise
 as we sweep either the frequency or the radius:
 </p>
 
@@ -3560,8 +3550,8 @@ as we sweep either the frequency or the radius:
 (with-sound (:channels 4 :clipped #f :statistics #t)
   (let* ((dur 100)
 	 (samps (seconds->samples dur))
-	 (flta (make-formant .999 100))
-	 (fltb (make-formant .1 5000))
+	 (flta (make-formant 100 .999))
+	 (fltb (make-formant 5000 .1))
 	 (fltc (make-firmant 100 .999))
 	 (fltd (make-firmant 5000 .1))
 	 (ampf (make-env '(0 0 1 1 100 1 101 0) :duration dur))
@@ -3576,29 +3566,25 @@ as we sweep either the frequency or the radius:
 		(amp (env ampf))
 		(pulse (- (random 2.0) 1.0)))
 	   (outa i (* amp (formant flta pulse frq)))
-	   (set! (mus-formant-radius fltb) r)
+	   (set! (mus-scaler fltb) r)
 	   (outc i (* amp (formant fltb pulse)))
-	   (outb i (* amp (firmant fltc pulse)))
-	   (set! (firmant-eps fltc) (* 2.0 (sin (* 0.5 frq))))
+	   (outb i (* amp (firmant fltc pulse frq)))
 	   (outd i (* amp (firmant fltd pulse)))
-	   (set! (firmant-radius fltd) r)))))))
+	   (set! (mus-scaler fltd) r)
+	   ))))))
 
-(set! (selected-data-color) (make-color 0 0 0))
-(set! (selected-graph-color) (make-color 1 1 1))
-(set! (x-axis-label 0 0 0) "formant: sweep frequency from 100 to 10000")
-(set! (x-axis-label 0 1 0) "firmant: sweep frequency from 100 to 10000")
-(set! (x-axis-label 0 0 1) "formant radius: .999")
-(set! (x-axis-label 0 1 1) "firmant radius: .999")
-(set! (x-axis-label 0 2 0) "formant: sweep radius from .6 to .999")
-(set! (x-axis-label 0 3 0) "firmant: sweep radius from .6 to .999")
-(set! (x-axis-label 0 2 1) "formant frequency: 5000")
-(set! (x-axis-label 0 3 1) "firmant frequency: 5000")
+(define (fixup-axes)
+  (set! (selected-data-color) (make-color 0 0 0))
+  (set! (selected-graph-color) (make-color 1 1 1))
+  (set! (x-axis-label 0 0 0) "formant: sweep frequency from 100 to 10000")
+  (set! (x-axis-label 0 1 0) "firmant: sweep frequency from 100 to 10000")
+  (set! (x-axis-label 0 0 1) "formant radius: .999")
+  (set! (x-axis-label 0 1 1) "firmant radius: .999")
+  (set! (x-axis-label 0 2 0) "formant: sweep radius from .6 to .999")
+  (set! (x-axis-label 0 3 0) "firmant: sweep radius from .6 to .999")
+  (set! (x-axis-label 0 2 1) "formant frequency: 5000")
+  (set! (x-axis-label 0 3 1) "firmant frequency: 5000"))
 -->
-
-<p>make-firmant's arguments are reversed from make-formant's;
-someday, make-formant's arguments will be reversed.
-Eventually all the make functions will put the frequency (if any) first.
-</p>
 
 <p>formant generators are commonly used in a bank of filters to provide a sort of sample-by-sample spectrum.
 An example is <a href="sndscm.html#fadedoc">fade.scm</a> which has various functions for frequency domain mixing.
@@ -3621,7 +3607,7 @@ If "radius" is .99, you get a glass-harmonica effect; if it's less, you get more
     (let ((start-frq (<a class=quiet href="#env">env</a> menv)))
       (do ((i 0 (1+ i)))
 	  ((= i num-formants))
-	(vector-set! frms i (<em class=red>make-formant</em> radius (* (+ i 1) start-frq)))))
+	(vector-set! frms i (<em class=red>make-formant</em> (* (+ i 1) start-frq) radius))))
     (<a class=quiet href="extsnd.html#run">run</a>
      (lambda ()
        (do ((k beg (1+ k)))
@@ -3642,6 +3628,9 @@ If "radius" is .99, you get a glass-harmonica effect; if it's less, you get more
 </pre>
 </td></tr></table>
 
+<p>The clm-3 formant gain calculation was incorrect.  To translate from the old
+formant to the new one, multiply the old gain by (sin (hz->radians frequency)).
+</p>
 
 <br><br>
 
@@ -6032,7 +6021,6 @@ The generic functions are:
 <tr><td><a class=def name="mus-feedback">mus-feedback</a></td><td></td><td>feedback coefficient</td></tr>
 <tr><td bgcolor="#f6f8ff"><a class=def name="mus-feedforward">mus-feedforward</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">feedforward coefficient</td></tr>
 <tr><td><a class=def name="mus-file-name">mus-file-name</a></td><td></td><td>file being read/written</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-formant-radius">mus-formant-radius</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">formant radius</td></tr>
 <tr><td><a class=def name="mus-frequency">mus-frequency</a></td><td></td><td>frequency (Hz)</td></tr>
 <tr><td bgcolor="#f6f8ff"><a class=def name="mus-hop">mus-hop</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">hop size for block processing</td></tr>
 <tr><td><a class=def name="mus-increment">mus-increment</a></td><td></td><td>various increments</td></tr>

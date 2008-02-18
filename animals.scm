@@ -433,14 +433,15 @@
 			  :duration dur :scaler 6100.0))
 	 (frqf4 (make-env '(0 7200 .5 7600 .9 7000 1 5400) :duration dur))
 
-	 (frm1 (make-formant .995 900 5))
-	 (frm2 (make-formant .99 1260 5))
-	 (frm3 (make-formant .99 4500 5))
-	 (frm4 (make-formant .9 7200 5))
+	 (frm1 (make-formant 900 .995))
+	 (frm2 (make-formant 1260 .99))
+	 (frm3 (make-formant 4500 .99))
+	 (frm4 (make-formant 7200 .9))
 
-	 (ampfr1 (make-env '(0 .5 1 3) :duration dur :base 3))
-	 (ampfr2 (make-env '(0 .25 .5 .4 1 1) :duration dur))
-	 (ampfr4 (make-env '(0 0 .3 1 1 1) :duration dur))
+	 (ampfr1 (make-env '(0 .5 1 3) :duration dur :scaler (* 5 (sin (hz->radians 900))) :base 3))
+	 (ampfr2 (make-env '(0 .25 .5 .4 1 1) :duration dur :scaler (* 5 (sin (hz->radians 1260)))))
+	 (ampfr4 (make-env '(0 0 .3 1 1 1) :duration dur :scaler (* 5 (sin (hz->radians 7200)))))
+	 (ampfr3 (* 5 (sin (hz->radians 4500))))
 
 	 (gen1 (make-rk!cos 100 13.0))
 	 (ampf1 (make-env '(0 1 1 0) :base 3 :duration dur))
@@ -478,7 +479,7 @@
 			 (formant frm1 val))
 		      (* (env ampfr2)
 			 (formant frm2 val))
-		      (formant frm3 val)
+		      (* ampfr3 (formant frm3 val))
 		      (* (env ampfr4)
 			 (formant frm4 val))))))))))
 
@@ -822,9 +823,13 @@
 	 (rnd (make-rand-interp 4000 .2))
 	 (rnd1 (make-rand-interp 200 (hz->radians 2)))
 
-	 (frm1 (make-formant .99 400 7))
-	 (frm2 (make-formant .98 1200 14))
-	 (frm3 (make-formant .97 5000 4))
+	 (frm1 (make-formant 400 .99))
+	 (frm2 (make-formant 1200 .98))
+	 (frm3 (make-formant 5000 .97))
+
+	 (frm1f (* 7.0 (sin (hz->radians 400))))
+	 (frm2f (* 14.0 (sin (hz->radians 1200))))
+	 (frm3f (* 4.0 (sin (hz->radians 5000))))
 
 	 (intrpf (make-env '(0 1 .6 0 1 1) :duration dur)))
    (run
@@ -841,9 +846,9 @@
 			   (* .1 (rxyk!cos f3 frq))
 			   (* .1 (rxyk!cos f4 frq))))))
 	   (set! (mus-frequency frm2) (+ 1000 (* intrp 200)))
-	   (outa i (+ (formant frm1 val)
-		      (formant frm2 val)
-		      (formant frm3 val)))))))))
+	   (outa i (+ (* frm1f (formant frm1 val))
+		      (* frm2f (formant frm2 val))
+		      (* frm3f (formant frm3 val))))))))))
 
 ;(with-sound (:play #t) (bullfrog 0 .5))
 
@@ -4215,9 +4220,14 @@
 			   0.435 0.424 0.495 0.439 0.528 0.392 0.589 0.405 0.621 0.362 0.677 0.373 0.704 0.332 
 			   0.767 0.325 0.791 0.281 0.832 0.278 0.859 0.251 0.890 0.225 0.912 0.255 0.950 0.263 1.000 0.26)
 			 :duration dur :scaler (hz->radians 1250.0)))
-	 (frm1 (make-formant .995 1400 20))
-	 (frm2 (make-formant .98 5500 1))
-	 (frm3 (make-formant .98 3800 2))
+	 (frm1 (make-formant 1400 .995))
+	 (frm2 (make-formant 5500 .98))
+	 (frm3 (make-formant 3800 .98))
+
+	 (fr1 (* 20 (sin (hz->radians 1400))))
+	 (fr2 (sin (hz->radians 5500)))
+	 (fr3 (* 2 (sin (hz->radians 3800))))
+
 	 (gen (make-nrcos 0.0 15 .75))
 	 (rnd (make-rand-interp 5000 .007)))
    (run
@@ -4227,9 +4237,9 @@
 	 (let ((inp (* (env ampf)
 		       (nrcos gen (+ (env frqf)
 				     (rand-interp rnd))))))
-	   (outa i (+ (formant frm1 inp)
-		      (formant frm2 inp)
-		      (formant frm3 inp)))))))))
+	   (outa i (+ (* fr1 (formant frm1 inp))
+		      (* fr2 (formant frm2 inp))
+		      (* fr3 (formant frm3 inp))))))))))
 
 ;(with-sound (:play #t) (american-crow 0 .5))
 
@@ -4408,9 +4418,13 @@
 	 (gens (make-vector 3 #f))
 	 (starts (make-vector 3 0))
 	 (stops (make-vector 3 0))
-	 (frm1 (make-formant .995 1000 5))
-	 (frm2 (make-formant .99 1700 15))
-	 (frm3 (make-formant .98 5600 5)))
+	 (frm1 (make-formant 1000 .995))
+	 (frm2 (make-formant 1700 .99))
+	 (frm3 (make-formant 5600 .98))
+
+	 (fr1 (* 5 (sin (hz->radians 1000))))
+	 (fr2 (* 15 (sin (hz->radians 1700))))
+	 (fr3 (* 5 (sin (hz->radians 5600)))))
 
     (do ((i 0 (1+ i)))
 	((= i 3))
@@ -4442,9 +4456,9 @@
 	       ((= i stop))
 	     (let ((val (* (env ampf)
 			   (nrxysin gen (env frqf)))))
-	       (outa i (+ (formant frm1 val)
-			  (formant frm2 val)
-			  (formant frm3 val)))))))))))
+	       (outa i (+ (* fr1 (formant frm1 val))
+			  (* fr2 (formant frm2 val))
+			  (* fr3 (formant frm3 val))))))))))))
 
 ;(with-sound (:play #t) (california-quail 0 .25))
 
@@ -4629,9 +4643,13 @@
 	 (intrpf (make-env '(0 0 .53 0 .54 1 1 1) :duration dur))
 	 (rnd1 (make-rand-interp 1000 .1))
 
-	 (frm1 (make-formant .995 730 15))
-	 (frm2 (make-formant .999 1090 1))
-	 (frm3 (make-formant .993 2240 1)))
+	 (frm1 (make-formant 730 .995))
+	 (frm2 (make-formant 1090 .999))
+	 (frm3 (make-formant 2240 .993))
+
+	 (fr1 (* 15 (sin (hz->radians 730))))
+	 (fr2 (sin (hz->radians 1090)))
+	 (fr3 (sin (hz->radians 2240))))
 
    (run
      (lambda ()
@@ -4647,9 +4665,9 @@
 	   (set! (mus-frequency frm1) (+ 550 (* intrp 80)))
 	   (set! (mus-frequency frm2) (- 1500 (* intrp 400)))
 	   (set! (mus-frequency frm3) (+ 2300 (* intrp 150)))
-	   (outa i (+ (formant frm1 inp)
-		      (formant frm2 inp)
-		      (formant frm3 inp)))))))))
+	   (outa i (+ (* fr1 (formant frm1 inp))
+		      (* fr2 (formant frm2 inp))
+		      (* fr3 (formant frm3 inp))))))))))
 
 ;(with-sound (:play #t) (barred-owl-1 0 .5))
 
@@ -4860,10 +4878,15 @@
 	 (rnd (make-rand-interp 800 .2))
 	 (attf (make-env '(0 1 .15 0 1 0) :duration dur :base 10))
 
-	 (frm1 (make-formant .99 2300 5))
-	 (frm2 (make-formant .98 6100 3))
-	 (frm3 (make-formant .98 3800 5))
-	 (frm4 (make-formant .99 1800 7))
+	 (frm1 (make-formant 2300 .99))
+	 (frm2 (make-formant 6100 .98))
+	 (frm3 (make-formant 3800 .98))
+	 (frm4 (make-formant 1800 .99))
+
+	 (fr1 (* 5 (sin (hz->radians 2300))))
+	 (fr2 (* 3 (sin (hz->radians 6100))))
+	 (fr3 (* 5 (sin (hz->radians 3800))))
+	 (fr4 (* 7 (sin (hz->radians 1800))))
 
 	 (rnd2 (make-rand-interp 300 (hz->radians 15))))
    (run
@@ -4878,10 +4901,10 @@
 		      (+ (rcos gen1 frq)
 			 (* (env intrpf)
 			    (rxycos gen2 frq))))))
-	   (outa i (+ (formant frm1 val)
-		      (formant frm2 val)
-		      (formant frm3 val)
-		      (formant frm4 val)))))))))
+	   (outa i (+ (* fr1 (formant frm1 val))
+		      (* fr2 (formant frm2 val))
+		      (* fr3 (formant frm3 val))
+		      (* fr4 (formant frm4 val))))))))))
 
 ;(with-sound (:play #t :scaled-to .5) (common-gull 0 .5))
 
@@ -5226,12 +5249,15 @@
 			 :duration dur :scaler (* 0.5 amp)))
 	 (frqf (make-env '(0.000 0.452 0.342 0.457 0.431 0.502 1.000 0.49 )
 			 :duration dur :offset (hz->radians -250) :scaler (hz->radians (* 1 512.0))))
-	 (frm1 (make-formant .995 4300 3))
-	 (frm2 (make-formant .99 2200 6))
-	 (frm3 (make-formant .9 3000 5))
+	 (frm1 (make-formant 4300 .995))
+	 (frm2 (make-formant 2200 .99))
+	 (frm3 (make-formant 3000 .9))
 	 (frm1f (make-env '(0 4400 1 3800) :duration dur))
 	 (frm2f (make-env '(0 2100 1 1700) :duration dur))
 	 (frm3f (make-env '(0 3000 1 2200) :duration dur))
+	 (fr1 (* 3 (sin (hz->radians 4300))))
+	 (fr2 (* 6 (sin (hz->radians 2200))))
+	 (fr3 (* 5 (sin (hz->radians 3000))))
 	 (gen (make-nxycos 1000 250 13))
 	 (rnd (make-rand-interp 1000 (hz->radians 20))))
    (run
@@ -5244,9 +5270,9 @@
 	   (set! (mus-frequency frm1) (env frm1f))
 	   (set! (mus-frequency frm2) (env frm2f))
 	   (set! (mus-frequency frm3) (env frm3f))
-	   (outa i (+ (formant frm1 inp)
-		      (formant frm2 inp)
-		      (formant frm3 inp)))))))))
+	   (outa i (+ (* fr1 (formant frm1 inp))
+		      (* fr2 (formant frm2 inp))
+		      (* fr3 (formant frm3 inp))))))))))
 
 ;(with-sound (:play #t) (white-faced-ibis 0 .5))
 
@@ -5370,9 +5396,12 @@
 	   (stop (+ start (seconds->samples dur)))
 	   (ampf (make-env '(0.000 0.000 2 1 4 1 6 0) :duration dur :scaler (* 0.5 amp)))
 	   (frqf (make-env frqlst :duration dur :scaler (hz->radians 1.0)))
-	   (frm1 (make-formant .99 frmfrq 20))
-	   (frm2 (make-formant .98 4200 1))
-	   (frm3 (make-formant .98 2800 8))
+	   (frm1 (make-formant frmfrq .99))
+	   (frm2 (make-formant 4200 .98))
+	   (frm3 (make-formant 2800 .98))
+	   (fr1 (* 20 (sin (hz->radians frmfrq))))
+	   (fr2 (sin (hz->radians 4200)))
+	   (fr3 (* 8 (sin (hz->radians 2800))))
 	   (gen (make-nrcos 0.0 15 .75))
 	   (rnd (make-rand-interp 5000 .03))
 	   (rnd1 (make-rand-interp 1000 .15))
@@ -5387,9 +5416,9 @@
 			 (nrcos gen (+ (env frqf)
 				       (rand-interp rnd)
 				       (* vib-index (blackman vib 0.0)))))))
-	     (outa i (+ (formant frm1 inp)
-			(formant frm2 inp)
-			(formant frm3 inp)))))))))
+	     (outa i (+ (* fr1 (formant frm1 inp))
+			(* fr2 (formant frm2 inp))
+			(* fr3 (formant frm3 inp))))))))))
 
   (plain-chacalaca-1 beg1 0.17    (* .7 amp) 1700 (list 0 450  1 680))
   (plain-chacalaca-1 (+ beg1 0.20) 0.12 amp  1400 (list 0 500  1 680  2 660))
@@ -5755,10 +5784,14 @@
 	 (midstuff (make-polywave :partials (list 1 .3 3 .7)))
 	 (midf (make-env '(0 1 .3 1 .4 .1 1 0) :duration dur :scaler 1.0))
 	 (oddf (make-env '(0 1  .1 1  .12 .01 .45 .01 .55 .75 1 0) :duration dur :scaler 0.7 :base 10))
-	 (frm1 (make-formant .98 2300 10))
-	 (frm2 (make-formant .99 3200 3))
-	 (frm3 (make-formant .97 5300 5))
-	 (frm4 (make-formant .99 1600 5))
+	 (frm1 (make-formant 2300 .98))
+	 (frm2 (make-formant 3200 .99))
+	 (frm3 (make-formant 5300 .97))
+	 (frm4 (make-formant 1600 .99))
+	 (fr1 (* 10 (sin (hz->radians 2300))))
+	 (fr2 (* 3 (sin (hz->radians 3200))))
+	 (fr3 (* 5 (sin (hz->radians 5300))))
+	 (fr4 (* 5 (sin (hz->radians 1600))))
 	 (rnd (make-rand-interp 400 (hz->radians 10))))
    (run
      (lambda ()
@@ -5773,10 +5806,10 @@
 			   (* (env midf)
 			      (polywave midstuff (* 2 frq)))))))
 	   (outa i (+ val
-		      (formant frm1 val) 
-		      (formant frm2 val) 
-		      (formant frm3 val)
-		      (formant frm4 val)))))))))
+		      (* fr1 (formant frm1 val) )
+		      (* fr2 (formant frm2 val) )
+		      (* fr3 (formant frm3 val))
+		      (* fr4 (formant frm4 val))))))))))
 
 ;(with-sound (:play #t) (red-shouldered-hawk 0 .5))
 
@@ -5969,9 +6002,12 @@
 	   (ampf2 (make-env '(0 0 1 1 2 0) :duration dur :scaler .3))
 	   (rnd (make-rand-interp 8000 ))
 
-	   (frm1 (make-formant .99 2460 5))
-	   (frm2 (make-formant .98 5200 5))
-	   (frm3 (make-formant .97 8200 2))
+	   (frm1 (make-formant 2460 .99))
+	   (frm2 (make-formant 5200 .98))
+	   (frm3 (make-formant 8200 .97))
+	   (fr1 (* 5 (sin (hz->radians 2460))))
+	   (fr2 (* 5 (sin (hz->radians 5200))))
+	   (fr3 (* 2 (sin (hz->radians 8200))))
 	   (frmf (make-env '(0 5200 .7 4900 .9 2200 1 2000) :duration dur))
 	   (frmf3 (make-env '(0 8200 .7 8400 .9 4000 1 4000) :duration dur))
 	   (frmaf (make-env '(0 0 .6 .3 .9 .8  1 .5) :duration dur))
@@ -5992,10 +6028,9 @@
 		  (val (* val1
 			  (rand-interp rnd))))
 	     (outa i (+ (* .75 val1)
-			(* (- 1.0 fintrp)
-			   (formant frm1 val))
-			(* fintrp (formant frm2 val))
-			(formant frm3 val)))))))))
+			(* fr1 (- 1.0 fintrp) (formant frm1 val))
+			(* fr2 fintrp (formant frm2 val))
+			(* fr3 (formant frm3 val))))))))))
 
   (do ((beg beg1 (+ beg .15))
        (i 0 (1+ i)))
@@ -7977,11 +8012,17 @@
 	 (rndf (make-env '(0 1 19 1 20 .1 22 .01) :duration dur))
 	 (trem (make-rand-interp 120 .6))
 
-	 (frm1 (make-formant .98 2800 7))
-	 (frm2 (make-formant .92 4400 3))
-	 (frm4 (make-formant .97 6000 3))
-	 (frm5 (make-formant .96 7500 1))
-	 (frm3 (make-formant .96 9000 0.5)))
+	 (frm1 (make-formant 2800 .98))
+	 (frm2 (make-formant 4400 .92))
+	 (frm4 (make-formant 6000 .97))
+	 (frm5 (make-formant 7500 .96))
+	 (frm3 (make-formant 9000 .96))
+
+	 (fr1 (* 7 (sin (hz->radians 2800))))
+	 (fr2 (* 3 (sin (hz->radians 4400))))
+	 (fr3 (* 0.5 (sin (hz->radians 9000))))
+	 (fr4 (* 3 (sin (hz->radians 6000))))
+	 (fr5 (sin (hz->radians 7500))))
     (run
      (lambda ()
        (do ((i start (1+ i)))
@@ -7993,11 +8034,11 @@
 					       (rand-interp rnd))))
 			  (* (env ampf2)
 			     (polywave gen2 (env frqf2)))))))
-	   (outa i (+ (formant frm1 val)
-		      (formant frm2 val)
-		      (formant frm3 val)
-		      (formant frm4 val)
-		      (formant frm5 val)))))))))
+	   (outa i (+ (* fr1 (formant frm1 val))
+		      (* fr2 (formant frm2 val))
+		      (* fr3 (formant frm3 val))
+		      (* fr4 (formant frm4 val))
+		      (* fr5 (formant frm5 val))))))))))
 
 ;(with-sound (:play #t :statistics #t) (barn-owl 0 .5))
 
@@ -9206,8 +9247,10 @@
 	   (vib (make-oscil 1000))
 	   (vibf (make-env vibf :duration dur :scaler (hz->radians 200)))
 	   (rnd (make-rand-interp 10000 vibamp))
-	   (frm1 (make-formant .97 frm1frq 5))
-	   (frm2 (make-formant .95 frm2frq 4))
+	   (frm1 (make-formant frm1frq .97))
+	   (frm2 (make-formant frm2frq .95))
+	   (fr1 (* 5 (sin (hz->radians frm1frq))))
+	   (fr2 (* 4 (sin (hz->radians frm2frq))))
 	   (frmf (make-env frmamp :duration dur)))
       (run
        (lambda ()
@@ -9225,8 +9268,8 @@
 			      (* 2 (polywave gen2 frq))
 			      (* (env ampf3) (polywave gen3 frq))
 			      (* (env ampf6) (polywave gen6 frq))))))
-	       (outa i (+ (* frm (+ (formant frm1 val)
-				    (formant frm2 val)))
+	       (outa i (+ (* frm (+ (* fr1 (formant frm1 val))
+				    (* fr2 (formant frm2 val))))
 			  (* (- 1.0 frm) val))))))))))
 
   (scaled-quail-1 beg1 .18 amp1 4200 

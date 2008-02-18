@@ -2353,7 +2353,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 	 (formants (make-vector freq-inc)))
     (do ((i 0 (1+ i)))
 	((= i freq-inc))
-      (vector-set! formants i (make-formant radius (* i bin))))
+      (vector-set! formants i (make-formant (* i bin) radius)))
     (lambda (inval)
       (let ((outval 0.0))
 	(if (= ctr freq-inc)

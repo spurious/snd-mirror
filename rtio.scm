@@ -95,7 +95,7 @@
 ;;; (in-out (lp) 1 0)
 
 (define (hp frq)
-  (let ((flt (make-formant .99 frq))
+  (let ((flt (make-formant frq .99))
 	(vobj (make-vct our-dac-buffer-size-in-shorts)))
     (lambda (data)
       (do ((i 0 (1+ i)))

@@ -1,12 +1,17 @@
 #ifndef CLM_H
 #define CLM_H
 
-#define MUS_VERSION 3
-#define MUS_REVISION 51
+#define MUS_VERSION 4
+#define MUS_REVISION 0
 #define MUS_DATE "17-Feb-08"
 
 /*
- * 17-Feb:     polywave for polyshape and waveshape.  mus_formant_with_frequency. firmant generator.
+ * 17-Feb:     clm 4:
+ *             polywave for polyshape and waveshape.  mus_formant_with_frequency. firmant generator.
+ *               removed mus_formant_radius and mus_set_formant_radius.
+ *               removed "gain" arg from mus_make_formant.
+ *               reversed the order of the arguments to mus_make_formant.
+ *               fixed long-standing bug in gain calculation in mus_formant.
  * 15-Feb:     nrxysin and nrxycos for sine-summation.
  * 12-Feb:     nsin for sum_of_sines, ncos for sum_of_cosines.
  * 4-Feb:      clm_default_frequency (clm2xen) and *clm-default-frequency* (ws.scm).
@@ -65,7 +70,7 @@
  * 24-Aug:     removed mus_inspect method -- overlaps mus_describe and is useless given gdb capabilities.
  * 27-July:    mus_granulate_with_editor and mus_phase_vocoder_with_editors.
  * 21-July:    edit-func as run-time arg to granulate (for CL/clm compatibility)
- * 19-July:    clm 3.0!
+ * 19-July:    clm 3:
  *             deprecated mus_ina|b, mus-outa|b|c|d.
  *             mus_make_frame_to_file_with_comment, mus_mixer_scale, mus_make_frame|mixer_with_data.
  *             mus_make_scalar_mixer, mus_mixer_add, mus_continue_frame_to_file.
@@ -392,8 +397,7 @@ Float mus_feedforward(mus_any *gen);
 Float mus_set_feedforward(mus_any *gen, Float val);
 Float mus_feedback(mus_any *rd);
 Float mus_set_feedback(mus_any *rd, Float dir);
-Float mus_formant_radius(mus_any *gen);
-Float mus_set_formant_radius(mus_any *gen, Float val);
+
 
   /* -------- generators -------- */
 
@@ -528,11 +532,11 @@ bool mus_two_pole_p(mus_any *gen);
 mus_any *mus_make_two_pole_from_radius_and_frequency(Float radius, Float frequency);
 
 Float mus_formant(mus_any *ptr, Float input); 
-Float mus_formant_bank(Float *amps, mus_any **formants, Float inval, int size);
-mus_any *mus_make_formant(Float radius, Float frequency, Float gain);
+mus_any *mus_make_formant(Float frequency, Float radius);
 bool mus_formant_p(mus_any *ptr);
 void mus_set_formant_radius_and_frequency(mus_any *ptr, Float radius, Float frequency);
 Float mus_formant_with_frequency(mus_any *ptr, Float input, Float freq_in_radians);
+Float mus_formant_bank(Float *amps, mus_any **formants, Float inval, int size);
 
 Float mus_firmant(mus_any *ptr, Float input);
 mus_any *mus_make_firmant(Float frequency, Float radius);

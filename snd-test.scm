@@ -2077,7 +2077,8 @@
 		       'filter-control-order 'filter-control-waveform-color 'filter-control? 'filter-selection 'filter-sound
 		       'filter? 'find-channel 'find-dialog 'find-mark 'find-sound
 		       'finish-progress-report 'fir-filter 'fir-filter? 'flat-top-window 'focus-widget 'foreground-color
-		       'forget-region 'formant 'formant-bank 'formant? 'fourier-transform
+		       'forget-region 'formant 'formant-bank 'formant? 'firmant 'firmant? 
+		       'fourier-transform
 		       'frame* 'frame+ 'frame->file 'frame->file?
 		       'frame->frame 'frame->list 'frame->sample 'frame-ref 'frame-set!
 		       'frame? 'frames 'free-player
@@ -2103,7 +2104,7 @@
 		       'locsig? 'log-freq-start 'main-menu 'main-widgets 'make-all-pass
 		       'make-asymmetric-fm 'make-moving-average 'make-bezier 'make-color 'make-comb 'make-filtered-comb
 		       'make-convolve 'make-delay 'make-env 'make-fft-window 'make-file->frame
-		       'make-file->sample 'make-filter 'make-fir-coeffs 'make-fir-filter 'make-formant
+		       'make-file->sample 'make-filter 'make-fir-coeffs 'make-fir-filter 'make-formant 'make-firmant
 		       'make-frame 'make-frame->file 'make-granulate 'make-graph-data 'make-iir-filter
 		       'make-locsig 'make-mix-sample-reader 'make-mixer 'make-move-sound 'make-notch 'make-one-pole
 		       'make-one-zero 'make-oscil 'make-phase-vocoder 'make-player 'make-polyshape 'make-polywave
@@ -2146,7 +2147,7 @@
 		       'mus-chebyshev-first-kind 'mus-chebyshev-second-kind 'mus-clipping 'mus-close 'mus-cosines
 		       'mus-data 'mus-data-format->string 'mus-data-format-name 'mus-describe 'mus-error-hook
 		       'mus-error-type->string 'mus-expand-filename 'mus-feedback 'mus-feedforward 'mus-fft
-		       'mus-file-buffer-size 'mus-file-clipping 'mus-file-name 'mus-file-prescaler 'mus-formant-radius
+		       'mus-file-buffer-size 'mus-file-clipping 'mus-file-name 'mus-file-prescaler
 		       'mus-frequency 'mus-generator? 'mus-header-raw-defaults 'mus-header-type->string 'mus-header-type-name
 		       'mus-hop 'mus-increment 'mus-input? 'mus-interp-all-pass 'mus-interp-bezier
 		       'mus-interp-hermite 'mus-interp-lagrange 'mus-interp-linear 'mus-interp-none 'mus-interp-sinusoidal
@@ -19573,13 +19574,13 @@ EDITS: 2
 		    (let ((z2 (make-zpolar .1 600.0))) (two-zero z2 1.0) z2)
 		    (let ((z3 (make-zpolar .1 600.0))) (two-zero z3 0.5) z3))
     
-    (let ((gen (make-formant .9 1200.0 1.0))
+    (let ((gen (make-formant 1200.0 0.9))
 	  (v0 (make-vct 10))
-	  (gen1 (make-formant .9 1200.0 1.0))
+	  (gen1 (make-formant 1200.0 0.9))
 	  (v1 (make-vct 10)))
       (print-and-check gen 
 		       "formant"
-		       "formant: radius: 0.900, frequency: 1200.000, (gain: 1.000)")
+		       "formant: radius: 0.900, frequency: 1200.000")
       (vct-set! v0 0 (formant gen 1.0))
       (do ((i 1 (1+ i)))
 	  ((= i 10))
@@ -19592,55 +19593,35 @@ EDITS: 2
       (if (not (vequal v0 v1)) (snd-display ";map formant: ~A ~A" v0 v1))
       (if (not (formant? gen)) (snd-display ";~A not formant?" gen))
       (if (not (= (mus-order gen) 2)) (snd-display ";formant order: ~D?" (mus-order gen)))
-      (if (fneq (mus-a0 gen) 0.06371) (snd-display ";formant a0: ~F?" (mus-a0 gen)))
-      (if (fneq (mus-a1 gen) 1.0) (snd-display ";formant a1: ~F?" (mus-a1 gen)))
-      (if (fneq (mus-a2 gen) -0.9) (snd-display ";formant a2: ~F?" (mus-a2 gen)))
-      (if (fneq (mus-b1 gen) -1.6957893) (snd-display ";formant b1: ~F?" (mus-b1 gen)))
-      (if (fneq (mus-b2 gen) 0.81) (snd-display ";formant b2: ~F?" (mus-b2 gen)))
-      (if (fneq (mus-formant-radius gen) .9) (snd-display ";formant radius: ~F?" (mus-formant-radius gen)))
       (if (fneq (mus-frequency gen) 1200.0) (snd-display ";formant frequency: ~F?" (mus-frequency gen)))
       (if (or (fneq (vct-ref v0 0) .064) (fneq (vct-ref v0 1) .108)) (snd-display ";formant output: ~A" v0))
       (if (fneq (mus-scaler gen) 1.0) (snd-display ";formant gain: ~F?" (mus-scaler gen)))
       
-      (if (fneq (mus-ycoeff gen 2) .81) (snd-display ";frm ycoeff 2 .81: ~A" (mus-ycoeff gen 2)))
-      (set! (mus-ycoeff gen 2) .1)
-      (if (fneq (mus-ycoeff gen 2) .1) (snd-display ";frm set ycoeff 2 .1: ~A" (mus-ycoeff gen 2)))
-      (if (fneq (mus-xcoeff gen 2) -0.9) (snd-display ";frm xcoeff 2 -0.9: ~A" (mus-xcoeff gen 2)))
-      (set! (mus-xcoeff gen 2) .3)
-      (if (fneq (mus-xcoeff gen 2) .3) (snd-display ";frm set xcoeff 2 .3: ~A" (mus-xcoeff gen 2)))
-      
-      (set! (mus-a0 gen) .5) (if (fneq (mus-a0 gen) 0.5) (snd-display ";formant set-a0: ~F?" (mus-a0 gen)))
-      (set! (mus-a1 gen) .5) (if (fneq (mus-a1 gen) 0.5) (snd-display ";formant set-a1: ~F?" (mus-a1 gen)))
-      (set! (mus-a2 gen) .5) (if (fneq (mus-a2 gen) 0.5) (snd-display ";formant set-a2: ~F?" (mus-a2 gen)))
-      (set! (mus-b1 gen) .5) (if (fneq (mus-b1 gen) 0.5) (snd-display ";formant set-b1: ~F?" (mus-b1 gen)))
-      (set! (mus-b2 gen) .5) (if (fneq (mus-b2 gen) 0.5) (snd-display ";formant set-b2: ~F?" (mus-b2 gen)))
-      (set! (mus-formant-radius gen) .01) 
-      (if (fneq (mus-formant-radius gen) 0.01) (snd-display ";formant set-radius: ~F?" (mus-formant-radius gen)))
       (set! (mus-scaler gen) 2.0)
       (if (fneq (mus-scaler gen) 2.0) (snd-display ";formant set gain: ~F?" (mus-scaler gen))))
     
-    (test-gen-equal (let ((f1 (make-formant .9 1200.0 1.0))) (formant f1 1.0) f1)
-		    (let ((f2 (make-formant .9 1200.0 1.0))) (formant f2 1.0) f2)
-		    (let ((f3 (make-formant .9 600.0 1.0))) (formant f3 1.0) f3))
-    (test-gen-equal (let ((f1 (make-formant .9 1200.0 1.0))) (formant f1 1.0) f1)
-		    (let ((f2 (make-formant .9 1200.0 1.0))) (formant f2 1.0) f2)
-		    (let ((f3 (make-formant .99 1200.0 1.0))) (formant f3 1.0) f3))
-    (test-gen-equal (let ((f1 (make-formant .9 1200.0 1.0))) (formant f1 1.0) f1)
-		    (let ((f2 (make-formant .9 1200.0 1.0))) (formant f2 1.0) f2)
-		    (let ((f3 (make-formant .9 1200.0 0.5))) (formant f3 1.0) f3))
+    (test-gen-equal (let ((f1 (make-formant 1200.0 0.9))) (formant f1 1.0) f1)
+		    (let ((f2 (make-formant 1200.0 0.9))) (formant f2 1.0) f2)
+		    (let ((f3 (make-formant 600.0 0.9))) (formant f3 1.0) f3))
+    (test-gen-equal (let ((f1 (make-formant 1200.0 0.9))) (formant f1 1.0) f1)
+		    (let ((f2 (make-formant 1200.0 0.9))) (formant f2 1.0) f2)
+		    (let ((f3 (make-formant 1200.0 0.99))) (formant f3 1.0) f3))
+    (test-gen-equal (let ((f1 (make-formant 1200.0 0.9))) (formant f1 1.0) f1)
+		    (let ((f2 (make-formant 1200.0 0.9))) (formant f2 1.0) f2)
+		    (let ((f3 (make-formant 1200.0 0.5))) (formant f3 1.0) f3))
     
-    (let ((frm (make-formant .1 440.0)))
+    (let ((frm (old-make-formant .1 440.0)))
       (mus-set-formant-radius-and-frequency frm 2.0 100.0)
       (if (fneq (mus-formant-radius frm) 2.0) (snd-display ";set-formant-radius-etc: ~A" (mus-formant-radius frm)))
       (if (fneq (mus-frequency frm) 100.0) (snd-display ";set-formant-radius-etc (frq): ~A" (mus-frequency frm))))
     
     (let ((fs (make-vector 1))
-	  (f0 (make-formant .1 1000.0))
+	  (f0 (old-make-formant .1 1000.0))
 	  (amps (make-vector 1 1.0))
 	  (val 1.0)
 	  (v0 (make-vct 10))
 	  (v1 (make-vct 10)))
-      (vector-set! fs 0 (make-formant .1 1000.0))
+      (vector-set! fs 0 (old-make-formant .1 1000.0))
       (do ((i 0 (1+ i)))
 	  ((= i 10))
 	(vct-set! v0 i (formant f0 val))
@@ -19649,14 +19630,14 @@ EDITS: 2
       (if (not (vequal v0 v1)) (snd-display ";formant bank: ~A ~A" v0 v1)))
     
     (let ((fs (make-vector 2))
-	  (f0 (make-formant .1 1000.0))
-	  (f1 (make-formant .2 100.0))
+	  (f0 (make-formant 1000.0 .1))
+	  (f1 (make-formant 100.0 .2))
 	  (amps (make-vector 2 1.0))
 	  (val 1.0)
 	  (v0 (make-vct 10))
 	  (v1 (make-vct 10)))
-      (vector-set! fs 0 (make-formant .1 1000.0))
-      (vector-set! fs 1 (make-formant .2 100.0))
+      (vector-set! fs 0 (make-formant 1000.0 .1))
+      (vector-set! fs 1 (make-formant 100.0 .2))
       (vector-set! amps 0 0.5)
       (vector-set! amps 1 0.25)
       (do ((i 0 (1+ i)))
@@ -19670,8 +19651,8 @@ EDITS: 2
 	  (amps (make-vct 2 1.0))
 	  (val 1.0)
 	  (v (make-vct 5)))
-      (vector-set! fs 0 (make-formant .1 1000.0))
-      (vector-set! fs 1 (make-formant .2 100.0))
+      (vector-set! fs 0 (make-formant 1000.0 .1))
+      (vector-set! fs 1 (make-formant 100.0 .2))
       (vct-set! amps 0 0.5)
       (vct-set! amps 1 0.25)
       (vct-map! v (lambda () (let ((res (formant-bank amps fs val))) (set! val 0.0) res)))
@@ -19688,11 +19669,11 @@ EDITS: 2
     (let ((ob (open-sound "oboe.snd")))
       (define (poltergeist frek amp R gain frek-env R-env)
 	;; test courtesy of Anders Vinjar
-	(let ((filt (make-formant R frek gain))
+	(let ((filt (make-formant frek R))
 	      (fe (make-env :envelope frek-env :length (frames) :offset frek))
 	      (re (make-env :envelope R-env :length (frames) :offset R)))
 	  (lambda (y)
-	    (let ((outval (formant filt (* amp y))))
+	    (let ((outval (* gain (formant filt (* amp y)))))
 	      (mus-set-formant-radius-and-frequency filt (env re) (env fe))
 	      outval))))
       (map-chan (poltergeist 300 0.1 0.0 30.0 '(0 100 1 4000.0) '(0 0.99 1 .9)))  ;; should sound like "whyieee?"
@@ -25055,10 +25036,10 @@ EDITS: 2
 			  0.0 0.0 0.0 0.0 0.0 0.0 (lambda (dir) 0.0) 0.0
 			  0.0 0.0))
 	  (generic-procs (list mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-channel mus-channels mus-cosines mus-data
-			       mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop mus-increment mus-length
+			       mus-feedback mus-feedforward mus-frequency mus-hop mus-increment mus-length
 			       mus-location mus-order mus-phase mus-ramp mus-scaler mus-xcoeffs mus-ycoeffs))
 	  (generic-names (list 'mus-a0 'mus-a1 'mus-a2 'mus-b1 'mus-b2 'mus-channel 'mus-channels 'mus-cosines 'mus-data
-			       'mus-feedback 'mus-feedforward 'mus-formant-radius 'mus-frequency 'mus-hop 'mus-increment 'mus-length
+			       'mus-feedback 'mus-feedforward 'mus-frequency 'mus-hop 'mus-increment 'mus-length
 			       'mus-location 'mus-order 'mus-phase 'mus-ramp 'mus-scaler 'mus-xcoeffs 'mus-ycoeffs)))
       (for-each
        (lambda (make runp ques arg name)
@@ -27929,7 +27910,7 @@ EDITS: 2
 	  (undo)
 	  (filter-sound (make-delay 120))
 	  (undo)
-	  (filter-sound (make-formant .99 1200))
+	  (filter-sound (make-formant 1200 .99))
 	  (undo)
 	  (let ((vc0 (make-vct 4)))
 	    (vct-set! vc0 0 .125) (vct-set! vc0 1 .25) (vct-set! vc0 2 .25) (vct-set! vc0 3 .125) 
@@ -44627,7 +44608,7 @@ EDITS: 1
 	  (ss (make-sum-of-sines 5 440.0))
 	  (sq (make-square-wave 44.0))
 	  (en (make-env '(0 0 1 1) :base .3 :length 11))
-	  (fr (make-formant .1 440.0))
+	  (fr (make-formant 440.0 .1))
 	  (fl (make-fir-filter 4 (vct .5 .5 .5 .5)))
 	  (dl (make-delay 32))
 	  (ap (make-all-pass .4 .6 32))
@@ -46972,6 +46953,7 @@ EDITS: 1
 	(btst '(let ((gen (make-file->sample "oboe.snd"))) (file->sample? gen)) #t)
 	(btst '(let ((gen (make-filter 8 v-var v-var))) (filter? gen)) #t)
 	(btst '(let ((gen (make-fir-filter 8 v-var))) (fir-filter? gen)) #t)
+	(btst '(let ((gen (make-firmant))) (firmant? gen)) #t)
 	(btst '(let ((gen (make-formant))) (formant? gen)) #t)
 	(btst '(let ((gen (make-frame 2))) (frame? gen)) #t)
 	;;(btst '(let ((gen (make-frame->file))) (frame->file? gen)) #t)
@@ -47039,6 +47021,8 @@ EDITS: 1
 	(ftst '(let ((gen (make-filter 8 v-var v-var))) (gen) (gen 0.0) (gen 0.0 0.0)) 0.0)
 	(ftst '(let ((gen (make-fir-filter 8 v-var))) (fir-filter gen)) 0.0)
 	(ftst '(let ((gen (make-fir-filter 8 v-var))) (gen) (gen 0.0) (gen 0.0 0.0)) 0.0)
+	(ftst '(let ((gen (make-firmant))) (firmant gen)) 0.0)
+	(ftst '(let ((gen (make-firmant))) (gen) (gen 0.0) (gen 0.0 0.0)) 0.0)
 	(ftst '(let ((gen (make-formant))) (formant gen)) 0.0)
 	(ftst '(let ((gen (make-formant))) (gen) (gen 0.0) (gen 0.0 0.0)) 0.0)
 	(ftst '(let ((gen (make-frame 2))) (frame-ref gen 0)) 0.0)
@@ -47893,7 +47877,7 @@ EDITS: 1
 	  (if (fneq p2 -.08) (snd-display ";run a0->out 2pole (-0.08): ~A" p2))
 	  (if (fneq p3 0.336) (snd-display ";run a0->out 2pole (0.336): ~A" p3)))
 	
-	(let ((flt (make-formant .1 1000.0))
+	(let ((flt (make-formant 1000.0 .1))
 	      (fa0 123.0)
 	      (fa1 123.0)
 	      (fa2 123.0)
@@ -47949,7 +47933,7 @@ EDITS: 1
 		 make-wave-train make-waveshape make-phase-vocoder make-ssb-am make-polyshape make-polywave))
 	  (close-sound ind))
 	
-	(let ((frm (make-formant .1 440.0))
+	(let ((frm (make-formant 440.0 .1))
 	      (v (make-vct 3)))
 	  (vct-map! v (lambda ()
 			(mus-set-formant-radius-and-frequency frm 2.0 100.0)))
@@ -49387,6 +49371,13 @@ EDITS: 1
 	      (let ((val1 (run-eval '(format #f "~A" (make-delay ))))
 		    (val2 (run (lambda () (let ((gen (make-delay ))) (format #f "~A" gen)))))
 		    (val3 (format #f "~A" (make-delay ))))
+		(if (or (not (string=? val1 val2))
+			(not (string=? val2 val3)))
+		    (snd-display ";run-eval format: ~A ~A ~A" val1 val2 val3)))
+	      
+	      (let ((val1 (run-eval '(format #f "~A" (make-firmant ))))
+		    (val2 (run (lambda () (let ((gen (make-firmant ))) (format #f "~A" gen)))))
+		    (val3 (format #f "~A" (make-firmant ))))
 		(if (or (not (string=? val1 val2))
 			(not (string=? val2 val3)))
 		    (snd-display ";run-eval format: ~A ~A ~A" val1 val2 val3)))
@@ -66180,12 +66171,12 @@ EDITS: 1
 		     array->file array-interp mus-interpolate asymmetric-fm asymmetric-fm? sound-data->sound-data
 		     clear-array comb comb? filtered-comb filtered-comb? contrast-enhancement convolution convolve convolve? db->linear degrees->radians
 		     delay delay? dot-product env env-interp env? file->array file->frame file->frame?  file->sample
-		     file->sample? filter filter? fir-filter fir-filter? formant formant-bank formant? frame* frame+
+		     file->sample? filter filter? fir-filter fir-filter? formant formant-bank formant? frame* frame+ firmant firmant?
 		     frame->file frame->file? frame->frame frame->list frame->sample frame-ref frame-set! frame?
 		     granulate granulate? hz->radians iir-filter iir-filter?  in-any ina inb linear->db locsig
 		     locsig-ref locsig-reverb-ref locsig-reverb-set! locsig-set!  locsig? make-all-pass make-asymmetric-fm
 		     make-comb make-filtered-comb make-convolve make-delay make-env make-fft-window make-file->frame
-		     make-file->sample make-filter make-fir-filter make-formant make-frame make-frame->file make-granulate
+		     make-file->sample make-filter make-fir-filter make-formant make-firmant make-frame make-frame->file make-granulate
 		     make-iir-filter make-locsig move-locsig make-mixer make-notch make-one-pole make-one-zero make-oscil
 		     make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
 		     make-sine-summation make-nrxysin make-nrxycos make-square-wave make-src make-sum-of-cosines make-ncos 
@@ -66193,7 +66184,7 @@ EDITS: 1
 		     make-two-pole make-two-zero make-wave-train make-waveshape mixer* mixer-ref mixer-set! mixer? mixer+
 		     move-sound make-move-sound move-sound? mus-float-equal-fudge-factor
 		     multiply-arrays mus-array-print-length mus-channel mus-channels make-polyshape polyshape polyshape? make-polywave polywave polywave?
-		     mus-close mus-cosines mus-data mus-feedback mus-feedforward mus-fft mus-formant-radius mus-frequency
+		     mus-close mus-cosines mus-data mus-feedback mus-feedforward mus-fft mus-frequency
 		     mus-hop mus-increment mus-input? mus-file-name mus-length mus-location mus-mix mus-order mus-output?  mus-phase
 		     mus-ramp mus-random mus-scaler mus-srate mus-xcoeff mus-xcoeffs mus-ycoeff mus-ycoeffs notch notch? one-pole one-pole?
 		     one-zero one-zero? oscil oscil? out-any outa outb outc outd partials->polynomial
@@ -66271,7 +66262,7 @@ EDITS: 1
 			 selected-sound selection-position selection-frames selection-member? sound-loop-info
 			 srate time-graph-type x-position-slider x-zoom-slider
 			 y-position-slider y-zoom-slider sound-data-ref mus-array-print-length mus-float-equal-fudge-factor
-			 mus-cosines mus-data mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop
+			 mus-cosines mus-data mus-feedback mus-feedforward mus-frequency mus-hop
 			 mus-increment mus-length mus-location mus-phase mus-ramp mus-scaler vct-ref x-axis-label
 			 filter-control-coeffs locsig-type mus-file-buffer-size 
 			 mus-rand-seed mus-width clm-table-size clm-default-frequency run-safety mus-offset mus-reset
@@ -66286,7 +66277,7 @@ EDITS: 1
 	     (make-procs (list
 			  make-all-pass make-asymmetric-fm make-snd->sample make-moving-average
 			  make-comb make-filtered-comb make-convolve make-delay make-env make-fft-window make-file->frame
-			  make-file->sample make-filter make-fir-filter make-formant make-frame make-frame->file make-granulate
+			  make-file->sample make-filter make-fir-filter make-formant make-firmant make-frame make-frame->file make-granulate
 			  make-iir-filter make-locsig make-mixer make-notch make-one-pole make-one-zero make-oscil
 			  make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
 			  make-sine-summation make-nrxysin make-nrxycos make-square-wave 
@@ -66390,7 +66381,7 @@ EDITS: 1
 		      (begin
 			(set! delay-32 (make-two-zero .5 .5 .1))
 			(set! color-95 (list 1 2 3))
-			(set! vector-0 (make-formant .1 100 1))
+			(set! vector-0 (make-formant 100 .1))
 			(set! vct-3 (make-waveshape :frequency 300 :partials '(1 1 2 1)))
 			(set! car-main (make-oscil))
 			(set! cadr-main (vector 1 2 3))
@@ -66570,7 +66561,7 @@ EDITS: 1
 				    (if tag
 					(snd-display ";?proc ~A: ~A" n tag))))
 				(list all-pass? asymmetric-fm? comb? filtered-comb? convolve? delay? env? file->frame? file->sample? snd->sample?
-				      filter? fir-filter? formant? frame->file? frame? granulate? iir-filter? locsig? mixer? move-sound? mus-input? 
+				      filter? fir-filter? formant? firmant? frame->file? frame? granulate? iir-filter? locsig? mixer? move-sound? mus-input? 
 				      mus-output? notch? one-pole? one-zero? oscil? phase-vocoder? pulse-train? rand-interp? rand? readin? 
 				      sample->file? sawtooth-wave? sine-summation? nrxysin? nrxycos?
 				      square-wave? src? sum-of-cosines? ncos? sum-of-sines? nsin? table-lookup? 
@@ -66588,7 +66579,7 @@ EDITS: 1
 			(if tag
 			    (snd-display ";oscil?proc ~A: ~A" n tag))))
 		    (list all-pass? asymmetric-fm? comb? filtered-comb? convolve? delay? env? file->frame? file->sample? snd->sample?
-			  filter? fir-filter? formant? frame->file? frame? granulate? iir-filter? locsig? mixer? move-sound? mus-input? 
+			  filter? fir-filter? formant? firmant? frame->file? frame? granulate? iir-filter? locsig? mixer? move-sound? mus-input? 
 			  mus-output? notch? one-pole? one-zero? phase-vocoder? pulse-train? rand-interp? rand? readin? 
 			  sample->file? sawtooth-wave? sine-summation? nrxysin? nrxycos?
 			  square-wave? src? sum-of-cosines? ncos? sum-of-sines? nsin? table-lookup? 
@@ -66630,16 +66621,16 @@ EDITS: 1
 					  (snd-display ";clm ~A: tag: ~A arg: ~A [~A]" n tag arg ctr))
 				      (set! ctr (1+ ctr))))
 				  (list all-pass asymmetric-fm clear-array comb filtered-comb convolve db->linear moving-average
-					degrees->radians delay env formant frame->list granulate hz->radians linear->db
+					degrees->radians delay env formant firmant frame->list granulate hz->radians linear->db
 					make-all-pass make-asymmetric-fm make-comb make-filtered-comb make-convolve make-delay make-env
-					make-file->frame make-file->sample make-filter make-fir-filter make-formant make-frame
+					make-file->frame make-file->sample make-filter make-fir-filter make-formant make-firmant make-frame
 					make-granulate make-iir-filter make-locsig make-notch make-one-pole make-one-zero
 					make-oscil make-pulse-train make-rand make-rand-interp make-readin
 					make-sawtooth-wave make-sine-summation make-nrxysin make-nrxycos make-square-wave make-src 
 					make-sum-of-cosines make-ncos make-sum-of-sines make-nsin
 					make-table-lookup make-triangle-wave make-two-pole make-two-zero make-wave-train make-ssb-am
 					make-waveshape mus-channel mus-channels make-polyshape make-polywave
-					mus-cosines mus-data mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop
+					mus-cosines mus-data mus-feedback mus-feedforward mus-frequency mus-hop
 					mus-increment mus-length mus-file-name mus-location mus-order mus-phase mus-ramp mus-random mus-run
 					mus-scaler mus-xcoeffs mus-ycoeffs notch one-pole one-zero make-moving-average seconds->samples samples->seconds
 					oscil partials->polynomial partials->wave partials->waveshape phase-partials->wave
@@ -66662,10 +66653,10 @@ EDITS: 1
 				     (eq? tag 'mus-error)))
 			    (snd-display ";clm-1 ~A: ~A" n tag))))
 		    (list all-pass array-interp asymmetric-fm comb filtered-comb contrast-enhancement convolution convolve moving-average
-			  convolve-files delay dot-product env-interp file->frame file->sample snd->sample filter fir-filter formant
+			  convolve-files delay dot-product env-interp file->frame file->sample snd->sample filter fir-filter formant firmant
 			  formant-bank frame* frame+ frame->frame frame-ref frame->sample granulate iir-filter ina
 			  inb locsig-ref locsig-reverb-ref make-all-pass make-asymmetric-fm make-comb make-filtered-comb
-			  make-delay make-env make-fft-window make-filter make-fir-filter make-formant make-frame make-granulate
+			  make-delay make-env make-fft-window make-filter make-fir-filter make-formant make-firmant make-frame make-granulate
 			  make-iir-filter make-locsig make-notch make-one-pole make-one-zero make-oscil make-phase-vocoder
 			  make-pulse-train make-rand make-rand-interp make-readin make-sawtooth-wave make-moving-average
 			  make-sine-summation make-nrxysin make-nrxycos make-square-wave make-src make-sum-of-cosines make-ncos 
@@ -66685,7 +66676,7 @@ EDITS: 1
 			(if (not (eq? tag 'wrong-type-arg))
 			    (snd-display ";mus-gen ~A: ~A" n tag))))
 		    (list mus-channel mus-channels mus-cosines mus-data
-			  mus-feedback mus-feedforward mus-formant-radius mus-frequency mus-hop mus-increment mus-length
+			  mus-feedback mus-feedforward mus-frequency mus-hop mus-increment mus-length
 			  mus-location mus-mix mus-order mus-phase mus-ramp mus-random mus-run mus-scaler mus-xcoeffs
 			  mus-ycoeffs))
 	  (gc)(gc)

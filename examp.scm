@@ -1109,8 +1109,8 @@ envelope: (map-channel (zcomb .8 32 '(0 0 1 10)))"
 
 (define (formant-filter radius frequency)
   "(formant-filter radius frequency) returns a formant generator: (map-channel (formant-filter .99 2400)). Faster 
-is: (filter-sound (make-formant .99 2400))"
-  (let ((frm (make-formant radius frequency)))
+is: (filter-sound (make-formant 2400 .99))"
+  (let ((frm (make-formant frequency radius)))
     (lambda (x) 
       (formant frm x))))
 
@@ -1119,9 +1119,9 @@ is: (filter-sound (make-formant .99 2400))"
 
 (define (formants r1 f1 r2 f2 r3 f3)
   "(formants r1 f1 r2 f2 r3 f3) returns 3 formant filters in parallel: (map-channel (formants .99 900 .98 1800 .99 2700))"
-  (let ((fr1 (make-formant r1 f1))
-	(fr2 (make-formant r2 f2))
-	(fr3 (make-formant r3 f3)))
+  (let ((fr1 (make-formant f1 r1))
+	(fr2 (make-formant f2 r2))
+	(fr3 (make-formant f3 r3)))
     (lambda (x)
       (+ (formant fr1 x)
 	 (formant fr2 x)
@@ -1130,7 +1130,7 @@ is: (filter-sound (make-formant .99 2400))"
 
 (define (moving-formant radius move)
   "(moving-formant radius move) returns a time-varying (in frequency) formant filter: (map-channel (moving-formant .99 '(0 1200 1 2400)))"
-  (let ((frm (make-formant radius (cadr move)))
+  (let ((frm (make-formant (cadr move) radius))
 	(menv (make-env :envelope move :length (frames))))
     (lambda (x)
       (let ((val (formant frm x)))
@@ -1146,7 +1146,7 @@ formants, then calls map-channel: (osc-formants .99 (vct 400.0 800.0 1200.0) (vc
 	 (oscs (make-vector len)))
     (do ((i 0 (1+ i)))
 	((= i len))
-      (vector-set! frms i (make-formant radius (vct-ref bases i)))
+      (vector-set! frms i (make-formant (vct-ref bases i) radius))
       (vector-set! oscs i (make-oscil (vct-ref freqs i))))
     (map-channel
      (lambda (x)
@@ -1382,7 +1382,7 @@ selected sound: (map-channel (cross-synthesis 1 .5 128 6.0))"
 	 (formants (make-vector freq-inc)))
     (do ((i 0 (1+ i)))
 	((= i freq-inc))
-      (vector-set! formants i (make-formant radius (* i bin))))
+      (vector-set! formants i (make-formant (* i bin) radius)))
     (lambda (inval)
       (if (= ctr freq-inc)
 	  (begin
@@ -1419,7 +1419,7 @@ selected sound: (map-channel (cross-synthesis 1 .5 128 6.0))"
 	 (new-peak-amp 0.0))
     (do ((i 0 (1+ i)))
 	((= i freq-inc))
-      (vector-set! formants i (make-formant radius (* i bin))))
+      (vector-set! formants i (make-formant (* i bin) radius)))
     (call-with-current-continuation ; setup non-local exit (for C-g interrupt)
      (lambda (break)                ;   now (break value) will exit the call/cc returning value
        (do ((k 0 (1+ k)))
@@ -1467,7 +1467,7 @@ selected sound: (map-channel (cross-synthesis 1 .5 128 6.0))"
 	 (new-peak-amp 0.0))
     (do ((i 0 (1+ i)))
 	((= i freq-inc))
-      (vector-set! formants i (make-formant radius (* i bin))))
+      (vector-set! formants i (make-formant (* i bin) radius)))
     (call-with-current-continuation ; setup non-local exit (for C-g interrupt)
      (lambda (break)
        (do ((k 0 (1+ k)))

@@ -188,7 +188,6 @@
 #define S_mus_file_buffer_size       "mus-file-buffer-size"
 #define S_mus_file_name              "mus-file-name"
 #define S_mus_float_equal_fudge_factor "mus-float-equal-fudge-factor"
-#define S_mus_formant_radius         "mus-formant-radius"
 #define S_mus_frequency              "mus-frequency"
 #define S_mus_generator_p            "mus-generator?"
 #define S_mus_hop                    "mus-hop"

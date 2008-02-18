@@ -33,7 +33,7 @@
 
     (do ((k 0 (1+ k)))
 	((= k fs))
-      (vector-set! fs1 k (make-formant radius (* k bin))))
+      (vector-set! fs1 k (make-formant (* k bin) radius)))
 
     (run
      (lambda ()
@@ -135,7 +135,7 @@
     (if (not (number? hi)) (set! hi freq-inc))
     (do ((k 0 (1+ k)))
 	((= k hi))
-      (vector-set! fs k (make-formant radius (* k bin))))
+      (vector-set! fs k (make-formant (* k bin) radius)))
 
     (run
      (lambda ()

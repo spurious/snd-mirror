@@ -2573,8 +2573,7 @@ nil doesnt print anything, which will speed up a bit the process.
 	(filt-gain-base 1)                    
 	(a1 .99)
 	(stats #t))                      
-  (let* (
-	 (st (inexact->exact (floor (* beg (mus-srate)))))
+  (let* ((st (inexact->exact (floor (* beg (mus-srate)))))
 	 (durata (if (= 0 dur) (mus-sound-duration file) dur))
 	 (nd (+ st (inexact->exact (floor (* (mus-srate) durata)))))
 	 (or-start (inexact->exact (round (* or-beg (mus-sound-srate file)))))
@@ -2598,6 +2597,7 @@ nil doesnt print anything, which will speed up a bit the process.
 		       #f))
 	 (if-list-in-gain (list? (car gain-list)))
 	 (frm-size (make-vector (length freq-list)))
+	 (gains (make-vct (length freq-list)))
 	 (samp -1))
 
     (do ((k 0 (1+ k)))
@@ -2609,10 +2609,11 @@ nil doesnt print anything, which will speed up a bit the process.
 	    (vector-set! env-size k (make-env :envelope gval
 					      :scaler filt-gain-scale
 					      :duration durata :base filt-gain-base))
-	    (vector-set! frm-size k (make-formant a1 fval)))
-	  (vector-set! frm-size k (make-formant a1 fval
-						(if (< (+ offset-gain gval) 0) 0
-						    (+ offset-gain gval)))))))
+	    (vector-set! frm-size k (make-formant fval a1)))
+	  (vector-set! frm-size k (make-formant fval a1))
+	  (vct-set! gains k (if (< (+ offset-gain gval) 0) 
+				0
+				(+ offset-gain gval))))))
     (ws-interrupt?)
 
     (<rt-play> st (- nd st)
@@ -2630,7 +2631,8 @@ nil doesnt print anything, which will speed up a bit the process.
 	       ((= k half-list))
 	     (if if-list-in-gain
 		 (set! (mus-xcoeff (vector-ref frm-size k) 0) (* (env (vector-ref env-size k)) (- 1.0 a1))))
-	     (set! outval (+ outval (formant (vector-ref frm-size k) inval))))
+	     (set! outval (+ outval (* (vct-ref gains k)
+				       (formant (vector-ref frm-size k) inval)))))
 	   (out (* (env ampenv) outval)))))))
 
 #!
@@ -2663,7 +2665,7 @@ nil doesnt print anything, which will speed up a bit the process.
 	 (samp 0))
     (do ((ctr 0 (1+ ctr)))
 	((= ctr freq-inc))
-      (vector-set! fs ctr (make-formant radius (* ctr bin))))
+      (vector-set! fs ctr (make-formant (* ctr bin) radius)))
     (ws-interrupt?)
     (<rt-play> start dur
      (lambda ()

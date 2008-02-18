@@ -8803,6 +8803,27 @@ static xen_value *formant_1(ptree *prog, xen_value **args, int num_args)
 }
 
 
+static void firmant_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_firmant(CLM_ARG_1, 0.0);}
+
+static void firmant_1f(int *args, ptree *pt) {FLOAT_RESULT = mus_firmant(CLM_ARG_1, FLOAT_ARG_2);}
+
+static void firmant_2f(int *args, ptree *pt) {FLOAT_RESULT = mus_firmant_with_frequency(CLM_ARG_1, FLOAT_ARG_2, FLOAT_ARG_3);}
+
+GEN_P(firmant)
+
+static xen_value *firmant_1(ptree *prog, xen_value **args, int num_args)
+{
+  if (run_safety == RUN_SAFE) safe_package(prog, R_BOOL, firmant_check, "firmant_check", args, num_args);
+  if ((num_args > 1) && (args[2]->type == R_INT)) single_to_float(prog, args, 2);
+  if ((num_args > 2) && (args[3]->type == R_INT)) single_to_float(prog, args, 3);
+  if (num_args == 1)
+    return(package(prog, R_FLOAT, firmant_0f, "firmant_0f", args, 1));
+  if (num_args == 2)
+    return(package(prog, R_FLOAT, firmant_1f, "firmant_1f", args, 2));
+  return(package(prog, R_FLOAT, firmant_2f, "firmant_2f", args, 3));
+}
+
+
 #define GEN2(Name) \
   GEN2_0(Name) \
   GEN2_1(Name) \
@@ -9114,7 +9135,6 @@ GEN0(phase)
 GEN0(scaler)
 GEN0(width)
 GEN0(offset)
-GEN0(formant_radius)
 GEN0(feedforward)
 GEN0(feedback)
 
@@ -9180,7 +9200,6 @@ SET_DBL_GEN0(feedback)
 SET_DBL_GEN0(feedforward)
 SET_DBL_GEN0(phase)
 SET_DBL_GEN0(frequency)
-SET_DBL_GEN0(formant_radius)
 
 
 #define STR_GEN0(Name) \
@@ -11339,6 +11358,7 @@ CLM_MAKE_FUNC(file_to_frame)
 CLM_MAKE_FUNC(file_to_sample)
 CLM_MAKE_FUNC(filter)
 CLM_MAKE_FUNC(fir_filter)
+CLM_MAKE_FUNC(firmant)
 CLM_MAKE_FUNC(formant)
 CLM_MAKE_FUNC(frame)
 CLM_MAKE_FUNC(frame_to_file)
@@ -12552,6 +12572,7 @@ static void init_walkers(void)
   INIT_WALKER(S_one_pole_p, make_walker(one_pole_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
   INIT_WALKER(S_two_zero_p, make_walker(two_zero_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
   INIT_WALKER(S_two_pole_p, make_walker(two_pole_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_firmant_p, make_walker(firmant_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
   INIT_WALKER(S_formant_p, make_walker(formant_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
   INIT_WALKER(S_wave_train_p, make_walker(wave_train_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
   INIT_WALKER(S_waveshape_p, make_walker(waveshape_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
@@ -12584,7 +12605,7 @@ static void init_walkers(void)
   INIT_WALKER(S_mus_scaler, make_walker(mus_scaler_0, NULL, mus_set_scaler_1, 1, 1, R_FLOAT, false, 1, R_GENERATOR));
   INIT_WALKER(S_mus_reset, make_walker(mus_reset_0, NULL, NULL, 1, 1, R_CLM, false, 1, R_GENERATOR));
   INIT_WALKER(S_mus_offset, make_walker(mus_offset_0, NULL, mus_set_offset_1, 1, 1, R_FLOAT, false, 1, R_GENERATOR));
-  INIT_WALKER(S_mus_formant_radius, make_walker(mus_formant_radius_0, NULL, mus_set_formant_radius_1, 1, 1, R_FLOAT, false, 1, R_GENERATOR));
+  INIT_WALKER("mus-formant-radius", make_walker(mus_scaler_0, NULL, mus_set_scaler_1, 1, 1, R_FLOAT, false, 1, R_GENERATOR)); /* backwards compatibility... */
   INIT_WALKER(S_mus_data, make_walker(mus_data_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_GENERATOR));
   INIT_WALKER(S_mus_xcoeffs, make_walker(mus_xcoeffs_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_GENERATOR)); 
   INIT_WALKER(S_mus_ycoeffs, make_walker(mus_ycoeffs_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_GENERATOR));
@@ -12653,6 +12674,7 @@ static void init_walkers(void)
   INIT_WALKER(S_phase_vocoder_phases, make_walker(phase_vocoder_phases_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_CLM));
   INIT_WALKER(S_phase_vocoder_phase_increments, make_walker(phase_vocoder_phase_increments_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_CLM));
 
+  INIT_WALKER(S_firmant, make_walker(firmant_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_formant, make_walker(formant_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_filter, make_walker(filter_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_fir_filter, make_walker(fir_filter_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
@@ -12728,7 +12750,8 @@ static void init_walkers(void)
   INIT_WALKER(S_make_file_to_sample, make_walker(make_file_to_sample_1, NULL, NULL, 0, 1, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_filter, make_walker(make_filter_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_fir_filter, make_walker(make_fir_filter_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_formant, make_walker(make_formant_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_firmant, make_walker(make_firmant_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_formant, make_walker(make_formant_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_frame, make_walker(make_frame_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_frame_to_file, make_walker(make_frame_to_file_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_granulate, make_walker(make_granulate_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));

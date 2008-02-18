@@ -282,7 +282,7 @@ static XEN kw_frequency, kw_initial_phase, kw_wave, kw_cosines, kw_amplitude,
   kw_r, kw_ratio, kw_size, kw_a0, kw_a1, kw_a2, kw_b1, kw_b2, kw_max_size,
   kw_input, kw_srate, kw_file, kw_channel, kw_start,
   kw_initial_contents, kw_initial_element, kw_scaler, kw_feedforward, kw_feedback,
-  kw_radius, kw_gain, kw_partials, kw_a, kw_n,
+  kw_radius, kw_partials, kw_a, kw_n,
   kw_order, kw_x_coeffs, kw_y_coeffs, kw_envelope, kw_base, kw_duration, kw_offset, kw_end,
   kw_direction, kw_degree, kw_distance, kw_reverb, kw_output, kw_fft_size,
   kw_expansion, kw_length, kw_hop, kw_ramp, kw_jitter,
@@ -319,7 +319,6 @@ static void init_keywords(void)
   kw_feedforward =      XEN_MAKE_KEYWORD("feedforward");
   kw_feedback =         XEN_MAKE_KEYWORD("feedback");
   kw_radius =           XEN_MAKE_KEYWORD("radius");
-  kw_gain =             XEN_MAKE_KEYWORD("gain");
   kw_partials =         XEN_MAKE_KEYWORD("partials");
   kw_a =                XEN_MAKE_KEYWORD("a");
   kw_n =                XEN_MAKE_KEYWORD("n");
@@ -1339,26 +1338,6 @@ static XEN g_mus_set_phase(XEN gen, XEN val)
   XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ARG_1, S_setB S_mus_phase, "a generator");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mus_phase, "a number");
   return(C_TO_XEN_DOUBLE(mus_set_phase(XEN_TO_MUS_ANY(gen), XEN_TO_C_DOUBLE(val))));
-}
-
-
-static XEN g_mus_formant_radius(XEN gen) 
-{
-  #define H_mus_formant_radius  "(" S_mus_formant_radius  " gen): (" S_formant " generator) gen's pole radius; \
-the closer the radius is to 1.0, the narrower the resonance."
-
-  if (XEN_LIST_P(gen)) return(call_get_method(gen, S_mus_formant_radius));
-  XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ONLY_ARG, S_mus_formant_radius, "a generator");
-  return(C_TO_XEN_DOUBLE(mus_formant_radius(XEN_TO_MUS_ANY(gen))));
-}
-
-
-static XEN g_mus_set_formant_radius(XEN gen, XEN val) 
-{
-  if (XEN_LIST_P(gen)) return(call_set_method(gen, val, S_mus_formant_radius));
-  XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ARG_1, S_setB S_mus_formant_radius, "a generator");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mus_formant_radius, "a number");
-  return(C_TO_XEN_DOUBLE(mus_set_formant_radius(XEN_TO_MUS_ANY(gen), XEN_TO_C_DOUBLE(val))));
 }
 
 
@@ -3353,38 +3332,32 @@ static XEN g_two_pole_p(XEN obj)
 
 /* ---------------- formant ---------------- */
 
-static XEN g_make_formant(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
+static XEN g_make_frm(bool formant_case, const char *caller, XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
-  #define H_make_formant "(" S_make_formant " :radius :frequency (:gain 1.0)): \
-return a new formant generator (a resonator).  radius sets the pole radius (in terms of the 'unit circle'). \
-frequency sets the resonance center frequency (Hz).  gain is an overall amplitude \
-control."
-
   mus_any *ge;
   int vals;
-  XEN args[6]; 
-  XEN keys[3];
-  int orig_arg[3] = {0, 0, 0};
-  Float freq = 0.0, radius = 0.0, gain = 1.0;
+  XEN args[4]; 
+  XEN keys[2];
+  int orig_arg[2] = {0, 0};
+  Float freq = 0.0, radius = 0.0;
 
-  keys[0] = kw_radius;
-  keys[1] = kw_frequency;
-  keys[2] = kw_gain;
-  args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6;
+  keys[0] = kw_frequency;
+  keys[1] = kw_radius;
+  args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4;
 
-  vals = mus_optkey_unscramble(S_make_formant, 3, keys, args, orig_arg);
+  vals = mus_optkey_unscramble(caller, 2, keys, args, orig_arg);
   if (vals > 0)
     {
-      radius = mus_optkey_to_float(keys[0], S_make_formant, orig_arg[0], radius);
-
-      freq = mus_optkey_to_float(keys[1], S_make_formant, orig_arg[1], freq);
+      freq = mus_optkey_to_float(keys[0], caller, orig_arg[0], freq);
       if (freq > (0.5 * mus_srate()))
-	XEN_OUT_OF_RANGE_ERROR(S_make_formant, orig_arg[1], keys[1], "freq ~A > srate/2?");
+	XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[0], keys[0], "freq ~A > srate/2?");
 
-      gain = mus_optkey_to_float(keys[2], S_make_formant, orig_arg[2], gain);
+      radius = mus_optkey_to_float(keys[1], caller, orig_arg[1], radius);
     }
 
-  ge = mus_make_formant(radius, freq, gain);
+  if (formant_case)
+    ge = mus_make_formant(freq, radius);
+  else ge = mus_make_firmant(freq, radius);
   if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
   return(XEN_FALSE);
 }
@@ -3444,6 +3417,16 @@ static XEN g_formant_bank(XEN amps, XEN gens, XEN inp)
 }
 
 
+static XEN g_make_formant(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+{
+  #define H_make_formant "(" S_make_formant " :frequency :radius): \
+return a new formant generator (a resonator).  radius sets the pole radius (in terms of the 'unit circle'). \
+frequency sets the resonance center frequency (Hz)."
+
+  return(g_make_frm(true, S_make_formant, arg1, arg2, arg3, arg4));
+}
+
+
 static XEN g_formant_p(XEN os) 
 {
   #define H_formant_p "(" S_formant_p " gen): " PROC_TRUE " if gen is a " S_formant
@@ -3461,6 +3444,43 @@ generator) gen's radius and frequency"
   XEN_ASSERT_TYPE(XEN_NUMBER_P(frq), frq, XEN_ARG_3, S_mus_set_formant_radius_and_frequency, "a number");
   mus_set_formant_radius_and_frequency(XEN_TO_MUS_ANY(gen), XEN_TO_C_DOUBLE(rad), XEN_TO_C_DOUBLE(frq));
   return(rad);
+}
+
+
+/* ---------------- firmant ---------------- */
+
+static XEN g_make_firmant(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
+{
+  #define H_make_firmant "(" S_make_firmant " :frequency :radius): \
+return a new firmant generator (a resonator).  radius sets the pole radius (in terms of the 'unit circle'). \
+frequency sets the resonance center frequency (Hz)."
+
+  return(g_make_frm(false, S_make_firmant, arg1, arg2, arg3, arg4));
+}
+
+
+static XEN g_firmant_p(XEN os) 
+{
+  #define H_firmant_p "(" S_firmant_p " gen): " PROC_TRUE " if gen is a " S_firmant " generator"
+  return(C_TO_XEN_BOOLEAN((MUS_XEN_P(os)) && (mus_firmant_p(XEN_TO_MUS_ANY(os)))));
+}
+
+
+static XEN g_firmant(XEN gen, XEN input, XEN freq)
+{
+  #define H_firmant "(" S_firmant " gen :optional (input 0.0) freq-in-radians): next sample from resonator gen"
+  Float in1 = 0.0;
+
+  XEN_ASSERT_TYPE((MUS_XEN_P(gen) && (mus_firmant_p(XEN_TO_MUS_ANY(gen)))), gen, XEN_ARG_1, S_firmant, "a firmant gen");
+
+  if (XEN_NUMBER_P(input)) 
+    in1 = XEN_TO_C_DOUBLE(input); 
+  else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(input), input, XEN_ARG_2, S_firmant, "a number");
+
+  if (XEN_NUMBER_P(freq)) 
+    return(C_TO_XEN_DOUBLE(mus_firmant_with_frequency(XEN_TO_MUS_ANY(gen), in1, XEN_TO_C_DOUBLE(freq))));
+
+  return(C_TO_XEN_DOUBLE(mus_firmant(XEN_TO_MUS_ANY(gen), in1)));
 }
 
 
@@ -7399,8 +7419,6 @@ XEN_NARGIFY_1(g_mus_name_w, g_mus_name)
 XEN_ARGIFY_3(g_mus_run_w, g_mus_run)
 XEN_NARGIFY_1(g_mus_phase_w, g_mus_phase)
 XEN_NARGIFY_2(g_mus_set_phase_w, g_mus_set_phase)
-XEN_NARGIFY_1(g_mus_formant_radius_w, g_mus_formant_radius)
-XEN_NARGIFY_2(g_mus_set_formant_radius_w, g_mus_set_formant_radius)
 XEN_NARGIFY_1(g_mus_width_w, g_mus_width)
 XEN_NARGIFY_2(g_mus_set_width_w, g_mus_set_width)
 XEN_NARGIFY_1(g_mus_scaler_w, g_mus_scaler)
@@ -7499,9 +7517,15 @@ XEN_ARGIFY_6(g_make_two_pole_w, g_make_two_pole)
 XEN_ARGIFY_2(g_two_pole_w, g_two_pole)
 XEN_NARGIFY_1(g_two_pole_p_w, g_two_pole_p)
 XEN_ARGIFY_3(g_formant_bank_w, g_formant_bank)
+
 XEN_NARGIFY_1(g_formant_p_w, g_formant_p)
-XEN_ARGIFY_6(g_make_formant_w, g_make_formant)
+XEN_ARGIFY_4(g_make_formant_w, g_make_formant)
 XEN_ARGIFY_3(g_formant_w, g_formant)
+
+XEN_NARGIFY_1(g_firmant_p_w, g_firmant_p)
+XEN_ARGIFY_4(g_make_firmant_w, g_make_firmant)
+XEN_ARGIFY_3(g_firmant_w, g_firmant)
+
 XEN_NARGIFY_3(g_set_formant_radius_and_frequency_w, g_set_formant_radius_and_frequency)
 XEN_VARGIFY(g_make_frame_w, g_make_frame)
 XEN_VARGIFY(g_make_frame_unchecked_w, g_make_frame_unchecked)
@@ -7700,8 +7724,6 @@ XEN_NARGIFY_2(g_mus_equalp_w, equalp_mus_xen)
 #define g_mus_run_w g_mus_run
 #define g_mus_phase_w g_mus_phase
 #define g_mus_set_phase_w g_mus_set_phase
-#define g_mus_formant_radius_w g_mus_formant_radius
-#define g_mus_set_formant_radius_w g_mus_set_formant_radius
 #define g_mus_scaler_w g_mus_scaler
 #define g_mus_set_scaler_w g_mus_set_scaler
 #define g_mus_feedforward_w g_mus_feedforward
@@ -7800,9 +7822,15 @@ XEN_NARGIFY_2(g_mus_equalp_w, equalp_mus_xen)
 #define g_two_pole_w g_two_pole
 #define g_two_pole_p_w g_two_pole_p
 #define g_formant_bank_w g_formant_bank
+
 #define g_formant_p_w g_formant_p
 #define g_make_formant_w g_make_formant
 #define g_formant_w g_formant
+
+#define g_firmant_p_w g_firmant_p
+#define g_make_firmant_w g_make_firmant
+#define g_firmant_w g_firmant
+
 #define g_set_formant_radius_and_frequency_w g_set_formant_radius_and_frequency
 #define g_make_frame_w g_make_frame
 #define g_make_frame_unchecked_w g_make_frame_unchecked
@@ -8304,11 +8332,11 @@ void mus_xen_init(void)
 
   XEN_DEFINE_PROCEDURE(S_formant_bank, g_formant_bank_w, 2, 1, 0, H_formant_bank);
   XEN_DEFINE_PROCEDURE(S_formant_p,    g_formant_p_w,    1, 0, 0, H_formant_p);
-  XEN_DEFINE_PROCEDURE(S_make_formant, g_make_formant_w, 0, 6, 0, H_make_formant);
+  XEN_DEFINE_PROCEDURE(S_make_formant, g_make_formant_w, 0, 4, 0, H_make_formant);
   XEN_DEFINE_PROCEDURE(S_formant,      g_formant_w,      1, 2, 0, H_formant);
-
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_formant_radius, g_mus_formant_radius_w, H_mus_formant_radius,
-				   S_setB S_mus_formant_radius, g_mus_set_formant_radius_w,  1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE(S_firmant_p,    g_firmant_p_w,    1, 0, 0, H_firmant_p);
+  XEN_DEFINE_PROCEDURE(S_make_firmant, g_make_firmant_w, 0, 4, 0, H_make_firmant);
+  XEN_DEFINE_PROCEDURE(S_firmant,      g_firmant_w,      1, 2, 0, H_firmant);
 
   XEN_DEFINE_PROCEDURE(S_mus_set_formant_radius_and_frequency, g_set_formant_radius_and_frequency_w, 3, 0, 0, H_mus_set_formant_radius_and_frequency);
 
@@ -8470,6 +8498,12 @@ void mus_xen_init(void)
   XEN_DEFINE_VARIABLE(S_reverb, clm_reverb, XEN_FALSE);
 
   XEN_YES_WE_HAVE("clm");
+  {
+    char *clm_version;
+    clm_version = mus_format("clm%d", MUS_VERSION);
+    XEN_YES_WE_HAVE(clm_version);
+    FREE(clm_version);
+  }
 
   /* is this a good idea?  I think it means these names are automatically imported into
    *   subsequently defined modules, which seems like a bad idea.  Perhaps we should
@@ -8539,6 +8573,8 @@ void mus_xen_init(void)
 	       S_filtered_comb_p,
 	       S_fir_filter,
 	       S_fir_filter_p,
+	       S_firmant,
+	       S_firmant_p,
 	       S_formant,
 	       S_formant_bank,
 	       S_formant_p,
@@ -8586,6 +8622,7 @@ void mus_xen_init(void)
 	       S_make_filtered_comb,
 	       S_make_fir_coeffs,
 	       S_make_fir_filter,
+	       S_make_firmant,
 	       S_make_formant,
 	       S_make_frame,
 	       S_make_frame "!",
@@ -8655,7 +8692,6 @@ void mus_xen_init(void)
 	       S_mus_file_buffer_size,
 	       S_mus_file_name,
 	       S_mus_float_equal_fudge_factor,
-	       S_mus_formant_radius,
 	       S_mus_frandom,
 	       S_mus_frequency,
 	       S_mus_generator_p,
