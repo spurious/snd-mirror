@@ -74,9 +74,7 @@ module PRC
   end
 
   def lip_set_freq(b, freq)
-    set_mus_b1(b, -2.0 * 0.999 * cos((PI * 2 * freq) / mus_srate))
-    set_mus_b2(b, 0.999 * 0.999)
-    set_mus_a0(b, 0.02)
+    set_mus_frequency(b, freq)
   end
 
   def lip(b, mouthsample, boresample)

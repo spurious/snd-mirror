@@ -36,9 +36,7 @@
 
 
 (define (lip-set-freq b freq)
-  (set! (mus-ycoeff b 1) (* -2.0 0.999 (cos (/ (* pi 2 freq) (mus-srate)))))
-  (set! (mus-ycoeff b 2) (* 0.999 0.999))
-  (set! (mus-xcoeff b 0) 0.02))
+  (set! (mus-frequency b) freq))
 
 (define (lip b mouthsample boresample)
   (let ((temp (formant b (- mouthsample boresample))))
@@ -166,7 +164,7 @@
   (let* ((lowestfreq 100.0)
 	 (len (1+ (inexact->exact (floor (/ (mus-srate) lowestfreq)))))
 	 (delayline (make-delaya len (+ 1.0 (/ (mus-srate) freq))))
-	 (lipfilter (make-formant))
+	 (lipfilter (make-formant freq))
 	 (dcblocker (make-dc-block))
 	 (blowing #t)
 	 (rate .001)
@@ -179,7 +177,6 @@
 	 (release (inexact->exact (floor (* .8 durlen))))
 	 (ctr 0)
 	 (dout 0.0))
-    (lip-set-freq lipfilter freq)
     (ws-interrupt?)
     (run
      (lambda ()

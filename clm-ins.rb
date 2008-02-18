@@ -2437,9 +2437,9 @@ def graph_eq(file, *args)
     outval = 0.0
     inval = ws_readin(rd_a)
     half_list.times do |j|
-      if if_list_in_gain
-        set_mus_xcoeff(frm_size[j], 0, env(env_size[j]) * (1.0 - a1))
-      end
+#      if if_list_in_gain
+#        set_mus_xcoeff(frm_size[j], 0, env(env_size[j]) * (1.0 - a1))
+#      end
       outval += formant(frm_size[j], inval)
     end
     env(ampenv) * outval

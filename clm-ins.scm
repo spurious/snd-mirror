@@ -2522,7 +2522,7 @@ nil doesnt print anything, which will speed up a bit the process.
 	   (do ((k 0 (1+ k)))
 	       ((= k half-list))
 	     (if if-list-in-gain
-		 (set! (mus-xcoeff (vector-ref frm-size k) 0) (* (env (vector-ref env-size k)) (- 1.0 a1))))
+		 (vct-set! gains k (* (env (vector-ref env-size k)) (- 1.0 a1))))
 	     (set! outval (+ outval (* (vct-ref gains k)
 				       (formant (vector-ref frm-size k) inval)))))
 	   (outa i (* (env ampenv) outval))))))))
