@@ -4935,7 +4935,7 @@ static Float firmant_set_frequency(mus_any *ptr, Float freq_in_hz)
   return(freq_in_hz);
 }
 
-static Float firmant_radius(mus_any *ptr) {return(mus_radians_to_hz(((frm *)ptr)->radius));}
+static Float firmant_radius(mus_any *ptr) {return(((frm *)ptr)->radius);}
 
 static Float firmant_set_radius(mus_any *ptr, Float radius)
 {
@@ -4957,8 +4957,8 @@ Float mus_firmant(mus_any *ptr, Float input)
 {
   frm *gen = (frm *)ptr;
   Float xn1, yn1;
-  xn1 = gen->gain * input + gen->radius * (gen->x1 - gen->fdbk * gen->y1);
-  yn1 = gen->rr * xn1 + gen->radius * gen->y1;
+  xn1 = gen->gain * input + gen->radius * (gen->x1         - gen->fdbk * gen->y1);
+  yn1 =                     gen->radius * (gen->fdbk * xn1 + gen->y1);
   gen->x1 = xn1;
   gen->y1 = yn1;
   return(yn1);
@@ -11199,7 +11199,7 @@ void init_mus_module(void)
  *      removed gain arg from mus_make_formant and reversed order of frequency and radius args
  *      fixed incorrect gain calculation in formant
  *      removed mus-make-formant (use mus-scaler)
- *   firmant (Mathews/Smith form of the formant generator) [todo: tests? lisp rb fs firmant/formant]
+ *   firmant (Mathews/Smith form of the formant generator) [todo: mus.lisp, test against mfilter]
  *   CL/CLM: moved really old, obsolete stuff to clm3.lisp
  *   make-two-pole|zero freq r in the "polar" case (reversed args)
 

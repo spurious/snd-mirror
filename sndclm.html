@@ -3461,12 +3461,15 @@ alterations to the filters:
 as the response at that frequency (in terms of a sampling rate of 1.0):
 </p>
 
-<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
+<table border=0 hspace=20>
+<tr><td bgcolor="#fafafa">
 <pre>
 (define (test-filter flt)
   (let* ((osc (<a class=quiet href="#make-oscil">make-oscil</a> 0.0))
 	 (samps (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> 0.5))
-	 (ramp (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1) :scaler (<a class=quiet href="#hztoradians">hz-&gt;radians</a> samps) :length samps)))
+	 (ramp (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1) 
+                     :scaler (<a class=quiet href="#hztoradians">hz-&gt;radians</a> samps) 
+                     :length samps)))
     (<a class=quiet href="sndscm.html#wsdoc">with-sound</a> ()
       (do ((i 0 (1+ i)))
 	  ((= i samps))
@@ -3477,8 +3480,37 @@ as the response at that frequency (in terms of a sampling rate of 1.0):
 (test-filter (make-two-pole 0.1 0.1 0.9))
 (test-filter (make-two-zero 0.5 0.2 0.3))
 </pre>
-</td></tr></table>
+</td><td>
+<img src="2pole.png" alt="simple filters">
+</td>
+</tr>
+</table>
 
+
+<!--
+(define (test-filter flt chan)
+  (let* ((osc (make-oscil 0.0))
+	 (samps (seconds->samples 0.5))
+	 (ramp (make-env '(0 0 1 1) :scaler (hz->radians samps) :length samps)))
+
+      (do ((i 0 (1+ i)))
+	  ((= i samps))
+        (out-any i (flt (oscil osc (env ramp))) chan))))
+
+(with-sound (:channels 4)
+  (test-filter (make-one-zero 0.5 0.5) 0)
+  (test-filter (make-one-pole 0.1 -0.9) 1)
+  (test-filter (make-two-pole 0.1 0.1 0.9) 2)
+  (test-filter (make-two-zero 0.5 0.2 0.3) 3))
+
+(define (fixup-axes)
+  (set! (selected-data-color) (make-color 0 0 0))
+  (set! (selected-graph-color) (make-color 1 1 1))
+  (set! (x-axis-label 0 0) "(make-one-zero 0.5 0.5)")
+  (set! (x-axis-label 0 1) "(make-one-pole 0.1 -0.9)")
+  (set! (x-axis-label 0 2) "(make-two-pole 0.1 0.1 0.9)")
+  (set! (x-axis-label 0 3) "(make-two-zero 0.5 0.2 0.3)"))
+-->
 
 <br><br>
 
@@ -3514,10 +3546,15 @@ as the response at that frequency (in terms of a sampling rate of 1.0):
 
 </td><td>
 <pre>
+    formant:
     y(n) = x(n) - 
            r * x(n-2) + 
-           2 * r * cos(frq-in-rads) * y(n-1) - 
+           2 * r * cos(frq) * y(n-1) - 
            r * r * y(n-2)
+
+    firmant:
+    x(n+1) = r * (x(n) - 2 * sin(frq/2) * y(n)) + input
+    y(n+1) = r * (2 * sin(frq/2) * x(n+1) + y(n))
 </pre>
 </td></tr></table>
 
@@ -3538,6 +3575,9 @@ The radius can be set in terms of desired bandwidth in Hz via:
 
 <p>If you change the radius, the peak amplitude 
 of the output changes.  
+The firmant generator is the "modified coupled form" of the formant generator,
+developed by Max Mathews and Julius Smith in "Methods for Synthesizing Very High Q Parametrically
+Well Behaved Two Pole Filters".
 Here are some graphs showing the formant and firmant filtering white noise
 as we sweep either the frequency or the radius:
 </p>

@@ -345,6 +345,17 @@
        (do ((i start (1+ i))) ((= i end))
 	 (out-any i (* amp (formant oz (oscil os))) 0))))))
 
+(define (simple-firm beg dur freq amp)
+  "(simple-frm beg dur freq amp) test instrument for firmant"
+  (let* ((start (seconds->samples beg))
+	 (end (+ start (seconds->samples dur)))
+	 (os (make-oscil freq))
+	 (oz (make-firmant 1200.0 0.95)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i))) ((= i end))
+	 (out-any i (* amp (firmant oz (oscil os))) 0))))))
+
 (define (simple-wav beg dur freq amp)
   "(simple-wav beg dur freq amp) test instrument for waveshape"
   (let* ((w1 (make-waveshape :frequency freq :partials '(1 1 2 1 3 1)))
