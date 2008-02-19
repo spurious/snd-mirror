@@ -438,10 +438,10 @@
 	 (frm3 (make-formant 4500 .99))
 	 (frm4 (make-formant 7200 .9))
 
-	 (ampfr1 (make-env '(0 .5 1 3) :duration dur :scaler (* 5 (sin (hz->radians 900))) :base 3))
-	 (ampfr2 (make-env '(0 .25 .5 .4 1 1) :duration dur :scaler (* 5 (sin (hz->radians 1260)))))
-	 (ampfr4 (make-env '(0 0 .3 1 1 1) :duration dur :scaler (* 5 (sin (hz->radians 7200)))))
-	 (ampfr3 (* 5 (sin (hz->radians 4500))))
+	 (ampfr1 (make-env '(0 .5 1 3) :duration dur :scaler (* 2 5 (sin (hz->radians 900))) :base 3))
+	 (ampfr2 (make-env '(0 .25 .5 .4 1 1) :duration dur :scaler (* 2 5 (sin (hz->radians 1260)))))
+	 (ampfr4 (make-env '(0 0 .3 1 1 1) :duration dur :scaler (* 2 5 (sin (hz->radians 7200)))))
+	 (ampfr3 (* 2 5 (sin (hz->radians 4500))))
 
 	 (gen1 (make-rk!cos 100 13.0))
 	 (ampf1 (make-env '(0 1 1 0) :base 3 :duration dur))
@@ -827,9 +827,9 @@
 	 (frm2 (make-formant 1200 .98))
 	 (frm3 (make-formant 5000 .97))
 
-	 (frm1f (* 7.0 (sin (hz->radians 400))))
-	 (frm2f (* 14.0 (sin (hz->radians 1200))))
-	 (frm3f (* 4.0 (sin (hz->radians 5000))))
+	 (frm1f (* 2 7.0 (sin (hz->radians 400))))
+	 (frm2f (* 2 14.0 (sin (hz->radians 1200))))
+	 (frm3f (* 2 4.0 (sin (hz->radians 5000))))
 
 	 (intrpf (make-env '(0 1 .6 0 1 1) :duration dur)))
    (run
@@ -4224,9 +4224,9 @@
 	 (frm2 (make-formant 5500 .98))
 	 (frm3 (make-formant 3800 .98))
 
-	 (fr1 (* 20 (sin (hz->radians 1400))))
-	 (fr2 (sin (hz->radians 5500)))
-	 (fr3 (* 2 (sin (hz->radians 3800))))
+	 (fr1 (* 2 20 (sin (hz->radians 1400))))
+	 (fr2 (* 2 (sin (hz->radians 5500))))
+	 (fr3 (* 2 2 (sin (hz->radians 3800))))
 
 	 (gen (make-nrcos 0.0 15 .75))
 	 (rnd (make-rand-interp 5000 .007)))
@@ -4422,9 +4422,9 @@
 	 (frm2 (make-formant 1700 .99))
 	 (frm3 (make-formant 5600 .98))
 
-	 (fr1 (* 5 (sin (hz->radians 1000))))
-	 (fr2 (* 15 (sin (hz->radians 1700))))
-	 (fr3 (* 5 (sin (hz->radians 5600)))))
+	 (fr1 (* 2 5 (sin (hz->radians 1000))))
+	 (fr2 (* 2 15 (sin (hz->radians 1700))))
+	 (fr3 (* 2 5 (sin (hz->radians 5600)))))
 
     (do ((i 0 (1+ i)))
 	((= i 3))
@@ -4647,9 +4647,9 @@
 	 (frm2 (make-formant 1090 .999))
 	 (frm3 (make-formant 2240 .993))
 
-	 (fr1 (* 15 (sin (hz->radians 730))))
-	 (fr2 (sin (hz->radians 1090)))
-	 (fr3 (sin (hz->radians 2240))))
+	 (fr1 (* 2 15 (sin (hz->radians 730))))
+	 (fr2 (* 2 (sin (hz->radians 1090))))
+	 (fr3 (* 2 (sin (hz->radians 2240)))))
 
    (run
      (lambda ()
@@ -4883,10 +4883,10 @@
 	 (frm3 (make-formant 3800 .98))
 	 (frm4 (make-formant 1800 .99))
 
-	 (fr1 (* 5 (sin (hz->radians 2300))))
-	 (fr2 (* 3 (sin (hz->radians 6100))))
-	 (fr3 (* 5 (sin (hz->radians 3800))))
-	 (fr4 (* 7 (sin (hz->radians 1800))))
+	 (fr1 (* 2 5 (sin (hz->radians 2300))))
+	 (fr2 (* 2 3 (sin (hz->radians 6100))))
+	 (fr3 (* 2 5 (sin (hz->radians 3800))))
+	 (fr4 (* 2 7 (sin (hz->radians 1800))))
 
 	 (rnd2 (make-rand-interp 300 (hz->radians 15))))
    (run
@@ -5255,9 +5255,9 @@
 	 (frm1f (make-env '(0 4400 1 3800) :duration dur))
 	 (frm2f (make-env '(0 2100 1 1700) :duration dur))
 	 (frm3f (make-env '(0 3000 1 2200) :duration dur))
-	 (fr1 (* 3 (sin (hz->radians 4300))))
-	 (fr2 (* 6 (sin (hz->radians 2200))))
-	 (fr3 (* 5 (sin (hz->radians 3000))))
+	 (fr1 (* 2 3 (sin (hz->radians 4300))))
+	 (fr2 (* 2 6 (sin (hz->radians 2200))))
+	 (fr3 (* 2 5 (sin (hz->radians 3000))))
 	 (gen (make-nxycos 1000 250 13))
 	 (rnd (make-rand-interp 1000 (hz->radians 20))))
    (run
@@ -5399,9 +5399,9 @@
 	   (frm1 (make-formant frmfrq .99))
 	   (frm2 (make-formant 4200 .98))
 	   (frm3 (make-formant 2800 .98))
-	   (fr1 (* 20 (sin (hz->radians frmfrq))))
-	   (fr2 (sin (hz->radians 4200)))
-	   (fr3 (* 8 (sin (hz->radians 2800))))
+	   (fr1 (* 2 20 (sin (hz->radians frmfrq))))
+	   (fr2 (* 2 (sin (hz->radians 4200))))
+	   (fr3 (* 2 8 (sin (hz->radians 2800))))
 	   (gen (make-nrcos 0.0 15 .75))
 	   (rnd (make-rand-interp 5000 .03))
 	   (rnd1 (make-rand-interp 1000 .15))
@@ -5788,10 +5788,10 @@
 	 (frm2 (make-formant 3200 .99))
 	 (frm3 (make-formant 5300 .97))
 	 (frm4 (make-formant 1600 .99))
-	 (fr1 (* 10 (sin (hz->radians 2300))))
-	 (fr2 (* 3 (sin (hz->radians 3200))))
-	 (fr3 (* 5 (sin (hz->radians 5300))))
-	 (fr4 (* 5 (sin (hz->radians 1600))))
+	 (fr1 (* 2 10 (sin (hz->radians 2300))))
+	 (fr2 (* 2 3 (sin (hz->radians 3200))))
+	 (fr3 (* 2 5 (sin (hz->radians 5300))))
+	 (fr4 (* 2 5 (sin (hz->radians 1600))))
 	 (rnd (make-rand-interp 400 (hz->radians 10))))
    (run
      (lambda ()
@@ -6005,9 +6005,9 @@
 	   (frm1 (make-formant 2460 .99))
 	   (frm2 (make-formant 5200 .98))
 	   (frm3 (make-formant 8200 .97))
-	   (fr1 (* 5 (sin (hz->radians 2460))))
-	   (fr2 (* 5 (sin (hz->radians 5200))))
-	   (fr3 (* 2 (sin (hz->radians 8200))))
+	   (fr1 (* 2 5 (sin (hz->radians 2460))))
+	   (fr2 (* 2 5 (sin (hz->radians 5200))))
+	   (fr3 (* 2 2 (sin (hz->radians 8200))))
 	   (frmf (make-env '(0 5200 .7 4900 .9 2200 1 2000) :duration dur))
 	   (frmf3 (make-env '(0 8200 .7 8400 .9 4000 1 4000) :duration dur))
 	   (frmaf (make-env '(0 0 .6 .3 .9 .8  1 .5) :duration dur))
@@ -8018,11 +8018,11 @@
 	 (frm5 (make-formant 7500 .96))
 	 (frm3 (make-formant 9000 .96))
 
-	 (fr1 (* 7 (sin (hz->radians 2800))))
-	 (fr2 (* 3 (sin (hz->radians 4400))))
-	 (fr3 (* 0.5 (sin (hz->radians 9000))))
-	 (fr4 (* 3 (sin (hz->radians 6000))))
-	 (fr5 (sin (hz->radians 7500))))
+	 (fr1 (* 2 7 (sin (hz->radians 2800))))
+	 (fr2 (* 2 3 (sin (hz->radians 4400))))
+	 (fr3 (* 2 0.5 (sin (hz->radians 9000))))
+	 (fr4 (* 2 3 (sin (hz->radians 6000))))
+	 (fr5 (* 2 (sin (hz->radians 7500)))))
     (run
      (lambda ()
        (do ((i start (1+ i)))
@@ -9249,8 +9249,8 @@
 	   (rnd (make-rand-interp 10000 vibamp))
 	   (frm1 (make-formant frm1frq .97))
 	   (frm2 (make-formant frm2frq .95))
-	   (fr1 (* 5 (sin (hz->radians frm1frq))))
-	   (fr2 (* 4 (sin (hz->radians frm2frq))))
+	   (fr1 (* 2 5 (sin (hz->radians frm1frq))))
+	   (fr2 (* 2 4 (sin (hz->radians frm2frq))))
 	   (frmf (make-env frmamp :duration dur)))
       (run
        (lambda ()

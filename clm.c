@@ -4834,7 +4834,7 @@ static void mus_set_formant_radius_and_frequency_in_radians(mus_any *ptr, Float 
   gen->radius = radius;
   gen->frequency = freq_in_radians;
   gen->rr = radius * radius;
-  gen->gain = (1.0 - gen->rr); 
+  gen->gain = (1.0 - gen->rr) * 0.5; 
   gen->fdbk = 2.0 * radius * cos(freq_in_radians);
 }
 

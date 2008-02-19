@@ -3667,7 +3667,7 @@ If "radius" is .99, you get a glass-harmonica effect; if it's less, you get more
 </td></tr></table>
 
 <p>The clm-3 formant gain calculation was incorrect.  To translate from the old
-formant to the new one, multiply the old gain by (sin (hz-&gt;radians frequency)).
+formant to the new one, multiply the old gain by (* 2 (sin (hz-&gt;radians frequency))).
 </p>
 
 <p>If you change the radius or frequency rapidly, the formant generator will either produce
@@ -3679,22 +3679,22 @@ example that puts formant on the edge of disaster (the glitch is about to explod
 <tr>
 <td bgcolor="#fafafa">
 <pre>
-(with-sound (:channels 2)
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> (:channels 2)
   (let* ((dur 3)
-	 (samps (seconds->samples dur))
-	 (flta (make-formant 1000 .999))
-	 (fltc (make-firmant 1000 .999))
-	 (vib (make-oscil 10))
-	 (index (hz->radians 100))
-	 (click (make-ncos 40 500)))
+	 (samps (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur))
+	 (flta (<em class=red>make-formant</em> 1000 .999))
+	 (fltc (<em class=red>make-firmant</em> 1000 .999))
+	 (vib (<a class=quiet href="#make-oscil">make-oscil</a> 10))
+	 (index (<a class=quiet href="#hztoradians">hz-&gt;radians</a> 100))
+	 (click (<a class=quiet href="#make-ncos">make-ncos</a> 40 500)))
     (run
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i samps))
-	 (let* ((vib (* index (+ 1 (oscil vib))))
-		(pulse (ncos click)))
-	   (outa i (* 10 (formant flta pulse vib)))
-	   (outb i (* 10 (firmant fltc pulse vib)))
+	 (let* ((vib (* index (+ 1 (<a class=quiet href="#oscil">oscil</a> vib))))
+		(pulse (<a class=quiet href="#ncos">ncos</a> click)))
+	   (<a class=quiet href="#outa">outa</a> i (* 10 (<em class=red>formant</em> flta pulse vib)))
+	   (<a class=quiet href="#outa">outb</a> i (* 10 (<em class=red>firmant</em> fltc pulse vib)))
 	   ))))))
 </pre>
 </td><td>
