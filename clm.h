@@ -2,8 +2,8 @@
 #define CLM_H
 
 #define MUS_VERSION 4
-#define MUS_REVISION 0
-#define MUS_DATE "17-Feb-08"
+#define MUS_REVISION 1
+#define MUS_DATE "19-Feb-08"
 
 /*
  * 17-Feb:     clm 4:
@@ -524,12 +524,12 @@ bool mus_one_pole_p(mus_any *gen);
 Float mus_two_zero(mus_any *gen, Float input);
 mus_any *mus_make_two_zero(Float a0, Float a1, Float a2);
 bool mus_two_zero_p(mus_any *gen);
-mus_any *mus_make_two_zero_from_radius_and_frequency(Float radius, Float frequency);
+mus_any *mus_make_two_zero_from_frequency_and_radius(Float frequency, Float radius);
 
 Float mus_two_pole(mus_any *gen, Float input);
 mus_any *mus_make_two_pole(Float a0, Float b1, Float b2);
 bool mus_two_pole_p(mus_any *gen);
-mus_any *mus_make_two_pole_from_radius_and_frequency(Float radius, Float frequency);
+mus_any *mus_make_two_pole_from_frequency_and_radius(Float frequency, Float radius);
 
 Float mus_formant(mus_any *ptr, Float input); 
 mus_any *mus_make_formant(Float frequency, Float radius);
@@ -768,6 +768,12 @@ mus_any *mus_make_mixer_with_data(int chans, Float *data);
 
 
 #ifndef CLM_DISABLE_DEPRECATED
+  #define mus_make_two_zero_from_radius_and_frequency(Rad, Freq) mus_make_two_zero_from_frequency_and_radius(Freq, Rad)
+  #define mus_make_two_pole_from_radius_and_frequency(Rad, Freq) mus_make_two_pole_from_frequency_and_radius(Freq, Rad)
+ 
+  #define mus_formant_radius(Obj) mus_scaler(Obj)
+  #define mus_set_formant_radius(Obj, Val) mus_set_scaler(Obj, Val)
+
   #define mus_oscil_1(Ptr, Fm) mus_oscil_fm(Ptr, Fm)
   #define mus_oscil_2(Ptr, Pm) mus_oscil_pm(Ptr, Pm)
   #define mus_polyshape_2(Ptr, Fm) mus_polyshape_fm(Ptr, Fm)

@@ -263,3 +263,8 @@ the amp (more or less), 'N'  is 1..10 or thereabouts, 'fi' is the phase incremen
   (make-formant freq radius))
 
   
+(def-optkey-fun (make-ppolar (radius 0.9) (frequency 440.0))
+  (make-two-pole :frequency frequency :radius radius))
+
+(def-optkey-fun (make-zpolar (radius 0.9) (frequency 440.0))
+  (make-two-zero :frequency frequency :radius radius))

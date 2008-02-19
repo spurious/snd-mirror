@@ -522,8 +522,8 @@
 	  (if (not (provided? 'snd-gtk-popup.scm)) (load "gtk-popup.scm")))))
 
 (if (not (provided? 'snd-snd7.scm)) (load "snd7.scm")) ; forward-graph
-(if (not (provided? 'snd-snd8.scm)) (load "snd8.scm")) ; make-ppolar|zpolar, samples->sound-data
-(if (not (provided? 'snd-snd9.scm)) (load "snd9.scm")) ; various generators later moved (and renamed) to generators.scm
+(if (not (provided? 'snd-snd8.scm)) (load "snd8.scm")) ; samples->sound-data
+(if (not (provided? 'snd-snd9.scm)) (load "snd9.scm")) ; make-ppolar|zpolar, various generators later moved (and renamed) to generators.scm
 
 					;(define widvardpy (make-variable-display "do-loop" "i*2" 'graph))
 
@@ -19513,7 +19513,7 @@ EDITS: 2
 		    (let ((z2 (make-ppolar .1 600.0))) (two-pole z2 1.0) z2)
 		    (let ((z3 (make-ppolar .1 600.0))) (two-pole z3 0.5) z3))
     
-    (let ((gen (make-two-pole .1 1200.0)))
+    (let ((gen (make-two-pole 1200.0 .1)))
       (if (not (two-pole? gen)) (snd-display ";~A not 2ppolar?" gen))
       (if (not (= (mus-order gen) 2)) (snd-display ";2ppolar order: ~D?" (mus-order gen)))
       (if (fneq (mus-a0 gen) 1.0) (snd-display ";2ppolar a0: ~F?" (mus-a0 gen)))
@@ -19555,7 +19555,7 @@ EDITS: 2
       (if (fneq (mus-frequency gen) 1200.0) (snd-display ";freq 2zpolar: ~A" (mus-frequency gen)))
       (if (fneq (mus-scaler gen) 0.1) (snd-display ";scaler 2zpolar: ~A" (mus-scaler gen))))
     
-    (let ((gen (make-two-zero .1 1200.0)))
+    (let ((gen (make-two-zero 1200.0 .1)))
       (if (not (two-zero? gen)) (snd-display ";~A not f2zpolar?" gen))
       (if (not (= (mus-order gen) 2)) (snd-display ";f2zpolar order: ~D?" (mus-order gen)))
       (if (fneq (mus-a0 gen) 1.0) (snd-display ";f2zpolar a0: ~F?" (mus-a0 gen)))
@@ -19612,8 +19612,8 @@ EDITS: 2
     
     (let ((frm (old-make-formant .1 440.0)))
       (mus-set-formant-radius-and-frequency frm 2.0 100.0)
-      (if (fneq (mus-formant-radius frm) 2.0) (snd-display ";set-formant-radius-etc: ~A" (mus-formant-radius frm)))
-      (if (fneq (mus-frequency frm) 100.0) (snd-display ";set-formant-radius-etc (frq): ~A" (mus-frequency frm))))
+      (if (fneq (mus-scaler frm) 2.0) (snd-display ";set-formant-radius-etc: ~A" (mus-scaler frm)))
+      (if (fneq (mus-frequency frm) 100.0) (snd-display ";set-radius-etc (frq): ~A" (mus-frequency frm))))
     
     (let ((fs (make-vector 1))
 	  (f0 (old-make-formant .1 1000.0))
@@ -47885,8 +47885,8 @@ EDITS: 1
 	      (v (make-vct 3)))
 	  (vct-map! v (lambda ()
 			(mus-set-formant-radius-and-frequency frm 2.0 100.0)))
-	  (if (fneq (mus-formant-radius frm) 2.0) (snd-display ";run set-formant-radius-etc: ~A" (mus-formant-radius frm)))
-	  (if (fneq (mus-frequency frm) 100.0) (snd-display ";run set-formant-radius-etc (frq): ~A" (mus-frequency frm))))
+	  (if (fneq (mus-scaler frm) 2.0) (snd-display ";run set-radius-etc: ~A" (mus-scaler frm)))
+	  (if (fneq (mus-frequency frm) 100.0) (snd-display ";run set-radius-etc (frq): ~A" (mus-frequency frm))))
 	
 	(let ((v (make-vct 3)))
 	  (vct-map! v (let ((i 0))
@@ -50662,6 +50662,33 @@ EDITS: 1
 			   (+ (abc232-func abc232g)
 			      (abd232-func abd232g))))))
 	    (if (fneq result 1.0) (snd-display ";two structs via func: ~A" result))))
+
+	(with-sound (:channels 4)
+		    (let* ((dur 100)
+			   (samps (seconds->samples dur))
+			   (flta (make-formant 100 .999))
+			   (fltb (make-formant 5000 .1))
+			   (fltc (make-firmant 100 .999))
+			   (fltd (make-firmant 5000 .1))
+			   (ampf (make-env '(0 0 1 1 100 1 101 0) :duration dur))
+			   (frqf (make-env '(0 100 1 10000) :scaler (hz->radians 1.0) :duration dur))
+			   (rf (make-env '(0 .6 1 .999) :base .01 :duration dur)))
+		      (run
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i samps))
+			   (let* ((frq (env frqf))
+				  (r (env rf))
+				  (amp (env ampf))
+				  (pulse (- (random 2.0) 1.0)))
+			     (outa i (* amp (formant flta pulse frq)))
+			     (set! (mus-scaler fltb) r)
+			     (outc i (* amp (formant fltb pulse)))
+			     (outb i (* amp (firmant fltc pulse frq)))
+			     (outd i (* amp (firmant fltd pulse)))
+			     (set! (mus-scaler fltd) r)
+			     ))))))
+	
 	
 	))))
 

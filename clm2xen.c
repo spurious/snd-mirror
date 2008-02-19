@@ -3128,9 +3128,9 @@ static XEN g_make_smpflt_1(xclm_filter_t choice, XEN arg1, XEN arg2, XEN arg3, X
   Float a1 = 0.0;
   switch (choice)
     {
-    case G_ONE_ZERO: keys[0] = kw_a0; keys[1] = kw_a1; break;
-    case G_ONE_POLE: keys[0] = kw_a0; keys[1] = kw_b1; break;
-    default: keys[0] = kw_radius; keys[1] = kw_frequency; break;
+    case G_ONE_ZERO: keys[0] = kw_a0;        keys[1] = kw_a1;     break;
+    case G_ONE_POLE: keys[0] = kw_a0;        keys[1] = kw_b1;     break;
+    default:         keys[0] = kw_frequency; keys[1] = kw_radius; break;
     }
   args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4;
   vals = mus_optkey_unscramble(smpflts[choice], 2, keys, args, orig_arg);
@@ -3143,8 +3143,8 @@ static XEN g_make_smpflt_1(xclm_filter_t choice, XEN arg1, XEN arg2, XEN arg3, X
     {
     case G_ONE_ZERO: gen = mus_make_one_zero(a0, a1); break;
     case G_ONE_POLE: gen = mus_make_one_pole(a0, a1); break;
-    case G_TWO_ZERO: gen = mus_make_two_zero_from_radius_and_frequency(a0, a1); break;
-    case G_TWO_POLE: gen = mus_make_two_pole_from_radius_and_frequency(a0, a1); break;
+    case G_TWO_ZERO: gen = mus_make_two_zero_from_frequency_and_radius(a0, a1); break;
+    case G_TWO_POLE: gen = mus_make_two_pole_from_frequency_and_radius(a0, a1); break;
     default: break;
     }
   if (gen) return(mus_xen_to_object(mus_any_to_mus_xen(gen)));
@@ -3222,17 +3222,17 @@ static bool found_coeff_key(XEN arg)
 
 static XEN g_make_two_zero(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6) 
 {
-  #define H_make_two_zero "(" S_make_two_zero " :a0 :a1 :a2 or :radius :frequency): return a new " S_two_zero " filter; \
+  #define H_make_two_zero "(" S_make_two_zero " :a0 :a1 :a2 or :frequency :radius): return a new " S_two_zero " filter; \
 a0*x(n) + a1*x(n-1) + a2*x(n-2)"
 
   if ((XEN_BOUND_P(arg2)) && /* 0 or 1 args -> coeffs */
       (!(XEN_BOUND_P(arg5)))) /* 5 or more args -> coeffs */
     {
       if ((found_polar_key(arg1)) || 
-	  (found_polar_key(arg2)) ||    /* if arg1 is radius as number, then arg2 is either key or number */
-	  ((!(XEN_BOUND_P(arg3))) &&    /* make a guess that if 2 args, no keys, and a1 > 20, it is intended as a frequency */
+	  (found_polar_key(arg2)) ||    /* if arg1 is frequency as number, then arg2 is either key or number */
+	  ((!(XEN_BOUND_P(arg3))) &&    /* make a guess that if 2 args, no keys, and a0 > 20, it is intended as a frequency */
 	   (!(found_coeff_key(arg1))) &&
-	   (XEN_TO_C_DOUBLE(arg2) >= 20.0)))
+	   (XEN_TO_C_DOUBLE(arg1) >= 20.0)))
 	return(g_make_smpflt_1(G_TWO_ZERO, arg1, arg2, arg3, arg4));
     }
 
@@ -3242,17 +3242,17 @@ a0*x(n) + a1*x(n-1) + a2*x(n-2)"
 
 static XEN g_make_two_pole(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6) 
 {
-  #define H_make_two_pole "(" S_make_two_pole " :a0 :b1 :b2 or :radius :frequency): return a new " S_two_pole " filter; \
+  #define H_make_two_pole "(" S_make_two_pole " :a0 :b1 :b2 or :frequency :radius): return a new " S_two_pole " filter; \
 a0*x(n) - b1*y(n-1) - b2*y(n-2)"
 
   if ((XEN_BOUND_P(arg2)) && /* 0 or 1 args -> coeffs */
       (!(XEN_BOUND_P(arg5)))) /* 5 or more args -> coeffs */
     {
       if ((found_polar_key(arg1)) || 
-	  (found_polar_key(arg2)) ||    /* if arg1 is radius as number, then arg2 is either key or number */
-	  ((!(XEN_BOUND_P(arg3))) &&    /* if arg2 is freq, it's >= 2.0 (see mus.lisp -- else unstable two-pole if b2) */
+	  (found_polar_key(arg2)) ||    /* if arg1 is frequency as number, then arg2 is either key or number */
+	  ((!(XEN_BOUND_P(arg3))) &&
 	   (!(found_coeff_key(arg1))) &&
-	   (XEN_TO_C_DOUBLE(arg2) >= 2.0)))
+	   (XEN_TO_C_DOUBLE(arg1) >= 2.0)))
 	return(g_make_smpflt_1(G_TWO_POLE, arg1, arg2, arg3, arg4));
     }
 

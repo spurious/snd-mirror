@@ -1835,7 +1835,7 @@ include bird.fsm
      <'> mus-array-print-length
      <'> mus-channel <'> mus-channels <'> make-polyshape <'> polyshape?
      <'> mus-close <'> mus-cosines <'> mus-data <'> mus-feedback
-     <'> mus-feedforward <'> mus-fft <'> mus-formant-radius <'> mus-frequency
+     <'> mus-feedforward <'> mus-fft <'> mus-frequency
      <'> mus-hop <'> mus-increment <'> mus-input? <'> mus-file-name
      <'> mus-length <'> mus-location <'> mus-mix <'> mus-order
      <'> mus-output? <'>  mus-phase <'> mus-ramp <'> mus-random
@@ -1954,7 +1954,7 @@ include bird.fsm
      <'> y-zoom-slider <'> sound-data-ref <'> mus-array-print-length
      <'> mus-float-equal-fudge-factor
      <'> mus-cosines <'> mus-data <'> mus-feedback <'> mus-feedforward
-     <'> mus-formant-radius <'> mus-frequency <'> mus-hop <'> mus-increment
+     <'> mus-frequency <'> mus-hop <'> mus-increment
      <'> mus-length <'> mus-location <'> mus-phase <'> mus-ramp
      <'> mus-scaler <'> vct-ref <'> x-axis-label <'> filter-control-coeffs
      <'> locsig-type <'> mus-file-buffer-size <'> mus-rand-seed <'> mus-width
@@ -2287,7 +2287,7 @@ include bird.fsm
        <'> make-two-pole <'> make-two-zero <'> make-wave-train <'> make-ssb-am
        <'> make-waveshape <'> mus-channel <'> mus-channels <'> make-polyshape
        <'> mus-cosines <'> mus-data <'> mus-feedback <'> mus-feedforward
-       <'> mus-formant-radius <'> mus-frequency <'> mus-hop <'> mus-increment
+       <'> mus-frequency <'> mus-hop <'> mus-increment
        <'> mus-length <'> mus-file-name <'> mus-location <'> mus-order
        <'> mus-phase <'> mus-ramp <'> mus-random <'> mus-run
        <'> mus-scaler <'> mus-xcoeffs <'> mus-ycoeffs <'> notch
@@ -2324,7 +2324,7 @@ include bird.fsm
       then
     end-each
     #( <'> mus-channel <'> mus-channels <'> mus-cosines <'> mus-data
-       <'> mus-feedback <'> mus-feedforward <'> mus-formant-radius <'> mus-frequency
+       <'> mus-feedback <'> mus-feedforward <'> mus-frequency
        <'> mus-hop <'> mus-increment <'> mus-length <'> mus-location
        <'> mus-mix <'> mus-order <'> mus-phase <'> mus-ramp
        <'> mus-random <'> mus-run <'> mus-scaler <'> mus-xcoeffs

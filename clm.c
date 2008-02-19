@@ -4621,7 +4621,7 @@ bool mus_two_zero_p(mus_any *ptr)
 }
 
 
-mus_any *mus_make_two_zero_from_radius_and_frequency(Float radius, Float frequency)
+mus_any *mus_make_two_zero_from_frequency_and_radius(Float frequency, Float radius)
 {
   return(mus_make_two_zero(1.0, -2.0 * radius * cos(mus_hz_to_radians(frequency)), radius * radius));
 }
@@ -4735,7 +4735,7 @@ bool mus_two_pole_p(mus_any *ptr)
 }
 
 
-mus_any *mus_make_two_pole_from_radius_and_frequency(Float radius, Float frequency)
+mus_any *mus_make_two_pole_from_frequency_and_radius(Float frequency, Float radius)
 {
   return(mus_make_two_pole(1.0, -2.0 * radius * cos(mus_hz_to_radians(frequency)), radius * radius));
 }
@@ -11153,7 +11153,6 @@ void init_mus_module(void)
  *         ["a" used only in sine-summation, "sines" used only in sum-of-sines, "cosines" used only in sum-of-cosines]
  *         ["a" (also "k") is used in generators.scm especially where "r" is already in use, and abcos]
  *
- *      make-two-pole|zero freq r
  *      perhaps add pm args alongside the fm args, as in oscil?
  *      perhaps remove all the initial-phase args
  *
@@ -11186,7 +11185,6 @@ void init_mus_module(void)
  *
  *
  * CL/CLM:
- *   get rid of the sound-* funcs (use just mus-sound-*)
  *   make the in-lisp with-sound work again
  *   definstrument could write actual C functions (with normal args) rather than the packaged int/double-array form
  *
@@ -11200,7 +11198,11 @@ void init_mus_module(void)
  *   added freq arg to formant [todo: test (clm/snd), doc, check lisp case]
  *      removed gain arg from mus_make_formant and reversed order of frequency and radius args
  *      fixed incorrect gain calculation in formant
- *   firmant (Mathews/Smith form of the formant generator) [todo: lisp rb fs firmant/formant/mus-formant-radius]
+ *      removed mus-make-formant (use mus-scaler)
+ *   firmant (Mathews/Smith form of the formant generator) [todo: tests? lisp rb fs firmant/formant]
+ *   CL/CLM: moved really old, obsolete stuff to clm3.lisp
+ *   make-two-pole|zero freq r in the "polar" case (reversed args)
+
  *
  *   (9.7)
  *   :dur and :end -> :length in make-env

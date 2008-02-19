@@ -15041,7 +15041,7 @@ def test068
   two_pole(z3, 0.5)
   test_gen_equal(z1, z2, z3)
   # 
-  gen = make_two_pole(0.1, 1200.0)
+  gen = make_two_pole(1200.0, 0.1)
   snd_display("%s not 2ppolar?", gen) unless two_pole?(gen)
   snd_display("2ppolar order: %d?", gen.order) if gen.order != 2
   snd_display("2ppolar a0: %s?", gen.a0) if fneq(gen.a0, 1.0)
@@ -15094,7 +15094,7 @@ def test068
   two_zero(z3, 0.5)
   test_gen_equal(z1, z2, z3)
    # 
-  gen = make_two_zero(0.1, 1200.0)
+  gen = make_two_zero(1200.0, 0.1)
   snd_display("%s not 2zpolar?", gen) unless two_zero?(gen)
   snd_display("2zpolar order: %d?", gen.order) if gen.order != 2
   snd_display("2zpolar a0: %s?", gen.a0) if fneq(gen.a0, 1.0)
