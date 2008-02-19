@@ -3670,6 +3670,38 @@ If "radius" is .99, you get a glass-harmonica effect; if it's less, you get more
 formant to the new one, multiply the old gain by (sin (hz-&gt;radians frequency)).
 </p>
 
+<p>If you change the radius or frequency rapidly, the formant generator will either produce
+clicks or numerical overflow, but firmant gives good output.   Here's an
+example that puts formant on the edge of disaster (the glitch is about to explode), but firmant plugs away happily:
+</p>
+
+<table border=0 hspace=20>
+<tr>
+<td bgcolor="#fafafa">
+<pre>
+(with-sound (:channels 2)
+  (let* ((dur 3)
+	 (samps (seconds->samples dur))
+	 (flta (make-formant 1000 .999))
+	 (fltc (make-firmant 1000 .999))
+	 (vib (make-oscil 10))
+	 (index (hz->radians 100))
+	 (click (make-ncos 40 500)))
+    (run
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i samps))
+	 (let* ((vib (* index (+ 1 (oscil vib))))
+		(pulse (ncos click)))
+	   (outa i (* 10 (formant flta pulse vib)))
+	   (outb i (* 10 (firmant fltc pulse vib)))
+	   ))))))
+</pre>
+</td><td>
+<img src="firmant.png" alt="firmant is happy">
+</td>
+</tr></table>
+
 <br><br>
 
 
