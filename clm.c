@@ -4942,6 +4942,7 @@ static Float firmant_set_radius(mus_any *ptr, Float radius)
   frm *gen = (frm *)ptr;
   gen->radius = radius;
   gen->rr = radius * radius;
+  gen->gain = 1.0 - gen->rr;
   return(radius);
 }
 
@@ -11195,11 +11196,11 @@ void init_mus_module(void)
  *   ncos, nsin
  *   nrxycos, nrxysin
  *   polywave
- *   added freq arg to formant [todo: test (clm/snd), doc, check lisp case]
+ *   added freq arg to formant [todo: test (clm/snd), check lisp case]
  *      removed gain arg from mus_make_formant and reversed order of frequency and radius args
  *      fixed incorrect gain calculation in formant
  *      removed mus-make-formant (use mus-scaler)
- *   firmant (Mathews/Smith form of the formant generator) [todo: mus.lisp, test against mfilter]
+ *   firmant (Mathews/Smith form of the formant generator) [todo: mus.lisp]
  *   CL/CLM: moved really old, obsolete stuff to clm3.lisp
  *   make-two-pole|zero freq r in the "polar" case (reversed args)
 

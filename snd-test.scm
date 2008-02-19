@@ -19700,7 +19700,7 @@ EDITS: 2
       (if (not (firmant? gen)) (snd-display ";~A not firmant?" gen))
       (if (not (= (mus-order gen) 2)) (snd-display ";firmant order: ~D?" (mus-order gen)))
       (if (fneq (mus-frequency gen) 1200.0) (snd-display ";firmant frequency: ~F?" (mus-frequency gen)))
-      (if (or (fneq (vct-ref v0 0) .154) (fneq (vct-ref v0 1) .239)) (snd-display ";firmant output: ~A" v0))
+      (if (or (fneq (vct-ref v0 0) .058) (fneq (vct-ref v0 1) .099)) (snd-display ";firmant output: ~A" v0))
       (if (fneq (mus-scaler gen) 0.9) (snd-display ";firmant gain: ~F?" (mus-scaler gen)))
       
       (set! (mus-scaler gen) .20)
@@ -50700,7 +50700,7 @@ EDITS: 1
 			      (abd232-func abd232g))))))
 	    (if (fneq result 1.0) (snd-display ";two structs via func: ~A" result))))
 
-	(with-sound (:channels 4)
+	(with-sound (:output "test.snd" :channels 4)
 		    (let* ((dur 100)
 			   (samps (seconds->samples dur))
 			   (flta (make-formant 100 .999))
@@ -50725,6 +50725,9 @@ EDITS: 1
 			     (outd i (* amp (firmant fltd pulse)))
 			     (set! (mus-scaler fltd) r)
 			     ))))))
+	(let ((ind (find-sound "test.snd")))
+	  (if (sound? ind)
+	      (close-sound ind)))
 	
 	
 	))))
