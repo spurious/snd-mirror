@@ -20891,7 +20891,7 @@ EDITS: 2
 	(do ((i 0 (1+ i)))
 	    ((= i 10))
 	  (vct-set! v i (env e)))
-	(if (not (vequal v (vct 1.000 1.200 1.400 1.600 1.800 2.000 2.200 2.400 2.600 2.800)))
+	(if (not (vequal v (vct 1.000 1.222 1.444 1.667 1.889 2.111 2.333 2.556 2.778 3.000)))
 	    (snd-display ";e set off 3: ~A" v))
 	(if (not (= (mus-length e) 19)) (snd-display ";e set off 3 len: ~A" (mus-length e)))
 	(if (fneq (mus-scaler e) 2.0) (snd-display ";e set off 3 scl: ~A" (mus-scaler e)))
@@ -42687,6 +42687,7 @@ EDITS: 1
 	  (remove-hook! graph-hook zoom-spectrum)
 	  (close-sound ind2)))
       
+      ;; TODO: figure out what's messed up inn power env
       (let ((ind (new-sound :size 33 :srate 22050)))
 	(map-channel (lambda (y) 1.0))
 	(let ((pe (make-power-env '(0 0 32.0  1 1 0.0312  2 0 1) :duration (/ 34.0 22050.0))))

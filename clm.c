@@ -5854,7 +5854,7 @@ static off_t env_set_length(mus_any *ptr, off_t val)
   seg *e;
   e = (seg *)ptr;
   rebuild_env(e, e->original_scaler, e->original_offset, val - 1);
-  e->end = val;
+  e->end = val - 1;
   return(val);
 }
 
@@ -6028,6 +6028,40 @@ double mus_env_interp(double x, mus_any *ptr)
   seg *gen = (seg *)ptr;
   env_set_location(ptr, (off_t)((x * (gen->end + 1)) / (gen->original_data[gen->size * 2 - 2])));
   return(gen->current_value);
+}
+
+
+/* TODO: doc, test (against generators.scm version) test */
+/*    also is this ok if step or exp env? */
+/*    also check the usual special cases (1 pt etc) */
+
+Float mus_env_any(mus_any *e, Float (*connect_points)(Float val))
+{
+  /* "env_any" is supposed to mimic "out-any" */
+  seg *gen = (seg *)e;
+  Float *pts;
+  int pt, size;
+  Float y0, y1, new_val, val;
+  double scaler, offset;
+  pts = gen->original_data;
+  scaler = gen->original_scaler;
+  offset = gen->original_offset;
+  pt = gen->index;
+  size = gen->size;
+  if (pt >= (size - 1)) pt = size - 2;
+  if (pts[pt * 2 + 1] <= pts[pt * 2 + 3])
+    {
+      y0 = pts[pt * 2 + 1];
+      y1 = pts[pt * 2 + 3];
+    }
+  else
+    {
+      y1 = pts[pt * 2 + 1];
+      y0 = pts[pt * 2 + 3];
+    }
+  val = (mus_env(e) - offset) / scaler;
+  new_val = connect_points( (val - y0) / (y1 - y0));
+  return(offset + scaler * (y0 + new_val * (y1 - y0)));
 }
 
 

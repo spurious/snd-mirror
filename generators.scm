@@ -4038,36 +4038,6 @@ index 10 (so 10/2 is the bes-jn arg):
 	 (outa i (round-interp gen 0.0)))))))
 |#
 
-
-;;; --------------------------------------------------------------------------------
-;;;
-;;; env-any
-
-(define (env-any e func)
-  (let* ((pts (mus-data e))
-	 (mus-position mus-channels)
-	 (pt (min (* 2 (mus-position e)) (- (vct-length pts) 4)))
-	 (val (/ (- (env e) (mus-offset e)) (mus-scaler e)))
-	 (y0 (min (vct-ref pts (+ pt 1)) (vct-ref pts (+ pt 3))))
-	 (y1 (max (vct-ref pts (+ pt 1)) (vct-ref pts (+ pt 3))))
-	 (new-val (func (/ (- val y0) (- y1 y0)))))
-    (+ (mus-offset e)
-       (* (mus-scaler e)
-	  (+ y0
-	     (* (- y1 y0) new-val))))))
-
-(define (sine-env e)
-  (env-any e (lambda (y)
-	       (* 0.5 (+ 1.0 (sin (+ (* -0.5 pi) 
-				     (* pi y))))))))
-
-
-;;; TODO: env-any: needs to be optimizable, so at least callable via clm2xen.c, also do the rest of the extensions.scm cases [doc/test etc]
-;;;         presumably the "func" could be a closure if caller wants to carry around state, but what if it wants to know
-;;;         where we are in the envelope -- pass it in too? (if func takes 2 args, 2nd=env?)
-;;;         or perhaps func arg to make-env
-
-
 ;;; --------------------------------------------------------------------------------
 
 (define (calling-all-generators)

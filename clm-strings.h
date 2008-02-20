@@ -47,6 +47,7 @@
 #define S_dolph_chebyshev_window     "dolph-chebyshev-window"
 #define S_dot_product                "dot-product"
 #define S_env                        "env"
+#define S_env_any                    "env-any"
 #define S_env_interp                 "env-interp"
 #define S_env_p                      "env?"
 #define S_exponential_window         "exponential-window"

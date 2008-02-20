@@ -9536,6 +9536,33 @@ static xen_value *env_interp_1(ptree *prog, xen_value **args, int num_args)
 }
 
 
+/* ---------------- env-any ---------------- */
+
+static ptree *env_any_outer_pt, *env_any_connect_pt;
+
+static Float env_any_connect(Float y)
+{
+  env_any_outer_pt->dbls[env_any_connect_pt->args[0]] = y;
+  eval_embedded_ptree(env_any_connect_pt, env_any_outer_pt);
+  /* here a recursive call will clobber our pointers I think, so
+   *   TODO: save and restore the local ptrees
+   */
+  return(env_any_outer_pt->dbls[env_any_connect_pt->result->addr]);
+}
+
+static void env_any_2(int *args, ptree *pt) 
+{
+  env_any_outer_pt = pt;
+  env_any_connect_pt = FNC_ARG_2;
+  FLOAT_RESULT = mus_env_any(CLM_ARG_1, env_any_connect);
+}
+
+static xen_value *env_any_1(ptree *prog, xen_value **args, int num_args) 
+{
+  return(package(prog, R_FLOAT, env_any_2, "env_any_2", args, 2));
+}
+
+
 /* ---------------- frame+ etc ---------------- */
 
 #define FRAME_OP(CName, SName, cfName) \
@@ -12636,6 +12663,7 @@ static void init_walkers(void)
   INIT_WALKER(S_outd, make_walker(outd_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_NUMBER, R_NUMBER, R_ANY));
   INIT_WALKER(S_env, make_walker(env_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_CLM));
   INIT_WALKER(S_env_interp, make_walker(env_interp_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_FLOAT, R_CLM));
+  INIT_WALKER(S_env_any, make_walker(env_any_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_CLM, R_FUNCTION));
   INIT_WALKER(S_notch, make_walker(notch_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_comb, make_walker(comb_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_filtered_comb, make_walker(filtered_comb_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));

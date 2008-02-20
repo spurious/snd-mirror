@@ -14,6 +14,7 @@
  *             removed "gain" arg from mus_make_formant.
  *             reversed the order of the arguments to mus_make_formant.
  *             fixed long-standing bug in gain calculation in mus_formant.
+ *             mus_env_any for arbitrary connecting functions.
  * 15-Feb:     nrxysin and nrxycos for sine-summation.
  * 12-Feb:     nsin for sum_of_sines, ncos for sum_of_cosines.
  * 4-Feb:      clm_default_frequency (clm2xen) and *clm-default-frequency* (ws.scm).
@@ -606,6 +607,7 @@ double mus_env_offset(mus_any *gen);        /* for Snd */
 double mus_env_scaler(mus_any *gen);        /* for Snd */
 double mus_env_initial_power(mus_any *gen); /* for Snd */
 int mus_env_breakpoints(mus_any *gen);      /* for Snd */
+Float mus_env_any(mus_any *e, Float (*connect_points)(Float val));
 
 bool mus_frame_p(mus_any *ptr);
 mus_any *mus_make_empty_frame(int chans);
