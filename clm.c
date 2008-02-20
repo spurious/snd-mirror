@@ -1985,8 +1985,12 @@ Float mus_nrxycos(mus_any *ptr, Float fm)
   gen->phase += (gen->freq + fm);
   
   divisor = gen->norm * (gen->r_squared_plus_1 - (2 * r * cos(y)));
-  if (DIVISOR_NEAR_ZERO(divisor)) /* this can happen if --with-doubles and r>0.9999999 or thereabouts */
+  if (DIVISOR_NEAR_ZERO(divisor))
     return(1.0);
+  /* this can happen if --with-doubles and r>0.9999999 or thereabouts;
+   *   it also happens in x86-64 linux with r=.999999 (with floats), divisor ca 1.0e-12
+   *     in this case, using --with-doubles fixes it
+   */
 
   return((cos(x) - 
 	  r * cos(x - y) - 
@@ -4338,8 +4342,6 @@ mus_any *mus_make_rand_interp_with_distribution(Float freq, Float base, Float *d
 
 /* ---------------- simple filters ---------------- */
 
-/* eventually this class/struct could be replaced by flt/filter below */
-
 typedef struct {
   mus_any_class *core;
   Float xs[3];
@@ -4941,8 +4943,7 @@ static Float firmant_set_radius(mus_any *ptr, Float radius)
 {
   frm *gen = (frm *)ptr;
   gen->radius = radius;
-  gen->rr = radius * radius;
-  gen->gain = 1.0 - gen->rr;
+  gen->gain = 1.0 - radius * radius;
   return(radius);
 }
 
@@ -5011,8 +5012,7 @@ mus_any *mus_make_firmant(Float frequency, Float radius)
   gen->frequency = mus_hz_to_radians(frequency);
   gen->radius = radius;
   gen->fdbk = 2.0 * sin(gen->frequency * 0.5);
-  gen->rr = radius * radius;
-  gen->gain = 1.0 - gen->rr;
+  gen->gain = 1.0 - radius * radius;
   return((mus_any *)gen);
 }
 
@@ -5769,7 +5769,7 @@ static Float env_offset(mus_any *ptr) {return(((seg *)ptr)->original_offset);}
 
 int mus_env_breakpoints(mus_any *ptr) {return(((seg *)ptr)->size);}
 
-static off_t env_length(mus_any *ptr) {return((((seg *)ptr)->end));} /* end + 1? */
+static off_t env_length(mus_any *ptr) {return((((seg *)ptr)->end + 1));} /* this needs to match the :length arg to make-env (changed to +1, 20-Feb-08) */
 
 static Float env_current_value(mus_any *ptr) {return(((seg *)ptr)->current_value);}
 
@@ -5811,11 +5811,11 @@ static void env_reset(mus_any *ptr)
 }
 
 
-static void rebuild_env(seg *e, Float scl, Float off, off_t dur)
+static void rebuild_env(seg *e, Float scl, Float off, off_t end)
 {
   seg *new_e;
 
-  new_e = (seg *)mus_make_env(e->original_data, e->size, scl, off, e->base, 0.0, dur, e->original_data);
+  new_e = (seg *)mus_make_env(e->original_data, e->size, scl, off, e->base, 0.0, end, e->original_data);
   if (e->locs) FREE(e->locs);
   if (e->rates) FREE(e->rates);
   e->locs = new_e->locs;
@@ -5853,7 +5853,7 @@ static off_t env_set_length(mus_any *ptr, off_t val)
 {
   seg *e;
   e = (seg *)ptr;
-  rebuild_env(e, e->original_scaler, e->original_offset, val);
+  rebuild_env(e, e->original_scaler, e->original_offset, val - 1);
   e->end = val;
   return(val);
 }
@@ -11149,13 +11149,12 @@ void init_mus_module(void)
 /* clm4:
  *
  * make-funcs/keywords:
- *   all the make-* funcs that have a frequency arg should put that first (make-formant in particular), use "n" not cosines|sines, "r" not "a"
- *         the "n" and "r" renaming could be parallel for now -- backwards compatible for a while 
+ *   all the make-* funcs that have a frequency arg should put that first, use "n" not cosines|sines, "r" not "a"
  *         ["a" used only in sine-summation, "sines" used only in sum-of-sines, "cosines" used only in sum-of-cosines]
  *         ["a" (also "k") is used in generators.scm especially where "r" is already in use, and abcos]
  *
  *      perhaps add pm args alongside the fm args, as in oscil?
- *      perhaps remove all the initial-phase args
+ *        or add those cases as extra funcs broken out in clm2xen and snd-run
  *
  * generators:
  *   can the def-clm-struct method/make lists be used with built-in gens?
@@ -11174,14 +11173,12 @@ void init_mus_module(void)
  * generic funcs:
  *   currently mus-cosines accesses "n" -- "mus-n"? [or use "mus-order" instead? -- jargon, and should be an int, not off_t!]  
  *             mus-scaler sometimes = "r" -- "mus-r" or "mus-amplitude"?
- *      mus-amplitude to parallel mus-frequency/mus-phase
+ *      mus-amplitude to parallel mus-frequency/mus-phase, but this means duplication of mus-scaler
  *      mus-documentation [mus-describe shows current state -- if we had this, snd-help might be able to use it for generators.scm]
  *        (the info is in clm2xen, but the class slot is in clm and it would be nice if it worked from C)
  *
  *
  * arguments:
- *   the simple filter args are inconsistent with other names -- didn't I deprecate the :a's and :b's a long time ago?
- *
  *   :base as list in env = if up use car else cdr as base? or if > 2, use next on each segment
  *
  *
@@ -11196,11 +11193,11 @@ void init_mus_module(void)
  *   ncos, nsin
  *   nrxycos, nrxysin
  *   polywave
- *   added freq arg to formant [todo: test (clm/snd), check lisp case]
+ *   added freq arg to formant
  *      removed gain arg from mus_make_formant and reversed order of frequency and radius args
  *      fixed incorrect gain calculation in formant
  *      removed mus-make-formant (use mus-scaler)
- *   firmant (Mathews/Smith form of the formant generator) [todo: mus.lisp]
+ *   firmant (Mathews/Smith form of the formant generator)
  *   CL/CLM: moved really old, obsolete stuff to clm3.lisp
  *   make-two-pole|zero freq r in the "polar" case (reversed args)
 

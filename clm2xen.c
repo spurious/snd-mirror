@@ -7558,7 +7558,7 @@ XEN_NARGIFY_1(g_polyshape_p_w, g_polyshape_p)
 XEN_ARGIFY_2(g_partials_to_waveshape_w, g_partials_to_waveshape)
 XEN_ARGIFY_2(g_partials_to_polynomial_w, g_partials_to_polynomial)
 XEN_VARGIFY(g_make_polywave_w, g_make_polywave)
-XEN_ARGIFY_3(g_polywave_w, g_polywave)
+XEN_ARGIFY_2(g_polywave_w, g_polywave)
 XEN_NARGIFY_1(g_polywave_p_w, g_polywave_p)
 
 XEN_VARGIFY(g_make_sine_summation_w, g_make_sine_summation)

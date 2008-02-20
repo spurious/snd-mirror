@@ -2,16 +2,18 @@
 #define CLM_H
 
 #define MUS_VERSION 4
-#define MUS_REVISION 1
-#define MUS_DATE "19-Feb-08"
+#define MUS_REVISION 2
+#define MUS_DATE "20-Feb-08"
 
 /*
- * 17-Feb:     clm 4:
- *             polywave for polyshape and waveshape.  mus_formant_with_frequency. firmant generator.
- *               removed mus_formant_radius and mus_set_formant_radius.
- *               removed "gain" arg from mus_make_formant.
- *               reversed the order of the arguments to mus_make_formant.
- *               fixed long-standing bug in gain calculation in mus_formant.
+ * 20-Feb:     clm 4:
+ *             polywave for polyshape and waveshape.  
+ *             mus_formant_with_frequency. 
+ *             firmant generator.
+ *             removed mus_formant_radius and mus_set_formant_radius.
+ *             removed "gain" arg from mus_make_formant.
+ *             reversed the order of the arguments to mus_make_formant.
+ *             fixed long-standing bug in gain calculation in mus_formant.
  * 15-Feb:     nrxysin and nrxycos for sine-summation.
  * 12-Feb:     nsin for sum_of_sines, ncos for sum_of_cosines.
  * 4-Feb:      clm_default_frequency (clm2xen) and *clm-default-frequency* (ws.scm).
@@ -385,7 +387,7 @@ off_t mus_location(mus_any *rd);
 off_t mus_set_location(mus_any *rd, off_t loc);
 int mus_channel(mus_any *rd);
 int mus_channels(mus_any *ptr);
-int mus_position(mus_any *ptr); /* only C, envs (snd-env.c) */
+int mus_position(mus_any *ptr); /* only C, envs (snd-env.c), shares slot with mus_channels */
 int mus_interp_type(mus_any *ptr);
 off_t mus_ramp(mus_any *ptr);
 off_t mus_set_ramp(mus_any *ptr, off_t val);
