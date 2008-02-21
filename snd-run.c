@@ -9538,17 +9538,28 @@ static xen_value *env_interp_1(ptree *prog, xen_value **args, int num_args)
 
 /* ---------------- env-any ---------------- */
 
+#if (!HAVE_NESTED_FUNCTIONS)
 static ptree *env_any_outer_pt, *env_any_connect_pt;
 
 static Float env_any_connect(Float y)
 {
-  env_any_outer_pt->dbls[env_any_connect_pt->args[0]] = y;
-  eval_embedded_ptree(env_any_connect_pt, env_any_outer_pt);
-  /* here a recursive call will clobber our pointers I think, so
-   *   TODO: save and restore the local ptrees
-   */
-  return(env_any_outer_pt->dbls[env_any_connect_pt->result->addr]);
+  ptree *outer, *inner;
+  Float result;
+
+  outer = env_any_outer_pt;
+  inner = env_any_connect_pt;
+
+  outer->dbls[inner->args[0]] = y;
+  eval_embedded_ptree(inner, outer);
+
+  env_any_outer_pt = outer;
+  env_any_connect_pt = inner;
+
+  result = outer->dbls[inner->result->addr];
+
+  return(result);
 }
+
 
 static void env_any_2(int *args, ptree *pt) 
 {
@@ -9556,6 +9567,23 @@ static void env_any_2(int *args, ptree *pt)
   env_any_connect_pt = FNC_ARG_2;
   FLOAT_RESULT = mus_env_any(CLM_ARG_1, env_any_connect);
 }
+
+#else
+
+static void env_any_2(int *args, ptree *pt) 
+{
+  Float env_any_connect(Float y)
+  {
+    pt->dbls[FNC_ARG_2->args[0]] = y;
+    eval_embedded_ptree(FNC_ARG_2, pt);
+    return(pt->dbls[FNC_ARG_2->result->addr]);
+  }
+
+  FLOAT_RESULT = mus_env_any(CLM_ARG_1, env_any_connect);
+}
+
+#endif
+
 
 static xen_value *env_any_1(ptree *prog, xen_value **args, int num_args) 
 {

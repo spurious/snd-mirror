@@ -787,16 +787,17 @@ To goof around with FM from a graphical interface, see bess.scm and bess1.scm.
   <a class=def name="make-env">make-env</a> <a class=quiet href="#optional-key">:optional-key</a> 
       envelope      ; list or vct of x,y break-point pairs
       (scaler 1.0)  ; scaler on every y value (before offset is added)
-      duration      ; seconds
+      duration      ; duration in seconds
       (offset 0.0)  ; value added to every y value
       base          ; type of connecting line between break-points
-      end           ; end point in samples (similar to dur)
-      length        ; duration in samples (can be used instead of end)
+      end           ; end sample number (obsolete -- use length)
+      length        ; duration in samples
 
   <a class=def name="env">env</a> e
   <a class=def name="env?">env?</a> e
 
   <a class=def name="env-interp">env-interp</a> x env :optional (base 1.0) ;value of env at x
+  <a class=def name="env-any">env-any</a> e connecting-function
 </pre>
 
 <table border=0 hspace=40 vspace=10><tr><td>
@@ -809,24 +810,28 @@ To goof around with FM from a graphical interface, see bess.scm and bess1.scm.
 <tr><td><em class=gen>mus-offset</em></td><td>offset</td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>duration in samples</td></tr>
 </table>
-</td><td width=50></td><td>
+</td><td width=50></td>
+<td>
 <img src="pyr.png" alt="an envelope">
-</td></tr></table>
+</td>
+</tr></table>
 
-<p>An envelope is a list or vct of break point pairs:  '(0 0  100 1)  is
-a ramp from 0 to 1 over an x-axis excursion from 0 to 100, as is (vct 0 0 100 1).  This data is passed
-to make-env along with the scaler
+<p>An envelope is a list or vct of break point pairs: <code>'(0 0  100 1)</code>  is
+a ramp from 0 to 1 over an x-axis excursion from 0 to 100, as is <code>(vct 0 0 100 1)</code>.  
+This data is passed
+to make-env along with the scaler (multiplier)
 applied to the y axis, the offset added to every y value,
-and the time in samples or seconds that the x axis represents.  make-env
-returns an env generator.  env then returns the next sample of the envelope each
-time it is called.  
+and the time in samples or seconds that the x axis represents.  
+make-env returns an env generator.  
+env then returns the next sample of the envelope each time it is called.  
 Say we want  a ramp moving from .3 to .5 during 1 second. 
 </p>
 <pre>
     (make-env '(0 0  100 1) :scaler .2 :offset .3 :duration 1.0)
     (make-env '(0 .3  1 .5) :duration 1.0)
 </pre>
-<p>I find the second version easier to read.  The first is handy if you have a
+<p>
+I find the second version easier to read.  The first is handy if you have a
 bunch of stored envelopes.
 </p>
 
@@ -838,7 +843,6 @@ interpolation).  Any other positive value affects the exponent of the exponentia
 connecting the points.  A base less than 1.0 gives convex curves (i.e. bowed
 out), and a base greater than 1.0 gives concave curves (i.e. sagging).
 If you'd rather think in terms of e^-kt, set the base to <code>(exp k)</code>. 
-There are more pictures of these choices in <a href="sndscm.html#envexptchannel">sndscm.html</a>.
 </p>
 </td><td>
 <img src="pyr03.png" alt="base .03 choice" hspace=10>
@@ -847,7 +851,8 @@ There are more pictures of these choices in <a href="sndscm.html#envexptchannel"
 </td></tr></table>
 
 <p>
-To get arbitrary connecting curves between the break points, treat
+There are several ways to get arbitrary connecting curves between the break points.
+The simplest method is to treat
 the output of env as the input to the connecting function.  Here's an
 instrument that maps the line segments into sin x^3:
 </p>
@@ -871,15 +876,22 @@ instrument that maps the line segments into sin x^3:
                 (<a class=quiet href="#oscil">oscil</a> osc)))))))))
 
 (<a class=quiet href="sndscm.html#withsound">with-sound</a> () 
-  (mapenv 0 1 440 .4 '(0 0 50 1 75 0 86 .5 100 0)))
+  (mapenv 0 1 440 .5 '(0 0  50 1  75 0  86 .5  100 0)))
 </pre>
 </td></tr></table>
 </td><td>
 <img src="sincube.png" alt="sin cubed envelope" hspace=10>
 </td></tr></table>
 
-<p>Or write a function that traces out the curve you want.
-J.C.Risset's bell curve could be:</p>
+<!--
+(define (fixup-axes)
+  (set! (selected-data-color) (make-color 0 0 0))(set! (selected-data-color) (make-color 0 0 0))
+  (set! (selected-graph-color) (make-color 1 1 1))
+  (set! (x-axis-label 0 0) "sin^3 of '(0 0  50 1  75 0  86 .5  100 0)"))
+-->
+
+<p>Another method is to write a function that traces out the curve you want.
+J.C.Risset's bell curve is:</p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
@@ -891,9 +903,63 @@ J.C.Risset's bell curve could be:</p>
 </pre>
 </td></tr></table>
 
-<p>There are many more such functions in the Snd package.  See <a href="sndscm.html#envexptchannel">extensions.scm</a>
-for examples and pictures.
+<p>But the the most flexible method is to use <b>env-any</b>.
+env-any takes the env generator that produces the underlying envelope,
+and a function to "connect the dots", and returns the new envelope
+using that connecting function between the break points.
+For example, say we want to square each envelope value:
 </p>
+
+<table border=0 hspace=40 cellpadding=10>
+<tr><td>
+<pre>
+(with-sound ()
+  (let ((e (make-env '(0 0 1 1 2 .25 3 1 4 0) 
+                     :duration 0.5)))
+    (do ((i 0 (1+ i)))
+	((= i 22050))
+      (outa i (env-any e (lambda (y) (* y y))))))
+
+
+;; or connect the dots with a sinusoid:
+
+(define (sine-env e)
+  (env-any e (lambda (y)
+	       (declare (y float)) 
+               ;; "declare" is for the run macro
+	       (* 0.5 (+ 1.0 (sin (+ (* -0.5 pi) 
+				     (* pi y))))))))
+
+(with-sound ()
+  (let ((e (make-env '(0 0 1 1 2 .25 3 1 4 0)
+                     :duration 0.5)))
+    (run
+      (lambda ()
+        (do ((i 0 (1+ i)))
+	    ((= i 22050))
+          (outa i (sine-env e)))))))
+</pre>
+
+</td>
+<td>
+<img src="envany.png" alt="env-any pix">
+</td></tr>
+</table>
+
+<!--
+(define (fixup-axes)
+  (set! (selected-data-color) (make-color 0 0 0))(set! (selected-data-color) (make-color 0 0 0))
+  (set! (selected-graph-color) (make-color 1 1 1))
+  (set! (axis-numbers-font) (tiny-font))
+  (set! (x-axis-label 0 0) "(env-any e (lambda (y) (* y y)))")
+  (set! (x-axis-label 0 1) "(sine-env)"))
+-->
+
+<p>The env-any connecting function takes one argument, the current envelope value treated as
+going between 0.0 and 1.0 between each two points.  It returns a value that is then
+fitted back into the original (scaled, offset) envelope.
+</p>
+
 
 <p>
 <a href="#mus-reset">mus-reset</a> of an env causes it
@@ -928,10 +994,7 @@ duration), it's simplest to use make-env:
 </pre>
 </td></tr></table>
 
-<p>or use table-lookup. 
-</p>
-
-<table border=3 bordercolor="tan" hspace=40><th bgcolor="beige">Envelopes</th><tr><td>
+<table border=3 bordercolor="tan" hspace=40 vspace=10><th bgcolor="beige">Envelopes</th><tr><td>
 <blockquote><small>
 <br>
 envelope sound: <a href="extsnd.html#envchannel">env-channel</a>, <a href="extsnd.html#envsound">env-sound</a><br>

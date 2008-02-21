@@ -5043,9 +5043,12 @@ static XEN g_env(XEN obj)
 }
 
 
+/* TODO: flatten make-env list: (define (make-env env . rest) (apply old-make-env (cons (flatten env) rest))) */
+
+
 static XEN g_make_env(XEN arglist)
 {
-  #define H_make_env "(" S_make_env " :envelope (:scaler 1.0) :duration (:offset 0.0) (:base 1.0) :length :dur): \
+  #define H_make_env "(" S_make_env " :envelope (:scaler 1.0) :duration (:offset 0.0) (:base 1.0) :end :length): \
 return a new envelope generator.  'envelope' is a list or vct of break-point pairs. To create the envelope, \
 these points are offset by 'offset', scaled by 'scaler', and mapped over the time interval defined by \
 either 'duration' (seconds) or 'length' (samples).  If 'base' is 1.0, the connecting segments \
@@ -5190,10 +5193,12 @@ static XEN g_env_interp(XEN x, XEN env1) /* "env" causes trouble in Objective-C!
 }
 
 
+#if (!HAVE_NESTED_FUNCTIONS)
+
 /* mus_env_any calls the C function itself, so we pass it connect_func,
  *   connect_func uses the function passed as an argument to g_env_any.
- *   I can't think of a cleaner way to handle this.  In gcc, perhaps,
- *   we could declare connect_func inside g_env_any?
+ *   I can't think of a cleaner way to handle this except via nested functions.
+ *   Both versions seem to work ok with recursive env-any calls.
  */
 
 static XEN current_connect_func = XEN_FALSE;
@@ -5222,7 +5227,26 @@ static XEN g_env_any(XEN e, XEN func)
   return(val);
 }
 
+#else
 
+static XEN g_env_any(XEN e, XEN func)
+{
+  #define H_env_any "(" S_env_any " e func) uses 'func' to connect the dots in the env 'e'"
+
+  Float connect_func(Float val)
+  {
+    return(XEN_TO_C_DOUBLE(XEN_CALL_1(func,
+				      C_TO_XEN_DOUBLE(val),
+				      S_env_any " connect function")));
+  }
+
+  XEN_ASSERT_TYPE((MUS_XEN_P(e)) && (mus_env_p(XEN_TO_MUS_ANY(e))), e, XEN_ARG_1, S_env_any, "an env generator");
+  XEN_ASSERT_TYPE((XEN_PROCEDURE_P(func)) && (XEN_REQUIRED_ARGS_OK(func, 1)), func, XEN_ARG_2, S_env_any, "a function of one arg");
+  
+  return(C_TO_XEN_DOUBLE(mus_env_any(XEN_TO_MUS_ANY(e), connect_func)));
+}
+
+#endif
 
 
 

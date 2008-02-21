@@ -4038,6 +4038,30 @@ index 10 (so 10/2 is the bes-jn arg):
 	 (outa i (round-interp gen 0.0)))))))
 |#
 
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; env-any functions
+
+(define (sine-env e)
+  (env-any e (lambda (y)
+	       (declare (y float))
+	       (* 0.5 (+ 1.0 (sin (+ (* -0.5 pi) 
+				     (* pi y))))))))
+
+(define (square-env e)
+  (env-any e (lambda (y)
+	       (declare (y float))
+	       (* y y))))
+
+(define (blackman4-env e)
+  (env-any e
+	   (lambda (y)
+	     (declare (y float))
+	     (let ((cx (cos (* pi y))))
+	       (+ 0.084037 (* cx (+ -.29145 (* cx (+ .375696 (* cx (+ -.20762 (* cx .041194))))))))))))
+
+
 ;;; --------------------------------------------------------------------------------
 
 (define (calling-all-generators)

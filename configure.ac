@@ -349,6 +349,24 @@ AC_CHECK_LIB(m, jn,
         [AC_DEFINE(HAVE_SPECIAL_FUNCTIONS)])])])])
 
 
+# look for nested function support
+AC_MSG_CHECKING(whether nested functions work)
+AC_LINK_IFELSE(
+  [AC_LANG_PROGRAM(,
+    [ double bar;
+      double foo(double a, double b)
+       {
+        double square (double z) {return(z * z);}
+        return(square(a) + square(b));
+       }
+     bar = foo(1.0, 2.0)
+    ])],
+  [AC_DEFINE(HAVE_NESTED_FUNCTIONS)
+   AC_MSG_RESULT(yes)
+  ],
+  [AC_MSG_RESULT(no)])
+
+
 
 
 #--------------------------------------------------------------------------------
