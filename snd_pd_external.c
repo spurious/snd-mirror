@@ -73,6 +73,7 @@
 
 #include <m_pd.h>
 //#include <s_stuff.h>
+#include <pthread.h>
 #include <jack/ringbuffer.h>
 
 #include <stdio.h>
@@ -786,6 +787,7 @@ static void pd0_init(void){
   if(pthread_create(&pthread,NULL,snd0_init,NULL)!=0){
     post("Could not make pthread. (disaster!)\n");
   }  
+
   return;
 }
 
@@ -879,13 +881,13 @@ static void snd0_load(struct dispatch *d){
 
 
   // Let the file live in its own name-space (or something like that).
-  snd0_eval2("(pd-fixfunction (pd-instance-func pd-instance pd-num-inlets pd-num-outlets)");
+  snd0_eval2("(define (pd-instance-func pd-instance pd-num-inlets pd-num-outlets) (fix-defines ");
   snd0_eval_file(SND_PD_PATH "/pd-local.scm");
   snd0_eval_file(d->data.filename);
   snd0_eval2("  (list pd-inlet-func pd-cleanup-func (if (defined? '*rt-engine*)"
 	                                               "*in-bus* 0)"
 	                                           "(if (defined? '*rt-engine*)"
-	                                               "*out-bus* 0)))");
+	                                               "*out-bus* 0))))");
   //  snd0_eval2("  (list pd-inlet-func pd-cleanup-func (if (defined? '*rt-engine*)"
   //	                                               "(SCM_SMOB_DATA *in-bus*) (list \"POINTER\" 0))"
   //	                                           "(if (defined? '*rt-engine*)"

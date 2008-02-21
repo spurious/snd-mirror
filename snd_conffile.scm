@@ -5,6 +5,14 @@
 (define srfi-loaded #f)
 (define common-list-loaded #f)
 
+(define (atleast1.8.0?)
+  (let ((version (map string->number (string-split (version) #\.))))
+    (or (> (car version) 1)
+	(and (= 1 (car version))
+	     (or (> (cadr version) 8)
+		 (and (= 8 (cadr version))
+		      (>= (caddr version) 0)))))))
+
 (define (atleast1.6.4?)	 	
    (let ((version (map string->number (string-split (version) #\.))))	 	
      (or (> (car version) 1)	 	
@@ -17,6 +25,9 @@
     (begin
       (display "Warning, snd_conffile.scm has not been tested with earlier versions of Guile than 1.6.4.")(newline)
       (display "In case of problems, please upgrade Guile to the latest version, and recompile Snd.")(newline)))
+
+(if (not (atleast1.8.0?))
+    (display "Warning. snd_conffile.scm should be run using Guile at least v1.8. This might not work.\n"))
 
 
 
@@ -38,7 +49,7 @@
 
 
 (define c-initializing
-  (let ((num 30))
+  (let ((num 33))
     (lambda ()
       (gtk_window_set_title (GTK_WINDOW (cadr (main-widgets))) (string-append "Initializing: " (number->string num)))
       (while (= 1 (gtk_events_pending))

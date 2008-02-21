@@ -140,7 +140,7 @@
      (lambda (return)
        (set! handles (<array/map> num_handles
 				  (lambda (n)
-				    (let ((handle (ladspa-instantiate this->descriptor (srate) )))
+				    (let ((handle (ladspa-instantiate descriptor (srate) )))
 				      (if (not handle)
 					  (begin
 					    (c-display "Error: Could not make ladspa handle.")
@@ -148,8 +148,8 @@
 					    (return #f))
 					  (begin
 					    (-> ports for-each (lambda (n port)
-								 (ladspa-connect-port this->descriptor handle n port)))
-					    (ladspa-activate this->descriptor handle)))
+								 (ladspa-connect-port descriptor handle n port)))
+					    (ladspa-activate descriptor handle)))
 				      handle))))))
     #t)
 
@@ -161,8 +161,8 @@
 	(-> handles for-each (lambda (n handle)
 			       (if handle
 				   (begin
-				     (ladspa-deactivate this->descriptor handle)
-				     (ladspa-cleanup this->descriptor handle))))))
+				     (ladspa-deactivate descriptor handle)
+				     (ladspa-cleanup descriptor handle))))))
     (set! handles #f))
 
 
@@ -173,7 +173,7 @@
   (define (set-port! portnum vct)
     (display "ai: ")(display handle)(newline)
     (ports portnum vct)
-    (ladspa-connect-port this->descriptor handle portnum vct)) ;; Which handle???
+    (ladspa-connect-port descriptor handle portnum vct)) ;; Which handle???
 
   (define (get-num-input-audio-ports)
     (length input-audios))
@@ -193,13 +193,13 @@
   ;; Warning, len must not be larger than ladspa-maxbuf.
   (define (run len)
     (-> handles for-each (lambda (n handle)
-			   (ladspa-run this->descriptor handle len))))
+			   (ladspa-run descriptor handle len))))
 
 
 
   (def-method (set-default-input-controls)
     ;;;; There is a serious bug regarding getting default values using lrdf. Disabled for now.
-    ;;(let* ((def-uri (lrdf_get_default_uri (.UniqueID this->descriptor)))
+    ;;(let* ((def-uri (lrdf_get_default_uri (.UniqueID descriptor)))
     ;;   (defs (and def-uri (lrdf_get_setting_values def-uri)))
     ;;   (def-count (and defs (lrdf_defaults_count defs)))
     ;;   (def-vals (and defs (-> (<array/map> def-count (lambda (n) (cons (lrdf_defaults_pid defs n) (lrdf_defaults_value defs n)))) get-list))))
@@ -233,8 +233,8 @@
 				(else
 				 (/ (+ lo hi) 2))))))
 		
-		(map (lambda (x) (<array> x (list-ref (.PortRangeHints this->descriptor) x)))
-		     this->input-controls)))
+		(map (lambda (x) (<array> x (list-ref (.PortRangeHints descriptor) x)))
+		     input-controls)))
   ;;)
   
   
@@ -267,7 +267,7 @@
 						      (sound-data->vct sdobj
 								       (+ chan n)
 								       (get-input-audio-port n))))))
-				     (ladspa-run this->descriptor handle len)
+				     (ladspa-run descriptor handle len)
 				     (c-for 0 < min_num_audios 1
 					    (lambda (n)
 					      (if (< (+ chan n) num_chans)
@@ -455,7 +455,7 @@
 
 
   (def-method (get-hint portnum)
-    (car (list-ref (.PortRangeHints this->descriptor) portnum)))
+    (car (list-ref (.PortRangeHints descriptor) portnum)))
 
   (define (ishint portnum dashint)
     (not (= (logand (this->get-hint portnum) dashint) 0)))
@@ -466,7 +466,7 @@
 	   1)
        (if (not (ishint portnum LADSPA_HINT_BOUNDED_BELOW))
 	   0                                   ;The value Ardour use.
-	   (cadr (list-ref (.PortRangeHints this->descriptor) portnum)))))
+	   (cadr (list-ref (.PortRangeHints descriptor) portnum)))))
 
   (def-method (get-hi portnum)
     (* (if (ishint portnum LADSPA_HINT_SAMPLE_RATE)
@@ -476,22 +476,22 @@
 	   (if (not (ishint portnum  LADSPA_HINT_TOGGLED))
 	       4                                   ;The value Ardour use.
 	       1)
-	   (caddr (list-ref (.PortRangeHints this->descriptor) portnum)))))
+	   (caddr (list-ref (.PortRangeHints descriptor) portnum)))))
 
 
   ;; Constructor:
-  (if (not this->descriptor)
+  (if (not descriptor)
       (set! this #f)
       (begin
 	(c-for-each (lambda (n x)
 		      (if (> (logand x LADSPA_PORT_CONTROL) 0)
 			  (if (> (logand x LADSPA_PORT_INPUT) 0)
-			      (set! this->input-controls (append this->input-controls (list n)))
-			      (set! this->output-controls (append this->output-controls (list n))))
+			      (set! input-controls (append input-controls (list n)))
+			      (set! output-controls (append output-controls (list n))))
 			  (if (> (logand x LADSPA_PORT_INPUT) 0)
 			      (set! input-audios (append input-audios (list n)))
 			      (set! output-audios (append output-audios (list n))))))
-		    (.PortDescriptors this->descriptor))
+		    (.PortDescriptors descriptor))
 	(if (= (length input-audios) 0)
 	    (begin
 	      (set! min_num_audios (length output-audios))
@@ -500,7 +500,7 @@
 	(set! ports (apply <array> (map (lambda (x) (if (> (logand x LADSPA_PORT_CONTROL) 0)
 							(make-vct 1)
 							#f))
-					(.PortDescriptors this->descriptor))))
+					(.PortDescriptors descriptor))))
 	(this->set-default-input-controls))))
 
 

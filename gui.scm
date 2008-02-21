@@ -683,19 +683,19 @@
   (define (make-pixmap!)
     (set! width (car (widget-size parent)))
     (set! height (cadr (widget-size parent)))
-    (set! this->pixmap (gdk_pixmap_new (.window parent) width height -1))
-    (set! this->drawable (GDK_DRAWABLE this->pixmap)))
+    (set! pixmap (gdk_pixmap_new (.window parent) width height -1))
+    (set! drawable (GDK_DRAWABLE pixmap)))
 
   (def-method (pixmap->parent)
     (gdk_draw_drawable (GDK_DRAWABLE (.window parent))
 		       (.black_gc (.style parent))
-		       this->drawable
+		       drawable
 		       0 0
 		       0 0
 		       width height))
 
   (def-method (parent->pixmap)
-    (gdk_draw_drawable this->drawable
+    (gdk_draw_drawable drawable
 		       (.black_gc (.style parent))
 		       (GDK_DRAWABLE (.window parent))
 		       0 0
@@ -1013,7 +1013,7 @@
 					     (square (- (+ a2 b2) c2)))
 					  16))
 				   (hc2 (* 4 (/ F2 c2))))
-			      (return (if (< hc2 (square this->boxsize))
+			      (return (if (< hc2 (square boxsize))
 					  (let ((node (list x y)))
 					    (changefunc this)
 					    (set! nodes (insert! nodes i node))
@@ -1039,12 +1039,12 @@
 				      (if (and (<= x maxx) (>= x minx))
 					  (let ((nx (<-gfx x))
 						(ny (<-gfy y))
-						(ax (* this->boxsize proportion)))
+						(ax (* boxsize proportion)))
 					    (set! boxes (cons (list i
 								    (- nx ax)
-								    (- ny this->boxsize)
+								    (- ny boxsize)
 								    (+ nx ax)
-								    (+ ny this->boxsize))
+								    (+ ny boxsize))
 							      boxes)))))))
 		       (if (= i 1)
 			   (makebox 0 x1 y1))
@@ -1066,9 +1066,9 @@
 			      (<= n end))
 			 (begin
 			   (linefunc x1 y1 x2 y2)
-			   (textfunc y1 (+ x1 (/ this->boxsize 2)) (- y1 this->boxsize))
+			   (textfunc y1 (+ x1 (/ boxsize 2)) (- y1 boxsize))
 			   (if (= n (car (get-last-line)))
-			       (textfunc y2 (+ x2 (/ this->boxsize 2)) (- y2 this->boxsize))))))))
+			       (textfunc y2 (+ x2 (/ boxsize 2)) (- y2 boxsize))))))))
   
   
   (def-method (paint)
@@ -1422,36 +1422,36 @@
 
   (def-method (set to)
     (if use-gtk
-	(gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON this->button) to)
-	(XtSetValues this->button (list XmNset to))))
+	(gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON button) to)
+	(XtSetValues button (list XmNset to))))
 
   (def-method (remove)
     (if use-gtk
-	(hide-widget (GTK_WIDGET this->button))
+	(hide-widget (GTK_WIDGET button))
 	;;(gtk_widget_destroy (GTK_WIDGET button))
-	(XtUnmanageChild this->button)))
+	(XtUnmanageChild button)))
     
   (if use-gtk
       (let ((dasparent (if (isdialog? parent) (-> parent getbox2) (GTK_BOX parent))))
-	(set! this->button (if name (gtk_check_button_new_with_label name) (gtk_check_button_new)))
-	(gtk_box_pack_end (GTK_BOX dasparent) this->button #f #f 0)
-	(gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON this->button) onoff)
-	(gtk_widget_show this->button)
+	(set! button (if name (gtk_check_button_new_with_label name) (gtk_check_button_new)))
+	(gtk_box_pack_end (GTK_BOX dasparent) button #f #f 0)
+	(gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON button) onoff)
+	(gtk_widget_show button)
 	(g_signal_connect_closure_by_id 
-	 (GPOINTER this->button)
-	 (g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT this->button))) 0
+	 (GPOINTER button)
+	 (g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT button))) 0
 	 (g_cclosure_new (lambda (w d) 
 			   (callback (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON w))))
 			 #f #f)
 	 #f))
       (let* ((dasparent (if (isdialog? parent) (-> parent getbox2) parent)))
-	(set! this->button (XtCreateManagedWidget (if name name "") xmToggleButtonWidgetClass dasparent
+	(set! button (XtCreateManagedWidget (if name name "") xmToggleButtonWidgetClass dasparent
 					    (append (list XmNbackground       (basic-color)
 							  ;;XmNlabelString      name
 							  XmNset              onoff
 							  XmNselectColor      (yellow-pixel))
 						    extraopts)))
-	(XtAddCallback this->button XmNvalueChangedCallback (lambda (w c i) (callback (.set i)))))))
+	(XtAddCallback button XmNvalueChangedCallback (lambda (w c i) (callback (.set i)))))))
 
 
 
@@ -1485,25 +1485,25 @@
 
   (def-method (remove)
     (if use-gtk
-	(hide-widget (GTK_WIDGET this->button))
+	(hide-widget (GTK_WIDGET button))
 	;;(gtk_widget_destroy (GTK_WIDGET button))
-	(XtUnmanageChild this->button)))
+	(XtUnmanageChild button)))
 
   (if use-gtk
       (begin
-	(set! this->button (gtk_button_new_with_label name))
-	(gtk_box_pack_start (GTK_BOX parent) this->button #t #t 20)
-	(g_signal_connect_closure_by_id (GPOINTER this->button)
-					(g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT this->button)))
+	(set! button (gtk_button_new_with_label name))
+	(gtk_box_pack_start (GTK_BOX parent) button #t #t 20)
+	(g_signal_connect_closure_by_id (GPOINTER button)
+					(g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT button)))
 					0 (g_cclosure_new (lambda (w data) 
 							    (callback))
 							  #f #f) #f)
-	(gtk_widget_show this->button))
+	(gtk_widget_show button))
       (begin
-	(set! this->button (XtCreateManagedWidget name xmPushButtonWidgetClass parent
+	(set! button (XtCreateManagedWidget name xmPushButtonWidgetClass parent
 					     (list XmNbackground (basic-color)
 						   XmNarmColor   (pushed-button-color))))
-	(XtAddCallback this->button XmNactivateCallback (lambda (w c i)
+	(XtAddCallback button XmNactivateCallback (lambda (w c i)
 							    (callback))))))
 
 
@@ -1520,24 +1520,24 @@
 
   (def-method (set to)
     (if use-gtk
-	(gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON this->button) to)
-	(XtSetValues this->button (list XmNset to))))
+	(gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON button) to)
+	(XtSetValues button (list XmNset to))))
 
   (def-method (remove)
     (if use-gtk
-	(hide-widget (GTK_WIDGET this->button))
+	(hide-widget (GTK_WIDGET button))
 	;;(gtk_widget_destroy (GTK_WIDGET button))
-	(XtUnmanageChild this->button)))
+	(XtUnmanageChild button)))
     
   (if use-gtk
       (let ((dasparent (if (isdialog? parent) (-> parent getbox2) (GTK_BOX parent))))
-	(set! this->button (gtk_toggle_button_new_with_label name))
-	(gtk_box_pack_end (GTK_BOX dasparent) this->button #f #f 0)
-	(gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON this->button) onoff)
-	(gtk_widget_show this->button)
+	(set! button (gtk_toggle_button_new_with_label name))
+	(gtk_box_pack_end (GTK_BOX dasparent) button #f #f 0)
+	(gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON button) onoff)
+	(gtk_widget_show button)
 	(g_signal_connect_closure_by_id 
-	 (GPOINTER this->button)
-	 (g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT this->button))) 0
+	 (GPOINTER button)
+	 (g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT button))) 0
 	 (g_cclosure_new (lambda (w d) 
 			   (if (= 1 (car (procedure-property callback 'arity)))
 			       (callback (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON w)))
@@ -1545,13 +1545,13 @@
 			 #f #f)
 	 #f))
       (let* ((dasparent (if (isdialog? parent) (-> parent getbox2) parent)))
-	(set! this->button (XtCreateManagedWidget (if name name "") xmToggleButtonWidgetClass dasparent
+	(set! button (XtCreateManagedWidget (if name name "") xmToggleButtonWidgetClass dasparent
 					    (append (list XmNbackground       (basic-color)
 							  ;;XmNlabelString      name
 							  XmNset              onoff
 							  XmNselectColor      (yellow-pixel))
 						    extraopts)))
-	(XtAddCallback this->button XmNvalueChangedCallback (lambda (w c i) (callback (.set i)))))))
+	(XtAddCallback button XmNvalueChangedCallback (lambda (w c i) (callback (.set i)))))))
 
 
 
@@ -1680,7 +1680,7 @@
 	  (if use-gtk
 	      (begin
 		(set! hbox (gtk_hbox_new #f 0))
-		(gtk_box_pack_start (GTK_BOX (.vbox (GTK_DIALOG this->dialog))) hbox #f #f 4)
+		(gtk_box_pack_start (GTK_BOX (.vbox (GTK_DIALOG dialog))) hbox #f #f 4)
 		(gtk_widget_show hbox))
 	      (let* ((mainform box1)
 		     (sep (XtCreateManagedWidget "sep" xmSeparatorWidgetClass mainform
@@ -1710,14 +1710,14 @@
 	  (if use-gtk
 	      (begin
 		(set! vbox (gtk_vbox_new #f 2))
-		(gtk_box_pack_start (GTK_BOX (.vbox (GTK_DIALOG this->dialog))) vbox #f #f 4)
+		(gtk_box_pack_start (GTK_BOX (.vbox (GTK_DIALOG dialog))) vbox #f #f 4)
 		(gtk_widget_show vbox))
-	      (set! vbox (XtCreateManagedWidget "formd" xmRowColumnWidgetClass this->dialog
+	      (set! vbox (XtCreateManagedWidget "formd" xmRowColumnWidgetClass dialog
 						(list XmNleftAttachment      XmATTACH_FORM
 						      XmNrightAttachment     XmATTACH_FORM
 						      XmNtopAttachment       XmATTACH_FORM
 						      XmNbottomAttachment    XmATTACH_WIDGET
-						      XmNbottomWidget        (XmMessageBoxGetChild this->dialog XmDIALOG_SEPARATOR)
+						      XmNbottomWidget        (XmMessageBoxGetChild dialog XmDIALOG_SEPARATOR)
 						      XmNbackground          (highlight-color)
 						      XmNorientation         XmVERTICAL))))
 	  (setbox1! vbox)))
@@ -1728,34 +1728,34 @@
 
   (def-method (hide)
     (if use-gtk
-	(gtk_widget_hide this->dialog)
-	(XtUnmanageChild this->dialog))
+	(gtk_widget_hide dialog)
+	(XtUnmanageChild dialog))
     (if (c-selected-sound)
 	(focus-widget (c-editor-widget (c-selected-sound)))))
 
   (def-method (show)
     (if use-gtk
 	(begin
-	  (gtk_widget_show this->dialog)
-	  (gdk_window_raise (.window this->dialog)))
-	(if (not (XtIsManaged this->dialog))
-	    (XtManageChild this->dialog)
-	    (raise-dialog this->dialog))))
+	  (gtk_widget_show dialog)
+	  (gdk_window_raise (.window dialog)))
+	(if (not (XtIsManaged dialog))
+	    (XtManageChild dialog)
+	    (raise-dialog dialog))))
 
 
   ;; Replacement for add-sliders in new-effects.scm/gtk-effects.scm
   (def-method (add-sliders dassliders)
-    (set! this->sliders (map
+    (set! sliders (map
 			 (lambda (slider-data)
 			   (apply <slider> (cons (this->getbox1) slider-data)))
 			 dassliders))
     
     (if (not use-gtk)
-	(let ((num_inputs (+ 1 (length this->sliders))))
-	  (set! (widget-size this->dialog) (list (min 800 (max 400 (* num_inputs 20)))
+	(let ((num_inputs (+ 1 (length sliders))))
+	  (set! (widget-size dialog) (list (min 800 (max 400 (* num_inputs 20)))
 						   (min 800 (max 120 (* num_inputs 70)))))))
     
-    this->sliders)
+    sliders)
 
 
   (let ((names '())
@@ -1827,7 +1827,7 @@
      (reverse names) (reverse funcs) (reverse wnames))
     
     ;; build rest in (.vbox (GTK_DIALOG new-dialog))
-    (set! this->dialog new-dialog)))
+    (set! dialog new-dialog)))
     
 
 

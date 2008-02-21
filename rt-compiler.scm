@@ -44,9 +44,10 @@ and run simple lisp[4] functions.
 
 ;;(use-modules (srfi srfi-1))
 
-(if (not srfi-loaded)
+(if (or (not (defined? 'srfi-loaded))
+	(not srfi-loaded))
     (use-modules (srfi srfi-1)))
-(set! srfi-loaded #t)
+(define srfi-loaded #t)
 
 
 ;;; Implementation detail: map must run its arguments in order. There must be no
@@ -2097,7 +2098,9 @@ and run simple lisp[4] functions.
 	       
 
 	       (if (and func (= 2 (length func)))
-		   (check-failed "Stupid compiler. Can't send anonymous functions to other functions, sorry: (Tip: Try macros instead...) " func))
+		   (check-failed (<-> "Snd-rt does not normally support functions as arguments.\n"
+				      "Use macros instead or rearrange so that functions are nested.")
+				 func))
 		   
 	       (if func
 
@@ -3454,6 +3457,11 @@ and run simple lisp[4] functions.
 (set! (=> str :b) 200)
 (=> str:str)
 (=> str :b)
+
+(macroexpand '(=> str:str :b))
+(macroexpand '(=> str :b))
+(rt-macroexpand '(=> str :b))
+(rt-macroexpand '(set! (=> str :b) 200))
 !#
 
 
@@ -4565,6 +4573,15 @@ and run simple lisp[4] functions.
 			    (locsig       (input)) ;; redefined later to use out instead of out-any
 			    ;;(move-sound   (input)) ;; Lots of work to support.
 			    (moving-average      (input))
+			    ,@(if (defined? 'ncos?) ;; Snd-ls uses an older version of Snd.
+				  '((ncos         ((fm 0)))
+				    (nsin         ((nsin 0)))
+				    (nrxysin      ((fm 0)))
+				    (nrxycos      ((fm 0)))
+				    ;(sine-summation ((fm 0)))
+				    (polywave     ((index 1) (fm 0)))
+				    )
+				  '())
 			    (notch        (input (pm 0)))
 			    (one-pole     (input))
 			    (one-zero     (input))
@@ -4581,10 +4598,6 @@ and run simple lisp[4] functions.
 			    (square-wave    ((fm 0)))
 			    (src            (sr-change input-function)) ;; redefined later
 			    (ssb-am         ((insig 0) (fm 0)))
-			    ,@(if (defined? 'ncos?) ;; Snd-ls uses an older version of Snd.
-				  '((ncos           ((fm 0)))
-				    (nsin           ((nsin 0))))
-				  '())
 			    (sum-of-cosines ((fm 0)))
 			    (sum-of-sines   ((fm 0)))
 			    (table-lookup   ((fm 0)))
@@ -4596,8 +4609,8 @@ and run simple lisp[4] functions.
 			    (waveshape      ((index 1) (fm 0)))))
 
 (for-each (lambda (clm-generator)
-	    (let* ((name (car clm-generator))              ;; all-pass
-		   (name2 (symbol-append name '-internal))              ;; all-pass-internal
+	    (let* ((name (car clm-generator))              ;; -> all-pass
+		   (name2 (symbol-append name '-internal)) ;; -> all-pass-internal
 		   (args (cadr clm-generator))             ;; (input (fm 0))
 		   (args1 (remove list? args))             ;; (input)
 		   (args2 (filter-org list? args))         ;; ((fm 0))
@@ -4612,19 +4625,19 @@ and run simple lisp[4] functions.
 				      (list->string (map (lambda (c)
 							   (if (equal? #\- c) #\_ c))
 							 (string->list (symbol->string belongsto-name))))))
-		   (etype (symbol-append                   ;; <mus_all-pass-*>
+		   (etype (symbol-append                   ;; -> <mus_all-pass-*>
 			   '<mus_ belongsto-name '-*>))
 		   (testfunc (primitive-eval               ;; all-pass?
 			      (symbol-append belongsto-name '?)))
 		   (c-func (symbol-append 'mus_ c-name))   ;; mus_all_pass
-		   (macroname (symbol-append               ;; rt-all-pass/mus_all_pass
+		   (macroname (symbol-append               ;; -> rt-all-pass/mus_all_pass
 			       'rt- name '/ c-func))
 		   
-		   (macro-belongsto-name (symbol-append               ;; rt-all-pass/mus_all_pass
+		   (macro-belongsto-name (symbol-append               ;; -> rt-all-pass/mus_all_pass
 					  'rt- belongsto-name '/ c-func))
 		   
-		   (c-transformfuncname (symbol-append macro-belongsto-name '?)) ;; rt-all-pass/mus_all_pass?
-		   (c-transformfuncname2 (symbol-append 'mus_ c-belongsto-name '_p)) ;; all_pass_p
+		   (c-transformfuncname (symbol-append macro-belongsto-name '?)) ;; -> rt-all-pass/mus_all_pass?
+		   (c-transformfuncname2 (symbol-append 'mus_ c-belongsto-name '_p)) ;; -> all_pass_p
 
 		   )
 	      
@@ -4765,6 +4778,11 @@ and run simple lisp[4] functions.
 (rt-renamefunc restart-env mus_restart_env <void> (<mus_env-*>))
 ;; env-interp
 (rt-renamefunc env-interp mus_env_interp <float> (<float> <mus_env-*>))
+
+;; Redefine env so that this can be done: (make-env '((0 0)(0.1 1)(0.9 1)(1 0)))
+(define old-make-env make-env)
+(define (make-env env . rest)
+  (apply old-make-env (cons (flatten env) rest)))
 
 	       
 ;; polynomial
@@ -4976,7 +4994,11 @@ and run simple lisp[4] functions.
   )
 
 
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Readin
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-ec-struct <mus_rt_readin>
   <mus_any_class-*> core
@@ -4991,7 +5013,7 @@ and run simple lisp[4] functions.
   <SCM> scm_readin)
 
 
-(eval-c (string-append "-I" snd-header-files-path " " (string #\`) "pkg-config --libs sndfile" (string #\`) )
+(eval-c (<-> "-I" snd-header-files-path " " (string #\`) "pkg-config --libs sndfile" (string #\`) )
 	"#include <mus-config.h>"
 	"#include <clm.h>"
 	"#include <xen.h>"
@@ -5058,12 +5080,14 @@ and run simple lisp[4] functions.
 								   0.0f
 								   (callback buffer->buffer readin->location))))
 					 ;;(fprintf stderr (string "dir: %d, pos: %d ret: %f\\n") dir pos ret)
+					 ;;(fprintf stderr (string "gakk2\\n"))
 					 (+= readin->location readin->increment)
 					 (return ret))))
 	
 	(public
 	 (<float> rt-readin (lambda ((<SCM> rt_readin_smob))
 			      (let* ((readin <struct-mus_rt_readin-*> (cast <void-*> (SCM_SMOB_DATA rt_readin_smob))))
+				;;(fprintf stderr (string "gakk\\n"))
 				(return (rt_readin readin))))))
 	
 	
@@ -6869,7 +6893,7 @@ old syntax: (not very nice)
   (push-back! (list name var) rt-extern-variables))
 
 #!
-(add-extern-variables '(a (make-oscil) b 3))
+(add-extern-variable 'a (make-oscil))
 (rt-extern-reset)
 !#
 (define-rt-macro (extern . rest)
@@ -7810,15 +7834,14 @@ old syntax: (not very nice)
 (define* (rt-1 term #:key (engine *rt-engine*))
   (rt-gensym-reset)
   (rt-extern-reset)
-  (let* ((key (list (deep-list-copy term)     ;; Hmm. That shouldn't be necesarry. (but it is) Is the list manipulated later?
+  (let* ((key (list term
 		    (rt-safety)               ;; Everything that can change the compiled output must be in the key.
 		    (-> engine samplerate))) ;; If saving to disk, the result of (version) and (snd-version) must be added as well. (and probably some more)
 	 (cached (hash-ref rt-cached-funcs key)))
     ;;(c-display "term/cached" term cached)
-    (if cached
-	cached
-	(let ((new-rt (rt-2 term)))
-	  (hash-set! rt-cached-funcs key new-rt)
+    (or	cached
+	(let ((new-rt (rt-2 (deep-list-copy term)))) ;; <- Hmm. Thats really bad. Seems like a set-car! is performed
+	  (hash-set! rt-cached-funcs key new-rt)     ;;         on term somewhere. Fix it with a deep-list-copy for now.
 	  new-rt))))
 (define (rt-clear-cache!)
   (set! rt-cached-funcs (make-hash-table 997)))
@@ -7981,7 +8004,7 @@ old syntax: (not very nice)
 		  (set! len (caddr body))
 		  (loop (cdddr body)))
 		 (else
-		  (error (list "Unknown keyword" (car body) "legal keywords are start/len/dur")))))
+		  (error (list "Unknown keyword" (car body) " for <rt-out>. Legal keywords are start/len/dur.")))))
 	  ((and start len)
 	   `(<rt-play> ,start ,len (lambda () (out ,@body))))
 	  (start

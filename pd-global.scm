@@ -47,40 +47,6 @@
 
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Macro to rearrange a function so that its possible to put defines
-;; after expressions. (workaround for a horrible flaw in the scheme language)
-;;
-(define-macro (pd-fixfunction header . body)
-  (define definestuff '(define define* def-class definstrument))
-  `(define ,header
-     (letrec* (,@(map (lambda (term)
-			(if (member (car term) definestuff)
-			    (if (pair? (cadr term))
-				`(,(car (cadr term)) (lambda ,(cdr (cadr term))
-						       ,@(cddr term)))
-				(cdr term))
-			    `(,(gensym) ,term)))
-		      (reverse! (cdr (reverse body)))))
-       ,(car (reverse body)))))
-
-#!
-(macroexpand '(pd-fixfunction (name ai ai2)
-			      (define aiai (- 2 4 4))
-			      (aiai1)
-			      (define (gakk a b . c) 5)
-			      (aiai2)))
-->
-(define (name ai ai2)
-  (letrec* ((aiai (- 2 4 4))
-	    (#{\ g20}# (aiai1))
-	    (gakk (lambda (a)
-		    5)))
-    (aiai2)))
-
-!#
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Misc. functions
 ;;
@@ -185,8 +151,12 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; RT support
-(rt-ec-function <t_snd_pd-*> rt_get_pd_instance (lambda ((<SCM> instance))
-						  (return (cast <t_snd_pd-*> (scm_num2ulong instance 0 (string "rt_get_pd_instance"))))))
+(rt-ec-function <t_snd_pd-*> rt_get_pd_instance
+		(lambda ((<SCM> instance))
+		  (return (cast <t_snd_pd-*>
+				(scm_num2ulong instance
+					       0 
+					       (string "rt_get_pd_instance"))))))
 (<rt-func> 'rt_get_pd_instance '<void-*> '(<SCM>))
 
 (<rt-type> '<t_snd_pd-*>

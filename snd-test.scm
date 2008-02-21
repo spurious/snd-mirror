@@ -42687,35 +42687,37 @@ EDITS: 1
 	  (remove-hook! graph-hook zoom-spectrum)
 	  (close-sound ind2)))
       
-      ;; TODO: figure out what's messed up inn power env
-      (let ((ind (new-sound :size 33 :srate 22050)))
-	(map-channel (lambda (y) 1.0))
-	(let ((pe (make-power-env '(0 0 32.0  1 1 0.0312  2 0 1) :duration (/ 34.0 22050.0))))
-	  (map-channel (lambda (y) (* y (power-env pe))))
-	  (if (not (vequal (channel->vct) 
-			   (vct 0.000 0.008 0.017 0.030 0.044 0.063 0.086 0.115 0.150 0.194 0.249 
-				0.317 0.402 0.507 0.637 0.799 1.000 0.992 0.983 0.971 0.956 0.937 
-				0.914 0.885 0.850 0.806 0.751 0.683 0.598 0.493 0.363 0.201 0.000)))
-	      (snd-display ";power-env: ~A" (channel->vct))))
-	(map-channel (lambda (y) 1.0))
-	(let ((pe (make-power-env '(0 0 1.0  1 1 0.0  2 0 1  3 0 1) :duration (/ 34.0 22050.0))))
-	  (map-channel (lambda (y) (* y (power-env pe))))
-	  (if (not (vequal (channel->vct) 
-			   (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900 1.000 
-				1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 0.000 0.000 
-				0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
-	      (snd-display ";power-env 0 and 1: ~A" (channel->vct))))
-	(map-channel (lambda (y) 1.0))
-	(let ((pe (make-power-env '(0 0 .01 1 1 1) :duration (/ 34.0 22050.0))))
-	  (map-channel (lambda (y) (* y (power-env pe))))
-	  (if (not (vequal (channel->vct) 
-			   (vct 0.000 0.132 0.246 0.346 0.432 0.507 0.573 0.630 0.679 0.722 0.760 
-				0.792 0.821 0.845 0.867 0.886 0.902 0.916 0.928 0.939 0.948 0.956 
-				0.963 0.969 0.975 0.979 0.983 0.987 0.990 0.992 0.995 0.997 0.998)))
-	      (snd-display ";power-env .01: ~A" (channel->vct))))
-	(let ((name (file-name ind)))
-	  (close-sound ind)
-	  (if (file-exists? name) (delete-file name))))
+      (let ((old-srate (mus-srate)))
+	(set! (mus-srate) 22050)
+	(let ((ind (new-sound :size 33 :srate 22050)))
+	  (map-channel (lambda (y) 1.0))
+	  (let ((pe (make-power-env '(0 0 32.0  1 1 0.0312  2 0 1) :duration (/ 34.0 22050.0))))
+	    (map-channel (lambda (y) (* y (power-env pe))))
+	    (if (not (vequal (channel->vct) 
+			     (vct 0.000 0.008 0.017 0.030 0.044 0.063 0.086 0.115 0.150 0.194 0.249 
+				  0.317 0.402 0.507 0.637 0.799 1.000 0.992 0.983 0.971 0.956 0.937 
+				  0.914 0.885 0.850 0.806 0.751 0.683 0.598 0.493 0.363 0.201 0.000)))
+		(snd-display ";power-env: ~A" (channel->vct))))
+	  (map-channel (lambda (y) 1.0))
+	  (let ((pe (make-power-env '(0 0 1.0  1 1 0.0  2 0 1  3 0 1) :duration (/ 34.0 22050.0))))
+	    (map-channel (lambda (y) (* y (power-env pe))))
+	    (if (not (vequal (channel->vct) 
+			     (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900 1.000 
+				  1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 0.000 0.000 
+				  0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
+		(snd-display ";power-env 0 and 1: ~A" (channel->vct))))
+	  (map-channel (lambda (y) 1.0))
+	  (let ((pe (make-power-env '(0 0 .01 1 1 1) :duration (/ 34.0 22050.0))))
+	    (map-channel (lambda (y) (* y (power-env pe))))
+	    (if (not (vequal (channel->vct) 
+			     (vct 0.000 0.132 0.246 0.346 0.432 0.507 0.573 0.630 0.679 0.722 0.760 
+				  0.792 0.821 0.845 0.867 0.886 0.902 0.916 0.928 0.939 0.948 0.956 
+				  0.963 0.969 0.975 0.979 0.983 0.987 0.990 0.992 0.995 0.997 0.998)))
+		(snd-display ";power-env .01: ~A" (channel->vct))))
+	  (let ((name (file-name ind)))
+	    (close-sound ind)
+	    (if (file-exists? name) (delete-file name))))
+	(set! (mus-srate) old-srate))
       
       (let ((ind (new-sound "tmp.snd" mus-next mus-bfloat 22050 1 :size 50)))
 	(set! (sample 3) 1.0)

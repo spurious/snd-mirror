@@ -118,6 +118,14 @@
 
 ;;(sublist '(0 1 2 3 4 5 6 7 8 9) 2 5)
 
+(define (flatten tree)
+  (cond ((null? tree) '())
+	((pair? (car tree))
+	 (append (flatten (car tree))
+		 (flatten (cdr tree))))
+	(else
+	 (cons (car tree) (flatten (cdr tree))))))
+
 (define-macro (push! val where)
   (let ((ret (gensym)))
     `(let ((,ret ,val))
@@ -163,12 +171,10 @@
 
 
 (define (deep-list-copy list)
-  (cond ((null? list) '())
-	((pair? (car list))
-	 (cons (deep-list-copy (car list))
-	       (deep-list-copy (cdr list))))
+  (cond ((not (pair? list))
+	 list)
 	(else
-	 (cons (car list)
+	 (cons (deep-list-copy (car list))
 	       (deep-list-copy (cdr list))))))
 
 
@@ -225,8 +231,9 @@
 		  (printfunc arg))
 		args)
     (printfunc #\newline))
-  (while (= 1 (gtk_events_pending))
-	 (gtk_main_iteration)))
+  (if (defined? 'gtk_events_pending)
+      (while (= 1 (gtk_events_pending))
+	(gtk_main_iteration))))
 
 ;  (gtk_main_iteration_do #f))
 
