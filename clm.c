@@ -6031,10 +6031,6 @@ double mus_env_interp(double x, mus_any *ptr)
 }
 
 
-/* TODO: doc, test (against generators.scm version) test */
-/*    also is this ok if step or exp env? */
-/*    also check the usual special cases (1 pt etc) */
-
 Float mus_env_any(mus_any *e, Float (*connect_points)(Float val))
 {
   /* "env_any" is supposed to mimic "out-any" */
@@ -6043,11 +6039,16 @@ Float mus_env_any(mus_any *e, Float (*connect_points)(Float val))
   int pt, size;
   Float y0, y1, new_val, val;
   double scaler, offset;
-  pts = gen->original_data;
+
   scaler = gen->original_scaler;
   offset = gen->original_offset;
-  pt = gen->index;
   size = gen->size;
+
+  if (size <= 1)
+    return(offset + scaler * connect_points(0.0));
+    
+  pts = gen->original_data;
+  pt = gen->index;
   if (pt >= (size - 1)) pt = size - 2;
   if (pts[pt * 2 + 1] <= pts[pt * 2 + 3])
     {
@@ -6059,6 +6060,7 @@ Float mus_env_any(mus_any *e, Float (*connect_points)(Float val))
       y1 = pts[pt * 2 + 1];
       y0 = pts[pt * 2 + 3];
     }
+
   val = (mus_env(e) - offset) / scaler;
   new_val = connect_points( (val - y0) / (y1 - y0));
   return(offset + scaler * (y0 + new_val * (y1 - y0)));
@@ -11200,10 +11202,6 @@ void init_mus_module(void)
  *      if the vector from the object to the speaker projected onto the vector from the speaker to the user is positive
  *        then the object is in front of the speaker(?)
  *
- *   The env-expt-channel funcs should be disconnected from ptree-channel somehow (or the process documented)
- *      TODO: find the rest of these hidden gens
- *
- *
  * generic funcs:
  *   currently mus-cosines accesses "n" -- "mus-n"? [or use "mus-order" instead? -- jargon, and should be an int, not off_t!]  
  *             mus-scaler sometimes = "r" -- "mus-r" or "mus-amplitude"?
@@ -11214,6 +11212,7 @@ void init_mus_module(void)
  *
  * arguments:
  *   :base as list in env = if up use car else cdr as base? or if > 2, use next on each segment
+ *   flatten the envelope arg to make-env (and all others? env-channel for example)
  *
  *
  * CL/CLM:
@@ -11234,7 +11233,7 @@ void init_mus_module(void)
  *   firmant (Mathews/Smith form of the formant generator)
  *   CL/CLM: moved really old, obsolete stuff to clm3.lisp
  *   make-two-pole|zero freq r in the "polar" case (reversed args)
-
+ *   env-any
  *
  *   (9.7)
  *   :dur and :end -> :length in make-env

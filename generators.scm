@@ -4061,6 +4061,12 @@ index 10 (so 10/2 is the bes-jn arg):
 	     (let ((cx (cos (* pi y))))
 	       (+ 0.084037 (* cx (+ -.29145 (* cx (+ .375696 (* cx (+ -.20762 (* cx .041194))))))))))))
 
+(define (multi-expt-env e expts)
+  (env-any e (lambda (y)
+	       (declare (y float))
+	       (let ((b (vct-ref expts (modulo (mus-channels e) (vct-length expts)))))
+		 (/ (- (expt b y) 1.0) (- b 1.0))))))
+
 
 ;;; --------------------------------------------------------------------------------
 

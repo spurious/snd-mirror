@@ -809,6 +809,7 @@ To goof around with FM from a graphical interface, see bess.scm and bess1.scm.
 <tr><td><em class=gen>mus-scaler</em></td><td>scaler</td></tr>
 <tr><td><em class=gen>mus-offset</em></td><td>offset</td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>duration in samples</td></tr>
+<tr><td><em class=gen>mus-channels</em></td><td>current position in the break-point list</td></tr>
 </table>
 </td><td width=50></td>
 <td>
@@ -906,38 +907,38 @@ J.C.Risset's bell curve is:</p>
 <p>But the the most flexible method is to use <b>env-any</b>.
 env-any takes the env generator that produces the underlying envelope,
 and a function to "connect the dots", and returns the new envelope
-using that connecting function between the break points.
+applying that connecting function between the break points.
 For example, say we want to square each envelope value:
 </p>
 
 <table border=0 hspace=40 cellpadding=10>
 <tr><td>
 <pre>
-(with-sound ()
-  (let ((e (make-env '(0 0 1 1 2 .25 3 1 4 0) 
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> ()
+  (let ((e (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1 2 .25 3 1 4 0) 
                      :duration 0.5)))
     (do ((i 0 (1+ i)))
 	((= i 22050))
-      (outa i (env-any e (lambda (y) (* y y))))))
+      (<a class=quiet href="#outa">outa</a> i (<em class=red>env-any</em> e (lambda (y) (* y y))))))
 
 
 ;; or connect the dots with a sinusoid:
 
 (define (sine-env e)
-  (env-any e (lambda (y)
+  (<em class=red>env-any</em> e (lambda (y)
 	       (declare (y float)) 
                ;; "declare" is for the run macro
 	       (* 0.5 (+ 1.0 (sin (+ (* -0.5 pi) 
 				     (* pi y))))))))
 
-(with-sound ()
-  (let ((e (make-env '(0 0 1 1 2 .25 3 1 4 0)
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> ()
+  (let ((e (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1 2 .25 3 1 4 0)
                      :duration 0.5)))
-    (run
+    (<a class=quiet href="extsnd.html#run">run</a>
       (lambda ()
         (do ((i 0 (1+ i)))
 	    ((= i 22050))
-          (outa i (sine-env e)))))))
+          (<a class=quiet href="#outa">outa</a> i (sine-env e)))))))
 </pre>
 
 </td>
@@ -957,7 +958,9 @@ For example, say we want to square each envelope value:
 
 <p>The env-any connecting function takes one argument, the current envelope value treated as
 going between 0.0 and 1.0 between each two points.  It returns a value that is then
-fitted back into the original (scaled, offset) envelope.
+fitted back into the original (scaled, offset) envelope.  There are a couple more of these
+functions in generators.scm, one to apply a blackman4 window between the points, and the
+other to cycle through a set of exponents.
 </p>
 
 
@@ -997,27 +1000,32 @@ duration), it's simplest to use make-env:
 <table border=3 bordercolor="tan" hspace=40 vspace=10><th bgcolor="beige">Envelopes</th><tr><td>
 <blockquote><small>
 <br>
+Various operations on envelopes: <a href="sndscm.html#envdoc">env.scm</a><br>
+<table border=0 cellpadding=0 cellspacing=0 hspace=30 vspace=6>
+
+    <tr><td><small>add-envelopes</small></td><td width=40></td><td><small>   add two envelopes</small></td></tr>
+    <tr><td><small>concatenate-envelopes</small></td><td></td><td><small>    concatenate a bunch of envelopes</small></td></tr>
+    <tr><td><small>envelope-exp</small></td><td></td><td><small>             interpolate points to approximate exponential curves</small></td></tr>
+    <tr><td><small>envelope-interp</small></td><td></td><td><small>          return the value of an envelope given the x position</small></td></tr>
+    <tr><td><small>envelope-last-x</small></td><td></td><td><small>          return the last x value in an envelope</small></td></tr>
+    <tr><td><small>intergrate-envelope</small></td><td></td><td><small>      return the area under an envelope</small></td></tr>
+    <tr><td><small>make-power-env</small></td><td></td><td><small>           exponential curves with multiple exponents (see also multi-expt-env in generators.scm)</small></td></tr>
+    <tr><td><small>map-envelopes</small></td><td></td><td><small>            apply a function to the breakpoints in two envelopes, returning a new envelope</small></td></tr>
+    <tr><td><small>max-envelope</small></td><td></td><td><small>             return the maximum y value in an envelope (also min-envelope)</small></td></tr>
+    <tr><td><small>multiply-envelopes</small></td><td></td><td><small>       multiply two envelopes</small></td></tr>
+    <tr><td><small>normalize-envelope</small></td><td></td><td><small>       scale the y values of an envelope to peak at 1.0</small></td></tr>
+    <tr><td><small>repeat-envelope</small></td><td></td><td><small>          concatenate copies of an envelope</small></td></tr>
+    <tr><td><small>reverse-envelope</small></td><td></td><td><small>         reverse the breakpoints in an envelope</small></td></tr>
+    <tr><td><small>scale-envelope</small></td><td></td><td><small>           scale and offset the y values of an envelope</small></td></tr>
+    <tr><td><small>stretch-envelope</small></td><td></td><td><small>         apply attack and decay times to an envelope ("adsr", or "divenv")</small></td></tr>
+    <tr><td><small>window-envelope</small></td><td></td><td><small>          return the portion of an envelope within given x axis bounds</small></td></tr>
+
+</td></tr></table>
 envelope sound: <a href="extsnd.html#envchannel">env-channel</a>, <a href="extsnd.html#envsound">env-sound</a><br>
 other enveloping functions: <a href="extsnd.html#rampchannel">ramp-channel</a>, <a href="extsnd.html#xrampchannel">xramp-channel</a>, <a href="extsnd.html#smoothchannel">smooth-channel</a><br>
-Various operations on envelopes: <a href="sndscm.html#envdoc">env.scm</a><br>
-<table border=0 hspace=30><tr><td>
-   <small>
-   add-envelopes, concatenate-envelopes, envelope-exp, envelope-interp, envelope-last-x,<br>
-   intergrate-envelope, make-power-env, map-envelopes, max-envelope, multiply-envelopes,<br>
-   normalize-envelope, repeat-envelope, reverse-envelope, rms-envelope, scale-envelope,<br>
-   stretch-envelope (also known as "adsr" in some systems, and previously "divenv" in CLM),<br>
-   window-envelope.
-   </small>
-</td></tr></table>
 The envelope editor: <a href="snd.html#editenvelope">Edit or View and Envelope</a><br>
 Panning: place-sound in examp.scm<br>
 Read sound indexed through envelope: <a href="sndscm.html#envsoundinterp">env-sound-interp</a><br>
-Cosine as envelope: <a href="extsnd.html#cosinechannel">cosine-channel</a>, <a href="extsnd.html#cosinechannelviaptree">cosine-channel-via-ptree</a>, <a href="sndclm.html#bellcurve">bell-curve</a><br>
-envelope with sinusoidal connections between points: <a href="sndscm.html#sineenvchannel">sine-env-channel</a><br>
-envelope with separate base for each segment: <a href="extsnd.html#powenvchannel">powenv-channel</a><br>
-envelope with x^2 connections: <a href="sndscm.html#envsquaredchannel">env-squared-channel</a><br>
-envelope with x^n connections: <a href="sndscm.html#envexptchannel">env-expt-channel</a><br>
-envelope with <a href="sndclm.html#ncos">ncos</a> connections: <a href="sndscm.html#blackman4envchannel">blackman4-env-channel</a><br>
 <br>
 </small></blockquote>
 </td></tr></table>

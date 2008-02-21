@@ -4,33 +4,33 @@
 ;;;  test 1: defaults                           [1110]
 ;;;  test 2: headers                            [1312]
 ;;;  test 3: variables                          [1628]
-;;;  test 4: sndlib                             [2276]
-;;;  test 5: simple overall checks              [4802]
-;;;  test 6: vcts                               [13769]
-;;;  test 7: colors                             [14037]
-;;;  test 8: clm                                [14527]
-;;;  test 9: mix                                [25571]
-;;;  test 10: marks                             [27789]
-;;;  test 11: dialogs                           [28750]
-;;;  test 12: extensions                        [28995]
-;;;  test 13: menus, edit lists, hooks, etc     [29266]
-;;;  test 14: all together now                  [30975]
-;;;  test 15: chan-local vars                   [32010]
-;;;  test 16: regularized funcs                 [33649]
-;;;  test 17: dialogs and graphics              [38640]
-;;;  test 18: enved                             [38730]
-;;;  test 19: save and restore                  [38749]
-;;;  test 20: transforms                        [40534]
-;;;  test 21: new stuff                         [42517]
-;;;  test 22: run                               [44509]
-;;;  test 23: with-sound                        [50732]
-;;;  test 24: user-interface                    [53990]
-;;;  test 25: X/Xt/Xm                           [57384]
-;;;  test 26: Gtk                               [61992]
-;;;  test 27: GL                                [65844]
-;;;  test 28: errors                            [65968]
-;;;  test all done                              [68268]
-;;;  test the end                               [68506]
+;;;  test 4: sndlib                             [2277]
+;;;  test 5: simple overall checks              [4803]
+;;;  test 6: vcts                               [13770]
+;;;  test 7: colors                             [14038]
+;;;  test 8: clm                                [14528]
+;;;  test 9: mix                                [25754]
+;;;  test 10: marks                             [27972]
+;;;  test 11: dialogs                           [28933]
+;;;  test 12: extensions                        [29178]
+;;;  test 13: menus, edit lists, hooks, etc     [29449]
+;;;  test 14: all together now                  [31158]
+;;;  test 15: chan-local vars                   [32193]
+;;;  test 16: regularized funcs                 [33832]
+;;;  test 17: dialogs and graphics              [38823]
+;;;  test 18: enved                             [38913]
+;;;  test 19: save and restore                  [38932]
+;;;  test 20: transforms                        [40717]
+;;;  test 21: new stuff                         [42700]
+;;;  test 22: run                               [44695]
+;;;  test 23: with-sound                        [50906]
+;;;  test 24: user-interface                    [54190]
+;;;  test 25: X/Xt/Xm                           [57584]
+;;;  test 26: Gtk                               [62192]
+;;;  test 27: GL                                [66044]
+;;;  test 28: errors                            [66168]
+;;;  test all done                              [68468]
+;;;  test the end                               [68706]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -21022,6 +21022,171 @@ EDITS: 2
       (if (not (eq? (car var) 'wrong-type-arg))
 	  (snd-display ";make-env env of non-number: ~A" var)))
     
+    ;; env-any
+    (let* ((env-any-1 (lambda (e func)
+			(let* ((pts (mus-data e))
+			       (mus-position mus-channels)
+			       (pt (min (* 2 (mus-position e)) (- (vct-length pts) 4)))
+			       (val (/ (- (env e) (mus-offset e)) (mus-scaler e)))
+			       (y0 (min (vct-ref pts (+ pt 1)) (vct-ref pts (+ pt 3))))
+			       (y1 (max (vct-ref pts (+ pt 1)) (vct-ref pts (+ pt 3))))
+			       (new-val (func (/ (- val y0) (- y1 y0)))))
+			  (+ (mus-offset e)
+			     (* (mus-scaler e)
+				(+ y0
+				   (* (- y1 y0) new-val)))))))
+	   (sine-env-1 (lambda (e)
+			 (env-any-1 e (lambda (y)
+					(* 0.5 (+ 1.0 (sin (+ (* -0.5 pi) 
+							      (* pi y)))))))))
+	   (square-env-1 (lambda (e)
+			   (env-any-1 e (lambda (y)
+					  (* y y)))))
+	   
+	   (blackman4-env-1 (lambda (e)
+			      (env-any-1 e (lambda (y)
+					     (let ((cx (cos (* pi y))))
+					       (+ 0.084037 (* cx (+ -.29145 (* cx (+ .375696 (* cx (+ -.20762 (* cx .041194)))))))))))))
+	   
+	   (multi-expt-env-1 (lambda (e expts)
+			       (env-any-1 e (lambda (y)
+					      (let ((b (vct-ref expts (modulo (mus-channels e) (vct-length expts)))))
+						(/ (- (expt b y) 1.0) (- b 1.0))))))))
+      
+      
+      
+      ;; assume sine-env square-env blackman4-env and multi-exp-env are available from generators.scm (8)
+      
+      (let ((val1 (with-sound (:output (make-vct 20))
+			      (let ((e (make-env '(0 0 1 1 2 .25 3 1 4 0) :length 20)))
+				(do ((i 0 (1+ i)))
+				    ((= i 20))
+				  (outa i (sine-env e))))))
+	    
+	    (val2 (with-sound (:output (make-vct 20))
+			      (let ((e (make-env '(0 0 1 1 2 .25 3 1 4 0) :length 20)))
+				(run
+				 (lambda ()
+				   (do ((i 0 (1+ i)))
+				       ((= i 20))
+				     (outa i (sine-env e))))))))
+	    
+	    (val3 (with-sound (:output (make-vct 20))
+			      (let ((e (make-env '(0 0 1 1 2 .25 3 1 4 0) :length 20)))
+				(do ((i 0 (1+ i)))
+				    ((= i 20))
+				  (outa i (sine-env-1 e)))))))
+	(if (not (vequal val1 val2))
+	    (snd-display ";sine-env straight and run: ~%;  ~A~%;  ~A" val1 val2))
+	(if (not (vequal val1 val3))
+	    (snd-display ";sine-env straight and scm: ~%;  ~A~%;  ~A" val1 val3)))
+      
+      
+      (let ((val1 (with-sound (:output (make-vct 20))
+			      (let ((e (make-env '(0 0 1 1 2 .25 3 1 4 0) :length 20)))
+				(do ((i 0 (1+ i)))
+				    ((= i 20))
+				  (outa i (square-env e))))))
+	    
+	    (val2 (with-sound (:output (make-vct 20))
+			      (let ((e (make-env '(0 0 1 1 2 .25 3 1 4 0) :length 20)))
+				(run
+				 (lambda ()
+				   (do ((i 0 (1+ i)))
+				       ((= i 20))
+				     (outa i (square-env e))))))))
+	    
+	    (val3 (with-sound (:output (make-vct 20))
+			      (let ((e (make-env '(0 0 1 1 2 .25 3 1 4 0) :length 20)))
+				(do ((i 0 (1+ i)))
+				    ((= i 20))
+				  (outa i (square-env-1 e)))))))
+	(if (not (vequal val1 val2))
+	    (snd-display ";square-env straight and run: ~%;  ~A~%;  ~A" val1 val2))
+	(if (not (vequal val1 val3))
+	    (snd-display ";square-env straight and scm: ~%;  ~A~%;  ~A" val1 val3)))
+      
+      (let ((val1 (with-sound (:output (make-vct 20))
+			      (let ((e (make-env '(0 0 1 1 2 .25 3 1 4 0) :length 20)))
+				(do ((i 0 (1+ i)))
+				    ((= i 20))
+				  (outa i (blackman4-env e))))))
+	    
+	    (val2 (with-sound (:output (make-vct 20))
+			      (let ((e (make-env '(0 0 1 1 2 .25 3 1 4 0) :length 20)))
+				(run
+				 (lambda ()
+				   (do ((i 0 (1+ i)))
+				       ((= i 20))
+				     (outa i (blackman4-env e))))))))
+	    
+	    (val3 (with-sound (:output (make-vct 20))
+			      (let ((e (make-env '(0 0 1 1 2 .25 3 1 4 0) :length 20)))
+				(do ((i 0 (1+ i)))
+				    ((= i 20))
+				  (outa i (blackman4-env-1 e)))))))
+	(if (not (vequal val1 val2))
+	    (snd-display ";blackman4-env straight and run: ~%;  ~A~%;  ~A" val1 val2))
+	(if (not (vequal val1 val3))
+	    (snd-display ";blackman4-env straight and scm: ~%;  ~A~%;  ~A" val1 val3)))
+      
+      
+      (let ((val1 (with-sound (:output (make-vct 20))
+			      (let ((e (make-env '(0 0 1 1 2 .25 3 1 4 0) :length 20))
+				    (bases (vct 32.0 0.3 1.5)))
+				(do ((i 0 (1+ i)))
+				    ((= i 20))
+				  (outa i (multi-expt-env e bases))))))
+	    
+	    (val2 (with-sound (:output (make-vct 20))
+			      (let ((e (make-env '(0 0 1 1 2 .25 3 1 4 0) :length 20))
+				    (bases (vct 32.0 0.3 1.5)))
+				(run
+				 (lambda ()
+				   (do ((i 0 (1+ i)))
+				       ((= i 20))
+				     (outa i (multi-expt-env e bases))))))))
+	    
+	    (val3 (with-sound (:output (make-vct 20))
+			      (let ((e (make-env '(0 0 1 1 2 .25 3 1 4 0) :length 20))
+				    (bases (vct 32.0 0.3 1.5)))
+				(do ((i 0 (1+ i)))
+				    ((= i 20))
+				  (outa i (multi-expt-env-1 e bases)))))))
+	(if (not (vequal val1 val2))
+	    (snd-display ";multi-expt-env straight and run: ~%;  ~A~%;  ~A" val1 val2))
+	(if (not (vequal val1 val3))
+	    (snd-display ";multi-expt-env straight and scm: ~%;  ~A~%;  ~A" val1 val3)))
+      
+      (let ((val1 (with-sound (:output (make-vct 220))
+			      (let ((e1 (make-env '(0 0 1 1 2 .25 3 1 4 0) :length 220))
+				    (e2 (make-env '(0 0 1 1 2 .25 3 1 4 0) :length 220)))
+				(do ((i 0 (1+ i)))
+				    ((= i 220))
+				  (outa i (env-any e1
+						   (lambda (y1)
+						     (declare (y1 float))
+						     (* y1 (env-any e2
+								    (lambda (y2)
+								      (declare (y2 float))
+								      y2))))))))))
+	    (val2 (with-sound (:output (make-vct 220))
+			      (let ((e1 (make-env '(0 0 1 1 2 .25 3 1 4 0) :length 220))
+				    (e2 (make-env '(0 0 1 1 2 .25 3 1 4 0) :length 220)))
+				(run 
+				 (lambda ()
+				   (do ((i 0 (1+ i)))
+				       ((= i 220))
+				     (outa i (env-any e1
+						      (lambda (y1)
+							(declare (y1 float))
+							(* y1 (env-any e2
+								       (lambda (y2)
+									 (declare (y2 float))
+									 y2)))))))))))))
+	(if (not (vequal val1 val2))
+	    (snd-display ";env-any recursive: ~%;  ~A~%;  ~A" val1 val2))))
+
     (let ((ind (new-sound :size 20)))
       (select-sound ind)
       (map-channel (lambda (y) 1.0))
