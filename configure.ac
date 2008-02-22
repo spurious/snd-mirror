@@ -191,16 +191,19 @@ AC_ARG_WITH(snd-as-widget,
 AC_ARG_WITH(snd-as-pd-external,
 	[  --with-snd-as-pd-external	  make Snd a loadable pd external, not a standalone program],
   	[if test "$with_snd_as_pd_external" = yes ; then
+
 	   if test "$with_motif" = yes || test "$with_gtk" = yes ; then
 	      AC_MSG_ERROR(When making snd as a pd external, motif or gtk can not be used.)
 	   fi
 	   if test "$with_ruby" = yes ; then
 	      AC_MSG_ERROR(When making snd as a pd external, ruby can not be used as extension language.)
 	   fi
+
 	   CFLAGS="$CFLAGS -DSND_PD_PATH=\\\"`pwd`\\\""
 	   [with_jack=yes]
 	   AC_DEFINE(SND_AS_PD_EXTERNAL)
 	   MAKE_TARGET=external
+           RANDOM_FEATURES="$RANDOM_FEATURES pd-external"
 
     	   case "$host" in
              *-apple-*)
@@ -1527,6 +1530,16 @@ if test $GUILE_CONFIG_works = yes; then
       AC_MSG_RESULT(no)
     fi
 
+    if test "$with_snd_as_pd_external" = yes ; then
+      AC_MSG_CHECKING([whether guile and snd-as-pd are compatible])
+      AC_RUN_IFELSE( 
+        [AC_LANG_PROGRAM([#include <libguile.h>], 
+                         [return (1 != SCM_USE_PTHREAD_THREADS)])],
+        [AC_MSG_RESULT([yes])],
+        [AC_MSG_RESULT(Guile is missing --with-threads)])
+    fi
+
+
     LIBS="$OLD_LIBS"
     CFLAGS="$OLD_CFLAGS"
 
@@ -2205,6 +2218,7 @@ if test "$ac_snd_have_extension_language" = no ; then
     fi
   fi
 fi
+
 
 AC_SUBST(CFLAGS)
 AC_SUBST(ORIGINAL_LDFLAGS)

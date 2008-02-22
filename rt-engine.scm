@@ -740,6 +740,8 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 
 
 (def-class (<pd-rt-driver> rt_callback c-engine)
+  (def-var frames 0)
+
   (def-method (start)
     (c-display "<pd-rt-driver>: starting!"))
   

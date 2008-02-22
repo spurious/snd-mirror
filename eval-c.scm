@@ -159,6 +159,8 @@ Usually just "", but can be "-lsnd" or something if needed.
 
 (if (not (defined? '*eval-c-compiler*))
     (primitive-eval '(define *eval-c-compiler* "gcc")))
+(if (not (defined? '*eval-c-CFLAGS*))
+    (primitive-eval '(define *eval-c-CFLAGS* "")))
 
 
 (if (not (defined? 'snd-header-files-path))
@@ -1746,6 +1748,7 @@ int fgetc (FILE
 			       (if (string=? *eval-c-compiler* "icc")
 				   "-L/opt/intel_cc_80/lib /opt/intel_cc_80/lib/libimf.a"
 				   (<-> "-Wall " (if (getenv "CFLAGS") (getenv "CFLAGS") "") " " (if (getenv "LDFLAGS") (getenv "LDFLAGS") "") " "))
+			       " " *eval-c-CFLAGS* " "
 			       (string #\`) guile-config " compile" (string #\`) " "
 			       compile-options))))
 	(begin

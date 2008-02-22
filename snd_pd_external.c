@@ -1090,6 +1090,11 @@ static void sigusr2callback(int sig){
  *****************************************************************************************************/
 void snd_setup(void){ // (pd0_setup)
 
+  if(0==SCM_USE_PTHREAD_THREADS){
+    post("Error. Snd/Pd needs to be built against Guile configured with \"--with-threads\". (see manual)");
+    return;
+  }
+
   pd0_init();
 
   snd_pd_class = class_new(gensym("snd"), (t_newmethod)pd0_new,
