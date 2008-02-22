@@ -1195,19 +1195,41 @@ env *xen_to_env(XEN res)
       if (len > 0)
 	{
 	  int i;
-	  Float *data;
+	  Float *data = NULL;
 	  XEN lst;
-	  data = (Float *)CALLOC(len, sizeof(Float));
-	  for (i = 0, lst = XEN_COPY_ARG(res); i < len; i++, lst = XEN_CDR(lst))
+	  
+	  if (XEN_NUMBER_P(XEN_CAR(res)))
 	    {
-	      XEN el;
-	      el = XEN_CAR(lst);
-	      if (XEN_NUMBER_P(el))
-		data[i] = XEN_TO_C_DOUBLE(el);
-	      else data[i] = 0.0;
+	      data = (Float *)CALLOC(len, sizeof(Float));
+	      for (i = 0, lst = XEN_COPY_ARG(res); i < len; i++, lst = XEN_CDR(lst))
+		{
+		  XEN el;
+		  el = XEN_CAR(lst);
+		  data[i] = XEN_TO_C_DOUBLE_OR_ELSE(el, 0.0);
+		}
 	    }
-	  rtn = make_envelope(data, len);
-	  FREE(data);
+	  else
+	    {
+	      /* embedded lists '((0 0) (100 1)) */
+	      /* TODO: doc/test embedded env lists -- what about env.scm, mus.lisp side? */
+	      if (XEN_LIST_P(XEN_CAR(res)))
+		{
+		  len *= 2;
+		  data = (Float *)CALLOC(len, sizeof(Float));
+		  for (i = 0, lst = XEN_COPY_ARG(res); i < len; i += 2, lst = XEN_CDR(lst))
+		    {
+		      XEN el;
+		      el = XEN_CAR(lst);
+		      data[i] = XEN_TO_C_DOUBLE(XEN_CAR(el));
+		      data[i + 1] = XEN_TO_C_DOUBLE(XEN_CADR(el));
+		    }
+		}
+	    }
+	  if (data)
+	    {
+	      rtn = make_envelope(data, len);
+	      FREE(data);
+	    }
 	}
     }
   return(rtn);

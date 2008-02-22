@@ -5123,14 +5123,19 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 				     C_TO_XEN_STRING("null env?"), 
 				     keys[0]));
 
-	      if (len & 1)
-		XEN_ERROR(BAD_TYPE,
-			  XEN_LIST_3(C_TO_XEN_STRING(S_make_env), 
-				     C_TO_XEN_STRING("odd length breakpoints list?"), 
-				     keys[0]));
+	      if (XEN_LIST_P(XEN_CAR(keys[0])))
+		len *= 2;
+	      else
+		{
+		  if (len & 1)
+		    XEN_ERROR(BAD_TYPE,
+			      XEN_LIST_3(C_TO_XEN_STRING(S_make_env), 
+					 C_TO_XEN_STRING("odd length breakpoints list?"), 
+					 keys[0]));
 
-	      if (!(XEN_NUMBER_P(XEN_CAR(keys[0]))))
-		XEN_ASSERT_TYPE(false, keys[0], orig_arg[0], S_make_env, "a list of numbers (breakpoints)");
+		  if (!(XEN_NUMBER_P(XEN_CAR(keys[0]))))
+		    XEN_ASSERT_TYPE(false, keys[0], orig_arg[0], S_make_env, "a list of numbers (breakpoints)");
+		}
 	    }
 
 	  npts = len / 2;
@@ -5145,8 +5150,21 @@ are linear, if 0.0 you get a step function, and anything else produces an expone
 	    memcpy((void *)brkpts, (void *)(v->data), len * sizeof(Float));
 	  else
 	    {
-	      for (i = 0, lst = XEN_COPY_ARG(keys[0]); (i < len) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))
-		brkpts[i] = XEN_TO_C_DOUBLE_OR_ELSE(XEN_CAR(lst), 0.0);
+	      if (XEN_NUMBER_P(XEN_CAR(keys[0])))
+		{
+		  for (i = 0, lst = XEN_COPY_ARG(keys[0]); (i < len) && (XEN_NOT_NULL_P(lst)); i++, lst = XEN_CDR(lst))
+		    brkpts[i] = XEN_TO_C_DOUBLE_OR_ELSE(XEN_CAR(lst), 0.0);
+		}
+	      else
+		{
+		  for (i = 0, lst = XEN_COPY_ARG(keys[0]); (i < len) && (XEN_NOT_NULL_P(lst)); i += 2, lst = XEN_CDR(lst))
+		    {
+		      XEN el;
+		      el = XEN_CAR(lst);
+		      brkpts[i] = XEN_TO_C_DOUBLE(XEN_CAR(el));
+		      brkpts[i + 1] = XEN_TO_C_DOUBLE(XEN_CADR(el));
+		    }
+		}
 	    }
 	  memcpy((void *)odata, (void *)brkpts, len * sizeof(Float));
         }
