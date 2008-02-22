@@ -114,6 +114,9 @@
 (define* (CFNC-211 data :optional spec)
   (fgrep (cadr-str data) 211))
 
+(define* (CFNC-213 data :optional spec)
+  (fgrep (cadr-str data) 213))
+
 (define* (CAIRO-FUNC data :optional spec)
   (fgrep (cadr-str data) 210))
 
@@ -150,6 +153,9 @@
 (define (CSTR-211 name)
   (fgrep name 211))
 
+(define (CSTR-213 name)
+  (fgrep name 213))
+
 (define (CDBL name)
   #f)
 
@@ -173,6 +179,9 @@
 
 (define* (CLNG-211 name :optional type spec-name)
   (fgrep name 211))
+
+(define* (CLNG-213 name :optional type spec-name)
+  (fgrep name 213))
 
 (define* (CINT name :optional type)
   #f)
@@ -213,6 +222,9 @@
 (define* (CINT-211 name :optional type)
   (fgrep name 211))
 
+(define* (CINT-213 name :optional type)
+  (fgrep name 213))
+
 (define* (CAIRO-INT name :optional type)
   (fgrep name 210))
 
@@ -246,6 +258,9 @@
 (define (CCAST-211 name type)
   (fgrep (paren-str name) 211))
 
+(define (CCAST-213 name type)
+  (fgrep (paren-str name) 213))
+
 (define (CCHK name type)
   #f)
 
@@ -272,6 +287,9 @@
 
 (define (CCHK-211 name type)
   (fgrep (paren-str name) 211))
+
+(define (CCHK-213 name type)
+  (fgrep (paren-str name) 213))
 
 (define (STRUCT data)
   #f)

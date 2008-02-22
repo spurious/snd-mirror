@@ -6746,3 +6746,31 @@
 ;;; pango 19.3:
 ;(CFNC-2xx "void pango_layout_set_height PangoLayout* layout int height")
 ;(CFNC-2xx "int pango_layout_get_height PangoLayout* layout")
+
+
+;;; for 2.13.0
+(CINT-213 "GTK_CALENDAR_SHOW_DETAILS" "GtkCalendarDisplayOptions")
+(CFNC-213 "void gtk_calendar_set_detail_func GtkCalendar* calendar GtkCalendarDetailFunc func gpointer data GDestroyNotify destroy")
+(CFNC-213 "void gtk_calendar_set_detail_width_chars GtkCalendar* calendar gint chars")
+(CFNC-213 "void gtk_calendar_set_detail_height_rows GtkCalendar* calendar gint rows")
+(CFNC-213 "gint gtk_calendar_get_detail_width_chars GtkCalendar* calendar")
+(CFNC-213 "gint gtk_calendar_get_detail_height_rows GtkCalendar* calendar")
+(CFNC-213 "gint gdk_screen_get_monitor_width_mm GdkScreen* screen gint monitor_num")
+(CFNC-213 "gint gdk_screen_get_monitor_height_mm GdkScreen* screen gint monitor_num")
+(CFNC-213 "gchar* gdk_screen_get_monitor_plug_name GdkScreen* screen gint monitor_num")
+(CFNC-213 "void gtk_tooltip_set_icon_from_icon_name GtkTooltip* tooltip gchar* icon_name GtkIconSize size" 'const)
+
+;;; TODO: check out the gtk test funcs
+;(CFNC-213 "void gtk_test_init int* argcp char*** argvp ...")
+;(CFNC-213 "GtkWidget* gtk_test_find_widget GtkWidget* widget gchar* label_pattern GType widget_type" 'const)
+;(CFNC-213 "GtkWidget* gtk_test_create_widget GType widget_type gchar* first_property_name ..." 'const)
+;(CFNC-213 "GtkWidget* gtk_test_create_simple_window gchar* window_title gchar* dialog_text" 'const)
+;(CFNC-213 "GtkWidget* gtk_test_display_button_window gchar* window_title gchar* dialog_text ..." 'const)
+;(CFNC-213 "void gtk_test_slider_set_perc GtkWidget* widget double percentage")
+;(CFNC-213 "double gtk_test_slider_get_value GtkWidget* widget")
+;(CFNC-213 "gboolean gtk_test_spin_button_click GtkSpinButton* widget guint button gboolean upwards")
+;(CFNC-213 "gboolean gtk_test_widget_click GtkWidget* widget guint button GdkModifierType modifiers")
+;(CFNC-213 "gboolean gtk_test_widget_send_key GtkWidget* widget guint keyval GdkModifierType modifiers")
+;(CFNC-213 "void gtk_test_text_set GtkWidget* widget gchar* string" 'const)
+;(CFNC-213 "gchar* gtk_test_text_get GtkWidget* widget")
+

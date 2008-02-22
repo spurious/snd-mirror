@@ -1033,6 +1033,10 @@ XM_TYPE_PTR_2(GtkSettings_, GtkSettings*)
 XM_TYPE_PTR(GtkTooltip_, GtkTooltip*)
 #endif
 
+#if HAVE_GTK_TEST_WIDGET_CLICK
+XM_TYPE(GtkCalendarDetailFunc, GtkCalendarDetailFunc)
+#endif
+
 #if HAVE_CAIRO_CREATE
 XM_TYPE_PTR(cairo_t_, cairo_t*)
 XM_TYPE_PTR(cairo_surface_t_, cairo_surface_t*)
@@ -30379,6 +30383,94 @@ static XEN gxg_gtk_widget_get_has_tooltip(XEN widget)
 
 #endif
 
+#if HAVE_GTK_TEST_WIDGET_CLICK
+static XEN gxg_gtk_calendar_set_detail_func(XEN calendar, XEN func, XEN data, XEN destroy)
+{
+  #define H_gtk_calendar_set_detail_func "void gtk_calendar_set_detail_func(GtkCalendar* calendar, GtkCalendarDetailFunc func, \
+gpointer data, GDestroyNotify destroy)"
+  XEN_ASSERT_TYPE(XEN_GtkCalendar__P(calendar), calendar, 1, "gtk_calendar_set_detail_func", "GtkCalendar*");
+  XEN_ASSERT_TYPE(XEN_GtkCalendarDetailFunc_P(func), func, 2, "gtk_calendar_set_detail_func", "GtkCalendarDetailFunc");
+  XEN_ASSERT_TYPE(XEN_gpointer_P(data), data, 3, "gtk_calendar_set_detail_func", "gpointer");
+  XEN_ASSERT_TYPE(XEN_GDestroyNotify_P(destroy), destroy, 4, "gtk_calendar_set_detail_func", "GDestroyNotify");
+  gtk_calendar_set_detail_func(XEN_TO_C_GtkCalendar_(calendar), XEN_TO_C_GtkCalendarDetailFunc(func), XEN_TO_C_gpointer(data), 
+                               XEN_TO_C_GDestroyNotify(destroy));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_calendar_set_detail_width_chars(XEN calendar, XEN chars)
+{
+  #define H_gtk_calendar_set_detail_width_chars "void gtk_calendar_set_detail_width_chars(GtkCalendar* calendar, \
+gint chars)"
+  XEN_ASSERT_TYPE(XEN_GtkCalendar__P(calendar), calendar, 1, "gtk_calendar_set_detail_width_chars", "GtkCalendar*");
+  XEN_ASSERT_TYPE(XEN_gint_P(chars), chars, 2, "gtk_calendar_set_detail_width_chars", "gint");
+  gtk_calendar_set_detail_width_chars(XEN_TO_C_GtkCalendar_(calendar), XEN_TO_C_gint(chars));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_calendar_set_detail_height_rows(XEN calendar, XEN rows)
+{
+  #define H_gtk_calendar_set_detail_height_rows "void gtk_calendar_set_detail_height_rows(GtkCalendar* calendar, \
+gint rows)"
+  XEN_ASSERT_TYPE(XEN_GtkCalendar__P(calendar), calendar, 1, "gtk_calendar_set_detail_height_rows", "GtkCalendar*");
+  XEN_ASSERT_TYPE(XEN_gint_P(rows), rows, 2, "gtk_calendar_set_detail_height_rows", "gint");
+  gtk_calendar_set_detail_height_rows(XEN_TO_C_GtkCalendar_(calendar), XEN_TO_C_gint(rows));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_gtk_calendar_get_detail_width_chars(XEN calendar)
+{
+  #define H_gtk_calendar_get_detail_width_chars "gint gtk_calendar_get_detail_width_chars(GtkCalendar* calendar)"
+  XEN_ASSERT_TYPE(XEN_GtkCalendar__P(calendar), calendar, 1, "gtk_calendar_get_detail_width_chars", "GtkCalendar*");
+  return(C_TO_XEN_gint(gtk_calendar_get_detail_width_chars(XEN_TO_C_GtkCalendar_(calendar))));
+}
+
+static XEN gxg_gtk_calendar_get_detail_height_rows(XEN calendar)
+{
+  #define H_gtk_calendar_get_detail_height_rows "gint gtk_calendar_get_detail_height_rows(GtkCalendar* calendar)"
+  XEN_ASSERT_TYPE(XEN_GtkCalendar__P(calendar), calendar, 1, "gtk_calendar_get_detail_height_rows", "GtkCalendar*");
+  return(C_TO_XEN_gint(gtk_calendar_get_detail_height_rows(XEN_TO_C_GtkCalendar_(calendar))));
+}
+
+static XEN gxg_gdk_screen_get_monitor_width_mm(XEN screen, XEN monitor_num)
+{
+  #define H_gdk_screen_get_monitor_width_mm "gint gdk_screen_get_monitor_width_mm(GdkScreen* screen, \
+gint monitor_num)"
+  XEN_ASSERT_TYPE(XEN_GdkScreen__P(screen), screen, 1, "gdk_screen_get_monitor_width_mm", "GdkScreen*");
+  XEN_ASSERT_TYPE(XEN_gint_P(monitor_num), monitor_num, 2, "gdk_screen_get_monitor_width_mm", "gint");
+  return(C_TO_XEN_gint(gdk_screen_get_monitor_width_mm(XEN_TO_C_GdkScreen_(screen), XEN_TO_C_gint(monitor_num))));
+}
+
+static XEN gxg_gdk_screen_get_monitor_height_mm(XEN screen, XEN monitor_num)
+{
+  #define H_gdk_screen_get_monitor_height_mm "gint gdk_screen_get_monitor_height_mm(GdkScreen* screen, \
+gint monitor_num)"
+  XEN_ASSERT_TYPE(XEN_GdkScreen__P(screen), screen, 1, "gdk_screen_get_monitor_height_mm", "GdkScreen*");
+  XEN_ASSERT_TYPE(XEN_gint_P(monitor_num), monitor_num, 2, "gdk_screen_get_monitor_height_mm", "gint");
+  return(C_TO_XEN_gint(gdk_screen_get_monitor_height_mm(XEN_TO_C_GdkScreen_(screen), XEN_TO_C_gint(monitor_num))));
+}
+
+static XEN gxg_gdk_screen_get_monitor_plug_name(XEN screen, XEN monitor_num)
+{
+  #define H_gdk_screen_get_monitor_plug_name "gchar* gdk_screen_get_monitor_plug_name(GdkScreen* screen, \
+gint monitor_num)"
+  XEN_ASSERT_TYPE(XEN_GdkScreen__P(screen), screen, 1, "gdk_screen_get_monitor_plug_name", "GdkScreen*");
+  XEN_ASSERT_TYPE(XEN_gint_P(monitor_num), monitor_num, 2, "gdk_screen_get_monitor_plug_name", "gint");
+  return(C_TO_XEN_gchar_(gdk_screen_get_monitor_plug_name(XEN_TO_C_GdkScreen_(screen), XEN_TO_C_gint(monitor_num))));
+}
+
+static XEN gxg_gtk_tooltip_set_icon_from_icon_name(XEN tooltip, XEN icon_name, XEN size)
+{
+  #define H_gtk_tooltip_set_icon_from_icon_name "void gtk_tooltip_set_icon_from_icon_name(GtkTooltip* tooltip, \
+gchar* icon_name, GtkIconSize size)"
+  XEN_ASSERT_TYPE(XEN_GtkTooltip__P(tooltip), tooltip, 1, "gtk_tooltip_set_icon_from_icon_name", "GtkTooltip*");
+  XEN_ASSERT_TYPE(XEN_gchar__P(icon_name), icon_name, 2, "gtk_tooltip_set_icon_from_icon_name", "gchar*");
+  XEN_ASSERT_TYPE(XEN_GtkIconSize_P(size), size, 3, "gtk_tooltip_set_icon_from_icon_name", "GtkIconSize");
+  gtk_tooltip_set_icon_from_icon_name(XEN_TO_C_GtkTooltip_(tooltip), (const gchar*)XEN_TO_C_gchar_(icon_name), XEN_TO_C_GtkIconSize(size));
+  return(XEN_FALSE);
+}
+
+#endif
+
 #if HAVE_CAIRO_CREATE
 static XEN gxg_cairo_create(XEN target)
 {
@@ -37415,6 +37507,18 @@ XEN_NARGIFY_2(gxg_gtk_widget_set_has_tooltip_w, gxg_gtk_widget_set_has_tooltip)
 XEN_NARGIFY_1(gxg_gtk_widget_get_has_tooltip_w, gxg_gtk_widget_get_has_tooltip)
 #endif
 
+#if HAVE_GTK_TEST_WIDGET_CLICK
+XEN_NARGIFY_4(gxg_gtk_calendar_set_detail_func_w, gxg_gtk_calendar_set_detail_func)
+XEN_NARGIFY_2(gxg_gtk_calendar_set_detail_width_chars_w, gxg_gtk_calendar_set_detail_width_chars)
+XEN_NARGIFY_2(gxg_gtk_calendar_set_detail_height_rows_w, gxg_gtk_calendar_set_detail_height_rows)
+XEN_NARGIFY_1(gxg_gtk_calendar_get_detail_width_chars_w, gxg_gtk_calendar_get_detail_width_chars)
+XEN_NARGIFY_1(gxg_gtk_calendar_get_detail_height_rows_w, gxg_gtk_calendar_get_detail_height_rows)
+XEN_NARGIFY_2(gxg_gdk_screen_get_monitor_width_mm_w, gxg_gdk_screen_get_monitor_width_mm)
+XEN_NARGIFY_2(gxg_gdk_screen_get_monitor_height_mm_w, gxg_gdk_screen_get_monitor_height_mm)
+XEN_NARGIFY_2(gxg_gdk_screen_get_monitor_plug_name_w, gxg_gdk_screen_get_monitor_plug_name)
+XEN_NARGIFY_3(gxg_gtk_tooltip_set_icon_from_icon_name_w, gxg_gtk_tooltip_set_icon_from_icon_name)
+#endif
+
 #if HAVE_CAIRO_CREATE
 XEN_NARGIFY_1(gxg_cairo_create_w, gxg_cairo_create)
 XEN_NARGIFY_0(gxg_cairo_version_w, gxg_cairo_version)
@@ -41289,6 +41393,18 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_tree_view_get_tooltip_column_w gxg_gtk_tree_view_get_tooltip_column
 #define gxg_gtk_widget_set_has_tooltip_w gxg_gtk_widget_set_has_tooltip
 #define gxg_gtk_widget_get_has_tooltip_w gxg_gtk_widget_get_has_tooltip
+#endif
+
+#if HAVE_GTK_TEST_WIDGET_CLICK
+#define gxg_gtk_calendar_set_detail_func_w gxg_gtk_calendar_set_detail_func
+#define gxg_gtk_calendar_set_detail_width_chars_w gxg_gtk_calendar_set_detail_width_chars
+#define gxg_gtk_calendar_set_detail_height_rows_w gxg_gtk_calendar_set_detail_height_rows
+#define gxg_gtk_calendar_get_detail_width_chars_w gxg_gtk_calendar_get_detail_width_chars
+#define gxg_gtk_calendar_get_detail_height_rows_w gxg_gtk_calendar_get_detail_height_rows
+#define gxg_gdk_screen_get_monitor_width_mm_w gxg_gdk_screen_get_monitor_width_mm
+#define gxg_gdk_screen_get_monitor_height_mm_w gxg_gdk_screen_get_monitor_height_mm
+#define gxg_gdk_screen_get_monitor_plug_name_w gxg_gdk_screen_get_monitor_plug_name
+#define gxg_gtk_tooltip_set_icon_from_icon_name_w gxg_gtk_tooltip_set_icon_from_icon_name
 #endif
 
 #if HAVE_CAIRO_CREATE
@@ -45174,6 +45290,18 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_widget_get_has_tooltip, gxg_gtk_widget_get_has_tooltip_w, 1, 0, 0, H_gtk_widget_get_has_tooltip);
 #endif
 
+#if HAVE_GTK_TEST_WIDGET_CLICK
+  XG_DEFINE_PROCEDURE(gtk_calendar_set_detail_func, gxg_gtk_calendar_set_detail_func_w, 4, 0, 0, H_gtk_calendar_set_detail_func);
+  XG_DEFINE_PROCEDURE(gtk_calendar_set_detail_width_chars, gxg_gtk_calendar_set_detail_width_chars_w, 2, 0, 0, H_gtk_calendar_set_detail_width_chars);
+  XG_DEFINE_PROCEDURE(gtk_calendar_set_detail_height_rows, gxg_gtk_calendar_set_detail_height_rows_w, 2, 0, 0, H_gtk_calendar_set_detail_height_rows);
+  XG_DEFINE_PROCEDURE(gtk_calendar_get_detail_width_chars, gxg_gtk_calendar_get_detail_width_chars_w, 1, 0, 0, H_gtk_calendar_get_detail_width_chars);
+  XG_DEFINE_PROCEDURE(gtk_calendar_get_detail_height_rows, gxg_gtk_calendar_get_detail_height_rows_w, 1, 0, 0, H_gtk_calendar_get_detail_height_rows);
+  XG_DEFINE_PROCEDURE(gdk_screen_get_monitor_width_mm, gxg_gdk_screen_get_monitor_width_mm_w, 2, 0, 0, H_gdk_screen_get_monitor_width_mm);
+  XG_DEFINE_PROCEDURE(gdk_screen_get_monitor_height_mm, gxg_gdk_screen_get_monitor_height_mm_w, 2, 0, 0, H_gdk_screen_get_monitor_height_mm);
+  XG_DEFINE_PROCEDURE(gdk_screen_get_monitor_plug_name, gxg_gdk_screen_get_monitor_plug_name_w, 2, 0, 0, H_gdk_screen_get_monitor_plug_name);
+  XG_DEFINE_PROCEDURE(gtk_tooltip_set_icon_from_icon_name, gxg_gtk_tooltip_set_icon_from_icon_name_w, 3, 0, 0, H_gtk_tooltip_set_icon_from_icon_name);
+#endif
+
 #if HAVE_CAIRO_CREATE
   XG_DEFINE_PROCEDURE(cairo_create, gxg_cairo_create_w, 1, 0, 0, H_cairo_create);
   XG_DEFINE_PROCEDURE(cairo_version, gxg_cairo_version_w, 0, 0, 0, H_cairo_version);
@@ -47189,6 +47317,10 @@ static void define_integers(void)
   DEFINE_INTEGER(GTK_DRAG_RESULT_ERROR);
 #endif
 
+#if HAVE_GTK_TEST_WIDGET_CLICK
+  DEFINE_INTEGER(GTK_CALENDAR_SHOW_DETAILS);
+#endif
+
 #if HAVE_CAIRO_CREATE
   DEFINE_INTEGER(CAIRO_STATUS_SUCCESS);
   DEFINE_INTEGER(CAIRO_STATUS_NO_MEMORY);
@@ -47783,7 +47915,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("14-Nov-07"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("22-Feb-08"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */
