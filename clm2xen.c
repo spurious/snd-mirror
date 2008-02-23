@@ -5248,6 +5248,13 @@ static XEN g_env_any(XEN e, XEN func)
 {
   #define H_env_any "(" S_env_any " e func) uses 'func' to connect the dots in the env 'e'"
 
+  auto Float connect_func(Float val); 
+  /* this is apparently how you declare these nested functions!
+   *   without that line, the compiler sez: clm2xen.c:5252: warning: no previous prototype for 'connect_func'
+   *   if you try to use "static":          clm2xen.c:5251: error: invalid storage class for function 'connect_func'
+   *   if nothing:                          clm2xen.c:5257: error: static declaration of 'connect_func' follows non-static declaration
+   * but isn't "auto" simply the default?
+   */
   Float connect_func(Float val)
   {
     return(XEN_TO_C_DOUBLE(XEN_CALL_1(func,

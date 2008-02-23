@@ -9572,6 +9572,7 @@ static void env_any_2(int *args, ptree *pt)
 
 static void env_any_2(int *args, ptree *pt) 
 {
+  auto Float env_any_connect(Float y); /* see comment in clm2xen */
   Float env_any_connect(Float y)
   {
     pt->dbls[FNC_ARG_2->args[0]] = y;

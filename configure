@@ -9983,6 +9983,7 @@ main ()
  double bar;
       double foo(double a, double b)
        {
+        auto double square (double z);
         double square (double z) {return(z * z);}
         return(square(a) + square(b));
        }
@@ -13432,8 +13433,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
 else
 
-         { echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6; }
+# redundant...  AC_MSG_RESULT(no)
 	 { echo "$as_me:$LINENO: WARNING: can't find the Motif library! -- will look for Gtk" >&5
 echo "$as_me: WARNING: can't find the Motif library! -- will look for Gtk" >&2;}
          with_gtk=yes

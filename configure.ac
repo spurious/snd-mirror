@@ -359,6 +359,7 @@ AC_LINK_IFELSE(
     [ double bar;
       double foo(double a, double b)
        {
+        auto double square (double z);
         double square (double z) {return(z * z);}
         return(square(a) + square(b));
        }
@@ -893,7 +894,7 @@ else
            fi
           ],
 	[
-         AC_MSG_RESULT(no)
+# redundant...  AC_MSG_RESULT(no)
 	 AC_MSG_WARN([can't find the Motif library! -- will look for Gtk])
          with_gtk=yes
 	 with_motif=no

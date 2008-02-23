@@ -968,7 +968,7 @@ XEN_NARGIFY_2(g_add_colormap_w, g_add_colormap)
 
 void g_init_gxcolormaps(void)
 {
-  cmaps_size = BUILTIN_COLORMAPS;
+  cmaps_size = NUM_BUILTIN_COLORMAPS;
   cmaps = (cmap **)CALLOC(cmaps_size, sizeof(cmap *));
   /* these are just place-holders */
   cmaps[BLACK_AND_WHITE_COLORMAP] = make_builtin_cmap(1, _("black-and-white"), make_black_and_white_colormap, black_and_white_rgb); 

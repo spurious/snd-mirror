@@ -1211,7 +1211,6 @@ env *xen_to_env(XEN res)
 	  else
 	    {
 	      /* embedded lists '((0 0) (100 1)) */
-	      /* SOMEDAY: mus.lisp embedded lists */
 	      if (XEN_LIST_P(XEN_CAR(res)))
 		{
 		  len *= 2;
