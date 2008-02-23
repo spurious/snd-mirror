@@ -211,7 +211,7 @@ void set_enved_in_dB(bool val) {}
 bool enved_dialog_is_active(void) {return(false);}
 void set_enved_filter_order(int order) {}
 widget_t record_file(void) {return(0);}
-widget_t make_open_file_dialog(bool read_only, bool managed) {return(0);}
+widget_t make_open_file_dialog(read_only_t read_only, bool managed) {return(0);}
 widget_t make_mix_file_dialog(bool managed) {return(0);}
 widget_t make_insert_file_dialog(bool managed) {return(0);}
 void clear_listener(void) {}
@@ -265,7 +265,7 @@ widget_t start_preferences_dialog(void) {return(NULL_WIDGET);}
 
 void auto_update_restart(void) {}
 
-snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
+snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr)
 {
   snd_info *sp;
   int snd_slot, nchans, i;

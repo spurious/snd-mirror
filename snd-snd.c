@@ -2286,7 +2286,7 @@ static XEN sound_get(XEN snd_n, sp_field_t fld, const char *caller)
   switch (fld)
     {
     case SP_SYNC:                return(C_TO_XEN_INT(sp->sync));                       break;
-    case SP_READ_ONLY:           return(C_TO_XEN_BOOLEAN(sp->user_read_only));         break;
+    case SP_READ_ONLY:           return(C_TO_XEN_BOOLEAN(sp->user_read_only == FILE_READ_ONLY)); break;
     case SP_NCHANS:              return(C_TO_XEN_INT(sp->nchans));                     break;
     case SP_EXPANDING:           return(C_TO_XEN_BOOLEAN(sp->expand_control_p));       break;
     case SP_CONTRASTING:         return(C_TO_XEN_BOOLEAN(sp->contrast_control_p));     break;
@@ -2448,8 +2448,11 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, const char *caller)
     case SP_READ_ONLY:
       if (!(IS_PLAYER(sp)))
 	{
-	  sp->user_read_only = XEN_TO_C_BOOLEAN(val); 
-	  if (sp->user_read_only || sp->file_read_only) show_lock(sp); else hide_lock(sp);
+	  sp->user_read_only = (XEN_TO_C_BOOLEAN(val) ? FILE_READ_ONLY : FILE_READ_WRITE);
+	  if ((sp->user_read_only == FILE_READ_ONLY) || 
+	      (sp->file_read_only == FILE_READ_ONLY))
+	    show_lock(sp); 
+	  else hide_lock(sp);
 	  call_sp_watchers(sp, SP_READ_ONLY_WATCHER, SP_READ_ONLY_CHANGED);
 	}
       break;
@@ -3489,7 +3492,8 @@ static XEN g_save_sound(XEN index)
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_save_sound, index));
 
-  if ((sp->user_read_only) || (sp->file_read_only))
+  if ((sp->user_read_only == FILE_READ_ONLY) || 
+      (sp->file_read_only == FILE_READ_ONLY))
     {
       char *msg;
       XEN str;

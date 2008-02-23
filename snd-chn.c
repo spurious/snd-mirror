@@ -8166,7 +8166,7 @@ to a standard Snd channel graph placed in the widget 'container'."
 	      XEN_LIST_3(C_TO_XEN_STRING(S_make_variable_graph),
 			 C_TO_XEN_STRING("container must be a Form widget with a legitimate window"),
 			 container));
-  sp->user_read_only = true;
+  sp->user_read_only = FILE_READ_ONLY;
   sp->index = find_free_sound_slot_for_channel_display();
   ss->sounds[sp->index] = sp;
   cp = sp->chans[0];

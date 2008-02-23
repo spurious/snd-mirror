@@ -283,7 +283,8 @@ void reflect_file_change_in_label(chan_info *cp)
       len = strlen(shortname(sp)) + 16;
       starred_name = (char *)CALLOC(len, sizeof(char));
       strcpy(starred_name, shortname_indexed(sp));
-      if (sp->user_read_only || sp->file_read_only)
+      if ((sp->user_read_only == FILE_READ_ONLY) || 
+	  (sp->file_read_only == FILE_READ_ONLY))
 	strcat(starred_name, "(*)");
       else strcat(starred_name, "*");
       set_sound_pane_file_label(sp, starred_name);
@@ -2892,7 +2893,8 @@ io_error_t channel_to_file_with_settings(chan_info *cp, const char *new_name, in
     pos = cp->edit_ctr;
 
   if ((snd_strcmp(new_name, sp->filename)) &&      /* overwriting current file with one of its channels */
-      ((sp->user_read_only) || (sp->file_read_only)))
+      ((sp->user_read_only == FILE_READ_ONLY) || 
+       (sp->file_read_only == FILE_READ_ONLY)))
     {
       snd_error(_("can't save channel %d as %s (%s is write-protected)"), cp->chan, new_name, sp->short_filename);
       return(IO_WRITE_PROTECTED);
@@ -6732,7 +6734,8 @@ io_error_t save_channel_edits(chan_info *cp, const char *ofile, int pos)
   if (snd_strcmp(ofile, sp->filename))        /* overwriting current file with one of its channels */
     {
       char *nfile = NULL;
-      if ((sp->user_read_only) || (sp->file_read_only))
+      if ((sp->user_read_only == FILE_READ_ONLY) || 
+	  (sp->file_read_only == FILE_READ_ONLY))
 	{
 	  snd_error(_("can't save channel as %s (%s is write-protected)"), ofile, sp->short_filename);
 	  return(IO_WRITE_PROTECTED);
@@ -6781,7 +6784,8 @@ static io_error_t save_edits_1(snd_info *sp, bool ask)
 
   if (sp == NULL)
     snd_error_without_format("save edits of null sound!");
-  if ((sp->user_read_only) || (sp->file_read_only))
+  if ((sp->user_read_only == FILE_READ_ONLY) || 
+      (sp->file_read_only == FILE_READ_ONLY))
     return(IO_WRITE_PROTECTED);
 
   if (!(has_unsaved_edits(sp))) return(IO_NO_CHANGES);

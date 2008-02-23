@@ -1041,7 +1041,7 @@ static file_info *translate_file(const char *filename, int type)
 
 static XEN open_raw_sound_hook;
 
-static file_info *open_raw_sound(const char *fullname, bool read_only, bool selected)
+static file_info *open_raw_sound(const char *fullname, read_only_t read_only, bool selected)
 {
   XEN res = XEN_FALSE;
   int res_loc = NOT_A_GC_LOC;
@@ -1132,7 +1132,7 @@ static char *raw_data_explanation(const char *filename, file_info *hdr, char **i
 
 static XEN bad_header_hook;
 
-static file_info *tackle_bad_header(const char *fullname, bool read_only, bool selected)
+static file_info *tackle_bad_header(const char *fullname, read_only_t read_only, bool selected)
 {
   /* messed up header */
   if ((XEN_HOOKED(bad_header_hook)) &&
@@ -1176,7 +1176,7 @@ static file_info *tackle_bad_header(const char *fullname, bool read_only, bool s
 }
 
 
-file_info *make_file_info(const char *fullname, bool read_only, bool selected)
+file_info *make_file_info(const char *fullname, read_only_t read_only, bool selected)
 {
   file_info *hdr = NULL;
   if (mus_file_probe(fullname))
@@ -1298,8 +1298,13 @@ static void fam_sp_action(struct fam_info *fp, FAMEvent *fe)
 	      sp->file_unreadable = false;
 	      clear_minibuffer_error(sp);
 	      err = access(sp->filename, W_OK);
-	      sp->file_read_only = (err < 0);
-	      if (sp->user_read_only || sp->file_read_only) show_lock(sp); else hide_lock(sp);
+	      if (err < 0)   /* if err < 0, then we can't write (W_OK -> error ) */
+		sp->file_read_only = FILE_READ_ONLY; 
+	      else sp->file_read_only = FILE_READ_WRITE;
+	      if ((sp->user_read_only == FILE_READ_ONLY) || 
+		  (sp->file_read_only == FILE_READ_ONLY)) 
+		show_lock(sp); 
+	      else hide_lock(sp);
 	    }
 	}
 #endif
@@ -1428,7 +1433,7 @@ char *output_name(const char *current_name)
 /* cleanup even if error in file lookup process */
 typedef struct {
   char *filename;
-  bool read_only;
+  read_only_t read_only;
   file_info *hdr;
 } open_file_context;
 
@@ -1480,6 +1485,7 @@ snd_info *finish_opening_sound(snd_info *sp, bool selected)
 	  (sp->inuse == SOUND_NORMAL))
 	select_channel(sp, 0);
       read_snd_opened_sound_file(sp);
+
       if ((sp->channel_style != CHANNELS_SEPARATE) && 
 	  (sp->nchans > 1)) 
 	{
@@ -1497,7 +1503,7 @@ snd_info *finish_opening_sound(snd_info *sp, bool selected)
 
 /* (add-hook! open-hook (lambda (f) (display f) #f)) */
 
-snd_info *snd_open_file(const char *filename, bool read_only)
+snd_info *snd_open_file(const char *filename, read_only_t read_only)
 {
   file_info *hdr;
   snd_info *sp;
@@ -1770,6 +1776,14 @@ void *make_axes_data(snd_info *sp)
       sa->axis_data[loc + SA_GZY] = cp->gzy;
       sa->wavep[i] = cp->graph_time_p;
       sa->fftp[i] = cp->graph_transform_p;
+      
+      /* unite and sync buttons are being cleared in snd_info_cleanup and explicitly in snd_update_1
+       *   then probably reset in change_channel_style
+       *   meanwhile channel_style is saved in copy_snd_info below
+       *   but also restored explicitly in snd_update_1.
+       *   but... if unite was off  before the update, it seems that it is set on multi-channel files 
+       *    (via channel_style(ss) which defaults to channels_combined)
+       */
     }
   return((void *)sa);
 }
@@ -1975,7 +1989,8 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
   /* we can't be real smart here because the channel number may have changed and so on */
   int i, old_srate, old_chans, old_format, sp_chans, old_index, gc_loc = NOT_A_GC_LOC;
   channel_style_t old_channel_style;
-  bool read_only, old_raw;
+  read_only_t read_only;
+  bool old_raw;
   void *sa;
   snd_info *nsp = NULL;
   char *filename;
@@ -2005,6 +2020,8 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
 
   filename = copy_string(ur_filename);
   read_only = sp->user_read_only;
+  if (sp->nchans > 1)
+    ss->update_sound_channel_style = sp->channel_style;
   sa = make_axes_data(sp);
   old_raw = (sp->hdr->type == MUS_RAW);
   if (old_raw)
@@ -2017,12 +2034,14 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
   old_channel_style = sp->channel_style;
   if (sp->channel_style != CHANNELS_SEPARATE)
     set_sound_channel_style(sp, CHANNELS_SEPARATE);
+
   ms = (void *)sound_store_marks(sp);
   save_controls(sp);
   saved_controls = sp->saved_controls;
   sp->saved_controls = NULL;
   saved_sp = sound_store_chan_info(sp);
   old_cursors = (off_t *)CALLOC(sp_chans, sizeof(off_t));
+
   /* peak-env code saves the current peak-envs on exit (snd_close), but in this case, that
    *   data is known to be out-of-date.  Since we'll be freeing it eventually anyway, we
    *   do it first here, and the peak-env update-hook clobbers the existing files
@@ -2701,7 +2720,8 @@ bool edit_header_callback(snd_info *sp, file_data *edit_header_data,
   char *comment, *original_comment = NULL;
   file_info *hdr;
   int chans, srate, type, format;
-  if (sp->user_read_only || sp->file_read_only)
+  if ((sp->user_read_only == FILE_READ_ONLY) || 
+      (sp->file_read_only == FILE_READ_ONLY))
     {
       snd_error(_("%s is write-protected"), sp->filename);
       return(false);
@@ -4927,7 +4947,8 @@ static XEN g_set_sound_loop_info(XEN snd, XEN vals)
     }
   if (sp == NULL) 
     return(snd_no_such_sound_error(S_setB S_sound_loop_info, snd));
-  if (sp->user_read_only || sp->file_read_only)
+  if ((sp->user_read_only == FILE_READ_ONLY) || 
+      (sp->file_read_only == FILE_READ_ONLY))
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_setB S_sound_loop_info),
 			 C_TO_XEN_STRING(sp->filename),

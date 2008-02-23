@@ -154,7 +154,7 @@ bool edit_header_callback(snd_info *sp, file_data *edit_header_data,
 			  void (*outer_handler)(const char *error_msg, void *ufd),
 			  void (*inner_handler)(const char *error_msg, void *ufd));
 
-void raw_data_dialog_to_file_info(const char *filename, char *title, char *info, bool read_only, bool selected);
+void raw_data_dialog_to_file_info(const char *filename, char *title, char *info, read_only_t read_only, bool selected);
 
 typedef struct {
   time_t time;

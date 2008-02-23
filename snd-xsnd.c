@@ -1755,7 +1755,7 @@ static void attach_minibuffer(snd_info *sp)
 }
 
 
-snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
+snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr)
 {  
   snd_info *sp = NULL, *osp;
   Widget *sw;
@@ -2756,9 +2756,16 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
       XtUnmanageChild(UNITE_BUTTON(sp));
     }
   attach_minibuffer(sp);
+
   add_sound_data(filename, sp, WITH_GRAPH);
-  if (cant_write(sp->filename)) sp->file_read_only = true;
-  if (sp->file_read_only || sp->user_read_only) show_lock(sp); else hide_lock(sp);
+
+  if (cant_write(sp->filename)) 
+    sp->file_read_only = FILE_READ_ONLY;
+  if ((sp->file_read_only == FILE_READ_ONLY) || 
+      (sp->user_read_only == FILE_READ_ONLY)) 
+    show_lock(sp);
+  else hide_lock(sp);
+
   if (old_name)
     report_in_minibuffer(sp, _("(translated %s)"), old_name);
 

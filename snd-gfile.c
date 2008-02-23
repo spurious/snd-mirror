@@ -611,7 +611,7 @@ static void file_text_item_activate_callback(GtkWidget *w, gpointer context)
 	  (*(fs->file_list->select_callback))((const char *)(fs->current_files->files[i]->filename),
 					      i,
 					      fs->file_list->select_callback_data);
-	sp = snd_open_file(current_filename, false);
+	sp = snd_open_file(current_filename, FILE_READ_WRITE);
 	if (sp) select_channel(sp, 0);
 	break;
       }
@@ -1103,7 +1103,7 @@ static void post_sound_info(GtkWidget *info1, GtkWidget *info2, const char *file
 
 typedef struct file_dialog_info {
   fsb *fs;
-  int file_dialog_read_only;
+  read_only_t file_dialog_read_only;
   GtkWidget *frame, *info1, *info2, *vbox;
   dialog_play_info *dp;
   fam_info *unsound_directory_watcher; /* doesn't exist, not a sound file, bogus header, etc */
@@ -1336,7 +1336,7 @@ static gboolean reflect_text_in_open_button(GtkWidget *w, GdkEventKey *event, gp
 }
 
 
-static file_dialog_info *make_file_dialog(int read_only, const char *title, const char *file_title, const char *ok_title,
+static file_dialog_info *make_file_dialog(read_only_t read_only, const char *title, const char *file_title, const char *ok_title,
 					  snd_dialog_t which_dialog, 
 					  GtkSignalFunc file_ok_proc,
 					  GtkSignalFunc file_mkdir_proc,
@@ -1616,13 +1616,13 @@ static void file_open_dialog_mkdir(GtkWidget *w, gpointer context)
 }
 
 
-widget_t make_open_file_dialog(bool read_only, bool managed)
+widget_t make_open_file_dialog(read_only_t read_only, bool managed)
 {
   if (!odat)
     {
       odat = make_file_dialog(read_only, 
-			      (char *)((read_only) ? _("View") : _("Open")), 
-			      (char *)((read_only) ? _("view:") : _("open:")),
+			      (char *)((read_only == FILE_READ_ONLY) ? _("View") : _("Open")), 
+			      (char *)((read_only == FILE_READ_ONLY) ? _("view:") : _("open:")),
 			      NULL,
 			      FILE_OPEN_DIALOG,
 			      (GtkSignalFunc)file_open_dialog_ok,	
@@ -1637,8 +1637,8 @@ widget_t make_open_file_dialog(bool read_only, bool managed)
     {
       if (read_only != odat->file_dialog_read_only)
 	{
-	  set_stock_button_label(odat->fs->ok_button, (char *)((read_only) ? _("View") : _("Open")));
-	  gtk_window_set_title(GTK_WINDOW(odat->fs->dialog), (char *)((read_only) ? _("View") : _("Open")));
+	  set_stock_button_label(odat->fs->ok_button, (char *)((read_only == FILE_READ_ONLY) ? _("View") : _("Open")));
+	  gtk_window_set_title(GTK_WINDOW(odat->fs->dialog), (char *)((read_only == FILE_READ_ONLY) ? _("View") : _("Open")));
 	  odat->file_dialog_read_only = read_only;
 	}
       if (odat->fs->reread_directory) 
@@ -2710,13 +2710,13 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
       (snd_strcmp(fullname, sp->filename)))
     {
       /* save-as here is the same as save */
-      if ((sp->user_read_only) || 
-	  (sp->file_read_only))
+      if ((sp->user_read_only == FILE_READ_ONLY) || 
+	  (sp->file_read_only == FILE_READ_ONLY))
 	{
 	  msg = mus_format(_("can't overwrite %s (it is write-protected)"), sp->short_filename);
 	  post_file_dialog_error((const char *)msg, sd->panel_data);
 	  clear_error_if_filename_changes(sd->fs, sd); 
-	  if (sp->user_read_only)
+	  if (sp->user_read_only == FILE_READ_ONLY)
 	    add_sp_watcher(sp, SP_READ_ONLY_WATCHER, save_as_watch_user_read_only, (void *)sd);
 	  FREE(msg);
 	  FREE(fullname);
@@ -3221,7 +3221,7 @@ typedef struct raw_info {
   GtkWidget *dialog;
   off_t location;
   file_data *rdat;
-  bool read_only;
+  read_only_t read_only;
   bool selected;
   char *filename;
   char *help;
@@ -3466,7 +3466,7 @@ static void make_raw_data_dialog(raw_info *rp, const char *filename, const char 
 }
 
 
-void raw_data_dialog_to_file_info(const char *filename, char *title, char *info, bool read_only, bool selected)
+void raw_data_dialog_to_file_info(const char *filename, char *title, char *info, read_only_t read_only, bool selected)
 {
   raw_info *rp;
   rp = new_raw_dialog();
@@ -3883,7 +3883,8 @@ static char *make_header_dialog_title(edhead_info *ep, snd_info *sp)
   /* dialog may not yet exist */
   char *str;
   str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-  if (sp->user_read_only || sp->file_read_only)
+  if ((sp->user_read_only == FILE_READ_ONLY) || 
+      (sp->file_read_only == FILE_READ_ONLY))
     {
       if (sp->hdr->type == MUS_RAW)
 	mus_snprintf(str, PRINT_BUFFER_SIZE, _("Add header to (write-protected) %s"), sp->short_filename);
@@ -3912,7 +3913,7 @@ static void edit_header_help_callback(GtkWidget *w, gpointer context)
 static void edit_header_set_ok_sensitive(GtkWidget *w, gpointer context) 
 {
   edhead_info *ep = (edhead_info *)context;
-  if (!(ep->sp->file_read_only))
+  if (ep->sp->file_read_only == FILE_READ_WRITE)
     gtk_widget_set_sensitive(ep->save_button, true);
   ep->panel_changed = true;
 }
@@ -3952,7 +3953,8 @@ static void edit_header_watch_user_read_only(struct snd_info *sp, sp_watcher_rea
       if (reason == SP_READ_ONLY_CHANGED)
 	{
 	  char *title;
-	  if ((!(sp->file_read_only)) && (!(sp->user_read_only)))
+	  if ((sp->file_read_only == FILE_READ_WRITE) && 
+	      (sp->user_read_only == FILE_READ_WRITE))
 	    clear_dialog_error(ep->edat);
 	  title = make_header_dialog_title(ep, sp);
 	  gtk_window_set_title(GTK_WINDOW(ep->dialog), title);
@@ -3991,8 +3993,9 @@ static void watch_file_read_only(struct fam_info *fp, FAMEvent *fe)
 	if (mus_file_probe(sp->filename))
 	  {
 	    err = access(sp->filename, W_OK);
-	    sp->file_read_only = (err < 0);
-	    if ((!(sp->file_read_only)) && (!(sp->user_read_only)))
+	    sp->file_read_only = ((err < 0) ? FILE_READ_ONLY : FILE_READ_WRITE);
+	    if ((sp->file_read_only == FILE_READ_WRITE) && 
+		(sp->user_read_only == FILE_READ_WRITE))
 	      clear_dialog_error(ep->edat);
 	    title = make_header_dialog_title(ep, sp);
 	    gtk_window_set_title(GTK_WINDOW(ep->dialog), title);

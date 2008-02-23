@@ -145,7 +145,7 @@ static void file_text_item_activate_callback(Widget w, XtPointer context, XtPoin
 
   ss->open_requestor = FROM_OPEN_DIALOG_POPUP;
   ss->open_requestor_data = NULL;
-  sp = snd_open_file(filename, false);
+  sp = snd_open_file(filename, FILE_READ_WRITE);
   if (sp) select_channel(sp, 0);
 
   XtUnmanageChild(fd->dialog);
@@ -944,7 +944,7 @@ static void add_play_and_just_sounds_buttons(Widget dialog, Widget parent, file_
 /* -------- File Open/View/Mix Dialogs -------- */
 
 typedef struct file_dialog_info {
-  bool file_dialog_read_only;
+  read_only_t file_dialog_read_only;
   Widget dialog, mkdirB;
   Widget info_frame, info1, info2;     /* labels giving info on selected file, or an error message */
   file_pattern_info *fp;
@@ -1228,7 +1228,7 @@ static void multifile_completer(widget_t w, void *data)
 }
 
 
-static file_dialog_info *make_file_dialog(bool read_only, char *title, char *select_title, 
+static file_dialog_info *make_file_dialog(read_only_t read_only, char *title, char *select_title, 
 					  XtCallbackProc file_ok_proc, XtCallbackProc file_help_proc)
 {
   /* file selection dialog box with added "Just Sound Files" and "Play selected" toggle buttons and info area,
@@ -1561,10 +1561,10 @@ static void file_mkdir_callback(Widget w, XtPointer context, XtPointer info)
 
 static file_dialog_info *odat = NULL;
 
-widget_t make_open_file_dialog(bool read_only, bool managed)
+widget_t make_open_file_dialog(read_only_t read_only, bool managed)
 {
   char *title, *select_title;
-  if (read_only)  
+  if (read_only == FILE_READ_ONLY)  
     {
       title = _("View");
       select_title = _("open read-only:");
@@ -2906,13 +2906,13 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
       (snd_strcmp(fullname, sp->filename)))
     {
       /* save-as here is the same as save */
-      if ((sp->user_read_only) || 
-	  (sp->file_read_only))
+      if ((sp->user_read_only == FILE_READ_ONLY) || 
+	  (sp->file_read_only == FILE_READ_ONLY))
 	{
 	  msg = mus_format(_("can't overwrite %s (it is write-protected)"), sp->short_filename);
 	  post_file_dialog_error((const char *)msg, sd->panel_data);
 	  clear_error_if_filename_changes(sd->dialog, sd->panel_data); 
-	  if (sp->user_read_only)
+	  if (sp->user_read_only == FILE_READ_ONLY)
 	    add_sp_watcher(sp, SP_READ_ONLY_WATCHER, save_as_watch_user_read_only, (void *)(sd->panel_data));
 	  FREE(msg);
 	  FREE(fullname);
@@ -3984,7 +3984,8 @@ static XmString make_header_dialog_title(edhead_info *ep, snd_info *sp)
   char *str;
   XmString xstr;
   str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-  if (sp->user_read_only || sp->file_read_only)
+  if ((sp->user_read_only == FILE_READ_ONLY) || 
+      (sp->file_read_only == FILE_READ_ONLY))
     {
       if (sp->hdr->type == MUS_RAW)
 	mus_snprintf(str, PRINT_BUFFER_SIZE, _("Add header to (write-protected) %s"), sp->short_filename);
@@ -4015,7 +4016,7 @@ static void edit_header_help_callback(Widget w, XtPointer context, XtPointer inf
 static void edit_header_set_ok_sensitive(Widget w, XtPointer context, XtPointer info)
 {
   edhead_info *ep = (edhead_info *)context;
-  if (!(ep->sp->file_read_only))
+  if (ep->sp->file_read_only == FILE_READ_WRITE)
     set_sensitive(MSG_BOX(ep->dialog, XmDIALOG_OK_BUTTON), true);
   ep->panel_changed = true;
 }
@@ -4059,7 +4060,8 @@ static void edit_header_watch_user_read_only(struct snd_info *sp, sp_watcher_rea
       if (reason == SP_READ_ONLY_CHANGED) /* SP_IS_CLOSING is other choice */
 	{
 	  XmString title;
-	  if ((!(sp->file_read_only)) && (!(sp->user_read_only)))
+	  if ((sp->file_read_only == FILE_READ_WRITE) && 
+	      (sp->user_read_only == FILE_READ_WRITE))
 	    clear_dialog_error(ep->edat);
 	  title = make_header_dialog_title(ep, sp);
 	  XtVaSetValues(ep->dialog, 
@@ -4100,8 +4102,9 @@ static void watch_file_read_only(struct fam_info *fp, FAMEvent *fe)
 	if (mus_file_probe(sp->filename))
 	  {
 	    err = access(sp->filename, W_OK);
-	    sp->file_read_only = (err < 0);
-	    if ((!(sp->file_read_only)) && (!(sp->user_read_only)))
+	    sp->file_read_only = ((err < 0) ? FILE_READ_ONLY : FILE_READ_WRITE);
+	    if ((sp->file_read_only == FILE_READ_WRITE) && 
+		(sp->user_read_only == FILE_READ_WRITE))
 	      clear_dialog_error(ep->edat);
 	    title = make_header_dialog_title(ep, sp);
 	    XtVaSetValues(ep->dialog, 
@@ -4352,7 +4355,8 @@ static XEN g_apply_edit_header(void)
 	ep = edhead_infos[i];
 	if ((ep->sp) && (ep->sp->active))
 	  {
-	    if ((!(ep->sp->user_read_only)) && (!(ep->sp->file_read_only)))
+	    if ((ep->sp->user_read_only == FILE_READ_WRITE) && 
+		(ep->sp->file_read_only == FILE_READ_WRITE))
 	      edit_header_callback(ep->sp, ep->edat, NULL, NULL);
 	    else snd_error(_("%s is write-protected"), ep->sp->short_filename);
 	  }
@@ -4374,7 +4378,7 @@ typedef struct raw_info {
   Widget dialog;
   off_t location;
   file_data *rdat;
-  bool read_only;
+  read_only_t read_only;
   bool selected;
   char *filename;
   char *help;
@@ -4641,7 +4645,7 @@ static void make_raw_data_dialog(raw_info *rp, const char *title)
 }
 
 
-void raw_data_dialog_to_file_info(const char *filename, char *title, char *info, bool read_only, bool selected)
+void raw_data_dialog_to_file_info(const char *filename, char *title, char *info, read_only_t read_only, bool selected)
 {
   /* put up dialog for srate, chans, data format */
   raw_info *rp;

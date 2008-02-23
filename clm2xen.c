@@ -5043,9 +5043,6 @@ static XEN g_env(XEN obj)
 }
 
 
-/* TODO: flatten make-env list: (define (make-env env . rest) (apply old-make-env (cons (flatten env) rest))) */
-
-
 static XEN g_make_env(XEN arglist)
 {
   #define H_make_env "(" S_make_env " :envelope (:scaler 1.0) :duration (:offset 0.0) (:base 1.0) :end :length): \

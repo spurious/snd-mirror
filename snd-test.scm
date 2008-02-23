@@ -21347,6 +21347,9 @@ EDITS: 2
     (test-gen-equal (make-table-lookup 440.0 :wave (partials->wave '(1 1 2 1)))
 		    (make-table-lookup 440.0 :wave (partials->wave '(1 1 2 1)))
 		    (make-table-lookup 440.0 :wave (partials->wave '(1 1 2 .5))))
+    (test-gen-equal (make-table-lookup-with-env 440.0 '(0 0 1 1))
+		    (make-table-lookup-with-env 440.0 (list 0 0 1 1))
+		    (make-table-lookup-with-env 440.0 '(0 0 1 1 2 0)))
     (let ((tag (catch #t (lambda () (partials->wave (list .5 .3 .2))) (lambda args (car args)))))
       (if (not (eq? tag 'bad-type)) (snd-display ";odd length arg to partials->wave: ~A" tag)))
     
@@ -21895,6 +21898,10 @@ EDITS: 2
     
     (test-gen-equal (make-wave-train 440.0 0.0 (make-vct 20)) (make-wave-train 440.0 0.0 (make-vct 20)) (make-wave-train 100.0 0.0 (make-vct 20)))
     (test-gen-equal (make-wave-train 440.0 0.0 (make-vct 20)) (make-wave-train 440.0 0.0 (make-vct 20)) (make-wave-train 440.0 1.0 (make-vct 20)))
+
+    (test-gen-equal (make-wave-train-with-env 440.0 '(0 0 1 1))
+		    (make-wave-train-with-env 440.0 (list 0 0 1 1))
+		    (make-wave-train-with-env 440.0 '(0 0 1 1 2 0)))
     
     (let ((hi (make-wave-train :size 256)))
       (if (not (= (mus-length hi) 256)) (snd-display ";wave-train set length: ~A?" (mus-length hi)))

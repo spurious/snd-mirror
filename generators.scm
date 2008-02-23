@@ -4009,8 +4009,6 @@ index 10 (so 10/2 is the bes-jn arg):
       (vct-set! ve i (env e)))
     (make-wave-train frequency 0.0 ve len)))
 
-;;; TODO: decide what to do with make-wave-train-with-env and doc/snd-test
-
 
 
 ;;; --------------------------------------------------------------------------------

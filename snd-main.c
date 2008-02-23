@@ -921,7 +921,7 @@ void open_save_sound_block(snd_info *sp, FILE *fd, bool with_nth)
 	  TO_PROC_NAME(S_find_sound),
 	  sp->short_filename,
 	  (with_nth) ? find_sound_nth(sp) : 0,
-	  TO_PROC_NAME((sp->user_read_only) ? S_view_sound : S_open_sound),
+	  TO_PROC_NAME((sp->user_read_only == FILE_READ_ONLY) ? S_view_sound : S_open_sound),
 	  sp->filename);
   
 #endif
@@ -930,7 +930,7 @@ void open_save_sound_block(snd_info *sp, FILE *fd, bool with_nth)
 	  S_find_sound,
 	  sp->short_filename, /* short filename ok because find-sound searches for that name as well as the full filename */
 	  (with_nth) ? find_sound_nth(sp) : 0,
-	  (sp->user_read_only) ? S_view_sound : S_open_sound,
+	  (sp->user_read_only == FILE_READ_ONLY) ? S_view_sound : S_open_sound,
 	  sp->filename);
 #endif
 #if HAVE_FORTH
@@ -939,7 +939,7 @@ void open_save_sound_block(snd_info *sp, FILE *fd, bool with_nth)
 	  (with_nth) ? find_sound_nth(sp) : 0,
 	  S_find_sound,
 	  sp->filename,
-	  (sp->user_read_only ? S_view_sound : S_open_sound));
+	  (sp->user_read_only == FILE_READ_ONLY) ? S_view_sound : S_open_sound);
 #endif
 }
 

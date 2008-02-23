@@ -402,7 +402,7 @@ Float mus_feedback(mus_any *rd);
 Float mus_set_feedback(mus_any *rd, Float dir);
 
 
-  /* -------- generators -------- */
+/* -------- generators -------- */
 
 Float mus_oscil(mus_any *o, Float fm, Float pm);
 Float mus_oscil_unmodulated(mus_any *ptr);
@@ -775,36 +775,33 @@ mus_any *mus_make_mixer_with_data(int chans, Float *data);
   #define mus_make_two_zero_from_radius_and_frequency(Rad, Freq) mus_make_two_zero_from_frequency_and_radius(Freq, Rad)
   #define mus_make_two_pole_from_radius_and_frequency(Rad, Freq) mus_make_two_pole_from_frequency_and_radius(Freq, Rad)
  
-  #define mus_formant_radius(Obj) mus_scaler(Obj)
+  #define mus_formant_radius(Obj)          mus_scaler(Obj)
   #define mus_set_formant_radius(Obj, Val) mus_set_scaler(Obj, Val)
-
-  #define mus_oscil_1(Ptr, Fm) mus_oscil_fm(Ptr, Fm)
-  #define mus_oscil_2(Ptr, Pm) mus_oscil_pm(Ptr, Pm)
-  #define mus_polyshape_2(Ptr, Fm) mus_polyshape_fm(Ptr, Fm)
-  #define mus_waveshape_2(Ptr, Fm) mus_waveshape_fm(Ptr, Fm)
-
-  #define mus_oscil_0(Ptr) mus_oscil_unmodulated(Ptr)  
-  #define mus_waveshape_1(Ptr, Index) mus_waveshape_unmodulated(Ptr, Index)  
-  #define mus_polyshape_1(Ptr, Index) mus_polyshape_unmodulated(Ptr, Index)  
-  #define mus_ssb_am_1(Ptr, Insig) mus_ssb_am_unmodulated(Ptr, Insig)
-  #define mus_asymmetric_fm_1(Ptr, Index) mus_asymmetric_fm_unmodulated(Ptr, Index)
-  #define mus_comb_1(Ptr, Insig) mus_comb_unmodulated(Ptr, Insig)
-  #define mus_notch_1(Ptr, Insig) mus_notch_unmodulated(Ptr, Insig)
-  #define mus_delay_1(Ptr, Insig) mus_delay_unmodulated(Ptr, Insig)
-  #define mus_tap_1(Ptr) mus_tap_unmodulated(Ptr)
-  #define mus_filtered_comb_1(Ptr, Insig) mus_filtered_comb_unmodulated(Ptr, Insig)
-  #define mus_all_pass_1(Ptr, Insig) mus_all_pass_unmodulated(Ptr, Insig)
-  #define mus_table_lookup_1(Ptr) mus_table_lookup_unmodulated(Ptr)
-  #define mus_wave_train_1(Ptr) mus_wave_train_unmodulated(Ptr)
-
-  #define mus_asymmetric_fm_0(Ptr) mus_asymmetric_fm_no_input(Ptr)
-  #define mus_waveshape_0(Ptr) mus_waveshape_no_input(Ptr)  
-  #define mus_polyshape_0(Ptr) mus_polyshape_no_input(Ptr)  
-  #define mus_random_1() mus_random_no_input()
-  #define mus_frandom_1() mus_frandom_no_input()
+  #define mus_oscil_1(Ptr, Fm)             mus_oscil_fm(Ptr, Fm)
+  #define mus_oscil_2(Ptr, Pm)             mus_oscil_pm(Ptr, Pm)
+  #define mus_polyshape_2(Ptr, Fm)         mus_polyshape_fm(Ptr, Fm)
+  #define mus_waveshape_2(Ptr, Fm)         mus_waveshape_fm(Ptr, Fm)
+  #define mus_oscil_0(Ptr)                 mus_oscil_unmodulated(Ptr)  
+  #define mus_waveshape_1(Ptr, Index)      mus_waveshape_unmodulated(Ptr, Index)  
+  #define mus_polyshape_1(Ptr, Index)      mus_polyshape_unmodulated(Ptr, Index)  
+  #define mus_ssb_am_1(Ptr, Insig)         mus_ssb_am_unmodulated(Ptr, Insig)
+  #define mus_asymmetric_fm_1(Ptr, Index)  mus_asymmetric_fm_unmodulated(Ptr, Index)
+  #define mus_comb_1(Ptr, Insig)           mus_comb_unmodulated(Ptr, Insig)
+  #define mus_notch_1(Ptr, Insig)          mus_notch_unmodulated(Ptr, Insig)
+  #define mus_delay_1(Ptr, Insig)          mus_delay_unmodulated(Ptr, Insig)
+  #define mus_tap_1(Ptr)                   mus_tap_unmodulated(Ptr)
+  #define mus_filtered_comb_1(Ptr, Insig)  mus_filtered_comb_unmodulated(Ptr, Insig)
+  #define mus_all_pass_1(Ptr, Insig)       mus_all_pass_unmodulated(Ptr, Insig)
+  #define mus_table_lookup_1(Ptr)          mus_table_lookup_unmodulated(Ptr)
+  #define mus_wave_train_1(Ptr)            mus_wave_train_unmodulated(Ptr)
+  #define mus_asymmetric_fm_0(Ptr)         mus_asymmetric_fm_no_input(Ptr)
+  #define mus_waveshape_0(Ptr)             mus_waveshape_no_input(Ptr)  
+  #define mus_polyshape_0(Ptr)             mus_polyshape_no_input(Ptr)  
+  #define mus_random_1()                   mus_random_no_input()
+  #define mus_frandom_1()                  mus_frandom_no_input() 
 
   /* backwards compatibility -- these moved to mus_location 15-Oct-07 */
-  #define mus_phase_vocoder_outctr(Ptr) (int)mus_location(Ptr)
+  #define mus_phase_vocoder_outctr(Ptr)          (int)mus_location(Ptr)
   #define mus_phase_vocoder_set_outctr(Ptr, Val) (int)mus_set_location(Ptr, (off_t)Val)
 #endif
 

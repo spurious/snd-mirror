@@ -1502,7 +1502,7 @@ static gboolean stop_sign_press(GtkWidget *w, GdkEventButton *ev, gpointer data)
 
 static bool currently_showing_controls = false;
 
-snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
+snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr)
 {
   snd_info *sp, *osp;
   GtkWidget **sw;
@@ -1983,9 +1983,15 @@ snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr)
 
   if (sp->nchans == 1) 
     gtk_widget_hide(UNITE_BUTTON(sp));
+
   add_sound_data(filename, sp, WITH_GRAPH);
-  if (cant_write(sp->filename)) sp->file_read_only = true;
-  if (sp->user_read_only || sp->file_read_only) show_lock(sp); else hide_lock(sp);
+
+  if (cant_write(sp->filename)) sp->file_read_only = FILE_READ_ONLY;
+  if ((sp->user_read_only == FILE_READ_ONLY) || 
+      (sp->file_read_only == FILE_READ_ONLY))
+    show_lock(sp); 
+  else hide_lock(sp);
+
   if (old_name)
     report_in_minibuffer(sp, _("(translated %s)"), old_name);
   after_open(sp->index);

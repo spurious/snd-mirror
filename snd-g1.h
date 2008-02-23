@@ -407,7 +407,7 @@ void set_filter_in_dB(snd_info *sp, bool val);
 void set_filter_in_hz(snd_info *sp, bool val);
 void filter_env_changed(snd_info *sp, env *e);
 void color_filter_waveform(color_info *color);
-snd_info *add_sound_window(char *filename, bool read_only, file_info *hdr);
+snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr);
 void set_sound_pane_file_label(snd_info *sp, char *str);
 void snd_info_cleanup(snd_info *sp);
 void show_controls(snd_info *sp);
@@ -485,7 +485,7 @@ widget_t record_file(void);
 
 char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, int *type, int *format, off_t *location, off_t *samples, int min_chan);
 void alert_new_file(void);
-widget_t make_open_file_dialog(bool read_only, bool managed);
+widget_t make_open_file_dialog(read_only_t read_only, bool managed);
 file_data *make_file_data_panel(GtkWidget *parent, const char *name, 
 				dialog_channels_t with_chan, 
 				int header_type, int data_format,

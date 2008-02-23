@@ -512,6 +512,9 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+24-Feb:  make-two-pole|zero freq r in the 'polar' case (reversed args)\n\
+         env-any for arbitrary func to connect the dots\n\
+         envelopes can be in the form '((0 0) (100 1))\n\
 20-Feb:  firmant generator.\n\
 17-Feb:  polywave generator.\n\
 15-Feb:  nrxysin and nrxycos generators.\n\

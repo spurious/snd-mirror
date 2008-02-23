@@ -31,7 +31,7 @@ static void open_recent_file_callback(GtkWidget *w, gpointer info)
   filename = get_item_label(w);
   ss->open_requestor = FROM_OPEN_RECENT_MENU;
   ss->open_requestor_data = NULL;
-  sp = snd_open_file(filename, false);
+  sp = snd_open_file(filename, FILE_READ_WRITE);
   if (sp) select_channel(sp, 0);
 }
 

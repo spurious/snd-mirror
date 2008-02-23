@@ -5870,7 +5870,7 @@ static mus_any_class ENV_CLASS = {
   0,
   &env_length, &env_set_length,
   0, 0, 
-  &env_current_value, 0,
+  &env_current_value, 0, /* mus-phase?? -- used in snd-sig.c, but this needs a better access point */
   &env_scaler, &env_set_scaler,
   &env_increment,
   0,
@@ -11209,15 +11209,11 @@ void init_mus_module(void)
  *      mus-documentation [mus-describe shows current state -- if we had this, snd-help might be able to use it for generators.scm]
  *        (the info is in clm2xen, but the class slot is in clm and it would be nice if it worked from C)
  *
- *
- * arguments:
- *   :base as list in env = if up use car else cdr as base? or if > 2, use next on each segment
- *   flatten the envelope arg to make-env (and all others? env-channel for example)
- *
- *
  * CL/CLM:
  *   make the in-lisp with-sound work again
  *   definstrument could write actual C functions (with normal args) rather than the packaged int/double-array form
+ *     but optkey args and envelopes would need to be massaged into C-compatible shape
+ *     and currently there's no limitation on the pre-run code -- I'd have to add optimizer support for everything
  *
  *
  * done:
@@ -11229,11 +11225,12 @@ void init_mus_module(void)
  *   added freq arg to formant
  *      removed gain arg from mus_make_formant and reversed order of frequency and radius args
  *      fixed incorrect gain calculation in formant
- *      removed mus-make-formant (use mus-scaler)
+ *      removed mus-formant-radius (use mus-scaler)
  *   firmant (Mathews/Smith form of the formant generator)
  *   CL/CLM: moved really old, obsolete stuff to clm3.lisp
  *   make-two-pole|zero freq r in the "polar" case (reversed args)
  *   env-any
+ *   envelopes can be in the form '((0 0) (100 1))
  *
  *   (9.7)
  *   :dur and :end -> :length in make-env

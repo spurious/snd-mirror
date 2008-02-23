@@ -288,7 +288,7 @@ void initialize_control_panel(snd_info *sp)
 }
 
 
-snd_info *make_snd_info(snd_info *sip, const char *filename, file_info *hdr, int snd_slot, bool read_only)
+snd_info *make_snd_info(snd_info *sip, const char *filename, file_info *hdr, int snd_slot, read_only_t read_only)
 {
   snd_info *sp = NULL;
   int chans, i;
@@ -325,9 +325,18 @@ snd_info *make_snd_info(snd_info *sip, const char *filename, file_info *hdr, int
   initialize_control_panel(sp);
   sp->search_count = 0;
   sp->selectpos = -1;
+
   if (chans > 1)
-    sp->channel_style = channel_style(ss);
+    {
+      if (ss->update_sound_channel_style != NOT_A_CHANNEL_STYLE)
+	{
+	  sp->channel_style = ss->update_sound_channel_style;
+	  ss->update_sound_channel_style = NOT_A_CHANNEL_STYLE;
+	}
+      else sp->channel_style = channel_style(ss);
+    }
   else sp->channel_style = CHANNELS_SEPARATE;
+
   sp->loading = false;
   sp->marking = 0;
   sp->filing = NOT_FILING;
@@ -406,8 +415,8 @@ void free_snd_info(snd_info *sp)
   sp->filing = NOT_FILING;
   sp->applying = false;
   sp->channel_style = CHANNELS_SEPARATE;
-  sp->user_read_only = false;
-  sp->file_read_only = false;
+  sp->user_read_only = FILE_READ_WRITE;
+  sp->file_read_only = FILE_READ_WRITE;
   sp->need_update = false;
   sp->file_unreadable = false;
   sp->minibuffer_on = MINI_OFF;

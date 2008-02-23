@@ -427,7 +427,7 @@ typedef struct snd_info {
   printing_t printing;
   off_t macro_count;
   minibuffer_choice_t minibuffer_on;
-  bool user_read_only, file_read_only;
+  read_only_t user_read_only, file_read_only;
   chan_info **chans;
   snd_context *sgx;
   file_info *hdr;             /* header of file that would be affected if we were to save current edits */
@@ -569,6 +569,7 @@ typedef struct snd_state {
   void *snd_print_data;
   ss_watcher **watchers;
   int watchers_size;
+  channel_style_t update_sound_channel_style;
 #if HAVE_GL && MUS_WITH_GL2PS
   bool gl_printing;
 #endif
@@ -829,7 +830,7 @@ off_t mark_id_to_sample(int id);
 /* -------- snd-data.c -------- */
 
 chan_info *make_chan_info(chan_info *cip, int chan, snd_info *sound);
-snd_info *make_snd_info(snd_info *sip, const char *filename, file_info *hdr, int snd_slot, bool read_only);
+snd_info *make_snd_info(snd_info *sip, const char *filename, file_info *hdr, int snd_slot, read_only_t read_only);
 snd_info *make_basic_snd_info(int chans);
 void initialize_control_panel(snd_info *sp);
 void free_snd_info(snd_info *sp);
@@ -1420,14 +1421,14 @@ bool link_p(const char *filename);
 int recent_files_size(void);
 char **recent_files(void);
 bool directory_p(const char *filename);
-file_info *make_file_info(const char *fullname, bool read_only, bool selected);
+file_info *make_file_info(const char *fullname, read_only_t read_only, bool selected);
 file_info *free_file_info(file_info *hdr);
 file_info *copy_header(const char *fullname, file_info *ohdr);
 file_info *make_temp_header(const char *fullname, int srate, int chans, off_t samples, const char *caller);
 bool sound_file_p(const char *name);
 void init_sound_file_extensions(void);
 void save_added_sound_file_extensions(FILE *fd);
-snd_info *snd_open_file(const char *filename, bool read_only);
+snd_info *snd_open_file(const char *filename, read_only_t read_only);
 void snd_close_file(snd_info *sp);
 snd_info *make_sound_readable(const char *filename, bool post_close);
 snd_info *snd_update(snd_info *sp);

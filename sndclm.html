@@ -1049,6 +1049,8 @@ Read sound indexed through envelope: <a href="sndscm.html#envsoundinterp">env-so
 
   <a class=def name="table-lookup">table-lookup</a> tl :optional (fm-input 0.0)
   <a class=def name="table-lookup?">table-lookup?</a> tl
+
+  <a class=def NAME="make-table-lookup-with-env">make-table-lookup-with-env</a> <a class=quiet href="#optional-key">:optional-key</a> frequency env size
 </pre>
 
 <p>table-lookup performs interpolating table lookup with a lookup index that moves
@@ -1060,6 +1062,7 @@ The intention here is that table-lookup with a sinusoid in the table and a given
 produces the same output as oscil with that FM signal.
 The "type" argument sets the type of interpolation used: <code>mus-interp-none</code>,
 <code>mus-interp-linear</code>, <code>mus-interp-lagrange</code>, or <code>mus-interp-hermite</code>.
+make-table-lookup-with-env returns a new table-lookup generator with the envelope 'env' loaded into its table.
 </p>
 
 <table border=1 align=left hspace=40 vspace=10 cellpadding=4>
@@ -1082,7 +1085,8 @@ The "type" argument sets the type of interpolation used: <code>mus-interp-none</
   result)
 </pre><br clear=left>
 
-<p>In the past, table-lookup was often used for additive synthesis, so
+<p>
+In the past, table-lookup was often used for additive synthesis, so
 there are two functions that make it easier to load up
 various such waveforms:
 </p>
@@ -2922,12 +2926,15 @@ And the fourth used the ssb-am-bank function in dsp.scm rewritten here for with-
 
   <a class=def name="wave-train">wave-train</a> w :optional (fm 0.0)
   <a class=def name="wave-train?">wave-train?</a> w
+
+  <a class=def NAME="make-wave-train-with-env">make-wave-train-with-env</a> <a class=quiet href="#optional-key">:optional-key</a> frequency env size
 </pre>
 
 <p>wave-train adds a copy its "wave" (a "grain" in more modern parlance) into its output at "frequency" times per second.
 These copies can overlap or have long intervals of silence in between, so
 wave train can be viewed either as an extension of pulse-train and table-lookup,
 or as a primitive form of granular synthesis.
+make-wave-train-with-env returns a new wave-train generator with the envelope 'env' loaded into its table.
 </p>
 
 <table border=1 cellpadding=4 hspace=40 vspace=10 align=left>
