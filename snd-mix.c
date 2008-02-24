@@ -1130,7 +1130,7 @@ static int remake_mix_data(mix_state *ms, mix_info *md)
   mix_reader = make_virtual_mix_reader(cp, 0, md->in_samps, md->original_index, 1.0, READ_FORWARD);
 
   if (e)
-    egen = mus_make_env(e->data, e->pts, 1.0, 0.0, 1.0, 0.0, len - 1, NULL);
+    egen = mus_make_env_with_length(e->data, e->pts, 1.0, 0.0, 1.0, len);
   if (ms->speed != 1.0)
     src_gen = mus_make_src(&src_input, ms->speed, sinc_width(ss), (void *)mix_reader);
 
@@ -1656,7 +1656,7 @@ static peak_env_info *env_on_env(env *e, peak_env_info *peaks)
       int i;
       Float val;
       mus_any *me;
-      me = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, ep->peak_env_size - 1, NULL);
+      me = mus_make_env_with_length(e->data, e->pts, 1.0, 0.0, e->base, ep->peak_env_size);
       for (i = 0; i < ep->peak_env_size; i++) 
 	{
 	  val = mus_env(me);

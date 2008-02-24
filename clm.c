@@ -1279,6 +1279,35 @@ Float mus_ncos(mus_any *ptr, Float fm)
   return((Float)val);
 }
 
+
+/* I think we could add ncos_pm via:
+ *
+ *   Float mus_ncos_pm(mus_any *ptr, Float fm, Float pm)
+ *    {
+ *      cosp *gen = (cosp *)ptr;
+ *      Float result;
+ *      gen->phase += pm;
+ *      result = mus_ncos(ptr, fm);
+ *      gen->phase -= pm;
+ *      return(result);
+ *    }
+ *
+ * and the same trick could add pm to anything:
+ *
+ *   Float mus_run_with_pm(mus_any *ptr, Float fm, Float pm)
+ *    {
+ *      Float result;
+ *      mus_set_phase(ptr, mus_phase(ptr) + pm);
+ *      result = mus_run(ptr, fm, 0.0);
+ *      mus_set_phase (ptr, mus_phase(ptr) - pm);
+ *      return(result);
+ *    }
+ *
+ * fm could also be handled here so the 4 cases become gen, mus_run_with_fm|pm|fm_and_pm(gen)
+ * but... this could just as well happen at the extension language level.
+ * The problem with differentiating the pm and using the fm arg is that we'd need a closure.
+ */
+
 #if 0
 /* if the current phase is close to 0.0, there were numerical troubles here:
     :(/ (cos (* 1.5 pi 1.0000000000000007)) (cos (* 0.5 pi 1.0000000000000007)))
@@ -5471,16 +5500,7 @@ Float *mus_make_fir_coeffs(int order, Float *envl, Float *aa)
 
 /* ---------------- env ---------------- */
 
-/* user defined env: 
- *  new-env-type (remove env_style_t->int, export presets, perhaps add sinusoid and power env to presets)
- *    needs init func (to package up particular call), run func -- split out all preset cases here?
- *    needs interp-func, set location func, description, free, equalp, restart
- *  make-env :type arg
- *  for Snd, would need ptree-channel settings
- */
-
 typedef enum {ENV_SEG, ENV_STEP, ENV_EXP} env_style_t;
-
 
 typedef struct {
   mus_any_class *core;
@@ -5493,8 +5513,6 @@ typedef struct {
   double *rates;
   off_t *locs;
 } seg;
-
-/* What about breakpoint triples for per-segment exp envs? */
 
 /* I used to use exp directly, but:
 
@@ -5859,7 +5877,6 @@ static off_t env_set_length(mus_any *ptr, off_t val)
 }
 
 
-
 static mus_any_class ENV_CLASS = {
   MUS_ENV,
   S_env,
@@ -5888,10 +5905,6 @@ static mus_any_class ENV_CLASS = {
   0
 };
 
-
-/* make-env (C, scm, lisp) should use :dur, not :end
- *   perhaps #define mus_make_env_with_dur(Brkpts, Pts, Scaler, Offset, Base, Dur) mus_make_env(Brkpts, Pts, Scaler, Offset, Base, 0.0, 0, Dur - 1, NULL)
- */
 
 mus_any *mus_make_env(Float *brkpts, int npts, double scaler, double offset, double base, double duration, off_t end, Float *odata)
 {
@@ -11188,9 +11201,6 @@ void init_mus_module(void)
  *   all the make-* funcs that have a frequency arg should put that first, use "n" not cosines|sines, "r" not "a"
  *         ["a" used only in sine-summation, "sines" used only in sum-of-sines, "cosines" used only in sum-of-cosines]
  *         ["a" (also "k") is used in generators.scm especially where "r" is already in use, and abcos]
- *
- *      perhaps add pm args alongside the fm args, as in oscil?
- *        or add those cases as extra funcs broken out in clm2xen and snd-run
  *
  * generators:
  *   can the def-clm-struct method/make lists be used with built-in gens?

@@ -919,7 +919,7 @@ For example, say we want to square each envelope value:
                      :duration 0.5)))
     (do ((i 0 (1+ i)))
 	((= i 22050))
-      (<a class=quiet href="#outa">outa</a> i (<em class=red>env-any</em> e (lambda (y) (* y y))))))
+      (<a class=quiet href="#outa">outa</a> i (<em class=red>env-any</em> e (lambda (y) (* y y)))))))
 
 
 ;; or connect the dots with a sinusoid:
@@ -1002,7 +1002,6 @@ duration), it's simplest to use make-env:
 <br>
 Various operations on envelopes: <a href="sndscm.html#envdoc">env.scm</a><br>
 <table border=0 cellpadding=0 cellspacing=0 hspace=30 vspace=6>
-
     <tr><td><small>add-envelopes</small></td><td width=40></td><td><small>   add two envelopes</small></td></tr>
     <tr><td><small>concatenate-envelopes</small></td><td></td><td><small>    concatenate a bunch of envelopes</small></td></tr>
     <tr><td><small>envelope-exp</small></td><td></td><td><small>             interpolate points to approximate exponential curves</small></td></tr>
@@ -1019,8 +1018,8 @@ Various operations on envelopes: <a href="sndscm.html#envdoc">env.scm</a><br>
     <tr><td><small>scale-envelope</small></td><td></td><td><small>           scale and offset the y values of an envelope</small></td></tr>
     <tr><td><small>stretch-envelope</small></td><td></td><td><small>         apply attack and decay times to an envelope ("adsr", or "divenv")</small></td></tr>
     <tr><td><small>window-envelope</small></td><td></td><td><small>          return the portion of an envelope within given x axis bounds</small></td></tr>
+</table>
 
-</td></tr></table>
 envelope sound: <a href="extsnd.html#envchannel">env-channel</a>, <a href="extsnd.html#envsound">env-sound</a><br>
 other enveloping functions: <a href="extsnd.html#rampchannel">ramp-channel</a>, <a href="extsnd.html#xrampchannel">xramp-channel</a>, <a href="extsnd.html#smoothchannel">smooth-channel</a><br>
 The envelope editor: <a href="snd.html#editenvelope">Edit or View and Envelope</a><br>
@@ -1713,7 +1712,8 @@ T5(a+b) = 16(a+b)^5 - 20(a+b)^3 + 5(a+b) and the complex FM equation cos(5*(a+b)
 
 <p>but watch out for clicks from the DC component if any of the "n" in the Tn are even.
 When I use this idea, I either use only odd numbered partials in the partials-&gt;polynomial list,
-or add an amplitude envelope to make sure the result ends at 0. 
+or add an amplitude envelope to make sure the result ends at 0.  A related, largely unexplored vein
+involves the "spread polynomials" where Tn(1 - 2s) = 1 - 2Sn(s).
 </p>
 
 <!-- SOMEDAY: find formulas for cheby with cos+cos and so on (polyshape(polyshape)) -- this is really complicated! -->
@@ -5352,7 +5352,6 @@ zip.scm:
 </pre>
 
 <p>In this section, we concentrate on the generators defined in generators.scm.
-
 </p>
 
 <pre>
@@ -6141,6 +6140,22 @@ with each component scaled by (r^(2k))/(2k)!.  r2sin output is not normalized.
 
 <p>This produces a sum of cosines, each scaled by 1/(r^2+k^2).
 </p>
+<br><br>
+
+
+<!-- def-generator -->
+<table border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>def-generator</h5></center></td></tr></table>
+
+<pre>
+  <a class=def name="def-generator">def-generator</a> name fields
+</pre>
+
+<p>def-generator is an extension of <a href="sndscm.html#def-clm-struct">def-clm-struct</a>
+that sets up all the usual generator methods (discussed under <a href="#genericfunctions">"generic functions"</a> below).
+</p>
+
+<!-- TODO: def-generator examples, doc, tests -->
+
 <br>
 
 

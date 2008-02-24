@@ -1235,7 +1235,7 @@ void src_env_or_num(chan_info *cp, env *e, Float ratio, bool just_num,
 	  if (!just_num)
 	    {
 	      if (e)
-		egen = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, dur - 1, NULL);
+		egen = mus_make_env_with_length(e->data, e->pts, 1.0, 0.0, e->base, dur);
 	      else egen = gen;
 	      if (egen) ratio = 0.0;            /* added 14-Mar-01 otherwise the envelope is an offset? */
 	    }
@@ -2627,7 +2627,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
     }
 
   if (e)
-    egen = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, dur - 1, NULL); /* dur - 1 = end sample number */
+    egen = mus_make_env_with_length(e->data, e->pts, 1.0, 0.0, e->base, dur);
   else egen = gen;
   len = mus_env_breakpoints(egen);
   passes = mus_env_passes(egen);
@@ -3386,7 +3386,7 @@ char *scale_and_src(char **files, int len, int max_chans, Float amp, Float speed
   else  new_dur = dur;
 
   if (!(default_env_p(amp_env)))
-    e = mus_make_env(amp_env->data, amp_env->pts, amp, 0.0, 1.0, 0.0, new_dur - 1, NULL);
+    e = mus_make_env_with_length(amp_env->data, amp_env->pts, amp, 0.0, 1.0, new_dur);
 
   j = 0;
   if (!sgens)
@@ -4955,7 +4955,7 @@ scale samples in the given sound/channel between beg and beg + num by a ramp goi
 	  else 
 	    {
 	      mus_any *egen;
-	      egen = mus_make_env(data, 2, 1.0, 0.0, 1.0, 0.0, samps - 1, NULL);
+	      egen = mus_make_env_with_length(data, 2, 1.0, 0.0, 1.0, samps);
 	      amp_env_env_selection_by(cp, egen, samp, samps, pos);
 	      mus_free(egen);
 	    }
@@ -5031,7 +5031,7 @@ scale samples in the given sound/channel between beg and beg + num by an exponen
 	      data[1] = seg0;
 	      data[2] = 1.0;
 	      data[3] = seg1;
-	      e = mus_make_env(data, 2, 1.0, 0.0, ebase, 0.0, samps - 1, NULL);
+	      e = mus_make_env_with_length(data, 2, 1.0, 0.0, ebase, samps);
 
 	      rates = mus_env_rates(e);
 	      passes = mus_env_passes(e);
@@ -5046,7 +5046,7 @@ scale samples in the given sound/channel between beg and beg + num by an exponen
 		      else 
 			{
 			  mus_any *egen;
-			  egen = mus_make_env(data, 2, 1.0, 0.0, ebase, 0.0, samps - 1, NULL);
+			  egen = mus_make_env_with_length(data, 2, 1.0, 0.0, ebase, samps);
 			  amp_env_env_selection_by(cp, egen, samp, samps, pos);
 			  mus_free(egen);
 			}
@@ -5374,7 +5374,7 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
 	{
 	  env *e;
 	  e = get_env(ratio_or_env, S_src_channel);
-	  egen = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, dur - 1, NULL);
+	  egen = mus_make_env_with_length(e->data, e->pts, 1.0, 0.0, e->base, dur);
 	  need_free = true;
 	  free_env(e);
 	}

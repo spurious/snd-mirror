@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 4
-#define MUS_REVISION 2
-#define MUS_DATE "20-Feb-08"
+#define MUS_REVISION 3
+#define MUS_DATE "24-Feb-08"
 
 /*
+ * 24-Feb:     removed mus_make_env_with_start, added mus_make_env_with_length
  * 20-Feb:     clm 4:
  *             polywave for polyshape and waveshape.  
  *             mus_formant_with_frequency. 
@@ -598,7 +599,6 @@ Float mus_polywave(mus_any *ptr, Float fm);
 
 Float mus_env(mus_any *ptr);
 mus_any *mus_make_env(Float *brkpts, int npts, double scaler, double offset, double base, double duration, off_t end, Float *odata);
-#define mus_make_env_with_start(Brkpts, Pts, Scaler, Offset, Base, Duration, Start, End, Odata) mus_make_env(Brkpts, Pts, Scaler, Offset, Base, Duration, End - Start, Odata)
 bool mus_env_p(mus_any *ptr);
 double mus_env_interp(double x, mus_any *env);
 off_t *mus_env_passes(mus_any *gen);        /* for Snd */
@@ -608,6 +608,7 @@ double mus_env_scaler(mus_any *gen);        /* for Snd */
 double mus_env_initial_power(mus_any *gen); /* for Snd */
 int mus_env_breakpoints(mus_any *gen);      /* for Snd */
 Float mus_env_any(mus_any *e, Float (*connect_points)(Float val));
+#define mus_make_env_with_length(Brkpts, Pts, Scaler, Offset, Base, Length) mus_make_env(Brkpts, Pts, Scaler, Offset, Base, 0.0, (Length) - 1, NULL)
 
 bool mus_frame_p(mus_any *ptr);
 mus_any *mus_make_empty_frame(int chans);
@@ -772,6 +773,9 @@ mus_any *mus_make_mixer_with_data(int chans, Float *data);
 
 
 #ifndef CLM_DISABLE_DEPRECATED
+
+  #define mus_make_env_with_start(Brkpts, Pts, Scaler, Offset, Base, Duration, Start, End, Odata) mus_make_env(Brkpts, Pts, Scaler, Offset, Base, Duration, End - Start, Odata)
+
   #define mus_make_two_zero_from_radius_and_frequency(Rad, Freq) mus_make_two_zero_from_frequency_and_radius(Freq, Rad)
   #define mus_make_two_pole_from_radius_and_frequency(Rad, Freq) mus_make_two_pole_from_frequency_and_radius(Freq, Rad)
  
@@ -803,6 +807,7 @@ mus_any *mus_make_mixer_with_data(int chans, Float *data);
   /* backwards compatibility -- these moved to mus_location 15-Oct-07 */
   #define mus_phase_vocoder_outctr(Ptr)          (int)mus_location(Ptr)
   #define mus_phase_vocoder_set_outctr(Ptr, Val) (int)mus_set_location(Ptr, (off_t)Val)
+
 #endif
 
 

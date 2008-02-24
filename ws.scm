@@ -1020,6 +1020,8 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 ;;;   calls add-clm-type to make sure run knows about the struct and, on each field,
 ;;;   add-clm-field to tell run the type of each list element (only actually needed if
 ;;;   there are different types in use)
+;;;
+;;; see def-generator in generators.scm for an extension that adds various methods such as mus-describe
 
 (defmacro def-clm-struct (struct-name . fields)
   (let* ((name (if (list? struct-name) (car struct-name) struct-name))

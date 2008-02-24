@@ -16,6 +16,175 @@
 
 (define nearly-zero 1.0e-12) ; 1.0e-14 in clm.c, but that is trouble here (noddcos)
 
+;;; --------------------------------------------------------------------------------
+;;;
+;;; def-generator
+
+(defmacro def-generator (struct-name . fields)
+
+  ;; an extension of def-clm-struct
+
+  ;; this adds the built-in methods mus-name, and mus-describe, and (if they don't already exist)
+  ;;   mus-frequency if a "frequency" field exists
+  ;;   mus-phase if either a "phase" or an "angle" field exists
+  ;;   mus-scaler if "r", 
+  ;;   mus-order if "n" or "order"
+
+  ;; TODO: check for existing method, add -n -r -xfrequency?
+  ;;   mus-run?  (could assume func of same name), mus-run-with-pm?
+  ;;   mus-reset? (use fields with init vals)
+  ;;   mus-data if there's a vct field?
+  ;;   should we assume the frequency field is in radians?
+
+  (let* ((name (if (list? struct-name) (car struct-name) struct-name))
+
+	 (wrapper (or (and (list? struct-name)
+			   (or (and (> (length struct-name) 2)
+				    (equal? (list-ref struct-name 1) :make-wrapper)
+				    (list-ref struct-name 2))
+			       (and (= (length struct-name) 5)
+				    (equal? (list-ref struct-name 3) :make-wrapper)
+				    (list-ref struct-name 4))))
+		      (lambda (gen) gen)))
+
+	 (sname (if (string? name) name (symbol->string name)))
+
+	 (field-names (map (lambda (n)
+			     (symbol->string (if (list? n) (car n) n)))
+			   fields))
+
+	 (find-if (lambda (pred l)
+		    (cond ((null? l) #f)
+			  ((pred (car l)) (car l))
+			  (else (find-if pred (cdr l))))))
+
+	 (phase-field-name (if (find-if (lambda (name) 
+					  (string=? name "phase"))
+					field-names)
+			       "-phase"
+			       (if (find-if (lambda (name) 
+					      (string=? name "angle"))
+					    field-names)
+				   "-angle"
+				   #f)))
+
+	 (frequency-field-name (if (find-if (lambda (name) 
+					  (string=? name "frequency"))
+					field-names)
+			       "-frequency"
+			       #f))
+
+	 (methods (append (or (and (list? struct-name)
+				   (or (and (> (length struct-name) 2)
+					    (equal? (list-ref struct-name 1) :methods)
+					    (list-ref struct-name 2))
+				       (and (= (length struct-name) 5)
+					    (equal? (list-ref struct-name 3) :methods)
+					    (list-ref struct-name 4))))
+			      '())
+
+			  `(list 
+
+			    (if ,phase-field-name
+				(list 'mus-phase
+				      (lambda (g)
+					(,(string->symbol (string-append sname (or phase-field-name "oops"))) g))
+				      (lambda (g val)
+					(set! (,(string->symbol (string-append sname (or phase-field-name "oops"))) g) val)))
+				(list :no-op))
+
+			    (if ,frequency-field-name
+				(list 'mus-frequency
+				      (lambda (g)
+					(,(string->symbol (string-append sname (or frequency-field-name "oops"))) g))
+				      (lambda (g val)
+					(set! (,(string->symbol (string-append sname (or frequency-field-name "oops"))) g) val)))
+				(list :no-op))
+
+			   (list 'mus-describe
+				 (lambda (g)
+				   (let ((desc ,sname)
+					 (first-time #t))
+				     (for-each
+				      (lambda (field)
+					(set! desc (string-concatenate 
+						    (list desc (format #f "~A~A: ~A"
+								       (if first-time " " ", ")
+								       field
+								       ((symbol-binding #f (string->symbol (string-append ,sname "-" field))) g)))))
+					(set! first-time #f))
+				      (list ,@field-names))
+				     desc)))
+
+			   (list :no-op )
+
+			   (list 'mus-name
+				 (lambda (g) ,sname)))))
+
+	 (field-types (map (lambda (n)
+			     (if (and (list? n) (cadr n) (eq? (cadr n) :type)) 
+				 (snd-error (format #f ":type indication for def-clm-struct (~A) field (~A) should be after the default value" name n)))
+			     (if (and (list? n)
+				      (= (length n) 4)
+				      (eq? (list-ref n 2) :type))
+				 (list-ref n 3)
+				 (if (and (list? n)
+					  (= (length n) 2))
+				     (if (number? (cadr n))
+					 (if (exact? (cadr n))
+					     'int
+					     'float)
+					 (if (string? (cadr n))
+					     'string
+					     (if (char? (cadr n))
+						 'char
+						 (if (or (equal? (cadr n) #t)
+							 (equal? (cadr n) #f))
+						     'boolean
+						     'float))))
+				     'float)))
+			   fields)))
+
+    `(begin
+       (define ,(string->symbol (string-append sname "?"))
+	 (lambda (obj)
+	   "clm struct type check"
+	   (and (list? obj)
+		(eq? (car obj) ',(string->symbol sname)))))
+
+       (define ,(string->symbol (string-append sname "-methods"))
+	 (lambda ()
+	   "clm struct local method list accessor"
+	   ,methods))
+
+       (def-optkey-fun (,(string->symbol (string-append "make-" sname))
+		        ,@(map (lambda (n)
+				(if (and (list? n)
+					 (>= (length n) 2))
+				    (list (car n) (cadr n))
+				    (list n 0.0)))
+			      fields))
+	 (,wrapper (if (list? ,methods)
+		       (list ',(string->symbol sname)
+			     ,@(map string->symbol field-names)
+			     ,methods)
+		       (list ',(string->symbol sname)
+			     ,@(map string->symbol field-names)))))
+
+       ,@(map (let ((ctr 1))
+		(lambda (n type)
+		  (let ((val `(define ,(string->symbol (string-append sname "-" n))
+				(make-procedure-with-setter
+				 (lambda (arg)
+				   "clm struct field accessor"
+				   (list-ref arg ,ctr))
+				 (lambda (arg val)
+				   (list-set! arg ,ctr val))))))
+		    (add-clm-field sname (string-append sname "-" n) ctr type)
+		    (set! ctr (1+ ctr))
+		    val)))
+	      field-names field-types))))
+
 
 ;;; --------------------------------------------------------------------------------
 

@@ -512,6 +512,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+25-Feb:  def-generator.\n\
 24-Feb:  make-two-pole|zero freq r in the 'polar' case (reversed args)\n\
          env-any for arbitrary func to connect the dots\n\
          envelopes can be in the form '((0 0) (100 1))\n\

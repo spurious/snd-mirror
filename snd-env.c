@@ -481,7 +481,7 @@ void env_editor_display_env(env_editor *edp, env *e, axis_context *ax, const cha
 	      /* exponential case */
 	      dur = width / EXP_SEGLEN;
 	      old_error_handler = mus_error_set_handler(local_mus_error);
-	      ce = mus_make_env(e->data, e->pts, 1.0, 0.0, e->base, 0.0, dur - 1, NULL);
+	      ce = mus_make_env_with_length(e->data, e->pts, 1.0, 0.0, e->base, dur);
 	      mus_error_set_handler(old_error_handler);
 	      if (ce == NULL) return;
 	      if (dur < e->pts) dur = e->pts;

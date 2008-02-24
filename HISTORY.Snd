@@ -1,5 +1,6 @@
 Snd change log
 
+ 25-Feb:     def-generator.
  24-Feb:     envelopes can be in the form '((0 0) (100 1)).
  11-Feb:     the "stream" arg to outa and friends now defaults to *output*.
  7-Feb:      Snd 9.7.
