@@ -24,17 +24,11 @@
 
   ;; an extension of def-clm-struct
 
-  ;; this adds the built-in methods mus-name, and mus-describe, and (if they don't already exist)
-  ;;   mus-frequency if a "frequency" field exists
-  ;;   mus-phase if either a "phase" or an "angle" field exists
+  ;; this adds the built-in methods mus-name, mus-reset, and mus-describe, and (if they don't already exist)
+  ;;   mus-frequency if a "frequency" or "xfrequency" field exists (treated as radians)
+  ;;   mus-phase if a "phase" or "angle" field exists
   ;;   mus-scaler if "r", 
   ;;   mus-order if "n" or "order"
-
-  ;; TODO: check for existing method, add -n -r -xfrequency?
-  ;;   mus-run?  (could assume func of same name), mus-run-with-pm?
-  ;;   mus-reset? (use fields with init vals)
-  ;;   mus-data if there's a vct field?
-  ;;   should we assume the frequency field is in radians?
 
   (let* ((name (if (list? struct-name) (car struct-name) struct-name))
 
@@ -52,74 +46,6 @@
 	 (field-names (map (lambda (n)
 			     (symbol->string (if (list? n) (car n) n)))
 			   fields))
-
-	 (find-if (lambda (pred l)
-		    (cond ((null? l) #f)
-			  ((pred (car l)) (car l))
-			  (else (find-if pred (cdr l))))))
-
-	 (phase-field-name (if (find-if (lambda (name) 
-					  (string=? name "phase"))
-					field-names)
-			       "-phase"
-			       (if (find-if (lambda (name) 
-					      (string=? name "angle"))
-					    field-names)
-				   "-angle"
-				   #f)))
-
-	 (frequency-field-name (if (find-if (lambda (name) 
-					  (string=? name "frequency"))
-					field-names)
-			       "-frequency"
-			       #f))
-
-	 (methods (append (or (and (list? struct-name)
-				   (or (and (> (length struct-name) 2)
-					    (equal? (list-ref struct-name 1) :methods)
-					    (list-ref struct-name 2))
-				       (and (= (length struct-name) 5)
-					    (equal? (list-ref struct-name 3) :methods)
-					    (list-ref struct-name 4))))
-			      '())
-
-			  `(list 
-
-			    (if ,phase-field-name
-				(list 'mus-phase
-				      (lambda (g)
-					(,(string->symbol (string-append sname (or phase-field-name "oops"))) g))
-				      (lambda (g val)
-					(set! (,(string->symbol (string-append sname (or phase-field-name "oops"))) g) val)))
-				(list :no-op))
-
-			    (if ,frequency-field-name
-				(list 'mus-frequency
-				      (lambda (g)
-					(,(string->symbol (string-append sname (or frequency-field-name "oops"))) g))
-				      (lambda (g val)
-					(set! (,(string->symbol (string-append sname (or frequency-field-name "oops"))) g) val)))
-				(list :no-op))
-
-			   (list 'mus-describe
-				 (lambda (g)
-				   (let ((desc ,sname)
-					 (first-time #t))
-				     (for-each
-				      (lambda (field)
-					(set! desc (string-concatenate 
-						    (list desc (format #f "~A~A: ~A"
-								       (if first-time " " ", ")
-								       field
-								       ((symbol-binding #f (string->symbol (string-append ,sname "-" field))) g)))))
-					(set! first-time #f))
-				      (list ,@field-names))
-				     desc)))
-
-			   (list :no-op )
-
-			   (list 'mus-name
-				 (lambda (g) ,sname)))))
 
 	 (field-types (map (lambda (n)
 			     (if (and (list? n) (cadr n) (eq? (cadr n) :type)) 
@@ -143,8 +69,139 @@
 						     'boolean
 						     'float))))
 				     'float)))
-			   fields)))
+			   fields))
 
+	 (find-if (lambda (pred l)
+		    (cond ((null? l) #f)
+			  ((pred (car l)) (car l))
+			  (else (find-if pred (cdr l))))))
+
+	 (original-methods (or (and (list? struct-name)
+				    (or (and (> (length struct-name) 2)
+					     (equal? (list-ref struct-name 1) :methods)
+					     (list-ref struct-name 2))
+					(and (= (length struct-name) 5)
+					     (equal? (list-ref struct-name 3) :methods)
+					     (list-ref struct-name 4))))
+			       '()))
+
+	 (method-exists? (lambda (method)
+			   (and (not (null? original-methods))
+				(find-if (lambda (g)
+					   (and (list? g)
+						(list? (cadr g))
+						(eq? (car (cadr g)) method)))
+					 (cdr original-methods)))))
+
+	 (phase-field-name (and (not (method-exists? 'mus-phase))
+				(let ((fld (find-if (lambda (name) 
+						      (or (string=? name "phase") 
+							  (string=? name "angle")))
+						    field-names)))
+				  (and fld (string-concatenate (list "-" fld))))))
+
+	 (frequency-field-name (and (not (method-exists? 'mus-frequency))
+				    (let ((fld (find-if (lambda (name) 
+							  (or (string=? name "frequency") 
+							      (string=? name "xfrequency")))
+							field-names)))
+				      (and fld (string-concatenate (list "-" fld))))))
+
+	 (scaler-field-name (and (not (method-exists? 'mus-scaler))
+				 (find-if (lambda (name) 
+					    (string=? name "r"))
+					  field-names)
+				 "-r"))
+
+	 (order-field-name (and (not (method-exists? 'mus-order))
+				(let ((fld (find-if (lambda (name) 
+						      (or (string=? name "n") 
+							  (string=? name "order")))
+						    field-names)))
+				  (and fld (string-concatenate (list "-" fld))))))
+
+	 (methods (append original-methods
+			  `(append ; using append to splice out unwanted entries
+
+			    (if ,phase-field-name
+				(list 
+				 (list 'mus-phase
+				       (lambda (g)
+					 (,(string->symbol (string-append sname (or phase-field-name "oops"))) g))
+				       (lambda (g val)
+					 (set! (,(string->symbol (string-append sname (or phase-field-name "oops"))) g) val))))
+				(list))
+
+			    (if ,frequency-field-name
+				(list 
+				 (list 'mus-frequency
+				       (lambda (g)
+					 (radians->hz (,(string->symbol (string-append sname (or frequency-field-name "oops"))) g)))
+				       (lambda (g val)
+					 (set! (,(string->symbol (string-append sname (or frequency-field-name "oops"))) g) (hz->radians val))
+					 val)))
+				(list))
+
+			    (if ,order-field-name
+				(list  ; not settable -- maybe use mus-length?
+				 (list 'mus-order
+				       (lambda (g)
+					 (,(string->symbol (string-append sname (or order-field-name "oops"))) g))))
+				(list))
+
+			    (if ,scaler-field-name
+				(list 
+				 (list 'mus-scaler
+				       (lambda (g)
+					 (,(string->symbol (string-append sname (or scaler-field-name "oops"))) g))
+				       (lambda (g val)
+					 (set! (,(string->symbol (string-append sname (or scaler-field-name "oops"))) g) val))))
+				(list))
+
+			    (if ,(not (method-exists? 'mus-describe))
+				(list 
+				 (list 'mus-describe
+				       (lambda (g)
+					 (let ((desc ,sname)
+					       (first-time #t))
+					   (for-each
+					    (lambda (field)
+					      (set! desc (string-concatenate 
+							  (list desc (format #f "~A~A: ~A"
+									     (if first-time " " ", ")
+									     field
+									     ((symbol-binding #f (string->symbol (string-append ,sname "-" field))) g)))))
+					      (set! first-time #f))
+					    (list ,@field-names))
+					   desc))))
+				(list))
+
+			    (if ,(not (method-exists? 'mus-reset))
+				(list 
+				 (list 'mus-reset
+				       (lambda (g)
+					 (for-each
+					  (lambda (name type orig)
+					    (if (or (not (string=? type "clm"))
+						    (not ((symbol-binding #f (string->symbol (string-append ,sname "-" name))) g)))
+						(set! ((symbol-binding #f (string->symbol (string-append ,sname "-" name))) g) orig)
+						(mus-reset ((symbol-binding #f (string->symbol (string-append ,sname "-" name))) g))))
+					  (list ,@field-names)
+					  (list ,@(map symbol->string field-types))
+					  (list ,@(map (lambda (n)
+							 (if (and (list? n)
+								  (>= (length n) 2))
+							     (cadr n)
+							     0.0))
+						       fields))))))
+				(list))
+
+			    (if ,(not (method-exists? 'mus-name))
+				(list 
+				 (list 'mus-name
+				       (lambda (g) ,sname)))
+				(list))))))
+    
     `(begin
        (define ,(string->symbol (string-append sname "?"))
 	 (lambda (obj)
@@ -184,6 +241,7 @@
 		    (set! ctr (1+ ctr))
 		    val)))
 	      field-names field-types))))
+
 
 
 ;;; --------------------------------------------------------------------------------
