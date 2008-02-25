@@ -2145,7 +2145,7 @@
 		       'mus-audio-treble 'mus-audio-write 'mus-b24int 'mus-bdouble 'mus-bdouble-unscaled
 		       'mus-bfloat 'mus-bfloat-unscaled 'mus-bicsf 'mus-bint 'mus-bintn
 		       'mus-bshort 'mus-byte 'mus-bytes-per-sample 'mus-caff 'mus-channel 'mus-channels
-		       'mus-chebyshev-first-kind 'mus-chebyshev-second-kind 'mus-clipping 'mus-close 'mus-cosines
+		       'mus-chebyshev-first-kind 'mus-chebyshev-second-kind 'mus-clipping 'mus-close
 		       'mus-data 'mus-data-format->string 'mus-data-format-name 'mus-describe 'mus-error-hook
 		       'mus-error-type->string 'mus-expand-filename 'mus-feedback 'mus-feedforward 'mus-fft
 		       'mus-file-buffer-size 'mus-file-clipping 'mus-file-name 'mus-file-prescaler
@@ -18015,7 +18015,7 @@ EDITS: 2
       (if (not (oscil? gen)) (snd-display ";~A not oscil?" gen))
       (if (fneq (mus-phase gen) 1.253787) (snd-display ";oscil phase: ~F?" (mus-phase gen)))
       (if (fneq (mus-frequency gen) 440.0) (snd-display ";oscil frequency: ~F?" (mus-frequency gen)))
-      (if (not (= (mus-cosines gen) 1)) (snd-display ";oscil cosines: ~D?" (mus-cosines gen)))
+      (if (not (= (mus-length gen) 1)) (snd-display ";oscil cosines: ~D?" (mus-length gen)))
       (if (or (fneq (vct-ref v0 1) 0.125) (fneq (vct-ref v0 8) 0.843)) (snd-display ";oscil output: ~A" v0))
       (set! (mus-phase gen) 0.0)
       (if (fneq (mus-phase gen) 0.0) (snd-display ";oscil set-phase: ~F?" (mus-phase gen)))
@@ -18150,13 +18150,6 @@ EDITS: 2
     (let ((var (catch #t (lambda () (set! (mus-scaler (make-oscil)) 0)) (lambda args args))))
       (if (not (eq? (car var) 'mus-error))
 	  (snd-display ";set mus-scaler bad gen: ~A" var)))
-    (let ((var (catch #t (lambda () (mus-length (make-oscil))) (lambda args args))))
-      (if (not (eq? (car var) 'mus-error))
-	  (snd-display ";mus-length bad gen: ~A" var)))
-    (let ((var (catch #t (lambda () (set! (mus-length (make-oscil)) 0)) (lambda args args))))
-      (if (and (not (eq? (car var) 'mus-error))
-	       (not (eq? (car var) 'out-of-range)))
-	  (snd-display ";set mus-length bad gen: ~A" var)))
     (let ((var (catch #t (lambda () (mus-frequency (make-one-pole))) (lambda args args))))
       (if (not (eq? (car var) 'mus-error))
 	  (snd-display ";mus-frequency bad gen: ~A" var)))
@@ -18235,11 +18228,11 @@ EDITS: 2
       (if (fneq (mus-phase gen) 1.253787) (snd-display ";sum-of-cosines phase: ~F?" (mus-phase gen)))
       (if (fneq (mus-frequency gen) 440.0) (snd-display ";sum-of-cosines frequency: ~F?" (mus-frequency gen)))
       (if (fneq (mus-scaler gen) .1) (snd-display ";sum-of-cosines scaler: ~F?" (mus-scaler gen)))
-      (if (not (= (mus-cosines gen) 10)) (snd-display ";sum-of-cosines cosines: ~D?" (mus-cosines gen)))
+      (if (not (= (mus-length gen) 10)) (snd-display ";sum-of-cosines cosines: ~D?" (mus-length gen)))
       (if (not (= (mus-length gen) 10)) (snd-display ";sum-of-cosines length: ~D?" (mus-length gen)))
       (if (or (fneq (vct-ref v0 1) 0.722) (fneq (vct-ref v0 8) -0.143)) (snd-display ";sum-of-cosines output: ~A" v0))
       (set! (mus-scaler gen) .5) (if (fneq (mus-scaler gen) 0.5) (snd-display ";sum-of-cosines set-scaler: ~F?" (mus-scaler gen)))
-      (set! (mus-cosines gen) 5) (if (not (= (mus-cosines gen) 5)) (snd-display ";set sum-of-cosines cosines: ~D?" (mus-cosines gen)))
+      (set! (mus-length gen) 5) (if (not (= (mus-length gen) 5)) (snd-display ";set sum-of-cosines cosines: ~D?" (mus-length gen)))
       (if (fneq (mus-scaler gen) .2) (snd-display ";set cosines->scaler: ~A" (mus-scaler gen))))
     
     (test-gen-equal (make-sum-of-cosines 3 440.0) (make-sum-of-cosines 3 440.0) (make-sum-of-cosines 5 440.0))
@@ -18254,7 +18247,7 @@ EDITS: 2
 			 1.0
 			 (min 1.0 (* (mus-scaler gen)
 				     (- (/ (sin (* (mus-phase gen)
-						   (+ (mus-cosines gen) 0.5)))
+						   (+ (mus-length gen) 0.5)))
 					   (* 2.0 den))
 					0.5)))))
 	       (val2 (gen 0.0)))
@@ -18286,11 +18279,11 @@ EDITS: 2
       (if (fneq (mus-phase gen) 1.253787) (snd-display ";sum-of-sines phase: ~F?" (mus-phase gen)))
       (if (fneq (mus-frequency gen) 440.0) (snd-display ";sum-of-sines frequency: ~F?" (mus-frequency gen)))
       (if (fneq (mus-scaler gen) .1315) (snd-display ";sum-of-sines scaler: ~F?" (mus-scaler gen)))
-      (if (not (= (mus-cosines gen) 10)) (snd-display ";sum-of-sines cosines: ~D?" (mus-cosines gen)))
+      (if (not (= (mus-length gen) 10)) (snd-display ";sum-of-sines cosines: ~D?" (mus-length gen)))
       (if (not (= (mus-length gen) 10)) (snd-display ";sum-of-sines length: ~D?" (mus-length gen)))
       (if (or (fneq (vct-ref v0 1) 0.784) (fneq (vct-ref v0 8) 0.181)) (snd-display ";sum-of-sines output: ~A" v0))
       (set! (mus-scaler gen) .5) (if (fneq (mus-scaler gen) 0.5) (snd-display ";sum-of-sines set-scaler: ~F?" (mus-scaler gen)))
-      (set! (mus-cosines gen) 5) (if (not (= (mus-cosines gen) 5)) (snd-display ";set sum-of-sines cosines: ~D?" (mus-cosines gen)))
+      (set! (mus-length gen) 5) (if (not (= (mus-length gen) 5)) (snd-display ";set sum-of-sines cosines: ~D?" (mus-length gen)))
       (if (fneq (mus-scaler gen) .2525) (snd-display ";set sines->scaler: ~A" (mus-scaler gen))))
     
     (test-gen-equal (make-sum-of-sines 3 440.0) (make-sum-of-sines 3 440.0) (make-sum-of-sines 5 440.0))
@@ -18331,11 +18324,11 @@ EDITS: 2
       (if (fneq (mus-phase gen) 1.253787) (snd-display ";ncos phase: ~F?" (mus-phase gen)))
       (if (fneq (mus-frequency gen) 440.0) (snd-display ";ncos frequency: ~F?" (mus-frequency gen)))
       (if (fneq (mus-scaler gen) .1) (snd-display ";ncos scaler: ~F?" (mus-scaler gen)))
-      (if (not (= (mus-cosines gen) 10)) (snd-display ";ncos n: ~D?" (mus-cosines gen)))
+      (if (not (= (mus-length gen) 10)) (snd-display ";ncos n: ~D?" (mus-length gen)))
       (if (not (= (mus-length gen) 10)) (snd-display ";ncos length: ~D?" (mus-length gen)))
       (if (or (fneq (vct-ref v0 1) 0.722) (fneq (vct-ref v0 8) -0.143)) (snd-display ";ncos output: ~A" v0))
       (set! (mus-scaler gen) .5) (if (fneq (mus-scaler gen) 0.5) (snd-display ";ncos set-scaler: ~F?" (mus-scaler gen)))
-      (set! (mus-cosines gen) 5) (if (not (= (mus-cosines gen) 5)) (snd-display ";set ncos n: ~D?" (mus-cosines gen)))
+      (set! (mus-length gen) 5) (if (not (= (mus-length gen) 5)) (snd-display ";set ncos n: ~D?" (mus-length gen)))
       (if (fneq (mus-scaler gen) .2) (snd-display ";set n->scaler: ~A" (mus-scaler gen))))
     
     (test-gen-equal (make-ncos 440.0 3) (make-ncos 440.0 3) (make-ncos 440.0 5))
@@ -18349,7 +18342,7 @@ EDITS: 2
 			 1.0
 			 (min 1.0 (* (mus-scaler gen)
 				     (- (/ (sin (* (mus-phase gen)
-						   (+ (mus-cosines gen) 0.5)))
+						   (+ (mus-length gen) 0.5)))
 					   (* 2.0 den))
 					0.5)))))
 	       (val2 (gen 0.0)))
@@ -18381,11 +18374,11 @@ EDITS: 2
       (if (fneq (mus-phase gen) 1.253787) (snd-display ";nsin phase: ~F?" (mus-phase gen)))
       (if (fneq (mus-frequency gen) 440.0) (snd-display ";nsin frequency: ~F?" (mus-frequency gen)))
       (if (fneq (mus-scaler gen) .1315) (snd-display ";nsin scaler: ~F?" (mus-scaler gen)))
-      (if (not (= (mus-cosines gen) 10)) (snd-display ";nsin n: ~D?" (mus-cosines gen)))
+      (if (not (= (mus-length gen) 10)) (snd-display ";nsin n: ~D?" (mus-length gen)))
       (if (not (= (mus-length gen) 10)) (snd-display ";nsin length: ~D?" (mus-length gen)))
       (if (or (fneq (vct-ref v0 1) 0.784) (fneq (vct-ref v0 8) 0.181)) (snd-display ";nsin output: ~A" v0))
       (set! (mus-scaler gen) .5) (if (fneq (mus-scaler gen) 0.5) (snd-display ";nsin set-scaler: ~F?" (mus-scaler gen)))
-      (set! (mus-cosines gen) 5) (if (not (= (mus-cosines gen) 5)) (snd-display ";set nsin n: ~D?" (mus-cosines gen)))
+      (set! (mus-length gen) 5) (if (not (= (mus-length gen) 5)) (snd-display ";set nsin n: ~D?" (mus-length gen)))
       (if (fneq (mus-scaler gen) .2525) (snd-display ";set sines->scaler: ~A" (mus-scaler gen))))
     
     (test-gen-equal (make-nsin 440.0 3) (make-nsin 440.0 3) (make-nsin 440.0 5))
@@ -18415,7 +18408,7 @@ EDITS: 2
 	  (v1 (make-vct 10)))
       (print-and-check gen 
 		       "nrxysin"
-                       "nrxysin: frequency: x: 440.000, y: 440.000 (ratio: 1.000), phase: 0.000, n: 1, r: 0.500")
+                       "nrxysin: frequency: x: 440.000, ratio: 1.000, phase: 0.000, n: 1, r: 0.500")
       (do ((i 0 (1+ i)))
 	  ((= i 10))
 	(vct-set! v0 i (sine-summation gen 0.0)))
@@ -18428,7 +18421,7 @@ EDITS: 2
       (if (fneq (mus-scaler gen) 0.5) (snd-display ";mus-scaler (a) sine-summation: ~A" (mus-scaler gen)))
       (set! (mus-scaler gen) 0.75)
       (if (fneq (mus-scaler gen) 0.75) (snd-display ";mus-scaler (set a) sine-summation: ~A" (mus-scaler gen)))
-      (if (not (= (mus-cosines gen) 1)) (snd-display ";mus-cosines sine-summation: ~A" (mus-cosines gen)))
+      (if (not (= (mus-length gen) 1)) (snd-display ";mus-length sine-summation: ~A" (mus-length gen)))
       (if (fneq (mus-offset gen) 1.0) (snd-display ";mus-offset sine-summation: ~A" (mus-offset gen))))
     
     (test-gen-equal (make-sine-summation 440.0) (make-sine-summation 440.0) (make-sine-summation 100.0))
@@ -18445,7 +18438,7 @@ EDITS: 2
       (if (fneq (mus-phase gen6) 3.0) (snd-display ";sine-summation phase (3): ~F?" (mus-phase gen6)))
       (if (fneq (mus-frequency gen6) 500.0) (snd-display ";sine-summation frequency (500): ~F?" (mus-frequency gen6)))
       (if (fneq (mus-scaler gen6) 0.1) (snd-display ";mus-scaler (a) sine-summation (.1): ~A" (mus-scaler gen6)))
-      (if (not (= (mus-cosines gen6) 10)) (snd-display ";mus-cosines sine-summation (10): ~A" (mus-cosines gen6)))
+      (if (not (= (mus-length gen6) 10)) (snd-display ";mus-length sine-summation (10): ~A" (mus-length gen6)))
       (if (fneq (mus-offset gen6) 0.4) (snd-display ";mus-offset sine-summation (0.4): ~A" (mus-offset gen6)))
       
       (let ((happy #t))
@@ -18475,7 +18468,7 @@ EDITS: 2
 	  (v1 (make-vct 10)))
       (print-and-check gen 
 		       "nrxysin"
-                       "nrxysin: frequency: x: 440.000, y: 440.000 (ratio: 1.000), phase: 0.000, n: 1, r: 0.500")
+                       "nrxysin: frequency: x: 440.000, ratio: 1.000, phase: 0.000, n: 1, r: 0.500")
       (do ((i 0 (1+ i)))
 	  ((= i 10))
 	(vct-set! v0 i (nrxysin gen 0.0)))
@@ -18487,7 +18480,7 @@ EDITS: 2
       (if (fneq (mus-scaler gen) 0.5) (snd-display ";mus-scaler (a) nrxysin: ~A" (mus-scaler gen)))
       (set! (mus-scaler gen) 0.75)
       (if (fneq (mus-scaler gen) 0.75) (snd-display ";mus-scaler (set a) nrxysin: ~A" (mus-scaler gen)))
-      (if (not (= (mus-cosines gen) 1)) (snd-display ";mus-cosines nrxysin: ~A" (mus-cosines gen)))
+      (if (not (= (mus-length gen) 1)) (snd-display ";mus-length nrxysin: ~A" (mus-length gen)))
       (if (fneq (mus-offset gen) 1.0) (snd-display ";mus-offset nrxysin: ~A" (mus-offset gen))))
     
     (test-gen-equal (make-nrxysin 440.0) (make-nrxysin 440.0) (make-nrxysin 100.0))
@@ -18510,7 +18503,7 @@ EDITS: 2
 	  (v1 (make-vct 10)))
       (print-and-check gen 
 		       "nrxycos"
-                       "nrxycos: frequency: x: 440.000, y: 440.000 (ratio: 1.000), phase: 0.000, n: 1, r: 0.500")
+                       "nrxycos: frequency: x: 440.000, ratio: 1.000, phase: 0.000, n: 1, r: 0.500")
       (do ((i 0 (1+ i)))
 	  ((= i 10))
 	(vct-set! v0 i (nrxycos gen 0.0)))
@@ -18522,7 +18515,7 @@ EDITS: 2
       (if (fneq (mus-scaler gen) 0.5) (snd-display ";mus-scaler (a) nrxycos: ~A" (mus-scaler gen)))
       (set! (mus-scaler gen) 0.75)
       (if (fneq (mus-scaler gen) 0.75) (snd-display ";mus-scaler (set a) nrxycos: ~A" (mus-scaler gen)))
-      (if (not (= (mus-cosines gen) 1)) (snd-display ";mus-cosines nrxycos: ~A" (mus-cosines gen)))
+      (if (not (= (mus-length gen) 1)) (snd-display ";mus-length nrxycos: ~A" (mus-length gen)))
       (if (fneq (mus-offset gen) 1.0) (snd-display ";mus-offset nrxycos: ~A" (mus-offset gen))))
     
     (test-gen-equal (make-nrxycos 440.0) (make-nrxycos 440.0) (make-nrxycos 100.0))
@@ -25148,7 +25141,6 @@ EDITS: 2
       (if (fneq (mus-phase gen) 1.253787) (snd-display ";ssb-am phase: ~F?" (mus-phase gen)))
       (if (fneq (mus-frequency gen) 440.0) (snd-display ";ssb-am frequency: ~F?" (mus-frequency gen)))
       (if (not (= (mus-order gen) 41)) (snd-display ";ssb-am order: ~F?" (mus-order gen)))
-      (if (not (= (mus-cosines gen) 1)) (snd-display ";ssb-am cosines: ~D?" (mus-cosines gen)))
       (if (not (= (mus-length gen) 41)) (snd-display ";ssb-am length: ~D?" (mus-length gen)))
       (if (not (= (mus-interp-type gen) mus-interp-none)) (snd-display ";ssb-am interp type: ~D?" (mus-interp-type gen)))
       (if (fneq (mus-xcoeff gen 0) -0.00124) (snd-display ";ssb-am xcoeff 0: ~A" (mus-xcoeff gen 0)))
@@ -25276,10 +25268,10 @@ EDITS: 2
 			  0.0 0.0 (lambda (dir) 0.0) 0.0 0.0 0.0 0.0
 			  0.0 0.0 0.0 0.0 0.0 0.0 (lambda (dir) 0.0) 0.0
 			  0.0 0.0))
-	  (generic-procs (list mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-channel mus-channels mus-cosines mus-data
+	  (generic-procs (list mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-channel mus-channels mus-data
 			       mus-feedback mus-feedforward mus-frequency mus-hop mus-increment mus-length
 			       mus-location mus-order mus-phase mus-ramp mus-scaler mus-xcoeffs mus-ycoeffs))
-	  (generic-names (list 'mus-a0 'mus-a1 'mus-a2 'mus-b1 'mus-b2 'mus-channel 'mus-channels 'mus-cosines 'mus-data
+	  (generic-names (list 'mus-a0 'mus-a1 'mus-a2 'mus-b1 'mus-b2 'mus-channel 'mus-channels 'mus-data
 			       'mus-feedback 'mus-feedforward 'mus-frequency 'mus-hop 'mus-increment 'mus-length
 			       'mus-location 'mus-order 'mus-phase 'mus-ramp 'mus-scaler 'mus-xcoeffs 'mus-ycoeffs)))
       (for-each
@@ -44862,8 +44854,8 @@ EDITS: 1
 	  )
       (run
        (lambda ()
-	 (set! (mus-cosines cs) 3)
-	 (if (not (= (mus-cosines cs) 3)) (display ";cosines messed up"))
+	 (set! (mus-length cs) 3)
+	 (if (not (= (mus-length cs) 3)) (display ";cosines messed up"))
 	 (set! (mus-length cs) 32)
 	 (if (not (= (mus-length cs) 32)) (display ";length messed up"))
 	 (set! (mus-frequency cs) 100.0)
@@ -47933,7 +47925,7 @@ EDITS: 1
 		    (lambda ()
 		      (set! frq (mus-frequency osc))
 		      (set! phs (mus-phase osc))
-		      (set! cs (mus-cosines osc))
+		      (set! cs (mus-length osc))
 		      (set! (mus-frequency osc) 123.0)
 		      (set! (mus-phase osc) 1.0)
 		      0.0))
@@ -48012,17 +48004,17 @@ EDITS: 1
 		    (lambda ()
 		      (set! frq (mus-frequency osc))
 		      (set! phs (mus-phase osc))
-		      (set! cs (mus-cosines osc))
+		      (set! cs (mus-length osc))
 		      (set! (mus-frequency osc) 123.0)
 		      (set! (mus-phase osc) 1.0)
-		      (set! (mus-cosines osc) 10)
+		      (set! (mus-length osc) 10)
 		      0.0))
 	  (if (fneq frq 440.0) (snd-display ";cs run frq: ~A" frq))
 	  (if (fneq phs 0.0) (snd-display ";cs run phs: ~A" phs))
 	  (if (not (= cs 3)) (snd-display ";cs run cs: ~A" cs))
 	  (if (fneq (mus-frequency osc) 123.0) (snd-display ";cs run mus-frequency: ~A" (mus-frequency osc)))
 	  (if (fneq (mus-phase osc) 1.0) (snd-display ";cs run mus-phase: ~A" (mus-phase osc)))
-	  (if (not (= (mus-cosines osc) 10)) (snd-display ";cs run set cs: ~A" (mus-cosines osc))))
+	  (if (not (= (mus-length osc) 10)) (snd-display ";cs run set cs: ~A" (mus-length osc))))
 	
 	(let ((osc (make-sum-of-sines 3 440.0))
 	      (v (make-vct 1))
@@ -48033,17 +48025,17 @@ EDITS: 1
 		    (lambda ()
 		      (set! frq (mus-frequency osc))
 		      (set! phs (mus-phase osc))
-		      (set! cs (mus-cosines osc))
+		      (set! cs (mus-length osc))
 		      (set! (mus-frequency osc) 123.0)
 		      (set! (mus-phase osc) 1.0)
-		      (set! (mus-cosines osc) 10)
+		      (set! (mus-length osc) 10)
 		      0.0))
 	  (if (fneq frq 440.0) (snd-display ";scs run frq: ~A" frq))
 	  (if (fneq phs 0.0) (snd-display ";scs run phs: ~A" phs))
 	  (if (not (= cs 3)) (snd-display ";scs run cs: ~A" cs))
 	  (if (fneq (mus-frequency osc) 123.0) (snd-display ";scs run mus-frequency: ~A" (mus-frequency osc)))
 	  (if (fneq (mus-phase osc) 1.0) (snd-display ";scs run mus-phase: ~A" (mus-phase osc)))
-	  (if (not (= (mus-cosines osc) 10)) (snd-display ";scs run set cs: ~A" (mus-cosines osc))))
+	  (if (not (= (mus-length osc) 10)) (snd-display ";scs run set cs: ~A" (mus-length osc))))
 	
 	(let ((osc (make-ncos 440.0 3))
 	      (v (make-vct 1))
@@ -48054,17 +48046,17 @@ EDITS: 1
 		    (lambda ()
 		      (set! frq (mus-frequency osc))
 		      (set! phs (mus-phase osc))
-		      (set! cs (mus-cosines osc))
+		      (set! cs (mus-length osc))
 		      (set! (mus-frequency osc) 123.0)
 		      (set! (mus-phase osc) 1.0)
-		      (set! (mus-cosines osc) 10)
+		      (set! (mus-length osc) 10)
 		      0.0))
 	  (if (fneq frq 440.0) (snd-display ";cs run frq: ~A" frq))
 	  (if (fneq phs 0.0) (snd-display ";cs run phs: ~A" phs))
 	  (if (not (= cs 3)) (snd-display ";cs run cs: ~A" cs))
 	  (if (fneq (mus-frequency osc) 123.0) (snd-display ";cs run mus-frequency: ~A" (mus-frequency osc)))
 	  (if (fneq (mus-phase osc) 1.0) (snd-display ";cs run mus-phase: ~A" (mus-phase osc)))
-	  (if (not (= (mus-cosines osc) 10)) (snd-display ";cs run set cs: ~A" (mus-cosines osc))))
+	  (if (not (= (mus-length osc) 10)) (snd-display ";cs run set cs: ~A" (mus-length osc))))
 	
 	(let ((osc (make-nsin 440.0 3))
 	      (v (make-vct 1))
@@ -48075,17 +48067,17 @@ EDITS: 1
 		    (lambda ()
 		      (set! frq (mus-frequency osc))
 		      (set! phs (mus-phase osc))
-		      (set! cs (mus-cosines osc))
+		      (set! cs (mus-length osc))
 		      (set! (mus-frequency osc) 123.0)
 		      (set! (mus-phase osc) 1.0)
-		      (set! (mus-cosines osc) 10)
+		      (set! (mus-length osc) 10)
 		      0.0))
 	  (if (fneq frq 440.0) (snd-display ";scs run frq: ~A" frq))
 	  (if (fneq phs 0.0) (snd-display ";scs run phs: ~A" phs))
 	  (if (not (= cs 3)) (snd-display ";scs run cs: ~A" cs))
 	  (if (fneq (mus-frequency osc) 123.0) (snd-display ";scs run mus-frequency: ~A" (mus-frequency osc)))
 	  (if (fneq (mus-phase osc) 1.0) (snd-display ";scs run mus-phase: ~A" (mus-phase osc)))
-	  (if (not (= (mus-cosines osc) 10)) (snd-display ";scs run set cs: ~A" (mus-cosines osc))))
+	  (if (not (= (mus-length osc) 10)) (snd-display ";scs run set cs: ~A" (mus-length osc))))
 
 	(let ((zf (make-two-zero .4 .7 .3))
 	      (pf (make-two-pole .4 .7 .3))
@@ -51012,7 +51004,7 @@ EDITS: 1
 			       (list 'mus-name
 				     (lambda (g) "osc329"))
 
-			       (list 'mus-cosines
+			       (list 'mus-length
 				     (lambda (g) (osc329-n g))
 				      (lambda (g val) (set! (osc329-n g) val)))
 			      
@@ -54079,11 +54071,11 @@ EDITS: 1
 	(let ((g123 (make-osc329 440.0)) (f 0.0)) 
 	  (run (lambda () (set! f (mus-frequency g123)))) 
 	  (if (or (not (number? f)) (fneq f 440.0)) (snd-display ";(name) mus-frequency osc329: ~A" f)))
-	(let ((g (make-osc329 440.0)) (f 32)) (set! f (mus-cosines g)) 
-	     (if (not (= f 1)) (snd-display ";osc329 (no run) mus-cosines: ~A" f)))
+	(let ((g (make-osc329 440.0)) (f 32)) (set! f (mus-length g)) 
+	     (if (not (= f 1)) (snd-display ";osc329 (no run) mus-length: ~A" f)))
 	(let ((g (make-osc329 440.0)) (f 32)) 
-	  (run (lambda () (set! f (mus-cosines g)))) 
-	  (if (not (= f 1)) (snd-display ";osc329 mus-cosines: ~A" f)))
+	  (run (lambda () (set! f (mus-length g)))) 
+	  (if (not (= f 1)) (snd-display ";osc329 mus-length: ~A" f)))
 	(let ((g (make-osc329 440.0)) (f "hiho")) 
 	  (run (lambda () (set! f (mus-name g)))) 
 	  (if (not (string=? f "osc329")) (snd-display ";osc329 mus-name: ~A" f)))
@@ -54100,8 +54092,8 @@ EDITS: 1
 	  (run (lambda () (set! f (mus-increment g)))) 
 	  (if (fneq f 1.0) (snd-display ";mus-increment osc329: ~A" f)))
 	(let ((g (make-osc329 440.0)) (f 32))
-	  (run (lambda () (set! (mus-cosines g) f)))
-	  (if (not (= (mus-cosines g) 32)) (snd-display ";osc329 set mus-cosines: ~A" (mus-cosines g))))
+	  (run (lambda () (set! (mus-length g) f)))
+	  (if (not (= (mus-length g) 32)) (snd-display ";osc329 set mus-length: ~A" (mus-length g))))
 	(let ((g (make-osc329 440.0)) (f 440.0))
 	  (run (lambda () (set! (mus-frequency g) 100.0) (set! f (mus-frequency g))))
 	  (if (fneq f 100.0) (snd-display ";osc329 set mus-frequency: ~A" (mus-frequency g))))
@@ -66432,7 +66424,7 @@ EDITS: 1
 		     make-two-pole make-two-zero make-wave-train make-waveshape mixer* mixer-ref mixer-set! mixer? mixer+
 		     move-sound make-move-sound move-sound? mus-float-equal-fudge-factor
 		     multiply-arrays mus-array-print-length mus-channel mus-channels make-polyshape polyshape polyshape? make-polywave polywave polywave?
-		     mus-close mus-cosines mus-data mus-feedback mus-feedforward mus-fft mus-frequency
+		     mus-close mus-data mus-feedback mus-feedforward mus-fft mus-frequency
 		     mus-hop mus-increment mus-input? mus-file-name mus-length mus-location mus-mix mus-order mus-output?  mus-phase
 		     mus-ramp mus-random mus-scaler mus-srate mus-xcoeff mus-xcoeffs mus-ycoeff mus-ycoeffs notch notch? one-pole one-pole?
 		     one-zero one-zero? oscil oscil? out-any outa outb outc outd partials->polynomial
@@ -66510,7 +66502,7 @@ EDITS: 1
 			 selected-sound selection-position selection-frames selection-member? sound-loop-info
 			 srate time-graph-type x-position-slider x-zoom-slider
 			 y-position-slider y-zoom-slider sound-data-ref mus-array-print-length mus-float-equal-fudge-factor
-			 mus-cosines mus-data mus-feedback mus-feedforward mus-frequency mus-hop
+			 mus-data mus-feedback mus-feedforward mus-frequency mus-hop
 			 mus-increment mus-length mus-location mus-phase mus-ramp mus-scaler vct-ref x-axis-label
 			 filter-control-coeffs locsig-type mus-file-buffer-size 
 			 mus-rand-seed mus-width clm-table-size clm-default-frequency run-safety mus-offset mus-reset
@@ -66878,7 +66870,7 @@ EDITS: 1
 					make-sum-of-cosines make-ncos make-sum-of-sines make-nsin
 					make-table-lookup make-triangle-wave make-two-pole make-two-zero make-wave-train make-ssb-am
 					make-waveshape mus-channel mus-channels make-polyshape make-polywave
-					mus-cosines mus-data mus-feedback mus-feedforward mus-frequency mus-hop
+					mus-data mus-feedback mus-feedforward mus-frequency mus-hop
 					mus-increment mus-length mus-file-name mus-location mus-order mus-phase mus-ramp mus-random mus-run
 					mus-scaler mus-xcoeffs mus-ycoeffs notch one-pole one-zero make-moving-average seconds->samples samples->seconds
 					oscil partials->polynomial partials->wave partials->waveshape phase-partials->wave
@@ -66923,7 +66915,7 @@ EDITS: 1
 				    (lambda args (car args)))))
 			(if (not (eq? tag 'wrong-type-arg))
 			    (snd-display ";mus-gen ~A: ~A" n tag))))
-		    (list mus-channel mus-channels mus-cosines mus-data
+		    (list mus-channel mus-channels mus-data
 			  mus-feedback mus-feedforward mus-frequency mus-hop mus-increment mus-length
 			  mus-location mus-mix mus-order mus-phase mus-ramp mus-random mus-run mus-scaler mus-xcoeffs
 			  mus-ycoeffs))

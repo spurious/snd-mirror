@@ -585,7 +585,7 @@ To get a cosine (as opposed to sine), set the initial-phase to (/ pi 2).
 <tr><td colspan=2 bgcolor="beige"><center>oscil methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
-<tr><td><em class=gen>mus-cosines</em></td><td>1 (no set!)</td></tr>
+<tr><td><em class=gen>mus-length</em></td><td>1 (no set!)</td></tr>
 <tr><td><em class=gen>mus-increment</em></td><td>frequency in radians per sample</td></tr>
 </table>
 <br>
@@ -2053,8 +2053,7 @@ cancel except the last.
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
 <tr><td><em class=gen>mus-scaler</em></td><td>(/ 1.0 cosines)</td></tr>
-<tr><td><em class=gen>mus-cosines</em></td><td>n or cosines arg  used in make-&lt;gen&gt;</td></tr>
-<tr><td><em class=gen>mus-length</em></td><td>same as mus-cosines</td></tr>
+<tr><td><em class=gen>mus-length</em></td><td>n or cosines arg  used in make-&lt;gen&gt;</td></tr>
 <tr><td><em class=gen>mus-increment</em></td><td>frequency in radians per sample</td></tr>
 </table>
 <pre>
@@ -2184,8 +2183,7 @@ kosine95
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
 <tr><td><em class=gen>mus-scaler</em></td><td>dependent on number of sines</td></tr>
-<tr><td><em class=gen>mus-cosines</em></td><td>n or sines arg used in make-&lt;gen&gt;</td></tr>
-<tr><td><em class=gen>mus-length</em></td><td>same as mus-cosines</td></tr>
+<tr><td><em class=gen>mus-length</em></td><td>n or sines arg used in make-&lt;gen&gt;</td></tr>
 <tr><td><em class=gen>mus-increment</em></td><td>frequency in radians per sample</td></tr>
 </table>
 
@@ -2595,7 +2593,7 @@ reflection, please send it to me, and I'll add it to this collection.
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
 <tr><td><em class=gen>mus-scaler</em></td><td>"r" parameter; sideband scaler</td></tr>
-<tr><td><em class=gen>mus-cosines</em></td><td>"n" parameter</td></tr>
+<tr><td><em class=gen>mus-length</em></td><td>"n" parameter</td></tr>
 <tr><td><em class=gen>mus-increment</em></td><td>frequency in radians per sample</td></tr>
 <tr><td><em class=gen>mus-offset</em></td><td>"ratio" parameter</td></tr>
 </table>
@@ -2753,7 +2751,6 @@ phase-vocoder or granular synthesis kludges.
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase (of embedded sin osc) in radians</td></tr>
 <tr><td><em class=gen>mus-order</em></td><td>embedded delay line size</td></tr>
-<tr><td><em class=gen>mus-cosines</em></td><td>1</td></tr>
 <tr><td><em class=gen>mus-length</em></td><td>same as mus-order</td></tr>
 <tr><td><em class=gen>mus-interp-type</em></td><td><code>mus-interp-none</code></td></tr>
 <tr><td><em class=gen>mus-xcoeff</em></td><td>FIR filter coeff</td></tr>
@@ -6179,7 +6176,6 @@ The generic functions are:
 <table cellspacing=0 cellpadding=0 hspace=40>
 <tr><td bgcolor="#f6f8ff"><a class=def name="mus-channel">mus-channel</a></td><td width=30 bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">channel being read/written</td></tr>
 <tr><td><a class=def name="mus-channels">mus-channels</a></td><td></td><td>channels open</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-cosines">mus-cosines</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">sinusoids in output</td></tr>
 <tr><td><a class=def name="mus-data">mus-data</a></td><td></td><td>vct of data</td></tr>
 <tr><td bgcolor="#f6f8ff"><a class=def name="mus-describe">mus-describe</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">description of current state</td></tr>
 <tr><td><a class=def name="mus-feedback">mus-feedback</a></td><td></td><td>feedback coefficient</td></tr>

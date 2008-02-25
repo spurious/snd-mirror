@@ -162,7 +162,6 @@ mus-channels
 mus-chebyshev-first-kind
 mus-chebyshev-second-kind
 mus-close
-mus-cosines
 mus-data
 mus-describe
 mus-feedback

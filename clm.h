@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 4
-#define MUS_REVISION 3
-#define MUS_DATE "24-Feb-08"
+#define MUS_REVISION 4
+#define MUS_DATE "26-Feb-08"
 
 /*
+ * 26-Feb:     removed mus_cosines (use mus_length)
  * 24-Feb:     removed mus_make_env_with_start, added mus_make_env_with_length
  * 20-Feb:     clm 4:
  *             polywave for polyshape and waveshape.  
@@ -395,8 +396,6 @@ off_t mus_ramp(mus_any *ptr);
 off_t mus_set_ramp(mus_any *ptr, off_t val);
 off_t mus_hop(mus_any *ptr);
 off_t mus_set_hop(mus_any *ptr, off_t val);
-off_t mus_cosines(mus_any *ptr);
-off_t mus_set_cosines(mus_any *ptr, off_t val);
 Float mus_feedforward(mus_any *gen);
 Float mus_set_feedforward(mus_any *gen, Float val);
 Float mus_feedback(mus_any *rd);
@@ -773,6 +772,9 @@ mus_any *mus_make_mixer_with_data(int chans, Float *data);
 
 
 #ifndef CLM_DISABLE_DEPRECATED
+
+  #define mus_cosines(Obj) mus_length(Obj)
+  #define mus_set_cosines(Obj, Val) mus_set_length(Obj,Val)
 
   #define mus_make_env_with_start(Brkpts, Pts, Scaler, Offset, Base, Duration, Start, End, Odata) mus_make_env(Brkpts, Pts, Scaler, Offset, Base, Duration, End - Start, Odata)
 

@@ -647,24 +647,6 @@ off_t mus_set_hop(mus_any *gen, off_t len)
 }
 
 
-off_t mus_cosines(mus_any *gen) /* shares "hop" */
-{
-  if ((check_gen(gen, S_mus_cosines)) &&
-      (gen->core->hop))
-    return((*(gen->core->hop))(gen));
-  return(mus_error(MUS_NO_HOP, "can't get %s's cosines value", mus_name(gen)));
-}
-
-
-off_t mus_set_cosines(mus_any *gen, off_t len)
-{
-  if ((check_gen(gen, S_setB S_mus_cosines)) &&
-      (gen->core->set_hop))
-    return((*(gen->core->set_hop))(gen, len));
-  return(mus_error(MUS_NO_HOP, "can't set %s's cosines value", mus_name(gen)));
-}
-
-
 off_t mus_ramp(mus_any *gen)
 {
   if ((check_gen(gen, S_mus_ramp)) &&
@@ -1211,7 +1193,8 @@ static mus_any_class OSCIL_CLASS = {
   &free_oscil,
   &describe_oscil,
   &oscil_equalp,
-  0, 0, 0, 0, /* data length */
+  0, 0, 
+  &oscil_cosines, 0,
   &oscil_freq,
   &oscil_set_freq,
   &oscil_phase,
@@ -1223,7 +1206,7 @@ static mus_any_class OSCIL_CLASS = {
   MUS_NOT_SPECIAL, 
   NULL,
   0, 
-  0, 0, 0, 0, 0, 0, &oscil_cosines, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &oscil_reset,
@@ -1423,7 +1406,7 @@ static mus_any_class NCOS_CLASS = {
   NULL,
   0,
   0, 0, 0, 0, 0, 0, 
-  &ncos_n, &ncos_set_n, 0, 0,
+  0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &ncos_reset,
@@ -1597,7 +1580,7 @@ static mus_any_class NSIN_CLASS = {
   NULL,
   0,
   0, 0, 0, 0, 0, 0, 
-  &ncos_n, &nsin_set_n, 0, 0,
+  0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &ncos_reset,
@@ -1876,9 +1859,8 @@ bool mus_nrxysin_p(mus_any *ptr)
 static char *describe_nrxysin(mus_any *ptr)
 {
   nrxy *gen = (nrxy *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_nrxysin ": frequency: x: %.3f, y: %.3f (ratio: %.3f), phase: %.3f, n: %d, r: %.3f",
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_nrxysin ": frequency: %.3f, ratio: %.3f, phase: %.3f, n: %d, r: %.3f",
 	       mus_frequency(ptr),
-	       gen->y_over_x * mus_frequency(ptr),
 	       gen->y_over_x,
 	       mus_phase(ptr),
 	       gen->n, 
@@ -1924,7 +1906,8 @@ static mus_any_class NRXYSIN_CLASS = {
   &free_nrxy,
   &describe_nrxysin,
   &nrxy_equalp,
-  0, 0, 0, 0,
+  0, 0, 
+  &nrxy_n, 0,
   &nrxy_freq,
   &nrxy_set_freq,
   &nrxy_phase,
@@ -1938,8 +1921,7 @@ static mus_any_class NRXYSIN_CLASS = {
   NULL, 0,
   &nrxy_y_over_x, &nrxy_set_y_over_x,
   0, 0, 0, 0, 
-  &nrxy_n, /* mus-cosines */
-  0, 0, 0,
+  0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &nrxy_reset,
@@ -1989,9 +1971,8 @@ bool mus_nrxycos_p(mus_any *ptr)
 static char *describe_nrxycos(mus_any *ptr)
 {
   nrxy *gen = (nrxy *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_nrxycos ": frequency: x: %.3f, y: %.3f (ratio: %.3f), phase: %.3f, n: %d, r: %.3f",
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_nrxycos ": frequency: %.3f, ratio: %.3f, phase: %.3f, n: %d, r: %.3f",
 	       mus_frequency(ptr),
-	       gen->y_over_x * mus_frequency(ptr),
 	       gen->y_over_x,
 	       mus_phase(ptr),
 	       gen->n, 
@@ -2038,7 +2019,8 @@ static mus_any_class NRXYCOS_CLASS = {
   &free_nrxy,
   &describe_nrxycos,
   &nrxy_equalp,
-  0, 0, 0, 0,
+  0, 0, 
+  &nrxy_n, 0,
   &nrxy_freq,
   &nrxy_set_freq,
   &nrxy_phase,
@@ -2052,8 +2034,7 @@ static mus_any_class NRXYCOS_CLASS = {
   NULL, 0,
   &nrxy_y_over_x, &nrxy_set_y_over_x,
   0, 0, 0, 0, 
-  &nrxy_n, /* mus-cosines */
-  0, 0, 0,
+  0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &nrxy_reset,
@@ -10757,7 +10738,6 @@ static Float ssb_am_set_phase(mus_any *ptr, Float val)
 }
 
 
-static off_t ssb_am_cosines(mus_any *ptr) {return(1);}
 static off_t ssb_am_order(mus_any *ptr) {return(mus_order(((ssbam *)ptr)->dly));}
 
 static int ssb_am_interp_type(mus_any *ptr) {return(delay_interp_type(((ssbam *)ptr)->dly));}
@@ -10825,7 +10805,7 @@ static mus_any_class SSB_AM_CLASS = {
   &ssb_am_interp_type,
   0, 0, 0, 0,
   &ssb_am_xcoeff, &ssb_am_set_xcoeff, 
-  &ssb_am_cosines, 0, 0, 0,
+  0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 
   &ssb_am_xcoeffs, 0, 0,
@@ -11208,8 +11188,6 @@ void init_mus_module(void)
  *        then the object is in front of the speaker(?)
  *
  * generic funcs:
- *   currently mus-cosines accesses "n" -- "mus-n"? [or use "mus-order" instead? -- jargon, and should be an int, not off_t!]  
- *             mus-scaler sometimes = "r" -- "mus-r" or "mus-amplitude"?
  *      mus-amplitude to parallel mus-frequency/mus-phase, but this means duplication of mus-scaler
  *      mus-documentation [mus-describe shows current state -- if we had this, snd-help might be able to use it for generators.scm]
  *        (the info is in clm2xen, but the class slot is in clm and it would be nice if it worked from C)
@@ -11237,7 +11215,8 @@ void init_mus_module(void)
  *   make-two-pole|zero freq r in the "polar" case (reversed args)
  *   env-any
  *   envelopes can be in the form '((0 0) (100 1))
- *   def-generator
+ *   defgenerator
+ *   removed mus-cosines
  *
  *   (9.7)
  *   :dur and :end -> :length in make-env

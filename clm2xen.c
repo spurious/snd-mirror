@@ -7176,23 +7176,6 @@ static XEN g_mus_set_hop(XEN obj, XEN val)
 
 
 
-static XEN g_mus_cosines(XEN obj)
-{
-  #define H_mus_cosines "(" S_mus_cosines " gen): number of sinusoids produced by generator"
-  if (XEN_LIST_P(obj)) return(call_get_method(obj, S_mus_cosines));
-  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ONLY_ARG, S_mus_cosines, "a generator");
-  return(C_TO_XEN_OFF_T(mus_cosines(XEN_TO_MUS_ANY(obj))));
-}
-
-
-static XEN g_mus_set_cosines(XEN obj, XEN val)
-{
-  if (XEN_LIST_P(obj)) return(call_set_method(obj, val, S_mus_cosines));
-  XEN_ASSERT_TYPE(MUS_XEN_P(obj), obj, XEN_ARG_1, S_setB S_mus_cosines, "a generator");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, S_setB S_mus_cosines, "a number");
-  return(C_TO_XEN_OFF_T(mus_set_cosines(XEN_TO_MUS_ANY(obj), XEN_TO_C_OFF_T_OR_ELSE(val, 0))));
-}
-
 
 
 /* ---------------- mix ---------------- */
@@ -7748,8 +7731,6 @@ XEN_NARGIFY_1(g_phase_vocoder_phases_w, g_phase_vocoder_phases)
 XEN_NARGIFY_1(g_phase_vocoder_phase_increments_w, g_phase_vocoder_phase_increments)
 XEN_NARGIFY_1(g_mus_hop_w, g_mus_hop)
 XEN_NARGIFY_2(g_mus_set_hop_w, g_mus_set_hop)
-XEN_NARGIFY_1(g_mus_cosines_w, g_mus_cosines)
-XEN_NARGIFY_2(g_mus_set_cosines_w, g_mus_set_cosines)
 XEN_ARGIFY_7(g_mus_mix_w, g_mus_mix)
 XEN_ARGIFY_4(g_make_ssb_am_w, g_make_ssb_am)
 XEN_ARGIFY_3(g_ssb_am_w, g_ssb_am)
@@ -8054,8 +8035,6 @@ XEN_NARGIFY_2(g_mus_equalp_w, equalp_mus_xen)
 #define g_phase_vocoder_phase_increments_w g_phase_vocoder_phase_increments
 #define g_mus_hop_w g_mus_hop
 #define g_mus_set_hop_w g_mus_set_hop
-#define g_mus_cosines_w g_mus_cosines
-#define g_mus_set_cosines_w g_mus_set_cosines
 #define g_mus_mix_w g_mus_mix
 #define g_make_ssb_am_w g_make_ssb_am
 #define g_ssb_am_w g_ssb_am
@@ -8130,8 +8109,6 @@ void mus_xen_init(void)
   rb_define_method(mus_xen_tag, "feedforward=", XEN_PROCEDURE_CAST g_mus_set_feedforward, 1);
   rb_define_method(mus_xen_tag, "feedback", XEN_PROCEDURE_CAST g_mus_feedback, 0);
   rb_define_method(mus_xen_tag, "feedback=", XEN_PROCEDURE_CAST g_mus_set_increment, 1);
-  rb_define_method(mus_xen_tag, "cosines", XEN_PROCEDURE_CAST g_mus_cosines, 0);
-  rb_define_method(mus_xen_tag, "cosines=", XEN_PROCEDURE_CAST g_mus_set_cosines, 1);
   rb_define_method(mus_xen_tag, "order", XEN_PROCEDURE_CAST g_mus_order, 0);
   rb_define_method(mus_xen_tag, "order=", XEN_PROCEDURE_CAST g_mus_set_length, 1);
   rb_define_method(mus_xen_tag, "call", XEN_PROCEDURE_CAST mus_xen_apply, 2);
@@ -8321,7 +8298,6 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_make_sum_of_cosines, g_make_sum_of_cosines_w, 0, 6, 0, H_make_sum_of_cosines); 
   XEN_DEFINE_PROCEDURE(S_sum_of_cosines,      g_sum_of_cosines_w,      1, 1, 0, H_sum_of_cosines);
   XEN_DEFINE_PROCEDURE(S_sum_of_cosines_p,    g_sum_of_cosines_p_w,    1, 0, 0, H_sum_of_cosines_p);
-  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_cosines, g_mus_cosines_w, H_mus_cosines, S_setB S_mus_cosines, g_mus_set_cosines_w, 1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE(S_make_sum_of_sines,   g_make_sum_of_sines_w,   0, 6, 0, H_make_sum_of_sines); 
   XEN_DEFINE_PROCEDURE(S_sum_of_sines,        g_sum_of_sines_w,        1, 1, 0, H_sum_of_sines);
   XEN_DEFINE_PROCEDURE(S_sum_of_sines_p,      g_sum_of_sines_p_w,      1, 0, 0, H_sum_of_sines_p);
@@ -8767,7 +8743,6 @@ void mus_xen_init(void)
 	       S_mus_chebyshev_first_kind,
 	       S_mus_chebyshev_second_kind,
 	       S_mus_close,
-	       S_mus_cosines,
 	       S_mus_data,
 	       S_mus_describe,
 	       S_mus_feedback,

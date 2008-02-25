@@ -20238,7 +20238,6 @@ def test238
     if RUBY_VERSION > "1.6.8"
       [:mus_channel,
        :mus_channels,
-       :mus_cosines,
        :mus_data,
        :mus_feedback,
        :mus_feedforward,
@@ -38616,7 +38615,7 @@ Procs =
    :move_sound, :make_move_sound, :move_sound?, :mus_float_equal_fudge_factor, :multiply_arrays,
    :mus_array_print_length, :mus_channel, :mus_channels, :make_polyshape, :polyshape, :polyshape?,
    :mus_close,
-   :mus_cosines, :mus_data, :mus_feedback, :mus_feedforward, :mus_fft, :mus_formant_radius,
+   :mus_data, :mus_feedback, :mus_feedforward, :mus_fft, :mus_formant_radius,
    :mus_frequency, :mus_hop, :mus_increment, :mus_input?, :mus_file_name, :mus_length,
    :mus_location, :mus_mix, :mus_order, :mus_output?, :mus_phase, :mus_ramp, :mus_random,
    :mus_scaler, :mus_srate, :mus_xcoeffs, :mus_ycoeffs, :notch, :notch?, :one_pole, :one_pole?,
@@ -38713,7 +38712,7 @@ Set_procs =
    :colormap_size, :selected_sound, :selection_position, :selection_frames,
    :selection_member?, :sound_loop_info, :srate, :time_graph_type, :x_position_slider,
    :x_zoom_slider, :y_position_slider, :y_zoom_slider, :sound_data_ref,
-   :mus_array_print_length, :mus_float_equal_fudge_factor, :mus_cosines, :mus_data,
+   :mus_array_print_length, :mus_float_equal_fudge_factor, :mus_data,
    :mus_feedback, :mus_feedforward,
    :mus_formant_radius, :mus_frequency, :mus_hop, :mus_increment, :mus_length, :mus_location,
    :mus_phase, :mus_ramp, :mus_scaler, :x_axis_label,
@@ -38971,7 +38970,7 @@ def test0028
      :make_src, :make_sum_of_cosines, :make_sum_of_sines, :make_table_lookup,
      :make_triangle_wave, :make_two_pole, :make_two_zero, :make_wave_train, :make_ssb_am,
      :make_waveshape, :mus_channel, :mus_channels, :make_polyshape,
-     :mus_cosines, :mus_data, :mus_feedback, :mus_feedforward, :mus_formant_radius,
+     :mus_data, :mus_feedback, :mus_feedforward, :mus_formant_radius,
      :mus_frequency, :mus_hop, :mus_increment, :mus_length, :mus_file_name, :mus_location,
      :mus_order, :mus_phase, :mus_ramp, :mus_random, :mus_run, :mus_scaler, :mus_xcoeffs,
      :mus_ycoeffs, :notch, :one_pole, :one_zero, :make_moving_average, :seconds2samples,
@@ -39016,7 +39015,7 @@ def test0028
       snd_display("clm 1 %s: %s %s", n, tag, res)
     end
   end
-  [:mus_cosines, :mus_data, :mus_feedback, :mus_feedforward,
+  [:mus_data, :mus_feedback, :mus_feedforward,
    :mus_formant_radius, :mus_frequency, :mus_hop, :mus_increment, :mus_length, :mus_location,
    :mus_phase, :mus_ramp, :mus_scaler].each do |n|
     if (tag = Snd.catch do set_snd_func(n, make_oscil, $vector_0) end).first != :wrong_type_arg

@@ -180,7 +180,6 @@
 #define S_mus_chebyshev_first_kind   "mus-chebyshev-first-kind"
 #define S_mus_chebyshev_second_kind  "mus-chebyshev-second-kind"
 #define S_mus_close                  "mus-close"
-#define S_mus_cosines                "mus-cosines"
 #define S_mus_data                   "mus-data"
 #define S_mus_describe               "mus-describe"
 #define S_mus_feedback               "mus-feedback"

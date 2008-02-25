@@ -1834,7 +1834,7 @@ include bird.fsm
      <'> move-sound? <'> mus-float-equal-fudge-factor <'> multiply-arrays
      <'> mus-array-print-length
      <'> mus-channel <'> mus-channels <'> make-polyshape <'> polyshape?
-     <'> mus-close <'> mus-cosines <'> mus-data <'> mus-feedback
+     <'> mus-close mus-data <'> mus-feedback
      <'> mus-feedforward <'> mus-fft <'> mus-frequency
      <'> mus-hop <'> mus-increment <'> mus-input? <'> mus-file-name
      <'> mus-length <'> mus-location <'> mus-mix <'> mus-order
@@ -1953,7 +1953,7 @@ include bird.fsm
      <'> x-position-slider <'> x-zoom-slider <'> y-position-slider
      <'> y-zoom-slider <'> sound-data-ref <'> mus-array-print-length
      <'> mus-float-equal-fudge-factor
-     <'> mus-cosines <'> mus-data <'> mus-feedback <'> mus-feedforward
+     <'> mus-data <'> mus-feedback <'> mus-feedforward
      <'> mus-frequency <'> mus-hop <'> mus-increment
      <'> mus-length <'> mus-location <'> mus-phase <'> mus-ramp
      <'> mus-scaler <'> vct-ref <'> x-axis-label <'> filter-control-coeffs
@@ -2286,7 +2286,7 @@ include bird.fsm
        <'> make-sum-of-cosines <'> make-sum-of-sines <'> make-table-lookup <'> make-triangle-wave
        <'> make-two-pole <'> make-two-zero <'> make-wave-train <'> make-ssb-am
        <'> make-waveshape <'> mus-channel <'> mus-channels <'> make-polyshape
-       <'> mus-cosines <'> mus-data <'> mus-feedback <'> mus-feedforward
+       <'> mus-data <'> mus-feedback <'> mus-feedforward
        <'> mus-frequency <'> mus-hop <'> mus-increment
        <'> mus-length <'> mus-file-name <'> mus-location <'> mus-order
        <'> mus-phase <'> mus-ramp <'> mus-random <'> mus-run
@@ -2323,7 +2323,7 @@ include bird.fsm
 	then
       then
     end-each
-    #( <'> mus-channel <'> mus-channels <'> mus-cosines <'> mus-data
+    #( <'> mus-channel <'> mus-channels <'> mus-data
        <'> mus-feedback <'> mus-feedforward <'> mus-frequency
        <'> mus-hop <'> mus-increment <'> mus-length <'> mus-location
        <'> mus-mix <'> mus-order <'> mus-phase <'> mus-ramp

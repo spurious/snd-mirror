@@ -9153,7 +9153,6 @@ INT_GEN0(location)
 INT_GEN0(ramp)
 INT_GEN0(order)
 INT_GEN0(length)
-INT_GEN0(cosines)
 INT_GEN0(channel)
 
 
@@ -9176,7 +9175,6 @@ SET_INT_GEN0(location)
 SET_INT_GEN0(ramp)
 SET_INT_GEN0(hop)
 SET_INT_GEN0(length)
-SET_INT_GEN0(cosines)
 
 
 #define SET_DBL_GEN0(Name) \
@@ -12676,7 +12674,6 @@ static void init_walkers(void)
   INIT_WALKER(S_mus_ramp, make_walker(mus_ramp_0, NULL, mus_set_ramp_1, 1, 1, R_INT, false, 1, R_GENERATOR));
   INIT_WALKER(S_mus_order, make_walker(mus_order_0, NULL, NULL, 1, 1, R_INT, false, 1, R_GENERATOR));
   INIT_WALKER(S_mus_length, make_walker(mus_length_0, NULL, mus_set_length_1, 1, 1, R_INT, false, 1, R_GENERATOR));
-  INIT_WALKER(S_mus_cosines, make_walker(mus_cosines_0, NULL, mus_set_cosines_1, 1, 1, R_INT, false, 1, R_GENERATOR));
   INIT_WALKER(S_mus_name, make_walker(mus_name_0, NULL, NULL, 1, 1, R_INT, false, 1, R_GENERATOR));
   INIT_WALKER(S_mus_file_name, make_walker(mus_file_name_0, NULL, NULL, 1, 1, R_STRING, false, 1, R_GENERATOR));
   INIT_WALKER(S_mus_describe, make_walker(mus_describe_0, NULL, NULL, 1, 1, R_STRING, false, 1, R_GENERATOR));
