@@ -814,11 +814,11 @@
 	 (ampf (make-env '(0 0 1 1 2 1 3 0) :duration dur :scaler amp :base 10))
 	 (frqf (make-env '(0 0  1 6  2 0) :duration dur :scaler (hz->radians 1.0)))
 
-	 (f1 (make-rxyk!cos 200 100 0.6))
-	 (f2 (make-rxyk!cos 230 100 1.2))
+	 (f1 (make-rxyk!cos 200 (/ 100 200) 0.6))
+	 (f2 (make-rxyk!cos 230 (/ 100 230) 1.2))
 
-	 (f3 (make-rxyk!cos 600 100 8.0))
-	 (f4 (make-rxyk!cos 630 100 8.0))
+	 (f3 (make-rxyk!cos 600 (/ 100 600) 8.0))
+	 (f4 (make-rxyk!cos 630 (/ 100 630) 8.0))
 
 	 (rnd (make-rand-interp 4000 .2))
 	 (rnd1 (make-rand-interp 200 (hz->radians 2)))
@@ -841,10 +841,10 @@
 		(intrp (env intrpf))
 		(val (* (env ampf)
 			(+ .8 (rand-interp rnd))
-			(+ (rxyk!cos f1 frq)
-			   (* .5 (rxyk!cos f2 frq))
-			   (* .1 (rxyk!cos f3 frq))
-			   (* .1 (rxyk!cos f4 frq))))))
+			(+ (rxyk!cos f1 (* (/ 200 100) frq))
+			   (* .5 (rxyk!cos f2 (* (/ 230 100) frq)))
+			   (* .1 (rxyk!cos f3 (* (/ 600 100) frq)))
+			   (* .1 (rxyk!cos f4 (* (/ 630 100) frq)))))))
 	   (set! (mus-frequency frm2) (+ 1000 (* intrp 200)))
 	   (outa i (+ (* frm1f (formant frm1 val))
 		      (* frm2f (formant frm2 val))
@@ -1739,7 +1739,7 @@
 	 (rnd (make-rand-interp 200))
 	 (rndf (make-env '(0 .3  .7 .3  .8 1  1 0) :scaler (hz->radians 120)))
 	 (frqf (make-env '(0 -.5  .2 0  .85 0  1 -1) :scaler (hz->radians 400) :duration dur))
-	 (rx (make-rxyk!cos 4000 600 8.0)))
+	 (rx (make-rxyk!cos 4000 (/ 600 4000) 8.0)))
     (run
      (lambda ()
        (do ((i start (1+ i)))
@@ -1751,6 +1751,7 @@
 					      (* .15 (oscil gen2))))
 			       (rxyk!cos rx 0.0)))))))))))
 		     
+;(with-sound () (dog-day-cicada 0 2 .5))
 
 
 ;;; --------------------------------------------------------------------------------
@@ -3909,8 +3910,8 @@
 	 (stop (+ start (seconds->samples dur)))
 	 (ampf (make-env '(0.000 0.000 0.052 0.100 0.130 0.538 0.261 0.845 0.438 0.983 0.580 0.917 0.738 0.720 0.860 0.475 0.941 0.172 1.000 0.000)
 			 :duration dur :scaler (/ amp 2.25)))
-	 (gen1 (make-rxyk!cos 3360 -200 0.7)) 
-	 (gen2 (make-rxyk!cos 3760 200 0.3))
+	 (gen1 (make-rxyk!cos 3360 (/ -200 3360) 0.7)) 
+	 (gen2 (make-rxyk!cos 3760 (/ 200 3760) 0.3))
 	 (gen3 (make-polywave 3660 '(1 .98 2 .02)))
 	 (frqf (make-env '(0 1 .1 0 .95 0 1.0 -.1) :duration dur :scaler (hz->radians 10.0)))
 	 (rnd (make-rand-interp 100 (hz->radians 3))))
@@ -3921,8 +3922,8 @@
 	 (let ((fm (+ (env frqf)
 		      (rand-interp rnd))))
 	   (outa i (* (env ampf)
-		      (+ (rxyk!cos gen1 (- fm))
-			 (rxyk!cos gen2 fm)
+		      (+ (rxyk!cos gen1 (* (/ 3360 200) fm))
+			 (rxyk!cos gen2 (* (/ 3760 200) fm))
 			 (* .25 (polywave gen3 fm)))))))))))
 
 ;(with-sound (:play #t) (varied-thrush 0 .25))

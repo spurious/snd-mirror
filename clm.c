@@ -1304,7 +1304,7 @@ Float mus_ncos(mus_any *ptr, Float fm)
  *    }
  *
  * fm could also be handled here so the 4 cases become gen, mus_run_with_fm|pm|fm_and_pm(gen)
- * but... this could just as well happen at the extension language level.
+ * but... this could just as well happen at the extension language level, except that snd-run doesn't expend macros?
  * The problem with differentiating the pm and using the fm arg is that we'd need a closure.
  */
 
@@ -1515,9 +1515,9 @@ bool mus_nsin_p(mus_any *ptr)
 		     (set! mx (abs sum)))))
 	     roots)
 	    mx))))))
-  *
-  *   (smax (make-vct n 1.0)
-  *
+  
+     (smax (make-vct n 1.0)
+  
   * but that's too much effort for an initialization function.
   *   A sum of (enough) sines is a spike even when the coeffs are random, the spikes being close to 0 and pi.
   */
@@ -11197,11 +11197,6 @@ void init_mus_module(void)
 
 /* clm4:
  *
- * make-funcs/keywords:
- *   all the make-* funcs that have a frequency arg should put that first, use "n" not cosines|sines, "r" not "a"
- *         ["a" used only in sine-summation, "sines" used only in sum-of-sines, "cosines" used only in sum-of-cosines]
- *         ["a" (also "k") is used in generators.scm especially where "r" is already in use, and abcos]
- *
  * generators:
  *   can the def-clm-struct method/make lists be used with built-in gens?
  *
@@ -11224,6 +11219,7 @@ void init_mus_module(void)
  *   definstrument could write actual C functions (with normal args) rather than the packaged int/double-array form
  *     but optkey args and envelopes would need to be massaged into C-compatible shape
  *     and currently there's no limitation on the pre-run code -- I'd have to add optimizer support for everything
+ *   can env-any be supported here?
  *
  *
  * done:
@@ -11241,6 +11237,7 @@ void init_mus_module(void)
  *   make-two-pole|zero freq r in the "polar" case (reversed args)
  *   env-any
  *   envelopes can be in the form '((0 0) (100 1))
+ *   def-generator
  *
  *   (9.7)
  *   :dur and :end -> :length in make-env
