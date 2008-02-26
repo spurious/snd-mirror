@@ -1716,6 +1716,25 @@ or add an amplitude envelope to make sure the result ends at 0.  A related, larg
 involves the "spread polynomials" where Tn(1 - 2s) = 1 - 2Sn(s).
 </p>
 
+<!--
+(with-sound (:channels 3 :clipped #f :statistics #t)
+  (let* ((dur 1.0)
+	 (samps (seconds->samples dur))
+	 (coeffs (partials->polynomial '(5 1)))
+	 (gen (make-oscil 100.0))
+	 (gen1 (make-oscil 500.0)))
+    (do ((i 0 (1+ i)))
+	((= i samps))
+      (let* ((val (oscil gen))
+	     (nval (oscil gen1))
+	     (aval (polynomial coeffs (- 1.0 (* 2 val val))))
+	     (bval (- 1.0 (* 2 nval nval)))
+	     (cval (- aval bval)))
+	(outa i aval)
+	(outb i bval)
+	(outc i cval)))))
+-->
+
 <!-- SOMEDAY: find formulas for cheby with cos+cos and so on (polyshape(polyshape)) -- this is really complicated! -->
 
 

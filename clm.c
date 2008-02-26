@@ -7831,6 +7831,11 @@ static Float locsig_set_xcoeff(mus_any *ptr, int index, Float val)
 }
 
 
+static mus_any *locsig_warned = NULL; 
+/* these locsig error messages are a pain -- using the output pointer in the wan hope that
+ *   subsequent runs will use a different output generator.
+ */
+
 Float mus_locsig_ref(mus_any *ptr, int chan) 
 {
   locs *gen = (locs *)ptr;
@@ -7839,9 +7844,16 @@ Float mus_locsig_ref(mus_any *ptr, int chan)
       if ((chan >= 0) && 
 	  (chan < gen->chans))
 	return(gen->outn[chan]);
-      else mus_error(MUS_NO_SUCH_CHANNEL, 
-		     S_locsig_ref " chan %d >= %d", 
-		     chan, gen->chans);
+      else 
+	{
+	  if (locsig_warned != gen->outn_writer)
+	    {
+	      mus_error(MUS_NO_SUCH_CHANNEL, 
+			S_locsig_ref " chan %d >= %d", 
+			chan, gen->chans);
+	      locsig_warned = gen->outn_writer;
+	    }
+	}
     }
   return(0.0);
 }
@@ -7855,9 +7867,16 @@ Float mus_locsig_set(mus_any *ptr, int chan, Float val)
       if ((chan >= 0) && 
 	  (chan < gen->chans))
 	gen->outn[chan] = val;
-      else mus_error(MUS_NO_SUCH_CHANNEL, 
-		     S_locsig_set " chan %d >= %d", 
-		     chan, gen->chans);
+      else 
+	{
+	  if (locsig_warned != gen->outn_writer)
+	    {
+	      mus_error(MUS_NO_SUCH_CHANNEL, 
+			S_locsig_set " chan %d >= %d", 
+			chan, gen->chans);
+	      locsig_warned = gen->outn_writer;
+	    }
+	}
     }
   return(val);
 }
@@ -7871,9 +7890,16 @@ Float mus_locsig_reverb_ref(mus_any *ptr, int chan)
       if ((chan >= 0) && 
 	  (chan < gen->rev_chans))
 	return(gen->revn[chan]);
-      else mus_error(MUS_NO_SUCH_CHANNEL, 
-		     S_locsig_reverb_ref " chan %d, but this locsig has %d reverb chans", 
-		     chan, gen->rev_chans);
+      else 
+	{
+	  if (locsig_warned != gen->outn_writer)
+	    {
+	      mus_error(MUS_NO_SUCH_CHANNEL, 
+			S_locsig_reverb_ref " chan %d, but this locsig has %d reverb chans", 
+			chan, gen->rev_chans);
+	      locsig_warned = gen->outn_writer;
+	    }
+	}
     }
   return(0.0);
 }
@@ -7887,9 +7913,16 @@ Float mus_locsig_reverb_set(mus_any *ptr, int chan, Float val)
       if ((chan >= 0) && 
 	  (chan < gen->rev_chans))
 	gen->revn[chan] = val;
-      else mus_error(MUS_NO_SUCH_CHANNEL, 
-		     S_locsig_reverb_set " chan %d >= %d", 
-		     chan, gen->rev_chans);
+      else 
+	{
+	  if (locsig_warned != gen->outn_writer)
+	    {
+	      mus_error(MUS_NO_SUCH_CHANNEL, 
+			S_locsig_reverb_set " chan %d >= %d", 
+			chan, gen->rev_chans);
+	      locsig_warned = gen->outn_writer;
+	    }
+	}
     }
   return(val);
 }
@@ -11164,6 +11197,7 @@ void init_mus_module(void)
   nsin_50 = .743;
   nsin_100 = .733;
   sincs = 0;
+  locsig_warned = NULL;
 
   data_format_zero = (int *)CALLOC(MUS_NUM_DATA_FORMATS, sizeof(int));
   data_format_zero[MUS_MULAW] = MULAW_ZERO;
