@@ -360,6 +360,8 @@ repetition to be in reverse."
 
 
 ;;; -------- power-env 
+;;;
+;;; (this could also be done using multi-expt-env (based on env-any) in generators.scm)
 
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 

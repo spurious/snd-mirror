@@ -1251,6 +1251,25 @@ static XEN call_get_method_2(XEN gen, XEN arg, const char *method_name)
 }
 
 
+static XEN call_get_method_3(XEN gen, XEN arg1, XEN arg2, const char *method_name)
+{
+#if HAVE_GUILE
+  XEN pair;
+  pair = XEN_ASSOC(C_STRING_TO_XEN_SYMBOL(method_name), 
+		   XEN_LIST_REF(gen, 
+				XEN_LIST_LENGTH(gen) - 1));
+  if (XEN_LIST_P(pair))
+    return(XEN_CALL_3(XEN_CADR(pair), 
+		      gen, arg1, arg2,
+		      method_name));
+  XEN_ERROR(XEN_ERROR_TYPE("no-such-method"), 
+	    XEN_LIST_2(C_TO_XEN_STRING(method_name), 
+		       gen));
+#endif
+  return(XEN_FALSE);
+}
+
+
 static XEN call_set_method(XEN gen, XEN value, const char *method_name)
 {
 #if HAVE_GUILE
@@ -1434,7 +1453,7 @@ static XEN g_mus_set_frequency(XEN gen, XEN val)
 static XEN g_mus_run(XEN gen, XEN arg1, XEN arg2) 
 {
   #define H_mus_run "(" S_mus_run " gen :optional (arg1 0.0) (arg2 0.0)): apply gen to arg1 and arg2"
-  if (XEN_LIST_P(gen)) return(call_get_method(gen, S_mus_run));
+  if (XEN_LIST_P(gen)) return(call_get_method_3(gen, arg1, arg2, S_mus_run));
   XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ARG_1, S_mus_run, "a generator");
   return(C_TO_XEN_DOUBLE(mus_run(XEN_TO_MUS_ANY(gen),
 				 (XEN_NUMBER_P(arg1)) ? XEN_TO_C_DOUBLE(arg1) : 0.0,

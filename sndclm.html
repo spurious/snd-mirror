@@ -5369,6 +5369,9 @@ zip.scm:
 
 <p>In this section, we concentrate on the generators defined in generators.scm.  Nearly all of them respond to the
 generic functions mus-name, mus-reset, mus-describe, mus-frequency, mus-scaler, mus-offset, mus-phase, and mus-order.
+The parameters are generally "frequency", "n" (the number of sidebands), "r" (the ratio between successive sideband
+amplitudes), and "ratio" (the ratio between the
+frequency and the spacing between successive sidebands).
 </p>
 
 <pre>
@@ -6169,9 +6172,8 @@ with each component scaled by (r^(2k))/(2k)!.  r2sin output is not normalized.
 
 <p>defgenerator is an extension of <a href="sndscm.html#def-clm-struct">def-clm-struct</a>
 that sets up all the usual generator methods (discussed under <a href="#genericfunctions">"generic functions"</a> below).
+It is used to define all the generators in generators.scm.
 </p>
-
-<!-- TODO: defgenerator examples, doc, tests -->
 
 <br>
 

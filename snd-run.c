@@ -9287,6 +9287,22 @@ static xen_value *set_formant_radius_and_frequency_1(ptree *prog, xen_value **ar
 }
 
 
+static void mus_run_0f(int *args, ptree *pt) {FLOAT_RESULT = mus_run(CLM_ARG_1, 0.0, 0.0);}
+static void mus_run_1f(int *args, ptree *pt) {FLOAT_RESULT = mus_run(CLM_ARG_1, FLOAT_ARG_2, 0.0);}  
+static void mus_run_2f(int *args, ptree *pt) {FLOAT_RESULT = mus_run(CLM_ARG_1, FLOAT_ARG_2, FLOAT_ARG_3);}  
+
+static xen_value *mus_run_1(ptree *prog, xen_value **args, int num_args)
+{
+  if (num_args == 1)
+    return(package(prog, R_FLOAT, mus_run_0f, "mus_run_0f", args, 1));
+  if (args[2]->type == R_INT) single_to_float(prog, args, 2);
+  if (num_args == 2)
+    return(package(prog, R_FLOAT, mus_run_1f, "mus_run_1f", args, 2));
+  if (args[3]->type == R_INT) single_to_float(prog, args, 3);
+  return(package(prog, R_FLOAT, mus_run_2f, "mus_run_2f", args, 3));
+}
+
+
 /* ---------------- xcoeff/ycoeff ---------------- */
 
 
@@ -10114,16 +10130,16 @@ static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args)  \
 VCT_2_F(sine_bank, sine-bank)
 VCT_2_F(dot_product, dot-product)
 
+
 static void clm_0f(int *args, ptree *pt) {if (CLM_ARG_1) FLOAT_RESULT = MUS_RUN(CLM_ARG_1, 0.0, 0.0);}
 
 static void clm_1f(int *args, ptree *pt) {if (CLM_ARG_1) FLOAT_RESULT = MUS_RUN(CLM_ARG_1, FLOAT_ARG_2, 0.0);}
 
-
 static void clm_2f(int *args, ptree *pt) {if (CLM_ARG_1) FLOAT_RESULT = MUS_RUN(CLM_ARG_1, FLOAT_ARG_2, FLOAT_ARG_3);}
-
 
 static xen_value *clm_n(ptree *prog, xen_value **args, int num_args, xen_value *sf)
 {
+  /* this is handling the gen-as-applicable-func stuff (gen fm) = (oscil gen fm) etc */
   xen_value *temp;
   if (args[0]) FREE(args[0]);
   args[0] = make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, 0.0), R_VARIABLE);
@@ -12678,6 +12694,7 @@ static void init_walkers(void)
   INIT_WALKER(S_mus_file_name, make_walker(mus_file_name_0, NULL, NULL, 1, 1, R_STRING, false, 1, R_GENERATOR));
   INIT_WALKER(S_mus_describe, make_walker(mus_describe_0, NULL, NULL, 1, 1, R_STRING, false, 1, R_GENERATOR));
   INIT_WALKER(S_mus_close, make_walker(mus_close_0, NULL, NULL, 1, 1, R_INT, false, 1, R_ANY));              /* *output* again */
+  INIT_WALKER(S_mus_run, make_walker(mus_run_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_GENERATOR, R_NUMBER, R_NUMBER));
 
   INIT_WALKER(S_oscil, make_walker(oscil_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_one_zero, make_walker(one_zero_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));

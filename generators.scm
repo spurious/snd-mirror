@@ -24,7 +24,7 @@
 
   ;; an extension of def-clm-struct
 
-  ;; this adds the built-in methods mus-name, mus-reset, and mus-describe (if they don't already exist), and
+  ;; this adds the built-in methods mus-name, mus-reset, mus-run, and mus-describe (if they don't already exist), and
   ;;   mus-frequency if a "frequency" field exists (treated as radians)
   ;;   mus-phase if a "phase" or "angle" field exists
   ;;   mus-scaler if "r" or "amplitude",
@@ -127,97 +127,104 @@
 						    field-names)))
 				  (and fld (string-concatenate (list "-" fld))))))
 
-	 (methods (append original-methods
-			  `(append ; using append to splice out unwanted entries
-
-			    (if ,phase-field-name
-				(list 
-				 (list 'mus-phase
-				       (lambda (g)
-					 (,(string->symbol (string-append sname (or phase-field-name "oops"))) g))
-				       (lambda (g val)
-					 (set! (,(string->symbol (string-append sname (or phase-field-name "oops"))) g) val))))
-				(list))
-
-			    (if ,frequency-field-name
-				(list 
-				 (list 'mus-frequency
-				       (lambda (g)
-					 (radians->hz (,(string->symbol (string-append sname (or frequency-field-name "oops"))) g)))
-				       (lambda (g val)
-					 (set! (,(string->symbol (string-append sname (or frequency-field-name "oops"))) g) (hz->radians val))
-					 val)))
-				(list))
-
-			    (if ,offset-field-name
-				(list 
-				 (list 'mus-offset
-				       (lambda (g)
-					 (,(string->symbol (string-append sname (or offset-field-name "oops"))) g))
-				       (lambda (g val)
-					 (set! (,(string->symbol (string-append sname (or offset-field-name "oops"))) g) val)
-					 val)))
-				(list))
-
-			    (if ,order-field-name
-				(list  ; not settable -- maybe use mus-length?
-				 (list 'mus-order
-				       (lambda (g)
-					 (,(string->symbol (string-append sname (or order-field-name "oops"))) g))))
-				(list))
-
-			    (if ,scaler-field-name
-				(list 
-				 (list 'mus-scaler
-				       (lambda (g)
-					 (,(string->symbol (string-append sname (or scaler-field-name "oops"))) g))
-				       (lambda (g val)
-					 (set! (,(string->symbol (string-append sname (or scaler-field-name "oops"))) g) val))))
-				(list))
-
-			    (if ,(not (method-exists? 'mus-describe))
-				(list 
-				 (list 'mus-describe
-				       (lambda (g)
-					 (let ((desc ,sname)
-					       (first-time #t))
-					   (for-each
-					    (lambda (field)
-					      (set! desc (string-concatenate 
-							  (list desc (format #f "~A~A: ~A"
-									     (if first-time " " ", ")
-									     field
-									     ((symbol-binding #f (string->symbol (string-append ,sname "-" field))) g)))))
-					      (set! first-time #f))
-					    (list ,@field-names))
-					   desc))))
-				(list))
-
-			    (if ,(not (method-exists? 'mus-reset))
-				(list 
-				 (list 'mus-reset
-				       (lambda (g)
-					 (for-each
-					  (lambda (name type orig)
-					    (if (or (not (string=? type "clm"))
-						    (not ((symbol-binding #f (string->symbol (string-append ,sname "-" name))) g)))
-						(set! ((symbol-binding #f (string->symbol (string-append ,sname "-" name))) g) orig)
-						(mus-reset ((symbol-binding #f (string->symbol (string-append ,sname "-" name))) g))))
-					  (list ,@field-names)
-					  (list ,@(map symbol->string field-types))
-					  (list ,@(map (lambda (n)
-							 (if (and (list? n)
-								  (>= (length n) 2))
-							     (cadr n)
-							     0.0))
-						       fields))))))
-				(list))
-
-			    (if ,(not (method-exists? 'mus-name))
-				(list 
-				 (list 'mus-name
-				       (lambda (g) ,sname)))
-				(list))))))
+	 (methods `(append (if ,(not (null? original-methods))  ; using append to splice out unwanted entries
+			       ,original-methods
+			       (list))
+			   
+			   (if ,phase-field-name
+			       (list 
+				(list 'mus-phase
+				      (lambda (g)
+					(,(string->symbol (string-append sname (or phase-field-name "oops"))) g))
+				      (lambda (g val)
+					(set! (,(string->symbol (string-append sname (or phase-field-name "oops"))) g) val))))
+			       (list))
+			   
+			   (if ,frequency-field-name
+			       (list 
+				(list 'mus-frequency
+				      (lambda (g)
+					(radians->hz (,(string->symbol (string-append sname (or frequency-field-name "oops"))) g)))
+				      (lambda (g val)
+					(set! (,(string->symbol (string-append sname (or frequency-field-name "oops"))) g) (hz->radians val))
+					val)))
+			       (list))
+			   
+			   (if ,offset-field-name
+			       (list 
+				(list 'mus-offset
+				      (lambda (g)
+					(,(string->symbol (string-append sname (or offset-field-name "oops"))) g))
+				      (lambda (g val)
+					(set! (,(string->symbol (string-append sname (or offset-field-name "oops"))) g) val)
+					val)))
+			       (list))
+			   
+			   (if ,order-field-name
+			       (list  ; not settable -- maybe use mus-length?
+				(list 'mus-order
+				      (lambda (g)
+					(,(string->symbol (string-append sname (or order-field-name "oops"))) g))))
+			       (list))
+			   
+			   (if ,scaler-field-name
+			       (list 
+				(list 'mus-scaler
+				      (lambda (g)
+					(,(string->symbol (string-append sname (or scaler-field-name "oops"))) g))
+				      (lambda (g val)
+					(set! (,(string->symbol (string-append sname (or scaler-field-name "oops"))) g) val))))
+			       (list))
+			   
+			   (if ,(not (method-exists? 'mus-describe))
+			       (list 
+				(list 'mus-describe
+				      (lambda (g)
+					(let ((desc ,sname)
+					      (first-time #t))
+					  (for-each
+					   (lambda (field)
+					     (set! desc (string-concatenate 
+							 (list desc (format #f "~A~A: ~A"
+									    (if first-time " " ", ")
+									    field
+									    ((symbol-binding #f (string->symbol (string-append ,sname "-" field))) g)))))
+					     (set! first-time #f))
+					   (list ,@field-names))
+					  desc))))
+			       (list))
+			   
+			   (if ,(not (method-exists? 'mus-run))
+			       (list
+				(list 'mus-run
+				      (lambda (g arg1 arg2)
+					(,(string->symbol sname) g arg1)))))
+			   
+			   (if ,(not (method-exists? 'mus-reset))
+			       (list 
+				(list 'mus-reset
+				      (lambda (g)
+					(for-each
+					 (lambda (name type orig)
+					   (if (or (not (string=? type "clm"))
+						   (not ((symbol-binding #f (string->symbol (string-append ,sname "-" name))) g)))
+					       (set! ((symbol-binding #f (string->symbol (string-append ,sname "-" name))) g) orig)
+					       (mus-reset ((symbol-binding #f (string->symbol (string-append ,sname "-" name))) g))))
+					 (list ,@field-names)
+					 (list ,@(map symbol->string field-types))
+					 (list ,@(map (lambda (n)
+							(if (and (list? n)
+								 (>= (length n) 2))
+							    (cadr n)
+							    0.0))
+						      fields))))))
+			       (list))
+			   
+			   (if ,(not (method-exists? 'mus-name))
+			       (list 
+				(list 'mus-name
+				      (lambda (g) ,sname)))
+			       (list)))))
     
     `(begin
        (define ,(string->symbol (string-append sname "?"))
@@ -717,7 +724,11 @@
 (defgenerator (nrsin
 	       :make-wrapper (lambda (g)
 			       (set! (nrsin-gen g) (make-nrxysin (nrsin-frequency g) 1.0 (nrsin-n g) (nrsin-r g)))
-			       g))
+			       g)
+	       :methods (list
+			 (list 'mus-frequency
+			       (lambda (g) (mus-frequency (nrsin-gen g)))
+			       (lambda (g val) (set! (mus-frequency (nrsin-gen g)) val)))))
   (frequency 0.0) (n 1 :type int) (r 0.0)
   (gen #f :type clm))
 
@@ -742,7 +753,11 @@
 	       :make-wrapper (lambda (g)
 			       (set! (nrcos-frequency g) (hz->radians (nrcos-frequency g)))
 			       (set! (nrcos-n g) (+ 1 (nrcos-n g)))
-			       g))
+			       g)
+	       :methods (list
+			 (list 'mus-order
+			       (lambda (g) (1- (nrcos-n g)))
+			       (lambda (g val) (set! (nrcos-n g) (1+ val)) val))))
   (frequency 0.0) (n 1 :type int) (r 0.0) (angle 0.0))
 
 (define (nrcos gen fm)
@@ -981,7 +996,11 @@
 	       :make-wrapper (lambda (g)
 			       (set! (nkssb-frequency g) (hz->radians (nkssb-frequency g)))
 			       (set! (nkssb-n g) (+ 1 (nkssb-n g))) ; sum goes 1 to n-1
-			       g))
+			       g)
+	       :methods (list
+			 (list 'mus-order
+			       (lambda (g) (1- (nkssb-n g)))
+			       (lambda (g val) (set! (nkssb-n g) (1+ val)) val))))
   (frequency 0.0) (ratio 1.0) (n 1 :type int) (angle 0.0))
 
 (define (nkssb gen fm)
@@ -1287,12 +1306,13 @@
 			       (set! (rcos-osc g) (make-oscil (rcos-frequency g) (* 0.5 pi)))
 			       g)
 	       :methods (list
+			 (list 'mus-frequency
+			       (lambda (g) (mus-frequency (rcos-osc g)))
+			       (lambda (g val) (set! (mus-frequency (rcos-osc g)) val) val))
+				       
 			 (list 'mus-phase
-			       (lambda (g)
-				 (mus-phase (rcos-osc g)))
-			       (lambda (g val)
-				 (set! (mus-phase (rcos-osc g)) val)
-				 val))))
+			       (lambda (g) (mus-phase (rcos-osc g)))
+			       (lambda (g val) (set! (mus-phase (rcos-osc g)) val) val))))
   (frequency 0.0) (r 1.0)
   (osc #f :type clm))
 
@@ -1669,12 +1689,14 @@
 				 (set! (ercos-scaler g) (* (sinh (ercos-r g)) (ercos-offset g))))
 			       g)
 	       :methods (list
+			 (list 'mus-frequency
+			       (lambda (g) (mus-frequency (ercos-osc g)))
+			       (lambda (g val) (set! (mus-frequency (ercos-osc g)) val) val))
+
 			 (list 'mus-phase
-			       (lambda (g)
-				 (mus-phase (ercos-osc g)))
-			       (lambda (g val)
-				 (set! (mus-phase (ercos-osc g)) val)
-				 val))))
+			       (lambda (g) (mus-phase (ercos-osc g)))
+			       (lambda (g val) (set! (mus-phase (ercos-osc g)) val) val))))
+
   (frequency 440.0) (r 1.0 :type float)
   (osc #f :type clm) scaler offset cosh-t)
 
@@ -1875,12 +1897,13 @@
 			       (set! (eoddcos-osc g) (make-oscil (eoddcos-frequency g) (* 0.5 pi)))
 			       g)
 	       :methods (list
-			 (list 'mus-phase
-			       (lambda (g)
-				 (mus-phase (eoddcos-osc g)))
-			       (lambda (g val)
-				 (set! (mus-phase (eoddcos-osc g)) val)
-				 val))))
+			 (list 'mus-frequency 
+			       (lambda (g) (mus-frequency (eoddcos-osc g)))
+			       (lambda (g val) (set! (mus-frequency (eoddcos-osc g)) val) val))
+
+			 (list 'mus-phase 
+			       (lambda (g) (mus-phase (eoddcos-osc g)))
+			       (lambda (g val) (set! (mus-phase (eoddcos-osc g)) val) val))))
   (frequency 0.0) (r 1.0)
   (osc #f :type clm))
 
@@ -1960,12 +1983,13 @@
 			       (set! (rkcos-r g) (max -0.9999999 (min 0.9999999 (rkcos-r g)))) ; or clip at 0.0?
 			       g)
 	       :methods (list
+			 (list 'mus-frequency
+			       (lambda (g) (mus-frequency (rkcos-osc g)))
+			       (lambda (g val) (set! (mus-frequency (rkcos-osc g)) val) val))
+
 			 (list 'mus-phase
-			       (lambda (g)
-				 (mus-phase (rkcos-osc g)))
-			       (lambda (g val)
-				 (set! (mus-phase (rkcos-osc g)) val)
-				 val))))
+			       (lambda (g) (mus-phase (rkcos-osc g)))
+			       (lambda (g val) (set! (mus-phase (rkcos-osc g)) val) val))))
   (frequency 0.0) (r 0.0)
   (osc #f :type clm))
 
@@ -2254,12 +2278,13 @@
 			       (set! (r2k!cos-osc g) (make-oscil (r2k!cos-frequency g)))
 			       g)
 	       :methods (list
+			 (list 'mus-frequency
+			       (lambda (g) (mus-frequency (r2k!cos-osc g)))
+			       (lambda (g val) (set! (mus-frequency (r2k!cos-osc g)) val) val))
+
 			 (list 'mus-phase
-			       (lambda (g)
-				 (mus-phase (r2k!cos-osc g)))
-			       (lambda (g val)
-				 (set! (mus-phase (r2k!cos-osc g)) val)
-				 val))))
+			       (lambda (g) (mus-phase (r2k!cos-osc g)))
+			       (lambda (g val) (set! (mus-phase (r2k!cos-osc g)) val) val))))
   (frequency 0.0) (r 0.0) (k 0.0)
   (osc #f :type clm))
 
@@ -2465,7 +2490,11 @@
 (defgenerator (dblsum
 	       :make-wrapper (lambda (g)
 			       (set! (dblsum-frequency g) (hz->radians (* 2 (dblsum-frequency g))))
-			       g))
+			       g)
+	       :methods (list
+			 (list 'mus-frequency
+			       (lambda (g) (radians->hz (* 0.5 (dblsum-frequency g))))
+			       (lambda (g val) (set! (dblsum-frequency g) (hz->radians (* 2 val))) val))))
   (frequency 0.0) (r 0.0) (angle 0.0))
 
 (define (dblsum gen fm)
@@ -2632,13 +2661,15 @@
 (defgenerator (abssin
 	       :make-wrapper (lambda (g)
 			       (set! (abssin-osc g) (make-oscil (abssin-frequency g)))
-			       g)	       :methods (list
+			       g)	       
+	       :methods (list
+			 (list 'mus-frequency
+			       (lambda (g) (mus-frequency (abssin-osc g)))
+			       (lambda (g val) (set! (mus-frequency (abssin-osc g)) val) val))
+
 			 (list 'mus-phase
-			       (lambda (g)
-				 (mus-phase (abssin-osc g)))
-			       (lambda (g val)
-				 (set! (mus-phase (abssin-osc g)) val)
-				 val))))
+			       (lambda (g) (mus-phase (abssin-osc g)))
+			       (lambda (g val) (set! (mus-phase (abssin-osc g)) val) val))))
   (frequency 0.0)
   (osc #f :type clm))
 
@@ -3895,7 +3926,12 @@ index 10 (so 10/2 is the bes-jn arg):
 							   (/ (* pi pi) 6.0)
 							   (/ pi -4.0)
 							   (/ 1.0 12.0)))
-			       g))
+			       g)
+	       :methods (list
+			 (list 'mus-reset
+			       (lambda (g)
+				 (set! (k3sin-frequency g) 0.0)
+				 (set! (k3sin-angle g) 0.0)))))
   (frequency 0.0) (angle 0.0) (coeffs #f :type vct))
 		   
 (define (k3sin gen fm)
@@ -4046,7 +4082,17 @@ index 10 (so 10/2 is the bes-jn arg):
 						      (adjustable-square-wave-frequency g) 
 						      (- (adjustable-square-wave-amplitude g))
 						      (* 2.0 pi (- 1.0 (adjustable-square-wave-duty-factor g)))))
-		 g))
+		 g)
+
+	       :methods (list
+			 (list 'mus-frequency
+			       (lambda (g) (mus-frequency (adjustable-square-wave-p1 g)))
+			       (lambda (g val) (set! (mus-frequency (adjustable-square-wave-p1 g)) val) val))
+
+			 (list 'mus-phase
+			       (lambda (g) (mus-phase (adjustable-square-wave-p1 g)))
+			       (lambda (g val) (set! (mus-phase (adjustable-square-wave-p1 g)) val) val))))
+
   (frequency 0.0) (duty-factor 0.5) (amplitude 1.0)
   (sum 0.0) (p1 #f :type clm) (p2 #f :type clm))
 
@@ -4076,7 +4122,17 @@ index 10 (so 10/2 is the bes-jn arg):
 		   (set! (adjustable-triangle-wave-top g) (- 1.0 df))
 		   (if (not (= df 0.0))
 		       (set! (adjustable-triangle-wave-scl g) (/ (adjustable-triangle-wave-amplitude g) df)))
-		   g)))
+		   g))
+
+	       :methods (list
+			 (list 'mus-frequency
+			       (lambda (g) (mus-frequency (adjustable-triangle-wave-gen g)))
+			       (lambda (g val) (set! (mus-frequency (adjustable-triangle-wave-gen g)) val) val))
+
+			 (list 'mus-phase
+			       (lambda (g) (mus-phase (adjustable-triangle-wave-gen g)))
+			       (lambda (g val) (set! (mus-phase (adjustable-triangle-wave-gen g)) val) val))))
+
   (frequency 0.0) (duty-factor 0.5) (amplitude 1.0) 
   (gen #f :type clm) (top 0.0) (scl 0.0))
 
@@ -4106,7 +4162,17 @@ index 10 (so 10/2 is the bes-jn arg):
 		   (set! (adjustable-sawtooth-wave-top g) (- 1.0 df))
 		   (if (not (= df 0.0))
 		       (set! (adjustable-sawtooth-wave-scl g) (/ (adjustable-sawtooth-wave-amplitude g) df)))
-		   g)))
+		   g))
+
+	       :methods (list
+			 (list 'mus-frequency
+			       (lambda (g) (mus-frequency (adjustable-sawtooth-wave-gen g)))
+			       (lambda (g val) (set! (mus-frequency (adjustable-sawtooth-wave-gen g)) val) val))
+
+			 (list 'mus-phase
+			       (lambda (g) (mus-phase (adjustable-sawtooth-wave-gen g)))
+			       (lambda (g val) (set! (mus-phase (adjustable-sawtooth-wave-gen g)) val) val))))
+
   (frequency 0.0) (duty-factor 0.5) (amplitude 1.0) 
   (gen #f :type clm) (top 0.0) (scl 0.0))
 
@@ -4130,14 +4196,23 @@ index 10 (so 10/2 is the bes-jn arg):
 
 ;;; and just for laughs... (almost anything would fit in this hack)
 (defgenerator (adjustable-oscil 
-	       :make-wrapper 
-	       (lambda (g)
-		 (let ((df (adjustable-oscil-duty-factor g)))
-		   (set! (adjustable-oscil-gen g) (make-oscil (adjustable-oscil-frequency g)))
-		   (set! (adjustable-oscil-top g) (- 1.0 df))
-		   (if (not (= df 0.0))
-		       (set! (adjustable-oscil-scl g) (/ 1.0 df)))
-		   g)))
+	       :make-wrapper (lambda (g)
+			       (let ((df (adjustable-oscil-duty-factor g)))
+				 (set! (adjustable-oscil-gen g) (make-oscil (adjustable-oscil-frequency g)))
+				 (set! (adjustable-oscil-top g) (- 1.0 df))
+				 (if (not (= df 0.0))
+				     (set! (adjustable-oscil-scl g) (/ 1.0 df)))
+				 g))
+
+	       :methods (list
+			 (list 'mus-frequency
+			       (lambda (g) (mus-frequency (adjustable-oscil-gen g)))
+			       (lambda (g val) (set! (mus-frequency (adjustable-oscil-gen g)) val) val))
+
+			 (list 'mus-phase
+			       (lambda (g) (mus-phase (adjustable-oscil-gen g)))
+			       (lambda (g val) (set! (mus-phase (adjustable-oscil-gen g)) val) val))))
+
   (frequency 0.0) (duty-factor 0.5)
   (gen #f :type clm) (top 0.0) (scl 0.0))
 
@@ -4183,11 +4258,20 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;; --------------------------------------------------------------------------------
 
 (defgenerator (round-interp 
-	       :make-wrapper 
-	       (lambda (g)
-		 (set! (round-interp-rnd g) (make-rand-interp (round-interp-frequency g) (round-interp-amplitude g)))
-		 (set! (round-interp-flt g) (make-moving-average (round-interp-n g)))
-		 g))
+	       :make-wrapper (lambda (g)
+			       (set! (round-interp-rnd g) (make-rand-interp (round-interp-frequency g) (round-interp-amplitude g)))
+			       (set! (round-interp-flt g) (make-moving-average (round-interp-n g)))
+			       g)
+
+	       :methods (list
+			 (list 'mus-frequency
+			       (lambda (g) (mus-frequency (round-interp-rnd g)))
+			       (lambda (g val) (set! (mus-frequency (round-interp-rnd g)) val) val))
+
+			 (list 'mus-phase
+			       (lambda (g) (mus-phase (round-interp-rnd g)))
+			       (lambda (g val) (set! (mus-phase (round-interp-rnd g)) val) val))))
+
   (frequency 0.0) (n 1) (amplitude 1.0)
   (rnd #f :type clm) (flt #f :type clm))
 
@@ -4236,18 +4320,8 @@ index 10 (so 10/2 is the bes-jn arg):
 
 
 ;;; --------------------------------------------------------------------------------
-
-(defmacro run-with-pm (gen pm . body)
-  `(begin
-     (set! (mus-phase ,gen) (+ (mus-phase ,gen) ,pm))
-     (let ((result ((lambda () ,@body))))
-       (set! (mus-phase ,gen) (- (mus-phase ,gen) ,pm))
-       result)))
-
-;;; TODO: a better test would compare oscils
-;;; TODO: check out run with macros -- for run-with-pm we could probably add it to the walker list
-
-;;; if we had mus-run (is it in snd-run?), an optimizable form would be:
+;;;
+;;; pm with any generator that has mus-phase and mus-run:
 
 (define (run-with-fm-and-pm gen fm pm)
   (set! (mus-phase gen) (+ (mus-phase gen) pm))
@@ -4255,6 +4329,19 @@ index 10 (so 10/2 is the bes-jn arg):
     (set! (mus-phase gen) (- (mus-phase gen) pm))
     result))
 
+#|
+(let ((gen1 (make-oscil 440.0))
+      (gen2 (make-oscil 440.0)))
+  (do ((i 0 (1+ i)))
+      ((= i 1000))
+    (let* ((pm (- 1.0 (random 2.0)))
+	   (val1 (oscil gen1 0.0 pm))
+	   (val2 (run-with-fm-and-pm gen2 0.0 pm)))
+      (if (fneq val1 val2)
+	  (snd-display ";run-with-fm-and-pm: ~A ~A" val1 val2)))))
+|#
+
+;;; TODO: doc/test pmmer
 
 ;;; --------------------------------------------------------------------------------
 
