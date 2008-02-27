@@ -316,6 +316,7 @@ extern "C" {
 #endif
 
 typedef void mus_error_handler_t(int type, char *msg);
+
 mus_error_handler_t *mus_error_set_handler(mus_error_handler_t *new_error_handler);
 int mus_make_error(char *error_name);
 const char *mus_error_type_to_string(int err);
@@ -551,9 +552,6 @@ off_t mus_header_true_length(void);
 int mus_header_original_format(void);
 off_t mus_samples_to_bytes(int format, off_t size);
 off_t mus_bytes_to_samples(int format, off_t size);
-#if (!SNDLIB_DISABLE_DEPRECATED)
-  int mus_header_write_next_header(int chan, int srate, int chans, int loc, int siz, int format, const char *comment, int len);
-#endif
 int mus_header_read(const char *name);
 int mus_header_write(const char *name, int type, int srate, int chans, off_t loc, off_t size_in_samples, int format, const char *comment, int len);
 int mus_write_header(const char *name, int type, int in_srate, int in_chans, off_t size_in_samples, int format, const char *comment);

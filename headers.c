@@ -731,11 +731,7 @@ static void write_next_comment(int fd, const char *comment, int len, int loc)
     }
 }
 
-
-#if SNDLIB_DISABLE_DEPRECATED
-static
-#endif
-int mus_header_write_next_header(int fd, int wsrate, int wchans, int loc, int siz, int format, const char *comment, int len)
+static int mus_header_write_next_header(int fd, int wsrate, int wchans, int loc, int siz, int format, const char *comment, int len)
 {
   int i, j;
   write_four_chars((unsigned char *)hdrbuf, I_DSND); /* ".snd" */

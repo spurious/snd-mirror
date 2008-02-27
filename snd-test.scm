@@ -54219,6 +54219,135 @@ EDITS: 1
 	(calling-all-animals)
 	(calling-all-generators)
 
+	(let ((funcs (list nssb nxysin nxycos nxy1cos nxy1sin noddsin noddcos noddssb ncos2 npcos
+			   nrsin nrcos nrssb nkssb nsincos npos1cos npos3cos rcos rssb rxysin rxycos
+			   rxyk!sin rxyk!cos ercos erssb r2sin r2cos r2ssb eoddcos rkcos rksin rkssb
+			   rk!cos rk!ssb r2k!cos k2sin k2cos k2ssb dblsum rkoddssb krksin abssin
+			   abcos absin r2k2cos blsaw bess jjcos j0evencos j2cos jpcos jncos 
+			   j0j1cos jycos sin2n blackman fmssb k3sin izcos
+			   adjustable-square-wave adjustable-triangle-wave adjustable-sawtooth-wave adjustable-oscil 
+			   round-interp))
+	      (make-funcs (list make-nssb make-nxysin make-nxycos make-nxy1cos make-nxy1sin make-noddsin make-noddcos make-noddssb make-ncos2 make-npcos
+				make-nrsin make-nrcos make-nrssb make-nkssb make-nsincos make-npos1cos make-npos3cos make-rcos make-rssb make-rxysin make-rxycos
+				make-rxyk!sin make-rxyk!cos make-ercos make-erssb make-r2sin make-r2cos make-r2ssb make-eoddcos make-rkcos make-rksin make-rkssb
+				make-rk!cos make-rk!ssb make-r2k!cos make-k2sin make-k2cos make-k2ssb make-dblsum make-rkoddssb make-krksin make-abssin
+				make-abcos make-absin make-r2k2cos make-blsaw make-bess make-jjcos make-j0evencos make-j2cos make-jpcos make-jncos
+				make-j0j1cos make-jycos make-sin2n make-blackman make-fmssb make-k3sin make-izcos
+				make-adjustable-square-wave make-adjustable-triangle-wave make-adjustable-sawtooth-wave make-adjustable-oscil
+				make-round-interp))
+	      (pfuncs (list nssb? nxysin? nxycos? nxy1cos? nxy1sin? noddsin? noddcos? noddssb? ncos2? npcos?
+			    nrsin? nrcos? nrssb? nkssb? nsincos? npos1cos? npos3cos? rcos? rssb? rxysin? rxycos?
+			    rxyk!sin? rxyk!cos? ercos? erssb? r2sin? r2cos? r2ssb? eoddcos? rkcos? rksin? rkssb?
+			    rk!cos? rk!ssb? r2k!cos? k2sin? k2cos? k2ssb? dblsum? rkoddssb? krksin? abssin?
+			    abcos? absin? r2k2cos? blsaw? bess? jjcos? j0evencos? j2cos? jpcos? jncos?
+			    j0j1cos? jycos? sin2n? blackman? fmssb? k3sin? izcos?
+			    adjustable-square-wave? adjustable-triangle-wave? adjustable-sawtooth-wave? adjustable-oscil?
+			    round-interp?))
+	      (names (list 'nssb 'nxysin 'nxycos 'nxy1cos 'nxy1sin 'noddsin 'noddcos 'noddssb 'ncos2 'npcos
+			   'nrsin 'nrcos 'nrssb 'nkssb 'nsincos 'npos1cos 'npos3cos 'rcos 'rssb 'rxysin 'rxycos
+			   'rxyk!sin 'rxyk!cos 'ercos 'erssb 'r2sin 'r2cos 'r2ssb 'eoddcos 'rkcos 'rksin 'rkssb
+			   'rk!cos 'rk!ssb 'r2k!cos 'k2sin 'k2cos 'k2ssb 'dblsum 'rkoddssb 'krksin 'abssin
+			   'abcos 'absin 'r2k2cos 'blsaw 'bess 'jjcos 'j0evencos 'j2cos 'jpcos 'jncos
+			   'j0j1cos 'jycos 'sin2n 'blackman 'fmssb 'k3sin 'izcos
+			   'adjustable-square-wave 'adjustable-triangle-wave 'adjustable-sawtooth-wave 'adjustable-oscil
+			   'round-interp))
+	      (methods (list nssb-methods nxysin-methods nxycos-methods nxy1cos-methods nxy1sin-methods 
+			     noddsin-methods noddcos-methods noddssb-methods ncos2-methods npcos-methods 
+			     nrsin-methods nrcos-methods nrssb-methods nkssb-methods nsincos-methods 
+			     npos1cos-methods npos3cos-methods rcos-methods rssb-methods rxysin-methods rxycos-methods 
+			     rxyk!sin-methods rxyk!cos-methods ercos-methods erssb-methods r2sin-methods 
+			     r2cos-methods r2ssb-methods eoddcos-methods rkcos-methods rksin-methods rkssb-methods 
+			     rk!cos-methods rk!ssb-methods r2k!cos-methods k2sin-methods k2cos-methods k2ssb-methods 
+			     dblsum-methods rkoddssb-methods krksin-methods abssin-methods 
+			     abcos-methods absin-methods r2k2cos-methods blsaw-methods bess-methods 
+			     jjcos-methods j0evencos-methods j2cos-methods jpcos-methods jncos-methods 
+			     j0j1cos-methods jycos-methods sin2n-methods blackman-methods fmssb-methods k3sin-methods izcos-methods 
+			     adjustable-square-wave-methods adjustable-triangle-wave-methods 
+			     adjustable-sawtooth-wave-methods adjustable-oscil-methods 
+			     round-interp-methods))
+	      )
+	  
+	  
+	  (for-each
+	   (lambda (mf rf pf name mth)
+	     (let ((gen (mf)))
+	       (if (not (pf gen))
+		   (snd-display ";make-* generators ~A: ~A" name gen))
+	       (rf gen 0.0)
+	       (mus-reset gen)
+	       (if (not (string=? (mus-name gen) (symbol->string name)))
+		   (snd-display ";mus-name generators: ~A ~A" (mus-name gen) (symbol->string name)))
+	       (mus-run gen 0.0 0.0)
+	       (let* ((has-freq (assoc 'mus-frequency (mth)))
+		      (has-n (and (assoc 'mus-order (mth))
+				  (pf (catch #t (lambda () (mf :n 3)) (lambda args (car args))))))
+		      (has-r (and (assoc 'mus-scaler (mth))
+				  (pf (catch #t (lambda () (mf :r 0.75)) (lambda args (car args)))))))
+		 (if has-freq
+		     (begin
+		       (set! gen (mf :frequency 440.0))
+		       (if (fneq (mus-frequency gen) 440.0) 
+			   (snd-display ";mus-frequency from make-~A: ~A" name (mus-frequency gen)))))
+		 (if has-n
+		     (begin
+		       (set! gen (mf :n 3))
+		       (if (not (= (mus-order gen) 3))
+			   (snd-display ";mus-order from make-~A: ~A" name (mus-order gen)))))
+		 (if has-r
+		     (begin
+		       (set! gen (mf :r 0.75))
+		       (if (fneq (mus-scaler gen) 0.75)
+			   (snd-display ";mus-scaler from make-~A: ~A" name (mus-scaler gen))))))))
+	   
+	   make-funcs funcs pfuncs names methods))
+	
+	
+	(let ((gen1 (make-oscil 440.0))
+	      (gen2 (make-oscil 440.0)))
+	  (do ((i 0 (1+ i)))
+	      ((= i 1000))
+	    (let* ((pm (- 1.0 (random 2.0)))
+		   (val1 (oscil gen1 0.0 pm))
+		   (val2 (run-with-fm-and-pm gen2 0.0 pm)))
+	      (if (fneq val1 val2)
+		  (snd-display ";run-with-fm-and-pm: ~A ~A" val1 val2)))))
+	
+	(let ((gen1 (make-oscil 440.0))
+	      (gen2 (make-oscil 440.0))
+	      (happy #t))
+	  (run 
+	   (lambda ()
+	     (do ((i 0 (1+ i)))
+		 ((or (not happy)
+		      (= i 1000)))
+	       (let* ((pm (- 1.0 (random 2.0)))
+		      (val1 (oscil gen1 0.0 pm))
+		      (val2 (run-with-fm-and-pm gen2 0.0 pm)))
+		 (if (fneq val1 val2)
+		     (set! happy #f))))))
+	  (if (not happy)
+	      (snd-display ";run-with-fm-and-pm unhappy")))
+	
+	(let ((gen (make-nssb 440.0 :n 3))
+	      (order 0)
+	      (frequency 0.0)
+	      (val 0.0)
+	      (name "hiho"))
+	  (run
+	   (lambda ()
+	     (set! order (mus-order gen))
+	     (set! frequency (mus-frequency gen))
+	     (nssb gen 1.0)
+	     (set! val (mus-run gen 0.0 0.0))
+	     (set! name (mus-name gen))
+	     ))
+	  (if (not (string=? name "nssb")) (snd-display ";run mus-name nssb: ~A" name))
+	  (if (not (= order 3)) (snd-display ";run mus-order nssb: ~A" order))
+	  (if (fneq frequency 440.0) (snd-display ";run mus-frequency nssb: ~A" frequency))
+	  (if (fneq val 0.371) (snd-display ";run mus-run nssb: ~A" val)))
+	
+	;; mus-reset and mus-describe in this case have an embedded for-each, so not optimizable
+
 	(if (not (null? (sounds))) (for-each close-sound (sounds)))
 	(set! (optimization) old-opt-23)
 	

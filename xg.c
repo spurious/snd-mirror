@@ -15,6 +15,7 @@
  *     HAVE_GTK_LINK_BUTTON_NEW for 2.9.0
  *     HAVE_GTK_LABEL_GET_LINE_WRAP_MODE for 2.10.0
  *     HAVE_GTK_WIDGET_GET_HAS_TOOLTIP for 2.11.n
+ *     HAVE_GTK_TEST_WIDGET_CLICK for 2.13.0
  *     HAVE_CAIRO_CREATE for cairo
  *     HAVE_CAIRO_GET_USER_DATA for cairo 1.4.0
  *
@@ -49,8 +50,9 @@
  *     win32-specific functions
  *
  * HISTORY:
+ *     --------
  *     9-Mar:     removed all *_get_type functions (nearly 300!).
- *     5-Mar:     cairo and more gtkprint.
+ *     5-Mar-07:  cairo and more gtkprint.
  *     --------
  *     26-Aug:    removed --with-x11, WITH_GTK_AND_X11, xg-x11.h.
  *     4-Aug:     added a form of g_object_get and gtk_settings_get_for_screen.
@@ -58,13 +60,13 @@
  *     17-Jul:    g_signal_connect and other related macros.
  *     21-Apr:    Gauche support.
  *     29-Mar:    Forth support.
- *     7-Mar:     if g_set_error, return the error message, not the GError pointer
+ *     7-Mar-06:  if g_set_error, return the error message, not the GError pointer
  *     --------
  *     9-Jul:     Collapse 2.3.* into 2.3.6, 2.5.* into 2.5.6.
  *     13-Jun:    folded xg-ruby.c into xg.c.
  *     21-Feb:    changed libxm to libxg, xm-version to xg-version.
  *     10-Jan:    plugged some memory leaks.
- *     4-Jan:     removed deprecated XEN_VECTOR_ELEMENTS.
+ *     4-Jan-05:  removed deprecated XEN_VECTOR_ELEMENTS.
  *     --------
  *     8-Dec:     added some g_log handler funcs.
  *     6-Dec:     check for lost callback context.
@@ -77,13 +79,13 @@
  *     4-Apr:     various additions, deletions, and bugfixes for snd-test 26
  *     29-Mar:    support for some ... args.
  *     22-Mar:    g_source_remove and related changes.
- *     12-Feb:    g_list_nth_data (Kjetil S. Matheussen).
+ *     12-Feb-04: g_list_nth_data (Kjetil S. Matheussen).
  *     --------
  *     15-Sep:    removed client_window GtkIMMulticontext struct field.
  *     26-May:    removed nugatory GdkInputFunction stuff and some unused type converters.
  *     1-Apr:     gdk_property_get uses scm_mem2string in some cases now.
  *     31-Mar:    gchar* -> xen string bugfix (thanks to Friedrich Delgado Friedrichs).
- *     10-Mar:    Ruby Xm_Version.
+ *     10-Mar-03: Ruby Xm_Version.
  *     --------
  *     18-Nov:    Ruby/Gtk bugfixes.
  *     25-Oct:    removed (deprecated) gdk_set_pointer_hooks
@@ -772,7 +774,6 @@ XM_TYPE_PTR(GtkRequisition_, GtkRequisition*)
 XM_TYPE_PTR_1(GtkAllocation_, GtkAllocation*)
 #define XEN_TO_C_GtkDirectionType(Arg) (GtkDirectionType)(XEN_TO_C_INT(Arg))
 #define XEN_GtkDirectionType_P(Arg) XEN_INTEGER_P(Arg)
-#define C_TO_XEN_GtkType(Arg) C_TO_XEN_ULONG(Arg)
 #define XEN_TO_C_GtkType(Arg) (GtkType)(XEN_TO_C_ULONG(Arg))
 #define XEN_GtkType_P(Arg) XEN_ULONG_P(Arg)
 XM_TYPE_PTR_2(AtkObject_, AtkObject*)
@@ -1008,14 +1009,9 @@ XM_TYPE_PTR(GtkPrintOperation_, GtkPrintOperation*)
 XM_TYPE_PTR(GtkPrintSettings_, GtkPrintSettings*)
 XM_TYPE_1(GtkUnit, GtkUnit)
 #define C_TO_XEN_GtkPrintOperationResult(Arg) C_TO_XEN_INT(Arg)
-#define XEN_TO_C_GtkPrintOperationResult(Arg) (GtkPrintOperationResult)(XEN_TO_C_INT(Arg))
-#define XEN_GtkPrintOperationResult_P(Arg) XEN_INTEGER_P(Arg)
-#define C_TO_XEN_GtkPrintOperationAction(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkPrintOperationAction(Arg) (GtkPrintOperationAction)(XEN_TO_C_INT(Arg))
 #define XEN_GtkPrintOperationAction_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_GtkPrintStatus(Arg) C_TO_XEN_INT(Arg)
-#define XEN_TO_C_GtkPrintStatus(Arg) (GtkPrintStatus)(XEN_TO_C_INT(Arg))
-#define XEN_GtkPrintStatus_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_1(GtkPageSetupDoneFunc, GtkPageSetupDoneFunc)
 XM_TYPE_PTR_1(GtkPrintOperationPreview_, GtkPrintOperationPreview*)
 XM_TYPE_1(GtkPrintSettingsFunc, GtkPrintSettingsFunc)
@@ -1061,8 +1057,6 @@ XM_TYPE_PTR(cairo_pattern_t_, cairo_pattern_t*)
 #define XEN_cairo_line_join_t_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR_1(cairo_matrix_t_, cairo_matrix_t*)
 #define C_TO_XEN_bool(Arg) C_TO_XEN_BOOLEAN(Arg)
-#define XEN_TO_C_bool(Arg) (bool)(XEN_TO_C_BOOLEAN(Arg))
-#define XEN_bool_P(Arg) XEN_BOOLEAN_P(Arg)
 XM_TYPE_PTR(cairo_font_options_t_, cairo_font_options_t*)
 #define C_TO_XEN_cairo_status_t(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_cairo_status_t(Arg) (cairo_status_t)(XEN_TO_C_INT(Arg))
@@ -1076,10 +1070,8 @@ XM_TYPE_PTR(cairo_font_options_t_, cairo_font_options_t*)
 #define C_TO_XEN_cairo_hint_metrics_t(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_cairo_hint_metrics_t(Arg) (cairo_hint_metrics_t)(XEN_TO_C_INT(Arg))
 #define XEN_cairo_hint_metrics_t_P(Arg) XEN_INTEGER_P(Arg)
-#define C_TO_XEN_cairo_font_slant_t(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_cairo_font_slant_t(Arg) (cairo_font_slant_t)(XEN_TO_C_INT(Arg))
 #define XEN_cairo_font_slant_t_P(Arg) XEN_INTEGER_P(Arg)
-#define C_TO_XEN_cairo_font_weight_t(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_cairo_font_weight_t(Arg) (cairo_font_weight_t)(XEN_TO_C_INT(Arg))
 #define XEN_cairo_font_weight_t_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR(cairo_scaled_font_t_, cairo_scaled_font_t*)
@@ -1088,20 +1080,15 @@ XM_TYPE_PTR(cairo_font_face_t_, cairo_font_face_t*)
 XM_TYPE_PTR_1(cairo_font_extents_t_, cairo_font_extents_t*)
 XM_TYPE_PTR_1(cairo_text_extents_t_, cairo_text_extents_t*)
 #define C_TO_XEN_cairo_font_type_t(Arg) C_TO_XEN_INT(Arg)
-#define XEN_TO_C_cairo_font_type_t(Arg) (cairo_font_type_t)(XEN_TO_C_INT(Arg))
-#define XEN_cairo_font_type_t_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR_1(cairo_user_data_key_t_, cairo_user_data_key_t*)
 XM_TYPE_1(cairo_destroy_func_t, cairo_destroy_func_t)
 XM_TYPE_PTR(cairo_path_t_, cairo_path_t*)
 #define C_TO_XEN_cairo_surface_type_t(Arg) C_TO_XEN_INT(Arg)
-#define XEN_TO_C_cairo_surface_type_t(Arg) (cairo_surface_type_t)(XEN_TO_C_INT(Arg))
 #define XEN_cairo_surface_type_t_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_cairo_format_t(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_cairo_format_t(Arg) (cairo_format_t)(XEN_TO_C_INT(Arg))
 #define XEN_cairo_format_t_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_cairo_pattern_type_t(Arg) C_TO_XEN_INT(Arg)
-#define XEN_TO_C_cairo_pattern_type_t(Arg) (cairo_pattern_type_t)(XEN_TO_C_INT(Arg))
-#define XEN_cairo_pattern_type_t_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_cairo_extend_t(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_cairo_extend_t(Arg) (cairo_extend_t)(XEN_TO_C_INT(Arg))
 #define XEN_cairo_extend_t_P(Arg) XEN_INTEGER_P(Arg)
@@ -47915,7 +47902,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("22-Feb-08"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("27-Feb-08"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

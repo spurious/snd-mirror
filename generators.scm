@@ -4341,7 +4341,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	  (snd-display ";run-with-fm-and-pm: ~A ~A" val1 val2)))))
 |#
 
-;;; TODO: doc/test pmmer
+;;; TODO: doc pmmer
 
 ;;; --------------------------------------------------------------------------------
 

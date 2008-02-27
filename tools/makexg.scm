@@ -201,6 +201,9 @@
 
 	"GtkPrintOperationPreview*" "GtkPrintSettingsFunc" "cairo_matrix_t*" "cairo_glyph_t*"
 	"cairo_font_extents_t*" "cairo_text_extents_t*" "cairo_user_data_key_t*" "cairo_destroy_func_t"
+	"cairo_font_weight_t" "cairo_font_slant_t"
+
+	"GtkType" "GtkPrintOperationAction"
 	))
 
 (define no-xen-p 
@@ -216,6 +219,8 @@
 	"GtkImageType" "GtkTreeModelFlags" "gint16" "gint8" "gshort" "guint8" "lambda" 
 
 	"time_t" "GtkWindowGroup*" "GtkSettings*" "GdkDevice*"
+	"GtkPrintOperationResult" "GtkPrintStatus"
+	"cairo_font_type_t" "bool" "cairo_pattern_type_t"
 	))
 
 (define no-xen-to-c 
@@ -231,6 +236,9 @@
 	"GtkImageType" "GtkTreeModelFlags" "etc" "gint16" "gshort"
 
 	"GtkWindowGroup*" "time_t" "GtkSettings*" "GdkDevice*"
+	"GtkPrintOperationResult" "GtkPrintStatus" "bool"
+
+	"cairo_surface_type_t" "cairo_pattern_type_t" "cairo_font_type_t"
 	))
 
 (define (cadr-str data)

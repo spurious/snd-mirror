@@ -9042,6 +9042,8 @@ SET_GEN0(locsig_reverb_set, locsig)
  *   the method expansion (via lambda_form) uses the passed-in arg types.
  */
 
+typedef enum {USE_SET_METHOD, USE_GET_METHOD} method_choice_t;
+
 static xen_value *clean_up(xen_value *result, xen_value **args, int args_size);
 
 static xen_value *splice_in_function_body(ptree *prog, XEN proc, xen_value **args, int num_args, const char *funcname)
@@ -9075,7 +9077,7 @@ static xen_value *splice_in_function_body(ptree *prog, XEN proc, xen_value **arg
 }
 
 
-static xen_value *splice_in_method(ptree *prog, xen_value **args, int num_args, const char *method_name, bool use_getter)
+static xen_value *splice_in_method(ptree *prog, xen_value **args, int num_args, const char *method_name, method_choice_t use_getter)
 {
   XEN methods, pair;
   int methods_loc;
@@ -9093,7 +9095,7 @@ static xen_value *splice_in_method(ptree *prog, xen_value **args, int num_args, 
 		       methods);
       if (XEN_LIST_P(pair))
 	{
-	  if (use_getter)
+	  if (use_getter == USE_GET_METHOD)
 	    result = splice_in_function_body(prog, XEN_CADR(pair), args, num_args, NULL);
 #if HAVE_GUILE
 	  else
@@ -9116,7 +9118,7 @@ static void splice_in_set_method(ptree *prog, xen_value *in_v, xen_value *in_v1,
   xen_value *args[3];
   args[1] = in_v;
   args[2] = v;
-  splice_in_method(prog, args, 2, method_name, false);
+  splice_in_method(prog, args, 2, method_name, USE_SET_METHOD);
 }
 
 
@@ -9125,7 +9127,7 @@ static void splice_in_set_method(ptree *prog, xen_value *in_v, xen_value *in_v1,
   static xen_value * mus_ ## Name ## _0(ptree *prog, xen_value **args, int num_args) \
   { \
     if (args[1]->type == R_CLM) return(package(prog, R_FLOAT, Name ## _0f, #Name "_0f", args, 1)); \
-    if (CLM_STRUCT_P(args[1]->type)) {return(splice_in_method(prog, args, num_args, "mus-" #Name, true));} \
+    if (CLM_STRUCT_P(args[1]->type)) {return(splice_in_method(prog, args, num_args, "mus-" #Name, USE_GET_METHOD));} \
     return(make_xen_value(R_FLOAT, add_dbl_to_ptree(prog, 0.0), R_CONSTANT)); \
   }
 
@@ -9144,7 +9146,7 @@ GEN0(feedback)
   static xen_value * mus_ ## Name ## _0(ptree *prog, xen_value **args, int num_args) \
   { \
     if (args[1]->type == R_CLM) return(package(prog, R_INT, Name ## _0i, #Name "_0i", args, 1)); \
-    if (CLM_STRUCT_P(args[1]->type)) {return(splice_in_method(prog, args, num_args, "mus-" #Name, true));} \
+    if (CLM_STRUCT_P(args[1]->type)) {return(splice_in_method(prog, args, num_args, "mus-" #Name, USE_GET_METHOD));} \
     return(make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_CONSTANT)); \
   }
 
@@ -9209,7 +9211,7 @@ SET_DBL_GEN0(frequency)
   static xen_value * mus_ ## Name ## _0(ptree *prog, xen_value **args, int num_args) \
   { \
     if (args[1]->type == R_CLM) return(package(prog, R_STRING, Name ## _0s, #Name "_0s", args, 1)); \
-    if (CLM_STRUCT_P(args[1]->type)) {return(splice_in_method(prog, args, num_args, "mus-" #Name, true));} \
+    if (CLM_STRUCT_P(args[1]->type)) {return(splice_in_method(prog, args, num_args, "mus-" #Name, USE_GET_METHOD));} \
     return(make_xen_value(R_STRING, add_string_to_ptree(prog, NULL), R_CONSTANT)); \
   }
 
@@ -9242,7 +9244,7 @@ static xen_value *mus_channels_0(ptree *prog, xen_value **args, int num_args)
   if (args[1]->type == R_SOUND_DATA)
     return(package(prog, R_INT, mus_channels_s, "mus_channels_sound_data", args, 1));
   if (CLM_STRUCT_P(args[1]->type)) 
-    return(splice_in_method(prog, args, num_args, "mus-channels", true));
+    return(splice_in_method(prog, args, num_args, "mus-channels", USE_GET_METHOD));
   return(package(prog, R_INT, mus_channels_f, "mus_channels_f", args, 1));
 }
 
@@ -9256,7 +9258,7 @@ static xen_value *mus_close_0(ptree *prog, xen_value **args, int num_args)
   if (args[1]->type == R_CLM)
     return(package(prog, R_INT, close_0, "mus_close_0", args, 1));
   if (CLM_STRUCT_P(args[1]->type)) 
-    return(splice_in_method(prog, args, num_args, "mus-close", true));
+    return(splice_in_method(prog, args, num_args, "mus-close", USE_GET_METHOD));
   return(package(prog, R_INT, close_0_noop, "mus_close_0_noop", args, 1));
 }
 
@@ -9268,7 +9270,7 @@ static xen_value *mus_reset_0(ptree *prog, xen_value **args, int num_args)
   if (args[1]->type == R_CLM)
     return(package(prog, R_CLM, reset_0, "mus_reset_0", args, 1));
   if (CLM_STRUCT_P(args[1]->type)) 
-    return(splice_in_method(prog, args, num_args, "mus-reset", true));
+    return(splice_in_method(prog, args, num_args, "mus-reset", USE_GET_METHOD));
   return(make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_CONSTANT));
 }
 
@@ -9293,13 +9295,17 @@ static void mus_run_2f(int *args, ptree *pt) {FLOAT_RESULT = mus_run(CLM_ARG_1, 
 
 static xen_value *mus_run_1(ptree *prog, xen_value **args, int num_args)
 {
-  if (num_args == 1)
-    return(package(prog, R_FLOAT, mus_run_0f, "mus_run_0f", args, 1));
-  if (args[2]->type == R_INT) single_to_float(prog, args, 2);
-  if (num_args == 2)
-    return(package(prog, R_FLOAT, mus_run_1f, "mus_run_1f", args, 2));
-  if (args[3]->type == R_INT) single_to_float(prog, args, 3);
-  return(package(prog, R_FLOAT, mus_run_2f, "mus_run_2f", args, 3));
+  if (args[1]->type == R_CLM)
+    {
+      if (num_args == 1)
+	return(package(prog, R_FLOAT, mus_run_0f, "mus_run_0f", args, 1));
+      if (args[2]->type == R_INT) single_to_float(prog, args, 2);
+      if (num_args == 2)
+	return(package(prog, R_FLOAT, mus_run_1f, "mus_run_1f", args, 2));
+      if (args[3]->type == R_INT) single_to_float(prog, args, 3);
+      return(package(prog, R_FLOAT, mus_run_2f, "mus_run_2f", args, 3));
+    }
+  return(splice_in_method(prog, args, num_args, S_mus_run, USE_GET_METHOD));
 }
 
 
@@ -9313,7 +9319,7 @@ static xen_value *mus_xcoeff_1(ptree *prog, xen_value **args, int num_args)
   if (args[1]->type == R_CLM)
     return(package(prog, R_FLOAT, xcoeff_0, "xcoeff_0", args, 2));
   if (CLM_STRUCT_P(args[1]->type)) 
-    return(splice_in_method(prog, args, num_args, "mus-xcoeff", true));
+    return(splice_in_method(prog, args, num_args, "mus-xcoeff", USE_GET_METHOD));
   return(make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_CONSTANT));
 }
 
@@ -9333,7 +9339,7 @@ static xen_value *mus_ycoeff_1(ptree *prog, xen_value **args, int num_args)
   if (args[1]->type == R_CLM)
     return(package(prog, R_FLOAT, ycoeff_0, "ycoeff_0", args, 2));
   if (CLM_STRUCT_P(args[1]->type)) 
-    return(splice_in_method(prog, args, num_args, "mus-ycoeff", true));
+    return(splice_in_method(prog, args, num_args, "mus-ycoeff", USE_GET_METHOD));
   return(make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_CONSTANT));
 }
 
