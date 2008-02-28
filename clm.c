@@ -11212,7 +11212,7 @@ void init_mus_module(void)
 /* clm4:
  *
  * generators:
- *   can the def-clm-struct method/make lists be used with built-in gens?
+ *   can the def-clm-struct method/make lists be used with built-in gens?  (yes, but not easily...)
  *
  *   do something debonair about move-sound -- another mistake -- elastic-delay + vector arithmetic = dlocsig?
  *   elastic-delay (and inelastic) -> delay with run-time length, if len expands so quickly as to drop
@@ -11222,7 +11222,6 @@ void init_mus_module(void)
  *        then the object is in front of the speaker(?)
  *
  * generic funcs:
- *      mus-amplitude to parallel mus-frequency/mus-phase, but this means duplication of mus-scaler
  *      mus-documentation [mus-describe shows current state -- if we had this, snd-help might be able to use it for generators.scm]
  *        (the info is in clm2xen, but the class slot is in clm and it would be nice if it worked from C)
  *
@@ -11232,6 +11231,8 @@ void init_mus_module(void)
  *     but optkey args and envelopes would need to be massaged into C-compatible shape
  *     and currently there's no limitation on the pre-run code -- I'd have to add optimizer support for everything
  *   can env-any be supported here?
+ *
+ * what about mus_generator_p at this level?
  *
  *
  * done:

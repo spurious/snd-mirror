@@ -1,36 +1,36 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [539]
-;;;  test 1: defaults                           [1110]
-;;;  test 2: headers                            [1312]
-;;;  test 3: variables                          [1628]
-;;;  test 4: sndlib                             [2277]
-;;;  test 5: simple overall checks              [4803]
-;;;  test 6: vcts                               [13775]
-;;;  test 7: colors                             [14043]
-;;;  test 8: clm                                [14533]
-;;;  test 9: mix                                [25785]
-;;;  test 10: marks                             [28003]
-;;;  test 11: dialogs                           [28964]
-;;;  test 12: extensions                        [29209]
-;;;  test 13: menus, edit lists, hooks, etc     [29480]
-;;;  test 14: all together now                  [31189]
-;;;  test 15: chan-local vars                   [32224]
-;;;  test 16: regularized funcs                 [33863]
-;;;  test 17: dialogs and graphics              [38854]
-;;;  test 18: enved                             [38944]
-;;;  test 19: save and restore                  [38963]
-;;;  test 20: transforms                        [40748]
-;;;  test 21: new stuff                         [42731]
-;;;  test 22: run                               [44726]
-;;;  test 23: with-sound                        [50937]
-;;;  test 24: user-interface                    [54221]
-;;;  test 25: X/Xt/Xm                           [57615]
-;;;  test 26: Gtk                               [62223]
-;;;  test 27: GL                                [66075]
-;;;  test 28: errors                            [66199]
-;;;  test all done                              [68499]
-;;;  test the end                               [68737]
+;;;  test 0: constants                          [540]
+;;;  test 1: defaults                           [1111]
+;;;  test 2: headers                            [1313]
+;;;  test 3: variables                          [1629]
+;;;  test 4: sndlib                             [2278]
+;;;  test 5: simple overall checks              [4804]
+;;;  test 6: vcts                               [13776]
+;;;  test 7: colors                             [14044]
+;;;  test 8: clm                                [14534]
+;;;  test 9: mix                                [25791]
+;;;  test 10: marks                             [28009]
+;;;  test 11: dialogs                           [28970]
+;;;  test 12: extensions                        [29215]
+;;;  test 13: menus, edit lists, hooks, etc     [29486]
+;;;  test 14: all together now                  [31195]
+;;;  test 15: chan-local vars                   [32236]
+;;;  test 16: regularized funcs                 [33875]
+;;;  test 17: dialogs and graphics              [38866]
+;;;  test 18: enved                             [38956]
+;;;  test 19: save and restore                  [38975]
+;;;  test 20: transforms                        [40760]
+;;;  test 21: new stuff                         [42743]
+;;;  test 22: run                               [44738]
+;;;  test 23: with-sound                        [50949]
+;;;  test 24: user-interface                    [54363]
+;;;  test 25: X/Xt/Xm                           [57757]
+;;;  test 26: Gtk                               [62365]
+;;;  test 27: GL                                [66217]
+;;;  test 28: errors                            [66341]
+;;;  test all done                              [68641]
+;;;  test the end                               [68879]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -16369,6 +16369,9 @@ EDITS: 2
     (log-mem clmtest)
     (if (odd? clmtest) (set! (run-safety) 1) (set! (run-safety) 0))
     (numerical-reality-checks)
+    (if (mus-generator? 321) (snd-display ";123 is a gen?"))
+    (if (mus-generator? (list 321)) (snd-display ";(123) is a gen?"))
+    (if (mus-generator? (list 'hi 321)) (snd-display ";(hi 123) is a gen?"))
     (set! (mus-srate) 22050)
     (let ((samps (seconds->samples 1.0))
 	  (secs (samples->seconds 22050)))
@@ -47116,6 +47119,13 @@ EDITS: 1
 	(let ((val (run-eval '(lambda (v) (declare (v vct)) (vct-ref v 0)) (make-vct 3 1.5))))
 	  (if (fneq val 1.5) (snd-display ";vct as arg to run: ~A" val)))
 
+	(let* ((gen (make-oscil))
+	       (val (run (lambda () (mus-generator? gen)))))
+	  (if (not val) (snd-display ";run mus-generator? oscil")))
+	(let* ((gen 123)
+	       (val (run (lambda () (mus-generator? gen)))))
+	  (if val (snd-display ";run mus-generator? 123")))
+
 	(let ((val (run-eval '(lambda (y) (let ((ge (make-env '(0 1 1 1) :length 11))) (env ge))) 0.0)))
 	  (if (fneq val 1.0) (snd-display ";make-env in run: ~A" val)))
 	
@@ -54273,6 +54283,8 @@ EDITS: 1
 	     (let ((gen (mf)))
 	       (if (not (pf gen))
 		   (snd-display ";make-* generators ~A: ~A" name gen))
+	       (if (not (mus-generator? gen))
+		   (snd-display ";make-* generators mus-generator? ~A" gen))
 	       (rf gen 0.0)
 	       (mus-reset gen)
 	       (if (not (string=? (mus-name gen) (symbol->string name)))
@@ -54328,6 +54340,7 @@ EDITS: 1
 	  (if (not happy)
 	      (snd-display ";run-with-fm-and-pm unhappy")))
 	
+	(set! (mus-srate) 44100)
 	(let ((gen (make-nssb 440.0 :n 3))
 	      (order 0)
 	      (frequency 0.0)

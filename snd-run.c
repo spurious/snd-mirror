@@ -85,14 +85,14 @@
 
 /* TODO: vector of def-clm-structs? -- list-vector?
 
-(with-sound ()
-  (let ((v (make-vector 2 #f)))
-    (vector-set! v 0 (make-nrcos 440 10 .5))    
-    (vector-set! v 1 (make-nrcos 440 10 .5))    
-    (run
-     (lambda ()
-       (let ((gen (vector-ref v 1)))
-       (outa 0 (nrcos gen 0.0) *output*)))))) ;either segfault or complains about null list
+  (with-sound ()
+    (let ((v (make-vector 2 #f)))
+      (vector-set! v 0 (make-nrcos 440 10 .5))    
+      (vector-set! v 1 (make-nrcos 440 10 .5))    
+      (run
+       (lambda ()
+         (let ((gen (vector-ref v 1)))
+         (outa 0 (nrcos gen 0.0) *output*)))))) ;either segfault or complains about null list
 */
 
 /* make-env needs vct args because '(...) and (list...) return #f (') or a parser complaint (list), so...
@@ -8686,6 +8686,13 @@ static xen_value *vct_to_sound_data_1(ptree *prog, xen_value **args, int num_arg
 
 /* ---------------- CLM stuff ---------------- */
 
+
+static xen_value *mus_generator_p_1(ptree *prog, xen_value **args, int num_args)
+{
+  return(make_xen_value(R_BOOL, add_int_to_ptree(prog, (args[1]->type == R_CLM) || (CLM_STRUCT_P(args[1]->type))), R_CONSTANT));
+}
+
+
 #define GEN_P(Name) \
   static void Name ## _0p(int *args, ptree *pt) {BOOL_RESULT = (Int)mus_ ## Name ## _p(CLM_ARG_1);} \
   static xen_value * Name ## _p(ptree *prog, xen_value **args, int num_args) \
@@ -12620,6 +12627,7 @@ static void init_walkers(void)
   INIT_WALKER("quote", make_walker(NULL, quote_form, NULL, 1, 1, R_ANY, false, 0));
 
   /* -------- clm funcs */
+  INIT_WALKER(S_mus_generator_p, make_walker(mus_generator_p_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
   INIT_WALKER(S_oscil_p, make_walker(oscil_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
   INIT_WALKER(S_env_p, make_walker(env_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
   INIT_WALKER(S_notch_p, make_walker(notch_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));

@@ -19,6 +19,18 @@
 ;;; --------------------------------------------------------------------------------
 ;;;
 ;;; defgenerator
+;;;
+;;; TODO: defgenerator has no chance in gauche: mus-phase #<closure (lambda*:L142 #f)>... (mus-phase g)->#f
+
+(define (symbol->value sym)
+  (if (defined? 'module-ref)
+      (module-ref (current-module) sym) ; symbol-binding is deprecated
+      (symbol-binding #f sym)))
+
+
+(if (provided? 'snd-gauche)
+    (use srfi-13)) ; string-concatenate
+
 
 (defmacro defgenerator (struct-name . fields)
 
@@ -188,7 +200,8 @@
 							 (list desc (format #f "~A~A: ~A"
 									    (if first-time " " ", ")
 									    field
-									    ((symbol-binding #f (string->symbol (string-append ,sname "-" field))) g)))))
+									    ((symbol->value (string->symbol (string-append ,sname "-" field))) g)))))
+					     ;; in the best of all worlds, we'd use (radians->hz frequency)
 					     (set! first-time #f))
 					   (list ,@field-names))
 					  desc))))
@@ -207,9 +220,9 @@
 					(for-each
 					 (lambda (name type orig)
 					   (if (or (not (string=? type "clm"))
-						   (not ((symbol-binding #f (string->symbol (string-append ,sname "-" name))) g)))
-					       (set! ((symbol-binding #f (string->symbol (string-append ,sname "-" name))) g) orig)
-					       (mus-reset ((symbol-binding #f (string->symbol (string-append ,sname "-" name))) g))))
+						   (not ((symbol->value (string->symbol (string-append ,sname "-" name))) g)))
+					       (set! ((symbol->value (string->symbol (string-append ,sname "-" name))) g) orig)
+					       (mus-reset ((symbol->value (string->symbol (string-append ,sname "-" name))) g))))
 					 (list ,@field-names)
 					 (list ,@(map symbol->string field-types))
 					 (list ,@(map (lambda (n)
@@ -269,7 +282,7 @@
 
 ;;; --------------------------------------------------------------------------------
 
-;;; nssb (see nxycos)
+;;; nssb (see nxycos) -- wouldn't a more consistent name be nxycos? but it already exists -- perhaps delete nssb?
 
 (defgenerator (nssb 
 	       :make-wrapper (lambda (g)
@@ -4341,7 +4354,6 @@ index 10 (so 10/2 is the bes-jn arg):
 	  (snd-display ";run-with-fm-and-pm: ~A ~A" val1 val2)))))
 |#
 
-;;; TODO: doc pmmer
 
 ;;; --------------------------------------------------------------------------------
 

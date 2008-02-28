@@ -6230,6 +6230,8 @@ sets osc1's phase increment to (<a class=quiet href="#hztoradians">hz-&gt;radian
 When I have a cold, I sometimes use the following function to see how high I can hear; count
 the audible tones and multiply by 1000:
 </p>
+
+<table border=0 hspace=40><tr><td>
 <pre>
 (define (quick-check)
   (<a class=quiet href="sndscm.html#wsdoc">with-sound</a> () 
@@ -6241,31 +6243,31 @@ the audible tones and multiply by 1000:
               (set! (<em class=red>mus-frequency</em> gen) (+ 1000 (/ i 20))))
 	  (<a class=quiet href="#outa">outa</a> i (* .5 (<a class=quiet href="#oscil">oscil</a> gen)))))))))
 </pre>
+</td></tr></table>
+
+<p>Another example is run-with-fm-and-pm in generators.scm which applies phase modulation (as well as
+the default frequency modulation) to any generator:
+</p>
+
+<table border=0 hspace=40><tr><td>
+<pre>
+(define (run-with-fm-and-pm gen fm pm)
+  (set! (<em class=red>mus-phase</em> gen) (+ (<em class=red>mus-phase</em> gen) pm))
+  (let ((result (<em class=red>mus-run</em> gen fm 0.0)))
+    (set! (<em class=red>mus-phase</em> gen) (- (<em class=red>mus-phase</em> gen) pm))
+    result))
+</pre>
+</td></tr></table>
 
 <p>
 <a class=def name="musgeneratorp">mus-generator?</a> returns #t if its argument is
 a generator.
-<a href="sndscm.html#clminsdoc">clm-ins.scm</a> has many examples of these functions.
 A generator defined via <a href="sndscm.html#def-clm-struct">def-clm-struct</a> can take part in these methods.
 If the last element of the list (returned by def-clm-struct) is an association list, the generic functions
-will search that list for their name, and use the functions that follow to implement their method.
+will search that list for their name, and use the functions that follow to implement their method
+(see defgenerator in generators.scm for an extended example).
 </p>
 <br>
-
-<pre>
-  <a class=def name="musfloatequalfudgefactor">mus-float-equal-fudge-factor</a>
-</pre>
-
-<p>This function sets how far apart generator vct elements can be and still be considered equal in equal?, and
-</p>
-
-<pre>
-  <a class=def name="musarrayprintlength">mus-array-print-length</a>
-</pre>
-
-<p>
-determines how many vct elements are printed by mus-describe.
-</p>
 <br><br>
 
 
@@ -6306,6 +6308,26 @@ radians per sample; in dimensional terms: (radians/sec) /
 frequency-related value is being accessed on every sample, as
 an increment of a phase variable.  
 </p></blockquote>
+
+<br>
+
+<p>And a couple functions that affect things like the generator equality check:</p>
+
+<pre>
+  <a class=def name="musfloatequalfudgefactor">mus-float-equal-fudge-factor</a>
+</pre>
+
+<p>This function sets how far apart generator vct elements can be and still be considered equal in equal?, and
+</p>
+
+<pre>
+  <a class=def name="musarrayprintlength">mus-array-print-length</a>
+</pre>
+
+<p>
+determines how many vct elements are printed by mus-describe.
+</p>
+
 <br><br>
 
 

@@ -1000,7 +1000,24 @@ bool mus_xen_p(XEN obj) {return(MUS_XEN_P(obj));}
 static XEN g_mus_generator_p(XEN obj) 
 {
   #define H_mus_generator_p "(" S_mus_generator_p " obj): " PROC_TRUE " if 'obj' is a CLM generator."
-  return(C_TO_XEN_BOOLEAN(MUS_XEN_P(obj)));
+
+  if (MUS_XEN_P(obj)) return(XEN_TRUE);
+
+  /* defgenerator defines "mus-name", and I can't see why a non-generator would include it in def-clm-struct, so... */
+  if ((XEN_LIST_P(obj)) &&
+      (XEN_LIST_LENGTH(obj) > 1) &&
+      (XEN_SYMBOL_P(XEN_CAR(obj))))
+    {
+      XEN assoc_list;
+      assoc_list = XEN_LIST_REF(obj, XEN_LIST_LENGTH(obj) - 1);
+
+      if ((XEN_LIST_P(assoc_list)) &&               /* avoid type error from assoc */
+	  (XEN_LIST_P(XEN_CAR(assoc_list))) &&
+	  (XEN_LIST_P(XEN_ASSOC(C_STRING_TO_XEN_SYMBOL("mus-name"), assoc_list))))
+	return(XEN_TRUE);
+    }
+
+  return(XEN_FALSE);
 }
 
 
