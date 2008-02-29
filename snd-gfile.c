@@ -1728,7 +1728,7 @@ widget_t make_mix_file_dialog(bool managed)
 {
   if (mdat == NULL)
     {
-      mdat = make_file_dialog(true, _("Mix"), _("mix:"), _("Mix"), FILE_MIX_DIALOG,
+      mdat = make_file_dialog(FILE_READ_ONLY, _("Mix"), _("mix:"), _("Mix"), FILE_MIX_DIALOG,
 			      (GtkSignalFunc)file_mix_ok_callback,
 			      NULL, /* no mkdir */
 			      (GtkSignalFunc)file_mix_delete_callback,
@@ -1828,7 +1828,7 @@ static void file_insert_ok_callback(GtkWidget *w, gpointer context)
 widget_t make_insert_file_dialog(bool managed)
 {
   if (idat == NULL)
-    idat = make_file_dialog(true, _("Insert"), _("insert:"), _("Insert"), FILE_INSERT_DIALOG,
+    idat = make_file_dialog(FILE_READ_ONLY, _("Insert"), _("insert:"), _("Insert"), FILE_INSERT_DIALOG,
 			    (GtkSignalFunc)file_insert_ok_callback,
 			    NULL, /* no mkdir */
 			    (GtkSignalFunc)file_insert_delete_callback,

@@ -9227,6 +9227,21 @@ STR_GEN0(describe)
 STR_GEN0(file_name)
 
 
+static void set_name_s(int *args, ptree *pt) {mus_set_name(CLM_RESULT, STRING_ARG_1);} 
+
+static void mus_set_name_1(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v)
+{
+  if (in_v->type == R_CLM)
+    add_triple_to_ptree(prog, va_make_triple(set_name_s, "set_name_s", 2, in_v, v));
+  else
+    { 
+      /* currently this doesn't work because the defgenerator set method uses stuff like set-car! */
+      if (CLM_STRUCT_P(in_v->type))
+	splice_in_set_method(prog, in_v, in_v1, in_v2, v, "mus-name");
+    }
+}
+
+
 
 /* -------- mus-channels --------
  *
@@ -12704,7 +12719,7 @@ static void init_walkers(void)
   INIT_WALKER(S_mus_ramp, make_walker(mus_ramp_0, NULL, mus_set_ramp_1, 1, 1, R_INT, false, 1, R_GENERATOR));
   INIT_WALKER(S_mus_order, make_walker(mus_order_0, NULL, NULL, 1, 1, R_INT, false, 1, R_GENERATOR));
   INIT_WALKER(S_mus_length, make_walker(mus_length_0, NULL, mus_set_length_1, 1, 1, R_INT, false, 1, R_GENERATOR));
-  INIT_WALKER(S_mus_name, make_walker(mus_name_0, NULL, NULL, 1, 1, R_INT, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_name, make_walker(mus_name_0, NULL, mus_set_name_1, 1, 1, R_STRING, false, 1, R_GENERATOR));
   INIT_WALKER(S_mus_file_name, make_walker(mus_file_name_0, NULL, NULL, 1, 1, R_STRING, false, 1, R_GENERATOR));
   INIT_WALKER(S_mus_describe, make_walker(mus_describe_0, NULL, NULL, 1, 1, R_STRING, false, 1, R_GENERATOR));
   INIT_WALKER(S_mus_close, make_walker(mus_close_0, NULL, NULL, 1, 1, R_INT, false, 1, R_ANY));              /* *output* again */

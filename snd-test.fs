@@ -540,7 +540,7 @@ mus-audio-playback-amp value original-audio-amp
   3 make-delay { gen2 }
   4 :initial-contents '( 1.0 0.5 0.25 0.0 ) make-delay { gen1 }
   4 :initial-contents vct( 1.0 0.5 0.25 0.0 ) make-delay { gen3 }
-  gen "delay" $" delay: line[3, step]: [0.000 0.000 0.000]" print-and-check
+  gen "delay" $" delay line[3, step]: [0.000 0.000 0.000]" print-and-check
   10 0.0 make-vct map gen i 0.0 delay end-map { v0 }
   10 0.0 make-vct map gen2 delay? if gen2 i 0.0 delay else -1.0 then end-map { v1 }
   v0 v1 vequal unless $" map delay: %s %s?" '( v0 v1 ) snd-display then

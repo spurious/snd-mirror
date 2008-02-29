@@ -92,8 +92,8 @@ static void file_menu_update_1(GtkWidget *w, gpointer info)
 }
 
 
-static void file_open_callback(GtkWidget *w, gpointer info) {make_open_file_dialog(false, true);}
-static void file_view_callback(GtkWidget *w, gpointer info) {make_open_file_dialog(true, true);}
+static void file_open_callback(GtkWidget *w, gpointer info) {make_open_file_dialog(FILE_READ_WRITE, true);}
+static void file_view_callback(GtkWidget *w, gpointer info) {make_open_file_dialog(FILE_READ_ONLY, true);}
 static void file_new_callback(GtkWidget *w, gpointer info) {make_new_file_dialog(true);}
 static void file_record_callback(GtkWidget *w, gpointer info) {record_file();}
 static void file_close_callback(GtkWidget *w, gpointer info) {if (any_selected_sound()) snd_close_file(any_selected_sound());}

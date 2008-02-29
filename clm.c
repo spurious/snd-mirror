@@ -357,8 +357,6 @@ const char *mus_name(mus_any *ptr)
 }
 
 
-/* TODO: snd-test mus-set-name for both these and defgens */
-
 const char *mus_set_name(mus_any *ptr, const char *new_name)
 {
   /* an experiment -- to change the name, we need to make a local copy of the mus_any_class struct */
@@ -401,16 +399,14 @@ int mus_free(mus_any *gen)
     {
       int release_result = 0;
       mus_any_class *local_class = NULL;
+
       if (gen->core->original_class)
 	local_class = (mus_any_class *)(gen->core);
+
       release_result = ((*(gen->core->release))(gen));
+
       if (local_class) 
-	{
-#if MUS_DEBUGGING
-	  fprintf(stderr, "free local class struct\n");
-#endif
-	  FREE(local_class);
-	}
+	FREE(local_class);
       return(release_result);
     }
   return(mus_error(MUS_NO_FREE, "can't free %s", mus_name(gen)));
@@ -11342,7 +11338,7 @@ void init_mus_module(void)
  *   envelopes can be in the form '((0 0) (100 1))
  *   defgenerator
  *   removed mus-cosines
- *   mus-run-with-fm-and-pm [TODO: can this work in CL/CLM?]
+ *   mus-run-with-fm-and-pm
  *   mus_set_name
  *
  *   (9.7)

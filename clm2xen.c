@@ -1003,6 +1003,7 @@ static XEN g_mus_generator_p(XEN obj)
 
   if (MUS_XEN_P(obj)) return(XEN_TRUE);
 
+#if HAVE_GUILE || HAVE_FORTH || HAVE_GAUCHE
   /* defgenerator defines "mus-name", and I can't see why a non-generator would include it in def-clm-struct, so... */
   if ((XEN_LIST_P(obj)) &&
       (XEN_LIST_LENGTH(obj) > 1) &&
@@ -1016,6 +1017,7 @@ static XEN g_mus_generator_p(XEN obj)
 	  (XEN_LIST_P(XEN_ASSOC(C_STRING_TO_XEN_SYMBOL("mus-name"), assoc_list))))
 	return(XEN_TRUE);
     }
+#endif
 
   return(XEN_FALSE);
 }

@@ -12997,7 +12997,7 @@ def test018
   gen2 = make_delay(3)
   gen1 = make_delay(4, :initial_contents, [1.0, 0.5, 0.25, 0.0])
   gen3 = make_delay(4, :initial_contents, vct(1.0, 0.5, 0.25, 0.0))
-  print_and_check(gen, "delay", "delay: line[3, step]: [0.000 0.000 0.000]")
+  print_and_check(gen, "delay", "delay line[3, step]: [0.000 0.000 0.000]")
   v0 = make_vct!(10) do |i| delay(gen, i) end
   v1 = make_vct!(10) do |i| delay?(gen2) ? delay(gen2, i) : -1.0 end
   snd_display("map delay: %s %s?", v0, v1) unless vequal(v1, v0)
@@ -13064,7 +13064,7 @@ def test018
   snd_display("zdelay: %s?", v0) unless vequal(v0, vct(0.6, 0.4, 0.0, 0.0, 0.0))
   delay(del, 1.0)
   delay(del, 0.0, 0.4)
-  if (res = del.to_s) != "delay: line[5,8, linear]: [0.000 0.000 0.000 1.000 0.000]"
+  if (res = del.to_s) != "delay line[5,8, linear]: [0.000 0.000 0.000 1.000 0.000]"
     snd_display("describe zdelay: %s", res)
   end
   if (res = Snd.catch do tap(make_oscil) end).first != :wrong_type_arg
@@ -13301,7 +13301,7 @@ def test028
   gen1 = make_all_pass(0.4, 0.6, 3)
   print_and_check(gen,
                   "all-pass",
-                  "all-pass: feedback: 0.400, feedforward: 0.600, line[3, step]:[0.000 0.000 0.000]")
+                  "all-pass feedback: 0.400, feedforward: 0.600, line[3, step]:[0.000 0.000 0.000]")
   v0 = make_vct!(10) do all_pass(gen, 1.0) end
   v1 = make_vct(10)
   vct_map!(v1, lambda do | | all_pass?(gen1) ? all_pass(gen1, 1.0) : -1.0 end)
@@ -13343,7 +13343,7 @@ def test028
   #
   gen = make_moving_average(4)
   gen1 = make_moving_average(4)
-  print_and_check(gen, "moving-average", "moving-average: 0.000, line[4]:[0.000 0.000 0.000 0.000]")
+  print_and_check(gen, "moving-average", "moving-average 0.000, line[4]:[0.000 0.000 0.000 0.000]")
   v0 = make_vct!(10) do moving_average(gen, 1.0) end
   v1 = make_vct(10)
   vct_map!(v1, lambda do | | moving_average?(gen1) ? moving_average(gen1, 1.0) : -1.0 end)
@@ -13413,7 +13413,7 @@ def test028
   #
   gen = make_comb(0.4, 3)
   gen1 = make_comb(0.4, 3)
-  print_and_check(gen, "comb", "comb: scaler: 0.400, line[3, step]: [0.000 0.000 0.000]")
+  print_and_check(gen, "comb", "comb scaler: 0.400, line[3, step]: [0.000 0.000 0.000]")
   v0 = make_vct!(10) do comb(gen, 1.0) end
   v1 = make_vct(10)
   vct_map!(v1, lambda do | | comb?(gen1) ? comb(gen1, 1.0) : -1.0 end)
@@ -13448,7 +13448,7 @@ def test028
   snd_display("zcomb: %s", v0) unless vequal(v0, vct(0.600, 0.400, 0.000, 0.000, 0.000))
   comb(del, 1.0)
   comb(del, 0.0, 0.4)
-  if (res = del.to_s) != "comb: scaler: 0.000, line[5,8, linear]: [0.000 0.000 0.000 1.000 0.000]"
+  if (res = del.to_s) != "comb scaler: 0.000, line[5,8, linear]: [0.000 0.000 0.000 1.000 0.000]"
     snd_display("describe zcom: %s", res)
   end
   del.feedback = 1.0
@@ -13457,7 +13457,7 @@ def test028
   gen = make_filtered_comb(0.4, 5, :filter, make_one_zero(0.3, 0.7))
   print_and_check(gen,
                   "filtered-comb",
-                  "filtered-comb: [comb: scaler: 0.400, line[5, step]: [0.000 0.000 0.000 0.000 0.000]], [one-zero: a0: 0.300, a1: 0.700, x1: 0.000]")
+                  "filtered-comb scaler: 0.400, line[5, step]: [0.000 0.000 0.000 0.000 0.000], filter: [one-zero a0: 0.300, a1: 0.700, x1: 0.000]")
   v0 = make_vct!(20) do |i| filtered_comb(gen, (i.zero? ? 1.0 : 0.0)) end
   unless vequal(v0,
                 vct(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0.12, 0.28, 0, 0, 0, 0.014, 0.067, 0.078, 0, 0))
@@ -13470,7 +13470,7 @@ def test028
   gen = make_filtered_comb(0.9, 5, :filter, make_one_zero(0.5, 0.5))
   print_and_check(gen,
                   "filtered-comb",
-                  "filtered-comb: [comb: scaler: 0.900, line[5, step]: [0.000 0.000 0.000 0.000 0.000]], [one-zero: a0: 0.500, a1: 0.500, x1: 0.000]")
+                  "filtered-comb scaler: 0.900, line[5, step]: [0.000 0.000 0.000 0.000 0.000], filter: [one-zero a0: 0.500, a1: 0.500, x1: 0.000]")
   v0 = make_vct!(20) do |i| filtered_comb(gen, (i.zero? ? 1.0 : 0.0)) end
   unless vequal(v0,
                 vct(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0.45, 0.45, 0, 0, 0, 0.202, 0.405, 0.202, 0, 0))
@@ -13479,7 +13479,7 @@ def test028
   gen = make_filtered_comb(0.9, 5, :filter, make_fir_filter(5, vct(0.1, 0.2, 0.3, 0.2, 0.1)))
   print_and_check(gen,
                   "filtered-comb",
-                  "filtered-comb: [comb: scaler: 0.900, line[5, step]: [0.000 0.000 0.000 0.000 0.000]], [fir-filter: order: 5, xs: [0.100 0.200 0.300 0.200 0.100]]")
+                  "filtered-comb scaler: 0.900, line[5, step]: [0.000 0.000 0.000 0.000 0.000], filter: [fir-filter order: 5, xs: [0.100 0.200 0.300 0.200 0.100]]")
   v0 = make_vct!(20) do |i| filtered_comb(gen, (i.zero? ? 1.0 : 0.0)) end
   unless vequal(v0,
                 vct(0, 0, 0, 0, 0, 1, 0, 0, 0, 0,
@@ -13514,7 +13514,7 @@ def test028
   end
   filtered_comb(del, 1.0)
   filtered_comb(del, 0.0, 0.4)
-  if (res = mus_describe(del)) != "filtered-comb: [comb: scaler: 0.000, line[5,8, linear]: [0.000 0.000 0.000 1.000 0.000]], [one-zero: a0: 0.500, a1: 0.500, x1: 0.000]"
+  if (res = mus_describe(del)) != "filtered-comb scaler: 0.000, line[5,8, linear] [0.000 0.000 0.000 1.000 0.000], filter: [one-zero a0: 0.500, a1: 0.500, x1: 0.000]"
     snd_display("describe zfiltered_comb: %s?", res)
   end
   del.feedback = 1.0
@@ -13522,7 +13522,7 @@ def test028
   #
   gen = make_notch(0.4, 3)
   gen1 = make_notch(0.4, 3)
-  print_and_check(gen, "notch", "notch: scaler: 0.400, line[3, step]: [0.000 0.000 0.000]")
+  print_and_check(gen, "notch", "notch scaler: 0.400, line[3, step]: [0.000 0.000 0.000]")
   v0 = make_vct!(10) do notch(gen, 1.0) end
   v1 = make_vct(10)
   vct_map!(v1, lambda do | | notch?(gen1) ? notch(gen1, 1.0) : -1.0 end)
@@ -13699,7 +13699,7 @@ end
 def test038
   gen = make_one_pole(0.4, 0.7)
   gen1 = make_one_pole(0.4, 0.7)
-  print_and_check(gen, "one-pole", "one-pole: a0: 0.400, b1: 0.700, y1: 0.000")
+  print_and_check(gen, "one-pole", "one-pole a0: 0.400, b1: 0.700, y1: 0.000")
   v0 = make_vct!(10) do one_pole(gen, 1.0) end
   v1 = make_vct(10)
   vct_map!(v1, lambda do | | one_pole?(gen1) ? one_pole(gen1, 1.0) : -1.0 end)
@@ -13720,7 +13720,7 @@ def test038
   # 
   gen = make_one_zero(0.4, 0.7)
   gen1 = make_one_zero(0.4, 0.7)
-  print_and_check(gen, "one-zero", "one-zero: a0: 0.400, a1: 0.700, x1: 0.000")
+  print_and_check(gen, "one-zero", "one-zero a0: 0.400, a1: 0.700, x1: 0.000")
   v0 = make_vct!(10) do one_zero(gen, 1.0) end
   v1 = make_vct(10)
   vct_map!(v1, lambda do | | one_zero?(gen1) ? one_zero(gen1, 1.0) : -1.0 end)
@@ -13740,7 +13740,7 @@ def test038
   gen1 = make_two_zero(0.4, 0.7, 0.3)
   print_and_check(gen,
                   "two-zero",
-                  "two-zero: a0: 0.400, a1: 0.700, a2: 0.300, x1: 0.000, x2: 0.000")
+                  "two-zero a0: 0.400, a1: 0.700, a2: 0.300, x1: 0.000, x2: 0.000")
   v0 = make_vct!(10) do two_zero(gen, 1.0) end
   v1 = make_vct(10)
   vct_map!(v1, lambda do | | two_zero?(gen1) ? two_zero(gen1, 1.0) : -1.0 end)
@@ -13783,7 +13783,7 @@ def test038
   gen1 = make_two_pole(0.4, 0.7, 0.3)
   print_and_check(gen,
                   "two-pole",
-                  "two-pole: a0: 0.400, b1: 0.700, b2: 0.300, y1: 0.000, y2: 0.000")
+                  "two-pole a0: 0.400, b1: 0.700, b2: 0.300, y1: 0.000, y2: 0.000")
   v0 = make_vct!(10) do two_pole(gen, 1.0) end
   v1 = make_vct(10)
   vct_map!(v1, lambda do | | two_pole?(gen1) ? two_pole(gen1, 1.0) : -1.0 end)
@@ -14108,7 +14108,7 @@ def test048
   gen1 = make_sine_summation(440.0)
   print_and_check(gen,
                   "sine-summation",
-                  "sine-summation: frequency: 440.000, phase: 0.000, n: 1, a: 0.500, ratio: 1.000")
+                  "sine-summation frequency: 440.000, phase: 0.000, n: 1, a: 0.500, ratio: 1.000")
   v0 = make_vct!(10) do sine_summation(gen, 0.0) end
   v1 = make_vct(10)
   vct_map!(v1, lambda do | | sine_summation?(gen1) ? sine_summation(gen1, 0.0) : -1.0 end)
@@ -14359,7 +14359,7 @@ end
 def test058
   gen = make_fir_filter(3, vct(0.5, 0.25, 0.125))
   gen1 = make_fir_filter(3, vct(0.5, 0.25, 0.125))
-  print_and_check(gen, "fir-filter", "fir-filter: order: 3, xs: [0.500 0.250 0.125]")
+  print_and_check(gen, "fir-filter", "fir-filter order: 3, xs: [0.500 0.250 0.125]")
   v0 = make_vct!(10) do |i| fir_filter(gen, i.zero? ? 1.0 : 0.0) end
   v1 = make_vct(10)
   inp = -1
@@ -14423,7 +14423,7 @@ def test058
   # 
   gen = make_iir_filter(3, vct(0.5, 0.25, 0.125))
   gen1 = make_iir_filter(3, vct(0.5, 0.25, 0.125))
-  print_and_check(gen, "iir-filter", "iir-filter: order: 3, ys: [0.500 0.250 0.125]")
+  print_and_check(gen, "iir-filter", "iir-filter order: 3, ys: [0.500 0.250 0.125]")
   v0 = make_vct!(10) do |i| iir_filter(gen, i.zero? ? 1.0 : 0.0) end
   v1 = make_vct(10)
   inp = -1
@@ -14464,7 +14464,7 @@ def test058
   gen1 = make_filter(3, vct(0.5, 0.25, 0.125), vct(0.5, 0.25, 0.125))
   print_and_check(gen,
                   "filter",
-                  "filter: order: 3, xs: [0.500 0.250 0.125], ys: [0.500 0.250 0.125]")
+                  "filter order: 3, xs: [0.500 0.250 0.125], ys: [0.500 0.250 0.125]")
   v0 = make_vct!(10) do |i| filter(gen, i.zero? ? 1.0 : 0.0) end
   v1 = make_vct(10)
   inp = -1
@@ -15114,7 +15114,7 @@ def test068
   # 
   gen = make_formant(1200.0, 0.9)
   gen1 = make_formant(1200.0, 0.9)
-  print_and_check(gen, "formant", "formant: radius: 0.900, frequency: 1200.000")
+  print_and_check(gen, "formant", "formant frequency: 1200.000, radius: 0.900")
   v0 = make_vct!(10) do |i| formant(gen, i.zero? ? 1.0 : 0.0) end
   v1 = make_vct(10)
   inp = -1
@@ -15237,7 +15237,7 @@ def test078
   fr1 = make_frame(2, 0.0, 0.0)
   print_and_check(gen,
                   "mixer",
-                  "mixer: chans: 2, [
+                  "mixer chans: 2, [
  0.500 0.250
  0.125 1.000
 ]")
@@ -15251,7 +15251,7 @@ def test078
   end
   print_and_check(mx,
                   "mixer",
-                  "mixer: chans: 8, [
+                  "mixer chans: 8, [
  0.000 1.000 2.000 3.000...
  8.000 9.000 10.000 11.000...
  16.000 17.000 18.000 19.000...
@@ -15260,7 +15260,7 @@ def test078
   set_mus_array_print_length(12)
   print_and_check(mx,
                   "mixer",
-                  "mixer: chans: 8, [
+                  "mixer chans: 8, [
  0.000 1.000 2.000 3.000 4.000 5.000 6.000 7.000
  8.000 9.000 10.000 11.000 12.000 13.000 14.000 15.000
  16.000 17.000 18.000 19.000 20.000 21.000 22.000 23.000
@@ -15271,7 +15271,7 @@ def test078
  56.000 57.000 58.000 59.000 60.000 61.000 62.000 63.000
 ]")
   set_mus_array_print_length(ap)
-  print_and_check(fr0, "frame", "frame[2]: [1.000 1.000]")
+  print_and_check(fr0, "frame", "frame[2] [1.000 1.000]")
   snd_display("%s not a frame?", fr0) unless frame?(fr0)
   snd_display("%s not a mixer?", gen) unless mixer?(gen)
   snd_display("frame=? %s %s?", fr0, fr1) if fr0.eql?(fr1)
@@ -15908,7 +15908,7 @@ def test088
   gen1 = make_env(:envelope, [0, 0, 1, 1, 2, 0], :scaler, 0.5, :length, 11)
   print_and_check(gen,
                   "env",
-                  "env: linear, pass: 0 (dur: 11), index: 0, scaler: 0.5000, offset: 0.0000, data: [0.000 0.000 1.000 1.000 2.000 0.000]")
+                  "env linear, pass: 0 (dur: 11), index: 0, scaler: 0.5000, offset: 0.0000, data: [0.000 0.000 1.000 1.000 2.000 0.000]")
   snd_display("%s not env?", gen) unless env?(gen)
   snd_display("env scaler: %s?", gen.scaler) if fneq(gen.scaler, 0.5)
   snd_display("env base (1.0): %s?", gen.increment) if fneq(gen.increment, 1.0)
@@ -16185,7 +16185,7 @@ def test098
   gen4 = make_table_lookup(440.0, :wave, partials2wave([1, 1, 2, 1]))
   print_and_check(gen,
                   "table-lookup",
-                  "table-lookup: freq: 440.000Hz, phase: 0.000, length: 512, interp: linear")
+                  "table-lookup freq: 440.000Hz, phase: 0.000, length: 512, interp: linear")
   snd_display("table_lookup length: %d?", gen.length) if gen.length != 512
   snd_display("default table_lookup length: %d?", gen3.length) if gen3.length != 512
   v0 = make_vct!(10) do table_lookup(gen, 0.0) end
@@ -16852,7 +16852,7 @@ def test108
   #
   gen = make_readin("oboe.snd", 0, 1490)
   gen1 = make_readin("oboe.snd", 0, 1490)
-  print_and_check(gen, "readin", "readin: oboe.snd[chan 0], loc: 1490, dir: 1")
+  print_and_check(gen, "readin", "readin oboe.snd[chan 0], loc: 1490, dir: 1")
   v0 = make_vct!(10) do readin(gen) end
   v1 = make_vct(10)
   vct_map!(v1, lambda do | |
@@ -16904,16 +16904,16 @@ def test108
                  make_readin("2.snd", 0))
   #
   gen = make_readin("2.snd", 1, :size, 1024)
-  print_and_check(gen, "readin", "readin: 2.snd[chan 1], loc: 0, dir: 1")
+  print_and_check(gen, "readin", "readin 2.snd[chan 1], loc: 0, dir: 1")
   v0.map! do readin(gen) end
   snd_display("readin chan 1: %s?", gen.channel) if gen.channel != 1
   if fneq(v0[1], 0.01) or fneq(v0[7], -0.006)
     snd_display("readin 1 output: %s?", v0)
   end
-  print_and_check(gen, "readin", "readin: 2.snd[chan 1], loc: 10, dir: 1")
+  print_and_check(gen, "readin", "readin 2.snd[chan 1], loc: 10, dir: 1")
   # 
   gen = make_file2sample("oboe.snd")
-  print_and_check(gen, "file->sample", "file->sample: oboe.snd")
+  print_and_check(gen, "file->sample", "file->sample oboe.snd")
   snd_display("%s not file2sample?", gen) unless file2sample?(gen)
   snd_display("%s not input?", gen) unless mus_input?(gen)
   snd_display("file2sample length: %s?", gen.length) if gen.length != 50828
@@ -16930,7 +16930,7 @@ def test108
   ind = open_sound("oboe.snd")
   gen = make_snd2sample(ind)
   gen1 = make_snd2sample(ind)
-  print_and_check(gen, "snd->sample", "snd->sample: reading oboe.snd (1 chan) at 0:[no readers]")
+  print_and_check(gen, "snd->sample", "snd->sample reading oboe.snd (1 chan) at 0:[no readers]")
   snd_display("snd2sample not eql? itself?") unless gen.eql?(gen)
   snd_display("snd2sample eql? not itself?") if gen.eql?(gen1)
   snd_display("%s not snd2sample?", gen) unless snd2sample?(gen)
@@ -16959,7 +16959,7 @@ def test108
   end
   print_and_check(gen,
                   "snd->sample",
-                  "snd->sample: reading 2.snd (2 chans) at 1499:[#<sample-reader: 2.snd[0: 0] from 1490, at 1500, forward>, #<sample-reader: 2.snd[1: 0] from 1490, at 1500, forward>]")
+                  "snd->sample reading 2.snd (2 chans) at 1499:[#<sample-reader: 2.snd[0: 0] from 1490, at 1500, forward>, #<sample-reader: 2.snd[1: 0] from 1490, at 1500, forward>]")
   snd_display("%s not snd2sample?", gen) unless snd2sample?(gen)
   snd_display("%s not input?", gen) unless mus_input?(gen)
   snd_display("snd2sample length: %s?", gen.length) if gen.length != frames(ind)
@@ -16973,7 +16973,7 @@ end
 
 def test118
   gen = make_file2frame("oboe.snd")
-  print_and_check(gen, "file->frame", "file->frame: oboe.snd")
+  print_and_check(gen, "file->frame", "file->frame oboe.snd")
   snd_display("%s not file2frame?", gen) unless file2frame?(gen)
   snd_display("%s not input?", gen) unless mus_input?(gen)
   snd_display("file2frame length: %s?", gen.length) if gen.length != 50828
@@ -16986,7 +16986,7 @@ def test118
   # 
   delete_files("fmv.snd", "fmv1.snd", "fmv2.snd", "fmv3.snd")
   gen = make_sample2file("fmv.snd", 2, Mus_lshort, Mus_riff)
-  print_and_check(gen, "sample->file", "sample->file: fmv.snd")
+  print_and_check(gen, "sample->file", "sample->file fmv.snd")
   snd_display("%s not sample2file?", gen) unless sample2file?(gen)
   snd_display("%s not output?", gen) unless mus_output?(gen)
   snd_display("sample2file length: %s?", gen.length) if gen.length != mus_file_buffer_size
@@ -17003,7 +17003,7 @@ def test118
   out_any(60, 0.150, 1, gen)
   mus_close(gen)
   gen = make_file2sample("fmv.snd")
-  print_and_check(gen, "file->sample", "file->sample: fmv.snd")
+  print_and_check(gen, "file->sample", "file->sample fmv.snd")
   val0 = in_any(20, 0, gen)
   val1 = in_any(20, 1, gen)
   val2 = ina(30, gen)
@@ -17094,7 +17094,7 @@ def test118
   end
   #
   gen = make_sample2file("fmv.snd", 4, Mus_lshort, Mus_riff)
-  print_and_check(gen, "sample->file", "sample->file: fmv.snd")
+  print_and_check(gen, "sample->file", "sample->file fmv.snd")
   10.times do |i|
     outa(i, 0.1, gen)
     outb(i, 0.2, gen)
@@ -17109,7 +17109,7 @@ def test118
   end
   mus_close(gen)
   gen = make_file2sample("fmv.snd")
-  print_and_check(gen, "file->sample", "file->sample: fmv.snd")
+  print_and_check(gen, "file->sample", "file->sample fmv.snd")
   10.times do |i|
     if fneq(res1 = ina(i, gen), 0.11) or
         fneq(res2 = inb(i, gen), 0.22) or
@@ -17138,7 +17138,7 @@ def test118
   end
   # 
   gen = make_frame2file("fmv1.snd", 2, Mus_bshort, Mus_next)
-  print_and_check(gen, "frame->file", "frame->file: fmv1.snd")
+  print_and_check(gen, "frame->file", "frame->file fmv1.snd")
   snd_display("%s not frame2file?", gen) unless frame2file?(gen)
   snd_display("%s not output?", gen) unless mus_output?(gen)
   snd_display("frame2file length: %s?", gen.length) if gen.length != mus_file_buffer_size
@@ -17165,7 +17165,7 @@ def test118
   end
   #
   gen = make_sample2file("fmv2.snd", 4, Mus_bshort, Mus_aifc)
-  print_and_check(gen, "sample->file", "sample->file: fmv2.snd")
+  print_and_check(gen, "sample->file", "sample->file fmv2.snd")
   snd_display("%s not sample2file?", gen) unless sample2file?(gen)
   snd_display("%s not output?", gen) unless mus_output?(gen)
   100.times do |i|
@@ -17628,7 +17628,7 @@ def test148
   gen200 = make_locsig(200.0, :channels, 4)
   gen3 = gen1
   fr0 = locsig(gen, 0, 1.0)
-  print_and_check(gen, "locsig", "locsig: chans 2, outn: [0.667 0.333], interp: linear")
+  print_and_check(gen, "locsig", "locsig chans 2, outn: [0.667 0.333], interp: linear")
   snd_display("%s not locsig?", gen) unless locsig?(gen)
   snd_display("locsig %s.eql?(%s)?", gen1, gen3) unless gen1.eql?(gen3)
   snd_display("locsig %s == %s?", gen1, gen3) unless gen1 == gen3
@@ -17840,7 +17840,7 @@ def test148
   lc = make_locsig(60.0, :reverb, 0.1, :channels, 4, :distance, 4.0, :output, gen, :revout, rev)
   print_and_check(lc,
                   "locsig",
-                  "locsig: chans 4, outn: [0.083 0.167 0.000 0.000], revn: [0.017 0.033 0.000 0.000], interp: linear")
+                  "locsig chans 4, outn: [0.083 0.167 0.000 0.000], revn: [0.017 0.033 0.000 0.000], interp: linear")
   100.times do |i| locsig(lc, i, 1.0) end
   4.times do |i|
     locsig_reverb_set!(lc, i, i * 0.1)
@@ -17850,7 +17850,7 @@ def test148
   end
   print_and_check(lc,
                   "locsig",
-                  "locsig: chans 4, outn: [0.083 0.167 0.000 0.000], revn: [0.000 0.100 0.200 0.300], interp: linear")
+                  "locsig chans 4, outn: [0.083 0.167 0.000 0.000], revn: [0.000 0.100 0.200 0.300], interp: linear")
   snd_display("out data locsig: %s?", lc.data) unless vct?(lc.data)
   snd_display("rev data locsig: %s?", lc.xcoeffs) unless vct?(lc.xcoeffs)
   xcs = lc.xcoeffs
@@ -17865,31 +17865,31 @@ def test148
   # 
   print_and_check(make_locsig(160, :channels, 4),
                   "locsig",
-                  "locsig: chans 4, outn: [0.000 0.222 0.778 0.000], interp: linear")
+                  "locsig chans 4, outn: [0.000 0.222 0.778 0.000], interp: linear")
   print_and_check(make_locsig(-200, :channels, 4),
                   "locsig",
-                  "locsig: chans 4, outn: [0.000 0.222 0.778 0.000], interp: linear")
+                  "locsig chans 4, outn: [0.000 0.222 0.778 0.000], interp: linear")
   print_and_check(make_locsig(160, :channels, 4, :distance, 0.5),
                   "locsig",
-                  "locsig: chans 4, outn: [0.000 0.222 0.778 0.000], interp: linear")
+                  "locsig chans 4, outn: [0.000 0.222 0.778 0.000], interp: linear")
   print_and_check(make_locsig(320, :channels, 4),
                   "locsig",
-                  "locsig: chans 4, outn: [0.556 0.000 0.000 0.444], interp: linear")
+                  "locsig chans 4, outn: [0.556 0.000 0.000 0.444], interp: linear")
   print_and_check(make_locsig(-40, :channels, 4),
                   "locsig",
-                  "locsig: chans 4, outn: [0.556 0.000 0.000 0.444], interp: linear")
+                  "locsig chans 4, outn: [0.556 0.000 0.000 0.444], interp: linear")
   print_and_check(make_locsig(320, :channels, 2),
                   "locsig",
-                  "locsig: chans 2, outn: [0.000 1.000], interp: linear")
+                  "locsig chans 2, outn: [0.000 1.000], interp: linear")
   print_and_check(make_locsig(-40, :channels, 2),
                   "locsig",
-                  "locsig: chans 2, outn: [0.000 1.000], interp: linear")
+                  "locsig chans 2, outn: [0.000 1.000], interp: linear")
   print_and_check(make_locsig(160, :channels, 4, :output, SoundData.new(4, 10)),
                   "locsig",
-                  "locsig: chans 4, outn: [0.000 0.222 0.778 0.000], interp: linear")
+                  "locsig chans 4, outn: [0.000 0.222 0.778 0.000], interp: linear")
   print_and_check(make_locsig(0, :channels, 1, :output, Vct.new(10)),
                   "locsig",
-                  "locsig: chans 1, outn: [1.000], interp: linear")
+                  "locsig chans 1, outn: [1.000], interp: linear")
   # 
   locsig_data = lambda do |g|
     make_vct!(g.channels) do |i| locsig_ref(g, i) end
@@ -18163,23 +18163,23 @@ def test148
                          outf1, revf)
   print_and_check(gen1,
                   "move-sound",
-                  "move-sound: start: 0, end: 1000, out chans 1, rev chans: 0
-  doppler delay: line[32, step]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)]
-  doppler env: linear, pass: 0 (dur: 1001), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 1.000]
-  global reverb env: linear, pass: 0 (dur: 1001), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 1.000]
+                  "move-sound start: 0, end: 1000, out chans 1, rev chans: 0
+  doppler delay line[32, step]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)]
+  doppler env linear, pass: 0 (dur: 1001), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 1.000]
+  global reverb env linear, pass: 0 (dur: 1001), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 1.000]
   out_delays[1]:
-    [0]: delay: line[32, step]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)]
+    [0]: delay line[32, step]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)]
   out_envs[1]:
-    [0]: env: linear, pass: 0 (dur: 1001), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 1.000]
+    [0]: env linear, pass: 0 (dur: 1001), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 1.000]
   rev_envs: nil
   out_map[1]: (0)
   free: arrays: true, gens: false
 ")
   print_and_check(gen2,
                   "move-sound",
-                  "move-sound: start: 0, end: 1000, out chans 4, rev chans: 0
-  doppler delay: line[12, step]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)]
-  doppler env: linear, pass: 0 (dur: 22050), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 10.000 1.000]
+                  "move-sound start: 0, end: 1000, out chans 4, rev chans: 0
+  doppler delay line[12, step]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)]
+  doppler env linear, pass: 0 (dur: 22050), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 10.000 1.000]
   global reverb null
   out_delays[4]:
     [0]: nil
@@ -18187,26 +18187,26 @@ def test148
     [2]: nil
     [3]: nil
   out_envs[4]:
-    [0]: env: linear, pass: 0 (dur: 22050), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 1.000 2.000 0.000 3.000 0.000...(0: 0.000, 8: 4.000)]
-    [1]: env: linear, pass: 0 (dur: 22050), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 0.000 2.000 1.000 3.000 0.000...(0: 0.000, 8: 4.000)]
-    [2]: env: linear, pass: 0 (dur: 22050), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 0.000 2.000 0.000 3.000 1.000...(0: 0.000, 8: 4.000)]
-    [3]: env: linear, pass: 0 (dur: 22050), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 0.000 2.000 0.000 3.000 0.000...(0: 0.000, 8: 4.000)]
+    [0]: env linear, pass: 0 (dur: 22050), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 1.000 2.000 0.000 3.000 0.000...(0: 0.000, 8: 4.000)]
+    [1]: env linear, pass: 0 (dur: 22050), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 0.000 2.000 1.000 3.000 0.000...(0: 0.000, 8: 4.000)]
+    [2]: env linear, pass: 0 (dur: 22050), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 0.000 2.000 0.000 3.000 1.000...(0: 0.000, 8: 4.000)]
+    [3]: env linear, pass: 0 (dur: 22050), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 0.000 2.000 0.000 3.000 0.000...(0: 0.000, 8: 4.000)]
   rev_envs: nil
   out_map[4]: (0 1 2 3)
   free: arrays: true, gens: false
 ")
   print_and_check(gen3,
                   "move-sound",
-                  "move-sound: start: 0, end: 1000, out chans 1, rev chans: 1
-  doppler delay: line[32, step]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)]
-  doppler env: linear, pass: 0 (dur: 1001), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 1.000]
-  global reverb env: linear, pass: 0 (dur: 1001), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 1.000]
+                  "move-sound start: 0, end: 1000, out chans 1, rev chans: 1
+  doppler delay line[32, step]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)]
+  doppler env linear, pass: 0 (dur: 1001), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 1.000]
+  global reverb env linear, pass: 0 (dur: 1001), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 1.000]
   out_delays[1]:
-    [0]: delay: line[32, step]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)]
+    [0]: delay line[32, step]: [0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000...(0: 0.000, 0: 0.000)]
   out_envs[1]:
-    [0]: env: linear, pass: 0 (dur: 1001), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 1.000]
+    [0]: env linear, pass: 0 (dur: 1001), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 0.000 1.000 1.000]
   rev_envs[1]:
-    [0]: env: linear, pass: 0 (dur: 1001), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 1.000 1.000 1.000]
+    [0]: env linear, pass: 0 (dur: 1001), index: 0, scaler: 1.0000, offset: 0.0000, data: [0.000 1.000 1.000 1.000]
   out_map[1]: (0)
   free: arrays: true, gens: false
 ")
@@ -18259,7 +18259,7 @@ def test158
   gen2 = make_src(:srate, 0.0)
   rd = make_readin("oboe.snd", 0, 2000)
   rd1 = make_readin("oboe.snd", 0, 2000)
-  print_and_check(gen, "src", "src: width: 10, x: 0.000, incr: 2.000, sinc table len: 10000")
+  print_and_check(gen, "src", "src width: 10, x: 0.000, incr: 2.000, sinc table len: 10000")
   v0 = make_vct!(10) do src(gen, 0.0, lambda do |dir| readin(rd) end) end
   v1 = make_vct(10)
   vct_map!(v1, lambda do || src?(gen1) ? src(gen1, 0.0, lambda do |dir| readin(rd1) end) : -1.0 end)
@@ -18317,7 +18317,7 @@ def test158
                     :size, mus_file_buffer_size)
   print_and_check(gen,
                   "granulate",
-                  "granulate: expansion: 2.000 (551/1102), scaler: 0.600, length: 0.150 secs (3308 samps), ramp: 0.060")
+                  "granulate expansion: 2.000 (551/1102), scaler: 0.600, length: 0.150 secs (3308 samps), ramp: 0.060")
   v0 = make_vct!(1000) do granulate(gen, lambda do |dir| readin(rd) end) end
   v1 = make_vct(1000)
   vct_map!(v1, lambda do | |
@@ -19318,7 +19318,7 @@ def test188
   gen = make_convolve(:filter, v0)
   gen1 = make_convolve(:filter, v01)
   n = n1 = -1
-  print_and_check(gen, "convolve", "convolve: size: 64")
+  print_and_check(gen, "convolve", "convolve size: 64")
   snd_display("%s not convolve?", gen) unless convolve?(gen)
   genx = gen1
   snd_display("convolve %s.eql?(%s)", genx, gen1) unless genx.eql?(gen1)
@@ -19764,7 +19764,7 @@ def test218
   snd_display("%s not phase_vocoder?", pv) unless phase_vocoder?(pv)
   print_and_check(pv,
                   "phase-vocoder",
-                  "phase-vocoder: outctr: 128, interp: 128, filptr: 0, N: 512, D: 128, in_data: nil")
+                  "phase-vocoder outctr: 128, interp: 128, filptr: 0, N: 512, D: 128, in_data: nil")
   pv = make_phase_vocoder
   set_mus_location(pv, 120)
   if (res = mus_location(pv)) != 120
@@ -19914,9 +19914,9 @@ def test228
   gen1 = make_ssb_am(440.0)
   print_and_check(gen,
                   "ssb-am",
-                  "ssb-am: shift: up, sin/cos: 439.999975 Hz (0.000000 radians), order: 41",
-                  "ssb-am: shift: up, sin/cos: 440.000000 Hz (0.000000 radians), order: 41",
-                  "ssb-am: shift: up, sin/cos: 439.999969 Hz (0.000000 radians), order: 41")
+                  "ssb-am shift: up, sin/cos: 439.999975 Hz (0.000000 radians), order: 41",
+                  "ssb-am shift: up, sin/cos: 440.000000 Hz (0.000000 radians), order: 41",
+                  "ssb-am shift: up, sin/cos: 439.999969 Hz (0.000000 radians), order: 41")
   v0 = make_vct!(10) do ssb_am(gen, 0.0) end
   v1 = make_vct(10)
   vct_map!(v1, lambda do | | ssb_am?(gen1) ? ssb_am(gen1, 0.0) : -1.0 end)

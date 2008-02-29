@@ -2828,7 +2828,7 @@ static XEN g_make_player(XEN snd, XEN chn)
 {
   #define H_make_player "(" S_make_player " :optional snd chn): \
 make a new player associated with snd's channel chn. \
-A player is a sort of wrapper for a channel of a sound that supports \
+A player is a sort of wrapper for a channel of a sound; it supports \
 all the control panel functions.  Once created, you can set these \
 fields, then call " S_add_player " to add this channel to the list of \
 channels either being played (if a play is in progress) or about \
@@ -2842,7 +2842,7 @@ to be played (via " S_start_playing ")."
     return(snd_no_such_sound_error(S_make_player, snd));
   cp = get_cp(snd, chn, S_make_player);
   if (cp == NULL) return(XEN_FALSE); /* won't happen */
-  new_sp = make_snd_info(NULL, "make_player:wrapper", true_sp->hdr, new_player_index(), true);
+  new_sp = make_snd_info(NULL, "make_player:wrapper", true_sp->hdr, new_player_index(), FILE_READ_ONLY);
   FREE(new_sp->sgx); /* no built-in GUI */
   new_sp->sgx = NULL;
   new_sp->chans[cp->chan] = cp;

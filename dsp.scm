@@ -1745,6 +1745,7 @@ the rendering frequency, the number of measurements per second; 'db-floor' is th
 a running window of the last 'size' inputs, returning the maxamp in that window."
   (let ((gen (make-delay size)))
     (set! (mus-scaler gen) 0.0)
+    (set! (mus-name gen) "moving-max")
     gen))
 
 (define (moving-max gen y)
@@ -1767,6 +1768,7 @@ a running window of the last 'size' inputs, returning the maxamp in that window.
 a running window of the last 'size' inputs, returning the sum of the absolute values of the samples in that window."
   (let ((gen (make-moving-average size)))
     (set! (mus-increment gen) 1.0) ; this is 1/size by default
+    (set! (mus-name gen) "moving-sum")
     gen))
 
 (define (moving-sum gen y)
@@ -1781,7 +1783,9 @@ a running window of the last 'size' inputs, returning the sum of the absolute va
 (define* (make-moving-rms :optional (size 128))
   "(make-moving-rms (size 128) returns a moving-rms generator.  The generator keeps \
 a running window of the last 'size' inputs, returning the rms of the samples in that window."
-  (make-moving-average size))
+  (let ((gen (make-moving-average size)))
+    (set! (mus-name gen) "moving-rms")
+    gen))
 
 (define (moving-rms gen y)
   "(moving-rms gen input) returns the rms of the values in a window over the last few inputs."
@@ -1797,6 +1801,7 @@ a running window of the last 'size' inputs, returning the rms of the samples in 
 a running window of the last 'size' inputs, returning the euclidean length of the vector in that window."
   (let ((gen (make-moving-average size)))
     (set! (mus-increment gen) 1.0)
+    (set! (mus-name gen) "moving-length")
     gen))
 
 (define (moving-length gen y)

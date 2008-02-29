@@ -1709,7 +1709,7 @@ widget_t make_mix_file_dialog(bool managed)
   /* called from the menu */
   if (!mdat)
     {
-      mdat = make_file_dialog(true, _("Mix Sound"), _("mix in:"), file_mix_ok_callback, mix_file_help_callback);
+      mdat = make_file_dialog(FILE_READ_ONLY, _("Mix Sound"), _("mix in:"), file_mix_ok_callback, mix_file_help_callback);
       set_dialog_widget(FILE_MIX_DIALOG, mdat->dialog);
       mdat->open_file_watcher_loc = add_ss_watcher(SS_FILE_OPEN_WATCHER, file_open_file_watcher, (void *)mdat);
     }
@@ -1800,7 +1800,7 @@ widget_t make_insert_file_dialog(bool managed)
 {
   if (!idat)
     {
-      idat = make_file_dialog(true, _("Insert Sound"), _("insert:"), file_insert_ok_callback, insert_file_help_callback);
+      idat = make_file_dialog(FILE_READ_ONLY, _("Insert Sound"), _("insert:"), file_insert_ok_callback, insert_file_help_callback);
       set_dialog_widget(FILE_INSERT_DIALOG, idat->dialog);
       idat->open_file_watcher_loc = add_ss_watcher(SS_FILE_OPEN_WATCHER, file_open_file_watcher, (void *)idat);
     }

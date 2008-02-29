@@ -9,28 +9,28 @@
 ;;;  test 6: vcts                               [13776]
 ;;;  test 7: colors                             [14044]
 ;;;  test 8: clm                                [14534]
-;;;  test 9: mix                                [25791]
-;;;  test 10: marks                             [28009]
-;;;  test 11: dialogs                           [28970]
-;;;  test 12: extensions                        [29215]
-;;;  test 13: menus, edit lists, hooks, etc     [29486]
-;;;  test 14: all together now                  [31195]
-;;;  test 15: chan-local vars                   [32236]
-;;;  test 16: regularized funcs                 [33875]
-;;;  test 17: dialogs and graphics              [38866]
-;;;  test 18: enved                             [38956]
-;;;  test 19: save and restore                  [38975]
-;;;  test 20: transforms                        [40760]
-;;;  test 21: new stuff                         [42743]
-;;;  test 22: run                               [44738]
-;;;  test 23: with-sound                        [50949]
-;;;  test 24: user-interface                    [54363]
-;;;  test 25: X/Xt/Xm                           [57757]
-;;;  test 26: Gtk                               [62365]
-;;;  test 27: GL                                [66217]
-;;;  test 28: errors                            [66341]
-;;;  test all done                              [68641]
-;;;  test the end                               [68879]
+;;;  test 9: mix                                [25794]
+;;;  test 10: marks                             [28012]
+;;;  test 11: dialogs                           [28973]
+;;;  test 12: extensions                        [29218]
+;;;  test 13: menus, edit lists, hooks, etc     [29489]
+;;;  test 14: all together now                  [31198]
+;;;  test 15: chan-local vars                   [32239]
+;;;  test 16: regularized funcs                 [33878]
+;;;  test 17: dialogs and graphics              [38869]
+;;;  test 18: enved                             [38959]
+;;;  test 19: save and restore                  [38978]
+;;;  test 20: transforms                        [40763]
+;;;  test 21: new stuff                         [42746]
+;;;  test 22: run                               [44741]
+;;;  test 23: with-sound                        [50962]
+;;;  test 24: user-interface                    [54424]
+;;;  test 25: X/Xt/Xm                           [57818]
+;;;  test 26: Gtk                               [62426]
+;;;  test 27: GL                                [66278]
+;;;  test 28: errors                            [66402]
+;;;  test all done                              [68702]
+;;;  test the end                               [68940]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -17444,7 +17444,7 @@ EDITS: 2
 	(filtered-comb del 1.0)
 	(filtered-comb del 0.0 0.4)
 	(if (not (string=? (mus-describe del)
-			   "filtered-comb scaler 0.000, line[5,8, linear]: [0.000 0.000 0.000 1.000 0.000], filter: [one-zero a0: 0.500, a1: 0.500, x1: 0.000]"))
+                            "filtered-comb scaler: 0.000, line[5,8, linear]: [0.000 0.000 0.000 1.000 0.000], filter: [one-zero a0: 0.500, a1: 0.500, x1: 0.000]"))
 	    (snd-display ";describe zfiltered-comb: ~A" (mus-describe del))))
       (set! (mus-feedback del) 1.0)
       (if (fneq (mus-feedback del) 1.0)
@@ -25529,6 +25529,9 @@ EDITS: 2
 	       random-args)))))
     
     (let ((gen (make-moving-max 4)))
+      (let ((descr (mus-describe gen)))
+	(if (not (string=? descr "moving-max ...")) (snd-display ";moving-max mus-describe: ~A" descr))
+	(if (not (string=? (mus-name gen) "moving-max")) (snd-display ";moving-max mus-name: ~A" (mus-name gen))))
       (let ((ov (make-vct 10))
 	    (iv (vct .1 .05 -.2 .15 -1.5 0.1 0.01 0.001 0.0 0.0))
 	    (tv (vct .1 .1 .2 .2 1.5 1.5 1.5 1.5 0.1 0.01)))
@@ -25602,6 +25605,9 @@ EDITS: 2
 	  ((= i 10))
 	(vct-set! data i (- 0.5 (random 1.0))))
       (set! g (make-moving-length 4))
+      (let ((descr (mus-describe g)))
+	(if (not (string=? descr "moving-length ...")) (snd-display ";moving-length mus-describe: ~A" descr))
+	(if (not (string=? (mus-name g) "moving-length")) (snd-display ";moving-length mus-name: ~A" (mus-name g))))
       (do ((i 0 (1+ i))) ((= i 12)) (vct-set! odata i (moving-length g (vct-ref data i))))
       (do ((i -3 (1+ i))
 	   (k 0 (1+ k)))
@@ -25617,6 +25623,9 @@ EDITS: 2
 	  ((= i 10))
 	(vct-set! data i (- 0.5 (random 1.0))))
       (set! g (make-moving-sum 4))
+      (let ((descr (mus-describe g)))
+	(if (not (string=? descr "moving-sum ...")) (snd-display ";moving-sum mus-describe: ~A" descr))
+	(if (not (string=? (mus-name g) "moving-sum")) (snd-display ";moving-sum mus-name: ~A" (mus-name g))))
       (do ((i 0 (1+ i))) ((= i 12)) (vct-set! odata i (moving-sum g (vct-ref data i))))
       (do ((i -3 (1+ i))
 	   (k 0 (1+ k)))
@@ -25632,6 +25641,9 @@ EDITS: 2
 	  ((= i 10))
 	(vct-set! data i (- 0.5 (random 1.0))))
       (set! g (make-moving-rms 4))
+      (let ((descr (mus-describe g)))
+	(if (not (string=? descr "moving-rms ...")) (snd-display ";moving-rms mus-describe: ~A" descr))
+	(if (not (string=? (mus-name g) "moving-rms")) (snd-display ";moving-rms mus-name: ~A" (mus-name g))))
       (do ((i 0 (1+ i))) ((= i 12)) (vct-set! odata i (moving-rms g (vct-ref data i))))
       (do ((i -3 (1+ i))
 	   (k 0 (1+ k)))
@@ -54364,6 +54376,52 @@ EDITS: 1
 	
 	;; mus-reset and mus-describe in this case have an embedded for-each, so not optimizable
 
+	(let ((gen (make-oscil 123.0)))
+	  (set! (mus-name gen) "oscil123")
+	  (if (not (string=? (mus-name gen) "oscil123")) (snd-display ";set mus-name oscil123: ~A" (mus-name gen)))
+	  (set! (mus-name gen) "another-name")
+	  (if (not (string=? (mus-name gen) "another-name")) (snd-display ";set mus-name again: ~A" (mus-name gen)))
+	  (let ((descr (mus-describe gen)))
+	    (if (not (string=? descr "another-name freq: 123.000Hz, phase: 0.000"))
+		(snd-display ";set mus-name describe: ~A" descr))))
+	
+	(let ((gen (make-nssb 123.0)))
+	  (set! (mus-name gen) "nssb123")
+	  (if (not (string=? (mus-name gen) "nssb123")) (snd-display ";set mus-name nssb123: ~A" (mus-name gen)))
+	  (set! (mus-name gen) "another-name")
+	  (if (not (string=? (mus-name gen) "another-name")) (snd-display ";set mus-name nssb again: ~A" (mus-name gen)))
+	  (set! (mus-frequency gen) 0.0)
+	  (let ((descr (mus-describe gen)))
+	    (if (not (string=? descr "another-name frequency: 0.0, ratio: 1.0, n: 1, angle: 0.0"))
+		(snd-display ";set mus-name nssb describe: ~A" descr))))
+	
+	(let ((gen (make-oscil 123.0))
+	      (gen1 (make-oscil 440.0)))
+	  (set! (mus-name gen) "oscil123")
+	  (set! (mus-name gen1) "440")
+	  (if (not (string=? (mus-name gen) "oscil123")) (snd-display ";set mus-name oscil123 1: ~A" (mus-name gen)))
+	  (if (not (string=? (mus-name gen1) "440")) (snd-display ";set mus-name oscil 440 1: ~A" (mus-name gen)))
+	  (set! (mus-name gen1) "another-name")
+	  (if (not (string=? (mus-name gen1) "another-name")) (snd-display ";set mus-name again 1: ~A" (mus-name gen)))
+	  (if (not (string=? (mus-name gen) "oscil123")) (snd-display ";set mus-name oscil123 2: ~A" (mus-name gen)))
+	  (let ((descr (mus-describe gen1)))
+	    (if (not (string=? descr "another-name freq: 440.000Hz, phase: 0.000"))
+		(snd-display ";set mus-name describe 1: ~A" descr))))
+	
+	(let ((gen (make-nssb 123.0))
+	      (gen1 (make-nssb 440.0)))
+	  (set! (mus-name gen) "nssb123")
+	  (set! (mus-name gen1) "440")
+	  (if (not (string=? (mus-name gen) "nssb123")) (snd-display ";set mus-name nssb123 1: ~A" (mus-name gen)))
+	  (if (not (string=? (mus-name gen1) "440")) (snd-display ";set mus-name nssb 440 1: ~A" (mus-name gen)))
+	  (set! (mus-name gen) "another-name")
+	  (if (not (string=? (mus-name gen) "another-name")) (snd-display ";set mus-name nssb again 1: ~A" (mus-name gen)))
+	  (set! (mus-frequency gen) 0.0)
+	  (let ((descr (mus-describe gen)))
+	    (if (not (string=? descr "another-name frequency: 0.0, ratio: 1.0, n: 1, angle: 0.0"))
+		(snd-display ";set mus-name nssb describe 1: ~A" descr))))
+	
+	
 	(if (not (null? (sounds))) (for-each close-sound (sounds)))
 	(set! (optimization) old-opt-23)
 	
@@ -66660,7 +66718,7 @@ EDITS: 1
 			 srate time-graph-type x-position-slider x-zoom-slider
 			 y-position-slider y-zoom-slider sound-data-ref mus-array-print-length mus-float-equal-fudge-factor
 			 mus-data mus-feedback mus-feedforward mus-frequency mus-hop
-			 mus-increment mus-length mus-location mus-phase mus-ramp mus-scaler vct-ref x-axis-label
+			 mus-increment mus-length mus-location mus-name mus-phase mus-ramp mus-scaler vct-ref x-axis-label
 			 filter-control-coeffs locsig-type mus-file-buffer-size 
 			 mus-rand-seed mus-width clm-table-size clm-default-frequency run-safety mus-offset mus-reset
 			 phase-vocoder-amp-increments phase-vocoder-amps 
@@ -67028,7 +67086,7 @@ EDITS: 1
 					make-table-lookup make-triangle-wave make-two-pole make-two-zero make-wave-train make-ssb-am
 					make-waveshape mus-channel mus-channels make-polyshape make-polywave
 					mus-data mus-feedback mus-feedforward mus-frequency mus-hop
-					mus-increment mus-length mus-file-name mus-location mus-order mus-phase mus-ramp mus-random mus-run
+					mus-increment mus-length mus-file-name mus-location mus-name mus-order mus-phase mus-ramp mus-random mus-run
 					mus-scaler mus-xcoeffs mus-ycoeffs notch one-pole one-zero make-moving-average seconds->samples samples->seconds
 					oscil partials->polynomial partials->wave partials->waveshape phase-partials->wave
 					phase-vocoder pulse-train radians->degrees radians->hz rand rand-interp readin
@@ -67074,7 +67132,7 @@ EDITS: 1
 			    (snd-display ";mus-gen ~A: ~A" n tag))))
 		    (list mus-channel mus-channels mus-data
 			  mus-feedback mus-feedforward mus-frequency mus-hop mus-increment mus-length
-			  mus-location mus-mix mus-order mus-phase mus-ramp mus-random mus-run mus-scaler mus-xcoeffs
+			  mus-location mus-mix mus-name mus-order mus-phase mus-ramp mus-random mus-run mus-scaler mus-xcoeffs
 			  mus-ycoeffs))
 	  (gc)(gc)
 	  
