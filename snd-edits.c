@@ -9440,8 +9440,8 @@ static char *snd_to_sample_describe(mus_any *ptr)
 	  }
     }
   snd_to_sample_buf = (char *)CALLOC(len, sizeof(char));
-  mus_snprintf(snd_to_sample_buf, len, "%s: reading %s (%d chan%s) at " OFF_TD ":[", 
-	       S_snd_to_sample, 
+  mus_snprintf(snd_to_sample_buf, len, "%s reading %s (%d chan%s) at " OFF_TD ":[", 
+	       mus_name(ptr),
 	       spl->sp->short_filename, 
 	       spl->chans, 
 	       (spl->chans > 1) ? "s" : "",

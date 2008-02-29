@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 4
-#define MUS_REVISION 4
-#define MUS_DATE "26-Feb-08"
+#define MUS_REVISION 5
+#define MUS_DATE "1-Mar-08"
 
 /*
+ * 1-Mar:      mus_set_name.
  * 26-Feb:     removed mus_cosines (use mus_length)
  * 24-Feb:     removed mus_make_env_with_start, added mus_make_env_with_length
  * 20-Feb:     clm 4:
@@ -275,7 +276,7 @@ typedef struct mus_any_class {
   Float (*set_ycoeff)(mus_any *ptr, int index, Float val);
   Float *(*xcoeffs)(mus_any *ptr);
   Float *(*ycoeffs)(mus_any *ptr);
-  void *unused;
+  void *original_class; /* class chain perhaps */
   void (*reset)(mus_any *ptr);
   void *(*set_closure)(mus_any *gen, void *e);
 } mus_any_class;
@@ -369,7 +370,8 @@ off_t mus_set_length(mus_any *gen, off_t len);
 off_t mus_order(mus_any *gen);
 Float *mus_data(mus_any *gen);
 Float *mus_set_data(mus_any *gen, Float *data);
-char *mus_name(mus_any *ptr);
+const char *mus_name(mus_any *ptr);
+const char *mus_set_name(mus_any *ptr, const char *new_name);
 Float mus_scaler(mus_any *gen);
 Float mus_set_scaler(mus_any *gen, Float val);
 Float mus_offset(mus_any *gen);

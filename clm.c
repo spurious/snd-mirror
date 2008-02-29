@@ -170,32 +170,6 @@ int mus_set_file_buffer_size(int size)
 }
 
 
-#define DESCRIBE_BUFFER_SIZE 2048
-static char describe_buffer[DESCRIBE_BUFFER_SIZE];
-#define STR_SIZE 128
-
-
-#define clm_calloc(Num, Size, What) CALLOC(Num, Size)
-
-static bool check_gen(mus_any *ptr, const char *name)
-{
-  if (ptr == NULL)
-    {
-      mus_error(MUS_NO_GEN, "null gen passed to %s", name);
-      return(false);
-    }
-  return(true);
-}
-
-
-char *mus_name(mus_any *ptr) 
-{
-  if (ptr == NULL)
-    return("null");
-  return(ptr->core->name);
-}
-
-
 Float mus_radians_to_hz(Float rads) {return(rads / w_rate);}
 Float mus_hz_to_radians(Float hz) {return(hz * w_rate);}
 
@@ -225,6 +199,12 @@ Float mus_set_srate(Float val)
 
 off_t mus_seconds_to_samples(Float secs) {return((off_t)(secs * sampling_rate));}
 Float mus_samples_to_seconds(off_t samps) {return((Float)((double)samps / (double)sampling_rate));}
+
+
+
+#define DESCRIBE_BUFFER_SIZE 2048
+static char describe_buffer[DESCRIBE_BUFFER_SIZE];
+#define STR_SIZE 128
 
 
 static char *float_array_to_string(Float *arr, int len, int loc)
@@ -356,11 +336,83 @@ static char *int_array_to_string(int *arr, int num_ints, char *name)
 
 /* ---------------- generic functions ---------------- */
 
+#define clm_calloc(Num, Size, What) CALLOC(Num, Size)
+
+static bool check_gen(mus_any *ptr, const char *name)
+{
+  if (ptr == NULL)
+    {
+      mus_error(MUS_NO_GEN, "null generator passed to %s", name);
+      return(false);
+    }
+  return(true);
+}
+
+
+const char *mus_name(mus_any *ptr) 
+{
+  if (ptr == NULL)
+    return("null");
+  return(ptr->core->name);
+}
+
+
+/* TODO: snd-test mus-set-name for both these and defgens */
+
+const char *mus_set_name(mus_any *ptr, const char *new_name)
+{
+  /* an experiment -- to change the name, we need to make a local copy of the mus_any_class struct */
+  /*   eventually we could use this to specialize built-in methods and so on */
+  if (check_gen(ptr, S_mus_name))
+    {
+      if (ptr->core->original_class)
+	{
+	  if (ptr->core->name) free(ptr->core->name);
+	  ptr->core->name = strdup(new_name);
+	}
+      else
+	{
+	  mus_any_class *tmp;
+	  tmp = ptr->core;
+	  ptr->core = (mus_any_class *)CALLOC(1, sizeof(mus_any_class));
+	  memcpy((void *)(ptr->core), (void *)tmp, sizeof(mus_any_class));
+	  ptr->core->name = strdup(new_name);
+	  ptr->core->original_class = (void *)tmp;
+	}
+    }
+  return(new_name);
+}
+
+/* add_method: in clm2xen always include mus_xen wrapper as environ (as currently for vct-func cases)
+ *               this is currently handled through closure and set_closure (locally) -- needs gen struct field for the pointer
+ *             add-method of degenerator could just prepend -- wouldn't assoc ignore the later case?
+ *             add_method(ptr, name, func) then copies if original as above, resets ptr to xen_func
+ *               also adds func to gen property list
+ *               func itself takes ptr, gets mus_xen via environ, finds func in property list and calls
+ *               to refer to (hidden) gen fields, we'd need a way to tell it to use the original_class ptr's funcs
+ *               call-next-method?  this would need the current ptr, the current class ptr etc
+ */
+
+
 int mus_free(mus_any *gen)
 {
   if ((check_gen(gen, "mus-free")) &&
       (gen->core->release))
-    return((*(gen->core->release))(gen));
+    {
+      int release_result = 0;
+      mus_any_class *local_class = NULL;
+      if (gen->core->original_class)
+	local_class = (mus_any_class *)(gen->core);
+      release_result = ((*(gen->core->release))(gen));
+      if (local_class) 
+	{
+#if MUS_DEBUGGING
+	  fprintf(stderr, "free local class struct\n");
+#endif
+	  FREE(local_class);
+	}
+      return(release_result);
+    }
   return(mus_error(MUS_NO_FREE, "can't free %s", mus_name(gen)));
 }
 
@@ -1180,7 +1232,8 @@ static bool oscil_equalp(mus_any *p1, mus_any *p2)
 
 static char *describe_oscil(mus_any *ptr)
 {
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_oscil " freq: %.3fHz, phase: %.3f", 
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s freq: %.3fHz, phase: %.3f", 
+	       mus_name(ptr),
 	       mus_frequency(ptr), 
 	       mus_phase(ptr));
   return(describe_buffer);
@@ -1376,7 +1429,8 @@ static bool ncos_equalp(mus_any *p1, mus_any *p2)
 
 static char *describe_ncos(mus_any *ptr)
 {
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_ncos " freq: %.3fHz, phase: %.3f, n: %d",
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s freq: %.3fHz, phase: %.3f, n: %d",
+	       mus_name(ptr),
 	       mus_frequency(ptr),
 	       mus_phase(ptr),
 	       (int)mus_order(ptr));
@@ -1454,7 +1508,8 @@ static bool nsin_equalp(mus_any *p1, mus_any *p2)
 
 static char *describe_nsin(mus_any *ptr)
 {
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_nsin " freq: %.3fHz, phase: %.3f, n: %d",
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s freq: %.3fHz, phase: %.3f, n: %d",
+	       mus_name(ptr),
 	       mus_frequency(ptr),
 	       mus_phase(ptr),
 	       (int)mus_order(ptr));
@@ -1669,7 +1724,8 @@ static bool asyfm_equalp(mus_any *p1, mus_any *p2)
 
 static char *describe_asyfm(mus_any *ptr)
 {
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_asymmetric_fm " freq: %.3fHz, phase: %.3f, ratio: %.3f, r: %.3f",
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s freq: %.3fHz, phase: %.3f, ratio: %.3f, r: %.3f",
+	       mus_name(ptr),
 	       mus_frequency(ptr),
 	       mus_phase(ptr),
 	       ((asyfm *)ptr)->ratio, 
@@ -1859,7 +1915,8 @@ bool mus_nrxysin_p(mus_any *ptr)
 static char *describe_nrxysin(mus_any *ptr)
 {
   nrxy *gen = (nrxy *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_nrxysin ": frequency: %.3f, ratio: %.3f, phase: %.3f, n: %d, r: %.3f",
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s frequency: %.3f, ratio: %.3f, phase: %.3f, n: %d, r: %.3f",
+	       mus_name(ptr),
 	       mus_frequency(ptr),
 	       gen->y_over_x,
 	       mus_phase(ptr),
@@ -1971,7 +2028,8 @@ bool mus_nrxycos_p(mus_any *ptr)
 static char *describe_nrxycos(mus_any *ptr)
 {
   nrxy *gen = (nrxy *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_nrxycos ": frequency: %.3f, ratio: %.3f, phase: %.3f, n: %d, r: %.3f",
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s frequency: %.3f, ratio: %.3f, phase: %.3f, n: %d, r: %.3f",
+	       mus_name(ptr),
 	       mus_frequency(ptr),
 	       gen->y_over_x,
 	       mus_phase(ptr),
@@ -2169,7 +2227,8 @@ static void table_lookup_reset(mus_any *ptr) {((tbl *)ptr)->phase = 0.0;}
 
 static char *describe_table_lookup(mus_any *ptr)
 {
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_table_lookup ": freq: %.3fHz, phase: %.3f, length: %d, interp: %s",
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s freq: %.3fHz, phase: %.3f, length: %d, interp: %s",
+	       mus_name(ptr),
 	       mus_frequency(ptr),
 	       mus_phase(ptr),
 	       (int)mus_length(ptr),
@@ -2343,7 +2402,8 @@ static Float *ws_set_data(mus_any *ptr, Float *val)
 
 static char *describe_waveshape(mus_any *ptr)
 {
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_waveshape " freq: %.3fHz, phase: %.3f, size: %d",
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s freq: %.3fHz, phase: %.3f, size: %d",
+	       mus_name(ptr),
 	       mus_frequency(ptr),
 	       mus_phase(ptr),
 	       (int)ws_size(ptr));
@@ -2603,7 +2663,8 @@ static char *describe_polywave(mus_any *ptr)
   pw *gen = (pw *)ptr;
   char *str;
   str = float_array_to_string(gen->coeffs, gen->n, 0);
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_polywave " freq: %.3fHz, phase: %.3f, coeffs[%d]: %s",
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s freq: %.3fHz, phase: %.3f, coeffs[%d]: %s",
+	       mus_name(ptr),
 	       mus_frequency(ptr),
 	       mus_phase(ptr),
 	       gen->n,
@@ -2686,7 +2747,8 @@ static char *describe_polyshape(mus_any *ptr)
   pw *gen = (pw *)ptr;
   char *str;
   str = float_array_to_string(gen->coeffs, gen->n, 0);
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_polyshape " freq: %.3fHz, phase: %.3f, coeffs[%d]: %s",
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s freq: %.3fHz, phase: %.3f, coeffs[%d]: %s",
+	       mus_name(ptr),
 	       mus_frequency(ptr),
 	       mus_phase(ptr),
 	       gen->n,
@@ -2810,7 +2872,8 @@ static bool wt_equalp(mus_any *p1, mus_any *p2)
 
 static char *describe_wt(mus_any *ptr)
 {
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_wave_train " freq: %.3fHz, phase: %.3f, size: " OFF_TD ", interp: %s",
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s freq: %.3fHz, phase: %.3f, size: " OFF_TD ", interp: %s",
+	       mus_name(ptr),
 	       mus_frequency(ptr), 
 	       mus_phase(ptr), 
 	       mus_length(ptr), 
@@ -3058,13 +3121,14 @@ static char *describe_delay(mus_any *ptr)
   char *str = NULL;
   dly *gen = (dly *)ptr;
   if (gen->zdly)
-    mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-		 S_delay ": line[%d,%d, %s]: %s", 
-		 gen->size, gen->zsize, 
+    mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s line[%d,%d, %s]: %s", 
+		 mus_name(ptr),
+		 gen->size, 
+		 gen->zsize, 
 		 interp_type_to_string(gen->type),
 		 str = float_array_to_string(gen->line, gen->size, gen->zloc));
-  else mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-		    S_delay ": line[%d, %s]: %s", 
+  else mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s line[%d, %s]: %s", 
+		    mus_name(ptr),
 		    gen->size, 
 		    interp_type_to_string(gen->type), 
 		    str = float_array_to_string(gen->line, gen->size, gen->loc));
@@ -3245,14 +3309,17 @@ static char *describe_comb(mus_any *ptr)
   char *str = NULL;
   dly *gen = (dly *)ptr;
   if (gen->zdly)
-    mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-		 S_comb ": scaler: %.3f, line[%d,%d, %s]: %s", 
-		 gen->yscl, gen->size, gen->zsize, 
+    mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s scaler: %.3f, line[%d,%d, %s]: %s", 
+		 mus_name(ptr),
+		 gen->yscl, 
+		 gen->size, 
+		 gen->zsize, 
 		 interp_type_to_string(gen->type),
 		 str = float_array_to_string(gen->line, gen->size, gen->zloc));
-  else mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-		    S_comb ": scaler: %.3f, line[%d, %s]: %s", 
-		    gen->yscl, gen->size, 
+  else mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s scaler: %.3f, line[%d, %s]: %s", 
+		    mus_name(ptr),
+		    gen->yscl, 
+		    gen->size, 
 		    interp_type_to_string(gen->type),
 		    str = float_array_to_string(gen->line, gen->size, gen->loc));
   if (str) FREE(str);
@@ -3313,14 +3380,17 @@ static char *describe_notch(mus_any *ptr)
   char *str = NULL;
   dly *gen = (dly *)ptr;
   if (gen->zdly)
-    mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-		 S_notch ": scaler: %.3f, line[%d,%d, %s]: %s", 
-		 gen->xscl, gen->size, gen->zsize, 
+    mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s scaler: %.3f, line[%d,%d, %s]: %s", 
+		 mus_name(ptr),
+		 gen->xscl, 
+		 gen->size, 
+		 gen->zsize, 
 		 interp_type_to_string(gen->type),
 		 str = float_array_to_string(gen->line, gen->size, gen->zloc));
-  else mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-		    S_notch ": scaler: %.3f, line[%d, %s]: %s", 
-		    gen->xscl, gen->size, 
+  else mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s scaler: %.3f, line[%d, %s]: %s", 
+		    mus_name(ptr),
+		    gen->xscl, 
+		    gen->size, 
 		    interp_type_to_string(gen->type),
 		    str = float_array_to_string(gen->line, gen->size, gen->loc));
   if (str) FREE(str);
@@ -3420,14 +3490,19 @@ static char *describe_all_pass(mus_any *ptr)
   char *str = NULL;
   dly *gen = (dly *)ptr;
   if (gen->zdly)
-    mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-		 S_all_pass ": feedback: %.3f, feedforward: %.3f, line[%d,%d, %s]:%s",
-		 gen->yscl, gen->xscl, gen->size, gen->zsize, 
+    mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s feedback: %.3f, feedforward: %.3f, line[%d,%d, %s]:%s",
+		 mus_name(ptr),
+		 gen->yscl, 
+		 gen->xscl, 
+		 gen->size, 
+		 gen->zsize, 
 		 interp_type_to_string(gen->type),
 		 str = float_array_to_string(gen->line, gen->size, gen->zloc));
-  else mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-		    S_all_pass ": feedback: %.3f, feedforward: %.3f, line[%d, %s]:%s",
-		    gen->yscl, gen->xscl, gen->size, 
+  else mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s feedback: %.3f, feedforward: %.3f, line[%d, %s]:%s",
+		    mus_name(ptr),
+		    gen->yscl, 
+		    gen->xscl, 
+		    gen->size, 
 		    interp_type_to_string(gen->type),
 		    str = float_array_to_string(gen->line, gen->size, gen->loc));
   if (str) FREE(str);
@@ -3509,9 +3584,8 @@ static char *describe_moving_average(mus_any *ptr)
 {
   char *str = NULL;
   dly *gen = (dly *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-	       "%s: %.3f, line[%d]:%s",
-	       gen->core->name,
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s %.3f, line[%d]:%s",
+	       mus_name(ptr),
 	       gen->xscl * gen->yscl, 
 	       gen->size, 
 	       str = float_array_to_string(gen->line, gen->size, gen->loc));
@@ -3593,7 +3667,7 @@ static char *describe_filtered_comb(mus_any *ptr)
   filter_str = strdup(mus_describe(((dly *)ptr)->filt));
   len = strlen(comb_str) + strlen(filter_str) + 64;
   res = (char *)CALLOC(len, sizeof(char));
-  mus_snprintf(res, len, "%s: [%s], [%s]", S_filtered_comb, comb_str, filter_str);
+  mus_snprintf(res, len, "%s, filter: [%s]", comb_str, filter_str);
   free(comb_str);
   free(filter_str);
   return(res);
@@ -4231,13 +4305,15 @@ static char *describe_noi(mus_any *ptr)
 {
   noi *gen = (noi *)ptr;
   if (mus_rand_p(ptr))
-    mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_rand " freq: %.3fHz, phase: %.3f, amp: %.3f%s",
+    mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s freq: %.3fHz, phase: %.3f, amp: %.3f%s",
+		 mus_name(ptr),
 		 mus_frequency(ptr),
 		 mus_phase(ptr),
 		 mus_scaler(ptr),
 		 (gen->distribution) ? ", with distribution envelope" : "");
   else
-    mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_rand_interp " freq: %.3fHz, phase: %.3f, amp: %.3f, incr: %.3f, curval: %.3f%s",
+    mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_rand_interp "%s freq: %.3fHz, phase: %.3f, amp: %.3f, incr: %.3f, curval: %.3f%s",
+		 mus_name(ptr),
 		 mus_frequency(ptr),
 		 mus_phase(ptr),
 		 mus_scaler(ptr),
@@ -4391,19 +4467,23 @@ static char *describe_smpflt(mus_any *ptr)
   switch (gen->core->type)
     {
     case MUS_ONE_ZERO: 
-      mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_one_zero ": a0: %.3f, a1: %.3f, x1: %.3f", 
+      mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s a0: %.3f, a1: %.3f, x1: %.3f", 
+		   mus_name(ptr),
 		   gen->xs[0], gen->xs[1], gen->x1); 
       break;
     case MUS_ONE_POLE: 
-      mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_one_pole ": a0: %.3f, b1: %.3f, y1: %.3f", 
+      mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s a0: %.3f, b1: %.3f, y1: %.3f", 
+		   mus_name(ptr),
 		   gen->xs[0], gen->ys[1], gen->y1); 
       break;
     case MUS_TWO_ZERO: 
-      mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_two_zero ": a0: %.3f, a1: %.3f, a2: %.3f, x1: %.3f, x2: %.3f",
+      mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s a0: %.3f, a1: %.3f, a2: %.3f, x1: %.3f, x2: %.3f",
+		   mus_name(ptr),
 		   gen->xs[0], gen->xs[1], gen->xs[2], gen->x1, gen->x2); 
       break;
     case MUS_TWO_POLE: 
-      mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_two_pole ": a0: %.3f, b1: %.3f, b2: %.3f, y1: %.3f, y2: %.3f",
+      mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s a0: %.3f, b1: %.3f, b2: %.3f, y1: %.3f, y2: %.3f",
+		   mus_name(ptr),
 		   gen->xs[0], gen->ys[1], gen->ys[2], gen->y1, gen->y2); 
       break;
     }
@@ -4806,9 +4886,10 @@ static bool frm_equalp(mus_any *p1, mus_any *p2)
 static char *describe_formant(mus_any *ptr)
 {
   frm *gen = (frm *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-	       S_formant ": radius: %.3f, frequency: %.3f",
-	       gen->radius, mus_radians_to_hz(gen->frequency));
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s frequency: %.3f, radius: %.3f",
+	       mus_name(ptr),
+	       mus_radians_to_hz(gen->frequency),
+	       gen->radius);
   return(describe_buffer);
 }
 
@@ -4929,9 +5010,10 @@ mus_any *mus_make_formant(Float frequency, Float radius)
 static char *describe_firmant(mus_any *ptr)
 {
   frm *gen = (frm *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-	       S_firmant ": radius: %.3f, frequency: %.3f",
-	       gen->radius, mus_radians_to_hz(gen->frequency));
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s frequency: %.3f, radius: %.3f",
+	       mus_name(ptr),
+	       mus_radians_to_hz(gen->frequency),
+	       gen->radius);
   return(describe_buffer);
 }
 
@@ -5254,8 +5336,8 @@ static char *describe_filter(mus_any *ptr)
   char *xstr = NULL, *ystr = NULL;
   xstr = float_array_to_string(gen->x, gen->order, 0);
   ystr = float_array_to_string(gen->y, gen->order, 0);
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s: order: %d, xs: %s, ys: %s", 
-	       gen->core->name, 
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s order: %d, xs: %s, ys: %s", 
+	       mus_name(ptr),
 	       gen->order,
 	       xstr, ystr);
   if (xstr) FREE(xstr);
@@ -5269,8 +5351,8 @@ static char *describe_fir_filter(mus_any *ptr)
   flt *gen = (flt *)ptr;
   char *xstr = NULL;
   xstr = float_array_to_string(gen->x, gen->order, 0);
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s: order: %d, xs: %s", 
-	       gen->core->name, 
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s order: %d, xs: %s", 
+	       mus_name(ptr),
 	       gen->order,
 	       xstr);
   if (xstr) FREE(xstr);
@@ -5283,8 +5365,8 @@ static char *describe_iir_filter(mus_any *ptr)
   flt *gen = (flt *)ptr;
   char *ystr = NULL;
   ystr = float_array_to_string(gen->y, gen->order, 0);
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s: order: %d, ys: %s", 
-	       gen->core->name, 
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s order: %d, ys: %s", 
+	       mus_name(ptr),
 	       gen->order,
 	       ystr);
   if (ystr) FREE(ystr);
@@ -5735,11 +5817,14 @@ static char *describe_env(mus_any *ptr)
 {
   char *str = NULL;
   seg *e = (seg *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE,
-	       S_env ": %s, pass: " OFF_TD " (dur: " OFF_TD "), index: %d, scaler: %.4f, offset: %.4f, data: %s",
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s %s, pass: " OFF_TD " (dur: " OFF_TD "), index: %d, scaler: %.4f, offset: %.4f, data: %s",
+	       mus_name(ptr),
 	       ((e->style == ENV_SEG) ? "linear" : ((e->style == ENV_EXP) ? "exponential" : "step")),
-	       e->loc, e->end + 1, e->index,
-	       e->original_scaler, e->original_offset,
+	       e->loc, 
+	       e->end + 1, 
+	       e->index,
+	       e->original_scaler, 
+	       e->original_offset,
 	       str = float_array_to_string(e->original_data, e->size * 2, 0));
   if (str) FREE(str);
   return(describe_buffer);
@@ -6092,8 +6177,8 @@ static char *describe_frame(mus_any *ptr)
 {
   mus_frame *gen = (mus_frame *)ptr;
   char *str = NULL;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-	       S_frame "[%d]: %s", 
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s[%d]: %s", 
+	       mus_name(ptr),
 	       gen->chans,
 	       str = float_array_to_string(gen->vals, gen->chans, 0));
   if (str) FREE(str);
@@ -6348,7 +6433,7 @@ static char *describe_mixer(mus_any *ptr)
   int i, j, lim;
 
   lim = mus_array_print_length();
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_mixer ": chans: %d, [\n ", gen->chans);
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s chans: %d, [\n ", mus_name(ptr), gen->chans);
   str = (char *)CALLOC(64, sizeof(char));
   if (gen->chans < lim) lim = gen->chans;
 
@@ -6818,8 +6903,8 @@ typedef struct {
 static char *describe_file_to_sample(mus_any *ptr)
 {
   rdin *gen = (rdin *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-	       S_file_to_sample ": %s", 
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s %s", 
+	       mus_name(ptr),
 	       gen->file_name);
   return(describe_buffer);
 }
@@ -7031,8 +7116,8 @@ Float mus_file_to_sample(mus_any *ptr, off_t samp, int chan)
 static char *describe_readin(mus_any *ptr)
 {
   rdin *gen = (rdin *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-	       S_readin ": %s[chan %d], loc: " OFF_TD ", dir: %d", 
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s %s[chan %d], loc: " OFF_TD ", dir: %d", 
+	       mus_name(ptr),
 	       gen->file_name, gen->chan, gen->loc, gen->dir);
   return(describe_buffer);
 }
@@ -7152,8 +7237,8 @@ Float mus_in_any(off_t samp, int chan, mus_any *IO)
 static char *describe_file_to_frame(mus_any *ptr)
 {
   rdin *gen = (rdin *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-	       S_file_to_frame ": %s", 
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s %s", 
+	       mus_name(ptr),
 	       gen->file_name);
   return(describe_buffer);
 }
@@ -7258,8 +7343,8 @@ typedef struct {
 static char *describe_sample_to_file(mus_any *ptr)
 {
   rdout *gen = (rdout *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-	       S_sample_to_file ": %s", 
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s %s", 
+	       mus_name(ptr),
 	       gen->file_name);
   return(describe_buffer);
 }
@@ -7603,8 +7688,8 @@ Float mus_out_any(off_t samp, Float val, int chan, mus_any *IO)
 static char *describe_frame_to_file(mus_any *ptr)
 {
   rdout *gen = (rdout *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-	       S_frame_to_file ": %s", 
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s %s", 
+	       mus_name(ptr),
 	       gen->file_name);
   return(describe_buffer);
 }
@@ -7728,8 +7813,8 @@ static char *describe_locsig(mus_any *ptr)
   int i, lim = 16;
   locs *gen = (locs *)ptr;
 
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE,
-	       S_locsig ": chans %d, outn: [", 
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s chans %d, outn: [", 
+	       mus_name(ptr),
 	       gen->chans);
   str = (char *)CALLOC(STR_SIZE, sizeof(char));
 
@@ -8142,8 +8227,12 @@ static char *describe_move_sound(mus_any *ptr)
 
   if (allstr) {FREE(allstr); allstr = NULL;}
 
-  starts = mus_format(S_move_sound ": start: " OFF_TD ", end: " OFF_TD ", out chans %d, rev chans: %d",
-		      gen->start, gen->end, gen->out_channels, gen->rev_channels);
+  starts = mus_format("%s start: " OFF_TD ", end: " OFF_TD ", out chans %d, rev chans: %d",
+		      mus_name(ptr),
+		      gen->start, 
+		      gen->end, 
+		      gen->out_channels, 
+		      gen->rev_channels);
   dopdly = mus_format("doppler %s", mus_describe(gen->doppler_delay));
   dopenv = mus_format("doppler %s", mus_describe(gen->doppler_env));
   revenv = mus_format("global reverb %s", mus_describe(gen->rev_env));
@@ -8491,8 +8580,8 @@ static bool src_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
 static char *describe_src(mus_any *ptr)
 {
   sr *gen = (sr *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE,
-	       S_src ": width: %d, x: %.3f, incr: %.3f, sinc table len: %d",
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s width: %d, x: %.3f, incr: %.3f, sinc table len: %d",
+	       mus_name(ptr),
 	       gen->width, gen->x, gen->incr, gen->len);
   return(describe_buffer);
 }
@@ -8789,8 +8878,8 @@ static bool granulate_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
 static char *describe_granulate(mus_any *ptr)
 {
   grn_info *gen = (grn_info *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE,
-	       S_granulate ": expansion: %.3f (%d/%d), scaler: %.3f, length: %.3f secs (%d samps), ramp: %.3f",
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s expansion: %.3f (%d/%d), scaler: %.3f, length: %.3f secs (%d samps), ramp: %.3f",
+	       mus_name(ptr),
 	       (Float)(gen->output_hop) / (Float)(gen->input_hop),
 	       gen->input_hop, gen->output_hop,
 	       gen->amp,
@@ -10139,8 +10228,8 @@ static bool convolve_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
 static char *describe_convolve(mus_any *ptr)
 {
   conv *gen = (conv *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, 
-	       S_convolve ": size: %d", 
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s size: %d", 
+	       mus_name(ptr),
 	       gen->fftsize);
   return(describe_buffer);
 }
@@ -10412,8 +10501,8 @@ static char *describe_phase_vocoder(mus_any *ptr)
 {
   char *arr = NULL;
   pv_info *gen = (pv_info *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE,
-	       S_phase_vocoder ": outctr: %d, interp: %d, filptr: %d, N: %d, D: %d, in_data: %s",
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s outctr: %d, interp: %d, filptr: %d, N: %d, D: %d, in_data: %s",
+	       mus_name(ptr),
 	       gen->outctr, gen->interp, gen->filptr, gen->N, gen->D,
 	       arr = float_array_to_string(gen->in_data, gen->N, 0));
   if (arr) FREE(arr);
@@ -10799,7 +10888,8 @@ static bool ssb_am_equalp(mus_any *p1, mus_any *p2)
 static char *describe_ssb_am(mus_any *ptr)
 {
   ssbam *gen = (ssbam *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, S_ssb_am ": shift: %s, sin/cos: %f Hz (%f radians), order: %d",
+  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s shift: %s, sin/cos: %f Hz (%f radians), order: %d",
+	       mus_name(ptr),
 	       (gen->shift_up) ? "up" : "down",
 	       mus_frequency(ptr),
 	       mus_phase(ptr),
@@ -11225,14 +11315,14 @@ void init_mus_module(void)
  *      mus-documentation [mus-describe shows current state -- if we had this, snd-help might be able to use it for generators.scm]
  *        (the info is in clm2xen, but the class slot is in clm and it would be nice if it worked from C)
  *
+ * optional func to out-any? -- needs result not current addition?
+ *
  * CL/CLM:
  *   make the in-lisp with-sound work again
  *   definstrument could write actual C functions (with normal args) rather than the packaged int/double-array form
  *     but optkey args and envelopes would need to be massaged into C-compatible shape
  *     and currently there's no limitation on the pre-run code -- I'd have to add optimizer support for everything
  *   can env-any be supported here?
- *
- * what about mus_generator_p at this level?
  *
  *
  * done:
@@ -11252,6 +11342,8 @@ void init_mus_module(void)
  *   envelopes can be in the form '((0 0) (100 1))
  *   defgenerator
  *   removed mus-cosines
+ *   mus-run-with-fm-and-pm [TODO: can this work in CL/CLM?]
+ *   mus_set_name
  *
  *   (9.7)
  *   :dur and :end -> :length in make-env

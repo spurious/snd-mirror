@@ -11094,7 +11094,7 @@ static XEN xen_value_to_xen(ptree *pt, xen_value *v)
 	}
       break;
 
-      /* PERHAPS: xen_value_to_xen for R_CLM|VCT|LIST_VECTOR READER MIX_READER also in free_xen_var? */
+      /* if xen_value_to_xen for R_CLM|VCT|LIST_VECTOR READER MIX_READER also in free_xen_var */
       /*  clm_vector data.gens=mus_any direct from scheme obj: is it safe to simply repackage? */
 
     case R_SOUND_DATA:

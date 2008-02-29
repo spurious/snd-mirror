@@ -1537,11 +1537,19 @@ static XEN g_mus_order(XEN gen)
 
 static XEN g_mus_name(XEN gen) 
 {
-  /* mus_name points to a constant string, so don't change it directly */
   #define H_mus_name "(" S_mus_name " gen): gen's (type) name, if any"
   if (XEN_LIST_P(gen)) return(call_get_method(gen, S_mus_name));
   XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ONLY_ARG, S_mus_name, "a generator");
   return(C_TO_XEN_STRING(mus_name(XEN_TO_MUS_ANY(gen))));
+}
+
+
+static XEN g_mus_set_name(XEN gen, XEN name) 
+{
+  if (XEN_LIST_P(gen)) return(call_set_method(gen, name, S_mus_name));
+  XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ARG_1, S_setB S_mus_name, "a generator");
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_2, S_setB S_mus_name, "a string");
+  return(C_TO_XEN_STRING(mus_set_name(XEN_TO_MUS_ANY(gen), (const char *)(XEN_TO_C_STRING(name)))));
 }
 
 
@@ -7516,6 +7524,7 @@ XEN_ARGIFY_5(g_mus_interpolate_w, g_mus_interpolate)
 XEN_ARGIFY_3(g_sine_bank_w, g_sine_bank)
 XEN_NARGIFY_1(g_mus_describe_w, g_mus_describe)
 XEN_NARGIFY_1(g_mus_name_w, g_mus_name)
+XEN_NARGIFY_2(g_mus_set_name_w, g_mus_set_name)
 XEN_ARGIFY_3(g_mus_run_w, g_mus_run)
 XEN_NARGIFY_1(g_mus_phase_w, g_mus_phase)
 XEN_NARGIFY_2(g_mus_set_phase_w, g_mus_set_phase)
@@ -7820,6 +7829,7 @@ XEN_NARGIFY_2(g_mus_equalp_w, equalp_mus_xen)
 #define g_sine_bank_w g_sine_bank
 #define g_mus_describe_w g_mus_describe
 #define g_mus_name_w g_mus_name
+#define g_mus_set_name_w g_mus_set_name
 #define g_mus_run_w g_mus_run
 #define g_mus_phase_w g_mus_phase
 #define g_mus_set_phase_w g_mus_set_phase
@@ -8264,11 +8274,11 @@ void mus_xen_init(void)
   XEN_DEFINE_CONSTANT(S_mus_chebyshev_second_kind, MUS_CHEBYSHEV_SECOND_KIND, "Chebyshev polynomial of second kind, for " S_partials_to_polynomial);
 
   XEN_DEFINE_PROCEDURE(S_mus_describe,  g_mus_describe_w,  1, 0, 0,  H_mus_describe);
-  XEN_DEFINE_PROCEDURE(S_mus_name,      g_mus_name_w,      1, 0, 0,  H_mus_name);
   XEN_DEFINE_PROCEDURE(S_mus_run,       g_mus_run_w,       1, 2, 0,  H_mus_run);
   XEN_DEFINE_PROCEDURE(S_mus_file_name, g_mus_file_name_w, 1, 0, 0,  H_mus_file_name);
   XEN_DEFINE_PROCEDURE(S_mus_reset,     g_mus_reset_w,     1, 0, 0,  H_mus_reset);
 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_name,      g_mus_name_w,      H_mus_name,      S_setB S_mus_name,      g_mus_set_name_w,       1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_phase,     g_mus_phase_w,     H_mus_phase,     S_setB S_mus_phase,     g_mus_set_phase_w,      1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_scaler,    g_mus_scaler_w,    H_mus_scaler,    S_setB S_mus_scaler,    g_mus_set_scaler_w,     1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_width,     g_mus_width_w,     H_mus_width,     S_setB S_mus_width,     g_mus_set_width_w,      1, 0, 2, 0);

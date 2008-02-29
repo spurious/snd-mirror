@@ -192,7 +192,7 @@
 			       (list 
 				(list 'mus-describe
 				      (lambda (g)
-					(let ((desc ,sname)
+					(let ((desc (mus-name g))
 					      (first-time #t))
 					  (for-each
 					   (lambda (field)
@@ -236,7 +236,12 @@
 			   (if ,(not (method-exists? 'mus-name))
 			       (list 
 				(list 'mus-name
-				      (lambda (g) ,sname)))
+				      (lambda (g) 
+					,sname)
+				      (lambda (g new-name)
+					(set-car! (cdr (assoc 'mus-name (list-ref g (1- (length g)))))
+						  (lambda (g) 
+						    new-name))))) ; depend on closures?
 			       (list)))))
     
     `(begin
@@ -278,6 +283,7 @@
 		    (set! ctr (1+ ctr))
 		    val)))
 	      field-names field-types))))
+
 
 
 ;;; --------------------------------------------------------------------------------
