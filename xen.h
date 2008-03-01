@@ -11,11 +11,12 @@
  */
 
 #define XEN_MAJOR_VERSION 2
-#define XEN_MINOR_VERSION 11
-#define XEN_VERSION "2.11"
+#define XEN_MINOR_VERSION 12
+#define XEN_VERSION "2.12"
 
 /* HISTORY:
  *
+ *  1-Mar-08:  no ext case now checks arg consistency.
  *  --------
  *  12-Dec-07: Gauche uses COMPNUM, not COMPLEX (after 0.8.7?), NUMBERP for complex?
  *  21-Nov-07: XEN_HAVE_COMPLEX_NUMBERS.
@@ -2051,9 +2052,41 @@ bool xen_gauche_hook_p(XEN val);
 #define XEN_WRAPPED_C_POINTER_P(a) 0
 #define XEN_PROCEDURE_P(Arg) 0
 #define XEN_PROCEDURE_SOURCE(Func) 0
-#define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc)
-#define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt)
-#define XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt)
+
+/* error checking ... */
+#define XEN_ARGIFY_1(OutName, InName) static int OutName(void) {return(-1);}
+#define XEN_ARGIFY_2(OutName, InName) static int OutName(void) {return(-2);}
+#define XEN_ARGIFY_3(OutName, InName) static int OutName(void) {return(-3);}
+#define XEN_ARGIFY_4(OutName, InName) static int OutName(void) {return(-4);}
+#define XEN_ARGIFY_5(OutName, InName) static int OutName(void) {return(-5);}
+#define XEN_ARGIFY_6(OutName, InName) static int OutName(void) {return(-6);}
+#define XEN_ARGIFY_7(OutName, InName) static int OutName(void) {return(-7);}
+#define XEN_ARGIFY_8(OutName, InName) static int OutName(void) {return(-8);}
+#define XEN_ARGIFY_9(OutName, InName) static int OutName(void) {return(-9);}
+#define XEN_ARGIFY_10(OutName, InName) static int OutName(void) {return(-10);}
+
+#define XEN_NARGIFY_0(OutName, InName) static int OutName(void) {return(0);}
+#define XEN_NARGIFY_1(OutName, InName) static int OutName(void) {return(1);}
+#define XEN_NARGIFY_2(OutName, InName) static int OutName(void) {return(2);}
+#define XEN_NARGIFY_3(OutName, InName) static int OutName(void) {return(3);}
+#define XEN_NARGIFY_4(OutName, InName) static int OutName(void) {return(4);}
+#define XEN_NARGIFY_5(OutName, InName) static int OutName(void) {return(5);}
+#define XEN_NARGIFY_6(OutName, InName) static int OutName(void) {return(6);}
+#define XEN_NARGIFY_7(OutName, InName) static int OutName(void) {return(7);}
+#define XEN_NARGIFY_8(OutName, InName) static int OutName(void) {return(8);}
+#define XEN_NARGIFY_9(OutName, InName) static int OutName(void) {return(9);}
+
+#define XEN_VARGIFY(OutName, InName) static int OutName(void) {return(-100);}
+
+#define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
+  xen_no_ext_lang_check_args(Name, Func(), ReqArg, OptArg, RstArg)
+
+#define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
+  {xen_no_ext_lang_check_args(Get_Name, Get_Func(), Get_Req, Get_Opt, 0); xen_no_ext_lang_check_args(Set_Name, Set_Func(), Set_Req, Set_Opt, 0);}
+
+#define XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
+  {xen_no_ext_lang_check_args(Get_Name, Get_Func(), Get_Req, Get_Opt, 0); xen_no_ext_lang_check_args(Set_Name, Set_Func(), Set_Req, Set_Opt, 0);}
+
 #define XEN_ARITY(Func) 0
 #define XEN_REQUIRED_ARGS(Func) 0
 #define XEN_REQUIRED_ARGS_OK(Func, Args) false
@@ -2118,6 +2151,8 @@ bool xen_gauche_hook_p(XEN val);
 #define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr)
 #define XEN_OUT_OF_RANGE_ERROR(Caller, ArgN, Arg, Descr)
 typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
+
+void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int opt_args, int rst_args);
 
 #endif
 /* end NO EXTENSION LANGUAGE */

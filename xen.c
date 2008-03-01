@@ -2292,4 +2292,35 @@ XEN c_to_xen_off_t(off_t val)
   return(XEN_ZERO);
 }
 
+
+void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int opt_args, int rst_args)
+{
+  if (args > 0) /* nargify -- all are required */
+    {
+      if (req_args != args)
+	fprintf(stderr, "%s: %d required args, but req: %d (opt: %d, rst: %d)\n", name, args, req_args, opt_args, rst_args);
+      if (opt_args != 0)
+	fprintf(stderr, "%s: all args required, but opt: %d (rst: %d)\n", name, opt_args, rst_args);
+      if (rst_args != 0)
+	fprintf(stderr, "%s: all args required, but rst: %d\n", name, rst_args);
+    }
+  else
+    {
+      if (args != -100) /* vargify -- any ok */
+	{
+	  args = -args;
+	  if (rst_args == 0)
+	    {
+	      if (req_args + opt_args != args)
+		fprintf(stderr, "%s: total args: %d, but req: %d and opt: %d\n", name, args, req_args, opt_args);
+	    }
+	  else
+	    {
+	      if (req_args + opt_args > args)
+		fprintf(stderr, "%s: has :rest, but req: %d and opt: %d , whereas total: %d\n", name, req_args, opt_args, args);
+	    }
+	}
+    }
+}
+
 #endif

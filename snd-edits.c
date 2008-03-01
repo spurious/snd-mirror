@@ -7689,10 +7689,11 @@ the edit lists '((global-pos data-num local-pos local-end scaler rmp0 rmp1 type-
 }
 
 
+#define S_edit_fragment_type_name "edit-fragment-type-name"
 static XEN g_edit_fragment_type_name(XEN type)
 {
   int typ;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(type), type, XEN_ONLY_ARG, "edit-fragment-type-name", "an int");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(type), type, XEN_ONLY_ARG, S_edit_fragment_type_name, "an int");
   typ = XEN_TO_C_INT(type);
   if ((typ >= 0) && (typ < NUM_OPS))
     return(C_TO_XEN_STRING(type_info[typ].name));
@@ -9659,6 +9660,7 @@ XEN_ARGIFY_1(g_make_snd_to_sample_w, g_make_snd_to_sample)
 XEN_ARGIFY_4(g_edit_list_to_function_w, g_edit_list_to_function)
 XEN_NARGIFY_0(g_max_virtual_ptrees_w, g_max_virtual_ptrees)
 XEN_NARGIFY_1(g_set_max_virtual_ptrees_w, g_set_max_virtual_ptrees)
+XEN_NARGIFY_1(g_edit_fragment_type_name_w, g_edit_fragment_type_name)
 #else
 #define g_make_sample_reader_w g_make_sample_reader
 #define g_make_region_sample_reader_w g_make_region_sample_reader
@@ -9701,6 +9703,7 @@ XEN_NARGIFY_1(g_set_max_virtual_ptrees_w, g_set_max_virtual_ptrees)
 #define g_edit_list_to_function_w g_edit_list_to_function
 #define g_max_virtual_ptrees_w g_max_virtual_ptrees
 #define g_set_max_virtual_ptrees_w g_set_max_virtual_ptrees
+#define g_edit_fragment_type_name_w g_edit_fragment_type_name
 #endif
 
 
@@ -9748,7 +9751,7 @@ void g_init_edits(void)
 
   XEN_DEFINE_PROCEDURE(S_save_edit_history,            g_save_edit_history_w,            1, 2, 0, H_save_edit_history);
   XEN_DEFINE_PROCEDURE(S_edit_fragment,                g_edit_fragment_w,                0, 3, 0, H_edit_fragment);
-  XEN_DEFINE_PROCEDURE("edit-fragment-type-name",      g_edit_fragment_type_name,        1, 0, 0, "internal testing function");
+  XEN_DEFINE_PROCEDURE(S_edit_fragment_type_name,      g_edit_fragment_type_name_w,      1, 0, 0, "internal testing function");
 
   XEN_DEFINE_PROCEDURE(S_undo,                         g_undo_w,                         0, 3, 0, H_undo);
 #if HAVE_RUBY
@@ -9788,7 +9791,7 @@ void g_init_edits(void)
   XEN_DEFINE_PROCEDURE(S_edit_list_to_function,        g_edit_list_to_function_w,        0, 4, 0, H_edit_list_to_function);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_max_virtual_ptrees, g_max_virtual_ptrees_w, H_max_virtual_ptrees,
-				   S_setB S_max_virtual_ptrees, g_set_max_virtual_ptrees_w,  0, 0, 1, 0);
+				   S_setB S_max_virtual_ptrees, g_set_max_virtual_ptrees_w, 0, 0, 1, 0);
 
 
   #define H_save_hook S_save_hook " (snd name): called each time a file is about to be saved. \
