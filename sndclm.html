@@ -104,15 +104,15 @@ note lists and instruments are described in sndscm.html.
   <tr><td><a href="#locsigdoc">locsig</a></td><td></td><td>static sound placement</td></tr>
   <tr><td><a href="#move-sounddoc">move-sound</a></td><td></td><td>sound motion</td></tr>
   <tr><td><a href="#moving-averagedoc">moving-average</a></td><td></td><td>moving window average</td></tr>
-  <tr><td><a href="#ncosdoc">ncos (sum-of-cosines)</a></td><td></td><td>sum of n equal amplitude cosines</td></tr>
+  <tr><td><a href="#ncosdoc">ncos (sum-of-cosines)</a></td><td></td><td>n equal amplitude cosines</td></tr>
   <tr><td><a href="#notchdoc">notch</a></td><td></td><td>notch filter</td></tr>
-  <tr><td><a href="#ncosdoc">nsin (sum-of-sines)</a></td><td></td><td>sum of n equal amplitude sines</td></tr>
-  <tr><td><a href="#nrxydoc">nrxycos</a></td><td></td><td>sum of n scaled cosines</td></tr>
+  <tr><td><a href="#ncosdoc">nsin (sum-of-sines)</a></td><td></td><td>n equal amplitude sines</td></tr>
+  <tr><td><a href="#nrxydoc">nrxycos</a></td><td></td><td>n scaled cosines</td></tr>
 </table>
 </td>
 <td>
 <table border=0 cellpadding=0>
-  <tr><td><a href="#nrxydoc">nrxysin (sine-summation)</a></td><td></td><td>sum of n scaled sines</td></tr>
+  <tr><td><a href="#nrxydoc">nrxysin (sine-summation)</a></td><td></td><td>n scaled sines</td></tr>
   <tr><td><a href="#one-poledoc">one-pole</a></td><td></td><td>one pole filter</td></tr>
   <tr><td><a href="#one-zerodoc">one-zero</a></td><td></td><td>one zero filter</td></tr>
   <tr><td><a href="#oscildoc">oscil</a></td><td></td><td>sine wave and FM</td></tr>
@@ -137,9 +137,11 @@ note lists and instruments are described in sndscm.html.
 </table>
 </td></tr>
 
+<tr><td colspan=3><center><a href="#genericfunctions">Generic Functions</a></center></td></tr>
+
 <tr><td colspan=3><center><a href="#othergenerators">Other Generators</a></center></td></tr>
 
-<tr><td colspan=3><center><a href="#genericfunctions">Functions</a></center></td></tr>
+<tr><td colspan=3><center><a href="#otherfunctions">Other Functions</a></center></td></tr>
 
 <tr><td width=20 bgcolor="#f6f8ff"></td><td>
 <table border=0 cellpadding=0>
@@ -5299,6 +5301,95 @@ dlocsig macro.  All the necessary data is packaged up in a list:
 
 
 
+<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h2>Generic Functions</h2></td></tr></table>
+<A NAME="genericfunctions"></A>
+
+<!-- ---------------------------------------- GENERIC FUNCTIONS ---------------------------------------- -->
+
+
+<p>The generators respond to a set of "generic" functions.  mus-frequency, for example, tries to return (or set) a generator's
+frequency, wherever that makes sense.
+The generic functions are:
+</p>
+
+<table cellspacing=0 cellpadding=0 hspace=40>
+<tr><td bgcolor="#f6f8ff"><a class=def name="mus-channel">mus-channel</a></td><td width=30 bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">channel being read/written</td></tr>
+<tr><td><a class=def name="mus-channels">mus-channels</a></td><td></td><td>channels open</td></tr>
+<tr><td bgcolor="#f6f8ff"><a class=def name="mus-data">mus-data</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">vct of data</td></tr>
+<tr><td><a class=def name="mus-describe">mus-describe</a></td><td></td><td>description of current state</td></tr>
+<tr><td bgcolor="#f6f8ff"><a class=def name="mus-feedback">mus-feedback</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">feedback coefficient</td></tr>
+<tr><td><a class=def name="mus-feedforward">mus-feedforward</a></td><td></td><td>feedforward coefficient</td></tr>
+<tr><td bgcolor="#f6f8ff"><a class=def name="mus-file-name">mus-file-name</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">file being read/written</td></tr>
+<tr><td><a class=def name="mus-frequency">mus-frequency</a></td><td></td><td>frequency (Hz)</td></tr>
+<tr><td bgcolor="#f6f8ff"><a class=def name="mus-hop">mus-hop</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">hop size for block processing</td></tr>
+<tr><td><a class=def name="mus-increment">mus-increment</a></td><td></td><td>various increments</td></tr>
+<tr><td bgcolor="#f6f8ff"><a class=def name="mus-interp-type">mus-interp-type</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">interpolation type (mus-interp-linear, etc)</td></tr>
+<tr><td><a class=def name="mus-length">mus-length</a></td><td></td><td>data length</td></tr>
+<tr><td bgcolor="#f6f8ff"><a class=def name="mus-location">mus-location</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">sample location for reads/writes</td></tr>
+<tr><td><a class=def name="mus-name">mus-name</a></td><td></td><td>generator name ("oscil")</td></tr>
+<tr><td bgcolor="#f6f8ff"><a class=def name="mus-offset">mus-offset</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">envelope offset</td></tr>
+<tr><td><a class=def name="mus-order">mus-order</a></td><td></td><td>filter order</td></tr>
+<tr><td bgcolor="#f6f8ff"><a class=def name="mus-phase">mus-phase</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">phase (radians)</td></tr>
+<tr><td><a class=def name="mus-ramp">mus-ramp</a></td><td></td><td>granulate grain envelope ramp setting</td></tr>
+<tr><td bgcolor="#f6f8ff"><a class=def name="mus-reset">mus-reset</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">set gen to default starting state</td></tr>
+<tr><td><a class=def name="mus-run">mus-run</a></td><td></td><td>run any generator</td></tr>
+<tr><td bgcolor="#f6f8ff"><a class=def name="mus-scaler">mus-scaler</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">scaler, normally on an amplitude</td></tr>
+<tr><td><a class=def name="mus-width">mus-width</a></td><td></td><td>width of interpolation tables, etc</td></tr>
+<tr><td bgcolor="#f6f8ff"><a class=def name="mus-xcoeff">mus-xcoeff</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">x (input) coefficient</td></tr>
+<tr><td><a class=def name="mus-xcoeffs">mus-xcoeffs</a></td><td></td><td>vct of x (input) coefficients</td></tr>
+<tr><td bgcolor="#f6f8ff"><a class=def name="mus-ycoeff">mus-ycoeff</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">y (output, feedback) coefficient</td></tr>
+<tr><td><a class=def name="mus-ycoeffs">mus-ycoeffs</a></td><td></td><td>vct of y (feedback) coefficients</td></tr>
+
+</table>
+
+<p>Many of these are settable:
+<code>(set! (mus-frequency osc1) 440.0)</code>
+sets osc1's phase increment to (<a class=quiet href="#hztoradians">hz-&gt;radians</a> 440.0). 
+When I have a cold, I sometimes use the following function to see how high I can hear; count
+the audible tones and multiply by 1000:
+</p>
+
+<table border=0 hspace=40><tr><td>
+<pre>
+(define (quick-check)
+  (<a class=quiet href="sndscm.html#wsdoc">with-sound</a> () 
+    (let ((gen (<a class=quiet href="#make-oscil">make-oscil</a> 1000))) 
+      (run (lambda ()
+        (do ((i 0 (1+ i))) 
+	    ((= i 400000))
+	  (if (= (modulo i 20000) 0) 
+              (set! (<em class=red>mus-frequency</em> gen) (+ 1000 (/ i 20))))
+	  (<a class=quiet href="#outa">outa</a> i (* .5 (<a class=quiet href="#oscil">oscil</a> gen)))))))))
+</pre>
+</td></tr></table>
+
+<p>Another example is run-with-fm-and-pm in generators.scm which applies phase modulation (as well as
+the default frequency modulation) to any generator:
+</p>
+
+<table border=0 hspace=40><tr><td>
+<pre>
+(define (run-with-fm-and-pm gen fm pm)
+  (set! (<em class=red>mus-phase</em> gen) (+ (<em class=red>mus-phase</em> gen) pm))
+  (let ((result (<em class=red>mus-run</em> gen fm 0.0)))
+    (set! (<em class=red>mus-phase</em> gen) (- (<em class=red>mus-phase</em> gen) pm))
+    result))
+</pre>
+</td></tr></table>
+
+<p>
+<a class=def name="musgeneratorp">mus-generator?</a> returns #t if its argument is
+a generator.
+A generator defined via <a href="sndscm.html#def-clm-struct">def-clm-struct</a> can take part in these methods.
+If the last element of the list (returned by def-clm-struct) is an association list, the generic functions
+will search that list for their name, and use the functions that follow to implement their method
+(see defgenerator in generators.scm for an extended example).
+</p>
+<br>
+<br><br>
+
+
+
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h2>Other Generators</h2></td></tr></table>
 <A NAME="othergenerators"></A>
 
@@ -6171,111 +6262,20 @@ with each component scaled by (r^(2k))/(2k)!.  r2sin output is not normalized.
 </pre>
 
 <p>defgenerator is an extension of <a href="sndscm.html#def-clm-struct">def-clm-struct</a>
-that sets up all the usual generator methods (discussed under <a href="#genericfunctions">"generic functions"</a> below).
+that sets up all the usual generator methods (discussed under <a href="#genericfunctions">"generic functions"</a> above).
 It is used to define all the generators in generators.scm.
 </p>
 
 <br>
 
 
-
-
-
 <br><br>
-
-<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h2>Functions</h2></td></tr></table>
-<A NAME="genericfunctions"></A>
-
-<!-- ---------------------------------------- GENERIC FUNCTIONS ---------------------------------------- -->
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>Generic Functions</h3></center></td></tr></table>
-
-<p>The generators respond to a set of "generic" functions.  mus-frequency, for example, tries to return (or set) a generator's
-frequency, wherever that makes sense.
-The generic functions are:
-</p>
-
-<table cellspacing=0 cellpadding=0 hspace=40>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-channel">mus-channel</a></td><td width=30 bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">channel being read/written</td></tr>
-<tr><td><a class=def name="mus-channels">mus-channels</a></td><td></td><td>channels open</td></tr>
-<tr><td><a class=def name="mus-data">mus-data</a></td><td></td><td>vct of data</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-describe">mus-describe</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">description of current state</td></tr>
-<tr><td><a class=def name="mus-feedback">mus-feedback</a></td><td></td><td>feedback coefficient</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-feedforward">mus-feedforward</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">feedforward coefficient</td></tr>
-<tr><td><a class=def name="mus-file-name">mus-file-name</a></td><td></td><td>file being read/written</td></tr>
-<tr><td><a class=def name="mus-frequency">mus-frequency</a></td><td></td><td>frequency (Hz)</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-hop">mus-hop</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">hop size for block processing</td></tr>
-<tr><td><a class=def name="mus-increment">mus-increment</a></td><td></td><td>various increments</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-interp-type">mus-interp-type</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">interpolation type (mus-interp-linear, etc)</td></tr>
-<tr><td><a class=def name="mus-length">mus-length</a></td><td></td><td>data length</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-location">mus-location</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">sample location for reads/writes</td></tr>
-<tr><td><a class=def name="mus-name">mus-name</a></td><td></td><td>generator name ("oscil")</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-offset">mus-offset</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">envelope offset</td></tr>
-<tr><td><a class=def name="mus-order">mus-order</a></td><td></td><td>filter order</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-phase">mus-phase</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">phase (radians)</td></tr>
-<tr><td><a class=def name="mus-ramp">mus-ramp</a></td><td></td><td>granulate grain envelope ramp setting</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-reset">mus-reset</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">set gen to default starting state</td></tr>
-<tr><td><a class=def name="mus-run">mus-run</a></td><td></td><td>run any generator</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-scaler">mus-scaler</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">scaler, normally on an amplitude</td></tr>
-<tr><td><a class=def name="mus-width">mus-width</a></td><td></td><td>width of interpolation tables, etc</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-xcoeff">mus-xcoeff</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">x (input) coefficient</td></tr>
-<tr><td><a class=def name="mus-xcoeffs">mus-xcoeffs</a></td><td></td><td>vct of x (input) coefficients</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-ycoeff">mus-ycoeff</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">y (output, feedback) coefficient</td></tr>
-<tr><td><a class=def name="mus-ycoeffs">mus-ycoeffs</a></td><td></td><td>vct of y (feedback) coefficients</td></tr>
-
-</table>
-
-<p>Many of these are settable:
-<code>(set! (mus-frequency osc1) 440.0)</code>
-sets osc1's phase increment to (<a class=quiet href="#hztoradians">hz-&gt;radians</a> 440.0). 
-When I have a cold, I sometimes use the following function to see how high I can hear; count
-the audible tones and multiply by 1000:
-</p>
-
-<table border=0 hspace=40><tr><td>
-<pre>
-(define (quick-check)
-  (<a class=quiet href="sndscm.html#wsdoc">with-sound</a> () 
-    (let ((gen (<a class=quiet href="#make-oscil">make-oscil</a> 1000))) 
-      (run (lambda ()
-        (do ((i 0 (1+ i))) 
-	    ((= i 400000))
-	  (if (= (modulo i 20000) 0) 
-              (set! (<em class=red>mus-frequency</em> gen) (+ 1000 (/ i 20))))
-	  (<a class=quiet href="#outa">outa</a> i (* .5 (<a class=quiet href="#oscil">oscil</a> gen)))))))))
-</pre>
-</td></tr></table>
-
-<p>Another example is run-with-fm-and-pm in generators.scm which applies phase modulation (as well as
-the default frequency modulation) to any generator:
-</p>
-
-<table border=0 hspace=40><tr><td>
-<pre>
-(define (run-with-fm-and-pm gen fm pm)
-  (set! (<em class=red>mus-phase</em> gen) (+ (<em class=red>mus-phase</em> gen) pm))
-  (let ((result (<em class=red>mus-run</em> gen fm 0.0)))
-    (set! (<em class=red>mus-phase</em> gen) (- (<em class=red>mus-phase</em> gen) pm))
-    result))
-</pre>
-</td></tr></table>
-
-<p>
-<a class=def name="musgeneratorp">mus-generator?</a> returns #t if its argument is
-a generator.
-A generator defined via <a href="sndscm.html#def-clm-struct">def-clm-struct</a> can take part in these methods.
-If the last element of the list (returned by def-clm-struct) is an association list, the generic functions
-will search that list for their name, and use the functions that follow to implement their method
-(see defgenerator in generators.scm for an extended example).
-</p>
-<br>
-<br><br>
-
 
 
 
 <!-- ---------------------------------------- FUNCTIONS ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3><A class=def NAME="functions">Other Functions</a></h3></center></td></tr></table>
+<table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h2><a class=def NAME="otherfunctions">Other Functions</a></h2></td></tr></table>
 
 <p>There are several functions closely tied to the generators and instruments.
 </p>
@@ -6360,7 +6360,7 @@ treasure-trove of interesting polynomials.
 For waveshaping, use the function <a href="#partialstopolynomial">partials-&gt;polynomial</a> to
 generate the coefficients, then drive polynomial with a cosine; this is what the <a href="#polyshape">polyshape</a>
 generator does for you (see the <a href="sndscm.html#birddoc">bigbird</a> and <a href="sndscm.html#vdoc">fm-violin</a>
-instruments).  Here's a generator that uses polynomial to produces a Blackman4 waveform:
+instruments).  Here's a generator that uses polynomial to produces a Blackman4 waveform (see also <a href="#make-blackman">make-blackman</a> in generators.scm):
 </p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
@@ -6386,9 +6386,6 @@ instruments).  Here's a generator that uses polynomial to produces a Blackman4 w
 	 (<a class=quiet href="#outa">outa</a> i (blackman4 black4 0.0)))))))
 </pre>
 </td></tr></table>
-
-<p>There's a version of this generator in generators.scm.
-</p>
 
 <br><br>
 

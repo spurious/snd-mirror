@@ -19,17 +19,21 @@
 ;;; --------------------------------------------------------------------------------
 ;;;
 ;;; defgenerator
-;;;
-;;; TODO: defgenerator has no chance in gauche: mus-phase #<closure (lambda*:L142 #f)>... (mus-phase g)->#f
 
-(define (symbol->value sym)
-  (if (defined? 'module-ref)
-      (module-ref (current-module) sym) ; symbol-binding is deprecated
-      (symbol-binding #f sym)))
+(if (provided? 'snd-guile)
+    (define (symbol->value sym)
+      (if (defined? 'module-ref)
+	  (module-ref (current-module) sym) ; symbol-binding is deprecated
+	  (symbol-binding #f sym))))
 
 
 (if (provided? 'snd-gauche)
     (use srfi-13)) ; string-concatenate
+
+(if (provided? 'snd-gauche)
+    (define (symbol->value sym)
+      (global-variable-ref (current-module) sym)))
+
 
 
 (defmacro defgenerator (struct-name . fields)
@@ -200,8 +204,9 @@
 							 (list desc (format #f "~A~A: ~A"
 									    (if first-time " " ", ")
 									    field
-									    ((symbol->value (string->symbol (string-append ,sname "-" field))) g)))))
-					     ;; in the best of all worlds, we'd use (radians->hz frequency)
+									    (if (string=? field "frequency")
+										(radians->hz ((symbol->value (string->symbol (string-append ,sname "-" field))) g))
+										((symbol->value (string->symbol (string-append ,sname "-" field))) g))))))
 					     (set! first-time #f))
 					   (list ,@field-names))
 					  desc))))

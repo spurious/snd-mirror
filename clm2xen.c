@@ -1234,7 +1234,7 @@ static mus_xen *mus_any_to_mus_xen_with_two_vcts(mus_any *ge, XEN v1, XEN v2)
 
 static XEN call_get_method(XEN gen, const char *method_name)
 {
-#if HAVE_GUILE
+#if HAVE_GUILE || HAVE_GAUCHE || HAVE_FORTH
   XEN pair;
   pair = XEN_ASSOC(C_STRING_TO_XEN_SYMBOL(method_name), 
 		   XEN_LIST_REF(gen, 
@@ -1253,7 +1253,7 @@ static XEN call_get_method(XEN gen, const char *method_name)
 
 static XEN call_get_method_2(XEN gen, XEN arg, const char *method_name)
 {
-#if HAVE_GUILE
+#if HAVE_GUILE || HAVE_GAUCHE || HAVE_FORTH
   XEN pair;
   pair = XEN_ASSOC(C_STRING_TO_XEN_SYMBOL(method_name), 
 		   XEN_LIST_REF(gen, 
@@ -1272,7 +1272,7 @@ static XEN call_get_method_2(XEN gen, XEN arg, const char *method_name)
 
 static XEN call_get_method_3(XEN gen, XEN arg1, XEN arg2, const char *method_name)
 {
-#if HAVE_GUILE
+#if HAVE_GUILE || HAVE_GAUCHE || HAVE_FORTH
   XEN pair;
   pair = XEN_ASSOC(C_STRING_TO_XEN_SYMBOL(method_name), 
 		   XEN_LIST_REF(gen, 
@@ -1291,17 +1291,19 @@ static XEN call_get_method_3(XEN gen, XEN arg1, XEN arg2, const char *method_nam
 
 static XEN call_set_method(XEN gen, XEN value, const char *method_name)
 {
-#if HAVE_GUILE
+#if HAVE_GUILE || HAVE_GAUCHE || HAVE_FORTH
   XEN pair;
   pair = XEN_ASSOC(C_STRING_TO_XEN_SYMBOL(method_name), 
 		   XEN_LIST_REF(gen, 
 				XEN_LIST_LENGTH(gen) - 1));
   if (XEN_LIST_P(pair))
     {
+#if HAVE_GUILE
       if (SCM_PROCEDURE_WITH_SETTER_P(XEN_CADR(pair)))
 	return(XEN_CALL_2(SCM_SETTER(XEN_CADR(pair)),
 			  gen, value,
 			  method_name));
+#endif
       if (XEN_LIST_LENGTH(pair) == 3)
 	return(XEN_CALL_2(XEN_CADDR(pair),
 			  gen, value,
@@ -1317,17 +1319,19 @@ static XEN call_set_method(XEN gen, XEN value, const char *method_name)
 
 static XEN call_set_method_2(XEN gen, XEN arg, XEN value, const char *method_name)
 {
-#if HAVE_GUILE
+#if HAVE_GUILE || HAVE_GAUCHE || HAVE_FORTH
   XEN pair;
   pair = XEN_ASSOC(C_STRING_TO_XEN_SYMBOL(method_name), 
 		   XEN_LIST_REF(gen, 
 				XEN_LIST_LENGTH(gen) - 1));
   if (XEN_LIST_P(pair))
     {
+#if HAVE_GUILE
       if (SCM_PROCEDURE_WITH_SETTER_P(XEN_CADR(pair)))
 	return(XEN_CALL_3(SCM_SETTER(XEN_CADR(pair)),
 			  gen, arg, value,
 			  method_name));
+#endif
       if (XEN_LIST_LENGTH(pair) == 3)
 	return(XEN_CALL_3(XEN_CADDR(pair),
 			  gen, arg, value,

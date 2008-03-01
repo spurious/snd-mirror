@@ -15998,7 +15998,7 @@ EDITS: 2
 	(let* ((nval (asinh (vector-ref args i)))
 	       (diff (abs (- nval (vector-ref vals i)))))
 	  (if (> diff max-bad) (set! max-bad diff))
-	  (if (> max-bad 1.0e-15)
+	  (if (> max-bad 1.0e-14) ; 14 for Gauche
 	      (snd-display ";asinh(~A): ~A ~A -> ~A" (vector-ref args i) nval (vector-ref vals i) max-bad)))))
     
     (let ((vals (vector 0.00000000000000000000 0.24497866312686415417 0.32175055439664219340 0.46364760900080611621 0.78539816339744830962 
@@ -16653,15 +16653,15 @@ EDITS: 2
 	(let* ((vals (make-vct 1 1.0))
 	       (v1 (edot-product 0.0 vals)))
 	  (if (fneq v1 1.0) ; exp 0.0 * 1.0
-	      (snd-display ";edot 1.0: ~A" v1))
+	      (snd-display ";edot a 1.0: ~A" v1))
 	  (vct-set! vals 0 0.0)
 	  (set! v1 (edot-product 0.0 vals))
 	  (if (fneq v1 0.0) ; exp 0.0 * 0.0
-	      (snd-display ";edot 0.0: ~A" v1))
+	      (snd-display ";edot b 0.0: ~A" v1))
 	  (set! vals (make-vector 1 1.0))
 	  (set! v1 (edot-product 0.0 vals))  
 	  (if (fneq v1 1.0) ; exp 0.0 * 1.0
-	      (snd-display ";edot 1.0: ~A" v1))
+	      (snd-display ";edot c 1.0: ~A" v1))
 	  (vector-set! vals 0 0.0+i)
 	  (set! v1 (edot-product 0.0 vals))
 	  (if (cneq v1 0.0+i)
@@ -25530,7 +25530,7 @@ EDITS: 2
     
     (let ((gen (make-moving-max 4)))
       (let ((descr (mus-describe gen)))
-	(if (not (string=? descr "moving-max ...")) (snd-display ";moving-max mus-describe: ~A" descr))
+	(if (not (string=? descr "moving-max line[4, step]: [0.000 0.000 0.000 0.000]")) (snd-display ";moving-max mus-describe: ~A" descr))
 	(if (not (string=? (mus-name gen) "moving-max")) (snd-display ";moving-max mus-name: ~A" (mus-name gen))))
       (let ((ov (make-vct 10))
 	    (iv (vct .1 .05 -.2 .15 -1.5 0.1 0.01 0.001 0.0 0.0))
@@ -25606,7 +25606,7 @@ EDITS: 2
 	(vct-set! data i (- 0.5 (random 1.0))))
       (set! g (make-moving-length 4))
       (let ((descr (mus-describe g)))
-	(if (not (string=? descr "moving-length ...")) (snd-display ";moving-length mus-describe: ~A" descr))
+	(if (not (string=? descr "moving-length 0.000, line[4]:[0.000 0.000 0.000 0.000]")) (snd-display ";moving-length mus-describe: ~A" descr))
 	(if (not (string=? (mus-name g) "moving-length")) (snd-display ";moving-length mus-name: ~A" (mus-name g))))
       (do ((i 0 (1+ i))) ((= i 12)) (vct-set! odata i (moving-length g (vct-ref data i))))
       (do ((i -3 (1+ i))
@@ -25624,7 +25624,7 @@ EDITS: 2
 	(vct-set! data i (- 0.5 (random 1.0))))
       (set! g (make-moving-sum 4))
       (let ((descr (mus-describe g)))
-	(if (not (string=? descr "moving-sum ...")) (snd-display ";moving-sum mus-describe: ~A" descr))
+	(if (not (string=? descr "moving-sum 0.000, line[4]:[0.000 0.000 0.000 0.000]")) (snd-display ";moving-sum mus-describe: ~A" descr))
 	(if (not (string=? (mus-name g) "moving-sum")) (snd-display ";moving-sum mus-name: ~A" (mus-name g))))
       (do ((i 0 (1+ i))) ((= i 12)) (vct-set! odata i (moving-sum g (vct-ref data i))))
       (do ((i -3 (1+ i))
@@ -25642,7 +25642,7 @@ EDITS: 2
 	(vct-set! data i (- 0.5 (random 1.0))))
       (set! g (make-moving-rms 4))
       (let ((descr (mus-describe g)))
-	(if (not (string=? descr "moving-rms ...")) (snd-display ";moving-rms mus-describe: ~A" descr))
+	(if (not (string=? descr "moving-rms 0.000, line[4]:[0.000 0.000 0.000 0.000]")) (snd-display ";moving-rms mus-describe: ~A" descr))
 	(if (not (string=? (mus-name g) "moving-rms")) (snd-display ";moving-rms mus-name: ~A" (mus-name g))))
       (do ((i 0 (1+ i))) ((= i 12)) (vct-set! odata i (moving-rms g (vct-ref data i))))
       (do ((i -3 (1+ i))
