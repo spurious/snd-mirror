@@ -612,7 +612,15 @@ static XEN g_edot_product(XEN val1, XEN val2)
   XEN result;
   XEN_ASSERT_TYPE(XEN_COMPLEX_P(val1), val1, XEN_ARG_1, S_edot_product, "complex");
   XEN_ASSERT_TYPE((MUS_VCT_P(val2)) || (XEN_VECTOR_P(val2)), val2, XEN_ARG_2, S_edot_product, "a vct");
+
+#if (!HAVE_GAUCHE)
   freq = XEN_TO_C_COMPLEX(val1);
+#else
+  /* see note below -- we can't mix real and complex in Gauche */
+  if (SCM_COMPNUMP(val1))
+    freq = XEN_TO_C_COMPLEX(val1);
+  else freq = XEN_TO_C_DOUBLE(val1) + 0.0 * _Complex_I;
+#endif
 
   if (MUS_VCT_P(val2))
     {
@@ -631,8 +639,24 @@ static XEN g_edot_product(XEN val1, XEN val2)
     }
   else
     {
+#if (!HAVE_GAUCHE)
       for (i = 0; i < len; i++)
 	vals[i] = XEN_TO_C_COMPLEX(XEN_VECTOR_REF(val2, i));
+#else
+      for (i = 0; i < len; i++)
+	{
+	  XEN val;
+	  val = XEN_VECTOR_REF(val2, i);
+	  if (SCM_COMPNUMP(val))
+	    vals[i] = XEN_TO_C_COMPLEX(val);
+	  else vals[i] = XEN_TO_C_DOUBLE(val) + 0.0 * _Complex_I;
+	  /* if we treat a real as a complex here (as in the Guile code above), the Gauche
+	   *   macros expand into obj->imag for the imaginary part, but a real has no such
+	   *   field, so we end up interpreting some random piece of memory as the imaginary
+	   *   part!  
+	   */
+	}
+#endif
     }
   result = C_TO_XEN_COMPLEX(mus_edot_product(freq, vals, len));
   FREE(vals);
@@ -5395,7 +5419,10 @@ static XEN g_in_any_1(const char *caller, XEN frame, XEN chan, XEN inp)
   pos = XEN_TO_C_OFF_T(frame);
   if (pos < 0) 
     XEN_OUT_OF_RANGE_ERROR(caller, XEN_ARG_1, frame, "must be >= 0");    
+
   in_chan = XEN_TO_C_INT(chan);
+  if (in_chan < 0) 
+    XEN_OUT_OF_RANGE_ERROR(caller, XEN_ARG_2, chan, "must be >= 0");    
 
   if (MUS_XEN_P(inp))
     {
@@ -5412,9 +5439,6 @@ static XEN g_in_any_1(const char *caller, XEN frame, XEN chan, XEN inp)
       return(C_TO_XEN_DOUBLE(0.0));
     }
 
-  if (in_chan < 0) 
-    XEN_OUT_OF_RANGE_ERROR(caller, XEN_ARG_2, chan, "must be >= 0");    
-
   if (sound_data_p(inp))
     {
       sound_data *sd;
@@ -5423,6 +5447,9 @@ static XEN g_in_any_1(const char *caller, XEN frame, XEN chan, XEN inp)
 	  (pos < sd->length))
 	return(C_TO_XEN_DOUBLE(sd->data[in_chan][pos]));
     }
+
+  if (XEN_PROCEDURE_P(inp))
+    return(XEN_CALL_2(inp, frame, chan, caller)); /* follow arg order of in-any */
 
   return(C_TO_XEN_DOUBLE(0.0));
 }
@@ -5459,6 +5486,16 @@ static XEN g_out_any_1(const char *caller, XEN frame, XEN chan, XEN val, XEN out
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_2, caller, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, caller, "a number");
 
+  chn = XEN_TO_C_INT(chan);
+  if (chn < 0)
+    XEN_OUT_OF_RANGE_ERROR(caller, XEN_ARG_3, chan, "must be >= 0");    
+
+  pos = XEN_TO_C_OFF_T_OR_ELSE(frame, 0);
+  if (pos < 0) 
+    XEN_OUT_OF_RANGE_ERROR(caller, XEN_ARG_1, frame, "must be >= 0");    
+
+  inv = XEN_TO_C_DOUBLE(val);
+
 #if HAVE_GUILE
   if (XEN_NOT_BOUND_P(outp))
     outp = XEN_VARIABLE_REF(clm_output);
@@ -5470,18 +5507,10 @@ static XEN g_out_any_1(const char *caller, XEN frame, XEN chan, XEN val, XEN out
   if (MUS_XEN_P(outp))
     {
       XEN_ASSERT_TYPE(mus_output_p(XEN_TO_MUS_ANY(outp)), outp, XEN_ARG_4, caller, "an output generator");
-      return(C_TO_XEN_DOUBLE(mus_out_any(XEN_TO_C_OFF_T_OR_ELSE(frame, 0),
-					 XEN_TO_C_DOUBLE(val),
-					 XEN_TO_C_INT(chan),
-					 (mus_any *)XEN_TO_MUS_ANY(outp))));
+      return(C_TO_XEN_DOUBLE(mus_out_any(pos, inv, chn, (mus_any *)XEN_TO_MUS_ANY(outp))));
     }
 
-  /* adds to existing! */
-  pos = XEN_TO_C_OFF_T(frame);
-  if (pos < 0) 
-    XEN_OUT_OF_RANGE_ERROR(caller, XEN_ARG_1, frame, "must be >= 0");    
-  inv = XEN_TO_C_DOUBLE(val);
-  chn = XEN_TO_C_INT(chan);
+  /* adds to existing -- these have to precede procedure check since vcts/sound-data objects are applicable */
   if (MUS_VCT_P(outp))
     {
       if (chn == 0)
@@ -5491,23 +5520,28 @@ static XEN g_out_any_1(const char *caller, XEN frame, XEN chan, XEN val, XEN out
 	  if (pos < v->length)
 	    v->data[pos] += inv;
 	}
+      return(val);
     }
-  else
+
+  if (sound_data_p(outp))
     {
-      if (sound_data_p(outp))
-	{
-	  sound_data *sd;
-	  if (chn < 0) 
-	    XEN_OUT_OF_RANGE_ERROR(caller, XEN_ARG_2, chan, "must be >= 0");    
-	  sd = XEN_TO_SOUND_DATA(outp);
-	  if ((chn < sd->chans) &&
-	      (pos < sd->length))
-	    sd->data[chn][pos] += inv;
-	}
+      sound_data *sd;
+      sd = XEN_TO_SOUND_DATA(outp);
+      if ((chn < sd->chans) &&
+	  (pos < sd->length))
+	sd->data[chn][pos] += inv;
+      return(val);
     }
+
+  if (XEN_PROCEDURE_P(outp))
+    return(XEN_CALL_3(outp, frame, val, chan, caller)); /* follow arg order of out-any */
+
+  /* TODO: test/snd-run *output* as func */
+  /* TODO: doc/test/snd-run in-any as func */
+  /* TODO: have we tested in-any inp as vct? I see the sd cases, but not vct (also in run tests) -- example in doc? */
+
   return(val);
 }
-
 
 static XEN g_out_any(XEN frame, XEN val, XEN chan, XEN outp)
 {
@@ -5549,7 +5583,8 @@ static XEN g_mus_close(XEN ptr)
   #define H_mus_close "(" S_mus_close " gen): close the IO stream managed by 'gen' (a sample->file generator, for example)"
   if (MUS_XEN_P(ptr))
     return(C_TO_XEN_INT(mus_close_file((mus_any *)XEN_TO_MUS_ANY(ptr))));
-  XEN_ASSERT_TYPE(MUS_VCT_P(ptr) || XEN_FALSE_P(ptr) || sound_data_p(ptr), ptr, XEN_ONLY_ARG, S_mus_close, "an IO gen or its outa equivalent");
+  XEN_ASSERT_TYPE(MUS_VCT_P(ptr) || XEN_FALSE_P(ptr) || sound_data_p(ptr) || XEN_PROCEDURE_P(ptr), 
+		  ptr, XEN_ONLY_ARG, S_mus_close, "an IO gen or its outa equivalent");
   return(XEN_ZERO);
 }
 
@@ -5560,13 +5595,16 @@ static XEN g_make_file_to_sample(XEN name, XEN buffer_size)
 
   mus_any *ge;
   int size;
+
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_make_file_to_sample, "a string");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(buffer_size), buffer_size, XEN_ARG_2, S_make_file_to_sample, "an integer");
+
   if (!(mus_file_probe(XEN_TO_C_STRING(name))))
     XEN_ERROR(NO_SUCH_FILE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_make_file_to_sample),
 			 name,
 			 C_TO_XEN_STRING(STRERROR(errno))));
+
   if (XEN_INTEGER_P(buffer_size))
     {
       size = XEN_TO_C_INT(buffer_size);
@@ -5574,6 +5612,7 @@ static XEN g_make_file_to_sample(XEN name, XEN buffer_size)
 	XEN_OUT_OF_RANGE_ERROR(S_make_file_to_sample, XEN_ARG_2, buffer_size, "must be > 0");
     }
   else size = mus_file_buffer_size();
+
   ge = mus_make_file_to_sample_with_buffer_size(XEN_TO_C_STRING(name), size);
   if (ge) return(xen_return_first(mus_xen_to_object(mus_any_to_mus_xen(ge)), name));
   return(XEN_FALSE);
@@ -5584,8 +5623,10 @@ static XEN g_file_to_sample(XEN obj, XEN samp, XEN chan)
 {
   #define H_file_to_sample "(" S_file_to_sample " obj frame chan): sample value in sound file read by 'obj' in channel chan at frame"
   int channel = 0;
+
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_input_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_file_to_sample, "an input generator");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(samp), samp, XEN_ARG_2, S_file_to_sample, "a number");
+
   if (XEN_BOUND_P(chan))
     {
       XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_3, S_file_to_sample, "an integer");
@@ -5615,10 +5656,12 @@ return an output generator writing the sound file 'filename' which is set up to 
 should be sndlib identifiers:\n  " make_sample_to_file_example
 
   int df;
+
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_make_sample_to_file, "a string");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chans), chans, XEN_ARG_2, S_make_sample_to_file, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(out_format), out_format, XEN_ARG_3, S_make_sample_to_file, "an integer (data format id)");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(out_type), out_type, XEN_ARG_4, S_make_sample_to_file, "an integer (header type id)");
+
   df = XEN_TO_C_INT_OR_ELSE(out_format, MUS_OUT_FORMAT);
   if (MUS_DATA_FORMAT_OK(df))
     {

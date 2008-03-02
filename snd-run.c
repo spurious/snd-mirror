@@ -9774,6 +9774,8 @@ static xen_value *file_to_frame_1(ptree *prog, xen_value **args, int num_args)
 
 /* ---------------- out-any ---------------- */
 
+/* see env_any for R_FUNCTION as arg */
+
 static void outa_3(int *args, ptree *pt) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, 0, CLM_ARG_3);}
 
 static void outb_3(int *args, ptree *pt) {FLOAT_RESULT = mus_out_any(INT_ARG_1, FLOAT_ARG_2, 1, CLM_ARG_3);}
@@ -9848,6 +9850,8 @@ static xen_value *outa_2(ptree *prog, xen_value **args, int num_args)
     return(package(prog, R_FLOAT, outa_sound_data_3, "outa_sound_data_3", args, 3));
   return(package(prog, R_FLOAT, out_f_3, "out_f_3", args, 3));  
 }
+
+/* output to a vct can only be mono, so outb to vct doesn't make sense */
 
 static xen_value *outb_2(ptree *prog, xen_value **args, int num_args) 
 {
@@ -9976,9 +9980,11 @@ static void inb_2(int *args, ptree *pt) {FLOAT_RESULT = mus_in_any(INT_ARG_1, 1,
 
 static void in_any_3(int *args, ptree *pt) {FLOAT_RESULT = mus_in_any(INT_ARG_1, INT_ARG_2, CLM_ARG_3);}
 
+
 static void in_f_2(int *args, ptree *pt) {FLOAT_RESULT = 0.0;}
 
 static void in_any_f_3(int *args, ptree *pt) {FLOAT_RESULT = 0.0;}
+
 
 static void in_vct_2(int *args, ptree *pt) 
 {
@@ -9993,6 +9999,7 @@ static void in_any_vct_3(int *args, ptree *pt)
     FLOAT_RESULT = VCT_ARG_3->data[INT_ARG_1];
   else FLOAT_RESULT = 0.0;
 }
+
 
 static void ina_sound_data_2(int *args, ptree *pt) 
 {
@@ -10016,6 +10023,29 @@ static void in_any_sound_data_3(int *args, ptree *pt)
 }
 
 
+static Float call_in_any_function(ptree *pt, Int loc, Int chan, ptree *function)
+{
+  pt->ints[function->args[0]] = loc;
+  pt->ints[function->args[1]] = chan; 
+  eval_embedded_ptree(function, pt);
+  return(pt->dbls[function->result->addr]);
+}
+
+static void ina_function_2(int *args, ptree *pt) 
+{
+  FLOAT_RESULT = call_in_any_function(pt, INT_ARG_1, 0, FNC_ARG_2);
+}
+
+static void inb_function_2(int *args, ptree *pt) 
+{
+  FLOAT_RESULT = call_in_any_function(pt, INT_ARG_1, 1, FNC_ARG_2);
+}
+
+static void in_any_function_3(int *args, ptree *pt) 
+{
+  FLOAT_RESULT = call_in_any_function(pt, INT_ARG_1, INT_ARG_2, FNC_ARG_3);
+}
+
 
 static xen_value *ina_1(ptree *prog, xen_value **args, int num_args) 
 {
@@ -10025,6 +10055,8 @@ static xen_value *ina_1(ptree *prog, xen_value **args, int num_args)
     return(package(prog, R_FLOAT, in_vct_2, "ina_vct_2", args, 2));
   if (args[2]->type == R_SOUND_DATA)
     return(package(prog, R_FLOAT, ina_sound_data_2, "ina_sound_data_2", args, 2));
+  if (args[2]->type == R_FUNCTION)
+    return(package(prog, R_FLOAT, ina_function_2, "ina_function_2", args, 2));
   return(package(prog, R_FLOAT, in_f_2, "ina_f_2", args, 2));  
 }
 
@@ -10034,6 +10066,8 @@ static xen_value *inb_1(ptree *prog, xen_value **args, int num_args)
     return(package(prog, R_FLOAT, inb_2, "inb_2", args, 2));
   if (args[2]->type == R_SOUND_DATA)
     return(package(prog, R_FLOAT, inb_sound_data_2, "inb_sound_data_2", args, 2));
+  if (args[2]->type == R_FUNCTION)
+    return(package(prog, R_FLOAT, inb_function_2, "inb_function_2", args, 2));
   return(package(prog, R_FLOAT, in_f_2, "inb_f_2", args, 2));  
 }
 
@@ -10045,6 +10079,8 @@ static xen_value *in_any_1(ptree *prog, xen_value **args, int num_args)
     return(package(prog, R_FLOAT, in_any_vct_3, "in_any_vct_3", args, 3));
   if (args[3]->type == R_SOUND_DATA)
     return(package(prog, R_FLOAT, in_any_sound_data_3, "in_any_sound_data_3", args, 3));
+  if (args[2]->type == R_FUNCTION)
+    return(package(prog, R_FLOAT, in_any_function_3, "in_any_function_3", args, 3));
   return(package(prog, R_FLOAT, in_any_f_3, "in_any_f_3", args, 3));  
 }
 

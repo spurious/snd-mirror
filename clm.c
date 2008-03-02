@@ -6942,10 +6942,15 @@ static Float file_to_sample_increment(mus_any *rd) {return((Float)(((rdin *)rd)-
 static Float file_to_sample_set_increment(mus_any *rd, Float val) {((rdin *)rd)->dir = (int)val; return(val);}
 
 static char *file_to_sample_file_name(mus_any *ptr) {return(((rdin *)ptr)->file_name);}
+
 static void no_reset(mus_any *ptr) {}
+
 static Float file_sample(mus_any *ptr, off_t samp, int chan);
+
 static int file_to_sample_end(mus_any *ptr);
+
 static Float run_file_to_sample(mus_any *ptr, Float arg1, Float arg2) {return(file_sample(ptr, (int)arg1, (int)arg2));} /* mus_read_sample here? */
+
 
 static mus_any_class FILE_TO_SAMPLE_CLASS = {
   MUS_FILE_TO_SAMPLE,
@@ -7037,6 +7042,7 @@ static Float file_sample(mus_any *ptr, off_t samp, int chan)
 	  if (gen->data_end > gen->file_end) gen->data_end = gen->file_end;
 	}
     }
+
   return((Float)MUS_SAMPLE_TO_FLOAT(gen->ibufs[chan][samp - gen->data_start]));
 }
 
@@ -7077,13 +7083,19 @@ mus_any *mus_make_file_to_sample_with_buffer_size(const char *filename, int buff
       gen = (rdin *)clm_calloc(1, sizeof(rdin), S_make_file_to_sample);
       gen->core = &FILE_TO_SAMPLE_CLASS;
       gen->file_buffer_size = buffer_size;
+
       gen->file_name = (char *)clm_calloc(strlen(filename) + 1, sizeof(char), S_file_to_sample " filename");
       strcpy(gen->file_name, filename);
       gen->data_end = -1; /* force initial read */
+
       gen->chans = mus_sound_chans(gen->file_name);
-      if (gen->chans <= 0) mus_error(MUS_NO_CHANNELS, "%s chans: %d", filename, gen->chans);
+      if (gen->chans <= 0) 
+	mus_error(MUS_NO_CHANNELS, "%s chans: %d", filename, gen->chans);
+
       gen->file_end = mus_sound_frames(gen->file_name);
-      if (gen->file_end < 0) mus_error(MUS_NO_LENGTH, "%s frames: " OFF_TD, filename, gen->file_end);
+      if (gen->file_end < 0) 
+	mus_error(MUS_NO_LENGTH, "%s frames: " OFF_TD, filename, gen->file_end);
+
       return((mus_any *)gen);
     }
   return(NULL);
@@ -7504,18 +7516,6 @@ static void flush_buffers(rdout *gen)
 	      filler -= current_samps;
 	    }
 	}
-
-#if MUS_DEBUGGING
-      {
-	off_t last;
-	last = gen->out_end - gen->data_start;
-	if (last != frames_to_add)
-	  {
-	    fprintf(stderr,"last != frames_to_add: " OFF_TD " " OFF_TD "\n", last, frames_to_add);
-	    abort();
-	  }
-      }
-#endif
 
       /* fill/write output buffers with current data added to saved data (if any) */
       for (j = 0; j < gen->chans; j++)
@@ -11311,14 +11311,12 @@ void init_mus_module(void)
  *      mus-documentation [mus-describe shows current state -- if we had this, snd-help might be able to use it for generators.scm]
  *        (the info is in clm2xen, but the class slot is in clm and it would be nice if it worked from C)
  *
- * optional func to out-any? -- needs result not current addition?
- *
  * CL/CLM:
  *   make the in-lisp with-sound work again
  *   definstrument could write actual C functions (with normal args) rather than the packaged int/double-array form
  *     but optkey args and envelopes would need to be massaged into C-compatible shape
  *     and currently there's no limitation on the pre-run code -- I'd have to add optimizer support for everything
- *   can env-any be supported here?
+ *   can env-any be supported here?  (yes, but not easily...)
  *
  *
  * done:
@@ -11340,6 +11338,7 @@ void init_mus_module(void)
  *   removed mus-cosines
  *   mus-run-with-fm-and-pm
  *   mus_set_name
+ *   *output* (last arg to out*) can be a function
  *
  *   (9.7)
  *   :dur and :end -> :length in make-env

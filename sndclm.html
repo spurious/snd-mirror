@@ -5026,11 +5026,13 @@ Here is one that uses file-&gt;sample to mix in a sound file (there are a zillio
 position "loc".  
 In with-sound, the current output is *output* and the reverb output is *reverb*.
 outa is the same as out-any with a channel of 0.
-The "output" argument can be a vct or a sound-data object, as well as the more usual frame-&gt;file object.
+The "output" argument can be a vct, a sound-data object, or a function, as well as the more usual frame-&gt;file object.
 </p>
 
 <p>in-any returns the sample at position "loc" in
 "input".  ina is the same as in-any with a channel of 0.
+As in out-any and friends, the "input" argument can be a vct, sound-data object, or a function.
+If "input" is a function, it should take two arguments, the location and the channel number.
 </p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
@@ -5050,6 +5052,41 @@ The "output" argument can be a vct or a sound-data object, as well as the more u
 (<a class=quiet href="sndscm.html#wsdoc">with-sound</a> () (simple-ina 0 1 .5 "oboe.snd"))
 </pre>
 </td></tr></table>
+
+<p>To write from <a href="sndscm.html#wsdoc">with-sound</a> to a vct or sound-data object, rather than a file,
+use its :output argument:
+</p>
+
+<table border=0 hspace=40><tr><td>
+<pre>
+(with-sound (<em class=red>:output</em> (make-vct 44100)) ; this sets *output*, the default output location
+   (fm-violin 0 1 440 .1))
+
+;; returns #&lt;vct[len=44100]: 0.000 0.000 0.000 ...&gt;
+</pre>
+</td></tr></table>
+
+
+<p>If *output* is a function, it should take 3 arguments, the sample number, current output value, and channel.
+</p>
+
+<table border=0 hspace=40><tr><td>
+<pre>
+(let ((avg 0.0)
+      (samps 0))
+  (with-sound (<em class=red>:output</em> (lambda (frame val chan) ; get the average of all the samples
+			 (set! avg (+ avg val))
+			 (set! samps (1+ samps))
+			 val))
+    (do ((i 0 (1+ i)))
+	((&gt; i 10))
+      (<em class=red>outa</em> i (* i .1))))
+  (/ avg samps))
+
+;; returns 0.5
+</pre>
+</td></tr></table>
+
 <br><br>
 
 
@@ -5698,7 +5735,7 @@ This uses J0(index * cos(x)) + J1(index * cos(x)) to produce a full set of cosin
   <A class=def NAME="nssb?">nssb?</A> gen
 </pre>
 
-<p>nssb is the single side-band version of ncos and nsin.
+<p>nssb is the single side-band version of ncos and nsin.  It is very similar to <a href="#nxysin">nxysin</a> and <a href="#nxycos">nxycos</a>.
 </p>
 
 <br>
@@ -5709,7 +5746,7 @@ This uses J0(index * cos(x)) + J1(index * cos(x)) to produce a full set of cosin
   <A class=def NAME="ncos2?">ncos2?</A> gen
 </pre>
 
-<p>This is the Fejer kernel.
+<p>This is the Fejer kernel.  The i-th harmonic amplitude is (n-i)/(n+1).
 </p>
 
 <!-- LATEX: &\frac{\sin^{2} \frac{1}{2}nx}{\sin^{2} \frac{1}{2}x} = \frac{n}{2} + \sum_{k=1}^{n-1} (n-k)\cos kx -->

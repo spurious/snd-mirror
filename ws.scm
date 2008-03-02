@@ -301,7 +301,8 @@ returning you to the true top-level."
 	     (if (not continue-old-file)
 		 (if (vct? output-1)
 		     (vct-fill! output-1 0.0)
-		     (sound-data-fill! output-1 0.0)))
+		     (if (sound-data? output-1)
+			 (sound-data-fill! output-1 0.0))))
 	     (set! *output* output-1)))
 
        (if reverb
@@ -383,7 +384,8 @@ returning you to the true top-level."
 	       (if (and reverb-to-file *clm-delete-reverb*)
 		   (delete-file reverb-1))))
 
-	 (mus-close *output*)
+	 (if output-to-file
+	     (mus-close *output*))
 	 (let ((snd-output #f)
 	       (cur-sync #f))
 	   (if statistics
@@ -410,7 +412,9 @@ returning you to the true top-level."
 			      (if output-to-file
 				  output-1
 				  (if (vct? output-1) "vct" 
-				      "sound-data"))
+				      (if (sound-data? output-1) "sound-data"
+					  (if (procedure? output-1) "function" 
+					      "flush"))))
 			      (if (or scaled-to scaled-by) 
 				  " (before scaling)" 
 				  "")
@@ -420,7 +424,9 @@ returning you to the true top-level."
 				      (mus-sound-maxamp output-1))
 				  (if (vct? output-1)
 				      (list (vct-peak output-1))
-				      (sound-data-maxamp output-1)))
+				      (if (sound-data? output-1)
+					  (sound-data-maxamp output-1)
+					  0.0)))
 			      (if revmax (format #f "  rev max: ~,4F~%" revmax) "")
 			      cycles)))
 
@@ -440,11 +446,12 @@ returning you to the true top-level."
 			     (if (> pk 0.0)
 				 (vct-scale! output-1 (/ scaled-to pk))))
 			   (vct-scale! output-1 scaled-by))
-		       (if scaled-to
-			   (let ((pk (sound-data-peak output-1)))
-			     (if (> pk 0.0)
-				 (sound-data-scale! output-1 (/ scaled-to pk))))
-			   (sound-data-scale! output-1 scaled-by)))))
+		       (if (sound-data? output-1)
+			   (if scaled-to
+			       (let ((pk (sound-data-peak output-1)))
+				 (if (> pk 0.0)
+				     (sound-data-scale! output-1 (/ scaled-to pk))))
+			       (sound-data-scale! output-1 scaled-by))))))
 
 	   (if (and play output-to-file)
 	       (if to-snd
@@ -472,7 +479,8 @@ returning you to the true top-level."
 		   (set! *reverb* old-*reverb*)))
 	     (if *output*
 		 (begin
-		   (mus-close *output*)
+		   (if (mus-output? *output*)
+		       (mus-close *output*))
 		   (set! *output* old-*output*)))
 	     (set! (mus-srate) old-srate)))))))
 
@@ -672,7 +680,8 @@ finish-with-sound to complete the process."
 		  (set! *reverb* revfile))
 	      (apply reverb reverb-data)
 	      (mus-close *reverb*)))
-	(mus-close *output*)
+	(if (mus-output? *output*)
+	    (mus-close *output*))
 
 	(if statistics
 	    (set! cycles (/ (- (get-internal-real-time) start) 100)))

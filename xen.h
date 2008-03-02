@@ -1614,6 +1614,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
   #else
     #define XEN_TO_C_COMPLEX(a)      ((SCM_COMPLEXP(a)) ? ((SCM_COMPLEX_REAL(a) + SCM_COMPLEX_IMAG(a) * _Complex_I)) : (XEN_TO_C_DOUBLE(a)))
   #endif
+  /* this actually needs to check SCM_COMPNUMP before accessing the imaginary part */
   #define C_TO_XEN_COMPLEX(a)        Scm_MakeComplex(creal(a), cimag(a))
 #endif
 
