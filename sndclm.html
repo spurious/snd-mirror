@@ -5003,6 +5003,60 @@ Here is one that uses file-&gt;sample to mix in a sound file (there are a zillio
 
 
 
+<A NAME="readindoc"></A>
+<!-- ---------------------------------------- READIN ---------------------------------------- -->
+
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>readin</h3></center></td></tr></table>
+
+<pre>
+ <a class=def name="make-readin">make-readin</a> <a class=quiet href="#optional-key">:optional-key</a> file (channel 0) (start 0) (direction 1) size
+ <a class=def name="readin">readin</a> rd
+ <a class=def name="readin?">readin?</a> rd
+</pre>
+
+<table border=1 cellpadding=4 hspace=40 vspace=10>
+<tr><td colspan=2 bgcolor="beige"><center>readin methods</center></td></tr>
+<tr><td><em class=gen>mus-channel</em></td><td>channel arg to make-readin (no set!)</td></tr>
+<tr><td><em class=gen>mus-location</em></td><td>current location in file</td></tr>
+<tr><td><em class=gen>mus-increment</em></td><td>sample increment (direction arg to make-readin)</td></tr>
+<tr><td><em class=gen>mus-file-name</em></td><td>name of file associated with gen</td></tr>
+<tr><td><em class=gen>mus-length</em></td><td>number of frames in file associated with gen</td></tr>
+</table>
+
+<p>readin returns successive samples from a file.
+Its "file" argument is the input file's name.
+"start" is the frame at which to start reading the input file. 
+"channel" is which channel to read (0-based).
+"size" is the read buffer size in samples.  It defaults to <a href="#musfilebuffersize">mus-file-buffer-size</a>.
+Here is an instrument that applies an envelope to a sound file using
+readin and <a href="#env">env</a>:
+</p>
+
+<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
+<pre>
+(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (env-sound file beg :optional (amp 1.0) (amp-env '(0 1 100 1)))
+  (let* ((st (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
+         (dur (<a class=quiet href="extsnd.html#mussoundduration">mus-sound-duration</a> file))
+         (rev-amount .01)
+         (rdA (<em class=red>make-readin</em> file))
+         (ampf (<a class=quiet href="#make-env">make-env</a> amp-env amp dur))
+         (nd (+ st (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur))))
+    (<a class=quiet href="extsnd.html#run">run</a>
+      (lambda ()
+        (do ((i st (1+ i)))
+	    ((= i nd))
+          (let ((outval (* (<a class=quiet href="#env">env</a> ampf) (<em class=red>readin</em> rdA))))
+  	    (<a class=quiet href="#outa">outa</a> i outval)
+	    (if *reverb* 
+              (<a class=quiet href="#outa">outa</a> i (* outval rev-amount) *reverb*))))))))
+
+(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> () (env-sound "oboe.snd" 0 1.0 '(0 0 1 1 2 1 3 0)))
+</pre>
+</td></tr></table>
+<br><br>
+
+
+
 
 <A NAME="in-anydoc"></A>
 <A NAME="out-anydoc"></A>
@@ -5022,8 +5076,11 @@ Here is one that uses file-&gt;sample to mix in a sound file (there are a zillio
   <a class=def name="inb">inb</a> loc input
 </pre>
 
-<p>out-any adds its "data" argument (a sound sample) into the "output" object at sample
+<p>These are the "generic" input and output functions.
+out-any adds its "data" argument (a sound sample) into the "output" object at sample
 position "loc".  
+The "ouput" can be a file (the most common case), a vct, a sound-data object, a function,
+or any output-capable CLM generator.
 In with-sound, the current output is *output* and the reverb output is *reverb*.
 outa is the same as out-any with a channel of 0.
 The "output" argument can be a vct, a sound-data object, or a function, as well as the more usual frame-&gt;file object.
@@ -5087,61 +5144,39 @@ use its :output argument:
 </pre>
 </td></tr></table>
 
-<br><br>
-
-
-
-
-<A NAME="readindoc"></A>
-<!-- ---------------------------------------- READIN ---------------------------------------- -->
-
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>readin</h3></center></td></tr></table>
-
-<pre>
- <a class=def name="make-readin">make-readin</a> <a class=quiet href="#optional-key">:optional-key</a> file (channel 0) (start 0) (direction 1) size
- <a class=def name="readin">readin</a> rd
- <a class=def name="readin?">readin?</a> rd
-</pre>
-
-<table border=1 cellpadding=4 hspace=40 vspace=10>
-<tr><td colspan=2 bgcolor="beige"><center>readin methods</center></td></tr>
-<tr><td><em class=gen>mus-channel</em></td><td>channel arg to make-readin (no set!)</td></tr>
-<tr><td><em class=gen>mus-location</em></td><td>current location in file</td></tr>
-<tr><td><em class=gen>mus-increment</em></td><td>sample increment (direction arg to make-readin)</td></tr>
-<tr><td><em class=gen>mus-file-name</em></td><td>name of file associated with gen</td></tr>
-<tr><td><em class=gen>mus-length</em></td><td>number of frames in file associated with gen</td></tr>
-</table>
-
-<p>readin returns successive samples from a file.
-Its "file" argument is the input file's name.
-"start" is the frame at which to start reading the input file. 
-"channel" is which channel to read (0-based).
-"size" is the read buffer size in samples.  It defaults to <a href="#musfilebuffersize">mus-file-buffer-size</a>.
-Here is an instrument that applies an envelope to a sound file using
-readin and <a href="#env">env</a>:
+<p>Similarly, if in-any's "input" argument is a function, it takes the input location (sample number), and channel (0-based).
 </p>
 
-<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
+<table border=0 hspace=40><tr><td>
 <pre>
-(<a class=quiet href="sndscm.html#definstrument">definstrument</a> (env-sound file beg :optional (amp 1.0) (amp-env '(0 1 100 1)))
-  (let* ((st (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> beg))
-         (dur (<a class=quiet href="extsnd.html#mussoundduration">mus-sound-duration</a> file))
-         (rev-amount .01)
-         (rdA (<em class=red>make-readin</em> file))
-         (ampf (<a class=quiet href="#make-env">make-env</a> amp-env amp dur))
-         (nd (+ st (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> dur))))
-    (<a class=quiet href="extsnd.html#run">run</a>
-      (lambda ()
-        (do ((i st (1+ i)))
-	    ((= i nd))
-          (let ((outval (* (<a class=quiet href="#env">env</a> ampf) (<em class=red>readin</em> rdA))))
-  	    (<a class=quiet href="#outa">outa</a> i outval)
-	    (if *reverb* 
-              (<a class=quiet href="#outa">outa</a> i (* outval rev-amount) *reverb*))))))))
-
-(<a class=quiet href="sndscm.html#wsdoc">with-sound</a> () (env-sound "oboe.snd" 0 1.0 '(0 0 1 1 2 1 3 0)))
+(let ((input (<a class=quiet href="#make-readin">make-readin</a> "oboe.snd" :start 1000)))
+  (with-sound (:output (<a class=quiet href="extsnd.html#makevct">make-vct</a> 10))
+    (do ((i 0 (1+ i)))
+	((= i 10))
+      (<em class=red>outa</em> i (<em class=red>ina</em> i (lambda (loc chn)
+		       (<a class=quiet href="#readin">readin</a> input)))))))
 </pre>
 </td></tr></table>
+
+<p>If you want to use the run macro with out* with a function, remember to
+declare the argument types (they default to int, so the input case doesn't need this).
+</p>
+
+<table border=0 hspace=40><tr><td>
+<pre>
+(let ((outv (<a class=quiet href="extsnd.html#makevct">make-vct</a> 10)))
+  (with-sound ()
+    (<em class=red>run</em> (lambda ()
+      (do ((i 0 (1+ i)))
+	  ((= i 10))
+	(outa i (* i .1) (lambda (loc val chan)
+			   (<em class=red>declare</em> (loc int) (val float) (chan int))
+			   (<a class=quiet href="extsnd.html#vctset">vct-set!</a> outv loc val)))))))
+  outv) ; this is equivalent to using :output (make-vct 10) as a with-sound argument
+</pre>
+</td></tr></table>
+
+
 <br><br>
 
 

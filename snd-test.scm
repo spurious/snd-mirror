@@ -9,28 +9,28 @@
 ;;;  test 6: vcts                               [13776]
 ;;;  test 7: colors                             [14044]
 ;;;  test 8: clm                                [14534]
-;;;  test 9: mix                                [25794]
-;;;  test 10: marks                             [28012]
-;;;  test 11: dialogs                           [28973]
-;;;  test 12: extensions                        [29218]
-;;;  test 13: menus, edit lists, hooks, etc     [29489]
-;;;  test 14: all together now                  [31198]
-;;;  test 15: chan-local vars                   [32239]
-;;;  test 16: regularized funcs                 [33878]
-;;;  test 17: dialogs and graphics              [38869]
-;;;  test 18: enved                             [38959]
-;;;  test 19: save and restore                  [38978]
-;;;  test 20: transforms                        [40763]
-;;;  test 21: new stuff                         [42746]
-;;;  test 22: run                               [44741]
-;;;  test 23: with-sound                        [50962]
-;;;  test 24: user-interface                    [54424]
-;;;  test 25: X/Xt/Xm                           [57818]
-;;;  test 26: Gtk                               [62426]
-;;;  test 27: GL                                [66278]
-;;;  test 28: errors                            [66402]
-;;;  test all done                              [68702]
-;;;  test the end                               [68940]
+;;;  test 9: mix                                [26225]
+;;;  test 10: marks                             [28443]
+;;;  test 11: dialogs                           [29404]
+;;;  test 12: extensions                        [29649]
+;;;  test 13: menus, edit lists, hooks, etc     [29920]
+;;;  test 14: all together now                  [31629]
+;;;  test 15: chan-local vars                   [32670]
+;;;  test 16: regularized funcs                 [34309]
+;;;  test 17: dialogs and graphics              [39300]
+;;;  test 18: enved                             [39390]
+;;;  test 19: save and restore                  [39409]
+;;;  test 20: transforms                        [41246]
+;;;  test 21: new stuff                         [43229]
+;;;  test 22: run                               [45224]
+;;;  test 23: with-sound                        [51445]
+;;;  test 24: user-interface                    [54907]
+;;;  test 25: X/Xt/Xm                           [58301]
+;;;  test 26: Gtk                               [62909]
+;;;  test 27: GL                                [66761]
+;;;  test 28: errors                            [66885]
+;;;  test all done                              [69187]
+;;;  test the end                               [69425]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -22582,7 +22582,254 @@ EDITS: 2
 									(in-any loc chn input))))))))))
 	(if (not (vequal result (vct 0.033 0.035 0.034 0.031 0.026 0.020 0.013 0.009 0.005 0.004)))
 	    (snd-display ";run in-any file->sample in-any: ~A" result))))
+
+
+    (let ((avg 0.0)
+	  (samps 0))
+      (with-sound (:output (lambda (frame val chan)
+			     (set! avg (+ avg val))
+			     (set! samps (1+ samps))
+			     val))
+		  (do ((i 0 (1+ i)))
+		      ((> i 10))
+		    (outa i (* i .1))))
+      (let ((result (/ avg samps)))
+	(if (fneq result 0.5)
+	    (snd-display ";output as avg: ~A" result))))
     
+    (let ((avg 0.0)
+	  (samps 0))
+      (with-sound (:output (lambda (frame val chan)
+			     (set! avg (+ avg val))
+			     (set! samps (1+ samps))
+			     val))
+		  (run (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((> i 10))
+			   (outa i (* i .1))))))
+      (let ((result (/ avg samps)))
+	(if (fneq result 0.5)
+	    (snd-display ";run output as avg: ~A" result))))
+    
+    (let ((outv (make-vct 10)))
+      (with-sound ()
+		  (do ((i 0 (1+ i)))
+		      ((= i 10))
+		    (outa i (* i .1) (lambda (loc val chan)
+				       (vct-set! outv i val)))))
+      (if (not (vequal outv (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900)))
+	  (snd-display ";outa func vct: ~A" outv)))
+    
+    (let ((outv (make-vct 10)))
+      (with-sound ()
+		  (run (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10))
+			   (outa i (* i .1) (lambda (loc val chan)
+					      (declare (loc int) (val float) (chan int))
+					      (vct-set! outv loc val)))))))
+      (if (not (vequal outv (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900)))
+	  (snd-display ";run outa func vct: ~A" outv)))
+    
+    
+    (let ((outv (make-sound-data 4 10)))
+      (with-sound (:channels 4)
+		  (do ((i 0 (1+ i)))
+		      ((= i 10))
+		    (outa i (* i .1) (lambda (loc val chan)
+				       (sound-data-set! outv chan loc val)))
+		    (outb i (* i .2) (lambda (loc val chan)
+				       (sound-data-set! outv chan loc val)))
+		    (outc i (* i .3) (lambda (loc val chan)
+				       (sound-data-set! outv chan loc val)))
+		    (outd i (* i .4) (lambda (loc val chan)
+				       (sound-data-set! outv chan loc val)))))
+      (if (not (vequal (sound-data->vct outv 0) (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900)))
+	  (snd-display ";outa 1 to sound-data function: ~A" (sound-data->vct outv 0)))
+      (if (not (vequal (sound-data->vct outv 1) (vct 0.000 0.200 0.400 0.600 0.800 1.000 1.200 1.400 1.600 1.800)))
+	  (snd-display ";outb 1 to sound-data function: ~A" (sound-data->vct outv 1)))
+      (if (not (vequal (sound-data->vct outv 2) (vct 0.000 0.300 0.600 0.900 1.200 1.500 1.800 2.100 2.400 2.700)))
+	  (snd-display ";outc 1 to sound-data function: ~A" (sound-data->vct outv 2)))
+      (if (not (vequal (sound-data->vct outv 3) (vct 0.000 0.400 0.800 1.200 1.600 2.000 2.400 2.800 3.200 3.600)))
+	  (snd-display ";outd 1 to sound-data function: ~A" (sound-data->vct outv 3))))
+    
+    (let ((outv (make-sound-data 4 10)))
+      (with-sound (:channels 4)
+		  (run (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10))
+			   (outa i (* i .1) (lambda (loc val chan)
+					      (declare (loc int) (val float) (chan int))
+					      (sound-data-set! outv chan loc val)))
+			   (outb i (* i .2) (lambda (loc val chan)
+					      (declare (loc int) (val float) (chan int))
+					      (sound-data-set! outv chan loc val)))
+			   (outc i (* i .3) (lambda (loc val chan)
+					      (declare (loc int) (val float) (chan int))
+					      (sound-data-set! outv chan loc val)))
+			   (outd i (* i .4) (lambda (loc val chan)
+					      (declare (loc int) (val float) (chan int))
+					      (sound-data-set! outv chan loc val)))))))
+      (if (not (vequal (sound-data->vct outv 0) (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900)))
+	  (snd-display ";run outa 1 to sound-data function: ~A" (sound-data->vct outv 0)))
+      (if (not (vequal (sound-data->vct outv 1) (vct 0.000 0.200 0.400 0.600 0.800 1.000 1.200 1.400 1.600 1.800)))
+	  (snd-display ";run outb 1 to sound-data function: ~A" (sound-data->vct outv 1)))
+      (if (not (vequal (sound-data->vct outv 2) (vct 0.000 0.300 0.600 0.900 1.200 1.500 1.800 2.100 2.400 2.700)))
+	  (snd-display ";run outc 1 to sound-data function: ~A" (sound-data->vct outv 2)))
+      (if (not (vequal (sound-data->vct outv 3) (vct 0.000 0.400 0.800 1.200 1.600 2.000 2.400 2.800 3.200 3.600)))
+	  (snd-display ";run outd 1 to sound-data function: ~A" (sound-data->vct outv 3))))
+    
+    (let ((outv (make-vct 10)))
+      (with-sound ()
+		  (do ((i 0 (1+ i)))
+		      ((= i 10))
+		    (out-any i (* i .1) 0 (lambda (loc val chan)
+					    (vct-set! outv loc val)))))
+      (if (not (vequal outv (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900)))
+	  (snd-display ";out-any func to vct: ~A" outv)))
+    
+    (let ((outv (make-vct 10)))
+      (with-sound ()
+		  (run (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10))
+			   (out-any i (* i .1) 0 (lambda (loc val chan)
+						   (declare (loc int) (val float) (chan int))
+						   (vct-set! outv loc val)))))))
+      (if (not (vequal outv (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900)))
+	  (snd-display ";run out-any func to vct: ~A" outv)))
+    
+    (let ((outv (make-sound-data 4 10)))
+      (with-sound (:channels 4)
+		  (do ((i 0 (1+ i)))
+		      ((= i 10))
+		    (do ((k 0 (1+ k)))
+			((= k 4))
+		      (out-any i (* i .1 (1+ k)) k (lambda (loc val chan)
+						     (sound-data-set! outv chan loc val))))))
+      (if (not (vequal (sound-data->vct outv 0) (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900)))
+	  (snd-display ";out-any 0 to sound-data function: ~A" (sound-data->vct outv 0)))
+      (if (not (vequal (sound-data->vct outv 1) (vct 0.000 0.200 0.400 0.600 0.800 1.000 1.200 1.400 1.600 1.800)))
+	  (snd-display ";out-any 1 to sound-data function: ~A" (sound-data->vct outv 1)))
+      (if (not (vequal (sound-data->vct outv 2) (vct 0.000 0.300 0.600 0.900 1.200 1.500 1.800 2.100 2.400 2.700)))
+	  (snd-display ";out-any 2 to sound-data function: ~A" (sound-data->vct outv 2)))
+      (if (not (vequal (sound-data->vct outv 3) (vct 0.000 0.400 0.800 1.200 1.600 2.000 2.400 2.800 3.200 3.600)))
+	  (snd-display ";out-any 3 to sound-data function: ~A" (sound-data->vct outv 3))))
+    
+    (let ((outv (make-sound-data 4 10)))
+      (with-sound (:channels 4)
+		  (run (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10))
+			   (do ((k 0 (1+ k)))
+			       ((= k 4))
+			     (out-any i (* i .1 (1+ k)) k (lambda (loc val chan)
+							    (declare (loc int) (val float) (chan int))
+							    (sound-data-set! outv chan loc val))))))))
+      (if (not (vequal (sound-data->vct outv 0) (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900)))
+	  (snd-display ";run out-any 0 to sound-data function: ~A" (sound-data->vct outv 0)))
+      (if (not (vequal (sound-data->vct outv 1) (vct 0.000 0.200 0.400 0.600 0.800 1.000 1.200 1.400 1.600 1.800)))
+	  (snd-display ";run out-any 1 to sound-data function: ~A" (sound-data->vct outv 1)))
+      (if (not (vequal (sound-data->vct outv 2) (vct 0.000 0.300 0.600 0.900 1.200 1.500 1.800 2.100 2.400 2.700)))
+	  (snd-display ";run out-any 2 to sound-data function: ~A" (sound-data->vct outv 2)))
+      (if (not (vequal (sound-data->vct outv 3) (vct 0.000 0.400 0.800 1.200 1.600 2.000 2.400 2.800 3.200 3.600)))
+	  (snd-display ";run out-any 3 to sound-data function: ~A" (sound-data->vct outv 3))))
+    
+    (let ((outv (make-vct 10)))
+      (with-sound (:output (lambda (loc val chan)
+			     (vct-set! outv loc val)))
+		  (do ((i 0 (1+ i)))
+		      ((= i 10))
+		    (outa i (* i .1))))
+      (if (not (vequal outv (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900)))
+	  (snd-display ";outa output func to vct: ~A" outv)))
+    
+    (let ((outv (make-vct 10)))
+      (with-sound (:output (lambda (loc val chan)
+			     (declare (loc int) (val float) (chan int))
+			     (vct-set! outv loc val)))
+		  (run (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10))
+			   (outa i (* i .1))))))
+      (if (not (vequal outv (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900)))
+	  (snd-display ";run outa output func to vct: ~A" outv)))
+    
+    (let ((outv (make-sound-data 4 10)))
+      (with-sound (:channels 4 :output (lambda (loc val chan)
+					 (sound-data-set! outv chan loc val)))
+		  (do ((i 0 (1+ i)))
+		      ((= i 10))
+		    (outa i (* i .1))
+		    (outb i (* i .2))
+		    (outc i (* i .3))
+		    (outd i (* i .4))))
+      (if (not (vequal (sound-data->vct outv 0) (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900)))
+	  (snd-display ";outa output to sound-data function: ~A" (sound-data->vct outv 0)))
+      (if (not (vequal (sound-data->vct outv 1) (vct 0.000 0.200 0.400 0.600 0.800 1.000 1.200 1.400 1.600 1.800)))
+	  (snd-display ";outb output to sound-data function: ~A" (sound-data->vct outv 1)))
+      (if (not (vequal (sound-data->vct outv 2) (vct 0.000 0.300 0.600 0.900 1.200 1.500 1.800 2.100 2.400 2.700)))
+	  (snd-display ";outc output to sound-data function: ~A" (sound-data->vct outv 2)))
+      (if (not (vequal (sound-data->vct outv 3) (vct 0.000 0.400 0.800 1.200 1.600 2.000 2.400 2.800 3.200 3.600)))
+	  (snd-display ";outd output to sound-data function: ~A" (sound-data->vct outv 3))))
+    
+    (let ((outv (make-sound-data 4 10)))
+      (with-sound (:channels 4 :output (lambda (loc val chan)
+					 (declare (loc int) (val float) (chan int))
+					 (sound-data-set! outv chan loc val)))
+		  (run (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10))
+			   (outa i (* i .1))
+			   (outb i (* i .2))
+			   (outc i (* i .3))
+			   (outd i (* i .4))))))
+      (if (not (vequal (sound-data->vct outv 0) (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900)))
+	  (snd-display ";run outa output to sound-data function: ~A" (sound-data->vct outv 0)))
+      (if (not (vequal (sound-data->vct outv 1) (vct 0.000 0.200 0.400 0.600 0.800 1.000 1.200 1.400 1.600 1.800)))
+	  (snd-display ";run outb output to sound-data function: ~A" (sound-data->vct outv 1)))
+      (if (not (vequal (sound-data->vct outv 2) (vct 0.000 0.300 0.600 0.900 1.200 1.500 1.800 2.100 2.400 2.700)))
+	  (snd-display ";run outc output to sound-data function: ~A" (sound-data->vct outv 2)))
+      (if (not (vequal (sound-data->vct outv 3) (vct 0.000 0.400 0.800 1.200 1.600 2.000 2.400 2.800 3.200 3.600)))
+	  (snd-display ";run outd output to sound-data function: ~A" (sound-data->vct outv 3))))
+    
+    (let ((outv (make-sound-data 4 10)))
+      (with-sound (:channels 4 :output (lambda (loc val chan)
+					 (sound-data-set! outv chan loc val)))
+		  (do ((i 0 (1+ i)))
+		      ((= i 10))
+		    (do ((k 0 (1+ k)))
+			((= k 4))
+		      (out-any i (* i .1 (1+ k)) k))))
+      (if (not (vequal (sound-data->vct outv 0) (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900)))
+	  (snd-display ";out-any 0 output to sound-data function: ~A" (sound-data->vct outv 0)))
+      (if (not (vequal (sound-data->vct outv 1) (vct 0.000 0.200 0.400 0.600 0.800 1.000 1.200 1.400 1.600 1.800)))
+	  (snd-display ";out-any 1 output to sound-data function: ~A" (sound-data->vct outv 1)))
+      (if (not (vequal (sound-data->vct outv 2) (vct 0.000 0.300 0.600 0.900 1.200 1.500 1.800 2.100 2.400 2.700)))
+	  (snd-display ";out-any 2 output to sound-data function: ~A" (sound-data->vct outv 2)))
+      (if (not (vequal (sound-data->vct outv 3) (vct 0.000 0.400 0.800 1.200 1.600 2.000 2.400 2.800 3.200 3.600)))
+	  (snd-display ";out-any 3 output to sound-data function: ~A" (sound-data->vct outv 3))))
+    
+    (let ((outv (make-sound-data 4 10)))
+      (with-sound (:channels 4 :output (lambda (loc val chan)
+					 (declare (loc int) (val float) (chan int))
+					 (sound-data-set! outv chan loc val)))
+		  (run (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10))
+			   (do ((k 0 (1+ k)))
+			       ((= k 4))
+			     (out-any i (* i .1 (1+ k)) k))))))
+      (if (not (vequal (sound-data->vct outv 0) (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900)))
+	  (snd-display ";run out-any 0 output to sound-data function: ~A" (sound-data->vct outv 0)))
+      (if (not (vequal (sound-data->vct outv 1) (vct 0.000 0.200 0.400 0.600 0.800 1.000 1.200 1.400 1.600 1.800)))
+	  (snd-display ";run out-any 1 output to sound-data function: ~A" (sound-data->vct outv 1)))
+      (if (not (vequal (sound-data->vct outv 2) (vct 0.000 0.300 0.600 0.900 1.200 1.500 1.800 2.100 2.400 2.700)))
+	  (snd-display ";run out-any 2 output to sound-data function: ~A" (sound-data->vct outv 2)))
+      (if (not (vequal (sound-data->vct outv 3) (vct 0.000 0.400 0.800 1.200 1.600 2.000 2.400 2.800 3.200 3.600)))
+	  (snd-display ";run out-any 3 output to sound-data function: ~A" (sound-data->vct outv 3))))
+    
+    (for-each close-sound (sounds))
     
     (let ((gen (make-frame->file "fmv1.snd" 2 mus-bshort mus-next)))
       (print-and-check gen 

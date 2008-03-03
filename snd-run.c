@@ -3281,6 +3281,9 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool sepa
 	  arg = XEN_CAR(args);
 	  arg_type = default_arg_type;
 	  /* (declare (x real) (a integer) (b string) ... */
+
+	  /* fprintf(stderr, "arg: %s, decls: %s\n", XEN_AS_STRING(arg), XEN_AS_STRING(declarations)); */
+
 	  if ((XEN_LIST_P(declarations)) && (XEN_NOT_NULL_P(declarations)))
 	    {
 	      declaration = XEN_CAR(declarations);
@@ -9791,6 +9794,42 @@ static void out_f_3(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2;}
 
 static void out_any_f_4(int *args, ptree *pt) {FLOAT_RESULT = FLOAT_ARG_2;}
 
+
+static Float call_out_any_function(ptree *pt, Int loc, Float val, Int chan, ptree *function)
+{
+  pt->ints[function->args[0]] = loc;
+  pt->dbls[function->args[1]] = val;
+  pt->ints[function->args[2]] = chan; 
+  eval_embedded_ptree(function, pt);
+  return(pt->dbls[function->result->addr]);
+}
+
+static void outa_function_3(int *args, ptree *pt) 
+{
+  FLOAT_RESULT = call_out_any_function(pt, INT_ARG_1, FLOAT_ARG_2, 0, FNC_ARG_3);
+}
+
+static void outb_function_3(int *args, ptree *pt) 
+{
+  FLOAT_RESULT = call_out_any_function(pt, INT_ARG_1, FLOAT_ARG_2, 1, FNC_ARG_3);
+}
+
+static void outc_function_3(int *args, ptree *pt) 
+{
+  FLOAT_RESULT = call_out_any_function(pt, INT_ARG_1, FLOAT_ARG_2, 2, FNC_ARG_3);
+}
+
+static void outd_function_3(int *args, ptree *pt) 
+{
+  FLOAT_RESULT = call_out_any_function(pt, INT_ARG_1, FLOAT_ARG_2, 3, FNC_ARG_3);
+}
+
+static void out_any_function_4(int *args, ptree *pt) 
+{
+  FLOAT_RESULT = call_out_any_function(pt, INT_ARG_1, FLOAT_ARG_2, INT_ARG_3, FNC_ARG_4);
+}
+
+
 static void out_vct_3(int *args, ptree *pt) 
 {
   if (INT_ARG_1 < VCT_ARG_3->length)
@@ -9840,6 +9879,7 @@ static void out_any_sound_data_4(int *args, ptree *pt)
   FLOAT_RESULT = FLOAT_ARG_2;
 }
 
+
 static xen_value *outa_2(ptree *prog, xen_value **args, int num_args) 
 {
   if (args[3]->type == R_CLM)
@@ -9848,6 +9888,8 @@ static xen_value *outa_2(ptree *prog, xen_value **args, int num_args)
     return(package(prog, R_FLOAT, out_vct_3, "outa_vct_3", args, 3));
   if (args[3]->type == R_SOUND_DATA)
     return(package(prog, R_FLOAT, outa_sound_data_3, "outa_sound_data_3", args, 3));
+  if (args[3]->type == R_FUNCTION)
+    return(package(prog, R_FLOAT, outa_function_3, "outa_function_3", args, 3));
   return(package(prog, R_FLOAT, out_f_3, "out_f_3", args, 3));  
 }
 
@@ -9859,6 +9901,8 @@ static xen_value *outb_2(ptree *prog, xen_value **args, int num_args)
     return(package(prog, R_FLOAT, outb_3, "outb_3", args, 3));
   if (args[3]->type == R_SOUND_DATA)
     return(package(prog, R_FLOAT, outb_sound_data_3, "outb_sound_data_3", args, 3));
+  if (args[3]->type == R_FUNCTION)
+    return(package(prog, R_FLOAT, outb_function_3, "outb_function_3", args, 3));
   return(package(prog, R_FLOAT, out_f_3, "out_f_3", args, 3));  
 }
 
@@ -9868,6 +9912,8 @@ static xen_value *outc_2(ptree *prog, xen_value **args, int num_args)
     return(package(prog, R_FLOAT, outc_3, "outc_3", args, 3));
   if (args[3]->type == R_SOUND_DATA)
     return(package(prog, R_FLOAT, outc_sound_data_3, "outc_sound_data_3", args, 3));
+  if (args[3]->type == R_FUNCTION)
+    return(package(prog, R_FLOAT, outc_function_3, "outc_function_3", args, 3));
   return(package(prog, R_FLOAT, out_f_3, "out_f_3", args, 3));  
 }
 
@@ -9877,10 +9923,58 @@ static xen_value *outd_2(ptree *prog, xen_value **args, int num_args)
     return(package(prog, R_FLOAT, outd_3, "outd_3", args, 3));
   if (args[3]->type == R_SOUND_DATA)
     return(package(prog, R_FLOAT, outd_sound_data_3, "outd_sound_data_3", args, 3));
+  if (args[3]->type == R_FUNCTION)
+    return(package(prog, R_FLOAT, outd_function_3, "outd_function_3", args, 3));
   return(package(prog, R_FLOAT, out_f_3, "out_f_3", args, 3));  
 }
 
-static xen_value *outn_1(ptree *prog, xen_value **args, int num_args, xen_value *(*out_func)(ptree *prog, xen_value **args, int num_args))
+static xen_value *out_any_2(ptree *prog, xen_value **args, int num_args)
+{
+  if (args[4]->type == R_CLM)
+    return(package(prog, R_FLOAT, out_any_4, "out_any_4", args, 4));
+  if (args[4]->type == R_VCT)
+    return(package(prog, R_FLOAT, out_any_vct_4, "out_any_vct_4", args, 4));
+  if (args[4]->type == R_SOUND_DATA)
+    return(package(prog, R_FLOAT, out_any_sound_data_4, "out_any_sound_data_4", args, 4));
+  if (args[4]->type == R_FUNCTION)
+    return(package(prog, R_FLOAT, out_any_function_4, "out_any_function_4", args, 4));
+  return(package(prog, R_FLOAT, out_any_f_4, "out_any_f_4", args, 4));  
+}
+
+/* TODO: if we know in advance the arg types, find some way to pass that as an automatic declare list to lambda_form
+ */
+
+
+static xen_value *out_any_function_body(ptree *prog, XEN proc, xen_value **args, int num_args, const char *funcname)
+{
+  XEN func_form;
+  func_form = XEN_PROCEDURE_SOURCE(proc);
+
+  if ((XEN_LIST_P(func_form)) &&
+      (XEN_SYMBOL_P(XEN_CAR(func_form))) &&
+      (strcmp("lambda", XEN_SYMBOL_TO_C_STRING(XEN_CAR(func_form))) == 0))
+    {
+      bool old_got_lambda;
+      xen_value *v;
+      old_got_lambda = got_lambda;
+      got_lambda = true;
+      v = lambda_form(prog, func_form, true, args, 0, proc); /* must have "declare" here */
+      got_lambda = old_got_lambda;
+      if (v) 
+	{
+	  xen_value *result;
+	  if (funcname) add_var_to_ptree(prog, funcname, v);
+	  result = funcall_n(prog, args, num_args, v);
+	  FREE(v);
+	  return(result);
+	}
+    }
+  return(NULL); /* not an error */
+}
+
+
+/* here *output* is used by default */
+static xen_value *outn_1(ptree *prog, int chan, xen_value **args, int num_args, xen_value *(*out_func)(ptree *prog, xen_value **args, int num_args))
 {
   if (num_args == 2)
     {
@@ -9888,6 +9982,8 @@ static xen_value *outn_1(ptree *prog, xen_value **args, int num_args, xen_value 
       xen_value *rtn;
       int k;
       XEN output;
+      bool protect_ptree = false;
+
       output = mus_clm_output();
       if (mus_xen_p(output))
 	true_args[3] = make_xen_value(R_CLM, add_clm_to_ptree(prog, XEN_TO_MUS_ANY(output), XEN_FALSE), R_VARIABLE);
@@ -9899,12 +9995,23 @@ static xen_value *outn_1(ptree *prog, xen_value **args, int num_args, xen_value 
 	    {
 	      if (sound_data_p(output))
 		true_args[3] = make_xen_value(R_SOUND_DATA, add_sound_data_to_ptree(prog, XEN_TO_SOUND_DATA(output)), R_VARIABLE);
-	      else true_args[3] = make_xen_value(R_XEN, add_xen_to_ptree(prog, output), R_VARIABLE);
+	      else
+		{
+		  if (XEN_PROCEDURE_P(output))
+		    {
+		      xen_value *func_args[5];
+		      for (k = 0; k < 3; k++) func_args[k] = args[k];
+		      func_args[3] = make_xen_value(R_INT, add_int_to_ptree(prog, chan), R_VARIABLE);
+		      true_args[3] = out_any_function_body(prog, output, func_args, 3, NULL);
+		      protect_ptree = true;
+		    }
+		  else true_args[3] = make_xen_value(R_XEN, add_xen_to_ptree(prog, output), R_VARIABLE);
+		}
 	    }
 	}
       for (k = 0; k < 3; k++) true_args[k] = args[k];
       rtn = out_func(prog, true_args, 3);
-      FREE(true_args[3]);
+      if (!protect_ptree) FREE(true_args[3]); /* otherwise it appears that the embedded ptree is gc'd twice? */
       return(rtn);
     }
   return(out_func(prog, args, num_args));
@@ -9912,33 +10019,22 @@ static xen_value *outn_1(ptree *prog, xen_value **args, int num_args, xen_value 
 
 static xen_value *outa_1(ptree *prog, xen_value **args, int num_args) 
 {
-  return(outn_1(prog, args, num_args, outa_2));
+  return(outn_1(prog, 0, args, num_args, outa_2));
 }
 
 static xen_value *outb_1(ptree *prog, xen_value **args, int num_args) 
 {
-  return(outn_1(prog, args, num_args, outb_2));
+  return(outn_1(prog, 1, args, num_args, outb_2));
 }
 
 static xen_value *outc_1(ptree *prog, xen_value **args, int num_args) 
 {
-  return(outn_1(prog, args, num_args, outc_2));
+  return(outn_1(prog, 2, args, num_args, outc_2));
 }
 
 static xen_value *outd_1(ptree *prog, xen_value **args, int num_args) 
 {
-  return(outn_1(prog, args, num_args, outd_2));
-}
-
-static xen_value *out_any_2(ptree *prog, xen_value **args, int num_args)
-{
-  if (args[4]->type == R_CLM)
-    return(package(prog, R_FLOAT, out_any_4, "out_any_4", args, 4));
-  if (args[4]->type == R_VCT)
-    return(package(prog, R_FLOAT, out_any_vct_4, "out_any_vct_4", args, 4));
-  if (args[4]->type == R_SOUND_DATA)
-    return(package(prog, R_FLOAT, out_any_sound_data_4, "out_any_sound_data_4", args, 4));
-  return(package(prog, R_FLOAT, out_any_f_4, "out_any_f_4", args, 4));  
+  return(outn_1(prog, 3, args, num_args, outd_2));
 }
 
 static xen_value *out_any_1(ptree *prog, xen_value **args, int num_args)
@@ -9949,6 +10045,8 @@ static xen_value *out_any_1(ptree *prog, xen_value **args, int num_args)
       xen_value *rtn;
       int k;
       XEN output;
+      bool protect_ptree = false;
+
       output = mus_clm_output();
       if (mus_xen_p(output))
 	true_args[4] = make_xen_value(R_CLM, add_clm_to_ptree(prog, XEN_TO_MUS_ANY(output), XEN_FALSE), R_VARIABLE);
@@ -9960,12 +10058,21 @@ static xen_value *out_any_1(ptree *prog, xen_value **args, int num_args)
 	    {
 	      if (sound_data_p(output))
 		true_args[4] = make_xen_value(R_SOUND_DATA, add_sound_data_to_ptree(prog, XEN_TO_SOUND_DATA(output)), R_VARIABLE);
-	      else true_args[4] = make_xen_value(R_XEN, add_xen_to_ptree(prog, output), R_VARIABLE);
+	      else
+		{
+		  if (XEN_PROCEDURE_P(output))
+		    {
+		      for (k = 0; k < 4; k++) true_args[k] = args[k];
+		      true_args[4] = out_any_function_body(prog, output, true_args, 3, NULL);
+		      protect_ptree = true;
+		    }
+		  else true_args[4] = make_xen_value(R_XEN, add_xen_to_ptree(prog, output), R_VARIABLE);
+		}
 	    }
 	}
       for (k = 0; k < 4; k++) true_args[k] = args[k];
       rtn = out_any_2(prog, true_args, 4);
-      FREE(true_args[4]);
+      if (!protect_ptree) FREE(true_args[4]);
       return(rtn);
     }
   return(out_any_2(prog, args, num_args));

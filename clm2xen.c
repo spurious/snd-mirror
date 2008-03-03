@@ -5536,10 +5536,6 @@ static XEN g_out_any_1(const char *caller, XEN frame, XEN chan, XEN val, XEN out
   if (XEN_PROCEDURE_P(outp))
     return(XEN_CALL_3(outp, frame, val, chan, caller)); /* follow arg order of out-any */
 
-  /* TODO: test/snd-run *output* as func */
-  /* TODO: doc/test/snd-run in-any as func */
-  /* TODO: have we tested in-any inp as vct? I see the sd cases, but not vct (also in run tests) -- example in doc? */
-
   return(val);
 }
 
