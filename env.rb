@@ -673,7 +673,7 @@ end
 include Env
 
 =begin
-# power envelope test (clm-3/env.lisp)
+# power envelope test (clm-4/env.lisp)
 
 def test_power_env(start, dur, en)
   os = make_oscil()

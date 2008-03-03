@@ -10010,15 +10010,17 @@ static void ina_sound_data_2(int *args, ptree *pt)
 
 static void inb_sound_data_2(int *args, ptree *pt) 
 {
-  if ((SOUND_DATA_ARG_2->length > INT_ARG_1) && (SOUND_DATA_ARG_2->chans > 1))
+  if ((SOUND_DATA_ARG_2->length > INT_ARG_1) && 
+      (SOUND_DATA_ARG_2->chans > 1))
     FLOAT_RESULT = SOUND_DATA_ARG_2->data[1][INT_ARG_1];
   else FLOAT_RESULT = 0.0;
 }
 
 static void in_any_sound_data_3(int *args, ptree *pt) 
 {
-  if ((SOUND_DATA_ARG_3->length > INT_ARG_2) && (SOUND_DATA_ARG_3->chans > INT_ARG_1))
-    FLOAT_RESULT = SOUND_DATA_ARG_3->data[INT_ARG_1][INT_ARG_2];
+  if ((SOUND_DATA_ARG_3->length > INT_ARG_1) && 
+      (SOUND_DATA_ARG_3->chans > INT_ARG_2))
+    FLOAT_RESULT = SOUND_DATA_ARG_3->data[INT_ARG_2][INT_ARG_1];
   else FLOAT_RESULT = 0.0;
 }
 
@@ -10079,7 +10081,7 @@ static xen_value *in_any_1(ptree *prog, xen_value **args, int num_args)
     return(package(prog, R_FLOAT, in_any_vct_3, "in_any_vct_3", args, 3));
   if (args[3]->type == R_SOUND_DATA)
     return(package(prog, R_FLOAT, in_any_sound_data_3, "in_any_sound_data_3", args, 3));
-  if (args[2]->type == R_FUNCTION)
+  if (args[3]->type == R_FUNCTION)
     return(package(prog, R_FLOAT, in_any_function_3, "in_any_function_3", args, 3));
   return(package(prog, R_FLOAT, in_any_f_3, "in_any_f_3", args, 3));  
 }
