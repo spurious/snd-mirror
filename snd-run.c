@@ -463,6 +463,9 @@ typedef struct {
   int addr;
   xen_value_constant_t constant;
   bool gc;
+#if MUS_DEBUGGING
+  int line;
+#endif
 } xen_value;
 
 typedef struct {
@@ -585,12 +588,18 @@ static triple *free_triple(triple *trp)
   return(NULL);
 }
 
+#if MUS_DEBUGGING
+#define make_xen_value(Type, Address, Constant) make_xen_value_1(Type, Address, Constant, __LINE__)
+static xen_value *make_xen_value_1(int typ, int address, xen_value_constant_t constant, int line)
+#else
 static xen_value *make_xen_value(int typ, int address, xen_value_constant_t constant)
+#endif
 {
   xen_value *v;
   v = (xen_value *)CALLOC(1, sizeof(xen_value));
 #if MUS_DEBUGGING
   set_printable(PRINT_XEN_VALUE);
+  v->line = line;
 #endif
   v->type = typ;
   v->addr = address;
@@ -653,10 +662,11 @@ void describe_xen_value_for_memlog(FILE *Fp, void *ptr);
 void describe_xen_value_for_memlog(FILE *Fp, void *ptr)
 {
   xen_value *v = (xen_value *)ptr;
-  fprintf(Fp, "[%p: type: %d (%s), addr: %d, %s %s]\n    ", 
+  fprintf(Fp, "[%p: type: %d (%s), addr: %d, %s %s, line: %d]\n    ", 
 	  v, v->type, type_name(v->type), v->addr,
 	  (v->constant == R_CONSTANT) ? "constant" : "variable",
-	  (v->gc) ? "gc" : "no gc");
+	  (v->gc) ? "gc" : "no gc",
+	  v->line);
 }
 #endif
 
@@ -9985,6 +9995,9 @@ static xen_value *outn_1(ptree *prog, int chan, xen_value **args, int num_args, 
       bool protect_ptree = false;
 
       output = mus_clm_output();
+
+      /* TODO: why add_*_to_ptree here (and out_any_1 below)? we're not creating these, and the protection is never cleared if *output* is a function referring to them */
+
       if (mus_xen_p(output))
 	true_args[3] = make_xen_value(R_CLM, add_clm_to_ptree(prog, XEN_TO_MUS_ANY(output), XEN_FALSE), R_VARIABLE);
       else
@@ -10004,6 +10017,7 @@ static xen_value *outn_1(ptree *prog, int chan, xen_value **args, int num_args, 
 		      func_args[3] = make_xen_value(R_INT, add_int_to_ptree(prog, chan), R_VARIABLE);
 		      true_args[3] = out_any_function_body(prog, output, func_args, 3, NULL);
 		      protect_ptree = true;
+		      FREE(func_args[3]);
 		    }
 		  else true_args[3] = make_xen_value(R_XEN, add_xen_to_ptree(prog, output), R_VARIABLE);
 		}

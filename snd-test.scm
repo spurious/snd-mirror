@@ -22456,43 +22456,55 @@ EDITS: 2
 	(if (not (vequal result (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900)))
 	    (snd-display ";run ina from vct: ~A" result))))
     
-    (let ((input (make-readin "oboe.snd" :start 1000)))
-      (let ((result (with-sound (:output (make-vct 10))
-				(do ((i 0 (1+ i)))
-				    ((= i 10))
-				  (outa i (ina i (lambda (loc chn)
-						   (readin input))))))))
-	(if (not (vequal result (vct 0.033 0.035 0.034 0.031 0.026 0.020 0.013 0.009 0.005 0.004)))
-	    (snd-display ";ina function readin: ~A" result))))
-    
-    (let ((input (make-readin "oboe.snd" :start 1000)))
-      (let ((result (with-sound (:output (make-vct 10))
-				(run (lambda ()
-				       (do ((i 0 (1+ i)))
-					   ((= i 10))
-					 (outa i (ina i (lambda (loc chn)
-							  (readin input))))))))))
-	(if (not (vequal result (vct 0.033 0.035 0.034 0.031 0.026 0.020 0.013 0.009 0.005 0.004)))
-	    (snd-display ";run ina function readin: ~A" result))))
-    
-    (let ((input (make-file->sample "oboe.snd")))
-      (let ((result (with-sound (:output (make-vct 10))
-				(do ((i 0 (1+ i)))
-				    ((= i 10))
-				  (outa i (ina (+ i 1000) (lambda (loc chn)
-							    (in-any loc chn input))))))))
-	(if (not (vequal result (vct 0.033 0.035 0.034 0.031 0.026 0.020 0.013 0.009 0.005 0.004)))
-	    (snd-display ";ina function in-any: ~A" result))))
-    
-    (let ((input (make-file->sample "oboe.snd")))
-      (let ((result (with-sound (:output (make-vct 10))
-				(run (lambda ()
-				       (do ((i 0 (1+ i)))
-					   ((= i 10))
-					 (outa i (ina (+ i 1000) (lambda (loc chn)
-								   (in-any loc chn input))))))))))
-	(if (not (vequal result (vct 0.033 0.035 0.034 0.031 0.026 0.020 0.013 0.009 0.005 0.004)))
-	    (snd-display ";run ina function in-any: ~A" result))))
+    (let ((old-buffer-size (mus-file-buffer-size))
+	  (old-clm-buffer-size *clm-file-buffer-size*))
+      (set! (mus-file-buffer-size) 1024)
+      (set! *clm-file-buffer-size* 1024)
+
+      (let ((input (make-readin "oboe.snd" :start 1000)))
+	(let ((result (with-sound (:output (make-vct 10))
+				  (do ((i 0 (1+ i)))
+				      ((= i 10))
+				    (outa i (ina i (lambda (loc chn)
+						     (readin input))))))))
+	  (if (not (vequal result (vct 0.033 0.035 0.034 0.031 0.026 0.020 0.013 0.009 0.005 0.004)))
+	      (snd-display ";ina function readin: ~A" result)))
+	(mus-close input))
+      
+      (let ((input (make-readin "oboe.snd" :start 1000)))
+	(let ((result (with-sound (:output (make-vct 10))
+				  (run (lambda ()
+					 (do ((i 0 (1+ i)))
+					     ((= i 10))
+					   (outa i (ina i (lambda (loc chn)
+							    (readin input))))))))))
+	  (if (not (vequal result (vct 0.033 0.035 0.034 0.031 0.026 0.020 0.013 0.009 0.005 0.004)))
+	      (snd-display ";run ina function readin: ~A" result)))
+	(mus-close input))
+      
+      (let ((input (make-file->sample "oboe.snd")))
+	(let ((result (with-sound (:output (make-vct 10))
+				  (do ((i 0 (1+ i)))
+				      ((= i 10))
+				    (outa i (ina (+ i 1000) (lambda (loc chn)
+							      (in-any loc chn input))))))))
+	  (if (not (vequal result (vct 0.033 0.035 0.034 0.031 0.026 0.020 0.013 0.009 0.005 0.004)))
+	      (snd-display ";ina function in-any: ~A" result)))
+	(mus-close input))
+      
+      (let ((input (make-file->sample "oboe.snd")))
+	(let ((result (with-sound (:output (make-vct 10))
+				  (run (lambda ()
+					 (do ((i 0 (1+ i)))
+					     ((= i 10))
+					   (outa i (ina (+ i 1000) (lambda (loc chn)
+								     (in-any loc chn input))))))))))
+	  (if (not (vequal result (vct 0.033 0.035 0.034 0.031 0.026 0.020 0.013 0.009 0.005 0.004)))
+	      (snd-display ";run ina function in-any: ~A" result)))
+	(mus-close input))
+      
+      (set! *clm-file-buffer-size* old-clm-buffer-size)
+      (set! (mus-file-buffer-size) old-buffer-size))
     
     (let ((invals (make-sound-data 2 10)))
       (do ((i 0 (1+ i)))
@@ -54716,48 +54728,48 @@ EDITS: 1
 	(calling-all-generators)
 
 	(let ((funcs (list nssb nxysin nxycos nxy1cos nxy1sin noddsin noddcos noddssb ncos2 npcos
-			   nrsin nrcos nrssb nkssb nsincos npos1cos npos3cos rcos rssb rxysin rxycos
+			   nrsin nrcos nrssb nkssb nsincos rcos rssb rxysin rxycos
 			   rxyk!sin rxyk!cos ercos erssb r2sin r2cos r2ssb eoddcos rkcos rksin rkssb
 			   rk!cos rk!ssb r2k!cos k2sin k2cos k2ssb dblsum rkoddssb krksin abssin
 			   abcos absin r2k2cos blsaw bess jjcos j0evencos j2cos jpcos jncos 
-			   j0j1cos jycos sin2n blackman fmssb k3sin izcos
+			   j0j1cos jycos blackman fmssb k3sin izcos
 			   adjustable-square-wave adjustable-triangle-wave adjustable-sawtooth-wave adjustable-oscil 
 			   round-interp))
 	      (make-funcs (list make-nssb make-nxysin make-nxycos make-nxy1cos make-nxy1sin make-noddsin make-noddcos make-noddssb make-ncos2 make-npcos
-				make-nrsin make-nrcos make-nrssb make-nkssb make-nsincos make-npos1cos make-npos3cos make-rcos make-rssb make-rxysin make-rxycos
+				make-nrsin make-nrcos make-nrssb make-nkssb make-nsincos make-rcos make-rssb make-rxysin make-rxycos
 				make-rxyk!sin make-rxyk!cos make-ercos make-erssb make-r2sin make-r2cos make-r2ssb make-eoddcos make-rkcos make-rksin make-rkssb
 				make-rk!cos make-rk!ssb make-r2k!cos make-k2sin make-k2cos make-k2ssb make-dblsum make-rkoddssb make-krksin make-abssin
 				make-abcos make-absin make-r2k2cos make-blsaw make-bess make-jjcos make-j0evencos make-j2cos make-jpcos make-jncos
-				make-j0j1cos make-jycos make-sin2n make-blackman make-fmssb make-k3sin make-izcos
+				make-j0j1cos make-jycos make-blackman make-fmssb make-k3sin make-izcos
 				make-adjustable-square-wave make-adjustable-triangle-wave make-adjustable-sawtooth-wave make-adjustable-oscil
 				make-round-interp))
 	      (pfuncs (list nssb? nxysin? nxycos? nxy1cos? nxy1sin? noddsin? noddcos? noddssb? ncos2? npcos?
-			    nrsin? nrcos? nrssb? nkssb? nsincos? npos1cos? npos3cos? rcos? rssb? rxysin? rxycos?
+			    nrsin? nrcos? nrssb? nkssb? nsincos? rcos? rssb? rxysin? rxycos?
 			    rxyk!sin? rxyk!cos? ercos? erssb? r2sin? r2cos? r2ssb? eoddcos? rkcos? rksin? rkssb?
 			    rk!cos? rk!ssb? r2k!cos? k2sin? k2cos? k2ssb? dblsum? rkoddssb? krksin? abssin?
 			    abcos? absin? r2k2cos? blsaw? bess? jjcos? j0evencos? j2cos? jpcos? jncos?
-			    j0j1cos? jycos? sin2n? blackman? fmssb? k3sin? izcos?
+			    j0j1cos? jycos? blackman? fmssb? k3sin? izcos?
 			    adjustable-square-wave? adjustable-triangle-wave? adjustable-sawtooth-wave? adjustable-oscil?
 			    round-interp?))
 	      (names (list 'nssb 'nxysin 'nxycos 'nxy1cos 'nxy1sin 'noddsin 'noddcos 'noddssb 'ncos2 'npcos
-			   'nrsin 'nrcos 'nrssb 'nkssb 'nsincos 'npos1cos 'npos3cos 'rcos 'rssb 'rxysin 'rxycos
+			   'nrsin 'nrcos 'nrssb 'nkssb 'nsincos 'rcos 'rssb 'rxysin 'rxycos
 			   'rxyk!sin 'rxyk!cos 'ercos 'erssb 'r2sin 'r2cos 'r2ssb 'eoddcos 'rkcos 'rksin 'rkssb
 			   'rk!cos 'rk!ssb 'r2k!cos 'k2sin 'k2cos 'k2ssb 'dblsum 'rkoddssb 'krksin 'abssin
 			   'abcos 'absin 'r2k2cos 'blsaw 'bess 'jjcos 'j0evencos 'j2cos 'jpcos 'jncos
-			   'j0j1cos 'jycos 'sin2n 'blackman 'fmssb 'k3sin 'izcos
+			   'j0j1cos 'jycos 'blackman 'fmssb 'k3sin 'izcos
 			   'adjustable-square-wave 'adjustable-triangle-wave 'adjustable-sawtooth-wave 'adjustable-oscil
 			   'round-interp))
 	      (methods (list nssb-methods nxysin-methods nxycos-methods nxy1cos-methods nxy1sin-methods 
 			     noddsin-methods noddcos-methods noddssb-methods ncos2-methods npcos-methods 
 			     nrsin-methods nrcos-methods nrssb-methods nkssb-methods nsincos-methods 
-			     npos1cos-methods npos3cos-methods rcos-methods rssb-methods rxysin-methods rxycos-methods 
+			     rcos-methods rssb-methods rxysin-methods rxycos-methods 
 			     rxyk!sin-methods rxyk!cos-methods ercos-methods erssb-methods r2sin-methods 
 			     r2cos-methods r2ssb-methods eoddcos-methods rkcos-methods rksin-methods rkssb-methods 
 			     rk!cos-methods rk!ssb-methods r2k!cos-methods k2sin-methods k2cos-methods k2ssb-methods 
 			     dblsum-methods rkoddssb-methods krksin-methods abssin-methods 
 			     abcos-methods absin-methods r2k2cos-methods blsaw-methods bess-methods 
 			     jjcos-methods j0evencos-methods j2cos-methods jpcos-methods jncos-methods 
-			     j0j1cos-methods jycos-methods sin2n-methods blackman-methods fmssb-methods k3sin-methods izcos-methods 
+			     j0j1cos-methods jycos-methods blackman-methods fmssb-methods k3sin-methods izcos-methods 
 			     adjustable-square-wave-methods adjustable-triangle-wave-methods 
 			     adjustable-sawtooth-wave-methods adjustable-oscil-methods 
 			     round-interp-methods))
@@ -67099,7 +67111,7 @@ EDITS: 1
 		     delay delay? dot-product env env-interp env? file->array file->frame file->frame?  file->sample
 		     file->sample? filter filter? fir-filter fir-filter? formant formant-bank formant? frame* frame+ firmant firmant?
 		     frame->file frame->file? frame->frame frame->list frame->sample frame-ref frame-set! frame?
-		     granulate granulate? hz->radians iir-filter iir-filter?  in-any ina inb linear->db locsig
+		     granulate granulate? hz->radians iir-filter iir-filter?  in-any linear->db locsig ; ina inb
 		     locsig-ref locsig-reverb-ref locsig-reverb-set! locsig-set!  locsig? make-all-pass make-asymmetric-fm
 		     make-comb make-filtered-comb make-convolve make-delay make-env make-fft-window make-file->frame
 		     make-file->sample make-filter make-fir-filter make-formant make-firmant make-frame make-frame->file make-granulate

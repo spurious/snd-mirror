@@ -1244,7 +1244,7 @@
 |#
 
 
-
+#|
 ;;; --------------------------------------------------------------------------------
 
 ;;; not sure the next two are interesting -- 2 more kernels
@@ -1276,14 +1276,13 @@
 
 ;;; needs normalization and no DC.   side amps seem close
 
-#|
+
 (with-sound (:clipped #f :statistics #t :play #f)
   (let ((gen (make-npos1cos 100.0 3)))
     (run (lambda () 
 	   (do ((i 0 (1+ i)))
 	       ((= i 20000))
 	     (outa i (npos1cos gen 0.0)))))))
-|#
 
 
 (defgenerator (npos3cos
@@ -1310,7 +1309,6 @@
 ;;; needs normalization and no DC, peak at den=0 not right.   side amps seem close
 
 
-#|
 (with-sound (:clipped #f :statistics #t :play #f)
   (let ((gen (make-npos3cos 100.0 3)))
     (run (lambda () 
@@ -3604,9 +3602,9 @@ index 10 (so 10/2 is the bes-jn arg):
 |#
 
 
-
 ;;; --------------------------------------------------------------------------------
 
+#|
 (defgenerator (sin2n
 	       :make-wrapper (lambda (g)
 			       (set! (sin2n-frequency g) (hz->radians (sin2n-frequency g)))
@@ -3618,11 +3616,9 @@ index 10 (so 10/2 is the bes-jn arg):
   (let* ((x (sin2n-angle gen))
 	 (n (sin2n-n gen))
 	 (r (sin2n-r gen)))
-    ;; TODO: normalize and remove DC
     (set! (sin2n-angle gen) (+ x fm (sin2n-frequency gen)))
     (expt (* r (sin x)) (* 2 n))))
 
-#|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-sin2n 100.0 2 1.0)))
     (run 

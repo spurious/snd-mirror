@@ -6050,6 +6050,7 @@ static XEN g_locsig_p(XEN obj)
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_locsig_p(XEN_TO_MUS_ANY(obj)))));
 }
 
+/* TODO: locsig doesn't handle *output* as function */
 
 enum {G_LOCSIG_DATA, G_LOCSIG_REVDATA, G_LOCSIG_OUT, G_LOCSIG_REVOUT};
 
@@ -6387,6 +6388,7 @@ static int *xen_vector_to_int_array(XEN vect)
   return(vals);
 }
 
+/* TODO: move-sound doesn't handle *output* as function */
 
 static XEN g_make_move_sound(XEN dloc_list, XEN outp, XEN revp)
 {

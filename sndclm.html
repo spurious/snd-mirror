@@ -517,7 +517,8 @@ plugging it into the following with-sound call:
 </pre>
 </td></tr></table>
 
-<p>By the way, there's nothing special about a generator in CLM: it is a function, or perhaps more accurately, a closure.  If it happens to restrict itself
+<p>By the way, there's nothing special about a generator in CLM: it is a function, or perhaps more accurately, a closure.  
+If such a function happens to restrict itself
 to functions that the "run" macro can handle (and this includes most of Scheme), then it will run
 nearly as fast as any built-in function.  If it needs to keep on-going state around, it is simplest to use a vct
 as the generator object:
@@ -546,7 +547,7 @@ as the generator object:
 </td></tr></table>
 
 <p>There are many more such generators scattered around the Snd package. For more sophisticated situations,
-you can use <a href="sndscm.html#def-clm-struct">def-clm-struct</a>.
+you can use <a href="sndscm.html#def-clm-struct">def-clm-struct</a>, and <a href="#defgenerator">defgenerator</a>.
 </p>
 <br><br>
 
@@ -2391,21 +2392,22 @@ another kernel set: binomial coeffs G&R 1.320 etc -- not different enough
 <td width=40></td>
 <td><img src="sceq15.png" alt="many more sums" usemap="#GR2" border=0>
 <map name="GR2">
-    <area shape=rect coords="0,0,300,40" href="sndclm.html#nrsin" alt="nrsin">
-    <area shape=rect coords="0,41,300,90" href="sndclm.html#nrcos" alt="nrcos">
-    <area shape=rect coords="0,91,300,140" href="sndclm.html#rssb" alt="rssb">
-    <area shape=rect coords="0,141,300,180" href="sndclm.html#rcos" alt="rcos">
-    <area shape=rect coords="0,181,300,220" href="sndclm.html#rksin" alt="rksin">
-    <area shape=rect coords="0,221,300,250" href="sndclm.html#rkcos" alt="rkcos">
-    <area shape=rect coords="0,251,300,300" href="sndclm.html#rkoddssb" alt="rkoddssb">
-    <area shape=rect coords="0,301,300,340" href="sndclm.html#rkoddssb" alt="rkoddssb">
-    <area shape=rect coords="0,341,300,380" href="sndclm.html#erssb" alt="erssb">
-    <area shape=rect coords="0,381,300,420" href="sndclm.html#ercos" alt="ercos">
-  <area shape=rect coords="0,421,300,500" href="sndclm.html#sin2n" alt="sin2n">
-
+  <area shape=rect coords="0,0,300,40" href="sndclm.html#nrsin" alt="nrsin">
+  <area shape=rect coords="0,41,300,90" href="sndclm.html#nrcos" alt="nrcos">
+  <area shape=rect coords="0,91,300,140" href="sndclm.html#rssb" alt="rssb">
+  <area shape=rect coords="0,141,300,180" href="sndclm.html#rcos" alt="rcos">
+  <area shape=rect coords="0,181,300,220" href="sndclm.html#rksin" alt="rksin">
+  <area shape=rect coords="0,221,300,250" href="sndclm.html#rkcos" alt="rkcos">
+  <area shape=rect coords="0,251,300,300" href="sndclm.html#rkoddssb" alt="rkoddssb">
+  <area shape=rect coords="0,301,300,340" href="sndclm.html#rkoddssb" alt="rkoddssb">
+  <area shape=rect coords="0,341,300,380" href="sndclm.html#erssb" alt="erssb">
+  <area shape=rect coords="0,381,300,420" href="sndclm.html#ercos" alt="ercos">
 </map>
 </td>
 </tr>
+
+<!--  <area shape=rect coords="0,421,300,500" href="sndclm.html#sin2n" alt="sin2n"> -->
+
 
 <tr><td colspan=3 bgcolor="#eefdee"><center>Gradshteyn and Ryzhik, "Table of Integrals, Series, and Products", 1.341.., 1.352.., 1.447.., 1.461, 1.518, 8.516, 8.531</center></td></tr>
 <tr><td colspan=3 height=25></td></tr>
@@ -3914,18 +3916,15 @@ get to the envelope.
 <table border=3 bordercolor="tan" hspace=40><th bgcolor="beige">Filters</th><tr><td>
 <blockquote><small>
 <br>
-filter a sound: <a href="extsnd.html#filtersound">filter-sound</a>, <a href="extsnd.html#filterchannel">filter-channel</a>, and <a href="extsnd.html#clmchannel">clm-channel</a><br>
 lowpass filter: <a href="sndscm.html#makelowpass">make-lowpass</a> in dsp.scm<br>
 highpass filter: <a href="sndscm.html#makehighpass">make-highpass</a> in dsp.scm<br>
 bandpass filter: <a href="sndscm.html#makebandpass">make-bandpass</a> in dsp.scm<br>
 bandstop filter: <a href="sndscm.html#makebandstop">make-bandstop</a> in dsp.scm<br>
-the usual analog filters (Butterworth, Chebyshev, Bessel, Elliptic): <a href="sndscm.html#analogfilterdoc">analog-filter.scm</a><br>
-Butterworth filters: <a href="sndscm.html#makebutter">make-butter-high-pass</a>, make-butter-low etc in dsp.scm, used in new-effects.scm<br>
-IIR filters of various orders/kinds: <a href="sndscm.html#IIRfilters">dsp.scm</a><br>
+Butterworth, Chebyshev, Bessel, Elliptic filters: <a href="sndscm.html#analogfilterdoc">analog-filter.scm</a><br>
 Hilbert transform: <a href="sndscm.html#makehilberttransform">make-hilbert-transform</a> in dsp.scm<br>
 differentiator: <a href="sndscm.html#makedifferentiator">make-differentiator</a> in dsp.scm<br>
-block DC: see example above, dc-block in prc95.scm, or stereo-flute in clm-ins.scm<br>
-hum elimination: see <a href="sndscm.html#IIRfilters">eliminate-hum</a> and <a href="sndscm.html#notchchannel">notch-channel</a> in dsp.scm<br>
+block DC: dc-block in prc95.scm or (make-filter 2 (vct 1 -1) (vct 0 -0.99))<br>
+hum elimination: <a href="sndscm.html#IIRfilters">eliminate-hum</a> and <a href="sndscm.html#notchchannel">notch-channel</a> in dsp.scm<br>
 hiss elimination: <a href="sndscm.html#notchoutrumbleandhiss">notch-out-rumble-and-hiss</a><br>
 smoothing filters: <a href="sndscm.html#smoothingfilter">smoothing-filter</a>, weighted-moving-average, exponentially-weighted-moving-average<br>
 notch-filters: <a href="sndscm.html#notchchannel">notch-channel</a> and <a href="sndscm.html#notchselection">notch-selection</a><br>
@@ -3933,15 +3932,15 @@ arbitrary spectrum via FIR filter: <a href="sndscm.html#spectrumtocoeffs">spectr
 invert an FIR filter: <a href="sndscm.html#invertfilter">invert-filter</a> in dsp.scm<br>
 filtered echo sound effect: <a href="sndscm.html#zecho">flecho</a> in examp.scm<br>
 time varying filter: fltit in examp.scm<br>
-draw frequency response: use <a href="snd.html#editenvelope">envelope editor</a> or <a href="snd.html#filtercontrol">filter control</a> in control panel<br>
+draw frequency response: use the <a href="snd.html#editenvelope">envelope editor</a> or <a href="snd.html#filtercontrol">filter control</a> in control panel<br>
 Moog filter: <a href="sndscm.html#moogdoc">moog.scm</a><br>
 Savitzky-Golay filter: <a href="sndscm.html#sgfilter">savitzky-golay-filter</a><br>
-Click reduction: <a href="sndscm.html#removeclicks">remove-clicks</a>, <a href="sndscm.html#cleanchannel">clean-channel</a><br>
+click reduction: <a href="sndscm.html#removeclicks">remove-clicks</a>, <a href="sndscm.html#cleanchannel">clean-channel</a><br>
 LADSPA-based filter effects: see ladspa.scm<br>
-Max Mathews resonator: <a href="sndscm.html#maxfdoc">maxf.scm, maxf.rb</a>, <a href="sndscm.html#mfilter">mfilter</a><br>
 graphical equalizer filter bank: <a href="sndscm.html#clminsdoc">graphEq</a><br>
 nonlinear (Volterra) filter: <a href="sndscm.html#volterrafilter">volterra-filter</a><br>
 Kalman filter: <a href="sndscm.html#kalmanfilterchannel">kalman-filter-channel</a><br>
+filter a sound: <a href="extsnd.html#filtersound">filter-sound</a>, <a href="extsnd.html#filterchannel">filter-channel</a><br>
 see also convolution, physical modeling, reverb, and <a href="sndscm.html#ssffts">fft-based filtering</a><br>
 <br>
 </small></blockquote>
@@ -5023,7 +5022,8 @@ Here is one that uses file-&gt;sample to mix in a sound file (there are a zillio
 <tr><td><em class=gen>mus-length</em></td><td>number of frames in file associated with gen</td></tr>
 </table>
 
-<p>readin returns successive samples from a file.
+<p>readin returns successive samples from a file; it is an elaboration of file-&gt;sample that keeps track of the
+current read location and channel number for you.
 Its "file" argument is the input file's name.
 "start" is the frame at which to start reading the input file. 
 "channel" is which channel to read (0-based).
@@ -5745,16 +5745,6 @@ This uses J0(index * cos(x)) + J1(index * cos(x)) to produce a full set of cosin
 </p>
 
 
-<pre>
-  <A class=def NAME="make-sin2n">make-sin2n</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (n 1) (r 1.0)
-  <A class=def NAME="sin2n">sin2n</A> gen fm
-  <A class=def NAME="sin2n?">sin2n?</A> gen
-</pre>
-
-<p>This is hard to explain, from any point of view...  The output looks similar to the various kernel ncos.
-</p>
-
-
 <br><br>
 
 
@@ -6335,9 +6325,30 @@ with each component scaled by (r^(2k))/(2k)!.  r2sin output is not normalized.
 
 <p>defgenerator is an extension of <a href="sndscm.html#def-clm-struct">def-clm-struct</a>
 that sets up all the usual generator methods (discussed under <a href="#genericfunctions">"generic functions"</a> above).
-It is used to define all the generators in generators.scm.
+It is used to define all the generators in generators.scm.  An oscillator could be:
 </p>
 
+<table border=0 hspace=40><tr><td>
+<pre>
+(<em class=red>defgenerator</em> (osc 
+       :make-wrapper (lambda (gen)
+	               (set! (osc-frequency gen) (<a class=quiet href="sndclm.html#hztoradians">hz-&gt;radians</a> (osc-frequency gen)))
+	               gen))
+  (frequency 0.0) (phase 0.0))
+
+(define (osc gen fm)
+  (<a class=quiet href="extsnd.html#declare">declare</a> (gen osc) (fm float))
+  (let ((result (sin (<em class=red>osc-phase</em> gen))))
+    (set! (<em class=red>osc-phase</em> gen) (+ (<em class=red>osc-phase</em> gen) (<em class=red>osc-frequency</em> gen) fm))
+    result))
+</pre>
+</td></tr></table>
+
+<p>defgenerator defines make-osc, osc?, and all the usual <a href="#genericfunctions">methods</a> for us: mus-name ("osc"),
+mus-frequency (radians-&gt;hz of the frequency field), mus-phase, mus-reset, mus-run, and mus-describe.
+If the generator has a field named "n" or "order", it defines mus-order. If it has a field named "r" or "amplitude",
+it defines mus-scaler.
+</p>
 <br>
 
 

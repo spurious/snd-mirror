@@ -512,6 +512,8 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+5-Mar:   mus-name is settable.\n\
+         *output* can be a function.\n\
 25-Feb:  defgenerator.\n\
 24-Feb:  make-two-pole|zero freq r in the 'polar' case (reversed args)\n\
          env-any for arbitrary func to connect the dots\n\

@@ -10076,7 +10076,7 @@ wrapper to handle that:
 <pre>
     (def-clm-struct 
       (osc <em class=red>:make-wrapper</em> (lambda (gen)
-			   (set! (osc1-freq gen) (<a class=quiet href="sndclm.html#hztoradians">hz-&gt;radians</a> (osc1-freq gen)))
+			   (set! (osc-freq gen) (<a class=quiet href="sndclm.html#hztoradians">hz-&gt;radians</a> (osc-freq gen)))
 			   gen))
       (freq 0.0) (phase 0.0))
 </pre>

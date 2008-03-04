@@ -163,6 +163,7 @@ int mus_file_buffer_size(void) {return(clm_file_buffer_size);}
 
 int mus_set_file_buffer_size(int size) 
 {
+  /* this is set in with-sound, among other places */
   int prev; 
   prev = clm_file_buffer_size; 
   clm_file_buffer_size = size; 
@@ -7377,7 +7378,7 @@ static int free_sample_to_file(mus_any *p)
 static int sample_to_file_channels(mus_any *ptr) {return((int)(((rdout *)ptr)->chans));}
 
 static off_t bufferlen(mus_any *ptr) {return(clm_file_buffer_size);}
-static off_t set_bufferlen(mus_any *ptr, off_t len) {clm_file_buffer_size = (int)len; return(len);}
+static off_t set_bufferlen(mus_any *ptr, off_t len) {clm_file_buffer_size = (int)len; return(len);} /* TODO: this looks like a disaster */
 static char *sample_to_file_file_name(mus_any *ptr) {return(((rdout *)ptr)->file_name);}
 
 static Float sample_file(mus_any *ptr, off_t samp, int chan, Float val);
@@ -11338,7 +11339,7 @@ void init_mus_module(void)
  *   removed mus-cosines
  *   mus-run-with-fm-and-pm
  *   mus_set_name
- *   *output* (last arg to out*) can be a function
+ *   last arg to out-any (*output*) and last arg to in-any can be a function
  *
  *   (9.7)
  *   :dur and :end -> :length in make-env
