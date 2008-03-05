@@ -26,7 +26,7 @@
 	 (len (seconds->samples dur))
 	 (end (+ beg len))
 	 (ampf (make-env :envelope ampenv :scaler amplitude :duration dur))
-	 (loc (make-locsig degree dist reverb  *output* *reverb* (mus-channels *output*)))
+	 (loc (make-locsig degree dist reverb))
 	 (vinut      (make-vct bufsize)) 
 	 (vinbridge  (make-vct bufsize))
 	 (vinutt     (make-vct bufsize))

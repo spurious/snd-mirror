@@ -5190,9 +5190,13 @@ declare the argument types (they default to int, so the input case doesn't need 
 
 <pre>
  <a class=def name="make-locsig">make-locsig</a> <a class=quiet href="#optional-key">:optional-key</a> 
-        (degree 0.0) (distance 1.0) (reverb 0.0) 
-        (channels 1) output revout 
-        (type mus-interp-linear)
+        (degree 0.0)
+        (distance 1.0) 
+	(reverb 0.0)       ; reverb amount
+        (output *output*)  ; output generator or location
+	(revout *reverb*)  ; reverb output generator or location
+        (channels (mus-channels output))
+	(type mus-interp-linear)
  <a class=def name="locsig">locsig</a> loc i in-sig
  <a class=def name="locsig?">locsig?</a> loc
 
@@ -5248,7 +5252,7 @@ To have full output to both channels,</p>
 		     (degree-env '(0 45 50 0 100 90)) (reverb-amount .05))
   (let* ((beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> onset))
 	 (end (+ beg (<a class=quiet href="#secondstosamples">seconds-&gt;samples</a> duration)))
-         (loc (<em class=red>make-locsig</em> :degree 0 :distance 1 :reverb reverb-amount :output *output* :revout *reverb*))
+         (loc (<em class=red>make-locsig</em> :degree 0 :distance 1 :reverb reverb-amount))
          (rdA (<a class=quiet href="#make-readin">make-readin</a> :file file))
          (dist-env (<a class=quiet href="#make-env">make-env</a> distance-env :duration duration))
          (amp-env (<a class=quiet href="#make-env">make-env</a> amplitude-env :duration duration))
@@ -5279,11 +5283,11 @@ source, see either move-locsig, or Fernando Lopez Lezcano's <a class=def href="h
 Here is an example of move-locsig:
 </p>
 
-<table border=0><tr><td>
-<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
+<table border=0 cellspacing=15><tr><td>
+<table border=0 bgcolor="#fafafa"><tr><td>
 <pre>
 (<a class=quiet href="sndscm.html#wsdoc">with-sound</a> (:channels 4)
-  (let ((loc (<em class=red>make-locsig</em> :channels 4 :output *output*))
+  (let ((loc (<em class=red>make-locsig</em>))
 	(osc (<a class=quiet href="#make-oscil">make-oscil</a> 440.0))
 	(j 0))
     (<a class=quiet href="extsnd.html#run">run</a>  ; 360 notes one at each degree in a circle
@@ -5300,8 +5304,16 @@ Here is an example of move-locsig:
 </td></tr></table>
 
 </td><td>
-<img src="circle.png" alt="move-locsig example" hspace=20>
-</td></tr></table>
+<img src="circle.png" alt="move-locsig example">
+<br><center>linear interp</center>
+</td>
+
+</td><td>
+<img src="locsine.png" alt="move-locsig example">
+<br><center>sinusoidal interp</center>
+</td>
+
+</tr></table>
 
 <br><br>
 
@@ -5314,7 +5326,7 @@ Here is an example of move-locsig:
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>move-sound</h3></center></td></tr></table>
 
 <pre>
- <a class=def name="make-move-sound">make-move-sound</a> dlocs-list output revout
+ <a class=def name="make-move-sound">make-move-sound</a> dlocs-list (output *output*) (revout *reverb*)
  <a class=def name="move-sound">move-sound</a> dloc i in-sig
  <a class=def name="move-sound?">move-sound?</a> dloc
 </pre>
@@ -5357,8 +5369,7 @@ dlocsig macro.  All the necessary data is packaged up in a list:
 					     (<a class=quiet href="#make-env">make-env</a> '(0 0 1 0 2 0 3 1 4 0) :duration dur)
 					     (<a class=quiet href="#make-env">make-env</a> '(0 0 1 0 2 0 3 0 4 1) :duration dur))
 				     #f
-				     (vector 0 1 2 3))
-			      )))
+				     (vector 0 1 2 3)))))
     (<a class=quiet href="extsnd.html#run">run</a>
      (lambda ()
        (do ((i start (1+ i)))

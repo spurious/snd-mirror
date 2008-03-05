@@ -97,7 +97,7 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 	   (amp-noi (if (and (not (= 0.0 amp-noise-amount)) (not (= 0.0 amp-noise-freq)))
 			(make-rand-interp amp-noise-freq amp-noise-amount)
 			#f))
-	   (locs (make-locsig (or degree (random 90.0)) distance reverb-amount *output* *reverb* (mus-channels *output*)))
+	   (locs (make-locsig (or degree (random 90.0)) distance reverb-amount))
 	   (vib 0.0) 
 	   (modulation 0.0)
 	   (fuzz 0.0)

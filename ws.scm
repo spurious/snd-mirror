@@ -265,6 +265,7 @@ returning you to the true top-level."
 	(output-to-file (string? output))
 	(reverb-1 revfile)
 	(reverb-to-file (and reverb (string? revfile))))
+
     (dynamic-wind 
 
      (lambda () 
@@ -386,6 +387,7 @@ returning you to the true top-level."
 
 	 (if output-to-file
 	     (mus-close *output*))
+
 	 (let ((snd-output #f)
 	       (cur-sync #f))
 	   (if statistics

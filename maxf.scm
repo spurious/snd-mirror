@@ -125,8 +125,9 @@ the desired phase.
 	 (state-3 (make-array 0.0 13 3))
 	 (state-4 (make-array 0.0  4 3))
 	 (state-5 (make-array 0.0  2 3))
-	 (loc (make-locsig :degree degree :distance distance :channels (mus-channels *output*)
-			   :reverb reverb-amount :output *output* :revout *reverb*
+	 (loc (make-locsig :degree degree 
+			   :distance distance
+			   :reverb reverb-amount
 			   :type *locsig-type*)))
     (cond ((= numf 1)
 	   (snd-msg ";;;; State 0 (default): One filter~%")

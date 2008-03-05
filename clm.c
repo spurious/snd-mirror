@@ -7378,10 +7378,13 @@ static int free_sample_to_file(mus_any *p)
 static int sample_to_file_channels(mus_any *ptr) {return((int)(((rdout *)ptr)->chans));}
 
 static off_t bufferlen(mus_any *ptr) {return(clm_file_buffer_size);}
+
 static off_t set_bufferlen(mus_any *ptr, off_t len) {clm_file_buffer_size = (int)len; return(len);} /* TODO: this looks like a disaster */
+
 static char *sample_to_file_file_name(mus_any *ptr) {return(((rdout *)ptr)->file_name);}
 
 static Float sample_file(mus_any *ptr, off_t samp, int chan, Float val);
+
 static int sample_to_file_end(mus_any *ptr);
 
 static Float run_sample_to_file(mus_any *ptr, Float arg1, Float arg2) {mus_error(MUS_NO_RUN, "no run method for sample->file"); return(0.0);}
@@ -7876,8 +7879,9 @@ static int free_locsig(mus_any *p)
 
 
 static off_t locsig_length(mus_any *ptr) {return(((locs *)ptr)->chans);}
-static Float *locsig_data(mus_any *ptr) {return(((locs *)ptr)->outn);}
 static int locsig_channels(mus_any *ptr) {return(((locs *)ptr)->chans);}
+
+static Float *locsig_data(mus_any *ptr) {return(((locs *)ptr)->outn);}
 static Float *locsig_xcoeffs(mus_any *ptr) {return(((locs *)ptr)->revn);}
 
 mus_any *mus_locsig_outf(mus_any *ptr) {return((mus_any *)(((locs *)ptr)->outf));}  /* clm2xen.c */
@@ -11299,7 +11303,10 @@ void init_mus_module(void)
 /* clm4:
  *
  * generators:
- *   can the def-clm-struct method/make lists be used with built-in gens?  (yes, but not easily...)
+ *   can the def-clm-struct method/make lists be used with built-in gens?
+ *   for added (as opposed to redefined) methods:
+ *     (define (oscil-methods) (list (list 'mus-hop (lambda (g) 1.23))))
+ *   then catch error in clm2xen and check for *-methods list -- not too hard!
  *
  *   do something debonair about move-sound -- another mistake -- elastic-delay + vector arithmetic = dlocsig?
  *   elastic-delay (and inelastic) -> delay with run-time length, if len expands so quickly as to drop
@@ -11308,16 +11315,11 @@ void init_mus_module(void)
  *      if the vector from the object to the speaker projected onto the vector from the speaker to the user is positive
  *        then the object is in front of the speaker(?)
  *
- * generic funcs:
- *      mus-documentation [mus-describe shows current state -- if we had this, snd-help might be able to use it for generators.scm]
- *        (the info is in clm2xen, but the class slot is in clm and it would be nice if it worked from C)
- *
  * CL/CLM:
  *   make the in-lisp with-sound work again
  *   definstrument could write actual C functions (with normal args) rather than the packaged int/double-array form
  *     but optkey args and envelopes would need to be massaged into C-compatible shape
  *     and currently there's no limitation on the pre-run code -- I'd have to add optimizer support for everything
- *   can env-any be supported here?  (yes, but not easily...)
  *
  *
  * done:
@@ -11340,6 +11342,7 @@ void init_mus_module(void)
  *   mus-run-with-fm-and-pm
  *   mus_set_name
  *   last arg to out-any (*output*) and last arg to in-any can be a function
+ *   make-locsig defaults to *output* and *reverb* output locations (also make-move-sound)
  *
  *   (9.7)
  *   :dur and :end -> :length in make-env

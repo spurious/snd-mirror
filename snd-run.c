@@ -9983,7 +9983,7 @@ static xen_value *out_any_function_body(ptree *prog, XEN proc, xen_value **args,
 }
 
 
-/* here *output* is used by default */
+/* here if num_args == 2 *output* is used by default */
 static xen_value *outn_1(ptree *prog, int chan, xen_value **args, int num_args, xen_value *(*out_func)(ptree *prog, xen_value **args, int num_args))
 {
   if (num_args == 2)
@@ -9997,6 +9997,7 @@ static xen_value *outn_1(ptree *prog, int chan, xen_value **args, int num_args, 
       output = mus_clm_output();
 
       /* TODO: why add_*_to_ptree here (and out_any_1 below)? we're not creating these, and the protection is never cleared if *output* is a function referring to them */
+      /*   is it actually protecting? -- XEN_FALSE is not xen_p? -- more likely add_value_to_ptree */
 
       if (mus_xen_p(output))
 	true_args[3] = make_xen_value(R_CLM, add_clm_to_ptree(prog, XEN_TO_MUS_ANY(output), XEN_FALSE), R_VARIABLE);
@@ -10012,6 +10013,7 @@ static xen_value *outn_1(ptree *prog, int chan, xen_value **args, int num_args, 
 		{
 		  if (XEN_PROCEDURE_P(output))
 		    {
+		      /* TODO: write some cogent explanation of this mess... */
 		      xen_value *func_args[5];
 		      for (k = 0; k < 3; k++) func_args[k] = args[k];
 		      func_args[3] = make_xen_value(R_INT, add_int_to_ptree(prog, chan), R_VARIABLE);

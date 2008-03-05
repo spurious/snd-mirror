@@ -23,7 +23,7 @@
 ;;; two-pi -> (* 2 pi)
 ;;; make-empty-frame is make-frame essentially
 ;;; open-input and close-input -> make-readin or use name directly (in make-readin)
-;;; make-locsig needs :output *output* and similarly for *reverb* if it's active
+;;; make-locsig channel arg is in a different place
 ;;; progn -> begin, when -> if+begin (prog1 prog2), dotimes
 ;;; string= -> string=? (also string-equal)
 ;;; integerp -> integer? and others like it (null -> null?)
@@ -839,7 +839,7 @@
 (define (simple-loc beg dur freq amp)
   "(simple-loc beg dur freq amp) test instrument for locsig"
   (let* ((os (make-oscil freq))
-	 (loc (make-locsig :degree 0.0 :channels 1 :output *output*))
+	 (loc (make-locsig :degree 0.0))
 	 (start (seconds->samples beg))
 	 (end (+ start (seconds->samples dur))))
     (run
@@ -855,8 +855,7 @@
 	 (loc (make-move-sound (list start end 1 0
 				     (make-delay 32) (make-env '(0 0 1 1) :length 1000) (make-env '(0 0 1 1) :length 1000)
 				     (vector (make-delay 32)) (vector (make-env '(0 0 1 1) :length 1000)) 
-				     (vector (make-delay 32)) (vector 0 1))
-			      *output*)))
+				     (vector (make-delay 32)) (vector 0 1)))))
     (run
      (lambda ()
        (do ((i start (1+ i))) ((= i end))
@@ -877,8 +876,7 @@
 					     (make-env '(0 0 1 0 2 0 3 1 4 0) :duration dur)
 					     (make-env '(0 0 1 0 2 0 3 0 4 1) :duration dur))
 				     #f
-				     (vector 0 1 2 3))
-			      *output*)))
+				     (vector 0 1 2 3)))))
     (run
      (lambda ()
        (do ((i start (1+ i)))
@@ -2807,7 +2805,7 @@
 		     (degree-env '(0 45 50 0 100 90)) (reverb-amount .05))
   (let* ((beg (seconds->samples onset))
 	 (end (+ beg (seconds->samples duration)))
-         (loc (make-locsig :degree 0 :distance 1 :reverb reverb-amount :output *output* :revout *reverb*))
+         (loc (make-locsig :degree 0 :distance 1 :reverb reverb-amount))
          (rdA (make-readin :file file))
          (dist-env (make-env distance-env :duration duration))
          (amp-env (make-env amplitude-env :duration duration))
@@ -2843,8 +2841,7 @@
 					     (make-env '(0 0 1 0 2 0 3 1 4 0) :duration dur)
 					     (make-env '(0 0 1 0 2 0 3 0 4 1) :duration dur))
 				     #f
-				     (vector 0 1 2 3))
-			      *output*)))
+				     (vector 0 1 2 3)))))
     (run
      (lambda ()
        (do ((i start (1+ i)))
@@ -3209,7 +3206,7 @@
   (with-sound (:reverb jc-reverb :channels 2) 
 	      (sndclmdoc-space "pistol.snd" 0 3 :distance-env '(0 1 1 2) :degree-env '(0 0 1 90)))
   (with-sound (:channels 4)
-	      (let ((loc (make-locsig :channels 4 :output *output*))
+	      (let ((loc (make-locsig))
 		    (osc (make-oscil 440.0))
 		    (j 0))
 		(run  ; 360 notes one at each degree in a circle

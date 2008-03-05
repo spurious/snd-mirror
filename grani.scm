@@ -421,8 +421,6 @@
 	 ;; signal locator in the stereo image
 	 (loc (make-locsig :degree 45.0
 			   :distance 1.0
-			   :output *output*
-			   :revout *reverb*
 			   :channels out-chans))
 	 ;; variables used and initialized inside the run loop
 	 (in-samples 0)

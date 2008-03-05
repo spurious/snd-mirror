@@ -138,7 +138,7 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
 	 (even-freq 0.0)
 	 (odd-freq 0.0)
 	 (sum 0.0)
-	 (loc (make-locsig deg 1.0 pcrev *output* *reverb* (mus-channels *output*)))
+	 (loc (make-locsig deg 1.0 pcrev))
 	 (per-vib (make-triangle-wave :frequency 6 :amplitude (* freq vibscl)))
 	 (ran-vib (make-rand-interp :frequency 20 :amplitude (* freq .5 vibscl))))
     (do ((i 0 (1+ i)))
@@ -256,7 +256,7 @@ synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
 			   (reverb-amount 0.005))
   (let* ((beg (seconds->samples startime))
 	 (end (+ beg (seconds->samples dur)))
-	 (loc (make-locsig degree distance reverb-amount *output* *reverb* (mus-channels *output*)))
+	 (loc (make-locsig degree distance reverb-amount))
 	 (per-vib-f (make-env :envelope (stretch-envelope '(0 1  25 .1  75 0  100 0)
 							  25 (min (* 100 (/ vibatt dur)) 45)
 							  75 (max (* 100 (- 1.0 (/ vibdec dur))) 55))
@@ -568,7 +568,7 @@ is a physical model of a flute:
 		               (reverb-amount 0.005))
   (let* ((beg (seconds->samples startime))
 	 (end (+ beg (seconds->samples dur)))
-	 (loc (make-locsig degree distance reverb-amount *output* *reverb* (mus-channels *output*)))
+	 (loc (make-locsig degree distance reverb-amount))
 	 (carrier (make-oscil :frequency frequency))
 	 (fm1-osc (make-oscil :frequency mod-freq))
 	 (fm2-osc (make-oscil :frequency (* fm-ratio frequency)))
@@ -636,7 +636,7 @@ is a physical model of a flute:
 					   90 (max (+ atdrpt 1) 
 						   (- 100 (* 100 (/ (- duration .05) duration)))))
 			 :scaler (min pi (hz->radians 7000)) :duration duration))
-	 (loc (make-locsig degree distance reverb-amount *output* *reverb* (mus-channels *output*)))
+	 (loc (make-locsig degree distance reverb-amount))
 	 (rn (make-rand :frequency 7000 :amplitude 1.0))
 	 (carrier (make-oscil :frequency frequency))
 	 (fmosc (make-oscil :frequency (* frequency fmrat)))
@@ -692,7 +692,7 @@ is a physical model of a flute:
 			     :scaler (- indx12 indx02) :offset indx02))
 	 (indxfun3 (make-env :envelope rise :duration duration
 			     :scaler (- indx13 indx03) :offset indx03))
-	 (loc (make-locsig degree distance reverb-amount *output* *reverb* (mus-channels *output*)))
+	 (loc (make-locsig degree distance reverb-amount))
 	 (carrier (make-oscil :frequency frequency))
 	 (mod1 (make-oscil :frequency mfq1))
 	 (mod2 (make-oscil :frequency mfq2))
@@ -756,7 +756,7 @@ is a physical model of a flute:
 	 (cos-coeffs (partials->polynomial normalized-partials mus-chebyshev-first-kind))
 	 (amp-env (make-env :envelope ampfun :scaler amplitude :duration dur))
 	 (ind-env (make-env :envelope indexfun :duration dur))
-	 (loc (make-locsig degree distance reverb-amount *output* *reverb* (mus-channels *output*)))
+	 (loc (make-locsig degree distance reverb-amount))
 	 (r (/ carrier-freq spacing-freq))
 	 (tr (make-triangle-wave :frequency 5 :amplitude (hz->radians (* .005 spacing-freq))))
 	 (rn (make-rand-interp :frequency 12 :amplitude (hz->radians (* .005 spacing-freq))))
@@ -927,7 +927,7 @@ is a physical model of a flute:
 			    :scaler amplitude :duration dur))
 	 (ran-vib (make-rand :frequency rvibfreq 
 			     :amplitude (* rvibamt freq)))
-	 (loc (make-locsig deg dis amtrev *output* *reverb* (mus-channels *output*))))
+	 (loc (make-locsig deg dis amtrev)))
     (ws-interrupt?)
     (run 
      (lambda ()
@@ -980,7 +980,7 @@ is a physical model of a flute:
 	 (gen3 (make-oscil :frequency (* pitch harm3)))
 	 (gen4 (make-oscil :frequency (* pitch harm4)))
 	 (ranvib (make-rand :frequency ranfreq :amplitude (hz->radians (* ranpc pitch))))
-	 (loc (make-locsig deg dis pcrev *output* *reverb* (mus-channels *output*))))
+	 (loc (make-locsig deg dis pcrev)))
     (ws-interrupt?)
     (run
      (lambda ()
@@ -1078,7 +1078,7 @@ is a physical model of a flute:
 	 (frqf (make-env :envelope (stretch-envelope skewfun 25 (* 100 (/ skewat dur)) 75 (- 100 (* 100 (/ skewdc dur))))
 			 :scaler (hz->radians (* pcskew pitch)) :duration dur))
 	 (totalamp 0.0)
-	 (loc (make-locsig degree distance reverb-amount *output* *reverb* (mus-channels *output*)))
+	 (loc (make-locsig degree distance reverb-amount))
 	 (pervib (make-triangle-wave :frequency vibfreq
 				     :amplitude (hz->radians (* vibpc pitch))))
 	 (ranvib (make-rand-interp :frequency ranvibfreq
@@ -1140,7 +1140,7 @@ is a physical model of a flute:
   (let* ((st (seconds->samples beg))
 	 (nd (+ st (seconds->samples dur)))
 	 (pit1 (if (zero? pitch1) pitch0 pitch1))
-	 (loc (make-locsig deg dis pcrev *output* *reverb* (mus-channels *output*)))
+	 (loc (make-locsig deg dis pcrev))
 	 (car (make-oscil :frequency pitch0))
 	 (low (make-one-zero .5 -.5))
 	 (fm 0.0)
@@ -1277,7 +1277,7 @@ is a physical model of a flute:
 	 (amp-env (make-env :envelope amp-envelope :scaler amplitude :duration duration))
 	 (per-vib (make-triangle-wave :frequency vibrato-speed
 				      :amplitude (* vibrato-amplitude freq)))
-	 (loc (make-locsig degree distance reverb-amount *output* *reverb* (mus-channels *output*)))
+	 (loc (make-locsig degree distance reverb-amount))
 	 (ran-vib (make-rand-interp :frequency (+ vibrato-speed 1.0)
 				    :amplitude (* vibrato-amplitude freq))))
     (ws-interrupt?)
@@ -1316,7 +1316,7 @@ is a physical model of a flute:
 	 (s-2 (make-table-lookup :frequency frequency :wave waveform-2))
 	 (amp-env (make-env :envelope amp-envelope :scaler amplitude :duration duration))
 	 (interp-env (make-env :envelope interp-func :duration duration))
-	 (loc (make-locsig degree distance reverb-amount *output* *reverb* (mus-channels *output*)))
+	 (loc (make-locsig degree distance reverb-amount))
 	 (per-vib (make-triangle-wave :frequency vibrato-speed
 				      :amplitude (* vibrato-amplitude freq)))
 	 (ran-vib (make-rand-interp :frequency (+ vibrato-speed 1.0)
@@ -1788,7 +1788,7 @@ is a physical model of a flute:
 	   (siz (inexact->exact (floor (/ (length partials) 2))))
 	   (oscils (make-vector siz))
 	   (alist (make-vct siz))
-	   (locs (make-locsig degree distance reverb-amount *output* *reverb* (mus-channels *output*)))
+	   (locs (make-locsig degree distance reverb-amount))
 	   (ampfun1 (make-piano-ampfun env1dur))
 	   (ampenv1 (make-env :envelope ampfun1
 			      :scaler  amplitude
@@ -1852,7 +1852,7 @@ is a physical model of a flute:
 	 (f2 (make-two-pole :radius r2 :frequency frq2))
 	 (f3 (make-two-pole :radius r3 :frequency frq3))
 	 (with-noise (= driver 1))
-	 (loc (make-locsig degree distance reverb-amount *output* *reverb* (mus-channels *output*)))
+	 (loc (make-locsig degree distance reverb-amount))
 	 (frqf (if (not with-noise)
 		   (make-env :envelope freqcosfun  :duration dur
 			      :scaler (hz->radians (- cosfreq1 cosfreq0)))

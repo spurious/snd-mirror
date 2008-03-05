@@ -7750,8 +7750,11 @@ int mus_audio_mixer_write(int dev1, int field, int chan, float *val)
   return(MUS_NO_ERROR);
 }
 
+
 int mus_audio_initialize(void) {return(MUS_NO_ERROR);}
+
 int mus_audio_systems(void) {return(1);}
+
 char *mus_audio_system_name(int system) {return("Mac OSX");}
 
 char *mus_audio_moniker(void) {return("Mac OSX audio");}

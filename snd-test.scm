@@ -22628,7 +22628,7 @@ EDITS: 2
 		  (do ((i 0 (1+ i)))
 		      ((= i 10))
 		    (outa i (* i .1) (lambda (loc val chan)
-				       (vct-set! outv i val)))))
+				       (vct-set! outv loc val)))))
       (if (not (vequal outv (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900)))
 	  (snd-display ";outa func vct: ~A" outv)))
     

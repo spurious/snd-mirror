@@ -2,16 +2,10 @@
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 
 
-;;; TODO: make and runtime function help strings -- could this use mus-documentation or some such method?
-;;;   (set-procedure-property! make-nxycos 'documentation "this is a test")
-;;;   (procedure-property make-nxycos 'documentation) -> "this is a test"
-;;;   so presumably the make-* funcs could have a :documentation slot in defgenerator 
-;;;   or would it be better to include field accessor docs and so on?
-
-
 ;;; these try to mimic existing gens (mainly oscil), so "frequency" is placed first.
 ;;;   Where a factor is involved, I'll use "r".
 ;;;   Where the number of terms in the sum is settable, I'll use "n".
+;;;   if you actually want to set the initial-phase, it is usually "angle" just after the documented arguments
 
 
 (define nearly-zero 1.0e-12) ; 1.0e-14 in clm.c, but that is trouble here (noddcos)
@@ -299,9 +293,12 @@
 	       :make-wrapper (lambda (g)
 			       (set! (nssb-frequency g) (hz->radians (nssb-frequency g)))
 			       g))
-  (frequency 0.0) (ratio 1.0) (n 1 :type int) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (n 1 :type int) (angle 0.0))
 
 (define (nssb gen fm)
+  "  (make-nssb frequency (ratio 1.0) (n 1)) creates an nssb generator, similar to nxysin.\n\
+   (nssb gen fm) returns n sinusoids from frequency spaced by frequency * ratio."
+
   (declare (gen nssb) (fm float))
   (let* ((n (nssb-n gen))
 	 (cx (nssb-angle gen))
@@ -350,9 +347,12 @@
 	       :make-wrapper (lambda (g)
 			       (set! (nxysin-frequency g) (hz->radians (nxysin-frequency g)))
 			       g))
-  (frequency 0.0) (ratio 1.0) (n 1 :type int) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (n 1 :type int) (angle 0.0))
 
 (define (nxysin gen fm)
+  "  (make-nxysin frequency (ratio 1.0) (n 1)) creates an nxysin generator.\n\
+   (nxysin gen fm) returns n sines from frequency spaced by frequency * ratio."
+
   (declare (gen nxysin) (fm float))
   (let* ((x (nxysin-angle gen))
 	 (y (* x (nxysin-ratio gen)))
@@ -383,9 +383,11 @@
 	       :make-wrapper (lambda (g)
 			       (set! (nxycos-frequency g) (hz->radians (nxycos-frequency g)))
 			       g))
-  (frequency 0.0) (ratio 1.0) (n 1 :type int) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (n 1 :type int) (angle 0.0))
 
 (define (nxycos gen fm)
+  "  (make-nxycos frequency (ratio 1.0) (n 1)) creates an nxycos generator.\n\
+   (nxycos gen fm) returns n cosines from frequency spaced by frequency * ratio."
   (declare (gen nxycos) (fm float))
   (let* ((x (nxycos-angle gen))
 	 (y (* x (nxycos-ratio gen)))
@@ -417,11 +419,14 @@
 ;;;
 ;;; G&R 1st col rows 3 4
 
+;;; TODO: add the rest of the help strings
+
+
 (defgenerator (nxy1cos
 	       :make-wrapper (lambda (g)
 			       (set! (nxy1cos-frequency g) (hz->radians (nxy1cos-frequency g)))
 			       g))
-  (frequency 0.0) (ratio 0.0) (n 1 :type int) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 0.0) (n 1 :type int) (angle 0.0))
 
 (define (nxy1cos gen fm)
   (declare (gen nxy1cos) (fm float))
@@ -468,7 +473,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (nxy1sin-frequency g) (hz->radians (nxy1sin-frequency g)))
 			       g))
-  (frequency 0.0) (ratio 0.0) (n 1 :type int) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 0.0) (n 1 :type int) (angle 0.0))
 
 (define (nxy1sin gen fm)
   (declare (gen nxy1sin) (fm float))
@@ -566,7 +571,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (noddcos-frequency g) (hz->radians (noddcos-frequency g)))
 			       g))
-  (frequency 0.0) (n 1 :type int) (angle 0.0))
+  (frequency *clm-default-frequency*) (n 1 :type int) (angle 0.0))
 
 (define (noddcos gen fm)
   (declare (gen noddcos) (fm float))
@@ -601,7 +606,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (noddssb-frequency g) (hz->radians (noddssb-frequency g)))
 			       g))
-  (frequency 0.0) (ratio 1.0) (n 1 :type int) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (n 1 :type int) (angle 0.0))
 
 (define (noddssb gen fm)
   (declare (gen noddssb) (fm float))
@@ -649,7 +654,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (ncos2-frequency g) (hz->radians (ncos2-frequency g)))
 			       g))
-  (frequency 0.0) (n 1 :type int) (angle 0.0))
+  (frequency *clm-default-frequency*) (n 1 :type int) (angle 0.0))
 
 (define (ncos2 gen fm)
   "(ncos2-pulse gen fm) produces a band-limited pulse train"
@@ -708,7 +713,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (npcos-frequency g) (hz->radians (npcos-frequency g)))
 			       g))
-  (frequency 0.0) (n 1 :type int) (angle 0.0))
+  (frequency *clm-default-frequency*) (n 1 :type int) (angle 0.0))
 
 (define (npcos gen fm)
   (declare (gen npcos) (fm float))
@@ -753,7 +758,7 @@
 			 (list 'mus-frequency
 			       (lambda (g) (mus-frequency (nrsin-gen g)))
 			       (lambda (g val) (set! (mus-frequency (nrsin-gen g)) val)))))
-  (frequency 0.0) (n 1 :type int) (r 0.0)
+  (frequency *clm-default-frequency*) (n 1 :type int) (r 0.0)
   (gen #f :type clm))
 
 (define (nrsin gen fm)
@@ -782,7 +787,7 @@
 			 (list 'mus-order
 			       (lambda (g) (1- (nrcos-n g)))
 			       (lambda (g val) (set! (nrcos-n g) (1+ val)) val))))
-  (frequency 0.0) (n 1 :type int) (r 0.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (n 1 :type int) (r 0.0) (angle 0.0))
 
 (define (nrcos gen fm)
   (declare (gen nrcos) (fm float))
@@ -874,7 +879,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (nrssb-frequency g) (hz->radians (nrssb-frequency g)))
 			       g))
-  (frequency 0.0) (ratio 1.0) (n 1 :type int) (r 0.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (n 1 :type int) (r 0.0) (angle 0.0))
 
 (define (nrssb gen fm)
   (declare (gen nrssb) (fm float))
@@ -1025,7 +1030,7 @@
 			 (list 'mus-order
 			       (lambda (g) (1- (nkssb-n g)))
 			       (lambda (g val) (set! (nkssb-n g) (1+ val)) val))))
-  (frequency 0.0) (ratio 1.0) (n 1 :type int) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (n 1 :type int) (angle 0.0))
 
 (define (nkssb gen fm)
   (declare (gen nkssb) (fm float))
@@ -1218,7 +1223,7 @@
 							     (/ (sin (/ (* k pi) (+ n 1))) 
 								(sin (/ pi (+ n 1)))))))
 				 g)))
-  (frequency 0.0) (n 1 :type int) 
+  (frequency *clm-default-frequency*) (n 1 :type int) 
   (angle 0.0) (n2 1.0) (cosn 1.0) (norm 0.0))
 
 (define (nsincos gen fm)
@@ -1255,7 +1260,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (npos1cos-frequency g) (hz->radians (npos1cos-frequency g)))
 			       g))
-  (frequency 0.0) (n 1 :type int) (angle 0.0))
+  (frequency *clm-default-frequency*) (n 1 :type int) (angle 0.0))
 
 (define (npos1cos gen fm)
   (declare (gen npos1cos) (fm float))
@@ -1289,7 +1294,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (npos3cos-frequency g) (hz->radians (npos3cos-frequency g)))
 			       g))
-  (frequency 0.0) (n 1 :type int) (angle 0.0))
+  (frequency *clm-default-frequency*) (n 1 :type int) (angle 0.0))
 
 (define (npos3cos gen fm)
   (declare (gen npos3cos) (fm float))
@@ -1335,7 +1340,7 @@
 			 (list 'mus-phase
 			       (lambda (g) (mus-phase (rcos-osc g)))
 			       (lambda (g val) (set! (mus-phase (rcos-osc g)) val) val))))
-  (frequency 0.0) (r 1.0)
+  (frequency *clm-default-frequency*) (r 1.0)
   (osc #f :type clm))
 
 (define (rcos gen fm)
@@ -1396,7 +1401,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (rssb-frequency g) (hz->radians (rssb-frequency g)))
 			       g))
-  (frequency 0.0) (ratio 1.0) (r 0.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.0) (angle 0.0))
 
 (define (rssb gen fm)
   (declare (gen rssb) (fm float))
@@ -1574,7 +1579,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (rxysin-frequency g) (hz->radians (rxysin-frequency g)))
 			       g))
-  (frequency 0.0) (ratio 1.0) (r 0.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.0) (angle 0.0))
 
 (define (rxysin gen fm)
   (declare (gen rxysin) (fm float))
@@ -1606,7 +1611,7 @@
 			       (set! (rxycos-frequency g) (hz->radians (rxycos-frequency g)))
 			       (if (>= (rxycos-r g) 1.0) (set! (rxycos-r g) 0.999999))
 			       g))
-  (frequency 0.0) (ratio 1.0) (r 0.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.0) (angle 0.0))
 
 (define (rxycos gen fm)
   (declare (gen rxycos) (fm float))
@@ -1641,7 +1646,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (rxyk!sin-frequency g) (hz->radians (rxyk!sin-frequency g)))
 			       g))
-  (frequency 0.0) (ratio 1.0) (r 0.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.0) (angle 0.0))
 
 (define (rxyk!sin gen fm)
   (declare (gen rxyk!sin) (fm float))
@@ -1669,7 +1674,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (rxyk!cos-frequency g) (hz->radians (rxyk!cos-frequency g)))
 			       g))
-  (frequency 0.0) (ratio 1.0) (r 0.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.0) (angle 0.0))
 
 (define (rxyk!cos gen fm)
   (declare (gen rxyk!cos) (fm float))
@@ -1764,7 +1769,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (erssb-frequency g) (hz->radians (erssb-frequency g)))
 			       g))
-  (frequency 0.0) (ratio 1.0) (r 0.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.0) (angle 0.0))
 
 (define (erssb gen fm)
   (declare (gen erssb) (fm float))
@@ -1807,7 +1812,7 @@
 			       (if (>= (* (r2sin-r g) (r2sin-r g)) 1.0)
 				   (set! (r2sin-r g) 0.9999999))
 			       g))
-  (frequency 0.0) (r 0.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (r 0.0) (angle 0.0))
 
 (define (r2sin gen fm)
   (declare (gen r2sin) (fm float))
@@ -1836,7 +1841,7 @@
 			       (if (>= (* (r2cos-r g) (r2sin-r g)) 1.0)
 				   (set! (r2cos-r g) 0.9999999))
 			       g))
-  (frequency 0.0) (r 0.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (r 0.0) (angle 0.0))
 
 (define (r2cos gen fm)
   (declare (gen r2cos) (fm float))
@@ -1865,7 +1870,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (r2ssb-frequency g) (hz->radians (r2ssb-frequency g)))
 			       g))
-  (frequency 0.0) (ratio 1.0) (r 1.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (r 1.0) (angle 0.0))
 
 (define (r2ssb gen fm)
   (declare (gen r2ssb) (fm float))
@@ -1926,7 +1931,7 @@
 			 (list 'mus-phase 
 			       (lambda (g) (mus-phase (eoddcos-osc g)))
 			       (lambda (g val) (set! (mus-phase (eoddcos-osc g)) val) val))))
-  (frequency 0.0) (r 1.0)
+  (frequency *clm-default-frequency*) (r 1.0)
   (osc #f :type clm))
 
 (define (eoddcos gen fm)
@@ -2012,7 +2017,7 @@
 			 (list 'mus-phase
 			       (lambda (g) (mus-phase (rkcos-osc g)))
 			       (lambda (g val) (set! (mus-phase (rkcos-osc g)) val) val))))
-  (frequency 0.0) (r 0.0)
+  (frequency *clm-default-frequency*) (r 0.0)
   (osc #f :type clm))
 
 ;;; not very flexible, and very similar to others in the r^k mold
@@ -2039,7 +2044,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (rksin-frequency g) (hz->radians (rksin-frequency g)))
 			       g))
-  (frequency 0.0) (r 1.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (r 1.0) (angle 0.0))
 
 ;;; normalization based on 0 of derivative of atan arg (for max) at cos x = r,
 ;;;   so we get a maxamp here of (atan (/ (* r (sin (acos r))) (- 1.0 (* r r))))
@@ -2070,7 +2075,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (rkssb-frequency g) (hz->radians (rkssb-frequency g)))
 			       g))
-  (frequency 0.0) (ratio 1.0) (r 1.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (r 1.0) (angle 0.0))
 
 (define (rkssb gen fm)
   (declare (gen rkssb) (fm float))
@@ -2114,7 +2119,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (rk!cos-frequency g) (hz->radians (rk!cos-frequency g)))
 			       g))
-  (frequency 0.0) (r 0.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (r 0.0) (angle 0.0))
 
 (define (rk!cos gen fm)
   (declare (gen rk!cos) (fm float))
@@ -2226,7 +2231,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (rk!ssb-frequency g) (hz->radians (rk!ssb-frequency g)))
 			       g))
-  (frequency 0.0) (ratio 1.0) (r 1.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (r 1.0) (angle 0.0))
 
 (define (rk!ssb gen fm)
   (declare (gen rk!ssb) (fm float))
@@ -2307,7 +2312,7 @@
 			 (list 'mus-phase
 			       (lambda (g) (mus-phase (r2k!cos-osc g)))
 			       (lambda (g val) (set! (mus-phase (r2k!cos-osc g)) val) val))))
-  (frequency 0.0) (r 0.0) (k 0.0)
+  (frequency *clm-default-frequency*) (r 0.0) (k 0.0)
   (osc #f :type clm))
 
 (define (r2k!cos gen fm)
@@ -2421,7 +2426,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (k2sin-frequency g) (hz->radians (k2sin-frequency g)))
 			       g))
-  (frequency 0.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (angle 0.0))
 
 (define (k2sin gen fm)
   (declare (gen k2sin) (fm float))
@@ -2449,7 +2454,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (k2cos-frequency g) (hz->radians (k2cos-frequency g)))
 			       g))
-  (frequency 0.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (angle 0.0))
 
 (define (k2cos gen fm)
   (declare (gen k2cos) (fm float))
@@ -2476,7 +2481,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (k2ssb-frequency g) (hz->radians (k2ssb-frequency g)))
 			       g))
-  (frequency 0.0) (ratio 1.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (angle 0.0))
 
 (define (k2ssb gen fm)
   (declare (gen k2ssb) (fm float))
@@ -2517,7 +2522,7 @@
 			 (list 'mus-frequency
 			       (lambda (g) (radians->hz (* 0.5 (dblsum-frequency g))))
 			       (lambda (g val) (set! (dblsum-frequency g) (hz->radians (* 2 val))) val))))
-  (frequency 0.0) (r 0.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (r 0.0) (angle 0.0))
 
 (define (dblsum gen fm)
   (declare (gen dblsum) (fm float))
@@ -2548,7 +2553,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (rkoddssb-frequency g) (hz->radians (rkoddssb-frequency g)))
 			       g))
-  (frequency 0.0) (ratio 1.0) (r 0.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.0) (angle 0.0))
 
 (define (rkoddssb gen fm)
   (declare (gen rkoddssb) (fm float))
@@ -2630,7 +2635,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (krksin-frequency g) (hz->radians (krksin-frequency g)))
 			       g))
-  (frequency 0.0) (r 0.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (r 0.0) (angle 0.0))
 
 (define (krksin gen fm)
   (declare (gen krksin) (fm float))
@@ -2692,7 +2697,7 @@
 			 (list 'mus-phase
 			       (lambda (g) (mus-phase (abssin-osc g)))
 			       (lambda (g val) (set! (mus-phase (abssin-osc g)) val) val))))
-  (frequency 0.0)
+  (frequency *clm-default-frequency*)
   (osc #f :type clm))
 
 (define (abssin gen fm)
@@ -2741,7 +2746,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (abcos-frequency g) (hz->radians (abcos-frequency g)))
 			       g))
-  (frequency 0.0) (a 0.0) (b 0.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (a 0.0) (b 0.0) (angle 0.0))
 
 (define (abcos gen fm)
   (declare (gen abcos) (fm float))
@@ -2775,7 +2780,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (absin-frequency g) (hz->radians (absin-frequency g)))
 			       g))
-  (frequency 0.0) (a 0.0) (b 0.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (a 0.0) (b 0.0) (angle 0.0))
 
 (define (absin gen fm)
   (declare (gen absin) (fm float))
@@ -2811,7 +2816,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (r2k2cos-frequency g) (hz->radians (r2k2cos-frequency g)))
 			       g))
-  (frequency 0.0) (r 1.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (r 1.0) (angle 0.0))
 
 (define (r2k2cos-norm a)
   ;; J 124
@@ -2865,7 +2870,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (blsaw-frequency g) (hz->radians (blsaw-frequency g)))
 			       g))
-  (frequency 0.0) (n 1 :type int) (r 0.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (n 1 :type int) (r 0.0) (angle 0.0))
 
 (define (blsaw gen fm)
   "blsaw produces a band-limited sawtooth"
@@ -2909,7 +2914,7 @@
 	       :make-wrapper (lambda (gen)
 			       (set! (asyfm-frequency gen) (hz->radians (asyfm-frequency gen)))
 			       gen))
-  (frequency 0.0) (ratio 1.0) (r 1.0) (index 1.0) (phase 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (r 1.0) (index 1.0) (phase 0.0))
 
 (define (asyfm-J gen input)
   "(asyfm-J gen input) is the same as the CLM asymmetric-fm generator (index=1.0), set r != 1.0 to get the asymmetric spectra"
@@ -3011,7 +3016,7 @@
 				   ;; this formula comes from V P Krainov, "Selected Mathetical Methods in Theoretical Physics"
 				   (set! (bess-norm g) (vct-ref bessel-peaks (bess-n g))))
 			       g))
-  (frequency 0.0) (n 0 :type int) (angle 0.0) (norm 1.0))
+  (frequency *clm-default-frequency*) (n 0 :type int) (angle 0.0) (norm 1.0))
 
 (define (bess gen fm)
   (declare (gen bess) (fm float))
@@ -3067,7 +3072,7 @@
 	       :make-wrapper (lambda (g)
 			       (set! (jjcos-frequency g) (hz->radians (jjcos-frequency g)))
 			       g))
-  (frequency 0.0) (r 0.0) (a 0.0) (k 1 :type int) (angle 0.0))
+  (frequency *clm-default-frequency*) (r 0.0) (a 0.0) (k 1 :type int) (angle 0.0))
 
 (define (jjcos gen fm)
   (declare (gen jjcos) (fm float))
@@ -3208,7 +3213,7 @@ which again matches
 	       :make-wrapper (lambda (g)
 			       (set! (j0evencos-frequency g) (hz->radians (j0evencos-frequency g)))
 			       g))
-  (frequency 0.0) (index 1.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (index 1.0) (angle 0.0))
 
 (define (j0evencos gen fm)
   (declare (gen j0evencos) (fm float))
@@ -3318,7 +3323,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	       :make-wrapper (lambda (g)
 			       (set! (j2cos-frequency g) (hz->radians (j2cos-frequency g)))
 			       g))
-  (frequency 0.0) (r 0.0) (n 1 :type int) (angle 0.0))
+  (frequency *clm-default-frequency*) (r 0.0) (n 1 :type int) (angle 0.0))
 
 (define (j2cos gen fm)
   (declare (gen j2cos) (fm float))
@@ -3355,7 +3360,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	       :make-wrapper (lambda (g)
 			       (set! (jpcos-frequency g) (hz->radians (jpcos-frequency g)))
 			       g))
-  (frequency 0.0) (r 0.0) (a 0.0) (k 1 :type int) (angle 0.0))
+  (frequency *clm-default-frequency*) (r 0.0) (a 0.0) (k 1 :type int) (angle 0.0))
 
 (define (jpcos gen fm)
   (declare (gen jpcos) (fm float))
@@ -3398,7 +3403,7 @@ index 10 (so 10/2 is the bes-jn arg):
 (defgenerator (jncos :make-wrapper (lambda (g)
 				     (set! (jncos-frequency g) (hz->radians (jncos-frequency g)))
 				     g))
-  (frequency 0.0) (r 0.0) (a 1.0) (n 0 :type int) (angle 0.0))
+  (frequency *clm-default-frequency*) (r 0.0) (a 1.0) (n 0 :type int) (angle 0.0))
 
 (define (jncos gen fm)
   (declare (gen jncos) (fm float))
@@ -3435,7 +3440,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	       :make-wrapper (lambda (g)
 			       (set! (j0j1cos-frequency g) (hz->radians (j0j1cos-frequency g)))
 			       g))
-  (frequency 0.0) (index 1.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (index 1.0) (angle 0.0))
 
 (define (j0j1cos gen fm)
   (declare (gen j0j1cos) (fm float))
@@ -3526,7 +3531,7 @@ index 10 (so 10/2 is the bes-jn arg):
 				 (if (<= (+ (* a a) (* r r)) (* 2 a r))
 				     (format #t ";jycos a: ~A, r: ~A will cause bes-y0 to return -inf!" a r)))
 			       g))
-  (frequency 0.0) (r 1.0) (a 0.5) ; "b" and "c" in the docs
+  (frequency *clm-default-frequency*) (r 1.0) (a 0.5) ; "b" and "c" in the docs
   (angle 0.0))
 
 (define (jycos gen fm)
@@ -3576,7 +3581,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	       :make-wrapper (lambda (g)
 			       (set! (jcos-frequency g) (hz->radians (jcos-frequency g)))
 			       g))
-  (frequency 0.0) (n 0 :type int) (r 1.0) (a 0.5) ; "b" and "c" in the docs
+  (frequency *clm-default-frequency*) (n 0 :type int) (r 1.0) (a 0.5) ; "b" and "c" in the docs
   (angle 0.0))
 
 (define (jcos gen fm)
@@ -3609,7 +3614,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	       :make-wrapper (lambda (g)
 			       (set! (sin2n-frequency g) (hz->radians (sin2n-frequency g)))
 			       g))
-  (frequency 0.0) (n 1 :type int) (r 1.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (n 1 :type int) (r 1.0) (angle 0.0))
 
 (define (sin2n gen fm)
   (declare (gen sin2n) (fm float))
@@ -3686,7 +3691,7 @@ index 10 (so 10/2 is the bes-jn arg):
 			   (list 'mus-reset
 				 (lambda (g)
 				   (set! (blackman-angle g) 0.0)))))
-    (frequency 0.0) (n 4 :type int) (coeffs #f :type vct) (angle 0.0))
+    (frequency *clm-default-frequency*) (n 4 :type int) (coeffs #f :type vct) (angle 0.0))
 
 (define (blackman gen fm)
   (declare (gen blackman) (fm float))
@@ -3717,7 +3722,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	       :make-wrapper (lambda (g)
 			       (set! (fmssb-frequency g) (hz->radians (fmssb-frequency g)))
 			       g))
-  (frequency 0.0) (ratio 1.0) (index 1.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (ratio 1.0) (index 1.0) (angle 0.0))
 
 (define (fmssb gen fm)
   (declare (gen fmssb) (fm float))
@@ -3952,7 +3957,7 @@ index 10 (so 10/2 is the bes-jn arg):
 			       (lambda (g)
 				 (set! (k3sin-frequency g) 0.0)
 				 (set! (k3sin-angle g) 0.0)))))
-  (frequency 0.0) (angle 0.0) (coeffs #f :type vct))
+  (frequency *clm-default-frequency*) (angle 0.0) (coeffs #f :type vct))
 		   
 (define (k3sin gen fm)
   (declare (gen k3sin) (fm float))
@@ -3981,7 +3986,7 @@ index 10 (so 10/2 is the bes-jn arg):
 			       (set! (izcos-dc g) (bes-i0 (izcos-r g)))
 			       (set! (izcos-norm g) (- (exp (izcos-r g)) (izcos-dc g)))
 			       g))
-  (frequency 0.0) (r 1.0) (angle 0.0)
+  (frequency *clm-default-frequency*) (r 1.0) (angle 0.0)
   (dc 0.0) (norm 1.0))
 
 (define (izcos gen fm)
@@ -4113,7 +4118,7 @@ index 10 (so 10/2 is the bes-jn arg):
 			       (lambda (g) (mus-phase (adjustable-square-wave-p1 g)))
 			       (lambda (g val) (set! (mus-phase (adjustable-square-wave-p1 g)) val) val))))
 
-  (frequency 0.0) (duty-factor 0.5) (amplitude 1.0)
+  (frequency *clm-default-frequency*) (duty-factor 0.5) (amplitude 1.0)
   (sum 0.0) (p1 #f :type clm) (p2 #f :type clm))
 
 (define (adjustable-square-wave gen fm)
@@ -4153,7 +4158,7 @@ index 10 (so 10/2 is the bes-jn arg):
 			       (lambda (g) (mus-phase (adjustable-triangle-wave-gen g)))
 			       (lambda (g val) (set! (mus-phase (adjustable-triangle-wave-gen g)) val) val))))
 
-  (frequency 0.0) (duty-factor 0.5) (amplitude 1.0) 
+  (frequency *clm-default-frequency*) (duty-factor 0.5) (amplitude 1.0) 
   (gen #f :type clm) (top 0.0) (scl 0.0))
 
 (define (adjustable-triangle-wave gen fm)
@@ -4193,7 +4198,7 @@ index 10 (so 10/2 is the bes-jn arg):
 			       (lambda (g) (mus-phase (adjustable-sawtooth-wave-gen g)))
 			       (lambda (g val) (set! (mus-phase (adjustable-sawtooth-wave-gen g)) val) val))))
 
-  (frequency 0.0) (duty-factor 0.5) (amplitude 1.0) 
+  (frequency *clm-default-frequency*) (duty-factor 0.5) (amplitude 1.0) 
   (gen #f :type clm) (top 0.0) (scl 0.0))
 
 (define (adjustable-sawtooth-wave gen fm)
@@ -4233,7 +4238,7 @@ index 10 (so 10/2 is the bes-jn arg):
 			       (lambda (g) (mus-phase (adjustable-oscil-gen g)))
 			       (lambda (g val) (set! (mus-phase (adjustable-oscil-gen g)) val) val))))
 
-  (frequency 0.0) (duty-factor 0.5)
+  (frequency *clm-default-frequency*) (duty-factor 0.5)
   (gen #f :type clm) (top 0.0) (scl 0.0))
 
 (define (adjustable-oscil gen fm)
@@ -4292,7 +4297,7 @@ index 10 (so 10/2 is the bes-jn arg):
 			       (lambda (g) (mus-phase (round-interp-rnd g)))
 			       (lambda (g val) (set! (mus-phase (round-interp-rnd g)) val) val))))
 
-  (frequency 0.0) (n 1) (amplitude 1.0)
+  (frequency *clm-default-frequency*) (n 1) (amplitude 1.0)
   (rnd #f :type clm) (flt #f :type clm))
 
 (define (round-interp gen fm)

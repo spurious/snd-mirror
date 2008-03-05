@@ -49,8 +49,9 @@
 	 (end (+ beg (seconds->samples dur)))
 	 (carrier (make-oscil :frequency freq0))
 	 (modulator (make-rand :frequency rfreq0 :amplitude 1.0))
-	 (loc (make-locsig :degree degree :distance distance :channels (mus-channels *output*)
-			   :reverb reverb-amount :output *output* :revout *reverb*
+	 (loc (make-locsig :degree degree 
+			   :distance distance
+			   :reverb reverb-amount
 			   :type *locsig-type*))
 	 (dev-0 (hz->radians dev0))
 	 
