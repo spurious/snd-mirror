@@ -868,7 +868,7 @@ Reverb-feedback sets the scaler on the feedback.
 ;;; -------- select-file --------
 ;;;
 ;;; (select-file func :optional title dir filter help)
-;;;   starts a File Selection Dialog, runs func if a file is selected
+;;;   starts a File Chooser Dialog, runs func if a file is selected
 ;;;
 ;;; (add-to-menu 0 "Insert File" 
 ;;;   (lambda () 
@@ -881,6 +881,7 @@ Reverb-feedback sets the scaler on the feedback.
 
   (let ((file-selector-dialogs '()))
     ;; (list (list widget inuse func title help) ...)
+
     (define (find-free-dialog ds)
       (if (null? ds)
 	  #f
@@ -889,12 +890,14 @@ Reverb-feedback sets the scaler on the feedback.
 		(list-set! (car ds) 1 #t)
 		(caar ds))
 	      (find-free-dialog (cdr ds)))))
+
     (define (find-dialog-widget wid ds)
       (if (null? ds)
 	  #f
 	  (if (equal? wid (caar ds))
 	      (car ds)
 	      (find-dialog-widget wid (cdr ds)))))
+
     (lambda args
       ;; (file-select func title dir filter help)
       (let* ((func (if (> (length args) 0) (list-ref args 0) #f))
@@ -902,32 +905,19 @@ Reverb-feedback sets the scaler on the feedback.
 	     ;; (dir (if (> (length args) 2) (list-ref args 2) "."))
 	     ;; (filter (if (> (length args) 3) (list-ref args 3) "*"))
 	     (dialog (or (find-free-dialog file-selector-dialogs)
-		 	 (let ((new-dialog (gtk_file_selection_new title)))
-			   (g_signal_connect new-dialog "delete_event" 
-					     (lambda (w e d) 
-					       (let ((lst (find-dialog-widget new-dialog file-selector-dialogs)))
-						 (list-set! lst 1 #f)
-						 (gtk_widget_hide new-dialog)
-						 #t))
-					     #f)
-			   (g_signal_connect  (.ok_button (GTK_FILE_SELECTION new-dialog)) "clicked"
-					      (lambda (w d)
-						(let ((lst (find-dialog-widget new-dialog file-selector-dialogs)))
-						  ((list-ref lst 2) (gtk_file_selection_get_filename (GTK_FILE_SELECTION new-dialog)))
-						  (list-set! lst 1 #f)
-						  (gtk_widget_hide new-dialog)))
-					      #f)
-			   (g_signal_connect (.cancel_button (GTK_FILE_SELECTION new-dialog)) "clicked"
-					     (lambda (w d) 
-					       (let ((lst (find-dialog-widget new-dialog file-selector-dialogs)))
-						 (list-set! lst 1 #f)
-						 (gtk_widget_hide new-dialog)))
-					     #f)
-			   (set! file-selector-dialogs (cons (list new-dialog #t func title) file-selector-dialogs))
-			   new-dialog))))
-	(gtk_widget_show dialog)))))
+			 (GTK_FILE_CHOOSER_DIALOG (gtk_file_chooser_dialog_new
+						   title
+						   #f
+						   ;(GTK_WINDOW (cadr (main-widgets)))
+						   GTK_FILE_CHOOSER_ACTION_OPEN
+						   (list GTK_STOCK_CANCEL GTK_RESPONSE_REJECT
+							 GTK_STOCK_OK GTK_RESPONSE_ACCEPT))))))
+	(if (and (= GTK_RESPONSE_ACCEPT (gtk_dialog_run (GTK_DIALOG dialog)))
+		 func)
+	    (func (gtk_file_chooser_get_filename (GTK_FILE_CHOOSER dialog))))
+	(gtk_widget_hide (GTK_WIDGET dialog))))))
 
-; (select-file (lambda (n) (snd-print n)))
+;;(select-file (lambda (n) (snd-print n)))
 
 
 ;;; -------- with-level-meters, make-level-meter, display-level
