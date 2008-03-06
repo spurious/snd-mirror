@@ -902,7 +902,7 @@ Reverb-feedback sets the scaler on the feedback.
       ;; (file-select func title dir filter help)
       (let* ((func (if (> (length args) 0) (list-ref args 0) #f))
 	     (title (if (> (length args) 1) (list-ref args 1) "select file"))
-	     ;; (dir (if (> (length args) 2) (list-ref args 2) "."))
+	     (dir (if (> (length args) 2) (list-ref args 2) "."))
 	     ;; (filter (if (> (length args) 3) (list-ref args 3) "*"))
 	     (dialog (or (find-free-dialog file-selector-dialogs)
 			 (GTK_FILE_CHOOSER_DIALOG (gtk_file_chooser_dialog_new
@@ -911,7 +911,8 @@ Reverb-feedback sets the scaler on the feedback.
 						   ;(GTK_WINDOW (cadr (main-widgets)))
 						   GTK_FILE_CHOOSER_ACTION_OPEN
 						   (list GTK_STOCK_CANCEL GTK_RESPONSE_REJECT
-							 GTK_STOCK_OK GTK_RESPONSE_ACCEPT))))))
+							 GTK_STOCK_OK GTK_RESPONSE_ACCEPT))))))	
+	(gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER dialog) dir)
 	(if (and (= GTK_RESPONSE_ACCEPT (gtk_dialog_run (GTK_DIALOG dialog)))
 		 func)
 	    (func (gtk_file_chooser_get_filename (GTK_FILE_CHOOSER dialog))))
