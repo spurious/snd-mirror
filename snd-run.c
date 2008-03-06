@@ -9968,6 +9968,14 @@ static xen_value *out_any_function_body(ptree *prog, XEN proc, xen_value **args,
       xen_value *v;
       old_got_lambda = got_lambda;
       got_lambda = true;
+      /* normally when we're plugging in a separate function body the args are already
+       *   processed, and we're looking at the name at the start of that list, so we
+       *   can pass the current args and let lambda_form use them in lieu of the declare
+       *   list to get the arg types.  In this case we might be outside any such call,
+       *   (with-sound (:output (lambda ...))), or some of the args might be defaulted (outa),
+       *   so we first get the lambda form parsed insisting on a declare (hence the 0 num_args),
+       *   then pass in the actual args so that the funcall works.
+       */
       v = lambda_form(prog, func_form, true, args, 0, proc); /* must have "declare" here */
       got_lambda = old_got_lambda;
       if (v) 
@@ -10013,7 +10021,6 @@ static xen_value *outn_1(ptree *prog, int chan, xen_value **args, int num_args, 
 		{
 		  if (XEN_PROCEDURE_P(output))
 		    {
-		      /* TODO: write some cogent explanation of this mess... */
 		      xen_value *func_args[5];
 		      for (k = 0; k < 3; k++) func_args[k] = args[k];
 		      func_args[3] = make_xen_value(R_INT, add_int_to_ptree(prog, chan), R_VARIABLE);

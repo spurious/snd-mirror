@@ -22842,6 +22842,26 @@ EDITS: 2
 	  (snd-display ";run out-any 3 output to sound-data function: ~A" (sound-data->vct outv 3))))
     
     (for-each close-sound (sounds))
+
+    (let ((vals (with-sound (:output (make-vct 4410))
+			    (fm-violin 0 .1 440 .1))))
+      (if (fneq (vct-peak vals) .1)
+	  (snd-display ";locsig to vct fm-violin peak: ~A" (vct-peak vals))))
+    
+    (let ((vals (with-sound (:output (make-sound-data 2 4410))
+			    (fm-violin 0 .1 440 .1 :degree 30))))
+      (let ((mxs (sound-data-maxamp vals)))
+	(if (or (fneq (car mxs) 0.0666)
+		(fneq (cadr mxs) 0.0333))
+	    (snd-display ";locsig to sound-data fm-violin peak: ~A" mxs))))
+    
+    (let ((data (make-vct 4410)))
+      (with-sound (:output (lambda (loc val chan)
+			     (vct-set! data loc val)))
+		  (fm-violin 0 .1 440 .1))
+      (if (fneq (vct-peak data) .1)
+	  (snd-display ";locsig to func fm-violin peak: ~A" (vct-peak data))))
+
     
     (let ((gen (make-frame->file "fmv1.snd" 2 mus-bshort mus-next)))
       (print-and-check gen 

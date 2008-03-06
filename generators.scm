@@ -295,6 +295,7 @@
 			       g))
   (frequency *clm-default-frequency*) (ratio 1.0) (n 1 :type int) (angle 0.0))
 
+
 (define (nssb gen fm)
   "  (make-nssb frequency (ratio 1.0) (n 1)) creates an nssb generator, similar to nxysin.\n\
    (nssb gen fm) returns n sinusoids from frequency spaced by frequency * ratio."
@@ -349,6 +350,7 @@
 			       g))
   (frequency *clm-default-frequency*) (ratio 1.0) (n 1 :type int) (angle 0.0))
 
+
 (define (nxysin gen fm)
   "  (make-nxysin frequency (ratio 1.0) (n 1)) creates an nxysin generator.\n\
    (nxysin gen fm) returns n sines from frequency spaced by frequency * ratio."
@@ -385,9 +387,11 @@
 			       g))
   (frequency *clm-default-frequency*) (ratio 1.0) (n 1 :type int) (angle 0.0))
 
+
 (define (nxycos gen fm)
   "  (make-nxycos frequency (ratio 1.0) (n 1)) creates an nxycos generator.\n\
    (nxycos gen fm) returns n cosines from frequency spaced by frequency * ratio."
+
   (declare (gen nxycos) (fm float))
   (let* ((x (nxycos-angle gen))
 	 (y (* x (nxycos-ratio gen)))
@@ -419,16 +423,17 @@
 ;;;
 ;;; G&R 1st col rows 3 4
 
-;;; TODO: add the rest of the help strings
-
-
 (defgenerator (nxy1cos
 	       :make-wrapper (lambda (g)
 			       (set! (nxy1cos-frequency g) (hz->radians (nxy1cos-frequency g)))
 			       g))
   (frequency *clm-default-frequency*) (ratio 0.0) (n 1 :type int) (angle 0.0))
 
+
 (define (nxy1cos gen fm)
+  "  (make-nxy1cos frequency (ratio 0.0) (n 1)) creates an nxy1cos generator.\n\
+   (nxy1cos gen fm) returns 2n-1 cosines from frequency spaced by frequency * ratio with every other cosine multiplied by -1."
+
   (declare (gen nxy1cos) (fm float))
   (let* ((x (nxy1cos-angle gen))
 	 (y (* x (nxy1cos-ratio gen)))
@@ -475,7 +480,11 @@
 			       g))
   (frequency *clm-default-frequency*) (ratio 0.0) (n 1 :type int) (angle 0.0))
 
+
 (define (nxy1sin gen fm)
+  "  (make-nxy1sin frequency (ratio 0.0) (n 1)) creates an nxy1sin generator.\n\
+   (nxy1sin gen fm) returns 2n-1 sines from frequency spaced by frequency * ratio with every other sine multiplied by -1."
+
   (declare (gen nxy1sin) (fm float))
   (let* ((x (nxy1sin-angle gen))
 	 (y (* x (nxy1sin-ratio gen)))
@@ -517,9 +526,13 @@
 									     1.379))))
 							     (noddsin-n g))))
 			       g))
-  (frequency 440.0) (n 1 :type int) (angle 0.0) (norm 1.0))
+  (frequency *clm-default-frequency*) (n 1 :type int) (angle 0.0) (norm 1.0))
+
 
 (define (noddsin gen fm)
+  "  (make-noddsin frequency (n 1)) creates an noddsin generator.\n\
+   (noddsin gen fm) returns n odd-numbered sines spaced by frequency."
+
   (declare (gen noddsin) (fm float))
   (let* ((x (noddsin-angle gen))
 	 (n (noddsin-n gen))
@@ -573,7 +586,11 @@
 			       g))
   (frequency *clm-default-frequency*) (n 1 :type int) (angle 0.0))
 
+
 (define (noddcos gen fm)
+  "  (make-noddcos frequency (n 1)) creates an noddcos generator.\n\
+   (noddcos gen fm) returns n odd-numbered cosines spaced by frequency."
+
   (declare (gen noddcos) (fm float))
   (let* ((angle (noddcos-angle gen))
 	 (n (noddcos-n gen))
@@ -608,7 +625,11 @@
 			       g))
   (frequency *clm-default-frequency*) (ratio 1.0) (n 1 :type int) (angle 0.0))
 
+
 (define (noddssb gen fm)
+  "  (make-noddssb frequency (ratio 1.0) (n 1)) creates an noddssb generator.\n\
+   (noddssb gen fm) returns n sinusoids from frequency spaced by 2 * ratio * frequency."
+
   (declare (gen noddssb) (fm float))
   (let* ((cx (noddssb-angle gen))
 	 (mx (* cx (noddssb-ratio gen)))
@@ -647,7 +668,7 @@
 
 
 ;;; --------------------------------------------------------------------------------
-
+;;;
 ;;; various kernels: ncos2 = ncos squared (Fejer), ncos4 = ncos2 squared (Jackson), npcos = Poussin kernel
 
 (defgenerator (ncos2
@@ -656,8 +677,11 @@
 			       g))
   (frequency *clm-default-frequency*) (n 1 :type int) (angle 0.0))
 
+
 (define (ncos2 gen fm)
-  "(ncos2-pulse gen fm) produces a band-limited pulse train"
+  "  (make-ncos2 frequency (n 1)) creates an ncos2 (Fejer kernel) generator.\n\
+   (ncos2 gen fm) returns n sinusoids spaced by frequency scaled by (n-i)/(n+1)"
+
   (declare (gen ncos2) (fm float))
 
   ;; from "Trigonometric Series" Zygmund p88 with changes suggested by Katznelson "Introduction to Harmonic Analysis" p12, and
@@ -692,6 +716,9 @@
 (define make-ncos4 make-ncos2)
 
 (define (ncos4 gen fm)
+  "  (make-ncos4 frequency (n 1)) creates an ncos4 (Jackson kernel) generator.\n\
+   (ncos4 gen fm) returns n sinusoids spaced by frequency scaled by ((n-i)/(n+1))^2"
+
   ;; Katznelson p16
   (declare (gen ncos2) (fm float))
   (let ((val (ncos2 gen fm)))
@@ -715,7 +742,11 @@
 			       g))
   (frequency *clm-default-frequency*) (n 1 :type int) (angle 0.0))
 
+
 (define (npcos gen fm)
+  "  (make-npcos frequency (n 1)) creates an npcos (Poussin kernel) generator.\n\
+   (npcos gen fm) returns n*2+1 sinusoids spaced by frequency with amplitudes in a sort of tent shape."
+
   (declare (gen npcos) (fm float))
   (let* ((angle (npcos-angle gen))
 	 (den (sin (* 0.5 angle)))
@@ -747,7 +778,7 @@
 
 
 ;;; --------------------------------------------------------------------------------
-
+;;;
 ;;; n sinusoids scaled by r: nrsin, nrcos, nrssb
 
 (defgenerator (nrsin
@@ -761,7 +792,11 @@
   (frequency *clm-default-frequency*) (n 1 :type int) (r 0.0)
   (gen #f :type clm))
 
+
 (define (nrsin gen fm)
+  "  (make-nrsin frequency (n 1) (r 0.0)) creates an nrsin generator (similar to nrxysin or sine-summation).\n\
+   (nrsin gen fm) returns n sines spaced by frequency with amplitudes scaled by r^i."
+
   (declare (gen nrsin) (fm float))
   (nrxysin (nrsin-gen gen) fm))
 
@@ -789,7 +824,11 @@
 			       (lambda (g val) (set! (nrcos-n g) (1+ val)) val))))
   (frequency *clm-default-frequency*) (n 1 :type int) (r 0.0) (angle 0.0))
 
+
 (define (nrcos gen fm)
+  "  (make-nrcos frequency (n 1) (r 0.0)) creates an nrcos generator.\n\
+   (nrcos gen fm) returns n cosines spaced by frequency with amplitudes scaled by r^i."
+
   (declare (gen nrcos) (fm float))
   (let* ((x (nrcos-angle gen))
 	 (n (nrcos-n gen))
@@ -881,7 +920,11 @@
 			       g))
   (frequency *clm-default-frequency*) (ratio 1.0) (n 1 :type int) (r 0.0) (angle 0.0))
 
+
 (define (nrssb gen fm)
+  "  (make-nrssb frequency (ratio 1.0) (n 1) (r 0.0)) creates an nrssb generator.\n\
+   (nrssb gen fm) returns n sinusoids from frequency spaced by frequency * ratio with amplitudes scaled by r^i."
+
   (declare (gen nrssb) (fm float))
   (let* ((cx (nrssb-angle gen))
 	 (mx (* cx (nrssb-ratio gen)))
@@ -908,6 +951,10 @@
        den)))
 
 (define (nrssb-interp gen fm interp)
+  "  (make-nrssb frequency (ratio 1.0) (n 1) (r 0.0)) creates an nrssb generator for use with nrssb-interp.\n\
+   (nrssb-interp gen fm interp) returns n sinusoids from frequency spaced by frequency * ratio with amplitudes scaled by r^i.\
+  The 'interp' argument determines whether the sidebands are above (1.0) or below (-1.0) frequency."
+
   (declare (gen nrssb) (fm float))
   (let* ((cx (nrssb-angle gen))
 	 (mx (* cx (nrssb-ratio gen)))
@@ -1016,8 +1063,11 @@
 
 
 ;;; --------------------------------------------------------------------------------
-
+;;;
 ;;; n sinusoids scaled by k: nkssb
+
+;;; TODO: add the rest of the help strings, also vector make-* help -> *
+
 
 ;;; G&R 1st col ksinkx cases
 
@@ -1724,7 +1774,7 @@
 			       (lambda (g) (mus-phase (ercos-osc g)))
 			       (lambda (g val) (set! (mus-phase (ercos-osc g)) val) val))))
 
-  (frequency 440.0) (r 1.0 :type float)
+  (frequency *clm-default-frequency*) (r 1.0)
   (osc #f :type clm) scaler offset cosh-t)
 
 (define (ercos gen fm)

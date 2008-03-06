@@ -6050,7 +6050,6 @@ static XEN g_locsig_p(XEN obj)
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_locsig_p(XEN_TO_MUS_ANY(obj)))));
 }
 
-/* TODO: locsig and move-sound don't handle *output* as function in snd-run */
 
 enum {G_LOCSIG_DATA, G_LOCSIG_REVDATA, G_LOCSIG_OUT, G_LOCSIG_REVOUT};
 
@@ -6193,7 +6192,6 @@ static XEN g_set_locsig_type(XEN val)
   return(C_TO_XEN_INT((int)clm_locsig_type));
 }
 
-/* TODO: (363)test default locsig/move-sound and other output choices [run clm-test] */
 
 static XEN g_make_locsig(XEN arglist)
 {

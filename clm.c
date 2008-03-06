@@ -7379,7 +7379,7 @@ static int sample_to_file_channels(mus_any *ptr) {return((int)(((rdout *)ptr)->c
 
 static off_t bufferlen(mus_any *ptr) {return(clm_file_buffer_size);}
 
-static off_t set_bufferlen(mus_any *ptr, off_t len) {clm_file_buffer_size = (int)len; return(len);} /* TODO: this looks like a disaster */
+static off_t set_bufferlen(mus_any *ptr, off_t len) {clm_file_buffer_size = (int)len; return(len);} 
 
 static char *sample_to_file_file_name(mus_any *ptr) {return(((rdout *)ptr)->file_name);}
 

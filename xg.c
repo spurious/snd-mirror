@@ -222,10 +222,6 @@ static void define_xm_obj(void)
   static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
   static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}
 
-#define XM_TYPE_NO_P(Name, XType) \
-  static XEN C_TO_XEN_ ## Name (XType val) {return(WRAP_FOR_XEN(#Name, val));} \
-  static XType XEN_TO_C_ ## Name (XEN val) {return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
-
 #define XM_TYPE_NO_P_2(Name, XType) \
   static XEN C_TO_XEN_ ## Name (XType val) {return(WRAP_FOR_XEN(#Name, val));}
 
@@ -233,10 +229,6 @@ static void define_xm_obj(void)
   static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(XEN_FALSE);} \
   static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
   static bool XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));}
-
-#define XM_TYPE_PTR_NO_P(Name, XType) \
-  static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(XEN_FALSE);} \
-  static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
 
 #define XM_TYPE_PTR_1(Name, XType) \
   static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
@@ -596,7 +588,6 @@ XM_TYPE_PTR_1(GtkButtonBox_, GtkButtonBox*)
 XM_TYPE_PTR(GtkBindingSet_, GtkBindingSet*)
 #define XEN_TO_C_GtkPathType(Arg) (GtkPathType)(XEN_TO_C_INT(Arg))
 #define XEN_GtkPathType_P(Arg) XEN_INTEGER_P(Arg)
-#define C_TO_XEN_GtkPathPriorityType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkPathPriorityType(Arg) (GtkPathPriorityType)(XEN_TO_C_INT(Arg))
 #define XEN_GtkPathPriorityType_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR_1(GtkBin_, GtkBin*)
@@ -1084,7 +1075,6 @@ XM_TYPE_PTR_1(cairo_user_data_key_t_, cairo_user_data_key_t*)
 XM_TYPE_1(cairo_destroy_func_t, cairo_destroy_func_t)
 XM_TYPE_PTR(cairo_path_t_, cairo_path_t*)
 #define C_TO_XEN_cairo_surface_type_t(Arg) C_TO_XEN_INT(Arg)
-#define XEN_cairo_surface_type_t_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_cairo_format_t(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_cairo_format_t(Arg) (cairo_format_t)(XEN_TO_C_INT(Arg))
 #define XEN_cairo_format_t_P(Arg) XEN_INTEGER_P(Arg)
@@ -47902,7 +47892,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("27-Feb-08"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("05-Mar-08"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */
