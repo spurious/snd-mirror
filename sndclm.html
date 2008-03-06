@@ -5766,7 +5766,7 @@ This uses J0(index * cos(x)) + J1(index * cos(x)) to produce a full set of cosin
 
 
 <pre>
-  <A class=def NAME="make-nssb">make-nssb</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (ratio 0.0) (n 1)
+  <A class=def NAME="make-nssb">make-nssb</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (ratio 1.0) (n 1)
   <A class=def NAME="nssb">nssb</A> gen fm
   <A class=def NAME="nssb?">nssb?</A> gen
 </pre>
@@ -5818,19 +5818,19 @@ This uses J0(index * cos(x)) + J1(index * cos(x)) to produce a full set of cosin
 
 
 <pre>
-  <A class=def NAME="make-nxycos">make-nxycos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (ratio 0.0) (n 1)
+  <A class=def NAME="make-nxycos">make-nxycos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (ratio 1.0) (n 1)
   <A class=def NAME="nxycos">nxycos</A> gen fm
   <A class=def NAME="nxycos?">nxycos?</A> gen
 
-  <A class=def NAME="make-nxysin">make-nxysin</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (ratio 0.0) (n 1)
+  <A class=def NAME="make-nxysin">make-nxysin</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (ratio 1.0) (n 1)
   <A class=def NAME="nxysin">nxysin</A> gen fm
   <A class=def NAME="nxysin?">nxysin?</A> gen
 
-  <A class=def NAME="make-nxy1cos">make-nxy1cos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (ratio 0.0) (n 1)
+  <A class=def NAME="make-nxy1cos">make-nxy1cos</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (ratio 1.0) (n 1)
   <A class=def NAME="nxy1cos">nxy1cos</A> gen fm
   <A class=def NAME="nxy1cos?">nxy1cos?</A> gen
 
-  <A class=def NAME="make-nxy1sin">make-nxy1sin</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (ratio 0.0) (n 1)
+  <A class=def NAME="make-nxy1sin">make-nxy1sin</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (ratio 1.0) (n 1)
   <A class=def NAME="nxy1sin">nxy1sin</A> gen fm
   <A class=def NAME="nxy1sin?">nxy1sin?</A> gen
 </pre>
@@ -5850,7 +5850,7 @@ component is multiplied by -1, and "n" produces 2n-1 components.
   <A class=def NAME="noddsin">noddsin</A> gen fm
   <A class=def NAME="noddsin?">noddsin?</A> gen
 
-  <A class=def NAME="make-noddssb">make-noddssb</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (ratio 0.0) (n 1)
+  <A class=def NAME="make-noddssb">make-noddssb</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (ratio 1.0) (n 1)
   <A class=def NAME="noddssb">noddssb</A> gen fm
   <A class=def NAME="noddssb?">noddssb?</A> gen
 </pre>
@@ -5891,7 +5891,7 @@ component is multiplied by -1, and "n" produces 2n-1 components.
   <A class=def NAME="nrsin">nrsin</A> gen fm
   <A class=def NAME="nrsin?">nrsin?</A> gen
 
-  <A class=def NAME="make-nrssb">make-nrssb</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (ratio 0.0) (n 1) (r 0.0)
+  <A class=def NAME="make-nrssb">make-nrssb</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (ratio 1.0) (n 1) (r 0.0)
   <A class=def NAME="nrssb">nrssb</A> gen fm
   <A class=def NAME="nrssbinterp">nrssb-interp</A> gen fm interp
   <A class=def NAME="nrssb?">nrssb?</A> gen
@@ -5935,7 +5935,7 @@ In the nrssb-interp generator, the "interp" argument interpolates between the up
 
 
 <pre>
-  <A class=def NAME="make-nkssb">make-nkssb</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (ratio 0.0) (n 1)
+  <A class=def NAME="make-nkssb">make-nkssb</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (ratio 1.0) (n 1)
   <A class=def NAME="nkssb">nkssb</A> gen fm
   <A class=def NAME="nkssbinterp">nkssb-interp</A> gen fm interp
   <A class=def NAME="nkssb?">nkssb?</A> gen
@@ -5991,7 +5991,7 @@ under the name "discrete summation formula".
   <A class=def NAME="rcos">rcos</A> gen fm
   <A class=def NAME="rcos?">rcos?</A> gen
 
-  <A class=def NAME="make-rssb">make-rssb</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (ratio 0.0) (r 0.0)
+  <A class=def NAME="make-rssb">make-rssb</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (ratio 1.0) (r 0.0)
   <A class=def NAME="rssb">rssb</A> gen fm
   <A class=def NAME="rssbinterp">rssb-interp</A> gen fm interp
   <A class=def NAME="rssb?">rssb?</A> gen
@@ -6028,7 +6028,7 @@ The bump instrument uses rssb-interp: <code>bump beg dur freq amp f0 f1 f2</code
   <A class=def NAME="ercos">ercos</A> gen fm
   <A class=def NAME="ercos?">ercos?</A> gen
 
-  <A class=def NAME="make-erssb">make-erssb</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (ratio 0.0) (r 0.0)
+  <A class=def NAME="make-erssb">make-erssb</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (ratio 1.0) (r 0.0)
   <A class=def NAME="erssb">erssb</A> gen fm
   <A class=def NAME="erssb?">erssb?</A> gen
 </pre>
@@ -6088,7 +6088,7 @@ This generator's output is not normalized, and looks incorrect...
   <A class=def NAME="rksin">rksin</A> gen fm
   <A class=def NAME="rksin?">rksin?</A> gen
 
-  <A class=def NAME="make-rkssb">make-rkssb</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (ratio 0.0) (r 0.0)
+  <A class=def NAME="make-rkssb">make-rkssb</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (ratio 1.0) (r 0.0)
   <A class=def NAME="rkssb">rkssb</A> gen
   <A class=def NAME="rkssb?">rkssb?</A> gen
 </pre>
@@ -6103,7 +6103,7 @@ This generator's output is not normalized, and looks incorrect...
   <A class=def NAME="rk!cos">rk!cos</A> gen fm
   <A class=def NAME="rk!cos?">rk!cos?</A> gen
 
-  <A class=def NAME="make-rk!ssb">make-rk!ssb</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (ratio 0.0) (r 0.0)
+  <A class=def NAME="make-rk!ssb">make-rk!ssb</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (ratio 1.0) (r 0.0)
   <A class=def NAME="rk!ssb">rk!ssb</A> gen fm
   <A class=def NAME="rk!ssb?">rk!ssb?</A> gen
 
@@ -6198,7 +6198,7 @@ This generator's output is not normalized, and looks incorrect...
   <A class=def NAME="k2cos">k2cos</A> gen fm
   <A class=def NAME="k2cos?">k2cos?</A> gen
 
-  <A class=def NAME="make-k2ssb">make-k2ssb</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (ratio 0.0)
+  <A class=def NAME="make-k2ssb">make-k2ssb</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (ratio 1.0)
   <A class=def NAME="k2ssb">k2ssb</A> gen fm
   <A class=def NAME="k2ssb?">k2ssb?</A> gen
 </pre>
@@ -6209,7 +6209,7 @@ This generator's output is not normalized, and looks incorrect...
 
 
 <pre>
-  <A class=def NAME="make-rkoddssb">make-rkoddssb</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (ratio 0.0) (r 0.0)
+  <A class=def NAME="make-rkoddssb">make-rkoddssb</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (ratio 1.0) (r 0.0)
   <A class=def NAME="rkoddssb">rkoddssb</A> gen fm
   <A class=def NAME="rkoddssb?">rkoddssb?</A> gen
 </pre>
@@ -6305,7 +6305,7 @@ This generator's output is not normalized, and looks incorrect...
   <A class=def NAME="r2cos">r2cos</A> gen fm
   <A class=def NAME="r2cos?">r2cos?</A> gen
 
-  <A class=def NAME="make-r2ssb">make-r2ssb</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (ratio 0.0) (r 0.0)
+  <A class=def NAME="make-r2ssb">make-r2ssb</A> <a class=quiet href="#optional-key">:optional-key</a> (frequency 0.0) (ratio 1.0) (r 0.0)
   <A class=def NAME="r2ssb">r2ssb</A> gen
   <A class=def NAME="r2ssb?">r2ssb?</A> gen
 </pre>
