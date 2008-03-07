@@ -221,6 +221,8 @@ returning you to the true top-level."
      (define* (,name ,@targs)
        (if *clm-notehook*
 	   (*clm-notehook* (symbol->string ',name) ,@utargs))
+       (if (not (zero? (run-safety))) 
+	   (set! *ws-stack* (make-stack #t)))
        ((lambda () ; for inner defines, if any
 	  ,@body)))
      ,@(if *definstrument-hook*
@@ -326,6 +328,7 @@ returning you to the true top-level."
 	     (cycles 0)
 	     (revmax #f))
 	 (catch 'mus-error
+
 		(lambda ()
 		  (catch 'with-sound-interrupt
 			 thunk
@@ -362,10 +365,22 @@ returning you to the true top-level."
 				   (snd-print (format #f "with-sound interrupted: ~{~A~^ ~}" (cdr args)))
 				   (set! flush-reverb #t)))
 			     args))))
+
 		(lambda args
-		  ;; hit mus-error -- not usually continuable -- can we send a stack to the debugger here?
-		  (display (format #f "with-sound mus-error: ~{~A~^ ~}~%" (cdr args)))
-		  (snd-print (format #f "with-sound mus-error: ~{~A~^ ~}~%" (cdr args)))
+		  ;; hit mus-error, for example:
+		  ;;   (with-sound () (fm-violin 0 1 440 .1 :amp-env '(0 0 1 1 1 2 3 0)))
+
+		  ;; user might have listener closed, or no listener so...
+		  (display (format #f ";~%with-sound mus-error: ~{~A~^ ~}~%" (cdr args)))
+
+		  ;; now try to get something to listener, since there may be no stdout
+		  (snd-print (format #f ";~%with-sound mus-error: ~{~A~^ ~}~%" (cdr args)))
+
+		  ;; we want to be able to clean up and yet we want a stack trace...
+		  (ws-backtrace)
+		  ;; but for that to work right we need     
+		  ;;    (if (not (zero? (run-safety))) (set! *ws-stack* (make-stack #t)))
+		  ;; before the outer let in definstrument -- this seems to be ok -- I see only a slight slowdown
 		  (set! flush-reverb #t)))
 		  
 	 (if (and reverb 
@@ -969,6 +984,8 @@ finish-with-sound to complete the process."
      (def-optkey-fun (,name ,@targs)
        (if *clm-notehook*
 	   (*clm-notehook* (symbol->string ',name) ,@utargs))
+       (if (not (zero? (run-safety))) 
+	   (set! *ws-stack* (make-stack #t)))
        ((lambda () ; for inner defines, if any
 	  ,@body)))
      ,@(if *definstrument-hook*

@@ -142,9 +142,9 @@
     ;; This is for my personal computers settings. May not suite your setup.
     (begin
       (set! %load-path (cons "/home/kjetil/snd-run" %load-path))
-      (set! (temp-dir) "/lyd/local/tmp")
-      (set! (save-dir) "/lyd/local/tmp")
-      (primitive-eval '(define *eval-c-compiler* "gcc-4.1.2"))
+      ;;(set! (temp-dir) "/lyd/local/tmp")
+      ;;(set! (save-dir) "/lyd/local/tmp")
+      ;;(primitive-eval '(define *eval-c-compiler* "gcc-4.1.2"))
       (primitive-eval '(define *eval-c-CFLAGS* "-march=athlon-xp"))
       ))
     
@@ -2221,7 +2221,7 @@ Does not work.
 
 
 
-
+;;(c-display "GGGGGGGGGG1")
 
 
 ;;##############################################################

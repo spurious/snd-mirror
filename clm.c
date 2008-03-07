@@ -11343,6 +11343,7 @@ void init_mus_module(void)
  *   mus_set_name
  *   last arg to out-any (*output*) and last arg to in-any can be a function
  *   make-locsig defaults to *output* and *reverb* output locations (also make-move-sound)
+ *   CL/CLM: error in run tries to call lisp error
  *
  *   (9.7)
  *   :dur and :end -> :length in make-env

@@ -96,7 +96,7 @@
 */
 
 /* make-env needs vct args because '(...) and (list...) return #f (') or a parser complaint (list), so...
- *   SOMEDAY: add support for ' and list
+ *   SOMEDAY: add support for ' and list: vct_1 below?
  *   the other such cases are make-waveshape, make-polyshape, partials->*
  *   currently make-rand|-interp distribution arg (an env) can't be a vct
  */

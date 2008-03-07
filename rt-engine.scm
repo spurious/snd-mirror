@@ -55,11 +55,16 @@ http://www.notam02.no/arkiv/doc/snd-rt/
 
 (define rt-max-frame-size 4096)
 
-(if (not (defined? '*rt-num-input-ports*))
-    (primitive-eval '(define *rt-num-input-ports* 8)))
-
-(if (not (defined? '*rt-num-output-ports*))
-    (primitive-eval '(define *rt-num-output-ports* 8)))
+(if (not (defined? '*rt-num-input-ports*))    
+    (primitive-eval `(define *rt-num-input-ports* 
+		       ,(if (getenv "SNDLIB_NUM_JACK_CHANNELS")
+			    (max 1 (string->number (getenv "SNDLIB_NUM_JACK_CHANNELS")))
+			    8))))
+(if (not (defined? '*rt-num-output-ports*))    
+    (primitive-eval `(define *rt-num-output-ports*
+		       ,(if (getenv "SNDLIB_NUM_JACK_CHANNELS")
+			    (max 1 (string->number (getenv "SNDLIB_NUM_JACK_CHANNELS")))
+			    8))))
 
 (if (not (defined? '*rt-jackname-prefix*))
     (primitive-eval `(define *rt-jackname-prefix* "snd-rt")))
@@ -239,11 +244,13 @@ const char **jack_port_get_connections (const jack_port_t *port);
 const char **jack_port_get_all_connections (const jack_client_t *client,
 					    const jack_port_t *port);
 int  jack_port_tie (jack_port_t *src, jack_port_t *dst);
-
 int  jack_port_untie (jack_port_t *port);
-int jack_port_lock (jack_client_t *, jack_port_t *);
+"
 
-int jack_port_unlock (jack_client_t *, jack_port_t *);
+;;int jack_port_lock (jack_client_t *, jack_port_t *);
+;;int jack_port_unlock (jack_client_t *, jack_port_t *);
+
+"
 jack_nframes_t jack_port_get_latency (jack_port_t *port);
 jack_nframes_t jack_port_get_total_latency (jack_client_t *,
 					    jack_port_t *port);

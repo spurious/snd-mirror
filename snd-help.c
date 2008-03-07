@@ -512,6 +512,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+7-Mar:   rt-faust.scm and rt-DotEmacs (thanks to Kjetil).\n\
 5-Mar:   mus-name is settable.\n\
          *output* can be a function.\n\
 25-Feb:  defgenerator.\n\

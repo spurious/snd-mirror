@@ -1604,7 +1604,7 @@
 	(gtk_scale_set_digits (GTK_SCALE scale)
 			      (if use-log
 				  0
-				  (if (= scaler 1000) 3 (if (= scaler 100) 2 (if (= scaler 10) 1 0)))))
+				  (if (>= scaler 1000) 3 (if (>= scaler 100) 2 (if (>= scaler 10) 1 0)))))
 	(gtk_scale_set_draw_value (GTK_SCALE scale) (not use-log))
 	(gtk_widget_show scale)
 	
@@ -1613,11 +1613,12 @@
 	    (g_signal_connect_closure_by_id (GPOINTER adj)
 					    (g_signal_lookup "value_changed" (G_OBJECT_TYPE (GTK_OBJECT adj))) 0
 					    (g_cclosure_new (lambda (w d) 
-							  (func (.value (GTK_ADJUSTMENT adj)))
-							  (change-label label 
-									(format #f "~A: ~,2F" 
-										title 
-										(scale-log-label low (.value (GTK_ADJUSTMENT adj)) high))))
+							      (func (scale-linear->log low (.value (GTK_ADJUSTMENT adj)) high))
+							      (change-label label 
+									    (format #f "~A: ~,2F" 
+										    title 
+										    (scale-log-label low (.value (GTK_ADJUSTMENT adj)) high)))
+							      )
 							    #f #f)
 					    #f)
 	    (g_signal_connect_closure_by_id (GPOINTER adj)

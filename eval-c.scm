@@ -1612,7 +1612,7 @@ int fgetc (FILE
 
 ;;;;;;;;;;;;;;;;;; Cache
 
-(define eval-c-generation 2) ;;Cached code with different generation can not be used, and file is automatically deleted.
+(define eval-c-generation 5) ;;Cached code with different generation can not be used, and file is automatically deleted.
 
 (define eval-c-cache-dir (<-> (getenv "HOME") "/snd-eval-c-cache"))
 

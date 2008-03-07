@@ -1,5 +1,6 @@
 Snd change log
 
+ 7-Mar:      rt-faust.scm and rt-DotEmacs (thanks to Kjetil).
  25-Feb:     defgenerator.
  24-Feb:     envelopes can be in the form '((0 0) (100 1)).
  11-Feb:     the "stream" arg to outa and friends now defaults to *output*.

@@ -2885,6 +2885,10 @@ and run simple lisp[4] functions.
     (let ((ret (if (not (this->check var))
 		   (begin
 		     (c-display "rt-compiler/<rt-type>. Wrong type. \"" varname "\" with value \"" var "\" is not a" rt-type ".")
+		     (if (eq? '<mus_any-*> rt-type)
+			 (c-display "(this usually means that only a clm method is used on the variable, and\n"
+				    " therefore it was impossible to figure out its real type.\n"
+				    " [for example only (mus-location envelope), but no (env envelope).])\n"))
 		     (throw 'wrong-type))
 		   (if transformfunc
 		       (begin
@@ -3127,10 +3131,10 @@ and run simple lisp[4] functions.
 	      (let ((,min-args ,(- (length clean-args) (length optionals)))
 		    (,max-args ,(length args))
 		    ,@(map (lambda (varname)
-			     (list varname #f))
+			     (list varname '(quote rt-undefined)))
 			   clean-args)
 		    ,@(map (lambda (expvarname)
-			     (list expvarname #f))
+			     (list expvarname '(quote rt-undefined)))
 			   expand-args))
 		(define (set-key-args ,rest)
 		  (cond ((null? ,rest) #t)
@@ -3154,16 +3158,20 @@ and run simple lisp[4] functions.
 		    (begin
 		      (c-display "To many arguments for rt-macro \"" ',name "\". Expected at most" ,max-args ", found:" ,rest)
 		      (,return #f)))
-		
+
+		;;(c-display "rest" ,rest)
+		;;(c-display "ai" ,(list-ref clean-args 4) (list-ref ,rest 4))
+
 		,@(map (lambda (name n)
 			 `(set! ,name (list-ref ,rest ,n)))
 		       clean-args
 		       (iota (- (length clean-args) (length optionals))))
-		
+
 		(set-key-args (list-tail ,rest ,min-args))
+
 		
-		,@(map (lambda (optarg)
-			 `(if (not ,(cadr optarg))
+		,@(map (lambda (optarg)			 
+			 `(if (eq? 'rt-undefined ,(cadr optarg))
 			      (set! ,(cadr optarg) ,(caddr optarg))))
 		       optionals)
 
@@ -3171,7 +3179,26 @@ and run simple lisp[4] functions.
 			     `(,expvarname (rt-macroexpand ,(symbol-append 'expand/ expvarname))))
 			   expand-args)
 		  ,@body))))))))
-	    
+
+#!    
+(define-rt-macro (add . args)
+  `(+ ,@args))
+
+(rt-funcall (rt-compile (lambda (a b c)
+			  (add a b c)))
+	    2 3 4)
+=> 9
+
+(define-rt-macro (add a1 a2 (#:a3 3) (#:a4 4) (#:a5 5))  
+  `(+ ,a1 ,a2 ,a3 ,a4 ,a5))
+
+(rt-funcall (rt-compile (lambda ()
+			  (add 1 2 #:a4 9))))
+=> 20
+(rt-macroexpand '(add 1 2 :a4 9))
+(+ 1 2 3 9 5)
+!#
+
 
 (define-macro (rt-renamefunc rt-name c-name returntype . args)
   (rt-clear-cache!)
@@ -4659,9 +4686,28 @@ and run simple lisp[4] functions.
 								   arg))
 							     (list ,@(map cadr args2))))))))
 	      (primitive-eval `(define-rt-macro (,name . rest)
-				 (if (null? rest)
-				     `(,',name2 (extern (,(symbol-append 'make- ',name))))
-				     `(,',name2 ,@rest))))
+				 (let ((args '())
+				       (make-extern-anyway #f))
+				   (define constructor-args
+				     (let loop ((rest rest))
+				       (cond ((null? rest) '())
+					     ((keyword? (car rest))
+					      (if (eqv? :extern (car rest))
+						  (begin
+						    (set! make-extern-anyway #t)
+						    (loop (cdr rest)))
+						  `(,(car rest) ,(cadr rest)
+						    ,@(loop (cddr rest)))))
+					     (else
+					      (set! args rest)
+					      '()))))
+				   ;;(c-display "constr/args" constructor-args args)
+				   (if (or (null? rest)
+					   make-extern-anyway
+					   (not (null? constructor-args)))
+				       `(,',name2 (extern (,(symbol-append 'make- ',name) ,@constructor-args))
+						  ,@args)
+				       `(,',name2 ,@rest)))))
 
 	      (primitive-eval `(define-c-macro (,macroname osc . rest)
 				 `(,',c-func ,osc ,@rest)))
@@ -4758,7 +4804,13 @@ and run simple lisp[4] functions.
 	    ))
 
 
-
+;; Remember to remove this when snd-ls is up to date with snd.
+(define old-make-env make-env)
+(define (make-env . rest)
+  (if (pair? (car rest))
+      (apply old-make-env (cons (flatten (car rest))
+				(cdr rest)))
+      (apply old-make-env rest)))
 
 ;; mus-feedback	
 (define-rt-macro (mus-feedback ins)	
@@ -4778,11 +4830,6 @@ and run simple lisp[4] functions.
 (rt-renamefunc restart-env mus_restart_env <void> (<mus_env-*>))
 ;; env-interp
 (rt-renamefunc env-interp mus_env_interp <float> (<float> <mus_env-*>))
-
-;; Redefine env so that this can be done: (make-env '((0 0)(0.1 1)(0.9 1)(1 0)))
-(define old-make-env make-env)
-(define (make-env env . rest)
-  (apply old-make-env (cons (flatten env) rest)))
 
 	       
 ;; polynomial
@@ -4817,9 +4864,9 @@ and run simple lisp[4] functions.
 
 ;; hz->radians
 ;;;;;;;;;;;;;;
-;; Can't use this one, because mus-srate might differ.
-;;(rt-renamefunc hz->radians mus_hz_to_radians <float> (<float>))
-;; This one should be fine: (Should probably compute w_rate and put it somewhere though.)
+;; Can't use this one, because mus-srate might differ:
+;;  (rt-renamefunc hz->radians mus_hz_to_radians <float> (<float>))
+;; But this one should be fine: (Should probably compute w_rate and put it somewhere though.)
 (define-rt-macro (hz->radians hz)
   (if (number? hz)
       (* hz (/ (* pi 2) (-> *rt-engine* samplerate)))
@@ -6189,14 +6236,14 @@ old syntax: (not very nice)
 ;; SCM->ladspa converter
 (rt-ec-function <struct-mus_rt_readin-*> rt_scm_to_rt_ladspa
 		(lambda (,rt-globalvardecl (<SCM> name))
-	       (<SCM> ladspa (SCM_CAR (SCM_CDR name)))
-	       ,(if (rt-is-safety?)
-		    `(if (not (SCM_SMOB_PREDICATE rt_ladspa_tag ladspa))
-			 (begin
-			   (rt_error rt_globals (string "Variable is not an rt-ladspa object"))
-			   (return NULL))
-			 (return (cast <void-*> (SCM_SMOB_DATA ladspa))))
-		    `(return (cast <void-*> (SCM_SMOB_DATA ladspa))))))
+		  (<SCM> ladspa (SCM_CAR (SCM_CDR name)))
+		  ,(if (rt-is-safety?)
+		       `(if (not (SCM_SMOB_PREDICATE rt_ladspa_tag ladspa))
+			    (begin
+			      (rt_error rt_globals (string "Variable is not an rt-ladspa object"))
+			      (return NULL))
+			    (return (cast <void-*> (SCM_SMOB_DATA ladspa))))
+		       `(return (cast <void-*> (SCM_SMOB_DATA ladspa))))))
 (<rt-func> 'rt_scm_to_rt_ladspa '<ladspa> '(<SCM>) #:needs-rt-globals #t)
 
 
@@ -6242,6 +6289,18 @@ old syntax: (not very nice)
 (<rt-func> 'rt_ladspa_set '<void> '(<ladspa> <int> <float>))
 (define-rt-macro (ladspa-set! ladspa controlnum val)
   `(rt_ladspa_set ,ladspa ,controlnum ,val))
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;; Faust ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;(c-load-from-path rt-faust)
 
 
 
@@ -6886,11 +6945,20 @@ old syntax: (not very nice)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Extern variables
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (define rt-extern-variables '())
 (define (add-extern-variable name var)
   (push-back! (list name var) rt-extern-variables))
+(define (get-extern-variable name)
+  (cadr (assq name rt-extern-variables)))
+(define (rt-extern-defined? name)
+  (assq name rt-extern-variables))
 
 #!
 (add-extern-variable 'a (make-oscil))
@@ -6924,6 +6992,153 @@ old syntax: (not very nice)
 (define (rt-extern-reset)
   (set! rt-extern-variables '()))
 
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; GUI
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (default-rt-dialog get-rt)
+  (if (rt-extern-defined? 'rt-standard-dialog)
+      (get-extern-variable 'rt-standard-dialog)
+      (letrec* ((dialog (<dialog> "dialog" (lambda ()
+					     (-> (force get-rt) stop)
+					     (-> dialog hide))
+				  "Close" (lambda ()
+					    (-> (force get-rt) stop)
+					    (-> dialog hide))
+				  "Stop" (lambda ()
+					   (-> (force get-rt) stop))
+				  "Start" (lambda ()
+					    (-> (force get-rt) play)))))
+	(-> dialog show)
+	(add-extern-variable 'rt-standard-dialog dialog)
+	dialog)))
+  
+(define-rt-macro (<slider> name min curr max (:glide #t) (:log #f) (:scale #f))
+  (define v (gensym))  
+  (define v2 (rt-gensym))  
+  (define min2 (gensym))
+  (define max2 (gensym))
+  (define glide2 (gensym))
+
+  (if (eq? glide #t)
+      (set! glide -1))
+
+  (if glide
+      `(read-glide-var
+	(extern    (let* ((,min2 ,min)
+			  (,max2 ,max)
+			  (,glide2 ,glide)
+			  (,v (make-glide-var ,curr (if (= -1 ,glide2)
+							(/ (- ,max2 ,min2) (/ (mus-srate) 3))
+							,glide2)))
+			  (slider (<slider> (default-rt-dialog (%delay rt-current-rt))
+					    ,name ,min2 (read-glide-var ,v)
+					    ,max2
+					    (lambda (val)
+					      (write-glide-var ,v val))
+					    (or ,scale
+						(max 100 (/ 1000 (- ,max2 ,min2))))
+					    #f
+					    ,log)))
+		     ,v)))
+      `(extern ,v2 (let* ((,min2 ,min)
+			  (,max2 ,max)
+			  (,v ,curr)
+			  (slider (<slider> (default-rt-dialog (%delay rt-current-rt))
+					    ,name ,min2 ,v
+					    ,max2
+					    (lambda (val)
+					      (set! (-> rt-current-rt ,v2) val))
+					    (or ,scale
+						(max 100 (/ 1000 (- ,max2 ,min2))))
+					    #f
+					    ,log)))
+		     ,v))))
+
+#!
+
+(rt-macroexpand '(<slider> "545test" 0 0.5 1 :glide #f))
+(<rt-out> (* (<slider> "vol" 0 0.2 1 :glide #t) 
+	     (<slider> "vol2" 0 0.2 1 :glide #t) 
+	     (oscil :extern (hz->radians 40))))
+
+!#
+
+(define-rt-macro (<checkbutton> name on-or-off (:glide #t) (:togglebutton #f))
+  (define v (gensym))
+  (define v2 (rt-gensym))
+  (define val (gensym))
+  (define glide2 (gensym))
+
+  (if (eq? glide #t)
+      (set! glide -1))
+
+  `(begin
+     (extern ,v2 (let* ((,val (cond ((eq? #t ,on-or-off) 1)
+				  ((eq? #f ,on-or-off) 0)
+				  ((number? ,on-or-off)
+				   (if (= 0 ,on-or-off)
+				       0
+				       1))
+				  (else 1)))
+			(,v ,(if glide
+				 `(make-glide-var ,val (let ((,glide2 ,glide))
+							 (if (= ,glide2 -1)
+							     (/ 50 (mus-srate))
+							     ,glide2)))
+				 val)))
+		   ((if ,togglebutton
+			<togglebutton>
+			<checkbutton>)
+		    (default-rt-dialog (%delay rt-current-rt)) 
+		    ,name (lambda (val)
+			    ,(if glide
+				 `(write-glide-var ,v (if val 1 0))
+				 `(set! (-> rt-current-rt ,v2) (if val 1 0))))
+		    (if (= 0 ,val)
+			#f
+			#t))
+		   ,v))
+     ,(if glide
+	  `(read-glide-var ,v2)
+	  `(begin 
+	     (declare (<float> ,v2)) ;; This is horrible. The type inference routine is really
+	                             ;; bad when its not even able to figure out a float, the
+	                             ;; default type.
+	     ,v2))))
+
+(define-rt-macro (<togglebutton> name on-or-off (:glide #t))
+  `(<checkbutton> ,name ,on-or-off :glide ,glide :togglebutton #t))
+
+
+
+#!
+(rt-macroexpand '(<checkbutton> "on/off" #f :glide #t))
+(rt-macroexpand '(<togglebutton> "on/off" #f :glide #f))
+(<rt-out> (* (<slider> "vol" 0 0.2 1) 
+	     (<slider> "vol2" 0 0.2 1 :glide #f)
+	     (<checkbutton> "on/off" #t :glide #t)
+	     (<togglebutton> "on/off" #t :glide #f)
+	     (oscil :frequency 0
+		    (hz->radians (<slider> "freq" 50 200 1000 :log #t)))))
+(oscil :frequency 0
+       (hz->radians (<slider> "freq"  50 200 1000 :log #t)))
+
+(rt-macroexpand '(oscil :frequency 0 2 3))
+
+(<rt-out> (let ((outval (* (<checkbutton> "on/off" #t)
+			   (oscil (extern (make-oscil 0))
+				  (hz->radians (<slider> "freq" 50 200 8000 :log #t))))))
+	    (vct (* (<slider> "left" 0 0.2 1) outval)
+		 (* (<slider> "right" 0 0.2 1) outval))))
+!#
 
 
 
@@ -7157,6 +7372,9 @@ old syntax: (not very nice)
 
 		   
 
+;; NOTE! "setternames" is an extremely confusing name. Its used for all variables which must be
+;; transformed in Guile before the c function is called, and not at all for all variables which
+;; may be setted. (must fix this)
 
 (define (rt-3 term)
   (let ((rt-4-result (rt-4 term)))
@@ -7262,7 +7480,8 @@ old syntax: (not very nice)
 		  
 		  (shared-struct <mus_rt_readin>)
 		  (shared-struct <mus_rt_ladspa>)
-		  
+		  ;;(shared-struct <mus_rt_faust>)
+
 		  ,bus-struct
 
 		  "#ifdef __GNUC__"
@@ -7360,7 +7579,7 @@ old syntax: (not very nice)
 
 		   "typedef float (*ThreadFunc)(void)"
 		   "typedef float (*ReadinFunc)(struct mus_rt_readin*)"
-
+		   "typedef void (*FaustComputeFunc)(void* self,int len,float** inputs,float** outputs)"
 
 		   ;; Finding needed rt-ec-functions to include in this file.
 		   ,@(let ((function-names '())
@@ -7473,7 +7692,7 @@ old syntax: (not very nice)
 							   (let* ((type (car das-type))
 								  (name (cadr das-type)))
 							     (cond ((string=? "UNSPECIFIED" type)
-								    (c-display "\n\nError! eval-c.scm/eval-c-gen-public-func: Strange type for " das-type "\n\n"))
+								    (c-display "\n\nError! rt-compiler.scm/eval-c.scm/eval-c-gen-public-func: Strange type for " das-type "\n\n"))
 								   ((string=? "SCM" type) "/* */")
 								   (else
 								    `(SCM_ASSERT ,(cond ((string=? "STRING" type) `(|| (scm_is_false ,name) (XEN_STRING_P ,name)))
@@ -7632,7 +7851,8 @@ old syntax: (not very nice)
 			      (lambda (x env)
 				(let ((isoutdefined? (defined? 'out-bus env))
 				      (isindefined? (defined? 'in-bus env)))
-				  `(letrec* ,externs
+				  `(letrec* ((rt-current-rt #f)
+					     ,@externs)
 				     (let* ((extra-gc-vars (make-hash-table 19))
 					    (buses (make-hash-table 19))
 					    (procarg (,make-globals-func (-> *rt-engine* engine-c)))
@@ -7769,7 +7989,7 @@ old syntax: (not very nice)
 					;				 in-bus))
 					;   (->2 ret add-method 'in-bus (lambda ()
 					;				 *in-bus*)))
-				       
+				       (set! rt-current-rt ret)
 				       ret)))))))
 	  
 	  (apply eval-c-non-macro (append (list (<-> "-I" snd-header-files-path " -ffast-math ") ;; "-ffast-math") ;; " -Werror "
