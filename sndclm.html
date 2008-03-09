@@ -1000,6 +1000,27 @@ duration), it's simplest to use make-env:
 </pre>
 </td></tr></table>
 
+<p>make-env signals an error if the envelope breakpoints are either out of order, or an x axis value
+occurs twice.  The default error handler in with-sound may not give you the information you need to
+track down the offending note, even given the original envelope.  Here's one way to trap the error
+and get more info (in this case, the begin time and duration of the enclosing note):
+</p>
+
+<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
+<pre>
+(define* (make-env-with-catch beg dur :rest args)
+  (catch 'mus-error
+	 (lambda ()
+	   (apply <em class=red>make-env</em> args))
+	 (lambda args
+	   (display (format #f ";~A ~A: ~A~%" beg dur args)))))
+</pre>
+</td></tr></table>
+
+<p>In cases like this, remember to set <a href="extsnd.html#runsafety">run-safety</a> to 0
+so that with-sound will be able to display the stack backtrace when an error occurs.
+</p>
+
 <table border=3 bordercolor="tan" hspace=40 vspace=10><th bgcolor="beige">Envelopes</th><tr><td>
 <blockquote><small>
 <br>

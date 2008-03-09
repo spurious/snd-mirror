@@ -5449,7 +5449,11 @@ static XEN g_in_any_1(const char *caller, XEN frame, XEN chan, XEN inp)
     }
 
   if (XEN_PROCEDURE_P(inp))
-    return(XEN_CALL_2(inp, frame, chan, caller)); /* follow arg order of in-any */
+    {
+      if (local_arity_ok(inp, 2))
+	return(XEN_CALL_2(inp, frame, chan, caller)); /* follow arg order of in-any */
+      XEN_ASSERT_TYPE(false, inp, XEN_ARG_3, caller, "a procedure of 2 arguments: the sample number and the channel");
+    }
 
   return(C_TO_XEN_DOUBLE(0.0));
 }
@@ -5534,7 +5538,11 @@ static XEN g_out_any_1(const char *caller, XEN frame, XEN chan, XEN val, XEN out
     }
 
   if (XEN_PROCEDURE_P(outp))
-    return(XEN_CALL_3(outp, frame, val, chan, caller)); /* follow arg order of out-any */
+    {
+      if (local_arity_ok(outp, 3))
+	return(XEN_CALL_3(outp, frame, val, chan, caller)); /* follow arg order of out-any */
+      XEN_ASSERT_TYPE(false, outp, XEN_ARG_4, caller, "a procedure of 3 arguments: the sample number, the sample value, and the channel");
+    }
 
   return(val);
 }
@@ -8796,6 +8804,7 @@ void mus_xen_init(void)
 	       S_edot_product,
 #endif
 	       S_env,
+	       S_env_any,
 	       S_env_interp,
 	       S_env_p,
 	       S_exponential_window,
@@ -8980,6 +8989,7 @@ void mus_xen_init(void)
 	       S_outb,
 	       S_outc,
 	       S_outd,
+	       S_output,
 	       S_partials_to_polynomial,
 	       S_partials_to_wave,
 	       S_partials_to_waveshape,
@@ -9011,6 +9021,7 @@ void mus_xen_init(void)
 	       S_readin_p,
 	       S_rectangular_to_polar,
 	       S_rectangular_window,
+	       S_reverb,
 	       S_riemann_window,
 	       S_ring_modulate,
 	       S_rv2_window,

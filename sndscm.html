@@ -9735,8 +9735,21 @@ To continue adding notes to an existing file, set 'continue-old-file':
 
 <p>
 The arguments passed to the notehook function are the current instrument name (a string) and all its
-arguments.  <a name="definstrument">definstrument</a> implements the notehook feature.  
+arguments.  <a name="definstrument">definstrument</a> implements the notehook feature.  Here's a version
+of the previous notehook that displays
+the first argument to the instrument (assuming it is the
+begin time) in the Snd window title bar, and tries to use the xm module if it is available:
 </p>
+
+<pre>
+    :notehook (lambda (name . args) 
+	        (let ((new-title (string-append "snd: " (number->string (car args)))))
+		  (if (provided? 'xm)
+		      (XtVaSetValues  (cadr (<a class=quiet href="extsnd.html#mainwidgets">main-widgets</a>)) (list XmNtitle new-title))
+		      (if (provided? 'xg)
+			  (gtk_window_set_title (GTK_WINDOW (cadr (<a class=quiet href="extsnd.html#mainwidgets">main-widgets</a>))) new-title)
+			  (set! (<a class=quiet href="extsnd.html#windowproperty">window-property</a> "SND_VERSION" "WM_NAME") new-title)))))
+</pre>
 
 <p>The "output" argument can be a vct or a sound-data object, as well as a filename:
 </p>

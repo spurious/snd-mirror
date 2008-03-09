@@ -67131,7 +67131,7 @@ EDITS: 1
 		     delay delay? dot-product env env-interp env? file->array file->frame file->frame?  file->sample
 		     file->sample? filter filter? fir-filter fir-filter? formant formant-bank formant? frame* frame+ firmant firmant?
 		     frame->file frame->file? frame->frame frame->list frame->sample frame-ref frame-set! frame?
-		     granulate granulate? hz->radians iir-filter iir-filter?  in-any linear->db locsig ; ina inb
+		     granulate granulate? hz->radians iir-filter iir-filter?  in-any linear->db locsig ina inb
 		     locsig-ref locsig-reverb-ref locsig-reverb-set! locsig-set!  locsig? make-all-pass make-asymmetric-fm
 		     make-comb make-filtered-comb make-convolve make-delay make-env make-fft-window make-file->frame
 		     make-file->sample make-filter make-fir-filter make-formant make-firmant make-frame make-frame->file make-granulate
