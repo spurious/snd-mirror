@@ -22,9 +22,6 @@
 
 
 (if (provided? 'snd-gauche)
-    (use srfi-13)) ; string-concatenate
-
-(if (provided? 'snd-gauche)
     (define (symbol->value sym)
       (global-variable-ref (current-module) sym)))
 
@@ -109,7 +106,7 @@
 						      (or (string=? name "phase") 
 							  (string=? name "angle")))
 						    field-names)))
-				  (and fld (string-concatenate (list "-" fld))))))
+				  (and fld (string-append "-" fld)))))
 
 	 (frequency-field-name (and (not (method-exists? 'mus-frequency))
 				    (find-if (lambda (name) 
@@ -128,14 +125,14 @@
 						       (or (string=? name "r")
 							   (string=? name "amplitude")))
 						     field-names)))
-				   (and fld (string-concatenate (list "-" fld))))))
+				   (and fld (string-append "-" fld)))))
 
 	 (order-field-name (and (not (method-exists? 'mus-order))
 				(let ((fld (find-if (lambda (name) 
 						      (or (string=? name "n") 
 							  (string=? name "order")))
 						    field-names)))
-				  (and fld (string-concatenate (list "-" fld))))))
+				  (and fld (string-append "-" fld)))))
 
 	 (methods `(append (if ,(not (null? original-methods))  ; using append to splice out unwanted entries
 			       ,original-methods
@@ -194,13 +191,13 @@
 					      (first-time #t))
 					  (for-each
 					   (lambda (field)
-					     (set! desc (string-concatenate 
-							 (list desc (format #f "~A~A: ~A"
-									    (if first-time " " ", ")
-									    field
-									    (if (string=? field "frequency")
-										(radians->hz ((symbol->value (string->symbol (string-append ,sname "-" field))) g))
-										((symbol->value (string->symbol (string-append ,sname "-" field))) g))))))
+					     (set! desc (string-append desc 
+								       (format #f "~A~A: ~A"
+									       (if first-time " " ", ")
+									       field
+									       (if (string=? field "frequency")
+										   (radians->hz ((symbol->value (string->symbol (string-append ,sname "-" field))) g))
+										   ((symbol->value (string->symbol (string-append ,sname "-" field))) g)))))
 					     (set! first-time #f))
 					   (list ,@field-names))
 					  desc))))

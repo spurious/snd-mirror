@@ -1577,10 +1577,12 @@ static XEN g_sound_data_ref(XEN obj, XEN chan, XEN frame_num)
   #define H_sound_data_ref "(" S_sound_data_ref " sd chan i): sample in channel chan at location i of sound-data sd: sd[chan][i]"
   sound_data *sd;
   int loc, chn;
+
   XEN_ASSERT_TYPE(SOUND_DATA_P(obj), obj, XEN_ARG_1, S_sound_data_ref, "a sound-data object");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_2, S_sound_data_ref, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(frame_num), frame_num, XEN_ARG_3, S_sound_data_ref, "an integer");
   sd = XEN_TO_SOUND_DATA(obj);
+
   chn = XEN_TO_C_INT(chan);
   if (chn < 0)
     XEN_OUT_OF_RANGE_ERROR(S_sound_data_ref, 2, chan, "~A: invalid channel");
@@ -1589,6 +1591,7 @@ static XEN g_sound_data_ref(XEN obj, XEN chan, XEN frame_num)
 	      XEN_LIST_3(C_TO_XEN_STRING(S_sound_data_ref),
 			 C_TO_XEN_STRING("chan: ~A >= sound-data chans: ~A"),
 			 XEN_LIST_2(chan, C_TO_XEN_INT(sd->chans))));
+
   loc = XEN_TO_C_INT(frame_num);
   if (loc < 0)
     XEN_OUT_OF_RANGE_ERROR(S_sound_data_ref, 3, frame_num, "~A: invalid frame");
@@ -1597,6 +1600,7 @@ static XEN g_sound_data_ref(XEN obj, XEN chan, XEN frame_num)
 	      XEN_LIST_3(C_TO_XEN_STRING(S_sound_data_ref),
 			 C_TO_XEN_STRING("frame: ~A >= sound-data length: ~A"),
 			 XEN_LIST_2(frame_num, C_TO_XEN_INT(sd->length))));
+
   return(C_TO_XEN_DOUBLE(sd->data[chn][loc]));
 }
 

@@ -36,7 +36,7 @@
 
 (define tests 1)
 (define keep-going #f)
-(define all-args #f)
+(define all-args #t)
 (define test-at-random 0)
 ;(show-ptree 1)
 ;(debug-enable 'warn-deprecated)
@@ -5012,7 +5012,11 @@
       (let ((ind (open-sound "oboe.snd")))
 	(set! (transform-graph? ind 0) #t)
 	(set! (transform-graph-type ind 0) graph-as-sonogram)
-	(set! (y-axis-label ind 0 1) "hiho")
+	(catch 'no-such-axis
+	       (lambda ()
+		 (set! (y-axis-label ind 0 1) "hiho"))
+	       (lambda args
+		 (snd-display ";no fft axis: ~A" args)))
 	(set! (fft-log-frequency ind 0) #t) ; segfault here originally
 	(update-transform-graph ind 0)
 	(close-sound ind))
@@ -53926,7 +53930,29 @@ EDITS: 1
 			  (fm-violin 0 .1 440 .1 :reverb-amount 0.9))
 	      (if (< (car (sound-data-maxamp v1)) .6) 
 		  (snd-display ";2 with-sound -> sound-data fm-violin maxamp (opt 2): ~A" (sound-data-maxamp v1))))))
-	
+
+	(let ((oldopt (optimization)))
+	  (set! (optimization) 0)
+	  (let ((v1 (with-sound (:output (make-sound-data 1 44100) :revfile (make-sound-data 1 44100) :reverb jc-reverb) 
+				(if (not (= (mus-length *output*) 44100)) (snd-display ";ws mus-length sd: ~A" (mus-length *output*)))
+				(fm-violin 0 .1 440 .1 :reverb-amount 0.9 :random-vibrato-amplitude 0.0)))
+		(v4 (with-sound (:output (make-sound-data 1 44100)) 
+				(fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))))
+	    (if (sd-equal v1 v4) (snd-display ";2 reverb output not written to sd?"))
+	    (if (< (car (sound-data-maxamp v1)) .3) 
+		(snd-display ";2 rev with-sound -> sound-data fm-violin maxamp (opt): ~A" (sound-data-maxamp v1)))
+	    (set! (optimization) 0)
+	    (let ((v2 (with-sound (:output (make-sound-data 1 44100) :revfile (make-sound-data 1 44100) :reverb jc-reverb) 
+				  (fm-violin 0 .1 440 .1 :reverb-amount 0.9))))
+	      (if (< (car (sound-data-maxamp v2)) .3) 
+		  (snd-display ";2 rev with-sound -> sound-data fm-violin maxamp: ~A" (sound-data-maxamp v2)))
+	      (set! (optimization) 6)
+	      (with-sound (:output v1 :revfile v2 :reverb jc-reverb)
+			  (fm-violin 0 .1 440 .1 :reverb-amount 0.9)
+			  (fm-violin 0 .1 440 .1 :reverb-amount 0.9))
+	      (if (< (car (sound-data-maxamp v1)) .6) 
+		  (snd-display ";2 with-sound -> sound-data fm-violin maxamp (opt 2): ~A" (sound-data-maxamp v1))))))
+
 	(let ((oldopt (optimization)))
 	  (set! (locsig-type) mus-interp-linear)
 	  (set! (optimization) 6)
@@ -67131,7 +67157,7 @@ EDITS: 1
 		     delay delay? dot-product env env-interp env? file->array file->frame file->frame?  file->sample
 		     file->sample? filter filter? fir-filter fir-filter? formant formant-bank formant? frame* frame+ firmant firmant?
 		     frame->file frame->file? frame->frame frame->list frame->sample frame-ref frame-set! frame?
-		     granulate granulate? hz->radians iir-filter iir-filter?  in-any linear->db locsig ina inb
+		     granulate granulate? hz->radians iir-filter iir-filter? linear->db locsig ; in-any ina inb (sound-data arg troubles)
 		     locsig-ref locsig-reverb-ref locsig-reverb-set! locsig-set!  locsig? make-all-pass make-asymmetric-fm
 		     make-comb make-filtered-comb make-convolve make-delay make-env make-fft-window make-file->frame
 		     make-file->sample make-filter make-fir-filter make-formant make-firmant make-frame make-frame->file make-granulate

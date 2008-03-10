@@ -5446,6 +5446,8 @@ static XEN g_in_any_1(const char *caller, XEN frame, XEN chan, XEN inp)
       if ((in_chan < sd->chans) && 
 	  (pos < sd->length))
 	return(C_TO_XEN_DOUBLE(sd->data[in_chan][pos]));
+      return(C_TO_XEN_DOUBLE(0.0)); /* say *reverb* is inp and we're adding decay time, so run off the end... */
+      /* in any case, sound-data obj looks like a procedure, and we don't want to hit that in the next block. */
     }
 
   if (XEN_PROCEDURE_P(inp))

@@ -1022,6 +1022,7 @@ void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool appl
   axis_info *active_ap = NULL;
   chan_info *active_channel = NULL;
   if (!(any_selected_sound())) return;
+  if ((!gray_ap) || (!ap)) return;
   gray_ap->x_axis_x0 = ap->x_axis_x0;
   gray_ap->x_axis_x1 = ap->x_axis_x1;
   gray_ap->y_axis_y0 = ap->y_axis_y0;

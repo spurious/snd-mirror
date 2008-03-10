@@ -1602,7 +1602,8 @@ void set_enved_base(Float val)
 
 bool enved_dialog_is_active(void)
 {
-  return((enved_dialog) && (XtIsManaged(enved_dialog)));
+  return((enved_dialog) && 
+	 (XtIsManaged(enved_dialog)));
 }
 
 

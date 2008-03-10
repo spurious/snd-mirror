@@ -320,7 +320,8 @@ returning you to the true top-level."
 		 (if (not continue-old-file)
 		     (if (vct? reverb-1)
 			 (vct-fill! reverb-1 0.0)
-			 (sound-data-fill! reverb-1 0.0)))
+			 (if (sound-data? reverb-1)
+			     (sound-data-fill! reverb-1 0.0))))
 		 (set! *reverb* reverb-1))))
 
        (let ((start (if statistics (get-internal-real-time)))
@@ -386,17 +387,20 @@ returning you to the true top-level."
 	 (if (and reverb 
 		  (not flush-reverb)) ; i.e. not interrupted by error and trying to jump out
 	     (begin
-	       (mus-close *reverb*)
+	       (if reverb-to-file
+		   (mus-close *reverb*))
 	       (if statistics 
 		   (if reverb-to-file
 		       (set! revmax (cadr (mus-sound-maxamp reverb-1)))
 		       (if (vct? reverb-1)
 			   (set! revmax (vct-peak reverb-1))
-			   (set! revmax (sound-data-peak reverb-1)))))
+			   (if (sound-data? reverb-1)
+			       (set! revmax (sound-data-peak reverb-1))))))
 	       (if reverb-to-file
 		   (set! *reverb* (make-file->sample reverb-1)))
 	       (apply reverb reverb-data)
-	       (mus-close *reverb*)
+	       (if reverb-to-file
+		   (mus-close *reverb*))
 	       (if (and reverb-to-file *clm-delete-reverb*)
 		   (delete-file reverb-1))))
 
