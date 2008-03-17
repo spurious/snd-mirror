@@ -334,7 +334,7 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 
 
 (define-ec-struct <Jack_Arg>
-  <int> frames
+  <int64> frames
   <int> is_running
 
   <void-*> rt_callback
@@ -538,7 +538,7 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 				    
 				    (if jack_arg->is_running
 					(+= jack_arg->frames nframes))
-				    
+
 				    (return 0))))))
 
 
@@ -828,6 +828,26 @@ procfuncs=sorted
   <SCM> toprotect
   <SCM> smob
   )
+
+
+#!
+;; signed int provides 12-13 hours of timing. Not enough, and doesn't even wrap around. (used now)
+(/ (/ (/ (expt 2 29)
+	 48000.0)
+      60)
+   60)
+
+;; unsigned long long provides over 12 million years of timing. Should be enough.
+;; (signed long long should be enough as well, by the way.)
+(/ (/ (/ (/ (/ (/ (expt 2 63)
+		  48000.0)
+	       60)
+	    60)
+	 24)
+      365)
+   1000000)
+!#
+
 
 (define-ec-struct <RT_Engine>
   <jack_ringbuffer_t-*> ringbuffer_to_rt
@@ -1418,7 +1438,7 @@ procfuncs=sorted
 
 
 (define *rt-jack-engine* (<rt-engine> (lambda (rt-arg)
-				   (<jack-rt-driver> *rt-num-input-ports* *rt-num-output-ports* (rt_callback) rt-arg))))
+					(<jack-rt-driver> *rt-num-input-ports* *rt-num-output-ports* (rt_callback) rt-arg))))
 
 (define *rt-pd-engine* (if (provided? 'snd-pd-external)
 			   (let ((res (<rt-engine> (lambda (c-engine)

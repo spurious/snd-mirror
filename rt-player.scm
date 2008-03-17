@@ -89,7 +89,8 @@ rt-player.scm
     (declare (<int> curr-ringbuffer-num read-pos size))
     (if (= read-pos size)
 	(let ((ringbuffer (=> rb2 :ringbuffer)))
-	  (if (= (read-var (=> rb2 :ringbuffer-num)) curr-ringbuffer-num)
+	  (if (= (read-var (=> rb2 :ringbuffer-num))
+		 curr-ringbuffer-num)
 	      (begin
 		(put-ringbuffer debug-rb 1)
 		;;(printf "RT-PLAYER: Error, can not read from disk fast enough.\\n");; Set the variable *rt-reader-buffer-time* higher.\\n"))

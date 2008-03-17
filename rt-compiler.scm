@@ -2098,10 +2098,12 @@ and run simple lisp[4] functions.
 	       
 
 	       (if (and func (= 2 (length func)))
-		   (check-failed (<-> "Snd-rt does not normally support functions as arguments.\n"
-				      "Use macros instead or rearrange so that functions are nested.")
+		   (check-failed (<-> "Snd-rt does not normally support function names as arguments.\n"
+				      "Either use the body of the function as argument instead, or tranform\n"
+				      "the function into a macro. (please let me know if you really need\n"
+				      "to use function names as arguments, -Kjetil.)")
 				 func))
-		   
+	       
 	       (if func
 
 		   ;; Local function
@@ -3679,12 +3681,22 @@ and run simple lisp[4] functions.
 (define-rt-macro (/% a b)
   `(quotient ,a ,b))
 (define-rt-macro (/ a . b)
-  (if (null? b)
-      `(rt-/// 1.0 (the <float> ,a))
-      (if (not (null? (cdr b)))
-	  `(/ (rt-/// (the <float> ,a) (the <float> ,(car b))) ,@(cdr b))
-	  `(rt-/// (the <float> ,a) (the <float> ,(car b))))))
+  (cond ((null? b)
+	 `(rt-/// 1.0 (the <float> ,a)))
+	((not (null? (cdr b)))
+	 `(/ (rt-/// (the <float> ,a) (the <float> ,(car b))) ,@(cdr b)))
+	(else
+	 `(rt-/// (the <float> ,a) (the <float> ,(car b))))))
 
+#!
+(define-rt-macro (/ a . b)
+  (cond ((null? b)
+	 `(rt-/// 1.0 (the <double> ,a)))
+	((not (null? (cdr b)))
+	 `(/ (rt-/// (the <double> ,a) (the <double> ,(car b))) ,@(cdr b)))
+	(else
+	 `(rt-/// (the <double> ,a) (the <double> ,(car b))))))
+!#
 
 
 (define-rt-macro (odd? n)
@@ -6300,7 +6312,7 @@ old syntax: (not very nice)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;;(c-load-from-path rt-faust)
+(c-load-from-path rt-faust)
 
 
 
@@ -6635,14 +6647,14 @@ old syntax: (not very nice)
 
 (rt-ec-function <void> rt_write_bus_vct (lambda (,rt-globalvardecl (<struct-rt_bus-*> bus) (<vct-*> vct))
 				       (<float-*> vctdata vct->data)
-				       (<int> end (EC_MIN vct->length bus->num_channels))
+				       (<int> num_channels (EC_MIN vct->length bus->num_channels))
 				       (<int> time rt_globals->time)
 				       (<int> base (* bus->num_channels rt_globals->framenum))
-				       (for-each 0 end
+				       (for-each 0 num_channels
 						 (lambda (ch)
 						   (let* ((data <struct-rt_bus_data-*> "&bus->data[base++]"))
 						     ,(rt-clean-write-bus 'vctdata[ch]))))))
-	     
+
 (<rt-func> 'rt_write_bus_vct '<void> '(<bus> <vct-*>) #:needs-rt-globals #t)
 
 (rt-ec-function <float> rt_read_bus (lambda (,rt-globalvardecl (<struct-rt_bus-*> bus) (<int> ch))
@@ -6661,18 +6673,18 @@ old syntax: (not very nice)
 (<rt-func> 'rt_read_bus '<float> '(<bus> <int>) #:needs-rt-globals #t)
 
 (rt-ec-function <vct-*> rt_read_bus_vct (lambda (,rt-globalvardecl (<struct-rt_bus-*> bus))
-				       (let* ((vct <vct-*> (rt_alloc_vct rt_globals bus->num_channels))
-					      (vctdata <float-*> vct->data)
-					      (time <int> rt_globals->time_before)
-					      (base <int> (* bus->num_channels rt_globals->framenum)))
-					 (for-each 0 bus->num_channels
-						   (lambda (ch)
-						     (let* ((data <struct-rt_bus_data-*> "&bus->data[base++]"))
-						       (set! vctdata[ch]
-							     (?kolon (< data->last_written_to time)
-								     0
-								     data->val)))))
-					 (return vct))))
+					  (let* ((vct <vct-*> (rt_alloc_vct rt_globals bus->num_channels))
+						 (vctdata <float-*> vct->data)
+						 (time <int> rt_globals->time_before)
+						 (base <int> (* bus->num_channels rt_globals->framenum)))
+					    (for-each 0 bus->num_channels
+						      (lambda (ch)
+							(let* ((data <struct-rt_bus_data-*> "&bus->data[base++]"))
+							  (set! vctdata[ch]
+								(?kolon (< data->last_written_to time)
+									0
+									data->val)))))
+					    (return vct))))
 
 (<rt-func> 'rt_read_bus_vct '<vct-*> '(<bus>) #:needs-rt-globals #t)
 
@@ -6804,27 +6816,27 @@ old syntax: (not very nice)
 
 
 (rt-ec-function <vct-*> rt_vct_scale (lambda ((<vct-*> vct) (<float> scl))
-				    (<int> lokke)
-				    "for(lokke=0;lokke<vct->length;lokke++){"
-				    (*= vct->data[lokke] scl)
-				    "}"
-				    (return vct)))
+				       (<int> lokke)
+				       "for(lokke=0;lokke<vct->length;lokke++){"
+				       (*= vct->data[lokke] scl)
+				       "}"
+				       (return vct)))
 (<rt-func> 'rt_vct_scale '<vct-*> '(<vct-*> <float>))
 
 (rt-ec-function <vct-*> rt_vct_offset (lambda ((<vct-*> vct) (<float> scl))
-				     (<int> lokke)
-				     "for(lokke=0;lokke<vct->length;lokke++){"
-				     (+= vct->data[lokke] scl)
-				     "}"
-				     (return vct)))
+					(<int> lokke)
+					"for(lokke=0;lokke<vct->length;lokke++){"
+					(+= vct->data[lokke] scl)
+					"}"
+					(return vct)))
 (<rt-func> 'rt_vct_offset '<vct-*> '(<vct-*> <float>))
 
 (rt-ec-function <vct-*> rt_vct_fill (lambda ((<vct-*> vct) (<float> scl))
-				   (<int> lokke)
-				   "for(lokke=0;lokke<vct->length;lokke++){"
-				   (set! vct->data[lokke] scl)
-				   "}"
-				   (return vct)))
+				      (<int> lokke)
+				      "for(lokke=0;lokke<vct->length;lokke++){"
+				      (set! vct->data[lokke] scl)
+				      "}"
+				      (return vct)))
 (<rt-func> 'rt_vct_fill '<vct-*> '(<vct-*> <float>))
 
 
@@ -6843,23 +6855,32 @@ old syntax: (not very nice)
 
 
 (define-rt-macro (vct-set! das-vct expand/pos val)
-  (if (rt-immediate? pos)
+  (define das-das-vct (rt-gensym))
+  (if (and (rt-immediate? pos)
+	   (rt-immediate? das-vct))
       `(rt-vct-legal-pos ,das-vct ,pos "vct-set!"
 			 (rt-vct-set!/vct-set! ,das-vct (rt-castint/castint ,pos) ,val))
       (let ((x (rt-gensym)))
-	`(let ((,x ,pos))
-	   (rt-vct-legal-pos ,das-vct ,x "vct-set!"
-			     (rt-vct-set!/vct-set! ,das-vct (rt-castint/castint ,x) ,val))))))
+	`(let ((,das-das-vct ,das-vct)
+	       (,x ,pos))
+	   (rt-vct-legal-pos ,das-das-vct ,x "vct-set!"
+			     (rt-vct-set!/vct-set! ,das-das-vct (rt-castint/castint ,x) ,val))))))
 
 (define-rt-macro (vct-ref das-vct pos)
-  (if (rt-immediate? pos)
+  (define das-das-vct (rt-gensym))
+  (define x (rt-gensym))
+  (if (and (rt-immediate? pos)
+	   (rt-immediate? das-vct))
       `(rt-vct-legal-pos ,das-vct ,pos "vct-ref"
 			 (rt-vct-ref/vct-ref ,das-vct (rt-castint/castint ,pos)))
-      (let ((x (rt-gensym)))
-	`(let ((,x ,pos))
-	   (rt-vct-legal-pos ,das-vct ,x "vct-ref"
-			     (rt-vct-ref/vct-ref ,das-vct (rt-castint/castint ,x)))))))
+      `(let ((,das-das-vct ,das-vct)
+	     (,x ,pos))
+	 (rt-vct-legal-pos ,das-das-vct ,x "vct-ref"
+			   (rt-vct-ref/vct-ref ,das-das-vct (rt-castint/castint ,x))))))
 
+#!
+(rt-macroexpand '(vct-ref positions1 i))
+!#
 
 (define-rt-macro (vct . rest)
   (let ((ret (rt-gensym))
@@ -7003,22 +7024,25 @@ old syntax: (not very nice)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (default-rt-dialog get-rt)
-  (if (rt-extern-defined? 'rt-standard-dialog)
-      (get-extern-variable 'rt-standard-dialog)
-      (letrec* ((dialog (<dialog> "dialog" (lambda ()
-					     (-> (force get-rt) stop)
-					     (-> dialog hide))
-				  "Close" (lambda ()
-					    (-> (force get-rt) stop)
-					    (-> dialog hide))
-				  "Stop" (lambda ()
-					   (-> (force get-rt) stop))
-				  "Start" (lambda ()
-					    (-> (force get-rt) play)))))
-	(-> dialog show)
-	(add-extern-variable 'rt-standard-dialog dialog)
-	dialog)))
+(define* (default-rt-dialog get-rt :key (show #t))
+  (let ((ret (if (rt-extern-defined? 'rt-standard-dialog)
+		 (get-extern-variable 'rt-standard-dialog)
+		 (letrec* ((dialog (<dialog> "dialog" (lambda ()
+							(-> (force get-rt) stop)
+							(-> dialog hide))
+					     "Close" (lambda ()
+						       (-> (force get-rt) stop)
+						       (-> dialog hide))
+					     "Stop" (lambda ()
+						      (-> (force get-rt) stop))
+					     "Start" (lambda ()
+						       (-> (force get-rt) play)))))
+		   (add-extern-variable 'rt-standard-dialog dialog)
+		   dialog))))
+    (if show
+	(-> ret show))
+    ret))
+
   
 (define-rt-macro (<slider> name min curr max (:glide #t) (:log #f) (:scale #f))
   (define v (gensym))  
@@ -7392,6 +7416,7 @@ old syntax: (not very nice)
 	       (funcname (rt-gensym2))
 	       (das-funcname (rt-gensym2))
 	       (rt-innerfuncname (rt-gensym2))
+	       (rt-faustsetvarfuncname (rt-gensym2))
 	       (rt-funcname (rt-gensym2))
 
 	       (make-globals-func (rt-gensym2))
@@ -7420,8 +7445,13 @@ old syntax: (not very nice)
 					   (eq? '<struct-rt_bus-*> (-> (cadr vardecl) c-type)))
 					 (append extnumbers-writing extnumbers extpointers))))
 	       
+	       ;; Not a good name for this variable
 	       (busnames (map (lambda (extvar)
-				(list (-> (cadr extvar) c-type) (car extvar) (symbol-append (car extvar) '_mirror) (cadddr extvar) (rt-gensym2)))
+				(list (-> (cadr extvar) c-type)
+				      (car extvar)
+				      (symbol-append (car extvar) '_mirror)
+				      (cadddr extvar)
+				      (rt-gensym2)))
 			      (remove (lambda (vardecl)
 					(not (eq? '<struct-rt_bus-*> (-> (cadr vardecl) c-type))))
 				      extpointers)))
@@ -7445,17 +7475,18 @@ old syntax: (not very nice)
 	  (rt-print2 "term" term)
 	  (newline)
 	  
-	  (list funcname
-		rt-funcname
-		extnumbers-writing
-		extpointers
-		extnumbers
+	  (list funcname             ; 0
+		rt-faustsetvarfuncname     ; 1
+		rt-funcname          ; 2
+		extnumbers-writing   ; 3
+		extpointers          ; 4
+		extnumbers           ; 5
 
-		make-globals-func
+		make-globals-func    ; 6
 		
-		getternames
-		setternames
-		busnames
+		getternames          ; 7
+		setternames          ; 8
+		busnames             ; 9
 		
 		`( ;;(define-struct <func_args>
 		   ;;  <int> num_outs
@@ -7480,7 +7511,7 @@ old syntax: (not very nice)
 		  
 		  (shared-struct <mus_rt_readin>)
 		  (shared-struct <mus_rt_ladspa>)
-		  ;;(shared-struct <mus_rt_faust>)
+		  (shared-struct <mus_rt_faust>)
 
 		  ,bus-struct
 
@@ -7517,7 +7548,8 @@ old syntax: (not very nice)
 					   (list (car vardecl) (caddr vardecl)))
 					 busnames))
 		    <int> remove_me
-		    <struct-RT_Engine*> engine)
+		    <struct-RT_Engine*> engine
+		    <struct-mus_rt_faust*> faust)
 
 		  
 		  ,(if (rt-is-safety?)
@@ -7623,8 +7655,81 @@ old syntax: (not very nice)
 						`(,rt-innerfuncname rt_globals )) ;;,@(map car orgargs)))
 					   
 					   ))
+
+		   (<int> rt_faustprocess (lambda (,rt-globalvardecl
+						   (<int> startframe)
+						   (<int> endframe))
+					    
+					    (<int> time rt_globals->engine->time)
+					    (<int> num_frames (- endframe startframe))
+					    
+					    (<struct-mus_rt_faust*> faust rt_globals->faust)
+					    (<FaustComputeFunc> compute faust->compute_func)
+					    		
+					    ;; In
+					    ,(let ((inbusdef (member 'in-bus busnames (lambda (a b)
+											(eq? a (nth 3 b))))))
+					       (if inbusdef
+						   `(begin
+						      ;; bus=rt_engine->in_bus_3_mirror
+						      (<struct-rt_bus-*> bus ,(symbol-append 'rt_globals->
+											     (nth 2 (car inbusdef))))
+						      (<int> num_channels (EC_MIN faust->num_inputs bus->num_channels))
+						      (<int> channels_diff (- bus->num_channels num_channels))
+						      (<int> base 0)
+						      
+						      (for-each 0 num_frames
+								(lambda (n)
+								  (for-each 0 num_channels
+									    (lambda (ch)
+									      (let* ((data <struct-rt_bus_data-*> "&bus->data[base++]"))
+										(set! faust->ins[ch][n]
+										      (?kolon (< data->last_written_to time)
+											      0
+											      data->val)))))
+								  (+= base channels_diff))))
+						   "/* No inbus */"))
+					    
+
+					    ;; Compute
+					    (compute faust->dsp num_frames faust->ins faust->outs)
+
+					    
+					    ;; Out
+					    ,(let ((outbusdef (member 'out-bus busnames (lambda (a b)
+											  (eq? a (nth 3 b))))))
+					       (if outbusdef
+						   `(begin
+						      ;; bus=rt_engine->out_bus_4_mirror
+						      (<struct-rt_bus-*> bus ,(symbol-append 'rt_globals->
+											     (nth 2 (car outbusdef))))
+						      (<int> num_channels (EC_MIN faust->num_outputs bus->num_channels))
+						      (<int> channels_diff (- bus->num_channels num_channels))
+						      (<int> base 0)
+					    
+						      (for-each 0 num_frames
+								(lambda (n)
+								  ;;(<int> base (* bus->num_channels n))
+								  (for-each 0 num_channels
+									    (lambda (ch)
+									      (let* ((data <struct-rt_bus_data-*> "&bus->data[base++]"))
+										,(rt-clean-write-bus 'faust->outs[ch][n]))))
+								  (+= base channels_diff))))
+						   "/* No outbus */"))
+					    
+					    (return 0)))
+		   (public
+		    (<void*> ,rt-faustsetvarfuncname (lambda ((<struct-RT_Globals*> rt_globals)
+							      (<struct-mus_rt_faust*> faust))
+						       (if (== NULL faust)
+							   (return rt_globals->faust))
+						       (set! rt_globals->faust faust)
+						       (return faust))))
+						
+		    
 		   
 		   (functions->public
+
 		    (<int> ,rt-funcname (lambda (,rt-globalvardecl
 						 (<int> startframe)
 						 (<int> endframe))
@@ -7636,6 +7741,9 @@ old syntax: (not very nice)
 
 						  (if (not (== 0 rt_globals->remove_me))
 						      (return 1))
+
+						  (if (!= NULL rt_globals->faust)
+						      (return (rt_faustprocess rt_globals startframe endframe)))
 						  
 						  (set! rt_globals->framenum startframe)
  						  (set! rt_globals->time engine->time)
@@ -7813,19 +7921,21 @@ old syntax: (not very nice)
   (let ((rt-3-result (rt-3 term))
 	(orgterm term)
 	(orgargs (cadr term)))
+    ;;(c-display (nth 3 rt-3-result) (nth 5 rt-3-result))
     (if (not rt-3-result)
 	(throw 'compilation-failed)
-	(let* ((funcname (car rt-3-result))
-	       (rt-funcname (cadr rt-3-result))
+	(let* ((funcname (nth 0 rt-3-result))
+	       (rt-faustsetvarfuncname (nth 1 rt-3-result))
+	       (rt-funcname (nth 2 rt-3-result))
 	       ;;(extnumbers-writing (caddr rt-3-result))
-	       (extnumbers-writing '())
-	       (extpointers (cadddr rt-3-result))
-	       (extnumbers (append (caddr rt-3-result) (cadr  (cdddr rt-3-result))))
-	       (make-globals-func (caddr (cdddr rt-3-result)))
-	       (getternames (cadddr (cdddr rt-3-result)))
-	       (setternames (cadr (cdddr (cdddr rt-3-result))))
-	       (busnames    (caddr (cdddr (cdddr rt-3-result))))
-	       (term        (cadddr (cdddr (cdddr rt-3-result))))
+	       (extnumbers-writing '()) ;; Numbers are not writable anymore. See two lines down.
+	       (extpointers (nth 4 rt-3-result))
+	       (extnumbers (append (nth 3 rt-3-result) (nth 5 rt-3-result))) ;; extnumbers-writing trasfered here.
+	       (make-globals-func (nth 6 rt-3-result))
+	       (getternames (nth 7 rt-3-result))
+	       (setternames (nth 8 rt-3-result))
+	       (busnames    (nth 9 rt-3-result))
+	       (term        (nth 10 rt-3-result))
 	       (callmacro (procedure->macro
 			   (lambda (x env)
 			     (if (null? extnumbers-writing)
@@ -7855,10 +7965,10 @@ old syntax: (not very nice)
 					     ,@externs)
 				     (let* ((extra-gc-vars (make-hash-table 19))
 					    (buses (make-hash-table 19))
-					    (procarg (,make-globals-func (-> *rt-engine* engine-c)))
+					    (rt-globals (,make-globals-func (-> *rt-engine* engine-c)))
 					    ;;(isoutdefined? (defined? 'out-bus env))
 					    (ret (<realtime> (,rt-funcname)
-							     procarg
+							     rt-globals
 							     ;; This variable is gc-marked manually in the funcall smob.
 							     (list extra-gc-vars ,@(map (lambda (p)
 											  (let ((ret (cadddr p)))
@@ -7887,7 +7997,7 @@ old syntax: (not very nice)
 						       (name (cadddr extvar))
 						       (type (cadr extvar)))
 						  `(begin
-						     (,funcname procarg
+						     (,funcname rt-globals
 								(->2 ,type transform
 								     ,name
 								     ',name
@@ -7905,13 +8015,13 @@ old syntax: (not very nice)
 						  ;;(c-display type name funcname)
 						  (if (eq? 'out-bus name)
 						      (if isoutdefined?
-							  `(,funcname procarg
+							  `(,funcname rt-globals
 								      (->2 ,type transform
 									   out-bus
 									   'out-bus
 									   (lambda (var)
 									     (hashq-set! extra-gc-vars (gensym) var))))
-							  `(,funcname procarg
+							  `(,funcname rt-globals
 								      (->2 ,type transform
 									   *out-bus*
 									   '*out-bus*
@@ -7919,19 +8029,19 @@ old syntax: (not very nice)
 									     (hashq-set! extra-gc-vars (gensym) var)))))
 						      (if (eq? 'in-bus name)
 							  (if isindefined?
-							      `(,funcname procarg
+							      `(,funcname rt-globals
 									  (->2 ,type transform
 									       in-bus
 									       'in-bus
 									       (lambda (var)
 										 (hashq-set! extra-gc-vars (gensym) var))))
-							      `(,funcname procarg
+							      `(,funcname rt-globals
 									  (->2 ,type transform
 									       *in-bus*
 									       '*in-bus*
 									       (lambda (var)
 										 (hashq-set! extra-gc-vars (gensym) var)))))
-							  `(,funcname procarg
+							  `(,funcname rt-globals
 								      (->2 ,type transform
 									   ,name
 									   ',name
@@ -7947,12 +8057,24 @@ old syntax: (not very nice)
 						       (type (cadr extvar)))
 						  `(->2 ret add-method ',name (make-procedure-with-setter
 									       (lambda ()
-										 (,(car getter) procarg))
+										 (,(car getter) rt-globals))
 									       (lambda (newval)
-										 (,setterfuncname procarg (rt-number-2-rt newval)))))))
+										 (,setterfuncname rt-globals (rt-number-2-rt newval)))))))
 					      getternames
 					      setternames)
-				       
+
+				       (->2 ret add-method 'faust
+					    (let ((faust #f))
+					      (lambda arg
+						(cond ((null? arg)
+						       faust)						      
+						      ((not (and (object? (car arg))
+								 (eq? '<mus_rt_faust> (-> (car arg) class-name))))
+						       (c-display "Error." (car arg) "is not a faust object."))
+						      (else
+						       (set! faust (car arg))
+						       (,rt-faustsetvarfuncname rt-globals (-> faust get-c-object)))))))
+				     
 				       ;; Adding "getter" for the pointers.
 				       ,@(map (lambda (pointer)
 						`(->2 ret add-method ',pointer (lambda ()
@@ -7975,7 +8097,7 @@ old syntax: (not very nice)
 										   (begin
 										     ;; There is a memory-leak here. Should (gensym) be exchanged with ,name?
 										     (hashq-set! extra-gc-vars (gensym) newval) 
-										     (,func procarg (SCM_SMOB_DATA newval)))))))))
+										     (,func rt-globals (SCM_SMOB_DATA newval)))))))))
 					      busnames)
 				       
 				       ;; Adding "getter" for in-bus and out-bus (TODO, setter as well, that would be very cool.)
@@ -8091,8 +8213,11 @@ old syntax: (not very nice)
 (define-macro (rt-funcall rt-func . args)
   `((cadr ,rt-func) ,@args))
 
+(define *rt* #f)
 (define-macro (<rt> rt-func)
-  `((caddr (rt-compile ,rt-func))))
+  `(let ((ret ((caddr (rt-compile ,rt-func)))))
+     (set! *rt* ret)
+     ret))
 
 
 (define-macro (rt-play-macro play-type eval-type rest)

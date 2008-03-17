@@ -113,6 +113,9 @@
 
 (define <-> string-append)
 
+(define (nth n list)
+  (list-ref list n))
+
 (define (sublist l start end)
   (take (drop l start) (- end start)))
 
@@ -144,7 +147,8 @@
      ,var))
 
 (define-macro (when cond . rest)
-  `(cond (,cond ,@rest)))
+  `(cond (,cond ,@rest)
+	 (else '())))
 
 (define (c-atleast1.7?)
   (or (>= (string->number (major-version)) 2)
@@ -253,7 +257,66 @@
   result)
 
 
+(define-macro (define*2 def . code)    
+  (cond ((or (not (proper-list? def))
+	     (not (memv :rest def)))
+	 `(define* ,def ,@code))
+	(else
+	 (let* ((keyargs '())
+		(rest-name #f)
+		(defargs (let loop ((arg (cdr def))
+				   (inkeys #f))
+			  (cond ((null? arg)
+				 '())
+				((eqv? :key (car arg))
+				 (cons :key
+				       (loop (cdr arg) #t)))
+				((eqv? :rest (car arg))
+				 (set! rest-name (cadr arg))
+				 arg)
+				(inkeys
+				 (let ((keyarg (list (if (pair? (car arg))
+							 (caar arg)
+							 (car arg))
+						     (if (pair? (car arg))
+							 (cadr (car arg))
+							 #f))))
+				   (push-back! keyarg keyargs)
+				   (cons (list (car keyarg)
+					       ''undefined)
+					 (loop (cdr arg)
+					       inkeys))))
+				(else
+				 (cons (car arg)
+				       (loop (cdr arg)
+					     inkeys)))))))
+	   (c-display "keyargs/defarg" keyargs defargs)
+	   `(define* (,(car def) ,@defargs)
+	      ,@(map (lambda (keyarg)
+		       `(cond ((eq? 'undefined ,(car keyarg))
+			       (set! ,(car keyarg) ,(cadr keyarg)))
+			      (else
+			       (set! ,rest-name (cddr ,rest-name)))))
+		     keyargs)
+	      ,@code)))))
 
+#!
+(pretty-print (macroexpand '(define*2 (ai :key 
+					  (b 2)
+					  c
+					  :rest rest)
+			      (c-display b c rest)
+			      )))
+(define*2 (ai :key 
+	      (b 2)
+	      :rest rest)
+  (c-display b rest)
+  )
+
+(ai :b 1 :c 2 3 4 5)
+(ai :b 1 3 4 5)
+(ai 3 4 5)
+!#
 
 (define-macro (letrec* vardecls . body)
   (let* ((sets '())
@@ -555,8 +618,138 @@
 !#
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;; Structs (redefined by rt-compiler) ;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
+(define-macro (=> object das-method . rest)
+  (define method (keyword->symbol das-method))
+  (define object-decomposed (map string->symbol (string-split (symbol->string object) #\:)))
+  (let ()
+    (define struct-name (car object-decomposed))
+    (define object-name (if (null? (cdr object-decomposed))
+			    (car object-decomposed)
+			    (cadr object-decomposed)))
+    `(,(append-various 'access- struct-name ":" method) ,object-name ,@rest)))
+
+
+(define-macro (define-rt-something-struct something name . das-slots)
+  (define name-name (gensym))
+  (define val-name (gensym))
+  (define slots '())
+  
+  (for-each (lambda (slot)
+	      (if (keyword? slot)
+		  (push-back! (list (append-various slot) 0) slots)
+		  (set-cdr! (last slots) (list slot))))
+	    das-slots)
+
+  (let ((slot-names (map car slots)))
+    `(begin
+
+       ;; guile
+       (define* (,(symbol-append 'make- name) :key ,@slots)
+	 (,something ,@slot-names))
+       ,@(let ((i -1))
+	   (map-in-order (lambda (slot)
+			   (set! i (1+ i))
+			   `(define ,(append-various 'access- name ":" slot)
+			      (make-procedure-with-setter
+			       (lambda (,name-name)
+				 (,(symbol-append something '-ref) ,name-name ,i))
+			       (lambda (,name-name ,val-name)
+				 (,(symbol-append something '-set!) ,name-name ,i ,val-name)))))
+			 slot-names))
+       )))
+
+
+(define-macro (define-rt-vct-struct name . das-slots)
+  `(define-rt-something-struct vct ,name ,@das-slots))
+
+(define-macro (define-rt-vector-struct name . das-slots)
+  `(define-rt-something-struct vector ,name ,@das-slots))
+
+
+#!
+(define-rt-vct-struct str
+  :a 1
+  :b)
+(set! (=> str:str) 200)
+(set! (=> str :b) 200)
+(=> str:str)
+(=> str :b)
+
+(macroexpand '(=> str:str :b))
+(macroexpand '(=> str :b))
+!#
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;; Finalizer     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(define-rt-vector-struct das-guardian
+  :finalizer
+  :guardian
+  :num-visitors 1)
+
+(define das-guardians '())
+
+;; Make sure cleanup-func doesn't refer to object somehow.
+;; This, for example:
+;;  (let ((obj (list 2 3))) (add-guardian-object obj (lambda x x)))
+;; won't work.
+
+(define (add-finalizer object finalizer)
+  (let ((das-guardian (member finalizer das-guardians (lambda (finalizer das-guardian)
+							(eqv? finalizer (=> das-guardian :finalizer))))))
+    ;;(c-display "hmm" das-guardian)
+    (if das-guardian
+	(begin
+	  (set! das-guardian (car das-guardian))
+	  ((=> das-guardian :guardian) object)
+	  (set! (=> das-guardian :num-visitors) (1+ (=> das-guardian :num-visitors))))
+	(push! (make-das-guardian :finalizer finalizer
+				  :guardian (let ((guardian (make-guardian)))
+					      (guardian object)
+					      guardian))
+	       das-guardians)))
+  (set! das-guardians
+	(remove (lambda (das-guardian)
+		  (let loop ((object ((=> das-guardian :guardian))))
+		    (and object
+			 (begin
+			   ((=> das-guardian :finalizer) object)
+			   (set! (=> das-guardian :num-visitors) (1- (=> das-guardian :num-visitors)))
+			   (if (= 0 (=> das-guardian :num-visitors))
+			       #t
+			       (loop ((=> das-guardian :guardian))))))))
+		das-guardians)))
+
+#!
+(define alist (list 'unique-name 2 3 4))
+(define cleanfunc (lambda (object) (c-display "freeing" object)))
+(add-finalizer alist cleanfunc)
+(add-finalizer alist (lambda (object)
+		       (c-display object "was garbage collected")))
+(gc)
+
+(map cadr das-guardians)
+(map caddr das-guardians)
+(length das-guardians)
+(set! alist #f)
+
+(begin das-guardians)
+
+!#
+		      
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;; Class definition, etc. ;;;;;;;;;;;;;;;;;;;;

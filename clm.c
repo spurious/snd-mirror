@@ -1973,7 +1973,8 @@ static mus_any_class NRXYSIN_CLASS = {
   &run_nrxysin,
   MUS_NOT_SPECIAL, 
   NULL, 0,
-  &nrxy_y_over_x, &nrxy_set_y_over_x,
+  &nrxy_y_over_x, 
+  &nrxy_set_y_over_x,
   0, 0, 0, 0, 
   0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
@@ -2087,7 +2088,8 @@ static mus_any_class NRXYCOS_CLASS = {
   &run_nrxycos,
   MUS_NOT_SPECIAL, 
   NULL, 0,
-  &nrxy_y_over_x, &nrxy_set_y_over_x,
+  &nrxy_y_over_x, 
+  &nrxy_set_y_over_x,
   0, 0, 0, 0, 
   0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
@@ -2219,6 +2221,7 @@ static Float table_lookup_phase(mus_any *ptr) {return(fmod(((TWO_PI * ((tbl *)pt
 static Float table_lookup_set_phase(mus_any *ptr, Float val) {((tbl *)ptr)->phase = (val * ((tbl *)ptr)->table_size) / TWO_PI; return(val);}
 
 static int table_lookup_interp_type(mus_any *ptr) {return((int)(((tbl *)ptr)->type));} /* ints here and elsewhere to fit mus_channels method = interp-type */
+
 static void table_lookup_reset(mus_any *ptr) {((tbl *)ptr)->phase = 0.0;}
 
 
@@ -2703,7 +2706,8 @@ static mus_any_class POLYWAVE_CLASS = {
   &pw_set_freq,
   &pw_phase,
   &pw_set_phase,
-  &pw_index, pw_set_index,
+  &pw_index, 
+  &pw_set_index,
   &pw_increment,
   &pw_set_increment,
   &run_polywave,
@@ -5397,7 +5401,9 @@ static mus_any_class FILTER_CLASS = {
   &filter_xcoeff, &filter_set_xcoeff, 
   0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
-  &filter_ycoeff, &filter_set_ycoeff, &filter_xcoeffs, &filter_ycoeffs, 0,
+  &filter_ycoeff, &filter_set_ycoeff, 
+  &filter_xcoeffs, &filter_ycoeffs, 
+  0,
   &filter_reset,
   0
 };
@@ -5422,7 +5428,8 @@ static mus_any_class FIR_FILTER_CLASS = {
   &filter_xcoeff, &filter_set_xcoeff, 
   0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
-  0, 0, &filter_xcoeffs, 0, 0,
+  0, 0, 
+  &filter_xcoeffs, 0, 0,
   &filter_reset,
   0
 };
@@ -5447,7 +5454,8 @@ static mus_any_class IIR_FILTER_CLASS = {
   0, 0,
   0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0,
-  &filter_ycoeff, &filter_set_ycoeff, 0, &filter_ycoeffs, 0,
+  &filter_ycoeff, &filter_set_ycoeff, 
+  0, &filter_ycoeffs, 0,
   &filter_reset,
   0
 };

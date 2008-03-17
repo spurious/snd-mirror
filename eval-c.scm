@@ -203,7 +203,10 @@ Usually just "", but can be "-lsnd" or something if needed.
 ;;;;;;;;;;;;;;;;;;;; Variables ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define *eval-macro-prefix* #f)
+
 (define eval-c-macro-prefix 'eval-c-macro-)
+(define eval-faust-macro-prefix 'eval-faust-macro-)
 
 (define eval-c-run-nows '())
 
@@ -217,6 +220,7 @@ Usually just "", but can be "-lsnd" or something if needed.
 (define eval-c-void-types (list "void"))
 (define eval-c-string-types (list "char *" "char*" "gchar*" "char *"))
 (define eval-c-int-types (list "int" "long" "short" "char" "gint" "size_t"))
+(define eval-c-int64-types (list "long long" "int64" "int64_t" "scm_t_int64"))
 (define eval-c-float-types (list "float"))
 (define eval-c-double-types (list "double"))
 
@@ -293,7 +297,9 @@ Usually just "", but can be "-lsnd" or something if needed.
 !#
 
 (define (eval-c-get-propertype das-type)
-  (<-> (eval-c-etype->ctype das-type) " "))
+  (if (pair? das-type)
+      " void* " ;; A function
+      (<-> (eval-c-etype->ctype das-type) " ")))
 
 #!
 (eval-c-get-propertype '<int-wefwe>)
@@ -304,6 +310,7 @@ Usually just "", but can be "-lsnd" or something if needed.
     (cond ((member type eval-c-void-types) "UNSPECIFIED")
 	  ((and (not eval-c-string-is-pointer) (member type eval-c-string-types) "STRING"))
 	  ((member type eval-c-int-types) "INTEGER")
+	  ((member type eval-c-int64-types) "INT64")
 	  ((member type eval-c-float-types) "FLOAT")
 	  ((member type eval-c-double-types) "DOUBLE")
 	  ((string=? type "SCM") "SCM")
@@ -317,6 +324,8 @@ Usually just "", but can be "-lsnd" or something if needed.
   (set! eval-c-string-types (cons type eval-c-string-types)))
 (define (eval-c-add-int-type type)
   (set! eval-c-int-types (cons type eval-c-int-types)))
+(define (eval-c-add-int64-type type)
+  (set! eval-c-int64-types (cons type eval-c-int64-types)))
 (define (eval-c-add-float-type type)
   (set! eval-c-float-types (cons type eval-c-float-types)))
 (define (eval-c-add-double-type type)
@@ -328,6 +337,7 @@ Usually just "", but can be "-lsnd" or something if needed.
 		`("UNSPECIFIED" <void>
 		  "STRING" <char-*>
 		  "INTEGER" <int>
+		  "INT64"   <int64>
 		  "FLOAT" <float>
 		  "DOUBLE" <double>
 		  "SCM" <SCM>
@@ -376,6 +386,8 @@ Usually just "", but can be "-lsnd" or something if needed.
 							      "_greaterthan_")
 							     ((equal? #\< c)
 							      "_lessthan_")
+							     ((equal? #\? c)
+							      "_questionmark_")
 							     (else
 							      (string c))))
 					   varlist))))
@@ -386,6 +398,7 @@ Usually just "", but can be "-lsnd" or something if needed.
       
 #!
 (eval-c-cify-var '(aiai))
+(eval-c-cify-var 'c-dlsym)
 !#
 
 (define (eval-c-symbol-is-type s)
@@ -606,7 +619,8 @@ Usually just "", but can be "-lsnd" or something if needed.
 ;;;;;;;;;;;;;;;;;;; Parsing ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (eval-c-eval-funccall term)
+(define* (eval-c-eval-funccall term)
+  (define parser eval-parse)
   (if (null? (cdr term))
       (<-> (eval-c-cify-var (if (symbol? (car term))
 				(symbol->string (car term))
@@ -616,20 +630,23 @@ Usually just "", but can be "-lsnd" or something if needed.
 							 (symbol->string (car term))
 							 (car term)))
 				    " ("))
-			 (map (lambda (x) (<-> (eval-c-parse x) ", ")) (c-butlast (cdr term)))
-			 (list (eval-c-parse (last term)))
+			 (map (lambda (x) (<-> (parser x) ", ")) (c-butlast (cdr term)))
+			 (list (parser (last term)))
 			 (list ")")))))
 
 
 (define (eval-c-macro-result term)
-  (let* ((a (cons (symbol-append eval-c-macro-prefix (car term)) (cdr term)))
+  (let* ((a (cons (symbol-append *eval-macro-prefix* (car term)) (cdr term)))
 	 (b (macroexpand-1 a )))
     (if (not (equal? a b))
-	(eval-c-parse b)
+	(eval-parse b)
 	(eval-c-eval-funccall term))))
 
 
-(define (eval-c-parse term)
+(define* (eval-parse term)
+  (define parser eval-parse)
+  (define macroexpander eval-c-macro-result)
+
   (if eval-c-very-verbose
       (c-display "top: " term))
   (cond 
@@ -655,12 +672,12 @@ Usually just "", but can be "-lsnd" or something if needed.
 					      (cdr (cadr type)))))
 			 "")
 		     ");"
-		     (eval-c-parse `( ,(eval-c-ctype->etype typename) ,(cadr term) ,@(cddr term)))))
+		     (parser `( ,(eval-c-ctype->etype typename) ,(cadr term) ,@(cddr term)))))
 	      
 	      ;; (<type> ...) / (func ...)
 	      (if (not (eval-c-symbol-is-type type))
 		  
-		  (eval-c-macro-result term)
+		  (macroexpander term)
 		  
 		  ;; (<type> ....)
 		  (let* ((type (if (= 0 eval-c-level)
@@ -677,7 +694,7 @@ Usually just "", but can be "-lsnd" or something if needed.
 		    (if (not isvarname?)
 			
 			;; (<type> () .... )
-			(eval-c-parse `(,type ,@(map eval-c-parse (cdr term))))
+			(parser `(,type ,@(map parser (cdr term))))
 			
 			;; (<type> varname ...)
 			(begin
@@ -689,7 +706,7 @@ Usually just "", but can be "-lsnd" or something if needed.
 			  (if (= (length term) 2)
 			      ;; (<int> a)
 			      (<-> (eval-c-get-propertype type)
-				   (eval-c-parse varname))
+				   (parser varname))
 			      
 			      (if (and (= (length term) 3)
 				       (or (not (list? (caddr term)))
@@ -698,9 +715,9 @@ Usually just "", but can be "-lsnd" or something if needed.
 				  
 				  ;; (<int> a 5)
 				  (<-> (eval-c-get-propertype type)
-				       (eval-c-parse varname)
+				       (parser varname)
 				       " = "
-				       (eval-c-parse (caddr term)))
+				       (parser (caddr term)))
 				  
 				  ;; (<int> a (lambda ...))
 				  (let* ((funcdecl (caddr term))
@@ -727,11 +744,16 @@ Usually just "", but can be "-lsnd" or something if needed.
 					 (if (> eval-c-level 0)
 					     "static "
 					     "")
-					 (apply <-> (map eval-c-parse (cons (eval-c-get-propertype type)
-									    (cons (eval-c-cify-var varname)
-										  `((,lambdaname ,funcvars
-												 ,@funcbody))))))))))))))))))))
-  
+					 (apply <-> (map parser (cons (eval-c-get-propertype type)
+								      (cons (eval-c-cify-var varname)
+									    `((,lambdaname ,funcvars
+											   ,@funcbody))))))))))))))))))))
+
+(define* (eval-c-parse term)
+  (set! *eval-macro-prefix* eval-c-macro-prefix)
+  (eval-parse term))
+
+
 #!
 (eval-c-parse '(<int> ai (lambda () (return 2))))
 (eval-c-parse '(<void> gakk (lambda (((<void> (<int>)) func)) (return 2))))
@@ -761,6 +783,13 @@ Usually just "", but can be "-lsnd" or something if needed.
 
 (define-macro (define-c-macro def . body)
   `(define-macro ,(cons (symbol-append eval-c-macro-prefix (car def)) (cdr def)) ,@body))
+(define-macro (define-faust-macro def . body)
+  `(define-macro ,(cons (symbol-append eval-faust-macro-prefix (car def)) (cdr def)) ,@body))
+(define-macro (define-c/faust-macro def . body)
+  `(begin
+     (define-macro ,(cons (symbol-append eval-faust-macro-prefix (car def)) (cdr def)) ,@body)
+     (define-macro ,(cons (symbol-append eval-c-macro-prefix (car def)) (cdr def)) ,@body)))
+
 
 
 (define-c-macro (set!-string-is-pointer-#t)
@@ -809,8 +838,23 @@ Usually just "", but can be "-lsnd" or something if needed.
 			 
 
 ;; He he. :-)
-(define-c-macro (unquote something)
+(define-c/faust-macro (unquote something)
   (primitive-eval something))
+
+(define-c/faust-macro (include filename)
+  (define ret "")
+  (for-each-line-in-file (string-trim-right (eval-parse filename))
+			 (lambda (line)
+			   (set! ret (<-> ret line "\n"))))
+  ret)
+
+(define-c/faust-macro (x11-selection)
+  (define filename (tmpnam))
+  (if (not (= 0 (system (<-> "xsel >" filename))))
+      (c-display "Error. x11-selection requires the \"xsel\" program: http://www.vergenet.net/~conrad/software/xsel/")
+      (begin
+	(delete-at-exit filename)
+	`(include ,filename))))
 
 (define-c-macro (arraydef name length)
   (<-> (eval-c-parse name) "[" (eval-c-parse length) "]"))
@@ -832,6 +876,17 @@ Usually just "", but can be "-lsnd" or something if needed.
 					 (list (eval-c-parse (car rest)))
 					 (map (lambda (x) (<-> ,opstring " " (eval-c-parse x) " ")) (cdr rest))
 					 (list ") "))))))))
+	  '(+ - * / | % & ~ == != < > <= >= || && += -= /= *= |= &= >> <<))
+
+(for-each (lambda (op)
+	    (let ((opstring (symbol->string op)))
+	      (primitive-eval 
+	       `(define-faust-macro (,op . rest)
+		  (if (= 1 (length rest))
+		      (<-> ,opstring (eval-c-parse (car rest)))
+		      (apply <-> (append (list (eval-c-parse (car rest)))
+					 (map (lambda (x) (<-> ,opstring " " (eval-c-parse x) " ")) (cdr rest))
+					 )))))))
 	  '(+ - * / | % & ~ == != < > <= >= || && += -= /= *= |= &= >> <<))
 
 
@@ -1225,10 +1280,8 @@ But, perhaps that last one shouldn't be allowed to work.
 	 (rettype (car term))
 	 (i 0)
 	 (types (map (lambda (var)
-		       (list (eval-c-to-scm
-			      (string-trim-right
-			       (eval-c-get-propertype
-				(car var))))
+		       (list (eval-c-to-scm (string-trim-right
+					     (eval-c-get-propertype (car var))))
 			     (cadr var)))
 		     parameters)))
     `((<SCM> ,helperfuncname (lambda ,(map (lambda (var) (list '<SCM> (cadr var)))
@@ -1244,6 +1297,7 @@ But, perhaps that last one shouldn't be allowed to work.
 							  `(SCM_ASSERT ,(cond ((string=? "STRING" type) `(|| (scm_is_false ,name) (IS_STRING_P ,name)))
 									      ((string=? "POINTER" type) `(POINTER_P ,name))
 									      ((string=? "INTEGER" type) `(== SCM_BOOL_T (scm_number_p ,name)))
+									      ((string=? "INT64" type) `(== SCM_BOOL_T (scm_number_p ,name)))
 									      ((string=? "FLOAT" type) `(== SCM_BOOL_T (scm_number_p ,name)))
 									      ((string=? "DOUBLE" type) `(== SCM_BOOL_T (scm_number_p ,name)))
 									      (else (c-display "\n\nError! eval.cscm/eval-c-gen-public-func: What?\n\n")))
@@ -1446,7 +1500,7 @@ int fgetc (FILE
   (<-> "while (" (eval-c-parse test) ")"
        (eval-c-parse `(begin ,@body))))
 
-(define-c-macro (string astring)
+(define-c/faust-macro (string astring)
   (<-> "\"" (if (string? astring)
 		astring
 		(string-trim-right (eval-c-parse astring)))
@@ -1612,7 +1666,7 @@ int fgetc (FILE
 
 ;;;;;;;;;;;;;;;;;; Cache
 
-(define eval-c-generation 5) ;;Cached code with different generation can not be used, and file is automatically deleted.
+(define eval-c-generation 6) ;;Cached code with different generation can not be used, and file is automatically deleted.
 
 (define eval-c-cache-dir (<-> (getenv "HOME") "/snd-eval-c-cache"))
 
@@ -1674,10 +1728,11 @@ int fgetc (FILE
     (if ret
 	(catch #t
 	       (lambda ()
-		 (c-display "Linking" (car ret))
-		 (if (defined? 'c-dynamic-call)
-		     (c-dynamic-call "das_init" (car ret))
-		     (dynamic-call "das_init" (dynamic-link (car ret)))))
+		 (cond ((defined? 'c-dynamic-call)
+			(c-dynamic-call (car ret) "das_init"))
+		       (else
+			(c-display "Linking" (car ret))
+			(dynamic-call "das_init" (dynamic-link (car ret))))))
 	       (lambda x
 		 (c-display x)
 		 (set! ret #f))))
@@ -1710,13 +1765,23 @@ int fgetc (FILE
 ;;	 (usleep 100)))
 
 (define eval-c-filestobedeleted '())
+(define (delete-at-exit filename)
+  (push! filename eval-c-filestobedeleted))
 
 (add-hook! exit-hook (lambda args
 		       (for-each (lambda (filename)
-				   (system (<-> "rm " filename)))
+				   (system (<-> "rm -f " filename)))
 				 eval-c-filestobedeleted)
 		       #f))
 
+(define old-tmpnam tmpnam)
+(define* (tmpnam :key (autodelete #t))
+  (define ret (old-tmpnam))
+  (if autodelete
+      (delete-at-exit ret))
+  ret)
+
+      
 (define* (eval-c-eval #:key (compile-options "") . codestrings)
   (let* ((evalstring "")
 	(sourcefile (<-> (tmpnam) ".c"))
@@ -1741,24 +1806,24 @@ int fgetc (FILE
 	(c-display (<-> *eval-c-compiler* " -O3 -fPIC -shared -o " libfile " " sourcefile " "
 			(if (string=? *eval-c-compiler* "icc")
 			    "-L/opt/intel_cc_80/lib /opt/intel_cc_80/lib/libimf.a"
-			    (<-> "-Wall " (if (getenv "CFLAGS") (getenv "CFLAGS") "") " " (if (getenv "LDFLAGS") (getenv "LDFLAGS") "") " "))
+			    (<-> "-Wall " (or (getenv "CFLAGS") "") " " (if (getenv "LDFLAGS") (getenv "LDFLAGS") "") " "))
 			(string #\`) guile-config " compile" (string #\`) " "
 			compile-options)))
     (if (not (= 0 (system (<-> *eval-c-compiler* " -O3 -fPIC -shared -o " libfile " " sourcefile " "
 			       (if (string=? *eval-c-compiler* "icc")
 				   "-L/opt/intel_cc_80/lib /opt/intel_cc_80/lib/libimf.a"
-				   (<-> "-Wall " (if (getenv "CFLAGS") (getenv "CFLAGS") "") " " (if (getenv "LDFLAGS") (getenv "LDFLAGS") "") " "))
+				   (<-> "-Wall " (or (getenv "CFLAGS") "") " " (if (getenv "LDFLAGS") (getenv "LDFLAGS") "") " "))
 			       " " *eval-c-CFLAGS* " "
 			       (string #\`) guile-config " compile" (string #\`) " "
 			       compile-options))))
 	(begin
 	  (if eval-c-lazy-cleanup
-	      (set! eval-c-filestobedeleted (cons sourcefile eval-c-filestobedeleted)))
+	      (delete-at-exit sourcefile))
 	  (throw 'compilation-failed)))
 
     ;;(ec-waitforfile libfile)
     (if (defined? 'c-dynamic-call)
-	(c-dynamic-call "das_init" libfile)
+	(c-dynamic-call libfile "das_init")
 	(dynamic-call "das_init" (dynamic-link libfile)))
     (if (not *eval-c-do-cache*)
 	(system (<-> "rm " libfile)))
@@ -1766,7 +1831,7 @@ int fgetc (FILE
     (if eval-c-cleanup
 	(system (<-> "rm " sourcefile))
 	(if eval-c-lazy-cleanup
-	    (set! eval-c-filestobedeleted (cons sourcefile eval-c-filestobedeleted))))
+	    (delete-at-exit sourcefile)))
     libfile))
 
 
@@ -1810,8 +1875,10 @@ int fgetc (FILE
     "#define MAKE_POINTER(a) scm_cons(MAKE_STRING(\"A_POINTER\"),scm_cons(scm_ulong2num((unsigned long)a),SCM_EOL))"
     "#define RETURN_POINTER(a) {unsigned long ret=(unsigned long)(a); return ret?MAKE_POINTER(ret):SCM_BOOL_F;}"
     "#define RETURN_UNSPECIFIED(a) {(a);return SCM_UNSPECIFIED;}"
-    ,(<-> "#define GET_INTEGER(a) SCM_INUM(scm_inexact_to_exact(" (if (c-atleast1.7?) "scm_floor(a)" "a") "))")
-    "#define MAKE_INTEGER SCM_MAKINUM"
+    "#define GET_INTEGER(a) scm_to_int(scm_inexact_to_exact(scm_floor(a)))"
+    "#define MAKE_INTEGER(a) scm_from_int(a)"
+    "#define GET_INT64(a) scm_to_int64(scm_inexact_to_exact(scm_floor(a)))"
+    "#define MAKE_INT64(a) scm_from_int64(a)"
     "#define GET_DOUBLE(a) scm_num2dbl(a,\"GET_DOUBLE\")"
     "#define MAKE_DOUBLE(a) scm_make_real((double)a)"
     "#define GET_FLOAT(a) ((float)scm_num2dbl(a,\"GET_DOUBLE\"))"
@@ -1824,6 +1891,7 @@ int fgetc (FILE
     "#else"
     "#  define IS_STRING_P(Arg)           scm_is_string(Arg)"
     "#endif"
+    "typedef scm_t_int64 int64;"
     ,@temp
     
     "void das_init(){"
@@ -1867,22 +1935,52 @@ int fgetc (FILE
 
 	"typedef void (*functype)()"
 
-	(public
-	 (<void> c-dynamic-call (lambda ((<char-*> funcname)
-					 (<char-*> filename))
-				  (printf (string "linking %s %s\\n") funcname filename)
-				  (let* ((handle <void-*> (dlopen filename RTLD_GLOBAL|RTLD_NOW)))
-				    (if (== handle NULL)
-					(begin
-					  (printf (string "Handle null (%s)\\n") (dlerror))
-					  ;;(throw 'gakk)
-					  )
-						  
-					(let* ((func <functype> (dlsym handle funcname)))
-					  (if (== func NULL)
-					      (printf (string "func null (%s)\\n") (dlerror))
-					      (func)))))))))
+	(variables->public
+	 (<int> RTLD_LAZY RTLD_NOW RTLD_GLOBAL RTLD_LOCAL))
 
+	(public
+	 (<void-*> c_dlsym_internal (lambda ((<void-*> handle)
+					     (<char-*> funcname))
+				      (if (== handle NULL)
+					  (begin
+					    (printf (string "Handle null (%s)\\n") (dlerror))
+					    (return NULL))
+					  (return (dlsym handle funcname)))))
+ 
+	 (<void> c_dynamic_call_internal (lambda ((<void-*> handle)
+						  (<char-*> funcname))
+					   (let* ((func <functype> (c_dlsym_internal handle funcname)))
+					     (if (== func NULL)
+						 (printf (string "func null (%s)\\n") (dlerror))
+						 (func)))))
+	 (<void-*> c_dynamic_handle_internal (lambda ((<char-*> filename)
+						      (<int> flag))
+					       (let* ((handle <void-*> (dlopen filename flag)))
+						 (if (== handle NULL)
+						     (begin
+						       (printf (string "Handle null (%s)\\n") (dlerror))
+						       (return NULL))
+						     (return handle)))))))
+(define* (c-dynamic-handle filename :key
+			   (flags (logior (RTLD_GLOBAL) (RTLD_NOW))))
+  (c_dynamic_handle_internal filename flags))
+			   
+(define (c-dlsym filename_or_handle funcname)
+  (c_dlsym_internal (if (string? filename_or_handle)
+			(c-dynamic-handle filename_or_handle)
+			filename_or_handle)
+		    funcname))
+  
+(define (c-dynamic-call filename_or_handle funcname)
+  (if (string? filename_or_handle)
+      (c-display "linking" filename_or_handle funcname))
+  (c_dynamic_call_internal (if (string? filename_or_handle)
+			       (c-dynamic-handle filename_or_handle)
+			       filename_or_handle)
+			   funcname))
+
+  
+  
 ;(define-macro (define-c ret-type def . body)
 ;  `(eval-c ""
 ;	   (public (,(car def) ,(cadr def) (lambda ,(cdr def)
@@ -1927,6 +2025,8 @@ int fgetc (FILE
 	 
 	 (<int*> ec-make-ints (lambda ((<int> n))
 				(return (calloc n (sizeof <int>)))))
+	 (<int64*> ec-make-int64s (lambda ((<int> n))
+				    (return (calloc n (sizeof <int64>)))))
 	 (<double*> ec-make-doubles (lambda ((<int> n))
 				      (return (calloc n (sizeof <double>)))))
 	 (<float*> ec-make-floats (lambda ((<int> n))
@@ -2031,10 +2131,24 @@ int fgetc (FILE
 ;(define (ec-make-struct something)
 ;  ())
 
-
+(define (free-ec-struct-from-guardian object)
+  (c-display "Automatically freeing a c-object of type:" ". This should not lead to trouble, but I'm not sure.")
+  (if #t
+      (begin
+	(ec-free object)
+	(c-display "that went well...?"))
+      (c-display "(not really freeing)" object))
+  ;;(,(symbol-append cleanname '_delete) das-c-object)
+  ;;(-> das-this destructor)
+  )
 
 
 (define-macro (define-ec-struct name . rest)
+  (define autofree #f)
+  (when (eqv? (car rest) :autofree)
+    (set! autofree (cadr rest))
+    (set! rest (cddr rest)))
+
   (let ((structname (symbol-append '<struct- (string->symbol
 					      (list->string
 					       (cdr
@@ -2070,7 +2184,8 @@ int fgetc (FILE
 								  (return (sizeof ,structname))))
 	       ,@(apply append (map (lambda (def)
 				      (let ((name (cadr def))
-					    (type (if (= 3 (length def))
+					    (type (if (or (pair? (car def))
+							  (= 3 (length def)))
 						      '<void-*>
 						      (eval-c-get-known-type (car def)))))
 					`((<void> ,(symbol-append cleanname '_set_ name) ,(if (eq? type '<void-*>)
@@ -2087,9 +2202,15 @@ int fgetc (FILE
 				    (remove (lambda (t)
 					      (eq? '<jmp_buf> (car t)))
 					    das-map))))))
-    `(def-class  (,name #:key ,@(map cadr das-map))
+    `(def-class  (,name :key
+			,@(map cadr das-map))
 
-       (define c-object (,(symbol-append cleanname '_new)))
+       (define c-object
+	 (let ((ret (,(symbol-append cleanname '_new))))
+	   (if ,autofree
+	       (add-finalizer ret free-ec-struct-from-guardian))
+	   ret))
+
 
        (def-method (get-c-object)
 	 c-object)
@@ -2133,6 +2254,7 @@ int fgetc (FILE
 										    `("UNSPECIFIED" ec-make-pointers
 										      "STRING" ec-make-pointers
 										      "INTEGER" ec-make-ints
+										      "INT64" ec-make-int64s
 										      "DOUBLE" ec-make-doubles
 										      "FLOAT" ec-make-floats
 										      "POINTER" ec-make-pointers)))))
@@ -2147,6 +2269,7 @@ int fgetc (FILE
 						 `("UNSPECIFIED" ec-get-pointers
 						   "STRING" ec-get-pointers
 						   "INTEGER" ec-get-ints
+						   "INT64" ec-get-int64s
 						   "DOUBLE" ec-get-doubles
 						   "FLOAT" ec-get-floats
 						   "POINTER" ec-get-pointers)))
@@ -2164,8 +2287,8 @@ int fgetc (FILE
 		      `(->2 this ,name ,name)
 		      `(if ,name
 			   (->2 this ,name ,name)))))
-	      das-map))
-    
+	      das-map)
+       )
     ))
 
 #!
@@ -2177,6 +2300,8 @@ int fgetc (FILE
 			    :twos '(2)
 			    :three "three"))
 
+
+(gc)
 (-> test one)
 => 1
 

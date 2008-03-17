@@ -285,6 +285,13 @@ in the \scheme|<realtime>| class.
 \item[\scheme|*in-bus*|] $ $ \newline
   The bus connected to the soundcard input.
 
+\item[\scheme|*rt*|] $ $ \newline
+  Always contains the last created rt object:
+  \begin{schemedisplay}
+    (<rt-out> (oscil))
+    (-> *rt* stop)
+  \end{schemedisplay}
+
 \end{description}
 
 
