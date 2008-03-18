@@ -4806,6 +4806,7 @@
 (if (not (provided? 'snd-snd4.scm)) (load "snd4.scm")) ; needed for various scan/map extensions
 
 (if (not (provided? 'snd-extensions.scm)) (load "extensions.scm"))
+(if (not (provided? 'snd-selection.scm)) (load "selection.scm"))
 (if (not (provided? 'snd-dsp.scm)) (load "dsp.scm"))
 (if (not (provided? 'snd-pvoc.scm)) (load "pvoc.scm"))
 (if (and with-gui (not (provided? 'snd-edit-menu.scm))) (load "edit-menu.scm"))

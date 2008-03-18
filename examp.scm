@@ -32,7 +32,6 @@
 ;;; voiced->unvoiced (formants)
 ;;; convolution (convolve)
 ;;; time varying FIR filter, notch filter
-;;; swap selection chans
 ;;; sound-interp, env-sound-interp
 ;;; add date and time to title bar
 ;;; how to get 'display' to write to Snd's listener
@@ -45,7 +44,6 @@
 ;;; remove-clicks
 ;;; searching examples (zero+, next-peak, find-pitch)
 ;;; file->vct and a sort of cue-list, I think, and region-play-list, region-play-sequence
-;;; replace-with-selection
 ;;; explode-sf2 -- turn soundfont file into a bunch of files of the form sample-name.aif
 ;;; open-next-file-in-directory -- middle button click closes current file and opens next
 ;;; chain-dsps
@@ -1550,35 +1548,6 @@ selected sound: (map-channel (cross-synthesis 1 .5 128 6.0))"
 
 
 
-;;; -------- swap selection chans
-
-(define+ (swap-selection-channels)
-  "(swap-selection-channels) swaps the currently selected data's channels"
-  (define find-selection-sound 
-    (lambda (not-this)
-      (catch 'return ; could also use call-with-current-continuation
-	     (lambda ()
-	       (apply map (lambda (snd chn)
-			    (if (and (selection-member? snd chn)
-				     (or (null? not-this)
-					 (not (= snd (car not-this)))
-					 (not (= chn (cadr not-this)))))
-				(throw 'return (list snd chn))))
-		      (all-chans)))
-	     (lambda (tag val) val))))
-  (if (selection?)
-      (if (= (selection-chans) 2)
-	  (let* ((beg (selection-position))
-		 (len (selection-frames))
-		 (snd-chn0 (find-selection-sound '()))
-		 (snd-chn1 (find-selection-sound snd-chn0)))
-	    (if snd-chn1
-		(swap-channels (car snd-chn0) (cadr snd-chn0) (car snd-chn1) (cadr snd-chn1) beg len)
-		(throw 'wrong-number-of-channels (list "swap-selection-channels" "needs two channels to swap"))))
-	  (throw 'wrong-number-of-channels (list "swap-selection-channels" "needs a stereo selection")))
-      (throw 'no-active-selection (list "swap-selection-channels"))))
-
-
 ;;; -------- sound interp
 ;;;
 ;;; make-sound-interp sets up a sound reader that reads a channel at an arbitary location,
@@ -2133,17 +2102,6 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 	  (set! time (+ time (/ (region-frames id) (region-srate id))))
 	  (list cur id)))
       data))))
-
-
-;;; -------- replace-with-selection
-
-(define (replace-with-selection)
-  "(replace-with-selection) replaces the samples from the cursor with the current selection"
-  (let ((beg (cursor))
-	(len (selection-frames)))
-    (insert-selection beg) ; put in the selection before deletion, since delete-samples can deactivate the selection
-    (delete-samples (+ beg len) len)))
-
 
 
 ;;; -------- explode-sf2
@@ -2733,26 +2691,6 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
      (lambda (snd)
        (set! (sync snd) new-sync))
      (sounds))))
-
-
-
-#|
-;;; define selection from cursor to named mark bound to 'm' key
-(bind-key #\m 0 
-  (lambda ()
-    (prompt-in-minibuffer "mark name:"
-      (lambda (response) ; this expects a string (use double quotes)
-	(define (define-selection beg end)
-	  (let* ((s (selected-sound))
-		 (c (selected-channel s)))
-	    (set! (selection-member? s c) #t)
-	    (set! (selection-position s c) beg)
-	    (set! (selection-frames s c) (1+ (- end beg)))))
-        (let ((m (find-mark response)))
-	  (if (mark? m)
-	      (define-selection (cursor) (mark-sample m))
-	      (report-in-minibuffer "no such mark")))))))
-|#
 
 
 

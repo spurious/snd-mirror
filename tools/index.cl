@@ -590,7 +590,7 @@
     (loop for file in files do
       (with-open-file (f file :if-does-not-exist nil)
 	(let ((line t)
-	      (linectr 0)
+	      (linectr -1)
 	      (comments 0)
 	      (openctr 0)
 	      (warned nil)
@@ -602,6 +602,7 @@
 	  ;;(if (> (length commands) 0) (warn "commands before ~A: ~A" file commands))
 	  (loop while line do
 	    (setf line (read-line f nil nil)) ;nil upon EOF with no error msg
+	    (incf linectr)
 	    (let ((len (length line)))
 	      (when (and line (plusp len))
 
@@ -691,7 +692,7 @@
 							(setf scripting nil)
 						      (if (not scripting)
 							  (if (not (member closer commands :test #'string-equal))
-							      (warn "~A without start? ~A from ~A[~D][~D:~D]" closer line file linectr (+ start 2) i)
+							      (warn "~A without start? ~A from ~A[~D][~D:~D] (commands: ~A)" closer line file linectr (+ start 2) i commands)
 							    (if (member closer
 									(list "ul" "tr" "td" "table" "small" "sub" "blockquote" "center" "p"
 									      "a" "i" "b" "title" "pre" "span" "h1" "h2" "h3" "code" "body" "html"
@@ -861,8 +862,7 @@
 			      (setf pos-def (search "<a class=def href=" dline))
 			      (setf pos (or pos-norm pos-quiet pos-def))
 			      (setf pos-len (if pos-norm 9 (if pos-def 19 21)))
-			      )))))))
-	    (incf linectr)))
+			      )))))))))
 	(if commands (format t "open directives at end of ~A: ~A~%" file commands))
 	(setf commands nil)
 	))

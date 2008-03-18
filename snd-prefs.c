@@ -4996,7 +4996,7 @@ static void help_show_selection(prefs_info *prf)
 static char *make_show_selection_binding(char *key, bool ctrl, bool meta, bool cx)
 {
 #if HAVE_SCHEME
-  return(mus_format("(if (not (provided? 'snd-extensions.scm)) (load-from-path \"extensions.scm\"))\n\(bind-key %s %d show-selection %s \"show selection\" \"show-selection\")\n", 
+  return(mus_format("(if (not (provided? 'snd-selection.scm)) (load-from-path \"selection.scm\"))\n\(bind-key %s %d show-selection %s \"show selection\" \"show-selection\")\n", 
 		    possibly_quote(key), 
 		    ((ctrl) ? 4 : 0) + ((meta) ? 8 : 0),
 		    (cx) ? "#t" : "#f"));
