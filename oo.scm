@@ -274,6 +274,10 @@
 				((eqv? :rest (car arg))
 				 (set! rest-name (cadr arg))
 				 arg)
+				((eqv? :allow-other-keys (car arg))
+				 (set! rest-name (caddr arg))
+				 arg)
+				;;(cdr arg))
 				(inkeys
 				 (let ((keyarg (list (if (pair? (car arg))
 							 (caar arg)
@@ -290,7 +294,7 @@
 				 (cons (car arg)
 				       (loop (cdr arg)
 					     inkeys)))))))
-	   (c-display "keyargs/defarg" keyargs defargs)
+	   (c-display "keyargs/defarg" keyargs "\n" defargs)
 	   `(define* (,(car def) ,@defargs)
 	      ,@(map (lambda (keyarg)
 		       `(cond ((eq? 'undefined ,(car keyarg))
@@ -298,7 +302,8 @@
 			      (else
 			       (set! ,rest-name (cddr ,rest-name)))))
 		     keyargs)
-	      ,@code)))))
+	      (let ()
+		,@code))))))
 
 #!
 (pretty-print (macroexpand '(define*2 (ai :key 

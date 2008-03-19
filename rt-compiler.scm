@@ -2100,7 +2100,7 @@ and run simple lisp[4] functions.
 	       (if (and func (= 2 (length func)))
 		   (check-failed (<-> "Snd-rt does not normally support function names as arguments.\n"
 				      "Either use the body of the function as argument instead, or tranform\n"
-				      "the function into a macro. (please let me know if you really need\n"
+				      "the function into a macro. (please let me know if you need\n"
 				      "to use function names as arguments, -Kjetil.)")
 				 func))
 	       
@@ -8214,8 +8214,16 @@ old syntax: (not very nice)
   `((cadr ,rt-func) ,@args))
 
 (define *rt* #f)
+(define *rt1* #f)
+(define *rt2* #f)
+(define *rt3* #f)
+(define *rt4* #f)
 (define-macro (<rt> rt-func)
   `(let ((ret ((caddr (rt-compile ,rt-func)))))
+     (set! *rt4* *rt3*)
+     (set! *rt3* *rt2*)
+     (set! *rt2* *rt1*)
+     (set! *rt1* *rt*)
      (set! *rt* ret)
      ret))
 
@@ -8245,10 +8253,21 @@ old syntax: (not very nice)
 	   (throw 'wrong-number-of-arguments-to-<rt-play>)))))
 
 
+(define*2 (<rt-play-do> play-type :key (out-bus #f) (in-bus #f) :allow-other-keys :rest rest)
+  `(let (,@(if in-bus `((in-bus ,in-bus)) '())
+	,@(if out-bus `((out-bus ,out-bus)) '()))
+     (rt-play-macro ,play-type (<rt> ,(last rest)) ,(c-butlast rest))))
+#!
+(<rt-play-do> 'play :out-bus #f :gakk 9 2 3 4)
+!#
+
 (define-macro (<rt-play> . rest)
-  `(rt-play-macro play (<rt> ,(last rest)) ,(c-butlast rest)))
+  (apply <rt-play-do> (cons 'play rest)))
+
 (define-macro (<rt-play-abs> . rest)
-  `(rt-play-macro play-abs (<rt> ,(last rest)) ,(c-butlast rest)))
+  (apply <rt-play-do> (cons 'play-abs rest)))
+
+;;  `(rt-play-macro play-abs (<rt> ,(last rest)) ,(c-butlast rest)))
 
 
 (define-macro (definstrument def . body)
@@ -8271,19 +8290,22 @@ old syntax: (not very nice)
 	    ;   `((cadr ,func))))
 	    
 	    ((eq? '<rt> (car term))
-	     (let ((func (add-rt-func (cadr term))))
-	       `((caddr ,func))))
+	     (find-rt (macroexpand-1 term)))
+;	     (let ((func (add-rt-func (cadr term))))
+;	       `((caddr ,func))))
 
 	    ((eq? '<rt-out> (car term))
 	     (find-rt (macroexpand-1 term)))
 
 	    ((eq? '<rt-play> (car term))
-	     (let ((func (add-rt-func (last term))))
-	       `(rt-play-macro play ((caddr ,func)) ,(cdr (c-butlast term)))))
+	     (find-rt (macroexpand-1 term)))
+;	     (let ((func (add-rt-func (last term))))
+;	       `(rt-play-macro play ((caddr ,func)) ,(cdr (c-butlast term)))))
 	    
 	    ((eq? '<rt-play-abs> (car term))
-	     (let ((func (add-rt-func (last term))))
-	       `(rt-play-macro play-abs ((caddr ,func)) ,(cdr (c-butlast term)))))
+	     (find-rt (macroexpand-1 term)))
+;	     (let ((func (add-rt-func (last term))))
+;	       `(rt-play-macro play-abs ((caddr ,func)) ,(cdr (c-butlast term)))))
 	    
 	    (else
 	     (map find-rt term))))
@@ -8331,14 +8353,21 @@ old syntax: (not very nice)
 	     (out (* (env amp-env)))))
 !#
 
-
 (define-macro (<rt-out> . body)
   (define start #f)
   (define len #f)
+  (define in-bus #f)
+  (define out-bus #f)
   (let loop ((body body))
     (cond ((keyword? (car body))
 	   (cond ((eqv? :start (car body))
 		  (set! start (cadr body))
+		  (loop (cddr body)))
+		 ((eqv? :in-bus (car body))
+		  (set! in-bus (cadr body))
+		  (loop (cddr body)))
+		 ((eqv? :out-bus (car body))
+		  (set! out-bus (cadr body))
 		  (loop (cddr body)))
 		 ((or (eqv? :len (car body))
 		      (eqv? :length (car body)))
@@ -8351,13 +8380,14 @@ old syntax: (not very nice)
 		 (else
 		  (error (list "Unknown keyword" (car body) " for <rt-out>. Legal keywords are start/len/dur.")))))
 	  ((and start len)
-	   `(<rt-play> ,start ,len (lambda () (out ,@body))))
+	   ;;(c-display "start/len" start len in-bus out-bus)
+	   `(<rt-play> :in-bus ,in-bus :out-bus ,out-bus ,start ,len (lambda () (out ,@body))))
 	  (start
-	   `(<rt-play> ,start (lambda () (out ,@body))))
+	   `(<rt-play> :in-bus ,in-bus :out-bus ,out-bus ,start (lambda () (out ,@body))))
 	  (len 
-	   `(<rt-play> 0 ,len (lambda () (out ,@body))))
+	   `(<rt-play> :in-bus ,in-bus :out-bus ,out-bus 0 ,len (lambda () (out ,@body))))
 	  (else
-	   `(<rt-play> (lambda () (out ,@body)))))))
+	   `(<rt-play> :in-bus ,in-bus :out-bus ,out-bus (lambda () (out ,@body)))))))
 #!
 (<rt-out> :start 3 :len 1 (oscil (extern (make-oscil))))
 (<rt-out> :dur 3 1 (oscil (extern (make-oscil))))
@@ -8530,6 +8560,22 @@ old syntax: (not very nice)
 (provided? 'snd-pd-external)
 
 (rt-macroexpand '(< a 3))
+
+(define (cons* x . x*)
+   (let f ((x x)
+	   (x* x*))
+     (cond ((null? x*)
+	    x)
+	   (else
+	    (cons x
+		  (f (car x*) (cdr x*)))])))
+
+
+(define (cons* x . x*)
+   (let f ([x x] [x* x*])
+     (cond
+       [(null? x*) x]
+       [else (cons x (f (car x*) (cdr x*)))])))
 
 !#
 

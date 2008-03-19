@@ -388,6 +388,14 @@ Usually just "", but can be "-lsnd" or something if needed.
 							      "_lessthan_")
 							     ((equal? #\? c)
 							      "_questionmark_")
+							     ((equal? #\! c)
+							      "_exclamationmark_")
+							     ((equal? #\+ c)
+							      "_plus_")
+							     ((equal? #\/ c)
+							      "_divide_")
+							     ((equal? #\* c)
+							      "_multiply_")
 							     (else
 							      (string c))))
 					   varlist))))
@@ -852,9 +860,14 @@ Usually just "", but can be "-lsnd" or something if needed.
   (define filename (tmpnam))
   (if (not (= 0 (system (<-> "xsel >" filename))))
       (c-display "Error. x11-selection requires the \"xsel\" program: http://www.vergenet.net/~conrad/software/xsel/")
-      (begin
-	(delete-at-exit filename)
-	`(include ,filename))))
+      `(include ,filename)))
+
+(define-c/faust-macro (url das-url)
+  (define filename (tmpnam))
+  ;;(c-display "command:" (<-> "wget " (string-trim-right (eval-parse das-url)) " -O " filename))
+  (if (not (= 0 (system (<-> "wget " (string-trim-right (eval-parse das-url)) " -O " filename))))
+      (c-display "Error. url requires wget.")
+      `(include ,filename)))
 
 (define-c-macro (arraydef name length)
   (<-> (eval-c-parse name) "[" (eval-c-parse length) "]"))
@@ -866,6 +879,7 @@ Usually just "", but can be "-lsnd" or something if needed.
   `(EC_MAX ,a ,b))
 
 
+;; eval-c infix fixer
 (for-each (lambda (op)
 	    (let ((opstring (symbol->string op)))
 	      (primitive-eval 
@@ -876,18 +890,27 @@ Usually just "", but can be "-lsnd" or something if needed.
 					 (list (eval-c-parse (car rest)))
 					 (map (lambda (x) (<-> ,opstring " " (eval-c-parse x) " ")) (cdr rest))
 					 (list ") "))))))))
-	  '(+ - * / | % & ~ == != < > <= >= || && += -= /= *= |= &= >> <<))
+	  '(+ - * / | % & ~ == != < > <= >= || && += -= /= *= |= &= >> << ^))
 
+; faust infix fixer
 (for-each (lambda (op)
-	    (let ((opstring (symbol->string op)))
-	      (primitive-eval 
-	       `(define-faust-macro (,op . rest)
-		  (if (= 1 (length rest))
-		      (<-> ,opstring (eval-c-parse (car rest)))
-		      (apply <-> (append (list (eval-c-parse (car rest)))
-					 (map (lambda (x) (<-> ,opstring " " (eval-c-parse x) " ")) (cdr rest))
-					 )))))))
-	  '(+ - * / | % & ~ == != < > <= >= || && += -= /= *= |= &= >> <<))
+	    (define opstring #f)
+	    (cond ((pair? op)
+		   (set! opstring (cadr op))
+		   (set! op (car op)))
+		  (else
+		   (set! opstring (symbol->string op))))
+	    (primitive-eval 
+	     `(define-faust-macro (,op . rest)
+		(if (= 1 (length rest))
+		    (<-> ,opstring (eval-parse (car rest)))
+		    (apply <-> (append (list (eval-parse (car rest)))
+				       (map (lambda (x) (<-> ,opstring " " (eval-parse x) " ")) (cdr rest))
+				       ))))))
+	  '(+ - * / | % & ~ == != < > <= >= || && += -= /= *= |= &= >> << ^
+	      (|:>| ":>") (|<:| "<:") (|:| ":") (@ "alpha")
+	      (colon ":") (comma ","))) ;; Looks better using seq and par.
+
 
 
 (define-c-macro (= . rest)

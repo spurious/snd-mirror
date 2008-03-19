@@ -6948,7 +6948,7 @@ insert sound-data: <a href="sndscm.html#insertsounddata">insert-sound-data</a><b
 </td></tr><tr><td></td><td>
 This inserts 'samps' samples of 'data' (normally a vct) starting at sample 'samp' in the given channel.
 'data' can be a filename.
-The regularized version of this might be:<br>
+The regularized version of this is:<br>
 <pre>
     (define* (<a class=quiet href="sndscm.html#insertchannel">insert-channel</a> data :optional beg dur snd chn edpos)
       (insert-samples beg dur data snd chn edpos))

@@ -45,12 +45,17 @@
 		    (return (cadr cache)))))
 	       faust-cache)
      #f)))
-				     
-#!
-(string=? "avb" "avb")
-(eq? "ab" "ab")
-!#
-
+(define* (display-faust-source :optional (faust (-> *rt* faust)))
+  (define handle (-> faust handle))
+  (call/cc
+   (lambda (return)
+     (for-each (lambda (cache)
+		 (when (equal? (cadr cache) 
+			       handle)
+		   (for-each c-display (car cache))
+		   (return #t)));(car cache))))
+	       faust-cache)
+     #f)))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -60,10 +65,12 @@
 (define has-compiled-faust-gui #f)
 
 ;; Don't reset this one. (Dynamic linking of c++ files seems to be very dynamic.)
+;; (removed, only necessary when linking with RTLD_GLOBAL)
 ;;(define num-compiled-faust-files -1)
 
 (define* (compile-faust source :key (make-gui #t))  
   (define file (generate-faust-source-file source))
+  
   (system (<-> "faust -a " (if make-gui
 			       "snd-rt-gtk.cpp "
 			       "module.cpp ")
@@ -73,13 +80,13 @@
   ;; Uncomment line below if linking with RTLD_GLOBAL
   ;;(system (<-> "sed -i -e 's/mydsp/mydsp" (number->string (inc! num-compiled-faust-files 1)) "/g' " file ".cpp"))
   (system (<-> "g++ -O3 -ffast-math "
+	       " " (or (getenv "CFLAGS") "") " "
+	       " " *eval-c-CFLAGS* " "
 	       (if make-gui
 		   (<-> (string-append (string #\`) "pkg-config --cflags --libs gtk+-2.0" (string #\`)) " ")
-		   "")
-	       " " (or (getenv "CFLAGS") "") " "
+		   " ")
 	       " " (or (getenv "LDFLAGS") "") " "
-	       " " *eval-c-CFLAGS* " "
-	       file ".cpp" " -shared -fpic -o " file ".so"))
+	       file ".cpp -shared -fpic -o " file ".so"))
 
   (for-each delete-at-exit
 	    (list (<-> file ".dsp")
@@ -176,7 +183,7 @@
 					   ((<int> (<void*>)) containsUI)
 					   (<void*> gtkui)
 					   )
-				    (printf (string "containss? %d\\n" ) (containsUI gtkui))
+				    (printf (string "contains? %d\\n" ) (containsUI gtkui))
 				    (if (containsUI gtkui)
 					(return SCM_BOOL_T)
 					(return SCM_BOOL_F))))
@@ -223,7 +230,7 @@
 
 
 (define (cleanup-faust-object faust)
-  (c-display "      TRYING TO CLEANUP")
+  (c-display "      TRYING TO CLEANUP (never seen this message, something is not wrong if this message is snown, which it is not.")
   )
 ;  (c-cleanup-faust-object faust))
 
@@ -235,7 +242,7 @@
   (define first-one? (not has-compiled-faust-gui))
 
   (if (not handle)
-      (set! handle (compile-faust source first-one?)))
+      (set! handle (compile-faust source :make-gui first-one?)))
 
   (let ((faust (<mus_rt_faust>))
 	;;(handle (c-dynamic-handle (<-> file ".so") :flags (RTLD_LOCAL)))
@@ -257,6 +264,9 @@
 	   #f)
 	  (else
 	   (-> faust compute_func (c-dlsym handle "compute"))
+	   (-> faust add-method 'display-source
+	       (lambda ()
+		 (display-faust-source faust)))
 	   (-> faust add-method 'init-gui
 	       (lambda (dialog)
 		 (let ((gtkui (faust-get-gui (-> faust get-c-object)
@@ -269,8 +279,8 @@
 	   (-> faust add-method 'contains-ui? (lambda ()
 					       ;;(-> faust init-gui)
 					       (faust-contains-ui? (-> faust get-c-object)
-								  (c-dlsym (-> faust-gui-faust handle) "containsUI")
-								  (-> faust gtkui))))
+								   (c-dlsym (-> faust-gui-faust handle) "containsUI")
+								   (-> faust gtkui))))
 	   (-> faust add-method 'open-gui
 	       (lambda (dialog)
 		 ;;(define d (<dialog> "hello" #f))
@@ -316,17 +326,20 @@
 (define-faust-macro (import something)
   (<-> "import(" (eval-parse `(string ,something)) ");"))
 
+(define-faust-macro (out . rest)
+  `(= process ,@rest))
 
 ;; Guile doesn't like "(: etc. etc.)"
-(define-faust-macro (colon . rest)
-  (define first #t)
-  (apply <-> (map (lambda (res)
-		    (if first
-			(begin
-			  (set! first #f)
-			  (eval-parse res) )   		
-			(<-> ": " (eval-parse res))))
-		  rest)))
+;; moved into the general infix fixer in eval-c
+;;(define-faust-macro (colon . rest)
+;;  (define first #t)
+;;  (apply <-> (map (lambda (res)
+;;		    (if first
+;;			(begin
+;;			  (set! first #f)
+;;			  (eval-parse res) )   		
+;;			(<-> ": " (eval-parse res))))
+;;		  rest)))
 
 ;; Automatically add (string) around second argument for the gui objects.
 (for-each (lambda (funcname)
@@ -344,21 +357,21 @@
 ;; More faust translation stuff added to eval-c.scm
 
 
-(define (generate-faust-source-file source)
+(define (generate-faust-source-file sourcelines)
   (fix-defines
    (define basename (tmpnam))
    (define sourcefile (<-> basename ".dsp"))
    (define fd (open-file sourcefile "w"))
    (for-each (lambda (code)
 	       (write-line (<-> code "") fd))
-	     source)
+	     sourcelines)
    (close fd)
    basename))
 
 
 (define*2 (generate-faust-source :key 
-				(autoimport-libs #t)
-				:rest terms)
+				 (autoimport-libs #t)
+				 :rest terms)
   (c-display "terms" terms)
   (set! terms (map eval-faust-parse terms))
   (when autoimport-libs
@@ -384,7 +397,7 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;; <rt-faust> in Snd-rt ;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;; <faust> and <faust-vct> in Snd-rt ;;;;;;;;
 ;;;;;;;; (frame by frame processing) ;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 			   
@@ -429,7 +442,7 @@
        (-> ,faust open-gui dialog)
        (-> dialog show))))
 
-(define*2 (<rt-faust-do> :key 
+(define*2 (rt-<faust>-do :key 
 			 (in '(vct))
 			 :rest code)
   ;;(c-display "input:" input)
@@ -442,28 +455,30 @@
 		  ,in))
 
 
-(define-rt-macro (<rt-faust-vct> . rest)
-  (apply <rt-faust-do> rest))
+(define-rt-macro (<faust-vct> . rest)
+  (apply rt-<faust>-do rest))
 
-(define-rt-macro (<rt-faust> . rest)
-  `(vct-ref (<rt-faust-vct> ,@rest) 0))
+(define-rt-macro (<faust> . rest)
+  `(vct-ref (<faust-vct> ,@rest) 0))
 
 
 #!
-(<rt-out> (vct-scale! (<rt-faust-vct> "process=osc(400),osc(500);")
+(<rt-out> (vct-scale! (<faust-vct> "process=osc(400),osc(500);")
 		      (<slider> "vol" 0.0 0.1 1.0)))
 
-(<rt-out> (* (<rt-faust> "freq = vslider(\"freq\", 600, 0, 2400, 0.1);"
-			 "process = vgroup(\"ai\",osc(freq));")
+(<rt-out> (* (<faust> "freq = vslider(\"freq\", 600, 0, 2400, 0.1);"
+		      "process = vgroup(\"ai\",osc(freq));")
 	     (<slider> "vol" 0.0 0.1 1.0)))
 
-(<rt-out> (* (<rt-faust> (= freq    (vslider "freq" 600 0 2400 0.1))
-			 (= process (vgroup "ai" (osc freq))))
+(<rt-out> (* (<faust> (= freq    (vslider "freq" 600 0 2400 0.1))
+		      (= process (vgroup "ai" (osc freq))))
 	     (<slider> "vol" 0.0 0.1 1.0)))
 
-(<rt-out> (<rt-faust> :in (vct (oscil))
-		      "process=*(0.3);"))
+(<rt-out> (<faust> :in (vct (oscil))
+		   "process=*(0.3);"))
+
 !#
+
 
 
 
@@ -473,19 +488,33 @@
 ;;;;;;;; (block processing)  ;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-macro (<rt-faust> . code)
+(define*2 (<rt-faust-do> :key
+			 (in-bus #f)
+			 (out-bus #f)
+			 :allow-other-keys
+			 :rest code)
   (define faust (rt-gensym))
   (define rt (rt-gensym))
-
+  
   (set! code (apply generate-faust-source code))
 
+  ;;(c-display "in-bus/out-bus:" in-bus out-bus)
+  
   `(let* ((,faust (make-faust-object ',code))
+	  ,@(if in-bus `((in-bus ,in-bus)) '())
+	  ,@(if out-bus `((out-bus ,out-bus)) '())
 	  (,rt (<rt> (lambda () (out (in))))))
      (-> ,rt faust ,faust)
      (-> ,rt play)
      (let ((rt-current-rt ,rt))
        (start-faust-gui-if-necessary ,faust))
      ,rt))
+
+(define-macro (<rt-faust> . code)
+  (apply <rt-faust-do> code))
+
+(define-macro (<rt-faust-url> url)
+  `(<rt-faust> (url ,url)))
 
 
 #!
@@ -495,8 +524,16 @@
 (<rt-faust> "process = osc(500)*0.2;")
 
 (<rt-faust> "process=osc(400);")
-(<rt-faust> (= process (osc 400)))
+(<rt-faust> (out (osc 400)))
 
+(<rt-faust> (import "math.lib")
+	    (= (smooth c) (colon "*(1-c)" "+~*(c)"))
+	    (= vol        (colon  (hslider "volume (db)" 0 -96 0 0.1)
+				  db2linear
+				  (smooth 0.99)))
+	    (= freq       (hslider "freq" 1000 0 24000 0.1))
+	    (out (vgroup "Osc" (* (osci freq) vol))))
+(display-faust-source)
 
 
 (let ((in-bus *out-bus*))
@@ -505,30 +542,35 @@
 	       envelop         = abs : max(db2linear(-96)) : linear2db : min(10)  : max ~ -(96.0/SR);
 	       process         = vmeter;")
   (<rt-faust> "freq = vslider(\"freq\", 600, 0, 2400, 0.1);"
-	      (= vol (colon (hslider "volume (db)" 0 -96 0 0.1) db2linear))
+	      (= vol (|:| (hslider "volume (db)" 0 -96 0 0.1) db2linear))
 	      "process = vgroup(\"ai\",osc(freq)*vol);"))
+
+(<rt-faust> :in-bus *out-bus*
+           "vmeter(x)       = attach(x, envelop(x) : vbargraph(\"dB\", -96, 10));
+ 	    hmeter(x)       = attach(x, envelop(x) : hbargraph(\"dB\", -96, 10));
+	    envelop         = abs : max(db2linear(-96)) : linear2db : min(10)  : max ~ -(96.0/SR);
+	    process         = vmeter;")
+
+
+(eval-faust-parse '(= vol (colon (hslider "volume (db)" 0 -96 0 0.1) db2linear)))
+(eval-faust-parse '(= vol (|:| (hslider "volume (db)" 0 -96 0 0.1) db2linear)))
+(eval-faust-parse '(= vol (seq (hslider "volume (db)" 0 -96 0 0.1) db2linear)))
 
 
 ;; To try the next one, go to the faust software catalog at http://faust.grame.fr/catalog.php ,
-;; open the code of a program, and select the code. But
-;; don't include import("music.lib")!
-(<rt-faust> (x11-selection))
+;; open the code of a program, mark the code, and evaluate expression below.
+;; (requires the "xsel" commandline program)
+(<rt-faust> :autoimport-libs #f	   
+	    (x11-selection))
 
+(<rt-faust> :autoimport-libs #f	   
+	    (url (x11-selection)))
 
-(define filename "/home/kjetil/snd-run/osc.dsp")
-(<rt-faust> (include ,filename))
+(<rt-faust> (url "http://faudiostream.cvs.sourceforge.net/*checkout*/faudiostream/faust/examples/tapiir.dsp"))
+(<rt-faust-url> "http://faudiostream.cvs.sourceforge.net/*checkout*/faudiostream/faust/examples/karplus32.dsp")
+(<rt-faust-url> "http://faudiostream.cvs.sourceforge.net/*checkout*/faudiostream/faust/tools/faust2pd-1.0.2/examples/seqdemo/organ.dsp")
+
 (<rt-faust> (include "/home/kjetil/snd-run/osc.dsp"))
-
-(<rt-faust> (import "math.lib")
-	    (= (smooth c) (colon "*(1-c)" "+~*(c)"))
-	    (= vol        (colon  (hslider "volume (db)" 0 -96 0 0.1)
-				  db2linear
-				  (smooth 0.99)))
-	    (= freq       (hslider "freq" 1000 0 24000 0.1))
-	    (= process    (vgroup "Osc" (* (osci freq) vol))))
-
-
-
 
 (let ((abus (make-bus)))
   (<rt-faust> "smooth(c)   = *(1-c) : +~*(c);"
@@ -538,6 +580,36 @@
   (<rt-out> (oscil))
   (set! (-> *rt* out-bus) abus))
 
+(let ((abus (make-bus)))
+  (<rt-faust> :in-bus abus
+	      "smooth(c)   = *(1-c) : +~*(c);"
+	      "gain        = vslider(\" dB \", 0, -96, 4, 0.1) : db2linear : smooth(0.999);"
+	      "process     = vgroup(\"fader\", *(gain));")
+  (<rt-out> :out-bus abus
+	    (oscil)))
+
+
+(let ((abus (make-bus)))
+  (<rt-faust> :in-bus abus
+	      (= (smooth c) "*(1-c) : +~*(c)")
+	      (= gain       (colon (vslider " dB " 0 -96 4 0.1) 
+				   db2linear
+				   (smooth 0.999)))
+	      (out (vgroup "fader" "*(gain)")))
+  (<rt-out> :out-bus abus
+	    (oscil)))
+
+(display-faust-source (-> *rt1* faust))
+
+
+(define-faust-macro (oscivol freq vol)
+  `(* ,vol (osci ,freq)))
+
+(<rt-faust> (out (oscivol 500 0.2)))
+
+(<rt-out> (<faust> :in (vct (oscil))
+		   (= gain    (vslider "gain" 0.2 0 1 0.01))
+		   (= process (vgroup "ai" "*(gain)"))))
 
 
 !#

@@ -466,7 +466,7 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
   
   )
 
-(define rt-callback-type "typedef void (*Callback)(void *arg,jack_client_t *client,int is_running,int num_frames,int base_time,float samplerate)")
+(define rt-callback-type "typedef void (*Callback)(void *arg,jack_client_t *client,int is_running,int num_frames,int64 base_time,float samplerate)")
 
 (eval-c ""
 	"#include <jack/jack.h>"
@@ -673,7 +673,7 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 	    ,bus-struct
 	    "extern float sys_getsr(void)"
 	    
-	    (<int> base_time 0)
+	    (<int64> base_time 0)
 	    (<void-*> engine)
 	    (<Callback> callback)
 	    
@@ -684,7 +684,7 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 				  (set! callback das_callback)))
 	     (<float> pd_rt_get_samplerate (lambda ()
 					     (return (sys_getsr))))
-	     (<int> pd_rt_get_time (lambda ()
+	     (<int64> pd_rt_get_time (lambda ()
 				     (return base_time))))
 	    
 	    
@@ -806,7 +806,7 @@ procfuncs=sorted
 
 
 (define-ec-struct <RT_Event>
-  <int> time
+  <int64> time
   <struct-RT_Event-*> next
   <void-*> func
   <void-*> arg
@@ -859,8 +859,8 @@ procfuncs=sorted
   <int> queue_size
   <struct-RT_Event-**> queue                ;; A priority queue with room for queue_fullsize number of events
   ;;<struct-RT_Event-*> events_rt           ;; Sorted events to be scheduled.
-  <int> next_switchtime                     ;; The next time events_noninserted2 becomes events_noninserted1
-  <int> next_next_switchtime                ;; The next time after that again that events_noninserted2 becomes events_noninserted1
+  <int64> next_switchtime                     ;; The next time events_noninserted2 becomes events_noninserted1
+  <int64> next_next_switchtime                ;; The next time after that again that events_noninserted2 becomes events_noninserted1
   <struct-RT_Event-*> events_noninserted1   ;; Events that is scheduled 0.0 or more seconds into the future. (unsorted)
   <struct-RT_Event-*> events_noninserted2   ;; Events that is scheduled 0.1 or more seconds into the future. (unsorted)
   <struct-RT_Event-*> events_non_rt
@@ -872,8 +872,8 @@ procfuncs=sorted
   <char-*> allocplace_end
 
   ;; Time must be unsigned! (wrap-around)
-  <int> time
-  <int> time_before ;; What is this?
+  <int64> time
+  <int64> time_before ;; What is this?
   <float> samplerate
   <float> res
   <char-*> error
@@ -1091,7 +1091,7 @@ procfuncs=sorted
 				      (set! event->time 0))
 
 				  (let* ((queue <struct-RT_Event-**> engine->queue)
-					 (time <int> event->time)
+					 (time <int64> event->time)
 					 (i <int> engine->queue_size)
 					 (newi <int> (>> i 1)))
 				    ;;(fprintf stderr (string "insert, i: %d newi: %d\\n") i newi)
@@ -1117,7 +1117,7 @@ procfuncs=sorted
 				     (let* ((queue <struct-RT_Event-**> engine->queue)					
 					    (size <int> engine->queue_size)
 					    (last <struct-RT_Event-*> queue[size+1])
-					    (last_time <int> last->time)
+					    (last_time <int64> last->time)
 					    (i <int> 1)
 					    (child <int>))
 				       ;;(fprintf stderr (string "remove, i: %d child %d, size: %d, last: %u\\n") i child size last)
@@ -1161,7 +1161,7 @@ procfuncs=sorted
 
 	;; Run queued events
 	(<void> rt_run_queued_events (lambda ((<struct-RT_Engine-*> engine)
-					      (<int> time))
+					      (<int64> time))
 				       (let* ((event <struct-RT_Event-*> (rt_findmin_event engine)))
 					 (while (and (!= event NULL)
 						     (>= time event->time))
@@ -1195,7 +1195,7 @@ procfuncs=sorted
 
 			       (<int> max_cycle_usage (/ (* nframes engine->max_cpu_usage) 100))
 				      
-			       (<int> time (+ base_time nframes))
+			       (<int64> time (+ base_time nframes))
 
 			       (if (> nframes ,rt-max-frame-size)
 				   (begin
@@ -1249,10 +1249,10 @@ procfuncs=sorted
 			       (set! engine->time_before engine->time) ;; Last time
 			       
 			       (if (== (setjmp engine->error_jmp) 0)
-				   (let* ((time <int> base_time)
-					  (next_stop <int>)
+				   (let* ((time <int64> base_time)
+					  (next_stop <int64>)
 					  (event <struct-RT_Event-*>)
-					  (end_time <int> (+ base_time nframes)))
+					  (end_time <int64> (+ base_time nframes)))
 
 
 				     
