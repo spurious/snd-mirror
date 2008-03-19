@@ -1478,6 +1478,14 @@ static int fill_dac_buffers(int write_ok)
 	  dp = play_list[i];
 	  if (dp)
 	    {
+	      
+	      if (dp->audio_chan >= snd_dacp->channels) /* this can happen if we're playing 1 chan, try to add 2 chans */
+		{
+		  if (dac_combines_channels(ss))
+		    dp->audio_chan %= snd_dacp->channels;
+		  else continue;
+		}
+
 	      /* check for moving cursor */
 	      sp = dp->sp; /* can be nil if region playing */
 	      if ((sp) && 
@@ -1497,6 +1505,7 @@ static int fill_dac_buffers(int write_ok)
 		  dp->cp->tracking = false;
 		  dp->cp->just_zero = old_just_zero;
 		}
+
 	      /* add a buffer's worth from the current source into dp->audio_chan */
 	      buf = dac_buffers[dp->audio_chan];
 	      if (buf == NULL) continue;
