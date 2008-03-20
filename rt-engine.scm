@@ -104,7 +104,7 @@ writing one period later[1]: bus[n]=v
 
 
 (define bus-struct (<-> "struct rt_bus_data{"
-			"  int last_written_to;"
+			"  int64 last_written_to;"
 			"  float val;"
 			"};"
 			"struct rt_bus{"
@@ -871,7 +871,7 @@ procfuncs=sorted
   <char-*> allocplace
   <char-*> allocplace_end
 
-  ;; Time must be unsigned! (wrap-around)
+  ;; Time must be unsigned! (wrap-around) (nope, using 64 bit instead.)
   <int64> time
   <int64> time_before ;; What is this?
   <float> samplerate
@@ -948,7 +948,7 @@ procfuncs=sorted
 	;; Code running in hard realtime thread (or can be)
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
-	"typedef int (*Callback)(void *arg,int startframes, int endframe)"
+	"typedef int (*Callback)(void *arg,int startframes, int endframe)" ;; startframes and endframe do not need to be 64 bit.
 	"typedef void (*Callback2)(struct RT_Engine *,struct RT_Event*)"
 
 
@@ -1190,7 +1190,7 @@ procfuncs=sorted
 				      (<jack_client_t-*> client)
 				      (<int> is_running)
 				      (<int> nframes)
-				      (<int> base_time)
+				      (<int64> base_time)
 				      (<float> samplerate))
 
 			       (<int> max_cycle_usage (/ (* nframes engine->max_cpu_usage) 100))
@@ -1325,7 +1325,7 @@ procfuncs=sorted
 				  (set! engine->allocplace_end (+ engine->allocplace ,rt-allocmem-size))
 				  
 				  (set! engine->queue (calloc (sizeof <struct-RT_Event-*>) engine->queue_fullsize))
-				  (set! rt_event_dummy.time 0.0f)
+				  (set! rt_event_dummy.time 0)
 				  ;;(set! engine->queue_size 1)
 				  (for-each 0 engine->queue_fullsize
 					    (lambda (i)
