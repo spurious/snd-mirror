@@ -546,9 +546,16 @@ returning you to the true top-level."
        (with-sound (:output "temp.snd")
          (eval (append (list (car call) 0.0) (cddr call)) (current-module)))
        (let ((temp (find-sound "temp.snd")))
-	 (mix-channel temp (seconds->samples (cadr call)) (frames temp) s 0 -1 #t)))
-     calls)
-    (close-sound (find-sound "temp.snd"))))
+	 (channel->mix temp 0 0 (frames temp)  s 0 (seconds->samples (cadr call))) ; channel->mix from extensions.scm
+	 (close-sound temp)))
+
+           ;; (define (channel->mix input-snd input-chn input-beg input-len  output-snd output-chn output-beg)...)
+           ;; this copies so the re-use of "temp.snd" should be safe
+
+           ;; with-sound :with-mixes and mixes->notelist?
+           ;; what about multichan output? or input? -- both sides here need to assume multi-channel mixes somehow
+           
+     calls)))
 
 (define (rewrite-calls)
   (let ((oput (open-output-file "temp")))

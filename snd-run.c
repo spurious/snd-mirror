@@ -10004,9 +10004,6 @@ static xen_value *outn_1(ptree *prog, int chan, xen_value **args, int num_args, 
 
       output = mus_clm_output();
 
-      /* TODO: why add_*_to_ptree here (and out_any_1 below)? we're not creating these, and the protection is never cleared if *output* is a function referring to them */
-      /*   is it actually protecting? -- XEN_FALSE is not xen_p? -- more likely add_value_to_ptree */
-
       if (mus_xen_p(output))
 	true_args[3] = make_xen_value(R_CLM, add_clm_to_ptree(prog, XEN_TO_MUS_ANY(output), XEN_FALSE), R_VARIABLE);
       else
@@ -10034,7 +10031,7 @@ static xen_value *outn_1(ptree *prog, int chan, xen_value **args, int num_args, 
 	}
       for (k = 0; k < 3; k++) true_args[k] = args[k];
       rtn = out_func(prog, true_args, 3);
-      if (!protect_ptree) FREE(true_args[3]); /* otherwise it appears that the embedded ptree is gc'd twice? */
+      if (!protect_ptree) FREE(true_args[3]); /* otherwise the embedded ptree is gc'd twice */
       return(rtn);
     }
   return(out_func(prog, args, num_args));

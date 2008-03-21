@@ -2,12 +2,9 @@
 
 ;;; channel-property, sound-property, edit-property
 ;;; delete selected portion and smooth the splice
-;;; eval over selection
 ;;; mix with result at original peak amp
 ;;; mix with envelope
 ;;; map-sound-files, for-each-sound-file, match-sound-files, directory->list
-;;; selection-members
-;;; make-selection
 ;;; check-for-unsaved-edits
 ;;; remember-sound-state
 ;;; mix-channel, insert-channel
@@ -210,142 +207,6 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
   
 
     
-;;; -------- selection-members
-;;;
-;;; returns a list of lists of (snd chn): channels in current selection
-
-(define (selection-members)
-  "(selection-members) -> list of lists of (snd chn) indicating the channels participating in the current selection."
-  (let ((sndlist '()))
-    (if (selection?)
-	(map (lambda (snd)
-	       (do ((i (1- (channels snd)) (1- i)))
-		   ((< i 0))
-		 (if (selection-member? snd i)
-		     (set! sndlist (cons (list snd i) sndlist)))))
-	     (sounds)))
-    sndlist))
-
-
-;;; -------- clear-selection
-
-(define (clear-selection)
-  (if (selection?)
-      (for-each
-       (lambda (s)
-	 (do ((i 0 (1+ i)))
-	     ((= i (chans s)))
-	   (let ((need-update (selection-member? s i)))
-	     (set! (selection-member? s i) #f)
-	     (if need-update (update-time-graph s i)))))
-       (sounds))))
-
-
-;;; -------- make-selection
-
-;;; the regularized form of this would use dur not end
-
-(define* (make-selection :optional beg end snd chn)
-  "(make-selection :optional beg end snd chn) makes a selection like make-region but without creating a region.
-make-selection follows snd's sync field, and applies to all snd's channels if chn is not specified. end defaults
-to end of channel, beg defaults to 0, snd defaults to the currently selected sound."
-
-  (let ((current-sound (or snd (selected-sound) (car (sounds)))))
-
-    (define (add-chan-to-selection s0 s1 s c)
-      (set! (selection-member? s c) #t)
-      (set! (selection-position s c) (or s0 0))
-      (set! (selection-frames s c) (- (or (and (number? s1) (1+ s1)) (frames s c)) (or s0 0))))
-
-    (if (not (sound? current-sound))
-	(throw 'no-such-sound (list "make-selection" beg end snd chn)))
-
-    (let ((current-sync (sync current-sound)))
-      (clear-selection)
-      (if (number? chn)
-	  (add-chan-to-selection beg end snd chn)
-	  (for-each
-	   (lambda (s)
-	     (if (or (eq? snd #t)
-		     (= s current-sound)
-		     (and (not (= current-sync 0))
-			  (= current-sync (sync s))))
-		 (do ((i 0 (1+ i)))
-		     ((= i (chans s)))
-		   (add-chan-to-selection beg end s i))))
-	   (sounds))))))
-
-
-
-;;; -------- with-temporary-selection
-
-(define (with-temporary-selection thunk beg dur snd chn)
-  (let ((seldata (and (selection?) 
-		      (car (selection-members)))))
-    (if (selection?)
-	(set! seldata (append seldata (list (selection-position) (selection-frames)))))
-    (make-selection beg (+ beg dur) snd chn)
-    (let ((result (thunk)))
-      (if seldata
-	  (make-selection (caddr seldata) 
-			  (+ (caddr seldata) (cadddr seldata))
-			  (car seldata)
-			  (cadr seldata))
-	  (clear-selection))
-      result)))
-
-
-
-
-;;; -------- delete selected portion and smooth the splice
-
-(define (delete-selection-and-smooth)
-  "(delete-selection-and-smooth) deletes the current selection and smooths the splice"
-  (if (selection?)
-      (let ((beg (selection-position))
-	    (len (selection-frames)))
-	(apply map (lambda (snd chn)
-		     (if (selection-member? snd chn)
-			 (let ((smooth-beg (max 0 (- beg 16))))
-			   (delete-samples beg len snd chn)
-			   (smooth-sound smooth-beg 32 snd chn))))
-	       (all-chans)))))
-
-
-;;; -------- eval over selection, replacing current samples, mapped to "C-x x" key using prompt-in-minibuffer
-;;;
-;;; when the user types C-x x (without modifiers) and there is a current selection,
-;;;   the minibuffer prompts "selection eval:".  Eventually the user responds,
-;;;   hopefully with a function of one argument, the current selection sample
-;;;   the value returned by the function becomes the new selection value.
-
-(bind-key #\x 0
-  (lambda () "eval over selection"
-    (if (selection?)
-	(prompt-in-minibuffer "selection eval:" eval-over-selection)
-	(report-in-minibuffer "no selection")))
-  #t)
-
-(define eval-over-selection 
-  (lambda (func)
-    "(eval-over-selection func) evaluates func on each sample in the current selection"
-    (if (and (procedure? func) 
-	     (selection?))
-	(let* ((beg (selection-position))
-	       (len (selection-frames)))
-	  (apply map (lambda (snd chn)
-		       (if (selection-member? snd chn)
-			   (let ((new-data (make-vct len))
-				 (old-data (channel->vct beg len snd chn)))
-			     (do ((k 0 (1+ k))) ;here we're applying our function to each sample in the currently selected portion
-				 ((= k len) (vct->channel new-data beg len snd chn))
-			       (vct-set! new-data k (func (vct-ref old-data k)))))))
-		 (all-chans))))))
-
-;;; the same idea can be used to apply a function between two marks (see eval-between-marks in marks.scm)
-
-
-
 ;;; -------- check-for-unsaved-edits
 ;;;
 ;;; (check-for-unsaved-edits :optional (on #t)): if 'on', add a function to before-close-hook and before-exit-hook
@@ -587,12 +448,28 @@ If 'check' is #f, the hooks are removed."
 
 ;;; -------- mix-channel, insert-channel, c-channel
 
+(define (channel->mix input-snd input-chn input-beg input-len output-snd output-chn output-beg)
+  (if (< input-len 1000000)
+      (mix-vct (channel->vct input-beg input-len input-snd input-chn) output-beg output-snd output-chn #t)
+      (let* ((output-name (snd-tempnam))
+	     (output (new-sound output-name :size input-len))
+	     (reader (make-sample-reader input-beg input-snd input-chn)))
+	(map-channel (lambda (val) 
+		       (next-sample reader)) 
+		     0 input-len output 0)
+	(save-sound output)
+	(close-sound output)
+	(mix output-name output-beg 0 output-snd output-chn #t #t))))
+  
+
 (define* (mix-channel input-data :optional (beg 0) dur snd (chn 0) edpos with-tag)
 
   "(mix-channel file :optional beg dur snd chn edpos with-tag) mixes in file. file can be the file name, a sound index, or \
 a list (file-name-or-sound-index [beg [channel]])."
 
-  (let* ((input (if (not (list? input-data)) input-data (car input-data)))
+  (let* ((input (if (not (list? input-data)) 
+		    input-data 
+		    (car input-data)))
 	 (input-beg (if (or (not (list? input-data))
 			   (< (length input-data) 2)) 
 		       0 
@@ -622,20 +499,17 @@ a list (file-name-or-sound-index [beg [channel]])."
 
 		;; a virtual mix -- use simplest method available
 		(if (number? input)
+
 		    ;; sound index case
-		    (if (< len 1000000)
-			(mix-vct (channel->vct input-beg len input input-channel) start snd chn #t)
-			(let* ((output-name (snd-tempnam))
-			       (output (new-sound output-name :size len))
-			       (reader (make-sample-reader input-beg input input-channel)))
-			  (map-channel (lambda (val) (next-sample reader)) 0 len output 0)
-			  (save-sound output)
-			  (close-sound output)
-			  (mix output-name start 0 snd chn #t #t)))
+		    (channel->mix input input-channel input-beg len snd chn start)
+
 		    ;; file input
-		    (if (and (= start 0) (= len (mus-sound-frames input)))
+		    (if (and (= start 0) 
+			     (= len (mus-sound-frames input)))
+
 			;; mixing entire file
 			(mix input start 0 snd chn #t #f) ; don't delete it!
+
 			;; mixing part of file
 			(let* ((output-name (snd-tempnam))
 			       (output (new-sound output-name :size len))
@@ -1202,35 +1076,6 @@ connects them with 'func', and applies the result as an amplitude envelope to th
   (if (and (not (= choice 0))
 	   (not (member global-sync-func (hook->list after-open-hook))))
       (add-hook! after-open-hook global-sync-func)))
-
-
-;;; -------- show-selection
-
-(define (show-selection)
-  "(show-selection) adjusts graph bounds to display the selected portion"
-  (if (selection?)
-      (let ((beg #f)
-	    (end #f))
-	(for-each
-	 (lambda (snd)
-	   (do ((i 0 (1+ i)))
-	       ((= i (chans snd)))
-	     (if (selection-member? snd i)
-		 (let ((pos (/ (selection-position snd i) (srate snd)))
-		       (len (/ (selection-frames snd i) (srate snd))))
-		   (if (or (not beg)
-			   (< pos beg))
-		       (set! beg pos))
-		   (if (or (not end)
-			   (> (+ pos len) end))
-		       (set! end (+ pos len)))))))
-	 (sounds))
-	(for-each
-	 (lambda (snd)
-	   (do ((i 0 (1+ i)))
-	       ((= i (chans snd)))
-	     (set! (x-bounds snd i) (list beg end))))
-	 (sounds)))))
 
 
 

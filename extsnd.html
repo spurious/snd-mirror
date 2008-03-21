@@ -477,8 +477,7 @@ Extensions to Snd can be found in:
  play-between-marks, snap-marks.')">functions related to marks</td></tr>
 
 <tr><td bgcolor="#f6f8ff"><a href="sndscm.html#maxfdoc">maxf</a></td>
-    <td bgcolor="#f6f8ff" onmouseover="return escape('This is a collection of modal synthesis demos.  For the actual filter, see mfilter\
- in dsp.scm.')">Max Mathews resonator</td></tr>
+    <td bgcolor="#f6f8ff" onmouseover="return escape('This is a collection of modal synthesis demos.  For the actual filter, see the firmant generator')">Max Mathews resonator</td></tr>
 
 <tr><td><a href="sndscm.html#menusdoc">menus</a></td>
     <td onmouseover="return escape('Menu additions for things like crop, trim,\
@@ -1701,7 +1700,7 @@ This provides an opportunity to set sndlib prescaling values:
 
 The prescaling affects only sound data made up of floats or doubles.  'reason' is an integer indicating why this file is being opened:
 <pre>
-    0: reopen a file closed to conserve file channels (this is an internal re-open normally invisible to the user)
+    0: reopen a temporarily closed file (internal to Snd &mdash; normally invisible)
     1: sound-open, File:open etc &mdash; the normal path to open a sound
     2: copy reader &mdash; another internal case; this happens if a sound is played and edited at the same time
     3: insert sound (File:Insert etc)
@@ -5694,6 +5693,7 @@ append selection: <a href="sndscm.html#menusdoc">append-selection</a><br>
 write selection to a file: <a href="sndscm.html#menusdoc">selection-&gt;new</a><br>
 notch filter selection: <a href="sndscm.html#notchselection">notch-selection</a><br>
 undo select-all.: <a href="sndscm.html#menusdoc">deselect-all</a><br>
+filter the selection: <a href="#filterselection">filter-selection</a>, <a href="sndscm.html#filterselectionandsmooth">filter-selection-and-smooth</a><br>
 <br>
 </blockquote></small>
 </td></tr></TABLE>
@@ -5764,7 +5764,7 @@ The following substitutions can be made:
 <small>
 <a href="#convolvewith">convolve-with</a> file amp s c e                    <a href="#clmchannel">clm-channel</a> convolve-gen beg dur s c e
 <a href="#envsound">env-sound</a> env beg dur base s c e                <a href="#envchannel">env-channel</a> env beg dur s c e
-<a href="#filtersound">filter-sound</a> env order s c e                    <a href="#clmchannel">clm-channel</a> clm-filter-gen beg dur s c e overlap or <a href="#filterchannel">filter-channel</a> env order beg dur s c e trunc
+<a href="#filtersound">filter-sound</a> env order s c e                    <a href="#filterchannel">filter-channel</a> env order beg dur s c e trunc
 <a href="#insertsilence">insert-silence</a> beg dur s c                      <a href="#padchannel">pad-channel</a> beg dur s c e
 <a href="#insertsound">insert-sound</a> file beg filechn s c e             <a href="sndscm.html#insertchannel">insert-channel</a> filedat beg dur s c e
 <a href="#mix">mix</a> file beg filechn s c with-tags              <a href="sndscm.html#mixchannel">mix-channel</a> filedat beg dur s c e
@@ -6650,6 +6650,7 @@ some other form, see cascade-&gt;canonical in dsp.scm, and the examples that fol
 <br>
 <A NAME="filtersinsnd">Filters</a> in Snd:<br>
 filter a sound: <a href="#filtersound">filter-sound</a>, <a href="#filterchannel">filter-channel</a>, and <a href="#clmchannel">clm-channel</a><br>
+filter the selection: <a href="extsnd.html#filterselection">filter-selection</a>, <a href="sndscm.html#filterselectionandsmooth">filter-selection-and-smooth</a><br>
 CLM filter generators: <a href="sndclm.html#filterdoc">filter, one-pole, formant, comb, notch, all-pass, etc</a><br>
 lowpass filter: <a href="sndscm.html#makelowpass">make-lowpass</a> in dsp.scm<br>
 highpass filter: <a href="sndscm.html#makehighpass">make-highpass</a> in dsp.scm<br>
@@ -6675,7 +6676,7 @@ Savitzky-Golay filter: <a href="sndscm.html#sgfilter">savitzky-golay-filter</a><
 Click reduction: <a href="sndscm.html#removeclicks">remove-clicks</a>, <a href="sndscm.html#cleanchannel">clean-channel</a><br>
 FIR filter as virtual edit: <a href="sndscm.html#virtualfilterchannel">virtual-filter-channel</a><br>
 LADSPA-based filter effects: see ladspa.scm<br>
-Max Mathews resonator: <a href="sndscm.html#maxfdoc">maxf.scm, maxf.rb</a>, <a href="sndscm.html#mfilter">mfilter</a><br>
+Max Mathews resonator: <a href="sndclm.html#firmant">firmant</a>, <a href="sndscm.html#maxfdoc">maxf.scm, maxf.rb</a><br>
 Spectral edit dialog: <a href="snd.html#editenvelope">Envelope Editor</a><br>
 graphical equalizer filter bank: <a href="sndscm.html#clminsdoc">graphEq</a><br>
 nonlinear (Volterra) filter: <a href="sndscm.html#volterrafilter">volterra-filter</a><br>
@@ -8502,7 +8503,7 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
 </td></tr>
 
 <!-- a similar table of ways to make a sine wave?
-     sin oscil Table-lookup polyshape ifft(spike) mfilter(r=1.0), ssb-am+? formulas?
+     sin oscil Table-lookup polyshape ifft(spike) firmant(r=1.0), ssb-am+? formulas?
 -->
 
 <tr><td colspan=2 height=18></td></tr>
