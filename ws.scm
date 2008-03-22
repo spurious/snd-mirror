@@ -188,10 +188,11 @@ returning you to the true top-level."
 (define *clm-notehook* #f)
 (define *clm-with-sound-depth* 0) ; for CM, not otherwise used
 (define *clm-default-frequency* 0.0)
+(define *clm-safety* run-safety) ; slightly different from CL/CLM but has similar effect
 
 (define *to-snd* #t)
 
-;(define *reverb* #f) ; these are sample->file (outa) gens, vcts, or sound-data objects
+;(define *reverb* #f) ; these are sample->file (outa) gens, vcts, sound-data objects, or functions
 ;(define *output* #f)
 ;;; these are now defined in clm2xen.c
 
@@ -505,13 +506,17 @@ returning you to the true top-level."
 		   (set! *output* old-*output*)))
 	     (set! (mus-srate) old-srate)))))))
 
+
 (defmacro with-sound (args . body)
   `(with-sound-helper (lambda () ,@body) ,@args))
 
+
 (defmacro with-full-sound (args . body)
+  ;; with-sound but display full sound in Snd window
   `(let ((snd (with-sound-helper (lambda () ,@body) ,@args)))
      (set! (x-bounds *snd-opened-sound*) (list 0.0 (/ (frames *snd-opened-sound*) (srate *snd-opened-sound*))))
      snd))
+
 
 (defmacro with-temp-sound (args . body)
   ;; with-sound but using tempnam for output (can be over-ridden by explicit :output) and does not open result in Snd
@@ -523,6 +528,7 @@ returning you to the true top-level."
        (set! *to-snd* old-to-snd)
        (set! *clm-file-name* old-file-name)
        val)))
+
 
 ;(defmacro clm-load (file . args)
 ;  `(with-sound-helper (lambda () (load ,file)) ,@args))
@@ -558,6 +564,9 @@ returning you to the true top-level."
      calls)))
 
 (define (rewrite-calls)
+
+  ;; mixes->calls but this is mono
+
   (let ((oput (open-output-file "temp")))
     (display (format #f "(with-sound ()~%") oput)
     (let ((ctr 0))

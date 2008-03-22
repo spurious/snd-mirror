@@ -929,8 +929,6 @@ For example, say we want to square each envelope value:
 
 (define (sine-env e)
   (<em class=red>env-any</em> e (lambda (y)
-	       (declare (y float)) 
-               ;; "declare" is for the run macro
 	       (* 0.5 (+ 1.0 (sin (+ (* -0.5 pi) 
 				     (* pi y))))))))
 
@@ -5100,16 +5098,15 @@ readin and <a href="#env">env</a>:
 <p>These are the "generic" input and output functions.
 out-any adds its "data" argument (a sound sample) into the "output" object at sample
 position "loc".  
-The "ouput" can be a file (the most common case), a vct, a sound-data object, a function,
+The "output" argument can be a vct, a sound-data object, or a function, as well as the more usual frame-&gt;file object.
 or any output-capable CLM generator.
 In with-sound, the current output is *output* and the reverb output is *reverb*.
 outa is the same as out-any with a channel of 0.
-The "output" argument can be a vct, a sound-data object, or a function, as well as the more usual frame-&gt;file object.
 </p>
 
 <p>in-any returns the sample at position "loc" in
 "input".  ina is the same as in-any with a channel of 0.
-As in out-any and friends, the "input" argument can be a vct, sound-data object, or a function.
+As in out-any and friends, the "input" argument can be a file-&gt;frame object, a vct, sound-data object, or a function.
 If "input" is a function, it should take two arguments, the location and the channel number.
 </p>
 
@@ -5179,10 +5176,6 @@ use its :output argument:
 </pre>
 </td></tr></table>
 
-<p>If you want to use the run macro with out* with a function, remember to
-declare the argument types (they default to int, so the input case doesn't need this).
-</p>
-
 <table border=0 hspace=40><tr><td>
 <pre>
 (let ((outv (<a class=quiet href="extsnd.html#makevct">make-vct</a> 10)))
@@ -5191,7 +5184,6 @@ declare the argument types (they default to int, so the input case doesn't need 
       (do ((i 0 (1+ i)))
 	  ((= i 10))
 	(outa i (* i .1) (lambda (loc val chan)
-			   (<em class=red>declare</em> (loc int) (val float) (chan int))
 			   (<a class=quiet href="extsnd.html#vctset">vct-set!</a> outv loc val)))))))
   outv) ; this is equivalent to using :output (make-vct 10) as a with-sound argument
 </pre>

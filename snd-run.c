@@ -546,7 +546,18 @@ typedef struct ptree {
   int constants;
   bool float_result;
   walk_result_t walk_result;
+  int *lambda_arg_types;
+  int lambda_args;
 } ptree;
+
+/*
+ * if we know in advance the arg types, it is cleaner to pass that as an automatic declare list to lambda_form,
+ *   rather than insisting on a declare form, but rewriting the lambda form to insert the declare seems clumsy.
+ *   Adding two or three extra args to walk is even clumsier, since this is a very rare special case, and using
+ *   global variables is prone to trouble if we have nested lambdas, so... we use the ptree fields lambda_arg_types
+ *   and lambda_args to pass this info in during the arg parsing in walk.  An embedded lambda will have its
+ *   own embedded ptree, so we get the local variable effect from the ptree structure.
+ */
 
 typedef struct triple {
   void (*function)(int *arg_addrs, ptree *pt);
@@ -3294,7 +3305,8 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool sepa
 
 	  /* fprintf(stderr, "arg: %s, decls: %s\n", XEN_AS_STRING(arg), XEN_AS_STRING(declarations)); */
 
-	  if ((XEN_LIST_P(declarations)) && (XEN_NOT_NULL_P(declarations)))
+	  if ((XEN_LIST_P(declarations)) &&
+	      (XEN_NOT_NULL_P(declarations)))
 	    {
 	      declaration = XEN_CAR(declarations);
 	      declarations = XEN_CDR(declarations);
@@ -3328,6 +3340,11 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool sepa
 	    {
 	      if ((cur_args) && (cur_args[i + 1]))
 		arg_type = cur_args[i + 1]->type;
+	      else
+		{
+		  if (prog->lambda_args > i)
+		    arg_type = prog->lambda_arg_types[i];
+		}
 	    }
 	  
 	  /* fprintf(stderr, "add arg %s (%s)\n", XEN_SYMBOL_TO_C_STRING(arg), type_name(arg_type)); */
@@ -9951,9 +9968,6 @@ static xen_value *out_any_2(ptree *prog, xen_value **args, int num_args)
   return(package(prog, R_FLOAT, out_any_f_4, "out_any_f_4", args, 4));  
 }
 
-/* TODO: if we know in advance the arg types, find some way to pass that as an automatic declare list to lambda_form
- */
-
 
 static xen_value *out_any_function_body(ptree *prog, XEN proc, xen_value **args, int num_args, const char *funcname)
 {
@@ -11434,7 +11448,16 @@ static xen_value *throw_1(ptree *prog, xen_value **args, int num_args)
 }
 
 
+typedef struct {
+  int *lambda_arg_types;
+  int lambda_args;
+} lambda_arg_info;
 
+typedef struct {
+  int args;
+  lambda_arg_info **arg_data;
+} lambda_info;
+  
 typedef struct {
   xen_value *(*walker)(ptree *prog, xen_value **args, int num_args);
   xen_value *(*special_walker)(ptree *prog, XEN form, walk_result_t need_result);
@@ -11443,6 +11466,7 @@ typedef struct {
   bool need_int_result;
   int *arg_types;
   int data;
+  lambda_info *linfo;
 } walk_info;
 
 static walk_info *make_walker(xen_value *(*walker)(ptree *prog, xen_value **args, int num_args),
@@ -11456,7 +11480,6 @@ static walk_info *make_walker(xen_value *(*walker)(ptree *prog, xen_value **args
 			      ...) /* arg type list, R_NUMBER=int or float, R_ANY=unchecked */
 {
   walk_info *w;
-  va_list ap;
   w = (walk_info *)malloc(sizeof(walk_info));
   w->walker = walker;
   w->special_walker = special_walker;
@@ -11467,8 +11490,10 @@ static walk_info *make_walker(xen_value *(*walker)(ptree *prog, xen_value **args
   w->need_int_result = need_int_result;
   w->num_arg_types = num_arg_types;
   w->data = 0;
+  w->linfo = NULL;
   if (num_arg_types > 0)
     {
+      va_list ap;
       int i;
       va_start(ap, num_arg_types);
       w->arg_types = (int *)calloc(num_arg_types, sizeof(int));
@@ -11476,6 +11501,40 @@ static walk_info *make_walker(xen_value *(*walker)(ptree *prog, xen_value **args
 	w->arg_types[i] = (int)(va_arg(ap, int));
       va_end(ap);
     }
+  return(w);
+}
+
+static walk_info *walker_with_declare(walk_info *w, int arg, int args, ...)
+{
+  lambda_info *li;
+  lambda_arg_info *larg;
+
+  if (!(w->linfo))
+    w->linfo = (lambda_info *)calloc(1, sizeof(lambda_info));
+  li = w->linfo;
+
+  if (li->args <= arg)
+    {
+      if (li->args == 0)
+	li->arg_data = (lambda_arg_info **)calloc(arg + 1, sizeof(lambda_arg_info *));
+      else li->arg_data = (lambda_arg_info **)realloc(li->arg_data, (arg + 1) * sizeof(lambda_arg_info *));
+      li->args = arg + 1;
+    }
+  li->arg_data[arg] = (lambda_arg_info *)calloc(1, sizeof(lambda_arg_info));
+
+  larg = li->arg_data[arg];
+  larg->lambda_args = args;
+  if (args > 0)
+    {
+      int i;
+      va_list ap;
+      larg->lambda_arg_types = (int *)calloc(args, sizeof(int));
+      va_start(ap, args);
+      for (i = 0; i < args; i++)
+	larg->lambda_arg_types[i] = (int)(va_arg(ap, int));
+      va_end(ap);
+    }
+
   return(w);
 }
 
@@ -12024,9 +12083,29 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 		  if ((w->need_int_result) ||
 		      ((i < w->num_arg_types) && (w->arg_types[i] == R_INT)))
 		    arg_result = NEED_INT_RESULT;
+
+		  /* clm23 has tests of the trailing phase-vocoder func args */
+		  /* TODO: in-out-any, pv, grn, src, conv all need to be tested with and without declares for all func args */
+		  
+		  /* if arg might be a function, check for auto-declare */
+		  if ((w->linfo) &&
+		      (w->linfo->args > i) &&
+		      (w->linfo->arg_data[i]) &&
+		      (i < w->num_arg_types) &&
+		      ((w->arg_types[i] == R_FUNCTION) || (w->arg_types[i] == R_ANY)))
+		    {
+		      prog->lambda_args = w->linfo->arg_data[i]->lambda_args;
+		      prog->lambda_arg_types = w->linfo->arg_data[i]->lambda_arg_types;
+		    }
 		}
 
 	      args[i + 1] = walk(prog, XEN_CAR(all_args), arg_result);
+
+	      if (prog->lambda_args > 0)
+		{
+		  prog->lambda_args = 0;
+		  prog->lambda_arg_types = NULL;
+		}
 	      
 	      /*
 	      fprintf(stderr,"%s ->", XEN_AS_STRING(XEN_CAR(all_args)));
@@ -12893,18 +12972,18 @@ static void init_walkers(void)
   INIT_WALKER(S_oscil, make_walker(oscil_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_one_zero, make_walker(one_zero_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_one_pole, make_walker(one_pole_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_out_any, make_walker(out_any_1, NULL, NULL, 3, 4, R_FLOAT, false, 4, R_NUMBER, R_NUMBER, R_INT, R_ANY));
-  INIT_WALKER(S_outa, make_walker(outa_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_NUMBER, R_NUMBER, R_ANY));
-  INIT_WALKER(S_outb, make_walker(outb_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_NUMBER, R_NUMBER, R_ANY));
-  INIT_WALKER(S_outc, make_walker(outc_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_NUMBER, R_NUMBER, R_ANY));
-  INIT_WALKER(S_outd, make_walker(outd_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_NUMBER, R_NUMBER, R_ANY));
+  INIT_WALKER(S_out_any, walker_with_declare(make_walker(out_any_1, NULL, NULL, 3, 4, R_FLOAT, false, 4, R_NUMBER, R_NUMBER, R_INT, R_ANY), 3, 3, R_INT, R_FLOAT, R_INT));
+  INIT_WALKER(S_outa, walker_with_declare(make_walker(outa_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_NUMBER, R_NUMBER, R_ANY), 2, 3, R_INT, R_FLOAT, R_INT));
+  INIT_WALKER(S_outb, walker_with_declare(make_walker(outb_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_NUMBER, R_NUMBER, R_ANY), 2, 3, R_INT, R_FLOAT, R_INT));
+  INIT_WALKER(S_outc, walker_with_declare(make_walker(outc_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_NUMBER, R_NUMBER, R_ANY), 2, 3, R_INT, R_FLOAT, R_INT));
+  INIT_WALKER(S_outd, walker_with_declare(make_walker(outd_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_NUMBER, R_NUMBER, R_ANY), 2, 3, R_INT, R_FLOAT, R_INT));
   INIT_WALKER(S_env, make_walker(env_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_CLM));
   INIT_WALKER(S_env_interp, make_walker(env_interp_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_FLOAT, R_CLM));
-  INIT_WALKER(S_env_any, make_walker(env_any_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_CLM, R_FUNCTION));
+  INIT_WALKER(S_env_any, walker_with_declare(make_walker(env_any_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_CLM, R_FUNCTION), 1, 1, R_FLOAT));
   INIT_WALKER(S_notch, make_walker(notch_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_comb, make_walker(comb_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_filtered_comb, make_walker(filtered_comb_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
-  INIT_WALKER(S_convolve, make_walker(convolve_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_FUNCTION));
+  INIT_WALKER(S_convolve, walker_with_declare(make_walker(convolve_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_FUNCTION), 2, 1, R_INT));
   INIT_WALKER(S_delay, make_walker(delay_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_all_pass, make_walker(all_pass_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_moving_average, make_walker(moving_average_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
@@ -12912,7 +12991,7 @@ static void init_walkers(void)
   INIT_WALKER(S_rand, make_walker(rand_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_rand_interp, make_walker(rand_interp_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_readin, make_walker(readin_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_CLM));
-  INIT_WALKER(S_src, make_walker(src_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_FUNCTION));
+  INIT_WALKER(S_src, walker_with_declare(make_walker(src_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_FUNCTION), 2, 1, R_INT));
   INIT_WALKER(S_sum_of_cosines, make_walker(sum_of_cosines_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_sum_of_sines, make_walker(sum_of_sines_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_ncos, make_walker(ncos_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
@@ -12931,8 +13010,16 @@ static void init_walkers(void)
   INIT_WALKER(S_tap, make_walker(tap_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_delay_tick, make_walker(delay_tick_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_pulse_train, make_walker(pulse_train_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_phase_vocoder, make_walker(phase_vocoder_1, NULL, NULL, 1, 5, R_FLOAT, false, 5, R_CLM, R_FUNCTION, R_FUNCTION, R_FUNCTION, R_FUNCTION));
-
+  INIT_WALKER(S_phase_vocoder, 
+	      walker_with_declare(
+	        walker_with_declare(
+	          walker_with_declare(
+		    walker_with_declare(
+                      make_walker(phase_vocoder_1, NULL, NULL, 1, 5, R_FLOAT, false, 5, R_CLM, R_FUNCTION, R_FUNCTION, R_FUNCTION, R_FUNCTION), 
+		      4, 1, R_CLM),
+		    3, 1, R_CLM),
+		  2, 2, R_CLM, R_FUNCTION),
+		1, 1, R_INT));
   INIT_WALKER(S_phase_vocoder_amps, make_walker(phase_vocoder_amps_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_CLM)); 
   INIT_WALKER(S_phase_vocoder_amp_increments, make_walker(phase_vocoder_amp_increments_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_CLM));
   INIT_WALKER(S_phase_vocoder_freqs, make_walker(phase_vocoder_freqs_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_CLM));
@@ -12952,10 +13039,15 @@ static void init_walkers(void)
   INIT_WALKER(S_polyshape, make_walker(polyshape_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_polywave, make_walker(polywave_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_iir_filter, make_walker(iir_filter_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_ina, make_walker(ina_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_NUMBER, R_ANY));
-  INIT_WALKER(S_inb, make_walker(inb_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_NUMBER, R_ANY));
-  INIT_WALKER(S_in_any, make_walker(in_any_1, NULL, NULL, 3, 3, R_FLOAT, false, 2, R_NUMBER, R_INT, R_ANY));
-  INIT_WALKER(S_granulate, make_walker(granulate_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_FUNCTION, R_FUNCTION));
+  INIT_WALKER(S_ina, walker_with_declare(make_walker(ina_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_NUMBER, R_ANY), 1, 2, R_INT, R_INT));
+  INIT_WALKER(S_inb, walker_with_declare(make_walker(inb_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_NUMBER, R_ANY), 1, 2, R_INT, R_INT));
+  INIT_WALKER(S_in_any, walker_with_declare(make_walker(in_any_1, NULL, NULL, 3, 3, R_FLOAT, false, 2, R_NUMBER, R_INT, R_ANY), 2, 2, R_INT, R_INT));
+  INIT_WALKER(S_granulate, 
+	      walker_with_declare(
+                walker_with_declare(
+  	          make_walker(granulate_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_FUNCTION, R_FUNCTION),
+		  2, 1, R_CLM),
+		1, 1, R_INT));
   INIT_WALKER(S_move_locsig, make_walker(move_locsig_1, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_mus_set_formant_radius_and_frequency, make_walker(set_formant_radius_and_frequency_1, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_mixer_set, make_walker(mixer_set_2, NULL, NULL, 4, 4, R_FLOAT, false, 4, R_CLM, R_INT, R_INT, R_NUMBER));

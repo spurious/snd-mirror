@@ -1058,7 +1058,6 @@
 				       (lambda (dir) 
 					   (oscil os))
 				       (lambda (g) 
-					   (declare (g clm))
 					   0))) 
 		  0))))))
 
@@ -1140,9 +1139,8 @@
 					       (readin fil))
 					   #f
 					   (lambda (closure)
-					       (declare (closure clm))
-					       (if (not (= (mus-location sr) 0))
-						   (clm-print "outctr: ~A" (mus-location sr)))
+					     (if (not (= (mus-location sr) 0))
+						 (clm-print "outctr: ~A" (mus-location sr)))
 					       #t)
 					   #f)) 
 		  0))))))
@@ -1165,7 +1163,6 @@
 		    #f
 		    #f
 		    (lambda (closure)
-		      (declare (closure clm))
 		      (set! k 0)
 		      (do ()
 			  ((= k N2))
@@ -1557,7 +1554,6 @@
        (do ((i start (1+ i))) ((= i end))
 	 (out-any i (* amp (granulate sr #f
 				      (lambda (g)
-					(declare (g clm))
 					(let ((grain (mus-data g))  ; current grain
 					      (len (mus-length g))) ; current grain length
 					  (do ((i 0 (1+ i)))
@@ -1584,8 +1580,7 @@
 					   #f
 					   #f
 					   (lambda (closure)
-					       (declare (closure clm))
-					       (oscil os))))
+					     (oscil os))))
 		  0))))))
 
 ;(with-sound () (sample-pvoc5 0 1 .1 256 "oboe.snd" 440.0))
@@ -1728,7 +1723,6 @@
 		#f
 		#f
 		(lambda (closure)
-		  (declare (closure clm))
 		  (let ((N2 (inexact->exact (/ size 2))))
 		    (do ((k 0 (1+ k)))
 			((= k N2))
@@ -1769,7 +1763,6 @@
 		(lambda (dir) (readin rd))
 		#f
 		(lambda (closure)
-		  (declare (closure clm))
 		  (let* ((D (inexact->exact (/ size 4))) ; overlap = 4
 			 (pscl (/ 1.0 D))
 			 (kscl (/ two-pi size)))
@@ -1784,7 +1777,6 @@
 			(vct-set! (phase-vocoder-freqs sr) k (+ (* diff  pscl) ks))))
 		    #f))
 		(lambda (closure)
-		  (declare (closure clm))
 		  (do ((k 0 (1+ k)))
 		      ((= k N2))
 		    (set! (vct-ref (phase-vocoder-amps sr) k) (+ (vct-ref (phase-vocoder-amps sr) k) 
@@ -1828,7 +1820,6 @@
 		(lambda (dir) (readin rd))
 
 		(lambda (closure input)
-		  (declare (closure clm))
 		  (let ((buf (modulo filptr size)))
 		    (clear-array (phase-vocoder-freqs sr))
 		    (if (= filptr 0)
@@ -1854,7 +1845,6 @@
 		    #f))
 
 		(lambda (closure)
-		  (declare (closure clm))
 		  (let* ((pscl (/ 1.0 D))
 			 (kscl (/ two-pi size)))
 		    (do ((k 0 (1+ k))
@@ -1869,7 +1859,6 @@
 		    #f))
 
 		(lambda (closure)
-		  (declare (closure clm))
 		  (do ((k 0 (1+ k)))
 		      ((= k N2))
 		    (set! (vct-ref (phase-vocoder-amps sr) k) (+ (vct-ref (phase-vocoder-amps sr) k) 

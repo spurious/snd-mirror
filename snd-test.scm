@@ -21210,9 +21210,8 @@ EDITS: 2
 				 (lambda ()
 				   (do ((i 0 (1+ i)))
 				       ((= i 220))
-				     (outa i (env-any e1
+				     (outa i (env-any e1 ; try it with and without "declare"
 						      (lambda (y1)
-							(declare (y1 float))
 							(* y1 (env-any e2
 								       (lambda (y2)
 									 (declare (y2 float))
@@ -22643,7 +22642,6 @@ EDITS: 2
 			 (do ((i 0 (1+ i)))
 			     ((= i 10))
 			   (outa i (* i .1) (lambda (loc val chan)
-					      (declare (loc int) (val float) (chan int))
 					      (vct-set! outv loc val)))))))
       (if (not (vequal outv (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900)))
 	  (snd-display ";run outa func vct: ~A" outv)))
@@ -22676,16 +22674,12 @@ EDITS: 2
 			 (do ((i 0 (1+ i)))
 			     ((= i 10))
 			   (outa i (* i .1) (lambda (loc val chan)
-					      (declare (loc int) (val float) (chan int))
 					      (sound-data-set! outv chan loc val)))
 			   (outb i (* i .2) (lambda (loc val chan)
-					      (declare (loc int) (val float) (chan int))
 					      (sound-data-set! outv chan loc val)))
 			   (outc i (* i .3) (lambda (loc val chan)
-					      (declare (loc int) (val float) (chan int))
 					      (sound-data-set! outv chan loc val)))
 			   (outd i (* i .4) (lambda (loc val chan)
-					      (declare (loc int) (val float) (chan int))
 					      (sound-data-set! outv chan loc val)))))))
       (if (not (vequal (sound-data->vct outv 0) (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900)))
 	  (snd-display ";run outa 1 to sound-data function: ~A" (sound-data->vct outv 0)))
@@ -22711,7 +22705,6 @@ EDITS: 2
 			 (do ((i 0 (1+ i)))
 			     ((= i 10))
 			   (out-any i (* i .1) 0 (lambda (loc val chan)
-						   (declare (loc int) (val float) (chan int))
 						   (vct-set! outv loc val)))))))
       (if (not (vequal outv (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900)))
 	  (snd-display ";run out-any func to vct: ~A" outv)))
@@ -22741,7 +22734,6 @@ EDITS: 2
 			   (do ((k 0 (1+ k)))
 			       ((= k 4))
 			     (out-any i (* i .1 (1+ k)) k (lambda (loc val chan)
-							    (declare (loc int) (val float) (chan int))
 							    (sound-data-set! outv chan loc val))))))))
       (if (not (vequal (sound-data->vct outv 0) (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900)))
 	  (snd-display ";run out-any 0 to sound-data function: ~A" (sound-data->vct outv 0)))
@@ -22763,7 +22755,6 @@ EDITS: 2
     
     (let ((outv (make-vct 10)))
       (with-sound (:output (lambda (loc val chan)
-			     (declare (loc int) (val float) (chan int))
 			     (vct-set! outv loc val)))
 		  (run (lambda ()
 			 (do ((i 0 (1+ i)))
@@ -22792,7 +22783,6 @@ EDITS: 2
     
     (let ((outv (make-sound-data 4 10)))
       (with-sound (:channels 4 :output (lambda (loc val chan)
-					 (declare (loc int) (val float) (chan int))
 					 (sound-data-set! outv chan loc val)))
 		  (run (lambda ()
 			 (do ((i 0 (1+ i)))
@@ -22829,7 +22819,6 @@ EDITS: 2
     
     (let ((outv (make-sound-data 4 10)))
       (with-sound (:channels 4 :output (lambda (loc val chan)
-					 (declare (loc int) (val float) (chan int))
 					 (sound-data-set! outv chan loc val)))
 		  (run (lambda ()
 			 (do ((i 0 (1+ i)))
@@ -24287,7 +24276,6 @@ EDITS: 2
 					    (lambda (dir) 
 					      (rd))
 					    (lambda (g)
-					      (declare (g clm))
 					      (let ((grain (mus-data g))  ; current grain
 						    (len (mus-length g))) ; current grain length
 						(do ((i 0 (1+ i)))
@@ -24303,7 +24291,6 @@ EDITS: 2
 					      (lambda (dir) 
 						(rd))
 					      (lambda (g)
-						(declare (g clm))
 						(let ((grain (mus-data g))  ; current grain
 						      (len (mus-length g))) ; current grain length
 						  (do ((i 0 (1+ i)))
@@ -24486,7 +24473,6 @@ EDITS: 2
 	(map-channel (lambda (y) (granulate gen 
 					    (lambda (dir) .1)
 					    (lambda (g)
-					      (declare (g clm))
 					      (let ((grain (mus-data g))  ; current grain
 						    (len (mus-length g))) ; current grain length
 						(do ((i 0 (1+ i)))
@@ -24512,7 +24498,6 @@ EDITS: 2
 	(map-channel (lambda (y) (granulate gen 
 					    (lambda (dir) (set! ctr (+ ctr incr)) ctr)
 					    (lambda (g)
-					      (declare (g clm))
 					      (let ((grain (mus-data g))
 						    (len (mus-length g)))
 						(if forward ; no change to data
@@ -24554,7 +24539,6 @@ EDITS: 2
       (let ((gen (make-granulate :jitter 0.0 :hop .001 :length .005 :ramp .5 :scaler 1.0
 				 :input (lambda (dir) .1)
 				 :edit (lambda (g)
-					 (declare (g clm))
 					 (let ((grain (mus-data g))  ; current grain
 					       (len (mus-length g))) ; current grain length
 					   (do ((i 0 (1+ i)))
@@ -24580,7 +24564,6 @@ EDITS: 2
 	     (gen (make-granulate :jitter 0.0 :hop .005 :length .002 :ramp 0.0 :scaler 1.0
 				  :input (lambda (dir) (set! ctr (+ ctr incr)) ctr)
 				  :edit (lambda (g)
-					  (declare (g clm))
 					  (let ((grain (mus-data g))
 						(len (mus-length g)))
 					    (if forward

@@ -3471,6 +3471,7 @@ index 10 (so 10/2 is the bes-jn arg):
 (defgenerator (j2cos
 	       :make-wrapper (lambda (g)
 			       (set! (j2cos-frequency g) (hz->radians (j2cos-frequency g)))
+			       (if (< (j2cos-n g) 1) (set! (j2cos-n g) 1))
 			       g))
   (frequency *clm-default-frequency*) (r 0.0) (n 1 :type int) (angle 0.0))
 
@@ -4518,25 +4519,21 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (define (sine-env e)
   (env-any e (lambda (y)
-	       (declare (y float))
 	       (* 0.5 (+ 1.0 (sin (+ (* -0.5 pi) 
 				     (* pi y))))))))
 
 (define (square-env e)
   (env-any e (lambda (y)
-	       (declare (y float))
 	       (* y y))))
 
 (define (blackman4-env e)
   (env-any e
 	   (lambda (y)
-	     (declare (y float))
 	     (let ((cx (cos (* pi y))))
 	       (+ 0.084037 (* cx (+ -.29145 (* cx (+ .375696 (* cx (+ -.20762 (* cx .041194))))))))))))
 
 (define (multi-expt-env e expts)
   (env-any e (lambda (y)
-	       (declare (y float))
 	       (let ((b (vct-ref expts (modulo (mus-channels e) (vct-length expts)))))
 		 (/ (- (expt b y) 1.0) (- b 1.0))))))
 
