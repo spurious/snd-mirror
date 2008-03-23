@@ -7862,7 +7862,6 @@ Here is an example that mixes a sine wave into the current channel:
 (define* (sine-channel freq amp :optional (beg 0) dur snd chn edpos)
   (<em class=red>ptree-channel</em>
    (lambda (y data forward)
-     (<a class=quiet href="#declare">declare</a> (y real) (data vct) (forward boolean))
      (let* ((angle (<a class=quiet href="#vctref">vct-ref</a> data 0))
 	    (incr (<a class=quiet href="#vctref">vct-ref</a> data 1))
 	    (val (+ y (* (<a class=quiet href="#vctref">vct-ref</a> data 2) (sin angle)))))
@@ -7905,7 +7904,6 @@ version of cosine-channel given under
   ;; vct: angle increment
   (<em class=red>ptree-channel</em>
    (lambda (y data forward)
-     (<a class=quiet href="#declare">declare</a> (y real) (data vct) (forward boolean))
      (let* ((angle (<a class=quiet href="#vctref">vct-ref</a> data 0))
 	    (incr (<a class=quiet href="#vctref">vct-ref</a> data 1))
 	    (val (* y (cos angle))))
@@ -7962,7 +7960,6 @@ currently doesn't know how to save the enclosing environment along with the init
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
   (let ((outer 0.5))
     (<em class=red>ptree-channel</em> (lambda (y data forward)
-		     (<a class=quiet href="#declare">declare</a> (y real) (data float) (forward boolean))
 		     (* y data))
 		   0 #f ind 0 #f #f
 		   (lambda (pos dur)
@@ -7990,7 +7987,6 @@ could in this case be:
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
   (<em class=red>ptree-channel</em> (lambda (y data forward)
-		   (<a class=quiet href="#declare">declare</a> (y real) (data vct) (forward boolean))
 		   (let ((val (* 0.5 (+ y (<a class=quiet href="#vctref">vct-ref</a> data 0)))))
 		     (<a class=quiet href="#vctset">vct-set!</a> data 0 y)
 		     val))
@@ -8020,7 +8016,6 @@ Here are several more examples:
   (let* ((base (if (&gt; r0 r1) (/ 1.0 ubase) ubase)))
     (<em class=red>ptree-channel</em>
      (lambda (y data forward)
-       (<a class=quiet href="#declare">declare</a> (y real) (data vct) (forward boolean))
        (let* ((lr0 (<a class=quiet href="#vctref">vct-ref</a> data 0))
 	      (lbase (<a class=quiet href="#vctref">vct-ref</a> data 1))
 	      (incr (<a class=quiet href="#vctref">vct-ref</a> data 2))
@@ -8044,7 +8039,6 @@ Here are several more examples:
   (let ((len (<a class=quiet href="#mussoundframes">mus-sound-frames</a> file)))
     (<em class=red>ptree-channel</em>
      (lambda (y state forward)
-       (<a class=quiet href="#declare">declare</a> (y real) (state sample-reader) (forward boolean))
        (+ y (if forward (<a class=quiet href="#nextsample">next-sample</a> state) (<a class=quiet href="#previoussample">previous-sample</a> state))))
      beg len snd chn -1 #f
      (lambda (frag-beg frag-dur)
@@ -8093,7 +8087,11 @@ result appear to be one operation in the edit history list.
 	     (set! base (list-ref envelope (+ i 2)))))))))
 </pre></td></tr></table>
 
-<table border=3 bordercolor="tan" hspace=20 vspace=10><tr><td>
+If the init-func returns something other than a vct, you need to declare its type
+for the run macro.  There are several examples in snd-test.scm.
+
+
+<table border=3 bordercolor="tan" hspace=20 vspace=20><tr><td>
 <blockquote><small>
 <br>
 more ptree-channel examples:<br>
@@ -8273,7 +8271,7 @@ of the speed of CL+run+C in CLM.  Currently, only Guile and Gauche support this 
 </pre></td></tr></table>
 
 <A NAME="declare"></A>
-Functions embedded within run need to declare the type of their arguments; run assumes each variable has one type (integer by default) throughout its life.
+Functions embedded within run may need to declare the type of their arguments; run assumes each variable has one type (integer by default) throughout its life.
 So, the following code
 displays "0", rather than "3.14":
 
@@ -8296,10 +8294,8 @@ The current declarable types include any <a href="sndscm.html#def-clm-struct">de
 </pre>
 
 declare is modelled after Common Lisp's declare; it is specific to run.
-For more examples see <a href="#ptreechannel">Virtual Edits</a> and, in
-particular, <a href="#cosinechannelviaptree">cosine-channel-via-ptree</a>.
 <br><br>
-This optimization is also hidden in many contexts: <a class=quiet href="#mapchannel">map-channel</a>, 
+The use of the run macro is hidden in many contexts: <a class=quiet href="#mapchannel">map-channel</a>, 
 <a class=quiet href="#findchannel">find-channel</a>, etc.  Internally the Snd run macro
 uses 64-bit ints and doubles, so large sounds should not present any numerical problems.
 See <a href="#optimization">optimization</a>

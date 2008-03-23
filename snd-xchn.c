@@ -1,6 +1,9 @@
 #include "snd.h"
 
 
+/* TODO: make the arrows more useful -- perhaps tiny change? */
+
+
 enum {W_top, W_form, W_main_window, W_edhist, W_wf_buttons, W_f, W_w, W_left_scrollers, W_zy, W_sy,
       W_bottom_scrollers, W_sx, W_zx, W_graph, W_gzy, W_gsy,
       NUM_CHAN_WIDGETS

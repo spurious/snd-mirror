@@ -4815,7 +4815,6 @@
   ;; vct: angle increment
   (ptree-channel
    (lambda (y data forward)
-     (declare (y real) (data vct) (forward boolean))
      (let* ((angle (vct-ref data 0))
 	    (incr (vct-ref data 1))
 	    (val (* y (cos angle))))
@@ -4981,7 +4980,6 @@
 			 (edit-position snd chn)
 			 edpos)))
       (ptree-channel (lambda (y data dir)
-		       (declare (y real) (data vct) (dir boolean))
 		       (let* ((pos (inexact->exact (floor (vct-ref data 0))))
 			      (len (inexact->exact (floor (vct-ref data 1))))
 			      (val (vct-ref data (+ pos 2))))
@@ -6251,13 +6249,11 @@ EDITS: 5
 		  ((= i 10))
 		(scale-channel 0.75 (* i 10) 10))
 	      (ptree-channel (lambda (y data forward)
-			       (declare (y real) (data vct) (forward boolean))
 			       (* y (vct-ref data 0)))
 			     0 (frames) ind 0 #f #f
 			     (lambda (pos dur)
 			       (vct 0.5)))
 	      (ptree-channel (lambda (y data forward)
-			       (declare (y real) (data vct) (forward boolean))
 			       (* y (vct-ref data 0)))
 			     20 45 ind 0 #f #f
 			     (lambda (pos dur)
@@ -6547,7 +6543,6 @@ EDITS: 5
 		  (snd-display ";ptree-ramp3: ~A" (safe-display-edits ind 0 5 #f)))
 	      (undo 1)
 	      (ptree-channel (lambda (y data forward)
-			       (declare (y real) (data vct) (forward boolean))
 			       (* y (vct-ref data 0)))
 			     0 (frames) ind 0 #f #t
 			     (lambda (pos dur)
@@ -6768,14 +6763,12 @@ EDITS: 5
 		(lambda () (ptree-channel (lambda (y) (* y 0.5))))
 		(lambda () (ptree-channel
 			    (lambda (y data forward)
-			      (declare (y real) (data vct) (forward boolean))
 			      (* y (vct-ref data 0)))
 			    0 (frames) ind 0 #f #f (lambda (p d) (vct 0.5)))))
 	       (list 
 		(lambda () (ptree-channel (lambda (y) (+ y 0.5))))
 		(lambda () (ptree-channel
 			    (lambda (y data forward)
-			      (declare (y real) (data vct) (forward boolean))
 			      (+ y (vct-ref data 0)))
 			    0 (frames) ind 0 #f #f (lambda (p d) (vct 0.5)))))
 	       (list "ramp-ptree" "ramp-ptreec"))
@@ -6815,14 +6808,12 @@ EDITS: 5
 		(lambda () (ptree-channel (lambda (y) (* y 0.5))))
 		(lambda () (ptree-channel
 			    (lambda (y data forward)
-			      (declare (y real) (data vct) (forward boolean))
 			      (* y (vct-ref data 0)))
 			    0 (frames) ind 0 #f #f (lambda (p d) (vct 0.5)))))
 	       (list 
 		(lambda () (ptree-channel (lambda (y) (+ y 0.5))))
 		(lambda () (ptree-channel
 			    (lambda (y data forward)
-			      (declare (y real) (data vct) (forward boolean))
 			      (+ y (vct-ref data 0)))
 			    0 (frames) ind 0 #f #f (lambda (p d) (vct 0.5)))))
 	       (list "xramp-ptree" "xramp-ptreec")
@@ -7425,7 +7416,6 @@ EDITS: 5
 	      (ramp-channel 0.0 1.0)
 	      (ramp-channel 0.0 1.0)
 	      (ptree-channel (lambda (y data forward)
-			       (declare (y real) (data vct) (forward boolean))
 			       (* y (vct-ref data 0)))
 			     0 (frames) ind 0 #f #t
 			     (lambda (pos dur)
@@ -8652,7 +8642,6 @@ EDITS: 5
 	    d))
 	(define (ptreec1)
 	  (ptree-channel (lambda (y data forward)
-			   (declare (y real) (data vct) (forward boolean))
 			   (* y (vct-ref data 0)))
 			 10 50 ind 0 #f #f
 			 (lambda (pos dur)
@@ -10829,7 +10818,6 @@ EDITS: 5
 		(peak-env-equal? "ptree+xramp peak" ind (channel-amp-envs ind 0 2) .004)
 		(undo 2)
 		(ptree-channel (lambda (y data forward)
-				 (declare (y real) (data vct) (forward boolean))
 				 (* y (vct-ref data 0)))
 			       0 (frames) ind 0 #f #t
 			       (lambda (pos dur)
@@ -10838,7 +10826,6 @@ EDITS: 5
 		(undo)
 		(ramp-channel 0.0 1.0)
 		(ptree-channel (lambda (y data forward)
-				 (declare (y real) (data vct) (forward boolean))
 				 (* y (vct-ref data 0)))
 			       0 (frames) ind 0 #f #t
 			       (lambda (pos dur)
@@ -10847,7 +10834,6 @@ EDITS: 5
 		(undo 2)
 		(xramp-channel 0.0 1.0 3.0)
 		(ptree-channel (lambda (y data forward)
-				 (declare (y real) (data vct) (forward boolean))
 				 (* y (vct-ref data 0)))
 			       0 (frames) ind 0 #f #t
 			       (lambda (pos dur)
@@ -10915,7 +10901,6 @@ EDITS: 5
 		(peak-env-equal? "ptree+xramp peak" ind (channel-amp-envs ind 0 2) .001)
 		(undo 2)
 		(ptree-channel (lambda (y data forward)
-				 (declare (y real) (data vct) (forward boolean))
 				 (* y (vct-ref data 0)))
 			       2000 1000 ind 0 #f #t
 			       (lambda (pos dur)
@@ -10924,7 +10909,6 @@ EDITS: 5
 		(undo)
 		(ramp-channel 0.0 1.0)
 		(ptree-channel (lambda (y data forward)
-				 (declare (y real) (data vct) (forward boolean))
 				 (* y (vct-ref data 0)))
 			       2000 1000 ind 0 #f #t
 			       (lambda (pos dur)
@@ -12734,7 +12718,6 @@ EDITS: 5
 		       
 		       (scl-1 (lambda (ind)
 				(ptree-channel (lambda (y data forward)
-						 (declare (y real) (data vct) (forward boolean))
 						 (* y (vct-ref data 0)))
 					       0 20 ind 0 #f #f
 					       (lambda (pos dur)
@@ -35472,7 +35455,6 @@ EDITS: 2
 		   (ptree-channel (lambda (y) (* y .5))))
 		 (lambda (ind)
 		   (ptree-channel (lambda (y data forward)
-				    (declare (y real) (data vct) (forward boolean))
 				    (* y (vct-ref data 0)))
 				  0 #f ind 0 #f #f
 				  (lambda (pos dur)
@@ -35498,7 +35480,6 @@ EDITS: 2
 		 (lambda (ind)
 		   (scale-by 0.0)
 		   (ptree-channel (lambda (y data forward)
-				    (declare (y real) (data vct) (forward boolean))
 				    (* y (vct-ref data 0)))
 				  0 #f ind 0 0 #f
 				  (lambda (pos dur)
@@ -35610,34 +35591,29 @@ EDITS: 2
 	   (list 
 	    (lambda (ind) 
 	      (ptree-channel (lambda (y data dir) 
-			       (declare (y real) (data vct) (dir boolean)) 
 			       1.0) 
 			     0 #f ind 0 #f #f 
 			     (lambda (pos dur) (vct 0.0))))
 	    (lambda (ind) 
 	      (scale-by 0.5 ind 0) 
 	      (ptree-channel (lambda (y data dir) 
-			       (declare (y real) (data vct) (dir boolean))
 			       y) 
 			     0 #f ind 0 #f #f 
 			     (lambda (pos dur) (vct 0.0))))
 	    (lambda (ind) 
 	      (ptree-channel (lambda (y data dir) 
-			       (declare (y real) (data vct) (dir boolean))
 			       y) 
 			     0 #f ind 0 #f #f 
 			     (lambda (pos dur) (vct 0.0)))
 	      (scale-by 0.5 ind 0) )
 	    (lambda (ind) 
 	      (ptree-channel (lambda (y data dir) 
-			       (declare (y real) (data vct) (dir boolean))
 			       (* y (vct-ref data 0)))
 			     0 #f ind 0 #f #f 
 			     (lambda (pos dur) (vct 0.5)))
 	      (delete-samples 2 3 ind 0))
 	    (lambda (ind) 
 	      (ptree-channel (lambda (y data dir) 
-			       (declare (y real) (data vct) (dir boolean))
 			       (* y (vct-ref data 0)))
 			     0 #f ind 0 #f #f 
 			     (lambda (pos dur) (vct 0.5)))
@@ -35645,7 +35621,6 @@ EDITS: 2
 	    (lambda (ind) 
 	      (set! (samples 0 10 ind 0) (vct 0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0))
 	      (ptree-channel (lambda (y data dir) 
-			       (declare (y real) (data vct) (dir boolean))
 			       (* y (vct-ref data 0)))
 			     0 #f ind 0 #f #f 
 			     (lambda (pos dur) (vct 0.5)))
@@ -35654,34 +35629,29 @@ EDITS: 2
 	    
 	    (lambda (ind) 
 	      (ptree-channel (lambda (y data dir) 
-			       (declare (y real) (data vct) (dir boolean)) 
 			       1.0) 
 			     2 #f ind 0 #f #f 
 			     (lambda (pos dur) (vct 0.0))))
 	    (lambda (ind) 
 	      (scale-by 0.5 ind 0) 
 	      (ptree-channel (lambda (y data dir) 
-			       (declare (y real) (data vct) (dir boolean))
 			       y) 
 			     2 #f ind 0 #f #f 
 			     (lambda (pos dur) (vct 0.0))))
 	    (lambda (ind) 
 	      (ptree-channel (lambda (y data dir) 
-			       (declare (y real) (data vct) (dir boolean))
 			       y) 
 			     2 #f ind 0 #f #f 
 			     (lambda (pos dur) (vct 0.0)))
 	      (scale-by 0.5 ind 0) )
 	    (lambda (ind) 
 	      (ptree-channel (lambda (y data dir) 
-			       (declare (y real) (data vct) (dir boolean))
 			       (* y (vct-ref data 0)))
 			     2 #f ind 0 #f #f 
 			     (lambda (pos dur) (vct 0.5)))
 	      (delete-samples 2 3 ind 0))
 	    (lambda (ind) 
 	      (ptree-channel (lambda (y data dir) 
-			       (declare (y real) (data vct) (dir boolean))
 			       (* y (vct-ref data 0)))
 			     2 #f ind 0 #f #f 
 			     (lambda (pos dur) (vct 0.5)))
@@ -35689,7 +35659,6 @@ EDITS: 2
 	    (lambda (ind) 
 	      (set! (samples 0 10 ind 0) (vct 0.0 1.0 2.0 3.0 4.0 5.0 6.0 7.0 8.0 9.0))
 	      (ptree-channel (lambda (y data dir) 
-			       (declare (y real) (data vct) (dir boolean))
 			       (* y (vct-ref data 0)))
 			     2 #f ind 0 #f #f 
 			     (lambda (pos dur) (vct 0.5)))
@@ -35700,7 +35669,6 @@ EDITS: 2
 	      ;; forced-fallback
 	      (ptree-channel (let ((sym (list 1))) 
 			       (lambda (y data dir)
-				 (declare (y real) (data vct) (dir boolean))
 				 (if (eq? (car sym) 1) (* y 0.5) (* y (vct-ref data 0)))))
 			     2 3 ind 0 #f #f
 			     (lambda (pos dur)
@@ -35709,7 +35677,6 @@ EDITS: 2
 	      ;; forced-fallback
 	      (ptree-channel (let ((sym (list 1))) 
 			       (lambda (y data dir)
-				 (declare (y real) (data vct) (dir boolean))
 				 (if (eq? (car sym) 1) (* y 0.5) (* y (vct-ref data 0)))))
 			     0 #f ind 0 #f #f
 			     (lambda (pos dur)
@@ -35717,7 +35684,6 @@ EDITS: 2
 	    (lambda (ind) 
 	      (scale-by 0.0)
 	      (ptree-channel (lambda (y data dir) 
-			       (declare (y real) (data vct) (dir boolean))
 			       y) 
 			     0 #f ind 0 2 #f 
 			     (lambda (pos dur) (vct 0.0)))
@@ -35963,7 +35929,6 @@ EDITS: 2
 	  
 	  (ramp-channel 0.0 1.0)
 	  (ptree-channel (lambda (y data forward)
-			   (declare (y real) (data vct) (forward boolean))
 			   (* y (vct-ref data 0)))
 			 0 (frames) ind 0 #f #f
 			 (lambda (pos dur)
@@ -35978,7 +35943,6 @@ EDITS: 2
 	  (undo 3)
 	  (xramp-channel 0.0 1.0 .3)
 	  (ptree-channel (lambda (y data forward)
-			   (declare (y real) (data vct) (forward boolean))
 			   (* y (vct-ref data 0)))
 			 0 (frames) ind 0 #f #f
 			 (lambda (pos dur)
@@ -35991,7 +35955,6 @@ EDITS: 2
 	  (ramp-channel 0.0 1.0)
 	  (ramp-channel 0.0 1.0)
 	  (ptree-channel (lambda (y data forward)
-			   (declare (y real) (data vct) (forward boolean))
 			   (* y (vct-ref data 0)))
 			 0 (frames) ind 0 #f #f
 			 (lambda (pos dur)
@@ -36004,7 +35967,6 @@ EDITS: 2
 	  (zigzag-check "zero" ind 0)
 	  (undo)
 	  (ptree-channel (lambda (y data forward)
-			   (declare (y real) (data vct) (forward boolean))
 			   (* y (vct-ref data 0)))
 			 0 (frames) ind 0 #f #f
 			 (lambda (pos dur)
@@ -36269,7 +36231,6 @@ EDITS: 2
 	     (undo 4))
 	   (list (lambda () (ptree-channel (lambda (y) (+ y 0.5))))
 		 (lambda () (ptree-channel (lambda (y data forward)
-					     (declare (y real) (data vct) (forward boolean))
 					     (* y (vct-ref data 0)))
 					   0 (frames) ind 0 #f #f
 					   (lambda (pos dur)
@@ -38056,7 +38017,6 @@ EDITS: 3
 	      (snd-display ";ptree fallback: ~A" (maxamp ind)))
 	  (undo)
 	  (ptree-channel (lambda (y data dir)
-			   (declare (y real) (data vct) (dir boolean))
 			   (if (current-input-port) (* y 0.5) (* y (vct-ref data 0))))
 			 0 #f ind 0 #f #f
 			 (lambda (pos dur)
@@ -38415,28 +38375,24 @@ EDITS: 1
 		(map-channel (lambda (y) (* y scl)) beg dur))
 	      (lambda (scl beg dur)
 		(ptree-channel (lambda (y data dir)
-				 (declare (y real) (data vct) (dir boolean))
 				 (* y (vct-ref data 0))) 
 			       beg dur ind 0 #f #f (lambda (pos dur) (vct scl)))))))
 	  
 	  ;; -------- ramp+ptree-closure
 	  (ramp-channel 0.0 1.0)
 	  (ptree-channel (lambda (y data dir) 
-			   (declare (y real) (data vct) (dir boolean))
 			   (* y (vct-ref data 0))) 
 			 0 (frames) ind 0 #f #f (lambda (pos dur) (vct 2.0)))
 	  (check-back-and-forth ind "ramp+ptreec 1" (vct 0.000 0.200 0.400 0.600 0.800 1.000 1.200 1.400 1.600 1.800 2.000))
 	  (scale-channel .5)
 	  (check-back-and-forth ind "ramp+ptreec 2" (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900 1.000))
 	  (ptree-channel (lambda (y data dir) 
-			   (declare (y real) (data vct) (dir boolean))
 			   (+ y (vct-ref data 0))) 
 			 0 (frames) ind 0 #f #f (lambda (pos dur) (vct 0.5)))
 	  (check-back-and-forth ind "ramp+ptreec 3" (vct 0.500 0.600 0.700 0.800 0.900 1.000 1.100 1.200 1.300 1.400 1.500))
 	  (undo 4)
 	  (env-channel '(0 0 1 1 2 0))
 	  (ptree-channel (lambda (y data dir) 
-			   (declare (y real) (data vct) (dir boolean))
 			   (* y (vct-ref data 0))) 
 			 0 (frames) ind 0 #f #f (lambda (pos dur) (vct 2.0)))
 	  (check-back-and-forth ind "ramp+ptreec 4" (vct 0.000 0.400 0.800 1.200 1.600 2.000 1.600 1.200 0.800 0.400 0.000))
@@ -38444,7 +38400,6 @@ EDITS: 1
 	  (scale-channel .5)
 	  (env-channel '(0 0 1 1 2 0))
 	  (ptree-channel (lambda (y data dir) 
-			   (declare (y real) (data vct) (dir boolean))
 			   (* y (vct-ref data 0))) 
 			 0 (frames) ind 0 #f #f (lambda (pos dur) (vct 2.0)))
 	  (check-back-and-forth ind "ramp+ptreec 5" (vct 0.000 0.200 0.400 0.600 0.800 1.000 0.800 0.600 0.400 0.200 0.000))
@@ -38454,7 +38409,6 @@ EDITS: 1
 	  (ramp-channel 0.0 1.0)
 	  (scale-channel 0.5)
 	  (ptree-channel (lambda (y data dir) 
-			   (declare (y real) (data vct) (dir boolean))
 			   (* y (vct-ref data 0))) 
 			 0 (frames) ind 0 #f #f (lambda (pos dur) (vct 2.0)))
 	  (check-back-and-forth ind "ramp+ptreec 7" (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900 1.000))
@@ -38467,14 +38421,12 @@ EDITS: 1
 	  (xramp-channel 0.0 1.0 .0325)
 	  (check-back-and-forth ind "xramp(+ptree+closure) 0" (vct 0.000 0.300 0.513 0.664 0.771 0.847 0.901 0.940 0.967 0.986 1.000))
 	  (ptree-channel (lambda (y data dir) 
-			   (declare (y real) (data vct) (dir boolean))
 			   (* y (vct-ref data 0))) 
 			 0 (frames) ind 0 #f #f (lambda (pos dur) (vct 2.0)))
 	  (check-back-and-forth ind "xramp+ptree-closure 1" (vct-scale! (vct 0.000 0.300 0.513 0.664 0.771 0.847 0.901 0.940 0.967 0.986 1.000) 2.0))
 	  (scale-channel .5)
 	  (check-back-and-forth ind "xramp+ptree-closure 2" (vct 0.000 0.300 0.513 0.664 0.771 0.847 0.901 0.940 0.967 0.986 1.000))
 	  (ptree-channel (lambda (y data dir) 
-			   (declare (y real) (data vct) (dir boolean))
 			   (+ y (vct-ref data 0))) 
 			 0 (frames) ind 0 #f #f (lambda (pos dur) (vct 0.5)))
 	  (check-back-and-forth ind "xramp+ptree-closure 3" (vct-offset! (vct 0.000 0.300 0.513 0.664 0.771 0.847 0.901 0.940 0.967 0.986 1.000) 0.5))
@@ -38482,7 +38434,6 @@ EDITS: 1
 	  (env-sound '(0 0 1 1 2 0) 0 11 .0325)
 	  (check-back-and-forth ind "xramp(+ptree-closure) 4" (vct 0.000 0.513 0.771 0.901 0.967 1.000 0.967 0.901 0.771 0.513 0.000))
 	  (ptree-channel (lambda (y data dir) 
-			   (declare (y real) (data vct) (dir boolean))
 			   (* y (vct-ref data 0))) 
 			 0 (frames) ind 0 #f #f (lambda (pos dur) (vct 2.0)))
 	  (check-back-and-forth ind "xramp+ptree-closure 4" (vct-scale! (vct 0.000 0.513 0.771 0.901 0.967 1.000 0.967 0.901 0.771 0.513 0.000) 2.0))
@@ -38490,7 +38441,6 @@ EDITS: 1
 	  (scale-channel .5)
 	  (env-sound '(0 0 1 1 2 0) 0 11 .0325)
 	  (ptree-channel (lambda (y data dir) 
-			   (declare (y real) (data vct) (dir boolean))
 			   (* y (vct-ref data 0))) 
 			 0 (frames) ind 0 #f #f (lambda (pos dur) (vct 2.0)))
 	  (check-back-and-forth ind "xramp+ptree-closure 5" (vct 0.000 0.513 0.771 0.901 0.967 1.000 0.967 0.901 0.771 0.513 0.000))
@@ -38500,7 +38450,6 @@ EDITS: 1
 	  (xramp-channel 0.0 1.0 .0325)
 	  (scale-channel 0.5)
 	  (ptree-channel (lambda (y data dir) 
-			   (declare (y real) (data vct) (dir boolean))
 			   (* y (vct-ref data 0))) 
 			 0 (frames) ind 0 #f #f (lambda (pos dur) (vct 2.0)))
 	  (check-back-and-forth ind "xramp+ptree-closure 7" (vct 0.000 0.300 0.513 0.664 0.771 0.847 0.901 0.940 0.967 0.986 1.000))
@@ -38510,7 +38459,6 @@ EDITS: 1
 	  (xramp-channel 0.0 1.0 .0325 0 5)
 	  (check-back-and-forth ind "xramp(+ptree-closure) 9" (vct 0.000 0.595 0.847 0.954 1.000 1.000 1.000 1.000 1.000 1.000 1.000))
 	  (ptree-channel (lambda (y data dir) 
-			   (declare (y real) (data vct) (dir boolean))
 			   (* y (vct-ref data 0))) 
 			 3 3 ind 0 #f #f (lambda (pos dur) (vct 2.0)))
 	  (check-back-and-forth ind "xramp+ptree-closure 9" (vct 0.000 0.595 0.847 1.909 2.000 2.000 1.000 1.000 1.000 1.000 1.000))
@@ -38518,7 +38466,6 @@ EDITS: 1
 	  (xramp-channel 0.0 1.0 .0325 0 5)
 	  (check-back-and-forth ind "xramp(+ptree-closure) 10" (vct 0.000 0.595 0.847 0.954 1.000 1.000 1.000 1.000 1.000 1.000 1.000))
 	  (ptree-channel (lambda (y data dir) 
-			   (declare (y real) (data vct) (dir boolean))
 			   (* y (vct-ref data 0))) 
 			 0 3 ind 0 #f #f (lambda (pos dur) (vct 2.0)))
 	  (check-back-and-forth ind "xramp+ptree-closure 10" (vct 0.000 1.189 1.695 0.954 1.000 1.000 1.000 1.000 1.000 1.000 1.000))
@@ -38526,7 +38473,6 @@ EDITS: 1
 	  (xramp-channel 1.0 0.0 .0325 5 5)
 	  (check-back-and-forth ind "xramp(+ptree-closure) 11" (vct 1.000 1.000 1.000 1.000 1.000 1.000 0.954 0.847 0.595 0.000 1.000))
 	  (ptree-channel (lambda (y data dir) 
-			   (declare (y real) (data vct) (dir boolean))
 			   (* y (vct-ref data 0))) 
 			 3 4 ind 0 #f #f (lambda (pos dur) (vct 2.0)))
 	  (check-back-and-forth ind "xramp+ptree-closure 11" (vct 1.000 1.000 1.000 2.000 2.000 2.000 1.909 0.847 0.595 0.000 1.000))

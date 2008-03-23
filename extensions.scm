@@ -601,7 +601,6 @@ connects them with 'func', and applies the result as an amplitude envelope to th
   ;; vct: angle incr off scl
   (ptree-channel
    (lambda (y data forward)
-     (declare (y real) (data vct) (forward boolean))
      (let* ((angle (vct-ref data 0))
 	    (incr (vct-ref data 1))
 	    (val (* y (+ (vct-ref data 2) (* (vct-ref data 3) (+ 0.5 (* 0.5 (cos angle))))))))
@@ -637,7 +636,6 @@ connects them with 'func', and applies the result as an amplitude envelope to th
   ;; vct: angle incr off scl
   (ptree-channel
    (lambda (y data forward)
-     (declare (y real) (data vct) (forward boolean))
      (let* ((angle (vct-ref data 0))
 	    (incr (vct-ref data 1))
 	    (cx (cos angle))
@@ -676,7 +674,6 @@ connects them with 'func', and applies the result as an amplitude envelope to th
   ;; vct: start incr off scl
   (ptree-channel
    (lambda (y data forward)
-     (declare (y real) (data vct) (forward boolean))
      (let* ((angle (vct-ref data 0))
 	    (incr (vct-ref data 1))
 	    (val (* y (+ (vct-ref data 2) (* angle angle (vct-ref data 3))))))
@@ -713,7 +710,6 @@ connects them with 'func', and applies the result as an amplitude envelope to th
   ;; a^x = exp(x * log(a))
   (ptree-channel
    (lambda (y data forward)
-     (declare (y real) (data vct) (forward boolean))
      (let* ((angle (vct-ref data 0))
 	    (incr (vct-ref data 1))
 	    (val (* y (+ (vct-ref data 2) (* (exp (* (log angle) (vct-ref data 4))) (vct-ref data 3))))))
@@ -861,7 +857,6 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 		       (edit-position snd chn)
 		       edpos)))
     (ptree-channel (lambda (y data dir)
-		     (declare (y real) (data vct) (dir boolean))
 		     (let* ((pos (inexact->exact (floor (vct-ref data 0))))
 			    (len (inexact->exact (floor (vct-ref data 1))))
 			    (val (vct-ref data (+ pos 2))))

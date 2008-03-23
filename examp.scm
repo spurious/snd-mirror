@@ -1959,7 +1959,6 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 	(samps (make-vct 10))
 	(sctr 0))
     (lambda (val)
-      (declare (val float)) ; for run
       (set! samp0 samp1)
       (set! samp1 samp2)
       (set! samp2 val)
@@ -1978,7 +1977,6 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
   "(zero+) finds the next positive-going zero crossing (if searching forward) (for use with C-s)"
   (let ((lastn 0.0))
     (lambda (n)
-      (declare (n float))
       (let ((rtn (and (< lastn 0.0)
 		      (>= n 0.0)
 		      -1)))
@@ -2325,7 +2323,6 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 	 (data (vct 0.0 0.0 init-angle off scale)))
     (ptree-channel
      (lambda (y data forward)
-       (declare (y real) (data vct) (forward boolean))
        (let* ((angle (vct-ref data 0))
 	      (incr (vct-ref data 1))
 	      (val (+ (vct-ref data 3) 
@@ -2350,7 +2347,6 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
   "(ring-modulate-channel freq :optional (beg 0) dur snd chn edpos) ring-modulates the given channel"
   (ptree-channel
    (lambda (y data forward)
-     (declare (y real) (data vct) (forward boolean))
      (let* ((angle (vct-ref data 0))
 	    (incr (vct-ref data 1))
 	    (val (* y (sin angle))))
@@ -2700,7 +2696,6 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
   (ptree-channel
      
    (lambda (y data forward)
-     (declare (y real) (data vct) (forward boolean))
      (let* ((sum 0.0)
 	    (order (inexact->exact (floor (vct-ref data 0))))
 	    (cur-loc (inexact->exact (floor (vct-ref data 1))))

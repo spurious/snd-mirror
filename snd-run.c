@@ -3182,7 +3182,7 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool sepa
   int i, arg_num, arg_type;
   char *type;
 
-  /* this can be (declare (arg1 type1)...) or (snd-declare (quote ((arg1 type1...)))) */
+  /* this can be (declare (arg1 type1)...) or (snd-declare (quote ((arg1 type1...)))) -- see snd-xen.c for an explanation of snd-declare */
 
   /* fprintf(stderr, "declare: %s, %d %d\n", XEN_AS_STRING(form), separate, num_args); */
 
@@ -3397,6 +3397,7 @@ static xen_value *lambda_form(ptree *prog, XEN form, bool separate, xen_value **
       new_tree = attach_to_ptree(prog);
       new_tree->code = local_proc;
       outer_locals = prog->var_ctr;
+      /* inner level default arg type is int(?) */
       err = declare_args(new_tree, form, R_INT, separate, args, num_args);
       if (err)
 	{
@@ -3428,6 +3429,8 @@ static xen_value *lambda_form(ptree *prog, XEN form, bool separate, xen_value **
       free_embedded_ptree(new_tree);
       return(run_warn("can't handle this embedded lambda: %s", XEN_AS_STRING(form)));
     }
+
+  /* outer level default arg type is float(?) */
   got_lambda = true;
   locals_loc = prog->var_ctr;
   err = declare_args(prog, form, R_FLOAT, separate, args, num_args);
@@ -12084,9 +12087,6 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 		      ((i < w->num_arg_types) && (w->arg_types[i] == R_INT)))
 		    arg_result = NEED_INT_RESULT;
 
-		  /* clm23 has tests of the trailing phase-vocoder func args */
-		  /* TODO: in-out-any, pv, grn, src, conv all need to be tested with and without declares for all func args */
-		  
 		  /* if arg might be a function, check for auto-declare */
 		  if ((w->linfo) &&
 		      (w->linfo->args > i) &&
@@ -12443,6 +12443,7 @@ typedef enum {NO_PTREE_DISPLAY, STDERR_PTREE_DISPLAY, LISTENER_PTREE_DISPLAY, GC
   static ptree_display_t ptree_on = DESCRIBE_PTREE_INIT;
 #endif
 
+
 static XEN g_show_ptree(XEN on)
 {
   #define S_show_ptree "show-ptree"
@@ -12453,8 +12454,7 @@ arg = 1 sends it to stderr, 2 to the listener, 3 is for gcat's use. "
   return(on);
 }
 
-
-static struct ptree *form_to_ptree(XEN code)
+static struct ptree *form_to_ptree_1(XEN code, int decls, int *types)
 {
   ptree *prog;
   XEN form;
@@ -12465,6 +12465,9 @@ static struct ptree *form_to_ptree(XEN code)
 
   form = XEN_CAR(code);
   prog = make_ptree(8);
+
+  prog->lambda_args = decls;
+  prog->lambda_arg_types = types;
 
 #if HAVE_GUILE
   if ((XEN_PROCEDURE_P(XEN_CADR(code))) && 
@@ -12487,7 +12490,6 @@ static struct ptree *form_to_ptree(XEN code)
   if (prog->result)
     {
       add_triple_to_ptree(prog, make_triple(quit, "quit", NULL, 0));
-      /* now check that we were able to nail down all global variable types */
 
       if (ptree_on != NO_PTREE_DISPLAY)
 	{
@@ -12511,12 +12513,45 @@ static struct ptree *form_to_ptree(XEN code)
 }
 
 
+static struct ptree *form_to_ptree(XEN code)
+{
+  return(form_to_ptree_1(code, 0, NULL));
+}
+
+
+static struct ptree *form_to_ptree_with_predeclarations(XEN code, int decls, ...)
+{
+  ptree *result;
+  int *types = NULL;
+
+  if (decls > 0)
+    {
+      int i;
+      va_list ap;
+
+      types = (int *)CALLOC(decls, sizeof(int));
+      va_start(ap, decls);
+      for (i = 0; i < decls; i++)
+	types[i] = va_arg(ap, int);
+      va_end(ap);
+    }
+
+  result = form_to_ptree_1(code, decls, types);
+  FREE(types);
+  return(result);
+}
+
+
+
+
+
 /* ---------------- various tree-building wrappers ---------------- */
 
 struct ptree *form_to_ptree_1_f(XEN code)
 {
+  /* map-channel and simple form of ptree-channel */
   ptree *pt;
-  pt = form_to_ptree(code);
+  pt = form_to_ptree_with_predeclarations(code, 1, R_FLOAT);
   if (pt)
     {
       if ((pt->result->type == R_FLOAT) && (pt->arity == 1))
@@ -12529,8 +12564,9 @@ struct ptree *form_to_ptree_1_f(XEN code)
 
 struct ptree *form_to_ptree_3_f(XEN code)
 {
+  /* ptree-channel, snd-sig.c */
   ptree *pt;
-  pt = form_to_ptree(code);
+  pt = form_to_ptree_with_predeclarations(code, 3, R_FLOAT, R_VCT, R_BOOL);
   if (pt)
     {
       if ((pt->result->type == R_FLOAT) && (pt->arity == 3))
@@ -12543,6 +12579,7 @@ struct ptree *form_to_ptree_3_f(XEN code)
 
 struct ptree *form_to_ptree_0_f(XEN code)
 {
+  /* vct-map! */
   ptree *pt;
   pt = form_to_ptree(code);
   if (pt)
@@ -12557,8 +12594,9 @@ struct ptree *form_to_ptree_0_f(XEN code)
 
 struct ptree *form_to_ptree_1_b(XEN code)
 {
+  /* find */
   ptree *pt;
-  pt = form_to_ptree(code);
+  pt = form_to_ptree_with_predeclarations(code, 1, R_FLOAT);
   if (pt)
     {
       if ((pt->result->type == R_BOOL) && (pt->arity == 1))
@@ -12571,6 +12609,7 @@ struct ptree *form_to_ptree_1_b(XEN code)
 
 struct ptree *form_to_ptree_1_b_without_env(XEN code)
 {
+  /* find */
   return(form_to_ptree_1_b(XEN_LIST_2(code, XEN_FALSE)));
 }
 
@@ -12717,299 +12756,299 @@ static void init_walkers(void)
   /* make_walker: walker, special walker, set walker, req args, max args, result type, need int, num arg types, ... */
 
   /* -------- special forms */
-  INIT_WALKER("let", make_walker(NULL, let_form, NULL, 2, UNLIMITED_ARGS, R_ANY, false, 0));
-  INIT_WALKER("let*", make_walker(NULL, let_star_form, NULL, 2, UNLIMITED_ARGS, R_ANY, false, 0));
-  INIT_WALKER("do", make_walker(NULL, do_form, NULL, 2, UNLIMITED_ARGS, R_ANY, false, 0));
-  INIT_WALKER("begin", make_walker(NULL, begin_form, NULL, 0, UNLIMITED_ARGS, R_ANY, false, 0));
-  INIT_WALKER("if", make_walker(NULL, if_form, NULL, 2, 3, R_ANY, false, 0));
-  INIT_WALKER("cond", make_walker(NULL, cond_form, NULL, 1, UNLIMITED_ARGS, R_ANY, false, 0));
-  INIT_WALKER("case", make_walker(NULL, case_form, NULL, 2, UNLIMITED_ARGS, R_ANY, false, 0));
+  INIT_WALKER("let",         make_walker(NULL, let_form, NULL, 2, UNLIMITED_ARGS, R_ANY, false, 0));
+  INIT_WALKER("let*",        make_walker(NULL, let_star_form, NULL, 2, UNLIMITED_ARGS, R_ANY, false, 0));
+  INIT_WALKER("do",          make_walker(NULL, do_form, NULL, 2, UNLIMITED_ARGS, R_ANY, false, 0));
+  INIT_WALKER("begin",       make_walker(NULL, begin_form, NULL, 0, UNLIMITED_ARGS, R_ANY, false, 0));
+  INIT_WALKER("if",          make_walker(NULL, if_form, NULL, 2, 3, R_ANY, false, 0));
+  INIT_WALKER("cond",        make_walker(NULL, cond_form, NULL, 1, UNLIMITED_ARGS, R_ANY, false, 0));
+  INIT_WALKER("case",        make_walker(NULL, case_form, NULL, 2, UNLIMITED_ARGS, R_ANY, false, 0));
   INIT_WALKER("call-with-current-continuation", make_walker(NULL, callcc_form, NULL, 1, 1, R_ANY, false, 0));
-  INIT_WALKER("or", make_walker(NULL, or_form, NULL, 0, UNLIMITED_ARGS, R_ANY, false, 0));
-  INIT_WALKER("and", make_walker(NULL, and_form, NULL, 0, UNLIMITED_ARGS, R_ANY, false, 0));
-  INIT_WALKER("set!", make_walker(NULL, set_form, NULL, 2, 2, R_ANY, false, 0)); /* Scheme set! does not take &rest args */
-  INIT_WALKER("call/cc", make_walker(NULL, callcc_form, NULL, 1, 1, R_ANY, false, 0));
-  INIT_WALKER("lambda", make_walker(NULL, lambda_preform, NULL, 1, UNLIMITED_ARGS, R_ANY, false, 0));
-  INIT_WALKER("declare", make_walker(NULL, declare_1, NULL, 0, UNLIMITED_ARGS, R_ANY, false, 0));
+  INIT_WALKER("or",          make_walker(NULL, or_form, NULL, 0, UNLIMITED_ARGS, R_ANY, false, 0));
+  INIT_WALKER("and",         make_walker(NULL, and_form, NULL, 0, UNLIMITED_ARGS, R_ANY, false, 0));
+  INIT_WALKER("set!",        make_walker(NULL, set_form, NULL, 2, 2, R_ANY, false, 0)); /* Scheme set! does not take &rest args */
+  INIT_WALKER("call/cc",     make_walker(NULL, callcc_form, NULL, 1, 1, R_ANY, false, 0));
+  INIT_WALKER("lambda",      make_walker(NULL, lambda_preform, NULL, 1, UNLIMITED_ARGS, R_ANY, false, 0));
+  INIT_WALKER("declare",     make_walker(NULL, declare_1, NULL, 0, UNLIMITED_ARGS, R_ANY, false, 0));
   INIT_WALKER("snd-declare", make_walker(NULL, declare_1, NULL, 0, UNLIMITED_ARGS, R_ANY, false, 0));
 
   /* -------- basic stuff */
-  INIT_WALKER("eq?", make_walker(eq_p, NULL, NULL, 2, 2, R_BOOL, false, 0));
-  INIT_WALKER("eqv?", make_walker(eqv_p, NULL, NULL, 2, 2, R_BOOL, false, 0));
-  INIT_WALKER("equal?", make_walker(equal_p, NULL, NULL, 2, 2, R_BOOL, false, 0));
+  INIT_WALKER("eq?",      make_walker(eq_p, NULL, NULL, 2, 2, R_BOOL, false, 0));
+  INIT_WALKER("eqv?",     make_walker(eqv_p, NULL, NULL, 2, 2, R_BOOL, false, 0));
+  INIT_WALKER("equal?",   make_walker(equal_p, NULL, NULL, 2, 2, R_BOOL, false, 0));
   INIT_WALKER("boolean?", make_walker(boolean_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
-  INIT_WALKER("number?", make_walker(number_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
+  INIT_WALKER("number?",  make_walker(number_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
   INIT_WALKER("integer?", make_walker(integer_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
   INIT_WALKER("inexact?", make_walker(inexact_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
-  INIT_WALKER("exact?", make_walker(exact_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
-  INIT_WALKER("real?", make_walker(real_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
-  INIT_WALKER("char?", make_walker(char_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
-  INIT_WALKER("string?", make_walker(string_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
+  INIT_WALKER("exact?",   make_walker(exact_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
+  INIT_WALKER("real?",    make_walker(real_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
+  INIT_WALKER("char?",    make_walker(char_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
+  INIT_WALKER("string?",  make_walker(string_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
   INIT_WALKER("keyword?", make_walker(keyword_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
-  INIT_WALKER("symbol?", make_walker(symbol_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
-  INIT_WALKER("vector?", make_walker(vector_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
-  INIT_WALKER("list?", make_walker(list_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
-  INIT_WALKER(">=", make_walker(ge_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_NUMBER));
-  INIT_WALKER(">", make_walker(gt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_NUMBER));
-  INIT_WALKER("<=", make_walker(le_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_NUMBER));
-  INIT_WALKER("<", make_walker(lt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_NUMBER));
-  INIT_WALKER("=", make_walker(eq_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_NUMBER));
+  INIT_WALKER("symbol?",  make_walker(symbol_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
+  INIT_WALKER("vector?",  make_walker(vector_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
+  INIT_WALKER("list?",    make_walker(list_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
+  INIT_WALKER(">=",       make_walker(ge_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_NUMBER));
+  INIT_WALKER(">",        make_walker(gt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_NUMBER));
+  INIT_WALKER("<=",       make_walker(le_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_NUMBER));
+  INIT_WALKER("<",        make_walker(lt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_NUMBER));
+  INIT_WALKER("=",        make_walker(eq_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_NUMBER));
 
-  INIT_WALKER("*", make_walker(multiply, NULL, NULL, 0, UNLIMITED_ARGS, R_ANY, false, 1, -R_NUMBER));
-  INIT_WALKER("+", make_walker(add, NULL, NULL, 0, UNLIMITED_ARGS, R_NUMBER, false, 1, -R_NUMBER));
-  INIT_WALKER("-", make_walker(subtract, NULL, NULL, 1, UNLIMITED_ARGS, R_NUMBER, false, 1, -R_NUMBER));
-  INIT_WALKER("/", make_walker(divide, NULL, NULL, 1, UNLIMITED_ARGS, R_NUMBER, false, 1, -R_NUMBER));
-  INIT_WALKER("max", make_walker(max_1, NULL, NULL, 1, UNLIMITED_ARGS, R_NUMBER, false, 1, -R_NUMBER));
-  INIT_WALKER("min", make_walker(min_1, NULL, NULL, 1, UNLIMITED_ARGS, R_NUMBER, false, 1, -R_NUMBER));
-  INIT_WALKER("1+", make_walker(one_plus, NULL, NULL, 1, 1, R_NUMBER, false, 1, R_NUMBER));
-  INIT_WALKER("1-", make_walker(one_minus, NULL, NULL, 1, 1, R_NUMBER, false, 1, R_NUMBER));
+  INIT_WALKER("*",        make_walker(multiply, NULL, NULL, 0, UNLIMITED_ARGS, R_ANY, false, 1, -R_NUMBER));
+  INIT_WALKER("+",        make_walker(add, NULL, NULL, 0, UNLIMITED_ARGS, R_NUMBER, false, 1, -R_NUMBER));
+  INIT_WALKER("-",        make_walker(subtract, NULL, NULL, 1, UNLIMITED_ARGS, R_NUMBER, false, 1, -R_NUMBER));
+  INIT_WALKER("/",        make_walker(divide, NULL, NULL, 1, UNLIMITED_ARGS, R_NUMBER, false, 1, -R_NUMBER));
+  INIT_WALKER("max",      make_walker(max_1, NULL, NULL, 1, UNLIMITED_ARGS, R_NUMBER, false, 1, -R_NUMBER));
+  INIT_WALKER("min",      make_walker(min_1, NULL, NULL, 1, UNLIMITED_ARGS, R_NUMBER, false, 1, -R_NUMBER));
+  INIT_WALKER("1+",       make_walker(one_plus, NULL, NULL, 1, 1, R_NUMBER, false, 1, R_NUMBER));
+  INIT_WALKER("1-",       make_walker(one_minus, NULL, NULL, 1, 1, R_NUMBER, false, 1, R_NUMBER));
 
   INIT_WALKER("inexact->exact", make_walker(inexact2exact_1, NULL, NULL, 1, 1, R_INT, true, 1, R_NUMBER));
   INIT_WALKER("exact->inexact", make_walker(exact2inexact_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
-  INIT_WALKER("modulo", make_walker(modulo_1, NULL, NULL, 2, 2, R_INT, true, 2, R_NUMBER, R_NUMBER));
-  INIT_WALKER("remainder", make_walker(remainder_1, NULL, NULL, 2, 2, R_INT, true, 2, R_NUMBER, R_NUMBER));
-  INIT_WALKER("quotient", make_walker(quotient_1, NULL, NULL, 2, 2, R_INT, true, 2, R_NUMBER, R_NUMBER));
-  INIT_WALKER("logand", make_walker(logand_1, NULL, NULL, 2, 2, R_INT, true, 2, R_INT, R_INT));
-  INIT_WALKER("logxor", make_walker(logxor_1, NULL, NULL, 2, 2, R_INT, true, 2, R_INT, R_INT));
-  INIT_WALKER("logior", make_walker(logior_1, NULL, NULL, 2, 2, R_INT, true, 2, R_INT, R_INT));
-  INIT_WALKER("lognot", make_walker(lognot_1, NULL, NULL, 1, 1, R_INT, true, 1, R_INT));
-  INIT_WALKER("ash", make_walker(ash_1, NULL, NULL, 2, 2, R_INT, true, 2, R_INT, R_INT));
-  INIT_WALKER("integer->char", make_walker(integer_to_char_1, NULL, NULL, 1, 1, R_CHAR, true, 1, R_INT));
-  INIT_WALKER("gcd", make_walker(gcd_1, NULL, NULL, 0, UNLIMITED_ARGS, R_INT, true, 1, -R_NUMBER));
-  INIT_WALKER("lcm", make_walker(lcm_1, NULL, NULL, 0, UNLIMITED_ARGS, R_INT, true, 1, -R_NUMBER));
-  INIT_WALKER("expt", make_walker(expt_1, NULL, NULL, 2, 2, R_NUMBER, false, 2, R_NUMBER, R_NUMBER));
-  INIT_WALKER("atan", make_walker(atanx_1, NULL, NULL, 1, 2, R_NUMBER, false, 2, R_NUMBER, R_NUMBER));
-  INIT_WALKER("sin", make_walker(sin_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
-  INIT_WALKER("cos", make_walker(cos_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
-  INIT_WALKER("tan", make_walker(tan_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
-  INIT_WALKER("abs", make_walker(abs_1, NULL, NULL, 1, 1, R_NUMBER, false, 1, R_NUMBER));
-  INIT_WALKER("random", make_walker(random_1, NULL, NULL, 1, 1, R_NUMBER, false, 1, R_NUMBER));
-  INIT_WALKER("log", make_walker(log_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
-  INIT_WALKER("exp", make_walker(exp_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
-  INIT_WALKER("asin", make_walker(asin_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
-  INIT_WALKER("acos", make_walker(acos_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
-  INIT_WALKER("sqrt", make_walker(sqrt_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
-  INIT_WALKER("cosh", make_walker(cosh_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
-  INIT_WALKER("sinh", make_walker(sinh_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
-  INIT_WALKER("tanh", make_walker(tanh_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
-  INIT_WALKER("acosh", make_walker(acosh_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
-  INIT_WALKER("asinh", make_walker(asinh_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
-  INIT_WALKER("atanh", make_walker(atanh_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
-  INIT_WALKER("bes-i0", make_walker(mus_bessi0_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
-  INIT_WALKER("fmod", make_walker(fmod_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_NUMBER, R_NUMBER));
+  INIT_WALKER("modulo",         make_walker(modulo_1, NULL, NULL, 2, 2, R_INT, true, 2, R_NUMBER, R_NUMBER));
+  INIT_WALKER("remainder",      make_walker(remainder_1, NULL, NULL, 2, 2, R_INT, true, 2, R_NUMBER, R_NUMBER));
+  INIT_WALKER("quotient",       make_walker(quotient_1, NULL, NULL, 2, 2, R_INT, true, 2, R_NUMBER, R_NUMBER));
+  INIT_WALKER("logand",         make_walker(logand_1, NULL, NULL, 2, 2, R_INT, true, 2, R_INT, R_INT));
+  INIT_WALKER("logxor",         make_walker(logxor_1, NULL, NULL, 2, 2, R_INT, true, 2, R_INT, R_INT));
+  INIT_WALKER("logior",         make_walker(logior_1, NULL, NULL, 2, 2, R_INT, true, 2, R_INT, R_INT));
+  INIT_WALKER("lognot",         make_walker(lognot_1, NULL, NULL, 1, 1, R_INT, true, 1, R_INT));
+  INIT_WALKER("ash",            make_walker(ash_1, NULL, NULL, 2, 2, R_INT, true, 2, R_INT, R_INT));
+  INIT_WALKER("integer->char",  make_walker(integer_to_char_1, NULL, NULL, 1, 1, R_CHAR, true, 1, R_INT));
+  INIT_WALKER("gcd",            make_walker(gcd_1, NULL, NULL, 0, UNLIMITED_ARGS, R_INT, true, 1, -R_NUMBER));
+  INIT_WALKER("lcm",            make_walker(lcm_1, NULL, NULL, 0, UNLIMITED_ARGS, R_INT, true, 1, -R_NUMBER));
+  INIT_WALKER("expt",           make_walker(expt_1, NULL, NULL, 2, 2, R_NUMBER, false, 2, R_NUMBER, R_NUMBER));
+  INIT_WALKER("atan",           make_walker(atanx_1, NULL, NULL, 1, 2, R_NUMBER, false, 2, R_NUMBER, R_NUMBER));
+  INIT_WALKER("sin",            make_walker(sin_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("cos",            make_walker(cos_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("tan",            make_walker(tan_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("abs",            make_walker(abs_1, NULL, NULL, 1, 1, R_NUMBER, false, 1, R_NUMBER));
+  INIT_WALKER("random",         make_walker(random_1, NULL, NULL, 1, 1, R_NUMBER, false, 1, R_NUMBER));
+  INIT_WALKER("log",            make_walker(log_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("exp",            make_walker(exp_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("asin",           make_walker(asin_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("acos",           make_walker(acos_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("sqrt",           make_walker(sqrt_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("cosh",           make_walker(cosh_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("sinh",           make_walker(sinh_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("tanh",           make_walker(tanh_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("acosh",          make_walker(acosh_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("asinh",          make_walker(asinh_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("atanh",          make_walker(atanh_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("bes-i0",         make_walker(mus_bessi0_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("fmod",           make_walker(fmod_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_NUMBER, R_NUMBER));
 #if HAVE_SPECIAL_FUNCTIONS
-  INIT_WALKER("bes-j0", make_walker(j0_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
-  INIT_WALKER("bes-j1", make_walker(j1_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
-  INIT_WALKER("bes-jn", make_walker(jn_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_INT, R_NUMBER));
-  INIT_WALKER("bes-y0", make_walker(y0_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
-  INIT_WALKER("bes-y1", make_walker(y1_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
-  INIT_WALKER("bes-yn", make_walker(yn_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_INT, R_NUMBER));
-  INIT_WALKER("erf", make_walker(erf_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
-  INIT_WALKER("erfc", make_walker(erfc_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
-  INIT_WALKER("lgamma", make_walker(lgamma_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("bes-j0",         make_walker(j0_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("bes-j1",         make_walker(j1_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("bes-jn",         make_walker(jn_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_INT, R_NUMBER));
+  INIT_WALKER("bes-y0",         make_walker(y0_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("bes-y1",         make_walker(y1_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("bes-yn",         make_walker(yn_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_INT, R_NUMBER));
+  INIT_WALKER("erf",            make_walker(erf_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("erfc",           make_walker(erfc_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("lgamma",         make_walker(lgamma_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
 #endif
-  INIT_WALKER("round", make_walker(round_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
-  INIT_WALKER("truncate", make_walker(truncate_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
-  INIT_WALKER("floor", make_walker(floor_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
-  INIT_WALKER("ceiling", make_walker(ceiling_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
-  INIT_WALKER("odd?", make_walker(odd_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_NUMBER));
-  INIT_WALKER("even?", make_walker(even_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_NUMBER));
-  INIT_WALKER("zero?", make_walker(zero_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_NUMBER));
+  INIT_WALKER("round",     make_walker(round_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("truncate",  make_walker(truncate_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("floor",     make_walker(floor_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("ceiling",   make_walker(ceiling_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("odd?",      make_walker(odd_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_NUMBER));
+  INIT_WALKER("even?",     make_walker(even_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_NUMBER));
+  INIT_WALKER("zero?",     make_walker(zero_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_NUMBER));
   INIT_WALKER("positive?", make_walker(positive_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_NUMBER));
   INIT_WALKER("negative?", make_walker(negative_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_NUMBER));
-  INIT_WALKER("not", make_walker(not_p, NULL, NULL, 1, 1, R_BOOL, false, 0)); /* ?? */
+  INIT_WALKER("not",       make_walker(not_p, NULL, NULL, 1, 1, R_BOOL, false, 0)); /* ?? */
 
-  INIT_WALKER("throw", make_walker(throw_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_SYMBOL));
+  INIT_WALKER("throw",     make_walker(throw_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_SYMBOL));
 
   /* -------- char funcs */
   INIT_WALKER("char-alphabetic?", make_walker(char_alphabetic_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CHAR));
-  INIT_WALKER("char-numeric?", make_walker(char_numeric_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CHAR));
+  INIT_WALKER("char-numeric?",    make_walker(char_numeric_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CHAR));
   INIT_WALKER("char-lower-case?", make_walker(char_lower_case_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CHAR));
   INIT_WALKER("char-upper-case?", make_walker(char_upper_case_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CHAR));
   INIT_WALKER("char-whitespace?", make_walker(char_whitespace_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CHAR));
-  INIT_WALKER("char-upcase", make_walker(char_upcase, NULL, NULL, 1, 1, R_CHAR, false, 1, R_CHAR));
-  INIT_WALKER("char-downcase", make_walker(char_downcase, NULL, NULL, 1, 1, R_CHAR, false, 1, R_CHAR));
-  INIT_WALKER("char->integer", make_walker(char_to_integer, NULL, NULL, 1, 1, R_INT, false, 1, R_CHAR));
-  INIT_WALKER("char>=?", make_walker(char_ge_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_CHAR));
-  INIT_WALKER("char>?", make_walker(char_gt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_CHAR));
-  INIT_WALKER("char<=?", make_walker(char_le_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_CHAR));
-  INIT_WALKER("char<?", make_walker(char_lt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_CHAR));
-  INIT_WALKER("char=?", make_walker(char_eq_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_CHAR));
-  INIT_WALKER("char-ci>=?", make_walker(char_ci_ge_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_CHAR));
-  INIT_WALKER("char-ci>?", make_walker(char_ci_gt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_CHAR));
-  INIT_WALKER("char-ci<=?", make_walker(char_ci_le_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_CHAR));
-  INIT_WALKER("char-ci<?", make_walker(char_ci_lt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_CHAR));
-  INIT_WALKER("char-ci=?", make_walker(char_ci_eq_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_CHAR));
-  INIT_WALKER("string", make_walker(string_1, NULL, NULL, 0, UNLIMITED_ARGS, R_STRING, false, 1, -R_CHAR));
+  INIT_WALKER("char-upcase",      make_walker(char_upcase, NULL, NULL, 1, 1, R_CHAR, false, 1, R_CHAR));
+  INIT_WALKER("char-downcase",    make_walker(char_downcase, NULL, NULL, 1, 1, R_CHAR, false, 1, R_CHAR));
+  INIT_WALKER("char->integer",    make_walker(char_to_integer, NULL, NULL, 1, 1, R_INT, false, 1, R_CHAR));
+  INIT_WALKER("char>=?",          make_walker(char_ge_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_CHAR));
+  INIT_WALKER("char>?",           make_walker(char_gt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_CHAR));
+  INIT_WALKER("char<=?",          make_walker(char_le_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_CHAR));
+  INIT_WALKER("char<?",           make_walker(char_lt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_CHAR));
+  INIT_WALKER("char=?",           make_walker(char_eq_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_CHAR));
+  INIT_WALKER("char-ci>=?",       make_walker(char_ci_ge_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_CHAR));
+  INIT_WALKER("char-ci>?",        make_walker(char_ci_gt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_CHAR));
+  INIT_WALKER("char-ci<=?",       make_walker(char_ci_le_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_CHAR));
+  INIT_WALKER("char-ci<?",        make_walker(char_ci_lt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_CHAR));
+  INIT_WALKER("char-ci=?",        make_walker(char_ci_eq_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_CHAR));
+  INIT_WALKER("string",           make_walker(string_1, NULL, NULL, 0, UNLIMITED_ARGS, R_STRING, false, 1, -R_CHAR));
 
   /* -------- string funcs */
-  INIT_WALKER("string=?", make_walker(string_eq_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_STRING));
-  INIT_WALKER("string>=?", make_walker(string_geq_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_STRING));
-  INIT_WALKER("string<=?", make_walker(string_leq_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_STRING));
-  INIT_WALKER("string>?", make_walker(string_gt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_STRING));
-  INIT_WALKER("string<?", make_walker(string_lt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_STRING));
-  INIT_WALKER("string-ci=?", make_walker(string_ci_eq_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_STRING));
-  INIT_WALKER("string-ci>=?", make_walker(string_ci_geq_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_STRING));
-  INIT_WALKER("string-ci<=?", make_walker(string_ci_leq_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_STRING));
-  INIT_WALKER("string-ci>?", make_walker(string_ci_gt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_STRING));
-  INIT_WALKER("string-ci<?", make_walker(string_ci_lt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_STRING));
+  INIT_WALKER("string=?",      make_walker(string_eq_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_STRING));
+  INIT_WALKER("string>=?",     make_walker(string_geq_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_STRING));
+  INIT_WALKER("string<=?",     make_walker(string_leq_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_STRING));
+  INIT_WALKER("string>?",      make_walker(string_gt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_STRING));
+  INIT_WALKER("string<?",      make_walker(string_lt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_STRING));
+  INIT_WALKER("string-ci=?",   make_walker(string_ci_eq_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_STRING));
+  INIT_WALKER("string-ci>=?",  make_walker(string_ci_geq_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_STRING));
+  INIT_WALKER("string-ci<=?",  make_walker(string_ci_leq_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_STRING));
+  INIT_WALKER("string-ci>?",   make_walker(string_ci_gt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_STRING));
+  INIT_WALKER("string-ci<?",   make_walker(string_ci_lt_1, NULL, NULL, 0, UNLIMITED_ARGS, R_BOOL, false, 1, -R_STRING));
   INIT_WALKER("string-length", make_walker(string_length_1, NULL, NULL, 1, 1, R_INT, false, 1, R_STRING));
-  INIT_WALKER("string-copy", make_walker(string_copy_1, NULL, NULL, 1, 1, R_STRING, false, 1, R_STRING));
-  INIT_WALKER("string-ref", make_walker(string_ref_1, NULL, NULL, 2, 2, R_CHAR, false, 2, R_STRING, R_INT));
-  INIT_WALKER("substring", make_walker(substring_1, NULL, NULL, 3, 3, R_STRING, false, 3, R_STRING, R_INT, R_INT));
-  INIT_WALKER("string-fill!", make_walker(string_fill_1, NULL, NULL, 2, 2, R_STRING, false, 2, R_STRING, R_CHAR));
-  INIT_WALKER("string-set!", make_walker(string_set_1, NULL, NULL, 3, 3, R_STRING, false, 3, R_STRING, R_INT, R_CHAR));
+  INIT_WALKER("string-copy",   make_walker(string_copy_1, NULL, NULL, 1, 1, R_STRING, false, 1, R_STRING));
+  INIT_WALKER("string-ref",    make_walker(string_ref_1, NULL, NULL, 2, 2, R_CHAR, false, 2, R_STRING, R_INT));
+  INIT_WALKER("substring",     make_walker(substring_1, NULL, NULL, 3, 3, R_STRING, false, 3, R_STRING, R_INT, R_INT));
+  INIT_WALKER("string-fill!",  make_walker(string_fill_1, NULL, NULL, 2, 2, R_STRING, false, 2, R_STRING, R_CHAR));
+  INIT_WALKER("string-set!",   make_walker(string_set_1, NULL, NULL, 3, 3, R_STRING, false, 3, R_STRING, R_INT, R_CHAR));
   INIT_WALKER("string-append", make_walker(string_append_1, NULL, NULL, 0, UNLIMITED_ARGS, R_STRING, false, 1, -R_STRING));
 
-  INIT_WALKER("display", make_walker(display_1, NULL, NULL, 1, 1, R_STRING, false, 0));
-  INIT_WALKER("make-string", make_walker(make_string_1, NULL, NULL, 1, 2, R_STRING, false, 2, R_INT, R_CHAR));
+  INIT_WALKER("display",        make_walker(display_1, NULL, NULL, 1, 1, R_STRING, false, 0));
+  INIT_WALKER("make-string",    make_walker(make_string_1, NULL, NULL, 1, 2, R_STRING, false, 2, R_INT, R_CHAR));
   INIT_WALKER("number->string", make_walker(number2string_1, NULL, NULL, 1, 2, R_STRING, false, 2, R_NUMBER, R_INT));
   INIT_WALKER("symbol->string", make_walker(symbol2string_1, NULL, NULL, 1, 1, R_STRING, false, 1, R_SYMBOL));
 
   /* -------- vector funcs */
-  INIT_WALKER("vector-ref", make_walker(vector_ref_1, NULL, NULL, 2, 2, R_ANY, false, 2, R_VECTOR, R_INT));
+  INIT_WALKER("vector-ref",    make_walker(vector_ref_1, NULL, NULL, 2, 2, R_ANY, false, 2, R_VECTOR, R_INT));
   INIT_WALKER("vector-length", make_walker(vector_length_1, NULL, NULL, 1, 1, R_INT, false, 1, R_VECTOR));
-  INIT_WALKER("vector-fill!", make_walker(vector_fill_1, NULL, NULL, 2, 2, R_INT, false, 1, R_VECTOR));
-  INIT_WALKER("vector-set!", make_walker(vector_set_1, NULL, NULL, 3, 3, R_ANY, false, 2, R_VECTOR, R_INT));
-  INIT_WALKER("make-vector", make_walker(make_vector_1, NULL, NULL, 1, 2, R_ANY, false, 2, R_INT, R_NUMBER));
+  INIT_WALKER("vector-fill!",  make_walker(vector_fill_1, NULL, NULL, 2, 2, R_INT, false, 1, R_VECTOR));
+  INIT_WALKER("vector-set!",   make_walker(vector_set_1, NULL, NULL, 3, 3, R_ANY, false, 2, R_VECTOR, R_INT));
+  INIT_WALKER("make-vector",   make_walker(make_vector_1, NULL, NULL, 1, 2, R_ANY, false, 2, R_INT, R_NUMBER));
 
   /* -------- list funcs */
-  INIT_WALKER("list-ref", make_walker(list_ref_1, NULL, NULL, 2, 2, R_ANY, false, 2, R_LIST, R_INT));
+  INIT_WALKER("list-ref",  make_walker(list_ref_1, NULL, NULL, 2, 2, R_ANY, false, 2, R_LIST, R_INT));
   INIT_WALKER("list-set!", make_walker(list_set_1, NULL, NULL, 3, 3, R_ANY, false, 2, R_LIST, R_INT));
-  INIT_WALKER("car", make_walker(car_1, NULL, NULL, 1, 1, R_ANY, false, 1, R_LIST));
-  INIT_WALKER("cadr", make_walker(cadr_1, NULL, NULL, 1, 1, R_ANY, false, 1, R_LIST));
-  INIT_WALKER("caddr", make_walker(caddr_1, NULL, NULL, 1, 1, R_ANY, false, 1, R_LIST));
-  INIT_WALKER("cadddr", make_walker(cadddr_1, NULL, NULL, 1, 1, R_ANY, false, 1, R_LIST));
-  INIT_WALKER("set-car!", make_walker(set_car_1, NULL, NULL, 2, 2, R_ANY, false, 1, R_LIST));
-  INIT_WALKER("length", make_walker(length_1, NULL, NULL, 1, 1, R_INT, false, 1, R_LIST));
-  INIT_WALKER("null?", make_walker(null_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_LIST));
-  INIT_WALKER("quote", make_walker(NULL, quote_form, NULL, 1, 1, R_ANY, false, 0));
+  INIT_WALKER("car",       make_walker(car_1, NULL, NULL, 1, 1, R_ANY, false, 1, R_LIST));
+  INIT_WALKER("cadr",      make_walker(cadr_1, NULL, NULL, 1, 1, R_ANY, false, 1, R_LIST));
+  INIT_WALKER("caddr",     make_walker(caddr_1, NULL, NULL, 1, 1, R_ANY, false, 1, R_LIST));
+  INIT_WALKER("cadddr",    make_walker(cadddr_1, NULL, NULL, 1, 1, R_ANY, false, 1, R_LIST));
+  INIT_WALKER("set-car!",  make_walker(set_car_1, NULL, NULL, 2, 2, R_ANY, false, 1, R_LIST));
+  INIT_WALKER("length",    make_walker(length_1, NULL, NULL, 1, 1, R_INT, false, 1, R_LIST));
+  INIT_WALKER("null?",     make_walker(null_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_LIST));
+  INIT_WALKER("quote",     make_walker(NULL, quote_form, NULL, 1, 1, R_ANY, false, 0));
 
   /* -------- clm funcs */
-  INIT_WALKER(S_mus_generator_p, make_walker(mus_generator_p_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_oscil_p, make_walker(oscil_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_env_p, make_walker(env_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_notch_p, make_walker(notch_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_comb_p, make_walker(comb_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_filtered_comb_p, make_walker(filtered_comb_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_delay_p, make_walker(delay_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_all_pass_p, make_walker(all_pass_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_mus_generator_p,  make_walker(mus_generator_p_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_oscil_p,          make_walker(oscil_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_env_p,            make_walker(env_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_notch_p,          make_walker(notch_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_comb_p,           make_walker(comb_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_filtered_comb_p,  make_walker(filtered_comb_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_delay_p,          make_walker(delay_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_all_pass_p,       make_walker(all_pass_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
   INIT_WALKER(S_moving_average_p, make_walker(moving_average_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_rand_p, make_walker(rand_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_rand_interp_p, make_walker(rand_interp_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_rand_p,           make_walker(rand_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_rand_interp_p,    make_walker(rand_interp_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
   INIT_WALKER(S_sum_of_cosines_p, make_walker(sum_of_cosines_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_ncos_p, make_walker(ncos_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_ssb_am_p, make_walker(ssb_am_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_sum_of_sines_p, make_walker(sum_of_sines_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_nsin_p, make_walker(nsin_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_table_lookup_p, make_walker(table_lookup_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_sawtooth_wave_p, make_walker(sawtooth_wave_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_pulse_train_p, make_walker(pulse_train_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_square_wave_p, make_walker(square_wave_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_triangle_wave_p, make_walker(triangle_wave_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_asymmetric_fm_p, make_walker(asymmetric_fm_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_ncos_p,           make_walker(ncos_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_ssb_am_p,         make_walker(ssb_am_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_sum_of_sines_p,   make_walker(sum_of_sines_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_nsin_p,           make_walker(nsin_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_table_lookup_p,   make_walker(table_lookup_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_sawtooth_wave_p,  make_walker(sawtooth_wave_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_pulse_train_p,    make_walker(pulse_train_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_square_wave_p,    make_walker(square_wave_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_triangle_wave_p,  make_walker(triangle_wave_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_asymmetric_fm_p,  make_walker(asymmetric_fm_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
   INIT_WALKER(S_sine_summation_p, make_walker(sine_summation_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_nrxysin_p, make_walker(nrxysin_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_nrxycos_p, make_walker(nrxycos_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_one_zero_p, make_walker(one_zero_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_one_pole_p, make_walker(one_pole_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_two_zero_p, make_walker(two_zero_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_two_pole_p, make_walker(two_pole_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_firmant_p, make_walker(firmant_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_formant_p, make_walker(formant_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_wave_train_p, make_walker(wave_train_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_waveshape_p, make_walker(waveshape_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_polyshape_p, make_walker(polyshape_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_polywave_p, make_walker(polywave_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_filter_p, make_walker(filter_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_fir_filter_p, make_walker(fir_filter_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_iir_filter_p, make_walker(iir_filter_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_readin_p, make_walker(readin_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_src_p, make_walker(src_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_granulate_p, make_walker(granulate_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_phase_vocoder_p, make_walker(phase_vocoder_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_convolve_p, make_walker(convolve_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_frame_p, make_walker(frame_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_mixer_p, make_walker(mixer_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_nrxysin_p,        make_walker(nrxysin_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_nrxycos_p,        make_walker(nrxycos_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_one_zero_p,       make_walker(one_zero_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_one_pole_p,       make_walker(one_pole_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_two_zero_p,       make_walker(two_zero_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_two_pole_p,       make_walker(two_pole_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_firmant_p,        make_walker(firmant_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_formant_p,        make_walker(formant_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_wave_train_p,     make_walker(wave_train_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_waveshape_p,      make_walker(waveshape_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_polyshape_p,      make_walker(polyshape_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_polywave_p,       make_walker(polywave_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_filter_p,         make_walker(filter_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_fir_filter_p,     make_walker(fir_filter_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_iir_filter_p,     make_walker(iir_filter_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_readin_p,         make_walker(readin_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_src_p,            make_walker(src_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_granulate_p,      make_walker(granulate_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_phase_vocoder_p,  make_walker(phase_vocoder_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_convolve_p,       make_walker(convolve_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_frame_p,          make_walker(frame_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_mixer_p,          make_walker(mixer_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
   INIT_WALKER(S_file_to_sample_p, make_walker(file_to_sample_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
   INIT_WALKER(S_sample_to_file_p, make_walker(sample_to_file_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_file_to_frame_p, make_walker(file_to_frame_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_frame_to_file_p, make_walker(frame_to_file_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_locsig_p, make_walker(locsig_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_move_sound_p, make_walker(move_sound_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_mus_input_p, make_walker(input_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_mus_output_p, make_walker(output_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_snd_to_sample_p, make_walker(snd_to_sample_1p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_file_to_frame_p,  make_walker(file_to_frame_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_frame_to_file_p,  make_walker(frame_to_file_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_locsig_p,         make_walker(locsig_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_move_sound_p,     make_walker(move_sound_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_mus_input_p,      make_walker(input_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_mus_output_p,     make_walker(output_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
+  INIT_WALKER(S_snd_to_sample_p,  make_walker(snd_to_sample_1p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
 
-  INIT_WALKER(S_mus_increment, make_walker(mus_increment_0, NULL, mus_set_increment_1, 1, 1, R_FLOAT, false, 1, R_GENERATOR));
-  INIT_WALKER(S_mus_frequency, make_walker(mus_frequency_0, NULL, mus_set_frequency_1, 1, 1, R_FLOAT, false, 1, R_GENERATOR));
-  INIT_WALKER(S_mus_phase, make_walker(mus_phase_0, NULL, mus_set_phase_1, 1, 1, R_FLOAT, false, 1, R_GENERATOR));
-  INIT_WALKER(S_mus_width, make_walker(mus_width_0, NULL, mus_set_width_1, 1, 1, R_FLOAT, false, 1, R_GENERATOR));
-  INIT_WALKER(S_mus_scaler, make_walker(mus_scaler_0, NULL, mus_set_scaler_1, 1, 1, R_FLOAT, false, 1, R_GENERATOR));
-  INIT_WALKER(S_mus_reset, make_walker(mus_reset_0, NULL, NULL, 1, 1, R_CLM, false, 1, R_GENERATOR));
-  INIT_WALKER(S_mus_offset, make_walker(mus_offset_0, NULL, mus_set_offset_1, 1, 1, R_FLOAT, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_increment,      make_walker(mus_increment_0, NULL, mus_set_increment_1, 1, 1, R_FLOAT, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_frequency,      make_walker(mus_frequency_0, NULL, mus_set_frequency_1, 1, 1, R_FLOAT, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_phase,          make_walker(mus_phase_0, NULL, mus_set_phase_1, 1, 1, R_FLOAT, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_width,          make_walker(mus_width_0, NULL, mus_set_width_1, 1, 1, R_FLOAT, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_scaler,         make_walker(mus_scaler_0, NULL, mus_set_scaler_1, 1, 1, R_FLOAT, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_reset,          make_walker(mus_reset_0, NULL, NULL, 1, 1, R_CLM, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_offset,         make_walker(mus_offset_0, NULL, mus_set_offset_1, 1, 1, R_FLOAT, false, 1, R_GENERATOR));
   INIT_WALKER("mus-formant-radius", make_walker(mus_scaler_0, NULL, mus_set_scaler_1, 1, 1, R_FLOAT, false, 1, R_GENERATOR)); /* backwards compatibility... */
-  INIT_WALKER(S_mus_data, make_walker(mus_data_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_GENERATOR));
-  INIT_WALKER(S_mus_xcoeffs, make_walker(mus_xcoeffs_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_GENERATOR)); 
-  INIT_WALKER(S_mus_ycoeffs, make_walker(mus_ycoeffs_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_GENERATOR));
-  INIT_WALKER(S_mus_xcoeff, make_walker(mus_xcoeff_1, NULL, mus_set_xcoeff_1, 2, 2, R_FLOAT, false, 2, R_GENERATOR, R_INT));
-  INIT_WALKER(S_mus_ycoeff, make_walker(mus_ycoeff_1, NULL, mus_set_ycoeff_1, 2, 2, R_FLOAT, false, 2, R_GENERATOR, R_INT));
-  INIT_WALKER(S_mus_feedforward, make_walker(mus_feedforward_0, NULL, mus_set_feedforward_1, 1, 1, R_FLOAT, false, 1, R_GENERATOR));
-  INIT_WALKER(S_mus_feedback, make_walker(mus_feedback_0, NULL, mus_set_feedback_1, 1, 1, R_FLOAT, false, 1, R_GENERATOR));
-  INIT_WALKER(S_mus_hop, make_walker(mus_hop_0, NULL, mus_set_hop_1, 1, 1, R_INT, false, 1, R_GENERATOR));
-  INIT_WALKER(S_mus_channels, make_walker(mus_channels_0, NULL, NULL, 1, 1, R_INT, false, 1, R_ANY));        /* *output* can be a vct or sound-data object */
-  INIT_WALKER(S_mus_channel, make_walker(mus_channel_0, NULL, NULL, 1, 1, R_INT, false, 1, R_GENERATOR));
-  INIT_WALKER(S_mus_location, make_walker(mus_location_0, NULL, mus_set_location_1, 1, 1, R_INT, false, 1, R_GENERATOR));
-  INIT_WALKER(S_mus_ramp, make_walker(mus_ramp_0, NULL, mus_set_ramp_1, 1, 1, R_INT, false, 1, R_GENERATOR));
-  INIT_WALKER(S_mus_order, make_walker(mus_order_0, NULL, NULL, 1, 1, R_INT, false, 1, R_GENERATOR));
-  INIT_WALKER(S_mus_length, make_walker(mus_length_0, NULL, mus_set_length_1, 1, 1, R_INT, false, 1, R_GENERATOR));
-  INIT_WALKER(S_mus_name, make_walker(mus_name_0, NULL, mus_set_name_1, 1, 1, R_STRING, false, 1, R_GENERATOR));
-  INIT_WALKER(S_mus_file_name, make_walker(mus_file_name_0, NULL, NULL, 1, 1, R_STRING, false, 1, R_GENERATOR));
-  INIT_WALKER(S_mus_describe, make_walker(mus_describe_0, NULL, NULL, 1, 1, R_STRING, false, 1, R_GENERATOR));
-  INIT_WALKER(S_mus_close, make_walker(mus_close_0, NULL, NULL, 1, 1, R_INT, false, 1, R_ANY));              /* *output* again */
-  INIT_WALKER(S_mus_run, make_walker(mus_run_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_GENERATOR, R_NUMBER, R_NUMBER));
+  INIT_WALKER(S_mus_data,           make_walker(mus_data_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_xcoeffs,        make_walker(mus_xcoeffs_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_GENERATOR)); 
+  INIT_WALKER(S_mus_ycoeffs,        make_walker(mus_ycoeffs_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_xcoeff,         make_walker(mus_xcoeff_1, NULL, mus_set_xcoeff_1, 2, 2, R_FLOAT, false, 2, R_GENERATOR, R_INT));
+  INIT_WALKER(S_mus_ycoeff,         make_walker(mus_ycoeff_1, NULL, mus_set_ycoeff_1, 2, 2, R_FLOAT, false, 2, R_GENERATOR, R_INT));
+  INIT_WALKER(S_mus_feedforward,    make_walker(mus_feedforward_0, NULL, mus_set_feedforward_1, 1, 1, R_FLOAT, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_feedback,       make_walker(mus_feedback_0, NULL, mus_set_feedback_1, 1, 1, R_FLOAT, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_hop,            make_walker(mus_hop_0, NULL, mus_set_hop_1, 1, 1, R_INT, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_channels,       make_walker(mus_channels_0, NULL, NULL, 1, 1, R_INT, false, 1, R_ANY));        /* *output* can be a vct or sound-data object */
+  INIT_WALKER(S_mus_channel,        make_walker(mus_channel_0, NULL, NULL, 1, 1, R_INT, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_location,       make_walker(mus_location_0, NULL, mus_set_location_1, 1, 1, R_INT, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_ramp,           make_walker(mus_ramp_0, NULL, mus_set_ramp_1, 1, 1, R_INT, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_order,          make_walker(mus_order_0, NULL, NULL, 1, 1, R_INT, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_length,         make_walker(mus_length_0, NULL, mus_set_length_1, 1, 1, R_INT, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_name,           make_walker(mus_name_0, NULL, mus_set_name_1, 1, 1, R_STRING, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_file_name,      make_walker(mus_file_name_0, NULL, NULL, 1, 1, R_STRING, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_describe,       make_walker(mus_describe_0, NULL, NULL, 1, 1, R_STRING, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_close,          make_walker(mus_close_0, NULL, NULL, 1, 1, R_INT, false, 1, R_ANY));              /* *output* again */
+  INIT_WALKER(S_mus_run,            make_walker(mus_run_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_GENERATOR, R_NUMBER, R_NUMBER));
 
-  INIT_WALKER(S_oscil, make_walker(oscil_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
-  INIT_WALKER(S_one_zero, make_walker(one_zero_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_one_pole, make_walker(one_pole_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_out_any, walker_with_declare(make_walker(out_any_1, NULL, NULL, 3, 4, R_FLOAT, false, 4, R_NUMBER, R_NUMBER, R_INT, R_ANY), 3, 3, R_INT, R_FLOAT, R_INT));
-  INIT_WALKER(S_outa, walker_with_declare(make_walker(outa_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_NUMBER, R_NUMBER, R_ANY), 2, 3, R_INT, R_FLOAT, R_INT));
-  INIT_WALKER(S_outb, walker_with_declare(make_walker(outb_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_NUMBER, R_NUMBER, R_ANY), 2, 3, R_INT, R_FLOAT, R_INT));
-  INIT_WALKER(S_outc, walker_with_declare(make_walker(outc_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_NUMBER, R_NUMBER, R_ANY), 2, 3, R_INT, R_FLOAT, R_INT));
-  INIT_WALKER(S_outd, walker_with_declare(make_walker(outd_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_NUMBER, R_NUMBER, R_ANY), 2, 3, R_INT, R_FLOAT, R_INT));
-  INIT_WALKER(S_env, make_walker(env_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_CLM));
-  INIT_WALKER(S_env_interp, make_walker(env_interp_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_FLOAT, R_CLM));
-  INIT_WALKER(S_env_any, walker_with_declare(make_walker(env_any_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_CLM, R_FUNCTION), 1, 1, R_FLOAT));
-  INIT_WALKER(S_notch, make_walker(notch_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
-  INIT_WALKER(S_comb, make_walker(comb_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
-  INIT_WALKER(S_filtered_comb, make_walker(filtered_comb_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
-  INIT_WALKER(S_convolve, walker_with_declare(make_walker(convolve_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_FUNCTION), 2, 1, R_INT));
-  INIT_WALKER(S_delay, make_walker(delay_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
-  INIT_WALKER(S_all_pass, make_walker(all_pass_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
+  INIT_WALKER(S_oscil,          make_walker(oscil_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
+  INIT_WALKER(S_one_zero,       make_walker(one_zero_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_one_pole,       make_walker(one_pole_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_out_any,        walker_with_declare(make_walker(out_any_1, NULL, NULL, 3, 4, R_FLOAT, false, 4, R_NUMBER, R_NUMBER, R_INT, R_ANY), 3, 3, R_INT, R_FLOAT, R_INT));
+  INIT_WALKER(S_outa,           walker_with_declare(make_walker(outa_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_NUMBER, R_NUMBER, R_ANY), 2, 3, R_INT, R_FLOAT, R_INT));
+  INIT_WALKER(S_outb,           walker_with_declare(make_walker(outb_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_NUMBER, R_NUMBER, R_ANY), 2, 3, R_INT, R_FLOAT, R_INT));
+  INIT_WALKER(S_outc,           walker_with_declare(make_walker(outc_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_NUMBER, R_NUMBER, R_ANY), 2, 3, R_INT, R_FLOAT, R_INT));
+  INIT_WALKER(S_outd,           walker_with_declare(make_walker(outd_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_NUMBER, R_NUMBER, R_ANY), 2, 3, R_INT, R_FLOAT, R_INT));
+  INIT_WALKER(S_env,            make_walker(env_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_CLM));
+  INIT_WALKER(S_env_interp,     make_walker(env_interp_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_FLOAT, R_CLM));
+  INIT_WALKER(S_env_any,        walker_with_declare(make_walker(env_any_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_CLM, R_FUNCTION), 1, 1, R_FLOAT));
+  INIT_WALKER(S_notch,          make_walker(notch_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
+  INIT_WALKER(S_comb,           make_walker(comb_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
+  INIT_WALKER(S_filtered_comb,  make_walker(filtered_comb_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
+  INIT_WALKER(S_convolve,       walker_with_declare(make_walker(convolve_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_FUNCTION), 2, 1, R_INT));
+  INIT_WALKER(S_delay,          make_walker(delay_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
+  INIT_WALKER(S_all_pass,       make_walker(all_pass_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_moving_average, make_walker(moving_average_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_asymmetric_fm, make_walker(asymmetric_fm_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
-  INIT_WALKER(S_rand, make_walker(rand_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_rand_interp, make_walker(rand_interp_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_readin, make_walker(readin_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_CLM));
-  INIT_WALKER(S_src, walker_with_declare(make_walker(src_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_FUNCTION), 2, 1, R_INT));
+  INIT_WALKER(S_asymmetric_fm,  make_walker(asymmetric_fm_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
+  INIT_WALKER(S_rand,           make_walker(rand_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_rand_interp,    make_walker(rand_interp_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_readin,         make_walker(readin_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_CLM));
+  INIT_WALKER(S_src,            walker_with_declare(make_walker(src_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_FUNCTION), 2, 1, R_INT));
   INIT_WALKER(S_sum_of_cosines, make_walker(sum_of_cosines_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_sum_of_sines, make_walker(sum_of_sines_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_ncos, make_walker(ncos_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_nsin, make_walker(nsin_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_ssb_am, make_walker(ssb_am_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
-  INIT_WALKER(S_sawtooth_wave, make_walker(sawtooth_wave_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_square_wave, make_walker(square_wave_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_sum_of_sines,   make_walker(sum_of_sines_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_ncos,           make_walker(ncos_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_nsin,           make_walker(nsin_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_ssb_am,         make_walker(ssb_am_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
+  INIT_WALKER(S_sawtooth_wave,  make_walker(sawtooth_wave_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_square_wave,    make_walker(square_wave_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_sine_summation, make_walker(sine_summation_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_nrxysin, make_walker(nrxysin_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_nrxycos, make_walker(nrxycos_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_nrxysin,        make_walker(nrxysin_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_nrxycos,        make_walker(nrxycos_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_sample_to_file, make_walker(sample_to_file_1, NULL, NULL, 4, 4, R_FLOAT, false, 4, R_CLM, R_NUMBER, R_INT, R_NUMBER));
-  INIT_WALKER(S_table_lookup, make_walker(table_lookup_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_triangle_wave, make_walker(triangle_wave_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_two_zero, make_walker(two_zero_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_two_pole, make_walker(two_pole_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_tap, make_walker(tap_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_delay_tick, make_walker(delay_tick_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_pulse_train, make_walker(pulse_train_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_table_lookup,   make_walker(table_lookup_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_triangle_wave,  make_walker(triangle_wave_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_two_zero,       make_walker(two_zero_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_two_pole,       make_walker(two_pole_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_tap,            make_walker(tap_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_delay_tick,     make_walker(delay_tick_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_pulse_train,    make_walker(pulse_train_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_phase_vocoder, 
 	      walker_with_declare(
 	        walker_with_declare(
@@ -13020,248 +13059,248 @@ static void init_walkers(void)
 		    3, 1, R_CLM),
 		  2, 2, R_CLM, R_FUNCTION),
 		1, 1, R_INT));
-  INIT_WALKER(S_phase_vocoder_amps, make_walker(phase_vocoder_amps_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_CLM)); 
-  INIT_WALKER(S_phase_vocoder_amp_increments, make_walker(phase_vocoder_amp_increments_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_CLM));
-  INIT_WALKER(S_phase_vocoder_freqs, make_walker(phase_vocoder_freqs_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_CLM));
-  INIT_WALKER(S_phase_vocoder_phases, make_walker(phase_vocoder_phases_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_CLM));
+  INIT_WALKER(S_phase_vocoder_amps,             make_walker(phase_vocoder_amps_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_CLM)); 
+  INIT_WALKER(S_phase_vocoder_amp_increments,   make_walker(phase_vocoder_amp_increments_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_CLM));
+  INIT_WALKER(S_phase_vocoder_freqs,            make_walker(phase_vocoder_freqs_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_CLM));
+  INIT_WALKER(S_phase_vocoder_phases,           make_walker(phase_vocoder_phases_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_CLM));
   INIT_WALKER(S_phase_vocoder_phase_increments, make_walker(phase_vocoder_phase_increments_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_CLM));
 
-  INIT_WALKER(S_firmant, make_walker(firmant_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
-  INIT_WALKER(S_formant, make_walker(formant_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
-  INIT_WALKER(S_filter, make_walker(filter_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_fir_filter, make_walker(fir_filter_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_firmant,        make_walker(firmant_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
+  INIT_WALKER(S_formant,        make_walker(formant_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
+  INIT_WALKER(S_filter,         make_walker(filter_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_fir_filter,     make_walker(fir_filter_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_file_to_sample, make_walker(file_to_sample_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_INT));
-  INIT_WALKER(S_snd_to_sample, make_walker(snd_to_sample_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_INT));
-  INIT_WALKER(S_frame_ref, make_walker(frame_ref_0, NULL, frame_set_1, 2, 2, R_FLOAT, false, 2, R_CLM, R_INT));
-  INIT_WALKER(S_frame_set, make_walker(frame_set_2, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_CLM, R_INT, R_NUMBER));
-  INIT_WALKER(S_wave_train, make_walker(wave_train_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_waveshape, make_walker(waveshape_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
-  INIT_WALKER(S_polyshape, make_walker(polyshape_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
-  INIT_WALKER(S_polywave, make_walker(polywave_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_iir_filter, make_walker(iir_filter_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_ina, walker_with_declare(make_walker(ina_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_NUMBER, R_ANY), 1, 2, R_INT, R_INT));
-  INIT_WALKER(S_inb, walker_with_declare(make_walker(inb_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_NUMBER, R_ANY), 1, 2, R_INT, R_INT));
-  INIT_WALKER(S_in_any, walker_with_declare(make_walker(in_any_1, NULL, NULL, 3, 3, R_FLOAT, false, 2, R_NUMBER, R_INT, R_ANY), 2, 2, R_INT, R_INT));
+  INIT_WALKER(S_snd_to_sample,  make_walker(snd_to_sample_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_INT));
+  INIT_WALKER(S_frame_ref,      make_walker(frame_ref_0, NULL, frame_set_1, 2, 2, R_FLOAT, false, 2, R_CLM, R_INT));
+  INIT_WALKER(S_frame_set,      make_walker(frame_set_2, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_CLM, R_INT, R_NUMBER));
+  INIT_WALKER(S_wave_train,     make_walker(wave_train_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_waveshape,      make_walker(waveshape_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
+  INIT_WALKER(S_polyshape,      make_walker(polyshape_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
+  INIT_WALKER(S_polywave,       make_walker(polywave_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_iir_filter,     make_walker(iir_filter_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
+  INIT_WALKER(S_ina,            walker_with_declare(make_walker(ina_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_NUMBER, R_ANY), 1, 2, R_INT, R_INT));
+  INIT_WALKER(S_inb,            walker_with_declare(make_walker(inb_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_NUMBER, R_ANY), 1, 2, R_INT, R_INT));
+  INIT_WALKER(S_in_any,         walker_with_declare(make_walker(in_any_1, NULL, NULL, 3, 3, R_FLOAT, false, 2, R_NUMBER, R_INT, R_ANY), 2, 2, R_INT, R_INT));
   INIT_WALKER(S_granulate, 
 	      walker_with_declare(
                 walker_with_declare(
   	          make_walker(granulate_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_FUNCTION, R_FUNCTION),
 		  2, 1, R_CLM),
 		1, 1, R_INT));
-  INIT_WALKER(S_move_locsig, make_walker(move_locsig_1, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
+  INIT_WALKER(S_move_locsig,          make_walker(move_locsig_1, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_mus_set_formant_radius_and_frequency, make_walker(set_formant_radius_and_frequency_1, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
-  INIT_WALKER(S_mixer_set, make_walker(mixer_set_2, NULL, NULL, 4, 4, R_FLOAT, false, 4, R_CLM, R_INT, R_INT, R_NUMBER));
-  INIT_WALKER(S_mixer_ref, make_walker(mixer_ref_1, NULL, mixer_set_1, 3, 3, R_FLOAT, false, 3, R_CLM, R_INT, R_INT));
-  INIT_WALKER(S_locsig_ref, make_walker(locsig_ref_0, NULL, locsig_set_1, 2, 2, R_FLOAT, false, 2, R_CLM, R_INT));
-  INIT_WALKER(S_locsig_reverb_ref, make_walker(locsig_reverb_ref_0, NULL, locsig_reverb_set_1, 2, 2, R_FLOAT, false, 2, R_CLM, R_INT));
-  INIT_WALKER(S_locsig_set, make_walker(locsig_set_2, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_CLM, R_INT, R_NUMBER));
-  INIT_WALKER(S_locsig_reverb_set, make_walker(locsig_reverb_set_2, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_CLM, R_INT, R_NUMBER));
-  INIT_WALKER(S_polynomial, make_walker(polynomial_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_VCT, R_NUMBER));
-  INIT_WALKER(S_clear_array, make_walker(clear_array_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_VCT));
-  INIT_WALKER(S_array_interp, make_walker(array_interp_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_VCT, R_FLOAT, R_INT));
-  INIT_WALKER(S_mus_interpolate, make_walker(mus_interpolate_1, NULL, NULL, 3, 5, R_FLOAT, false, 3, R_INT, R_FLOAT, R_VCT, R_INT, R_FLOAT));
-  INIT_WALKER(S_mus_srate, make_walker(mus_srate_1, NULL, mus_set_srate_1, 0, 0, R_NUMBER, false, 0));
-  INIT_WALKER(S_ring_modulate, make_walker(ring_modulate_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_NUMBER, R_NUMBER));
-  INIT_WALKER(S_amplitude_modulate, make_walker(amplitude_modulate_1, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_NUMBER, R_NUMBER, R_NUMBER));
+  INIT_WALKER(S_mixer_set,            make_walker(mixer_set_2, NULL, NULL, 4, 4, R_FLOAT, false, 4, R_CLM, R_INT, R_INT, R_NUMBER));
+  INIT_WALKER(S_mixer_ref,            make_walker(mixer_ref_1, NULL, mixer_set_1, 3, 3, R_FLOAT, false, 3, R_CLM, R_INT, R_INT));
+  INIT_WALKER(S_locsig_ref,           make_walker(locsig_ref_0, NULL, locsig_set_1, 2, 2, R_FLOAT, false, 2, R_CLM, R_INT));
+  INIT_WALKER(S_locsig_reverb_ref,    make_walker(locsig_reverb_ref_0, NULL, locsig_reverb_set_1, 2, 2, R_FLOAT, false, 2, R_CLM, R_INT));
+  INIT_WALKER(S_locsig_set,           make_walker(locsig_set_2, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_CLM, R_INT, R_NUMBER));
+  INIT_WALKER(S_locsig_reverb_set,    make_walker(locsig_reverb_set_2, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_CLM, R_INT, R_NUMBER));
+  INIT_WALKER(S_polynomial,           make_walker(polynomial_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_VCT, R_NUMBER));
+  INIT_WALKER(S_clear_array,          make_walker(clear_array_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_VCT));
+  INIT_WALKER(S_array_interp,         make_walker(array_interp_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_VCT, R_FLOAT, R_INT));
+  INIT_WALKER(S_mus_interpolate,      make_walker(mus_interpolate_1, NULL, NULL, 3, 5, R_FLOAT, false, 3, R_INT, R_FLOAT, R_VCT, R_INT, R_FLOAT));
+  INIT_WALKER(S_mus_srate,            make_walker(mus_srate_1, NULL, mus_set_srate_1, 0, 0, R_NUMBER, false, 0));
+  INIT_WALKER(S_ring_modulate,        make_walker(ring_modulate_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_NUMBER, R_NUMBER));
+  INIT_WALKER(S_amplitude_modulate,   make_walker(amplitude_modulate_1, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_NUMBER, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_contrast_enhancement, make_walker(contrast_enhancement_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_NUMBER, R_NUMBER));
-  INIT_WALKER(S_dot_product, make_walker(dot_product_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_VCT, R_VCT, R_INT));
-  INIT_WALKER(S_sine_bank, make_walker(sine_bank_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_VCT, R_VCT, R_INT));
+  INIT_WALKER(S_dot_product,          make_walker(dot_product_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_VCT, R_VCT, R_INT));
+  INIT_WALKER(S_sine_bank,            make_walker(sine_bank_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_VCT, R_VCT, R_INT));
   INIT_WALKER(S_polar_to_rectangular, make_walker(polar_to_rectangular_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_VCT, R_VCT));
   INIT_WALKER(S_rectangular_to_polar, make_walker(rectangular_to_polar_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_VCT, R_VCT));
-  INIT_WALKER(S_multiply_arrays, make_walker(multiply_arrays_1, NULL, NULL, 2, 3, R_VCT, false, 3, R_VCT, R_VCT, R_INT));
-  INIT_WALKER(S_mus_fft, make_walker(mus_fft_1, NULL, NULL, 2, 4, R_VCT, false, 4, R_VCT, R_VCT, R_INT, R_INT));
-  INIT_WALKER(S_spectrum, make_walker(mus_spectrum_1, NULL, NULL, 3, 4, R_VCT, false, 4, R_VCT, R_VCT, R_VCT, R_INT));
-  INIT_WALKER(S_convolution, make_walker(convolution_1, NULL, NULL, 2, 3, R_VCT, false, 3, R_VCT, R_VCT, R_INT));
-  INIT_WALKER(S_formant_bank, make_walker(formant_bank_1,NULL, NULL, 3, 3, R_FLOAT, false, 2, R_VCT, R_CLM_VECTOR));
-  INIT_WALKER(S_frame_add, make_walker(mus_frame_add_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_NUMBER_CLM, R_NUMBER_CLM, R_CLM));
-  INIT_WALKER(S_frame_multiply, make_walker(mus_frame_multiply_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_NUMBER_CLM, R_NUMBER_CLM, R_CLM));
-  INIT_WALKER(S_mixer_multiply, make_walker(mus_mixer_multiply_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_NUMBER_CLM, R_NUMBER_CLM, R_CLM));
-  INIT_WALKER(S_mixer_add, make_walker(mus_mixer_add_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_NUMBER_CLM, R_NUMBER_CLM, R_CLM));
-  INIT_WALKER(S_frame_to_frame, make_walker(frame_to_frame_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_CLM, R_CLM, R_CLM));
-  INIT_WALKER(S_frame_to_sample, make_walker(frame_to_sample_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_CLM, R_CLM));
-  INIT_WALKER(S_sample_to_frame, make_walker(sample_to_frame_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_CLM, R_FLOAT, R_CLM));
-  INIT_WALKER(S_locsig, make_walker(locsig_1, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
-  INIT_WALKER(S_move_sound, make_walker(move_sound_1, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
-  INIT_WALKER(S_frame_to_file, make_walker(frame_to_file_1, NULL, NULL, 3, 3, R_CLM, false, 3, R_CLM, R_NUMBER, R_CLM));
-  INIT_WALKER(S_file_to_frame, make_walker(file_to_frame_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_CLM, R_NUMBER, R_CLM));
+  INIT_WALKER(S_multiply_arrays,      make_walker(multiply_arrays_1, NULL, NULL, 2, 3, R_VCT, false, 3, R_VCT, R_VCT, R_INT));
+  INIT_WALKER(S_mus_fft,              make_walker(mus_fft_1, NULL, NULL, 2, 4, R_VCT, false, 4, R_VCT, R_VCT, R_INT, R_INT));
+  INIT_WALKER(S_spectrum,             make_walker(mus_spectrum_1, NULL, NULL, 3, 4, R_VCT, false, 4, R_VCT, R_VCT, R_VCT, R_INT));
+  INIT_WALKER(S_convolution,          make_walker(convolution_1, NULL, NULL, 2, 3, R_VCT, false, 3, R_VCT, R_VCT, R_INT));
+  INIT_WALKER(S_formant_bank,         make_walker(formant_bank_1,NULL, NULL, 3, 3, R_FLOAT, false, 2, R_VCT, R_CLM_VECTOR));
+  INIT_WALKER(S_frame_add,            make_walker(mus_frame_add_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_NUMBER_CLM, R_NUMBER_CLM, R_CLM));
+  INIT_WALKER(S_frame_multiply,       make_walker(mus_frame_multiply_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_NUMBER_CLM, R_NUMBER_CLM, R_CLM));
+  INIT_WALKER(S_mixer_multiply,       make_walker(mus_mixer_multiply_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_NUMBER_CLM, R_NUMBER_CLM, R_CLM));
+  INIT_WALKER(S_mixer_add,            make_walker(mus_mixer_add_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_NUMBER_CLM, R_NUMBER_CLM, R_CLM));
+  INIT_WALKER(S_frame_to_frame,       make_walker(frame_to_frame_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_CLM, R_CLM, R_CLM));
+  INIT_WALKER(S_frame_to_sample,      make_walker(frame_to_sample_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_CLM, R_CLM));
+  INIT_WALKER(S_sample_to_frame,      make_walker(sample_to_frame_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_CLM, R_FLOAT, R_CLM));
+  INIT_WALKER(S_locsig,               make_walker(locsig_1, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
+  INIT_WALKER(S_move_sound,           make_walker(move_sound_1, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
+  INIT_WALKER(S_frame_to_file,        make_walker(frame_to_file_1, NULL, NULL, 3, 3, R_CLM, false, 3, R_CLM, R_NUMBER, R_CLM));
+  INIT_WALKER(S_file_to_frame,        make_walker(file_to_frame_1, NULL, NULL, 2, 3, R_CLM, false, 3, R_CLM, R_NUMBER, R_CLM));
 
-  INIT_WALKER(S_radians_to_hz, make_walker(mus_radians_to_hz_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
-  INIT_WALKER(S_hz_to_radians, make_walker(mus_hz_to_radians_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER(S_radians_to_hz,      make_walker(mus_radians_to_hz_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER(S_hz_to_radians,      make_walker(mus_hz_to_radians_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
   INIT_WALKER(S_degrees_to_radians, make_walker(mus_degrees_to_radians_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
   INIT_WALKER(S_radians_to_degrees, make_walker(mus_radians_to_degrees_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
-  INIT_WALKER(S_db_to_linear, make_walker(mus_db_to_linear_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
-  INIT_WALKER(S_linear_to_db, make_walker(mus_linear_to_db_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER(S_db_to_linear,       make_walker(mus_db_to_linear_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER(S_linear_to_db,       make_walker(mus_linear_to_db_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
   INIT_WALKER(S_seconds_to_samples, make_walker(seconds_to_samples_1, NULL, NULL, 1, 1, R_INT, false, 1, R_NUMBER));
-  INIT_WALKER(S_mus_random, make_walker(mus_random_r, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER(S_mus_random,         make_walker(mus_random_r, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
 
-  INIT_WALKER(S_make_all_pass, make_walker(make_all_pass_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_all_pass,       make_walker(make_all_pass_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_moving_average, make_walker(make_moving_average_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_asymmetric_fm, make_walker(make_asymmetric_fm_1, NULL, NULL, 0, 8, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_comb, make_walker(make_comb_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_filtered_comb, make_walker(make_filtered_comb_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_convolve, make_walker(make_convolve_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_delay, make_walker(make_delay_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_env, make_walker(make_env_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_fft_window, make_walker(make_fft_window_1, NULL, NULL, 2, 3, R_VCT, false, 1, -R_XEN));
-  INIT_WALKER(S_make_file_to_frame, make_walker(make_file_to_frame_1, NULL, NULL, 0, 1, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_asymmetric_fm,  make_walker(make_asymmetric_fm_1, NULL, NULL, 0, 8, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_comb,           make_walker(make_comb_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_filtered_comb,  make_walker(make_filtered_comb_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_convolve,       make_walker(make_convolve_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_delay,          make_walker(make_delay_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_env,            make_walker(make_env_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_fft_window,     make_walker(make_fft_window_1, NULL, NULL, 2, 3, R_VCT, false, 1, -R_XEN));
+  INIT_WALKER(S_make_file_to_frame,  make_walker(make_file_to_frame_1, NULL, NULL, 0, 1, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_file_to_sample, make_walker(make_file_to_sample_1, NULL, NULL, 0, 1, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_filter, make_walker(make_filter_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_fir_filter, make_walker(make_fir_filter_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_firmant, make_walker(make_firmant_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_formant, make_walker(make_formant_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_frame, make_walker(make_frame_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_frame_to_file, make_walker(make_frame_to_file_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_granulate, make_walker(make_granulate_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_iir_filter, make_walker(make_iir_filter_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_locsig, make_walker(make_locsig_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN)); /* no move-sound -- way too complex */
-  INIT_WALKER(S_make_mixer, make_walker(make_mixer_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_notch, make_walker(make_notch_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_one_pole, make_walker(make_one_pole_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_one_zero, make_walker(make_one_zero_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_oscil, make_walker(make_oscil_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_phase_vocoder, make_walker(make_phase_vocoder_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_pulse_train, make_walker(make_pulse_train_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_rand, make_walker(make_rand_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_rand_interp, make_walker(make_rand_interp_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_readin, make_walker(make_readin_1, NULL, NULL, 0, 8, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_filter,         make_walker(make_filter_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_fir_filter,     make_walker(make_fir_filter_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_firmant,        make_walker(make_firmant_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_formant,        make_walker(make_formant_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_frame,          make_walker(make_frame_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_frame_to_file,  make_walker(make_frame_to_file_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_granulate,      make_walker(make_granulate_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_iir_filter,     make_walker(make_iir_filter_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_locsig,         make_walker(make_locsig_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN)); /* no move-sound -- way too complex */
+  INIT_WALKER(S_make_mixer,          make_walker(make_mixer_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_notch,          make_walker(make_notch_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_one_pole,       make_walker(make_one_pole_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_one_zero,       make_walker(make_one_zero_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_oscil,          make_walker(make_oscil_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_phase_vocoder,  make_walker(make_phase_vocoder_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_pulse_train,    make_walker(make_pulse_train_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_rand,           make_walker(make_rand_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_rand_interp,    make_walker(make_rand_interp_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_readin,         make_walker(make_readin_1, NULL, NULL, 0, 8, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_sample_to_file, make_walker(make_sample_to_file_1, NULL, NULL, 4, 5, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_sawtooth_wave, make_walker(make_sawtooth_wave_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_sawtooth_wave,  make_walker(make_sawtooth_wave_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_sine_summation, make_walker(make_sine_summation_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_nrxysin, make_walker(make_nrxysin_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_nrxycos, make_walker(make_nrxycos_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_square_wave, make_walker(make_square_wave_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_src, make_walker(make_src_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_nrxysin,        make_walker(make_nrxysin_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_nrxycos,        make_walker(make_nrxycos_1, NULL, NULL, 0, UNLIMITED_ARGS, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_square_wave,    make_walker(make_square_wave_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_src,            make_walker(make_src_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_sum_of_cosines, make_walker(make_sum_of_cosines_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_sum_of_sines, make_walker(make_sum_of_sines_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_ncos, make_walker(make_ncos_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_nsin, make_walker(make_nsin_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_ssb_am, make_walker(make_ssb_am_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_table_lookup, make_walker(make_table_lookup_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_triangle_wave, make_walker(make_triangle_wave_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_two_pole, make_walker(make_two_pole_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_two_zero, make_walker(make_two_zero_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_wave_train, make_walker(make_wave_train_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_waveshape, make_walker(make_waveshape_1, NULL, NULL, 0, 8, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_polyshape, make_walker(make_polyshape_1, NULL, NULL, 0, 8, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_polywave, make_walker(make_polywave_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_sum_of_sines,   make_walker(make_sum_of_sines_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_ncos,           make_walker(make_ncos_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_nsin,           make_walker(make_nsin_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_ssb_am,         make_walker(make_ssb_am_1, NULL, NULL, 0, 4, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_table_lookup,   make_walker(make_table_lookup_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_triangle_wave,  make_walker(make_triangle_wave_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_two_pole,       make_walker(make_two_pole_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_two_zero,       make_walker(make_two_zero_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_wave_train,     make_walker(make_wave_train_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_waveshape,      make_walker(make_waveshape_1, NULL, NULL, 0, 8, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_polyshape,      make_walker(make_polyshape_1, NULL, NULL, 0, 8, R_CLM, false, 1, -R_XEN));
+  INIT_WALKER(S_make_polywave,       make_walker(make_polywave_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
 
   INIT_WALKER(S_partials_to_polynomial, make_walker(partials_to_polynomial_1, NULL, NULL, 1, 2, R_VCT, false, 2, R_VCT, R_INT));
 
 
   /* -------- sndlib funcs */
-  INIT_WALKER(S_mus_sound_samples, make_walker(mus_sound_samples_1, NULL, NULL, 1, 1, R_INT, false, 1, R_STRING));
-  INIT_WALKER(S_mus_sound_frames, make_walker(mus_sound_frames_1, NULL, NULL, 1, 1, R_INT, false, 1, R_STRING));
-  INIT_WALKER(S_mus_sound_datum_size, make_walker(mus_sound_datum_size_1, NULL, NULL, 1, 1, R_INT, false, 1, R_STRING));
-  INIT_WALKER(S_mus_sound_data_location, make_walker(mus_sound_data_location_1, NULL, NULL, 1, 1, R_INT, false, 1, R_STRING));
-  INIT_WALKER(S_mus_sound_chans, make_walker(mus_sound_chans_1, NULL, NULL, 1, 1, R_INT, false, 1, R_STRING));
-  INIT_WALKER(S_mus_sound_srate, make_walker(mus_sound_srate_1, NULL, NULL, 1, 1, R_INT, false, 1, R_STRING));
-  INIT_WALKER(S_mus_sound_header_type, make_walker(mus_sound_header_type_1, NULL, NULL, 1, 1, R_INT, false, 1, R_STRING));
-  INIT_WALKER(S_mus_sound_data_format, make_walker(mus_sound_data_format_1, NULL, NULL, 1, 1, R_INT, false, 1, R_STRING));
-  INIT_WALKER(S_mus_sound_length, make_walker(mus_sound_length_1, NULL, NULL, 1, 1, R_INT, false, 1, R_STRING));
-  INIT_WALKER(S_mus_sound_duration, make_walker(mus_sound_duration_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_STRING));
-  INIT_WALKER(S_mus_sound_comment, make_walker(mus_sound_comment_1, NULL, NULL, 1, 1, R_STRING, false, 1, R_STRING));
-  INIT_WALKER(S_mus_sound_forget, make_walker(mus_sound_forget_1, NULL, NULL, 1, 1, R_INT, false, 1, R_STRING));
+  INIT_WALKER(S_mus_sound_samples,        make_walker(mus_sound_samples_1, NULL, NULL, 1, 1, R_INT, false, 1, R_STRING));
+  INIT_WALKER(S_mus_sound_frames,         make_walker(mus_sound_frames_1, NULL, NULL, 1, 1, R_INT, false, 1, R_STRING));
+  INIT_WALKER(S_mus_sound_datum_size,     make_walker(mus_sound_datum_size_1, NULL, NULL, 1, 1, R_INT, false, 1, R_STRING));
+  INIT_WALKER(S_mus_sound_data_location,  make_walker(mus_sound_data_location_1, NULL, NULL, 1, 1, R_INT, false, 1, R_STRING));
+  INIT_WALKER(S_mus_sound_chans,          make_walker(mus_sound_chans_1, NULL, NULL, 1, 1, R_INT, false, 1, R_STRING));
+  INIT_WALKER(S_mus_sound_srate,          make_walker(mus_sound_srate_1, NULL, NULL, 1, 1, R_INT, false, 1, R_STRING));
+  INIT_WALKER(S_mus_sound_header_type,    make_walker(mus_sound_header_type_1, NULL, NULL, 1, 1, R_INT, false, 1, R_STRING));
+  INIT_WALKER(S_mus_sound_data_format,    make_walker(mus_sound_data_format_1, NULL, NULL, 1, 1, R_INT, false, 1, R_STRING));
+  INIT_WALKER(S_mus_sound_length,         make_walker(mus_sound_length_1, NULL, NULL, 1, 1, R_INT, false, 1, R_STRING));
+  INIT_WALKER(S_mus_sound_duration,       make_walker(mus_sound_duration_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_STRING));
+  INIT_WALKER(S_mus_sound_comment,        make_walker(mus_sound_comment_1, NULL, NULL, 1, 1, R_STRING, false, 1, R_STRING));
+  INIT_WALKER(S_mus_sound_forget,         make_walker(mus_sound_forget_1, NULL, NULL, 1, 1, R_INT, false, 1, R_STRING));
   INIT_WALKER(S_mus_sound_type_specifier, make_walker(mus_sound_type_specifier_1, NULL, NULL, 1, 1, R_INT, false, 1, R_STRING));
 
-  INIT_WALKER(S_mus_header_type_name, make_walker(mus_header_type_name_1, NULL, NULL, 1, 1, R_STRING, false, 1, R_INT));
-  INIT_WALKER(S_mus_data_format_name, make_walker(mus_data_format_name_1, NULL, NULL, 1, 1, R_STRING, false, 1, R_INT));
+  INIT_WALKER(S_mus_header_type_name,      make_walker(mus_header_type_name_1, NULL, NULL, 1, 1, R_STRING, false, 1, R_INT));
+  INIT_WALKER(S_mus_data_format_name,      make_walker(mus_data_format_name_1, NULL, NULL, 1, 1, R_STRING, false, 1, R_INT));
   INIT_WALKER(S_mus_header_type_to_string, make_walker(mus_header_type_to_string_1, NULL, NULL, 1, 1, R_STRING, false, 1, R_INT));
   INIT_WALKER(S_mus_data_format_to_string, make_walker(mus_data_format_to_string_1, NULL, NULL, 1, 1, R_STRING, false, 1, R_INT));
-  INIT_WALKER(S_mus_bytes_per_sample, make_walker(mus_bytes_per_sample_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
+  INIT_WALKER(S_mus_bytes_per_sample,      make_walker(mus_bytes_per_sample_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
 
   INIT_WALKER(S_mus_audio_close, make_walker(mus_audio_close_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
   INIT_WALKER(S_mus_audio_write, make_walker(mus_audio_write_1, NULL, NULL, 3, 3, R_INT, false, 3, R_INT, R_SOUND_DATA, R_INT));
 
-  INIT_WALKER(S_vct_ref, make_walker(vct_ref_1, NULL, vct_set_1, 2, 2, R_FLOAT, false, 2, R_VCT, R_INT));
-  INIT_WALKER(S_vct_length, make_walker(vct_length_1, NULL, NULL, 1, 1, R_INT, false, 1, R_VCT));
-  INIT_WALKER(S_vct_fillB, make_walker(vct_fill_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_VCT, R_NUMBER));
-  INIT_WALKER(S_vct_scaleB, make_walker(vct_scale_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_VCT, R_NUMBER));
-  INIT_WALKER(S_vct_offsetB, make_walker(vct_offset_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_VCT, R_NUMBER));
-  INIT_WALKER(S_vct_addB, make_walker(vct_add_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_VCT, R_VCT));
+  INIT_WALKER(S_vct_ref,       make_walker(vct_ref_1, NULL, vct_set_1, 2, 2, R_FLOAT, false, 2, R_VCT, R_INT));
+  INIT_WALKER(S_vct_length,    make_walker(vct_length_1, NULL, NULL, 1, 1, R_INT, false, 1, R_VCT));
+  INIT_WALKER(S_vct_fillB,     make_walker(vct_fill_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_VCT, R_NUMBER));
+  INIT_WALKER(S_vct_scaleB,    make_walker(vct_scale_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_VCT, R_NUMBER));
+  INIT_WALKER(S_vct_offsetB,   make_walker(vct_offset_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_VCT, R_NUMBER));
+  INIT_WALKER(S_vct_addB,      make_walker(vct_add_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_VCT, R_VCT));
   INIT_WALKER(S_vct_subtractB, make_walker(vct_subtract_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_VCT, R_VCT));
   INIT_WALKER(S_vct_multiplyB, make_walker(vct_multiply_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_VCT, R_VCT));
-  INIT_WALKER(S_vct_copy, make_walker(vct_copy_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_VCT));
-  INIT_WALKER(S_vct_peak, make_walker(vct_peak_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_VCT));
-  INIT_WALKER(S_vct_setB, make_walker(vct_set_2, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_VCT, R_INT, R_NUMBER));
-  INIT_WALKER(S_make_vct, make_walker(make_vct_1, NULL, NULL, 1, 2, R_VCT, false, 2, R_INT, R_FLOAT));
-  INIT_WALKER(S_vct, make_walker(vct_1, NULL, NULL, 1, UNLIMITED_ARGS, R_VCT, false, 1, -R_NUMBER));
-  INIT_WALKER(S_vct_p, make_walker(vct_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
-  INIT_WALKER(S_vct_reverse, make_walker(vct_reverse_2, NULL, NULL, 1, 2, R_VCT, false, 2, R_VCT, R_INT));
-  INIT_WALKER(S_vct_moveB, make_walker(vct_move_3, NULL, NULL, 3, 3, R_VCT, false, 3, R_VCT, R_INT, R_INT));
-  INIT_WALKER(S_vct_times, make_walker(vct_times_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_NUMBER_VCT, R_NUMBER_VCT));
-  INIT_WALKER(S_vct_plus, make_walker(vct_plus_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_NUMBER_VCT, R_NUMBER_VCT));
+  INIT_WALKER(S_vct_copy,      make_walker(vct_copy_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_VCT));
+  INIT_WALKER(S_vct_peak,      make_walker(vct_peak_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_VCT));
+  INIT_WALKER(S_vct_setB,      make_walker(vct_set_2, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_VCT, R_INT, R_NUMBER));
+  INIT_WALKER(S_make_vct,      make_walker(make_vct_1, NULL, NULL, 1, 2, R_VCT, false, 2, R_INT, R_FLOAT));
+  INIT_WALKER(S_vct,           make_walker(vct_1, NULL, NULL, 1, UNLIMITED_ARGS, R_VCT, false, 1, -R_NUMBER));
+  INIT_WALKER(S_vct_p,         make_walker(vct_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
+  INIT_WALKER(S_vct_reverse,   make_walker(vct_reverse_2, NULL, NULL, 1, 2, R_VCT, false, 2, R_VCT, R_INT));
+  INIT_WALKER(S_vct_moveB,     make_walker(vct_move_3, NULL, NULL, 3, 3, R_VCT, false, 3, R_VCT, R_INT, R_INT));
+  INIT_WALKER(S_vct_times,     make_walker(vct_times_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_NUMBER_VCT, R_NUMBER_VCT));
+  INIT_WALKER(S_vct_plus,      make_walker(vct_plus_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_NUMBER_VCT, R_NUMBER_VCT));
 
-  INIT_WALKER(S_sound_data_length, make_walker(sound_data_length_1, NULL, NULL, 1, 1, R_INT, false, 1, R_SOUND_DATA));
-  INIT_WALKER(S_sound_data_chans, make_walker(sound_data_chans_1, NULL, NULL, 1, 1, R_INT, false, 1, R_SOUND_DATA));
-  INIT_WALKER(S_sound_data_peak, make_walker(sound_data_peak_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_SOUND_DATA));
-  INIT_WALKER(S_sound_data_copy, make_walker(sound_data_copy_1, NULL, NULL, 1, 1, R_SOUND_DATA, false, 1, R_SOUND_DATA));
-  INIT_WALKER(S_sound_data_reverseB, make_walker(sound_data_reverse_1, NULL, NULL, 1, 1, R_SOUND_DATA, false, 1, R_SOUND_DATA));
-  INIT_WALKER(S_sound_data_p, make_walker(sound_data_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
-  INIT_WALKER(S_sound_data_ref, make_walker(sound_data_ref_1, NULL, sound_data_set_1, 3, 3, R_FLOAT, false, 3, R_SOUND_DATA, R_INT, R_INT));
-  INIT_WALKER(S_sound_data_setB, make_walker(sound_data_set_2, NULL, NULL, 4, 4, R_FLOAT, false, 4, R_SOUND_DATA, R_INT, R_INT, R_NUMBER));
-  INIT_WALKER(S_make_sound_data, make_walker(make_sound_data_1, NULL, NULL, 2, 2, R_SOUND_DATA, false, 2, R_INT, R_INT));
-  INIT_WALKER(S_sound_data_scaleB, make_walker(sound_data_scale_1, NULL, NULL, 2, 2, R_SOUND_DATA, false, 2, R_SOUND_DATA, R_NUMBER));
-  INIT_WALKER(S_sound_data_offsetB, make_walker(sound_data_offset_1, NULL, NULL, 2, 2, R_SOUND_DATA, false, 2, R_SOUND_DATA, R_NUMBER));
-  INIT_WALKER(S_sound_data_fillB, make_walker(sound_data_fill_1, NULL, NULL, 2, 2, R_SOUND_DATA, false, 2, R_SOUND_DATA, R_NUMBER));
-  INIT_WALKER(S_sound_data_addB, make_walker(sound_data_add_1, NULL, NULL, 2, 2, R_SOUND_DATA, false, 2, R_SOUND_DATA, R_SOUND_DATA));
+  INIT_WALKER(S_sound_data_length,    make_walker(sound_data_length_1, NULL, NULL, 1, 1, R_INT, false, 1, R_SOUND_DATA));
+  INIT_WALKER(S_sound_data_chans,     make_walker(sound_data_chans_1, NULL, NULL, 1, 1, R_INT, false, 1, R_SOUND_DATA));
+  INIT_WALKER(S_sound_data_peak,      make_walker(sound_data_peak_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_SOUND_DATA));
+  INIT_WALKER(S_sound_data_copy,      make_walker(sound_data_copy_1, NULL, NULL, 1, 1, R_SOUND_DATA, false, 1, R_SOUND_DATA));
+  INIT_WALKER(S_sound_data_reverseB,  make_walker(sound_data_reverse_1, NULL, NULL, 1, 1, R_SOUND_DATA, false, 1, R_SOUND_DATA));
+  INIT_WALKER(S_sound_data_p,         make_walker(sound_data_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
+  INIT_WALKER(S_sound_data_ref,       make_walker(sound_data_ref_1, NULL, sound_data_set_1, 3, 3, R_FLOAT, false, 3, R_SOUND_DATA, R_INT, R_INT));
+  INIT_WALKER(S_sound_data_setB,      make_walker(sound_data_set_2, NULL, NULL, 4, 4, R_FLOAT, false, 4, R_SOUND_DATA, R_INT, R_INT, R_NUMBER));
+  INIT_WALKER(S_make_sound_data,      make_walker(make_sound_data_1, NULL, NULL, 2, 2, R_SOUND_DATA, false, 2, R_INT, R_INT));
+  INIT_WALKER(S_sound_data_scaleB,    make_walker(sound_data_scale_1, NULL, NULL, 2, 2, R_SOUND_DATA, false, 2, R_SOUND_DATA, R_NUMBER));
+  INIT_WALKER(S_sound_data_offsetB,   make_walker(sound_data_offset_1, NULL, NULL, 2, 2, R_SOUND_DATA, false, 2, R_SOUND_DATA, R_NUMBER));
+  INIT_WALKER(S_sound_data_fillB,     make_walker(sound_data_fill_1, NULL, NULL, 2, 2, R_SOUND_DATA, false, 2, R_SOUND_DATA, R_NUMBER));
+  INIT_WALKER(S_sound_data_addB,      make_walker(sound_data_add_1, NULL, NULL, 2, 2, R_SOUND_DATA, false, 2, R_SOUND_DATA, R_SOUND_DATA));
   INIT_WALKER(S_sound_data_multiplyB, make_walker(sound_data_multiply_1, NULL, NULL, 2, 2, R_SOUND_DATA, false, 2, R_SOUND_DATA, R_SOUND_DATA));
-  INIT_WALKER(S_sound_data_multiply, make_walker(sound_data_times_1, NULL, NULL, 2, 2, R_SOUND_DATA, false, 2, R_NUMBER_SOUND_DATA, R_NUMBER_SOUND_DATA));
-  INIT_WALKER(S_sound_data_add, make_walker(sound_data_plus_1, NULL, NULL, 2, 2, R_SOUND_DATA, false, 2, R_NUMBER_SOUND_DATA, R_NUMBER_SOUND_DATA));
-  INIT_WALKER(S_sound_data_to_vct, make_walker(sound_data_to_vct_1, NULL, NULL, 3, 3, R_VCT, false, 3, R_SOUND_DATA, R_INT, R_VCT));
-  INIT_WALKER(S_vct_to_sound_data, make_walker(vct_to_sound_data_1, NULL, NULL, 3, 3, R_SOUND_DATA, false, 3, R_VCT, R_SOUND_DATA, R_INT));
+  INIT_WALKER(S_sound_data_multiply,  make_walker(sound_data_times_1, NULL, NULL, 2, 2, R_SOUND_DATA, false, 2, R_NUMBER_SOUND_DATA, R_NUMBER_SOUND_DATA));
+  INIT_WALKER(S_sound_data_add,       make_walker(sound_data_plus_1, NULL, NULL, 2, 2, R_SOUND_DATA, false, 2, R_NUMBER_SOUND_DATA, R_NUMBER_SOUND_DATA));
+  INIT_WALKER(S_sound_data_to_vct,    make_walker(sound_data_to_vct_1, NULL, NULL, 3, 3, R_VCT, false, 3, R_SOUND_DATA, R_INT, R_VCT));
+  INIT_WALKER(S_vct_to_sound_data,    make_walker(vct_to_sound_data_1, NULL, NULL, 3, 3, R_SOUND_DATA, false, 3, R_VCT, R_SOUND_DATA, R_INT));
 
   /* -------- snd funcs */
-  INIT_WALKER(S_next_sample, make_walker(next_sample_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_READER));
-  INIT_WALKER(S_previous_sample, make_walker(previous_sample_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_READER));
-  INIT_WALKER(S_read_sample, make_walker(reader_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_READER));
-  INIT_WALKER(S_make_sample_reader, make_walker(make_sample_reader_1, NULL, NULL, 0, 5, R_READER, false, 1, R_NUMBER));
-  INIT_WALKER(S_sample_reader_p, make_walker(sample_reader_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
+  INIT_WALKER(S_next_sample,            make_walker(next_sample_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_READER));
+  INIT_WALKER(S_previous_sample,        make_walker(previous_sample_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_READER));
+  INIT_WALKER(S_read_sample,            make_walker(reader_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_READER));
+  INIT_WALKER(S_make_sample_reader,     make_walker(make_sample_reader_1, NULL, NULL, 0, 5, R_READER, false, 1, R_NUMBER));
+  INIT_WALKER(S_sample_reader_p,        make_walker(sample_reader_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
   INIT_WALKER(S_sample_reader_at_end_p, make_walker(sample_reader_at_end_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
 
   INIT_WALKER(S_make_region_sample_reader, make_walker(make_region_sample_reader_1, NULL, NULL, 3, 3, R_READER, false, 3, R_INT, R_INT, R_INT));
-  INIT_WALKER(S_read_region_sample, make_walker(reader_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_READER));
+  INIT_WALKER(S_read_region_sample,        make_walker(reader_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_READER));
 
-  INIT_WALKER(S_read_mix_sample, make_walker(mix_reader_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_MIX_READER));
+  INIT_WALKER(S_read_mix_sample,        make_walker(mix_reader_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_MIX_READER));
   INIT_WALKER(S_make_mix_sample_reader, make_walker(make_mix_sample_reader_1, NULL, NULL, 1, 2, R_MIX_READER, false, 1, R_NUMBER));
-  INIT_WALKER(S_mix_sample_reader_p, make_walker(mix_sample_reader_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
+  INIT_WALKER(S_mix_sample_reader_p,    make_walker(mix_sample_reader_p_1, NULL, NULL, 1, 1, R_BOOL, false, 0));
 
-  INIT_WALKER(S_edit_position, make_walker(edit_position_1, NULL, NULL, 0, 2, R_INT, false, 0));
-  INIT_WALKER(S_frames, make_walker(frames_1, NULL, NULL, 0, 3, R_INT, false, 0));
-  INIT_WALKER(S_cursor, make_walker(cursor_1, NULL, NULL, 0, 2, R_INT, false, 0));
-  INIT_WALKER(S_add_mark, make_walker(add_mark_1, NULL, NULL, 1, 3, R_INT, false, 0));
-  INIT_WALKER(S_maxamp, make_walker(maxamp_1, NULL, NULL, 0, 3, R_FLOAT, false, 0));
-  INIT_WALKER(S_sample, make_walker(sample_1, NULL, NULL, 1, 4, R_FLOAT, false, 1, R_INT));
-  INIT_WALKER(S_srate, make_walker(srate_1, NULL, NULL, 0, 1, R_INT, false, 0));
-  INIT_WALKER(S_channels, make_walker(channels_1, NULL, NULL, 0, 1, R_INT, false, 0));
-  INIT_WALKER(S_c_g, make_walker(c_g_p_1, NULL, NULL, 0, 0, R_BOOL, false, 0));
-  INIT_WALKER(S_autocorrelate, make_walker(autocorrelate_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_VCT));
-  INIT_WALKER(S_correlate, make_walker(correlate_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_VCT, R_VCT));
+  INIT_WALKER(S_edit_position,  make_walker(edit_position_1, NULL, NULL, 0, 2, R_INT, false, 0));
+  INIT_WALKER(S_frames,         make_walker(frames_1, NULL, NULL, 0, 3, R_INT, false, 0));
+  INIT_WALKER(S_cursor,         make_walker(cursor_1, NULL, NULL, 0, 2, R_INT, false, 0));
+  INIT_WALKER(S_add_mark,       make_walker(add_mark_1, NULL, NULL, 1, 3, R_INT, false, 0));
+  INIT_WALKER(S_maxamp,         make_walker(maxamp_1, NULL, NULL, 0, 3, R_FLOAT, false, 0));
+  INIT_WALKER(S_sample,         make_walker(sample_1, NULL, NULL, 1, 4, R_FLOAT, false, 1, R_INT));
+  INIT_WALKER(S_srate,          make_walker(srate_1, NULL, NULL, 0, 1, R_INT, false, 0));
+  INIT_WALKER(S_channels,       make_walker(channels_1, NULL, NULL, 0, 1, R_INT, false, 0));
+  INIT_WALKER(S_c_g,            make_walker(c_g_p_1, NULL, NULL, 0, 0, R_BOOL, false, 0));
+  INIT_WALKER(S_autocorrelate,  make_walker(autocorrelate_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_VCT));
+  INIT_WALKER(S_correlate,      make_walker(correlate_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_VCT, R_VCT));
   INIT_WALKER(S_vct_to_channel, make_walker(vct_to_channel_1, NULL, NULL, 3, 5, R_BOOL, false, 3, R_VCT, R_INT, R_INT));
 
-  INIT_WALKER(S_snd_print, make_walker(snd_print_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_STRING));
-  INIT_WALKER(S_snd_warning, make_walker(snd_warning_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_STRING));
+  INIT_WALKER(S_snd_print,            make_walker(snd_print_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_STRING));
+  INIT_WALKER(S_snd_warning,          make_walker(snd_warning_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_STRING));
   INIT_WALKER(S_report_in_minibuffer, make_walker(report_in_minibuffer_1, NULL, NULL, 1, 2, R_BOOL, false, 1, R_STRING));
 
-  INIT_WALKER(S_sound_p, make_walker(r_sound_p_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
-  INIT_WALKER(S_mix_p, make_walker(mix_exists_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
-  INIT_WALKER(S_region_p, make_walker(region_ok_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
-  INIT_WALKER(S_mark_p, make_walker(r_mark_p_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
-  INIT_WALKER(S_mark_sync, make_walker(r_mark_sync_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
-  INIT_WALKER(S_mark_sample, make_walker(r_mark_sample_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
-  INIT_WALKER(S_mark_sync_max, make_walker(mark_sync_max_1, NULL, NULL, 0, 0, R_INT, false, 0));
-  INIT_WALKER(S_mix_sync_max, make_walker(mix_sync_max_1, NULL, NULL, 0, 0, R_INT, false, 0));
+  INIT_WALKER(S_sound_p,         make_walker(r_sound_p_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
+  INIT_WALKER(S_mix_p,           make_walker(mix_exists_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
+  INIT_WALKER(S_region_p,        make_walker(region_ok_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
+  INIT_WALKER(S_mark_p,          make_walker(r_mark_p_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_INT));
+  INIT_WALKER(S_mark_sync,       make_walker(r_mark_sync_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
+  INIT_WALKER(S_mark_sample,     make_walker(r_mark_sample_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
+  INIT_WALKER(S_mark_sync_max,   make_walker(mark_sync_max_1, NULL, NULL, 0, 0, R_INT, false, 0));
+  INIT_WALKER(S_mix_sync_max,    make_walker(mix_sync_max_1, NULL, NULL, 0, 0, R_INT, false, 0));
   INIT_WALKER(S_selection_chans, make_walker(selection_chans_1, NULL, NULL, 0, 0, R_INT, false, 0));
-  INIT_WALKER(S_temp_dir, make_walker(r_temp_dir_1, NULL, NULL, 0, 0, R_STRING, false, 0));
-  INIT_WALKER(S_save_dir, make_walker(r_save_dir_1, NULL, NULL, 0, 0, R_STRING, false, 0));
-  INIT_WALKER(S_mix_position, make_walker(mix_position_from_id_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
-  INIT_WALKER(S_mix_length, make_walker(mix_length_from_id_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
-  INIT_WALKER(S_region_chans, make_walker(region_chans_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
-  INIT_WALKER(S_region_srate, make_walker(region_srate_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
-  INIT_WALKER(S_region_frames, make_walker(region_len_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
-  INIT_WALKER(S_mix_speed, make_walker(mix_speed_from_id_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_INT));
-  INIT_WALKER(S_mix_amp, make_walker(mix_amp_from_id_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_INT));
-  INIT_WALKER(S_region_maxamp, make_walker(region_maxamp_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_INT));
-  INIT_WALKER(S_fft, make_walker(fft_1, NULL, NULL, 2, 3, R_VCT, false, 3, R_VCT, R_VCT, R_INT));
+  INIT_WALKER(S_temp_dir,        make_walker(r_temp_dir_1, NULL, NULL, 0, 0, R_STRING, false, 0));
+  INIT_WALKER(S_save_dir,        make_walker(r_save_dir_1, NULL, NULL, 0, 0, R_STRING, false, 0));
+  INIT_WALKER(S_mix_position,    make_walker(mix_position_from_id_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
+  INIT_WALKER(S_mix_length,      make_walker(mix_length_from_id_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
+  INIT_WALKER(S_region_chans,    make_walker(region_chans_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
+  INIT_WALKER(S_region_srate,    make_walker(region_srate_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
+  INIT_WALKER(S_region_frames,   make_walker(region_len_1, NULL, NULL, 1, 1, R_INT, false, 1, R_INT));
+  INIT_WALKER(S_mix_speed,       make_walker(mix_speed_from_id_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_INT));
+  INIT_WALKER(S_mix_amp,         make_walker(mix_amp_from_id_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_INT));
+  INIT_WALKER(S_region_maxamp,   make_walker(region_maxamp_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_INT));
+  INIT_WALKER(S_fft,             make_walker(fft_1, NULL, NULL, 2, 3, R_VCT, false, 3, R_VCT, R_VCT, R_INT));
 }
 
 
