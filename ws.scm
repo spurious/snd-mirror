@@ -519,15 +519,18 @@ returning you to the true top-level."
 
 
 (defmacro with-temp-sound (args . body)
-  ;; with-sound but using tempnam for output (can be over-ridden by explicit :output) and does not open result in Snd
   `(let ((old-file-name *clm-file-name*)
 	 (old-to-snd *to-snd*))
-     (set! *clm-file-name* (snd-tempnam))
-     (set! *to-snd* #f)
-     (let ((val (with-sound-helper (lambda () ,@body) ,@args)))
-       (set! *to-snd* old-to-snd)
-       (set! *clm-file-name* old-file-name)
-       val)))
+     ;; with-sound but using tempnam for output (can be over-ridden by explicit :output) and does not open result in Snd
+     (dynamic-wind
+	 (lambda () 
+	   (set! *clm-file-name* (snd-tempnam))
+	   (set! *to-snd* #f))
+	 (lambda ()
+	   (with-sound-helper (lambda () ,@body) ,@args)) ; dynamic-wind returns this as its result
+	 (lambda ()
+	   (set! *to-snd* old-to-snd)
+	   (set! *clm-file-name* old-file-name)))))
 
 
 ;(defmacro clm-load (file . args)
@@ -539,51 +542,92 @@ returning you to the true top-level."
   (apply with-sound-helper (lambda () (load file)) args))
 
 
-#|
-;;; a bit clumsy, but here's one way to mix each note in a notelist ("calls" below),
-;;;   then rewrite a new notelist after changing begin times in Snd:
 
-;;; TODO: make a with-sound replacement for mix-calls
+(define (with-mixed-sound-mix-info id snd)
+  (let ((all-info (sound-property 'with-mixed-sound-info snd)))
+    ;; each entry is '(mx-id beg chans note)
+    (let ((find-if (lambda (pred l)
+		     (cond ((null? l) #f)
+			   ((pred (car l)) (car l))
+			   (else (find-if pred (cdr l)))))))
+      (find-if (lambda (info)
+		 (and (>= id (car info))
+		      (< id (+ (car info) (caddr info)))))
+	       all-info))))
 
-(define (mix-calls)
-  (let ((s (new-sound)))
-    (for-each
-     (lambda (call)
-       (with-sound (:output "temp.snd")
-         (eval (append (list (car call) 0.0) (cddr call)) (current-module)))
-       (let ((temp (find-sound "temp.snd")))
-	 (channel->mix temp 0 0 (frames temp)  s 0 (seconds->samples (cadr call))) ; channel->mix from extensions.scm
-	 (close-sound temp)))
+(defmacro with-mixed-sound (args . body)
+  `(let* ((output (with-sound-helper (lambda () #f) ,@args :to-snd #t)) ; pick up args for output
+	  (outsnd (find-sound output)))
+     (if (sound? outsnd)
+	 (let ((mix-info '()))
+	   ;; if multichannel output, make sure cross-chan mixes move together and click shows the original note list entry
+	   (if (> (chans outsnd) 1)
+	       (begin
+		 (reset-hook! mix-release-hook)
+		 (add-hook! mix-release-hook
+			    (lambda (id samps-moved)
+			      (let ((new-pos (+ samps-moved (mix-position id)))
+				    (base (mix-sync id)))
+				(do ((mx base (+ mx 1)))
+				    ((or (not (mix? mx))
+					 (not (= (mix-sync mx) base))))
+				  (set! (mix-position mx) new-pos))
+				#t)))))
+	   (reset-hook! mix-click-hook)
+	   (add-hook! mix-click-hook
+		      (lambda (id)
+			(let ((info (with-mixed-sound-mix-info id outsnd)))
+			  (report-in-minibuffer (format #f "mix ~A: ~A" 
+						      id (or (and info
+								  (cadddr info))
+							     (exact->inexact (/ (mix-position id) (srate outsnd))))))
+			  #t))) ; #t -> don't print the mix id in the minibuffer
+	   (for-each
+	    (lambda (note)
+	      (let* ((beg (seconds->samples (cadr note))) ; srate??
+		     (snd (with-temp-sound ,args (eval (append (list (car note) 0.0) (cddr note)) (current-module))))
+		     ;; I can't immediately find a way around the "eval" (TODO: gauche current-module?)
+		     (mx (mix snd beg #t outsnd #f #t #t))     ; all chans mixed, current output sound, with mixes, with auto-delete
+		     (chans (mus-sound-chans snd)))
+		(set! (mix-name mx) (format #f "(~A ~A)" (car note) (cadr note)))
+		(do ((chan 0 (1+ chan)))
+		    ((= chan chans))
+		  (set! (mix-sync (+ mx chan)) mx))
+		(set! mix-info (cons (list mx beg chans note) mix-info))))
+	    ',body)
+	   (set! (sound-property 'with-mixed-sound-info outsnd) (reverse mix-info))))
+     output))
 
-           ;; (define (channel->mix input-snd input-chn input-beg input-len  output-snd output-chn output-beg)...)
-           ;; this copies so the re-use of "temp.snd" should be safe
+;(with-mixed-sound () (fm-violin 0 .1 440 .1) (fm-violin 1 .1 660 .1))
+;(with-mixed-sound (:channels 2) (fm-violin 0 .1 440 .1 :degree 0) (fm-violin 1 .1 660 .1 :degree 45))
 
-           ;; with-sound :with-mixes and mixes->notelist?
-           ;; what about multichan output? or input? -- both sides here need to assume multi-channel mixes somehow
-           
-     calls)))
 
-(define (rewrite-calls)
+(define* (with-mixed-sound->notelist :optional snd (output-file "temp.scm"))
+  (let* ((outsnd (or snd (selected-sound) (car (sounds))))
+	 (mix-info (sound-property 'with-mixed-sound-info outsnd)))
+    (if (not mix-info)
+	(throw 'no-such-mixed-sound (list outsnd))
+	(let ((cur-mixes (mixes outsnd 0)) ; for now assume each mix is multichannel
+	      (oput (open-output-file output-file)))
+	  (display (format #f "(with-sound (:channels ~D)~%" (chans snd)) oput)
+	  (for-each
+	   (lambda (id)
+	     (let ((info (with-mixed-sound-mix-info id snd)))
+	       (if info
+		   (let ((call (cadddr info)))
+		     (if (not (= (cadr info) (mix-position id)))
+			 (display (format #f "  (~A ~,3F~{ ~A~})~%"
+					  (car call) 
+					  (exact->inexact (/ (mix-position id) (srate snd)))
+					  (cddr call)) 
+				  oput)
+			 (display (format #f "  ~A~%" call) oput)))
+		   (report-in-minibuffer "can't find note associated with mix ~A" id))))
+	   cur-mixes)
+	  (display (format #f ")~%") oput)
+	  (close-output-port oput)))))
 
-  ;; mixes->calls but this is mono
-
-  (let ((oput (open-output-file "temp")))
-    (display (format #f "(with-sound ()~%") oput)
-    (let ((ctr 0))
-      (for-each
-       (lambda (call)
-	 (let ((beg (exact->inexact (/ (mix-position ctr) (srate)))))
-	   (if (<= (abs (- beg (cadr call))) .001)
-	       (display (format #f "  ~A~%" call) oput)
-	       (display (format #f "  (~A ~,3F~{ ~A~})~%"
-				(car call) 
-				beg
-				(cddr call)) oput)))
-	 (set! ctr (1+ ctr)))
-       calls))
-    (display (format #f ")~%") oput)
-    (close-output-port oput)))
-|#
+;;; TODO: doc/snd-test with-mixed-sound stuff
 
 
 
@@ -823,6 +867,10 @@ finish-with-sound to complete the process."
 	  (let ((mk (add-mark (car m) snd)))         ; put a mark at each note begin sample
 	    (set! (mark-property :ws mk) (cadr m)))) ; and set its :ws property to the other info
 	*ws-prog*))))
+
+
+;;; PERHAPS: with-marked-sound with notelist info on mark? using the with-mixed-sound style of macro
+
 |#
 
 

@@ -1798,6 +1798,7 @@ void free_ptree(struct ptree *pt)
 	  for (i = 0; i < pt->gc_protected_ctr; i++)
 	    snd_unprotect_at(pt->gc_protected[i]);
 	  FREE(pt->gc_protected);
+	  pt->gc_protected = NULL;
 	}
       if (pt->program)
 	{

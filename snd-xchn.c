@@ -1,9 +1,5 @@
 #include "snd.h"
 
-
-/* TODO: make the arrows more useful -- perhaps tiny change? */
-
-
 enum {W_top, W_form, W_main_window, W_edhist, W_wf_buttons, W_f, W_w, W_left_scrollers, W_zy, W_sy,
       W_bottom_scrollers, W_sx, W_zx, W_graph, W_gzy, W_gsy,
       NUM_CHAN_WIDGETS
@@ -352,10 +348,10 @@ static void sx_valuechanged_callback(Widget w, XtPointer context, XtPointer info
 static void sx_increment_callback(Widget w, XtPointer context, XtPointer info) 
 {
   /* problem here is that in large files these increments, if determined via scrollbar values, are huge */
-  /* so, move ahead one windowfull on each tick */
+  /* so, move ahead one-tenth window on each tick */
   chan_info *cp = (chan_info *)(context);
   if (cp->active == CHANNEL_HAS_AXES)
-    sx_incremented(cp, 1.0);
+    sx_incremented(cp, 0.1);
 }
 
 
@@ -363,7 +359,7 @@ static void sx_decrement_callback(Widget w, XtPointer context, XtPointer info)
 {
   chan_info *cp = (chan_info *)(context);
   if (cp->active == CHANNEL_HAS_AXES)
-    sx_incremented(cp, -1.0);
+    sx_incremented(cp, -0.1);
 }
 
 

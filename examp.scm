@@ -1959,6 +1959,7 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 	(samps (make-vct 10))
 	(sctr 0))
     (lambda (val)
+      (declare (val float))
       (set! samp0 samp1)
       (set! samp1 samp2)
       (set! samp2 val)
@@ -1977,6 +1978,7 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
   "(zero+) finds the next positive-going zero crossing (if searching forward) (for use with C-s)"
   (let ((lastn 0.0))
     (lambda (n)
+      (declare (n float))
       (let ((rtn (and (< lastn 0.0)
 		      (>= n 0.0)
 		      -1)))

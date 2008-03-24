@@ -4730,6 +4730,8 @@ Say we have a mix whose id is 123:</p>
 
 <table border=0 cellspacing=0 hspace=10>
 
+<!-- TODO: what about multichan input? -->
+
 <!-- mix -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mix">mix</a> (file :optional samp in-chan snd chn with-mix-tags auto-delete)</code>
 </td></tr><tr><td width=60></td><td>
@@ -7960,6 +7962,7 @@ currently doesn't know how to save the enclosing environment along with the init
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
   (let ((outer 0.5))
     (<em class=red>ptree-channel</em> (lambda (y data forward)
+ 		     (<a class=quiet href="#declare">declare</a> (y real) (data float) (forward boolean))
 		     (* y data))
 		   0 #f ind 0 #f #f
 		   (lambda (pos dur)
@@ -8039,6 +8042,7 @@ Here are several more examples:
   (let ((len (<a class=quiet href="#mussoundframes">mus-sound-frames</a> file)))
     (<em class=red>ptree-channel</em>
      (lambda (y state forward)
+       (<a class=quiet href="#declare">declare</a> (y real) (state sample-reader) (forward boolean))
        (+ y (if forward (<a class=quiet href="#nextsample">next-sample</a> state) (<a class=quiet href="#previoussample">previous-sample</a> state))))
      beg len snd chn -1 #f
      (lambda (frag-beg frag-dur)
