@@ -6,31 +6,31 @@
 ;;;  test 3: variables                          [1629]
 ;;;  test 4: sndlib                             [2278]
 ;;;  test 5: simple overall checks              [4804]
-;;;  test 6: vcts                               [13776]
-;;;  test 7: colors                             [14044]
-;;;  test 8: clm                                [14534]
-;;;  test 9: mix                                [26225]
-;;;  test 10: marks                             [28443]
-;;;  test 11: dialogs                           [29404]
-;;;  test 12: extensions                        [29649]
-;;;  test 13: menus, edit lists, hooks, etc     [29920]
-;;;  test 14: all together now                  [31629]
-;;;  test 15: chan-local vars                   [32670]
-;;;  test 16: regularized funcs                 [34309]
-;;;  test 17: dialogs and graphics              [39300]
-;;;  test 18: enved                             [39390]
-;;;  test 19: save and restore                  [39409]
-;;;  test 20: transforms                        [41246]
-;;;  test 21: new stuff                         [43229]
-;;;  test 22: run                               [45224]
-;;;  test 23: with-sound                        [51445]
-;;;  test 24: user-interface                    [54907]
-;;;  test 25: X/Xt/Xm                           [58301]
-;;;  test 26: Gtk                               [62909]
-;;;  test 27: GL                                [66761]
-;;;  test 28: errors                            [66885]
-;;;  test all done                              [69187]
-;;;  test the end                               [69425]
+;;;  test 6: vcts                               [13764]
+;;;  test 7: colors                             [14032]
+;;;  test 8: clm                                [14522]
+;;;  test 9: mix                                [26228]
+;;;  test 10: marks                             [28448]
+;;;  test 11: dialogs                           [29409]
+;;;  test 12: extensions                        [29654]
+;;;  test 13: menus, edit lists, hooks, etc     [29925]
+;;;  test 14: all together now                  [31634]
+;;;  test 15: chan-local vars                   [32679]
+;;;  test 16: regularized funcs                 [34318]
+;;;  test 17: dialogs and graphics              [39272]
+;;;  test 18: enved                             [39362]
+;;;  test 19: save and restore                  [39381]
+;;;  test 20: transforms                        [41223]
+;;;  test 21: new stuff                         [43206]
+;;;  test 22: run                               [45201]
+;;;  test 23: with-sound                        [51422]
+;;;  test 24: user-interface                    [54962]
+;;;  test 25: X/Xt/Xm                           [58356]
+;;;  test 26: Gtk                               [62964]
+;;;  test 27: GL                                [66816]
+;;;  test 28: errors                            [66940]
+;;;  test all done                              [69242]
+;;;  test the end                               [69480]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -54022,6 +54022,61 @@ EDITS: 1
 		(if (not (vequal (channel->vct 1000 10) (vct -0.071 0.022 0.095 0.143 0.174 0.199 0.227 0.251 0.257 0.239)))
 		    (snd-display ";mixed with-sound via sound-let: ~A" (channel->vct 1000 10)))
 		(close-sound ind))))
+
+
+	(let* ((res (with-mixed-sound (:srate 44100) 
+				     (fm-violin 0 .1 440 .1) 
+				     (fm-violin 1 .1 660 .1)))
+	       (snd (find-sound res)))
+	  (if (not (sound? snd)) (snd-display ";with-mixed-sound: ~A?" res))
+	  (let ((mxs (mixes snd 0))
+		(info (sound-property 'with-mixed-sound-info snd)))
+	    (if (or (not (list? mxs))
+		    (not (= (length mxs) 2)))
+		(snd-display ";with-mixed-sound mixes: ~A" mxs))
+	    (if (or (not (= (car (list-ref info 0)) (car mxs)))
+		    (not (= (cadr (list-ref info 0)) 0))
+		    (not (= (caddr (list-ref info 0)) 1)))
+		(snd-display ";with-mixed-sound info 0: ~A" (list-ref info 0)))
+	    (if (or (not (= (car (list-ref info 1)) (cadr mxs)))
+		    (not (= (cadr (list-ref info 1)) 44100))
+		    (not (= (caddr (list-ref info 1)) 1)))
+		(snd-display ";with-mixed-sound info 1: ~A" (list-ref info 1)))
+	    (if (or (not (= (frames snd) 48510))
+		    (fneq (maxamp snd) .1))
+		(snd-display ";with-mixed-sound 0: ~A ~A" (frames snd) (maxamp snd)))
+	    (close-sound snd)))
+
+	(let* ((res (with-mixed-sound (:channels 2 :srate 44100) 
+				      (fm-violin 0 .1 440 .1 :degree 0) 
+				      (fm-violin 1 .1 660 .1 :degree 45)))
+	       (snd (find-sound res))
+	       (mxs (mixes snd))
+	       (info (sound-property 'with-mixed-sound-info snd)))
+	  (if (or (not (= (length mxs) 2))
+		  (not (= (length (car mxs)) 2))
+		  (not (= (length info) 2))
+		  (not (= (caar info) (caar mxs))))
+	      (snd-display ";with-mixed-sound 1: ~A ~A" mxs info))
+	  (close-sound snd))
+
+	(let* ((res (with-marked-sound () 
+				       (fm-violin 0 .1 440 .1) 
+				       (fm-violin 1 .1 660 .1)))
+	       (snd (find-sound res))
+	       (mxs (marks snd 0)))
+	  (if (not (= (length mxs) 2))
+	      (snd-display ";with-marked-sound marks: ~A " mxs))
+	  (if (not (string=? (mark-name (car mxs)) "fm-violin 0 0.1"))
+	      (snd-display ";with-marked-sound name: ~A" (mark-name (car mxs))))
+	  (if (fneq (maxamp snd) .1)
+	      (snd-display ";with-marked-sound maxamp: ~A" (maxamp snd)))
+	  (close-sound snd))
+
+	(reset-hook! mark-click-hook)
+	(reset-hook! mix-click-hook)
+	(reset-hook! mix-drag-hook)
+
 
 	;; generators.scm
 

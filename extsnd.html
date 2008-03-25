@@ -3516,7 +3516,7 @@ additional methods: map, each, &lt;=&gt;, etc.  See vct.c and the Ruby documenta
 <!-- INDEX sndsounddata:sound-data -->
 <table width="50%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="sndsounddata">Sound-data</a></h3></td></tr></table>
 
-<p>Another sound data object is the sound-data object; it can be viewed either as an array of vcts, 
+<p>Another Snd object containing sound samples is the sound-data object; it can be viewed either as an array of vcts, 
 each vct representing one channel's data, or as an array of frames, each frame holding a sample from
 each channel at that position in the sound.  <a href="sndscm.html#framedoc">frame.scm</a> has a number of useful functions that use
 sound-data objects.
@@ -5128,8 +5128,7 @@ rather than <a href="#play">play</a>).
 <!-- with-mix-tags -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="withmixtags">with-mix-tags</a> ()</code>
 </td></tr><tr><td></td><td>
-If with-mix-tags is #f (the default is #t), Snd automatically locks each new mix. The default is to place a tag above each
-mix so that it can be easily moved around.
+If with-mix-tags is #f (the default is #t), newly mixed data does not have a mix id or tag associated with it.
 </td></tr>
 
 </table>

@@ -517,6 +517,8 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"
 
 
 ;;; simplify-envelope
+;;;
+;;; this is not very good...
 
 (define* (simplify-envelope env :optional (ygrid 10) (xgrid 100))
 
@@ -592,4 +594,3 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"
 	    (set! new-env (cons qty new-env))
 	    (reverse new-env))))
       env))
-;;; TODO: doc/test simplify-envelope, or make it work better

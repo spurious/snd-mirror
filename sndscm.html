@@ -9935,9 +9935,13 @@ with_sound() do
 end
 </pre></td></tr></table>
 
+
 <p><a name="withmixedsound">with-mixed-sound</a> is a variant of with-sound that creates a
 <a href="extsnd.html#sndmixes">"mix"</a> for each note in the notelist.  If you move the
 mixes around, you can write out the new note list via <a name="withmixedsoundtonotelist">with-mixed-sound-&gt;notelist</a>.
+In multichannel files, all the channels associated with a note are sync'd together, so if you drag one,
+the others follow.  Also, if you click a mix tag, the corresponding note in the notelist is displayed
+in the minibuffer.
 </p>
 
 <pre>
@@ -9950,8 +9954,14 @@ mixes around, you can write out the new note list via <a name="withmixedsoundton
       (fm-violin 1 .1 660 .1 :degree 45))
 </pre>
 
-<p>Another variant of with-sound is <a name="clmload">clm-load</a>.  Its first argument is a filename, assumed to
-be a text file containing the body of with-sound, followed by the usual with-sound arguments, if any.
+
+<p><a name="withmarkedsound">with-marked-sound</a> is yet another version of with-sound that 
+adds a mark at the start of each note.  
+</p>
+
+
+<p><a name="clmload">clm-load</a> provides a slightly different way to load a notelist.  Its first argument is a filename, assumed to
+be a text file containing notes (equivalent to the body of with-sound). The rest of the arguments to clm-load are the usual with-sound arguments, if any.
 For example, if we have a file named clm-load-test.clm with these contents:
 </p>
 <pre>
@@ -10211,13 +10221,6 @@ The <b>ws-go</b> 'returned-value' is the value to return from the original call 
 
 <br>
 <table width="30%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>other stuff associated with with-sound</h4></td></tr></table>
-
-<p>Toward the end of ws.scm is an example, <A NAME="withmarkedsound">with-marked-sound</A>, that is just
-like with-sound except that it adds a mark at the start of each note in the output
-sound; the corresponding code in your instrument sets the mark's :ws property
-to contain any info you might find amusing.  You then click the mark to see
-that info.
-</p>
 
 <p>
 The *clm-* variables are saved in the save-state
