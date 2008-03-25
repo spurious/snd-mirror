@@ -70,7 +70,9 @@
 
 (define* (compile-faust source :key (make-gui #t))  
   (define file (generate-faust-source-file source))
-  
+
+  (c-display (<-> "compiling " file ".dsp"))
+
   (system (<-> "faust -a " (if make-gui
 			       "snd-rt-gtk.cpp "
 			       "module.cpp ")
@@ -275,12 +277,12 @@
 					     (c-dlsym handle "buildUserInterface"))))
 		   (-> faust add-method 'gtkui (lambda ()
 						 gtkui)))))
-
+	   
 	   (-> faust add-method 'contains-ui? (lambda ()
-					       ;;(-> faust init-gui)
-					       (faust-contains-ui? (-> faust get-c-object)
-								   (c-dlsym (-> faust-gui-faust handle) "containsUI")
-								   (-> faust gtkui))))
+						;;(-> faust init-gui)
+						(faust-contains-ui? (-> faust get-c-object)
+								    (c-dlsym (-> faust-gui-faust handle) "containsUI")
+								    (-> faust gtkui))))
 	   (-> faust add-method 'open-gui
 	       (lambda (dialog)
 		 ;;(define d (<dialog> "hello" #f))
@@ -544,9 +546,8 @@
   (<rt-faust> "freq = vslider(\"freq\", 600, 0, 2400, 0.1);"
 	      (= vol (|:| (hslider "volume (db)" 0 -96 0 0.1) db2linear))
 	      "process = vgroup(\"ai\",osc(freq)*vol);"))
-
 (<rt-faust> :in-bus *out-bus*
-           "vmeter(x)       = attach(x, envelop(x) : vbargraph(\"dB\", -96, 10));
+	    "vmeter(x)       = attach(x, envelop(x) : vbargraph(\"dB\", -96, 10));
  	    hmeter(x)       = attach(x, envelop(x) : hbargraph(\"dB\", -96, 10));
 	    envelop         = abs : max(db2linear(-96)) : linear2db : min(10)  : max ~ -(96.0/SR);
 	    process         = vmeter;")
@@ -607,7 +608,7 @@
 
 (<rt-faust> (out (oscivol 500 0.2)))
 
-(<rt-out> (<faust> :in (vct (oscil))
+(<rt-out> (<faust> :in (vct (osci 200))
 		   (= gain    (vslider "gain" 0.2 0 1 0.01))
 		   (= process (vgroup "ai" "*(gain)"))))
 

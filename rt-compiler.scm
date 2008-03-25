@@ -1359,10 +1359,12 @@ and run simple lisp[4] functions.
 			     (eq? 'let* (car term))
 			     (eq? 'letrec (car term))
 			     (eq? 'letrec* (car term)))
-			 `(,(car term) ,(map (lambda (a)
+			 ;; @#$T#$T#$%!!!
+			 (let ((daslets (map (lambda (a)
 					       `(,(car a) ,@(map expand (cdr a))))
-					     (cadr term))
-			   ,@(map expand (cddr term))))
+					     (cadr term))))
+			   `(,(car term) ,daslets
+			     ,@(map expand (cddr term)))))
 			((not (symbol? (car term)))
 			 term)
 			(else
@@ -3100,88 +3102,92 @@ and run simple lisp[4] functions.
   	   
   (if rt-defining-macros-clears-cache
       (rt-clear-cache!))
-  (if (dotted-list? def)
-      (let* ((das-last (cdr (last-pair def)))
-	     (exp (is-expand das-last)))
-	(if exp
-	    `(define-macro ,(cons (symbol-append rt-macro-prefix (car def)) (cdr def))
-	       (let ((,exp (map rt-macroexpand ,das-last)))
-		 ,@body))
-	    `(define-macro ,(cons (symbol-append rt-macro-prefix (car def)) (cdr def))
-	       ,@body)))
-      (let* ((name (car def))
-	     (new-name (symbol-append rt-macro-prefix name))
-	     (expand-args '())
-	     (args (cdr def))
-	     (clean-args '())
-	     (optionals '())
-	     (rest (rt-gensym))
-	     (min-args (rt-gensym))
-	     (max-args (rt-gensym))
-	     (return (rt-gensym)))
-	(for-each (lambda (arg)
-		    (if (list? arg)
-			(set! optionals (append! optionals (list (list (car arg) (keyword->symbol (car arg)) (cadr arg)))))
-			(let ((exp (is-expand arg)))
-			  (if exp
-			      (set! expand-args (append! expand-args (list exp))))))
-		    (set! clean-args (append! clean-args (list (if (list? arg) (keyword->symbol (car arg)) arg)))))
-		  args)
-	`(define-macro ,(cons new-name rest)
-	   (call-with-current-continuation
-	    (lambda (,return)
-	      (let ((,min-args ,(- (length clean-args) (length optionals)))
-		    (,max-args ,(length args))
-		    ,@(map (lambda (varname)
-			     (list varname '(quote rt-undefined)))
-			   clean-args)
-		    ,@(map (lambda (expvarname)
-			     (list expvarname '(quote rt-undefined)))
-			   expand-args))
-		(define (set-key-args ,rest)
-		  (cond ((null? ,rest) #t)
-			,@(map (lambda (optarg)
-				 `((eq? (car ,rest) ,(car optarg))
-				   (set! ,(cadr optarg) (cadr ,rest))
-				   (set-key-args (cddr ,rest))))
-			       optionals)
-			(else
-			 (if (not (keyword? (car ,rest)))
-			     (c-display "Unknown argument \"" (car ,rest) "\" for rt-macro \"" ',name "\":" ,rest)
-			     (c-display "Unknown key-word argument \"" (car ,rest) "\" for rt-macro \"" ',name "\":" ,rest))
-			 (,return #f))))
+  (cond ((not (pair? def))
+	 `(define-macro ,(symbol-append rt-macro-prefix def)
+	    ,@body))
+	((dotted-list? def)
+	 (let* ((das-last (cdr (last-pair def)))
+		(exp (is-expand das-last)))
+	   (if exp
+	       `(define-macro ,(cons (symbol-append rt-macro-prefix (car def)) (cdr def))
+		  (let ((,exp (map rt-macroexpand ,das-last)))
+		    ,@body))
+	       `(define-macro ,(cons (symbol-append rt-macro-prefix (car def)) (cdr def))
+		  ,@body))))
+	(else
+	 (let* ((name (car def))
+		(new-name (symbol-append rt-macro-prefix name))
+		(expand-args '())
+		(args (cdr def))
+		(clean-args '())
+		(optionals '())
+		(rest (rt-gensym))
+		(min-args (rt-gensym))
+		(max-args (rt-gensym))
+		(return (rt-gensym)))
+	   (for-each (lambda (arg)
+		       (if (list? arg)
+			   (set! optionals (append! optionals (list (list (car arg) (keyword->symbol (car arg)) (cadr arg)))))
+			   (let ((exp (is-expand arg)))
+			     (if exp
+				 (set! expand-args (append! expand-args (list exp))))))
+		       (set! clean-args (append! clean-args (list (if (list? arg) (keyword->symbol (car arg)) arg)))))
+		     args)
+	   `(define-macro ,(cons new-name rest)
+	      (call-with-current-continuation
+	       (lambda (,return)
+		 (let ((,min-args ,(- (length clean-args) (length optionals)))
+		       (,max-args ,(length args))
+		       ,@(map (lambda (varname)
+				(list varname '(quote rt-undefined)))
+			      clean-args)
+		       ,@(map (lambda (expvarname)
+				(list expvarname '(quote rt-undefined)))
+			      expand-args))
+		   (define (set-key-args ,rest)
+		     (cond ((null? ,rest) #t)
+			   ,@(map (lambda (optarg)
+				    `((eq? (car ,rest) ,(car optarg))
+				      (set! ,(cadr optarg) (cadr ,rest))
+				      (set-key-args (cddr ,rest))))
+				  optionals)
+			   (else
+			    (if (not (keyword? (car ,rest)))
+				(c-display "Unknown argument \"" (car ,rest) "\" for rt-macro \"" ',name "\":" ,rest)
+				(c-display "Unknown key-word argument \"" (car ,rest) "\" for rt-macro \"" ',name "\":" ,rest))
+			    (,return #f))))
+		   
+		   (if (< (length ,rest) ,min-args)
+		       (begin
+			 (c-display "To few arguments for rt-macro \"" ',name "\". Expected at least" ,min-args ", found " (length ,rest) ":" ,rest)
+			 (,return #f)))
+		   
+		   (if (> (length ,rest) (+ ,min-args (* ,(length optionals) 2)))
+		       (begin
+			 (c-display "To many arguments for rt-macro \"" ',name "\". Expected at most" ,max-args ", found:" ,rest)
+			 (,return #f)))
+		   
+		   ;;(c-display "rest" ,rest)
+		   ;;(c-display "ai" ,(list-ref clean-args 4) (list-ref ,rest 4))
+		   
+		   ,@(map (lambda (name n)
+			    `(set! ,name (list-ref ,rest ,n)))
+			  clean-args
+			  (iota (- (length clean-args) (length optionals))))
+
+		   (set-key-args (list-tail ,rest ,min-args))
+
 		
-		(if (< (length ,rest) ,min-args)
-		    (begin
-		      (c-display "To few arguments for rt-macro \"" ',name "\". Expected at least" ,min-args ", found " (length ,rest) ":" ,rest)
-		      (,return #f)))
-		
-		(if (> (length ,rest) (+ ,min-args (* ,(length optionals) 2)))
-		    (begin
-		      (c-display "To many arguments for rt-macro \"" ',name "\". Expected at most" ,max-args ", found:" ,rest)
-		      (,return #f)))
-
-		;;(c-display "rest" ,rest)
-		;;(c-display "ai" ,(list-ref clean-args 4) (list-ref ,rest 4))
-
-		,@(map (lambda (name n)
-			 `(set! ,name (list-ref ,rest ,n)))
-		       clean-args
-		       (iota (- (length clean-args) (length optionals))))
-
-		(set-key-args (list-tail ,rest ,min-args))
-
-		
-		,@(map (lambda (optarg)			 
-			 `(if (eq? 'rt-undefined ,(cadr optarg))
-			      (set! ,(cadr optarg) ,(caddr optarg))))
-		       optionals)
-
-		(let ,(map (lambda (expvarname)
-			     `(,expvarname (rt-macroexpand ,(symbol-append 'expand/ expvarname))))
-			   expand-args)
-		  ,@body))))))))
-
+		   ,@(map (lambda (optarg)			 
+			    `(if (eq? 'rt-undefined ,(cadr optarg))
+				 (set! ,(cadr optarg) ,(caddr optarg))))
+			  optionals)
+		   
+		   (let ,(map (lambda (expvarname)
+				`(,expvarname (rt-macroexpand ,(symbol-append 'expand/ expvarname))))
+			      expand-args)
+		     ,@body)))))))))
+  
 #!    
 (define-rt-macro (add . args)
   `(+ ,@args))
@@ -4505,12 +4511,12 @@ and run simple lisp[4] functions.
 !#
 		  
 
-;; He he. :-)
+;; Beware that caching happens before macroexpanding!
 (define-rt-macro (unquote something)
-  (primitive-eval something))
+  (local-eval something *rt-local-code-environment*))
 
 (define-rt-macro (include-guile-func name)
-  (procedure-source (primitive-eval name)))
+  (procedure-source (local-eval name *rt-local-code-environment*)))
 
 
 
@@ -4739,6 +4745,74 @@ and run simple lisp[4] functions.
 		    ))))
 
 	  rt-clm-generators)
+
+
+(for-each (lambda (generator)
+	    (fix-defines
+	     (define basename (car generator))
+	     (define new-name (symbol-append basename '*))
+	     (define args (cadr generator))
+	     (define first-arg (and (not (null? args))
+				    (nth 0 args)))
+	     (when (equal? first-arg '(fm 0))
+	       (c-display "hepp" generator)
+	       (primitive-eval `(define-rt-macro ,new-name
+				  (lambda* (:optional (frequency 440))
+					   (if (number? frequency)
+					       `(,',basename :frequency ,frequency)
+					       `(,',basename :frequency 0
+							     (hz->radians ,frequency)))))))))
+	  rt-clm-generators)
+
+#!
+(<rt-out> (oscil* (<slider> "freq" 0 200 5000 :log #t)))
+(<rt-out> (pulse-train* (<slider> "freq" 0 200 5000 :log #t)))
+(<rt-out> (sawtooth-wave* (<slider> "freq" 0 200 5000 :log #t)))
+(<rt-out> (sine-summation* (<slider> "freq" 0 200 5000 :log #t)))
+(<rt-out> (square-wave* (<slider> "freq" 0 200 5000 :log #t)))
+(<rt-out> (sum-of-cosines* (<slider> "freq" 0 200 5000 :log #t)))
+(<rt-out> (sum-of-sines* (<slider> "freq" 0 200 5000 :log #t)))
+(<rt-out> (triangle-wave* (<slider> "freq" 0 200 5000 :log #t)))
+(<rt-out> (table-lookup* (<slider> "freq" 0 200 5000 :log #t)))
+(<rt-out> (wave-train* (<slider> "freq" 0 200 5000 :log #t)))
+
+(<rt-out> (let* ((sos (extern (make-sum-of-sines :sines n)))
+		 (new-n (<slider> "num_cosines" 1 10 100 :scale 1)))
+	    (when (not (= (extern n 10) new-n))
+	      (set! n new-n)
+	      (set! (mus-length sos) n)
+	      (mus-reset sos))
+	    (sum-of-sines sos (hz->radians (<slider> "freq" 0 200 5000 :log #t)))))
+
+(define sos (make-sum-of-sines :sines 10))
+(mus-length sos)
+(set! (mus-length sos) 11)
+!#
+
+
+;;A more efficient implementation of oscil*:
+(define-rt-macro osci*
+  (lambda* (:optional (frequency 440))
+    (define phase (rt-gensym))
+    (define rt (rt-gensym))
+    (cond ((number? frequency)
+	   (let ((phaseinc (hz->radians frequency)))
+	     `(begin
+		(declare (<double> ,phase))
+		(set! ,phase (+ (extern ,phase (- ,phaseinc)) ,phaseinc))
+		(sin ,phase))))
+	  (else
+	   `(let ((ret (sin (extern ,phase 0))))
+	      (declare (<double> ,phase))
+	      (set! ,phase (+ ,phase (hz->radians ,frequency)))
+	      ret)))))
+
+#!
+(hz->radians 20000)
+(rt-macroexpand '(osci))
+(<rt-out> (oscil* 900))
+(<rt-out> (oscil* (<slider> "freq" 0 400 1500 :log #t)))
+!#
 
 
 ;;;;;; CLM Methods ;;;;;;;;;;;;;;;
@@ -6974,28 +7048,28 @@ old syntax: (not very nice)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define rt-extern-variables '())
-(define (add-extern-variable name var)
+(define (add-extern-rt-variable name var)
   (push-back! (list name var) rt-extern-variables))
-(define (get-extern-variable name)
+(define (get-extern-rt-variable name)
   (cadr (assq name rt-extern-variables)))
 (define (rt-extern-defined? name)
   (assq name rt-extern-variables))
 
 #!
-(add-extern-variable 'a (make-oscil))
+(add-extern-rt-variable 'a (make-oscil))
 (rt-extern-reset)
 !#
 (define-rt-macro (extern . rest)
   (fix-defines
    (cond ((null? (cdr rest))
 	  (define varname (rt-gensym))
-	  (add-extern-variable varname (car rest))
+	  (add-extern-rt-variable varname (car rest))
 	  varname)
 	 ((null? (cddr rest))
-	  (add-extern-variable (car rest) (cadr rest))
+	  (add-extern-rt-variable (car rest) (cadr rest))
 	  (car rest))
 	 (else
-	  (add-extern-variable (car rest) (cadr rest))
+	  (add-extern-rt-variable (car rest) (cadr rest))
 	  `(extern ,@(cddr rest))))))
 (define-rt-macro (external . rest)
   `(extern ,@rest))
@@ -7005,7 +7079,7 @@ old syntax: (not very nice)
 (rt-gensym)
 (rt-gensym-reset)
 (rt-macroexpand '(extern ai (make-oscil) b 2 c 3))
-(begin rt-extern-variables)
+(begin rt-extern-rt-variables)
 (rt-extern-reset)
 (<rt-out> :len 2 (oscil))
 (<rt-out> :len 2 (oscil))
@@ -7024,26 +7098,75 @@ old syntax: (not very nice)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define* (default-rt-dialog get-rt :key (show #t))
-  (let ((ret (if (rt-extern-defined? 'rt-standard-dialog)
-		 (get-extern-variable 'rt-standard-dialog)
-		 (letrec* ((dialog (<dialog> "dialog" (lambda ()
-							(-> (force get-rt) stop)
-							(-> dialog hide))
-					     "Close" (lambda ()
-						       (-> (force get-rt) stop)
-						       (-> dialog hide))
-					     "Stop" (lambda ()
-						      (-> (force get-rt) stop))
-					     "Start" (lambda ()
-						       (-> (force get-rt) play)))))
-		   (add-extern-variable 'rt-standard-dialog dialog)
-		   dialog))))
+(define* (default-rt-dialog get-rt :key (show #t) (close-button #t) (stop-button #t) (start-button #t))
+  (define rt-dialog #f)
+  (let ((dialog (cond ((and get-rt
+			    (defined? 'rt-dialog-unique-name *rt-local-code-environment*))
+		       (let ((dialog (local-eval 'rt-dialog-unique-name *rt-local-code-environment*)))
+			 (set-car! dialog (cons get-rt (car dialog)))
+			 (cadr dialog)))
+		      ((and get-rt
+			    (rt-extern-defined? 'rt-standard-dialog))
+		       (get-extern-rt-variable 'rt-standard-dialog))
+		      (else		    
+		       (letrec* ((for-each-instrument (lambda (func)
+							(for-each (lambda (instrument)
+								    (func (force instrument)))
+								  (if get-rt
+								      (list get-rt)
+								      (delete-duplicates (car rt-dialog))))))
+				 (dialog (<dialog> "dialog" (lambda ()
+							      (for-each-instrument (lambda (instrument)
+										     (-> instrument stop)))
+							      (-> dialog hide)))))
+			 (for-each (lambda (args)
+				     (if (car args)
+					 (<button> dialog (cadr args) (caddr args))))
+				   `((,close-button "Close" ,(lambda ()
+							       (for-each-instrument (lambda (instrument)
+										      (-> instrument stop)))
+							       (-> dialog hide)))
+				     (,stop-button "Stop" ,(lambda ()
+							     (for-each-instrument (lambda (instrument)
+										    (-> instrument stop)))))
+				     (,start-button "Start" ,(lambda ()
+							       (for-each-instrument (lambda (instrument)
+										      (-> instrument play)))))))
+			 (add-extern-rt-variable 'rt-standard-dialog dialog)
+			 (set! rt-dialog (list '() dialog (make-hash-table 19)))
+			 dialog)))))
     (if show
-	(-> ret show))
-    ret))
+	(-> dialog show))
+    (if get-rt
+	dialog
+	rt-dialog)))
 
-  
+(define-macro define-multi-instrument-rt-dialog
+  (lambda x
+    `(define rt-dialog-unique-name (default-rt-dialog #f ,@x))))
+
+(define-macro (get-multi-instrument-rt-dialog)
+  '(cadr rt-dialog-unique-name))
+
+
+#!
+(let ()
+  (define-multi-instrument-rt-dialog)
+  (<rt-out> (* (<slider> "oscil" 0 0.5 1)
+	       (<slider> "vol2" 0 1 2)
+	       (oscil)))
+  (<rt-out> (* (<slider> "square" 0 0.5 2)
+	       (<slider> "vol2" 0 1 2)
+	       (square-wave))))
+
+(macroexpand '(define-multi-instrument-rt-dialog :show #t))
+
+(let ()
+  (define ai 0.2)
+  (<rt-out> (* (extern ai) (oscil))))
+
+!#
+
 (define-rt-macro (<slider> name min curr max (:glide #t) (:log #f) (:scale #f))
   (define v (gensym))  
   (define v2 (rt-gensym))  
@@ -7051,40 +7174,72 @@ old syntax: (not very nice)
   (define max2 (gensym))
   (define glide2 (gensym))
 
+  (define dialog (gensym))
+  (define slider (gensym))
+  (define ret (gensym))
+  (define topmost (gensym))
+
+  (define extern-name (string->symbol (<-> "rt-internal-<slider>-" name)))
+
+  (c-display "slider" name)
+
   (if (eq? glide #t)
       (set! glide -1))
 
   (if glide
       `(read-glide-var
-	(extern    (let* ((,min2 ,min)
-			  (,max2 ,max)
-			  (,glide2 ,glide)
-			  (,v (make-glide-var ,curr (if (= -1 ,glide2)
-							(/ (- ,max2 ,min2) (/ (mus-srate) 3))
-							,glide2)))
-			  (slider (<slider> (default-rt-dialog (%delay rt-current-rt))
-					    ,name ,min2 (read-glide-var ,v)
-					    ,max2
-					    (lambda (val)
-					      (write-glide-var ,v val))
-					    (or ,scale
-						(max 100 (/ 1000 (- ,max2 ,min2))))
-					    #f
-					    ,log)))
-		     ,v)))
-      `(extern ,v2 (let* ((,min2 ,min)
-			  (,max2 ,max)
-			  (,v ,curr)
-			  (slider (<slider> (default-rt-dialog (%delay rt-current-rt))
-					    ,name ,min2 ,v
-					    ,max2
-					    (lambda (val)
-					      (set! (-> rt-current-rt ,v2) val))
-					    (or ,scale
-						(max 100 (/ 1000 (- ,max2 ,min2))))
-					    #f
-					    ,log)))
-		     ,v))))
+	(extern    (let ((,dialog (and (defined? 'rt-dialog-unique-name *rt-local-code-environment*)
+				      (local-eval 'rt-dialog-unique-name *rt-local-code-environment*))))
+		     (define ,topmost #f)
+		     (let* ((,min2 ,min)
+			    (,max2 ,max)
+			    (,glide2 ,glide)
+			    (,v (make-glide-var ,curr (if (= -1 ,glide2)
+							  (/ (- ,max2 ,min2) (/ (mus-srate) 3))
+							  ,glide2)))
+			    (,slider (if (and ,dialog
+					     (hashq-ref (nth 2 ,dialog) ',extern-name))
+					(hashq-ref (nth 2 ,dialog) ',extern-name)
+					(let* ((,slider (<slider> (default-rt-dialog (%delay rt-current-rt))
+								 ,name ,min2 (read-glide-var ,v)
+								 ,max2
+								 (lambda (val)
+								   (if ,topmost
+								       (for-each (lambda (v)
+										   (write-glide-var v val))
+										 (car ,topmost))
+								       (write-glide-var ,v val)))
+								 (or ,scale
+								     (max 100 (/ 1000 (- ,max2 ,min2))))
+								 #f
+								 ,log)))
+					  (define ,ret (list '() ,slider))
+					  (when ,dialog
+					    (hashq-set! (nth 2 ,dialog) ',extern-name ,ret)
+					    (set! ,topmost ,ret))
+					  ,ret))))
+		       (set-car! ,slider (cons ,v (car ,slider)))
+		       ,v))))
+      `(extern ,v2 (let ((dialog (and (defined? 'rt-dialog-unique-name *rt-local-code-environment*)
+				      (local-eval 'rt-dialog-unique-name *rt-local-code-environment*))))
+		     (if (and dialog
+			      (hashq-ref (nth 2 dialog) ',extern-name))
+			 (hashq-ref (nth 2 dialog) ',extern-name)
+			 (let* ((,min2 ,min)
+				(,max2 ,max)
+				(,v ,curr)
+				(slider (<slider> (default-rt-dialog (%delay rt-current-rt))
+						  ,name ,min2 ,v
+						  ,max2
+						  (lambda (val)
+						    (set! (-> rt-current-rt ,v2) val))
+						  (or ,scale
+						      (max 100 (/ 1000 (- ,max2 ,min2))))
+						  #f
+						  ,log)))
+			   (if dialog
+			       (hashq-set! (nth 2 dialog) ',extern-name ,v))
+			   ,v))))))
 
 #!
 
@@ -7101,35 +7256,46 @@ old syntax: (not very nice)
   (define val (gensym))
   (define glide2 (gensym))
 
+  (define extern-name (string->symbol (<-> "rt-internal-" (if togglebutton "<togglebutton>-" "<checkbutton>-") name)))
+
+  (c-display "checkbutton")
+  
   (if (eq? glide #t)
       (set! glide -1))
 
   `(begin
-     (extern ,v2 (let* ((,val (cond ((eq? #t ,on-or-off) 1)
-				  ((eq? #f ,on-or-off) 0)
-				  ((number? ,on-or-off)
-				   (if (= 0 ,on-or-off)
-				       0
-				       1))
-				  (else 1)))
-			(,v ,(if glide
-				 `(make-glide-var ,val (let ((,glide2 ,glide))
-							 (if (= ,glide2 -1)
-							     (/ 50 (mus-srate))
-							     ,glide2)))
-				 val)))
-		   ((if ,togglebutton
-			<togglebutton>
-			<checkbutton>)
-		    (default-rt-dialog (%delay rt-current-rt)) 
-		    ,name (lambda (val)
-			    ,(if glide
-				 `(write-glide-var ,v (if val 1 0))
-				 `(set! (-> rt-current-rt ,v2) (if val 1 0))))
-		    (if (= 0 ,val)
-			#f
-			#t))
-		   ,v))
+     (extern ,v2 (let ((dialog (and (defined? 'rt-dialog-unique-name *rt-local-code-environment*)
+				      (local-eval 'rt-dialog-unique-name *rt-local-code-environment*))))
+		     (if (and dialog
+			      (hashq-ref (nth 2 dialog) ',extern-name))
+			 (hashq-ref (nth 2 dialog) ',extern-name)
+			 (let* ((,val (cond ((eq? #t ,on-or-off) 1)
+					    ((eq? #f ,on-or-off) 0)
+					    ((number? ,on-or-off)
+					     (if (= 0 ,on-or-off)
+						 0
+						 1))
+					    (else 1)))
+				(,v ,(if glide
+					 `(make-glide-var ,val (let ((,glide2 ,glide))
+								 (if (= ,glide2 -1)
+								     (/ 50 (mus-srate))
+								     ,glide2)))
+					 val)))
+			   ((if ,togglebutton
+				<togglebutton>
+				<checkbutton>)
+			    (default-rt-dialog (%delay rt-current-rt)) 
+			    ,name (lambda (val)
+				    ,(if glide
+					 `(write-glide-var ,v (if val 1 0))
+					 `(set! (-> rt-current-rt ,v2) (if val 1 0))))
+			    (if (= 0 ,val)
+				#f
+				#t))
+			   (if dialog
+			       (hashq-set! (nth 2 dialog) ',extern-name ,v))
+			   ,v))))
      ,(if glide
 	  `(read-glide-var ,v2)
 	  `(begin 
@@ -7455,6 +7621,13 @@ old syntax: (not very nice)
 			      (remove (lambda (vardecl)
 					(not (eq? '<struct-rt_bus-*> (-> (cadr vardecl) c-type))))
 				      extpointers)))
+
+	       (inbusdef (member 'in-bus busnames (lambda (a b)
+						    (eq? a (nth 3 b)))))
+	       (outbusdef (member 'out-bus busnames (lambda (a b)
+						      (eq? a (nth 3 b)))))
+					    
+
 	       (i 0)
 	       
 	       (types (map (lambda (var)
@@ -7659,63 +7832,60 @@ old syntax: (not very nice)
 		   (<int> rt_faustprocess (lambda (,rt-globalvardecl
 						   (<int> startframe)
 						   (<int> endframe))
-					    
-					    (<int> time rt_globals->engine->time)
+
+					    ,(if (or inbusdef outbusdef)
+						 '(<int> time rt_globals->engine->time)
+						 "/* No inbus or outbus */")
+
 					    (<int> num_frames (- endframe startframe))
 					    
 					    (<struct-mus_rt_faust*> faust rt_globals->faust)
 					    (<FaustComputeFunc> compute faust->compute_func)
 					    		
 					    ;; In
-					    ,(let ((inbusdef (member 'in-bus busnames (lambda (a b)
-											(eq? a (nth 3 b))))))
-					       (if inbusdef
-						   `(begin
-						      ;; bus=rt_engine->in_bus_3_mirror
-						      (<struct-rt_bus-*> bus ,(symbol-append 'rt_globals->
-											     (nth 2 (car inbusdef))))
-						      (<int> num_channels (EC_MIN faust->num_inputs bus->num_channels))
-						      (<int> channels_diff (- bus->num_channels num_channels))
-						      (<int> base 0)
-						      
-						      (for-each 0 num_frames
-								(lambda (n)
-								  (for-each 0 num_channels
-									    (lambda (ch)
-									      (let* ((data <struct-rt_bus_data-*> "&bus->data[base++]"))
-										(set! faust->ins[ch][n]
-										      (?kolon (< data->last_written_to time)
-											      0
-											      data->val)))))
-								  (+= base channels_diff))))
-						   "/* No inbus */"))
-					    
+					    ,(if inbusdef
+						 `(begin
+						    ;; bus=rt_engine->in_bus_3_mirror
+						    (<struct-rt_bus-*> bus ,(symbol-append 'rt_globals->
+											   (nth 2 (car inbusdef))))
+						    (<int> num_channels (EC_MIN faust->num_inputs bus->num_channels))
+						    (<int> channels_diff (- bus->num_channels num_channels))
+						    (<int> base 0)
+						    
+						    (for-each 0 num_frames
+							      (lambda (n)
+								(for-each 0 num_channels
+									  (lambda (ch)
+									    (let* ((data <struct-rt_bus_data-*> "&bus->data[base++]"))
+									      (set! faust->ins[ch][n]
+										    (?kolon (< data->last_written_to time)
+											    0
+											    data->val)))))
+								(+= base channels_diff))))
+						 "/* No inbus */")
 
 					    ;; Compute
 					    (compute faust->dsp num_frames faust->ins faust->outs)
-
 					    
 					    ;; Out
-					    ,(let ((outbusdef (member 'out-bus busnames (lambda (a b)
-											  (eq? a (nth 3 b))))))
-					       (if outbusdef
-						   `(begin
-						      ;; bus=rt_engine->out_bus_4_mirror
-						      (<struct-rt_bus-*> bus ,(symbol-append 'rt_globals->
-											     (nth 2 (car outbusdef))))
-						      (<int> num_channels (EC_MIN faust->num_outputs bus->num_channels))
-						      (<int> channels_diff (- bus->num_channels num_channels))
-						      (<int> base 0)
-					    
-						      (for-each 0 num_frames
-								(lambda (n)
-								  ;;(<int> base (* bus->num_channels n))
-								  (for-each 0 num_channels
-									    (lambda (ch)
-									      (let* ((data <struct-rt_bus_data-*> "&bus->data[base++]"))
-										,(rt-clean-write-bus 'faust->outs[ch][n]))))
-								  (+= base channels_diff))))
-						   "/* No outbus */"))
+					    ,(if outbusdef
+						 `(begin
+						    ;; bus=rt_engine->out_bus_4_mirror
+						    (<struct-rt_bus-*> bus ,(symbol-append 'rt_globals->
+											   (nth 2 (car outbusdef))))
+						    (<int> num_channels (EC_MIN faust->num_outputs bus->num_channels))
+						    (<int> channels_diff (- bus->num_channels num_channels))
+						    (<int> base 0)
+						    
+						    (for-each 0 num_frames
+							      (lambda (n)
+								;;(<int> base (* bus->num_channels n))
+								(for-each 0 num_channels
+									  (lambda (ch)
+									    (let* ((data <struct-rt_bus_data-*> "&bus->data[base++]"))
+									      ,(rt-clean-write-bus 'faust->outs[ch][n]))))
+								(+= base channels_diff))))
+						 "/* No outbus */")
 					    
 					    (return 0)))
 		   (public
@@ -8172,28 +8342,36 @@ old syntax: (not very nice)
 
 		
 ;; rt-1 + compiled code cache handling.
-(define rt-cached-funcs (make-hash-table 997))
+(define *rt-cached-funcs* (make-hash-table 997))
 (define* (rt-1 term #:key (engine *rt-engine*))
   (rt-gensym-reset)
   (rt-extern-reset)
+
+  ;;(c-display "term after:" term)
+
   (let* ((key (list term
 		    (rt-safety)               ;; Everything that can change the compiled output must be in the key.
 		    (-> engine samplerate))) ;; If saving to disk, the result of (version) and (snd-version) must be added as well. (and probably some more)
-	 (cached (hash-ref rt-cached-funcs key)))
+	 (cached (hash-ref *rt-cached-funcs* key)))
     ;;(c-display "term/cached" term cached)
     (or	cached
 	(let ((new-rt (rt-2 (deep-list-copy term)))) ;; <- Hmm. Thats really bad. Seems like a set-car! is performed
-	  (hash-set! rt-cached-funcs key new-rt)     ;;         on term somewhere. Fix it with a deep-list-copy for now.
+	  (hash-set! *rt-cached-funcs* key new-rt)     ;;         on term somewhere. Fix it with a deep-list-copy for now.
 	  new-rt))))
 (define (rt-clear-cache!)
-  (set! rt-cached-funcs (make-hash-table 997)))
+  (set! *rt-cached-funcs* (make-hash-table 997)))
 
 ;;(define (rt-1 term)
 ;;  (rt-2 term))
 
+(define *rt-local-code-environment* (the-environment))
+
 ;; rt
 (define-macro (rt-compile term)
-  `(rt-1 ',term))
+  `(begin
+     (set! *rt-local-code-environment* (the-environment)) ;; *rt-local-etc.* must be placed directly in the macro for hygenic reasons.
+                                                          ;; For example, if placed in rt-1, "term" willl be in the environment.
+     (rt-1 ',term)))
 (define-macro (rt-c term)
   `(rt-compile ,term))
 
@@ -8202,6 +8380,7 @@ old syntax: (not very nice)
     (if (not das-rt)
 	#f
 	`(lambda ,(cadr term)
+	   (set! *rt-local-code-environment* (the-environment))
 	   (,(cadr das-rt) ,@(cadr term))))))
 
 (define-macro (define-rt2 def . body)
@@ -8211,7 +8390,9 @@ old syntax: (not very nice)
 				 (,(car def) ,@(cdr def))))))
   
 (define-macro (rt-funcall rt-func . args)
-  `((cadr ,rt-func) ,@args))
+  `(begin
+     (set! *rt-local-code-environment* (the-environment))
+     (cadr ,rt-func) ,@args))
 
 (define *rt* #f)
 (define *rt1* #f)
@@ -8219,13 +8400,14 @@ old syntax: (not very nice)
 (define *rt3* #f)
 (define *rt4* #f)
 (define-macro (<rt> rt-func)
-  `(let ((ret ((caddr (rt-compile ,rt-func)))))
-     (set! *rt4* *rt3*)
-     (set! *rt3* *rt2*)
-     (set! *rt2* *rt1*)
-     (set! *rt1* *rt*)
-     (set! *rt* ret)
-     ret))
+  `(begin
+     (let ((ret ((caddr (rt-compile ,rt-func)))))
+       (set! *rt4* *rt3*)
+       (set! *rt3* *rt2*)
+       (set! *rt2* *rt1*)
+       (set! *rt1* *rt*)
+       (set! *rt* ret)
+       ret)))
 
 
 (define-macro (rt-play-macro play-type eval-type rest)
@@ -8560,22 +8742,6 @@ old syntax: (not very nice)
 (provided? 'snd-pd-external)
 
 (rt-macroexpand '(< a 3))
-
-(define (cons* x . x*)
-   (let f ((x x)
-	   (x* x*))
-     (cond ((null? x*)
-	    x)
-	   (else
-	    (cons x
-		  (f (car x*) (cdr x*)))])))
-
-
-(define (cons* x . x*)
-   (let f ([x x] [x* x*])
-     (cond
-       [(null? x*) x]
-       [else (cons x (f (car x*) (cdr x*)))])))
 
 !#
 

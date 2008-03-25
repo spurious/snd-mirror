@@ -849,6 +849,10 @@ Usually just "", but can be "-lsnd" or something if needed.
 (define-c/faust-macro (unquote something)
   (primitive-eval something))
 
+(define-c/faust-macro (unquote-splicing something)
+  (apply <-> (map eval-parse (primitive-eval something))))
+
+
 (define-c/faust-macro (include filename)
   (define ret "")
   (for-each-line-in-file (string-trim-right (eval-parse filename))

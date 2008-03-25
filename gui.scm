@@ -1490,9 +1490,11 @@
 	(XtUnmanageChild button)))
 
   (if use-gtk
-      (begin
+      (let ((dasparent (if (isdialog? parent)
+			   (GTK_BOX (.action_area (GTK_DIALOG (-> parent dialog))))
+			   (GTK_BOX parent))))
 	(set! button (gtk_button_new_with_label name))
-	(gtk_box_pack_start (GTK_BOX parent) button #t #t 20)
+	(gtk_box_pack_start dasparent button #t #t 20)
 	(g_signal_connect_closure_by_id (GPOINTER button)
 					(g_signal_lookup "clicked" (G_OBJECT_TYPE (GTK_OBJECT button)))
 					0 (g_cclosure_new (lambda (w data) 
