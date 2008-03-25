@@ -3377,7 +3377,7 @@ This changes (edits) the channel, so 'origin' provides a way to name the edit (f
 Since with-sound can write its output to a vct, we can use it with vct-&gt;channel to paste in an fm-violin note as
 an edit:
 <pre>
-  (vct-&gt;channel (<a class=quiet href="sndscm.html#withsound">with-sound</a> (:output (make-vct 22050)) (<a class=quiet href="sndscm.html#fmviolin">fm-violin</a> 0 1 440 .1)))
+  (vct-&gt;channel (<a class=quiet href="sndscm.html#withsound">with-sound</a> (:output (make-vct 44100)) (<a class=quiet href="sndscm.html#fmviolin">fm-violin</a> 0 1 440 .1)))
 </pre>
 To add such a note to whatever is already present, use either <a href="#mixvct">mix-vct</a> or 
 <a href="sndscm.html#mixsounddata">mix-sound-data</a>.
@@ -4272,7 +4272,7 @@ mus-sound-open-input opens the sound file 'filename' and returns an integer for 
 
 
 <!-- mus-sound-open-output -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundopenoutput">mus-sound-open-output</a> (filename :optional (srate 22050) (chans 1) data-format header-type comment)</code>
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mussoundopenoutput">mus-sound-open-output</a> (filename :optional (srate 44100) (chans 1) data-format header-type comment)</code>
 </td></tr><tr><td></td><td>
 mus-sound-open-output creates a new sound file with the indicated attributes, and returns an integer 
 for use with <a href="#mussoundwrite">mus-sound-write</a> and <a href="#mussoundcloseoutput">mus-sound-close-output</a>.
@@ -4730,20 +4730,33 @@ Say we have a mix whose id is 123:</p>
 
 <table border=0 cellspacing=0 hspace=10>
 
-<!-- TODO: what about multichan input? -->
-
 <!-- mix -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mix">mix</a> (file :optional samp in-chan snd chn with-mix-tags auto-delete)</code>
 </td></tr><tr><td width=60></td><td>
-mix is one of the basic mixing functions. 
-mix mixes the 'in-chan' channel of the file 'file' into the given channel
-starting at 'samp' in the output channel.
-mix returns the id mix or -1 (a simple mix, no tag).
-If 'with-mix-tags' is #f (the default is #t), the data is simply
+<p>mix is one of the basic mixing functions.
+It mixes the 'in-chan' channel of the file 'file' into the given channel
+starting at 'samp' in the output channel.  If 'in-chan' is #t, all input channels are mixed into successive output channels.
+mix returns the mix id (of the first mix, if there are multiple channels).
+</p>
+<p>If 'with-mix-tags' is #f (the default is #t), the data is simply
 mixed without creating any mix objects. 
+</p>
+
+<pre>
+  (mix "test.snd")             ; add channel 0 of test.snd to the current sound at sample 0
+  (mix "test.snd" 0 #t)        ; same but add all channels of test.snd into successive output channels
+  (mix "test.snd" 0 1)         ; add channel 1 of test.snd to channel 0 of the current sound
+  (mix "test.snd" 0 0 #f 1)    ; add channel 0 of test.snd to channel 1 of the current sound
+  (mix "test.snd" 0 3 #f 1 #f) ; add channel 3 of test.snd to channel 1 of the current sound, without a mix tag
+</pre>
+
+<p>
 The input file ('file') is not deleted by Snd unless 'auto-delete' is #t (or 1 or 3). 
 auto-delete can be a boolean (#f = don't delete), or and integer: 0=don't delete, 1=delete, 3=delete but keep track of multichannel inputs.
-<br>
+</p>
+<p>In the next example, we mix in two sounds:
+</p>
+
 <img src="mix1.png" alt="mixes" vspace=10 onmouseover="return escape('the mix tag is the red rectangle at the left end of the mix waveform.  The number under it is that mix\'s id.')">
 <br>
 Now we can drag either of the red tags to move the mixed sounds, call up the View:Mixes dialog to edit them,
@@ -4821,7 +4834,10 @@ in the 2nd channel of the 2nd (a stereo sound):
 <!-- mix-amp -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixamp">mix-amp</a> (mix)</code>
 </td></tr><tr><td></td><td>
-mix-amp is the amplitude scaler applied to the mix. 
+mix-amp is the amplitude scaler applied to the mix.  To make mix 0 half as loud:
+<pre>
+  (set! (mix-amp 0) .5)
+</pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -4894,7 +4910,7 @@ feedback:
       (violin-color (<a class=quiet href="#makecolor">make-color</a> 0 0 1)) ; blue
       (cello-sync 2)
       (cello-color (<a class=quiet href="#makecolor">make-color</a> 0 1 0)) ; green
-      (index (<a class=quiet href="#newsound">new-sound</a> "test.snd" :channels 1 :size (* 22050 22))))
+      (index (<a class=quiet href="#newsound">new-sound</a> "test.snd" :channels 1 :size (* 44100 22))))
   
   (define (violin beg dur freq amp)
     (let ((id (<a class=quiet href="#mix">mix</a> (<a class=quiet href="sndscm.html#withtempsound">with-temp-sound</a> ()                            ; write instrument output to temp sound
@@ -4968,13 +4984,19 @@ to use multiple output files, collecting related notes in one file, then mixing 
     (<a class=quiet href="sndclm.html#mus-close">mus-close</a> violins)
     (<a class=quiet href="sndclm.html#mus-close">mus-close</a> cellos))
 </pre></td></tr></table>
+
+<p>See also <a href="sndscm.html#withmixedsound">with-mixed-sound</a> in ws.scm.
+</p>
 </td></tr><tr><td colspan=2 height=32></td></tr>
 
 
 <!-- mix-position -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixposition">mix-position</a> (mix)</code>
 </td></tr><tr><td></td><td>
-mix-position is the current starting position (a sample number) of 'mix'.
+mix-position is the current starting position (a sample number) of 'mix'.  To move mix 0 so that it starts at sample 200 in the output:
+<pre>
+    (set! (mix-position 0) 200)
+</pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -5014,7 +5036,8 @@ mix-speed is the speed (resampling ratio) of 'mix'; 1.0 (the default) means no r
 <!-- mix-sync -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixsync">mix-sync</a> (mix)</code>
 </td></tr><tr><td></td><td>
-mix-sync is an integer, like <a href="#sync">sync</a> that you can use to group mixes.
+mix-sync is an integer, like <a href="#sync">sync</a> that you can use to group mixes.  See <a href="sndscm.html#mixdoc">mix.scm</a>
+for many examples.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -5028,7 +5051,7 @@ This is the maximum mix sync value seen so far.
 <!-- mix-tag-height -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="mixtagheight">mix-tag-height</a> ()</code>
 </td></tr><tr><td></td><td>
-This is the mix tag height in pixels (the default is 14).
+This is the mix tag height (the vertical extent of the tag rectangle) in pixels (the default is 14).  
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -5071,7 +5094,7 @@ mix-vct returns the id of the new mix, or -1 (a simple mix, no tag).
     <em class=listener>1000</em>
     :<em class=typing>(mix-length 3)</em>                      ; and its length is 3 samples
     <em class=listener>3</em>
-    :<em class=typing>(mix-vct (with-sound (:output (make-vct 22050)) (fm-violin 0 1 440 .1)))</em>
+    :<em class=typing>(mix-vct (with-sound (:output (make-vct 44100)) (fm-violin 0 1 440 .1)))</em>
     <em class=listener>0</em>
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -5136,6 +5159,7 @@ cross-fade in frequency: cross-fade and dissolve-fade in <a href="sndscm.html#fa
 zipper cross-fade: <a href="sndscm.html#zipdoc">zipper.scm</a><br>
 snap mix to beat after drag: <a href="sndscm.html#snapmixtobeat">snap-mix-to-beat</a><br>
 delete all mixes: <a href="sndscm.html#silenceallmixes">silence-all-mixes</a><br>
+with-sound (a notelist) expanded into mixes: <a href="sndscm.html#withmixedsound">with-mixed-sound</a><br>
 <br>
 </small></blockquote>
 </td></tr></TABLE>

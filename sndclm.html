@@ -301,7 +301,7 @@ essentially the same thing using with-sound and oscil is:
     (with-sound ()
       (let ((osc (<a class=quiet href="#make-oscil">make-oscil</a> 440.0)))
         (do ((i 0 (1+ i)))
-	    ((= i 22050))
+	    ((= i 44100))
           (<a class=quiet href="#outa">outa</a> i (* .1 (<a class=quiet href="#oscil">oscil</a> osc)) *output*))))
 </pre>
 
@@ -393,7 +393,7 @@ could be rewritten:
 
 <p>Now to hear our sine wave:</p>
 <pre>
-    (with-sound (:play #t) (simp 0 22050 330 .1))
+    (with-sound (:play #t) (simp 0 44100 330 .1))
 </pre>
 
 <p>This version of "simp" forces you to think in terms of sample numbers ("start" and "end") which
@@ -541,7 +541,7 @@ as the generator object:
    (lambda () 
      (let ((osc (make-my-oscil 440.0)))
        (do ((i 0 (1+ i))) 
-	   ((= i 22050))
+	   ((= i 44100))
 	 (outa i (my-oscil osc 0.0)))))))
 </pre>
 </td></tr></table>
@@ -921,7 +921,7 @@ For example, say we want to square each envelope value:
   (let ((e (<a class=quiet href="#make-env">make-env</a> '(0 0 1 1 2 .25 3 1 4 0) 
                      :duration 0.5)))
     (do ((i 0 (1+ i)))
-	((= i 22050))
+	((= i 44100))
       (<a class=quiet href="#outa">outa</a> i (<em class=red>env-any</em> e (lambda (y) (* y y)))))))
 
 
@@ -938,7 +938,7 @@ For example, say we want to square each envelope value:
     (<a class=quiet href="extsnd.html#run">run</a>
       (lambda ()
         (do ((i 0 (1+ i)))
-	    ((= i 22050))
+	    ((= i 44100))
           (<a class=quiet href="#outa">outa</a> i (sine-env e)))))))
 </pre>
 
@@ -1914,7 +1914,7 @@ To get a square-wave with control over the "duty-factor":
 	 (p-off (<em class=red>make-pulse-train</em> 100 -0.5 (* 2 pi (- 1.0 duty-factor))))
 	 (sum 0.0))
     (do ((i 0 (1+ i)))
-	((= i 22050))
+	((= i 44100))
       (set! sum (+ sum (<em class=red>pulse-train</em> p-on) (<em class=red>pulse-train</em> p-off)))
       (<a class=quiet href="#outa">outa</a> i sum))))
 </pre>
@@ -2195,13 +2195,13 @@ fejer2 (10)
   (let ((freq (hz->radians 100.0)))
     (do ((i 0 (1+ i))
 	 (angle 0.0 (+ angle freq)))
-	((= i 22050))
+	((= i 44100))
       (outa i (fejer-sum angle 10)))))
 
 (<a class=quiet href="sndscm.html#wsdoc">with-sound</a> ()
 (let ((gen (make-kosine-summation 100.0))) 
     (do ((i 0 (1+ i)))
-	((= i 22050))
+	((= i 44100))
       (outa i (kosine-summation gen 0.5 5.0)))))
 
 
@@ -2209,7 +2209,7 @@ kosine95
 (<a class=quiet href="sndscm.html#wsdoc">with-sound</a> ()
 (let ((gen (make-kosine-summation 100.0))) 
     (do ((i 0 (1+ i)))
-	((= i 22050))
+	((= i 44100))
       (outa i (kosine-summation gen 0.95 1.0)))))
 -->
 

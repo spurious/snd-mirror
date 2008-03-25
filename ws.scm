@@ -511,12 +511,15 @@ returning you to the true top-level."
   `(with-sound-helper (lambda () ,@body) ,@args))
 
 
+;;; -------- with-full-sound --------
+
 (defmacro with-full-sound (args . body)
   ;; with-sound but display full sound in Snd window
   `(let ((snd (with-sound-helper (lambda () ,@body) ,@args)))
      (set! (x-bounds *snd-opened-sound*) (list 0.0 (/ (frames *snd-opened-sound*) (srate *snd-opened-sound*))))
      snd))
 
+;;; -------- with-temp-sound --------
 
 (defmacro with-temp-sound (args . body)
   `(let ((old-file-name *clm-file-name*)
@@ -533,6 +536,8 @@ returning you to the true top-level."
 	   (set! *clm-file-name* old-file-name)))))
 
 
+;;; -------- clm-load --------
+
 ;(defmacro clm-load (file . args)
 ;  `(with-sound-helper (lambda () (load ,file)) ,@args))
 ; cm wants this to be a function so that it can use apply
@@ -542,6 +547,7 @@ returning you to the true top-level."
   (apply with-sound-helper (lambda () (load file)) args))
 
 
+;;; -------- with-mixed-sound --------
 
 (define (with-mixed-sound-mix-info id snd)
   (let ((all-info (sound-property 'with-mixed-sound-info snd)))
@@ -560,7 +566,8 @@ returning you to the true top-level."
 	  (outsnd (find-sound output)))
      (if (sound? outsnd)
 	 (let ((mix-info '()))
-	   ;; if multichannel output, make sure cross-chan mixes move together and click shows the original note list entry
+
+	   ;; if multichannel output, make sure cross-chan mixes move together 
 	   (if (> (chans outsnd) 1)
 	       (begin
 		 (reset-hook! mix-release-hook)
@@ -573,6 +580,8 @@ returning you to the true top-level."
 					 (not (= (mix-sync mx) base))))
 				  (set! (mix-position mx) new-pos))
 				#t)))))
+
+	   ;; click shows the original note list entry
 	   (reset-hook! mix-click-hook)
 	   (add-hook! mix-click-hook
 		      (lambda (id)
@@ -582,11 +591,13 @@ returning you to the true top-level."
 								  (cadddr info))
 							     (exact->inexact (/ (mix-position id) (srate outsnd))))))
 			  #t))) ; #t -> don't print the mix id in the minibuffer
+
 	   (for-each
 	    (lambda (note)
 	      (let* ((beg (seconds->samples (cadr note))) ; srate??
 		     (snd (with-temp-sound ,args (eval (append (list (car note) 0.0) (cddr note)) (current-module))))
-		     ;; I can't immediately find a way around the "eval" (TODO: gauche current-module?)
+		     ;; I can't immediately find a way around the "eval" 
+		     ;;   current-module is a synonym for interaction-environment in Gauche
 		     (mx (mix snd beg #t outsnd #f #t #t))     ; all chans mixed, current output sound, with mixes, with auto-delete
 		     (chans (mus-sound-chans snd)))
 		(set! (mix-name mx) (format #f "(~A ~A)" (car note) (cadr note)))
@@ -602,11 +613,11 @@ returning you to the true top-level."
 ;(with-mixed-sound (:channels 2) (fm-violin 0 .1 440 .1 :degree 0) (fm-violin 1 .1 660 .1 :degree 45))
 
 
-(define* (with-mixed-sound->notelist :optional snd (output-file "temp.scm"))
+(define* (with-mixed-sound->notelist :optional (output-file "temp.scm") snd)
   (let* ((outsnd (or snd (selected-sound) (car (sounds))))
 	 (mix-info (sound-property 'with-mixed-sound-info outsnd)))
     (if (not mix-info)
-	(throw 'no-such-mixed-sound (list outsnd))
+	(throw 'no-such-mixed-sound (list "with-mixed-sound->notelist" outsnd))
 	(let ((cur-mixes (mixes outsnd 0)) ; for now assume each mix is multichannel
 	      (oput (open-output-file output-file)))
 	  (display (format #f "(with-sound (:channels ~D)~%" (chans snd)) oput)
@@ -628,7 +639,53 @@ returning you to the true top-level."
 	  (close-output-port oput)))))
 
 ;;; TODO: doc/snd-test with-mixed-sound stuff
+;;; TODO: the mix tags need to be placed according to frequency in with-mixed-sound
+;;; TODO: squelch-update and not full sound at start in with-mixed-sound
+;;; TODO: make sure play button works right
+;;; TODO: it might be nice to notice interrupted with-temp-sounds here and exit the mixing loop
+;;; SOMEDAY: what happens to an expression that isn't a note?  How to handle notes that don't put begin time 1st?
+;;; TODO: figure out what to do with with-marked-sound:
 
+;;; -------- with-marked-sound --------
+#|
+;;; the following code places a mark at the start of each note in the with-sound body
+;;;    with arbitrary info in the :ws mark-property, displayed in the help dialog
+;;;    when the mark is clicked.  The corresponding code in the instrument is:
+;;;          (if (defined? '*note-hook*)
+;;;	         (run-hook *note-hook* beg (list 'fm-violin dur frequency amplitude)))
+
+(load "marks.scm")
+(define *note-hook* (make-hook 2)) ; args = beg[sample] comment[anything]
+
+(defmacro with-marked-sound (args . body)
+  ;; a wrapper around with-sound to set up the marks
+  `(let ((*ws-prog* '())
+	 (old-*note-hook* (hook->list *note-hook*))) ; save old *note-hook* (nested with-sound)
+     (define (list->hook hook l)
+       (if (not (null? l))
+	   (begin
+	     (add-hook! hook (car l))
+	     (list->hook hook (cdr l)))))
+     (reset-hook! *note-hook*)
+     (add-hook! *note-hook*                          ; current hook saves mark data in *ws-prog*
+		(lambda (beg comment)
+		  (set! *ws-prog* (cons (list beg comment) *ws-prog*))))
+     (reset-hook! mark-click-hook)
+     (add-hook! mark-click-hook mark-click-info)
+     (let* ((name (with-sound-helper (lambda () ,@body) ,@args)) ; with-sound itself
+	    (snd (find-sound name)))
+       (reset-hook! *note-hook*)
+       (list->hook *note-hook* old-*note-hook*)      ; restore previous *note-hook*, if any
+       (for-each 
+	(lambda (m)
+	  (let ((mk (add-mark (car m) snd)))         ; put a mark at each note begin sample
+	    (set! (mark-property :ws mk) (cadr m)))) ; and set its :ws property to the other info
+	*ws-prog*))))
+
+
+;;; PERHAPS: with-marked-sound with notelist info on mark? using the with-mixed-sound style of macro
+
+|#
 
 
 ;;; -------- sound-let --------
@@ -830,48 +887,6 @@ finish-with-sound to complete the process."
     (close-appending fd)))
 
 (add-hook! after-save-state-hook ws-save-state)
-
-
-;;; -------- with-marked-sound --------
-#|
-;;; the following code places a mark at the start of each note in the with-sound body
-;;;    with arbitrary info in the :ws mark-property, displayed in the help dialog
-;;;    when the mark is clicked.  The corresponding code in the instrument is:
-;;;          (if (defined? '*note-hook*)
-;;;	         (run-hook *note-hook* beg (list 'fm-violin dur frequency amplitude)))
-
-(load "marks.scm")
-(define *note-hook* (make-hook 2)) ; args = beg[sample] comment[anything]
-
-(defmacro with-marked-sound (args . body)
-  ;; a wrapper around with-sound to set up the marks
-  `(let ((*ws-prog* '())
-	 (old-*note-hook* (hook->list *note-hook*))) ; save old *note-hook* (nested with-sound)
-     (define (list->hook hook l)
-       (if (not (null? l))
-	   (begin
-	     (add-hook! hook (car l))
-	     (list->hook hook (cdr l)))))
-     (reset-hook! *note-hook*)
-     (add-hook! *note-hook*                          ; current hook saves mark data in *ws-prog*
-		(lambda (beg comment)
-		  (set! *ws-prog* (cons (list beg comment) *ws-prog*))))
-     (reset-hook! mark-click-hook)
-     (add-hook! mark-click-hook mark-click-info)
-     (let* ((name (with-sound-helper (lambda () ,@body) ,@args)) ; with-sound itself
-	    (snd (find-sound name)))
-       (reset-hook! *note-hook*)
-       (list->hook *note-hook* old-*note-hook*)      ; restore previous *note-hook*, if any
-       (for-each 
-	(lambda (m)
-	  (let ((mk (add-mark (car m) snd)))         ; put a mark at each note begin sample
-	    (set! (mark-property :ws mk) (cadr m)))) ; and set its :ws property to the other info
-	*ws-prog*))))
-
-
-;;; PERHAPS: with-marked-sound with notelist info on mark? using the with-mixed-sound style of macro
-
-|#
 
 
 ;;; -------- with-mix --------

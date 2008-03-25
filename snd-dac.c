@@ -6,9 +6,6 @@
  *   channels can come and go as a play is in progress
  */
 
-/* TODO: figure out why the play button turns off prematurely, and add a stop button or something if necessary */
-
-
 /* -------------------------------- per-channel control-panel state -------------------------------- */
 
 typedef struct {

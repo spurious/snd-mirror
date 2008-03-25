@@ -512,20 +512,13 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+25-Mar:  with-mixed-sound and with-mixed-sound->notelist (ws.scm)\n\
 18-Mar:  selection.scm.\n\
 17-Mar:  Snd 9.8.\n\
 7-Mar:   rt-faust.scm and rt-DotEmacs (thanks to Kjetil).\n\
 5-Mar:   mus-name is settable.\n\
          *output* can be a function.\n\
 25-Feb:  defgenerator.\n\
-24-Feb:  make-two-pole|zero freq r in the 'polar' case (reversed args)\n\
-         env-any for arbitrary func to connect the dots\n\
-         envelopes can be in the form '((0 0) (100 1))\n\
-20-Feb:  firmant generator.\n\
-17-Feb:  polywave generator.\n\
-15-Feb:  nrxysin and nrxycos generators.\n\
-14-Feb:  nsin and ncos generators.\n\
-11-Feb:  the 'stream' arg to outa and friends now defaults to *output*.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",

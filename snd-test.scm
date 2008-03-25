@@ -93,8 +93,8 @@
       (if (not with-big-file) (snd-display ";no big file"))))
 (define big-file-frames 0)
 
-(define original-save-dir (or (save-dir) "/zap/snd"))
-(define original-temp-dir (or (temp-dir) "/zap/tmp"))
+(define original-save-dir (or (save-dir) "~/zap/snd"))
+(define original-temp-dir (or (temp-dir) "~/zap/tmp"))
 (define original-sound-file-extensions (sound-file-extensions))
 
 (unbind-key #\c 4 #t)
@@ -27677,6 +27677,8 @@ EDITS: 2
 		(if (not (vequal data (vct-reverse! (vct 0.022 0.020 0.118 0.216 0.314 0.013 0.012 0.010 0.009 0.008))))
 		    (snd-display ";read mix on xramp_ramp3 reversed: ~A" data))))
 	    
+	    (set! (with-mix-tags) #t)
+	    (set! (optimization) 6)
 	    (set! (edit-position ind 0) 1)
 	    (ptree-channel (lambda (y) (* y 0.5)))
 	    (let ((id (mix-vct (vct .1 .2 .3) 50)))
@@ -28173,6 +28175,8 @@ EDITS: 2
 	  
 	  (close-sound ind))
 	
+	(set! (optimization) old-opt-val)
+
 	(let ((ind (open-sound "4.aiff"))
 	      (selind (open-sound "oboe.snd")))
 	  (make-selection 100 500 selind 0)
@@ -28439,8 +28443,6 @@ EDITS: 2
 	  (close-sound ind))
 
 	)))
-
-
 
 
 ;;; ---------------- test 10: marks ----------------

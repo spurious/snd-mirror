@@ -395,7 +395,7 @@ If 'check' is #f, the hooks are removed."
 					   (not (null? val))
 					   (eq? (car val) 'lambda))
 				      (set! (f snd chn) (eval val (interaction-environment)))
-				      ;; not sure this is the right eval environment, but it appears to work
+				      ;; this works in Guile and Gauche -- in the latter it returns the current module
 				      (set! (f snd chn) val)))
 				channel-funcs
 				(list-ref (cadddr state) chn)))

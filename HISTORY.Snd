@@ -1,5 +1,6 @@
 Snd change log
 
+ 25-Mar:     with-mixed-sound and with-mixed-sound->notelist (ws.scm).
  18-Mar:     selection.scm.
  17-Mar:     Snd 9.8.
  7-Mar:      rt-faust.scm and rt-DotEmacs (thanks to Kjetil).

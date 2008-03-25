@@ -4948,7 +4948,7 @@ same sample in all channels.
 
 <!-- sound-data->file -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="sounddatatofile">sound-data-&gt;file</a> <code>sd file :optional (srate 22050) (comment "")</code>
+<a class=def name="sounddatatofile">sound-data-&gt;file</a> <code>sd file :optional (srate 44100) (comment "")</code>
 </td></tr><tr><td></td><td>
 sound-data-&gt;file places the contents of its sound-data argument 'sd' in the newly created sound file 'file'.
 <pre>
@@ -4999,7 +4999,7 @@ sound-&gt;frame returns a frame containing the contents of the sound snd at posi
 
 <!-- vct->file -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="vcttofile">vct-&gt;file</a> <code>vct file :optional (srate 22050) (comment "")</code>
+<a class=def name="vcttofile">vct-&gt;file</a> <code>vct file :optional (srate 44100) (comment "")</code>
 </td></tr><tr><td></td><td>
 vct-&gt;file places the contents of its vct argument in the newly created (mono) sound file 'file'.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -9870,7 +9870,7 @@ avoid lists, if possible, and fancy stuff like map or apply, and you should be f
 <br>
 <table width="30%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>sound-let</h4></td></tr></table>
 
-<p>There are several other versions of with-sound: with-temp-sound, sound-let, clm-load, with-mix, and the Common Music
+<p>There are several other versions of with-sound: with-temp-sound, with-mixed-sound, sound-let, clm-load, with-mix, and the Common Music
 handles, init-with-sound and finish-with-sound.
 <a name="withtempsound">with-temp-sound</a> and <a name="sound-let">sound-let</a> set up temporary bindings for embedded with-sounds.
 </p>
@@ -9934,6 +9934,21 @@ with_sound() do
   }
 end
 </pre></td></tr></table>
+
+<p><a name="withmixedsound">with-mixed-sound</a> is a variant of with-sound that creates a
+<a href="extsnd.html#sndmixes">"mix"</a> for each note in the notelist.  If you move the
+mixes around, you can write out the new note list via <a name="withmixedsoundtonotelist">with-mixed-sound-&gt;notelist</a>.
+</p>
+
+<pre>
+    (with-mixed-sound () 
+      (fm-violin 0 .1 440 .1) 
+      (fm-violin 1 .1 660 .1))
+
+    (with-mixed-sound (:channels 2) 
+      (fm-violin 0 .1 440 .1 :degree 0) 
+      (fm-violin 1 .1 660 .1 :degree 45))
+</pre>
 
 <p>Another variant of with-sound is <a name="clmload">clm-load</a>.  Its first argument is a filename, assumed to
 be a text file containing the body of with-sound, followed by the usual with-sound arguments, if any.
