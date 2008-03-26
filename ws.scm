@@ -1,14 +1,10 @@
 ;;; with-sound and friends
 
 (use-modules (ice-9 optargs) (ice-9 format))
+
 (provide 'snd-ws.scm)
 (if (and (provided? 'snd-gauche) (not (provided? 'gauche-optargs.scm))) (load-from-path "gauche-optargs.scm"))
 (if (and (provided? 'snd-guile) (not (provided? 'snd-debug.scm))) (load-from-path "debug.scm"))
-
-;;; changed default variable names 3-Apr-03 for Common Music's benefit
-;;;   *clm-channels* is the default number of with-sound output chans in
-;;;   both CL and Scheme now.  *channels* (the old name) was a dynamic
-;;;   binding in CL to implement dynamic-wind by hand, I think.
 
 
 ;;; -------- with-sound debugger --------
@@ -189,18 +185,17 @@ returning you to the true top-level."
 (define *clm-with-sound-depth* 0) ; for CM, not otherwise used
 (define *clm-default-frequency* 0.0)
 (define *clm-safety* run-safety) ; slightly different from CL/CLM but has similar effect
+(define *clm-delete-reverb* #f) ; should with-sound clean up reverb stream
 
 (define *to-snd* #t)
 
-;(define *reverb* #f) ; these are sample->file (outa) gens, vcts, sound-data objects, or functions
-;(define *output* #f)
-;;; these are now defined in clm2xen.c
-
-(define *clm-delete-reverb* #f) ; should with-sound clean up reverb stream
 
 (define (times->samples beg dur) 
   "(times->samples beg dur) converts beg and (+ beg dur) to samples, returning both in a list"
   (list (seconds->samples beg) (seconds->samples (+ beg dur))))
+
+
+;;; -------- definstrument --------
 
 ;(define definstrument define*) -- old form 2-Nov-05
 
@@ -235,6 +230,8 @@ returning you to the true top-level."
 
 ;;; definstrument help string is currently lost
 
+
+;;; -------- with-sound --------
 
 (define* (with-sound-helper thunk 
 			    :key (srate *clm-srate*) 
@@ -519,6 +516,7 @@ returning you to the true top-level."
      (set! (x-bounds *snd-opened-sound*) (list 0.0 (/ (frames *snd-opened-sound*) (srate *snd-opened-sound*))))
      snd))
 
+
 ;;; -------- with-temp-sound --------
 
 (defmacro with-temp-sound (args . body)
@@ -537,10 +535,8 @@ returning you to the true top-level."
 
 
 ;;; -------- clm-load --------
-
-;(defmacro clm-load (file . args)
-;  `(with-sound-helper (lambda () (load ,file)) ,@args))
-; cm wants this to be a function so that it can use apply
+;;;
+;;; CM wants this to be a function so that it can use apply
 
 (define (clm-load file . args) 
   "(clm-load file . args) loads 'file' in the context of with-sound"
@@ -639,11 +635,12 @@ returning you to the true top-level."
 	  (display (format #f ")~%") oput)
 	  (close-output-port oput)))))
 
-;;; TODO: the mix tags need to be placed according to frequency in with-mixed-sound
+
+;;; TODO: the mix tags need to be placed according to frequency in with-mixed-sound [amp/freq/dur/env change -> notelist?]
 ;;; TODO: squelch-update and not full sound at start in with-mixed-sound
 ;;; TODO: make sure play button works right
 ;;; TODO: it might be nice to notice interrupted with-temp-sounds here and exit the mixing loop
-;;; SOMEDAY: what happens to an expression that isn't a note?  How to handle notes that don't put begin time 1st?
+;;; SOMEDAY: what happens to an expression that isn't a note?  How to handle notes that don't put begin time 1st? (and other such changes)
 
 
 ;;; -------- with-marked-sound --------
@@ -980,7 +977,7 @@ finish-with-sound to complete the process."
 ;;; (with-sound () (fm-violin 0 1 440 .1) (sleep 1) (fm-violin 1 1 440 .1) (sleep 1) (fm-violin 2 1 440 .1) (sleep 1))
 
 
-;;; -------- def-optkey-fun
+;;; -------- def-optkey-fun --------
 ;;;
 ;;; this is a translation of CLM's def-optkey-fun
 

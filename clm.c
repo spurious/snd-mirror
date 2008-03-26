@@ -8063,7 +8063,7 @@ bool mus_locsig_p(mus_any *ptr)
 }
 
 
-void mus_fill_locsig(Float *arr, int chans, Float degree, Float scaler, mus_interp_t type)
+static void mus_locsig_fill(Float *arr, int chans, Float degree, Float scaler, mus_interp_t type)
 {
   if (chans == 1)
     arr[0] = scaler;
@@ -8145,7 +8145,7 @@ mus_any *mus_make_locsig(Float degree, Float distance, Float reverb,
     gen->outn_writer = output;
   gen->chans = chans;
   gen->outn = (Float *)clm_calloc(gen->chans, sizeof(Float), "locsig frame");
-  mus_fill_locsig(gen->outn, gen->chans, degree, dist, type);
+  mus_locsig_fill(gen->outn, gen->chans, degree, dist, type);
 
   if (mus_output_p(revput))
     gen->revn_writer = revput;
@@ -8154,7 +8154,7 @@ mus_any *mus_make_locsig(Float degree, Float distance, Float reverb,
     {
       gen->revn = (Float *)clm_calloc(gen->rev_chans, sizeof(Float), "locsig reverb frame");
       gen->revf = (mus_frame *)mus_make_empty_frame(gen->rev_chans);
-      mus_fill_locsig(gen->revn, gen->rev_chans, degree, (reverb * sqrt(dist)), type);
+      mus_locsig_fill(gen->revn, gen->rev_chans, degree, (reverb * sqrt(dist)), type);
     }
 
   return((mus_any *)gen);
@@ -8186,8 +8186,8 @@ void mus_move_locsig(mus_any *ptr, Float degree, Float distance)
     dist = 1.0 / distance;
   else dist = 1.0;
   if (gen->rev_chans > 0)
-    mus_fill_locsig(gen->revn, gen->rev_chans, degree, (gen->reverb * sqrt(dist)), gen->type);
-  mus_fill_locsig(gen->outn, gen->chans, degree, dist, gen->type);
+    mus_locsig_fill(gen->revn, gen->rev_chans, degree, (gen->reverb * sqrt(dist)), gen->type);
+  mus_locsig_fill(gen->outn, gen->chans, degree, dist, gen->type);
 }
 
 
@@ -11331,6 +11331,9 @@ void init_mus_module(void)
  *
  *
  * done:
+ *   (9.9)
+ *   with-mixed|marked-sound
+ *
  *   (9.8)
  *   out* last arg defaults to *output*
  *   ncos, nsin

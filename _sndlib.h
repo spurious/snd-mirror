@@ -2,8 +2,8 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 20
-#define SNDLIB_REVISION 5
-#define SNDLIB_DATE "26-Jun-07"
+#define SNDLIB_REVISION 6
+#define SNDLIB_DATE "28-Mar-08"
 
 #include <mus-config.h>
 
@@ -610,12 +610,6 @@ char *strdup(const char *str);
 #endif
 #if (!HAVE_FILENO)
 int fileno(FILE *fp);
-#endif
-
-#ifndef SNDLIB_DISABLE_DEPRECATED
-  #define ALSA_API MUS_ALSA_API
-  #define OSS_API MUS_OSS_API
-  #define JACK_API MUS_JACK_API
 #endif
 
 #ifdef __cplusplus
