@@ -6300,6 +6300,7 @@ mus_any *mus_frame_add(mus_any *uf1, mus_any *uf2, mus_any *ures)
   mus_frame *f1 = (mus_frame *)uf1;
   mus_frame *f2 = (mus_frame *)uf2;
   mus_frame *res = (mus_frame *)ures;
+
   chans = f1->chans;
   if (f2->chans < chans) chans = f2->chans;
   if (res)
@@ -6319,6 +6320,7 @@ mus_any *mus_frame_multiply(mus_any *uf1, mus_any *uf2, mus_any *ures)
   mus_frame *f1 = (mus_frame *)uf1;
   mus_frame *f2 = (mus_frame *)uf2;
   mus_frame *res = (mus_frame *)ures;
+
   chans = f1->chans;
   if (f2->chans < chans) chans = f2->chans;
   if (res)
@@ -6338,6 +6340,7 @@ mus_any *mus_frame_scale(mus_any *uf1, Float scl, mus_any *ures)
   int chans, i;
   mus_frame *f1 = (mus_frame *)uf1;
   mus_frame *res = (mus_frame *)ures;
+
   chans = f1->chans;
   if (res)
     {
@@ -6356,6 +6359,7 @@ mus_any *mus_frame_offset(mus_any *uf1, Float offset, mus_any *ures)
   int chans, i;
   mus_frame *f1 = (mus_frame *)uf1;
   mus_frame *res = (mus_frame *)ures;
+
   chans = f1->chans;
   if (res)
     {
@@ -6482,8 +6486,11 @@ static bool equalp_mixer(mus_any *p1, mus_any *p2)
 
 
 static Float run_mixer(mus_any *ptr, Float arg1, Float arg2) {return(mus_mixer_ref(ptr, (int)arg1, (int)arg2));}
+
 static off_t mixer_length(mus_any *ptr) {return(((mus_mixer *)ptr)->chans);}
+
 static Float *mixer_data(mus_any *ptr) {return((Float *)(((mus_mixer *)ptr)->vals));}
+
 static int mixer_channels(mus_any *ptr) {return(((mus_mixer *)ptr)->chans);}
 
 static mus_any_class MIXER_CLASS = {
@@ -6623,6 +6630,7 @@ static mus_any *frame_to_frame_right(mus_any *arg1, mus_any *arg2, mus_any *arg_
   mus_frame *frame = (mus_frame *)arg1;
   mus_frame *out = (mus_frame *)arg_out;
   int i, in_chans, out_chans;
+
   in_chans = frame->chans;
   if (in_chans > mix->chans) 
     in_chans = mix->chans;
@@ -6651,6 +6659,7 @@ static mus_any *frame_to_frame_left(mus_any *arg1, mus_any *arg2, mus_any *arg_o
   mus_frame *frame = (mus_frame *)arg2;
   mus_frame *out = (mus_frame *)arg_out;
   int i, in_chans, out_chans;
+
   in_chans = frame->chans;
   if (in_chans > mix->chans) 
     in_chans = mix->chans;
@@ -6760,6 +6769,7 @@ mus_any *mus_mixer_add(mus_any *uf1, mus_any *uf2, mus_any *ures)
   mus_mixer *f1 = (mus_mixer *)uf1;
   mus_mixer *f2 = (mus_mixer *)uf2;
   mus_mixer *res = (mus_mixer *)ures;
+
   chans = f1->chans;
   if (f2->chans < chans) 
     chans = f2->chans;
@@ -6782,6 +6792,7 @@ mus_any *mus_mixer_multiply(mus_any *uf1, mus_any *uf2, mus_any *ures)
   mus_mixer *f1 = (mus_mixer *)uf1;
   mus_mixer *f2 = (mus_mixer *)uf2;
   mus_mixer *res = (mus_mixer *)ures;
+
   chans = f1->chans;
   if (f2->chans < chans) 
     chans = f2->chans;
@@ -6807,6 +6818,7 @@ mus_any *mus_mixer_scale(mus_any *uf1, Float scaler, mus_any *ures)
   int i, j, chans;
   mus_mixer *f1 = (mus_mixer *)uf1;
   mus_mixer *res = (mus_mixer *)ures;
+
   chans = f1->chans;
   if (res)
     {
@@ -6826,6 +6838,7 @@ mus_any *mus_mixer_offset(mus_any *uf1, Float offset, mus_any *ures)
   int i, j, chans;
   mus_mixer *f1 = (mus_mixer *)uf1;
   mus_mixer *res = (mus_mixer *)ures;
+
   chans = f1->chans;
   if (res)
     {
@@ -11310,29 +11323,9 @@ void init_mus_module(void)
 
 /* clm4:
  *
- * generators:
- *   can the def-clm-struct method/make lists be used with built-in gens?
- *   for added (as opposed to redefined) methods:
- *     (define (oscil-methods) (list (list 'mus-hop (lambda (g) 1.23))))
- *   then catch error in clm2xen and check for *-methods list -- not too hard!
- *
- *   do something debonair about move-sound -- another mistake -- elastic-delay + vector arithmetic = dlocsig?
- *   elastic-delay (and inelastic) -> delay with run-time length, if len expands so quickly as to drop
- *      a sample, interpolate, if compresses too quickly, create shock -- a slight extension of the current delay pm arg
- *      it should be possible to collapse nearly all of dlocsig into these lines -- no envelopes need to be precalulated etc
- *      if the vector from the object to the speaker projected onto the vector from the speaker to the user is positive
- *        then the object is in front of the speaker(?)
- *
- * CL/CLM:
- *   make the in-lisp with-sound work again
- *   definstrument could write actual C functions (with normal args) rather than the packaged int/double-array form
- *     but optkey args and envelopes would need to be massaged into C-compatible shape
- *     and currently there's no limitation on the pre-run code -- I'd have to add optimizer support for everything
- *
- *
- * done:
  *   (9.9)
  *   with-mixed|marked-sound
+ *   CL/CLM eval-when handling updated
  *
  *   (9.8)
  *   out* last arg defaults to *output*

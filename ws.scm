@@ -162,7 +162,7 @@ returning you to the true top-level."
        #f)) ; there is a possible return value from the continuation, so I guess this will make it easier to use?
 
 
-;;; -------- with-sound --------
+;;; -------- with-sound defaults --------
 
 (define *clm-srate* (default-output-srate))
 (define *clm-file-name* "test.snd")

@@ -1062,9 +1062,9 @@ Read sound indexed through envelope: <a href="sndscm.html#envsoundinterp">env-so
 
 <pre>
   <a class=def name="make-table-lookup">make-table-lookup</a> <a class=quiet href="#optional-key">:optional-key</a> 
-        (frequency *clm-default-frequency*) ; in Hz
-        (initial-phase 0.0)                 ; in radians 
-        wave                                ; a vct
+        (frequency *clm-default-frequency*) ; table repetition rate in Hz
+        (initial-phase 0.0)                 ; starting point in radians (pi = mid-table)
+        wave                                ; a vct containing the signal
         (size *clm-table-size*)             ; table size if wave not specified
         (type mus-interp-linear)            ; interpolation type
 
@@ -1271,8 +1271,8 @@ See also <a href="sndscm.html#granidoc">grani</a> and <a href="sndscm.html#displ
 <pre>
   <a class=def name="make-polywave">make-polywave</a> <a class=quiet href="#optional-key">:optional-key</a> 
          (frequency *clm-default-frequency*) 
-         (partials '(1 1)) 
-         (type mus-chebyshev-first-kind)
+         (partials '(1 1))                   ; a list of harmonic numbers and their associated amplitudes
+         (type mus-chebyshev-first-kind)     ; Chebyshev polynomial choice
 
   <a class=def name="polywave">polywave</a> w :optional (fm 0.0)
   <a class=def name="polywave?">polywave?</a> w
@@ -2613,7 +2613,11 @@ reflection, please send it to me, and I'll add it to this collection.
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>nrxysin (sine-summation) and nrxycos</h3></center></td></tr></table>
 <br>
 <pre>
-  <a class=def name="make-nrxysin">make-nrxysin</a> <a class=quiet href="#optional-key">:optional-key</a> (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (r .5)
+  <a class=def name="make-nrxysin">make-nrxysin</a> <a class=quiet href="#optional-key">:optional-key</a> 
+      (frequency *clm-default-frequency*) 
+      (ratio 1.0)               ; ratio between frequency and the spacing between successive sidebands
+      (n 1)                     ; number of sidebands
+      (r .5)                    ; amplitude ratio between successive sidebands (< 1.0)
   <a class=def name="nrxysin">nrxysin</a> s :optional (fm 0.0)
   <a class=def name="nrxysin?">nrxysin?</a> s
 
@@ -3640,7 +3644,9 @@ as the response at that frequency (in terms of a sampling rate of 1.0):
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>formant</h3></center></td></tr></table>
 
 <pre>
-  <a class=def name="make-formant">make-formant</a> <a class=quiet href="#optional-key">:optional-key</a> frequency radius
+  <a class=def name="make-formant">make-formant</a> <a class=quiet href="#optional-key">:optional-key</a> 
+      frequency   ; resonance center frequency in Hz
+      radius      ; resonance width, indirectly
   <a class=def name="formant">formant</a> f input :optional center-frequency-in-radians
   <a class=def name="formant?">formant?</a> f
 
@@ -3974,7 +3980,12 @@ see also convolution, physical modeling, reverb, and <a href="sndscm.html#ssffts
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>delay, tap</h3></center></td></tr></table>
 
 <pre>
-  <a class=def name="make-delay">make-delay</a> <a class=quiet href="#optional-key">:optional-key</a> size initial-contents (initial-element 0.0) max-size type
+  <a class=def name="make-delay">make-delay</a> <a class=quiet href="#optional-key">:optional-key</a> 
+      size                  ; delay length
+      initial-contents      ; delay line's initial values (a vct or a list)
+      (initial-element 0.0) ; delay line's initial element
+      max-size              ; maximum delay size in case the delay changes 
+      type                  ; interpolation type
   <a class=def name="delay">delay</a> d input :optional (pm 0.0)
   <a class=def name="delay?">delay?</a> d
 
@@ -4757,7 +4768,10 @@ generator).
 
 <pre>
   <a class=def name="make-asymmetric-fm">make-asymmetric-fm</a> <a class=quiet href="#optional-key">:optional-key</a> 
-        (frequency *clm-default-frequency*) (initial-phase 0.0) (r 1.0) (ratio 1.0)
+      (frequency *clm-default-frequency*) 
+      (initial-phase 0.0) 
+      (r 1.0)             ; amplitude ratio between successive sidebands
+      (ratio 1.0)         ; ratio between carrier and sideband spacing
   <a class=def name="asymmetric-fm">asymmetric-fm</a> af index :optional (fm 0.0)
   <a class=def name="asymmetric-fm?">asymmetric-fm?</a> af
 </pre>

@@ -684,7 +684,7 @@ function. </p>
 <!-- ask-before-overwrite -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="askbeforeoverwrite">ask-before-overwrite</a></code></td>
 <td bgcolor="#f6f8ff" onmouseover="return escape('in this table, the default value of the given variable is listed after the variable name, so ask-before-overwrite defaults to false')"><code>#f</code></td></tr><tr><td></td><td colspan=2>
-ask-before-overwrite determines whether Snd ask before overwriting an existing file:
+ask-before-overwrite determines whether Snd asks before overwriting an existing file:
 <code>(set! (ask-before-overwrite) #t)</code>
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
@@ -707,7 +707,7 @@ This is the audio output device for the play button.
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="autoresize">auto-resize</a></code></td>
 <td bgcolor="#f6f8ff"><code>#t</code></td></tr><tr><td></td><td colspan=2>
 auto-resize determines whether the Snd window should be resized
-when a sound is opened or closed (see discussion above; there is also the X resource <a href="grfsnd.html#xautoresize">AutoResize</a>).
+when a sound is opened or closed.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
@@ -739,6 +739,8 @@ If clipping is #t, output values are clipped to fit the current sndlib sample
 representation's notion of -1.0 to just less than 1.0.  The default (#f)
 can cause wrap-around (if writing integer sound data) which makes the out-of-range values very obvious.
 To control this action more closely, use <a href="#cliphook">clip-hook</a>.
+To get completely confused, see <a href="#musclipping">mus-clipping</a> and <a href="#musfileclipping">mus-file-clipping</a>:
+this has become as messed up as the sampling rate settings!
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
@@ -746,7 +748,7 @@ To control this action more closely, use <a href="#cliphook">clip-hook</a>.
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="cursorlocationoffset">cursor-location-offset</a></code></td>
 <td bgcolor="#f6f8ff"><code>0.05</code></td></tr><tr><td></td><td colspan=2>
 cursor-location-offset is the offset in samples between Snd's notion of the location of the tracking cursor
-(with-tracking-cursor in Snd jargon) and the actual (DAC-relative) location.
+(<a href="#withtrackingcursor">with-tracking-cursor</a> in Snd jargon) and the actual (DAC-relative) location.
 Since, in general, Snd can't tell how many samples of buffering there are between itself
 and the speakers (audio cards have varying amounts), its notion of where to place the
 tracking cursor can be wrong by an almost arbitrary amount.  If you have some idea
@@ -1037,7 +1039,13 @@ See also <a href="#maxvirtualptrees">max-virtual-ptrees</a>.
 <!-- print-length -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="printlength">print-length</a></code></td>
 <td bgcolor="#f6f8ff"><code>12</code></td></tr><tr><td></td><td colspan=2>
-print-length sets how many elements of lists and vectors are printed.
+For objects such as vcts, print-length sets the number of elements printed.
+<pre>
+    <em class=listener>&gt;</em><em class=typing>(set! (print-length) 3)</em>
+    <em class=listener>3</em>
+    <em class=listener>&gt;</em><em class=typing>(make-vct 10 .1)</em>
+    <em class=listener>#&lt;vct[len=10]: 0.100 0.100 0.100 ...&gt;</em>
+</pre>
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
@@ -1046,7 +1054,7 @@ print-length sets how many elements of lists and vectors are printed.
 <td bgcolor="#f6f8ff"><code>0</code></td></tr><tr><td></td><td colspan=2>
 If run-safety is not 0, code is added by the run macro to perform various
 error checks, much as in CL/CLM with *clm-safety*.  (The name *clm-safety* is defined in ws.scm as
-a synonym for run-safety).
+a synonym for run-safety within with-sound).
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
@@ -1091,7 +1099,7 @@ If show-backtrace is #t, any error will display a backtrace automatically.
 <!-- show-indices -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="showindices">show-indices</a></code></td>
 <td bgcolor="#f6f8ff"><code>#f</code></td></tr><tr><td></td><td colspan=2>
-If show-indices is #t, each sound's name is preceded by its index (in the sound pane).
+If show-indices is #t, each sound's name is preceded by its index in the sound pane.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
@@ -1119,7 +1127,7 @@ a sine wave at (say) 55 Hz, then <code>(<a class=quiet href="#srcsound">src-soun
 <!-- snd-version -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="sndversion">snd-version</a></code></td>
 <td bgcolor="#f6f8ff"><code>"1-Jun-06" etc</code></td></tr><tr><td></td><td colspan=2>
-This is a string giving the current Snd version, normally a date. <b>version</b> is a Guile function.
+This is a string giving the current Snd version, normally a date. <b>version</b> is a Guile function; in Gauche it's <b>gauche-version</b>.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
@@ -8900,6 +8908,7 @@ at the loop points:
 See also explode-sf2 in examp.scm.
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
+
 <!-- sound-loop-info -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="soundloopinfo">sound-loop-info</a> (:optional snd)</code>
 </td></tr><tr><td></td><td>
@@ -8913,6 +8922,7 @@ This is similar to <a href="#mussoundloopinfo">mus-sound-loop-info</a> (but it's
     <em class=listener>(24981 144332 0 0 60 0 1 0)</em>
 </pre>
 </td></tr><tr><td colspan=2 height=18></td></tr>
+
 
 <!-- sound-properties -->
 <tr><td colspan=2 bgcolor="#f6f8ff">

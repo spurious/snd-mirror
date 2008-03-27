@@ -7525,6 +7525,7 @@ static void write_transform_peaks(FILE *fd, chan_info *ucp)
   /* put (sync'd) peak info in (possibly temporary) file */
   int i, chn;
   sync_info *si = NULL;
+
   fprintf(fd, _("Snd: fft peaks (%s)\n\n"), snd_local_time());
   si = sync_to_chan(ucp);
   for (chn = 0; chn < si->chans; chn++)
@@ -7532,11 +7533,13 @@ static void write_transform_peaks(FILE *fd, chan_info *ucp)
       snd_info *sp;
       chan_info *cp;
       fft_info *fp;
+
       cp = si->cps[chn];
       fp = cp->fft;
       if (fp)
 	{
 	  axis_info *fap;
+
 	  fap = fp->axis;
 	  if ((fap) && (fap->graph_active))
 	    {
@@ -7547,6 +7550,7 @@ static void write_transform_peaks(FILE *fd, chan_info *ucp)
 	      Float *data;
 	      int num_peaks,samps, tens, srate;
 	      Float samples_per_pixel;
+
 	      ap = cp->axis;
 	      sp = cp->sound;
 	      data = fp->data;
@@ -7563,9 +7567,11 @@ static void write_transform_peaks(FILE *fd, chan_info *ucp)
 		  if (samps > (srate / 20)) 
 		    tens = 0; 
 		  else tens = -1;
+
 	      peak_freqs = (fft_peak *)CALLOC(cp->max_transform_peaks, sizeof(fft_peak));
 	      peak_amps = (fft_peak *)CALLOC(cp->max_transform_peaks, sizeof(fft_peak));
 	      num_peaks = find_and_sort_transform_peaks(data, peak_freqs, cp->max_transform_peaks, samps, 1, samples_per_pixel, fp->scale);
+
 	      if ((num_peaks != 1) || 
 		  (peak_freqs[0].freq != 0.0))
 		{
@@ -7699,9 +7705,12 @@ The accessor edit-property is provided in extensions." XEN_FILE_EXTENSION "."
 
   chan_info *cp;
   int edpos;
+
   ASSERT_CHANNEL(S_edit_properties, snd_n, chn_n, 1);
+
   cp = get_cp(snd_n, chn_n, S_edit_properties);
   if (!cp) return(XEN_FALSE);
+
   edpos = to_c_edit_position(cp, pos, S_edit_properties, 3);
   if (!(XEN_VECTOR_P(cp->edits[edpos]->properties)))
     {
@@ -7715,9 +7724,12 @@ static XEN g_set_edit_properties(XEN on, XEN snd_n, XEN chn_n, XEN pos)
 {
   chan_info *cp;
   int edpos;
+
   ASSERT_CHANNEL(S_setB S_edit_properties, snd_n, chn_n, 1);
+
   cp = get_cp(snd_n, chn_n, S_setB S_edit_properties);
   if (!cp) return(XEN_FALSE);
+
   edpos = to_c_edit_position(cp, pos, S_setB S_edit_properties, 3);
   if (!(XEN_VECTOR_P(cp->edits[edpos]->properties)))
     {
@@ -8060,6 +8072,7 @@ data and passes it to openGL.  See snd-gl.scm for an example."
   sono_info *si;
   int i;
   vct *v;
+
   XEN_ASSERT_TYPE(XEN_VECTOR_P(data), data, XEN_ARG_1, S_glSpectrogram, "a vector of vcts");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(gl_list), gl_list, XEN_ARG_2, S_glSpectrogram, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(cutoff), cutoff, XEN_ARG_3, S_glSpectrogram, "a number");
@@ -8069,6 +8082,7 @@ data and passes it to openGL.  See snd-gl.scm for an example."
   XEN_ASSERT_TYPE(XEN_NUMBER_P(br), br, XEN_ARG_7, S_glSpectrogram, "a number (red value)");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(bg), bg, XEN_ARG_8, S_glSpectrogram, "a number (green value)");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(bb), bb, XEN_ARG_9, S_glSpectrogram, "a number (blue value)");
+
   si = (sono_info *)CALLOC(1, sizeof(sono_info));
   si->active_slices = XEN_VECTOR_LENGTH(data);
   si->data = (Float **)CALLOC(si->active_slices, sizeof(Float *));
@@ -8100,7 +8114,9 @@ static XEN g_channel_data(XEN snd, XEN chn)
   #define H_channel_data "(" S_channel_data " :optional snd chn) returns the in-core samples associated with the \
 given channel.  Currently, this must be a channel (sound) created by " S_make_variable_graph "."
   chan_info *cp;
+
   ASSERT_CHANNEL(S_channel_data, snd, chn, 1);
+
   cp = get_cp(snd, chn, S_channel_data);
   if ((cp) && (cp->sound) && (cp->sound->inuse == SOUND_WRAPPER))
 #if SNDLIB_USE_FLOATS
@@ -8153,12 +8169,15 @@ to a standard Snd channel graph placed in the widget 'container'."
   snd_info *sp;
   chan_info *cp;
   int rate, initial_length;
+
   XEN_ASSERT_TYPE(XEN_WIDGET_P(container), container, XEN_ARG_1, S_make_variable_graph, "a widget");
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(name), name, XEN_ARG_2, S_make_variable_graph, "a string");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(length), length, XEN_ARG_3, S_make_variable_graph, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(srate), srate, XEN_ARG_4, S_make_variable_graph, "an integer");
+
   rate = XEN_TO_C_INT_OR_ELSE(srate, (int)mus_srate());
   initial_length = XEN_TO_C_INT_OR_ELSE(length, 8192);
+
   sp = make_simple_channel_display(rate, initial_length, WITH_FW_BUTTONS, graph_style(ss), 
 				   (widget_t)(XEN_UNWRAP_WIDGET(container)), WITH_EVENTS);
   if (sp == NULL) /* can only happen if "container" is not a form widget (or perhaps no container XtWindow) */
@@ -8166,6 +8185,7 @@ to a standard Snd channel graph placed in the widget 'container'."
 	      XEN_LIST_3(C_TO_XEN_STRING(S_make_variable_graph),
 			 C_TO_XEN_STRING("container must be a Form widget with a legitimate window"),
 			 container));
+
   sp->user_read_only = FILE_READ_ONLY;
   sp->index = find_free_sound_slot_for_channel_display();
   ss->sounds[sp->index] = sp;
@@ -8188,6 +8208,7 @@ to a standard Snd channel graph placed in the widget 'container'."
       sp->filename = copy_string("variable");
       sp->short_filename = copy_string("var");
     }
+
   cp->sounds[0] = make_snd_data_buffer_for_simple_channel(initial_length);
   cp->edits[0] = initial_ed_list(0, initial_length - 1);
   cp->edits[0]->origin = copy_string(S_make_variable_graph);

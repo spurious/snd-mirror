@@ -1368,7 +1368,6 @@ static XEN call_set_method_2(XEN gen, XEN arg, XEN value, const char *method_nam
   return(XEN_FALSE);
 }
 
-/* TODO: check whether method stuff is compatible with ruby/forth */
 
 static XEN g_mus_describe(XEN gen) 
 {

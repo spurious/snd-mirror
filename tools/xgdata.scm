@@ -6760,7 +6760,6 @@
 (CFNC-213 "gchar* gdk_screen_get_monitor_plug_name GdkScreen* screen gint monitor_num")
 (CFNC-213 "void gtk_tooltip_set_icon_from_icon_name GtkTooltip* tooltip gchar* icon_name GtkIconSize size" 'const)
 
-;;; TODO: check out the gtk test funcs
 ;(CFNC-213 "void gtk_test_init int* argcp char*** argvp ...")
 ;(CFNC-213 "GtkWidget* gtk_test_find_widget GtkWidget* widget gchar* label_pattern GType widget_type" 'const)
 ;(CFNC-213 "GtkWidget* gtk_test_create_widget GType widget_type gchar* first_property_name ..." 'const)
