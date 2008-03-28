@@ -348,8 +348,8 @@ for "b" and get:
 in the earlier formulas,  and "B" is either
 <img src="fmeq41.png" alt="cos sin" align=absmiddle> or
 <img src="fmeq40.png" alt="sin sin" align=absmiddle>.
-You can slog through the Fourier series expansion by hand, or look it up in Abramowitz and Stegun, 
-"Handbook of Mathematical Functions" (formulas 9.1.42 and 9.1.43), or take my word for it that:
+The Fourier transform we want is not obvious to us (not to me, certainly!), so we go to Abramowitz and Stegun, 
+"Handbook of Mathematical Functions" and find (formulas 9.1.42 and 9.1.43):
 </p>
 
 
@@ -361,7 +361,8 @@ You can slog through the Fourier series expansion by hand, or look it up in Abra
 <img src="fmeq11.png" alt="sin B sin t" hspace=20 vspace=6>
 
 
-<p>Here the J's refer to the Bessel functions which we will return to later. First, let's finish this 
+<p>Here the J's refer to the Bessel functions which we will return to later. 
+First, let's finish this 
 expansion; we take these two sums and 
 <img src="fmeq23.png" alt="wct" align=absmiddle>
 and plug them into our first expansion of the FM 
@@ -515,6 +516,12 @@ fmeq17: e^{\frac{1}{2}(t - \frac{1}{t})}
 
 <!-- LATEX fmeq45.png: e^{iz \cos \theta} \! = \sum i^{n} J_{n}(z) \, e^{i n \theta} -->
 
+<!-- LATEX fmeq59.png:
+& \mathrm{define} \ J_{n}(x) = \sum_{0}^{\infty}\frac{(-1)^{s}x^{n+2s}}{2^{n+2s}s!(n+s)!} \quad
+\mathrm{now}\ e^{\frac{x}{2}\left(t - \frac{1}{t}\right)} = \left(e^{\frac{xt}{2}}\right) \left(e^{\frac{-x}{2t}}\right) = \left(\sum_{0}^{\infty} \frac{x^{r} t^{r}}{2^{r} r!}\right) \left(\sum_{0}^{\infty} \frac{(-1)^{s} x^{s} t^{-s}}{2^{s} s!}\right) = \sum \sum \frac{(-1)^{s}x^{r+s} t^{r-s}}{2^{r+s}\, r! s!} = \sum_{-\infty}^{\infty} J_{n}(x) t^{n} \quad
+\mathrm{and}\ \mathrm{let}\  t = e^{i\phi} \\
+-->
+
 <table border=1 hspace=50 cellpadding=10 vspace=10><tr><td>
 <small> 
 Then there's the perennial question "why Bessel functions?". 
@@ -532,8 +539,12 @@ Euler (the vibrations of a membrane, 1764), Lagrange (planetary motion, 1770),
 and Fourier (the motion of heat in a cylinder, 1822); Bessel studied them in the context of Kepler's equation, and wrote a monograph
 about them in 1824. 
 For an explanation of the connection between planetary motion and FM, see Benson, "Music: A Mathematical Offering".
+Just for completeness, here's a derivation following Gray and Mathews, "A Treatise on Bessel Functions":
+<img src="fmeq59.png" alt="et again" vspace=5>
 </small>
 </td></tr></table>
+
+<!-- should we do the expansion by hand? -->
 
 <br>
 <table align=right border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>simple FM examples</h5></center></td></tr></table>
@@ -2304,6 +2315,8 @@ Benson, "Music: A Mathematical Offering", Cambridge University Press, Nov 2006. 
 Chowning, "The Synthesis of Complex Audio Spectra by Means of Frequency Modulation", JAES 21:526-534, 1973
 
 Gagliardi, "Introduction to Communications Engineering", Wiley Interscience, 1978.
+
+Gray and Mathews, "A Treatise on Bessel Functions and Their Applications to Physics", MacMillan and Co, 1895.
 
 Klapper, "Selected Papers on Frequency Modulation", Dover 1970. (Out of print, but available
      via used book markets such as abebooks or amazon &mdash; usually about $25).
