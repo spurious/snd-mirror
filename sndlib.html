@@ -18,6 +18,10 @@
 </style>
 </head>
 <body bgcolor=white>
+
+<script language=JavaScript type="text/javascript" src="wz_tooltip.js"></script>
+<script language=JavaScript type="text/javascript" src="wz_data.js"></script>
+
 <h1>SndLib</h1>
 <center>Bill Schottstaedt (bil@ccrma.stanford.edu)</center>
 <br>
@@ -25,12 +29,12 @@
 <center>
 <table bgcolor="aliceblue" border=0 cellspacing=8><tr>
 <td><small>related documentation:</small></td>
-<td><small><a href="snd.html" onmouseover="return escape('basic Snd user-interface documentation')">snd.html</a></small></td>
-<td><small><a href="grfsnd.html" onmouseover="return escape('Snd configuration, connection to other libraries and programs')">grfsnd.html</a></small></td>
-<td><small><a href="extsnd.html" onmouseover="return escape('Snd extension and customization')">extsnd.html</a></small></td>
-<td><small><a href="sndscm.html" onmouseover="return escape('Scheme, Ruby, and Forth files included with Snd')">sndscm.html</a></small></td>
-<td><small><a href="sndclm.html" onmouseover="return escape('sound synthesis generators, with-sound, instruments')">sndclm.html</a></small></td>
-<td><small><a href="libxm.html" onmouseover="return escape('library that ties Motif and Gtk into Snd\'s extension language')">libxm.html</a></small></td>
+<td><small><a href="snd.html" onmouseout="UnTip()" onmouseover="Tip('basic Snd user-interface documentation')">snd.html</a></small></td>
+<td><small><a href="grfsnd.html" onmouseout="UnTip()" onmouseover="Tip('Snd configuration, connection to other libraries and programs')">grfsnd.html</a></small></td>
+<td><small><a href="extsnd.html" onmouseout="UnTip()" onmouseover="Tip('Snd extension and customization')">extsnd.html</a></small></td>
+<td><small><a href="sndscm.html" onmouseout="UnTip()" onmouseover="Tip('Scheme, Ruby, and Forth files included with Snd')">sndscm.html</a></small></td>
+<td><small><a href="sndclm.html" onmouseout="UnTip()" onmouseover="Tip('sound synthesis generators, with-sound, instruments')">sndclm.html</a></small></td>
+<td><small><a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip('library that ties Motif and Gtk into Snd\'s extension language')">libxm.html</a></small></td>
 <td><small><a href="index.html">index.html</a></small></td>
 </tr></table>
 </center>
@@ -1067,61 +1071,61 @@ constants and functions described above into Scheme.
   (lambda (file)
     (string-append
      file
-     ": chans: " (number-&gt;string (<a class=quiet href="extsnd.html#mussoundchans">mus-sound-chans</a> file))
-     ", srate: " (number-&gt;string (<a class=quiet href="extsnd.html#mussoundsrate">mus-sound-srate</a> file))
-     ", " (<a class=quiet href="extsnd.html#musheadertypename">mus-header-type-name</a> (<a class=quiet href="extsnd.html#mussoundheadertype">mus-sound-header-type</a> file))
-     ", " (<a class=quiet href="extsnd.html#musdataformatname">mus-data-format-name</a> (<a class=quiet href="extsnd.html#mussounddataformat">mus-sound-data-format</a> file))
+     ": chans: " (number-&gt;string (<a class=quiet href="extsnd.html#mussoundchans" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundchans_tip)">mus-sound-chans</a> file))
+     ", srate: " (number-&gt;string (<a class=quiet href="extsnd.html#mussoundsrate" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundsrate_tip)">mus-sound-srate</a> file))
+     ", " (<a class=quiet href="extsnd.html#musheadertypename" onmouseout="UnTip()" onmouseover="Tip(extsnd_musheadertypename_tip)">mus-header-type-name</a> (<a class=quiet href="extsnd.html#mussoundheadertype" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundheadertype_tip)">mus-sound-header-type</a> file))
+     ", " (<a class=quiet href="extsnd.html#musdataformatname" onmouseout="UnTip()" onmouseover="Tip(extsnd_musdataformatname_tip)">mus-data-format-name</a> (<a class=quiet href="extsnd.html#mussounddataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussounddataformat_tip)">mus-sound-data-format</a> file))
      ", len: " (number-&gt;string
-                (/ (<a class=quiet href="extsnd.html#mussoundsamples">mus-sound-samples</a> file)
-                   (* (<a class=quiet href="extsnd.html#mussoundchans">mus-sound-chans</a> file) (<a class=quiet href="extsnd.html#mussoundsrate">mus-sound-srate</a> file)))))))
+                (/ (<a class=quiet href="extsnd.html#mussoundsamples" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundsamples_tip)">mus-sound-samples</a> file)
+                   (* (<a class=quiet href="extsnd.html#mussoundchans" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundchans_tip)">mus-sound-chans</a> file) (<a class=quiet href="extsnd.html#mussoundsrate" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundsrate_tip)">mus-sound-srate</a> file)))))))
 
 ;;; this function reads the first 32 samples of a file, returning the 30th in channel 0
 (define read-sample-30 
   (lambda (file)
-    (let* ((fd (<a class=quiet href="extsnd.html#mussoundopeninput">mus-sound-open-input</a> file))
-	   (<a class=quiet href="extsnd.html#chans">chans</a> (<a class=quiet href="extsnd.html#mussoundchans">mus-sound-chans</a> file))
-	   (data (<a class=quiet href="extsnd.html#makesounddata">make-sound-data</a> chans 32)))
-      (<a class=quiet href="extsnd.html#mussoundread">mus-sound-read</a> fd 0 31 chans data)
+    (let* ((fd (<a class=quiet href="extsnd.html#mussoundopeninput" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundopeninput_tip)">mus-sound-open-input</a> file))
+	   (<a class=quiet href="extsnd.html#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">chans</a> (<a class=quiet href="extsnd.html#mussoundchans" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundchans_tip)">mus-sound-chans</a> file))
+	   (data (<a class=quiet href="extsnd.html#makesounddata" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesounddata_tip)">make-sound-data</a> chans 32)))
+      (<a class=quiet href="extsnd.html#mussoundread" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundread_tip)">mus-sound-read</a> fd 0 31 chans data)
       ;; we could use sound-data-&gt;vct here to return all the samples
-      (let ((val (<a class=quiet href="extsnd.html#sounddataref">sound-data-ref</a> data 0 29)))
-	(<a class=quiet href="extsnd.html#mussoundcloseinput">mus-sound-close-input</a> fd)
+      (let ((val (<a class=quiet href="extsnd.html#sounddataref" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounddataref_tip)">sound-data-ref</a> data 0 29)))
+	(<a class=quiet href="extsnd.html#mussoundcloseinput" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundcloseinput_tip)">mus-sound-close-input</a> fd)
 	val))))
 
 ;;; here we get the microphone volume, then set it to .5
   (define vals (make-vct 32))
-  (<a class=quiet href="extsnd.html#musaudiomixerread">mus-audio-mixer-read</a> mus-audio-microphone mus-audio-amp 0 vals)
+  (<a class=quiet href="extsnd.html#musaudiomixerread" onmouseout="UnTip()" onmouseover="Tip(extsnd_musaudiomixerread_tip)">mus-audio-mixer-read</a> mus-audio-microphone mus-audio-amp 0 vals)
   (vct-ref vals 0)
   (vct-set! vals 0 .5)
-  (<a class=quiet href="extsnd.html#musaudiomixerwrite">mus-audio-mixer-write</a> mus-audio-microphone mus-audio-amp 0 vals)
+  (<a class=quiet href="extsnd.html#musaudiomixerwrite" onmouseout="UnTip()" onmouseover="Tip(extsnd_musaudiomixerwrite_tip)">mus-audio-mixer-write</a> mus-audio-microphone mus-audio-amp 0 vals)
 
 ;;; this function plays a sound (we're assuming that we can play 16-bit linear little-endian data)
 (define play-sound
   (lambda (file)
-    (let* ((sound-fd (<a class=quiet href="extsnd.html#mussoundopeninput">mus-sound-open-input</a> file))
-	   (<a class=quiet href="extsnd.html#chans">chans</a> (<a class=quiet href="extsnd.html#mussoundchans">mus-sound-chans</a> file))
-	   (<a class=quiet href="extsnd.html#frames">frames</a> (<a class=quiet href="extsnd.html#mussoundframes">mus-sound-frames</a> file))
+    (let* ((sound-fd (<a class=quiet href="extsnd.html#mussoundopeninput" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundopeninput_tip)">mus-sound-open-input</a> file))
+	   (<a class=quiet href="extsnd.html#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">chans</a> (<a class=quiet href="extsnd.html#mussoundchans" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundchans_tip)">mus-sound-chans</a> file))
+	   (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> (<a class=quiet href="extsnd.html#mussoundframes" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundframes_tip)">mus-sound-frames</a> file))
 	   (bufsize 256)
-	   (data (<a class=quiet href="extsnd.html#makesounddata">make-sound-data</a> chans bufsize))
+	   (data (<a class=quiet href="extsnd.html#makesounddata" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesounddata_tip)">make-sound-data</a> chans bufsize))
 	   (bytes (* bufsize chans 2)))
-      (<a class=quiet href="extsnd.html#mussoundread">mus-sound-read</a> sound-fd 0 (1- bufsize) chans data)
-      (let ((audio-fd (<a class=quiet href="extsnd.html#musaudioopenoutput">mus-audio-open-output</a> mus-audio-default (<a class=quiet href="extsnd.html#mussoundsrate">mus-sound-srate</a> file) chans mus-lshort bytes)))
+      (<a class=quiet href="extsnd.html#mussoundread" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundread_tip)">mus-sound-read</a> sound-fd 0 (1- bufsize) chans data)
+      (let ((audio-fd (<a class=quiet href="extsnd.html#musaudioopenoutput" onmouseout="UnTip()" onmouseover="Tip(extsnd_musaudioopenoutput_tip)">mus-audio-open-output</a> mus-audio-default (<a class=quiet href="extsnd.html#mussoundsrate" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundsrate_tip)">mus-sound-srate</a> file) chans mus-lshort bytes)))
 	(do ((i 0 (+ i bufsize)))
 	    ((&gt;= i frames))
-	  (<a class=quiet href="extsnd.html#musaudiowrite">mus-audio-write</a> audio-fd data bufsize)
-	  (<a class=quiet href="extsnd.html#mussoundread">mus-sound-read</a> sound-fd 0 (1- bufsize) chans data))
-	(<a class=quiet href="extsnd.html#mussoundcloseinput">mus-sound-close-input</a> sound-fd)
-	(<a class=quiet href="extsnd.html#musaudioclose">mus-audio-close</a> audio-fd)))))
+	  (<a class=quiet href="extsnd.html#musaudiowrite" onmouseout="UnTip()" onmouseover="Tip(extsnd_musaudiowrite_tip)">mus-audio-write</a> audio-fd data bufsize)
+	  (<a class=quiet href="extsnd.html#mussoundread" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundread_tip)">mus-sound-read</a> sound-fd 0 (1- bufsize) chans data))
+	(<a class=quiet href="extsnd.html#mussoundcloseinput" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundcloseinput_tip)">mus-sound-close-input</a> sound-fd)
+	(<a class=quiet href="extsnd.html#musaudioclose" onmouseout="UnTip()" onmouseover="Tip(extsnd_musaudioclose_tip)">mus-audio-close</a> audio-fd)))))
 </pre>
 <p>You can load sndlib into the standard Guile interpreter:
 </p>
 <pre>
 guile&gt; (define lib (<em class=red>dynamic-link</em> "/home/bil/sndlib/sndlib.so"))
 guile&gt; (<em class=red>dynamic-call</em> "mus_sndlib_xen_initialize" lib)
-guile&gt; (<a class=quiet href="extsnd.html#mussoundsrate">mus-sound-srate</a> "/home/bil/cl/oboe.snd")
+guile&gt; (<a class=quiet href="extsnd.html#mussoundsrate" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundsrate_tip)">mus-sound-srate</a> "/home/bil/cl/oboe.snd")
 22050
 guile&gt; (<em class=red>dynamic-call</em> "mus_xen_init" lib)
-guile&gt; (define osc (<a class=quiet href="sndclm.html#make-oscil">make-oscil</a> 440))
-guile&gt; (<a class=quiet href="sndclm.html#oscil">oscil</a> osc)
+guile&gt; (define osc (<a class=quiet href="sndclm.html#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> 440))
+guile&gt; (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> osc)
 0.0
 </pre>
 <p>The first dynamic-call (mus_sndlib_xen_initialize) ties sndlib2xen.c into
@@ -1197,15 +1201,14 @@ Now, load this code into guile+sndlib, and <code>(play-sine 440 .1)</code>.
 <center>
 <table bgcolor="aliceblue" border=0 cellspacing=8><tr>
 <td><small>related documentation:</small></td>
-<td><small><a href="snd.html" onmouseover="return escape('basic Snd user-interface documentation')">snd.html</a></small></td>
-<td><small><a href="grfsnd.html" onmouseover="return escape('Snd configuration, connection to other libraries and programs')">grfsnd.html</a></small></td>
-<td><small><a href="extsnd.html" onmouseover="return escape('Snd extension and customization')">extsnd.html</a></small></td>
-<td><small><a href="sndscm.html" onmouseover="return escape('Scheme, Ruby, and Forth files included with Snd')">sndscm.html</a></small></td>
-<td><small><a href="sndclm.html" onmouseover="return escape('sound synthesis generators, with-sound, instruments')">sndclm.html</a></small></td>
-<td><small><a href="libxm.html" onmouseover="return escape('library that ties Motif and Gtk into Snd\'s extension language')">libxm.html</a></small></td>
+<td><small><a href="snd.html" onmouseout="UnTip()" onmouseover="Tip('basic Snd user-interface documentation')">snd.html</a></small></td>
+<td><small><a href="grfsnd.html" onmouseout="UnTip()" onmouseover="Tip('Snd configuration, connection to other libraries and programs')">grfsnd.html</a></small></td>
+<td><small><a href="extsnd.html" onmouseout="UnTip()" onmouseover="Tip('Snd extension and customization')">extsnd.html</a></small></td>
+<td><small><a href="sndscm.html" onmouseout="UnTip()" onmouseover="Tip('Scheme, Ruby, and Forth files included with Snd')">sndscm.html</a></small></td>
+<td><small><a href="sndclm.html" onmouseout="UnTip()" onmouseover="Tip('sound synthesis generators, with-sound, instruments')">sndclm.html</a></small></td>
+<td><small><a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip('library that ties Motif and Gtk into Snd\'s extension language')">libxm.html</a></small></td>
 <td><small><a href="index.html">index.html</a></small></td>
 </tr></table>
 </center>
 
-<script language=JavaScript type="text/javascript" src="wz_tooltip.js"></script>
 </body></html>

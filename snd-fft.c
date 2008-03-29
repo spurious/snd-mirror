@@ -1971,7 +1971,7 @@ static XEN g_transform_frames(XEN snd, XEN chn)
   #define H_transform_frames "(" S_transform_frames " :optional snd chn): \
 return a description of transform graph data in snd's channel chn, based on " S_transform_graph_type ".\
 If there is no transform graph, return 0; if " S_graph_once ", return " S_transform_size ",\
-and otherwise return a list (total-size active-bins active-slices)"
+and otherwise return a list (spectro-cutoff time-slices fft-bins)"
 
   chan_info *cp;
   sono_info *si;

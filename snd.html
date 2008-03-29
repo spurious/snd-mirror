@@ -17,6 +17,10 @@
 <!-- 	P {text-align: justify}  -->
 </head>
 <body bgcolor=white>
+
+<script language=JavaScript type="text/javascript" src="wz_tooltip.js"></script>
+<script language=JavaScript type="text/javascript" src="wz_data.js"></script>
+
 <center>
 
 
@@ -35,21 +39,21 @@
 <center><img src="title.png" usemap="#sndwindow" vspace=10 border=0 alt="standard Snd appearance"></center>
 <map name="sndwindow">
   <area shape=rect coords="0,0,608,26" href="#overview" alt="title bar">
-  <area shape=rect coords="0,26,75,60" href="#fileoperations" alt="File menu" onmouseover="return escape('open, close, save a file, exit Snd...')">
-  <area shape=rect coords="75,26,150,60" href="#editoperations" alt="Edit menu" onmouseover="return escape('cut, paste, save selection, undo...')">
-  <area shape=rect coords="150,26,215,60" href="#viewing" alt="View menu" onmouseover="return escape('various dialogs, graphing choices')">
-  <area shape=rect coords="215,26,300,60" href="#options" alt="Options menu" onmouseover="return escape('save session, fft choices, preferences')">
-  <area shape=rect coords="15,70,30,170" href="#gettingstarted" alt="Y axis zoom" onmouseover="return escape('this slider changes the y-axis bounds')">
-  <area shape=rect coords="30,70,45,170" href="#gettingstarted" alt="Y axis position" onmouseover="return escape('this slider changes the y-axis midpoint')">
-  <area shape=rect coords="10,180,40,200" href="#gettingstarted" alt="fft button" onmouseover="return escape('this button turns on the fft display')">
-  <area shape=rect coords="10,200,40,220" href="#gettingstarted" alt="waveform button" onmouseover="return escape('this button turns on the time-domain display')">
+  <area shape=rect coords="0,26,75,60" href="#fileoperations" alt="File menu" onmouseout="UnTip()" onmouseover="Tip('open, close, save a file, exit Snd...')">
+  <area shape=rect coords="75,26,150,60" href="#editoperations" alt="Edit menu" onmouseout="UnTip()" onmouseover="Tip('cut, paste, save selection, undo...')">
+  <area shape=rect coords="150,26,215,60" href="#viewing" alt="View menu" onmouseout="UnTip()" onmouseover="Tip('various dialogs, graphing choices')">
+  <area shape=rect coords="215,26,300,60" href="#options" alt="Options menu" onmouseout="UnTip()" onmouseover="Tip('save session, fft choices, preferences')">
+  <area shape=rect coords="15,70,30,170" href="#gettingstarted" alt="Y axis zoom" onmouseout="UnTip()" onmouseover="Tip('this slider changes the y-axis bounds')">
+  <area shape=rect coords="30,70,45,170" href="#gettingstarted" alt="Y axis position" onmouseout="UnTip()" onmouseover="Tip('this slider changes the y-axis midpoint')">
+  <area shape=rect coords="10,180,40,200" href="#gettingstarted" alt="fft button" onmouseout="UnTip()" onmouseover="Tip('this button turns on the fft display')">
+  <area shape=rect coords="10,200,40,220" href="#gettingstarted" alt="waveform button" onmouseout="UnTip()" onmouseover="Tip('this button turns on the time-domain display')">
   <area shape=rect coords="45,60,600,200" href="#gettingstarted" alt="graphs">
-  <area shape=rect coords="50,200,600,212" href="#gettingstarted" alt="X axis position" onmouseover="return escape('this slider changes where we are in the sound')">
-  <area shape=rect coords="50,212,600,225" href="#gettingstarted" alt="X axis zoom" onmouseover="return escape('this slider changes how much of the sound we see')">
-  <area shape=rect coords="10,230,140,270" href="#gettingstarted" alt="sound file name" onmouseover="return escape('sound file name')">
-  <area shape=rect coords="140,230,490,270" href="#gettingstarted" alt="minibuffer" onmouseover="return escape('error messages get displayed here')">
-  <area shape=rect coords="490,230,510,250" href="#syncbutton" alt="sync button" onmouseover="return escape('this button can make all chans/sounds move together')">
-  <area shape=rect coords="550,230,570,250" href="#menuplay" alt="play button" onmouseover="return escape('play the sound')">
+  <area shape=rect coords="50,200,600,212" href="#gettingstarted" alt="X axis position" onmouseout="UnTip()" onmouseover="Tip('this slider changes where we are in the sound')">
+  <area shape=rect coords="50,212,600,225" href="#gettingstarted" alt="X axis zoom" onmouseout="UnTip()" onmouseover="Tip('this slider changes how much of the sound we see')">
+  <area shape=rect coords="10,230,140,270" href="#gettingstarted" alt="sound file name" onmouseout="UnTip()" onmouseover="Tip('sound file name')">
+  <area shape=rect coords="140,230,490,270" href="#gettingstarted" alt="minibuffer" onmouseout="UnTip()" onmouseover="Tip('error messages get displayed here')">
+  <area shape=rect coords="490,230,510,250" href="#syncbutton" alt="sync button" onmouseout="UnTip()" onmouseover="Tip('this button can make all chans/sounds move together')">
+  <area shape=rect coords="550,230,570,250" href="#menuplay" alt="play button" onmouseout="UnTip()" onmouseover="Tip('play the sound')">
 </map>
 
 <p><A NAME="overview"><b>Snd</b></a> is a sound editor modelled
@@ -70,13 +74,13 @@ is included in the <a href="http://ccrma.stanford.edu/planetccrma/software/">Pla
 <center>
 <table bgcolor="aliceblue" border=0 cellspacing=8><tr>
 <td><small>related documentation:</small></td>
-<td><small><a href="extsnd.html" onmouseover="return escape('Snd extension and customization')">extsnd.html</a></small></td>
-<td><small><a href="grfsnd.html" onmouseover="return escape('Snd configuration, connection to other libraries and programs')">grfsnd.html</a></small></td>
-<td><small><a href="sndscm.html" onmouseover="return escape('Scheme, Ruby, and Forth files included with Snd')">sndscm.html</a></small></td>
-<td><small><a href="sndclm.html" onmouseover="return escape('sound synthesis generators')">sndclm.html</a></small></td>
-<td><small><a href="fm.html" onmouseover="return escape('introduction to frequency modulation')">fm.html</a></small></td>
-<td><small><a href="sndlib.html" onmouseover="return escape('library that handles sound files')">sndlib.html</a></small></td>
-<td><small><a href="libxm.html" onmouseover="return escape('library that ties Motif and Gtk into Snd')">libxm.html</a></small></td>
+<td><small><a href="extsnd.html" onmouseout="UnTip()" onmouseover="Tip('Snd extension and customization')">extsnd.html</a></small></td>
+<td><small><a href="grfsnd.html" onmouseout="UnTip()" onmouseover="Tip('Snd configuration, connection to other libraries and programs')">grfsnd.html</a></small></td>
+<td><small><a href="sndscm.html" onmouseout="UnTip()" onmouseover="Tip('Scheme, Ruby, and Forth files included with Snd')">sndscm.html</a></small></td>
+<td><small><a href="sndclm.html" onmouseout="UnTip()" onmouseover="Tip('sound synthesis generators')">sndclm.html</a></small></td>
+<td><small><a href="fm.html" onmouseout="UnTip()" onmouseover="Tip('introduction to frequency modulation')">fm.html</a></small></td>
+<td><small><a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip('library that handles sound files')">sndlib.html</a></small></td>
+<td><small><a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip('library that ties Motif and Gtk into Snd')">libxm.html</a></small></td>
 <td><small><a href="index.html">index.html</a></small></td>
 </tr></table>
 </center>
@@ -141,25 +145,25 @@ is included in the <a href="http://ccrma.stanford.edu/planetccrma/software/">Pla
     <li><a href="extsnd.html#behavior">Customizing Snd's behavior</a>
       <ul>
       <li><a href="extsnd.html#sndglobalvars">Global variables</a>
-      <li><a href="extsnd.html#sndhooks" onmouseover="return escape('callbacks')">Hooks</a>
+      <li><a href="extsnd.html#sndhooks" onmouseout="UnTip()" onmouseover="Tip('callbacks')">Hooks</a>
       </ul>
     <li><a href="extsnd.html#sndobjects">Snd's objects</a>
       <ul>
-      <li><a href="extsnd.html#samplereaders" onmouseover="this.T_WIDTH=200; return escape('sound data iterators')">Sample-readers</a>
-      <li><a href="extsnd.html#Vcts" onmouseover="this.T_WIDTH=100; return escape('real arrays')">Vcts</a>
-      <li><a href="extsnd.html#sndsounddata" onmouseover="return escape('arrays of vcts for multichannel data')">Sound-data</a>
-      <li><a href="extsnd.html#extsndlib" onmouseover="return escape('the underlying library that handles sound data and files')">Sndlib</a>
-      <li><a href="extsnd.html#sndmarks" onmouseover="return escape('location markers in sound data')">Marks</a>
-      <li><a href="extsnd.html#sndmixes" onmouseover="return escape('mixed sounds and groups of mixed sounds')">Mixes</a>
-      <li><a href="extsnd.html#sndregions" onmouseover="return escape('selected or saved portions of sound data')">Regions and Selections</a>
-      <li><a href="extsnd.html#sndsounds" onmouseover="return escape('editing functions, per-channel display decisions, etc')">Sounds and channels</a>
+      <li><a href="extsnd.html#samplereaders" onmouseout="UnTip()" onmouseover="Tip('sound data iterators', WIDTH, 200)">Sample-readers</a>
+      <li><a href="extsnd.html#Vcts" onmouseout="UnTip()" onmouseover="Tip('real arrays', WIDTH, 100)">Vcts</a>
+      <li><a href="extsnd.html#sndsounddata" onmouseout="UnTip()" onmouseover="Tip('arrays of vcts for multichannel data')">Sound-data</a>
+      <li><a href="extsnd.html#extsndlib" onmouseout="UnTip()" onmouseover="Tip('the underlying library that handles sound data and files')">Sndlib</a>
+      <li><a href="extsnd.html#sndmarks" onmouseout="UnTip()" onmouseover="Tip('location markers in sound data')">Marks</a>
+      <li><a href="extsnd.html#sndmixes" onmouseout="UnTip()" onmouseover="Tip('mixed sounds and groups of mixed sounds')">Mixes</a>
+      <li><a href="extsnd.html#sndregions" onmouseout="UnTip()" onmouseover="Tip('selected or saved portions of sound data')">Regions and Selections</a>
+      <li><a href="extsnd.html#sndsounds" onmouseout="UnTip()" onmouseover="Tip('editing functions, per-channel display decisions, etc')">Sounds and channels</a>
         <ul>
-          <li><a href="extsnd.html#customcontrols" onmouseover="return escape('a set of common sound effects below the main graph')">the control panel</a>
-          <li><a href="extsnd.html#editlists" onmouseover="this.T_WIDTH=200; return escape('current edit sequence')">edit lists</a>
+          <li><a href="extsnd.html#customcontrols" onmouseout="UnTip()" onmouseover="Tip('a set of common sound effects below the main graph')">the control panel</a>
+          <li><a href="extsnd.html#editlists" onmouseout="UnTip()" onmouseover="Tip('current edit sequence', WIDTH, 200)">edit lists</a>
         </ul>
-      <li><a href="extsnd.html#sndtransforms" onmouseover="return escape('Fourier transform, wavelets, autocorelation, etc')">Transforms</a>
-      <li><a href="extsnd.html#snddialogs" onmouseover="return escape('customizing the built-in dialogs, etc')">Dialogs and Other Widgets</a>
-      <li><a href="extsnd.html#sndmisc" onmouseover="return escape('bind-key, exit, etc')">Miscellaneous functions</a>
+      <li><a href="extsnd.html#sndtransforms" onmouseout="UnTip()" onmouseover="Tip('Fourier transform, wavelets, autocorelation, etc')">Transforms</a>
+      <li><a href="extsnd.html#snddialogs" onmouseout="UnTip()" onmouseover="Tip('customizing the built-in dialogs, etc')">Dialogs and Other Widgets</a>
+      <li><a href="extsnd.html#sndmisc" onmouseout="UnTip()" onmouseover="Tip('bind-key, exit, etc')">Miscellaneous functions</a>
       <li><a href="extsnd.html#sndconstants">Constants</a>
       <li><a href="extsnd.html#snderrors">Errors and Debugging</a>
       </ul>
@@ -167,7 +171,7 @@ is included in the <a href="http://ccrma.stanford.edu/planetccrma/software/">Pla
       <ul>
       <li><a href="extsnd.html#colors">Colors</a>
       <li><a href="extsnd.html#fonts">Fonts</a>
-      <li><a href="extsnd.html#graphics" onmouseover="return escape('write your own sound display functions or customize Snd\'s')">Graphics</a>
+      <li><a href="extsnd.html#graphics" onmouseout="UnTip()" onmouseover="Tip('write your own sound display functions or customize Snd\'s')">Graphics</a>
       </ul>
 
     </ul>
@@ -178,31 +182,31 @@ is included in the <a href="http://ccrma.stanford.edu/planetccrma/software/">Pla
 
   <li><a href="grfsnd.html#startup">Snd Startup</a>
     <ul>
-    <li><a href="grfsnd.html#sndswitches" onmouseover="return escape('startup switches such as -l and -p')">Snd invocation flags</a>
-    <li><a href="grfsnd.html#sndinitfile" onmouseover="return escape('~/.snd, ~/.snd_guile, ~/.snd_prefs_guile, etc')">The initialization file</a>
-    <li><a href="grfsnd.html#sndresources" onmouseover="return escape('X resources: Xdefaults, gtkrc')">Snd resources</a>
-    <li><a href="grfsnd.html#sndconfigurationswitches" onmouseover="return escape('this refers to the configure script that prepares a makefile to build Snd from its sources')">Configuration choices</a>
-    <li><a href="grfsnd.html#sndenvvars" onmouseover="return escape('mostly related to audio hardware choices')">Environment variables</a>
+    <li><a href="grfsnd.html#sndswitches" onmouseout="UnTip()" onmouseover="Tip('startup switches such as -l and -p')">Snd invocation flags</a>
+    <li><a href="grfsnd.html#sndinitfile" onmouseout="UnTip()" onmouseover="Tip('~/.snd, ~/.snd_guile, ~/.snd_prefs_guile, etc')">The initialization file</a>
+    <li><a href="grfsnd.html#sndresources" onmouseout="UnTip()" onmouseover="Tip('X resources: Xdefaults, gtkrc')">Snd resources</a>
+    <li><a href="grfsnd.html#sndconfigurationswitches" onmouseout="UnTip()" onmouseover="Tip('this refers to the configure script that prepares a makefile to build Snd from its sources')">Configuration choices</a>
+    <li><a href="grfsnd.html#sndenvvars" onmouseout="UnTip()" onmouseover="Tip('mostly related to audio hardware choices')">Environment variables</a>
     </ul>
   <li><a href="grfsnd.html#snddynamic">Runtime modules and external programs</a>
     <ul>
-    <li><a href="grfsnd.html#emacssnd" onmouseover="return escape('Use Emacs as the listener')">Snd as an Emacs subjob</a>
-    <li><a href="grfsnd.html#dynamic" onmouseover="return escape('Load your own C code into Snd')">Dynamically loaded modules</a>
-    <li><a href="grfsnd.html#programs" onmouseover="return escape('Use independent programs to perform editing operations')">External Programs</a>
-    <li><a href="grfsnd.html#sndaswidget" onmouseover="return escape('Embed Snd in some other program')">Snd as a Widget</a>
-    <li><a href="grfsnd.html#sndwithclm" onmouseover="return escape('CLM is built into Snd')">Snd and CLM</a>
-    <li><a href="grfsnd.html#sndwithcm" onmouseover="return escape('CM is Rick Taube\'s composition environment')">Snd and Common Music</a>
-    <li><a href="grfsnd.html#sndwithpd" onmouseover="return escape('PD is Miller Puckette\'s synthesis and composition program')">Snd and Pd</a>
-    <li><a href="grfsnd.html#sndwithmotif" onmouseover="return escape('Motif extensions from xm.c')">Snd and Motif</a>
-    <li><a href="grfsnd.html#sndwithgtk" onmouseover="return escape('Gtk extensions from xg.c')">Snd and Gtk</a>
+    <li><a href="grfsnd.html#emacssnd" onmouseout="UnTip()" onmouseover="Tip('Use Emacs as the listener')">Snd as an Emacs subjob</a>
+    <li><a href="grfsnd.html#dynamic" onmouseout="UnTip()" onmouseover="Tip('Load your own C code into Snd')">Dynamically loaded modules</a>
+    <li><a href="grfsnd.html#programs" onmouseout="UnTip()" onmouseover="Tip('Use independent programs to perform editing operations')">External Programs</a>
+    <li><a href="grfsnd.html#sndaswidget" onmouseout="UnTip()" onmouseover="Tip('Embed Snd in some other program')">Snd as a Widget</a>
+    <li><a href="grfsnd.html#sndwithclm" onmouseout="UnTip()" onmouseover="Tip('CLM is built into Snd')">Snd and CLM</a>
+    <li><a href="grfsnd.html#sndwithcm" onmouseout="UnTip()" onmouseover="Tip('CM is Rick Taube\'s composition environment')">Snd and Common Music</a>
+    <li><a href="grfsnd.html#sndwithpd" onmouseout="UnTip()" onmouseover="Tip('PD is Miller Puckette\'s synthesis and composition program')">Snd and Pd</a>
+    <li><a href="grfsnd.html#sndwithmotif" onmouseout="UnTip()" onmouseover="Tip('Motif extensions from xm.c')">Snd and Motif</a>
+    <li><a href="grfsnd.html#sndwithgtk" onmouseout="UnTip()" onmouseover="Tip('Gtk extensions from xg.c')">Snd and Gtk</a>
     <li><a href="grfsnd.html#sndwithnogui">Snd with no GUI and as script engine</a>
-    <li><a href="grfsnd.html#sndandruby" onmouseover="return escape('Ruby is a scripting/extension language somewhat like Python')">Snd with Ruby</a>
-    <li><a href="grfsnd.html#sndandforth" onmouseover="return escape('Forth is a postfix extension language')">Snd with Forth</a>
-    <li><a href="grfsnd.html#sndandladspa" onmouseover="return escape('This is a Linux-based sound-effects plugin system')">Snd and LADSPA plugins</a>
-    <li><a href="grfsnd.html#sndandjack" onmouseover="return escape('This is the Jack audio library')">Snd and Jack</a>
-    <li><a href="grfsnd.html#sndandalsa" onmouseover="return escape('This is the new Linux audio library')">Snd and ALSA</a>
-    <li><a href="grfsnd.html#sndandx" onmouseover="return escape('other programs can control Snd through window properties')">Driving Snd remotely</a>
-    <li><a href="grfsnd.html#sndandgl" onmouseover="return escape('OpenGL (Mesa) extensions via gl.c')">Snd and OpenGL</a>
+    <li><a href="grfsnd.html#sndandruby" onmouseout="UnTip()" onmouseover="Tip('Ruby is a scripting/extension language somewhat like Python')">Snd with Ruby</a>
+    <li><a href="grfsnd.html#sndandforth" onmouseout="UnTip()" onmouseover="Tip('Forth is a postfix extension language')">Snd with Forth</a>
+    <li><a href="grfsnd.html#sndandladspa" onmouseout="UnTip()" onmouseover="Tip('This is a Linux-based sound-effects plugin system')">Snd and LADSPA plugins</a>
+    <li><a href="grfsnd.html#sndandjack" onmouseout="UnTip()" onmouseover="Tip('This is the Jack audio library')">Snd and Jack</a>
+    <li><a href="grfsnd.html#sndandalsa" onmouseout="UnTip()" onmouseover="Tip('This is the new Linux audio library')">Snd and ALSA</a>
+    <li><a href="grfsnd.html#sndandx" onmouseout="UnTip()" onmouseover="Tip('other programs can control Snd through window properties')">Driving Snd remotely</a>
+    <li><a href="grfsnd.html#sndandgl" onmouseout="UnTip()" onmouseover="Tip('OpenGL (Mesa) extensions via gl.c')">Snd and OpenGL</a>
     </ul>
 
   <li><a href="sndscm.html#introduction">Scheme, Ruby, and Forth</a>
@@ -722,7 +726,7 @@ There's also a list on the left of each channel pane containing a list of
 the current edits.  You can click anywhere in the list to move to that
 edit.
 </p>
-<img src="edithistory.png" alt="edit history list" hspace=20 onmouseover="return escape('the edit history list is on the left: we\'ve made two edits so far')">
+<img src="edithistory.png" alt="edit history list" hspace=20 onmouseout="UnTip()" onmouseover="Tip('the edit history list is on the left: we\'ve made two edits so far')">
 
 <A NAME="printfile"></a><p>The Print option opens the Print
 dialog.  You can send the currently active graph directly to
@@ -886,16 +890,16 @@ current window and is updated as the window bounds change.
 If you'd like the fft size to reflect the current time domain
 window size:</p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa" 
- onmouseover="this.T_OFFSETX=200; return escape('This is Scheme code that adds a \'hook\', a callback function that gets called whenever a graph is redrawn.  The function checks for a simple FFT graph (not a sonogram) via &quot;transform-graph?&quot; and &quot;transform-graph-type&quot;, then sets the FFT size (a power of 2) to reflect the current time domain window bounds.  See extsnd.html for full details on the extension language capabilities.  This code can be added to your Snd initialization file if you want it by default.  That process is described in grfsnd.html.')">
+<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa" onmouseout="UnTip()" 
+ onmouseover="Tip('This is Scheme code that adds a \'hook\', a callback function that gets called whenever a graph is redrawn.  The function checks for a simple FFT graph (not a sonogram) via &quot;transform-graph?&quot; and &quot;transform-graph-type&quot;, then sets the FFT size (a power of 2) to reflect the current time domain window bounds.  See extsnd.html for full details on the extension language capabilities.  This code can be added to your Snd initialization file if you want it by default.  That process is described in grfsnd.html.', OFFSETX, 200)">
 <pre>
-(add-hook! <a class=quiet href="extsnd.html#graphhook">graph-hook</a>
+(add-hook! <a class=quiet href="extsnd.html#graphhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_graphhook_tip)">graph-hook</a>
   (lambda (snd chn y0 y1)
-    (if (and (<a class=quiet href="extsnd.html#transformgraphp">transform-graph?</a>) 
-             (= (<a class=quiet href="extsnd.html#transformgraphtype">transform-graph-type</a>) <a class=quiet href="extsnd.html#transformgraphtype">graph-once</a>))
-      (set! (<a class=quiet href="extsnd.html#transformsize">transform-size)</a>
-        (expt 2 (ceiling (/ (log (- (<a class=quiet href="extsnd.html#rightsample">right-sample</a>) 
-                                    (<a class=quiet href="extsnd.html#leftsample">left-sample</a>))) 
+    (if (and (<a class=quiet href="extsnd.html#transformgraphp" onmouseout="UnTip()" onmouseover="Tip(extsnd_transformgraphp_tip)">transform-graph?</a>) 
+             (= (<a class=quiet href="extsnd.html#transformgraphtype" onmouseout="UnTip()" onmouseover="Tip(extsnd_transformgraphtype_tip)">transform-graph-type</a>) <a class=quiet href="extsnd.html#transformgraphtype" onmouseout="UnTip()" onmouseover="Tip(extsnd_transformgraphtype_tip)">graph-once</a>))
+      (set! (<a class=quiet href="extsnd.html#transformsize" onmouseout="UnTip()" onmouseover="Tip(extsnd_transformsize_tip)">transform-size)</a>
+        (expt 2 (ceiling (/ (log (- (<a class=quiet href="extsnd.html#rightsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_rightsample_tip)">right-sample</a>) 
+                                    (<a class=quiet href="extsnd.html#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a>))) 
                             (log 2.0))))))))
 </pre></td></tr></table>
 
@@ -958,7 +962,7 @@ spectrogram variables to their default values.
 <A NAME="wavogram"></a>"wavogram", mimics the spectrogram in the time domain.
 The same rotation commands apply to this display,
 with the additional variable <a href="extsnd.html#wavohop">wavo-hop</a> which sets the
-density of the traces.  To get this display <code>(set! (<a href="extsnd.html#timegraphtype">time-graph-type</a>) <a class=quiet href="extsnd.html#timegraphtype">graph-as-wavogram</a>)</code>.  It is
+density of the traces.  To get this display <code>(set! (<a href="extsnd.html#timegraphtype">time-graph-type</a>) <a class=quiet href="extsnd.html#timegraphtype" onmouseout="UnTip()" onmouseover="Tip(extsnd_timegraphtype_tip)">graph-as-wavogram</a>)</code>.  It is
 important to set the length of each trace
 so that successive peaks line up.  The
 trace length in samples is set by the variable <a href="extsnd.html#wavotrace">wavo-trace</a>,
@@ -1055,10 +1059,10 @@ To make the selected channel stand out from the rest,
 set the <a href="extsnd.html#selecteddatacolor">selected-data-color</a> 
 or the <a href="extsnd.html#selectedgraphcolor">selected-graph-color</a>:</p>
 <pre>
-  (define beige (<a class=quiet href="extsnd.html#makecolor">make-color</a> 0.96 0.96 0.86))
-  (define blue (<a class=quiet href="extsnd.html#makecolor">make-color</a> 0 0 1))
-  (set! (<a class=quiet href="extsnd.html#selectedgraphcolor">selected-graph-color</a>) beige)
-  (set! (<a class=quiet href="extsnd.html#selecteddatacolor">selected-data-color</a>) blue)
+  (define beige (<a class=quiet href="extsnd.html#makecolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_makecolor_tip)">make-color</a> 0.96 0.96 0.86))
+  (define blue (<a class=quiet href="extsnd.html#makecolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_makecolor_tip)">make-color</a> 0 0 1))
+  (set! (<a class=quiet href="extsnd.html#selectedgraphcolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedgraphcolor_tip)">selected-graph-color</a>) beige)
+  (set! (<a class=quiet href="extsnd.html#selecteddatacolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_selecteddatacolor_tip)">selected-data-color</a>) blue)
 </pre>
 <p>The selected channel receives keyboard commands.  You can
 also move between windows with <A NAME="cxo"></a>C-x o.</p>
@@ -1478,10 +1482,10 @@ set of sync'd channels, or just one argument. In the
 latter case, scale-by uses that scaler for all its
 channels, and scale-to normalizes all the channels
 together so that the loudest reaches that amplitude
-(that is, (<a class=quiet href="extsnd.html#scaleto">scale-to</a> .5) when applied to a stereo file
+(that is, (<a class=quiet href="extsnd.html#scaleto" onmouseout="UnTip()" onmouseover="Tip(extsnd_scaleto_tip)">scale-to</a> .5) when applied to a stereo file
 means that both channels are scaled by the same amount so
 that the loudest point in the file becomes .5).  There's
-one special case here: if you (<a class=quiet href="extsnd.html#scaleto">scale-to</a> 1.0) in a sound 
+one special case here: if you (<a class=quiet href="extsnd.html#scaleto" onmouseout="UnTip()" onmouseover="Tip(extsnd_scaleto_tip)">scale-to</a> 1.0) in a sound 
 that is stored as short ints and you haven't set the data-clipped
 variable to #t, since 1.0 itself is not representable,
 the actual scaled-to value is just less than 1.0 to avoid the
@@ -1515,7 +1519,7 @@ The search commands are:</p>
 <p>These searching functions can be closures; the following searches for
 the next positive-going zero crossing, placing the cursor just before it:</p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa" onmouseover="this.T_OFFSETX=100; return escape('This function is used in conjunction with C-s to search for a positive-going zero crossing.  C-s calls it on each sample, passing the sample value to us as \'n\' (the argument to the inner lambda). We save the last sample in \'lastn\', and watch for a case where lastn is less than 0.0 and the current sample is greater than or equal to 0.0.  When that happens, \'rtn\' is set to -1 to cause the cursor to back up one sample.  Otherwise the function returns #f which tells C-s to keep searching. The search function is wrapped in a \'let\' so that the last sample value is saved across function calls.')">
+<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa" onmouseout="UnTip()" onmouseover="Tip('This function is used in conjunction with C-s to search for a positive-going zero crossing.  C-s calls it on each sample, passing the sample value to us as \'n\' (the argument to the inner lambda). We save the last sample in \'lastn\', and watch for a case where lastn is less than 0.0 and the current sample is greater than or equal to 0.0.  When that happens, \'rtn\' is set to -1 to cause the cursor to back up one sample.  Otherwise the function returns #f which tells C-s to keep searching. The search function is wrapped in a \'let\' so that the last sample value is saved across function calls.', OFFSETX, 100)">
 <pre>
 (define (zero+)
   (let ((lastn 0.0))
@@ -1540,7 +1544,7 @@ See also the functions <a href="extsnd.html#findchannel">find-channel</a> and <a
   <A NAME="cxcz"></a>C-x C-z   smooth data using cosine (<a href="extsnd.html#smoothsound">smooth-sound</a>)
 </pre>
 
-<p>M-x (set! (<a class=quiet href="extsnd.html#sample">sample</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>)) .1) sets the sample
+<p>M-x (set! (<a class=quiet href="extsnd.html#sample" onmouseout="UnTip()" onmouseover="Tip(extsnd_sample_tip)">sample</a> (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>)) .1) sets the sample
 at the cursor to .1.  To set several samples to zero, use C-u &lt;number&gt; C-z.
 </p>
 
@@ -1604,9 +1608,9 @@ red: playback paused.</p>
 If you're getting
 interruptions while playing a sound (stereo 44.1 kHz sounds can be problematic),
 try using a very large dac buffer.  Use set! to change this:
-<code>(set! (<a class=quiet href="extsnd.html#dacsize">dac-size</a>) 65536)</code>.
+<code>(set! (<a class=quiet href="extsnd.html#dacsize" onmouseout="UnTip()" onmouseover="Tip(extsnd_dacsize_tip)">dac-size</a>) 65536)</code>.
 If you're getting clicks in Linux despite a large dac-size, try setting the OSS fragment sizes by hand: <code>
-(<a class=quiet href="extsnd.html#musosssetbuffers">mus-oss-set-buffers</a> fragments fragment-size)</code>. OSS's
+(<a class=quiet href="extsnd.html#musosssetbuffers" onmouseout="UnTip()" onmouseover="Tip(extsnd_musosssetbuffers_tip)">mus-oss-set-buffers</a> fragments fragment-size)</code>. OSS's
 defaults are 16 and 12 which make the control panel controls very sluggish.  Snd used to
 default to 4 and 12, but this seems to cause trouble for a variety of new sound cards.
 My initialization file uses <code>(mus-oss-set-buffers 2 12)</code>.
@@ -1765,8 +1769,8 @@ using define or defvar (the latter for CL compatibility), and loaded from a sepa
 definitions via load:
 </p>
 <pre>
-  (<a class=quiet href="extsnd.html#defvar">defvar</a> ramp '(0 0 1 1))
-  (<a class=quiet href="extsnd.html#defvar">defvar</a> pyramid '(0 0 1 1 2 0))
+  (<a class=quiet href="extsnd.html#defvar" onmouseout="UnTip()" onmouseover="Tip(extsnd_defvar_tip)">defvar</a> ramp '(0 0 1 1))
+  (<a class=quiet href="extsnd.html#defvar" onmouseout="UnTip()" onmouseover="Tip(extsnd_defvar_tip)">defvar</a> pyramid '(0 0 1 1 2 0))
 </pre>
 <p>defines two envelopes that can be used in Snd wherever an
 envelope is needed (e.g. C-x C-a).  You can also define
@@ -1871,7 +1875,7 @@ window.  Use the <a href="extsnd.html#ybounds">y-bounds</a> function to set the 
 small number, then use the position scroller to find the signal.
 For example, if your signal is a very soft recording setting only the lowest two bits
 of a 16 bit signal but with DC offset due to the recording conditions,
-M-x (set! (<a class=quiet href="extsnd.html#ybounds">y-bounds</a>) '(-.01 .01)) and try the scroller.</p>
+M-x (set! (<a class=quiet href="extsnd.html#ybounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_ybounds_tip)">y-bounds</a>) '(-.01 .01)) and try the scroller.</p>
 
 	<!-- I(center tiny signal):A(centeryaxis) --><!-- I(center tiny signal):L(y-bounds)(ybounds) -->
 <br>
@@ -1974,46 +1978,46 @@ all the samples between the cursor and the next mark.</p>
 <tr><td>[Down]</td><td>zoom out</td><td><code><small>;algorithm depends on zoom-focus-style choice</small></code></td></tr>
 <tr><td>[Up]</td><td>zoom in</td><td><code><small>;algorithm depends on zoom-focus-style choice</small></code></td></tr>
 <tr><td valign=top>[Left]</td><td valign=top>move window left</td>
-<td onmouseover="return escape('this odd looking code gets the window size divided by 2, and subtracts that from the current window left edge, thus moving the left edge back a half-windowful: left - (right - left) / 2')"><pre><small>
+<td onmouseout="UnTip()" onmouseover="Tip('this odd looking code gets the window size divided by 2, and subtracts that from the current window left edge, thus moving the left edge back a half-windowful: left - (right - left) / 2')"><pre><small>
 (lambda () 
-  (set! (<a class=quiet href="extsnd.html#leftsample">left-sample</a>) 
-    (max 0 (- (* 1.5 (<a class=quiet href="extsnd.html#leftsample">left-sample</a>)) (* 0.5 (<a class=quiet href="extsnd.html#rightsample">right-sample</a>))))))
+  (set! (<a class=quiet href="extsnd.html#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a>) 
+    (max 0 (- (* 1.5 (<a class=quiet href="extsnd.html#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a>)) (* 0.5 (<a class=quiet href="extsnd.html#rightsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_rightsample_tip)">right-sample</a>))))))
 </small></pre></td></tr>
-<tr><td>[Right]</td><td>move window right</td><td onmouseover="return escape('we set the new window left edge to its current midpoint')"><code><small>(lambda () (set! (<a class=quiet href="extsnd.html#leftsample">left-sample</a>) (* 0.5 (+ (<a class=quiet href="extsnd.html#leftsample">left-sample</a>) (<a class=quiet href="extsnd.html#rightsample">right-sample</a>)))))</small></code></td></tr>
+<tr><td>[Right]</td><td>move window right</td><td onmouseout="UnTip()" onmouseover="Tip('we set the new window left edge to its current midpoint')"><code><small>(lambda () (set! (<a class=quiet href="extsnd.html#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a>) (* 0.5 (+ (<a class=quiet href="extsnd.html#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a>) (<a class=quiet href="extsnd.html#rightsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_rightsample_tip)">right-sample</a>)))))</small></code></td></tr>
 <tr><td>[Home]</td><td>update current file from disk</td><td><code><small>update-sound</small></code></td></tr>
 <tr><td>[Space]</td><td colspan=2>cancel selection; if playing, pause or continue playback</td></tr>
-<tr><td>&lt;</td><td>move cursor to sample 0</td><td><code><small>(lambda () (set! (<a class=quiet href="extsnd.html#cursor">cursor</a>) 0))</small></code></td></tr>
-<tr><td>&gt;</td><td>move cursor to last sample</td><td><code><small>(lambda () (set! (<a class=quiet href="extsnd.html#cursor">cursor</a>) (1- (<a class=quiet href="extsnd.html#frames">frames</a>))))</small></code></td></tr>
-<tr><td>C-&lt;</td><td>move cursor to sample 0</td><td><code><small>(lambda () (set! (<a class=quiet href="extsnd.html#cursor">cursor</a>) 0))</small></code></td></tr>
-<tr><td>C-&gt;</td><td>move cursor to last sample</td><td><code><small>(lambda () (set! (<a class=quiet href="extsnd.html#cursor">cursor</a>) (1- (<a class=quiet href="extsnd.html#frames">frames</a>))))</small></code></td></tr>
-<tr><td>C-a</td><td>move cursor to window start</td><td><code><small>(lambda () (set! (<a class=quiet href="extsnd.html#cursor">cursor</a>) (<a class=quiet href="extsnd.html#leftsample">left-sample</a>)))</small></code></td></tr>
-<tr><td>C-b</td><td>move cursor back one sample</td><td><code><small>(lambda (arg) (set! (<a class=quiet href="extsnd.html#cursor">cursor</a>) (max 0 (- (<a class=quiet href="extsnd.html#cursor">cursor</a>) arg))))</small></code></td></tr>
-<tr><td>C-d</td><td>delete sample at cursor</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#deletesamples">delete-samples</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>) arg))</small></code></td></tr>
-<tr><td>C-e</td><td>move cursor to window end</td><td><code><small>(lambda () (set! (<a class=quiet href="extsnd.html#cursor">cursor</a>) (<a class=quiet href="extsnd.html#rightsample">right-sample</a>)))</small></code></td></tr>
-<tr><td>C-f</td><td>move cursor ahead one sample</td><td><code><small>(lambda (arg) (set! (<a class=quiet href="extsnd.html#cursor">cursor</a>) (min (1- (<a class=quiet href="extsnd.html#frames">frames</a>)) (+ (<a class=quiet href="extsnd.html#cursor">cursor</a>) arg))))</small></code></td></tr>
+<tr><td>&lt;</td><td>move cursor to sample 0</td><td><code><small>(lambda () (set! (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) 0))</small></code></td></tr>
+<tr><td>&gt;</td><td>move cursor to last sample</td><td><code><small>(lambda () (set! (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) (1- (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>))))</small></code></td></tr>
+<tr><td>C-&lt;</td><td>move cursor to sample 0</td><td><code><small>(lambda () (set! (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) 0))</small></code></td></tr>
+<tr><td>C-&gt;</td><td>move cursor to last sample</td><td><code><small>(lambda () (set! (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) (1- (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>))))</small></code></td></tr>
+<tr><td>C-a</td><td>move cursor to window start</td><td><code><small>(lambda () (set! (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) (<a class=quiet href="extsnd.html#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a>)))</small></code></td></tr>
+<tr><td>C-b</td><td>move cursor back one sample</td><td><code><small>(lambda (arg) (set! (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) (max 0 (- (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) arg))))</small></code></td></tr>
+<tr><td>C-d</td><td>delete sample at cursor</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#deletesamples" onmouseout="UnTip()" onmouseover="Tip(extsnd_deletesamples_tip)">delete-samples</a> (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) arg))</small></code></td></tr>
+<tr><td>C-e</td><td>move cursor to window end</td><td><code><small>(lambda () (set! (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) (<a class=quiet href="extsnd.html#rightsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_rightsample_tip)">right-sample</a>)))</small></code></td></tr>
+<tr><td>C-f</td><td>move cursor ahead one sample</td><td><code><small>(lambda (arg) (set! (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) (min (1- (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>)) (+ (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) arg))))</small></code></td></tr>
 <tr><td>C-g</td><td>abort current command</td><td><code><small>c-g!</small></code></td></tr>
-<tr><td>C-h</td><td>delete previous sample</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#deletesamples">delete-samples</a> (- (<a class=quiet href="extsnd.html#cursor">cursor</a>) arg) arg))</small></code></td></tr>
-<tr><td>C-i</td><td>display cursor info</td><td><code><small>(lambda () (<a class=quiet href="extsnd.html#reportinminibuffer">report-in-minibuffer</a> (format #f "cursor at ~A" (<a class=quiet href="extsnd.html#sample">sample</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>)))))</small></code></td></tr>
+<tr><td>C-h</td><td>delete previous sample</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#deletesamples" onmouseout="UnTip()" onmouseover="Tip(extsnd_deletesamples_tip)">delete-samples</a> (- (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) arg) arg))</small></code></td></tr>
+<tr><td>C-i</td><td>display cursor info</td><td><code><small>(lambda () (<a class=quiet href="extsnd.html#reportinminibuffer" onmouseout="UnTip()" onmouseover="Tip(extsnd_reportinminibuffer_tip)">report-in-minibuffer</a> (format #f "cursor at ~A" (<a class=quiet href="extsnd.html#sample" onmouseout="UnTip()" onmouseover="Tip(extsnd_sample_tip)">sample</a> (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>)))))</small></code></td></tr>
 <tr><td>C-j</td><td>go to mark</td><td><code><small>(lambda (arg) (forward-mark arg)) ;snd7.scm</small></code></td></tr>
-<tr><td>C-k</td><td>delete one line's worth of samples</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#deletesamples">delete-samples</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>) (* 128 arg)))</small></code></td></tr>
-<tr><td>C-l</td><td>position window so cursor is in the middle</td><td><code><small>(lambda () <a class=quiet href="extsnd.html#bindkey">cursor-in-middle</a>)</small></code></td></tr>
-<tr><td>C-m</td><td>place (or remove) mark at cursor location</td><td><code><small>(lambda () (<a class=quiet href="extsnd.html#addmark">add-mark</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>)))</small></code></td></tr>
-<tr><td>C-n</td><td>move cursor ahead one 'line'</td><td><code><small>(lambda (arg) (set! (<a class=quiet href="extsnd.html#cursor">cursor</a>) (+ (<a class=quiet href="extsnd.html#cursor">cursor</a>) (* 128 arg))))</small></code></td></tr>
+<tr><td>C-k</td><td>delete one line's worth of samples</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#deletesamples" onmouseout="UnTip()" onmouseover="Tip(extsnd_deletesamples_tip)">delete-samples</a> (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) (* 128 arg)))</small></code></td></tr>
+<tr><td>C-l</td><td>position window so cursor is in the middle</td><td><code><small>(lambda () <a class=quiet href="extsnd.html#bindkey" onmouseout="UnTip()" onmouseover="Tip(extsnd_bindkey_tip)">cursor-in-middle</a>)</small></code></td></tr>
+<tr><td>C-m</td><td>place (or remove) mark at cursor location</td><td><code><small>(lambda () (<a class=quiet href="extsnd.html#addmark" onmouseout="UnTip()" onmouseover="Tip(extsnd_addmark_tip)">add-mark</a> (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>)))</small></code></td></tr>
+<tr><td>C-n</td><td>move cursor ahead one 'line'</td><td><code><small>(lambda (arg) (set! (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) (+ (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) (* 128 arg))))</small></code></td></tr>
 <tr><td>M-n</td><td colspan=2>move ahead one form in history</td></tr>
-<tr><td>C-o</td><td>insert one zero sample at cursor</td><td onmouseover="return escape('use a vct in case the numeric argument is not 1')"><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#insertsamples">insert-samples</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>) arg (<a class=quiet href="extsnd.html#makevct">make-vct</a> arg)))</small></code></td></tr>
-<tr><td>C-p</td><td>move cursor back one 'line'</td><td><code><small>(lambda (arg) (set! (<a class=quiet href="extsnd.html#cursor">cursor</a>) (- (<a class=quiet href="extsnd.html#cursor">cursor</a>) (* 128 arg))))</small></code></td></tr>
+<tr><td>C-o</td><td>insert one zero sample at cursor</td><td onmouseout="UnTip()" onmouseover="Tip('use a vct in case the numeric argument is not 1')"><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#insertsamples" onmouseout="UnTip()" onmouseover="Tip(extsnd_insertsamples_tip)">insert-samples</a> (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) arg (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> arg)))</small></code></td></tr>
+<tr><td>C-p</td><td>move cursor back one 'line'</td><td><code><small>(lambda (arg) (set! (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) (- (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) (* 128 arg))))</small></code></td></tr>
 <tr><td>M-p</td><td colspan=2>move back one form in history</td></tr>
-<tr><td>C-q</td><td>play current channel(s) starting at cursor</td><td><code><small>(lambda () (<a class=quiet href="extsnd.html#play">play</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>) (<a class=quiet href="extsnd.html#selectedsound">selected-sound</a>) (<a class=quiet href="extsnd.html#selectedchannel">selected-channel</a>)))</small></code></td></tr>
+<tr><td>C-q</td><td>play current channel(s) starting at cursor</td><td><code><small>(lambda () (<a class=quiet href="extsnd.html#play" onmouseout="UnTip()" onmouseover="Tip(extsnd_play_tip)">play</a> (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) (<a class=quiet href="extsnd.html#selectedsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedsound_tip)">selected-sound</a>) (<a class=quiet href="extsnd.html#selectedchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedchannel_tip)">selected-channel</a>)))</small></code></td></tr>
 <tr><td>C-r</td><td>search backwards</td><td></td></tr>
 <tr><td>C-s</td><td>search forwards</td><td><code><small>(lambda () (prompt "find:" find))</small></code></td></tr>
 <tr><td>C-t</td><td>stop playing</td><td><code><small>stop-playing</small></code></td></tr>
 <tr><td>C-u</td><td>start numerical argument</td><td></td></tr>
-<tr><td>C-v</td><td>move cursor to mid-window</td><td><code><small>(lambda () (set! (<a class=quiet href="extsnd.html#cursor">cursor</a>) (* 0.5 (+ (<a class=quiet href="extsnd.html#leftsample">left-sample</a>) (<a class=quiet href="extsnd.html#rightsample">right-sample</a>)))))</small></code></td></tr>
+<tr><td>C-v</td><td>move cursor to mid-window</td><td><code><small>(lambda () (set! (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) (* 0.5 (+ (<a class=quiet href="extsnd.html#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a>) (<a class=quiet href="extsnd.html#rightsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_rightsample_tip)">right-sample</a>)))))</small></code></td></tr>
 <tr><td>C-w</td><td>delete current selection</td><td><code><small>delete-selection</small></code></td></tr>
 <tr><td>C-x</td><td>start extended command</td><td></td></tr>
-<tr><td>C-y</td><td>paste in selection</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#insertselection">insert-selection</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>)))</small></code></td></tr>
-<tr><td>C-z</td><td>set current sample to 0.0</td><td><code><small>(lambda (arg) (set! (<a class=quiet href="extsnd.html#samples">samples</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>) arg) (<a class=quiet href="extsnd.html#makevct">make-vct</a> arg)))</small></code></td></tr>
-<tr><td>C-_</td><td>undo last edit</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#undo">undo</a> arg))</small></code></td></tr>
+<tr><td>C-y</td><td>paste in selection</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#insertselection" onmouseout="UnTip()" onmouseover="Tip(extsnd_insertselection_tip)">insert-selection</a> (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>)))</small></code></td></tr>
+<tr><td>C-z</td><td>set current sample to 0.0</td><td><code><small>(lambda (arg) (set! (<a class=quiet href="extsnd.html#samples" onmouseout="UnTip()" onmouseover="Tip(extsnd_samples_tip)">samples</a> (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) arg) (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> arg)))</small></code></td></tr>
+<tr><td>C-_</td><td>undo last edit</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#undo" onmouseout="UnTip()" onmouseover="Tip(extsnd_undo_tip)">undo</a> arg))</small></code></td></tr>
 <tr><td>C-[Space]</td><td colspan=2>start region definition (arg&lt;0 =&gt; cancel and deselect)</td></tr>
 <tr><td>C-?</td><td colspan=2>look for a function name and print snd-help for it</td></tr>
 <tr><td>C-M-g</td><td>delete listener text from start to cursor</td><td><code><small>(clear-listener)</small></code></td></tr>
@@ -2022,38 +2026,38 @@ all the samples between the cursor and the next mark.</p>
         <!-- I(cut selection):K(C-w)(cw) --><!-- I(define selection):K(C-[space], C-x c)(cxc) -->
 
 <tr><td>C-x a</td><td>apply envelope to selection</td><td><code><small>(lambda () (prompt "env:" env-selection))</small></code></td></tr>
-<tr><td>C-x b</td><td>position window so cursor is on left</td><td><code><small>(lambda () <a class=quiet href="extsnd.html#bindkey">cursor-on-left</a>)</small></code></td></tr>
+<tr><td>C-x b</td><td>position window so cursor is on left</td><td><code><small>(lambda () <a class=quiet href="extsnd.html#bindkey" onmouseout="UnTip()" onmouseover="Tip(extsnd_bindkey_tip)">cursor-on-left</a>)</small></code></td></tr>
 <tr><td valign=top>C-x c</td><td>define selection from cursor to nth mark</td><td></td></tr>
-<tr><td>C-x d</td><td>get temp dir name</td><td><code><small>(lambda (arg) (prompt "temp dir:" (lambda (val) (set! (<a class=quiet href="extsnd.html#tempdir">temp-dir</a>) val))))</small></code></td></tr>
+<tr><td>C-x d</td><td>get temp dir name</td><td><code><small>(lambda (arg) (prompt "temp dir:" (lambda (val) (set! (<a class=quiet href="extsnd.html#tempdir" onmouseout="UnTip()" onmouseover="Tip(extsnd_tempdir_tip)">temp-dir</a>) val))))</small></code></td></tr>
 <tr><td>C-x e</td><td>execute keyboard macro</td><td></td></tr>
-<tr><td>C-x f</td><td>position window so cursor is on right</td><td><code><small>(lambda () <a class=quiet href="extsnd.html#bindkey">cursor-on-right</a>)</small></code></td></tr>
-<tr><td>C-x i</td><td>insert region</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#insertregion">insert-region</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>) arg)) ;insert-selection if no arg</small></code></td></tr>
+<tr><td>C-x f</td><td>position window so cursor is on right</td><td><code><small>(lambda () <a class=quiet href="extsnd.html#bindkey" onmouseout="UnTip()" onmouseover="Tip(extsnd_bindkey_tip)">cursor-on-right</a>)</small></code></td></tr>
+<tr><td>C-x i</td><td>insert region</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#insertregion" onmouseout="UnTip()" onmouseover="Tip(extsnd_insertregion_tip)">insert-region</a> (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) arg)) ;insert-selection if no arg</small></code></td></tr>
 <tr><td valign=top>C-x j</td><td valign=top>go to named mark</td><td>
 <pre><small>
 (lambda () 
   (prompt "mark:" 
-    (lambda (val) (set! (<a class=quiet href="extsnd.html#cursor">cursor</a>) (<a class=quiet href="extsnd.html#marksample">mark-sample</a> (<a class=quiet href="extsnd.html#findmark">find-mark</a> val))))))
+    (lambda (val) (set! (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) (<a class=quiet href="extsnd.html#marksample" onmouseout="UnTip()" onmouseover="Tip(extsnd_marksample_tip)">mark-sample</a> (<a class=quiet href="extsnd.html#findmark" onmouseout="UnTip()" onmouseover="Tip(extsnd_findmark_tip)">find-mark</a> val))))))
 </small></pre></td></tr>
 <tr><td>C-x k</td><td>close file</td><td><code><small>close-sound</small></code></td></tr>
 <tr><td valign=top>C-x l</td><td valign=top>position selection in mid-view</td>
 <td><pre><small>
 (lambda ()
-  (let* ((range (- (cadr (<a class=quiet href="extsnd.html#xbounds">x-bounds</a>)) (car (<a class=quiet href="extsnd.html#xbounds">x-bounds</a>))))
-	 (mid-point (/ (+ (<a class=quiet href="extsnd.html#selectionposition">selection-position</a>) 
-                          (* 0.5 (<a class=quiet href="extsnd.html#selectionframes">selection-frames</a>))) (<a class=quiet href="extsnd.html#srate">srate</a>)))
+  (let* ((range (- (cadr (<a class=quiet href="extsnd.html#xbounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_xbounds_tip)">x-bounds</a>)) (car (<a class=quiet href="extsnd.html#xbounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_xbounds_tip)">x-bounds</a>))))
+	 (mid-point (/ (+ (<a class=quiet href="extsnd.html#selectionposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionposition_tip)">selection-position</a>) 
+                          (* 0.5 (<a class=quiet href="extsnd.html#selectionframes" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionframes_tip)">selection-frames</a>))) (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>)))
 	 (minx (max 0.0 (- mid-point (* 0.5 range)))))
-    (set! (<a class=quiet href="extsnd.html#xbounds">x-bounds</a>) (list minx (+ minx range)))))
+    (set! (<a class=quiet href="extsnd.html#xbounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_xbounds_tip)">x-bounds</a>) (list minx (+ minx range)))))
 </small></pre></td></tr>
 <tr><td>C-x o</td><td>move to next or previous graph</td><td><code><small>(lambda (arg) (forward-graph arg)) ;snd7.scm</small></code></td></tr>
-<tr><td>C-x p</td><td>play selection or region n</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#playregion">play-region</a> arg)) ;play-selection if no arg</small></code></td></tr>
-<tr><td>C-x q</td><td>mix in region</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#mixregion">mix-region</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>) arg)) ;mix-selection if no arg</small></code></td></tr>
-<tr><td>C-x r</td><td>redo last undone edit</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#redo">redo</a> arg))</small></code></td></tr>
-<tr><td>C-x u</td><td>undo last edit</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#undo">undo</a> arg))</small></code></td></tr>
+<tr><td>C-x p</td><td>play selection or region n</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#playregion" onmouseout="UnTip()" onmouseover="Tip(extsnd_playregion_tip)">play-region</a> arg)) ;play-selection if no arg</small></code></td></tr>
+<tr><td>C-x q</td><td>mix in region</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#mixregion" onmouseout="UnTip()" onmouseover="Tip(extsnd_mixregion_tip)">mix-region</a> (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) arg)) ;mix-selection if no arg</small></code></td></tr>
+<tr><td>C-x r</td><td>redo last undone edit</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#redo" onmouseout="UnTip()" onmouseover="Tip(extsnd_redo_tip)">redo</a> arg))</small></code></td></tr>
+<tr><td>C-x u</td><td>undo last edit</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#undo" onmouseout="UnTip()" onmouseover="Tip(extsnd_undo_tip)">undo</a> arg))</small></code></td></tr>
 <tr><td valign=top>C-x v</td><td valign=top>position window over current selection</td>
 <td><pre><small>
-  (set! (<a class=quiet href="extsnd.html#xbounds">x-bounds</a>) 
-    (list (/ (<a class=quiet href="extsnd.html#selectionposition">selection-position</a>) (<a class=quiet href="extsnd.html#srate">srate</a>))
-	  (/ (+ (<a class=quiet href="extsnd.html#selectionposition">selection-position</a>) (<a class=quiet href="extsnd.html#selectionframes">selection-frames</a>)) (<a class=quiet href="extsnd.html#srate">srate</a>))))
+  (set! (<a class=quiet href="extsnd.html#xbounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_xbounds_tip)">x-bounds</a>) 
+    (list (/ (<a class=quiet href="extsnd.html#selectionposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionposition_tip)">selection-position</a>) (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>))
+	  (/ (+ (<a class=quiet href="extsnd.html#selectionposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionposition_tip)">selection-position</a>) (<a class=quiet href="extsnd.html#selectionframes" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionframes_tip)">selection-frames</a>)) (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>))))
 </small></pre></td></tr>
 <tr><td>C-x w</td><td>save selection as file</td><td><code><small>(lambda (arg) (prompt "file:" save-selection))</small></code></td></tr>
 <tr><td>C-x <A NAME="cxz"></a>z</td><td>smooth selection</td><td><code><small>smooth-selection</small></code></td></tr>
@@ -2061,7 +2065,7 @@ all the samples between the cursor and the next mark.</p>
 <td><pre><small>
 (lambda (arg) 
   (prompt "mark:" 
-    (lambda (val) (set! (<a class=quiet href="extsnd.html#markname">mark-name</a> (<a class=quiet href="extsnd.html#addmark">add-mark</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>))) val))))
+    (lambda (val) (set! (<a class=quiet href="extsnd.html#markname" onmouseout="UnTip()" onmouseover="Tip(extsnd_markname_tip)">mark-name</a> (<a class=quiet href="extsnd.html#addmark" onmouseout="UnTip()" onmouseover="Tip(extsnd_addmark_tip)">add-mark</a> (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>))) val))))
 </small></pre></td></tr>
 <tr><td>C-x ( <!-- ) --></td><td>begin keyboard macro definition</td><td><code><small>; bind-key</small></code></td></tr>
 <tr><td>C-x ) <!-- ( --></td><td>end keyboard macro definition</td><td></td></tr>
@@ -2071,47 +2075,47 @@ all the samples between the cursor and the next mark.</p>
         <!-- I(smooth selection):L(smooth-selection)(smoothselection) -->
 
 <tr><td>C-x C-a</td><td>apply amplitude envelope</td><td><code><small>(lambda () (prompt "amp env:" env-sound))</small></code></td></tr>
-<tr><td>C-x C-b</td><td>set left sample (via C-u arg)</td><td><code><small>(lambda (arg) (set! (<a class=quiet href="extsnd.html#leftsample">left-sample</a>) arg))</small></code></td></tr>
-<tr><td>C-x C-c</td><td>hide ("close") controls</td><td><code><small>(lambda () (set! (<a class=quiet href="extsnd.html#showcontrols">show-controls</a>) #f))</small></code></td></tr>
+<tr><td>C-x C-b</td><td>set left sample (via C-u arg)</td><td><code><small>(lambda (arg) (set! (<a class=quiet href="extsnd.html#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a>) arg))</small></code></td></tr>
+<tr><td>C-x C-c</td><td>hide ("close") controls</td><td><code><small>(lambda () (set! (<a class=quiet href="extsnd.html#showcontrols" onmouseout="UnTip()" onmouseover="Tip(extsnd_showcontrols_tip)">show-controls</a>) #f))</small></code></td></tr>
 <tr><td>C-x C-d</td><td>print</td><td><code><small>(lambda () (prompt "eps file:" graph-&gt;ps))</small></code></td></tr>
 <tr><td>C-x C-f</td><td>open file</td><td><code><small>(lambda () (prompt "file:" open-sound))</small></code></td></tr>
 <tr><td>C-x C-g</td><td>abort command</td><td><code><small>c-g!</small></code></td></tr>
-<tr><td>C-x C-i</td><td>insert file</td><td><code><small>(lambda () (prompt "insert file:" (lambda (val) (<a class=quiet href="extsnd.html#insertsound">insert-sound</a> val (<a class=quiet href="extsnd.html#cursor">cursor</a>)))))</small></code></td></tr>
+<tr><td>C-x C-i</td><td>insert file</td><td><code><small>(lambda () (prompt "insert file:" (lambda (val) (<a class=quiet href="extsnd.html#insertsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_insertsound_tip)">insert-sound</a> val (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>)))))</small></code></td></tr>
 <tr><td>C-x C-j</td><td>go to mix </td><td></td></tr>
 <tr><td>C-x <A NAME="cxcl"></a>C-l</td><td>load scm file</td><td><code><small>(lambda () (prompt "load:" load))</small></code></td></tr>
 <tr><td valign=top>C-x C-m</td><td valign=top>add named mark</td>
 <td><pre><small>
 (lambda () (prompt "mark:" 
              (lambda (val) 
-               (set! (<a class=quiet href="extsnd.html#markname">mark-name</a> (<a class=quiet href="extsnd.html#addmark">add-mark</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>))) val))))
+               (set! (<a class=quiet href="extsnd.html#markname" onmouseout="UnTip()" onmouseover="Tip(extsnd_markname_tip)">mark-name</a> (<a class=quiet href="extsnd.html#addmark" onmouseout="UnTip()" onmouseover="Tip(extsnd_addmark_tip)">add-mark</a> (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>))) val))))
 </small></pre></td></tr>
-<tr><td>C-x C-o</td><td>show ("open") controls</td><td><code><small>(lambda () (set! (<a class=quiet href="extsnd.html#showcontrols">show-controls</a>) #t))</small></code></td></tr>
+<tr><td>C-x C-o</td><td>show ("open") controls</td><td><code><small>(lambda () (set! (<a class=quiet href="extsnd.html#showcontrols" onmouseout="UnTip()" onmouseover="Tip(extsnd_showcontrols_tip)">show-controls</a>) #t))</small></code></td></tr>
 <tr><td valign=top>C-x C-p</td><td valign=top>set displayed duration in seconds</td>
 <td><pre><small>
 (lambda (arg)
-  (let* ((minx (max 0.0 (* 0.5 (- (apply + (<a class=quiet href="extsnd.html#xbounds">x-bounds</a>)) arg)))))
-    (set! (<a class=quiet href="extsnd.html#xbounds">x-bounds</a>) (list minx (+ minx arg)))))
+  (let* ((minx (max 0.0 (* 0.5 (- (apply + (<a class=quiet href="extsnd.html#xbounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_xbounds_tip)">x-bounds</a>)) arg)))))
+    (set! (<a class=quiet href="extsnd.html#xbounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_xbounds_tip)">x-bounds</a>) (list minx (+ minx arg)))))
 </small></pre></td></tr>
 <tr><td>C-x C-q</td><td>mix in file</td><td><pre><small>(lambda (arg) (prompt "mix file:" 
-                (lambda (val) (<a class=quiet href="sndscm.html#mixsound">mix-sound</a> val (<a class=quiet href="extsnd.html#cursor">cursor</a>)))))</small></pre></td></tr>
-<tr><td>C-x C-r</td><td>redo last undone edit</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#redo">redo</a> arg))</small></code></td></tr>
+                (lambda (val) (<a class=quiet href="sndscm.html#mixsound">mix-sound</a> val (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>)))))</small></pre></td></tr>
+<tr><td>C-x C-r</td><td>redo last undone edit</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#redo" onmouseout="UnTip()" onmouseover="Tip(extsnd_redo_tip)">redo</a> arg))</small></code></td></tr>
 <tr><td>C-x C-s</td><td>save file</td><td><code><small>save-sound</small></code></td></tr>
-<tr><td>C-x C-u</td><td>undo last edit</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#undo">undo</a> arg))</small></code></td></tr>
+<tr><td>C-x C-u</td><td>undo last edit</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#undo" onmouseout="UnTip()" onmouseover="Tip(extsnd_undo_tip)">undo</a> arg))</small></code></td></tr>
 <tr><td valign=top>C-x C-v</td><td valign=top>set displayed duration as portion of total</td>
 <td><pre><small>
 (lambda (arg)
-  (let* ((range (/ (* (<a class=quiet href="extsnd.html#frames">frames</a>) arg) (<a class=quiet href="extsnd.html#srate">srate</a>)))
-	 (minx (max 0.0 (* 0.5 (- (apply + (<a class=quiet href="extsnd.html#xbounds">x-bounds</a>)) range)))))
-    (set! (<a class=quiet href="extsnd.html#xbounds">x-bounds</a>) (list minx (+ minx range)))))
+  (let* ((range (/ (* (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>) arg) (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>)))
+	 (minx (max 0.0 (* 0.5 (- (apply + (<a class=quiet href="extsnd.html#xbounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_xbounds_tip)">x-bounds</a>)) range)))))
+    (set! (<a class=quiet href="extsnd.html#xbounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_xbounds_tip)">x-bounds</a>) (list minx (+ minx range)))))
 </small></pre></td></tr>
 <tr><td valign=top>C-x C-w</td><td valign=top>save current channel in file</td>
 <td><pre><small>
 (lambda (arg) (prompt "file:"
                 (lambda (val)
-                  (<a class=quiet href="extsnd.html#savesound">save-sound</a> val (<a class=quiet href="extsnd.html#selectedsound">selected-sound</a>) 
-                    (<a class=quiet href="extsnd.html#selectedchannel">selected-channel</a>)))))
+                  (<a class=quiet href="extsnd.html#savesound" onmouseout="UnTip()" onmouseover="Tip(extsnd_savesound_tip)">save-sound</a> val (<a class=quiet href="extsnd.html#selectedsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedsound_tip)">selected-sound</a>) 
+                    (<a class=quiet href="extsnd.html#selectedchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedchannel_tip)">selected-channel</a>)))))
 </small></pre></td></tr>
-<tr><td>C-x C-z</td><td>smooth using cosine</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#smoothsound">smooth-sound</a> (<a class=quiet href="extsnd.html#cursor">cursor</a>) arg))</small></code></td></tr>
+<tr><td>C-x C-z</td><td>smooth using cosine</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#smoothsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_smoothsound_tip)">smooth-sound</a> (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) arg))</small></code></td></tr>
 </table>
 
 </td></tr></table>
@@ -2388,16 +2392,15 @@ For information on initialization, configuration, and connections to other progr
 <center>
 <table bgcolor="aliceblue" border=0 cellspacing=8><tr>
 <td><small>related documentation:</small></td>
-<td><small><a href="extsnd.html" onmouseover="return escape('Snd extension and customization')">extsnd.html</a></small></td>
-<td><small><a href="grfsnd.html" onmouseover="return escape('Snd configuration, connection to other libraries and programs')">grfsnd.html</a></small></td>
-<td><small><a href="sndscm.html" onmouseover="return escape('Scheme, Ruby, and Forth files included with Snd')">sndscm.html</a></small></td>
-<td><small><a href="sndclm.html" onmouseover="return escape('sound synthesis generators')">sndclm.html</a></small></td>
-<td><small><a href="fm.html" onmouseover="return escape('introduction to frequency modulation')">fm.html</a></small></td>
-<td><small><a href="sndlib.html" onmouseover="return escape('library that handles sound files')">sndlib.html</a></small></td>
-<td><small><a href="libxm.html" onmouseover="return escape('library that ties Motif and Gtk into Snd')">libxm.html</a></small></td>
-<td><small><a href="index.html" onmouseover="return escape('overall index')">index.html</a></small></td>
+<td><small><a href="extsnd.html" onmouseout="UnTip()" onmouseover="Tip('Snd extension and customization')">extsnd.html</a></small></td>
+<td><small><a href="grfsnd.html" onmouseout="UnTip()" onmouseover="Tip('Snd configuration, connection to other libraries and programs')">grfsnd.html</a></small></td>
+<td><small><a href="sndscm.html" onmouseout="UnTip()" onmouseover="Tip('Scheme, Ruby, and Forth files included with Snd')">sndscm.html</a></small></td>
+<td><small><a href="sndclm.html" onmouseout="UnTip()" onmouseover="Tip('sound synthesis generators')">sndclm.html</a></small></td>
+<td><small><a href="fm.html" onmouseout="UnTip()" onmouseover="Tip('introduction to frequency modulation')">fm.html</a></small></td>
+<td><small><a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip('library that handles sound files')">sndlib.html</a></small></td>
+<td><small><a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip('library that ties Motif and Gtk into Snd')">libxm.html</a></small></td>
+<td><small><a href="index.html" onmouseout="UnTip()" onmouseover="Tip('overall index')">index.html</a></small></td>
 </tr></table>
 </center>
 
-<script language=JavaScript type="text/javascript" src="wz_tooltip.js"></script>
 </body></html>

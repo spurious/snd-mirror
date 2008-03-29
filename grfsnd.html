@@ -21,6 +21,10 @@
 </head>
 <body bgcolor=white>
 
+<script language=JavaScript type="text/javascript" src="wz_tooltip.js"></script>
+<script language=JavaScript type="text/javascript" src="wz_data.js"></script>
+
+
 <!-- I'm using A NAME (i.e caps) where the entity should be ignored by the indexer (index.cl) -->
 
 <A NAME="grfsndcontents"></a>
@@ -30,14 +34,14 @@
 <center>
 <table bgcolor="aliceblue" border=0 cellspacing=8><tr>
 <td><small>related documentation:</small></td>
-<td><small><a href="snd.html" onmouseover="return escape('basic Snd user-interface documentation')">snd.html</a></small></td>
-<td><small><a href="extsnd.html" onmouseover="return escape('Snd extension and customization')">extsnd.html</a></small></td>
-<td><small><a href="sndscm.html" onmouseover="return escape('Scheme, Ruby, and Forth files included with Snd')">sndscm.html</a></small></td>
-<td><small><a href="sndclm.html" onmouseover="return escape('sound synthesis generators')">sndclm.html</a></small></td>
-<td><small><a href="fm.html" onmouseover="return escape('introduction to frequency modulation')">fm.html</a></small></td>
-<td><small><a href="sndlib.html" onmouseover="return escape('library that handles sound files')">sndlib.html</a></small></td>
-<td><small><a href="libxm.html" onmouseover="return escape('library that ties Motif and Gtk into Snd')">libxm.html</a></small></td>
-<td><small><a href="index.html" onmouseover="return escape('an actual index, not some introductory file')">index.html</a></small></td>
+<td><small><a href="snd.html" onmouseout="UnTip()" onmouseover="Tip('basic Snd user-interface documentation')">snd.html</a></small></td>
+<td><small><a href="extsnd.html" onmouseout="UnTip()" onmouseover="Tip('Snd extension and customization')">extsnd.html</a></small></td>
+<td><small><a href="sndscm.html" onmouseout="UnTip()" onmouseover="Tip('Scheme, Ruby, and Forth files included with Snd')">sndscm.html</a></small></td>
+<td><small><a href="sndclm.html" onmouseout="UnTip()" onmouseover="Tip('sound synthesis generators')">sndclm.html</a></small></td>
+<td><small><a href="fm.html" onmouseout="UnTip()" onmouseover="Tip('introduction to frequency modulation')">fm.html</a></small></td>
+<td><small><a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip('library that handles sound files')">sndlib.html</a></small></td>
+<td><small><a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip('library that ties Motif and Gtk into Snd')">libxm.html</a></small></td>
+<td><small><a href="index.html" onmouseout="UnTip()" onmouseover="Tip('an actual index, not some introductory file')">index.html</a></small></td>
 </tr></table>
 </center>
 
@@ -48,32 +52,32 @@
 <ul>
 <li><a href="#startup">Snd Startup</a>
   <ul>
-  <li><a href="#sndswitches" onmouseover="return escape('startup switches such as -l and -p')">Snd invocation flags</a>
-  <li><a href="#sndinitfile" onmouseover="return escape('~/.snd, ~/.snd_guile, ~/.snd_prefs_guile, etc')">The initialization file</a>
-  <li><a href="#sndresources" onmouseover="return escape('X resources: Xdefaults, gtkrc')">Snd resources</a>
-  <li><a href="grfsnd.html#sndconfigurationswitches" onmouseover="return escape('this refers to the configure script that prepares a makefile to build Snd from its sources')">Configuration choices</a>
-  <li><a href="grfsnd.html#sndenvvars" onmouseover="return escape('mostly related to audio hardware choices')">Environment variables</a>
+  <li><a href="#sndswitches" onmouseout="UnTip()" onmouseover="Tip('startup switches such as -l and -p')">Snd invocation flags</a>
+  <li><a href="#sndinitfile" onmouseout="UnTip()" onmouseover="Tip('~/.snd, ~/.snd_guile, ~/.snd_prefs_guile, etc')">The initialization file</a>
+  <li><a href="#sndresources" onmouseout="UnTip()" onmouseover="Tip('X resources: Xdefaults, gtkrc')">Snd resources</a>
+  <li><a href="grfsnd.html#sndconfigurationswitches" onmouseout="UnTip()" onmouseover="Tip('this refers to the configure script that prepares a makefile to build Snd from its sources')">Configuration choices</a>
+  <li><a href="grfsnd.html#sndenvvars" onmouseout="UnTip()" onmouseover="Tip('mostly related to audio hardware choices')">Environment variables</a>
   </ul>
 <li><a href="#snddynamic">Runtime modules and external programs</a>
   <ul>
-  <li><a href="#emacssnd" onmouseover="return escape('Use Emacs as the listener')">Snd as an Emacs subjob</a>
-  <li><a href="#dynamic" onmouseover="return escape('Load your own C code into Snd')">Dynamically loaded modules</a>
-  <li><a href="#programs" onmouseover="return escape('Use other programs for editing operations')">External Programs</a>
-  <li><a href="#sndaswidget" onmouseover="return escape('Embed Snd in some other program')">Snd as a Widget</a>
-  <li><a href="#sndwithclm" onmouseover="return escape('CLM is built into Snd')">Snd and CLM</a>
-  <li><a href="#sndwithcm" onmouseover="return escape('CM is Rick Taube\'s composition environment')">Snd and Common Music</a>
-  <li><a href="#sndwithpd" onmouseover="return escape('PD is Miller Puckette\'s synthesis and composition program')">Snd and Pd</a>
-  <li><a href="#sndwithmotif" onmouseover="return escape('Motif extensions from xm.c')">Snd and Motif</a>
-  <li><a href="#sndwithgtk" onmouseover="return escape('Gtk extensions from xg.c')">Snd and Gtk</a>
+  <li><a href="#emacssnd" onmouseout="UnTip()" onmouseover="Tip('Use Emacs as the listener')">Snd as an Emacs subjob</a>
+  <li><a href="#dynamic" onmouseout="UnTip()" onmouseover="Tip('Load your own C code into Snd')">Dynamically loaded modules</a>
+  <li><a href="#programs" onmouseout="UnTip()" onmouseover="Tip('Use other programs for editing operations')">External Programs</a>
+  <li><a href="#sndaswidget" onmouseout="UnTip()" onmouseover="Tip('Embed Snd in some other program')">Snd as a Widget</a>
+  <li><a href="#sndwithclm" onmouseout="UnTip()" onmouseover="Tip('CLM is built into Snd')">Snd and CLM</a>
+  <li><a href="#sndwithcm" onmouseout="UnTip()" onmouseover="Tip('CM is Rick Taube\'s composition environment')">Snd and Common Music</a>
+  <li><a href="#sndwithpd" onmouseout="UnTip()" onmouseover="Tip('PD is Miller Puckette\'s synthesis and composition program')">Snd and Pd</a>
+  <li><a href="#sndwithmotif" onmouseout="UnTip()" onmouseover="Tip('Motif extensions from xm.c')">Snd and Motif</a>
+  <li><a href="#sndwithgtk" onmouseout="UnTip()" onmouseover="Tip('Gtk extensions from xg.c')">Snd and Gtk</a>
   <li><a href="#sndwithnogui">Snd with no GUI and as scripting engine</a>
-  <li><a href="grfsnd.html#sndandruby" onmouseover="return escape('Ruby is a scripting/extension language somewhat like Python')">Snd with Ruby</a>
-  <li><a href="grfsnd.html#sndandforth" onmouseover="return escape('Forth is a postfix extension language')">Snd with Forth</a>
-  <li><a href="#sndandladspa" onmouseover="return escape('This is a Linux-based sound-effects plugin system')">Snd and LADSPA plugins</a>
-  <li><a href="#sndandalsa" onmouseover="return escape('This is the no-longer-very-new Linux audio library')">Snd and ALSA</a>
-  <li><a href="#sndandjack" onmouseover="return escape('This is the Jack audio library')">Snd and Jack</a>
-  <li><a href="grfsnd.html#sndandx" onmouseover="return escape('other programs can control Snd through window properties')">Driving Snd remotely</a>
-  <li><a href="#sndandgl" onmouseover="return escape('OpenGL (Mesa) extensions via gl.c')">Snd and OpenGL</a>
-  <li><a href="#sndandgsl" onmouseover="return escape('tie-ins to libgsl')">Snd and GSL</a>
+  <li><a href="grfsnd.html#sndandruby" onmouseout="UnTip()" onmouseover="Tip('Ruby is a scripting/extension language somewhat like Python')">Snd with Ruby</a>
+  <li><a href="grfsnd.html#sndandforth" onmouseout="UnTip()" onmouseover="Tip('Forth is a postfix extension language')">Snd with Forth</a>
+  <li><a href="#sndandladspa" onmouseout="UnTip()" onmouseover="Tip('This is a Linux-based sound-effects plugin system')">Snd and LADSPA plugins</a>
+  <li><a href="#sndandalsa" onmouseout="UnTip()" onmouseover="Tip('This is the no-longer-very-new Linux audio library')">Snd and ALSA</a>
+  <li><a href="#sndandjack" onmouseout="UnTip()" onmouseover="Tip('This is the Jack audio library')">Snd and Jack</a>
+  <li><a href="grfsnd.html#sndandx" onmouseout="UnTip()" onmouseover="Tip('other programs can control Snd through window properties')">Driving Snd remotely</a>
+  <li><a href="#sndandgl" onmouseout="UnTip()" onmouseover="Tip('OpenGL (Mesa) extensions via gl.c')">Snd and OpenGL</a>
+  <li><a href="#sndandgsl" onmouseout="UnTip()" onmouseover="Tip('tie-ins to libgsl')">Snd and GSL</a>
   </ul>
 </ul>
 </td><td width="40%">
@@ -81,25 +85,25 @@
   <li><a href="extsnd.html#behavior">Customizing Snd's behavior</a>
     <ul>
     <li><a href="extsnd.html#sndglobalvars">Global variables</a>
-    <li><a href="extsnd.html#sndhooks" onmouseover="return escape('callbacks')">Hooks</a>
+    <li><a href="extsnd.html#sndhooks" onmouseout="UnTip()" onmouseover="Tip('callbacks')">Hooks</a>
     </ul>
   <li><a href="extsnd.html#sndobjects">Snd's objects</a>
     <ul>
-    <li><a href="extsnd.html#samplereaders" onmouseover="this.T_WIDTH=200; return escape('sound data iterators')">Sample-readers</a>
-    <li><a href="extsnd.html#Vcts" onmouseover="this.T_WIDTH=100; return escape('real arrays')">Vcts</a>
-    <li><a href="extsnd.html#sndsounddata" onmouseover="return escape('arrays of vcts for multichannel data')">Sound-data</a>
-    <li><a href="extsnd.html#extsndlib" onmouseover="return escape('the underlying library that handles sound data and files')">Sndlib</a>
-    <li><a href="extsnd.html#sndmarks" onmouseover="return escape('location markers in sound data')">Marks</a>
-    <li><a href="extsnd.html#sndmixes" onmouseover="return escape('mixed sounds and groups of mixed sounds')">Mixes</a>
-    <li><a href="extsnd.html#sndregions" onmouseover="return escape('selected or saved portions of sound data')">Regions and Selections</a>
-    <li><a href="extsnd.html#sndsounds" onmouseover="return escape('editing functions, per-channel display decisions, etc')">Sounds and channels</a>
+    <li><a href="extsnd.html#samplereaders" onmouseout="UnTip()" onmouseover="Tip('sound data iterators', WIDTH, 200)">Sample-readers</a>
+    <li><a href="extsnd.html#Vcts" onmouseout="UnTip()" onmouseover="Tip('real arrays', WIDTH, 100)">Vcts</a>
+    <li><a href="extsnd.html#sndsounddata" onmouseout="UnTip()" onmouseover="Tip('arrays of vcts for multichannel data')">Sound-data</a>
+    <li><a href="extsnd.html#extsndlib" onmouseout="UnTip()" onmouseover="Tip('the underlying library that handles sound data and files')">Sndlib</a>
+    <li><a href="extsnd.html#sndmarks" onmouseout="UnTip()" onmouseover="Tip('location markers in sound data')">Marks</a>
+    <li><a href="extsnd.html#sndmixes" onmouseout="UnTip()" onmouseover="Tip('mixed sounds and groups of mixed sounds')">Mixes</a>
+    <li><a href="extsnd.html#sndregions" onmouseout="UnTip()" onmouseover="Tip('selected or saved portions of sound data')">Regions and Selections</a>
+    <li><a href="extsnd.html#sndsounds" onmouseout="UnTip()" onmouseover="Tip('editing functions, per-channel display decisions, etc')">Sounds and channels</a>
       <ul>
-        <li><a href="extsnd.html#customcontrols" onmouseover="return escape('a set of common sound effects below the main graph')">the control panel</a>
-        <li><a href="extsnd.html#editlists" onmouseover="this.T_WIDTH=200; return escape('current edit sequence')">edit lists</a>
+        <li><a href="extsnd.html#customcontrols" onmouseout="UnTip()" onmouseover="Tip('a set of common sound effects below the main graph')">the control panel</a>
+        <li><a href="extsnd.html#editlists" onmouseout="UnTip()" onmouseover="Tip('current edit sequence', WIDTH, 200)">edit lists</a>
       </ul>
-    <li><a href="extsnd.html#sndtransforms" onmouseover="return escape('Fourier transform, wavelets, autocorelation, etc')">Transforms</a>
-    <li><a href="extsnd.html#snddialogs" onmouseover="return escape('customizing the built-in dialogs, etc')">Dialogs and Other Widgets</a>
-    <li><a href="extsnd.html#sndmisc" onmouseover="return escape('bind-key, exit, etc')">Miscellaneous functions</a>
+    <li><a href="extsnd.html#sndtransforms" onmouseout="UnTip()" onmouseover="Tip('Fourier transform, wavelets, autocorelation, etc')">Transforms</a>
+    <li><a href="extsnd.html#snddialogs" onmouseout="UnTip()" onmouseover="Tip('customizing the built-in dialogs, etc')">Dialogs and Other Widgets</a>
+    <li><a href="extsnd.html#sndmisc" onmouseout="UnTip()" onmouseover="Tip('bind-key, exit, etc')">Miscellaneous functions</a>
     <li><a href="extsnd.html#sndconstants">Constants</a>
     <li><a href="extsnd.html#snderrors">Errors and Debugging</a>
     </ul>
@@ -107,7 +111,7 @@
     <ul>
     <li><a href="extsnd.html#colors">Colors</a>
     <li><a href="extsnd.html#fonts">Fonts</a>
-    <li><a href="extsnd.html#graphics" onmouseover="return escape('write your own sound display functions or customize Snd\'s')">Graphics</a>
+    <li><a href="extsnd.html#graphics" onmouseout="UnTip()" onmouseover="Tip('write your own sound display functions or customize Snd\'s')">Graphics</a>
     </ul>
   </ul>
 
@@ -151,8 +155,8 @@ the usual Xt/X-related flags like -xrm).</p>
 <td>
 <pre>
 snd -notebook oboe.snd pistol.snd
-(set! (<a class=quiet href="extsnd.html#graphstyle">graph-style</a>) graph-lollipops)
-(set! (<a class=quiet href="extsnd.html#dotsize">dot-size</a>) 8)
+(set! (<a class=quiet href="extsnd.html#graphstyle" onmouseout="UnTip()" onmouseover="Tip(extsnd_graphstyle_tip)">graph-style</a>) graph-lollipops)
+(set! (<a class=quiet href="extsnd.html#dotsize" onmouseout="UnTip()" onmouseover="Tip(extsnd_dotsize_tip)">dot-size</a>) 8)
 </pre>
 </td>
 </tr>
@@ -164,18 +168,18 @@ The -e switch evaluates its argument.  The
 initialization file, if any, is loaded first, then the arguments are processed
 in order:</p>
 <pre>
-    snd -e "(set! (<a class=quiet href="extsnd.html#datacolor">data-color</a>) (<a class=quiet href="extsnd.html#makecolor">make-color</a> 1 0 0))" oboe.snd
+    snd -e "(set! (<a class=quiet href="extsnd.html#datacolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_datacolor_tip)">data-color</a>) (<a class=quiet href="extsnd.html#makecolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_makecolor_tip)">make-color</a> 1 0 0))" oboe.snd
 </pre>
 <p>reads ~/.snd, if any, then sets the (unselected) data color to red, then opens oboe.snd.</p>
 <pre>
-    snd -eval '(begin (display (+ 1 2)) (<a class=quiet href="extsnd.html#exit">exit</a>))'
+    snd -eval '(begin (display (+ 1 2)) (<a class=quiet href="extsnd.html#exit" onmouseout="UnTip()" onmouseover="Tip(extsnd_exit_tip)">exit</a>))'
 </pre>
 <p>prints "3" and exits.  The "-title" argument works in both versions of Snd.
 The following adds "WAV" to the sound file extension table before adding all the sound files in the directory to the
 View:Files dialog's list:
 </p>
 <pre>
-    snd -e '(<a class=quiet href="extsnd.html#addsoundfileextension">add-sound-file-extension</a> "WAV")' -p /home/bil/sounds
+    snd -e '(<a class=quiet href="extsnd.html#addsoundfileextension" onmouseout="UnTip()" onmouseover="Tip(extsnd_addsoundfileextension_tip)">add-sound-file-extension</a> "WAV")' -p /home/bil/sounds
 </pre>
 
 
@@ -186,11 +190,11 @@ View:Files dialog's list:
 <td>
 <pre>
 snd oboe.snd
-(set! (<a class=quiet href="extsnd.html#selecteddatacolor">selected-data-color</a>) (<a class=quiet href="extsnd.html#makecolor">make-color</a> 1 1 1))
-(set! (<a class=quiet href="extsnd.html#selectedgraphcolor">selected-graph-color</a>) (<a class=quiet href="extsnd.html#makecolor">make-color</a> 0 0 0))
-(set! (<a class=quiet href="extsnd.html#graphshorizontal">graphs-horizontal</a>) #f)
-(set! (<a class=quiet href="extsnd.html#transformgraphp">transform-graph?</a>) #t)
-(set! (<a class=quiet href="extsnd.html#showtransformpeaks">show-transform-peaks</a>) #t)
+(set! (<a class=quiet href="extsnd.html#selecteddatacolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_selecteddatacolor_tip)">selected-data-color</a>) (<a class=quiet href="extsnd.html#makecolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_makecolor_tip)">make-color</a> 1 1 1))
+(set! (<a class=quiet href="extsnd.html#selectedgraphcolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedgraphcolor_tip)">selected-graph-color</a>) (<a class=quiet href="extsnd.html#makecolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_makecolor_tip)">make-color</a> 0 0 0))
+(set! (<a class=quiet href="extsnd.html#graphshorizontal" onmouseout="UnTip()" onmouseover="Tip(extsnd_graphshorizontal_tip)">graphs-horizontal</a>) #f)
+(set! (<a class=quiet href="extsnd.html#transformgraphp" onmouseout="UnTip()" onmouseover="Tip(extsnd_transformgraphp_tip)">transform-graph?</a>) #t)
+(set! (<a class=quiet href="extsnd.html#showtransformpeaks" onmouseout="UnTip()" onmouseover="Tip(extsnd_showtransformpeaks_tip)">show-transform-peaks</a>) #t)
 </pre>
 </td>
 </tr>
@@ -212,10 +216,10 @@ want the Snd window to start out 800x500, want to predefine an envelope named
 show just sound files.  We make ~/.snd and put in it:</p>
 <pre>
 Scheme:
-    (set! (<a class=quiet href="extsnd.html#windowwidth">window-width</a>) 800)
-    (set! (<a class=quiet href="extsnd.html#windowheight">window-height</a>) 500)
-    (set! (<a class=quiet href="extsnd.html#justsounds">just-sounds</a>) #t)
-    (<a class=quiet href="extsnd.html#defineenvelope">define-envelope</a> env1 '(0 0 1 1 2 0))
+    (set! (<a class=quiet href="extsnd.html#windowwidth" onmouseout="UnTip()" onmouseover="Tip(extsnd_windowwidth_tip)">window-width</a>) 800)
+    (set! (<a class=quiet href="extsnd.html#windowheight" onmouseout="UnTip()" onmouseover="Tip(extsnd_windowheight_tip)">window-height</a>) 500)
+    (set! (<a class=quiet href="extsnd.html#justsounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_justsounds_tip)">just-sounds</a>) #t)
+    (<a class=quiet href="extsnd.html#defineenvelope" onmouseout="UnTip()" onmouseover="Tip(extsnd_defineenvelope_tip)">define-envelope</a> env1 '(0 0 1 1 2 0))
 
 Ruby:
     set_window_width(800)
@@ -267,30 +271,30 @@ Here's a more elaborate initialization file (~/.snd_guile):
 (use-modules (ice-9 debug) (ice-9 format) (ice-9 optargs))
 (debug-set! stack 0)                ;turn off Guile's stack-size check
 
-(set! (<a class=quiet href="extsnd.html#windowwidth">window-width</a>) 800)           ;these set the initial window size
-(set! (<a class=quiet href="extsnd.html#windowheight">window-height</a>) 500)
+(set! (<a class=quiet href="extsnd.html#windowwidth" onmouseout="UnTip()" onmouseover="Tip(extsnd_windowwidth_tip)">window-width</a>) 800)           ;these set the initial window size
+(set! (<a class=quiet href="extsnd.html#windowheight" onmouseout="UnTip()" onmouseover="Tip(extsnd_windowheight_tip)">window-height</a>) 500)
 
 (if (provided? '<a class=quiet href="#sndmotiffeature">snd-motif</a>)          ;Motif and Gtk use different font naming conventions
     (begin
-      (set! (<a class=quiet href="extsnd.html#listenerfont">listener-font</a>) "9x15")
-      (set! (<a class=quiet href="extsnd.html#axislabelfont">axis-label-font</a>) "-*-times-medium-r-normal-*-18-*-*-*-*-*-*-*")
-      (set! (<a class=quiet href="extsnd.html#axisnumbersfont">axis-numbers-font</a>) "9x15"))
+      (set! (<a class=quiet href="extsnd.html#listenerfont" onmouseout="UnTip()" onmouseover="Tip(extsnd_listenerfont_tip)">listener-font</a>) "9x15")
+      (set! (<a class=quiet href="extsnd.html#axislabelfont" onmouseout="UnTip()" onmouseover="Tip(extsnd_axislabelfont_tip)">axis-label-font</a>) "-*-times-medium-r-normal-*-18-*-*-*-*-*-*-*")
+      (set! (<a class=quiet href="extsnd.html#axisnumbersfont" onmouseout="UnTip()" onmouseover="Tip(extsnd_axisnumbersfont_tip)">axis-numbers-font</a>) "9x15"))
     (begin
-      (set! (<a class=quiet href="extsnd.html#listenerfont">listener-font</a>) "Monospace 10")
-      (set! (<a class=quiet href="extsnd.html#axislabelfont">axis-label-font</a>) "Serif 14")
-      (set! (<a class=quiet href="extsnd.html#axisnumbersfont">axis-numbers-font</a>) "Monospace 10")))
+      (set! (<a class=quiet href="extsnd.html#listenerfont" onmouseout="UnTip()" onmouseover="Tip(extsnd_listenerfont_tip)">listener-font</a>) "Monospace 10")
+      (set! (<a class=quiet href="extsnd.html#axislabelfont" onmouseout="UnTip()" onmouseover="Tip(extsnd_axislabelfont_tip)">axis-label-font</a>) "Serif 14")
+      (set! (<a class=quiet href="extsnd.html#axisnumbersfont" onmouseout="UnTip()" onmouseover="Tip(extsnd_axisnumbersfont_tip)">axis-numbers-font</a>) "Monospace 10")))
 
-(set! (<a class=quiet href="extsnd.html#listenerprompt">listener-prompt</a>) ":")        ;change listener prompt from the default "&gt;" to ":"
-(set! (<a class=quiet href="extsnd.html#showlistener">show-listener</a>) #t)           ;include the listener window initially
-(set! (<a class=quiet href="extsnd.html#showindices">show-indices</a>) #t)            ;include sound index values with the sound name
+(set! (<a class=quiet href="extsnd.html#listenerprompt" onmouseout="UnTip()" onmouseover="Tip(extsnd_listenerprompt_tip)">listener-prompt</a>) ":")        ;change listener prompt from the default "&gt;" to ":"
+(set! (<a class=quiet href="extsnd.html#showlistener" onmouseout="UnTip()" onmouseover="Tip(extsnd_showlistener_tip)">show-listener</a>) #t)           ;include the listener window initially
+(set! (<a class=quiet href="extsnd.html#showindices" onmouseout="UnTip()" onmouseover="Tip(extsnd_showindices_tip)">show-indices</a>) #t)            ;include sound index values with the sound name
 
-(define beige (<a class=quiet href="extsnd.html#makecolor">make-color</a> 0.96 0.96 0.86))
-(define blue (<a class=quiet href="extsnd.html#makecolor">make-color</a> 0 0 1))
-(set! (<a class=quiet href="extsnd.html#selectedgraphcolor">selected-graph-color</a>) beige) ;selected graph background is beige
-(set! (<a class=quiet href="extsnd.html#selecteddatacolor">selected-data-color</a>) blue)   ;selected graph data is blue
+(define beige (<a class=quiet href="extsnd.html#makecolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_makecolor_tip)">make-color</a> 0.96 0.96 0.86))
+(define blue (<a class=quiet href="extsnd.html#makecolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_makecolor_tip)">make-color</a> 0 0 1))
+(set! (<a class=quiet href="extsnd.html#selectedgraphcolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedgraphcolor_tip)">selected-graph-color</a>) beige) ;selected graph background is beige
+(set! (<a class=quiet href="extsnd.html#selecteddatacolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_selecteddatacolor_tip)">selected-data-color</a>) blue)   ;selected graph data is blue
 
-(set! (<a class=quiet href="extsnd.html#savedir">save-dir</a>) "/zap/snd")        ;save-state files are placed in /zap/snd
-(set! (<a class=quiet href="extsnd.html#tempdir">temp-dir</a>) "/zap/tmp")        ;temp files are placed in /zap/tmp
+(set! (<a class=quiet href="extsnd.html#savedir" onmouseout="UnTip()" onmouseover="Tip(extsnd_savedir_tip)">save-dir</a>) "/zap/snd")        ;save-state files are placed in /zap/snd
+(set! (<a class=quiet href="extsnd.html#tempdir" onmouseout="UnTip()" onmouseover="Tip(extsnd_tempdir_tip)">temp-dir</a>) "/zap/tmp")        ;temp files are placed in /zap/tmp
 (load "peak-env.scm")               ;large file peak env data is saved for faster 
 				    ;  subsequent reads &mdash; this makes the first
 				    ;  view of a large file much snappier &mdash;
@@ -308,13 +312,13 @@ Here's a more elaborate initialization file (~/.snd_guile):
     (if (provided? '<a class=quiet href="#sndgtkfeature">snd-gtk</a>)
         (load "/home/bil/cl/gtk-popup.scm")))
 
-(add-hook! <a class=quiet href="extsnd.html#afteropenhook">after-open-hook</a>          ;if sound has many chans, use just one pane for all
+(add-hook! <a class=quiet href="extsnd.html#afteropenhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_afteropenhook_tip)">after-open-hook</a>          ;if sound has many chans, use just one pane for all
   (lambda (snd)
-    (if (&gt; (<a class=quiet href="extsnd.html#chans">chans</a> snd) 4)
-        (set! (<a class=quiet href="extsnd.html#channelstyle">channel-style</a> snd) <a class=quiet href="extsnd.html#channelstyle">channels-combined</a>))))
+    (if (&gt; (<a class=quiet href="extsnd.html#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">chans</a> snd) 4)
+        (set! (<a class=quiet href="extsnd.html#channelstyle" onmouseout="UnTip()" onmouseover="Tip(extsnd_channelstyle_tip)">channel-style</a> snd) <a class=quiet href="extsnd.html#channelstyle" onmouseout="UnTip()" onmouseover="Tip(extsnd_channelstyle_tip)">channels-combined</a>))))
 
-(set! (<a class=quiet href="extsnd.html#optimization">optimization</a>) 6)              ;turn on full optimization (live dangerously...)
-(set! (<a class=quiet href="extsnd.html#selectioncreatesregion">selection-creates-region</a>) #f) ;turn off automatic region creation
+(set! (<a class=quiet href="extsnd.html#optimization" onmouseout="UnTip()" onmouseover="Tip(extsnd_optimization_tip)">optimization</a>) 6)              ;turn on full optimization (live dangerously...)
+(set! (<a class=quiet href="extsnd.html#selectioncreatesregion" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectioncreatesregion_tip)">selection-creates-region</a>) #f) ;turn off automatic region creation
 </pre></td></tr></table>
 
 <p>A similar Ruby initialization file (~/.snd_ruby):
@@ -638,7 +642,7 @@ colors are defined by <a href="extsnd.html#makecolor">make-color</a> with the th
 each a float between 0.0 and 1.0.
 </p>
 <pre>
-    (set! (<a class=quiet href="extsnd.html#basiccolor">basic-color</a>) (<a class=quiet href="extsnd.html#makecolor">make-color</a> 1.0 0.0 0.0))
+    (set! (<a class=quiet href="extsnd.html#basiccolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_basiccolor_tip)">basic-color</a>) (<a class=quiet href="extsnd.html#makecolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_makecolor_tip)">make-color</a> 1.0 0.0 0.0))
 </pre>
 <p>sets
 the overall background color of Snd to red.  <a href="sndscm.html#rgbdoc">rgb.scm</a> defines all the standard X11 color names.
@@ -678,7 +682,7 @@ the black text back with:
     snd -xrm '*foreground: Black'
 </pre>
 <p>or put the equivalent line in your .Xdefaults file.  The listener text color can be set
-via <code>(set! (<a class=quiet href="extsnd.html#listenertextcolor">listener-text-color</a>) (<a class=quiet href="extsnd.html#makecolor">make-color</a> 0 0 0))</code> in ~/.snd.
+via <code>(set! (<a class=quiet href="extsnd.html#listenertextcolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_listenertextcolor_tip)">listener-text-color</a>) (<a class=quiet href="extsnd.html#makecolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_makecolor_tip)">make-color</a> 0 0 0))</code> in ~/.snd.
 </p>
 
 <p>
@@ -1023,27 +1027,27 @@ these declarations in ~/.snd:
 
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
 (define data-size 1024)
-(define data (<a class=quiet href="extsnd.html#makevct">make-vct</a> data-size))
+(define data (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> data-size))
 
 (define (run-gen func)        ; func is a function of no arguments (a "thunk")
   (do ((i 0 (1+ i))) 
       ((= i data-size))
-    (<a class=quiet href="extsnd.html#vctset">vct-set!</a> data i (func))) ; fill data vct with output of 'func'
-  (<a class=quiet href="extsnd.html#graph">graph</a> data))               ; display data as a graph
+    (<a class=quiet href="extsnd.html#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> data i (func))) ; fill data vct with output of 'func'
+  (<a class=quiet href="extsnd.html#graph" onmouseout="UnTip()" onmouseover="Tip(extsnd_graph_tip)">graph</a> data))               ; display data as a graph
 
 (define (run-fft func)
   (do ((i 0 (1+ i))) 
       ((= i data-size))
-    (<a class=quiet href="extsnd.html#vctset">vct-set!</a> data i (func)))
-  (<a class=quiet href="extsnd.html#graph">graph</a> (<a class=quiet href="extsnd.html#sndspectrum">snd-spectrum</a> data blackman2-window data-size #t)))
+    (<a class=quiet href="extsnd.html#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> data i (func)))
+  (<a class=quiet href="extsnd.html#graph" onmouseout="UnTip()" onmouseover="Tip(extsnd_graph_tip)">graph</a> (<a class=quiet href="extsnd.html#sndspectrum" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndspectrum_tip)">snd-spectrum</a> data blackman2-window data-size #t)))
 </pre></td></tr></table>
 
 <p>Now we can open the listener, and type:</p>
 <pre>
-    (define hi (<a class=quiet href="sndclm.html#make-oscil">make-oscil</a>))
-    (run-gen (lambda () (<a class=quiet href="sndclm.html#oscil">oscil</a> hi)))
-    (define ho (<a class=quiet href="sndclm.html#make-oscil">make-oscil</a>))
-    (run-fft (lambda () (<a class=quiet href="sndclm.html#oscil">oscil</a> hi (* .5 (<a class=quiet href="sndclm.html#oscil">oscil</a> ho)))))
+    (define hi (<a class=quiet href="sndclm.html#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a>))
+    (run-gen (lambda () (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> hi)))
+    (define ho (<a class=quiet href="sndclm.html#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a>))
+    (run-fft (lambda () (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> hi (* .5 (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> ho)))))
 </pre>
 <p>Any CLM instrument or function can be used in this way 
 to edit sounds.  Say we want an echo effect:</p>
@@ -1051,9 +1055,9 @@ to edit sounds.  Say we want an echo effect:</p>
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
 (define echo 
   (lambda (scaler secs)
-    (let ((del (<a class=quiet href="sndclm.html#make-delay">make-delay</a> (round (* secs (<a class=quiet href="extsnd.html#srate">srate</a>))))))
+    (let ((del (<a class=quiet href="sndclm.html#make-delay" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_delay_tip)">make-delay</a> (round (* secs (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>))))))
       (lambda (inval)
-        (+ inval (<a class=quiet href="sndclm.html#delay">delay</a> del (* scaler (+ (<a class=quiet href="sndclm.html#tap">tap</a> del) inval))))))))
+        (+ inval (<a class=quiet href="sndclm.html#delay" onmouseout="UnTip()" onmouseover="Tip(sndclm_delay_tip)">delay</a> del (* scaler (+ (<a class=quiet href="sndclm.html#tap" onmouseout="UnTip()" onmouseover="Tip(sndclm_tap_tip)">tap</a> del) inval))))))))
 </pre></td></tr></table>
 
 <p>
@@ -1069,7 +1073,7 @@ one argument ('inval') and returns the result of passing
 that value to the delay with scaling.  The upshot of all this is that
 we can use:</p>
 <pre>
-    (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (echo .5 .75) 0 44100)
+    (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (echo .5 .75) 0 44100)
 </pre>
 
 <p>to take the current active channel and 
@@ -1083,9 +1087,9 @@ producing the echo.
 <p>If we want "pre-echoes" instead (echoes of the future):
 </p>
 <pre>
-    (<a class=quiet href="extsnd.html#reversesound">reverse-sound</a>)
-    (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (echo .5 .75) 0 44100)
-    (<a class=quiet href="extsnd.html#reversesound">reverse-sound</a>)
+    (<a class=quiet href="extsnd.html#reversesound" onmouseout="UnTip()" onmouseover="Tip(extsnd_reversesound_tip)">reverse-sound</a>)
+    (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (echo .5 .75) 0 44100)
+    (<a class=quiet href="extsnd.html#reversesound" onmouseout="UnTip()" onmouseover="Tip(extsnd_reversesound_tip)">reverse-sound</a>)
 </pre>
 
 <p>Generators are "applicable" in most versions of Snd: the generator knows its type, so the
@@ -1124,22 +1128,22 @@ an oscil or a sawtooth-wave:
 <pre>
 (define comb-filter 
   (lambda (scaler size)
-    (let ((cmb (<a class=quiet href="sndclm.html#make-comb">make-comb</a> scaler size)))
-      (lambda (x) (<a class=quiet href="sndclm.html#comb">comb</a> cmb x)))))
+    (let ((cmb (<a class=quiet href="sndclm.html#make-comb" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_comb_tip)">make-comb</a> scaler size)))
+      (lambda (x) (<a class=quiet href="sndclm.html#comb" onmouseout="UnTip()" onmouseover="Tip(sndclm_comb_tip)">comb</a> cmb x)))))
 
-; (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (comb-filter .8 32))
+; (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (comb-filter .8 32))
 
 ;;; by using filters at harmonically related sizes, we can get chords:
 
 (define comb-chord
   (lambda (scaler size amp)
-    (let ((c1 (<a class=quiet href="sndclm.html#make-comb">make-comb</a> scaler size))
-	  (c2 (<a class=quiet href="sndclm.html#make-comb">make-comb</a> scaler (* size .75)))
-	  (c3 (<a class=quiet href="sndclm.html#make-comb">make-comb</a> scaler (* size 1.2))))
+    (let ((c1 (<a class=quiet href="sndclm.html#make-comb" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_comb_tip)">make-comb</a> scaler size))
+	  (c2 (<a class=quiet href="sndclm.html#make-comb" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_comb_tip)">make-comb</a> scaler (* size .75)))
+	  (c3 (<a class=quiet href="sndclm.html#make-comb" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_comb_tip)">make-comb</a> scaler (* size 1.2))))
       (lambda (x)
-        (* amp (+ (<a class=quiet href="sndclm.html#comb">comb</a> c1 x) (<a class=quiet href="sndclm.html#comb">comb</a> c2 x) (<a class=quiet href="sndclm.html#comb">comb</a> c3 x)))))))
+        (* amp (+ (<a class=quiet href="sndclm.html#comb" onmouseout="UnTip()" onmouseover="Tip(sndclm_comb_tip)">comb</a> c1 x) (<a class=quiet href="sndclm.html#comb" onmouseout="UnTip()" onmouseover="Tip(sndclm_comb_tip)">comb</a> c2 x) (<a class=quiet href="sndclm.html#comb" onmouseout="UnTip()" onmouseover="Tip(sndclm_comb_tip)">comb</a> c3 x)))))))
 
-; (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (comb-chord .95 60 .3))
+; (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (comb-chord .95 60 .3))
 
 ;;; or change the comb length via an envelope:
 
@@ -1151,57 +1155,57 @@ an oscil or a sawtooth-wave:
 
 (define zcomb
   (lambda (scaler size pm)
-    (let ((cmb (<a class=quiet href="sndclm.html#make-comb">make-comb</a> scaler size :max-size (+ size 1 (<a class=quiet href="sndscm.html#maxenvelope">max-envelope</a> pm 0))))
-	  (penv (<a class=quiet href="sndclm.html#make-env">make-env</a> pm :length (<a class=quiet href="extsnd.html#frames">frames</a>))))
-      (lambda (x) (<a class=quiet href="sndclm.html#comb">comb</a> cmb x (env penv))))))
+    (let ((cmb (<a class=quiet href="sndclm.html#make-comb" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_comb_tip)">make-comb</a> scaler size :max-size (+ size 1 (<a class=quiet href="sndscm.html#maxenvelope">max-envelope</a> pm 0))))
+	  (penv (<a class=quiet href="sndclm.html#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> pm :length (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>))))
+      (lambda (x) (<a class=quiet href="sndclm.html#comb" onmouseout="UnTip()" onmouseover="Tip(sndclm_comb_tip)">comb</a> cmb x (env penv))))))
 
-; (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (zcomb .8 32 '(0 0 1 10)))
+; (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (zcomb .8 32 '(0 0 1 10)))
 
 ;;; to impose several formants, just add them in parallel:
 
 (define formants
   (lambda (r1 f1 r2 f2 r3 f3)
-    (let ((fr1 (<a class=quiet href="sndclm.html#make-formant">make-formant</a> f1 r1))
-	  (fr2 (<a class=quiet href="sndclm.html#make-formant">make-formant</a> f2 r2))
-	  (fr3 (<a class=quiet href="sndclm.html#make-formant">make-formant</a> f3 r3)))
+    (let ((fr1 (<a class=quiet href="sndclm.html#make-formant" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_formant_tip)">make-formant</a> f1 r1))
+	  (fr2 (<a class=quiet href="sndclm.html#make-formant" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_formant_tip)">make-formant</a> f2 r2))
+	  (fr3 (<a class=quiet href="sndclm.html#make-formant" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_formant_tip)">make-formant</a> f3 r3)))
       (lambda (x)
-	(+ (<a class=quiet href="sndclm.html#formant">formant</a> fr1 x)
-	   (<a class=quiet href="sndclm.html#formant">formant</a> fr2 x)
-	   (<a class=quiet href="sndclm.html#formant">formant</a> fr3 x))))))
+	(+ (<a class=quiet href="sndclm.html#formant" onmouseout="UnTip()" onmouseover="Tip(sndclm_formant_tip)">formant</a> fr1 x)
+	   (<a class=quiet href="sndclm.html#formant" onmouseout="UnTip()" onmouseover="Tip(sndclm_formant_tip)">formant</a> fr2 x)
+	   (<a class=quiet href="sndclm.html#formant" onmouseout="UnTip()" onmouseover="Tip(sndclm_formant_tip)">formant</a> fr3 x))))))
 
-; (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (formants .01 900 .02 1800 .01 2700))
+; (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (formants .01 900 .02 1800 .01 2700))
 
 ;;; to get a moving formant:
 
 (define moving-formant
   (lambda (radius move)
-    (let ((frm (<a class=quiet href="sndclm.html#make-formant">make-formant</a> (cadr move) radius))
-	  (menv (<a class=quiet href="sndclm.html#make-env">make-env</a> move :length (<a class=quiet href="extsnd.html#frames">frames</a>))))
+    (let ((frm (<a class=quiet href="sndclm.html#make-formant" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_formant_tip)">make-formant</a> (cadr move) radius))
+	  (menv (<a class=quiet href="sndclm.html#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> move :length (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>))))
       (lambda (x)
-        (let ((val (<a class=quiet href="sndclm.html#formant">formant</a> frm x)))
-	  (set! (<a class=quiet href="sndclm.html#mus-frequency">mus-frequency</a> frm) (env menv))
+        (let ((val (<a class=quiet href="sndclm.html#formant" onmouseout="UnTip()" onmouseover="Tip(sndclm_formant_tip)">formant</a> frm x)))
+	  (set! (<a class=quiet href="sndclm.html#mus-frequency" onmouseout="UnTip()" onmouseover="Tip(sndclm_mus_frequency_tip)">mus-frequency</a> frm) (env menv))
 	  val)))))
 
-; (<a class=quiet href="extsnd.html#mapchannel">map-channel</a> (moving-formant .01 '(0 1200 1 2400)))
+; (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (moving-formant .01 '(0 1200 1 2400)))
 
 ;;; various "Forbidden Planet" sound effects:
 
 (define fp
   (lambda (sr osamp osfrq)
-    (let* ((os (<a class=quiet href="sndclm.html#make-oscil">make-oscil</a> osfrq))
-	   (sr (<a class=quiet href="sndclm.html#make-src">make-src</a> :srate sr))
-	   (len (<a class=quiet href="extsnd.html#frames">frames</a>))
-	   (sf (<a class=quiet href="extsnd.html#makesamplereader">make-sample-reader</a>))
-	   (out-data (<a class=quiet href="extsnd.html#makevct">make-vct</a> len)))
-      (<a class=quiet href="extsnd.html#vctmap">vct-map!</a> out-data
+    (let* ((os (<a class=quiet href="sndclm.html#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> osfrq))
+	   (sr (<a class=quiet href="sndclm.html#make-src" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_src_tip)">make-src</a> :srate sr))
+	   (len (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>))
+	   (sf (<a class=quiet href="extsnd.html#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a>))
+	   (out-data (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> len)))
+      (<a class=quiet href="extsnd.html#vctmap" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctmap_tip)">vct-map!</a> out-data
 		  (lambda () 
-		    (<a class=quiet href="sndclm.html#src">src</a> sr (* osamp (<a class=quiet href="sndclm.html#oscil">oscil</a> os))
+		    (<a class=quiet href="sndclm.html#src" onmouseout="UnTip()" onmouseover="Tip(sndclm_src_tip)">src</a> sr (* osamp (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> os))
 			 (lambda (dir)
 			   (if (&gt; dir 0)
-			       (<a class=quiet href="extsnd.html#nextsample">next-sample</a> sf)
-			       (<a class=quiet href="extsnd.html#previoussample">previous-sample</a> sf))))))
-      (<a class=quiet href="extsnd.html#freesamplereader">free-sample-reader</a> sf)
-      (<a class=quiet href="extsnd.html#vcttochannel">vct-&gt;channel</a> out-data 0 len))))
+			       (<a class=quiet href="extsnd.html#nextsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_nextsample_tip)">next-sample</a> sf)
+			       (<a class=quiet href="extsnd.html#previoussample" onmouseout="UnTip()" onmouseover="Tip(extsnd_previoussample_tip)">previous-sample</a> sf))))))
+      (<a class=quiet href="extsnd.html#freesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_freesamplereader_tip)">free-sample-reader</a> sf)
+      (<a class=quiet href="extsnd.html#vcttochannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_vcttochannel_tip)">vct-&gt;channel</a> out-data 0 len))))
 
 ; (fp 1.0 .3 20)
 
@@ -1213,24 +1217,24 @@ an oscil or a sawtooth-wave:
 
 (define <A class=def NAME="expsrc">expsrc</a>
   (lambda (rate)
-    (let* ((gr (<a class=quiet href="sndclm.html#make-granulate">make-granulate</a> :expansion rate))
-	   (sr (<a class=quiet href="sndclm.html#make-src">make-src</a> :srate rate))
+    (let* ((gr (<a class=quiet href="sndclm.html#make-granulate" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_granulate_tip)">make-granulate</a> :expansion rate))
+	   (sr (<a class=quiet href="sndclm.html#make-src" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_src_tip)">make-src</a> :srate rate))
 	   (vsize 1024)
 	   (vbeg 0)
-	   (v (<a class=quiet href="extsnd.html#channeltovct">channel-&gt;vct</a> 0 vsize))
+	   (v (<a class=quiet href="extsnd.html#channeltovct" onmouseout="UnTip()" onmouseover="Tip(extsnd_channeltovct_tip)">channel-&gt;vct</a> 0 vsize))
 	   (inctr 0))
       (lambda (inval)
-        (<a class=quiet href="sndclm.html#src">src</a> sr 0.0
+        (<a class=quiet href="sndclm.html#src" onmouseout="UnTip()" onmouseover="Tip(sndclm_src_tip)">src</a> sr 0.0
 	  (lambda (dir)
-	    (<a class=quiet href="sndclm.html#granulate">granulate</a> gr
+	    (<a class=quiet href="sndclm.html#granulate" onmouseout="UnTip()" onmouseover="Tip(sndclm_granulate_tip)">granulate</a> gr
 	      (lambda (dir)
-		(let ((val (<a class=quiet href="extsnd.html#vctref">vct-ref</a> v inctr)))
+		(let ((val (<a class=quiet href="extsnd.html#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> v inctr)))
 		  (set! inctr (+ inctr dir))
 		  (if (&gt;= inctr vsize)
 		      (begin
 			(set! vbeg (+ vbeg inctr))
 			(set! inctr 0)
-			(<a class=quiet href="extsnd.html#channeltovct">channel-&gt;vct</a> vbeg vsize 0 0 v)))
+			(<a class=quiet href="extsnd.html#channeltovct" onmouseout="UnTip()" onmouseover="Tip(extsnd_channeltovct_tip)">channel-&gt;vct</a> vbeg vsize 0 0 v)))
 		  val)))))))))
 
 </pre>
@@ -1245,7 +1249,7 @@ You can load Rick Taube's CM into Snd as Scheme code:
 <p>In most CLM instruments, including all those in clm-ins.scm, the assumption is that 
 you're reading and writing a temp file, calling the instruments within with-sound.
 The special generator snd-&gt;sample provides a way to redirect
-the CLM input handlers (<a class=quiet href="sndclm.html#in-any">in-any</a> in particular) to a Snd sound (via its index).
+the CLM input handlers (<a class=quiet href="sndclm.html#in-any" onmouseout="UnTip()" onmouseover="Tip(sndclm_in_any_tip)">in-any</a> in particular) to a Snd sound (via its index).
 </p>
 <br><br>
 
@@ -1388,7 +1392,7 @@ Here's a dialog window with a slider:</p>
 					   (XtUnmanageChild scale-dialog)))
 	(XtAddCallback scale-dialog 
 		       XmNhelpCallback (lambda (w context info)
-					 (<a class=quiet href="extsnd.html#sndprint">snd-print</a> "move the slider to affect the volume")))
+					 (<a class=quiet href="extsnd.html#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> "move the slider to affect the volume")))
 	(XmStringFree xhelp)
 	(XmStringFree xdismiss)
 	(XmStringFree titlestr)
@@ -1414,7 +1418,7 @@ Here's a dialog window with a slider:</p>
 					     (set! current-scaler (/ (.value info) 100.0)))))))
   (XtManageChild scale-dialog))
 
-(create-scale-dialog (cadr (<a class=quiet href="extsnd.html#mainwidgets">main-widgets</a>)))
+(create-scale-dialog (cadr (<a class=quiet href="extsnd.html#mainwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_mainwidgets_tip)">main-widgets</a>)))
 </pre></td></tr></table>
 
 <p>which creates a little dialog:
@@ -1486,9 +1490,9 @@ match-sound-files from extensions.scm):
     (XmStringTableUnparse st len #f XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL))
   (define (list-&gt;XmStringTable strs)
     (XmStringTableParseStringArray strs (length strs) #f XmCHARSET_TEXT #f 0 #f))
-  (XtSetValues (let ((m (<a class=quiet href="extsnd.html#openfiledialog">open-file-dialog</a> #f)))
+  (XtSetValues (let ((m (<a class=quiet href="extsnd.html#openfiledialog" onmouseout="UnTip()" onmouseover="Tip(extsnd_openfiledialog_tip)">open-file-dialog</a> #f)))
                          ; make sure the dialog exists
-		  (list-ref (<a class=quiet href="extsnd.html#dialogwidgets">dialog-widgets</a>) 6))
+		  (list-ref (<a class=quiet href="extsnd.html#dialogwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_dialogwidgets_tip)">dialog-widgets</a>) 6))
 		(list XmNfileSearchProc                             ; set dialog file search procedure
 		       (lambda (widget info)
 			 (let* ((dir (XmString-&gt;string (dir info))) ; directory string
@@ -1502,8 +1506,8 @@ match-sound-files from extensions.scm):
 					       XmNfileListItemCount (length files)
 					       XmNlistUpdated #t)))))))
 
-;(install-searcher (lambda (file) (= (<a class=quiet href="extsnd.html#mussoundsrate">mus-sound-srate</a> file) 44100)))
-;(install-searcher (lambda (file) (= (<a class=quiet href="extsnd.html#mussoundchans">mus-sound-chans</a> file) 4)))
+;(install-searcher (lambda (file) (= (<a class=quiet href="extsnd.html#mussoundsrate" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundsrate_tip)">mus-sound-srate</a> file) 44100)))
+;(install-searcher (lambda (file) (= (<a class=quiet href="extsnd.html#mussoundchans" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundchans_tip)">mus-sound-chans</a> file) 4)))
 </pre></td></tr></table>
 
 <p>Now click the 'Filter' button to see only those files that fit the procedure in
@@ -1542,7 +1546,7 @@ Here's the scale-dialog in xg/gtk:
 				 (gtk_widget_hide scale-dialog)))
 	  (g_signal_connect help "clicked"
 			       (lambda (w info)
-				 (<a class=quiet href="extsnd.html#helpdialog">help-dialog</a> "Scaler Dialog" "move the slider to affect the volume")))
+				 (<a class=quiet href="extsnd.html#helpdialog" onmouseout="UnTip()" onmouseover="Tip(extsnd_helpdialog_tip)">help-dialog</a> "Scaler Dialog" "move the slider to affect the volume")))
 	  (gtk_widget_show dismiss)
 	  (gtk_widget_show help)
 	  (let* ((adj (gtk_adjustment_new 0.0 0.0 1.01 0.01 0.01 .01))
@@ -1557,7 +1561,7 @@ Here's the scale-dialog in xg/gtk:
 	    (gtk_widget_show scale)))))
   (gtk_widget_show scale-dialog))
 
-(create-scale-dialog (cadr (<a class=quiet href="extsnd.html#mainwidgets">main-widgets</a>)))
+(create-scale-dialog (cadr (<a class=quiet href="extsnd.html#mainwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_mainwidgets_tip)">main-widgets</a>)))
 </pre></td></tr></table>
 
 <p>The only change from the C code is the addition of GTK_ADJUSTMENT in the scale value_changed
@@ -1571,9 +1575,9 @@ friends:
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
 ;; report on mouse scroll wheel changes when in the channel graph
 (g_signal_connect 
- (car (<a class=quiet href="extsnd.html#channelwidgets">channel-widgets</a>)) "scroll_event" 
+ (car (<a class=quiet href="extsnd.html#channelwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_channelwidgets_tip)">channel-widgets</a>)) "scroll_event" 
  (lambda (w e i)
-   (<a class=quiet href="extsnd.html#sndprint">snd-print</a> (format #f "~%state: ~A, x: ~A, y: ~A, direction: ~A" 
+   (<a class=quiet href="extsnd.html#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> (format #f "~%state: ~A, x: ~A, y: ~A, direction: ~A" 
 		      (.state (GDK_EVENT_SCROLL e))
 		      (.x (GDK_EVENT_SCROLL e))
 		      (.y (GDK_EVENT_SCROLL e))
@@ -1582,9 +1586,9 @@ friends:
 
 ;; report which kind of click was received in the channel graph
 (g_signal_connect 
- (car (<a class=quiet href="extsnd.html#channelwidgets">channel-widgets</a>)) "button_press_event"
+ (car (<a class=quiet href="extsnd.html#channelwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_channelwidgets_tip)">channel-widgets</a>)) "button_press_event"
  (lambda (w e i)
-   (<a class=quiet href="extsnd.html#sndprint">snd-print</a> (format #f "~%button: ~A, ~A click" 
+   (<a class=quiet href="extsnd.html#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> (format #f "~%button: ~A, ~A click" 
 		      (.type (GDK_EVENT_BUTTON e))
 		      (if (= (.type (GDK_EVENT_BUTTON e)) GDK_BUTTON_PRESS)
 			  "single"
@@ -1686,13 +1690,13 @@ if you have an executable file with:
     hiho
     :a-test
     32
-    :(<a class=quiet href="extsnd.html#exit">exit</a>)
+    :(<a class=quiet href="extsnd.html#exit" onmouseout="UnTip()" onmouseover="Tip(extsnd_exit_tip)">exit</a>)
     /home/bil/test/snd-9/ 
 </pre>
 <p>The difference between this use of Snd, and using guile itself
 for scripts is that Snd uses the -l switch where guile would use -s.
 As noted above, you can use the -e switch to use Snd as a pure
-command-line program, and, of course, (<a class=quiet href="extsnd.html#exit">exit</a>) to drop back to the shell.
+command-line program, and, of course, (<a class=quiet href="extsnd.html#exit" onmouseout="UnTip()" onmouseover="Tip(extsnd_exit_tip)">exit</a>) to drop back to the shell.
 Here's a script that doubles every sample in "oboe.snd" and
 writes the result as "test.snd":
 </p>
@@ -1734,7 +1738,7 @@ snd-exit
 to access the script's arguments, and if necessary (if not exiting)
 tell Snd to ignore arguments.  script-args returns a list of strings
 giving the arguments.  The first two are always "-l" and the script
-file name. The current argument is (<a class=quiet href="extsnd.html#scriptarg">script-arg</a>).  If you set this to
+file name. The current argument is (<a class=quiet href="extsnd.html#scriptarg" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptarg_tip)">script-arg</a>).  If you set this to
 a higher value, Snd will subsequently ignore the intervening arguments
 as it scans the startup arguments (see snd-test.scm).
 </p>
@@ -1742,13 +1746,13 @@ as it scans the startup arguments (see snd-test.scm).
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
 #!/home/bil/test/snd-9/snd -l
 !#
-(if (= (length (<a class=quiet href="extsnd.html#scriptargs">script-args</a>)) 2) ;i.e. ("-l" "script")
+(if (= (length (<a class=quiet href="extsnd.html#scriptargs" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptargs_tip)">script-args</a>)) 2) ;i.e. ("-l" "script")
   (display "usage: script file-name...")
   (begin
-    (<a class=quiet href="extsnd.html#opensound">open-sound</a> (list-ref (<a class=quiet href="extsnd.html#scriptargs">script-args</a>) (+ (<a class=quiet href="extsnd.html#scriptarg">script-arg</a>) 1)))
-    (<a class=quiet href="extsnd.html#scaleby">scale-by</a> 2.0)
-    (<a class=quiet href="extsnd.html#savesoundas">save-sound-as</a> "test.snd")))
-(<a class=quiet href="extsnd.html#exit">exit</a>)
+    (<a class=quiet href="extsnd.html#opensound" onmouseout="UnTip()" onmouseover="Tip(extsnd_opensound_tip)">open-sound</a> (list-ref (<a class=quiet href="extsnd.html#scriptargs" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptargs_tip)">script-args</a>) (+ (<a class=quiet href="extsnd.html#scriptarg" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptarg_tip)">script-arg</a>) 1)))
+    (<a class=quiet href="extsnd.html#scaleby" onmouseout="UnTip()" onmouseover="Tip(extsnd_scaleby_tip)">scale-by</a> 2.0)
+    (<a class=quiet href="extsnd.html#savesoundas" onmouseout="UnTip()" onmouseover="Tip(extsnd_savesoundas_tip)">save-sound-as</a> "test.snd")))
+(<a class=quiet href="extsnd.html#exit" onmouseout="UnTip()" onmouseover="Tip(extsnd_exit_tip)">exit</a>)
 </pre></td></tr></table>
 
 <p>This either grumbles if no argument is given,
@@ -1766,13 +1770,13 @@ the following displays all the comments it finds:
 #!/home/bil/cl/snd -l
 !#
 (use-modules (ice-9 format))
-(if (= (length (<a class=quiet href="extsnd.html#scriptargs">script-args</a>)) 2) ;i.e. ("-l" "script")
+(if (= (length (<a class=quiet href="extsnd.html#scriptargs" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptargs_tip)">script-args</a>)) 2) ;i.e. ("-l" "script")
   (display "usage: script file-name...")
-  (do ((arg (+ (<a class=quiet href="extsnd.html#scriptarg">script-arg</a>) 1) (1+ arg)))
-      ((= arg (length (<a class=quiet href="extsnd.html#scriptargs">script-args</a>))))
-    (let ((name (list-ref (<a class=quiet href="extsnd.html#scriptargs">script-args</a>) arg)))
-      (display (format #f "~A: ~A~%" name (<a class=quiet href="extsnd.html#mussoundcomment">mus-sound-comment</a> name))))))
-(<a class=quiet href="extsnd.html#exit">exit</a>)
+  (do ((arg (+ (<a class=quiet href="extsnd.html#scriptarg" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptarg_tip)">script-arg</a>) 1) (1+ arg)))
+      ((= arg (length (<a class=quiet href="extsnd.html#scriptargs" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptargs_tip)">script-args</a>))))
+    (let ((name (list-ref (<a class=quiet href="extsnd.html#scriptargs" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptargs_tip)">script-args</a>) arg)))
+      (display (format #f "~A: ~A~%" name (<a class=quiet href="extsnd.html#mussoundcomment" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundcomment_tip)">mus-sound-comment</a> name))))))
+(<a class=quiet href="extsnd.html#exit" onmouseout="UnTip()" onmouseover="Tip(extsnd_exit_tip)">exit</a>)
 </pre></td></tr></table>
 
 <p>
@@ -1801,17 +1805,17 @@ than 40 seconds in duration, and truncates them to 40 seconds:
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
 #!/usr/local/bin/snd -l
 !#
-(if (= (length (<a class=quiet href="extsnd.html#scriptargs">script-args</a>)) 2)
+(if (= (length (<a class=quiet href="extsnd.html#scriptargs" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptargs_tip)">script-args</a>)) 2)
   (display "usage: trunc.scm file-name...")
-  (do ((arg (+ (<a class=quiet href="extsnd.html#scriptarg">script-arg</a>) 1) (1+ arg)))
-      ((= arg (length (<a class=quiet href="extsnd.html#scriptargs">script-args</a>))))
-    (let* ((name (list-ref (<a class=quiet href="extsnd.html#scriptargs">script-args</a>) arg)))
-      (if (&gt; (<a class=quiet href="extsnd.html#mussoundduration">mus-sound-duration</a> name) 40.0)
-	  (let* ((ind (<a class=quiet href="extsnd.html#opensound">open-sound</a> name)))
-	    (set! (<a class=quiet href="extsnd.html#frames">frames</a> ind) (* 40 (<a class=quiet href="extsnd.html#srate">srate</a> ind)))
-	    (<a class=quiet href="extsnd.html#savesound">save-sound</a> ind)
-	    (<a class=quiet href="extsnd.html#closesound">close-sound</a> ind))))))
-(<a class=quiet href="extsnd.html#exit">exit</a>)
+  (do ((arg (+ (<a class=quiet href="extsnd.html#scriptarg" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptarg_tip)">script-arg</a>) 1) (1+ arg)))
+      ((= arg (length (<a class=quiet href="extsnd.html#scriptargs" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptargs_tip)">script-args</a>))))
+    (let* ((name (list-ref (<a class=quiet href="extsnd.html#scriptargs" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptargs_tip)">script-args</a>) arg)))
+      (if (&gt; (<a class=quiet href="extsnd.html#mussoundduration" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundduration_tip)">mus-sound-duration</a> name) 40.0)
+	  (let* ((ind (<a class=quiet href="extsnd.html#opensound" onmouseout="UnTip()" onmouseover="Tip(extsnd_opensound_tip)">open-sound</a> name)))
+	    (set! (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> ind) (* 40 (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> ind)))
+	    (<a class=quiet href="extsnd.html#savesound" onmouseout="UnTip()" onmouseover="Tip(extsnd_savesound_tip)">save-sound</a> ind)
+	    (<a class=quiet href="extsnd.html#closesound" onmouseout="UnTip()" onmouseover="Tip(extsnd_closesound_tip)">close-sound</a> ind))))))
+(<a class=quiet href="extsnd.html#exit" onmouseout="UnTip()" onmouseover="Tip(extsnd_exit_tip)">exit</a>)
 </pre></td></tr></table>
 
 <p>Here's a sndplay replacement script:</p>
@@ -1819,8 +1823,8 @@ than 40 seconds in duration, and truncates them to 40 seconds:
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
 #!snd -b
 !#
-(<a class=quiet href="extsnd.html#playandwait">play-and-wait</a> (list-ref (<a class=quiet href="extsnd.html#scriptargs">script-args</a>) (+ (<a class=quiet href="extsnd.html#scriptarg">script-arg</a>) 1)))
-(<a class=quiet href="extsnd.html#exit">exit</a>)
+(<a class=quiet href="extsnd.html#playandwait" onmouseout="UnTip()" onmouseover="Tip(extsnd_playandwait_tip)">play-and-wait</a> (list-ref (<a class=quiet href="extsnd.html#scriptargs" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptargs_tip)">script-args</a>) (+ (<a class=quiet href="extsnd.html#scriptarg" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptarg_tip)">script-arg</a>) 1)))
+(<a class=quiet href="extsnd.html#exit" onmouseout="UnTip()" onmouseover="Tip(extsnd_exit_tip)">exit</a>)
 </pre></td></tr></table>
 
 <p>And here's a script that splits a multichannel file
@@ -1830,23 +1834,23 @@ into a bunch of mono files:
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
 #!snd -b
 !#
-(if (= (length (<a class=quiet href="extsnd.html#scriptargs">script-args</a>)) 2)
+(if (= (length (<a class=quiet href="extsnd.html#scriptargs" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptargs_tip)">script-args</a>)) 2)
   (display "usage: split.scm filename")
-  (let* ((name (list-ref (<a class=quiet href="extsnd.html#scriptargs">script-args</a>) (1+ (<a class=quiet href="extsnd.html#scriptarg">script-arg</a>))))
-	 (chns (<a class=quiet href="extsnd.html#mussoundchans">mus-sound-chans</a> name)))
+  (let* ((name (list-ref (<a class=quiet href="extsnd.html#scriptargs" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptargs_tip)">script-args</a>) (1+ (<a class=quiet href="extsnd.html#scriptarg" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptarg_tip)">script-arg</a>))))
+	 (chns (<a class=quiet href="extsnd.html#mussoundchans" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundchans_tip)">mus-sound-chans</a> name)))
     (if (&gt; chns 1)
-	(let ((ind (<a class=quiet href="extsnd.html#opensound">open-sound</a> name)))
+	(let ((ind (<a class=quiet href="extsnd.html#opensound" onmouseout="UnTip()" onmouseover="Tip(extsnd_opensound_tip)">open-sound</a> name)))
 	  (do ((i 0 (1+ i)))
 	      ((= i chns))
 	    (display (format #f "~A.~D " name i))
-	    (<a class=quiet href="extsnd.html#savesoundas">save-sound-as</a> (format #f "~A.~D" name i)
+	    (<a class=quiet href="extsnd.html#savesoundas" onmouseout="UnTip()" onmouseover="Tip(extsnd_savesoundas_tip)">save-sound-as</a> (format #f "~A.~D" name i)
 			   ind
-			   (<a class=quiet href="extsnd.html#headertype">header-type</a> ind)
-			   (<a class=quiet href="extsnd.html#dataformat">data-format</a> ind)
-			   (<a class=quiet href="extsnd.html#srate">srate</a> ind)
+			   (<a class=quiet href="extsnd.html#headertype" onmouseout="UnTip()" onmouseover="Tip(extsnd_headertype_tip)">header-type</a> ind)
+			   (<a class=quiet href="extsnd.html#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_dataformat_tip)">data-format</a> ind)
+			   (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> ind)
 			   i))
-	  (<a class=quiet href="extsnd.html#closesound">close-sound</a> ind)))))
-(<a class=quiet href="extsnd.html#exit">exit</a>)
+	  (<a class=quiet href="extsnd.html#closesound" onmouseout="UnTip()" onmouseover="Tip(extsnd_closesound_tip)">close-sound</a> ind)))))
+(<a class=quiet href="extsnd.html#exit" onmouseout="UnTip()" onmouseover="Tip(extsnd_exit_tip)">exit</a>)
 </pre></td></tr></table>
 
 <br>
@@ -1866,7 +1870,7 @@ In Ruby, the following changes are made in the function names (as presented in S
 (e.g. Autocorrelation).  The generalized set! functions are replaced
 by "set_" plus the base name (e.g. set_window_width), with arguments
 reordered in some cases to place the optional values after the new value.  That is,
-<code>(set! (<a class=quiet href="extsnd.html#sync">sync</a> snd) 1)</code> becomes <code>set_sync(1, snd)</code>.
+<code>(set! (<a class=quiet href="extsnd.html#sync" onmouseout="UnTip()" onmouseover="Tip(extsnd_sync_tip)">sync</a> snd) 1)</code> becomes <code>set_sync(1, snd)</code>.
 Hooks in Ruby (which have little or nothing to do with Ruby's "hookable variables")
 are just procedures or nil, not lists of procedures as in Scheme.
 Here's a Ruby version of the init file given
@@ -2060,12 +2064,12 @@ The main function is:
 
 	Applies a LADSPA plugin to a block of samples. 
 An example call to apply the low-pass-filter in the CMT plugin library is 
-(apply-ladspa (<a class=quiet href="extsnd.html#makesamplereader">make-sample-reader</a> 0) (list "cmt" "lpf" 1000) 10000 "origin").
+(apply-ladspa (<a class=quiet href="extsnd.html#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a> 0) (list "cmt" "lpf" 1000) 10000 "origin").
 </pre>
 <p>Dave Phillips in <a href="http://www.oreillynet.com/pub/a/linux/2001/02/02/ladspa.html">Linux Audio Plug-Ins: A Look Into LADSPA</a> adds this:
 </p>
 <pre>
-  (apply-ladspa (<a class=quiet href="extsnd.html#makesamplereader">make-sample-reader</a> 57264) (list "cmt" "delay_5s" .3 .5) 32556 "ibm.wav")
+  (apply-ladspa (<a class=quiet href="extsnd.html#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a> 57264) (list "cmt" "delay_5s" .3 .5) 32556 "ibm.wav")
 </pre>
 <p>
 "This sequence tells Snd to read a block of 32556 samples from the ibm.wav file, starting at sample number 57264,
@@ -2088,8 +2092,8 @@ cmt.so is in /usr/local/lib/ladspa, (and you're using tcsh), then
 than one input is required, the first argument to apply-ladspa should be a list of readers:
 </p>
 <pre>
-  (apply-ladspa (list (<a class=quiet href="extsnd.html#makesamplereader">make-sample-reader</a> 0 0 0)  ;chan 0
-                      (<a class=quiet href="extsnd.html#makesamplereader">make-sample-reader</a> 0 0 1)) ;chan 1
+  (apply-ladspa (list (<a class=quiet href="extsnd.html#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a> 0 0 0)  ;chan 0
+                      (<a class=quiet href="extsnd.html#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a> 0 0 1)) ;chan 1
                 (list "cmt" "freeverb3" 0 .5 .5 .5 .5 .5) 
                 100000 "freeverb")
 </pre>
@@ -2097,10 +2101,10 @@ than one input is required, the first argument to apply-ladspa should be a list 
 </p>
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
 (define* (ladspa-channel ladspa-data :optional (beg 0) ndur snd chn (edpos -1))
-  (let* ((dur (or ndur (- (<a class=quiet href="extsnd.html#frames">frames</a> snd chn) beg)))
-	 (reader (<a class=quiet href="extsnd.html#makesamplereader">make-sample-reader</a> beg snd chn 1 edpos)))
+  (let* ((dur (or ndur (- (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> snd chn) beg)))
+	 (reader (<a class=quiet href="extsnd.html#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a> beg snd chn 1 edpos)))
     (let ((result (<em class=red>apply-ladspa</em> reader ladspa-data dur "apply-ladspa" snd chn)))
-      (<a class=quiet href="extsnd.html#freesamplereader">free-sample-reader</a> reader)
+      (<a class=quiet href="extsnd.html#freesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_freesamplereader_tip)">free-sample-reader</a> reader)
       result)))
 </pre></td></tr></table>
 
@@ -2176,20 +2180,20 @@ data directly to the DAC:
   ;; (ladspa-it "cmt" "delay_5s" .3 .5)
   (init-ladspa)
   (let* ((descriptor (ladspa-descriptor library label))
-	 (handle (ladspa-instantiate descriptor (<a class=quiet href="extsnd.html#srate">srate</a>)))
+	 (handle (ladspa-instantiate descriptor (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>)))
 	 (block-size 256)
-	 (in-block (<a class=quiet href="extsnd.html#makevct">make-vct</a> block-size))
-	 (out-block (<a class=quiet href="extsnd.html#makevct">make-vct</a> block-size))
-	 (len (<a class=quiet href="extsnd.html#frames">frames</a>))
-	 (data (<a class=quiet href="extsnd.html#makesounddata">make-sound-data</a> 1 block-size))
-	 (audio-port (<a class=quiet href="extsnd.html#musaudioopenoutput">mus-audio-open-output</a> mus-audio-default (<a class=quiet href="extsnd.html#srate">srate</a>) 1 mus-lshort (* block-size 2))))
+	 (in-block (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> block-size))
+	 (out-block (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> block-size))
+	 (len (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>))
+	 (data (<a class=quiet href="extsnd.html#makesounddata" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesounddata_tip)">make-sound-data</a> 1 block-size))
+	 (audio-port (<a class=quiet href="extsnd.html#musaudioopenoutput" onmouseout="UnTip()" onmouseover="Tip(extsnd_musaudioopenoutput_tip)">mus-audio-open-output</a> mus-audio-default (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>) 1 mus-lshort (* block-size 2))))
   (dynamic-wind
    (lambda ()
      (let ((count 0))
        (for-each 
 	(lambda (port)
 	  (if (not (= (logand port LADSPA_PORT_CONTROL) 0))
-	      (let ((parameter (<a class=quiet href="extsnd.html#makevct">make-vct</a> 1 (car plugin-parameters))))
+	      (let ((parameter (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> 1 (car plugin-parameters))))
 		(set! plugin-parameters (cdr plugin-parameters))
 		(ladspa-connect-port descriptor handle count parameter))
 	      (if (not (= (logand port LADSPA_PORT_INPUT) 0))
@@ -2201,13 +2205,13 @@ data directly to the DAC:
      (ladspa-activate descriptor handle)
      (do ((i 0 (+ i block-size)))
 	 ((&gt;= i len))
-       (<a class=quiet href="extsnd.html#vctsubseq">vct-subseq</a> (<a class=quiet href="extsnd.html#channeltovct">channel-&gt;vct</a> i block-size) 0 block-size in-block)
+       (<a class=quiet href="extsnd.html#vctsubseq" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctsubseq_tip)">vct-subseq</a> (<a class=quiet href="extsnd.html#channeltovct" onmouseout="UnTip()" onmouseover="Tip(extsnd_channeltovct_tip)">channel-&gt;vct</a> i block-size) 0 block-size in-block)
        (ladspa-run descriptor handle block-size)
-       (<a class=quiet href="extsnd.html#vcttosounddata">vct-&gt;sound-data</a> out-block data 0)
-       (<a class=quiet href="extsnd.html#musaudiowrite">mus-audio-write</a> audio-port data block-size)))
+       (<a class=quiet href="extsnd.html#vcttosounddata" onmouseout="UnTip()" onmouseover="Tip(extsnd_vcttosounddata_tip)">vct-&gt;sound-data</a> out-block data 0)
+       (<a class=quiet href="extsnd.html#musaudiowrite" onmouseout="UnTip()" onmouseover="Tip(extsnd_musaudiowrite_tip)">mus-audio-write</a> audio-port data block-size)))
    (lambda ()
      (ladspa-deactivate descriptor handle)
-     (<a class=quiet href="extsnd.html#musaudioclose">mus-audio-close</a> audio-port)
+     (<a class=quiet href="extsnd.html#musaudioclose" onmouseout="UnTip()" onmouseover="Tip(extsnd_musaudioclose_tip)">mus-audio-close</a> audio-port)
      (ladspa-cleanup descriptor handle)))))
 </pre></td></tr></table>
 <p>For a Ladspa GUI builder, see <a href="sndscm.html#ladspadoc">ladspa.scm</a>.
@@ -2321,7 +2325,7 @@ that replaces the current property value (which Snd will evaluate).
 CLM's communication
 with Snd function sends Snd this string:</p>
 <pre>
-    "(set! (<a class=quiet href="extsnd.html#windowproperty">window-property</a> \"CLM_VERSION\" \"CLM_COMMAND\") " str ")"
+    "(set! (<a class=quiet href="extsnd.html#windowproperty" onmouseout="UnTip()" onmouseover="Tip(extsnd_windowproperty_tip)">window-property</a> \"CLM_VERSION\" \"CLM_COMMAND\") " str ")"
 </pre>
 <p>where 'str' is the form to be evaluated within Snd.  It then waits
 for a change to the CLM_COMMAND property, returning its value to the
@@ -2350,8 +2354,8 @@ program:
 </p>
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
 (define (draw-it)
-  (glXMakeCurrent (XtDisplay (cadr (<a class=quiet href="extsnd.html#mainwidgets">main-widgets</a>))) 
-		  (XtWindow (car (<a class=quiet href="extsnd.html#channelwidgets">channel-widgets</a>)))
+  (glXMakeCurrent (XtDisplay (cadr (<a class=quiet href="extsnd.html#mainwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_mainwidgets_tip)">main-widgets</a>))) 
+		  (XtWindow (car (<a class=quiet href="extsnd.html#channelwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_channelwidgets_tip)">channel-widgets</a>)))
 		  (snd-glx-context)) ; the GL context
   (glEnable GL_DEPTH_TEST)
   (glDepthFunc GL_LEQUAL)
@@ -2361,7 +2365,7 @@ program:
   (gluPerspective 40.0 1.0 10.0 200.0)
   (glTranslatef 0.0 0.0 -50.0)
   (glRotatef -58.0 0.0 1.0 0.0)
-  (let ((vals (XtVaGetValues (car (<a class=quiet href="extsnd.html#channelwidgets">channel-widgets</a>)) (list XmNwidth 0 XmNheight 0))))
+  (let ((vals (XtVaGetValues (car (<a class=quiet href="extsnd.html#channelwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_channelwidgets_tip)">channel-widgets</a>)) (list XmNwidth 0 XmNheight 0))))
     (glViewport 0 0 (list-ref vals 1) (list-ref vals 3)))
   (glClear (logior GL_COLOR_BUFFER_BIT GL_DEPTH_BUFFER_BIT))
   (glBegin GL_POLYGON)
@@ -2380,8 +2384,8 @@ program:
   (glColor3f 0.0 0.0 1.0)   (glVertex3f 4.0 -9.0 -10.0)
   (glColor3f 1.0 0.0 1.0)   (glVertex3f 4.0 -6.0 -10.0)
   (glEnd)
-  (glXSwapBuffers (XtDisplay (cadr (<a class=quiet href="extsnd.html#mainwidgets">main-widgets</a>))) 
-		  (XtWindow (car (<a class=quiet href="extsnd.html#channelwidgets">channel-widgets</a>))))
+  (glXSwapBuffers (XtDisplay (cadr (<a class=quiet href="extsnd.html#mainwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_mainwidgets_tip)">main-widgets</a>))) 
+		  (XtWindow (car (<a class=quiet href="extsnd.html#channelwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_channelwidgets_tip)">channel-widgets</a>))))
   (glFlush))
 </pre></td></tr></table>
 
@@ -2455,16 +2459,15 @@ This returns the roots of the polynomial "poly" via gsl_poly_complex_solve.  See
 <center>
 <table bgcolor="aliceblue" border=0 cellspacing=8><tr>
 <td><small>related documentation:</small></td>
-<td><small><a href="snd.html" onmouseover="return escape('basic Snd user-interface documentation')">snd.html</a></small></td>
-<td><small><a href="extsnd.html" onmouseover="return escape('Snd extension and customization')">extsnd.html</a></small></td>
-<td><small><a href="sndscm.html" onmouseover="return escape('Scheme, Ruby, and Forth files included with Snd')">sndscm.html</a></small></td>
-<td><small><a href="sndclm.html" onmouseover="return escape('sound synthesis generators')">sndclm.html</a></small></td>
-<td><small><a href="fm.html" onmouseover="return escape('introduction to frequency modulation')">fm.html</a></small></td>
-<td><small><a href="sndlib.html" onmouseover="return escape('library that handles sound files')">sndlib.html</a></small></td>
-<td><small><a href="libxm.html" onmouseover="return escape('library that ties Motif and Gtk into Snd')">libxm.html</a></small></td>
-<td><small><a href="index.html" onmouseover="return escape('an actual index, not some introductory file')">index.html</a></small></td>
+<td><small><a href="snd.html" onmouseout="UnTip()" onmouseover="Tip('basic Snd user-interface documentation')">snd.html</a></small></td>
+<td><small><a href="extsnd.html" onmouseout="UnTip()" onmouseover="Tip('Snd extension and customization')">extsnd.html</a></small></td>
+<td><small><a href="sndscm.html" onmouseout="UnTip()" onmouseover="Tip('Scheme, Ruby, and Forth files included with Snd')">sndscm.html</a></small></td>
+<td><small><a href="sndclm.html" onmouseout="UnTip()" onmouseover="Tip('sound synthesis generators')">sndclm.html</a></small></td>
+<td><small><a href="fm.html" onmouseout="UnTip()" onmouseover="Tip('introduction to frequency modulation')">fm.html</a></small></td>
+<td><small><a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip('library that handles sound files')">sndlib.html</a></small></td>
+<td><small><a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip('library that ties Motif and Gtk into Snd')">libxm.html</a></small></td>
+<td><small><a href="index.html" onmouseout="UnTip()" onmouseover="Tip('an actual index, not some introductory file')">index.html</a></small></td>
 </tr></table>
 </center>
 
-<script language=JavaScript type="text/javascript" src="wz_tooltip.js"></script>
 </body></html>
