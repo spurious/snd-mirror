@@ -1766,7 +1766,7 @@ This hook is called upon exit.
 It can be used
 to perform cleanup activities; in <a href="sndscm.html#peakenvdoc">peak-env.scm</a>, for example, we save peak-env info upon exit:
 <pre>
-    (add-hook! <em class=red>exit-hook</em> (lambda () (for-each <a class=quiet href="sndscm.html#peakenvdoc">save-peak-env-info</a> (<a class=quiet href="#sounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounds_tip)">sounds</a>))))
+    (add-hook! <em class=red>exit-hook</em> (lambda () (for-each <a class=quiet href="sndscm.html#peakenvdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_savepeakenvinfo_tip)">save-peak-env-info</a> (<a class=quiet href="#sounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounds_tip)">sounds</a>))))
 </pre>
 For more examples, see extensions.scm and autosave.scm.
 Guile's exit-hook is shadowed by this variable.
@@ -1805,7 +1805,7 @@ This hook is called from <a href="#sndhelp">snd-help</a> with the current help s
 Say we want the index.scm
 procedure <a href="sndscm.html#html">html</a> called any time snd-help is called (from C-? for example):
 <pre>
-    (add-hook! <em class=red>help-hook</em> (lambda (subject help) (<a class=quiet href="sndscm.html#html">html</a> subject) #f))
+    (add-hook! <em class=red>help-hook</em> (lambda (subject help) (<a class=quiet href="sndscm.html#html" onmouseout="UnTip()" onmouseover="Tip(sndscm_html_tip)">html</a> subject) #f))
 </pre>
 If there is more than one hook function, each function's result is passed as input to the next function.
 </td></tr><tr><td colspan=3 height=16></td></tr>
@@ -3388,7 +3388,7 @@ This changes (edits) the channel, so 'origin' provides a way to name the edit (f
 Since with-sound can write its output to a vct, we can use it with vct-&gt;channel to paste in an fm-violin note as
 an edit:
 <pre>
-  (vct-&gt;channel (<a class=quiet href="sndscm.html#withsound">with-sound</a> (:output (make-vct 44100)) (<a class=quiet href="sndscm.html#fmviolin">fm-violin</a> 0 1 440 .1)))
+  (vct-&gt;channel (<a class=quiet href="sndscm.html#withsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_withsound_tip)">with-sound</a> (:output (make-vct 44100)) (<a class=quiet href="sndscm.html#fmviolin" onmouseout="UnTip()" onmouseover="Tip(sndscm_fmviolin_tip)">fm-violin</a> 0 1 440 .1)))
 </pre>
 To add such a note to whatever is already present, use either <a href="#mixvct">mix-vct</a> or 
 <a href="sndscm.html#mixsounddata">mix-sound-data</a>.
@@ -4457,7 +4457,7 @@ This function deletes all marks in the given channel.  It could be defined in Sc
     (for-each 
       (lambda (m) 
         (delete-mark m)) 
-      (<a class=quiet href="#emarks" onmouseout="UnTip()" onmouseover="Tip(extsnd_emarks_tip)">marks</a> (or snd (selected-sound)) (or chn (selected-channel))))
+      (<a class=quiet href="#emarks" onmouseout="UnTip()" onmouseover="Tip(extsnd_emarks_tip)">marks</a> (or snd (<a class=quiet href="#selectedsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedsound_tip)">selected-sound</a>)) (or chn (<a class=quiet href="#selectedchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedchannel_tip)">selected-channel</a>))))
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -4787,7 +4787,7 @@ We can use <a href="sndscm.html#dlocsigdoc">dlocsig</a> in conjunction with mix 
   (let* ((duration (<a class=quiet href="#mussoundduration" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundduration_tip)">mus-sound-duration</a> file))
 	 (rd (<a class=quiet href="#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a> 0 file))
 	 (start (<a class=quiet href="sndclm.html#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> start-time))
-         (tmp-sound (<a class=quiet href="sndscm.html#sound-let">with-temp-sound</a> (:channels (<a class=quiet href="#channels" onmouseout="UnTip()" onmouseover="Tip(extsnd_channels_tip)">channels</a>) :srate (<a class=quiet href="#mussoundsrate" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundsrate_tip)">mus-sound-srate</a> file))
+         (tmp-sound (<a class=quiet href="sndscm.html#sound-let" onmouseout="UnTip()" onmouseover="Tip(sndscm_sound_let_tip)">with-temp-sound</a> (:channels (<a class=quiet href="#channels" onmouseout="UnTip()" onmouseover="Tip(extsnd_channels_tip)">channels</a>) :srate (<a class=quiet href="#mussoundsrate" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundsrate_tip)">mus-sound-srate</a> file))
 
          ;; We use with-temp-sound here rather than sound-let because mix normally expects its input file to
          ;; be around until it decides it doesn't need it anymore, but sound-let deletes all its temp files.
@@ -4924,9 +4924,9 @@ feedback:
       (index (<a class=quiet href="#newsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_newsound_tip)">new-sound</a> "test.snd" :channels 1 :size (* 44100 22))))
   
   (define (violin beg dur freq amp)
-    (let ((id (<a class=quiet href="#mix" onmouseout="UnTip()" onmouseover="Tip(extsnd_mix_tip)">mix</a> (<a class=quiet href="sndscm.html#withtempsound">with-temp-sound</a> ()                            ; write instrument output to temp sound
-   	             (<a class=quiet href="sndscm.html#fmviolin">fm-violin</a> 0 dur (<a class=quiet href="sndscm.html#tofrequency">-&gt;frequency</a> freq #t) amp)) ; our favorite FM instrument
-		(<a class=quiet href="sndscm.html#tosample">-&gt;sample</a> beg) 0 index 0  ; mix start, file in-chan, sound, channel
+    (let ((id (<a class=quiet href="#mix" onmouseout="UnTip()" onmouseover="Tip(extsnd_mix_tip)">mix</a> (<a class=quiet href="sndscm.html#withtempsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_withtempsound_tip)">with-temp-sound</a> ()                            ; write instrument output to temp sound
+   	             (<a class=quiet href="sndscm.html#fmviolin" onmouseout="UnTip()" onmouseover="Tip(sndscm_fmviolin_tip)">fm-violin</a> 0 dur (<a class=quiet href="sndscm.html#tofrequency" onmouseout="UnTip()" onmouseover="Tip(sndscm_tofrequency_tip)">-&gt;frequency</a> freq #t) amp)) ; our favorite FM instrument
+		(<a class=quiet href="sndscm.html#tosample" onmouseout="UnTip()" onmouseover="Tip(sndscm_tosample_tip)">-&gt;sample</a> beg) 0 index 0  ; mix start, file in-chan, sound, channel
                 #t #t)))                  ; mix with tag and auto-delete
       (if (symbol? freq)
 	  (set! (<em class=red>mix-name</em> id) (symbol-&gt;string freq)))
@@ -4935,9 +4935,9 @@ feedback:
       (set! (<a class=quiet href="#mixtagy" onmouseout="UnTip()" onmouseover="Tip(extsnd_mixtagy_tip)">mix-tag-y</a> id) (frequency-&gt;tag-y (-&gt;frequency freq #t) (-&gt;frequency 'c2) 3))))
   
   (define (cello beg dur freq amp)
-    (let ((id (<a class=quiet href="#mix" onmouseout="UnTip()" onmouseover="Tip(extsnd_mix_tip)">mix</a> (<a class=quiet href="sndscm.html#withtempsound">with-temp-sound</a> ()
-   	             (<a class=quiet href="sndscm.html#fmviolin">fm-violin</a> 0 dur (<a class=quiet href="sndscm.html#tofrequency">-&gt;frequency</a> freq #t) amp :fm-index 1.5))
-                (<a class=quiet href="sndscm.html#tosample">-&gt;sample</a> beg) 0 index 0
+    (let ((id (<a class=quiet href="#mix" onmouseout="UnTip()" onmouseover="Tip(extsnd_mix_tip)">mix</a> (<a class=quiet href="sndscm.html#withtempsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_withtempsound_tip)">with-temp-sound</a> ()
+   	             (<a class=quiet href="sndscm.html#fmviolin" onmouseout="UnTip()" onmouseover="Tip(sndscm_fmviolin_tip)">fm-violin</a> 0 dur (<a class=quiet href="sndscm.html#tofrequency" onmouseout="UnTip()" onmouseover="Tip(sndscm_tofrequency_tip)">-&gt;frequency</a> freq #t) amp :fm-index 1.5))
+                (<a class=quiet href="sndscm.html#tosample" onmouseout="UnTip()" onmouseover="Tip(sndscm_tosample_tip)">-&gt;sample</a> beg) 0 index 0
   	        #t #t)))
       (if (symbol? freq)
 	  (set! (<em class=red>mix-name</em> id) (symbol-&gt;string freq)))
@@ -4977,12 +4977,12 @@ to use multiple output files, collecting related notes in one file, then mixing 
       (cellos (<a class=quiet href="sndclm.html#make-sampletofile" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_sampletofile_tip)">make-sample-&gt;file</a> "cellos.snd" 1 mus-lfloat mus-next)))
 
   (define (violin beg dur freq amp)
-    (<a class=quiet href="sndscm.html#withtempsound">with-temp-sound</a> (:continue-old-file #t :output "violins.snd") 
-      (<a class=quiet href="sndscm.html#fmviolin">fm-violin</a> beg dur (-&gt;frequency freq #t) amp)))
+    (<a class=quiet href="sndscm.html#withtempsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_withtempsound_tip)">with-temp-sound</a> (:continue-old-file #t :output "violins.snd") 
+      (<a class=quiet href="sndscm.html#fmviolin" onmouseout="UnTip()" onmouseover="Tip(sndscm_fmviolin_tip)">fm-violin</a> beg dur (-&gt;frequency freq #t) amp)))
 
   (define (cello beg dur freq amp)
-    (<a class=quiet href="sndscm.html#withtempsound">with-temp-sound</a> (:continue-old-file #t :output "cellos.snd") 
-      (<a class=quiet href="sndscm.html#fmviolin">fm-violin</a> beg dur (-&gt;frequency freq #t) amp :fm-index 1.5)))
+    (<a class=quiet href="sndscm.html#withtempsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_withtempsound_tip)">with-temp-sound</a> (:continue-old-file #t :output "cellos.snd") 
+      (<a class=quiet href="sndscm.html#fmviolin" onmouseout="UnTip()" onmouseover="Tip(sndscm_fmviolin_tip)">fm-violin</a> beg dur (-&gt;frequency freq #t) amp :fm-index 1.5)))
 
   (violin 0 1 'e4 .2)  (violin 1 1.5 'g4 .2)   (violin 2.5 .5 'g3 .2)
   (cello  0 1 'c3 .2)  (cello  1 1.5 'e3 .2)  (cello  2.5 .5 'g2 .2)
@@ -5531,7 +5531,7 @@ saving them in files named 'base'.n: (brksnd 1.0 \"sec\")"
     (do ((i 0 (+ i hop))
 	 (j 0 (1+ j)))
 	((&gt;= i len))
-      (<a class=quiet href="sndscm.html#makeselection">make-selection</a> i (+ i hop)) ; in extensions.scm
+      (<a class=quiet href="sndscm.html#makeselection" onmouseout="UnTip()" onmouseover="Tip(sndscm_makeselection_tip)">make-selection</a> i (+ i hop)) ; in extensions.scm
       (<em class=red>save-selection</em> (string-append base "." (number-&gt;string j))))
     (set! (<a class=quiet href="#sync" onmouseout="UnTip()" onmouseover="Tip(extsnd_sync_tip)">sync</a>) old-sync)))
 </pre></td></tr></table>
@@ -6368,7 +6368,7 @@ or (an alternative that sets the underlying database entry, rather than the curr
 </pre></td></tr></table>
 
 If you set any of these fields, the sound's index may change (there can be an embedded <a class=quiet href="#updatesound" onmouseout="UnTip()" onmouseover="Tip(extsnd_updatesound_tip)">update-sound</a>).
-To deal with MPEG, OGG, Flac, or Speex files, see examp.scm (<a class=quiet href="sndscm.html#mpg">mpg</a>) or misc.scm (mpg123 and ogg123).
+To deal with MPEG, OGG, Flac, or Speex files, see examp.scm (<a class=quiet href="sndscm.html#mpg" onmouseout="UnTip()" onmouseover="Tip(sndscm_mpg_tip)">mpg</a>) or misc.scm (mpg123 and ogg123).
 Octave/WaveLab ASCII files can be translated by read-ascii (examp.scm).
 <br><br>
 To turn a data-format number into a string, use <a href="#musdataformatname">mus-data-format-name</a>. To get
@@ -6672,7 +6672,7 @@ If you want to use the cascade filter structure, rather than the canonical
 form of CLM's filter generator:
 
 <pre>
-    (define (<a class=quiet href="sndscm.html#makebiquad">make-biquad</a> a0 a1 a2 b1 b2)
+    (define (<a class=quiet href="sndscm.html#makebiquad" onmouseout="UnTip()" onmouseover="Tip(sndscm_makebiquad_tip)">make-biquad</a> a0 a1 a2 b1 b2)
       (<a class=quiet href="sndclm.html#make-filter" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_filter_tip)">make-filter</a> 3 (<a class=quiet href="#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> a0 a1 a2) (<a class=quiet href="#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 0.0 b1 b2)))
 </pre>
 
@@ -6988,7 +6988,7 @@ This inserts 'samps' samples of 'data' (normally a vct) starting at sample 'samp
 'data' can be a filename.
 The regularized version of this is:<br>
 <pre>
-    (define* (<a class=quiet href="sndscm.html#insertchannel">insert-channel</a> data :optional beg dur snd chn edpos)
+    (define* (<a class=quiet href="sndscm.html#insertchannel" onmouseout="UnTip()" onmouseover="Tip(sndscm_insertchannel_tip)">insert-channel</a> data :optional beg dur snd chn edpos)
       (insert-samples beg dur data snd chn edpos))
 </pre>
 To insert a block of samples of a given value: <code>(insert-samples beg dur (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> dur val))</code>
@@ -7032,7 +7032,7 @@ waveform for the given channel.
 To get the data currently displayed in the time domain window:
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
-(define (<a class=quiet href="sndscm.html#windowsamples">window-samples</a>)
+(define (<a class=quiet href="sndscm.html#windowsamples" onmouseout="UnTip()" onmouseover="Tip(sndscm_windowsamples_tip)">window-samples</a>)
   (let ((wl (<em class=red>left-sample</em>))
 	(wr (<a href="#rightsample">right-sample</a>)))
    (<a href="#samples">samples</a> wl (+ 1 (- wr wl)))))
@@ -7411,7 +7411,7 @@ giving the correct values in the call to open-raw-sound.
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
 (define mpg
   (lambda (mpgfile rawfile chans)
-    "(<a class=quiet href="sndscm.html#mpg">mpg</a> file tmpname chans) converts file from MPEG-3 to raw 16-bit samples using mpg123"
+    "(<a class=quiet href="sndscm.html#mpg" onmouseout="UnTip()" onmouseover="Tip(sndscm_mpg_tip)">mpg</a> file tmpname chans) converts file from MPEG-3 to raw 16-bit samples using mpg123"
     (system (format #f "mpg123 -s ~A &gt; ~A" mpgfile rawfile))
     (<em class=red>open-raw-sound</em> rawfile 1 44100 (if (little-endian?) mus-lshort <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_dataformat_tip)">mus-bshort</a>))))
 </pre></td></tr></table>
@@ -8493,7 +8493,7 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
 (<a class=quiet href="#clmchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_clmchannel_tip)">clm-channel</a> (<a class=quiet href="sndclm.html#make-one-zero" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_one_zero_tip)">make-one-zero</a> :a0 2.0 :a1 0.0))
 (<a class=quiet href="#filterchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_filterchannel_tip)">filter-channel</a> (vct 2.0) 1)
 (<a class=quiet href="#vcttochannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_vcttochannel_tip)">vct-&gt;channel</a> (<a class=quiet href="#vctscale" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctscale_tip)">vct-scale!</a> (<a class=quiet href="#channeltovct" onmouseout="UnTip()" onmouseover="Tip(extsnd_channeltovct_tip)">channel-&gt;vct</a>) 2.0) 0)
-(<a class=quiet href="sndscm.html#sounddatatosound">sound-data-&gt;sound</a> (<a class=quiet href="#sounddata*" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounddata_times_tip)">sound-data*</a> (<a class=quiet href="sndscm.html#soundtosounddata">sound-&gt;sound-data</a>) 2.0))
+(<a class=quiet href="sndscm.html#sounddatatosound" onmouseout="UnTip()" onmouseover="Tip(sndscm_sounddatatosound_tip)">sound-data-&gt;sound</a> (<a class=quiet href="#sounddata*" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounddata_times_tip)">sound-data*</a> (<a class=quiet href="sndscm.html#soundtosounddata" onmouseout="UnTip()" onmouseover="Tip(sndscm_soundtosounddata_tip)">sound-&gt;sound-data</a>) 2.0))
 (begin (<a class=quiet href="#selectall" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectall_tip)">select-all</a>) (<a class=quiet href="#mixselection" onmouseout="UnTip()" onmouseover="Tip(extsnd_mixselection_tip)">mix-selection</a> 0))
 (begin (<a class=quiet href="#selectall" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectall_tip)">select-all</a>) (<a class=quiet href="#scaleselectionby" onmouseout="UnTip()" onmouseover="Tip(extsnd_scaleselectionby_tip)">scale-selection-by</a> 2.0))
 (begin (<a class=quiet href="#savesoundas" onmouseout="UnTip()" onmouseover="Tip(extsnd_savesoundas_tip)">save-sound-as</a> "temp.snd") (<a class=quiet href="#mix" onmouseout="UnTip()" onmouseover="Tip(extsnd_mix_tip)">mix</a> "temp.snd" 0) (delete-file "temp.snd"))
@@ -8723,7 +8723,7 @@ it's probably simpler to use <a href="sndscm.html#withsound">with-sound</a> (see
 	 (s (<a class=quiet href="sndclm.html#make-src" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_src_tip)">make-src</a> :srate 0.0))
 	 (incr (+ 2.0 (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> o)))	  
 	 (tempfile (<em class=red>with-sound</em> (:output (<a class=quiet href="#sndtempnam" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndtempnam_tip)">snd-tempnam</a>) :srate (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>) :to-snd #f)
-		     (<a class=quiet href="sndscm.html#run">run</a> (lambda ()
+		     (<a class=quiet href="sndscm.html#run" onmouseout="UnTip()" onmouseover="Tip(sndscm_run_tip)">run</a> (lambda ()
 			    (do ((samp 0 (1+ samp)))
 				((or (c-g?) (<a class=quiet href="#samplereaderatendQ" onmouseout="UnTip()" onmouseover="Tip(extsnd_samplereaderatendQ_tip)">sample-reader-at-end?</a> rd)))
 			      (<a class=quiet href="sndclm.html#out-any" onmouseout="UnTip()" onmouseover="Tip(sndclm_out_any_tip)">out-any</a> samp (<a class=quiet href="sndclm.html#src" onmouseout="UnTip()" onmouseover="Tip(sndclm_src_tip)">src</a> s incr (lambda (dir) (<a class=quiet href="#readsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_readsample_tip)">read-sample</a> rd))) 0)
@@ -10650,7 +10650,7 @@ This code ties the Hilbert transform in dsp.scm into the user-interface:
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
 (<em class=red>add-transform</em> "Hilbert" "Hilbert" 0.0 1.0
   (lambda (len fd)
-    (let ((flt (<a class=quiet href="sndscm.html#makehilberttransform">make-hilbert-transform</a> 40)))
+    (let ((flt (<a class=quiet href="sndscm.html#makehilberttransform" onmouseout="UnTip()" onmouseover="Tip(sndscm_makehilberttransform_tip)">make-hilbert-transform</a> 40)))
       (do ((i 0 (1+ i))) ; preload first samples
 	  ((= i 40))
 	(<a class=quiet href="sndclm.html#fir-filter" onmouseout="UnTip()" onmouseover="Tip(sndclm_fir_filter_tip)">fir-filter</a> flt (<a class=quiet href="#readsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_readsample_tip)">read-sample</a> fd)))
@@ -12674,7 +12674,7 @@ code is loaded,
   (use-modules (ice-9 debug))
 </pre>
 <p>
-Now when an error occurs, you can call (<a class=quiet href="sndscm.html#snddebug">snd-debug</a>) 
+Now when an error occurs, you can call (<a class=quiet href="sndscm.html#snddebug" onmouseout="UnTip()" onmouseover="Tip(sndscm_snddebug_tip)">snd-debug</a>) 
 and fall into the debugger.  
 To get backtraces,
 </p>
@@ -12985,9 +12985,9 @@ of FractInt's royal colormap):
       (do ((i 0 (1+ i))
 	   (x 0.0 (+ x incr)))
 	  ((= i size))
-        (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> r i (exact-&gt;inexact (/ (<a class=quiet href="sndscm.html#envelopeinterp">envelope-interp</a> x er) 256.0))) ; from env.scm
-        (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> g i (exact-&gt;inexact (/ (<a class=quiet href="sndscm.html#envelopeinterp">envelope-interp</a> x eg) 256.0)))
-        (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> b i (exact-&gt;inexact (/ (<a class=quiet href="sndscm.html#envelopeinterp">envelope-interp</a> x eb) 256.0))))
+        (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> r i (exact-&gt;inexact (/ (<a class=quiet href="sndscm.html#envelopeinterp" onmouseout="UnTip()" onmouseover="Tip(sndscm_envelopeinterp_tip)">envelope-interp</a> x er) 256.0))) ; from env.scm
+        (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> g i (exact-&gt;inexact (/ (<a class=quiet href="sndscm.html#envelopeinterp" onmouseout="UnTip()" onmouseover="Tip(sndscm_envelopeinterp_tip)">envelope-interp</a> x eg) 256.0)))
+        (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> b i (exact-&gt;inexact (/ (<a class=quiet href="sndscm.html#envelopeinterp" onmouseout="UnTip()" onmouseover="Tip(sndscm_envelopeinterp_tip)">envelope-interp</a> x eb) 256.0))))
       (list r g b))))
 
 ;;; another amusing colormap from FractInt:
@@ -13225,13 +13225,13 @@ currently in the time-domain graph:
 (define* (<a name="addcomment">add-comment</a> sample comment :optional snd1 chn1)
   (let* ((snd (or snd1 (<a class=quiet href="#selectedsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedsound_tip)">selected-sound</a>)))
 	 (chn (or chn1 (<a class=quiet href="#selectedchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedchannel_tip)">selected-channel</a>)))
-	 (old-comments (or (<a class=quiet href="sndscm.html#channelproperty">channel-property</a> 'comments snd chn) '())))
-    (set! (<a class=quiet href="sndscm.html#channelproperty">channel-property</a> 'comments snd chn)
+	 (old-comments (or (<a class=quiet href="sndscm.html#channelproperty" onmouseout="UnTip()" onmouseover="Tip(sndscm_channelproperty_tip)">channel-property</a> 'comments snd chn) '())))
+    (set! (<a class=quiet href="sndscm.html#channelproperty" onmouseout="UnTip()" onmouseover="Tip(sndscm_channelproperty_tip)">channel-property</a> 'comments snd chn)
 	  (cons (list sample comment)
 		old-comments))))
 	  
 (define (show-comments snd chn)
-  (let ((comments (or (<a class=quiet href="sndscm.html#channelproperty">channel-property</a> 'comments snd chn) '())))
+  (let ((comments (or (<a class=quiet href="sndscm.html#channelproperty" onmouseout="UnTip()" onmouseover="Tip(sndscm_channelproperty_tip)">channel-property</a> 'comments snd chn) '())))
     (for-each
      (lambda (<a class=quiet href="#comment" onmouseout="UnTip()" onmouseover="Tip(extsnd_comment_tip)">comment</a>)
        (let* ((samp (car comment))

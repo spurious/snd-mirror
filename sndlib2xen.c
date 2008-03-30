@@ -1105,11 +1105,11 @@ static XEN g_mus_audio_mixer_read(XEN dev, XEN field, XEN chan, XEN vals)
   #define mixer_read_vct_example "vals 0 vct-ref"
 #endif
 
-  #define H_mus_audio_mixer_read "(" S_mus_audio_mixer_read " device field channel vals): read some portion of the sound card mixer state.\
+  #define H_mus_audio_mixer_read "(" S_mus_audio_mixer_read " device field channel vals): read some portion of the sound card mixer state. \
 The device is the nominal audio device, normally " S_mus_audio_default ". The field describes what info we are requesting: \
-to get the devices max available chans, the field would be " S_mus_audio_channel ". The channel arg, when relevant, specifies \
+to get the device's max available chans, use " S_mus_audio_channel ". The channel arg, when relevant, specifies \
 which channel we want info on or the 'vals' vct length. \
-The requested info will be written into 'vals': \n\n" mixer_read_example " \n\
+The requested info is written into 'vals': \n\n" mixer_read_example " \n\
 sets " mixer_read_vct_example " to the default device's desired audio sample data format."
 
   int val, i, len;

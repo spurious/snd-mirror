@@ -402,6 +402,7 @@
 				  (setf pos-simple (or (search "<a name=" dline :test #'string=)
 						       (and with-clm-locals (search "<a Name=" dline :test #'string=))))
 				  (setf pos-def (or (search "<a class=def name=" dline :test #'string=)
+						    (search "<A class=def name=" dline :test #'string=)
 						    (and with-clm-locals (search "<a class=def Name=" dline :test #'string=))))
 				  (setf pos (or pos-simple pos-def))
 				  ))))))))

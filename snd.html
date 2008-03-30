@@ -2097,7 +2097,7 @@ all the samples between the cursor and the next mark.</p>
     (set! (<a class=quiet href="extsnd.html#xbounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_xbounds_tip)">x-bounds</a>) (list minx (+ minx arg)))))
 </small></pre></td></tr>
 <tr><td>C-x C-q</td><td>mix in file</td><td><pre><small>(lambda (arg) (prompt "mix file:" 
-                (lambda (val) (<a class=quiet href="sndscm.html#mixsound">mix-sound</a> val (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>)))))</small></pre></td></tr>
+                (lambda (val) (<a class=quiet href="sndscm.html#mixsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_mixsound_tip)">mix-sound</a> val (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>)))))</small></pre></td></tr>
 <tr><td>C-x C-r</td><td>redo last undone edit</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#redo" onmouseout="UnTip()" onmouseover="Tip(extsnd_redo_tip)">redo</a> arg))</small></code></td></tr>
 <tr><td>C-x C-s</td><td>save file</td><td><code><small>save-sound</small></code></td></tr>
 <tr><td>C-x C-u</td><td>undo last edit</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#undo" onmouseout="UnTip()" onmouseover="Tip(extsnd_undo_tip)">undo</a> arg))</small></code></td></tr>

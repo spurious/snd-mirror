@@ -4272,7 +4272,7 @@ static XEN g_scan_channel(XEN proc, XEN beg, XEN dur, XEN snd, XEN chn, XEN edpo
   #endif
 
   #define H_scan_channel "(" S_scan_channel " func :optional (start 0) (dur len) snd chn edpos): \
-apply func to samples in current channel (or the specified channel) \
+apply func to samples in current channel (or the specified channel). \
 func is a function of one argument, the current sample. \
 if func returns non-" PROC_FALSE ", the scan stops, and the value is returned to the caller with the sample number. \n  " scan_channel_example
 

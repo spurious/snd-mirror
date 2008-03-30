@@ -1151,11 +1151,11 @@ an oscil or a sawtooth-wave:
   (lambda (e mx)
     (if (null? e)
 	mx
-      (<a class=quiet href="sndscm.html#maxenvelope">max-envelope</a> (cddr e) (max mx (abs (cadr e)))))))
+      (<a class=quiet href="sndscm.html#maxenvelope" onmouseout="UnTip()" onmouseover="Tip(sndscm_maxenvelope_tip)">max-envelope</a> (cddr e) (max mx (abs (cadr e)))))))
 
 (define zcomb
   (lambda (scaler size pm)
-    (let ((cmb (<a class=quiet href="sndclm.html#make-comb" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_comb_tip)">make-comb</a> scaler size :max-size (+ size 1 (<a class=quiet href="sndscm.html#maxenvelope">max-envelope</a> pm 0))))
+    (let ((cmb (<a class=quiet href="sndclm.html#make-comb" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_comb_tip)">make-comb</a> scaler size :max-size (+ size 1 (<a class=quiet href="sndscm.html#maxenvelope" onmouseout="UnTip()" onmouseover="Tip(sndscm_maxenvelope_tip)">max-envelope</a> pm 0))))
 	  (penv (<a class=quiet href="sndclm.html#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> pm :length (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>))))
       (lambda (x) (<a class=quiet href="sndclm.html#comb" onmouseout="UnTip()" onmouseover="Tip(sndclm_comb_tip)">comb</a> cmb x (env penv))))))
 
@@ -1496,7 +1496,7 @@ match-sound-files from extensions.scm):
 		(list XmNfileSearchProc                             ; set dialog file search procedure
 		       (lambda (widget info)
 			 (let* ((dir (XmString-&gt;string (dir info))) ; directory string
-				(files (<a class=quiet href="sndscm.html#matchsoundfiles">match-sound-files</a> proc dir)) ; list of matching files
+				(files (<a class=quiet href="sndscm.html#matchsoundfiles" onmouseout="UnTip()" onmouseover="Tip(sndscm_matchsoundfiles_tip)">match-sound-files</a> proc dir)) ; list of matching files
 				(fileTable (list-&gt;XmStringTable      ; XmStringTable for XmNfileListItems
                                              (map (lambda (n)        ; every file needs prepended dir
                                                     (string-append dir n)) 

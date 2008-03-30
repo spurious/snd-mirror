@@ -6817,8 +6817,8 @@ static XEN g_make_granulate(XEN arglist)
   #define H_make_granulate "(" S_make_granulate " :input (:expansion 1.0) (:length .15) (:scaler .6) (:hop .05) (:ramp .4) (:jitter 1.0) :max-size :edit): \
 return a new granular synthesis generator.  'length' is the grain length (seconds), 'expansion' is the ratio in timing \
 between the new and old (expansion > 1.0 slows things down), 'scaler' scales the grains \
-to avoid overflows, 'hop' is the spacing (seconds) between successive grains upon output \
-jitter controls the randomness in that spacing, input can be a file pointer. 'edit' can \
+to avoid overflows, 'hop' is the spacing (seconds) between successive grains upon output. \
+'jitter' controls the randomness in that spacing, 'input' can be a file pointer. 'edit' can \
 be a function of one arg, the current granulate generator.  It is called just before \
 a grain is added into the output buffer. The current grain is accessible via " S_mus_data ". \
 The edit function, if any, should return the length in samples of the grain, or 0."

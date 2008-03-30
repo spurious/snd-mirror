@@ -346,7 +346,7 @@ If it returns " PROC_TRUE ", Snd flushes the warning (it assumes you've reported
 
 
   #define H_clip_hook S_clip_hook " (clipping-value) is called each time a sample is about to \
-be clipped upon being written to a sound file.  The hook function can return the new vallue to \
+be clipped upon being written to a sound file.  The hook function can return the new value to \
 be written, or rely on the default (-1.0 or 1.0 depending on the sign of 'clipping-value')."
 
   clip_hook = XEN_DEFINE_HOOK(S_clip_hook, 1, H_clip_hook); /* arg = clipping val as double */

@@ -1602,8 +1602,8 @@ static XEN g_set_enved_target(XEN val)
   enved_target_t n;
   int in_n;
 
-  #define H_enved_target "(" S_enved_target "): where (amplitude, frequency, etc) the envelope is applied in the envelope editor; \
-choices are " S_enved_amplitude ", " S_enved_srate ", and " S_enved_spectrum
+  #define H_enved_target "(" S_enved_target "): determines how the envelope edit envelope is applied; \
+choices are " S_enved_amplitude ", " S_enved_srate "(apply to speed), and " S_enved_spectrum "(apply as a filter)."
 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_enved_target, "an integer"); 
   in_n = XEN_TO_C_INT(val);

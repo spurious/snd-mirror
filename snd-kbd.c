@@ -2416,7 +2416,7 @@ static XEN g_bind_key_1(XEN key, XEN state, XEN code, XEN cx_extended, XEN origi
 
 static XEN g_bind_key(XEN key, XEN state, XEN code, XEN cx_extended, XEN origin, XEN prefs_info)
 {
-  #define H_bind_key "(" S_bind_key " key modifiers func :optional extended origin prefs-info: \
+  #define H_bind_key "(" S_bind_key " key modifiers func :optional extended origin prefs-info): \
 causes 'key' (an integer, character, or string) \
 when typed with 'modifiers' (0:none, 4:control, 8:meta) (and C-x if extended) to invoke 'func', a function of \
 zero or one arguments. If the function takes one argument, it is passed the preceding C-u number, if any. \

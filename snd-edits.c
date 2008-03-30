@@ -8361,7 +8361,7 @@ static void after_as_one_edit(void *context)
 
 static XEN g_as_one_edit(XEN proc, XEN origin)
 {
-  #define H_as_one_edit "(" S_as_one_edit " thunk :optional origin): evaluate thunk, collecting all edits into one from the edit historys' point of view"
+  #define H_as_one_edit "(" S_as_one_edit " thunk :optional origin): evaluate thunk, collecting all edits into one from the edit history's point of view"
   XEN result = XEN_FALSE;
   char *errmsg, *as_one_edit_origin = NULL;
   XEN errstr;

@@ -7342,10 +7342,10 @@ WITH_THREE_SETTER_ARGS(g_set_dot_size_reversed, g_set_dot_size)
 
 static XEN g_x_axis_style(XEN snd, XEN chn)
 {
-  #define H_x_axis_style "(" S_x_axis_style " :optional snd chn) \
+  #define H_x_axis_style "(" S_x_axis_style " :optional snd chn): \
 The x axis labelling of the time domain waveform can be in seconds (" S_x_axis_in_seconds "), in samples (" S_x_axis_in_samples "), expressed as a \
-percentage of the overall duration (" S_x_axis_as_percentage "), as a beat number (" S_x_axis_in_beats ", as a measure \
-number (" S_x_axis_in_measures ", or clock-style (dd:hh:mm:ss) (" S_x_axis_as_clock ")."
+percentage of the overall duration (" S_x_axis_as_percentage "), as a beat number (" S_x_axis_in_beats "), as a measure \
+number (" S_x_axis_in_measures "), or clock-style (dd:hh:mm:ss) (" S_x_axis_as_clock ")."
 
   if (XEN_BOUND_P(snd))
     return(channel_get(snd, chn, CP_X_AXIS_STYLE, S_x_axis_style));

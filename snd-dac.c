@@ -2702,7 +2702,7 @@ static XEN g_play_and_wait(XEN samp_n, XEN snd_n, XEN chn_n, XEN syncd, XEN end_
 
   #define H_play_and_wait "(" S_play_and_wait " (start 0) snd chn syncd end (pos -1) stop-proc out-chan): \
 play snd or snd's channel chn starting at start \
-and waiting for the play to complete before returning.  'start' can also be a function or a filename:\n  " play_and_wait_example
+and wait for the play to complete before returning.  'start' can also be a function or a filename:\n  " play_and_wait_example
 
   return(g_play_1(samp_n, snd_n, chn_n, false, TO_C_BOOLEAN_OR_FALSE(syncd), end_n, edpos, S_play_and_wait, 6, stop_proc, out_chan));
 }
