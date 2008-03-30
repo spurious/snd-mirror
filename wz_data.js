@@ -93,6 +93,8 @@ var extsnd_channelstyle_tip = "(channel-style :optional snd): how multichannel s
                               " The default is channels-combined; other values are channels-separate and channels-superimposed.<br>" +
                               " As a global (if the 'snd' arg is omitted), it is the default setting for each sound's 'unite' button.";
 
+var extsnd_channeltovct_tip = "(channel-&gt;vct :optional beg dur snd chn edpos): return a vct with the specified samples.";
+
 var extsnd_channelwidgets_tip = "(channel-widgets :optional snd chn): a list of widgets: ((0)graph (1)w (2)f (3)sx (4)sy (5)zx (6)zy (7)edhist)";
 
 var extsnd_chans_tip = "(channels :optional snd): how many channels snd has";
@@ -578,6 +580,8 @@ var extsnd_restorecontrols_tip = "(restore-controls :optional snd): restore the 
 
 var extsnd_reversesound_tip = "(reverse-sound :optional snd chn edpos): reverse snd's channel chn";
 
+var extsnd_revertsound_tip = "(revert-sound :optional snd): return 'snd' to its unedited state (undo all edits).";
+
 var extsnd_rightsample_tip = "(right-sample :optional snd chn): right sample number in time domain window";
 
 var extsnd_run_tip = "(run thunk): try to optimize the procedure passed as its argument,<br>" +
@@ -712,6 +716,8 @@ var extsnd_sounddataref_tip = "(sound-data-ref sd chan i): sample in channel cha
 
 var extsnd_sounddataset_tip = "(sound-data-set! sd chan i val): set sound-data sd's i-th element in channel chan to val:<br>" +
                               " sd[chan][i] = val";
+
+var extsnd_sounddata_times_tip = "(sound-data* val1 val2): multiply val1 by val2 (either or both can be a sound-data object).";
 
 var extsnd_soundfilep_tip = "(sound-file? name): #t if name has a known sound file extension";
 
@@ -1042,19 +1048,19 @@ var sndclm_make_two_zero_tip = "(make-two-zero :a0 :a1 :a2 or :frequency :radius
 
 var sndclm_moving_average_tip = "(moving-average gen :optional (val 0.0)): moving window moving_average.";
 
-var sndclm_mus_channels_tip = "(mus-channels gen): gen's mus-channels field, if any";
+var sndclm_mus_channels_tip = "(mus-channels gen): gen's mus-channels field";
 
 var sndclm_mus_close_tip = "(mus-close gen): close the IO stream managed by 'gen' (a sample->file generator, for example)";
 
-var sndclm_mus_data_tip = "(mus-data gen): gen's internal data (a vct), if any";
+var sndclm_mus_data_tip = "(mus-data gen): gen's internal data (a vct)";
 
 var sndclm_mus_frequency_tip = "(mus-frequency gen): gen's frequency (Hz)";
 
-var sndclm_mus_increment_tip = "(mus-increment gen): gen's mus-increment field, if any";
+var sndclm_mus_increment_tip = "(mus-increment gen): gen's mus-increment field";
 
-var sndclm_mus_length_tip = "(mus-length gen): gen's length, if any";
+var sndclm_mus_length_tip = "(mus-length gen): gen's length";
 
-var sndclm_mus_offset_tip = "(mus-offset gen): gen's offset, if any";
+var sndclm_mus_offset_tip = "(mus-offset gen): gen's offset";
 
 var sndclm_mus_random_tip = "(mus-random val): a random number between -val and val.<br>" +
                             " the built-in 'random' function returns values between 0 and its argument";
@@ -1206,7 +1212,7 @@ var sndscm_makespencerfilter_tip = "(make-spencer-filter) returns an FIR filter 
 var sndscm_matchsoundfiles_tip = "(match-sound-files func :optional dir): apply 'func' to each sound file in 'dir'<br>" +
                                  " and return a list of files for which func does not return #f.";
 
-var sndscm_maxenvelope_tip = "(max-envelope env): max-envelope returns the maximum y value in 'env'";
+var sndscm_maxenvelope_tip = "(max-envelope env): return the maximum y value in 'env'";
 
 var sndscm_mixsound_tip = "(mix-sound file start): mix 'file' (all chans) into the currently selected sound at 'start'.";
 
@@ -1262,30 +1268,91 @@ var sndscm_scalemixes_tip = "(scale-mixes mix-list scl): scales the amplitude of
 var sndscm_sgfilter_tip = "(savitzky-golay-filter gen input): a Savitzky-Golay filter, assuming symmetrical positioning.<br>" +
                           " It is an FIR smoothing filter.";
 
-var sndscm_snddebug_tip = "";
+var sndscm_sound_let_tip = "sound-let is a form of let* that creates temporary sound files within with-sound.<br>" +
+                       " Its syntax is a combination of let* and with-sound:<br><br>" +
+                       "<code> (sound-let ((temp-1 () (fm-violin 0 1 440 .1))<br>" +
+                       "             (temp-2 () (fm-violin 0 2 660 .1)<br>" +
+                       "                        (fm-violin .125 .5 880 .1)))<br>" +
+                       "   (granulate-sound temp-1 0 2 0 2)     ;temp-1 is the name of the 1st temporary file<br>" +
+                       "   (granulate-sound temp-2 1 1 0 2))</code><br><br>" +
+                       " This creates two temporary files and passes them along to the subsequent calls<br>" +
+                       " on granulate-sound.  The first list after the sound file identifier is the list of <br>" +
+                       " with-sound options to be passed along when creating this temporary file.  These default<br>" +
+                       " to :output with a unique name generated internally, and all other variables are taken from<br>" +
+                       " the overall (enclosing) with-sound.  The rest of the list is the body of the associated with-sound.";
 
-var sndscm_sound_let_tip = "";
+var sndscm_sounddatatosound_tip = "(sound-data-&gt;sound sd beg :optional dur snd): place the contents of<br>" +
+                                  " its sound-data argument 'sd' into the sound 'snd' starting at 'beg' and going for 'dur' frames.<br>" +
+                                  " 'dur' defaults to the sound-data object's length.";
 
-var sndscm_sounddatatosound_tip = "";
+var sndscm_soundinterp_tip = "(sound-interp reader loc): the sound-interp interpolating reader<br>" +
+                             " reads a channel at an arbitary location, interpolating between samples if necessary.";
 
-var sndscm_soundinterp_tip = "";
+var sndscm_soundtosounddata_tip = "(sound-&gt;sound-data beg dur :optional snd):<br>" +
+                                  " return a sound-data object containing the contents of the sound 'snd'<br>" +
+                                  " starting from beg for dur frames.<br>" +
+                                  " <code>  (sound-data-&gt;sound (sound-data* (sound-&gt;sound-data) 2.0))</code><br>" +
+                                  " is yet another way to scale a sound by 2.0.";
 
-var sndscm_soundtosounddata_tip = "";
+var sndscm_syncdmixes_tip = "(syncd-mixes sync):  returns a list of all mixes whose mix-sync field is set to 'sync'.";
 
-var sndscm_syncdmixes_tip = "";
+var sndscm_tofrequency_tip = "(-&gt;frequency pitch :optional ratio) takes either a number or a common-music pitch symbol<br>" +
+                       " ('c4 is middle C), and returns either the number or the frequency associated with that pitch:<br>" +
+                       " <code>(-&gt;frequency 'cs5)</code> returns 554 and change.<br>" +
+                       " 'ratio' can be #t to get small integer ratios rather than equal temperment.";
 
-var sndscm_tofrequency_tip = "";
+var sndscm_tosample_tip = "(-&gt;sample time) returns a sample number given a time in seconds";
 
-var sndscm_tosample_tip = "";
+var sndscm_volterrafilter_tip = "(volterra-filter flt x): pass 'x' through the Volterra (non-linear) filter 'flt'.";
 
-var sndscm_volterrafilter_tip = "";
+var sndscm_windowsamples_tip = "(window-samples :optional snd chn): returns (in a vct) the samples<br>" +
+                               " displayed in the current graph window for the given channel.";
 
-var sndscm_windowsamples_tip = "";
+var sndscm_withtempsound_tip = "with-temp-sound is like sound-let (it sets up a temporary output<br>" +
+                               " for with-sound) , but does not delete its output file.";
 
-var sndscm_withsound_tip = "";
+var sndscm_wsdoc_tip = "with-sound provides a simple way to package up a bunch of instrument calls into a new<br>" +
+                       " sound file, and open that file in Snd when the computation is complete. <br>" +
+                       " with-sound opens an output object, and optionally a reverb output object.<br>" +
+                       " Each instrument uses out-any to add its sounds to the *output* results.<br>" +
+                       "<pre> with-sound<br>" + 
+                       "  :key (srate *clm-srate*)             ; output sampling rate (44100)<br>" + 
+                       "       (output *clm-file-name*)        ; output file name (\"test.snd\")<br>" + 
+                       "       (channels *clm-channels*)       ; channels in output (1)<br>" + 
+                       "       (header-type *clm-header-type*) ; output header type (mus-next or mus-aifc)<br>" + 
+                       "       (data-format *clm-data-format*) ; output sample data type (mus-bfloat)<br>" + 
+                       "       (comment #f)                    ; any comment to store in the header (a string)<br>" + 
+                       "       (reverb *clm-reverb*)           ; reverb instrument (jc-reverb)<br>" + 
+                       "       (reverb-data *clm-reverb-data*) ; arguments passed to the reverb<br>" + 
+                       "       (statistics *clm-statistics*)   ; if #t, print info at end of with-sound<br>" + 
+                       "       (scaled-to #f)                  ; if a number, scale the output to peak at that amp<br>" + 
+                       "       (play *clm-play*)               ; if #t, play the sound automatically</pre><br>" + 
+                       " The with-sound syntax may look sightly odd; we include the arguments in the<br>" +
+                       " first list, then everything after that is evaluated as a note list.<br>" +
+                       "<pre>   (with-sound (:srate 44100 :channels 2 :output \"test.snd\")<br>" +
+                       "      (fm-violin 0 1 440 .1)<br>" +
+                       "      (fm-violin 1 1 660 .1))</pre><br>" +
+                       " produces a sound file with two fm-violin notes; the sound file is named \"test.snd\",<br>" +
+                       " is stero, and has a sampling rate of 44100.";
 
-var sndscm_withtempsound_tip = "";
+var sndscm_zipper_tip = "(zipper gen in1 in2): the digital zipper; a way to crossfade between in1 and in2.";
 
-var sndscm_wsdoc_tip = "";
 
-var sndscm_zipper_tip = "";
+
+var sndlib_html_tip = "library that handles sound files and audio ports";
+
+var sndclm_html_tip = "sound synthesis generators";
+
+var sndscm_html_tip = "Scheme, Ruby, and Forth files included with Snd";
+
+var fm_html_tip = "introduction to frequency modulation";
+
+var extsnd_html_tip = "Snd extension and customization";
+
+var grfsnd_html_tip = "Snd configuration, connection to other libraries and programs";
+
+var snd_html_tip = "basic Snd user-interface documentation";
+
+var libxm_html_tip = "library that ties Motif and Gtk into Snd";
+
+var index_html_tip = "overall index";

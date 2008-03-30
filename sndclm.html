@@ -62,14 +62,14 @@ note lists and instruments are described in sndscm.html.
 <center>
 <table bgcolor="aliceblue" border=0 cellspacing=8><tr>
 <td><small>related documentation:</small></td>
-<td><small><a href="snd.html" onmouseout="UnTip()" onmouseover="Tip('basic Snd user-interface documentation')">snd.html</a></small></td>
-<td><small><a href="extsnd.html" onmouseout="UnTip()" onmouseover="Tip('Snd extension and customization')">extsnd.html</a></small></td>
-<td><small><a href="grfsnd.html" onmouseout="UnTip()" onmouseover="Tip('Snd configuration, connection to other libraries and programs')">grfsnd.html</a></small></td>
-<td><small><a href="sndscm.html" onmouseout="UnTip()" onmouseover="Tip('Scheme, Ruby, and Forth files included with Snd')">sndscm.html</a></small></td>
-<td><small><a href="fm.html" onmouseout="UnTip()" onmouseover="Tip('introduction to frequency modulation')">fm.html</a></small></td>
-<td><small><a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip('library that handles sound files')">sndlib.html</a></small></td>
-<td><small><a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip('library that ties Motif and Gtk into Snd')">libxm.html</a></small></td>
-<td><small><a href="index.html" onmouseout="UnTip()" onmouseover="Tip('this is an actual index, not some introductory file')">index.html</a></small></td>
+<td><small><a href="snd.html" onmouseout="UnTip()" onmouseover="Tip(snd_html_tip)">snd.html</a></small></td>
+<td><small><a href="extsnd.html" onmouseout="UnTip()" onmouseover="Tip(extsnd_html_tip)">extsnd.html</a></small></td>
+<td><small><a href="grfsnd.html" onmouseout="UnTip()" onmouseover="Tip(grfsnd_html_tip)">grfsnd.html</a></small></td>
+<td><small><a href="sndscm.html" onmouseout="UnTip()" onmouseover="Tip(sndscm_html_tip)">sndscm.html</a></small></td>
+<td><small><a href="fm.html" onmouseout="UnTip()" onmouseover="Tip(fm_html_tip)">fm.html</a></small></td>
+<td><small><a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip(sndlib_html_tip)">sndlib.html</a></small></td>
+<td><small><a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip(libxm_html_tip)">libxm.html</a></small></td>
+<td><small><a href="index.html" onmouseout="UnTip()" onmouseover="Tip(index_html_tip)">index.html</a></small></td>
 </tr></table>
 </center>
 
@@ -881,7 +881,7 @@ instrument that maps the line segments into sin x^3:
                 (sin (* 0.5 pi zval zval zval)) 
                 (<a class=quiet href="#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> osc)))))))))
 
-(<a class=quiet href="sndscm.html#withsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_withsound_tip)">with-sound</a> () 
+(<a class=quiet href="sndscm.html#withsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () 
   (mapenv 0 1 440 .5 '(0 0  50 1  75 0  86 .5  100 0)))
 </pre>
 </td></tr></table>
@@ -3046,9 +3046,9 @@ Here is a FOF instrument based loosely on fof.c of Perry Cook and the article
            ((= i end))
          (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> ampf) (<em class=red>wave-train</em> wt0 (* (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> vibenv) (<a class=quiet href="#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> vibr))))))))))
 
-(<a class=quiet href="sndscm.html#withsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_withsound_tip)">with-sound</a> () (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)) ; "Ahh"
+(<a class=quiet href="sndscm.html#withsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)) ; "Ahh"
 
-(<a class=quiet href="sndscm.html#withsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_withsound_tip)">with-sound</a> () ; one of JC's favorite demos
+(<a class=quiet href="sndscm.html#withsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () ; one of JC's favorite demos
   (fofins 0 4 270 .2 0.005 730 .6 1090 .3 2440 .1 '(0 0 40 0 75 .2 100 1) 
           '(0 0 .5 1 3 .5 10 .2 20 .1 50 .1 60 .2 85 1 100 0))
   (fofins 0 4 (* 6/5 540) .2 0.005 730 .6 1090 .3 2440 .1 '(0 0 40 0 75 .2 100 1) 
@@ -3430,9 +3430,9 @@ than the preceding:
          (set! x (- 1.0 (* m x x))))))))
 
 ;;; this quickly reaches a stable point for any m in[0,.75], so:
-(<a class=quiet href="sndscm.html#withsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_withsound_tip)">with-sound</a> () (fractal 0 1 .5 0 .5)) 
+(<a class=quiet href="sndscm.html#withsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () (fractal 0 1 .5 0 .5)) 
 ;;; is just a short "ftt"
-(<a class=quiet href="sndscm.html#withsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_withsound_tip)">with-sound</a> () (fractal 0 1 1.5 .20 .2))
+(<a class=quiet href="sndscm.html#withsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () (fractal 0 1 1.5 .20 .2))
 </pre>
 </td></tr></table>
 
@@ -4047,7 +4047,7 @@ See prc95.scm for examples of both of these functions.
          (let ((inval (rd)))
   	   (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (+ inval (<em class=red>delay</em> del (* scaler (+ (<em class=red>tap</em> del) inval)))))))))))
 
-(<a class=quiet href="sndscm.html#withsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_withsound_tip)">with-sound</a> () (echo 0 60000 .5 1.0 "pistol.snd"))
+(<a class=quiet href="sndscm.html#withsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () (echo 0 60000 .5 1.0 "pistol.snd"))
 </pre>
 </td></tr></table>
 
@@ -4446,12 +4446,12 @@ an instrument that provides time-varying sampling rate conversion:
             ((= i end))
           (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* amp (<em class=red>src</em> src-gen (* fmamp (<a class=quiet href="#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> os))))))))))
 
-(<a class=quiet href="sndscm.html#withsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_withsound_tip)">with-sound</a> () (srcer 0 2 1.0   1 .3 20 "fyow.snd"))   
-(<a class=quiet href="sndscm.html#withsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_withsound_tip)">with-sound</a> () (srcer 0 25 10.0   .01 1 10 "fyow.snd"))
-(<a class=quiet href="sndscm.html#withsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_withsound_tip)">with-sound</a> () (srcer 0 2 1.0   .9 .05 60 "oboe.snd")) 
-(<a class=quiet href="sndscm.html#withsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_withsound_tip)">with-sound</a> () (srcer 0 2 1.0   1.0 .5 124 "oboe.snd"))
-(<a class=quiet href="sndscm.html#withsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_withsound_tip)">with-sound</a> () (srcer 0 10 10.0   .01 .2 8 "oboe.snd"))
-(<a class=quiet href="sndscm.html#withsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_withsound_tip)">with-sound</a> () (srcer 0 2 1.0   1 3 20 "oboe.snd"))    
+(<a class=quiet href="sndscm.html#withsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () (srcer 0 2 1.0   1 .3 20 "fyow.snd"))   
+(<a class=quiet href="sndscm.html#withsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () (srcer 0 25 10.0   .01 1 10 "fyow.snd"))
+(<a class=quiet href="sndscm.html#withsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () (srcer 0 2 1.0   .9 .05 60 "oboe.snd")) 
+(<a class=quiet href="sndscm.html#withsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () (srcer 0 2 1.0   1.0 .5 124 "oboe.snd"))
+(<a class=quiet href="sndscm.html#withsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () (srcer 0 10 10.0   .01 .2 8 "oboe.snd"))
+(<a class=quiet href="sndscm.html#withsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () (srcer 0 2 1.0   1 3 20 "oboe.snd"))    
 </pre>
 </td></tr></table>
 
@@ -4655,7 +4655,7 @@ argument to granulate.  It cause the granulation to run backwards through the fi
 		       (if (&gt; ctr 0) (set! ctr (1- ctr)))
 		       inval)))))))))
 
-(<a class=quiet href="sndscm.html#withsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_withsound_tip)">with-sound</a> () (grev 0 100000 2.0 "pistol.snd" 40000))
+(<a class=quiet href="sndscm.html#withsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () (grev 0 100000 2.0 "pistol.snd" 40000))
 </pre>
 </td></tr></table>
 
@@ -7182,14 +7182,14 @@ an interesting instrument that you're willing to share, please send it to me
 <center>
 <table bgcolor="aliceblue" border=0 cellspacing=8><tr>
 <td><small>related documentation:</small></td>
-<td><small><a href="snd.html" onmouseout="UnTip()" onmouseover="Tip('basic Snd user-interface documentation')">snd.html</a></small></td>
-<td><small><a href="extsnd.html" onmouseout="UnTip()" onmouseover="Tip('Snd extension and customization')">extsnd.html</a></small></td>
-<td><small><a href="grfsnd.html" onmouseout="UnTip()" onmouseover="Tip('Snd configuration, connection to other libraries and programs')">grfsnd.html</a></small></td>
-<td><small><a href="sndscm.html" onmouseout="UnTip()" onmouseover="Tip('Scheme, Ruby, and Forth files included with Snd')">sndscm.html</a></small></td>
-<td><small><a href="fm.html" onmouseout="UnTip()" onmouseover="Tip('introduction to frequency modulation')">fm.html</a></small></td>
-<td><small><a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip('library that handles sound files')">sndlib.html</a></small></td>
-<td><small><a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip('library that ties Motif and Gtk into Snd')">libxm.html</a></small></td>
-<td><small><a href="index.html" onmouseout="UnTip()" onmouseover="Tip('this is an actual index, not some introductory file')">index.html</a></small></td>
+<td><small><a href="snd.html" onmouseout="UnTip()" onmouseover="Tip(snd_html_tip)">snd.html</a></small></td>
+<td><small><a href="extsnd.html" onmouseout="UnTip()" onmouseover="Tip(extsnd_html_tip)">extsnd.html</a></small></td>
+<td><small><a href="grfsnd.html" onmouseout="UnTip()" onmouseover="Tip(grfsnd_html_tip)">grfsnd.html</a></small></td>
+<td><small><a href="sndscm.html" onmouseout="UnTip()" onmouseover="Tip(sndscm_html_tip)">sndscm.html</a></small></td>
+<td><small><a href="fm.html" onmouseout="UnTip()" onmouseover="Tip(fm_html_tip)">fm.html</a></small></td>
+<td><small><a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip(sndlib_html_tip)">sndlib.html</a></small></td>
+<td><small><a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip(libxm_html_tip)">libxm.html</a></small></td>
+<td><small><a href="index.html" onmouseout="UnTip()" onmouseover="Tip(index_html_tip)">index.html</a></small></td>
 </tr></table>
 </center>
 

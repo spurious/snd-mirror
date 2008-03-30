@@ -37,14 +37,14 @@
 <center>
 <table bgcolor="aliceblue" border=0 cellspacing=8><tr>
 <td><small>related documentation:</small></td>
-<td><small><a href="snd.html" onmouseout="UnTip()" onmouseover="Tip('basic Snd user-interface documentation')">snd.html</a></small></td>
-<td><small><a href="grfsnd.html" onmouseout="UnTip()" onmouseover="Tip('Snd configuration, connection to other libraries and programs')">grfsnd.html</a></small></td>
-<td><small><a href="sndscm.html" onmouseout="UnTip()" onmouseover="Tip('Scheme, Ruby, and Forth files included with Snd')">sndscm.html</a></small></td>
-<td><small><a href="sndclm.html" onmouseout="UnTip()" onmouseover="Tip('sound synthesis generators')">sndclm.html</a></small></td>
-<td><small><a href="fm.html" onmouseout="UnTip()" onmouseover="Tip('introduction to frequency modulation')">fm.html</a></small></td>
-<td><small><a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip('library that handles sound files')">sndlib.html</a></small></td>
-<td><small><a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip('library that ties Motif and Gtk into Snd\'s extension language')">libxm.html</a></small></td>
-<td><small><a href="index.html" onmouseout="UnTip()" onmouseover="Tip('this is an actual index, not some introductory file')">index.html</a></small></td>
+<td><small><a href="snd.html" onmouseout="UnTip()" onmouseover="Tip(snd_html_tip)">snd.html</a></small></td>
+<td><small><a href="grfsnd.html" onmouseout="UnTip()" onmouseover="Tip(grfsnd_html_tip)">grfsnd.html</a></small></td>
+<td><small><a href="sndscm.html" onmouseout="UnTip()" onmouseover="Tip(sndscm_html_tip)">sndscm.html</a></small></td>
+<td><small><a href="sndclm.html" onmouseout="UnTip()" onmouseover="Tip(sndclm_html_tip)">sndclm.html</a></small></td>
+<td><small><a href="fm.html" onmouseout="UnTip()" onmouseover="Tip(fm_html_tip)">fm.html</a></small></td>
+<td><small><a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip(sndlib_html_tip)">sndlib.html</a></small></td>
+<td><small><a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip(libxm_html_tips extension language')">libxm.html</a></small></td>
+<td><small><a href="index.html" onmouseout="UnTip()" onmouseover="Tip(index_html_tip)">index.html</a></small></td>
 </tr></table>
 </center>
 
@@ -3388,7 +3388,7 @@ This changes (edits) the channel, so 'origin' provides a way to name the edit (f
 Since with-sound can write its output to a vct, we can use it with vct-&gt;channel to paste in an fm-violin note as
 an edit:
 <pre>
-  (vct-&gt;channel (<a class=quiet href="sndscm.html#withsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_withsound_tip)">with-sound</a> (:output (make-vct 44100)) (<a class=quiet href="sndscm.html#fmviolin" onmouseout="UnTip()" onmouseover="Tip(sndscm_fmviolin_tip)">fm-violin</a> 0 1 440 .1)))
+  (vct-&gt;channel (<a class=quiet href="sndscm.html#withsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:output (make-vct 44100)) (<a class=quiet href="sndscm.html#fmviolin" onmouseout="UnTip()" onmouseover="Tip(sndscm_fmviolin_tip)">fm-violin</a> 0 1 440 .1)))
 </pre>
 To add such a note to whatever is already present, use either <a href="#mixvct">mix-vct</a> or 
 <a href="sndscm.html#mixsounddata">mix-sound-data</a>.
@@ -12674,7 +12674,7 @@ code is loaded,
   (use-modules (ice-9 debug))
 </pre>
 <p>
-Now when an error occurs, you can call (<a class=quiet href="sndscm.html#snddebug" onmouseout="UnTip()" onmouseover="Tip(sndscm_snddebug_tip)">snd-debug</a>) 
+Now when an error occurs, you can call (<a class=quiet href="sndscm.html#snddebug">snd-debug</a>) 
 and fall into the debugger.  
 To get backtraces,
 </p>
@@ -13675,14 +13675,14 @@ You can find out at run-time whether GL is loaded via <code>(provided? 'gl)</cod
 <center>
 <table bgcolor="aliceblue" border=0 cellspacing=8><tr>
 <td><small>related documentation:</small></td>
-<td><small><a href="snd.html" onmouseout="UnTip()" onmouseover="Tip('basic Snd user-interface documentation')">snd.html</a></small></td>
-<td><small><a href="grfsnd.html" onmouseout="UnTip()" onmouseover="Tip('Snd configuration, connection to other libraries and programs')">grfsnd.html</a></small></td>
-<td><small><a href="sndscm.html" onmouseout="UnTip()" onmouseover="Tip('Scheme, Ruby, and Forth files included with Snd')">sndscm.html</a></small></td>
-<td><small><a href="sndclm.html" onmouseout="UnTip()" onmouseover="Tip('sound synthesis generators')">sndclm.html</a></small></td>
-<td><small><a href="fm.html" onmouseout="UnTip()" onmouseover="Tip('introduction to frequency modulation')">fm.html</a></small></td>
-<td><small><a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip('library that handles sound files')">sndlib.html</a></small></td>
-<td><small><a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip('library that ties Motif and Gtk into Snd\'s extension language')">libxm.html</a></small></td>
-<td><small><a href="index.html" onmouseout="UnTip()" onmouseover="Tip('an actual index, not some introductory file')">index.html</a></small></td>
+<td><small><a href="snd.html" onmouseout="UnTip()" onmouseover="Tip(snd_html_tip)">snd.html</a></small></td>
+<td><small><a href="grfsnd.html" onmouseout="UnTip()" onmouseover="Tip(grfsnd_html_tip)">grfsnd.html</a></small></td>
+<td><small><a href="sndscm.html" onmouseout="UnTip()" onmouseover="Tip(sndscm_html_tip)">sndscm.html</a></small></td>
+<td><small><a href="sndclm.html" onmouseout="UnTip()" onmouseover="Tip(sndclm_html_tip)">sndclm.html</a></small></td>
+<td><small><a href="fm.html" onmouseout="UnTip()" onmouseover="Tip(fm_html_tip)">fm.html</a></small></td>
+<td><small><a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip(sndlib_html_tip)">sndlib.html</a></small></td>
+<td><small><a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip(libxm_html_tip)">libxm.html</a></small></td>
+<td><small><a href="index.html" onmouseout="UnTip()" onmouseover="Tip(index_html_tip)">index.html</a></small></td>
 </tr></table>
 </center>
 

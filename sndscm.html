@@ -33,14 +33,14 @@
 <center>
 <table bgcolor="aliceblue" border=0 cellspacing=8><tr>
 <td><small>related documentation:</small></td>
-<td><small><a href="snd.html" onmouseout="UnTip()" onmouseover="Tip('basic Snd user-interface documentation')">snd.html</a></small></td>
-<td><small><a href="extsnd.html" onmouseout="UnTip()" onmouseover="Tip('Snd extension and customization')">extsnd.html</a></small></td>
-<td><small><a href="grfsnd.html" onmouseout="UnTip()" onmouseover="Tip('Snd configuration, connection to other libraries and programs')">grfsnd.html</a></small></td>
-<td><small><a href="sndclm.html" onmouseout="UnTip()" onmouseover="Tip('sound synthesis generators')">sndclm.html</a></small></td>
-<td><small><a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip('library that handles sound files')">sndlib.html</a></small></td>
-<td><small><a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip('library that ties Motif and Gtk into Snd')">libxm.html</a></small></td>
-<td><small><a href="fm.html" onmouseout="UnTip()" onmouseover="Tip('introduction to frequency modulation')">fm.html</a></small></td>
-<td><small><a href="index.html" onmouseout="UnTip()" onmouseover="Tip('an actual index, not some introductory file')">index.html</a></small></td>
+<td><small><a href="snd.html" onmouseout="UnTip()" onmouseover="Tip(snd_html_tip)">snd.html</a></small></td>
+<td><small><a href="extsnd.html" onmouseout="UnTip()" onmouseover="Tip(extsnd_html_tip)">extsnd.html</a></small></td>
+<td><small><a href="grfsnd.html" onmouseout="UnTip()" onmouseover="Tip(grfsnd_html_tip)">grfsnd.html</a></small></td>
+<td><small><a href="sndclm.html" onmouseout="UnTip()" onmouseover="Tip(sndclm_html_tip)">sndclm.html</a></small></td>
+<td><small><a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip(sndlib_html_tip)">sndlib.html</a></small></td>
+<td><small><a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip(libxm_html_tip)">libxm.html</a></small></td>
+<td><small><a href="fm.html" onmouseout="UnTip()" onmouseover="Tip(fm_html_tip)">fm.html</a></small></td>
+<td><small><a href="index.html" onmouseout="UnTip()" onmouseover="Tip(index_html_tip)">index.html</a></small></td>
 </tr></table>
 </center>
 
@@ -4923,7 +4923,7 @@ If 'with-sync' is #t, the frame read includes all channels currently sync'd to t
     (<em class=red>scan-sound</em> (lambda (fr)
 		  (let ((result #t))
 		    (do ((chn 0 (1+ chn)))
-			((= chn (<a class=quiet href="sndclm.html#framemuschannels" onmouseout="UnTip()" onmouseover="Tip(sndclm_length_tip)">mus-length</a> fr)))
+			((= chn (<a class=quiet href="sndclm.html#framemuschannels" onmouseout="UnTip()" onmouseover="Tip(sndclm_mus_length_tip)">mus-length</a> fr)))
 		      (set! result (and result 
                                         (&lt; (* (<a class=quiet href="sndclm.html#frame-ref" onmouseout="UnTip()" onmouseover="Tip(sndclm_frame_ref_tip)">frame-ref</a> fr chn) (<a class=quiet href="sndclm.html#frame-ref" onmouseout="UnTip()" onmouseover="Tip(sndclm_frame_ref_tip)">frame-ref</a> last-fr chn)) 0.0)))
 		      (<a class=quiet href="sndclm.html#frame-set!" onmouseout="UnTip()" onmouseover="Tip(sndclm_frame_set_tip)">frame-set!</a> last-fr chn (<a class=quiet href="sndclm.html#frame-ref" onmouseout="UnTip()" onmouseover="Tip(sndclm_frame_ref_tip)">frame-ref</a> fr chn)))
@@ -9542,7 +9542,7 @@ load("v.rb")
 <tr>
 <td bgcolor="#fbfbff">
 <pre>
-(<a class=quiet href="#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () 
+(with-sound ()
   (fm-violin 0 1 440 .1))
 </pre></td><td width=30></td>
 
@@ -9564,7 +9564,7 @@ we want to hear an arpeggio from the fm-violin:
 </p>
 
 <pre>
-    (<a class=quiet href="#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> ()
+    (with-sound ()
       (do ((i 0 (1+ i)))
           ((= i 4))                ; 4 notes in all
         (fm-violin (* i 0.25)      ; notes 1/4 secs apart
@@ -9748,7 +9748,7 @@ To continue adding notes to an existing file, set 'continue-old-file':
 </p>
 
 <pre>
-    (<a class=quiet href="#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:continue-old-file #t) (fm-violin 0 1 440 .1))
+    (with-sound (:continue-old-file #t) (fm-violin 0 1 440 .1))
 </pre>
 
 <p>The "notehook" argument is a function called each time an instrument is called:
@@ -10990,14 +10990,14 @@ via CLM ins: <a href="anoi.ins">anoi.ins</a><br>
 <center>
 <table bgcolor="aliceblue" border=0 cellspacing=8><tr>
 <td><small>related documentation:</small></td>
-<td><small><a href="snd.html" onmouseout="UnTip()" onmouseover="Tip('basic Snd user-interface documentation')">snd.html</a></small></td>
-<td><small><a href="extsnd.html" onmouseout="UnTip()" onmouseover="Tip('Snd extension and customization')">extsnd.html</a></small></td>
-<td><small><a href="grfsnd.html" onmouseout="UnTip()" onmouseover="Tip('Snd configuration, connection to other libraries and programs')">grfsnd.html</a></small></td>
-<td><small><a href="sndclm.html" onmouseout="UnTip()" onmouseover="Tip('sound synthesis generators')">sndclm.html</a></small></td>
-<td><small><a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip('library that handles sound files')">sndlib.html</a></small></td>
-<td><small><a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip('library that ties Motif and Gtk into Snd')">libxm.html</a></small></td>
-<td><small><a href="fm.html" onmouseout="UnTip()" onmouseover="Tip('introduction to frequency modulation')">fm.html</a></small></td>
-<td><small><a href="index.html" onmouseout="UnTip()" onmouseover="Tip('an actual index, not some introductory file')">index.html</a></small></td>
+<td><small><a href="snd.html" onmouseout="UnTip()" onmouseover="Tip(snd_html_tip)">snd.html</a></small></td>
+<td><small><a href="extsnd.html" onmouseout="UnTip()" onmouseover="Tip(extsnd_html_tip)">extsnd.html</a></small></td>
+<td><small><a href="grfsnd.html" onmouseout="UnTip()" onmouseover="Tip(grfsnd_html_tip)">grfsnd.html</a></small></td>
+<td><small><a href="sndclm.html" onmouseout="UnTip()" onmouseover="Tip(sndclm_html_tip)">sndclm.html</a></small></td>
+<td><small><a href="sndlib.html" onmouseout="UnTip()" onmouseover="Tip(sndlib_html_tip)">sndlib.html</a></small></td>
+<td><small><a href="libxm.html" onmouseout="UnTip()" onmouseover="Tip(libxm_html_tip)">libxm.html</a></small></td>
+<td><small><a href="fm.html" onmouseout="UnTip()" onmouseover="Tip(fm_html_tip)">fm.html</a></small></td>
+<td><small><a href="index.html" onmouseout="UnTip()" onmouseover="Tip(index_html_tip)">index.html</a></small></td>
 </tr></table>
 </center>
 

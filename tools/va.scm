@@ -249,3 +249,80 @@
  (list ...))
 
 !#
+
+
+;;; look for missing or unused tips
+
+(if (not (defined? 'find-if))
+    (define (find-if pred l)
+      "(find-if func lst) scans 'lst' for any element that 'func' likes"
+      (cond ((null? l) #f)
+	    ((pred (car l)) (car l))
+	    (else (find-if pred (cdr l))))))
+  
+(let ((tip-list '())
+      (new-tip-list '())
+      (warned-list '()))
+
+  (call-with-input-file "wz_data.js"
+    (lambda (file)
+      (let loop ((line (read-line file 'concat))) ; concat means leave the final crlf in place
+	(or (eof-object? line)
+	    (let ((len (string-length line)))
+	      (if (and (> len 8)
+		       (string=? "var " (substring line 0 4)))
+		  (let ((end (do ((i 4 (1+ i)))
+				 ((or (>= i len)
+				      (char=? (string-ref line i) #\space))
+				  i))))
+		    (if (< end len)
+			(set! tip-list (cons (substring line 4 end) tip-list)))))
+	      (loop (read-line file 'concat)))))))
+  
+  (for-each
+   (lambda (filename)
+     (call-with-input-file filename
+       (lambda (file)
+	 (let loop ((line (read-line file 'concat)))
+	   (or (eof-object? line)
+	       (let ((len (string-length line)))
+		 (if (> len 8)
+		     (let ((start 0))
+		       (do ((i 0 (1+ i)))
+			   ((>= i len))
+			 (let ((chr (string-ref line i)))
+			   (if (char=? chr #\))
+			       (let* ((name (substring line (1+ start) i))
+				      (len (string-length name)))
+				 (if (and (> len 4)
+					  (string=? "_tip" (substring name (- len 4) len)))
+				     (begin
+				       (if (and (not (find-if (lambda (str)
+								(string=? str name))
+							      tip-list))
+						(not (find-if (lambda (str)
+								(string=? str name))
+							      warned-list)))
+					   (begin
+					     (set! warned-list (cons name warned-list))
+					     (display (format #f ";can't find ~A in wz_data.js~%" name))))
+				       (if (not (find-if (lambda (str)
+							   (string=? str name))
+							 new-tip-list))
+					   (set! new-tip-list (cons name new-tip-list))))))
+			       (if (and (not (char=? chr #\_))
+					(not (char-alphabetic? chr))
+					(not (char-numeric? chr)))
+				   (set! start i)))))))
+		 (loop (read-line file 'concat))))))))
+   (list "snd.html" "extsnd.html" "sndlib.html" "grfsnd.html" "sndclm.html" "sndscm.html"))
+
+  (for-each
+   (lambda (name)
+     (if (not (find-if (lambda (str)
+			 (string=? str name))
+		       new-tip-list))
+	 (display (format #f ";defined in wz_data.js but not used: ~A~%" name))))
+   tip-list))
+  
+  
