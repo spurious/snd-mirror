@@ -18,6 +18,11 @@
 </head>
 <body bgcolor=white>
 
+<!-- TODO: perhaps tips for the constants in extsnd?
+     TODO: perhaps tips to show how to generate the pictures? or discuss pics as below?
+     TODO: snd-help support for declare, define-envelope, defvar, etc
+-->
+
 <script language=JavaScript type="text/javascript" src="wz_tooltip.js"></script>
 <script language=JavaScript type="text/javascript" src="wz_data.js"></script>
 
@@ -185,7 +190,7 @@ is included in the <a href="http://ccrma.stanford.edu/planetccrma/software/">Pla
     <li><a href="grfsnd.html#sndswitches" onmouseout="UnTip()" onmouseover="Tip('startup switches such as -l and -p')">Snd invocation flags</a>
     <li><a href="grfsnd.html#sndinitfile" onmouseout="UnTip()" onmouseover="Tip('~/.snd, ~/.snd_guile, ~/.snd_prefs_guile, etc')">The initialization file</a>
     <li><a href="grfsnd.html#sndresources" onmouseout="UnTip()" onmouseover="Tip('X resources: Xdefaults, gtkrc')">Snd resources</a>
-    <li><a href="grfsnd.html#sndconfigurationswitches" onmouseout="UnTip()" onmouseover="Tip('this refers to the configure script that prepares a makefile to build Snd from its sources')">Configuration choices</a>
+    <li><a href="grfsnd.html#sndconfigurationswitches" onmouseout="UnTip()" onmouseover="Tip('this refers to the configure script used to build Snd')">Configuration choices</a>
     <li><a href="grfsnd.html#sndenvvars" onmouseout="UnTip()" onmouseover="Tip('mostly related to audio hardware choices')">Environment variables</a>
     </ul>
   <li><a href="grfsnd.html#snddynamic">Runtime modules and external programs</a>
@@ -890,13 +895,14 @@ current window and is updated as the window bounds change.
 If you'd like the fft size to reflect the current time domain
 window size:</p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa" onmouseout="UnTip()" 
- onmouseover="Tip('This is Scheme code that adds a \'hook\', a callback function that gets called whenever a graph is redrawn.  The function checks for a simple FFT graph (not a sonogram) via &quot;transform-graph?&quot; and &quot;transform-graph-type&quot;, then sets the FFT size (a power of 2) to reflect the current time domain window bounds.  See extsnd.html for full details on the extension language capabilities.  This code can be added to your Snd initialization file if you want it by default.  That process is described in grfsnd.html.', OFFSETX, 200)">
+<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa">
 <pre>
 (add-hook! <a class=quiet href="extsnd.html#graphhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_graphhook_tip)">graph-hook</a>
   (lambda (snd chn y0 y1)
+    ;; check that we are displaying an FFT, 
+    ;; if so, set the FFT size to reflect the graph boundaries
     (if (and (<a class=quiet href="extsnd.html#transformgraphp" onmouseout="UnTip()" onmouseover="Tip(extsnd_transformgraphp_tip)">transform-graph?</a>) 
-             (= (<a class=quiet href="extsnd.html#transformgraphtype" onmouseout="UnTip()" onmouseover="Tip(extsnd_transformgraphtype_tip)">transform-graph-type</a>) <a class=quiet href="extsnd.html#transformgraphtype" onmouseout="UnTip()" onmouseover="Tip(extsnd_transformgraphtype_tip)">graph-once</a>))
+             (= (<a class=quiet href="extsnd.html#transformgraphtype" onmouseout="UnTip()" onmouseover="Tip(extsnd_transformgraphtype_tip)">transform-graph-type</a>) <a class=quiet href="extsnd.html#transformgraphtype" onmouseout="UnTip()" onmouseover="Tip(extsnd_graphonce_tip)">graph-once</a>))
       (set! (<a class=quiet href="extsnd.html#transformsize" onmouseout="UnTip()" onmouseover="Tip(extsnd_transformsize_tip)">transform-size)</a>
         (expt 2 (ceiling (/ (log (- (<a class=quiet href="extsnd.html#rightsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_rightsample_tip)">right-sample</a>) 
                                     (<a class=quiet href="extsnd.html#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a>))) 
@@ -1519,9 +1525,10 @@ The search commands are:</p>
 <p>These searching functions can be closures; the following searches for
 the next positive-going zero crossing, placing the cursor just before it:</p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa" onmouseout="UnTip()" onmouseover="Tip('This function is used in conjunction with C-s to search for a positive-going zero crossing.  C-s calls it on each sample, passing the sample value to us as \'n\' (the argument to the inner lambda). We save the last sample in \'lastn\', and watch for a case where lastn is less than 0.0 and the current sample is greater than or equal to 0.0.  When that happens, \'rtn\' is set to -1 to cause the cursor to back up one sample.  Otherwise the function returns #f which tells C-s to keep searching. The search function is wrapped in a \'let\' so that the last sample value is saved across function calls.', OFFSETX, 100)">
+<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa">
 <pre>
 (define (zero+)
+  ;; return a closure to search for positive-going zero crossing.	
   (let ((lastn 0.0))
     (lambda (n)
       (let ((rtn (and (&lt; lastn 0.0)
@@ -1978,7 +1985,7 @@ all the samples between the cursor and the next mark.</p>
 <tr><td>[Down]</td><td>zoom out</td><td><code><small>;algorithm depends on zoom-focus-style choice</small></code></td></tr>
 <tr><td>[Up]</td><td>zoom in</td><td><code><small>;algorithm depends on zoom-focus-style choice</small></code></td></tr>
 <tr><td valign=top>[Left]</td><td valign=top>move window left</td>
-<td onmouseout="UnTip()" onmouseover="Tip('this odd looking code gets the window size divided by 2, and subtracts that from the current window left edge, thus moving the left edge back a half-windowful: left - (right - left) / 2')"><pre><small>
+<td onmouseout="UnTip()" onmouseover="Tip('this odd looking code gets the window size divided by 2,<br>and subtracts that from the current window left edge,<br>thus moving the left edge back a half-windowful:<br>left - (right - left) / 2')"><pre><small>
 (lambda () 
   (set! (<a class=quiet href="extsnd.html#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a>) 
     (max 0 (- (* 1.5 (<a class=quiet href="extsnd.html#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a>)) (* 0.5 (<a class=quiet href="extsnd.html#rightsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_rightsample_tip)">right-sample</a>))))))

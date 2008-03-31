@@ -264,6 +264,8 @@ var extsnd_graph_tip = "(graph data :optional xlabel (x0 0.0) (x1 1.0) y0 y1 snd
 var extsnd_graphhook_tip = "graph-hook (snd chn y0 y1): called each time a graph is about to be updated. <br>" +
                            "If it returns #t, the display is not updated.";
 
+var extsnd_graphonce_tip = "graph-once is the default value of the graph types (time-graph-type and transform-graph-type).";
+
 var extsnd_graphshorizontal_tip = "(graphs-horizontal :optional snd chn):<br>" +
                                   " #t if the time domain, fft, and lisp graphs are layed out horizontally";
 
@@ -302,6 +304,8 @@ var extsnd_insertsound_tip = "(insert-sound file :optional (beg 0) (file-chan 0)
 var extsnd_justsounds_tip = "(just-sounds): the 'just sounds' choice in the file chooser dialog";
 
 var extsnd_leftsample_tip = "(left-sample :optional snd chn): left sample number in time domain window";
+
+var extsnd_lispgraph_tip = "the lisp-graph is the 3rd graph displayed in the channel graphs.";
 
 var extsnd_lispgraphhook_tip = "lisp-graph-hook (snd chn): called just before the lisp graph is updated.<br>" +
                                " If it returns a list of pixels, these are used in order by the list of graphs<br>" +
@@ -426,7 +430,12 @@ var extsnd_musaudiowrite_tip = "(mus-audio-write line sdata frames):<br>" +
 
 var extsnd_musdataformatname_tip = "(mus-data-format-name format): data format (e.g. mus-bshort) as a string";
 
+var extsnd_musfileprescaler_tip = "sometimes sound files sample values are so small that they need<br>" +
+                                  "to be boosted before Snd uses them.";
+
 var extsnd_musheadertypename_tip = "(mus-header-type-name type): header type (e.g. mus-aiff) as a string";
+
+var extsnd_musraw_tip = "mus-raw means 'no header'; see header-type.";
 
 var extsnd_musosssetbuffers_tip = "(mus-oss-set-buffers num size): set Linux OSS 'fragment' number and size.<br>" +
                                   " If Snd's controls seem sluggish, try <code>(mus-oss-set-buffers 4 12)</code><br>" +
@@ -1356,3 +1365,183 @@ var snd_html_tip = "basic Snd user-interface documentation";
 var libxm_html_tip = "library that ties Motif and Gtk into Snd";
 
 var index_html_tip = "overall index";
+
+
+
+var analog_filter_doc_tip = "These are the traditional IIR filters, any type, any even order<br>" +
+                            "(Butterworth, Chebyshev, Inverse Chebyshev, Bessel, and Elliptic)<br>" +
+                            "The elliptic function filters need GSL, and all of these work better<br>" +
+                            "if you build Snd --with-doubles.";
+
+var animals_doc_tip = "synthesis of birds, frogs, and insects";
+
+var autosave_doc_tip = "periodically save current sound edits in a backup file, <br>" +
+                       "useful if your machine crashes a lot.";
+
+var bess_doc_tip = "This sets up a dialog to experiment with simple FM, <br>" +
+                   "the fm-violin, or with a compositional algorithm";
+
+var bird_doc_tip = "simple synthesis of about 50 birds using additive synthesis.<br>" +
+                   "see animals.scm for much more elaborate versions of these birds";
+
+var clean_doc_tip = "click, pop, and hum removal, and signal reconstruction";
+
+var clm_ins_doc_tip = "Instruments using many standard synthesis techniques,<br>" +
+                      " including a bagpipe, FOF synthesis, many FM examples,<br>" +
+                      " granular synthesis, spectral modeling, reverbs, and physical modeling.";
+
+var debug_doc_tip = "These are guile-specific debugging functions for tracing execution,<br>" +
+                    " inserting breakpoints, and displaying a stack trace.";
+
+
+var dlocsig_doc_tip = "dlocsig sets up envelopes to mimic a moving sound;<br>" +
+                      " included are many path-specification functions";
+
+var draw_doc_tip = "Examples of drawing extensions, primarily one that puts a thumbnail graph<br>" +
+                   " of the current sound in the upper right corner";
+
+var dsp_doc_tip = "This has all the usual DSP stuff: filters, ffts, sample rate conversion, <br>" +
+                  " sound effects, statistics, scanned synthesis, transforms, etc";
+
+var dot_snd_doc_tip = "Example initialization (~/.snd) files.<br>" +
+                      " snd_frg.scm sets up key bindings to imitate Soundforge.";
+
+var env_doc_tip = "Various operations on envelopes: add, scale, copy, stretch";
+
+var enved_doc_tip = "This adds an envelope editor to each displayed channel.<br>" +
+                    " You can set it up to be an amplitude envelope.";
+
+var examp_doc_tip = "A bunch of examples of things like ffts, filters, marks, selections,<br>" +
+                    " graphics extensions, sound effects, and generators.";
+
+var extensions_doc_tip = "channel and sound property lists, several enveloping functions,<br>" +
+                         " and commonly used editing sequences such as channel extraction.";
+
+var fade_doc_tip = "sound mixing using envelopes in the frequency domain";
+
+var frame_doc_tip = "various frame, vct, and sound-data functions";
+
+var freeverb_doc_tip = "a reverberator along the lines of nrev, but with more options.";
+
+var generators_doc_tip = "defgenerator and about 80 generators related to sums of sinusoids<br>" +
+                         " bessel functions, adjustable square-waves, special envelopes, etc";
+
+var grani_doc_tip = "this is a very flexible granular synthesis instrument";
+
+var green_doc_tip = "generators similar to rand and rand-interp, producing 1/f noise, etc";
+
+var heart_doc_tip = "This code is aimed at blood pressure readings.";
+
+var hooks_doc_tip = "snd-hooks, describe-hook, with-local-hook, reset-all-hooks.";
+
+var index_doc_tip = "this provides a connection between firefox and the snd-help mechanism.";
+
+var inf_snd_doc_tip = "this provides a Snd emacs mode implementation.<br>" +
+                      "  You can use emacs as the listener, rather than the built-in Snd window.";
+
+var jcrev_doc_tip = "this is probably the first Schroeder reverb, based on all-pass and comb filters.";
+
+var ladspa_doc_tip = "LADSPA is the linux audio group plugin standard. <br>" +
+                     "There are a lot of plugin collections.";
+
+var maraca_doc_tip = "this includes the maraca, tambourine, wind-chimes, etc";
+
+var marks_doc_tip = "this includes describe-mark, eval-between-marks, mark-property,<br>" +
+                    " play-between-marks, and snap-marks.";
+
+var maxf_doc_tip = "This is a collection of modal synthesis demos.<br>" +
+                   "  For the actual filter, see the firmant generator";
+
+var menus_doc_tip = "Menu additions for things like crop, trim, fft notch filter,<br>" +
+                    " mark and mix functions, etc.  The main added menu loads a huge<br>" +
+                    " set of sound effects";
+
+var mix_doc_tip = "mix-property, silence-all-mixes, mix-sound, save-mix, snap-mix-to-beat<br>" +
+                  " and many functions acting on lists of mixes";
+
+var mixer_doc_tip = "mixers and frames treated as matrices and vectors: <br>" +
+                    " matrix determinant, transpose, invert, solve, mixer-poly, etc";
+
+var moog_doc_tip = "Moog's four pole lowpass (24db/Oct) filter as a clm generator,<br>" +
+                   " variable resonance, \"that warm, analog sound\".";
+
+var musglyphs_doc_tip = "The CMN music symbol font built from bezier curves.<br>" +
+                        "This file is a lisp-&gt;scheme wrapper for cmn-glyphs.lisp";
+
+var nb_doc_tip = "As you move the mouse through the view-files list,<br>" +
+                 " the help dialog posts information about the file underneath the mouse";
+
+var noise_doc_tip = "This ancient noise instrument can produce those all-important whooshing<br>" +
+                    " sounds.  noise.ins translated to Scheme/Ruby by Michael Scholz";
+
+var numerics_doc_tip = "Various numerical functions: factorial, plgndr, gegenbaur, etc";
+
+var oscope_doc_tip = "oscope.scm sets up a dialog with a Snd channel window<br>" +
+                     " (time domain, fft etc) that displays data read from the<br>" +
+                     " microphone in real time.";
+
+var peak_env_doc_tip = "This saves the overall amplitude envelopes for a given sound so<br>" +
+                       " that a subsequent re-open of the sound can display the full waveform quickly.";
+
+var piano_doc_tip = "Scott van Duyne's piano model that includes multiple coupled strings,<br>" +
+                    " a nonlinear hammer, and an arbitrarily large soundboard and enclosure";
+
+var play_doc_tip = "play between marks, play continuously, play a set of sines, etc";
+
+var poly_doc_tip = "polynomial addition, multiplication, division, gcd, roots, and discriminant";
+
+var popup_doc_tip = "context-sensitive popup menus.  You get a different popup<br>" +
+                    " menu over the main graph, the fft, the selection, the listener, etc";
+
+var prc95_doc_tip = "The basic physical models: pluck, bow, clarinet, brass, flute";
+
+var pvoc_doc_tip = "various versions of the Moore-Klingbeil-Trevisani-Edwards phase-vocoder.<br>" +
+                   "see also the CLM phase-vocoder generator.";
+
+var rgb_doc_tip = "this translates the standard X11 color names into Snd color objects.";
+
+var rtex_doc_tip = "hard (glitch-free) real-time support for CLM instruments,<br>" +
+                   " as well as numerous other extensions of Snd for user <br>" +
+                   " interface development.  Included are rt-compiler.scm,<br>" +
+                   " rt-engine.scm, rt-faust.scm, rt.tex, rt-clm-ins.scm, <br>" +
+                   " rt-DotEmacs, rt-examples.scm, and rt-player.scm, <br>" +
+                   " all thanks to Kjetil Matheussen";
+
+var rtio_doc_tip = "show graph of real-time input and so on";
+
+var rubber_doc_tip = "rubber-sound tries to stretch or contract a sound (in time);<br>" +
+                     " it scans the sound looking for stable sections, then either <br>" +
+                     " deletes periods or interpolates new ones to shorten or lengthen the sound";
+
+var selection_doc_tip = "includes swap-selection-channels, replace-with-selection, <br>" +
+                        " selection-members, make-selection, delete-selection-and-smooth,<br>" +
+                        " filter-selection-and-smooth, and with-temporary-selection";
+
+var singer_doc_tip = "This is based on Perry's singer.c and CLM's singer.ins";
+
+var snd4_doc_tip = "These files (snd4.scm to snd9.scm) provide backwards compatibility<br>" +
+                   " with earlier versions of Snd.";
+
+var snddiff_doc_tip = "a diff or grep-like function for sounds. It can currently find<br>" +
+                      " initial delays, scaling differences, and scattered individual<br>" +
+                      " sample differences: <code>(snddiff snd0 chn0 snd1 chn1)</code>.";
+
+var snd_gl_doc_tip = "This depends on access to openGL (Mesa); it includes a waterfall fft graph<br>" +
+                     "and GL state readbacks";
+
+var snd_motif_doc_tip = "user interface extensions using the libxm modules: add-mark-pane,<br>" +
+                        " display-scanned-synthesis, load-font, with-level-meters,<br>" + 
+                        " variable-display, smpte labels, and lots more.<br>" +  
+                        " snd-motif is for Motif, snd-gtk for Gtk.";
+
+var snd_test_doc_tip = "Snd regression test suite; zillions of examples.";
+
+var sndwarp_doc_tip = "time stretching and whatnot";
+
+var ws_doc_tip = "with-sound provides a simple way to package up a bunch of<br>" +
+                 " instrument calls into a new sound file,  and open that file in Snd";
+
+var zip_doc_tip = "The zipper marches through the two sounds taking equal short portions<br>" +
+                  " of each, then abutting them while resampling so that as one sound<br>" +
+                  " takes less overall frame space, the other takes more.";
+
