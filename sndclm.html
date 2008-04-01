@@ -611,7 +611,7 @@ This means that the frequency envelope y values should be passed through <a href
 <pre>
 (define (simp start end freq amp frq-env)
   (let ((os (make-oscil freq)) 
-        (frqe (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> frq-env :length (1+ (- end start)) :scaler (<em class=red>hz->radians</em> freq))))
+        (frqe (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> frq-env :length (1+ (- end start)) :scaler (<em class=red>hz-&gt;radians</em> freq))))
     (do ((i start (1+ i))) 
         ((= i end))
       (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* amp (oscil os (env <em class=red>frqe</em>)))))))
@@ -2608,18 +2608,18 @@ reflection, please send it to me, and I'll add it to this collection.
 <br><br>
 
 
-
 <A NAME="nrxydoc"></A>
 <!-- ---------------------------------------- NRXYSIN and NRXYCOS ---------------------------------------- -->
 
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>nrxysin (sine-summation) and nrxycos</h3></center></td></tr></table>
+
 <br>
 <pre>
   <a class=def name="make-nrxysin">make-nrxysin</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> 
       (frequency *clm-default-frequency*) 
       (ratio 1.0)               ; ratio between frequency and the spacing between successive sidebands
       (n 1)                     ; number of sidebands
-      (r .5)                    ; amplitude ratio between successive sidebands (< 1.0)
+      (r .5)                    ; amplitude ratio between successive sidebands (&lt; 1.0)
   <a class=def name="nrxysin">nrxysin</a> s :optional (fm 0.0)
   <a class=def name="nrxysin?">nrxysin?</a> s
 
@@ -2922,7 +2922,7 @@ And the fourth used the ssb-am-bank function in dsp.scm rewritten here for with-
 	 (factor (/ (- new-freq old-freq) old-freq))
 	 (rd (<a class=quiet href="#make-readin" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_readin_tip)">make-readin</a> sound)))
     (do ((i 1 (1+ i)))
-	((> i pairs))
+	((&gt; i pairs))
       (let* ((aff (* i old-freq))
 	     (bwf (* bw (+ 1.0 (/ i (* 2 pairs))))))
 	(vector-set! ssbs (1- i) (<em class=red>make-ssb-am</em> (* i factor old-freq)))
@@ -3307,7 +3307,7 @@ but 0.5 should happen three times as often as either of the others:
     (let ((vals (vct 0.0 0.5 0.5 0.5 1.0)))
       (do ((i 0 (1+ i)))
           ((= i 10))
-        (snd-display ";~A " (vct-ref vals (inexact->exact (floor (random 5.0)))))))
+        (snd-display ";~A " (vct-ref vals (inexact-&gt;exact (floor (random 5.0)))))))
 </pre>
 
 <p>These "distributions" refer to the values returned by the random number
@@ -4218,12 +4218,12 @@ delay line as the coefficients for an FIR filter:
 	((= k num-combs0))
       (vector-set! cmbs0 k 
 		   (<em class=red>make-comb</em> scaler 
-			      (inexact->exact (floor (* comb-len (list-ref combs0 k)))))))
+			      (inexact-&gt;exact (floor (* comb-len (list-ref combs0 k)))))))
     (do ((k 0 (1+ k)))
 	((= k num-combs1))
       (vector-set! cmbs1 k 
 		   (<em class=red>make-comb</em> scaler 
-			      (inexact->exact (floor (* comb-len (list-ref combs1 k)))))))
+			      (inexact-&gt;exact (floor (* comb-len (list-ref combs1 k)))))))
     (<a class=quiet href="extsnd.html#run" onmouseout="UnTip()" onmouseover="Tip(extsnd_run_tip)">run</a>
      (lambda ()
        (do ((i beg (1+ i)))
@@ -5328,7 +5328,7 @@ Here is an example of move-locsig:
 	    (let ((sig (* .5 (<a class=quiet href="#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> osc))))
               (<em class=red>locsig</em> loc j sig)
 	      (set! j (1+ j))))
-	  (<em class=red>move-locsig</em> loc (exact->inexact i) 1.0))))))
+	  (<em class=red>move-locsig</em> loc (exact-&gt;inexact i) 1.0))))))
 </pre>
 </td></tr></table>
 
@@ -5805,8 +5805,8 @@ This uses J0(index * cos(x)) + J1(index * cos(x)) to produce a full set of cosin
 <br>
 
 <pre>
-  <A class=def NAME="make-ncos2">make-ncos2</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (n 1)
-  <A class=def NAME="ncos2">ncos2</A> gen fm
+  <A class=def NAME="make-ncos2" onmouseout="UnTip()" onmouseover="Tip('<img src=\'fejer.png\' width=\'320\' height=\'170\'>', TITLE, 'ncos2 (Fejer), n=10', ABOVE, true)">make-ncos2</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (n 1)
+  <A class=def NAME="ncos2" onmouseout="UnTip()" onmouseover="Tip('<img src=\'fejer.png\' width=\'320\' height=\'170\'>', TITLE, 'ncos2 (Fejer), n=10', ABOVE, true)">ncos2</A> gen fm
   <A class=def NAME="ncos2?">ncos2?</A> gen
 </pre>
 
@@ -5819,8 +5819,8 @@ This uses J0(index * cos(x)) + J1(index * cos(x)) to produce a full set of cosin
 <br>
 
 <pre>
-  <A class=def NAME="make-ncos4">make-ncos4</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (n 1)
-  <A class=def NAME="ncos4">ncos4</A> gen fm
+  <A class=def NAME="make-ncos4" onmouseout="UnTip()" onmouseover="Tip('<img src=\'jackson.png\' width=\'320\' height=\'170\'>', TITLE, 'ncos4 (Jackson), n=10', ABOVE, true)">make-ncos4</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (n 1)
+  <A class=def NAME="ncos4" onmouseout="UnTip()" onmouseover="Tip('<img src=\'jackson.png\' width=\'320\' height=\'170\'>', TITLE, 'ncos4 (Jackson), n=10', ABOVE, true)">ncos4</A> gen fm
   <A class=def NAME="ncos4?">ncos4?</A> gen
 </pre>
 
@@ -5835,8 +5835,8 @@ This uses J0(index * cos(x)) + J1(index * cos(x)) to produce a full set of cosin
 
 
 <pre>
-  <A class=def NAME="make-npcos">make-npcos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (n 1)
-  <A class=def NAME="npcos">npcos</A> gen fm
+  <A class=def NAME="make-npcos" onmouseout="UnTip()" onmouseover="Tip('<img src=\'poussin.png\' width=\'320\' height=\'170\'>', TITLE, 'npcos (Poussin), n=5', ABOVE, true)">make-npcos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (n 1)
+  <A class=def NAME="npcos" onmouseout="UnTip()" onmouseover="Tip('<img src=\'poussin.png\' width=\'320\' height=\'170\'>', TITLE, 'npcos (Poussin), n=5', ABOVE, true)">npcos</A> gen fm
   <A class=def NAME="npcos?">npcos?</A> gen
 </pre>
 

@@ -428,12 +428,20 @@ var extsnd_musaudioopenoutput_tip = "(mus-audio-open-output device srate chans f
 var extsnd_musaudiowrite_tip = "(mus-audio-write line sdata frames):<br>" +
                                " write frames of data (channels * frames = samples) to the audio line from sound-data sdata.";
 
+var extsnd_musbfloat_tip = "mus-bfloat data is big-endian float";
+
+var extsnd_musbshort_tip = "mus-bshort data is big-endian signed 16-bit integer";
+
 var extsnd_musdataformatname_tip = "(mus-data-format-name format): data format (e.g. mus-bshort) as a string";
 
 var extsnd_musfileprescaler_tip = "sometimes sound files sample values are so small that they need<br>" +
                                   "to be boosted before Snd uses them.";
 
 var extsnd_musheadertypename_tip = "(mus-header-type-name type): header type (e.g. mus-aiff) as a string";
+
+var extsnd_muslfloat_tip = "mus-lfloat data is little-endian float";
+
+var extsnd_muslshort_tip = "mus-lshort data is little-endian signed 16-bit integer";
 
 var extsnd_musraw_tip = "mus-raw means 'no header'; see header-type.";
 
@@ -566,7 +574,7 @@ var extsnd_readmixsample_tip = "(read-mix-sample reader): read sample from mix r
 
 var extsnd_readonly_tip = "(read-only :optional snd): whether snd is write-protected";
 
-var extsnd_readsample_tip = "(read-sample reader): read sample from reader";
+var extsnd_readsample_tip = "(read-sample reader): get the next sample from the sample-reader";
 
 var extsnd_redo_tip = "(redo :optional (count 1) snd chn): redo 'count' edits in snd's channel chn";
 
@@ -1083,10 +1091,10 @@ var sndclm_ncos_tip = "(ncos gen :optional (fm 0.0)): get the next sample from '
 
 var sndclm_one_pole_tip = "(one-pole gen :optional (input 0.0)): one pole filter of input";
 
-var sndclm_optional_key_tip = "One special aspect of each generator make function is the way it read its arguments.<br>" +
+var sndclm_optional_key_tip = "One special aspect of each generator make function is the way it reads its arguments.<br>" +
                 "I use the word <b>optional-key</b> to indicate that the arguments are keywords, but the keywords<br>" +
-                "themselves are optional. Take the make-oscil call, defined as:<br>" +
-                "<code>make-oscil :optional-key (frequency *clm-default-frequency*) (initial-phase 0.0)</code><br>" +
+                "themselves are optional. Take the make-oscil call, defined as:<br><br>" +
+                "<code>make-oscil :optional-key (frequency *clm-default-frequency*) (initial-phase 0.0)</code><br><br>" +
                 "This says that make-oscil has two optional arguments, frequency (in Hz), and <br>" +
                 "initial-phase (in radians).  The keywords associated with these values are<br>" +
                 ":frequency and :initial-phase.  When make-oscil is called, it scans its arguments;<br>" +

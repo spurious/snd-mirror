@@ -18,11 +18,6 @@
 </head>
 <body bgcolor=white>
 
-<!-- TODO: perhaps tips for the constants in extsnd?
-     TODO: perhaps tips to show how to generate the pictures? or discuss pics as below?
-     TODO: snd-help support for declare, define-envelope, defvar, etc
--->
-
 <script language=JavaScript type="text/javascript" src="wz_tooltip.js"></script>
 <script language=JavaScript type="text/javascript" src="wz_data.js"></script>
 
@@ -41,24 +36,28 @@
 <!-- these are then gathered into the reference table at the end by snd-index.cl -->
 <!-- I'm using A NAME (i.e caps) where the entity should be ignored by the indexer (index.cl) -->
 
+<!-- TODO: drop down menus mimicking Snd here -->
+
 <center><img src="title.png" usemap="#sndwindow" vspace=10 border=0 alt="standard Snd appearance"></center>
 <map name="sndwindow">
-  <area shape=rect coords="0,0,608,26" href="#overview" alt="title bar">
-  <area shape=rect coords="0,26,75,60" href="#fileoperations" alt="File menu" onmouseout="UnTip()" onmouseover="Tip('open, close, save a file, exit Snd...')">
-  <area shape=rect coords="75,26,150,60" href="#editoperations" alt="Edit menu" onmouseout="UnTip()" onmouseover="Tip('cut, paste, save selection, undo...')">
-  <area shape=rect coords="150,26,215,60" href="#viewing" alt="View menu" onmouseout="UnTip()" onmouseover="Tip('various dialogs, graphing choices')">
-  <area shape=rect coords="215,26,300,60" href="#options" alt="Options menu" onmouseout="UnTip()" onmouseover="Tip('save session, fft choices, preferences')">
-  <area shape=rect coords="15,70,30,170" href="#gettingstarted" alt="Y axis zoom" onmouseout="UnTip()" onmouseover="Tip('this slider changes the y-axis bounds')">
-  <area shape=rect coords="30,70,45,170" href="#gettingstarted" alt="Y axis position" onmouseout="UnTip()" onmouseover="Tip('this slider changes the y-axis midpoint')">
-  <area shape=rect coords="10,180,40,200" href="#gettingstarted" alt="fft button" onmouseout="UnTip()" onmouseover="Tip('this button turns on the fft display')">
-  <area shape=rect coords="10,200,40,220" href="#gettingstarted" alt="waveform button" onmouseout="UnTip()" onmouseover="Tip('this button turns on the time-domain display')">
-  <area shape=rect coords="45,60,600,200" href="#gettingstarted" alt="graphs">
-  <area shape=rect coords="50,200,600,212" href="#gettingstarted" alt="X axis position" onmouseout="UnTip()" onmouseover="Tip('this slider changes where we are in the sound')">
-  <area shape=rect coords="50,212,600,225" href="#gettingstarted" alt="X axis zoom" onmouseout="UnTip()" onmouseover="Tip('this slider changes how much of the sound we see')">
-  <area shape=rect coords="10,230,140,270" href="#gettingstarted" alt="sound file name" onmouseout="UnTip()" onmouseover="Tip('sound file name')">
-  <area shape=rect coords="140,230,490,270" href="#gettingstarted" alt="minibuffer" onmouseout="UnTip()" onmouseover="Tip('error messages get displayed here')">
-  <area shape=rect coords="490,230,510,250" href="#syncbutton" alt="sync button" onmouseout="UnTip()" onmouseover="Tip('this button can make all chans/sounds move together')">
-  <area shape=rect coords="550,230,570,250" href="#menuplay" alt="play button" onmouseout="UnTip()" onmouseover="Tip('play the sound')">
+  <area shape=rect coords="0,0,608,20" href="#overview" alt="title bar">
+  <area shape=rect coords="0,20,50,50" href="#fileoperations" alt="File menu" onmouseout="UnTip()" onmouseover="Tip('open, close, save a file, exit Snd...')">
+  <area shape=rect coords="65,20,105,50" href="#editoperations" alt="Edit menu" onmouseout="UnTip()" onmouseover="Tip('cut, paste, save selection, undo...')">
+  <area shape=rect coords="110,20,150,50" href="#viewing" alt="View menu" onmouseout="UnTip()" onmouseover="Tip('various dialogs, graphing choices')">
+  <area shape=rect coords="160,20,230,50" href="#options" alt="Options menu" onmouseout="UnTip()" onmouseover="Tip('save session, fft choices, preferences')">
+  <area shape=rect coords="540,20,570,50" href="#options" alt="Help menu" onmouseout="UnTip()" onmouseover="Tip('helpful essays')">
+  <area shape=rect coords="12,60,20,70" href="#gettingstarted" alt="edit history list" onmouseout="UnTip()" onmouseover="Tip('a list of editing changes')">
+  <area shape=rect coords="23,60,32,190" href="#gettingstarted" alt="Y axis zoom" onmouseout="UnTip()" onmouseover="Tip('this slider changes the y-axis bounds')">
+  <area shape=rect coords="34,60,44,190" href="#gettingstarted" alt="Y axis position" onmouseout="UnTip()" onmouseover="Tip('this slider changes the y-axis midpoint')">
+  <area shape=rect coords="20,205,50,220" href="#gettingstarted" alt="fft button" onmouseout="UnTip()" onmouseover="Tip('this button turns on the fft display')">
+  <area shape=rect coords="20,230,50,245" href="#gettingstarted" alt="waveform button" onmouseout="UnTip()" onmouseover="Tip('this button turns on the time-domain display')">
+  <area shape=rect coords="50,60,580,220" href="#gettingstarted" alt="graphs">
+  <area shape=rect coords="50,227,580,239" href="#gettingstarted" alt="X axis position" onmouseout="UnTip()" onmouseover="Tip('this slider changes where we are in the sound')">
+  <area shape=rect coords="50,240,580,250" href="#gettingstarted" alt="X axis zoom" onmouseout="UnTip()" onmouseover="Tip('this slider changes how much of the sound we see')">
+  <area shape=rect coords="10,260,130,280" href="#gettingstarted" alt="sound file name" onmouseout="UnTip()" onmouseover="Tip('sound file name')">
+  <area shape=rect coords="140,260,450,280" href="#gettingstarted" alt="minibuffer" onmouseout="UnTip()" onmouseover="Tip('error messages get displayed here')">
+  <area shape=rect coords="460,260,475,280" href="#syncbutton" alt="sync button" onmouseout="UnTip()" onmouseover="Tip('this button can make all chans/sounds move together')">
+  <area shape=rect coords="522,260,535,280" href="#menuplay" alt="play button" onmouseout="UnTip()" onmouseover="Tip('play the sound')">
 </map>
 
 <p><A NAME="overview"><b>Snd</b></a> is a sound editor modelled

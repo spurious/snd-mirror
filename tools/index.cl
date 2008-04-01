@@ -811,8 +811,11 @@
 					;actually should look for close double quote
 			  (if (not epos) 
 			      (warn "<a name but no </a> for ~A in ~A[~D]" dline file linectr)
-			    (progn
+			    (let ((min-epos (search " " dline)))
 			      (setf epos (search ">" dline))
+			      (if (and (numberp min-epos)
+				       (< min-epos epos))
+				  (setf epos min-epos))
 			      (setf (aref names name) (concatenate 'string file "#" (my-subseq dline 0 (- epos 1))))
 			      (if id-names
 				  (setf (aref id-names name) (my-subseq dline 0 (- epos 1))))

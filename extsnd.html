@@ -370,7 +370,7 @@ Extensions to Snd can be found in:
 </p>
 
 
-<table border=8 bordercolor="lightsteelblue" cellpadding=6><tr><td>
+<table border=8 bordercolor="lightsteelblue" cellpadding=6 hspace=20><tr><td>
 <table border=0 cellspacing=0 cellpadding=2>
 <tr><th colspan=2 bgcolor="beige">Contents</th></tr>
 
@@ -2633,7 +2633,7 @@ I use update-hook to make sure the y axis bounds reflect the new maxamp, if it i
       (do ((i 0 (1+ i)))
 	  ((= i (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">chans</a> snd)))
 	(let ((mx (<a class=quiet href="#maxamp" onmouseout="UnTip()" onmouseover="Tip(extsnd_maxamp_tip)">maxamp</a> snd i)))
-	  (if (> mx 1.0)
+	  (if (&gt; mx 1.0)
   	      (set! (<a class=quiet href="#ybounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_ybounds_tip)">y-bounds</a> snd i) (list (- mx) mx))))))))
 </pre></td></tr></table>
 
@@ -3780,7 +3780,7 @@ or <a href="#musaudioopenoutput">mus-audio-open-output</a>).
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa">
 <pre>
-(let* ((audio-fd (<a class=quiet href="#musaudioopenoutput" onmouseout="UnTip()" onmouseover="Tip(extsnd_musaudioopenoutput_tip)">mus-audio-open-output</a> mus-audio-default 22050 1 mus-lshort 1024))
+(let* ((audio-fd (<a class=quiet href="#musaudioopenoutput" onmouseout="UnTip()" onmouseover="Tip(extsnd_musaudioopenoutput_tip)">mus-audio-open-output</a> mus-audio-default 22050 1 <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_muslshort_tip)">mus-lshort</a> 1024))
        ;; open DAC at srate 22050, 1 channel, 1024 bytes per buffer
        (osc (<a class=quiet href="sndclm.html#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> 440.0))                       ; make a sine wave at 440 Hz
        (data (<a class=quiet href="#makesounddata" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesounddata_tip)">make-sound-data</a> 1 512)))                ; output buffer (1 chan, 512 samples)
@@ -4943,8 +4943,8 @@ to use multiple output files, collecting related notes in one file, then mixing 
 ;; open two output files, one for the violin notes, the other for the cellos
 ;;   then mix them into "test.snd"
 
-(let ((violins (<a class=quiet href="sndclm.html#make-sampletofile" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_sampletofile_tip)">make-sample-&gt;file</a> "violins.snd" 1 mus-lfloat mus-next))
-      (cellos (<a class=quiet href="sndclm.html#make-sampletofile" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_sampletofile_tip)">make-sample-&gt;file</a> "cellos.snd" 1 mus-lfloat mus-next)))
+(let ((violins (<a class=quiet href="sndclm.html#make-sampletofile" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_sampletofile_tip)">make-sample-&gt;file</a> "violins.snd" 1 <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_muslfloat_tip)">mus-lfloat</a> mus-next))
+      (cellos (<a class=quiet href="sndclm.html#make-sampletofile" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_sampletofile_tip)">make-sample-&gt;file</a> "cellos.snd" 1 <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_muslfloat_tip)">mus-lfloat</a> mus-next)))
 
   (define (violin beg dur freq amp)
     (<a class=quiet href="sndscm.html#withtempsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_withtempsound_tip)">with-temp-sound</a> (:continue-old-file #t :output "violins.snd") 
@@ -5236,7 +5236,7 @@ Here is a brief example (taken from play.scm) that plays a region over and over 
   (<em class=red>play-region</em> 0 #f
     (letrec ((stop-func (lambda (reason)
 			  (if (and (not (<a class=quiet href="#cgp" onmouseout="UnTip()" onmouseover="Tip(extsnd_cgp_tip)">c-g?</a>))
-				   (= reason 0)) ; 0 -> play completed normally
+				   (= reason 0)) ; 0 -&gt; play completed normally
 			      (<em class=red>play-region</em> reg #f stop-func)))))
       stop-func))
 </pre>
@@ -5371,8 +5371,8 @@ args (that is, they are normal keyword arguments, but the keywords are optional)
 <pre>
     (save-region 2 "reg0.snd")
     (save-region 2 :file "reg0.snd" :header-type mus-next)
-    (save-region 2 "reg0.snd" mus-next mus-bfloat "a comment")
-    (save-region 2 :file "reg0.snd" :comment "a comment" :data-format mus-bfloat)
+    (save-region 2 "reg0.snd" mus-next <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_musbfloat_tip)">mus-bfloat</a> "a comment")
+    (save-region 2 :file "reg0.snd" :comment "a comment" :data-format <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_musbfloat_tip)">mus-bfloat</a>)
 </pre>
 </td></tr>
 
@@ -7383,7 +7383,7 @@ giving the correct values in the call to open-raw-sound.
   (lambda (mpgfile rawfile chans)
     "(<a class=quiet href="sndscm.html#mpg" onmouseout="UnTip()" onmouseover="Tip(sndscm_mpg_tip)">mpg</a> file tmpname chans) converts file from MPEG-3 to raw 16-bit samples using mpg123"
     (system (format #f "mpg123 -s ~A &gt; ~A" mpgfile rawfile))
-    (<em class=red>open-raw-sound</em> rawfile 1 44100 (if (little-endian?) mus-lshort <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_dataformat_tip)">mus-bshort</a>))))
+    (<em class=red>open-raw-sound</em> rawfile 1 44100 (if (little-endian?) <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_muslshort_tip)">mus-lshort</a> <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_musbshort_tip)">mus-bshort</a>))))
 </pre></td></tr></table>
 
 There's a more elaborate version of this function in examp.scm.  See also <a href="#openrawsoundhook">open-raw-sound-hook</a>.
@@ -9312,7 +9312,8 @@ The choices are:
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <code><a class=def name="timegraphtype">time-graph-type</a> (:optional <em class=narg>snd chn</em>)</code>
 </td></tr><tr><td></td><td>
-If time-graph-type is <code>graph-as-wavogram</code>, the time domain waveform is displayed as a '<a href="snd.html#wavogram">wavogram</a>'.
+If time-graph-type is <code>graph-as-wavogram</code>, the time domain waveform is displayed as a 
+'<a href="snd.html#wavogram" onmouseout="UnTip()" onmouseover="Tip('<img src=\'wavo.png\' width=\'640\' height=\'250\'>', TITLE, 'graph-as-wavogram', ABOVE, true)">wavogram</a>'.
 The default is <code>graph-once</code>.  See also <a href="#wavohop">wavo-hop</a> and <a href="#wavotrace">wavo-trace</a>.
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
@@ -10324,7 +10325,7 @@ This returns the current edit list contents as a string.  If 'edpos' is specifie
     :<em class=typing>(display-edits 0 0 1)</em>  ; show just edit 1 (the scale-channel call)
     <em class=listener>"
      (scale 0 50828) ; scale-channel 2.000 0 #f [1:2]:
-       (at 0, cp->sounds[0][0:50827, 2.000]) [file: /home/bil/cl/oboe.snd[0]]
+       (at 0, cp-&gt;sounds[0][0:50827, 2.000]) [file: /home/bil/cl/oboe.snd[0]]
        (at 50828, end_mark)
     "</em>
 </pre>
@@ -10547,7 +10548,7 @@ graphical user interface.  So we create myfile.scm, and
 put in it something like:</p>
 
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-(let ((myfile (<a class=quiet href="#newsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_newsound_tip)">new-sound</a> "mysound.snd" mus-aifc-sound-file mus-bshort 44100 2 "this is my sound")))
+(let ((myfile (<a class=quiet href="#newsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_newsound_tip)">new-sound</a> "mysound.snd" mus-aifc-sound-file <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_musbshort_tip)">mus-bshort</a> 44100 2 "this is my sound")))
 	;; this is equivalent to the New file menu option
   (<a class=quiet href="#mix" onmouseout="UnTip()" onmouseover="Tip(extsnd_mix_tip)">mix</a> "oboe.snd" 0 0 myfile 0)
   ;; this mixes in the mono file oboe.snd at sample 0 in channel 0
@@ -13063,6 +13064,7 @@ colormap-name returns the specified colormap's name.
   <em class=listener>:</em><em class=typing>(colormap-name (colormap))</em>
   <em class=listener>"hot"</em>
 </pre>
+rgb.scm defines the built-in colormap names.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
