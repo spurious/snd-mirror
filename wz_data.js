@@ -1553,3 +1553,8 @@ var zip_doc_tip = "The zipper marches through the two sounds taking equal short 
                   " of each, then abutting them while resampling so that as one sound<br>" +
                   " takes less overall frame space, the other takes more.";
 
+var scheme_add_hook_tip = "(add-hook! hook function :optional append): adds 'function'<br>" +
+                          "to the list of functions associated with 'hook'.  If 'append' is #t,<br>" +
+                          "the function is added at the end of the list, otherwise at the start";
+
+var scheme_reset_hook_tip = "(reset-hook! hook): removes all functions from 'hook'.";

@@ -36,8 +36,6 @@
 <!-- these are then gathered into the reference table at the end by snd-index.cl -->
 <!-- I'm using A NAME (i.e caps) where the entity should be ignored by the indexer (index.cl) -->
 
-<!-- TODO: drop down menus mimicking Snd here -->
-
 <center><img src="title.png" usemap="#sndwindow" vspace=10 border=0 alt="standard Snd appearance"></center>
 <map name="sndwindow">
   <area shape=rect coords="0,0,608,20" href="#overview" alt="title bar">
@@ -559,7 +557,16 @@ explicit setting:
 
 <A NAME="openfile"></a>
 
-<img src="open-dialog.png" alt="Open File dialog" align=right hspace=20>
+<img src="open-dialog.png" usemap="#opendialogmap" alt="Open File dialog" align=right hspace=20 border=0>
+
+<map name="opendialogmap">
+  <area shape=rect coords="365,40,400,60" 
+     onmouseout="UnTip()" 
+     onmouseover="Tip('In Motif, you can right-click the text widget to<br>get a drop-down list of previous file filters, but<br>in Gtk, you have to click this weird icon')">
+  <area shape=rect coords="365,350,400,370" 
+     onmouseout="UnTip()" 
+     onmouseover="Tip('In Motif, you can right-click the text widget to<br>get a drop-down list of previous files, but<br>in Gtk, you have to click this weird icon')">
+</map>
 
 <p>A file can be opened from the File menu via Open
 or View.  <A class=def NAME="viewfile">View</a> opens the file read-only, whereas Open
@@ -1272,9 +1279,9 @@ you made.
   C-y         paste in current selection at cursor
   C-[space]   start keyboard-based selection definition
   C-x a       apply amplitude envelope to selection
-  <A NAME="cxc"></a>C-x c       define selection from cursor to nth mark
+  <A NAME="cxc"></a>C-x c       define selection from cursor to mark
   <A NAME="cxi"></a>C-x i       insert selection
-  C-x p       play selection or region (numeric arg selects region)
+  C-x p       play selection or region
   <A NAME="cxq"></a>C-x q       mix in selection
   <A NAME="cxw"></a>C-x w       save selection as file 
 
@@ -1289,6 +1296,7 @@ If the 'selection' button is set in the transform options dialog,
 (or equivalently, <a href="extsnd.html#showselectiontransform">show-selection-transform</a>
 is #t), the fft display, if any, displays the transform of the selected portion.
 </p>
+<br>
 <br>
 
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="edithistory">The Edit List</a></h3></td></tr></table>

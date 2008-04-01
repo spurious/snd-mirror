@@ -3073,7 +3073,7 @@ appended new stuff as it came to mind.  In this documentation, I'll divide the f
 </td></tr><tr><td width=60></td><td>
 display-correlation graphs the correlation of the 2 channels of the sound 'snd'.
 To make this happen automatically as you move the time domain position
-slider: <code>(add-hook! <a class=quiet href="extsnd.html#graphhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_graphhook_tip)">graph-hook</a> display-correlation)</code>.
+slider: <code>(<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> <a class=quiet href="extsnd.html#graphhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_graphhook_tip)">graph-hook</a> display-correlation)</code>.
 The last three parameters are unused; they are just for compatibility with graph-hook.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -3125,7 +3125,7 @@ envelope 'interp'.
 </td></tr><tr><td></td><td>
 fft-peak is an <a href="extsnd.html#aftertransformhook">after-transform-hook</a> function that reports the peak spectral magnitude in the minibuffer.
 <pre>
-    Scheme: (add-hook! <a class=quiet href="extsnd.html#aftertransformhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_aftertransformhook_tip)">after-transform-hook</a> fft-peak)
+    Scheme: (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> <a class=quiet href="extsnd.html#aftertransformhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_aftertransformhook_tip)">after-transform-hook</a> fft-peak)
 
     Ruby:   $after_transform_hook.add_hook!(\"fft-peak\") do |snd, chn, scale|
               fft_peak(snd, chn, scale)
@@ -3197,7 +3197,7 @@ noise (a consonant, sometimes), then tries to remove (set to 0.0) the vowel-like
 </td></tr><tr><td></td><td>
 superimpose-ffts is a graph-hook function that
 superimposes the ffts of multiple (sync'd) sounds.
-<code>(add-hook! <a class=quiet href="extsnd.html#graphhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_graphhook_tip)">graph-hook</a> superimpose-ffts)</code>
+<code>(<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> <a class=quiet href="extsnd.html#graphhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_graphhook_tip)">graph-hook</a> superimpose-ffts)</code>
 This function needs some work...
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -3207,7 +3207,7 @@ This function needs some work...
 <em class=emdef>zoom-spectrum</em> <code>snd chn y0 y1</code>
 </td></tr><tr><td></td><td>
 zoom-spectrum sets the transform size to correspond to the time-domain window size.
-<code>(add-hook! <a class=quiet href="extsnd.html#graphhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_graphhook_tip)">graph-hook</a> zoom-spectrum)</code>.
+<code>(<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> <a class=quiet href="extsnd.html#graphhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_graphhook_tip)">graph-hook</a> zoom-spectrum)</code>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 <tr><td colspan=2 height=16></td></tr>
 
@@ -3838,7 +3838,7 @@ selection-rms returns the rms value of the selection's data (in chan 0).
 auto-dot sets the dot size (when you're using dots in the time domain) based on 
 the current graph size.
 <pre>
-    (add-hook! <a class=quiet href="extsnd.html#graphhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_graphhook_tip)">graph-hook</a> auto-dot)
+    (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> <a class=quiet href="extsnd.html#graphhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_graphhook_tip)">graph-hook</a> auto-dot)
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -3849,7 +3849,7 @@ the current graph size.
 </td></tr><tr><td></td><td>
 display-db is a <a href="extsnd.html#lispgraphhook">lisp-graph-hook</a> function to display the time domain data in dB.
 <pre>
-    (add-hook! <a class=quiet href="extsnd.html#lispgraphhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_lispgraphhook_tip)">lisp-graph-hook</a> display-db)
+    (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> <a class=quiet href="extsnd.html#lispgraphhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_lispgraphhook_tip)">lisp-graph-hook</a> display-db)
 </pre>
 I just noticed that its y axis is labelled upside down.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -4044,7 +4044,7 @@ mpg uses the "system" function to call mpg123 to translate an MPEG
 format sound file to a headerless ("raw") file containing 16-bit samples.
 <pre>
     (shell "df")
-    (add-hook! <a class=quiet href="extsnd.html#closehook" onmouseout="UnTip()" onmouseover="Tip(extsnd_closehook_tip)">close-hook</a> (lambda (snd) (shell \"sndplay wood16.wav\")))
+    (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> <a class=quiet href="extsnd.html#closehook" onmouseout="UnTip()" onmouseover="Tip(extsnd_closehook_tip)">close-hook</a> (lambda (snd) (shell \"sndplay wood16.wav\")))
     (mpg "mpeg.mpg" "mpeg.raw")
 </pre>
 This is now built-in if the Snd configuration process can find mpg123.
@@ -4063,8 +4063,8 @@ adds a menu item that selects a file, close-buffer removes it.
 To activate this, we need
 to:
 <pre>
-    (add-hook! <a class=quiet href="extsnd.html#openhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_openhook_tip)">open-hook</a> open-buffer)
-    (add-hook! <a class=quiet href="extsnd.html#closehook" onmouseout="UnTip()" onmouseover="Tip(extsnd_closehook_tip)">close-hook</a> close-buffer)
+    (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> <a class=quiet href="extsnd.html#openhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_openhook_tip)">open-hook</a> open-buffer)
+    (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> <a class=quiet href="extsnd.html#closehook" onmouseout="UnTip()" onmouseover="Tip(extsnd_closehook_tip)">close-hook</a> close-buffer)
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -4241,8 +4241,8 @@ These provide Emacs-like C-x b support where only one sound is visible at a time
 To activate it:
 <pre>
     (bind-key #\b 0 switch-to-buf #t)
-    (add-hook! <a class=quiet href="extsnd.html#closehook" onmouseout="UnTip()" onmouseover="Tip(extsnd_closehook_tip)">close-hook</a> xb-close)
-    (add-hook! <a class=quiet href="extsnd.html#afteropenhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_afteropenhook_tip)">after-open-hook</a> xb-open)	    
+    (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> <a class=quiet href="extsnd.html#closehook" onmouseout="UnTip()" onmouseover="Tip(extsnd_closehook_tip)">close-hook</a> xb-close)
+    (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> <a class=quiet href="extsnd.html#afteropenhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_afteropenhook_tip)">after-open-hook</a> xb-open)	    
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -5268,16 +5268,16 @@ Here's an instrument that fuzzes up its amplitude envelope a bit using green noi
 
 <A NAME="heartdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>heart</h2></td></tr></table>
 
-<table vspace=10 hspace=10><tr><td>
+<p>
 Snd can be used with non-sound data, and <a href="#wsdoc">with-sound</a> makes it easy to
 write such data to a sound file.  An example is heart.scm.  In this code, we search a file for blood pressure
 readings (they are scattered around with a bunch of other stuff), then write those numbers to a stereo
 sound file (the sphygmometer readings are between 70 and 150), then open that file in Snd with all the sound-related
 clipping features turned off.  We also tell Snd to skip the data file in its start-up load process (since it
 is an uninterpretable text file) by incrementing script-arg.
-</td><td>
-<img src="usync.png" alt="heart picture">
-</td></tr></table>
+<p>
+<img src="usync.png" alt="heart picture" hspace=40>
+
 <br>
 <br>
 
@@ -6339,7 +6339,7 @@ mixes-maxamp returns the maxamp of the mixes in 'mix-list'.
 move-mixes moves each mix in 'mix-list' by 'samps' samples.  To move all sync'd mixes together whenever one of them is dragged:
 
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-(add-hook! <a class=quiet href="extsnd.html#mixreleasehook" onmouseout="UnTip()" onmouseover="Tip(extsnd_mixreleasehook_tip)">mix-release-hook</a>
+(<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> <a class=quiet href="extsnd.html#mixreleasehook" onmouseout="UnTip()" onmouseover="Tip(extsnd_mixreleasehook_tip)">mix-release-hook</a>
 	   (lambda (id samps-moved)
 	     (let ((result (= (<a class=quiet href="extsnd.html#mixsync" onmouseout="UnTip()" onmouseover="Tip(extsnd_mixsync_tip)">mix-sync</a> id) 0)))
 	       (if (not result)
@@ -8489,7 +8489,7 @@ whenever Snd receives focus from the window manager.
 </td></tr><tr><td></td><td>
 with-minmax-button adds an open/close button to each sound's pane.  To activate it:
 <pre>
-    (add-hook! <a class=quiet href="extsnd.html#afteropenhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_afteropenhook_tip)">after-open-hook</a> with-minmax-button)
+    (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> <a class=quiet href="extsnd.html#afteropenhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_afteropenhook_tip)">after-open-hook</a> with-minmax-button)
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -10795,7 +10795,7 @@ So I bound a few keys:
   ;; patterned after pfc in extsnd.html
   (let ((old-tracking (<a class=quiet href="extsnd.html#withtrackingcursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_withtrackingcursor_tip)">with-tracking-cursor</a>)))
     (set! (<a class=quiet href="extsnd.html#withtrackingcursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_withtrackingcursor_tip)">with-tracking-cursor</a>) #t)
-    (add-hook! <a class=quiet href="extsnd.html#stopplayinghook" onmouseout="UnTip()" onmouseover="Tip(extsnd_stopplayinghook_tip)">stop-playing-hook</a> 
+    (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> <a class=quiet href="extsnd.html#stopplayinghook" onmouseout="UnTip()" onmouseover="Tip(extsnd_stopplayinghook_tip)">stop-playing-hook</a> 
 	       (lambda (snd)
 		 (set! (<a class=quiet href="extsnd.html#withtrackingcursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_withtrackingcursor_tip)">with-tracking-cursor</a>) old-tracking)))
     (<a class=quiet href="extsnd.html#play" onmouseout="UnTip()" onmouseover="Tip(extsnd_play_tip)">play</a> (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) #f #f #f #f (if current #f (1- (<a class=quiet href="extsnd.html#editposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_editposition_tip)">edit-position</a>))))))
