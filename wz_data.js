@@ -322,7 +322,8 @@ var extsnd_listenertextcolor_tip = "(listener-text-color): text color in the lis
 var extsnd_listtovct_tip = "(list->vct lst): returns a new vct filled with elements of list lst";
 
 var extsnd_mainwidgets_tip = "(main-widgets): top level widgets<br>" +
-                             " <code>(list (0)main-app (1)main-shell (2)main-pane (3)sound-pane (4)listener-pane (5)notebook-outer-pane)</code>";
+                             " <code>(list (0)main-app (1)main-shell (2)main-pane<br>" +
+                             " (3)sound-pane (4)listener-pane (5)notebook-outer-pane)</code>";
 
 var extsnd_makecolor_tip = "(make-color r g b): return a color object with the indicated rgb values";
 
@@ -777,6 +778,9 @@ var extsnd_sync_tip = "(sync :optional snd): snd's sync value (0 = no sync).<br>
 
 var extsnd_tempdir_tip = "(temp-dir): name of directory for temp files (or #f=null)";
 
+var extsnd_time_graph_tip = "time-graph is the constant associated with the time domain graph<br>" +
+                            "The other two graphs are transform-graph and lisp-graph";
+
 var extsnd_timegraphtype_tip = "(time-graph-type :optional snd chn): graph-as-wavogram if<br>" +
                                " Snd's time domain display is a 'wavogram',otherwise graph-once.";
 
@@ -1175,6 +1179,8 @@ var sndscm_envelopeinterp_tip = "(envelope-interp x env (base 1.0): returns valu
                                 " if 'base' is 1.0 (the default), the breakpoints of 'env' are connected by a straight line,<br>" +
                                 " and any other 'base' connects the breakpoints with an exponential curve.";
 
+var sndscm_enevlopelastx_tip = "(envelope-last-x env) returns the last breakpoint's x axis value in 'env'";
+
 var sndscm_envexptchannel_tip = "(env-expt-channel env exponent :optional (symmetric #t) beg dur snd chn edpos):<br>" +
                                 " applies 'env' to the given channel using 'exponent' for the exponential base.<br>" +
                                 " The 'symmetric' argument determines whether the up and down moving ramps look<br>" +
@@ -1259,6 +1265,8 @@ var sndscm_openplayoutput_tip = "(open-play-output :optional chans srate format 
                                 " sampling rate, data format, and DAC buffer size (in samples),<br>" +
                                 " and returns a list containing the audio port (-1 on failure),<br>" +
                                 " the opened output channels, and the actual DAC buffer size.";
+
+var sndscm_poy_times_tip = "(poly* p1 p2) multiplies p1 by p2, both polynomials.";
 
 var sndscm_powerenv_tip = "(power-env env): an envelope generator where each segment has its own base.";
 

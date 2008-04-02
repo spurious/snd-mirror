@@ -529,7 +529,7 @@ as the generator object:
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
 (define (<A NAME="make-my-oscil">make-my-oscil</A> frequency)       ; we want our own oscil!
-  (vct 0.0 (hz-&gt;radians frequency)))    ; current phase and frequency-based phase increment
+  (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 0.0 (hz-&gt;radians frequency)))    ; current phase and frequency-based phase increment
 
 (define (my-oscil gen fm)               ; the corresponding generator
   (let ((result (sin (vct-ref gen 0)))) ; return sin(current-phase)
@@ -1606,13 +1606,13 @@ energy appears in lower harmonics even if they are not included in the index=1.0
 </p>
 
 <pre>
-    &gt; (cheby-hka 3 0.25 (vct 0 0 0 0 1.0 1.0))
+    &gt; (cheby-hka 3 0.25 (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 0 0 0 0 1.0 1.0))
     -0.0732421875
-    &gt; (cheby-hka 2 0.25 (vct 0 0 0 0 1.0 1.0))
+    &gt; (cheby-hka 2 0.25 (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 0 0 0 0 1.0 1.0))
     -0.234375
-    &gt; (cheby-hka 1 0.25 (vct 0 0 0 0 1.0 1.0))
+    &gt; (cheby-hka 1 0.25 (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 0 0 0 0 1.0 1.0))
     1.025390625
-    &gt; (cheby-hka 0 0.25 (vct 0 0 0 0 1.0 1.0))
+    &gt; (cheby-hka 0 0.25 (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 0 0 0 0 1.0 1.0))
     1.5234375
 </pre>
 
@@ -1665,7 +1665,7 @@ pattern + + - -:
 <table border=0 hspace=20>
 <tr><td>
 <pre>
-(with-sound ()
+(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> ()
   (let ((gen (<em class=red>make-polyshape</em> 1000.0 :partials (list 1 .25 2 .25 3 .125 4 .125 5 .25)))
 	(indf (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1 2 0) :duration 2.0))     ; index env
 	(ampf (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1 2 1 3 0) :duration 2.0)) ; desired amp env
@@ -1699,7 +1699,7 @@ we get sum and difference tones, much as in complex FM:
 <hr>
 <pre>
 (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> ()
-  (let ((pcoeffs (<em class=red>partials-&gt;polynomial</em> (vct 5 1)))
+  (let ((pcoeffs (<em class=red>partials-&gt;polynomial</em> (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 5 1)))
 	(gen1 (<a class=quiet href="#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> 100.0))
 	(gen2 (<a class=quiet href="#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> 2000.0)))
     (do ((i 0 (1+ i)))
@@ -2005,7 +2005,7 @@ Even more amusing is this algorithm:
 (define (sinsq c theta) (cossq c (- theta (* 0.5 pi))))
 (define (sqsq c theta) (sinsq c (- (sinsq c theta)))) ; a sharper square wave
 
-(with-sound ()
+(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> ()
   (let ((angle 0.0))
     (do ((i 0 (1+ i))
 	 (angle 0.0 (+ angle 0.02)))
@@ -3304,7 +3304,7 @@ but 0.5 should happen three times as often as either of the others:
 </p>
 
 <pre>
-    (let ((vals (vct 0.0 0.5 0.5 0.5 1.0)))
+    (let ((vals (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 0.0 0.5 0.5 0.5 1.0)))
       (do ((i 0 (1+ i)))
           ((= i 10))
         (snd-display ";~A " (vct-ref vals (inexact-&gt;exact (floor (random 5.0)))))))
@@ -3904,7 +3904,7 @@ A biquad section can be implemented as:
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
    (define (make-biquad a0 a1 a2 b1 b2) 
-      (make-filter 3 (vct a0 a1 a2) (vct 0.0 b1 b2)))
+      (make-filter 3 (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> a0 a1 a2) (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 0.0 b1 b2)))
 </pre>
 </td></tr></table>
 
@@ -4517,7 +4517,7 @@ called whenever convolve needs input.
           (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (<em class=red>convolve</em> ff)))))))
 
 (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () 
-  (convins 0 2 (vct 1.0 0.5 0.25 0.125) "oboe.snd")) ; same as fir-filter with those coeffs
+  (convins 0 2 (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 1.0 0.5 0.25 0.125) "oboe.snd")) ; same as fir-filter with those coeffs
 </pre>
 </td></tr></table>
 
@@ -5151,7 +5151,7 @@ use its :output argument:
 <table border=0 hspace=40><tr><td>
 <pre>
 (with-sound (<em class=red>:output</em> (make-vct 44100)) ; this sets *output*, the default output location
-   (fm-violin 0 1 440 .1))
+   (<a class=quiet href="sndscm.html#vdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_fmviolin_tip)">fm-violin</a> 0 1 440 .1))
 
 ;; returns #&lt;vct[len=44100]: 0.000 0.000 0.000 ...&gt;
 </pre>
@@ -6530,7 +6530,7 @@ generator, among others.  Here's array-interp as a "compander":
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
-(define compand-table (vct -1.0 -0.96 -0.90 -0.82 -0.72 -0.60 -0.45 -0.25 
+(define compand-table (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> -1.0 -0.96 -0.90 -0.82 -0.72 -0.60 -0.45 -0.25 
                             0.0 0.25 0.45 0.60 0.72 0.82 0.90 0.96 1.0))
 
 (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a>

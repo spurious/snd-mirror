@@ -1157,7 +1157,7 @@ an oscil or a sawtooth-wave:
   (lambda (scaler size pm)
     (let ((cmb (<a class=quiet href="sndclm.html#make-comb" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_comb_tip)">make-comb</a> scaler size :max-size (+ size 1 (<a class=quiet href="sndscm.html#maxenvelope" onmouseout="UnTip()" onmouseover="Tip(sndscm_maxenvelope_tip)">max-envelope</a> pm 0))))
 	  (penv (<a class=quiet href="sndclm.html#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> pm :length (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>))))
-      (lambda (x) (<a class=quiet href="sndclm.html#comb" onmouseout="UnTip()" onmouseover="Tip(sndclm_comb_tip)">comb</a> cmb x (env penv))))))
+      (lambda (x) (<a class=quiet href="sndclm.html#comb" onmouseout="UnTip()" onmouseover="Tip(sndclm_comb_tip)">comb</a> cmb x (<a class=quiet href="sndclm.html#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> penv))))))
 
 ; (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (zcomb .8 32 '(0 0 1 10)))
 
@@ -1183,7 +1183,7 @@ an oscil or a sawtooth-wave:
 	  (menv (<a class=quiet href="sndclm.html#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> move :length (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>))))
       (lambda (x)
         (let ((val (<a class=quiet href="sndclm.html#formant" onmouseout="UnTip()" onmouseover="Tip(sndclm_formant_tip)">formant</a> frm x)))
-	  (set! (<a class=quiet href="sndclm.html#mus-frequency" onmouseout="UnTip()" onmouseover="Tip(sndclm_mus_frequency_tip)">mus-frequency</a> frm) (env menv))
+	  (set! (<a class=quiet href="sndclm.html#mus-frequency" onmouseout="UnTip()" onmouseover="Tip(sndclm_mus_frequency_tip)">mus-frequency</a> frm) (<a class=quiet href="sndclm.html#env" onmouseout="UnTip" onmouseover="Tip(sndclm_env_tip)">env</a> menv))
 	  val)))))
 
 ; (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (moving-formant .01 '(0 1200 1 2400)))

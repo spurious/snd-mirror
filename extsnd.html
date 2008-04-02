@@ -1712,7 +1712,7 @@ and decay portions in the envelope editor, or use functions such as
 (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> <em class=red>enved-hook</em>
   (lambda (env pt x y reason)
     (if (= reason enved-move-point)
-        (if (and (&gt; x 0.0) (&lt; x (envelope-last-x env))) ; from env.scm
+        (if (and (&gt; x 0.0) (&lt; x (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(sndscm_envelopelastx_tip)">envelope-last-x</a> env))) ; from env.scm
             (let* ((old-x (list-ref env (* pt 2)))
                    (new-env (<em class=red>stretch-envelope</em> env old-x x)))
               (list-set! new-env (+ (* pt 2) 1) y)
@@ -2014,7 +2014,7 @@ This hook is called when a mix is dragged.
 A neat example is to set up an empty sound with a 1.0 in sample 0, mix in a vct containing one element of 0.5, then set
 up this mix-drag-hook:
 <pre>
-    (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> mix-drag-hook (lambda (id x y) (update-transform-graph)))
+    (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> mix-drag-hook (lambda (id x y) (<a class=quiet href="#updatetransformgraph" onmouseout="UnTip()" onmouseover="Tip(extsnd_updatetransformgraph_tip)">update-transform-graph</a>)))
 </pre>
 and turn on the FFT graph.  As you drag the mix, you can see the spectral effect of that
 moving value as a comb filter.
@@ -2042,7 +2042,7 @@ See the <a href="sndscm.html#makecurrentwindowdisplay">current-window-location</
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
 (define (click-to-center snd chn button state x y axis)
   ;; if mouse click in time domain graph, set cursor as normally, but also center the window
-  (if (= axis <a class=quiet href="#ytoposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_ytoposition_tip)">time-graph</a>)
+  (if (= axis <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_time_graph_tip)">time-graph</a>)
       (let ((samp (inexact-&gt;exact (* (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> snd) (<a class=quiet href="#positiontox" onmouseout="UnTip()" onmouseover="Tip(extsnd_positiontox_tip)">position-&gt;x</a> x snd chn)))))
 	(set! (<a class=quiet href="#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a> snd chn) samp)
 	(set! (<a class=quiet href="#rightsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_rightsample_tip)">right-sample</a> snd chn) 
@@ -2055,7 +2055,7 @@ See the <a href="sndscm.html#makecurrentwindowdisplay">current-window-location</
 ;;; this example disables button 2 -&gt; insert selection
 (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> <em class=red>mouse-click-hook</em>
   (lambda (snd chn button state x y axis)
-    (and (= axis <a class=quiet href="#ytoposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_ytoposition_tip)">time-graph</a>) (= button 2))))
+    (and (= axis <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_time_graph_tip)">time-graph</a>) (= button 2))))
 </pre></td></tr></table>
 
 The mouse scroll wheel is sometimes reported as buttons 4 and 5; in the next example,
@@ -2064,9 +2064,9 @@ turning the wheel zooms the graph in or out:
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
 (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> <em class=red>mouse-click-hook</em>
   (lambda (snd chn button state x y axis)
-    (if (and (= axis time-graph)
+    (if (and (= axis <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_time_graph_tip)">time-graph</a>)
 	     (or (= button 4) (= button 5))) ; mouse scroll wheel
-	(let ((midpoint (* 0.5 (apply + (x-bounds))))
+	(let ((midpoint (* 0.5 (apply + (<a class=quiet href="#xbounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_xbounds_tip)">x-bounds</a>))))
 	      (dur (/ (frames) (srate)))
 	      (range (if (= button 4)
 			 (* -0.25 (apply - (x-bounds))) ; zoom in
@@ -3358,6 +3358,7 @@ This changes (edits) the channel, so 'origin' provides a way to name the edit (f
 Since with-sound can write its output to a vct, we can use it with vct-&gt;channel to paste in an fm-violin note as
 an edit:
 <pre>
+
   (vct-&gt;channel (<a class=quiet href="sndscm.html#withsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:output (make-vct 44100)) (<a class=quiet href="sndscm.html#fmviolin" onmouseout="UnTip()" onmouseover="Tip(sndscm_fmviolin_tip)">fm-violin</a> 0 1 440 .1)))
 </pre>
 To add such a note to whatever is already present, use either <a href="#mixvct">mix-vct</a> or 
@@ -5872,7 +5873,7 @@ could be:
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
 (define (x-&gt;position-1 x snd chn)
-  (let* ((axinfo (<em class=red>axis-info</em> snd chn <a class=quiet href="#ytoposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_ytoposition_tip)">time-graph</a>))
+  (let* ((axinfo (<em class=red>axis-info</em> snd chn <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_time_graph_tip)">time-graph</a>))
 	 (x0 (list-ref axinfo 2))
 	 (x1 (list-ref axinfo 4))
 	 (axis-left (list-ref axinfo 10))
@@ -5904,7 +5905,7 @@ then restore that state upon "Page Up":
 			       (lambda (lst)
 				 (let ((snd (list-ref lst 0))
 				       (name (list-ref lst 1)))
-				   (if (and (sound? snd)
+				   (if (and (<a class=quiet href="#soundp" onmouseout="UnTip()" onmouseover="Tip(extsnd_soundp_tip)">sound?</a> snd) 
 					    (string=? (<a class=quiet href="#filename" onmouseout="UnTip()" onmouseover="Tip(extsnd_filename_tip)">file-name</a> snd) name))
 				       (for-each
 					(lambda (chan-data)
@@ -7525,7 +7526,7 @@ The argument passed to 'stop-proc' provides the reason the play is stopping; it 
     (play 0 #f #f #f #f #f 
       (lambda (reason)                             ; if interrupted, say so in the listener
         (if (not (= reason 0))
-            (snd-print ";play interrupted"))))
+            (<a class=quiet href="#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> ";play interrupted"))))
 </pre>
 
 The 'pos' argument makes it easier to try "A:B" comparisons; this plays the version before the latest edit:
@@ -7879,7 +7880,7 @@ Here is an example that mixes a sine wave into the current channel:
    beg dur snd chn edpos #f
    (lambda (frag-beg frag-dur)
      (let ((incr (/ (* 2 pi freq) (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>))))
-       (<a class=quiet href="#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> (fmod (* frag-beg incr) (* 2 pi)) incr amp))))) ; fmod from C
+       (<a class=quiet href="#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> (<a class=quiet onmouseout="UnTip()" onmouseover="Tip('fmod is mod with float arguments')">fmod</a> (* frag-beg incr) (* 2 pi)) incr amp))))) ; fmod from C
 </pre></td></tr></table>
 
 In the normal case,
@@ -8461,7 +8462,7 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
 (<a class=quiet href="#envsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_envsound_tip)">env-sound</a> '(0 2 1 2))
 (<a class=quiet href="#envchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_envchannel_tip)">env-channel</a> (<a class=quiet href="sndclm.html#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 1 1 1) :scaler 2.0 :length (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>)))
 (<a class=quiet href="#clmchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_clmchannel_tip)">clm-channel</a> (<a class=quiet href="sndclm.html#make-one-zero" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_one_zero_tip)">make-one-zero</a> :a0 2.0 :a1 0.0))
-(<a class=quiet href="#filterchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_filterchannel_tip)">filter-channel</a> (vct 2.0) 1)
+(<a class=quiet href="#filterchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_filterchannel_tip)">filter-channel</a> (<a class=quiet href="#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 2.0) 1)
 (<a class=quiet href="#vcttochannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_vcttochannel_tip)">vct-&gt;channel</a> (<a class=quiet href="#vctscale" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctscale_tip)">vct-scale!</a> (<a class=quiet href="#channeltovct" onmouseout="UnTip()" onmouseover="Tip(extsnd_channeltovct_tip)">channel-&gt;vct</a>) 2.0) 0)
 (<a class=quiet href="sndscm.html#sounddatatosound" onmouseout="UnTip()" onmouseover="Tip(sndscm_sounddatatosound_tip)">sound-data-&gt;sound</a> (<a class=quiet href="#sounddata*" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounddata_times_tip)">sound-data*</a> (<a class=quiet href="sndscm.html#soundtosounddata" onmouseout="UnTip()" onmouseover="Tip(sndscm_soundtosounddata_tip)">sound-&gt;sound-data</a>) 2.0))
 (begin (<a class=quiet href="#selectall" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectall_tip)">select-all</a>) (<a class=quiet href="#mixselection" onmouseout="UnTip()" onmouseover="Tip(extsnd_mixselection_tip)">mix-selection</a> 0))
@@ -8477,7 +8478,7 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
        (<a class=quiet href="sndclm.html#convolve" onmouseout="UnTip()" onmouseover="Tip(sndclm_convolve_tip)">convolve</a> cnv (lambda (dir) 
                        (<a class=quiet href="#readsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_readsample_tip)">read-sample</a> sf)))))))
 
-(vct-&gt;channel (poly* (channel-&gt;vct 0 (frames)) (vct 2.0))) ; poly.scm (sound = polynomial coeffs)
+(<a class=quiet href="#vcttochannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_vcttochannel_tip)">vct-&gt;channel</a> (<a class=quiet href=sndscm.html#polydoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_poy_times_tip)">poly*</a> (<a class=quiet href="#channeltovct" onmouseout="UnTip()" onmouseover="Tip(extsnd_channeltovct_tip)">channel-&gt;vct</a> 0 (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>)) (<a class=quiet href="#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd+vct_tip)">vct</a> 2.0))) ; poly.scm (sound = polynomial coeffs)
 
 (let* ((len (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>))
        (fsize (expt 2 (ceiling (/ (log len) (log 2)))))
@@ -8627,7 +8628,7 @@ This gives the selected channel in 'snd'; you can set it to select a channel.  I
 </td></tr><tr><td></td><td>
 This gives the currently selected sound (its index, of course); you can set it to select a sound. It returns #f is there is no selected sound. 
 <pre>
-    (or (selected-sound) 
+    (or (<a class=quiet href="#selectedsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedsound_tip)">selected-sound</a>)
         (and (not (null? (<a class=quiet href="#sounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounds_tip)">sounds</a>)))
              (car (<a class=quiet href="#sounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounds_tip)">sounds</a>))))
 </pre>
@@ -11629,7 +11630,7 @@ new..old, old..new (sort by file write date), and small..big, big..small (sort b
 If you set view-files-sort without giving the dialog argument, it just affects the startup state of subsequent new View:Files
 dialogs.  To set the sort choice in the current dialog:
 <pre>
-  (set! (view-files-sort (list-ref (dialog-widgets) 8)) 2) ; 2=new..old
+  (set! (view-files-sort (list-ref (<a class=quiet href="#dialogwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_dialogwidgets_tip)">dialog-widgets</a>) 8)) 2) ; 2=new..old
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -11738,9 +11739,9 @@ is:
     Motif: (add-watcher (lambda () 
                           (XtSetSensitive 
                             (XmMessageBoxGetChild new-dialog XmDIALOG_OK_BUTTON) 
-                            (not (null? (sounds))))))
+                            (not (null? (<a class=quiet href="#soundp" onmouseout="UnTip()" onmouseover="Tip(extsnd_soundp_tip)">sounds</a>))))))
     Gtk:   (add-watcher (lambda () 
-                          (gtk_widget_set_sensitive ok-button (not (null? (sounds))))))
+                          (gtk_widget_set_sensitive ok-button (not (null? (<a class=quiet href="#soundp" onmouseout="UnTip()" onmouseover="Tip(extsnd_soundp_tip)">sounds</a>))))))
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -11861,7 +11862,7 @@ A similar set rebinds the arrow keys to give much more precise window position a
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
 (define (<a NAME="moveonepixel">move-one-pixel</a> s c right)
-  (let* ((ax (<a class=quiet href="#axisinfo" onmouseout="UnTip()" onmouseover="Tip(extsnd_axisinfo_tip)">axis-info</a> s c time-graph))
+  (let* ((ax (<a class=quiet href="#axisinfo" onmouseout="UnTip()" onmouseover="Tip(extsnd_axisinfo_tip)">axis-info</a> s c <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_time_graph_tip)">time-graph</a>))
 	 (lo (list-ref ax 0))
 	 (hi (list-ref ax 1))
 	 (lo-pix (list-ref ax 10))
@@ -11885,7 +11886,7 @@ A similar set rebinds the arrow keys to give much more precise window position a
 
 
 (define (<a NAME="zoomonepixel">zoom-one-pixel</a> s c in)
-  (let* ((ax (<a class=quiet href="#axisinfo" onmouseout="UnTip()" onmouseover="Tip(extsnd_axisinfo_tip)">axis-info</a> s c time-graph))
+  (let* ((ax (<a class=quiet href="#axisinfo" onmouseout="UnTip()" onmouseover="Tip(extsnd_axisinfo_tip)">axis-info</a> s c <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_time_graph_tip)">time-graph</a>))
 	 (lo (list-ref ax 0))
 	 (hi (list-ref ax 1))
 	 (lo-pix (list-ref ax 10))
@@ -11990,7 +11991,7 @@ in either Motif or Gtk:
 
 (define extended #f)     ; our extended mode flag
 
-(XtAddEventHandler (list-ref (main-widgets) 4) KeyPressMask #f 
+(XtAddEventHandler (list-ref (<a class=quiet href="#mainwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_mainwidgets_tip)">main-widgets</a>) 4) KeyPressMask #f
   (lambda (w context event go)
     (let* ((bits (.state event))
 	   (keysym (XKeycodeToKeysym (XtDisplay w)
@@ -12004,7 +12005,7 @@ in either Motif or Gtk:
 	      (begin
 		(if (and extended
 			 (= (cadr keysym) 102)) ; C-x C-f
-		    (open-file-dialog))
+		    (<a class=quiet href="#openfiledialog" onmouseout="UnTip()" onmouseover="Tip(extsnd_openfiledialog_tip)">open-file-dialog</a>))
 		(set! extended #f)))))))
 
 
@@ -12012,7 +12013,7 @@ in either Motif or Gtk:
 
 (define extended #f)     ; our extended mode flag
 
-(let ((listener (list-ref (main-widgets) 4)))
+(let ((listener (list-ref (<a class=quiet href="#mainwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_mainwidgets_tip)">main-widgets</a>) 4)))
   (g_signal_connect_closure_by_id 
    (GPOINTER listener)
    (g_signal_lookup "key_press_event" (G_OBJECT_TYPE (GTK_OBJECT listener)))
@@ -12028,7 +12029,7 @@ in either Motif or Gtk:
 			       (begin
 				 (if (and extended
 					  (= key 102))
-				     (open-file-dialog))
+				     (<a class=quiet href="#openfiledialog" onmouseout="UnTip()" onmouseover="Tip(extsnd_openfiledialog_tip)">open-file-dialog</a>))
 				 (set! extended #f))))
 		       #f))
 		   #f #f)
