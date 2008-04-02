@@ -2159,7 +2159,29 @@ To delete listener text back to the previous command, use C-_.
 <p>The control panel is the portion of each sound's pane
 beneath the channel graphs.
 </p>
-<img src="controls.png" alt="picture of Snd control panel" hspace=20>
+
+<img src="controls.png" alt="picture of Snd control panel" hspace=20 usemap="#controlsmap" border=0>
+<map name="controlsmap">
+  <area shape=rect coords="0,0,25,25" onmouseout="UnTip()" onmouseover="Tip('This is Snd's icon!')">
+  <area shape=rect coords="650,60,820,95" onmouseout="UnTip()" onmouseover="Tip('See make-current-window-display in sndscm.html')">
+
+  <area shape=rect coords="0,295,820,310" onmouseout="UnTip()" onmouseover="Tip('amplitude control')">
+  <area shape=rect coords="0,311,800,325" onmouseout="UnTip()" onmouseover="Tip('speed (sampling rate) control')">
+  <area shape=rect coords="801,311,820,325" onmouseout="UnTip()" onmouseover="Tip('resampling direction (click the arrow to change direction)')">
+  <area shape=rect coords="0,326,800,345" onmouseout="UnTip()" onmouseover="Tip('expansion control (tempo change); uses granular synthesis')">
+  <area shape=rect coords="801,326,820,345" onmouseout="UnTip()" onmouseover="Tip('this button turns on/off the expansion effect')">
+  <area shape=rect coords="0,346,800,365" onmouseout="UnTip()" onmouseover="Tip('contrast enhancement; this can make loud portions more intense')">
+  <area shape=rect coords="801,346,820,365" onmouseout="UnTip()" onmouseover="Tip('this button turns on/off the contrast enhancement effect')">
+  <area shape=rect coords="0,366,499,380" onmouseout="UnTip()" onmouseover="Tip('reverb amount')">
+  <area shape=rect coords="500,366,800,380" onmouseout="UnTip()" onmouseover="Tip('reverb length')">
+  <area shape=rect coords="801,366,820,380" onmouseout="UnTip()" onmouseover="Tip('this button turns on/off the reverberator')">
+  <area shape=rect coords="80,381,130,400" onmouseout="UnTip()" onmouseover="Tip('filter order')">
+  <area shape=rect coords="131,381,710,400" onmouseout="UnTip()" onmouseover="Tip('filter frequency response envelope; 1.0 = srate/2')">
+  <area shape=rect coords="711,381,760,400" onmouseout="UnTip()" onmouseover="Tip('filter graph y-axis displayed in dB or linear')">
+  <area shape=rect coords="761,381,800,400" onmouseout="UnTip()" onmouseover="Tip('filter graph x-axis displayed in Hz or 0..1')">
+  <area shape=rect coords="801,381,820,400" onmouseout="UnTip()" onmouseover="Tip('this button turns on/off the filter')">
+  <area shape=rect coords="0,401,820,525" onmouseout="UnTip()" onmouseover="Tip('this graph shows the desired frequency response,<br>and the actual one given the current filter order')">
+</map>
 
 <p>The controls are: amp, speed, expand, contrast,
 reverb, and filter.</p>

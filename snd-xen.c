@@ -45,8 +45,7 @@
  * SCM:         (Scheme) looks tricky -- name space troubles, no bignums
  * s-lang:      (C)      probably doable -- would need to wrap everything in my own struct, and 7 args max is too few.
  * squirrel:    ()       c++, like lua in call sequence
- * stklos:      (Scheme) doesn't build libstklos yet, and has many non-unique names in its headers (checked 0.96)
- *                         this is probably do-able once stklos has a library and some sort of eval-c-string function.
+ * stklos:      (Scheme) doesn't build libstklos yet, and has many non-unique names in its headers (checked 0.97)
  */
 
 

@@ -4506,9 +4506,9 @@ Say we have three named marks in a speech excerpt (see below), then delete the i
 each mark backs up with the deletion so that it
 continues to point to its original sample:
 <br>
-<img src="mark1.png" align=left vspace=10 hspace=20 alt="marks" onmouseout="UnTip()" onmouseover="Tip('This is a recording of a man saying &quot;now the same piece is played&quot;.<br>The three marks are set at the start of three of the words.<br> I have no idea why gimp colored the title bar that way.')">
-<img src="mark2.png" vspace=10 hspace=20 alt="marks" onmouseout="UnTip()" onmouseover="Tip('The cursor also moves to maintain its relative position.<br>The red triangles on the x axis can be clicked or dragged to play the sound from that point.')">
-<br>
+
+<img src="mark1.png" align=left vspace=20 hspace=20 alt="marks" onmouseout="UnTip()" onmouseover="Tip('This is a recording of a man saying &quot;now the same piece is played&quot;.<br>The three marks are set at the start of three of the words.<br>To play from a mark, click the red triangle at the bottom.<br>To reposition a mark, drag the upper rectangle.')">
+
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -8742,8 +8742,17 @@ This is the View:Axes choice.
 </td></tr><tr><td></td><td>
 If show-grid is #t (the default is #f), a background grid is displayed (default is #f).  See also <a href="#griddensity">grid-density</a>.
 <br><br>
-<img src="grid.png" alt="grid">
+<img src="grid.png" alt="grid" onmouseout="UnTip()" onmouseover="Tip('<pre>snd -horizontal now.snd now.snd<br>(set! (show-grid) #t)<br>(set! (grid-density 1) 0.2)</pre>')">
 </td></tr><tr><td colspan=2 height=18></td></tr>
+
+<!--
+./snd -horizontal now.snd now.snd
+(set! (grid-density 1) 0.2)
+(set! (selected-graph-color) (make-color 1 1 1))
+(set! (selected-data-color) (make-color 0 0 0))
+(set! (x-axis-label 1 0) "grid-density: 0.2")
+(set! (x-axis-label 1 0) "grid-density: 0.2")
+-->
 
 
 <!-- show-marks -->
@@ -13340,7 +13349,7 @@ sound over another at an arbitrary point, and so on (see draw.scm):
 
 <img src="redsamps.png" alt="red samples" hspace=20>
 
-</td></tr><tr><td colspan=2 height=16></td></tr>
+</td></tr><tr><td colspan=2 height=32></td></tr>
 
 
 <!--  make-color -->

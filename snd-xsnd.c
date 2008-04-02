@@ -1627,6 +1627,7 @@ static void allocate_icons(Widget w)
   int scr, pixerr = XpmSuccess;
   Display *dp;
   Drawable wn;
+
   dp = XtDisplay(w);
   wn = XtWindow(w);
   scr = DefaultScreen(dp);
@@ -1638,6 +1639,7 @@ static void allocate_icons(Widget w)
   attributes.colorsymbols = symbols;
   attributes.numsymbols = 1;
   attributes.valuemask = XpmColorSymbols | XpmDepth | XpmColormap | XpmVisual;
+
   pixerr = XpmCreatePixmapFromData(dp, wn, mini_lock_bits(), &mini_lock, &shape1, &attributes);
   if (pixerr != XpmSuccess) 
     snd_error("lock pixmap trouble: %s from %s\n", XpmGetErrorString(pixerr), bits_to_string(mini_lock_bits()));
@@ -1686,23 +1688,29 @@ static void change_pixmap_background(Widget w, Pixmap orig, Pixel old_color, Pix
   GC draw_gc;
   int depth, depth_bytes, x, y;
   char *data;
+
   dp = XtDisplay(w);
   wn = XtWindow(w);
   vis = DefaultVisual(dp, DefaultScreen(dp));
   XtVaGetValues(w, XmNdepth, &depth, NULL);
   depth_bytes = (depth >> 3);
+
   data = (char *)calloc((width + 1) * (height + 1) * depth_bytes, sizeof(char)); /* not CALLOC since X will free this */
   /* there's overflow in X here, apparently -- the +1's fix it according to valgrind */
   /*   perhaps this is supposed to be rounded up to byte boundaries? */
+
   before = XCreateImage(dp, vis, depth, XYPixmap, 0, data, width, height, 8, 0);
   XGetSubImage(dp, orig, 0, 0, width, height, AllPlanes, XYPixmap, before, 0, 0);
+
   v.background = new_color;
   draw_gc = XCreateGC(dp, wn, GCBackground, &v);
   XSetBackground(dp, draw_gc, new_color); 
+
   for (x = 0; x < width; x++) 
     for (y = 0; y < height; y++) 
       if (XGetPixel(before, x, y) == old_color)
 	XPutPixel(before, x, y, new_color);
+
   XPutImage(dp, orig, draw_gc, before, 0, 0, 0, 0, width, height);
   XDestroyImage(before);  /* frees data as well */
   XFreeGC(dp, draw_gc);
@@ -1774,6 +1782,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
   XtCallbackList n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12;
   snd_context *sx;
   Atom sound_delete;
+
   if (ss->translated_filename) 
     {
       old_name = filename;
@@ -1781,6 +1790,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       free_filename = true;
       ss->translated_filename = NULL;
     }
+
   nchans = hdr->chans;
   if (nchans <= 0) nchans = 1;
   XtVaGetValues(MAIN_SHELL(ss),
