@@ -1991,6 +1991,8 @@ Reverb-feedback sets the scaler on the feedback.
 ;;; -------- add amp sliders in control panel for multi-channel sounds
 ;;;
 ;;; use control-button to move all at once
+;;;
+;;; the max scrollbar value can change (it's now 10000), so ideally this code should notice it
 
 (define+ (add-amp-controls)
   "(add-amp-controls) adds amplitude sliders to the control panel for each channel in multi-channel sounds"
@@ -2001,25 +2003,25 @@ Reverb-feedback sets the scaler on the feedback.
 
   (define (amp->scroll minval val maxval)
     (if (<= val minval) 0
-	(if (>= val maxval) 900
+	(if (>= val maxval) 9000
 	    (if (>= val 1.0)
-		(inexact->exact (* 450 (+ 1.0 (/ (- val 1.0) (- maxval 1.0)))))
-		(inexact->exact (* 450 (/ (- val minval) (- 1.0 minval))))))))
+		(inexact->exact (* 4500 (+ 1.0 (/ (- val 1.0) (- maxval 1.0)))))
+		(inexact->exact (* 4500 (/ (- val minval) (- 1.0 minval))))))))
   
   (define (scroll->amp snd val)
     (if (<= val 0)
 	(car (amp-control-bounds snd))
-	(if (>= val 900)
+	(if (>= val 9000)
 	    (cadr (amp-control-bounds snd))
-	    (if (> val 450)
-		(+ (* (- (/ val 450.0) 1.0) (- (cadr (amp-control-bounds snd)) 1.0)) 1.0)
-		(+ (* val (/ (- 1.0 (car (amp-control-bounds snd))) 450.0)) (car (amp-control-bounds snd)))))))
+	    (if (> val 4500)
+		(+ (* (- (/ val 4500.0) 1.0) (- (cadr (amp-control-bounds snd)) 1.0)) 1.0)
+		(+ (* val (/ (- 1.0 (car (amp-control-bounds snd))) 4500.0)) (car (amp-control-bounds snd)))))))
 
   (define (amp-callback w c info)
     ;; c is (list number-widget snd chan)
     (let* ((snd (cadr c))
 	   (amp (scroll->amp snd (.value info)))
-	   (ampstr (XmStringCreateLocalized (format #f "~,2F" amp)))
+	   (ampstr (XmStringCreateLocalized (format #f "~,3F " amp)))
 	   (top-chn (- (chans snd) 1))
 	   (chn (- top-chn (caddr c)))
 	   (ctrl (and (.event info) (not (= (logand (.state (.event info)) ControlMask) 0)))))
@@ -2039,8 +2041,8 @@ Reverb-feedback sets the scaler on the feedback.
 	  (set! (amp-control snd chn) amp))))
 
   (define (reset-to-one scroller number)
-    (XtSetValues scroller (list XmNvalue 450))
-    (let ((ampstr (XmStringCreateLocalized "1.00")))
+    (XtSetValues scroller (list XmNvalue 4500))
+    (let ((ampstr (XmStringCreateLocalized "1.000 ")))
       (XtSetValues number (list XmNlabelString ampstr))
       (XmStringFree ampstr)))
   
@@ -2059,7 +2061,7 @@ Reverb-feedback sets the scaler on the feedback.
 						XmNshadowThickness  0
 						XmNhighlightThickness 0
 						XmNfillOnArm        #f)))
-	   (s2 (XmStringCreateLocalized "1.00"))
+	   (s2 (XmStringCreateLocalized "1.000 "))
 	   (number (XtCreateManagedWidget (number-name chan) xmLabelWidgetClass parent
 					   (list XmNbackground       (basic-color)
 						 XmNalignment        XmALIGNMENT_BEGINNING
@@ -2071,6 +2073,7 @@ Reverb-feedback sets the scaler on the feedback.
 						 XmNrightAttachment  XmATTACH_NONE
 						 XmNlabelString      s2
 						 XmNmarginHeight     1
+						 XmNmarginRight      3
 						 XmNrecomputeSize    #f)))
 	   (scroll (XtCreateManagedWidget (scroller-name chan) xmScrollBarWidgetClass parent
 					   (list XmNbackground       (position-color)
@@ -2082,8 +2085,8 @@ Reverb-feedback sets the scaler on the feedback.
 						 XmNleftWidget       number
 						 XmNrightAttachment  XmATTACH_FORM
 						 XmNorientation      XmHORIZONTAL
-						 XmNmaximum          1000
-						 XmNvalue            450
+						 XmNmaximum          10000
+						 XmNvalue            4500
 						 XmNdragCallback     (list amp-callback (list number snd chan))
 						 XmNvalueChangedCallback (list amp-callback (list number snd chan))))))
       (XtOverrideTranslations scroll

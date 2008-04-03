@@ -1739,6 +1739,8 @@ to get a more polite cursor, use <a href="#smartlinecursor">smart-line-cursor</a
 </td></tr><tr><td width=60></td><td>
 overlay-rms-env displays the running rms value of the currently displayed data in red, overlayed upon the 
 normal graph. To activate it, add it to the <a href="extsnd.html#aftergraphhook">after-graph-hook</a>.
+<!-- (add-hook! after-graph-hook overlay-rms-env)
+-->
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -1754,9 +1756,17 @@ overlay-sounds overlays onto its first argument (a sound index) all subsequent a
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <em class=emdef>samples-via-colormap</em> <code>snd chn</code>
 </td></tr><tr><td width=60></td><td>
+<table border=0><tr>
+<td>
 samples-via-colormap displays the time domain graph using the current colormap (it is really just an example of 
 <a href="extsnd.html#colormapref">colormap-ref</a>).  
-To activate this, add it to <a href="extsnd.html#aftergraphhook">after-graph-hook</a>.
+To activate this, add it to <a href="extsnd.html#aftergraphhook">after-graph-hook</a>:
+<pre>
+    (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> <a class=quiet href="extsnd.html#aftergraphhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_aftergraphhook_tip)">after-graph-hook</a> samples-via-colormap)
+</pre>
+</td><td>
+<img src="samplesviacolormap.png" alt="samples-via-colormap" hspace=10>
+</td></tr></table>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -7827,7 +7837,30 @@ sample and a vct as the second argument.  Use <a href="extsnd.html#vcttochannel"
 <table border=0 cellspacing=0 hspace=20>
 <!-- snddiff -->
 <tr><td colspan=2 bgcolor="#f6f8ff"><a class=def>snddiff</a> snd0 chn0 snd1 chn1
-</td></tr><tr><td></td><td>
+</td></tr><tr><td width=60></td><td>
+This could use about a lifetime's work, but it does find some simple differences:
+<pre>
+                     ;; start with two identical sounds:
+    <em class=listener>:</em><em class=typing>(map short-file-name (sounds))</em>
+    <em class=listener>("oboe.snd" "oboe.snd")</em>
+    <em class=listener>:</em><em class=typing>(snddiff 0 0 1 0)</em>
+    <em class=listener>no-difference</em>
+                     ;; snddiff can find individual sample differences:
+    <em class=listener>:</em><em class=typing>(set! (sample 1000 0 0) 0.5)</em>
+    <em class=listener>0.5</em>
+    <em class=listener>:</em><em class=typing>(snddiff 0 0 1 0)</em>
+    <em class=listener>(differences ((1000 0.5 0.0328369140625)))</em>
+                     ;; and simple scaling changes (we reverted the previous change):
+    <em class=listener>:</em><em class=typing>(scale-channel 2.0)</em>
+    <em class=listener>2.0</em>
+    <em class=listener>:</em><em class=typing>(snddiff 0 0 1 0)</em>
+    <em class=listener>(scale 2.0)</em>
+                     ;; and some initial delays:
+    <em class=listener>:</em><em class=typing>(pad-channel 0 200 0 0)</em>
+    <em class=listener>0</em>
+    <em class=listener>:</em><em class=typing>(snddiff 0 0 1 0)</em>
+    <em class=listener>(lag 200 no-difference 0.0 #f #f #f)</em>
+</pre>
 
 </td></tr><tr><td colspan=2 height=16></td></tr>
 </table>
@@ -7935,9 +7968,15 @@ Some of these have been translated to Gtk and xg.c &mdash; snd-gtk.scm.  In Ruby
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="addampcontrols">add-amp-controls</a> ()
 </td></tr><tr><td width=60></td><td>
+<table border=0 cellspacing=10><tr>
+<td>
 add-amp-controls adds amplitude sliders to the control panel
 for multichannel sounds so that each channel gets its own amplitude control slider.
 To make this the default, add <code>(add-amp-controls)</code> to your initialization file.
+Here is a 4-channel control panel after adding the channel-specific amp controls.
+</td><td>
+<img src="addamps.png" alt="added amp controls">
+</td></tr></table>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -8112,7 +8151,7 @@ of files by using different colors.
 
 <!-- keep-file-dialog-open-upon-ok -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<em class=emdef>keep-file-dialog-open-upon-ok</em> ()
+<em class=emdef>keep-file-dialog-open-upon-ok</em>
 </td></tr><tr><td></td><td>
 keep-file-dialog-open-upon-ok changes File:Open so that clicking "ok" does not unmanage (dismiss) the dialog.
 </td></tr><tr><td colspan=2 height=16></td></tr>

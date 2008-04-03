@@ -7436,8 +7436,8 @@ To insert a block of arbitrary-valued samples:
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
 (define* (<A NAME="blockchannel">block-channel</a> value :optional beg dur snd chn edpos)
-  (let ((val value)) ; this for the run macro's benefit
-    (<em class=red>pad-channel</em> beg dur snd chn edpos)
+  (let ((val value))                    ; this for the run macro's benefit
+    (<em class=red>pad-channel</em> beg dur snd chn edpos) ; insert 'dur' samples, ptree-channel sets their values
     (<a class=quiet href="#ptreechannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_ptreechannel_tip)">ptree-channel</a> (lambda (y) val) beg dur snd chn)))
 </pre></td></tr></table>
 
@@ -8341,7 +8341,13 @@ or <a href="#channeltovct">channel-&gt;vct</a> instead.  'samp' defaults to the 
 This returns a vct of 'samps' samples starting at 'samp' in the given channel.
 'samp' defaults to 0.  'samps' defaults to frames - 'samp' (i.e. read to the end of the data).
 'pos' is the edit history position to read (it defaults to the current position).
-This is settable (as is <a href="#sample">sample</a>) &mdash; see <a href="#setsamples">set-samples</a>.
+This is settable (as is <a href="#sample">sample</a>):
+<pre>
+    <em class=listener>:</em><em class=typing>(samples 1000 10)</em>
+    <em class=listener>#&lt;vct[len=10]: 0.033 0.035 0.034 0.031 0.026 0.020 0.013 0.009 0.005 0.004&gt;</em>
+    <em class=listener>:</em><em class=typing>(set! (samples 1000 10) (make-vct 10 .1))</em>
+    <em class=listener>#&lt;vct[len=10]: 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100 0.100&gt;</em>
+</pre>
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 

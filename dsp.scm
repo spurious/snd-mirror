@@ -1789,7 +1789,11 @@ a running window of the last 'size' inputs, returning the rms of the samples in 
 
 (define (moving-rms gen y)
   "(moving-rms gen input) returns the rms of the values in a window over the last few inputs."
-  (sqrt (moving-average gen (* y y))))
+  (sqrt (max 0.0 ;; this is tricky -- due to floating point inaccuracy, we can get negative output
+  		 ;;   from moving-rms even if all the inputs are positive!  The sqrt then returns
+                 ;;   a complex number and all hell breaks loose (in run, you'll get a complaint
+                 ;;   about an integer > 32 bits).
+	     (moving-average gen (* y y)))))
 
 
 ;;; ----------------
@@ -1806,7 +1810,7 @@ a running window of the last 'size' inputs, returning the euclidean length of th
 
 (define (moving-length gen y)
   "(moving-length gen input) returns the length of the values in a window over the last few inputs."
-  (sqrt (moving-average gen (* y y))))
+  (sqrt (max 0.0 (moving-average gen (* y y)))))
 
 #|
 ;; perhaps also use moving-rms gen to avoid amplifying noise-sections (or even squlech them)
