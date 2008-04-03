@@ -181,6 +181,7 @@ writing one period later[1]: bus[n]=v
 (begin
   (eval-c-add-int-type "jack_nframes_t")
   (eval-c-add-int-type "jack_port_id_t")
+  (eval-c-add-int-type "jack_options_t")
   (eval-c-add-float-type "jack_default_audio_sample_t")
   
   (eval-c "-ljack"
@@ -189,7 +190,11 @@ writing one period later[1]: bus[n]=v
 	  "#include <jack/ringbuffer.h>"
 
 	  (proto->public
-	   "jack_client_t *jack_client_new (const char *client_name);
+	   "
+jack_client_t *jack_client_open (const char *client_name,
+				 jack_options_t options,
+				 jack_status_t *status, void* lastarg);
+jack_client_t *jack_client_new (const char *client_name);
 int jack_client_close (jack_client_t *client);
 int jack_client_name_size(void);
 int jack_internal_client_new (const char *client_name, const char *so_name,
@@ -326,7 +331,14 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 		  JackPortIsOutput 
 		  JackPortIsPhysical
 		  JackPortCanMonitor
-		  JackPortIsTerminal)
+		  JackPortIsTerminal
+		  JackNullOption
+		  JackNoStartServer
+		  JackUseExactName
+		  JackServerName
+		  JackLoadName
+		  JackLoadInit
+		  )
 	   (<char*> JACK_DEFAULT_AUDIO_TYPE))
 	  
 	  ))
@@ -397,21 +409,13 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 		    (c-display "\n\nError. <jack>/constructor: process-func is not an ec-pointer.\n\n")
 		    (return #f)))
 
-
-	      (call-with-current-continuation
-	       (lambda (got-it)
-		 (for-each (lambda (postfix)
-			     (set! client (jack_client_new (<-> name postfix)))
-			     (if client
-				 (begin
-				   (got-it))))
-			   '("0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "10" "11" "12" "13" "14" "15"))))
+	      (set! client (jack_client_open name (JackNoStartServer) #f #f))
 	      
 	      (if (not client)
 		  (begin
 		    (c-display "Could not create jack client with name \"" name "\".")
 		    (return #f)))
-
+	      
 	      (-> jack-arg client client)
 
 	      ;; Note to myself, why the if???

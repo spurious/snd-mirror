@@ -4200,6 +4200,13 @@ and run simple lisp[4] functions.
   "rt_globals->remove_me=1")
 (rt-renamefunc remove-me rt-remove-me <void> ())
 
+(define-rt (scale x x1 x2 y1 y2)
+  (declare (<float> x x1 x2 y1 y2))
+  (+ y1 (/ (* (- x x1)
+	      (- y2 y1))
+	   (- x2 x1))))
+
+
 ;; Oh, horror. This implemenation is ugly...
 ;; '(a b c) -> '( (a b c) (a c) (a b) (a) (b c) (b) (c) ())
 (define (permutate alist)
@@ -4755,7 +4762,6 @@ and run simple lisp[4] functions.
 	     (define first-arg (and (not (null? args))
 				    (nth 0 args)))
 	     (when (equal? first-arg '(fm 0))
-	       (c-display "hepp" generator)
 	       (primitive-eval `(define-rt-macro ,new-name
 				  (lambda* (:optional (frequency 440))
 					   (if (number? frequency)
@@ -4794,18 +4800,19 @@ and run simple lisp[4] functions.
 (define-rt-macro osci*
   (lambda* (:optional (frequency 440))
     (define phase (rt-gensym))
-    (define rt (rt-gensym))
+    (define ret (rt-gensym))
     (cond ((number? frequency)
 	   (let ((phaseinc (hz->radians frequency)))
 	     `(begin
 		(declare (<double> ,phase))
-		(set! ,phase (+ (extern ,phase (- ,phaseinc)) ,phaseinc))
+		(set! ,phase (+ (extern ,phase (- ,phaseinc))
+				,phaseinc))
 		(sin ,phase))))
 	  (else
-	   `(let ((ret (sin (extern ,phase 0))))
+	   `(let ((,ret (sin (extern ,phase 0))))
 	      (declare (<double> ,phase))
 	      (set! ,phase (+ ,phase (hz->radians ,frequency)))
-	      ret)))))
+	      ,ret)))))
 
 #!
 (hz->radians 20000)
@@ -7168,78 +7175,84 @@ old syntax: (not very nice)
 !#
 
 (define-rt-macro (<slider> name min curr max (:glide #t) (:log #f) (:scale #f))
-  (define v (gensym))  
-  (define v2 (rt-gensym))  
-  (define min2 (gensym))
-  (define max2 (gensym))
-  (define glide2 (gensym))
+  (fix-defines 
+   (define v (gensym))  
+   (define v2 (rt-gensym))  
+   (define min2 (gensym))
+   (define max2 (gensym))
+   (define glide2 (gensym))
+   
+   (define dialog (gensym))
+   (define slider (gensym))
+   (define ret (gensym))
+   (define topmost (gensym))
+   
+   ;;(set! name (local-eval name *rt-local-code-environment*))
+   
+   (define extern-name (gensym))
 
-  (define dialog (gensym))
-  (define slider (gensym))
-  (define ret (gensym))
-  (define topmost (gensym))
-
-  (define extern-name (string->symbol (<-> "rt-internal-<slider>-" name)))
-
-  (c-display "slider" name)
-
-  (if (eq? glide #t)
-      (set! glide -1))
-
-  (if glide
-      `(read-glide-var
-	(extern    (let ((,dialog (and (defined? 'rt-dialog-unique-name *rt-local-code-environment*)
-				      (local-eval 'rt-dialog-unique-name *rt-local-code-environment*))))
-		     (define ,topmost #f)
-		     (let* ((,min2 ,min)
-			    (,max2 ,max)
-			    (,glide2 ,glide)
-			    (,v (make-glide-var ,curr (if (= -1 ,glide2)
-							  (/ (- ,max2 ,min2) (/ (mus-srate) 3))
-							  ,glide2)))
-			    (,slider (if (and ,dialog
-					     (hashq-ref (nth 2 ,dialog) ',extern-name))
-					(hashq-ref (nth 2 ,dialog) ',extern-name)
-					(let* ((,slider (<slider> (default-rt-dialog (%delay rt-current-rt))
-								 ,name ,min2 (read-glide-var ,v)
-								 ,max2
-								 (lambda (val)
-								   (if ,topmost
-								       (for-each (lambda (v)
-										   (write-glide-var v val))
-										 (car ,topmost))
-								       (write-glide-var ,v val)))
-								 (or ,scale
-								     (max 100 (/ 1000 (- ,max2 ,min2))))
-								 #f
-								 ,log)))
-					  (define ,ret (list '() ,slider))
-					  (when ,dialog
-					    (hashq-set! (nth 2 ,dialog) ',extern-name ,ret)
-					    (set! ,topmost ,ret))
-					  ,ret))))
-		       (set-car! ,slider (cons ,v (car ,slider)))
-		       ,v))))
-      `(extern ,v2 (let ((dialog (and (defined? 'rt-dialog-unique-name *rt-local-code-environment*)
-				      (local-eval 'rt-dialog-unique-name *rt-local-code-environment*))))
-		     (if (and dialog
-			      (hashq-ref (nth 2 dialog) ',extern-name))
-			 (hashq-ref (nth 2 dialog) ',extern-name)
-			 (let* ((,min2 ,min)
-				(,max2 ,max)
-				(,v ,curr)
-				(slider (<slider> (default-rt-dialog (%delay rt-current-rt))
-						  ,name ,min2 ,v
-						  ,max2
-						  (lambda (val)
-						    (set! (-> rt-current-rt ,v2) val))
-						  (or ,scale
-						      (max 100 (/ 1000 (- ,max2 ,min2))))
-						  #f
-						  ,log)))
-			   (if dialog
-			       (hashq-set! (nth 2 dialog) ',extern-name ,v))
-			   ,v))))))
+   (c-display "slider" name extern-name)
+   
+   (if (eq? glide #t)
+       (set! glide -1))
+   
+   (if glide
+       `(read-glide-var
+	 (extern    (let ((,extern-name (string->symbol (<-> "rt-internal-<slider>-" ,name)))
+			  (,dialog (and (defined? 'rt-dialog-unique-name *rt-local-code-environment*)
+					(local-eval 'rt-dialog-unique-name *rt-local-code-environment*))))
+		      (define ,topmost #f)
+		      (c-display "extern-name" ,extern-name)
+		      (let* ((,min2 ,min)
+			     (,max2 ,max)
+			     (,glide2 ,glide)
+			     (,v (make-glide-var ,curr (if (= -1 ,glide2)
+							   (/ (- ,max2 ,min2) (/ (mus-srate) 3))
+							   ,glide2)))
+			     (,slider (if (and ,dialog
+					       (hashq-ref (nth 2 ,dialog) ,extern-name))
+					  (hashq-ref (nth 2 ,dialog) ,extern-name)
+					  (let* ((,slider (<slider> (default-rt-dialog (%delay rt-current-rt))
+								    ,name ,min2 (read-glide-var ,v)
+								    ,max2
+								    (lambda (val)
+								      (if ,topmost
+									  (for-each (lambda (v)
+										      (write-glide-var v val))
+										    (car ,topmost))
+									  (write-glide-var ,v val)))
+								    (or ,scale
+									(max 100 (/ 1000 (- ,max2 ,min2))))
+								    #f
+								    ,log)))
+					    (define ,ret (list '() ,slider))
+					    (when ,dialog
+					      (hashq-set! (nth 2 ,dialog) ,extern-name ,ret)
+					      (set! ,topmost ,ret))
+					    ,ret))))
+			(set-car! ,slider (cons ,v (car ,slider)))
+			,v))))
+       `(extern ,v2 (let ((,extern-name (string->symbol (<-> "rt-internal-<slider>-" ,name)))
+			  (dialog (and (defined? 'rt-dialog-unique-name *rt-local-code-environment*)
+				       (local-eval 'rt-dialog-unique-name *rt-local-code-environment*))))
+		      (if (and dialog
+			       (hashq-ref (nth 2 dialog) ,extern-name))
+			  (hashq-ref (nth 2 dialog) ,extern-name)
+			  (let* ((,min2 ,min)
+				 (,max2 ,max)
+				 (,v ,curr)
+				 (slider (<slider> (default-rt-dialog (%delay rt-current-rt))
+						   ,name ,min2 ,v
+						   ,max2
+						   (lambda (val)
+						     (set! (-> rt-current-rt ,v2) val))
+						   (or ,scale
+						       (max 100 (/ 1000 (- ,max2 ,min2))))
+						   #f
+						   ,log)))
+			    (if dialog
+				(hashq-set! (nth 2 dialog) ,extern-name ,v))
+			    ,v)))))))
 
 #!
 
@@ -7256,7 +7269,7 @@ old syntax: (not very nice)
   (define val (gensym))
   (define glide2 (gensym))
 
-  (define extern-name (string->symbol (<-> "rt-internal-" (if togglebutton "<togglebutton>-" "<checkbutton>-") name)))
+  (define extern-name (gensym))
 
   (c-display "checkbutton")
   
@@ -7264,11 +7277,12 @@ old syntax: (not very nice)
       (set! glide -1))
 
   `(begin
-     (extern ,v2 (let ((dialog (and (defined? 'rt-dialog-unique-name *rt-local-code-environment*)
-				      (local-eval 'rt-dialog-unique-name *rt-local-code-environment*))))
-		     (if (and dialog
-			      (hashq-ref (nth 2 dialog) ',extern-name))
-			 (hashq-ref (nth 2 dialog) ',extern-name)
+     (extern ,v2 (let ((,extern-name (string->symbol (<-> "rt-internal-" (if ,togglebutton "<togglebutton>-" "<checkbutton>-") ,name)))
+		       (dialog (and (defined? 'rt-dialog-unique-name *rt-local-code-environment*)
+				    (local-eval 'rt-dialog-unique-name *rt-local-code-environment*))))
+		   (if (and dialog
+			    (hashq-ref (nth 2 dialog) ,extern-name))
+			 (hashq-ref (nth 2 dialog) ,extern-name)
 			 (let* ((,val (cond ((eq? #t ,on-or-off) 1)
 					    ((eq? #f ,on-or-off) 0)
 					    ((number? ,on-or-off)
@@ -7294,7 +7308,7 @@ old syntax: (not very nice)
 				#f
 				#t))
 			   (if dialog
-			       (hashq-set! (nth 2 dialog) ',extern-name ,v))
+			       (hashq-set! (nth 2 dialog) ,extern-name ,v))
 			   ,v))))
      ,(if glide
 	  `(read-glide-var ,v2)
@@ -7833,10 +7847,6 @@ old syntax: (not very nice)
 						   (<int> startframe)
 						   (<int> endframe))
 
-					    ,(if (or inbusdef outbusdef)
-						 '(<int> time rt_globals->engine->time)
-						 "/* No inbus or outbus */")
-
 					    (<int> num_frames (- endframe startframe))
 					    
 					    (<struct-mus_rt_faust*> faust rt_globals->faust)
@@ -7846,6 +7856,7 @@ old syntax: (not very nice)
 					    ,(if inbusdef
 						 `(begin
 						    ;; bus=rt_engine->in_bus_3_mirror
+						    (<int> time rt_globals->engine->time)
 						    (<struct-rt_bus-*> bus ,(symbol-append 'rt_globals->
 											   (nth 2 (car inbusdef))))
 						    (<int> num_channels (EC_MIN faust->num_inputs bus->num_channels))
@@ -7926,8 +7937,8 @@ old syntax: (not very nice)
 						  ;;((<struct-rt_bus-*> renamed_var__3 renamed_var__3_mirror out-bus rt_gen529))
 						  ;; Copying buses
 						  ,@(map (lambda (busdecl)
-							   `(set! ,(symbol-append 'rt_globals-> (cadr busdecl))
-								  ,(symbol-append 'rt_globals-> (caddr busdecl))))
+							   `(set! ,(symbol-append 'rt_globals-> (nth 1 busdecl))   ;; busname
+								  ,(symbol-append 'rt_globals-> (nth 2 busdecl)))) ;; busname_mirror
 							 busnames)
 						  
 						  (let* ((len <int> (- endframe startframe)))
@@ -8472,9 +8483,9 @@ old syntax: (not very nice)
 	    ;   `((cadr ,func))))
 	    
 	    ((eq? '<rt> (car term))
-	     (find-rt (macroexpand-1 term)))
-;	     (let ((func (add-rt-func (cadr term))))
-;	       `((caddr ,func))))
+	     ;;(find-rt (macroexpand-1 term)))
+	     (let ((func (add-rt-func (cadr term))))
+	       `((caddr ,func))))
 
 	    ((eq? '<rt-out> (car term))
 	     (find-rt (macroexpand-1 term)))

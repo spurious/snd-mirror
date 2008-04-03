@@ -294,7 +294,7 @@
 				 (cons (car arg)
 				       (loop (cdr arg)
 					     inkeys)))))))
-	   (c-display "keyargs/defarg" keyargs "\n" defargs)
+	   ;;(c-display "keyargs/defarg" keyargs "\n" defargs)
 	   `(define* (,(car def) ,@defargs)
 	      ,@(map (lambda (keyarg)
 		       `(cond ((eq? 'undefined ,(car keyarg))

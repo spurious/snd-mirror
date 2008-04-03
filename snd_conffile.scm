@@ -39,13 +39,16 @@
 
 (set! (show-backtrace) #t)
 (debug-enable 'debug)
-(if #t
+(if #f
     (begin
       (read-enable 'positions)
       (debug-enable 'debug)
       (debug-enable 'backtrace)
       (debug-set! frames 28)
       (debug-set! depth 250)))
+
+;(use-modules (ice-9 readline))
+;(activate-readline)
 
 
 (define c-initializing
@@ -118,11 +121,11 @@
     #f))
   
 
-(add-hook! snd-error-hook
-  (lambda (msg) 
-    (display "snd-error!")(newline)
-    (display msg)
-    #f))
+;(add-hook! snd-error-hook
+;  (lambda (msg) 
+;    (display "snd-error!")(newline)
+;    (display msg)
+;    #f))
 
 ;;##############################################################
 ;; Various settings.
@@ -142,9 +145,6 @@
     ;; This is for my personal computers settings. May not suite your setup.
     (begin
       (set! %load-path (cons "/home/kjetil/snd-run" %load-path))
-      ;;(set! (temp-dir) "/lyd/local/tmp")
-      ;;(set! (save-dir) "/lyd/local/tmp")
-      ;;(primitive-eval '(define *eval-c-compiler* "gcc-4.1.2"))
       (primitive-eval '(define *eval-c-CFLAGS* "-march=athlon-xp"))
       ))
     

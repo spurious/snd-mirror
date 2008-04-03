@@ -7100,7 +7100,9 @@ and add-amp-controls in <a href="sndscm.html#sndmotifdoc">snd-motif.scm</a>.
 
 <!-- make-variable-graph -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="makevariablegraph">make-variable-graph</a> (container :optional name length srate)</code>
+<code><a class=def name="makevariablegraph"
+        onmouseout="UnTip()" 
+        onmouseover="Tip('<img src=\'vardpy.png\' width=\'250\' height=\'250\'>', TITLE, 'make-variable-display in snd-motif', ABOVE, true)">make-variable-graph</a> (container :optional name length srate)</code>
 </td></tr><tr><td></td><td>
 make-variable-graph is a part of the <a href="sndscm.html#variabledisplay">variable-display</a> mechanism in snd-motif.scm.  It creates the
 sound/channel pair that displays a graph or spectrum of the arbitrary data accessed via <a href="#channeldata">channel-data</a>.
@@ -9529,7 +9531,9 @@ This forces Snd to redisplay 'chn's' fft graph.  For historical reasons, it also
 
 <!-- variable-graph? -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="variablegraphp">variable-graph?</a> (index)</code>
+<code><a class=def name="variablegraphp" 
+        onmouseout="UnTip()" 
+        onmouseover="Tip('<img src=\'vardpy.png\' width=\'250\' height=\'250\'>', TITLE, 'make-variable-display in snd-motif', ABOVE, true)">variable-graph?</a> (index)</code>
 </td></tr><tr><td></td><td>
 This returns #t if 'index' refers to a variable graph (see <a href="#makevariablegraph">make-variable-graph</a>).
 </td></tr><tr><td colspan=2 height=18></td></tr>
@@ -9809,7 +9813,8 @@ of the fft points, making the display look smoother.
     (<a class=quiet href="#updatetransformgraph" onmouseout="UnTip()" onmouseover="Tip(extsnd_updatetransformgraph_tip)">update-transform-graph</a>)))
 </pre></td></tr></table>
 </td><td>
-<img src="pad1.png" alt="pads"></td><td><img src="pad2.png" alt="more pads"></td></tr></table>
+<img src="pad1.png" alt="more pads"></td>
+</tr></table>
 
 </td></tr>
 

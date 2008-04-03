@@ -1561,6 +1561,15 @@
 ;; Sliders
 ;;##############################################################
 
+#!
+(scale-log->linear 0 0.5 2)
+(scale-linear->log 0 0 log-scale-ticks)
+
+(scale-log->linear 0 1.2 2)
+(scale-linear->log 0 1 2)
+(scale-log-label 0 1 2)
+!#
+
 (def-class (<slider> parent
 			 title
 			 low initial high
@@ -1580,16 +1589,30 @@
 
   (def-method (set! val)
     (gtk_adjustment_set_value (GTK_ADJUSTMENT slider) val))
-			     
+
+  (when use-log
+    (set! low (1+ low))
+    (set! high (1+ high)))
+
   (if use-gtk
       (let* ((vbox (if (isdialog? parent) (-> parent getbox1) parent))
 	     (adj (if use-log 
-		      (gtk_adjustment_new (scale-log->linear low initial high) 0 log-scale-ticks 1 10 1)
+		      (gtk_adjustment_new (scale-log->linear low (1+ initial) high) 0 log-scale-ticks 1 10 1)
 		      (gtk_adjustment_new initial low high 0.0 0.0 0.0))))
+	(define (get-two-dec-string n)
+	  (fix-defines
+	   (define whole (c-integer n))
+	   (define rest (- n whole))
+	   (define dec100 (c-integer (* rest 100)))
+	   (<-> (number->string whole) (if (< dec100 10) ".0" ".") (number->string dec100))))
+	
+	(define (get-slider-text n)
+	  (if use-log
+	      (<-> title " "
+		   (get-two-dec-string n))
+	      (format #f "~A" title)))
 
-	(set! label (gtk_label_new (if use-log
-				       (format #f "~A (~,2F)" title initial)
-				       (format #f "~A" title))))
+	(set! label (gtk_label_new (get-slider-text initial)))
 
 	(set! hbox (gtk_hbox_new #f 0))
 
@@ -1615,11 +1638,9 @@
 	    (g_signal_connect_closure_by_id (GPOINTER adj)
 					    (g_signal_lookup "value_changed" (G_OBJECT_TYPE (GTK_OBJECT adj))) 0
 					    (g_cclosure_new (lambda (w d) 
-							      (func (scale-linear->log low (.value (GTK_ADJUSTMENT adj)) high))
-							      (change-label label 
-									    (format #f "~A: ~,2F" 
-										    title 
-										    (scale-log-label low (.value (GTK_ADJUSTMENT adj)) high)))
+							      (define val (1- (scale-linear->log low (.value (GTK_ADJUSTMENT adj)) high)))
+							      (func val)
+							      (change-label label (get-slider-text val))
 							      )
 							    #f #f)
 					    #f)

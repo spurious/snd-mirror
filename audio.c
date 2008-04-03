@@ -8349,18 +8349,19 @@ static int sndjack_init(void){
   int numch;
   int num=0;
 
-  while(num<SNDJACK_MAXSNDS){
-    char temp[500];
-    sprintf(temp, "sndlib%d",num);
-    if ((sndjack_client=jack_client_new(temp)) != 0) {
-      break;
+  {
+    jack_status_t status;
+    sndjack_client=jack_client_open("sndlib",JackNoStartServer,&status,NULL);
+    if (sndjack_client == NULL) {
+#if 0
+      fprintf (stderr, "jack_client_open() failed, "
+	       "status = 0x%2.0x\n", status);
+      if (status & JackServerFailed) {
+	fprintf (stderr, "Unable to connect to JACK server\n");
+      }
+#endif
+      return -1;
     }
-    num++;
-  }
-
-  if(sndjack_client==NULL){
-    /* printf("Unable to create new jack_client\n"); */
-    return -1;
   }
 
   pthread_mutex_init(&sndjack_mutex,NULL);

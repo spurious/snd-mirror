@@ -675,9 +675,8 @@ create the individual spectral components:
 
 <table border=2 bgcolor="#fafafa" cellpadding=6 hspace=20 vspace=20>
 <tr><td>
-<p>To compare the Scheme, Ruby, Forth, and C versions of a CLM instrument (not to mention the Common Lisp
-version in the CLM tarball), here are versions of the bird instrument; it produces a sinusoid with (usually
-very elaborate) amplitude and frequency envelopes.
+<p>To show CLM in its various embodiments, here are  the Scheme, Common Lisp, Ruby, Forth, and C versions of the bird instrument;
+it produces a sinusoid with (usually very elaborate) amplitude and frequency envelopes.
 </p>
 
 </td></tr><tr><td>
@@ -688,15 +687,30 @@ very elaborate) amplitude and frequency envelopes.
   (let* ((gls-env (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> freq-envelope (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> freqskew) dur))
          (os (<a class=quiet href="#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> frequency))
          (amp-env (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> amp-envelope amplitude dur))
-	 (len (<a class=quiet href="#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> dur))
 	 (beg (<a class=quiet href="#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> start))
-	 (end (+ beg len)))
+	 (end (+ beg (<a class=quiet href="#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> dur))))
     (<a class=quiet href="extsnd.html#run" onmouseout="UnTip()" onmouseover="Tip(extsnd_run_tip)">run</a>
      (lambda ()
        (do ((i beg (1+ i)))
 	   ((= i end))
 	 (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> amp-env) 
                     (<a class=quiet href="#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> os (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> gls-env)))))))))
+</pre>
+</td></tr></table>
+
+</td></tr><tr><td>
+
+<table border=0 bgcolor="#fafafa" hspace=20><tr><td>
+<pre>
+(definstrument common-lisp-bird (startime dur frequency freq-skew amplitude freq-envelope amp-envelope)
+  (multiple-value-bind (beg end) (times-&gt;samples startime dur)
+    (let* ((amp-env (make-env amp-envelope amplitude dur))
+	   (gls-env (make-env freq-envelope (hz-&gt;radians freq-skew) dur))
+	   (os (make-oscil frequency)))
+      (run
+       (loop for i from beg to end do
+	 (outa i (* (env amp-env) 
+                    (oscil os (env gls-env)))))))))
 </pre>
 </td></tr></table>
 
