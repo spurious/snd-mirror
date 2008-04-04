@@ -364,7 +364,7 @@ var extsnd_markdraghook_tip = "<code>mark-drag-hook (id)</code>: called when a m
 
 var extsnd_markhome_tip = "<code>(mark-home :optional id)</code>: the sound (index) and channel that hold mark id";
 
-var extsnd_markname_tip = "<code>(mark-name :optional id snd chn)</code>: mark's name";
+var extsnd_markname_tip = "<code>(mark-name :optional id)</code>: mark's name";
 
 var extsnd_marksample_tip = "<code>(mark-sample :optional id pos)</code>: mark's location (sample number) at edit history pos";
 
@@ -846,7 +846,7 @@ var extsnd_vctscale_tip = "<code>(vct-scale! v val)</code>: scale each element o
 
 var extsnd_vctset_tip = "<code>(vct-set! v n val)</code>: sets element of vct v to val, v[n] = val";
 
-var extsnd_vctsubseq_tip = "<code>(vct-subseq v start :optional end len vnew)</code>: v[start..end],<br>" +
+var extsnd_vctsubseq_tip = "<code>(vct-subseq v start :optional end vnew)</code>: v[start..end],<br>" +
                            " placed in vnew if given or new vct";
 
 var extsnd_vcttochannel_tip = "<code>(vct-&gt;channel vct :optional (beg 0) (dur len) snd chn edpos origin)</code>:<br>" +

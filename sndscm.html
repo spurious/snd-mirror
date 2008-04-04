@@ -1834,15 +1834,20 @@ The Hartley transform is a kind of Fourier transform.
   
 <!-- display-bark-fft -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<a class=def name="displaybarkfft">display-bark-fft</a><br>
+<a class=def name="displaybarkfft">display-bark-fft</a> <code>:optional off color1 color2 color3</code><br>
 <em class=emdef>undisplay-bark-fft</em>
 </td></tr><tr><td></td><td>
 display-bark-fft shows the current spectrum in the "lisp" graph in three
 different frequency scales: bark, mel, and erb, each in a different color.
 The default ticks follow the bark scale; click anywhere in the lisp graph
 to switch to a different tick scale choice.  undisplay-bark-fft turns this
-graph off.
-<br>
+graph off. Here we've used rgb.scm for some color names:
+<pre>
+    (display-bark-fft #f sea-green orange alice-blue)
+    (set! (selected-graph-color) gray30)
+    (set! (selected-data-color) light-green)
+</pre>
+
 <img src="bark.png" alt="bark display" vspace=10>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 

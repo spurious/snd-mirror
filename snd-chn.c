@@ -7296,7 +7296,7 @@ WITH_THREE_SETTER_ARGS(g_set_lisp_graph_style_reversed, g_set_lisp_graph_style)
 
 static XEN g_transform_graph_style(XEN snd, XEN chn)
 {
-  #define H_transform_graph_style "(" S_lisp_graph_style " snd chn): fft graph drawing style, one \
+  #define H_transform_graph_style "(" S_transform_graph_style " snd chn): fft graph drawing style, one \
 of '(" S_graph_lines " " S_graph_dots " " S_graph_dots_and_lines " " S_graph_lollipops " " S_graph_filled ")"
   ASSERT_SOUND(S_transform_graph_style, snd, 0);
   return(channel_get(snd, chn, CP_TRANSFORM_GRAPH_STYLE, S_transform_graph_style));

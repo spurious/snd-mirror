@@ -1967,7 +1967,10 @@ and replaces it with the spectrum given in coeffs"
   ;; click in lisp-graph to change the tick placement choice
 
   (let ((bark-fft-size 0)
-	(bark-tick-function 0))
+	(bark-tick-function 0)
+	(color1 (snd-color 8))  ; selected-data-color
+	(color2 (snd-color 2))  ; red
+	(color3 (snd-color 4))) ; blue
 
     (define (bark f) 
       (let ((f2 (/ f 7500))) 
@@ -2054,13 +2057,12 @@ and replaces it with the spectrum given in coeffs"
 				 snd chn 
 				 #f show-bare-x-axis)))))))
 	
-	#f)) ; not pixel list or thunk
+	(list color1 color2 color3))) ; tell lisp graph display what colors to use
     
     (define (make-bark-labels snd chn)
       ;; at this point the x axis has no markings, but there is room for labels and ticks
       
       (let ((old-foreground-color (foreground-color snd chn copy-context)))
-	;; assume at start the foreground color is correct
 	
 	(let* ((axinfo (axis-info snd chn lisp-graph))
 	       (axis-x0 (list-ref axinfo 10))
@@ -2116,18 +2118,19 @@ and replaces it with the spectrum given in coeffs"
 		  (draw-line i1000 tick-y0 i1000 minor-y0 snd chn copy-context)))))
 
 	  ;; bark label/ticks
+	  (set! (foreground-color snd chn copy-context) color1)
 	  (if (= bark-tick-function 0) (draw-bark-ticks bark-position))
 	  (if bark-label-font (set! (current-font snd chn copy-context) bark-label-font))
 	  (draw-string "bark," label-pos (+ axis-y1 label-height) snd chn copy-context)
 	  
 	  ;; mel label/ticks
-	  (set! (foreground-color snd chn copy-context) (snd-color 2))
+	  (set! (foreground-color snd chn copy-context) color2)
 	  (if (= bark-tick-function 1) (draw-bark-ticks mel-position))
 	  (if bark-label-font (set! (current-font snd chn copy-context) bark-label-font))
 	  (draw-string "mel," (+ (* char-width 6) label-pos) (+ axis-y1 label-height) snd chn copy-context)
 	  
 	  ;; erb label/ticks
-	  (set! (foreground-color snd chn copy-context) (snd-color 4))
+	  (set! (foreground-color snd chn copy-context) color3)
 	  (if (= bark-tick-function 2) (draw-bark-ticks erb-position))
 	  (if bark-label-font (set! (current-font snd chn copy-context) bark-label-font))
 	  (draw-string "erb" (+ (* char-width (+ 6 5)) label-pos) (+ axis-y1 label-height) snd chn copy-context))
@@ -2144,7 +2147,10 @@ and replaces it with the spectrum given in coeffs"
 	    (update-lisp-graph snd chn))))
     
     ;; user's view of display-bark-fft function
-    (lambda* (:optional off)
+    (lambda* (:optional off col1 col2 col3)
+      (if col1 (set! color1 col1))
+      (if col2 (set! color2 col2))
+      (if col3 (set! color3 col3))
       (if (not off)
 	  (begin
 	    (add-hook! lisp-graph-hook display-bark-fft-1)

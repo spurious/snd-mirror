@@ -594,7 +594,7 @@ static XEN g_vct_peak(XEN obj)
 
 static XEN g_vct_subseq(XEN vobj, XEN start, XEN end, XEN newv)
 {
-  #define H_vct_subseq "(" S_vct_subseq " v start :optional end len vnew): v[start..end], placed in vnew if given or new vct"
+  #define H_vct_subseq "(" S_vct_subseq " v start :optional end vnew): v[start..end], placed in vnew if given or new vct"
   vct *vold, *vnew;
   XEN res;
   int i, old_len, new_len, j, istart, iend;

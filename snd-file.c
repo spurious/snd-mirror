@@ -4576,7 +4576,7 @@ static XEN g_view_files_dialog(XEN managed, XEN make_new)
 {
   widget_t w;
   bool new_dialog = false;
-  #define H_view_files_dialog "(" S_view_files_dialog " :optional managed): start the View Files dialog"
+  #define H_view_files_dialog "(" S_view_files_dialog " :optional managed create-new-dialog): start the View Files dialog"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ARG_1, S_view_files_dialog, "a boolean");
   new_dialog = (XEN_TRUE_P(make_new));
   w = start_view_files_dialog(XEN_TO_C_BOOLEAN(managed), new_dialog);
@@ -4622,7 +4622,7 @@ static XEN g_add_file_to_view_files_list(XEN file, XEN dialog)
 
 static XEN g_view_files_sort(XEN dialog) 
 {
-  #define H_view_files_sort "(" S_view_files_sort "): sort choice in View:files dialog."
+  #define H_view_files_sort "(" S_view_files_sort " :optional dialog): sort choice in View:files dialog."
   if (XEN_BOUND_P(dialog))
     {
       XEN_ASSERT_TYPE(XEN_WIDGET_P(dialog), dialog, XEN_ONLY_ARG, S_view_files_sort, "a view-files dialog widget"); 

@@ -2472,7 +2472,7 @@ static XEN g_set_mix_tag_y(XEN n, XEN val)
 
 static XEN g_mix_properties(XEN n)
 {
-  #define H_mix_properties "(S_mix_properties id):  A property list associated with the given mix. \
+  #define H_mix_properties "(" S_mix_properties " id):  A property list associated with the given mix. \
 The accessor mix-property is provided in mix." XEN_FILE_EXTENSION "."
 
   mix_info *md;

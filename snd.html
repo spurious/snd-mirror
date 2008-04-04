@@ -742,7 +742,15 @@ There's also a list on the left of each channel pane containing a list of
 the current edits.  You can click anywhere in the list to move to that
 edit.
 </p>
-<img src="edithistory.png" alt="edit history list" hspace=20 onmouseout="UnTip()" onmouseover="Tip('the edit history list is on the left: we\'ve made two edits so far')">
+<img src="edithistory.png" alt="edit history list" hspace=40 usemap="#edithistorymap" border=0>
+<map name="edithistorymap">
+  <area shape=rect coords="0,30,245,230" onmouseout="UnTip()" onmouseover="Tip('this is the edit history list. We\'ve made 4 edits so far.')">
+  <area shape=rect coords="285,30,420,210" onmouseout="UnTip()" onmouseover="Tip('this is the time domain graph with display-current-window.')">
+  <area shape=rect coords="530,30,760,210" onmouseout="UnTip()" onmouseover="Tip('this is the frequency domain (FFT) graph with peaks.')">
+  <area shape=rect coords="0,285,750,415" onmouseout="UnTip()" onmouseover="Tip('this is the listener showing the edits.')">
+  <area shape=rect coords="210,245,570,275" onmouseout="UnTip()" onmouseover="Tip('this is the minibuffer telling us about the cursor.')">
+</map>
+
 
 <A NAME="printfile"></a><p>The Print option opens the Print
 dialog.  You can send the currently active graph directly to

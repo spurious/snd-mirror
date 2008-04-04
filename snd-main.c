@@ -1599,7 +1599,7 @@ default " S_save_state " filename is " DEFAULT_SAVE_STATE_FILE ". It can be chan
 
 static XEN g_exit(XEN val) 
 {
-  #define H_exit "(" S_exit "): exit Snd"
+  #define H_exit "(" S_exit " :optional val): exit Snd"
   if (snd_exit_cleanly(EXIT_NOT_FORCED))
     snd_exit(XEN_TO_C_INT_OR_ELSE(val, 1)); 
   return(XEN_FALSE);
@@ -2100,7 +2100,7 @@ static XEN g_snd_version(void)
 static XEN g_color_dialog(XEN managed) 
 {
   widget_t w;
-  #define H_color_dialog "(" S_color_dialog "): start the Color dialog"
+  #define H_color_dialog "(" S_color_dialog " :optional managed): start the Color dialog"
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(managed), managed, XEN_ONLY_ARG, S_color_dialog, "a boolean");
   w = start_color_dialog(XEN_TO_C_BOOLEAN(managed));
   return(XEN_WRAP_WIDGET(w));

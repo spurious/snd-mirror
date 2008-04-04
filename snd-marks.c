@@ -1994,7 +1994,7 @@ static XEN g_set_mark_sync(XEN mark_n, XEN sync_n)
 
 static XEN g_mark_name(XEN mark_n) 
 {
-  #define H_mark_name "(" S_mark_name " :optional id snd chn): mark's name"
+  #define H_mark_name "(" S_mark_name " :optional id): mark's name"
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(mark_n), mark_n, XEN_ONLY_ARG, S_mark_name, "an integer");
   return(mark_get(mark_n, MARK_NAME, XEN_UNDEFINED, S_mark_name));
 }
