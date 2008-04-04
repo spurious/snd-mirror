@@ -1577,7 +1577,7 @@ friends:
 (g_signal_connect 
  (car (<a class=quiet href="extsnd.html#channelwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_channelwidgets_tip)">channel-widgets</a>)) "scroll_event" 
  (lambda (w e i)
-   (<a class=quiet href="extsnd.html#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> (format #f "~%state: ~A, x: ~A, y: ~A, direction: ~A" 
+   (<a class=quiet href="extsnd.html#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~%state: ~A, x: ~A, y: ~A, direction: ~A" 
 		      (.state (GDK_EVENT_SCROLL e))
 		      (.x (GDK_EVENT_SCROLL e))
 		      (.y (GDK_EVENT_SCROLL e))
@@ -1588,7 +1588,7 @@ friends:
 (g_signal_connect 
  (car (<a class=quiet href="extsnd.html#channelwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_channelwidgets_tip)">channel-widgets</a>)) "button_press_event"
  (lambda (w e i)
-   (<a class=quiet href="extsnd.html#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> (format #f "~%button: ~A, ~A click" 
+   (<a class=quiet href="extsnd.html#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~%button: ~A, ~A click" 
 		      (.type (GDK_EVENT_BUTTON e))
 		      (if (= (.type (GDK_EVENT_BUTTON e)) GDK_BUTTON_PRESS)
 			  "single"
@@ -1775,7 +1775,7 @@ the following displays all the comments it finds:
   (do ((arg (+ (<a class=quiet href="extsnd.html#scriptarg" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptarg_tip)">script-arg</a>) 1) (1+ arg)))
       ((= arg (length (<a class=quiet href="extsnd.html#scriptargs" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptargs_tip)">script-args</a>))))
     (let ((name (list-ref (<a class=quiet href="extsnd.html#scriptargs" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptargs_tip)">script-args</a>) arg)))
-      (display (format #f "~A: ~A~%" name (<a class=quiet href="extsnd.html#mussoundcomment" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundcomment_tip)">mus-sound-comment</a> name))))))
+      (display (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~A: ~A~%" name (<a class=quiet href="extsnd.html#mussoundcomment" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundcomment_tip)">mus-sound-comment</a> name))))))
 (<a class=quiet href="extsnd.html#exit" onmouseout="UnTip()" onmouseover="Tip(extsnd_exit_tip)">exit</a>)
 </pre></td></tr></table>
 
@@ -1842,8 +1842,8 @@ into a bunch of mono files:
 	(let ((ind (<a class=quiet href="extsnd.html#opensound" onmouseout="UnTip()" onmouseover="Tip(extsnd_opensound_tip)">open-sound</a> name)))
 	  (do ((i 0 (1+ i)))
 	      ((= i chns))
-	    (display (format #f "~A.~D " name i))
-	    (<a class=quiet href="extsnd.html#savesoundas" onmouseout="UnTip()" onmouseover="Tip(extsnd_savesoundas_tip)">save-sound-as</a> (format #f "~A.~D" name i)
+	    (display (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~A.~D " name i))
+	    (<a class=quiet href="extsnd.html#savesoundas" onmouseout="UnTip()" onmouseover="Tip(extsnd_savesoundas_tip)">save-sound-as</a> (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~A.~D" name i)
 			   ind
 			   (<a class=quiet href="extsnd.html#headertype" onmouseout="UnTip()" onmouseover="Tip(extsnd_headertype_tip)">header-type</a> ind)
 			   (<a class=quiet href="extsnd.html#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_dataformat_tip)">data-format</a> ind)

@@ -1027,7 +1027,7 @@ and get more info (in this case, the begin time and duration of the enclosing no
 	 (lambda ()
 	   (apply <em class=red>make-env</em> args))
 	 (lambda args
-	   (display (format #f ";~A ~A: ~A~%" beg dur args)))))
+	   (display (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f ";~A ~A: ~A~%" beg dur args)))))
 </pre>
 </td></tr></table>
 
@@ -3270,7 +3270,7 @@ do perfectly well:
     (let* ((bins (vector-&gt;vct (add-rands n)))
 	   (pk (<a class=quiet href="extsnd.html#vctpeak" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctpeak_tip)">vct-peak</a> bins)))
       (<a class=quiet href="extsnd.html#vcttochannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_vcttochannel_tip)">vct-&gt;channel</a> (<a class=quiet href="extsnd.html#vctscale" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctscale_tip)">vct-scale!</a> bins (/ 1.0 pk)))
-      (set! (<a class=quiet href="extsnd.html#xaxislabel" onmouseout="UnTip()" onmouseover="Tip(extsnd_xaxislabel_tip)">x-axis-label</a>) (format #f "n: ~D" n))
+      (set! (<a class=quiet href="extsnd.html#xaxislabel" onmouseout="UnTip()" onmouseover="Tip(extsnd_xaxislabel_tip)">x-axis-label</a>) (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "n: ~D" n))
       (<a class=quiet href="extsnd.html#updatetimegraph" onmouseout="UnTip()" onmouseover="Tip(extsnd_updatetimegraph_tip)">update-time-graph</a>))))
 </pre>
 </td></tr></table>

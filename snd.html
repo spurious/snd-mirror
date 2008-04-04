@@ -44,18 +44,23 @@
   <area shape=rect coords="110,20,150,50" href="#viewing" alt="View menu" onmouseout="UnTip()" onmouseover="Tip('various dialogs, graphing choices')">
   <area shape=rect coords="160,20,230,50" href="#options" alt="Options menu" onmouseout="UnTip()" onmouseover="Tip('save session, fft choices, preferences')">
   <area shape=rect coords="540,20,570,50" href="#options" alt="Help menu" onmouseout="UnTip()" onmouseover="Tip('helpful essays')">
-  <area shape=rect coords="12,60,20,70" href="#gettingstarted" alt="edit history list" onmouseout="UnTip()" onmouseover="Tip('a list of editing changes')">
+  <area shape=rect coords="12,60,20,70" href="#gettingstarted" alt="edit history list" onmouseout="UnTip()" onmouseover="Tip('this opens a list of the current edits')">
   <area shape=rect coords="23,60,32,190" href="#gettingstarted" alt="Y axis zoom" onmouseout="UnTip()" onmouseover="Tip('this slider changes the y-axis bounds')">
   <area shape=rect coords="34,60,44,190" href="#gettingstarted" alt="Y axis position" onmouseout="UnTip()" onmouseover="Tip('this slider changes the y-axis midpoint')">
   <area shape=rect coords="20,205,50,220" href="#gettingstarted" alt="fft button" onmouseout="UnTip()" onmouseover="Tip('this button turns on the fft display')">
   <area shape=rect coords="20,230,50,245" href="#gettingstarted" alt="waveform button" onmouseout="UnTip()" onmouseover="Tip('this button turns on the time-domain display')">
-  <area shape=rect coords="50,60,580,220" href="#gettingstarted" alt="graphs">
+  <area shape=rect coords="50,60,100,220" href="#gettingstarted" alt="graphs" onmouseout="UnTip()" onmouseover="Tip('the y axis bounds')">
+  <area shape=rect coords="101,60,580,195" href="#gettingstarted" alt="graphs" onmouseout="UnTip()" onmouseover="Tip('time domain, FFT, and special-purpose graphs')">
+  <area shape=rect coords="101,196,580,220" href="#gettingstarted" alt="graphs" onmouseout="UnTip()" onmouseover="Tip('x axis bounds (in seconds)')">
   <area shape=rect coords="50,227,580,239" href="#gettingstarted" alt="X axis position" onmouseout="UnTip()" onmouseover="Tip('this slider changes where we are in the sound')">
-  <area shape=rect coords="50,240,580,250" href="#gettingstarted" alt="X axis zoom" onmouseout="UnTip()" onmouseover="Tip('this slider changes how much of the sound we see')">
-  <area shape=rect coords="10,260,130,280" href="#gettingstarted" alt="sound file name" onmouseout="UnTip()" onmouseover="Tip('sound file name')">
+  <area shape=rect coords="50,240,580,250" href="#gettingstarted" alt="X axis zoom" onmouseout="UnTip()" onmouseover="Tip('this slider changes how much of the sound we see (zoom in and out)')">
+  <area shape=rect coords="30,260,130,280" href="#gettingstarted" alt="sound file name" onmouseout="UnTip()" onmouseover="Tip('sound file name')">
+  <area shape=rect coords="0,260,29,280" href="#gettingstarted" alt="sound file name" onmouseout="UnTip()" onmouseover="Tip('sound index (used by many of the extension language functions)')">
   <area shape=rect coords="140,260,450,280" href="#gettingstarted" alt="minibuffer" onmouseout="UnTip()" onmouseover="Tip('error messages get displayed here')">
-  <area shape=rect coords="460,260,475,280" href="#syncbutton" alt="sync button" onmouseout="UnTip()" onmouseover="Tip('this button can make all chans/sounds move together')">
+  <area shape=rect coords="460,260,475,280" href="#syncbutton" alt="sync button" onmouseout="UnTip()" onmouseover="Tip('this button can make all chans/sounds move together<br>It's not doing anything in the current case.')">
   <area shape=rect coords="522,260,535,280" href="#menuplay" alt="play button" onmouseout="UnTip()" onmouseover="Tip('play the sound')">
+  <area shape=rect coords="563,255,573,262" href="#menuplay" alt="play button" onmouseout="UnTip()" onmouseover="Tip('this opens the control panel')">
+  <area shape=rect coords="0,0,25,20" href="#menuplay" alt="play button" onmouseout="UnTip()" onmouseover="Tip('Snd's icon!')">
 </map>
 
 <p><A NAME="overview"><b>Snd</b></a> is a sound editor modelled
@@ -2011,7 +2016,7 @@ all the samples between the cursor and the next mark.</p>
 <tr><td>C-f</td><td>move cursor ahead one sample</td><td><code><small>(lambda (arg) (set! (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) (min (1- (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>)) (+ (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) arg))))</small></code></td></tr>
 <tr><td>C-g</td><td>abort current command</td><td><code><small>c-g!</small></code></td></tr>
 <tr><td>C-h</td><td>delete previous sample</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#deletesamples" onmouseout="UnTip()" onmouseover="Tip(extsnd_deletesamples_tip)">delete-samples</a> (- (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) arg) arg))</small></code></td></tr>
-<tr><td>C-i</td><td>display cursor info</td><td><code><small>(lambda () (<a class=quiet href="extsnd.html#reportinminibuffer" onmouseout="UnTip()" onmouseover="Tip(extsnd_reportinminibuffer_tip)">report-in-minibuffer</a> (format #f "cursor at ~A" (<a class=quiet href="extsnd.html#sample" onmouseout="UnTip()" onmouseover="Tip(extsnd_sample_tip)">sample</a> (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>)))))</small></code></td></tr>
+<tr><td>C-i</td><td>display cursor info</td><td><code><small>(lambda () (<a class=quiet href="extsnd.html#reportinminibuffer" onmouseout="UnTip()" onmouseover="Tip(extsnd_reportinminibuffer_tip)">report-in-minibuffer</a> (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "cursor at ~A" (<a class=quiet href="extsnd.html#sample" onmouseout="UnTip()" onmouseover="Tip(extsnd_sample_tip)">sample</a> (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>)))))</small></code></td></tr>
 <tr><td>C-j</td><td>go to mark</td><td><code><small>(lambda (arg) (forward-mark arg)) ;snd7.scm</small></code></td></tr>
 <tr><td>C-k</td><td>delete one line's worth of samples</td><td><code><small>(lambda (arg) (<a class=quiet href="extsnd.html#deletesamples" onmouseout="UnTip()" onmouseover="Tip(extsnd_deletesamples_tip)">delete-samples</a> (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) (* 128 arg)))</small></code></td></tr>
 <tr><td>C-l</td><td>position window so cursor is in the middle</td><td><code><small>(lambda () <a class=quiet href="extsnd.html#bindkey" onmouseout="UnTip()" onmouseover="Tip(extsnd_bindkey_tip)">cursor-in-middle</a>)</small></code></td></tr>

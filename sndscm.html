@@ -1711,7 +1711,10 @@ To activate this, add it to <a href="extsnd.html#aftergraphhook">after-graph-hoo
 <em class=emdef>display-previous-edits</em> <code>snd chn</code>
 </td></tr><tr><td width=60></td><td>
 display-previous-edits displays all the edits of the current sound, with older edits gradually fading away.
-To activate this, add it to <a href="extsnd.html#aftergraphhook">after-graph-hook</a>.
+To activate this, add it to <a href="extsnd.html#aftergraphhook">after-graph-hook</a>:
+<pre>
+    (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> <a class=quiet href="extsnd.html#aftergraphhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_aftergraphhook_tip)">after-graph-hook</a> display-previous-edits)
+</pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -1738,9 +1741,10 @@ to get a more polite cursor, use <a href="#smartlinecursor">smart-line-cursor</a
 <a class=def name="overlayrmsenv">overlay-rms-env</a> <code>snd chn</code>
 </td></tr><tr><td width=60></td><td>
 overlay-rms-env displays the running rms value of the currently displayed data in red, overlayed upon the 
-normal graph. To activate it, add it to the <a href="extsnd.html#aftergraphhook">after-graph-hook</a>.
-<!-- (add-hook! after-graph-hook overlay-rms-env)
--->
+normal graph. To activate it, add it to the <a href="extsnd.html#aftergraphhook">after-graph-hook</a>:
+<pre>
+    (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> <a class=quiet href="extsnd.html#aftergraphhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_aftergraphhook_tip)">after-graph-hook</a> overlay-rms-env)
+</pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -2750,7 +2754,7 @@ concatenate-envelopes concatenates its arguments:
 </td></tr><tr><td></td><td>
 envelope-exp interpolates segments into envelope to approximate exponential curves.
 <pre>
-    :<em class=typing>(format #f "~{~,3F ~}" (envelope-exp '(0 0 1 1) 3.0 6))</em>
+    :<em class=typing>(<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~{~,3F ~}" (envelope-exp '(0 0 1 1) 3.0 6))</em>
     <em class=listener>"0.000 0.000 0.167 0.005 0.333 0.037 0.500 0.125 0.667 0.296 0.833 0.579 1.000 1.000 "</em>
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -2936,7 +2940,7 @@ reverse-envelope reverses an envelope.
 </td></tr><tr><td></td><td>
 rms-envelope returns an rms envelope of a file; it is based on rmsenv.ins in the CLM package.
 <pre>
-    :<em class=typing>(format #f "~{~,3F ~}" (rms-envelope "1a.snd"))</em>
+    :<em class=typing>(<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~{~,3F ~}" (rms-envelope "1a.snd"))</em>
     <em class=listener>"0.000 0.049 0.033 0.069 0.067 0.049 0.100 0.000 0.133 0.000 0.167 0.000 0.200 0.000 "</em>
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -3887,8 +3891,8 @@ Not sure why anyone would want such a thing...
 examp.scm also has (commented out) functions to display colored text
 in rxvt:
 <pre>
-    (display (format #f "~Athis is red!~Abut this is not" red-text normal-text))
-    (display (format #f "~A~Ahiho~Ahiho" yellow-bg red-fg normal-text))
+    (display (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~Athis is red!~Abut this is not" red-text normal-text))
+    (display (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~A~Ahiho~Ahiho" yellow-bg red-fg normal-text))
 </pre>
 It's possible to use the same escape sequences in a normal shell script, of course:
 <pre>
@@ -4517,7 +4521,7 @@ In fact, we could replace the built-in procedures <a href="extsnd.html#addsoundf
 
 (define* (sound-files-in-directory-1 :optional (dir "."))
   (sort (grep
-	 (format #f "\\.(~{~A~^|~})$" sound-file-extensions)
+	 (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "\\.(~{~A~^|~})$" sound-file-extensions)
 	 (directory-&gt;list dir))
 	string&lt;?))
 </pre></td></tr></table>
@@ -5285,7 +5289,7 @@ readings (they are scattered around with a bunch of other stuff), then write tho
 sound file (the sphygmometer readings are between 70 and 150), then open that file in Snd with all the sound-related
 clipping features turned off.  We also tell Snd to skip the data file in its start-up load process (since it
 is an uninterpretable text file) by incrementing script-arg.
-<p>
+</p>
 <img src="usync.png" alt="heart picture" hspace=40>
 
 <br>
@@ -5370,7 +5374,7 @@ we want to close all currently open sounds without invoking the peak-env stuff:
     :<em class=typing>(with-local-hook
        close-hook 
        (list (lambda (snd)</em>            ; close hook's local function just prints a message
-               <em class=typing>(snd-print (format #f "~%;closing ~S" (short-file-name snd))))) 
+               <em class=typing>(snd-print (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~%;closing ~S" (short-file-name snd))))) 
        (lambda ()</em>                     ; this is evaluated with the local close-hook
          <em class=typing>(for-each (lambda (snd) (close-sound snd)) (sounds))))</em>
     <em class=listener>;closing "oboe.snd"
@@ -6859,7 +6863,7 @@ determines whether these envelopes are being saved (its default is #t).  The pro
 
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
 (define (peak-env-info-file-name snd chn)	
-  (format #f "~A/~A-peaks-~D" save-peak-env-info-directory (<a class=quiet href="extsnd.html#shortfilename" onmouseout="UnTip()" onmouseover="Tip(extsnd_shortfilename_tip)">short-file-name</a> snd) chn))
+  (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~A/~A-peaks-~D" save-peak-env-info-directory (<a class=quiet href="extsnd.html#shortfilename" onmouseout="UnTip()" onmouseover="Tip(extsnd_shortfilename_tip)">short-file-name</a> snd) chn))
 </pre></td></tr></table>
 
 <p>determines the saved peak env file name; in the default
@@ -8001,11 +8005,21 @@ add-find-to-listener causes C-s and C-r in the listener to start a separate "Fin
 <a class=def name="addmarkpane">add-mark-pane</a> 
 </td></tr><tr><td></td><td>
 add-mark-pane adds a pane to each channel giving the current mark locations (sample values).
-These can be edited to move the mark, or deleted to delete the mark.
+These can be edited to move the mark, or deleted to delete the mark.  (If you add-mark-pane to a channel having marks,
+you need to make some change to them to force it to be displayed).
 Here's a picture (it also shows <a href="#showsmptelabel">show-smpte-label</a>, 
 <a href="#makecurrentwindowdisplay">make-current-window-display</a> (draw.scm), and <a href="#showdiskspace">show-disk-space</a>).
 <br>
-<img src="markpane.png" alt="mark pane" hspace=20 vspace=10>
+<img src="markpane.png" alt="mark pane" hspace=20 vspace=10 usemap="#markpanemap" border=0>
+<map name="markpanemap">
+  <area shape=rect coords="70,30,150,50" alt="SMPTE label" onmouseout="UnTip()" onmouseover="Tip('this is the SMPTE label showing the time of the left edge')">
+  <area shape=rect coords="240,33,245,120" alt="SMPTE label" onmouseout="UnTip()" onmouseover="Tip('this is mark at sample 8001: <code>(add-mark 8001)</code>')">
+  <area shape=rect coords="337,33,343,120" alt="SMPTE label" onmouseout="UnTip()" onmouseover="Tip('this is mark at sample 9400: <code>(add-mark 9400)</code>')">
+  <area shape=rect coords="539,33,545,120" alt="SMPTE label" onmouseout="UnTip()" onmouseover="Tip('this is mark at sample 12345: <code>(add-mark 12345)</code>')">
+  <area shape=rect coords="570,25,710,45" alt="SMPTE label" onmouseout="UnTip()" onmouseover="Tip('this is the graph produced by <code>(display-current-window)</code>')">
+  <area shape=rect coords="725,25,800,155" alt="SMPTE label" onmouseout="UnTip()" onmouseover="Tip('this is the mark pane from <code>(add-mark-pane)</code>')">
+  <area shape=rect coords="590,155,700,170" alt="SMPTE label" onmouseout="UnTip()" onmouseover="Tip('this is the amount of free disk space I have.<br>In the bad old days, disk space was a constant problem.')">
+</map>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -8124,9 +8138,15 @@ If the 'snd' argument is given, only that sound's panes are affected.
 <a class=def name="foreachchild">for-each-child</a> <code>w func</code><br>
 <em class=emdef>find-child</em> <code>w name</code>
 </td></tr><tr><td></td><td>
-for-each-child applies 'func' the widget 'w' and to each widget in the hierarchy of widgets below it.
+for-each-child applies 'func' to the widget 'w' and to each widget in the hierarchy of widgets below it.
 'func' takes one argument, the child widget.  for-each-child is used by find-child which searches
 for a widget named 'name' belonging to 'w'.
+<pre>
+    (for-each-child 
+      (list-ref (<a class=quiet href="extsnd.html#soundwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_soundwidgets_tip)">sound-widgets</a>) 2) ; control panel
+      (lambda (w) 
+        (<a class=quiet href="extsnd.html#sndprint" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndprint_tip)">snd-print</a> (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~%~A" (XtName w)))))
+</pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -9765,7 +9785,7 @@ To continue adding notes to an existing file, set 'continue-old-file':
 
 <pre>
     <em class=listener>&gt;</em><em class=typing>(with-sound (:notehook (lambda (name . args) 
-                              (snd-print (format #f "~%;~A: ~A" name (caddr args)))))
+                              (snd-print (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~%;~A: ~A" name (caddr args)))))
        (fm-violin 0 1 440 .1) 
        (fm-violin 1 1 660 .1))</em>
     <em class=listener>;fm-violin: 440
@@ -10189,7 +10209,7 @@ in CLM, add the desired methods as an association list with the name :methods:
 			    (lambda (g val) (set! (osc-phase g) val)))
 		      
 		      (list 'mus-describe 
-			    (lambda (g) (format #f "osc freq: ~A, phase: ~A" 
+			    (lambda (g) (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "osc freq: ~A, phase: ~A" 
 					  (mus-frequency g) 
 					  (mus-phase g))))))
   freq phase)
@@ -10420,7 +10440,7 @@ classes and methods in Scheme:
     obj))
 
 (define-method (write (obj fcmb) port)
-  (display (format #f "#&lt;fcomb: delay: ~A, filter: ~A, feedback: ~A&gt;"
+  (display (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "#&lt;fcomb: delay: ~A, filter: ~A, feedback: ~A&gt;"
 		   (fcomb-delay obj)
 		   (fcomb-filter obj)
 		   (fcomb-feedback obj))
