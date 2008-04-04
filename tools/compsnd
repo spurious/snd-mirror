@@ -39,6 +39,8 @@ echo ' '
 echo ' '
 ./snd --version
 ./snd -noinit --features "'clm 'snd-guile 'snd-motif 'sndlib"
+./snd tools/check-help.scm
+
 # echo '(let ((hxm (dlopen (string-append (getcwd) "/xm.so")))) (dlinit hxm "Init_libxm") (display XmARROWS_END) (exit))' > tmp.scm
 # ./snd tmp.scm
 # rm tmp.scm

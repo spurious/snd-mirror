@@ -8484,7 +8484,7 @@ There are approximately a bazillion ways to scale samples in Snd; here's a potpo
        (<a class=quiet href="sndclm.html#convolve" onmouseout="UnTip()" onmouseover="Tip(sndclm_convolve_tip)">convolve</a> cnv (lambda (dir) 
                        (<a class=quiet href="#readsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_readsample_tip)">read-sample</a> sf)))))))
 
-(<a class=quiet href="#vcttochannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_vcttochannel_tip)">vct-&gt;channel</a> (<a class=quiet href="sndscm.html#polydoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_poly_times_tip)">poly*</a> (<a class=quiet href="#channeltovct" onmouseout="UnTip()" onmouseover="Tip(extsnd_channeltovct_tip)">channel-&gt;vct</a> 0 (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>)) (<a class=quiet href="#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd+vct_tip)">vct</a> 2.0))) ; poly.scm (sound = polynomial coeffs)
+(<a class=quiet href="#vcttochannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_vcttochannel_tip)">vct-&gt;channel</a> (<a class=quiet href="sndscm.html#polydoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_poly_times_tip)">poly*</a> (<a class=quiet href="#channeltovct" onmouseout="UnTip()" onmouseover="Tip(extsnd_channeltovct_tip)">channel-&gt;vct</a> 0 (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>)) (<a class=quiet href="#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 2.0))) ; poly.scm (sound = polynomial coeffs)
 
 (let* ((len (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>))
        (fsize (expt 2 (ceiling (/ (log len) (log 2)))))

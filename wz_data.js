@@ -1186,7 +1186,7 @@ var sndscm_envelopeinterp_tip = "<code>(envelope-interp x env (base 1.0)</code>:
                                 " if 'base' is 1.0 (the default), the breakpoints of 'env' are connected by a straight line,<br>" +
                                 " and any other 'base' connects the breakpoints with an exponential curve.";
 
-var sndscm_enevlopelastx_tip = "<code>(envelope-last-x env)</code>: returns the last breakpoint's x axis value in 'env'";
+var sndscm_envelopelastx_tip = "<code>(envelope-last-x env)</code>: returns the last breakpoint's x axis value in 'env'";
 
 var sndscm_envexptchannel_tip = "<code>(env-expt-channel env exponent :optional (symmetric #t) beg dur snd chn edpos)</code>:<br>" +
                                 " applies 'env' to the given channel using 'exponent' for the exponential base.<br>" +
@@ -1273,7 +1273,7 @@ var sndscm_openplayoutput_tip = "<code>(open-play-output :optional chans srate f
                                 " and returns a list containing the audio port (-1 on failure),<br>" +
                                 " the opened output channels, and the actual DAC buffer size.";
 
-var sndscm_poy_times_tip = "<code>(poly* p1 p2)</code> multiplies p1 by p2, both polynomials.";
+var sndscm_poly_times_tip = "<code>(poly* p1 p2)</code> multiplies p1 by p2, both polynomials.";
 
 var sndscm_powerenv_tip = "<code>(power-env env)</code>: an envelope generator where each segment has its own base.";
 
