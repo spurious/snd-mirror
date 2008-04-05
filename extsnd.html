@@ -21,6 +21,19 @@
 </style>
 </head>
 
+<!-- other possible tooltips: file-exists? delete-file procedure-with-setter define* list-set! load-from-path 
+                                  delete-file system remove-hook! throw little-endian? copy-file
+                              ruby examples?
+			      enved-move-point 
+			      keyboard-no-action
+			      copy-context
+			      grfsnd.html: graph-lollipops blackman2-window
+			      sndclm.html: *reverb*
+			      sndscm.html: mus-next normalize-partials any-random
+			                   add-main-pane
+					   ws-interrupt?
+-->
+
 <body bgcolor=white>
 
 <script language=JavaScript type="text/javascript" src="wz_tooltip.js"></script>
@@ -1896,7 +1909,7 @@ hook function is used in <a href="sndscm.html#withmarkedsound">with-marked-sound
 	      (if (not (= (<a class=quiet href="#marksync" onmouseout="UnTip()" onmouseover="Tip(extsnd_marksync_tip)">mark-sync</a> n) 0))
 	        (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~%  sync: ~A" (<a class=quiet href="#marksync" onmouseout="UnTip()" onmouseover="Tip(extsnd_marksync_tip)">mark-sync</a> n))
 	        "")
-	      (let ((props (mark-properties n)))
+	      (let ((props (<a class=quiet href="sndscm.html#markproperties" onmouseout="UnTip()" onmouseover="Tip(sndscm_markproperties_tip)">mark-properties</a> n)))
 	        (if (and (list? props)
 		         (not (null? props)))
 	          (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~%  properties: '~A" props)
@@ -2067,11 +2080,11 @@ turning the wheel zooms the graph in or out:
     (if (and (= axis <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_time_graph_tip)">time-graph</a>)
 	     (or (= button 4) (= button 5))) ; mouse scroll wheel
 	(let ((midpoint (* 0.5 (apply + (<a class=quiet href="#xbounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_xbounds_tip)">x-bounds</a>))))
-	      (dur (/ (frames) (srate)))
+	      (dur (/ (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>) (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>)))
 	      (range (if (= button 4)
-			 (* -0.25 (apply - (x-bounds))) ; zoom in
-			 (abs (apply - (x-bounds))))))  ; zoom out
-	  (set! (x-bounds) (list (max 0.0 (- midpoint range))
+			 (* -0.25 (apply - (<a class=quiet href="#xbounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_xbounds_tip)">x-bounds</a>))) ; zoom in
+			 (abs (apply - (<a class=quiet href="#xbounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_xbounds_tip)">x-bounds</a>))))))  ; zoom out
+	  (set! (<a class=quiet href="#xbounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_xbounds_tip)">x-bounds</a>) (list (max 0.0 (- midpoint range))
 				 (min dur (+ midpoint range))))))
     #f))
 </pre></td></tr></table>
@@ -3247,7 +3260,7 @@ We can use vct-move! to maintain a sliding window on a sound:
 	     (samps (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> size)))
         (lambda (y)
          (<em class=red>vct-move!</em> samps 0 1)
-         (vct-set! samps (1- size) y)
+         (<a class=quiet href="#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> samps (1- size) y)
          ...)))
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -4903,7 +4916,7 @@ feedback:
 	  (set! (<em class=red>mix-name</em> id) (symbol-&gt;string freq)))
       (set! (<a class=quiet href="#mixsync" onmouseout="UnTip()" onmouseover="Tip(extsnd_mixsync_tip)">mix-sync</a> id) violin-sync)
       (set! (<a class=quiet href="#mixcolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_mixcolor_tip)">mix-color</a> id) violin-color)
-      (set! (<a class=quiet href="#mixtagy" onmouseout="UnTip()" onmouseover="Tip(extsnd_mixtagy_tip)">mix-tag-y</a> id) (frequency-&gt;tag-y (-&gt;frequency freq #t) (-&gt;frequency 'c2) 3))))
+      (set! (<a class=quiet href="#mixtagy" onmouseout="UnTip()" onmouseover="Tip(extsnd_mixtagy_tip)">mix-tag-y</a> id) (frequency-&gt;tag-y (<a class=quiet href="sndscm.html#tofrequency" onmouseout="UnTip()" onmouseover="Tip(sndscm_tofrequency_tip)">-&gt;frequency</a> freq #t) (<a class=quiet href="sndscm.html#tofrequency" onmouseout="UnTip()" onmouseover="Tip(sndscm_tofrequency_tip)">-&gt;frequency</a> 'c2) 3))))
   
   (define (cello beg dur freq amp)
     (let ((id (<a class=quiet href="#mix" onmouseout="UnTip()" onmouseover="Tip(extsnd_mix_tip)">mix</a> (<a class=quiet href="sndscm.html#withtempsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_withtempsound_tip)">with-temp-sound</a> ()
@@ -4914,7 +4927,7 @@ feedback:
 	  (set! (<em class=red>mix-name</em> id) (symbol-&gt;string freq)))
       (set! (<a class=quiet href="#mixsync" onmouseout="UnTip()" onmouseover="Tip(extsnd_mixsync_tip)">mix-sync</a> id) cello-sync)
       (set! (<a class=quiet href="#mixcolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_mixcolor_tip)">mix-color</a> id) cello-color)
-      (set! (<a class=quiet href="#mixtagy" onmouseout="UnTip()" onmouseover="Tip(extsnd_mixtagy_tip)">mix-tag-y</a> id) (frequency-&gt;tag-y (-&gt;frequency freq #t) (-&gt;frequency 'c2) 3))))
+      (set! (<a class=quiet href="#mixtagy" onmouseout="UnTip()" onmouseover="Tip(extsnd_mixtagy_tip)">mix-tag-y</a> id) (frequency-&gt;tag-y (<a class=quiet href="sndscm.html#tofrequency" onmouseout="UnTip()" onmouseover="Tip(sndscm_tofrequency_tip)">-&gt;frequency</a> freq #t) (<a class=quiet href="sndscm.html#tofrequency" onmouseout="UnTip()" onmouseover="Tip(sndscm_tofrequency_tip)">-&gt;frequency</a> 'c2) 3))))
   
   (<a class=quiet href="#asoneedit" onmouseout="UnTip()" onmouseover="Tip(extsnd_asoneedit_tip)">as-one-edit</a>
    (lambda ()
@@ -4949,11 +4962,11 @@ to use multiple output files, collecting related notes in one file, then mixing 
 
   (define (violin beg dur freq amp)
     (<a class=quiet href="sndscm.html#withtempsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_withtempsound_tip)">with-temp-sound</a> (:continue-old-file #t :output "violins.snd") 
-      (<a class=quiet href="sndscm.html#fmviolin" onmouseout="UnTip()" onmouseover="Tip(sndscm_fmviolin_tip)">fm-violin</a> beg dur (-&gt;frequency freq #t) amp)))
+      (<a class=quiet href="sndscm.html#fmviolin" onmouseout="UnTip()" onmouseover="Tip(sndscm_fmviolin_tip)">fm-violin</a> beg dur (<a class=quiet href="sndscm.html#tofrequency" onmouseout="UnTip()" onmouseover="Tip(sndscm_tofrequency_tip)">-&gt;frequency</a> freq #t) amp)))
 
   (define (cello beg dur freq amp)
     (<a class=quiet href="sndscm.html#withtempsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_withtempsound_tip)">with-temp-sound</a> (:continue-old-file #t :output "cellos.snd") 
-      (<a class=quiet href="sndscm.html#fmviolin" onmouseout="UnTip()" onmouseover="Tip(sndscm_fmviolin_tip)">fm-violin</a> beg dur (-&gt;frequency freq #t) amp :fm-index 1.5)))
+      (<a class=quiet href="sndscm.html#fmviolin" onmouseout="UnTip()" onmouseover="Tip(sndscm_fmviolin_tip)">fm-violin</a> beg dur (<a class=quiet href="sndscm.html#tofrequency" onmouseout="UnTip()" onmouseover="Tip(sndscm_tofrequency_tip)">-&gt;frequency</a> freq #t) amp :fm-index 1.5)))
 
   (violin 0 1 'e4 .2)  (violin 1 1.5 'g4 .2)   (violin 2.5 .5 'g3 .2)
   (cello  0 1 'c3 .2)  (cello  1 1.5 'e3 .2)  (cello  2.5 .5 'g2 .2)
@@ -5425,7 +5438,7 @@ delete-selection deletes the selection, equivalent to the Edit:Delete selection 
 
 
 <!-- env-selection -->
-<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="envsoundselection">env-selection</a> (envelope :optional env-base)</code>
+<tr><td colspan=2 bgcolor="#f6f8ff"><code><a class=def name="envselection">env-selection</a> (envelope :optional env-base)</code>
 </td></tr><tr><td></td><td>
 env-selection applies 'envelope' to the selection. (as an amplitude envelope).
 'envelope' can also be a CLM env generator; in this case, 'env-base' is ignored.
@@ -5835,7 +5848,7 @@ send channel 1 data to channel 1 of the DAC, and so on).
   (let ((vals (<a class=quiet href="#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> 3))
 	(end (<a class=quiet href="#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> snd)))
     (<a class=quiet href="#musaudiomixerread" onmouseout="UnTip()" onmouseover="Tip(extsnd_musaudiomixerread_tip)">mus-audio-mixer-read</a> mus-audio-default mus-audio-channel 3 vals)
-    (let ((chans (max (inexact-&lt;exact (<a class=quiet href="#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> vals 0)) 2))) ; assume stereo is out there
+    (let ((chans (max (inexact-&gt;exact (<a class=quiet href="#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> vals 0)) 2))) ; assume stereo is out there
       (do ((chan 0 (1+ chan)))                               ; get a player for each output channel
 	  ((= chan chans))
 	(let ((player (<em class=red>make-player</em> snd 0)))
@@ -5853,7 +5866,7 @@ See play-with-envs in enved.scm, play-syncd-marks in marks.scm, or start-dac in 
 </td></tr><tr><td><br></td><td>
 axis-info returns a list describing the specified axis:
 <pre>
-    (list <a class=quiet href="#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a> right-sample 
+    (list left-sample right-sample 
           x0 y0 x1 y1 x-min y-min x-max y-max 
           x0-position y0-position x1-position y1-position y-offset 
           xlabel ylabel new-peaks)
@@ -5898,7 +5911,7 @@ then restore that state upon "Page Up":
  				 ((= i (<a class=quiet href="#channels" onmouseout="UnTip()" onmouseover="Tip(extsnd_channels_tip)">chans</a> snd)) data)
 			       (set! data (append data (list (cons i (<em class=red>axis-info</em> snd i))))))))
 		         (<a class=quiet href="#sounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounds_tip)">sounds</a>))))
-	      (bind-key "Page_Up" 0
+	      (<a class=quiet href="#bindkey" onmouseout="UnTip()" onmouseover="Tip(extsnd_bindkey_tip)">bind-key</a> "Page_Up" 0
 			(lambda ()
 			  (if last-page-state
 			      (for-each
@@ -7505,8 +7518,8 @@ dac-buffer boundaries (normally around 256 samples).
     (play 0 #f #f #f (round (* 3.0 (<a class=quiet href="#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>))))  ; play from start for 3.0 secs
     (play 0 #f #f #f #f 2)                     ; play the version at edit history position 2
     (play 0 0 2 #f #f #f #f 0)                     ; play chan 2, but send it to DAC chan 0
-    (play (mark-sample 0) #f #f #f (mark-sample 1)); play between marks 0 and 1
-    (play (selection-position) #f #f (+ (selection-position) (selection-frames))) ; play selection
+    (play (<a class=quiet href="#marksample" onmouseout="UnTip()" onmouseover="Tip(extsnd_marksample_tip)">mark-sample</a> 0) #f #f #f (<a class=quiet href="#marksample" onmouseout="UnTip()" onmouseover="Tip(extsnd_marksample_tip)">mark-sample</a> 1)); play between marks 0 and 1
+    (play (<a class=quiet href="#selectionposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionposition_tip)">selection-position</a>) #f #f (+ (<a class=quiet href="#selectionposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionposition_tip)">selection-position</a>) (<a class=quiet href="#selectionframes" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionframes_tip)">selection-frames</a>))) ; play selection
 </pre>
 'samp' can
 also be a filename (a string).  In this case, 'snd' can be the start 
@@ -11379,7 +11392,7 @@ If the xm module is loaded, we could add our own info via:
 
 <table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
   (let* ((dialog (<em class=red>open-file-dialog</em> #f))
-	 (rc (find-child dialog "info-rc2")) ; holds the info labels if a sound file is selected
+	 (rc (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(sndscm_findchild_tip)">find-child</a> dialog "info-rc2")) ; holds the info labels if a sound file is selected
 	 (label (XtCreateManagedWidget "file-preview-info" xmLabelWidgetClass rc 
                   (list XmNbackground (<a class=quiet href="#highlightcolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_highlightcolor_tip)">highlight-color</a>)))))
     (XtAddCallback (XmFileSelectionBoxGetChild dialog XmDIALOG_LIST)
@@ -12601,7 +12614,7 @@ In the case of 'no-active-selection, we set up our own handler for that as follo
 <pre>
 &gt;<em class=typing>(catch 'no-active-selection 
        (lambda () 
-         (+ 1 (selection-position))) 
+         (+ 1 (<a class=quiet href="#selectionposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionposition_tip)">selection-position</a>))) 
        (lambda (tag val) 0))</em>
 <em class=listener>0</em>
 </pre>

@@ -1844,8 +1844,8 @@ to switch to a different tick scale choice.  undisplay-bark-fft turns this
 graph off. Here we've used rgb.scm for some color names:
 <pre>
     (display-bark-fft #f sea-green orange alice-blue)
-    (set! (selected-graph-color) gray30)
-    (set! (selected-data-color) light-green)
+    (set! (<a class=quiet href="extsnd.html#selectedgraphcolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedgraphcolor_tip)">selected-graph-color</a>) gray30)
+    (set! (<a class=quiet href="extsnd.html#selecteddatacolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_selecteddatacolor_tip)">selected-data-color</a>) light-green)
 </pre>
 
 <img src="bark.png" alt="bark display" vspace=10>
@@ -2054,7 +2054,7 @@ Say we previously filtered a sound via
 and our mouse is broken so we can't use the Undo menu, and we've forgotten that
 we could type <code>(undo)</code>.  Nothing daunted, we use:
 <pre>
-    (<a class=quiet href="extsnd.html#filterchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_filterchannel_tip)">filter-channel</a> (invert-filter (vct .5 .25 .125)))
+    (<a class=quiet href="extsnd.html#filterchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_filterchannel_tip)">filter-channel</a> (invert-filter (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> .5 .25 .125)))
 </pre>
 There are a million gotchas here.  The primary one is that the inverse filter
 can "explode" &mdash; the coefficients can grow without bound.  For example, any
@@ -2116,7 +2116,7 @@ perhaps it could be useful in noise reduction.
 <pre>
   (define (unnoise order)
     (let ((flt (make-savitzky-golay-filter order 2)))
-      (map-channel (lambda (y) (savitzky-golay-filter flt y)))))
+      (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (lambda (y) (savitzky-golay-filter flt y)))))
 </pre>
 
 This filter uses <a href="#mixer-solve">mixer-solve</a> from mixer.scm, so you need
@@ -2153,7 +2153,7 @@ This version is taken from Monson Hayes "Statistical DSP and Modeling";
 it is a slight specialization of the form mentioned by J O Smith and others.
 The 'acoeffs' apply to the linear terms, and the 'bcoeffs' to the quadratic.
 <pre>
-   (let ((flt (make-volterra-filter (vct .5 .1) (vct .3 .2 .1))))
+   (let ((flt (make-volterra-filter (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> .5 .1) (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> .3 .2 .1))))
      (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (lambda (x) (volterra-filter flt x))))
 </pre>
 </td></tr><tr><td colspan=2 height=32></td></tr>
@@ -2261,7 +2261,7 @@ given the index 'a', and harmonic coefficients 'coeffs' (the 0th element is DC a
 	    ((= i 88200))
           (<a class=quiet href="sndclm.html#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* .5 (<a class=quiet href="sndclm.html#polyshape" onmouseout="UnTip()" onmouseover="Tip(sndclm_polyshape_tip)">polyshape</a> gen 0.25))))))
 
-    (<em class=red>cheby-hka</em> 1 0.25 (vct 0 .5 .25 .125 .125)) ; returns 1st partial (fundamental) amplitude
+    (<em class=red>cheby-hka</em> 1 0.25 (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 0 .5 .25 .125 .125)) ; returns 1st partial (fundamental) amplitude
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -2462,7 +2462,7 @@ lpc-predict takes the output of lpc-coeffs ('coeffs') and the length thereof ('m
 'n' data points 'data', and produces 'nf' new data points (in a vct) as its prediction.
 If 'clipped' is #t, the new data is assumed to be outside -1.0 to 1.0.
 <pre>
-    :<em class=typing>(lpc-predict (vct 0 1 2 3 4 5 6 7) 8 (lpc-coeffs (vct 0 1 2 3 4 5 6 7) 8 4) 4 2)</em>
+    :<em class=typing>(lpc-predict (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 0 1 2 3 4 5 6 7) 8 (lpc-coeffs (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 0 1 2 3 4 5 6 7) 8 4) 4 2)</em>
     <em class=listener>#&lt;vct[len=2]: 7.906 8.557&gt;</em>
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -2660,17 +2660,17 @@ the time domain display (to give our graph all the window)
 then
 <pre>
     (let* ((size 128)
-	   (x0 (make-vct size))	   
-	   (x1 (make-vct size))	   
-	   (x2 (make-vct size)))
+	   (x0 (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> size))	   
+	   (x1 (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> size))	   
+	   (x2 (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> size)))
       (do ((i 0 (1+ i)))
 	  ((= i 12))
 	(let ((val (sin (/ (* 2 pi i) 12.0))))
-	  (vct-set! x1 (+ i (- (/ size 4) 6)) val)))
+	  (<a class=quiet href="extsnd.html#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> x1 (+ i (- (/ size 4) 6)) val)))
       (do ((i 0 (1+ i)))
-	  ((or (c-g?) (= i 1024)))
+	  ((or (<a class=quiet href="extsnd.html#cgp" onmouseout="UnTip()" onmouseover="Tip(extsnd_cgp_tip)">c-g?</a>) (= i 1024)))
 	(<em class=red>compute-uniform-circular-string</em> size x0 x1 x2 1.0 0.1 0.0)
-	(graph x0 "string" 0 1.0 -10.0 10.0)))
+	(<a class=quiet href="extsnd.html#graph" onmouseout="UnTip()" onmouseover="Tip(extsnd_graph_tip)">graph</a> x0 "string" 0 1.0 -10.0 10.0)))
 </pre>
 There's also a dialog to experiment with this:
 <a href="#displayscannedsynthesis">display-scanned-synthesis</a> in snd-motif.scm.
@@ -3189,13 +3189,13 @@ This a sort of generalization of the preceding functions.  It gets the spectrum 
 applies the function 'func' to it, then inverse ffts.  'func' should take one argument, the
 current spectrum value.
 <pre>
-    (let ((op (make-one-zero .5 .5))) (filter-fft op))
-    (let ((op (make-one-pole .05 .95))) (filter-fft op))
+    (let ((op (<a class=quiet href="sndclm.html#make-one-zero" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_one_zero_tip)">make-one-zero</a> .5 .5))) (filter-fft op))
+    (let ((op (<a class=quiet href="sndclm.html#make-one-pole" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_one_pole_tip)">make-one-pole</a> .05 .95))) (filter-fft op))
     (filter-fft (lambda (y) (if (&lt; y .1) 0.0 y))) ; like fft-squelch
-    (let ((rd (make-sample-reader 0 0 0 1 0))) 
-      (scale-by 0) 
+    (let ((rd (<a class=quiet href="extsnd.html#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a> 0 0 0 1 0))) 
+      (<a class=quiet href="extsnd.html#scaleby" onmouseout="UnTip()" onmouseover="Tip(extsnd_scaleby_tip)">scale-by</a> 0) 
       (filter-fft (lambda (y) (rd))))             ; treat sound as spectrum
-    (filter-fft contrast-enhancement)
+    (filter-fft <a class=quiet href="sndclm.html#contrast-enhancement" onmouseout="UnTip()" onmouseover="Tip(sndclm_contrast_enhancement_tip)">contrast-enhancement</a>)
     (filter-fft (lambda (y) (* y y y)))           ; extreme low pass
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -3356,7 +3356,7 @@ formant frequencies (thereby setting the width of the warbling).
 </td></tr><tr><td></td><td>
 This is a virtual edit version of <a href="extsnd.html#filterchannel">filter-channel</a>.
 <pre>
-    (virtual-filter-channel (vct 1.0 .5 .25) 0 10 0 0 1)
+    (virtual-filter-channel (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 1.0 .5 .25) 0 10 0 0 1)
 </pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -4259,7 +4259,7 @@ This is just a trivial wrapper for <a href="extsnd.html#channeltovct">channel-&g
 These provide Emacs-like C-x b support where only one sound is visible at a time.
 To activate it:
 <pre>
-    (bind-key #\b 0 switch-to-buf #t)
+    (<a class=quiet href="extsnd.html#bindkey" onmouseout="UnTip()" onmouseover="Tip(extsnd_bindkey_tip)">bind-key</a> #\b 0 switch-to-buf #t)
     (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> <a class=quiet href="extsnd.html#closehook" onmouseout="UnTip()" onmouseover="Tip(extsnd_closehook_tip)">close-hook</a> xb-close)
     (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> <a class=quiet href="extsnd.html#afteropenhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_afteropenhook_tip)">after-open-hook</a> xb-open)	    
 </pre>
@@ -5878,11 +5878,20 @@ If a such a mark doesn't exist, it returns <code>'no-such-mark</code>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
+<!-- mark-properties -->
+<tr><td colspan=2 bgcolor="#f6f8ff">
+<a class=def name="markproperties">mark-properties</a> <code>id</code>
+</td></tr><tr><td></td><td>
+mark-properties accesses the property list associated with the mark 'id'.
+This list is created, if necessary, by mark-property.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
 <!-- mark-property -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
 <a class=def name="markproperty">mark-property</a> <code>key id</code>
 </td></tr><tr><td></td><td>
-mark-property associates a property list with a mark.
+mark-property accesses the property 'key' in the property list associated with the mark 'id'.
 <pre>
     :<em class=typing>(set! (mark-property :weight 3) 2.5)</em>   ; 3 is the mark id
     <em class=listener>2.5</em>
@@ -7162,7 +7171,7 @@ Apparently some commercial synths (or software?) provide this.
 
 <p>This file contains various functions related to the CLM polynomial function.  A polynomial here
 is a vct or a vector (for complex coefficients) holding the polynomial coefficients from lowest
-to highest (i.e. the constant is vct[0], x+2 is (vct 2 1), etc).
+to highest (i.e. the constant is vct[0], x+2 is (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 2 1), etc).
 </p>
 
 <!-- main-index |polydoc:polynomial operations -->
@@ -9118,7 +9127,7 @@ In CLM, the fm-violin became (fm.html, 1989):
 
 <table border=0 hspace=20><tr><td bgcolor="#fafafa"><pre><small>
 (<a class=quiet href="#definstrument" onmouseout="UnTip()" onmouseover="Tip(sndscm_definstrument_tip)">definstrument</a> violin (beg end frequency amplitude fm-index)
-  (let* ((frq-scl (hz-&gt;radians frequency))
+  (let* ((frq-scl (<a class=quiet href="sndclm.html#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> frequency))
          (maxdev (* frq-scl fm-index))
          (index1 (* maxdev (/ 5.0 (log frequency))))
          (index2 (* maxdev 3.0 (/ (- 8.5 (log frequency)) (+ 3.0 (/ frequency 1000)))))
@@ -9819,7 +9828,7 @@ begin time) in the Snd window title bar, and tries to use the xm module if it is
 <p>The "output" argument can be a vct or a sound-data object, as well as a filename:
 </p>
 <pre>
-    (with-sound (:output (make-vct 44100)) (fm-violin 0 1 440 .1))
+    (with-sound (:output (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> 44100)) (fm-violin 0 1 440 .1))
 </pre>
 
 <p>See <a href="#fadedoc">fade.scm</a>, snd-test.scm,
@@ -9855,7 +9864,7 @@ So, an instrument that wants to cooperate fully with with-sound and Common Music
   (let* ((os (make-oscil frequency)))
     (run (lambda ()
       (do ((i 0 (1+ i))) ((= i dur))
-	(outa (+ i beg) (* amplitude (oscil os))))))))
+	(<a class=quiet href="sndclm.html#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> (+ i beg) (* amplitude (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> os))))))))
 
 (<a class=quiet href="#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () 
   (simp 0 10000) 
@@ -10706,7 +10715,7 @@ time for perfection...):
 	 (clip-max-len 0)
 	 (in-clip #f)
 	 (samp 0))
-    (scan-channel
+    (<a class=quiet href="extsnd.html#scanchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_scanchannel_tip)">scan-channel</a>
      (lambda (y)
        (if (or (&gt; y .9999) (&lt; y -.9999))
 	   (if in-clip
@@ -10804,7 +10813,7 @@ end points.  (This is also "just-good-enough" software).
   ;; turn off graphics and fix all the clipped sections
   (set! (<a class=quiet href="extsnd.html#squelchupdate" onmouseout="UnTip()" onmouseover="Tip(extsnd_squelchupdate_tip)">squelch-update</a>) #t)
   (do ((i 0 (1+ i)))
-      ((or (= i n) (c-g?))) 
+      ((or (= i n) (<a class=quiet href="extsnd.html#cgp" onmouseout="UnTip()" onmouseover="Tip(extsnd_cgp_tip)">c-g?</a>))) 
       ;; "clips" here is a list form of the earlier vector of clip locations
     (fix-clip (list-ref clips (* i 2)) 
 	      (list-ref clips (1+ (* i 2)))))
@@ -10901,9 +10910,9 @@ changed it to play a list of sine tones generated on the fly (the changes are in
 	      (<em class=red>amps (map cadr freqs-and-amps)</em>)
 	      (data (<a class=quiet href="extsnd.html#makesounddata" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesounddata_tip)">make-sound-data</a> outchans size)))  
 	      ;; the data buffer passed to the function (func above), then to mus-audio-write
-	  (set! (dac-size) outbytes)
+	  (set! (<a class=quiet href="extsnd.html#dacsize" onmouseout="UnTip()" onmouseover="Tip(extsnd_dacsize_tip)">dac-size)</a> outbytes)
 	  (do ((beg 0 (+ beg size)))
-	      ((or (c-g?)                   ; C-g to stop in mid-stream
+	      ((or (<a class=quiet href="extsnd.html#cgp" onmouseout="UnTip()" onmouseover="Tip(extsnd_cgp_tip)">c-g?</a>)                   ; C-g to stop in mid-stream
 		   (&lt; beg len)))
 	    (do ((i 0 (1+ i)))
 		((= i size))
@@ -10983,7 +10992,7 @@ individual characteristics of each voice were.
 </p>
 <p>
 The next step was to take out noisy sections between snippets, mostly
-using <code>(<a class=quiet href="extsnd.html#envsoundselection" onmouseout="UnTip()" onmouseover="Tip(extsnd_envsoundselection_tip)">env-selection</a> '(0 1 1 0 10 0 11 1))</code>
+using <code>(<a class=quiet href="extsnd.html#envselection" onmouseout="UnTip()" onmouseover="Tip(extsnd_envselection_tip)">env-selection</a> '(0 1 1 0 10 0 11 1))</code>
 and equalizing each snippet, more or less, with scale-selection-by.
 There were a few "you-are-being-recorded" beeps which I deleted (via the Edit
 menu delete selection option).  

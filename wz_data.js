@@ -207,8 +207,8 @@ var extsnd_envsound_tip = "<code>(env-sound env :optional (start-samp 0) (samps 
                           " starting at start-samp, going either to the end of the sound or for samps samples,<br>" +
                           " with segments interpolating according to env-base (1 = linear).";
 
-var extsnd_envsoundselection_tip = "<code>(env-selection env :optional (env-base 1.0))</code>:<br>" +
-                                   " apply envelope to the selection using env-base to determine how breakpoints are connected";
+var extsnd_envselection_tip = "<code>(env-selection env :optional (env-base 1.0))</code>:<br>" +
+                              " apply envelope to the selection using env-base to determine how breakpoints are connected";
 
 var extsnd_eregions_tip = "<code>(regions)</code>: current active regions (a list of region ids)";
 
@@ -956,6 +956,9 @@ var sndclm_make_comb_tip = "<code>(make-comb :scaler :size :initial-contents (:i
                            " If the comb length will be changing at run-time, max-size sets its maximum length.<br>" +
                            " initial-contents can be either a list or a vct.";
 
+var sndclm_contrast_enhancement_tip = "<code>(contrast-enhancement input :optional (fm-index 1.0))</code><br>" +
+                           " phase-modulates its input.";
+
 var sndclm_make_convolve_tip = "<code>(make-convolve :input :filter :fft-size)</code>: <br>" +
                                " return a new convolution generator which convolves its input with the impulse response 'filter'.";
 
@@ -1196,6 +1199,9 @@ var sndscm_envexptchannel_tip = "<code>(env-expt-channel env exponent :optional 
 var sndscm_exponentiallyweightedmovingaverage_tip = "exponentially-weighted-moving-average applies exponential weights<br>" +
                                                     " to a moving average (it is actually just a one-pole filter.";
 
+var sndscm_findchild_tip = "<code>(find-child widget name)</code> searches for a widget named 'name',<br>" +
+                           "starting from 'widget' and moving through all its children.";
+
 var sndscm_fmviolin_tip = "The fm-violin instrument uses FM to produce a string-like sound;<br>" +
                           " It has many parameters, the principal ones being <code>startime dur frequency amplitude</code>.<br>" +
                           " The code is in v.scm.";
@@ -1238,6 +1244,8 @@ var sndscm_makeselection_tip = "<code>(make-selection beg end snd chn)</code>: m
                                " It selects 'dur' samples starting at 'beg' in the given channel.";
 
 var sndscm_makespencerfilter_tip = "<code>(make-spencer-filter)</code> returns an FIR filter with the Spencer (smoothing) coefficients.";
+
+var sndscm_markproperties_tip = "<code>(mark-properties id)</code> accesses the property list associated with the mark 'id'";
 
 var sndscm_matchsoundfiles_tip = "<code>(match-sound-files func :optional dir)</code>: apply 'func' to each sound file in 'dir'<br>" +
                                  " and return a list of files for which func does not return #f.";
