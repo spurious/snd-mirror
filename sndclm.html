@@ -1821,12 +1821,10 @@ we can only push the order up to around 46.
 speed (the polynomial computation is much faster than the equivalent sum of oscils)
 and memory (waveshape and table-lookup use a table that has to be loaded),
 the main reason to use polyshape is accuracy.  polyshape
-produces output that is almost as clean as the equivalent sum of oscils, whereas table-lookup 
+produces output that is cleaner than the equivalent sum of oscils, whereas table-lookup 
 and waveshape, both of which interpolate into a sampled version of the desired function, are noisy.
 To make the difference almost appalling, here are spectra comparing a sum of oscils, polyshape,
-waveshape, and table-lookup.  The table size is 512, but that almost doesn't matter; you'd see a
-similar result with a huge table.  The FFT size is 262144, dolph-chebyshev window, and the y-axis
-is in dB, going down to -200 dB(!):
+waveshape, and table-lookup. 
 </p>
 
 <img src="4grfs.png" alt="compare ffts" hspace=40>
@@ -1855,7 +1853,29 @@ is in dB, going down to -200 dB(!):
 (set! (x-axis-label 0 3 1) "table-lookup: frequency")
 -->
 
-<p>Perhaps a better question is, why waveshape?  Here history intrudes.  We couldn't handle the
+<table border=1 hspace=200 vspace=10 cellpadding=6><tr><td>
+<p><small>
+The table size is 512, but that almost doesn't matter; you'd have to use a table size of at least 8192
+to approach the oscil and polyshape cases.  The FFT size is 1048576, with no data window ("rectangular"), and the y-axis
+is in dB, going down to -120 dB.  The choice of fft window
+can make a big difference; using no window, but a huge fft seems like the least confusing
+way to present this result.
+</small></p>
+<p><small>
+Notice the lower peaks in the table-lookup case.  By chance, 100 * 512 = 800 * 64 = 1600 * 32, so
+all our components have their first interpolation noise peak centered around 7100 Hz (51200 mod 22050).
+Since its effective table size is only 32 samples, the 1600 Hz component creates big sidebands at 5500 Hz
+and 8700 Hz.  The 800 Hz component makes smaller peaks at
+6300 Hz and 7900 Hz (its effective table size is 64 points), and the 100 Hz
+cases are at 7000 Hz and 7200 Hz.  The highest peaks are down only 60 dB.  Raise the sampling
+rate to 200000 to make this effect (amplitude modulation of the stored signal and the linear interpolating signal)
+more obvious.
+See <a href="#table-lookup">table-lookup</a> for more discussion of interpolation noise.
+</small></p>
+</td></tr></table>
+
+<p>
+Perhaps a better question is, why waveshape?  Here history intrudes.  We couldn't handle the
 polynomial on the Samson box, so we used the table-lookup version.  I've tried to maintain
 reasonable backwards compatibility with old instruments, but someday I think I'll 
 remove the waveshape generator.
@@ -5099,8 +5119,8 @@ readin and <a href="#env">env</a>:
 	    ((= i nd))
           (let ((outval (* (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> ampf) (<em class=red>readin</em> rdA))))
   	    (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i outval)
-	    (if *reverb* 
-              (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* outval rev-amount) *reverb*))))))))
+	    (if <a class=quiet onmouseout="UnTip()" onmouseover="Tip(sndclm_reverb_tip)">*reverb*</a> 
+              (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* outval rev-amount) <a class=quiet onmouseout="UnTip()" onmouseover="Tip(sndclm_reverb_tip)">*reverb*</a>))))))))
 
 (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () (env-sound "oboe.snd" 0 1.0 '(0 0 1 1 2 1 3 0)))
 </pre>
@@ -5313,9 +5333,9 @@ To have full output to both channels,</p>
 	        (distval (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> dist-env)))
             (set! dist-scaler (/ 1.0 distval))
             (set! (<em class=red>locsig-ref</em> loc 0) (* (- 1.0 degval) dist-scaler))
-            (if (&gt; (<a class=quiet href="#mus-channels" onmouseout="UnTip()" onmouseover="Tip(sndclm_mus_channels_tip)">mus-channels</a> *output*) 1)
+            (if (&gt; (<a class=quiet href="#mus-channels" onmouseout="UnTip()" onmouseover="Tip(sndclm_mus_channels_tip)">mus-channels</a> <a class=quiet onmouseout="UnTip()" onmouseover="Tip(sndclm_output_tip)">*output*</a>) 1)
                 (set! (<em class=red>locsig-ref</em> loc 1) (* degval dist-scaler)))
-            (if *reverb* 
+            (if <a class=quiet onmouseout="UnTip()" onmouseover="Tip(sndclm_reverb_tip)">*reverb*</a> 
                 (set! (<em class=red>locsig-reverb-ref</em> loc 0) (* reverb-amount (sqrt dist-scaler))))
             (<em class=red>locsig</em> loc i rdval)))))))
 

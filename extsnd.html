@@ -22,15 +22,10 @@
 </head>
 
 <!-- other possible tooltips: file-exists? delete-file procedure-with-setter define* list-set! load-from-path 
-                                  delete-file system remove-hook! throw little-endian? copy-file
+                                  delete-file system remove-hook! throw copy-file
                               ruby examples?
-			      keyboard-no-action
-			      copy-context
-			      grfsnd.html: graph-lollipops blackman2-window
-			      sndclm.html: *reverb*
-			      sndscm.html: mus-next normalize-partials
+			      sndscm.html: normalize-partials
 			                   add-main-pane
-					   ws-interrupt?
 -->
 
 <body bgcolor=white>
@@ -897,7 +892,7 @@ The X/Motif cursors are declared in /usr/include/X11/cursorfont.h or some such f
 gtk versions are in gdkcursor.h.  Some useful choices are:
 
 <table border=0 cellpadding=6 vspace=10><tr><td>
-<table border=0 cellspacing=4>
+<table border=0 cellspacing=4 cellpadding=4>
 <tr><th bgcolor="beige"><small>Motif</small></th><th bgcolor="beige"><small>Gtk+</small></th><th bgcolor="beige"><small>value</small></th></tr>
 <tr><td><small>XC_arrow</small></td><td><small>GDK_ARROW</small></td><td><small>2</small></td></tr>
 <tr><td><small>XC_center_ptr</small></td><td><small>GDK_CENTER_PTR</small></td><td><small>22</small></td></tr>
@@ -7396,7 +7391,7 @@ giving the correct values in the call to open-raw-sound.
   (lambda (mpgfile rawfile chans)
     "(<a class=quiet href="sndscm.html#mpg" onmouseout="UnTip()" onmouseover="Tip(sndscm_mpg_tip)">mpg</a> file tmpname chans) converts file from MPEG-3 to raw 16-bit samples using mpg123"
     (system (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "mpg123 -s ~A &gt; ~A" mpgfile rawfile))
-    (<em class=red>open-raw-sound</em> rawfile 1 44100 (if (little-endian?) <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_muslshort_tip)">mus-lshort</a> <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_musbshort_tip)">mus-bshort</a>))))
+    (<em class=red>open-raw-sound</em> rawfile 1 44100 (if (<a class=quiet onmouseout="UnTip()" onmouseover="Tip('little-endian? returns #t if the host uses that byte order')">little-endian?</a>) <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_muslshort_tip)">mus-lshort</a> <a class=quiet href="#dataformat" onmouseout="UnTip()" onmouseover="Tip(extsnd_musbshort_tip)">mus-bshort</a>))))
 </pre></td></tr></table>
 
 There's a more elaborate version of this function in examp.scm.  See also <a href="#openrawsoundhook">open-raw-sound-hook</a>.
@@ -7554,10 +7549,10 @@ the "P" key to play the previous version of the current sound:
   (<em class=red>play</em> (<a class=quiet href="#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) #f #f #f #f (if current #f (1- (<a class=quiet href="#editposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_editposition_tip)">edit-position</a>)))))
 
 (<a class=quiet href="#bindkey" onmouseout="UnTip()" onmouseover="Tip(extsnd_bindkey_tip)">bind-key</a> (char-&gt;integer #\p) 0 
-  (lambda () "play from cursor" (play-from-cursor #t) keyboard-no-action))
+  (lambda () "play from cursor" (play-from-cursor #t) <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_keyboard_no_action_tip)">keyboard-no-action</a>))
 
 (<a class=quiet href="#bindkey" onmouseout="UnTip()" onmouseover="Tip(extsnd_bindkey_tip)">bind-key</a> (char-&gt;integer #\P) 0 
-  (lambda () "play previous version from cursor" (play-from-cursor #f) keyboard-no-action))
+  (lambda () "play previous version from cursor" (play-from-cursor #f) <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_keyboard_no_action_tip)">keyboard-no-action</a>))
 </pre></td></tr></table>
 
 And here we play from the cursor with a moving ("tracking") cursor:
@@ -12492,7 +12487,7 @@ to put the date and time in the Snd title bar.
 
 <p><b>Time domain graph type</b> (<a href="#timegraphtype">time-graph-type</a>):</p>
 <pre>
-  graph-once  graph-as-wavogram
+  graph-once  <a class=quiet href="snd.html#wavogram" onmouseout="UnTip()" onmouseover="Tip('<img src=\'wavo.png\' width=\'640\' height=\'250\'>', TITLE, 'graph-as-wavogram', ABOVE, true)">graph-as-wavogram</a>
 </pre>
 
 <p><b>Transform graph type</b> (the Transform Options Display choice, <a href="#transformgraphtype">transform-graph-type</a>):</p>
@@ -12586,6 +12581,11 @@ to put the date and time in the Snd title bar.
   bone-colormap            copper-colormap   pink-colormap    jet-colormap
   prism-colormap           autumn-colormap   winter-colormap  spring-colormap
   summer-colormap          rainbow-colormap  flag-colormap    phases-colormap
+</pre>
+
+<p><b>Graphics context</b> choice (<a href="#graphdata">graph-data</a>)</p>
+<pre>
+  copy-context   cursor-context   selection-context  mark-context
 </pre>
 
 <br>
@@ -13127,9 +13127,9 @@ colormap? returns #t if 'index' represents a usable colormap.
 
 <!-- copy-context -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="copycontext">copy-context</a></code>
+<code><A class=def NAME="copycontext">copy-context</A></code>
 </td></tr><tr><td></td><td>
-This is the graphics mode to use to draw over whatever is currently in a graph.
+This is the graphics mode (an integer in Snd, not a function) to use to draw over whatever is currently in a graph.
 The "contexts" refer to graphics contexts used throughout Snd; the <code>copy-context</code>
 copies into the current graph, whereas the <code>cursor-context</code> uses XOR.
 The error thrown for an unimplemented context is 'no-such-graphics-context.
@@ -13147,9 +13147,9 @@ This is the current font (a Font in Motif, a PangoFontDescription* in Gtk+).
 
 <!-- cursor-context -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="cursorcontext">cursor-context</a></code>
+<code><A class=def NAME="cursorcontext">cursor-context</A></code>
 </td></tr><tr><td></td><td>
-This is the graphics mode for XOR drawing in the cursor color (for cursors, normally).
+This is the graphics mode (an integer in Snd, not a function) for XOR drawing in the cursor color (for cursors, normally).
 See <a href="#xcursor">x-cursor</a> or
 <a href="#foregroundcolor">foreground-color</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -13343,7 +13343,7 @@ sound over another at an arbitrary point, and so on (see draw.scm):
 		     (offset (max 0 (- 1000 left)))
 		     (new-data (<a class=quiet href="#vctsubseq" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctsubseq_tip)">vct-subseq</a> data offset (+ offset samps))))
 		(set! (<a class=quiet href="#foregroundcolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_foregroundcolor_tip)">foreground-color</a> snd chn) red)
-		(<em class=red>graph-data</em> new-data snd chn copy-context (max 1000 left) (min 2000 right))
+		(<em class=red>graph-data</em> new-data snd chn <a class=quiet href="#copycontext"> onmouseout="UnTip()" onmouseover="Tip(extsnd_copycontext_tip)">copy-context</a> (max 1000 left) (min 2000 right))
 		(set! (<a class=quiet href="#foregroundcolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_foregroundcolor_tip)">foreground-color</a> snd chn) old-color))
 	      (let* ((low-data (car data))     ;the two-sided envelope graph case
 		     (high-data (cadr data))
@@ -13360,7 +13360,7 @@ sound over another at an arbitrary point, and so on (see draw.scm):
 		     (new-high-data (<a class=quiet href="#vctsubseq" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctsubseq_tip)">vct-subseq</a> high-data left-bin right-bin)))
 		(set! (<a class=quiet href="#foregroundcolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_foregroundcolor_tip)">foreground-color</a> snd chn) red)
 		(<em class=red>graph-data</em> 
-                  (list new-low-data new-high-data) snd chn copy-context left-bin right-bin)
+                  (list new-low-data new-high-data) snd chn <a class=quiet href="#copycontext"> onmouseout="UnTip()" onmouseover="Tip(extsnd_copycontext_tip)">copy-context</a> left-bin right-bin)
 		(set! (<a class=quiet href="#foregroundcolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_foregroundcolor_tip)">foreground-color</a> snd chn) old-color)))))))
 
 (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> <a class=quiet href="#aftergraphhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_aftergraphhook_tip)">after-graph-hook</a> display-samps-in-red)
@@ -13437,17 +13437,17 @@ vcts), and displays it in any channel's time domain graph using its current grap
 
 <!-- mark-context -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="markcontext">mark-context</a></code>
+<code><A class=def NAME="markcontext">mark-context</A></code>
 </td></tr><tr><td></td><td>
-This is the graphics context to use to draw a mark (XOR mode).
+This is the graphics context used to draw a mark (XOR mode). (It is an integer, not a function).
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- selection-context -->
 <tr><td colspan=2 bgcolor="#f6f8ff">
-<code><a class=def name="selectioncontext">selection-context</a></code>
+<code><A class=def NAME="selectioncontext">selection-context</A></code>
 </td></tr><tr><td></td><td>
-This is the graphics context for XOR drawing in the selection color.
+This is the graphics context for XOR drawing in the selection color.  (An integer, not a function).
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

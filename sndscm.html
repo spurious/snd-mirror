@@ -7914,10 +7914,10 @@ you could bind the arrow keys:
 <table border=0 cellpadding=5 hspace=20 vspace=10><tr><td bgcolor="#fafafa"><pre>
 (<a class=quiet href="extsnd.html#bindkey" onmouseout="UnTip()" onmouseover="Tip(extsnd_bindkey_tip)">bind-key</a> "Left" 0 (lambda () 
                      (set! (<a class=quiet href="extsnd.html#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a>) (max 0 (1- (<a class=quiet href="extsnd.html#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a>)))) 
-                     keyboard-no-action))
+                     <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_keyboard_no_action_tip)">keyboard-no-action</a>))
 (<a class=quiet href="extsnd.html#bindkey" onmouseout="UnTip()" onmouseover="Tip(extsnd_bindkey_tip)">bind-key</a> "Right" 0 (lambda () 
                      (set! (<a class=quiet href="extsnd.html#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a>) (min (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>) (1+ (<a class=quiet href="extsnd.html#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a>)))) 
-                     keyboard-no-action))
+                     <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_keyboard_no_action_tip)">keyboard-no-action</a>))
 </pre></td></tr></table>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -10088,7 +10088,7 @@ it in conjunction with mixer to scale and envelope all the various ins and outs.
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
 (<a class=quiet href="#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () 
   (fm-violin 0 .1 440 .1) 
-  (<a class=quiet href="#musmix" onmouseout="UnTip()" onmouseover="Tip(sndscm_musmix_tip)">mus-mix</a> *output* "oboe.snd") 
+  (<a class=quiet href="#musmix" onmouseout="UnTip()" onmouseover="Tip(sndscm_musmix_tip)">mus-mix</a> <a class=quiet onmouseout="UnTip()" onmouseover="Tip(sndclm_output_tip)">*output*</a> "oboe.snd") 
   (fm-violin .1 .1 660 .1))
 </pre></td></tr></table>
 
@@ -10873,9 +10873,9 @@ So I bound a few keys:
 		 (set! (<a class=quiet href="extsnd.html#withtrackingcursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_withtrackingcursor_tip)">with-tracking-cursor</a>) old-tracking)))
     (<a class=quiet href="extsnd.html#play" onmouseout="UnTip()" onmouseover="Tip(extsnd_play_tip)">play</a> (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) #f #f #f #f (if current #f (1- (<a class=quiet href="extsnd.html#editposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_editposition_tip)">edit-position</a>))))))
 
-(<a class=quiet href="extsnd.html#bindkey" onmouseout="UnTip()" onmouseover="Tip(extsnd_bindkey_tip)">bind-key</a> #\p 0 (lambda () "play from cursor" (play-from-cursor #t) keyboard-no-action))
-(<a class=quiet href="extsnd.html#bindkey" onmouseout="UnTip()" onmouseover="Tip(extsnd_bindkey_tip)">bind-key</a> #\P 0 (lambda () "play previous from cursor" (play-from-cursor #f) keyboard-no-action))
-(<a class=quiet href="extsnd.html#bindkey" onmouseout="UnTip()" onmouseover="Tip(extsnd_bindkey_tip)">bind-key</a> #\p 4 (lambda () "play from cursor with tracking" (play-from-cursor-with-tracking #t) keyboard-no-action))
+(<a class=quiet href="extsnd.html#bindkey" onmouseout="UnTip()" onmouseover="Tip(extsnd_bindkey_tip)">bind-key</a> #\p 0 (lambda () "play from cursor" (play-from-cursor #t) <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_keyboard_no_action_tip)">keyboard-no-action</a>))
+(<a class=quiet href="extsnd.html#bindkey" onmouseout="UnTip()" onmouseover="Tip(extsnd_bindkey_tip)">bind-key</a> #\P 0 (lambda () "play previous from cursor" (play-from-cursor #f) <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_keyboard_no_action_tip)">keyboard-no-action</a>))
+(<a class=quiet href="extsnd.html#bindkey" onmouseout="UnTip()" onmouseover="Tip(extsnd_bindkey_tip)">bind-key</a> #\p 4 (lambda () "play from cursor with tracking" (play-from-cursor-with-tracking #t) <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_keyboard_no_action_tip)">keyboard-no-action</a>))
 </pre></td></tr></table>
 
 <p>

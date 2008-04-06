@@ -115,6 +115,10 @@ var extsnd_closesound_tip = "<code>(close-sound :optional snd)</code>: close snd
 
 var extsnd_comment_tip = "<code>(comment :optional snd)</code>: snd's comment (in its header)";
 
+var extsnd_copycontext_tip = "<code>copy-context</code> is the graphics context used in Snd<br>" +
+                             "when you want the newly drawn stuff to replace whatever is already there.<br>" +
+                             "the other common choice is <code>cursor-context</code> which uses XOR";
+
 var extsnd_countmatches_tip = "<code>(count-matches func :optional (start-samp 0) snd chn edpos)</code>:<br>" +
                               " return how many samples satisfy func (a function of one argument,<br>" +
                               " the current sample, returning #t upon match):<br>" +
@@ -303,6 +307,9 @@ var extsnd_insertsound_tip = "<code>(insert-sound file :optional (beg 0) (file-c
                              " inserts all of oboe.snd starting at sample 1000.";
 
 var extsnd_justsounds_tip = "<code>(just-sounds)</code>: the 'just sounds' choice in the file chooser dialog";
+
+var extsnd_keyboard_no_action_tip = "<code>keyboard-no-action</code> is one of the <code>bind-key</a> function<br>" +
+                                    "return values.  It indicates that Snd should not update the graphs.";
 
 var extsnd_leftsample_tip = "<code>(left-sample :optional snd chn)</code>: left sample number in time domain window";
 
@@ -1127,6 +1134,8 @@ var sndclm_out_any_tip = "<code>(out-any frame val chan stream)</code>: add val 
 
 var sndclm_outa_tip = "<code>(outa frame val stream)</code>: add val to output stream at frame in channel 0";
 
+var sndclm_output_tip = "<code>*output*</code> is the direct signal output stream.  The reverb input is sent to *reverb*.";
+
 var sndclm_partialstopolynomial_tip = "<code>(partials-&gt;polynomial partials :optional (kind mus-chebyshev-first-kind))</code>:<br>" +
                                       " produce a Chebyshev polynomial suitable for use with the polynomial generator<br>" +
                                       " to create (via waveshaping) the harmonic spectrum described by the partials argument:<br>" +
@@ -1148,6 +1157,8 @@ var sndclm_rand_tip = "<code>(rand gen :optional (fm 0.0))</code>: gen's current
                       " fm modulates the rate at which the current number is changed.";
 
 var sndclm_readin_tip = "<code>(readin gen)</code>: next sample from readin generator (a sound file reader)";
+
+var sndclm_reverb_tip = "<code>*reverb*</code> is the reverb stream.  The direct signal is sent to *output*.";
 
 var sndclm_secondstosamples_tip = "<code>(seconds-&gt;samples secs)</code>: use mus-srate to convert seconds to samples";
 
