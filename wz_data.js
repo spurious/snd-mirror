@@ -277,6 +277,9 @@ var extsnd_graphshorizontal_tip = "<code>(graphs-horizontal :optional snd chn)</
 var extsnd_graphstyle_tip = "<code>(graph-style :optional snd chn)</code>: graph style, <br>" +
                             " one of <code>graph-lines graph-dots graph-dots-and-lines graph-lollipops graph-filled</code>";
 
+var extsnd_graphtops_tip = "<code>(graph-&gt;ps :optional (filename eps-file)):</code><br>" +
+                           "this writes the current Snd displays to an EPS file";
+
 var extsnd_headertype_tip = "<code>(header-type :optional snd)</code>: snd's header type (e.g. <code>mus-aiff</code>)";
 
 var extsnd_helpdialog_tip = "<code>(help-dialog subject message xrefs urls)</code>: start the Help window with subject and message";

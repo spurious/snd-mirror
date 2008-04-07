@@ -1911,13 +1911,18 @@ static char ampstr[LABEL_BUFFER_SIZE];
 
 static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler, off_t samps, Float samps_per_pixel, bool fft_data, Float fft_scale)
 {
-  int num_peaks, row, col, tens, i, acol, acols, row_height = 15;
+  int num_peaks, row, frq_col, frq_strlen, tens, i, amp_col, amp_strlen, row_height = 15;
   bool with_amps;
   Float amp0;
   axis_context *ax;
   fft_peak *peak_freqs = NULL;
   fft_peak *peak_amps = NULL;
 
+  /* "scaler" is the top displayed frequency in the FFT frequency axis 
+   * "samps" is how many samples of data we have
+   */
+
+  /* "tens" is for prettyf in snd-utils, if -1 -> print int else sets decimals */
   if (samps > (scaler * 10)) 
     tens = 2; 
   else 
@@ -1927,6 +1932,7 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
       if (samps > (scaler / 10)) 
 	tens = 0; 
       else tens = -1;
+
 #if (!USE_GTK)
   row_height = (int)(1.25 * number_height(PEAKS_FONT(ss)));
 #else
@@ -1938,13 +1944,15 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
   if (cp->sound->channel_style == CHANNELS_SUPERIMPOSED)
     num_peaks /= cp->sound->nchans;
   if (num_peaks <= 0) return;
+  if (num_peaks > cp->max_transform_peaks) num_peaks = cp->max_transform_peaks;
 
   peak_freqs = (fft_peak *)CALLOC(cp->max_transform_peaks, sizeof(fft_peak));
   peak_amps = (fft_peak *)CALLOC(cp->max_transform_peaks, sizeof(fft_peak));
-  if (num_peaks > cp->max_transform_peaks) num_peaks = cp->max_transform_peaks;
+
   if (fft_data)
     num_peaks = find_and_sort_transform_peaks(data, peak_freqs, num_peaks, samps, 1, samps_per_pixel, fft_scale); /* srate 1.0=>freqs between 0 and 1.0 */
   else num_peaks = find_and_sort_peaks(data, peak_freqs, num_peaks, samps);
+
   if ((num_peaks == 0) || 
       ((num_peaks == 1) && 
        ((peak_freqs[0].freq == 1.0) || (peak_freqs[0].freq == 0.0))))
@@ -1954,21 +1962,25 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
       return;
     }
 
-  with_amps = (fap->width > ((30 + 5 * tens + AMP_ROOM) * AMP_ROOM_CUTOFF));
-  acols = 3;
-  col = fap->x_axis_x1 - 30 - tens * 5; 
-  /* in some cases (lisp graph with integer peak "freqs") this can move the freq column over too far */
-  acol = fap->x_axis_x1 - AMP_ROOM + 15;
+  frq_strlen = (int)ceil(log10(peak_freqs[num_peaks - 1].freq * scaler)) + ((tens <= 0) ? 0 : (tens + 1)) + 1;
+  if (frq_strlen < 1) frq_strlen = 1;
+
+  with_amps = (fap->width > ((30 + 5 * frq_strlen + AMP_ROOM) * AMP_ROOM_CUTOFF));
+  amp_strlen = 3;
+
+  frq_col = fap->x_axis_x1 - frq_strlen * 5; 
+  amp_col = fap->x_axis_x1 - AMP_ROOM + 15;
+
   if (with_amps) 
     {
-      col -= AMP_ROOM;
+      frq_col -= AMP_ROOM;
       if ((fft_data) && 
 	  ((cp->transform_normalization == DONT_NORMALIZE) ||
 	   (cp->min_dB < -60)))
 	{
-	  col -= 5;
-	  acol -= 5;
-	  acols = 4;
+	  frq_col -= 5;
+	  amp_col -= 5;
+	  amp_strlen = 4;
 	}
     }
 
@@ -2000,18 +2012,18 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
 	      Float px;
 	      px = peak_freqs[i].freq;
 	      fstr = prettyf(px * scaler, tens);
-	      draw_string(ax, col, row, fstr, strlen(fstr));
-	      if (cp->printing) ps_draw_string(fap, col, row, fstr);
+	      draw_string(ax, frq_col, row, fstr, strlen(fstr));
+	      if (cp->printing) ps_draw_string(fap, frq_col, row, fstr);
 	      FREE(fstr);
 	      fstr = NULL;
 	      if (with_amps)
 		{
 		  if ((fft_data) && (cp->fft_log_magnitude))
 		    mus_snprintf(ampstr, LABEL_BUFFER_SIZE, "%.1f", in_dB(cp->min_dB, cp->lin_dB, peak_freqs[i].amp));
-		  else mus_snprintf(ampstr, LABEL_BUFFER_SIZE, "%.*f", acols, peak_freqs[i].amp);
-		  draw_string(ax, acol, row, ampstr, strlen(ampstr));
+		  else mus_snprintf(ampstr, LABEL_BUFFER_SIZE, "%.*f", amp_strlen, peak_freqs[i].amp);
+		  draw_string(ax, amp_col, row, ampstr, strlen(ampstr));
 		  if (cp->printing) 
-		    ps_draw_string(fap, acol, row, ampstr);
+		    ps_draw_string(fap, amp_col, row, ampstr);
 		}
 	    }
 	  row += row_height;
@@ -2038,18 +2050,18 @@ static void display_peaks(chan_info *cp, axis_info *fap, Float *data, int scaler
 	  char *fstr;
 	  px = peak_freqs[i].freq;
 	  fstr = prettyf(px * scaler, tens);
-	  draw_string(ax, col, row, fstr, strlen(fstr));
-	  if (cp->printing) ps_draw_string(fap, col, row, fstr);
+	  draw_string(ax, frq_col, row, fstr, strlen(fstr));
+	  if (cp->printing) ps_draw_string(fap, frq_col, row, fstr);
 	  FREE(fstr);
 	  fstr = NULL;
 	  if (with_amps)
 	    {
 	      if ((fft_data) && (cp->fft_log_magnitude))
 		mus_snprintf(ampstr, LABEL_BUFFER_SIZE, "%.1f", in_dB(cp->min_dB, cp->lin_dB, peak_freqs[i].amp));
-	      else mus_snprintf(ampstr, LABEL_BUFFER_SIZE, "%.*f", acols, peak_freqs[i].amp);
-	      draw_string(ax, acol, row, ampstr, strlen(ampstr));
+	      else mus_snprintf(ampstr, LABEL_BUFFER_SIZE, "%.*f", amp_strlen, peak_freqs[i].amp);
+	      draw_string(ax, amp_col, row, ampstr, strlen(ampstr));
 	      if (cp->printing) 
-		ps_draw_string(fap, acol, row, ampstr);
+		ps_draw_string(fap, amp_col, row, ampstr);
 	    }
 	}
       row += row_height;
@@ -7548,14 +7560,17 @@ static void write_transform_peaks(FILE *fd, chan_info *ucp)
 	      fft_peak *peak_freqs = NULL;
 	      fft_peak *peak_amps = NULL;
 	      Float *data;
-	      int num_peaks,samps, tens, srate;
-	      Float samples_per_pixel;
+	      int num_peaks,samps, cutoff_samps, tens, srate, digits = 5;
+	      Float samples_per_pixel, cutoff;
 
 	      ap = cp->axis;
 	      sp = cp->sound;
 	      data = fp->data;
-	      samps = fp->current_size / 2;
-	      samples_per_pixel = (Float)samps / (Float)(fap->x_axis_x1 - fap->x_axis_x0);
+	      cutoff = cp->spectro_cutoff;
+	      samps = fp->current_size * 0.5;
+	      cutoff_samps = (int)(samps * cutoff);
+	      samples_per_pixel = (Float)cutoff_samps / (Float)(fap->x_axis_x1 - fap->x_axis_x0);
+
 	      srate = SND_SRATE(sp);
 	      srate2 = (Float)srate * .5;
 	      if (samps > (5 * srate)) 
@@ -7567,6 +7582,9 @@ static void write_transform_peaks(FILE *fd, chan_info *ucp)
 		  if (samps > (srate / 20)) 
 		    tens = 0; 
 		  else tens = -1;
+	      
+	      if (ceil(log10(srate)) > 3.0)
+		digits = (int)ceil(log10(srate)) + 2;
 
 	      peak_freqs = (fft_peak *)CALLOC(cp->max_transform_peaks, sizeof(fft_peak));
 	      peak_amps = (fft_peak *)CALLOC(cp->max_transform_peaks, sizeof(fft_peak));
@@ -7583,9 +7601,10 @@ static void write_transform_peaks(FILE *fd, chan_info *ucp)
 			  (float)((double)(ap->losamp) / (double)srate),
 			  mus_fft_window_name(cp->fft_window)); /* was XEN name */
 		  for (i = 0; i < num_peaks; i++)
-		    fprintf(fd, "  %.*f  %.5f\n",
+		    fprintf(fd, "  %.*f  %.*f\n",
 			    tens, 
 			    peak_freqs[i].freq * srate2, 
+			    digits,
 			    peak_freqs[i].amp); 
 		  fprintf(fd, "\n");
 		}

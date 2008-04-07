@@ -1210,6 +1210,85 @@ an actual deviation of mfreq*2*pi*index/srate, which looks like FM; hmmm.  See <
 below for an <a href="#src">src</a>-based way to do the same thing.
 </p>
 
+<br>
+<p>
+There is one annoying problem with table-lookup: noise.
+Say we have a sine wave in a table with L elements, and we want to read it at a frequency of
+f Hz at a sampling rate of Fs.  This requires that we read the table at locations that are increments of
+L * f / Fs.  This is ordinarily not an integer (that is, we've fallen between the
+table elements).  We have no data between the elements, but we can make (plenty of)
+assumptions about it.  In the no-interpolation case (:type = mus-interp-none), we simply take the floor of
+the table-relative phase, returning a squared-off sine-wave:
+</p>
+<!--
+<IMG>
+-->
+
+<p>
+Note that we're getting lots of pairs of components, each pair centered around n * L * f,
+and separated from it by f, and the amplitude of each pair is 1/(nL).
+This spectrum says "amplitude modulation".
+Now we try linear interpolation, and get the same components as before, but
+now the amplitude is going (more or less) as 1/(nL^2) (I remember vaguely that there's actually a factor of sinc^2 or something in there as well; as always,
+check out Julius Smith's web site.  He has a derivation of this spectrum, but now I can't track it down).
+</p>
+
+<!--
+<IMG>
+-->
+
+<p>
+If we make the table size 1000 we get:
+</p>
+
+<!--
+<IMG><IMG>
+-->
+
+<p>
+In the linear-interpolation case, we can look at it as
+a little linear sweep at each table sample, so we have 
+sine(f) * linear-sweep(L*f); the linear signal can be expanded as
+a sum of sines involving sin kx/k, so we can view this also as amplitude modulation
+(the linear signal at L*f and the slow moving sine at f).  So each component
+is at n * L * f, as before, and split in half (+/- f) as before by the modulation.
+After the initial pairs, the rest tail off as 1/n (or n/(n+1) if viewing them from one to the next).
+Since L*f is normally a very high frequency, these components normally
+alias to such an extent that they look like noise, but they are noise only in the
+sense that we wish they weren't there.  
+</p>
+
+<p>
+The table length (L above) is the "effective" length.  If we store the nth harmonic
+in the table, each period gets L/n elements, so the amplitude of the nth harmonic's components
+is higher (by n^2) than the fundamental's.  So, we either have to use enormous
+tables (which defeats the whole purpose of using tables), or stick to low
+numbered partials.  To keep the noise components out of sight in 16-bit output (down 90 dB),
+we need 180 elements per period.  So a table with a 50th harmonic has to be at least length 8192.
+It's odd that the cutoff here is basically the same as
+in the waveshaping case; a 50-th harmonic is trouble in either case.
+</p>
+
+<p>
+We can try fancier interpolations.
+Here are the same examples as before using lagrange and hermite interpolation:
+</p>
+
+<!--
+<IMG>s
+-->
+
+<p>
+But these interpolations are expensive and ugly.
+So (this story is spinning out much longer than I intended), in the
+polywave case (see below), if the number of the highest harmonic seems too high,
+the generator uses a bank of sines (i.e. straight additive synthesis, but all
+based on the same instantaneous phase), rather than degenerating into a racket.
+</p>
+
+
+<!--
+
 <p>The interpolation type primarily affects the cleanliness of the table-lookup output.
 Here are the four choices applied to a pulse, the resultant spectrum, and then
 the spectrum of the interpolation applied to a stored sine wave (y axes are in dB).
@@ -1222,6 +1301,8 @@ the spectrum of the interpolation applied to a stored sine wave (y axes are in d
 <img src="interp2.png" alt="interp choices">
 </td></tr>
 </table>
+
+-->
 
 <!--
 (with-sound (:channels 4 :clipped #f :statistics #t)
@@ -1263,7 +1344,7 @@ the spectrum of the interpolation applied to a stored sine wave (y axes are in d
 -->
 
 
-
+<br>
 <p><a href="spectr.clm">spectr.clm</a> has a steady state spectra of
 several standard orchestral instruments, courtesy of James A. Moorer.
 The <a href="sndscm.html#drone">drone</a> instrument in clm-ins.scm uses table-lookup for the
@@ -1862,15 +1943,15 @@ can make a big difference; using no window, but a huge fft seems like the least 
 way to present this result.
 </small></p>
 <p><small>
-Notice the lower peaks in the table-lookup case.  By chance, 100 * 512 = 800 * 64 = 1600 * 32, so
-all our components have their first interpolation noise peak centered around 7100 Hz (51200 mod 22050).
-Since its effective table size is only 32 samples, the 1600 Hz component creates big sidebands at 5500 Hz
-and 8700 Hz.  The 800 Hz component makes smaller peaks at
-6300 Hz and 7900 Hz (its effective table size is 64 points), and the 100 Hz
-cases are at 7000 Hz and 7200 Hz.  The highest peaks are down only 60 dB.  Raise the sampling
-rate to 200000 to make this effect (amplitude modulation of the stored signal and the linear interpolating signal)
-more obvious.
-See <a href="#table-lookup">table-lookup</a> for more discussion of interpolation noise.
+Notice the lower peaks in the table-lookup case.  partials-&gt;wave puts n periods of the nth harmonic
+in the table, so the nth harmonic has an effective table length of table-length/n.  n * 1/n = 1, so all
+our components have their first interpolation noise peak centered (in this case) around 7100 Hz ((512 * 100) mod 22050).
+Since the 1600 Hz component has an effective table size of only 32 samples, it creates big sidebands at 5500 Hz
+and 8700 Hz.  The 800 Hz component makes smaller peaks (by a factor of 4, since this is proportional to n^2) at
+6300 Hz and 7900 Hz, and the 100 Hz
+cases are at 7000 Hz and 7200 Hz (down in amplitude by 16^2).  The highest peaks are down only 60 dB.
+See <a href="#table-lookup">table-lookup</a> for more discussion of interpolation noise (it's actually
+(amplitude modulation of the stored signal and the linear interpolating signal with sever aliasing).
 </small></p>
 </td></tr></table>
 
