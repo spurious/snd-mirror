@@ -1217,94 +1217,107 @@ Say we have a sine wave in a table with L elements, and we want to read it at a 
 f Hz at a sampling rate of Fs.  This requires that we read the table at locations that are increments of
 L * f / Fs.  This is ordinarily not an integer (that is, we've fallen between the
 table elements).  We have no data between the elements, but we can make (plenty of)
-assumptions about it.  In the no-interpolation case (:type = mus-interp-none), we simply take the floor of
+assumptions about what ought to be there.  In the no-interpolation case (type = <code>mus-interp-none</code>), we simply take the floor of
 the table-relative phase, returning a squared-off sine-wave:
 </p>
+
+<img src="interp1.png" alt="squared-off sine spectra" hspace=40 onmouseout="UnTip()" onmouseover="Tip('srate=1000000 so that aliasing does not cause confusion.<br>FFT size=262144 with a blackman2 window.<br>In detail, the first 10 pairs (with 1/nL in parens) are:<br><pre>    100  1.000000<br>   9900  0.010368  (.01)<br>  10100  0.010192<br>  19900  0.005174  (.005)<br>  20100  0.005099<br>  29900  0.003431  (.0033)<br>  30100  0.003436<br>  39900  0.002594  (.0025)<br>  40100  0.002560<br>  49900  0.002060  (.002)<br>  50100  0.002066<br>  59900  0.001732  (.0017)<br>  60100  0.001715<br>  69900  0.001477  (.0014)<br>  70100  0.001478<br>  79900  0.001300  (.00125)<br>  80100  0.001296<br>  89900  0.001157  (.0011)<br>  90100  0.001153<br>  99900  0.001043  (.001)<br> 100100  0.001046</pre>')">
+
 <!--
-<IMG>
+(with-sound (:srate 1000000 :channels 2) 
+  (let ((gen1 (make-table-lookup 100.0 :wave (partials->wave '(1 1) (make-vct 100)) :type mus-interp-none))
+	(sine (make-oscil 100.0)))
+    (run 
+     (lambda () 
+       (do ((i 0 (1+ i))) 
+	   ((= i 1000000))
+	 (let ((qsine (table-lookup gen1))
+	       (tsine (oscil sine)))
+	   (outa i qsine)
+	   (outb i (- tsine qsine))))))))
+
+(set! (selected-graph-color) (make-color 1 1 1))
+(set! (selected-data-color) (make-color 0 0 0))
+(set! (x-axis-label 0 0 0) "no interpolation, table size=100, sine at 100 Hz")
+(set! (x-axis-label 0 1 0) "difference between sine and squared-off sine")
+(set! (x-axis-label 0 0 1) "squared-off sine spectrum: srate=1000000")
+(set! (x-axis-label 0 1 1) "spectrum of the error")
+(set! (axis-label-font) (axis-numbers-font))
+(set! (transform-normalization) normalize-by-sound)
+(set! (graphs-horizontal) #f)
 -->
 
+
 <p>
-Note that we're getting lots of pairs of components, each pair centered around n * L * f,
-and separated from it by f, and the amplitude of each pair is 1/(nL).
-This spectrum says "amplitude modulation".
-Now we try linear interpolation, and get the same components as before, but
-now the amplitude is going (more or less) as 1/(nL^2) (I remember vaguely that there's actually a factor of sinc^2 or something in there as well; as always,
-check out Julius Smith's web site.  He has a derivation of this spectrum, but now I can't track it down).
+In addition to the sine at 100 Hz, we're getting lots of pairs of components, each pair centered around n * L * f, (10000 = 100 * 100 is the first),
+and separated from it by f, (9900 and 10100),
+and the amplitude of each pair is 1/(nL): -40 dB is 1/100 for the n=1 case.
+This spectrum says "amplitude modulation" (the fast square wave times the slow sinusoid).
+Now we try linear interpolation (<code>mus-interp-linear</code>), and get the same components as before, but
+the amplitude is going (essentially) as 1.0 / (n * n * L * L).  So the interpolation
+reduces the original problem by a factor of n * L:
 </p>
 
-<!--
-<IMG>
--->
-
-<p>
-If we make the table size 1000 we get:
-</p>
+<img src="interp2.png" alt="squared-off sine spectra" hspace=40 onmouseout="UnTip()" onmouseover="Tip('as before, srate=1000000 so that aliasing does not cause confusion.<br>FFT size=262144 with a blackman2 window.<br>In detail, the first 10 pairs (with 1/(n^2 L^2) in parens) are:<br><pre>    100  1.00000000<br>   9900  0.00010508  (.0001)<br>  10100  0.00010086<br>  19900  0.00002580  (.000025)<br>  20100  0.00002524<br>  29900  0.00001133  (.000011)<br>  30100  0.00001157<br>  39900  0.00000661  (.0000063)<br>  40100  0.00000652<br>  49900  0.00000419  (.000004)<br>  50100  0.00000422<br>  59900  0.00000263  (.0000027)<br>  60100  0.00000282<br>  69900  0.00000216  (.000002)<br>  70100  0.00000201<br>  79900  0.00000161  (.0000015)<br>  80100  0.00000155<br>  89900  0.00000120  (.0000012)<br>  90100  0.00000123<br>  99900  0.00000099  (.000001)<br> 100100  0.00000102</pre>')">
 
 <!--
-<IMG><IMG>
+(with-sound (:srate 1000000 :channels 2) 
+  (let ((gen1 (make-table-lookup 100.0 :wave (partials->wave '(1 1) (make-vct 100)) :type mus-interp-linear))
+	(sine (make-oscil 100.0)))
+    (run 
+     (lambda () 
+       (do ((i 0 (1+ i))) 
+	   ((= i 1000000))
+	 (let ((qsine (table-lookup gen1))
+	       (tsine (oscil sine)))
+	   (outa i qsine)
+	   (outb i (- tsine qsine))))))))
+
+(set! (x-axis-label 0 0 0) "linear interpolation, table size=100, sine at 100 Hz")
+(set! (x-axis-label 0 1 0) "difference between sine and interpolated sine")
+(set! (x-axis-label 0 0 1) "interpolated sine spectrum: srate=1000000")
+(set! (x-axis-label 0 1 1) "spectrum of the error")
 -->
 
+
 <p>
-In the linear-interpolation case, we can look at it as
-a little linear sweep at each table sample, so we have 
-sine(f) * linear-sweep(L*f); the linear signal can be expanded as
-a sum of sines involving sin kx/k, so we can view this also as amplitude modulation
-(the linear signal at L*f and the slow moving sine at f).  So each component
-is at n * L * f, as before, and split in half (+/- f) as before by the modulation.
-After the initial pairs, the rest tail off as 1/n (or n/(n+1) if viewing them from one to the next).
-Since L*f is normally a very high frequency, these components normally
+We can view this again as amplitude modulation:
+the sinusoid at frequency f times the little linear sweep during each table sample (its frequency: L * f).
+(The linear signal can be expanded as
+a sum of sines involving sin(n * L * f) / n).
+Each component
+is at n * L * f, as before, and split in half by the modulation.
+Since L * f is normally a very high frequency, and sampling rates are not in the megahertz range (as in our examples),
+these components
 alias to such an extent that they look like noise, but they are noise only in the
 sense that we wish they weren't there.  
 </p>
 
 <p>
-The table length (L above) is the "effective" length.  If we store the nth harmonic
-in the table, each period gets L/n elements, so the amplitude of the nth harmonic's components
-is higher (by n^2) than the fundamental's.  So, we either have to use enormous
+The table length (L above) is the "effective" length.  If we store an nth harmonic
+in the table, each period gets L/n elements (we want to avoid clicks caused by discontinuities between the first and last table elements), 
+so the amplitude of the nth harmonic's noise components
+is higher (by n^2) than the fundamental's.  We either have to use enormous
 tables (which defeats the whole purpose of using tables), or stick to low
 numbered partials.  To keep the noise components out of sight in 16-bit output (down 90 dB),
 we need 180 elements per period.  So a table with a 50th harmonic has to be at least length 8192.
 It's odd that the cutoff here is basically the same as
 in the waveshaping case; a 50-th harmonic is trouble in either case.
+(This leaves an opening for <a href="#ncos">ncos</a> and friends even when dynamic spectra aren't the issue).
 </p>
 
 <p>
-We can try fancier interpolations.
-Here are the same examples as before using lagrange and hermite interpolation:
-</p>
-
-<!--
-<IMG>s
--->
-
-<p>
+We can try fancier interpolations.  <code>mus-interp-lagrange</code> and <code>mus-interp-hermite</code>
+reduce the components (which are at the same frequencies as before) by about another factor of L.
 But these interpolations are expensive and ugly.
 So (this story is spinning out much longer than I intended), in the
-polywave case (see below), if the number of the highest harmonic seems too high,
-the generator uses a bank of sines (i.e. straight additive synthesis, but all
-based on the same instantaneous phase), rather than degenerating into a racket.
+<a href="#polywave">polywave</a> case (see below), if the number of the highest harmonic seems too high,
+the generator uses a bank of sines (i.e. straight additive synthesis), rather than degenerating into a racket.
 </p>
 
 
-<!--
+<!-- an earlier example showing the interpolation waveforms:
 
-<p>The interpolation type primarily affects the cleanliness of the table-lookup output.
-Here are the four choices applied to a pulse, the resultant spectrum, and then
-the spectrum of the interpolation applied to a stored sine wave (y axes are in dB).
-</p>
-
-<table border=0 hspace=20>
-<tr><td>
-<img src="interp1.png" alt="interp choices">
-</td><td>
-<img src="interp2.png" alt="interp choices">
-</td></tr>
-</table>
-
--->
-
-<!--
 (with-sound (:channels 4 :clipped #f :statistics #t)
   (let* ((pitch 1000.0)
 	 (size 64)
@@ -1951,7 +1964,10 @@ and 8700 Hz.  The 800 Hz component makes smaller peaks (by a factor of 4, since 
 6300 Hz and 7900 Hz, and the 100 Hz
 cases are at 7000 Hz and 7200 Hz (down in amplitude by 16^2).  The highest peaks are down only 60 dB.
 See <a href="#table-lookup">table-lookup</a> for more discussion of interpolation noise (it's actually
-(amplitude modulation of the stored signal and the linear interpolating signal with sever aliasing).
+amplitude modulation of the stored signal and the linear interpolating signal with severe aliasing).
+To repeat the punch line of that discussion, if the highest harmonic requested in polywave is too
+high, the generator uses a sum of sines (i.e. cos or sin directly) so that you always get a clean
+result.
 </small></p>
 </td></tr></table>
 
@@ -2841,22 +2857,6 @@ goes up, "r" goes down (to avoid foldover, or whatever).
 (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () (ss 0 1 400.0 1.0 5 0.5 1.0 '(0 0 1 2)))
 </pre>
 </td></tr></table>
-
-<!--
-<p>
-"oscil" is a contentious name, since some people think it means "table-lookup",
-but I can't think of a good replacement ("1sin"? "sine"?).  Even "waveshaping" is ambiguous;
-some consider it a synonym of "distortion synthesis" (a wretched name for array-interp),
-and others confuse it with "wavetable synthesis".  I don't know the history of the term; perhaps
-CLM should retire "waveshape" and use "polyshape" instead.
-At least one such case is funny:  the claim that "frequency
-modulation" should really be called "phase modulation" because the phase changes!
-But computer musicians are not the only ones
-with screwed up terminology: CLM uses the term "scaler" instead of "scalar" because
-the execrable name "scalar product" confuses beginners.
-Perhaps "amplitude" would sidestep this problem.
-</p>
--->
 
 
 <!-- MLB's index idea is not so great:

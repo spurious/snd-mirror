@@ -41,6 +41,8 @@
   #define SSIZE_TD "%ld"
 #endif
 
+
+/* these used to be in configure.ac,  but the 2.62 change to AC_C_BIGENDIAN ruins that */
 #ifndef MUS_LITTLE_ENDIAN
   #if WORDS_BIGENDIAN
     #define MUS_LITTLE_ENDIAN 0
@@ -48,6 +50,47 @@
     #define MUS_LITTLE_ENDIAN 1
   #endif
 #endif
+
+#ifndef MUS_AUDIO_COMPATIBLE_FORMAT
+  #if WORDS_BIGENDIAN
+    #if MUS_MAC_OSX
+      #define MUS_AUDIO_COMPATIBLE_FORMAT MUS_BFLOAT
+    #else
+      #define MUS_AUDIO_COMPATIBLE_FORMAT MUS_BSHORT
+    #endif
+  #else
+    #if MUS_MAC_OSX
+      #define MUS_AUDIO_COMPATIBLE_FORMAT MUS_LFLOAT
+    #else
+      #define MUS_AUDIO_COMPATIBLE_FORMAT MUS_LSHORT
+    #endif
+  #endif
+#endif
+
+#ifndef MUS_OUT_FORMAT
+  #if WORDS_BIGENDIAN
+    #if SNDLIB_USE_FLOATS
+      #if WITH_DOUBLES
+        #define MUS_OUT_FORMAT MUS_BDOUBLE
+      #else
+        #define MUS_OUT_FORMAT MUS_BFLOAT
+      #endif
+    #else
+        #define MUS_OUT_FORMAT MUS_BINT
+    #endif
+  #else
+    #if SNDLIB_USE_FLOATS
+      #if WITH_DOUBLES
+        #define MUS_OUT_FORMAT MUS_LDOUBLE
+      #else
+        #define MUS_OUT_FORMAT MUS_LFLOAT
+      #endif
+    #else
+        #define MUS_OUT_FORMAT MUS_LINT
+    #endif
+  #endif
+#endif
+
 
 #ifndef c__FUNCTION__
 #if (HAVE___FUNC__) || (defined(__STDC__) && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L))

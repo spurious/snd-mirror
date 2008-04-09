@@ -2674,21 +2674,38 @@ static char *describe_polywave(mus_any *ptr)
 }
 
 
+static Float poly_bank(pw *gen, Float fm)
+{
+  Float sum = 0.0;
+  int i;
+  osc *o = (osc *)(gen->o);
+  for (i = 1; i < gen->n; i++)
+    if (gen->coeffs[i] != 0.0)
+      sum += (gen->coeffs[i] * cos(o->phase * i));  /* TODO: should we pass in the type and use sin? */
+  o->phase += (o->freq + fm);
+  return(sum);
+}
+
+
 Float mus_polywave(mus_any *ptr, Float fm)
 {
   pw *gen = (pw *)ptr;
-  return(mus_polynomial(gen->coeffs,
-			gen->index * mus_oscil_fm(gen->o, fm), 
-			gen->n));
+  if (gen->n <= MUS_CHEBYSHEV_TOP)
+    return(mus_polynomial(gen->coeffs,
+			  gen->index * mus_oscil_fm(gen->o, fm), 
+			  gen->n));
+  return(poly_bank(gen, fm));
 }
 
 
 Float mus_polywave_unmodulated(mus_any *ptr)
 {
   pw *gen = (pw *)ptr;
-  return(mus_polynomial(gen->coeffs,
-			gen->index * mus_oscil_unmodulated(gen->o), 
-			gen->n));
+  if (gen->n <= MUS_CHEBYSHEV_TOP)
+    return(mus_polynomial(gen->coeffs,
+			  gen->index * mus_oscil_unmodulated(gen->o), 
+			  gen->n));
+  return(poly_bank(gen, 0.0));
 }
 
 
@@ -2761,15 +2778,21 @@ static char *describe_polyshape(mus_any *ptr)
 
 Float mus_polyshape(mus_any *ptr, Float index, Float fm)
 {
-  pw_set_index(ptr, index);
-  return(mus_polywave(ptr, fm));
+  pw *gen = (pw *)ptr;
+  gen->index = index;
+  return(mus_polynomial(gen->coeffs,
+			index * mus_oscil_fm(gen->o, fm), 
+			gen->n));
 }
 
 
 Float mus_polyshape_unmodulated(mus_any *ptr, Float index)
 {
-  pw_set_index(ptr, index);
-  return(mus_polywave_unmodulated(ptr));
+  pw *gen = (pw *)ptr;
+  gen->index = index;
+  return(mus_polynomial(gen->coeffs,
+			index * mus_oscil_unmodulated(gen->o), 
+			gen->n));
 }
 
 

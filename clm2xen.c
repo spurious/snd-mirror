@@ -4664,13 +4664,18 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
 		      XEN_LIST_3(C_TO_XEN_STRING(S_make_polywave), 
 				 C_TO_XEN_STRING(list_to_partials_error_to_string(error)), 
 				 keys[1]));
-	  coeffs = mus_partials_to_polynomial(npartials, partials, kind);
+
+	  /* if top harmonic is beyond what our current Float choice can handle, use sine-bank */
+	  if (npartials <= MUS_CHEBYSHEV_TOP)
+	    coeffs = mus_partials_to_polynomial(npartials, partials, kind); /* overwrites partials with Chebyshev coeffs, returns partials */
+	  else coeffs = partials;
+
 	  n = npartials;
 	  /* coeffs = partials here, so don't delete */ 
 	}
       if (!partials)
 	{
-	  /* clm.html says '(1 1) is the default */
+	  /* clm.html says '(1 1) is the default but table-lookup is 0? */
 	  Float *data;
 	  data = (Float *)CALLOC(2, sizeof(Float));
 	  data[0] = 0.0;

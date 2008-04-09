@@ -21821,6 +21821,33 @@ EDITS: 2
 	      (begin
 		(snd-display ";polywaver (1 1) .5 index ~A: ~A ~A" i val1 val2)
 		(set! happy #f))))))
+
+    (for-each
+     (lambda (k)
+       (let ((gen (make-polywave 100.0 (list 1 0.5 k 0.5))))
+	 (let ((err 0.0)
+	       (err-max 0.0)
+	       (err-max-loc -1))
+	   (do ((i 0 (1+ i)))
+	       ((>= i 44100))
+	     (let* ((ph (if (< k (if (or (= mus-out-format mus-ldouble)
+					 (= mus-out-format mus-bdouble))
+				     30
+				     20))
+			    (- (mus-phase gen) (* 0.5 pi))
+			    (mus-phase gen)))
+		    (gval (polywave gen))
+		    (sval (* 0.5 (+ (cos ph)
+				    (cos (* k ph)))))
+		    (err-local (abs (- sval gval))))
+	       (if (> err-local err-max)
+		   (begin
+		     (set! err-max-loc i)
+		     (set! err-max err-local)))
+	       (set! err (+ err err-local))))
+	   (if (> err-max 5.0e-5)
+	       (snd-display ";polywave vs sin: ~D: ~A ~A ~A" k err err-max err-max-loc)))))
+     (list 2 19 20 29 30 39 40 60 100))
     
     (let ((var (catch #t (lambda () (make-polywave 440.0 3.14)) (lambda args args))))
       (if (not (eq? (car var) 'wrong-type-arg))
@@ -67531,6 +67558,7 @@ EDITS: 1
 			 (length procs4) (length set-procs4) 
 			 (length procs5) (length procs6) (length procs7) (length procs8) (length procs10)))
 	
+;	(snd-display ";8: ~A~%;10: ~A" procs8 procs10)
 	
 	(reset-almost-all-hooks)
 	

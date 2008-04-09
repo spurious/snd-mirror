@@ -258,45 +258,8 @@ AC_TYPE_SIZE_T
 AC_CHECK_TYPE(ssize_t, int)
 AC_TYPE_PID_T
 
-AC_C_BIGENDIAN( [AC_DEFINE(MUS_LITTLE_ENDIAN, 0)
-		 AC_DEFINE(WORDS_BIGENDIAN)
-    		 case "$host" in
-      		  *-apple-*)
-        		AC_DEFINE(MUS_AUDIO_COMPATIBLE_FORMAT, MUS_BFLOAT)
-        		;;
-      		  *)
-			AC_DEFINE(MUS_AUDIO_COMPATIBLE_FORMAT, MUS_BSHORT)
-			;;
-    		 esac
-		 if test "$with_float_samples" != no ; then
-		    if test "$with_doubles" = yes ; then
-                      AC_DEFINE(MUS_OUT_FORMAT, MUS_BDOUBLE)
-                    else
-                      AC_DEFINE(MUS_OUT_FORMAT, MUS_BFLOAT)
-                    fi
-                 else
-                   AC_DEFINE(MUS_OUT_FORMAT, MUS_BINT)
- 		 fi
- 		],
-		[AC_DEFINE(MUS_LITTLE_ENDIAN, 1)
-    		 case "$host" in
-      		  *-apple-*)
-        		AC_DEFINE(MUS_AUDIO_COMPATIBLE_FORMAT, MUS_LFLOAT)
-        		;;
-      		  *)
-			AC_DEFINE(MUS_AUDIO_COMPATIBLE_FORMAT, MUS_LSHORT)
-			;;
-    		 esac
-		 if test "$with_float_samples" != no ; then
-		    if test "$with_doubles" = yes ; then
-                      AC_DEFINE(MUS_OUT_FORMAT, MUS_LDOUBLE)
-                    else
-                      AC_DEFINE(MUS_OUT_FORMAT, MUS_LFLOAT)
-                    fi
-                 else
-                   AC_DEFINE(MUS_OUT_FORMAT, MUS_LINT)
- 		 fi
-		])
+# new form of this macro from autoconf 2.62 makes the Mac case a real headache
+AC_C_BIGENDIAN
 
 AC_SYS_LARGEFILE
 AC_TYPE_OFF_T
@@ -1828,10 +1791,25 @@ case "$host" in
 	;;
     *-apple-*)
 	if test "$with_jack" != yes ; then 
+
 	    AC_DEFINE(MUS_MAC_OSX)
 	    AUDIO_SYSTEM=MacOSX
 	    AUDIO_LIB="-framework CoreAudio -framework CoreFoundation -framework CoreMIDI"
 	    AC_SUBST(AUDIO_LIB)
+
+	    # OSX 10.5, deprecating earlier AudioDeviceRemoveIOProc
+	    AC_MSG_CHECKING([for AudioDeviceDestroyIOProcID])
+	    AC_COMPILE_IFELSE(
+              [AC_LANG_PROGRAM([#include <CoreServices/CoreServices.h>
+                                #include <CoreAudio/CoreAudio.h>],
+			       [AudioDeviceIOProcID procId;
+			        AudioDeviceID device = kAudioDeviceUnknown;
+        			AudioDeviceDestroyIOProcID(device, procId)
+			       ])],
+	      [AC_DEFINE(HAVE_AUDIODEVICEDESTROYIOPROCID)
+	       AC_MSG_RESULT(yes)],
+	      [AC_MSG_RESULT(no)])
+
 	    AC_MSG_CHECKING([for kAudioDevicePropertyDeviceManufacturer])
 	    AC_COMPILE_IFELSE(
               [AC_LANG_PROGRAM([#include <CoreServices/CoreServices.h>
@@ -1844,6 +1822,7 @@ case "$host" in
 	      [AC_DEFINE(HAVE_KAUDIODEVICEPROPERTYTRANSPORTTYPE)
 	       AC_MSG_RESULT(yes)],
 	      [AC_MSG_RESULT(no)])
+
 	    AC_MSG_CHECKING([for kLinearPCMFormatFlagIsNonInterleaved])
 	    AC_COMPILE_IFELSE(
               [AC_LANG_PROGRAM([#include <CoreServices/CoreServices.h>

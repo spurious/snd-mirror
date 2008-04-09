@@ -99,6 +99,8 @@ var extsnd_channelwidgets_tip = "<code>(channel-widgets :optional snd chn)</code
 
 var extsnd_chans_tip = "<code>(channels :optional snd)</code>: how many channels snd has";
 
+var extsnd_clearlistener_tip = "<code>(clear-listener)</code> removes listener text from the beginning to the cursor.";
+
 var extsnd_clearminibuffer_tip = "<code>(clear-minibuffer :optional snd)</code>: clears snd's minibuffer (erasing any error message as well).";
 
 var extsnd_cliphook_tip = "<code>clip-hook (clipping-value)</code> is called each time a sample is about to be clipped<br>" +
@@ -159,6 +161,8 @@ var extsnd_defvar_tip = "<code>(defvar name data)</code>: define 'name' to have 
 
 var extsnd_deletesamples_tip = "<code>(delete-samples start-samp samps :optional snd chn edpos)</code>:<br>" +
                                " delete 'samps' samples from snd's channel chn starting at 'start-samp'";
+
+var extsnd_deleteselection_tip = "<code>(delete-selection)</code> deletes the currently selected portion";
 
 var extsnd_dialogwidgets_tip = "<code>(dialog-widgets)</code>: dialog widgets (each #f if not yet created)</code>:<br>" +
                                " <code>(list  (0 color-dialog) (1 orientation-dialog) (2 enved-dialog)<br>" +
@@ -634,6 +638,10 @@ var extsnd_savedir_tip = "<code>(save-dir)</code>: name of directory for saved s
 var extsnd_savehook_tip = "<code>save-hook (snd name)</code>: called each time a file is about to be saved.<br>" +
                           " If it returns #t, the file is not saved.<br>" +
                           " 'name' is #f unless the file is being saved under a new name (as in sound-save-as).";
+
+var extsnd_saveselection_tip = "<code>(save-selection :file :header-type :data-format :srate :comment :channel)</code><br>" +
+                               "saves the current selection in 'file' using the indicated file attributes.<br>" +
+                               "If 'channel' is given, save only that channel.";
 
 var extsnd_savesound_tip = "<code>(save-sound :optional snd)</code>: save snd<br>" +
                            " (update the on-disk data to match Snd's current version)";

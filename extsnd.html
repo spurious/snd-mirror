@@ -7492,6 +7492,11 @@ peaks displays fft peak information.  If 'file' is not null, it writes
 the information to that file, otherwise it posts the data in a help window 
 (where it can be selected and pasted elsewhere).  The maximum number of peaks reported is set
 by <a href="#maxfftpeaks">max-transform-peaks</a>.
+
+<pre>
+(add-hook! <a class=quiet href="#aftertransformhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_aftertransformhook_tip)">after-transform-hook</a> (lambda (a b c) 
+                                  (<em class=red>peaks</em>))) ; post a detailed list of peaks after each FFT
+</pre>
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 

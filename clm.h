@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 4
-#define MUS_REVISION 5
-#define MUS_DATE "1-Mar-08"
+#define MUS_REVISION 6
+#define MUS_DATE "8-Apr-08"
 
 /*
+ * 8-Apr:      polywave uses sine-bank if highest harmonic out of Chebyshev range.
  * 1-Mar:      mus_set_name.
  * 26-Feb:     removed mus_cosines (use mus_length)
  * 24-Feb:     removed mus_make_env_with_start, added mus_make_env_with_length
@@ -310,6 +311,14 @@ typedef enum {MUS_CHEBYSHEV_OBSOLETE_KIND, MUS_CHEBYSHEV_FIRST_KIND, MUS_CHEBYSH
 #define MUS_RUN_P(GEN) (((GEN)->core)->run)
 #define MUS_MAX_CLM_SINC_WIDTH 65536
 #define MUS_MAX_CLM_SRC 65536.0
+
+#if WITH_DOUBLES
+  /* if with-doubles, the worst case difference between Tn and sin is up to 5e-6 by 39, 7e-10 at 30 */
+  #define MUS_CHEBYSHEV_TOP 30
+#else
+  /* here (float case) error gets to 6e-6 by 20 which is about where all the other errors are */
+  #define MUS_CHEBYSHEV_TOP 20
+#endif
 
 #ifdef __cplusplus
 extern "C" {

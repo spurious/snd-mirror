@@ -16,19 +16,6 @@
  *    audio describers
  */
 
-/* TODO: mac audio deprecations:
-   audio.c: In function 'mus_audio_close':
-   audio.c:7160: warning: 'AudioDeviceRemoveIOProc' is deprecated (declared at /System/Library/Frameworks/CoreAudio.framework/Headers/AudioHardware.h:2081)
-   audio.c:7167: warning: 'AudioDeviceAddIOProc' is deprecated (declared at /System/Library/Frameworks/CoreAudio.framework/Headers/AudioHardware.h:2067)
-   audio.c:7188: warning: 'AudioDeviceRemoveIOProc' is deprecated (declared at /System/Library/Frameworks/CoreAudio.framework/Headers/AudioHardware.h:2081)
-   audio.c: In function 'mus_audio_write':
-   audio.c:7454: warning: 'AudioDeviceAddIOProc' is deprecated (declared at /System/Library/Frameworks/CoreAudio.framework/Headers/AudioHardware.h:2067)
-   audio.c: In function 'mus_audio_open_input':
-   audio.c:7527: warning: 'AudioDeviceAddIOProc' is deprecated (declared at /System/Library/Frameworks/CoreAudio.framework/Headers/AudioHardware.h:2067)
-
-   I can't find any documentation about this, and Google just returns someone else asking the same question
-*/
-   
 /*
  * void mus_audio_describe(void) describes the audio hardware state.
  * char *mus_audio_report(void) returns the same information as a string.
@@ -7205,6 +7192,10 @@ static OSStatus reader(AudioDeviceID inDevice,
 static AudioDeviceID device = kAudioDeviceUnknown;
 static bool writing = false, open_for_input = false;
 
+#if HAVE_AUDIODEVICEDESTROYIOPROCID
+  static AudioDeviceIOProcID read_procId, write_procId;
+#endif 
+
 int mus_audio_close(int line) 
 {
   OSStatus err = noErr;
@@ -7215,14 +7206,22 @@ int mus_audio_close(int line)
       in_buf = 0;
       err = AudioDeviceStop(device, (AudioDeviceIOProc)reader);
       if (err == noErr) 
-	err = AudioDeviceRemoveIOProc(device, (AudioDeviceIOProc)reader);
+#if HAVE_AUDIODEVICEDESTROYIOPROCID
+	err = AudioDeviceDestroyIOProcID(device, read_procId);
+#else
+        err = AudioDeviceRemoveIOProc(device, (AudioDeviceIOProc)reader);
+#endif
     }
   else
     {
       if ((in_buf > 0) && (!writing))
 	{
 	  /* short enough sound that we never got started? */
+#if HAVE_AUDIODEVICEDESTROYIOPROCID
+	  err = AudioDeviceCreateIOProcID(device, (AudioDeviceIOProc)writer, NULL, &write_procId);
+#else
 	  err = AudioDeviceAddIOProc(device, (AudioDeviceIOProc)writer, NULL);
+#endif
 	  if (err == noErr)
 	    err = AudioDeviceStart(device, (AudioDeviceIOProc)writer); /* writer will be called right away */
 	  if (err == noErr)
@@ -7243,7 +7242,11 @@ int mus_audio_close(int line)
 	  in_buf = 0;
 	  err = AudioDeviceStop(device, (AudioDeviceIOProc)writer);
 	  if (err == noErr) 
+#if HAVE_AUDIODEVICEDESTROYIOPROCID
+	    err = AudioDeviceDestroyIOProcID(device, write_procId);
+#else
 	    err = AudioDeviceRemoveIOProc(device, (AudioDeviceIOProc)writer);
+#endif
 	  writing = false;
 	}
     }
@@ -7509,7 +7512,11 @@ int mus_audio_write(int line, char *buf, int bytes)
 	  if (in_buf == MAX_BUFS)
 	    {
 	      in_buf = 0;
+#if HAVE_AUDIODEVICEDESTROYIOPROCID
+	      err = AudioDeviceCreateIOProcID(device, (AudioDeviceIOProc)writer, NULL, &write_procId);
+#else
 	      err = AudioDeviceAddIOProc(device, (AudioDeviceIOProc)writer, NULL);
+#endif
 	      if (err == noErr)
 		err = AudioDeviceStart(device, (AudioDeviceIOProc)writer); /* writer will be called right away */
 	      if (err == noErr)
@@ -7582,7 +7589,13 @@ int mus_audio_open_input(int dev, int srate, int chans, int format, int size)
   fill_point = 0;
   incoming_out_srate = srate;
   incoming_out_chans = chans;
+
+#if HAVE_AUDIODEVICEDESTROYIOPROCID
+  err = AudioDeviceCreateIOProcID(device, (AudioDeviceIOProc)reader, NULL, &read_procId);
+#else
   err = AudioDeviceAddIOProc(device, (AudioDeviceIOProc)reader, NULL);
+#endif
+
   if (err == noErr)
     err = AudioDeviceStart(device, (AudioDeviceIOProc)reader);
   if (err != noErr) 
