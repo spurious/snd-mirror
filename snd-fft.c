@@ -5,7 +5,7 @@
 
 /* we need error catcher from FFTW (memerr = exit) */
 
-/* TODO: if big (long) spectr we run out of mem -- can this be done as needed in slices? */
+/* TODO: if big (long) spectr we run out of mem -- can this be done as needed in slices? or using temp files? */
 
 #if WITH_SHARED_SNDLIB
 #if HAVE_FFTW3

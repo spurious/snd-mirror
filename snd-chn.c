@@ -5,6 +5,11 @@
 
 /* SOMEDAY: fft side needs a zoom capability, not just the drag now */
 /* TODO: set y-bounds doesn't always fixup the y zoom slider? */
+/*
+ * TODO: check out wavo again and make it graph in some reasonable way
+ * TODO: polywave should accept 1/2 kind distinction, perhaps add 3/4 kinds (also is the phase offset documented?)
+ */
+
 
 
 /* it would be neat I think to change label font sizes/button sizes etc when dialog changes size

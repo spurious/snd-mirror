@@ -3,14 +3,12 @@
  * originally intended as a re-implementation of my much-missed dpysnd -- the Foonly/SAIL/E/Mus10/Grnlib sound editor from ca 1983.
  */
 
-/* TODO: fix the infinite loop in forth
+/*   MAJOR THINGS TO DO...
+ *
+ * TODO: fix the infinite loop in forth
  * TODO: direct to dac/jack in clm (write_sample replacement)
  * TODO:   openMP or similar multi-thread system for instruments?
  * TODO: dlocsig/move-sound in run
- * TODO: waveshape noise analysis
- * TODO: check out wavo again and make it graph in some reasonable way
- * TODO: polywave should accept 1/2 kind distinction, perhaps add 3/4 kinds (also is the phase offset documented?)
- * TODO: nchooseksin?
  * TODO: check out juce and chicken scheme
  */
 

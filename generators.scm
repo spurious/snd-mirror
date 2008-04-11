@@ -4594,8 +4594,6 @@ index 10 (so 10/2 is the bes-jn arg):
 	 (outa i (nchoosekcos gen 0.0)))))))
 |#
 
-;;; TODO: doc/test nchoosekgen
-
 
 
 

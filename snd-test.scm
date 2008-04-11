@@ -54809,6 +54809,17 @@ EDITS: 1
 	  (if (not (sound? snd)) (snd-display ";nsincos ~A" snd))
 	  (if (fneq (maxamp snd) 1.0) (snd-display ";nsincos max: ~A" (maxamp snd))))
 
+	(let* ((res (with-sound (:clipped #f :play #f)
+				(let ((gen (make-nchoosekcos 2000.0 0.05 10)))
+				  (run 
+				   (lambda ()
+				     (do ((i 0 (1+ i)))
+					 ((= i 30000))
+				       (outa i (nchoosekcos gen 0.0))))))))
+	       (snd (find-sound res)))
+	  (if (not (sound? snd)) (snd-display ";nchoosekcos ~A" snd))
+	  (if (ffneq (maxamp snd) 1.0) (snd-display ";nchoosekcos max: ~A" (maxamp snd))))
+		    
 	(let* ((res (with-sound ()
 		    (let ((gen (make-adjustable-square-wave 100 .2 .5)))
 		      (run
