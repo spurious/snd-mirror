@@ -4561,6 +4561,43 @@ index 10 (so 10/2 is the bes-jn arg):
 |#
 
 
+;;; --------------------------------------------------------------------------------
+
+;;; cos^n J 121
+
+(defgenerator (nchoosekcos
+	       :make-wrapper (lambda (g)
+			       (set! (nchoosekcos-frequency g) (hz->radians (nchoosekcos-frequency g)))
+			       g))
+  (frequency *clm-default-frequency*) (ratio 1.0) (n 1) (angle 0.0))
+
+(define (nchoosekcos gen fm)
+  "  (make-nchoosekcos frequency (ratio 1.0) (n 1)) creates an nchoosekcos generator.\n\
+   (nchoosekcos gen fm) returns a sum of cosines scaled by the binomial coeffcients."
+  (declare (gen nchoosekcos) (fm float))
+  (let* ((x (nchoosekcos-angle gen))
+	 (y (* x (nchoosekcos-ratio gen)))
+	 (n (nchoosekcos-n gen)))
+
+    (set! (nchoosekcos-angle gen) (+ x fm (nchoosekcos-frequency gen)))
+
+    (* (cos x)
+       (expt (cos y) n))))
+
+#|
+(with-sound (:clipped #f :statistics #t :play #t)
+  (let ((gen (make-nchoosekcos 2000.0 0.05 10)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 30000))
+	 (outa i (nchoosekcos gen 0.0)))))))
+|#
+
+;;; TODO: doc/test nchoosekgen
+
+
+
 
 ;;; --------------------------------------------------------------------------------
 ;;;

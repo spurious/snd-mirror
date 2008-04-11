@@ -1360,7 +1360,7 @@ snd_info *make_simple_channel_display(int srate, int initial_length, fw_button_t
 
 
 static axis_context *combined_context(chan_info *cp);
-static void make_wavogram(chan_info *cp);
+static int make_wavogram(chan_info *cp);
 
 
 static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_sided)
@@ -1411,10 +1411,7 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
 
   /* check for wavogram */
   if (cp->time_graph_type == GRAPH_AS_WAVOGRAM) 
-    {
-      make_wavogram(cp); 
-      return(0);
-    }
+    return(make_wavogram(cp)); 
 
   if (normal)
     {
@@ -3113,12 +3110,12 @@ static bool make_spectrogram(chan_info *cp)
 }
 
 
-static void make_wavogram(chan_info *cp)
+static int make_wavogram(chan_info *cp)
 {
   snd_info *sp;
   Float xoff, x, y, x0, y0, xincr;
   Float width, height, zscl, yval, xval, binval;
-  int i, j, yincr, yoff, xx, yy;
+  int i, j, points = 0, yincr, yoff, xx, yy;
   Float matrix[9];
   Float xyz[3];
   snd_fd *sf;
@@ -3128,7 +3125,7 @@ static void make_wavogram(chan_info *cp)
   ap = cp->axis;
   if (sp) ap->losamp = (off_t)(ap->x0 * SND_SRATE(sp));
   sf = init_sample_read(ap->losamp, cp, READ_FORWARD);
-  if (sf == NULL) return;
+  if (sf == NULL) return(0);
 #if HAVE_GL
   if (((sp->nchans == 1) || (sp->channel_style == CHANNELS_SEPARATE)) &&
       (color_map(ss) != BLACK_AND_WHITE_COLORMAP) &&
@@ -3141,7 +3138,7 @@ static void make_wavogram(chan_info *cp)
       /* each line is wavo_trace samps, there are (height / wave_hop) of these? */
       int lines, len;
       lines = (int)(ap->height / cp->wavo_hop);
-      if (lines == 0) return;
+      if (lines == 0) return(0);
       len = cp->wavo_trace;
       samps = (Float **)CALLOC(lines, sizeof(Float *));
       js = (int **)CALLOC(lines, sizeof(int *));
@@ -3198,6 +3195,7 @@ static void make_wavogram(chan_info *cp)
 	    glEnd();
 	  }
       gl_display(cp);
+      points = j;
 
       for (i = 0; i < lines; i++) 
 	{
@@ -3207,7 +3205,7 @@ static void make_wavogram(chan_info *cp)
       FREE(samps);
       FREE(js);
       free_snd_fd(sf);
-      return;
+      return(points);
     }
 #endif
   if (cp->printing) ps_allocate_grf_points();
@@ -3271,6 +3269,7 @@ static void make_wavogram(chan_info *cp)
 	      yy = (int)(yval + y0);
 	    }
 	}
+      points += cp->wavo_trace;
       
       if (color_map(ss) == BLACK_AND_WHITE_COLORMAP)
 	{
@@ -3283,6 +3282,7 @@ static void make_wavogram(chan_info *cp)
   if ((cp->printing) && (color_map(ss) != BLACK_AND_WHITE_COLORMAP))
     ps_reset_color();
   free_snd_fd(sf);
+  return(points);
 }
 
 
@@ -7567,7 +7567,7 @@ static void write_transform_peaks(FILE *fd, chan_info *ucp)
 	      sp = cp->sound;
 	      data = fp->data;
 	      cutoff = cp->spectro_cutoff;
-	      samps = fp->current_size * 0.5;
+	      samps = (int)(fp->current_size * 0.5);
 	      cutoff_samps = (int)(samps * cutoff);
 	      samples_per_pixel = (Float)cutoff_samps / (Float)(fap->x_axis_x1 - fap->x_axis_x0);
 

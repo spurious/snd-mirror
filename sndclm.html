@@ -86,7 +86,7 @@ note lists and instruments are described in sndscm.html.
 
 <tr><td colspan=3><center><a href="#generators">Built-in Generators</a></center></td></tr>
 
-<tr><td width=20 bgcolor="#f6f8ff"></td><td>
+<tr><td width=20 bgcolor="#f2f4ff"></td><td>
 <table border=0 cellpadding=0>
   <tr><td><a href="#all-passdoc">all-pass</a></td><td width=20></td><td>all-pass filter</td></tr>
   <tr><td><a href="#asymmetric-fmdoc">asymmetric-fm</a></td><td></td><td>asymmetric fm</td></tr>
@@ -146,7 +146,7 @@ note lists and instruments are described in sndscm.html.
 
 <tr><td colspan=3><center><a href="#otherfunctions">Other Functions</a></center></td></tr>
 
-<tr><td width=20 bgcolor="#f6f8ff"></td><td>
+<tr><td width=20 bgcolor="#f2f4ff"></td><td>
 <table border=0 cellpadding=0>
   <tr><td><a href="#autocorrelate">autocorrelate</a></td><td></td><td>autocorrelation</td></tr>
   <tr><td><a href="#amplitude-modulate">amplitude-modulate</a></td><td></td><td>sig1 * (car + sig2)</td></tr>
@@ -1035,6 +1035,72 @@ and get more info (in this case, the begin time and duration of the enclosing no
 so that with-sound will be able to display the stack backtrace when an error occurs.
 </p>
 
+<p>
+An envelope applied to the amplitude of a signal is a form of amplitude modulation,
+and glissando is frequency modulation.  Both cause a broadening of the spectral components:
+</p>
+
+<table border=1 hspace=40><tr>
+<td>
+<img src="ampenvspectrum.png" alt="amp env spectrum" onmouseout="UnTip()" onmouseover="Tip('fft size: 65536, Blackman10 window.<br><br><pre>(with-sound (:srate 10000)<br>  (let* ((ampf (make-env \'(0 0 1 1 15 1 16 0) :duration 15))<br>	 (osc (make-oscil 50))<br>	 (samps (seconds->samples 15))<br>	 (start (seconds->samples 7))<br>	 (end (+ start samps)))<br>    (do ((i 0 (1+ i)))<br>        ((= i end))<br>      (outa (+ i start) (* (env ampf) (oscil osc))))))</pre>')">
+</td><td width=10>
+</td><td>
+<img src="frqenvspectrum.png" alt="frq env spectrum" onmouseout="UnTip()" onmouseover="Tip('fft size: 65536, Blackman10 window.<br><br><pre>(with-sound (:srate 10000)<br>  (let* ((ampf (make-env \'(0 0 10 0 11 1 25 1 26 0 40 0) <br>			 :duration 40<br>			 :scaler (hz->radians 200)))<br>	 (osc (make-oscil 100))<br>	 (samps (seconds->samples 40))<br>	 (start (seconds->samples 0))<br>	 (end (+ start samps)))<br>    (do ((i 0 (1+ i)))<br>	((= i end))<br>      (outa (+ i start) (oscil osc (env ampf))))))<br></pre>')">
+</td>
+<tr>
+<td bgcolor="#f2f4ff"><small><center>truncated pyramid amplitude envelope<br>multiplied by sinusoid at 50Hz</center></small>
+</td><td></td>
+<td bgcolor="#f2f4ff"><small><center>truncated pyramid frquency envelope<br>sinusoid from 100Hz to 300Hz</center></small>
+</td>
+</tr></table>
+
+<!--
+ampenvspectrum.png:
+(with-sound (:srate 10000)
+  (let* ((ampf (make-env '(0 0 1 1 15 1 16 0) :duration 15))
+	 (osc (make-oscil 50))
+	 (samps (seconds->samples 15))
+	 (start (seconds->samples 7))
+	 (end (+ start samps)))
+    (run
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i end))
+	 (outa (+ i start) (* (env ampf) (oscil osc))))))))
+
+;;; GL/ data cutoff .015 dark 78 jet invert blackman10 65536 db-100
+;;; x 299 1.84 y 281 .082 z 342 1.25
+;;; hop 3
+(set! (spectro-cutoff) .02)
+(set! (selected-graph-color) (make-color 1 1 1))
+
+frqenvspectrum.png:
+(with-sound (:srate 10000)
+  (let* ((ampf (make-env '(0 0 10 0 11 1 25 1 26 0 40 0) :duration 40 :scaler (hz->radians 200)))
+	 (osc (make-oscil 100))
+	 (samps (seconds->samples 40))
+	 (start (seconds->samples 0))
+	 (end (+ start samps)))
+    (run
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i end))
+	 (outa (+ i start) (oscil osc (env ampf))))))))
+
+65536 GL blackman10 -100 dB 
+x 299 1.84 y 281 0.82 z 10 1.25
+hop 3 % 0.11
+jet .015 78 invert
+-->
+
+<p>The amplitude case reflects the spectrum of the amplitude envelope all by itself, translated (by multiplication)
+up to the sinusoid's pitch.  The sidebands are about 1 Hz apart (the envelope takes 1 second to go linearly from 0 to 1).
+Despite appearances, we hear this (are you sitting down?) as a changing amplitude, not a timbral mess.
+Spectra can be tricky to interpret, and I've tried to choose parameters for this display that emphasize 
+the broadening.
+</p>
+
+
 <table border=3 bordercolor="tan" hspace=40 vspace=10><th bgcolor="beige">Envelopes</th><tr><td>
 <blockquote><small>
 <br>
@@ -1214,7 +1280,7 @@ below for an <a href="#src">src</a>-based way to do the same thing.
 <p>
 There is one annoying problem with table-lookup: noise.
 Say we have a sine wave in a table with L elements, and we want to read it at a frequency of
-f Hz at a sampling rate of Fs.  This requires that we read the table at locations that are increments of
+f Hz at a sampling rate of Fs.  This requires that we read the table at locations that are multiples of
 L * f / Fs.  This is ordinarily not an integer (that is, we've fallen between the
 table elements).  We have no data between the elements, but we can make (plenty of)
 assumptions about what ought to be there.  In the no-interpolation case (type = <code>mus-interp-none</code>), we simply take the floor of
@@ -1247,12 +1313,17 @@ the table-relative phase, returning a squared-off sine-wave:
 (set! (graphs-horizontal) #f)
 -->
 
+<!-- 
+     maxamp of sawtooth is 2pi/L (it's a max at 0 when sin x ~ x, and each phase increment is 2pi/L) 
+-->
 
 <p>
 In addition to the sine at 100 Hz, we're getting lots of pairs of components, each pair centered around n * L * f, (10000 = 100 * 100 is the first),
 and separated from it by f, (9900 and 10100),
 and the amplitude of each pair is 1/(nL): -40 dB is 1/100 for the n=1 case.
 This spectrum says "amplitude modulation" (the fast square wave times the slow sinusoid).
+After scribbling a bit on the back of an envelope, we announce with a confident air that
+the sawtooth error signal gives us the 1/n (it is a sum of sin nx/n), and its amplitude gives us the 1/L.
 Now we try linear interpolation (<code>mus-interp-linear</code>), and get the same components as before, but
 the amplitude is going (essentially) as 1.0 / (n * n * L * L).  So the interpolation
 reduces the original problem by a factor of n * L:
@@ -1279,12 +1350,9 @@ reduces the original problem by a factor of n * L:
 (set! (x-axis-label 0 1 1) "spectrum of the error")
 -->
 
-
 <p>
-We can view this again as amplitude modulation:
-the sinusoid at frequency f times the little linear sweep during each table sample (its frequency: L * f).
-(The linear signal can be expanded as
-a sum of sines involving sin(n * L * f) / n).
+We can view this also as amplitude modulation:
+the sinusoid at frequency f times the little blip during each table sample at frequency L * f.
 Each component
 is at n * L * f, as before, and split in half by the modulation.
 Since L * f is normally a very high frequency, and sampling rates are not in the megahertz range (as in our examples),
@@ -2065,11 +2133,11 @@ A more reasonable square-wave can be generated via
 
 <table border=1 hspace=20 vspace=10>
 <tr>
-<td bgcolor="#f6f8ff"><center>n: 1.0</center></td>
+<td bgcolor="#f2f4ff"><center>n: 1.0</center></td>
 <td width=16></td>
-<td bgcolor="#f6f8ff"><center>n: 3.0</center></td>
+<td bgcolor="#f2f4ff"><center>n: 3.0</center></td>
 <td width=16></td>
-<td bgcolor="#f6f8ff"><center>n: 100.0</center></td>
+<td bgcolor="#f2f4ff"><center>n: 100.0</center></td>
 </tr>
 <tr>
 <td>
@@ -2308,9 +2376,9 @@ but perhaps a filter is a simpler approach.  There are a lot more of these "kern
 
 <table border=1 hspace=20 cellspacing=4>
 <tr>
-<td bgcolor="#f6f8ff"><center>ncos2 (Fejer, n=10)</center></td>
-<td bgcolor="#f6f8ff"><center>npcos (Poussin, n=5)</center></td>
-<td bgcolor="#f6f8ff"><center>ncos4 (Jackson, n=10)</center></td>
+<td bgcolor="#f2f4ff"><center>ncos2 (Fejer, n=10)</center></td>
+<td bgcolor="#f2f4ff"><center>npcos (Poussin, n=5)</center></td>
+<td bgcolor="#f2f4ff"><center>ncos4 (Jackson, n=10)</center></td>
 </tr><tr>
 <td><img src="fejer.png" alt="fejer sum"></td>
 <td><img src="poussin.png" alt="poussin sum"></td>
@@ -2375,7 +2443,12 @@ the conjugate Dirichlet kernel
 </td></tr></table>
 
 
-<p>See also the <a href="#nrxydoc">nrxycos</a> generator, 
+<p>In terms of speed, ncos and nsin outpace polywave only when the latter has to
+shift away from the Chebyshev polynomials (around n=30).  polywave appears to be more accurate when n is small.
+Both ncos and nsin could be implemented as polynomials in cos x, just as in polyshape; in fact, ncos is
+almost the same as the Chebyshev polynomial of the 4th kind.  But by sticking with the current formulas,
+we avoid the numerical troubles that limit polyshape to n < 50.
+See also the <a href="#nrxydoc">nrxycos</a> generator, 
 and <a href="#othergenerators">generators.scm</a>.
 </p>
 
@@ -2522,7 +2595,7 @@ another kernel set: binomial coeffs G&R 1.320 etc -- not different enough
 
 <table border=1 hspace=20 vspace=10><tr><td>
 <table border=0 hspace=40 vspace=10>
-<tr><td colspan=3 bgcolor="#f6f8ff"><center><h4>various sums</h4></center></td></tr>
+<tr><td colspan=3 bgcolor="#f2f4ff"><center><h4>various sums</h4></center></td></tr>
 
 
 <tr>
@@ -2806,7 +2879,7 @@ reflection, please send it to me, and I'll add it to this collection.
 <table border=1 hspace=40><tr><td>
 <img src="sinesummation.png" alt="nxry formula">
 </td></tr>
-<tr><td bgcolor="#f6f8ff"><center>nrxysin, n=5, a=0.5</center></td></tr>
+<tr><td bgcolor="#f2f4ff"><center>nrxysin, n=5, a=0.5</center></td></tr>
 </table></td></tr>
 </table>
 
@@ -3313,14 +3386,14 @@ both reflect that in their spectra (spectrum y axis is in dB):
 <td><img src="sqsq.png" alt="sqwave spectrum"></td><td width=20></td><td><img src="tritri.png" alt="triwave spectrum"></td>
 </tr>
 <tr>
-<td bgcolor="#f6f8ff"><center>square-wave (freq=1000)</center></td><td></td><td bgcolor="#f6f8ff"><center>triangle-wave (freq=1000)</center></td>
+<td bgcolor="#f2f4ff"><center>square-wave (freq=1000)</center></td><td></td><td bgcolor="#f2f4ff"><center>triangle-wave (freq=1000)</center></td>
 </tr>
 
 <tr>
 <td><img src="randsq.png" alt="rand spectrum"></td><td></td><td><img src="randtri.png" alt="rand-interp spectrum"></td>
 </tr>
 <tr>
-<td bgcolor="#f6f8ff"><center>rand (freq=2000)</center></td><td></td><td bgcolor="#f6f8ff"><center>rand-interp (freq=2000)</center></td>
+<td bgcolor="#f2f4ff"><center>rand (freq=2000)</center></td><td></td><td bgcolor="#f2f4ff"><center>rand-interp (freq=2000)</center></td>
 </tr>
 </table>
 
@@ -3463,9 +3536,9 @@ than the preceding:
 <tr><td>
 <table border=0>
 <tr>
-<td bgcolor="#f6f8ff"><center>random</center></td>
-<td bgcolor="#f6f8ff"><center>rand</center></td>
-<td bgcolor="#f6f8ff"><center>rand-interp</center></td>
+<td bgcolor="#f2f4ff"><center>random</center></td>
+<td bgcolor="#f2f4ff"><center>rand</center></td>
+<td bgcolor="#f2f4ff"><center>rand-interp</center></td>
 </tr><tr>
 <td><img src="random.png" alt="random spectrum"></td>
 <td><img src="rand.png" alt="rand spectrum"></td>
@@ -3474,9 +3547,9 @@ than the preceding:
 </td></tr><tr><td>
 <table border=0>
 <tr>
-<td bgcolor="#f6f8ff"><center>1/f</center></td>
-<td bgcolor="#f6f8ff"><center>brownian</center></td>
-<td bgcolor="#f6f8ff"><center>green</center></td>
+<td bgcolor="#f2f4ff"><center>1/f</center></td>
+<td bgcolor="#f2f4ff"><center>brownian</center></td>
+<td bgcolor="#f2f4ff"><center>green</center></td>
 </tr><tr>
 <td><img src="1f.png" alt="1/f spectrum"></td>
 <td><img src="brownian.png" alt="brownian spectrum"></td>
@@ -5543,31 +5616,31 @@ The generic functions are:
 </p>
 
 <table cellspacing=0 cellpadding=0 hspace=40>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-channel">mus-channel</a></td><td width=30 bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">channel being read/written</td></tr>
+<tr><td bgcolor="#f2f4ff"><a class=def name="mus-channel">mus-channel</a></td><td width=30 bgcolor="#f2f4ff"></td><td bgcolor="#f2f4ff">channel being read/written</td></tr>
 <tr><td><a class=def name="mus-channels">mus-channels</a></td><td></td><td>channels open</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-data">mus-data</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">vct of data</td></tr>
+<tr><td bgcolor="#f2f4ff"><a class=def name="mus-data">mus-data</a></td><td bgcolor="#f2f4ff"></td><td bgcolor="#f2f4ff">vct of data</td></tr>
 <tr><td><a class=def name="mus-describe">mus-describe</a></td><td></td><td>description of current state</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-feedback">mus-feedback</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">feedback coefficient</td></tr>
+<tr><td bgcolor="#f2f4ff"><a class=def name="mus-feedback">mus-feedback</a></td><td bgcolor="#f2f4ff"></td><td bgcolor="#f2f4ff">feedback coefficient</td></tr>
 <tr><td><a class=def name="mus-feedforward">mus-feedforward</a></td><td></td><td>feedforward coefficient</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-file-name">mus-file-name</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">file being read/written</td></tr>
+<tr><td bgcolor="#f2f4ff"><a class=def name="mus-file-name">mus-file-name</a></td><td bgcolor="#f2f4ff"></td><td bgcolor="#f2f4ff">file being read/written</td></tr>
 <tr><td><a class=def name="mus-frequency">mus-frequency</a></td><td></td><td>frequency (Hz)</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-hop">mus-hop</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">hop size for block processing</td></tr>
+<tr><td bgcolor="#f2f4ff"><a class=def name="mus-hop">mus-hop</a></td><td bgcolor="#f2f4ff"></td><td bgcolor="#f2f4ff">hop size for block processing</td></tr>
 <tr><td><a class=def name="mus-increment">mus-increment</a></td><td></td><td>various increments</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-interp-type">mus-interp-type</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">interpolation type (mus-interp-linear, etc)</td></tr>
+<tr><td bgcolor="#f2f4ff"><a class=def name="mus-interp-type">mus-interp-type</a></td><td bgcolor="#f2f4ff"></td><td bgcolor="#f2f4ff">interpolation type (mus-interp-linear, etc)</td></tr>
 <tr><td><a class=def name="mus-length">mus-length</a></td><td></td><td>data length</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-location">mus-location</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">sample location for reads/writes</td></tr>
+<tr><td bgcolor="#f2f4ff"><a class=def name="mus-location">mus-location</a></td><td bgcolor="#f2f4ff"></td><td bgcolor="#f2f4ff">sample location for reads/writes</td></tr>
 <tr><td><a class=def name="mus-name">mus-name</a></td><td></td><td>generator name ("oscil")</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-offset">mus-offset</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">envelope offset</td></tr>
+<tr><td bgcolor="#f2f4ff"><a class=def name="mus-offset">mus-offset</a></td><td bgcolor="#f2f4ff"></td><td bgcolor="#f2f4ff">envelope offset</td></tr>
 <tr><td><a class=def name="mus-order">mus-order</a></td><td></td><td>filter order</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-phase">mus-phase</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">phase (radians)</td></tr>
+<tr><td bgcolor="#f2f4ff"><a class=def name="mus-phase">mus-phase</a></td><td bgcolor="#f2f4ff"></td><td bgcolor="#f2f4ff">phase (radians)</td></tr>
 <tr><td><a class=def name="mus-ramp">mus-ramp</a></td><td></td><td>granulate grain envelope ramp setting</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-reset">mus-reset</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">set gen to default starting state</td></tr>
+<tr><td bgcolor="#f2f4ff"><a class=def name="mus-reset">mus-reset</a></td><td bgcolor="#f2f4ff"></td><td bgcolor="#f2f4ff">set gen to default starting state</td></tr>
 <tr><td><a class=def name="mus-run">mus-run</a></td><td></td><td>run any generator</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-scaler">mus-scaler</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">scaler, normally on an amplitude</td></tr>
+<tr><td bgcolor="#f2f4ff"><a class=def name="mus-scaler">mus-scaler</a></td><td bgcolor="#f2f4ff"></td><td bgcolor="#f2f4ff">scaler, normally on an amplitude</td></tr>
 <tr><td><a class=def name="mus-width">mus-width</a></td><td></td><td>width of interpolation tables, etc</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-xcoeff">mus-xcoeff</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">x (input) coefficient</td></tr>
+<tr><td bgcolor="#f2f4ff"><a class=def name="mus-xcoeff">mus-xcoeff</a></td><td bgcolor="#f2f4ff"></td><td bgcolor="#f2f4ff">x (input) coefficient</td></tr>
 <tr><td><a class=def name="mus-xcoeffs">mus-xcoeffs</a></td><td></td><td>vct of x (input) coefficients</td></tr>
-<tr><td bgcolor="#f6f8ff"><a class=def name="mus-ycoeff">mus-ycoeff</a></td><td bgcolor="#f6f8ff"></td><td bgcolor="#f6f8ff">y (output, feedback) coefficient</td></tr>
+<tr><td bgcolor="#f2f4ff"><a class=def name="mus-ycoeff">mus-ycoeff</a></td><td bgcolor="#f2f4ff"></td><td bgcolor="#f2f4ff">y (output, feedback) coefficient</td></tr>
 <tr><td><a class=def name="mus-ycoeffs">mus-ycoeffs</a></td><td></td><td>vct of y (feedback) coefficients</td></tr>
 
 </table>

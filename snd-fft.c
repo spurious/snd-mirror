@@ -5,6 +5,8 @@
 
 /* we need error catcher from FFTW (memerr = exit) */
 
+/* TODO: if big (long) spectr we run out of mem -- can this be done as needed in slices? */
+
 #if WITH_SHARED_SNDLIB
 #if HAVE_FFTW3
 #include <fftw3.h>
