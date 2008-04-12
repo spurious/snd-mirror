@@ -54509,10 +54509,10 @@ EDITS: 1
 		       (lambda ()
 			 (do ((i 0 (1+ i)))
 			     ((= i 30000))
-			   (outa i (* 0.5 (nkssb-interp gen (* vibamp (oscil vib)) (env move))))))))))
+			   (outa i (nkssb-interp gen (* vibamp (oscil vib)) (env move)))))))))
 	       (snd (find-sound res)))
 	  (if (not (sound? snd)) (snd-display ";nkssb 2 ~A" snd))
-	  (if (fneq (maxamp snd) 0.5) (snd-display ";nkssb 2 max: ~A" (maxamp snd))))
+	  (if (fneq (maxamp snd) 1.0) (snd-display ";nkssb 2 max: ~A" (maxamp snd))))
 	
 	(let* ((res (with-sound (:clipped #f)
 		    (let ((gen (make-rkoddssb 1000.0 0.1 0.5)))

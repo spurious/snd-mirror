@@ -3,10 +3,6 @@
 #include "sndlib2xen.h"
 
 
-/* we need error catcher from FFTW (memerr = exit) */
-
-/* TODO: if big (long) spectr we run out of mem -- can this be done as needed in slices? or using temp files? */
-
 #if WITH_SHARED_SNDLIB
 #if HAVE_FFTW3
 #include <fftw3.h>
@@ -1526,6 +1522,48 @@ void free_sono_info(chan_info *cp)
 }
 
 
+static bool memory_available_p(off_t slices, off_t bins)
+{
+  /* as far as I can tell, the approved way to make sure we can allocate enough memory is to allocate it... */
+  off_t bytes_needed; /* "off_t" throughout is vital here */
+
+  bytes_needed = (off_t)(slices * (sizeof(off_t) + sizeof(Float *))) +  /* begs + pointer to each slice data */
+                 (off_t)(bins * slices * sizeof(Float)) +               /* data for all the slices */
+                 (off_t)(bins * 2 * sizeof(double));                    /* FFT space */
+
+  /* apparently Linux always returns a pointer, even when it will fail later, so we have to
+   *   touch the memory to find out if it's there; but this works only if we then try another alloc!
+   *   this is ridiculous...
+   */
+
+  if (bytes_needed > 100000000) /* assume 100 MBytes is ok */
+    {
+      char *check_alloc[10];
+      int i;
+      off_t bytes_needed_10;
+
+      bytes_needed_10 = bytes_needed / 10;
+      for (i = 0; i < 10; i++)
+	{
+	  check_alloc[i] = (char *)malloc(bytes_needed_10);
+	  if (check_alloc[i] == NULL)
+	    {
+	      int j;
+	      snd_warning("can't allocate enough memory to run this set of FFTS: " OFF_TD " bytes needed", bytes_needed);
+	      for (j = 0; j < i; j++)
+		free(check_alloc[j]);
+	      return(false);
+	    }
+	  check_alloc[i][0] = ' '; /* touch it! */
+	}
+
+      for (i = 0; i < 10; i++)
+	free(check_alloc[i]);
+    }
+  return(true);
+}
+
+
 static sono_slice_t set_up_sonogram(sonogram_state *sg)
 {
   /* return SONO_RUN to go on, SONO_QUIT to quit early */
@@ -1573,12 +1611,20 @@ static sono_slice_t set_up_sonogram(sonogram_state *sg)
 
   sg->edit_ctr = cp->edit_ctr;
   si = cp->sonogram_data;
+
   if (!si)
     {
       si = (sono_info *)CALLOC(1, sizeof(sono_info));
-      cp->sonogram_data = si;
-      si->total_bins = sg->spectrum_size;
+      si->total_bins = sg->spectrum_size; 
       si->total_slices = snd_to_int_pow2(sg->outlim);
+
+      if (!memory_available_p((off_t)(si->total_slices), (off_t)(si->total_bins)))
+	{
+	  FREE(si);
+	  return(SONO_QUIT);
+	}
+
+      cp->sonogram_data = si;
       si->begs = (off_t *)CALLOC(si->total_slices, sizeof(off_t));
       si->data = (Float **)CALLOC(si->total_slices, sizeof(Float *));
       for (i = 0; i < si->total_slices; i++) si->data[i] = (Float *)CALLOC(si->total_bins, sizeof(Float));
@@ -1588,20 +1634,26 @@ static sono_slice_t set_up_sonogram(sonogram_state *sg)
 	(si->total_bins < sg->spectrum_size))
       {
 	int tempsize;
+
+	tempsize = snd_to_int_pow2(sg->outlim);
+	if (!memory_available_p((off_t)tempsize, (off_t)(sg->spectrum_size)))
+	  return(SONO_QUIT);
+
 	for (i = 0; i < si->total_slices; i++) 
 	  if (si->data[i]) 
 	    {
 	      FREE(si->data[i]); 
 	      si->data[i] = NULL;
 	    }
-	tempsize = snd_to_int_pow2(sg->outlim);
+
 	if (si->total_slices < tempsize) 
 	  {
-	    FREE(si->data);
 	    si->total_slices = tempsize;
+	    FREE(si->data);
 	    si->begs = (off_t *)REALLOC(si->begs, si->total_slices * sizeof(off_t));
 	    si->data = (Float **)CALLOC(si->total_slices, sizeof(Float *));
 	  }
+
 	if (si->total_bins < sg->spectrum_size) si->total_bins = sg->spectrum_size;
 	for (i = 0; i < si->total_slices; i++) si->data[i] = (Float *)CALLOC(si->total_bins, sizeof(Float));
       }

@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 4
-#define MUS_REVISION 6
-#define MUS_DATE "8-Apr-08"
+#define MUS_REVISION 7
+#define MUS_DATE "12-Apr-08"
 
 /*
+ * 12-Apr:     added choice arg to mus_make_polywave.
  * 8-Apr:      polywave uses sine-bank if highest harmonic out of Chebyshev range.
  * 1-Mar:      mus_set_name.
  * 26-Feb:     removed mus_cosines (use mus_length)
@@ -300,7 +301,7 @@ typedef enum {MUS_RECTANGULAR_WINDOW, MUS_HANN_WINDOW, MUS_WELCH_WINDOW, MUS_PAR
 #define MUS_FFT_WINDOW_OK(Window) ((Window) < MUS_NUM_FFT_WINDOWS)
 
 typedef enum {MUS_SPECTRUM_IN_DB, MUS_SPECTRUM_NORMALIZED, MUS_SPECTRUM_RAW} mus_spectrum_t;
-typedef enum {MUS_CHEBYSHEV_OBSOLETE_KIND, MUS_CHEBYSHEV_FIRST_KIND, MUS_CHEBYSHEV_SECOND_KIND} mus_polynomial_t;
+typedef enum {MUS_CHEBYSHEV_EITHER_KIND, MUS_CHEBYSHEV_FIRST_KIND, MUS_CHEBYSHEV_SECOND_KIND} mus_polynomial_t;
 
 #if defined(__GNUC__) && (!(defined(__cplusplus)))
   #define MUS_RUN(GEN, ARG_1, ARG_2) ({ mus_any *_clm_h_1 = (mus_any *)(GEN); \
@@ -601,7 +602,7 @@ Float mus_polyshape_unmodulated(mus_any *ptr, Float index);
 #define mus_polyshape_no_input(Obj) mus_polywave_unmodulated(Obj)
 bool mus_polyshape_p(mus_any *ptr);
 
-mus_any *mus_make_polywave(Float frequency, Float *coeffs, int n);
+mus_any *mus_make_polywave(Float frequency, Float *coeffs, int n, int cheby_choice);
 bool mus_polywave_p(mus_any *ptr);
 Float mus_polywave_unmodulated(mus_any *ptr);
 Float mus_polywave(mus_any *ptr, Float fm);

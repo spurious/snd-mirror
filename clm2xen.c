@@ -4438,7 +4438,7 @@ to create (via waveshaping) the harmonic spectrum described by the partials argu
     {
       int ck;
       ck = XEN_TO_C_INT(ukind);
-      if ((ck >= MUS_CHEBYSHEV_OBSOLETE_KIND) && (ck <= MUS_CHEBYSHEV_SECOND_KIND))
+      if ((ck >= MUS_CHEBYSHEV_EITHER_KIND) && (ck <= MUS_CHEBYSHEV_SECOND_KIND))
 	kind = (mus_polynomial_t)ck;
       else XEN_OUT_OF_RANGE_ERROR(S_partials_to_polynomial, 2, ukind, "~A: unknown Chebyshev polynomial kind");
     }
@@ -4534,7 +4534,7 @@ is the same in effect as " S_make_oscil
       phase = mus_optkey_to_float(keys[1], S_make_polyshape, orig_arg[2], phase);
 
       ck = mus_optkey_to_int(keys[4], S_make_polyshape, orig_arg[4], (int)kind);
-      if ((ck >= MUS_CHEBYSHEV_OBSOLETE_KIND) && (ck <= MUS_CHEBYSHEV_SECOND_KIND))
+      if ((ck >= MUS_CHEBYSHEV_EITHER_KIND) && (ck <= MUS_CHEBYSHEV_SECOND_KIND))
 	kind = (mus_polynomial_t)ck;
       else XEN_OUT_OF_RANGE_ERROR(S_make_polyshape, orig_arg[4], keys[4], "~A: unknown Chebyshev polynomial kind");
 
@@ -4644,7 +4644,7 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
 	XEN_OUT_OF_RANGE_ERROR(S_make_polywave, orig_arg[0], keys[0], "freq ~A > srate/2?");
 
       type = mus_optkey_to_int(keys[2], S_make_polywave, orig_arg[2], (int)kind);
-      if ((type >= MUS_CHEBYSHEV_OBSOLETE_KIND) && 
+      if ((type >= MUS_CHEBYSHEV_EITHER_KIND) && 
 	  (type <= MUS_CHEBYSHEV_SECOND_KIND))
 	kind = (mus_polynomial_t)type;
       else XEN_OUT_OF_RANGE_ERROR(S_make_polywave, orig_arg[2], keys[2], "~A: unknown Chebyshev polynomial kind");
@@ -4686,7 +4686,7 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
       orig_v = xen_make_vct(n, coeffs);
     }
 
-  ge = mus_make_polywave(freq, coeffs, n);
+  ge = mus_make_polywave(freq, coeffs, n, kind);
   if (ge) return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, orig_v)));
   return(XEN_FALSE);
 }

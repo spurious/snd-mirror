@@ -1510,6 +1510,15 @@ is used internally:  mus-chebyshev-first-kind or mus-chebyshev-second-kind. (The
 Chebyshev polynomials of the fourth kind).  
 </p>
 
+<table border=1 hspace=100 cellpadding=8><tr><td>
+<p><small>The initial-phase defaults to 0.0 (i.e. a sine, not a cosine) for historical reasons.  This
+can be slightly confusing if you're comparing waveforms.  Using sin doesn't change the
+shape of the output waveform, but affects its components initial phases.  To get a sum of cosines,
+set the initial-phase to pi/2.  In the polywave case, set mus-phase to pi/2 after creating
+the generator.
+</small></p></td></tr></table>
+<br>
+
 <table border=1 align=left hspace=40 vspace=10 cellpadding=4>
 <tr><td colspan=2 bgcolor="beige"><center>polywave methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>

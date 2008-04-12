@@ -1107,7 +1107,7 @@
 
     (set! (nkssb-angle gen) (+ cx fm (nkssb-frequency gen)))
 
-    (if (< (abs sx2) nearly-zero)
+    (if (< (abs sx2) 1.0e-8)
 	-1.0
 	(let* ((s1 (- (/ (sin nx) sxsx)
 		      (/ (* n (cos nx2)) sx22)))

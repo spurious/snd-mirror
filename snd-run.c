@@ -95,6 +95,9 @@
          (outa 0 (nrcos gen 0.0) *output*)))))) ;either segfault or complains about null list
 */
 
+/* PERHAPS: couldn't the run macro handle the "lambda () ...)" wrapper? would it be a good idea?
+ */
+
 /* make-env needs vct args because '(...) and (list...) return #f (') or a parser complaint (list), so...
  *   SOMEDAY: add support for ' and list: vct_1 below?
  *   the other such cases are make-waveshape, make-polyshape, partials->*

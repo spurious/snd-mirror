@@ -7,7 +7,6 @@
 /* TODO: set y-bounds doesn't always fixup the y zoom slider? */
 /*
  * TODO: check out wavo again and make it graph in some reasonable way
- * TODO: polywave should accept 1/2 kind distinction, perhaps add 3/4 kinds (also is the phase offset documented?)
  */
 
 

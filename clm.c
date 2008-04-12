@@ -2600,8 +2600,9 @@ typedef struct {
   mus_any_class *core;
   mus_any *o;
   Float *coeffs;
-  int n;
+  int n, cheby_choice;
   Float index;
+  Float (*poly_run)(mus_any *gen, Float fm);
 } pw;
 
 
@@ -2634,6 +2635,7 @@ static bool pw_equalp(mus_any *p1, mus_any *p2)
 	 (mus_equalp(w1->o, w2->o)) &&
 	 (w1->n == w2->n) &&
 	 (w1->index == w2->index) &&
+	 (w1->cheby_choice == w2->cheby_choice) &&
 	 (clm_arrays_are_equal(w1->coeffs, w2->coeffs, w1->n)));
 }
 
@@ -2656,7 +2658,7 @@ static Float *pw_set_data(mus_any *ptr, Float *val) {((pw *)ptr)->coeffs = val; 
 static Float pw_index(mus_any *ptr) {return(((pw *)ptr)->index);}
 static Float pw_set_index(mus_any *ptr, Float val) {((pw *)ptr)->index = val; return(val);}
 
-static Float run_polywave(mus_any *ptr, Float fm, Float ignored) {return(mus_polywave(ptr, fm));}
+static Float run_polywave(mus_any *ptr, Float fm, Float ignored) {return((*(((pw *)ptr)->poly_run))(ptr, fm));}
 
 static char *describe_polywave(mus_any *ptr)
 {
@@ -2674,38 +2676,54 @@ static char *describe_polywave(mus_any *ptr)
 }
 
 
-static Float poly_bank(pw *gen, Float fm)
+static Float poly_cos_bank(mus_any *ptr, Float fm)
 {
+  pw *gen = (pw *)ptr;
   Float sum = 0.0;
   int i;
   osc *o = (osc *)(gen->o);
   for (i = 1; i < gen->n; i++)
     if (gen->coeffs[i] != 0.0)
-      sum += (gen->coeffs[i] * cos(o->phase * i));  /* TODO: should we pass in the type and use sin? */
+      sum += (gen->coeffs[i] * cos(o->phase * i));
   o->phase += (o->freq + fm);
   return(sum);
+}
+
+
+static Float poly_sin_bank(mus_any *ptr, Float fm)
+{
+  pw *gen = (pw *)ptr;
+  Float sum = 0.0;
+  int i;
+  osc *o = (osc *)(gen->o);
+  for (i = 1; i < gen->n; i++)
+    if (gen->coeffs[i] != 0.0)
+      sum += (gen->coeffs[i] * sin(o->phase * i));
+  o->phase += (o->freq + fm);
+  return(sum);
+}
+
+
+static Float poly_poly(mus_any *ptr, Float fm)
+{
+  pw *gen = (pw *)ptr;
+  return(mus_polynomial(gen->coeffs,
+			gen->index * mus_oscil_fm(gen->o, fm), 
+			gen->n));
 }
 
 
 Float mus_polywave(mus_any *ptr, Float fm)
 {
   pw *gen = (pw *)ptr;
-  if (gen->n <= MUS_CHEBYSHEV_TOP)
-    return(mus_polynomial(gen->coeffs,
-			  gen->index * mus_oscil_fm(gen->o, fm), 
-			  gen->n));
-  return(poly_bank(gen, fm));
+  return((*(gen->poly_run))(ptr, fm));
 }
-
+ 
 
 Float mus_polywave_unmodulated(mus_any *ptr)
 {
   pw *gen = (pw *)ptr;
-  if (gen->n <= MUS_CHEBYSHEV_TOP)
-    return(mus_polynomial(gen->coeffs,
-			  gen->index * mus_oscil_unmodulated(gen->o), 
-			  gen->n));
-  return(poly_bank(gen, 0.0));
+  return((*(gen->poly_run))(ptr, 0.0));
 }
 
 
@@ -2738,15 +2756,25 @@ static mus_any_class POLYWAVE_CLASS = {
 };
 
 
-mus_any *mus_make_polywave(Float frequency, Float *coeffs, int n)
+mus_any *mus_make_polywave(Float frequency, Float *coeffs, int n, int cheby_choice)
 {
   pw *gen;
   gen = (pw *)clm_calloc(1, sizeof(pw), S_make_polywave);
   gen->core = &POLYWAVE_CLASS;
   gen->o = mus_make_oscil(frequency, 0.0);
+  /* phase of 0.0 means we're using sin, not cos as the driver -- we still get the same waveform, but the initial phase is off by pi/2 */
   gen->coeffs = coeffs;
   gen->n = n;
   gen->index = 1.0;
+  if ((n <= MUS_CHEBYSHEV_TOP) ||
+      (cheby_choice == MUS_CHEBYSHEV_EITHER_KIND))
+    gen->poly_run = poly_poly;
+  else 
+    {
+      if (cheby_choice == MUS_CHEBYSHEV_FIRST_KIND)
+	gen->poly_run = poly_cos_bank;
+      else gen->poly_run = poly_sin_bank;
+    }
   return((mus_any *)gen);
 }
 
@@ -2827,7 +2855,7 @@ static mus_any_class POLYSHAPE_CLASS = {
 mus_any *mus_make_polyshape(Float frequency, Float phase, Float *coeffs, int size)
 {
   mus_any *gen;
-  gen = mus_make_polywave(frequency, coeffs, size);
+  gen = mus_make_polywave(frequency, coeffs, size, MUS_CHEBYSHEV_EITHER_KIND); /* use the polynomial no matter what */
   gen->core = &POLYSHAPE_CLASS;
   pw_set_phase(gen, phase);
   return(gen);
@@ -6103,6 +6131,7 @@ static void env_set_location(mus_any *ptr, off_t val)
       if (val > gen->locs[gen->index])
 	samps = gen->locs[gen->index] - ctr;
       else samps = val - ctr;
+
       switch (gen->style)
 	{
 	case ENV_SEG: 
@@ -6118,6 +6147,7 @@ static void env_set_location(mus_any *ptr, off_t val)
 	  gen->current_value = gen->offset + (gen->scaler * gen->power);
 	  break;
 	}
+
       ctr += samps;
       if (ctr < val)
 	{
@@ -7604,6 +7634,34 @@ static Float sample_file(mus_any *ptr, off_t samp, int chan, Float val)
     }
   return(val);
 }
+
+#if 0
+/* TODO: mus_make_sample_to_dac using rdout with dac_sample as writer (so automatically compatible all the way up)
+ *         also sample_to_dac_end, run_sample_to_dace etc
+ *         will need MUS_SAMPLE_TO_DAC_CLASS (but re-use the rdout struct)
+ *         then a direct writer that knows about rdout buffers [format conversion?]
+ *         with-sound/cm init-with-sound output-to-dac recognition and set *output* -- how to handle *reverb*? 
+ */
+
+static Float sample_dac(mus_any *ptr, off_t samp, int chan, Float val)
+{
+  /* to write direct to a DAC, assume we have a (moving) buffer for each channel
+   *   and a current time.  Then any output can be added to the buffer
+   *   at samp - current in chan, and we assume the DAC writer will 
+   *   handle the block-at-a-time stuff (or is Jack samp-at-a-time?).
+   *   If samp has passed, just return.
+   */
+  rdout *gen = (rdout *)ptr;
+  if ((samp >= gen->data_start) &&
+      (chan < gen->chans))
+    {
+      if (samp < gen->data_end)
+	gen->obufs[chan][samp - gen->data_start] += MUS_FLOAT_TO_SAMPLE(val);
+      else mus_error(MUS_WRITE_ERROR, "write at " OFF_TD " ran off end of output buffer: " OFF_TD, samp, gen->data_end);
+    }
+  return(val);
+}
+#endif
 
 
 #if 0
@@ -11341,8 +11399,6 @@ void init_mus_module(void)
   data_format_zero[MUS_UBSHORT] = USHORT_ZERO;
   data_format_zero[MUS_ULSHORT] = USHORT_ZERO;
 }
-
-
 
 /* clm4:
  *
