@@ -762,6 +762,132 @@
 |#
 
 
+#|
+;;; ncos5 and nsin5 are minor variants of nsin and ncos -- the last component is at half amplitude
+
+(defgenerator (ncos5
+	       :make-wrapper (lambda (g)
+			       (set! (ncos5-frequency g) (hz->radians (ncos5-frequency g)))
+			       g))
+  (frequency *clm-default-frequency*) (n 1 :type int) (angle 0.0))
+
+
+(define (ncos5 gen fm)
+  "  (make-ncos5 frequency (n 1)) creates an ncos5 generator.\n\
+   (ncos5 gen fm) returns n cosines spaced by frequency. All are equal amplitude except the first and last at half amp."
+  (declare (gen ncos5) (fm float))
+  
+  ;; from "Chebyshev Polynomials", Mason and Handscomb, p87
+
+  (let* ((x (ncos5-angle gen))
+	 (n (ncos5-n gen))
+	 (den (tan (* 0.5 x))))
+
+    (set! (ncos5-angle gen) (+ x fm (ncos5-frequency gen)))
+
+    (if (< (abs den) nearly-zero)
+	1.0
+	(/ (- (/ (sin (* n x))
+		 (* 2 den))
+	      0.5)
+	   (- n 0.5)))))
+
+
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-ncos5 100.0 :n 10)))
+    (run
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 20000))
+	 (outa i (ncos5 gen 0.0)))))))
+
+
+(defgenerator (nsin5
+	       :make-wrapper (lambda (g)
+			       (set! (nsin5-frequency g) (hz->radians (nsin5-frequency g)))
+			       (set! (nsin5-n g) (max 2 (nsin5-n g)))
+			       (if (< (nsin5-n g) 40)
+				   (set! (nsin5-norm g) (list-ref (list 1.0 0.0 2.598 4.137 5.637 7.117 8.587 10.051 11.509 
+									12.971 14.422 15.880 17.320 18.764 20.224 21.693 23.136 24.554 26.048 
+									27.436 28.938 30.377 31.734 33.296 34.725 36.009 37.566 39.101 40.522 
+									41.817 43.121 44.768 46.331 47.801 49.171 50.434 51.583 53.058 54.745 56.368)
+								  (nsin5-n g)))
+				   (set! (nsin5-norm g) (* 1.45 n)))
+			       g))
+  (frequency *clm-default-frequency*) (n 2 :type int) (angle 0.0) (norm 1.0))
+
+
+(define (nsin5 gen fm)
+  "  (make-nsin5 frequency (n 1)) creates an nsin5 generator.\n\
+   (nsin5 gen fm) returns n sines spaced by frequency. All are equal amplitude except last at half amp."
+  (declare (gen nsin5) (fm float))
+  
+  ;; from "Chebyshev Polynomials", Mason and Handscomb, p100
+
+  (let* ((x (nsin5-angle gen))
+	 (n (nsin5-n gen))
+	 (norm (nsin5-norm gen))
+	 (den (tan (* 0.5 x))))
+
+    (set! (nsin5-angle gen) (+ x fm (nsin5-frequency gen)))
+
+    (if (< (abs den) nearly-zero)
+	0.0
+	(/ (- 1.0 (cos (* n x)))
+	   (* den norm)))))
+
+
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-nsin5 100.0 :n 10)))
+    (run
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 20000))
+	 (outa i (nsin5 gen 0.0)))))))
+
+(let ((norms (list 1.0 0.0)))
+  (do ((i 2 (1+ i)))
+      ((= i 40))
+    (let* ((res (with-sound (:clipped #f)
+ 	          (let ((gen (make-nsin5 100.0 :n i)))
+		    (run
+		     (lambda ()
+		       (do ((i 0 (1+ i)))
+			   ((= i 20000))
+			 (outa i (nsin5 gen 0.0))))))))
+	   (snd (find-sound res)))
+      (snd-display ";~D: ~A" i (maxamp snd 0))
+      (set! norms (cons (maxamp snd 0) norms))))
+  (reverse norms))
+
+
+;;; from the same book p 110 is atan(x)/x, if x=cos we get:
+
+(with-sound (:clipped #f :statistics #t)
+  (let* ((x 0.0)
+	 (freq (hz->radians 100.0)))
+    (do ((i 0 (1+ i)))
+	((= i 20000))
+      (outa i (/ (- (/ (atan (cos x))
+		       (cos x))
+		    (* 0.5 1.76275))
+		 -0.1187))
+      (set! x (+ x freq)))))
+
+(let ((sum 0.0))
+  (do ((s 1 (+ s 2)))
+      ((>= s 100))
+    (set! sum (+ sum (* 4 (/ (expt (- (sqrt 2.0) 1.0) (+ (* 2 s) 1))
+				(+ (* 2 s) 1))))))
+  sum) ; ~ 0.096
+
+;;; the evens cancel, each of the odds gets through once
+
+|#
+
+
+
+
 
 ;;; --------------------------------------------------------------------------------
 ;;;
