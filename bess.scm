@@ -6,17 +6,19 @@
 ;;;   for the Ruby version, see bess.rb by Michael Scholz
 
 ;;; load sndlib and xmlib
-(let ((sndlib (dynamic-link "libsndlib.so")))
-  (if (not (dynamic-object? sndlib))
-      (set! sndlib (dynamic-link "sndlib.so")))
-  (if (not (dynamic-object? sndlib))
-      (error "can't find sndlib.so or libsndlib.so")
-      (dynamic-call (dynamic-func "Init_sndlib" sndlib) #f)))
+(if (not (provided? 'sndlib))
+    (let ((sndlib (dynamic-link "libsndlib.so")))
+      (if (not (dynamic-object? sndlib))
+	  (set! sndlib (dynamic-link "sndlib.so")))
+      (if (not (dynamic-object? sndlib))
+	  (error "can't find sndlib.so or libsndlib.so")
+	  (dynamic-call (dynamic-func "Init_sndlib" sndlib) #f))))
 
-(let ((libxm (dynamic-link "libxm.so")))
-  (if (not (dynamic-object? libxm))
-      (error "can't find libxm")
-      (dynamic-call (dynamic-func "Init_libxm" libxm) #f)))
+(if (not (provided? 'xm))
+    (let ((libxm (dynamic-link "libxm.so")))
+      (if (not (dynamic-object? libxm))
+	  (error "can't find libxm")
+	  (dynamic-call (dynamic-func "Init_libxm" libxm) #f))))
 
 ;;; if these fail, first strace bess.scm and see where it failed
 ;;; if it actually did find the library, try running Snd and (dlopen "sndlib.so")
@@ -25,8 +27,14 @@
 
 ;;; set up our user-interface
 (let* ((shell-app (XtVaOpenApplication 
-                    "FM Forever!" 0 '() applicationShellWidgetClass
-                    (list XmNallowShellResize #t)))
+                    "FM Forever!" 0 '()
+		    applicationShellWidgetClass
+                    (list XmNallowShellResize #t)
+		    (list "*fontList: 9x15"
+			  "*enableEtchedInMenu: True"
+			  "*enableThinThickness: True"
+			  "*enableToggleColor: True"
+			  "*enableToggleVisual: True")))
        (app (cadr shell-app))
        (shell (car shell-app))
        (dpy (XtDisplay shell))
@@ -53,7 +61,7 @@
 
   (XtSetValues shell (list XmNtitle "FM Forever!"))
 
-  (let* ((light-blue (get-color "lightsteelblue"))
+  (let* ((light-blue (position-color))
 	 (form (XtCreateManagedWidget "form" xmFormWidgetClass shell 
 		 (list XmNbackground white
 		       XmNforeground black

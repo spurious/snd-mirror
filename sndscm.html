@@ -419,14 +419,19 @@ audio setup).  This is a translation to the Sndlib/Libxm system of bess.cl in CL
 Michael Scholz has contributed a Ruby translation of this with many improvements:
 bess.rb.  You may need to make bess.scm executable before running it: <code>chmod 777 bess.scm</code>.
 If you get "command not found", you need to edit the path to guile in the source.
+You can run this from Snd by loading bess.scm into Snd, but then it takes over as
+the main application.
 </p>
 
 <table border=0 hspace=20>
 <tr><td>
-<img src="fm.png" alt="fm dialog">
-</td><td>
+<img src="fm.png" alt="fm dialog" hspace=40>
+</td>
+</tr>
+<tr><td>
 <pre>
-   ;; bess opens the DAC, continuously sends the following:
+
+   ;; bess opens the DAC and continuously sends the following:
    (* amp 
       (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> carosc 
         (+ (<a class=quiet href="sndclm.html#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> frequency)
@@ -532,7 +537,7 @@ simply paste the with-sound call into the listener.  It will automatically write
 new sound file and open it in Snd.
 </p>
 
-<table border=0 cellspacing=0 hspace=20>
+<table border=0 hspace=20 cellspacing=4 cellpadding=6>
 
 <!-- anoi -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
@@ -1118,12 +1123,17 @@ makes great use of this instrument.
 anything other than .5 produces a longer decay.  It should be between 0.0 and 1.0. 
 'lossfact' can be used to shorten decays.  The most useful values are between .8 and 1.0. 
 
+<table border=0><tr>
+<td>
 <pre>
 (<a class=quiet href="#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () 
   (pluck 0 1 330 .3 .95 .95) 
-  (pluck 1 2 330 .3 .9 .9999) 
-  (pluck 3 2 330 .3 .8 .99))
+  (pluck .3 2 330 .3 .9 .9999) 
+  (pluck .7 2 330 .3 .8 .99))
 </pre>
+</td><td width=40></td><td>
+<img src="pluck.png" alt="wavogram of pluck" onmouseout="UnTip()" onmouseover="Tip('this is a wavogram of the with-sound on the left:<br><br><code>(set! (time-graph-type) graph-as-wavogram)</code><br><br>To get this graph, use the \'hot\' colormap<br>color data cutoff at .004, darkness 100<br>x angle 20, scale .85, y 100 .79, z 138 .85<br>wavo-trace 100, wavo-hop 1, and scale the sound to 1.0')">
+</td></tr></table>
 
 In Ruby:
 <pre>
@@ -1682,7 +1692,7 @@ A simple instrument that uses dlocsig is:
 <p>draw.scm has examples of graphics-oriented extensions.  The most useful one is make-current-window-display.
 </p>
 
-<table border=0 cellspacing=0 hspace=20>
+<table border=0 hspace=20 cellspacing=4 cellpassing=6>
 
 <!-- click-for-listener-help -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
@@ -1818,7 +1828,7 @@ His "Mathematics of the DFT" is a very clear introduction.
 </blockquote></small></p>
 <br>
 
-<table border=0 cellspacing=0 hspace=20>
+<table border=0 cellspacing=4 cellpadding=6 hspace=20>
 
 <!-- ---------------------------------------- dsp FFT ---------------------------------------- -->
 <tr><td colspan=2 bgcolor="lightgreen"><center><A NAME="dspdocfft">FFTs</A></center></td><td></td></tr>
@@ -2729,7 +2739,7 @@ is arbitrary, though it's simplest to use 0.0 to 1.0.
 (In this file, envelopes are assumed to be flat lists, not vcts or lists of lists).
 </p>
 
-<table border=0 cellspacing=0 hspace=20>
+<table border=0 cellspacing=4 cellpadding=6 hspace=20>
 
 <!-- add-envelopes -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
@@ -3082,7 +3092,7 @@ appended new stuff as it came to mind.  In this documentation, I'll divide the f
 <a href="#ssmisc">miscellaneous stuff</a>
 </p>
 
-<table border=0 cellspacing=0 hspace=20 vspace=10>
+<table border=0 cellspacing=4 cellpadding=6 hspace=20 vspace=10>
 
 
 <!-- -------------------------------- examp FFTS -------------------------------- -->
@@ -4282,7 +4292,7 @@ To activate it:
 convenient if they were in one file.
 </p>
 
-<table border=0 cellspacing=0 hspace=20>
+<table border=0 cellspacing=4 cellpadding=6 hspace=20>
 
 
 <!-- channels-equal? -->
@@ -4752,7 +4762,7 @@ where we want to handle all channels in parallel.  I may
 move some of these into C.
 </p>
 
-<table border=0 cellspacing=0 hspace=20>
+<table border=0 cellspacing=4 cellpadding=6 hspace=20>
 
 <!-- file->sound-data -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
@@ -5018,7 +5028,7 @@ to the sample-reader functions, but which deal in frames.  I will probably move 
 once the dust settles.
 </p>
 
-<table border=0 cellspacing=0 hspace=20>
+<table border=0 cellspacing=4 cellpadding=6 hspace=20>
 
 <!-- copy-frame-reader -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
@@ -5310,7 +5320,7 @@ is an uninterpretable text file) by incrementing script-arg.
 <p>hooks.scm and hooks.rb have various <a href="extsnd.html#sndhooks">hook</a>-related functions.
 </p>
 
-<table border=0 cellspacing=0 hspace=20>
+<table border=0 cellspacing=4 cellpadding=6 hspace=20>
 
 <!-- describe-hook -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
@@ -5798,7 +5808,7 @@ big-maraca is like maraca, but takes a list of resonances and includes low-pass 
 <p>marks.scm/rb is a collection of mark-related functions.
 </p>
 
-<table border=0 cellspacing=0 hspace=20>
+<table border=0 cellspacing=4 cellpadding=6 hspace=20>
 
 <!-- define-selection-via-marks -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
@@ -6048,7 +6058,7 @@ modify existing ones.  Most were written by Dave Phillips; see his tutorial for
 pictures and a more complete discussion.
 </p>
 
-<table border=0 cellspacing=0 hspace=20 vspace=10>
+<table border=0 cellspacing=4 cellpadding=6 hspace=20 vspace=10>
 
 <!-- edit-menu -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
@@ -6243,7 +6253,7 @@ you want to your initialization file.
 
 <table width="60%" border=0><tr><td bgcolor="lightgreen" align="center" valign="middle"><h3>mixes</h3></td></tr></table>
 
-<table border=0 cellspacing=0 hspace=20>
+<table border=0 cellspacing=4 cellpadding=6 hspace=20>
 
 <!-- color-mixes -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
@@ -7024,7 +7034,7 @@ goof around with them.
 <p>This file has a variety of "real-time" audio output examples.
 </p>
 
-<table border=0 cellspacing=0 hspace=20>
+<table border=0 cellspacing=4 cellpadding=6 hspace=20>
 
 
 <!-- loop-between-marks -->
@@ -7484,7 +7494,7 @@ rubber-sound is incredibly slow, and almost never works.  The idea seems good ho
 </p>
 
 
-<table border=0 cellspacing=0 hspace=20 vspace=10>
+<table border=0 cellspacing=4 cellpadding=6 hspace=20 vspace=10>
 
 
 <!-- clear-selection -->
@@ -7688,7 +7698,7 @@ A more complex example is singer's attempt to say "requiem":
 that were removed from or renamed in earlier versions of Snd (in Ruby, look in extensions.rb).  Some of them are:
 </p>
 
-<table border=0 cellspacing=0 hspace=20>
+<table border=0 cellspacing=4 cellpadding=6 hspace=20>
 
 <!-- append-to-minibuffer -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
@@ -7897,7 +7907,7 @@ with GL: <code>configure --with-gl</code>.  You can tell if your current Snd has
 *features* list for 'gl: <code>(provided? 'gl)</code>.
 </p>
 
-<table border=0 cellspacing=0 hspace=20>
+<table border=0 cellspacing=4 cellpadding=6 hspace=20>
 
 <!-- complexify -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
@@ -7982,7 +7992,7 @@ stop-waterfall turns off the waterfall spectrum display.
 Some of these have been translated to Gtk and xg.c &mdash; snd-gtk.scm.  In Ruby, see snd-xm.rb.
 </p>
 
-<table border=0 cellspacing=0 hspace=20>
+<table border=0 cellspacing=4 cellpadding=6 hspace=20>
 
 <!-- add-amp-controls -->
 <tr><td colspan=2 bgcolor="#f2f4ff">

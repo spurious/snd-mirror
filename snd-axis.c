@@ -442,6 +442,9 @@ static void draw_vertical_grid_line(int x, axis_info *ap, axis_context *ax)
 static void draw_x_number(const char *label, int x, int y, int hgt, axis_info *ap, axis_context *ax, printing_t printing)
 {
   /* from motif point of view, gtk is down by font height (ascent) in pixels */
+
+  if (x < 0) x = 0; /* if no y axis and no labels, this sometimes is pushed left too far */
+
 #if USE_MOTIF
   y = y + hgt + 1;
 #else

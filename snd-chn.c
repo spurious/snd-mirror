@@ -2,7 +2,6 @@
 #include "clm2xen.h"
 #include "clm-strings.h"
 
-
 /* SOMEDAY: fft side needs a zoom capability, not just the drag now */
 /* TODO: set y-bounds doesn't always fixup the y zoom slider? */
 /*
@@ -45,6 +44,10 @@ chan_info *get_cp(XEN x_snd_n, XEN x_chn_n, const char *caller)
 
 
 typedef enum {CLICK_NOGRAPH, CLICK_WAVE, CLICK_FFT_AXIS, CLICK_LISP, CLICK_FFT_MAIN} click_loc_t;    /* for marks, regions, mouse click detection */
+/*
+ * static char *click_detection_names[5] = {"no graph", "click wave", "click fft axis", "click lisp", "click fft graph"};
+ */
+
 
 static XEN lisp_graph_hook;
 static XEN mouse_press_hook; 
@@ -3153,7 +3156,7 @@ static int make_wavogram(chan_info *cp)
 	  for (j = 0; j < len; j++)
 	    {
 	      samps[i][j] = read_sample(sf);
-	      js[i][j] = skew_color(samps[i][j]);
+	      js[i][j] = skew_color(fabs(samps[i][j]));
 	      if (js[i][j] < 0) js[i][j] = 0;
 	    }
 	}
@@ -4663,10 +4666,16 @@ void graph_button_press_callback(chan_info *cp, int x, int y, int key_state, int
   dragged_cp = cp;
   dragged = false;
   finish_selection_creation();
-  mouse_mark = hit_mark(cp, x, y, key_state);
-  if (mouse_mark == NULL) 
-    play_mark = hit_triangle(cp, x, y);
+
+  if (cp->graph_time_p)
+    {
+      mouse_mark = hit_mark(cp, x, y, key_state);
+      if (mouse_mark == NULL) 
+	play_mark = hit_triangle(cp, x, y);
+    }
+
   click_within_graph = within_graph(cp, x, y);
+
   switch (click_within_graph)
     {
     case CLICK_FFT_AXIS:
@@ -4915,14 +4924,18 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
   snd_info *sp;
   oclock_t mouse_time;
   /* this needs to be a little slow about deciding that we are dragging, as opposed to a slow click */
+
   mouse_time = time;
   if ((mouse_time - mouse_down_time) < ss->click_time) return;
+
 #ifdef MUS_MAC_OSX
   /* on the Mac, we seem to get motion events even without any motion, and the times seem very short */
   if ((x == press_x) && (y == press_y)) return;
 #endif
+
   sp = cp->sound;
   if ((cp->active < CHANNEL_HAS_AXES) || (sp == NULL)) return; /* autotest silliness */
+
   if (sp->channel_style == CHANNELS_COMBINED) /* in united chans, dragging mark shouldn't change channel */
     {
       if (dragged_cp)
@@ -4930,6 +4943,7 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
       else cp = which_channel(sp, y);
     }
   select_channel(sp, cp->chan);
+
   if (mouse_mark)
     {
       move_mark(cp, mouse_mark, x);
