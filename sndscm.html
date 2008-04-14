@@ -3197,9 +3197,31 @@ This is sometimes useful for noise-reduction.
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <A class=def NAME="filterfft">filter-fft</a> <code>func :optional (normalize #t) snd chn</code>
 </td></tr><tr><td></td><td>
+<p>
 This a sort of generalization of the preceding functions.  It gets the spectrum of all the data in the given channel,
-applies the function 'func' to it, then inverse ffts.  'func' should take one argument, the
-current spectrum value.
+applies the function 'func' to each element of the spectrum, then inverse ffts.  'func' should take one argument, the
+current spectrum value.  
+</p>
+<table border=0 cellpadding=5 hspace=20>
+<tr><td bgcolor="#fafafa"><pre>
+(define (brfft lofrq hifrq)
+  "(brfft lofrq hifrq) removes all frequencies between lofrq and hifrq: (brfft 1000.0 2000.0)"
+  (let* ((len (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>))
+	 (fsize (expt 2 (inexact->exact (ceiling (/ (log len) (log 2.0))))))
+	 (ctr -1)
+	 (lo (inexact->exact (round (/ (* fsize lofrq) (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>)))))
+	 (hi (inexact->exact (round (/ (* fsize hifrq) (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>))))))
+    (<em class=red>filter-fft</em> (lambda (y)
+		  (set! ctr (1+ ctr))
+		  (if (and (>= ctr lo)
+			   (<= ctr hi))
+		      0.0
+		      y)))))
+</pre></td></tr>
+</table>
+<p>Here are some sillier examples...
+</p>
+
 <pre>
     (let ((op (<a class=quiet href="sndclm.html#make-one-zero" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_one_zero_tip)">make-one-zero</a> .5 .5))) (filter-fft op))
     (let ((op (<a class=quiet href="sndclm.html#make-one-pole" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_one_pole_tip)">make-one-pole</a> .05 .95))) (filter-fft op))

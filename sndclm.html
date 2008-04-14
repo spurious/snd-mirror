@@ -792,6 +792,33 @@ For a sine-bank example, see pvoc.scm.
 To goof around with FM from a graphical interface, see bess.scm and bess1.scm.
 </p>
 
+
+<table border=1 hspace=100 cellpadding=8><tr><td>
+<p><small>When oscil's frequency is high relative to the sampling rate,
+the waveform you'll see may not look very sinusoidal.  Here, for example, is oscil
+at 440 Hz when the srate is 1000, 4000, and 16000:
+</small></p>
+<img src="srates.png" alt="effect of different srates" hspace=40>
+</td></tr></table>
+
+
+<!--
+(set! (selected-graph-color) (make-color 1 1 1))
+(set! (selected-data-color) (make-color 0 0 0))
+(set! (axis-numbers-font) (tiny-font))
+(set! (x-axis-label 0 0 0) "srate: 1000")
+(set! (x-axis-label 1 0 0) "srate: 4000")
+(set! (x-axis-label 2 0 0) "srate: 16000")
+(set! (axis-labels-font) "12x24")
+
+(with-sound (:srate 1000) ; 4000 16000
+   (let ((gen (make-oscil 440.0)))
+      (do ((i 0 (1+ i)))
+          ((= i 20000))
+        (outa i (oscil gen)))))
+
+-->
+
 <br><br>
 
 
@@ -1366,7 +1393,7 @@ The table length (L above) is the "effective" length.  If we store an nth harmon
 in the table, each period gets L/n elements (we want to avoid clicks caused by discontinuities between the first and last table elements), 
 so the amplitude of the nth harmonic's noise components
 is higher (by n^2) than the fundamental's.  We either have to use enormous
-tables (which defeats the whole purpose of using tables), or stick to low
+tables or stick to low
 numbered partials.  To keep the noise components out of sight in 16-bit output (down 90 dB),
 we need 180 elements per period.  So a table with a 50th harmonic has to be at least length 8192.
 It's odd that the cutoff here is basically the same as
@@ -3738,8 +3765,9 @@ and <a href="sndscm.html#greendoc">green.scm</a> (bounded Brownian noise).
    <a class=def name="two-zero?">two-zero?</a> f
 </pre>
 
-<p>These are the simplest of filters. 
-For everything you want to know about filters, see Julius Smith's <A HREF="http://ccrma.stanford.edu/~jos">home page</a>.
+<p>These are the simplest of filters. If you're curious about filters, 
+Julius Smith's on-line <a href="http://www-ccrma.stanford.edu/~jos/filters/">Introduction to Digital Filters</a> is
+excellent.
 </p>
 
 <table border=1 align=left hspace=40 vspace=10 cellpadding=4>
@@ -4030,8 +4058,8 @@ example that puts formant on the edge of disaster (the glitch is about to explod
 (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:channels 2)
   (let* ((dur 3)
 	 (samps (<a class=quiet href="#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> dur))
-	 (flta (<em class=red>make-formant</em> 1000 .999))
-	 (fltc (<em class=red>make-firmant</em> 1000 .999))
+	 (flta (<em class=red>make-formant</em> 100 .999))
+	 (fltc (<em class=red>make-firmant</em> 100 .999))
 	 (vib (<a class=quiet href="#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> 10))
 	 (index (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> 100))
 	 (click (<a class=quiet href="#make-ncos" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_ncos_tip)">make-ncos</a> 40 500)))
@@ -4046,7 +4074,7 @@ example that puts formant on the edge of disaster (the glitch is about to explod
 	   ))))))
 </pre>
 </td><td>
-<img src="firmant.png" alt="firmant is happy">
+<img src="firmant.png" alt="firmant is happy" hspace=20>
 </td>
 </tr></table>
 
