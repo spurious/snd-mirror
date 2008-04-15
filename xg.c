@@ -32362,6 +32362,53 @@ static XEN gxg_cairo_get_scaled_font(XEN cr)
 
 #endif
 
+#if HAVE_CAIRO_FORMAT_STRIDE_FOR_WIDTH
+static XEN gxg_cairo_path_extents(XEN cr, XEN ignore_x1, XEN ignore_y1, XEN ignore_x2, XEN ignore_y2)
+{
+  #define H_cairo_path_extents "void cairo_path_extents(cairo_t* cr, double* [x1], double* [y1], double* [x2], \
+double* [y2])"
+  double ref_x1;
+  double ref_y1;
+  double ref_x2;
+  double ref_y2;
+  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 1, "cairo_path_extents", "cairo_t*");
+  cairo_path_extents(XEN_TO_C_cairo_t_(cr), &ref_x1, &ref_y1, &ref_x2, &ref_y2);
+  return(XEN_LIST_4(C_TO_XEN_double(ref_x1), C_TO_XEN_double(ref_y1), C_TO_XEN_double(ref_x2), C_TO_XEN_double(ref_y2)));
+}
+
+static XEN gxg_cairo_has_current_point(XEN cr)
+{
+  #define H_cairo_has_current_point "bool cairo_has_current_point(cairo_t* cr)"
+  XEN_ASSERT_TYPE(XEN_cairo_t__P(cr), cr, 1, "cairo_has_current_point", "cairo_t*");
+  return(C_TO_XEN_bool(cairo_has_current_point(XEN_TO_C_cairo_t_(cr))));
+}
+
+static XEN gxg_cairo_surface_copy_page(XEN surface)
+{
+  #define H_cairo_surface_copy_page "void cairo_surface_copy_page(cairo_surface_t* surface)"
+  XEN_ASSERT_TYPE(XEN_cairo_surface_t__P(surface), surface, 1, "cairo_surface_copy_page", "cairo_surface_t*");
+  cairo_surface_copy_page(XEN_TO_C_cairo_surface_t_(surface));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_cairo_surface_show_page(XEN surface)
+{
+  #define H_cairo_surface_show_page "void cairo_surface_show_page(cairo_surface_t* surface)"
+  XEN_ASSERT_TYPE(XEN_cairo_surface_t__P(surface), surface, 1, "cairo_surface_show_page", "cairo_surface_t*");
+  cairo_surface_show_page(XEN_TO_C_cairo_surface_t_(surface));
+  return(XEN_FALSE);
+}
+
+static XEN gxg_cairo_format_stride_for_width(XEN format, XEN width)
+{
+  #define H_cairo_format_stride_for_width "int cairo_format_stride_for_width(cairo_format_t format, int width)"
+  XEN_ASSERT_TYPE(XEN_cairo_format_t_P(format), format, 1, "cairo_format_stride_for_width", "cairo_format_t");
+  XEN_ASSERT_TYPE(XEN_int_P(width), width, 2, "cairo_format_stride_for_width", "int");
+  return(C_TO_XEN_int(cairo_format_stride_for_width(XEN_TO_C_cairo_format_t(format), XEN_TO_C_int(width))));
+}
+
+#endif
+
 #define WRAPPED_OBJECT_P(Obj) (XEN_LIST_P(Obj) && (XEN_LIST_LENGTH(Obj) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Obj))))
 
 static XEN gxg_GPOINTER(XEN obj) {return(XEN_LIST_2(C_STRING_TO_XEN_SYMBOL("gpointer"), (WRAPPED_OBJECT_P(obj)) ? XEN_CADR(obj) : obj));}
@@ -37711,6 +37758,14 @@ XEN_ARGIFY_7(gxg_cairo_pattern_get_radial_circles_w, gxg_cairo_pattern_get_radia
 XEN_NARGIFY_1(gxg_cairo_get_scaled_font_w, gxg_cairo_get_scaled_font)
 #endif
 
+#if HAVE_CAIRO_FORMAT_STRIDE_FOR_WIDTH
+XEN_ARGIFY_5(gxg_cairo_path_extents_w, gxg_cairo_path_extents)
+XEN_NARGIFY_1(gxg_cairo_has_current_point_w, gxg_cairo_has_current_point)
+XEN_NARGIFY_1(gxg_cairo_surface_copy_page_w, gxg_cairo_surface_copy_page)
+XEN_NARGIFY_1(gxg_cairo_surface_show_page_w, gxg_cairo_surface_show_page)
+XEN_NARGIFY_2(gxg_cairo_format_stride_for_width_w, gxg_cairo_format_stride_for_width)
+#endif
+
 XEN_NARGIFY_1(gxg_GPOINTER_w, gxg_GPOINTER)
 XEN_NARGIFY_2(c_array_to_xen_list_w, c_array_to_xen_list)
 XEN_NARGIFY_2(xen_list_to_c_array_w, xen_list_to_c_array)
@@ -41597,6 +41652,14 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_cairo_pattern_get_linear_points_w gxg_cairo_pattern_get_linear_points
 #define gxg_cairo_pattern_get_radial_circles_w gxg_cairo_pattern_get_radial_circles
 #define gxg_cairo_get_scaled_font_w gxg_cairo_get_scaled_font
+#endif
+
+#if HAVE_CAIRO_FORMAT_STRIDE_FOR_WIDTH
+#define gxg_cairo_path_extents_w gxg_cairo_path_extents
+#define gxg_cairo_has_current_point_w gxg_cairo_has_current_point
+#define gxg_cairo_surface_copy_page_w gxg_cairo_surface_copy_page
+#define gxg_cairo_surface_show_page_w gxg_cairo_surface_show_page
+#define gxg_cairo_format_stride_for_width_w gxg_cairo_format_stride_for_width
 #endif
 
 #define gxg_GPOINTER_w gxg_GPOINTER
@@ -45494,6 +45557,14 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(cairo_get_scaled_font, gxg_cairo_get_scaled_font_w, 1, 0, 0, H_cairo_get_scaled_font);
 #endif
 
+#if HAVE_CAIRO_FORMAT_STRIDE_FOR_WIDTH
+  XG_DEFINE_PROCEDURE(cairo_path_extents, gxg_cairo_path_extents_w, 1, 4, 0, H_cairo_path_extents);
+  XG_DEFINE_PROCEDURE(cairo_has_current_point, gxg_cairo_has_current_point_w, 1, 0, 0, H_cairo_has_current_point);
+  XG_DEFINE_PROCEDURE(cairo_surface_copy_page, gxg_cairo_surface_copy_page_w, 1, 0, 0, H_cairo_surface_copy_page);
+  XG_DEFINE_PROCEDURE(cairo_surface_show_page, gxg_cairo_surface_show_page_w, 1, 0, 0, H_cairo_surface_show_page);
+  XG_DEFINE_PROCEDURE(cairo_format_stride_for_width, gxg_cairo_format_stride_for_width_w, 2, 0, 0, H_cairo_format_stride_for_width);
+#endif
+
   XG_DEFINE_PROCEDURE(GPOINTER, gxg_GPOINTER_w, 1, 0, 0, "(GPOINTER obj) casts obj to GPOINTER");
   XG_DEFINE_PROCEDURE(GDK_COLORMAP, gxg_GDK_COLORMAP_w, 1, 0, 0, "(GDK_COLORMAP obj) casts obj to GDK_COLORMAP");
   XG_DEFINE_PROCEDURE(GDK_DRAG_CONTEXT, gxg_GDK_DRAG_CONTEXT_w, 1, 0, 0, "(GDK_DRAG_CONTEXT obj) casts obj to GDK_DRAG_CONTEXT");
@@ -47370,7 +47441,6 @@ static void define_integers(void)
   DEFINE_INTEGER(CAIRO_FONT_TYPE_TOY);
   DEFINE_INTEGER(CAIRO_FONT_TYPE_FT);
   DEFINE_INTEGER(CAIRO_FONT_TYPE_WIN32);
-  DEFINE_INTEGER(CAIRO_FONT_TYPE_ATSUI);
   DEFINE_INTEGER(CAIRO_PATH_MOVE_TO);
   DEFINE_INTEGER(CAIRO_PATH_LINE_TO);
   DEFINE_INTEGER(CAIRO_PATH_CURVE_TO);
@@ -47410,6 +47480,14 @@ static void define_integers(void)
   DEFINE_INTEGER(CAIRO_STATUS_INVALID_INDEX);
   DEFINE_INTEGER(CAIRO_STATUS_CLIP_NOT_REPRESENTABLE);
   DEFINE_INTEGER(CAIRO_SURFACE_TYPE_OS2);
+#endif
+
+#if HAVE_CAIRO_FORMAT_STRIDE_FOR_WIDTH
+  DEFINE_INTEGER(CAIRO_STATUS_TEMP_FILE_ERROR);
+  DEFINE_INTEGER(CAIRO_STATUS_INVALID_STRIDE);
+  DEFINE_INTEGER(CAIRO_FONT_TYPE_QUARTZ);
+  DEFINE_INTEGER(CAIRO_SURFACE_TYPE_WIN32_PRINTING);
+  DEFINE_INTEGER(CAIRO_SURFACE_TYPE_QUARTZ_IMAGE);
 #endif
 
   DEFINE_ULONG(GDK_TYPE_PIXBUF);
@@ -47892,7 +47970,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("05-Mar-08"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("15-Apr-08"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

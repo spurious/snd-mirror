@@ -1000,6 +1000,8 @@ else
 	AC_CHECK_LIB(cairo, cairo_create, [AC_DEFINE(HAVE_CAIRO_CREATE)], ,$GTK_LIBS)
 	# for cairo 1.4.0
 	AC_CHECK_LIB(cairo, cairo_get_user_data, [AC_DEFINE(HAVE_CAIRO_GET_USER_DATA)], ,$GTK_LIBS)
+	# for cairo 1.6.4
+	AC_CHECK_LIB(cairo, cairo_format_stride_for_width, [AC_DEFINE(HAVE_CAIRO_FORMAT_STRIDE_FOR_WIDTH)], ,$GTK_LIBS)
 
 	XLIBS=""
       	XFLAGS=""

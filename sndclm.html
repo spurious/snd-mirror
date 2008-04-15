@@ -598,7 +598,7 @@ To get a cosine (as opposed to sine), set the initial-phase to (/ pi 2).
   (let ((result (sin (+ phase pm-input))))
     (set! phase (+ phase (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> frequency) fm-input))
     result)
-<!--  <img src="sceq9.png" alt="fnm equation" hspace=10 vspace=10> -->
+<!--  <img src="pix/sceq9.png" alt="fnm equation" hspace=10 vspace=10> -->
 </pre>
 <!-- LATEX: \cos \, (\omega_{c}t+B\sin \omega_{m}t)\:=\!\!\sum_{n=-\infty}^{\infty} \! \! J_{n}(B)\cos(\omega_{c} + n\omega_{m})t -->
 <br clear=left>
@@ -798,7 +798,7 @@ To goof around with FM from a graphical interface, see bess.scm and bess1.scm.
 the waveform you'll see may not look very sinusoidal.  Here, for example, is oscil
 at 440 Hz when the srate is 1000, 4000, and 16000:
 </small></p>
-<img src="srates.png" alt="effect of different srates" hspace=40>
+<img src="pix/srates.png" alt="effect of different srates" hspace=40>
 </td></tr></table>
 
 
@@ -859,7 +859,7 @@ at 440 Hz when the srate is 1000, 4000, and 16000:
 </table>
 </td><td width=50></td>
 <td>
-<img src="pyr.png" alt="an envelope">
+<img src="pix/pyr.png" alt="an envelope">
 </td>
 </tr></table>
 
@@ -892,9 +892,9 @@ out), and a base greater than 1.0 gives concave curves (i.e. sagging).
 If you'd rather think in terms of e^-kt, set the base to <code>(exp k)</code>. 
 </p>
 </td><td>
-<img src="pyr03.png" alt="base .03 choice" hspace=10>
+<img src="pix/pyr03.png" alt="base .03 choice" hspace=10>
 </td><td>
-<img src="pyr32.png" alt="base 32 choice" hspace=10>
+<img src="pix/pyr32.png" alt="base 32 choice" hspace=10>
 </td></tr></table>
 
 <p>
@@ -927,7 +927,7 @@ instrument that maps the line segments into sin x^3:
 </pre>
 </td></tr></table>
 </td><td>
-<img src="sincube.png" alt="sin cubed envelope" hspace=10>
+<img src="pix/sincube.png" alt="sin cubed envelope" hspace=10>
 </td></tr></table>
 
 <!--
@@ -987,7 +987,7 @@ For example, say we want to square each envelope value:
 
 </td>
 <td>
-<img src="envany.png" alt="env-any pix">
+<img src="pix/envany.png" alt="env-any pix">
 </td></tr>
 </table>
 
@@ -1069,10 +1069,10 @@ and glissando is frequency modulation.  Both cause a broadening of the spectral 
 
 <table border=1 hspace=40><tr>
 <td>
-<img src="ampenvspectrum.png" alt="amp env spectrum" onmouseout="UnTip()" onmouseover="Tip('fft size: 65536, Blackman10 window.<br><br><pre>(with-sound (:srate 10000)<br>  (let* ((ampf (make-env \'(0 0 1 1 15 1 16 0) :duration 15))<br>	 (osc (make-oscil 50))<br>	 (samps (seconds->samples 15))<br>	 (start (seconds->samples 7))<br>	 (end (+ start samps)))<br>    (do ((i 0 (1+ i)))<br>        ((= i end))<br>      (outa (+ i start) (* (env ampf) (oscil osc))))))</pre>')">
+<img src="pix/ampenvspectrum.png" alt="amp env spectrum" onmouseout="UnTip()" onmouseover="Tip('fft size: 65536, Blackman10 window.<br><br><pre>(with-sound (:srate 10000)<br>  (let* ((ampf (make-env \'(0 0 1 1 15 1 16 0) :duration 15))<br>	 (osc (make-oscil 50))<br>	 (samps (seconds->samples 15))<br>	 (start (seconds->samples 7))<br>	 (end (+ start samps)))<br>    (do ((i 0 (1+ i)))<br>        ((= i end))<br>      (outa (+ i start) (* (env ampf) (oscil osc))))))</pre>')">
 </td><td width=10>
 </td><td>
-<img src="frqenvspectrum.png" alt="frq env spectrum" onmouseout="UnTip()" onmouseover="Tip('fft size: 65536, Blackman10 window.<br><br><pre>(with-sound (:srate 10000)<br>  (let* ((ampf (make-env \'(0 0 10 0 11 1 25 1 26 0 40 0) <br>			 :duration 40<br>			 :scaler (hz->radians 200)))<br>	 (osc (make-oscil 100))<br>	 (samps (seconds->samples 40))<br>	 (start (seconds->samples 0))<br>	 (end (+ start samps)))<br>    (do ((i 0 (1+ i)))<br>	((= i end))<br>      (outa (+ i start) (oscil osc (env ampf))))))<br></pre>')">
+<img src="pix/frqenvspectrum.png" alt="frq env spectrum" onmouseout="UnTip()" onmouseover="Tip('fft size: 65536, Blackman10 window.<br><br><pre>(with-sound (:srate 10000)<br>  (let* ((ampf (make-env \'(0 0 10 0 11 1 25 1 26 0 40 0) <br>			 :duration 40<br>			 :scaler (hz->radians 200)))<br>	 (osc (make-oscil 100))<br>	 (samps (seconds->samples 40))<br>	 (start (seconds->samples 0))<br>	 (end (+ start samps)))<br>    (do ((i 0 (1+ i)))<br>	((= i end))<br>      (outa (+ i start) (oscil osc (env ampf))))))<br></pre>')">
 </td>
 <tr>
 <td bgcolor="#f2f4ff"><small><center>truncated pyramid amplitude envelope<br>multiplied by sinusoid at 50Hz</center></small>
@@ -1314,7 +1314,7 @@ assumptions about what ought to be there.  In the no-interpolation case (type = 
 the table-relative phase, returning a squared-off sine-wave:
 </p>
 
-<img src="interp1.png" alt="squared-off sine spectra" hspace=40 onmouseout="UnTip()" onmouseover="Tip('srate=1000000 so that aliasing does not cause confusion.<br>FFT size=262144 with a blackman2 window.<br>In detail, the first 10 pairs (with 1/nL in parens) are:<br><pre>    100  1.000000<br>   9900  0.010368  (.01)<br>  10100  0.010192<br>  19900  0.005174  (.005)<br>  20100  0.005099<br>  29900  0.003431  (.0033)<br>  30100  0.003436<br>  39900  0.002594  (.0025)<br>  40100  0.002560<br>  49900  0.002060  (.002)<br>  50100  0.002066<br>  59900  0.001732  (.0017)<br>  60100  0.001715<br>  69900  0.001477  (.0014)<br>  70100  0.001478<br>  79900  0.001300  (.00125)<br>  80100  0.001296<br>  89900  0.001157  (.0011)<br>  90100  0.001153<br>  99900  0.001043  (.001)<br> 100100  0.001046</pre>')">
+<img src="pix/interp1.png" alt="squared-off sine spectra" hspace=40 onmouseout="UnTip()" onmouseover="Tip('srate=1000000 so that aliasing does not cause confusion.<br>FFT size=262144 with a blackman2 window.<br>In detail, the first 10 pairs (with 1/nL in parens) are:<br><pre>    100  1.000000<br>   9900  0.010368  (.01)<br>  10100  0.010192<br>  19900  0.005174  (.005)<br>  20100  0.005099<br>  29900  0.003431  (.0033)<br>  30100  0.003436<br>  39900  0.002594  (.0025)<br>  40100  0.002560<br>  49900  0.002060  (.002)<br>  50100  0.002066<br>  59900  0.001732  (.0017)<br>  60100  0.001715<br>  69900  0.001477  (.0014)<br>  70100  0.001478<br>  79900  0.001300  (.00125)<br>  80100  0.001296<br>  89900  0.001157  (.0011)<br>  90100  0.001153<br>  99900  0.001043  (.001)<br> 100100  0.001046</pre>')">
 
 <!--
 (with-sound (:srate 1000000 :channels 2) 
@@ -1356,7 +1356,7 @@ the amplitude is going (essentially) as 1.0 / (n * n * L * L).  So the interpola
 reduces the original problem by a factor of n * L:
 </p>
 
-<img src="interp2.png" alt="squared-off sine spectra" hspace=40 onmouseout="UnTip()" onmouseover="Tip('as before, srate=1000000 so that aliasing does not cause confusion.<br>FFT size=262144 with a blackman2 window.<br>In detail, the first 10 pairs (with 1/(n^2 L^2) in parens) are:<br><pre>    100  1.00000000<br>   9900  0.00010508  (.0001)<br>  10100  0.00010086<br>  19900  0.00002580  (.000025)<br>  20100  0.00002524<br>  29900  0.00001133  (.000011)<br>  30100  0.00001157<br>  39900  0.00000661  (.0000063)<br>  40100  0.00000652<br>  49900  0.00000419  (.000004)<br>  50100  0.00000422<br>  59900  0.00000263  (.0000027)<br>  60100  0.00000282<br>  69900  0.00000216  (.000002)<br>  70100  0.00000201<br>  79900  0.00000161  (.0000015)<br>  80100  0.00000155<br>  89900  0.00000120  (.0000012)<br>  90100  0.00000123<br>  99900  0.00000099  (.000001)<br> 100100  0.00000102</pre>')">
+<img src="pix/interp2.png" alt="squared-off sine spectra" hspace=40 onmouseout="UnTip()" onmouseover="Tip('as before, srate=1000000 so that aliasing does not cause confusion.<br>FFT size=262144 with a blackman2 window.<br>In detail, the first 10 pairs (with 1/(n^2 L^2) in parens) are:<br><pre>    100  1.00000000<br>   9900  0.00010508  (.0001)<br>  10100  0.00010086<br>  19900  0.00002580  (.000025)<br>  20100  0.00002524<br>  29900  0.00001133  (.000011)<br>  30100  0.00001157<br>  39900  0.00000661  (.0000063)<br>  40100  0.00000652<br>  49900  0.00000419  (.000004)<br>  50100  0.00000422<br>  59900  0.00000263  (.0000027)<br>  60100  0.00000282<br>  69900  0.00000216  (.000002)<br>  70100  0.00000201<br>  79900  0.00000161  (.0000015)<br>  80100  0.00000155<br>  89900  0.00000120  (.0000012)<br>  90100  0.00000123<br>  99900  0.00000099  (.000001)<br> 100100  0.00000102</pre>')">
 
 <!--
 (with-sound (:srate 1000000 :channels 2) 
@@ -1521,7 +1521,7 @@ a sinusoid, creating a sort of cross between additive synthesis and FM; see
 "Digital Waveshaping Synthesis" by Marc Le Brun in JAES 1979 April, vol 27, no 4, p250.
 The basic idea is:
 </p>
-<img src="sceq16.png" alt="Cheby eqs" hspace=40>
+<img src="pix/sceq16.png" alt="Cheby eqs" hspace=40>
 <p>
 We can add scaled Tns (polynomials) to get the spectrum we want, producing
 in the simplest case an inexpensive additive synthesis.  We can vary the peak amplitude of the
@@ -1585,7 +1585,7 @@ the generator.
 </pre>
 </td>
 <td>
-<img src="waveshape.png" alt="waveshaping">
+<img src="pix/waveshape.png" alt="waveshaping">
 </td>
 </tr></table>
 
@@ -1652,7 +1652,7 @@ technique.  Here is a simplified example:
 (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () (pqw 0 1 200.0 1000.0 '(2 .2  3 .3  6 .5)))
 </pre>
 </td><td>
-<img src="pqw.png" alt="pqw example">
+<img src="pix/pqw.png" alt="pqw example">
 </td></tr></table>
 
 <p>We can use waveshaping to make a band-limited triangle-wave:
@@ -1712,7 +1712,7 @@ if all the components should move together (as in vibrato).  If you need better 
 use a bank of oscils where you can set each index independently.  Here we used '(1 1 2 1 3 1) and polyshape
 with sinusoidal FM with an index of 1.
 </td><td width=20></td><td>
-<img src="polyfm.png" alt="polyshape fm">
+<img src="pix/polyfm.png" alt="polyshape fm">
 </td></tr>
 </table>
 
@@ -1805,7 +1805,7 @@ The kth partial's amplitude
 at a given index, given a set h[k] of coefficients, is:
 </p>
 
-<img src="sceq43.png" alt="cheby hka calc" hspace=40>
+<img src="pix/sceq43.png" alt="cheby hka calc" hspace=40>
 
 <!-- LATEX:
     &h_{k}(a) = \sum_{j=0}^{\infty} \binom{p}{j} a^{p} \sum_{i=0}^{\infty} (-1)^{i}\Big(\tbinom{p+i}{i} + \tbinom{p+i-1}{i-1}\Big) h_{p+2i}(1) & p=k+2j \\
@@ -1848,9 +1848,9 @@ odd harmonics are independent:
 </td></tr>
 
 <tr><td>
-<img src="waver.png" alt="picture of waveshaping sweep">
+<img src="pix/waver.png" alt="picture of waveshaping sweep">
 </td><td>
-<img src="waver2.png" alt="time domain" hspace=20>
+<img src="pix/waver2.png" alt="time domain" hspace=20>
 </td></tr>
 </table>
 
@@ -1894,7 +1894,7 @@ pattern + + - -:
 <p>The harmonic amplitude formula for the Chebyshev polynomials of the second kind is:
 </p>
 
-<img src="sceq44.png" alt="more cheby hka calcs" hspace=40>
+<img src="pix/sceq44.png" alt="more cheby hka calcs" hspace=40>
 
 <!-- LATEX:
     &h_{k}(a) = \sum_{j=0}^{\infty} \Big(\tbinom{p-1}{j} - \tbinom{p-1}{j-1}\Big) a^p \sum_{i=0}^{\infty} (-1)^{i} \tbinom{p+i-1}{i} h_{p+2i}(1) & p=k+2j \\
@@ -1922,7 +1922,7 @@ we get sum and difference tones, much as in complex FM:
 </pre>
 </td>
 <td>
-<img src="crosswave.png">
+<img src="pix/crosswave.png">
 </td></tr></table>
 
 <p>This kind of output is typical; I get the impression that the cross products are
@@ -1972,7 +1972,7 @@ involves the "spread polynomials" where Tn(1 - 2s) = 1 - 2Sn(s).
 -->
 
 <p>Looking back at the bl-saw instrument, why does a high harmonic number give numerical problems?  The polynomials are related to each other
-via the recursion: <img src="sceq17.png" alt="Cheby recurse" align=absmiddle>, so the first
+via the recursion: <img src="pix/sceq17.png" alt="Cheby recurse" align=absmiddle>, so the first
 few polynomials are:
 </p>
 
@@ -1996,9 +1996,9 @@ few polynomials are:
 -->
 
 <table border=0 hspace=40><tr>
-<td><img src="sceq18.png" alt="some Chebys"></td>
+<td><img src="pix/sceq18.png" alt="some Chebys"></td>
 <td width=20></td>
-<td><img src="sceq19.png" alt="more Chebys"></td>
+<td><img src="pix/sceq19.png" alt="more Chebys"></td>
 </tr></table>
 
 <p>The first coefficient is 2^n or 2^(n-1).  This is bad news if "n" is large because
@@ -2022,7 +2022,7 @@ To make the difference almost appalling, here are spectra comparing a sum of osc
 waveshape, and table-lookup. 
 </p>
 
-<img src="4grfs.png" alt="compare ffts" hspace=40>
+<img src="pix/4grfs.png" alt="compare ffts" hspace=40>
 
 <!--
 (with-sound (:channels 4)
@@ -2075,7 +2075,7 @@ The waveshaping noise is much worse because the polynomial is so
 sensitive numerically.  Here is a portion of the error signal at the point where the driving sinusoid
 is at its maximum:
 </small></p>
-<img src="errorwave.png" alt="cheby error" hspace=40>
+<img src="pix/errorwave.png" alt="cheby error" hspace=40>
 </td></tr></table>
 
 <!--
@@ -2201,15 +2201,15 @@ A more reasonable square-wave can be generated via
 </tr>
 <tr>
 <td>
-<img src="tanh1.png" alt="tanh 1">
+<img src="pix/tanh1.png" alt="tanh 1">
 </td>
 <td width=16></td>
 <td>
-<img src="tanh3.png" alt="tanh 1">
+<img src="pix/tanh3.png" alt="tanh 1">
 </td>
 <td width=16></td>
 <td>
-<img src="tanh100.png" alt="tanh 1">
+<img src="pix/tanh100.png" alt="tanh 1">
 </td></tr></table>
 
 <!-- LATEX: \tanh(x) = x-\frac{x^{3}}{3}+\frac{2x^{5}}{15}-\frac{17x^{7}}{315}+\frac{62x^{9}}{2835}-\frac{1382x^{11}}{155925}\cdots -->
@@ -2221,11 +2221,11 @@ A more reasonable square-wave can be generated via
 <tr><td>
 <p>The spectrum of tanh(sin) can be obtained by expanding tanh as a power series:
 </p>
-<img src="sceq11.png" alt="tanh power series" hspace=20>
+<img src="pix/sceq11.png" alt="tanh power series" hspace=20>
 <p>
 plugging in "sin" for "x", expanding the sine powers, and collecting terms (very tedious!):
 </p>
-<img src="sceq12.png" alt="tanh sin power series" hspace=20>
+<img src="pix/sceq12.png" alt="tanh sin power series" hspace=20>
 <p>
 which is promising since a square wave is made up of odd harmonics with amplitude 1/n.
 As the "n" in tanh(n sin(x)) increases, this series doesn't apply, but we can check the
@@ -2245,7 +2245,7 @@ we got .006).
 <p>Another square-wave choice is <a href="#eoddcos">eoddcos</a> in <a href="#othergenerators">generators.scm</a>, 
 based on atan; as its "r" parameter approaches 0.0, you get closer to a square wave.
 Even more amusing is this algorithm:
-<img src="sceq13.png" alt="square" align=absmiddle hspace=10>
+<img src="pix/sceq13.png" alt="square" align=absmiddle hspace=10>
 <!-- CMJ 37 4 sept 2006 p326 -->
 <!-- LATEX: \frac{(c+1)^{\cos t}-(c-1)^{\cos t}}{(c+1)^{\cos t}+(c-1)^{\cos t}} -->
 
@@ -2363,7 +2363,7 @@ cancel except the last.
 based on:
 </pre>
 <!-- LATEX: \sum_{k=0}^{n}\cos kx = \frac{1}{2}\Bigg(1+\frac{\sin(n+\frac{1}{2})x}{\sin \frac{x}{2}}\Bigg) -->
-<img src="sceq2.png" alt="sum of cosines" hspace=40>
+<img src="pix/sceq2.png" alt="sum of cosines" hspace=40>
 <!--
   cos(x) + cos(2x) + ... cos(nx) = 
     (sin((n + .5)x) / (2 * sin(x / 2))) - 1/2
@@ -2390,7 +2390,7 @@ see also <a href="#othergenerators">generators.scm</a>
 (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () (simple-soc 0 1 100 1.0))
 </pre></td>
 <td>
-<img src="cosines.png" alt="sum of cosines example" hspace=10>
+<img src="pix/cosines.png" alt="sum of cosines example" hspace=10>
 </td></tr></table>
 
 <p>Almost identical is the following <A NAME="sinc-train">sinc-train</a> generator:
@@ -2440,9 +2440,9 @@ but perhaps a filter is a simpler approach.  There are a lot more of these "kern
 <td bgcolor="#f2f4ff"><center>npcos (Poussin, n=5)</center></td>
 <td bgcolor="#f2f4ff"><center>ncos4 (Jackson, n=10)</center></td>
 </tr><tr>
-<td><img src="fejer.png" alt="fejer sum"></td>
-<td><img src="poussin.png" alt="poussin sum"></td>
-<td><img src="jackson.png" alt="jackson sum"></td>
+<td><img src="pix/fejer.png" alt="fejer sum"></td>
+<td><img src="pix/poussin.png" alt="poussin sum"></td>
+<td><img src="pix/jackson.png" alt="jackson sum"></td>
 </tr></table>
 
 <!--
@@ -2493,13 +2493,13 @@ kosine95
 
 <table border=0 cellspacing=20>
 <tr><td>
-<img src="sceq1.png" alt="sum of sines" hspace=40>
+<img src="pix/sceq1.png" alt="sum of sines" hspace=40>
 <pre>
 the conjugate Dirichlet kernel
 </pre>
 </td></tr>
 <tr><td>
-<img src="sos.png" alt="sum of sines graphs">
+<img src="pix/sos.png" alt="sum of sines graphs">
 </td></tr></table>
 
 
@@ -2660,7 +2660,7 @@ another kernel set: binomial coeffs G&R 1.320 etc -- not different enough
 
 
 <tr>
-<td><img src="sceq14.png" alt="many sums" usemap="#GR1" border=0>
+<td><img src="pix/sceq14.png" alt="many sums" usemap="#GR1" border=0>
 <map name="GR1">
   <area shape=rect coords="0,0,300,60" href="sndclm.html#nxysin" alt="nxysin">
   <area shape=rect coords="0,61,300,100" href="sndclm.html#nxycos" alt="nxycos">
@@ -2676,7 +2676,7 @@ another kernel set: binomial coeffs G&R 1.320 etc -- not different enough
 </map>
 </td>
 <td width=40></td>
-<td><img src="sceq15.png" alt="many more sums" usemap="#GR2" border=0>
+<td><img src="pix/sceq15.png" alt="many more sums" usemap="#GR2" border=0>
 <map name="GR2">
   <area shape=rect coords="0,0,300,40" href="sndclm.html#nrsin" alt="nrsin">
   <area shape=rect coords="0,41,300,90" href="sndclm.html#nrcos" alt="nrcos">
@@ -2700,7 +2700,7 @@ another kernel set: binomial coeffs G&R 1.320 etc -- not different enough
 <tr><td colspan=3 height=25></td></tr>
 
 
-<tr><td><img src="sceq20.png" alt="more sums" usemap="#J1" border=0>
+<tr><td><img src="pix/sceq20.png" alt="more sums" usemap="#J1" border=0>
 <map name="J1">
     <area shape=rect coords="0,0,300,30" href="sndclm.html#rxycos" alt="rxycos">
     <area shape=rect coords="0,31,300,60" href="sndclm.html#rxysin" alt="rxysin">
@@ -2709,7 +2709,7 @@ another kernel set: binomial coeffs G&R 1.320 etc -- not different enough
     <area shape=rect coords="0,141,300,180" href="sndclm.html#koddcos" alt="koddcos">
 </map>
 </td><td></td>
-<td><img src="sceq21.png" alt="more sums" usemap="#J2" border=0>
+<td><img src="pix/sceq21.png" alt="more sums" usemap="#J2" border=0>
 <map name="J2">
     <area shape=rect coords="0,0,300,30" href="sndclm.html#rxyk!cos" alt="rxyk!cos">
     <area shape=rect coords="0,31,300,60" href="sndclm.html#rxyk!sin" alt="rxyk!sin">
@@ -2722,31 +2722,31 @@ another kernel set: binomial coeffs G&R 1.320 etc -- not different enough
 <tr><td colspan=3 height=25></td></tr>
 
 
-<tr><td><a class=invisible href="#izcos"><img src="sceq39.png" alt="I(k) sum"></a></td><td></td>
-<td><a class=invisible href="#k3sin"><img src="sceq40.png" alt="n3 case"></a></td></tr>
+<tr><td><a class=invisible href="#izcos"><img src="pix/sceq39.png" alt="I(k) sum"></a></td><td></td>
+<td><a class=invisible href="#k3sin"><img src="pix/sceq40.png" alt="n3 case"></a></td></tr>
 <tr><td colspan=3 bgcolor="#eefdee"><center>Abramowitz and Stegun, "Handbook of Mathematical Functions", 9.6.34, 27.8.6</center></td></tr>
 <tr><td colspan=3 height=25></td></tr>
 
 
-<tr><td><a class=invisible href="#krksin"><img src="sceq25.png" alt="more sums"></a></td><td></td>
-<td><a class=invisible href="#abssin"><img src="sceq26.png" alt="more sums"></a></td></tr>
+<tr><td><a class=invisible href="#krksin"><img src="pix/sceq25.png" alt="more sums"></a></td><td></td>
+<td><a class=invisible href="#abssin"><img src="pix/sceq26.png" alt="more sums"></a></td></tr>
 <tr><td colspan=3 bgcolor="#eefdee"><center>Zygmund, "Trigonometric Series" p34, 352</center></td></tr>
 <tr><td colspan=3 height=25></td></tr>
 
 
-<tr><td><img src="sceq7.png" alt="more sums"></td><td></td>
-<td><a class=invisible href="#abcos"><img src="sceq27.png" alt="more sums"></a></td></tr>
+<tr><td><img src="pix/sceq7.png" alt="more sums"></td><td></td>
+<td><a class=invisible href="#abcos"><img src="pix/sceq27.png" alt="more sums"></a></td></tr>
 <tr><td colspan=3 bgcolor="#eefdee"><center>Sansone, "Orthogonal Functions"</center></td></tr>
 <tr><td colspan=3 height=25></td></tr>
 
 
-<tr><td><img src="sceq36.png" alt="more sums" usemap="#GM1" border=0>
+<tr><td><img src="pix/sceq36.png" alt="more sums" usemap="#GM1" border=0>
 <map name="GM1">
     <area shape=rect coords="0,0,300,50" href="sndclm.html#j0j1cos" alt="j0j1cos">
     <area shape=rect coords="0,51,300,80" href="sndclm.html#j0j1cos" alt="j0j1cos">
 </map>
 </td><td></td>
-<td><img src="sceq37.png" alt="more sums" usemap="#GM2" border=0>
+<td><img src="pix/sceq37.png" alt="more sums" usemap="#GM2" border=0>
 <map name="GM2">
     <area shape=rect coords="0,0,300,50" href="sndclm.html#jycos" alt="jycos">
     <area shape=rect coords="0,51,300,100" href="sndclm.html#jjesin" alt="jjesin">
@@ -2757,17 +2757,17 @@ another kernel set: binomial coeffs G&R 1.320 etc -- not different enough
 
 
 <tr>
-<td><a class=invisible href="#jncos"><img src="sceq32.png" alt="more sums"></a></td><td></td>
-<td><a class=invisible href="#jjcos"><img src="sceq31.png" alt="more sums"></a></td>
+<td><a class=invisible href="#jncos"><img src="pix/sceq32.png" alt="more sums"></a></td><td></td>
+<td><a class=invisible href="#jjcos"><img src="pix/sceq31.png" alt="more sums"></a></td>
 </tr><tr>
-<td><a class=invisible href="#j2cos"><img src="sceq34.png" alt="more sums"></a></td><td></td>
-<td><a class=invisible href="#jpcos"><img src="sceq33.png" alt="more sums"></a></td>
+<td><a class=invisible href="#j2cos"><img src="pix/sceq34.png" alt="more sums"></a></td><td></td>
+<td><a class=invisible href="#jpcos"><img src="pix/sceq33.png" alt="more sums"></a></td>
 </tr><tr>
 <td colspan=3 bgcolor="#eefdee"><center>Watson, "A Treatise on the Theory of Bessel Functions": 4.82, 11.41, 17.31</center></td></tr>
 <tr><td colspan=3 height=25></td></tr>
 
 
-<tr><td colspan=3><a class=invisible href="#r2k!cos"><img src="sceq30.png" alt="kosines"></a></td></tr>
+<tr><td colspan=3><a class=invisible href="#r2k!cos"><img src="pix/sceq30.png" alt="kosines"></a></td></tr>
 <tr><td colspan=3 bgcolor="#eefdee"><center>Askey, "Ramanujan and Hypergeometric Series"</center></td></tr>
 
 
@@ -2785,7 +2785,7 @@ As far as I know, most of these formulas have never been explored.
 There are many formulas that produce exponentially decaying or bell-curve shaped spectra;
 I think these all sound about the same, so I have included only a representative sample of them.
 A couple of the formulas are special cases of the "Bessel function summation theorem", G&amp;R 8.530:
-<img src="sceq38.png" alt="summation formula" align=absmiddle>,
+<img src="pix/sceq38.png" alt="summation formula" align=absmiddle>,
 where Z stands for any of the various Bessel functions (J, Y, etc),
 and R stands for the Poisson-like business (or is it Legendre?) in the square root.
 Don't shy away from the sums to infinity just because you've heard shouting about "band-limited waveforms" &mdash; FM is an infinite sum:
@@ -2806,10 +2806,10 @@ Don't shy away from the sums to infinity just because you've heard shouting abou
 <table border=1 hspace=40 vspace=20><tr><td>
 <table border=0 hspace=20>
 <tr><td>
-<img src="fmeq49.png" alt="cos cos cases">
+<img src="pix/fmeq49.png" alt="cos cos cases">
 </td><td width=20></td>
 <td>
-<img src="fmeq50.png" alt="cos cos cases">
+<img src="pix/fmeq50.png" alt="cos cos cases">
 </td>
 </tr></table>
 </td></tr></table>
@@ -2934,12 +2934,12 @@ reflection, please send it to me, and I'll add it to this collection.
 & \sum_{k=0}^{n} r^{k}\cos(x+ky) = \frac{\cos(x) - r\cos(x-y) - r^{n+1}\Big(\cos(x+(n+1)y) - r\cos(x+ny)\Big)}{1+r^{2}-2r\cos(y)} \\
 -->
 
-<img src="sceq8.png" alt="nxry formulas">
+<img src="pix/sceq8.png" alt="nxry formulas">
 </td></tr>
 <tr><td>
 
 <table border=1 hspace=40><tr><td>
-<img src="sinesummation.png" alt="nxry formula">
+<img src="pix/sinesummation.png" alt="nxry formula">
 </td></tr>
 <tr><td bgcolor="#f2f4ff"><center>nrxysin, n=5, a=0.5</center></td></tr>
 </table></td></tr>
@@ -3125,10 +3125,10 @@ rather than a filter bank, and an inverse FFT of the moved spectrum, rather than
 <table border=1 hspace=20><tr><td>
 <table border=0 hspace=20 vspace=10>
 <tr>
-<td><img src="orig-oboe.png" alt="unaltered oboe"></td>
-<td><img src="am.png" alt="am oboe"></td>
-<td><img src="ssbam.png" alt="ssbam oboe"></td>
-<td><img src="ssbambank.png" alt="ssbambank oboe"></td>
+<td><img src="pix/orig-oboe.png" alt="unaltered oboe"></td>
+<td><img src="pix/am.png" alt="am oboe"></td>
+<td><img src="pix/ssbam.png" alt="ssbam oboe"></td>
+<td><img src="pix/ssbambank.png" alt="ssbambank oboe"></td>
 </tr>
 <tr>
 <td><center>original</center></td>
@@ -3241,7 +3241,7 @@ make-wave-train-with-env returns a new wave-train generator with the envelope 'e
 <tr><td><em class=gen>mus-interp-type</em></td><td>interpolation choice (no set!)</td></tr>
 </table>
 
-<img src="wt.png" alt="wave-train example" vspace=20>
+<img src="pix/wt.png" alt="wave-train example" vspace=20>
 <br clear=left>
 
 
@@ -3445,14 +3445,14 @@ both reflect that in their spectra (spectrum y axis is in dB):
 
 <table border=1 hspace=20 vspace=10>
 <tr>
-<td><img src="sqsq.png" alt="sqwave spectrum"></td><td width=20></td><td><img src="tritri.png" alt="triwave spectrum"></td>
+<td><img src="pix/sqsq.png" alt="sqwave spectrum"></td><td width=20></td><td><img src="pix/tritri.png" alt="triwave spectrum"></td>
 </tr>
 <tr>
 <td bgcolor="#f2f4ff"><center>square-wave (freq=1000)</center></td><td></td><td bgcolor="#f2f4ff"><center>triangle-wave (freq=1000)</center></td>
 </tr>
 
 <tr>
-<td><img src="randsq.png" alt="rand spectrum"></td><td></td><td><img src="randtri.png" alt="rand-interp spectrum"></td>
+<td><img src="pix/randsq.png" alt="rand spectrum"></td><td></td><td><img src="pix/randtri.png" alt="rand-interp spectrum"></td>
 </tr>
 <tr>
 <td bgcolor="#f2f4ff"><center>rand (freq=2000)</center></td><td></td><td bgcolor="#f2f4ff"><center>rand-interp (freq=2000)</center></td>
@@ -3602,9 +3602,9 @@ than the preceding:
 <td bgcolor="#f2f4ff"><center>rand</center></td>
 <td bgcolor="#f2f4ff"><center>rand-interp</center></td>
 </tr><tr>
-<td><img src="random.png" alt="random spectrum"></td>
-<td><img src="rand.png" alt="rand spectrum"></td>
-<td><img src="randi.png" alt="rand-interp spectrum"></td>
+<td><img src="pix/random.png" alt="random spectrum"></td>
+<td><img src="pix/rand.png" alt="rand spectrum"></td>
+<td><img src="pix/randi.png" alt="rand-interp spectrum"></td>
 </tr></table>
 </td></tr><tr><td>
 <table border=0>
@@ -3613,9 +3613,9 @@ than the preceding:
 <td bgcolor="#f2f4ff"><center>brownian</center></td>
 <td bgcolor="#f2f4ff"><center>green</center></td>
 </tr><tr>
-<td><img src="1f.png" alt="1/f spectrum"></td>
-<td><img src="brownian.png" alt="brownian spectrum"></td>
-<td><img src="green.png" alt="green spectrum"></td>
+<td><img src="pix/1f.png" alt="1/f spectrum"></td>
+<td><img src="pix/brownian.png" alt="brownian spectrum"></td>
+<td><img src="pix/green.png" alt="green spectrum"></td>
 </tr></table>
 </td></tr></table>
 
@@ -3855,7 +3855,7 @@ as the response at that frequency (in terms of a sampling rate of 1.0):
 (test-filter (make-two-zero 0.5 0.2 0.3))
 </pre>
 </td><td>
-<img src="2pole.png" alt="simple filters">
+<img src="pix/2pole.png" alt="simple filters">
 </td>
 </tr>
 </table>
@@ -3958,7 +3958,7 @@ Here are some graphs showing the formant and firmant filtering white noise
 as we sweep either the frequency or the radius:
 </p>
 
-<img src="formant.png" alt="various formant cases" hspace=20>
+<img src="pix/formant.png" alt="various formant cases" hspace=20>
 
 <!--
 (with-sound (:channels 4 :clipped #f :statistics #t)
@@ -4074,7 +4074,7 @@ example that puts formant on the edge of disaster (the glitch is about to explod
 	   ))))))
 </pre>
 </td><td>
-<img src="firmant.png" alt="firmant is happy" hspace=20>
+<img src="pix/firmant.png" alt="firmant is happy" hspace=20>
 </td>
 </tr></table>
 
@@ -4386,7 +4386,7 @@ and the other arguments are also handled as in <a href="#delay">delay</a>.
  filtered-comb:  y(n) = x(n - size) + scaler * filter(y(n - size))
 </pre>
 
-<img src="comb.png" alt="sonogram of comb" vspace=10>
+<img src="pix/comb.png" alt="sonogram of comb" vspace=10>
 
 <!-- 1024 blackman2 dB jet light=1 data-cutoff around .009 invert off using the local zc (not clm-ins!): (with-sound (:srate 44100) (zc 0 2 2000 .1 100 1000 .99))
 -->
@@ -5060,8 +5060,8 @@ e^{\big( \big(\frac{B}{2}\big(r+\frac{1}{r}\big)\cos \omega_{m}t\big) - \frac{1}
 <pre>
 based on:
 </pre>
-<img src="sceq10.png" alt="e sin"><br>
-<img src="sceq22.png" alt="I form">
+<img src="pix/sceq10.png" alt="e sin"><br>
+<img src="pix/sceq22.png" alt="I form">
 
 <br clear=left>
 
@@ -5587,12 +5587,12 @@ Here is an example of move-locsig:
 </td></tr></table>
 
 </td><td>
-<img src="circle.png" alt="move-locsig example">
+<img src="pix/circle.png" alt="move-locsig example">
 <br><center>linear interp</center>
 </td>
 
 <td>
-<img src="locsine.png" alt="move-locsig example">
+<img src="pix/locsine.png" alt="move-locsig example">
 <br><center>sinusoidal interp</center>
 </td>
 
@@ -5936,7 +5936,7 @@ so bess's output is not the same as the raw bessel function value returned by <a
 The "frequency" argument actually makes sense here because the Bessel functions
 are close to damped sinusoids after their initial hesitation:
 </p>
-<img src="sceq24.png" alt="Jn" hspace=40>
+<img src="pix/sceq24.png" alt="Jn" hspace=40>
 <p>
 where the variables other than x remain bounded as x increases.  This explains, in a sketchy way, why Jn(cos) and Jn(Jn)
 behave like FM.  To see how close these are to FM, compare the expansion of J0(sin) with FM's cos(sin):
@@ -5948,7 +5948,7 @@ sceq35:
 & \cos(B \sin x) = J_{0}(B) + 2 \sum_{k=1}^{\infty} J_{2k}(B) \cos 2kx \\
 -->
 
-<img src="sceq35.png" alt="J(sin) and cos(sin)" hspace=40>
+<img src="pix/sceq35.png" alt="J(sin) and cos(sin)" hspace=40>
 
 <br>
 <br>
@@ -6000,10 +6000,10 @@ Normalization is not handled correctly in all cases.
 </p>
 
 <table border=0 hspace=40 cellspacing=10>
-<tr><td>jjcos:</td><td width=10></td><td><img src="sceq31.png" alt="more sums"></td></tr>
-<tr><td>j2cos:</td><td width=10></td><td><img src="sceq34.png" alt="more sums"></td></tr>
-<tr><td>jpcos:</td><td width=10></td><td><img src="sceq33.png" alt="more sums"></td></tr>
-<tr><td>jncos:</td><td width=10></td><td><img src="sceq32.png" alt="more sums"></td></tr>
+<tr><td>jjcos:</td><td width=10></td><td><img src="pix/sceq31.png" alt="more sums"></td></tr>
+<tr><td>j2cos:</td><td width=10></td><td><img src="pix/sceq34.png" alt="more sums"></td></tr>
+<tr><td>jpcos:</td><td width=10></td><td><img src="pix/sceq33.png" alt="more sums"></td></tr>
+<tr><td>jncos:</td><td width=10></td><td><img src="pix/sceq32.png" alt="more sums"></td></tr>
 </table>
 
 <br>
@@ -6072,7 +6072,7 @@ This uses J0(index * cos(x)) + J1(index * cos(x)) to produce a full set of cosin
 
 <!-- LATEX: &\frac{\sin^{2} \frac{1}{2}nx}{\sin^{2} \frac{1}{2}x} = \frac{n}{2} + \sum_{k=1}^{n-1} (n-k)\cos kx -->
 
-<img src="sceq23.png" alt="sum of cosines" hspace=40><br>
+<img src="pix/sceq23.png" alt="sum of cosines" hspace=40><br>
 <br>
 
 <pre>
@@ -6086,7 +6086,7 @@ This uses J0(index * cos(x)) + J1(index * cos(x)) to produce a full set of cosin
 
 <!-- LATEX: &\Bigg(\frac{\sin(n+\frac{1}{2})x}{\sin \frac{x}{2}}\Bigg)^{4} -->
 <!-- pointless...
-<img src="sceq24.png" alt="sum of cosines" hspace=40>
+<img src="pix/sceq24.png" alt="sum of cosines" hspace=40>
 -->
 
 
@@ -6146,11 +6146,11 @@ component is multiplied by -1, and "n" produces 2n-1 components.
 <p>These produce the sum of "n" equal amplitude odd-numbered sinusoids:
 </p>
 
-<img src="sceq29.png" alt="sum of cosines" hspace=40><br>
+<img src="pix/sceq29.png" alt="sum of cosines" hspace=40><br>
 
 <!-- LATEX: &\sum_{k=1}^{n}\sin(2k-1)x=\frac{\sin^{2}nx}{\sin x} \\ -->
 
-<img src="sceq28.png" alt="sum of sines" hspace=40><br>
+<img src="pix/sceq28.png" alt="sum of sines" hspace=40><br>
 
 <p>The corresponding "even" case is the same as ncos with twice the frequency.  noddsin produces a somewhat clarinet-like tone:
 </p>
@@ -6460,7 +6460,7 @@ This generator's output is not normalized, and looks incorrect...
   &(1 - 2r \cos \theta + r^{2})^{-k} = \frac{1}{2} {}_{2}F_{1}(k, k; 1; r^{2}) + \sum_{n=1}^{\infty} \frac{(k)_{n}}{n!} r^{n} {}_{2}F_{1}(k, k+n; n+1; r^{2}) \cos n\theta
 -->
 
-<img src="sceq30.png" alt="sum of sines" hspace=40>
+<img src="pix/sceq30.png" alt="sum of sines" hspace=40>
 <br>
 
 <p>The instruments pianoy and pianoy1 use r2k!cos: <code>pianoy beg dur freq amp</code>, and 
@@ -6552,7 +6552,7 @@ This generator's output is not normalized, and looks incorrect...
   <A class=def NAME="krksin?">krksin?</A> gen
 </pre>
 
-<img src="sceq25.png" alt="sum of sines" hspace=40>
+<img src="pix/sceq25.png" alt="sum of sines" hspace=40>
 <br>
 
 <p>This produces a sum of sinusoids scaled by kr^k.  Its output is not normalized.
@@ -6566,7 +6566,7 @@ This generator's output is not normalized, and looks incorrect...
   <A class=def NAME="abssin?">abssin?</A> gen
 </pre>
 
-<img src="sceq26.png" alt="sum of sines" hspace=40>
+<img src="pix/sceq26.png" alt="sum of sines" hspace=40>
 <br>
 
 <p>This produces abs(oscil) &mdash; not very useful, I fear.
@@ -6587,7 +6587,7 @@ This generator's output is not normalized, and looks incorrect...
 <p>These produce a sum of sinusoids scaled as follows:
 </p>
 
-<img src="sceq27.png" alt="sum of sines" hspace=40>
+<img src="pix/sceq27.png" alt="sum of sines" hspace=40>
 <br>
 <br>
 
@@ -6913,7 +6913,7 @@ two pi Hz, multiplying by a sinusoid splits its spectrum into two equal parts
 translated up and down by w/(two pi) Hz:
 </p>
 
-<img src="fmeq8.png" alt="coscos and sinsin" hspace=20>
+<img src="pix/fmeq8.png" alt="coscos and sinsin" hspace=20>
 
 <br><br><br>
 

@@ -24,7 +24,7 @@
 <center>
 
 
-<img src="s.png" alt="S"><img src="n.png" alt="n"><img src="d.png" alt="d">
+<img src="pix/s.png" alt="S"><img src="pix/n.png" alt="n"><img src="pix/d.png" alt="d">
 
 </center>
 <br><br>
@@ -36,7 +36,7 @@
 <!-- these are then gathered into the reference table at the end by snd-index.cl -->
 <!-- I'm using A NAME (i.e caps) where the entity should be ignored by the indexer (index.cl) -->
 
-<center><img src="title.png" usemap="#sndwindow" vspace=10 border=0 alt="standard Snd appearance"></center>
+<center><img src="pix/title.png" usemap="#sndwindow" vspace=10 border=0 alt="standard Snd appearance"></center>
 <map name="sndwindow">
   <area shape=rect coords="0,0,608,20" href="#overview" alt="title bar">
   <area shape=rect coords="0,20,50,50" href="#fileoperations" alt="File menu" onmouseout="UnTip()" onmouseover="Tip('open, close, save a file, exit Snd...')">
@@ -336,7 +336,7 @@ is included in the <a href="http://ccrma.stanford.edu/planetccrma/software/">Pla
 <p>Once compiled and loaded (see README.Snd for instructions), start Snd:
 </p>
 
-<img src="intro2.png" alt="basic snd display" align=right>
+<img src="pix/intro2.png" alt="basic snd display" align=right>
 
 <pre>
   snd some.snd
@@ -360,7 +360,7 @@ to group sounds together for simultaneous editing.
 
 <br>
 
-<img src="intro1.png" alt="basic snd display" align=right>
+<img src="pix/intro1.png" alt="basic snd display" align=right>
 
 <p>Now return to the time domain form (click "w" and "f"),
 and click in the graph itself.  A red cursor (a big "+")
@@ -385,7 +385,7 @@ to life.  Just for laughs, delete the selection (via the Edit menu), then click 
 button to get the popup menu, and try Undo followed
 by Redo.</p>
 
-<img src="intro.png" alt="basic snd display" align=right>
+<img src="pix/intro.png" alt="basic snd display" align=right>
 <p>Next type C-m.  This places a
 mark at the current cursor location.  C-a goes
 to the start of the window; C-j jumps forward to the
@@ -430,7 +430,7 @@ editing operations built into other editors.  Just load the
 files that look interesting, and start clicking widgets.
 </p>
 
-<img src="intro3.png" alt="basic snd display" align=right>
+<img src="pix/intro3.png" alt="basic snd display" align=right>
 
 <p>Manipulating sounds in a programming environment
 is most enjoyable if you can edit and retry expressions
@@ -562,7 +562,7 @@ explicit setting:
 
 <A NAME="openfile"></a>
 
-<img src="open-dialog.png" usemap="#opendialogmap" alt="Open File dialog" align=right hspace=20 border=0>
+<img src="pix/open-dialog.png" usemap="#opendialogmap" alt="Open File dialog" align=right hspace=20 border=0>
 
 <map name="opendialogmap">
   <area shape=rect coords="365,40,400,60" 
@@ -742,7 +742,7 @@ There's also a list on the left of each channel pane containing a list of
 the current edits.  You can click anywhere in the list to move to that
 edit.
 </p>
-<img src="edithistory.png" alt="edit history list" hspace=40 usemap="#edithistorymap" border=0>
+<img src="pix/edithistory.png" alt="edit history list" hspace=40 usemap="#edithistorymap" border=0>
 <map name="edithistorymap">
   <area shape=rect coords="0,30,245,230" onmouseout="UnTip()" onmouseover="Tip('this is the edit history list. We\'ve made 4 edits so far.')">
   <area shape=rect coords="285,30,420,210" onmouseout="UnTip()" onmouseover="Tip('this is the time domain graph with display-current-window.')">
@@ -843,7 +843,7 @@ is a very awkward thing to do), or by calling <a href="extsnd.html#addfilesorter
 by typing the file or directory name in the 'add:' text widget.
 </p>
 
-<img src="vf.png" alt="View:Files dialog" hspace=20 align=left>
+<img src="pix/vf.png" alt="View:Files dialog" hspace=20 align=left>
 
 <p>Files can be added to the list at startup
 via the -p switch, and with the functions <a href="extsnd.html#addfiletoviewfileslist">add-file-to-view-files-list</a>
@@ -907,7 +907,7 @@ the slider beneath the window list is highlighted and can be used
 to choose the desired member of that family of windows.
 </p>
 
-<img src="ffts.png" alt="transform dialog" hspace=20 align=left>
+<img src="pix/ffts.png" alt="transform dialog" hspace=20 align=left>
 
 <p>The FFT is taken from the start (the left edge) of the
 current window and is updated as the window bounds change.
@@ -980,7 +980,7 @@ spectro-x-scale and spectro-y-scale.
 The keypad Enter key resets all the
 spectrogram variables to their default values.
 </p>
-<img src="hfft.png" alt="picture of sonogram">
+<img src="pix/hfft.png" alt="picture of sonogram">
 <br><br>
 
 <p>A somewhat frivolous feature, known here as the
@@ -993,7 +993,7 @@ so that successive peaks line up.  The
 trace length in samples is set by the variable <a href="extsnd.html#wavotrace">wavo-trace</a>,
 or the numeric keypad + and - keys.
 </p>
-<img src="wavo.png" alt="wavogram of oboe" hspace=20>
+<img src="pix/wavo.png" alt="wavogram of oboe" hspace=20>
 
         <!-- I(wavogram):A(wavogram) --><!-- I(wavogram):L(time-graph-type)(wavogram) --><!-- I(wavogram):O(wavo-trace, wavo-hop)(wavohop) -->
 
@@ -1022,7 +1022,7 @@ the far right, and click on the one you're
 interested in.  If you leave the help dialog active, it becomes a sort of tooltip --
 if you linger over some other topic, its help info will be posted in the help dialog.
 </p>
-<img src="prefs.png" alt="preferences dialog">
+<img src="pix/prefs.png" alt="preferences dialog">
 <br>
 <br>
 
@@ -1272,7 +1272,7 @@ available regions (the maximum list size is normally 16 &mdash; see <a href="ext
 The currently available regions can be view from the
 View menu's Region browser:</p>
 
-<img src="regions.png" alt="picture of region browser" align=left hspace=20>
+<img src="pix/regions.png" alt="picture of region browser" align=left hspace=20>
 
 <p>
 The 'print' button produces a Postscript
@@ -1371,7 +1371,7 @@ See <a href="extsnd.html#editlists">Edit Lists</a> for more details.
 <br>
 <table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="saveopen">Save, open, close, print</a></h4></td></tr></table>
 
-<img src="saveas.png" alt="save as dialog" align=right>
+<img src="pix/saveas.png" alt="save as dialog" align=right>
 <p>Most of these kinds of operations are accessible from the File menu.
 They can also
 be invoked from the keyboard:</p>
@@ -1691,7 +1691,7 @@ be changed independently of anything else either through such functions as
 	<!-- I(move mixed file):O(drag mix tag)(mixingfiles) -->
 	<!-- I(move mixed file):A(mixingfiles) -->
 
-<img src="mixer.png" alt="mix tags">
+<img src="pix/mixer.png" alt="mix tags">
 <br>
 <br>
 <table width="35%" border=0><tr><td bgcolor="#FDFDF2" valign="middle"><A NAME="mixdialog">The Mix Dialog</a></td></tr></table>
@@ -1765,7 +1765,7 @@ automatically pad with zeros, if necessary.
 <!-- INDEX recordfile:Recording -->
 <table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="recordfile">Record a File</a></h4></td></tr></table>
 
-<img src="simprec.png" alt="picture of recorder dialog" align=right hspace=20>
+<img src="pix/simprec.png" alt="picture of recorder dialog" align=right hspace=20>
 
 <p>Snd's recorder is very simple; for complex recording tasks, use Ardour.  The record dialog presents one or two VU meters (just
 the curve and a needle), a text widget for the output sound file name, a button to change the meters from linear to dB, and
@@ -1775,7 +1775,7 @@ the usual buttons along the bottom to start or stop the recorder, provide help, 
 <br>
 <table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="editenvelope">Edit or View an Envelope</a></h4></td></tr></table>
 
-<img src="env.png" alt="picture of envelope editor" align=right hspace=10>
+<img src="pix/env.png" alt="picture of envelope editor" align=right hspace=10>
 
 <p>The Edit Envelope dialog (under the Edit menu) opens a window
 for viewing and editing envelopes.  
@@ -1867,7 +1867,7 @@ improve the fit.  In this case, the X axis goes from 0 Hz to half the sampling r
 <br>
 <table width="50%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4><A NAME="editheader">Edit, add, or remove the header</a></h4></td></tr></table>
 
-<img src="editheader.png" alt="edit header dialog" align=right>
+<img src="pix/editheader.png" alt="edit header dialog" align=right>
 <p>The Edit menu's Edit Header option starts a dialog to edit, add, or
 remove the sound's header.  No change is made to the actual sound
 data; the new header is blindly written out; any unsaved edits are
@@ -2173,7 +2173,7 @@ To delete listener text back to the previous command, use C-_.
 beneath the channel graphs.
 </p>
 
-<img src="controls.png" alt="picture of Snd control panel" hspace=20 usemap="#controlsmap" border=0>
+<img src="pix/controls.png" alt="picture of Snd control panel" hspace=20 usemap="#controlsmap" border=0>
 <map name="controlsmap">
   <area shape=rect coords="0,0,25,25" onmouseout="UnTip()" onmouseover="Tip('This is Snd's icon!')">
   <area shape=rect coords="650,60,820,95" onmouseout="UnTip()" onmouseover="Tip('See make-current-window-display in sndscm.html')">

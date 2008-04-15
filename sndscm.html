@@ -279,19 +279,6 @@ For help with Forth and Snd/CLM, see the Forth documentation section "Snd, CLM, 
 
 <br><br>
 
-<!-- ---------------------------------------- FILE: animals ---------------------------------------- -->
-
-<A NAME="animalsdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>animals</h2></td></tr></table>
-
-<p>
-animals.scm contains several synthesized animal sounds and songs.  
-To hear them all, call calling-all-animals (defined at the end of animals.scm).
-People paint birds; why not bird songs?  Check out a Hermit Thrush song down 2 or 3 octaves and slowed down as well (via
-granular synthesis, for example) -- incredibly beautiful 2-part microtonal counterpoint.
-</p>
-<br>
-
-
 <!-- ---------------------------------------- FILE: analog-filter ---------------------------------------- -->
 
 <A NAME="analogfilterdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>analog-filter</h2></td></tr></table>
@@ -363,7 +350,7 @@ in terms of srate = 1.0 (for convenience):
 </pre></td></tr></table>
 
 <table border=0 cellpadding=5 vspace=10 hspace=20><tr><td>
-<img src="iir.png" alt="iir filters">
+<img src="pix/iir.png" alt="iir filters">
 </td><td>
 <pre>
 ;; this shows filter-sweep with:
@@ -382,6 +369,21 @@ in terms of srate = 1.0 (for convenience):
 </tr></table>
 <br>
 
+
+
+<!-- ---------------------------------------- FILE: animals ---------------------------------------- -->
+
+<A NAME="animalsdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>animals</h2></td></tr></table>
+
+<p>
+animals.scm contains several synthesized animal sounds: frogs, birds, insects, and one mammal.
+People paint birds; why not bird songs?  Check out a Hermit Thrush song down 2 or 3 octaves and slowed down as well (via
+granular synthesis, for example) &mdash; incredibly beautiful 2-part microtonal counterpoint.
+Anyway, to hear them all, <code>(calling-all-animals)</code>.
+</p>
+<br>
+
+<!-- before and after comparisons? -->
 
 
 <!-- ---------------------------------------- FILE: autosave ---------------------------------------- -->
@@ -425,7 +427,7 @@ the main application.
 
 <table border=0 hspace=20>
 <tr><td>
-<img src="fm.png" alt="fm dialog" hspace=40>
+<img src="pix/fm.png" alt="fm dialog" hspace=40>
 </td>
 </tr>
 <tr><td>
@@ -1132,7 +1134,7 @@ anything other than .5 produces a longer decay.  It should be between 0.0 and 1.
   (pluck .7 2 330 .3 .8 .99))
 </pre>
 </td><td width=40></td><td>
-<img src="pluck.png" alt="wavogram of pluck" onmouseout="UnTip()" onmouseover="Tip('this is a wavogram of the with-sound on the left:<br><br><code>(set! (time-graph-type) graph-as-wavogram)</code><br><br>To get this graph, use the \'hot\' colormap<br>color data cutoff at .004, darkness 100<br>x angle 20, scale .85, y 100 .79, z 138 .85<br>wavo-trace 100, wavo-hop 1, and scale the sound to 1.0')">
+<img src="pix/pluck.png" alt="wavogram of pluck" onmouseout="UnTip()" onmouseover="Tip('this is a wavogram of the with-sound on the left:<br><br><code>(set! (time-graph-type) graph-as-wavogram)</code><br><br>To get this graph, use the \'hot\' colormap<br>color data cutoff at .004, darkness 100<br>x angle 20, scale .85, y 100 .79, z 138 .85<br>wavo-trace 100, wavo-hop 1, and scale the sound to 1.0')">
 </td></tr></table>
 
 In Ruby:
@@ -1740,7 +1742,7 @@ This information is implicit in the x axis zoom and position sliders, but a redu
 the cursor is moved to the clicked point.  A menu item named "Toggle inset" is added to the View menu to turn this
 little graph off or on.
 
-<img src="uppergrf.png" alt="make-current-window-display" hspace=20 vspace=10>
+<img src="pix/uppergrf.png" alt="make-current-window-display" hspace=20 vspace=10>
 <br>
 If you're using a line cursor (if <a href="extsnd.html#cursorstyle">cursor-style</a> is <code>cursor-line</code>), it may 
 collide at times with the little graph; 
@@ -1781,7 +1783,7 @@ To activate this, add it to <a href="extsnd.html#aftergraphhook">after-graph-hoo
     (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> <a class=quiet href="extsnd.html#aftergraphhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_aftergraphhook_tip)">after-graph-hook</a> samples-via-colormap)
 </pre>
 </td><td>
-<img src="samplesviacolormap.png" alt="samples-via-colormap" hspace=10>
+<img src="pix/samplesviacolormap.png" alt="samples-via-colormap" hspace=10>
 </td></tr></table>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -1860,7 +1862,7 @@ graph off. Here we've used rgb.scm for some color names:
     (set! (<a class=quiet href="extsnd.html#selecteddatacolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_selecteddatacolor_tip)">selected-data-color</a>) light-green)
 </pre>
 
-<img src="bark.png" alt="bark display" vspace=10>
+<img src="pix/bark.png" alt="bark display" vspace=10>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -2929,7 +2931,7 @@ It's usually easier to use <a href="sndclm.html#mus-reset">mus-reset</a> to rest
     <em class=listener>(0 0 0.1 0.9 1.0 1 1.3 0.2 2.0 0 2.1 0.9 3.0 1 3.3 0.2 4.0 0)</em>
 </pre>
 </td></tr><tr>
-<td><img src="repenv.png" alt="repeated envelope" hspace=20>
+<td><img src="pix/repenv.png" alt="repeated envelope" hspace=20>
 </td></tr></table>
 
 If the final y value is different from the first y value (as above), a quick ramp is
@@ -3038,7 +3040,7 @@ control panel fields); the latter pans a mono sound into stereo following
 the envelope. 
 </p>
 
-<img src="envs.png" alt="channel enveds" hspace=20 vspace=10>
+<img src="pix/envs.png" alt="channel enveds" hspace=20 vspace=10>
 <br>
 <p>
 Closely related to this is xm-enved.scm which implements a separate envelope editor widget.
@@ -4472,7 +4474,7 @@ use env-expt-channel.  The 'symmetric' argument determines whether the
 up and down moving ramps look symmetrical around a break point.
 
 <table border=0 vspace=10>
-<tr><td><img src="exptenvs.png" alt="exponential envelopes"></td><td>
+<tr><td><img src="pix/exptenvs.png" alt="exponential envelopes"></td><td>
 <pre>
 (env-channel '(0 0 1 1 2 -.75 3 0)) 
 (env-sound '(0 0 1 1 2 -.75 3 0) 0 100 32.0)  
@@ -5329,7 +5331,7 @@ sound file (the sphygmometer readings are between 70 and 150), then open that fi
 clipping features turned off.  We also tell Snd to skip the data file in its start-up load process (since it
 is an uninterpretable text file) by incrementing script-arg.
 </p>
-<img src="usync.png" alt="heart picture" hspace=40>
+<img src="pix/usync.png" alt="heart picture" hspace=40>
 
 <br>
 <br>
@@ -6173,7 +6175,7 @@ Some of the outer menu items are:
   Reverse
 </pre>
 </td><td>
-<img src="gain.png" alt="gain effect dialog">
+<img src="pix/gain.png" alt="gain effect dialog">
 </td></tr></table>
 
 <!-- I(reverse samples):M(Effects: Reverse)(menusdoc) -->
@@ -6232,7 +6234,7 @@ default used by misc.scm.
 to things like Zoom, and Quit.
 </p>
 
-<img src="newbuttons.png" alt="button bar" hspace=20>
+<img src="pix/newbuttons.png" alt="button bar" hspace=20>
 
 <p>
 <b>misc.scm</b> loads these menus and interface improvements, adds several sound file extensions,
@@ -6719,7 +6721,7 @@ at position (100 100) of size 50; since the 'style' argument defaults to
 #f, the clef is displayed as a filled polygon; use #t to get an outline of
 the clef instead.
 </p>
-<img src="sndcmn.png" alt="Snd with music symbols" hspace=20>
+<img src="pix/sndcmn.png" alt="Snd with music symbols" hspace=20>
 <br>
 <p>This was created with:
 </p>
@@ -6885,7 +6887,7 @@ displays the data read from the microphone in "real time".
 </p>
 
 <table border=0 cellpadding=10 hspace=20><tr><td>
-<img src="sndosc.png" alt="oscilloscope dialog">
+<img src="pix/sndosc.png" alt="oscilloscope dialog">
 </td><td>
 This is a snapshot of the oscope display (I'm singing "eeahhee" into the microphone); in normal operation, it's constantly updating both the
 waveform and the FFT.  Eventually I hope to add a "waterfall" FFT display.
@@ -7263,9 +7265,9 @@ Here are the selection and fft popups:
 
 <table border=0 hspace=20 cellpadding=10>
 <tr><td>
-<img src="selpop.png" alt="selection popup menu">
+<img src="pix/selpop.png" alt="selection popup menu">
 </td><td>
-<img src="fftpop.png" alt="fft popup menu">
+<img src="pix/fftpop.png" alt="fft popup menu">
 </td></tr></table>
 
 <br>
@@ -8027,7 +8029,7 @@ for multichannel sounds so that each channel gets its own amplitude control slid
 To make this the default, add <code>(add-amp-controls)</code> to your initialization file.
 Here is a 4-channel control panel after adding the channel-specific amp controls.
 </td><td>
-<img src="addamps.png" alt="added amp controls">
+<img src="pix/addamps.png" alt="added amp controls">
 </td></tr></table>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -8058,7 +8060,7 @@ you need to make some change to them to force it to be displayed).
 Here's a picture (it also shows <a href="#showsmptelabel">show-smpte-label</a>, 
 <a href="#makecurrentwindowdisplay">make-current-window-display</a> (draw.scm), and <a href="#showdiskspace">show-disk-space</a>).
 <br>
-<img src="markpane.png" alt="mark pane" hspace=20 vspace=10 usemap="#markpanemap" border=0>
+<img src="pix/markpane.png" alt="mark pane" hspace=20 vspace=10 usemap="#markpanemap" border=0>
 <map name="markpanemap">
   <area shape=rect coords="70,30,150,50" alt="SMPTE label" onmouseout="UnTip()" onmouseover="Tip('this is the SMPTE label showing the time of the left edge')">
   <area shape=rect coords="240,33,245,120" alt="SMPTE label" onmouseout="UnTip()" onmouseover="Tip('this is mark at sample 8001: <code>(add-mark 8001)</code>')">
@@ -8151,7 +8153,7 @@ scanned synthesis developed by Bill Verplank and Max Mathews.
 It is not impossible that you can close this pane via <code>close-scanned-synthesis-pane</code>.
 The synthesis code is also in <a href="#dspdocscanned">dsp.scm</a>.
 <table border=0 hspace=20 vspace=10><tr><td>
-<img src="scanned.png" alt="scanned synthesis dialog"></td><td>
+<img src="pix/scanned.png" alt="scanned synthesis dialog"></td><td>
 <pre>
     top slider = mass,
     2nd slider = spring,
@@ -8434,7 +8436,7 @@ putting it in a text display:
 (simp)
 </pre>
 </td><td>
-<img src="vardpy.png" alt="variable display">
+<img src="pix/vardpy.png" alt="variable display">
 </td></tr></table>
 
 variable-display doesn't work within the run macro, but if you're debugging
@@ -8549,7 +8551,7 @@ show-sounds-in-directory calls make-sound-box, filling it with
 any sounds found in the directory passed as its argument (which defaults to 
 the current directory).
 <br>
-<img src="soundbox.png" alt="show-sounds-in-directory" hspace=20 vspace=10>
+<img src="pix/soundbox.png" alt="show-sounds-in-directory" hspace=20 vspace=10>
 
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -9935,7 +9937,7 @@ by calling the oscils and whatnot directly in the with-sound body:
 	     (set! x (+ x incr))
 	     (<a class=quiet href="sndclm.html#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> samp (* .1 sum)))))))))
 </pre></td></tr></table>
-<img src="shepard.png" alt="shepard tone spectrum" vspace=10 hspace=40>
+<img src="pix/shepard.png" alt="shepard tone spectrum" vspace=10 hspace=40>
 
 <p>In all these cases, the "run time" portion of the sound computation is wrapped up
 in <code>(run (lambda () ... ))</code>.  <a name="run">run</a> (the name predates me!),
@@ -10367,7 +10369,7 @@ an upward ramp and a downward ramp, then zips them together:
 </pre></td></tr></table>
 
 <br>
-<img src="zramp.png" alt="zipper ramp output" hspace=20>
+<img src="pix/zramp.png" alt="zipper ramp output" hspace=20>
 <p>Needless to say, this is not intended to be a suave, romantic gesture!
 </p>
 

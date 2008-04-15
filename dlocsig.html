@@ -236,10 +236,10 @@
 <p>All the intermediate points that create the smooth trajectory were rendered from the bezier segments fitted by <em>make-path</em> to the three supplied points. </p>
 </td>
 
-<td><img src="fig1.png"></td>
+<td><img src="pix/fig1.png"></td>
 
 <tr valign="top">
-<td><img src="fig2.png"></td>
+<td><img src="pix/fig2.png"></td>
 <td><p>The fourth optional parameter controls the relative velocity of the movement. In our example the sound source slows down to zero velocity on the second point and reaches the third point at 1.5 times the speed it started it. </p>
 
 <p>These are the corresponding graphs of average velocity, acceleration and doppler shift for each segment of the trajectory. </p>
@@ -319,8 +319,8 @@
 <p>The figure on the left was created by <tt>(make-path '((-10 10)(0 5)(10 10)) :curvature '(0.4 1))</tt>. The first segment of the trajectory changes direction more abruptly than the second that uses the default of 1 for the parameter. The second was created by <tt>(make-path '((-10 10)(0 5)(10 10)) :curvature 0.4)</tt>, now both segments share the same curvature. </p>
 
 <p><table cellpadding="5"><tr>
-<td><img src="c0.png"><br><br>:curvature '(0.4 1)</td>
-<td><img src="c1.png"><br><br>:curvature 0.4</td>
+<td><img src="pix/c0.png"><br><br>:curvature '(0.4 1)</td>
+<td><img src="pix/c1.png"><br><br>:curvature 0.4</td>
 </table></p>
 
 <tr valign=top>
@@ -330,9 +330,9 @@
 <p>The following figures illustrate the effect of the <a href="#bezier-error">error</a> parameter. All figures represent the same path in 2d space <tt>'((-10 10)(0 5)(10 10))</tt>. The one on the left was created with <tt>(make-path '((-10 10)(0 5)(10 10)) :error 3)</tt>. The error bound is so large that no points are actually interpolated between the three supplied points (even though internally the bezier curve control points were calculated). The one on the center was created with <tt>(make-path '((-10 10)(0 5)(10 10)) :error 0.3)</tt>. Two intermediate points are calculated between each of the three supplied points. The one on the right was created with <tt>(make-path '((-10 10)(0 5)(10 10)) :error 0.01)</tt> and closely approaches the ideal bezier curve. </p>
 
 <p><table cellpadding="5"><tr>
-<td><img src="e0.png"><br><br>:error 3</td>
-<td><img src="e1.png"><br><br>:error 0.3</td>
-<td><img src="e2.png"><br><br>:error 0.01</td>
+<td><img src="pix/e0.png"><br><br>:error 3</td>
+<td><img src="pix/e1.png"><br><br>:error 0.3</td>
+<td><img src="pix/e2.png"><br><br>:error 0.01</td>
 </table></p>
 
 <tr valign=top>
