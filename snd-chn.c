@@ -4,10 +4,6 @@
 
 /* SOMEDAY: fft side needs a zoom capability, not just the drag now */
 /* TODO: set y-bounds doesn't always fixup the y zoom slider? */
-/*
- * TODO: check out wavo again and make it graph in some reasonable way
- */
-
 
 
 /* it would be neat I think to change label font sizes/button sizes etc when dialog changes size

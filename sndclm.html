@@ -5678,7 +5678,9 @@ frequency, wherever that makes sense.
 The generic functions are:
 </p>
 
-<table cellspacing=0 cellpadding=0 hspace=40>
+<table bordercolor="#f2f4ff" border=2 cellpadding=10 hspace=40><tr><td>
+
+<table cellspacing=0 cellpadding=0>
 <tr><td bgcolor="#f2f4ff"><a class=def name="mus-channel">mus-channel</a></td><td width=30 bgcolor="#f2f4ff"></td><td bgcolor="#f2f4ff">channel being read/written</td></tr>
 <tr><td><a class=def name="mus-channels">mus-channels</a></td><td></td><td>channels open</td></tr>
 <tr><td bgcolor="#f2f4ff"><a class=def name="mus-data">mus-data</a></td><td bgcolor="#f2f4ff"></td><td bgcolor="#f2f4ff">vct of data</td></tr>
@@ -5705,8 +5707,9 @@ The generic functions are:
 <tr><td><a class=def name="mus-xcoeffs">mus-xcoeffs</a></td><td></td><td>vct of x (input) coefficients</td></tr>
 <tr><td bgcolor="#f2f4ff"><a class=def name="mus-ycoeff">mus-ycoeff</a></td><td bgcolor="#f2f4ff"></td><td bgcolor="#f2f4ff">y (output, feedback) coefficient</td></tr>
 <tr><td><a class=def name="mus-ycoeffs">mus-ycoeffs</a></td><td></td><td>vct of y (feedback) coefficients</td></tr>
-
 </table>
+
+</td></tr></table>
 
 <p>Many of these are settable:
 <code>(set! (mus-frequency osc1) 440.0)</code>
@@ -7317,11 +7320,6 @@ test 23 in snd-test.
     <td><a href="rmsenv.ins">rmsenv.ins</a></td>    
     </tr>
 
-<tr><td>track-rms</td>         
-    <td>rms envelope of sound file (Michael Edwards)</td>      
-    <td><a href="rmsp.ins">rmsp.ins</a></td>        
-    </tr>
-
 <tr><td>pins</td>              
     <td>spectral modelling</td>      
     <td><a href="san.ins">san.ins</a></td>          
@@ -7372,6 +7370,11 @@ test 23 in snd-test.
     <td><a href="strad.ins">strad.ins</a></td>      
 	<td><a href="strad.scm">strad.scm</a></td>
 	<td><a href="strad.rb">strad.rb</a></td>
+    </tr>
+
+<tr><td>track-rms</td>         
+    <td>rms envelope of sound file (Michael Edwards)</td>      
+    <td><a href="track-rms.ins">track-rms.ins</a></td>        
     </tr>
 
 <tr><td>fm-trumpet</td>        
