@@ -24,19 +24,45 @@
 ;;; if it actually did find the library, try running Snd and (dlopen "sndlib.so")
 ;;;   Snd's dlopen will report a truthful error message (libtool lies)
 
+(define use-snd (provided? 'snd))
 
 ;;; set up our user-interface
-(let* ((shell-app (XtVaOpenApplication 
-                    "FM Forever!" 0 '()
-		    applicationShellWidgetClass
-                    (list XmNallowShellResize #t)
-		    (list "*fontList: 9x15"
-			  "*enableEtchedInMenu: True"
-			  "*enableThinThickness: True"
-			  "*enableToggleColor: True"
-			  "*enableToggleVisual: True")))
-       (app (cadr shell-app))
-       (shell (car shell-app))
+(let* ((shell-app (if (not use-snd)
+		      (XtVaOpenApplication 
+		       "FM Forever!" 0 '()
+		       applicationShellWidgetClass
+		       (list XmNallowShellResize #t)
+		       (list "*fontList: 9x15"
+			     "*enableEtchedInMenu: True"
+			     "*enableThinThickness: True"
+			     "*enableToggleColor: True"
+			     "*enableToggleVisual: True"))
+		      #f))
+       (app (if use-snd
+		(car (main-widgets))
+		(cadr shell-app)))
+
+       (shell (if use-snd
+		  (let* ((xdismiss (XmStringCreate "Go away" XmFONTLIST_DEFAULT_TAG))
+			 (xhelp (XmStringCreate "Help" XmFONTLIST_DEFAULT_TAG))
+			 (titlestr (XmStringCreate "FM Forever!" XmFONTLIST_DEFAULT_TAG))
+			 (dialog (XmCreateTemplateDialog (cadr (main-widgets)) "FM Forever!"
+				   (list XmNcancelLabelString   xdismiss
+					 XmNhelpLabelString     xhelp
+					 XmNautoUnmanage        #f
+					 XmNdialogTitle         titlestr
+					 XmNresizePolicy        XmRESIZE_GROW
+					 XmNnoResize            #f
+					 XmNtransient           #f))))
+		    (XtAddCallback dialog 
+				   XmNhelpCallback (lambda (w context info)
+						     (snd-print "This dialog lets you experiment with simple FM")))
+		    (XmStringFree xhelp)
+		    (XmStringFree xdismiss)
+		    (XmStringFree titlestr)
+		    dialog)
+		  (car shell-app)))
+
        (dpy (XtDisplay shell))
        (screen (DefaultScreenOfDisplay dpy))
        (cmap (DefaultColormap dpy (DefaultScreen dpy)))
@@ -59,7 +85,8 @@
       (XtVaSetValues label (list XmNlabelString s1))
       (XmStringFree s1)))
 
-  (XtSetValues shell (list XmNtitle "FM Forever!"))
+  (if (not use-snd)
+      (XtSetValues shell (list XmNtitle "FM Forever!")))
 
   (let* ((light-blue (position-color))
 	 (form (XtCreateManagedWidget "form" xmFormWidgetClass shell 
@@ -189,9 +216,7 @@
 	 (high-index 3.0)
 	 (ratio 1)
 	 (high-ratio 10)
-
 	 (playing 0.0)
-
 	 (carosc (make-oscil 0.0))
 	 (modosc (make-oscil 0.0)))
 
@@ -237,7 +262,9 @@
     (XmScaleSetValue fm-scale (inexact->exact (floor (* 100 (/ index high-index)))))
     (XmScaleSetValue cm-scale (inexact->exact (floor (* ratio (/ 100 high-ratio)))))
 
-    (XtRealizeWidget shell)
+    (if use-snd
+	(XtManageChild shell)
+	(XtRealizeWidget shell))
 
     ;; send fm data to dac
     (mus-oss-set-buffers 4 12) ; a no-op except in OSS/Linux
@@ -247,13 +274,21 @@
 	   (data (make-sound-data chans bufsize))
 	   (proc #f)
 	   (port (mus-audio-open-output mus-audio-default srate chans mus-lshort (* bufsize 2))))
-      (if (< port 0) (display (format #f "can't open DAC!")))
+      (if (< port 0) 
+	  (display (format #f "can't open DAC!")))
+
       (XmAddWMProtocolCallback shell 
 			       (XmInternAtom dpy "WM_DELETE_WINDOW" #f)
 			       (lambda (w c i)
 				 (XtRemoveWorkProc proc) ; odd that there's no XtAppRemoveWorkProc
 				 (mus-audio-close port))
 			       #f)
+      (if use-snd
+	  (XtAddCallback shell
+			 XmNcancelCallback (lambda (w context info)
+					     (XtRemoveWorkProc proc)
+					     (mus-audio-close port)
+					     (XtUnmanageChild shell))))
       (set! proc (XtAppAddWorkProc 
 		  app 
 		  (lambda (ignored-arg)
@@ -269,4 +304,7 @@
 					      (hz->radians (* ratio frequency)))))))))
 		    (mus-audio-write port data bufsize)
 		    #f))))
-    (XtAppMainLoop app)))
+    (if (not use-snd)
+	(XtAppMainLoop app))))
+
+

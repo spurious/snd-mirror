@@ -126,6 +126,9 @@
 (define* (CAIRO-FUNC-140 data :optional spec)
   (fgrep (cadr-str data) 140))
 
+(define* (CAIRO-FUNC-164 data :optional spec)
+  (fgrep (cadr-str data) 164))
+
 (define (CATOM name)
   #f)
 
@@ -230,6 +233,9 @@
 
 (define* (CAIRO-INT-140 name :optional type)
   (fgrep name 140))
+
+(define* (CAIRO-INT-164 name :optional type)
+  (fgrep name 164))
 
 (define (CCAST name type) ; this is the cast (type *)obj essentially but here it's (list type* (cadr obj))
   #f)

@@ -2432,6 +2432,8 @@
 ;;; --------------------------------------------------------------------------------
 ;;;
 ;;; White-throated sparrow
+;;;
+;;; probably music of birds 14, 1st song
 
 (definstrument (white-throated-sparrow beg amp)
   (let* ((start (seconds->samples beg))
@@ -2469,7 +2471,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (let ((frq (+ (env frqf)
-		       (mus-random 0.01)
+		       (mus-random 0.001)
 		       (rand-interp rnd))))
 	   (outa i (* (env ampf)
 		      (+ (* .9 (oscil gen1 frq))
@@ -4870,7 +4872,7 @@
 	 (stop (+ start (seconds->samples dur)))
 	 (ampf (make-env '(0 0 1 1 1.4 1 1.7 .8  1.8 .2 2 0) :duration dur :scaler amp))
 	 (gen1 (make-rcos 1200 0.5))
-	 (gen2 (make-rxycos 1800 1200 0.75))
+	 (gen2 (make-rxycos 1800 (/ 1200 1800.0) 0.75))
 	 (frqf (make-env '(0.000 0.326 0.057 0.599 0.075 0.602 0.102 0.637 0.140 0.618 0.255 0.626 0.378 0.607 
 			   0.401 0.589 0.441 0.584 0.491 0.562 0.591 0.544 0.628 0.557 0.675 0.541 0.733 0.538 
 			   0.756 0.523 0.809 0.501 0.853 0.469 0.887 0.390 1.000 0.325)
@@ -5241,6 +5243,8 @@
 ;;; --------------------------------------------------------------------------------
 ;;;
 ;;; White-faced ibis
+;;;
+;;; TODO: fix ibis! this is broken -- I think the change to formant screwed it up
 
 (definstrument (white-faced-ibis beg amp)
   (let* ((start (seconds->samples beg))
@@ -5259,7 +5263,7 @@
 	 (fr1 (* 2 3 (sin (hz->radians 4300))))
 	 (fr2 (* 2 6 (sin (hz->radians 2200))))
 	 (fr3 (* 2 5 (sin (hz->radians 3000))))
-	 (gen (make-nxycos 1000 250 13))
+	 (gen (make-nxycos 1000 0.25 13))
 	 (rnd (make-rand-interp 1000 (hz->radians 20))))
    (run
      (lambda ()

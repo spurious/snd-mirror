@@ -146,6 +146,10 @@
 (define cairo-ints-140 '())
 (define cairo-types-140 '())
 
+(define cairo-funcs-164 '())
+(define cairo-ints-164 '())
+(define cairo-types-164 '())
+
 (define all-types '())
 (define all-check-types '())
 
@@ -1283,6 +1287,23 @@
 	    (set! names (cons (cons name (func-type strs)) names)))))))
 
 
+(define* (CAIRO-FUNC-164 data :optional spec)
+  (let ((name (cadr-str data))
+	(args (caddr-str data)))
+    (if (assoc name names)
+	(no-way "CAIRO-FUNC-164: ~A~%" (list name data))
+	(let ((type (car-str data)))
+	  (if (not (member type all-types))
+	      (begin
+		(set! all-types (cons type all-types))
+		(set! cairo-types-164 (cons type cairo-types-164))))
+	  (let ((strs (parse-args args '210)))
+	    (if spec
+		(set! cairo-funcs-164 (cons (list name type strs args spec) cairo-funcs-164))
+		(set! cairo-funcs-164 (cons (list name type strs args) cairo-funcs-164)))
+	    (set! names (cons (cons name (func-type strs)) names)))))))
+
+
 (define (helpify name type args)
   (let* ((initial (format #f "  #define H_~A \"~A ~A(" name type name))
 	 (line-len (string-length initial))
@@ -1557,6 +1578,14 @@
       (no-way "~A CAIRO-INT-140~%" name)
       (begin
 	(set! cairo-ints-140 (cons name cairo-ints-140))
+	(set! names (cons (cons name 'int) names)))))
+  
+(define* (CAIRO-INT-164 name :optional type)
+  (save-declared-type type)
+  (if (assoc name names)
+      (no-way "~A CAIRO-INT-164~%" name)
+      (begin
+	(set! cairo-ints-164 (cons name cairo-ints-164))
 	(set! names (cons (cons name 'int) names)))))
   
 
@@ -1868,6 +1897,11 @@
 
 (define (with-cairo-140 dpy thunk)
   (dpy "#if HAVE_CAIRO_GET_USER_DATA~%")
+  (thunk)
+  (dpy "#endif~%~%"))
+
+(define (with-cairo-164 dpy thunk)
+  (dpy "#if HAVE_CAIRO_FORMAT_STRIDE_FOR_WIDTH~%")
   (thunk)
   (dpy "#endif~%~%"))
 
@@ -2223,6 +2257,7 @@
 (if (not (null? types-213)) (with-213 hey (lambda () (for-each type-it (reverse types-213)))))
 (if (not (null? cairo-types)) (with-cairo hey (lambda () (for-each type-it (reverse cairo-types)))))
 (if (not (null? cairo-types-140)) (with-cairo-140 hey (lambda () (for-each type-it (reverse cairo-types-140)))))
+(if (not (null? cairo-types-164)) (with-cairo-164 hey (lambda () (for-each type-it (reverse cairo-types-164)))))
 
 (hey "#define XLS(a, b) XEN_TO_C_gchar_(XEN_LIST_REF(a, b))~%")
 (hey "#define XLI(a, b) XEN_TO_C_INT(XEN_LIST_REF(a, b))~%")
@@ -2860,6 +2895,7 @@
 (if (not (null? cairo-funcs)) (with-cairo hey (lambda () (for-each handle-func (reverse cairo-funcs)))))
 (if (not (null? cairo-png-funcs)) (with-cairo-png hey (lambda () (for-each handle-func (reverse cairo-png-funcs)))))
 (if (not (null? cairo-funcs-140)) (with-cairo-140 hey (lambda () (for-each handle-func (reverse cairo-funcs-140)))))
+(if (not (null? cairo-funcs-164)) (with-cairo-164 hey (lambda () (for-each handle-func (reverse cairo-funcs-164)))))
 
 
 (hey "#define WRAPPED_OBJECT_P(Obj) (XEN_LIST_P(Obj) && (XEN_LIST_LENGTH(Obj) >= 2) && (XEN_SYMBOL_P(XEN_CAR(Obj))))~%~%")
@@ -3221,6 +3257,7 @@
 (if (not (null? cairo-funcs)) (with-cairo hey (lambda () (for-each argify-func (reverse cairo-funcs)))))
 (if (not (null? cairo-png-funcs)) (with-cairo-png hey (lambda () (for-each argify-func (reverse cairo-png-funcs)))))
 (if (not (null? cairo-funcs-140)) (with-cairo-140 hey (lambda () (for-each argify-func (reverse cairo-funcs-140)))))
+(if (not (null? cairo-funcs-164)) (with-cairo-164 hey (lambda () (for-each argify-func (reverse cairo-funcs-164)))))
 
 (define (ruby-cast func) (hey "XEN_NARGIFY_1(gxg_~A_w, gxg_~A)~%" (no-arg (car func)) (no-arg (car func)))) 
 (hey "XEN_NARGIFY_1(gxg_GPOINTER_w, gxg_GPOINTER)~%")
@@ -3301,6 +3338,7 @@
 (if (not (null? cairo-funcs)) (with-cairo hey (lambda () (for-each unargify-func (reverse cairo-funcs)))))
 (if (not (null? cairo-png-funcs)) (with-cairo-png hey (lambda () (for-each unargify-func (reverse cairo-png-funcs)))))
 (if (not (null? cairo-funcs-140)) (with-cairo-140 hey (lambda () (for-each unargify-func (reverse cairo-funcs-140)))))
+(if (not (null? cairo-funcs-164)) (with-cairo-164 hey (lambda () (for-each unargify-func (reverse cairo-funcs-164)))))
 
 (hey "#define gxg_GPOINTER_w gxg_GPOINTER~%")
 (hey "#define c_array_to_xen_list_w c_array_to_xen_list~%")
@@ -3403,6 +3441,7 @@
 (if (not (null? cairo-funcs)) (with-cairo hey (lambda () (for-each defun (reverse cairo-funcs)))))
 (if (not (null? cairo-png-funcs)) (with-cairo-png hey (lambda () (for-each defun (reverse cairo-png-funcs)))))
 (if (not (null? cairo-funcs-140)) (with-cairo-140 hey (lambda () (for-each defun (reverse cairo-funcs-140)))))
+(if (not (null? cairo-funcs-164)) (with-cairo-164 hey (lambda () (for-each defun (reverse cairo-funcs-164)))))
 
 (define (cast-out func)
   (hey "  XG_DEFINE_PROCEDURE(~A, gxg_~A_w, 1, 0, 0, \"(~A obj) casts obj to ~A\");~%" 
@@ -3530,6 +3569,8 @@
     (with-cairo hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse cairo-ints)))))
 (if (not (null? cairo-ints-140))
     (with-cairo-140 hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse cairo-ints-140)))))
+(if (not (null? cairo-ints-164))
+    (with-cairo-164 hey (lambda () (for-each (lambda (val) (hey "  DEFINE_INTEGER(~A);~%" val)) (reverse cairo-ints-164)))))
 
 
 (for-each 

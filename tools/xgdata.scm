@@ -6246,6 +6246,8 @@
 (CAIRO-INT-140 "CAIRO_STATUS_INVALID_INDEX" "cairo_status_t")
 (CAIRO-INT-140 "CAIRO_STATUS_CLIP_NOT_REPRESENTABLE" "cairo_status_t")
 
+(CAIRO-INT-164 "CAIRO_STATUS_TEMP_FILE_ERROR" "cairo_status_t")
+(CAIRO-INT-164 "CAIRO_STATUS_INVALID_STRIDE" "cairo_status_t")
 
 (CAIRO-INT "CAIRO_CONTENT_COLOR" "cairo_content_t")
 (CAIRO-INT "CAIRO_CONTENT_ALPHA" "cairo_content_t")
@@ -6308,7 +6310,8 @@
 (CAIRO-INT "CAIRO_FONT_TYPE_TOY" "cairo_font_type_t")
 (CAIRO-INT "CAIRO_FONT_TYPE_FT" "cairo_font_type_t")
 (CAIRO-INT "CAIRO_FONT_TYPE_WIN32" "cairo_font_type_t")
-(CAIRO-INT "CAIRO_FONT_TYPE_ATSUI" "cairo_font_type_t")
+;;; (CAIRO-INT "CAIRO_FONT_TYPE_ATSUI" "cairo_font_type_t") ; replaced by QUARTZ in 1.6.4
+(CAIRO-INT-164 "CAIRO_FONT_TYPE_QUARTZ" "cairo_font_type_t")
 
 (CAIRO-INT "CAIRO_PATH_MOVE_TO" "cairo_path_data_type_t")
 (CAIRO-INT "CAIRO_PATH_LINE_TO" "cairo_path_data_type_t")
@@ -6328,6 +6331,9 @@
 (CAIRO-INT "CAIRO_SURFACE_TYPE_SVG" "cairo_surface_type_t")
 
 (CAIRO-INT-140 "CAIRO_SURFACE_TYPE_OS2" "cairo_surface_type_t")
+
+(CAIRO-INT-164 "CAIRO_SURFACE_TYPE_WIN32_PRINTING" "cairo_surface_type_t")
+(CAIRO-INT-164 "CAIRO_SURFACE_TYPE_QUARTZ_IMAGE" "cairo_surface_type_t")
 
 (CAIRO-INT "CAIRO_FORMAT_ARGB32" "cairo_format_t")
 (CAIRO-INT "CAIRO_FORMAT_RGB24" "cairo_format_t")
@@ -6772,4 +6778,11 @@
 ;(CFNC-213 "gboolean gtk_test_widget_send_key GtkWidget* widget guint keyval GdkModifierType modifiers")
 ;(CFNC-213 "void gtk_test_text_set GtkWidget* widget gchar* string" 'const)
 ;(CFNC-213 "gchar* gtk_test_text_get GtkWidget* widget")
+
+
+(CAIRO-FUNC-164 "void cairo_path_extents cairo_t* cr double* [x1] double* [y1] double* [x2] double* [y2]")
+(CAIRO-FUNC-164 "bool cairo_has_current_point cairo_t* cr")
+(CAIRO-FUNC-164 "void cairo_surface_copy_page cairo_surface_t* surface")
+(CAIRO-FUNC-164 "void cairo_surface_show_page cairo_surface_t* surface")
+(CAIRO-FUNC-164 "int cairo_format_stride_for_width cairo_format_t format int width")
 
