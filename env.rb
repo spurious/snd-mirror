@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sat Sep 20 23:24:17 CEST 2003
-# Changed: Sat Nov 17 00:59:17 CET 2007
+# Changed: Wed Mar 05 00:56:48 CET 2008
 
 # Commentary:
 #
@@ -673,7 +673,7 @@ end
 include Env
 
 =begin
-# power envelope test (clm-4/env.lisp)
+# power envelope test (clm/env.lisp)
 
 def test_power_env(start, dur, en)
   os = make_oscil()

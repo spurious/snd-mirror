@@ -12948,7 +12948,7 @@ def test008
   if fneq(res = mus_interpolate(Mus_interp_linear, 1.5, v0), 1.5)
     snd_display("mus_interpolate linear: %s?", res)
   end
-  if fneq(res = mus_interpolate(Mus_interp_all_pass, 1.5, v0), 1.667)
+  if fneq(res = mus_interpolate(Mus_interp_all_pass, 1.5, v0), 1.5)
     snd_display("mus_interpolate all-pass: %s?", res)
   end
   if fneq(res = mus_interpolate(Mus_interp_none, 1.5, v0), 1.0)
@@ -12967,7 +12967,7 @@ def test008
   if fneq(res = mus_interpolate(Mus_interp_linear, 1.5, v0), 0.7694)
     snd_display("mus_interpolate linear sin: %s?", res)
   end
-  if fneq(res = mus_interpolate(Mus_interp_all_pass, 1.5, v0), 0.9048)
+  if fneq(res = mus_interpolate(Mus_interp_all_pass, 1.5, v0), 0.7649)
     snd_display("mus_interpolate all-pass sin: %s?", res)
   end
   if fneq(res = mus_interpolate(Mus_interp_none, 1.5, v0), 0.5877)
@@ -13849,7 +13849,7 @@ def test038
   snd_display("%s not oscil?", gen) unless oscil?(gen)
   snd_display("oscil phase: %s?", gen.phase) if fneq(gen.phase, 1.253787)
   snd_display("oscil frequency: %s?", gen.frequency) if fneq(gen.frequency, 440.0)
-  snd_display("oscil cosines: %d?", gen.cosines) if fneq(gen.cosines, 1)
+  snd_display("oscil cosines: %d?", gen.length) if fneq(gen.length, 1)
   if fneq(v0[1], 0.125) or fneq(v0[8], 0.843)
     snd_display("oscil output: %s?", v0)
   end
@@ -13970,18 +13970,8 @@ def test038
   if (res = Snd.catch do set_mus_location(make_oscil, 0) end).first != :mus_error
     snd_display("set_mus_location bad gen: %s", res.inspect)
   end
-  if (res = Snd.catch do mus_scaler(make_oscil) end).first != :mus_error
-    snd_display("mus_scaler bad gen: %s", res.inspect)
-  end
   if (res = Snd.catch do set_mus_scaler(make_oscil, 0) end).first != :mus_error
     snd_display("set_mus_scaler bad gen: %s", res.inspect)
-  end
-  if (res = Snd.catch do mus_length(make_oscil) end).first != :mus_error
-    snd_display("mus_length bad gen: %s", res.inspect)
-  end
-  if (tag = (res = Snd.catch do set_mus_length(make_oscil, 0) end).first) !=
-      :mus_error and tag != :out_of_range
-    snd_display("set_mus_length bad gen: %s", res.inspect)
   end
   if (res = Snd.catch do mus_frequency(make_one_pole) end).first != :mus_error
     snd_display("mus_frequency bad gen: %s", res.inspect)
@@ -14019,15 +14009,15 @@ def test048
   snd_display("sum_of_cosines phase: %s?", gen.phase) if fneq(gen.phase, 1.253787)
   snd_display("sum_of_cosines frequency: %s?", gen.frequency) if fneq(gen.frequency, 440.0)
   snd_display("sum_of_cosines scaler: %s?", gen.scaler) if fneq(gen.scaler, 0.1)
-  snd_display("sum_of_cosines cosines: %d?", gen.cosines) if fneq(gen.cosines, 10)
+  snd_display("sum_of_cosines cosines: %d?", gen.length) if fneq(gen.length, 10)
   snd_display("sum_of_cosines length: %d?", gen.length) if fneq(gen.length, 10)
   if fneq(v0[1], 0.722) or fneq(v0[8], -0.143)
     snd_display("sum_of_cosines output: %s?", v0)
   end
   gen.scaler = 0.5
   snd_display("sum_of_cosines set_scaler: %s?", gen.scaler) if fneq(gen.scaler, 0.5)
-  gen.cosines = 5
-  snd_display("sum_of_cosines set_cosines: %d?", gen.cosines) if fneq(gen.cosines, 5)
+  gen.length = 5
+  snd_display("sum_of_cosines set_cosines: %d?", gen.length) if fneq(gen.length, 5)
   snd_display("sum_of_cosines set_cosines->scaler: %s?", gen.scaler) if fneq(gen.scaler, 0.2)
   test_gen_equal(make_sum_of_cosines(3, 440),
                  make_sum_of_cosines(3, 440),
@@ -14041,7 +14031,7 @@ def test048
   gen = make_sum_of_cosines(10)
   1100.times do |i|
     den = sin(gen.phase * 0.5)
-    val1 = den.zero? ? 1.0 : [1.0, gen.scaler * (sin(gen.phase * (gen.cosines + 0.5)) /
+    val1 = den.zero? ? 1.0 : [1.0, gen.scaler * (sin(gen.phase * (gen.length + 0.5)) /
                                                    (2.0 * den) - 0.5)].min
     if (val1 - (val2 = gen.run(0.0))).abs > 0.002
       snd_display("sum_of_cosines: %d: %s %s?", i, val1, val2)
@@ -14068,15 +14058,15 @@ def test048
   snd_display("sum_of_sines phase: %s?", gen.phase) if fneq(gen.phase, 1.253787)
   snd_display("sum_of_sines frequency: %s?", gen.frequency) if fneq(gen.frequency, 440.0)
   snd_display("sum_of_sines scaler: %s?", gen.scaler) if fneq(gen.scaler, 0.1315)
-  snd_display("sum_of_sines sines: %d?", gen.cosines) if fneq(gen.cosines, 10)
+  snd_display("sum_of_sines sines: %d?", gen.length) if fneq(gen.length, 10)
   snd_display("sum_of_sines length: %d?", gen.length) if fneq(gen.length, 10)
   if fneq(v0[1], 0.784) or fneq(v0[8], 0.181)
     snd_display("sum_of_sines output: %s?", v0)
   end
   gen.scaler = 0.5
   snd_display("sum_of_sines set_scaler: %s?", gen.scaler) if fneq(gen.scaler, 0.5)
-  gen.cosines = 5
-  snd_display("sum_of_sines set_sines: %d?", gen.cosines) if fneq(gen.cosines, 5)
+  gen.length = 5
+  snd_display("sum_of_sines set_sines: %d?", gen.length) if fneq(gen.length, 5)
   snd_display("sum_of_sines set_sines->scaler: %s?", gen.scaler) if fneq(gen.scaler, 0.2525)
   test_gen_equal(make_sum_of_sines(3, 440),
                  make_sum_of_sines(3, 440),
@@ -14090,7 +14080,7 @@ def test048
   gen = make_sum_of_sines(5)
   1100.times do |i|
     den = sin(gen.phase * 0.5)
-    val1 = den.zero? ? 1.0 : [1.0, gen.scaler * (sin(gen.phase * (gen.cosines + 0.5)) /
+    val1 = den.zero? ? 1.0 : [1.0, gen.scaler * (sin(gen.phase * (gen.length + 0.5)) /
                                                    (2.0 * den) - 0.5)].min
     if fneq(val1 = sum_of_n_sines(gen.phase, 5) * gen.scaler, val2 = gen.run(0.0))
       snd_display("sum_of_sines: %d: %s %s?", i, val1, val2)
@@ -14122,7 +14112,7 @@ def test048
   snd_display("sine_summation set_scaler: %s?", gen.scaler) if fneq(gen.scaler, 0.5)
   gen.scaler = 0.75
   snd_display("sine_summation set_scaler: %s?", gen.scaler) if fneq(gen.scaler, 0.75)
-  snd_display("sine_summation cosines: %d?", gen.cosines) if fneq(gen.cosines, 1)
+  snd_display("sine_summation cosines: %d?", gen.length) if fneq(gen.length, 1)
   snd_display("sine_summation offset: %s?", gen.offset) if fneq(gen.offset, 1.0)
   test_gen_equal(make_sine_summation(440),
                  make_sine_summation(440),
@@ -14148,7 +14138,7 @@ def test048
   if fneq(res = gen6.scaler, 0.1)
     snd_display("sine_summation scaler (0.1): %s?", res)
   end
-  if (res = gen6.cosines) != 10
+  if (res = gen6.length) != 10
     snd_display("sine_summation cosines (10): %d?", res)
   end
   if fneq(res = gen6.offset, 0.4)
@@ -15006,7 +14996,7 @@ def test068
   end
   set_mus_srate(old_srate)
   # 
-  gen = make_ppolar(0.1, 1200.0)
+  gen = make_ppolar(1200.0, 0.1)
   v0 = make_vct!(10) do |i| two_pole(gen, i.zero? ? 1.0 : 0.0) end
   snd_display("%s not ppolar?", gen) unless two_pole?(gen)
   snd_display("ppolar order: %d?", gen.order) if gen.order != 2
@@ -15019,9 +15009,9 @@ def test068
   snd_display("ppolar freq: %s?", gen.frequency) if fneq(gen.frequency, 1200.0)
   snd_display("ppolar scaler: %s?", gen.scaler) if fneq(gen.scaler, 0.1)
   # 
-  z1 = make_ppolar(0.1, 600.0)
-  z2 = make_ppolar(0.1, 600.0)
-  z3 = make_ppolar(0.1, 1200.0)
+  z1 = make_ppolar(600.0, 0.1)
+  z2 = make_ppolar(600.0, 0.1)
+  z3 = make_ppolar(1200.0, 0.1)
   two_pole(z1, 1.0)
   two_pole(z2, 1.0)
   two_pole(z3, 1.0)
@@ -15033,9 +15023,9 @@ def test068
   two_pole(z2, 1.0)
   two_pole(z3, 1.0)
   test_gen_equal(z1, z2, z3)
-  z1 = make_ppolar(0.1, 600.0)
-  z2 = make_ppolar(0.1, 600.0)
-  z3 = make_ppolar(0.1, 600.0)
+  z1 = make_ppolar(600.0, 0.1)
+  z2 = make_ppolar(600.0, 0.1)
+  z3 = make_ppolar(600.0, 0.1)
   two_pole(z1, 1.0)
   two_pole(z2, 1.0)
   two_pole(z3, 0.5)
@@ -15125,37 +15115,11 @@ def test068
   snd_display("map formant: %s %s?", v0, v1) unless vequal(v0, v1)
   snd_display("%s not formant?", gen) unless formant?(gen)
   snd_display("formant order: %d?", gen.order) if gen.order != 2
-  snd_display("formant a0: %s?", gen.a0) if fneq(gen.a0, 0.06371)
-  snd_display("formant a1: %s?", gen.a1) if fneq(gen.a1, 1.0)
-  snd_display("formant a2: %s?", gen.a2) if fneq(gen.a2, -0.9)
-  snd_display("formant b1: %s?", gen.b1) if fneq(gen.b1, -1.6957893)
-  snd_display("formant b2: %s?", gen.b2) if fneq(gen.b2, 0.81)
-  snd_display("formant radius: %s?", mus_formant_radius(gen)) if fneq(mus_formant_radius(gen), 0.9)
   snd_display("formant frequency: %s?", gen.frequency) if fneq(gen.frequency, 1200.0)
-  if fneq(v0[0], 0.064) or fneq(v0[1], 0.108)
+  if fneq(v0[0], 0.095) or fneq(v0[1], 0.161)
     snd_display("formant output: %s?", v0)
   end
-  snd_display("formant gain: %s?", gen.scaler) if fneq(gen.scaler, 1.0)
-  snd_display("formant ycoeff 2 0.81: %s?", gen.ycoeff(2)) if fneq(gen.ycoeff(2), 0.81)
-  set_mus_ycoeff(gen, 2, 0.1)
-  snd_display("formant set_ycoeff 2 0.1: %s?", gen.ycoeff(2)) if fneq(gen.ycoeff(2), 0.1)
-  snd_display("formant xcoeff 2 -0.9: %s?", gen.xcoeff(2)) if fneq(gen.xcoeff(2), -0.9)
-  set_mus_xcoeff(gen, 2, 0.3)
-  snd_display("formant set_xcoeff 2 0.3: %s?", gen.xcoeff(2)) if fneq(gen.xcoeff(2), 0.3)
-  gen.a0 = 0.5
-  snd_display("formant set_a0: %s?", gen.a0) if fneq(gen.a0, 0.5)
-  gen.a1 = 0.5
-  snd_display("formant set_a1: %s?", gen.a1) if fneq(gen.a1, 0.5)
-  gen.a2 = 0.5
-  snd_display("formant set_a2: %s?", gen.a2) if fneq(gen.a2, 0.5)
-  gen.b1 = 0.5
-  snd_display("formant set_b1: %s?", gen.b1) if fneq(gen.b1, 0.5)
-  gen.b2 = 0.5
-  snd_display("formant set_b2: %s?", gen.b2) if fneq(gen.b2, 0.5)
-  set_mus_formant_radius(gen, 0.01)
-  if fneq(res = mus_formant_radius(gen), 0.01)
-    snd_display("formant set_radius: %s?", res)
-  end
+  snd_display("formant gain: %s?", gen.scaler) if fneq(gen.scaler, 0.9)
   gen.scaler = 2.0
   snd_display("formant set_gain: %s?", gen.scaler) if fneq(gen.scaler, 2.0)
   f1 = make_formant(1200.0, 0.9)
@@ -15202,7 +15166,7 @@ def test068
   fs = [make_formant(1000.0, 0.1), make_formant(100.0, 0.2)]
   amps = vct(0.5, 0.25)
   v = make_vct!(5) do |i| old_formant_bank(amps, fs, i.zero? ? 1.0 : 0.0) end
-  unless vequal(v, vct(0.146, 0.029, -0.011, -0.003, 0.000))
+  unless vequal(v, vct(0.368, 0.095, -0.346, -0.091, -0.020))
     snd_display("run formant_bank: %s?", v)
   end
   fs = make_array(1)
@@ -15912,7 +15876,7 @@ def test088
   snd_display("%s not env?", gen) unless env?(gen)
   snd_display("env scaler: %s?", gen.scaler) if fneq(gen.scaler, 0.5)
   snd_display("env base (1.0): %s?", gen.increment) if fneq(gen.increment, 1.0)
-  snd_display("env length: %d?", gen.length) if gen.length != 10
+  snd_display("env length: %d?", gen.length) if gen.length != 11
   v0 = make_vct!(10) do env(gen) end
   v1 = make_vct(10)
   off = 123.0
@@ -19925,7 +19889,7 @@ def test228
   snd_display("ssb_am phase: %s?", gen.phase) if fneq(gen.phase, 1.253787)
   snd_display("ssb_am frequency: %s?", gen.frequency) if fneq(gen.frequency, 440.0)
   snd_display("ssb_am order: %d?", gen.order) if gen.order != 41
-  snd_display("ssb_am cosines: %d?", gen.cosines) if gen.cosines != 1
+  snd_display("ssb_am cosines: %d?", gen.length) if gen.length != 1
   snd_display("ssb_am length: %d?", gen.length) if gen.length != 41
   snd_display("ssb_am interp_type: %d?", gen.interp_type) if gen.interp_type != Mus_interp_none
   snd_display("ssb_am xcoeff 0: %s?", gen.xcoeff(0)) if fneq(gen.xcoeff(0), -0.00124)
@@ -20241,7 +20205,6 @@ def test238
        :mus_data,
        :mus_feedback,
        :mus_feedforward,
-       :mus_formant_radius,
        :mus_frequency,
        :mus_hop,
        :mus_increment,
@@ -20257,7 +20220,7 @@ def test238
        :mus_ycoeffs].each do |func_sym|
         if (res = Snd.catch do snd_func(func_sym, false) end).first != :wrong_type_arg
           snd_display("generic function with false: %s.%s(false) -> %s",
-                      name_sym, func-sym, res.inspect)
+                      name_sym, func_sym, res.inspect)
         end
         g1 = make_oscil
         g2 = make_one_pole(0.1, 0.9)
@@ -23993,19 +23956,22 @@ def duration(snd)
   frames(snd) / srate(snd).to_f
 end
 
-def safe_make_region(beg, fin, snd)
+def safe_make_selection(beg, fin, snd)
   len = frames(snd)
+  old_choice = selection_creates_region()
+  set_selection_creates_region(true)
   if len > 1
     if fin < len
-      make_region(beg, fin, snd)
+      make_selection(beg, fin, snd)
     else
       if beg < len
-        make_region(beg, len - 1, snd)
+        make_selection(beg, len - 1, snd)
       else
-        make_region(0, len - 1, snd)
+        make_selection(0, len - 1, snd)
       end
     end
   end
+  set_selection_creates_region(old_choice)
 end
 
 def clone_sound_as(new_name, snd = false)
@@ -24227,9 +24193,9 @@ def test14
       key(key_to_int(?b), 0)
     end
     set_cursor(1200, choose_fd.call)
-    safe_make_region(1000, 2000, choose_fd.call)
+    safe_make_selection(1000, 2000, choose_fd.call)
     if Snd.regions.length.zero?
-      snd_display("safe_make_region failed?")
+      snd_display("safe_make_selection failed?")
     else
       if selection? then delete_selection end
       set_cursor(0, choose_fd.call)
@@ -24314,23 +24280,23 @@ def test14
     append_to_minibuffer("ho")
     Snd.catch do
       cfd = choose_fd.call
-      safe_make_region(1000, 2000, cfd)
+      safe_make_selection(1000, 2000, cfd)
       src_selection(0.5)
       undo_edit(1, cfd)
       cfd = choose_fd.call
-      safe_make_region(1000, 2000, cfd)
+      safe_make_selection(1000, 2000, cfd)
       src_selection(-1.5)
       undo_edit(1, cfd)
       cfd = choose_fd.call
-      safe_make_region(1000, 2000, cfd)
+      safe_make_selection(1000, 2000, cfd)
       scale_selection_by(0.5)
       undo_edit(1, cfd)
       cfd = choose_fd.call
-      safe_make_region(1000, 2000, cfd)
+      safe_make_selection(1000, 2000, cfd)
       env_selection([0, 0, 1, 1, 2, 0])
       undo_edit(1, cfd)
       cfd = choose_fd.call
-      safe_make_region(1000, 2000, cfd)
+      safe_make_selection(1000, 2000, cfd)
       scale_selection_to(0.5)
       reverse_selection
       undo_edit(2, cfd)
@@ -24342,42 +24308,42 @@ def test14
       set_sync(1, cfd)
       open_files.length > 1 and set_sync(1, open_files[1])
       if rs(0.5)
-        safe_make_region(1000, 2000, cfd)
+        safe_make_selection(1000, 2000, cfd)
         src_selection(0.5)
         undo_edit(1, cfd)
       end
       if rs(0.5)
-        safe_make_region(1000, 2000, cfd)
+        safe_make_selection(1000, 2000, cfd)
         src_selection(-1.5)
         undo_edit(1, cfd)
       end
       if rs(0.5)
-        safe_make_region(1000, 2000, cfd)
+        safe_make_selection(1000, 2000, cfd)
         env_selection([0, 0, 1, 1, 2, 0])
         undo_edit(1, cfd)
       end
       if rs(0.5)
-        safe_make_region(1000, 2000, cfd)
+        safe_make_selection(1000, 2000, cfd)
         reverse_selection
         undo_edit(1, cfd)
       end
       if rs(0.5)
-        safe_make_region(1000, 2000, cfd)
+        safe_make_selection(1000, 2000, cfd)
         filter_selection([0, 0, 0.1, 1, 1, 0], 40)
         undo_edit(1, cfd)
       end
       if rs(0.5)
-        safe_make_region(1000, 2000, cfd)
+        safe_make_selection(1000, 2000, cfd)
         convolve_selection_with("oboe.snd")
         undo_edit(1, cfd)
       end
       if rs(0.5)
-        safe_make_region(1000, 2000, cfd)
+        safe_make_selection(1000, 2000, cfd)
         smooth_selection
         undo_edit(1, cfd)
       end
       if rs(0.5)
-        safe_make_region(1000, 2000, cfd)
+        safe_make_selection(1000, 2000, cfd)
         scale_selection_by(0.5)
         undo_edit(1, cfd)
       end
@@ -25210,7 +25176,7 @@ def test0015
   end
   delete_mark(m1)
   close_sound(s2i)
-  safe_make_region(1000, 2000, obi)
+  safe_make_selection(1000, 2000, obi)
   unless selection? then make_selection(1000, 2000, obi, 0) end
   delete_selection_and_smooth
   if (res = edit_fragment(0, obi, 0)) != ["", "init", 0, 50828]
@@ -25224,7 +25190,7 @@ def test0015
   end
   samp100 = sample(1100, obi, 0)
   select_sound(obi)
-  safe_make_region(1000, 2000, obi)
+  safe_make_selection(1000, 2000, obi)
   unless selection? then make_selection(1000, 2000, obi, 0) end
   eval_over_selection do |val| 2.0 * val end
   nsamp100 = sample(1100, obi, 0)
@@ -36519,8 +36485,8 @@ def test0024
   key_event(minibuffer, ?f, 4)
   force_event
   focus_widget(minibuffer)
-  not_a_snd = 10
-  widget_string(minibuffer, "not_a_snd")
+  $not_a_snd = 10
+  widget_string(minibuffer, "$not_a_snd")
   key_event(minibuffer, Snd_return_key, 0)
   force_event
   ind = find_sound("not-a.snd")
@@ -37880,7 +37846,7 @@ def test0324
   if (res = edit_position(curind, 0)) != edpos + 1
     snd_display("vf insert edpos: %s %s?", res, edpos)
   else
-    if (res = edit_tree(curind, 0, edpos + 1))[edpos + 1].car != nd
+    if (res = edit_tree(curind, 0, edpos + 1))[edpos + 1][0] != nd
       snd_display("insert at end: %s %s?", nd, res)
     end
   end
@@ -37891,8 +37857,9 @@ def test0324
   if (res = edit_position(curind, 0)) != 1
     snd_display("vf mix edpos: %s?", res)
   end
-  if (res = edit_tree(curind, 0, 1))[0].car != 0
-    snd_display("mix at end: %s %s?", nd, res)
+  tag = Snd.catch do res = edit_tree(curind, 0, 1) end.first
+  if tag == :no_such_edit || res[0][0] != 0
+    snd_display("mix at beginning: %s %s?", nd, res)
   end
   revert_sound(curind)
   RXmTextFieldSetString(at_sample_text, "100")
@@ -37902,7 +37869,8 @@ def test0324
   if (res = edit_position(curind, 0)) != 1
     snd_display("vf 100 mix edpos: %s?", res)
   end
-  if (res = edit_tree(curind, 0, 1)).cadr.car != 100
+  tag = Snd.catch do res = edit_tree(curind, 0, 1) end.first
+  if tag == :no_such_edit || res[1][0] != 100
     snd_display("mix at 100: %s?", res)
   end
   revert_sound(curind)
@@ -37951,7 +37919,7 @@ def test0324
   click_event(speed_scroll, 1, 0, 40, 3)
   force_event
   if RXmDrawingArea?(amp_env)
-    xy = widget_size(emp_env)
+    xy = widget_size(amp_env)
     x0 = (xy.car / 2.0).floor.to_i
     y0 = (xy.cadr / 2.0).floor.to_i
     click_event(amp_env, 1, 0, x0, y0)
@@ -38152,10 +38120,6 @@ def test0324
   force_event
   key_event(begtxt, Snd_return_key, 0)
   force_event
-  widget_string(trktxt, "2")
-  force_event
-  key_event(trktxt, Snd_return_key, 0)
-  force_event
   widget_string(idtxt, "2")
   force_event
   key_event(idtxt, Snd_return_key, 0)
@@ -38214,7 +38178,7 @@ def test0324
   save_button = RXmMessageBoxGetChild(prefs, RXmDIALOG_CANCEL_BUTTON)
   help_button = RXmMessageBoxGetChild(prefs, RXmDIALOG_HELP_BUTTON)
   dismiss_button = RXmMessageBoxGetChild(prefs, RXmDIALOG_OK_BUTTON)
-  reset_button = find_child(prefs, "Reset")
+  reset_button = find_child(prefs, "Revert")
   clear_button = find_child(prefs, "Clear")
   topics = find_child(prefs, "pref-scroller")
   old_width = window_width
@@ -38615,7 +38579,7 @@ Procs =
    :move_sound, :make_move_sound, :move_sound?, :mus_float_equal_fudge_factor, :multiply_arrays,
    :mus_array_print_length, :mus_channel, :mus_channels, :make_polyshape, :polyshape, :polyshape?,
    :mus_close,
-   :mus_data, :mus_feedback, :mus_feedforward, :mus_fft, :mus_formant_radius,
+   :mus_data, :mus_feedback, :mus_feedforward, :mus_fft,
    :mus_frequency, :mus_hop, :mus_increment, :mus_input?, :mus_file_name, :mus_length,
    :mus_location, :mus_mix, :mus_order, :mus_output?, :mus_phase, :mus_ramp, :mus_random,
    :mus_scaler, :mus_srate, :mus_xcoeffs, :mus_ycoeffs, :notch, :notch?, :one_pole, :one_pole?,
@@ -38714,7 +38678,7 @@ Set_procs =
    :x_zoom_slider, :y_position_slider, :y_zoom_slider, :sound_data_ref,
    :mus_array_print_length, :mus_float_equal_fudge_factor, :mus_data,
    :mus_feedback, :mus_feedforward,
-   :mus_formant_radius, :mus_frequency, :mus_hop, :mus_increment, :mus_length, :mus_location,
+   :mus_frequency, :mus_hop, :mus_increment, :mus_length, :mus_location,
    :mus_phase, :mus_ramp, :mus_scaler, :x_axis_label,
    :locsig_type, :mus_file_buffer_size, :mus_rand_seed, :mus_width, :clm_table_size, :run_safety,
    :mus_offset, :quit_button_color,
@@ -38786,20 +38750,14 @@ Procs7  = Procs.remove_if! do |n| function?(n) and arity_ok(n, 7) end # not used
 Procs8  = Procs.remove_if! do |n| function?(n) and arity_ok(n, 8) end
 Procs10 = Procs.remove_if! do |n| function?(n) and arity_ok(n, 10) end
 
-$delay_32 = make_delay(32)
-$color_95 = make_color_with_catch(0.95, 0.95, 0.95)
-$vector_0 = make_array(0)
+$delay_32 = make_oscil(440)
+$color_95 = [1, 2, 3]
+$vector_0 = make_comb(0.1, 3)
 $vct_3 = make_vct(3)
-$vct_5 = make_vct(5)
-if provided? :snd_nogui
-  $car_main = false
-  $cadr_main = false
-else
-  $car_main = main_widgets().car
-  $cadr_main = main_widgets().cadr
-end
-$sound_data_23 = make_sound_data(2, 3)
-$a_hook = make_hook("test", 2)
+$car_main = make_all_pass(0.4, 0.5, 2)
+$cadr_main = make_table_lookup(101)
+$sound_data_23 = make_square_wave(440)
+$a_hook = make_triangle_wave(220)
 $a_sound = false
 
 def test0028
@@ -38822,7 +38780,7 @@ def test0028
       snd_display("snd :no_such_sound %s: %s", n, tag)
     end
   end
-  [$vct_5, sqrt(-1.0), 1.5, "hiho"].each do |arg|
+  [sqrt(-1.0), 1.5, "hiho"].each do |arg|
     procs1.each do |n|
       next if n == :progress_report
       if (tag = Snd.catch do snd_func(n, arg) end).first != :wrong_type_arg
@@ -38843,7 +38801,7 @@ def test0028
      :reverb_control_length, :reverb_control_lowpass, :reverb_control_scale, :reverb_control?,
      :sound_loop_info,
      :speed_control, :speed_control_style, :speed_control_tones, :srate, :channel_style, :sync]
-  [$vct_5, sqrt(-1.0), 1.5, "hiho"].each do |arg|
+  [sqrt(-1.0), 1.5, "hiho"].each do |arg|
     progs2.each_with_index do |n, i|
       if (tag = Snd.catch do
             case n
@@ -38872,7 +38830,7 @@ def test0028
      :reverb_control_length, :reverb_control_lowpass, :reverb_control_scale, :reverb_control?,
      :speed_control, :speed_control_style, :speed_control_tones, :channel_style, :sync]
   index = open_sound("obtest.snd")
-  [$vct_5, sqrt(-1.0), "hiho"].each do |arg|
+  [sqrt(-1.0), "hiho"].each do |arg|
     progs3.each_with_index do |n, i|
       if (tag = Snd.catch do set_snd_func(n, arg, index) end).first != :wrong_type_arg
         snd_display("snd safe set :wrong_type_arg %d %s: %s %s", i, n, tag, arg)
@@ -38888,7 +38846,7 @@ def test0028
     end
   end
   [Array.new(1), "hiho", sqrt(-1.0), 1.5, [1, 0], [0, 1]].each do |arg1|
-    [$vct_5, "hiho", sqrt(-1.0), 1.5, [1, 0], [0, 1]].each do |arg2|
+    ["hiho", sqrt(-1.0), 1.5, [1, 0], [0, 1]].each do |arg2|
       [:vct_add!, :vct_subtract!, :vct_multiply!, :vct_ref, :vct_scale!, :vct_fill!].each do |n|
         case tag = (res = Snd.catch do snd_func(n, arg1, arg2) end).first
         when :wrong_type_arg, :wrong_number_of_args, :mus_error
@@ -38970,7 +38928,7 @@ def test0028
      :make_src, :make_sum_of_cosines, :make_sum_of_sines, :make_table_lookup,
      :make_triangle_wave, :make_two_pole, :make_two_zero, :make_wave_train, :make_ssb_am,
      :make_waveshape, :mus_channel, :mus_channels, :make_polyshape,
-     :mus_data, :mus_feedback, :mus_feedforward, :mus_formant_radius,
+     :mus_data, :mus_feedback, :mus_feedforward,
      :mus_frequency, :mus_hop, :mus_increment, :mus_length, :mus_file_name, :mus_location,
      :mus_order, :mus_phase, :mus_ramp, :mus_random, :mus_run, :mus_scaler, :mus_xcoeffs,
      :mus_ycoeffs, :notch, :one_pole, :one_zero, :make_moving_average, :seconds2samples,
@@ -38990,25 +38948,26 @@ def test0028
   [:all_pass, :array_interp, :asymmetric_fm, :comb, :filtered_comb, :contrast_enhancement,
    :convolution, :convolve, :moving_average, :convolve_files, :delay, :dot_product, :env_interp,
    :file2frame,
-   :file2sample, :snd2sample, :filter, :fir_filter, :formant, :formant_bank,
+   :file2sample, :snd2sample, :filter, :fir_filter, :formant, :firmant, :formant_bank,
    :frame_multiply, :frame_add, :frame2frame, :frame_ref, :frame2sample, :granulate,
    :iir_filter, :ina, :inb, :locsig_ref, :locsig_reverb_ref, :make_all_pass,
    :make_asymmetric_fm, :make_comb, :make_filtered_comb, :make_delay, :make_env, :make_fft_window,
-   :make_filter, :make_fir_filter, :make_formant, :make_frame, :make_granulate,
+   :make_filter, :make_fir_filter, :make_formant, :make_firmant, :make_frame, :make_granulate,
    :make_iir_filter, :make_locsig, :make_notch, :make_one_pole, :make_one_zero,
    :make_oscil, :make_phase_vocoder, :make_pulse_train, :make_rand,
    :make_rand_interp, :make_readin, :make_sawtooth_wave, :make_moving_average,
-   :make_sine_summation,
-   :make_square_wave, :make_src, :make_sum_of_cosines, :make_sum_of_sines,
+   :make_sine_summation, :make_nrxysin, :make_nrxycos,
+   :make_square_wave, :make_src, :make_sum_of_cosines, :make_ncos, :make_sum_of_sines, :make_nsin,
    :make_table_lookup, :make_triangle_wave, :make_two_pole, :make_two_zero,
    :make_wave_train, :make_waveshape, :mixer_multiply, :mixer_add,
    :multiply_arrays, :notch, :one_pole, :one_zero, :oscil, :partials2polynomial,
-   :partials2wave, :partials2waveshape, :make_polyshape, :phase_partials2wave,
+   :partials2wave, :partials2waveshape, :make_polyshape, :make_polywave, :phase_partials2wave,
    :phase_vocoder, :polynomial, :pulse_train, :rand, :rand_interp, :rectangular2polar,
-   :ring_modulate, :sample2frame, :sawtooth_wave, :sine_summation, :square_wave, :src,
-   :sum_of_cosines, :sum_of_sines, :sine_bank, :table_lookup, :tap, :triangle_wave,
+   :ring_modulate, :sample2frame, :sawtooth_wave, :sine_summation, :nrxysin, :nrxycos,
+   :square_wave, :src,
+   :sum_of_cosines, :ncos, :sum_of_sines, :nsin, :sine_bank, :table_lookup, :tap, :triangle_wave,
    :two_pole, :two_zero, :wave_train, :waveshape, :ssb_am, :make_ssb_am].each do |n|
-    case tag = (res = Snd.catch do snd_func(n, make_oscil, $vct_5) end).first
+    case tag = (res = Snd.catch do snd_func(n, make_oscil, $vct_3) end).first
     when :wrong_type_arg, :bad_arity, :mus_error
       next
     else
@@ -39016,7 +38975,7 @@ def test0028
     end
   end
   [:mus_data, :mus_feedback, :mus_feedforward,
-   :mus_formant_radius, :mus_frequency, :mus_hop, :mus_increment, :mus_length, :mus_location,
+   :mus_frequency, :mus_hop, :mus_increment, :mus_length, :mus_location,
    :mus_phase, :mus_ramp, :mus_scaler].each do |n|
     if (tag = Snd.catch do set_snd_func(n, make_oscil, $vector_0) end).first != :wrong_type_arg
       snd_display("mus_gen %s: %s", n, tag)
@@ -39030,7 +38989,7 @@ def test0028
                :mus_sound_mark_info, :mus_sound_maxamp, :mus_sound_maxamp_exists?,
                :mus_header_type2string, :mus_data_format2string]
   mus_procs.each do |n|
-    if (tag = Snd.catch do snd_func(n, $vct_5) end).first != :wrong_type_arg
+    if (tag = Snd.catch do snd_func(n, $vct_3) end).first != :wrong_type_arg
       snd_display("mus_sound %s: %s", n, tag)
     end
   end
@@ -39072,7 +39031,7 @@ def test0128
    :wavelet_type, :time_graph?, :time_graph_type, :wavo_hop, :wavo_trace, :x_bounds,
    :x_position_slider, :x_zoom_slider, :x_axis_label, :y_axis_label, :y_bounds,
    :y_position_slider, :y_zoom_slider, :zero_pad].each_with_index do |n, i|
-    case (tag = Snd.catch do snd_func(n, $vct_5) end).first
+    case (tag = Snd.catch do snd_func(n, $vct_3) end).first
     when :wrong_type_arg, :no_such_sound
       next
     else
@@ -39099,7 +39058,7 @@ def test0128
    :time_graph?, :time_graph_type, :wavo_hop, :wavo_trace, :x_bounds, :x_position_slider,
    :x_zoom_slider, :x_axis_label, :y_axis_label, :y_bounds, :y_position_slider,
    :y_zoom_slider, :zero_pad].each_with_index do |n, i|
-    if (tag = Snd.catch do snd_func(n, 0, $vct_5) end).first != :wrong_type_arg
+    if (tag = Snd.catch do snd_func(n, 0, $vct_3) end).first != :wrong_type_arg
       snd_display("%d: chn (no chn) procs %s: %s", i, n, tag)
     end
   end
@@ -39180,7 +39139,7 @@ def test0128
    :update_lisp_graph, :wavelet_type, :time_graph?, :time_graph_type, :wavo_hop,
    :wavo_trace, :x_bounds, :x_position_slider, :x_zoom_slider, :y_bounds,
    :y_position_slider, :y_zoom_slider, :zero_pad, :x_axis_label].each_with_index do |n, i|
-    tag = Snd.catch do set_snd_func(n, $vct_5, index, 0) end
+    tag = Snd.catch do set_snd_func(n, $vct_3, index, 0) end
     if tag.first != :wrong_type_arg and tag.first != :no_method_error and tag.first != :name_error
       snd_display("%d: set chn procs %s: %s", i, n, tag)
     end
@@ -39189,7 +39148,7 @@ def test0128
   [:mix_amp, :mix_amp_env, :mix_length,
    :mix_name, :mix_position, :mix_home, :mix_speed,
    :mix_tag_y].each_with_index do |n, i|
-    if (tag = Snd.catch do snd_func(n, $vct_5) end).first != :wrong_type_arg
+    if (tag = Snd.catch do snd_func(n, $vct_3) end).first != :wrong_type_arg
       snd_display("%d: mix (1) procs %s: %s", i, n, tag)
     end
   end
@@ -39202,7 +39161,7 @@ def test0128
   end
   [:mix_name, :mix_position,
    :mix_speed, :mix_tag_y].each_with_index do |n, i|
-    tag = Snd.catch do set_snd_func(n, 1234, $vct_5) end
+    tag = Snd.catch do set_snd_func(n, 1234, $vct_3) end
     if tag.car != :wrong_type_arg and tag.car != :no_such_mix
       snd_display("%d: set mix (3) procs %s: %s", i, n, tag)
     end
@@ -39211,14 +39170,14 @@ def test0128
   id = mix_sound("oboe.snd", 10)
   [:mix_name, :mix_position,
    :mix_speed, :mix_tag_y].each_with_index do |n, i|
-    if (tag = Snd.catch do set_snd_func(n, id, $vct_5) end).first != :wrong_type_arg
+    if (tag = Snd.catch do set_snd_func(n, id, $vct_3) end).first != :wrong_type_arg
       snd_display("%d: set mix (4) procs %s: %s", i, n, tag)
     end
   end
   close_sound(index)
   [:add_mark, :mark_name, :mark_sample, :mark_sync, :mark_home, :delete_mark,
    :delete_marks, :find_mark].each_with_index do |n, i|
-    if (tag = Snd.catch do snd_func(n, $vct_5) end).first != :wrong_type_arg
+    if (tag = Snd.catch do snd_func(n, $vct_3) end).first != :wrong_type_arg
       snd_display("%d: mark (1) procs %s: %s", i, n, tag)
     end
   end
@@ -39230,12 +39189,12 @@ def test0128
   index = open_sound("oboe.snd")
   id = add_mark(0, index, 0)
   [:mark_name, :mark_sample, :mark_sync].each_with_index do |n, i|
-    if (tag = Snd.catch do set_snd_func(n, id, $vct_5) end).first != :wrong_type_arg
+    if (tag = Snd.catch do set_snd_func(n, id, $vct_3) end).first != :wrong_type_arg
       snd_display("%d: set mark (3) procs %s: %s", i, n, tag)
     end
   end
   close_sound(index)
-  [$vct_5, [0, 1], sqrt(-1.0), "hiho", [0, 1]].each do |arg|
+  [[0, 1], sqrt(-1.0), "hiho", [0, 1]].each do |arg|
     [:play_region, :region_chans, :region_home, :region_frames, :region_position,
      :region_maxamp, :region_maxamp_position, :region_sample, :region2vct,
      :region_srate, :forget_region].each_with_index do |n, i|
@@ -39282,7 +39241,7 @@ def test0128
     when :bind_key, :color_dialog, :enved_dialog, :key_binding, :unbind_key
       next
     end
-    if (tag = Snd.catch do set_snd_func(n, $vct_5) end).first != :wrong_type_arg
+    if (tag = Snd.catch do set_snd_func(n, $vct_3) end).first != :wrong_type_arg
       snd_display("%d: misc procs %s: %s", i, n, tag)
     end
   end
@@ -39794,7 +39753,7 @@ def test0328
   # 1 Arg
   #
   [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
-    lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true,
+    lambda do | | true end, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true,
     ?c, 0.0, 1.0, -1.0, [], 4, 2, 8, 16, 32, 64, -64, $vector_0, 2.0 ** 21.5, 2.0 ** -18.0,
     $car_main, $cadr_main, 12345678901234567890, log0].each do |arg|
     Procs1.each do |n|
@@ -39809,7 +39768,7 @@ def test0328
   #
   if $all_args
     args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
-      lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true, ?c,
+      lambda do | | true end, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true, ?c,
       0.0, 1.0, -1.0, [], 3, 4, 2, 8, 16, 32, 64, -64, $vector_0, 2.0 ** 21.5, 2.0 ** -18.0,
       $car_main, $cadr_main, 12345678901234567890, log0]
   else
@@ -39831,12 +39790,12 @@ def test0328
   #
   if $all_args
     args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
-            lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true,
+            lambda do | | true end, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true,
             ?c, 0.0, 1.0, -1.0, [], 3, 4, 2, 8, 16, 32, 64, -64, $vector_0,
             2.0 ** 21.5, 2.0 ** -18.0, $car_main, $cadr_main, 12345678901234567890, log0]
   else
     args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
-            lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, 64, -64, $a_hook,
+            lambda do | | true end, $sound_data_23, :order, 0, 1, -1, 64, -64, $a_hook,
             false, true, [], $vector_0, 12345678901234567890, log0]
   end
   args.each do |val|
@@ -39856,12 +39815,12 @@ def test0328
   #
   if $all_args
     args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
-            lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true,
+            lambda do | | true end, $sound_data_23, :order, 0, 1, -1, $a_hook, false, true,
             ?c, 0.0, 1.0, -1.0, [], 3, 4, 2, 8, 16, 32, 64, -64, $vector_0,
             2.0 ** 21.5, 2.0 ** -18.0, $car_main, $cadr_main, 12345678901234567890, log0]
   else
     args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
-            lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, 64, -64, $a_hook,
+            lambda do | | true end, $sound_data_23, :order, 0, 1, -1, 64, -64, $a_hook,
             false, true, [], $vector_0, 12345678901234567890, log0]
   end
   args.each do |arg1|
@@ -39879,12 +39838,12 @@ def test0328
   #
   if $all_args
     args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
-            lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, $a_hook,
+            lambda do | | true end, $sound_data_23, :order, 0, 1, -1, $a_hook,
             false, true, ?c, 0.0, 1.0, -1.0, [], 3, 4, 2, 8, 16, 32, 64, -64, $vector_0,
             2.0 ** 21.5, 2.0 ** -18.0, $car_main, $cadr_main, 12345678901234567890, log0]
   else
     args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
-            lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, 64, -64, $a_hook,
+            lambda do | | true end, $sound_data_23, :order, 0, 1, -1, 64, -64, $a_hook,
             false, true, [], $vector_0, 12345678901234567890, log0]
   end
   args.each do |arg1|
@@ -39906,7 +39865,7 @@ def test0328
     # 3 Args
     #
     args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
-            lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, 64, -64, $a_hook,
+            lambda do | | true end, $sound_data_23, :order, 0, 1, -1, 64, -64, $a_hook,
             false, true, [], $vector_0, 12345678901234567890, log0]
     args.each do |arg1|
       args.each do |arg2|
@@ -39926,7 +39885,7 @@ def test0328
     # set 3 Args
     #
     args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
-            lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, 64, -64, $a_hook,
+            lambda do | | true end, $sound_data_23, :order, 0, 1, -1, 64, -64, $a_hook,
             false, true, [], $vector_0, 12345678901234567890, log0]
     args.each do |arg1|
       args.each do |arg2|
@@ -39948,7 +39907,7 @@ def test0328
     # 4 Args
     #
     args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
-            lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, 64, -64, $a_hook,
+            lambda do | | true end, $sound_data_23, :order, 0, 1, -1, 64, -64, $a_hook,
             false, true, [], $vector_0, 12345678901234567890, log0]
     args.each do |arg1|
       args.each do |arg2|
@@ -39970,7 +39929,7 @@ def test0328
     # set 4 Args
     #
     args = [1.5, "/hiho", [0, 1], 1234, $vct_3, $color_95, :mus_error, sqrt(-1.0), $delay_32,
-            lambda do | | true end, $vct_5, $sound_data_23, :order, 0, 1, -1, 64, -64, $a_hook,
+            lambda do | | true end, $sound_data_23, :order, 0, 1, -1, 64, -64, $a_hook,
             false, true, [], $vector_0, 12345678901234567890, log0]
     args.each do |arg1|
       args.each do |arg2|

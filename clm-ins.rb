@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue Sep 16 01:27:09 CEST 2003
-# Changed: Sun Jul 15 22:45:21 CEST 2007
+# Changed: Tue Apr 15 21:28:53 CEST 2008
 
 # Instruments work with
 #   with_sound (CLM (sample2file gens) and Snd)
@@ -1764,9 +1764,9 @@ def resflt(start, dur, driver,
   # There are then 3 resonators, centered at frq1, frq2, frq3,
   # with pole-radius r1, r2, and r3 respectively, and
   # with gains of g1, g2, and g3.
-  f1 = make_two_pole(r1, frq1)
-  f2 = make_two_pole(r2, frq2)
-  f3 = make_two_pole(r3, frq3)
+  f1 = make_two_pole(frq1, r1)
+  f2 = make_two_pole(frq2, r2)
+  f3 = make_two_pole(frq3, r3)
   with_noise = (driver == 1)
   frqf = if with_noise
            nil
