@@ -317,8 +317,9 @@ For help with Forth and Snd/CLM, see the Forth documentation section "Snd, CLM, 
 </pre>
 
 <p>analog-filter.scm has the usual IIR filters: Butterworth, Chebyshev, inverse Chebyshev, Bessel,
-and Elliptic filters in lowpass, highpass, bandpass, and bandstop versions.  Each of the associated
-"make" functions returns a function ready for use as a filter (using the CLM filter generator).
+and Elliptic filters in lowpass, highpass, bandpass, and bandstop versions.  Each of the lowpass and highpass
+"make" functions returns a filter generator, whereas the bandstop and bandpass make functions
+return a function of one argument, the current input (the filter generators are built-in in these cases).
 The filter order should be an even number; very high orders can cause numerical disaster!  If you
 want to push these guys, be sure to build Snd with the --with-doubles configuration switch.  The
 elliptic filters depend on GSL, so you'll also need GSL (Snd's configure script includes it by default, if possible).
@@ -349,21 +350,83 @@ in terms of srate = 1.0 (for convenience):
 (filter-sweep (<em class=red>make-butterworth-lowpass</em> 8 .1))
 </pre></td></tr></table>
 
-<table border=0 cellpadding=5 vspace=10 hspace=20><tr><td>
+<table border=1 hspace=20 cellspacing=6 cellpadding=6>
+<tr><td bgcolor="#f2f4ff"><center>IIR filters, order=8, low cutoff at .1 (4410Hz), high cutoff at .3 (13230Hz)</center></td></tr>
+<tr><td>
 <img src="pix/iir.png" alt="iir filters">
-</td><td>
-<pre>
-;; this shows filter-sweep with:
-(make-butterworth-lowpass 8 .1)
-(make-elliptic-lowpass 8 .1)
-(make-butterworth-bandpass 8 .1 .2)
-(make-elliptic-bandpass 8 .1 .2)
-</pre>
 </td></tr>
 </table>
 
+<!--
+(define (filter-sweep flt chan)
+  (let ((phase 0.0)
+	(freq 0.0)
+	(incr (/ (* 2 pi) 44100.0))
+	(samps (seconds->samples 0.5)))
 
-<table bgcolor="aliceblue" border=0><tr><td>
+    (do ((i 0 (1+ i)))
+	((= i samps))
+
+      (let ((sval (* .8 (sin phase))))
+	(set! phase (+ phase freq)) 
+	(set! freq (+ freq incr))
+
+	(out-any i (flt sval) chan)))))
+
+(define low-cut .1)
+(define high-cut .3)
+
+(with-sound (:channels 5 :output "test.snd")
+  (filter-sweep (make-butterworth-lowpass 8 low-cut) 0)
+  (filter-sweep (make-bessel-lowpass 8 low-cut) 1)
+  (filter-sweep (make-chebyshev-lowpass 8 low-cut) 2)
+  (filter-sweep (make-inverse-chebyshev-lowpass 8 low-cut) 3)
+  (filter-sweep (make-elliptic-lowpass 8 low-cut) 4))
+
+(with-sound (:channels 5 :output "test2.snd")
+  (filter-sweep (make-butterworth-highpass 8 high-cut) 0)
+  (filter-sweep (make-bessel-highpass 8 high-cut) 1)
+  (filter-sweep (make-chebyshev-highpass 8 high-cut) 2)
+  (filter-sweep (make-inverse-chebyshev-highpass 8 high-cut) 3)
+  (filter-sweep (make-elliptic-highpass 8 high-cut) 4))
+
+(with-sound (:channels 5 :output "test1.snd")
+  (filter-sweep (make-butterworth-bandpass 8 low-cut high-cut) 0)
+  (filter-sweep (make-bessel-bandpass 8 low-cut high-cut) 1)
+  (filter-sweep (make-chebyshev-bandpass 8 low-cut high-cut) 2)
+  (filter-sweep (make-inverse-chebyshev-bandpass 8 low-cut high-cut) 3)
+  (filter-sweep (make-elliptic-bandpass 8 low-cut high-cut) 4))
+
+(with-sound (:channels 5 :output "test3.snd")
+  (filter-sweep (make-butterworth-bandstop 8 low-cut high-cut) 0)
+  (filter-sweep (make-bessel-bandstop 8 low-cut high-cut) 1)
+  (filter-sweep (make-chebyshev-bandstop 8 low-cut high-cut) 2)
+  (filter-sweep (make-inverse-chebyshev-bandstop 8 low-cut high-cut) 3)
+  (filter-sweep (make-elliptic-bandstop 8 low-cut high-cut) 4))
+
+(set! (selected-graph-color) (make-color 1 1 1))
+(set! (selected-data-color) (make-color 0 0 0))
+(set! (axis-label-font) "9x15")
+
+(do ((i 0 (1+ i)))
+    ((= i 4))
+  (do ((k 0 (1+ k)))
+      ((= k 5))
+    (set! (x-axis-label i k)
+	  (format #f "~A ~A"
+		  (if (= k 0) "butterworth"
+		      (if (= k 1) "bessel"
+			  (if (= k 2) "chebyshev"
+			      (if (= k 3) "inverse chebyshev"
+				  "elliptic"))))
+		  (if (= i 0) "lowpass"
+		      (if (= i 1) "highpass"
+			  (if (= i 2) "bandpass"
+			      "bandstop")))))))
+-->
+
+
+<table bgcolor="aliceblue" border=0 vspace=20><tr><td>
 <pre>see also: <a href="#dspdoc" onmouseout="UnTip()" onmouseover="Tip('many more filters')">dsp</a> <a href="#exampdoc" onmouseout="UnTip()" onmouseover="Tip('comb-filter, time-varying filters, etc')">examp</a> <a href="#moogdoc" onmouseout="UnTip()" onmouseover="Tip('Moog filter')">moog</a> <a href="#maxfdoc" onmouseout="UnTip()" onmouseover="Tip('Mathews resonator')">maxf</a> <a href="#prc95doc" onmouseout="UnTip()" onmouseover="Tip('DC block')">prc95</a> <a href="#grapheqdoc" onmouseout="UnTip()" onmouseover="Tip('graphic equalizer instrument')">graphEq</a> <a href="sndclm.html#filter" onmouseout="UnTip()" onmouseover="Tip('CLM filter generators')">clm</a>
 </pre></td>
 </tr></table>
@@ -669,7 +732,7 @@ The full note list is bag.clm in the CLM tarball.
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <A class=def NAME="cellon">cellon</A> <code>(beg dur freq amp ...)</code>
 </td></tr><tr><td></td><td>
-cellon, developed by Stanislaw Krupowiecz, uses feedback FM as in some old synthesizers.  There's a brief discussion of it in fm.html.
+cellon, developed by Stanislaw Krupowiecz, uses feedback FM as in some old synthesizers.  There's a brief discussion of it in <a href="fm.html">fm.html</a>.
 The trailing parameters are:
 <pre>
     ampfun betafun beta0 beta1 betaat betadc ampat ampdc dis pcrev deg pitch1 glissfun glissat 
@@ -780,7 +843,7 @@ at random), and car3 and mod3 putting a sort of formant at the minor third
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <A class=def NAME="fmdrum">fm-drum</A> <code>(beg dur freq amp ind :optional (high #f) (deg 0.0) (dist 1.0) (rev-amount 0.01))</code>
 </td></tr><tr><td></td><td>
-The fm-drum uses "cascade FM" (see fm.html); it was developed by Jan Mattox.
+The fm-drum uses "cascade FM" (see <a href="fm.html">fm.html</a>); it was developed by Jan Mattox.
 <pre>
     (<a class=quiet href="#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () (fm-drum 0 1.5 55 .3 5 #f) (fm-drum 1.5 1.5 66 .3 4 #t))
 </pre>
@@ -3211,14 +3274,14 @@ current spectrum value.
 (define (brfft lofrq hifrq)
   "(brfft lofrq hifrq) removes all frequencies between lofrq and hifrq: (brfft 1000.0 2000.0)"
   (let* ((len (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>))
-	 (fsize (expt 2 (inexact->exact (ceiling (/ (log len) (log 2.0))))))
+	 (fsize (expt 2 (inexact-&gt;exact (ceiling (/ (log len) (log 2.0))))))
 	 (ctr -1)
-	 (lo (inexact->exact (round (/ (* fsize lofrq) (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>)))))
-	 (hi (inexact->exact (round (/ (* fsize hifrq) (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>))))))
+	 (lo (inexact-&gt;exact (round (/ (* fsize lofrq) (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>)))))
+	 (hi (inexact-&gt;exact (round (/ (* fsize hifrq) (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>))))))
     (<em class=red>filter-fft</em> (lambda (y)
 		  (set! ctr (1+ ctr))
-		  (if (and (>= ctr lo)
-			   (<= ctr hi))
+		  (if (and (&gt;= ctr lo)
+			   (&lt;= ctr hi))
 		      0.0
 		      y)))))
 </pre></td></tr>
@@ -9398,7 +9461,7 @@ continue:
         aleft   = asig
 </small></pre></td></tr></table>
 
-<p><small>There's a C/CLM version of this instrument in sndlib.html.  The body of the fm-violin
+<p><small>There's a C/CLM version of this instrument in <a href="sndlib.html">sndlib.html</a>.  The body of the fm-violin
 in C/CLM is:
 </small></p>
 
@@ -10142,7 +10205,7 @@ this came from user-defined generators in CLM.  We want to package together all 
 variables that make up a generator, just as in function groups such as 
 <a href="sndclm.html#make-oscil">make-oscil</a>, <a href="sndclm.html#oscil">oscil</a>, and <a href="sndclm.html#oscil?">oscil?</a>.
 So, as a first example, here is a way to define your own oscil using def-clm-struct (oscil is so simple that
-you could also use a vct &mdash; see <a href="sndclm.html#make-my-oscil">make-my-oscil</a> in sndclm.html).
+you could also use a vct &mdash; see <a href="sndclm.html#make-my-oscil">make-my-oscil</a>).
 </p>
 
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>

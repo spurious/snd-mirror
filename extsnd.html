@@ -3723,7 +3723,7 @@ vct-&gt;sound-data copies vct v's data into sound-data sd's channel chan.
 <table width="50%" border=0><tr><td bgcolor="lightgreen" valign="middle"><h3><A NAME="extsndlib">Sndlib</a></h3></td></tr></table>
 
 <p>All of the underlying sound library (<a href="sndlib.html">Sndlib</a>)
-functions are available, as well as most of CLM (clm.html).
+functions are available, as well as most of CLM (<a href="sndclm.html">sndclm.html</a>).
 For many eamples, see play.scm and rtio.scm. The most important Sndlib functions for Snd are:
 </p>
 
@@ -6879,10 +6879,12 @@ set. See <a href="#timegraphstyle">time-graph-style</a>, <a href="#lispgraphstyl
 
 <!-- graphs-horizontal -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def name="graphshorizontal" onmouseout="UnTip()" onmouseover="Tip('<img src=\'pix/bgd.png\' width=\'540\' height=\'360\'>', TITLE, '<code>(set! (graphs-horizontal) #f)</code>', ABOVE, true)">graphs-horizontal</a> (:optional <em class=narg>snd chn</em>)</code>
+<code><a class=def name="graphshorizontal">graphs-horizontal</a> (:optional <em class=narg>snd chn</em>)</code>
 </td></tr><tr><td></td><td>
 This determines whether channel graphs (the time domain, spectrum, and lisp graphs) 
-are arranged vertically or horizontally (the latter is the default).
+are arranged 
+<A class=quiet onmouseout="UnTip()" onmouseover="Tip('<img src=\'pix/bgd.png\' width=\'540\' height=\'360\'>', TITLE, '<code>(set! (graphs-horizontal) #f)</code>', ABOVE, true)">vertically</A>
+or horizontally (the latter is the default).
 </td></tr><tr><td colspan=2 height=18></td></tr>
 
 
@@ -8119,7 +8121,7 @@ for the run macro.  There are several examples in snd-test.scm.
 more ptree-channel examples:<br>
 smoothing: smooth-channel-via-ptree (examp.scm)<br>
 compander: <a href="sndscm.html#compandchannel">compand-channel</a> (examp.scm)<br>
-insert a block of arbitrary-valued samples: <a href="#blockchannel">block-channel</a> (extsnd.html)<br>
+insert a block of arbitrary-valued samples: <a href="#blockchannel">block-channel</a><br>
 sinusoidal ramp: <a href="sndscm.html#sineramp">sine-ramp</a> (extensions.scm)<br>
 sinusoidal envelope: <a href="sndscm.html#sineenvchannel">sine-env-channel</a> (extensions.scm)<br>
 CLM-style contrast-enhancement: <a href="sndscm.html#contrastchannel">contrast-channel</a> (extensions.scm)<br>

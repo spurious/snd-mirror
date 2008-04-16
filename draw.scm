@@ -463,7 +463,12 @@ whenever they're in the current view."
 
   (add-to-menu 2 "Toggle Inset" 
 	       (lambda () 
-		 (set! current-window-display-is-running (not current-window-display-is-running)))
+		 (set! current-window-display-is-running (not current-window-display-is-running))
+		 (for-each (lambda (snd)
+			     (do ((chan 0 (1+ chan)))
+				 ((= chan (channels snd)))
+			       (update-time-graph snd chn)))
+			   (sounds)))
 	       2))
 
 

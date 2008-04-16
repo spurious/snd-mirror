@@ -51,7 +51,7 @@ in the CLM tarball.
 CLM is based on a set of functions known
 as "generators".  These can be packaged into "instruments", and instrument calls
 can be packaged into "note lists".  The main emphasis here is on the generators;
-note lists and instruments are described in sndscm.html.
+note lists and instruments are described in <a href="sndscm.html">sndscm.html</a>.
 </p>
 <br>
 
@@ -245,7 +245,8 @@ In Ruby, we'd do it this way:
     <em class=listener>\ filename: test.snd</em>
 </pre>
 
-<p>In most of this document, I'll stick with Scheme as implemented by Guile.  extsnd.html and sndscm.html have numerous
+<p>In most of this document, I'll stick with Scheme as implemented by Guile.  
+<a href="extsnd.html">extsnd.html</a> and <a href="sndscm.html">sndscm.html</a> have numerous
 Ruby and Forth examples, and I'll toss some in here as I go along.
 You can save yourself a lot of typing by using two features of the listener.  First, &lt;TAB&gt; (that is, the key marked TAB) tries to complete 
 the current name, so if you type "fm-&lt;TAB&gt;" the listener completes the name as "fm-violin".
@@ -1073,7 +1074,7 @@ and glissando is frequency modulation.  Both cause a broadening of the spectral 
 </td><td width=10>
 </td><td>
 <img src="pix/frqenvspectrum.png" alt="frq env spectrum" onmouseout="UnTip()" onmouseover="Tip('fft size: 65536, Blackman10 window.<br><br><pre>(with-sound (:srate 10000)<br>  (let* ((ampf (make-env \'(0 0 10 0 11 1 25 1 26 0 40 0) <br>			 :duration 40<br>			 :scaler (hz->radians 200)))<br>	 (osc (make-oscil 100))<br>	 (samps (seconds->samples 40))<br>	 (start (seconds->samples 0))<br>	 (end (+ start samps)))<br>    (do ((i 0 (1+ i)))<br>	((= i end))<br>      (outa (+ i start) (oscil osc (env ampf))))))<br></pre>')">
-</td>
+</td></tr>
 <tr>
 <td bgcolor="#f2f4ff"><small><center>truncated pyramid amplitude envelope<br>multiplied by sinusoid at 50Hz</center></small>
 </td><td></td>
@@ -2507,7 +2508,7 @@ the conjugate Dirichlet kernel
 shift away from the Chebyshev polynomials (around n=30).  polywave appears to be more accurate when n is small.
 Both ncos and nsin could be implemented as polynomials in cos x, just as in polyshape; in fact, ncos is
 almost the same as the Chebyshev polynomial of the 4th kind.  But by sticking with the current formulas,
-we avoid the numerical troubles that limit polyshape to n < 50.
+we avoid the numerical troubles that limit polyshape to n &lt; 50.
 See also the <a href="#nrxydoc">nrxycos</a> generator, 
 and <a href="#othergenerators">generators.scm</a>.
 </p>
@@ -5852,7 +5853,7 @@ asyfm-I is the modified Bessel function version (the second formula in the <a hr
   <A class=def NAME="fmssb?">fmssb?</A> gen
 </pre>
 
-<p>This generator produces the "gapped" spectra mentioned in fm.html. It is used extensively in the
+<p>This generator produces the "gapped" spectra mentioned in <a href="fm.html">fm.html</a>. It is used extensively in the
 various "imaginary machines".  Also included in this section of generators.scm is fpmc, an instrument
 that performs FM with a complex index (complex in the sense of complex numbers).  It can be used
 in with-sound, but not within run (the run macro does not currently handle complex numbers).
@@ -6879,9 +6880,8 @@ A similar (slightly simpler) effect is:
 </td></tr></table>
 
 <p>This modulates the sound but keeps the output maxamp the same as the input.
-There is a similar function in sndscm.html that does this kind of scaling throughout the sound,
-resulting in a steady modulation, rather than an intensification of just the peaks &mdash; see
-<a href="sndscm.html#movingmax">moving-max</a>.
+There is a similar function in <a href="sndscm.html#movingmax">sndscm.html</a> that does this kind of scaling throughout the sound,
+resulting in a steady modulation, rather than an intensification of just the peaks.
 </p>
 <br><br>
 
@@ -7442,7 +7442,8 @@ an interesting instrument that you're willing to share, please send it to me
 (bil@ccrma.stanford.edu). 
 </p>
 
-<p><a href="sndscm.html#definstrument">definstrument</a>, the individual instruments, and <a href="sndscm.html#wsdoc">with-sound</a> are documented in sndscm.html.
+<p><a href="sndscm.html#definstrument">definstrument</a>, the individual instruments, and <a href="sndscm.html#wsdoc">with-sound</a> are documented in 
+<a href="sndscm.html">sndscm.html</a>.
 </p>
 
 
