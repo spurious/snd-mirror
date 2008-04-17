@@ -2502,9 +2502,9 @@ nil doesnt print anything, which will speed up a bit the process.
 	    (vector-set! frm-size k (make-formant fval a1)))
 	  (begin
 	    (vector-set! frm-size k (make-formant fval a1))
-	    (vct-set! gains (if (< (+ offset-gain gval) 0) 
-				0
-				(+ offset-gain gval)))))))
+	    (vct-set! gains k (if (< (+ offset-gain gval) 0) 
+				  0
+				  (+ offset-gain gval)))))))
     (ws-interrupt?)
     (run
      (lambda ()

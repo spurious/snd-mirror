@@ -2,7 +2,7 @@
 
 # Translator: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Tue Sep 16 01:27:09 CEST 2003
-# Changed: Tue Apr 15 21:28:53 CEST 2008
+# Changed: Wed Apr 16 17:41:01 CEST 2008
 
 # Instruments work with
 #   with_sound (CLM (sample2file gens) and Snd)
@@ -2387,7 +2387,7 @@ nil doesnt print anything, which will speed up a bit the process.
 def graph_eq(file, *args)
   assert_type(File.exist?(file), file, 0, "an existing file")
   start, dur, or_beg, amp, amp_env, amp_base, offset_gain = nil
-  gain_freq_list, filt_gain_scale, filt_gain_base, a1, stats = nil
+  gain_freq_list, filt_gain_scale, filt_gain_base, a1 = nil
   optkey(args, binding,
          [:start, 0],
          [:dur, 0],
@@ -2399,8 +2399,7 @@ def graph_eq(file, *args)
          [:gain_freq_list, [[0, 1, 1, 0], 440, [0, 0, 1, 1], 660]],
          [:filt_gain_scale, 1],
          [:filt_gain_base, 1],
-         [:a1, 0.99],
-         :stats)
+         [:a1, 0.99])
   durata = (dur.zero? ? ws_duration(file) : dur)
   len = seconds2samples(durata)
   or_start = (or_beg * ws_srate(file)).round
@@ -2414,7 +2413,7 @@ def graph_eq(file, *args)
   if_list_in_gain = gain_list[0].kind_of?(Array)
   env_size = (if_list_in_gain ? Array.new(freq_list.length) : nil)
   frm_size = Array.new(freq_list.length)
-  samp = -1
+  gains = Vct.new(len, 1.0)
   half_list.times do |i|
     gval = gain_list[i]
     fval = freq_list[i]
@@ -2423,24 +2422,18 @@ def graph_eq(file, *args)
                              :duration, durata, :base, filt_gain_base)
       frm_size[i] = make_formant(fval, a1)
     else
+      gains[i] = (offset_gain + gval < 0) ? 0 : (offset_gain + gain)
       frm_size[i] = make_formant(fval, a1)
-# [offset_gain + gval, 0].max
     end
   end
   run_instrument(start, durata) do
-    if stats
-      samp += 1
-      if samp == @srate
-        samp = 0
-      end
-    end
     outval = 0.0
     inval = ws_readin(rd_a)
     half_list.times do |j|
-#      if if_list_in_gain
-#        set_mus_xcoeff(frm_size[j], 0, env(env_size[j]) * (1.0 - a1))
-#      end
-      outval += formant(frm_size[j], inval)
+      if if_list_in_gain
+        gains[j] = env(env_size[j]) * (1.0 - a1))
+      end
+      outval += gains[j] * formant(frm_size[j], inval)
     end
     env(ampenv) * outval
   end

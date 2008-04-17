@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Sun Jul 15 23:06:20 CEST 2007
+\ Changed: Wed Apr 16 23:20:19 CEST 2008
 
 \ Commentary:
 \
@@ -38,6 +38,11 @@ require dsp
   require snd-xm
   require effects
 [then]
+
+nil value *arg1*
+nil value *arg2*
+nil value *prc*
+nil value *tag*
 
 reset-all-hooks
 'snd-motif provided? 'snd-gtk provided? || value with-gui
@@ -270,6 +275,8 @@ mus-audio-playback-amp value original-audio-amp
       then
     then
   then { kind }
+  stack-reset
+  "test.snd" file-exists? if "test.snd" 0o644 file-chmod then
   $" === Snd version: %s (%s)" '( snd-version kind ) clm-message
   $" === Fth version: %s"      '( fth-version )      clm-message
   ""   '() clm-message
@@ -285,6 +292,7 @@ mus-audio-playback-amp value original-audio-amp
   #t  show-listener      	    drop
   reset-almost-all-hooks
   *snd-test-verbose* to *clm-verbose*
+  22050 set-mus-srate f>s to *clm-srate*
   stack-reset
   make-timer to overall-start-time
 ;
@@ -315,6 +323,7 @@ mus-audio-playback-amp value original-audio-amp
   "" '() clm-message
   $" %d files deleted" '( file-count ) clm-message
   "" '() clm-message
+  "test.snd" file-exists? if "test.snd" 0o644 file-chmod then
   #( "aaa.eps"
      "envs.save"
      "fmv.snd"
@@ -1555,9 +1564,9 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
   make-rmsgain { rg }
   40 make-rmsgain { rg1 }
   2  make-rmsgain { rg2 }
-  '( 0 0 1 1 2 0 )      :length 10001 make-env { e }
-  '( 0 0 1 1 )          :length 10001 make-env { e1 }
-  '( 0 0 1 1 2 0 10 0 ) :length 10001 make-env { e2 }
+  '( 0 0 1 1 2 0 )      :length 10000 make-env { e }
+  '( 0 0 1 1 )          :length 10000 make-env { e1 }
+  '( 0 0 1 1 2 0 10 0 ) :length 10000 make-env { e2 }
   440.0 make-oscil { o }
   10000 0 do
     e env { sig }
@@ -1565,15 +1574,11 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
     i  rg1 sig                    e1 env rmsgain-balance  *output*  outb drop
     i  rg2 o 0.0 0.0 oscil 0.1 f* e2 env rmsgain-balance  *output*  outc drop
   loop
-  rg rmsgain-gain-avg 0.98402 ffneq if
-    $" rmsgain gain-avg: %f (%f)?" '( rg rmsgain-gain-avg 0.98402 ) snd-display
-  then
-  rg1 rmsgain-balance-avg 19380.2848 fneq
-  rg1 rmsgain-balance-avg 19378.7850 fneq && if \ the resulte here
-    $" rmsgain balance-avg: %f (%f)?" '( rg1 rmsgain-balance-avg 19380.2848 ) snd-display
+  rg rmsgain-gain-avg 0.98402 fneq if
+    $" rmsgain gain-avg: %f (0.98402)?" '( rg rmsgain-gain-avg ) snd-display
   then
   rg2 :rmsg-avgc hash-ref 10000 <> if
-    $" rmsgain count: %d (%d)?" '( rg2 :rmsg-avgc hash-ref 10000 ) snd-display
+    $" rmsgain count: %d (10000)?" '( rg2 :rmsg-avgc hash-ref ) snd-display
   then
 ;
 : test23-ssb-fm ( gen mg -- proc; y self -- val )
@@ -1613,7 +1618,25 @@ include bird.fsm
 ;
 
 \ ====== test 28: errors
-#f value FIXME-FIXED?
+'snd-motif provided? [if]
+  : snd-motif-error-checks ( -- )
+    '( 'Widget 0 ) 	      <'> widget-position     'no-such-widget check-error-tag
+    '( 'Widget 0 ) 	      <'> widget-size         'no-such-widget check-error-tag
+    '( 'Widget 0 ) 	      <'> widget-text         'no-such-widget check-error-tag
+    '( 'Widget 0 ) '( 0 0 )   <'> set-widget-position 'no-such-widget check-error-tag
+    '( 'Widget 0 ) '( 10 10 ) <'> set-widget-size     'no-such-widget check-error-tag
+    '( 'Widget 0 ) "text"     <'> set-widget-text     'no-such-widget check-error-tag
+    '( 'Widget 0 ) 	      <'> hide-widget         'no-such-widget check-error-tag
+    '( 'Widget 0 ) 	      <'> show-widget         'no-such-widget check-error-tag
+    '( 'Widget 0 ) 	      <'> focus-widget        'no-such-widget check-error-tag
+  ;
+[else]
+  <'> noop alias snd-motif-error-checks
+[then]
+[ifundef] mus-audio-reinitialize
+  : mus-audio-reinitialize ( -- n ) 0 ;
+[then]
+
 'snd-nogui provided? [unless]
   '( 0 0 1 1 ) value env3
   : make-identity-mixer <{ chans -- mx }>
@@ -1633,35 +1656,13 @@ include bird.fsm
       then
     then
   ;
-  'snd-motif provided? [if]
-    : snd-motif-error-checks ( -- )
-      '( 'Widget 0 ) 	      	<'> widget-position     'no-such-widget check-error-tag
-      '( 'Widget 0 ) 	      	<'> widget-size         'no-such-widget check-error-tag
-      '( 'Widget 0 ) 	      	<'> widget-text         'no-such-widget check-error-tag
-      '( 'Widget 0 ) '( 0 0 )   <'> set-widget-position 'no-such-widget check-error-tag
-      '( 'Widget 0 ) '( 10 10 ) <'> set-widget-size     'no-such-widget check-error-tag
-      '( 'Widget 0 ) "text"     <'> set-widget-text     'no-such-widget check-error-tag
-      '( 'Widget 0 ) 	      	<'> hide-widget         'no-such-widget check-error-tag
-      '( 'Widget 0 ) 	      	<'> show-widget         'no-such-widget check-error-tag
-      '( 'Widget 0 ) 	      	<'> focus-widget        'no-such-widget check-error-tag
-    ;
-  [else]
-    <'> noop alias snd-motif-error-checks
-  [then]
 
-  stack-reset
-  32 make-delay       constant delay-32
-  0.95 0.95 0.95 make-color-with-catch constant color-95
+  3 :initial-element 1 make-array constant color-95
   0 make-array        constant vector-0
   3 0.0 make-vct      constant vct-3
   5 0.0 make-vct      constant vct-5
-  with-gui [if]
-    main-widgets car  constant car-main
-    main-widgets cadr constant cadr-main
-  [else]
-    #f                constant car-main
-    #f                constant cadr-main
-  [then]
+  main-widgets car    constant car-main
+  main-widgets cadr   constant cadr-main
   2 3 make-sound-data constant sound-data-23
   2 make-hook         constant a-hook
 
@@ -1834,7 +1835,7 @@ include bird.fsm
      <'> move-sound? <'> mus-float-equal-fudge-factor <'> multiply-arrays
      <'> mus-array-print-length
      <'> mus-channel <'> mus-channels <'> make-polyshape <'> polyshape?
-     <'> mus-close mus-data <'> mus-feedback
+     <'> mus-close <'> mus-data <'> mus-feedback
      <'> mus-feedforward <'> mus-fft <'> mus-frequency
      <'> mus-hop <'> mus-increment <'> mus-input? <'> mus-file-name
      <'> mus-length <'> mus-location <'> mus-mix <'> mus-order
@@ -1887,8 +1888,7 @@ include bird.fsm
      <'> copy-sample-reader <'> html-dir <'> html-program
      <'> make-fir-coeffs <'> make-identity-mixer <'> mus-interp-type <'> mus-run
      <'> phase-vocoder <'> player-home <'> redo-edit <'> undo-edit
-     <'> widget-position <'> widget-size <'> focus-widget 
-     [ifdef] window-property <'> window-property [then] ) constant procs
+     <'> widget-position <'> widget-size <'> focus-widget ) constant procs
 
   #( <'> amp-control <'> ask-before-overwrite <'> audio-input-device <'> audio-output-device
      <'> auto-update <'> axis-label-font <'> axis-numbers-font <'> channel-style
@@ -1966,8 +1966,7 @@ include bird.fsm
      <'> html-program <'> mus-interp-type <'> widget-position <'> widget-size
      <'> mixer-ref <'> frame-ref <'> locsig-ref <'> locsig-reverb-ref
      <'> mus-file-prescaler <'> mus-prescaler <'> mus-clipping <'> mus-file-clipping
-     <'> mus-header-raw-defaults
-     [ifdef] window-property <'> window-property [then] ) constant set-procs
+     <'> mus-header-raw-defaults ) constant set-procs
   
   #( <'> make-all-pass <'> make-asymmetric-fm <'> make-snd->sample <'> make-moving-average
      <'> make-comb <'> make-filtered-comb <'> make-convolve <'> make-delay
@@ -2008,7 +2007,6 @@ include bird.fsm
   set-procs <'> set-arity-not-ok 4 array-reject constant set-procs03
   set-procs <'> set-arity-not-ok 5 array-reject constant set-procs04
 
-  [ifundef] mus-audio-reinitialize : mus-audio-reinitialize ( -- n ) 0 ; [then]
   : close-sound-mc-cb { -- prc; y self -- val }
     1 proc-create "oboe.snd" open-sound , ( prc )
    does> { y self -- val }
@@ -2802,14 +2800,14 @@ include bird.fsm
     0 <'> noop 2 make-proc     <'> play-selection         'wrong-type-arg   check-error-tag
     #()                        <'> draw-lines             'no-data          check-error-tag
     #( 1 2 3 )                 <'> draw-lines             'bad-length       check-error-tag
-    '( 0 0 1 1 )  :length 11 make-env <'> src-channel        'out-of-range     check-error-tag
-    '( 0 1 1 0 )  :length 11 make-env <'> src-channel        'out-of-range     check-error-tag
-    '( 0 1 1 -1 ) :length 11 make-env <'> src-channel        'out-of-range     check-error-tag
-    '( 0 -1 1 1 ) :length 11 make-env <'> src-channel        'out-of-range     check-error-tag
-    '( 0 0 1 1 )  :length 11 make-env <'> src-sound          'out-of-range     check-error-tag
-    '( 0 1 1 0 )  :length 11 make-env <'> src-sound          'out-of-range     check-error-tag
-    '( 0 1 1 -1 ) :length 11 make-env <'> src-sound          'out-of-range     check-error-tag
-    '( 0 -1 1 1 ) :length 11 make-env <'> src-sound          'out-of-range     check-error-tag
+    '( 0 0 1 1 )  :length 11 make-env <'> src-channel     'out-of-range     check-error-tag
+    '( 0 1 1 0 )  :length 11 make-env <'> src-channel     'out-of-range     check-error-tag
+    '( 0 1 1 -1 ) :length 11 make-env <'> src-channel     'out-of-range     check-error-tag
+    '( 0 -1 1 1 ) :length 11 make-env <'> src-channel     'out-of-range     check-error-tag
+    '( 0 0 1 1 )  :length 11 make-env <'> src-sound       'out-of-range     check-error-tag
+    '( 0 1 1 0 )  :length 11 make-env <'> src-sound       'out-of-range     check-error-tag
+    '( 0 1 1 -1 ) :length 11 make-env <'> src-sound       'out-of-range     check-error-tag
+    '( 0 -1 1 1 ) :length 11 make-env <'> src-sound       'out-of-range     check-error-tag
     0.0 0.0 0.0 0.0 0.0 0.0 0.0 <'> make-readin           'mus-error        check-error-tag
     vct-3 32                   <'> filter-sound           'out-of-range     check-error-tag
     '( 0 0 1 1 ) 0             <'> filter-sound           'out-of-range     check-error-tag
@@ -3010,16 +3008,18 @@ include bird.fsm
     '( 44100 2.123 "hi" )      <'> set-mus-header-raw-defaults 'wrong-type-arg check-error-tag
     \ key args
     *snd-test-verbose* if
-      $" procs00: %d/%d" '( procs00 length set-procs00 length ) clm-message
-      $" procs01: %d/%d" '( procs01 length set-procs01 length ) clm-message
-      $" procs02: %d/%d" '( procs02 length set-procs02 length ) clm-message
-      $" procs03: %d/%d" '( procs03 length set-procs03 length ) clm-message
-      $" procs04: %d/%d" '( procs04 length set-procs04 length ) clm-message
-      $" procs05: %d"    '( procs05 length )                    clm-message
-      $" procs06: %d"    '( procs06 length )                    clm-message
-      $" procs07: %d"    '( procs07 length )                    clm-message
-      $" procs08: %d"    '( procs08 length )                    clm-message
-      $" procs10: %d"    '( procs10 length )                    clm-message
+      $" procs   prcs/set-prcs" '() clm-message
+      $" =====================" '() clm-message
+      $" procs00: %3d/%3d" '( procs00 length set-procs00 length ) clm-message
+      $" procs01: %3d/%3d" '( procs01 length set-procs01 length ) clm-message
+      $" procs02: %3d/%3d" '( procs02 length set-procs02 length ) clm-message
+      $" procs03: %3d/%3d" '( procs03 length set-procs03 length ) clm-message
+      $" procs04: %3d/%3d" '( procs04 length set-procs04 length ) clm-message
+      $" procs05: %3d"     '( procs05 length )                    clm-message
+      $" procs06: %3d"     '( procs06 length )                    clm-message
+      $" procs07: %3d"     '( procs07 length )                    clm-message
+      $" procs08: %3d"     '( procs08 length )                    clm-message
+      $" procs10: %3d"     '( procs10 length )                    clm-message
     then
     #( 1.5 "/hiho" '( 0 1 ) 1234 vct-3 :wave -1 0 1 #f #t
        '() vector-0 12345678901234567890 log0 nan ) { vals }
@@ -3034,7 +3034,6 @@ include bird.fsm
     end-each
     all-args if
       "keyargs-3-args" '() clm-message
-      make-timer to tm
       vals each to arg1
 	keyargs each to arg2
 	  vals each to arg3
@@ -3044,25 +3043,18 @@ include bird.fsm
 	  end-each
 	end-each
       end-each
-      tm stop-timer
-      "%s" '( tm ) clm-message
-      FIXME-FIXED? if
-	"keyargs-4-args" '() clm-message
-	tm start-timer
-	keyargs each to arg1
-	  vals each to arg2
-	    keyargs each to arg3
-	      vals each to arg4
-		make-procs each to prc
-		  arg1 arg2 arg3 arg4 prc #t nil fth-catch stack-reset
-		end-each
-	      end-each
-	    end-each
-	  end-each
-	end-each
-	tm stop-timer
-	"%s" '( tm ) clm-message
-      then
+      "keyargs-4-args" '() clm-message
+      keyargs each to arg1
+      	vals each to arg2
+      	  keyargs each to arg3
+      	    vals each to arg4
+      	      make-procs each to prc
+      		arg1 arg2 arg3 arg4 prc #t nil fth-catch stack-reset
+      	      end-each
+      	    end-each
+      	  end-each
+      	end-each
+      end-each
     then
     \ 0 args
     "0-args" '() clm-message
@@ -3076,78 +3068,77 @@ include bird.fsm
       then
     end-each
     dismiss-all-dialogs
-    all-args if
-      #( 1.5 "/hiho" '( 0 1 ) 1234 vct-3 color-95  #( 0 1 ) 3/4 'mus-error -1.0 csqrt delay-32
-	 <'> noop 0 make-proc vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t <char> c 0.0 1.0 -1.0 
-	 '() '3 2 8 64 -64 vector-0 2.0 21.5 f** 2.0 -18.0 f** car-main cadr-main 
-	 12345678901234567890 log0 nan <'> noop 1 make-proc ) { main-args }
-      #( 1.5 "/hiho" '( 0 1 ) 1234 vct-3 color-95 #( 0 1 ) 3/4 -1.0
-	 -1.0 csqrt delay-32 :feedback -1 0 1 3 64 -64 #f #t '() vector-0 12345678901234567890
-	 log0 nan ) { few-args }
-      #( "/hiho" 1234 vct-3 -1.0 -1.0 csqrt delay-32
-	 -1 0 1 #f #t '() 12345678901234567890 log0 ) { fewer-args }
-      all-args if main-args else few-args then { less-args }
-      \ 1 arg
-      "1-arg" '() clm-message
-      nil { arg }
-      main-args each to arg
-	procs01 each to prc
-	  arg prc #t nil fth-catch to tag
+    #( 1.5 "/hiho" '( 0 1 ) 1234 vct-3 color-95  #( 0 1 ) 3/4 'mus-error -1.0 csqrt
+       <'> noop 0 make-proc vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t <char> c 0.0 1.0 -1.0 
+       '() '3 2 8 64 -64 vector-0 2.0 21.5 f** 2.0 -18.0 f** car-main cadr-main 
+       12345678901234567890 log0 nan <'> noop 1 make-proc ) { main-args }
+    #( 1.5 "/hiho" '( 0 1 ) 1234 vct-3 color-95 #( 0 1 ) 3/4 -1.0
+       -1.0 csqrt :feedback -1 0 1 3 64 -64 #f #t '() vector-0 12345678901234567890
+       log0 nan ) { few-args }
+    #( "/hiho" 1234 vct-3 -1.0 -1.0 csqrt
+       -1 0 1 #f #t '() 12345678901234567890 log0 ) { fewer-args }
+    all-args if main-args else few-args then { less-args }
+    \ 1 arg
+    "1-arg" '() clm-message
+    nil { arg }
+    main-args each to arg
+      procs01 each to prc
+	arg prc #t nil fth-catch to tag
+	stack-reset
+	tag list? if
+	  tag car 'wrong-number-of-args symbol= if
+	    $" procs01 wna: (%s) %s %s" '( arg prc tag ) snd-display
+	  then
+	then
+      end-each
+    end-each
+    \ 2 args
+    "2-args" '() clm-message
+    main-args each to arg1
+      main-args each to arg2
+	procs02 each to prc
+	  arg1 arg2 prc #t nil fth-catch to tag
 	  stack-reset
 	  tag list? if
 	    tag car 'wrong-number-of-args symbol= if
-	      $" procs01 wna: (%s) %s %s" '( arg prc tag ) snd-display
+	      $" procs02: (%s %s) %s %s" '( arg1 arg2 prc tag ) snd-display
 	    then
 	  then
 	end-each
       end-each
-      \ 2 args
-      "2-args" '() clm-message
-      main-args each to arg1
-	main-args each to arg2
-	  procs02 each to prc
-	    arg1 arg2 prc #t nil fth-catch to tag
+    end-each
+    \ set! no args
+    "set-no-args" '() clm-message
+    main-args each to arg
+      set-procs00 each to prc
+	arg prc set-xt #t nil fth-catch to tag
+	stack-reset
+	tag list? if
+	  tag car 'wrong-number-of-args symbol= if
+	    $" set-procs00: (%s) %s %s" '( arg prc tag ) snd-display
+	  then
+	then
+      end-each
+    end-each
+    dismiss-all-dialogs
+    \ set! 1 arg
+    "set-1-arg" '() clm-message
+    main-args each to arg1
+      main-args each to arg2
+	set-procs01 each to prc
+	  prc proc-name "widget-size" string= unless
+	    arg1 arg2 prc set-xt #t nil fth-catch to tag
 	    stack-reset
 	    tag list? if
 	      tag car 'wrong-number-of-args symbol= if
-		$" procs02: (%s %s) %s %s" '( arg1 arg2 prc tag ) snd-display
+		$" set-procs01: (%s %s) %s %s" '( arg1 arg2 prc tag ) snd-display
 	      then
-	    then
-	  end-each
-	end-each
-      end-each
-      \ set! no args
-      "set-no-args" '() clm-message
-      main-args each to arg
-	set-procs00 each to prc
-	  arg prc set-xt #t nil fth-catch to tag
-	  stack-reset
-	  tag list? if
-	    tag car 'wrong-number-of-args symbol= if
-	      $" set-procs00: (%s) %s %s" '( arg prc tag ) snd-display
 	    then
 	  then
 	end-each
       end-each
-      dismiss-all-dialogs
-      \ set! 1 arg
-      "set-1-arg" '() clm-message
-      main-args each to arg1
-	main-args each to arg2
-	  set-procs01 each to prc
-	    prc proc-name "widget-size" string= unless
-	      arg1 arg2 prc set-xt #t nil fth-catch to tag
-	      stack-reset
-	      tag list? if
-		tag car 'wrong-number-of-args symbol= if
-		  $" set-procs01: (%s %s) %s %s" '( arg1 arg2 prc tag ) snd-display
-		then
-	      then
-	    then
-	  end-each
-	end-each
-      end-each
-      \ FIXME all-args if
+    end-each
+    all-args if
       \ set! 2 args
       "set-2-args" '() clm-message
       less-args each to arg1
@@ -3420,8 +3411,8 @@ include bird.fsm
     select-all drop
     "test.snd" file-delete
     view-regions-dialog drop
-    dismiss-all-dialogs
     ind close-sound drop
+    dismiss-all-dialogs
     \ 
     $" cp -f oboe.snd test.snd" file-system drop
     "test.snd" open-sound to ind
@@ -3592,51 +3583,77 @@ include bird.fsm
     ind sound? if $" edpos proc clobbers chan??: %s" '( ind ) snd-display then
   ;
   : 30-test
-    #( 1.5 "/hiho" '( 0 1 ) 1234 vct-3 color-95  #( 0 1 ) 3/4 'mus-error -1.0 csqrt delay-32
+    32 make-delay { delay-32 }
+    #( 1.5 "/hiho" '( 0 1 ) 1234 vct-3 :wave -1 0 1 #f #t
+       '() vector-0 12345678901234567890 log0 nan ) { vals }
+    #( 1.5 "/hiho" '( 0 1 ) 1234 vct-3 color-95  #( 0 1 ) 3/4 'mus-error -1.0 csqrt ( delay-32 )
        <'> noop 0 make-proc vct-5 sound-data-23 :order 0 1 -1 a-hook #f #t <char> c 0.0 1.0 -1.0 
        '() '3 2 8 64 -64 vector-0 2.0 21.5 f** 2.0 -18.0 f** car-main cadr-main 
        12345678901234567890 log0 nan <'> noop 1 make-proc ) { main-args }
     #( 1.5 "/hiho" '( 0 1 ) 1234 vct-3 color-95 #( 0 1 ) 3/4 -1.0
-       -1.0 csqrt delay-32 :feedback -1 0 1 3 64 -64 #f #t '() vector-0 12345678901234567890
+       -1.0 csqrt ( delay-32 ) :feedback -1 0 1 3 64 -64 #f #t '() vector-0 12345678901234567890
        log0 nan ) { few-args }
+    #( "/hiho" 1234 vct-3 -1.0 -1.0 csqrt ( delay-32 )
+       -1 0 1 #f #t '() 12345678901234567890 log0 ) { fewer-args }
     all-args if main-args else few-args then { less-args }
-    #( 1.5 "/hiho" '( 0 1 ) 1234 vct-3 :wave -1 0 1 #f #t
-       '() vector-0 12345678901234567890 log0 nan ) { vals }
     nil nil nil nil nil nil nil nil nil nil nil nil nil nil nil
     { ind prc tag arg arg1 arg2 arg3 arg4 arg5 arg6 arg7 arg8 arg9 arg0 tm }
-    make-timer to tm
-    tm start-timer
-    main-args each to arg1
-      main-args each to arg2
-	set-procs01 each to prc
-	  $" %s %s %s" '( arg1 arg2 prc ) clm-message
-	  prc proc-name "widget-size" string= unless
-	    arg1 arg2 prc set-xt #t nil fth-catch to tag
-	    stack-reset
-	    tag list? if
-	      tag car 'wrong-number-of-args symbol= if
-		$" set-procs01: (%s %s) %s %s" '( arg1 arg2 prc tag ) snd-display
-	      then
-	    then
-	  then
-	end-each
+    make-timer { tm }
+    "keyargs-4-args" '() clm-message
+    keyargs each to arg1
+      tm stop-timer
+      $" %2d: %S (%s)" '( i arg1 tm ) clm-message
+      tm start-timer
+      vals each to arg2
+    	arg2 to *arg1*
+    	keyargs each to arg3
+	  $" %2d: %S %S %S" '( i arg1 arg2 arg3 ) clm-message
+    	  vals each to arg4
+    	    arg4 to *arg2*
+    	    make-procs each to prc
+    	      prc to *prc*
+    	      arg1 arg2 arg3 arg4 prc #t nil fth-catch stack-reset
+	    end-each
+    	  end-each
+    	end-each
       end-each
     end-each
-    tm stop-timer
-    "%s" '( tm ) clm-message
   ;
-[then]
-[ifundef] 28-errors <'> noop alias 28-errors [then]
-[ifundef] 30-test   <'> noop alias 30-test   [then]
+[else]					\ 'snd-nogui
+  <'> noop alias 28-errors
+  <'> noop alias 30-test
+[then]					\ 'snd-nogui
+
+SIGSEGV lambda: { sig -- }
+  \ backtrace
+  stack-reset
+  "" '() clm-message
+  $" Segmentation fault (signal no %d)" '( sig ) clm-message
+  "" '() clm-message
+  finish-snd-test
+  2 snd-exit drop
+; signal drop
+SIGILL lambda: { sig -- }
+  \ backtrace
+  stack-reset
+  "" '() clm-message
+  $" Illegal instruction (signal no %d)" '( sig ) clm-message
+  "" '() clm-message
+  finish-snd-test
+  2 snd-exit drop
+; signal drop
+
+\ SIGSEGV SIG_IGN signal drop
+\ SIGILL  SIG_IGN signal drop
 
 SIGINT lambda: ( sig -- )
   stack-reset
   "" '() clm-message
-  $" Interrupt received.  Finish %S." '( *filename* #f file-basename ) clm-message
+  $" Interrupt received.  Clean up %S." '( *filename* #f file-basename ) clm-message
   "" '() clm-message
   finish-snd-test
-  2 snd-exit drop
-; signal value original-sig-handler
+  0 snd-exit drop
+; signal drop
 
 let: ( -- )
   #() { numbs }
@@ -3655,6 +3672,7 @@ let: ( -- )
     29 -1 do test-numbers i array-push to test-numbers loop
   then
   numbs each abs { n } test-numbers test-numbers n array-index array-delete! drop end-each
+  .stack
   start-snd-test
   <'> 00-sel-from-snd    run-fth-test
   <'> 10-marks           run-fth-test
