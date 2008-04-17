@@ -659,7 +659,7 @@ function. </p>
 
 <table border=0 cellspacing=4 cellpadding=6>
 
-<tr><td width=60></td><td></td><td></td></tr>
+<tr><td width=30></td><td></td><td></td></tr>
 
 <!-- ask-before-overwrite -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="askbeforeoverwrite">ask-before-overwrite</a></code></td>
@@ -1369,7 +1369,7 @@ indication such as "[or]", that means the various hook function values are or-d 
 <!-- after-apply-controls-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
 <code><a class=def name="afterapplycontrolshook">after-apply-controls-hook</a> (snd)</code>
-</td></tr><tr><td width=60></td><td colspan=2>
+</td></tr><tr><td width=30></td><td colspan=2>
 This hook is called when <a href="#applycontrols">apply-controls</a> finishes.  
 <a href="sndscm.html#addampcontrols">add-amp-controls</a> in snd-motif.scm uses this hook to
 reset any added amplitude sliders to 1.0.
@@ -2688,7 +2688,7 @@ If its function returns #t, the command is not evaluated.  This is an internal d
   <a class=def name="afteredithook">after-edit-hook</a> (snd chn)
 </pre>
 
-<table border=0><tr><td width=60><br></td><td>
+<table border=0><tr><td width=30><br></td><td>
 These are functions that return the hooks in question associated with the specified channel.
 The functions on these hooks are thunks &mdash; they should take no arguments.
 edit-hook is called just before any attempt to edit the channel's data; if it returns #t,
@@ -2699,7 +2699,7 @@ the edit is cancelled. So,
              Ruby:   edit_hook(snd, chn).add_hook!(\"stop-edit\") do | | true end
              Forth:  snd chn edit-hook lambda: &lt;{ }&gt; #t ; add-hook!
 </pre>
-<table border=0><tr><td width=60><br></td><td>
+<table border=0><tr><td width=30><br></td><td>
 halts any attempt to edit the data; this is even more restrictive than setting the read-only
 flag because the latter only refuses to overwrite the current data.  undo-hook is called
 just after any undo, redo, or revert that affects the channel.  after-edit-hook is called
@@ -2842,7 +2842,7 @@ implemented in frame.scm.
 
 <!-- copy-sample-reader -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="copysamplereader">copy-sample-reader</a> (obj)</code>
-</td></tr><tr><td width=60><br></td><td>
+</td></tr><tr><td width=30><br></td><td>
 copy-sample-reader returns a copy of 'obj' which can be any kind of sample-reader.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -3047,7 +3047,7 @@ to Snd data, snd-&gt;sample.
 
 <!-- make-snd->sample -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="makesndtosample">make-snd-&gt;sample</a> (:optional snd)</code>
-</td></tr><tr><td width=60><br></td><td>
+</td></tr><tr><td width=30><br></td><td>
 make-snd-&gt;sample creates a Snd data reader for use with CLM's in-any, file-&gt;sample, etc.
 </td></tr>
 <tr><td colspan=2 height=16></td></tr>
@@ -3122,7 +3122,7 @@ Forth: variable hi
 
 <!-- list->vct -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="listtovct">list-&gt;vct</a> (lst)</code>
-</td></tr><tr><td width=60></td><td>
+</td></tr><tr><td width=30></td><td>
 return a new vct with elements of list 'lst' (equivalent to the <a href="#vct">vct</a> function).
 <pre>
     :<em class=typing>(list-&gt;vct (list 0.1 0.2 0.3))</em>
@@ -3519,7 +3519,7 @@ classes in Ruby.
 
 <!-- make-sound-data -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="makesounddata">make-sound-data</a> (chans frames)</code>
-</td></tr><tr><td width=60><br></td><td>
+</td></tr><tr><td width=30><br></td><td>
 make-sound-data returns a new sound-data object with 'chans' arrays, each with 'frames' elements.
 <pre>
     :<em class=typing>(make-sound-data 2 5)</em>
@@ -3733,7 +3733,7 @@ For many eamples, see play.scm and rtio.scm. The most important Sndlib functions
 
 <!-- mus-alsa-buffers -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="musalsabuffers">mus-alsa-buffers</a> ()</code>
-</td></tr><tr><td width=60><br></td><td>
+</td></tr><tr><td width=30><br></td><td>
 mus-alsa-buffers is the number of buffers ("periods") used in ALSA; you can also use the environment variable MUS_ALSA_BUFFERS.
 The default setting is 3.
 These ALSA variables only matter if you built Snd with the configure switch --with-alsa.
@@ -4399,7 +4399,7 @@ See also the <a href="#sndhooks">hooks</a> section above for various mark-relate
 
 <!-- add-mark -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="addmark">add-mark</a> (sample :optional snd chn name sync)</code>
-</td></tr><tr><td width=60><br></td><td>
+</td></tr><tr><td width=30><br></td><td>
 add-mark adds a mark at the position 'sample', returning the new mark' identifier (an integer).
 Since marks
 can move around during editing, a unique tag is needed to refer to a 
@@ -4721,7 +4721,7 @@ Say we have a mix whose id is 123:</p>
 
 <!-- mix -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="mix">mix</a> (file :optional samp in-chan snd chn with-mix-tags auto-delete)</code>
-</td></tr><tr><td width=60></td><td>
+</td></tr><tr><td width=30></td><td>
 <p>mix is one of the basic mixing functions.
 It mixes the 'in-chan' channel of the file 'file' into the given channel
 starting at 'samp' in the output channel.  If 'in-chan' is #t, all input channels are mixed into successive output channels.
@@ -5175,7 +5175,7 @@ Most of the region arguments default to the current region (the top of the regio
 
 <!-- forget-region -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="forgetregion">forget-region</a> (:optional reg)</code>
-</td></tr><tr><td width=60><br></td><td>
+</td></tr><tr><td width=30><br></td><td>
 forget-region deletes region 'reg', removing it from the region stack.  This does not affect any of the
 active sounds; it just tells Snd that you no longer need any access to one of the current regions.
 To delete all regions, 
@@ -5417,7 +5417,7 @@ region-play-list and region-play-sequence in examp.scm<br>
 
 <!-- convolve-selection-with -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="convolveselectionwith">convolve-selection-with</a> (file :optional amp)</code>
-</td></tr><tr><td width=60><br></td><td>
+</td></tr><tr><td width=30><br></td><td>
 convolve-selection-with convolves the current selection with 'file', replacing the selection with the result.
 'amp' sets the maxamp of the result.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -5826,7 +5826,7 @@ There's never any good reason to do this, so if it looks like a no-op, do it a d
 <!-- add-player -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><a class=def name="addplayer">add-player</a> (player :optional start end edpos stop-proc out-chan)</code>
-</td></tr><tr><td width=60></td><td>
+</td></tr><tr><td width=30></td><td>
 add-player adds 'player' to the play-list (see <a href="#makeplayer">make-player</a>). 
 If 'edpos' is given, play at that edit position. 
 'stop-proc' can be a procedure of one argument; it is called when the play process stops and passed
@@ -9865,7 +9865,7 @@ The control panel procedures are:
 <!-- amp-control -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><a class=def name="ampcontrol">amp-control</a> (:optional <em class=narg>snd chn</em>)</code>
-</td></tr><tr><td width=60><br></td><td>
+</td></tr><tr><td width=30><br></td><td>
 The current amp value.
 It is possible to use these controls (in "real-time") in your own functions.
 See amprt in <a href="sndscm.html#exampdoc">examp.scm</a> for a simple example,
@@ -10293,7 +10293,7 @@ The edit list functions are:
 <!-- as-one-edit -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><a class=def name="asoneedit">as-one-edit</a> (func :optional origin)</code>
-</td></tr><tr><td width=60></td><td>
+</td></tr><tr><td width=30></td><td>
 call 'func', a function of no arguments, treating it as
 one edit (in all channels) in the edit history mechanism.  Graphics redisplays are squelched during as-one-edit.
 as-one-edit returns the result of 'func'.
@@ -10477,7 +10477,8 @@ Each inner list has the form
 If 'data-number' is -2, it marks the end of the list.  In our example above (the scale-channel/pad-channel sequence):
 <pre>
     :<em class=typing>(edit-tree)</em>
-    <em class=listener>((0 0 0 99 2.0 0.0 0.0 0) (100 -1 0 199 0.0 0.0 0.0 1) (300 0 100 50827 2.0 0.0 0.0 0) (51028 -2 0 0 0.0 0.0 0.0 0))</em>
+    <em class=listener>((0 0 0 99 2.0 0.0 0.0 0) (100 -1 0 199 0.0 0.0 0.0 1) 
+        (300 0 100 50827 2.0 0.0 0.0 0) (51028 -2 0 0 0.0 0.0 0.0 0))</em>
 </pre>
 
 The following function uses
@@ -10619,7 +10620,7 @@ other such text.
 <!-- add-transform -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><a class=def name="addtransform">add-transform</a> (name xlabel lo hi transform)</code>
-</td></tr><tr><td width=60></td><td>
+</td></tr><tr><td width=30></td><td>
 add-transform adds a transform to the transform choices (alongside Fourier, Wavelet, etc).  'name' is the name
 to use in the transform dialog. 'xlabel' is the x axis label
 of the resultant graph.  'lo' and 'hi' set which portion of the returned data
@@ -10950,14 +10951,14 @@ channel-widgets returns a list of various widgets associated with a given channe
 <!-- clear-listener -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><a class=def name="clearlistener">clear-listener</a> ()</code>
-</td></tr><tr><td width=60></td><td>
+</td></tr><tr><td width=30></td><td>
 This deletes all listener text from the beginning to the cursor position (C-M-g is bound to this function).
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
 <!-- color-dialog -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="colordialog">color-dialog</a> (:optional managed)</code>
-</td></tr><tr><td width=60></td><td>
+</td></tr><tr><td width=30></td><td>
 This creates and (if 'managed' which defaults to #t) activates the Color dialog; it returns the dialog widget.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -11729,7 +11730,7 @@ This returns the text widget's text.  It can be set.
 <!-- abort -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><a class=def name="abort">abort</a> ()</code>
-</td></tr><tr><td width=60><br></td><td>
+</td></tr><tr><td width=30><br></td><td>
 This exits Snd via "abort", presumably to fall into the C debugger.  To stop some on-going Snd operation,
 use <a href="#cgp">C-g</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
@@ -12122,7 +12123,7 @@ This simulates typing C-g.  It is intended for use with <a href="#bindkey">bind-
 <!-- delete-watcher -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><a class=def name="deletewatcher">delete-watcher</a> (id)</code>
-</td></tr><tr><td width=60><br></td><td>
+</td></tr><tr><td width=30><br></td><td>
 delete-watcher removes from the watcher list the function associated with id.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -12461,7 +12462,7 @@ This causes 'key' with modifiers 'state' and 'extended' to revert to its built-i
 <!-- window-property -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><a class=def name="windowproperty">window-property</a> (known-atom property)</code>
-</td></tr><tr><td width=60></td><td>
+</td></tr><tr><td width=30></td><td>
 window-property returns or changes an X-window's property; <a href="sndscm.html#titlewithdate">title-with-date</a> in examp.scm uses this function
 to put the date and time in the Snd title bar.
 <pre>
@@ -13175,7 +13176,7 @@ delete-colormap deletes the colormap represented by 'index'.
 <!-- draw-axes -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><a class=def name="drawaxes">draw-axes</a> (wid gc :optional label x0 x1 y0 y1 style axes)</code>
-</td></tr><tr><td width=60></td><td>
+</td></tr><tr><td width=30></td><td>
 This draws axes in the widget 'wid', using the graphics context 'gc', with the x-axis label 'label'
 going from 'x0' to 'x1' (floats) along the x axis, 'y0' to 'y1' along the y axis, with x-axis-style
 'style' (<code>x-axis-in-seconds</code> etc).  Whether axes are actually displayed or just implied
@@ -13189,7 +13190,7 @@ or the local envelope editor code in xm-enved.scm.
 <!-- draw-dot -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><a class=def name="drawdot">draw-dot</a> (x0 y0 dot-size snd chn context)</code>
-</td></tr><tr><td width=60></td><td>
+</td></tr><tr><td width=30></td><td>
 This draws a dot at ('x0 y0') of diameter 'dot-size' pixels in the specified context.  See musglyphs.scm.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
@@ -13352,7 +13353,7 @@ sound over another at an arbitrary point, and so on (see draw.scm):
 		     (offset (max 0 (- 1000 left)))
 		     (new-data (<a class=quiet href="#vctsubseq" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctsubseq_tip)">vct-subseq</a> data offset (+ offset samps))))
 		(set! (<a class=quiet href="#foregroundcolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_foregroundcolor_tip)">foreground-color</a> snd chn) red)
-		(<em class=red>graph-data</em> new-data snd chn <a class=quiet href="#copycontext"> onmouseout="UnTip()" onmouseover="Tip(extsnd_copycontext_tip)">copy-context</a> (max 1000 left) (min 2000 right))
+		(<em class=red>graph-data</em> new-data snd chn <a class=quiet href="#copycontext" onmouseout="UnTip()" onmouseover="Tip(extsnd_copycontext_tip)">copy-context</a> (max 1000 left) (min 2000 right))
 		(set! (<a class=quiet href="#foregroundcolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_foregroundcolor_tip)">foreground-color</a> snd chn) old-color))
 	      (let* ((low-data (car data))     ;the two-sided envelope graph case
 		     (high-data (cadr data))
@@ -13369,7 +13370,7 @@ sound over another at an arbitrary point, and so on (see draw.scm):
 		     (new-high-data (<a class=quiet href="#vctsubseq" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctsubseq_tip)">vct-subseq</a> high-data left-bin right-bin)))
 		(set! (<a class=quiet href="#foregroundcolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_foregroundcolor_tip)">foreground-color</a> snd chn) red)
 		(<em class=red>graph-data</em> 
-                  (list new-low-data new-high-data) snd chn <a class=quiet href="#copycontext"> onmouseout="UnTip()" onmouseover="Tip(extsnd_copycontext_tip)">copy-context</a> left-bin right-bin)
+                  (list new-low-data new-high-data) snd chn <a class=quiet href="#copycontext" onmouseout="UnTip()" onmouseover="Tip(extsnd_copycontext_tip)">copy-context</a> left-bin right-bin)
 		(set! (<a class=quiet href="#foregroundcolor" onmouseout="UnTip()" onmouseover="Tip(extsnd_foregroundcolor_tip)">foreground-color</a> snd chn) old-color)))))))
 
 (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> <a class=quiet href="#aftergraphhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_aftergraphhook_tip)">after-graph-hook</a> display-samps-in-red)

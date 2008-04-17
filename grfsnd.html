@@ -1287,7 +1287,8 @@ if you go on anyway, you'll get some complaint that there is no class named "sim
 </p>
 
 <table border=0 cellpadding=5 hspace=20><tr><td><pre>
-&gt; <em class=typing>(define (random-fn n) (process repeat n output (new simp :beg (now) :dur .1 :freq (between 220 880) :amp .1) wait .25))</em>
+&gt; <em class=typing>(define (random-fn n) 
+    (process repeat n output (new simp :beg (now) :dur .1 :freq (between 220 880) :amp .1) wait .25))</em>
 <em class=listener>#&lt;unspecified&gt;</em>
 &gt; <em class=typing>(events (random-fn 10) "test.clm" 0 :output "test.snd")</em>
 <em class=listener>"test.clm"</em>
@@ -1333,7 +1334,8 @@ Here are brief descriptions of the functions:
 
 (<b>pd-unbind</b> symbol) 
     Stop receiving messages sent to 'symbol'. 
-    Both local and global. For the local version, all bindings are automatically unbound when the object is destroyed or reloaded. 
+    Both local and global. For the local version, all bindings are automatically unbound 
+      when the object is destroyed or reloaded. 
 
 (<b>pd-send</b> symbol arg0 arg1 ...) 
     Sends one or more values to receivers for 'symbol'. 'symbol' can either be a scheme or a pd symbol. 
@@ -1341,7 +1343,8 @@ Here are brief descriptions of the functions:
     Global function. 
 
 (<b>pd-get-symbol</b> symbol) 
-    Returns the pd symbol for the scheme symbol 'symbol'. pd-send works faster when a pd symbol is used instead of a scheme symbol. 
+    Returns the pd symbol for the scheme symbol 'symbol'. pd-send works faster when a pd symbol 
+      is used instead of a scheme symbol. 
     send_receive.scm 
     Global function. 
 

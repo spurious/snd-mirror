@@ -176,6 +176,19 @@ note lists and instruments are described in <a href="sndscm.html">sndscm.html</a
 
 <table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A class=def NAME="introduction">Introduction</a></h2></td></tr></table>
 
+<table border=0 hspace=100 vspace=20><tr><td>
+<p><small>
+I'm not sure how to motivate this set of functions.  If you try to make
+new sounds, or recreate and alter existing sounds, you'll find that there are
+some functions that seem to pop up everywhere.  The basic
+building block of sound is the sinusoid, so we have things like oscil and polywave.
+Another basic thing is noise, so we have rand and rand-interp.
+Sounds get louder and softer, or go up and down in pitch, so we have envelopes (env).
+We need a way to get at them (in-any, readin), and play them (out-any, locsig).
+We need tons of reverb (delay, all-pass).
+I love this stuff.
+</small></p></td></tr></table>
+
 <p>Start Snd, open the listener (choose "Show listener" in the View menu), and:
 </p>
 
@@ -6809,6 +6822,10 @@ generator, among others.  Here's array-interp as a "compander":
 </pre>
 </td></tr></table>
 
+
+<p><a href="sndscm.html#soundinterp">sound-interp</a> in examp.scm fills an array with an entire sound,
+then uses array-interp to read it.
+</p>
 
 <p>
 dot-product is the usual "inner product" or "scalar product" (a name that should be banned from polite society).
