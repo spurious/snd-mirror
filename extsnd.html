@@ -5760,10 +5760,10 @@ situations, you can make use of data in the "redo" section of the edit-history l
 nothing is guaranteed.  
 </p>
 
-<blockquote>
-<hr>
+<table border=1 hspace=100 cellpadding=10>
+<tr><td>
 <p>
-<small><A NAME="regularizedargs"></a>
+<A NAME="regularizedargs"></a>
 For not-very-good historical reasons (it took me awhile to decide how to organize things), some of the procedures here are unnecessarily inconsistent in
 what arguments they accept, whether a channel of #t signals application to all channels or just the
 selected one, whether the <a class=quiet href="#sync" onmouseout="UnTip()" onmouseover="Tip(extsnd_sync_tip)">sync</a> field is followed, and so on.  Rather than make a bunch of backwards
@@ -5773,10 +5773,9 @@ sound index, channel number, and edit position, possibly preceded by one argumen
 an edit history name or 'ring time' (overlap).  The <a class=quiet href="#sync" onmouseout="UnTip()" onmouseover="Tip(extsnd_sync_tip)">sync</a> field is ignored, an unspecified sound argument applies only to the
 current sound, and an unspecified channel argument applies only to the current channel. 
 The following substitutions can be made:
-</small>
 </p>
+
 <pre>
-<small>
 <a href="#convolvewith">convolve-with</a> file amp s c e                    <a href="#clmchannel">clm-channel</a> convolve-gen beg dur s c e
 <a href="#envsound">env-sound</a> env beg dur base s c e                <a href="#envchannel">env-channel</a> env beg dur s c e
 <a href="#filtersound">filter-sound</a> env order s c e                    <a href="#filterchannel">filter-channel</a> env order beg dur s c e trunc
@@ -5793,18 +5792,16 @@ The following substitutions can be made:
 <a href="#srcsound">src-sound</a> num base s c e                        <a href="#srcchannel">src-channel</a> ratio-or-env beg dur s c e
 <a href="#undo">undo</a> edits s c                                  <a href="#undochannel">undo-channel</a> edits s c
 <a href="grfsnd.html#applyladspa">apply-ladspa</a> reader dat dur origin snd chn      <a href="grfsnd.html#ladspachannel">ladspa-channel</a> dat beg dur s c e
-</small>
 </pre>
-<p><small>Another case that might deserve "regularization" is <a class=quiet href="#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a> which confusingly interpolates
+
+<p>Another case that might deserve "regularization" is <a class=quiet href="#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a> which confusingly interpolates
 the direction argument between the channel and edit-position:
-</small></p>
-<pre><small>   (define* (read-channel :optional (beg 0) snd chn edpos (direction 1))
+</p>
+<pre>   (define* (read-channel :optional (beg 0) snd chn edpos (direction 1))
      (<a class=quiet href="#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a> beg snd chn direction edpos))
-</small>
 </pre>
 
 <p>
-<small>
 The edit position argument can cause ambiguity in a few cases.  What should Snd do with:
 <code><small>(pad-channel 100 0 snd chn 2)</small></code>?
 It currently treats any 0-length operation as a no-op, so the edit history is not changed by this function call.
@@ -5812,10 +5809,9 @@ However, in a similar situation (where the current edit counter is greater than 
 back into the edit history list): <code><small>(scale-channel 1.0 0 #f snd chn 2)</small></code>
 Snd essentially copies the state of the channel at that edit position, and puts it in the current edit position.
 There's never any good reason to do this, so if it looks like a no-op, do it a different way.
-</small>
 </p>
-<hr>
-</blockquote>
+</td></tr></table>
+
 <br>
 
 
@@ -7622,7 +7618,7 @@ play an external file: (play "file")<br>
 </td></tr></TABLE>
 
 <A NAME="stopplayreasons"></a>
-<pre><small>
+<pre>
 The "reasons" that might be passed to the stop-procedure are:
 
     0    play completed normally	
@@ -7635,7 +7631,7 @@ The "reasons" that might be passed to the stop-procedure are:
     7    apply requested (control panel)	
     8    file edited
     9    C-t
-</small></pre>
+</pre>
 
 The hooks called during a play operation are:
 <pre>

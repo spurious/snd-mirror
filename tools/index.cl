@@ -10,9 +10,6 @@
 
 ;;; for snd.html table, see snd-index.cl (snd-index "test.html")
 
-;;; TODO: check for bad <small> placement
-;;; TODO: check for duplicate mouse stuff
-
 #+cmu (declaim (optimize (extensions:inhibit-warnings 3))) 
 #+cmu (setf extensions::*gc-verbose* nil)
 #+cmu (setf *compile-print* nil)
@@ -779,6 +776,12 @@
 								(if (and (string-equal opener "li")
 									 (not (member "ul" commands :test #'string-equal)))
 								    (format t "li without ul ~A ~A~%" file linectr))
+
+								(if (and (string-equal opener "small")
+									 (or (string-equal "pre" (car commands))
+									     (string-equal "code" (car commands))))
+								    (format t "small shouldn't follow ~A: ~A ~A~%" (car commands) file linectr))
+
 								(if (not warned)
 								    (progn
 								      (if (and (string-equal opener "tr")

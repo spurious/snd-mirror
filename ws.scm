@@ -5,6 +5,7 @@
 (provide 'snd-ws.scm)
 (if (and (provided? 'snd-gauche) (not (provided? 'gauche-optargs.scm))) (load-from-path "gauche-optargs.scm"))
 (if (and (provided? 'snd-guile) (not (provided? 'snd-debug.scm))) (load-from-path "debug.scm"))
+(if (not (provided? 'snd-extensions.scm)) (load-from-path "extensions.scm")) ; we need sound-property in with-mixed-sound
 
 
 ;;; -------- with-sound debugger --------
@@ -588,22 +589,35 @@ returning you to the true top-level."
 							     (exact->inexact (/ (mix-position id) (srate outsnd))))))
 			  #t))) ; #t -> don't print the mix id in the minibuffer
 
-	   (for-each
-	    (lambda (note)
-	      (let* ((snd (with-temp-sound ,args (eval (append (list (car note) 0.0) (cddr note)) (current-module))))
-		     ;; I can't immediately find a way around the "eval" 
-		     ;;   current-module is a synonym for interaction-environment in Gauche
-		     (beg (inexact->exact (floor (* (srate outsnd) (cadr note)))))
-		     ;; can't use seconds->samples here because the global mus-srate value might not match the local one
-		     (mx (mix snd beg #t outsnd #f #t #t))     ; all chans mixed, current output sound, with mixes, with auto-delete
-		     (chans (mus-sound-chans snd)))
-		(set! (mix-name mx) (format #f "(~A ~A)" (car note) (cadr note)))
-		(do ((chan 0 (1+ chan)))
-		    ((= chan chans))
-		  (set! (mix-sync (+ mx chan)) mx))
-		(set! mix-info (cons (list mx beg chans note) mix-info))))
-	    ',body)
-	   (set! (sound-property 'with-mixed-sound-info outsnd) (reverse mix-info))))
+	   (dynamic-wind
+	       (lambda ()
+		 (do ((chan 0 (1+ chan)))
+		     ((= chan (channels outsnd)))
+		   (set! (squelch-update outsnd chan) #t)))
+
+	       (lambda ()
+		 (for-each
+		  (lambda (note)
+		    (let* ((snd (with-temp-sound ,args (eval (append (list (car note) 0.0) (cddr note)) (current-module))))
+			   ;; I can't immediately find a way around the "eval" 
+			   ;;   current-module is a synonym for interaction-environment in Gauche
+			   (beg (inexact->exact (floor (* (srate outsnd) (cadr note)))))
+			   ;; can't use seconds->samples here because the global mus-srate value might not match the local one
+			   (mx (mix snd beg #t outsnd #f #t #t))     ; all chans mixed, current output sound, with mixes, with auto-delete
+			   (chans (mus-sound-chans snd)))
+		      (set! (mix-name mx) (format #f "(~A ~A)" (car note) (cadr note)))
+		      (do ((chan 0 (1+ chan)))
+			  ((= chan chans))
+			(set! (mix-sync (+ mx chan)) mx))
+		      (set! mix-info (cons (list mx beg chans note) mix-info))))
+		  ',body)
+		 (set! (sound-property 'with-mixed-sound-info outsnd) (reverse mix-info)))
+
+	       (lambda ()
+		 (do ((chan 0 (1+ chan)))
+		     ((= chan (channels outsnd)))
+		   (set! (squelch-update outsnd chan) #f)
+		   (update-time-graph outsnd chan))))))
      output))
 
 ;(with-mixed-sound () (fm-violin 0 .1 440 .1) (fm-violin 1 .1 660 .1))
@@ -637,8 +651,6 @@ returning you to the true top-level."
 
 
 ;;; TODO: the mix tags need to be placed according to frequency in with-mixed-sound [amp/freq/dur/env change -> notelist?]
-;;; TODO: squelch-update and not full sound at start in with-mixed-sound
-;;; TODO: make sure play button works right
 ;;; TODO: it might be nice to notice interrupted with-temp-sounds here and exit the mixing loop
 ;;; SOMEDAY: what happens to an expression that isn't a note?  How to handle notes that don't put begin time 1st? (and other such changes)
 
@@ -655,16 +667,25 @@ returning you to the true top-level."
 
 	 (lambda ()
 	   (let* ((result (with-sound-helper (lambda () ,@body) ,@args))
-		  (snd (find-sound result)))
-	     (for-each
-	      (lambda (descr)
-		(let ((m (add-mark (inexact->exact (floor (* (srate snd) (cadr descr)))) snd)))
-		  (set! (mark-name m) (format #f "~A ~A ~A" (car descr) (cadr descr) (caddr descr)))))
-	      mark-list)
+		  (snd (find-sound result))
+		  (old-update (squelch-update snd 0)))
+	     (dynamic-wind
+		 (lambda ()
+		   (set! (squelch-update snd 0) #t))
+		 (lambda ()
+		   (for-each
+		    (lambda (descr)
+		      (let ((m (add-mark (inexact->exact (floor (* (srate snd) (cadr descr)))) snd)))
+			(set! (mark-name m) (format #f "~A ~A ~A" (car descr) (cadr descr) (caddr descr)))))
+		    mark-list))
+		 (lambda ()
+		   (set! (squelch-update snd 0) old-update)))
 	     result))
 		  
 	 (lambda ()
 	   (set! *clm-notehook* old-notehook)))))
+
+;;; (with-marked-sound () (do ((i 0 (1+ i))) ((= i 5)) (fm-violin i .1 440 .1)))
 
 
 
