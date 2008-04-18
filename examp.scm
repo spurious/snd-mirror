@@ -1555,26 +1555,10 @@ selected sound: (map-channel (cross-synthesis 1 .5 128 6.0))"
 
 (define* (make-sound-interp start :optional snd chn)
   "(make-sound-interp start :optional snd chn) -> an interpolating reader for snd's channel chn"
-  (let* ((bufsize 2048)
-	 (buf4size 128)
-	 (data (channel->vct start bufsize snd chn))
-	 (curbeg start)
-	 (curend (+ start bufsize)))
+  (let* ((data (channel->vct 0 #f snd chn))
+	 (size (vct-length data)))
     (lambda (loc)
-      (if (< loc curbeg)
-	  (begin
-	    ;; get previous buffer
-	    (set! curbeg (max 0 (+ buf4size (- loc bufsize))))
-	    (set! curend (+ curbeg bufsize))
-	    (set! data (channel->vct curbeg bufsize snd chn)))
-	  (if (> loc curend)
-	      (begin
-		;; get next buffer
-		(set! curbeg (max 0 (- loc buf4size)))
-		(set! curend (+ curbeg bufsize))
-		(set! data (channel->vct curbeg bufsize snd chn)))))
-      (array-interp data (- loc curbeg) bufsize))))
-
+      (array-interp data loc size))))
 
 (define sound-interp ;make it look like a clm generator
   (lambda (func loc) 
@@ -1592,6 +1576,8 @@ selected sound: (map-channel (cross-synthesis 1 .5 128 6.0))"
 		     (sound-interp reader (* len (+ 0.5 (* 0.5 (oscil osc))))))))))
 
 ;;; (test-interp 0.5)
+
+;;; our FM index is len * 0.5 * (hz->radians freq)
 
 (define (sound-via-sound snd1 snd2) ; "sound composition"??
   (let* ((intrp (make-sound-interp 0 snd1 0))

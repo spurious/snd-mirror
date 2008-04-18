@@ -10,6 +10,9 @@
 
 ;;; for snd.html table, see snd-index.cl (snd-index "test.html")
 
+;;; TODO: check for bad <small> placement
+;;; TODO: check for duplicate mouse stuff
+
 #+cmu (declaim (optimize (extensions:inhibit-warnings 3))) 
 #+cmu (setf extensions::*gc-verbose* nil)
 #+cmu (setf *compile-print* nil)

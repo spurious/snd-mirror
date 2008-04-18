@@ -467,7 +467,7 @@ whenever they're in the current view."
 		 (for-each (lambda (snd)
 			     (do ((chan 0 (1+ chan)))
 				 ((= chan (channels snd)))
-			       (update-time-graph snd chn)))
+			       (update-time-graph snd chan)))
 			   (sounds)))
 	       2))
 

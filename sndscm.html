@@ -640,7 +640,7 @@ new sound file and open it in Snd.
 
 <!-- anoi -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<em class=emdef>anoi</em> <code>(file start dur :optional (fftsize 128) (amp-scaler 1.0) (r 6.28))</code>
+<A class=def NAME="anoi">anoi</A> <code>(file start dur :optional (fftsize 128) (amp-scaler 1.0) (r 6.28))</code>
 </td></tr><tr><td width=30></td><td>
 anoi is a stab at noise reduction
 based on Perry Cook's Scrubber.m.  It tracks an on-going average spectrum, then tries
@@ -1198,10 +1198,7 @@ fundamental is below 300 Hz;
     Scheme:  (with-sound () (pins 0.0 1.0 "now.snd" 1.0 :time-scaler 2.0))
     Ruby:    with_sound() do pins(0, 1, "now.snd", 1, :time_scaler, 2) end
 </pre>
-Xavier has a website devoted to this system:
-<A HREF="http://www.iua.upf.es/mtg/sms">Spectral Modeling Synthesis</A>
-which has moved to the CLAM site:
-<A HREF="http://clam.iua.upf.es/">CLAM-SMSTools</A>.
+Xavier has a website devoted to this system, but it seems to move; search for CLAM or SMS.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -1791,7 +1788,7 @@ A simple instrument that uses dlocsig is:
 <p>draw.scm has examples of graphics-oriented extensions.  The most useful one is make-current-window-display.
 </p>
 
-<table border=0 hspace=20 cellspacing=4 cellpassing=6>
+<table border=0 hspace=20 cellspacing=4 cellpadding=6>
 
 <!-- click-for-listener-help -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
@@ -3855,6 +3852,7 @@ make-sound-interp returns an interpolating reader for the given channel.
 The interpolating reader reads a channel at an arbitary location,
 interpolating between samples if necessary.  The corresponding generator is sound-interp.
 Here we use a sine wave to lookup the current sound:
+
 <pre>
     (let ((osc (<a class=quiet href="sndclm.html#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> :frequency 0.5 :initial-phase (+ pi (/ pi 2))))
 	  (reader (make-sound-interp 0 0 0)) 
@@ -3862,6 +3860,9 @@ Here we use a sine wave to lookup the current sound:
       (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (lambda (val) 
 		     (sound-interp reader (* len (+ 0.5 (* 0.5 (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> osc))))))))
 </pre>
+
+This is effectively phase-modulation with an index of length-of-file-in-samples * 0.5 * hz-&gt;radians(oscil-frequency),
+or equivalently duration-in-seconds * frequency-in-Hz * pi.
 env-sound-interp reads the given channel (via a sound-interp generator)
 according to 'envelope' and 'time-scale',
 returning a new version of the data in the specified channel
@@ -5329,9 +5330,7 @@ sets the output mixing matrix directly (rather than through 'global').
 
 <p>This is Fernando Lopez-Lezcano's CLM <A HREF="http://ccrma.stanford.edu/~nando/clm/grani/">grani</a> 
 granular synthesis instrument translated to Scheme by Mike Scholz.
-The Ruby version is in clm-ins.rb.  There is further documentation <A HREF="http://ccrma.stanford.edu/courses/220b/topics/granularsynthesis/">here</a>.
-Rather than repeat everything, I'll merely paraphrase the main points, for completeness' sake
-or something.
+The Ruby version is in clm-ins.rb.
 </p>
 
 <pre>
@@ -7399,7 +7398,7 @@ Here are the selection and fft popups:
 <!-- INDEX prc95doc:Physical Models -->
 <p>prc95.scm is a translation to Snd of Perry Cook's (1995) physical modelling toolkit; prc-toolkit95.lisp 
 in CLM.  One starting point for physical modelling is Smith, "Music Applications of Digital Waveguides", CCRMA, Stan-M-39, 1987,
-or Julius's <A HREF="http://ccrma.stanford.edu/~jos">home</A> page, or
+or Julius's <A HREF="http://ccrma.stanford.edu/~jos/">home</A> page, or
 any of several classic papers also by Julius Smith.  Perry's own version of this code can be
 found in <A HREF="http://ccrma.stanford.edu/CCRMA/Software/STK/">STK</A>.
 The example instruments are:
@@ -9039,7 +9038,7 @@ I can't resist including an historical digression.
 Here is a Mus10 version of fm-violin (in this code ":=" is used in place of the original SAIL left arrow character,
 and so on):
 </p>
-<table border=0 hspace=20><tr><td bgcolor="#fafafa"><pre><small>
+<table border=0 hspace=20><tr><td bgcolor="#fafafa"><pre>
 ARRAY GlissFunc, DecayFunc, AttackFunc, SineWave, AmpFunc(512);
 SYNTH(Sinewave); 1,1 999;
 SEG(AmpFunc); 0,0 1,25 1,50 0,75 0,100;
@@ -9149,7 +9148,7 @@ Mod3:=NOSCIL(Decay*ScFreq*(Att+Index3),3*NewMag,Sinewave);
 Snd:=ZOSCIL(Decay*ENV*Ramp,NewMag+Mod1+Mod2+Mod3,Sinewave);
 OUTA:=OUTA+Snd*0.5;
 END;
-</small></pre></td></tr></table>
+</pre></td></tr></table>
 
 <p><small>
 This instrument required about 60 seconds of computing on a PDP-10
@@ -9162,7 +9161,7 @@ To give a feel for how one worked in those days, here's a brief quote from the M
 Leland Smith, May 1977):
 </small></p>
 
-<table border=0 hspace=20><tr><td bgcolor="#fafafa"><pre><small>
+<table border=0 hspace=20><tr><td bgcolor="#fafafa"><pre>
 The following generates  1 second of a  440 Hz sine wave  followed by
 1/2 sec. of a  660Hz sine wave. The output goes to a file, MUSIC.MSB,
 which is written on DSKM.  
@@ -9181,7 +9180,7 @@ PLAY ;
   SIMP 0, 1, 440, 1000;
   SIMP 1, 1/2, 660, 1000;
   FINISH;
-</small></pre></td></tr></table>
+</pre></td></tr></table>
 
 <p><small>
 The computation involved was considered so burdensome, that the names of
@@ -9191,7 +9190,7 @@ of going away.
 In the Samson box world, this (in its initial "chorus" version) was:
 </small></p>
 
-<table border=0 hspace=20><tr><td bgcolor="#fafafa"><pre><small>
+<table border=0 hspace=20><tr><td bgcolor="#fafafa"><pre>
 Instrument(Violin);
 RECORD_POINTER(seg) nullfunc;
 INTEGER ARRAY gens[1:4],indgens[1:6], GensA[1:4],AmpGens[1:2];
@@ -9250,7 +9249,7 @@ AddArrEnv(Pns,Gens,4,"F",freq,Freq*skewmult,skewfunc,ratsA,
 AddArrEnv(Pns,GensA,4,"F",freq,Freq*skewmult,skewfunc,ratsA,
 	6,.010,.010,nullfunc,5,.017,.017,nullfunc,1,0);
 End!Instrument(Pns);			! deallocation;
-</small></pre></td></tr></table>
+</pre></td></tr></table>
 
 <p><small>
 The Sambox version eventually became incredibly complicated, mainly to
@@ -9261,17 +9260,17 @@ The parallel in the Sambox world to the SIMP example above is (this is
 taken from SAMBOX.BIL, November 1984):
 </small></p>
 
-<table border=0 hspace=20><tr><td bgcolor="#fafafa"><pre><small>
+<table border=0 hspace=20><tr><td bgcolor="#fafafa"><pre>
     Instrument(Simp);
     Integer Gen1;
     Gen1:=Osc(Pns,OutA,Zero,SineMode,0,0,Pn[3]);
     AddEnv(Pns,Gen1,"A",0,Pn[4],Pf[5]);
     End_Instrument(Pns);
-</small></pre></td></tr></table>
+</pre></td></tr></table>
 
 <p><small>The CLM version of this is:</small></p>
 
-<table border=0 hspace=20><tr><td bgcolor="#fafafa"><pre><small>
+<table border=0 hspace=20><tr><td bgcolor="#fafafa"><pre>
 (<a class=quiet href="#definstrument" onmouseout="UnTip()" onmouseover="Tip(sndscm_definstrument_tip)">definstrument</a> simp (start-time duration frequency amplitude
                      &amp;optional (amp-env '(0 0 50 1 100 0)))
   (multiple-value-bind (beg end) (<a class=quiet href="sndclm.html#timestosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_timestosamples_tip)">times-&gt;samples</a> start-time duration)
@@ -9280,13 +9279,13 @@ taken from SAMBOX.BIL, November 1984):
       (run
        (loop for i from beg below end do
          (<a class=quiet href="sndclm.html#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* (<a class=quiet href="sndclm.html#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> amp) (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> s))))))))
-</small></pre></td></tr></table>
+</pre></td></tr></table>
 
 <p><small>
 In CLM, the fm-violin became (fm.html, 1989):
 </small></p>
 
-<table border=0 hspace=20><tr><td bgcolor="#fafafa"><pre><small>
+<table border=0 hspace=20><tr><td bgcolor="#fafafa"><pre>
 (<a class=quiet href="#definstrument" onmouseout="UnTip()" onmouseover="Tip(sndscm_definstrument_tip)">definstrument</a> violin (beg end frequency amplitude fm-index)
   (let* ((frq-scl (<a class=quiet href="sndclm.html#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> frequency))
          (maxdev (* frq-scl fm-index))
@@ -9313,12 +9312,12 @@ In CLM, the fm-violin became (fm.html, 1989):
                             (* (<a class=quiet href="sndclm.html#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> indf1) (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> fmosc1 vib))
                             (* (<a class=quiet href="sndclm.html#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> indf2) (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> fmosc2 (* 3.0 vib)))
                             (* (<a class=quiet href="sndclm.html#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> indf3) (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> fmosc3 (* 4.0 vib)))))))))))
-</small></pre></td></tr></table>
+</pre></td></tr></table>
 
 <p><small>or in its actual (non-simplified) form:
 </small></p>
 
-<table border=0 hspace=20><tr><td bgcolor="#fafafa"><pre><small>
+<table border=0 hspace=20><tr><td bgcolor="#fafafa"><pre>
 (defun bit20 (x)			;Samson box modifier got 20 bit int interpreted as fraction 
   (if (&gt;= x (expt 2 19))                ;(keep fm-violin compatible with old note lists)
       (float (/ (- x (expt 2 20)) (expt 2 19)))
@@ -9453,13 +9452,13 @@ In CLM, the fm-violin became (fm.html, 1989):
        (<a class=quiet href="sndclm.html#locsig" onmouseout="UnTip()" onmouseover="Tip(sndclm_locsig_tip)">locsig</a> loc i
 	     (* (<a class=quiet href="sndclm.html#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> ampf) amp-fuzz
 		(<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> carrier (+ vib (* ind-fuzz modulation)))))))))
-</small></pre></td></tr></table>
+</pre></td></tr></table>
 
 <p><small>which is very similar to the Scheme version (v.scm).
 And I just found this out on the net; I'm no csound expert, so I merely quote what I find:
 </small></p>
 
-<table border=0 hspace=20><tr><td bgcolor="#fafafa"><pre><small>
+<table border=0 hspace=20><tr><td bgcolor="#fafafa"><pre>
 ;ORC
 ; edited by R. Pinkston, modified for use with MIDI2CS by R. Borrmann
 ;
@@ -9519,13 +9518,13 @@ continue:
 ;                endin
         aright  = asig
         aleft   = asig
-</small></pre></td></tr></table>
+</pre></td></tr></table>
 
 <p><small>There's a C/CLM version of this instrument in <a href="sndlib.html">sndlib.html</a>.  The body of the fm-violin
 in C/CLM is:
 </small></p>
 
-<table border=0 hspace=20><tr><td bgcolor="#fafafa"><pre><small>
+<table border=0 hspace=20><tr><td bgcolor="#fafafa"><pre>
       if (noise_amount != 0.0) fuzz = mus_rand(fmnoi,0.0);
       if (frqf) vib = mus_env(frqf); else vib = 0.0;
       vib += mus_triangle_wave(pervib, 0.0) + 
@@ -9539,12 +9538,12 @@ in C/CLM is:
                      mus_env(indf3) * mus_oscil(fmosc3, (fuzz + fm3_rat * vib), 0.0);
       mus_locsig(loc, i, mus_env(ampf) *
                          mus_oscil(carrier, vib + indfuzz * modulation, 0.0));
-</small></pre></td></tr></table>
+</pre></td></tr></table>
 
 
 <p><small>And here is the Ruby version, written by Michael Scholz (see examp.rb):</small></p>
 
-<table border=0 hspace=20><tr><td bgcolor="#fafafa"><pre><small>
+<table border=0 hspace=20><tr><td bgcolor="#fafafa"><pre>
 #
 # fm_violin([start=0.0[, dur=1.0[, freq=440.0[, amp=0.3[, *args]]]]])
 #
@@ -9699,7 +9698,7 @@ rescue
   die(usage + "fm_violin()");
 end
 
-</small></pre></td></tr></table>
+</pre></td></tr></table>
 
 
 <br>
@@ -11187,7 +11186,7 @@ noise reduction: <a href="#cleandoc">clean-channel</a><br>
 clicks: <a href="extsnd.html#smoothchannel">smooth-channel</a>, <a href="#removeclicks">remove-clicks</a>, <a href="sndscm.html#fftsmoother">fft-smoother</a><br>
 rumble, hiss: <a href="#notchoutrumbleandhiss">notch-out-rumble-and-hiss</a>, <a href="#fftsquelch">fft-squelch</a>, <a href="#fftcancel">fft-cancel</a><br>
 hum: <a href="#notchchannel">notch-channel</a><br>
-via CLM ins: <a href="anoi.ins">anoi.ins</a><br>
+via CLM ins: <a href="#anoi">anoi</a><br>
 <br>
 </small></blockquote>
 </td></tr></TABLE>

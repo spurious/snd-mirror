@@ -94,13 +94,13 @@ note lists and instruments are described in <a href="sndscm.html">sndscm.html</a
   <tr><td><a href="#convolvedoc">convolve</a></td><td></td><td>convolution</td></tr>
   <tr><td><a href="#delaydoc">delay</a></td><td></td><td>delay line</td></tr>
   <tr><td><a href="#envdoc">env</a></td><td></td><td>line segment envelope</td></tr>
-  <tr><td><a href="#filterdoc">filter</a></td><td></td><td>direct form FIR/IIR filter</td></tr>
-  <tr><td><a href="#combdoc">filtered-comb</a></td><td></td><td>comb filter with filter on feedback</td></tr>
   <tr><td><a href="#filetosampledoc">file-&gt;sample</a></td><td></td><td>input sample from file</td></tr>
   <tr><td><a href="#filetoframe">file-&gt;frame</a></td><td></td><td>input frame from file</td></tr>
+  <tr><td><a href="#filterdoc">filter</a></td><td></td><td>direct form FIR/IIR filter</td></tr>
+  <tr><td><a href="#combdoc">filtered-comb</a></td><td></td><td>comb filter with filter on feedback</td></tr>
   <tr><td><a href="#fir-filterdoc">fir-filter</a></td><td></td><td>FIR filter</td></tr>
-  <tr><td><a href="#frametofile">frame-&gt;file</a></td><td></td><td>output frame to file</td></tr>
   <tr><td><a href="#formantdoc">formant and firmant</a></td><td></td><td>resonance</td></tr>
+  <tr><td><a href="#frametofile">frame-&gt;file</a></td><td></td><td>output frame to file</td></tr>
   <tr><td><a href="#granulatedoc">granulate</a></td><td></td><td>granular synthesis</td></tr>
   <tr><td><a href="#iir-filterdoc">iir-filter</a></td><td></td><td>IIR filter</td></tr>
   <tr><td><a href="#in-anydoc">in-any</a></td><td></td><td>sound file input</td></tr>
@@ -109,23 +109,23 @@ note lists and instruments are described in <a href="sndscm.html">sndscm.html</a
   <tr><td><a href="#moving-averagedoc">moving-average</a></td><td></td><td>moving window average</td></tr>
   <tr><td><a href="#ncosdoc">ncos (sum-of-cosines)</a></td><td></td><td>n equal amplitude cosines</td></tr>
   <tr><td><a href="#notchdoc">notch</a></td><td></td><td>notch filter</td></tr>
-  <tr><td><a href="#ncosdoc">nsin (sum-of-sines)</a></td><td></td><td>n equal amplitude sines</td></tr>
   <tr><td><a href="#nrxydoc">nrxycos</a></td><td></td><td>n scaled cosines</td></tr>
+  <tr><td><a href="#nrxydoc">nrxysin (sine-summation)</a></td><td></td><td>n scaled sines</td></tr>
 </table>
 </td>
 <td>
 <table border=0 cellpadding=0>
-  <tr><td><a href="#nrxydoc">nrxysin (sine-summation)</a></td><td></td><td>n scaled sines</td></tr>
+  <tr><td><a href="#ncosdoc">nsin (sum-of-sines)</a></td><td></td><td>n equal amplitude sines</td></tr>
   <tr><td><a href="#one-poledoc">one-pole</a></td><td></td><td>one pole filter</td></tr>
   <tr><td><a href="#one-zerodoc">one-zero</a></td><td></td><td>one zero filter</td></tr>
   <tr><td><a href="#oscildoc">oscil</a></td><td></td><td>sine wave and FM</td></tr>
   <tr><td><a href="#out-anydoc">out-any</a></td><td width=20></td><td>sound output</td></tr>
-  <tr><td><a href="#polyshapedoc">polyshape and polywave</a></td><td></td><td>waveshaping</td></tr>
   <tr><td><a href="#phase-vocoderdoc">phase-vocoder</a></td><td></td><td>vocoder analysis and resynthesis</td></tr>
-  <tr><td><a href="#sampletofile">sample-&gt;file</a></td><td></td><td>output sample to file</td></tr>
+  <tr><td><a href="#polyshapedoc">polyshape and polywave</a></td><td></td><td>waveshaping</td></tr>
   <tr><td><a href="#sawtoothdoc">pulse-train</a></td><td></td><td>pulse train</td></tr>
   <tr><td><a href="#randdoc">rand,rand-interp</a></td><td></td><td>random numbers, noise</td></tr>
   <tr><td><a href="#readindoc">readin</a></td><td></td><td>sound input</td></tr>
+  <tr><td><a href="#sampletofile">sample-&gt;file</a></td><td></td><td>output sample to file</td></tr>
   <tr><td><a href="#sawtoothdoc">sawtooth-wave</a></td><td></td><td>sawtooth</td></tr>
   <tr><td><a href="#sawtoothdoc">square-wave</a></td><td></td><td>square wave</td></tr>
   <tr><td><a href="#srcdoc">src</a></td><td></td><td>sampling rate conversion</td></tr>
@@ -185,7 +185,7 @@ building block of sound is the sinusoid, so we have things like oscil and polywa
 Another basic thing is noise, so we have rand and rand-interp.
 Sounds get louder and softer, or go up and down in pitch, so we have envelopes (env).
 We need a way to get at them (in-any, readin), and play them (out-any, locsig).
-We need tons of reverb (delay, all-pass).
+We need tons of reverb (delay, convolve).
 I love this stuff.
 </small></p></td></tr></table>
 
@@ -796,7 +796,7 @@ void c_bird(double start, double dur, double frequency, double freqskew, double 
 <a href="#waveshape">waveshape</a>.  
 Some instruments that use oscil are 
 <a href="sndscm.html#birddoc">bird and bigbird</a>,
-<a href="sndscm.html#fmviolin">fm-violin</a> (v.ins),
+<a href="sndscm.html#fmviolin">fm-violin</a> (v),
 <a href="sndscm.html#lbjpiano">lbj-piano</a> (clm-ins.scm), 
 <a href="sndscm.html#fmvox">vox</a> (clm-ins.scm), and
 <a href="sndscm.html#fmbell">fm-bell</a> (clm-ins.scm).  
@@ -2726,7 +2726,7 @@ another kernel set: binomial coeffs G&R 1.320 etc -- not different enough
 <td><img src="pix/sceq21.png" alt="more sums" usemap="#J2" border=0>
 <map name="J2">
     <area shape=rect coords="0,0,300,30" href="sndclm.html#rxyk!cos" alt="rxyk!cos">
-    <area shape=rect coords="0,31,300,60" href="sndclm.html#rxyk!sin" alt="rxyk!sin">
+    <area shape=rect coords="0,31,300,60" href="sndclm.html#rxyk!cos" alt="rxyk!sin">
     <area shape=rect coords="0,61,300,100" href="sndclm.html#r2cos" alt="r2cos">
     <area shape=rect coords="0,101,300,140" href="sndclm.html#r2sin" alt="r2sin">
     <area shape=rect coords="0,141,300,180">
@@ -2763,7 +2763,7 @@ another kernel set: binomial coeffs G&R 1.320 etc -- not different enough
 <td><img src="pix/sceq37.png" alt="more sums" usemap="#GM2" border=0>
 <map name="GM2">
     <area shape=rect coords="0,0,300,50" href="sndclm.html#jycos" alt="jycos">
-    <area shape=rect coords="0,51,300,100" href="sndclm.html#jjesin" alt="jjesin">
+    <area shape=rect coords="0,51,300,100" alt="jjesin">
 </map>
 </td></tr>
 <tr><td colspan=3 bgcolor="#eefdee"><center>Gray and Mathews, "A Treatise on Bessel Functions and Their Applications to Physics" p 28, 29, 92, 240</center></td></tr>
@@ -4205,7 +4205,8 @@ get to the envelope.
 
 <br>
 
-<table border=3 bordercolor="tan" hspace=40><th bgcolor="beige">Filters</th><tr><td>
+<table border=3 bordercolor="tan" hspace=40><th bgcolor="beige">Filters</th>
+<tr><td>
 <blockquote><small>
 <br>
 lowpass filter: <a href="sndscm.html#makelowpass">make-lowpass</a> in dsp.scm<br>
@@ -4572,7 +4573,7 @@ comb filter.  If both scale terms are 0.0, we get a pure delay line.
 </pre><br clear=left>
 
 <p>all-pass filters are used extensively in reverberation; 
-see <a href="sndscm.html#jcrevdoc">jcrev.ins</a> or <a href="sndscm.html#nrev">nrev.ins</a>.
+see <a href="sndscm.html#jcrevdoc">jcrev</a> or <a href="sndscm.html#nrev">nrev</a>.
 </p>
 <br><br>
 
@@ -6441,7 +6442,7 @@ This generator's output is not normalized, and looks incorrect...
       ((= k 6))
     (let ((gen (make-rk!cos 3000.0 :r 0.6)) 
           (ampf (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1 2 1 3 0) :length 3000))
-	  (frqf (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1) :base .1 :scaler <a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">(<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a></a> 2000) :length 3000)))
+	  (frqf (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1) :base .1 :scaler (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> 2000) :length 3000)))
       (run 
        (lambda ()
 	 (do ((i 0 (1+ i)))
@@ -6899,6 +6900,7 @@ A similar (slightly simpler) effect is:
 <p>This modulates the sound but keeps the output maxamp the same as the input.
 There is a similar function in <a href="sndscm.html#movingmax">sndscm.html</a> that does this kind of scaling throughout the sound,
 resulting in a steady modulation, rather than an intensification of just the peaks.
+And a sort of converse is <a href="sndscm.html#soundinterp">sound-interp</a>.
 </p>
 <br><br>
 
@@ -7008,19 +7010,19 @@ test 23 in snd-test.
 <tr><th width=120 bgcolor="beige">instrument</th><th bgcolor="beige">function</th><th bgcolor="beige">CL</th><th bgcolor="beige">Scheme</th><th bgcolor="beige">Ruby</th><th bgcolor="beige">Forth</th></tr>
 <tr><td>complete-add</td>      
     <td>additive synthesis</td>
-    <td><a href="add.ins">add.ins</a></td>
+    <td>add.ins</td>
     </tr>
 
 <tr><td>addflts</td>
     <td>filters</td>
-    <td><a href="addflt.ins">addflt.ins</a></td> 
+    <td>addflt.ins</td> 
         <td><a href="dsp.scm">dsp.scm</a></td>
 	<td><a href="dsp.rb">dsp.rb</a></td>
     </tr>
 
 <tr><td>add-sound</td>
     <td>mix in a sound file</td>
-    <td><a href="addsnd.ins">addsnd.ins</a></td>
+    <td>addsnd.ins</td>
     </tr>
 
 <tr><td>bullfrog et al</td>
@@ -7031,7 +7033,7 @@ test 23 in snd-test.
 
 <tr><td>anoi</td>
     <td>noise reduction</td>
-    <td><a href="anoi.ins">anoi.ins</a></td>
+    <td>anoi.ins</td>
         <td><a href="clm-ins.scm">clm-ins.scm</a></td>
         <td><a href="clm-ins.rb">clm-ins.rb</a></td>
         <td><a href="clm-ins.fs">clm-ins.fs</a></td>
@@ -7039,17 +7041,17 @@ test 23 in snd-test.
 
 <tr><td>autoc</td>
     <td>autocorrelation-based pitch estimation (Bret Battey)</td>
-    <td><a href="autoc.ins">autoc.ins</a></td>
+    <td>autoc.ins</td>
     </tr>
 
 <tr><td>badd</td>
     <td>fancier additive synthesis (Doug Fulton)</td>
-    <td><a href="badd.ins">badd.ins</a></td>
+    <td>badd.ins</td>
     </tr>
 
 <tr><td>fm-bell</td>
     <td>fm bell sounds (Michael McNabb)</td>
-    <td><a href="bell.ins">bell.ins</a></td>
+    <td>bell.ins</td>
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
 	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
@@ -7057,7 +7059,7 @@ test 23 in snd-test.
 
 <tr><td>bigbird</td>
     <td>waveshaping (bird.clm and bird.ins)</td>
-    <td><a href="bigbird.ins">bigbird.ins</a></td>
+    <td>bigbird.ins</td>
 	<td><a href="bird.scm">bird.scm</a></td>
 	<td><a href="bird.rb">bird.rb</a></td>
 	<td><a href="clm-ins.fs">clm-ins.fs, bird.fs</a></td>
@@ -7065,7 +7067,7 @@ test 23 in snd-test.
 
 <tr><td>canter</td>            
     <td>fm (<a href="bag.clm">bag.clm</a> &mdash; bagpipes) (Peter Commons)</td>      
-    <td><a href="canter.ins">canter.ins</a></td>
+    <td>canter.ins</td>
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
 	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
@@ -7073,7 +7075,7 @@ test 23 in snd-test.
 
 <tr><td>cellon</td>            
     <td>feedback fm (Stanislaw Krupowicz)</td>      
-    <td><a href="cellon.ins">cellon.ins</a></td>    
+    <td>cellon.ins</td>    
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
 	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
@@ -7081,7 +7083,7 @@ test 23 in snd-test.
 
 <tr><td>cnvrev</td>            
     <td>convolution (aimed at reverb)</td>      
-    <td><a href="cnv.ins">cnv.ins</a></td>          
+    <td>cnv.ins</td>          
     </tr>
 
 <tr><td>moving sounds</td>     
@@ -7093,7 +7095,7 @@ test 23 in snd-test.
 
 <tr><td>drone</td>             
     <td>additive synthesis (bag.clm) (Peter Commons)</td>      
-    <td><a href="drone.ins">drone.ins</a></td>      
+    <td>drone.ins</td>      
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
 	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
@@ -7101,7 +7103,7 @@ test 23 in snd-test.
 
 <tr><td>granulate-sound</td>   
     <td>examples of the granulate generator (granular synthesis)</td>      
-    <td><a href="expsrc.ins">expsrc.ins</a></td>    
+    <td>expsrc.ins</td>    
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
 	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
@@ -7109,19 +7111,19 @@ test 23 in snd-test.
 
 <tr><td>cross-fade</td>        
     <td>cross-fades and dissolves in the frequency domain</td>      
-    <td><a href="fade.ins">fade.ins</a></td>        
+    <td>fade.ins</td>        
 	<td><a href="fade.scm">fade.scm</a></td>
     </tr>
 
 <tr><td>filter-sound</td>      
     <td>filter a sound file</td>      
-    <td><a href="fltsnd.ins">fltsnd.ins</a></td>    
+    <td>fltsnd.ins</td>    
 	<td><a href="dsp.scm">dsp.scm</a></td>
     </tr>
 
 <tr><td>stereo-flute</td>      
     <td>physical model of a flute (Nicky Hind)</td>      
-    <td><a href="flute.ins">flute.ins</a></td>      
+    <td>flute.ins</td>      
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
 	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
@@ -7129,7 +7131,7 @@ test 23 in snd-test.
 
 <tr><td>fm examples</td>       
     <td>fm bell, gong, drum (Paul Weineke, Jan Mattox)</td>      
-    <td><a href="fmex.ins">fmex.ins</a></td>        
+    <td>fmex.ins</td>        
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
 	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
@@ -7153,7 +7155,7 @@ test 23 in snd-test.
 
 <tr><td>fullmix</td>           
     <td>a mixer</td>      
-    <td><a href="fullmix.ins">fullmix.ins</a></td>  
+    <td>fullmix.ins</td>  
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
 	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
@@ -7161,13 +7163,13 @@ test 23 in snd-test.
 
 <tr><td>grani</td>             
     <td>granular synthesis (Fernando Lopez-Lezcano)</td>      
-    <td><a href="grani.ins">grani.ins</a></td>      
+    <td>grani.ins</td>      
 	<td><a href="grani.scm">grani.scm</a></td>
     </tr>
 
 <tr><td>grapheq</td>           
     <td>graphic equalizer (Marco Trevisani)</td>      
-    <td><a href="grapheq.ins">grapheq.ins</a></td>  
+    <td>grapheq.ins</td>  
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
 	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
@@ -7175,14 +7177,14 @@ test 23 in snd-test.
 
 <tr><td>fm-insect</td>         
     <td>fm</td>      
-    <td><a href="insect.ins">insect.ins</a></td>    
+    <td>insect.ins</td>    
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
     </tr>
 
 <tr><td>jc-reverb</td>         
     <td>an old reverberator (jlrev is a cavernous version)</td>      
-    <td><a href="jcrev.ins">jcrev.ins</a></td>      
+    <td>jcrev.ins</td>      
 	<td><a href="jcrev.scm">jcrev.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
 	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
@@ -7190,17 +7192,17 @@ test 23 in snd-test.
 
 <tr><td>fm-voice</td>          
     <td>fm voice (John Chowning)</td>      
-    <td><a href="jcvoi.ins">jcvoi.ins</a></td>      
+    <td>jcvoi.ins</td>      
     </tr>
 
 <tr><td>kiprev</td>            
     <td>a fancier (temperamental) reverberator (Kip Sheeline)</td>      
-    <td><a href="kiprev.ins">kiprev.ins</a></td>    
+    <td>kiprev.ins</td>    
     </tr>
 
 <tr><td>lbj-piano</td>         
     <td>additive synthesis piano (Doug Fulton)</td>      
-    <td><a href="lbjPiano.ins">lbjPiano.ins</a></td> 
+    <td>lbjPiano.ins</td> 
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
 	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
@@ -7208,21 +7210,21 @@ test 23 in snd-test.
 
 <tr><td>maraca</td>            
     <td>Perry Cook's maraca physical models</td>      
-    <td><a href="maraca.ins">maraca.ins</a></td>    
+    <td>maraca.ins</td>    
 	<td><a href="maraca.scm">maraca.scm</a></td>
 	<td><a href="maraca.rb">maraca.rb</a></td>
     </tr>
 
 <tr><td>maxfilter</td>         
     <td>Juan Reyes modular synthesis</td>      
-    <td><a href="maxf.ins">maxf.ins</a></td>        
+    <td>maxf.ins</td>        
 	<td><a href="maxf.scm">maxf.scm</a></td>
 	<td><a href="maxf.rb">maxf.rb</a></td>
     </tr>
 
 <tr><td>mlb-voice</td>         
     <td>fm (originally waveshaping) voice (Marc LeBrun)</td>      
-    <td><a href="mlbvoi.ins">mlbvoi.ins</a></td>
+    <td>mlbvoi.ins</td>
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
 	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
@@ -7230,13 +7232,13 @@ test 23 in snd-test.
 
 <tr><td>moog filters</td>      
     <td>Moog filters (Fernando Lopez-Lezcano)</td>      
-    <td><a href="moog.lisp">moog.lisp</a></td>      
+    <td>moog.lisp</td>      
 	<td><a href="moog.scm">moog.scm</a></td>
     </tr>
 
 <tr><td>fm-noise</td>          
     <td>noise maker</td>      
-    <td><a href="noise.ins">noise.ins</a></td>      
+    <td>noise.ins</td>      
 	<td><a href="noise.scm">noise.scm</a></td>
 	<td><a href="noise.rb">noise.rb</a></td>
 	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
@@ -7244,7 +7246,7 @@ test 23 in snd-test.
 
 <tr><td>nrev</td>              
     <td>a popular reverberator (Michael McNabb)</td>      
-    <td><a href="nrev.ins">nrev.ins</a></td>        
+    <td>nrev.ins</td>        
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
 	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
@@ -7252,19 +7254,19 @@ test 23 in snd-test.
 
 <tr><td>one-cut</td>           
     <td>a "cut and paste" instrument (Fernando Lopez-Lezcano)</td>      
-    <td><a href="one-cut.ins">one-cut.ins</a></td>  
+    <td>one-cut.ins</td>  
     </tr>
 
 <tr><td>p</td>                 
     <td>Scott van Duyne's piano physical model</td>      
-    <td><a href="piano.ins">piano.ins</a></td>      
+    <td>piano.ins</td>      
 	<td><a href="piano.scm">piano.scm</a></td>
 	<td><a href="piano.rb">piano.rb</a></td>
     </tr>
 
 <tr><td>pluck</td>             
     <td>Karplus-Strong synthesis (David Jaffe)</td>      
-    <td><a href="pluck.ins">pluck.ins</a></td>      
+    <td>pluck.ins</td>      
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
 	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
@@ -7272,7 +7274,7 @@ test 23 in snd-test.
 
 <tr><td>pqw</td>               
     <td>waveshaping</td>      
-    <td><a href="pqw.ins">pqw.ins</a></td>          
+    <td>pqw.ins</td>          
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>	
 	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
@@ -7280,7 +7282,7 @@ test 23 in snd-test.
 
 <tr><td>pqw-vox</td>           
     <td>waveshaping voice</td>      
-    <td><a href="pqwvox.ins">pqwvox.ins</a></td>    
+    <td>pqwvox.ins</td>    
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
 	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
@@ -7288,7 +7290,7 @@ test 23 in snd-test.
 
 <tr><td>physical models</td>   
     <td>physical modelling (Perry Cook)</td>      
-    <td><a href="prc-toolkit95.lisp">prc-toolkit95.lisp</a></td>
+    <td>prc-toolkit95.lisp</td>
 	<td><a href="prc95.scm">prc95.scm</a></td>
 	<td><a href="prc95.rb">prc95.rb</a></td>
 	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
@@ -7296,7 +7298,7 @@ test 23 in snd-test.
 
 <tr><td>various ins</td>       
     <td>from Perry Cook's Synthesis Toolkit</td>      
-    <td><a href="prc96.ins">prc96.ins</a></td>      
+    <td>prc96.ins</td>      
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
 	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
@@ -7304,14 +7306,14 @@ test 23 in snd-test.
 
 <tr><td>pvoc</td>              
     <td>phase vocoder (Michael Klingbeil)</td>      
-    <td><a href="pvoc.ins">pvoc.ins</a></td>        
+    <td>pvoc.ins</td>        
 	<td><a href="pvoc.scm">pvoc.scm</a></td>
 	<td><a href="pvoc.rb">pvoc.rb</a></td>
     </tr>
 
 <tr><td>resflt</td>            
     <td>filters (3 resonators) (Xavier Serra, Richard Karpen)</td>      
-    <td><a href="resflt.ins">resflt.ins</a></td>    
+    <td>resflt.ins</td>    
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
 	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
@@ -7319,7 +7321,7 @@ test 23 in snd-test.
 
 <tr><td>reson</td>             
     <td>fm formants (John Chowning)</td>      
-    <td><a href="reson.ins">reson.ins</a></td>      
+    <td>reson.ins</td>      
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
 	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
@@ -7327,19 +7329,19 @@ test 23 in snd-test.
 
 <tr><td>ring-modulate</td>     
     <td>ring-modulation of sounds (Craig Sapp)</td>      
-    <td><a href="ring-modulate.ins">ring-modulate.ins</a></td>
+    <td>ring-modulate.ins</td>
 	<td><a href="examp.scm">examp.scm</a></td>
 	<td><a href="examp.rb">examp.rb</a></td>
     </tr>
 
 <tr><td>rmsenv</td>            
     <td>rms envelope of sound (Bret Battey)</td>      
-    <td><a href="rmsenv.ins">rmsenv.ins</a></td>    
+    <td>rmsenv.ins</td>    
     </tr>
 
 <tr><td>pins</td>              
     <td>spectral modelling</td>      
-    <td><a href="san.ins">san.ins</a></td>          
+    <td>san.ins</td>          
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
 	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
@@ -7347,56 +7349,56 @@ test 23 in snd-test.
 
 <tr><td>scanned</td>           
     <td>Juan Reyes scanned synthesis instrument</td>      
-    <td><a href="scanned.ins">scanned.ins</a></td>  
+    <td>scanned.ins</td>  
 	<td><a href="dsp.scm">dsp.scm</a></td>
     </tr>
 
 <tr><td>scentroid</td>         
     <td>spectral scentroid envelope (Bret Battey)</td>      
-    <td><a href="scentroid.ins">scentroid.ins</a></td> 
+    <td>scentroid.ins</td> 
 	<td><a href="dsp.scm">dsp.scm</a></td>
     </tr>
 
 <tr><td>shepard</td>            
     <td>Shepard tones (Juan Reyes)</td>      
-    <td><a href="shepard.ins">shepard.ins</a></td>    
+    <td>shepard.ins</td>    
 	<td><a href="sndscm.html#wsdoc">sndscm.html</a></td>
 	<td></td>
     </tr>
 
 <tr><td>singer</td>            
     <td>Perry Cook's vocal tract physical model</td>      
-    <td><a href="singer.ins">singer.ins</a></td>    
+    <td>singer.ins</td>    
 	<td><a href="singer.scm">singer.scm</a></td>
 	<td><a href="singer.rb">singer.rb</a></td>
     </tr>
 
 <tr><td>sndwarp</td>           
     <td>Csound-like sndwarp generator (Bret Battey)</td>      
-    <td><a href="sndwarp.ins">sndwarp.ins</a></td>   
+    <td>sndwarp.ins</td>   
 	<td><a href="sndwarp.scm">sndwarp.scm</a></td>
     </tr>
 
 <tr><td>stochastic</td>        
     <td>Bill Sack's stochastic synthesis implementation</td>      
-    <td><a href="stochastic.ins">stochastic.ins</a></td>
+    <td>stochastic.ins</td>
     </tr>
 
 <tr><td>bow</td>               
     <td>Juan Reyes bowed string physical model</td>      
-    <td><a href="strad.ins">strad.ins</a></td>      
+    <td>strad.ins</td>      
 	<td><a href="strad.scm">strad.scm</a></td>
 	<td><a href="strad.rb">strad.rb</a></td>
     </tr>
 
 <tr><td>track-rms</td>         
     <td>rms envelope of sound file (Michael Edwards)</td>      
-    <td><a href="track-rms.ins">track-rms.ins</a></td>        
+    <td>track-rms.ins</td>        
     </tr>
 
 <tr><td>fm-trumpet</td>        
     <td>fm trumpet (Dexter Morrill)</td>      
-    <td><a href="trp.ins">trp.ins</a></td>          
+    <td>trp.ins</td>          
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
 	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
@@ -7404,20 +7406,20 @@ test 23 in snd-test.
 
 <tr><td>various ins</td>       
     <td>granular synthesis, formants, etc</td>      
-    <td><a href="ugex.ins">ugex.ins</a></td>        
+    <td>ugex.ins</td>        
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
     </tr>
 
 <tr><td>test ins</td>          
     <td>CLM regression tests &mdash; see clm-test.lisp</td>      
-    <td><a href="ug.ins">ug(1,2,3,4).ins</a></td>   
+    <td>ug(1,2,3,4).ins</td>   
 	<td><a href="clm23.scm">clm23.scm</a></td>
     </tr>
 
 <tr><td>fm-violin</td>         
     <td>fm violin (fmviolin.clm, popi.clm)</td>      
-    <td><a href="v.ins">v.ins</a></td>              
+    <td>v.ins</td>              
 	<td><a href="v.scm">v.scm</a></td>
 	<td><a href="v.rb">v.rb</a></td>
 	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
@@ -7425,12 +7427,12 @@ test 23 in snd-test.
 
 <tr><td>vowel</td>             
     <td>vowels via pulse-train and formant (Michelle Daniels)</td>      
-    <td><a href="vowel.ins">vowel.ins</a></td>      
+    <td>vowel.ins</td>      
     </tr>
 
 <tr><td>vox</td>               
     <td>fm voice (cream.clm)</td>      
-    <td><a href="vox.ins">vox.ins</a></td>          
+    <td>vox.ins</td>          
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
 	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
@@ -7438,7 +7440,7 @@ test 23 in snd-test.
 
 <tr><td>zc, zn</td>            
     <td>interpolating delays</td>      
-    <td><a href="zd.ins">zd.ins</a></td>            
+    <td>zd.ins</td>            
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
 	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
@@ -7446,7 +7448,7 @@ test 23 in snd-test.
 
 <tr><td>zipper</td>            
     <td>The 'digital zipper' effect.</td>      
-    <td><a href="zipper.ins">zipper.ins</a></td>    
+    <td>zipper.ins</td>    
 	<td><a href="zip.scm">zip.scm</a></td>
 	<td><a href="zip.rb">zip.rb</a></td>
     </tr>
