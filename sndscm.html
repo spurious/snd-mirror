@@ -471,7 +471,7 @@ read them:
 
 <table border=0 hspace=40>
 <tr><td>
-<img src="golden.png" alt="Lincoln's Sparrow, approximately original size">
+<img src="pix/golden.png" alt="Lincoln's Sparrow, approximately original size">
 </td><td width=40></td>
 <td><small>
 Lincoln's Sparrow approximately original size,<br>
@@ -490,14 +490,14 @@ a Hairy Woodpecker call (hairy-woodpecker in animals.scm).
 <p>
 Open the Hairy Woodpecker. Find a squawk that seems within reach, and select it.
 </p>
-<img src="hairy1.png" alt="selecting a squawk" hspace=40>
+<img src="pix/hairy1.png" alt="selecting a squawk" hspace=40>
 
 <p>
 Zoom onto the first channel (the vertical slider on the right), and center the squawk in the time domain window (C-v).
 Get the selection duration in seconds.  Start the envelope editor dialog (under the Edit menu).  Choose "selection"
 and "wave" in that dialog.
 </p>
-<img src="hairy2.png" alt="zoom in" hspace=40>
+<img src="pix/hairy2.png" alt="zoom in" hspace=40>
 
 <p>Since our goal is a CLM instrument that synthesizes this sound, we need to get a "blank bird", and fill
 in the duration.
@@ -531,7 +531,7 @@ I have this bound to the "m" key in my ~/.snd initialization file.  The change i
 the envelope editor.  We can draw the amplitude envelope simply by approximating the shape.  Call it "hairy-amp".
 </p>
 
-<img src="hairy3.png" alt="get amp env" hspace=40>
+<img src="pix/hairy3.png" alt="get amp env" hspace=40>
 
 <p>Now go to the listener and get the value of hairy-amp as a list of breakpoints.
 I usually use this function to get the breakpoints:
@@ -557,7 +557,7 @@ envelope and the spectrum match (bright spots at loud spots and so on).  I bind 
 movements for this reason (in my ~/.snd file, see <a href="extsnd.html#moveonepixel">move-one-pixel</a>).
 </p>
 
-<img src="hairy4.png" alt="preapring to get freq env" hspace=40>
+<img src="pix/hairy4.png" alt="preapring to get freq env" hspace=40>
 
 <p>Reset the envelope editor (to erase the amp envelope), and press "flt" and "wave" again.
 Now zoom in to the main spectral component (drag the FFT y axis up), and
@@ -567,7 +567,7 @@ into the bird instrument.  The "scaler" for the frequency envelope is
 the top of the FFT graph in Hz; it is 10KHz in this case.
 </p>
 
-<img src="hairy5.png" alt="get freq env" hspace=40>
+<img src="pix/hairy5.png" alt="get freq env" hspace=40>
 
 <pre>
 (definstrument (hairy-woodpecker beg amp)
@@ -612,7 +612,7 @@ Not terrible.  If it's cut off during playback, add a dummy silent call to the e
 <code>(with-sound (:play #t) (hairy-woodpecker 0.0 0.5) (hairy-woodpecker 0.5 0.0))</code>.
 </p>
 
-<img src="hairy6.png" alt="first take" hspace=40>
+<img src="pix/hairy6.png" alt="first take" hspace=40>
 
 <p>
 The attack and decay sections need work.  Returning to either FFT view, it's clear
@@ -655,7 +655,7 @@ Keep tweaking the envelopes and spectral amplitudes until it sounds right!
 Total elapsed time?  Two or three hours probably.
 </p>
 
-<img src="hairy7.png" alt="the end" hspace=40>
+<img src="pix/hairy7.png" alt="the end" hspace=40>
 
 
 
