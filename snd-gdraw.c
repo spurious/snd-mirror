@@ -518,7 +518,7 @@ void allocate_color_map(int colormap)
 }
 
 
-void draw_colored_lines(axis_context *ax, point_t *points, int num, int *colors, int axis_y0, color_t default_color)
+void draw_colored_lines(chan_info *cp, axis_context *ax, point_t *points, int num, int *colors, int axis_y0, color_t default_color)
 {
   int i, x0, y0, x1, y1, cur, prev;
   color_t old_color;
@@ -554,7 +554,9 @@ void draw_colored_lines(axis_context *ax, point_t *points, int num, int *colors,
 	  prev = cur;
 	}
 
-      gdk_draw_line(ax->wn, ax->gc, (gint)x0, (gint)y0, (gint)x1, (gint)y1);
+      if (cp->transform_graph_style == GRAPH_DOTS)
+	gdk_draw_arc(ax->wn, ax->gc, true, x0 - cp->dot_size / 2, y0 - cp->dot_size / 2, cp->dot_size, cp->dot_size, 0, 360 * 64);
+      else gdk_draw_line(ax->wn, ax->gc, (gint)x0, (gint)y0, (gint)x1, (gint)y1);
 
       x0 = x1;
       y0 = y1;
@@ -657,7 +659,7 @@ void allocate_color_map(int colormap)
 
 void phases_rgb(float x, rgb_t *r, rgb_t *g, rgb_t *b);
 
-void draw_colored_lines(axis_context *ax, point_t *points, int num, int *colors, int axis_y0, color_t default_color)
+void draw_colored_lines(chan_info *cp, axis_context *ax, point_t *points, int num, int *colors, int axis_y0, color_t default_color)
 {
   int i, x0, y0, x1, y1, cur, prev;
   color_t old_color;
@@ -709,10 +711,18 @@ void draw_colored_lines(axis_context *ax, point_t *points, int num, int *colors,
 	  prev = cur;
 	}
 
-      cairo_set_line_width(ax->cr, 1.0); 
-      cairo_move_to(ax->cr, x0 + 0.5, y0 + 0.5);
-      cairo_line_to(ax->cr, x1 + 0.5, y1 + 0.5);
-      cairo_stroke(ax->cr);
+      if (cp->transform_graph_style == GRAPH_DOTS)
+	{
+	  cairo_arc(ax->cr, x0, y0, cp->dot_size / 2, 0.0, 2 * M_PI);
+	  cairo_fill(ax->cr);
+	}
+      else 
+	{
+	  cairo_set_line_width(ax->cr, 1.0); 
+	  cairo_move_to(ax->cr, x0 + 0.5, y0 + 0.5);
+	  cairo_line_to(ax->cr, x1 + 0.5, y1 + 0.5);
+	  cairo_stroke(ax->cr);
+	}
 
       x0 = x1;
       y0 = y1;

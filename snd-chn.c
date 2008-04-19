@@ -2357,7 +2357,7 @@ static void make_fft_graph(chan_info *cp, axis_info *fap, axis_context *ax, with
 	  colors[k] = (int)((fft_phases[k] * color_map_size(ss)) / (2.0 * M_PI));
 	}
       
-      draw_colored_lines(ax, get_grf_points(), lines_to_draw, colors, fap->y_axis_y0, default_color);
+      draw_colored_lines(cp, ax, get_grf_points(), lines_to_draw, colors, fap->y_axis_y0, default_color);
       
       FREE(colors);
       if (free_phases)

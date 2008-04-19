@@ -30,7 +30,7 @@ typedef struct dac_info {
   int slot;
   Float *a;            /* filter coeffs */
   int a_size;          /* user can change filter order while playing (sigh...) */
-  snd_fd *chn_fd;      /* sample reader */
+  snd_fd *chn_fd;      /* sample reader, null if DAC_XEN */
   spd_info *spd;
   mus_any *flt;
   int region, mix_id;  /* to reset region-browser play button upon completion */
@@ -88,7 +88,8 @@ static mus_any *make_flt(dac_info *dp, int order, Float *env)
 static Float dac_src_input_as_needed(void *arg, int direction) 
 {
   dac_info *dp = (dac_info *)arg;
-  if ((direction != dp->direction) && (dp->chn_fd))
+  if ((direction != dp->direction) && 
+      (dp->chn_fd))
     {
       read_sample_change_direction(dp->chn_fd, (direction == 1) ? READ_FORWARD : READ_BACKWARD);
       dp->direction = direction;
@@ -1425,7 +1426,6 @@ static void cleanup_dac_hook(void)
 }
 
 
-
 static int fill_dac_buffers(int write_ok)
 {
   /* return value used only by Apply */
@@ -1490,6 +1490,7 @@ static int fill_dac_buffers(int write_ok)
 	      if ((sp) && 
 		  (cursor_change) && 
 		  (sp->with_tracking_cursor != DONT_TRACK) &&
+		  (dp->chn_fd) &&
 		  (!(dp->chn_fd->at_eof)) &&
 		  (dp->chn_fd->cb))
 		{

@@ -27,7 +27,7 @@ void allocate_color_map(int colormap);
 void allocate_sono_rects(int size);
 void set_sono_rectangle(int j, int color, int x, int y, int width, int height);
 void draw_sono_rectangles(axis_context *ax, int color, int jmax);
-void draw_colored_lines(axis_context *ax, point_t *points, int num, int *colors, int axis_y0, color_t default_color);
+void draw_colored_lines(chen_info *cp, axis_context *ax, point_t *points, int num, int *colors, int axis_y0, color_t default_color);
 widget_t start_color_dialog(bool managed);
 widget_t start_orientation_dialog(bool managed);
 void set_color_scale(Float val);

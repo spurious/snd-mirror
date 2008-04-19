@@ -108,7 +108,6 @@ enum {MUS_OSCIL, MUS_NCOS, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PASS,
       MUS_SAMPLE_TO_FILE, MUS_FRAME_TO_FILE, MUS_MIXER, MUS_PHASE_VOCODER,
       MUS_MOVING_AVERAGE, MUS_NSIN, MUS_SSB_AM, MUS_POLYSHAPE, MUS_FILTERED_COMB,
       MUS_MOVE_SOUND, MUS_NRXYSIN, MUS_NRXYCOS, MUS_POLYWAVE, MUS_FIRMANT,
-      MUS_SAMPLE_TO_DAC,
       MUS_INITIAL_GEN_TAG};
 
 
@@ -7636,106 +7635,6 @@ static Float sample_file(mus_any *ptr, off_t samp, int chan, Float val)
   return(val);
 }
 
-#if 0
-/* TODO: mus_make_sample_to_dac using rdout with dac_sample as writer (so automatically compatible all the way up)
- *         then a direct writer that knows about rdout buffers [format conversion?]
- *         with-sound/cm init-with-sound output-to-dac recognition and set *output* -- how to handle *reverb*? 
- */
-
-typedef struct {
-  mus_any_class *core;
-  int chan;
-  int chans;
-  mus_sample_t **obufs;
-  off_t data_start, data_end;
-  int output_data_format;
-} dacout;
-
-
-#define S_make_sample_to_dac        "make-sample->dac"
-#define S_sample_to_dac             "sample->dac"
-#define S_sample_to_dac_p           "sample->dac?"
-
-
-static int sample_to_dac_channels(mus_any *ptr) {return((int)(((dacout *)ptr)->chans));}
-
-
-static char *describe_sample_to_dac(mus_any *ptr)
-{
-  dacout *gen = (dacout *)ptr;
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s %s", 
-	       mus_name(ptr),
-	       gen->file_name);
-  return(describe_buffer);
-}
-
-
-static bool sample_to_dac_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
-
-
-static int free_sample_to_dac(mus_any *p) 
-{
-  dacout *ptr = (dacout *)p;
-  if (ptr) 
-    {
-      if (ptr->core->end) ((*ptr->core->end))(p);
-      FREE(ptr);
-    }
-  return(0);
-}
-
-
-static Float run_sample_to_dacle(mus_any *ptr, Float arg1, Float arg2) {mus_error(MUS_NO_RUN, "no run method for sample->dac"); return(0.0);}
-
-
-static Float sample_dac(mus_any *ptr, off_t samp, int chan, Float val)
-{
-  /* to write direct to a DAC, assume we have a (moving) buffer for each channel
-   *   and a current time.  Then any output can be added to the buffer
-   *   at samp - current in chan, and we assume the DAC writer will 
-   *   handle the block-at-a-time stuff (or is Jack samp-at-a-time?).
-   *   If samp has passed, just return.
-   */
-  dacout *gen = (dacout *)ptr;
-  if ((samp >= gen->data_start) &&
-      (chan < gen->chans))
-    {
-      if (samp < gen->data_end)
-	gen->obufs[chan][samp - gen->data_start] += MUS_FLOAT_TO_SAMPLE(val);
-      else mus_error(MUS_WRITE_ERROR, "write at " OFF_TD " ran off end of output buffer: " OFF_TD, samp, gen->data_end);
-    }
-  return(val);
-}
-
-static mus_any_class SAMPLE_TO_DAC_CLASS = {
-  MUS_SAMPLE_TO_DAC,
-  S_sample_to_dac,
-  &free_sample_to_dac,
-  &describe_sample_to_dac,
-  &sample_to_dac_equalp,
-  0, 0, 
-  0, 0,
-  0, 0, 0, 0,
-  &fallback_scaler, 0,
-  0, 0,
-  &run_sample_to_dac,
-  MUS_OUTPUT,
-  NULL,
-  &sample_to_dac_channels,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0,
-  &sample_dac,
-  0,
-  0,
-  0, 0, 0,
-  0, 0, 0, 0, 0,
-  &no_reset,
-  0
-};
-
-
-#endif
-
 
 #if 0
 Float mus_sample_to_file_current_value(mus_any *ptr, off_t samp, int chan)
@@ -7949,6 +7848,16 @@ mus_any *mus_continue_frame_to_file(const char *filename)
   if (gen) gen->core = &FRAME_TO_FILE_CLASS;
   return((mus_any *)gen);
 }
+
+
+/* I toyed with sample_to_dac so that instruments using *output* and the run loop could
+ *   go straight out, rather than through a file.  See ~/old/direct-to-dac.c.  This output
+ *   choice could be made in with-sound, or triggered in play (Snd).  But after writing
+ *   the code, I can't see any real use for it -- it saves the wait while the file is
+ *   being written, but doesn't provide the kind of "real-time" handles you'd need for
+ *   note controls.  The function option for play (DAC_XEN in snd-dac.c)
+ *   could provide that, I think, though the instrument code has to be redone (fmv.scm).
+ */
 
 
 

@@ -331,20 +331,8 @@ void allocate_color_map(int colormap)
     }
 }
 
-#if 0
-  /* TODO: fft graph style if phases colormap */
-  switch (cp->transform_graph_style)
-    case GRAPH_LINES:
-      draw_lines
-    case GRAPH_DOTS:
-      draw_points(ax, points, j, dot_size);
-    case GRAPH_FILLED:
-      fill_two_sided_polygons(ax, points, points1, j);
-    case GRAPH_DOTS_AND_LINES:
-    case GRAPH_LOLLIPOPS:
-#endif
 
-void draw_colored_lines(axis_context *ax, point_t *points, int num, int *colors, int axis_y0, color_t default_color)
+void draw_colored_lines(chan_info *cp, axis_context *ax, point_t *points, int num, int *colors, int axis_y0, color_t default_color)
 {
   int i, x0, y0, x1, y1, y2 = 0, y00 = -1, cur, prev;
   color_t old_color;
@@ -358,7 +346,7 @@ void draw_colored_lines(axis_context *ax, point_t *points, int num, int *colors,
     prev = -1;
   else prev = colors[0];
 
-  XSetForeground(ax->dp, ax->gc, (prev == -1) ? default_color : current_colors[prev]);
+  set_foreground_color(ax, (prev == -1) ? default_color : current_colors[prev]);
 
   for (i = 1; i < num; i++)
     {
@@ -393,10 +381,14 @@ void draw_colored_lines(axis_context *ax, point_t *points, int num, int *colors,
 
       if (cur != prev)
 	{
-	  XSetForeground(ax->dp, ax->gc, (cur == -1) ? default_color : current_colors[cur]);
+	  set_foreground_color(ax, (cur == -1) ? default_color : current_colors[cur]);
 	  prev = cur;
 	}
-      XDrawLine(ax->dp, ax->wn, ax->gc, x0, y0, x1, y1);
+
+      if (cp->transform_graph_style == GRAPH_DOTS)
+	draw_dot(ax, x0, y0, cp->dot_size);
+      else draw_line(ax, x0, y0, x1, y1);
+
       y00 = y0;
       x0 = x1;
       y0 = y1;

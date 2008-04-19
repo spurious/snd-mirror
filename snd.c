@@ -6,7 +6,6 @@
 /*   MAJOR THINGS TO DO...
  *
  * TODO: fix the infinite loop in forth
- * TODO: direct to dac/jack in clm (finish sample_dac and associated class)
  * TODO: openMP or similar multi-thread system for instruments?
  * TODO: dlocsig/move-sound in run
  */
