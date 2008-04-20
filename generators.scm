@@ -4425,7 +4425,15 @@ index 10 (so 10/2 is the bes-jn arg):
 
 			 (list 'mus-phase
 			       (lambda (g) (mus-phase (adjustable-square-wave-p1 g)))
-			       (lambda (g val) (set! (mus-phase (adjustable-square-wave-p1 g)) val) val))))
+			       (lambda (g val) (set! (mus-phase (adjustable-square-wave-p1 g)) val) val))
+
+			 (list 'mus-scaler
+			       (lambda (g) 
+				 (adjustable-square-wave-duty-factor g))
+			       (lambda (g val)
+				 (set! (adjustable-square-wave-duty-factor g) val)
+				 (set! (mus-phase (adjustable-square-wave-p2 g) (* 2.0 pi (- 1.0 (adjustable-square-wave-duty-factor g)))))
+				 val))))
 
   (frequency *clm-default-frequency*) (duty-factor 0.5) (amplitude 1.0)
   (sum 0.0) (p1 #f :type clm) (p2 #f :type clm))
@@ -4468,7 +4476,17 @@ index 10 (so 10/2 is the bes-jn arg):
 
 			 (list 'mus-phase
 			       (lambda (g) (mus-phase (adjustable-triangle-wave-gen g)))
-			       (lambda (g val) (set! (mus-phase (adjustable-triangle-wave-gen g)) val) val))))
+			       (lambda (g val) (set! (mus-phase (adjustable-triangle-wave-gen g)) val) val))
+
+			 (list 'mus-scaler
+			       (lambda (g) 
+				 (adjustable-triangle-wave-duty-factor g))
+			       (lambda (g val)
+				 (set! (adjustable-triangle-wave-duty-factor g) val)
+				 (set! (adjustable-triangle-wave-top g) (- 1.0 val))
+				 (if (not (= val 0.0))
+				     (set! (adjustable-triangle-wave-scl g) (/ (adjustable-triangle-wave-amplitude g) val)))
+				 val))))
 
   (frequency *clm-default-frequency*) (duty-factor 0.5) (amplitude 1.0) 
   (gen #f :type clm) (top 0.0) (scl 0.0))
@@ -4511,7 +4529,17 @@ index 10 (so 10/2 is the bes-jn arg):
 
 			 (list 'mus-phase
 			       (lambda (g) (mus-phase (adjustable-sawtooth-wave-gen g)))
-			       (lambda (g val) (set! (mus-phase (adjustable-sawtooth-wave-gen g)) val) val))))
+			       (lambda (g val) (set! (mus-phase (adjustable-sawtooth-wave-gen g)) val) val))
+
+			 (list 'mus-scaler
+			       (lambda (g) 
+				 (adjustable-sawtooth-wave-duty-factor g))
+			       (lambda (g val)
+				 (set! (adjustable-sawtooth-wave-duty-factor g) val)
+				 (set! (adjustable-sawtooth-wave-top g) (- 1.0 val))
+				 (if (not (= val 0.0))
+				     (set! (adjustable-sawtooth-wave-scl g) (/ (adjustable-sawtooth-wave-amplitude g) val)))
+				 val))))
 
   (frequency *clm-default-frequency*) (duty-factor 0.5) (amplitude 1.0) 
   (gen #f :type clm) (top 0.0) (scl 0.0))
@@ -4554,7 +4582,17 @@ index 10 (so 10/2 is the bes-jn arg):
 
 			 (list 'mus-phase
 			       (lambda (g) (mus-phase (adjustable-oscil-gen g)))
-			       (lambda (g val) (set! (mus-phase (adjustable-oscil-gen g)) val) val))))
+			       (lambda (g val) (set! (mus-phase (adjustable-oscil-gen g)) val) val))
+
+			 (list 'mus-scaler
+			       (lambda (g) 
+				 (adjustable-oscil-duty-factor g))
+			       (lambda (g val)
+				 (set! (adjustable-oscil-duty-factor g) val)
+				 (set! (adjustable-oscil-top g) (- 1.0 val))
+				 (if (not (= val 0.0))
+				     (set! (adjustable-oscil-scl g) (/ 1.0 val)))
+				 val))))
 
   (frequency *clm-default-frequency*) (duty-factor 0.5)
   (gen #f :type clm) (top 0.0) (scl 0.0))

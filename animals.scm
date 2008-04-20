@@ -229,6 +229,177 @@
 (set! *clm-default-frequency* 0.0)
 
 
+#|
+;;; ================================================================================
+;;; useful settings and functions for this work (I have these in my init file):
+
+(define (normalize-partials lst)
+  ;; make sure the partials sum to 1.0 in amp
+  (define (sum-partials lst sum)
+    (if (null? lst)
+	sum
+	(sum-partials (cddr lst) (+ sum (cadr lst)))))
+    
+  (define (scale-partials lst scl newlst)
+    (if (null? lst)
+	newlst
+	(scale-partials (cddr lst) scl (append newlst (list (car lst) (* scl (cadr lst)))))))
+    
+  (scale-partials lst (/ 1.0 (sum-partials lst 0.0)) '()))
+
+(define (clean-string e)
+  ;; make the envelope lists look prettier
+  (string-concatenate (append (list "(")
+			      (map (lambda (n)
+				     (format #f "~,3F " n))
+				   e)
+			      (list ")"))))
+
+(define (seldur) 
+  (list (/ (selection-frames) 44100.0) 
+	(selection-maxamp)))
+
+(define (sp) 
+  (* 22050 (spectro-cutoff 0 0)))
+
+
+;;; save us some dialog setup
+(set! (show-transform-peaks) #t)
+(set! (transform-size) 512)
+(set! (fft-window) blackman10-window)
+(set! (colormap) 7) ; jet
+(set! (speed-control-style) speed-control-as-ratio)
+(set! (color-cutoff) .001)
+(set! (enved-clip?) #t)
+
+
+;;; if click play button and there's a selection, play the selection
+;;;   otherwise if the file is long (like most bird recordings), play what's in the current window.
+;;;   This is mainly to cut out the ubiquitous and useless announcer.
+
+(if (hook-empty? start-playing-hook)
+    (add-hook! start-playing-hook
+      (lambda (snd)
+	(if (sound? snd)  ; meaning not 123456 = temp-sound-index from View:Files play button
+	    (if (and (selection?)
+		     (selection-member? snd))
+		(begin
+		  (play-selection)
+		  #t)
+		(if (> (frames snd) (* 10 (srate snd)))
+		    (let ((chn (or (selected-channel) 0)))
+		      (with-temporary-selection 
+		       play-selection 
+		       (left-sample snd chn) (- (right-sample snd chn) (left-sample snd chn)) snd chn)
+		      #t)
+		    #f))
+	    #f))))
+
+
+;;; precision window movements via arrow keys
+
+(define (move-one-pixel s c right)
+  (let* ((ax (axis-info s c time-graph))
+	 (lo (list-ref ax 0))
+	 (hi (list-ref ax 1))
+	 (lo-pix (list-ref ax 10))
+	 (hi-pix (list-ref ax 12))
+	 (samps-per-pixel (max 1 (inexact->exact (round (/ (- hi lo) (- hi-pix lo-pix))))))
+	 (change (if right 
+                    (- (min (+ hi samps-per-pixel) (frames s c)) hi)
+                    (- (max 0 (- lo samps-per-pixel)) lo))))
+    (set! (left-sample) (min (max 0 (+ lo change)) (frames s c)))
+    keyboard-no-action))
+
+(bind-key "Left" 0 (lambda () "move one pixel backward" (move-one-pixel (selected-sound) (selected-channel) #f)))
+(bind-key "Right" 0 (lambda () "move one pixel forward" (move-one-pixel (selected-sound) (selected-channel) #t)))
+
+(define (move-more-pixels s c right)
+  (let* ((ax (axis-info s c time-graph))
+	 (lo (list-ref ax 0))
+	 (hi (list-ref ax 1))
+	 (lo-pix (list-ref ax 10))
+	 (hi-pix (list-ref ax 12))
+	 (samps-per-pixel (* 8 (max 1 (inexact->exact (round (/ (- hi lo) (- hi-pix lo-pix)))))))
+	 (change (if right 
+                    (- (min (+ hi samps-per-pixel) (frames s c)) hi)
+                    (- (max 0 (- lo samps-per-pixel)) lo))))
+    (set! (left-sample) (min (max 0 (+ lo change)) (frames s c)))
+    keyboard-no-action))
+
+(bind-key "Left" 4 (lambda () "move some pixels backward" (move-more-pixels (selected-sound) (selected-channel) #f)))
+(bind-key "Right" 4 (lambda () "move some pixels forward" (move-more-pixels (selected-sound) (selected-channel) #t)))
+
+(define (zoom-one-pixel s c in)
+  (let* ((ax (axis-info s c time-graph))
+	 (lo (list-ref ax 0))
+	 (hi (list-ref ax 1))
+	 (lo-pix (list-ref ax 10))
+	 (hi-pix (list-ref ax 12))
+	 (samps-per-pixel (max 1 (inexact->exact (round (/ (- hi lo) (- hi-pix lo-pix))))))
+	 (len (frames s c)))
+    (if in
+	(if (> (- hi-pix lo-pix) samps-per-pixel)
+	    (begin
+	      (set! (left-sample) (+ lo samps-per-pixel))
+	      (set! (x-zoom-slider) (exact->inexact (/ (max samps-per-pixel (- hi lo (* 2 samps-per-pixel))) len)))))
+	(begin
+	  (set! (left-sample) (max 0 (- lo samps-per-pixel)))
+	  (set! (x-zoom-slider) (exact->inexact (/ (min len (+ (- hi lo) (* 2 samps-per-pixel))) len)))))
+    keyboard-no-action))
+
+(bind-key "Up" 0 (lambda () "zoom out one pixel" (zoom-one-pixel (selected-sound) (selected-channel) #f))) ;up
+(bind-key "Down" 0 (lambda () "zoom in one pixel" (zoom-one-pixel (selected-sound) (selected-channel) #t))) ;down
+
+
+;;; save the current window so that PageUp returns to it
+
+(bind-key "Page_Down" 0 
+	  (lambda ()
+	    (let ((last-page-state (map (lambda (snd) 
+					  (let ((data (list snd (file-name snd))))
+					    (do ((i 0 (1+ i)))
+						((= i (chans snd)) data)
+					      (set! data (append data (list (cons i (axis-info snd i))))))))
+					(sounds))))
+	      (bind-key "Page_Up" 0
+			(lambda ()
+			  (if last-page-state
+			      (for-each
+			       (lambda (lst)
+				 (let ((snd (list-ref lst 0))
+				       (name (list-ref lst 1)))
+				   (if (and (sound? snd)
+					    (string=? (file-name snd) name))
+				       (for-each
+					(lambda (chan-data)
+					  (let ((chn (list-ref chan-data 0))
+						(x0 (list-ref chan-data 3))
+						(x1 (list-ref chan-data 5))
+						(y0 (list-ref chan-data 4))
+						(y1 (list-ref chan-data 6)))
+					    (set! (x-bounds snd chn) (list x0 x1))
+					    (set! (y-bounds snd chn) (list y0 y1))))
+					(cddr lst)))))
+			       last-page-state)))))))
+
+;;; "m" -> make enved amp display suitable for drawing the amp env
+(bind-key #\m 0
+	  (lambda ()
+	    (set! (y-bounds (selected-sound) (selected-channel)) (list 0 (selection-maxamp))))
+	  #t)
+
+;;; "C-m" returns to normal after "m"
+(bind-key #\m 4
+	  (lambda ()
+	    (set! (y-bounds (selected-sound) (selected-channel)) (list -1.0 1.0)))
+	  #t)
+	  
+|#
+;;; ================================================================================
+
+
+
 ;;; some of these need srate=44100 since various frequencies are (well) over 10KHz
 ;;;   also, I have bare indices scattered around -- ideally these would be wrapped in hz->radians
 ;;;   (use radians->hz to back out of the current form)
