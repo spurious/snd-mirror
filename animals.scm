@@ -8642,7 +8642,7 @@
 			   0.288 0.506 0.390 0.524 0.509 0.530 0.637 0.537 0.732 0.530 0.770 0.503 0.808 0.503 
 			   0.826 0.427 0.848 0.366 0.889 0.345 0.913 0.232 1.000 0.198)
 			 :duration dur :scaler (hz->radians 10000.0)))
-	 (gen1 (make-polywave :partials (list 1 .96  2 .03  3 .01)))
+	 (gen1 (make-polywave :partials (list 1 .9  2 .09  3 .01)))
 	 (gen2 (make-polywave :partials (list 1 .2  2 .1  3 .1  4 .1  5 .1  6 .05  7 .01)))
 	 (ampf2 (make-env '(0 1 .3 1 .4 0 .75 0 .8 1 1 1) :duration dur :scaler 1.0)))
     (run

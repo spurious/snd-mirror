@@ -461,7 +461,7 @@ To hear them all, <code>(calling-all-animals)</code>.
 
 <table width="30%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>How to Paint a Bird Song</h4></td></tr></table>
 
-<p>Back in 1980, I wanted some bird songs for the last movement of "Colony", but my stabs at
+<p>Back in 1980, I wanted some bird songs for "Colony", but my stabs at
 a fake bird song were completely unconvincing.  So I went to
 my battered bird book (Robbins, Bruun, Zim, Singer "Birds of North America" Golden Press, NY 1966)
 which had sonograms
@@ -493,41 +493,44 @@ Open the Hairy Woodpecker. Find a squawk that seems within reach, and select it.
 <img src="pix/hairy1.png" alt="selecting a squawk" hspace=40>
 
 <p>
-Zoom onto the first channel (the vertical slider on the right), and center the squawk in the time domain window (C-v).
+Zoom onto the first channel (the vertical slider on the right &mdash; we don't care about stereo here), and center the squawk in the time domain window (C-v).
 Get the selection duration in seconds.  Start the envelope editor dialog (under the Edit menu).  Choose "selection"
 and "wave" in that dialog.
 </p>
 <img src="pix/hairy2.png" alt="zoom in" hspace=40>
 
-<p>Since our goal is a CLM instrument that synthesizes this sound, we need to get a "blank bird", and fill
+<p>Since the goal is a CLM instrument that synthesizes this sound, get a "blank bird", and fill
 in the duration.
-<p>
+</p>
+
+<!-- SOMEDAY: bi-level index -->
+<!-- PERHAPS: mention other animal funcs? [or add to animals.scm?] -->
 
 <pre>
 (definstrument (hairy-woodpecker beg amp)
-  (let* ((start (seconds-&gt;samples beg))
+  (let* ((start (<a class=quiet href="sndclm.html#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> beg))
 	 (dur 0.08)                                      ; filled in from the selection duration
-	 (stop (+ start (seconds-&gt;samples dur)))
-	 (ampf (make-env '                               ; left blank for the moment
+	 (stop (+ start (<a class=quiet href="sndclm.html#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> dur)))
+	 (ampf (<a class=quiet href="sndclm.html#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '                               ; left blank for the moment
 			 :duration dur :scaler amp))
-	 (gen1 (make-oscil 0.0))
-	 (frqf (make-env '                               ; ditto
-			 :duration dur :scaler (hz->radians 1.0))))
-   (run
+	 (gen1 (<a class=quiet href="sndclm.html#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> 0.0))
+	 (frqf (<a class=quiet href="sndclm.html#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '                               ; ditto
+			 :duration dur :scaler (<a class=quiet href="sndclm.html#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> 1.0))))
+   (<a class=quiet href="sndscm.html#run" onmouseout="UnTip()" onmouseover="Tip(sndscm_run_tip)">run</a>
      (lambda ()
        (do ((i start (1+ i)))
 	   ((= i stop))
-	 (outa i (* (env ampf)                           ; just a first guess at the synthesis algorithm
-		    (oscil gen1 (env frqf)))))))))
+	 (<a class=quiet href="sndclm.html#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* (<a class=quiet href="sndclm.html#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> ampf)                           ; just a first guess at the synthesis algorithm
+		    (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> gen1 (<a class=quiet href="sndclm.html#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> frqf)))))))))
 </pre>
 
-<p>Now to get an amplitude envelope, set the y axis bounds to be from 0.0 to the selection maxamp:
+<p>Now to get an amplitude envelope, set the y axis limits to be from 0.0 to the selection maxamp:
 </p>
 <pre>
-    (set! (y-bounds (selected-sound) (selected-channel)) (list 0 (selection-maxamp)))
+    (set! (<a class=quiet href="extsnd.html#ybounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_ybounds_tip)">y-bounds</a> (<a class=quiet href="extsnd.html#selectedsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedsound_tip)">selected-sound</a>) (<a class=quiet href="extsnd.html#selectedchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectedchannel_tip)">selected-channel</a>)) (list 0 (<a class=quiet href="extsnd.html#selectionmaxamp" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionmaxamp_tip)">selection-maxamp</a>)))
 </pre>
 <p>
-I have this bound to the "m" key in my ~/.snd initialization file.  The change is reflected in
+I have this action bound to the "m" key in my ~/.snd initialization file.  The change is reflected in
 the envelope editor.  We can draw the amplitude envelope simply by approximating the shape.  Call it "hairy-amp".
 </p>
 
@@ -571,38 +574,39 @@ the top of the FFT graph in Hz; it is 10KHz in this case.
 
 <pre>
 (definstrument (hairy-woodpecker beg amp)
-  (let* ((start (seconds-&gt;samples beg))
+  (let* ((start (<a class=quiet href="sndclm.html#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> beg))
 	 (dur 0.08)
-	 (stop (+ start (seconds-&gt;samples dur)))
-	 (ampf (make-env '(0.000 0.000 0.099 0.188 0.152 0.148 0.211 0.558 0.242 0.267 0.278 0.519 0.434 0.472 
+	 (stop (+ start (<a class=quiet href="sndclm.html#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> dur)))
+	 (ampf (<a class=quiet href="sndclm.html#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0.000 0.000 0.099 0.188 0.152 0.148 0.211 0.558 0.242 0.267 0.278 0.519 0.434 0.472 
 			   0.527 0.543 0.612 0.479 0.792 0.941 0.831 0.523 0.854 1.000 0.913 0.422 0.927 0.200 
 			   0.946 0.430 0.971 0.304 1.000 0.000 )
 			 :duration dur :scaler amp))
-	 (frqf (make-env '(0.000 0.180 0.056 0.213 0.135 0.241 0.167 0.305 0.191 0.396 0.212 0.402 0.242 0.485 
+	 (frqf (<a class=quiet href="sndclm.html#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0.000 0.180 0.056 0.213 0.135 0.241 0.167 0.305 0.191 0.396 0.212 0.402 0.242 0.485 
 			   0.288 0.506 0.390 0.524 0.509 0.530 0.637 0.537 0.732 0.530 0.770 0.503 0.808 0.503 
 			   0.826 0.427 0.848 0.366 0.889 0.345 0.913 0.232 1.000 0.198)
-			 :duration dur :scaler (hz->radians 10000.0)))
-	 (gen1 (make-oscil 0.0)))
-   (run
+			 :duration dur :scaler (<a class=quiet href="sndclm.html#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> 10000.0)))
+	 (gen1 (<a class=quiet href="sndclm.html#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> 0.0)))
+   (<a class=quiet href="sndscm.html#run" onmouseout="UnTip()" onmouseover="Tip(sndscm_run_tip)">run</a>
      (lambda ()
        (do ((i start (1+ i)))
 	   ((= i stop))
-	 (outa i (* (env ampf)
-		    (oscil gen1 (env frqf)))))))))
+	 (<a class=quiet href="sndclm.html#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* (<a class=quiet href="sndclm.html#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> ampf)
+		    (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> gen1 (<a class=quiet href="sndclm.html#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> frqf)))))))))
 </pre>
 
-<p>This squawk has more than one component (it is not just a sine wave).  So go to the "single transform"
+<p>This squawk has more than one component (it is not just a sine wave), and the components follow more or less
+the same amplitude envelope (so we can use polywave).  Go to the "single transform"
 view (in the Transform dialog), make the FFT size bigger, move the time domain window into about the middle
 of the call, and get some estimate of the number of
 components and their relative amplitudes (concentrating for now on the steady state).  Change the "make-oscil"
 to "make-polywave" and give some first stab at the steady-state spectrum:
-<p>
+</p>
 
 <pre>
    ...
-  (gen1 (make-polywave :partials (list 1 .96  2 .2  3 .03)))
+  (gen1 (<a class=quiet href="sndclm.html#make-polywave" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_polywave_tip)">make-polywave</a> :partials (list 1 .9  2 .1  3 .01)))
   ...
-  (polywave gen1 (env frqf))
+  (<a class=quiet href="sndclm.html#polywave" onmouseout="UnTip()" onmouseover="Tip(sndclm_polywave_tip)">polywave</a> gen1 (<a class=quiet href="sndclm.html#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> frqf))
   ...
 </pre>
 
@@ -610,42 +614,41 @@ to "make-polywave" and give some first stab at the steady-state spectrum:
 listen to the squawk: <code>(with-sound (:play #t) (hairy-woodpecker 0.0 0.5))</code>.
 Not terrible.  If it's cut off during playback, add a dummy silent call to the end:
 <code>(with-sound (:play #t) (hairy-woodpecker 0.0 0.5) (hairy-woodpecker 0.5 0.0))</code>.
+We're happy at this stage if it's in the right ballpark.
 </p>
 
 <img src="pix/hairy6.png" alt="first take" hspace=40>
 
 <p>
 The attack and decay sections need work.  Returning to either FFT view, it's clear
-there's a set of components at half the steady state frequency, and they seem to 
-wobble around at random.  Add another polywave with its own amplitude envelope
-and some random jitter:
+there's a set of components moving together at half the steady state frequency, so add another polywave with its own amplitude envelope:
 </p>
 
 <pre>
 (definstrument (hairy-woodpecker beg amp)
-  (let* ((start (seconds->samples beg))
+  (let* ((start (<a class=quiet href="sndclm.html#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> beg))
 	 (dur 0.08)
-	 (stop (+ start (seconds->samples dur)))
-	 (ampf (make-env '(0.000 0.000 0.099 0.188 0.152 0.148 0.211 0.558 0.242 0.267 0.278 0.519 0.434 0.472 
+	 (stop (+ start (<a class=quiet href="sndclm.html#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> dur)))
+	 (ampf (<a class=quiet href="sndclm.html#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0.000 0.000 0.099 0.188 0.152 0.148 0.211 0.558 0.242 0.267 0.278 0.519 0.434 0.472 
 			   0.527 0.543 0.612 0.479 0.792 0.941 0.831 0.523 0.854 1.000 0.913 0.422 0.927 0.200 
 			   0.946 0.430 0.971 0.304 1.000 0.000 )
 			 :duration dur :scaler amp))
-	 (frqf (make-env '(0.000 0.180 0.056 0.213 0.135 0.241 0.167 0.305 0.191 0.396 0.212 0.402 0.242 0.485 
+	 (frqf (<a class=quiet href="sndclm.html#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0.000 0.180 0.056 0.213 0.135 0.241 0.167 0.305 0.191 0.396 0.212 0.402 0.242 0.485 
 			   0.288 0.506 0.390 0.524 0.509 0.530 0.637 0.537 0.732 0.530 0.770 0.503 0.808 0.503 
 			   0.826 0.427 0.848 0.366 0.889 0.345 0.913 0.232 1.000 0.198)
-			 :duration dur :scaler (hz->radians 10000.0)))
-	 (gen1 (make-polywave :partials (list 1 .96  2 .03  3 .01)))
-	 (gen2 (make-polywave :partials (list 1 .2  2 .1  3 .1  4 .1  5 .1  6 .05  7 .01)))
-	 (ampf2 (make-env '(0 1 .3 1 .4 0 .75 0 .8 1 1 1) :duration dur :scaler 1.0)))
-    (run
+			 :duration dur :scaler (<a class=quiet href="sndclm.html#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> 10000.0)))
+	 (gen1 (<a class=quiet href="sndclm.html#make-polywave" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_polywave_tip)">make-polywave</a> :partials (list 1 .9  2 .09  3 .01)))
+	 (gen2 (<a class=quiet href="sndclm.html#make-polywave" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_polywave_tip)">make-polywave</a> :partials (list 1 .2  2 .1  3 .1  4 .1  5 .1  6 .05  7 .01))) ; attack and decay
+	 (ampf2 (<a class=quiet href="sndclm.html#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 1  .3 1  .4 0 .75 0 .8 1  1 1) :duration dur :scaler 1.0)))      ; its amplitude
+    (<a class=quiet href="sndscm.html#run" onmouseout="UnTip()" onmouseover="Tip(sndscm_run_tip)">run</a>
      (lambda ()
        (do ((i start (1+ i)))
 	   ((= i stop))
-	 (let ((frq (env frqf)))
-	   (outa i (* (env ampf)
-		      (+ (polywave gen1 frq)
-			 (* (env ampf2)
-			    (polywave gen2 (* 0.5 frq))))))))))))
+	 (let ((frq (<a class=quiet href="sndclm.html#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> frqf)))
+	   (<a class=quiet href="sndclm.html#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* (<a class=quiet href="sndclm.html#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> ampf)
+		      (+ (<a class=quiet href="sndclm.html#polywave" onmouseout="UnTip()" onmouseover="Tip(sndclm_polywave_tip)">polywave</a> gen1 frq)
+			 (* (<a class=quiet href="sndclm.html#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> ampf2)
+			    (<a class=quiet href="sndclm.html#polywave" onmouseout="UnTip()" onmouseover="Tip(sndclm_polywave_tip)">polywave</a> gen2 (* 0.5 frq))))))))))))
 </pre>
 
 <p>Now patience is the key.  
@@ -10256,7 +10259,8 @@ by calling the oscils and whatnot directly in the with-sound body:
 		 (set! sum (+ sum (* (let ((y (- 4.0 (* 8.0 loc))))
 				       (exp (* -0.5 y y)))  ; Gaussian normal curve as amplitude envelope
 				     (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> (vector-ref oscs i) 
-					    (<a class=quiet href="sndclm.html#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> (expt 2.0 (+ 2 (* loc 12.0)))))))))) ; (- 1.0 loc) to go down
+					    (<a class=quiet href="sndclm.html#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> (expt 2.0 (+ 2 (* loc 12.0))))))))))
+                                            ;; (- 1.0 loc) to go down
 	     (set! x (+ x incr))
 	     (<a class=quiet href="sndclm.html#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> samp (* .1 sum)))))))))
 </pre></td></tr></table>
@@ -11234,9 +11238,15 @@ So I bound a few keys:
 		 (set! (<a class=quiet href="extsnd.html#withtrackingcursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_withtrackingcursor_tip)">with-tracking-cursor</a>) old-tracking)))
     (<a class=quiet href="extsnd.html#play" onmouseout="UnTip()" onmouseover="Tip(extsnd_play_tip)">play</a> (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) #f #f #f #f (if current #f (1- (<a class=quiet href="extsnd.html#editposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_editposition_tip)">edit-position</a>))))))
 
-(<a class=quiet href="extsnd.html#bindkey" onmouseout="UnTip()" onmouseover="Tip(extsnd_bindkey_tip)">bind-key</a> #\p 0 (lambda () "play from cursor" (play-from-cursor #t) <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_keyboard_no_action_tip)">keyboard-no-action</a>))
-(<a class=quiet href="extsnd.html#bindkey" onmouseout="UnTip()" onmouseover="Tip(extsnd_bindkey_tip)">bind-key</a> #\P 0 (lambda () "play previous from cursor" (play-from-cursor #f) <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_keyboard_no_action_tip)">keyboard-no-action</a>))
-(<a class=quiet href="extsnd.html#bindkey" onmouseout="UnTip()" onmouseover="Tip(extsnd_bindkey_tip)">bind-key</a> #\p 4 (lambda () "play from cursor with tracking" (play-from-cursor-with-tracking #t) <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_keyboard_no_action_tip)">keyboard-no-action</a>))
+(<a class=quiet href="extsnd.html#bindkey" onmouseout="UnTip()" onmouseover="Tip(extsnd_bindkey_tip)">bind-key</a> #\p 0 (lambda () 
+                  "play from cursor" 
+	  	  (play-from-cursor #t) <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_keyboard_no_action_tip)">keyboard-no-action</a>))
+(<a class=quiet href="extsnd.html#bindkey" onmouseout="UnTip()" onmouseover="Tip(extsnd_bindkey_tip)">bind-key</a> #\P 0 (lambda () 
+                  "play previous from cursor" 
+		  (play-from-cursor #f) <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_keyboard_no_action_tip)">keyboard-no-action</a>))
+(<a class=quiet href="extsnd.html#bindkey" onmouseout="UnTip()" onmouseover="Tip(extsnd_bindkey_tip)">bind-key</a> #\p 4 (lambda () 
+                  "play from cursor with tracking" 
+		  (play-from-cursor-with-tracking #t) <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_keyboard_no_action_tip)">keyboard-no-action</a>))
 </pre></td></tr></table>
 
 <p>

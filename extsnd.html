@@ -5803,10 +5803,10 @@ the direction argument between the channel and edit-position:
 
 <p>
 The edit position argument can cause ambiguity in a few cases.  What should Snd do with:
-<code><small>(pad-channel 100 0 snd chn 2)</small></code>?
+<code>(pad-channel 100 0 snd chn 2)</code>?
 It currently treats any 0-length operation as a no-op, so the edit history is not changed by this function call.
 However, in a similar situation (where the current edit counter is greater than 2, so this code is reaching
-back into the edit history list): <code><small>(scale-channel 1.0 0 #f snd chn 2)</small></code>
+back into the edit history list): <code>(scale-channel 1.0 0 #f snd chn 2)</code>
 Snd essentially copies the state of the channel at that edit position, and puts it in the current edit position.
 There's never any good reason to do this, so if it looks like a no-op, do it a different way.
 </p>

@@ -784,6 +784,8 @@ var extsnd_srcsound_tip = "<code>(src-sound ratio-or-env :optional (base 1.0) sn
                           " sampling-rate convert snd's channel chn by ratio, or following an envelope.<br>" +
                           " A negative ratio reverses the sound";
 
+var extsnd_selectionmaxamp_tip = "<code>(selection-maxamp)</code> returns the peak amplitude in the selection.";
+
 var extsnd_startplayinghook_tip = "<code>start-playing-hook (snd)</code>: called when a play request is triggered.<br>" +
                                   " If it returns #t, the sound is not played.";
 
@@ -942,8 +944,6 @@ var sndclm_filetoarray_tip = "<code>(file-&gt;array filename chan start samples 
 
 var sndclm_filetosample_tip = "<code>(file-&gt;sample obj frame chan)</code>: sample value in sound file read by 'obj' in channel chan at frame";
 
-var sndclm_filter_tip = "<code>(filter gen :optional (input 0.0))</code>: next sample from filter";
-
 var sndclm_fir_filter_tip = "<code>(fir-filter gen :optional (input 0.0))</code>: next sample from FIR filter";
 
 var sndclm_formant_tip = "<code>(formant gen :optional (input 0.0) freq-in-radians)</code>: next sample from resonator generator";
@@ -1059,6 +1059,9 @@ var sndclm_make_polyshape_tip = "<code>(make-polyshape (:frequency *clm-default-
                                 "<code>   (make-polyshape :coeffs (partials-&gt;polynomial '(1 1.0)))</code><br>" +
                                 " is the same in effect as make-oscil";
 
+var sndclm_make_polywave_tip = "<code>(make-polyshape (:frequency *clm-default-frequency*) (:partials '(1 1)) (:kind mus-chebyshev-first-kind))</code>:<br>" +
+                               " return a new polynomial-based waveshaping generator (additive synthesis).";
+
 var sndclm_make_pulse_train_tip = "<code>(make-pulse-train (:frequency *clm-default-frequency*) (:amplitude 1.0) (:initial-phase 0.0))</code>:<br>" +
                                   " return a new pulse-train generator.  This produces a sequence of impulses.";
 
@@ -1157,7 +1160,11 @@ var sndclm_phase_vocoder_tip = "<code>(phase-vocoder gen input-function analyze-
 var sndclm_polynomial_tip = "<code>(polynomial coeffs x)</code>: evaluate a polynomial at x.<br>" +
                             " coeffs are in order of degree, so coeff[0] is the constant term.";
 
-var sndclm_polyshape_tip = "<code>(polyshape gen :optional (index 1.0) (fm 0.0))</code>: next sample of polynomial-based waveshaper";
+var sndclm_polyshape_tip = "<code>(polyshape gen :optional (index 1.0) (fm 0.0))</code>:<br>" +
+                           " next sample of polynomial-based waveshaper";
+
+var sndclm_polywave_tip = "<code>(polywave gen :optional (fm 0.0))</code>:<br>" +
+                          " next sample of polynomial-based waveshaper (additive synthesis)";
 
 var sndclm_pulse_train_tip = "<code>(pulse-train gen :optional (fm 0.0))</code>: next pulse train sample from generator";
 
