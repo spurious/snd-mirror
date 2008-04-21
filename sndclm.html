@@ -5924,6 +5924,53 @@ Use mus-scaler to set the duty-factor at run-time.
 </p>
 
 <img src="pix/adjustable.png" alt="mus-scaler adjusts" hspace=40>
+
+<!-- adjustable.png:
+
+(with-sound (:channels 4)
+  (let* ((fsamps 500)
+	 (freq (radians->hz (/ 1.0 fsamps)))
+	 (sq (make-adjustable-square-wave freq 0.01))
+	 (sw (make-adjustable-sawtooth-wave freq 0.01))
+	 (tr (make-adjustable-triangle-wave freq 0.01))
+	 (os (make-adjustable-oscil freq 0.01))
+	 (pl (make-pulse-train freq))
+	 (dur 1.0)
+	 (samps (seconds->samples dur))
+	 (ampf (make-env '(0 0 1 1 100 1 101 0) :duration dur))
+	 (adjf (make-env '(0 .01 1 .99) :duration dur)))
+    (run
+     (lambda ()
+    (do ((i 0 (1+ i)))
+	((= i samps))
+      (let ((amp (env ampf))
+	    (adj (env adjf))
+	    (trigger (pulse-train pl)))
+
+	(if (> trigger 0.1)
+	    (begin
+	      (set! (mus-scaler sq) adj)
+	      (set! (mus-scaler sw) adj)
+	      (set! (mus-scaler tr) adj)
+	      (set! (mus-scaler os) adj)))
+
+	(outa i (* amp (adjustable-square-wave sq 0.0)))
+	(outb i (* amp (adjustable-sawtooth-wave sw 0.0)))
+	(outc i (* amp (adjustable-triangle-wave tr 0.0)))
+	(outd i (* amp (adjustable-oscil os 0.0)))
+	))))
+    ))
+
+(set! (selected-graph-color) (make-color 1 1 1))
+(set! (selected-data-color) (make-color 0 0 0))
+(set! (x-axis-label 0 0) "adjustable-square-wave, duty-factor from .01 to .99")
+(set! (x-axis-label 0 1) "adjustable-sawtooth-wave")
+(set! (x-axis-label 0 2) "adjustable-triangle-wave")
+(set! (x-axis-label 0 3) "adjustable-oscil")
+(set! (axis-numbers-font) (tiny-font))
+(set! (axis-label-font) "10x20")
+-->
+
 <br>
 <br>
 
@@ -6482,7 +6529,7 @@ This generator's output is not normalized, and looks incorrect...
 <img src="pix/sceq30.png" alt="sum of sines">
 </td></tr>
 <tr><td>
-<img src="pix/r2kfactcos.png" alt="r2k!cos spectra")">
+<img src="pix/r2kfactcos.png" alt="r2k!cos spectra">
 </td></tr></table>
 
 <!-- r2kfactcos.png:

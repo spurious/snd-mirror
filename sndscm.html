@@ -265,15 +265,6 @@ For help with Forth and Snd/CLM, see the Forth documentation section "Snd, CLM, 
 <tr><td bgcolor="#f2f4ff"><a href="#zipdoc">zip</a></td>
     <td bgcolor="#f2f4ff" onmouseout="UnTip()" onmouseover="Tip(zip_doc_tip)">the zipper (the anti-cross-fader)</td></tr>
 
-<tr><td><a href="#extsndasneededexpl">A Note on "As-Needed" input functions</a></td>
-    <td></td></tr>
-
-<tr><td bgcolor="#f2f4ff"><a href="#extsndcgens">A Note on User-defined Generators in C-CLM</a></td>
-    <td bgcolor="#f2f4ff" ></td></tr>
-
-<tr><td><a href="#noisystory">A Note on Noise Reduction</a></td>
-    <td></td></tr>
-
 </table>
 </td></tr></table>
 
@@ -817,6 +808,291 @@ variety of functions from dsp.scm.  The final low-pass filter is relatively cons
 it's not a very intense filter), so you may want to run another filter over the data after calling
 clean-channel.
 </p>
+<br>
+
+<table width="30%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>A Noisy Story</h4></td></tr></table>
+<!-- INDEX noisystory:Noise Reduction -->
+
+<p>There is no built-in noise reduction function in Snd.
+I believe the most common such function is 
+some variant of Perry Cook's
+Scrubber program (see anoi in clm-ins.scm or fft-squelch in examp.scm).
+Secondary tricks involve smoothing functions similar to smooth-channel,
+and enveloping to silence stuff between tracks, and so on.
+clean-channel came about when
+I blithely offered to clean up some recorded telephone conversations.
+The first step was to find the clipped locations (where the conversation was
+accidentally over-recorded).  I did this first because there were places in the
+recordings where the DC offset was huge, causing clipping in a signal that would
+otherwise have been safe.  I hoped to reconstruct the signal at the clipped
+points, but these would be hard to find once the DC was removed.  A quick check:
+</p>
+
+<pre>
+  (<a class=quiet href="extsnd.html#countmatches" onmouseout="UnTip()" onmouseover="Tip(extsnd_countmatches_tip)">count-matches</a> (lambda (y) (or (&gt; y .9999) (&lt; y -.9999))))
+</pre>
+
+<p>
+returned 5437 (in 18 minutes of sound).  That seemed high, and I thought "maybe
+those are just one sample clicks that can easily be smoothed over", so
+</p>
+
+<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+(define* (count-clips :optional snd chn)
+  (let ((y0 0.0))
+    (<a class=quiet href="extsnd.html#countmatches" onmouseout="UnTip()" onmouseover="Tip(extsnd_countmatches_tip)">count-matches</a> 
+     (lambda (y) (let ((val (and (or (&gt; y0 .9999) (&lt; y0 -.9999))
+				 (or (&gt; y .9999) (&lt; y -.9999)))))
+		   (set! y0 y)
+		   val))
+     0 snd chn)))
+</pre></td></tr></table>
+
+<p>
+But this returned 4768!  I made a list of clipped
+portions (this function has at least one bug, but I plowed past it &mdash; no
+time for perfection...):
+</p>
+
+<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+(define* (list-clips :optional snd chn)
+  (let* ((max-clips (count-clips snd chn))
+	 (clip-data (make-vector (* 2 max-clips) 0))
+	 (clip-ctr 0)
+	 (clip-beg 0)
+	 (clip-end 0)
+	 (clip-max-len 0)
+	 (in-clip #f)
+	 (samp 0))
+    (<a class=quiet href="extsnd.html#scanchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_scanchannel_tip)">scan-channel</a>
+     (lambda (y)
+       (if (or (&gt; y .9999) (&lt; y -.9999))
+	   (if in-clip
+	       (set! clip-end samp)
+	       (begin
+		 (set! in-clip #t)
+		 (set! clip-beg samp)
+		 (set! clip-end samp)))
+	   (if in-clip
+	       (begin
+		 (set! in-clip #f)
+		 (vector-set! clip-data clip-ctr clip-beg)
+		 (vector-set! clip-data (1+ clip-ctr) clip-end)
+		 (set! clip-max-len (max clip-max-len (1+ (- clip-end clip-beg))))
+		 (set! clip-ctr (+ clip-ctr 2)))))
+       (set! samp (1+ samp))
+       #f)) ; make sure scan doesn't quit prematurely
+    (list clip-ctr clip-max-len clip-data)))
+</pre></td></tr></table>
+
+<p>
+which returned a vector of 669 clipped portions, the worst being 42 samples long!
+I saved that data in a separate file, just in case of disaster:
+</p>
+
+<pre>
+    (with-output-to-file "clips" (display (list-clips)))
+</pre>
+
+<p>
+I decided to try to reconstruct the clipped portions before 
+filtering them.
+This
+produced sample values outside -1.0 to 1.0,
+so I reset the graph y bounds:
+</p>
+
+<pre>
+    (set! (<a class=quiet href="extsnd.html#ybounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_ybounds_tip)">y-bounds</a>) (list -1.5 1.5))
+</pre>
+
+<p>
+Now to conjure up a plausible sine wave between the clip begin and
+end points.  (This is also "just-good-enough" software).
+</p>
+
+<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+(if (not (defined? 'pi)) (define pi 3.141592653589793))
+
+(define (fix-clip clip-beg-1 clip-end-1)
+  (if (&gt; clip-end-1 clip-beg-1)
+      (let* ((dur (1+ (- clip-end-1 clip-beg-1)))
+	     (samps (<a class=quiet href="extsnd.html#channeltovct" onmouseout="UnTip()" onmouseover="Tip(extsnd_channeltovct_tip)">channel-&gt;vct</a> (- clip-beg-1 4) (+ dur 9)))
+	     (clip-beg 3)
+	     (clip-end (+ dur 4)))
+	(let ((samp0 (<a class=quiet href="extsnd.html#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> samps clip-beg))
+	      (samp1 (<a class=quiet href="extsnd.html#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> samps clip-end)))
+	  (if (or (&gt; samp0 .99) (&lt; samp0 -.99))
+	      (begin
+	        ;; weird!  some of the clipped passages have "knees"
+		;;   this looks nuts, but no time to scratch my head
+		(set! clip-beg (1- clip-beg))
+		(set! samp0 (<a class=quiet href="extsnd.html#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> samps clip-beg))
+		(if (or (&gt; samp0 .99) (&lt; samp0 -.99))
+		    (begin
+		      (set! clip-beg (1- clip-beg))
+		      (set! samp0 (<a class=quiet href="extsnd.html#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> samps clip-beg))))))
+	  (if (or (&gt; samp1 .99) (&lt; samp1 -.99))
+	      (begin
+		(set! clip-end (1+ clip-end))
+		(set! samp1 (<a class=quiet href="extsnd.html#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> samps clip-end))
+		(if (or (&gt; samp1 .99) (&lt; samp1 -.99))
+		    (begin
+		      (set! clip-end (1+ clip-end))
+		      (set! samp1 (<a class=quiet href="extsnd.html#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> samps clip-end))))))
+          ;; now we have semi-plausible bounds
+          ;; make sine dependent on rate of change of current 
+	  (let* ((samp00 (<a class=quiet href="extsnd.html#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> samps (1- clip-beg)))
+		 (samp11 (<a class=quiet href="extsnd.html#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> samps (1+ clip-end)))
+		 (dist (- clip-end clip-beg))
+		 (incr (/ pi dist))
+		 (amp (* .125 (+ (abs (- samp0 samp00)) (abs (- samp1 samp11))) dist)))
+	    (if (&gt; samp0 0.0)
+                ;; clipped at 1.0
+		(do ((i (1+ clip-beg) (1+ i))
+		     (angle incr (+ angle incr)))
+		    ((= i clip-end))
+		  (<a class=quiet href="extsnd.html#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> samps i (+ 1.0 (* amp (sin angle)))))
+                ;; clipped at -1.0
+		(do ((i (1+ clip-beg) (1+ i))
+		     (angle incr (+ angle incr)))
+		    ((= i clip-end))
+		  (<a class=quiet href="extsnd.html#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> samps i (- -1.0 (* amp (sin angle))))))
+	    (<a class=quiet href="extsnd.html#vcttochannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_vcttochannel_tip)">vct-&gt;channel</a> samps (- clip-beg-1 4))))
+	#t) ; return values so I can tell when I hit a 1-sample section during testing
+      #f))
+
+(define (fix-it n)
+  ;; turn off graphics and fix all the clipped sections
+  (set! (<a class=quiet href="extsnd.html#squelchupdate" onmouseout="UnTip()" onmouseover="Tip(extsnd_squelchupdate_tip)">squelch-update</a>) #t)
+  (do ((i 0 (1+ i)))
+      ((or (= i n) (<a class=quiet href="extsnd.html#cgp" onmouseout="UnTip()" onmouseover="Tip(extsnd_cgp_tip)">c-g?</a>))) 
+      ;; "clips" here is a list form of the earlier vector of clip locations
+    (fix-clip (list-ref clips (* i 2)) 
+	      (list-ref clips (1+ (* i 2)))))
+  (set! (<a class=quiet href="extsnd.html#squelchupdate" onmouseout="UnTip()" onmouseover="Tip(extsnd_squelchupdate_tip)">squelch-update</a>) #f))
+
+(fix-it 669)
+</pre></td></tr></table>
+
+<p>
+This produced 418 edits, with a maxamp of 2.26.  So scale it back down:
+<code>(<a class=quiet href="extsnd.html#scaleto" onmouseout="UnTip()" onmouseover="Tip(extsnd_scaleto_tip)">scale-to</a> .9)</code>.
+Next I ran some large ffts to see what sort of overall spectrum I had:
+<code>(set! (<a class=quiet href="extsnd.html#transformsize" onmouseout="UnTip()" onmouseover="Tip(extsnd_transformsize_tip)">transform-size</a>) (expt 2 23))</code>.
+This showed a massive DC component, and numerous harmonics of 60 Hz.
+I decided to get rid of the portions that were clearly noise.  Since I was dealing with
+telephone recordings, I assumed anything under 40 Hz or above
+4000 Hz was extraneous:
+</p>
+
+<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+(define* (<a name="notchoutrumbleandhiss">notch-out-rumble-and-hiss</a> :optional snd chn)
+  (let* ((cur-srate (exact-&gt;inexact (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> snd))))
+    (<a class=quiet href="extsnd.html#filtersound" onmouseout="UnTip()" onmouseover="Tip(extsnd_filtersound_tip)">filter-sound</a>
+     (list 0.0 0.0                    ; get rid of DC
+	   (/ 80.0 cur-srate) 0.0     ; get rid of anything under 40 Hz (1.0=srate/2 here)
+	   (/ 90.0 cur-srate) 1.0     ; now the passband
+	   (/ 7000.0 cur-srate) 1.0 
+	   (/ 8000.0 cur-srate) 0.0   ; end passband (40..4000)
+	   1.0 0.0)                   ; get rid of some of the hiss
+     ;; since I'm assuming the minimum band is 10 Hz here, 
+     ;;   cur-srate/10 rounded up to next power of 2 seems a safe filter size
+     ;;   filter-sound will actually use overlap-add convolution in this case
+     (inexact-&gt;exact (expt 2 (ceiling (/ (log (/ cur-srate 10.0)) (log 2.0)))))
+     snd chn)))
+
+(notch-out-rumble-and-hiss)
+</pre></td></tr></table>
+
+<p>
+By now it was obvious I needed a simple way to play portions of the
+sound before and after an edit, sometimes with a tracking cursor.
+So I bound a few keys:
+</p>
+
+<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+(define (play-from-cursor current)
+  (<a class=quiet href="extsnd.html#play" onmouseout="UnTip()" onmouseover="Tip(extsnd_play_tip)">play</a> (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) #f #f #f #f (if current #f (1- (<a class=quiet href="extsnd.html#editposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_editposition_tip)">edit-position</a>)))))
+
+(define (play-from-cursor-with-tracking current)
+  ;; patterned after pfc in extsnd.html
+  (let ((old-tracking (<a class=quiet href="extsnd.html#withtrackingcursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_withtrackingcursor_tip)">with-tracking-cursor</a>)))
+    (set! (<a class=quiet href="extsnd.html#withtrackingcursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_withtrackingcursor_tip)">with-tracking-cursor</a>) #t)
+    (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> <a class=quiet href="extsnd.html#stopplayinghook" onmouseout="UnTip()" onmouseover="Tip(extsnd_stopplayinghook_tip)">stop-playing-hook</a> 
+	       (lambda (snd)
+		 (set! (<a class=quiet href="extsnd.html#withtrackingcursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_withtrackingcursor_tip)">with-tracking-cursor</a>) old-tracking)))
+    (<a class=quiet href="extsnd.html#play" onmouseout="UnTip()" onmouseover="Tip(extsnd_play_tip)">play</a> (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) #f #f #f #f (if current #f (1- (<a class=quiet href="extsnd.html#editposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_editposition_tip)">edit-position</a>))))))
+
+(<a class=quiet href="extsnd.html#bindkey" onmouseout="UnTip()" onmouseover="Tip(extsnd_bindkey_tip)">bind-key</a> #\p 0 (lambda () 
+                  "play from cursor" 
+	  	  (play-from-cursor #t) <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_keyboard_no_action_tip)">keyboard-no-action</a>))
+(<a class=quiet href="extsnd.html#bindkey" onmouseout="UnTip()" onmouseover="Tip(extsnd_bindkey_tip)">bind-key</a> #\P 0 (lambda () 
+                  "play previous from cursor" 
+		  (play-from-cursor #f) <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_keyboard_no_action_tip)">keyboard-no-action</a>))
+(<a class=quiet href="extsnd.html#bindkey" onmouseout="UnTip()" onmouseover="Tip(extsnd_bindkey_tip)">bind-key</a> #\p 4 (lambda () 
+                  "play from cursor with tracking" 
+		  (play-from-cursor-with-tracking #t) <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_keyboard_no_action_tip)">keyboard-no-action</a>))
+</pre></td></tr></table>
+
+<p>
+In words, if the mouse is in the channel graph, 'p' plays from the cursor,
+'P' plays the previous version from the cursor, and 'C-p' plays from
+the cursor with a "tracking cursor".
+In several of the sections (the overall sound consisted of a couple dozen
+separate conversations), there was a loud mid-range tone.  To figure out what its component frequencies were,
+I FFT'd a portion containing only that noise and got this spectrum
+(plus a zillion other peaks that didn't look interesting):
+</p>
+<pre>
+    ((425 .05) (450 .01) (546 .02) (667 .01) (789 .034) (910 .032) (470 .01))
+</pre>
+<p>To hear that, I passed this list to <a href="#playsines">play-sines</a>:
+</p>
+<pre>
+    (play-sines '((425 .05) (450 .01) (546 .02) (667 .01) (789 .034) (910 .032) (470 .01)))
+</pre>
+<p>
+And to my surprise, the result was close to the main portion of the hum.  
+So now to notch out those frequencies,
+and see what is left: <code>(notch-sound (list 425 450 470 546 667 789 910) #f 1 10)</code>.
+This erased most of the hum, but it also
+changed the timbre of the voices which wasn't acceptable.
+I goofed around with the notch-width and filter-size parameters, looking
+for something that that would still do the trick without removing
+the personal side of the voices, but in only a few cases was the result
+usable. What was being said was not very important, but the
+individual characteristics of each voice were.
+</p>
+
+<p>
+The next step was to take out noisy sections between snippets, mostly
+using <code>(<a class=quiet href="extsnd.html#envselection" onmouseout="UnTip()" onmouseover="Tip(extsnd_envselection_tip)">env-selection</a> '(0 1 1 0 10 0 11 1))</code>
+and equalizing each snippet, more or less, with scale-selection-by.
+There were a few "you-are-being-recorded" beeps which I deleted (via the Edit
+menu delete selection option).  
+In some of the conversations,
+between sections of speech the background hum would gradually increase, then
+the voice would abruptly start with a large peak amplitude. These
+were fixed mostly with small-section scale-by's and envelopes.
+In the female voice sections, it seemed to help to:
+<code>(<a class=quiet href="extsnd.html#filterselection" onmouseout="UnTip()" onmouseover="Tip(extsnd_filterselection_tip)">filter-selection</a> '(0 0 .01 0 .02 1 1 1) 1024)</code>
+which got rid of some of the rumble without noticeably affecting
+the vocal timbre.
+</p>
+
+<TABLE border=3 bordercolor="tan" hspace=40><tr><td>
+<blockquote><small>
+<br>
+clicks: <a href="extsnd.html#smoothchannel">smooth-channel</a>, <a href="#removeclicks">remove-clicks</a>, <a href="sndscm.html#fftsmoother">fft-smoother</a><br>
+rumble, hiss: <a href="#notchoutrumbleandhiss">notch-out-rumble-and-hiss</a>, <a href="#fftsquelch">fft-squelch</a>, <a href="#fftcancel">fft-cancel</a><br>
+hum: <a href="#notchchannel">notch-channel</a><br>
+via CLM ins: <a href="#anoi">anoi</a><br>
+<br>
+</small></blockquote>
+</td></tr></TABLE>
+<br>
+
 
 <br>
 <br>
@@ -10712,695 +10988,6 @@ an upward ramp and a downward ramp, then zips them together:
 <br>
 
 
-
-<!-- ---------------------------------------- as needed functions ---------------------------------------- -->
-
-<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="extsndasneededexpl">A Note on "As-Needed" input functions</a></h2></td></tr></table>
-
-<p>Several CLM generators work internally on buffers of data; only the code internal
-to the generator knows when it needs input, and how much it needs.  So, <a href="sndclm.html#src">src</a>, <a href="sndclm.html#granulate">granulate</a>,
-<a href="sndclm.html#convolve">convolve</a>, and <a href="sndclm.html#phase-vocoder">phase-vocoder</a> are passed a function either at run-time or when the
-generator is allocated that they can call whenever a new value is needed.
-A simple C case is:
-</p>
-
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-#include &lt;stdio.h&gt;
-#include "clm.h"
-
-typedef struct {
-  float val;
-} src_state;
-
-float src_input_as_needed(void *arg, int dir) 
-{
-  src_state *sr = (src_state *)arg;
-  sr-&gt;val += (dir * .01); /* just return a ramp */
-  return(sr-&gt;val);
-}
-
-int main(int argc, char **argv)
-{
-  mus_any *gen;
-  src_state *input;
-  int i;
-  input = (src_state *)calloc(1, sizeof(src_state));
-  input-&gt;val = 0.0;
-  gen = mus_make_src(&amp;src_input_as_needed, 0.5, 10, (void *)input);
-  for (i=0; i &lt; 100; i++)
-    fprintf(stdout, "%f ", mus_src(gen, 0.0, NULL));
-    /* or: fprintf(stdout, "%f ", mus_src(gen, 0.0, src_input_as_needed)); */
-  mus_free(gen);
-  free(input);
-  return(0);
-}
-
-/* cc g1.c -o g1 -L/usr/local/lib -lguile /home/bil/sndlib/sndlib.a */
-/* g1: 0.010000 0.015440 0.020000 0.024761 0.029999 0.035170 0.039999 ... */
-</pre></td></tr></table>
-
-<p>To put that code in words, the src generator uses the function
-<code>src_input_as_needed</code> to fill its internal buffer (convolving
-it with sinc); in this case, the "srate" argument is 0.5, so src will
-pick up a new input sample (calling src_input_as_needed) on every other
-output sample.  In the Scheme CLM (and Snd), the "as-needed" input
-function is a Scheme function passed in as Scheme code.
-</p>
-<br>
-
-
-
-<!-- ---------------------------------------- user-defined generators ---------------------------------------- -->
-
-<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="extsndcgens">A Note on User-defined Generators in C-CLM</a></h2></td></tr></table>
-<p>To define a new generator type in Scheme is not difficult.  
-For example, here is a comb filter with
-a low-pass filter on the feedback (this is now built into CLM as <a href="sndclm.html#filtered-comb">filtered-comb</a>):
-</p>
-
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-(define (fcomb gen input)
-  (gen input))	
-
-(define (make-fcomb length feedback a0 a1)
-  (let ((dly (<a class=quiet href="sndclm.html#make-delay" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_delay_tip)">make-delay</a> length))
-        (flt (<a class=quiet href="sndclm.html#make-one-zero" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_one_zero_tip)">make-one-zero</a> a0 a1)))
-    (lambda (input)
-      (dly (+ input (* (flt (<a class=quiet href="sndclm.html#tap" onmouseout="UnTip()" onmouseover="Tip(sndclm_tap_tip)">tap</a> dly)) feedback))))))
-</pre></td></tr></table>
-
-<p>See <a href="#def-clm-struct">def-clm-struct</a> for more such examples.
-We could use Guile's object system to conjure up fcomb
-classes and methods in Scheme:
-</p>
-
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-(use-modules (oop goops))
-
-(define-class fcmb ()
-  (dly :accessor fcomb-delay)
-  (flt :accessor fcomb-filter)
-  (fdb :accessor fcomb-feedback))
-
-(define (fcomb gen input)
-  ((fcomb-delay gen) 
-   (+ input (* ((fcomb-filter gen) 
-		(<a class=quiet href="sndclm.html#tap" onmouseout="UnTip()" onmouseover="Tip(sndclm_tap_tip)">tap</a> (fcomb-delay gen)))
-	       (fcomb-feedback gen)))))
-
-(define-method (initialize (obj fcmb) initargs)
-  (next-method)
-  (let* ((len (get-keyword :length initargs 0))
-	 (feedback (get-keyword :feedback initargs 0.5))
-	 (a0 (get-keyword :a0 initargs 0.5))
-	 (a1 (get-keyword :a1 initargs 0.5)))
-    (set! (fcomb-delay obj) (<a class=quiet href="sndclm.html#make-delay" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_delay_tip)">make-delay</a> len))
-    (set! (fcomb-filter obj) (<a class=quiet href="sndclm.html#make-one-zero" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_one_zero_tip)">make-one-zero</a> a0 a1))
-    (set! (fcomb-feedback obj) feedback)
-    obj))
-
-(define-method (write (obj fcmb) port)
-  (display (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "#&lt;fcomb: delay: ~A, filter: ~A, feedback: ~A&gt;"
-		   (fcomb-delay obj)
-		   (fcomb-filter obj)
-		   (fcomb-feedback obj))
-	   port))
-</pre></td></tr></table>
-
-<p>
-To do the same thing in CLM-in-C (clm.c) takes a bit more effort:
-</p>
-
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-#include &lt;stddef.h&gt;
-#include &lt;math.h&gt;
-#include &lt;stdio.h&gt;
-#include "sndlib.h"
-#include "clm.h"
-#include "xen.h"
-#include "clm2xen.h"
-
-static int MUS_FCOMB = 0; /* this will be our fcomb type identifier */
-
-typedef struct {
-  mus_any_class *core;
-  int loc, size;
-  Float *line;
-  Float xscl, a0, a1, x1;
-} fcomb;
-
-/* each CLM-in-C generator has mus_any_class *core as the first thing in its structure.
- *   it defines most of the built-in "generic" functions like mus-describe.
- * The next set of functions implement the core functions/
- *   The address of the function is stored in the class's core struct.
- *   For example, the scaler method is defined as Float (*scaler)(mus_any *ptr);
- *   in the mus_any_class declaration (clm.h); for fcomb it will correspond
- *   to the fcomb_scaler function below; it is invoked via mus_scaler(gen)
- *   where gen is an fcomb generator (the actual call is (*((gen-&gt;core)-&gt;scaler))(gen)).
- *   the core-&gt;scaler pointer (the function address) is set in the declaration
- *   of mus_any_class FCOMB_CLASS below.  If a method doesn't apply to a given
- *   generator class, just set its slot to 0.
- */
-
-static bool mus_fcomb_p(mus_any *ptr) {return((ptr) &amp;&amp; ((ptr-&gt;core)-&gt;type == MUS_FCOMB));}
-
-static char *describe_fcomb(mus_any *ptr) 
-{
-  char *desc = NULL;
-  fcomb *gen = (fcomb *)ptr;
-  desc = (char *)calloc(1024, sizeof(char));
-  if (desc)
-    {
-      if (mus_fcomb_p((mus_any *)ptr))
-	sprintf(desc, "fcomb: scaler: %.3f,  a0: %.3f,  a1: %.3f,  line[%d]", 
-		gen-&gt;xscl, gen-&gt;a0, gen-&gt;a1, gen-&gt;size);
-      else sprintf(desc, "not an fcomb gen");
-    }
-  return(desc);
-}
-
-static bool fcomb_equalp(mus_any *p1, mus_any *p2) {return(p1 == p2);}
-static off_t fcomb_length(mus_any *ptr) {return(((fcomb *)ptr)-&gt;size);}
-static Float *fcomb_data(mus_any *ptr) {return(((fcomb *)ptr)-&gt;line);}
-static Float fcomb_scaler(mus_any *ptr) {return(((fcomb *)ptr)-&gt;xscl);}
-static Float set_fcomb_scaler(mus_any *ptr, Float val) {((fcomb *)ptr)-&gt;xscl = val; return(val);}
-
-static void fcomb_reset(mus_any *ptr)
-{
-  fcomb *gen = (fcomb *)ptr;
-  gen-&gt;loc = 0;
-  memset((void *)(gen-&gt;line), 0, gen-&gt;size * sizeof(Float));
-}
-
-static int free_fcomb(mus_any *uptr) 
-{
-  fcomb *ptr = (fcomb *)uptr;
-  if (ptr)
-    {
-      if (ptr-&gt;line) 
-        free(ptr-&gt;line);
-      free(ptr); 
-    }
-  return(0);
-}
-
-/* now the actual run-time code executed by fcomb */
-/* the extra "ignored" argument is for the run method */
-
-static Float mus_fcomb (mus_any *ptr, Float input, Float ignored) 
-{
-  fcomb *gen = (fcomb *)ptr;
-  Float tap_result, filter_result;
-  tap_result = gen-&gt;line[gen-&gt;loc];
-  filter_result = (gen-&gt;a0 * tap_result) + (gen-&gt;a1 * gen-&gt;x1);
-  gen-&gt;x1 = tap_result;
-  gen-&gt;line[gen-&gt;loc] = input + filter_result * gen-&gt;xscl;
-  gen-&gt;loc++;
-  if (gen-&gt;loc &gt;= gen-&gt;size) gen-&gt;loc = 0;
-  return(tap_result);
-}
-
-/* this is our generator class descriptor */
-
-static mus_any_class FCOMB_CLASS = {
-  -1, /* MUS_FCOMB eventually */ /* mus_type: this is assigned at run-time via mus_make_class_tag below */
-  "fcomb",                       /* mus_name: class name (used in descriptive/error messages) */
-  &amp;free_fcomb,                   /* mus_free: free gen's struct etc */
-  &amp;describe_fcomb,               /* mus_describe: user-friendly description */
-  &amp;fcomb_equalp,                 /* mus_equalp: check equality of fcomb gens */
-  &amp;fcomb_data,                   /* mus_data: the fcomb delay line, a float array */
-  0,
-  &amp;fcomb_length,                 /* mus_length: delay line length */
-  0,
-  0,0,
-  0,0,
-  &amp;fcomb_scaler,                 /* mus_scaler: the feedback term */
-  &amp;set_fcomb_scaler,             /* mus_set_scaler */
-  0, 0,
-  &amp;mus_fcomb,                    /* mus_run|apply: the run-time fcomb function */
-  MUS_NOT_SPECIAL,               /* type extension */
-  NULL,                     
-  0,
-  0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0,
-  &amp;fcomb_reset,
-  0
-};
-
-/* now a function to make a new generator */
-
-static mus_any *mus_make_fcomb (Float scaler, int size, Float a0, Float a1)
-{
-  fcomb *gen = NULL;
-  gen = (fcomb *)calloc(1, sizeof(fcomb));
-  if (gen == NULL) 
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED, 
-              "can't allocate struct for mus_make_fcomb!");
-  else
-    {
-      gen-&gt;core = &amp;FCOMB_CLASS;
-      if (MUS_FCOMB == 0) 
-        {
-          MUS_FCOMB = mus_make_class_tag();  /* this gives us a unique fcomb type id */
-          gen-&gt;core-&gt;type = MUS_FCOMB;
-        }
-      gen-&gt;loc = 0;
-      gen-&gt;xscl = scaler;
-      gen-&gt;x1 = 0.0;
-      gen-&gt;a0 = a0;
-      gen-&gt;a1 = a1;
-      gen-&gt;size = size;
-      gen-&gt;line = (Float *)calloc(size, sizeof(Float));
-      if (gen-&gt;line == NULL) 
-	mus_error(MUS_MEMORY_ALLOCATION_FAILED, 
-		  "can't allocate %d bytes for fcomb delay line in mus_make_fcomb!",
-		  (int)(size * sizeof(Float)));
-    }
-  return((mus_any *)gen);
-}
-
-/* that is the end of the C side; the rest ties this generator into Guile/Ruby/Forth via the Xen package */
-/*   in Snd's case, it's actually not needed because the generator is only called from C */
-
-static XEN g_fcomb(XEN obj, XEN input)
-{
-  return(C_TO_XEN_DOUBLE(mus_fcomb(MUS_XEN_TO_CLM(obj), XEN_TO_C_DOUBLE(input), 0.0)));
-}
-
-static XEN g_fcomb_p(XEN obj)
-{
-  return(C_TO_XEN_BOOLEAN((mus_xen_p(obj)) &amp;&amp; (mus_fcomb_p(MUS_XEN_TO_CLM(obj)))));
-}
-
-static XEN g_make_fcomb(XEN scaler, XEN size, XEN a0, XEN a1)
-{
-  mus_xen *gn;
-  gn = (mus_xen *)CALLOC(1,sizeof(mus_xen));
-  gn-&gt;gen = mus_make_fcomb(XEN_TO_C_DOUBLE(scaler),
-                           XEN_TO_C_INT(size),
-                           XEN_TO_C_DOUBLE(a0),
-                           XEN_TO_C_DOUBLE(a1));
-  gn-&gt;nvcts = 0;
-  return(mus_xen_to_object(gn));
-}
-
-static void init_fcomb(void)
-{
-  XEN_DEFINE_PROCEDURE("fcomb?", g_fcomb_p, 1, 0, 0, "(fcomb? gen) -&gt; #t if gen is an fcomb generator");
-  XEN_DEFINE_PROCEDURE("make-fcomb", g_make_fcomb, 4, 0, 0, "(make-fcomb scaler size a0 a1) -&gt; new fcomb gen");
-  XEN_DEFINE_PROCEDURE("fcomb", g_fcomb, 2, 0, 0, "(fcomb gen input) returns result of running fcomb gen");
-}
-</pre></td></tr></table>
-<br>
-
-<br>
-
-
-<!-- ---------------------------------------- noise reduction ---------------------------------------- -->
-
-<table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="noisystory">A Note on Noise Reduction</a></h2></td></tr></table>
-<!-- INDEX noisystory:Noise Reduction -->
-
-<p>There is no built-in noise reduction function in Snd.  There are so many kinds of
-noise (clicks, pops, rumble, hiss, hum, crackle, clips, flutter, "distortion", modulation, echoes, etc),
-and what is noise in one context is signal in another (consonants, percussion, etc)
-that it's hard to write a single function that can handle every case.
-As far as I can tell, looking at other programs that
-offer noise reduction, the main trick used is similar to Perry Cook's
-Scrubber program, translated to Scheme as anoi in clm-ins.scm or fft-squelch in examp.scm.
-Secondary tricks involve smoothing functions similar to smooth-channel,
-and enveloping to silence stuff between tracks, etc.
-I'd certainly be happy to include in Snd an all-inclusive function for noise reduction,
-if anyone sends me one as a gift!  But in the meantime, 
-the tools exist to do most of what you normally want to do in
-this situation.  
-</p>
-<p>
-In my case, I blithely offered to clean up some recorded telephone conversations.
-The first step was to find the clipped locations (where the conversation was
-accidentally over-recorded).  I did this first because there were places in the
-recordings where the DC offset was huge, causing clipping in a signal that would
-otherwise have been safe.  I hoped to reconstruct the signal at the clipped
-points, but these would be hard to find once the DC was removed.  A quick check:
-</p>
-
-<pre>
-  (<a class=quiet href="extsnd.html#countmatches" onmouseout="UnTip()" onmouseover="Tip(extsnd_countmatches_tip)">count-matches</a> (lambda (y) (or (&gt; y .9999) (&lt; y -.9999))))
-</pre>
-<p>
-returned 5437 (in 18 minutes of sound).  That seemed high, and I thought "maybe
-those are just one sample clicks that can easily be smoothed over", so
-</p>
-
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-(define* (count-clips :optional snd chn)
-  (let ((y0 0.0))
-    (<a class=quiet href="extsnd.html#countmatches" onmouseout="UnTip()" onmouseover="Tip(extsnd_countmatches_tip)">count-matches</a> 
-     (lambda (y) (let ((val (and (or (&gt; y0 .9999) (&lt; y0 -.9999))
-				 (or (&gt; y .9999) (&lt; y -.9999)))))
-		   (set! y0 y)
-		   val))
-     0 snd chn)))
-</pre></td></tr></table>
-
-<p>
-But this returned 4768!  So, it's time to make a list of clipped
-portions (this function has at least one bug, but I plowed past it &mdash; no
-time for perfection...):
-</p>
-
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-(define* (list-clips :optional snd chn)
-  (let* ((max-clips (count-clips snd chn))
-	 (clip-data (make-vector (* 2 max-clips) 0))
-	 (clip-ctr 0)
-	 (clip-beg 0)
-	 (clip-end 0)
-	 (clip-max-len 0)
-	 (in-clip #f)
-	 (samp 0))
-    (<a class=quiet href="extsnd.html#scanchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_scanchannel_tip)">scan-channel</a>
-     (lambda (y)
-       (if (or (&gt; y .9999) (&lt; y -.9999))
-	   (if in-clip
-	       (set! clip-end samp)
-	       (begin
-		 (set! in-clip #t)
-		 (set! clip-beg samp)
-		 (set! clip-end samp)))
-	   (if in-clip
-	       (begin
-		 (set! in-clip #f)
-		 (vector-set! clip-data clip-ctr clip-beg)
-		 (vector-set! clip-data (1+ clip-ctr) clip-end)
-		 (set! clip-max-len (max clip-max-len (1+ (- clip-end clip-beg))))
-		 (set! clip-ctr (+ clip-ctr 2)))))
-       (set! samp (1+ samp))
-       #f)) ; make sure scan doesn't quit prematurely
-    (list clip-ctr clip-max-len clip-data)))
-</pre></td></tr></table>
-
-<p>
-which returned a vector of 669 clipped portions, the worst being 42 samples long!
-I saved that data in a separate file, just in case of disaster:
-</p>
-<pre>
-    (with-output-to-file "clips" (display (list-clips)))
-</pre>
-<p>
-Since filtering can pad the sound at the beginning, and tends to
-change the clipped portions, I decide to reconstruct them first.  This will
-produce sample values outside -1.0 to 1.0, but I can scale everything
-back down at the end.
-To see how things look, I reset the graph y bounds:
-</p>
-<pre>
-    (set! (<a class=quiet href="extsnd.html#ybounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_ybounds_tip)">y-bounds</a>) (list -1.5 1.5))
-</pre>
-<p>
-Now to conjure up a plausible sine wave between the clip begin and
-end points.  (This is also "just-good-enough" software).
-</p>
-
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-(if (not (defined? 'pi)) (define pi 3.141592653589793))
-
-(define (fix-clip clip-beg-1 clip-end-1)
-  (if (&gt; clip-end-1 clip-beg-1)
-      (let* ((dur (1+ (- clip-end-1 clip-beg-1)))
-	     (samps (<a class=quiet href="extsnd.html#channeltovct" onmouseout="UnTip()" onmouseover="Tip(extsnd_channeltovct_tip)">channel-&gt;vct</a> (- clip-beg-1 4) (+ dur 9)))
-	     (clip-beg 3)
-	     (clip-end (+ dur 4)))
-	(let ((samp0 (<a class=quiet href="extsnd.html#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> samps clip-beg))
-	      (samp1 (<a class=quiet href="extsnd.html#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> samps clip-end)))
-	  (if (or (&gt; samp0 .99) (&lt; samp0 -.99))
-	      (begin
-	        ;; weird!  some of the clipped passages have "knees"
-		;;   this looks nuts, but no time to scratch my head
-		(set! clip-beg (1- clip-beg))
-		(set! samp0 (<a class=quiet href="extsnd.html#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> samps clip-beg))
-		(if (or (&gt; samp0 .99) (&lt; samp0 -.99))
-		    (begin
-		      (set! clip-beg (1- clip-beg))
-		      (set! samp0 (<a class=quiet href="extsnd.html#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> samps clip-beg))))))
-	  (if (or (&gt; samp1 .99) (&lt; samp1 -.99))
-	      (begin
-		(set! clip-end (1+ clip-end))
-		(set! samp1 (<a class=quiet href="extsnd.html#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> samps clip-end))
-		(if (or (&gt; samp1 .99) (&lt; samp1 -.99))
-		    (begin
-		      (set! clip-end (1+ clip-end))
-		      (set! samp1 (<a class=quiet href="extsnd.html#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> samps clip-end))))))
-          ;; now we have semi-plausible bounds
-          ;; make sine dependent on rate of change of current 
-	  (let* ((samp00 (<a class=quiet href="extsnd.html#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> samps (1- clip-beg)))
-		 (samp11 (<a class=quiet href="extsnd.html#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> samps (1+ clip-end)))
-		 (dist (- clip-end clip-beg))
-		 (incr (/ pi dist))
-		 (amp (* .125 (+ (abs (- samp0 samp00)) (abs (- samp1 samp11))) dist)))
-	    (if (&gt; samp0 0.0)
-                ;; clipped at 1.0
-		(do ((i (1+ clip-beg) (1+ i))
-		     (angle incr (+ angle incr)))
-		    ((= i clip-end))
-		  (<a class=quiet href="extsnd.html#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> samps i (+ 1.0 (* amp (sin angle)))))
-                ;; clipped at -1.0
-		(do ((i (1+ clip-beg) (1+ i))
-		     (angle incr (+ angle incr)))
-		    ((= i clip-end))
-		  (<a class=quiet href="extsnd.html#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> samps i (- -1.0 (* amp (sin angle))))))
-	    (<a class=quiet href="extsnd.html#vcttochannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_vcttochannel_tip)">vct-&gt;channel</a> samps (- clip-beg-1 4))))
-	#t) ; return values so I can tell when I hit a 1-sample section during testing
-      #f))
-
-(define (fix-it n)
-  ;; turn off graphics and fix all the clipped sections
-  (set! (<a class=quiet href="extsnd.html#squelchupdate" onmouseout="UnTip()" onmouseover="Tip(extsnd_squelchupdate_tip)">squelch-update</a>) #t)
-  (do ((i 0 (1+ i)))
-      ((or (= i n) (<a class=quiet href="extsnd.html#cgp" onmouseout="UnTip()" onmouseover="Tip(extsnd_cgp_tip)">c-g?</a>))) 
-      ;; "clips" here is a list form of the earlier vector of clip locations
-    (fix-clip (list-ref clips (* i 2)) 
-	      (list-ref clips (1+ (* i 2)))))
-  (set! (<a class=quiet href="extsnd.html#squelchupdate" onmouseout="UnTip()" onmouseover="Tip(extsnd_squelchupdate_tip)">squelch-update</a>) #f))
-
-(fix-it 669)
-</pre></td></tr></table>
-
-<p>
-This produced 418 edits, with a maxamp of 2.26.  So scale it back down:
-<code>(<a class=quiet href="extsnd.html#scaleto" onmouseout="UnTip()" onmouseover="Tip(extsnd_scaleto_tip)">scale-to</a> .9)</code>.
-Next I ran some large ffts to see what sort of overall spectrum I had:
-<code>(set! (<a class=quiet href="extsnd.html#transformsize" onmouseout="UnTip()" onmouseover="Tip(extsnd_transformsize_tip)">transform-size</a>) (expt 2 23))</code>.
-This showed a massive DC component, and numerous harmonics of 60 Hz.
-I decided to get rid of the portions that were clearly noise.  Since I was dealing with
-telephone recordings, I assumed anything under 40 Hz or above
-4000 Hz was extraneous.
-</p>
-
-
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-(define* (<a name="notchoutrumbleandhiss">notch-out-rumble-and-hiss</a> :optional snd chn)
-  (let* ((cur-srate (exact-&gt;inexact (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> snd))))
-    (<a class=quiet href="extsnd.html#filtersound" onmouseout="UnTip()" onmouseover="Tip(extsnd_filtersound_tip)">filter-sound</a>
-     (list 0.0 0.0                    ; get rid of DC
-	   (/ 80.0 cur-srate) 0.0     ; get rid of anything under 40 Hz (1.0=srate/2 here)
-	   (/ 90.0 cur-srate) 1.0     ; now the passband
-	   (/ 7000.0 cur-srate) 1.0 
-	   (/ 8000.0 cur-srate) 0.0   ; end passband (40..4000)
-	   1.0 0.0)                   ; get rid of some of the hiss
-     ;; since I'm assuming the minimum band is 10 Hz here, 
-     ;;   cur-srate/10 rounded up to next power of 2 seems a safe filter size
-     ;;   filter-sound will actually use overlap-add convolution in this case
-     (inexact-&gt;exact (expt 2 (ceiling (/ (log (/ cur-srate 10.0)) (log 2.0)))))
-     snd chn)))
-
-(notch-out-rumble-and-hiss)
-</pre></td></tr></table>
-
-<p>
-By now it was obvious I needed a simple way to play portions of the
-sound before and after an edit, sometimes with a tracking cursor.
-So I bound a few keys:
-</p>
-
-
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-(define (play-from-cursor current)
-  (<a class=quiet href="extsnd.html#play" onmouseout="UnTip()" onmouseover="Tip(extsnd_play_tip)">play</a> (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) #f #f #f #f (if current #f (1- (<a class=quiet href="extsnd.html#editposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_editposition_tip)">edit-position</a>)))))
-
-(define (play-from-cursor-with-tracking current)
-  ;; patterned after pfc in extsnd.html
-  (let ((old-tracking (<a class=quiet href="extsnd.html#withtrackingcursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_withtrackingcursor_tip)">with-tracking-cursor</a>)))
-    (set! (<a class=quiet href="extsnd.html#withtrackingcursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_withtrackingcursor_tip)">with-tracking-cursor</a>) #t)
-    (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> <a class=quiet href="extsnd.html#stopplayinghook" onmouseout="UnTip()" onmouseover="Tip(extsnd_stopplayinghook_tip)">stop-playing-hook</a> 
-	       (lambda (snd)
-		 (set! (<a class=quiet href="extsnd.html#withtrackingcursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_withtrackingcursor_tip)">with-tracking-cursor</a>) old-tracking)))
-    (<a class=quiet href="extsnd.html#play" onmouseout="UnTip()" onmouseover="Tip(extsnd_play_tip)">play</a> (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) #f #f #f #f (if current #f (1- (<a class=quiet href="extsnd.html#editposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_editposition_tip)">edit-position</a>))))))
-
-(<a class=quiet href="extsnd.html#bindkey" onmouseout="UnTip()" onmouseover="Tip(extsnd_bindkey_tip)">bind-key</a> #\p 0 (lambda () 
-                  "play from cursor" 
-	  	  (play-from-cursor #t) <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_keyboard_no_action_tip)">keyboard-no-action</a>))
-(<a class=quiet href="extsnd.html#bindkey" onmouseout="UnTip()" onmouseover="Tip(extsnd_bindkey_tip)">bind-key</a> #\P 0 (lambda () 
-                  "play previous from cursor" 
-		  (play-from-cursor #f) <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_keyboard_no_action_tip)">keyboard-no-action</a>))
-(<a class=quiet href="extsnd.html#bindkey" onmouseout="UnTip()" onmouseover="Tip(extsnd_bindkey_tip)">bind-key</a> #\p 4 (lambda () 
-                  "play from cursor with tracking" 
-		  (play-from-cursor-with-tracking #t) <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_keyboard_no_action_tip)">keyboard-no-action</a>))
-</pre></td></tr></table>
-
-<p>
-So, if the mouse is in the channel graph, 'p' plays from the cursor,
-'P' plays the previous version from the cursor, and 'C-p' plays from
-the cursor with a "tracking cursor".
-</p>
-<p>
-In several of the sections (the overall sound consisted of a couple dozen
-separate conversations), there was some very loud mid-range tone that I
-dubbed "transformer noise".  To figure out what frequencies it represented,
-I FFT'd a portion containing only that noise and got this spectrum
-(plus a zillion other peaks that didn't look interesting):
-</p>
-<pre>
-    ((425 .05) (450 .01) (546 .02) (667 .01) (789 .034) (910 .032) (470 .01))
-</pre>
-<p>To hear that, I took play-sound from play.scm, and
-changed it to play a list of sine tones generated on the fly (the changes are in red):
-</p>
-
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-(define (<em class=red>play-sines freqs-and-amps</em>)
-  ;; <em class=red>(play-sines '((440 .4) (660 .3)))</em>
-  (let* ((size 256)
-	 (audio-info (<a class=quiet href="#openplayoutput" onmouseout="UnTip()" onmouseover="Tip(sndscm_openplayoutput_tip)">open-play-output</a> <em class=red>1 22050</em> #f size))
-	 (audio-fd (car audio-info)))
-    (set! size (caddr audio-info))
-    (if (not (= audio-fd -1))
-	(let ((len <em class=red>22050</em>) ; <em class=red>play a one-second tone</em>
-	      (<em class=red>oscs (map make-oscil (map car freqs-and-amps))</em>)
-	      (<em class=red>amps (map cadr freqs-and-amps)</em>)
-	      (data (<a class=quiet href="extsnd.html#makesounddata" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesounddata_tip)">make-sound-data</a> outchans size)))  
-	      ;; the data buffer passed to the function (func above), then to mus-audio-write
-	  (set! (<a class=quiet href="extsnd.html#dacsize" onmouseout="UnTip()" onmouseover="Tip(extsnd_dacsize_tip)">dac-size)</a> outbytes)
-	  (do ((beg 0 (+ beg size)))
-	      ((or (<a class=quiet href="extsnd.html#cgp" onmouseout="UnTip()" onmouseover="Tip(extsnd_cgp_tip)">c-g?</a>)                   ; C-g to stop in mid-stream
-		   (&lt; beg len)))
-	    (do ((i 0 (1+ i)))
-		((= i size))
-	      (<em class=red>sound-data-set! data 0 i (apply + (map (lambda (o a) (* a (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> o))) oscs amps))</em>))
-	    (<a class=quiet href="extsnd.html#musaudiowrite" onmouseout="UnTip()" onmouseover="Tip(extsnd_musaudiowrite_tip)">mus-audio-write</a> audio-fd data size))
-	  (<a class=quiet href="extsnd.html#musaudioclose" onmouseout="UnTip()" onmouseover="Tip(extsnd_musaudioclose_tip)">mus-audio-close</a> audio-fd))
-        #f)))
-</pre></td></tr></table>
-
-<p>
-The only changes to the original function set up and use a list of oscillators, each with
-its own amplitude, rather than opening and reading a sound file. (I added this function to play.scm).
-I could then resynthesize the suspect tone with:
-</p>
-<pre>
-    (play-sines '((425 .05) (450 .01) (546 .02) (667 .01) (789 .034) (910 .032) (470 .01)))
-</pre>
-<p>
-And to my surprise, the result was close to the main portion of the hum.  So now to notch out those frequencies,
-and see what is left:
-</p>
-
-
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-(define* (make-notch-frequency-response cur-srate freqs :optional (notch-width 2))
-  (let ((freq-response (list 0.0 0.0)))
-    (for-each
-     (lambda (i)
-      (set! freq-response (cons (/ (* 2 (- i notch-width)) cur-srate) freq-response))       ; left upper y hz
-      (set! freq-response (cons 1.0 freq-response))                                         ; left upper y resp
-      (set! freq-response (cons (/ (* 2 (- i (/ notch-width 2))) cur-srate) freq-response)) ; left bottom y hz
-      (set! freq-response (cons 0.0 freq-response))                                         ; left bottom y resp
-      (set! freq-response (cons (/ (* 2 (+ i (/ notch-width 2))) cur-srate) freq-response)) ; right bottom y hz
-      (set! freq-response (cons 0.0 freq-response))                                         ; right bottom y resp
-      (set! freq-response (cons (/ (* 2 (+ i notch-width)) cur-srate) freq-response))       ; right upper y hz
-      (set! freq-response (cons 1.0 freq-response)))                                        ; right upper y resp
-     freqs)
-    (set! freq-response (cons 1.0 freq-response))
-    (set! freq-response (cons 1.0 freq-response)) 
-    (reverse freq-response)))
-
-(define* (notch-channel freqs :optional filter-order snd chn (notch-width 2))
-  (<a class=quiet href="extsnd.html#filtersound" onmouseout="UnTip()" onmouseover="Tip(extsnd_filtersound_tip)">filter-sound</a> (make-notch-frequency-response (exact-&gt;inexact (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> snd)) freqs notch-width)
-		(or filter-order 
-                    (inexact-&gt;exact (expt 2 (ceiling (/ (log (/ (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> snd) notch-width))
-                                                        (log 2.0))))))
-		snd chn))
-
-(define* (notch-sound freqs :optional filter-order snd (notch-width 2))
-  (<a class=quiet href="extsnd.html#filtersound" onmouseout="UnTip()" onmouseover="Tip(extsnd_filtersound_tip)">filter-sound</a> (make-notch-frequency-response (exact-&gt;inexact (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> snd)) freqs notch-width)
-		(or filter-order 
-                    (inexact-&gt;exact (expt 2 (ceiling (/ (log (/ (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> snd) notch-width)) 
-                                                        (log 2.0))))))
-		snd))
-
-(define* (notch-selection freqs :optional filter-order (notch-width 2))
-  (<a class=quiet href="extsnd.html#filterselection" onmouseout="UnTip()" onmouseover="Tip(extsnd_filterselection_tip)">filter-selection</a> (make-notch-frequency-response (exact-&gt;inexact (<a class=quiet href="extsnd.html#selectionsrate" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionsrate_tip)">selection-srate</a>)) freqs notch-width)
-		    (or filter-order 
-                        (inexact-&gt;exact (expt 2 (ceiling (/ (log (/ (<a class=quiet href="extsnd.html#selectionsrate" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionsrate_tip)">selection-srate</a>) notch-width)) 
-                                                            (log 2.0))))))))
-
-(notch-sound (list 425 450 470 546 667 789 910) #f 1 10)
-</pre></td></tr></table>
-
-<p>
-
-And the steady hum was largely erased.  (I added these functions to dsp.scm, with some subsequent changes). Unfortunately, in many cases,
-this also changed the timbre of the voices, and that wasn't acceptable
-in this context.  
-I goofed around with the notch-width and filter-size parameters, looking
-for something that that would still do the trick without removing half
-the personal side of the voices, but in only a few cases was the result
-usable. (The human ear is so attuned to the voice, that you can remove
-all but a small passband and still get understandable speech).
-In my case, what was being said was not very important, but the
-individual characteristics of each voice were.
-</p>
-<p>
-The next step was to take out noisy sections between snippets, mostly
-using <code>(<a class=quiet href="extsnd.html#envselection" onmouseout="UnTip()" onmouseover="Tip(extsnd_envselection_tip)">env-selection</a> '(0 1 1 0 10 0 11 1))</code>
-and equalizing each snippet, more or less, with scale-selection-by.
-There were a few "you-are-being-recorded" beeps which I deleted (via the Edit
-menu delete selection option).  
-In some of the conversations,
-between sections of speech the background hum would gradually increase, then
-the voice would abruptly start with a large peak amplitude. These
-were fixed mostly with small-section scale-by's and envelopes.
-In the female voice sections, it seemed to help to:
-<code>(<a class=quiet href="extsnd.html#filterselection" onmouseout="UnTip()" onmouseover="Tip(extsnd_filterselection_tip)">filter-selection</a> '(0 0 .01 0 .02 1 1 1) 1024)</code>
-which got rid of some of the rumble without noticeably affecting
-the vocal timbre.
-</p>
-
-<p>This may seem like a lot of programming for a simple problem, but
-I hadn't previously thought about noise reduction (so nothing was
-already written), and once this stuff is written, no one else has
-to do anything but load it.  Most of the functions mentioned
-here are now in play.scm or dsp.scm.
-(Note added much later: <a href="sndscm.html#unclipchannel">unclip-channel</a>
-does a much better job at reconstruction than the code described here; it uses
-LPC to predict what the lost samples were; see dsp.scm.  Even later: I finally
-packaged all these functions: <a href="#cleandoc">clean-channel</a>).
-</p>
-
-<TABLE border=3 bordercolor="tan" hspace=40><tr><td>
-<blockquote><small>
-<br>
-noise reduction: <a href="#cleandoc">clean-channel</a><br>
-clicks: <a href="extsnd.html#smoothchannel">smooth-channel</a>, <a href="#removeclicks">remove-clicks</a>, <a href="sndscm.html#fftsmoother">fft-smoother</a><br>
-rumble, hiss: <a href="#notchoutrumbleandhiss">notch-out-rumble-and-hiss</a>, <a href="#fftsquelch">fft-squelch</a>, <a href="#fftcancel">fft-cancel</a><br>
-hum: <a href="#notchchannel">notch-channel</a><br>
-via CLM ins: <a href="#anoi">anoi</a><br>
-<br>
-</small></blockquote>
-</td></tr></TABLE>
-<br>
 
 <center>
 <table bgcolor="aliceblue" border=0 cellspacing=8><tr>
