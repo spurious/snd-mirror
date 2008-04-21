@@ -6028,21 +6028,85 @@ sceq35:
 </pre>
 
 <p>j0evencos produces the J0(sin) case mentioned above (with the DC component subtracted out).
+If you sweep the index, the bandwidth is the same as in normal FM (J2k(B) is about 3log(k)*Jk(B/2)^2),
+but the B/2 factor causes
+the individual component amplitudes to follow the Bessel functions half as fast. 
+So j0evencos produces a spectral sweep that is like FM's but smoother.
+The effect is very subtle &mdash; the Man will not be impressed.
 </p>
 
+<table border=0 hspace=40 cellspacing=20><tr><td>
+<img src="pix/j0fm.png" alt="compare FM and j0evencos">
+</td><td>
+<img src="pix/j0jfm.png" alt="compare FM and j0evencos">
+</td></tr>
+<tr> <td colspan=2>
 <pre>
-(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:play #t)
-  (let ((gen (make-j0evencos 100.0 0.0))
-	(indf (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 10 1 0) :length 30000))
-	(carrier (<a class=quiet href="#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> 2000.0)))
-    (run 
-     (lambda ()
-       (do ((i 0 (1+ i)))
-	   ((= i 30000)) 
-	 (set! (j0evencos-index gen) (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> indf))
-	 (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* 0.5 (j0evencos gen (* .1 (<a class=quiet href="#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> carrier))))))))))
+(with-sound (:channels 2)
+  (let* ((dur 1.0)
+         (end (seconds-&gt;samples dur))
+         (jmd (<em class=red>make-j0evencos</em> 200.0))
+	 (fmd (make-oscil 200.0))
+         (ampf (make-env '(0 0  1 1  20 1  21 0) :scaler 0.5 :duration dur))
+         (indf (make-env '(0 0  1 20) :duration dur)))
+    (do ((i 0 (1+ i)))
+	((= i end))
+      (let ((ind (env indf))
+	    (vol (env ampf)))
+	(set! (<em class=red>j0evencos-index</em> jmd) ind)
+	(outa i (* vol (- (cos (* ind (oscil fmd))) 
+                          (bes-j0 ind)))) ; subtract out DC (see cos(B sin x) above)
+	(outb i (* vol (<em class=red>j0evencos</em> jmd 0.0)))))))
 </pre>
+</td></tr>
+</table>
 
+<!-- TODO: instrument j0evencos example -->
+
+<!--
+snd -horizontal
+
+(define* (fm beg dur freq amp mc-ratio index :optional (index-env '(0 1 100 1)))
+  (let* ((start (seconds->samples beg))
+         (end (+ start (seconds->samples dur)))
+         (md (make-oscil (* freq mc-ratio)))
+         (ampf (make-env '(0 0 1 1 20 1 21 0) :scaler amp :duration dur)) 
+         (indf (make-env index-env :scaler index :duration dur)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i end))
+	 (let ((ind (env indf)))
+	   (outa i (* (env ampf)  
+		      (- (cos (* ind (oscil md)))
+			 (bes-j0 ind))))))))))
+
+(with-sound (:output "test.snd") (fm 0 1.0 2000.0 0.5 .1 20.0 '(0 0 1 1)))
+
+(define* (jfm beg dur freq amp mc-ratio index :optional (index-env '(0 1 100 1)))
+  (let* ((start (seconds->samples beg))
+         (end (+ start (seconds->samples dur)))
+         (md (make-j0evencos (* freq mc-ratio)))
+         (ampf (make-env '(0 0 1 1 20 1 21 0) :scaler amp :duration dur)) 
+         (indf (make-env index-env :scaler index :duration dur)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i end))
+	 (set! (j0evencos-index md) (env indf))
+	 (outa i (* (env ampf)
+                    (j0evencos md 0.0))))))))
+
+(with-sound (:output "test1.snd") (jfm 0 1.0 2000.0 0.5 .1 20.0 '(0 0 1 1)))
+
+x 314 1.36
+y 327 .4
+z 0 1.9
+4 0.24
+blackman6 2048
+
+(set! (selected-graph-color) (make-color 1 1 1))
+-->
 <br>
 
 <pre style="background-color: #f2f4ff">
@@ -6117,6 +6181,11 @@ This uses J0(index * cos(x)) + J1(index * cos(x)) to produce a full set of cosin
 <!-- finite sums -->
 <table border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>finite sums</h5></center></td></tr></table>
 
+<p>If n (the number of partials) is less than 25, all of these could be done with polywave.  I don't
+think there would be any difference, even taking FM into account.  For n greater than 25, these are
+faster, but also very similar musically.  I suppose they give different initial blocks of sound
+that we can then sculpt with formant filters and whatnot.
+</p>
 
 <pre style="background-color: #f2f4ff">
   <A class=def NAME="make-nssb">make-nssb</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0) (n 1)

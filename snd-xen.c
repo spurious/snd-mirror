@@ -1778,52 +1778,60 @@ static XEN g_fmod(XEN a, XEN b)
 
 
 #if HAVE_SPECIAL_FUNCTIONS
+
+#define S_bes_j0 "bes-j0"
+#define S_bes_j1 "bes-j1"
+#define S_bes_jn "bes-jn"
+#define S_bes_y0 "bes-y0"
+#define S_bes_y1 "bes-y1"
+#define S_bes_yn "bes-yn"
+
 static XEN g_j0(XEN x)
 {
-  #define H_j0 "(j0 x): returns the regular cylindrical bessel function J0(x)"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "j0", " a number");
+  #define H_j0 "(" S_bes_j0 " x): returns the regular cylindrical bessel function J0(x)"
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, S_bes_j0, " a number");
   return(C_TO_XEN_DOUBLE(j0(XEN_TO_C_DOUBLE(x))));
 }
 
 
 static XEN g_j1(XEN x)
 {
-  #define H_j1 "(j1 x): returns the regular cylindrical bessel function J1(x)"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "j1", " a number");
+  #define H_j1 "(" S_bes_j1 " x): returns the regular cylindrical bessel function J1(x)"
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, S_bes_j1, " a number");
   return(C_TO_XEN_DOUBLE(j1(XEN_TO_C_DOUBLE(x))));
 }
 
 
 static XEN g_jn(XEN order, XEN x)
 {
-  #define H_jn "(jn n x): returns the regular cylindrical bessel function Jn(x)"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(order), x, XEN_ARG_1, "jn", " an int");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ARG_2, "jn", " a number");
+  #define H_jn "(" S_bes_jn " n x): returns the regular cylindrical bessel function Jn(x)"
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(order), x, XEN_ARG_1, S_bes_jn, " an int");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ARG_2, S_bes_jn, " a number");
   return(C_TO_XEN_DOUBLE(jn(XEN_TO_C_INT(order), XEN_TO_C_DOUBLE(x))));
 }
 
 
 static XEN g_y0(XEN x)
 {
-  #define H_y0 "(y0 x): returns the irregular cylindrical bessel function Y0(x)"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "y0", " a number");
+  #define H_y0 "(" S_bes_y0 " x): returns the irregular cylindrical bessel function Y0(x)"
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, S_bes_y0, " a number");
   return(C_TO_XEN_DOUBLE(y0(XEN_TO_C_DOUBLE(x))));
 }
 
 
 static XEN g_y1(XEN x)
 {
-  #define H_y1 "(y1 x): returns the irregular cylindrical bessel function Y1(x)"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "y1", " a number");
+  #define H_y1 "(" S_bes_y1 " x): returns the irregular cylindrical bessel function Y1(x)"
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, S_bes_y1, " a number");
   return(C_TO_XEN_DOUBLE(y1(XEN_TO_C_DOUBLE(x))));
 }
 
 
 static XEN g_yn(XEN order, XEN x)
 {
-  #define H_yn "(yn n x): returns the irregular cylindrical bessel function Yn(x)"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(order), x, XEN_ARG_1, "yn", " an int");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ARG_2, "yn", " a number");
+  #define H_yn "(" S_bes_yn " n x): returns the irregular cylindrical bessel function Yn(x)"
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(order), x, XEN_ARG_1, S_bes_yn, " an int");
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ARG_2, S_bes_yn, " a number");
   return(C_TO_XEN_DOUBLE(yn(XEN_TO_C_INT(order), XEN_TO_C_DOUBLE(x))));
 }
 
@@ -1853,10 +1861,12 @@ static XEN g_lgamma(XEN x)
 #endif
 
 
+#define S_bes_i0 "bes-i0"
+
 static XEN g_i0(XEN x)
 {
-  #define H_i0 "(i0 x): returns the modified cylindrical bessel function I0(x)"
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, "i0", " a number");
+  #define H_i0 "(" S_bes_i0 " x): returns the modified cylindrical bessel function I0(x)"
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ONLY_ARG, S_bes_i0, " a number");
   return(C_TO_XEN_DOUBLE(mus_bessi0(XEN_TO_C_DOUBLE(x))));
 }
 
@@ -2549,17 +2559,17 @@ void g_xen_initialize(void)
 #endif
 
 #if HAVE_SPECIAL_FUNCTIONS
-  XEN_DEFINE_PROCEDURE("bes-j0", g_j0_w,     1, 0, 0, H_j0);
-  XEN_DEFINE_PROCEDURE("bes-j1", g_j1_w,     1, 0, 0, H_j1);
-  XEN_DEFINE_PROCEDURE("bes-jn", g_jn_w,     2, 0, 0, H_jn);
-  XEN_DEFINE_PROCEDURE("bes-y0", g_y0_w,     1, 0, 0, H_y0);
-  XEN_DEFINE_PROCEDURE("bes-y1", g_y1_w,     1, 0, 0, H_y1);
-  XEN_DEFINE_PROCEDURE("bes-yn", g_yn_w,     2, 0, 0, H_yn);
+  XEN_DEFINE_PROCEDURE(S_bes_j0, g_j0_w,     1, 0, 0, H_j0);
+  XEN_DEFINE_PROCEDURE(S_bes_j1, g_j1_w,     1, 0, 0, H_j1);
+  XEN_DEFINE_PROCEDURE(S_bes_jn, g_jn_w,     2, 0, 0, H_jn);
+  XEN_DEFINE_PROCEDURE(S_bes_y0, g_y0_w,     1, 0, 0, H_y0);
+  XEN_DEFINE_PROCEDURE(S_bes_y1, g_y1_w,     1, 0, 0, H_y1);
+  XEN_DEFINE_PROCEDURE(S_bes_yn, g_yn_w,     2, 0, 0, H_yn);
   XEN_DEFINE_PROCEDURE("erf",    g_erf_w,    1, 0, 0, H_erf);
   XEN_DEFINE_PROCEDURE("erfc",   g_erfc_w,   1, 0, 0, H_erfc);
   XEN_DEFINE_PROCEDURE("lgamma", g_lgamma_w, 1, 0, 0, H_lgamma);
 #endif
-  XEN_DEFINE_PROCEDURE("bes-i0", g_i0_w,     1, 0, 0, H_i0);
+  XEN_DEFINE_PROCEDURE(S_bes_i0, g_i0_w,     1, 0, 0, H_i0);
 
 #if HAVE_GSL
   XEN_DEFINE_PROCEDURE("gsl-ellipk", g_gsl_ellipk_w, 1, 0, 0, H_gsl_ellipk);

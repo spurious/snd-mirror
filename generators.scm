@@ -3496,10 +3496,14 @@ which again matches
 	 (z (j0evencos-index gen))
 	 (j0 (bes-j0 (* 0.5 z)))
 	 (dc (* j0 j0)))
+
     (set! (j0evencos-angle gen) (+ x fm (j0evencos-frequency gen)))
-    (/ (- (bes-j0 (* z (sin x)))
-	  dc)        ; get rid of DC component
-       (- 1.0 dc)))) ; normalize
+
+    (if (= dc 1.0)
+	1.0
+	(/ (- (bes-j0 (* z (sin x)))
+	      dc)        ; get rid of DC component
+	   (- 1.0 dc))))) ; normalize
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -3589,6 +3593,27 @@ index 10 (so 10/2 is the bes-jn arg):
 	    (do ((i 0 (1+ i)))
 		((= i 10))
 	      (j0even i 1.0 2000.0 0.5 (+ .1 (* .05 i)) 0.1)))
+
+(define* (jfm beg dur freq amp mc-ratio index :optional (index-env '(0 1 1 1 2 0)))
+  (let* ((start (seconds->samples beg))
+         (end (+ start (seconds->samples dur)))
+         (md (make-j0evencos (* freq mc-ratio)))
+	 (cr (make-oscil 2000))
+	 (vib (make-oscil 5))
+	 (vibamp (hz->radians (* freq .01)))
+         (ampf (make-env '(0 0 1 1 20 1 21 0) :scaler amp :duration dur)) 
+         (indf (make-env index-env :scaler index :duration dur)))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i end))
+	 (let ((vb (* vibamp (oscil vib))))
+	   (set! (j0evencos-index md) (env indf))
+	   (outa i (* (env ampf)
+		      (oscil cr vb)
+		      (j0evencos md (* vb mc-ratio))))))))))
+
+(with-sound (:output "test1.snd" :play #t) (jfm 0 3.0 400.0 0.5 .5 4.0 '(0 1  1 2  2 .5)))
 |#
 
 
@@ -4432,7 +4457,7 @@ index 10 (so 10/2 is the bes-jn arg):
 				 (adjustable-square-wave-duty-factor g))
 			       (lambda (g val)
 				 (set! (adjustable-square-wave-duty-factor g) val)
-				 (set! (mus-phase (adjustable-square-wave-p2 g) (* 2.0 pi (- 1.0 (adjustable-square-wave-duty-factor g)))))
+				 (set! (mus-phase (adjustable-square-wave-p2 g)) (* 2.0 pi (- 1.0 (adjustable-square-wave-duty-factor g))))
 				 val))))
 
   (frequency *clm-default-frequency*) (duty-factor 0.5) (amplitude 1.0)
