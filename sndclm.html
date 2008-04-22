@@ -5983,6 +5983,34 @@ Use mus-scaler to set the duty-factor at run-time.
 This is a rand-interp generator feeding a moving-average generator.  "n" is the length of the moving-average;
 the higher "n", the more low-passed the output.
 </p>
+<img src="pix/roundinterp.png" alt="round-interp" hspace=40>
+
+<!--
+(with-sound (:channels 5)
+  (let ((gen0 (make-round-interp 100 1))
+	(gen1 (make-round-interp 100 10))
+	(gen2 (make-round-interp 100 100))
+	(gen3 (make-round-interp 100 1000))
+	(gen4 (make-round-interp 100 10000)))
+    (run
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 100000))
+	 (out-any i (round-interp gen0 0.0) 0)
+	 (out-any i (round-interp gen1 0.0) 1)
+	 (out-any i (round-interp gen2 0.0) 2)
+	 (out-any i (round-interp gen3 0.0) 3)
+	 (out-any i (round-interp gen4 0.0) 4))))))
+
+(set! (x-axis-label 0 0) "round-interp, n=1")
+(set! (x-axis-label 0 1) "round-interp, n=10")
+(set! (x-axis-label 0 2) "round-interp, n=100")
+(set! (x-axis-label 0 3) "round-interp, n=1000")
+(set! (x-axis-label 0 4) "round-interp, n=10000")
+(set! (axis-label-font) "-*-times-medium-r-normal-*-20-*-*-*-*-*-*-*")
+-->
+
+<br>
 <br>
 
 
@@ -6174,7 +6202,8 @@ Normalization is not handled correctly in all cases.
   <A class=def NAME="jycos?">jycos?</A> gen
 </pre>
 
-<p>This uses bes-y0 to produce components scaled by Yn(r)*Jn(a).  bes-y0(0) is -inf, so a^2 + r^2 should be greater than 2ar.
+<p>This uses bes-y0 to produce components scaled by Yn(r)*Jn(a).  bes-y0(0) is -inf, so a^2 + r^2 should be greater than 2ar,
+and r should be greater than 0.0.  Tricky to use, and no return for your trouble.
 </p>
 
 

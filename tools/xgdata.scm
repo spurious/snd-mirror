@@ -6582,18 +6582,6 @@
 (CFNC-210 "void gdk_cairo_region cairo_t* cr GdkRegion* region")
 
 
-;;; pango 1.15.0
-;;; (CINT-2108 "PANGO_FONT_MASK_GRAVITY")
-
-;;; pango 1.15.4:
-;;; (CINT-2108 "PANGO_ATTR_ABSOLUTE_SIZE" "PangoAttrType")
-;;; (CINT-2108 "PANGO_ATTR_GRAVITY" "PangoAttrType")
-;;; (CINT-2108 "PANGO_ATTR_GRAVITY_HINT" "PangoAttrType")
-;;; (CFNC-2108 "gboolean pango_layout_is_wrapped PangoLayout* layout")
-;;; (CFNC-2108 "gboolean pango_layout_is_ellipsized PangoLayout* layout")
-
-
-
 
 (CAIRO-FUNC-140 "guint cairo_get_reference_count cairo_t* cr")
 (CAIRO-FUNC-140 "void* cairo_get_user_data cairo_t* cr cairo_user_data_key_t* key")
@@ -6749,11 +6737,6 @@
 (CCHK-211 "GTK_IS_TOOLTIP(obj)" "GtkTooltip*")
 
 
-;;; pango 19.3:
-;(CFNC-2xx "void pango_layout_set_height PangoLayout* layout int height")
-;(CFNC-2xx "int pango_layout_get_height PangoLayout* layout")
-
-
 ;;; for 2.13.0
 (CINT-213 "GTK_CALENDAR_SHOW_DETAILS" "GtkCalendarDisplayOptions")
 (CFNC-213 "void gtk_calendar_set_detail_func GtkCalendar* calendar GtkCalendarDetailFunc func gpointer data GDestroyNotify destroy")
@@ -6785,4 +6768,26 @@
 (CAIRO-FUNC-164 "void cairo_surface_copy_page cairo_surface_t* surface")
 (CAIRO-FUNC-164 "void cairo_surface_show_page cairo_surface_t* surface")
 (CAIRO-FUNC-164 "int cairo_format_stride_for_width cairo_format_t format int width")
+
+
+
+;;; someday, get configure switches and incorporate these changes in Pango:
+;;; pango 1.15.0
+;;; (CINT-2108 "PANGO_FONT_MASK_GRAVITY")
+
+;;; pango 1.15.4:
+;;; (CINT-2108 "PANGO_ATTR_ABSOLUTE_SIZE" "PangoAttrType")
+;;; (CINT-2108 "PANGO_ATTR_GRAVITY" "PangoAttrType")
+;;; (CINT-2108 "PANGO_ATTR_GRAVITY_HINT" "PangoAttrType")
+;;; (CFNC-2108 "gboolean pango_layout_is_wrapped PangoLayout* layout")
+;;; (CFNC-2108 "gboolean pango_layout_is_ellipsized PangoLayout* layout")
+
+;;; pango 19.3:
+;(CFNC-2xx "void pango_layout_set_height PangoLayout* layout int height")
+;(CFNC-2xx "int pango_layout_get_height PangoLayout* layout")
+
+;;; Pango 1.21.0
+;;; (CFNC-2xx "PangoContext* pango_cairo_create_context cairo_t* cr")
+;;; (CFNC-2xx "int pango_layout_get_baseline PangoLayout* layout")
+
 

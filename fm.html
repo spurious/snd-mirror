@@ -2021,9 +2021,12 @@ Heinrich Taube had the inspired idea
 of feeding the noise (as a sort of cascade FM) into the 
 parallel modulators of an fm-flute, but not into the carrier.  The modulating signal becomes a sum of 
 two or three narrow band noises (narrow because normally the amplitude of the noise is low), and 
-these modulate the carrier.  It is my belief that you get the normal spectrum with each component 
-smeared out by a copy of the noise band:
+these modulate the carrier.  In CLM:
 </p>
+
+<!--
+It is my belief that you get the normal spectrum with each component 
+smeared out by a copy of the noise band:
 
 <table border=1 hspace=20 vspace=10>
 <tr>
@@ -2039,9 +2042,10 @@ smeared out by a copy of the noise band:
 <td bgcolor="#f6f8ff"><center>noise-amount: 0.007</center></td>
 </tr></table>
 
-
-<p>In CLM, the basic idea is:
+<p>In CLM:
 </p>
+-->
+
 
 <pre>
     (oscil carrier (* fm-index (oscil fm (* noise-index (rand noise)))))

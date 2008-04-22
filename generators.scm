@@ -3836,6 +3836,7 @@ index 10 (so 10/2 is the bes-jn arg):
 (defgenerator (jycos
 	       :make-wrapper (lambda (g)
 			       (set! (jycos-frequency g) (hz->radians (jycos-frequency g)))
+			       (set! (jycos-r g) (max .0001 (jycos-r g))) ; 0->inf in bes-y0
 			       (let ((a (jycos-a g)) ; "c"
 				     (r (jycos-r g))); "b"
 				 (if (<= r a)
@@ -3868,13 +3869,19 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;; norm only works for "reasonable" a and r
 
 #|
-(with-sound (:clipped #f :statistics #t :play #t)
-  (let ((gen (make-jycos 100.0 1.5 1.0)))
+(with-sound (:clipped #f :statistics #t :play #f)
+  (let ((gen (make-jycos 100.0 1.5 1.0))
+	(af (make-env '(0 0 1 1) :length 30000))
+	(rf (make-env '(0 3 1 3) :length 30000))
+	(ampf (make-env '(0 0 1 1 10 1 11 0) :scaler 0.5 :length 30000)))
     (run 
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 30000))
-	 (outa i (jycos gen 0.0)))))))
+	 (set! (jycos-a gen) (env af))
+	 (set! (jycos-r gen) (env rf))
+	 (outa i (* (env ampf)
+		    (jycos gen 0.0))))))))
 
 :(* (bes-yn 1 1.5) (bes-jn 1 1.0))
 -0.181436652807559
@@ -4713,13 +4720,21 @@ index 10 (so 10/2 is the bes-jn arg):
   (moving-average (round-interp-flt gen) (rand-interp (round-interp-rnd gen) fm)))
 
 #|
-(with-sound ()
-  (let ((gen (make-round-interp 100 1)))
+(with-sound (:channels 5)
+  (let ((gen0 (make-round-interp 100 1))
+	(gen1 (make-round-interp 100 10))
+	(gen2 (make-round-interp 100 100))
+	(gen3 (make-round-interp 100 1000))
+	(gen4 (make-round-interp 100 10000)))
     (run
      (lambda ()
        (do ((i 0 (1+ i)))
-	   ((= i 22050))
-	 (outa i (round-interp gen 0.0)))))))
+	   ((= i 100000))
+	 (out-any i (round-interp gen0 0.0) 0)
+	 (out-any i (round-interp gen1 0.0) 1)
+	 (out-any i (round-interp gen2 0.0) 2)
+	 (out-any i (round-interp gen3 0.0) 3)
+	 (out-any i (round-interp gen4 0.0) 4))))))
 |#
 
 
