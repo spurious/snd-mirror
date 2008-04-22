@@ -2314,9 +2314,7 @@ triggering a new peep each time the pulse goes by.
 </p>
 
 <p>I think just about every combination of oscil/triangle-wave/sawtooth-wave/square-wave has been
-used.  Even triangle-wave(square-wave) can make funny noises. Along these lines, there's
-a <a href="#blsaw">band-limited sawtooth</a> generator in generators.scm, 
-band-limited-triangle-wave above (waveshaping), and band-limited pulse-train via <a href="#ncos">ncos</a>.
+used.  Even triangle-wave(square-wave) can make funny noises.
 </p>
 
 <br><br>
@@ -6027,7 +6025,7 @@ sceq35:
   <A class=def NAME="j0evencos?">j0evencos?</A> gen
 </pre>
 
-<p>j0evencos produces the J0(sin) case mentioned above (with the DC component subtracted out).
+<p>j0evencos produces the J0(index * sin(x)) case mentioned above (with the DC component subtracted out).
 If you sweep the index, the bandwidth is the same as in normal FM (J2k(B) is about 3log(k)*Jk(B/2)^2),
 but the B/2 factor causes
 the individual component amplitudes to follow the Bessel functions half as fast. 
@@ -6110,6 +6108,36 @@ blackman6 2048
 <br>
 
 <pre style="background-color: #f2f4ff">
+  <A class=def NAME="make-j0j1cos">make-j0j1cos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (index 0.0)
+  <A class=def NAME="j0j1cos">j0j1cos</A> gen fm
+  <A class=def NAME="j0j1cos?">j0j1cos?</A> gen
+</pre>
+
+<img src="pix/sceq36.png" alt="j0j1 formulsa" hspace=40>
+
+<p>
+This uses J0(index * cos(x)) + J1(index * cos(x)) to produce a full set of cosines.  It is not yet normalized correctly,
+and it's too similar to normal FM.
+</p>
+
+<br>
+
+<pre style="background-color: #f2f4ff">
+  <A class=def NAME="make-izcos">make-izcos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (r 1.0)
+  <A class=def NAME="izcos">izcos</A> gen fm
+  <A class=def NAME="izcos?">izcos?</A> gen
+</pre>
+
+<img src="pix/sceq39.png" alt="I(k) sum" hspace=40>
+
+<p>This produces a sum of cosines scaled by In(r), very similar to normal FM again.
+</p>
+
+
+
+<br>
+
+<pre style="background-color: #f2f4ff">
   <A class=def NAME="make-jjcos">make-jjcos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (r 0.0) (a 1.0) (k 1)
   <A class=def NAME="jjcos">jjcos</A> gen fm
   <A class=def NAME="jjcos?">jjcos?</A> gen
@@ -6139,19 +6167,6 @@ Normalization is not handled correctly in all cases.
 </table>
 
 <br>
-<br>
-
-<pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-j0j1cos">make-j0j1cos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (index 0.0)
-  <A class=def NAME="j0j1cos">j0j1cos</A> gen fm
-  <A class=def NAME="j0j1cos?">j0j1cos?</A> gen
-</pre>
-
-<p>
-This uses J0(index * cos(x)) + J1(index * cos(x)) to produce a full set of cosines.  It is not yet normalized correctly.
-</p>
-
-<br>
 
 <pre style="background-color: #f2f4ff">
   <A class=def NAME="make-jycos">make-jycos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (r 1.0) (a 1.0)
@@ -6163,16 +6178,6 @@ This uses J0(index * cos(x)) + J1(index * cos(x)) to produce a full set of cosin
 </p>
 
 
-<pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-izcos">make-izcos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (r 1.0)
-  <A class=def NAME="izcos">izcos</A> gen fm
-  <A class=def NAME="izcos?">izcos?</A> gen
-</pre>
-
-<p>This produces a sum of cosines scaled by In(r).
-</p>
-
-
 <br><br>
 
 
@@ -6181,10 +6186,9 @@ This uses J0(index * cos(x)) + J1(index * cos(x)) to produce a full set of cosin
 <!-- finite sums -->
 <table border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>finite sums</h5></center></td></tr></table>
 
-<p>If n (the number of partials) is less than 25, all of these could be done with polywave.  I don't
+<p>If n (the number of partials) is less than 25 and r is constant, these could be done with polywave.  I don't
 think there would be any difference, even taking FM into account.  For n greater than 25, these are
-faster, but also very similar musically.  I suppose they give different initial blocks of sound
-that we can then sculpt with formant filters and whatnot.
+faster, but also similar to each other musically.
 </p>
 
 <pre style="background-color: #f2f4ff">
@@ -6399,21 +6403,8 @@ The instrument nkssber uses nkssb-interp:
 
 <p>This generator produces a sum of n cosines scaled by the binomial coefficients.  If n is even, the last term is halved.
 </p>
-<br>
-
-
-<pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-blsaw">make-blsaw</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (n 1) (r 0.0)
-  <A class=def NAME="blsaw">blsaw</A> gen
-  <A class=def NAME="blsaw?">blsaw?</A> gen
-</pre>
-
-<p>
-blsaw (band-limited sawtooth) is apparently originally from Tim Stilson and Julius Smith,
-under the name "discrete summation formula".
-'r' is more or less the amplitude.
-</p>
 <br><br>
+
 
 
 <!-- infinite sums -->

@@ -54411,17 +54411,6 @@ EDITS: 1
 	  (if (fneq (maxamp snd) 1.0) (snd-display ";r2k!cos max: ~A" (maxamp snd))))
 	
 	(let* ((res (with-sound (:clipped #f)
-		    (let ((gen (make-blsaw 440.0 :r 0.5 :n 3)))
-		      (run 
-		       (lambda ()
-			 (do ((i 0 (1+ i)))
-			     ((= i 10000))
-			   (outa i (blsaw gen 0.0))))))))
-	       (snd (find-sound res)))
-	  (if (not (sound? snd)) (snd-display ";blsaw ~A" snd))
-	  (if (ffneq (maxamp snd) 0.652) (snd-display ";blsaw max: ~A" (maxamp snd))))
-	
-	(let* ((res (with-sound (:clipped #f)
 		    (let ((gen (make-k2sin 440.0)))
 		      (run 
 		       (lambda ()
@@ -55013,7 +55002,7 @@ EDITS: 1
 			   nrsin nrcos nrssb nkssb nsincos rcos rssb rxysin rxycos
 			   rxyk!sin rxyk!cos ercos erssb r2sin r2cos r2ssb eoddcos rkcos rksin rkssb
 			   rk!cos rk!ssb r2k!cos k2sin k2cos k2ssb dblsum rkoddssb krksin abssin
-			   abcos absin r2k2cos blsaw bess jjcos j0evencos j2cos jpcos jncos 
+			   abcos absin r2k2cos bess jjcos j0evencos j2cos jpcos jncos 
 			   j0j1cos jycos blackman fmssb k3sin izcos
 			   adjustable-square-wave adjustable-triangle-wave adjustable-sawtooth-wave adjustable-oscil 
 			   round-interp))
@@ -55021,7 +55010,7 @@ EDITS: 1
 				make-nrsin make-nrcos make-nrssb make-nkssb make-nsincos make-rcos make-rssb make-rxysin make-rxycos
 				make-rxyk!sin make-rxyk!cos make-ercos make-erssb make-r2sin make-r2cos make-r2ssb make-eoddcos make-rkcos make-rksin make-rkssb
 				make-rk!cos make-rk!ssb make-r2k!cos make-k2sin make-k2cos make-k2ssb make-dblsum make-rkoddssb make-krksin make-abssin
-				make-abcos make-absin make-r2k2cos make-blsaw make-bess make-jjcos make-j0evencos make-j2cos make-jpcos make-jncos
+				make-abcos make-absin make-r2k2cos make-bess make-jjcos make-j0evencos make-j2cos make-jpcos make-jncos
 				make-j0j1cos make-jycos make-blackman make-fmssb make-k3sin make-izcos
 				make-adjustable-square-wave make-adjustable-triangle-wave make-adjustable-sawtooth-wave make-adjustable-oscil
 				make-round-interp))
@@ -55029,7 +55018,7 @@ EDITS: 1
 			    nrsin? nrcos? nrssb? nkssb? nsincos? rcos? rssb? rxysin? rxycos?
 			    rxyk!sin? rxyk!cos? ercos? erssb? r2sin? r2cos? r2ssb? eoddcos? rkcos? rksin? rkssb?
 			    rk!cos? rk!ssb? r2k!cos? k2sin? k2cos? k2ssb? dblsum? rkoddssb? krksin? abssin?
-			    abcos? absin? r2k2cos? blsaw? bess? jjcos? j0evencos? j2cos? jpcos? jncos?
+			    abcos? absin? r2k2cos? bess? jjcos? j0evencos? j2cos? jpcos? jncos?
 			    j0j1cos? jycos? blackman? fmssb? k3sin? izcos?
 			    adjustable-square-wave? adjustable-triangle-wave? adjustable-sawtooth-wave? adjustable-oscil?
 			    round-interp?))
@@ -55037,7 +55026,7 @@ EDITS: 1
 			   'nrsin 'nrcos 'nrssb 'nkssb 'nsincos 'rcos 'rssb 'rxysin 'rxycos
 			   'rxyk!sin 'rxyk!cos 'ercos 'erssb 'r2sin 'r2cos 'r2ssb 'eoddcos 'rkcos 'rksin 'rkssb
 			   'rk!cos 'rk!ssb 'r2k!cos 'k2sin 'k2cos 'k2ssb 'dblsum 'rkoddssb 'krksin 'abssin
-			   'abcos 'absin 'r2k2cos 'blsaw 'bess 'jjcos 'j0evencos 'j2cos 'jpcos 'jncos
+			   'abcos 'absin 'r2k2cos 'bess 'jjcos 'j0evencos 'j2cos 'jpcos 'jncos
 			   'j0j1cos 'jycos 'blackman 'fmssb 'k3sin 'izcos
 			   'adjustable-square-wave 'adjustable-triangle-wave 'adjustable-sawtooth-wave 'adjustable-oscil
 			   'round-interp))
@@ -55049,7 +55038,7 @@ EDITS: 1
 			     r2cos-methods r2ssb-methods eoddcos-methods rkcos-methods rksin-methods rkssb-methods 
 			     rk!cos-methods rk!ssb-methods r2k!cos-methods k2sin-methods k2cos-methods k2ssb-methods 
 			     dblsum-methods rkoddssb-methods krksin-methods abssin-methods 
-			     abcos-methods absin-methods r2k2cos-methods blsaw-methods bess-methods 
+			     abcos-methods absin-methods r2k2cos-methods bess-methods 
 			     jjcos-methods j0evencos-methods j2cos-methods jpcos-methods jncos-methods 
 			     j0j1cos-methods jycos-methods blackman-methods fmssb-methods k3sin-methods izcos-methods 
 			     adjustable-square-wave-methods adjustable-triangle-wave-methods 

@@ -3127,6 +3127,7 @@
 
 ;;; --------------------------------------------------------------------------------
 
+#|
 ;;;  from Stilson/Smith apparently -- was named "Discrete Summation Formula" which doesn't convey anything to me
 ;;;    Alexander Kritov suggests time-varying "a" is good (this is a translation of his code)
 
@@ -3158,7 +3159,6 @@
 		s1) 
 	     den)))))
 
-#|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-blsaw 440.0 :r 0.5 :n 3)))
     (run 
@@ -3167,8 +3167,6 @@
 	   ((= i 10000))
 	 (outa i (blsaw gen 0.0)))))))
 |#
-
-;;; needs normalization
 
 
 
@@ -3785,6 +3783,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	    (set! saved-x x)))
       (set! x (+ x .001))))
   (list mx saved-x))
+
 (1.21533317877749 0.825000000000001)
 (1.21533318495717 0.824863000002882)
 (1.21533318495718 0.824863061409846)
@@ -4316,7 +4315,16 @@ index 10 (so 10/2 is the bes-jn arg):
 			       (set! (izcos-frequency g) (hz->radians (izcos-frequency g)))
 			       (set! (izcos-dc g) (bes-i0 (izcos-r g)))
 			       (set! (izcos-norm g) (- (exp (izcos-r g)) (izcos-dc g)))
-			       g))
+			       g)
+	       :methods (list
+			 (list 'mus-scaler
+			       (lambda (g)
+				 (izcos-r g))
+			       (lambda (g val)
+				 (set! (izcos-r g) val)
+				 (set! (izcos-dc g) (bes-i0 val))
+				 (set! (izcos-norm g) (- (exp val) (izcos-dc g)))
+				 val))))
   (frequency *clm-default-frequency*) (r 1.0) (angle 0.0)
   (dc 0.0) (norm 1.0))
 
@@ -4332,9 +4340,11 @@ index 10 (so 10/2 is the bes-jn arg):
 
     (set! (izcos-angle gen) (+ x fm (izcos-frequency gen)))
 
-    (/ (- (exp (* z (cos x)))
-	  dc)
-       norm)))
+    (if (< (abs norm) nearly-zero)
+	1.0
+	(/ (- (exp (* z (cos x)))
+	      dc)
+	   norm))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -4344,6 +4354,17 @@ index 10 (so 10/2 is the bes-jn arg):
        (do ((i 0 (1+ i)))
 	   ((= i 30000))
 	 (outa i (izcos gen 0.0)))))))
+
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-izcos 100.0 1.0))
+	(indf (make-env '(0 0 1 3) :length 30000)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 30000))
+	 (set! (mus-scaler gen) (env indf))
+	 (outa i (izcos gen 0.0)))))))
+
 |#
 
 
@@ -4800,7 +4821,7 @@ index 10 (so 10/2 is the bes-jn arg):
 		nrsin nrcos nrssb nkssb nsincos rcos rssb rxysin rxycos
 		rxyk!sin rxyk!cos ercos erssb r2sin r2cos r2ssb eoddcos rkcos rksin rkssb
 		rk!cos rk!ssb r2k!cos k2sin k2cos k2ssb dblsum rkoddssb krksin abssin
-		abcos absin r2k2cos blsaw bess jjcos j0evencos j2cos jpcos jncos 
+		abcos absin r2k2cos bess jjcos j0evencos j2cos jpcos jncos 
 		j0j1cos jycos blackman fmssb k3sin izcos
 		adjustable-square-wave adjustable-triangle-wave adjustable-sawtooth-wave adjustable-oscil 
 		round-interp))
@@ -4808,7 +4829,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	   make-nrsin make-nrcos make-nrssb make-nkssb make-nsincos make-rcos make-rssb make-rxysin make-rxycos
 	   make-rxyk!sin make-rxyk!cos make-ercos make-erssb make-r2sin make-r2cos make-r2ssb make-eoddcos make-rkcos make-rksin make-rkssb
 	   make-rk!cos make-rk!ssb make-r2k!cos make-k2sin make-k2cos make-k2ssb make-dblsum make-rkoddssb make-krksin make-abssin
-	   make-abcos make-absin make-r2k2cos make-blsaw make-bess make-jjcos make-j0evencos make-j2cos make-jpcos make-jncos
+	   make-abcos make-absin make-r2k2cos make-bess make-jjcos make-j0evencos make-j2cos make-jpcos make-jncos
 	   make-j0j1cos make-jycos make-blackman make-fmssb make-k3sin make-izcos
 	   make-adjustable-square-wave make-adjustable-triangle-wave make-adjustable-sawtooth-wave make-adjustable-oscil
 	   make-round-interp)))
