@@ -663,7 +663,15 @@ of this change was spectral.  To get a changing spectrum, we need only put an en
 sweep the FM index from 0 to 10, and the spectrogram looks like this:
 </p>
 
-<img src="pix/fmsweep.png" alt="sweep index" hspace=40>
+<table border=0 hspace=40><tr><td>
+<img src="pix/fmsweep.png" alt="sweep index">
+</td><td>
+<table border=1 hspace=200 cellpadding=10><tr><td>
+<img src="pix/m5fm1.png"><br>
+<img src="pix/m5fm2.png">
+</td></tr>
+<tr><td bgcolor="#f6f8ff"><center>Music 5 FM?</center></td></tr></table>
+</td></tr></table>
 
 <p>
 There is a lot of music in simple FM.  You get a full spectrum at little computational expense, and
@@ -1864,6 +1872,13 @@ initial phase in that line, and there's always some choice that reduces it to 0.
 Groan &mdash; it appears to be another "centering" problem, but I haven't found
 the magic formula yet (a reasonable stab at it is: <code>-(phase-incr^(1-(B/3))</code>)).
 </p>
+
+<table border=1 align=right hspace=20 vspace=20><tr><td>
+<img src="pix/blip.png">
+</td></tr>
+<tr><td bgcolor="#f6f8ff">
+<center>Tomisawa's picture of the noise</center>
+</td></tr></table>
 
 <p>Why does an index over 1.0 create bursts of noise?
 Each burst happens as the modulator phase goes through an odd multiple of pi (where sine is going negative as the phase increases). Since the
