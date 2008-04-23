@@ -3291,9 +3291,9 @@
 		(snd-display ";vct->sound-data[3]: ~A?" (sound-data-ref sdata2 1 1)))
 	    (vct->sound-data vx sdata2 0))
 	  (mus-sound-write fd 0 99 1 sdata)
-	  (mus-sound-close-output fd 200)
+	  (mus-sound-close-output fd (* 100 (mus-bytes-pre-sample mus-bshort))) ; bshort chosen at open
 	  (set! fd (mus-sound-reopen-output "fmv5.snd" 1 mus-bshort mus-aiff (mus-sound-data-location "fmv5.snd")))
-	  (mus-sound-close-output fd 200)
+	  (mus-sound-close-output fd (* 100 (mus-bytes-pre-sample mus-bshort)))
 	  (set! fd (mus-sound-open-input "fmv5.snd"))
 	  (mus-sound-read fd 0 99 1 sdata)
 	  (if (fneq (sound-data-ref sdata 0 10) .1) (snd-display ";mus-sound-write: ~A?" (sound-data-ref sdata 0 10)))
@@ -27086,12 +27086,13 @@ EDITS: 2
 		(snd-display ";set mix-color: ~A ~A ~A ~A" 
 			     (color->list (mix-color)) (color->list (mix-color mix1)) (list 1.0 1.0 0.0) (color->list old-color)))
 	    (set! (mix-color) old-color)
-	    (save-mix mix1 "test.snd")
-	    (let ((ind1 (open-sound "test.snd")))
+	    (save-mix mix1 "test1.snd")
+	    (let ((ind1 (open-sound "test1.snd")))
 	      (if (not (= (frames ind1) (mix-length mix1))) (snd-display ";save-mix frames: ~A ~A" (mix-length mix1) (frames ind1)))
 	      (if (not (vequal (channel->vct 0 10) (mix->vct mix1)))
 		  (snd-display ";save-mix data: ~A ~A" (mix->vct mix1) (channel->vct 0 10 ind1)))
-	      (close-sound ind1)))
+	      (close-sound ind1)
+	      (if (file-exists? "test1.snd") (delete-file "test1.snd"))))
 	  (close-sound ind))
 	
 	(let* ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 1 "lock mix tests" 300))

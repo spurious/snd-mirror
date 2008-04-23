@@ -391,7 +391,7 @@
 	   
 
 	    ;; Close temporary file.
-	    (mus-sound-close-output new-file (* chans (* 4 length)))
+	    (mus-sound-close-output new-file (* chans (* (mus-bytes-per-sample mus-out-format) length)))
 
 
 	    ;; Let snd know about the new file.

@@ -3070,8 +3070,8 @@ static char *help_urls[HELP_NAMES_SIZE] = {
   "sndscm.html#insertvct",
   "sndclm.html#instruments",
   "sndscm.html#integrateenvelope",
-  "sndscm.html#jcrevdoc",
   "sndscm.html#jcreverb",
+  "sndscm.html#jcrevdoc",
   "extsnd.html#justsounds",
   "sndscm.html#kalmanfilterchannel",
   "extsnd.html#key",
@@ -4678,7 +4678,7 @@ static char *FFTs_xrefs[] = {
   "smoothing via fft: {fft-smoother}",
   "cross-synthesis: {cross-synthesis}",
   "voiced->unvoiced effect: {voiced->unvoiced}",
-  "noise reduction: {Noise Reduction}, {clean-channel}, {anoi}",
+  "noise reduction: {clean-channel}, {anoi}",
   "power spectral density: green.scm",
   "spectral modeling: {pins}",
   "polynomial approach to spectral multiplies (convolution): {spectral-polynomial}",
@@ -4709,7 +4709,7 @@ static char *FFTs_urls[] = {
   "sndscm.html#fftsmoother",
   "sndscm.html#crosssynthesis",
   "sndscm.html#voicedtounvoiced",
-  "sndscm.html#noisystory",
+  "sndscm.html#cleanchannel",
   NULL,
   "sndscm.html#clminsdoc",
   "sndscm.html#spectralpolynomial",
@@ -4756,6 +4756,20 @@ static char *Colors_urls[] = {
   NULL,
   "extsnd.html#colorhook",
   "extsnd.html#sndgcs",
+  NULL};
+
+static char *Noise_Reduction_xrefs[] = {
+  "clicks: {smooth-channel}, {remove-clicks}, {fft-smoother}",
+  "rumble, hiss: {notch-out-rumble-and-hiss}, {fft-squelch}, {fft-cancel}",
+  "hum: {notch-channel}",
+  "via CLM ins: {anoi}",
+  NULL};
+
+static char *Noise_Reduction_urls[] = {
+  "extsnd.html#smoothchannel",
+  "sndscm.html#notchoutrumbleandhiss",
+  "sndscm.html#notchchannel",
+  "sndscm.html#anoi",
   NULL};
 
 static char *Random_Numbers_xrefs[] = {
@@ -4812,20 +4826,4 @@ static char *Reverb_urls[] = {
   "extsnd.html#convolvewith",
   NULL,
   "sndscm.html#wsdoc",
-  NULL};
-
-static char *Noise_Reduction_xrefs[] = {
-  "noise reduction: {clean-channel}",
-  "clicks: {smooth-channel}, {remove-clicks}, {fft-smoother}",
-  "rumble, hiss: {notch-out-rumble-and-hiss}, {fft-squelch}, {fft-cancel}",
-  "hum: {notch-channel}",
-  "via CLM ins: {anoi.ins}",
-  NULL};
-
-static char *Noise_Reduction_urls[] = {
-  "sndscm.html#cleandoc",
-  "extsnd.html#smoothchannel",
-  "sndscm.html#notchoutrumbleandhiss",
-  "sndscm.html#notchchannel",
-  "anoi.ins",
   NULL};

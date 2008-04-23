@@ -817,6 +817,7 @@ enable_largefile
 with_gnu_ld
 enable_threads
 with_x
+enable_readline
 with_ruby_prefix
 with_ruby
 with_forth
@@ -1470,6 +1471,7 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --disable-largefile     omit support for large files
   --enable-threads      include pthread support
+  --enable-readline      include readline (the default)
   --enable-snd-debug      include internal Snd debugging functions
   --disable-nls           do not use Native Language Support
   --disable-rpath         do not hardcode runtime library paths
@@ -16809,6 +16811,13 @@ fi
 # Ruby
 #--------------------------------------------------------------------------------
 
+# readline (for Ruby)
+# Check whether --enable-readline was given.
+if test "${enable_readline+set}" = set; then
+  enableval=$enable_readline;
+fi
+
+
 RUBY="ruby"
 
 # Check whether --with-ruby-prefix was given.
@@ -24493,7 +24502,8 @@ fi
 # -ffast-math appears to make exp about twice as fast, but slows down filtering by the same amount -- kinda strange
 #   timing tests using -O3 -ffast-math indicate an overall speedup of maybe 4-5%
 #   can't use -ffast-math in Scheme in any case because NaN handling gets screwed up
-
+#
+# I also tried -ftree-vectorize but didn't see any big improvement
 
 
 #--------------------------------------------------------------------------------

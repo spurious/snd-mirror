@@ -383,9 +383,9 @@
 (define* (vct->file v file :optional (srate 22050) (comment ""))
   "(vct->file v file :optional srate comment) writes the data in vct v to the specified sound file"
   (if (vct? v)
-      (let ((fd (mus-sound-open-output file srate 1 mus-lfloat mus-riff comment)))
+      (let ((fd (mus-sound-open-output file srate 1 #f mus-riff comment)))
 	(mus-sound-write fd 0 (1- (vct-length v)) 1 (vct->sound-data v))
-	(mus-sound-close-output fd (* 4 (vct-length v)))
+	(mus-sound-close-output fd (* (mus-bytes-per-sample mus-out-format) (vct-length v)))
 	file)
       (throw 'wrong-type-arg (list "file->vct" v))))
 
@@ -405,9 +405,9 @@
 (define* (sound-data->file sd file :optional (srate 22050) (comment ""))
   "(sound-data->file sd file :optional srate comment) writes the contents of sound-data sd to file"
   (if (sound-data? sd)
-      (let ((fd (mus-sound-open-output file srate (sound-data-chans sd) mus-lfloat mus-riff comment)))
+      (let ((fd (mus-sound-open-output file srate (sound-data-chans sd) #f mus-riff comment)))
 	(mus-sound-write fd 0 (1- (sound-data-length sd)) (sound-data-chans sd) sd)
-	(mus-sound-close-output fd (* 4 (sound-data-length sd) (sound-data-chans sd)))
+	(mus-sound-close-output fd (* (mus-bytes-per-sample mus-out-format) (sound-data-length sd) (sound-data-chans sd)))
 	file)
       (throw 'wrong-type-arg (list "sound-data->file" sd))))
 

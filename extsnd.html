@@ -576,15 +576,6 @@ Extensions to Snd can be found in:
 <tr><td bgcolor="#f2f4ff"><a href="sndscm.html#zipdoc">zip</a></td>
     <td bgcolor="#f2f4ff" onmouseout="UnTip()" onmouseover="Tip(zip_doc_tip)">the zipper (the anti-cross-fader)</td></tr>
 
-<tr><td><a href="sndscm.html#extsndasneededexpl">A Note on "As-Needed" input functions</a></td>
-    <td></td></tr>
-
-<tr><td bgcolor="#f2f4ff"><a href="sndscm.html#extsndcgens">A Note on User-defined Generators in C-CLM</a></td>
-    <td bgcolor="#f2f4ff" ></td></tr>
-
-<tr><td><a href="sndscm.html#noisystory">A Note on Noise Reduction</a></td>
-    <td></td></tr>
-
 </table>
 </td></tr></table>
 
@@ -4098,6 +4089,12 @@ This function reads the first 32 samples of a file, returning the 30th in channe
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="mussoundcloseoutput">mus-sound-close-output</a> (fd bytes)</code>
 </td></tr><tr><td></td><td>
 This function closes the sound file 'fd', and updates its length indication, if any to be 'bytes' bytes.
+If you didn't specify a data-format to <a href="#mussoundopenoutput">mus-sound-open-output</a>,
+it defaulted to <code>mus-out-format</code>.
+<code>mus-out-format</code> can
+currently be either ints, floats, or doubles, depending on how you've configured Snd, so it's safest
+to use <code>(<a href="#musbytespersample">mus-bytes-per-sample</a> mus-out-format)</code> 
+for the number of bytes per sample.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -10756,7 +10753,7 @@ duration change via autocorrelation: <a href="sndscm.html#rubberdoc">rubber-soun
 smoothing via fft: <a href="sndscm.html#fftsmoother">fft-smoother</a><br>
 cross-synthesis: <a href="sndscm.html#crosssynthesis">cross-synthesis</a><br>
 voiced-&gt;unvoiced effect: <a href="sndscm.html#voicedtounvoiced">voiced-&gt;unvoiced</a><br>
-noise reduction: <a href="sndscm.html#noisystory">Noise Reduction</a>, <a href="sndscm.html#cleanchannel">clean-channel</a>, <a href="sndscm.html#clminsdoc">anoi</a><br>
+noise reduction: <a href="sndscm.html#cleanchannel">clean-channel</a>, <a href="sndscm.html#clminsdoc">anoi</a><br>
 power spectral density: green.scm<br>
 spectral modeling: <a href="sndscm.html#clminsdoc">pins</a><br>
 polynomial approach to spectral multiplies (convolution): <a href="sndscm.html#spectralpolynomial">spectral-polynomial</a><br>

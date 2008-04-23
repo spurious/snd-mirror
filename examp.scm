@@ -1622,7 +1622,7 @@ selected sound: (map-channel (cross-synthesis 1 .5 128 6.0))"
 	    (set! data-ctr 0))))
     (if (> data-ctr 0)
 	(mus-sound-write fil 0 (1- data-ctr) 1 data))
-    (mus-sound-close-output fil (* 4 newlen))
+    (mus-sound-close-output fil (* (mus-bytes-per-sample mus-out-format) newlen))
     ;; #t trunc arg to set samples shortens the sound as needed
     (set-samples 0 newlen tempfilename snd chn #t
 		 (format #f "env-sound-interp '~A ~A" envelope time-scale))
@@ -1685,7 +1685,7 @@ the given channel following 'envelope' (as in env-sound-interp), using grains to
 
     (if (> data-ctr 0)
 	(mus-sound-write fil 0 (1- data-ctr) 1 data))
-    (mus-sound-close-output fil (* 4 newlen))
+    (mus-sound-close-output fil (* (mus-bytes-per-sample mus-out-format) newlen))
     ;; #t trunc arg to set samples shortens the sound as needed
     (set-samples 0 newlen tempfilename snd chn #t
 		 (format #f "granulated-sound-interp '~A ~A ~A ~A ~A" envelope time-scale grain-length grain-envelope output-hop))
