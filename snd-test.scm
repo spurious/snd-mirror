@@ -3291,9 +3291,9 @@
 		(snd-display ";vct->sound-data[3]: ~A?" (sound-data-ref sdata2 1 1)))
 	    (vct->sound-data vx sdata2 0))
 	  (mus-sound-write fd 0 99 1 sdata)
-	  (mus-sound-close-output fd (* 100 (mus-bytes-pre-sample mus-bshort))) ; bshort chosen at open
+	  (mus-sound-close-output fd (* 100 (mus-bytes-per-sample mus-bshort))) ; bshort chosen at open
 	  (set! fd (mus-sound-reopen-output "fmv5.snd" 1 mus-bshort mus-aiff (mus-sound-data-location "fmv5.snd")))
-	  (mus-sound-close-output fd (* 100 (mus-bytes-pre-sample mus-bshort)))
+	  (mus-sound-close-output fd (* 100 (mus-bytes-per-sample mus-bshort)))
 	  (set! fd (mus-sound-open-input "fmv5.snd"))
 	  (mus-sound-read fd 0 99 1 sdata)
 	  (if (fneq (sound-data-ref sdata 0 10) .1) (snd-display ";mus-sound-write: ~A?" (sound-data-ref sdata 0 10)))

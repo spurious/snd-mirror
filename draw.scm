@@ -256,11 +256,12 @@ whenever they're in the current view."
 	    (set! y0 y1)))
 	(set! (foreground-color snd chn) old-color)))
 
-    (if (vct? data)
-	(samples-1 data)
-	(begin
-	  (samples-1 (car data))
-	  (samples-1 (cadr data))))))
+    (if data
+	(if (vct? data)
+	    (samples-1 data)
+	    (begin
+	      (samples-1 (car data))
+	      (samples-1 (cadr data)))))))
 
 
 

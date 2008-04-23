@@ -1963,6 +1963,9 @@ and replaces it with the spectrum given in coeffs"
 
 ;;; -------- spectrum displayed in various frequency scales
 
+(if (not (defined? 'snd-color))
+    (define (snd-color . args) #f)) ; no-gui case I guess
+
 (define display-bark-fft
   ;; click in lisp-graph to change the tick placement choice
 
