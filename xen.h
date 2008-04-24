@@ -11,11 +11,12 @@
  */
 
 #define XEN_MAJOR_VERSION 2
-#define XEN_MINOR_VERSION 12
-#define XEN_VERSION "2.12"
+#define XEN_MINOR_VERSION 13
+#define XEN_VERSION "2.13"
 
 /* HISTORY:
  *
+ *  23-Apr-08: try to get old Gauche (8.7) to work again.
  *  1-Mar-08:  no ext case now checks arg consistency.
  *  --------
  *  12-Dec-07: Gauche uses COMPNUM, not COMPLEX (after 0.8.7?), NUMBERP for complex?
@@ -1592,7 +1593,6 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_EXACT_P(Arg)             SCM_EXACTP(Arg)
 #define C_TO_XEN_LONG_LONG(a)        Scm_MakeBignumFromSI(a)
 #define XEN_COMPLEX_P(Arg)           SCM_NUMBERP(Arg)
-#define XEN_HAVE_COMPLEX_NUMBERS 1
 
 #if defined(__GNUC__) && (!(defined(__cplusplus)))
   #define XEN_OFF_T_P(Arg)           ({ XEN _xen_ga_3_ = Arg; (SCM_INTEGERP(_xen_ga_3_) || SCM_BIGNUMP(_xen_ga_3_)); })
@@ -1600,22 +1600,31 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
                                          (SCM_BIGNUMP(_xen_ga_4_) ? \
                                             ((off_t)(Scm_BignumToSI64(SCM_BIGNUM(_xen_ga_4_), SCM_CLAMP_NONE, NULL))) : \
                                             ((off_t)XEN_TO_C_INT(_xen_ga_4_))); })
-  #ifdef SCM_COMPNUM_REAL
-    #define XEN_TO_C_COMPLEX(a)      ({ XEN _xen_ga_5_ = a; (SCM_COMPNUM_REAL(_xen_ga_5_) + SCM_COMPNUM_IMAG(_xen_ga_5_) * _Complex_I); })
-  #else
-    #define XEN_TO_C_COMPLEX(a)      ({ XEN _xen_ga_5_ = a; (SCM_COMPLEX_REAL(_xen_ga_5_) + SCM_COMPLEX_IMAG(_xen_ga_5_) * _Complex_I); })
-  #endif
-  #define C_TO_XEN_COMPLEX(a)        ({ complex double _xen_ga_6_ = a; Scm_MakeComplex(creal(_xen_ga_6_), cimag(_xen_ga_6_)); })
 #else
   #define XEN_OFF_T_P(Arg)           (SCM_INTEGERP(Arg) || SCM_BIGNUMP(Arg))
   #define XEN_TO_C_LONG_LONG(a)      (SCM_BIGNUMP(a) ? ((off_t)(Scm_BignumToSI64(SCM_BIGNUM(a), SCM_CLAMP_NONE, NULL))) : ((off_t)XEN_TO_C_INT(a)))
-  #ifdef SCM_COMPNUM_REAL
-    #define XEN_TO_C_COMPLEX(a)      ((SCM_COMPNUMP(a)) ? ((SCM_COMPNUM_REAL(a) + SCM_COMPNUM_IMAG(a) * _Complex_I)) : (XEN_TO_C_DOUBLE(a)))
+#endif
+
+#if defined(SCM_COMPNUMP)
+  #define XEN_HAVE_COMPLEX_NUMBERS 1
+  #if defined(__GNUC__) && (!(defined(__cplusplus)))
+    #ifdef SCM_COMPNUM_REAL
+      #define XEN_TO_C_COMPLEX(a)      ({ XEN _xen_ga_5_ = a; (SCM_COMPNUM_REAL(_xen_ga_5_) + SCM_COMPNUM_IMAG(_xen_ga_5_) * _Complex_I); })
+    #else
+      #define XEN_TO_C_COMPLEX(a)      ({ XEN _xen_ga_5_ = a; (SCM_COMPLEX_REAL(_xen_ga_5_) + SCM_COMPLEX_IMAG(_xen_ga_5_) * _Complex_I); })
+    #endif
+    #define C_TO_XEN_COMPLEX(a)        ({ complex double _xen_ga_6_ = a; Scm_MakeComplex(creal(_xen_ga_6_), cimag(_xen_ga_6_)); })
   #else
-    #define XEN_TO_C_COMPLEX(a)      ((SCM_COMPLEXP(a)) ? ((SCM_COMPLEX_REAL(a) + SCM_COMPLEX_IMAG(a) * _Complex_I)) : (XEN_TO_C_DOUBLE(a)))
+    #ifdef SCM_COMPNUM_REAL
+      #define XEN_TO_C_COMPLEX(a)      ((SCM_COMPNUMP(a)) ? ((SCM_COMPNUM_REAL(a) + SCM_COMPNUM_IMAG(a) * _Complex_I)) : (XEN_TO_C_DOUBLE(a)))
+    #else
+      #define XEN_TO_C_COMPLEX(a)      ((SCM_COMPLEXP(a)) ? ((SCM_COMPLEX_REAL(a) + SCM_COMPLEX_IMAG(a) * _Complex_I)) : (XEN_TO_C_DOUBLE(a)))
+    #endif
+    /* this actually needs to check SCM_COMPNUMP before accessing the imaginary part */
+    #define C_TO_XEN_COMPLEX(a)        Scm_MakeComplex(creal(a), cimag(a))
   #endif
-  /* this actually needs to check SCM_COMPNUMP before accessing the imaginary part */
-  #define C_TO_XEN_COMPLEX(a)        Scm_MakeComplex(creal(a), cimag(a))
+#else
+  #define XEN_HAVE_COMPLEX_NUMBERS 0
 #endif
 
 #define XEN_CHAR_P(Arg)              SCM_CHARP(Arg)

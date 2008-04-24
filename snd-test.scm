@@ -36,7 +36,7 @@
 
 (define tests 1)
 (define keep-going #f)
-(define all-args #f)
+(define all-args #t)
 (define test-at-random 0)
 ;(show-ptree 1)
 ;(debug-enable 'warn-deprecated)
@@ -4805,6 +4805,7 @@
 
 (if (not (provided? 'snd-snd4.scm)) (load "snd4.scm")) ; needed for various scan/map extensions
 
+(if (not (provided? 'snd-selection.scm)) (load "selection.scm"))
 (if (not (provided? 'snd-extensions.scm)) (load "extensions.scm"))
 (if (not (provided? 'snd-selection.scm)) (load "selection.scm"))
 (if (not (provided? 'snd-dsp.scm)) (load "dsp.scm"))

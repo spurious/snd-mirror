@@ -1,45 +1,24 @@
-Snd 9.8:
+Snd 9.9
 
-more rt improvements and a major bugfix in snd-gtk.scm thanks to Kjetil
-  (new files: rt-faust.scm and rt-DotEmacs)
+more rt and faust-related improvements thanks to Kjetil Matheussen
 
-clm4:
-  ncos and nsin generators (eventually replace sum-of-cosines and sum-of-sines)
-  nrxysin (replacing sine-summation) and nrxycos generators
-  polywave (replacing polyshape and waveshape)
-  firmant (the Mathews/Smith formant; the old form, mfilter, has been moved to snd9.scm)
-  env-any for envelopes with arbitrary functions to connect the dots (not in CL/CLM)
-  make-env envelope can be made up of embedded lists: '((0 0) (1 1)) (thanks to Kjetil)
-    this also applies to envelopes in Snd.
-  defgenerator (generators.scm)
-    all the generators in generators.scm changed to reflect the nrxycos style of arguments
-  removed mus-cosines (use mus-length, old form is in snd9.scm)
-  changed the gain calculation in the formant generator (a long-standing bug)
-    mus-formant-radius removed (use mus-scaler, snd9.scm has old form)
-    "gain" argument removed from make-formant
-    frequency and radius argument order reversed in make-formant (snd9.scm has old-make-formant)
-    added 3rd optional argument to formant for frequency change
-  mus-name can be set
-  mus-run-with-fm-and-pm
-  the "stream" arg to outa and friends now defaults to *output* 
-    *output* (last arg to out* and last arg to in*) can be a function (not in CL/CLM)
-    make-locsig defaults to *output* and *reverb* output locations (also make-move-sound)
-  with-sound tries to be more informative in case of an error if run-safety is not 0
-  
-  CL/CLM: clm3.lisp has obsolete stuff previously in ffi.lisp.
-          opencml support on linux 86-64 and ppc
-          sbcl support on netbsd, cmucl on sparc, etc
-          the cl/clm tarball is now clm-4.tar.gz
-          "error" called in run loop tries to call lisp "error" (rather than exit)
+freeverb bugfix thanks to Oded Ben-Tal.
 
-added clm4 and snd9 to the *features* lists.
+rmsp.ins replaced by track-rms.ins thanks to Michael Edwards.
 
-7 more animals in animals.scm
+many Ruby and Forth-related improvements, and a bugfix in graphEq thanks to Mike.
 
-1 more generator in generators.scm
+most of my effort went into the documentation.
 
-checked: gtk 2.12.8 and 2.13.0, Gauche 0.8.13, sbcl 1.0.14|15, guile 1.8.4, clisp 2.44, cmucl 19e
+selection.scm (with various functions that used to be in examp.scm, extensions.scm etc)
 
-Thanks!: Kjetil Matheussen, Arthur Green, Timothy E Johnson, Oded Ben-Tal
+with-marked-sound, with-mixed-sound and with-mixed-sound->notelist (ws.scm)
 
+3 more generators in generators.scm
+
+bess.scm can now be loaded into Snd (as well as run independently as a script)
+
+checked: gsl 1.10, autoconf 2.62, cairo 1.6.4, sbcl 1.0.16
+
+Thanks!: Kjetil Matheussen, Oded Ben-Tal, Michael Edwards, Mike Scholz, Rick Taube.
 
