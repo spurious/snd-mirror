@@ -1,6 +1,6 @@
 # Configuration script for Snd
 
-AC_INIT(snd, 9.9, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-9.tar.gz)
+AC_INIT(snd, 9.10, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-9.tar.gz)
 
 AC_CONFIG_SRCDIR(snd.c)
 AC_CANONICAL_HOST
@@ -19,7 +19,7 @@ LOCAL_LANGUAGE="None"
 GRAPHICS_TOOLKIT="None"
 
 PACKAGE=snd
-VERSION=9.9
+VERSION=9.10
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE")
 AC_DEFINE_UNQUOTED(VERSION, "$VERSION")
 AC_SUBST(PACKAGE)
@@ -259,7 +259,8 @@ AC_CHECK_TYPE(ssize_t, int)
 AC_TYPE_PID_T
 
 # new form of this macro from autoconf 2.62 makes the Mac case a real headache
-AC_C_BIGENDIAN
+#  so this is a call on the old form
+AC_OLD_BIGENDIAN
 
 AC_SYS_LARGEFILE
 AC_TYPE_OFF_T

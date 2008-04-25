@@ -7532,7 +7532,8 @@ static void flush_buffers(rdout *gen)
       addbufs = (mus_sample_t **)clm_calloc(gen->chans, sizeof(mus_sample_t *), "output buffers");
 
       /* SOMEDAY: ideally we'd check here for clm_file_buffer_size too large,
-       *   and use a smaller setting locally if necessary.
+       *   and use a smaller setting locally if necessary, or better, check
+       *   when the buffer size is set that we can handle n chans of mus-out-format samps
        */
 
       for (i = 0; i < gen->chans; i++) 
