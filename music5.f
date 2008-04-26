@@ -1,4 +1,26 @@
-C [page 1-1]
+C typed in from old XGP output (JAM 2Aug76), 
+C      file last written 19Jun75 MUSIC5[M5,GM]
+C      SAIL
+C
+C in gfortran, many errors: 
+C
+C    Obsolete: arithmetic IF statement
+C    TYPE 99 Error: Unclassifiable statement (also ACCEPT 999)
+C    various labels for PRINT are there, but gfortran is unhappy
+C    Incompatible types in assignment at (1), CHARACTER(1) to INTEGER(4)
+C    Two main PROGRAMs
+C
+C    The main typos are 'I' vs 1 -- the printout is so old and faded that
+C    I can barely make out which is correct sometimes.  And there are space
+C    characters that were dropped by the printer.  Also I haven't used
+C    fortran since the early '80s -- I scarcely remember how this supposed
+C    to look.  
+C
+C (Bill Schottstaedt, 26-Apr-08)
+C
+C
+C [page 1-1] -- these are the original XGP pages to help me find my place
+
 
 CPASS1 PASS 1 MAIN PROGRAM
 CPASS1   *** MUSIC V ***   THIS VERSION RUNS ON THE PDP10, JULY 14,1971
@@ -100,7 +122,7 @@ CERRO1    GENERAL ERROR ROUTINE
 C   ***MUSIC V ***
       SUBROUTINE ERROR(I)
       PRINT 100,I
- 100  FORMAT(I3HERROR OF TYPEI5)
+ 100  FORMAT(13HERROR OF TYPEI5)
       RETURN
       END
       SUBROUTINE HARVEY
@@ -210,7 +232,7 @@ C     TO SCAN FOR OP CODE
  26      NP=1
  27      L=L+1
          IF (IBCD(L)-JBLANK) 27,29,27
- 29      GO TO (100,200,300,400,500,600,700,800,900,10000,1100,,1200,1300,1217,201,202,203,204,205,206,207,208,209,210,211,212),M
+ 29      GO TO (100,200,300,400,500,600,700,800,900,10000,1100,1200,1300,1217,201,202,203,204,205,206,207,208,209,210,211,212),M
 C     OP CODE 1 TO PLAY NOTE
  100     P(1)=1.
          GO TO 30
@@ -399,7 +421,7 @@ C     ERRORS
             IF(NUMU.EQ.1)GO TO 45
             GO TO 30
  45         PRINT 7
- 7          FORMAT(46H+                        FOR UNIT DESIGNATION)
+ 7          FORMAT(46H+                          FOR UNIT DESIGNATION)
             P(3)=0.
             GO TO 220
  46         PRINT 8

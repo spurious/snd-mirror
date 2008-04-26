@@ -1,5 +1,24 @@
 #include "snd.h"
 
+/* TODO: the main memory leak in snd-gtk is:
+ *
+ * ==30220== 6,555,096 bytes in 4,005 blocks are possibly lost in loss record 526 of 529
+ * ==30220==    at 0x4004750: memalign (vg_replace_malloc.c:332)
+ * ==30220==    by 0x40047AA: posix_memalign (vg_replace_malloc.c:425)
+ * ==30220==    by 0x468D418: slab_allocator_alloc_chunk (gslice.c:1136)
+ * ==30220==    by 0x468E5CB: g_slice_alloc (gslice.c:666)
+ * ==30220==    by 0x468E744: g_slice_alloc0 (gslice.c:833)
+ * ==30220==    by 0x4627BA6: g_type_create_instance (gtype.c:1555)
+ * ==30220==    by 0x460F151: g_object_constructor (gobject.c:1046)
+ * ==30220==    by 0x415E99F: gtk_button_constructor (gtkbutton.c:542)
+ * ==30220==    by 0x460D3DA: g_object_newv (gobject.c:937)
+ * ==30220==    by 0x460E018: g_object_new_valist (gobject.c:1027)
+ * ==30220==    by 0x460E11F: g_object_new (gobject.c:795)
+ * ==30220==    by 0x415DB57: gtk_button_new_with_label (gtkbutton.c:822)
+ *
+ * which I think is caused by the fact that every time you change a button's label it allocates something
+ * I must be doing something wrong
+ */
 
 #define FALLBACK_FONT "Monospace 14"
 
