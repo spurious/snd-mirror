@@ -390,6 +390,8 @@ seen, the corresponding keyword is prepended in the argument list:
 <p>are in error, because once we see any keyword, all the rest of the arguments have
 to use keywords too (we can't reliably make any assumptions after that point about argument
 ordering). 
+This style of argument passing is very similar to the "Optional
+Positional and Named Parameters" extension of scheme: <a href="http://srfi.schemers.org/srfi-89/">SRFI-89</a>.
 </p>
 
 <p>Since we often want to use a given sound-producing algorithm many times (in a note list,
@@ -2428,6 +2430,55 @@ see also <a href="#othergenerators">generators.scm</a>
 	(list-set! gen 0 new-ang))
     val))
 </pre></td></tr></table>
+
+<p>If you use ncos as the FM modulating signal, you may be surprised.
+As the modulating signal approaches a spike (as n increases), the bulk of the FM spectrum appears to collapse back to the carrier:
+</p>
+
+<table border=1 cellpadding=6><tr><td>
+<!-- all I want is slightly smaller code text!!
+<pre>
+(with-sound (:channels 1)
+  (for-each
+    (lambda (arg)
+      (let* ((beg (car arg))
+	     (n (cadr arg))
+	     (car1 (make-oscil 1000))
+	     (mod1 (<em class=red>make-ncos</em> 100 n))
+	     (start (seconds->samples beg))
+	     (dur 1.0)
+	     (samps (seconds->samples dur))
+	     (stop (+ start samps))
+	     (ampf (make-env '(0 0 1 1 20 1 21 0) 
+	             :duration dur :scaler .8))
+	     (index (hz->radians (* 100 3.0))))
+	(do ((i start (1+ i)))
+	    ((= i stop))
+	  (let ((amp (env ampf)))
+	    (outa i (* amp (oscil car1 (* index
+                             (<em class=red>ncos</em> mod1)))))))))
+    (list
+     (list 0.0 1)   (list 2.0 2)
+     (list 4.0 4)   (list 6.0 8)
+     (list 8.0 16)  (list 10.0 32)
+     (list 12.0 64) (list 14.0 128))))
+</pre>
+-->
+<img src="pix/ncostext.png">
+</td><td>
+<img src="pix/ncosfm.png" alt="ncos as FM">
+</td></tr></table>
+
+<!--
+ncosfm.png:
+jet .001 59 invert
+x 317 1.53
+y 237 0.65
+z 0 1.28
+hop 4 % 0.14
+blackman2 8192
+-->
+
 
 <p>If you sweep ncos upwards in frequency, you'll eventually
 get foldover; the generator produces its preset number of cosines no
@@ -6068,26 +6119,26 @@ The effect is very subtle &mdash; the Man will not be impressed.
 </td></tr>
 <tr> <td colspan=2>
 <pre>
-(with-sound (:channels 2)
+(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:channels 2)
   (let* ((dur 1.0)
-         (end (seconds-&gt;samples dur))
+         (end (<a class=quiet href="#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> dur))
          (jmd (<em class=red>make-j0evencos</em> 200.0))
-	 (fmd (make-oscil 200.0))
-         (ampf (make-env '(0 0  1 1  20 1  21 0) :scaler 0.5 :duration dur))
-         (indf (make-env '(0 0  1 20) :duration dur)))
+	 (fmd (<a class=quiet href="#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> 200.0))
+         (ampf (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0  1 1  20 1  21 0) :scaler 0.5 :duration dur))
+         (indf (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0  1 20) :duration dur)))
     (do ((i 0 (1+ i)))
 	((= i end))
-      (let ((ind (env indf))
-	    (vol (env ampf)))
+      (let ((ind (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> indf))
+	    (vol (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> ampf)))
 	(set! (<em class=red>j0evencos-index</em> jmd) ind)
-	(outa i (* vol (- (cos (* ind (oscil fmd))) 
-                          (bes-j0 ind)))) ; subtract out DC (see cos(B sin x) above)
-	(outb i (* vol (<em class=red>j0evencos</em> jmd 0.0)))))))
+	(<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* vol (- (cos (* ind (<a class=quiet href="#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> fmd))) 
+                          (<a class=quiet href="extsnd.html#besj0" onmouseout="UnTip()" onmouseover="Tip(extsnd_besj0_tip)">bes-j0</a> ind)))) ; subtract out DC (see cos(B sin x) above)
+	(<a class=quiet href="#out-any" onmouseout="UnTip()" onmouseover="Tip(sndclm_outb_tip)">outb</a> i (* vol (<em class=red>j0evencos</em> jmd 0.0)))))))
 </pre>
 </td></tr>
 </table>
 
-<!-- TODO: instrument j0evencos example -->
+
 
 <!--
 snd -horizontal

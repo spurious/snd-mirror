@@ -1018,6 +1018,17 @@ static gboolean slist_item_button_pressed(GtkWidget *w, GdkEventButton *ev, gpoi
 }
 
 
+/* Valgrind complains:
+ *
+ * ==30220== 6,555,096 bytes in 4,005 blocks are possibly lost in loss record 526 of 529
+ * ==30220==    by 0x415DB57: gtk_button_new_with_label (gtkbutton.c:822)
+ *
+ * but these are primarily from the edit history lists which can be very long in snd-test
+ *   and the open file dialog (400 files if running in the snd dir).
+ *   we could put off allocating a button until someone opens the pane, but even 4000 buttons
+ *   doesn't seem so bad to me.
+ */
+
 static GtkWidget *slist_new_item(slist *lst, const char *label, int row)
 {
   GtkWidget *item;

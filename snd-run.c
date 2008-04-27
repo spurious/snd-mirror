@@ -114,6 +114,8 @@
  *            all arithmetic needs extra complex checks etc
  *            also each function needs a check in configure (see fth)
  *
+ * infinite precision would also be neat -- could we have a WITH_GMP flag?  Is current scheme-only case doing this?
+ *
  * would it simplify variable handling to store everything as xen_value?
  */
 

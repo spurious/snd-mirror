@@ -7503,6 +7503,7 @@ static void flush_buffers(rdout *gen)
   fd = mus_sound_open_input(gen->file_name);
   if (fd == -1)
     {
+      /* no output yet, so open the output file and write the current samples (no need to add to existing samples in this case) */
       fd = mus_sound_open_output(gen->file_name, 
 				 (int)sampling_rate, 
 				 gen->chans, 
@@ -7522,6 +7523,7 @@ static void flush_buffers(rdout *gen)
     }
   else
     {
+      /* get existing samples, add new output, write back to output */
       mus_sample_t **addbufs;
       int i, j, data_format;
       off_t current_file_frames, frames_to_add;
@@ -7531,13 +7533,46 @@ static void flush_buffers(rdout *gen)
 
       addbufs = (mus_sample_t **)clm_calloc(gen->chans, sizeof(mus_sample_t *), "output buffers");
 
-      /* SOMEDAY: ideally we'd check here for clm_file_buffer_size too large,
-       *   and use a smaller setting locally if necessary, or better, check
-       *   when the buffer size is set that we can handle n chans of mus-out-format samps
-       */
+      {
+	bool allocation_failed = false;
 
-      for (i = 0; i < gen->chans; i++) 
-	addbufs[i] = (mus_sample_t *)clm_calloc(clm_file_buffer_size, sizeof(mus_sample_t), "output buffer");
+	for (i = 0; i < gen->chans; i++) 
+	  {
+	    /* clm_file_buffer_size may be too large, but it's very hard to tell that
+	     *   in advance.  In Linux, malloc returns a non-null pointer even when
+	     *   there's no memory available, so you have to touch the memory to force
+	     *   the OS to deal with it, then the next allocation returns null.
+	     *   So, here we go...
+	     */
+	    addbufs[i] = (mus_sample_t *)calloc(clm_file_buffer_size, sizeof(mus_sample_t));
+	    if (addbufs[i])
+	      addbufs[i][0] = MUS_SAMPLE_0;
+	    else
+	      {
+		allocation_failed = true;
+		break;
+	      }
+	  }
+
+	if (allocation_failed)
+	  {
+	    /* first clean up the mess we made */
+	    for (i = 0; i < gen->chans; i++) 
+	      if (addbufs[i])
+		{
+		  free(addbufs[i]);
+		  addbufs[i] = NULL;
+		}
+	    FREE(addbufs);
+
+	    /* it would take a lot of screwing around to find the biggest clm_file_buffer_size we could handle,
+	     *   and it might fail on the next call (if more chans), so we'll throw an error.  We could get
+	     *   say 1024 samps per chan, then run through a loop outputting the current buffer, but geez...
+	     */
+	    mus_error(MUS_MEMORY_ALLOCATION_FAILED, S_mus_file_buffer_size " (%d) is too large: we can't allocate the output buffers!", clm_file_buffer_size);
+	    return;
+	  }
+      }
 
       mus_file_seek_frame(fd, gen->data_start);
       frames_to_add = gen->out_end - gen->data_start;
@@ -7610,8 +7645,9 @@ static void flush_buffers(rdout *gen)
       if (current_file_frames <= gen->out_end) current_file_frames = gen->out_end + 1;
 
       mus_sound_close_output(fd, current_file_frames * gen->chans * mus_bytes_per_sample(data_format));
+
       for (i = 0; i < gen->chans; i++) 
-	FREE(addbufs[i]);
+	free(addbufs[i]);  /* used calloc above to make sure we can check for unsuccessful allocation */
       FREE(addbufs);
     }
 }
@@ -7955,10 +7991,25 @@ static int free_locsig(mus_any *p)
   locs *ptr = (locs *)p;
   if (ptr) 
     {
-      if (ptr->outn) FREE(ptr->outn);
-      if (ptr->revn) FREE(ptr->revn);
+      if (ptr->outn) 
+	{
+	  FREE(ptr->outn);
+	  ptr->outn = NULL;
+	}
+      if (ptr->revn) 
+	{
+	  FREE(ptr->revn);
+	  ptr->revn = NULL;
+	}
       mus_free((mus_any *)(ptr->outf));
-      if (ptr->revf) mus_free((mus_any *)(ptr->revf));
+      ptr->outf = NULL;
+      if (ptr->revf) 
+	{
+	  mus_free((mus_any *)(ptr->revf));
+	  ptr->revf = NULL;
+	}
+      ptr->outn_writer = NULL;
+      ptr->revn_writer = NULL;
       ptr->chans = 0;
       ptr->rev_chans = 0;
       FREE(ptr);
@@ -7968,9 +8019,11 @@ static int free_locsig(mus_any *p)
 
 
 static off_t locsig_length(mus_any *ptr) {return(((locs *)ptr)->chans);}
+
 static int locsig_channels(mus_any *ptr) {return(((locs *)ptr)->chans);}
 
 static Float *locsig_data(mus_any *ptr) {return(((locs *)ptr)->outn);}
+
 static Float *locsig_xcoeffs(mus_any *ptr) {return(((locs *)ptr)->revn);}
 
 mus_any *mus_locsig_outf(mus_any *ptr) {return((mus_any *)(((locs *)ptr)->outf));}  /* clm2xen.c */

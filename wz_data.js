@@ -73,6 +73,8 @@ var extsnd_beforesaveashook_tip = "<code>before-save-as-hook (index filename sel
 var extsnd_beforesavestatehook_tip = "<code>before-save-state-hook (filename)</code>: called before Snd state is saved.<br>" +
                                      " If the hook functions return #t, the save state process opens 'filename' for appending, rather than truncating.";
 
+var extsnd_besj0_tip = "<code>(bes-j0 x) returns the Bessel function J0(x)";
+
 var extsnd_bindkey_tip = "<code>(bind-key key modifiers func :optional extended origin prefs-info)</code>:<br>" +
                          " causes 'key' (an integer, character, or string) when typed with 'modifiers'<br>" +
                          " (0:none, 4:control, 8:meta) (and C-x if extended) to invoke 'func', a function of zero or one arguments.<br>" +
@@ -709,8 +711,6 @@ var extsnd_selectionok_tip = "<code>(selection?)</code>: #t if selection is curr
 
 var extsnd_selectionposition_tip = "<code>(selection-position :optional snd chn)</code>: selection start samp";
 
-var extsnd_selectionsrate_tip = "<code>(selection-srate)</code>: selection srate";
-
 var extsnd_setsamples_tip = "<code>(set-samples start-samp samps data :optional snd chn truncate edname (infile-chan 0) edpos auto-delete)</code>:<br>" +
                             " set snd's channel chn's samples starting at start-samp for samps from data (a vct, vector, or string (filename));<br>" +
                             " start-samp can be beyond current data end;<br>" +
@@ -1148,6 +1148,8 @@ var sndclm_out_any_tip = "<code>(out-any frame val chan stream)</code>: add val 
 
 var sndclm_outa_tip = "<code>(outa frame val stream)</code>: add val to output stream at frame in channel 0";
 
+var sndclm_outb_tip = "<code>(outb frame val stream)</code>: add val to output stream at frame in channel 1 (counting from 0)";
+
 var sndclm_output_tip = "<code>*output*</code> is the direct signal output stream.  The reverb input is sent to *reverb*.";
 
 var sndclm_partialstopolynomial_tip = "<code>(partials-&gt;polynomial partials :optional (kind mus-chebyshev-first-kind))</code>:<br>" +
@@ -1303,12 +1305,6 @@ var sndscm_musmix_tip = "<code>(mus-mix outfile infile :optional (outloc 0) (fra
                         " to scale and envelope all the various ins and outs.<br>" +
                         " 'outfile' can also be a frame-&gt;file generator, and<br>" +
                         " 'infile' can be a file-&gt;frame generator.";
-
-var sndscm_openplayoutput_tip = "<code>(open-play-output :optional chans srate format buffer-size)</code>:<br>" +
-                                " opens an output audio port.  It takes the desired number of channels, <br>" +
-                                " sampling rate, data format, and DAC buffer size (in samples),<br>" +
-                                " and returns a list containing the audio port (-1 on failure),<br>" +
-                                " the opened output channels, and the actual DAC buffer size.";
 
 var sndscm_poly_times_tip = "<code>(poly* p1 p2)</code> multiplies p1 by p2, both polynomials.";
 
