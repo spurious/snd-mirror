@@ -2435,36 +2435,29 @@ see also <a href="#othergenerators">generators.scm</a>
 As the modulating signal approaches a spike (as n increases), the bulk of the FM spectrum appears to collapse back to the carrier:
 </p>
 
-<table border=1 cellpadding=6><tr><td>
-<!-- all I want is slightly smaller code text!!
+<table border=1 cellpadding=4 cell-spacing=0><tr><td>
 <pre>
-(with-sound (:channels 1)
+(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> ()
   (for-each
     (lambda (arg)
-      (let* ((beg (car arg))
-	     (n (cadr arg))
-	     (car1 (make-oscil 1000))
-	     (mod1 (<em class=red>make-ncos</em> 100 n))
-	     (start (seconds->samples beg))
-	     (dur 1.0)
-	     (samps (seconds->samples dur))
-	     (stop (+ start samps))
-	     (ampf (make-env '(0 0 1 1 20 1 21 0) 
-	             :duration dur :scaler .8))
-	     (index (hz->radians (* 100 3.0))))
+      (let ((car1 (<a class=quiet href="#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm__tip)">make-oscil</a> 1000))
+	    (mod1 (<em class=red>make-ncos</em> 100 (cadr arg)))
+	    (start (<a class=quiet href="#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> (car arg)))
+	    (samps (<a class=quiet href="#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> 1.0))
+	    (ampf (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1 20 1 21 0) 
+	            :duration 1.0 :scaler .8))
+	    (index (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> (* 100 3.0))))
 	(do ((i start (1+ i)))
-	    ((= i stop))
-	  (let ((amp (env ampf)))
-	    (outa i (* amp (oscil car1 (* index
-                             (<em class=red>ncos</em> mod1)))))))))
+	    ((= i (+ start samps)))
+	    (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> ampf)
+                       (<a class=quiet href="#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> car1 (* index
+                         (<em class=red>ncos</em> mod1))))))))
     (list
      (list 0.0 1)   (list 2.0 2)
-     (list 4.0 4)   (list 6.0 8)
+     (list 4.0 4)   (list 6.0 8)   
      (list 8.0 16)  (list 10.0 32)
      (list 12.0 64) (list 14.0 128))))
 </pre>
--->
-<img src="pix/ncostext.png">
 </td><td>
 <img src="pix/ncosfm.png" alt="ncos as FM">
 </td></tr></table>
