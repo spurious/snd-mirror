@@ -2520,53 +2520,68 @@ the higher ones only matter when all the Ji(B/(k * n))'s are not negligible (sin
 its a huge product of J's &mdash; see <a href="fm.html">fm.html</a>).  
 B/(k * n) is heading for 0, so the product of J's is non-negligible
 only when all the J's are J0 except the solitary J1 that hits that component directly (i.e. the nth).
-But all the others are J0(B/(k*n)), and these are all less than 1.0, so as the total number of
-components increases, everything piles into the carrier:
+J0(0) is 1, and J1(0) is 0, and the factor of n is scrunching all our components closer
+and closer to 0, so the carrier (all J0's) approaches 1, whereas the others (J0's except
+for J1(B/(n*k)) approach 0.
 </p>
 
+<!-- j0j1.png:
+(with-sound (:channels 2 :srate 10000)
+  (do ((x 0.0 (+ x .0001))
+       (i 0 (1+ i)))
+      ((= i 40000))
+    (outa i (bes-j0 x))
+    (outb i (bes-j1 x))))
+
+
+(set! (x-axis-label 0 0) "J0 and J1")
+(set! (x-axis-label 0 1) "")
+(set! (axis-label-font)"9x15")
+-->
+
+
 <table border=0 hspace=20>
-<tr><td colspan=2>
+<tr><td>
+<img src="pix/j0j1.png" alt="j0 and j1">
+</td><td colspan=2>
 <pre>
 (define (ncfm freq-we-want wc modfreq baseindex n)
-  ;; get amplitude of "freq-we-want" given ncos as FM, "wc" as carrier, "modfreq" as ncos freq,
-  ;;   "baseindex" as FM-index of 1st harmonics, "n" as number of harmonics
+  ;; get amplitude of "freq-we-want" given ncos as FM, 
+  ;;   "wc" as carrier, "modfreq" as ncos freq,
+  ;;   "baseindex" as FM-index of 1st harmonic, 
+  ;;   "n" as number of harmonics
   (let ((harms '())
 	(amps '()))
     (do ((i 1 (1+ i)))
 	((&gt; i n))
       (set! harms (cons (* i modfreq) harms))
       (set! amps (cons (/ baseindex (* i n)) amps)))
-    (<a class=quiet href="sndscm.html#fmparallelcomponent">fm-parallel-component</a> freq-we-want wc (reverse harms) (reverse amps) '() '() #f)))
+    (<a class=quiet href="sndscm.html#fmparallelcomponent">fm-parallel-component</a> freq-we-want wc 
+      (reverse harms) (reverse amps) '() '() #f)))
 </pre>
 </td></tr>
 <tr><td>
 
 <table border=1 cellpadding=4>
 <tr><td colspan=3 bgcolor="#f2f4ff"><center>4 components: (ncfm x 1000 100 3.0 4)</center></td></tr>
-<tr><td>x=1000</td><td> 0.81</td><td> 0.81 from '(0 0 0 0)</td></tr>
-<tr><td>x=900</td><td>-0.44</td><td>-0.32 from '(-1 0 0 0)</td></tr>
-<tr><td>x=800</td><td>-0.14</td><td>-0.16 from '(0 -1 0 0)</td></tr>
-<tr><td>x=700</td><td>-0.06</td><td>-0.10 from '(0 0 -1 0)</td></tr>
+<tr><td>x=1000</td><td> 0.81</td><td> 0.81 from J0(3/(4*k)) '(0 0 0 0)</td></tr>
+<tr><td>x=900</td><td>-0.44</td><td>-0.32 from J1(3/4)*J0s  '(-1 0 0 0)</td></tr>
+<tr><td>x=800</td><td>-0.14</td><td>-0.16 from J1(3/8)*J0s  '(0 -1 0 0)</td></tr>
+<tr><td>x=700</td><td>-0.06</td><td>-0.10 from J1(3/12)*J0s '(0 0 -1 0)</td></tr>
 </table>
 
-</td><td>
+</td><td width=20></td><td>
 
 <table border=1 cellpadding=4>
 <tr><td colspan=3 bgcolor="#f2f4ff"><center>24 components: (ncfm x 1000 100 3.0 24)</center></td></tr>
-<tr><td>x=1000</td><td>0.99</td><td> 0.99 from '(0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)</td></tr>
-<tr><td>x=900</td><td>-0.06</td><td>-0.06 from '(-1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)</td></tr>
-<tr><td>x=800</td><td>-0.03</td><td>-0.03 from '(0 -1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)</td></tr>
-<tr><td>x=700</td><td>-0.02</td><td>-0.02 from '(0 0 -1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)</td></tr>
+<tr><td>x=1000</td><td>0.99</td><td> 0.99 from J0(3/(24*k)) '(0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)</td></tr>
+<tr><td>x=900</td><td>-0.06</td><td>-0.06 from J1(3/24)*J0s '(-1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)</td></tr>
+<tr><td>x=800</td><td>-0.03</td><td>-0.03 from J1(3/48)*J0s '(0 -1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)</td></tr>
+<tr><td>x=700</td><td>-0.02</td><td>-0.02 from J1(3/96)*J0s '(0 0 -1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0)</td></tr>
 </table>
 
 </td></tr></table>
-</td></tr></table>
 
-<p>
-This argument is "sketchy" because we're assuming the indices are low and marching toward 0.0
-(simplifying that giant product);
-if the individual component amplitudes are not the same, you can get pretty much any result you want.
-</p>
 
 <!--
 compare ncos as FM and direct sum of cos:
