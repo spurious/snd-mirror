@@ -1,6 +1,7 @@
 C     typed in from old XGP output (JAM 2Aug76), 
 C     file last written 19Jun75 MUSIC5[M5,GM]
 C     SAIL
+C        (I believe GM = George McKee, JAM = Andy Moorer)
 C     
 C     in gfortran, many errors: 
 C     

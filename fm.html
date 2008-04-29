@@ -1347,13 +1347,15 @@ expressed:
 Schottstaedt, "The Simulation of Natural Instrument Tones Using Frequency Modulation with a 
 Complex Modulating Wave".  (There's a function to do it for you in dsp.scm: fm-parallel-component). 
 In simple cases, the extra modulating components flatten and spread out the 
-spectrum somewhat.
+spectrum somewhat (see <a href="sndclm.html#ncosdoc">ncos</a> for a discussion of a very different non-simple case).
 In general:
 </p>
 
 <!-- Gagliardi 2.2.16 -->
 
-<!-- LATEX \cos(\omega_{c}t+\Big(\sum_{i=1}^{k}B_{i}\sin(\omega_{i}t + \theta_{i})\Big) + \phi) = \sum_{k_{k}} \cdots \sum_{k_{1}}\Big(\prod_{i=1}^{k}J_{k_{i}}(B_{i})\Big)\cos(\omega_{c}t+\Big(\sum_{i=1}^{k}k_{i}(\omega_{i}t+\theta_{i})\Big)+\phi) -->
+<!-- LATEX 
+\cos(\omega_{c}t+\Big(\sum_{i=1}^{k}B_{i}\sin(\omega_{i}t + \theta_{i})\Big) + \phi) = \sum_{k_{k}} \cdots \sum_{k_{1}}\Big(\prod_{i=1}^{k}J_{k_{i}}(B_{i})\Big)\cos(\omega_{c}t+\Big(\sum_{i=1}^{k}k_{i}(\omega_{i}t+\theta_{i})\Big)+\phi)
+-->
 
 <img src="pix/fmeq33.png" alt="silly formula" hspace=20>
 

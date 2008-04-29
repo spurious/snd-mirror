@@ -2517,13 +2517,15 @@ modulating frequency in its index calculation.
 As more
 components are produced (as n increases), 
 the higher ones only matter when all the Ji(B/(k * n))'s are not negligible (since
-its a huge product of J's &mdash; see <a href="fm.html">fm.html</a>).  
+its a huge product of J's, <img src="pix/jprod.png" alt="product of Js" align=absmiddle> &mdash; see <a href="fm.html">fm.html</a>).  
 B/(k * n) is heading for 0, so the product of J's is non-negligible
-only when all the J's are J0 except the solitary J1 that hits that component directly (i.e. the nth).
+only when all the J's are J0 except the solitary J1 that hits that component directly (i.e. the kth).
 J0(0) is 1, and J1(0) is 0, and the factor of n is scrunching all our components closer
 and closer to 0, so the carrier (all J0's) approaches 1, whereas the others (J0's except
 for J1(B/(n*k)) approach 0.
 </p>
+
+<!-- LATEX jprod.png \prod_{i=1}^{k}J_{k_{i}}(B_{i}) -->
 
 <!-- j0j1.png:
 (with-sound (:channels 2 :srate 10000)
@@ -2582,6 +2584,39 @@ for J1(B/(n*k)) approach 0.
 
 </td></tr></table>
 
+<p>If you use ncos (or nsin) as both the carrier and modulator, you get a very similar effect.  As n increases,
+the ncos(wc + ncos(wm)) output gradually approaches the unmodulated ncos output &mdash; the crunch happens on each carrier component,
+but most strongly on the earlier ones (the "effective index" is less on those components, as mentioned
+under <a href="#polywave">polywave</a>).  So, a pulse-train modulated by a pulse-train is a pulse-train.
+Are there any other cases where gen(wc + gen(wm)) = gen(wc)?  My first thought was rand, but that has a hidden
+surprise: the modulation obscures the underlying square-wave!
+</p>
+
+<img src="pix/randfm.png" alt="rand(rand) spectrum" hspace=40>
+
+<!-- randfm.png:
+
+(with-sound (:channels 3)
+  (let* ((car1 (make-rand 1000))
+	 (car2 (make-rand 1000))
+	 (mod1 (make-rand 100))
+	 (samps (seconds->samples 1.0))
+	 (ampf (make-env '(0 0 1 1 20 1 21 0) :duration 1.0 :scaler .8))
+	 (index (hz->radians (* 100 3.0))))
+    (do ((i 0 (1+ i)))
+	((= i samps))
+      (let ((amp (env ampf))
+	    (fm (* index (rand mod1))))
+	(outa i fm)
+	(outb i (* amp (rand car2)))
+	(outc i (* amp (rand car1 fm)))))))
+
+(set! (selected-graph-color) (make-color 1 1 1))
+(set! (selected-data-color) (make-color 0 0 0))
+(set! (x-axis-label 0 0 1) "100Hz rand modulating signal spectrum")
+(set! (x-axis-label 0 1 1) "1000Hz rand, no modulation")
+(set! (x-axis-label 0 2 1) "1000Hz rand, 100Hz modulation (from chan 0), index: 3")
+-->
 
 <!--
 compare ncos as FM and direct sum of cos:
@@ -2624,21 +2659,24 @@ compare ncos as FM and direct sum of cos:
      (list 14.0 128))))
 -->
 
-
+<br>
 <p>If you sweep ncos upwards in frequency, you'll eventually
 get foldover; the generator produces its preset number of cosines no
 matter what.  It is possible to vary the spectrum smoothly:
 </p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td><pre>
-(let ((os (<em class=red>make-ncos</em> 100.0 4))
-      (pow (make-env '(0 1.0 1 30.0) :length 10000))) ; our "index" envelope in FM jargon
-   (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (lambda (y) 
-		  (let ((val (<em class=red>ncos</em> os 0.0))) 
-		    (* (signum val) 
-		       (expt (abs val) (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> pow)))))))
+(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> ()
+  (let ((os (<em class=red>make-ncos</em> 100.0 4))
+        (pow (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 1.0 1 30.0) :length 10000))) ; our "index" envelope in FM jargon
+    (do ((i 0 (1+ i)))
+	((= i 10000))
+      (let ((val (<em class=red>ncos</em> os)))
+	(<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* (signum val) ; signum is in dsp.scm
+		   (expt (abs val) (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> pow))))))))
 </pre></td></tr></table>
-<p>This trick works on all the <a href="#ncos2">pulse-train</a> functions in generators.scm (or an oscil for that matter!), 
+
+<p>This is not a very polite sound.  The same trick works on all the <a href="#ncos2">pulse-train</a> functions in generators.scm (or an oscil for that matter!), 
 but perhaps a filter is a simpler approach.  There are a lot more of these "kernels" in <a href="#othergenerators">generators.scm</a>.
 </p>
 
