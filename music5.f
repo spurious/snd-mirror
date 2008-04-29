@@ -18,6 +18,43 @@ C     I can barely make out which is correct sometimes.  And there are space
 C     characters that were dropped by the printer.  Also I haven't used
 C     fortran since the early '80s -- I scarcely remember how this is supposed
 C     to look.  
+C
+C     if split into three passes, (with various fixups for CHARACTER handling
+C       and so on -- I haven't merged them into this file) music5.f compiles:
+C     
+C     /tmp/ccqug822.o: In function `MAIN__':
+C     pass1.f:(.text+0x101): undefined reference to `ifile_'
+C     pass1.f:(.text+0x414): undefined reference to `plf2_'
+C     pass1.f:(.text+0x41e): undefined reference to `plf3_'
+C     pass1.f:(.text+0x428): undefined reference to `plf4_'
+C     pass1.f:(.text+0x432): undefined reference to `plf5_'
+C     pass1.f:(.text+0x43c): undefined reference to `plf1_'
+C     collect2: ld returned 1 exit status
+C     /home/bil/test/music5/ gfortran pass2.f -w
+C     /tmp/ccZDaR8h.o: In function `write2_':
+C     pass2.f:(.text+0x8a2): undefined reference to `convt_'
+C     collect2: ld returned 1 exit status
+C     /home/bil/test/music5/ gfortran pass3.f -w
+C     /tmp/cckVJjj0.o: In function `MAIN__':
+C     pass3.f:(.text+0x236): undefined reference to `ifile_'
+C     pass3.f:(.text+0x273): undefined reference to `putfile_'
+C     /tmp/cckVJjj0.o: In function `frout3_':
+C     pass3.f:(.text+0x2b7e): undefined reference to `fastout_'
+C     pass3.f:(.text+0x2b83): undefined reference to `finfile_'
+C     /tmp/cckVJjj0.o: In function `samout_':
+C     pass3.f:(.text+0x2f33): undefined reference to `fastout_'
+C     collect2: ld returned 1 exit status
+C     
+C     The "convt" error I expect -- the manual says you have to
+C     provide your own.  The plf stuff is not a problem.  But,
+C     I can't find ifile, putfile, or fastout anywhere. Not in
+C     music11, not in the DEC Fortran manuals from that era,
+C     not in 1963 Fortran IV manual from IBM.  I suspect the
+C     local Fortran at SAIL had machine code handling the
+C     file IO.  I guess I'll try to write replacements.
+C     fastout is used only to write a block of 1024 zeros
+C     to the output file. putfile merely creates the output
+C     file.  I can't tell for sure what ifile does.
 C     
 C     (Bill Schottstaedt, 26-Apr-08)
 C     
@@ -774,7 +811,7 @@ C********NWRITE=2
 C     PDP DSK1=DEV.21
       NWRITE=1
 C     PDP DSK=DEV.1
- 1    REWIND NREAD
+      REWIND NREAD
       REWIND NWRITE
       TYPE 10001
       ACCEPT 10002,FLNM,IDSK
@@ -803,7 +840,7 @@ C     INITIALIZATION OF SECTION
       DO 220 N1=MS1,MS3,MS2
  220     I(N1)=-1
       DO 221 N1=1,IP9
- 221     T1(N1)=1000000.
+ 221     TI(N1)=1000000.
 C     MAIN CARD READING LOOP
  204  CALL DATA (NREAD)
       IF(P(2)-T(1))200,200,244
@@ -958,7 +995,7 @@ CC***** GO TO 295
  295        IGEN=I(IGEN+1)
             IF(I(IGEN))270,270,272
  270     CONTINUE
- 256  CALL SAMOUT(IDSK,MSAMP)
+ 265     CALL SAMOUT(IDSK,MSAMP)
       IF(ISAM)247,247,266
       END
       
@@ -1239,7 +1276,7 @@ C     SET NEW FUNCTION IN OSC OR ENV
       IF(I(N1+1).EQ.105) ILOC=N1+4
       IN1=I(3)+I(N1)-1
       IIN1=I(IN1)/IP(12)
-      IF(IIN1))960,960,955
+      IF(IIN1)960,960,955
  955  I(ILOC)=-IP(2)-(IIN1-1)*IP(6)
  960  RETURN
 C     RANDOM AND HOLD GENERATOR
@@ -1431,7 +1468,7 @@ C     **** DUMMY SUBROUTINES ****
       SUBROUTINE FROUT3(IDSK)
 C     TERMINATE OUTPUT
       INTEGER PEAK
-      COMMON I(15000),P(100/PARM/IP(20)/fINOUT/PEAK,NRSOR
+      COMMON I(15000),P(100)/PARM/IP(20)/FINOUT/PEAK,NRSOR
       K=IP(10)
       L=IP(10)+IP(14)-1
       DO 1 J=K,L
@@ -1485,7 +1522,7 @@ C***  IDBUF WILL STORE PACKED SAMPLES. ****
  103  RETURN
  104  IF(N1-10)105,106,106
  105  N3=N1
-      GOT TO 106
+      GO TO 106
       
  99   J=IDSK+1
       M1=IP(10)
