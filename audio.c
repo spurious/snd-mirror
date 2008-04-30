@@ -8056,6 +8056,23 @@ void describe_audio_state_1(void)
 /* Kjetil S. Matheussen. k.s.matheussen@notam02.no */
 /* Based on code from ceres. */
 
+#if MUS_JACK
+#define AUDIO_OK
+#include <jack/jack.h>
+#include <samplerate.h>
+#include <sys/mman.h>
+#include <signal.h>
+
+#if MUS_LITTLE_ENDIAN
+#  define MUS_COMP_SHORT MUS_LSHORT
+#  define MUS_COMP_FLOAT MUS_LFLOAT
+#else
+#  define MUS_COMP_SHORT MUS_BSHORT
+#  define MUS_COMP_FLOAT MUS_BFLOAT
+#endif
+
+#define SRC_QUALITY SRC_SINC_BEST_QUALITY
+
 #if defined(__i386__) || defined(__x86_64)
 
 static inline void __attribute__ ((__unused__)) atomic_add(volatile int* __mem, int __val)
@@ -8085,22 +8102,6 @@ static inline void __attribute__ ((__unused__)) atomic_add(volatile int* __mem, 
 #error "Seems like an unsupported hardware for jack. Please contact k.s.matheussen@notam02.no"
 #endif
  
-#if MUS_JACK
-#define AUDIO_OK
-#include <jack/jack.h>
-#include <samplerate.h>
-#include <sys/mman.h>
-#include <signal.h>
-
-#if MUS_LITTLE_ENDIAN
-#  define MUS_COMP_SHORT MUS_LSHORT
-#  define MUS_COMP_FLOAT MUS_LFLOAT
-#else
-#  define MUS_COMP_SHORT MUS_BSHORT
-#  define MUS_COMP_FLOAT MUS_BFLOAT
-#endif
-
-#define SRC_QUALITY SRC_SINC_BEST_QUALITY
  
 /*************/
 /* Jack Part */
