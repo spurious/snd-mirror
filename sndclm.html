@@ -35,6 +35,8 @@
 where the "displaymath" lines change to fit the situation
 -->
 
+<!-- TODO: replace most of the map-channels with with-sound -->
+
 </style>
 </head>
 <body bgcolor=white>
@@ -1556,7 +1558,7 @@ Chebyshev polynomials of the fourth kind).
 <table border=1 hspace=100 cellpadding=8><tr><td>
 <p><small>The initial-phase defaults to 0.0 (i.e. a sine, not a cosine) for historical reasons.  This
 can be slightly confusing if you're comparing waveforms.  Using sin doesn't change the
-shape of the output waveform, but affects its components initial phases.  To get a sum of cosines,
+shape of the output waveform, but affects its components' initial phases.  To get a sum of cosines,
 set the initial-phase to pi/2.  In the polywave case, set mus-phase to pi/2 after creating
 the generator.
 </small></p></td></tr></table>
@@ -3423,7 +3425,7 @@ And the fourth used the ssb-am-bank function in dsp.scm rewritten here for with-
       (let* ((aff (* i old-freq))
 	     (bwf (* bw (+ 1.0 (/ i (* 2 pairs))))))
 	(vector-set! ssbs (1- i) (<em class=red>make-ssb-am</em> (* i factor old-freq)))
-	(vector-set! bands (1- i) (<a class=quiet href="sndscm.html#makebandpass" onmouseout="UnTip()" onmouseover="Tip(sndscm_makebandpass_tip)">make-bandpass</a> (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> (- aff bwf)) 
+	(vector-set! bands (1- i) (<a class=quiet href="sndscm.html#makebandpass" onmouseout="UnTip()" onmouseover="Tip(sndscm_makebandpass_tip)">make-bandpass</a> (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> (- aff bwf)) ; bandpass is in dsp.scm
 						 (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> (+ aff bwf)) 
 						 order))))
     (<a class=quiet href="extsnd.html#run" onmouseout="UnTip()" onmouseover="Tip(extsnd_run_tip)">run</a>
@@ -3441,7 +3443,7 @@ And the fourth used the ssb-am-bank function in dsp.scm rewritten here for with-
  (let* ((sound "oboe.snd")
         (mx (cadr (<a class=quiet href="extsnd.html#mussoundmaxamp" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundmaxamp_tip)">mus-sound-maxamp</a> sound)))
 	(dur (<a class=quiet href="extsnd.html#mussoundduration" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundduration_tip)">mus-sound-duration</a> sound)))
-    (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:scaled-to mx) 
+    (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:scaled-to mx  :srate (<a class=quiet href="extsnd.html#mussoundsrate" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundsrate_tip)">mus-sound-srate</a> sound))
       (repitch 0 dur sound 554 1000)))
 </pre>
 </td></tr></table>
@@ -3818,6 +3820,8 @@ Orfanidis also mentions a clever way to get reasonably good 1/f noise:
 sum together n rand's, where each rand is running an octave slower
 than the preceding:
 </p>
+
+<!-- TODO: shouldn't 1f-noise be in defgenerator? -->
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>

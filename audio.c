@@ -8055,6 +8055,35 @@ void describe_audio_state_1(void)
 
 /* Kjetil S. Matheussen. k.s.matheussen@notam02.no */
 /* Based on code from ceres. */
+
+#if defined(__i386__) || defined(__x86_64)
+
+static inline void __attribute__ ((__unused__)) atomic_add(volatile int* __mem, int __val)
+{
+  __asm__ __volatile__ ("lock; addl %1,%0"
+			: "=m" (*__mem) : "ir" (__val), "m" (*__mem));
+}
+
+#elif defined(__powerpc__) || defined(__ppc__)
+
+static inline void __attribute__ ((__unused__)) atomic_add(volatile int* __mem, int __val)
+{
+  int __tmp;
+  __asm__ __volatile__ (
+	"/* Inline atomic add */\n"
+	"0:\t"
+	"lwarx    %0,0,%2 \n\t"
+	"add%I3   %0,%0,%3 \n\t"
+	_STWCX "  %0,0,%2 \n\t"
+	"bne-     0b \n\t"
+	"/* End atomic add */"
+	: "=&b"(__tmp), "=m" (*__mem)
+	: "r" (__mem), "Ir"(__val), "m" (*__mem)
+	: "cr0");
+}
+#else
+#error "Seems like an unsupported hardware for jack. Please contact k.s.matheussen@notam02.no"
+#endif
  
 #if MUS_JACK
 #define AUDIO_OK
@@ -8155,7 +8184,7 @@ static void sndjack_read_process(jack_nframes_t nframes){
     }
     for(ch=0;ch<sndjack_num_read_channels_inuse;ch++)
       sndjack_read_channels[ch].buffer[sj_r_writeplace]=out[ch][i];
-    sj_r_unread++;
+    atomic_add(&sj_r_unread,1);
     sj_r_writeplace++;
     if(sj_r_writeplace==sj_r_buffersize)
       sj_r_writeplace=0;
@@ -8211,7 +8240,7 @@ static void sndjack_write_process(jack_nframes_t nframes){
 	  out[ch][i]=sndjack_channels[ch].buffer[sj_readplace];
 	}
       }
-      sj_unread--;
+      atomic_add(&sj_unread,-1);
       sj_readplace++;
       if(sj_readplace==sj_buffersize)
 	sj_readplace=0;
@@ -8267,7 +8296,7 @@ static int sndjack_read(void *buf,int bytes,int chs){
 	buf_f[i*chs+ch]=sndjack_read_channels[ch].buffer[sj_r_readplace];
 	break;
       }}
-    sj_r_unread--;
+    atomic_add(&sj_r_unread,-1);
     sj_r_readplace++;
     if(sj_r_readplace==sj_r_buffersize)
       sj_r_readplace=0;
@@ -8301,7 +8330,7 @@ static void sndjack_write(sample_t **buf,int nframes,int latencyframes,int chs){
     for(ch=0;ch<chs;ch++)
       sndjack_channels[ch].buffer[sj_writeplace]=buf[ch][i];
 
-    sj_unread++;
+    atomic_add(&sj_unread,1);
     sj_writeplace++;
     if(sj_writeplace==sj_buffersize)
       sj_writeplace=0;
