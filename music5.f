@@ -11,53 +11,21 @@ C     various labels for PRINT are there, but gfortran is unhappy
 C     Incompatible types in assignment at (1), CHARACTER(1) to INTEGER(4)
 C     Two main PROGRAMs (actually at least 3)
 C     I think each page of this file was intended as a separate compilation (6 in all)
-C     since fortran complains so much about duplicate labels
+C       since fortran complains so much about duplicate labels
 C     
 C     The main typos are 'I' vs 1 -- the printout is so old and faded that
-C     I can barely make out which is correct sometimes.  And there are space
-C     characters that were dropped by the printer.  Also I haven't used
-C     fortran since the early '80s -- I scarcely remember how this is supposed
-C     to look.  
+C       I can barely make out which is correct sometimes.  And there are space
+C       characters that were dropped by the printer.  Also I haven't used
+C       fortran since the early '80s -- I scarcely remember how this is supposed
+C       to look.  
 C
 C     if split into three passes, (with various fixups for CHARACTER handling
-C       and so on -- I haven't merged them into this file) music5.f compiles:
-C     
-C     /tmp/ccqug822.o: In function `MAIN__':
-C     pass1.f:(.text+0x101): undefined reference to `ifile_'
-C     pass1.f:(.text+0x414): undefined reference to `plf2_'
-C     pass1.f:(.text+0x41e): undefined reference to `plf3_'
-C     pass1.f:(.text+0x428): undefined reference to `plf4_'
-C     pass1.f:(.text+0x432): undefined reference to `plf5_'
-C     pass1.f:(.text+0x43c): undefined reference to `plf1_'
-C     collect2: ld returned 1 exit status
-C     /home/bil/test/music5/ gfortran pass2.f -w
-C     /tmp/ccZDaR8h.o: In function `write2_':
-C     pass2.f:(.text+0x8a2): undefined reference to `convt_'
-C     collect2: ld returned 1 exit status
-C     /home/bil/test/music5/ gfortran pass3.f -w
-C     /tmp/cckVJjj0.o: In function `MAIN__':
-C     pass3.f:(.text+0x236): undefined reference to `ifile_'
-C     pass3.f:(.text+0x273): undefined reference to `putfile_'
-C     /tmp/cckVJjj0.o: In function `frout3_':
-C     pass3.f:(.text+0x2b7e): undefined reference to `fastout_'
-C     pass3.f:(.text+0x2b83): undefined reference to `finfile_'
-C     /tmp/cckVJjj0.o: In function `samout_':
-C     pass3.f:(.text+0x2f33): undefined reference to `fastout_'
-C     collect2: ld returned 1 exit status
-C     
-C     The "convt" error I expect -- the manual says you have to
-C     provide your own.  The plf stuff is not a problem.  But,
-C     I can't find ifile, putfile, or fastout anywhere. Not in
-C     music11, not in the DEC Fortran manuals from that era,
-C     not in 1963 Fortran IV manual from IBM.  I suspect the
-C     local Fortran at SAIL had machine code handling the
-C     file IO.  I guess I'll try to write replacements.
-C     fastout is used only to write a block of 1024 zeros
-C     to the output file. putfile merely creates the output
-C     file.  I can't tell for sure what ifile does.
+C       and so on -- I haven't merged the changes into this file yet) music5.f compiles
+C       without errors.  But I'm missing the functions putfile, ifile, finfile,
+C       and fastout.  I'm guessing ifile opens a file for reading, finfile
+C       closes a file, and the others write a file.
 C     
 C     (Bill Schottstaedt, 26-Apr-08)
-C     
 C     
 C     [page 1-1] -- these are the original XGP pages to help me find my place
       

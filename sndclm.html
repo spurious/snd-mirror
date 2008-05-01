@@ -35,8 +35,6 @@
 where the "displaymath" lines change to fit the situation
 -->
 
-<!-- TODO: replace most of the map-channels with with-sound -->
-
 </style>
 </head>
 <body bgcolor=white>
@@ -3449,7 +3447,17 @@ And the fourth used the ssb-am-bank function in dsp.scm rewritten here for with-
 </td></tr></table>
 
 
-<!-- PERHAPS: ssb-am and formant placement -->
+<p>If you'd like to move formants independently of the fundamental, add
+or subtract integer multiples of the new fundamental from the make-ssb-am
+frequency argument.  In the repitch instrument above, say we wanted to 
+add a "stretch" argument to spread out or squeeze down the spectrum.
+We would replace the current make-ssb-am line with:
+</p>
+<pre>
+    (vector-set! ssbs (1- i) (<em class=red>make-ssb-am</em> (+ (* i factor old-freq)
+					     (* new-freq (inexact-&gt;exact (round (* i <em class=red>stretch</em>)))))))
+</pre>
+
 
 <br><br>
 
@@ -3969,12 +3977,12 @@ We can also get all the period doublings and so on from sin:
 </p>
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
+(<a class=quiet href="sndscm.html#withsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:clipped #f :scaled-to 0.5)
   (let ((x 0.5)) 
-    (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> 
-      (lambda (y) 
-        (let ((val x)) 
-          (set! x (* 4 (sin (* pi x)))) 
-          val))))
+    (do ((i 0 (1+ i)))
+	((= i 44100))
+      (outa i x)
+      (set! x (* 4 (sin (* pi x)))))))
 </pre>
 </td></tr></table>
 
@@ -6019,6 +6027,9 @@ will search that list for their name, and use the functions that follow to imple
 <p>(this section is work in progress...)
 </p>
 
+<!-- TODO move ramp and sound-interp to generators, maybe all the moving-*
+-->
+
 <p>There are dozens of generators scattered around the *.scm files that come with Snd.  Some that come to mind:
 </p>
 
@@ -6282,6 +6293,12 @@ sceq35:
 
 <img src="pix/sceq35.png" alt="J(sin) and cos(sin)" hspace=40>
 
+<p>The rest of the generators in this section suffer a similar fate.  From a waveshaping perspective,
+we're using a sinusoid, or a modulated sinusoid, to index into the near-zero portion of a Bessel
+function, and the result is sadly reminiscent of standard FM.  But they're such pretty formulas;
+I must be missing something.
+</p>
+
 <br>
 <br>
 
@@ -6383,7 +6400,7 @@ blackman6 2048
 
 <p>
 This uses J0(index * cos(x)) + J1(index * cos(x)) to produce a full set of cosines.  It is not yet normalized correctly,
-and it's too similar to normal FM.
+and is very similar to normal FM.
 </p>
 
 <br>
@@ -6396,7 +6413,7 @@ and it's too similar to normal FM.
 
 <img src="pix/sceq39.png" alt="I(k) sum" hspace=40>
 
-<p>This produces a sum of cosines scaled by In(r), very similar to normal FM again.
+<p>This produces a sum of cosines scaled by In(r), again very similar to normal FM.
 </p>
 
 
@@ -6441,9 +6458,9 @@ Normalization is not handled correctly in all cases.
 </pre>
 
 <p>This uses bes-y0 to produce components scaled by Yn(r)*Jn(a).  bes-y0(0) is -inf, so a^2 + r^2 should be greater than 2ar,
-and r should be greater than 0.0.  Tricky to use, and no return for your trouble.
+and r should be greater than 0.0.  Tricky to use.  (If you get and inf or a NaN from division by zero or whatever in Scheme,
+both the time and frequency graphs will be unhappy; perhaps I should add an explicit warning when that happens).
 </p>
-
 
 <br><br>
 
@@ -6764,7 +6781,7 @@ The bump instrument uses rssb-interp: <code>bump beg dur freq amp f0 f1 f2</code
   <A class=def NAME="koddcos?">koddcos?</A> gen
 </pre>
 
-<p>This produces a sum of odd harmonics with a complicated scaling &mdash; it is the 3rd Jolley case, 1st column, in the nsin table.
+<p>This produces a sum of odd harmonics with a complicated scaling &mdash; it is the 5th Jolley case, 1st column, in the nsin table.
 This generator's output is not normalized, and looks incorrect...
 </p>
 <br>
@@ -6813,7 +6830,7 @@ This generator's output is not normalized, and looks incorrect...
 &\sum_{k=0}^{\infty}\frac{p^{k}\cos kx}{k!} = e^{p\cos x}\cos(p\sin x) \\
 -->
 
-<p>These produce a sum of sinusoids scaled by (r^k)/k!.  (rk!cos is a special case of rxyk!cos).  Here is rk!cos make a bird twitter:
+<p>These produce a sum of sinusoids scaled by (r^k)/k!.  (rk!cos is a special case of rxyk!cos).  Here is a use of rk!cos to make a bird twitter:
 </p>
 
 <pre>

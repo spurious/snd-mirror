@@ -11,11 +11,12 @@
  */
 
 #define XEN_MAJOR_VERSION 2
-#define XEN_MINOR_VERSION 13
-#define XEN_VERSION "2.13"
+#define XEN_MINOR_VERSION 14
+#define XEN_VERSION "2.14"
 
 /* HISTORY:
  *
+ *  1-May-08:  XEN_NAN_P and XEN_INF_P (Guile).
  *  23-Apr-08: try to get old Gauche (8.7) to work again.
  *  1-Mar-08:  no ext case now checks arg consistency.
  *  --------
@@ -225,6 +226,21 @@
   #define XEN_NUMBER_P(Arg)          (XEN_NOT_FALSE_P(scm_real_p(Arg)))
   #define XEN_OFF_T_P(Arg)           (XEN_NOT_FALSE_P(scm_integer_p(Arg)))
 #endif
+
+#if HAVE_SCM_NAN_P
+  #define XEN_NAN_P(Arg)             scm_nan_p(Arg)
+  #define XEN_INF_P(Arg)             scm_inf_p(Arg)
+  #define HAVE_XEN_NAN_AND_INF_P     1
+#endif
+
+/* Ruby has flo_is_infinite_p and flo_is_nan_p but they are declared static in numeric.c
+ *   they're used in the nan? and infinite? methods for floats, so perhaps I could call 
+ *   them explicitly somehow.
+ *
+ * Fth has ficl_inf_p and ficl_nan_p (fth/src/numbers.c), but they are also declared static.
+ *
+ * Gauche has code to recognize these guys, but returns 0 internally.
+ */
 
 #if HAVE_COMPLEX_TRIG
   #if HAVE_SCM_C_MAKE_RECTANGULAR

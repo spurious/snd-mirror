@@ -5504,6 +5504,13 @@ static XEN g_out_any_1(const char *caller, XEN frame, XEN chan, XEN val, XEN out
   if (pos < 0) 
     XEN_OUT_OF_RANGE_ERROR(caller, XEN_ARG_1, frame, "must be >= 0");    
 
+#if HAVE_XEN_NAN_AND_INF_P
+  if (XEN_INF_P(val))
+    XEN_OUT_OF_RANGE_ERROR(caller, XEN_ARG_4, val, "is infinite");
+  if (XEN_NAN_P(val))
+    XEN_OUT_OF_RANGE_ERROR(caller, XEN_ARG_4, val, "is not a number");
+#endif
+
   inv = XEN_TO_C_DOUBLE(val);
 
 #if HAVE_GUILE
