@@ -2189,7 +2189,7 @@
 
 ;;; inf odd cosines scaled by complicated mess: koddcos
 
-;;; Jolley 1st col 3rd row 
+;;; Jolley 1st col 5th row 
 
 (define make-koddcos make-oscil)
 
@@ -3700,7 +3700,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;; -.725, 1/.275
 |#
 
-;;; TODO: dc is not right if a!=r, no norm
+;;; dc is not right if a!=r, no norm
 
 
 ;;; --------------------------------------------------------------------------------
@@ -3768,7 +3768,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	  dc)        ; get rid of DC component
        1.215)))      ; not the best...
 
-; TODO: normalize j0j1cos -- min depends on index, so peak depends on max and min and dc
+; need to normalize j0j1cos -- min depends on index, so peak depends on max and min and dc
 ;       (max (- 1.2154 dc)
 ;	    (- -0.5530 dc)
 

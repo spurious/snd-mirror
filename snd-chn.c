@@ -4,6 +4,9 @@
 
 /* SOMEDAY: fft side needs a zoom capability, not just the drag now */
 /* TODO: set y-bounds doesn't always fixup the y zoom slider? */
+/* TODO: Snd apparently doesn't update the background if a new chan is selected? 
+           I think this is confusion in the "united" case as to which channel is which
+ */
 
 
 /* it would be neat I think to change label font sizes/button sizes etc when dialog changes size

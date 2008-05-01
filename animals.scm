@@ -203,7 +203,6 @@
 ;;; Common Gull
 ;;; Willet
 ;;; Black-necked stilt
-;;; White-faced ibis
 ;;; Whooping crane
 ;;; Sandhill crane
 ;;; Trumpeter swan
@@ -5413,48 +5412,6 @@
 
 ;;; --------------------------------------------------------------------------------
 ;;;
-;;; White-faced ibis
-;;;
-;;; TODO: fix ibis! this is broken -- I think the change to formant screwed it up
-
-(definstrument (white-faced-ibis beg amp)
-  (let* ((start (seconds->samples beg))
-	 (dur 0.19)
-	 (stop (+ start (seconds->samples dur)))
-	 (ampf (make-env '(0.000 0.000 0.016 0.156 0.052 0.337 0.527 0.317 0.751 0.834 0.916 0.683 1.000 0.000)
-			 :duration dur :scaler (* 0.5 amp)))
-	 (frqf (make-env '(0.000 0.452 0.342 0.457 0.431 0.502 1.000 0.49 )
-			 :duration dur :offset (hz->radians -250) :scaler (hz->radians (* 1 512.0))))
-	 (frm1 (make-formant 4300 .995))
-	 (frm2 (make-formant 2200 .99))
-	 (frm3 (make-formant 3000 .9))
-	 (frm1f (make-env '(0 4400 1 3800) :duration dur))
-	 (frm2f (make-env '(0 2100 1 1700) :duration dur))
-	 (frm3f (make-env '(0 3000 1 2200) :duration dur))
-	 (fr1 (* 2 3 (sin (hz->radians 4300))))
-	 (fr2 (* 2 6 (sin (hz->radians 2200))))
-	 (fr3 (* 2 5 (sin (hz->radians 3000))))
-	 (gen (make-nxycos 1000 0.25 13))
-	 (rnd (make-rand-interp 1000 (hz->radians 20))))
-   (run
-     (lambda ()
-       (do ((i start (1+ i)))
-	   ((= i stop))
-	 (let ((inp (* (env ampf)
-		       (nxycos gen (+ (env frqf)
-				      (rand-interp rnd))))))
-	   (set! (mus-frequency frm1) (env frm1f))
-	   (set! (mus-frequency frm2) (env frm2f))
-	   (set! (mus-frequency frm3) (env frm3f))
-	   (outa i (+ (* fr1 (formant frm1 inp))
-		      (* fr2 (formant frm2 inp))
-		      (* fr3 (formant frm3 inp))))))))))
-
-;(with-sound (:play #t) (white-faced-ibis 0 .5))
-
-
-;;; --------------------------------------------------------------------------------
-;;;
 ;;; Lucy's warbler
 
 (definstrument (lucys-warbler beg amp)
@@ -9720,8 +9677,7 @@
 ;;;
 ;;; this is a good one
 
-;;;
-;;; (TODO: also 55)
+;;; (someday also 55)
 
 (define (trumpeter-swan-1 beg amp)
   ;; east 19 44
@@ -11034,7 +10990,6 @@
   (house-finch                   (+ beg 115.0) 0.25)     (set! beg (+ beg spacing))
   (ruby-crowned-kinglet          (+ beg 118.5) 0.25)     (set! beg (+ beg spacing))
   (green-tailed-towhee           (+ beg 121.0) 0.25)     (set! beg (+ beg spacing))
-  (white-faced-ibis              (+ beg 123.5) 0.25)     (set! beg (+ beg spacing))
   (lucys-warbler                 (+ beg 124.0) 0.25)     (set! beg (+ beg spacing))
   (cassins-vireo                 (+ beg 126.0) 0.25)     (set! beg (+ beg spacing))
   (plain-chacalaca               (+ beg 127.0) 0.5)      (set! beg (+ beg spacing))

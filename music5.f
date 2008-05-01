@@ -12,6 +12,7 @@ C     Incompatible types in assignment at (1), CHARACTER(1) to INTEGER(4)
 C     Two main PROGRAMs (actually at least 3)
 C     I think each page of this file was intended as a separate compilation (6 in all)
 C       since fortran complains so much about duplicate labels
+C     gfortran is unhappy with some of the DO loops and GO TO's
 C     
 C     The main typos are 'I' vs 1 -- the printout is so old and faded that
 C       I can barely make out which is correct sometimes.  And there are space
@@ -23,7 +24,10 @@ C     if split into three passes, (with various fixups for CHARACTER handling
 C       and so on -- I haven't merged the changes into this file yet) music5.f compiles
 C       without errors.  But I'm missing the functions putfile, ifile, finfile,
 C       and fastout.  I'm guessing ifile opens a file for reading, finfile
-C       closes a file, and the others write a file.
+C       closes a file, and the others open a file for writing, and fastout writes 0's.
+C       So, all I need is a known-good input example.
+C
+C     Mus11 says ifile(n,rnam) is the same as open(n,rnam,0,'RDO',,,'UNF')
 C     
 C     (Bill Schottstaedt, 26-Apr-08)
 C     

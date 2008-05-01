@@ -1476,8 +1476,6 @@ bagpipe drone.  <a href="sndscm.html#twotab">two-tab</a> in the same file interp
 See also <a href="sndscm.html#granidoc">grani</a> and <a href="sndscm.html#displayscannedsynthesis">display-scanned-synthesis</a>.
 </p>
 
-<!-- PERHAPS: auto-freeze -->
-
 <br><br>
 
 
@@ -3071,11 +3069,6 @@ Don't shy away from the sums to infinity just because you've heard shouting abou
 overwhelm r^k, so you can get away with very large "r"s in those cases; the center
 of the resultant spectrum is around r * freq.
 </p>
-
-<!-- PERHAPS: 3D graphs of how these change with index (if possible), perhaps also accuracy comparisons?
-     PERHAPS: also how they act with noise as input, or in feedback situations?
-     PERHAPS: also 3D of moving formants in each of those cases?
--->
 
 <p>
 <a class=quiet href="sndscm.html#def-clm-struct" onmouseout="UnTip()" onmouseover="Tip(sndscm_def_clm_struct_tip)">def-clm-struct</a> makes it easy to try out 
@@ -6984,7 +6977,7 @@ hop 3
   <A class=def NAME="k3sin?">k3sin?</A> gen
 </pre>
 
-<p>This produces a sum of sines scaled by k^3.
+<p>This produces a sum of sines scaled by 1.0/(k^3).
 </p>
 <br>
 
