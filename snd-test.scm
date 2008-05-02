@@ -36,7 +36,7 @@
 
 (define tests 1)
 (define keep-going #f)
-(define all-args #t)
+(define all-args #f)
 (define test-at-random 0)
 ;(show-ptree 1)
 ;(debug-enable 'warn-deprecated)
@@ -54713,6 +54713,19 @@ EDITS: 1
 	       (snd (find-sound res)))
 	  (if (not (sound? snd)) (snd-display ";nrxycos ~A" snd))
 	  (if (fneq (maxamp snd) 1.0) (snd-display ";nrxycos max: ~A" (maxamp snd))))
+
+	(let* ((res (with-sound (:clipped #f)
+				(let ((gen (make-nrxycos 1000 0.1 15 0.5))
+				      (indr (make-env '(0 -1 1 1) :length 40000 :scaler 0.9999)))
+				  (run 
+				   (lambda ()
+				     (do ((i 0 (1+ i)))
+					 ((= i 40000))
+				       (set! (mus-scaler gen) (env indr)) 
+				       (outa i (nrxycos gen 0.0))))))))
+	       (snd (find-sound res)))
+	  (if (not (sound? snd)) (snd-display ";nrxycos with scaler ~A" snd))
+	  (if (fneq (maxamp snd) 1.0) (snd-display ";nrxycos with scaler max: ~A" (maxamp snd))))
 
 	(let* ((res (with-sound (:clipped #f)
 		    (let ((black4 (make-blackman 440.0)))

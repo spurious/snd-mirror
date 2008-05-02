@@ -1845,6 +1845,9 @@ mus_any *mus_make_asymmetric_fm(Float freq, Float phase, Float r, Float ratio) /
  *   xy-ratio negative to build (via r) backwards.
  */
 
+#define MAX_R 0.999999
+#define MIN_R -0.999999
+
 typedef struct {
   mus_any_class *core;
   double freq, phase;
@@ -1872,21 +1875,24 @@ static Float nrxy_set_y_over_x(mus_any *ptr, Float val) {((nrxy *)ptr)->y_over_x
 
 static Float nrxy_r(mus_any *ptr) {return(((nrxy *)ptr)->r);}
 
-static Float nrxy_set_r(mus_any *ptr, Float val) 
+static Float nrxy_set_r(mus_any *ptr, Float r)
 {
   nrxy *gen = (nrxy *)ptr;
-  if (val >= 1.0)
-    val = 0.999;
-  if (val < 0.0)
-    val = 0.0;
-  if (gen->n > 0)
-    gen->norm = (pow(val, gen->n) - 1.0) / (val - 1.0); 
-  gen->r = val;
-  gen->r_squared_plus_1 = 1.0 + val * val;
-  gen->r_to_n_plus_1 = pow(val, gen->n + 1);
-  return(val);
+  int n;
+  n = gen->n;
+  if (r > MAX_R) r = MAX_R;
+  if (r < MIN_R) r = MIN_R;
+  gen->r = r;
+  gen->r_to_n_plus_1 = pow(r, n + 1);
+  gen->r_squared_plus_1 = 1.0 + r * r;
+  if (n == 0)
+    gen->norm = 1.0;
+  else gen->norm = (pow(fabs(r), n + 1) - 1.0) / (fabs(r) - 1.0); 
+  /* fabs here because if r<0.0, we line up at (2k-1)*pi rather than 2k*pi, but
+   *   otherwise the waveform is identical
+   */
+  return(r);
 }
-
 
 static bool nrxy_equalp(mus_any *p1, mus_any *p2)
 {
@@ -1950,6 +1956,8 @@ Float mus_nrxysin(mus_any *ptr, Float fm)
 	 divisor);
 }
 
+/* TODO: make these fabs r changes in mus.lisp too */
+
 
 static Float run_nrxysin(mus_any *ptr, Float fm, Float unused) {return(mus_nrxysin(ptr, fm));}
 
@@ -1992,15 +2000,8 @@ mus_any *mus_make_nrxysin(Float frequency, Float y_over_x, int n, Float r)
   gen->freq = mus_hz_to_radians(frequency);
   gen->y_over_x = y_over_x;
   gen->phase = 0.0;
-  if (r >= 1.0) r = 0.99999;
-  if (r < 0.0) r = 0.0;
-  gen->r = r;
   gen->n = n;
-  gen->r_to_n_plus_1 = pow(r, n + 1);
-  gen->r_squared_plus_1 = 1.0 + r * r;
-  if (n == 0)
-    gen->norm = 1.0;
-  else gen->norm = (pow(r, n + 1) - 1.0) / (r - 1.0); 
+  nrxy_set_r((mus_any *)gen, r);
   return((mus_any *)gen);
 }
 
@@ -2060,7 +2061,7 @@ Float mus_nrxycos(mus_any *ptr, Float fm)
 
   return((cos(x) - 
 	  r * cos(x - y) - 
-	  gen->r_to_n_plus_1 * (cos (x + (n + 1) * y) - 
+	  gen->r_to_n_plus_1 * (cos(x + (n + 1) * y) - 
 				r * cos(x + n * y))) / 
 	 divisor);
 }
@@ -2106,6 +2107,7 @@ mus_any *mus_make_nrxycos(Float frequency, Float y_over_x, int n, Float r)
   gen->core = &NRXYCOS_CLASS;
   return((mus_any *)gen);
 }
+
 
 
 

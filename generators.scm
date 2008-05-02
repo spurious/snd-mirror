@@ -947,7 +947,8 @@
 
     (set! (nrcos-angle gen) (+ fm x (nrcos-frequency gen)))
 
-    (/ (+ (- (* r (cos x)) (* (expt r n) (cos (* n x))) (* r r)) 
+    (/ (+ (- (* r (cos x)) 
+	     (* (expt r n) (cos (* n x))) (* r r)) 
 	  (* (expt r (+ n 1)) (cos (* (- n 1) x))))
        (* norm (+ 1.0 (* -2.0 r (cos x)) (* r r))))))
 
@@ -1503,6 +1504,10 @@
 (defgenerator (rcos
 	       :make-wrapper (lambda (g)
 			       (set! (rcos-osc g) (make-oscil (rcos-frequency g) (* 0.5 pi)))
+			       (if (>= (rcos-r g) 1.0)
+				   (set! (rcos-r g) .999999)
+				   (if (<= (rcos-r g) -1.0)
+				       (set! (rcos-r g) -.999999)))
 			       g)
 	       :methods (list
 			 (list 'mus-frequency
@@ -1515,6 +1520,20 @@
   (frequency *clm-default-frequency*) (r 0.0)
   (osc #f :type clm))
 
+#|
+;;; G&R form:
+(define (rcos gen fm)
+  (declare (gen rcos) (fm float))
+  (let* ((r (rcos-r gen))
+	 (absr (abs r))
+	 (rcosx (* r (oscil (rcos-osc gen) fm))))
+    (* (- (/ (- 1.0 rcosx)
+	     (+ 1.0 
+		(* r r)
+		(* -2.0 rcosx)))
+	  1.0)
+       (/ (- 1.0 absr) absr)))) ; normalization
+|#
 
 (define (rcos gen fm)
   "  (make-rcos frequency (r 0.0)) creates an rcos generator.\n\
@@ -1523,12 +1542,21 @@
   ;; a variant of the G&R 2nd col 4th row
   (declare (gen rcos) (fm float))
   (let* ((r (rcos-r gen))
+	 (absr (abs r))
 	 (rr (* r r)))
     (* (- (/ (- 1.0 rr)
 	     (- (+ 1.0 rr)
 		(* 2.0 r (oscil (rcos-osc gen) fm))))
 	  1.0)
-       (/ (- 1.0 r) (* 2.0 r))))) ; normalization
+       (/ (- 1.0 absr) (* 2.0 absr))))) ; normalization
+
+;;; if r>0 we get the spike at multiples of 2pi, since the k*pi case is flipping -1 1 -1 etc
+;;; if r<0, we get the spike at multiples of (2k-1)pi since the r sign now counteracts the cos kpi sign
+;;;  so the peak amp is the same in the two cases, so the normalization has to use abs(r)!
+;;;  but in the kpi case we tend to miss kpi (whereas we never miss 0 since we start there),
+;;;  so the actual maxamp may be less than 1.0
+
+;;; TODO: test all the other r cases for < 0! also sndclm expl for this, and mus-scaler method should clamp
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -1578,6 +1606,7 @@
 			       g))
   (frequency *clm-default-frequency*) (ratio 1.0) (r 0.0) (angle 0.0))
 
+;;; TODO: rssb is not normalized??  why is default r 1.0? (r<0 inverts?)
 
 (define (rssb gen fm)
   "  (make-rssb frequency (ratio 1.0) (r 1.0)) creates an rssb generator.\n\

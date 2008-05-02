@@ -2777,7 +2777,7 @@ sceq15:
 &\sum_{k=1}^{n-1}p^{k}\sin kx=\frac{p\sin x - p^{n}\sin nx + p^{n+1}\sin(n-1)x}{1-2p\cos x+p^{2}} \\
 &\sum_{k=0}^{n-1}p^{k}\cos kx=\frac{1-p\cos x - p^{n}\cos nx + p^{n+1}\cos(n-1)x}{1-2p\cos x + p^{2}} \\
 &\sum_{k=1}^{\infty}p^{k}\sin kx=\frac{p\sin x}{1-2p\cos x + p^{2}} \\
-&\sum_{k=1}^{\infty}p^{k}\cos kx=\frac{1-p\cos x}{1-2p\cos x + p^{2}} \\
+&\sum_{k=0}^{\infty}p^{k}\cos kx=\frac{1-p\cos x}{1-2p\cos x + p^{2}} \\
 &\sum_{k=1}^{\infty}\frac{p^{k}\sin kx}{k} = \arctan \frac{p\sin x}{1-p\cos x} \\
 &\sum_{k=1}^{\infty}\frac{p^{k}\cos kx}{k} = \ln \frac{1}{\sqrt{1-2p\cos x + p^{2}}} \\
 &\sum_{k=1}^{\infty}\frac{p^{2k-1}\sin(2k-1)x}{2k-1} = \frac{1}{2}\arctan \frac{2p\sin x}{1-p^{2}} \\
@@ -3125,7 +3125,7 @@ reflection, please send it to me, and I'll add it to this collection.
       (frequency *clm-default-frequency*) 
       (ratio 1.0)               ; ratio between frequency and the spacing between successive sidebands
       (n 1)                     ; number of sidebands
-      (r .5)                    ; amplitude ratio between successive sidebands (&lt; 1.0)
+      (r .5)                    ; amplitude ratio between successive sidebands (-1.0 &lt; r &lt; 1.0)
   <a class=def name="nrxysin">nrxysin</a> s :optional (fm 0.0)
   <a class=def name="nrxysin?">nrxysin?</a> s
 
@@ -3181,7 +3181,7 @@ reflection, please send it to me, and I'll add it to this collection.
 <table border=1 hspace=40><tr><td>
 <img src="pix/sinesummation.png" alt="nxry formula">
 </td></tr>
-<tr><td bgcolor="#f2f4ff"><center>nrxysin, n=5, a=0.5</center></td></tr>
+<tr><td bgcolor="#f2f4ff"><center>nrxysin, n=5, r=0.5</center></td></tr>
 </table></td></tr>
 </table>
 
@@ -3194,6 +3194,9 @@ ratio between successive sidebands (don't set it to 1.0), and "ratio" is the rat
 carrier frequency and the spacing between successive sidebands.
 A "ratio" of 2 gives odd-numbered harmonics for a (vaguely) clarinet-like sound.
 A negative ratio puts the side-bands below the carrier.
+A negative r is the same as shifting the initial phase by pi (instead of lining up
+for the spike at multiples of 2*pi, the (-1)^n causes them to line up at (2k-1)*pi,
+but the waveform is the same otherwise).
 The basic idea is very similar to that used in the
 <a href="#ncos">ncos</a> generator, but you have control of the
 fall-off of the spectrum and the spacing of the partials.
@@ -3230,6 +3233,26 @@ goes up, "r" goes down (to avoid foldover, or whatever).
 		    (<em class=red>nrxysin</em> sgen (if frq-env (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> frq-env) 0.0)))))))))
 
 (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () (ss 0 1 400.0 1.0 5 0.5 1.0 '(0 0 1 2)))
+</pre>
+</td></tr></table>
+
+<p>"r" can also be used in the same way as an FM index, giving changing spectra, but with no FM funny business
+(r is 0 at the midpoint):
+</p>
+
+<table border=0 hspace=30 cellpadding=10>
+<td>
+<img src="pix/nrxy-r.png" alt="nrxycos changing r">
+</td><td>
+<pre>
+(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> ()
+  (let ((gen1 (<em class=red>make-nrxycos</em> 400 1 15 0.95))
+	(indr (<a class=quiet href="#make-env" onmouseout="UnTip()" omnouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 -1 1 1) 
+	        :length 80000 :scaler 0.9999)))
+    (do ((i 0 (1+ i)))
+        ((= i 80000))
+      (set! (<em class=red>mus-scaler</em> gen1) (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> indr)) ; this sets r
+      (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* .5 (<em class=red>nrxycos</em> gen1 0.0))))))
 </pre>
 </td></tr></table>
 
@@ -6020,7 +6043,7 @@ will search that list for their name, and use the functions that follow to imple
 <p>(this section is work in progress...)
 </p>
 
-<!-- TODO move ramp and sound-interp to generators, maybe all the moving-*
+<!-- TODO move ramp and sound-interp (env-sound-interp, granulate-sound-interp) to generators, maybe all the moving-*
 -->
 
 <p>There are dozens of generators scattered around the *.scm files that come with Snd.  Some that come to mind:
