@@ -887,6 +887,10 @@
 
 
 
+(define generator-max-r 0.999999)
+(define generator-min-r -0.999999)
+(define (generator-clamp-r r)
+  (min generator-max-r (max generator min-r r)))
 
 
 ;;; --------------------------------------------------------------------------------
@@ -895,12 +899,16 @@
 
 (defgenerator (nrsin
 	       :make-wrapper (lambda (g)
+			       (set! (nrsin-r g) (generator-clamp-r (nrsin-r g)))
 			       (set! (nrsin-gen g) (make-nrxysin (nrsin-frequency g) 1.0 (nrsin-n g) (nrsin-r g)))
 			       g)
 	       :methods (list
 			 (list 'mus-frequency
 			       (lambda (g) (mus-frequency (nrsin-gen g)))
-			       (lambda (g val) (set! (mus-frequency (nrsin-gen g)) val)))))
+			       (lambda (g val) (set! (mus-frequency (nrsin-gen g)) val)))
+			 (list 'mus-scaler
+			       (lambda (g) (mus-scaler (nrsin-gen g)))
+			       (lambda (g val) (set! (mus-scaler (nrsin-gen g)) val)))))
   (frequency *clm-default-frequency*) (n 1 :type int) (r 0.0)
   (gen #f :type clm))
 
@@ -923,16 +931,21 @@
 			    (* .3 (sine-summation gen2 0.0))))))))))
 |#
 
-
 (defgenerator (nrcos
 	       :make-wrapper (lambda (g)
 			       (set! (nrcos-frequency g) (hz->radians (nrcos-frequency g)))
 			       (set! (nrcos-n g) (+ 1 (nrcos-n g)))
+			       (set! (nrcos-r g) (generator-clamp-r (nrcos-r g)))
 			       g)
 	       :methods (list
 			 (list 'mus-order
 			       (lambda (g) (1- (nrcos-n g)))
-			       (lambda (g val) (set! (nrcos-n g) (1+ val)) val))))
+			       (lambda (g val) (set! (nrcos-n g) (1+ val)) val))
+			 (list 'mus-scaler
+			       (lambda (g) (nrcos-r g))
+			       (lambda (g val)
+				 (set! (nrcos-r g) (generator-clamp-r val))
+				 (nrcos-r g)))))
   (frequency *clm-default-frequency*) (n 1 :type int) (r 0.0) (angle 0.0))
 
 
@@ -943,7 +956,7 @@
   (let* ((x (nrcos-angle gen))
 	 (n (nrcos-n gen))
 	 (r (nrcos-r gen))
-	 (norm (- (/ (- (expt r n) 1) (- r 1)) 1.0)))
+	 (norm (- (/ (- (expt (abs r) n) 1) (- (abs r) 1)) 1.0))) ; n+1??
 
     (set! (nrcos-angle gen) (+ fm x (nrcos-frequency gen)))
 
@@ -1028,6 +1041,9 @@
 (defgenerator (nrssb
 	       :make-wrapper (lambda (g)
 			       (set! (nrssb-frequency g) (hz->radians (nrssb-frequency g)))
+			       (set! (nrssb-r g) (generator-clamp-r (nrssb-r g)))
+			       (if (< (nrssb-r g) 0.0)
+				   (set! (nrssb-r g) 0.0))
 			       g))
   (frequency *clm-default-frequency*) (ratio 1.0) (n 1 :type int) (r 0.0) (angle 0.0))
 
@@ -1504,10 +1520,7 @@
 (defgenerator (rcos
 	       :make-wrapper (lambda (g)
 			       (set! (rcos-osc g) (make-oscil (rcos-frequency g) (* 0.5 pi)))
-			       (if (>= (rcos-r g) 1.0)
-				   (set! (rcos-r g) .999999)
-				   (if (<= (rcos-r g) -1.0)
-				       (set! (rcos-r g) -.999999)))
+			       (set! (rcos-r g) (generator-clamp-r (rcos-r g)))
 			       g)
 	       :methods (list
 			 (list 'mus-frequency
@@ -1827,7 +1840,7 @@
 (defgenerator (rxycos
 	       :make-wrapper (lambda (g)
 			       (set! (rxycos-frequency g) (hz->radians (rxycos-frequency g)))
-			       (if (>= (rxycos-r g) 1.0) (set! (rxycos-r g) 0.999999))
+			       (set! (rxycos-r g) (generator-clamp-r (rxycos-r g)))
 			       g))
   (frequency *clm-default-frequency*) (ratio 1.0) (r 0.0) (angle 0.0))
 
@@ -2254,7 +2267,7 @@
 (defgenerator (rkcos 
 	       :make-wrapper (lambda (g)
 			       (set! (rkcos-osc g) (make-oscil (rkcos-frequency g) (* 0.5 pi)))
-			       (set! (rkcos-r g) (max -0.9999999 (min 0.9999999 (rkcos-r g)))) ; or clip at 0.0?
+			       (set! (rkcos-r g) (generator-clamp-r (rkcos-r g))) ; or clip at 0.0?
 			       g)
 	       :methods (list
 			 (list 'mus-frequency

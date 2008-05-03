@@ -1956,8 +1956,6 @@ Float mus_nrxysin(mus_any *ptr, Float fm)
 	 divisor);
 }
 
-/* TODO: make these fabs r changes in mus.lisp too */
-
 
 static Float run_nrxysin(mus_any *ptr, Float fm, Float unused) {return(mus_nrxysin(ptr, fm));}
 

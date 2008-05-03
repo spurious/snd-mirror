@@ -54222,6 +54222,19 @@ EDITS: 1
 	  (if (fneq (maxamp snd) 1.0) (snd-display ";nrcos max: ~A" (maxamp snd))))
 
 	(let* ((res (with-sound (:clipped #f)
+				(let ((gen (make-nrcos 100 :n 15 :r 0.5))
+				      (indr (make-env '(0 -1 1 1) :length 40000 :scaler 0.9999)))
+				  (run 
+				   (lambda ()
+				     (do ((i 0 (1+ i)))
+					 ((= i 40000))
+				       (set! (mus-scaler gen) (env indr)) 
+				       (outa i (nrcos gen 0.0))))))))
+	       (snd (find-sound res)))
+	  (if (not (sound? snd)) (snd-display ";nrcos with scaler ~A" snd))
+	  (if (fneq (maxamp snd) 1.0) (snd-display ";nrcos with scaler max: ~A" (maxamp snd))))
+
+	(let* ((res (with-sound (:clipped #f)
 		    (let ((gen (make-ncos2 100.0 :n 10)))
 		      (run
 		       (lambda ()

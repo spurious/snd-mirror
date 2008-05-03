@@ -3236,8 +3236,8 @@ goes up, "r" goes down (to avoid foldover, or whatever).
 </pre>
 </td></tr></table>
 
-<p>"r" can also be used in the same way as an FM index, giving changing spectra, but with no FM funny business
-(r is 0 at the midpoint):
+<p>"r" can also be used in the same way as an FM index, but with much simpler spectral evolution (x^n, x between -1.0 and 1.0, rather than Jn(x)).
+In the graph, r is 0 at the midpoint, r goes from -1.0 to 1.0 along the horizontal axis &mdash; I forgot to label the axes.
 </p>
 
 <table border=0 hspace=30 cellpadding=10>
@@ -6609,21 +6609,22 @@ component is multiplied by -1, and "n" produces 2n-1 components.
 
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-nrcos">make-nrcos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (n 1) (r 0.0)
+  <A class=def NAME="make-nrcos">make-nrcos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (n 1) (r 0.0)             ; -1.0 &lt; r &lt; 1.0
   <A class=def NAME="nrcos">nrcos</A> gen fm
   <A class=def NAME="nrcos?">nrcos?</A> gen
 
-  <A class=def NAME="make-nrsin">make-nrsin</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (n 1) (r 0.0)
+  <A class=def NAME="make-nrsin">make-nrsin</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (n 1) (r 0.0)             ; -1.0 &lt; r &lt; 1.0
   <A class=def NAME="nrsin">nrsin</A> gen fm
   <A class=def NAME="nrsin?">nrsin?</A> gen
 
-  <A class=def NAME="make-nrssb">make-nrssb</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0) (n 1) (r 0.0)
+  <A class=def NAME="make-nrssb">make-nrssb</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0) (n 1) (r 0.0) ; 0.0 &lt;= r &lt; 1.0
   <A class=def NAME="nrssb">nrssb</A> gen fm
   <A class=def NAME="nrssbinterp">nrssb-interp</A> gen fm interp
   <A class=def NAME="nrssb?">nrssb?</A> gen
 </pre>
 
-<p>These produce the sum of "n" sinusoids, with successive sinusoids scaled by "r".  (The nth component has amplitude r^n).
+<p>These produce the sum of "n" sinusoids, with successive sinusoids scaled by "r"; the nth component has amplitude r^n.
+nrsin is just a wrapper for <a href="#nrxysin">nrxysin</a>, and the other two are obviously variants of <a href="#nrxycos">nrxycos</a>.
 In the nrssb-interp generator, the "interp" argument interpolates between the upper (interp=1.0) and lower (interp=-1.0) side bands.
 </p>
 
