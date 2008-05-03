@@ -6712,11 +6712,11 @@ The instrument nkssber uses nkssb-interp:
 <table border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>infinite sums</h5></center></td></tr></table>
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-rcos">make-rcos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (r 0.0)
+  <A class=def NAME="make-rcos">make-rcos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (r 0.0) ; -1.0 &lt; r &lt; 1.0
   <A class=def NAME="rcos">rcos</A> gen fm
   <A class=def NAME="rcos?">rcos?</A> gen
 
-  <A class=def NAME="make-rssb">make-rssb</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0) (r 0.0)
+  <A class=def NAME="make-rssb">make-rssb</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0) (r 0.0) ; -1.0 &lt; r &lt; 1.0
   <A class=def NAME="rssb">rssb</A> gen fm
   <A class=def NAME="rssbinterp">rssb-interp</A> gen fm interp
   <A class=def NAME="rssb?">rssb?</A> gen
@@ -6725,7 +6725,7 @@ The instrument nkssber uses nkssb-interp:
   <A class=def NAME="rxycos">rxycos</A> gen fm
   <A class=def NAME="rxycos?">rxycos?</A> gen
 
-  <A class=def NAME="make-rxysin">make-rxysin</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0) (r 0.0)
+  <A class=def NAME="make-rxysin">make-rxysin</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0) (r 0.0) ; -1.0 &lt; r &lt; 1.0
   <A class=def NAME="rxysin">rxysin</A> gen fm
   <A class=def NAME="rxysin?">rxysin?</A> gen
 </pre>
@@ -6734,6 +6734,7 @@ The instrument nkssber uses nkssb-interp:
 The bump instrument uses rssb-interp: <code>bump beg dur freq amp f0 f1 f2</code>:
 </p>
 
+<table border=0 hspace=20><tr><td>
 <pre>
 (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:play #t)
   (do ((k 0 (1+ k))) 
@@ -6745,6 +6746,61 @@ The bump instrument uses rssb-interp: <code>bump beg dur freq amp f0 f1 f2</code
 	   (scl (sqrt (/ freq 120))))
       (bump (+ 4 (* 0.4 k)) 1 freq  .5 (* scl 520) (* scl 1190) (* scl 2390)))))
 </pre>
+</td></tr></table>
+
+<p>As with all the "infinite sums" generators, aliasing is a major concern.  We can use the following
+relatively conservative function to find the highest safe "r" given the current fundamental and sampling rate:
+<p>
+
+<pre>
+   (define (safe-r-max freq srate)
+     (expt .001 (/ 1.0 (floor (/ srate (* 3 freq))))))
+</pre>
+
+<table border=0>
+<td>
+<p>
+If you go over that value, be prepared for some very unintuitive behavior!  For example,
+at an srate of 44100:
+</p>
+
+<table border=0 hspace=20><tr><td>
+<pre>
+(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:channels 2)
+  (let* ((gen1 (<em class=red>make-rcos</em> 1050 0.99))
+         ;; r=.6 or so is the safe max
+	 (gen2 (<em class=red>make-rcos</em> 1048 0.99)))
+    (do ((i 0 (1+ i)))
+	((= i 88200))
+      (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (<em class=red>rcos</em> gen1 0.0))
+      (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outb_tip)">outb</a> i (<em class=red>rcos</em> gen2 0.0)))))
+</pre>
+</td></tr></table>
+
+<p>In the first case, all the aliased harmonics line up perfectly with the
+unaliased ones because 1050 is 21*22050, but in the second case,
+we get (for example) the strong 84 Hz component because the 42nd harmonic
+which falls at 44100 - 42*1048 = 84 still has an amplitude of 0.99^42 = .66!
+</p>
+</td><td>
+<img src="pix/rcos.png" alt="rcos aliased">
+</td></tr></table>
+
+<p>Another artifact of aliasing is that at some frequencies, 
+for example at 100 Hz, and a sampling rate of 44100, if r is -0.99 and the initial phase is 0.5*pi, or if r is 0.99 and the initial phase is 1.5*pi, the peak amp
+is only 0.6639.  Finally(?),
+there's a sharp discontinuity (a click) as you sweep r through 0.0.  As in nrxycos, the waveforms produced by r and -r
+are the same, but there's an overall phase difference of pi.  
+</p>
+
+<p>Other notes: the output of rssb is not normalized, nor is rxysin.
+
+<!--
+(set! (x-axis-label 0 0 0) "rcos freq=1050 r=.99")
+(set! (x-axis-label 0 1 0) "rcos freq=1048 r=.99")
+(set! (axis-label-font) "9x15")
+-->
+
 <br>
 
 

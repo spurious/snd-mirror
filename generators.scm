@@ -890,7 +890,7 @@
 (define generator-max-r 0.999999)
 (define generator-min-r -0.999999)
 (define (generator-clamp-r r)
-  (min generator-max-r (max generator min-r r)))
+  (min generator-max-r (max generator-min-r r)))
 
 
 ;;; --------------------------------------------------------------------------------
@@ -1526,6 +1526,12 @@
 			 (list 'mus-frequency
 			       (lambda (g) (mus-frequency (rcos-osc g)))
 			       (lambda (g val) (set! (mus-frequency (rcos-osc g)) val) val))
+
+			 (list 'mus-scaler
+			       (lambda (g) (rcos-r g))
+			       (lambda (g val)
+				 (set! (rcos-r g) (generator-clamp-r (rcos-r g)))
+				 (rcos-r g)))
 				       
 			 (list 'mus-phase
 			       (lambda (g) (mus-phase (rcos-osc g)))
@@ -1557,11 +1563,14 @@
   (let* ((r (rcos-r gen))
 	 (absr (abs r))
 	 (rr (* r r)))
-    (* (- (/ (- 1.0 rr)
-	     (- (+ 1.0 rr)
-		(* 2.0 r (oscil (rcos-osc gen) fm))))
-	  1.0)
-       (/ (- 1.0 absr) (* 2.0 absr))))) ; normalization
+
+    (if (< absr nearly-zero)
+	0.0                       ; 1.0 from the formula, but we're subtracting out DC
+	(* (- (/ (- 1.0 rr)
+		 (- (+ 1.0 rr)
+		    (* 2.0 r (oscil (rcos-osc gen) fm))))
+	      1.0)
+	   (/ (- 1.0 absr) (* 2.0 absr)))))) ; normalization
 
 ;;; if r>0 we get the spike at multiples of 2pi, since the k*pi case is flipping -1 1 -1 etc
 ;;; if r<0, we get the spike at multiples of (2k-1)pi since the r sign now counteracts the cos kpi sign
@@ -1569,7 +1578,9 @@
 ;;;  but in the kpi case we tend to miss kpi (whereas we never miss 0 since we start there),
 ;;;  so the actual maxamp may be less than 1.0
 
-;;; TODO: test all the other r cases for < 0! also sndclm expl for this, and mus-scaler method should clamp
+
+
+;;; TODO: test all the other r cases for < 0! also sndclm expl for this, and mus-scaler method should clamp and we need checks for /0 due to r=0
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -1616,13 +1627,21 @@
 (defgenerator (rssb 
 	       :make-wrapper (lambda (g)
 			       (set! (rssb-frequency g) (hz->radians (rssb-frequency g)))
-			       g))
+			       (set! (rcos-r g) (generator-clamp-r (rcos-r g)))
+			       g)
+
+	       :methods (list
+			 (list 'mus-scaler
+			       (lambda (g) (rcos-r g))
+			       (lambda (g val)
+				 (set! (rcos-r g) (generator-clamp-r (rcos-r g)))
+				 (rcos-r g)))))
+
   (frequency *clm-default-frequency*) (ratio 1.0) (r 0.0) (angle 0.0))
 
-;;; TODO: rssb is not normalized??  why is default r 1.0? (r<0 inverts?)
 
 (define (rssb gen fm)
-  "  (make-rssb frequency (ratio 1.0) (r 1.0)) creates an rssb generator.\n\
+  "  (make-rssb frequency (ratio 1.0) (r 0.0)) creates an rssb generator.\n\
    (rssb gen fm) returns many cosines from frequency spaced by frequency * ratio with amplitude r^k."
   (declare (gen rssb) (fm float))
   (let* ((angle1 (rssb-angle gen))
@@ -1642,7 +1661,7 @@
 
 
 (define (rssb-interp gen fm interp)
-  "  (make-rssb frequency (ratio 1.0) (r 1.0)) creates an rssb generator for rssb-interp.\n\
+  "  (make-rssb frequency (ratio 1.0) (r 0.0)) creates an rssb generator for rssb-interp.\n\
    (rssb-interp gen fm interp) returns many cosines from frequency spaced by frequency * ratio with amplitude r^k.\
   The 'interp' argument determines whether the sidebands are above (1.0) or below (-1.0) frequency."
   (declare (gen rssb) (fm float))
