@@ -1432,6 +1432,42 @@
 |#
 
 
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Ramanujan, "On certain Arithmetical Functions"
+
+(defgenerator (n1cos 
+	       :make-wrapper (lambda (g)
+			       (set! (n1cos-frequency g) (hz->radians (n1cos-frequency g)))
+			       g))
+  (frequency *clm-default-frequency*) (n 1 :type int) (angle 0.0))
+
+(define (n1cos gen fm)
+  (declare (gen n1cos) (fm float))
+  (let* ((n (n1cos-n gen))
+	 (x (n1cos-angle gen))
+	 (tn (tan (* 0.5 x))))
+
+    (set! (n1cos-angle gen) (+ x fm (n1cos-frequency gen)))
+
+    (if (< (abs tn) 1.0e-3)
+	1.0
+	(/ (- 1.0 (cos (* n x)))
+	   (* tn tn
+	      n n 2))))) ; normalization -- this still has the very large DC term
+	      
+#|
+(with-sound (:clipped #f)
+  (let ((gen (make-n1cos 100.0 10)))
+    (do ((i 0 (1+ i)))
+	((= i 44100))
+      (outa i (n1cos gen 0.0)))))
+|#
+
+;;; TODO: doc test n1cos -- should DC be removed?
+
+
+
 #|
 ;;; --------------------------------------------------------------------------------
 
