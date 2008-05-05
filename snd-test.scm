@@ -54266,6 +54266,15 @@ EDITS: 1
 	  (if (fneq (maxamp snd) 1.0) (snd-display ";npcos max: ~A" (maxamp snd))))
 	
 	(let* ((res (with-sound (:clipped #f)
+		    (let ((gen (make-n1cos 100.0 :n 10)))
+		      (run (lambda () (do ((i 0 (1+ i)))
+					  ((= i 20000))
+					(outa i (n1cos gen 0.0))))))))
+	       (snd (find-sound res)))
+	  (if (not (sound? snd)) (snd-display ";n1cos ~A" snd))
+	  (if (fneq (maxamp snd) 1.0) (snd-display ";n1cos max: ~A" (maxamp snd))))
+	
+	(let* ((res (with-sound (:clipped #f)
 		    (let ((gen (make-rcos 100.0 :r 0.5)))
 		      (run (lambda () 
 			     (do ((i 0 (1+ i)))
@@ -54979,6 +54988,7 @@ EDITS: 1
 		(test-zero-stability (lambda () (make-noddcos :n n)) noddcos zero)
 		(test-zero-stability (lambda () (make-ncos2 :n n)) ncos2 zero)
 		(test-zero-stability (lambda () (make-npcos :n n)) npcos zero)
+		(test-zero-stability (lambda () (make-n1cos :n n)) n1cos zero)
 		(test-zero-stability (lambda () (make-nrcos :n n)) nrcos zero))
 	      (list 1 10 3 30))
 	     

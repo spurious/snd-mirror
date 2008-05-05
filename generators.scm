@@ -1450,12 +1450,12 @@
 
     (set! (n1cos-angle gen) (+ x fm (n1cos-frequency gen)))
 
-    (if (< (abs tn) nearly-zero)
+    (if (< (abs tn) 1.0e-6)
 	1.0
 	(/ (- 1.0 (cos (* n x)))
 	   (* tn tn
 	      n n 2))))) ; normalization -- this still has the very large DC term
-	      
+
 #|
 (with-sound (:clipped #f)
   (let ((gen (make-n1cos 100.0 10)))
@@ -1464,7 +1464,6 @@
       (outa i (n1cos gen 0.0)))))
 |#
 
-;;; TODO: doc test n1cos -- should DC be removed?
 
 
 
@@ -1566,7 +1565,7 @@
 			 (list 'mus-scaler
 			       (lambda (g) (rcos-r g))
 			       (lambda (g val)
-				 (set! (rcos-r g) (generator-clamp-r (rcos-r g)))
+				 (set! (rcos-r g) (generator-clamp-r val))
 				 (rcos-r g)))
 				       
 			 (list 'mus-phase
@@ -1670,7 +1669,7 @@
 			 (list 'mus-scaler
 			       (lambda (g) (rcos-r g))
 			       (lambda (g val)
-				 (set! (rcos-r g) (generator-clamp-r (rcos-r g)))
+				 (set! (rcos-r g) (generator-clamp-r val))
 				 (rcos-r g)))))
 
   (frequency *clm-default-frequency*) (ratio 1.0) (r 0.0) (angle 0.0))

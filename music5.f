@@ -471,6 +471,9 @@ C     OP CODE 12 TO SET INTEGER ALL PASSES
       GO TO 30
 C     OP CODE 13 FOR COMMENTS
  1300 IF(IBCD(L).NE.JSEMI) GO TO 1301
+      L=L+1
+      go to 4321
+c ? COM causes an infinite loop in the original code
  1301 L=L+1
       GO TO 1300
 C     TO STORE PFIELDS

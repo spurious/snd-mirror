@@ -3014,7 +3014,7 @@ another kernel set: binomial coeffs G&R 1.320 etc -- not different enough
 <tr><td colspan><a class=invisible href="#r2k!cos"><img src="pix/sceq30.png" alt="kosines" onmouseout="UnTip()" onmouseover="Tip('<img src=\'pix/r2kfactcos.png\' width=\'400\' height=\'177\'>')"></a></td>
 <td></td>
 <td>
-<img src="pix/sceq45.png" alt="linear cosines">
+<a class=invisible href="#n1cos"><img src="pix/sceq45.png" alt="linear cosines"></a>
 </td>
 </tr>
  
@@ -6552,6 +6552,18 @@ faster, but also similar to each other musically.
 
 <p>This is the Poussin kernel, a combination of two ncos2 generators, one at "n" subtracted from twice another at 2n+1.
 </p>
+
+
+<pre style="background-color: #f2f4ff">
+  <A class=def NAME="make-n1cos">make-n1cos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (n 1)
+  <A class=def NAME="n1cos">n1cos</A> gen fm
+  <A class=def NAME="n1cos?">n1cos?</A> gen
+</pre>
+
+<p>Another sinc-train sort of thing.
+</p>
+
+
 <br>
 
 
@@ -6733,7 +6745,7 @@ The instrument nkssber uses nkssb-interp:
   <A class=def NAME="rssbinterp">rssb-interp</A> gen fm interp
   <A class=def NAME="rssb?">rssb?</A> gen
 
-  <A class=def NAME="make-rxycos">make-rxycos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0) (r 0.0)
+  <A class=def NAME="make-rxycos">make-rxycos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0) (r 0.0) ; -1.0 &lt; r &lt; 1.0
   <A class=def NAME="rxycos">rxycos</A> gen fm
   <A class=def NAME="rxycos?">rxycos?</A> gen
 
