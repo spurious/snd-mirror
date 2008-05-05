@@ -11,7 +11,7 @@ C     Most of my changes are in lower case.
 
 
 
-C     To use this program, first divide music5.f into 3 passes (cut at the dotted line)
+C     To use this program, first divide music5.f into 3 passes (cut at the dotted lines)
 C     named, say pass1.f, pass2.f, pass3.f.  Then run them through gfortran:
 C       gfortran -o pass1 pass1.f
 C       gfortran -o pass2 pass2.f
@@ -1998,7 +1998,8 @@ C     [page 6-5]
 c      print *, 'output ', N, ICTR
 
       do 55 K=1,N
-         SAMPLE=IARR(k)*0.001
+         SAMPLE=IARR(k)*0.000488
+c 1/2048
          ICTR = ICTR+1
  55      WRITE(nwrite, rec=ICTR) SAMPLE
 
