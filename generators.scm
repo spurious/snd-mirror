@@ -1450,7 +1450,7 @@
 
     (set! (n1cos-angle gen) (+ x fm (n1cos-frequency gen)))
 
-    (if (< (abs tn) 1.0e-3)
+    (if (< (abs tn) nearly-zero)
 	1.0
 	(/ (- 1.0 (cos (* n x)))
 	   (* tn tn
