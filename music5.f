@@ -20,7 +20,7 @@ C     Now get some input, from music5-examples perhaps, run pass1
 C       and give it the input file name.
 C     It writes pass1.data.  Run pass2.  It reads pass1.data and writes pass2.data.
 C     Run pass3.  It reads pass2.data and writes the raw (headerless) binary sound
-C       file test.snd.  This is a file of little-endian 4-byte floats at 10000Hz, mono.
+C       file raw.snd.  This is a file of little-endian 4-byte floats at 20000Hz, mono.
 
 
 
@@ -90,7 +90,7 @@ C*****ABOVE 5 LINES FOR PDP10 ********
       
 C     INITIALIZATION
 C     NOMINAL SAMPLING RATE.
-      D(4) = 10000.0
+      D(4) = 20000.0
 C     ERROR FLAG
       IP(2)=0
       P(2)=0.0
@@ -981,7 +981,7 @@ C     DATA SPECIFICATION
       COMMON I(15000),P(100)/PARM/IP(21)/FINOUT/PEAK,NRSOR
 C     C******** DATA IIIRD/Z5EECE66D/
 
-      DATA IP/12,512,10000,14500,14400,512,13000,35,40,6657,2048,
+      DATA IP/12,512,20000,14500,14400,512,13000,35,40,6657,2048,
      *     1000000,6657,512,7777777,6*0/
 
       DATA IIIRD/976545367/
@@ -1006,6 +1006,7 @@ c      open(outputfile, FILE='pass3.data')
      * FILE='raw.snd', 
      * form='unformatted', 
      * access='direct',
+     * status='replace',
      * recl=4)
 
       I(7)=IIIRD
@@ -1854,7 +1855,7 @@ C     IP(15) = SCALE FACTOR FOR FUNCTIONS
 C     
 c      BLOCK DATA
 c      COMMON /PARM/IP(21)
-c      DATA IP/12,512,10000,14500,14400,512,13000,35,40,6657,2048,
+c      DATA IP/12,512,20000,14500,14400,512,13000,35,40,6657,2048,
 c     1     1000000,6657,512,7777777,5*0/
 C**** BIG NUMB. IS IBM360'S BIGGEST. 1  65536,6657,512,Z7FFFFFFF/
 c     END
