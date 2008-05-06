@@ -1172,7 +1172,7 @@ other enveloping functions: <a href="extsnd.html#rampchannel">ramp-channel</a>, 
 envelope editor: <a href="snd.html#editenvelope">Edit or View and Envelope</a><br>
 panning: place-sound in examp.scm<br>
 read sound indexed through envelope: <a href="sndscm.html#envsoundinterp">env-sound-interp</a><br>
-repeating envelope: <a href="#pulsedenv">pulsed-env</a></br>
+repeating envelope: <a href="#pulsedenv">pulsed-env</a><br>
 <br>
 </small></blockquote>
 </td></tr></table>
@@ -2461,7 +2461,7 @@ As the modulating signal approaches a spike (as n increases), the bulk of the en
      (list 12.0 64) (list 14.0 128))))
 </pre>
 </td><td>
-<img src="pix/ncosfm.png" alt="ncos as FM">
+<img src="pix/ncosfm.png" alt="ncos as FM" onmouseout="UnTip()" onmouseover="Tip('The n=1 case is at the bottom, the n=128 case at the top.<br>I tried adding axes and labels to this graph, but they looked really dumb')">
 </td></tr></table>
 
 <!--
@@ -6164,13 +6164,13 @@ in with-sound, but not within run (the run macro does not currently handle compl
 <p>
 This produces a repeating envelope.  <a href="#env">env</a> sticks at its last value, but pulsed-env repeats it over and over.
 "duration" is the envelope duration, and "frequency" is the repeitition rate, changeable via the "fm" argument to the pulsed-env generator.
-Many of the instruments in animals.scm use this generator.
+Many of the instruments in animals.scm use this generator.  (In a sense, this is the original Music V OSC generator).
 </p>
 <br>
 
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-blackman">make-blackman</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> frequency n
+  <A class=def NAME="make-blackman">make-blackman</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> frequency n ; 1 &lt;= n &lt;= 10
   <A class=def NAME="blackman">blackman</A> gen fm
   <A class=def NAME="blackman?">blackman?</A> gen
 </pre>
@@ -6563,8 +6563,10 @@ faster, but also similar to each other musically.
   <A class=def NAME="n1cos?">n1cos?</A> gen
 </pre>
 
-<p>Another sinc-train sort of thing.
+<p>Another spikey waveform, very similar to ncos2 above.
 </p>
+
+<img src="pix/sceq45.png" alt="linear cosines" hspace=20>
 
 
 <br>
@@ -6805,7 +6807,7 @@ at an srate of 44100:
 </td></tr></table>
 
 <p>In the first case, all the aliased harmonics line up perfectly with the
-unaliased ones because 1050 is 21*22050, but in the second case,
+unaliased ones because 21*1050 is 22050, but in the second case,
 we get (for example) the strong 84 Hz component because the 42nd harmonic
 which falls at 44100 - 42*1048 = 84 still has an amplitude of 0.99^42 = .66!
 </p>
@@ -6945,7 +6947,7 @@ differ by a factor of 3.  I think the one with the higher peak amplitude sounds 
 	((= i 50000))
       (<a class=quiet href="#outa">outa</a> i (<a class=quiet href="#moving-average">moving-average</a> flt1 
                 (<a class=quiet href="#adjustable-square-wave">adjustable-square-wave</a> gen1 0.0)))
-      (<a class=quiet href="#outb">outb</a> i (<a class=quiet href="#moving-average">moving-average</a> flt2 
+      (<a class=quiet href="#outa">outb</a> i (<a class=quiet href="#moving-average">moving-average</a> flt2 
                 (<a class=quiet href="#adjustable-square-wave">adjustable-square-wave</a> gen2 0.0))))))
 </pre>
 </td><td>
