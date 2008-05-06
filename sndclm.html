@@ -2288,7 +2288,8 @@ Even more amusing is this algorithm:
 </pre>
 </td></tr></table>
 
-<p>In these generators, the "fm" argument is useful mainly for various sci-fi sound effects:
+<p>For sawtooth output, see also <a href="#rksin">rksin</a>.
+In these generators, the "fm" argument is useful mainly for various sci-fi sound effects:
 </p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
@@ -2520,7 +2521,7 @@ B/(k * n) is heading for 0, so the product of J's is non-negligible
 only when all the J's are J0 except the solitary J1 that hits that component directly (i.e. the kth).
 J0(0) is 1, and J1(0) is 0, and the factor of n is scrunching all our components closer
 and closer to 0, so the carrier (all J0's) approaches 1, whereas the others (J0's except
-for J1(B/(n*k)) approach 0.
+for J1(B/(n*k))) approach 0.
 </p>
 
 <!-- LATEX jprod.png \prod_{i=1}^{k}J_{k_{i}}(B_{i}) -->
@@ -2805,8 +2806,9 @@ sceq20:
 &\sum_{k=0}^{\infty} p^{k} \sin(x + ky) = \frac{\sin x - p \sin(x - y)}{1 - 2p\cos y + p^{2}} \\
 &\sum_{k=1}^{\infty} \frac{\sin kx}{2^{k-1}} = \frac{4\sin x}{5 - 4\cos x} \\
 &\sum_{k=1}^{\infty} \frac{(-1)^{k} e^{(2k-1)a} \cos(2k-1)x}{2k-1} = \frac{1}{2}\arctan \bigg(\frac{\cos x}{\sinh a}\bigg) \\
-&\cos x + \frac{1}{2}\frac{\cos 3x}{3} + \frac{1 \cdot 3}{2 \cdot 4}\frac{\cos 5x}{5}\cdots = \frac{1}{2}\arccos(1 - 2\sin x) & (0\leq x \leq \pi?) \\
+&\sum_{k=1}^{\infty} \frac{\sin nx}{n(n^{2}-4)} = -\frac{\pi}{8}\sin^{2}x \\
 \end{align*}
+
 
 sceq21:
 \begin{align*}
@@ -2950,7 +2952,7 @@ another kernel set: binomial coeffs G&R 1.320 etc -- not different enough
     <area shape=rect coords="0,31,300,60" href="sndclm.html#rxysin" alt="rxysin">
     <area shape=rect coords="0,61,300,100" href="sndclm.html#k2sin" alt="k2sin">
     <area shape=rect coords="0,101,300,140" href="sndclm.html#eoddcos" alt="eoddcos">
-    <area shape=rect coords="0,141,300,180" href="sndclm.html#koddcos" alt="koddcos">
+    <area shape=rect coords="0,141,300,180" href="sndclm.html#k3sin" alt="k3sin">
 </map>
 </td><td></td>
 <td><img src="pix/sceq21.png" alt="more sums" usemap="#J2" border=0>
@@ -2962,7 +2964,7 @@ another kernel set: binomial coeffs G&R 1.320 etc -- not different enough
     <area shape=rect coords="0,141,300,180">
 </map>
 </td></tr>
-<tr><td colspan=3 bgcolor="#eefdee"><center>Jolley, "Summation of Series", 521 587 620 635 638 685 686 691 692 728</center></td></tr>
+<tr><td colspan=3 bgcolor="#eefdee"><center>Jolley, "Summation of Series", 521 587 623 635 638 685 686 691 692 728</center></td></tr>
 <tr><td colspan=3 height=25></td></tr>
 
 
@@ -2970,6 +2972,8 @@ another kernel set: binomial coeffs G&R 1.320 etc -- not different enough
 <td><a class=invisible href="#k3sin"><img src="pix/sceq40.png" alt="n3 case"></a></td></tr>
 <tr><td colspan=3 bgcolor="#eefdee"><center>Abramowitz and Stegun, "Handbook of Mathematical Functions", 9.6.34, 27.8.6</center></td></tr>
 <tr><td colspan=3 height=25></td></tr>
+
+<!-- TODO: k3sin name is already taken -->
 
 
 <tr><td><a class=invisible href="#krksin"><img src="pix/sceq25.png" alt="more sums"></a></td><td></td>
@@ -3253,7 +3257,7 @@ In the graph, r is 0 at the midpoint, r goes from -1.0 to 1.0 along the horizont
 </p>
 
 <table border=0 hspace=30 cellpadding=10>
-<td>
+<tr><td>
 <img src="pix/nrxy-r.png" alt="nrxycos changing r">
 </td><td>
 <pre>
@@ -6774,7 +6778,7 @@ The bump instrument uses rssb-interp: <code>bump beg dur freq amp f0 f1 f2</code
 
 <p>As with all the "infinite sums" generators, aliasing is a major concern.  We can use the following
 relatively conservative function to find the highest safe "r" given the current fundamental and sampling rate:
-<p>
+</p>
 
 <pre>
    (define (safe-r-max freq srate)
@@ -6782,7 +6786,7 @@ relatively conservative function to find the highest safe "r" given the current 
 </pre>
 
 <table border=0>
-<td>
+<tr><td>
 <p>
 If you go over that value, be prepared for some very unintuitive behavior!  For example,
 at an srate of 44100:
@@ -6818,6 +6822,7 @@ are the same, but there's an overall phase difference of pi.
 </p>
 
 <p>Other notes: the output of rssb is not normalized, nor is rxysin.
+</p>
 
 <!--
 (set! (x-axis-label 0 0 0) "rcos freq=1050 r=.99")
@@ -6838,7 +6843,8 @@ are the same, but there's an overall phase difference of pi.
   <A class=def NAME="erssb?">erssb?</A> gen
 </pre>
 
-<p>These produce a sum of sinusoids, each scaled by e^(-kr), a special case of rcos.  The ercoser instrument uses ercos:
+<p>These produce a sum of sinusoids, each scaled by e^(-kr), a special case of rcos.  Our safe (minimum) "r" here becomes <code>(/ (log 0.001) (floor (/ srate (* -3 freq))))</code>.
+The ercoser instrument uses ercos:
 <code>ercoser beg dur freq amp r</code>:
 </p>
 
@@ -6855,51 +6861,78 @@ are the same, but there's an overall phase difference of pi.
   <A class=def NAME="eoddcos?">eoddcos?</A> gen
 </pre>
 
-<p>This produces a sum of odd harmonics, each scaled by e^(2k-1)/(2k-1).  As "r" approches 0.0, this approaches a square wave.
+<p>This produces a sum of odd harmonics, each scaled by e^r(2k-1)/(2k-1).  As "r" approches 0.0, this approaches a square wave.
 </p>
 
 <pre>
 (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:play #t)
-  (let ((gen1 (make-eoddcos 400.0 :r 0.0))
+  (let ((gen1 (<em class=red>make-eoddcos</em> 400.0 :r 0.0))
 	(gen2 (<a class=quiet href="#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> 400.0))
 	(a-env (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1) :length 10000)))
     (run (lambda () 
       (do ((i 0 (1+ i)))
 	  ((= i 10000))
 	(set! (eoddcos-r gen1) (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> a-env))
-	(<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* .5 (eoddcos gen1 (* .1 (<a class=quiet href="#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> gen2))))))))))
+	(<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* .5 (<em class=red>eoddcos</em> gen1 (* .1 (<a class=quiet href="#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> gen2))))))))))
 </pre>
 <br>
 
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-koddcos">make-koddcos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0)
-  <A class=def NAME="koddcos">koddcos</A> gen fm
-  <A class=def NAME="koddcos?">koddcos?</A> gen
-</pre>
-
-<p>This produces a sum of odd harmonics with a complicated scaling &mdash; it is the 5th Jolley case, 1st column, in the nsin table.
-This generator's output is not normalized, and looks incorrect...
-</p>
-<br>
-
-
-<pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-rkcos">make-rkcos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (r 0.0)
+  <A class=def NAME="make-rkcos">make-rkcos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (r 0.0) ; -1.0 &lt; r &lt; 1.0
   <A class=def NAME="rkcos">rkcos</A> gen fm
   <A class=def NAME="rkcos?">rkcos?</A> gen
 
-  <A class=def NAME="make-rksin">make-rksin</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (r 0.0)
+  <A class=def NAME="make-rksin">make-rksin</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (r 0.0) ; -1.0 &lt; r &lt; 1.0
   <A class=def NAME="rksin">rksin</A> gen fm
   <A class=def NAME="rksin?">rksin?</A> gen
 
-  <A class=def NAME="make-rkssb">make-rkssb</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0) (r 0.0)
+  <A class=def NAME="make-rkssb">make-rkssb</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0) (r 0.0) ; -1.0 &lt; r &lt; 1.0
   <A class=def NAME="rkssb">rkssb</A> gen
   <A class=def NAME="rkssb?">rkssb?</A> gen
 </pre>
 
-<p>These produce a sum of sinusoids scaled by (r^k)/k.  The rksin output is not normalized.
+<p>These produce a sum of sinusoids scaled by (r^k)/k.  As r approaches 1.0 or -1.0, rksin approaches a sawtooth.  As with rcos, we
+can calculate the safe maximum r, given the current srate and frequency (this function is perhaps too cautious...):
 </p>
+
+<pre>
+    (define (safe-rk-max freq srate)
+      (let ((topk (floor (/ srate (* 3 freq)))))
+        (expt (* .001 topk) (/ 1.0 topk))))
+</pre>
+
+<p>
+rksin and rkcos provide a nice demonstration of how insensitive the ear is to phase.  These two waveforms 
+have the same timbre. The sawtooth sounds louder to me, despite having the same peak amplitude.
+</p>
+
+<table border=0 hspace=20>
+<tr><td>
+<pre>
+(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:channels 2)
+  (let ((gen1 (<em class=red>make-rkcos</em> 200.0 :r 0.9))
+        (gen2 (<em class=red>make-rksin</em> 200.0 :r 0.9)))
+    (do ((i 0 (1+ i)))
+	((= i 100000))
+      (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* .95 (<em class=red>rkcos</em> gen1 0.0)))
+      (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outb_tip)">outb</a> i (* .95 (<em class=red>rksin</em> gen2 0.0))))))
+
+<em class=typing>&gt;</em> <em class=listener>(channel-rms 0 0)</em> ; from dsp.scm
+<em class=typing>0.305301097090353</em>
+<em class=typing>&gt;</em> <em class=listener>(channel-rms 0 1)</em>
+<em class=typing>0.627769794744852</em>
+</pre>
+</td><td>
+<img src="pix/rksin.png" alt="sin vs cos" hspace=30>
+</td></tr></table>
+
+<!--
+(set! (x-axis-label 0 0) "rkcos, r=.9")
+(set! (x-axis-label 0 1) "rksin, r=.9")
+(set! (axis-label-font) "9x15")
+-->
+
 <br>
 
 

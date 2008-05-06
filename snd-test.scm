@@ -54370,16 +54370,6 @@ EDITS: 1
 	  (if (fneq (maxamp snd) 1.0) (snd-display ";eoddcos 2 max: ~A" (maxamp snd))))
 	
 	(let* ((res (with-sound (:clipped #f)
-		    (let ((gen (make-koddcos 400.0)))
-		      (run (lambda ()
-			     (do ((i 0 (1+ i)))
-				 ((= i 10000))
-			       (outa i (* .3 (koddcos gen 0.0)))))))))
-	       (snd (find-sound res)))
-	  (if (not (sound? snd)) (snd-display ";koddcos ~A" snd))
-	  (if (fneq (maxamp snd) 0.3) (snd-display ";koddcos max: ~A" (maxamp snd))))
-	
-	(let* ((res (with-sound (:clipped #f)
 		    (let ((gen (make-nssb 2000.0 0.05 3)))
 		      (run 
 		       (lambda ()

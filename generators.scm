@@ -1616,6 +1616,7 @@
 
 
 ;;; TODO: test all the other r cases for < 0! also sndclm expl for this, and mus-scaler method should clamp and we need checks for /0 due to r=0
+;;; rkoddssb krksin r2k!cos rxyk!* r2k2cos + safe-r calcs
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -1860,7 +1861,15 @@
 (defgenerator (rxysin
 	       :make-wrapper (lambda (g)
 			       (set! (rxysin-frequency g) (hz->radians (rxysin-frequency g)))
-			       g))
+			       (set! (rxysin-r g) (generator-clamp-r (rxysin-r g)))
+			       g)
+	       :methods (list
+			 (list 'mus-scaler
+			       (lambda (g) (rxysin-r g))
+			       (lambda (g val)
+				 (set! (rxysin-r g) (generator-clamp-r val))
+				 (rxysin-r g)))))
+
   (frequency *clm-default-frequency*) (ratio 1.0) (r 0.0) (angle 0.0))
 
 
@@ -1895,7 +1904,13 @@
 	       :make-wrapper (lambda (g)
 			       (set! (rxycos-frequency g) (hz->radians (rxycos-frequency g)))
 			       (set! (rxycos-r g) (generator-clamp-r (rxycos-r g)))
-			       g))
+			       g)
+	       :methods (list
+			 (list 'mus-scaler
+			       (lambda (g) (rxycos-r g))
+			       (lambda (g val)
+				 (set! (rxycos-r g) (generator-clamp-r val))
+				 (rxycos-r g)))))
   (frequency *clm-default-frequency*) (ratio 1.0) (r 0.0) (angle 0.0))
 
 
@@ -1914,7 +1929,7 @@
 	  (+ 1.0 
 	     (* -2.0 r (cos y))
 	     (* r r)))
-       (- 1.0 r))))
+       (- 1.0 (abs r))))) ; norm, abs for negative r
 
 #|
 (with-sound (:clipped #f :statistics #t)
@@ -2281,7 +2296,9 @@
 |#
 
 
+#|
 ;;; --------------------------------------------------------------------------------
+;;; removed 6-May-08
 
 ;;; inf odd cosines scaled by complicated mess: koddcos
 
@@ -2298,24 +2315,28 @@
 	(/ (acos (- 1.0 arg)) pi)
 	(/ (acos (+ 1.0 arg)) (- pi)))))
 
-#|
+
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-koddcos 400.0)))
     (run (lambda ()
 	   (do ((i 0 (1+ i)))
 	       ((= i 10000))
 	     (outa i (* .3 (koddcos gen 0.0))))))))
-|#
+
 
 ;;; as printed in J, this is not usable -- 1-2sin can be 3 so acos will be complex -- looks like we're missing: x < pi
 ;;; we get odd harmonics but wrong amps
+|#
+
+
+;;; TODO: check out the replacement for koddcos, doc, test if it works out
 
 
 ;;; --------------------------------------------------------------------------------
 
 ;;; inf cosines scaled by r^k/k: rkcos, rksin, rkssb
 
-;;; G&R 2nd col 6th row
+;;; G&R 2nd col 6th row, also J 536
 ;;; r^k/k -- this sums to ln(1/(1-x)) if x<1 (J 118)
 
 (defgenerator (rkcos 
@@ -2327,6 +2348,12 @@
 			 (list 'mus-frequency
 			       (lambda (g) (mus-frequency (rkcos-osc g)))
 			       (lambda (g val) (set! (mus-frequency (rkcos-osc g)) val) val))
+			 
+			 (list 'mus-scaler
+			       (lambda (g) (rkcos-r g))
+			       (lambda (g val)
+				 (set! (rkcos-r g) (generator-clamp-r val))
+				 (rkcos-r g)))
 
 			 (list 'mus-phase
 			       (lambda (g) (mus-phase (rkcos-osc g)))
@@ -2343,8 +2370,8 @@
   (declare (gen rkcos) (fm float))
   (let ((cs (oscil (rkcos-osc gen) fm))
 	(r (rkcos-r gen)))
-    (/ (log (/ 1.0 (sqrt (+ 1.0 (* -2.0 r cs) (* r r)))))
-       (log (/ 1.0 (- 1.0 r)))))) ; normalization (assuming 0.0<=r<1.0)
+    (/ (* 0.5 (log (+ 1.0 (* -2.0 r cs) (* r r))))
+       (log (- 1.0 (abs r)))))) ; norm
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -2360,8 +2387,15 @@
 (defgenerator (rksin
 	       :make-wrapper (lambda (g)
 			       (set! (rksin-frequency g) (hz->radians (rksin-frequency g)))
-			       g))
-  (frequency *clm-default-frequency*) (r 1.0) (angle 0.0))
+			       g)
+	       :methods (list
+			 (list 'mus-scaler
+			       (lambda (g) (rksin-r g))
+			       (lambda (g val)
+				 (set! (rksin-r g) (generator-clamp-r val))
+				 (rksin-r g)))))
+
+  (frequency *clm-default-frequency*) (r 0.0) (angle 0.0))
 
 ;;; normalization based on 0 of derivative of atan arg (for max) at cos x = r,
 ;;;   so we get a maxamp here of (atan (/ (* r (sin (acos r))) (- 1.0 (* r r))))
@@ -2394,8 +2428,15 @@
 (defgenerator (rkssb
 	       :make-wrapper (lambda (g)
 			       (set! (rkssb-frequency g) (hz->radians (rkssb-frequency g)))
-			       g))
-  (frequency *clm-default-frequency*) (ratio 1.0) (r 1.0) (angle 0.0))
+			       g)
+	       :methods (list
+			 (list 'mus-scaler
+			       (lambda (g) (rkssb-r g))
+			       (lambda (g val)
+				 (set! (rkssb-r g) (generator-clamp-r val))
+				 (rkssb-r g)))))
+
+  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.0) (angle 0.0))
 
 
 (define (rkssb gen fm)
@@ -2404,18 +2445,18 @@
   (declare (gen rkssb) (fm float))
   (let* ((cx (rkssb-angle gen))
 	 (mx (* cx (rkssb-ratio gen)))
+	 (cxx (* (- 1.0 (rkssb-ratio gen)) cx))
 	 (r (rkssb-r gen))
 	 (rcosmx (* r (cos mx))))
 
     (set! (rkssb-angle gen) (+ cx fm (rkssb-frequency gen)))
 
-    (/ (- (* (cos cx)
-	     (log (/ 1.0
-		     (sqrt (+ 1.0 (* -2.0 rcosmx) (* r r))))))
-	  (* (sin cx)
+    (/ (- (* (cos cxx)
+	     -0.5 (log (+ 1.0 (* -2.0 rcosmx) (* r r))))
+	  (* (sin cxx)
 	     (atan (/ (* r (sin mx))
 		      (- 1.0 rcosmx)))))
-       (log (/ 1.0 (- 1.0 r)))))) ; normalization
+       (- (log (- 1.0 (abs r))))))) ; normalization
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)

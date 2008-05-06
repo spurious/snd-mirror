@@ -15,9 +15,6 @@
 /* SOMEDAY: the open file dialog is screwed up in OSX -- ".." ignored and so on
  */
 
-/* TODO: open raw, and the no header found dialog is enormous?
- */
-
 #define FSB_BOX(Dialog, Child) XmFileSelectionBoxGetChild(Dialog, Child)
 #define MSG_BOX(Dialog, Child) XmMessageBoxGetChild(Dialog, Child)
 
@@ -4590,6 +4587,7 @@ static void make_raw_data_dialog(raw_info *rp, const char *title)
   XtSetArg(args[n], XmNautoUnmanage, false); n++;
   /* not transient -- we want this window to remain visible if possible */
   rp->dialog = XmCreateWarningDialog(MAIN_SHELL(ss), "raw data", args, n);
+  /* I don't know why this takes up all the vertical space on the screen */
 
   XtAddCallback(rp->dialog, XmNcancelCallback, raw_data_cancel_callback, (XtPointer)rp);
   XtAddCallback(rp->dialog, XmNhelpCallback,   raw_data_help_callback,   (XtPointer)rp);
