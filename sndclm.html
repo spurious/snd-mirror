@@ -1169,9 +1169,10 @@ Various operations on envelopes: <a href="sndscm.html#envdoc">env.scm</a><br>
 
 envelope sound: <a href="extsnd.html#envchannel">env-channel</a>, <a href="extsnd.html#envsound">env-sound</a><br>
 other enveloping functions: <a href="extsnd.html#rampchannel">ramp-channel</a>, <a href="extsnd.html#xrampchannel">xramp-channel</a>, <a href="extsnd.html#smoothchannel">smooth-channel</a><br>
-The envelope editor: <a href="snd.html#editenvelope">Edit or View and Envelope</a><br>
-Panning: place-sound in examp.scm<br>
-Read sound indexed through envelope: <a href="sndscm.html#envsoundinterp">env-sound-interp</a><br>
+envelope editor: <a href="snd.html#editenvelope">Edit or View and Envelope</a><br>
+panning: place-sound in examp.scm<br>
+read sound indexed through envelope: <a href="sndscm.html#envsoundinterp">env-sound-interp</a><br>
+repeating envelope: <a href="#pulsedenv">pulsed-env</a></br>
 <br>
 </small></blockquote>
 </td></tr></table>
@@ -2952,7 +2953,7 @@ another kernel set: binomial coeffs G&R 1.320 etc -- not different enough
     <area shape=rect coords="0,31,300,60" href="sndclm.html#rxysin" alt="rxysin">
     <area shape=rect coords="0,61,300,100" href="sndclm.html#k2sin" alt="k2sin">
     <area shape=rect coords="0,101,300,140" href="sndclm.html#eoddcos" alt="eoddcos">
-    <area shape=rect coords="0,141,300,180" href="sndclm.html#k3sin" alt="k3sin">
+    <area shape=rect coords="0,141,300,180" href="sndclm.html#k32sin" alt="k32sin">
 </map>
 </td><td></td>
 <td><img src="pix/sceq21.png" alt="more sums" usemap="#J2" border=0>
@@ -2972,8 +2973,6 @@ another kernel set: binomial coeffs G&R 1.320 etc -- not different enough
 <td><a class=invisible href="#k3sin"><img src="pix/sceq40.png" alt="n3 case"></a></td></tr>
 <tr><td colspan=3 bgcolor="#eefdee"><center>Abramowitz and Stegun, "Handbook of Mathematical Functions", 9.6.34, 27.8.6</center></td></tr>
 <tr><td colspan=3 height=25></td></tr>
-
-<!-- TODO: k3sin name is already taken -->
 
 
 <tr><td><a class=invisible href="#krksin"><img src="pix/sceq25.png" alt="more sums"></a></td><td></td>
@@ -6626,12 +6625,12 @@ component is multiplied by -1, and "n" produces 2n-1 components.
 
 <pre>
 (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:play #t)
-  (let ((gen (make-noddsin 300 :n 3))
+  (let ((gen (<em class=red>make-noddsin</em> 300 :n 3))
 	(ampf (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1 2 1 3 0) :length 40000 :scaler .5)))
     (run (lambda ()
       (do ((i 0 (1+ i)))
 	  ((= i 40000))
-	(<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> ampf) (noddsin gen 0.0))))))))
+	(<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> ampf) (<em class=red>noddsin</em> gen 0.0))))))))
 </pre>
 <br>
 
@@ -6834,7 +6833,7 @@ are the same, but there's an overall phase difference of pi.
 
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-ercos">make-ercos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (r 0.0)
+  <A class=def NAME="make-ercos">make-ercos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (r 0.0) ; r &gt; 0.0
   <A class=def NAME="ercos">ercos</A> gen fm
   <A class=def NAME="ercos?">ercos?</A> gen
 
@@ -6903,7 +6902,7 @@ can calculate the safe maximum r, given the current srate and frequency (this fu
 </pre>
 
 <p>
-rksin and rkcos provide a nice demonstration of how insensitive the ear is to phase.  These two waveforms 
+rksin and rkcos provide a nice demonstration of how insensitive the ear is to phase.  These two waveforms look different, but
 have the same timbre. The sawtooth sounds louder to me, despite having the same peak amplitude.
 </p>
 
@@ -6927,10 +6926,46 @@ have the same timbre. The sawtooth sounds louder to me, despite having the same 
 <img src="pix/rksin.png" alt="sin vs cos" hspace=30>
 </td></tr></table>
 
+<p>We might conclude that the RMS value gives the perceived amplitude, but
+in the next case, the RMS values are the same, and the peak amplitudes
+differ by a factor of 3.  I think the one with the higher peak amplitude sounds louder.
+</p>
+
+<table border=0 hspace=20>
+<tr><td>
+<pre>
+(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:channels 2)
+  (let* ((gen1 (<a class=quiet href="#make-adjustable-square-wave">make-adjustable-square-wave</a> 400 
+		 :duty-factor .75 :amplitude .25))
+	 (gen2 (<a class=quiet href="#make-adjustable-square-wave">make-adjustable-square-wave</a> 400 
+                 :duty-factor .11 :amplitude .75))
+	 (flt1 (<a class=quiet href="#make-moving-average">make-moving-average</a> 10))
+	 (flt2 (<a class=quiet href="#make-moving-average">make-moving-average</a> 10)))
+    (do ((i 0 (1+ i)))
+	((= i 50000))
+      (<a class=quiet href="#outa">outa</a> i (<a class=quiet href="#moving-average">moving-average</a> flt1 
+                (<a class=quiet href="#adjustable-square-wave">adjustable-square-wave</a> gen1 0.0)))
+      (<a class=quiet href="#outb">outb</a> i (<a class=quiet href="#moving-average">moving-average</a> flt2 
+                (<a class=quiet href="#adjustable-square-wave">adjustable-square-wave</a> gen2 0.0))))))
+</pre>
+</td><td>
+<img src="pix/rmspk.png" alt="rms vs peak" hspace=30>
+</td></tr></table>
+
+<p>Since clipping is a disaster, we focus on peak amplitudes in the generators.
+</p>
+
+
 <!--
+(set! (selected-graph-color) (make-color 1 1 1))
+(set! (selected-data-color) (make-color 0 0 0))
+
 (set! (x-axis-label 0 0) "rkcos, r=.9")
 (set! (x-axis-label 0 1) "rksin, r=.9")
 (set! (axis-label-font) "9x15")
+
+(set! (x-axis-label 0 0) "rms: .21, peak amp: .25")
+(set! (x-axis-label 0 1) "rms: .21, peak amp: .75")
 -->
 
 <br>
@@ -6967,7 +7002,7 @@ have the same timbre. The sawtooth sounds louder to me, despite having the same 
 (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:play #t :scaled-to .5)
   (do ((k 0 (1+ k)))
       ((= k 6))
-    (let ((gen (make-rk!cos 3000.0 :r 0.6)) 
+    (let ((gen (<em class=red>make-rk!cos</em> 3000.0 :r 0.6)) 
           (ampf (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1 2 1 3 0) :length 3000))
 	  (frqf (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1) :base .1 :scaler (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> 2000) :length 3000)))
       (run 
@@ -6976,7 +7011,7 @@ have the same timbre. The sawtooth sounds louder to me, despite having the same 
 	     ((= i 3000)) 
 	   (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> (+ i (* k 4000)) 
 		 (* (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> ampf) 
-		    (rk!cos gen (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> frqf))))))))))
+		    (<em class=red>rk!cos</em> gen (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> frqf))))))))))
 </pre>
 
 <p>The instrument bouncy uses rk!ssb: <code>bouncy beg dur freq amp :optional (bounce-freq 5) (bounce-amp 20)</code>
