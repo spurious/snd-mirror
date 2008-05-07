@@ -2859,7 +2859,10 @@ given the index 'a', and harmonic coefficients 'coeffs' (the 0th element is DC a
 
 <!-- fm-parallel-component -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<A class=def NAME="fmparallelcomponent">fm-parallel-component</A> <code>(freq-we-want wc wms inds ns bs using-sine)</code>
+<A class=def NAME="fmparallelcomponent">fm-parallel-component</A> <code>(freq-we-want wc wms inds ns bs using-sine)</code><br>
+<em class=emdef>fm-cascade-component</em> <code>(freq-we-want wc wm1 a wm2 b)</code><br>
+<em class=emdef>fm-complex-component</em> <code>(freq-we-want wc wm a b interp sine)</code> ; "sine" arg currently ignored
+
 </td></tr><tr><td></td><td>
 This returns the amplitude of "freq-we-want" in parallel (complex) FM, where
 "wc" is the carrier, "wms" is a list of modulator frequencies, "inds" is a list of the
@@ -3185,6 +3188,9 @@ multiply being a convolution).
 The "constant" (0-th coefficient) term in spectral polynomial is treated as a dither amount (that is,
 it has the given magnitude, but its phase is randomized, rather than being simple DC).
 See also <a href="#polydoc">poly.scm</a>.
+In channel-poynomial,
+if you have an nth-order polynomial, the resultant spectrum is n times as wide as the original,
+so aliasing is a possibility, and even powers create energy at 0Hz. 
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

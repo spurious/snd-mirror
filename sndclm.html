@@ -1074,7 +1074,7 @@ and get more info (in this case, the begin time and duration of the enclosing no
 </pre>
 </td></tr></table>
 
-<p>In cases like this, remember to set <a href="extsnd.html#runsafety">run-safety</a> to 0
+<p>In cases like this, remember to set <a href="extsnd.html#runsafety">run-safety</a> to 1
 so that with-sound will be able to display the stack backtrace when an error occurs.
 </p>
 
@@ -1816,7 +1816,16 @@ is scaled to be -1..1, so that adds another layer of confusion). There's a longe
 </td></tr></table>
 
 
-<p>The index argument can be used to vary the spectrum, much as in FM.
+<p>The simplest way to get 
+get changing spectra is to interpolate between two or more sets of coefficients.
+</p>
+<pre>
+    (+ (* interp (polywave p1 ...))  ; see animals.scm for many examples
+       (* (- 1.0 interp) (polywave p2 ...)))
+</pre>
+<p>
+But we can also vary 
+the index (the amplitude of the sinusoid driving the sum of polynomials), much as in FM.
 The kth partial's amplitude
 at a given index, given a set h[k] of coefficients, is:
 </p>
@@ -6986,9 +6995,9 @@ differ by a factor of 3.  I think the one with the higher peak amplitude sounds 
   <A class=def NAME="rxyk!cos">rxyk!cos</A> gen fm
   <A class=def NAME="rxyk!cos?">rxyk!cos?</A> gen
 
-  <A class=def NAME="make-rxyk!ssb">make-rxyk!ssb</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0) (r 0.0)
-  <A class=def NAME="rxyk!ssb">rxyk!ssb</A> gen fm
-  <A class=def NAME="rxyk!ssb?">rxyk!ssb?</A> gen
+  <A class=def NAME="make-rxyk!sin">make-rxyk!sin</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0) (r 0.0)
+  <A class=def NAME="rxyk!sin">rxyk!sin</A> gen fm
+  <A class=def NAME="rxyk!sin?">rxyk!sin?</A> gen
 </pre>
 
 
@@ -6997,8 +7006,33 @@ differ by a factor of 3.  I think the one with the higher peak amplitude sounds 
 &\sum_{k=0}^{\infty}\frac{p^{k}\cos kx}{k!} = e^{p\cos x}\cos(p\sin x) \\
 -->
 
-<p>These produce a sum of sinusoids scaled by (r^k)/k!.  (rk!cos is a special case of rxyk!cos).  Here is a use of rk!cos to make a bird twitter:
+<table border=0>
+<tr>
+<td>
+<p>These produce a sum of sinusoids scaled by (r^k)/k!.  rk!cos is a special case of rxyk!cos.  
+The k! denominator dominates eventually, so r * ratio * frequency is approximately the spectral center.
+That is, the ratio between successive harmonic amplitudes is (r^(k+1)/(k+1)!)/(r^k/k!) = r/(k+1), which
+becomes less than 1.0 at k=r.
+For example, if frequency is 100 and r is 30, the center of the spectrum is around 3kHz.
+Negative "r" gives the same spectrum as positive, but the waveform's initial-phase is shifted by pi.
+The (very) safe maximum "r" is:
 </p>
+<pre>
+  (define (safe-rk!-max freq srate)
+    (let ((topk (floor (/ srate (* 3 freq)))))
+      (expt (* .001 (factorial topk)) (/ 1.0 topk))))
+                  ;; factorial is in numerics.scm
+</pre>
+</td><td>
+<img src="pix/rkbang.png" alt=rk!cos spectrum" hspace=30>
+</td></tr></table>
+
+<p>As in other such cases, varying "r" gives changing spectra.
+Here is a use of rk!cos to make a bird twitter:
+</p>
+
+<!-- TODO:  what about r sweep through 0?
+-->
 
 <pre>
 (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:play #t :scaled-to .5)
@@ -7528,6 +7562,9 @@ translated up and down by w/(two pi) Hz:
 </p>
 
 <img src="pix/fmeq8.png" alt="coscos and sinsin" hspace=20>
+
+<p>The upper sidebands may foldover (alias); low-pass filter the inputs to keep that from happening.
+</p>
 
 <br><br><br>
 

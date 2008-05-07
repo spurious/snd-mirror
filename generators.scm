@@ -1608,9 +1608,9 @@
 	   (/ (- 1.0 absr) (* 2.0 absr)))))) ; normalization
 
 ;;; if r>0 we get the spike at multiples of 2pi, since the k*pi case is flipping -1 1 -1 etc
-;;; if r<0, we get the spike at multiples of (2k-1)pi since the r sign now counteracts the cos kpi sign
+;;; if r<0, we get the spike at multiples of (2k-1)pi since the r sign now counteracts the cos k*pi sign
 ;;;  so the peak amp is the same in the two cases, so the normalization has to use abs(r)!
-;;;  but in the kpi case we tend to miss kpi (whereas we never miss 0 since we start there),
+;;;  but in the k*pi case we tend to miss k*pi (whereas we never miss 0 since we start there),
 ;;;  so the actual maxamp may be less than 1.0
 
 
@@ -1943,73 +1943,6 @@
 
 
 ;;; --------------------------------------------------------------------------------
-;;; rxyk!cos
-
-(defgenerator (rxyk!sin
-	       :make-wrapper (lambda (g)
-			       (set! (rxyk!sin-frequency g) (hz->radians (rxyk!sin-frequency g)))
-			       g))
-  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.0) (angle 0.0))
-
-
-(define (rxyk!sin gen fm)
-  "  (make-rxyk!sin frequency (ratio 1.0) (r 0.0)) creates an rxyk!sin generator.\n\
-   (rxyk!sin gen fm) returns many sines from frequency spaced by frequency * ratio with amplitude r^k/k!."
-  (declare (gen rxyk!sin) (fm float))
-  (let* ((x (rxyk!sin-angle gen))
-	 (y (* x (rxyk!sin-ratio gen)))
-	 (r (rxyk!sin-r gen)))
-
-    (set! (rxyk!sin-angle gen) (+ x fm (rxyk!sin-frequency gen)))
-
-    (* (exp (* r (cos y)))
-       (cos (+ x (* r (sin y)))))))
-
-#|
-(with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
-  (let ((gen (make-rxyk!sin 1000 0.1 0.5)))
-    (run 
-     (lambda ()
-       (do ((i 0 (1+ i)))
-	   ((= i 10000))
-	 (outa i (rxyk!sin gen 0.0)))))))
-|#
-
-
-(defgenerator (rxyk!cos
-	       :make-wrapper (lambda (g)
-			       (set! (rxyk!cos-frequency g) (hz->radians (rxyk!cos-frequency g)))
-			       g))
-  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.0) (angle 0.0))
-
-
-(define (rxyk!cos gen fm)
-  "  (make-rxyk!cos frequency (ratio 1.0) (r 0.0)) creates an rxyk!cos generator.\n\
-   (rxyk!cos gen fm) returns many cosines from frequency spaced by frequency * ratio with amplitude r^k/k!."
-  (declare (gen rxyk!cos) (fm float))
-  (let* ((x (rxyk!cos-angle gen))
-	 (y (* x (rxyk!cos-ratio gen)))
-	 (r (rxyk!cos-r gen)))
-
-    (set! (rxyk!cos-angle gen) (+ x fm (rxyk!cos-frequency gen)))
-
-    (/ (* (exp (* r (cos y)))
-	  (sin (+ x (* r (sin y)))))
-       (exp r))))
-
-#|
-(with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
-  (let ((gen (make-rxyk!cos 1000 0.1 0.5)))
-    (run 
-     (lambda ()
-       (do ((i 0 (1+ i)))
-	   ((= i 10000))
-	 (outa i (rxyk!cos gen 0.0)))))))
-|#
-
-
-
-;;; --------------------------------------------------------------------------------
 
 ;;; inf cosines scaled by e^-r (special case of rcos): ercos, erssb
 
@@ -2329,7 +2262,7 @@
 |#
 
 
-;;; TODO: check out the replacement for koddcos, doc, test if it works out
+;;; TODO: check out the replacement for koddcos, doc, test if it works out (k32sin)
 
 
 ;;; --------------------------------------------------------------------------------
@@ -2472,12 +2405,11 @@
 
 
 
-
 ;;; --------------------------------------------------------------------------------
 
 ;;; inf cosines scaled by r^k/k!: rk!cos, rk!ssb
 
-;;; G&R 2nd col 3rd from last
+;;; G&R 2nd col 3rd from last (simplified)
 
 (defgenerator (rk!cos
 	       :make-wrapper (lambda (g)
@@ -2498,7 +2430,7 @@
     (/ (- (* (exp (* r (cos x)))
 	     (cos (* r (sin x))))
 	  1.0) ; omit DC
-       (- (exp r) 1.0)))) ; normalization
+       (- (exp (abs r)) 1.0)))) ; normalization
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -2615,7 +2547,7 @@
 
     (/ (- (* (cos cx) ercosmx (cos rsinmx))
 	  (* (sin cx) ercosmx (sin rsinmx)))
-       (exp r)))) ; normalization (keeping DC term here to get "carrier")
+       (exp (abs r))))) ; normalization (keeping DC term here to get "carrier")
 	  
 #|
 (with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
@@ -2659,6 +2591,73 @@
   (bouncy 0 2 200 .5 3 2))
 |#
 			  
+
+
+;;; --------------------------------------------------------------------------------
+;;; rxyk!cos
+
+(defgenerator (rxyk!sin
+	       :make-wrapper (lambda (g)
+			       (set! (rxyk!sin-frequency g) (hz->radians (rxyk!sin-frequency g)))
+			       g))
+  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.0) (angle 0.0))
+
+
+(define (rxyk!sin gen fm)
+  "  (make-rxyk!sin frequency (ratio 1.0) (r 0.0)) creates an rxyk!sin generator.\n\
+   (rxyk!sin gen fm) returns many sines from frequency spaced by frequency * ratio with amplitude r^k/k!."
+  (declare (gen rxyk!sin) (fm float))
+  (let* ((x (rxyk!sin-angle gen))
+	 (y (* x (rxyk!sin-ratio gen)))
+	 (r (rxyk!sin-r gen)))
+
+    (set! (rxyk!sin-angle gen) (+ x fm (rxyk!sin-frequency gen)))
+
+    (* (exp (* r (cos y)))
+       (cos (+ x (* r (sin y)))))))
+
+#|
+(with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
+  (let ((gen (make-rxyk!sin 1000 0.1 0.5)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000))
+	 (outa i (rxyk!sin gen 0.0)))))))
+|#
+
+
+(defgenerator (rxyk!cos
+	       :make-wrapper (lambda (g)
+			       (set! (rxyk!cos-frequency g) (hz->radians (rxyk!cos-frequency g)))
+			       g))
+  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.0) (angle 0.0))
+
+
+(define (rxyk!cos gen fm)
+  "  (make-rxyk!cos frequency (ratio 1.0) (r 0.0)) creates an rxyk!cos generator.\n\
+   (rxyk!cos gen fm) returns many cosines from frequency spaced by frequency * ratio with amplitude r^k/k!."
+  (declare (gen rxyk!cos) (fm float))
+  (let* ((x (rxyk!cos-angle gen))
+	 (y (* x (rxyk!cos-ratio gen)))
+	 (r (rxyk!cos-r gen)))
+
+    (set! (rxyk!cos-angle gen) (+ x fm (rxyk!cos-frequency gen)))
+
+    (/ (* (exp (* r (cos y)))
+	  (sin (+ x (* r (sin y)))))
+       (exp (abs r)))))
+
+#|
+(with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
+  (let ((gen (make-rxyk!cos 1000 0.1 0.5)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000))
+	 (outa i (rxyk!cos gen 0.0)))))))
+|#
+
 
 
 ;;; --------------------------------------------------------------------------------
