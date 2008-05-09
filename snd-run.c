@@ -113,6 +113,7 @@
  *                       carg[angle] creal cimag, complex double _Complex_I
  *            all arithmetic needs extra complex checks etc
  *            also each function needs a check in configure (see fth)
+ *            would be nice to have gens accept/return complex values, but outa? Jn? [as arg=>In]
  *
  * infinite precision would also be neat -- could we have a WITH_GMP flag?  Is current scheme-only case doing this?
  *

@@ -1173,6 +1173,7 @@ envelope editor: <a href="snd.html#editenvelope">Edit or View and Envelope</a><b
 panning: place-sound in examp.scm<br>
 read sound indexed through envelope: <a href="sndscm.html#envsoundinterp">env-sound-interp</a><br>
 repeating envelope: <a href="#pulsedenv">pulsed-env</a><br>
+step envelope in pitch: <a href="#rxyk!cos">brassy</a> in generators.scm<br>
 <br>
 </small></blockquote>
 </td></tr></table>
@@ -1601,6 +1602,28 @@ the generator.
 </td>
 <td>
 <img src="pix/waveshape.png" alt="waveshaping">
+</td>
+</tr></table>
+
+<p>Say we want every third harmonic at amplitude 1/sqrt(harmonic-number) for 5 harmonics total:
+</p>
+
+<table border=0 hspace=40><tr>
+<td bgcolor="#fafafa">
+<pre>
+(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:clipped #f :statistics #t :play #t :scaled-to .5)
+  (let* ((gen (<em class=red>make-polywave</em> 200 (let ((harms (make-vct (* 5 2)))) ; 5 harmonics, 2 numbers for each
+				   (do ((k 1 (+ k 3))
+					(i 0 (+ i 2)))
+				       ((= i (* 5 2)))
+				     (<a class=quiet href="extsnd.html#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> harms i k) ; harmonic number (k*freq)
+				     (<a class=quiet href="extsnd.html#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> harms (+ i 1) (/ 1.0 (sqrt k)))) ; harmonic amplitude
+				   harms)))
+	 (ampf (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1 10 1 11 0) :duration 1.0 :scaler .5)))
+    (do ((i 0 (1+ i)))
+	((= i 44100))
+      (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> ampf) (<em class=red>polywave</em> gen))))))
+</pre>
 </td>
 </tr></table>
 
@@ -2451,7 +2474,7 @@ As the modulating signal approaches a spike (as n increases), the bulk of the en
 (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> ()
   (for-each
     (lambda (arg)
-      (let ((car1 (<a class=quiet href="#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm__tip)">make-oscil</a> 1000))
+      (let ((car1 (<a class=quiet href="#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> 1000))
 	    (mod1 (<em class=red>make-ncos</em> 100 (cadr arg)))
 	    (start (<a class=quiet href="#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> (car arg)))
 	    (samps (<a class=quiet href="#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> 1.0))
@@ -2969,8 +2992,8 @@ another kernel set: binomial coeffs G&R 1.320 etc -- not different enough
 <map name="J2">
     <area shape=rect coords="0,0,300,30" href="sndclm.html#rxyk!cos" alt="rxyk!cos">
     <area shape=rect coords="0,31,300,60" href="sndclm.html#rxyk!cos" alt="rxyk!sin">
-    <area shape=rect coords="0,61,300,100" href="sndclm.html#r2cos" alt="r2cos">
-    <area shape=rect coords="0,101,300,140" href="sndclm.html#r2sin" alt="r2sin">
+    <area shape=rect coords="0,61,300,100" alt="r2cos">
+    <area shape=rect coords="0,101,300,140" alt="r2sin">
     <area shape=rect coords="0,141,300,180">
 </map>
 </td></tr>
@@ -6670,30 +6693,30 @@ In the nrssb-interp generator, the "interp" argument interpolates between the up
 </p>
 
 <pre>
-(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:play #t)
-  (do ((i 0 (1+ i)))
-      ((= i 10))
-    (lutish (* i .1) 2 (* 100 (1+ i)) .05)))
+    (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:play #t)
+      (do ((i 0 (1+ i)))
+          ((= i 10))
+        (lutish (* i .1) 2 (* 100 (1+ i)) .05)))
 </pre>
 
 <p>The instrument oboish uses nrssb: <code>oboish beg dur freq amp amp-env</code>:
 </p>
 
 <pre>
-(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:play #t)
-  (do ((i 0 (1+ i)))
-      ((= i 10))
-    (oboish (* i .3) .4 (+ 100 (* 50 i)) .05 '(0 0 1 1 2 1 3 0))))
+    (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:play #t)
+      (do ((i 0 (1+ i)))
+          ((= i 10))
+        (oboish (* i .3) .4 (+ 100 (* 50 i)) .05 '(0 0 1 1 2 1 3 0))))
 </pre>
 
 <p>organish also uses nrssb: <code>organish beg dur freq amp fm-index amp-env</code>:
 </p>
 
 <pre>
-(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:play #t)
-  (do ((i 0 (1+ i)))
-      ((= i 10))
-    (organish (* i .3) .4 (+ 100 (* 50 i)) .5 1.0 #f)))
+    (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:play #t)
+      (do ((i 0 (1+ i)))
+          ((= i 10))
+        (organish (* i .3) .4 (+ 100 (* 50 i)) .5 1.0 #f)))
 </pre>
 
 <br>
@@ -6859,8 +6882,8 @@ The ercoser instrument uses ercos:
 </p>
 
 <pre>
-(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:play #t)
-  (ercoser 0 1 100 .5 0.1))
+    (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:play #t)
+      (ercoser 0 1 100 .5 0.1))
 </pre>
 <br>
 
@@ -6875,15 +6898,14 @@ The ercoser instrument uses ercos:
 </p>
 
 <pre>
-(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:play #t)
-  (let ((gen1 (<em class=red>make-eoddcos</em> 400.0 :r 0.0))
-	(gen2 (<a class=quiet href="#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> 400.0))
-	(a-env (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1) :length 10000)))
-    (run (lambda () 
-      (do ((i 0 (1+ i)))
-	  ((= i 10000))
-	(set! (eoddcos-r gen1) (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> a-env))
-	(<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* .5 (<em class=red>eoddcos</em> gen1 (* .1 (<a class=quiet href="#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> gen2))))))))))
+    (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:play #t)
+      (let ((gen1 (<em class=red>make-eoddcos</em> 400.0 :r 0.0))
+	    (gen2 (<a class=quiet href="#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> 400.0))
+	    (a-env (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1) :length 10000)))
+        (do ((i 0 (1+ i)))
+	    ((= i 10000))
+	  (set! (eoddcos-r gen1) (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> a-env))
+ 	  (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* .5 (<em class=red>eoddcos</em> gen1 (* .1 (<a class=quiet href="#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> gen2))))))))
 </pre>
 <br>
 
@@ -6983,7 +7005,7 @@ differ by a factor of 3.  I think the one with the higher peak amplitude sounds 
 
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-rk!cos">make-rk!cos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (r 0.0)
+  <A class=def NAME="make-rk!cos">make-rk!cos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (r 0.0)  ; rk!cos is a special case of rxyk!cos
   <A class=def NAME="rk!cos">rk!cos</A> gen fm
   <A class=def NAME="rk!cos?">rk!cos?</A> gen
 
@@ -7009,7 +7031,7 @@ differ by a factor of 3.  I think the one with the higher peak amplitude sounds 
 <table border=0>
 <tr>
 <td>
-<p>These produce a sum of sinusoids scaled by (r^k)/k!.  rk!cos is a special case of rxyk!cos.  
+<p>These produce a sum of sinusoids scaled by (r^k)/k!.  
 The k! denominator dominates eventually, so r * ratio * frequency is approximately the spectral center.
 That is, the ratio between successive harmonic amplitudes is (r^(k+1)/(k+1)!)/(r^k/k!) = r/(k+1), which
 becomes less than 1.0 at k=r.
@@ -7024,15 +7046,13 @@ The (very) safe maximum "r" is:
                   ;; factorial is in numerics.scm
 </pre>
 </td><td>
-<img src="pix/rkbang.png" alt=rk!cos spectrum" hspace=30>
+<img src="pix/rkbang.png" alt="rk!cos spectrum" hspace=30>
 </td></tr></table>
 
-<p>As in other such cases, varying "r" gives changing spectra.
+<p>As in other such cases, varying "r" gives changing spectra.  You can sweep r through 0 smoothly except in rk!cos where you'll get a click.
+Coupled with the fm argument, these generators provide an extension of multi-carrier FM, similar in effect to the "leap-frog" FM voice.
 Here is a use of rk!cos to make a bird twitter:
 </p>
-
-<!-- TODO:  what about r sweep through 0?
--->
 
 <pre>
 (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:play #t :scaled-to .5)
@@ -7054,9 +7074,15 @@ Here is a use of rk!cos to make a bird twitter:
 </p>
 
 <pre>
-(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:play #t)
-  (bouncy 0 2 200 .5 3 2))
+    (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:play #t)
+      (bouncy 0 2 200 .5 3 2))
 </pre>
+
+<p>brassy (also in generators.scm) uses rxyk!cos, but it is more of an experiment with envelopes than spectra.
+It takes a gliss envelope and turns it into a series of quick jumps between harmonics, handling both the
+pitch and the index ("r") of the rxyk!cos generator.  The effect is vaguely brass-like.
+</p>
+
 <br>
 
 
@@ -7065,6 +7091,13 @@ Here is a use of rk!cos to make a bird twitter:
   <A class=def NAME="r2k!cos">r2k!cos</A> gen fm
   <A class=def NAME="r2k!cos?">r2k!cos?</A> gen
 </pre>
+
+<p>
+This generator produces a sum of cosines with a complicated-looking formula for
+the component amplitudes.  It's actually pretty simple, as this graph shows.
+The "F" notation stands for a hypergeometric series, a generalization
+of sinusoids and Bessel functions.  
+</p>
 
 <!-- LATEX: sceq30:
   &(1 - 2r \cos \theta + r^{2})^{-k} = \frac{1}{2} {}_{2}F_{1}(k, k; 1; r^{2}) + \sum_{n=1}^{\infty} \frac{(k)_{n}}{n!} r^{n} {}_{2}F_{1}(k, k+n; n+1; r^{2}) \cos n\theta
@@ -7106,26 +7139,74 @@ hop 3
 
 <br>
 
-<p>The instruments pianoy and pianoy1 use r2k!cos: <code>pianoy beg dur freq amp</code>, and 
+<p>Negative "r" gives the same output as the corresponding positive "r", and 
+there is sometimes a lot of DC.  Despite appearances, as r increases beyond 1.0,
+the spectrum collapses back towards the fundamental.  (I think that r and 1/r produce the same spectrum).
+Aliasing can be a problem,
+especially when r is close to 1.
+The instruments pianoy and pianoy1 use r2k!cos: <code>pianoy beg dur freq amp</code>, and 
 <code>pianoy1 beg dur freq amp :optional (bounce-freq 5) (bounce-amp 20)</code>:
 </p>
 
 <pre>
-(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:play #t)
-  (pianoy 0 3 100 .5))
+    (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:play #t)
+      (pianoy 0 3 100 .5))
 
-(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:play #t)
-  (pianoy1 0 4 200 .5 1 .1))
+    (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:play #t)
+      (pianoy1 0 4 200 .5 1 .1))
 </pre>
 
 <p>pianoy2 combines r2k!cos with fmssb to try to get closer to the hammer sound:
 </p>
 
 <pre>
-(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:play #t) 
-  (pianoy2 0 1 100 .5))
+    (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:play #t) 
+      (pianoy2 0 1 100 .5))
 </pre>
 
+<br>
+
+
+<pre style="background-color: #f2f4ff">
+  <A class=def NAME="make-rkoddssb">make-rkoddssb</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0) (r 0.0) ; -1.0 &lt; r &lt; 1.0
+  <A class=def NAME="rkoddssb">rkoddssb</A> gen fm
+  <A class=def NAME="rkoddssb?">rkoddssb?</A> gen
+</pre>
+
+<p>This produces a sum of odd-numbered harmonics scaled by (r^(2k-1))/(2k-1).  This kind of spectrum is usually
+called "clarinet-like".
+Negative r gives the
+same output as positive. The (not very)
+safe maximum r is:
+</p>
+
+<pre>
+  (define (safe-rkodd-max-r freq srate)
+    (let* ((topk (floor (/ srate (* 3 freq))))
+           (k2-1 (- (* 2 topk) 1)))
+      (expt (* .001 k2-1) (/ 1.0 k2-1))))
+</pre>
+
+
+<p>The instrument stringy uses rkoddssb and rcos: <code>stringy beg dur freq amp</code>:
+</p>
+
+<pre>
+    (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:play #t)
+      (do ((i 0 (1+ i)))
+          ((= i 10))
+        (stringy (* i .3) .3 (+ 200 (* 100 i)) .5)))
+</pre>
+
+<p>glassy also uses rkoddssb: <code>glassy beg dur freq amp</code>:
+</p>
+
+<pre>
+    (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:play #t)
+      (do ((i 0 (1+ i)))
+          ((= i 10))
+        (glassy (* i .3) .1 (+ 400 (* 100 i)) .5)))
+</pre>
 <br>
 
 
@@ -7149,37 +7230,6 @@ hop 3
 
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-rkoddssb">make-rkoddssb</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0) (r 0.0)
-  <A class=def NAME="rkoddssb">rkoddssb</A> gen fm
-  <A class=def NAME="rkoddssb?">rkoddssb?</A> gen
-</pre>
-
-<p>This produces a sum of odd-numbered harmonics scaled by (r^(2k-1))/(2k-1).
-</p>
-
-<p>The instrument stringy uses rkoddssb and rcos: <code>stringy beg dur freq amp</code>:
-</p>
-
-<pre>
-(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:play #t)
-  (do ((i 0 (1+ i)))
-      ((= i 10))
-    (stringy (* i .3) .3 (+ 200 (* 100 i)) .5)))
-</pre>
-
-<p>glassy also uses rkoddssb: <code>glassy beg dur freq amp</code>:
-</p>
-
-<pre>
-(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:play #t)
-  (do ((i 0 (1+ i)))
-      ((= i 10))
-    (glassy (* i .3) .1 (+ 400 (* 100 i)) .5)))
-</pre>
-<br>
-
-
-<pre style="background-color: #f2f4ff">
   <A class=def NAME="make-k3sin">make-k3sin</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0)
   <A class=def NAME="k3sin">k3sin</A> gen fm
   <A class=def NAME="k3sin?">k3sin?</A> gen
@@ -7199,22 +7249,21 @@ hop 3
 <img src="pix/sceq25.png" alt="sum of sines" hspace=40>
 <br>
 
-<p>This produces a sum of sinusoids scaled by kr^k.  Its output is not normalized.
+<p>This produces a sum of sinusoids scaled by kr^k.  Its output is not normalized.  I think the formula
+given assumes that r is less than 1.0, and in that case, the safe maximum r is given by:
 </p>
-<br>
 
-
-<pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-abssin">make-abssin</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0)
-  <A class=def NAME="abssin">abssin</A> gen fm
-  <A class=def NAME="abssin?">abssin?</A> gen
+<pre>
+  (define (safe-krk-max-r freq srate)
+    (let* ((topk (floor (/ srate (* 3 freq)))))
+      (expt (/ .001 topk) (/ 1.0 topk))))
 </pre>
 
-<img src="pix/sceq26.png" alt="sum of sines" hspace=40>
-<br>
-
-<p>This produces abs(oscil) &mdash; not very useful, I fear.
+<p>However, r can be greater than 1.0 without causing any trouble, and behaves in that case much like r2k!cos &mdash; as it increases, the spectrum collapses;
+I think r in that case is equivalent to 1/r.
+The only value to avoid is 1.0.
 </p>
+
 <br>
 
 
@@ -7237,26 +7286,6 @@ hop 3
 
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-r2sin">make-r2sin</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (r 0.0)
-  <A class=def NAME="r2sin">r2sin</A> gen fm
-  <A class=def NAME="r2sin?">r2sin?</A> gen
-
-  <A class=def NAME="make-r2cos">make-r2cos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (r 0.0)
-  <A class=def NAME="r2cos">r2cos</A> gen fm
-  <A class=def NAME="r2cos?">r2cos?</A> gen
-
-  <A class=def NAME="make-r2ssb">make-r2ssb</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0) (r 0.0)
-  <A class=def NAME="r2ssb">r2ssb</A> gen
-  <A class=def NAME="r2ssb?">r2ssb?</A> gen
-</pre>
-
-<p>These produce a sum of even numbered sinusoids (er, think of it as up an octave or something) 
-with each component scaled by (r^(2k))/(2k)!.  r2sin output is not normalized.
-</p>
-<br>
-
-
-<pre style="background-color: #f2f4ff">
   <A class=def NAME="make-r2k2cos">make-r2k2cos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (r 0.0)
   <A class=def NAME="r2k2cos">r2k2cos</A> gen fm
   <A class=def NAME="r2k2cos?">r2k2cos?</A> gen
@@ -7264,6 +7293,11 @@ with each component scaled by (r^(2k))/(2k)!.  r2sin output is not normalized.
 
 <p>This produces a sum of cosines, each scaled by 1/(r^2+k^2).
 </p>
+
+<p>There are a dozen or so other generators defined in generators.scm, but most are close
+variants of those given above.
+</p>
+
 <br><br>
 
 
@@ -7563,7 +7597,7 @@ translated up and down by w/(two pi) Hz:
 
 <img src="pix/fmeq8.png" alt="coscos and sinsin" hspace=20>
 
-<p>The upper sidebands may foldover (alias); low-pass filter the inputs to keep that from happening.
+<p>The upper sidebands may foldover (alias); if it's a problem, low-pass filter the inputs (surely no CLM user needs that silly reminder!).
 </p>
 
 <br><br><br>

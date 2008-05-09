@@ -4,6 +4,7 @@
 ;;; sources:
 ;;; "The Diversity of Animal Sounds", Cornell Lab of Ornithology
 ;;; Geoffrey Keller, "Bird Songs of California" (Cornell)
+;;; Geoffrey Keller, "Bird Songs of Southeastern Arizona and Sonora, Mexico" (Cornell)
 ;;; Bret Whitney et al, "Voices of New World Parrots" (Cornell)
 ;;; Carlos Davidson, "Frog and Toad Calls of the Rocky Mountains" (Cornell)
 ;;; Geoffrey Keller, "Bird Songs of the Lower Rio Grande Valley" (Cornell)
@@ -148,6 +149,7 @@
 ;;; Say's phoebe
 ;;; Northern beardless tyrannulet
 ;;; Great kiskadee
+;;; Scrub euphonia
 ;;; Eastern bluebird
 ;;; Common yellowthroat
 ;;; Blue grosbeak
@@ -10865,6 +10867,36 @@
 ;(with-sound (:play #t) (black-crowned-night-heron 0 .5))
 
 
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Scrub Euphonia
+
+(definstrument (scrub-euphonia beg amp)
+  ;; arizona 90 3.0
+  (let* ((start (seconds->samples beg))
+	 (dur 0.49)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 0.067 0.188 0.111 0.676 0.151 0.838 0.239 0.988 0.275 0.000 0.346 0.000 
+			   0.386 0.243 0.399 0.615 0.427 0.719 0.445 0.587 0.464 0.664 0.521 0.630 0.533 0.571 
+			   0.567 0.868 0.580 0.877 0.611 0.176 0.628 0.138 0.637 0.000 0.671 0.000 0.676 0.168 
+			   0.690 0.204 0.725 0.694 0.742 0.725 0.821 0.464 0.904 0.696 0.939 0.109 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (gen1 (make-polywave 0.0 (list 1 .99 2 .01)))
+	 (frqf (make-env '(0.000 0.819 0.024 0.761 0.063 0.686 0.101 0.642 0.171 0.586 0.229 0.556 0.271 0.558 
+			   0.342 0.556 0.347 0.883 0.361 0.900 0.367 0.719 0.390 0.656 0.436 0.589 0.480 0.564 
+			   0.529 0.547 0.555 0.525 0.605 0.519 0.640 0.528 0.660 0.869 0.673 0.869 0.683 0.681 
+			   0.717 0.625 0.763 0.561 0.791 0.564 0.817 0.544 0.857 0.533 0.894 0.522 0.924 0.531 1.000 0.531)
+			 :duration dur :scaler (hz->radians 7160))))
+    (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (outa i (* (env ampf)
+		    (polywave gen1 (env frqf)))
+	       *output*))))))
+
+;(with-sound (:play #t) (scrub-euphonia 0 .25))
+
 
 
 
@@ -11083,7 +11115,8 @@
   (philadelphia-vireo            (+ beg 247.5) .25)      (set! beg (+ beg spacing))
   (willet                        (+ beg 248.3) .25)      (set! beg (+ beg spacing))
   (black-crowned-night-heron     (+ beg 249.0) .25)      (set! beg (+ beg spacing))
-  (+ beg 249.5))
+  (scrub-euphonia                (+ beg 249.5) .25)      (set! beg (+ beg spacing))
+  (+ beg 250))
 
 
 (define (calling-all-animals)

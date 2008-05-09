@@ -1615,9 +1615,6 @@
 
 
 
-;;; TODO: test all the other r cases for < 0! also sndclm expl for this, and mus-scaler method should clamp and we need checks for /0 due to r=0
-;;; rkoddssb krksin r2k!cos rxyk!* r2k2cos + safe-r calcs
-
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-rcos 100.0 :r 0.5)))
@@ -1663,15 +1660,15 @@
 (defgenerator (rssb 
 	       :make-wrapper (lambda (g)
 			       (set! (rssb-frequency g) (hz->radians (rssb-frequency g)))
-			       (set! (rcos-r g) (generator-clamp-r (rcos-r g)))
+			       (set! (rssb-r g) (generator-clamp-r (rssb-r g)))
 			       g)
 
 	       :methods (list
 			 (list 'mus-scaler
-			       (lambda (g) (rcos-r g))
+			       (lambda (g) (rssb-r g))
 			       (lambda (g val)
-				 (set! (rcos-r g) (generator-clamp-r val))
-				 (rcos-r g)))))
+				 (set! (rssb-r g) (generator-clamp-r val))
+				 (rssb-r g)))))
 
   (frequency *clm-default-frequency*) (ratio 1.0) (r 0.0) (angle 0.0))
 
@@ -2048,7 +2045,9 @@
 |#
 
 
+#|
 ;;; --------------------------------------------------------------------------------
+;;; removed 8-May-08 -- not useful or different from (for example) rk!cos
 
 ;;; inf sinusoids scaled by r^2: r2cos, r2sin, r2ssb
 
@@ -2075,7 +2074,7 @@
     (* (sinh (* r (cos x)))
        (sin (* r (sin x))))))
 
-#|
+
 ;;; even harmonics, but we can't push the upper partials past the (2k)! range, so not very flexible
 
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -2083,7 +2082,7 @@
     (run (lambda () (do ((i 0 (1+ i)))
 	((= i 20000))
       (outa i (r2sin gen 0.0)))))))
-|#
+
 
 
 (defgenerator (r2cos
@@ -2109,7 +2108,7 @@
 	  1.0)                   ; omit DC
        (- (cosh r) 1.0))))       ; normalize
 
-#|
+
 ;;; odd harmonics, but we can't push the upper partials past the (2k)! range, so not very flexible
 
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -2117,7 +2116,7 @@
     (run (lambda () (do ((i 0 (1+ i)))
 	((= i 20000))
       (outa i (r2cos gen 0.0)))))))
-|#
+
 
 
 (defgenerator (r2ssb
@@ -2147,7 +2146,7 @@
 	     (sin asinx)))
        (cosh a)))) ; normalization
 
-#|
+
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-r2ssb 1000.0 0.1 0.5)))
     (run 
@@ -2613,8 +2612,9 @@
 
     (set! (rxyk!sin-angle gen) (+ x fm (rxyk!sin-frequency gen)))
 
-    (* (exp (* r (cos y)))
-       (cos (+ x (* r (sin y)))))))
+    (/ (* (exp (* r (cos y)))
+	  (cos (+ x (* r (sin y)))))
+       (exp (abs r)))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t :scaled-to .5)
@@ -2645,7 +2645,7 @@
     (set! (rxyk!cos-angle gen) (+ x fm (rxyk!cos-frequency gen)))
 
     (/ (* (exp (* r (cos y)))
-	  (sin (+ x (* r (sin y)))))
+	  (cos (+ x (* r (sin y)))))
        (exp (abs r)))))
 
 #|
@@ -2658,6 +2658,43 @@
 	 (outa i (rxyk!cos gen 0.0)))))))
 |#
 
+(definstrument (brassy beg dur freq amp ampf freqf gliss)
+  (let* ((base-freq freq)
+	 (gen (make-rxyk!cos base-freq :r 0.0))
+	 (start (seconds->samples beg))
+	 (samps (seconds->samples dur))
+	 (stop (+ start samps))
+	 (amp-env (make-env ampf :duration dur :scaler amp))
+	 (pitch-env (make-env freqf :scaler gliss :duration dur))
+	 (pitch-time .05)
+	 (slant (make-moving-average (seconds->samples pitch-time)))
+	 (amp-time .1)
+	 (vib (make-oscil 5))
+	 (vib-index (hz->radians 4.0))
+	 )
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i samps))
+	 (let* ((pitch (env pitch-env))
+		(harmfrq (/ pitch base-freq))
+		(harmonic (inexact->exact (floor harmfrq)))
+		(dist (abs (- harmfrq harmonic)))
+		(frq (* base-freq (moving-average slant harmonic))))
+	   (set! (rxyk!cos-r gen) (* (/ 1.0 amp-time)
+				     2.0
+				     (if (< dist amp-time)
+					 dist
+					 (if (> dist (- 1.0 amp-time))
+					     (- 1.0 dist)
+					     amp-time))))
+	   (outa i (* (env amp-env)
+		      (rxyk!cos gen (+ (hz->radians frq)
+				       (* vib-index (oscil vib))))))))))))
+#|
+(with-sound (:statistics #t :play #t)
+  (brassy 0 4 50 .5 '(0 0 1 1 10 1 11 0) '(0 1 1 0) 1000))
+|#
 
 
 ;;; --------------------------------------------------------------------------------
@@ -2692,7 +2729,7 @@
   (let* ((r (r2k!cos-r gen))
 	 (k (r2k!cos-k gen))
 	 (rr1 (+ 1.0 (* r r)))
-	 (r2 (* 2 r)))
+	 (r2 (* 2 (abs r)))) ; abs for negative r
     (* (expt (- rr1
 		(* r2 (oscil (r2k!cos-osc gen) fm)))
 	     (- k))
@@ -2935,7 +2972,16 @@
 (defgenerator (rkoddssb
 	       :make-wrapper (lambda (g)
 			       (set! (rkoddssb-frequency g) (hz->radians (rkoddssb-frequency g)))
-			       g))
+			       (set! (rkoddssb-r g) (generator-clamp-r (rkoddssb-r g)))
+			       g)
+
+	       :methods (list
+			 (list 'mus-scaler
+			       (lambda (g) (rkoddssb-r g))
+			       (lambda (g val)
+				 (set! (rkoddssb-r g) (generator-clamp-r val))
+				 (rkoddssb-r g)))))
+
   (frequency *clm-default-frequency*) (ratio 1.0) (r 0.0) (angle 0.0))
 
 
@@ -3016,6 +3062,7 @@
 ;;; Zygmund 1st
 ;;;   this looks interesting, but how to normalize?  sum of sines is bad enough, kr^k -> 1/(1-x)^2 if x^2<1 (G&R 113)
 ;;;   for low n, we could use the Tn roots stuff (clm.c)
+;;;   the formula must be assuming r<1.0 -- if greater than 1 it's acting like r2k! above
 
 (defgenerator (krksin
 	       :make-wrapper (lambda (g)
@@ -3067,7 +3114,7 @@
     (snd-display ";~A: ~A" (* 0.1 i) mx)))
 |#
 
-
+#|
 ;;; --------------------------------------------------------------------------------
 
 ;;; absolute value of oscil: abssin
@@ -3102,7 +3149,7 @@
 ;;   so every term in the sum adds 1/(2(4k^2-1)) -> 1/4 (J 397 or 373)
 ;;   so DC is 2/pi = 0.6366
 
-#|
+
 (with-sound (:clipped #f :statistics #t :play #t)
   (let ((gen (make-abssin 440.0)))
     (run 
@@ -3126,6 +3173,7 @@
 ;;; pitch is 2*freq, 200 1, 400 .203, 600 .087, 800 .049, 1000 .031, 1200 .021
 ;;;                      1      .2        .086      .048       .030       .021 -- (/ 3.0 (- (* 4 (* 6 6)) 1))
 |#
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -4970,16 +5018,16 @@ index 10 (so 10/2 is the bes-jn arg):
      (map procedure-documentation 
 	  (list nssb nxysin nxycos nxy1cos nxy1sin noddsin noddcos noddssb ncos2 npcos
 		nrsin nrcos nrssb nkssb nsincos rcos rssb rxysin rxycos
-		rxyk!sin rxyk!cos ercos erssb r2sin r2cos r2ssb eoddcos rkcos rksin rkssb
-		rk!cos rk!ssb r2k!cos k2sin k2cos k2ssb dblsum rkoddssb krksin abssin
+		rxyk!sin rxyk!cos ercos erssb eoddcos rkcos rksin rkssb
+		rk!cos rk!ssb r2k!cos k2sin k2cos k2ssb dblsum rkoddssb krksin
 		abcos absin r2k2cos bess jjcos j0evencos j2cos jpcos jncos 
 		j0j1cos jycos blackman fmssb k3sin izcos
 		adjustable-square-wave adjustable-triangle-wave adjustable-sawtooth-wave adjustable-oscil 
 		round-interp))
      (list make-nssb make-nxysin make-nxycos make-nxy1cos make-nxy1sin make-noddsin make-noddcos make-noddssb make-ncos2 make-npcos
 	   make-nrsin make-nrcos make-nrssb make-nkssb make-nsincos make-rcos make-rssb make-rxysin make-rxycos
-	   make-rxyk!sin make-rxyk!cos make-ercos make-erssb make-r2sin make-r2cos make-r2ssb make-eoddcos make-rkcos make-rksin make-rkssb
-	   make-rk!cos make-rk!ssb make-r2k!cos make-k2sin make-k2cos make-k2ssb make-dblsum make-rkoddssb make-krksin make-abssin
+	   make-rxyk!sin make-rxyk!cos make-ercos make-erssb make-eoddcos make-rkcos make-rksin make-rkssb
+	   make-rk!cos make-rk!ssb make-r2k!cos make-k2sin make-k2cos make-k2ssb make-dblsum make-rkoddssb make-krksin
 	   make-abcos make-absin make-r2k2cos make-bess make-jjcos make-j0evencos make-j2cos make-jpcos make-jncos
 	   make-j0j1cos make-jycos make-blackman make-fmssb make-k3sin make-izcos
 	   make-adjustable-square-wave make-adjustable-triangle-wave make-adjustable-sawtooth-wave make-adjustable-oscil
@@ -5002,5 +5050,7 @@ index 10 (so 10/2 is the bes-jn arg):
     (pianoy2 8 1 100 .5)
     (glassy 9 .1 1000 .5)
     (machine1 10 .3 100 540 0.5 3.0 0.0)
-    (organish 11 .4 100 .5 1.0 #f)))
+    (organish 11 .4 100 .5 1.0 #f)
+    (brassy 12 4 50 .5 '(0 0 1 1 10 1 11 0) '(0 1 1 0) 1000)))
+
 
