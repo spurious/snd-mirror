@@ -54740,6 +54740,13 @@ EDITS: 1
 	  (if (not (sound? snd)) (snd-display ";sinc-train ~A" snd))
 	  (if (fneq (maxamp snd) 1.0) (snd-display ";sinc-train max: ~A" (maxamp snd))))
 
+	(with-sound (:clipped #f) ; at least run the thing -- not sure how to test this automatically
+		    (let* ((gen (make-pink-noise 12)))
+		      (run (lambda ()
+			     (do ((i 0 (1+ i)))
+				 ((= i 44100))
+			       (outa i (pink-noise gen)))))))
+
 	(let* ((res (with-sound (:clipped #f)
 		    (let ((gen (make-k3sin 100.0)))
 		      (run 

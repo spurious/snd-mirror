@@ -3710,7 +3710,9 @@ rand:
 </pre>
 <br clear=left>
 
-<p>Since rand is producing a sequence of square-waves, and rand-interp a sequence of triangle-waves,
+<p>The "frequency" is the rate at which new values are produced, so it makes sense to request a frequency above srate/2.
+If rand's frequency is the current srate, it produces a new random value on every sample.  
+Since rand is (normally) producing a sequence of square-waves, and rand-interp a sequence of triangle-waves,
 both reflect that in their spectra (spectrum y axis is in dB):
 </p>
 
@@ -3869,8 +3871,6 @@ sum together n rand's, where each rand is running an octave slower
 than the preceding:
 </p>
 
-<!-- TODO: shouldn't 1f-noise be in defgenerator? -->
-
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
 (define (make-1f-noise n)
@@ -3889,8 +3889,9 @@ than the preceding:
 </pre>
 </td></tr></table>
 
-<p>See also <a href="sndscm.html#greendoc">green.scm</a> &mdash; bounded brownian noise that can mimic 1/f noise in some cases.
-(The brownian graph below has a different dB range).
+<p>This is the <a href="#pink-noise">pink-noise</a> generator in generators.scm.
+See also <a href="#green-noise">green-noise</a> &mdash; bounded brownian noise that can mimic 1/f noise in some cases.
+(The brownian graph below has a different dB range, and the rand graph would be flat if we used a frequency of 44100).
 </p>
 
 <table border=1 hspace=20 cellpadding=5>
@@ -3920,34 +3921,34 @@ than the preceding:
 
 <!-- CLM:
 ;; 1f.png
-(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> ()
+(with-sound ()
   (let ((noise (make-1f-noise 12)))
     (do ((i 0 (1+ i)))
 	((= i 10000))
       (outa i (1f-noise noise)))))
 
 ;; rand.png
-(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> ()
+(with-sound ()
   (let ((noise (make-rand 10000.0)))
     (do ((i 0 (1+ i)))
 	((= i 10000))
       (outa i (rand noise)))))
 
 ;; randi.png
-(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> ()
+(with-sound ()
   (let ((noise (make-rand-interp 10000.0)))
     (do ((i 0 (1+ i)))
 	((= i 10000))
       (outa i (rand-interp noise)))))
 
 ;; random.png
-(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:clipped #f)
+(with-sound ()
   (do ((i 0 (1+ i)))
       ((= i 10000))
     (outa i (- 0.5 (random 1.0)))))
 
 ;; brownian.png
-(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:clipped #f)
+(with-sound ()
   (let ((val 0.0))
     (do ((i 0 (1+ i)))
 	((= i 10000))
@@ -3955,7 +3956,7 @@ than the preceding:
       (outa i val))))
 
 ;; green.png
-(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> ()
+(with-sound ()
   (let ((noise (make-green-noise 10000.0 1)))
     (do ((i 0 (1+ i)))
 	((= i 10000))
@@ -4031,7 +4032,7 @@ We can also get all the period doublings and so on from sin:
 <a href="sndscm.html#maracadoc">maraca.scm</a> (physical modelling), 
 <a href="sndscm.html#noisedoc">noise.scm, noise.rb</a> (a truly ancient noise-maker),
 <a href="sndscm.html#anyrandom">any-random</a> (arbitrary distribution via the rejection method),
-and <a href="sndscm.html#greendoc">green.scm</a> (bounded Brownian noise).
+and <a href="#green-noise">green-noise</a> (bounded Brownian noise).
 </p>
 
 <br><br>
@@ -6111,17 +6112,11 @@ examp.scm:
     <a class=quiet href="sndscm.html#makeramp" onmouseout="UnTip()" onmouseover="Tip(sndscm_makeramp_tip)">ramp</a>, 
     <a class=quiet href="sndscm.html#soundinterp" onmouseout="UnTip()" onmouseover="Tip(sndscm_soundinterp_tip)">sound-interp</a>
 
-green.scm:
-    rand and rand-interp: <a class=quiet href="sndscm.html#greendoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_greendoc_tip)">green-noise</a>, <a class=quiet href="sndscm.html#greendoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_greendoc_tip)">brownian-noise</a>
-
 moog.scm:
     <a class=quiet href="sndscm.html#moogfilter" onmouseout="UnTip()" onmouseover="Tip(sndscm_moogfilter_tip)">moog-filter</a>
 
 prc95.scm:
     <a class=quiet href="sndscm.html#prc95doc" onmouseout="UnTip()" onmouseover="Tip(sndscm_prc95doc_tip)">reed, bowtable, jettable, onep, lip, dc-block, delaya, delayl</a>
-
-sndclm.html:
-    <a class=quiet href="sndclm.html#make-rand">1f-noise</a>,
 
 zip.scm:
     <a class=quiet href="sndscm.html#zipper" onmouseout="UnTip()" onmouseover="Tip(sndscm_zipper_tip)">zipper</a>
@@ -6190,13 +6185,83 @@ This produces a Blackman-Harris sum of cosines of order 'n'.
 
 <pre style="background-color: #f2f4ff">
   <A class=def NAME="make-sinc-train">make-sinc-train</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> frequency (n 1)
-  <A class=def NAME="sinc-train">sinc-train</A> gen fm
+  <a class=def name="sinc-train">sinc-train</a> gen fm
   <A class=def NAME="sinc-train?">sinc-train?</A> gen
 </pre>
 
 <p>
-This produces a sinc-train ((sin x)/x) with n components.  It is very similar to ncos.
+This produces a sinc-train ((sin x)/x) with n components.  It is very similar to <a href="#ncos">ncos</a>.
 </p>
+<br>
+
+
+<pre style="background-color: #f2f4ff">
+  <A class=def NAME="make-pink-noise">make-pink-noise</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (n 1)
+  <a class=def name="pink-noise">pink-noise</a> gen
+  <A class=def NAME="pink-noise?">pink-noise?</A> gen
+</pre>
+
+<p>
+This produces a reasonable approximation to 1/f noise, also known as pink-noise.
+</p>
+<br>
+
+
+<pre style="background-color: #f2f4ff">
+  <A class=def NAME="make-brown-noise">make-brown-noise</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> frequency (amplitude 1.0)
+  <a class=def name="brown-noise">brown-noise</a> gen
+  <A class=def NAME="brown-noise?">brown-noise?</A> gen
+</pre>
+
+<p>
+This produces a (unbounded) brownian noise.  'amplitude' sets the maximum size of individual jumps.
+</p>
+<br>
+
+
+<pre style="background-color: #f2f4ff">
+  <A class=def NAME="make-green-noise">make-green-noise</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (amplitude 1.0) (low -1.0) (high 1.0)
+  <a class=def name="green-noise">green-noise</a> gen
+  <A class=def NAME="green-noise?">green-noise?</A> gen
+
+  <A class=def NAME="make-green-noise-interp">make-green-noise-interp</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (amplitude 1.0) (low -1.0) (high 1.0)
+  <a class=def name="green-noise-interp">green-noise-interp</a> gen
+  <A class=def NAME="green-noise-interp?">green-noise-interp?</A> gen
+</pre>
+
+<p>These two generators produce bounded brownian noise; "green-noise" was Michael McNabb's name for it.
+Unlike CLM's <a href="sndclm.html#rand">rand</a> or <a href="sndclm.html#rand-interp">rand-interp</a> which
+produce white noise centered around 0.0, green-noise wanders around, bouncing off its bounds
+every now and then.  This produces a noise that is close to pink noise (see some graphs under <a href="#rand">rand</a>).
+My informal explanation is that each time we bounce off an edge, we're transferring energy from
+from a low frequency into some higher frequency.  This is still brownian noise however.
+'amplitude' controls how large individual steps can be; 'low' and 'high' set
+the overall bounds; 'frequency' controls how often a new random number is chosen.
+Here's an instrument that fuzzes up its amplitude envelope a bit using green noise:
+</p>
+
+<table border=0 cellpadding=5 hspace=20><tr>
+<td bgcolor="#fafafa"><pre>
+(<a class=quiet href="#definstrument" onmouseout="UnTip()" onmouseover="Tip(sndscm_definstrument_tip)">definstrument</a> (green3 start dur freq amp amp-env noise-freq noise-width noise-max-step)
+  (let* ((grn (<em class=red>make-green-noise-interp</em> :frequency noise-freq 
+                                       :amplitude noise-max-step 
+                                       :high (* 0.5 noise-width) :low (* -0.5 noise-width)))
+	 (osc (<a class=quiet href="sndclm.html#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> freq))
+	 (e (<a class=quiet href="sndclm.html#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> amp-env :scaler amp :duration dur))
+	 (beg (<a class=quiet href="sndclm.html#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> start))
+	 (end (+ beg (<a class=quiet href="sndclm.html#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> dur))))
+    (run
+     (lambda ()
+       (do ((i beg (1+ i)))
+	   ((= i end))
+	 (<a class=quiet href="sndclm.html#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* (<a class=quiet href="sndclm.html#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> e) 
+		    (+ 1.0 (<em class=red>green-noise-interp</em> grn 0.0))
+		    (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> osc))))))))
+
+(<a class=quiet href="#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () 
+  (green3 0 2.0 440 .5 '(0 0 1 1 2 1 3 0) 100 .2 .02))
+</pre></td></tr></table>
+
 <br>
 
 

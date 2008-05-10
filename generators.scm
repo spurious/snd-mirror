@@ -5076,6 +5076,228 @@ index 10 (so 10/2 is the bes-jn arg):
 
 
 
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; pink-noise (based on rand-bank idea of Orfanidis)
+
+(defgenerator (pink-noise
+	       :make-wrapper (lambda (g)
+			       (if (<= (pink-noise-n g) 0) (set! (pink-noise-n g) 1))
+			       (let ((n (pink-noise-n g)))
+				 (set! (pink-noise-rands g) (make-vector n))
+				 (do ((i 0 (1+ i)))
+				     ((= i n))
+				   (vector-set! (pink-noise-rands g) i (make-rand :frequency (/ (mus-srate) (expt 2 i))))
+				   (set! (mus-phase (vector-ref (pink-noise-rands g) i)) (random pi))))
+			       g))
+  (n 1) (rands #f :type clm-vector))
+
+
+(define (pink-noise gen)
+  "  (make-pink-noise (n 1)) creates a pink-noise generator with n octaves of rand (12 is recommended).\n\
+  (pink-noise gen) returns the next random value in the 1/f stream produced by gen."
+  (declare (gen pink-noise))
+  (let ((val 0.0) 
+	(rands (pink-noise-rands gen))
+	(n (pink-noise-n gen)))
+    (do ((i 0 (1+ i)))
+        ((= i n))
+      (set! val (+ val (rand (vector-ref rands i)))))
+    (/ val (* 2.5 (sqrt n))))) ; this normalization is not quite right
+
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let* ((gen (make-pink-noise 12)))
+    (do ((i 0 (1+ i)))
+	((= i 44100))
+      (outa i (pink-noise gen)))))
+|#
+
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; brown-noise
+
+(defgenerator (brown-noise
+	       :make-wrapper (lambda (g)
+			       (set! (brown-noise-frequency g) (hz->radians (brown-noise-frequency g)))
+			       (set! (brown-noise-sum g) (mus-random (brown-noise-amplitude g)))
+			       g))
+  (frequency *clm-default-frequency*) (amplitude 1.0) (angle 0.0) (sum 0.0))
+
+
+(define (brown-noise gen fm)
+  "  (make-brown-noise frequency (amplitude 1.0)) returns a generator that produces brownian noise.\n\
+  (brown-noise gen fm) returns the next brownian noise sample."
+  (declare (gen brown-noise) (fm float))
+  (let ((x (brown-noise-angle gen)))
+    (if (or (>= x (* 2 pi))
+	    (< x 0.0))
+	(begin
+	  (set! x (fmod x (* 2 pi)))
+	  (if (< x 0.0) (set! x (+ x (* 2 pi))))
+	  (set! (brown-noise-sum gen) (+ (brown-noise-sum gen) (mus-random (brown-noise-amplitude gen))))))
+    (set! (brown-noise-angle gen) (+ x fm (brown-noise-frequency gen)))
+    (brown-noise-sum gen)))
+  
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let* ((gen (make-brown-noise 1000)))
+    (do ((i 0 (1+ i)))
+	((= i 44100))
+      (outa i (brown-noise gen 0.0)))))
+|#
+
+;;; TODO: doc test brown noise, remove from green.scm, merge in green-noise[-interp]
+
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; green-noise
+
+(defgenerator (green-noise
+	       :make-wrapper (lambda (g)
+			       (set! (green-noise-frequency g) (hz->radians (green-noise-frequency g)))
+			       g))
+  (frequency *clm-default-frequency*) (amplitude 1.0) (low -1.0) (high 1.0)
+  (angle 0.0) (sum 0.0))
+
+
+(define (green-noise gen fm)
+  "(make-green-noise frequency (amplitude 1.0) (low -1.0) (high 1.0)) returns a new green-noise (bounded brownian noise) generator.\n\
+   (green-noise gen fm) returns the next sample in a sequence of bounded brownian noise samples."
+  (declare (gen green-noise) (fm float))
+  (let* ((x (green-noise-angle gen)))
+    (if (or (>= x (* 2 pi))
+	    (< x 0.0))
+	(begin
+	  (set! x (fmod x (* 2 pi)))
+	  (if (< x 0.0) (set! x (+ x (* 2 pi))))
+	  (let ((val (mus-random (green-noise-amplitude gen))))
+	    (set! (green-noise-sum gen) (+ (green-noise-sum gen) val))
+	    (if (not (<= (green-noise-low gen) (green-noise-sum gen) (green-noise-high gen)))
+		(set! (green-noise-sum gen) (- (green-noise-sum gen) (* 2 val)))))))
+    (set! (green-noise-angle gen) (+ x fm (green-noise-frequency gen)))
+    (green-noise-sum gen)))
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let* ((gen (make-green-noise 1000)))
+    (do ((i 0 (1+ i)))
+	((= i 44100))
+      (outa i (green-noise gen 0.0)))))
+|#
+
+;;; TODO: this needs tests for bounds etc 
+
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; green-noise-interp
+
+(defgenerator (green-noise-interp
+	       :make-wrapper (lambda (g)
+			       (set! (green-noise-interp-frequency g) (hz->radians (green-noise-interp-frequency g)))
+			       (set! (green-noise-interp-incr g) (/ (* (mus-random (green-noise-interp-amplitude g))
+								       (green-noise-interp-frequency g))
+								    (* 2 pi)))
+			       g))
+  (frequency *clm-default-frequency*) (amplitude 1.0) (low -1.0) (high 1.0)
+  (angle 0.0) (sum 0.0) (incr 0.0))
+
+
+(define (green-noise-interp gen fm)
+  "(make-green-noise-interp frequency (amplitude 1.0) (low -1.0) (high 1.0)) returns a new interpolating green noise (bounded brownian noise) generator.\n\
+   (green-noise-interp gen fm) returns the next sample in a sequence of interpolated bounded brownian noise samples."
+  (declare (gen green-noise-interp) (fm float))
+  (let* ((x (green-noise-interp-angle gen)))
+    (if (or (>= x (* 2 pi))
+	    (< x 0.0))
+	(begin
+	  (set! x (fmod x (* 2 pi)))
+	  (if (< x 0.0) (set! x (+ x (* 2 pi))))
+	  (let* ((val (mus-random (green-noise-interp-amplitude gen)))
+		 (end (+ (green-noise-interp-sum gen) val)))
+	    (if (not (<= (green-noise-interp-low gen) end (green-noise-interp-high gen)))
+		(set! val (* -2 val)))
+	    (set! (green-noise-interp-incr gen) (/ (* val (green-noise-interp-frequency gen))
+						   (* 2 pi))))))
+    (set! (green-noise-interp-angle gen) (+ x fm (green-noise-interp-frequency gen)))
+    (set! (green-noise-interp-sum gen) (+ (green-noise-interp-sum gen) (green-noise-interp-incr gen)))
+    (green-noise-interp-sum gen)))
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let* ((gen (make-green-noise-interp 1000)))
+    (do ((i 0 (1+ i)))
+	((= i 44100))
+      (outa i (green-noise-interp gen 0.0)))))
+
+#|
+(definstrument (green1 beg end freq amp lo hi)
+  (let ((grn (make-green-noise :frequency freq :amplitude amp :high hi :low lo)))
+    (run
+     (lambda ()
+       (do ((i beg (1+ i)))
+	   ((= i end))
+	 (outa i (green-noise grn 0.0) *output*))))))
+
+(definstrument (green2 beg end freq amp lo hi)
+  (let ((grn (make-green-noise-interp :frequency freq :amplitude amp :high hi :low lo)))
+    (run
+     (lambda ()
+       (do ((i beg (1+ i)))
+	   ((= i end))
+	 (outa i (green-noise-interp grn 0.0) *output*))))))
+
+(with-sound () (green1 0 10000 1000 0.1 -0.5 0.5) (green2 10000 20000 1000 0.1 -0.5 0.5))
+
+(definstrument (green3 start dur freq amp amp-env noise-freq noise-width noise-max-step)
+  ;; brownian noise on amp env
+  (let* ((grn (make-green-noise-interp :frequency noise-freq :amplitude noise-max-step :high (* 0.5 noise-width) :low (* -0.5 noise-width)))
+	 (osc (make-oscil freq))
+	 (e (make-env amp-env :scaler amp :duration dur))
+	 (beg (seconds->samples start))
+	 (end (+ beg (seconds->samples dur))))
+    (run
+     (lambda ()
+       (do ((i beg (1+ i)))
+	   ((= i end))
+	 (outa i (* (env e) 
+		    (+ 1.0 (green-noise-interp grn 0.0))
+		    (oscil osc)) 
+	       *output*))))))
+
+(with-sound () (green3 0 2.0 440 .5 '(0 0 1 1 2 1 3 0) 100 .2 .02))
+
+
+(definstrument (green4 start dur freq amp freq-env gliss noise-freq noise-width noise-max-step)
+  ;; same but on freq env
+  (let* ((grn (make-green-noise-interp :frequency noise-freq :amplitude noise-max-step :high (* 0.5 noise-width) :low (* -0.5 noise-width)))
+	 (osc (make-oscil freq))
+	 (e (make-env freq-env :scaler gliss :duration dur))
+	 (beg (seconds->samples start))
+	 (end (+ beg (seconds->samples dur))))
+    (run
+     (lambda ()
+       (do ((i beg (1+ i)))
+	   ((= i end))
+	 (outa i (* amp (oscil osc (hz->radians (+ (env e) (green-noise-interp grn 0.0)))))
+	       *output*))))))
+
+(with-sound () (green4 0 2.0 440 .5 '(0 0 1 1 2 1 3 0) 440 100 100 10))
+
+|#
+
+;;; TODO: this also needs tests for bounds etc  [rest of green.scm ins etc]
+
+
+
 ;;; --------------------------------------------------------------------------------
 ;;;
 ;;; set up make-* help strings

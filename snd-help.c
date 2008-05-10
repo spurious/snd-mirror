@@ -512,6 +512,8 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+10-May:  merged green.scm into generators.scm.\n\
+5-May:   music5 port: music5.f, music5-examples, old-music5.f\n\
 24-Apr:  Snd 9.9.\n\
 25-Mar:  with-mixed-sound and with-mixed-sound->notelist (ws.scm)\n\
 18-Mar:  selection.scm.\n\
