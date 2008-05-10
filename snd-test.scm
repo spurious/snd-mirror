@@ -54674,7 +54674,7 @@ EDITS: 1
 	  (if (not (sound? snd)) (snd-display ";nxy1cos ~A" snd))
 	  (if (fneq (maxamp snd) 1.0) (snd-display ";nxy1cos max: ~A" (maxamp snd))))
 	
-	(let* ((res (with-sound (:clipped #f :statistics #t)
+	(let* ((res (with-sound (:clipped #f)
 		    (let ((gen (make-nxy1sin 300 1/3 3)))
 		      (run 
 		       (lambda ()
@@ -54696,7 +54696,7 @@ EDITS: 1
 	  (if (not (sound? snd)) (snd-display ";nrxysin ~A" snd))
 	  (if (fneq (maxamp snd) 0.985) (snd-display ";nrxysin max: ~A" (maxamp snd))))
 	
-	(let* ((res (with-sound (:clipped #f :statistics #t)
+	(let* ((res (with-sound (:clipped #f)
 		    (let ((gen (make-nrxycos 1000 0.1 5 0.5)))
 		      (run 
 		       (lambda ()
@@ -54729,6 +54729,16 @@ EDITS: 1
 	       (snd (find-sound res)))
 	  (if (not (sound? snd)) (snd-display ";blackman ~A" snd))
 	  (if (fneq (maxamp snd) 1.0) (snd-display ";blackman max: ~A" (maxamp snd))))
+
+	(let* ((res (with-sound (:clipped #f)
+		    (let ((black4 (make-sinc-train 440.0 10)))
+		      (run (lambda ()
+			     (do ((i 0 (1+ i)))
+				 ((= i 10000))
+			       (outa i (sinc-train black4 0.0))))))))
+	       (snd (find-sound res)))
+	  (if (not (sound? snd)) (snd-display ";sinc-train ~A" snd))
+	  (if (fneq (maxamp snd) 1.0) (snd-display ";sinc-train max: ~A" (maxamp snd))))
 
 	(let* ((res (with-sound (:clipped #f)
 		    (let ((gen (make-k3sin 100.0)))

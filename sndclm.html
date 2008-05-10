@@ -2441,31 +2441,8 @@ see also <a href="#othergenerators">generators.scm</a>
 <img src="pix/cosines.png" alt="sum of cosines example" hspace=10>
 </td></tr></table>
 
-<p>Almost identical is the following <A NAME="sinc-train">sinc-train</a> generator:
-</p>
-
-<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
-<pre>(define* (make-sinc-train :optional (frequency *clm-default-frequency*) (width #f))
-  (let ((range (or width (* pi (- (* 2 (inexact-&gt;exact (floor (/ (<a class=quiet href="#mussrate" onmouseout="UnTip()" onmouseover="Tip(sndclm_mussrate_tip)">mus-srate</a>) (* 2.2 frequency))))) 1)))))
-    ;; 2.2 leaves a bit of space before srate/2, (* 3 pi) is the minimum width, normally
-    (list (- (* range 0.5))
-	  range
-	  (/ (* range frequency) (<a class=quiet href="#mussrate" onmouseout="UnTip()" onmouseover="Tip(sndclm_mussrate_tip)">mus-srate</a>)))))
-	
-(define* (sinc-train gen :optional (fm 0.0))
-  (let* ((ang (car gen))
-	 (range (cadr gen))
-	 (top (* 0.5 range))
-	 (frq (caddr gen))
-	 (val (if (= ang 0.0) 1.0 (/ (sin ang) ang)))
-	 (new-ang (+ ang frq fm)))
-    (if (&gt; new-ang top)
-	(list-set! gen 0 (- new-ang range))
-	(list-set! gen 0 new-ang))
-    val))
-</pre></td></tr></table>
-
-<p>If you use ncos as the FM modulating signal, you may be surprised and disappointed.
+<p>The <a href="#sinc-train">sinc-train</a> generator (in generators.scm) is very similar to ncos.
+If you use ncos as the FM modulating signal, you may be surprised and disappointed.
 As the modulating signal approaches a spike (as n increases), the bulk of the energy collapses back onto the carrier:
 </p>
 
@@ -6144,9 +6121,7 @@ prc95.scm:
     <a class=quiet href="sndscm.html#prc95doc" onmouseout="UnTip()" onmouseover="Tip(sndscm_prc95doc_tip)">reed, bowtable, jettable, onep, lip, dc-block, delaya, delayl</a>
 
 sndclm.html:
-    <a class=quiet href="sndclm.html#sinc-train">sinc-train</a>, 
     <a class=quiet href="sndclm.html#make-rand">1f-noise</a>,
-    <a class=quiet href="sndclm.html#polynomial">blackman4</a>
 
 zip.scm:
     <a class=quiet href="sndscm.html#zipper" onmouseout="UnTip()" onmouseover="Tip(sndscm_zipper_tip)">zipper</a>
@@ -6209,6 +6184,18 @@ Many of the instruments in animals.scm use this generator.  (In a sense, this is
 
 <p>
 This produces a Blackman-Harris sum of cosines of order 'n'.
+</p>
+<br>
+
+
+<pre style="background-color: #f2f4ff">
+  <A class=def NAME="make-sinc-train">make-sinc-train</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> frequency (n 1)
+  <A class=def NAME="sinc-train">sinc-train</A> gen fm
+  <A class=def NAME="sinc-train?">sinc-train?</A> gen
+</pre>
+
+<p>
+This produces a sinc-train ((sin x)/x) with n components.  It is very similar to ncos.
 </p>
 <br>
 
@@ -7291,7 +7278,8 @@ The only value to avoid is 1.0.
   <A class=def NAME="r2k2cos?">r2k2cos?</A> gen
 </pre>
 
-<p>This produces a sum of cosines, each scaled by 1/(r^2+k^2).
+<p>This produces a sum of cosines, each scaled by 1/(r^2+k^2).  r shouldn't be 0, but otherwise it almost doesn't matter what it is &mdash;
+this is not a very flexible generator!
 </p>
 
 <p>There are a dozen or so other generators defined in generators.scm, but most are close

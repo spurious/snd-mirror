@@ -6,7 +6,10 @@ C     SAIL
 C     
 C     Bill Schottstaedt, 26-Apr-08
 C     
-C     This is the new version that runs (5-May-08) in gfortran and linux.
+C     This is the new version that runs (5-May-08) in gfortran in Linux or the Mac.
+C       On the Mac, I got gfortran from http://macresearch.org/xcode_gfortran_plugin_update.
+C       You don't need the xcode plugin stuff, just the gfortran binary -- it gets
+C       installed in /usr/local/bin.  On linux, I think Fedora installed fortran for me.
 C     Most of my changes are in lower case.
 
 

@@ -2261,8 +2261,6 @@
 |#
 
 
-;;; TODO: check out the replacement for koddcos, doc, test if it works out (k32sin)
-
 
 ;;; --------------------------------------------------------------------------------
 
@@ -5003,6 +5001,78 @@ index 10 (so 10/2 is the bes-jn arg):
 	 (outa i (nchoosekcos gen 0.0)))))))
 |#
 
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; sinc-train
+
+(defgenerator (sinc-train 
+	       :make-wrapper (lambda (g)
+			       (if (<= (sinc-train-n g) 0)
+				   (begin
+				     (set! (sinc-train-original-n g) 1)
+				     (set! (sinc-train-n g) 3))
+				   (begin
+				     (set! (sinc-train-original-n g) (sinc-train-n g))
+				     (set! (sinc-train-n g) (+ 1 (* 2 (sinc-train-n g)))))) ; mimic ncos
+			       (set! (sinc-train-original-frequency g) (sinc-train-frequency g))
+			       (set! (sinc-train-frequency g) (* 0.5 (sinc-train-n g) (hz->radians (sinc-train-frequency g))))
+			       g)
+
+	       :methods (list
+			 (list 'mus-order
+			       (lambda (g) (sinc-train-original-n g))
+			       (lambda (g val)
+				 (if (<= val 0)
+				     (begin
+				       (set! (sinc-train-original-n g) 1)
+				       (set! (sinc-train-n g) 3))
+				     (begin
+				       (set! (sinc-train-original-n g) val)
+				       (set! (sinc-train-n g) (+ 1 (* 2 val)))))
+				 (set! (sinc-train-frequency g) (* 0.5 (sinc-train-n g) (hz->radians (sinc-train-original-frequency g))))
+				 (sinc-train-original-n g)))
+
+			 (list 'mus-frequency
+			       (lambda (g) (sinc-train-original-frequency g))
+			       (lambda (g val)
+				 (set! (sinc-train-original-frequency g) val)
+				 (set! (sinc-train-frequency g) (* 0.5 (sinc-train-n g) (hz->radians val)))
+				 val))))
+
+  (frequency *clm-default-frequency*) (n 1 :type int) (angle 0.0)
+  (original-n 1 :type int) (original-frequency 0.0))
+
+	
+(define (sinc-train gen fm)
+  "  (make-sinc-train frequency (n 1)) creates a sinc-train generator with n components.\n\
+   (sinc-train gen fm) returns a sinc-train"
+  (declare (gen sinc-train) (fm float))
+  (let* ((x (sinc-train-angle gen))
+	 (n (sinc-train-n gen))
+	 (max-angle (* pi 0.5 n))
+	 (new-angle (+ x fm (sinc-train-frequency gen)))
+	 (DC (/ 1.0 n))
+	 (norm (/ n (1- n))))
+    
+    (if (> new-angle max-angle)
+	(set! new-angle (- new-angle (* pi n))))
+
+    (set! (sinc-train-angle gen) new-angle)
+
+    (if (< (abs x) nearly-zero)
+	1.0
+	(* norm (- (/ (sin x) x) DC)))))
+
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let* ((g (make-sinc-train 100.0 40)))
+    (do ((i 0 (1+ i)))
+	((= i 44100))
+      (outa i (sinc-train g 0.0)))))
+|#
 
 
 

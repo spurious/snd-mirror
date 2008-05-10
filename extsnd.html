@@ -2632,7 +2632,10 @@ I use update-hook to make sure the y axis bounds reflect the new maxamp, if it i
 	  ((= i (<a class=quiet href="#chans" onmouseout="UnTip()" onmouseover="Tip(extsnd_chans_tip)">chans</a> snd)))
 	(let ((mx (<a class=quiet href="#maxamp" onmouseout="UnTip()" onmouseover="Tip(extsnd_maxamp_tip)">maxamp</a> snd i)))
 	  (if (&gt; mx 1.0)
-  	      (set! (<a class=quiet href="#ybounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_ybounds_tip)">y-bounds</a> snd i) (list (- mx) mx))))))))
+  	      (set! (<a class=quiet href="#ybounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_ybounds_tip)">y-bounds</a> snd i) (list (- mx) mx))
+	      (if (and (&gt; (cadr (<a class=quiet href="#ybounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_ybounds_tip)">y-bounds</a> snd)) 1.0) ; previous (pre-update) version was &gt; 1.0
+		       (&lt;= mx 1.0))                  ; but current is not, so reset axes
+		  (set! (<a class=quiet href="#ybounds" onmouseout="UnTip()" onmouseover="Tip(extsnd_ybounds_tip)">y-bounds</a> snd i) (list -1.0 1.0)))))))))
 </pre></td></tr></table>
 
 Say we're editing a sound in several different windows, and want to save and re-apply any

@@ -902,7 +902,7 @@ var extsnd_xtoposition_tip = "<code>(x-&gt;position val :optional snd chn (ax ti
 
 var extsnd_xzoomslider_tip = "<code>(x-zoom-slider :optional snd chn)</code>: current x axis zoom slider of snd channel chn";
 
-var extsnd_ybounds_tip = "<code>(y-bounds :optional snd chn)</code>:<br>a list (y0 y1) giving the current y axis bounds of snd channel chn";
+var extsnd_ybounds_tip = "<code>(y-bounds :optional snd chn)</code>:<br>a list (low high) giving the current y axis bounds of snd channel chn";
 
 var extsnd_ytoposition_tip = "<code>(y-&gt;position val :optional snd chn (ax time-graph))</code>: y pixel loc of val";
 
