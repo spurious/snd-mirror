@@ -5075,8 +5075,6 @@ index 10 (so 10/2 is the bes-jn arg):
 |#
 
 
-
-
 ;;; --------------------------------------------------------------------------------
 ;;;
 ;;; pink-noise (based on rand-bank idea of Orfanidis)
@@ -5133,12 +5131,13 @@ index 10 (so 10/2 is the bes-jn arg):
   "  (make-brown-noise frequency (amplitude 1.0)) returns a generator that produces brownian noise.\n\
   (brown-noise gen fm) returns the next brownian noise sample."
   (declare (gen brown-noise) (fm float))
-  (let ((x (brown-noise-angle gen)))
-    (if (or (>= x (* 2 pi))
+  (let ((x (brown-noise-angle gen))
+	(two-pi (* 2 pi)))
+    (if (or (>= x two-pi)
 	    (< x 0.0))
 	(begin
-	  (set! x (fmod x (* 2 pi)))
-	  (if (< x 0.0) (set! x (+ x (* 2 pi))))
+	  (set! x (fmod x two-pi))
+	  (if (< x 0.0) (set! x (+ x two-pi)))
 	  (set! (brown-noise-sum gen) (+ (brown-noise-sum gen) (mus-random (brown-noise-amplitude gen))))))
     (set! (brown-noise-angle gen) (+ x fm (brown-noise-frequency gen)))
     (brown-noise-sum gen)))
@@ -5150,8 +5149,6 @@ index 10 (so 10/2 is the bes-jn arg):
 	((= i 44100))
       (outa i (brown-noise gen 0.0)))))
 |#
-
-;;; TODO: doc test brown noise, remove from green.scm, merge in green-noise[-interp]
 
 
 
@@ -5171,12 +5168,13 @@ index 10 (so 10/2 is the bes-jn arg):
   "(make-green-noise frequency (amplitude 1.0) (low -1.0) (high 1.0)) returns a new green-noise (bounded brownian noise) generator.\n\
    (green-noise gen fm) returns the next sample in a sequence of bounded brownian noise samples."
   (declare (gen green-noise) (fm float))
-  (let* ((x (green-noise-angle gen)))
-    (if (or (>= x (* 2 pi))
+  (let* ((x (green-noise-angle gen))
+	 (two-pi (* 2 pi)))
+    (if (or (>= x two-oi)
 	    (< x 0.0))
 	(begin
-	  (set! x (fmod x (* 2 pi)))
-	  (if (< x 0.0) (set! x (+ x (* 2 pi))))
+	  (set! x (fmod x two-pi))
+	  (if (< x 0.0) (set! x (+ x two-pi)))
 	  (let ((val (mus-random (green-noise-amplitude gen))))
 	    (set! (green-noise-sum gen) (+ (green-noise-sum gen) val))
 	    (if (not (<= (green-noise-low gen) (green-noise-sum gen) (green-noise-high gen)))
@@ -5192,7 +5190,6 @@ index 10 (so 10/2 is the bes-jn arg):
       (outa i (green-noise gen 0.0)))))
 |#
 
-;;; TODO: this needs tests for bounds etc 
 
 
 
@@ -5215,12 +5212,13 @@ index 10 (so 10/2 is the bes-jn arg):
   "(make-green-noise-interp frequency (amplitude 1.0) (low -1.0) (high 1.0)) returns a new interpolating green noise (bounded brownian noise) generator.\n\
    (green-noise-interp gen fm) returns the next sample in a sequence of interpolated bounded brownian noise samples."
   (declare (gen green-noise-interp) (fm float))
-  (let* ((x (green-noise-interp-angle gen)))
-    (if (or (>= x (* 2 pi))
+  (let* ((x (green-noise-interp-angle gen))
+	 (two-pi (* 2 pi)))
+    (if (or (>= x two-pi)
 	    (< x 0.0))
 	(begin
-	  (set! x (fmod x (* 2 pi)))
-	  (if (< x 0.0) (set! x (+ x (* 2 pi))))
+	  (set! x (fmod x two-pi))
+	  (if (< x 0.0) (set! x (+ x two-pi)))
 	  (let* ((val (mus-random (green-noise-interp-amplitude gen)))
 		 (end (+ (green-noise-interp-sum gen) val)))
 	    (if (not (<= (green-noise-interp-low gen) end (green-noise-interp-high gen)))
@@ -5238,7 +5236,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	((= i 44100))
       (outa i (green-noise-interp gen 0.0)))))
 
-#|
+
 (definstrument (green1 beg end freq amp lo hi)
   (let ((grn (make-green-noise :frequency freq :amplitude amp :high hi :low lo)))
     (run
@@ -5294,7 +5292,6 @@ index 10 (so 10/2 is the bes-jn arg):
 
 |#
 
-;;; TODO: this also needs tests for bounds etc  [rest of green.scm ins etc]
 
 
 

@@ -1,36 +1,36 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [540]
-;;;  test 1: defaults                           [1111]
-;;;  test 2: headers                            [1313]
-;;;  test 3: variables                          [1629]
-;;;  test 4: sndlib                             [2278]
-;;;  test 5: simple overall checks              [4804]
-;;;  test 6: vcts                               [13764]
-;;;  test 7: colors                             [14032]
-;;;  test 8: clm                                [14522]
-;;;  test 9: mix                                [26228]
-;;;  test 10: marks                             [28448]
-;;;  test 11: dialogs                           [29409]
-;;;  test 12: extensions                        [29654]
-;;;  test 13: menus, edit lists, hooks, etc     [29925]
-;;;  test 14: all together now                  [31634]
-;;;  test 15: chan-local vars                   [32679]
-;;;  test 16: regularized funcs                 [34318]
-;;;  test 17: dialogs and graphics              [39272]
-;;;  test 18: enved                             [39362]
-;;;  test 19: save and restore                  [39381]
-;;;  test 20: transforms                        [41223]
-;;;  test 21: new stuff                         [43206]
-;;;  test 22: run                               [45201]
-;;;  test 23: with-sound                        [51422]
-;;;  test 24: user-interface                    [55163]
-;;;  test 25: X/Xt/Xm                           [58557]
-;;;  test 26: Gtk                               [63165]
-;;;  test 27: GL                                [67017]
-;;;  test 28: errors                            [67141]
-;;;  test all done                              [69443]
-;;;  test the end                               [69681]
+;;;  test 0: constants                          [548]
+;;;  test 1: defaults                           [1119]
+;;;  test 2: headers                            [1321]
+;;;  test 3: variables                          [1637]
+;;;  test 4: sndlib                             [2286]
+;;;  test 5: simple overall checks              [4812]
+;;;  test 6: vcts                               [13773]
+;;;  test 7: colors                             [14041]
+;;;  test 8: clm                                [14531]
+;;;  test 9: mix                                [26268]
+;;;  test 10: marks                             [28489]
+;;;  test 11: dialogs                           [29450]
+;;;  test 12: extensions                        [29695]
+;;;  test 13: menus, edit lists, hooks, etc     [29966]
+;;;  test 14: all together now                  [31675]
+;;;  test 15: chan-local vars                   [32720]
+;;;  test 16: regularized funcs                 [34359]
+;;;  test 17: dialogs and graphics              [39313]
+;;;  test 18: enved                             [39403]
+;;;  test 19: save and restore                  [39422]
+;;;  test 20: transforms                        [41264]
+;;;  test 21: new stuff                         [43247]
+;;;  test 22: run                               [45242]
+;;;  test 23: with-sound                        [51463]
+;;;  test 24: user-interface                    [55265]
+;;;  test 25: X/Xt/Xm                           [58659]
+;;;  test 26: Gtk                               [63267]
+;;;  test 27: GL                                [67119]
+;;;  test 28: errors                            [67243]
+;;;  test all done                              [69546]
+;;;  test the end                               [69784]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -51480,7 +51480,6 @@ EDITS: 1
     (catch #t 
 	   (lambda () (load "dlocsig.scm"))
 	   (lambda args (snd-display ";load dlocsig: ~A" args))))
-(if (not (provided? 'snd-green.scm)) (load "green.scm"))
 (if (not (provided? 'snd-sndwarp.scm)) (load "sndwarp.scm"))
 
 (define old-opt-23 (optimization))
@@ -53597,11 +53596,6 @@ EDITS: 1
 				ind 3 "dlocsig 15 3")
 		))); end dlocsig tests
 	
-	(let ((gr (make-green-noise)))
-	  (do ((i 0 (1+ i)))
-	      ((= i 10))
-	    (brownian-noise gr)))
-	
 	(let ((a4 (->frequency 'a4))
 	      (a440 (->frequency 440.0))
 	      (cs5 (->frequency 'cs5))
@@ -54740,13 +54734,6 @@ EDITS: 1
 	  (if (not (sound? snd)) (snd-display ";sinc-train ~A" snd))
 	  (if (fneq (maxamp snd) 1.0) (snd-display ";sinc-train max: ~A" (maxamp snd))))
 
-	(with-sound (:clipped #f) ; at least run the thing -- not sure how to test this automatically
-		    (let* ((gen (make-pink-noise 12)))
-		      (run (lambda ()
-			     (do ((i 0 (1+ i)))
-				 ((= i 44100))
-			       (outa i (pink-noise gen)))))))
-
 	(let* ((res (with-sound (:clipped #f)
 		    (let ((gen (make-k3sin 100.0)))
 		      (run 
@@ -54866,6 +54853,68 @@ EDITS: 1
 	       (snd (find-sound res)))
 	  (if (not (sound? snd)) (snd-display ";adj saw ~A" snd))
 	  (if (ffneq (maxamp snd) 0.5) (snd-display ";adj saw max: ~A" (maxamp snd))))
+
+	(with-sound (:clipped #f) ; at least run the thing -- not sure how to test this automatically
+		    (let* ((gen (make-pink-noise 12)))
+		      (run (lambda ()
+			     (do ((i 0 (1+ i)))
+				 ((= i 44100))
+			       (outa i (pink-noise gen)))))))
+
+	(let* ((res (with-sound (:clipped #f)
+		    (let ((gen (make-brown-noise 100.0)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10000))
+			   (outa i (brown-noise gen 0.0))))))))
+	       (snd (find-sound res)))
+	  (if (not (sound? snd)) (snd-display ";brown-noise ~A" snd))
+	  (if (< (maxamp snd) 0.01) (snd-display ";brown-noise max: ~A" (maxamp snd))))
+
+	(let* ((res (with-sound (:clipped #f)
+		    (let ((gen (make-green-noise 100.0)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10000))
+			   (outa i (green-noise gen 0.0))))))))
+	       (snd (find-sound res)))
+	  (if (not (sound? snd)) (snd-display ";green-noise ~A" snd))
+	  (if (or (< (maxamp snd) 0.01) (> (maxamp snd) 1.0)) (snd-display ";green-noise max: ~A" (maxamp snd))))
+
+	(let* ((res (with-sound (:clipped #f)
+		    (let ((gen (make-green-noise 100.0 0.1 -0.1 0.5)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10000))
+			   (outa i (green-noise gen 0.0))))))))
+	       (snd (find-sound res)))
+	  (if (not (sound? snd)) (snd-display ";green-noise .5 ~A" snd))
+	  (if (or (< (maxamp snd) 0.01) (> (maxamp snd) 0.5)) (snd-display ";green-noise .5 max: ~A" (maxamp snd))))
+
+	(let* ((res (with-sound (:clipped #f)
+		    (let ((gen (make-green-noise-interp 100.0)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10000))
+			   (outa i (green-noise-interp gen 0.0))))))))
+	       (snd (find-sound res)))
+	  (if (not (sound? snd)) (snd-display ";green-noise-interp ~A" snd))
+	  (if (or (< (maxamp snd) 0.01) (> (maxamp snd) 1.0)) (snd-display ";green-noise-interp max: ~A" (maxamp snd))))
+
+	(let* ((res (with-sound (:clipped #f)
+		    (let ((gen (make-green-noise-interp 100.0 0.1 -0.1 0.5)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10000))
+			   (outa i (green-noise-interp gen 0.0))))))))
+	       (snd (find-sound res)))
+	  (if (not (sound? snd)) (snd-display ";green-noise-interp .5 ~A" snd))
+	  (if (or (< (maxamp snd) 0.01) (> (maxamp snd) 0.5)) (snd-display ";green-noise-interp .5 max: ~A" (maxamp snd))))
 
 	
 	(if (provided? 'snd-guile) (begin
