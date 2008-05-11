@@ -1919,7 +1919,7 @@ pattern + + - -:
     (list 1 .5  2 .25  3 -.125  4 -.125) ; squeeze the amplitude change toward index=0
 </pre>
 
-<p>To follow an amplitude envelope despite a changing index, we can use a moving-max generator (from dsp.scm):
+<p>To follow an amplitude envelope despite a changing index, we can use a <a href="#moving-max">moving-max</a> generator (from generators.scm):
 </p>
 
 <table border=0 hspace=20>
@@ -1929,13 +1929,13 @@ pattern + + - -:
   (let ((gen (<em class=red>make-polyshape</em> 1000.0 :partials (list 1 .25 2 .25 3 .125 4 .125 5 .25)))
 	(indf (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1 2 0) :duration 2.0))     ; index env
 	(ampf (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1 2 1 3 0) :duration 2.0)) ; desired amp env
-	(mx (<a class=quiet href="sndscm.html#movingmax" onmouseout="UnTip()" onmouseover="Tip(sndscm_movingmax_tip)">make-moving-max</a> 256))                         ; track actual current amp
+	(mx (<a class=quiet href="#moving-max" onmouseout="UnTip()" onmouseover="Tip(sndclm_moving_max_tip)">make-moving-max</a> 256))                         ; track actual current amp
 	(samps (<a class=quiet href="#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> 2.0)))
     (do ((i 0 (1+ i)))
 	((= i samps))
       (let ((val (<em class=red>polyshape</em> gen (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> indf))))              ; polyshape with index env
 	(<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (/ (* (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> ampf) val)
-		   (max 0.001 (<a class=quiet href="sndscm.html#movingmax" onmouseout="UnTip()" onmouseover="Tip(sndscm_movingmax_tip)">moving-max</a> mx val))))))))
+		   (max 0.001 (<a class=quiet href="#moving-max" onmouseout="UnTip()" onmouseover="Tip(sndclm_moving_max_tip)">moving-max</a> mx val))))))))
 </pre>
 </td></tr></table>
 
@@ -3685,7 +3685,7 @@ using the same frequency envelope as the wave-train, so we have some idea when t
 amplitude (a sort of step function).
 rand-interp interpolates between successive
 random numbers.
-rand-interp could be defined as (<a class=quiet href="#moving-average" onmouseout="UnTip()" onmouseover="Tip(sndclm_moving_average_tip)">moving-average</a> agen (rand rgen)) where the
+rand-interp could be defined as (<a class=quiet href="#moving-average">moving-average</a> agen (rand rgen)) where the
 averager has the same period (length) as the rand.  
 In both cases, the "envelope" argument or the "distribution" argument determines the random number distribution.
 mus-random returns a random number between -amplitude and amplitude.
@@ -4505,7 +4505,7 @@ differentiator: <a href="sndscm.html#makedifferentiator">make-differentiator</a>
 block DC: dc-block in prc95.scm or (make-filter 2 (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 1 -1) (<a class=quiet href="extsnd.html#vct" onmouseout="UnTip()" onmouseover="Tip(extsnd_vct_tip)">vct</a> 0 -0.99))<br>
 hum elimination: <a href="sndscm.html#IIRfilters">eliminate-hum</a> and <a href="sndscm.html#notchchannel">notch-channel</a> in dsp.scm<br>
 hiss elimination: <a href="sndscm.html#notchoutrumbleandhiss">notch-out-rumble-and-hiss</a><br>
-smoothing filters: <a href="sndscm.html#smoothingfilter">smoothing-filter</a>, weighted-moving-average, exponentially-weighted-moving-average<br>
+smoothing filters: <a href="#moving-average">moving-average</a>, <a href="#weighted-moving-average">weighted-moving-average</a>, exponentially-weighted-moving-average<br>
 notch-filters: <a href="sndscm.html#notchchannel">notch-channel</a> and <a href="sndscm.html#notchselection">notch-selection</a><br>
 arbitrary spectrum via FIR filter: <a href="sndscm.html#spectrumtocoeffs">spectrum-&gt;coeffs</a> in dsp.scm<br>
 invert an FIR filter: <a href="sndscm.html#invertfilter">invert-filter</a> in dsp.scm<br>
@@ -4604,30 +4604,10 @@ See prc95.scm for examples of both of these functions.
 </td></tr></table>
 
 <p>The <a href="sndclm.html#mus-scaler">mus-scaler</a> field is available for simple extensions of the delay.  For example,
-the following "moving-max" generator uses mus-scaler to track the current maximum sample value
+the <a href="#moving-max">moving-max</a> generator uses mus-scaler to track the current maximum sample value
 in the delay line; the result is an envelope that tracks the peak amplitude in the
 last "size" samples.
-</p>
-
-<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
-<pre>
-(define* (make-moving-max :optional (size 128))
-  (let ((gen (<em class=red>make-delay</em> size)))
-    (set! (<a class=quiet href="#mus-scaler" onmouseout="UnTip()" onmouseover="Tip(sndclm_mus_scaler_tip)">mus-scaler</a> gen) 0.0)
-    gen))
-
-(define (moving-max gen y)
-  (let* ((absy (abs y))
-         (mx (<em class=red>delay</em> gen absy)))
-    (if (>= absy (<a class=quiet href="#mus-scaler" onmouseout="UnTip()" onmouseover="Tip(sndclm_mus_scaler_tip)">mus-scaler</a> gen))
-	(set! (<a class=quiet href="#mus-scaler" onmouseout="UnTip()" onmouseover="Tip(sndclm_mus_scaler_tip)">mus-scaler</a> gen) absy)
-	(if (>= mx (<a class=quiet href="#mus-scaler" onmouseout="UnTip()" onmouseover="Tip(sndclm_mus_scaler_tip)">mus-scaler</a> gen))
-	    (set! (<a class=quiet href="#mus-scaler" onmouseout="UnTip()" onmouseover="Tip(sndclm_mus_scaler_tip)">mus-scaler</a> gen) (<a class=quiet href="extsnd.html#vctpeak" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctpeak_tip)">vct-peak</a> (<a class=quiet href="#mus-data" onmouseout="UnTip()" onmouseover="Tip(sndclm_mus_data_tip)">mus-data</a> gen)))))
-    (<a class=quiet href="#mus-scaler" onmouseout="UnTip()" onmouseover="Tip(sndclm_mus_scaler_tip)">mus-scaler</a> gen)))
-</pre>
-</td></tr></table>
-
-<p>The delay generator is used in some reverbs (<a href="sndscm.html#nrev">nrev</a>), many physical
+The delay generator is used in some reverbs (<a href="sndscm.html#nrev">nrev</a>), many physical
 models (<a href="sndscm.html#stereoflute">stereo-flute</a>), <a href="sndscm.html#dlocsigdoc">dlocsig</a>,
 chorus effects (<a href="sndscm.html#chorus">chorus</a> in dsp.scm), and flanging (<a href="sndscm.html#neweffectsdoc">new-effects</a>),
 and is the basis for about a dozen extensions (comb and friends below).
@@ -4918,10 +4898,10 @@ that are squelched and those that are unchanged (to avoid clicks):
 </td></tr></table>
 
 <p>See also dsp.scm for several related functions:
-<a href="sndscm.html#movingmax">moving-max</a>,
-<a href="sndscm.html#movingrms">moving-rms</a>, <a href="sndscm.html#movingsum">moving-sum</a>, 
-<a href="sndscm.html#movinglength">moving-length</a>, <a href="sndscm.html#weightedmovingaverage">weighted-moving-average</a>, and 
-<a href="sndscm.html#exponentiallyweightedmovingaverage">exponentially-weighted-moving-average</a>
+<a href="#moving-max">moving-max</a>,
+<a href="#moving-rms">moving-rms</a>, <a href="#moving-sum">moving-sum</a>, 
+<a href="#moving-length">moving-length</a>, <a href="#weighted-moving-average">weighted-moving-average</a>, and 
+<a href="#exponentially-weighted-moving-average">exponentially-weighted-moving-average</a>
 (the latter being just a one-pole filter).
 </p>
 <br><br>
@@ -6097,9 +6077,6 @@ dsp.scm:
             <a class=quiet href="sndscm.html#IIRfilters" onmouseout="UnTip()" onmouseover="Tip(sndscm_IIRfilters_tip)">iir-low-pass, iir-high-pass, iir-band-pass, iir-band-stop, peaking</a>,
             <a class=quiet href="sndscm.html#makebutter" onmouseout="UnTip()" onmouseover="Tip(sndscm_makebutter_tip)">butter-lp, butter-hp, butter-bp, butter-bs</a>
    
-    delay: <a class=quiet href="sndscm.html#movingmax" onmouseout="UnTip()" onmouseover="Tip(sndscm_movingmax_tip)">moving-max</a>
-    average:  <a class=quiet href="sndscm.html#movingsum" onmouseout="UnTip()" onmouseover="Tip(sndscm_movingsum_tip)">moving-sum, moving-rms, moving-length, weighted-moving-average</a>
-    one-pole: <a class=quiet href="sndscm.html#exponentiallyweightedmovingaverage" onmouseout="UnTip()" onmouseover="Tip(sndscm_exponentiallyweightedmovingaverage_tip)">exponentially-weighted-moving-average </a>
     <a class=quiet href="sndscm.html#volterrafilter" onmouseout="UnTip()" onmouseover="Tip(sndscm_volterrafilter_tip)">volterra-filter</a>
 
 env.scm:
@@ -6346,7 +6323,7 @@ Use mus-scaler to set the duty-factor at run-time.
 </pre>
 
 <p>
-This is a rand-interp generator feeding a moving-average generator.  "n" is the length of the moving-average;
+This is a <a href="#rand-interp">rand-interp</a> generator feeding a <a href="#moving-average">moving-average</a> generator.  "n" is the length of the moving-average;
 the higher "n", the more low-passed the output.
 </p>
 <img src="pix/roundinterp.png" alt="round-interp" hspace=40>
@@ -6375,6 +6352,69 @@ the higher "n", the more low-passed the output.
 (set! (x-axis-label 0 4) "round-interp, n=10000")
 (set! (axis-label-font) "-*-times-medium-r-normal-*-20-*-*-*-*-*-*-*")
 -->
+
+<br>
+<br>
+
+
+<pre style="background-color: #f2f4ff">
+  <A class=def>make-moving-max</A> (n 128)
+  <a class=def name="moving-max">moving-max</a> gen y
+  <A class=def>moving-max?</A> gen
+
+  <A class=def>make-moving-sum</A> (n 128)
+  <a class=def name="moving-sum">moving-sum</a> gen y
+  <A class=def>moving-sum?</A> gen
+
+  <A class=def>make-moving-rms</A> (n 128)
+  <a class=def name="moving-rms">moving-rms</a> gen y
+  <A class=def>moving-rms?</A> gen
+
+  <A class=def>make-moving-length</A> (n 128)
+  <a class=def name="moving-length">moving-length</a> gen y
+  <A class=def>moving-length?</A> gen
+
+  <A class=def>make-weighted-moving-average</A> n
+  <a class=def name="weighted-moving-average">weighted-moving-average</a> gen y
+  <A class=def>weighted-moving-average?</A> gen
+
+  <A class=def>make-exponentially-weighted-moving-average</A> n
+  <a class=def name="exponentially-weighted-moving-average">exponentially-weighted-moving-average</a> gen y
+  <A class=def>exponentially-weighted-moving-average?</A> gen
+</pre>
+
+<p>
+moving-max is a specialization
+of the <a href="sndclm.html#delay">delay</a> generator; it produces an envelope that tracks the peak amplitude of the last 'size' samples.
+<code>(make-moving-max 256)</code> returns the generator (this one's window size is 256),
+and <code>(moving-max gen y)</code> then returns the envelope traced out by the signal 'y'.
+The <a href="sndscm.html#harmonicizer">harmonicizer</a> uses this generator to normalize an in-coming signal to 1.0
+so that the Chebyshev polynomials it is driving will produce a full spectrum at all times.
+Here is a similar, but simpler, example; we use the moving-max generator to track the
+current peak amplitude over a small window, use that value to drive a <a href="sndclm.html#contrast-enhancement">contrast-enhancement</a>
+generator (so that its output is always fully modulated), and rescale by the same value
+upon output (to track the original sound's amplitude envelope):
+</p>
+
+<pre>
+    (define (intensify index)
+      (let* ((mx (make-moving-max))
+	     (flt (<a class=quiet href="sndscm.html#makelowpass" onmouseout="UnTip()" onmouseover="Tip(sndscm_makelowpass_tip)">make-lowpass</a> (* pi .1) 8))) ; smooth the maxamp signal
+        (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (lambda (y)
+		       (let ((amp (max .1 (<a class=quiet href="sndclm.html#fir-filter" onmouseout="UnTip()" onmouseover="Tip(sndclm_fir_filter_tip)">fir-filter</a> flt (moving-max mx y)))))
+		         (* amp (<a class=quiet href="sndclm.html#contrast-enhancement" onmouseout="UnTip()" onmouseover="Tip(sndclm_contrast_enhancement_tip)">contrast-enhancement</a> (/ y amp) index)))))))
+</pre>
+
+<p>
+This can also be used for automatic gain control &mdash; see generators.scm for the agc function.
+The other "moving" generators are specializations of the <a href="sndclm.html#moving-average">moving-average</a>
+generator.  moving-sum keeps the ongoing sum of absolute values, moving-length the square root of the sum
+of squares, and moving-rms the square root of the sum of squares divided by the size.
+moving-rms is used in <a href="sndscm.html#overlayrmsenv">overlay-rms-env</a> in draw.scm.
+weighted-moving-average weights the
+table entries by 1/n.  Similarly exponentially-weighted-moving-average applies exponential weights (it is
+actually just a one-pole filter &mdash; this generator wins the "longest-name-for-simplest-effect" award).
+</p>
 
 <br>
 <br>
@@ -7593,7 +7633,7 @@ The "type" argument is one of the interpolation types (<code>mus-interp-linear</
    <a class=def name="contrast-enhancement">contrast-enhancement</a> in-samp :optional (fm-index 1.0)
 </pre>
 
-<p>contrast-enhancement phase-modulates a sound file:
+<p>contrast-enhancement passes its input to sin as a kind of phase modulation.
 </p>
 <pre>
     (sin (+ (* input pi 0.5)
@@ -7602,7 +7642,7 @@ The "type" argument is one of the interpolation types (<code>mus-interp-linear</
 
 <p>
 This brightens the
-sound, helping it cut through a huge mix.
+input, helping it cut through a huge mix.
 A similar (slightly simpler) effect is:
 </p>
 
@@ -7616,7 +7656,7 @@ A similar (slightly simpler) effect is:
 </td></tr></table>
 
 <p>This modulates the sound but keeps the output maxamp the same as the input.
-There is a similar function in <a href="sndscm.html#movingmax">sndscm.html</a> that does this kind of scaling throughout the sound,
+See <a href="#moving-max">moving-max</a> for a similar function that does this kind of scaling throughout the sound,
 resulting in a steady modulation, rather than an intensification of just the peaks.
 And a sort of converse is <a href="sndscm.html#soundinterp">sound-interp</a>.
 </p>

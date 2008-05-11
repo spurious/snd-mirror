@@ -5294,6 +5294,178 @@ index 10 (so 10/2 is the bes-jn arg):
 
 
 
+;;; --------------------------------------------------------------------------------
+;;;
+;;; moving-max
+
+(defgenerator (moving-max
+	       :make-wrapper (lambda (g)
+			       (let ((dly (make-delay (moving-max-n g))))
+				 (set! (moving-max-gen g) dly)
+				 (set! (mus-scaler dly) 0.0)
+				 g))
+	       :methods (list
+			 (list 'mus-scaler
+			       (lambda (g) (mus-scaler (moving-max-gen g)))
+			       (lambda (g val)
+				 (set! (mus-scaler (moving-max-gen g)) val)
+				 val))))
+  (n 128 :type int) (gen #f :type clm))
+
+
+(define (moving-max gen y)
+  "(make-moving-max (n 128) returns a moving-max generator.\n\
+  (moving-max gen input) returns the maxamp in a moving window over the last n inputs."
+  (declare (gen moving-max) (y float))
+  (let* ((absy (abs y))
+	 (mx (delay gen absy)))
+    (if (>= absy (mus-scaler gen))
+	(set! (mus-scaler gen) absy)
+	(if (>= mx (mus-scaler gen))
+	    (set! (mus-scaler gen) (vct-peak (mus-data gen)))))
+    (mus-scaler gen)))
+
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; moving-sum
+
+(defgenerator (moving-sum
+	       :make-wrapper (lambda (g)
+			       (let ((dly (make-moving-average (moving-sum-n g))))
+				 (set! (moving-sum-gen g) dly)
+				 (set! (mus-increment dly) 1.0) ; this is 1/n by default
+				 g)))
+  (n 128 :type int) (gen #f :type clm))
+
+
+(define (moving-sum gen y)
+  "  (make-moving-sum (n 128) returns a moving-sum generator.\n\
+  (moving-sum gen input) returns the sum of the absolute values in a moving window over the last n inputs."
+  (declare (gen moving-sum) (y float))
+  (moving-average (moving-sum-gen gen) (abs y)))
+			       
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; moving-rms
+
+(defgenerator (moving-rms
+	       :make-wrapper (lambda (g)
+			       (set! (moving-rms-gen g) (make-moving-average (moving-rms-n g)))
+			       g))
+  (n 128 :type int) (gen #f :type clm))
+
+
+(define (moving-rms gen y)
+  "  (make-moving-rms (n 128) returns a moving-rms generator.\n\
+  (moving-rms gen input) returns the rms of the values in a window over the last n inputs."
+  (declare (gen moving-rms) (y float))
+  (sqrt (max 0.0 ;; this is tricky -- due to floating point inaccuracy, we can get negative output
+  		 ;;   from moving-rms even if all the inputs are positive!  The sqrt then returns
+                 ;;   a complex number and all hell breaks loose (in run, you'll get a complaint
+                 ;;   about an integer > 32 bits).
+	     (moving-average (moving-rms-gen gen) (* y y)))))
+
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; moving-length
+
+(defgenerator (moving-length
+	       :make-wrapper (lambda (g)
+			       (let ((dly (make-moving-average (moving-length-n g))))
+				 (set! (moving-length-gen g) dly)
+				 (set! (mus-increment dly) 1.0)
+				 g)))
+  (n 128 :type int) (gen #f :type clm))
+
+
+(define (moving-length gen y)
+  "  (make-moving-length (n 128) returns a moving-length generator.\n\
+  (moving-length gen input) returns the length of the values in a window over the last few inputs."
+  (declare (gen moving-length) (y float))
+  (sqrt (max 0.0 (moving-average (moving-length-gen gen) (* y y)))))
+
+
+#|
+;; perhaps also use moving-rms gen to avoid amplifying noise-sections (or even squlech them)
+(define* (agc :optional (ramp-speed .001) (window-size 512))
+  (let ((maxer (make-moving-max window-size))
+	(mult 1.0))
+    (map-channel
+     (lambda (y)
+       (let* ((curmax (moving-max maxer y))
+	      (diff (- 0.5 (* mult curmax)))
+	      (this-incr (* diff ramp-speed)))
+	 (set! mult (+ mult this-incr))
+	 (* y mult))))))
+
+;;; moving-mean = average
+;;; moving-variance? = (sum of (y - average)^2) n = (average (* (- y average-overall) (- y average-overall)))
+|#
+
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; weighted-moving-average
+;;;
+;;; arithmetic (1/n) weights
+
+(defgenerator (weighted-moving-average
+	       :make-wrapper (lambda (g)
+			       (let ((dly (make-moving-average (weighted-moving-average-n g))))
+				 (set! (mus-increment dly) 1.0)
+				 (set! (weighted-moving-average-gen g) dly)
+				 g)))
+  (n 128 :type int) (gen #f :type clm) (num 0.0) (sum 0.0))
+
+
+(define (weighted-moving-average gen y)
+  "  (make-weighted-moving-average (n 128) returns a weighted-moving-average generator.\n\
+  (weighted-moving-average gen y) returns the sum of the last n inputs weighted by 1/n"
+  (declare (gen weighted-moving-average) (y float))
+  (let* ((dly (weighted-moving-average-gen gen))
+	 (n (mus-order dly))
+	 (den (/ (* (1+ n) n) 2))
+	 (num (weighted-moving-average-num gen))
+	 (sum (weighted-moving-average-sum gen)))
+    (set! num (- (+ num (* n y)) sum))
+    (set! sum (moving-average dly y))
+    (set! (weighted-moving-average-num gen) num)
+    (set! (weighted-moving-average-sum gen) sum)
+    (/ num den)))
+
+
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; exponentially-weighted-moving-average
+;;;
+;;; geometric (r^n) weights
+
+(defgenerator (exponentially-weighted-moving-average
+	       :make-wrapper (lambda (g)
+			       (let* ((n (exponentially-weighted-moving-average-n g))
+				      (flt (make-one-pole (/ 1.0 n) (/ (- n) (+ 1.0 n)))))
+				 (set! (exponentially-weighted-moving-average-gen g) flt)
+				 g)))
+  (n 128 :type int) (gen #f :type clm))
+
+
+(define (exponentially-weighted-moving-average gen y)
+  "  (make-exponentially-weighted-moving-average (n 128) returns an exponentially-weighted-moving-average generator.\n\
+  (exponentially-weighted-moving-average gen y) returns the sum of the last n inputs weighted by (-n/(n+1))^k"
+  (declare (gen exponentially-weighted-moving-average) (y float))
+  (one-pole (exponentially-weighted-moving-average-gen gen) y))
+
+
+
 
 ;;; --------------------------------------------------------------------------------
 ;;;
@@ -5310,17 +5482,21 @@ index 10 (so 10/2 is the bes-jn arg):
 		rxyk!sin rxyk!cos ercos erssb eoddcos rkcos rksin rkssb
 		rk!cos rk!ssb r2k!cos k2sin k2cos k2ssb dblsum rkoddssb krksin
 		abcos absin r2k2cos bess jjcos j0evencos j2cos jpcos jncos 
-		j0j1cos jycos blackman fmssb k3sin izcos
+		j0j1cos jycos blackman fmssb k3sin izcos nchoosekcos n1cos
 		adjustable-square-wave adjustable-triangle-wave adjustable-sawtooth-wave adjustable-oscil 
-		round-interp))
+		round-interp sinc-train pink-noise green-noise brown-noise green-noise-interp
+		moving-max moving-sum moving-rms moving-length weighted-moving-average exponentially-weighted-moving-average 
+		))
      (list make-nssb make-nxysin make-nxycos make-nxy1cos make-nxy1sin make-noddsin make-noddcos make-noddssb make-ncos2 make-npcos
 	   make-nrsin make-nrcos make-nrssb make-nkssb make-nsincos make-rcos make-rssb make-rxysin make-rxycos
 	   make-rxyk!sin make-rxyk!cos make-ercos make-erssb make-eoddcos make-rkcos make-rksin make-rkssb
 	   make-rk!cos make-rk!ssb make-r2k!cos make-k2sin make-k2cos make-k2ssb make-dblsum make-rkoddssb make-krksin
 	   make-abcos make-absin make-r2k2cos make-bess make-jjcos make-j0evencos make-j2cos make-jpcos make-jncos
-	   make-j0j1cos make-jycos make-blackman make-fmssb make-k3sin make-izcos
+	   make-j0j1cos make-jycos make-blackman make-fmssb make-k3sin make-izcos make-nchoosekcos make-n1cos
 	   make-adjustable-square-wave make-adjustable-triangle-wave make-adjustable-sawtooth-wave make-adjustable-oscil
-	   make-round-interp)))
+	   make-round-interp make-sinc-train make-pink-noise make-green-noise make-brown-noise make-green-noise-interp
+	   make-moving-max make-moving-sum make-moving-rms make-moving-length make-weighted-moving-average make-exponentially-weighted-moving-average 
+	   )))
 
 
 ;;; --------------------------------------------------------------------------------

@@ -3192,50 +3192,6 @@ so aliasing is a possibility, and even powers create energy at 0Hz.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
-<!-- moving-max -->
-<tr><td colspan=2 bgcolor="#f2f4ff">
-<em class=emdef>make-moving-max</em> <code>(:optional (size 128))</code><br>
-<a class=def name="movingmax">moving-max</a> <code>(gen y)</code><br>
-<em class=emdef>make-moving-sum</em> <code>(:optional (size 128))</code><br>
-<a class=def name="movingsum">moving-sum</a> <code>(gen y)</code><br>
-<em class=emdef>make-moving-rms</em> <code>(:optional (size 128))</code><br>
-<a class=def name="movingrms">moving-rms</a> <code>(gen y)</code><br>
-<em class=emdef>make-moving-length</em> <code>(:optional (size 128))</code><br>
-<a class=def name="movinglength">moving-length</a> <code>(gen y)</code><br>
-<em class=emdef>make-smoothing-filter</em> ; same as <a href="sndclm.html#make-moving-average">make-moving-average</a><br>
-<a class=def name="smoothingfilter">smoothing-filter</a> <code>(gen y)</code><br>
-<em class=emdef>make-weighted-moving-average</em> <code>(order)</code><br>
-<a class=def name="weightedmovingaverage">weighted-moving-average</a> <code>(gen y)</code><br>
-<em class=emdef>make-exponentially-weighted-moving-average</em> <code>(order)</code><br>
-<a class=def name="exponentiallyweightedmovingaverage">exponentially-weighted-moving-average</a> <code>(gen y)</code>
-</td></tr><tr><td></td><td>
-moving-max is a specialization
-of the <a href="sndclm.html#delay">delay</a> generator; it produces an envelope that tracks the peak amplitude of the last 'size' samples.
-<code>(make-moving-max 256)</code> returns the generator (this one's window size is 256),
-and <code>(moving-max gen y)</code> then returns the envelope traced out by the signal 'y'.
-The harmonicizer (above) uses this generator to normalize an in-coming signal to 1.0
-so that the Chebyshev polynomials it is driving will produce a full spectrum at all times.
-Here is a similar, but simpler, example; we use the moving-max generator to track the
-current peak amplitude over a small window, use that value to drive a <a href="sndclm.html#contrast-enhancement">contrast-enhancement</a>
-generator (so that its output is always fully modulated), and rescale by the same value
-upon output (to track the original sound's amplitude envelope):
-<pre>
-    (define (intensify index)
-      (let* ((mx (make-moving-max))
-	     (flt (<a class=quiet href="#makelowpass" onmouseout="UnTip()" onmouseover="Tip(sndscm_makelowpass_tip)">make-lowpass</a> (* pi .1) 8))) ; smooth the maxamp signal
-        (<a class=quiet href="extsnd.html#mapchannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_mapchannel_tip)">map-channel</a> (lambda (y)
-		       (let ((amp (max .1 (<a class=quiet href="sndclm.html#fir-filter" onmouseout="UnTip()" onmouseover="Tip(sndclm_fir_filter_tip)">fir-filter</a> flt (moving-max mx y)))))
-		         (* amp (<a class=quiet href="sndclm.html#contrast-enhancement" onmouseout="UnTip()" onmouseover="Tip(sndclm_contrast_enhancement_tip)">contrast-enhancement</a> (/ y amp) index)))))))
-</pre>
-This can also be used for automatic gain control &mdash; see dsp.scm for the agc function.
-The other "moving" generators are specializations of the <a href="sndclm.html#moving-average">moving-average</a>
-generator.  moving-sum keeps the ongoing sum of absolute values, moving-length the square root of the sum
-of squares, and moving-rms the square root of the sum of squares divided by the size.
-moving-rms is used in <a href="#overlayrmsenv">overlay-rms-env</a> in draw.scm.
-smoothing-filter is a version of <a href="sndclm.html#moving-average">moving-average</a> with rounded edges.  weighted-moving-average weights the
-table entries by 1/n.  Similarly exponentially-weighted-moving-average applies exponential weights (it is
-actually just a one-pole filter &mdash; this generator wins the "longest-name-for-simplest-effect" award).
-</td></tr><tr><td colspan=2 height=32></td></tr>
 
 
 <!-- ---------------------------------------- scanned synthesis ---------------------------------------- -->

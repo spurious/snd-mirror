@@ -275,3 +275,18 @@ the amp (more or less), 'N'  is 1..10 or thereabouts, 'fi' is the phase incremen
 
 (def-optkey-fun (make-zpolar (radius 0.9) (frequency 440.0))
   (make-two-zero :frequency frequency :radius radius))
+
+
+;;; -------- smoothing-filter
+
+;;; a simple modification is to round-off the edges:
+
+(define make-smoothing-filter make-moving-average)
+
+(define (smoothing-filter gen sig)
+  (let* ((val (moving-average gen sig))
+	 (old-sig (tap gen))
+	 (n (mus-order gen)))
+    (* (/ n (1- n))   ; scale back to 1.0
+       (- val (* (mus-increment gen) 0.5 (+ old-sig sig))))))
+

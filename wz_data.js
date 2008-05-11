@@ -931,6 +931,9 @@ var sndclm_dot_product_tip = "<code>(dot-product v1 v2 :optional size)</code>: s
 
 var sndclm_env_tip = "<code>(env gen)</code>: next sample from envelope generator";
 
+var sndclm_exponentially_weighted_moving_average_tip = "exponentially-weighted-moving-average applies exponential weights<br>" +
+                                                    " to a moving average (it is actually just a one-pole filter.";
+
 var sndclm_fft_tip = "<code>(mus-fft rl im :optional len (dir 1))</code>:<br>" +
                      " return the fft of vcts rl and im which contain <br>" +
                      " the real and imaginary parts of the data;<br>" +
@@ -1033,6 +1036,12 @@ var sndclm_make_locsig_tip = "<code>(make-locsig (:degree 0.0) (:distance 1.0) (
 
 var sndclm_make_moving_average_tip = "<code>(make-moving-average :size :initial-contents (:initial-element 0.0))</code>:<br>" +
                                      " return a new moving_average generator. initial-contents can be either a list or a vct.";
+
+var sndclm_moving_max_tip = "<code>(moving-max gen y)</code>: return moving window max given input 'y'.<br>" +
+                           " moving-max is a specialization of the delay generator that produces<br>" +
+                           " an envelope that tracks the peak amplitude of the last 'size' samples.";
+
+var sndclm_moving_sum_tip = "<code>(moving-sum gen y)</code>: return moving window sum given input 'y'.";
 
 var sndclm_make_ncos_tip = "<code>(make-ncos (:frequency *clm-default-frequency*) (:n 1))</code>:<br>" +
                            " return a new ncos generator, producing a sum of 'n' equal amplitude cosines.";
@@ -1227,17 +1236,12 @@ var sndscm_envexptchannel_tip = "<code>(env-expt-channel env exponent :optional 
                                 " The 'symmetric' argument determines whether the up and down moving ramps look<br>" +
                                 " symmetrical around a break point.";
 
-var sndscm_exponentiallyweightedmovingaverage_tip = "exponentially-weighted-moving-average applies exponential weights<br>" +
-                                                    " to a moving average (it is actually just a one-pole filter.";
-
 var sndscm_findchild_tip = "<code>(find-child widget name)</code> searches for a widget named 'name',<br>" +
                            "starting from 'widget' and moving through all its children.";
 
 var sndscm_fmviolin_tip = "The fm-violin instrument uses FM to produce a string-like sound;<br>" +
                           " It has many parameters, the principal ones being <code>startime dur frequency amplitude</code>.<br>" +
                           " The code is in v.scm.";
-
-var sndscm_greendoc_tip = "brownian and 1/f noise from green.scm.";
 
 var sndscm_hilberttransform_tip = "<code>(hilbert-transform gen input)</code> returns the Hilbert transform of 'input'.";
 
@@ -1286,12 +1290,6 @@ var sndscm_maxenvelope_tip = "<code>(max-envelope env)</code>: return the maximu
 var sndscm_mixsound_tip = "<code>(mix-sound file start)</code>: mix 'file' (all chans) into the currently selected sound at 'start'.";
 
 var sndscm_moogfilter_tip = "<code>(moog-filter gen input)</code>: return Moog-style 4-pole lowpass filtering of 'input'";
-
-var sndscm_movingmax_tip = "<code>(moving-max gen y)</code>: return moving window max given input 'y'.<br>" +
-                           " moving-max is a specialization of the delay generator that produces<br>" +
-                           " an envelope that tracks the peak amplitude of the last 'size' samples.";
-
-var sndscm_movingsum_tip = "<code>(moving-sum gen y)</code>: return moving window sum given input 'y'.";
 
 var sndscm_mpg_tip = "<code>(mpg mpgfile rawfile)</code>: call mpg123 to translate an MPEG format sound file<br>" +
                      " to a headerless (\"raw\") file containing 16-bit samples.";
@@ -1483,8 +1481,6 @@ var generators_doc_tip = "defgenerator and about 80 generators related to sums o
                          " bessel functions, adjustable square-waves, special envelopes, etc";
 
 var grani_doc_tip = "this is a very flexible granular synthesis instrument";
-
-var green_doc_tip = "generators similar to rand and rand-interp, producing 1/f noise, etc";
 
 var heart_doc_tip = "This code is aimed at blood pressure readings.";
 
