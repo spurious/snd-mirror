@@ -2669,7 +2669,9 @@ compare ncos as FM and direct sum of cos:
 -->
 
 <br>
-<p>If you sweep ncos upwards in frequency, you'll eventually
+<p>What FM input (to oscil) would give the most dispersed output?  My first guess was square-wave, but looking at graphs,
+I'd say rand gives it a good contest.
+If you sweep ncos upwards in frequency, you'll eventually
 get foldover; the generator produces its preset number of cosines no
 matter what.  It is possible to vary the spectrum smoothly:
 </p>
@@ -3050,7 +3052,6 @@ sceq45.png
 -->
 
 <p>
-As far as I know, most of these formulas have never been explored.
 There are many formulas that produce exponentially decaying or bell-curve shaped spectra;
 I think these all sound about the same, so I have included only a representative sample of them.
 A couple of the formulas are special cases of the "Bessel function summation theorem", G&amp;R 8.530:
@@ -3081,48 +3082,6 @@ Don't shy away from the sums to infinity just because you've heard shouting abou
 <img src="pix/fmeq50.png" alt="cos cos cases">
 </td>
 </tr></table>
-</td></tr></table>
-
-
-<p>You can calculate the maximum "r" factor given the current frequency and sampling rate:
-</p>
-<pre>
-    (expt .001 (/ 1.0 (floor (/ (mus-srate) (* 3 freq)))))
-</pre>
-<p>or the equivalent where there's some factor in the denominator.  The factorials
-overwhelm r^k, so you can get away with very large "r"s in those cases; the center
-of the resultant spectrum is around r * freq.
-</p>
-
-<p>
-<a class=quiet href="sndscm.html#def-clm-struct" onmouseout="UnTip()" onmouseover="Tip(sndscm_def_clm_struct_tip)">def-clm-struct</a> makes it easy to try out 
-new ideas;
-take the first one in the Jolley section:
-</p>
-
-<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
-<pre>
-(<a class=quiet href="sndscm.html#def-clm-struct" onmouseout="UnTip()" onmouseover="Tip(sndscm_def_clm_struct_tip)">def-clm-struct</a> (k2sin :make-wrapper 
-                  (lambda (g)
-		   (set! (k2sin-incr g) (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> (k2sin-frequency g)))
-		   g))
-  (frequency 0.0) (angle 0.0) (incr 0.0))
-
-(define (k2sin gen fm)
-  (<a class=quiet href="extsnd.html#declare" onmouseout="UnTip()" onmouseover="Tip(extsnd_declare_tip)">declare</a> (gen k2sin) (fm float))
-  (let ((x (k2sin-angle gen)))
-    (set! (k2sin-angle gen) (+ x fm (k2sin-incr gen)))
-    (/ (* 3.0 (sin x))             ; 3 rather than 4 for normalization
-       (- 5.0 (* 4.0 (cos x))))))
-
-(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> ()
-  (let ((gen (make-k2sin 440.0)))
-    (run 
-     (lambda ()
-       (do ((i 0 (1+ i)))
-	   ((= i 10000))
-	 (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (k2sin gen 0.0)))))))
-</pre>
 </td></tr></table>
 
 <p>
@@ -6048,9 +6007,6 @@ will search that list for their name, and use the functions that follow to imple
 <p>(this section is work in progress...)
 </p>
 
-<!-- TODO move ramp and sound-interp (env-sound-interp, granulate-sound-interp) to generators, maybe all the moving-*
--->
-
 <p>There are dozens of generators scattered around the *.scm files that come with Snd.  Some that come to mind:
 </p>
 
@@ -6212,7 +6168,7 @@ This produces (unbounded) brownian noise.  'amplitude' sets the maximum size of 
 Unlike CLM's <a href="sndclm.html#rand">rand</a> or <a href="sndclm.html#rand-interp">rand-interp</a> which
 produce white noise centered around 0.0, green-noise wanders around, bouncing off its bounds
 every now and then.  This produces a noise that can be similar to pink noise (see some graphs under <a href="#rand">rand</a>).
-My informal explanation is that each time we bounce off an edge, we're transferring energy from
+My informal explanation is that each time we bounce off an edge, we're transferring energy
 from a low frequency into some higher frequency.  It is still brownian noise however.
 The 'amplitude' argument controls how large individual steps can be; 'low' and 'high' set
 the overall output bounds; 'frequency' controls how often a new random number is chosen.
@@ -6912,9 +6868,7 @@ relatively conservative function to find the highest safe "r" given the current 
      (expt .001 (/ 1.0 (floor (/ srate (* 3 freq))))))
 </pre>
 
-<!-- TODO: add expandn to cl/scm clm doc/test/msg check bug report -->
-<!-- TODO: is sqwv max fm given index? (check ran) -->
-<!-- TODO: if so, can tanh(sin) improve contrast? -->
+<!-- TODO: doc/test expandn -->
 
 <table border=0>
 <tr><td>
@@ -7864,6 +7818,14 @@ test 23 in snd-test.
 	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
 	<td><a href="clm-ins.rb">clm-ins.rb</a></td>
 	<td><a href="clm-ins.fs">clm-ins.fs</a></td>
+    </tr>
+
+<tr><td>expandn</td>             
+    <td>granular synthesis (Michael Klingbeil)</td>      
+    <td><a href="expandn.ins">expandn.ins</a></td>      
+	<td><a href="clm-ins.scm">clm-ins.scm</a></td>
+	<td></td>
+	<td></td>
     </tr>
 
 <tr><td>granulate-sound</td>   

@@ -2449,47 +2449,7 @@ special cases:
 ;;;   see formula below which does look like it fits
 
 
-a single pulse is swallowed up by the mod 2 pi:
-
-(define* (fmpulse beg dur freq amp :optional (mc-ratio 1) (index 1.0) (phase 0.0))
-  (let* ((start (seconds->samples beg))
-         (end (+ start (seconds->samples dur)))
-	 (carrier (make-oscil freq phase))
-	 (modulator (make-pulse-train (* freq mc-ratio)))
-	 (fm-index (hz->radians (* index freq mc-ratio)))
-	 (ampf (make-env '(0 0 1 1 10 1 11 0) :scaler amp :duration dur)))
-    (run
-     (lambda ()
-       (do ((i start (1+ i)))
-	   ((= i end))
-	 (outa i (* (env ampf)
-		    (oscil carrier (* fm-index (pulse-train modulator))))))))))
-
-;(with-sound (:clipped #f :statistics #t) (fmpulse 0 1 1000 .5 .1 1))
-;  but as index goes up, I think it's pushed over by about index/5?
-
-similarly
-
-(define* (fmsum beg dur freq amp :optional (mc-ratio 1) (index 1.0) (n 10) (phase 0.0))
-  (let* ((start (seconds->samples beg))
-         (end (+ start (seconds->samples dur)))
-	 (carrier (make-oscil freq phase))
-	 (modulator (make-sum-of-cosines n (* freq mc-ratio)))
-	 (fm-index (hz->radians (* index freq mc-ratio)))
-	 (ampf (make-env '(0 0 1 1 10 1 11 0) :scaler amp :duration dur)))
-    (run
-     (lambda ()
-       (do ((i start (1+ i)))
-	   ((= i end))
-	 (outa i (* (env ampf)
-		    (oscil carrier (* fm-index (sum-of-cosines modulator))))))))))
-
-;(with-sound (:clipped #f :statistics #t) (fmsum 0 1 1000 .5 .1 1))
-
-as n goes up, the thing approaches the pulse case (effectively no sidebands)
-but how to derive this from the prodigal formula?
-
-perhaps spectra of sin(sin) vs sin(sq) sin(tri) sin(pulse)
+perhaps spectra of sin(sin) vs sin(sq) sin(tri)
    or sin(two sines at same freq) and sin(2 * sin)
 also sin(sin a + sin a) = sin (2 sin a) so in the m=n case, the JnJm's collapse to Jn(2..)
 

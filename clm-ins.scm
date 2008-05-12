@@ -2841,7 +2841,7 @@ mjkoskin@sci.fi
 ;;; $Revision: 1.1 $
 ;;; $Date: 2005/10/16 22:15:44 $
 ;;;
-;;; clm-4 an dscheme 12-May-08 bil
+;;; clm-4 and scheme 12-May-08 bil
 
 (definstrument (expandn time duration filename amplitude
 			:key (expand 1.0)

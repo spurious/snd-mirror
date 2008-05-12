@@ -9,28 +9,28 @@
 ;;;  test 6: vcts                               [13773]
 ;;;  test 7: colors                             [14041]
 ;;;  test 8: clm                                [14531]
-;;;  test 9: mix                                [26268]
-;;;  test 10: marks                             [28489]
-;;;  test 11: dialogs                           [29450]
-;;;  test 12: extensions                        [29695]
-;;;  test 13: menus, edit lists, hooks, etc     [29966]
-;;;  test 14: all together now                  [31675]
-;;;  test 15: chan-local vars                   [32720]
-;;;  test 16: regularized funcs                 [34359]
-;;;  test 17: dialogs and graphics              [39313]
-;;;  test 18: enved                             [39403]
-;;;  test 19: save and restore                  [39422]
-;;;  test 20: transforms                        [41264]
-;;;  test 21: new stuff                         [43247]
-;;;  test 22: run                               [45242]
-;;;  test 23: with-sound                        [51463]
-;;;  test 24: user-interface                    [55265]
-;;;  test 25: X/Xt/Xm                           [58659]
-;;;  test 26: Gtk                               [63267]
-;;;  test 27: GL                                [67119]
-;;;  test 28: errors                            [67243]
-;;;  test all done                              [69546]
-;;;  test the end                               [69784]
+;;;  test 9: mix                                [26261]
+;;;  test 10: marks                             [28482]
+;;;  test 11: dialogs                           [29443]
+;;;  test 12: extensions                        [29688]
+;;;  test 13: menus, edit lists, hooks, etc     [29959]
+;;;  test 14: all together now                  [31668]
+;;;  test 15: chan-local vars                   [32713]
+;;;  test 16: regularized funcs                 [34352]
+;;;  test 17: dialogs and graphics              [39306]
+;;;  test 18: enved                             [39396]
+;;;  test 19: save and restore                  [39415]
+;;;  test 20: transforms                        [41257]
+;;;  test 21: new stuff                         [43240]
+;;;  test 22: run                               [45235]
+;;;  test 23: with-sound                        [51456]
+;;;  test 24: user-interface                    [55294]
+;;;  test 25: X/Xt/Xm                           [58688]
+;;;  test 26: Gtk                               [63296]
+;;;  test 27: GL                                [67148]
+;;;  test 28: errors                            [67272]
+;;;  test all done                              [69575]
+;;;  test the end                               [69813]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -43398,7 +43398,7 @@ EDITS: 1
 	  (map-channel (lambda (y) 1.0))
 	  (let ((pe (make-power-env '(0 0 32.0  1 1 0.0312  2 0 1) :duration (/ 34.0 22050.0))))
 	    (map-channel (lambda (y) (* y (power-env pe))))
-	    (if (not (vequal (channel->vct) 
+	    (if (not (vequal1 (channel->vct) 
 			     (vct 0.000 0.008 0.017 0.030 0.044 0.063 0.086 0.115 0.150 0.194 0.249 
 				  0.317 0.402 0.507 0.637 0.799 1.000 0.992 0.983 0.971 0.956 0.937 
 				  0.914 0.885 0.850 0.806 0.751 0.683 0.598 0.493 0.363 0.201 0.000)))
@@ -43406,7 +43406,7 @@ EDITS: 1
 	  (map-channel (lambda (y) 1.0))
 	  (let ((pe (make-power-env '(0 0 1.0  1 1 0.0  2 0 1  3 0 1) :duration (/ 34.0 22050.0))))
 	    (map-channel (lambda (y) (* y (power-env pe))))
-	    (if (not (vequal (channel->vct) 
+	    (if (not (vequal1 (channel->vct) 
 			     (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900 1.000 
 				  1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 1.000 0.000 0.000 
 				  0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000 0.000)))
@@ -43414,7 +43414,7 @@ EDITS: 1
 	  (map-channel (lambda (y) 1.0))
 	  (let ((pe (make-power-env '(0 0 .01 1 1 1) :duration (/ 34.0 22050.0))))
 	    (map-channel (lambda (y) (* y (power-env pe))))
-	    (if (not (vequal (channel->vct) 
+	    (if (not (vequal1 (channel->vct) 
 			     (vct 0.000 0.132 0.246 0.346 0.432 0.507 0.573 0.630 0.679 0.722 0.760 
 				  0.792 0.821 0.845 0.867 0.886 0.902 0.916 0.928 0.939 0.948 0.956 
 				  0.963 0.969 0.975 0.979 0.983 0.987 0.990 0.992 0.995 0.997 0.998)))
@@ -51579,25 +51579,6 @@ EDITS: 1
 					;(with-sound () (green4 0 2.0 440 .5 '(0 0 1 1 2 1 3 0) 440 100 100 10))
   
   
-  (define* (make-sinc-train :optional (frequency 440.0) (width #f))
-    (let ((range (or width (* pi (- (* 2 (inexact->exact (floor (/ (mus-srate) (* 2.2 frequency))))) 1)))))
-      ;; 2.2 leaves a bit of space before srate/2, (* 3 pi) is the minimum width, normally
-      (list (- (* range 0.5))
-	    range
-	    (/ (* range frequency) (mus-srate)))))
-  
-  (define* (sinc-train gen :optional (fm 0.0))
-    (let* ((ang (car gen))
-	   (range (cadr gen))
-	   (top (* 0.5 range))
-	   (frq (caddr gen))
-	   (val (if (= ang 0.0) 1.0 (/ (sin ang) ang)))
-	   (new-ang (+ ang frq fm)))
-      (if (> new-ang top)
-	  (list-set! gen 0 (- new-ang range))
-	  (list-set! gen 0 new-ang))
-      val))
-  
   (define (make-cndf n freq)
     (let ((amps (make-vct (1- n) 0.0))
 	  (oscs (make-vector (1- n) #f))
@@ -52341,6 +52322,7 @@ EDITS: 1
 		      (fir+comb 26 2 3000 .0005 1000)
 		      
 		      (sndwarp 28 1.0 "pistol.snd")
+		      (expandn 29 .5 "oboe.snd" .2)
 		      
 		      (graphEq "oboe.snd")
 		      )
@@ -54771,7 +54753,7 @@ EDITS: 1
 	  (if (not (sound? snd)) (snd-display ";rxycos ~A" snd))
 	  (if (fneq (maxamp snd) 1.0) (snd-display ";rxycos max: ~A" (maxamp snd))))
 	
-	(let* ((res (with-sound (:clipped #f)
+	(let* ((res (with-sound (:clipped #f :srate 44100)
 		      (let ((gen (make-safe-rxycos 1000 0.1 0.5)))
 		        (run 
 		         (lambda ()
@@ -54784,7 +54766,7 @@ EDITS: 1
 
 	(let* ((base-r 0.0)
                (end-r 0.0)
-               (res (with-sound (:clipped #f :channels 2)
+               (res (with-sound (:clipped #f :channels 2 :srate 44100)
 		      (let ((gen1 (make-safe-rxycos 1000 1 0.99))
                             (gen2 (make-safe-rxycos 1000 1 0.99))
                             (frqf (make-env '(0 0 1 1) :length 10000 :scaler (hz->radians 1000))))
@@ -54806,7 +54788,7 @@ EDITS: 1
 
 	(let* ((base-r 0.0)
                (end-r 0.0)
-               (res (with-sound (:clipped #f :channels 2)
+               (res (with-sound (:clipped #f :channels 2 :srate 44100)
 		      (let ((gen1 (make-safe-rxycos 1000 .1 0.99))
                             (gen2 (make-safe-rxycos 1000 .1 0.99))
                             (frqf (make-env '(0 0 1 1) :length 10000 :scaler (hz->radians 1000))))
