@@ -1939,6 +1939,87 @@
 |#
 
 
+(define (clamp-rxycos-r gen fm)
+  ;; in this case we need to track ratio, as well as r, since the
+  ;;   highest frequency goes as x+ky (y=ratio*x); we want the value of k when
+  ;;   we reach srate/3, then solve for the corresponding r.
+
+  (declare (gen safe-rxycos) (fm float))
+  (let* ((x (radians->hz (+ (safe-rxycos-frequency gen) fm)))
+	 (y (* x (safe-rxycos-ratio gen)))
+	 (r (safe-rxycos-r gen))
+	 (topk (inexact->exact (floor (/ (- (/ (mus-srate) 3) x) y))))
+	 (maxr (expt (safe-rxycos-cutoff gen) 
+		     (/ 1.0 topk))))
+    (if (>= r 0.0)
+	(min r maxr)
+	(max r (- maxr)))))
+
+(defgenerator (safe-rxycos
+	       :make-wrapper (lambda (g)
+			       (set! (safe-rxycos-frequency g) (hz->radians (safe-rxycos-frequency g)))
+			       (set! (safe-rxycos-r g) (clamp-rxycos-r g 0.0))
+			       g)
+
+	       :methods (list
+			 (list 'mus-scaler
+			       (lambda (g) 
+				 (safe-rxycos-r g))
+			       (lambda (g val)
+				 (set! (safe-rxycor-r g) val)
+				 (set! (safe-rxycos-r g) (clamp-rxycos-r g 0.0))
+				 (safe-rxycos-r g)))
+
+			 (list 'mus-frequency
+			       (lambda (g) 
+				 (radians->hz (rxycos-frequency g)))
+			       (lambda (g val)
+				 (set! (safe-rxycos-frequency g) (hz->radians val))
+				 (set! (safe-rxycos-r g) (clamp-rxycos-r g 0.0))
+				 val))
+
+			 (list 'mus-offset ; ratio accessor in defgenerator
+			       (lambda (g)
+				 (safe-rxycos-ratio g))
+			       (lambda (g val)
+				 (set! (safe-rxycos-ratio g) val)
+				 (set! (safe-rxycos-r g) (clamp-rxycos-r g 0.0))
+				 val))))
+			       
+  (frequency *clm-default-frequency*) (ratio 1.0) (r 0.0) (angle 0.0) (cutoff 0.001))
+
+
+(define (safe-rxycos gen fm)
+  "  (make-safe-rxycos frequency (ratio 1.0) (r 0.0)) creates a safe-rxycos generator.\n\
+   (safe-rxycos gen fm) returns many cosines from frequency spaced by frequency * ratio with amplitude r^k where 'r' is restricted to a safe value."
+  (declare (gen safe-rxycos) (fm float))
+  (let* ((x (safe-rxycos-angle gen))
+	 (y (* x (safe-rxycos-ratio gen)))
+	 (r (safe-rxycos-r gen)))
+
+    (set! (safe-rxycos-angle gen) (+ x fm (safe-rxycos-frequency gen)))
+    (if (not (= fm 0.0))
+	(set! r (clamp-rxycos-r gen fm)))
+
+    (* (/ (- (cos x)
+	     (* r (cos (- x y))))
+	  (+ 1.0 
+	     (* -2.0 r (cos y))
+	     (* r r)))
+       (- 1.0 (abs r))))) ; norm, abs for negative r
+
+#|
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-safe-rxycos 1000 0.1 0.99)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000))
+	 (outa i (safe-rxycos gen 0.0)))))))
+ |#
+
+
+
 ;;; --------------------------------------------------------------------------------
 
 ;;; inf cosines scaled by e^-r (special case of rcos): ercos, erssb
@@ -5170,7 +5251,7 @@ index 10 (so 10/2 is the bes-jn arg):
   (declare (gen green-noise) (fm float))
   (let* ((x (green-noise-angle gen))
 	 (two-pi (* 2 pi)))
-    (if (or (>= x two-oi)
+    (if (or (>= x two-pi)
 	    (< x 0.0))
 	(begin
 	  (set! x (fmod x two-pi))
@@ -5305,6 +5386,8 @@ index 10 (so 10/2 is the bes-jn arg):
 				 (set! (mus-scaler dly) 0.0)
 				 g))
 	       :methods (list
+			 (list 'mus-data
+			       (lambda (g) (mus-data (moving-max-gen g))))
 			 (list 'mus-scaler
 			       (lambda (g) (mus-scaler (moving-max-gen g)))
 			       (lambda (g val)
@@ -5318,12 +5401,13 @@ index 10 (so 10/2 is the bes-jn arg):
   (moving-max gen input) returns the maxamp in a moving window over the last n inputs."
   (declare (gen moving-max) (y float))
   (let* ((absy (abs y))
-	 (mx (delay gen absy)))
-    (if (>= absy (mus-scaler gen))
-	(set! (mus-scaler gen) absy)
-	(if (>= mx (mus-scaler gen))
-	    (set! (mus-scaler gen) (vct-peak (mus-data gen)))))
-    (mus-scaler gen)))
+	 (dly (moving-max-gen gen))
+	 (mx (delay dly absy)))
+    (if (>= absy (mus-scaler dly))
+	(set! (mus-scaler dly) absy)
+	(if (>= mx (mus-scaler dly))
+	    (set! (mus-scaler dly) (vct-peak (mus-data dly)))))
+    (mus-scaler dly)))
 
 
 

@@ -6385,7 +6385,7 @@ the higher "n", the more low-passed the output.
 
 <p>
 moving-max is a specialization
-of the <a href="sndclm.html#delay">delay</a> generator; it produces an envelope that tracks the peak amplitude of the last 'size' samples.
+of the <a href="sndclm.html#delay">delay</a> generator; it produces an envelope that tracks the peak amplitude of the last 'n' samples.
 <code>(make-moving-max 256)</code> returns the generator (this one's window size is 256),
 and <code>(moving-max gen y)</code> then returns the envelope traced out by the signal 'y'.
 The <a href="sndscm.html#harmonicizer">harmonicizer</a> uses this generator to normalize an in-coming signal to 1.0
@@ -6908,9 +6908,13 @@ relatively conservative function to find the highest safe "r" given the current 
 </p>
 
 <pre>
-   (define (safe-r-max freq srate)
+   (define (safe-r-max freq srate) ; the safe-rxycos generator in generators.scm has this built-in
      (expt .001 (/ 1.0 (floor (/ srate (* 3 freq))))))
 </pre>
+
+<!-- TODO: add expandn to cl/scm clm doc/test/msg check bug report -->
+<!-- TODO: is sqwv max fm given index? (check ran) -->
+<!-- TODO: if so, can tanh(sin) improve contrast? -->
 
 <table border=0>
 <tr><td>
