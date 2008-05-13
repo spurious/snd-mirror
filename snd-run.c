@@ -83,18 +83,6 @@
  * (add-hook! optimization-hook (lambda (n) (snd-display "opt: ~A~%" n)))
  */
 
-/* TODO: vector of def-clm-structs? -- list-vector?
-
-  (with-sound ()
-    (let ((v (make-vector 2 #f)))
-      (vector-set! v 0 (make-nrcos 440 10 .5))    
-      (vector-set! v 1 (make-nrcos 440 10 .5))    
-      (run
-       (lambda ()
-         (let ((gen (vector-ref v 1)))
-         (outa 0 (nrcos gen 0.0) *output*)))))) ;either segfault or complains about null list
-*/
-
 /* make-env needs vct args because '(...) and (list...) return #f (') or a parser complaint (list), so...
  *   SOMEDAY: add support for ' and list: vct_1 below?
  *   the other such cases are make-waveshape, make-polyshape, partials->*
@@ -1383,6 +1371,15 @@ static list *xen_to_list(ptree *pt, XEN lst)
 }
 
 
+static void list_vect_into_vector(ptree *prog, vect *v, XEN vectr)
+{
+  int len, i;
+  len = XEN_VECTOR_LENGTH(vectr);
+  for (i = 0; i < len; i++) 
+    list_into_list(prog, v->data.lists[i], XEN_VECTOR_REF(vectr, i));
+}
+
+
 static void int_vect_into_vector(vect *v, XEN vectr)
 {
   int len, i;
@@ -1497,6 +1494,15 @@ static xen_var *free_xen_var(ptree *prog, xen_var *var)
 		  val = symbol_to_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), &local_var);
 		  if (XEN_VECTOR_P(val))
 		    int_vect_into_vector(prog->vects[var->v->addr], val);
+		  break;
+
+		  /* not clm_vector because it is already accessing the generators directly */
+
+		case R_LIST_VECTOR:
+		  /* not yet functional because the unclean flag is not set (we're setting elements of lists within the vector) */
+		  val = symbol_to_value(prog->code, C_STRING_TO_XEN_SYMBOL(var->name), &local_var);
+		  if (XEN_VECTOR_P(val))
+		    list_vect_into_vector(prog, prog->vects[var->v->addr], val);
 		  break;
 		  
 		default:
@@ -2182,6 +2188,7 @@ static xen_value *add_empty_var_to_ptree(ptree *prog, int type)
 static xen_value *transfer_value(ptree *prog, xen_value *v)
 {
   /* if ((v->type == R_LIST) || (CLM_STRUCT_P(v->type))) fprintf(stderr,"transfer %s\n", type_name(v->type)); */
+
   switch (v->type)
     {
     case R_FLOAT: 
@@ -2190,23 +2197,17 @@ static xen_value *transfer_value(ptree *prog, xen_value *v)
     case R_STRING: 
       return(make_xen_value(v->type, add_string_to_ptree(prog, copy_string(prog->strs[v->addr])), R_VARIABLE)); 
       break;
-    case R_LIST_VECTOR:
-    case R_CLM_VECTOR:
-    case R_INT_VECTOR:
-    case R_VCT_VECTOR:
-    case R_FLOAT_VECTOR:
-    case R_VCT: 
-    case R_CLM: 
-    case R_FUNCTION: 
-    case R_READER: 
-    case R_MIX_READER: 
-    case R_SOUND_DATA:
-    case R_SYMBOL: 
-    case R_KEYWORD:
-    case R_LIST:
+    case R_INT:
+    case R_BOOL:
+    case R_CHAR:
+    case R_GOTO:
+      return(make_xen_value(v->type, add_int_to_ptree(prog, prog->ints[v->addr]), R_VARIABLE));      
+      break;
+    default:
       return(make_xen_value(v->type, v->addr, R_VARIABLE)); 
       break;
     }
+  /* can't get here? */
   return(make_xen_value(v->type, add_int_to_ptree(prog, prog->ints[v->addr]), R_VARIABLE));
 }
 
@@ -2382,10 +2383,10 @@ static vect *read_vector(ptree *pt, XEN vector, int type)
 {
   switch (type)
     {
-    case R_LIST_VECTOR:       return(read_list_vector(pt, vector)); break;
-    case R_INT_VECTOR:        return(read_int_vector(vector));      break;
-    case R_CLM_VECTOR:        return(read_clm_vector(vector));      break;
-    case R_VCT_VECTOR:        return(read_vct_vector(vector));      break;
+    case R_LIST_VECTOR: return(read_list_vector(pt, vector)); break;
+    case R_INT_VECTOR:  return(read_int_vector(vector));      break;
+    case R_CLM_VECTOR:  return(read_clm_vector(vector));      break;
+    case R_VCT_VECTOR:  return(read_vct_vector(vector));      break;
     }
   return(NULL);
 }
@@ -7856,20 +7857,18 @@ static xen_value *vector_ref_1(ptree *prog, xen_value **args, int num_args)
   switch (args[1]->type)
     {
     case R_FLOAT_VECTOR: return(package(prog, R_FLOAT, vector_ref_f, "vector_ref_f", args, 2)); break;
-    case R_INT_VECTOR: return(package(prog, R_INT, vector_ref_i, "vector_ref_i", args, 2)); break;
-    case R_VCT_VECTOR: return(package(prog, R_VCT, vector_ref_v, "vector_ref_v", args, 2)); break;
-    case R_CLM_VECTOR: return(package(prog, R_CLM, vector_ref_c, "vector_ref_c", args, 2)); break;
-    case R_LIST_VECTOR: 
+    case R_INT_VECTOR:   return(package(prog, R_INT, vector_ref_i, "vector_ref_i", args, 2));   break;
+    case R_VCT_VECTOR:   return(package(prog, R_VCT, vector_ref_v, "vector_ref_v", args, 2));   break;
+    case R_CLM_VECTOR:   return(package(prog, R_CLM, vector_ref_c, "vector_ref_c", args, 2));   break;
+    case R_LIST_VECTOR:  
       {
 	vect *v;
 	v = prog->vects[args[1]->addr]; /* has to exist, I think */
-
-	/* fprintf(stderr,"vl ref: %d %p\n", args[1]->addr, v); */
-	/* if (v) fprintf(stderr,"  %p -> %s\n", v->data.lists[0], type_name(v->data.lists[0]->type)); */
-
-	return(package(prog, v->data.lists[0]->type, vector_ref_l, "vector_ref_l", args, 2)); 
+	/* vector of lists other than generators will not work because the element type isn't passed with the list */
+	/*   also currently I think the changes to gen fields are not reflected externally */
+	return(package(prog, (CLM_STRUCT_P(v->data.lists[0]->type)) ? v->data.lists[0]->type : R_LIST, vector_ref_l, "vector_ref_l", args, 2)); 
       }
-      break; 
+      break;
     }
   return(NULL);
 }

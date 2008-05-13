@@ -1158,7 +1158,8 @@ the bump
 gives us a percussive attack, and the damped sinusoid gives us
 a dynamic spectrum, mimicking FM more or less.
 
-The Bessel functions I0, Jn, and Yn are built-in; Kn and In are implemented in Scheme in snd-test.scm.
+The Bessel functions I0, Jn, and Yn are built-in; Kn and In are implemented in Scheme in snd-test.scm. See <a href="sndclm.html#bess">bess</a> and friends
+for many more examples.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 <!-- main-index |bagpipe:bagpipe -->
@@ -1286,6 +1287,50 @@ This is the other half of Peter Common's bagpipe &mdash; see canter above.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
+<!-- expandn -->
+<tr><td colspan=2 bgcolor="#f2f4ff">
+<em class=emdef>expandn</em> <code>time duration file amp ...</code>
+</td></tr><tr><td></td><td>
+<p>
+Here is the documentation from Rick Taube's granular synthesis page, edited slightly for the Scheme CLM.
+</p>
+<p>
+The expandn instrument by Michael Klingbeil performs granular syntheisis by time-stretching (expanding/compressing) an input file. 
+This effect is achieved by chopping up the input sound into very small segments (grains) that are then overlayed in the ouput stream. 
+The larger the segments, the more the output sound is smeared, an effect approaching reverberation.
+The expandn instrument parameters are:
+</p>
+<pre>
+   time duration filename amplitude :key
+	(expand 1.0)
+	(matrix #f)
+	(ramp 0.4)
+	(seglen 0.15)
+	(srate 1.0)
+	(hop .05)
+	(amp-env '(0 0 50 1 100 0))
+	(input-start 0.0)
+	(grain-amp 0.8)
+	(reverb #f))
+</pre>
+<p>
+'time' is the start time of the sound in the output file.
+'duration' is the duration of expanded sound. To expand an entire sound, set this to the expansion factor times the input sound's duration.
+'filename' is the input file to expand.
+'amplitude' is a scaler on the ampitude of the input file. Since the output is created by overlaying many copies of the intput this value is generally less than 1.
+'hop' can be a number or an envelope. It is the average length in time between segments (grains) in the output.
+'expand' can be a number or an envelope. It sets the amount of expansion to produce in the output file.
+'seglen'can be a number or an envelope. It is the length in time of the sound segments (grains).
+'srate' can be a number or an envelope. It sets the sampling rate change to apply to the output file.
+'amp-env' is the amplitude envelope for the output sound.
+'input-start' sets where to start reading in the input file.
+'grain-amp' is a scaler on each grain's amplitude.
+'matrix' is a list, a mixing matrix.
+'reverb' is the reverb amount.
+</p>
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
 <!-- expfil -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <em class=emdef>expfil</em> <code>(start duration hopsecs rampsecs steadysecs file1 file2)</code>
@@ -1380,6 +1425,9 @@ ended with:
     (fm-insect 3.950  1.500   900.627  .12  amp 40 -10.707 locust 300.866 bug_hi  .346  .500)
     (fm-insect 4.300  1.500   900.627  .09  amp 40 -20.707 locust 300.866 bug_hi  .246  .500)))
 </pre>
+
+See <a href="#animalsdoc">animals.scm</a> for much more convincing insect calls.
+
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

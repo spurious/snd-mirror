@@ -24,13 +24,13 @@
 ;;;  test 21: new stuff                         [43240]
 ;;;  test 22: run                               [45235]
 ;;;  test 23: with-sound                        [51456]
-;;;  test 24: user-interface                    [55294]
-;;;  test 25: X/Xt/Xm                           [58688]
-;;;  test 26: Gtk                               [63296]
-;;;  test 27: GL                                [67148]
-;;;  test 28: errors                            [67272]
-;;;  test all done                              [69575]
-;;;  test the end                               [69813]
+;;;  test 24: user-interface                    [55373]
+;;;  test 25: X/Xt/Xm                           [58767]
+;;;  test 26: Gtk                               [63375]
+;;;  test 27: GL                                [67227]
+;;;  test 28: errors                            [67351]
+;;;  test all done                              [69654]
+;;;  test the end                               [69892]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -52915,18 +52915,6 @@ EDITS: 1
 	  (if (> (abs (- (frames) 24602)) 100) (snd-display ";step-src frames: ~A (~A)" (frames) (edits)))
 	  (close-sound ind))
 	
-	(let ((file (with-sound ()
-				(let ((gen (make-sinc-train 440.0 (* 9 pi))))
-				  (do ((i 0 (1+ i)))
-				      ((= i 1102))
-				    (outa i (sinc-train gen)))))))
-	  (let ((ind (find-sound file)))
-	    (if (not (sound? ind))
-		(snd-display ";with-sound let -> ~A (~A)?" ind file)
-		(let ((mx (maxamp ind)))
-		  (if (fneq mx 1.0) (snd-display ";with-sound sinc-train max: ~A" mx))
-		  (close-sound ind)))))
-	
 	(let ((file (with-sound (:channels 3)
 				(let ((rg (make-rmsgain))
 				      (rg1 (make-rmsgain 40))
@@ -54946,17 +54934,107 @@ EDITS: 1
 	  (if (not (sound? snd)) (snd-display ";green-noise-interp .5 ~A" snd))
 	  (if (or (< (maxamp snd) 0.01) (> (maxamp snd) 0.5)) (snd-display ";green-noise-interp .5 max: ~A" (maxamp snd))))
 
+	(let ((val (make-vector 3))
+	      (frq 0.0))
+	  (vector-set! val 0 (make-nrcos 100))  
+	  (vector-set! val 1 (make-nrcos 200))  
+	  (vector-set! val 2 (make-nrcos 300))
+	  (run
+	   (lambda ()
+	     (set! frq (mus-frequency (vector-ref val 1)))))
+	  (if (fneq frq 200.0) (snd-display ";defgen vect freq: ~A" frq)))
+	
+	(let ((val (make-vector 3))
+	      (frq 0.0))
+	  (vector-set! val 0 (make-nrcos 100))  
+	  (vector-set! val 1 (make-nrcos 200))  
+	  (vector-set! val 2 (make-nrcos 300))
+	  (run
+	   (lambda ()
+	     (set! frq (+ (mus-frequency (vector-ref val 0))
+			  (mus-frequency (vector-ref val 1))
+			  (mus-frequency (vector-ref val 2))))))
+	  (if (fneq frq 600.0) (snd-display ";defgen vect freq 1: ~A" frq)))
+	
+	(let ((val (make-vector 3))
+	      (frq 0.0))
+	  (vector-set! val 0 (make-nrcos 100))  
+	  (vector-set! val 1 (make-nrcos 200))  
+	  (vector-set! val 2 (make-nrcos 300))
+	  (run
+	   (lambda ()
+	     (set! (mus-frequency (vector-ref val 1)) 500.0)
+	     (set! frq (mus-frequency (vector-ref val 1)))))
+	  (if (fneq frq 500.0) (snd-display ";defgen set freq: ~A ~A" frq (mus-frequency (vector-ref val 1)))))
+	
+	
+	(let* ((res (with-sound (:clipped #f)
+				(let ((v (make-vector 2 #f)))
+				  (vector-set! v 0 (make-nrcos 440 10 .5))    
+				  (vector-set! v 1 (make-nrcos 440 10 .5))    
+				  (run
+				   (lambda ()
+				     (do ((i 0 (1+ i)))
+					 ((= i 1000))
+				       (outa i (nrcos (vector-ref v 0) 0.0))))))))
+	       (snd (find-sound res)))
+	  (if (not (sound? snd)) (snd-display ";vect nrcos ~A" snd))
+	  (if (fneq (maxamp snd) 1.0) (snd-display ";vect nrcos max: ~A" (maxamp snd))))
+	
+	(let* ((res (with-sound (:clipped #f)
+				(let ((val (make-vector 2))
+				      (frq 0.0))
+				  (vector-set! val 0 (make-nrcos 100 1 .1))  
+				  (vector-set! val 1 (make-nrcos 200 1 .1))  
+				  (run
+				   (lambda ()
+				     (do ((i 0 (1+ i)))
+					 ((= i 2000))
+				       (outa i (* .5 (+ (nrcos (vector-ref val 0) 0.0)
+							(nrcos (vector-ref val 1) 0.0))))))))))
+	       (snd (find-sound res)))
+	  (if (not (sound? snd)) (snd-display ";vect 2 nrcos ~A" snd))
+	  (if (fneq (maxamp snd) 1.0) (snd-display ";vect 2 nrcos max: ~A" (maxamp snd))))
+	
+	(let* ((res (with-sound (:clipped #f)
+				(let ((gen1 (make-nrcos 100 1 .1))
+				      (gen2 (make-nrcos 200 1 .1))
+				      (frq 0.0))
+				  (run
+				   (lambda ()
+				     (do ((i 0 (1+ i)))
+					 ((= i 2000))
+				       (outa i (* .5 (+ (nrcos gen1 0.0)
+							(nrcos gen2 0.0))))))))))
+	       (snd (find-sound res)))
+	  (if (not (sound? snd)) (snd-display ";no vect 2 nrcos ~A" snd))
+	  (if (fneq (maxamp snd) 1.0) (snd-display ";no vect 2 nrcos max: ~A" (maxamp snd))))
+	
+	(let* ((res (with-sound (:clipped #f)
+				(let ((v (make-vector 2 #f)))
+				  (vector-set! v 0 (make-nrcos 440 10 .5))    
+				  (vector-set! v 1 (make-nrcos 440 10 .5))    
+				  (run
+				   (lambda () 
+				     (do ((i 0 (1+ i))) 
+					 ((= i 2000))
+				       (let ((gen (vector-ref v 0)))
+					 (outa i (nrcos gen 0.0)))))))))
+	       (snd (find-sound res)))
+	  (if (not (sound? snd)) (snd-display ";vect let nrcos ~A" snd))
+	  (if (fneq (maxamp snd) 1.0) (snd-display ";vect let nrcos max: ~A" (maxamp snd))))
+	
 	
 	(if (provided? 'snd-guile) (begin
-	(let ((g (make-osc329 440.0)) (f 10.0)) 
-	  (run (lambda () (set! f (osc329 g 0.0)))) 
-	  (if (fneq f 0.0) (snd-display ";run osc329: ~A" f)))
-	(let ((g (make-osc329 440.0)) (f #t)) 
-	  (run (lambda () (set! f (oscil? g)))) 
-	  (if f (snd-display ";oscil? osc329: ~A" f)))
-	(let ((g (+ 3 2)) (f #t)) 
-	  (run (lambda () (set! f (oscil? g)))) 
-	  (if f (snd-display ";oscil? 5: ~A" f)))
+				     (let ((g (make-osc329 440.0)) (f 10.0)) 
+				       (run (lambda () (set! f (osc329 g 0.0)))) 
+				       (if (fneq f 0.0) (snd-display ";run osc329: ~A" f)))
+				     (let ((g (make-osc329 440.0)) (f #t)) 
+				       (run (lambda () (set! f (oscil? g)))) 
+				       (if f (snd-display ";oscil? osc329: ~A" f)))
+				     (let ((g (+ 3 2)) (f #t)) 
+				       (run (lambda () (set! f (oscil? g)))) 
+				       (if f (snd-display ";oscil? 5: ~A" f)))
 	(let ((g (make-osc329 440.0)) (f #t))  
 	  (run (lambda () (set! f (osc329? g)))) 
 	  (if (not f) (snd-display ";osc329? osc329: ~A" f)))

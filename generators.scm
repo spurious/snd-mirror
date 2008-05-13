@@ -909,7 +909,7 @@
 			 (list 'mus-scaler
 			       (lambda (g) (mus-scaler (nrsin-gen g)))
 			       (lambda (g val) (set! (mus-scaler (nrsin-gen g)) val)))))
-  (frequency *clm-default-frequency*) (n 1 :type int) (r 0.0)
+  (frequency *clm-default-frequency*) (n 1 :type int) (r 0.5)
   (gen #f :type clm))
 
 
@@ -946,24 +946,27 @@
 			       (lambda (g val)
 				 (set! (nrcos-r g) (generator-clamp-r val))
 				 (nrcos-r g)))))
-  (frequency *clm-default-frequency*) (n 1 :type int) (r 0.0) (angle 0.0))
+  (frequency *clm-default-frequency*) (n 1 :type int) (r 0.5) (angle 0.0))
 
 
 (define (nrcos gen fm)
-  "  (make-nrcos frequency (n 1) (r 0.0)) creates an nrcos generator.\n\
+  "  (make-nrcos frequency (n 1) (r 0.5)) creates an nrcos generator.\n\
    (nrcos gen fm) returns n cosines spaced by frequency with amplitudes scaled by r^k."
   (declare (gen nrcos) (fm float))
   (let* ((x (nrcos-angle gen))
-	 (n (nrcos-n gen))
-	 (r (nrcos-r gen))
-	 (norm (- (/ (- (expt (abs r) n) 1) (- (abs r) 1)) 1.0))) ; n+1??
+	 (r (nrcos-r gen)))
 
     (set! (nrcos-angle gen) (+ fm x (nrcos-frequency gen)))
 
-    (/ (+ (- (* r (cos x)) 
-	     (* (expt r n) (cos (* n x))) (* r r)) 
-	  (* (expt r (+ n 1)) (cos (* (- n 1) x))))
-       (* norm (+ 1.0 (* -2.0 r (cos x)) (* r r))))))
+    (if (< (abs r) nearly-zero)
+	0.0
+	(let* ((n (nrcos-n gen))
+	       (norm (- (/ (- (expt (abs r) n) 1) (- (abs r) 1)) 1.0))) ; n+1??
+
+	  (/ (+ (- (* r (cos x)) 
+		   (* (expt r n) (cos (* n x))) (* r r)) 
+		(* (expt r (+ n 1)) (cos (* (- n 1) x))))
+	     (* norm (+ 1.0 (* -2.0 r (cos x)) (* r r))))))))
 
 ;;; formula changed to start at k=1 and n increased so we get 1 to n
 
@@ -1049,7 +1052,7 @@
 
 
 (define (nrssb gen fm)
-  "  (make-nrssb frequency (ratio 1.0) (n 1) (r 0.0)) creates an nrssb generator.\n\
+  "  (make-nrssb frequency (ratio 1.0) (n 1) (r 0.5)) creates an nrssb generator.\n\
    (nrssb gen fm) returns n sinusoids from frequency spaced by frequency * ratio with amplitudes scaled by r^k."
   (declare (gen nrssb) (fm float))
   (let* ((cx (nrssb-angle gen))

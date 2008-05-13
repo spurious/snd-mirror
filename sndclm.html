@@ -6720,15 +6720,15 @@ component is multiplied by -1, and "n" produces 2n-1 components.
 
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-nrcos">make-nrcos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (n 1) (r 0.0)             ; -1.0 &lt; r &lt; 1.0
+  <A class=def NAME="make-nrcos">make-nrcos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (n 1) (r 0.5)             ; -1.0 &lt; r &lt; 1.0
   <A class=def NAME="nrcos">nrcos</A> gen fm
   <A class=def NAME="nrcos?">nrcos?</A> gen
 
-  <A class=def NAME="make-nrsin">make-nrsin</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (n 1) (r 0.0)             ; -1.0 &lt; r &lt; 1.0
+  <A class=def NAME="make-nrsin">make-nrsin</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (n 1) (r 0.5)             ; -1.0 &lt; r &lt; 1.0
   <A class=def NAME="nrsin">nrsin</A> gen fm
   <A class=def NAME="nrsin?">nrsin?</A> gen
 
-  <A class=def NAME="make-nrssb">make-nrssb</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0) (n 1) (r 0.0) ; 0.0 &lt;= r &lt; 1.0
+  <A class=def NAME="make-nrssb">make-nrssb</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0) (n 1) (r 0.5) ; 0.0 &lt;= r &lt; 1.0
   <A class=def NAME="nrssb">nrssb</A> gen fm
   <A class=def NAME="nrssbinterp">nrssb-interp</A> gen fm interp
   <A class=def NAME="nrssb?">nrssb?</A> gen
@@ -6868,7 +6868,6 @@ relatively conservative function to find the highest safe "r" given the current 
      (expt .001 (/ 1.0 (floor (/ srate (* 3 freq))))))
 </pre>
 
-<!-- TODO: doc/test expandn -->
 
 <table border=0>
 <tr><td>
