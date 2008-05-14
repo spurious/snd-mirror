@@ -854,10 +854,12 @@ static int current_selectpos = 0;
 static void select_sound(snd_info *sp)
 {
   if ((sp == NULL) || (sp->inuse != SOUND_NORMAL)) return;
+
   if (XEN_HOOKED(select_sound_hook))
     run_hook(select_sound_hook,
 	     XEN_LIST_1(C_TO_XEN_INT(sp->index)),
 	     S_select_sound_hook);
+
   if (ss->selected_sound != sp->index)
     {
       reflect_sound_selection(sp);
@@ -883,6 +885,7 @@ chan_info *color_selected_channel(snd_info *sp)
 void select_channel(snd_info *sp, int chan)
 {
   chan_info *cp, *ncp;
+
   if ((sp == NULL) || (sp->inuse != SOUND_NORMAL)) return;
   cp = selected_channel();
   if (cp != sp->chans[chan])

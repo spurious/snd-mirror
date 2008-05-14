@@ -1593,10 +1593,12 @@ void snd_close_file(snd_info *sp)
     for (i = 0; i < sp->nchans; i++)
       if (sp->chans[i]) 
 	sequester_deferred_regions(sp->chans[i], -1);
+
   sp->inuse = SOUND_IDLE;
   for (i = 0; i < sp->nchans; i++) sp->chans[i]->squelch_update = true;
   /* view_files_add_file(NULL_WIDGET, sp->filename); */  /* removed 11-Jan-08 -- the open recent files menu item replaces this */
   if (sp->playing) stop_playing_sound(sp, PLAY_CLOSE);
+
   if (sp->sgx) 
     {
       sp->inuse = SOUND_NORMAL;               /* needed to make sure minibuffer is actually cleared in set_minibuffer_string */
@@ -1631,15 +1633,19 @@ void snd_close_file(snd_info *sp)
    *   subsequent read segfaults.
    */
   free_snd_info(sp);
+
   ss->active_sounds--;
   reflect_file_change_in_title();
   call_selection_watchers(SELECTION_IN_DOUBT);
   call_ss_watchers(SS_FILE_OPEN_WATCHER, SS_FILE_CLOSED);
+
   if (chosen_sp)
     select_channel(chosen_sp, 0);
   else 
     {
-      ss->selected_sound = NO_SELECTION;
+      if (sp == selected_sound())
+	ss->selected_sound = NO_SELECTION;
+
       if ((!(ss->exiting)) && 
 	  (any_selected_sound() == NULL)) /* I hope this can't be fooled... */
 	reset_mix_ctr();
@@ -1924,7 +1930,6 @@ static void copy_snd_info(snd_info *nsp, snd_info *osp)
   nsp->reverb_control_feedback = osp->reverb_control_feedback;
   nsp->reverb_control_lowpass = osp->reverb_control_lowpass;
   nsp->reverb_control_decay = osp->reverb_control_decay;
-  nsp->selected_channel = osp->selected_channel;
   nsp->channel_style = osp->channel_style;
   nsp->sync = osp->sync;
   nsp->with_tracking_cursor = osp->with_tracking_cursor;
@@ -1943,6 +1948,7 @@ static snd_info *sound_store_chan_info(snd_info *sp)
   chan_info **cps;
   snd_info *nsp;
   int i;
+
   nsp = (snd_info *)CALLOC(1, sizeof(snd_info));
   cps = (chan_info **)CALLOC(sp->nchans, sizeof(chan_info *));
   nsp->chans = cps;
@@ -1961,6 +1967,7 @@ static void sound_restore_chan_info(snd_info *nsp, snd_info *osp)
 {
   int i;
   chan_info **cps;
+
   cps = osp->chans;
   copy_snd_info(nsp, osp);
   for (i = 0; i < nsp->nchans; i++)
@@ -1987,7 +1994,7 @@ static XEN update_hook;
 static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
 {
   /* we can't be real smart here because the channel number may have changed and so on */
-  int i, old_srate, old_chans, old_format, sp_chans, old_index, gc_loc = NOT_A_GC_LOC;
+  int i, old_srate, old_chans, old_format, sp_chans, old_index, gc_loc = NOT_A_GC_LOC, old_selected_channel = NO_SELECTION;
   channel_style_t old_channel_style;
   read_only_t read_only;
   bool old_raw;
@@ -2029,6 +2036,10 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
       mus_header_raw_defaults(&old_srate, &old_chans, &old_format);
       mus_header_set_raw_defaults(sp->hdr->srate, sp->hdr->chans, sp->hdr->format);
     }
+
+  if (sp == selected_sound())
+    old_selected_channel = sp->selected_channel;
+
   sp_chans = sp->nchans;
   old_index = sp->index;
   old_channel_style = sp->channel_style;
@@ -2079,6 +2090,7 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
 
   ss->reloading_updated_file = (old_index + 1);
   ss->open_requestor = FROM_UPDATE;
+
   nsp = snd_open_file(filename, read_only);
 
   unlock_all_panes();
@@ -2099,6 +2111,12 @@ static snd_info *snd_update_1(snd_info *sp, const char *ur_filename)
       nsp->saved_controls = saved_controls;
       if (saved_controls) restore_controls(nsp);
       if (nsp->nchans == sp_chans) sound_restore_chan_info(nsp, saved_sp);
+
+      if ((old_selected_channel != NO_SELECTION) &&
+	  (old_selected_channel < nsp->nchans) &&
+	  (nsp == selected_sound()))
+	select_channel(nsp, old_selected_channel);
+
       restore_axes_data(nsp, sa, mus_sound_duration(filename), false);
       sound_restore_marks(nsp, ms);
 

@@ -4,10 +4,6 @@
 
 /* SOMEDAY: fft side needs a zoom capability, not just the drag now */
 /* TODO: set y-bounds doesn't always fixup the y zoom slider? */
-/* TODO: Snd apparently doesn't update the background if a new chan is selected? 
-           I think this is confusion in the "united" case as to which channel is which
- */
-
 
 /* it would be neat I think to change label font sizes/button sizes etc when dialog changes size
  *   but there's no way to trap the outer resizing event and
@@ -4941,7 +4937,10 @@ void graph_button_motion_callback(chan_info *cp, int x, int y, oclock_t time)
 	cp = dragged_cp;
       else cp = which_channel(sp, y);
     }
+
+  /*
   select_channel(sp, cp->chan);
+  */
 
   if (mouse_mark)
     {

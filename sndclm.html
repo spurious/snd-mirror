@@ -789,6 +789,70 @@ void c_bird(double start, double dur, double frequency, double freqskew, double 
 
 </td></tr></table>
 
+<p>Many of the synthesis functions in this document try to make it
+faster or more convenient to produce a lot of sinusoids, but there
+are times when nothing but a ton of oscils will do:
+</p>
+
+<table border=1 hspace=20><tr><td>
+<table border=0 hspace=20>
+<tr><td bgcolor="#eefdee"><center>add lots of reverb!</center></td></tr>
+<tr><td bgcolor="#fafafa">
+<pre>
+
+(<a class=quiet href="sndscm.html#withsound" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () 
+ (let* ((peaks (list  23  0.0051914    32  0.0090310    63  0.0623477    123  0.1210755    185  0.1971876
+		      209  0.0033631  247  0.5797809   309  1.0000000    370  0.1713255    432  0.9351965
+		      481  0.0369873  495  0.1335089   518  0.0148626    558  0.1178001    617  0.6353443
+		      629  0.1462804  661  0.0208941   680  0.1739281    701  0.0260423    742  0.1203807
+		      760  0.0070301  803  0.0272111   865  0.0418878    926  0.0090197    992  0.0098687
+		      1174  0.00444  1298  0.0039722  2223  0.0033486   2409  0.0083675   2472  0.0100995
+		      2508  0.004262 2533  0.0216248  2580  0.0047732   2596  0.0088663   2612  0.0040592
+		      2657  0.005971 2679  0.0032541  2712  0.0048836   2761  0.0050938   2780  0.0098877
+		      2824  0.003421 2842  0.0134356  2857  0.0050194   2904  0.0147466   2966  0.0338878
+		      3015  0.004832 3027  0.0095497  3040  0.0041434   3092  0.0044802   3151  0.0038269
+		      3460  0.003633 3585  0.0050849  4880  0.0042301   5121  0.0037906   5136  0.0048349
+		      5158  0.004336 5192  0.0037841  5200  0.0038025   5229  0.0035555   5356  0.0045781
+		      5430  0.003687 5450  0.0055170  5462  0.0057821   5660  0.0041789   5673  0.0044932
+		      5695  0.007370 5748  0.0031716  5776  0.0037921   5800  0.0062308   5838  0.0034629
+		      5865  0.005942 5917  0.0032254  6237  0.0046164   6360  0.0034708   6420  0.0044593
+		      6552  0.005939 6569  0.0034665  6752  0.0041965   7211  0.0039695   7446  0.0031611
+		      7468  0.003330 7482  0.0046322  8013  0.0034398   8102  0.0031590   8121  0.0031972
+		      8169  0.003345 8186  0.0037020  8476  0.0035857   8796  0.0036703   8927  0.0042374
+		      9388  0.003173 9443  0.0035844  9469  0.0053484   9527  0.0049137   9739  0.0032365
+		      9853  0.004297 10481  0.0036424  10490  0.0033786  10606  0.0031366))
+	(len (/ (length peaks) 2))
+	(dur 10)
+	(oscs (make-vector len))
+	(amps (make-vector len))
+	(ramps (make-vector len))
+	(freqs (make-vector len))
+	(vib (<a class=quiet href="#make-rand-interp" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_rand_interp_tip)">make-rand-interp</a> 50 (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> .01)))
+	(ampf (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1 10 1 11 0) :duration dur :scaler .1))
+	(samps (<a class=quiet href="#samplestoseconds" onmouseout="UnTip()" onmouseover="Tip(sndclm_samplestoseconds_tip)">seconds-&gt;samples</a> dur)))
+
+   (do ((i 0 (1+ i)))
+       ((= i len))
+     (vector-set! freqs i (list-ref peaks (* i 2)))
+     (vector-set! oscs i (<em class=red>make-oscil</em> (vector-ref freqs i) (random pi)))
+     (vector-set! amps i (list-ref peaks (1+ (* 2 i))))
+     (vector-set! ramps i (<a class=quiet href="#make-rand-interp" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_rand_interp_tip)">make-rand-interp</a> (+ 1.0 (* i (/ 20.0 len))) 
+					    (* (+ .1 (* i (/ 3.0 len))) (vector-ref amps i)))))
+   (run
+    (lambda ()
+      (do ((i 0 (1+ i)))
+	  ((= i samps))
+	(let ((sum 0.0)
+	      (fm (<a class=quiet href="#rand-interp" onmouseout="UnTip()" onmouseover="Tip(sndclm_rand_interp_tip)">rand-interp</a> vib)))
+	  (do ((k 0 (1+ k)))
+	      ((= k len))
+	    (set! sum (+ sum (* (+ (vector-ref amps k)
+				   (<a class=quiet href="#rand-interp" onmouseout="UnTip()" onmouseover="Tip(sndclm_rand_interp_tip)">rand-interp</a> (vector-ref ramps k)))
+				(<em class=red>oscil</em> (vector-ref oscs k) (* (vector-ref freqs k) fm))))))
+	  (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> ampf) sum))))))))
+</pre>
+</td></tr></table>
+</td></tr></table>
 
 <p>Related generators are 
 <a href="#ncos">ncos</a>, 

@@ -11,11 +11,12 @@
  */
 
 #define XEN_MAJOR_VERSION 2
-#define XEN_MINOR_VERSION 14
-#define XEN_VERSION "2.14"
+#define XEN_MINOR_VERSION 15
+#define XEN_VERSION "2.15"
 
 /* HISTORY:
  *
+ *  14-May-08: changed XEN_ARITY in Guile to use scm_procedure_property.
  *  1-May-08:  XEN_NAN_P and XEN_INF_P (Guile).
  *  23-Apr-08: try to get old Gauche (8.7) to work again.
  *  1-Mar-08:  no ext case now checks arg consistency.
@@ -228,8 +229,8 @@
 #endif
 
 #if HAVE_SCM_NAN_P
-  #define XEN_NAN_P(Arg)             scm_nan_p(Arg)
-  #define XEN_INF_P(Arg)             scm_inf_p(Arg)
+  #define XEN_NAN_P(Arg)             XEN_TRUE_P(scm_nan_p(Arg))
+  #define XEN_INF_P(Arg)             XEN_TRUE_P(scm_inf_p(Arg))
   #define HAVE_XEN_NAN_AND_INF_P     1
 #endif
 
@@ -596,7 +597,12 @@
 #define XEN_PROCEDURE_HELP(Name)         scm_procedure_property(Name, XEN_DOCUMENTATION_SYMBOL)
 #define XEN_PROCEDURE_SOURCE_HELP(Name)  scm_procedure_documentation(Name)
 #define XEN_PROCEDURE_SOURCE(Func)       scm_procedure_source(Func)
-#define XEN_ARITY(Func)                  scm_i_procedure_arity(Func)
+#if 0
+  #define XEN_ARITY(Func)                scm_i_procedure_arity(Func)
+                                         /* internalized in 1.8.6 */
+#else
+  #define XEN_ARITY(Func)                scm_procedure_property(Func, scm_string_to_symbol(C_TO_XEN_STRING("arity")))
+#endif
 #define XEN_PROCEDURE_NAME(Func)         scm_procedure_name(Func)
 #define XEN_REQUIRED_ARGS_OK(Func, Args) (XEN_TO_C_INT(XEN_CAR(XEN_ARITY(Func))) == Args)
 
