@@ -4418,6 +4418,29 @@
 
 ;(with-sound (:play #t) (american-crow 0 .5))
 
+(definstrument (american-crow-no-formants beg amp) ; this is for sndclm.html
+  (let* ((start (seconds->samples beg))
+	 (dur 0.27)
+	 (stop (+ start (seconds->samples dur)))
+	 (ampf (make-env '(0.000 0.000 .02 .1  .04 .01 .06 0.056 0.110 0.700 0.258 1.000  0.344 0.970  0.369 0.677 .7 .3  1.000 0.000)
+			 :duration dur :scaler (* 2 amp)))
+	 (frqf (make-env '(0.000 0.360 0.038 0.362 0.052 0.396 0.076 0.403 0.095 0.445 0.129 0.445 0.153 0.493 
+			   0.201 0.495 0.231 0.501 0.260 0.490 0.297 0.503 0.317 0.499 0.346 0.473 0.407 0.473 
+			   0.435 0.424 0.495 0.439 0.528 0.392 0.589 0.405 0.621 0.362 0.677 0.373 0.704 0.332 
+			   0.767 0.325 0.791 0.281 0.832 0.278 0.859 0.251 0.890 0.225 0.912 0.255 0.950 0.263 1.000 0.26)
+			 :duration dur :scaler (hz->radians 1250.0)))
+	 (gen (make-nrcos 0.0 15 .75))
+	 (rnd (make-rand-interp 5000 .007)))
+   (run
+     (lambda ()
+       (do ((i start (1+ i)))
+	   ((= i stop))
+	 (let ((inp (* (env ampf)
+		       (nrcos gen (+ (env frqf)
+				     (rand-interp rnd))))))
+	   (outa i inp)))))))
+
+
 
 ;;; --------------------------------------------------------------------------------
 ;;;

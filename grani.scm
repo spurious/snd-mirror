@@ -634,9 +634,7 @@
 		   (if (< in-start 0)
 		       (set! in-start 0)))
 	       ;; reset position of input file reader
-	       (set! (mus-location rd) in-start))))))
-    ;; close file
-    (mus-close rd)))
+	       (set! (mus-location rd) in-start))))))))
 
 ;; (with-sound (:channels 2 :reverb jc-reverb :reverb-channels 1)
 ;; 	    (let ((file "oboe.snd"))

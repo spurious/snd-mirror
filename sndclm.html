@@ -978,6 +978,20 @@ If you'd rather think in terms of e^-kt, set the base to <code>(exp k)</code>.
 </td></tr></table>
 
 <p>
+You can get a lot from a couple envelopes:
+</p>
+
+<pre>
+    <em class=listener>&gt;</em> <em class=typing>(load "animals.scm")</em>
+    <em class=listener>#&lt;unspecified&gt;</em>
+    <em class=listener>&gt;</em> <em class=typing>(with-sound (:play #t) (pacific-chorus-frog 0 .5))</em>
+    <em class=listener>"test.snd"</em>
+    <em class=listener>&gt;</em> <em class=typing>(with-sound (:play #t) (house-finch 0 .5))</em>
+    <em class=listener>"test.snd"</em>
+</pre>
+
+
+<p>
 There are several ways to get arbitrary connecting curves between the break points.
 The simplest method is to treat
 the output of env as the input to the connecting function.  Here's an
@@ -1204,8 +1218,9 @@ jet .015 78 invert
 up to the sinusoid's pitch.  The sidebands are about 1 Hz apart (the envelope takes 1 second to go linearly from 0 to 1).
 Despite appearances, we hear this (are you sitting down?) as a changing amplitude, not a timbral mess.
 Spectra can be tricky to interpret, and I've tried to choose parameters for this display that emphasize 
-the broadening.
+the broadening.  
 </p>
+
 <br>
 
 <table border=3 bordercolor="tan" hspace=40 vspace=10><th bgcolor="beige">Envelopes</th><tr><td>
@@ -4365,6 +4380,22 @@ If "radius" is .99, you get a glass-harmonica effect; if it's less, you get more
 </pre>
 </td></tr></table>
 
+<p>formant and firmant are also used to sculpt away unwanted spectral components, or emphasize formant regions.
+In animals.scm, the crow, for example, 
+</p>
+
+<pre>
+    (load "animals.scm")
+    (with-sound (:play #t) (american-crow 0 .5))
+</pre>
+
+<p>has three formant filters.  Without them, it would sound like this:
+</p>
+
+<pre>
+    (with-sound (:play #t) (american-crow-no-formants 0 .5))
+</pre>
+
 <p>The clm-3 formant gain calculation was incorrect.  To translate from the old
 formant to the new one, multiply the old gain by (* 2 (sin (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> frequency))).
 </p>
@@ -4920,7 +4951,7 @@ that are squelched and those that are unchanged (to avoid clicks):
 </pre>
 </td></tr></table>
 
-<p>See also dsp.scm for several related functions:
+<p>See also generators.scm for several related functions:
 <a href="#moving-max">moving-max</a>,
 <a href="#moving-rms">moving-rms</a>, <a href="#moving-sum">moving-sum</a>, 
 <a href="#moving-length">moving-length</a>, <a href="#weighted-moving-average">weighted-moving-average</a>, and 
@@ -5398,7 +5429,7 @@ would be tricky to get time-varying indices.  In this instrument we sweep "r" wi
 </pre>
 </td></tr></table>
 
-<p>For the other kind of asymmetric-fm see generators.scm, and for asymmetric spectra via "single sideband FM" see dsp.scm.
+<p>For the other kind of asymmetric-fm see generators.scm, and for asymmetric spectra via "single sideband FM" see generators.scm.
 </p>
 <br><br>
 
@@ -5589,7 +5620,10 @@ Here is one that uses file-&gt;sample to mix in a sound file (there are a zillio
 </pre>
 </td></tr></table>
 
-<p>If you forget to call mus-close, the GC will eventually do it for you.
+<p>mus-close flushes any pending output and closes the output stream 'obj'.
+This is normally done for you by with-sound, but if you have your own
+output streams,
+and you forget to call mus-close, the GC will eventually do it for you.
 </p>
 <br><br>
 
@@ -6635,8 +6669,8 @@ Normalization is not handled correctly in all cases.
 </pre>
 
 <p>This uses bes-y0 to produce components scaled by Yn(r)*Jn(a).  bes-y0(0) is -inf, so a^2 + r^2 should be greater than 2ar,
-and r should be greater than 0.0.  Tricky to use.  (If you get and inf or a NaN from division by zero or whatever in Scheme,
-both the time and frequency graphs will be unhappy; perhaps I should add an explicit warning when that happens).
+and r should be greater than 0.0.  Tricky to use.  (If you get an inf or a NaN from division by zero or whatever in Scheme,
+both the time and frequency graphs will be unhappy).
 </p>
 
 <br><br>
@@ -6647,7 +6681,8 @@ both the time and frequency graphs will be unhappy; perhaps I should add an expl
 <!-- finite sums -->
 <table border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>finite sums</h5></center></td></tr></table>
 
-<p>If n (the number of partials) is less than 25 and r is constant, these could be done with polywave.  I don't
+<p>These generators produce a set of n sinusoids.
+If n is less than 25 and r is constant, they could be done with polywave.  I don't
 think there would be any difference, even taking FM into account.  For n greater than 25, these are
 faster, but also similar to each other musically.
 </p>
@@ -7147,10 +7182,10 @@ differ by a factor of 3.  I think the one with the higher peak amplitude sounds 
 <tr>
 <td>
 <p>These produce a sum of sinusoids scaled by (r^k)/k!.  
-The k! denominator dominates eventually, so r * ratio * frequency is approximately the spectral center.
-That is, the ratio between successive harmonic amplitudes is (r^(k+1)/(k+1)!)/(r^k/k!) = r/(k+1), which
-becomes less than 1.0 at k=r.
-For example, if frequency is 100 and r is 30, the center of the spectrum is around 3kHz.
+The k! denominator dominates eventually, so r * ratio * frequency is approximately the spectral center
+(the ratio between successive harmonic amplitudes is (r^(k+1)/(k+1)!)/(r^k/k!) = r/(k+1), which
+becomes less than 1.0 at k=r).
+For example, in the graph on the right, the frequency is 100 and r is 30, so the center of the spectrum is around 3kHz.
 Negative "r" gives the same spectrum as positive, but the waveform's initial-phase is shifted by pi.
 The (very) safe maximum "r" is:
 </p>
@@ -7426,33 +7461,121 @@ variants of those given above.
 
 <p>defgenerator is an extension of <a href="sndscm.html#def-clm-struct">def-clm-struct</a>
 that sets up all the usual generator methods (discussed under <a href="#genericfunctions">"generic functions"</a> above).
-It is used to define all the generators in generators.scm.  An oscillator could be:
+It is used to define all the generators in generators.scm.  
+We could add a dither generator via defgenerator (pandering to the Temple of Tape Hiss?):
 </p>
 
 <table border=0 hspace=40><tr><td>
 <pre>
-(<em class=red>defgenerator</em> (osc 
-       :make-wrapper (lambda (gen)
-	               (set! (osc-frequency gen) (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> (osc-frequency gen)))
-	               gen))
-  (frequency 0.0) (phase 0.0))
+(<em class=red>defgenerator</em> dither
+  (amplitude 0.001))
 
-(define (osc gen fm)
-  (<a class=quiet href="extsnd.html#declare" onmouseout="UnTip()" onmouseover="Tip(extsnd_declare_tip)">declare</a> (gen osc) (fm float))
-  (let ((result (sin (<em class=red>osc-phase</em> gen))))
-    (set! (<em class=red>osc-phase</em> gen) (+ (<em class=red>osc-phase</em> gen) (<em class=red>osc-frequency</em> gen) fm))
-    result))
+;; this expands into (define* (make-dither :optional-key (amplitude 0.001)) ...) 
+;;   and (define (dither? obj)...)
+;;   as well as the field accessors (dither-amplitude gen), (mus-scaler gen), 
+;;   and all the other methods such as mus-name
+;;   it also adds the dither type to the optimizer's list of known types.
+
+(define (dither gen input)
+  ;; this is the dither generator -- we need to tell run that "gen" is a dither generator:
+  (<a class=quiet href="extsnd.html#declare" onmouseout="UnTip()" onmouseover="Tip(extsnd_declare_tip)">declare</a> (gen dither) (input float))
+  (+ input 
+     (random (dither-amplitude gen)) 
+     (random (mus-scaler gen))))     ; these are equivalent ways to access the amplitude field
+
+#|
+  (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () 
+    (let ((osc (<a class=quiet href="#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> 440)) 
+          (noise (<em class=red>make-dither</em> .25))) ; yes, oh Lord of Hiss, I believe!!
+      (run
+        (lambda ()
+          (do ((i 0 (1+ i))) 
+              ((= i 20000)) 
+            (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* .5 (<em class=red>dither</em> noise (<a class=quiet href="#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> osc)))))))))
+|#
 </pre>
 </td></tr></table>
 
-<p>defgenerator defines make-osc, osc?, and all the usual <a href="#genericfunctions">methods</a> for us: mus-name ("osc"),
-mus-frequency (radians-&gt;hz of the frequency field), mus-phase, mus-reset, mus-run, and mus-describe.
-If the generator has a field named "n" or "order", it defines mus-order. If it has a field named "r" or "amplitude",
-it defines mus-scaler.
+<p>In this case, defgenerator defines make-dither, dither?, and the usual methods for us: mus-name ("dither"),
+mus-describe, and mus-reset.  If the generator has a frequency field,
+defgenerator adds the method
+mus-frequency (radians-&gt;hz of the frequency field); similarly "angle" or "phase" become mus-phase,
+"n" or "order" becomes mus-order, and "r" or "amplitude" becomes mus-scaler.
+To specialize the make function,
+or add your own methods, the generator name can be a list: 
 </p>
+
+<table border=0 hspace=40><tr><td>
+<pre>
+(defgenerator (name 
+                :make-wrapper (lambda (gen) ... gen) 
+                :methods (list 
+                           (list 'method-name
+                                  (lambda (gen) ...)     ; get method
+                                  (lambda (gen val) ...) ; set method, if any
+				  ...)))
+   fields...)
+</pre>
+</td></tr></table>
+
+<p>The make-wrapper might more accurately be called an after-method; it is
+evaluated at the end of the automatically-created make function.  All the
+fields have been set at that point either by arguments to the make function,
+or from the default values given in the defgenerator declaration.  The make
+function returns whatever
+the make-wrapper function returns, so you almost always want to return the "gen" argument.
+The added methods can be optimized by run, as can the generator function itself, but
+remember to declare the generator type (the "declare" business above).
+Here is an example that produces abs(oscil):
+</p>
+
+<table border=0 hspace=40><tr><td>
+<pre>
+(defgenerator (abssin
+	       :make-wrapper (lambda (g)
+			       (set! (abssin-osc g) (<a class=quiet href="#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> (abssin-frequency g)))
+			       g)	       
+	       :methods (list
+			 (list 'mus-frequency
+			       (lambda (g) (mus-frequency (abssin-osc g)))
+			       (lambda (g val) (set! (mus-frequency (abssin-osc g)) val) val))
+
+			 (list 'mus-phase
+			       (lambda (g) (mus-phase (abssin-osc g)))
+			       (lambda (g val) (set! (mus-phase (abssin-osc g)) val) val))))
+  (frequency *clm-default-frequency*)
+  (osc #f :type clm))
+
+(define (abssin gen fm)
+  (declare (gen abssin) (fm float))
+  (/ (- (abs (<a class=quiet href="#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> (abssin-osc gen) fm))
+	(/ 2.0 pi))  ; remove DC
+     (/ 2.0 pi)))    ; normalize
+
+#|
+(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> ()
+  (let ((gen (<em class=red>make-abssin</em> 440.0)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 10000))
+	 (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* .5 (<em class=red>abssin</em> gen 0.0))))))))
+#|
+</pre>
+</td></tr></table>
+
+
+<p>The field type defaults to float.  It can be any of the types that declare accepts (all of
+these type declarations are for the run macro's benefit). Currently these types are:
+int, float, boolean, char, string,
+vct, sample-reader, sound-data, clm, 
+float-vector, int-vector, vct-vector, list-vector, clm-vector,
+or any type defined in def-clm-struct or defgenerator.
+The "clm" type refers to built-in generators like oscil; "list-vector" refers
+a vector of defgenerator-defined generators.
+</p>
+
 <br>
-
-
 <br><br>
 
 
@@ -7544,7 +7667,7 @@ treasure-trove of interesting polynomials.
 For waveshaping, use the function <a href="#partialstopolynomial">partials-&gt;polynomial</a> to
 generate the coefficients, then drive polynomial with a cosine; this is what the <a href="#polyshape">polyshape</a>
 generator does for you (see the <a href="sndscm.html#birddoc">bigbird</a> and <a href="sndscm.html#vdoc">fm-violin</a>
-instruments).  Here's a generator that uses polynomial to produces a Blackman4 waveform (see also <a href="#make-blackman">make-blackman</a> in generators.scm):
+instruments).  Here's a generator that uses polynomial to produce a Blackman4 waveform (see also <a href="#make-blackman">make-blackman</a> in generators.scm):
 </p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
