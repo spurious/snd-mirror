@@ -931,9 +931,6 @@ var sndclm_dot_product_tip = "<code>(dot-product v1 v2 :optional size)</code>: s
 
 var sndclm_env_tip = "<code>(env gen)</code>: next sample from envelope generator";
 
-var sndclm_exponentially_weighted_moving_average_tip = "exponentially-weighted-moving-average applies exponential weights<br>" +
-                                                    " to a moving average (it is actually just a one-pole filter.";
-
 var sndclm_fft_tip = "<code>(mus-fft rl im :optional len (dir 1))</code>:<br>" +
                      " return the fft of vcts rl and im which contain <br>" +
                      " the real and imaginary parts of the data;<br>" +
@@ -1040,8 +1037,6 @@ var sndclm_make_moving_average_tip = "<code>(make-moving-average :size :initial-
 var sndclm_moving_max_tip = "<code>(moving-max gen y)</code>: return moving window max given input 'y'.<br>" +
                            " moving-max is a specialization of the delay generator that produces<br>" +
                            " an envelope that tracks the peak amplitude of the last 'size' samples.";
-
-var sndclm_moving_sum_tip = "<code>(moving-sum gen y)</code>: return moving window sum given input 'y'.";
 
 var sndclm_make_ncos_tip = "<code>(make-ncos (:frequency *clm-default-frequency*) (:n 1))</code>:<br>" +
                            " return a new ncos generator, producing a sum of 'n' equal amplitude cosines.";

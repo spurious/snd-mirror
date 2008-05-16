@@ -653,40 +653,67 @@ This means that the frequency envelope y values should be passed through <a href
       (lambda ()
         (do ((i start (1+ i)))
             ((= i end))
-          (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> ampf) (<em class=red>oscil</em> cr (* (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> indf) (<em class=red>oscil</em> md))))))))))
+          (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> ampf) 
+                     (<em class=red>oscil</em> cr (* (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> indf) 
+                                  (<em class=red>oscil</em> md))))))))))
 
 ;;; (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () (simple-fm 0 1 440 .1 2 1.0))
 </pre>
 </td></tr></table>
 
-<p>See <a href="fm.html">fm.html</a> for a
-discussion of FM.  The standard additive synthesis instruments use an array of oscillators to
-create the individual spectral components:
+<p><a href="fm.html">fm.html</a> has an introduction to FM.
+FM and PM behave slightly differently during a glissando; FM is the more "natural" in that, left to its own devices,
+it produces a spectrum that varies inversely with the pitch.  Compare these two cases.  Both involve a slow glissando
+up an octave, FM in channel 0, and PM in channel 1.  In the first note, I fix up the FM index during the sweep to
+keep the spectra steady, and in the second, I fix up the PM index.  I think the second sounds better.
 </p>
 
-<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
+<table border=0 bgcolor="#fafafa" cellpadding=6 hspace=20>
+<tr><td>
 <pre>
-(define (simple-add beg dur freq amp)
-  (let* ((start (<a class=quiet href="#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> beg))
-	 (end (+ start (<a class=quiet href="#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> dur)))
-	 (arr (make-vector 20)))     ; we'll create a tone with 20 equal amplitude harmonics
-    (do ((i 0 (1+ i)))               ;   use the 'f' button to check out the spectrum
-	((= i 20))
-      (vector-set! arr i (<em class=red>make-oscil</em> (* (1+ i) freq))))
-    (<a class=quiet href="extsnd.html#run" onmouseout="UnTip()" onmouseover="Tip(extsnd_run_tip)">run</a>
-     (lambda ()
-       (do ((i start (1+ i))) 
-           ((= i end))
-	 (let ((sum 0.0))
-	   (do ((k 0 (1+ k)))
-	       ((= k 20))
-	     (set! sum (+ sum (<em class=red>oscil</em> (vector-ref arr k)))))
-	   (<a class=quiet href="#out-any" onmouseout="UnTip()" onmouseover="Tip(sndclm_out_any_tip)">out-any</a> i (* amp .05 sum) 0)))))))
-
-;;; (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () (simple-add 0 1 220 .3))
+(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:channels 2)
+  (let* ((dur 2.0)
+	 (samps (<a class=quiet href="#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> dur))
+	 (pitch 1000)
+	 (modpitch 100)
+	 (pm-index 4.0)
+	 (fm-index (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> (* 4.0 modpitch))))
+    (let* ((car1 (make-oscil pitch))
+	   (mod1 (make-oscil modpitch))
+	   (car2 (make-oscil pitch))
+	   (mod2 (make-oscil modpitch))
+	   (frqf (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1) :duration dur))
+	   (ampf (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1 20 1 21 0) :duration dur :scaler .5)))
+      (do ((i 0 (1+ i)))
+	  ((= i samps))
+	(let* ((frq (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> frqf))
+	       (rfrq (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> frq))
+	       (amp (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> ampf)))
+	  (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* amp (oscil car1 (+ (* rfrq pitch)
+					(* <em class=red>fm-index (1+ frq)</em> ; keep spectrum the same
+					   (oscil mod1 (* rfrq modpitch)))))))
+	  (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outb</a> i (* amp (oscil car2 (* rfrq pitch)
+				(+ (* <em class=red>pm-index</em>
+				      (oscil mod2 (* rfrq modpitch)))))))))
+      (let* ((car1 (make-oscil pitch))
+	     (mod1 (make-oscil modpitch))
+	     (car2 (make-oscil pitch))
+	     (mod2 (make-oscil modpitch))
+	     (frqf (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1) :duration dur))
+	     (ampf (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1 20 1 21 0) :duration dur :scaler .5)))
+	(do ((i 0 (1+ i)))
+	    ((= i samps))
+	  (let* ((frq (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> frqf))
+		 (rfrq (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> frq))
+		 (amp (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> ampf)))
+	    (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> (+ i samps) (* amp (oscil car1 (+ (* rfrq pitch)
+						    (* <em class=red>fm-index</em>   ; let spectrum decay
+						       (oscil mod1 (* rfrq modpitch)))))))
+	    (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outb</a> (+ i samps) (* amp (oscil car2 (* rfrq pitch)
+					    (+ (* <em class=red>(/ pm-index (1+ frq))</em>
+						  (oscil mod2 (* rfrq modpitch)))))))))))))
 </pre>
 </td></tr></table>
-
 
 
 <table border=2 bgcolor="#fafafa" cellpadding=6 hspace=20 vspace=20>
@@ -829,7 +856,7 @@ are times when nothing but a ton of oscils will do:
 	(freqs (make-vector len))
 	(vib (<a class=quiet href="#make-rand-interp" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_rand_interp_tip)">make-rand-interp</a> 50 (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> .01)))
 	(ampf (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1 10 1 11 0) :duration dur :scaler .1))
-	(samps (<a class=quiet href="#samplestoseconds" onmouseout="UnTip()" onmouseover="Tip(sndclm_samplestoseconds_tip)">seconds-&gt;samples</a> dur)))
+	(samps (<a class=quiet href="#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> dur)))
 
    (do ((i 0 (1+ i)))
        ((= i len))
@@ -978,7 +1005,7 @@ If you'd rather think in terms of e^-kt, set the base to <code>(exp k)</code>.
 </td></tr></table>
 
 <p>
-You can get a lot from a couple envelopes:
+You can get a lot from a couple of envelopes:
 </p>
 
 <pre>
@@ -1903,14 +1930,14 @@ is scaled to be -1..1, so that adds another layer of confusion). There's a longe
 							   0.0))))))))))))))))
 -->
 
-<p>To get the FM effect of a spectrum centered around a carrier, multiply the waveshape output by the carrier:
+<p>To get the FM effect of a spectrum centered around a carrier, multiply the waveshape output by the carrier (the 0Hz term gives us the carrier):
 </p>
 
 <table border=0 hspace=20>
 <tr><td>
 <pre>
 (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> ()
-  (let ((modulator (<em class=red>make-polyshape</em> 100.0 :partials (list 1 .5  2 .25  3 .125  4 .125)))
+  (let ((modulator (<em class=red>make-polyshape</em> 100.0 :partials (list 0 .4  1 .4  2 .1  3 .05  4 .05)))
 	(carrier (<a class=quiet href="#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> 1000.0)))
     (do ((i 0 (1+ i))) ((= i 20000))
       (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* .5 (<a class=quiet href="#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> carrier) (<em class=red>polyshape</em> modulator))))))
@@ -2672,10 +2699,50 @@ for J1(B/(n*k))) approach 0.
 
 </td></tr></table>
 
-<p>If you use ncos (or nsin) as both the carrier and modulator, you get a very similar effect.  As n increases,
+
+<table border=0 vspace=10>
+<tr><td>
+<p>You can multiply the index by n to counteract the effect of the n modulators
+(in the n=128 case mentioned above, the index becomes 384!).
+I find it surprising how smooth the spectral evolution is in this context.
+Here we sweep the index from 0 to 48 using n=16:
+</p>
+</td><td>
+<table border=1><tr><td>
+<img src="pix/ncossweep.png">
+</td></tr>
+<tr><td bgcolor="#f2f3ff"><center>ncos (n=16) as FM, index from 0 to 48</center></td></tr>
+</table>
+</td></tr></table>
+
+<!--
+(with-sound (:statistics #t)
+  (let* ((dur 10.0)
+	 (samps (seconds->samples dur))
+	 (car1 (make-oscil 1000))
+	 (mod1 (make-sum-of-cosines 16 100))
+	 (ampf (make-env '(0 0 1 1 20 1 21 0) :duration dur :scaler .8))
+	 (index (hz->radians (* 100 16 3.0)))
+	 (indf (make-env '(0 0 1 1) :scaler index :duration dur)))
+    (do ((i 0 (1+ i)))
+	((= i samps))
+      (outa i (* (env ampf)
+		 (oscil car1 (* (env indf)
+				(sum-of-cosines mod1))))))))
+
+4096 blackman2 100(dark) 0 cutoff invert jet
+319 1.5
+289 0.71
+0 1.0
+4 0.25
+-->
+
+<p>
+If you use ncos (or nsin) as both the carrier and modulator, you get a very similar effect.  As n increases,
 the ncos(wc + ncos(wm)) output gradually approaches the unmodulated ncos output &mdash; the crunch happens on each carrier component,
 but most strongly on the earlier ones (the "effective index" is less on those components, as mentioned
-under <a href="#polywave">polywave</a>).  So, a pulse-train modulated by a pulse-train is a pulse-train.
+under <a href="#polywave">polywave</a>).  
+So, a pulse-train modulated by a pulse-train is a pulse-train.
 Are there any other cases where gen(wc + gen(wm)) = gen(wc)?  My first thought was rand, but that has a hidden
 surprise: the modulation obscures the underlying square-wave!
 </p>
@@ -2748,7 +2815,7 @@ compare ncos as FM and direct sum of cos:
 -->
 
 <br>
-<p>What FM input (to oscil) would give the most dispersed output?  My first guess was square-wave, but looking at graphs,
+<p>What FM input (to oscil, for a given index) would give the most dispersed output?  My first guess was square-wave, but looking at graphs,
 I'd say rand gives it a good contest.
 If you sweep ncos upwards in frequency, you'll eventually
 get foldover; the generator produces its preset number of cosines no
@@ -3687,6 +3754,8 @@ using the same frequency envelope as the wave-train, so we have some idea when t
 </pre>
 </td></tr></table>
 
+<p>wave-train is built on table-lookup and shares all of its questionable aspects.
+</p>
 <br><br>
 
 
@@ -4338,7 +4407,24 @@ as we sweep either the frequency or the radius:
   (set! (x-axis-label 0 3 1) "firmant frequency: 5000"))
 -->
 
-<p>formant generators are commonly used in a bank of filters to provide a sort of sample-by-sample spectrum.
+<p>formant and firmant are often used to sculpt away unwanted spectral components, or emphasize formant regions.
+In animals.scm, the crow, for example, 
+</p>
+
+<pre>
+    (load "animals.scm")
+    (with-sound (:play #t) (american-crow 0 .5))
+</pre>
+
+<p>has three formant filters.  Without them, it would sound like this:
+</p>
+
+<pre>
+    (with-sound (:play #t) (american-crow-no-formants 0 .5))
+</pre>
+
+
+<p>formant generators are also commonly used in a bank of filters to provide a sort of sample-by-sample spectrum.
 An example is <a href="sndscm.html#fadedoc">fade.scm</a> which has various functions for frequency domain mixing.
 See also 
 <a href="sndscm.html#grapheq">grapheq</a> (a non-graphic equalizer), and
@@ -4346,6 +4432,7 @@ See also
 Here's a simpler example that moves a set of harmonically related formants through a sound.
 If "radius" is .99, you get a glass-harmonica effect; if it's less, you get more of an FM index envelope effect.
 </p>
+
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
@@ -4380,21 +4467,6 @@ If "radius" is .99, you get a glass-harmonica effect; if it's less, you get more
 </pre>
 </td></tr></table>
 
-<p>formant and firmant are also used to sculpt away unwanted spectral components, or emphasize formant regions.
-In animals.scm, the crow, for example, 
-</p>
-
-<pre>
-    (load "animals.scm")
-    (with-sound (:play #t) (american-crow 0 .5))
-</pre>
-
-<p>has three formant filters.  Without them, it would sound like this:
-</p>
-
-<pre>
-    (with-sound (:play #t) (american-crow-no-formants 0 .5))
-</pre>
 
 <p>The clm-3 formant gain calculation was incorrect.  To translate from the old
 formant to the new one, multiply the old gain by (* 2 (sin (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> frequency))).
@@ -5065,6 +5137,7 @@ dsp.scm (<a href="sndscm.html#downoct">down-oct</a>, <a href="sndscm.html#soundi
 a time-varying src is applied, use <a href="sndscm.html#srcduration">src-duration</a>.  To scale an src
 envelope so that the result has a given duration, use <a href="sndscm.html#srcfitenvelope">scr-fit-envelope</a>.
 </p>
+
 <br><br>
 
 
@@ -7618,7 +7691,7 @@ an increment of a phase variable.
 
 <br>
 
-<p>And a couple functions that affect things like the generator equality check:</p>
+<p>And a couple of functions that affect things like the generator equality check:</p>
 
 <pre>
   <a class=def name="musfloatequalfudgefactor">mus-float-equal-fudge-factor</a>
@@ -7892,6 +7965,28 @@ autocorrelate performs an (in place) autocorrelation of 'data' (a vct).  See <a 
 or <a href="sndscm.html#rubberdoc">rubber.scm</a>.
 correlate performs an in-place cross-correlation of data1 and data2 (see, for example, <a href="sndscm.html#snddiffdoc">snddiff</a>).
 </p>
+
+<table border=3 bordercolor="tan" hspace=40><th bgcolor="beige">FFTs</th><tr><td>
+<small><blockquote>
+Hartley transform in Scheme: <a href="sndscm.html#dht">dht</a><br>
+Spectral edit dialog: <a href="snd.html#editenvelope">Envelope Editor</a><br>
+fft-based filter: <a href="sndscm.html#fftedit">fft-edit</a>, <a href="sndscm.html#fftenvedit">fft-env-edit</a>, <a href="sndscm.html#fftenvinterp">fft-env-interp</a>, <a href="sndscm.html#fftsquelch">fft-squelch</a>, <a href="sndscm.html#fftcancel">fft-cancel</a><br>
+phase-vocoder: <a href="sndclm.html#phase-vocoder">phase-vocoder</a>. <a href="sndscm.html#pvocdoc">pvoc</a><br>
+transposition via fft: <a href="sndscm.html#downoct">down-oct</a><br>
+phase rotation via fft: <a href="sndscm.html#zerophase">zero-phase, rotate-phase</a><br>
+duration change via autocorrelation: <a href="sndscm.html#rubberdoc">rubber-sound</a><br>
+smoothing via fft: <a href="sndscm.html#fftsmoother">fft-smoother</a><br>
+cross-synthesis: <a href="sndscm.html#crosssynthesis">cross-synthesis</a><br>
+voiced-&gt;unvoiced effect: <a href="sndscm.html#voicedtounvoiced">voiced-&gt;unvoiced</a><br>
+noise reduction: <a href="sndscm.html#cleanchannel">clean-channel</a>, <a href="sndscm.html#clminsdoc">anoi</a><br>
+spectral modeling: <a href="sndscm.html#clminsdoc">pins</a><br>
+polynomial approach to spectral multiplies (convolution): <a href="sndscm.html#spectralpolynomial">spectral-polynomial</a><br>
+More transforms: <a href="sndscm.html#fractionalfouriertransform">fractional-fourier-transform</a>, <a href="sndscm.html#ztransform">z-transform</a> in dsp.scm<br>
+bark, mel, erb scale display: <a href="sndscm.html#displaybarkfft">display-bark-fft</a><br>
+apply function to spectrum, inverse fft: <a href="sndscm.html#filterfft">filter-fft</a><br>
+</blockquote></small>
+</td></tr></table>
+
 <br><br>
 
 

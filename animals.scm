@@ -99,6 +99,7 @@
 ;;; Gray-crowned rosy-finch
 ;;; Eastern wood-pewee (2)
 ;;; Western wood-pewee (2)
+;;; Greater pewee
 ;;; Tufted titmouse
 ;;; Oak titmouse
 ;;; Bushtit
@@ -10922,6 +10923,65 @@
 
 
 
+;;; --------------------------------------------------------------------------------
+;;;
+;;; Greater pewee
+
+(definstrument (greater-pewee beg1 amp)
+  ;; arizona 52 2
+
+  (define (greater-pewee-first-and-last beg)
+    (let* ((start (seconds->samples beg))
+	   (dur 0.4)
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0.000 0.000 0.011 0.083 0.220 0.268 0.374 0.325 0.463 0.337 0.542 0.289 0.599 0.000 
+			     0.668 0.000 0.683 0.554 0.701 0.501 0.735 1.000 0.775 0.039 0.829 0.806 0.852 0.862 
+			     0.877 0.979 0.888 0.912 0.900 0.968 0.912 0.822 0.928 0.866 0.939 0.762 0.950 0.783 
+			     0.970 0.637 1.000 0.000)
+			   :duration dur :scaler amp))
+	   (frqf (make-env '(0.000 0.102 0.018 0.114 0.138 0.124 0.251 0.124 0.438 0.124 0.511 0.124 0.589 0.119 
+			     0.649 0.124 0.663 0.169 0.672 0.150 0.704 0.124 0.750 0.135 0.777 0.124 0.795 0.121 
+			     0.969 0.147 1.000 0.162)
+			   :duration dur :scaler (hz->radians 22500))) ; not a typo...
+	   (gen1 (make-polywave :partials (list 1 .96  2 .02  3 .02))))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf)
+		      (polywave gen1 (env frqf)))))))))
+
+  (define (greater-pewee-midsection beg)
+    (let* ((start (seconds->samples beg))
+	   (dur 1.65)
+	   (stop (+ start (seconds->samples dur)))
+	   (ampf (make-env '(0.000 0.000 0.023 0.155 0.085 0.349 0.196 0.507 0.219 0.513 0.227 0.000 0.295 0.000
+			     0.306 0.510 0.333 0.741 0.356 0.825 0.370 0.752 0.386 0.775 0.394 0.713 0.409 0.761 
+			     0.431 0.668 0.439 0.713 0.456 0.701 0.469 0.000 0.570 0.000 0.578 0.093 0.619 0.152 
+			     0.653 0.223 0.684 0.217 0.721 0.299 0.745 0.507 0.780 0.620 0.795 0.586 0.808 0.679 
+			     0.836 0.428 0.852 0.563 0.862 0.997 0.875 0.625 0.887 0.476 0.982 0.251 1.000 0.000)
+			 :duration dur :scaler amp))
+	 (frqf (make-env '(0.000 0.274 0.038 0.283 0.219 0.291 0.302 0.293 0.410 0.324 0.451 0.327 0.464 0.315 
+			   0.518 0.324 0.542 0.213 0.580 0.223 0.715 0.242 0.759 0.293 0.813 0.308 0.828 0.320 
+			   0.843 0.341 0.857 0.337 0.877 0.276 0.896 0.252 1.000 0.230)
+			 :duration dur :scaler (hz->radians 10000)))
+	 (gen1 (make-polywave :partials (list 1 .98  2 .01  3 .01))))
+      (run
+       (lambda ()
+	 (do ((i start (1+ i)))
+	     ((= i stop))
+	   (outa i (* (env ampf)
+		      (polywave gen1 (env frqf)))))))))
+  
+  (greater-pewee-first-and-last beg1)
+  (greater-pewee-midsection (+ beg1 1.13))
+  (greater-pewee-first-and-last (+ beg1 3.2)))
+
+
+;(with-sound (:play #t) (greater-pewee 0 .5))
+
+
+
 
 ;;; ================ calling-all-animals ================
 
@@ -11139,7 +11199,8 @@
   (willet                        (+ beg 248.3) .25)      (set! beg (+ beg spacing))
   (black-crowned-night-heron     (+ beg 249.0) .25)      (set! beg (+ beg spacing))
   (scrub-euphonia                (+ beg 249.5) .25)      (set! beg (+ beg spacing))
-  (+ beg 250))
+  (greater-pewee                 (+ beg 250.0) .25)      (set! beg (+ beg spacing))
+  (+ beg 254))
 
 
 (define (calling-all-animals)
