@@ -225,6 +225,7 @@
 #define S_mus_ycoeffs                "mus-ycoeffs"
 #define S_ncos                       "ncos"
 #define S_ncos_p                     "ncos?"
+#define S_normalize_partials         "normalize-partials"
 #define S_notch                      "notch"
 #define S_notch_p                    "notch?"
 #define S_nrxycos                    "nrxycos"

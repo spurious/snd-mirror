@@ -2594,6 +2594,24 @@ Float *mus_partials_to_polynomial(int npartials, Float *partials, mus_polynomial
 }
 
 
+Float *mus_normalize_partials(int num_partials, Float *partials)
+{
+  int i;
+  double sum = 0.0;
+  for (i = 0; i < num_partials; i++)
+    sum += fabs(partials[2 * i + 1]);
+  if ((sum != 0.0) &&
+      (sum != 1.0))
+    {
+      sum = 1.0 / sum;
+      for (i = 0; i < num_partials; i++)
+	partials[2 * i + 1] *= sum;
+    }
+  return(partials);
+}
+
+
+
 /* ---------------- polywave ---------------- */
 
 typedef struct {

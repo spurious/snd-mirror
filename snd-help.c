@@ -512,6 +512,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+17-May:  normalize-partials is now built-in.\n\
 12-May:  expandn (clm-ins.scm) thanks to Michael Klingbeil.\n\
 10-May:  merged green.scm into generators.scm.\n\
 5-May:   music5 port: music5.f, music5-examples, old-music5.f\n\

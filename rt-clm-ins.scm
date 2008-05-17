@@ -376,16 +376,6 @@ vocal sounds using phase quadrature waveshaping"
 	       (append newenv
 		       (list (car phons)
 			     (list-ref (find-phoneme (cadr phons) formants) which))))))
-  (define (normalize-partials partials)
-    (let ((sum 0.0)
-	  (len (length partials)))
-      (do ((i 1 (+ i 2)))
-	  ((>= i len))
-	(set! sum (+ sum (abs (list-ref partials i)))))
-      (do ((i 1 (+ i 2)))
-	  ((>= i len) partials)
-	(list-set! partials i (/ (list-ref partials i) sum)))))
-
   (let* ((start (inexact->exact (floor (* (mus-srate) beg))))
 	 (samps (inexact->exact (floor (* (mus-srate) dur))))
 	 (end (+ start samps))
@@ -776,15 +766,6 @@ is a physical model of a flute:
 			 (reverb-amount 0.005))
   ;; phase-quadrature waveshaping used to create asymmetric (i.e. single side-band) spectra.
   ;; The basic idea here is a variant of sin x sin y - cos x cos y = cos (x + y)
-  (define (normalize-partials partials)
-    (let ((sum 0.0)
-	  (len (length partials)))
-      (do ((i 1 (+ i 2)))
-	  ((>= i len))
-	(set! sum (+ sum (abs (list-ref partials i)))))
-      (do ((i 1 (+ i 2)))
-	  ((>= i len) partials)
-	(list-set! partials i (/ (list-ref partials i) sum)))))
   (let* ((normalized-partials (normalize-partials partials))
 	 (spacing-cos (make-oscil :frequency spacing-freq :initial-phase (/ pi 2.0)))
 	 (spacing-sin (make-oscil :frequency spacing-freq))
@@ -1828,16 +1809,6 @@ is a physical model of a flute:
 	     (attackTime (/ (* *piano-attack-duration* 100) dur)))
 	(list 0 0 (/ attackTime 4) 1.0 attackTime 1.0 100 releaseAmp)))
     
-    (define (normalize-partials partials)
-      (let ((sum 0.0)
-	    (len (length partials)))
-	(do ((i 1 (+ i 2)))
-	    ((>= i len))
-	  (set! sum (+ sum (abs (list-ref partials i)))))
-	(do ((i 1 (+ i 2)))
-	    ((>= i len) partials)
-	  (list-set! partials i (/ (list-ref partials i) sum)))))
-
     ;; This thing sounds pretty good down low, below middle c or so.  
     ;; Unfortunately, there are some tens of partials down there and we're using 
     ;; exponential envelopes.  You're going to wait for a long long time just to 
@@ -1858,7 +1829,7 @@ is a physical model of a flute:
 	   (end (+ beg (inexact->exact (floor (* newdur (mus-srate))))))
 	   (env1dur (- newdur *piano-release-duration*))
 	   (env1samples (inexact->exact (floor (* env1dur (mus-srate)))))
-	   (siz (inexact->exact (floor (/ (length partials) 2))))
+	   (siz (inexact->exact (floor (/ (vct-length partials) 2))))
 	   (oscils (make-vector siz))
 	   (alist (make-vct siz))
 	   (locs (make-locsig degree distance reverb-amount *output* *reverb* *rt-num-channels*))
@@ -1876,9 +1847,9 @@ is a physical model of a flute:
       
       (do ((i 0 (+ i 2))
 	   (j 0 (1+ j)))
-	  ((= i (length partials)))
-	(vct-set! alist j (list-ref partials (+ i 1)))
-	(vector-set! oscils j (make-oscil :frequency (* (list-ref partials i) frequency))))
+	  ((= i (vct-length partials)))
+	(vct-set! alist j (vct-ref partials (+ i 1)))
+	(vector-set! oscils j (make-oscil :frequency (* (vct-ref partials i) frequency))))
       (ws-interrupt?)
     (<rt-play> begin-time duration
 	       (lambda ()

@@ -17,19 +17,6 @@
 (definstrument+ (bigbird start dur frequency freqskew amplitude freq-envelope amp-envelope partials)
   "(bigbird start dur frequency freqskew amplitude freq-envelope amp-envelope partials)"
 
-  (define (sum-partials lst sum)
-    (if (null? lst)
-	sum
-	(sum-partials (cddr lst) (+ sum (cadr lst)))))
-    
-  (define (scale-partials lst scl newlst)
-    (if (null? lst)
-	newlst
-	(scale-partials (cddr lst) scl (append newlst (list (car lst) (* scl (cadr lst)))))))
-    
-  (define (normalize-partials lst)
-    (scale-partials lst (/ 1.0 (sum-partials lst 0.0)) '()))
-    
   (let* ((gls-env (make-env freq-envelope (hz->radians freqskew) dur))
 	 (os (make-polyshape frequency :coeffs (partials->polynomial (normalize-partials partials))))
 	 (amp-env (make-env amp-envelope amplitude dur))

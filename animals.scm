@@ -235,20 +235,6 @@
 ;;; ================================================================================
 ;;; useful settings and functions for this work (I have these in my init file):
 
-(define (normalize-partials lst)
-  ;; make sure the partials sum to 1.0 in amp
-  (define (sum-partials lst sum)
-    (if (null? lst)
-	sum
-	(sum-partials (cddr lst) (+ sum (cadr lst)))))
-    
-  (define (scale-partials lst scl newlst)
-    (if (null? lst)
-	newlst
-	(scale-partials (cddr lst) scl (append newlst (list (car lst) (* scl (cadr lst)))))))
-    
-  (scale-partials lst (/ 1.0 (sum-partials lst 0.0)) '()))
-
 (define (clean-string e)
   ;; make the envelope lists look prettier
   (string-concatenate (append (list "(")
@@ -927,20 +913,6 @@
 ;;;
 ;;; original formants were much sharper, but using rxyk!cos to sharpen ours didn't seem to help
 ;;; animal seems to group these in 3's
-
-(define (normalize-partials lst)
-  (define (sum-partials lst sum)
-    (if (null? lst)
-	sum
-	(sum-partials (cddr lst) (+ sum (cadr lst)))))
-    
-  (define (scale-partials lst scl newlst)
-    (if (null? lst)
-	newlst
-	(scale-partials (cddr lst) scl (append newlst (list (car lst) (* scl (cadr lst)))))))
-    
-  (scale-partials lst (/ 1.0 (sum-partials lst 0.0)) '()))
-
 
 (definstrument (river-frog beg amp)
   (let* ((dur 1.85)

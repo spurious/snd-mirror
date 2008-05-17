@@ -16435,6 +16435,17 @@ EDITS: 2
       (if (not (vequal lv7 (vct 0.000 -7.000 0.000 56.000 0.000 -112.000 0.000 64.000))) (snd-display ";partials->polynomial(8): ~A?" lv7))
       (if (not (vequal lv8 (vct -1.000 0.000 24.000 0.000 -80.000 0.000 64.000 0.000))) (snd-display ";partials->polynomial(9): ~A?" lv8))
       (if (not (vequal lv7 lv7a)) (snd-display ";partials->polynomial kind=1? ~A ~A" lv7 lv7a))
+
+      (if (not (vequal (normalize-partials (list 1 1 2 1)) (vct 1.000 0.500 2.000 0.500)))
+	  (snd-display ";normalize-partials 1: ~A" (normalize-partials (list 1 1 2 1))))
+      (if (not (vequal (normalize-partials (vct 1 1 2 1)) (vct 1.000 0.500 2.000 0.500)))
+	  (snd-display ";normalize-partials 2: ~A" (normalize-partials (vct 1 1 2 1))))
+      (if (not (vequal (normalize-partials (vct 1 1 2 -1)) (vct 1.000 0.500 2.000 -0.500)))
+	  (snd-display ";normalize-partials 3: ~A" (normalize-partials (vct 1 1 2 -1))))
+      (if (not (vequal (normalize-partials (vct 1 -.1 2 -.1)) (vct 1.000 -0.500 2.000 -0.500)))
+	  (snd-display ";normalize-partials 4: ~A" (normalize-partials (vct 1 -.1 2 -.1))))
+      (if (not (vequal (normalize-partials (vct 0 2 1 1 4 1)) (vct 0.000 0.500 1.000 0.250 4.000 0.250)))
+	  (snd-display ";normalize-partials 4: ~A" (normalize-partials (vct 0 2 1 1 4 1))))
       
       (if (fneq (polynomial lv7 1.0) (cosh (* 7 (acosh 1.0)))) 
 	  (snd-display ";ccosh cheb 7 1.0: ~A ~A" (polynomial lv7 1.0) (cosh (* 7 (acosh 1.0)))))
@@ -67610,7 +67621,7 @@ EDITS: 1
 		     mus-close mus-data mus-feedback mus-feedforward mus-fft mus-frequency
 		     mus-hop mus-increment mus-input? mus-file-name mus-length mus-location mus-mix mus-order mus-output?  mus-phase
 		     mus-ramp mus-random mus-scaler mus-srate mus-xcoeff mus-xcoeffs mus-ycoeff mus-ycoeffs notch notch? one-pole one-pole?
-		     one-zero one-zero? oscil oscil? out-any outa outb outc outd partials->polynomial
+		     one-zero one-zero? oscil oscil? out-any outa outb outc outd partials->polynomial normalize-partials
 		     partials->wave partials->waveshape phase-partials->wave polynomial pulse-train pulse-train?
 		     radians->degrees radians->hz rand rand-interp rand-interp?  rand? readin readin?  rectangular->polar
 		     ring-modulate sample->file sample->file? sample->frame sawtooth-wave
@@ -68057,7 +68068,7 @@ EDITS: 1
 					mus-data mus-feedback mus-feedforward mus-frequency mus-hop
 					mus-increment mus-length mus-file-name mus-location mus-name mus-order mus-phase mus-ramp mus-random mus-run
 					mus-scaler mus-xcoeffs mus-ycoeffs notch one-pole one-zero make-moving-average seconds->samples samples->seconds
-					oscil partials->polynomial partials->wave partials->waveshape phase-partials->wave
+					oscil partials->polynomial partials->wave partials->waveshape phase-partials->wave normalize-partials
 					phase-vocoder pulse-train radians->degrees radians->hz rand rand-interp readin
 					sawtooth-wave sine-summation nrxysin nrxycos square-wave src 
 					sum-of-cosines ncos sum-of-sines nsin table-lookup tap triangle-wave
@@ -68086,7 +68097,7 @@ EDITS: 1
 			  make-sine-summation make-nrxysin make-nrxycos make-square-wave make-src make-sum-of-cosines make-ncos 
 			  make-sum-of-sines make-nsin make-table-lookup make-triangle-wave
 			  make-two-pole make-two-zero make-wave-train make-waveshape mixer* mixer+ multiply-arrays
-			  notch one-pole one-zero oscil partials->polynomial partials->wave partials->waveshape make-polyshape make-polywave
+			  notch one-pole one-zero oscil partials->polynomial partials->wave partials->waveshape make-polyshape make-polywave normalize-partials
 			  phase-partials->wave phase-vocoder polynomial pulse-train rand rand-interp rectangular->polar
 			  ring-modulate sample->frame sawtooth-wave sine-summation nrxysin nrxycos square-wave src sum-of-cosines ncos sum-of-sines nsin
 			  sine-bank table-lookup tap triangle-wave two-pole two-zero wave-train waveshape ssb-am make-ssb-am))
@@ -68882,6 +68893,10 @@ EDITS: 1
 		(check-error-tag 'out-of-range (lambda () (partials->polynomial '(1 1) 3)))
 		(check-error-tag 'out-of-range (lambda () (make-polyshape 440.0 :partials '(1 1) :kind -1)))
 		(check-error-tag 'out-of-range (lambda () (make-polyshape 440.0 :partials '(1 1) :kind 3)))
+		(check-error-tag 'wrong-type-arg (lambda () (normalize-partials 32)))
+		(check-error-tag 'wrong-type-arg (lambda () (normalize-partials '())))
+		(check-error-tag 'bad-type (lambda () (normalize-partials '(1 2 3))))
+		(check-error-tag 'bad-type (lambda () (normalize-partials (vct 3))))
 
 		(check-error-tag 'no-data (lambda () (make-polyshape 440.0 :partials (vct 1 1 -2 1))))
 		(check-error-tag 'no-data (lambda () (make-polyshape 440.0 :partials (list 1 1 -2 1))))

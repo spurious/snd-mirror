@@ -4458,6 +4458,32 @@ to create (via waveshaping) the harmonic spectrum described by the partials argu
 }
 
 
+static XEN g_normalize_partials(XEN partials)
+{
+  #define H_normalize_partials "(" S_normalize_partials " num-partials partials) scales the \
+partial amplitudes in the vct or list 'partials' by the inverse of their sum (so that they add to 1.0)."
+
+  vct *v;
+  XEN xv = XEN_FALSE;
+
+  XEN_ASSERT_TYPE(((XEN_LIST_P(partials)) && (XEN_NOT_NULL_P(partials))) || (MUS_VCT_P(partials)), partials, XEN_ONLY_ARG, S_normalize_partials, "a vct or (non-empty) list");
+
+  if (MUS_VCT_P(partials))
+    xv = partials;
+  else xv = xen_list_to_vct(partials);
+  v = XEN_TO_VCT(xv);
+
+  if ((v->length > 1) &&
+      ((v->length & 1) == 0))
+    mus_normalize_partials(v->length / 2, v->data);
+  else XEN_ERROR(BAD_TYPE,
+		 XEN_LIST_3(C_TO_XEN_STRING(S_normalize_partials),
+			    C_TO_XEN_STRING("partials must be a non-empty list or vct of even length (partial-number partial-amp ...)"),
+			    partials));
+  return(xv);
+}
+
+
 
 
 /* ---------------- polyshape ---------------- */
@@ -7817,6 +7843,7 @@ XEN_ARGIFY_3(g_polyshape_w, g_polyshape)
 XEN_NARGIFY_1(g_polyshape_p_w, g_polyshape_p)
 XEN_ARGIFY_2(g_partials_to_waveshape_w, g_partials_to_waveshape)
 XEN_ARGIFY_2(g_partials_to_polynomial_w, g_partials_to_polynomial)
+XEN_NARGIFY_1(g_normalize_partials_w, g_normalize_partials)
 XEN_VARGIFY(g_make_polywave_w, g_make_polywave)
 XEN_ARGIFY_2(g_polywave_w, g_polywave)
 XEN_NARGIFY_1(g_polywave_p_w, g_polywave_p)
@@ -8122,6 +8149,7 @@ XEN_NARGIFY_2(g_mus_equalp_w, equalp_mus_xen)
 #define g_polyshape_p_w g_polyshape_p
 #define g_partials_to_waveshape_w g_partials_to_waveshape
 #define g_partials_to_polynomial_w g_partials_to_polynomial
+#define g_normalize_partials_w g_normalize_partials
 #define g_make_polywave_w g_make_polywave
 #define g_polywave_w g_polywave
 #define g_polywave_p_w g_polywave_p
@@ -8605,6 +8633,7 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_polyshape_p,            g_polyshape_p_w,            1, 0, 0, H_polyshape_p);
   XEN_DEFINE_PROCEDURE(S_partials_to_waveshape,  g_partials_to_waveshape_w,  1, 1, 0, H_partials_to_waveshape);
   XEN_DEFINE_PROCEDURE(S_partials_to_polynomial, g_partials_to_polynomial_w, 1, 1, 0, H_partials_to_polynomial);
+  XEN_DEFINE_PROCEDURE(S_normalize_partials,     g_normalize_partials_w,     1, 0, 0, H_normalize_partials);
   XEN_DEFINE_PROCEDURE(S_make_polywave,          g_make_polywave_w,          0, 0, 1, H_make_polywave);
   XEN_DEFINE_PROCEDURE(S_polywave,               g_polywave_w,               1, 1, 0, H_polywave);
   XEN_DEFINE_PROCEDURE(S_polywave_p,             g_polywave_p_w,             1, 0, 0, H_polywave_p);
@@ -8836,22 +8865,22 @@ void mus_xen_init(void)
 	       S_formant,
 	       S_formant_bank,
 	       S_formant_p,
-	       S_frame_to_file,
-	       S_frame_to_file_p,
-	       S_frame_to_frame,
-	       S_frame_to_list,
-	       S_frame_to_sample,
 	       S_frame_add,
 	       S_frame_multiply,
 	       S_frame_p,
 	       S_frame_ref,
 	       S_frame_set,
+	       S_frame_to_file,
+	       S_frame_to_file_p,
+	       S_frame_to_frame,
+	       S_frame_to_list,
+	       S_frame_to_sample,
 	       S_gaussian_window,
 	       S_granulate,
 	       S_granulate_p,
 	       S_hamming_window,
-	       S_hann_window,
 	       S_hann_poisson_window,
+	       S_hann_window,
 	       S_hz_to_radians,
 	       S_iir_filter,
 	       S_iir_filter_p,
@@ -8882,17 +8911,21 @@ void mus_xen_init(void)
 	       S_make_fir_filter,
 	       S_make_firmant,
 	       S_make_formant,
-	       S_make_frame,
 	       S_make_frame "!",
+	       S_make_frame,
 	       S_make_frame_to_file,
 	       S_make_granulate,
 	       S_make_iir_filter,
 	       S_make_locsig,
-	       S_make_mixer,
 	       S_make_mixer "!",
+	       S_make_mixer,
 	       S_make_move_sound,
 	       S_make_moving_average,
+	       S_make_ncos,
 	       S_make_notch,
+	       S_make_nrxycos,
+	       S_make_nrxysin,
+	       S_make_nsin,
 	       S_make_one_pole,
 	       S_make_one_zero,
 	       S_make_oscil,
@@ -8907,15 +8940,11 @@ void mus_xen_init(void)
 	       S_make_sawtooth_wave,
 	       S_make_scalar_mixer,
 	       S_make_sine_summation,
-	       S_make_nrxycos,
-	       S_make_nrxysin,
 	       S_make_square_wave,
 	       S_make_src,
 	       S_make_ssb_am,
 	       S_make_sum_of_cosines,
 	       S_make_sum_of_sines,
-	       S_make_ncos,
-	       S_make_nsin,
 	       S_make_table_lookup,
 	       S_make_triangle_wave,
 	       S_make_two_pole,
@@ -8955,10 +8984,6 @@ void mus_xen_init(void)
 	       S_mus_hop,
 	       S_mus_increment,
 	       S_mus_input_p,
-	       S_mus_interp_type,
-	       S_mus_irandom,
-	       S_mus_length,
-	       S_mus_interpolate,
 	       S_mus_interp_all_pass,
 	       S_mus_interp_bezier,
 	       S_mus_interp_hermite,
@@ -8966,6 +8991,10 @@ void mus_xen_init(void)
 	       S_mus_interp_linear,
 	       S_mus_interp_none,
 	       S_mus_interp_sinusoidal,
+	       S_mus_interp_type,
+	       S_mus_interpolate,
+	       S_mus_irandom,
+	       S_mus_length,
 	       S_mus_location,
 	       S_mus_mix,
 	       S_mus_name,
@@ -8978,9 +9007,6 @@ void mus_xen_init(void)
 	       S_mus_random,
 	       S_mus_reset,
 	       S_mus_run,
-	       S_rv2_window,
-	       S_rv3_window,
-	       S_rv4_window,
 	       S_mus_scaler,
 	       S_mus_set_formant_radius_and_frequency,
 	       S_mus_srate,
@@ -8989,8 +9015,17 @@ void mus_xen_init(void)
 	       S_mus_xcoeffs,
 	       S_mus_ycoeff,
 	       S_mus_ycoeffs,
+	       S_ncos,
+	       S_ncos_p,
+	       S_normalize_partials,
 	       S_notch,
 	       S_notch_p,
+	       S_nrxycos,
+	       S_nrxycos_p,
+	       S_nrxysin,
+	       S_nrxysin_p,
+	       S_nsin,
+	       S_nsin_p,
 	       S_one_pole,
 	       S_one_pole_p,
 	       S_one_zero,
@@ -9007,9 +9042,14 @@ void mus_xen_init(void)
 	       S_partials_to_wave,
 	       S_partials_to_waveshape,
 	       S_parzen_window,
-	       S_phase_vocoder,
-	       S_phase_vocoder_p,
 	       S_phase_partials_to_wave,
+	       S_phase_vocoder,
+	       S_phase_vocoder_amp_increments,
+	       S_phase_vocoder_amps,
+	       S_phase_vocoder_freqs,
+	       S_phase_vocoder_p,
+	       S_phase_vocoder_phase_increments,
+	       S_phase_vocoder_phases,
 	       S_poisson_window,
 	       S_polar_to_rectangular,
 	       S_polynomial,
@@ -9019,11 +9059,6 @@ void mus_xen_init(void)
 	       S_polywave_p,
 	       S_pulse_train,
 	       S_pulse_train_p,
-	       S_phase_vocoder_amp_increments,
-	       S_phase_vocoder_amps,
-	       S_phase_vocoder_freqs,
-	       S_phase_vocoder_phase_increments,
-	       S_phase_vocoder_phases,
 	       S_radians_to_degrees,
 	       S_radians_to_hz,
 	       S_rand,
@@ -9048,12 +9083,9 @@ void mus_xen_init(void)
 	       S_sawtooth_wave,
 	       S_sawtooth_wave_p,
 	       S_seconds_to_samples,
+	       S_sine_bank,
 	       S_sine_summation,
 	       S_sine_summation_p,
-	       S_nrxycos,
-	       S_nrxycos_p,
-	       S_nrxysin,
-	       S_nrxysin_p,
 	       S_spectrum,
 	       S_square_wave,
 	       S_square_wave_p,
@@ -9065,11 +9097,6 @@ void mus_xen_init(void)
 	       S_sum_of_cosines_p,
 	       S_sum_of_sines,
 	       S_sum_of_sines_p,
-	       S_ncos,
-	       S_ncos_p,
-	       S_nsin,
-	       S_nsin_p,
-	       S_sine_bank,
 	       S_table_lookup,
 	       S_table_lookup_p,
 	       S_tap,

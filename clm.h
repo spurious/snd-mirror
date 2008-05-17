@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 4
-#define MUS_REVISION 7
-#define MUS_DATE "12-Apr-08"
+#define MUS_REVISION 8
+#define MUS_DATE "17-May-08"
 
 /*
+ * 17-May:     mus_normalize_partials.
  * 12-Apr:     added choice arg to mus_make_polywave.
  * 8-Apr:      polywave uses sine-bank if highest harmonic out of Chebyshev range.
  * 1-Mar:      mus_set_name.
@@ -594,6 +595,7 @@ bool mus_waveshape_p(mus_any *ptr);
 Float *mus_partials_to_waveshape(int npartials, Float *partials, int size, Float *table);
 
 Float *mus_partials_to_polynomial(int npartials, Float *partials, mus_polynomial_t kind);
+Float *mus_normalize_partials(int num_partials, Float *partials);
 
 mus_any *mus_make_polyshape(Float frequency, Float phase, Float *coeffs, int size);
 Float mus_polyshape(mus_any *ptr, Float index, Float fm);

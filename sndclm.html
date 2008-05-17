@@ -1625,6 +1625,7 @@ See also <a href="sndscm.html#granidoc">grani</a> and <a href="sndscm.html#displ
 
   <a class=def name="partialstowaveshape">partials-&gt;waveshape</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> partials (size *clm-table-size*)
   <a class=def name="partialstopolynomial">partials-&gt;polynomial</a> partials :optional (kind mus-chebyshev-first-kind)
+  <a class=def name="normalizepartials">normalize-partials</a> partials
 </pre>
 
 <!-- LATEX: sceq16
@@ -1765,6 +1766,8 @@ partials-&gt;polynomial with polyshape and polywave:
 
 <p>See animals.scm for many more examples along these lines.
 partials-&gt;waveshape with waveshape produces the same output as partials-&gt;polynomial with polyshape.
+normalize-partials makes sure that the component amplitudes (magnitudes) add to 1.0.  Its argument can be either a list or vct,
+but it always returns a vct.
 The <a href="sndscm.html#fmviolin">fm-violin</a> uses polyshape for the multiple FM section in some cases.
 We can get single side-band spectra by using Chebyshev polynomials of the second kind.  
 The <a href="sndscm.html#pqw">pqw</a> and <a href="sndscm.html#pqwvox">pqwvox</a> instruments use this
@@ -2742,7 +2745,23 @@ If you use ncos (or nsin) as both the carrier and modulator, you get a very simi
 the ncos(wc + ncos(wm)) output gradually approaches the unmodulated ncos output &mdash; the crunch happens on each carrier component,
 but most strongly on the earlier ones (the "effective index" is less on those components, as mentioned
 under <a href="#polywave">polywave</a>).  
-So, a pulse-train modulated by a pulse-train is a pulse-train.
+And (for some reason this makes me smile), polywave modulated by ncos behaves the same way:
+</p>
+
+<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
+<pre>
+(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> ()
+  (let ((modulator (<em class=red>make-ncos</em> 100 :n 128))
+	(carrier (<em class=red>make-polywave</em> 1000 (list 1 .5 3 .25 6 .25))))
+    (do ((i 0 (1+ i))) 
+	((= i 20000))
+      (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* .5 (<em class=red>polywave</em> carrier 
+                      (* (<a class=quiet href="#hztoradians">hz-&gt;radians</a> (* 3 100)) 
+                         (<em class=red>ncos</em> modulator 0.0))))))))
+</pre>
+</td></tr></table>
+
+<p>So, a pulse-train modulated by a pulse-train is a pulse-train.
 Are there any other cases where gen(wc + gen(wm)) = gen(wc)?  My first thought was rand, but that has a hidden
 surprise: the modulation obscures the underlying square-wave!
 </p>
@@ -6757,7 +6776,7 @@ both the time and frequency graphs will be unhappy).
 <p>These generators produce a set of n sinusoids.
 If n is less than 25 and r is constant, they could be done with polywave.  I don't
 think there would be any difference, even taking FM into account.  For n greater than 25, these are
-faster, but also similar to each other musically.
+faster, but also similar to each other musically.  
 </p>
 
 <pre style="background-color: #f2f4ff">
@@ -6986,7 +7005,24 @@ The instrument nkssber uses nkssb-interp:
 </pre>
 
 <p>This generator produces a sum of n cosines scaled by the binomial coefficients.  If n is even, the last term is halved.
+All these "finite sum" generators are a bit inflexible, and sound more or less the same.  One (desperate) countermeasure
+is amplitude modulation:
 </p>
+
+<table border=0 hspace=20>
+<tr><td>
+<pre>
+(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> ()
+  (let ((modulator (<em class=red>make-nchoosekcos</em> 100.0 1.0 4))
+	(carrier (<a class=quiet href="#make-nrcos">make-nrcos</a> 2000.0 :n 3 :r .5)))
+    (do ((i 0 (1+ i))) ((= i 20000))
+      (<a class=quiet href="#outa">outa</a> i (* .5 (<a class=quiet href="#nrcos">nrcos</a> carrier 0.0) 
+                    (<em class=red>nchoosekcos</em> modulator 0.0))))))
+</pre>
+</td><td>
+<img src="pix/nkcos.png" alt="am nchoosekcos">
+</td></tr></table>
+
 <br><br>
 
 
