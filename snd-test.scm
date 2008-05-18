@@ -49780,6 +49780,11 @@ EDITS: 1
 	      (if (not (vequal (vct 1 1 0)
 			       (run (lambda () (partials->polynomial (vct 1 1 2 .5) mus-chebyshev-second-kind)))))
 		  (snd-display ";run partials->polynomial 2nd kind: ~A" (run (lambda () (partials->polynomial (vct 1 1 2 .5) mus-chebyshev-second-kind)))))
+
+	      (let ((vals (vct 1 1 3 1)))
+		(let ((nvals (run (lambda () (normalize-partials vals)))))
+		  (if (not (vequal nvals (vct 1.000 0.500 3.000 0.500)))
+		      (snd-display ";run normalize-partials: ~A" nvals))))
 	      
 	      (let ((ho 123))
 		(let ((val (run-eval '(lambda () (lfunc)))))

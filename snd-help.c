@@ -3156,13 +3156,12 @@ static int help_name_to_url(const char *name)
 
 char *snd_url(const char *name)
 {
+#if HAVE_EXTENSION_LANGUAGE
   /* (snd-url "save-sound-as") -> "extsnd.html#savesoundas" */
   int i;
-  if (help_names) /* no ext lang, but wily user typed play-selection to the help dialog... */
-    {
-      i = help_name_to_url(name);
-      if (i >= 0) return(help_urls[i]);
-    }
+  i = help_name_to_url(name);
+  if (i >= 0) return(help_urls[i]);
+#endif
   return(NULL);
 }
 
@@ -3366,7 +3365,9 @@ char **help_name_to_xrefs(const char *name)
 {
   char **xrefs = NULL;
   int i, xref_ctr = 0, xrefs_size = 0, name_len;
-  if (!help_names) return(NULL);
+#if (!HAVE_EXTENSION_LANGUAGE)
+  return(NULL);
+#endif
   name_len = strlen(name);
   for (i = 0; i < HELP_NAMES_SIZE; i++)
     if (name[0] == help_names[i][0])
@@ -3746,7 +3747,7 @@ and its value is returned."
 		    (SCM_PROCEDURE_WITH_SETTER_P(value)))
 		  help_text = XEN_PROCEDURE_SOURCE_HELP(SCM_PROCEDURE(value));
 	      }
-	    if ((XEN_FALSE_P(help_text)) && (search) && (!already_looped) && (help_names))
+	    if ((XEN_FALSE_P(help_text)) && (search) && (!already_looped))
 	      {
 		/* we're getting desperate! */
 		int i, min_loc = 0, this_diff;
@@ -4000,12 +4001,13 @@ static XEN g_snd_urls(void)
 {
   #define H_snd_urls "(" S_snd_urls "): list of all snd names with the associated url (a list of lists)"
   XEN lst = XEN_EMPTY_LIST;
+#if HAVE_EXTENSION_LANGUAGE
   int i;
-  if (help_names)
-    for (i = 0; i < HELP_NAMES_SIZE; i++)
-      lst = XEN_CONS(XEN_CONS(C_TO_XEN_STRING(help_names[i]), 
-			      C_TO_XEN_STRING(help_urls[i])), 
-		     lst);
+  for (i = 0; i < HELP_NAMES_SIZE; i++)
+    lst = XEN_CONS(XEN_CONS(C_TO_XEN_STRING(help_names[i]), 
+			    C_TO_XEN_STRING(help_urls[i])), 
+		   lst);
+#endif
   return(lst);
 }
 

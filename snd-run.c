@@ -612,7 +612,7 @@ static xen_value *make_xen_value(int typ, int address, xen_value_constant_t cons
 
 
 #define OPTIMIZER_WARNING_BUFFER_SIZE 1024
-static char optimizer_warning_buffer[OPTIMIZER_WARNING_BUFFER_SIZE];
+static char *optimizer_warning_buffer = NULL;
 
 #ifdef __GNUC__
 static xen_value *run_warn(const char *format, ...) __attribute ((format (printf, 1, 2)));
@@ -621,6 +621,8 @@ static xen_value *run_warn(const char *format, ...) __attribute ((format (printf
 static xen_value *run_warn(const char *format, ...)
 {
   va_list ap;
+  if (!optimizer_warning_buffer)
+    optimizer_warning_buffer = (char *)CALLOC(OPTIMIZER_WARNING_BUFFER_SIZE, sizeof(char));
   run_warned = true;
   va_start(ap, format);
 #if HAVE_VSNPRINTF
@@ -10471,6 +10473,24 @@ static xen_value *partials_to_polynomial_1(ptree *prog, xen_value **args, int nu
 
 
 
+/* ---------------- normalize-partials ---------------- */
+
+static void normalize_partials_0(int *args, ptree *pt) 
+{
+  vct *v;
+  v = VCT_ARG_1;
+  mus_normalize_partials(v->length / 2, v->data);
+  VCT_RESULT = v;
+}
+
+
+static xen_value *normalize_partials_1(ptree *prog, xen_value **args, int num_args)
+{
+  return(package(prog, R_VCT, normalize_partials_0, "normalize_partials_0", args, 1));
+}
+
+
+
 /* ---------------- src ---------------- */
 
 GEN_P(src)
@@ -13188,6 +13208,7 @@ static void init_walkers(void)
   INIT_WALKER(S_make_polywave,       make_walker(make_polywave_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
 
   INIT_WALKER(S_partials_to_polynomial, make_walker(partials_to_polynomial_1, NULL, NULL, 1, 2, R_VCT, false, 2, R_VCT, R_INT));
+  INIT_WALKER(S_normalize_partials,  make_walker(normalize_partials_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_VCT));
 
 
   /* -------- sndlib funcs */
@@ -13506,6 +13527,7 @@ void g_init_run(void)
   XEN_DEFINE_PROCEDURE(S_show_ptree,    g_show_ptree_w,    1, 0, 0, H_show_ptree);
 		       
   XEN_YES_WE_HAVE("run");
+
 #if HAVE_GAUCHE
   walker_hash_table = Scm_MakeHashTableSimple(SCM_HASH_EQ, 1024);
   xen_gauche_permanent_object(walker_hash_table);
