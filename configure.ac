@@ -557,6 +557,13 @@ else
        AC_DEFINE(HAVE_XSHAPEQUERYEXTENSION)
       ], , $TEST_LIBS)
 
+    # search for libXp and libXm may need libXft so...
+    AC_CHECK_LIB(Xft, XftFontOpen, [
+	         X_PRE_LIBS="$X_PRE_LIBS -lXft"
+	         TEST_PRE_LIBS="$TEST_PRE_LIBS -lXft"
+                 TEST_LIBS="$TEST_PRE_LIBS $TEST_POST_LIBS"
+		 ], , $TEST_LIBS)
+
     if test "$with_static_motif" = yes ; then
       if test x$motif_prefix != x ; then
       AC_CHECK_FILE($motif_prefix/lib/libXm.a,[
@@ -614,8 +621,8 @@ else
 	AC_MSG_RESULT(no),
 	[
 	  AC_MSG_RESULT(yes)
-	  X_PRE_LIBS="$X_PRE_LIBS -lXmu -lXft -L/usr/local/lib -liconv -lpng -ljpeg"
-	  TEST_PRE_LIBS="$TEST_PRE_LIBS -lXmu -lXft -L/usr/local/lib -liconv -lpng -ljpeg"
+	  X_PRE_LIBS="$X_PRE_LIBS -lXmu -L/usr/local/lib -liconv -lpng -ljpeg"
+	  TEST_PRE_LIBS="$TEST_PRE_LIBS -lXmu -L/usr/local/lib -liconv -lpng -ljpeg"
 	],
 	$TEST_LIBS)
 
