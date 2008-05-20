@@ -224,6 +224,50 @@ rm -f config.cache
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
+echo ' -----                --with-forth                                           ---- '
+echo ' -------------------------------------------------------------------------------- '
+./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-forth
+make
+./snd --version
+./snd -noinit --features "'clm 'snd-forth 'snd-motif"
+make allclean
+
+echo ' '
+echo ' '
+echo ' -------------------------------------------------------------------------------- '
+echo ' -----                --with-forth --enable-snd-debug --with-static-xm --with-editres --with-gl ---- '
+echo ' -------------------------------------------------------------------------------- '
+./configure --quiet --with-forth --enable-snd-debug --with-static-xm --with-editres --with-gl LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --with-midi
+make
+./snd --version
+./snd -noinit --features "'clm 'snd-forth 'xm 'gl"
+make allclean
+
+echo ' '
+echo ' '
+echo ' -------------------------------------------------------------------------------- '
+echo ' -----                --with-forth --with-gtk --with-static-xg --with-gl      --- '
+echo ' -------------------------------------------------------------------------------- '
+./configure --quiet --with-forth --with-gtk --with-static-xg --with-gl LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
+make
+./snd --version
+./snd -noinit --features "'clm 'snd-gtk 'xg 'gl"
+make allclean
+
+echo ' '
+echo ' '
+echo ' -------------------------------------------------------------------------------- '
+echo ' -----                --with-forth --with-no-gui                              --- '
+echo ' -------------------------------------------------------------------------------- '
+./configure --quiet --with-forth --with-no-gui LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
+make
+./snd --version
+./snd -noinit --features "'clm 'snd-forth 'snd-nogui"
+make allclean
+
+echo ' '
+echo ' '
+echo ' -------------------------------------------------------------------------------- '
 echo ' ----                 --without-guile --without-ruby                        ----  '
 echo ' -------------------------------------------------------------------------------- '
 ./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --without-guile --without-ruby
@@ -1275,6 +1319,10 @@ make clean
 ./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --disable-deprecated
 make
 make clean
+./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-forth
+make
+make clean
+
 
 cp ~/libxm/* .
 echo ' -------------------------------------------------------------------------------- '
@@ -1295,6 +1343,9 @@ make clean
 ./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --disable-deprecated
 make
 make clean
+./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-forth
+make
+make clean
 ./configure --quiet --with-gtk
 make
 make clean
@@ -1302,6 +1353,9 @@ make clean
 make
 make clean
 ./configure --quiet --with-gauche --with-gtk
+make
+make clean
+./configure --quiet --with-forth --with-gtk
 make
 make clean
 ./configure --quiet --without-guile --without-ruby --without-gauche --without-forth --with-gtk

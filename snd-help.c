@@ -193,12 +193,12 @@ static char *xm_version(void)
 #endif
 #if HAVE_RUBY
   #if USE_MOTIF
-    if (rb_const_defined(rb_cObject, rb_intern("Xm_Version")))
-      xm_val = XEN_EVAL_C_STRING("Xm_Version");
+      if (rb_const_defined(rb_cObject, rb_intern("Xm_Version")))
+	xm_val = XEN_EVAL_C_STRING((char *)"Xm_Version");
   #else
     #if USE_GTK
       if (rb_const_defined(rb_cObject, rb_intern("Xg_Version")))
-        xm_val = XEN_EVAL_C_STRING("Xg_Version");
+        xm_val = XEN_EVAL_C_STRING((char *)"Xg_Version");
     #endif
   #endif
 #endif
@@ -500,7 +500,7 @@ void about_snd_help(void)
   files = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING("*snd-loaded-files*")), 400);
 #endif
 #if HAVE_RUBY
-  features = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING("$\".join(' ')")), 400);
+  features = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING((char *)"$\".join(' ')")), 400);
 #endif
 #if HAVE_FORTH
   features = word_wrap(XEN_AS_STRING(XEN_VARIABLE_REF("*features*")), 400);
@@ -512,6 +512,9 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+20-May:     rt-various.[ch], rt-coroutines.scm, rt-stalin.scm, rt-DotEmacs, and\n\
+              many other changes thanks to Kjetil.\n\
+         many const char* changes for g++ 4.3.0.\n\
 17-May:  normalize-partials is now built-in.\n\
 12-May:  expandn (clm-ins.scm) thanks to Michael Klingbeil.\n\
 10-May:  merged green.scm into generators.scm.\n\
@@ -3845,8 +3848,8 @@ and its value is returned."
 	      }
 	    else
 	      {
-		subject = S_snd_help;
-		str = H_snd_help;
+		subject = (char *)S_snd_help;
+		str = (char *)H_snd_help;
 	      }
 	  }
       }

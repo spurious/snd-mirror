@@ -901,7 +901,7 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 #define XEN_HOOK_PROCEDURES(a)          xen_rb_hook_to_a(a)
 #define XEN_CLEAR_HOOK(a)               xen_rb_hook_reset_hook(a)
 #define XEN_HOOKED(a)                   (!xen_rb_hook_empty_p(a))
-#define XEN_DEFINE_HOOK(Name, Arity, Help) xen_rb_create_hook((char *)(Name), Arity, Help)
+#define XEN_DEFINE_HOOK(Name, Arity, Help) xen_rb_create_hook((char *)(Name), Arity, (char *)Help)
 #define XEN_DEFINE_SIMPLE_HOOK(Arity)   xen_rb_hook_c_new((char *)"simple_hook", Arity, NULL);
 
 /* ---- vectors ---- */

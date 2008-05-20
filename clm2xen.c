@@ -1063,7 +1063,7 @@ enum {MUS_DATA_WRAPPER, MUS_INPUT_FUNCTION, MUS_ANALYZE_FUNCTION, MUS_EDIT_FUNCT
 static XEN_MARK_OBJECT_TYPE mark_mus_xen(XEN obj) 
 {
 #if HAVE_GAUCHE
-  static char *keys[6] = {"mus-data", "mus-input", "mus-analyze", "mus-edit", "mus-synthesize", "mus-self"};
+  static const char *keys[6] = {"mus-data", "mus-input", "mus-analyze", "mus-edit", "mus-synthesize", "mus-self"};
 #endif
   mus_xen *ms;
 #if HAVE_RUBY

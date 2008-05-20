@@ -2840,9 +2840,9 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 #endif
 
 #if HAVE_RUBY
-  XEN_EVAL_C_STRING("def clm_print(str, *args)\n\
-                       snd_print format(str, *args)\n\
-                       end");
+  XEN_EVAL_C_STRING((char *)"def clm_print(str, *args)\n\
+                               snd_print format(str, *args)\n\
+                               end");
 #endif
 
 #if HAVE_FORTH
@@ -2917,7 +2917,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
       /* this code stolen from ruby.c */
       char *str, *buf;
       int i, j = 0, len;
-      str = RUBY_SEARCH_PATH;
+      str = (char *)(RUBY_SEARCH_PATH);
       len = snd_strlen(str);
       buf = (char *)CALLOC(len + 1, sizeof(char));
       for (i = 0; i < len; i++)

@@ -1,5 +1,8 @@
 Snd change log
 
+ 20-May:     rt-various.[ch], rt-coroutines.scm, rt-stalin.scm, rt-DotEmacs, and
+               many other changes thanks to Kjetil.
+	     many const char* changes for g++ 4.3.0.
  17-May:     normalize-partials is now built-in.
  12-May:     expandn (clm-ins.scm) thanks to Michael Klingbeil.
  10-May:     merged green.scm into generators.scm.
