@@ -1275,10 +1275,10 @@ static void save_state_file_text(prefs_info *prf)
   char *str, *file = NULL;
   str = GET_TEXT(prf->text);
   if ((!str) || (!(*str))) 
-    file = DEFAULT_SAVE_STATE_FILE; /* local, not freed */
-  else file = str;
+    file = copy_string(DEFAULT_SAVE_STATE_FILE);
+  else file = copy_string(str);
   if (save_state_file(ss)) FREE(save_state_file(ss));
-  in_set_save_state_file(copy_string(file));
+  in_set_save_state_file(file);
   if (str) {FREE_TEXT(str);}
 }
 
@@ -3122,6 +3122,7 @@ static char *raw_data_format_to_string(int format)
 	    }
 	  else rtn[i] = name[j];
 	}
+      free(name);
       return(rtn);
     }
   return(copy_string("unknown"));

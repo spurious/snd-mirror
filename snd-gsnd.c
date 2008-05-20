@@ -342,16 +342,16 @@ static void make_pixmaps(void)
       int k;
       wn = MAIN_WINDOW(ss);
 
-      mini_lock = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, mini_lock_bits());
-      stop_sign = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, stop_sign_bits());
-      blank = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, blank_bits());
-      speed_r = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, speed_r_bits());
-      speed_l = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, speed_l_bits());
+      mini_lock = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, (gchar **)mini_lock_bits());
+      stop_sign = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, (gchar **)stop_sign_bits());
+      blank = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, (gchar **)blank_bits());
+      speed_r = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, (gchar **)speed_r_bits());
+      speed_l = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, (gchar **)speed_l_bits());
       for (k = 0; k < NUM_BOMBS; k++) 
-	bombs[k] = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, mini_bomb_bits(k));
+	bombs[k] = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, (gchar **)mini_bomb_bits(k));
 #if (!USE_CAIRO)
       for (k = 0; k < NUM_HOURGLASSES; k++) 
-	hourglasses[k] = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, mini_glass_bits(k));
+	hourglasses[k] = gdk_pixmap_create_from_xpm_d(wn, NULL, NULL, (gchar **)mini_glass_bits(k));
 #endif
       mini_lock_allocated = true;
     }
@@ -1287,7 +1287,7 @@ static gboolean filter_drawer_button_release(GtkWidget *w, GdkEventButton *ev, g
 }
 
 
-void set_filter_text(snd_info *sp, char *str)
+void set_filter_text(snd_info *sp, const char *str)
 {
   if (!(IS_PLAYER(sp)))
     {
@@ -1416,7 +1416,7 @@ static void filter_activate_callback(GtkWidget *w, gpointer context)
   str = (char *)gtk_entry_get_text(GTK_ENTRY(w));
   if (sp->filter_control_envelope) sp->filter_control_envelope = free_env(sp->filter_control_envelope);
   redirect_errors_to(errors_to_minibuffer, (void *)sp);
-  sp->filter_control_envelope = string_to_env(str);
+  sp->filter_control_envelope = string_to_env((const char *)str);
   redirect_errors_to(NULL, NULL);
   if (!(sp->filter_control_envelope)) /* maybe user cleared text field? */
     sp->filter_control_envelope = default_env(sp->filter_control_xmax, 1.0);

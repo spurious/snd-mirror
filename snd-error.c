@@ -1,11 +1,11 @@
 #include "snd.h"
 
-static char *io_error_names[IO_ERROR_NUM] = {"no error", "save-hook cancellation", "bad channel",
-					     "can't reopen file", "too many open files", "unknown sndlib error", 
-					     "no memory", "can't open", "no filename", "bad data format", "bad header type", "sndlib uninitialized", 
-					     "not a sound file", "file closed", "write error", "interrupted", "can't close", 
-					     "bad header", "disk full", "write protected", "can't read selection file",
-					     "need write confirmation", "no changes", "io edit-hook cancellation", "can't create file"
+static const char *io_error_names[IO_ERROR_NUM] = {"no error", "save-hook cancellation", "bad channel",
+						   "can't reopen file", "too many open files", "unknown sndlib error", 
+						   "no memory", "can't open", "no filename", "bad data format", "bad header type", "sndlib uninitialized", 
+						   "not a sound file", "file closed", "write error", "interrupted", "can't close", 
+						   "bad header", "disk full", "write protected", "can't read selection file",
+						   "need write confirmation", "no changes", "io edit-hook cancellation", "can't create file"
 };
 
 const char *io_error_name(io_error_t err)
@@ -170,7 +170,7 @@ static void snd_warning_1(const char *msg)
 static int snd_error_buffer_size = 1024;
 static char *snd_error_buffer = NULL;
 
-void snd_warning(char *format, ...)
+void snd_warning(const char *format, ...)
 {
   int bytes_needed = 0;
   va_list ap;
@@ -206,7 +206,7 @@ void snd_warning_without_format(const char *msg)
 }
 
 
-void snd_error(char *format, ...)
+void snd_error(const char *format, ...)
 {
   int bytes_needed = 0;
   va_list ap;

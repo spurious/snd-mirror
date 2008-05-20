@@ -1143,7 +1143,7 @@ int mus_file_to_array(const char *filename, int chan, int start, int samples, mu
 }
 
 
-char *mus_array_to_file_with_error(const char *filename, mus_sample_t *ddata, int len, int srate, int channels)
+const char *mus_array_to_file_with_error(const char *filename, mus_sample_t *ddata, int len, int srate, int channels)
 {
   /* put ddata into a sound file, taking byte order into account */
   /* assume ddata is interleaved already if more than one channel */
@@ -1175,7 +1175,7 @@ char *mus_array_to_file_with_error(const char *filename, mus_sample_t *ddata, in
 
 int mus_array_to_file(const char *filename, mus_sample_t *ddata, int len, int srate, int channels)
 {
-  char *errmsg;
+  const char *errmsg;
   errmsg = mus_array_to_file_with_error(filename, ddata, len, srate, channels);
   if (errmsg)
     return(mus_error(MUS_CANT_OPEN_FILE, errmsg));
@@ -1203,7 +1203,7 @@ int mus_file_to_float_array(const char *filename, int chan, off_t start, int sam
 
 int mus_float_array_to_file(const char *filename, Float *ddata, int len, int srate, int channels)
 {
-  char *errmsg;
+  const char *errmsg;
 #if SNDLIB_USE_FLOATS
   errmsg = mus_array_to_file_with_error(filename, ddata, len, srate, channels);
 #else

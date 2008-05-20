@@ -52,7 +52,7 @@ static void key_bind(prefs_info *prf, char *(*binder)(char *key, bool c, bool m,
 static void clear_prefs_dialog_error(void);
 static void scale_set_color(prefs_info *prf, color_t pixel);
 static char *get_text(GtkWidget *w);
-static void set_text(GtkWidget *w, char *value);
+static void set_text(GtkWidget *w, const char *value);
 static void post_prefs_error(const char *msg, prefs_info *data);
 #ifdef __GNUC__
   static void va_post_prefs_error(const char *msg, prefs_info *data, ...) __attribute__ ((format (printf, 1, 0)));
@@ -95,7 +95,7 @@ static void sg_entry_set_text(GtkEntry* entry, const char *text)
 }
 
 
-static void set_text(GtkWidget *w, char *value)
+static void set_text(GtkWidget *w, const char *value)
 {
   if (GTK_IS_ENTRY(w))
     sg_entry_set_text(GTK_ENTRY(w), value);

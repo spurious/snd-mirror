@@ -54,6 +54,7 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --with-ruby-prefix    set location of Ruby
 #   --with-gauche         try to use Gauche as the extension language
 #   --with-hobbit         include hobbit-style function arity checking
+#   --with-rt             make Snd capable of running Snd-Rt
 #   --with-static-xm      include xm module
 #   --with-temp-dir       directory to use for temp files
 #   --with-save-dir       directory to use for saved-state files
@@ -212,6 +213,28 @@ AC_ARG_WITH(snd-as-pd-external,
            esac
 
 	fi])
+
+RT_LIBS=""
+
+AC_ARG_WITH(rt,
+	[  --with-rt	  makes Snd capable of running Snd-Rt],
+  	[if test "$with_rt" = yes ; then
+
+           AC_CHECK_HEADER(rollendurchmesserzeitsammler.h)
+           AC_CHECK_LIB(rollendurchmesserzeitsammler,tar_get_dynamic_roots_for)
+
+	   RT_LIBS="-lrollendurchmesserzeitsammler"
+           OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES rollendurchmesserzeitsammler"
+
+	   [with_jack=yes]
+           [with_guile=yes]
+
+	   AC_DEFINE(WITH_RT)
+
+	fi])
+
+AC_SUBST(RT_LIBS)
+
 
 # if mingw add -mwindows to the load flags
 case "$host" in

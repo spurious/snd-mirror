@@ -86,7 +86,7 @@ static void post_prefs_error(const char *msg, prefs_info *data);
 #define GET_TOGGLE(Toggle)        (XmToggleButtonGetState(Toggle) == XmSET)
 #define SET_TOGGLE(Toggle, Value) XmToggleButtonSetState(Toggle, Value, false)
 #define GET_TEXT(Text)            XmTextFieldGetString(Text)
-#define SET_TEXT(Text, Val)       XmTextFieldSetString(Text, Val)
+#define SET_TEXT(Text, Val)       XmTextFieldSetString(Text, (char *)Val)
 #define FREE_TEXT(Val)            XtFree(Val)
 #define SET_SCALE(Value)          XmScaleSetValue(prf->scale, (int)(100 * Value))
 #define SET_SENSITIVE(Wid, Val)   XtSetSensitive(Wid, Val)
@@ -836,7 +836,7 @@ static Widget make_row_radio_box(prefs_info *prf,
   XtSetArg(args[n], XmNmarginHeight, 0); n++;
   XtSetArg(args[n], XmNorientation, XmHORIZONTAL); n++;
   XtSetArg(args[n], XmNpacking, XmPACK_TIGHT); n++;
-  w = XmCreateRadioBox(box, "radio-box", args, n);
+  w = XmCreateRadioBox(box, (char *)"radio-box", args, n);
   XtManageChild(w);
 
   for (i = 0; i < num_labels; i++)
@@ -1163,12 +1163,12 @@ static prefs_info *prefs_row_with_list(const char *label, const char *varname, c
   XtSetArg(args[n], XmNshadowThickness, 0); n++;
   XtSetArg(args[n], XmNhighlightThickness, 0); n++;
   XtSetArg(args[n], XmNmarginHeight, 0); n++;
-  sbar = XmCreateMenuBar(box, "menuBar", args, n);
+  sbar = XmCreateMenuBar(box, (char *)"menuBar", args, n);
   XtManageChild(sbar);
 
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
-  prf->list_menu = XmCreatePulldownMenu(sbar, "sort-menu", args, n);
+  prf->list_menu = XmCreatePulldownMenu(sbar, (char *)"sort-menu", args, n);
 
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -1777,7 +1777,7 @@ widget_t start_preferences_dialog(void)
       XtSetArg(args[n], XmNwidth, (STARTUP_WIDTH < width) ? STARTUP_WIDTH : ((Dimension)(width - 50))); n++;
       XtSetArg(args[n], XmNheight, (STARTUP_HEIGHT < height) ? STARTUP_HEIGHT : ((Dimension)(height - 50))); n++;
     }
-    preferences_dialog = XmCreateTemplateDialog(MAIN_PANE(ss), "preferences", args, n);
+    preferences_dialog = XmCreateTemplateDialog(MAIN_PANE(ss), (char *)"preferences", args, n);
 
     n = 0;
     XtSetArg(args[n], XmNbackground, ss->sgx->reset_button_color); n++;
@@ -1819,7 +1819,7 @@ widget_t start_preferences_dialog(void)
     XtSetArg(args[n], XmNbottomWidget, XmMessageBoxGetChild(preferences_dialog, XmDIALOG_SEPARATOR)); n++;
     XtSetArg(args[n], XmNscrollingPolicy, XmAUTOMATIC); n++;
     XtSetArg(args[n], XmNscrollBarDisplayPolicy, XmSTATIC); n++;
-    scroller = XmCreateScrolledWindow(preferences_dialog, "pref-scroller", args, n);
+    scroller = XmCreateScrolledWindow(preferences_dialog, (char *)"pref-scroller", args, n);
     XtManageChild(scroller);
     
     XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
@@ -2868,7 +2868,7 @@ widget_t start_preferences_dialog(void)
 
   {
     Atom wm_delete_window;
-    wm_delete_window = XmInternAtom(MAIN_DISPLAY(ss), "WM_DELETE_WINDOW", false);
+    wm_delete_window = XmInternAtom(MAIN_DISPLAY(ss), (char *)"WM_DELETE_WINDOW", false);
     XmAddWMProtocolCallback(XtParent(preferences_dialog), wm_delete_window, wm_delete_callback, NULL);
   }
 

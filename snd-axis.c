@@ -1290,7 +1290,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
       Float minlx = 0.0, maxlx, fap_range, log_range, lscale = 1.0, curlx;
       int logx;
       int y0, majy, miny, i;
-      char *label = NULL;
+      const char *label = NULL;
       Float freq = 0.0, freq10 = 0.0;
       /* get min (log-freq or spectro-start), max, add major ticks and brief labels, then if room add log-style minor ticks (100's, 1000's) */
       y0 = ap->x_axis_y0;
@@ -1352,7 +1352,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
       Float minlx = 0.0, maxlx, fap_range, log_range, lscale = 1.0, curly;
       int logy;
       int x0, majx, minx, i;
-      char *label = NULL;
+      const char *label = NULL;
       Float freq = 0.0, freq10 = 0.0;
       /* get min (log-freq or spectro-start), max, add major ticks and brief labels, then if room add log-style minor ticks (100's, 1000's) */
       x0 = ap->y_axis_x0;
@@ -1416,7 +1416,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 
 
 axis_info *make_axis_info (chan_info *cp, double xmin, double xmax, Float ymin, Float ymax, 
-			   char *xlabel, double x0, double x1, Float y0, Float y1, axis_info *old_ap)
+			   const char *xlabel, double x0, double x1, Float y0, Float y1, axis_info *old_ap)
 {
   axis_info *ap;
   if (old_ap) 

@@ -2214,9 +2214,9 @@ Does not work.
 	"#include <_sndlib.h>"
 	(proto->public "int mus_audio_api(void)")
 	(variables->public
-	 (<int> JACK_API ALSA_API OSS_API)))
+	 (<int> MUS_JACK_API MUS_ALSA_API MUS_OSS_API)))
 
-(if (= (mus_audio_api) (JACK_API))
+(if (= (mus_audio_api) (MUS_JACK_API))
     (load-from-path "rt-player.scm"))
 
 

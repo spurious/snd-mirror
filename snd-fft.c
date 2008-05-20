@@ -178,7 +178,7 @@ static Float sym5[8] = {0.066291265, -0.19887379, -0.15467963, 0.994369, 0.99436
 static Float sym6[16] = {-0.0030210863, -0.009063259, -0.016831767, 0.07466399, 0.03133298, -0.30115914, -0.026499243, 
 			 0.9516422, 0.9516422, -0.026499243, -0.30115914, 0.03133298, 0.07466399, -0.016831767, -0.009063259, -0.0030210863};
 
-static char *wavelet_names_1[NUM_WAVELETS] =
+static const char *wavelet_names_1[NUM_WAVELETS] =
   {"daub4", "daub6", "daub8", "daub10", "daub12", "daub14", "daub16", "daub18", "daub20",
    "battle-lemarie", "burt-adelson", "beylkin", "coif2", "coif4", "coif6",
    "sym2", "sym3", "sym4", "sym5", "sym6",
@@ -198,8 +198,8 @@ static Float *wavelet_data[NUM_WAVELETS] =
    Daub21, Daub22, Daub23, Daub24, Daub25, Daub26, Daub27, Daub28, Daub29, Daub30,
    Daub31, Daub32, Daub33, Daub34, Daub35, Daub36, Daub37, Daub38};
 
-char *wavelet_name(int i) {return(wavelet_names_1[i]);}
-char **wavelet_names(void) {return(wavelet_names_1);}
+const char *wavelet_name(int i) {return(wavelet_names_1[i]);}
+const char **wavelet_names(void) {return(wavelet_names_1);}
 
 
 
@@ -496,9 +496,9 @@ Float fft_beta_max(mus_fft_window_t win) {return(beta_maxes[(int)win]);}
 
 
 
-static char *transform_type_names[NUM_BUILTIN_TRANSFORM_TYPES] = {"Fourier", "Wavelet", "Walsh", "Autocorrelate", "Cepstrum", "Haar"};
+static const char *transform_type_names[NUM_BUILTIN_TRANSFORM_TYPES] = {"Fourier", "Wavelet", "Walsh", "Autocorrelate", "Cepstrum", "Haar"};
 
-static char *transform_type_program_names[NUM_BUILTIN_TRANSFORM_TYPES] = {
+static const char *transform_type_program_names[NUM_BUILTIN_TRANSFORM_TYPES] = {
   S_fourier_transform, S_wavelet_transform, S_walsh_transform, S_autocorrelation, S_cepstrum, S_haar_transform};
 
 
@@ -580,7 +580,7 @@ bool transform_p(int type)
 
 /* delete-transform would also need to remove its name from the various UI lists */
 
-char *transform_name(int type)
+const char *transform_name(int type)
 {
   if (transform_p(type))
     {
@@ -594,7 +594,7 @@ char *transform_name(int type)
 }
 
 
-char *transform_program_name(int type)
+const char *transform_program_name(int type)
 {
   if (transform_p(type))
     {
@@ -608,7 +608,7 @@ char *transform_program_name(int type)
 }
 
 
-static char *added_transform_xlabel(int type)
+static const char *added_transform_xlabel(int type)
 {
   added_transform *af;
   af = type_to_transform(type);
@@ -688,7 +688,7 @@ int transform_position_to_type(int pos)
 }
 
 
-static char *spectro_xlabel(chan_info *cp)
+static const char *spectro_xlabel(chan_info *cp)
 {
   switch (cp->transform_type)
     {
@@ -721,7 +721,7 @@ static void make_sonogram_axes(chan_info *cp)
     {
       axis_info *ap;
       Float max_freq, min_freq, yang;
-      char *xlabel;
+      const char *xlabel;
       ap = cp->axis;
       if (cp->transform_type == FOURIER)
 	{
@@ -998,7 +998,7 @@ static void display_fft(fft_state *fs)
   chan_info *cp;
   int di;
   Float max_freq = 0.0, min_freq = 0.0, max_val, min_val, data_max = 0.0, scale = 1.0;
-  char *xlabel;
+  const char *xlabel;
   fft_info *nfp;
   Float *data, *tdata;
   chan_info *ncp;

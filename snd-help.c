@@ -2,8 +2,8 @@
 #include "sndlib-strings.h"
 #include "clm-strings.h"
 
-static char **snd_xrefs(const char *topic);
-static char **snd_xref_urls(const char *topic);
+static const char **snd_xrefs(const char *topic);
+static const char **snd_xref_urls(const char *topic);
 
 static char **snd_itoa_strs = NULL;
 static int snd_itoa_ctr = 0, snd_itoa_size = 0;
@@ -101,7 +101,7 @@ static char *vstrcat(char *arg1, ...)
 }
 
 
-static char *main_snd_xrefs[13] = {
+static const char *main_snd_xrefs[13] = {
   "{CLM}: sound synthesis",
   "{CM}: algorithmic composition",
   "{CMN}: music notation",
@@ -117,7 +117,7 @@ static char *main_snd_xrefs[13] = {
   NULL
 };
 
-static char *main_snd_xref_urls[13] = {
+static const char *main_snd_xref_urls[13] = {
   "grfsnd.html#sndwithclm",
   "grfsnd.html#sndwithcm",
   "sndscm.html#musglyphs",
@@ -216,7 +216,7 @@ static char *xm_version(void)
       if (snd_itoa_ctr < snd_itoa_size) snd_itoa_strs[snd_itoa_ctr++] = version;
       return(version);
     }
-  return("");
+  return(copy_string(""));
 }
 
 
@@ -253,7 +253,7 @@ static char *gl_version(void)
       if (snd_itoa_ctr < snd_itoa_size) snd_itoa_strs[snd_itoa_ctr++] = version;
       return(version);
     }
-  return("");
+  return(copy_string(""));
 }
 
 
@@ -286,18 +286,18 @@ static char *glx_version(void)
       Window win;
       GLXContext glCtx;
       dpy = XOpenDisplay(NULL);
-      if (!dpy) return("");
+      if (!dpy) return(copy_string(""));
       scrn = DefaultScreen(dpy);
       visInfo = glXChooseVisual(dpy, scrn, glAttribs);
-      if (!visInfo) return("");
+      if (!visInfo) return(copy_string(""));
       glCtx = glXCreateContext(dpy, visInfo, 0, True);
-      if (!glCtx) return("");
+      if (!glCtx) return(copy_string(""));
       win = XCreateSimpleWindow(dpy, RootWindow(dpy, scrn), 0, 0, 1, 1, 0, 0, 0);
       glXMakeCurrent(dpy, win, glCtx);
       mus_snprintf(version, VERSION_SIZE, " %s", glGetString(GL_VERSION));
       return(version);
 #else
-      return("");
+      return(copy_string(""));
 #endif
     }
 
@@ -556,13 +556,14 @@ static bool append_key_help(const char *name, int key, int state, bool cx_extend
   pos = in_user_keymap(key, state, cx_extended);
   if (pos != -1)
     {
-      char *msg;
+      char *msg, *tmp = NULL;
       msg = mus_format("%s%s is bound to %s",
 		       (first_time) ? "\n\ncurrently " : "\n          ",
 		       name,
-		       key_binding_description(key, state, cx_extended));
+		       tmp = key_binding_description(key, state, cx_extended));
       snd_help_append(msg);
       FREE(msg);
+      if (tmp) FREE(tmp);
       return(false);
     }
   return(first_time);
@@ -725,7 +726,7 @@ File:Revert is the same as undo all edits.",
 
 /* ---------------- Sync and Unite ---------------- */
 
-static char *sync_xrefs[5] = {
+static const char *sync_xrefs[5] = {
   "sound sync field: {" S_sync "}, {" S_sync_max "}",
   "mark sync field: {" S_mark_sync "}, {" S_mark_sync_max "}, {mark-sync-color}, {" S_syncd_marks "}",
   "mix sync field: {" S_mix_sync "}",
@@ -789,7 +790,7 @@ superimposed on each other.",
 
 /* ---------------- Debug ---------------- */
 
-static char *debug_xrefs[8] = {
+static const char *debug_xrefs[8] = {
   "C debugging: {gdb}",
   "Scheme/Ruby/Forth debugging: {snd-debug}",
   "CLM Instrument debugging: {variable-display}",
@@ -799,7 +800,7 @@ static char *debug_xrefs[8] = {
   "Print statement: {" S_snd_print "}",
   NULL};
 
-static char *debug_urls[8] = {
+static const char *debug_urls[8] = {
   "extsnd.html#cdebugging",
   "sndscm.html#debugdoc",
   "sndscm.html#variabledisplay",
@@ -1055,7 +1056,7 @@ viewing angles and so on, but it's always easier to use the View:Orientation dia
 
 /* ---------------- Control Panel ---------------- */
 
-static char *control_xrefs[9] = {
+static const char *control_xrefs[9] = {
   "various control panel variables: {Control panel}",
   "amplitude: {" S_scale_by "}",
   "speed or srate: {" S_src_sound "}",
@@ -1404,7 +1405,7 @@ the usual buttons along the bottom to start or stop the recorder, provide help, 
 
 /* ---------------- Headers etc ---------------- */
 
-static char *header_and_data_xrefs[10] = {
+static const char *header_and_data_xrefs[10] = {
   "data format discussion: {" S_data_format "}",
   "data format constants: {" S_mus_data_format_name "}",
   "header type discussion: {" S_header_type "}",
@@ -1416,7 +1417,7 @@ static char *header_and_data_xrefs[10] = {
   "{Sndlib}: underlying support",
   NULL};
 
-static char *header_and_data_urls[10] = {
+static const char *header_and_data_urls[10] = {
   "extsnd.html#snddataformat",
   "extsnd.html#soundformatname",
   "extsnd.html#sndheadertype",
@@ -1474,7 +1475,7 @@ its header type.",
 
 /* ---------------- Initialization File ---------------- */
 
-static char *init_file_xrefs[6] = {
+static const char *init_file_xrefs[6] = {
   "{X resources}:  .Xdefaults settings",
   "{Invocation flags}", 
   "~/.snd: {Initialization file}",
@@ -1482,7 +1483,7 @@ static char *init_file_xrefs[6] = {
   "examples of ~/.snd",
   NULL};
 
-static char *init_file_urls[6] = {
+static const char *init_file_urls[6] = {
   "grfsnd.html#sndresources",
   "grfsnd.html#sndswitches",
   "grfsnd.html#sndinitfile",
@@ -1516,7 +1517,7 @@ the gtk resource stuff in Snd.gtkrc.",
 
 /* ---------------- Key Bindings ---------------- */
 
-static char *key_xrefs[4] = {
+static const char *key_xrefs[4] = {
   "To change a key binding: {" S_bind_key "}",
   "To undefine a key: {" S_unbind_key "}",
   "Current key binding: {" S_key_binding "}",
@@ -1524,6 +1525,9 @@ static char *key_xrefs[4] = {
 
 static void show_key_help(int key, int state, bool cx, char *help)
 {
+  /* this frees the help string since it's always coming from key_binding_description, and
+   *   is a bother to handle in the loops that call us
+   */
   if (help)
     {
       char buf[1024];
@@ -1531,11 +1535,12 @@ static void show_key_help(int key, int state, bool cx, char *help)
       make_key_name(cbuf, 256, key, state, cx);
       mus_snprintf(buf, 1024, "\n%s: %s", cbuf, help);
       snd_help_append(buf);
+      FREE(help);
     }
 }
 
 
-static bool find_unbuckified_keys(int key, int state, bool cx, char *ignored, XEN func)
+static bool find_unbuckified_keys(int key, int state, bool cx, XEN func)
 {
   if ((key > 256) && (state == 0) && (!cx) && (XEN_BOUND_P(func)))
     show_key_help(key, state, cx, key_binding_description(key, state, cx));
@@ -1543,7 +1548,7 @@ static bool find_unbuckified_keys(int key, int state, bool cx, char *ignored, XE
 }
 
 
-static bool find_buckified_keys(int key, int state, bool cx, char *ignored, XEN func)
+static bool find_buckified_keys(int key, int state, bool cx, XEN func)
 {
   if ((key > 256) && (state == snd_ControlMask) && (!cx) && (XEN_BOUND_P(func)))
     show_key_help(key, state, cx, key_binding_description(key, state, cx));
@@ -1551,7 +1556,7 @@ static bool find_buckified_keys(int key, int state, bool cx, char *ignored, XEN 
 }
 
 
-static bool find_unbuckified_cx_keys(int key, int state, bool cx, char *ignored, XEN func)
+static bool find_unbuckified_cx_keys(int key, int state, bool cx, XEN func)
 {
   if ((key > 256) && (state == 0) && (cx) && (XEN_BOUND_P(func)))
     show_key_help(key, state, cx, key_binding_description(key, state, cx));
@@ -1559,7 +1564,7 @@ static bool find_unbuckified_cx_keys(int key, int state, bool cx, char *ignored,
 }
 
 
-static bool find_buckified_cx_keys(int key, int state, bool cx, char *ignored, XEN func)
+static bool find_buckified_cx_keys(int key, int state, bool cx, XEN func)
 {
   if ((key > 256) && (state == snd_ControlMask) && (cx) && (XEN_BOUND_P(func)))
     show_key_help(key, state, cx, key_binding_description(key, state, cx));
@@ -1567,7 +1572,7 @@ static bool find_buckified_cx_keys(int key, int state, bool cx, char *ignored, X
 }
 
 
-static bool find_leftover_keys(int key, int state, bool cx, char *ignored, XEN func)
+static bool find_leftover_keys(int key, int state, bool cx, XEN func)
 {
   if ((key > 256) && (state & snd_MetaMask))
     show_key_help(key, state, cx, key_binding_description(key, state, cx));
@@ -1588,6 +1593,7 @@ void key_binding_help(void)
   #endif
 
   int i;
+
   snd_help_with_xrefs("Key bindings",
 
 #if HAVE_EXTENSION_LANGUAGE
@@ -1623,6 +1629,7 @@ any key via:\n\
   map_over_key_bindings(find_unbuckified_cx_keys);
   for (i = 0; i < 256; i++)
     show_key_help(i, snd_ControlMask, true, key_binding_description(i, snd_ControlMask, true));
+
   map_over_key_bindings(find_buckified_cx_keys);
   map_over_key_bindings(find_leftover_keys);
   snd_help_back_to_top();
@@ -2446,7 +2453,7 @@ in linear terms.",
 
 /* ---------------- Color Dialog ---------------- */
 
-static char *color_dialog_xrefs[9] = {
+static const char *color_dialog_xrefs[9] = {
   "colormap variable: {colormap}",
   "colormap constants: rgb." XEN_FILE_EXTENSION,
   "colormap colors: {" S_colormap_ref "}",
@@ -2477,7 +2484,7 @@ and wavogram display. The cutoff scale refers to the minimum data value to be di
 
 /* ---------------- Orientation Dialog ---------------- */
 
-static char *orientation_dialog_xrefs[4] = {
+static const char *orientation_dialog_xrefs[4] = {
   "orientation variables: {" S_spectro_x_scale "}, {" S_spectro_x_angle "}, etc",
   "start orientation dialog: {" S_orientation_dialog "}",
   "specialize orientation dialog actions: {" S_orientation_hook "}",
@@ -2522,7 +2529,7 @@ the file, the region is updated to reflect any edits you made.",
 
 /* ---------------- Raw Sound Dialog ---------------- */
 
-static char *raw_xrefs[7] = {
+static const char *raw_xrefs[7] = {
   "specialize handing of raw sounds: {" S_open_raw_sound_hook "}",
   "open a headerless sound: {" S_open_raw_sound "}",
   "header type constants: {" S_mus_header_type_name "}",
@@ -2531,7 +2538,7 @@ static char *raw_xrefs[7] = {
   "what are these headers?",
   NULL};
 
-static char *raw_urls[7] = {
+static const char *raw_urls[7] = {
   NULL, NULL, NULL, NULL, 
   "extsnd.html#describedataformats",
   "extsnd.html#describeheadertypes",
@@ -2591,7 +2598,7 @@ than 'Save'.",
 
 /* ---------------- Open File ---------------- */
 
-static char *open_file_xrefs[] = {
+static const char *open_file_xrefs[] = {
   "open file: {" S_open_sound "}",
   "add to sound file extension list (for '" S_just_sounds "'): {" S_add_sound_file_extension "}",
   "specialize open: {" S_open_hook "}, {" S_after_open_hook "}, etc",
@@ -2724,7 +2731,7 @@ mix amp env (if any) is drawn in blue.",
 
 /* ---------------- New File ---------------- */
 
-static char *new_file_xrefs[5] = {
+static const char *new_file_xrefs[5] = {
   "open a new sound: {" S_new_sound "}",
   "specialize making a new sound: {" S_new_sound_hook "}",
   "header type constants: {" S_mus_header_type_name "}",
@@ -2758,7 +2765,7 @@ until you save the new sound.",
 
 /* ---------------- Edit Header ---------------- */
 
-static char *edit_header_xrefs[11] = {
+static const char *edit_header_xrefs[11] = {
   "change srate: {" S_src_channel "}",
   "convert data to a new format: {" S_save_sound_as "}",
   "interpret current data in new data format: {" S_data_format "}",
@@ -2772,7 +2779,7 @@ static char *edit_header_xrefs[11] = {
   NULL
 };
 
-static char *edit_header_urls[11] = {
+static const char *edit_header_urls[11] = {
   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
   "extsnd.html#describedataformats",
   "extsnd.html#describeheadertypes",
@@ -2796,7 +2803,7 @@ or editing the header comments; anything else is obviously dangerous.",
 
 /* ---------------- Print Dialog ---------------- */
 
-static char *print_xrefs[4] = {
+static const char *print_xrefs[4] = {
   "default eps file name: {" S_eps_file "}",
   "eps overall size: {" S_eps_size "}",
   "eps margins: {" S_eps_bottom_margin "}, {" S_eps_left_margin "}",
@@ -2831,7 +2838,7 @@ but you can use Gimp or some such program to get a screenshot, and print that.",
 
 /* ---------------- View Files ---------------- */
 
-static char *view_files_xrefs[5] = {
+static const char *view_files_xrefs[5] = {
   "place sound in view files list: {" S_add_file_to_view_files_list "}",
   "place all sounds from a directory in view files list: {" S_add_directory_to_view_files_list "}",
   "specialize view files selection: {" S_view_files_select_hook "}",
@@ -2963,14 +2970,14 @@ static void random_numbers_help(void)
 }
 
 
-static char *Wavogram_xrefs[] = {
+static const char *Wavogram_xrefs[] = {
   "wavogram picture",
   "{wavo-hop}",
   "{wavo-trace}",
   "time-graph-type: {graph-as-wavogram}",
   NULL};
 
-static char *Wavogram_urls[] = {
+static const char *Wavogram_urls[] = {
   "snd.html#wavogram",
   "extsnd.html#wavohop",
   "extsnd.html#wavotrace",
@@ -3002,7 +3009,7 @@ static void window_size_help(void)
 #include "snd-xref.c"
 
 #define NUM_TOPICS 38
-static char *topic_names[NUM_TOPICS] = {
+static const char *topic_names[NUM_TOPICS] = {
   "Hook", "Vct", "Sample reader", "Mark", "Mix", "Region", "Edit list", "Transform", "Error",
   "Color", "Font", "Graphic", "Widget", "Emacs",
   "CLM", "Instrument", "CM", "CMN", "Libxm", "Sndlib", 
@@ -3012,7 +3019,7 @@ static char *topic_names[NUM_TOPICS] = {
   "Forth"
 };
 
-static char *topic_urls[NUM_TOPICS] = {
+static const char *topic_urls[NUM_TOPICS] = {
   "extsnd.html#sndhooks", "extsnd.html#Vcts", "extsnd.html#samplereaders", "extsnd.html#sndmarks", 
   "extsnd.html#sndmixes", "extsnd.html#sndregions", "extsnd.html#editlists", "extsnd.html#sndtransforms", 
   "extsnd.html#snderrors", "extsnd.html#colors", "extsnd.html#fonts", "extsnd.html#sndgraphics", 
@@ -3036,7 +3043,7 @@ static int min_strlen(const char *a, const char *b)
 }
 
 
-static char *topic_url(const char *topic)
+static const char *topic_url(const char *topic)
 {
   int i;
   for (i = 0; i < NUM_TOPICS; i++)
@@ -3046,14 +3053,14 @@ static char *topic_url(const char *topic)
 }
 
 #define NUM_XREFS 35
-static char *xrefs[NUM_XREFS] = {
+static const char *xrefs[NUM_XREFS] = {
   "Mark", "Mix", "Region", "Selection", "Cursor", "Tracking cursor", "Delete", "Envelope", "Filter",
   "Search", "Insert", "Maxamp", "Play", "Reverse", "Save", "Smooth", "Resample", "FFT", "Reverb",
   "Src", "Find", "Undo", "Redo", "Sync", "Control panel", "Record", "Header", "Key", "Copy",
   "Noise Reduction", "Window Size", "Color", "Control", "Random Numbers", "Wavogram"
 };
 
-static char **xref_tables[NUM_XREFS] = {
+static const char **xref_tables[NUM_XREFS] = {
   Marking_xrefs, Mixing_xrefs, Regions_xrefs, Selections_xrefs, Cursors_xrefs, Tracking_cursors_xrefs,
   Deletions_xrefs, Envelopes_xrefs, Filters_xrefs, Searching_xrefs, Insertions_xrefs, Maxamps_xrefs,
   Playing_xrefs, Reversing_xrefs, Saving_xrefs, Smoothing_xrefs, Resampling_xrefs, FFTs_xrefs, Reverb_xrefs,
@@ -3063,7 +3070,7 @@ static char **xref_tables[NUM_XREFS] = {
   Wavogram_xrefs
 };
 
-static char **xref_url_tables[NUM_XREFS] = {
+static const char **xref_url_tables[NUM_XREFS] = {
   Marking_urls, Mixing_urls, Regions_urls, Selections_urls, Cursors_urls, Tracking_cursors_urls,
   Deletions_urls, Envelopes_urls, Filters_urls, Searching_urls, Insertions_urls, Maxamps_urls,
   Playing_urls, Reversing_urls, Saving_urls, Smoothing_urls, Resampling_urls, FFTs_urls, Reverb_urls,
@@ -3086,7 +3093,7 @@ static help_func help_funcs[NUM_XREFS] = {
 };
 
 
-static char **snd_xrefs(const char *topic)
+static const char **snd_xrefs(const char *topic)
 {
   int i;
   for (i = 0; i < NUM_XREFS; i++)
@@ -3096,7 +3103,7 @@ static char **snd_xrefs(const char *topic)
 }
 
 
-static char **snd_xref_urls(const char *topic)
+static const char **snd_xref_urls(const char *topic)
 {
   int i;
   for (i = 0; i < NUM_XREFS; i++)
@@ -3154,7 +3161,7 @@ static int help_name_to_url(const char *name)
 }
 
 
-char *snd_url(const char *name)
+const char *snd_url(const char *name)
 {
 #if HAVE_EXTENSION_LANGUAGE
   /* (snd-url "save-sound-as") -> "extsnd.html#savesoundas" */
@@ -3189,7 +3196,8 @@ static char *call_grep(const char *defstr, const char *name, const char *endstr,
 static char *snd_finder(const char *name, bool got_help)
 {
   /* desperation -- search *.scm/rb then even *.html? for 'name' */
-  char *url = NULL, *fgrep = NULL, *tempfile = NULL, *command = NULL;
+  const char *url = NULL;
+  char *fgrep = NULL, *tempfile = NULL, *command = NULL;
   bool is_defined = false;
   int a_def = 0, dir_len = 0, i;
   XEN dirs = XEN_EMPTY_LIST;
@@ -3361,9 +3369,9 @@ static bool strings_might_match(const char *a, const char *b, int len)
 }
 
 
-char **help_name_to_xrefs(const char *name)
+const char **help_name_to_xrefs(const char *name)
 {
-  char **xrefs = NULL;
+  const char **xrefs = NULL;
   int i, xref_ctr = 0, xrefs_size = 0, name_len;
 #if (!HAVE_EXTENSION_LANGUAGE)
   return(NULL);
@@ -3380,11 +3388,11 @@ char **help_name_to_xrefs(const char *name)
 	      {
 		xrefs_size += 8;
 		if (xref_ctr == 0)
-		  xrefs = (char **)CALLOC(xrefs_size, sizeof(char *));
+		  xrefs = (const char **)CALLOC(xrefs_size, sizeof(char *));
 		else
 		  {
 		    int k;
-		    xrefs = (char **)REALLOC(xrefs, xrefs_size * sizeof(char *));
+		    xrefs = (const char **)REALLOC(xrefs, xrefs_size * sizeof(char *));
 		    for (k = xref_ctr; k < xrefs_size; k++) xrefs[k] = NULL;
 		  }
 	      }
@@ -3524,7 +3532,7 @@ char* word_wrap(const char *text, int widget_len)
 
 
 #define DOC_DIRECTORIES 6
-static char *doc_directories[DOC_DIRECTORIES] = {
+static const char *doc_directories[DOC_DIRECTORIES] = {
   "/usr/share/doc/snd-" SND_VERSION,
   "/usr/share/doc/snd-" SND_MAJOR_VERSION,
   "/usr/local/share/doc/snd-" SND_VERSION,
@@ -3533,7 +3541,7 @@ static char *doc_directories[DOC_DIRECTORIES] = {
   "/usr/share/docs/snd-" SND_VERSION
 };
   
-static char *doc_files[DOC_DIRECTORIES] = {
+static const char *doc_files[DOC_DIRECTORIES] = {
   "/usr/share/doc/snd-" SND_VERSION "/snd.html",
   "/usr/share/doc/snd-" SND_MAJOR_VERSION "/snd.html",
   "/usr/local/share/doc/snd-" SND_VERSION "/snd.html",
@@ -3608,7 +3616,7 @@ void url_to_html_viewer(const char *url)
 
 void name_to_html_viewer(const char *red_text)
 {
-  char *url;
+  const char *url;
   url = snd_url(red_text);
   if (url == NULL) url = topic_url(red_text);
   if (url)
@@ -3695,7 +3703,7 @@ and its value is returned."
     if (XEN_EQ_P(text, XEN_UNDEFINED))                              /* if no arg, describe snd-help */
       {
 	help_text = C_TO_XEN_STRING(H_snd_help);
-	subject = S_snd_help;
+	subject = (char *)S_snd_help;
       }
     else
       {
@@ -3763,7 +3771,7 @@ and its value is returned."
 		  }
 		if (min_diff < topic_min)
 		  {
-		    subject = help_names[min_loc];
+		    subject = (char *)help_names[min_loc];
 		    sym = C_STRING_TO_XEN_SYMBOL(subject);
 		    help_text = XEN_OBJECT_HELP(sym);
 		    goto HELP_LOOP;
@@ -3865,7 +3873,7 @@ and its value is returned."
 		  }
 		if (min_diff < topic_min)
 		  {
-		    subject = help_names[min_loc];
+		    subject = (char *)help_names[min_loc];
 		    sym = C_STRING_TO_XEN_SYMBOL(subject);
 		    hlp = XEN_OBJECT_HELP(sym);
 		    if (XEN_STRING_P(hlp))
@@ -4012,7 +4020,7 @@ static XEN g_snd_urls(void)
 }
 
 
-static char **refs = NULL, **urls = NULL;
+static const char **refs = NULL, **urls = NULL;
 
 static XEN g_help_dialog(XEN subject, XEN msg, XEN xrefs, XEN xurls)
 {
@@ -4028,7 +4036,7 @@ static XEN g_help_dialog(XEN subject, XEN msg, XEN xrefs, XEN xurls)
     {
       int i, len;
       len = XEN_LIST_LENGTH(xrefs);
-      refs = (char **)CALLOC(len + 1, sizeof(char *));
+      refs = (const char **)CALLOC(len + 1, sizeof(char *));
       for (i = 0; i < len; i++)
 	if (XEN_STRING_P(XEN_LIST_REF(xrefs, i)))
 	  refs[i] = XEN_TO_C_STRING(XEN_LIST_REF(xrefs, i));
@@ -4037,7 +4045,7 @@ static XEN g_help_dialog(XEN subject, XEN msg, XEN xrefs, XEN xurls)
 	  int ulen;
 	  ulen = XEN_LIST_LENGTH(xurls);
 	  if (ulen > len) ulen = len;
-	  urls = (char **)CALLOC(ulen + 1, sizeof(char *));
+	  urls = (const char **)CALLOC(ulen + 1, sizeof(char *));
 	  for (i = 0; i < ulen; i++)
 	    if (XEN_STRING_P(XEN_LIST_REF(xurls, i)))
 	      urls[i] = XEN_TO_C_STRING(XEN_LIST_REF(xurls, i));

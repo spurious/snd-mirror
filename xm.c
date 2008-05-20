@@ -641,7 +641,7 @@ static int XEN_XmFontList_or_XmRenderTable_P(XEN arg)
 
 static XEN type_to_event_symbol(int utype)
 {
-  char *type;
+  const char *type;
   type = "XErrorEvent"; /* -1 for an error event? */
   switch (utype)
     {
@@ -27514,11 +27514,11 @@ static void define_strings(void)
   DEFINE_RESOURCE(XmNtitleEncoding, XM_ATOM);
   DEFINE_RESOURCE(XmNtitleString, XM_XMSTRING);
 #ifdef XmNtoolTipString
-  DEFINE_RESOURCE(XmNtoolTipString, XM_XMSTRING);
-  DEFINE_RESOURCE(XmNtoolTipPostDelay, XM_INT);
-  DEFINE_RESOURCE(XmNtoolTipPostDuration, XM_INT);
-  DEFINE_RESOURCE(XmNtoolTipEnable, XM_BOOLEAN);
-  DEFINE_RESOURCE(XmNanimate, XM_BOOLEAN);
+  DEFINE_RESOURCE((char *)XmNtoolTipString, XM_XMSTRING);
+  DEFINE_RESOURCE((char *)XmNtoolTipPostDelay, XM_INT);
+  DEFINE_RESOURCE((char *)XmNtoolTipPostDuration, XM_INT);
+  DEFINE_RESOURCE((char *)XmNtoolTipEnable, XM_BOOLEAN);
+  DEFINE_RESOURCE((char *)XmNanimate, XM_BOOLEAN);
 #endif
   DEFINE_RESOURCE(XmNtoBottomCallback, XM_CALLBACK);
   DEFINE_RESOURCE(XmNtoTopCallback, XM_CALLBACK);

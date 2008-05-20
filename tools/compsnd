@@ -755,7 +755,7 @@ rm -f config.cache
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                g++                                                      --- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet CC=g++ LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
+./configure --quiet CC=g++ LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -Wextra -I/usr/X11R6/include"
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-guile 'snd-motif 'snd-ladspa 'sndlib"
@@ -1172,7 +1172,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                g++ GUILE_CONFIG_path=/home/bil/test/g13/bin           ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet CFLAGS="-I/home/bil/test/g13/include -Wall -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/g13/lib -L/usr/X11R6/lib" CC=g++ GUILE_CONFIG_path=/home/bil/test/g13/bin
+./configure --quiet CFLAGS="-I/home/bil/test/g13/include -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/g13/lib -L/usr/X11R6/lib" CC=g++ GUILE_CONFIG_path=/home/bil/test/g13/bin
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-guile"
@@ -1183,7 +1183,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                g++ GUILE_CONFIG_path=/home/bil/test/g14/bin           ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet CFLAGS="-I/home/bil/test/g14/include -Wall -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/g14/lib -L/usr/X11R6/lib" CC=g++ GUILE_CONFIG_path=/home/bil/test/g14/bin
+./configure --quiet CFLAGS="-I/home/bil/test/g14/include -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/g14/lib -L/usr/X11R6/lib" CC=g++ GUILE_CONFIG_path=/home/bil/test/g14/bin
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-guile"
@@ -1194,7 +1194,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                g++ GUILE_CONFIG_path=/home/bil/test/g13/bin --with-static-xm '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet CFLAGS="-I/home/bil/test/g13/include -Wall -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/g13/lib -L/usr/X11R6/lib" CC=g++ GUILE_CONFIG_path=/home/bil/test/g13/bin --with-static-xm
+./configure --quiet CFLAGS="-I/home/bil/test/g13/include -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/g13/lib -L/usr/X11R6/lib" CC=g++ GUILE_CONFIG_path=/home/bil/test/g13/bin --with-static-xm
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-guile"
@@ -1205,7 +1205,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                g++ GUILE_CONFIG_path=/home/bil/test/g14/bin --with-static-xm '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet CFLAGS="-I/home/bil/test/g14/include -Wall -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/g14/lib -L/usr/X11R6/lib" CC=g++ GUILE_CONFIG_path=/home/bil/test/g14/bin --with-static-xm
+./configure --quiet CFLAGS="-I/home/bil/test/g14/include -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/g14/lib -L/usr/X11R6/lib" CC=g++ GUILE_CONFIG_path=/home/bil/test/g14/bin --with-static-xm
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-guile"
@@ -1216,7 +1216,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                g++ GUILE_CONFIG_path=/home/bil/test/g13/bin --with-static-xg --with-gtk '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet CFLAGS="-I/home/bil/test/g13/include -Wall -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/g13/lib -L/usr/X11R6/lib" CC=g++ GUILE_CONFIG_path=/home/bil/test/g13/bin --with-static-xg --with-gtk
+./configure --quiet CFLAGS="-I/home/bil/test/g13/include -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/g13/lib -L/usr/X11R6/lib" CC=g++ GUILE_CONFIG_path=/home/bil/test/g13/bin --with-static-xg --with-gtk
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-guile"
@@ -1227,7 +1227,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                g++ GUILE_CONFIG_path=/home/bil/test/g14/bin --with-static-xg --with-gtk '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet CFLAGS="-I/home/bil/test/g14/include -Wall -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/g14/lib -L/usr/X11R6/lib" CC=g++ GUILE_CONFIG_path=/home/bil/test/g14/bin --with-static-xg --with-gtk
+./configure --quiet CFLAGS="-I/home/bil/test/g14/include -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/g14/lib -L/usr/X11R6/lib" CC=g++ GUILE_CONFIG_path=/home/bil/test/g14/bin --with-static-xg --with-gtk
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-guile"

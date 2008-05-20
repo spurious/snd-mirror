@@ -74,12 +74,12 @@ static drop_watcher_t *find_drop_watcher(GtkWidget *caller)
 enum {TARGET_STRING, TARGET_UTF8, TARGET_URL};
 
 static GtkTargetEntry target_table[] = {
-  {"STRING",        0, TARGET_STRING},
-  {"FILE_NAME",     0, TARGET_STRING},
-  {"text/plain",    0, TARGET_STRING},
-  {"COMPOUND_TEXT", 0, TARGET_STRING}, 
-  {"UTF8_STRING",   0, TARGET_UTF8},    /* untested */
-  {"text/uri-list", 0, TARGET_URL}
+  {(char *)"STRING",        0, TARGET_STRING},
+  {(char *)"FILE_NAME",     0, TARGET_STRING},
+  {(char *)"text/plain",    0, TARGET_STRING},
+  {(char *)"COMPOUND_TEXT", 0, TARGET_STRING}, 
+  {(char *)"UTF8_STRING",   0, TARGET_UTF8},    /* untested */
+  {(char *)"text/uri-list", 0, TARGET_URL}
 };
 
 static XEN drop_hook;

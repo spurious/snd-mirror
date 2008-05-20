@@ -1002,7 +1002,7 @@ static void start_view_color_dialog(bool managed)
 	size = num_colormaps();
 	names = (char **)CALLOC(size, sizeof(char *));
 	for (i = 0; i < size; i++) names[i] = colormap_name(i);
-	ccd->list = slist_new_with_title(S_colormap, frame, names, size, CONTAINER_ADD);
+	ccd->list = slist_new_with_title(S_colormap, frame, (const char**)names, size, CONTAINER_ADD);
 	ccd->list->select_callback = list_color_callback;
 	ccd->list->select_callback_data = (void *)ccd;
 	FREE(names);

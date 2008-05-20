@@ -29,7 +29,7 @@ static gint delete_help_dialog(GtkWidget *w, GdkEvent *event, gpointer context)
 static GtkWidget *help_text = NULL;
 slist *related_items = NULL;
 static char *original_help_text = NULL;
-static char **help_urls = NULL;
+static const char **help_urls = NULL;
 
 /* gtk_text_buffer_insert_with_tags_by_name (buffer, &iter, "some text in red", -1, "red_foreground", NULL); */
 
@@ -84,8 +84,8 @@ static gboolean help_expose_callback(GtkWidget *w, GdkEventExpose *ev, gpointer 
 
 static bool new_help(const char *pattern, bool complain)
 {
-  char *url;
-  char **xrefs;
+  const char *url;
+  const char **xrefs;
   url = snd_url(pattern);
   if (url)
     {
@@ -353,7 +353,7 @@ GtkWidget *snd_help(const char *subject, const char *helpstr, with_word_wrap_t w
 }
 
 
-GtkWidget *snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_wrap_t with_wrap, char **xrefs, char **urls)
+GtkWidget *snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_wrap_t with_wrap, const char **xrefs, const char **urls)
 {
   GtkWidget *w;
   help_urls = urls;

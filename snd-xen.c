@@ -2687,7 +2687,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 #endif
 
 #ifdef SCRIPTS_DIR
-  XEN_ADD_TO_LOAD_PATH(SCRIPTS_DIR);
+  XEN_ADD_TO_LOAD_PATH((char *)SCRIPTS_DIR);
 #endif
 
   { 

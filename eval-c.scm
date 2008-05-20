@@ -257,6 +257,10 @@ Usually just "", but can be "-lsnd" or something if needed.
 			     c))
 		       type))))
 
+#!
+(eval-c-etype->ctype '<int>)
+!#
+
 (define (eval-c-etype type)
   (if (eval-c-isetype? type)
       type
@@ -348,6 +352,7 @@ Usually just "", but can be "-lsnd" or something if needed.
 (eval-c-to-scm "        static  const unsigned char   *")
 (eval-c-to-scm '<static-const-char-*>)
 (eval-c-to-scm "int")
+(eval-c-get-known-type '<static-const-char-*>)
 !#
 
 (define (eval-c-get-*type etype)
@@ -420,6 +425,13 @@ Usually just "", but can be "-lsnd" or something if needed.
 		   (last aslist))))))
 
 
+(define *eval-c-public-funcdecls* (make-hash-table 219))
+
+(define (eval-c-put-public-funcdecl name decl)
+  (hashq-set! *eval-c-public-funcdecls* name decl))
+
+(define (eval-c-get-public-funcdecl name)
+  (hashq-ref *eval-c-public-funcdecls* name))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -688,16 +700,20 @@ Usually just "", but can be "-lsnd" or something if needed.
 		  (macroexpander term)
 		  
 		  ;; (<type> ....)
-		  (let* ((type (if (= 0 eval-c-level)
-				   (eval-c-ctype->etype (let* ((ctype (eval-c-etype->ctype type))
-							       (minlength (min (string-length "nonstatic ") (string-length ctype))))
-							  (if (string= "nonstatic " ctype 0 minlength 0 minlength)
-							      (string-drop ctype (string-length "nonstatic "))
-							      (<-> "static " ctype))))
+		  (let* ((is-toplevel (= 0 eval-c-level))
+			 (ctype (and is-toplevel (eval-c-etype->ctype type)))
+			 (is-static (and is-toplevel
+					 (let* ((minlength (min (string-length "nonstatic ") (string-length ctype))))
+					   (not (string= "nonstatic " ctype 0 minlength 0 minlength)))))
+			 (type (if is-toplevel
+				   (eval-c-ctype->etype (if is-static
+							    (<-> "static " ctype)
+							    (string-drop ctype (string-length "nonstatic "))))
 				   type))
 			 (varname (cadr term))
 			 (isvarname? (or (string? varname) (symbol? varname))))
 		    
+		    ;;(c-display varname ":" term (eval-c-etype->ctype (car term)) type)
 
 		    (if (not isvarname?)
 			
@@ -719,7 +735,7 @@ Usually just "", but can be "-lsnd" or something if needed.
 			      (if (and (= (length term) 3)
 				       (or (not (list? (caddr term)))
 					   (not (or (eq? 'lambda (caaddr term))
-						    (eq? 'rt-lambda-decl (caaddr term))))))
+						    (eq? 'lambda-decl (caaddr term))))))
 				  
 				  ;; (<int> a 5)
 				  (<-> (eval-c-get-propertype type)
@@ -728,26 +744,34 @@ Usually just "", but can be "-lsnd" or something if needed.
 				       (parser (caddr term)))
 				  
 				  ;; (<int> a (lambda ...))
-				  (let* ((funcdecl (caddr term))
+				  (let* ((funcdecl (nth 2 term))
 					 (lambdaname (car funcdecl))
 					 (typedefs "")
 					 (funcvars (map (lambda (v)
-							  (let ((type (car v))
+                                                          (let ((type (car v))
 								(name (cadr v)))
-							    (if (list? type)
-								(let ((typename (eval-c-get-unique-name)))
+                                                            (if (list? type)
+                                                                (let ((typename (eval-c-get-unique-name)))
 								  (set! typedefs (<-> typedefs
 										      "typedef " (eval-c-etype->ctype (car type)) " (*" typename ")("
 										      (if (not (null? (cadr type)))
 											  (<-> (eval-c-etype->ctype (car (cadr type)))
 											       (apply <-> (map (lambda (t)
 														 (<-> "," (eval-c-etype->ctype t)))
-													       (cdr (cadr type))))))
+													       (cdr (cadr type)))))
+											  "")
 										      ");\n"))
 								  (list (eval-c-ctype->etype typename) name))
-								v)))
-							(cadr funcdecl)))
+                                                                v)))
+                                                        (if (null? (cadr funcdecl))
+                                                            '((<void> NOTHING))
+                                                            ;;(cadr funcdecl)
+                                                            (cadr funcdecl))))
 					 (funcbody (cddr funcdecl)))
+
+				    (if (not is-static)
+					(eval-c-put-public-funcdecl varname `(,(car term) ,varname (lambda-decl ,(cadr funcdecl)))))
+
 				    (<-> typedefs
 					 (if (> eval-c-level 0)
 					     "static "
@@ -816,6 +840,11 @@ Usually just "", but can be "-lsnd" or something if needed.
 	   (eval-c-parse `(begin ,b)) "\n"
 	   "else\n"
 	   (eval-c-parse (car c)))))
+
+(define-c-macro (when a . rest)
+  `(if ,a
+       (begin
+         ,@rest)))
 
 (define-c-macro (?kolon a b . c)
   (<-> "("
@@ -1023,7 +1052,8 @@ Usually just "", but can be "-lsnd" or something if needed.
 					     das-struct)))
 			#f))
 
-(define-c-macro (shared-struct-but-only-known-types structname)
+
+(define (eval-c-shared-struct-but-only-known-types structname)
   (eval-c-define-struct structname
 			(apply append (map (lambda (def)
 					       (if (= 3 (length def))
@@ -1260,6 +1290,8 @@ But, perhaps that last one shouldn't be allowed to work.
       
 
 
+(define eval-c-decl-symbol (gensym))
+
 ;; Workaround:
 (define-c-macro (lambda def . body)
   (eval-c-uplevel)
@@ -1269,7 +1301,7 @@ But, perhaps that last one shouldn't be allowed to work.
 					 (map (lambda (x) (<-> (eval-c-parse x) ", ")) (c-butlast def))
 					 (list (<-> (eval-c-parse (last def))))
 					 (list ")"))))
-		  (if (eq? 'decl (car body))
+		  (if (eq? eval-c-decl-symbol (car body))
 		      ""
 		      (<->  "{" (string #\newline)
 			    (eval-c-parse-lines body)
@@ -1277,6 +1309,21 @@ But, perhaps that last one shouldn't be allowed to work.
     (eval-c-downlevel)
     ret))
 
+(define-c-macro (lambda-decl rest)
+  `(lambda ,rest ,eval-c-decl-symbol))
+
+(define-c-macro (get-proto name)
+  (eval-c-parse (eval-c-get-public-funcdecl name)))
+
+#!
+(eval-c ""
+	(<nonstatic-void> printsomething (lambda ()
+					   (printf (string "something\\n")))))
+(eval-c ""
+	(get-proto printsomething)
+	(run-now
+	 (printsomething)))
+!#
 
 (define-c-macro (define def . body)
   (if (list? def)
@@ -1744,6 +1791,7 @@ int fgetc (FILE
 
 	   
 (define (eval-c-check-cached compile-options terms)
+  ;;(pretty-print terms)
   (let ((ret (call-with-current-continuation
 	      (lambda (return)
 		(for-each (lambda (cache)
@@ -1836,7 +1884,7 @@ int fgetc (FILE
 			    (<-> "-Wall " (or (getenv "CFLAGS") "") " " (if (getenv "LDFLAGS") (getenv "LDFLAGS") "") " "))
 			(string #\`) guile-config " compile" (string #\`) " "
 			compile-options)))
-    (if (not (= 0 (system (<-> *eval-c-compiler* " -O3 -fPIC -shared -o " libfile " " sourcefile " "
+    (if (not (= 0 (system (<-> *eval-c-compiler* " -O3 -fPIC -shared -o " libfile " " sourcefile " -g " ;" -fomit-frame-pointer "
 			       (if (string=? *eval-c-compiler* "icc")
 				   "-L/opt/intel_cc_80/lib /opt/intel_cc_80/lib/libimf.a"
 				   (<-> "-Wall " (or (getenv "CFLAGS") "") " " (if (getenv "LDFLAGS") (getenv "LDFLAGS") "") " "))
@@ -1881,6 +1929,7 @@ int fgetc (FILE
     "#include <libguile.h>"
     "#include <string.h>"
     "#include <stdlib.h>"
+    "#define NOTHING"
     "#ifndef SCM_VECTOR_REF"	
     "  #define SCM_VECTOR_REF(a,b) SCM_VELTS (a)[(long)(b)]"
     "#endif"	
@@ -2201,7 +2250,7 @@ int fgetc (FILE
 			    das-map))
     (primitive-eval
      `(eval-c ""
-	      (shared-struct-but-only-known-types ,name)
+	      ,(eval-c-shared-struct-but-only-known-types name)
 	      (public 
 	       (,structname-pointer ,(symbol-append cleanname '_new) (lambda ()
 								       (return (calloc 1 (sizeof ,structname)))))

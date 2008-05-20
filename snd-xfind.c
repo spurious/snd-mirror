@@ -261,7 +261,7 @@ static void make_edit_find_dialog(bool managed)
 
       {
 	Atom wm_delete_window;
-	wm_delete_window = XmInternAtom(MAIN_DISPLAY(ss), "WM_DELETE_WINDOW", false);
+	wm_delete_window = XmInternAtom(MAIN_DISPLAY(ss), (char *)"WM_DELETE_WINDOW", false);
 	XmAddWMProtocolCallback(XtParent(edit_find_dialog), wm_delete_window, find_dialog_close, NULL);
       }
     }

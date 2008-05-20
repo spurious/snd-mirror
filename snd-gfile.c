@@ -367,7 +367,7 @@ static bool fsb_files_button_press_callback(GdkEventButton *ev, void *data);
 
 static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab,
 		     void (*add_innards)(GtkWidget *vbox, void *data), void *data, /* add_innards data can be either file_dialog_info or save_as_dialog_info */
-		     gchar *stock, bool with_extract)
+		     const gchar *stock, bool with_extract)
 {
   fsb *fs;
   char *cur_dir = NULL, *pwd = NULL;
@@ -819,21 +819,10 @@ static void file_list_item_activate_callback(GtkWidget *w, gpointer context)
 
 static GtkWidget *make_file_list_item(fsb *fs, int choice)
 {
-  char *item_label;
+  const char *item_label[7] = {"a..z", "z..a", "new..old", "old..new", "small..big", "big..small", "unused"};
   GtkWidget *w;
 
-  switch (choice)
-    {
-    case 0: item_label = "a..z";       break;
-    case 1: item_label = "z..a";       break;
-    case 2: item_label = "new..old";   break;
-    case 3: item_label = "old..new";   break;
-    case 4: item_label = "small..big"; break;
-    case 5: item_label = "big..small"; break;
-    default: item_label = "unused";    break;
-    }
-
-  w = gtk_menu_item_new_with_label(item_label);
+  w = gtk_menu_item_new_with_label(item_label[choice]);
   set_user_int_data(G_OBJECT(w), choice);
   gtk_menu_shell_append(GTK_MENU_SHELL(fs->files_menu), w);
   gtk_widget_show(w);
@@ -1343,7 +1332,7 @@ static file_dialog_info *make_file_dialog(read_only_t read_only, const char *tit
 					  GtkSignalFunc file_delete_proc,
 					  GtkSignalFunc file_dismiss_proc,
 					  GtkSignalFunc file_help_proc,
-					  gchar *stock)
+					  const gchar *stock)
 {
   file_dialog_info *fd;
   fsb *fs;
@@ -1954,8 +1943,8 @@ char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, 
 static void set_file_dialog_sound_attributes(file_data *fdat, int type, int format, int srate, int chans, off_t location, off_t samples, char *comment)
 {
   int i;
-  char **fl = NULL;
-  char *str;
+  const char **fl = NULL;
+  const char *str;
   if (!(fdat->format_list)) return;
 
   if (type != IGNORE_HEADER_TYPE)
@@ -2297,7 +2286,7 @@ file_data *make_file_data_panel(GtkWidget *parent, const char *name,
   GtkWidget *form, *scbox, *combox = NULL;
   file_data *fdat;
   int nformats = 0, nheaders = 0;
-  char **formats = NULL, **headers = NULL;
+  const char **formats = NULL, **headers = NULL;
   GtkWidget *sbar, *sitem;
 
   switch (header_choice)
@@ -2320,14 +2309,14 @@ file_data *make_file_data_panel(GtkWidget *parent, const char *name,
   /* header type */
   if (with_header_type == WITH_HEADER_TYPE_FIELD)
     {
-      fdat->header_list = slist_new_with_title(_("header:"), form, headers, nheaders, BOX_PACK); /* BOX_PACK widget_add_t (snd-g0.h) */
+      fdat->header_list = slist_new_with_title(_("header:"), form, (const char **)headers, nheaders, BOX_PACK); /* BOX_PACK widget_add_t (snd-g0.h) */
       fdat->header_list->select_callback = update_header_type_list;
       fdat->header_list->select_callback_data = (void *)fdat;
       slist_select(fdat->header_list, fdat->header_pos);
     }
 
   /* data format */
-  fdat->format_list = slist_new_with_title(_("data format:"), form, formats, nformats, BOX_PACK);
+  fdat->format_list = slist_new_with_title(_("data format:"), form, (const char **)formats, nformats, BOX_PACK);
   fdat->format_list->select_callback = update_data_format_list;
   fdat->format_list->select_callback_data = (void *)fdat;
   slist_select(fdat->format_list, fdat->format_pos);
@@ -3635,18 +3624,20 @@ static void new_file_ok_callback(GtkWidget *w, gpointer context)
 static char *new_file_dialog_filename(int header_type)
 {
   static int new_file_dialog_file_ctr = 1;
-  char *filename = NULL, *extension = NULL;
+  char *filename = NULL;
+  const char *extensions[6] = {"aiff", "aiff", "wav", "wav", "caf", "snd"};
+  int extension = 0;
   filename = (char *)CALLOC(64, sizeof(char));
   switch (header_type)
     {
-    case MUS_AIFC: extension = "aiff"; break;
-    case MUS_AIFF: extension = "aiff"; break;
-    case MUS_RF64: extension = "wav";  break;
-    case MUS_RIFF: extension = "wav";  break;
-    case MUS_CAFF: extension = "caf";  break;
-    default:       extension = "snd";  break;
+    case MUS_AIFC: extension = 0; break;
+    case MUS_AIFF: extension = 1; break;
+    case MUS_RF64: extension = 2;  break;
+    case MUS_RIFF: extension = 3;  break;
+    case MUS_CAFF: extension = 4;  break;
+    default:       extension = 5;  break;
     }
-  mus_snprintf(filename, 64, _("new-%d.%s"), new_file_dialog_file_ctr++, extension);
+  mus_snprintf(filename, 64, _("new-%d.%s"), new_file_dialog_file_ctr++, extensions[extension]);
   return(filename);
 }
 

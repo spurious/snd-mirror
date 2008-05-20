@@ -657,12 +657,12 @@ Widget make_mix_dialog(void)
       w_id = make_textfield_widget("mix-id", mix_row, args, n, ACTIVATABLE, NO_COMPLETER);
       XtAddCallback(w_id, XmNlosingFocusCallback, id_check_callback, NULL);
       XtAddCallback(w_id, XmNmodifyVerifyCallback, id_modify_callback, NULL);
-      XmTextSetString(w_id, "0");
+      XmTextSetString(w_id, (char *)"0");
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       w_beg = make_textfield_widget("mix-times", mix_row, args, n, ACTIVATABLE, NO_COMPLETER);
-      XmTextSetString(w_beg, "0.000 : 1.000");
+      XmTextSetString(w_beg, (char *)"0.000 : 1.000");
 
       XtVaGetValues(mix_row, XmNforeground, &v.foreground, XmNbackground, &v.background, XmNdepth, &mixer_depth, NULL);
       gc = XtGetGC(mix_row, GCForeground | GCBackground, &v);
@@ -785,7 +785,7 @@ Widget make_mix_dialog(void)
       XmStringFree(s1);
 
       n = 0;
-      s1 = XmStringCreateLocalized("1.00");
+      s1 = XmStringCreateLocalized((char *)"1.00");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -979,8 +979,8 @@ void reflect_mix_change(int mix_id)
 	    }
 	  else
 	    {
-	      XmTextSetString(w_id, "-1");
-	      XmTextSetString(w_beg, _("no active mixes"));
+	      XmTextSetString(w_id, (char *)"-1");
+	      XmTextSetString(w_beg, (char *)_("no active mixes"));
 	      set_sensitive(XmMessageBoxGetChild(mix_dialog, XmDIALOG_CANCEL_BUTTON), false);
 	    }
 	  if (!dragging)

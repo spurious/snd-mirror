@@ -2708,7 +2708,7 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id, 
   vct *v;
   off_t bg;
   chan_info *cp;
-  char *edname = NULL;
+  const char *edname = NULL;
   mus_sample_t *data;
   int len, mix_id = NO_MIX_TAG;
   bool with_mixer;

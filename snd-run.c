@@ -387,24 +387,24 @@ enum {R_UNSPECIFIED, R_INT, R_FLOAT, R_BOOL, R_CHAR, R_STRING, R_LIST,
 
 static int last_type = R_ANY;
 static int type_names_size = BUILT_IN_TYPES;
-static char **type_names = NULL;
-static char *basic_type_names[BUILT_IN_TYPES] = {"unspecified", "int", "float", "boolean", "char", "string", "list",
-						 "symbol", "keyword", "function", "continuation", "vct", 
-						 "sample-reader", "mix-sample-reader", "sound-data", "clm", 
-						 "float-vector", "int-vector", "vct-vector", "list-vector", "clm-vector",
-						 "number", "vector", "xen", "number or clm", "number or vct", 
-						 "number or sound-data", "generator", "any"};
+static const char **type_names = NULL;
+static const char *basic_type_names[BUILT_IN_TYPES] = {"unspecified", "int", "float", "boolean", "char", "string", "list",
+						       "symbol", "keyword", "function", "continuation", "vct", 
+						       "sample-reader", "mix-sample-reader", "sound-data", "clm", 
+						       "float-vector", "int-vector", "vct-vector", "list-vector", "clm-vector",
+						       "number", "vector", "xen", "number or clm", "number or vct", 
+						       "number or sound-data", "generator", "any"};
 
 static void init_type_names(void)
 {
   int i;
-  type_names = (char **)CALLOC(BUILT_IN_TYPES, sizeof(char *));
+  type_names = (const char **)CALLOC(BUILT_IN_TYPES, sizeof(char *));
   for (i = 0; i < BUILT_IN_TYPES; i++)
     type_names[i] = basic_type_names[i];
 }
 
 
-static char *type_name(int id) 
+static const char *type_name(int id) 
 {
   if ((id >= R_UNSPECIFIED) && (id <= last_type)) 
     return(type_names[id]); 
@@ -418,7 +418,7 @@ static int add_new_type(const char *new_type)
     {
       int i;
       type_names_size += 8;
-      type_names = (char **)REALLOC(type_names, type_names_size * sizeof(char *));
+      type_names = (const char **)REALLOC(type_names, type_names_size * sizeof(char *));
       for (i = last_type + 1; i < type_names_size; i++) type_names[i] = NULL;
     }
   last_type++;
@@ -10952,8 +10952,11 @@ static xen_value *mus_data_format_name_1(ptree *prog, xen_value **args, int num_
 
 static void mus_header_type_to_string_f(int *args, ptree *pt) 
 {
+  char *tmp;
   if (STRING_RESULT) FREE(STRING_RESULT);
-  STRING_RESULT = copy_string(mus_header_type_to_string(INT_ARG_1));
+  tmp = mus_header_type_to_string(INT_ARG_1);
+  STRING_RESULT = copy_string(tmp);
+  free(tmp);
 }
 
 
@@ -10965,8 +10968,11 @@ static xen_value *mus_header_type_to_string_1(ptree *prog, xen_value **args, int
 
 static void mus_data_format_to_string_f(int *args, ptree *pt) 
 {
+  char *tmp;
   if (STRING_RESULT) FREE(STRING_RESULT);
-  STRING_RESULT = copy_string(mus_data_format_to_string(INT_ARG_1));
+  tmp = mus_data_format_to_string(INT_ARG_1);
+  STRING_RESULT = copy_string(tmp);
+  free(tmp);
 }
 
 
@@ -12011,7 +12017,8 @@ static bool vowel_p(char b)
 
 static xen_value *arg_warn(ptree *prog, const char *funcname, int arg_num, xen_value **args, const char *correct_type)
 {
-  char *xb, *tb;
+  char *xb;
+  const char *tb;
   xb = describe_xen_value(args[arg_num], prog);
   tb = type_name(args[arg_num]->type);
   if (xb)
@@ -12043,7 +12050,7 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
   if (XEN_LIST_P(form))
     {
       XEN function, all_args;
-      char *funcname = "not-a-function";
+      char *funcname = (char *)"not-a-function";
       xen_value **args = NULL;
       int i, num_args, constants = 0;
       bool float_result = false;
@@ -12432,7 +12439,8 @@ static xen_value *lookup_generalized_set(ptree *prog, XEN acc_form, xen_value *i
 	    }
 	  else 
 	    {
-	      char *xb, *tb, *vb;
+	      char *xb;
+	      const char *tb, *vb;
 	      xb = describe_xen_value(v, prog);
 	      tb = type_name(w->result_type);
 	      vb = type_name(v->type);

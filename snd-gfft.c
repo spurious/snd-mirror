@@ -21,7 +21,7 @@ static Float graph_fftr[GRAPH_SIZE * 2];
 static Float graph_ffti[GRAPH_SIZE * 2];
 
 #define NUM_TRANSFORM_SIZES 14
-static char *transform_size_names[NUM_TRANSFORM_SIZES] = 
+static const char *transform_size_names[NUM_TRANSFORM_SIZES] = 
   {"32", "64", "128", "256", "512", "1024", "2048", "4096", "8192", "16384", "65536", "262144", "1048576", "4194304    "};
 
 static off_t transform_sizes[NUM_TRANSFORM_SIZES] = 
@@ -665,14 +665,14 @@ GtkWidget *fire_up_transform_dialog(bool managed)
 
 
       /* WINDOWS */
-      window_list = slist_new_with_title_and_table_data(_("window"), outer_table, (char **)mus_fft_window_names(), MUS_NUM_FFT_WINDOWS, TABLE_ATTACH, 0, 1, 1, 2);
+      window_list = slist_new_with_title_and_table_data(_("window"), outer_table, (const char **)mus_fft_window_names(), MUS_NUM_FFT_WINDOWS, TABLE_ATTACH, 0, 1, 1, 2);
       window_list->select_callback = window_browse_callback;
 
       
       /* WAVELETS */
       wavelet_box = gtk_table_new(2, 3, false);
       gtk_table_attach_defaults(GTK_TABLE(outer_table), wavelet_box, 1, 2, 1, 2);
-      wavelet_list = slist_new_with_title_and_table_data(_("wavelet"), wavelet_box, wavelet_names(), NUM_WAVELETS, TABLE_ATTACH, 0, 1, 0, 1);
+      wavelet_list = slist_new_with_title_and_table_data(_("wavelet"), wavelet_box, (const char **)wavelet_names(), NUM_WAVELETS, TABLE_ATTACH, 0, 1, 0, 1);
       wavelet_list->select_callback = wavelet_browse_callback;
 
       beta_adj = gtk_adjustment_new(0.0, 0.0, 1.01, 0.001, 0.01, .01);
@@ -985,9 +985,9 @@ void make_transform_type_list(void)
   if (transform_dialog)
     {
       int i, j, num;
-      char **transform_names;
+      const char **transform_names;
       num = max_transform_type();
-      transform_names = (char **)CALLOC(num, sizeof(char *));
+      transform_names = (const char **)CALLOC(num, sizeof(char *));
       for (i = 0, j = 0; i < num; i++) 
 	if (transform_p(i))
 	  {

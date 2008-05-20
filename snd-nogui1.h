@@ -4,7 +4,7 @@
 /* -------- snd-xhelp.c -------- */
 
 int snd_help(const char *subject, const char *help, with_word_wrap_t with_wrap);
-int snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_wrap_t with_wrap, char **xrefs, char **urls);
+int snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_wrap_t with_wrap, const char **xrefs, const char **urls);
 int help_text_width(const char *txt, int start, int end);
 void snd_help_append(const char *text);
 void snd_help_back_to_top(void);
@@ -204,7 +204,7 @@ void set_speed(snd_info *sp, Float val);
 void set_revlen(snd_info *sp, Float val);
 void set_revscl(snd_info *sp, Float val);
 void set_filter_order(snd_info *sp, int val);
-void set_filter_text(snd_info *sp, char *str);
+void set_filter_text(snd_info *sp, const char *str);
 void display_filter_env(snd_info *sp);
 void toggle_expand_button(snd_info *sp, bool state);
 void toggle_contrast_button(snd_info *sp, bool state);

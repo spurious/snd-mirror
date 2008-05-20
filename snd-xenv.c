@@ -10,7 +10,7 @@ static Widget nameL, textL, screnvlst, dBB, orderL, deleteB, resetB, firB = NULL
 static Widget expB, linB, baseScale, baseValue, selectionB;
 static GC gc, rgc, ggc;
 
-static char *env_names[3] = {N_("amp env:"), N_("flt env:"), N_("src env:")};
+static const char *env_names[3] = {N_("amp env:"), N_("flt env:"), N_("src env:")};
 
 static bool showing_all_envs = false; /* edit one env (0), or view all currently defined envs (1) */
 static bool apply_to_selection = false, we_turned_selection_off = false;
@@ -412,7 +412,7 @@ static void text_field_activated(void)
 	    {
 	      #define ENVED_TEMP_NAME "enved-backup"
 	      /* save current under a temp name!  -- user might have mistakenly reused a name */
-	      alert_envelope_editor(ENVED_TEMP_NAME, copy_env(active_env));
+	      alert_envelope_editor((char *)ENVED_TEMP_NAME, copy_env(active_env));
 	      add_or_edit_symbol(ENVED_TEMP_NAME, active_env);
 	      active_env = free_env(active_env);
 	    }
@@ -1048,7 +1048,7 @@ Widget create_envelope_editor(void)
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
-      s1 = XmStringCreateLocalized("1.000");
+      s1 = XmStringCreateLocalized((char *)"1.000");
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, baseLabel); n++;
@@ -1481,7 +1481,7 @@ Widget create_envelope_editor(void)
 	  XtSetArg(args[n], XM_FONT_RESOURCE, ss->sgx->listener_fontlist); n++;
 	  use_listener_font = true;
 	}
-      screnvlst = XmCreateScrolledList(colD, "scrolled-env-list", args, n);
+      screnvlst = XmCreateScrolledList(colD, (char *)"scrolled-env-list", args, n);
       XtManageChild(screnvlst); 
       XtAddCallback(screnvlst, XmNbrowseSelectionCallback, env_browse_callback, NULL);
       map_over_children(screnvlst, set_main_color_of_widget);

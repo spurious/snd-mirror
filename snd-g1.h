@@ -6,7 +6,7 @@
 /* -------- snd-ghelp.c -------- */
 
 GtkWidget *snd_help(const char *subject, const char *help, with_word_wrap_t with_wrap);
-GtkWidget *snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_wrap_t with_wrap, char **xrefs, char **urls);
+GtkWidget *snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_wrap_t with_wrap, const char **xrefs, const char **urls);
 int help_text_width(const char *txt, int start, int end);
 void snd_help_append(const char *text);
 void snd_help_back_to_top(void);
@@ -182,18 +182,18 @@ void g_init_gxutils(void);
 
 /* -------- snd-gxbitmaps.c -------- */
 
-char **mini_bomb_bits(int n);
-char **mini_glass_bits(int n);
-char **mini_lock_bits(void);
-char **blank_bits(void);
-char **snd_icon_bits(void);
-char **speed_l_bits(void);
-char **speed_r_bits(void);
-char **stop_sign_bits(void);
+const char **mini_bomb_bits(int n);
+const char **mini_glass_bits(int n);
+const char **mini_lock_bits(void);
+const char **blank_bits(void);
+const char **snd_icon_bits(void);
+const char **speed_l_bits(void);
+const char **speed_r_bits(void);
+const char **stop_sign_bits(void);
 
-char **speaker_bits(void);
-char **blue_speaker_bits(void);
-void make_icons_transparent(char *basic_color);
+const char **speaker_bits(void);
+const char **blue_speaker_bits(void);
+void make_icons_transparent(const char *basic_color);
 
 
 /* -------- snd-gxcolormaps.c -------- */
@@ -334,7 +334,7 @@ void reset_user_int_data(GObject *obj, int data);
 gpointer get_user_data(GObject *obj);
 int get_user_int_data(GObject *obj);
 void set_stock_button_label(GtkWidget *w, const char *new_label);
-GtkWidget *sg_button_new_from_stock_with_label(const char *text, gchar *stock_id);
+GtkWidget *sg_button_new_from_stock_with_label(const char *text, const gchar *stock_id);
 
 char *sg_get_text(GtkWidget *w, int start, int end);
 void sg_set_cursor(GtkWidget *w, int position);
@@ -356,10 +356,10 @@ void widget_off_t_to_text(GtkWidget *w, off_t val);
 void ensure_scrolled_window_row_visible(widget_t list, int pos, int num_rows);
 
 slist *slist_new_with_title_and_table_data(const char *title,
-					   GtkWidget *parent, char **initial_items, int num_items, widget_add_t paned,
+					   GtkWidget *parent, const char **initial_items, int num_items, widget_add_t paned,
 					   int t1, int t2, int t3, int t4);
-slist *slist_new(GtkWidget *parent, char **initial_items, int num_items, widget_add_t paned);
-slist *slist_new_with_title(const char *title, GtkWidget *parent, char **initial_items, int num_items, widget_add_t paned);
+slist *slist_new(GtkWidget *parent, const char **initial_items, int num_items, widget_add_t paned);
+slist *slist_new_with_title(const char *title, GtkWidget *parent, const char **initial_items, int num_items, widget_add_t paned);
 void slist_clear(slist *lst);
 void slist_append(slist *lst, const char *name);
 void slist_moveto(slist *lst, int row);
@@ -396,7 +396,7 @@ void set_speed(snd_info *sp, Float val);
 void set_revlen(snd_info *sp, Float val);
 void set_revscl(snd_info *sp, Float val);
 void set_filter_order(snd_info *sp, int order);
-void set_filter_text(snd_info *sp, char *str);
+void set_filter_text(snd_info *sp, const char *str);
 void display_filter_env(snd_info *sp);
 void toggle_expand_button(snd_info *sp, bool state);
 void toggle_contrast_button(snd_info *sp, bool state);

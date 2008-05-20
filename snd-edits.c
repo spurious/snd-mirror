@@ -1729,7 +1729,7 @@ typedef struct {
   int type, add_ramp, add_xramp, add_ptree, add_mix, subtract_mix;
   bool ptrees, ramps, zero, mixes; /* zero = no underlying data (mix, ptree, etc), mixes = involves virtual mixes in some way */
   int scale_op;
-  char *name;
+  const char *name;
   Float (*next)(struct snd_fd *sf);  
   Float (*previous)(struct snd_fd *sf);  
   Float (*rampf)(struct snd_fd *sf);  
@@ -2531,10 +2531,10 @@ static void choose_accessor(snd_fd *sf)
 }
 
 
-static char *edit_names[NUM_EDIT_TYPES] = {"insert", "delete", "set", "init", "scale", "zero", "env", "ptree", "extend", "mix", "change mix"};
+static const char *edit_names[NUM_EDIT_TYPES] = {"insert", "delete", "set", "init", "scale", "zero", "env", "ptree", "extend", "mix", "change mix"};
 
 #if MUS_DEBUGGING
-char *ed_list_edit_type_to_string(int type)
+const char *ed_list_edit_type_to_string(int type)
 {
   if ((type >= 0) &&
       (type < NUM_EDIT_TYPES))
@@ -7724,10 +7724,10 @@ char *sample_reader_to_string(snd_fd *fd)
     sprintf(desc, "#<sample-reader: null>");
   else
     {
-      char *name = NULL;
+      const char *name = NULL;
       cp = fd->cp;
       if ((fd->local_sp) && (fd->local_sp->hdr))
-	name = ((fd->local_sp)->hdr)->name;
+	name = (const char *)(((fd->local_sp)->hdr)->name);
       else
 	{
 	  if ((cp) && (cp->sound) && (cp->active >= CHANNEL_HAS_EDIT_LIST) && (!(fd->at_eof)))
@@ -8744,7 +8744,7 @@ file_delete_t xen_to_file_delete_t(XEN auto_delete, const char *caller)
 
 
 static XEN g_set_samples_with_origin(XEN samp_0, XEN samps, XEN vect, XEN snd_n, XEN chn_n, XEN truncate, 
-				     char *edname, XEN infile_chan, XEN edpos, XEN auto_delete)
+				     const char *edname, XEN infile_chan, XEN edpos, XEN auto_delete)
 {
   #define H_set_samples "(set-" S_samples " start-samp samps data :optional snd chn truncate edname (infile-chan 0) edpos auto-delete): \
 set snd's channel chn's samples starting at start-samp for samps from data (a vct, vector, or string (filename)); \
@@ -8755,7 +8755,7 @@ the new data's end."
   off_t len = 0, beg;
   bool override = false;
   int pos;
-  char *caller;
+  const char *caller;
 
   if (edname)
     caller = edname;
@@ -8893,7 +8893,7 @@ static XEN g_vct_to_channel(XEN v, XEN beg, XEN dur, XEN snd_n, XEN chn_n, XEN e
 {
   #define H_vct_to_channel "(" S_vct_to_channel " vct :optional (beg 0) (dur len) snd chn edpos origin): \
 set snd's channel chn's samples starting at beg for dur samps from vct data"
-  char *caller;
+  const char *caller;
   XEN_ASSERT_TYPE(MUS_VCT_P(v), v, XEN_ARG_1, S_vct_to_channel, "a vct");
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, XEN_ARG_7, S_vct_to_channel, "a string");
   if (XEN_NOT_BOUND_P(beg)) beg = XEN_ZERO;
@@ -8905,7 +8905,7 @@ set snd's channel chn's samples starting at beg for dur samps from vct data"
     }
   if (XEN_NOT_BOUND_P(origin))
     caller = S_vct_to_channel;
-  else caller = XEN_TO_C_STRING(origin);
+  else caller = (const char *)XEN_TO_C_STRING(origin);
   return(g_set_samples_with_origin(beg, dur, v, snd_n, chn_n, XEN_FALSE, caller, XEN_FALSE, edpos, XEN_UNDEFINED));
 }
 
@@ -9502,7 +9502,7 @@ Float snd_to_sample_read(mus_any *ptr, off_t frame, int chan)
 
 static mus_any_class SND_TO_SAMPLE_CLASS = {
   -1,
-  S_snd_to_sample,
+  (char *)S_snd_to_sample,
   &snd_to_sample_free,
   &snd_to_sample_describe,
   &snd_to_sample_equalp,

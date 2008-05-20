@@ -482,7 +482,7 @@ widget_t record_file(void)
 	recorder_ax->gc = XtGetGC(meters, GCForeground | GCFunction, &gv);
       }
 
-      wm_delete = XmInternAtom(XtDisplay(recorder), "WM_DELETE_WINDOW", false);
+      wm_delete = XmInternAtom(XtDisplay(recorder), (char *)"WM_DELETE_WINDOW", false);
       XmAddWMProtocolCallback(XtParent(recorder), wm_delete, close_recorder, NULL);
 
       XtManageChild(recorder);

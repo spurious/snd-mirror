@@ -54,6 +54,7 @@ http://www.notam02.no/arkiv/doc/snd-rt/
 (define rt-allocmem-size (* 1024 1024 8))
 
 (define rt-max-frame-size 4096)
+(define *rt-block-size* 0) ;; set later.
 
 (if (not (defined? '*rt-num-input-ports*))    
     (primitive-eval `(define *rt-num-input-ports* 
@@ -415,7 +416,9 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 		  (begin
 		    (c-display "Could not create jack client with name \"" name "\".")
 		    (return #f)))
-	      
+
+	      (set! *rt-block-size* (jack_get_buffer_size client))
+
 	      (-> jack-arg client client)
 
 	      ;; Note to myself, why the if???
@@ -502,10 +505,10 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 
 				    (for-each 0 jack_arg->num_outports
 					      (lambda (ch)
-					      (set! out[ch] (jack_port_get_buffer jack_arg->output_ports[ch] nframes))))
+                                                (set! out[ch] (jack_port_get_buffer jack_arg->output_ports[ch] nframes))))
 				    (for-each 0 jack_arg->num_inports
-					    (lambda (ch)
-					      (set! in[ch] (jack_port_get_buffer jack_arg->input_ports[ch] nframes))))
+                                              (lambda (ch)
+                                                (set! in[ch] (jack_port_get_buffer jack_arg->input_ports[ch] nframes))))
 				    
 				    (set! lokke 0)
 				    (for-each 0 nframes
@@ -523,7 +526,7 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 						(set! jack_arg->out_bus->data[n].val 0.0f)
 						(set! jack_arg->out_bus->data[n].last_written_to
 						      jack_arg->frames)))
-				    
+
 				    (callback jack_arg->rt_arg
 					      jack_arg->client
 					      jack_arg->is_running
@@ -778,6 +781,129 @@ size_t jack_ringbuffer_write_space(const jack_ringbuffer_t *rb);
 
 
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;; General priority queue implementation ;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; insert and delete-min logic below taken from "Data Structures and Agloritm Analysis second edition" by Mark Allen Weiss.
+;; (note that this doesn't mean Mark Allen Weiss invented the binary heap priority queue used below, only that he is to blame for any
+;;  bugs in the code ;-) )
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(define (gen-priority-queue-insert funcname <holder-struct*> <event-struct*>)
+  (define <event-struct**> (symbol-append (string->symbol (list->string (reverse (cdr (reverse (string->list (symbol->string <event-struct*>)))))))
+					  '*>))
+  `(<bool> ,funcname (lambda ((,<holder-struct*> holder)
+			      (,<event-struct*> event))
+		       (if (>= holder->queue_size (- holder->queue_fullsize 2)) ;; Can 2 be changed to 1 or 0?
+			   (begin
+			     holder->num_events--
+			     holder->num_lost_events++
+			     (return false)))
+		       
+		       holder->queue_size++
+		       
+		       (if (< event->time 0)
+			   (set! event->time 0))
+		       
+		       (let* ((queue ,<event-struct**> holder->queue)
+			      (time <int64> event->time)
+			      (i <int> holder->queue_size)
+			      (newi <int> (>> i 1)))
+			 ;;(fprintf stderr (string "insert, i: %d newi: %d\\n") i newi)
+			 (while (> queue[newi]->time time)
+			   (set! queue[i] queue[newi])
+			   (set! i newi)
+			   (set! newi (>> newi 1)))
+			 ;;(fprintf stderr (string "insert2  %u size: %d, i: %d newi: %d\\n") event->arg holder->queue_size i newi)
+			 (set! queue[i] event))
+		       (return true))))
+#!
+(pretty-print (gen-priority-queue-insert 'rt_insert_event '<struct-RT_Engine-*> '<struct-RT_Event-*>))
+!#
+
+(define (gen-priority-queue-delete-min funcname <holder-struct*> <event-struct*>)
+  (define <event-struct**> (symbol-append (string->symbol (list->string (reverse (cdr (reverse (string->list (symbol->string <event-struct*>)))))))
+					  '*>))
+  `(<void> ,funcname (lambda ((,<holder-struct*> holder))
+				     
+		      ;;This check must be done before calling.
+		      ;;(if (== holder->queue_size 0)
+		      ;;    (return NULL))
+		      
+		      ;;(<struct-RT_Event-*> event holder->queue[1])
+		      holder->num_events--				     
+		      holder->queue_size--
+			       
+		      (let* ((queue ,<event-struct**> holder->queue)					
+			     (size <int> holder->queue_size)
+			     (last ,<event-struct*> queue[size+1])
+			     (last_time <int64> last->time)
+			     (i <int> 1)
+			     (child <int>))
+			;;(fprintf stderr (string "remove, i: %d child %d, size: %d, last: %u\\n") i child size last)
+			(while (<= (<< i 1) size)
+			  (set! child (<< i 1))
+			  (if (and (!= child size)
+				   (< queue[child+1]->time queue[child]->time))
+			      child++)
+			  (if (> last_time queue[child]->time)
+			      (begin
+				(set! queue[i] queue[child])
+				(set! i child))
+			      break))
+			;;(set! child (<< i 1)))
+			;;(fprintf stderr (string "remove2, %u size: %d, i: %d child %d\\n") event->arg size i child)
+			;;(set! queue[size] NULL)
+			(set! queue[i] last)))))
+
+#!
+(pretty-print (gen-priority-queue-delete-min 'rt_delete_event '<struct-RT_Engine-*> '<struct-RT_Event-*>))
+!#
+
+
+(define (gen-priority-queue-find-min funcname <holder-struct*> <event-struct*>)
+  `(,<event-struct*> rt_findmin_event (lambda ((,<holder-struct*> holder))
+					(return holder->queue_size==0?NULL:holder->queue[1]))))
+
+(define (gen-priority-queue-init-code holder <event-struct*> dummy)
+  `(begin
+     (set! ,(<_> holder '->queue) (calloc (sizeof ,<event-struct*>) ,(<_> holder '->queue_fullsize)))
+     (set! ,(<_> dummy '.time) 0)
+     ;;(set! engine->queue_size 1)
+     (for-each 0 ,(<_> holder '->queue_fullsize)
+	       (lambda (i)
+		 (set! ,(<_> holder '->queue[i]) ,(<_> '& dummy))))))
+
+
+(define-macro (define-ec-struct-with-priority-queue name . rest)
+  `(define-ec-struct ,name
+     ,@(call-with-values (lambda () (break (lambda (a) (eq? a 'priority-queue))
+					   rest))
+	 (lambda (before after)
+	   (append before
+		   `(<int> num_lost_events                     ;; Number of events lost because queue was full.
+		     <int> num_events                          ;; Number of events waiting to be run
+		     <int> queue_fullsize
+		     <int> queue_size
+		     ,(cadr after) queue)                ;; A priority queue with room for queue_fullsize number of events
+		   (cddr after))))))
+
+#!
+(pretty-print (macroexpand-1 '(define-ec-struct-with-priority-queue <RT_Engine>
+				<int> one
+				priority-queue <void*>
+				<int> two)))
+!#
+
+
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;; Engine ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -853,15 +979,12 @@ procfuncs=sorted
 !#
 
 
-(define-ec-struct <RT_Engine>
+(define-ec-struct-with-priority-queue <RT_Engine>
   <jack_ringbuffer_t-*> ringbuffer_to_rt
   <jack_ringbuffer_t-*> ringbuffer_from_rt
 
-  <int> num_lost_events                     ;; Number of events lost because queue was full.
-  <int> num_events                          ;; Number of events waiting to be run
-  <int> queue_fullsize
-  <int> queue_size
-  <struct-RT_Event-**> queue                ;; A priority queue with room for queue_fullsize number of events
+  priority-queue <struct-RT_Event-**>
+
   ;;<struct-RT_Event-*> events_rt           ;; Sorted events to be scheduled.
   <int64> next_switchtime                     ;; The next time events_noninserted2 becomes events_noninserted1
   <int64> next_next_switchtime                ;; The next time after that again that events_noninserted2 becomes events_noninserted1
@@ -877,7 +1000,8 @@ procfuncs=sorted
 
   ;; Time must be unsigned! (wrap-around) (nope, using 64 bit instead.)
   <int64> time
-  <int64> time_before ;; What is this?
+  <int64> block_time
+  <int64> prev_block_time ;; What is this?
   <float> samplerate
   <float> res
   <char-*> error
@@ -899,6 +1023,10 @@ procfuncs=sorted
 	"#include <stdbool.h>"
 	"#include <jack/ringbuffer.h>"
 	"#include <jack/jack.h>"
+	"#define __USE_XOPEN2K"
+	"#include <semaphore.h>"
+	"#include <jack/thread.h>"
+	"#include <errno.h>"
 
 	,bus-struct
 	
@@ -930,10 +1058,20 @@ procfuncs=sorted
 	(<SCM> mark_procfunc (lambda ((<SCM> procfunc_smob))
 			       (let* ((procfunc <struct-RT_Procfunc-*> (cast <void-*> (SCM_SMOB_DATA procfunc_smob))))
 				 (return procfunc->toprotect))))
+
+	"typedef  void (*voidfreetypedef)(void*,int do_I_free_questionmark)"
+	"struct first_arg_is_freefunc{voidfreetypedef ai;}"
+
 	(<size_t> free_procfunc (lambda ((<SCM> procfunc_smob))
 				  (let* ((procfunc <struct-RT_Procfunc-*> (cast <void-*> (SCM_SMOB_DATA procfunc_smob))))
 				    ;;(fprintf stderr (string "Freeing procfunc smob: %u\\n") procfunc)
-				    (free procfunc->arg)
+				    (if procfunc->arg
+					(begin
+					  (<struct-first_arg_is_freefunc*> faif procfunc->arg)
+					  (if faif->ai
+					      (faif->ai procfunc->arg 1) ;; Call to free_globals_func
+					      ;;(free procfunc->arg) ;; This is where rt_globals is freed.
+					      )))
 				    (free procfunc)
 				    (return 0))))
 	(<int> print_procfunc (lambda ((<SCM> procfunc_smob) (<SCM> port) (<scm_print_state-*> pstate))
@@ -993,6 +1131,13 @@ procfuncs=sorted
 					   (begin
 					     engine->num_procfuncs--
 					     
+                                             (if toremove->arg
+                                                 (begin
+                                                   (<struct-first_arg_is_freefunc*> faif toremove->arg)
+                                                   (if faif->ai
+                                                       (faif->ai toremove->arg 0) ;; Call to release coroutines etc.
+                                                       )))
+
 					     (rt_unprotect_procfunc engine toremove)
 					     
 					     (if (== toremove->prev NULL)
@@ -1068,84 +1213,26 @@ procfuncs=sorted
 					   (let* ((procfunc <struct-RT_Procfunc-*> engine->procfuncs)
 						  (next <struct-RT_Procfunc-*>))
 					     (while procfunc
-						    (set! next procfunc->next)
-						    (rt_remove_procfunc_do engine procfunc)
-						    (set! procfunc next))))))
+                                               (set! next procfunc->next)
+                                               (rt_remove_procfunc_do engine procfunc)
+                                               (set! procfunc next))))))
 	 
 	
+
 	;; Priority queue code
-	;; rt_insert_event and rt_deletmin_event logic taken from "Data Structures and Agloritm Analysis second edition" by Mark Allen Weiss.
-	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	(<struct-RT_Event> rt_event_dummy)
 	
-
-	(<bool> rt_insert_event (lambda ((<struct-RT_Engine-*> engine)
-					 (<struct-RT_Event-*> event))
-				  
-				  (if (>= engine->queue_size (- engine->queue_fullsize 2)) ;; Can 2 be changed to 1 or 0?
-				      (begin
-					engine->num_events--
-					engine->num_lost_events++
-					(return false)))
-
-				  engine->queue_size++
-
-				  (if (< event->time 0)
-				      (set! event->time 0))
-
-				  (let* ((queue <struct-RT_Event-**> engine->queue)
-					 (time <int64> event->time)
-					 (i <int> engine->queue_size)
-					 (newi <int> (>> i 1)))
-				    ;;(fprintf stderr (string "insert, i: %d newi: %d\\n") i newi)
-				    (while (> queue[newi]->time time)
-					   (set! queue[i] queue[newi])
-					   (set! i newi)
-					   (set! newi (>> newi 1)))
-				    ;;(fprintf stderr (string "insert2  %u size: %d, i: %d newi: %d\\n") event->arg engine->queue_size i newi)
-				    (set! queue[i] event))
-				  (return true)))
+	,(gen-priority-queue-insert 'rt_insert_event '<struct-RT_Engine-*> '<struct-RT_Event-*>)
 	
 
-	(<void> rt_deletemin_event (lambda ((<struct-RT_Engine-*> engine))
-				     
-				     ;;This check is done elsewhere
-				     ;;(if (== engine->queue_size 0)
-				     ;;    (return NULL))
-
-				     ;;(<struct-RT_Event-*> event engine->queue[1])
-				     engine->num_events--				     
-				     engine->queue_size--
-				     
-				     (let* ((queue <struct-RT_Event-**> engine->queue)					
-					    (size <int> engine->queue_size)
-					    (last <struct-RT_Event-*> queue[size+1])
-					    (last_time <int64> last->time)
-					    (i <int> 1)
-					    (child <int>))
-				       ;;(fprintf stderr (string "remove, i: %d child %d, size: %d, last: %u\\n") i child size last)
-				       (while (<= (<< i 1) size)
-					      (set! child (<< i 1))
-					      (if (and (!= child size)
-						       (< queue[child+1]->time queue[child]->time))
-						  child++)
-					      (if (> last_time queue[child]->time)
-						  (begin
-						    (set! queue[i] queue[child])
-						    (set! i child))
-						  break))
-				       ;;(set! child (<< i 1)))
-				       ;;(fprintf stderr (string "remove2, %u size: %d, i: %d child %d\\n") event->arg size i child)
-				       ;;(set! queue[size] NULL)
-				       (set! queue[i] last))))
+	,(gen-priority-queue-delete-min 'rt_deletemin_event '<struct-RT_Engine-*> '<struct-RT_Event-*>)
+	
 
 	;;(<int> rt_is_queue_not_empty (lambda ((<struct-RT_Engine-*> engine))
 	;;			       (return engine->queue_size)))
 	
-	(<struct-RT_Event-*> rt_findmin_event (lambda ((<struct-RT_Engine-*> engine))
-						(return engine->queue_size==0?NULL:engine->queue[1])))
-	
+	,(gen-priority-queue-find-min 'rt_findmin_event '<struct-RT_Engine-*> '<struct-RT_Event-*>)
 						    
 			       
 	;; Decide whether to insert now or later.
@@ -1187,19 +1274,16 @@ procfuncs=sorted
 						(return 0)
 						(return ret))))
 						
-
-	(functions->public
-
-	 (<void> rt_callback (lambda ((<struct-RT_Engine-*> engine)
-				      (<jack_client_t-*> client)
-				      (<int> is_running)
-				      (<int> nframes)
-				      (<int64> base_time)
-				      (<float> samplerate))
+	(<void> rt_callback_do (lambda ((<struct-RT_Engine-*> engine)
+                                        (<jack_client_t-*> client)
+                                        (<int> is_running)
+                                        (<int> nframes)
+                                        (<int64> block_time)
+                                        (<float> samplerate))
 
 			       (<int> max_cycle_usage (/ (* nframes engine->max_cpu_usage) 100))
-				      
-			       (<int64> time (+ base_time nframes))
+
+			       (<int64> next_block_time (+ block_time nframes))
 
 			       (if (> nframes ,rt-max-frame-size)
 				   (begin
@@ -1231,7 +1315,7 @@ procfuncs=sorted
 					     (rt_insert_event engine event)))))
 
 			       ;; Put events placed in the to-be-queued list into the priority queue and switch the two lists.
-			       (if (>= time engine->next_switchtime)
+			       (if (>= next_block_time engine->next_switchtime)
 				   (let* ((left <struct-RT_Event-*> engine->events_noninserted1))
 				     (set! engine->events_noninserted1 engine->events_noninserted2)
 				     (set! engine->events_noninserted2 NULL)
@@ -1248,23 +1332,22 @@ procfuncs=sorted
 
 			       (set! engine->samplerate samplerate)
 
-			       (rt_run_queued_events engine base_time)
+			       (rt_run_queued_events engine block_time)
 
-			       (set! engine->time_before engine->time) ;; Last time
+			       (set! engine->prev_block_time engine->block_time)
+                               (set! engine->block_time block_time)
 			       
 			       (if (== (setjmp engine->error_jmp) 0)
-				   (let* ((time <int64> base_time)
+				   (let* ((time <int64> block_time)
 					  (next_stop <int64>)
-					  (event <struct-RT_Event-*>)
-					  (end_time <int64> (+ base_time nframes)))
-
+					  (event <struct-RT_Event-*>))
 
 				     
-				     (while (< time end_time)
+				     (while (< time next_block_time)
 					    (set! event (rt_findmin_event engine))
 					    (if event
-						(set! next_stop (MIN end_time event->time))
-						(set! next_stop end_time))
+						(set! next_stop (MIN next_block_time event->time))
+						(set! next_stop next_block_time))
 
 					    ;; Make some noise
 					    (if is_running
@@ -1286,10 +1369,9 @@ procfuncs=sorted
 							       ;; Run a <realtime> instance function.
 							       (if (!= engine->skip_this_procfunc_next_cycle procfunc)
 								   (if (== 1 (callback procfunc->arg
-										       (- time base_time)
-										       (- next_stop base_time)))
+										       (- time block_time)
+										       (- next_stop block_time)))
 								       (rt_remove_procfunc_do engine procfunc)))
-							       
 							       (if (== NULL next)
 								   (set! engine->skip_this_procfunc_next_cycle NULL))
 							       
@@ -1319,22 +1401,94 @@ procfuncs=sorted
 				      (let* ((next <struct-RT_Event-*> engine->events_non_rt->next))
 					(rt_send_data_back engine RT_DATABACK_EVENT
 							   engine->events_non_rt)
-					(set! engine->events_non_rt next))))))
-					       
+					(set! engine->events_non_rt next)))))
 
+
+	(<struct-RT_Engine-*> gl_engine)
+	(<jack_client_t-*> gl_client)
+	(<int> gl_is_running)
+	(<int> gl_nframes)
+	(<int64> gl_base_time)
+	(<float> gl_samplerate)
+
+	(<sem_t> cb_ready_sem)
+	(<sem_t> cb_finished_sem)
+	(run-now
+	 (sem_init &cb_ready_sem 0 0)
+	 (sem_init &cb_finished_sem 0 0))
+	(<int> cb_working 0)
+	
+	(<void*> callback_thread_func
+		 (lambda ((<void*> arg))
+		   (while 1
+		     (set! cb_working 0)
+		     (sem_wait &cb_ready_sem)
+		     (set! cb_working 1)
+		     (rt_callback_do gl_engine
+				     gl_client
+				     gl_is_running
+				     gl_nframes
+				     gl_base_time
+				     gl_samplerate)		     
+		     (sem_post &cb_finished_sem))
+		   (return NULL)))
+	
+	(<pthread_t> callback_thread "{0}")
+	(run-now
+	 (pthread_create &callback_thread NULL callback_thread_func NULL)
+	 ;;(jack_acquire_real_time_scheduling callback_thread 60)
+	 )
+	
+	(functions->public
+	 (<void> rt_callback (lambda ((<struct-RT_Engine-*> engine)
+				      (<jack_client_t-*> client)
+				      (<int> is_running)
+				      (<int> nframes)
+				      (<int64> base_time)
+				      (<float> samplerate))
+			       (<static-int> not_finished_last_time 0)
+			       (if 1
+				   (rt_callback_do engine
+						   client
+						   is_running
+						   nframes
+						   base_time
+						   samplerate)
+				   (begin
+				     (if (== 1 cb_working)
+					 (begin
+					   (fprintf stderr (string "Still not finished...\\n"))
+					   return))
+				     (if (== 1 not_finished_last_time)
+					 (sem_wait &cb_finished_sem))
+
+				     (set! gl_engine engine)
+				     (set! gl_client client)
+				     (set! gl_is_running is_running)
+				     (set! gl_nframes nframes)
+				     (set! gl_base_time base_time)
+				     (set! gl_samplerate samplerate)
+
+				     (sem_post &cb_ready_sem)
+
+				     (<struct-timespec> timespec)
+				     (set! timespec.tv_sec 0)
+				     (set! timespec.tv_nsec 999999999/300)
+				     ;;(sem_wait &cb_finished_sem))))))
+				     (if (== -1 (sem_timedwait &cb_finished_sem &timespec))
+					 (begin
+					   (set! not_finished_last_time 1)
+					   (fprintf stderr (string "sem_wait failed: %d, (%d %d %d %d)\\n") errno EINTR EAGAIN EINVAL ETIMEDOUT))
+					 (set! not_finished_last_time 0)))))))
+	
+	
 	(public
 
 	 (<void> rt_init_engine (lambda ((<struct-RT_Engine-*> engine))
 				  (set! engine->allocplace (malloc ,rt-allocmem-size))
 				  (set! engine->allocplace_end (+ engine->allocplace ,rt-allocmem-size))
-				  
-				  (set! engine->queue (calloc (sizeof <struct-RT_Event-*>) engine->queue_fullsize))
-				  (set! rt_event_dummy.time 0)
-				  ;;(set! engine->queue_size 1)
-				  (for-each 0 engine->queue_fullsize
-					    (lambda (i)
-					      (set! engine->queue[i] &rt_event_dummy))))))
 
+				  ,(gen-priority-queue-init-code 'engine '<struct-RT_Event-*> 'rt_event_dummy))))
 	
 	 
 	 ;; Freeing events, protecting and unprotecting procfunc-smobs.

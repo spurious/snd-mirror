@@ -636,7 +636,7 @@ static void start_view_color_dialog(bool managed)
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNlistMarginWidth, 3); n++;
-      ccd->list = XmCreateScrolledList(mainform, "colormap-list", args, n);
+      ccd->list = XmCreateScrolledList(mainform, (char *)"colormap-list", args, n);
       XtVaSetValues(ccd->list, 
 		    XmNbackground, ss->sgx->white, 
 		    XmNforeground, ss->sgx->black, 

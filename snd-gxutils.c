@@ -15,7 +15,7 @@
 #define NS_COMMAND      "_MOZILLA_COMMAND"
 
 
-static Window compare_window(Display *display, Window window, char *id)
+static Window compare_window(Display *display, Window window, const char *id)
 {
   Atom type;
   int format;
@@ -37,8 +37,8 @@ static Window compare_window(Display *display, Window window, char *id)
 
 static Window find_window(Display *display, 
 			  Window starting_window, 
-			  char *name, 
-			  Window (*compare_func)(Display *dpy, Window win, char *id))
+			  const char *name, 
+			  Window (*compare_func)(Display *dpy, Window win, const char *id))
 {
   Window rootwindow, window_parent;
   unsigned int i = 0, num_children = 0;

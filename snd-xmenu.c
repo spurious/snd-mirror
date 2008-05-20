@@ -80,7 +80,7 @@ static void make_open_recent_menu(void)
   XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
   XtSetArg(args[n], XmNpositionIndex, 1); n++;  /* just after "Open" menu */
   
-  file_open_recent_menu = XmCreatePulldownMenu(file_menu, "open-recent", args, n);
+  file_open_recent_menu = XmCreatePulldownMenu(file_menu, (char *)"open-recent", args, n);
 	  
   XtSetArg(args[n], XmNsubMenuId, file_open_recent_menu); n++;
 
@@ -267,7 +267,7 @@ static void make_view_files_list_menu(void)
   XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
   XtSetArg(args[n], XmNpositionIndex, pos); n++;
   
-  view_files_menu = XmCreatePulldownMenu(view_menu, "view-files", args, n);
+  view_files_menu = XmCreatePulldownMenu(view_menu, (char *)"view-files", args, n);
   XtSetArg(args[n], XmNsubMenuId, view_files_menu); n++;
 
   view_files_cascade_menu = XtCreateManagedWidget(_("Files"), xmCascadeButtonWidgetClass, view_menu, args, n);
@@ -472,12 +472,12 @@ Widget add_menu(void)
 #ifdef SND_AS_WIDGET
   main_menu = XtCreateWidget("mb", xmRowColumnWidgetClass, MAIN_PANE(ss), high_args, n);
 #else
-  main_menu = XmCreateMenuBar(MAIN_PANE(ss), "menuBar", high_args, n);
+  main_menu = XmCreateMenuBar(MAIN_PANE(ss), (char *)"menuBar", high_args, n);
 #endif
 
   /* FILE MENU */
   XtSetArg(main_args[main_n], XmNuserData, 0);
-  file_menu = XmCreatePulldownMenu(main_menu, "File", main_args, main_n + 1);
+  file_menu = XmCreatePulldownMenu(main_menu, (char *)"File", main_args, main_n + 1);
   
   high_n = start_high_n;
   XtSetArg(high_args[high_n], XmNsubMenuId, file_menu); high_n++;
@@ -547,7 +547,7 @@ Widget add_menu(void)
 
   /* EDIT MENU */
   XtSetArg(main_args[main_n], XmNuserData, 1);
-  edit_menu = XmCreatePulldownMenu(main_menu, "Edit", main_args, main_n + 1);
+  edit_menu = XmCreatePulldownMenu(main_menu, (char *)"Edit", main_args, main_n + 1);
 
   high_n = start_high_n;
   XtSetArg(high_args[high_n], XmNsubMenuId, edit_menu); high_n++;
@@ -607,7 +607,7 @@ Widget add_menu(void)
 
   /* VIEW MENU */
   XtSetArg(main_args[main_n], XmNuserData, 2);
-  view_menu = XmCreatePulldownMenu(main_menu, "View", main_args, main_n + 1);
+  view_menu = XmCreatePulldownMenu(main_menu, (char *)"View", main_args, main_n + 1);
 
   high_n = start_high_n;
   XtSetArg(high_args[high_n], XmNsubMenuId, view_menu); high_n++;
@@ -645,7 +645,7 @@ Widget add_menu(void)
 
   view_sep2_menu = XtCreateManagedWidget("", xmSeparatorWidgetClass, view_menu, sep_args, j);
 
-  view_graph_style_menu = XmCreatePulldownMenu(view_menu, "graph-style", main_args, main_n);
+  view_graph_style_menu = XmCreatePulldownMenu(view_menu, (char *)"graph-style", main_args, main_n);
 
   k = main_n;
   XtSetArg(main_args[k], XmNsubMenuId, view_graph_style_menu); k++;
@@ -674,7 +674,7 @@ Widget add_menu(void)
   view_cursor_menu = XtCreateManagedWidget(_("Verbose cursor"), xmPushButtonWidgetClass, view_menu, main_args, main_n);
   XtAddCallback(view_cursor_menu, XmNactivateCallback, view_cursor_callback, NULL);
 
-  view_combine_menu = XmCreatePulldownMenu(view_menu, "combine", main_args, main_n);
+  view_combine_menu = XmCreatePulldownMenu(view_menu, (char *)"combine", main_args, main_n);
 
   k = main_n;
   XtSetArg(main_args[k], XmNsubMenuId, view_combine_menu); k++;
@@ -696,7 +696,7 @@ Widget add_menu(void)
   XtAddCallback(view_zero_menu, XmNactivateCallback, view_zero_callback, NULL);
   XtVaSetValues(view_zero_menu, XmNmnemonic, 'y', NULL);
 
-  view_x_axis_menu = XmCreatePulldownMenu(view_menu, "xaxis", main_args, main_n);
+  view_x_axis_menu = XmCreatePulldownMenu(view_menu, (char *)"xaxis", main_args, main_n);
 
   k = main_n;
   XtSetArg(main_args[k], XmNsubMenuId, view_x_axis_menu); k++;
@@ -722,7 +722,7 @@ Widget add_menu(void)
   XtAddCallback(view_x_axis_measures_menu, XmNactivateCallback, view_x_axis_measures_callback, NULL);  
 
 
-  view_axes_menu = XmCreatePulldownMenu(view_menu, "axes", main_args, main_n);
+  view_axes_menu = XmCreatePulldownMenu(view_menu, (char *)"axes", main_args, main_n);
 
   k = main_n;
   XtSetArg(main_args[k], XmNsubMenuId, view_axes_menu); k++;
@@ -755,7 +755,7 @@ Widget add_menu(void)
 
   /* OPTIONS MENU */
   XtSetArg(main_args[main_n], XmNuserData, 3);
-  options_menu = XmCreatePulldownMenu(main_menu, "Option", main_args, main_n + 1);
+  options_menu = XmCreatePulldownMenu(main_menu, (char *)"Option", main_args, main_n + 1);
 
   high_n = start_high_n;
   XtSetArg(high_args[high_n], XmNsubMenuId, options_menu); high_n++;
@@ -768,7 +768,7 @@ Widget add_menu(void)
   XtVaSetValues(options_transform_menu, XmNmnemonic, 't', NULL);
 
 
-  options_focus_style_menu = XmCreatePulldownMenu(options_menu, "focusstyle", main_args, main_n);
+  options_focus_style_menu = XmCreatePulldownMenu(options_menu, (char *)"focusstyle", main_args, main_n);
 
   k = main_n;
   XtSetArg(main_args[k], XmNsubMenuId, options_focus_style_menu); k++;
@@ -803,7 +803,7 @@ Widget add_menu(void)
 
   /* HELP MENU */
   XtSetArg(main_args[main_n], XmNuserData, 4);
-  help_menu = XmCreatePulldownMenu(main_menu, "Help", main_args, main_n + 1);
+  help_menu = XmCreatePulldownMenu(main_menu, (char *)"Help", main_args, main_n + 1);
 
   high_n = start_high_n;
   XtSetArg(high_args[high_n], XmNsubMenuId, help_menu); high_n++;
@@ -979,7 +979,7 @@ void create_popup_menu(void)
       mainp = MAIN_PANE(ss);
       XtSetArg(args[n], XmNpopupEnabled, XmPOPUP_AUTOMATIC_RECURSIVE); n++;
       XtSetArg(args[n], XmNuserData, 5);
-      popup_menu = XmCreatePopupMenu(mainp, "popup-menu", args, n + 1);
+      popup_menu = XmCreatePopupMenu(mainp, (char *)"popup-menu", args, n + 1);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;

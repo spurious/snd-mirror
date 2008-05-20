@@ -671,7 +671,7 @@ char* word_wrap(const char *text, int widget_len);
 void g_init_help(void);
 XEN g_snd_help_with_search(XEN text, int widget_wid, bool search);
 XEN g_snd_help(XEN text, int widget_wid);
-char *snd_url(const char *name);
+const char *snd_url(const char *name);
 void set_html_dir(char *new_dir);
 void key_binding_help(void);
 void play_help(void);
@@ -684,7 +684,7 @@ void delete_help(void);
 void name_to_html_viewer(const char *red_text);
 void url_to_html_viewer(const char *url);
 bool snd_topic_help(const char *topic);
-char **help_name_to_xrefs(const char *name);
+const char **help_name_to_xrefs(const char *name);
 
 
 /* -------- snd-menu.c -------- */
@@ -699,7 +699,7 @@ void g_init_menu(void);
 int add_ss_watcher(ss_watcher_t type, void (*watcher)(ss_watcher_reason_t reason, void *data), void *context);
 /* bool remove_ss_watcher(int loc); */
 void call_ss_watchers(ss_watcher_t type, ss_watcher_reason_t reason);
-char *save_options_in_prefs(void);
+const char *save_options_in_prefs(void);
 void open_save_sound_block(snd_info *sp, FILE *fd, bool with_nth);
 void close_save_sound_block(FILE *fd, bool need_f);
 bool snd_exit_cleanly(bool force_exit);
@@ -716,11 +716,11 @@ void g_init_main(void);
 
 const char *io_error_name(io_error_t err);
 #ifdef __GNUC__
-  void snd_error(char *format, ...)  __attribute__ ((format (printf, 1, 2)));
-  void snd_warning(char *format, ...)  __attribute__ ((format (printf, 1, 2)));
+  void snd_error(const char *format, ...)  __attribute__ ((format (printf, 1, 2)));
+  void snd_warning(const char *format, ...)  __attribute__ ((format (printf, 1, 2)));
 #else
-  void snd_error(char *format, ...);
-  void snd_warning(char *format, ...);
+  void snd_error(const char *format, ...);
+  void snd_warning(const char *format, ...);
 #endif
 void snd_error_without_redirection_or_hook(const char *msg);
 void snd_error_without_format(const char *msg);
@@ -876,7 +876,7 @@ void g_init_data(void);
 
 ed_list *initial_ed_list(off_t beg, off_t end);
 #if MUS_DEBUGGING
-  char *ed_list_edit_type_to_string(int type);
+  const char *ed_list_edit_type_to_string(int type);
 #endif
 snd_info *sound_is_silence(snd_info *sp);
 off_t edit_changes_begin_at(chan_info *cp, int edpos);
@@ -991,12 +991,12 @@ void cp_free_fft_state(chan_info *cp);
 void autocorrelation(Float *data, int n);
 void set_fft_info_xlabel(chan_info *cp, const char *new_label);
 void fourier_spectrum(snd_fd *sf, Float *data, off_t fft_size, off_t data_len, Float *window, chan_info *cp);
-char *wavelet_name(int i);
-char **wavelet_names(void);
+const char *wavelet_name(int i);
+const char **wavelet_names(void);
 void set_log_freq_start(Float base);
 
-char *transform_name(int type);
-char *transform_program_name(int type);
+const char *transform_name(int type);
+const char *transform_program_name(int type);
 int transform_position_to_type(int pos);
 int transform_type_to_position(int type);
 int max_transform_type(void);
@@ -1177,8 +1177,8 @@ void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool appl
 void save_envelope_editor_state(FILE *fd);
 char *env_name_completer(widget_t w, char *text, void *data);
 env *enved_next_env(void);
-env *string_to_env(char *str);
-void add_or_edit_symbol(char *name, env *val);
+env *string_to_env(const char *str);
+void add_or_edit_symbol(const char *name, env *val);
 env* name_to_env(const char *str);
 env *position_to_env(int pos);
 void delete_envelope(char *name);
@@ -1333,7 +1333,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
 #define ungrf_y(AP, Y) (((Y) - (AP)->y_base) / (AP)->y_scale)
 
 axis_info *make_axis_info(chan_info *cp, double xmin, double xmax, Float ymin, Float ymax, 
-			  char *xlabel, double x0, double x1, Float y0, Float y1,
+			  const char *xlabel, double x0, double x1, Float y0, Float y1,
 			  axis_info *old_ap);
 
 #if (!USE_NO_GUI)
@@ -1663,7 +1663,7 @@ int in_user_keymap(int key, int state, bool cx_extended);
 void set_keymap_entry(int key, int state, int args, XEN func, bool cx_extended, const char *origin, const char *prefs_info);
 char *key_binding_description(int key, int state, bool cx_extended);
 char *make_key_name(char *buf, int buf_size, int key, int state, bool extended);
-void map_over_key_bindings(bool (*func)(int key, int state, bool cx, char *pinfo, XEN xf));
+void map_over_key_bindings(bool (*func)(int key, int state, bool cx, XEN xf));
 key_info *find_prefs_key_binding(const char *prefs_name);
 void keyboard_command(chan_info *cp, int keysym, int state);
 void control_g(snd_info *sp);

@@ -111,9 +111,9 @@ enum {MUS_OSCIL, MUS_NCOS, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PASS,
       MUS_INITIAL_GEN_TAG};
 
 
-static char *interp_name[] = {"step", "linear", "sinusoidal", "all-pass", "lagrange", "bezier", "hermite"};
+static const char *interp_name[] = {"step", "linear", "sinusoidal", "all-pass", "lagrange", "bezier", "hermite"};
 
-static char *interp_type_to_string(int type)
+static const char *interp_type_to_string(int type)
 {
   if ((type >= 0) && (type < MUS_NUM_INTERPS))
     return(interp_name[type]);
@@ -271,7 +271,7 @@ static char *float_array_to_string(Float *arr, int len, int loc)
 }
 
 
-static char *clm_array_to_string(mus_any **gens, int num_gens, char *name, char *indent)
+static char *clm_array_to_string(mus_any **gens, int num_gens, const char *name, const char *indent)
 {
   char *descr = NULL;
   if ((gens) && (num_gens > 0))
@@ -305,7 +305,7 @@ static char *clm_array_to_string(mus_any **gens, int num_gens, char *name, char 
 }
 
 
-static char *int_array_to_string(int *arr, int num_ints, char *name)
+static char *int_array_to_string(int *arr, int num_ints, const char *name)
 {
   #define MAX_INT_SIZE 32
   char *descr = NULL;
@@ -417,7 +417,7 @@ int mus_free(mus_any *gen)
 char *mus_describe(mus_any *gen)
 {
   if (gen == NULL)
-    return("null");
+    return((char *)"null");
   if ((gen->core) && (gen->core->describe))
     return((*(gen->core->describe))(gen));
   else mus_error(MUS_NO_DESCRIBE, "can't describe %s", mus_name(gen));
@@ -1239,7 +1239,7 @@ static char *describe_oscil(mus_any *ptr)
 
 static mus_any_class OSCIL_CLASS = {
   MUS_OSCIL,
-  S_oscil,
+  (char *)S_oscil,   /* the "(char *)" business is for g++'s benefit */
   &free_oscil,
   &describe_oscil,
   &oscil_equalp,
@@ -1437,7 +1437,7 @@ static char *describe_ncos(mus_any *ptr)
 
 static mus_any_class NCOS_CLASS = {
   MUS_NCOS,
-  S_ncos,
+  (char *)S_ncos,
   &free_ncos,
   &describe_ncos,
   &ncos_equalp,
@@ -1612,7 +1612,7 @@ static Float run_nsin(mus_any *ptr, Float fm, Float unused) {return(mus_nsin(ptr
 
 static mus_any_class NSIN_CLASS = {
   MUS_NSIN,
-  S_nsin,
+  (char *)S_nsin,
   &free_ncos,
   &describe_nsin,
   &nsin_equalp,
@@ -1786,7 +1786,7 @@ Float mus_asymmetric_fm_no_input(mus_any *ptr)
 
 static mus_any_class ASYMMETRIC_FM_CLASS = {
   MUS_ASYMMETRIC_FM,
-  S_asymmetric_fm,
+  (char *)S_asymmetric_fm,
   &free_asymmetric_fm,
   &describe_asyfm,
   &asyfm_equalp,
@@ -1962,7 +1962,7 @@ static Float run_nrxysin(mus_any *ptr, Float fm, Float unused) {return(mus_nrxys
 
 static mus_any_class NRXYSIN_CLASS = {
   MUS_NRXYSIN,
-  S_nrxysin,
+  (char *)S_nrxysin,
   &free_nrxy,
   &describe_nrxysin,
   &nrxy_equalp,
@@ -2070,7 +2070,7 @@ static Float run_nrxycos(mus_any *ptr, Float fm, Float unused) {return(mus_nrxyc
 
 static mus_any_class NRXYCOS_CLASS = {
   MUS_NRXYCOS,
-  S_nrxycos,
+  (char *)S_nrxycos,
   &free_nrxy,
   &describe_nrxycos,
   &nrxy_equalp,
@@ -2276,7 +2276,7 @@ static Float *table_set_data(mus_any *ptr, Float *val)
 
 static mus_any_class TABLE_LOOKUP_CLASS = {
   MUS_TABLE_LOOKUP,
-  S_table_lookup,
+  (char *)S_table_lookup,
   &free_table_lookup,
   &describe_table_lookup,
   &table_lookup_equalp,
@@ -2413,7 +2413,7 @@ static char *describe_waveshape(mus_any *ptr)
 
 static mus_any_class WAVESHAPE_CLASS = {
   MUS_WAVESHAPE,
-  S_waveshape,
+  (char *)S_waveshape,
   &free_ws,
   &describe_waveshape,
   &ws_equalp,
@@ -2747,7 +2747,7 @@ Float mus_polywave_unmodulated(mus_any *ptr)
 
 static mus_any_class POLYWAVE_CLASS = {
   MUS_POLYWAVE,
-  S_polywave,
+  (char *)S_polywave,
   &free_pw,
   &describe_polywave,
   &pw_equalp,
@@ -2844,7 +2844,7 @@ Float mus_polyshape_unmodulated(mus_any *ptr, Float index)
 
 static mus_any_class POLYSHAPE_CLASS = {
   MUS_POLYSHAPE,
-  S_polyshape,
+  (char *)S_polyshape,
   &free_pw,
   &describe_polyshape,
   &pw_equalp,
@@ -3031,7 +3031,7 @@ static void wt_reset(mus_any *ptr)
 
 static mus_any_class WAVE_TRAIN_CLASS = {
   MUS_WAVE_TRAIN,
-  S_wave_train,
+  (char *)S_wave_train,
   &free_wt,
   &describe_wt,
   &wt_equalp,
@@ -3292,7 +3292,7 @@ static void delay_reset(mus_any *ptr)
 
 static mus_any_class DELAY_CLASS = {
   MUS_DELAY,
-  S_delay,
+  (char *)S_delay,
   &free_delay,
   &describe_delay,
   &delay_equalp,
@@ -3399,7 +3399,7 @@ static char *describe_comb(mus_any *ptr)
 
 static mus_any_class COMB_CLASS = {
   MUS_COMB,
-  S_comb,
+  (char *)S_comb,
   &free_delay,
   &describe_comb,
   &delay_equalp,
@@ -3470,7 +3470,7 @@ static char *describe_notch(mus_any *ptr)
 
 static mus_any_class NOTCH_CLASS = {
   MUS_NOTCH,
-  S_notch,
+  (char *)S_notch,
   &free_delay,
   &describe_notch,
   &delay_equalp,
@@ -3582,7 +3582,7 @@ static char *describe_all_pass(mus_any *ptr)
 
 static mus_any_class ALL_PASS_CLASS = {
   MUS_ALL_PASS,
-  S_all_pass,
+  (char *)S_all_pass,
   &free_delay,
   &describe_all_pass,
   &delay_equalp,
@@ -3666,7 +3666,7 @@ static char *describe_moving_average(mus_any *ptr)
 
 static mus_any_class MOVING_AVERAGE_CLASS = {
   MUS_MOVING_AVERAGE,
-  S_moving_average,
+  (char *)S_moving_average,
   &free_delay,
   &describe_moving_average,
   &delay_equalp,
@@ -3783,7 +3783,7 @@ Float mus_filtered_comb_unmodulated(mus_any *ptr, Float input)
 
 static mus_any_class FILTERED_COMB_CLASS = {
   MUS_FILTERED_COMB,
-  S_filtered_comb,
+  (char *)S_filtered_comb,
   &free_delay,
   &describe_filtered_comb,
   &filtered_comb_equalp,
@@ -3921,7 +3921,7 @@ static void sawtooth_reset(mus_any *ptr)
 
 static mus_any_class SAWTOOTH_WAVE_CLASS = {
   MUS_SAWTOOTH_WAVE,
-  S_sawtooth_wave,
+  (char *)S_sawtooth_wave,
   &free_sw,
   &describe_sw,
   &sw_equalp,
@@ -3999,7 +3999,7 @@ static void square_wave_reset(mus_any *ptr)
 
 static mus_any_class SQUARE_WAVE_CLASS = {
   MUS_SQUARE_WAVE,
-  S_square_wave,
+  (char *)S_square_wave,
   &free_sw,
   &describe_sw,
   &sw_equalp,
@@ -4086,7 +4086,7 @@ static void triangle_wave_reset(mus_any *ptr)
 
 static mus_any_class TRIANGLE_WAVE_CLASS = {
   MUS_TRIANGLE_WAVE,
-  S_triangle_wave,
+  (char *)S_triangle_wave,
   &free_sw,
   &describe_sw,
   &sw_equalp,
@@ -4166,7 +4166,7 @@ static void pulse_train_reset(mus_any *ptr)
 
 static mus_any_class PULSE_TRAIN_CLASS = {
   MUS_PULSE_TRAIN,
-  S_pulse_train,
+  (char *)S_pulse_train,
   &free_sw,
   &describe_sw,
   &sw_equalp,
@@ -4396,7 +4396,7 @@ static char *describe_noi(mus_any *ptr)
 
 static mus_any_class RAND_INTERP_CLASS = {
   MUS_RAND_INTERP,
-  S_rand_interp,
+  (char *)S_rand_interp,
   &free_noi,
   &describe_noi,
   &noi_equalp,
@@ -4423,7 +4423,7 @@ static mus_any_class RAND_INTERP_CLASS = {
 
 static mus_any_class RAND_CLASS = {
   MUS_RAND,
-  S_rand,
+  (char *)S_rand,
   &free_noi,
   &describe_noi,
   &noi_equalp,
@@ -4598,7 +4598,7 @@ static void smpflt_reset(mus_any *ptr)
 
 static mus_any_class ONE_ZERO_CLASS = {
   MUS_ONE_ZERO,
-  S_one_zero,
+  (char *)S_one_zero,
   &free_smpflt,
   &describe_smpflt,
   &smpflt_equalp,
@@ -4653,7 +4653,7 @@ static Float run_one_pole(mus_any *ptr, Float input, Float unused) {return(mus_o
 
 static mus_any_class ONE_POLE_CLASS = {
   MUS_ONE_POLE,
-  S_one_pole,
+  (char *)S_one_pole,
   &free_smpflt,
   &describe_smpflt,
   &smpflt_equalp,
@@ -4740,7 +4740,7 @@ static Float two_zero_set_frequency(mus_any *ptr, Float new_freq)
 
 static mus_any_class TWO_ZERO_CLASS = {
   MUS_TWO_ZERO,
-  S_two_zero,
+  (char *)S_two_zero,
   &free_smpflt,
   &describe_smpflt,
   &smpflt_equalp,
@@ -4836,7 +4836,7 @@ static Float two_pole_set_frequency(mus_any *ptr, Float new_freq)
 
 static mus_any_class TWO_POLE_CLASS = {
   MUS_TWO_POLE,
-  S_two_pole,
+  (char *)S_two_pole,
   &free_smpflt,
   &describe_smpflt,
   &smpflt_equalp,
@@ -5041,7 +5041,7 @@ static Float formant_set_radius(mus_any *ptr, Float val)
 
 static mus_any_class FORMANT_CLASS = {
   MUS_FORMANT,
-  S_formant,
+  (char *)S_formant,
   &free_frm,
   &describe_formant,
   &frm_equalp,
@@ -5143,7 +5143,7 @@ static Float run_firmant(mus_any *ptr, Float input, Float unused) {return(mus_fi
 
 static mus_any_class FIRMANT_CLASS = {
   MUS_FIRMANT,
-  S_firmant,
+  (char *)S_firmant,
   &free_frm,
   &describe_firmant,
   &frm_equalp,
@@ -5453,7 +5453,7 @@ static void filter_reset(mus_any *ptr)
 
 static mus_any_class FILTER_CLASS = {
   MUS_FILTER,
-  S_filter,
+  (char *)S_filter,
   &free_filter,
   &describe_filter,
   &filter_equalp,
@@ -5480,7 +5480,7 @@ static mus_any_class FILTER_CLASS = {
 
 static mus_any_class FIR_FILTER_CLASS = {
   MUS_FIR_FILTER,
-  S_fir_filter,
+  (char *)S_fir_filter,
   &free_filter,
   &describe_fir_filter,
   &filter_equalp,
@@ -5506,7 +5506,7 @@ static mus_any_class FIR_FILTER_CLASS = {
 
 static mus_any_class IIR_FILTER_CLASS = {
   MUS_IIR_FILTER,
-  S_iir_filter,
+  (char *)S_iir_filter,
   &free_filter,
   &describe_iir_filter,
   &filter_equalp,
@@ -6019,7 +6019,7 @@ static off_t env_set_length(mus_any *ptr, off_t val)
 
 static mus_any_class ENV_CLASS = {
   MUS_ENV,
-  S_env,
+  (char *)S_env,
   &free_env_gen,
   &describe_env,
   &env_equalp,
@@ -6294,7 +6294,7 @@ static void frame_reset(mus_any *ptr)
 
 static mus_any_class FRAME_CLASS = {
   MUS_FRAME,
-  S_frame,
+  (char *)S_frame,
   &free_frame,
   &describe_frame,
   &equalp_frame,
@@ -6566,7 +6566,7 @@ static int mixer_channels(mus_any *ptr) {return(((mus_mixer *)ptr)->chans);}
 
 static mus_any_class MIXER_CLASS = {
   MUS_MIXER,
-  S_mixer,
+  (char *)S_mixer,
   &free_mixer,
   &describe_mixer,
   &equalp_mixer,
@@ -7047,7 +7047,7 @@ static Float run_file_to_sample(mus_any *ptr, Float arg1, Float arg2) {return(fi
 
 static mus_any_class FILE_TO_SAMPLE_CLASS = {
   MUS_FILE_TO_SAMPLE,
-  S_file_to_sample,
+  (char *)S_file_to_sample,
   &free_file_to_sample,
   &describe_file_to_sample,
   &rdin_equalp,
@@ -7248,7 +7248,7 @@ static int rd_channel(mus_any *rd) {return(((rdin *)rd)->chan);}
 
 static mus_any_class READIN_CLASS = {
   MUS_READIN,
-  S_readin,
+  (char *)S_readin,
   &free_readin,
   &describe_readin,
   &rdin_equalp,
@@ -7354,7 +7354,7 @@ static Float run_file_to_frame(mus_any *ptr, Float arg1, Float arg2)
 
 static mus_any_class FILE_TO_FRAME_CLASS = {
   MUS_FILE_TO_FRAME,
-  S_file_to_frame,
+  (char *)S_file_to_frame,
   &free_file_to_sample,
   &describe_file_to_frame,
   &rdin_equalp,
@@ -7483,7 +7483,7 @@ static Float run_sample_to_file(mus_any *ptr, Float arg1, Float arg2) {mus_error
 
 static mus_any_class SAMPLE_TO_FILE_CLASS = {
   MUS_SAMPLE_TO_FILE,
-  S_sample_to_file,
+  (char *)S_sample_to_file,
   &free_sample_to_file,
   &describe_sample_to_file,
   &sample_to_file_equalp,
@@ -7837,7 +7837,7 @@ static Float run_frame_to_file(mus_any *ptr, Float arg1, Float arg2)
 
 static mus_any_class FRAME_TO_FILE_CLASS = {
   MUS_FRAME_TO_FILE,
-  S_frame_to_file,
+  (char *)S_frame_to_file,
   &free_sample_to_file,
   &describe_frame_to_file,
   &sample_to_file_equalp,
@@ -8183,7 +8183,7 @@ static Float run_locsig(mus_any *ptr, Float arg1, Float arg2)
 
 static mus_any_class LOCSIG_CLASS = {
   MUS_LOCSIG,
-  S_locsig,
+  (char *)S_locsig,
   &free_locsig,
   &describe_locsig,
   &locsig_equalp,
@@ -8534,7 +8534,7 @@ static Float run_move_sound(mus_any *ptr, Float arg1, Float arg2)
 
 static mus_any_class MOVE_SOUND_CLASS = {
   MUS_MOVE_SOUND,
-  S_move_sound,
+  (char *)S_move_sound,
   &free_move_sound,
   &describe_move_sound,
   &move_sound_equalp,
@@ -8776,7 +8776,7 @@ static void src_reset(mus_any *ptr)
 
 static mus_any_class SRC_CLASS = {
   MUS_SRC,
-  S_src,
+  (char *)S_src,
   &free_src_gen,
   &describe_src,
   &src_equalp,
@@ -9141,7 +9141,7 @@ static int grn_irandom(grn_info *spd, int amp)
 
 static mus_any_class GRANULATE_CLASS = {
   MUS_GRANULATE,
-  S_granulate,
+  (char *)S_granulate,
   &free_granulate,
   &describe_granulate,
   &granulate_equalp,
@@ -10075,7 +10075,7 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 	double alpha;
 	freq = M_PI / (Float)size;
 	if (beta < 0.2) beta = 0.2;
-	alpha = ccosh(cacosh(pow(10.0, beta)) / (Float)size);
+	alpha = creal(ccosh(cacosh(pow(10.0, beta)) / (Float)size));
 	rl = (Float *)clm_calloc(size, sizeof(Float), "ifft window buffer");
 	im = (Float *)clm_calloc(size, sizeof(Float), "ifft window buffer");
 	for (i = 0, angle = 0.0; i < size; i++, angle += freq)
@@ -10428,7 +10428,7 @@ static void convolve_reset(mus_any *ptr)
 
 static mus_any_class CONVOLVE_CLASS = {
   MUS_CONVOLVE,
-  S_convolve,
+  (char *)S_convolve,
   &free_convolve,
   &describe_convolve,
   &convolve_equalp,
@@ -10528,7 +10528,7 @@ void mus_convolve_files(const char *file1, const char *file2, Float maxamp, cons
   off_t file1_len, file2_len, outlen, totallen;
   int fftlen, file1_chans, file2_chans, output_chans;
   Float *data1, *data2;
-  char *errmsg = NULL;
+  const char *errmsg = NULL;
   Float maxval = 0.0;
   int i;
 
@@ -10735,7 +10735,7 @@ static void pv_reset(mus_any *ptr)
 
 static mus_any_class PHASE_VOCODER_CLASS = {
   MUS_PHASE_VOCODER,
-  S_phase_vocoder,
+  (char *)S_phase_vocoder,
   &free_phase_vocoder,
   &describe_phase_vocoder,
   &phase_vocoder_equalp,
@@ -11070,7 +11070,7 @@ static void ssb_reset(mus_any *ptr)
 
 static mus_any_class SSB_AM_CLASS = {
   MUS_SSB_AM,
-  S_ssb_am,
+  (char *)S_ssb_am,
   &free_ssb_am,
   &describe_ssb_am,
   &ssb_am_equalp,

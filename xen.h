@@ -11,11 +11,12 @@
  */
 
 #define XEN_MAJOR_VERSION 2
-#define XEN_MINOR_VERSION 15
-#define XEN_VERSION "2.15"
+#define XEN_MINOR_VERSION 16
+#define XEN_VERSION "2.16"
 
 /* HISTORY:
  *
+ *  19-May-08: more const char* arg declarations.
  *  14-May-08: changed XEN_ARITY in Guile to use scm_procedure_property.
  *  1-May-08:  XEN_NAN_P and XEN_INF_P (Guile).
  *  23-Apr-08: try to get old Gauche (8.7) to work again.
@@ -713,10 +714,10 @@
 #define XEN_PORT_TO_STRING(Port)      scm_strport_to_string(Port)
 
 XEN xen_guile_create_hook(const char *name, int args, const char *help, XEN local_doc);
-void xen_guile_define_procedure_with_setter(char *get_name, XEN (*get_func)(), char *get_help, XEN (*set_func)(), 
+void xen_guile_define_procedure_with_setter(const char *get_name, XEN (*get_func)(), const char *get_help, XEN (*set_func)(), 
 					    XEN local_doc, int get_req, int get_opt, int set_req, int set_opt);
 
-void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_func)(), char *get_help, XEN (*set_func)(), XEN (*reversed_set_func)(), 
+void xen_guile_define_procedure_with_reversed_setter(const char *get_name, XEN (*get_func)(), const char *get_help, XEN (*set_func)(), XEN (*reversed_set_func)(), 
 						     XEN local_doc, int get_req, int get_opt, int set_req, int set_opt);
 double xen_to_c_double(XEN a);
 double xen_to_c_double_or_else(XEN a, double b);
@@ -900,8 +901,8 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 #define XEN_HOOK_PROCEDURES(a)          xen_rb_hook_to_a(a)
 #define XEN_CLEAR_HOOK(a)               xen_rb_hook_reset_hook(a)
 #define XEN_HOOKED(a)                   (!xen_rb_hook_empty_p(a))
-#define XEN_DEFINE_HOOK(Name, Arity, Help) xen_rb_create_hook(Name, Arity, Help)
-#define XEN_DEFINE_SIMPLE_HOOK(Arity)   xen_rb_hook_c_new("simple_hook", Arity, NULL);
+#define XEN_DEFINE_HOOK(Name, Arity, Help) xen_rb_create_hook((char *)(Name), Arity, Help)
+#define XEN_DEFINE_SIMPLE_HOOK(Arity)   xen_rb_hook_c_new((char *)"simple_hook", Arity, NULL);
 
 /* ---- vectors ---- */
 #define XEN_VECTOR_P(Arg)               (TYPE(Arg) == T_ARRAY)
@@ -1663,7 +1664,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define C_TO_XEN_STRINGN(Str, Len)   Scm_MakeString(Str, Len, Len, SCM_MAKSTR_COPYING)
 #define C_STRING_TO_XEN_FORM(Str)    Scm_ReadFromCString(Str)
 #define XEN_EVAL_FORM(Form)          xen_gauche_eval_form(Form)
-#define XEN_EVAL_C_STRING(Arg)       xen_gauche_eval_c_string(Arg)
+#define XEN_EVAL_C_STRING(Arg)       xen_gauche_eval_c_string((char *)(Arg))
 #define XEN_SYMBOL_P(Arg)            SCM_SYMBOLP(Arg)
 #define XEN_SYMBOL_TO_C_STRING(a)    XEN_TO_C_STRING(SCM_SYMBOL_NAME(a))
 #define XEN_TO_STRING(Obj)           xen_gauche_object_to_string(Obj)
@@ -1777,10 +1778,10 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   xen_gauche_define_procedure_with_reversed_setter(Get_Name, Get_Func, Get_Help, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt)
 
-void xen_gauche_define_procedure(char *Name, XEN (*Func)(), int ReqArg, int OptArg, int RstArg, char *Doc);
-void xen_gauche_define_procedure_with_reversed_setter(char *get_name, XEN (*get_func)(), char *get_help, XEN (*set_func)(), XEN (*reversed_set_func)(), 
+void xen_gauche_define_procedure(const char *Name, XEN (*Func)(), int ReqArg, int OptArg, int RstArg, const char *Doc);
+void xen_gauche_define_procedure_with_reversed_setter(const char *get_name, XEN (*get_func)(), const char *get_help, XEN (*set_func)(), XEN (*reversed_set_func)(), 
   int get_req, int get_opt, int set_req, int set_opt);
-void xen_gauche_define_procedure_with_setter(char *get_name, XEN (*get_func)(), char *get_help, XEN (*set_func)(),
+void xen_gauche_define_procedure_with_setter(const char *get_name, XEN (*get_func)(), const char *get_help, XEN (*set_func)(),
   int get_req, int get_opt, int set_req, int set_opt);
 
 #else
@@ -1793,11 +1794,11 @@ void xen_gauche_define_procedure_with_setter(char *get_name, XEN (*get_func)(), 
 #define XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   xen_gauche_define_procedure_with_reversed_setter(Get_Name, XEN_PROCEDURE_CAST Get_Func, Get_Help, XEN_PROCEDURE_CAST Set_Func, XEN_PROCEDURE_CAST Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt)
 
-void xen_gauche_define_procedure(char *Name, ScmHeaderRec* (*Func)(ScmHeaderRec**, int, void*), int ReqArg, int OptArg, int RstArg, char *Doc);
-void xen_gauche_define_procedure_with_reversed_setter(char *get_name, ScmHeaderRec* (*get_func)(ScmHeaderRec**, int, void*), char *get_help, 
+void xen_gauche_define_procedure(const char *Name, ScmHeaderRec* (*Func)(ScmHeaderRec**, int, void*), int ReqArg, int OptArg, int RstArg, const char *Doc);
+void xen_gauche_define_procedure_with_reversed_setter(const char *get_name, ScmHeaderRec* (*get_func)(ScmHeaderRec**, int, void*), const char *get_help, 
   ScmHeaderRec* (*set_func)(ScmHeaderRec**, int, void*), ScmHeaderRec* (*reversed_set_func)(ScmHeaderRec**, int, void*), 
   int get_req, int get_opt, int set_req, int set_opt);
-void xen_gauche_define_procedure_with_setter(char *get_name, ScmHeaderRec* (*get_func)(ScmHeaderRec**, int, void*), char *get_help, 
+void xen_gauche_define_procedure_with_setter(const char *get_name, ScmHeaderRec* (*get_func)(ScmHeaderRec**, int, void*), const char *get_help, 
   ScmHeaderRec* (*set_func)(ScmHeaderRec**, int, void*),
   int get_req, int get_opt, int set_req, int set_opt);
 #endif
@@ -2053,7 +2054,7 @@ bool xen_gauche_hook_p(XEN val);
 #define XEN_APPEND(X, Y) 0
 #define XEN_STRING_P(Arg) 0
 #define XEN_NAME_AS_C_STRING_TO_VALUE(a) 0
-#define XEN_TO_C_STRING(STR) "(not a string)"
+#define XEN_TO_C_STRING(STR) ((char *)"(not a string)")
 #define C_TO_XEN_STRING(a) 0
 #define C_TO_XEN_STRINGN(Str, Len) 0
 #define C_STRING_TO_XEN_SYMBOL(a) 0
@@ -2077,8 +2078,8 @@ bool xen_gauche_hook_p(XEN val);
 #define C_STRING_TO_XEN_FORM(Str) 0
 #define XEN_EVAL_FORM(Form) 0
 #define XEN_EVAL_C_STRING(Arg) 0
-#define XEN_SYMBOL_TO_C_STRING(a) "(not a symbol)"
-#define XEN_TO_STRING(Obj) "(unknown)"
+#define XEN_SYMBOL_TO_C_STRING(a) ((char *)"(not a symbol)")
+#define XEN_TO_STRING(Obj) ((char *)"(unknown)")
 #define XEN_WRAP_C_POINTER(a) 0
 #define XEN_UNWRAP_C_POINTER(a) 0
 #define XEN_WRAPPED_C_POINTER_P(a) 0

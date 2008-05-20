@@ -1297,6 +1297,8 @@ void sp_name_click(snd_info *sp)
       if (hdr)
 	{
 	  Float dur;
+	  char *tmp_type = NULL, *tmp_format = NULL;
+
 	  bool linked = false;
 	  linked = link_p(sp->filename);
 	  dur = (Float)((double)(hdr->samples) / (double)(hdr->chans * hdr->srate));
@@ -1306,8 +1308,8 @@ void sp_name_click(snd_info *sp)
 			       ((hdr->chans > 1) ? "s" : ""),
 			       dur,
 			       ((dur == 1.0) ? "" : "s"),
-			       mus_header_type_to_string(hdr->type),
-			       mus_data_format_to_string(hdr->format),
+			       tmp_type = mus_header_type_to_string(hdr->type),
+			       tmp_format = mus_data_format_to_string(hdr->format),
 			       snd_strftime(STRFTIME_FORMAT, sp->write_date),
 			       (linked) ? ", (link to " : "",
 #if HAVE_READLINK
@@ -1316,6 +1318,8 @@ void sp_name_click(snd_info *sp)
 			       (linked) ? "?" : "",
 #endif
 			       (linked) ? ")" : "");
+	  if (tmp_type) free(tmp_type);
+	  if (tmp_format) free(tmp_format);
 	}
     }
 }
@@ -4770,7 +4774,7 @@ static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
 
 
 typedef enum {PEAK_ENV_NO_ERROR, PEAK_ENV_BAD_HEADER, PEAK_ENV_BAD_FORMAT, PEAK_ENV_BAD_SIZE, PEAK_ENV_NO_FILE, PEAK_ENV_NO_DATA} peak_env_error_t;
-static char *peak_env_error[6] = {"no error", "bad header", "bad format", "bad size", "no file", "no data in file"};
+static const char *peak_env_error[6] = {"no error", "bad header", "bad format", "bad size", "no file", "no data in file"};
 
 static bool peak_env_info_type_ok(int val)
 {

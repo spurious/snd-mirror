@@ -240,7 +240,7 @@ typedef struct {
   int args; 
   XEN func; 
   bool cx_extended; /* Sun/Forte C defines "extended" somewhere */
-  char *origin, *prefs_info;
+  const char *origin, *prefs_info;
   int gc_loc;
 } key_entry; 
 
@@ -353,7 +353,7 @@ static key_entry built_in_key_bindings[NUM_BUILT_IN_KEY_BINDINGS];
 #endif
 
 
-void map_over_key_bindings(bool (*func)(int key, int state, bool cx, char *pinfo, XEN xf))
+void map_over_key_bindings(bool (*func)(int key, int state, bool cx, XEN xf))
 {
   int i;
   for (i = 0; i < keymap_top; i++)
@@ -361,7 +361,6 @@ void map_over_key_bindings(bool (*func)(int key, int state, bool cx, char *pinfo
 	((*func)(user_keymap[i].key, 
 		 user_keymap[i].state, 
 		 user_keymap[i].cx_extended, 
-		 user_keymap[i].prefs_info, 
 		 user_keymap[i].func)))
       return;
 }
@@ -430,19 +429,19 @@ char *key_binding_description(int key, int state, bool cx_extended)
       if (!(XEN_FALSE_P(help_text))) 
 	{
 	  if (XEN_STRING_P(help_text))
-	    return(XEN_TO_C_STRING(help_text)); /* this is dangerous -- these are temp strings, but they're used as temps in snd-help */
-	  return(XEN_AS_STRING(help_text));
+	    return(copy_string(XEN_TO_C_STRING(help_text)));
+	  return(copy_string(XEN_AS_STRING(help_text)));
 	}
 #endif
       if (user_keymap[pos].origin)
-	return(user_keymap[pos].origin);
-      return("something indescribable"); /* NULL would mean "no binding" */
+	return(copy_string(user_keymap[pos].origin));
+      return(copy_string("something indescribable")); /* NULL would mean "no binding" */
     }
   for (pos = 0; pos < NUM_BUILT_IN_KEY_BINDINGS; pos++)
     if ((built_in_key_bindings[pos].key == key) && 
 	(built_in_key_bindings[pos].state == state) && 
 	(built_in_key_bindings[pos].cx_extended == cx_extended))
-      return(built_in_key_bindings[pos].origin);
+      return(copy_string(built_in_key_bindings[pos].origin));
   return(NULL);
 }
 
@@ -494,13 +493,18 @@ void set_keymap_entry(int key, int state, int args, XEN func, bool cx_extended, 
 	}
       if (user_keymap[i].origin)
 	{
-	  FREE(user_keymap[i].origin);
+	  /* this is silly... */
+	  char *tmp;
+	  tmp = (char *)user_keymap[i].origin;
 	  user_keymap[i].origin = NULL;
+	  FREE(tmp);
 	}
       if (user_keymap[i].prefs_info)
 	{
-	  FREE(user_keymap[i].prefs_info);
+	  char *tmp;
+	  tmp = (char *)user_keymap[i].prefs_info;
 	  user_keymap[i].prefs_info = NULL;
+	  FREE(tmp);
 	}
     }
   user_keymap[i].origin = copy_string(origin);
@@ -580,7 +584,7 @@ void clear_minibuffer(snd_info *sp)
 
 void clear_minibuffer_prompt(snd_info *sp)
 {
-  make_minibuffer_label(sp, "     ");
+  make_minibuffer_label(sp, (char *)"     ");
 }
 
 
@@ -1341,11 +1345,11 @@ static bool stop_selecting(int keysym, int state)
 }
 
 
-static char *key_to_name(int keysym) 
+static const char *key_to_name(int keysym) 
 {
   if (keysym) 
     {
-      char *str;
+      const char *str;
       str = KEY_TO_NAME(keysym);
       if (str) return(str);
     }
@@ -1454,7 +1458,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
       ((keysym == snd_K_X) || (keysym == snd_K_x)))
     {
       /* named macros invoked and saved here */
-      prompt(sp, "M-x:", NULL);
+      prompt(sp, (char *)"M-x:", NULL);
       sp->macro_count = count;
       return;
     }
@@ -2068,7 +2072,7 @@ void keyboard_command(chan_info *cp, int keysym, int unmasked_state)
 		  }
 		else 
 		  {
-		    prompt(sp, "M-x:", buf);
+		    prompt(sp, (char *)"M-x:", buf);
 		    sp->macro_count = count;
 		    clear_search = false;
 		  }

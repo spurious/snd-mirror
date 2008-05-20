@@ -176,8 +176,8 @@ void xen_initialize(void)
 }
 
 
-void xen_guile_define_procedure_with_setter(char *get_name, XEN (*get_func)(), 
-					    char *get_help, XEN (*set_func)(), XEN local_doc,
+void xen_guile_define_procedure_with_setter(const char *get_name, XEN (*get_func)(), 
+					    const char *get_help, XEN (*set_func)(), XEN local_doc,
 					    int get_req, int get_opt, int set_req, int set_opt)
 {
 #if HAVE_SCM_C_DEFINE
@@ -212,8 +212,8 @@ void xen_guile_define_procedure_with_setter(char *get_name, XEN (*get_func)(),
 }
 
 
-void xen_guile_define_procedure_with_reversed_setter(char *get_name, XEN (*get_func)(), 
-						     char *get_help, XEN (*set_func)(), XEN (*reversed_set_func)(), 
+void xen_guile_define_procedure_with_reversed_setter(const char *get_name, XEN (*get_func)(), 
+						     const char *get_help, XEN (*set_func)(), XEN (*reversed_set_func)(), 
 						     XEN local_doc, int get_req, int get_opt, int set_req, int set_opt)
 {
 #if HAVE_SCM_C_DEFINE
@@ -1606,7 +1606,7 @@ XEN xen_gauche_define_constant(const char *name, int value, const char *help)
 
 
 #ifndef __cplusplus
-void xen_gauche_define_procedure(char *Name, XEN (*Func)(), int ReqArg, int OptArg, int RstArg, char *Doc)
+void xen_gauche_define_procedure(const char *Name, XEN (*Func)(), int ReqArg, int OptArg, int RstArg, const char *Doc)
 {
   XEN proc, sym;
   if (RstArg > 0)
@@ -1618,7 +1618,7 @@ void xen_gauche_define_procedure(char *Name, XEN (*Func)(), int ReqArg, int OptA
 }
 
 
-void xen_gauche_define_procedure_with_setter(char *get_name, XEN (*get_func)(), char *get_help, XEN (*set_func)(), 
+void xen_gauche_define_procedure_with_setter(const char *get_name, XEN (*get_func)(), const char *get_help, XEN (*set_func)(), 
 					     int get_req, int get_opt, int set_req, int set_opt)
 {
   XEN proc, set_proc, sym;
@@ -1631,7 +1631,7 @@ void xen_gauche_define_procedure_with_setter(char *get_name, XEN (*get_func)(), 
 }
 
 
-void xen_gauche_define_procedure_with_reversed_setter(char *get_name, XEN (*get_func)(), char *get_help, XEN (*set_func)(), XEN (*reversed_set_func)(), 
+void xen_gauche_define_procedure_with_reversed_setter(const char *get_name, XEN (*get_func)(), const char *get_help, XEN (*set_func)(), XEN (*reversed_set_func)(), 
 						      int get_req, int get_opt, int set_req, int set_opt)
 {
   XEN proc, set_proc, sym;
@@ -1645,9 +1645,9 @@ void xen_gauche_define_procedure_with_reversed_setter(char *get_name, XEN (*get_
 
 #else
 
-void xen_gauche_define_procedure(char *Name, 
+void xen_gauche_define_procedure(const char *Name, 
 				 ScmHeaderRec* (*Func)(ScmHeaderRec**, int, void*), 
-				 int ReqArg, int OptArg, int RstArg, char *Doc)
+				 int ReqArg, int OptArg, int RstArg, const char *Doc)
 {
   XEN proc, sym;
   if (RstArg > 0)
@@ -1659,9 +1659,9 @@ void xen_gauche_define_procedure(char *Name,
 }
 
 
-void xen_gauche_define_procedure_with_reversed_setter(char *get_name, 
+void xen_gauche_define_procedure_with_reversed_setter(const char *get_name, 
 						      ScmHeaderRec* (*get_func)(ScmHeaderRec**, int, void*), 
-						      char *get_help, 
+						      const char *get_help, 
 						      ScmHeaderRec* (*set_func)(ScmHeaderRec**, int, void*), 
 						      ScmHeaderRec* (*reversed_set_func)(ScmHeaderRec**, int, void*), 
 						      int get_req, int get_opt, int set_req, int set_opt)
@@ -1676,9 +1676,9 @@ void xen_gauche_define_procedure_with_reversed_setter(char *get_name,
 }
 
 
-void xen_gauche_define_procedure_with_setter(char *get_name, 
+void xen_gauche_define_procedure_with_setter(const char *get_name, 
 					     ScmHeaderRec* (*get_func)(ScmHeaderRec**, int, void*), 
-					     char *get_help, 
+					     const char *get_help, 
 					     ScmHeaderRec* (*set_func)(ScmHeaderRec**, int, void*),
 					     int get_req, int get_opt, int set_req, int set_opt)
 {

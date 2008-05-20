@@ -220,7 +220,7 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
 		  XtSetArg(args[n], XmNforeground, ss->sgx->black); n++;
 		  XtSetArg(args[n], XmNselectColor, ss->sgx->selection_color); n++;
 
-		  completions_list = XmCreateScrolledList(listener_pane, "completion-help-text", args, n);
+		  completions_list = XmCreateScrolledList(listener_pane, (char *)"completion-help-text", args, n);
 		  completions_pane = XtParent(completions_list);
 
 		  XtAddCallback(completions_list, XmNbrowseSelectionCallback, listener_completions_browse_callback, NULL);
@@ -331,7 +331,7 @@ static void Kill_line(Widget w, XEvent *ev, char **str, Cardinal *num)
   XmTextPosition curpos, loc;
   Boolean found;
   curpos = XmTextGetCursorPosition(w);
-  found = XmTextFindString(w, curpos, "\n", XmTEXT_FORWARD, &loc);
+  found = XmTextFindString(w, curpos, (char *)"\n", XmTEXT_FORWARD, &loc);
   if (!found) loc = XmTextGetLastPosition(w);
   if (loc > curpos)
     {
@@ -365,7 +365,7 @@ static void Begin_of_line(Widget w, XEvent *ev, char **ustr, Cardinal *num)
   XmTextPosition curpos, loc;
   Boolean found;
   curpos = XmTextGetCursorPosition(w) - 1;
-  found = XmTextFindString(w, curpos, "\n", XmTEXT_BACKWARD, &loc);
+  found = XmTextFindString(w, curpos, (char *)"\n", XmTEXT_BACKWARD, &loc);
   if (found) 
     {
       char *str = NULL;
@@ -672,29 +672,29 @@ static void Listener_Return(Widget w, XEvent *event, char **str, Cardinal *num)
 
 #define NUM_ACTS 23
 static XtActionsRec acts[NUM_ACTS] = {
-  {"no-op", No_op},
-  {"activate-keyboard", Activate_keyboard},
-  {"yank", Yank},
-  {"delete-region", Delete_region},
-  {"kill-line", Kill_line},
-  {"begin-of-line", Begin_of_line},
-  {"b1-press", B1_press},
-  {"b1-move", B1_move},
-  {"b1-release", B1_release},
-  {"text-transpose", Text_transpose},
-  {"word-upper", Word_upper},
-  {"tab-completion", Tab_completion},
-  {"listener-completion", Listener_completion},
-  {"listener-clear", Listener_clear},
-  {"listener-g", Listener_g},
-  {"listener-help", Listener_help},
-  {"listener-meta-p", Listener_Meta_P},
-  {"listener-meta-n", Listener_Meta_N},
-  {"listener-next-line", Listener_Arrow_Down},
-  {"listener-previous-line", Listener_Arrow_Up},
-  {"listener-return", Listener_Return},
-  {"delete-to-previous-command", Listener_Backup},
-  {"complain", Complain},
+  {(char *)"no-op", No_op},
+  {(char *)"activate-keyboard", Activate_keyboard},
+  {(char *)"yank", Yank},
+  {(char *)"delete-region", Delete_region},
+  {(char *)"kill-line", Kill_line},
+  {(char *)"begin-of-line", Begin_of_line},
+  {(char *)"b1-press", B1_press},
+  {(char *)"b1-move", B1_move},
+  {(char *)"b1-release", B1_release},
+  {(char *)"text-transpose", Text_transpose},
+  {(char *)"word-upper", Word_upper},
+  {(char *)"tab-completion", Tab_completion},
+  {(char *)"listener-completion", Listener_completion},
+  {(char *)"listener-clear", Listener_clear},
+  {(char *)"listener-g", Listener_g},
+  {(char *)"listener-help", Listener_help},
+  {(char *)"listener-meta-p", Listener_Meta_P},
+  {(char *)"listener-meta-n", Listener_Meta_N},
+  {(char *)"listener-next-line", Listener_Arrow_Down},
+  {(char *)"listener-previous-line", Listener_Arrow_Up},
+  {(char *)"listener-return", Listener_Return},
+  {(char *)"delete-to-previous-command", Listener_Backup},
+  {(char *)"complain", Complain},
 };
 
 
@@ -910,7 +910,7 @@ void mouse_leave_text_callback(Widget w, XtPointer context, XEvent *event, Boole
 }
 
 
-Widget make_textfield_widget(char *name, Widget parent, Arg *args, int n, text_cr_t activatable, int completer)
+Widget make_textfield_widget(const char *name, Widget parent, Arg *args, int n, text_cr_t activatable, int completer)
 {
   /* white background when active, emacs translations */
   Widget df;
@@ -960,7 +960,7 @@ Widget make_textfield_widget(char *name, Widget parent, Arg *args, int n, text_c
 
 
 
-Widget make_text_widget(char *name, Widget parent, Arg *args, int n)
+Widget make_text_widget(const char *name, Widget parent, Arg *args, int n)
 {
   /* white background when active, emacs translations */
   /* used only for comment widget in file data box (snd-xfile.c), but needs to be in this file to pick up actions etc */
@@ -974,7 +974,7 @@ Widget make_text_widget(char *name, Widget parent, Arg *args, int n)
   /* XmNblinkRate 0 turns off the cursor blink */
   XtSetArg(args[n], XmNcursorPositionVisible, false); n++;
   XtSetArg(args[n], XmNhighlightThickness, 1); n++;
-  df = XmCreateScrolledText(parent, name, args, n);
+  df = XmCreateScrolledText(parent, (char *)name, args, n);
   XtManageChild(df);
   XtAddCallback(df, XmNfocusCallback, textfield_focus_callback, NULL);
   XtAddCallback(df, XmNlosingFocusCallback, textfield_unfocus_callback, NULL);
@@ -1186,7 +1186,7 @@ static void make_command_widget(int height)
       XtSetArg(args[n], XmNpendingDelete, false); n++; /* don't cut selection upon paste */
       XtSetArg(args[n], XmNpositionIndex, XmLAST_POSITION); n++;
       XtSetArg(args[n], XmNhighlightThickness, 1); n++;
-      listener_text = XmCreateScrolledText(listener_pane, "lisp-listener", args, n);
+      listener_text = XmCreateScrolledText(listener_pane, (char *)"lisp-listener", args, n);
       ss->sgx->listener_pane = listener_text;
 
       XtVaSetValues(MAIN_SHELL(ss), XmNallowShellResize, false, NULL);
@@ -1297,7 +1297,7 @@ static void override_toggle_translation(Widget w)
 #endif
 
 
-Widget make_togglebutton_widget(char *name, Widget parent, Arg *args, int n)
+Widget make_togglebutton_widget(const char *name, Widget parent, Arg *args, int n)
 {
   Widget w;
   w = XtCreateManagedWidget(name, xmToggleButtonWidgetClass, parent, args, n);
@@ -1308,7 +1308,7 @@ Widget make_togglebutton_widget(char *name, Widget parent, Arg *args, int n)
 }
 
 
-Widget make_pushbutton_widget(char *name, Widget parent, Arg *args, int n)
+Widget make_pushbutton_widget(const char *name, Widget parent, Arg *args, int n)
 {
   Widget w;
   w = XtCreateManagedWidget(name, xmPushButtonWidgetClass, parent, args, n);

@@ -15,7 +15,7 @@
   #define gettext_noop(String) String
   #define N_(String) gettext_noop (String)
 #else
-  #define _(String) (String)
+#define _(String) ((char *)(String))
   #define N_(String) String
   #define textdomain(Domain)
   #define bindtextdomain(Package, Directory)

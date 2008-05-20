@@ -68073,7 +68073,7 @@ EDITS: 1
 					mus-data mus-feedback mus-feedforward mus-frequency mus-hop
 					mus-increment mus-length mus-file-name mus-location mus-name mus-order mus-phase mus-ramp mus-random mus-run
 					mus-scaler mus-xcoeffs mus-ycoeffs notch one-pole one-zero make-moving-average seconds->samples samples->seconds
-					oscil partials->polynomial partials->wave partials->waveshape phase-partials->wave normalize-partials
+					oscil partials->polynomial partials->wave partials->waveshape phase-partials->wave
 					phase-vocoder pulse-train radians->degrees radians->hz rand rand-interp readin
 					sawtooth-wave sine-summation nrxysin nrxycos square-wave src 
 					sum-of-cosines ncos sum-of-sines nsin table-lookup tap triangle-wave
@@ -68102,7 +68102,7 @@ EDITS: 1
 			  make-sine-summation make-nrxysin make-nrxycos make-square-wave make-src make-sum-of-cosines make-ncos 
 			  make-sum-of-sines make-nsin make-table-lookup make-triangle-wave
 			  make-two-pole make-two-zero make-wave-train make-waveshape mixer* mixer+ multiply-arrays
-			  notch one-pole one-zero oscil partials->polynomial partials->wave partials->waveshape make-polyshape make-polywave normalize-partials
+			  notch one-pole one-zero oscil partials->polynomial partials->wave partials->waveshape make-polyshape make-polywave
 			  phase-partials->wave phase-vocoder polynomial pulse-train rand rand-interp rectangular->polar
 			  ring-modulate sample->frame sawtooth-wave sine-summation nrxysin nrxycos square-wave src sum-of-cosines ncos sum-of-sines nsin
 			  sine-bank table-lookup tap triangle-wave two-pole two-zero wave-train waveshape ssb-am make-ssb-am))

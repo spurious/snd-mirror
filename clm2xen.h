@@ -23,7 +23,7 @@ double clm_default_frequency_c(void);
 
 bool mus_xen_p(XEN obj);
 void mus_xen_init(void);
-char *mus_fft_window_xen_name(mus_fft_window_t i);
+const char *mus_fft_window_xen_name(mus_fft_window_t i);
 XEN mus_xen_to_object(mus_xen *gn);
 XEN mus_xen_to_object_with_vct(mus_xen *gn, XEN v);
 mus_any *mus_optkey_to_mus_any(XEN key, const char *caller, int n, mus_any *def);

@@ -9,7 +9,7 @@ static Widget help_dialog = NULL;
 static Widget help_text = NULL;
 static char *original_help_text = NULL;
 static with_word_wrap_t outer_with_wrap = WITHOUT_WORD_WRAP;
-static char **help_urls = NULL;
+static const char **help_urls = NULL; /* shouldn't this be static char* const char*? */
 
 static int old_help_text_width = 0; 
 
@@ -50,7 +50,7 @@ static XmString parse_crossref(const char *xref)
 	    {
 	      str = (char *)CALLOC(i - start + 1, sizeof(char));
 	      for (k = 0, j = start; j < i; k++, j++) str[k] = xref[j];
-	      tmp = XmStringGenerate(str, NULL, XmCHARSET_TEXT, "normal_text");
+	      tmp = XmStringGenerate(str, NULL, XmCHARSET_TEXT, (char *)"normal_text");
 	      FREE(str);
 	      if (xs) 
 		xs = XmStringConcatAndFree(xs, tmp);
@@ -65,8 +65,8 @@ static XmString parse_crossref(const char *xref)
 	      str = (char *)CALLOC(i - start + 1, sizeof(char));
 	      for (k = 0, j = start; j < i; k++, j++) str[k] = xref[j];
 	      if (xs)
-		xs = XmStringConcatAndFree(xs, XmStringGenerate(str, NULL, XmCHARSET_TEXT, "url_text"));
-	      else xs = XmStringGenerate(str, NULL, XmCHARSET_TEXT, "url_text");
+		xs = XmStringConcatAndFree(xs, XmStringGenerate(str, NULL, XmCHARSET_TEXT, (char *)"url_text"));
+	      else xs = XmStringGenerate(str, NULL, XmCHARSET_TEXT, (char *)"url_text");
 	      FREE(str);
 	      start = i + 1;
 	    }
@@ -77,8 +77,8 @@ static XmString parse_crossref(const char *xref)
       str = (char *)CALLOC(len - start + 1, sizeof(char));
       for (k = 0, j = start; j < len; k++, j++) str[k] = xref[j];
       if (xs)
-	xs = XmStringConcatAndFree(xs, XmStringGenerate(str, NULL, XmCHARSET_TEXT, "normal_text"));
-      else xs = XmStringGenerate(str, NULL, XmCHARSET_TEXT, "normal_text");
+	xs = XmStringConcatAndFree(xs, XmStringGenerate(str, NULL, XmCHARSET_TEXT, (char *)"normal_text"));
+      else xs = XmStringGenerate(str, NULL, XmCHARSET_TEXT, (char *)"normal_text");
       FREE(str);
     }
   return(xs);
@@ -134,8 +134,8 @@ static char *help_completer(widget_t w, char *text, void *data)
 
 static bool new_help(const char *pattern, bool complain)
 {
-  char *url = NULL;
-  char **xrefs;
+  const char *url = NULL;
+  const char **xrefs;
   url = snd_url(pattern);
   if (url)
     {
@@ -323,7 +323,7 @@ static void help_search_callback(Widget w, XtPointer context, XtPointer info)
   char *pattern = NULL;
   pattern = XmTextFieldGetString(w);
   if (new_help(pattern, true))
-    XmTextFieldSetString(w, "");
+    XmTextFieldSetString(w, (char *)"");
   if (pattern) XtFree(pattern);
 }
 
@@ -355,7 +355,7 @@ static void create_help_monolog(void)
   XtSetArg(args[n], XmNokLabelString, dismiss); n++;
   XtSetArg(args[n], XmNcancelLabelString, forward); n++;
 
-  help_dialog = XmCreateMessageDialog(MAIN_PANE(ss), "snd-help", args, n);
+  help_dialog = XmCreateMessageDialog(MAIN_PANE(ss), (char *)"snd-help", args, n);
   XtAddEventHandler(help_dialog, ExposureMask, false, help_expose, NULL);
   XtAddCallback(help_dialog, XmNokCallback, ok_callback, NULL);
   XtAddCallback(help_dialog, XmNcancelCallback, help_next_callback, NULL);
@@ -389,7 +389,7 @@ static void create_help_monolog(void)
   XtSetArg(args[n], XmNrows, HELP_ROWS); n++;
   XtSetArg(args[n], XmNforeground, ss->sgx->black); n++; /* needed if color allocation fails completely */
   XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
-  help_text = XmCreateScrolledText(holder, "help-text", args, n);
+  help_text = XmCreateScrolledText(holder, (char *)"help-text", args, n);
   XtAddEventHandler(help_text, ButtonReleaseMask, false, text_release_callback, NULL);
   XtManageChild(help_text);
 
@@ -411,9 +411,9 @@ static void create_help_monolog(void)
     }
   XtSetArg(args[n], XmNrenditionBackground, ss->sgx->white); n++;
   XtSetArg(args[n], XmNrenditionForeground, ss->sgx->red); n++;
-  texts[0] = XmRenditionCreate(help_text, "url_text", args, n);
+  texts[0] = XmRenditionCreate(help_text, (char *)"url_text", args, n);
   XtSetArg(args[n - 1], XmNrenditionForeground, ss->sgx->black); 
-  texts[1] = XmRenditionCreate(help_text, "normal_text", args, n);
+  texts[1] = XmRenditionCreate(help_text, (char *)"normal_text", args, n);
   rs = XmRenderTableCopy(XmRenderTableAddRenditions(rs, texts, 2, XmMERGE_NEW), NULL, 0);
   /*
    * valgrind says this data is used later
@@ -492,7 +492,7 @@ static void create_help_monolog(void)
   XtSetArg(args[n], XmNheight, 150); n++;
 
   XtSetArg(args[n], XmNscrollBarDisplayPolicy, XmAS_NEEDED); n++;
-  related_items = XmCreateScrolledList(inner_holder, "help-list", args, n);
+  related_items = XmCreateScrolledList(inner_holder, (char *)"help-list", args, n);
   XtManageChild(related_items);
   XtAddCallback(related_items, XmNbrowseSelectionCallback, help_browse_callback, NULL);
   XtAddCallback(related_items, XmNdefaultActionCallback, help_double_click_callback, NULL);
@@ -568,7 +568,7 @@ Widget snd_help(const char *subject, const char *helpstr, with_word_wrap_t with_
 }
 
 
-Widget snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_wrap_t with_wrap, char **xrefs, char **urls)
+Widget snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_wrap_t with_wrap, const char **xrefs, const char **urls)
 {
   Widget w;
   w = snd_help(subject, helpstr, with_wrap);

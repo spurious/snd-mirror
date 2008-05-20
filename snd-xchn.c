@@ -655,7 +655,7 @@ static void remake_edit_history(Widget lst, chan_info *cp, int from_graph)
 	      FREE(temp);
 	    }
 	  if (k < sp->nchans - 1)
-	    edits[ed++] = XmStringCreateLocalized("______________________________");
+	    edits[ed++] = XmStringCreateLocalized((char *)"______________________________");
 	}
       FREE(title);
       XtVaSetValues(lst, 
@@ -963,7 +963,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Wid
 	  XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
 	  XtSetArg(args[n], XmNpaneMaximum, DEFAULT_EDIT_HISTORY_WIDTH); n++;
 	  XtSetArg(args[n], XmNlistSizePolicy, XmCONSTANT); n++;
-	  cw[W_edhist] = XmCreateScrolledList(cw[W_top], "chn-edhist", args, n);
+	  cw[W_edhist] = XmCreateScrolledList(cw[W_top], (char *)"chn-edhist", args, n);
 	  XtManageChild(cw[W_edhist]);
 
 	  XtAddCallback(cw[W_edhist], XmNbrowseSelectionCallback, history_select_callback, cp);

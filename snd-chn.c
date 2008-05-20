@@ -618,7 +618,8 @@ void add_channel_data_1(chan_info *cp, int srate, off_t frames, channel_graph_t 
   axis_info *ap;
   Float ymin = 0.0, ymax = 0.0, y0, y1;
   double xmax, x0, x1, dur, gdur;
-  char *label = NULL, *hook_label = NULL;
+  const char *label = NULL;
+  char *hook_label = NULL;
   bool ymin_set = false, ymax_set = false;
 
   cp->edit_size = INITIAL_EDIT_SIZE;

@@ -689,8 +689,8 @@ GtkWidget *make_mix_dialog(void)
       
       if (!speaker_off_pix)
 	{
-	  speaker_off_pix = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), NULL, NULL, speaker_bits());
-	  speaker_on_pix = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), NULL, NULL, blue_speaker_bits());
+	  speaker_off_pix = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), NULL, NULL, (gchar **)speaker_bits());
+	  speaker_on_pix = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), NULL, NULL, (gchar **)blue_speaker_bits());
 	}
 
       mix_speaker_pix = speaker_off_pix;

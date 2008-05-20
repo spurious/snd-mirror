@@ -6,7 +6,7 @@
 /* -------- snd-xhelp.c -------- */
 
 Widget snd_help(const char *subject, const char *help, with_word_wrap_t with_wrap);
-Widget snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_wrap_t with_wrap, char **xrefs, char **urls);
+Widget snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_wrap_t with_wrap, const char **xrefs, const char **urls);
 int help_text_width(const char *txt, int start, int end);
 void snd_help_append(const char *text);
 void snd_help_back_to_top(void);
@@ -80,10 +80,10 @@ void handle_listener(bool new_state);
 bool listener_exists(void);
 int listener_height(void);
 int listener_width(void);
-Widget make_togglebutton_widget(char *name, Widget parent, Arg *args, int n);
-Widget make_pushbutton_widget(char *name, Widget parent, Arg *args, int n);
-Widget make_text_widget(char *name, Widget parent, Arg *args, int n);
-Widget make_textfield_widget(char *name, Widget parent, Arg *args, int n, text_cr_t activatable, int completer);
+Widget make_togglebutton_widget(const char *name, Widget parent, Arg *args, int n);
+Widget make_pushbutton_widget(const char *name, Widget parent, Arg *args, int n);
+Widget make_text_widget(const char *name, Widget parent, Arg *args, int n);
+Widget make_textfield_widget(const char *name, Widget parent, Arg *args, int n, text_cr_t activatable, int completer);
 void clear_listener(void);
 void set_listener_text_font(void);
 void g_init_gxlistener(void);
@@ -183,16 +183,16 @@ void g_init_gxutils(void);
 
 /* -------- snd-gxbitmaps.c -------- */
 
-char **mini_bomb_bits(int n);
-char **mini_glass_bits(int n);
-char **mini_lock_bits(void);
-char **snd_icon_bits(void);
+const char **mini_bomb_bits(int n);
+const char **mini_glass_bits(int n);
+const char **mini_lock_bits(void);
+const char **snd_icon_bits(void);
 unsigned char *snd_plain_icon_bits(void);
-char **blank_bits(void);
-char **speed_l_bits(void);
-char **speed_r_bits(void);
-void make_icons_transparent(char *basic_color);
-char **stop_sign_bits(void);
+const char **blank_bits(void);
+const char **speed_l_bits(void);
+const char **speed_r_bits(void);
+void make_icons_transparent(const char *basic_color);
+const char **stop_sign_bits(void);
 
 
 /* -------- snd-gxcolormaps.c -------- */
@@ -332,7 +332,7 @@ void set_speed(snd_info *sp, Float val);
 void set_revlen(snd_info *sp, Float val);
 void set_revscl(snd_info *sp, Float val);
 void set_filter_order(snd_info *sp, int val);
-void set_filter_text(snd_info *sp, char *str);
+void set_filter_text(snd_info *sp, const char *str);
 void display_filter_env(snd_info *sp);
 void toggle_expand_button(snd_info *sp, bool state);
 void toggle_contrast_button(snd_info *sp, bool state);

@@ -182,7 +182,7 @@ static bool fneq(Float a, Float b)
 }
 
 
-static char *cursor_style_name(cursor_style_t style)
+static const char *cursor_style_name(cursor_style_t style)
 {
   switch (style)
     {
@@ -193,7 +193,7 @@ static char *cursor_style_name(cursor_style_t style)
 }
 
 
-static char *show_axes2string(show_axes_t ax)
+static const char *show_axes2string(show_axes_t ax)
 {
   switch (ax)
     {
@@ -207,7 +207,7 @@ static char *show_axes2string(show_axes_t ax)
 }
 
 
-static char *zoom_focus_style_name(zoom_focus_t choice)
+static const char *zoom_focus_style_name(zoom_focus_t choice)
 {
   switch (choice)
     {
@@ -220,7 +220,7 @@ static char *zoom_focus_style_name(zoom_focus_t choice)
 }
 
 
-static char *transform_normalization_name(fft_normalize_t choice)
+static const char *transform_normalization_name(fft_normalize_t choice)
 {
   switch (choice)
     {
@@ -233,7 +233,7 @@ static char *transform_normalization_name(fft_normalize_t choice)
 }
 
 
-static char *graph_style_name(graph_style_t choice)
+static const char *graph_style_name(graph_style_t choice)
 {
   switch (choice)
     {
@@ -247,7 +247,7 @@ static char *graph_style_name(graph_style_t choice)
 }
 
 
-static char *transform_graph_type_name(graph_type_t choice)
+static const char *transform_graph_type_name(graph_type_t choice)
 {
   switch (choice)
     {
@@ -258,7 +258,7 @@ static char *transform_graph_type_name(graph_type_t choice)
 }
 
 
-static char *time_graph_type_name(graph_type_t choice)
+static const char *time_graph_type_name(graph_type_t choice)
 {
   switch (choice)
     {
@@ -268,7 +268,7 @@ static char *time_graph_type_name(graph_type_t choice)
 }
 
 
-static char *x_axis_style_name(x_axis_style_t choice)
+static const char *x_axis_style_name(x_axis_style_t choice)
 {
   switch(choice)
     {
@@ -282,7 +282,7 @@ static char *x_axis_style_name(x_axis_style_t choice)
 }
 
 
-static char *speed_control_style_name(speed_style_t choice)
+static const char *speed_control_style_name(speed_style_t choice)
 {
   switch (choice)
     {
@@ -293,7 +293,7 @@ static char *speed_control_style_name(speed_style_t choice)
 }
 
 
-static char *channel_style_name(channel_style_t choice)
+static const char *channel_style_name(channel_style_t choice)
 {
   switch (choice)
     {
@@ -304,7 +304,7 @@ static char *channel_style_name(channel_style_t choice)
 }
 
 
-static char *enved_target_name(enved_target_t choice)
+static const char *enved_target_name(enved_target_t choice)
 {
   switch (choice)
     {
@@ -315,7 +315,7 @@ static char *enved_target_name(enved_target_t choice)
 }
 
 
-static char *b2s(bool val) {return((val) ? (char *)PROC_TRUE : (char *)PROC_FALSE);} /* cast needed by g++ > 3.4 */
+static const char *b2s(bool val) {return((val) ? (char *)PROC_TRUE : (char *)PROC_FALSE);} /* cast needed by g++ > 3.4 */
 
 
 #define white_space "      "
@@ -624,6 +624,7 @@ static void save_options(FILE *fd)
 
   {
     int srate = 0, chans = 0, format = 0;
+    char *tmp_format = NULL;
     mus_header_raw_defaults(&srate, &chans, &format);
     if ((chans != 2) ||
 	(srate != 44100) ||
@@ -633,20 +634,21 @@ static void save_options(FILE *fd)
 	fprintf(fd, "(set! (mus-header-raw-defaults) (list %d %d %s))\n",
 		srate,
 		chans,
-		mus_data_format_to_string(format));
+		tmp_format = mus_data_format_to_string(format));
 #endif
 #if HAVE_RUBY
 	fprintf(fd, "set_mus_header_raw_defaults([%d, %d, %s])\n",
 		srate,
 		chans,
-		mus_data_format_to_string(format));
+		tmp_format = mus_data_format_to_string(format));
 #endif
 #if HAVE_FORTH
 	fprintf(fd, "'( %d %d %s ) set-mus-header-raw-defaults drop\n",
 		srate,
 		chans,
-		mus_data_format_to_string(format));
+		tmp_format = mus_data_format_to_string(format));
 #endif
+	if (tmp_format) free(tmp_format);
       }
   }
   
@@ -1326,7 +1328,7 @@ void save_state(const char *save_state_name)
 }
 
 
-char *save_options_in_prefs(void)
+const char *save_options_in_prefs(void)
 {
 #if HAVE_EXTENSION_LANGUAGE
   FILE *fd;

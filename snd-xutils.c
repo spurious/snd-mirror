@@ -13,7 +13,7 @@
 #endif
 
 
-static XmRenderTable get_xm_font(XFontStruct *ignore, const char *font, char *tag)
+static XmRenderTable get_xm_font(XFontStruct *ignore, const char *font, const char *tag)
 {
   XmRendition tmp;
   XmRenderTable tabl;
@@ -23,7 +23,7 @@ static XmRenderTable get_xm_font(XFontStruct *ignore, const char *font, char *ta
   XtSetArg(args[n], XmNfontName, font); n++;
   XtSetArg(args[n], XmNfontType, XmFONT_IS_FONT); n++; 
   XtSetArg(args[n], XmNloadModel, XmLOAD_IMMEDIATE); n++;
-  tmp = XmRenditionCreate(MAIN_SHELL(ss), tag, args, n);
+  tmp = XmRenditionCreate(MAIN_SHELL(ss), (char *)tag, args, n);
   tabl = XmRenderTableAddRenditions(NULL, &tmp, 1, XmMERGE_NEW);
   /* XmRenditionFree(tmp); */ /* valgrind thinks this is a bad idea */
   return(tabl);
@@ -562,7 +562,7 @@ idle_t add_work_proc(XtWorkProc func, XtPointer data)
     return(XtAppAddWorkProc(MAIN_APP(ss), func, data));
   else
     {
-      while (((*func)(data)) == BACKGROUND_CONTINUE);
+      while (((*func)(data)) == BACKGROUND_CONTINUE) ;
       return((idle_t)0);
     }
 }

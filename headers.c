@@ -470,7 +470,8 @@ const char *mus_data_format_short_name(int format)
 #if HAVE_RUBY
   #define TO_LANG(Str) strdup(xen_scheme_constant_to_ruby(Str))
 #else
-  #define TO_LANG(Str) Str
+  #define TO_LANG(Str) strdup(Str)
+  /* the strdup is to silence a ridiculous g++ warning */
 #endif
 
 
@@ -689,10 +690,10 @@ static int header_write(int fd, unsigned char *buf, int chars)
       bytes = write(fd, buf, chars);
       if (bytes != chars)
 	{
-	  char *errstr;
+	  char *errstr = NULL;
 	  errstr = STRERROR(errno);
-	  if (!errstr) errstr = "unknown error?";
-	  return(mus_error(MUS_WRITE_ERROR, "header_write: wrote " SSIZE_TD " of %d bytes, %s", bytes, chars, errstr));
+	  return(mus_error(MUS_WRITE_ERROR, "header_write: wrote " SSIZE_TD " of %d bytes, %s", 
+			   bytes, chars, (errstr) ? errstr : "unknown error?"));
 	}
     }
   return(MUS_NO_ERROR);
@@ -707,10 +708,10 @@ static int header_read(int fd, unsigned char *buf, int chars)
       bytes = read(fd, buf, chars);
       if (bytes != chars) 
 	{
-	  char *errstr;
+	  char *errstr = NULL;
 	  errstr = STRERROR(errno);
-	  if (!errstr) errstr = "unknown error?";
-	  return(mus_error(MUS_READ_ERROR, "header_read: read " SSIZE_TD " of %d bytes, %s", bytes, chars, errstr));
+	  return(mus_error(MUS_READ_ERROR, "header_read: read " SSIZE_TD " of %d bytes, %s", 
+			   bytes, chars, (errstr) ? errstr : "unknown error?"));
 	}
     }
   return(MUS_NO_ERROR);
@@ -3358,6 +3359,7 @@ static int read_sdif_header(const char *filename, int fd)
   const unsigned char I_1HRM[4] = {'1','H','R','M'}; 
   const unsigned char I_1RES[4] = {'1','R','E','S'}; 
   const unsigned char I_1TDS[4] = {'1','T','D','S'};  /* samples -- all others are useless */
+  const char *sdif_names[7] = {"fundamental frequency", "FFT", "spectral peak", "sinusoidal track", "harmonic track", "resonance", "unknown"};
 
   int offset, size;
   bool happy = false;
@@ -3372,21 +3374,21 @@ static int read_sdif_header(const char *filename, int fd)
 	break;
       else
 	{
-	  char *type;
+	  int type = 0;
 	  if (match_four_chars((unsigned char *)hdrbuf, I_1FQ0))
-	    type = "fundamental frequency";
+	    type = 0;
 	  else if (match_four_chars((unsigned char *)hdrbuf, I_1STF))
-	    type = "FFT";
+	    type = 1;
 	  else if (match_four_chars((unsigned char *)hdrbuf, I_1PIC))
-	    type = "spectral peak";
+	    type = 2;
 	  else if (match_four_chars((unsigned char *)hdrbuf, I_1TRC))
-	    type = "sinusoidal track";
+	    type = 3;
 	  else if (match_four_chars((unsigned char *)hdrbuf, I_1HRM))
-	    type = "harmonic track";
+	    type = 4;
 	  else if (match_four_chars((unsigned char *)hdrbuf, I_1RES))
-	    type = "resonance";
-	  else type = "unknown";
-	  return(mus_error(MUS_HEADER_READ_FAILED, "this SDIF file contains %s data, not sampled sound", type));
+	    type = 5;
+	  else type = 6;
+	  return(mus_error(MUS_HEADER_READ_FAILED, "this SDIF file contains %s data, not sampled sound", sdif_names[type]));
 	}
       
       offset += size;

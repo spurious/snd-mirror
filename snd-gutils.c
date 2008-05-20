@@ -973,7 +973,7 @@ void ensure_scrolled_window_row_visible(widget_t list, int row, int num_rows)
 }
 
 
-GtkWidget *sg_button_new_from_stock_with_label(const char *text, gchar *stock_id)
+GtkWidget *sg_button_new_from_stock_with_label(const char *text, const gchar *stock_id)
 {
   /* borrowed from gtk/gtkbutton.c */
   GtkWidget *button, *image, *label, *hbox, *align;
@@ -1048,7 +1048,10 @@ static GtkWidget *slist_new_item(slist *lst, const char *label, int row)
 
 
 slist *slist_new_with_title_and_table_data(const char *title,
-					   GtkWidget *parent, char **initial_items, int num_items, widget_add_t paned,
+					   GtkWidget *parent, 
+					   const char **initial_items, 
+					   int num_items, 
+					   widget_add_t paned,
 					   int t1, int t2, int t3, int t4)
 {
   slist *lst;
@@ -1120,13 +1123,13 @@ slist *slist_new_with_title_and_table_data(const char *title,
 }
 
 
-slist *slist_new(GtkWidget *parent, char **initial_items, int num_items, widget_add_t paned)
+slist *slist_new(GtkWidget *parent, const char **initial_items, int num_items, widget_add_t paned)
 {
   return(slist_new_with_title_and_table_data(NULL, parent, initial_items, num_items, paned, 0, 0, 0, 0));
 }
 
 
-slist *slist_new_with_title(const char *title, GtkWidget *parent, char **initial_items, int num_items, widget_add_t paned)
+slist *slist_new_with_title(const char *title, GtkWidget *parent, const char **initial_items, int num_items, widget_add_t paned)
 {
   return(slist_new_with_title_and_table_data(title, parent, initial_items, num_items, paned, 0, 0, 0, 0));
 }

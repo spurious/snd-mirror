@@ -12,7 +12,7 @@ bool send_mozilla(const char *html_viewer, const char *url) {return(false);}
 void check_menu_labels(int key, int state, bool extended) {}
 int add_channel_window(snd_info *sound, int channel, int chan_y, int insertion, widget_t main, fw_button_t arrows, bool with_events) {return(0);}
 int snd_help(const char *subject, const char *help, with_word_wrap_t with_wrap) {fprintf(stdout, help); return(0);}
-int snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_wrap_t with_wrap, char **xrefs, char **urls) {return(0);}
+int snd_help_with_xrefs(const char *subject, const char *helpstr, with_word_wrap_t with_wrap, const char **xrefs, const char **urls) {return(0);}
 void snd_help_append(const char *text) {fprintf(stdout, text);}
 int help_text_width(const char *txt, int start, int end) {return(0);}
 widget_t post_it(const char *subject, const char *str) {fprintf(stdout, str); return(0);}
@@ -217,7 +217,7 @@ widget_t make_insert_file_dialog(bool managed) {return(0);}
 void clear_listener(void) {}
 int menu_widget(int which_menu) {return(0);}
 void get_current_color(int colormap, int j, rgb_t *r, rgb_t *g, rgb_t *b) {}
-void set_filter_text(snd_info *sp, char *str) {}
+void set_filter_text(snd_info *sp, const char *str) {}
 void display_filter_env(snd_info *sp) {}
 void reflect_mix_change(int mix_id) {}
 int make_mix_dialog(void) {return(0);}

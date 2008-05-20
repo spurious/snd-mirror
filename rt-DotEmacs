@@ -34,13 +34,33 @@
 
 (font-lock-add-keywords
  'scheme-mode
+ '(("(\\(define-stalin\\)\\>\\s-*(?\\(\\sw+\\)?"
+    (1 font-lock-keyword-face)
+    (2 (cond ((match-beginning 1) font-lock-function-name-face)
+	     ((match-beginning 2) font-lock-variable-name-face)
+	     (t font-lock-type-face))
+       nil t))))
+
+(font-lock-add-keywords
+ 'scheme-mode
+ '(("(\\(define-stalin-ec\\)\\>\\s-*(?\\(\\sw+\\)?"
+    (1 font-lock-keyword-face)
+    (2 font-lock-type-face)
+    (3 (cond ((match-beginning 1) font-lock-function-name-face)
+	     ((match-beginning 2) font-lock-variable-name-face)
+	     ((match-beginning 3) font-lock-function-name-face)
+	     (t font-lock-type-face))
+       nil t))))
+
+(font-lock-add-keywords
+ 'scheme-mode
  '(("(\\(c-define\\)\\>\\s-*(?\\(\\sw+\\)?"
     (1 font-lock-keyword-face)
     (2 (cond ((match-beginning 1) font-lock-function-name-face)
 	     ((match-beginning 2) font-lock-variable-name-face)
 	     (t font-lock-type-face))
        nil t))))
-(put 'c-define 'scheme-indent-function 1)
+(put 'c-define 'scheme-indent-function 'defun)
 
 (font-lock-add-keywords
  'scheme-mode
@@ -50,7 +70,7 @@
 	     ((match-beginning 2) font-lock-variable-name-face)
 	     (t font-lock-type-face))
        nil t))))
-(put 'c-define* 'scheme-indent-function 1)
+(put 'c-define* 'scheme-indent-function 'defun)
 
 
 (font-lock-add-keywords
@@ -61,17 +81,7 @@
 	     ((match-beginning 2) font-lock-variable-name-face)
 	     (t font-lock-type-face))
        nil t))))
-(put 'define*2 'scheme-indent-function 1)
-
-(font-lock-add-keywords
- 'scheme-mode
- '(("(\\(fn\\)\\>\\s-*(?\\(\\sw+\\)?"
-    (1 font-lock-keyword-face)
-    (2 (cond ((match-beginning 1) font-lock-function-name-face)
-	     ((match-beginning 2) font-lock-variable-name-face)
-	     (t font-lock-type-face))
-       nil t))))
-(put 'fn 'scheme-indent-function 1)
+(put 'define*2 'scheme-indent-function 'defun)
 
 (font-lock-add-keywords
  'scheme-mode
@@ -95,6 +105,49 @@
 
 (font-lock-add-keywords
  'scheme-mode
+ '(("(\\(spawn\\)\\>\\s-*(?\\(\\sw+\\)?"
+    (1 font-lock-keyword-face)
+    (2 (cond ;((match-beginning 1) font-lock-variable-name-face)
+	     ((match-beginning 2) font-lock-builtin-face)
+	     ;(t font-lock-type-face)
+             )
+       nil t))))
+(put 'spawn 'scheme-indent-function 'defun)
+
+(font-lock-add-keywords
+ 'scheme-mode
+ '(("(\\(block\\)\\>\\s-*(?\\(\\sw+\\)?"
+    (1 font-lock-keyword-face)
+    (2 (cond ;((match-beginning 1) font-lock-variable-name-face)
+	     ((match-beginning 2) font-lock-builtin-face)
+	     ;(t font-lock-type-face)
+             )
+       nil t))))
+(put 'block 'scheme-indent-function 'defun)
+
+(font-lock-add-keywords
+ 'scheme-mode
+ '(("(\\(spawn-block\\)\\>\\s-*(?\\(\\sw+\\)?"
+    (1 font-lock-keyword-face)
+    (2 (cond ;((match-beginning 1) font-lock-variable-name-face)
+	     ((match-beginning 2) font-lock-builtin-face)
+	     ;(t font-lock-type-face)
+             )
+       nil t))))
+(put 'spawn-block 'scheme-indent-function 'defun)
+
+(font-lock-add-keywords
+ 'scheme-mode
+ '(("(\\(wait-midi\\)\\>\\s-*(?\\(\\sw+\\)?"
+    (1 font-lock-keyword-face)
+    (2 (cond ((match-beginning 1) font-lock-function-name-face)
+	     ((match-beginning 2) font-lock-variable-name-face)
+	     (t font-lock-type-face))
+       nil t))))
+(put 'wait-midi 'scheme-indent-function 'defun)
+
+(font-lock-add-keywords
+ 'scheme-mode
  '(("(\\(define-c-macro\\)\\>\\s-*(?\\(\\sw+\\)?"
     (1 font-lock-keyword-face)
     (2 font-lock-builtin-face
@@ -108,6 +161,12 @@
 (font-lock-add-keywords
  'scheme-mode
  '(("(\\(define-c/faust-macro\\)\\>\\s-*(?\\(\\sw+\\)?"
+    (1 font-lock-keyword-face)
+    (2 font-lock-builtin-face
+       nil t))))
+(font-lock-add-keywords
+ 'scheme-mode
+ '(("(\\(define-stalin-macro\\)\\>\\s-*(?\\(\\sw+\\)?"
     (1 font-lock-keyword-face)
     (2 font-lock-builtin-face
        nil t))))
@@ -225,6 +284,12 @@
   (comint-send-string (scheme-proc) "(rte-silence!)\n"))
 
 (global-set-key (kbd "<C-return>") 'rte-silence!)
+
+(defun rte-info ()
+  (interactive)
+  (comint-send-string (scheme-proc) "(rte-info)\n"))
+
+(global-set-key (kbd "<C-S-return>") 'rte-info)
 
 ;;(get-buffer "auai")
 ;(comint-send-string (scheme-proc) (concat "(c-display \"" (x-get-selection) "\")\n"))

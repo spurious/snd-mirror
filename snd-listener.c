@@ -533,7 +533,7 @@ void command_return(widget_t w, int last_prompt)
 		  new_eot = GUI_TEXT_END(w);
 		  if (end_of_text < 0)
 		    GUI_LISTENER_TEXT_INSERT(w, new_eot, listener_prompt_with_cr());
-		  else GUI_LISTENER_TEXT_INSERT(w, new_eot, "\n");
+		  else GUI_LISTENER_TEXT_INSERT(w, new_eot, (char *)"\n");
 		  if (full_str) GUI_FREE(full_str);
 		  return;
 		}

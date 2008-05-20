@@ -373,7 +373,7 @@ static regrow *make_regrow(Widget ww, Widget last_row, XtCallbackProc play_callb
   XmString s1;
   XtCallbackList n1, n3;
 
-  s1 = XmStringCreateLocalized("");
+  s1 = XmStringCreateLocalized((char *)"");
   r = (regrow *)CALLOC(1, sizeof(regrow));
 
   n = 0;
@@ -525,7 +525,7 @@ static void make_region_dialog(void)
   XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
   XtSetArg(args[n], XmNscrollingPolicy, XmAUTOMATIC); n++;
   XtSetArg(args[n], XmNscrollBarDisplayPolicy, XmSTATIC); n++;
-  region_list = XmCreateScrolledWindow(toppane, "reglist", args, n);
+  region_list = XmCreateScrolledWindow(toppane, (char *)"reglist", args, n);
 
   n = attach_all_sides(args, 0);
   region_ww = XtCreateManagedWidget("ww", xmFormWidgetClass, region_list, args, n);

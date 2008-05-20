@@ -310,7 +310,7 @@ static mus_error_handler_t *old_error_handler;
 
 static void local_mus_error(int type, char *msg)
 {
-  snd_error(msg);
+  snd_error_without_format(msg);
 }
 
 
@@ -1262,12 +1262,12 @@ static bool x_increases(XEN res)
 #endif
 
 
-env *string_to_env(char *str) 
+env *string_to_env(const char *str) 
 {
 #if HAVE_EXTENSION_LANGUAGE
   XEN res;
   int len = 0;
-  res = snd_catch_any(eval_str_wrapper, str, "string->env");
+  res = snd_catch_any(eval_str_wrapper, (void *)str, "string->env");
   if (XEN_LIST_P_WITH_LENGTH(res, len))
     {
       if ((len % 2) == 0)
@@ -1397,7 +1397,7 @@ XEN env_to_xen(env *e)
 }
 
 
-void add_or_edit_symbol(char *name, env *val)
+void add_or_edit_symbol(const char *name, env *val)
 {
   /* called from envelope editor -- pass new definition into scheme */
 #if HAVE_RUBY

@@ -297,8 +297,13 @@ static XEN g_mus_header_type_name(XEN type)
 static XEN g_mus_header_type_to_string(XEN type) 
 {
   #define H_mus_header_type_to_string "(" S_mus_header_type_to_string " type): header type (e.g. " S_mus_aiff ") as a string"
+  char *tmp;
+  XEN res;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(type), type, XEN_ONLY_ARG, S_mus_header_type_to_string, "an integer (header-type id)"); 
-  return(C_TO_XEN_STRING(mus_header_type_to_string(XEN_TO_C_INT(type))));
+  tmp = mus_header_type_to_string(XEN_TO_C_INT(type));
+  res = C_TO_XEN_STRING(tmp);
+  free(tmp);
+  return(res);
 }
 
 
@@ -313,8 +318,13 @@ static XEN g_mus_data_format_name(XEN format)
 static XEN g_mus_data_format_to_string(XEN format) 
 {
   #define H_mus_data_format_to_string "(" S_mus_data_format_to_string " format): data format (e.g. " S_mus_bshort ") as a string"
+  char *tmp;
+  XEN res;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(format), format, XEN_ONLY_ARG, S_mus_data_format_to_string, "an integer (data-format id)"); 
-  return(C_TO_XEN_STRING(mus_data_format_to_string(XEN_TO_C_INT(format))));
+  tmp = mus_data_format_to_string(XEN_TO_C_INT(format));
+  res = C_TO_XEN_STRING(tmp);
+  free(tmp);
+  return(res);
 }
 
 

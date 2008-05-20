@@ -12,7 +12,7 @@ static GtkObject *baseAdj, *orderAdj;
 static gc_t *gc, *rgc, *ggc, *hgc;
 static slist *env_list = NULL;
 
-static char *env_names[3] = {N_("amp env:"), N_("flt env:"), N_("src env:")};
+static const char *env_names[3] = {N_("amp env:"), N_("flt env:"), N_("src env:")};
 
 static bool showing_all_envs = false; /* edit one env (0), or view all currently defined envs (1) */
 static bool apply_to_selection = false, we_turned_selection_off = false;
@@ -366,7 +366,7 @@ static void text_field_activated(GtkWidget *w, gpointer context)
 	    {
 	      #define ENVED_TEMP_NAME "enved-backup"
 	      /* save current under a temp name!  -- user might have mistakenly reused a name */
-	      alert_envelope_editor(ENVED_TEMP_NAME, copy_env(active_env));
+	      alert_envelope_editor((char *)ENVED_TEMP_NAME, copy_env(active_env));
 	      add_or_edit_symbol(ENVED_TEMP_NAME, active_env);
 	      active_env = free_env(active_env);
 	    }

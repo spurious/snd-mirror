@@ -440,7 +440,7 @@ static Widget make_file_list_item(file_popup_info *fd, int choice)
 {
   int n;
   Arg args[12];
-  char *item_label;
+  const char *item_label;
   Widget w;
 
   n = 0;
@@ -606,14 +606,14 @@ static void add_file_popups(file_popup_info *fd)
 
   /* file text */
   XtAddCallback(FSB_BOX(fd->dialog, XmDIALOG_TEXT), XmNpopupHandlerCallback, file_text_popup_callback, (void *)fd);
-  fd->file_text_popup = XmCreatePopupMenu(FSB_BOX(fd->dialog, XmDIALOG_TEXT), "file-text-popup", args, n);
+  fd->file_text_popup = XmCreatePopupMenu(FSB_BOX(fd->dialog, XmDIALOG_TEXT), (char *)"file-text-popup", args, n);
   fd->file_text_names = make_filename_list();
   fd->file_text_popup_label = XtCreateManagedWidget(FILE_TEXT_POPUP_LABEL, xmLabelWidgetClass, fd->file_text_popup, args, n);
   XtCreateManagedWidget("sep", xmSeparatorWidgetClass, fd->file_text_popup, args, n);
 
   /* filter text */
   XtAddCallback(FSB_BOX(fd->dialog, XmDIALOG_FILTER_TEXT), XmNpopupHandlerCallback, file_filter_popup_callback, (void *)fd);
-  fd->file_filter_popup = XmCreatePopupMenu(FSB_BOX(fd->dialog, XmDIALOG_FILTER_TEXT), "file-filter-popup", args, n);
+  fd->file_filter_popup = XmCreatePopupMenu(FSB_BOX(fd->dialog, XmDIALOG_FILTER_TEXT), (char *)"file-filter-popup", args, n);
   fd->file_filter_names = make_filename_list();
   fd->file_filter_popup_label = XtCreateManagedWidget(FILE_FILTER_POPUP_LABEL, xmLabelWidgetClass, fd->file_filter_popup, args, n);
   XtCreateManagedWidget("sep", xmSeparatorWidgetClass, fd->file_filter_popup, args, n);
@@ -630,13 +630,13 @@ static void add_file_popups(file_popup_info *fd)
 
   /* file directory */
   XtAddCallback(FSB_BOX(fd->dialog, XmDIALOG_DIR_LIST), XmNpopupHandlerCallback, file_dir_popup_callback, (void *)fd);
-  fd->file_dir_popup = XmCreatePopupMenu(FSB_BOX(fd->dialog, XmDIALOG_DIR_LIST), "file-dir-popup", args, n);
+  fd->file_dir_popup = XmCreatePopupMenu(FSB_BOX(fd->dialog, XmDIALOG_DIR_LIST), (char *)"file-dir-popup", args, n);
   fd->file_dir_popup_label = XtCreateManagedWidget(FILE_DIR_POPUP_LABEL, xmLabelWidgetClass, fd->file_dir_popup, args, n);
   XtCreateManagedWidget("sep", xmSeparatorWidgetClass, fd->file_dir_popup, args, n);
 
   /* file list */
   XtAddCallback(FSB_BOX(fd->dialog, XmDIALOG_LIST), XmNpopupHandlerCallback, file_list_popup_callback, (void *)fd);
-  fd->file_list_popup = XmCreatePopupMenu(FSB_BOX(fd->dialog, XmDIALOG_LIST), "file-list-popup", args, n);
+  fd->file_list_popup = XmCreatePopupMenu(FSB_BOX(fd->dialog, XmDIALOG_LIST), (char *)"file-list-popup", args, n);
   fd->file_list_popup_label = XtCreateManagedWidget(FILE_LIST_POPUP_LABEL, xmLabelWidgetClass, fd->file_list_popup, args, n);
   XtCreateManagedWidget("sep", xmSeparatorWidgetClass, fd->file_list_popup, args, n);
 }
@@ -1359,7 +1359,7 @@ static file_dialog_info *make_file_dialog(read_only_t read_only, char *title, ch
   /* -------- the WM 'close' button */
   {
     Atom wm_delete_window;
-    wm_delete_window = XmInternAtom(MAIN_DISPLAY(ss), "WM_DELETE_WINDOW", false);
+    wm_delete_window = XmInternAtom(MAIN_DISPLAY(ss), (char *)"WM_DELETE_WINDOW", false);
     XmAddWMProtocolCallback(XtParent(fd->dialog), wm_delete_window, file_wm_delete_callback, (XtPointer)(fd->dp));
   }
 
@@ -1997,7 +1997,7 @@ static void set_file_dialog_sound_attributes(file_data *fdat,
 					     int type, int format, int srate, int chans, off_t location, off_t samples, char *comment)
 {
   int i;
-  char **fl = NULL;
+  const char **fl = NULL;
   XmString *strs;
 
   if (type != IGNORE_HEADER_TYPE)
@@ -2016,7 +2016,7 @@ static void set_file_dialog_sound_attributes(file_data *fdat,
 
   strs = (XmString *)MALLOC(fdat->formats * sizeof(XmString)); 
   for (i = 0; i < fdat->formats; i++) 
-    strs[i] = XmStringCreateLocalized(fl[i]);
+    strs[i] = XmStringCreateLocalized((char *)fl[i]);
   XtVaSetValues(fdat->format_list, 
 		XmNitems, strs, 
 		XmNitemCount, fdat->formats, 
@@ -2282,7 +2282,7 @@ file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_args, i
   int i, n;
   XmString *strs;
   int nformats = 0, nheaders = 0;
-  char **formats = NULL, **headers = NULL;
+  const char **formats = NULL, **headers = NULL;
 
   switch (header_choice)
     {
@@ -2324,7 +2324,7 @@ file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_args, i
       /* what is selected depends on current type */
       strs = (XmString *)CALLOC(nheaders, sizeof(XmString)); 
       for (i = 0; i < nheaders; i++) 
-	strs[i] = XmStringCreateLocalized(headers[i]);
+	strs[i] = XmStringCreateLocalized((char *)headers[i]);
 
       n = 0;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -2338,7 +2338,7 @@ file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_args, i
       XtSetArg(args[n], XmNitems, strs); n++;
       XtSetArg(args[n], XmNitemCount, nheaders); n++;
       XtSetArg(args[n], XmNvisibleItemCount, NUM_VISIBLE_HEADERS); n++;
-      fdat->header_list = XmCreateScrolledList(form, "header-type", args, n);
+      fdat->header_list = XmCreateScrolledList(form, (char *)"header-type", args, n);
       XtManageChild(fdat->header_list);
 
       for (i = 0; i < nheaders; i++) 
@@ -2390,11 +2390,11 @@ file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_args, i
     }
   XtSetArg(args[n], XmNrightAttachment, XmATTACH_NONE); n++;
   XtSetArg(args[n], XmNuserData, (XtPointer)fdat); n++;
-  fdat->format_list = XmCreateScrolledList(form, "data-format", args, n);
+  fdat->format_list = XmCreateScrolledList(form, (char *)"data-format", args, n);
 
   strs = (XmString *)CALLOC(nformats, sizeof(XmString)); 
   for (i = 0; i < nformats; i++) 
-    strs[i] = XmStringCreateLocalized(formats[i]);
+    strs[i] = XmStringCreateLocalized((char *)formats[i]);
   XtVaSetValues(fdat->format_list, 
 		XmNitems, strs, 
 		XmNitemCount, nformats, 
@@ -2429,11 +2429,11 @@ file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_args, i
   XtSetArg(args[n], XmNshadowThickness, 0); n++;
   XtSetArg(args[n], XmNhighlightThickness, 0); n++;
   XtSetArg(args[n], XmNmarginHeight, 0); n++;
-  srate_label = XmCreateMenuBar(form, "menuBar", args, n);
+  srate_label = XmCreateMenuBar(form, (char *)"menuBar", args, n);
 
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
-  fdat->smenu = XmCreatePulldownMenu(srate_label, _("srate:"), args, n);
+  fdat->smenu = XmCreatePulldownMenu(srate_label, (char *)_("srate:"), args, n);
 
   n = 0;
   XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
@@ -2469,7 +2469,7 @@ file_data *make_file_data_panel(Widget parent, const char *name, Arg *in_args, i
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNmarginHeight, 0); n++;
-      chans_label = XmCreateMenuBar(form, "menuBar1", args, n);
+      chans_label = XmCreateMenuBar(form, (char *)"menuBar1", args, n);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->highlight_color); n++;
@@ -3235,7 +3235,7 @@ static void make_save_as_dialog(save_as_dialog_info *sd, char *sound_name, int h
       XtSetArg(args[n], XmNfileFilterStyle, XmFILTER_HIDDEN_FILES); n++;
       XtSetArg(args[n], XmNfileSearchProc, snd_directory_reader); n++;        /* over-ride Motif's directory reader altogether */      
 
-      sd->dialog = XmCreateFileSelectionDialog(MAIN_SHELL(ss), "save-as", args, n);
+      sd->dialog = XmCreateFileSelectionDialog(MAIN_SHELL(ss), (char *)"save-as", args, n);
       sd->fp->dialog = sd->dialog;
       sd->dp->dialog = sd->dialog;
       sd->fpop->dialog = sd->dialog;
@@ -3703,7 +3703,8 @@ static void new_file_ok_callback(Widget w, XtPointer context, XtPointer info)
 static char *new_file_dialog_filename(int header_type)
 {
   static int new_file_dialog_file_ctr = 1;
-  char *filename = NULL, *extension = NULL;
+  char *filename = NULL;
+  const char *extension = NULL;
   filename = (char *)CALLOC(64, sizeof(char));
   switch (header_type)
     {
@@ -3792,7 +3793,7 @@ widget_t make_new_file_dialog(bool managed)
       XtSetArg(args[n], XmNdialogTitle, titlestr); n++;
       XtSetArg(args[n], XmNnoResize, false); n++;
       XtSetArg(args[n], XmNautoUnmanage, false); n++;
-      new_file_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), "new", args, n);
+      new_file_dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), (char *)"new", args, n);
 
       XmStringFree(titlestr);
       XmStringFree(xok);
@@ -4231,7 +4232,7 @@ Widget edit_header(snd_info *sp)
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, false); n++;
       XtSetArg(args[n], XmNtransient, false); n++;
-      ep->dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), "Edit Header", args, n);
+      ep->dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), (char *)"Edit Header", args, n);
 
       XtAddCallback(ep->dialog, XmNcancelCallback, edit_header_cancel_callback, (XtPointer)ep);
       XtAddCallback(ep->dialog, XmNhelpCallback,   edit_header_help_callback,   (XtPointer)ep);
@@ -4286,7 +4287,7 @@ Widget edit_header(snd_info *sp)
 
       {
 	Atom wm_delete_window;
-	wm_delete_window = XmInternAtom(MAIN_DISPLAY(ss), "WM_DELETE_WINDOW", false);
+	wm_delete_window = XmInternAtom(MAIN_DISPLAY(ss), (char *)"WM_DELETE_WINDOW", false);
 	XmAddWMProtocolCallback(XtParent(ep->dialog), wm_delete_window, edit_header_wm_delete_callback, (XtPointer)ep);
       }
 
@@ -4586,7 +4587,7 @@ static void make_raw_data_dialog(raw_info *rp, const char *title)
   XtSetArg(args[n], XmNnoResize, false); n++;
   XtSetArg(args[n], XmNautoUnmanage, false); n++;
   /* not transient -- we want this window to remain visible if possible */
-  rp->dialog = XmCreateWarningDialog(MAIN_SHELL(ss), "raw data", args, n);
+  rp->dialog = XmCreateWarningDialog(MAIN_SHELL(ss), (char *)"raw data", args, n);
   /* I don't know why this takes up all the vertical space on the screen */
 
   XtAddCallback(rp->dialog, XmNcancelCallback, raw_data_cancel_callback, (XtPointer)rp);
@@ -4724,7 +4725,7 @@ static void create_post_it_monolog(void)
   XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
   XtSetArg(args[n], XmNnoResize, false); n++;
   XtSetArg(args[n], XmNtransient, false); n++;
-  post_it_dialog = XmCreateMessageDialog(MAIN_PANE(ss), "info", args, n);
+  post_it_dialog = XmCreateMessageDialog(MAIN_PANE(ss), (char *)"info", args, n);
 
   XtUnmanageChild(MSG_BOX(post_it_dialog, XmDIALOG_CANCEL_BUTTON));
   XtUnmanageChild(MSG_BOX(post_it_dialog, XmDIALOG_HELP_BUTTON));
@@ -4739,7 +4740,7 @@ static void create_post_it_monolog(void)
   XtSetArg(args[n], XmNrows, POST_IT_ROWS); n++;
   XtSetArg(args[n], XmNforeground, ss->sgx->black); n++; /* needed if color allocation fails completely */
   XtSetArg(args[n], XmNbackground, ss->sgx->white); n++;
-  post_it_text = XmCreateScrolledText(post_it_dialog, "post-it-text", args, n);
+  post_it_text = XmCreateScrolledText(post_it_dialog, (char *)"post-it-text", args, n);
   XtManageChild(post_it_text);
   XtManageChild(post_it_dialog);
 
@@ -4876,7 +4877,7 @@ static vf_row *make_vf_row(view_files_info *vdat,
   XmString s1;
   XtCallbackList n1, n3;
 
-  s1 = XmStringCreateLocalized("");
+  s1 = XmStringCreateLocalized((char *)"");
   r = (vf_row *)CALLOC(1, sizeof(vf_row));
   r->vdat = (void *)vdat;
 
@@ -5047,8 +5048,8 @@ void vf_unpost_info(view_files_info *vdat)
   XmStringFree(s3);
   FREE(title);
 
-  s1 = XmStringCreateLocalized("|");
-  s2 = XmStringCreateLocalized("|");
+  s1 = XmStringCreateLocalized((char *)"|");
+  s2 = XmStringCreateLocalized((char *)"|");
   XtVaSetValues(vdat->info1, XmNlabelString, s1, NULL);
   XtVaSetValues(vdat->info2, XmNlabelString, s2, NULL);
   XmStringFree(s1);
@@ -5396,7 +5397,7 @@ void vf_post_error(const char *error_msg, view_files_info *vdat)
 		XmNlabelString, msg, 
 		NULL);
   XmStringFree(msg);
-  msg = XmStringCreateLocalized("");
+  msg = XmStringCreateLocalized((char *)"");
   XtVaSetValues(vdat->info2,
 		XmNlabelString, msg, 
 		NULL);
@@ -5853,7 +5854,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNresizePolicy, XmRESIZE_GROW); n++;
       XtSetArg(args[n], XmNnoResize, false); n++;
       XtSetArg(args[n], XmNtransient, false); n++;
-      vdat->dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), "Files", args, n);
+      vdat->dialog = XmCreateTemplateDialog(MAIN_SHELL(ss), (char *)"Files", args, n);
 
       XtAddCallback(vdat->dialog, XmNhelpCallback,   view_files_help_callback,       (XtPointer)vdat);
       XtAddCallback(vdat->dialog, XmNokCallback,     view_files_dismiss_callback,    (XtPointer)vdat);
@@ -6190,7 +6191,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XmStringFree(s1);
 
       n = 0;
-      s1 = XmStringCreateLocalized("1.0 ");
+      s1 = XmStringCreateLocalized((char *)"1.0 ");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
@@ -6455,11 +6456,11 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNshadowThickness, 0); n++;
       XtSetArg(args[n], XmNhighlightThickness, 0); n++;
       XtSetArg(args[n], XmNmarginHeight, 0); n++;
-      sbar = XmCreateMenuBar(viewform, "menuBar", args, n);
+      sbar = XmCreateMenuBar(viewform, (char *)"menuBar", args, n);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
-      vdat->smenu = XmCreatePulldownMenu(sbar, "sort-menu", args, n);
+      vdat->smenu = XmCreatePulldownMenu(sbar, (char *)"sort-menu", args, n);
 
       n = 0;
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
@@ -6495,7 +6496,7 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
       XtSetArg(args[n], XmNbottomWidget, sep3); n++;
       XtSetArg(args[n], XmNscrollingPolicy, XmAUTOMATIC); n++;
       XtSetArg(args[n], XmNscrollBarDisplayPolicy, XmSTATIC); n++;
-      vdat->file_list = XmCreateScrolledWindow(viewform, "file_list", args, n);
+      vdat->file_list = XmCreateScrolledWindow(viewform, (char *)"file_list", args, n);
 
       n = attach_all_sides(args, 0);
       vdat->file_list_holder = XtCreateManagedWidget("file_list_holder", xmRowColumnWidgetClass, vdat->file_list, args, n);

@@ -535,18 +535,18 @@
 		(let ((len (length help-names)))
 		  (format sfil "#define HELP_NAMES_SIZE ~D~%" len)
 		  (format sfil "#if HAVE_SCHEME || HAVE_FORTH~%")
-		  (format sfil "static char *help_names[HELP_NAMES_SIZE] = {~%  ")
+		  (format sfil "static const char *help_names[HELP_NAMES_SIZE] = {~%  ")
 		  (format sfil "~S" (car help-names))
 		  (loop for ctr from 1 and name in (cdr help-names) do
 		    (format sfil ",~%  ~S" name))
 		  (format sfil "};~%")
 		  (format sfil "#endif~%#if HAVE_RUBY~%")
-		  (format sfil "static char *help_names[HELP_NAMES_SIZE] = {~%  ")
+		  (format sfil "static const char *help_names[HELP_NAMES_SIZE] = {~%  ")
 		  (format sfil "~S" (car help-names))
 		  (loop for ctr from 1 and name in (cdr help-names) do
 		    (format sfil ",~%  ~S" (scm->rb name)))
 		  (format sfil "};~%#endif~%")
-		  (format sfil "#if (!HAVE_EXTENSION_LANGUAGE)~%static char **help_names = NULL;~%#endif~%")
+		  (format sfil "#if (!HAVE_EXTENSION_LANGUAGE)~%static const char **help_names = NULL;~%#endif~%")
 		  (format sfil "static char *help_urls[HELP_NAMES_SIZE] = {~%  ")
 		  (format sfil "~S" (car help-names))
 		  (loop for ctr from 1 and url in (cdr help-urls) do
@@ -556,12 +556,12 @@
 		  (if (and (aref xrefs i)
 			   (> (length (aref xrefs i)) 1))
 		      (let ((vals (clean-up-xref (aref xrefs i) (aref gfiles i))))
-			(format sfil "~%static char *~A_xrefs[] = {~%  ~A,~%  NULL};~%"
+			(format sfil "~%static const char *~A_xrefs[] = {~%  ~A,~%  NULL};~%"
 				(let* ((str (aref generals i))
 				       (mid (search ":" str)))
 				  (make-array-name (my-subseq str (1+ mid))))
 				(car vals))
-			(format sfil "~%static char *~A_urls[] = {~%  ~ANULL};~%"
+			(format sfil "~%static const char *~A_urls[] = {~%  ~ANULL};~%"
 				(let* ((str (aref generals i))
 				       (mid (search ":" str)))
 				  (make-array-name (my-subseq str (1+ mid))))

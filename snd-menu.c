@@ -236,7 +236,7 @@ void revert_file_from_menu(void)
 
 void save_options_from_menu(void)
 {
-  char *filename;
+  const char *filename;
   filename = save_options_in_prefs();
   if (filename)
     {

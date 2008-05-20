@@ -20,7 +20,7 @@ static Float graph_ffti[GRAPH_SIZE * 2];
 /*   also tried linear/db+min-dB distinction, but linear looks dumb and min-dB is a bother */
 
 #define NUM_TRANSFORM_SIZES 14
-static char *transform_size_names[NUM_TRANSFORM_SIZES] = 
+static const char *transform_size_names[NUM_TRANSFORM_SIZES] = 
   {"32", "64", "128", "256", "512", "1024", "2048", "4096", "8192", "16384", "65536", "262144", "1048576", "4194304    "};
 static off_t transform_sizes[NUM_TRANSFORM_SIZES] = 
   {32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 65536, 262144, 1048576, 4194304};
@@ -702,7 +702,7 @@ Widget fire_up_transform_dialog(bool managed)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, type_label); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      type_list = XmCreateScrolledList(type_form, "type-list", args, n);
+      type_list = XmCreateScrolledList(type_form, (char *)"type-list", args, n);
       XtVaSetValues(type_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
       make_transform_type_list();
       XtManageChild(type_list); 
@@ -744,10 +744,10 @@ Widget fire_up_transform_dialog(bool managed)
       XtSetArg(args[n], XmNtopWidget, size_label); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopItemPosition, (size_pos > 2) ? (size_pos - 2) : size_pos); n++;
-      size_list = XmCreateScrolledList(size_form, "size-list", args, n);
+      size_list = XmCreateScrolledList(size_form, (char *)"size-list", args, n);
       XtVaSetValues(size_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
       for (i = 0; i < NUM_TRANSFORM_SIZES; i++) 
-	sizes[i] = XmStringCreateLocalized(transform_size_names[i]);
+	sizes[i] = XmStringCreateLocalized((char *)transform_size_names[i]);
       XtVaSetValues(size_list, 
 		    XmNitems, sizes, 
 		    XmNitemCount, NUM_TRANSFORM_SIZES, 
@@ -1033,7 +1033,7 @@ Widget fire_up_transform_dialog(bool managed)
       XtSetArg(args[n], XmNtopWidget, window_label); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNtopItemPosition, ((int)fft_window(ss) > 2) ? ((int)fft_window(ss) - 1) : ((int)fft_window(ss) + 1)); n++;
-      window_list = XmCreateScrolledList(window_form, "window-list", args, n);
+      window_list = XmCreateScrolledList(window_form, (char *)"window-list", args, n);
       XtVaSetValues(window_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
       for (i = 0; i < MUS_NUM_FFT_WINDOWS; i++)
 	windows[i] = XmStringCreateLocalized((char *)mus_fft_window_name((mus_fft_window_t)i));
@@ -1115,10 +1115,10 @@ Widget fire_up_transform_dialog(bool managed)
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, wavelet_label); n++;
       XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-      wavelet_list = XmCreateScrolledList(wavelet_form, "wavelet-list", args, n);
+      wavelet_list = XmCreateScrolledList(wavelet_form, (char *)"wavelet-list", args, n);
       XtVaSetValues(wavelet_list, XmNbackground, ss->sgx->white, XmNforeground, ss->sgx->black, NULL);
       for (i = 0; i < NUM_WAVELETS; i++) 
-	wavelets[i] = XmStringCreateLocalized(wavelet_name(i));
+	wavelets[i] = XmStringCreateLocalized((char *)wavelet_name(i));
       XtVaSetValues(wavelet_list, 
 		    XmNitems, wavelets, 
 		    XmNitemCount, NUM_WAVELETS, 
@@ -1438,7 +1438,7 @@ void make_transform_type_list(void)
 	if (transform_p(i))
 	  {
 	    set_transform_position(i, j);
-	    types[j++] = XmStringCreateLocalized(transform_name(i)); 
+	    types[j++] = XmStringCreateLocalized((char *)transform_name(i)); 
 	  }
       XtVaSetValues(type_list, 
 		    XmNitems, types, 

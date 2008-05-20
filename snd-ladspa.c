@@ -309,7 +309,7 @@ static void loadLADSPA() {
 
 
 #if USE_MOTIF || USE_GTK
-static char *ladspa_xrefs[6] = {
+static const char *ladspa_xrefs[6] = {
   "LADSPA overview: {LADSPA}",
   "info on specific plugin: {analyze-ladspa}",
   "apply plugin: {apply-ladspa}",

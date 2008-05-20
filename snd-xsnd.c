@@ -307,9 +307,9 @@ XmString initial_speed_label(speed_style_t style)
   /* used also in snd-xmix.c */
   switch (style)
     {
-    case SPEED_CONTROL_AS_RATIO:    return(XmStringCreateLocalized("  1/1")); break;
-    case SPEED_CONTROL_AS_SEMITONE: return(XmStringCreateLocalized("    0")); break;
-    default:                        return(XmStringCreateLocalized(" 1.00")); break;
+    case SPEED_CONTROL_AS_RATIO:    return(XmStringCreateLocalized((char *)"  1/1")); break;
+    case SPEED_CONTROL_AS_SEMITONE: return(XmStringCreateLocalized((char *)"    0")); break;
+    default:                        return(XmStringCreateLocalized((char *)" 1.00")); break;
     }
 }
 
@@ -807,10 +807,10 @@ void display_filter_env(snd_info *sp)
 }
 
 
-void set_filter_text(snd_info *sp, char *str)
+void set_filter_text(snd_info *sp, const char *str)
 {
   if (!(IS_PLAYER(sp)))
-    XmTextSetString(FILTER_COEFFS_TEXT(sp), str);
+    XmTextSetString(FILTER_COEFFS_TEXT(sp), (char *)str);
 }
 
 #ifdef MUS_MAC_OSX
@@ -987,7 +987,7 @@ static void filter_activate_callback(Widget w, XtPointer context, XtPointer info
 
   if (sp->filter_control_envelope) sp->filter_control_envelope = free_env(sp->filter_control_envelope);
   redirect_errors_to(errors_to_minibuffer, (void *)sp);
-  sp->filter_control_envelope = string_to_env(str);
+  sp->filter_control_envelope = string_to_env((const char *)str);
   redirect_errors_to(NULL, NULL);
   if (str) XtFree(str);
   if (!(sp->filter_control_envelope)) /* maybe user cleared text field? */
@@ -1609,7 +1609,7 @@ static void hide_hourglass(snd_info *sp)
 }
 
 
-static char *bits_to_string(char **icon)
+static char *bits_to_string(const char **icon)
 {
   /* show first few lines */
   char *buf;
@@ -1633,24 +1633,24 @@ static void allocate_icons(Widget w)
   scr = DefaultScreen(dp);
   XtVaGetValues(w, XmNdepth, &attributes.depth, XmNcolormap, &attributes.colormap, NULL);
   attributes.visual = DefaultVisual(dp, scr);
-  symbols[0].name = "basiccolor";
+  symbols[0].name = (char *)"basiccolor";
   symbols[0].value = NULL;
   symbols[0].pixel = ss->sgx->basic_color;
   attributes.colorsymbols = symbols;
   attributes.numsymbols = 1;
   attributes.valuemask = XpmColorSymbols | XpmDepth | XpmColormap | XpmVisual;
 
-  pixerr = XpmCreatePixmapFromData(dp, wn, mini_lock_bits(), &mini_lock, &shape1, &attributes);
+  pixerr = XpmCreatePixmapFromData(dp, wn, (char **)mini_lock_bits(), &mini_lock, &shape1, &attributes);
   if (pixerr != XpmSuccess) 
     snd_error("lock pixmap trouble: %s from %s\n", XpmGetErrorString(pixerr), bits_to_string(mini_lock_bits()));
   else
     {
-      pixerr = XpmCreatePixmapFromData(dp, wn, blank_bits(), &blank_pixmap, &shape1, &attributes);
+      pixerr = XpmCreatePixmapFromData(dp, wn, (char **)blank_bits(), &blank_pixmap, &shape1, &attributes);
       if (pixerr != XpmSuccess) 
 	snd_error("blank pixmap trouble: %s from %s\n", XpmGetErrorString(pixerr), bits_to_string(blank_bits()));
       else
 	{
-	  pixerr = XpmCreatePixmapFromData(dp, wn, stop_sign_bits(), &stop_sign, &shape4, &attributes);
+	  pixerr = XpmCreatePixmapFromData(dp, wn, (char **)stop_sign_bits(), &stop_sign, &shape4, &attributes);
 	  if (pixerr != XpmSuccess) 
 	    snd_error("stop sign pixmap trouble: %s from %s\n", XpmGetErrorString(pixerr), bits_to_string(stop_sign_bits()));
 	  else
@@ -1658,13 +1658,13 @@ static void allocate_icons(Widget w)
 	      int k;
 	      for (k = 0; k < NUM_BOMBS; k++)
 		{
-		  pixerr = XpmCreatePixmapFromData(dp, wn, mini_bomb_bits(k), &(bombs[k]), &shape2, &attributes);
+		  pixerr = XpmCreatePixmapFromData(dp, wn, (char **)mini_bomb_bits(k), &(bombs[k]), &shape2, &attributes);
 		  if (pixerr != XpmSuccess) 
 		    {
 		      snd_error("bomb pixmap trouble: %s from %s\n", XpmGetErrorString(pixerr), bits_to_string(mini_bomb_bits(k)));
 		      break;
 		    }
-		  pixerr = XpmCreatePixmapFromData(dp, wn, mini_glass_bits(k), &(hourglasses[k]), &shape3, &attributes);
+		  pixerr = XpmCreatePixmapFromData(dp, wn, (char **)mini_glass_bits(k), &(hourglasses[k]), &shape3, &attributes);
 		  if (pixerr != XpmSuccess) 
 		    {
 		      snd_error("glass pixmap trouble: %s from %s\n", XpmGetErrorString(pixerr), bits_to_string(mini_glass_bits(k))); 
@@ -1853,7 +1853,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 	       * -- as a popup, it's not considered a child, but that means we don't inherit things like popup menus from 
 	       * the main shell.
 	       */
-	      sound_delete = XmInternAtom(XtDisplay(sx->dialog), "WM_DELETE_WINDOW", false);
+	      sound_delete = XmInternAtom(XtDisplay(sx->dialog), (char *)"WM_DELETE_WINDOW", false);
 	      XmAddWMProtocolCallback(sx->dialog, sound_delete, close_sound_dialog, (XtPointer)sp);
 	    }
 	  else XtVaSetValues(sx->dialog, XmNtitle, title, NULL);
@@ -1966,7 +1966,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XtAddCallback(STOP_ICON(sp), XmNactivateCallback, stop_sign_click_callback, (XtPointer)sp);
 
       n = 0;
-      s1 = XmStringCreateLocalized("     ");
+      s1 = XmStringCreateLocalized((char *)"     ");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
@@ -2095,7 +2095,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XmStringFree(s1);
 
       n = 0;
-      s1 = XmStringCreateLocalized("1.0   ");
+      s1 = XmStringCreateLocalized((char *)"1.0   ");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
@@ -2243,7 +2243,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XmStringFree(s1);
       
       n = 0;
-      s1 = XmStringCreateLocalized("1.0   ");
+      s1 = XmStringCreateLocalized((char *)"1.0   ");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
@@ -2260,7 +2260,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XmStringFree(s1);
 
       n = 0;
-      s1 = XmStringCreateLocalized("");
+      s1 = XmStringCreateLocalized((char *)"");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
@@ -2322,7 +2322,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XmStringFree(s1);
       
       n = 0;
-      s1 = XmStringCreateLocalized("1.0   ");
+      s1 = XmStringCreateLocalized((char *)"1.0   ");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
@@ -2339,7 +2339,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XmStringFree(s1);
       
       n = 0;
-      s1 = XmStringCreateLocalized("");
+      s1 = XmStringCreateLocalized((char *)"");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNbottomAttachment, XmATTACH_NONE); n++;
       XtSetArg(args[n], XmNleftAttachment, XmATTACH_NONE); n++;
@@ -2401,7 +2401,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XmStringFree(s1);
       
       n = 0;
-      s1 = XmStringCreateLocalized("0.0     ");
+      s1 = XmStringCreateLocalized((char *)"0.0     ");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
@@ -2438,7 +2438,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
       /* REVOFF */
       n = 0;
-      s1 = XmStringCreateLocalized("");
+      s1 = XmStringCreateLocalized((char *)"");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, REVSCL_BUTTON(sp)); n++;
@@ -2483,7 +2483,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XmStringFree(s1);
 
       n = 0;
-      s1 = XmStringCreateLocalized("1.0 ");
+      s1 = XmStringCreateLocalized((char *)"1.0 ");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNalignment, XmALIGNMENT_BEGINNING); n++;	
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_OPPOSITE_WIDGET); n++;
@@ -2557,7 +2557,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XtSetArg(args[n], XmNmarginHeight, CONTROLS_MARGIN); n++;
       XtSetArg(args[n], XmNrecomputeSize, false); n++;
       FILTER_ORDER_TEXT(sp) = make_textfield_widget("filter-order", CONTROLS(sp), args, n, ACTIVATABLE, NO_COMPLETER);
-      XmTextSetString(FILTER_ORDER_TEXT(sp), " 20");
+      XmTextSetString(FILTER_ORDER_TEXT(sp), (char *)" 20");
       XtAddCallback(FILTER_ORDER_TEXT(sp), XmNactivateCallback, filter_order_activate_callback, (XtPointer)sp);
 
       #define ARROW_SIZE 12
@@ -2597,7 +2597,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       XtAddCallback(FILTER_ORDER_UP(sp), XmNactivateCallback, filter_order_up_callback, (XtPointer)sp);
 
       n = 0;
-      s1 = XmStringCreateLocalized("");
+      s1 = XmStringCreateLocalized((char *)"");
       XtSetArg(args[n], XmNbackground, ss->sgx->basic_color); n++;
       XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
       XtSetArg(args[n], XmNtopWidget, REVERB_BUTTON(sp)); n++;

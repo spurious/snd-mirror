@@ -1812,7 +1812,7 @@ static void unset_dac_print(void)
 }
 
 
-static char *describe_dac(void)
+static const char *describe_dac(void)
 {
   /* this is only called in dac_error and only then upon a failed mus_audio_open_output */
   int players = 0, i;
@@ -1825,7 +1825,7 @@ static char *describe_dac(void)
       }
   if ((players == 1) && 
       (ptr->sp))
-    return(ptr->sp->short_filename);
+    return((const char *)(ptr->sp->short_filename));
   return("");
 }
 

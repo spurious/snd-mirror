@@ -1146,7 +1146,7 @@ static file_info *tackle_bad_header(const char *fullname, read_only_t read_only,
       (ss->open_requestor == FROM_VIEW_SOUND) ||
       (ss->open_requestor == FROM_NEW_SOUND)) /* this case should not happen! */
     {
-      char *caller;
+      const char *caller;
       if (ss->open_requestor == FROM_OPEN_SOUND)
 	caller = S_open_sound;
       else caller = S_view_sound;
@@ -2285,11 +2285,11 @@ static int h_dfs[H_SIZE][H_DFS_MAX] = { /* next */  {MUS_BFLOAT, MUS_BSHORT, MUS
 					/* wavpack */ {MUS_LSHORT},
 					/* readonly */  {-1}, {-1}, {-1}
 };
-static char *h_df_names[H_SIZE][H_DFS_MAX];
+static const char *h_df_names[H_SIZE][H_DFS_MAX];
 
-static char *h_names[H_SIZE] = {"next ", "aifc ", "wave ", "rf64", "raw  ", "aiff ", "ircam", "nist ", "caff",
-				"ogg ", "flac ", "speex", "tta", "wavpack",
-				"mpeg ", "midi ", "shorten"};
+static const char *h_names[H_SIZE] = {"next ", "aifc ", "wave ", "rf64", "raw  ", "aiff ", "ircam", "nist ", "caff",
+				      "ogg ", "flac ", "speex", "tta", "wavpack",
+				      "mpeg ", "midi ", "shorten"};
 static int h_pos_to_type[H_SIZE] = {MUS_NEXT, MUS_AIFC, MUS_RIFF, MUS_RF64, MUS_RAW, MUS_AIFF, MUS_IRCAM, MUS_NIST, MUS_CAFF, -1, -1, -1, -1, -1, -1, -1, -1};
 static int h_type_to_pos[MUS_NUM_HEADER_TYPES];
 static int h_type_to_h[MUS_NUM_HEADER_TYPES];
@@ -2301,7 +2301,7 @@ void initialize_format_lists(void)
 
   for (h = 0; h < H_SIZE; h++)
     for (i = 0; i < h_num_formats[h]; i++)
-      h_df_names[h][i] = (char *)mus_data_format_to_string(h_dfs[h][i]);
+      h_df_names[h][i] = mus_data_format_to_string(h_dfs[h][i]);
   
   for (i = 0; i < MUS_NUM_HEADER_TYPES; i++)
     {
@@ -2377,26 +2377,26 @@ void initialize_format_lists(void)
 
 #define NUM_BUILTIN_HEADERS 9
 #define NUM_POSSIBLE_HEADERS 16
-static char **writable_headers = NULL;
-static char **readable_headers = NULL;
+static const char **writable_headers = NULL;
+static const char **readable_headers = NULL;
 static int num_writable_headers = NUM_BUILTIN_HEADERS;
 static int num_readable_headers = NUM_BUILTIN_HEADERS;
 
 
-char **short_builtin_headers(int *len)
+const char **short_builtin_headers(int *len)
 {
   (*len) = NUM_BUILTIN_HEADERS;
   return(h_names);
 }
 
 
-char **short_writable_headers(int *len)
+const char **short_writable_headers(int *len)
 {
   /* these are headers that we either write ourself, or have external programs to write (oggenc etc) */
   int i;
   if (!writable_headers)
     {
-      writable_headers = (char **)calloc(NUM_POSSIBLE_HEADERS, sizeof(char *));
+      writable_headers = (const char **)calloc(NUM_POSSIBLE_HEADERS, sizeof(char *));
       for (i = 0; i < NUM_BUILTIN_HEADERS; i++)
 	writable_headers[i] = h_names[i];
 #if HAVE_OGG
@@ -2430,12 +2430,12 @@ char **short_writable_headers(int *len)
 }
 
 
-char **short_readable_headers(int *len)
+const char **short_readable_headers(int *len)
 {
   int i;
   if (!readable_headers)
     {
-      readable_headers = (char **)calloc(NUM_POSSIBLE_HEADERS, sizeof(char *));
+      readable_headers = (const char **)calloc(NUM_POSSIBLE_HEADERS, sizeof(char *));
       for (i = 0; i < NUM_BUILTIN_HEADERS; i++)
 	readable_headers[i] = h_names[i];
 #if HAVE_OGG
@@ -2513,7 +2513,7 @@ static int h_to_format_pos(int h, int frm)
 }
 
 
-char **type_and_format_to_position(file_data *fdat, int type, int format)
+const char **type_and_format_to_position(file_data *fdat, int type, int format)
 {
   int h;
   h = h_type_to_h[type];

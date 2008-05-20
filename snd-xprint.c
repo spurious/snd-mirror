@@ -304,7 +304,7 @@ static void start_print_dialog(XmString xmstr4, bool managed)
 widget_t make_file_print_dialog(bool managed, bool direct_to_printer)
 {
   XmString xmstr4;
-  xmstr4 = XmStringCreateLocalized("print");
+  xmstr4 = XmStringCreateLocalized((char *)"print");
   start_print_dialog(xmstr4, managed);
   XmStringFree(xmstr4);
   XmToggleButtonSetState(print_eps_or_lpr, direct_to_printer, false);

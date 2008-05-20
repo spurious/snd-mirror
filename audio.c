@@ -159,7 +159,7 @@ static const char *mus_audio_format_name(int fr)
 #endif
 
 static char *audio_strbuf = NULL; /* previous name "strbuf" collides with Mac OSX global! */
-static void pprint(char *str);
+static void pprint(const char *str);
 
 int device_channels(int dev);
 int device_gains(int dev);
@@ -1428,13 +1428,13 @@ static char *mixer_name(int sys)
   if (sys < sound_cards)
     {
       if (audio_mixer[sys] == -2)
-	return(MIXER_NAME); 
+	return((char *)MIXER_NAME); 
       /* if we have /dev/dsp (not /dev/dsp0), I assume the corresponding mixer is /dev/mixer (not /dev/mixer0) */
       /* but in sam9407 driver, there is no /dev/mixer, and everything goes through /dev/dsp */
       else
 	{
 	  if (audio_mixer[sys] == -3)
-	    return(DAC_NAME); 
+	    return((char *)DAC_NAME); 
 	  else 
 	    {
 	      mus_snprintf(dev_name, LABEL_BUFFER_SIZE, "%s%d", MIXER_NAME, audio_mixer[sys]);
@@ -1442,7 +1442,7 @@ static char *mixer_name(int sys)
 	    }
 	}
     }
-  return(DAC_NAME);
+  return((char *)DAC_NAME);
 }
 
 static char *oss_mus_audio_system_name(int system) 
@@ -1484,7 +1484,7 @@ static char *oss_mus_audio_system_name(int system)
       close(fd);
     }
 #endif
-  return("OSS");
+  return((char *)"OSS");
 }
 
 #if HAVE_SAM_9407
@@ -1522,7 +1522,7 @@ static char *dac_name(int sys, int offset)
       mus_snprintf(dev_name, LABEL_BUFFER_SIZE, "%s%d", DAC_NAME, audio_dsp[sys] + offset);
       return(dev_name);
     }
-  return(DAC_NAME);
+  return((char *)DAC_NAME);
 }
 
 #define MIXER_SIZE SOUND_MIXER_NRDEVICES
@@ -2499,9 +2499,9 @@ static int oss_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
 					   strerror(errno)));
 	      return(MUS_ERROR);
 	    }
-	  else dev_name = DAC_NAME;
+	  else dev_name = (char *)DAC_NAME;
 	}
-      else dev_name = DAC_NAME;
+      else dev_name = (char *)DAC_NAME;
     }
   if (ioctl(fd, SOUND_MIXER_READ_DEVMASK, &devmask))
     RETURN_ERROR_EXIT(MUS_AUDIO_CONFIGURATION_NOT_AVAILABLE, fd,
@@ -2762,7 +2762,7 @@ static int oss_mus_audio_mixer_write(int ur_dev, int field, int chan, float *val
   fd = linux_audio_open(dev_name = mixer_name(sys), O_RDWR | O_NONBLOCK, 0, sys);
   if (fd == -1) 
     {
-      fd = linux_audio_open_with_error(dev_name = DAC_NAME, O_WRONLY, 0, sys);
+      fd = linux_audio_open_with_error(dev_name = (char *)DAC_NAME, O_WRONLY, 0, sys);
       if (fd == -1) return(MUS_ERROR);
     }
   if ((dev == MUS_AUDIO_MIXER) || 
@@ -2867,7 +2867,7 @@ static int oss_mus_audio_mixer_write(int ur_dev, int field, int chan, float *val
   return(linux_audio_close(fd));
 }
 
-static char *synth_names[] = 
+static const char *synth_names[] = 
   {"",
    "Adlib", "SoundBlaster", "ProAudio Spectrum", "Gravis UltraSound", "MPU 401",
    "SoundBlaster 16", "SoundBlaster 16 MIDI", "6850 UART", "Gravis UltraSound 16", "Microsoft",
@@ -2875,7 +2875,7 @@ static char *synth_names[] =
    "Mediatrix Pro", "MAD16", "MAD16 + MPU", "CS4232", "CS4232 + MPU", "Maui",
    "Pseudo-MSS", "Gravis Ultrasound PnP", "UART 401"};
 
-static char *synth_name(int i)
+static const char *synth_name(int i)
 {
 #ifdef SNDCARD_UART401
   if ((i > 0) && (i <= SNDCARD_UART401)) 
@@ -2886,9 +2886,9 @@ static char *synth_name(int i)
   return("unknown");
 }
 
-static char *device_types[] = {"FM", "Sampling", "MIDI"};
+static const char *device_types[] = {"FM", "Sampling", "MIDI"};
 
-static char *device_type(int i)
+static const char *device_type(int i)
 {
   if ((i >= 0) && (i <= 2))
     return(device_types[i]);
@@ -4400,12 +4400,12 @@ static int alsa_mus_audio_initialize(void)
   /* now check that we have a plausible name */
   if (!alsa_probe_device_name(alsa_sndlib_device_name))
     {
-      alsa_sndlib_device_name = "default";
+      alsa_sndlib_device_name = (char *)"default";
       if (!alsa_probe_device_name(alsa_sndlib_device_name))
 	{
-	  alsa_sndlib_device_name = "plughw:0";
+	  alsa_sndlib_device_name = (char *)"plughw:0";
 	  if (!alsa_probe_device_name(alsa_sndlib_device_name))
-	    alsa_sndlib_device_name = "hw:0";
+	    alsa_sndlib_device_name = (char *)"hw:0";
 	}
     }
     
@@ -4414,14 +4414,14 @@ static int alsa_mus_audio_initialize(void)
     {
       if (alsa_probe_device_name(alsa_sndlib_device_name)) 
 	alsa_playback_device_name = alsa_sndlib_device_name;
-      else alsa_playback_device_name = "hw:0";
+      else alsa_playback_device_name = (char *)"hw:0";
     }
 
   if (!alsa_capture_device_name) 
     {
       if (alsa_probe_device_name(alsa_sndlib_device_name)) 
 	alsa_capture_device_name = alsa_sndlib_device_name;
-      else alsa_capture_device_name = "hw:0";
+      else alsa_capture_device_name = (char *)"hw:0";
     }
 
   alsa_get_int_from_env(MUS_ALSA_BUFFERS_ENV_NAME, &alsa_buffers, -1, -1);
@@ -4433,10 +4433,10 @@ static int alsa_mus_audio_initialize(void)
   if (!alsa_set_playback_parameters())
     {
       /* somehow we got a device that passed muster with alsa_probe_device_name, but doesn't return hw params! */
-      alsa_playback_device_name = "plughw:0";
+      alsa_playback_device_name = (char *)"plughw:0";
       if (!alsa_set_playback_parameters())
 	{
-	  alsa_playback_device_name = "hw:0";
+	  alsa_playback_device_name = (char *)"hw:0";
 	  if (!alsa_set_playback_parameters())
 	    return(MUS_ERROR);
 	}
@@ -4444,10 +4444,10 @@ static int alsa_mus_audio_initialize(void)
 
   if (!alsa_set_capture_parameters())
     {
-      alsa_capture_device_name = "plughw:0";
+      alsa_capture_device_name = (char *)"plughw:0";
       if (!alsa_set_capture_parameters())
 	{
-	  alsa_capture_device_name = "hw:0";
+	  alsa_capture_device_name = (char *)"hw:0";
 	  if (!alsa_set_capture_parameters())
 	    return(MUS_ERROR);
 	}
@@ -9943,7 +9943,7 @@ static int print_it = 1;
 static int save_it_len = 0;
 static int save_it_loc = 0;
 
-static void pprint(char *str)
+static void pprint(const char *str)
 {
   int i, len;
   if ((str) && (*str))

@@ -70,16 +70,16 @@ static void local_mus_error(int type, char *msg)
 }
 
 
-static XEN clm_mus_error(int type, char *msg)
+static XEN clm_mus_error(int type, const char *msg)
 {
-  mus_error(type, msg);
+  mus_error(type, (char *)msg);
   return(XEN_FALSE);
 }
 
 
 #define CLM_ERROR XEN_ERROR_TYPE("mus-error")
 
-static void clm_error(const char *caller, char *msg, XEN val)
+static void clm_error(const char *caller, const char *msg, XEN val)
 {
   if (msg)
     XEN_ERROR(CLM_ERROR,
@@ -400,7 +400,7 @@ static XEN g_set_clm_default_frequency(XEN val)
 
 /* ---------------- AM and simple stuff ---------------- */
 
-static char *fft_window_xen_names[MUS_NUM_FFT_WINDOWS] = 
+static const char *fft_window_xen_names[MUS_NUM_FFT_WINDOWS] = 
     {S_rectangular_window, S_hann_window, S_welch_window, S_parzen_window, S_bartlett_window,
      S_hamming_window, S_blackman2_window, S_blackman3_window, S_blackman4_window,
      S_exponential_window, S_riemann_window, S_kaiser_window, S_cauchy_window,
@@ -412,7 +412,7 @@ static char *fft_window_xen_names[MUS_NUM_FFT_WINDOWS] =
 };
 
 
-char *mus_fft_window_xen_name(mus_fft_window_t i) {return(fft_window_xen_names[(int)i]);}
+const char *mus_fft_window_xen_name(mus_fft_window_t i) {return(fft_window_xen_names[(int)i]);}
 
 
 static XEN g_radians_to_hz(XEN val) 
@@ -1778,7 +1778,7 @@ typedef enum {G_DELAY, G_COMB, G_NOTCH, G_ALL_PASS, G_MOVING_AVERAGE, G_FCOMB} x
 static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 {
   mus_any *ge = NULL, *filt = NULL;
-  char *caller = NULL;
+  const char *caller = NULL;
   XEN args[MAX_ARGLIST_LEN]; 
   XEN keys[9];
   XEN xen_filt = XEN_FALSE;
@@ -2970,7 +2970,7 @@ typedef enum {G_SAWTOOTH_WAVE, G_SQUARE_WAVE, G_TRIANGLE_WAVE, G_PULSE_TRAIN} xc
 static XEN g_make_sw(xclm_wave_t type, Float def_phase, XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
 {
   mus_any *ge = NULL;
-  char *caller = NULL;
+  const char *caller = NULL;
   XEN args[6]; 
   XEN keys[3];
   int orig_arg[3] = {0, 0, 0};
@@ -3187,7 +3187,7 @@ static XEN g_asymmetric_fm_p(XEN obj)
 
 typedef enum {G_ONE_POLE, G_ONE_ZERO, G_TWO_POLE, G_TWO_ZERO} xclm_filter_t;
 
-static char *smpflts[6] = {S_make_one_pole, S_make_one_zero, S_make_two_pole, S_make_two_zero};
+static const char *smpflts[6] = {S_make_one_pole, S_make_one_zero, S_make_two_pole, S_make_two_zero};
 
 
 static XEN g_make_smpflt_1(xclm_filter_t choice, XEN arg1, XEN arg2, XEN arg3, XEN arg4)
@@ -4129,7 +4129,7 @@ static XEN g_wave_train_p(XEN obj)
 
 enum {NO_PROBLEM_IN_LIST, NULL_LIST, ODD_LENGTH_LIST, NON_NUMBER_IN_LIST, NEGATIVE_NUMBER_IN_LIST};
 
-static char* list_to_partials_error_to_string(int code)
+static const char* list_to_partials_error_to_string(int code)
 {
   switch (code)
     {
@@ -4460,7 +4460,7 @@ to create (via waveshaping) the harmonic spectrum described by the partials argu
 
 static XEN g_normalize_partials(XEN partials)
 {
-  #define H_normalize_partials "(" S_normalize_partials " num-partials partials) scales the \
+  #define H_normalize_partials "(" S_normalize_partials " partials) scales the \
 partial amplitudes in the vct or list 'partials' by the inverse of their sum (so that they add to 1.0)."
 
   vct *v;
@@ -4987,7 +4987,7 @@ static XEN g_make_filter_1(xclm_fir_t choice, XEN arg1, XEN arg2, XEN arg3, XEN 
   int orig_arg[4] = {0, 0, 0, 0};
   vct *x = NULL, *y = NULL;
   int vals, order = 0;
-  char *caller;
+  const char *caller;
   if (choice == G_FILTER) caller = S_make_filter; else if (choice == G_FIR_FILTER) caller = S_make_fir_filter; else caller = S_make_iir_filter;
 
   keys[0] = kw_order;
@@ -7067,7 +7067,8 @@ static XEN g_convolve_files(XEN file1, XEN file2, XEN maxamp, XEN outfile)
   #define H_convolve_files "(" S_convolve_files " file1 file2 :optional maxamp output-file): convolve \
 file1 and file2 writing outfile after scaling the convolution result to maxamp."
 
-  char *f1, *f2, *f3;
+  char *f1, *f2;
+  const char *f3;
   Float maxval = 1.0;
   XEN_ASSERT_TYPE(XEN_STRING_P(file1), file1, XEN_ARG_1, S_convolve_files, "a string");
   XEN_ASSERT_TYPE(XEN_STRING_P(file2), file2, XEN_ARG_2, S_convolve_files, "a string");
