@@ -169,7 +169,7 @@ int device_channels(int dev)
   float val[4];
 #if USE_SND && MUS_DEBUGGING
   XEN res;
-  res = XEN_EVAL_C_STRING("(if (defined? 'debugging-device-channels) debugging-device-channels 0)");
+  res = XEN_EVAL_C_STRING((char *)"(if (defined? 'debugging-device-channels) debugging-device-channels 0)");
   if (XEN_INTEGER_P(res))
     {
       int chans;

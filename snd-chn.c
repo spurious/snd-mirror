@@ -5362,7 +5362,7 @@ static XEN channel_get(XEN snd_n, XEN chn_n, cp_field_t fld, const char *caller)
 		    {
 		      void *val;
 		      val = (void *)make_sonogram_state(cp, FORCE_REFFT);
-		      while (sonogram_in_slices(val) == BACKGROUND_CONTINUE);
+		      while (sonogram_in_slices(val) == BACKGROUND_CONTINUE) ;
 		    }
 		  ss->checking_explicitly = false;
 		}

@@ -355,7 +355,7 @@ void finish_peak_env(chan_info *cp)
   if ((cgx->peak_env_in_progress) && 
       (cgx->peak_env_state))
     {
-      while (!(tick_peak_env(cp, cgx->peak_env_state))); /* finish peak-env scan */
+      while (!(tick_peak_env(cp, cgx->peak_env_state))) ; /* finish peak-env scan */
       enved_reflect_peak_env_completion(cp->sound);
       free_peak_env_state(cp);
     }
@@ -2067,7 +2067,7 @@ void menu_apply_controls(snd_info *sp)
 	{
 	  sp->applying = true;
 	  redirect_everything_to(printout_to_minibuffer, (void *)sp);
-	  while (apply_controls(ap));
+	  while (apply_controls(ap)) ;
 	  redirect_everything_to(NULL, NULL);
 	}
     }
