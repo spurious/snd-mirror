@@ -1191,7 +1191,7 @@ XEN xen_rb_list_ref(XEN obj, int index);
 XEN xen_rb_list_set(XEN obj, int index, XEN value);
 void xen_rb_raise(XEN type, XEN info);
 XEN xen_rb_obj_as_string(XEN obj);
-XEN xen_rb_eval_string_with_error(char *str);
+XEN xen_rb_eval_string_with_error(const char *str);
 XEN xen_rb_load_file_with_error(XEN file);
 XEN xen_rb_ary_new_with_initial_element(long num, XEN element);
 XEN xen_rb_apply(XEN func, XEN args);

@@ -1035,19 +1035,23 @@ static char *gl_print(XEN result)
 {
   char *newbuf = NULL, *str = NULL;
   int i, ilen, savelen;
+
   /* specialize vectors which can be enormous in this context */
   if ((!(XEN_VECTOR_P(result))) || 
       ((int)(XEN_VECTOR_LENGTH(result)) <= print_length(ss)))
     return(g_print_1(result));
+
   ilen = print_length(ss); 
   newbuf = (char *)CALLOC(128, sizeof(char));
   savelen = 128;
+
 #if HAVE_SCHEME || HAVE_FORTH
   sprintf(newbuf, "#("); 
 #endif
 #if HAVE_RUBY
   sprintf(newbuf, "[");
 #endif
+
   for (i = 0; i < ilen; i++)
     {
       str = g_print_1(XEN_VECTOR_REF(result, i));
@@ -1064,12 +1068,14 @@ static char *gl_print(XEN result)
 	  FREE(str);
 	}
     }
+
 #if HAVE_SCHEME || HAVE_FORTH
   newbuf = snd_strcat(newbuf, " ...)", &savelen);
 #endif
 #if HAVE_RUBY
   newbuf = snd_strcat(newbuf, " ...]", &savelen);
 #endif
+
   return(newbuf);
 }
 
@@ -2840,9 +2846,9 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 #endif
 
 #if HAVE_RUBY
-  XEN_EVAL_C_STRING((char *)"def clm_print(str, *args)\n\
-                               snd_print format(str, *args)\n\
-                               end");
+  XEN_EVAL_C_STRING("def clm_print(str, *args)\n\
+                      snd_print format(str, *args)\n\
+                      end");
 #endif
 
 #if HAVE_FORTH

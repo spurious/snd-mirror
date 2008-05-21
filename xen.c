@@ -774,7 +774,7 @@ void xen_repl(int argc, char **argv)
 }
 
 
-XEN xen_rb_eval_string_with_error(char *str)
+XEN xen_rb_eval_string_with_error(const char *str)
 {
   int status = 0;
   XEN res;

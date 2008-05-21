@@ -5,7 +5,7 @@
 (if (not (provided? 'xm))
     (let ((hxm (dlopen "xm.so")))
       (if (string? hxm)
-	  (snd-error (format #f "event.scm needs the xm module: ~A" hxm))
+	  (snd-error (format #f "event.scm needs the xm module (either 'make xm' or build Snd with --with-static-xm): ~A" hxm))
 	  (dlinit hxm "Init_libxm"))))
 
 (provide 'snd-event.scm)

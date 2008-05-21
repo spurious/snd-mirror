@@ -7,7 +7,7 @@
 (if (not (provided? 'xm))
     (let ((hxm (dlopen "xm.so")))
       (if (string? hxm)
-	  (snd-error (format #f "new-effects.scm needs the xm module: ~A" hxm))
+	  (snd-error (format #f "new-effects.scm needs the xm module (either 'make xm' or build Snd with --with-static-xm): ~A" hxm))
 	  (dlinit hxm "Init_libxm"))))
 
 (if (not (defined? 'raise-dialog))

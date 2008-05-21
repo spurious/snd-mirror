@@ -33,7 +33,7 @@
 (if (not (provided? 'xg))
     (let ((hxm (dlopen "xg.so")))
       (if (string? hxm)
-	  (snd-error (format #f "snd-gtk.scm needs the xg module: ~A" hxm))
+	  (snd-error (format #f "snd-gtk.scm needs the xg module (either 'make xg' or build Snd with --with-static-xg): ~A" hxm))
 	  (dlinit hxm "Init_libxg"))))
 
 (provide 'snd-snd-gtk.scm)
