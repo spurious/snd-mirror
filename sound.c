@@ -161,7 +161,7 @@ static char **mus_error_names = NULL;
 static int mus_error_names_size = 0;
 static int mus_error_tag = MUS_INITIAL_ERROR_TAG;
 
-int mus_make_error(char *error_name) 
+int mus_make_error(const char *error_name) 
 {
   int new_error, err;
   new_error = mus_error_tag++;

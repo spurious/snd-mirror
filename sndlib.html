@@ -40,7 +40,10 @@
 </center>
 
 <br>
+<table border=0 bordercolor="lightgreen" width=100% cellpadding=2 cellspacing=0><tr><td bgcolor="lightgreen">
 <table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>Contents</h2></td></tr></table>
+</td></tr></table>
+
 <ul>
 <li><a href="#introduction">Introduction</a>
 <li><a href="#headers">Headers</a>
@@ -62,7 +65,9 @@
 <li><a href="#sndlibguile">Extension Languages</a>
 </ul>
 <br>
+<table border=0 bordercolor="lightgreen" width=100% cellpadding=2 cellspacing=0><tr><td bgcolor="lightgreen">
 <table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="introduction">Introduction</a></h2></td></tr></table>
+</td></tr></table>
 
 <p>sndlib is a collection of sound file and audio hardware
 handlers written in C and running currently on SGI (either
@@ -108,7 +113,9 @@ Common Lisp convention meaning "predicate" I think).
 </p>
 
 <br>
+<table border=0 bordercolor="lightgreen" width=100% cellpadding=2 cellspacing=0><tr><td bgcolor="lightgreen">
 <table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="headers">Headers</a></h2></td></tr></table>
+</td></tr></table>
 
 <p>Sound files have built-in descriptors known as headers.
 The following functions return the information in the header.
@@ -175,7 +182,9 @@ components that have been found can be read via functions such as
 </p>
 
 <br>
+<table border=0 bordercolor="lightgreen" width=100% cellpadding=2 cellspacing=0><tr><td bgcolor="lightgreen">
 <table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="data">Data</a></h2></td></tr></table>
+</td></tr></table>
 
 <p>The following functions provide access to
 sound file data:</p>
@@ -236,7 +245,9 @@ file indicated by <i>fd</i> to the desired frame.
 </p>
 
 <br>
+<table border=0 bordercolor="lightgreen" width=100% cellpadding=2 cellspacing=0><tr><td bgcolor="lightgreen">
 <table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="hardware">Hardware</a></h2></td></tr></table>
+</td></tr></table>
 
 <p>The following functions provide access to audio harware.  If an
 error occurs, they return -1 (MUS_ERROR). </p>
@@ -375,7 +386,9 @@ MUS_AUDIO_PORT      return list of available devices (e.g. MUS_AUDIO_MICROPHONE)
 </pre>
 
 <br>
+<table border=0 bordercolor="lightgreen" width=100% cellpadding=2 cellspacing=0><tr><td bgcolor="lightgreen">
 <table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="midi">MIDI</a></h2></td></tr></table>
+</td></tr></table>
 
 <p>
 There is some simple, very low-level MIDI support in sndlib.  
@@ -424,7 +437,9 @@ went wrong.
 </p>
 
 <br>
+<table border=0 bordercolor="lightgreen" width=100% cellpadding=2 cellspacing=0><tr><td bgcolor="lightgreen">
 <table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="music5">MusicV</a></h2></td></tr></table>
+</td></tr></table>
 
 <p>clm.c and friends implement all the generators found in CLM, a
 music V implementation, and clm2xen.c ties these into the languages supported by the
@@ -552,7 +567,9 @@ through mus_error which can be redirected or muffled.  See clm2xen.c for an exam
 </p>
 <br>
 
+<table border=0 bordercolor="lightgreen" width=100% cellpadding=2 cellspacing=0><tr><td bgcolor="lightgreen">
 <table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="examples">Examples</a></h2></td></tr></table>
+</td></tr></table>
 
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndinfo">SndInfo</a></h3></td></tr></table>
 
@@ -914,8 +931,10 @@ of Snd and CLM, both of which are freely available.
 </p>
 <br>
 
-
+<table border=0 bordercolor="lightgreen" width=100% cellpadding=2 cellspacing=0><tr><td bgcolor="lightgreen">
 <table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="currentstatus">Current Status</a></h2></td></tr></table>
+</td></tr></table>
+
 <br>
 <table border=8 bordercolor="lightgreen" cellpadding=4 hspace=20> 
   <tr><th bgcolor="beige">System</th><th bgcolor="beige">SndSine</th><th bgcolor="beige">SndInfo</th><th bgcolor="beige">Audinfo</th><th bgcolor="beige">SndPlay</th><th bgcolor="beige">SndRecord</th><th bgcolor="beige">CLM</th><th bgcolor="beige">MIDI</th></tr>
@@ -972,7 +991,9 @@ of Snd and CLM, both of which are freely available.
 
 <br><br>
 
+<table border=0 bordercolor="lightgreen" width=100% cellpadding=2 cellspacing=0><tr><td bgcolor="lightgreen">
 <table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2><A NAME="sndlibguile"></a>Extension Languages</h2></td></tr></table>
+</td></tr></table>
 
 <p>Much of sndlib is accessible at run time in any program that has one of
 the languages supported by the xen package (Guile, Gauche, Ruby, Forth);

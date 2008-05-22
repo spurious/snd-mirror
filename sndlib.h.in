@@ -245,7 +245,7 @@ extern "C" {
 
 typedef void mus_error_handler_t(int type, char *msg);
 mus_error_handler_t *mus_error_set_handler(mus_error_handler_t *new_error_handler);
-int mus_make_error(char *error_name);
+int mus_make_error(const char *error_name);
 const char *mus_error_type_to_string(int err);
 
 typedef void mus_print_handler_t(char *msg);
@@ -492,7 +492,7 @@ int mus_header_change_srate(const char *filename, int type, int new_srate);
 int mus_header_change_type(const char *filename, int new_type, int new_format);
 int mus_header_change_format(const char *filename, int type, int new_format);
 int mus_header_change_location(const char *filename, int type, off_t new_location);
-int mus_header_change_comment(const char *filename, int type, char *new_comment);
+int mus_header_change_comment(const char *filename, int type, const char *new_comment);
 int mus_header_change_data_size(const char *filename, int type, off_t bytes);
 
 typedef void mus_header_write_hook_t(const char *filename);

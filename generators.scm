@@ -5437,6 +5437,47 @@ index 10 (so 10/2 is the bes-jn arg):
 
 ;;; --------------------------------------------------------------------------------
 ;;;
+;;; moving-variance
+;;;
+;;; this taken from the dsp bboard -- untested!
+
+(defgenerator (moving-variance
+	       :make-wrapper (lambda (g)
+			       (let ((g1 (make-moving-average (moving-variance-n g)))
+				     (g2 (make-moving-average (moving-variance-n g))))
+				 (set! (moving-variance-gen1 g) g1)
+				 (set! (mus-increment g1) 1.0)
+				 (set! (moving-variance-gen2 g) g2)
+				 (set! (mus-increment g2) 1.0)
+				 g)))
+  (n 128 :type int) (gen1 #f :type clm) (gen2 #f :type clm))
+
+
+(define (moving-variance gen y)
+  (declare (gen moving-variance) (y float))
+  (let* ((x1 (moving-average (moving-variance-gen1 gen) y))
+	 (x2 (moving-average (moving-variance-gen2 gen) (* y y)))
+	 (n (moving-variance-n gen)))
+    (/ (- (* n x2)
+	  (* x1 x1))
+       (* n (- n 1)))))
+
+#|
+(with-sound (:clipped #f)
+  (let* ((gen (make-moving-variance 128))) 
+    (do ((i 0 (1+ i))) 
+	((= i 10000)) 
+      (outa i (moving-variance gen (random 1.0))))))
+|#
+
+
+;;; similarly (moving-inner-product x y) -> (moving-sum (* x y)), 
+;;;           (moving-distance x y) -> (sqrt (moving-sum (* (- x y) (- x y))))
+
+
+
+;;; --------------------------------------------------------------------------------
+;;;
 ;;; moving-rms
 
 (defgenerator (moving-rms

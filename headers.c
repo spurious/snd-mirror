@@ -6277,7 +6277,7 @@ int mus_header_change_location(const char *filename, int type, off_t new_locatio
 }
 
 
-int mus_header_change_comment(const char *filename, int type, char *new_comment)
+int mus_header_change_comment(const char *filename, int type, const char *new_comment)
 {
   int err = MUS_NO_ERROR, fd, len = 0;
   bool need_ripple = false;
