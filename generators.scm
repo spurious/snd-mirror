@@ -3605,8 +3605,9 @@
 	       :make-wrapper (lambda (g)
 			       (set! (jjcos-frequency g) (hz->radians (jjcos-frequency g)))
 			       g))
-  (frequency *clm-default-frequency*) (r 0.0) (a 0.0) (k 1 :type int) (angle 0.0))
+  (frequency *clm-default-frequency*) (r 0.0) (a 0.0) (k 1.0) (angle 0.0))
 
+;;; TODO: k not an int? in jjcos, also make sure in make-* that a!=r (see jjsin below also)
 
 (define (jjcos gen fm)
   "  (make-jjcos frequency (r 0.0) (a 0.0) (k 1)) creates a jjcos generator.\n\
@@ -3927,8 +3928,12 @@ index 10 (so 10/2 is the bes-jn arg):
 (defgenerator (jpcos
 	       :make-wrapper (lambda (g)
 			       (set! (jpcos-frequency g) (hz->radians (jpcos-frequency g)))
+			       (if (= (jpcos-r g) (jpcos-a g))
+				   (begin
+				     (snd-warn ";jpcos r and a can't be equal (~A)" (jpcos-r g))
+				     (set! (jpcos-r g) (+ (jpcos-a g) .01))))
 			       g))
-  (frequency *clm-default-frequency*) (r 0.0) (a 0.0) (k 1 :type int) (angle 0.0))
+  (frequency *clm-default-frequency*) (r 0.0) (a 0.0) (k 1.0) (angle 0.0))
 
 
 (define (jpcos gen fm)
@@ -3939,34 +3944,73 @@ index 10 (so 10/2 is the bes-jn arg):
 	 (a (jpcos-a gen))
 	 (r (jpcos-r gen))
 	 (k (jpcos-k gen))
-	 (dc (/ (* (sin (* k a)) (sin (* k r))) (* k a r)))
+	 ;; (dc (/ (* (sin (* k a)) (sin (* k r))) (* k a r)))
 	 ;; from P0(x)=1, J[1/2](x)=sqrt(2/(pi x))sin(x), omitting original 1/pi
 	 ;;   G&R 914 (8.464), 974 (8.912), but it's missing some remaining (small) component
-	 (norm 1.0)
-	 (arg (sqrt (+ (* r r) 
-		       (* a a)
-		       (* a r -2.0 (cos x))))))
+	 ;; also omitting the original divide by (* pi (sqrt arg)) -- it's just an amplitude scaler
+	 ;;   and in this context, we get -1..1 peak amps from the sin anyway.
+	 (arg (+ (* r r) 
+		 (* a a)
+		 (* a r -2.0 (cos x)))))
 
     (set! (jpcos-angle gen) (+ x fm (jpcos-frequency gen)))
 
-    (/ (- (/ (sin (* k arg))
-	     arg)
-	  dc)
-       norm)))
+    (if (< (abs arg) nearly-zero) ; r = a, darn it! This will produce a spike, but at least it's not a NaN
+	1.0
+	(sin (* k (sqrt arg))))))
 
 #|
-(with-sound (:clipped #f :statistics #t :play #t)
-  (let ((gen (make-jpcos 100.0 :a 1.0 :r 1.0 :k 1)))
+(with-sound (:clipped #f :statistics #t)
+  (let ((gen (make-jpcos 100.0 :a 1.0 :r 0.5 :k 1)))
     (run 
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 210000))
 	 (outa i (jpcos gen 0.0)))))))
 
+(with-sound (:clipped #f :statistics #t)
+  (let* ((gen (make-jpcos 400.0 :a 1.0 :r 0.5 :k 10))
+	 (dur 1.0)
+	 (samps (seconds->samples dur))
+	 (ampf (make-env '(0 0 1 1 10 1 11 0) :duration dur :scaler 0.5))
+	 (indf (make-env '(0 0 1 1) :duration dur :scaler 1.0)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i samps))
+	 (set! (jpcos-r gen) (env indf))
+	 (outa i (* (env ampf)
+		    (jpcos gen 0.0))))))))
+
 ;;; -.725, 1/.275
+(with-sound (:clipped #f :scaled-to .5) 
+  (let* ((gen (make-oscil 100.0))) 
+    (do ((i 0 (1+ i))) 
+	((= i 44100)) 
+      (outa i (sqrt (+ 1.0 (oscil gen)))))))
+
+(with-sound (:clipped #f :scaled-to .5) 
+  (let* ((gen (make-oscil 100.0))
+	 (indf (make-env '(0 .1 1 .9) :length 44100)))
+    (do ((i 0 (1+ i))) 
+	((= i 44100)) 
+      (let ((ind (env indf)))
+	(outa i (sqrt (+ (* 1.0 1.0) (* ind ind) (* -2 1.0 ind (oscil gen)))))))))
+
+;;; rkcos r=.4 or so (.6?), so rkcos+indf is mostly equivalent? (k=scaler in both)
+
+(with-sound (:clipped #f :statistics #t :play #t)
+  (let ((gen (make-rkcos 440.0 :r 0.6)) 
+	(gen1 (make-oscil 440.0)) 
+	(indf (make-env '(0 .1 1 .8) :length 50000)))
+    (run 
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 50000)) 
+	 (set! (rkcos-r gen) (env indf))
+	 (outa i (oscil gen1 (* (rkcos-r gen) (rkcos gen 0.0)))))))))
 |#
 
-;;; dc is not right if a!=r, no norm
 
 
 ;;; --------------------------------------------------------------------------------

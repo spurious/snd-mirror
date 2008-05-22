@@ -6628,7 +6628,7 @@ sceq35:
 
 <img src="pix/sceq35.png" alt="J(sin) and cos(sin)" hspace=40>
 
-<p>The rest of the generators in this section suffer a similar fate.  From a waveshaping perspective,
+<p>Except for jpcos, the rest of the generators in this section suffer a similar fate.  From a waveshaping perspective,
 we're using a sinusoid, or a modulated sinusoid, to index into the near-zero portion of a Bessel
 function, and the result is sadly reminiscent of standard FM.  But they're such pretty formulas;
 I must be missing something.
@@ -6756,7 +6756,7 @@ and is very similar to normal FM.
 <br>
 
 <pre style="background-color: #f2f4ff">
-  <A class=def NAME="make-jjcos">make-jjcos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (r 0.0) (a 1.0) (k 1)
+  <A class=def NAME="make-jjcos">make-jjcos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (r 0.0) (a 1.0) (k 1.0)
   <A class=def NAME="jjcos">jjcos</A> gen fm
   <A class=def NAME="jjcos?">jjcos?</A> gen
 
@@ -6764,7 +6764,7 @@ and is very similar to normal FM.
   <A class=def NAME="j2cos">j2cos</A> gen fm
   <A class=def NAME="j2cos?">j2cos?</A> gen
 
-  <A class=def NAME="make-jpcos">make-jpcos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (r 0.0) (a 0.0) (k 1)
+  <A class=def NAME="make-jpcos">make-jpcos</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (r 0.0) (a 0.0) (k 1.0)
   <A class=def NAME="jpcos">jpcos</A> gen fm
   <A class=def NAME="jpcos?">jpcos?</A> gen
 
@@ -6774,7 +6774,9 @@ and is very similar to normal FM.
 </pre>
 
 <p>These produce a sum of cosines scaled by a product of Bessel functions; in a sense, there are two, or maybe three "indices".
-Normalization is not handled correctly in all cases.
+Normalization is handled correctly at least for jpcos.  Of the four, jpcos seems the most interesting.  "a" should not equal "r";
+in general as a and r approach 1.0, the spectrum approaches "k" components, sometimes in a highly convoluted manner.
+I need to play with this more...
 </p>
 
 <table border=0 hspace=40 cellspacing=10>

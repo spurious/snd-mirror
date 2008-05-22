@@ -550,7 +550,7 @@
 		    (format sfil ",~%  ~S" (scm->rb name)))
 		  (format sfil "};~%#endif~%")
 		  (format sfil "#if (!HAVE_EXTENSION_LANGUAGE)~%static const char **help_names = NULL;~%#endif~%")
-		  (format sfil "static char *help_urls[HELP_NAMES_SIZE] = {~%  ")
+		  (format sfil "static const char *help_urls[HELP_NAMES_SIZE] = {~%  ")
 		  (format sfil "~S" (car help-names))
 		  (loop for ctr from 1 and url in (cdr help-urls) do
 		    (format sfil ",~%  ~S" url))
