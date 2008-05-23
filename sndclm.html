@@ -2562,6 +2562,7 @@ see also <a href="#othergenerators">generators.scm</a>
 </pre><br clear=left>
 
 <br>
+
 <table border=0 hspace=40>
 <tr>
 <td bgcolor="#fafafa">
@@ -2586,7 +2587,7 @@ If you use ncos as the FM modulating signal, you may be surprised and disappoint
 As the modulating signal approaches a spike (as n increases), the bulk of the energy collapses back onto the carrier:
 </p>
 
-<table border=1 cellpadding=4 cell-spacing=0><tr><td>
+<table border=0 hspace=40><tr><td>
 <pre>
 (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> ()
   (for-each
@@ -2610,7 +2611,7 @@ As the modulating signal approaches a spike (as n increases), the bulk of the en
      (list 12.0 64) (list 14.0 128))))
 </pre>
 </td><td>
-<img src="pix/ncosfm.png" alt="ncos as FM" onmouseout="UnTip()" onmouseover="Tip('The n=1 case is at the bottom, the n=128 case at the top.<br>I tried adding axes and labels to this graph, but they looked really dumb')">
+<img src="pix/ncosfm.png" alt="ncos as FM" onmouseout="UnTip()" onmouseover="Tip('The n=1 case is at the bottom, the n=128 case at the top.<br>I tried adding axes and labels to this graph, but they looked really dumb')" hspace=40>
 </td></tr></table>
 
 <!--
@@ -2770,6 +2771,99 @@ Here we sweep the index from 0 to 48 using n=16:
 0 1.0
 4 0.25
 -->
+
+<p>But if our second analysis is correct, there's nothing special about the spike waveform that ncos produces.
+We only need a lot of components of decreasing effective FM index.  If we randomize the initial
+phases of the n harmonically related equal amplitude sinusoids, we can minimize the peak amplitude (to reduce the
+spike), 
+getting waveforms and results like these:
+</p>
+
+
+<table border=0 hspace=20><tr><td>
+<img src="pix/nsinfm.png" alt="ncos case but random phases">
+</td>
+<td>
+<img src="pix/randomsins.png" alt="ncos case but random phases">
+</td></tr>
+<td><center><table border=0><tr><td bgcolor="#f2f3ff">FM of sum of n sinusoids</td></tr></table></center></td>
+<td><center><table border=0><tr><td bgcolor="#f2f3ff">sum of n sinusoids minimizing resemblance to pulse-train</td></tr></table></center></td>
+</tr></table>
+
+
+<!-- same setting as above
+
+(defgenerator (ngencos 
+	       :make-wrapper (lambda (g)
+			       (let ((n (ngencos-n g))
+				     (frq (ngencos-frequency g))
+				     (phases (ngencos-phases g)))
+				 (set! (ngencos-arr g) (make-vector n))
+				 (do ((i 0 (1+ i)))
+				     ((= i n))
+				   (if (vct? phases)
+				       (vector-set! (ngencos-arr g) i (make-oscil (* frq (1+ i)) (vct-ref phases i)))
+				       (vector-set! (ngencos-arr g) i (make-oscil (* frq (1+ i)) (random (* 2 pi)))))))
+			       g))
+  (frequency 0.0) (n 1 :type int) (phases #f :type vct) (arr #f :type clm-vector))
+
+
+(define (ngencos gen fm)
+  (declare (gen ngencos) (fm float))
+  (let* ((n (ngencos-n gen))
+	 (arr (ngencos-arr gen))
+	 (sum 0.0))
+    (do ((i 0 (1+ i)))
+	((= i n))
+      (set! sum (+ sum (oscil (vector-ref arr i) (* (1+ i) fm)))))
+    (/ sum n)))
+
+(with-sound (:channels 1 :clipped #f)
+  (for-each
+    (lambda (arg)
+      (let ((car1 (make-oscil 1000))
+	    (norm (/ 1.0 (caddr arg)))
+	    (mod1 (make-ngencos 100 (cadr arg) (cadddr arg)))
+	    (start (seconds->samples (car arg)))
+	    (samps (seconds->samples 1.0))
+	    (ampf (make-env '(0 0 1 1 20 1 21 0) 
+	            :duration 1.0 :scaler .8))
+	    (index (hz->radians (* 100 3.0)))
+	    (mx 0.0))
+	(run (lambda ()
+	(do ((i start (1+ i)))
+	    ((= i (+ start samps)))
+	  (let ((md (ngencos mod1 0.0)))
+	    (outa i (* (env ampf)
+                       (oscil car1 (* index norm md))))
+	    (set! mx (max mx (abs md)))
+	    ))))
+	(snd-display ";~A ~A ~A" (cadr arg) (caddr arg) mx)))
+                         
+    (list
+     (list 0.0 1    1.0    (vct 0))
+     (list 2.0 2    0.881 (vct 0 0))
+     (list 4.0 4    0.5184 (vct 1.295 0.248 0.304 2.785))
+     (list 6.0 8    0.393  (vct 4.515 1.780 4.259 1.771 1.166 0.254 1.419 2.735))
+     (list 8.0 16   0.302  (vct 0.432 2.086 2.763 2.344 2.811 3.409 1.836 6.173 3.770 2.339 6.158 1.530 6.132 3.006 4.967 0.859))
+     (list 10.0 32  0.266  (vct 6.208 4.197 3.109 1.718 5.050 1.317 4.334 3.778 4.936 0.069 3.025 2.115 5.060 1.286 3.499 5.191 1.822 5.985 4.384 1.394 3.453 2.579 3.031 3.255 3.834 2.621 1.390 0.717 0.409 3.370 6.042 6.052))
+     (list 12.0 64  0.2124 (vct 4.913 5.507 5.262 1.926 4.819 3.794 0.355 1.178 4.959 1.012 3.433 2.855 2.191 4.792 3.740 1.865 5.196 1.078 4.139 5.518 3.053 3.958 3.131 6.260 2.157 4.279 2.352 4.314 1.102 5.967 3.551 2.439 5.456 4.833 5.213 3.523 3.263 2.810 0.433 0.639 2.554 3.469 2.682 4.765 0.125 3.824 1.137 6.166 0.019 2.240 4.406 4.734 5.451 6.230 4.943 4.160 3.577 5.086 2.444 0.900 1.952 2.234 4.794 3.424))
+     (list 14.0 128 0.16121 (vct 1.531 4.987 1.847 0.632 6.101 4.309 0.517 1.910 4.921 4.949 6.040 5.611 2.831 5.338 0.891 5.388 0.599 2.677 6.248 5.592 1.977 1.794 3.572 2.638 1.903 3.083 2.412 6.125 3.799 5.619 5.949 1.241 3.044 5.395 5.865 4.846 4.899 2.267 4.537 3.979 1.783 3.826 1.325 5.278 5.799 4.977 2.066 3.029 1.036 4.606 1.691 6.079 4.957 6.138 2.603 1.111 1.335 1.765 5.767 2.730 0.702 1.122 1.628 1.848 0.712 2.338 5.099 6.249 2.009 3.379 1.653 4.831 2.245 1.831 1.113 5.462 5.533 2.944 4.376 4.734 3.285 4.361 1.015 2.100 5.022 3.269 0.796 0.317 5.244 2.613 4.609 3.415 4.454 0.228 2.025 0.216 1.785 3.599 3.207 5.019 3.591 5.138 4.333 3.005 6.208 5.296 0.763 3.741 3.446 3.962 0.204 1.715 4.054 2.402 1.455 1.842 4.637 4.427 0.536 2.700 4.289 3.066 0.574 6.106 1.472 5.793 4.294 2.287)))))
+-->
+
+
+<table border=1 hspace=100 vspace=20 cellpadding=6>
+<tr><td>
+<small>
+Compare the sound of the n=64 and n=128 cases using ncos and random phases: they sound very different
+despite having the same spectrum.  Also, this example raises the burning question: given n equal amplitude
+harmonically related sinusoids, what is the minimum peak amplitude?  My guess is sqrt(n).  Here are the
+best minimum peaks I've found:
+<pre>
+  1 1.0, 2 1.762, 4 2.0735, 8 3.1436, 16 4.829, 32 8.512, 64 13.591, 128 20.634
+</pre>
+</small>
+</td></tr></table>
 
 <p>
 If you use ncos (or nsin) as both the carrier and modulator, you get a very similar effect.  As n increases,
