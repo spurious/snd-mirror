@@ -5637,6 +5637,38 @@ index 10 (so 10/2 is the bes-jn arg):
   (one-pole (exponentially-weighted-moving-average-gen gen) y))
 
 
+;;; --------------------------------------------------------------------------------
+;;;
+;;; nphisin -- sum of n sinusoids at arbitrary (default=random) initial phases
+
+(defgenerator (nphisin 
+	       :make-wrapper (lambda (g)
+			       (let ((n (nphisin-n g))
+				     (frq (nphisin-frequency g))
+				     (phases (nphisin-phases g)))
+				 (set! (nphisin-arr g) (make-vector n))
+				 (do ((i 0 (1+ i)))
+				     ((= i n))
+				   (if (vct? phases)
+				       (vector-set! (nphisin-arr g) i (make-oscil (* frq (1+ i)) (vct-ref phases i)))
+				       (vector-set! (nphisin-arr g) i (make-oscil (* frq (1+ i)) (random (* 2 pi)))))))
+			       g))
+  (frequency 0.0) (n 1 :type int) (phases #f :type vct) 
+  (arr #f :type clm-vector))
+
+
+(define (nphisin gen fm)
+  (declare (gen nphisin) (fm float))
+  (let* ((n (nphisin-n gen))
+	 (arr (nphisin-arr gen))
+	 (sum 0.0))
+    (do ((i 0 (1+ i)))
+	((= i n))
+      (set! sum (+ sum (oscil (vector-ref arr i) (* (1+ i) fm)))))
+    (/ sum n)))
+
+;;; TODO: doc/test nphisin
+
 
 
 ;;; --------------------------------------------------------------------------------
