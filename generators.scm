@@ -3930,7 +3930,7 @@ index 10 (so 10/2 is the bes-jn arg):
 			       (set! (jpcos-frequency g) (hz->radians (jpcos-frequency g)))
 			       (if (= (jpcos-r g) (jpcos-a g))
 				   (begin
-				     (snd-warn ";jpcos r and a can't be equal (~A)" (jpcos-r g))
+				     (snd-warning (format #f ";jpcos r and a can't be equal (~A)" (jpcos-r g)))
 				     (set! (jpcos-r g) (+ (jpcos-a g) .01))))
 			       g))
   (frequency *clm-default-frequency*) (r 0.0) (a 0.0) (k 1.0) (angle 0.0))
@@ -5708,26 +5708,60 @@ index 10 (so 10/2 is the bes-jn arg):
 			       (let ((n (noid-n g))
 				     (frq (noid-frequency g))
 				     (phases (noid-phases g)))
-				 (set! (noid-arr g) (make-vector n))
+				 (set! (noid-gen g) (make-polyoid frq (let ((amps '()))
+									(do ((i 1 (1+ i)))
+									    ((> i n))
+									  (set! amps (cons 
+										      (if (vct? phases)
+											  (vct-ref phases (1- i))
+											  (random (* 2 pi)))
+										      (cons 1 (cons i amps)))))
+									(reverse amps))))
+			       g)))
+  (frequency 0.0) (n 1 :type int) (phases #f :type vct) 
+  (gen #f :type polyoid))
+
+
+(define (noid gen fm)
+  (declare (gen noid) (fm float))
+  (/ (polyoid (noid-gen gen) fm) (noid-n gen)))
+
+
+#|
+(defgenerator (nold
+	       :make-wrapper (lambda (g)
+			       (let ((n (nold-n g))
+				     (frq (nold-frequency g))
+				     (phases (nold-phases g)))
+				 (set! (nold-arr g) (make-vector n))
 				 (do ((i 0 (1+ i)))
 				     ((= i n))
 				   (if (vct? phases)
-				       (vector-set! (noid-arr g) i (make-oscil (* frq (1+ i)) (vct-ref phases i)))
-				       (vector-set! (noid-arr g) i (make-oscil (* frq (1+ i)) (random (* 2 pi)))))))
+				       (vector-set! (nold-arr g) i (make-oscil (* frq (1+ i)) (vct-ref phases i)))
+				       (vector-set! (nold-arr g) i (make-oscil (* frq (1+ i)) (random (* 2 pi)))))))
 			       g))
   (frequency 0.0) (n 1 :type int) (phases #f :type vct) 
   (arr #f :type clm-vector))
 
 
-(define (noid gen fm)
-  (declare (gen noid) (fm float))
-  (let* ((n (noid-n gen))
-	 (arr (noid-arr gen))
+(define (nold gen fm)
+  (declare (gen nold) (fm float))
+  (let* ((n (nold-n gen))
+	 (arr (nold-arr gen))
 	 (sum 0.0))
     (do ((i 0 (1+ i)))
 	((= i n))
       (set! sum (+ sum (oscil (vector-ref arr i) (* (1+ i) fm)))))
     (/ sum n)))
+
+(with-sound (:clipped #f :channels 2) 
+  (let ((gen1 (make-noid 100.0 3 (vct 1.0 2.0 3.0)))
+	(gen2 (make-nold 100.0 3 (vct 1.0 2.0 3.0))))
+    (do ((i 0 (1+ i)))
+	((= i 10000))
+      (outa i (noid gen1 0.0))
+      (outb i (nold gen2 0.0)))))
+|#
 
 ;;; TODO: doc/test noid ("the unpulse") -- for small n this could use polyoid
 ;;; TODO: if :minimize-peak, remember norm, :maximize-peak->ncos

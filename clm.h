@@ -600,9 +600,9 @@ Float *mus_normalize_partials(int num_partials, Float *partials);
 
 mus_any *mus_make_polyshape(Float frequency, Float phase, Float *coeffs, int size);
 Float mus_polyshape(mus_any *ptr, Float index, Float fm);
-#define mus_polyshape_fm(Obj, Fm) mus_polywave(Obj, Fm)
+#define mus_polyshape_fm(Obj, Fm) mus_polyshape(Obj, 1.0, Fm)
 Float mus_polyshape_unmodulated(mus_any *ptr, Float index);
-#define mus_polyshape_no_input(Obj) mus_polywave_unmodulated(Obj)
+#define mus_polyshape_no_input(Obj) mus_polyshape(Obj, 1.0, 0.0)
 bool mus_polyshape_p(mus_any *ptr);
 
 mus_any *mus_make_polywave(Float frequency, Float *coeffs, int n, int cheby_choice);

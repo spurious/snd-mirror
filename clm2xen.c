@@ -4592,19 +4592,23 @@ is the same in effect as " S_make_oscil
 	      csize = npartials;
 	      /* coeffs = partials here, so don't delete */ 
 	    }
-	  if (!partials)
-	    {
-	      /* clm.html says '(1 1) is the default */
-	      Float *data;
-	      data = (Float *)CALLOC(2, sizeof(Float));
-	      data[0] = 0.0;
-	      data[1] = 1.0;
-	      coeffs = mus_partials_to_polynomial(2, data, kind);
-	      csize = 2;
-	    }
-	  orig_v = xen_make_vct(csize, coeffs);
 	}
     }
+
+  if (!coeffs)
+    {
+      /* clm.html says '(1 1) is the default */
+      Float *data;
+      data = (Float *)CALLOC(2, sizeof(Float));
+      data[0] = 0.0;
+      data[1] = 1.0;
+      coeffs = mus_partials_to_polynomial(2, data, kind);
+      csize = 2;
+    }
+
+  if (XEN_FALSE_P(orig_v))
+    orig_v = xen_make_vct(csize, coeffs);
+
   ge = mus_make_polyshape(freq, phase, coeffs, csize);
   if (ge) return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, orig_v)));
   return(XEN_FALSE);
@@ -4659,6 +4663,7 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
 	      XEN_LIST_3(C_TO_XEN_STRING(S_make_polywave), 
 			 C_TO_XEN_STRING("too many args!"),
 			 arglist));
+
   for (i = 0; i < arglist_len; i++) args[i] = XEN_LIST_REF(arglist, i);
   for (i = arglist_len; i < MAX_ARGLIST_LEN; i++) args[i] = XEN_UNDEFINED;
 
@@ -4685,6 +4690,7 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
 	      XEN_ASSERT_TYPE(XEN_LIST_P(keys[1]), keys[1], orig_arg[1], S_make_polywave, "a list or a vct");
 	      partials = list_to_partials(keys[1], &npartials, &error);
 	    }
+
 	  if (partials == NULL)
 	    XEN_ERROR(NO_DATA, 
 		      XEN_LIST_3(C_TO_XEN_STRING(S_make_polywave), 
@@ -4695,18 +4701,19 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
 	  n = npartials;
 	  /* coeffs = partials here, so don't delete */ 
 	}
-      if (!partials)
-	{
-	  /* clm.html says '(1 1) is the default but table-lookup is 0? */
-	  Float *data;
-	  data = (Float *)CALLOC(2, sizeof(Float));
-	  data[0] = 0.0;
-	  data[1] = 1.0;
-	  coeffs = data;
-	  n = 2; /* TODO: or 1?? */
-	}
-      orig_v = xen_make_vct(n, coeffs);
     }
+
+  if (!coeffs)
+    {
+      /* clm.html says '(1 1) is the default but table-lookup is 0? */
+      Float *data;
+      data = (Float *)CALLOC(2, sizeof(Float));
+      data[0] = 0.0;
+      data[1] = 1.0;
+      coeffs = data;
+      n = 2; /* TODO: or 1?? */
+    }
+  orig_v = xen_make_vct(n, coeffs);
 
   ge = mus_make_polywave(freq, coeffs, n, kind);
   if (ge) return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, orig_v)));

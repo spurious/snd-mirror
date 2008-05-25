@@ -2792,6 +2792,7 @@ bool mus_polywave_p(mus_any *ptr)
 }
 
 
+
 /* ---------------- polyshape ---------------- */
 
 static char *describe_polyshape(mus_any *ptr)
