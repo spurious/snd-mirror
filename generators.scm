@@ -5637,38 +5637,103 @@ index 10 (so 10/2 is the bes-jn arg):
   (one-pole (exponentially-weighted-moving-average-gen gen) y))
 
 
+
 ;;; --------------------------------------------------------------------------------
 ;;;
-;;; nphisin -- sum of n sinusoids at arbitrary (default=random) initial phases
+;;; polyoid -- Tn + Un to get arbitrary initial-phases
 
-(defgenerator (nphisin 
+(defgenerator (polyoid
 	       :make-wrapper (lambda (g)
-			       (let ((n (nphisin-n g))
-				     (frq (nphisin-frequency g))
-				     (phases (nphisin-phases g)))
-				 (set! (nphisin-arr g) (make-vector n))
+			       (let* ((lst (polyoid-partial-amps-and-phases g))
+				      (len (length lst))
+				      (topk (let ((n 0))
+					      (do ((i 0 (+ i 3)))
+						  ((>= i len))
+						(set! n (max n (list-ref lst i))))
+					      n))
+				      (sin-amps (make-vct (* 2 topk)))
+				      (cos-amps (make-vct (* 2 topk))))
+				 (do ((j 0 (+ j 3))
+				      (i 0 (+ i 2)))
+				     ((>= j len))
+				   (let ((n (list-ref lst j))
+					 (amp (list-ref lst (+ j 1)))
+					 (phase (list-ref lst (+ j 2))))
+				     (vct-set! sin-amps i n)
+				     (vct-set! cos-amps i n)
+				     (vct-set! sin-amps (+ i 1) (* amp (cos phase)))
+				     (vct-set! cos-amps (+ i 1) (* amp (sin phase)))))
+				 (set! (polyoid-tn g) (partials->polynomial cos-amps mus-chebyshev-first-kind))
+				 (set! (polyoid-un g) (partials->polynomial sin-amps mus-chebyshev-second-kind))
+				 (set! (polyoid-frequency g) (hz->radians (polyoid-frequency g)))
+				 g)))
+  (frequency *clm-default-frequency*) (partial-amps-and-phases #f :type list) (angle 0.0)
+  (tn #f :type vct) (un #f :type vct))
+
+
+(define (polyoid gen fm)
+  (declare (gen polyoid) (fm float))
+  (let* ((tn (polyoid-tn gen))
+	 (un (polyoid-un gen))
+	 (x (polyoid-angle gen))
+	 (cx (cos x))
+	 (sx (sin x)))
+
+    (set! (polyoid-angle gen) (+ x fm (polyoid-frequency gen)))
+
+    (+ (polynomial tn cx)
+       (* sx (polynomial un cx)))))
+
+#|
+(with-sound (:clipped #f)
+  (let ((samps 44100)
+	(gen (make-polyoid 100.0 (list 1 1 0.0))))
+    (do ((i 0 (1+ i)))
+	((= i samps))
+      (outa i (polyoid gen 0.0)))))
+|#
+
+
+;;; TODO: doc/test polyoid
+
+
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; noid -- sum of n sinusoids at arbitrary (default=random) initial phases
+
+(defgenerator (noid 
+	       :make-wrapper (lambda (g)
+			       (let ((n (noid-n g))
+				     (frq (noid-frequency g))
+				     (phases (noid-phases g)))
+				 (set! (noid-arr g) (make-vector n))
 				 (do ((i 0 (1+ i)))
 				     ((= i n))
 				   (if (vct? phases)
-				       (vector-set! (nphisin-arr g) i (make-oscil (* frq (1+ i)) (vct-ref phases i)))
-				       (vector-set! (nphisin-arr g) i (make-oscil (* frq (1+ i)) (random (* 2 pi)))))))
+				       (vector-set! (noid-arr g) i (make-oscil (* frq (1+ i)) (vct-ref phases i)))
+				       (vector-set! (noid-arr g) i (make-oscil (* frq (1+ i)) (random (* 2 pi)))))))
 			       g))
   (frequency 0.0) (n 1 :type int) (phases #f :type vct) 
   (arr #f :type clm-vector))
 
 
-(define (nphisin gen fm)
-  (declare (gen nphisin) (fm float))
-  (let* ((n (nphisin-n gen))
-	 (arr (nphisin-arr gen))
+(define (noid gen fm)
+  (declare (gen noid) (fm float))
+  (let* ((n (noid-n gen))
+	 (arr (noid-arr gen))
 	 (sum 0.0))
     (do ((i 0 (1+ i)))
 	((= i n))
       (set! sum (+ sum (oscil (vector-ref arr i) (* (1+ i) fm)))))
     (/ sum n)))
 
-;;; TODO: doc/test nphisin
-
+;;; TODO: doc/test noid ("the unpulse") -- for small n this could use polyoid
+;;; TODO: if :minimize-peak, remember norm, :maximize-peak->ncos
+;;; TODO: would these phases work for any sum-of-sines (nrsin for example) that wants unpulsy output?
+;;; TODO: L&S sq wave + fm? -- why isn't this already a generator or two?
+;;; TODO: in triangle-wave section it shows FM tri(tri) -- what is spectrum?
 
 
 ;;; --------------------------------------------------------------------------------

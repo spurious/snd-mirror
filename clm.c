@@ -2627,7 +2627,6 @@ typedef struct {
   Float *coeffs;
   int n, cheby_choice;
   Float index;
-  Float (*poly_run)(mus_any *gen, Float fm);
 } pw;
 
 
@@ -2683,7 +2682,36 @@ static Float *pw_set_data(mus_any *ptr, Float *val) {((pw *)ptr)->coeffs = val; 
 static Float pw_index(mus_any *ptr) {return(((pw *)ptr)->index);}
 static Float pw_set_index(mus_any *ptr, Float val) {((pw *)ptr)->index = val; return(val);}
 
-static Float run_polywave(mus_any *ptr, Float fm, Float ignored) {return((*(((pw *)ptr)->poly_run))(ptr, fm));}
+
+static Float poly_TU(mus_any *ptr, Float fm)
+{
+  /* changed to use recursion, rather than polynomial in x, 25-May-08
+   *   this algorithm taken from Mason and Handscomb, "Chebyshev Polynomials" p27
+   */
+
+  int i;
+  pw *gen = (pw *)ptr;
+  double x, x2, b, b1 = 0.0, b2 = 0.0;
+
+  x = gen->index * mus_oscil_fm(gen->o, fm);
+  x2 = 2.0 * x;
+  b = gen->coeffs[gen->n - 1];
+
+  for (i = gen->n - 2; i >= 0; i--)
+    {
+      b2 = b1;
+      b1 = b;
+      b = x2 * b1 - b2 + gen->coeffs[i];
+    }
+
+  if (gen->cheby_choice != MUS_CHEBYSHEV_SECOND_KIND)
+    return((Float)(b - b1 * x));
+  return((Float)(b - b1 * x2));
+}
+
+
+static Float run_polywave(mus_any *ptr, Float fm, Float ignored) {return(poly_TU(ptr, fm));}
+
 
 static char *describe_polywave(mus_any *ptr)
 {
@@ -2701,54 +2729,15 @@ static char *describe_polywave(mus_any *ptr)
 }
 
 
-static Float poly_cos_bank(mus_any *ptr, Float fm)
-{
-  pw *gen = (pw *)ptr;
-  Float sum = 0.0;
-  int i;
-  osc *o = (osc *)(gen->o);
-  for (i = 1; i < gen->n; i++)
-    if (gen->coeffs[i] != 0.0)
-      sum += (gen->coeffs[i] * cos(o->phase * i));
-  o->phase += (o->freq + fm);
-  return(sum);
-}
-
-
-static Float poly_sin_bank(mus_any *ptr, Float fm)
-{
-  pw *gen = (pw *)ptr;
-  Float sum = 0.0;
-  int i;
-  osc *o = (osc *)(gen->o);
-  for (i = 1; i < gen->n; i++)
-    if (gen->coeffs[i] != 0.0)
-      sum += (gen->coeffs[i] * sin(o->phase * i));
-  o->phase += (o->freq + fm);
-  return(sum);
-}
-
-
-static Float poly_poly(mus_any *ptr, Float fm)
-{
-  pw *gen = (pw *)ptr;
-  return(mus_polynomial(gen->coeffs,
-			gen->index * mus_oscil_fm(gen->o, fm), 
-			gen->n));
-}
-
-
 Float mus_polywave(mus_any *ptr, Float fm)
 {
-  pw *gen = (pw *)ptr;
-  return((*(gen->poly_run))(ptr, fm));
+  return(poly_TU(ptr, fm));
 }
  
 
 Float mus_polywave_unmodulated(mus_any *ptr)
 {
-  pw *gen = (pw *)ptr;
-  return((*(gen->poly_run))(ptr, 0.0));
+  return(poly_TU(ptr, 0.0));
 }
 
 
@@ -2791,15 +2780,7 @@ mus_any *mus_make_polywave(Float frequency, Float *coeffs, int n, int cheby_choi
   gen->coeffs = coeffs;
   gen->n = n;
   gen->index = 1.0;
-  if ((n <= MUS_CHEBYSHEV_TOP) ||
-      (cheby_choice == MUS_CHEBYSHEV_EITHER_KIND))
-    gen->poly_run = poly_poly;
-  else 
-    {
-      if (cheby_choice == MUS_CHEBYSHEV_FIRST_KIND)
-	gen->poly_run = poly_cos_bank;
-      else gen->poly_run = poly_sin_bank;
-    }
+  gen->cheby_choice = cheby_choice;
   return((mus_any *)gen);
 }
 

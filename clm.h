@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 4
-#define MUS_REVISION 8
-#define MUS_DATE "17-May-08"
+#define MUS_REVISION 9
+#define MUS_DATE "25-May-08"
 
 /*
+ * 25-May:     mus_polywave algorithm changed.
  * 17-May:     mus_normalize_partials.
  * 12-Apr:     added choice arg to mus_make_polywave.
  * 8-Apr:      polywave uses sine-bank if highest harmonic out of Chebyshev range.

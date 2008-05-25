@@ -1532,9 +1532,7 @@ in the waveshaping case; a 50-th harmonic is trouble in either case.
 We can try fancier interpolations.  <code>mus-interp-lagrange</code> and <code>mus-interp-hermite</code>
 reduce the components (which are at the same frequencies as before) by about another factor of L.
 But these interpolations are expensive and ugly.
-So (this story is spinning out much longer than I intended), in the
-<a href="#polywave">polywave</a> case (see below), if the number of the highest harmonic seems too high,
-the generator uses a bank of sines (i.e. straight additive synthesis), rather than degenerating into a racket.
+If you're trying to produce a sum of sinusoids, use polywave &mdash; it makes a monkey out of table lookup in every case.
 </p>
 
 
@@ -1640,7 +1638,7 @@ See also <a href="sndscm.html#granidoc">grani</a> and <a href="sndscm.html#displ
 A&S 22.3.15
 -->
 
-<p>polywave is the new form of polyshape; waveshape will soon be deprecated. 
+<p>polywave is the new form of polyshape; waveshape and polyshape will soon be deprecated. 
 These three generators
 drive a sum of scaled Chebyshev polynomials with
 a sinusoid, creating a sort of cross between additive synthesis and FM; see
@@ -1656,8 +1654,9 @@ input (cos theta) to get effects similar to those of FM.
 </p>
 
 <p>
-waveshape uses an internal <a href="#table-lookup">table-lookup</a> generator, whereas polyshape and polywave use
-the <a href="#polynomial">polynomial</a> function.  The "partials" argument to the make function can
+waveshape uses an internal <a href="#table-lookup">table-lookup</a> generator, polyshape uses a prebuilt sum of Chebyshev polynomials,
+and polywave uses the Chebyshev recursion.  Only polywave is stable and noise-free even with high partial numbers.
+The "partials" argument to the make function can
 be either a list or a vct.
 The "type" or "kind" argument determines which kind of Chebyshev polynomial
 is used internally:  mus-chebyshev-first-kind or mus-chebyshev-second-kind. (The <a href="#ncos">ncos</a> generator produces
@@ -1739,7 +1738,7 @@ the generator.
 </tr></table>
 
 <p>we can also use
-partials-&gt;polynomial with polyshape and polywave:
+partials-&gt;polynomial with polyshape:
 </p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
@@ -1773,6 +1772,11 @@ partials-&gt;waveshape with waveshape produces the same output as partials-&gt;p
 normalize-partials makes sure that the component amplitudes (magnitudes) add to 1.0.  Its argument can be either a list or vct,
 but it always returns a vct.
 The <a href="sndscm.html#fmviolin">fm-violin</a> uses polyshape for the multiple FM section in some cases.
+<p>
+
+<p>The 'type' or 'kind' argument can also be <code>mus-chebyshev-second-kind</code>. In this case, the polynomial
+turns out a sum of sines (when multiplied by sine) rather than cosines.  <a href="#make-polyoid">make-polyoid</a> (in generators.scm) combines the two forms
+to provide arbitrary initial phases.
 We can get single side-band spectra by using Chebyshev polynomials of the second kind.  
 The <a href="sndscm.html#pqw">pqw</a> and <a href="sndscm.html#pqwvox">pqwvox</a> instruments use this
 technique.  Here is a simplified example:
@@ -1854,7 +1858,7 @@ we absolutely insist on using waveshaping, we could do it this way:
 <tr><td>
 The "fm" argument to these generators is intended mainly for vibrato and frequency envelopes. 
 If you use it for frequency modulation, you'll notice that the result is not the necessarily same as applying that
-modulation to the equivalent bank of oscillators, but it is the same as (for example) applying it to a ncos
+modulation to the equivalent bank of oscillators, but it is the same as (for example) applying it to an ncos
 generator, or most of the other generators (table-lookup, nsin, etc).  The polynomial in cos(x) produces
 a sum of cos(nx) for various "n", but if "x" is itself a sinusoid, its
 effective index includes the factor of "n" (the partial number). 
@@ -2198,15 +2202,18 @@ should be -129026680.721 &mdash;  we have run out of bits in the mantissa!
 Even if we build Snd --with-doubles, 
 we can only push the order up to around 46.  (But notice in the T5 case above, we have a component at 100 times
 the "fundamental"; we have to give up precise control over the resultant spectra).
+polywave builds up the sum of sines from the underlying recursion, which is only slightly
+slower than using the polynomial, and it is not bothered by these numerical problems.
 </p>
 
-<p>With all these problems, we might ask why we'd want polyshape at all.  Leaving aside
-speed (the polynomial computation is much faster than the equivalent sum of oscils)
+<p>Since it is primarily used for additive synthesis,
+we might ask why we'd want polywave at all.  Leaving aside
+speed (the Chebyshev computation is much faster than the equivalent sum of oscils)
 and memory (waveshape and table-lookup use a table that has to be loaded),
-the main reason to use polyshape is accuracy.  polyshape
+the main reason to use polywave is accuracy.  polywave
 produces output that is cleaner than the equivalent sum of oscils, whereas table-lookup 
 and waveshape, both of which interpolate into a sampled version of the desired function, are noisy.
-To make the difference almost appalling, here are spectra comparing a sum of oscils, polyshape,
+To make the difference almost appalling, here are spectra comparing a sum of oscils, polywave,
 waveshape, and table-lookup. 
 </p>
 
@@ -2254,9 +2261,6 @@ and 8700 Hz.  The 800 Hz component makes smaller peaks (by a factor of 4, since 
 cases are at 7000 Hz and 7200 Hz (down in amplitude by 16^2).  The highest peaks are down only 60 dB.
 See <a href="#table-lookup">table-lookup</a> for more discussion of interpolation noise (it's actually
 amplitude modulation of the stored signal and the linear interpolating signal with severe aliasing).
-To repeat the punch line of that discussion, if the highest harmonic requested in polywave is too
-high, the generator uses a sum of sines (i.e. cos or sin directly) so that you always get a clean
-result.
 </small></p>
 <p><small>
 The waveshaping noise is much worse because the polynomial is so 
@@ -2278,13 +2282,6 @@ is at its maximum:
 		 (* 1/2 (+ (oscil osc1) 
 			   (oscil osc2))))))))
 -->
-
-<p>
-Perhaps a better question is, why waveshape?  Here history intrudes.  We couldn't handle the
-polynomial on the Samson box, so we used the table-lookup version.  I've tried to maintain
-reasonable backwards compatibility with old instruments, but someday I think I'll 
-remove the waveshape generator.
-</p>
 
 
 <!-- this works: (make-waveshape 100.0 :partials '(1 1) :size 2)
@@ -2851,11 +2848,23 @@ getting waveforms and results like these:
      (list 14.0 128 0.16121 (vct 1.531 4.987 1.847 0.632 6.101 4.309 0.517 1.910 4.921 4.949 6.040 5.611 2.831 5.338 0.891 5.388 0.599 2.677 6.248 5.592 1.977 1.794 3.572 2.638 1.903 3.083 2.412 6.125 3.799 5.619 5.949 1.241 3.044 5.395 5.865 4.846 4.899 2.267 4.537 3.979 1.783 3.826 1.325 5.278 5.799 4.977 2.066 3.029 1.036 4.606 1.691 6.079 4.957 6.138 2.603 1.111 1.335 1.765 5.767 2.730 0.702 1.122 1.628 1.848 0.712 2.338 5.099 6.249 2.009 3.379 1.653 4.831 2.245 1.831 1.113 5.462 5.533 2.944 4.376 4.734 3.285 4.361 1.015 2.100 5.022 3.269 0.796 0.317 5.244 2.613 4.609 3.415 4.454 0.228 2.025 0.216 1.785 3.599 3.207 5.019 3.591 5.138 4.333 3.005 6.208 5.296 0.763 3.741 3.446 3.962 0.204 1.715 4.054 2.402 1.455 1.842 4.637 4.427 0.536 2.700 4.289 3.066 0.574 6.106 1.472 5.793 4.294 2.287)))))
 
 
-3  1.999  #(0 37/23 8/23)
+1  1.0    #(0)
 
-4  2.0500 #(0 45/37 25/31 8/7)
+2  1.76   #(0 0)
+
+3  1.9801 #(0 23/39 6/19)
+
+4  2.050  #(0 45/37 25/31 8/7)
+
+5  2.383  #(0 34/29 9/29 47/78 2/5)
+
+6  2.621  #(0 13/7 6/43 1/6 54/49 55/28)
+
+7  2.715  #(0 7/48 31/29 38/29 11/14 3/2 89/79)
 
 8  3.1436 #(0 22/13 24/23 22/27 32/27 35/24 9/23 92/67)
+
+9  3.2793 #(0 46/91 3/22 23/37 85/171 7/44 56/33 31/44 40/33)
 
 16 4.7779 #(0 5/13 18/37 14/57 1/5 12/47 21/13 73/85 43/22 
 	    19/14 39/70 41/47 7/57 37/34 45/29 1/17)
@@ -2895,11 +2904,15 @@ getting waveforms and results like these:
 <small>
 Compare the sound of the n=64 and n=128 cases using ncos and random phases: they sound very different
 despite having the same spectrum.  Also, this example raises the burning question: given n equal amplitude
-harmonically related sinusoids, what is the minimum peak amplitude?  My guess is sqrt(n).  Here are the
+harmonically related sinusoids, what is the minimum peak amplitude?  My guess is sqrt(n).  Here are (some of) the
 best minimum peaks I've found:
 <pre>
   1 1.0, 2 1.762, 4 2.05, 8 3.1436, 16 4.777, 32 7.478, 64 10.968, 128 18.937
 </pre>
+For the actual phases, and an ever-growing list of other results, developed with
+amiable, if sometimes incomprehensible advice from Bill Gosper, Marc LeBrun,
+and Julius Smith, 
+see noid in generators.scm.
 </small>
 </td></tr></table>
 
@@ -3087,12 +3100,44 @@ the conjugate Dirichlet kernel
 <img src="pix/sos.png" alt="sum of sines graphs">
 </td></tr></table>
 
+<p>
+As with all the paired cos/sin generators (waveshaping, generators.scm, etc), we can vary
+the initial phase by taking advantage of the trig identity:
+</p>
+<img src="pix/fmeq18.png" alt="sin split" hspace=20><br>
 
-<p>In terms of speed, ncos and nsin outpace polywave only when the latter has to
-shift away from the Chebyshev polynomials (around n=30).  polywave appears to be more accurate when n is small.
+<p>that is,
+</p>
+
+<pre>
+     (+ (* (ncos nc) (sin initial-phase))
+        (* (nsin ns) (cos initial-phase)))
+</pre>
+
+<p>Or vary it via an envelope at run-time:
+</p>
+
+<table border=0 hspace=40>
+<tr><td>
+<pre>
+(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> ()
+  (let* ((nc (<em class=red>make-ncos</em> 500.0 6))
+	 (ns (<em class=red>make-nsin</em> 500.0 6))
+	 (phase (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1) 
+                   :length 1000 :scaler (/ pi 2))))
+    (do ((i 0 (1+ i)))
+	((= i 1000)) 
+      (let ((angle (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> phase)))
+	(<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (+ (* (<em class=red>ncos</em> nc) (sin angle))
+		   (* (<em class=red>nsin</em> ns) (cos angle))))))))
+</pre>
+</td><td>
+<img src="pix/varyphase.png" alt="ncos+nsin example" hspace=20>
+</td></tr></table>
+
+<p>Compared to ncos or nsin, polywave is probably always faster and more accurate, but less convenient to set up.
 Both ncos and nsin could be implemented as polynomials in cos x, just as in polyshape; in fact, ncos is
-almost the same as the Chebyshev polynomial of the 4th kind.  But by sticking with the current formulas,
-we avoid the numerical troubles that limit polyshape to n &lt; 50.
+almost the same as the Chebyshev polynomial of the 4th kind. 
 See also the <a href="#nrxydoc">nrxycos</a> generator, 
 and <a href="#othergenerators">generators.scm</a>.
 </p>
@@ -5127,7 +5172,7 @@ in the feedback loop:
 </pre>
 
 <p>The all-pass or moving average comb generator is just like <a href="#comb">comb</a> but with
-an added scaler on the input ("feedforward" is Julius Smith's suggested name for it).  If feedback is 0.0, we get a
+an added scaler on the input ("feedforward" is Julius Smith's suggested name for it).  If feedforward is 0.0, we get a
 comb filter.  If both scale terms are 0.0, we get a pure delay line. 
 </p>
 
@@ -5148,6 +5193,7 @@ comb filter.  If both scale terms are 0.0, we get a pure delay line.
 
 <p>all-pass filters are used extensively in reverberation; 
 see <a href="sndscm.html#jcrevdoc">jcrev</a> or <a href="sndscm.html#nrev">nrev</a>.
+To get the "all-pass" behavior, set feedback equal to -feedforward. 
 </p>
 <br><br>
 
@@ -6415,6 +6461,23 @@ amplitudes), and "ratio" (the ratio between the
 frequency and the spacing between successive sidebands).
 </p>
 
+
+<br>
+<pre>
+  <a class=def name="make-polyoid">make-polyoid</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> 
+         (frequency *clm-default-frequency*) 
+         (partial-amps-and-phases '(1 1 0.0))   ; a list of harmonic numbers, their associated amplitudes, and their initial-phases
+
+  <a class=def name="polyoid">polyoid</a> w :optional (fm 0.0)
+  <a class=def name="polyoid?">polyoid?</a> w
+</pre>
+
+<p>polyoid combines the first and second Chebyshev polynomials to provide
+a sum of sinusoids with arbitrary amplitude and initial-phases.
+</p>
+<br>
+
+
 <br>
 <pre style="background-color: #f2f4ff">
   <A class=def NAME="make-asyfm">make-asyfm</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (ratio 1.0) (r 1.0) (index 1.0)
@@ -6940,9 +7003,9 @@ both the time and frequency graphs will be unhappy).
 <table border=1 width=200 vspace=10 hspace=20><tr><td bgcolor="#eefdee"><center><h5>finite sums</h5></center></td></tr></table>
 
 <p>These generators produce a set of n sinusoids.
-If n is less than 25 and r is constant, they could be done with polywave.  I don't
-think there would be any difference, even taking FM into account.  For n greater than 25, these are
-faster, but also similar to each other musically.  
+With a bit of bother, 
+they could be done with polywave.  I don't
+think there would be any difference, even taking FM into account. 
 </p>
 
 <pre style="background-color: #f2f4ff">
