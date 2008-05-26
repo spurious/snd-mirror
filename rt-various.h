@@ -42,3 +42,5 @@ void* clm_calloc(int num,size_t size,const char* what);
 void* clm_malloc_atomic(size_t size,const char* what);
 void* clm_malloc(size_t size,const char* what);
 
+void* clm_realloc(void* old,size_t newsize);
+void clm_free(void* p);

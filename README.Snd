@@ -353,6 +353,15 @@ Ruby:
 fftw:  
   http://www.fftw.org
 
+Stalin: 
+ http://cobweb.ecn.purdue.edu/~qobi/software.html 
+
+Rollendurchmesserzeitsammler: (at least v0.0.3) 
+ http://www.notam02.no/arkiv/src/ 
+
+libpcl: 
+ http://www.xmailserver.org/libpcl.html 
+
 
 On LADSPA, Dave Phillips adds: "I have used the LADSPA plugins as standalone 
 effects processing modules. The Help texts for the LADSPA effects are courtesy 

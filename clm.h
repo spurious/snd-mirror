@@ -6,7 +6,8 @@
 #define MUS_DATE "27-May-08"
 
 /*
- * 27-May:     mus_waveshape retired -- it's now just a wrapper for polyshape.
+ * 27-May:     mus_waveshape retired -- generators.scm has a wrapper for it.
+ *             clm_free, clm_realloc etc for rt work.
  * 25-May:     mus_polywave algorithm changed.
  * 17-May:     mus_normalize_partials.
  * 12-Apr:     added choice arg to mus_make_polywave.

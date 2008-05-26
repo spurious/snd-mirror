@@ -5642,7 +5642,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;;
 ;;; polyoid -- Tn + Un to get arbitrary initial-phases
 
-#|
+
 (defgenerator (polyoid
 	       :make-wrapper (lambda (g)
 			       (let* ((lst (polyoid-partial-amps-and-phases g))
@@ -5706,7 +5706,7 @@ index 10 (so 10/2 is the bes-jn arg):
       (set! sx-val b))
 
     (+ cx-val (* sx sx-val))))
-|#
+
 
 #|
 (with-sound (:clipped #f)
@@ -5724,13 +5724,51 @@ index 10 (so 10/2 is the bes-jn arg):
     (do ((i 0 (1+ i)))
 	((= i samps))
       (outa i (* (oscil gen1) (polywave gen 0.0))))))
+
+(with-sound (:clipped #f :statistics #t)
+  (let ((samps 44100)
+	(gen (make-polyoid 100.0 (vct 1 0.5 0.0 51 0.25 0.0 64 .25 (/ pi 2)))))
+    (run
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i samps))
+	 (outa i (polyoid gen 0.0)))))))
+
+(define (test-polyoid n)
+  (let* ((res (with-sound (:channels 2 :clipped #f)
+                (let ((angle 0.0)
+		      (incr (hz->radians 1.0))
+		      (cur-phases (make-vct (* 3 n))))
+		  (do ((i 0 (+ i 1))
+		       (j 0 (+ j 3)))
+		      ((= i n))
+		    (vct-set! cur-phases j (+ i 1))
+		    (vct-set! cur-phases (+ j 1) (/ 1.0 n))
+		    (vct-set! cur-phases (+ j 2) (random (* 2 pi))))
+		  (let ((gen (make-polyoid 1.0 cur-phases)))
+		    (do ((i 0 (1+ i)))
+			((= i 88200))
+		      (let ((poly-sum 0.0)
+			    (sin-sum 0.0))
+			(do ((k 0 (1+ k)))
+			    ((= k n))
+			  (set! sin-sum (+ sin-sum (sin (+ (* (+ k 1) angle) (vct-ref cur-phases (+ (* 3 k) 2)))))))
+			(set! poly-sum (polyoid gen 0.0))
+			(set! angle (+ angle incr))
+			(outa i (/ sin-sum n))
+			(outb i poly-sum)))))))
+	 (snd (find-sound res)))
+  (channel-distance snd 0 snd 1)))
+
+;;; 0 diff up to 128 so far (unopt)
+
 |#
 
 
 ;;; TODO: doc/test polyoid
 
 
-
+#|
 ;;;; old polyoid
 
 (defgenerator (polyoid
@@ -5774,7 +5812,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
     (+ (polynomial tn cx)
        (* sx (polynomial un cx)))))
-
+|#
 
 
 ;;; --------------------------------------------------------------------------------
@@ -5841,6 +5879,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 
 #|
+
 1  1.0    #(0)
 
 2  1.76   #(0 0)
@@ -5867,8 +5906,12 @@ index 10 (so 10/2 is the bes-jn arg):
 11 3.5519 #(0 28/29 4/27 4/23 34/33 67/34 11/30 1/13 33/31 31/22 19/17)
 
 12 3.9263 #(0 49/27 7/40 12/25 67/40 8/5 47/41 19/30 35/23 18/29 35/22 54/37)
+   3.9110 #(0 1/14 9/58 3/47 9/37 27/17 25/14 4/7 17/24 1/22 31/24 11/45)
 
 13 4.1939 #(0 53/39 40/29 7/16 2/21 10/53 24/29 81/41 49/34 4/13 25/16 37/21 33/17)
+[could use a longer run here]
+
+15 4.5243 #(0 51/29 18/53 32/25 43/31 7/53 38/21 21/53 5/36 2/17 3/14 57/61 73/38 34/19 37/29)
 
 16 4.778  #(0 5/13 18/37 14/57 1/5 12/47 21/13 73/85 43/22 
 	    19/14 39/70 41/47 7/57 37/34 45/29 1/17)
@@ -5907,6 +5950,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	     47/24 69/40 18/53 4/3 17/13 81/53 7/18 51/55 19/11 29/23 65/64 
 	     55/46 1/7 7/53 19/20 56/33 7/27 79/41 25/21 114/113 35/22 44/43 
 	     38/63 1/47)
+
 |#
 
 ;;; TODO: doc/test noid ("the unpulse") -- for small n this could use polyoid
@@ -5914,7 +5958,6 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;; TODO: would these phases work for any sum-of-sines (nrsin for example) that wants unpulsy output?
 ;;; TODO: L&S sq wave + fm? -- why isn't this already a generator or two?
 ;;; TODO: in triangle-wave section it shows FM tri(tri) -- what is spectrum?
-;;; TODO: check clm.html for polywave n>50 claims
 ;;; TODO: try the monks with polyoid (changing amps and phases)
 ;;; TODO: nrcos via polyoid -> phases etc
 ;;; TODO: check Cheb recursion for ncos and nsin -- more flexible?
@@ -5923,7 +5966,6 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;; TODO: snd-test needs real basic existence checks for 2nd Cheb
 ;;; TODO: why does try-it n=128 seem to hang?
 ;;; TODO: Un n+1 offset doc?
-;;; TODO: green borders in clm.html
 
 
 

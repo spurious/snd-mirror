@@ -28,7 +28,6 @@
 
 #if WITH_RT
   #include "rt-various.h"
-  #define clm_free(P) /* */
   #define mus_error(...) rt_mus_error(__VA_ARGS__)
 #else
   #define clm_malloc(Num, What) MALLOC(Num)
@@ -228,17 +227,17 @@ static char *float_array_to_string(Float *arr, int len, int loc)
   int i, lim, k, size = 256;
   if (arr == NULL) 
     {
-      str = (char *)clm_calloc_atomic(4, sizeof(char),"float_array_to_string");
+      str = (char *)clm_calloc_atomic(4, sizeof(char), "float_array_to_string");
       sprintf(str, "nil");
       return(str);
     }
   lim = (array_print_length + 4) * MAX_NUM_SIZE; /* 4 for possible bounds below */
   if (lim > size) size = lim;
-  base = (char *)clm_calloc_atomic(size, sizeof(char),"float_array_to_string");
+  base = (char *)clm_calloc_atomic(size, sizeof(char), "float_array_to_string");
 #if MUS_DEBUGGING
   set_printable(PRINT_CHAR);
 #endif
-  str = (char *)clm_calloc_atomic(STR_SIZE, sizeof(char),"float_array_to_string");
+  str = (char *)clm_calloc_atomic(STR_SIZE, sizeof(char), "float_array_to_string");
 #if MUS_DEBUGGING
   set_printable(PRINT_CHAR);
 #endif

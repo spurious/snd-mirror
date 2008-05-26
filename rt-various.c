@@ -236,4 +236,11 @@ void* clm_realloc(void* old,size_t newsize){
   return memcpy(clm_malloc(newsize,"realloc"),old,size);
 }
 
+
+void clm_free(void* p){
+  if(clm_tar_heap==NULL)
+    FREE(p);
+}
+
+
 #endif // WITH_RT
