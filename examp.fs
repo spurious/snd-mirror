@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Tue Jul 05 13:09:37 CEST 2005
-\ Changed: Sat Oct 06 21:20:04 CEST 2007
+\ Changed: Wed Feb 27 00:29:45 CET 2008
 
 \ Commentary:
 \
@@ -1089,8 +1089,8 @@ If you're in a hurry use: 0.8 32 make-comb clm-channel instead."
 ;
 
 : formant-filter ( radius frequency -- prc; x self -- val )
-  doc" Returns a formant generator: 0.99 2400 formant-filter map-channel.  \
-Faster is:  2400 0.99 make-formant filter-sound"
+  doc" Returns a formant generator: 2400 0.99 formant-filter map-channel.  \
+Faster is: 2400 0.99 make-formant filter-sound"
   make-formant { gen }
   1 proc-create gen ,
  does> { x self -- val }

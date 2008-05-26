@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Sun Jul 15 22:56:13 CEST 2007
+\ Changed: Sat May 24 02:56:00 CEST 2008
 
 \ Commentary:
 \
@@ -53,7 +53,7 @@
 \ with-mix             ( body-str args fname beg -- )
 \ sound-let            ( ws-xt-lst body-xt -- )
 
-$" fth 1-May-2007" value *clm-version*
+$" fth 24-May-2008" value *clm-version*
 
 \ defined in snd/snd-xen.c
 [ifundef] snd-print   : snd-print   ( str -- str )  dup .string ;             [then]
@@ -263,11 +263,12 @@ mus-lshort    value *clm-audio-format*
 
 'snd provided? [unless]
   1                 constant default-output-chans
-  22050             constant default-output-srate
+  44100             constant default-output-srate
   mus-next          constant default-output-header-type
   mus-lfloat        constant default-output-data-format
   mus-audio-default constant audio-output-device
   512               constant dac-size
+  0.0               constant clm-default-frequency
 [then]
 
 default-output-chans       value *clm-channels*
@@ -281,6 +282,7 @@ mus-file-buffer-size       value *clm-file-buffer-size*
 mus-clipping               value *clm-clipped*
 mus-array-print-length     value *clm-array-print-length*
 clm-table-size             value *clm-table-size*
+clm-default-frequency      value *clm-default-frequency*
 
 \ internal global variables
 *clm-channels* value *channels*
@@ -665,20 +667,9 @@ The whole oboe.snd file will be mixed in because :frames is not specified."
 hide
 : ws-get-snd ( ws -- snd )
   { ws }
-  #f { snd }
-  'snd provided? if
-    ws :output hash-ref find-file { fname }
-    fname 0 find-sound dup sound? if to snd
-      save-stack { s }
-      snd update-sound
-      stack-reset			\ Unknown number of return values from update-sound!
-      s restore-stack
-    else
-      drop
-      fname open-sound to snd
-    then
-  then
-  snd
+  ws :output hash-ref find-file { fname }
+  fname 0 find-sound dup sound? if ( snd ) save-sound drop then
+  fname open-sound ( snd )
 ;
 : ws-scaled-to ( ws -- )
   { ws }
@@ -1208,7 +1199,7 @@ event: inst-test ( -- )
       :frequency freq offset i 6 - 0.03 f* f* f+
       :partials '( 1 1  5 0.7  6 0.7  7 0.7  8 0.7  9 0.7  10 0.7 ) make-waveshape
     end-map { waveshbank }
-    :envelope ampenv :scaler amp 0.25 f* :end end make-env { amp-env }
+    :envelope ampenv :scaler amp 0.25 f* :length end make-env { amp-env }
     end 0.0 make-vct map!
       0.0 ( wvsum ) waveshbank each ( wv ) 1.0 0.0 waveshape f+ end-each ( wvsum ) amp-env env f*
     end-map ( output )

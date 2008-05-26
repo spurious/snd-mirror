@@ -1019,7 +1019,7 @@ procfuncs=sorted
 
 
 
-(eval-c ""
+(eval-c "" ;;(<-> "-I" snd-header-files-path)
 	"#include <stdbool.h>"
 	"#include <jack/ringbuffer.h>"
 	"#include <jack/jack.h>"
@@ -1027,6 +1027,8 @@ procfuncs=sorted
 	"#include <semaphore.h>"
 	"#include <jack/thread.h>"
 	"#include <errno.h>"
+
+        ;;"#include <rt-various.h>"
 
 	,bus-struct
 	
@@ -1064,7 +1066,7 @@ procfuncs=sorted
 
 	(<size_t> free_procfunc (lambda ((<SCM> procfunc_smob))
 				  (let* ((procfunc <struct-RT_Procfunc-*> (cast <void-*> (SCM_SMOB_DATA procfunc_smob))))
-				    ;;(fprintf stderr (string "Freeing procfunc smob: %u\\n") procfunc)
+				    (fprintf stderr (string "Freeing procfunc smob: %p\\n") procfunc)
 				    (if procfunc->arg
 					(begin
 					  (<struct-first_arg_is_freefunc*> faif procfunc->arg)
@@ -1124,7 +1126,7 @@ procfuncs=sorted
 						
 	(<int> rt_remove_procfunc_do (lambda ((<struct-RT_Engine-*> engine)
 					       (<struct-RT_Procfunc-*> toremove))
-					  
+                                       (fprintf stderr (string "Yes, remove_procfunc_do %d %p %p\\n") toremove->visitors engine toremove)
 				       toremove->visitors--
 				       
 				       (if (== 0 toremove->visitors)
@@ -1392,6 +1394,11 @@ procfuncs=sorted
 					    (set! time next_stop)
 					    (rt_run_queued_events engine time))))
 			       
+
+                               ;; Just to be sure (no, it can be set to non-NULL while initializing stalin)
+                               ;;(if (!= NULL (clm_set_tar_heap NULL))
+                               ;;    (fprintf stderr (string "Error! The clm heap was not NULL while leaving the realtime block...\\n")))
+
 			       ;;(set! engine->temp (jack_frames_since_cycle_start client))
 			       
 			       ;; Put events-to-be-freed into freing-ringbuffer.

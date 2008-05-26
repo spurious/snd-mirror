@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Dec 30 04:52:13 CET 2005
-\ Changed: Sat Jan 12 01:09:50 CET 2008
+\ Changed: Tue Jan 29 01:59:19 CET 2008
 
 \ src-duration             ( en -- dur )
 \ src-fit-envelope         ( e1 target-dur -- e2 )

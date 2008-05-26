@@ -112,9 +112,16 @@
 	  list))
 
 (define <-> string-append)
+(define <_> symbol-append)
 
 (define (nth n list)
   (list-ref list n))
+
+(define (nth-cdr n list)
+  (cond ((= 0 n)
+	 list)
+	(else
+	 (nth-cdr (1- n) (cdr list)))))
 
 (define (sublist l start end)
   (take (drop l start) (- end start)))
@@ -147,7 +154,8 @@
      ,var))
 
 (define-macro (when cond . rest)
-  `(cond (,cond ,@rest)
+  `(cond (,cond (let ()
+                  ,@rest))
 	 (else '())))
 
 (define (c-atleast1.7?)
@@ -210,7 +218,6 @@
 			    (apply func (cons n els))
 			    (set! n (1+ n)))
 			  lists))))
-
 
 (define (append-various . rest)
   (apply symbol-append (map (lambda (r)
@@ -390,6 +397,26 @@
 !#
 
 
+(define (supereval func)
+  (let* ((filename (tmpnam))
+         (fd (open-file filename "w")))
+    (delete-at-exit filename)
+    (func (lambda something
+            (for-each (lambda (s)
+                        (display s fd))
+                      something)))
+    (close fd)
+    (load filename)
+    (delete-file filename)))
+
+#!
+(supereval (lambda (out)
+             (out "(c-display \"hello\")")))
+(supereval (lambda (out)
+             (out '(c-display 'hello))
+             (out '(newline))))
+!#
+
 
 (define schemecodeparser-varlist '())
 
@@ -398,12 +425,13 @@
 
 
 
-(define* (schemecodeparser expr :key elsefunc symbolfunc atomfunc nullfunc pairfunc use-customsymbolhandler? customsymbolhandler blockhandler symbolhandler (varlist '()))
+(define* (schemecodeparser expr :key elsefunc symbolfunc keywordfunc atomfunc nullfunc pairfunc use-customsymbolhandler? customsymbolhandler blockhandler symbolhandler (varlist '()))
 
   (let parse ((varlist varlist)
 	      (expr expr))
 
     (define (blockhandlerfunc varlist expr)
+      ;;(c-display "blockhandlerfunc" varlist expr)
       (if (not blockhandler)
 	  (map (lambda (expr)
 		 (parse varlist expr))
@@ -428,6 +456,9 @@
     (cond ((and (symbol? expr)
 		symbolfunc)
 	   (symbolfunc expr))
+          ((and (keyword? expr)
+                keywordfunc)
+           (keywordfunc expr))
 	  ((not (pair? expr)) 
 	   (if atomfunc
 	       (atomfunc expr)
@@ -464,7 +495,7 @@
 	  ;; named let
 	  ((and (eq? 'let (car expr))
 		(symbol? (cadr expr)))
-	   (let* ((newvars (append (cons (car expr) (map car (caddr expr)))
+	   (let* ((newvars (append (cons (cadr expr) (map car (caddr expr)))
 				   varlist))
 		  (vars (map (lambda (a)
 			       `(,(car a) ,@(blockhandlerfunc varlist (cdr a))))
@@ -521,9 +552,9 @@
 	  (else
 	   (if elsefunc
 	       (elsefunc expr)
-	       `(,(car expr) ,@(map (lambda (expr)
-				      (parse varlist expr))
-				    (cdr expr))))))))
+	       `(,(parse varlist (car expr)) ,@(map (lambda (expr)
+                                                      (parse varlist expr))
+                                                    (cdr expr))))))))
 
 (define (fix-defines-do terms)
   ;;(c-display terms)

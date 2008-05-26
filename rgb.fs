@@ -3,7 +3,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Aug 18 16:57:43 CEST 2006
-\ Changed: Tue Nov 28 14:25:26 CET 2006
+\ Changed: Tue Nov 20 01:03:29 CET 2007
 
 \ Commentary:
 \
@@ -31,6 +31,7 @@
 13 constant rainbow-colormap
 14 constant flag-colormap
 15 constant phases-colormap
+16 constant last-colormap
 
 1.00 0.98 0.98 make-color constant snow
 0.97 0.97 1.00 make-color constant ghost-white

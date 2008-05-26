@@ -2,7 +2,7 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Fri Feb 03 10:36:51 CET 2006
-\ Changed: Thu Nov 22 22:19:58 CET 2007
+\ Changed: Fri May 23 19:01:52 CEST 2008
 
 \ Commentary:
 \
@@ -723,7 +723,7 @@ instrument: pqw-vox <{ start dur
     end-each
     ampf env f*
   end-run
-  pv if pv free throw then
+  values each ( pv ) free throw end-each
 ;instrument
 
 : pqw-vox-test <{ :optional start 0.0 dur 1.0 -- }>
@@ -1029,8 +1029,8 @@ instrument: pqw <{ start dur sfreq cfreq amp ampfun indexfun parts
 
 : pqw-test <{ :optional start 0.0 dur 1.0 -- }>
   start now!
-  now@ 5.0 200 1000 0.2 '( 0 0 25 1 100 0 ) '( 0 1 100 0 ) '( 2 0.1 3 0.3 6 0.5 ) pqw
-  5.2 step
+  now@ dur 200 1000 0.2 '( 0 0 25 1 100 0 ) '( 0 1 100 0 ) '( 2 0.1 3 0.3 6 0.5 ) pqw
+  dur 0.2 f+ step
 ;
 
 \ taken from Perry Cook's stkv1.tar.Z (Synthesis Toolkit), but I was
@@ -2288,8 +2288,7 @@ previous
 
 : scratch-test <{ :optional start 0.0 dur 1.0 -- }>
   start now!
-  :dur   1.0 get-optkey drop
-  start "fyow.snd" 1.5 '( 0 0.5 0.25 1 ) scratch-ins
+  start "fyow.snd" dur 1.5 fmin '( 0 0.5 0.25 1 ) scratch-ins
   "fyow.snd" find-file mus-sound-duration 0.2 f+ step
 ;
 
@@ -2839,16 +2838,13 @@ instrument: expfil <{ start dur hopsecs rampsecs steadysecs file1 file2 -- }>
 \ 
 \ "filt-gain-scale" & "filt-gain-base" will apply to the elements of the
 \ envelopes if we are in case 2, gains are envelopes.
-\ 
-\ "stats" if #t --default-- prints the number of seconds processed, if
-\ nil doesnt print anything, which will speed up a bit the process.
-
 instrument: graph-eq <{ file start dur
      :key
      file-start      0.0
      amplitude       1.0
      amp-env         '( 0 1 0.8 1 1 0 )
-     base            1.0
+     amp-base        1.0
+     offset-gain     0.0
      gain-freq-list  #( '( 0 1 1 0 ) 440 '( 0 0 1 1 ) 660 )
      filt-gain-scale 1.0
      filt-gain-base  1.0
@@ -2857,29 +2853,57 @@ instrument: graph-eq <{ file start dur
   file find-file to file
   file false? if 'file-not-found $" %s: cannot find %S" '( get-func-name file ) fth-raise then
   :file file :start file mus-sound-srate file-start f* fround->s make-readin { rd }
-  :envelope amp-env :scaler amplitude :duration dur :base base make-env { ampf }
+  :envelope amp-env :scaler amplitude :duration dur :base amp-base make-env { ampf }
   gain-freq-list length 2/ { len }
   len make-array { gainl }
-  len make-vct { freql }
+  len make-array { freql }
   0 { idx }
   gain-freq-list length 1- 0 ?do
-    gainl idx  gain-freq-list i array-ref  array-set!
-    freql idx  gain-freq-list i 1+ array-ref vct-set! drop
+    gainl idx  gain-freq-list i    array-ref array-set!
+    freql idx  gain-freq-list i 1+ array-ref array-set!
     1 +to idx
   2 +loop
-  len make-array map!
-    :envelope gainl i array-ref :scaler filt-gain-scale :duration dur :base filt-gain-base make-env
-  end-map { env-size }
-  len make-array map! :radius a1 :frequency freql i vct-ref make-formant end-map { frm-size }
-  gainl 0 array-ref list? { if-list-in-gain }
+  gainl 0 array-ref list? dup { if-list-in-gain } if
+    len make-array map!
+      :envelope gainl i array-ref
+      :scaler filt-gain-scale
+      :duration dur
+      :base filt-gain-base make-env
+    end-map
+  else
+    #f
+  then { env-size }
+  freql map :frequency *key* :radius a1 make-formant end-map { frm-size }
+  len 1.0 make-vct { gains }
+  gainl each { gval }
+    freql i array-ref { fval }
+    if-list-in-gain if
+      :envelope gval
+      :scaler filt-gain-scale
+      :duration dur
+      :base filt-gain-base make-env
+      env-size i rot ( en ) array-set!
+      frm-size i :frequency fval :radius a1 make-formant array-set!
+    else
+      frm-size i :frequency fval :radius a1 make-formant array-set!
+      gains i
+      offset-gain gval f+ f0< if
+	0.0
+      else
+	offset-gain gval f+
+      then vct-set! drop
+    then
+  end-each
   1.0 a1 f- { 1-a1 }
   start dur #{ :degree 90.0 random } run-instrument
     rd readin { inval }
     0.0 ( outval )
     env-size each { en }
-      frm-size i array-ref { fmt }
-      if-list-in-gain if fmt 0  en env 1-a1 f*  set-mus-xcoeff drop then
-      fmt inval formant f+ ( outval )
+      if-list-in-gain if
+	gains i  en env  1-a1 f* vct-set! drop
+      then
+      gains i vct-ref
+      frm-size i array-ref ( fmt ) inval 0.0 formant  f*  f+ ( outval )
     end-each
     ampf env f* ( outval )
   end-run
@@ -2938,7 +2962,7 @@ instrument: anoi <{ fname start dur :optional fftsize 128 amp-scaler 1.0 R two-p
     0.0 ( outval )
     fs each { fmt }
       scales i vct-ref { curscl }
-      fmt inval formant curscl f* f+ ( outval += ... )
+      fmt inval 0.0 formant curscl f* f+ ( outval += ... )
       scales i  diffs i vct-ref curscl f+  vct-set! drop
     end-each
     ( outval ) amp f*

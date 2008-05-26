@@ -28,11 +28,15 @@
 
 #if WITH_RT
   #include "rt-various.h"
+  #define clm_free(P) /* */
+  #define mus_error(...) rt_mus_error(__VA_ARGS__)
 #else
   #define clm_malloc(Num, What) MALLOC(Num)
   #define clm_malloc_atomic(Num, What) MALLOC(Num)
   #define clm_calloc(Num, Size, What) CALLOC(Num, Size)
   #define clm_calloc_atomic(Num, Size, What) CALLOC(Num, Size)
+  #define clm_realloc(Old, NewSize) REALLOC(Old, NewSize)
+  #define clm_free(Ptr) FREE(Ptr)
 #endif
 
 #if HAVE_GSL
@@ -224,17 +228,17 @@ static char *float_array_to_string(Float *arr, int len, int loc)
   int i, lim, k, size = 256;
   if (arr == NULL) 
     {
-      str = (char *)CALLOC(4, sizeof(char));
+      str = (char *)clm_calloc_atomic(4, sizeof(char),"float_array_to_string");
       sprintf(str, "nil");
       return(str);
     }
   lim = (array_print_length + 4) * MAX_NUM_SIZE; /* 4 for possible bounds below */
   if (lim > size) size = lim;
-  base = (char *)CALLOC(size, sizeof(char));
+  base = (char *)clm_calloc_atomic(size, sizeof(char),"float_array_to_string");
 #if MUS_DEBUGGING
   set_printable(PRINT_CHAR);
 #endif
-  str = (char *)CALLOC(STR_SIZE, sizeof(char));
+  str = (char *)clm_calloc_atomic(STR_SIZE, sizeof(char),"float_array_to_string");
 #if MUS_DEBUGGING
   set_printable(PRINT_CHAR);
 #endif
@@ -248,7 +252,7 @@ static char *float_array_to_string(Float *arr, int len, int loc)
       strcat(base, str);
       if ((int)(strlen(base) + MAX_NUM_SIZE) > size)
 	{
-	  base = (char *)REALLOC(base, size * 2 * sizeof(char));
+	  base = (char *)clm_realloc(base, size * 2 * sizeof(char));
 #if MUS_DEBUGGING
 	  set_printable(PRINT_CHAR);
 #endif
@@ -275,7 +279,7 @@ static char *float_array_to_string(Float *arr, int len, int loc)
       mus_snprintf(str, STR_SIZE, "(%d: %.3f, %d: %.3f)]", min_loc, min_val, max_loc, max_val);
       strcat(base, str);
     }
-  FREE(str);
+  clm_free(str);
   return(base);
 }
 
@@ -287,7 +291,7 @@ static char *clm_array_to_string(mus_any **gens, int num_gens, const char *name,
     {
       int i, len = 0;
       char **descrs;
-      descrs = (char **)CALLOC(num_gens, sizeof(char *));
+      descrs = (char **)clm_calloc(num_gens, sizeof(char *), "clm_array_to_string");
       for (i = 0; i < num_gens; i++)
 	{
 	  if (gens[i])
@@ -296,18 +300,18 @@ static char *clm_array_to_string(mus_any **gens, int num_gens, const char *name,
 	  len += strlen(descrs[i]);
 	}
       len += (64 + strlen(name));
-      descr = (char *)CALLOC(len, sizeof(char));
+      descr = (char *)clm_calloc(len, sizeof(char), "clm_array_to_string");
       mus_snprintf(descr, len, "%s[%d]:", name, num_gens);
       for (i = 0; i < num_gens; i++)
 	{
 	  strcat(descr, descrs[i]);
-	  FREE(descrs[i]);
+	  clm_free(descrs[i]);
 	}
-      FREE(descrs);
+      clm_free(descrs);
     }
   else
     {
-      descr = (char *)CALLOC(128, sizeof(char));
+      descr = (char *)clm_calloc(128, sizeof(char), "clm_array_to_string");
       mus_snprintf(descr, 128, "%s: nil", name);
     }
   return(descr);
@@ -323,8 +327,8 @@ static char *int_array_to_string(int *arr, int num_ints, const char *name)
       int i, len;
       char *intstr;
       len = num_ints * MAX_INT_SIZE + 64;
-      descr = (char *)CALLOC(len, sizeof(char));
-      intstr = (char *)CALLOC(MAX_INT_SIZE, sizeof(char));
+      descr = (char *)clm_calloc(len, sizeof(char), "clm_int_array_to_string");
+      intstr = (char *)clm_calloc(MAX_INT_SIZE, sizeof(char), "clm_int_array_to_string");
       mus_snprintf(descr, len, "%s[%d]: (", name, num_ints);      
       for (i = 0; i < num_ints - 1; i++)
 	{
@@ -333,11 +337,11 @@ static char *int_array_to_string(int *arr, int num_ints, const char *name)
 	}
       mus_snprintf(intstr, MAX_INT_SIZE, "%d)", arr[num_ints - 1]);
       strcat(descr, intstr);
-      FREE(intstr);
+      clm_free(intstr);
     }
   else
     {
-      descr = (char *)CALLOC(128, sizeof(char));
+      descr = (char *)clm_calloc(128, sizeof(char), "clm_int_array_to_string");
       mus_snprintf(descr, 128, "%s: nil", name);
     }
   return(descr);
@@ -380,7 +384,7 @@ const char *mus_set_name(mus_any *ptr, const char *new_name)
 	{
 	  mus_any_class *tmp;
 	  tmp = ptr->core;
-	  ptr->core = (mus_any_class *)CALLOC(1, sizeof(mus_any_class));
+	  ptr->core = (mus_any_class *)clm_calloc(1, sizeof(mus_any_class), "mus_set_name");
 	  memcpy((void *)(ptr->core), (void *)tmp, sizeof(mus_any_class));
 	  ptr->core->name = strdup(new_name);
 	  ptr->core->original_class = (void *)tmp;
@@ -414,7 +418,7 @@ int mus_free(mus_any *gen)
       release_result = ((*(gen->core->release))(gen));
 
       if (local_class) 
-	FREE(local_class);
+	clm_free(local_class);
       return(release_result);
     }
   return(mus_error(MUS_NO_FREE, "can't free %s", mus_name(gen)));
@@ -1207,7 +1211,7 @@ bool mus_oscil_p(mus_any *ptr)
 }
 
 
-static int free_oscil(mus_any *ptr) {if (ptr) FREE(ptr); return(0);}
+static int free_oscil(mus_any *ptr) {if (ptr) clm_free(ptr); return(0);}
 
 static Float oscil_freq(mus_any *ptr) {return(mus_radians_to_hz(((osc *)ptr)->freq));}
 static Float oscil_set_freq(mus_any *ptr, Float val) {((osc *)ptr)->freq = mus_hz_to_radians(val); return(val);}
@@ -1388,7 +1392,7 @@ bool mus_ncos_p(mus_any *ptr)
 }
 
 
-static int free_ncos(mus_any *ptr) {if (ptr) FREE(ptr); return(0);}
+static int free_ncos(mus_any *ptr) {if (ptr) clm_free(ptr); return(0);}
 static void ncos_reset(mus_any *ptr) {((cosp *)ptr)->phase = 0.0;}
 
 static Float ncos_freq(mus_any *ptr) {return(mus_radians_to_hz(((cosp *)ptr)->freq));}
@@ -1682,7 +1686,7 @@ typedef struct {
 } asyfm;
 
 
-static int free_asymmetric_fm(mus_any *ptr) {if (ptr) FREE(ptr); return(0);}
+static int free_asymmetric_fm(mus_any *ptr) {if (ptr) clm_free(ptr); return(0);}
 static void asyfm_reset(mus_any *ptr) {((asyfm *)ptr)->phase = 0.0;}
 
 static Float asyfm_freq(mus_any *ptr) {return(mus_radians_to_hz(((asyfm *)ptr)->freq));}
@@ -1863,7 +1867,7 @@ typedef struct {
 } nrxy;
 
 
-static int free_nrxy(mus_any *ptr) {if (ptr) FREE(ptr); return(0);}
+static int free_nrxy(mus_any *ptr) {if (ptr) clm_free(ptr); return(0);}
 static void nrxy_reset(mus_any *ptr) {((nrxy *)ptr)->phase = 0.0;}
 
 static Float nrxy_freq(mus_any *ptr) {return(mus_radians_to_hz(((nrxy *)ptr)->freq));}
@@ -2265,8 +2269,8 @@ static int free_table_lookup(mus_any *ptr)
   tbl *gen = (tbl *)ptr;
   if (gen)
     {
-      if ((gen->table) && (gen->table_allocated)) FREE(gen->table); 
-      FREE(gen); 
+      if ((gen->table) && (gen->table_allocated)) clm_free(gen->table); 
+      clm_free(gen); 
     }
   return(0);
 }
@@ -2275,7 +2279,7 @@ static int free_table_lookup(mus_any *ptr)
 static Float *table_set_data(mus_any *ptr, Float *val) 
 {
   tbl *gen = (tbl *)ptr;
-  if (gen->table_allocated) {FREE(gen->table); gen->table_allocated = false;}
+  if (gen->table_allocated) {clm_free(gen->table); gen->table_allocated = false;}
   gen->table = val; 
   return(val);
 }
@@ -2384,10 +2388,10 @@ Float *mus_partials_to_polynomial(int npartials, Float *partials, mus_polynomial
   for (i = 0; i < npartials; i++) 
     partials[i] = Cc1[i];
 
-  FREE(T0);
-  FREE(T1);
-  FREE(Tn);
-  FREE(Cc1);
+  clm_free(T0);
+  clm_free(T1);
+  clm_free(Tn);
+  clm_free(Cc1);
   return(partials);
 }
 
@@ -2425,7 +2429,7 @@ static int free_pw(mus_any *pt)
   if (ptr) 
     {
       mus_free(ptr->o);
-      FREE(ptr); 
+      clm_free(ptr); 
     }
   return(0);
 }
@@ -2513,7 +2517,7 @@ static char *describe_polywave(mus_any *ptr)
 	       mus_phase(ptr),
 	       gen->n,
 	       str);
-  FREE(str);
+  clm_free(str);
   return(describe_buffer);
 }
 
@@ -2595,7 +2599,7 @@ static char *describe_polyshape(mus_any *ptr)
 	       mus_phase(ptr),
 	       gen->n,
 	       str);
-  FREE(str);
+  clm_free(str);
   return(describe_buffer);
 }
 
@@ -2787,10 +2791,10 @@ static int free_wt(mus_any *p)
     {
       if (ptr->out_data)
 	{
-	  FREE(ptr->out_data); 
+	  clm_free(ptr->out_data); 
 	  ptr->out_data = NULL;
 	}
-      FREE(ptr);
+      clm_free(ptr);
     }
   return(0);
 }
@@ -2957,8 +2961,8 @@ static int free_delay(mus_any *gen)
   dly *ptr = (dly *)gen;
   if (ptr) 
     {
-      if ((ptr->line) && (ptr->line_allocated)) FREE(ptr->line);
-      FREE(ptr);
+      if ((ptr->line) && (ptr->line_allocated)) clm_free(ptr->line);
+      clm_free(ptr);
     }
   return(0);
 }
@@ -2980,7 +2984,7 @@ static char *describe_delay(mus_any *ptr)
 		    gen->size, 
 		    interp_type_to_string(gen->type), 
 		    str = float_array_to_string(gen->line, gen->size, gen->loc));
-  if (str) FREE(str);
+  if (str) clm_free(str);
   return(describe_buffer);
 }
 
@@ -3027,7 +3031,7 @@ static Float *delay_data(mus_any *ptr) {return(((dly *)ptr)->line);}
 static Float *delay_set_data(mus_any *ptr, Float *val) 
 {
   dly *gen = (dly *)ptr;
-  if (gen->line_allocated) {FREE(gen->line); gen->line_allocated = false;}
+  if (gen->line_allocated) {clm_free(gen->line); gen->line_allocated = false;}
   gen->line = val; 
   return(val);
 }
@@ -3170,7 +3174,7 @@ static char *describe_comb(mus_any *ptr)
 		    gen->size, 
 		    interp_type_to_string(gen->type),
 		    str = float_array_to_string(gen->line, gen->size, gen->loc));
-  if (str) FREE(str);
+  if (str) clm_free(str);
   return(describe_buffer);
 }
 
@@ -3241,7 +3245,7 @@ static char *describe_notch(mus_any *ptr)
 		    gen->size, 
 		    interp_type_to_string(gen->type),
 		    str = float_array_to_string(gen->line, gen->size, gen->loc));
-  if (str) FREE(str);
+  if (str) clm_free(str);
   return(describe_buffer);
 }
 
@@ -3353,7 +3357,7 @@ static char *describe_all_pass(mus_any *ptr)
 		    gen->size, 
 		    interp_type_to_string(gen->type),
 		    str = float_array_to_string(gen->line, gen->size, gen->loc));
-  if (str) FREE(str);
+  if (str) clm_free(str);
   return(describe_buffer);
 }
 
@@ -3437,7 +3441,7 @@ static char *describe_moving_average(mus_any *ptr)
 	       gen->xscl * gen->yscl, 
 	       gen->size, 
 	       str = float_array_to_string(gen->line, gen->size, gen->loc));
-  if (str) FREE(str);
+  if (str) clm_free(str);
   return(describe_buffer);
 }
 
@@ -3510,11 +3514,11 @@ static char *describe_filtered_comb(mus_any *ptr)
   char *comb_str, *filter_str;
   static char *res = NULL;
   int len;
-  if (res) FREE(res); /* left over from before (mus_describe result isn't freed by caller) */
+  if (res) clm_free(res); /* left over from before (mus_describe result isn't freed by caller) */
   comb_str = strdup(describe_comb(ptr));
   filter_str = strdup(mus_describe(((dly *)ptr)->filt));
   len = strlen(comb_str) + strlen(filter_str) + 64;
-  res = (char *)CALLOC(len, sizeof(char));
+  res = (char *)clm_calloc(len, sizeof(char), "describe_filtered_comb");
   mus_snprintf(res, len, "%s, filter: [%s]", comb_str, filter_str);
   free(comb_str);
   free(filter_str);
@@ -3617,7 +3621,7 @@ typedef struct {
 
 static int free_sw(mus_any *ptr) 
 {
-  if (ptr) FREE(ptr);
+  if (ptr) clm_free(ptr);
   return(0);
 }
 
@@ -4106,7 +4110,7 @@ bool mus_rand_interp_p(mus_any *ptr)
 }
 
 
-static int free_noi(mus_any *ptr) {if (ptr) FREE(ptr); return(0);}
+static int free_noi(mus_any *ptr) {if (ptr) clm_free(ptr); return(0);}
 
 static Float noi_freq(mus_any *ptr) {return(mus_radians_to_hz(((noi *)ptr)->freq));}
 static Float noi_set_freq(mus_any *ptr, Float val) {((noi *)ptr)->freq = mus_hz_to_radians(val); return(val);}
@@ -4286,7 +4290,7 @@ typedef struct {
 
 static int free_smpflt(mus_any *ptr) 
 {
-  if (ptr) FREE(ptr); 
+  if (ptr) clm_free(ptr); 
   return(0);
 }
 
@@ -4694,7 +4698,7 @@ typedef struct {
 
 static int free_frm(mus_any *ptr) 
 {
-  if (ptr) FREE(ptr); 
+  if (ptr) clm_free(ptr); 
   return(0);
 }
 
@@ -5156,8 +5160,8 @@ static int free_filter(mus_any *ptr)
   flt *gen = (flt *)ptr;
   if (gen)
     {
-      if ((gen->state) && (gen->state_allocated)) FREE(gen->state);
-      FREE(gen);
+      if ((gen->state) && (gen->state_allocated)) clm_free(gen->state);
+      clm_free(gen);
     }
   return(0);
 }
@@ -5188,8 +5192,8 @@ static char *describe_filter(mus_any *ptr)
 	       mus_name(ptr),
 	       gen->order,
 	       xstr, ystr);
-  if (xstr) FREE(xstr);
-  if (ystr) FREE(ystr);
+  if (xstr) clm_free(xstr);
+  if (ystr) clm_free(ystr);
   return(describe_buffer);
 }
 
@@ -5203,7 +5207,7 @@ static char *describe_fir_filter(mus_any *ptr)
 	       mus_name(ptr),
 	       gen->order,
 	       xstr);
-  if (xstr) FREE(xstr);
+  if (xstr) clm_free(xstr);
   return(describe_buffer);
 }
 
@@ -5217,7 +5221,7 @@ static char *describe_iir_filter(mus_any *ptr)
 	       mus_name(ptr),
 	       gen->order,
 	       ystr);
-  if (ystr) FREE(ystr);
+  if (ystr) clm_free(ystr);
   return(describe_buffer);
 }
 
@@ -5389,8 +5393,8 @@ Float *mus_make_fir_coeffs(int order, Float *envl, Float *aa)
       int fsize, lim;
       Float offset;
       fsize = 2 * order; /* checked power of 2 above */
-      rl = (Float *)CALLOC(fsize, sizeof(Float));
-      im = (Float *)CALLOC(fsize, sizeof(Float));
+      rl = (Float *)clm_calloc(fsize, sizeof(Float), "mus_make_fir_coeffs");
+      im = (Float *)clm_calloc(fsize, sizeof(Float), "mus_make_fir_coeffs");
       lim = order / 2;
       memcpy((void *)rl, (void *)envl, lim * sizeof(Float));
       /* for (i = 0; i < lim; i++) rl[i] = envl[i]; */
@@ -5404,8 +5408,8 @@ Float *mus_make_fir_coeffs(int order, Float *envl, Float *aa)
 	  a[j] = rl[i]; 
 	  a[jj] = rl[i];
 	}
-      FREE(rl);
-      FREE(im);
+      clm_free(rl);
+      clm_free(im);
     }
 
   return(a);
@@ -5678,7 +5682,7 @@ static char *describe_env(mus_any *ptr)
 	       e->original_scaler, 
 	       e->original_offset,
 	       str = float_array_to_string(e->original_data, e->size * 2, 0));
-  if (str) FREE(str);
+  if (str) clm_free(str);
   return(describe_buffer);
 }
 
@@ -5688,10 +5692,10 @@ static int free_env_gen(mus_any *pt)
   seg *ptr = (seg *)pt;
   if (ptr) 
     {
-      if (ptr->locs) FREE(ptr->locs);
-      if (ptr->rates) FREE(ptr->rates);
-      if ((ptr->original_data) && (ptr->data_allocated)) FREE(ptr->original_data);
-      FREE(ptr); 
+      if (ptr->locs) clm_free(ptr->locs);
+      if (ptr->rates) clm_free(ptr->rates);
+      if ((ptr->original_data) && (ptr->data_allocated)) clm_free(ptr->original_data);
+      clm_free(ptr); 
     }
   return(0);
 }
@@ -5752,8 +5756,8 @@ static void rebuild_env(seg *e, Float scl, Float off, off_t end)
   seg *new_e;
 
   new_e = (seg *)mus_make_env(e->original_data, e->size, scl, off, e->base, 0.0, end, e->original_data);
-  if (e->locs) FREE(e->locs);
-  if (e->rates) FREE(e->rates);
+  if (e->locs) clm_free(e->locs);
+  if (e->rates) clm_free(e->rates);
   e->locs = new_e->locs;
   e->rates = new_e->rates;
 
@@ -5761,7 +5765,7 @@ static void rebuild_env(seg *e, Float scl, Float off, off_t end)
   e->init_power = new_e->init_power;
   env_reset((mus_any *)e);
 
-  FREE(new_e);
+  clm_free(new_e);
 }
 
 
@@ -5862,10 +5866,11 @@ mus_any *mus_make_env(Float *brkpts, int npts, double scaler, double offset, dou
   if (odata)
     e->original_data = odata;
   else
-    {
-      e->original_data = (Float *)clm_calloc_atomic(npts * 2, sizeof(Float), "env original data");
+    {      
+      e->original_data  = (Float *)clm_calloc_atomic(npts * 2, sizeof(Float), "env original data");
       e->data_allocated = true;
     }
+
   if (e->original_data != brkpts)
     memcpy((void *)(e->original_data), (void *)brkpts, npts * 2 * sizeof(Float));
 
@@ -5888,8 +5893,8 @@ mus_any *mus_make_env(Float *brkpts, int npts, double scaler, double offset, dou
 	  edata = fixup_exp_env(e, brkpts, npts, offset, scaler, base);
 	  if (edata == NULL)
 	    {
-	      if ((e->original_data) && (e->data_allocated)) FREE(e->original_data);
-	      FREE(e);
+	      if ((e->original_data) && (e->data_allocated)) clm_free(e->original_data);
+	      clm_free(e);
 	      return(NULL);
 	    }
 
@@ -5898,7 +5903,7 @@ mus_any *mus_make_env(Float *brkpts, int npts, double scaler, double offset, dou
 	  e->power = exp(edata[1]);
 	  e->init_power = e->power;
 	  e->offset -= e->scaler;
-	  FREE(edata);
+	  clm_free(edata);
 	}
     }
 
@@ -6018,8 +6023,8 @@ static int free_frame(mus_any *pt)
   mus_frame *ptr = (mus_frame *)pt;
   if (ptr)
     {
-      if ((ptr->vals) && (ptr->data_allocated)) FREE(ptr->vals);
-      FREE(ptr);
+      if ((ptr->vals) && (ptr->data_allocated)) clm_free(ptr->vals);
+      clm_free(ptr);
     }
   return(0);
 }
@@ -6035,7 +6040,7 @@ static char *describe_frame(mus_any *ptr)
 	       mus_name(ptr),
 	       gen->chans,
 	       str = float_array_to_string(gen->vals, gen->chans, 0));
-  if (str) FREE(str);
+  if (str) clm_free(str);
   return(describe_buffer);
 }
 
@@ -6264,10 +6269,10 @@ static int free_mixer(mus_any *pt)
 	  int i;
 	  if (ptr->data_allocated)
 	    for (i = 0; i < ptr->chans; i++) 
-	      FREE(ptr->vals[i]);
-	  FREE(ptr->vals);
+	      clm_free(ptr->vals[i]);
+	  clm_free(ptr->vals);
 	}
-      FREE(ptr);
+      clm_free(ptr);
     }
   return(0);
 }
@@ -6292,7 +6297,7 @@ static char *describe_mixer(mus_any *ptr)
 
   lim = mus_array_print_length();
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s chans: %d, [\n ", mus_name(ptr), gen->chans);
-  str = (char *)CALLOC(64, sizeof(char));
+  str = (char *)clm_calloc(64, sizeof(char), "describe_mixer");
   if (gen->chans < lim) lim = gen->chans;
 
   for (i = 0; i < lim; i++)
@@ -6308,7 +6313,7 @@ static char *describe_mixer(mus_any *ptr)
 	else break;
       }
 
-  FREE(str);
+  clm_free(str);
   return(describe_buffer);
 }
 
@@ -6799,8 +6804,8 @@ static int free_file_to_sample(mus_any *p)
   if (ptr) 
     {
       if (ptr->core->end) ((*ptr->core->end))(p);
-      FREE(ptr->file_name);
-      FREE(ptr);
+      clm_free(ptr->file_name);
+      clm_free(ptr);
     }
   return(0);
 }
@@ -6928,8 +6933,8 @@ static int file_to_sample_end(mus_any *ptr)
 	  int i;
 	  for (i = 0; i < gen->chans; i++)
 	    if (gen->ibufs[i]) 
-	      FREE(gen->ibufs[i]);
-	  FREE(gen->ibufs);
+	      clm_free(gen->ibufs[i]);
+	  clm_free(gen->ibufs);
 	  gen->ibufs = NULL;
 	}
     }
@@ -7008,8 +7013,8 @@ static int free_readin(mus_any *p)
   if (ptr) 
     {
       if (ptr->core->end) ((*ptr->core->end))(p);
-      FREE(ptr->file_name);
-      FREE(ptr);
+      clm_free(ptr->file_name);
+      clm_free(ptr);
     }
   return(0);
 }
@@ -7238,8 +7243,8 @@ static int free_sample_to_file(mus_any *p)
   if (ptr) 
     {
       if (ptr->core->end) ((*ptr->core->end))(p);
-      FREE(ptr->file_name);
-      FREE(ptr);
+      clm_free(ptr->file_name);
+      clm_free(ptr);
     }
   return(0);
 }
@@ -7359,7 +7364,7 @@ static void flush_buffers(rdout *gen)
 		  free(addbufs[i]);
 		  addbufs[i] = NULL;
 		}
-	    FREE(addbufs);
+	    clm_free(addbufs);
 
 	    /* it would take a lot of screwing around to find the biggest clm_file_buffer_size we could handle,
 	     *   and it might fail on the next call (if more chans), so we'll throw an error.  We could get
@@ -7444,7 +7449,7 @@ static void flush_buffers(rdout *gen)
 
       for (i = 0; i < gen->chans; i++) 
 	free(addbufs[i]);  /* used calloc above to make sure we can check for unsuccessful allocation */
-      FREE(addbufs);
+      clm_free(addbufs);
     }
 }
 
@@ -7492,8 +7497,8 @@ static int sample_to_file_end(mus_any *ptr)
       flush_buffers(gen);
       for (i = 0; i < gen->chans; i++)
 	if (gen->obufs[i]) 
-	  FREE(gen->obufs[i]);
-      FREE(gen->obufs);
+	  clm_free(gen->obufs[i]);
+      clm_free(gen->obufs);
       gen->obufs = NULL;
     }
   return(0);
@@ -7737,7 +7742,7 @@ static char *describe_locsig(mus_any *ptr)
   mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s chans %d, outn: [", 
 	       mus_name(ptr),
 	       gen->chans);
-  str = (char *)CALLOC(STR_SIZE, sizeof(char));
+  str = (char *)clm_calloc(STR_SIZE, sizeof(char), "describe_locsig");
 
   if (gen->outn)
     {
@@ -7777,7 +7782,7 @@ static char *describe_locsig(mus_any *ptr)
 
   mus_snprintf(str, STR_SIZE, ", interp: %s", interp_type_to_string(gen->type));
   strcat(describe_buffer, str);
-  FREE(str);
+  clm_free(str);
   return(describe_buffer);
 }
 
@@ -7789,12 +7794,12 @@ static int free_locsig(mus_any *p)
     {
       if (ptr->outn) 
 	{
-	  FREE(ptr->outn);
+	  clm_free(ptr->outn);
 	  ptr->outn = NULL;
 	}
       if (ptr->revn) 
 	{
-	  FREE(ptr->revn);
+	  clm_free(ptr->revn);
 	  ptr->revn = NULL;
 	}
       mus_free((mus_any *)(ptr->outf));
@@ -7808,7 +7813,7 @@ static int free_locsig(mus_any *p)
       ptr->revn_writer = NULL;
       ptr->chans = 0;
       ptr->rev_chans = 0;
-      FREE(ptr);
+      clm_free(ptr);
     }
   return(0);
 }
@@ -8164,7 +8169,7 @@ static char *describe_move_sound(mus_any *ptr)
   static char *allstr = NULL;
   int len;
 
-  if (allstr) {FREE(allstr); allstr = NULL;}
+  if (allstr) {clm_free(allstr); allstr = NULL;}
 
   starts = mus_format("%s start: " OFF_TD ", end: " OFF_TD ", out chans %d, rev chans: %d",
 		      mus_name(ptr),
@@ -8182,19 +8187,19 @@ static char *describe_move_sound(mus_any *ptr)
 
   len = 64 + strlen(starts) + strlen(dopdly) + strlen(dopenv) + strlen(revenv) + 
     strlen(outdlys) + strlen(outenvs) + strlen(revenvs) + strlen(outmap);
-  allstr = (char *)CALLOC(len, sizeof(char));
+  allstr = (char *)clm_calloc(len, sizeof(char), "describe_move_sound");
   mus_snprintf(allstr, len, "%s\n  %s\n  %s\n  %s\n  %s\n  %s\n  %s\n  %s\n  free: arrays: %s, gens: %s\n",
 		      starts, dopdly, dopenv, revenv, outdlys, outenvs, revenvs, outmap,
 		      (gen->free_arrays) ? "true" : "false",
 		      (gen->free_gens) ? "true" : "false");
-  FREE(starts); 
-  FREE(dopdly); 
-  FREE(dopenv); 
-  FREE(revenv); 
-  FREE(outdlys); 
-  FREE(outenvs); 
-  FREE(revenvs); 
-  FREE(outmap);
+  clm_free(starts); 
+  clm_free(dopdly); 
+  clm_free(dopenv); 
+  clm_free(revenv); 
+  clm_free(outdlys); 
+  clm_free(outenvs); 
+  clm_free(revenvs); 
+  clm_free(outmap);
   return(allstr);
 }
 
@@ -8225,16 +8230,16 @@ static int free_move_sound(mus_any *p)
       if (ptr->free_arrays)
 	{
 	  /* free outer arrays */
-	  if (ptr->out_envs) {FREE(ptr->out_envs); ptr->out_envs = NULL;}
-	  if (ptr->rev_envs) {FREE(ptr->rev_envs); ptr->rev_envs = NULL;}
-	  if (ptr->out_delays) {FREE(ptr->out_delays); ptr->out_delays = NULL;}
-	  if (ptr->out_map) FREE(ptr->out_map);
+	  if (ptr->out_envs) {clm_free(ptr->out_envs); ptr->out_envs = NULL;}
+	  if (ptr->rev_envs) {clm_free(ptr->rev_envs); ptr->rev_envs = NULL;}
+	  if (ptr->out_delays) {clm_free(ptr->out_delays); ptr->out_delays = NULL;}
+	  if (ptr->out_map) clm_free(ptr->out_map);
 	}
 
       /* we created these in make_move_sound, so it should always be safe to free them */
       if (ptr->outf) mus_free((mus_any *)(ptr->outf));
       if (ptr->revf) mus_free((mus_any *)(ptr->revf));
-      FREE(ptr);
+      clm_free(ptr);
     }
   return(0);
 }
@@ -8435,10 +8440,10 @@ void mus_clear_sinc_tables(void)
       int i;
       for (i = 0; i < sincs; i++) 
 	if (sinc_tables[i]) 
-	  FREE(sinc_tables[i]);
-      FREE(sinc_tables);
+	  clm_free(sinc_tables[i]);
+      clm_free(sinc_tables);
       sinc_tables = NULL;
-      FREE(sinc_widths);
+      clm_free(sinc_widths);
       sinc_widths = NULL;
       sincs = 0;
     }
@@ -8506,8 +8511,8 @@ static int free_src_gen(mus_any *srptr)
   sr *srp = (sr *)srptr;
   if (srp)
     {
-      if (srp->data) FREE(srp->data);
-      FREE(srp);
+      if (srp->data) clm_free(srp->data);
+      clm_free(srp);
     }
   return(0);
 }
@@ -8833,10 +8838,10 @@ static int free_granulate(mus_any *ptr)
   grn_info *gen = (grn_info *)ptr;
   if (gen)
     {
-      if (gen->out_data) FREE(gen->out_data);
-      if (gen->in_data) FREE(gen->in_data);
-      if (gen->grain) FREE(gen->grain);
-      FREE(gen);
+      if (gen->out_data) clm_free(gen->out_data);
+      if (gen->in_data) clm_free(gen->in_data);
+      if (gen->grain) clm_free(gen->grain);
+      clm_free(gen);
     }
   return(0);
 }
@@ -9206,12 +9211,12 @@ void mus_fftw(Float *rl, int n, int dir)
   int i;
   if (n != last_fft_size)
     {
-      if (rdata) {FREE(rdata); FREE(idata); rfftw_destroy_plan(rplan); rfftw_destroy_plan(iplan);}
+      if (rdata) {clm_free(rdata); clm_free(idata); rfftw_destroy_plan(rplan); rfftw_destroy_plan(iplan);}
       rplan = rfftw_create_plan(n, FFTW_REAL_TO_COMPLEX, FFTW_ESTIMATE); /* I didn't see any improvement here from using FFTW_MEASURE */
       iplan = rfftw_create_plan(n, FFTW_COMPLEX_TO_REAL, FFTW_ESTIMATE);
       last_fft_size = n;
-      rdata = (fftw_real *)CALLOC(n, sizeof(fftw_real));
-      idata = (fftw_real *)CALLOC(n, sizeof(fftw_real));
+      rdata = (fftw_real *)clm_calloc(n, sizeof(fftw_real), "fftw");
+      idata = (fftw_real *)clm_calloc(n, sizeof(fftw_real), "fftw");
     }
   memset((void *)idata, 0, n * sizeof(fftw_real));
   /* if Float (default float) == fftw_real (default double) we could forego the data copy */
@@ -9893,8 +9898,8 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 	    memcpy((void *)window, (void *)rl, size * sizeof(Float));
 	  }
 
-	FREE(rl);
-	FREE(im);
+	clm_free(rl);
+	clm_free(im);
       }
 #else
 #if HAVE_GSL
@@ -9954,8 +9959,8 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 	  {
 	    memcpy((void *)window, (void *)rl, size * sizeof(Float));
 	  }
-	FREE(rl);
-	FREE(im);
+	clm_free(rl);
+	clm_free(im);
       }
 #else
       mus_error(MUS_NO_SUCH_FFT_WINDOW, "Dolph-Chebyshev, Samaraki, and Ultraspherical windows need complex trig support");
@@ -10068,7 +10073,7 @@ Float *mus_autocorrelate(Float *data, int n)
   for (i = n2 + 1; i < n; i++)
     data[i] = 0.0;
 
-  FREE(im);
+  clm_free(im);
   return(data);
 }
 
@@ -10101,8 +10106,8 @@ Float *mus_correlate(Float *data1, Float *data2, int n)
   for (i = 0; i < n; i++)
     data1[i] *= fscl;
 
-  FREE(im1);
-  FREE(im2);
+  clm_free(im1);
+  clm_free(im2);
 
   return(data1);
 }
@@ -10179,10 +10184,10 @@ static int free_convolve(mus_any *ptr)
   conv *gen = (conv *)ptr;
   if (gen)
     {
-      if (gen->rl1) FREE(gen->rl1);
-      if (gen->rl2) FREE(gen->rl2);
-      if (gen->buf) FREE(gen->buf);
-      FREE(gen);
+      if (gen->rl1) clm_free(gen->rl1);
+      if (gen->rl2) clm_free(gen->rl2);
+      if (gen->buf) clm_free(gen->buf);
+      clm_free(gen);
     }
   return(0);
 }
@@ -10353,7 +10358,7 @@ void mus_convolve_files(const char *file1, const char *file2, Float maxamp, cons
       for (i = 0; i < outlen; i++) samps[i] = MUS_DOUBLE_TO_SAMPLE(data1[i]);
       errmsg = mus_array_to_file_with_error(output_file, samps, outlen, mus_sound_srate(file1), 1);
 
-      FREE(samps);
+      clm_free(samps);
     }
   else
     {
@@ -10399,12 +10404,12 @@ void mus_convolve_files(const char *file1, const char *file2, Float maxamp, cons
 	samps[i] = MUS_DOUBLE_TO_SAMPLE(outdat[i]);
 
       errmsg = mus_array_to_file_with_error(output_file, samps, totallen, mus_sound_srate(file1), output_chans);
-      FREE(samps);
-      FREE(outdat);
+      clm_free(samps);
+      clm_free(outdat);
     }
 
-  FREE(data1);
-  FREE(data2);
+  clm_free(data1);
+  clm_free(data2);
   if (errmsg)
     mus_error(MUS_CANT_OPEN_FILE, errmsg);
 }
@@ -10444,7 +10449,7 @@ static char *describe_phase_vocoder(mus_any *ptr)
 	       mus_name(ptr),
 	       gen->outctr, gen->interp, gen->filptr, gen->N, gen->D,
 	       arr = float_array_to_string(gen->in_data, gen->N, 0));
-  if (arr) FREE(arr);
+  if (arr) clm_free(arr);
   return(describe_buffer);
 }
 
@@ -10454,15 +10459,15 @@ static int free_phase_vocoder(mus_any *ptr)
   pv_info *gen = (pv_info *)ptr;
   if (gen)
     {
-      if (gen->in_data) FREE(gen->in_data);
-      if (gen->amps) FREE(gen->amps);
-      if (gen->freqs) FREE(gen->freqs);
-      if (gen->phases) FREE(gen->phases);
-      if (gen->win) FREE(gen->win);
-      if (gen->phaseinc) FREE(gen->phaseinc);
-      if (gen->lastphase) FREE(gen->lastphase);
-      if (gen->ampinc) FREE(gen->ampinc);
-      FREE(gen);
+      if (gen->in_data) clm_free(gen->in_data);
+      if (gen->amps) clm_free(gen->amps);
+      if (gen->freqs) clm_free(gen->freqs);
+      if (gen->phases) clm_free(gen->phases);
+      if (gen->win) clm_free(gen->win);
+      if (gen->phaseinc) clm_free(gen->phaseinc);
+      if (gen->lastphase) clm_free(gen->lastphase);
+      if (gen->ampinc) clm_free(gen->ampinc);
+      clm_free(gen);
     }
   return(0);
 }
@@ -10498,7 +10503,7 @@ static Float pv_set_increment(mus_any *rd, Float val) {((pv_info *)rd)->interp =
 static void pv_reset(mus_any *ptr)
 {
   pv_info *gen = (pv_info *)ptr;
-  if (gen->in_data) FREE(gen->in_data);
+  if (gen->in_data) clm_free(gen->in_data);
   gen->in_data = NULL;
   gen->outctr = gen->interp;
   gen->filptr = 0;
@@ -10743,8 +10748,8 @@ static int free_ssb_am(mus_any *ptr)
       mus_free(gen->hilbert);
       mus_free(gen->cos_osc);
       mus_free(gen->sin_osc);
-      if (gen->coeffs) {FREE(gen->coeffs); gen->coeffs = NULL;}
-      FREE(ptr); 
+      if (gen->coeffs) {clm_free(gen->coeffs); gen->coeffs = NULL;}
+      clm_free(ptr); 
     }
   return(0);
 }
@@ -10890,7 +10895,7 @@ mus_any *mus_make_ssb_am(Float freq, int order)
   gen->cos_osc = mus_make_oscil(fabs(freq), M_PI * 0.5);
   gen->dly = mus_make_delay(order, NULL, order, MUS_INTERP_NONE);
   len = order * 2 + 1;
-  gen->coeffs = (Float *)CALLOC(len, sizeof(Float));
+  gen->coeffs = (Float *)clm_calloc(len, sizeof(Float), "make-ssb-am");
   for (i = -order, k = 0; i <= order; i++, k++)
     {
       Float denom, num;
@@ -11188,10 +11193,10 @@ void mus_mix(const char *outfile, const char *infile, off_t out_start, off_t out
       mus_sound_close_output(ofd, 
 			     curoutframes * out_chans * mus_bytes_per_sample(mus_sound_data_format(outfile)));
       mus_sound_close_input(ifd);
-      for (i = 0; i < in_chans; i++) FREE(ibufs[i]);
-      FREE(ibufs);
-      for (i = 0; i < out_chans; i++) FREE(obufs[i]);
-      FREE(obufs);
+      for (i = 0; i < in_chans; i++) clm_free(ibufs[i]);
+      clm_free(ibufs);
+      for (i = 0; i < out_chans; i++) clm_free(obufs[i]);
+      clm_free(obufs);
     }
 }
 
@@ -11228,7 +11233,7 @@ void init_mus_module(void)
   sincs = 0;
   locsig_warned = NULL;
 
-  data_format_zero = (int *)CALLOC(MUS_NUM_DATA_FORMATS, sizeof(int));
+  data_format_zero = (int *)clm_calloc(MUS_NUM_DATA_FORMATS, sizeof(int), "init mus module");
   data_format_zero[MUS_MULAW] = MULAW_ZERO;
   data_format_zero[MUS_ALAW] = ALAW_ZERO;
   data_format_zero[MUS_UBYTE] = UBYTE_ZERO;

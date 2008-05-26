@@ -4835,6 +4835,247 @@ and run simple lisp[4] functions.
 
 ;;;;;; CLM Generators ;;;;;;;;;;;;;;;
 
+;; This expressions is generated from the commented out in rt-stalin.scm
+;; This struct is hopefully just going to be a temporary solution.
+(define clm-constructor-protos
+'((make-all-pass
+   #:feedback
+   #:feedforward
+   #:size
+   #:initial-contents
+   (#:initial-element 0.0)
+   #:max-size
+   (#:type mus-interp-linear))
+ (make-asymmetric-fm
+   (#:frequency *clm-default-frequency*)
+   (#:initial-phase 0.0)
+   (#:r 1.0)
+   (#:ratio 1.0))
+ (make-comb
+   #:scaler
+   #:size
+   #:initial-contents
+   (#:initial-element 0.0)
+   #:max-size
+   (#:type mus-interp-linear))
+ (make-convolve #:input #:filter #:fft-size)
+ (make-delay
+   #:size
+   #:initial-contents
+   (#:initial-element 0.0)
+   (#:max-size)
+   (#:type mus-interp-linear))
+ (make-env
+   #:envelope
+   (#:scaler 1.0)
+   #:duration
+   (#:offset 0.0)
+   (#:base 1.0)
+   #:end
+   #:length)
+ (make-fft-window
+   type
+   size
+   #:optional
+   (beta 0.0)
+   (alpha 0.0))
+ (make-file->frame
+   filename
+   #:optional
+   buffer-size)
+ (make-file->sample
+   filename
+   #:optional
+   buffer-size)
+ (make-filter #:order #:xcoeffs #:ycoeffs)
+ (make-filtered-comb
+   #:scaler
+   #:size
+   #:initial-contents
+   (#:initial-element 0.0)
+   #:max-size
+   (#:type mus-interp-linear)
+   #:filter)
+ (make-fir-coeffs order v)
+ (make-fir-filter #:order #:xcoeffs)
+ (make-firmant #:frequency #:radius)
+ (make-formant #:frequency #:radius)
+ (make-frame chans val0 val1 ...)
+ (make-frame->file
+   filename
+   #:optional
+   chans
+   data-format
+   header-type
+   comment)
+ (make-granulate
+   #:input
+   (#:expansion 1.0)
+   (#:length 0.15)
+   (#:scaler 0.6)
+   (#:hop 0.05)
+   (#:ramp 0.4)
+   (#:jitter 1.0)
+   #:max-size
+   #:edit)
+ (make-iir-filter #:order #:ycoeffs)
+ (make-locsig
+   (#:degree 0.0)
+   (#:distance 1.0)
+   (#:reverb 0.0)
+   (#:output *output*)
+   (#:revout *reverb*)
+   (#:channels 2) ;(mus-channels *output*))
+   (#:type mus-interp-linear))
+ (make-mixer chans val0 val1 ...)
+ (make-move-sound
+   dloc-list
+   #:optional
+   (out *output*)
+   (rev *reverb*))
+ (make-moving-average
+   #:size
+   #:initial-contents
+   (#:initial-element 0.0))
+ (make-ncos
+   (#:frequency *clm-default-frequency*)
+   (#:n 1))
+ (make-notch
+   #:scaler
+   #:size
+   #:initial-contents
+   (#:initial-element 0.0)
+   #:max-size
+   (#:type mus-interp-linear))
+ (make-nrxycos
+   (#:frequency *clm-default-frequency*)
+   (#:ratio 1.0)
+   (#:n 1)
+   (#:r 0.5))
+ (make-nrxysin
+   (#:frequency *clm-default-frequency*)
+   (#:ratio 1.0)
+   (#:n 1)
+   (#:r 0.5))
+ (make-nsin
+   (#:frequency *clm-default-frequency*)
+   (#:n 1))
+ (make-one-pole #:a0 #:b1)
+ (make-one-zero #:a0 #:a1)
+ (make-oscil
+   (#:frequency *clm-default-frequency*)
+   (#:initial-phase 0.0))
+ (make-phase-vocoder
+   #:input
+   #:fft-size
+   #:overlap
+   #:interp
+   #:pitch
+   #:analyze
+   #:edit
+   #:synthesize)
+ (make-polyshape
+   (#:frequency *clm-default-frequency*)
+   (#:initial-phase 0.0)
+   #:coeffs
+   (#:partials (quote (1 1)))
+   (#:kind mus-chebyshev-first-kind))
+ (make-polywave
+   (#:frequency *clm-default-frequency*)
+   (#:partials (quote (1 1)))
+   (#:type mus-chebyshev-first-kind))
+ (make-pulse-train
+   (#:frequency *clm-default-frequency*)
+   (#:amplitude 1.0)
+   (#:initial-phase 0.0))
+ (make-rand
+   (#:frequency *clm-default-frequency*)
+   (#:amplitude 1.0)
+   #:envelope
+   #:distribution
+   #:size)
+ (make-rand-interp
+   (#:frequency *clm-default-frequency*)
+   (#:amplitude 1.0)
+   #:envelope
+   #:distribution
+   #:size)
+ (make-readin
+   #:file
+   (#:channel 0)
+   (#:start 0)
+   (#:direction 1)
+   #:size)
+ (make-sample->file
+   filename
+   #:optional
+   chans
+   data-format
+   header-type
+   comment)
+ (make-sawtooth-wave
+   (#:frequency *clm-default-frequency*)
+   (#:amplitude 1.0)
+   (#:initial-phase 0.0))
+ (make-scalar-mixer chans value)
+ (make-sine-summation
+   (#:frequency *clm-default-frequency*)
+   (#:initial-phase 0.0)
+   (#:n 1)
+   (#:a 0.5)
+   (#:ratio 1.0))
+ (make-square-wave
+   (#:frequency *clm-default-frequency*)
+   (#:amplitude 1.0)
+   (#:initial-phase 0.0))
+ (make-src #:input (#:srate 1.0) (#:width 10))
+ (make-ssb-am
+   (#:frequency *clm-default-frequency*)
+   (#:order 40))
+ (make-sum-of-cosines
+   (#:cosines 1)
+   (#:frequency *clm-default-frequency*)
+   (#:initial-phase 0.0))
+ (make-sum-of-sines
+   (#:sines 1)
+   (#:frequency *clm-default-frequency*)
+   (#:initial-phase 0.0))
+ (make-table-lookup
+   (#:frequency *clm-default-frequency*)
+   (#:initial-phase 0.0)
+   #:wave
+   (#:size (clm-table-size))
+   #:type)
+ (make-triangle-wave
+   (#:frequency *clm-default-frequency*)
+   (#:amplitude 1.0)
+   (#:initial-phase 0.0))
+ (make-two-pole
+   #:a0
+   #:b1
+   #:b2
+   or
+   #:frequency
+   #:radius)
+ (make-two-zero
+   #:a0
+   #:a1
+   #:a2
+   or
+   #:frequency
+   #:radius)
+ (make-wave-train
+   (#:frequency *clm-default-frequency*)
+   (#:initial-phase 0.0)
+   #:wave
+   (#:size (clm-table-size))
+   #:type)
+ (make-waveshape
+   (#:frequency *clm-default-frequency*)
+   (#:partials (quote (1 1)))
+   (#:size (clm-table-size))
+   #:wave)))
+
 (define rt-clm-generators `((all-pass     (input (pm 0)))
 			    (asymmetric-fm (index (fm 0)))
 			    (comb         (input (pm 0)))
@@ -4980,6 +5221,7 @@ and run simple lisp[4] functions.
 	  rt-clm-generators)
 
 
+#!
 (for-each (lambda (generator)
 	    (fix-defines
 	     (define basename (car generator))
@@ -4995,6 +5237,7 @@ and run simple lisp[4] functions.
 					       `(,',basename :frequency 0
 							     (hz->radians ,frequency)))))))))
 	  rt-clm-generators)
+!#
 
 #!
 (<rt-out> (oscil* (<slider> "freq" 0 200 5000 :log #t)))
@@ -5124,12 +5367,12 @@ and run simple lisp[4] functions.
 
 
 ;; Remember to remove this when snd-ls is up to date with snd.
-(define old-make-env make-env)
-(define (make-env . rest)
-  (if (pair? (car rest))
-      (apply old-make-env (cons (flatten (car rest))
-				(cdr rest)))
-      (apply old-make-env rest)))
+;;(define old-make-env make-env)
+;;(define (make-env . rest)
+;;  (if (pair? (car rest))
+;;      (apply old-make-env (cons (flatten (car rest))
+;;				(cdr rest)))
+;;      (apply old-make-env rest)))
 
 ;; mus-feedback	
 (define-rt-macro (mus-feedback ins)	
@@ -6013,6 +6256,7 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 		  (number? (cadr seq))))
 	   #f)
 
+
 ;;(define-c-macro (rt-get-framenum)
 ;;  "rt_globals->framenum")
 ;;(<rt-func> 'rt-get-framenum '<int> '() #:is-immediate #t)
@@ -6051,10 +6295,12 @@ func(rt_globals,0xe0+event->data.control.channel,val&127,val>>7);
 
 ;; Logic partly taken from pd by Miller Puckette.
 (define-rt-macro (midi-to-freq f)
-  `(cond ((<= ,f 0) 0)
-	 ((> ,f 135) 20000)
-	 (else
-	  (* 8.17579891564 (exp (* .0577622650 ,f))))))
+  (define freq (rt-gensym))
+  `(let ((,freq ,f))
+     (cond ((<= ,freq 0) 0)
+           ((> ,freq 135) 20000)
+           (else
+            (* 8.17579891564 (exp (* .0577622650 ,freq)))))))
 
 (define (midi-to-freq f)
   (* 8.17579891564 (exp (* .0577622650 f))))  
@@ -7143,11 +7389,22 @@ old syntax: (not very nice)
 
 
 (rt-ec-function <vct-*> rt_alloc_vct (lambda (,rt-globalvardecl (<int> length))
-				    (let* ((ret <vct-*> (rt_alloc rt_globals (sizeof <vct>)))
-					   (floats <float-*> (rt_alloc rt_globals (* (sizeof <float>) length))))
-				      (set! ret->length length)
-				      (set! ret->data floats)
-				      (return ret))))
+                                       (let* ((ret <vct-*> (rt_alloc rt_globals (sizeof <vct>)))
+                                              (floats <float-*> (rt_alloc rt_globals (* (sizeof <float>) length))))
+                                         (set! ret->length length)
+                                         (set! ret->data floats)
+                                         (return ret))))
+
+#!
+Can alignmnet screw up this one?
+(rt-ec-function <vct-*> rt_alloc_vct (lambda (,rt-globalvardecl (<int> length))
+                                       (let* ((ret <vct-*> (rt_alloc rt_globals (+ (sizeof <vct>)
+                                                                                   (* (sizeof <float>) length))))
+                                              (floats <float-*> (cast <float-*> (+ ret 1))))
+                                         (set! ret->length length)
+                                         (set! ret->data floats)
+                                         (return ret))))
+!#
 
 
 (rt-ec-function <vct-*> rt_vct_scale (lambda ((<vct-*> vct) (<float> scl))

@@ -8,10 +8,12 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include <errno.h>
+#include <sched.h>
 
 #include "rt-various.h"
 
-#include "rollendurchmesserzeitsammler.h"
+#include "_sndlib.h"
+#include "clm.h"
 
 
 /* Stalin stuff. */
@@ -137,6 +139,101 @@ void rt_various_dummy(void){
   tar_calloc_atomic_uncollectable(0,0);
   tar_free_atomic_uncollectable(NULL);
 
+}
+
+
+
+/* clm stuff */
+
+static tar_heap_t *clm_tar_heap=NULL;
+static error_func_t clm_error_func=NULL;
+
+tar_heap_t *clm_set_tar_heap(tar_heap_t *new_heap){
+    tar_heap_t *ret=clm_tar_heap;
+    clm_tar_heap=new_heap;
+    return ret;
+}
+
+error_func_t clm_set_error_func(error_func_t new_error){
+  error_func_t ret=clm_error_func;
+  clm_error_func=new_error;
+  return ret;
+}
+
+
+int rt_mus_error(int type,const char* fmt,...){
+  int size;
+  va_list argp;
+  static char string[1024]; //Should be static, stack is limited in realtime.
+
+  va_start(argp,fmt);
+  vsprintf(string,fmt,argp);
+  va_end(argp);
+
+  if(clm_error_func==NULL)
+    return mus_error(type,string);
+  else
+    clm_error_func(string);
+  return -1;
+}
+
+
+void* clm_calloc_atomic(int num,size_t size,const char* what){
+  if(clm_tar_heap==NULL){
+    return CALLOC(num,size);
+  }else{
+    void *ret=tar_alloc_atomic(clm_tar_heap,num*size);
+    if(ret==NULL){
+      rt_mus_error(0,"clm.c: out of memory. (%s)",what);
+    }
+    memset(ret,0,num*size);
+    return ret;
+  }
+}
+
+
+void* clm_calloc(int num,size_t size,const char* what){
+  if(clm_tar_heap==NULL){
+    return CALLOC(num,size);
+  }else{
+    void *ret=tar_alloc(clm_tar_heap,num*size);
+    if(ret==NULL){
+      rt_mus_error(0,"clm.c: out of memory. (%s)",what);
+    }
+    return ret;
+  }
+}
+
+void* clm_malloc_atomic(size_t size,const char* what){
+  if(clm_tar_heap==NULL){
+    return MALLOC(size);
+  }else{
+    void *ret=tar_alloc_atomic(clm_tar_heap,size);
+    if(ret==NULL){
+      rt_mus_error(0,"clm.c: out of memory. (%s)",what);
+    }
+    return ret;
+  }
+}
+
+void* clm_malloc(size_t size,const char* what){
+  if(clm_tar_heap==NULL){
+    return MALLOC(size);
+  }else{
+    void *ret=tar_alloc(clm_tar_heap,size);
+    if(ret==NULL){
+      rt_mus_error(0,"clm.c: out of memory. (%s)",what);
+    }
+    return ret;
+  }
+}
+
+void* clm_realloc(void* old,size_t newsize){
+  tar_mem_t *mem=(tar_mem_t*)(((char*)old)-sizeof(tar_mem_t));
+  size_t size=mem->size;
+  if(newsize<size)
+    size=newsize;
+  return memcpy(clm_malloc(newsize,"realloc"),old,size);
 }
 
 #endif // WITH_RT
