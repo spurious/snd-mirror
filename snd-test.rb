@@ -16285,136 +16285,6 @@ def test098
     snd_display("tbl interp_type (%s) %d?", type_sym, tbl.interp_type) if tbl.interp_type != type
   end
   #
-  gen0 = make_waveshape(440.0, :wave, partials2waveshape([1, 1]))
-  gen = make_waveshape(440.0, :size, 512, :partials, [1, 1])
-  gen1 = make_waveshape(440.0, :wave, partials2waveshape([1, 1]))
-  print_and_check(gen, "waveshape", "waveshape freq: 440.000Hz, phase: 0.000, size: 512")
-  snd_display("waveshape length: %d?", gen.length) if gen.length != 512
-  v0 = make_vct!(10) do
-    if fneq(val0 = waveshape(gen0, 1.0, 0.0), val = mus_apply(gen, 1.0, 0.0))
-      snd_display("waveshape: %s != %s?", val, val0)
-    end
-    val
-  end
-  v1 = make_vct(10)
-  vct_map!(v1, lambda do | | waveshape?(gen1) ? waveshape(gen1, 1.0, 0.0) : -1.0 end)
-  snd_display("map waveshape: %s %s?", v0, v1) unless vequal(v0, v1)
-  gen1 = make_waveshape(440.0, :wave, partials2waveshape([1, 1]))
-  vct_map!(v1, lambda do | | waveshape(gen1, 1.0) end)
-  snd_display("map waveshape (no fm): %s %s?", v0, v1) unless vequal(v0, v1)
-  snd_display("%s not waveshape?", gen) unless waveshape?(gen)
-  snd_display("waveshape phase: %s?", gen.phase) if fneq(gen.phase, 1.253787)
-  gen.phase = 1.0
-  snd_display("waveshape set_phase: %s?", gen.phase) if fneq(gen.phase, 1.0)
-  snd_display("waveshape frequency: %s?", gen.frequency) if fneq(gen.frequency, 440.0)
-  gen.frequency = 100.0
-  snd_display("waveshape set_frequency: %s?", gen.frequency) if fneq(gen.frequency, 100.0)
-  snd_display("mus_data waveshape: %s?", gen.data) unless vct?(gen.data)
-  if fneq(v0[1], 0.125) or fneq(v0[8], 0.843)
-    snd_display("waveshape output: %s?", v0)
-  end
-  gen0.data = make_vct(32)
-  gen0.length = 32
-  snd_display("set_mus_length waveshape: %d?", gen0.length) if gen0.length != 32
-  #
-  test_gen_equal(make_waveshape(440.0, :partials, [1, 1]),
-                 make_waveshape(440.0, :partials, [1, 1]),
-                 make_waveshape(100.0, :partials, [1, 1]))
-  test_gen_equal(make_waveshape(440.0, :partials, [1, 1]),
-                 make_waveshape(440.0, :partials, [1, 1]),
-                 make_waveshape(4400.0, :partials, [1, 1, 2, 0.5]))
-  #
-  if (res = Snd.catch do partials2waveshape([0.5, 0.3, 0.2]) end).first != :bad_type
-    snd_display("odd length arg to partials2waveshape: %s", res.inspect)
-  end
-  if (res = Snd.catch do phase_partials2wave([1, 0.3, 2, 0.2]) end).first != :wrong_type_arg
-    snd_display("bad length arg to phase_partials2wave: %s", res.inspect)
-  end
-  # 
-  unless vequal(d11 = partials2waveshape([1, 1], 16),
-            vct(-1.000, -0.867, -0.733, -0.600, -0.467, -0.333, -0.200, -0.067,
-                0.067, 0.200, 0.333, 0.467, 0.600, 0.733, 0.867, 1.000))
-    snd_display("partials2waveshape 1 1: %s?", d11)
-  end
-  unless vequal(d11 = partials2waveshape([2, 1], 16),
-            vct(1.000, 0.502, 0.076, -0.280, -0.564, -0.778, -0.920, -0.991,
-                -0.991, -0.920, -0.778, -0.564, -0.280, 0.076, 0.502, 1.000))
-    snd_display("partials2waveshape 2 1: %s?", d11)
-  end
-  #
-  gen = make_waveshape(440.0, :partials, [1, 1])
-  1100.times do |i|
-    a = gen.phase
-    if fneq(val1 = sin(a), val2 = gen.run(1.0, 0.0))
-      snd_display("waveshaper [1, 1] %d: %s %s?", i, val1, val2)
-      break
-    end
-  end
-  gen = make_waveshape(440.0) # check default for partials: [1, 1])
-  1100.times do |i|
-    a = gen.phase
-    if fneq(val1 = sin(a), val2 = gen.run(1.0, 0.0))
-      snd_display("waveshaper default [1, 1] %d: %s %s?", i, val1, val2)
-      break
-    end
-  end
-  gen = make_waveshape(440.0, :partials, [2, 1])
-  incr = (TWO_PI * 440.0) / mus_srate
-  a = 0.0
-  1100.times do |i|
-    if fneq(val1 = sin(-HALF_PI + 2.0 * a), val2 = gen.run(1.0, 0.0))
-      snd_display("waveshaper [2, 1] %d: %s %s?", i, val1, val2)
-      break
-    end
-    a += incr
-  end
-  gen = make_waveshape(440.0, :partials, [1, 1, 2, 0.5])
-  incr = (TWO_PI * 440.0) / mus_srate
-  a = 0.0
-  1100.times do |i|
-    a = gen.phase
-    val1 = (1.0 / 1.5) * (sin(a) + 0.5 * sin(-HALF_PI + 2.0 * a))
-    if fneq(val1, val2 = gen.run(1.0, 0.0))
-      snd_display("waveshaper [1, 1, 2, 0.5] %d: %s %s?", i, val1, val2)
-      break
-    end
-    a += incr
-  end
-  gen = make_waveshape(440.0, :partials, [1, 1])
-  1100.times do |i|
-    a = gen.phase
-    if fneq(val1 = 0.5 * sin(a), val2 = gen.run(0.5, 0.0))
-      snd_display("waveshaper [1, 1] 0.5 %d: %s %s?", i, val1, val2)
-      break
-    end
-  end
-  #
-  if (res = Snd.catch do
-        make_waveshape(440.0, :partials, [1, 1], :size, false)
-      end).first != :wrong_type_arg
-    snd_display("make_waveshape bad size: %s", res.inspect)
-  end
-  if (res = Snd.catch do make_waveshape(440.0, :wave, 3.14) end).first != :wrong_type_arg
-    snd_display("make_waveshape bad wave: %s", res.inspect)
-  end
-  if (res = Snd.catch do make_waveshape(440.0, :size, 0) end).first != :out_of_range
-    snd_display("make_waveshape bad size: %s", res.inspect)
-  end
-  if (res = make_waveshape(:size, 256).length) != 256
-    snd_display("waveshape set_length: %d?", res)
-  end
-  gen = make_waveshape(0.0, :wave, partials2waveshape([1, 1]))
-  gen1 = make_waveshape(40.0, :wave, partials2waveshape([1, 1]))
-  a1 = 0.0
-  a = 0.0
-  400.times do |i|
-    if ((val1 = sin(a1)) - (val2 = waveshape(gen, 1.0, waveshape(gen1, 1.0)))).abs > 0.002
-      snd_display("waveshape fm: %d: %s %s?", i, val1, val2)
-    end
-    a1 += sin(a)
-    a += (TWO_PI * 40.0) / 22050.0
-  end
-  #
   gen0 = make_polyshape(440.0, :coeffs, partials2polynomial([1, 1]))
   gen = make_polyshape(440.0, :partials, [1, 1], :kind, Mus_chebyshev_first_kind)
   gen1 = make_polyshape(440.0)
@@ -20084,7 +19954,6 @@ def test228
   # 
   [[:table_lookup, [:wave]],
    [:wave_train, [:wave]],
-   [:waveshape, [:wave]],
    [:polyshape, [:coeffs]],
    [:delay, [:initial_contents]],
    [:filtered_comb, [:scaler, 0.5, :filter, make_one_zero(0.1, 0.2), :initial_contents]],
@@ -20181,7 +20050,6 @@ def test238
    [:two_pole,       false, 0.0, false],
    [:two_zero,       false, 0.0, false],
    [:wave_train,     false, 0.0, false],
-   [:waveshape,      false, 0.0, false],
    [:polyshape,      false, 0.0, false],
    [:phase_vocoder,  false, lambda { |dir| 0.0 }, false],
    [:ssb_am,         false, 0.0, false]].each do |name_sym, make_args, arg, run_func|
@@ -20286,7 +20154,6 @@ def test238
                [:triangle_wave,  false, false],
                [:two_pole,       [0.1, 0.3, 0.6], false],
                [:two_zero,       [0.1, 0.3, 0.5], false],
-               [:waveshape,      [:frequency, 440.0, :wave, partials2waveshape([1, 1])], false],
                [:polyshape,      [:frequency, 440.0, :partials, [1, 1]], false],
                [:phase_vocoder,  [lambda { |dir| 1.0 }], false],
                [:ssb_am,         false, false]]
@@ -20328,7 +20195,7 @@ def test238
         end
         unless not_zero
           case name_sym
-          when :polyshape, :waveshape, :rand, :wave_train
+          when :polyshape, :rand, :wave_train
             next
           else
             snd_display("%s not much of a reset test!", name_sym)
@@ -20461,7 +20328,6 @@ def test248
      :make_two_pole,
      :make_two_zero,
      :make_wave_train,
-     :make_waveshape,
      :make_polyshape,
      :make_phase_vocoder,
      :make_ssb_am].each do |make_func|
@@ -38574,7 +38440,7 @@ Procs =
    :make_one_zero, :make_oscil, :make_pulse_train, :make_rand, :make_rand_interp,
    :make_readin, :make_sample2file, :make_sawtooth_wave, :make_sine_summation, :make_square_wave,
    :make_src, :make_sum_of_cosines, :make_sum_of_sines, :make_ssb_am, :make_table_lookup,
-   :make_triangle_wave, :make_two_pole, :make_two_zero, :make_wave_train, :make_waveshape,
+   :make_triangle_wave, :make_two_pole, :make_two_zero, :make_wave_train,
    :mixer_multiply, :mixer_ref, :mixer_set!, :mixer?, :mixer_add,
    :move_sound, :make_move_sound, :move_sound?, :mus_float_equal_fudge_factor, :multiply_arrays,
    :mus_array_print_length, :mus_channel, :mus_channels, :make_polyshape, :polyshape, :polyshape?,
@@ -38584,14 +38450,14 @@ Procs =
    :mus_location, :mus_mix, :mus_order, :mus_output?, :mus_phase, :mus_ramp, :mus_random,
    :mus_scaler, :mus_srate, :mus_xcoeffs, :mus_ycoeffs, :notch, :notch?, :one_pole, :one_pole?,
    :one_zero, :one_zero?, :oscil, :oscil?, :out_any, :outa, :outb, :outc, :outd,
-   :partials2polynomial, :partials2wave, :partials2waveshape, :phase_partials2wave,
+   :partials2polynomial, :partials2wave, :phase_partials2wave,
    :polynomial, :pulse_train, :pulse_train?, :radians2degrees, :radians2hz, :rand,
    :rand_interp, :rand_interp?, :rand?, :readin, :readin?, :rectangular2polar, :ring_modulate,
    :sample2file, :sample2file?, :sample2frame, :sawtooth_wave, :sawtooth_wave?, :sine_summation,
    :sine_summation?, :spectrum, :square_wave, :square_wave?, :src, :src?, :sum_of_cosines,
    :sum_of_sines, :ssb_am, :sum_of_cosines?, :sum_of_sines?, :ssb_am?, :table_lookup,
    :table_lookup?, :tap, :triangle_wave, :triangle_wave?, :two_pole, :two_pole?, :two_zero,
-   :two_zero?, :wave_train, :wave_train?, :waveshape, :waveshape?, :make_vct, :vct_add!,
+   :two_zero?, :wave_train, :wave_train?, :make_vct, :vct_add!,
    :vct_subtract!, :vct_copy, :vct_length, :vct_multiply!, :vct_offset!, :vct_ref, :vct_scale!,
    :vct_fill!, :vct_set!, :mus_audio_describe, :vct_peak, :vct?, :list2vct, :vct2list,
    :vector2vct, :vct2vector, :vct_move!, :vct_reverse!, :vct_subseq, :vct, :little_endian?,
@@ -38703,7 +38569,7 @@ Make_procs =
    :make_rand, :make_rand_interp, :make_readin, :make_sample2file, :make_sawtooth_wave,
    :make_sine_summation, :make_square_wave, :make_src, :make_sum_of_cosines, :make_sum_of_sines,
    :make_table_lookup, :make_triangle_wave, :make_two_pole, :make_two_zero, :make_wave_train,
-   :make_waveshape, :make_phase_vocoder, :make_ssb_am, :make_polyshape,
+   :make_phase_vocoder, :make_ssb_am, :make_polyshape,
    :make_color, :make_player, :make_region, :make_scalar_mixer]
 
 Keyargs =
@@ -38884,7 +38750,7 @@ def test0028
      :mus_output?, :notch?, :one_pole?, :one_zero?, :oscil?, :phase_vocoder?,
      :pulse_train?, :rand_interp?, :rand?, :readin?, :sample2file?, :sawtooth_wave?,
      :sine_summation?, :square_wave?, :src?, :sum_of_cosines?, :sum_of_sines?,
-     :table_lookup?, :triangle_wave?, :two_pole?, :two_zero?, :wave_train?, :waveshape?,
+     :table_lookup?, :triangle_wave?, :two_pole?, :two_zero?, :wave_train?,
      :color?, :mix_sample_reader?, :moving_average?, :ssb_am?, :sample_reader?,
      :region_sample_reader?, :vct?]
   [Array.new(1), "hiho", sqrt(-1.0), 1.5, [1, 0], [0, 1]].each do |arg|
@@ -38927,16 +38793,16 @@ def test0028
      :make_readin, :make_sawtooth_wave, :make_sine_summation, :make_square_wave,
      :make_src, :make_sum_of_cosines, :make_sum_of_sines, :make_table_lookup,
      :make_triangle_wave, :make_two_pole, :make_two_zero, :make_wave_train, :make_ssb_am,
-     :make_waveshape, :mus_channel, :mus_channels, :make_polyshape,
+     :mus_channel, :mus_channels, :make_polyshape,
      :mus_data, :mus_feedback, :mus_feedforward,
      :mus_frequency, :mus_hop, :mus_increment, :mus_length, :mus_file_name, :mus_location,
      :mus_order, :mus_phase, :mus_ramp, :mus_random, :mus_run, :mus_scaler, :mus_xcoeffs,
      :mus_ycoeffs, :notch, :one_pole, :one_zero, :make_moving_average, :seconds2samples,
-     :samples2seconds, :oscil, :partials2polynomial, :partials2wave, :partials2waveshape,
+     :samples2seconds, :oscil, :partials2polynomial, :partials2wave,
      :phase_partials2wave, :phase_vocoder, :pulse_train, :radians2degrees, :radians2hz,
      :rand, :rand_interp, :readin, :sawtooth_wave, :sine_summation, :square_wave, :src,
      :sum_of_cosines, :sum_of_sines, :table_lookup, :tap, :triangle_wave, :two_pole,
-     :two_zero, :wave_train, :waveshape, :ssb_am].each_with_index do |n, i|
+     :two_zero, :wave_train, :ssb_am].each_with_index do |n, i|
       case (tag = Snd.catch do snd_func(n, arg) end).first
       when :wrong_type_arg, :arg_error
         next
@@ -38959,14 +38825,14 @@ def test0028
    :make_sine_summation, :make_nrxysin, :make_nrxycos,
    :make_square_wave, :make_src, :make_sum_of_cosines, :make_ncos, :make_sum_of_sines, :make_nsin,
    :make_table_lookup, :make_triangle_wave, :make_two_pole, :make_two_zero,
-   :make_wave_train, :make_waveshape, :mixer_multiply, :mixer_add,
+   :make_wave_train, :mixer_multiply, :mixer_add,
    :multiply_arrays, :notch, :one_pole, :one_zero, :oscil, :partials2polynomial,
-   :partials2wave, :partials2waveshape, :make_polyshape, :make_polywave, :phase_partials2wave,
+   :partials2wave, :make_polyshape, :make_polywave, :phase_partials2wave,
    :phase_vocoder, :polynomial, :pulse_train, :rand, :rand_interp, :rectangular2polar,
    :ring_modulate, :sample2frame, :sawtooth_wave, :sine_summation, :nrxysin, :nrxycos,
    :square_wave, :src,
    :sum_of_cosines, :ncos, :sum_of_sines, :nsin, :sine_bank, :table_lookup, :tap, :triangle_wave,
-   :two_pole, :two_zero, :wave_train, :waveshape, :ssb_am, :make_ssb_am].each do |n|
+   :two_pole, :two_zero, :wave_train, :ssb_am, :make_ssb_am].each do |n|
     case tag = (res = Snd.catch do snd_func(n, make_oscil, $vct_3) end).first
     when :wrong_type_arg, :bad_arity, :mus_error
       next
@@ -39590,8 +39456,6 @@ def test0228
   end
   check_error_tag(:out_of_range) do make_table_lookup(:size, 100, :wave, Vct.new(3)) end
   check_error_tag(:out_of_range) do make_wave_train(:size, 100, :wave, Vct.new(3)) end
-  check_error_tag(:out_of_range) do make_waveshape(:size, 100, :wave, Vct.new(3)) end
-  check_error_tag(:out_of_range) do make_waveshape(:size, 2 ** 30) end
   check_error_tag(:out_of_range) do make_granulate(:max_size, 2 ** 30) end
   check_error_tag(:out_of_range) do make_ssb_am(100, 12345678) end
   check_error_tag(:mus_error) do make_rand(:envelope, [0, 0, 1, 1], :distribution, Vct.new(10)) end
@@ -39677,7 +39541,7 @@ end
 
 def test0328
   new_wave = Vct.new(1)
-  [[:make_waveshape, :waveshape], [:make_table_lookup, :table_lookup]].each do |mg, g|
+  [[:make_table_lookup, :table_lookup]].each do |mg, g|
     gen = snd_func(mg, :wave, new_wave)
     snd_func(g, gen, 1.0)
   end

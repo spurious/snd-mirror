@@ -155,7 +155,6 @@
 #define S_make_two_pole              "make-two-pole"
 #define S_make_two_zero              "make-two-zero"
 #define S_make_wave_train            "make-wave-train"
-#define S_make_waveshape             "make-waveshape"
 #if HAVE_RUBY
   #define S_mixer_multiply           "mixer_multiply"
   #define S_mixer_add                "mixer_add"
@@ -247,7 +246,6 @@
 #define S_outd                       "outd"
 #define S_partials_to_polynomial     "partials->polynomial"
 #define S_partials_to_wave           "partials->wave"
-#define S_partials_to_waveshape      "partials->waveshape"
 #define S_parzen_window              "parzen-window"
 #define S_phase_vocoder              "phase-vocoder"
 #define S_phase_vocoder_p            "phase-vocoder?"
@@ -316,8 +314,6 @@
 #define S_ultraspherical_window      "ultraspherical-window"
 #define S_wave_train                 "wave-train"
 #define S_wave_train_p               "wave-train?"
-#define S_waveshape                  "waveshape"
-#define S_waveshape_p                "waveshape?"
 #define S_welch_window               "welch-window"
 
 #endif

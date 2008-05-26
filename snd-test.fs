@@ -1830,7 +1830,7 @@ include bird.fsm
      <'> make-sawtooth-wave <'> make-sine-summation <'> make-square-wave <'> make-src
      <'> make-sum-of-cosines <'> make-sum-of-sines <'> make-ssb-am <'> make-table-lookup
      <'> make-triangle-wave <'> make-two-pole <'> make-two-zero <'> make-wave-train
-     <'> make-waveshape <'> mixer* <'> mixer-ref <'> mixer-set!
+     <'> mixer* <'> mixer-ref <'> mixer-set!
      <'> mixer? <'> mixer+ <'> move-sound <'> make-move-sound
      <'> move-sound? <'> mus-float-equal-fudge-factor <'> multiply-arrays
      <'> mus-array-print-length
@@ -1844,7 +1844,7 @@ include bird.fsm
      <'> notch <'> notch? <'> one-pole <'> one-pole?
      <'> one-zero <'> one-zero? <'> oscil <'> oscil?
      <'> out-any <'> outa <'> outb <'> outc
-     <'> outd <'> partials->polynomial <'> partials->wave <'> partials->waveshape
+     <'> outd <'> partials->polynomial <'> partials->wave 
      <'> phase-partials->wave <'> polynomial <'> pulse-train <'> pulse-train?
      <'> radians->degrees <'> radians->hz <'> rand <'> rand-interp
      <'> rand-interp? <'>  rand? <'> readin <'> readin?
@@ -1855,8 +1855,8 @@ include bird.fsm
      <'> ssb-am <'> sum-of-cosines? <'> sum-of-sines? <'> ssb-am?
      <'> table-lookup <'> table-lookup? <'> tap <'> triangle-wave
      <'> triangle-wave? <'> two-pole <'> two-pole? <'> two-zero
-     <'> two-zero? <'> wave-train <'> wave-train? <'>  waveshape
-     <'> waveshape? <'>  make-vct <'> vct-add! <'> vct-subtract!
+     <'> two-zero? <'> wave-train <'> wave-train? 
+     <'>  make-vct <'> vct-add! <'> vct-subtract!
      <'>  vct-copy <'> vct-length <'> vct-multiply! <'> vct-offset!
      <'> vct-ref <'> vct-scale! <'> vct-fill! <'> vct-set!
      <'> mus-audio-describe <'> vct-peak <'> vct? <'> list->vct
@@ -1978,7 +1978,7 @@ include bird.fsm
      <'> make-readin <'> make-sample->file <'> make-sawtooth-wave <'> make-sine-summation
      <'> make-square-wave <'> make-src <'> make-sum-of-cosines <'> make-sum-of-sines
      <'> make-table-lookup <'> make-triangle-wave <'> make-two-pole <'> make-two-zero
-     <'> make-wave-train <'> make-waveshape <'> make-phase-vocoder <'> make-ssb-am
+     <'> make-wave-train <'> make-phase-vocoder <'> make-ssb-am
      <'> make-polyshape <'> make-color <'> make-player
      <'> make-region <'> make-scalar-mixer ) constant make-procs
 
@@ -2227,7 +2227,7 @@ include bird.fsm
        <'> rand-interp? <'> rand? <'> readin? <'> sample->file?
        <'> sawtooth-wave? <'> sine-summation? <'> square-wave? <'> src?
        <'> sum-of-cosines? <'> sum-of-sines? <'> table-lookup? <'> triangle-wave?
-       <'> two-pole? <'> two-zero? <'> wave-train? <'> waveshape?
+       <'> two-pole? <'> two-zero? <'> wave-train? 
        <'> color? <'> mix-sample-reader? <'> moving-average? <'> ssb-am?
        <'> sample-reader? <'> region-sample-reader? <'> vct? ) { ?prcs }
     args-1 each to arg
@@ -2283,7 +2283,7 @@ include bird.fsm
        <'> make-sawtooth-wave <'> make-sine-summation <'> make-square-wave <'> make-src
        <'> make-sum-of-cosines <'> make-sum-of-sines <'> make-table-lookup <'> make-triangle-wave
        <'> make-two-pole <'> make-two-zero <'> make-wave-train <'> make-ssb-am
-       <'> make-waveshape <'> mus-channel <'> mus-channels <'> make-polyshape
+       <'> mus-channel <'> mus-channels <'> make-polyshape
        <'> mus-data <'> mus-feedback <'> mus-feedforward
        <'> mus-frequency <'> mus-hop <'> mus-increment
        <'> mus-length <'> mus-file-name <'> mus-location <'> mus-order
@@ -2291,12 +2291,12 @@ include bird.fsm
        <'> mus-scaler <'> mus-xcoeffs <'> mus-ycoeffs <'> notch
        <'> one-pole <'> one-zero <'> make-moving-average <'> seconds->samples
        <'> samples->seconds <'> oscil <'> partials->polynomial <'> partials->wave
-       <'> partials->waveshape <'> phase-partials->wave <'> phase-vocoder <'> pulse-train
+       <'> phase-partials->wave <'> phase-vocoder <'> pulse-train
        <'> radians->degrees <'> radians->hz <'> rand <'> rand-interp
        <'> readin <'> sawtooth-wave <'> sine-summation <'> square-wave
        <'> src <'> sum-of-cosines <'> sum-of-sines <'> table-lookup
        <'> tap <'> triangle-wave <'> two-pole <'> two-zero
-       <'> wave-train <'> waveshape <'> ssb-am ) { clm-prcs-1 }
+       <'> wave-train <'> ssb-am ) { clm-prcs-1 }
     \ -1.0 csqrt is a number so I replaced it by #{}: make-frame -> out-of-range
     #( 1 make-array color-95 #{} ) each to arg
       clm-prcs-1 each to prc
@@ -2972,8 +2972,6 @@ include bird.fsm
     <'> make-delay 'out-of-range check-error-tag
     :size 100 :wave 3 0 make-vct <'> make-table-lookup     'out-of-range    check-error-tag
     :size 100 :wave 3 0 make-vct <'> make-wave-train       'out-of-range    check-error-tag
-    :size 100 :wave 3 0 make-vct <'> make-waveshape        'out-of-range    check-error-tag
-    :size 2 30 f** f>s         <'> make-waveshape          'out-of-range    check-error-tag
     :max-size 2 30 f** f>s     <'> make-granulate          'out-of-range    check-error-tag
     100 12345678               <'> make-ssb-am             'out-of-range    check-error-tag
     :envelope '( 0 0 1 1 ) :distribution 10 0 make-vct <'> make-rand 'mus-error check-error-tag

@@ -112,11 +112,11 @@ note lists and instruments are described in <a href="sndscm.html">sndscm.html</a
   <tr><td><a href="#ncosdoc">ncos (sum-of-cosines)</a></td><td></td><td>n equal amplitude cosines</td></tr>
   <tr><td><a href="#notchdoc">notch</a></td><td></td><td>notch filter</td></tr>
   <tr><td><a href="#nrxydoc">nrxycos</a></td><td></td><td>n scaled cosines</td></tr>
-  <tr><td><a href="#nrxydoc">nrxysin (sine-summation)</a></td><td></td><td>n scaled sines</td></tr>
 </table>
 </td>
 <td>
 <table border=0 cellpadding=0>
+  <tr><td><a href="#nrxydoc">nrxysin (sine-summation)</a></td><td></td><td>n scaled sines</td></tr>
   <tr><td><a href="#ncosdoc">nsin (sum-of-sines)</a></td><td></td><td>n equal amplitude sines</td></tr>
   <tr><td><a href="#one-poledoc">one-pole</a></td><td></td><td>one pole filter</td></tr>
   <tr><td><a href="#one-zerodoc">one-zero</a></td><td></td><td>one zero filter</td></tr>
@@ -138,7 +138,6 @@ note lists and instruments are described in <a href="sndscm.html">sndscm.html</a
   <tr><td><a href="#two-poledoc">two-pole</a></td><td></td><td>two pole filter</td></tr>
   <tr><td><a href="#two-zerodoc">two-zero</a></td><td></td><td>two zero filter</td></tr>
   <tr><td><a href="#wave-traindoc">wave-train</a></td><td></td><td>wave train</td></tr>
-  <tr><td><a href="#waveshapedoc">waveshape</a></td><td></td><td>waveshaping</td></tr>
 </table>
 </td></tr>
 
@@ -887,9 +886,8 @@ are times when nothing but a ton of oscils will do:
 <p>Related generators are 
 <a href="#ncos">ncos</a>, 
 <a href="#nsin">nsin</a>,
-<a href="#asymmetric-fm">asymmetric-fm</a>, 
-<a href="#nrxydoc">nrxysin</a>, and
-<a href="#waveshape">waveshape</a>.  
+<a href="#asymmetric-fm">asymmetric-fm</a>, and
+<a href="#nrxydoc">nrxysin</a>.
 Some instruments that use oscil are 
 <a href="sndscm.html#birddoc">bird and bigbird</a>,
 <a href="sndscm.html#fmviolin">fm-violin</a> (v),
@@ -1589,12 +1587,11 @@ See also <a href="sndscm.html#granidoc">grani</a> and <a href="sndscm.html#displ
 
 
 
-<A NAME="waveshapedoc"></A>
 <A NAME="polyshapedoc"></A>
 <A NAME="polywavedoc"></A>
-<!-- ---------------------------------------- POLYWAVE, POLYSHAPE, WAVESHAPE ---------------------------------------- -->
+<!-- ---------------------------------------- POLYWAVE, POLYSHAPE ---------------------------------------- -->
 
-<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>polywave (polyshape and waveshape)</h3></center></td></tr></table>
+<table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>polywave, polyshape</h3></center></td></tr></table>
 <br>
 <pre>
   <a class=def name="make-polywave">make-polywave</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> 
@@ -1604,15 +1601,6 @@ See also <a href="sndscm.html#granidoc">grani</a> and <a href="sndscm.html#displ
 
   <a class=def name="polywave">polywave</a> w :optional (fm 0.0)
   <a class=def name="polywave?">polywave?</a> w
-
-  <a class=def name="make-waveshape">make-waveshape</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> 
-         (frequency *clm-default-frequency*) 
-         (partials '(1 1)) 
-         wave 
-         (size *clm-table-size*)
-
-  <a class=def name="waveshape">waveshape</a> w :optional (index 1.0) (fm 0.0)
-  <a class=def name="waveshape?">waveshape?</a> w
 
   <a class=def name="make-polyshape">make-polyshape</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> 
         (frequency *clm-default-frequency*) 
@@ -1624,7 +1612,6 @@ See also <a href="sndscm.html#granidoc">grani</a> and <a href="sndscm.html#displ
   <a class=def name="polyshape">polyshape</a> w :optional (index 1.0) (fm 0.0)
   <a class=def name="polyshape?">polyshape?</a> w
 
-  <a class=def name="partialstowaveshape">partials-&gt;waveshape</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> partials (size *clm-table-size*)
   <a class=def name="partialstopolynomial">partials-&gt;polynomial</a> partials :optional (kind mus-chebyshev-first-kind)
   <a class=def name="normalizepartials">normalize-partials</a> partials
 </pre>
@@ -1638,8 +1625,8 @@ See also <a href="sndscm.html#granidoc">grani</a> and <a href="sndscm.html#displ
 A&S 22.3.15
 -->
 
-<p>polywave is the new form of polyshape; waveshape and polyshape will soon be deprecated. 
-These three generators
+<p>polywave is the new form of polyshape; polyshape may eventually be deprecated. 
+These two generators
 drive a sum of scaled Chebyshev polynomials with
 a sinusoid, creating a sort of cross between additive synthesis and FM; see
 "Digital Waveshaping Synthesis" by Marc Le Brun in JAES 1979 April, vol 27, no 4, p250.
@@ -1654,8 +1641,8 @@ input (cos theta) to get effects similar to those of FM.
 </p>
 
 <p>
-waveshape uses an internal <a href="#table-lookup">table-lookup</a> generator, polyshape uses a prebuilt sum of Chebyshev polynomials,
-and polywave uses the Chebyshev recursion.  Only polywave is stable and noise-free even with high partial numbers.
+polyshape uses a prebuilt sum of Chebyshev polynomials,
+whereas polywave uses the Chebyshev recursion.  Only polywave is stable and noise-free even with high partial numbers.
 The "partials" argument to the make function can
 be either a list or a vct.
 The "type" or "kind" argument determines which kind of Chebyshev polynomial
@@ -1703,15 +1690,15 @@ the generator.
 <td bgcolor="#fafafa">
 <pre>
 (<a class=quiet href="sndscm.html#definstrument" onmouseout="UnTip()" onmouseover="Tip(sndscm_definstrument_tip)">definstrument</a> (simp)
-  (let ((wav (<em class=red>make-waveshape</em> 
+  (let ((wav (<em class=red>make-polyshape</em> 
                :frequency 440 
                :partials '(1 .5  2 .3  3 .2))))
     (do ((i 0 (1+ i))) ((= i 10000))
-      (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (<em class=red>waveshape</em> wav)))))
+      (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (<em class=red>polyshape</em> wav)))))
 </pre>
 </td>
 <td>
-<img src="pix/waveshape.png" alt="waveshaping">
+<img src="pix/polyshape.png" alt="waveshaping">
 </td>
 </tr></table>
 
@@ -1768,11 +1755,10 @@ partials-&gt;polynomial with polyshape:
 </td></tr></table>
 
 <p>See animals.scm for many more examples along these lines.
-partials-&gt;waveshape with waveshape produces the same output as partials-&gt;polynomial with polyshape.
 normalize-partials makes sure that the component amplitudes (magnitudes) add to 1.0.  Its argument can be either a list or vct,
 but it always returns a vct.
 The <a href="sndscm.html#fmviolin">fm-violin</a> uses polyshape for the multiple FM section in some cases.
-<p>
+</p>
 
 <p>The 'type' or 'kind' argument can also be <code>mus-chebyshev-second-kind</code>. In this case, the polynomial
 turns out a sum of sines (when multiplied by sine) rather than cosines.  <a href="#make-polyoid">make-polyoid</a> (in generators.scm) combines the two forms
@@ -1810,6 +1796,8 @@ technique.  Here is a simplified example:
 <img src="pix/pqw.png" alt="pqw example">
 </td></tr></table>
 
+<!-- TODO: check this instrument! -->
+
 <p>We can use waveshaping to make a band-limited triangle-wave:
 </p>
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
@@ -1820,10 +1808,10 @@ technique.  Here is a simplified example:
 	 (j 1 (+ j 2)))
 	((&gt; i order))
       (set! freqs (cons (/ 1.0 (* j j)) (cons j freqs))))
-    (<em class=red>make-waveshape</em> frequency :wave (<em class=red>partials-&gt;waveshape</em> (reverse freqs)))))
+    (<em class=red>make-polyshape</em> frequency :partials (reverse freqs))))
 
 (define* (band-limited-triangle-wave gen :optional (fm 0.0))
-  (<em class=red>waveshape</em> gen 1.0 fm))
+  (<em class=red>polyshape</em> gen 1.0 fm))
 </pre>
 </td></tr></table>
 
@@ -1941,7 +1929,7 @@ is scaled to be -1..1, so that adds another layer of confusion). There's a longe
 							   0.0))))))))))))))))
 -->
 
-<p>To get the FM effect of a spectrum centered around a carrier, multiply the waveshape output by the carrier (the 0Hz term gives us the carrier):
+<p>To get the FM effect of a spectrum centered around a carrier, multiply the waveshaping output by the carrier (the 0Hz term gives us the carrier):
 </p>
 
 <table border=0 hspace=20>
@@ -2209,7 +2197,7 @@ slower than using the polynomial, and it is not bothered by these numerical prob
 <p>Since it is primarily used for additive synthesis,
 we might ask why we'd want polywave at all.  Leaving aside
 speed (the Chebyshev computation is much faster than the equivalent sum of oscils)
-and memory (waveshape and table-lookup use a table that has to be loaded),
+and memory (the defunct table-lookup based waveshape generator and table-lookup itself use a table that has to be loaded),
 the main reason to use polywave is accuracy.  polywave
 produces output that is cleaner than the equivalent sum of oscils, whereas table-lookup 
 and waveshape, both of which interpolate into a sampled version of the desired function, are noisy.
@@ -4156,7 +4144,7 @@ the desired distribution function; the generator takes the
 inverse of the integral of this envelope, loads that into an array, and uses
 <code>(array-interp (random array-size))</code>.  This gives
 random numbers of any arbitrary distribution at a computational cost
-equivalent to the waveshape generator (which is very similar).
+equivalent to the polyshape generator (which is very similar).
 The x axis of the envelope sets the output range (before scaling by the "amplitude" argument), and
 the y axis sets the relative weight of the corresponding x axis value.
 So, the default is <code>'(-1 1 1 1)</code> which says "output numbers between -1 and 1,

@@ -85,7 +85,7 @@
 
 /* make-env needs vct args because '(...) and (list...) return #f (') or a parser complaint (list), so...
  *   SOMEDAY: add support for ' and list: vct_1 below?
- *   the other such cases are make-waveshape, make-polyshape, partials->*
+ *   the other such cases are make-polyshape, partials->*
  *   currently make-rand|-interp distribution arg (an env) can't be a vct
  */
 
@@ -8912,7 +8912,6 @@ GEN3(all_pass)
 
 GEN3(ssb_am)
 GEN3(asymmetric_fm)
-GEN_WAVER(waveshape)
 GEN_WAVER(polyshape)
 
 GEN2(polywave)
@@ -11744,7 +11743,6 @@ CLM_MAKE_FUNC(triangle_wave)
 CLM_MAKE_FUNC(two_pole)
 CLM_MAKE_FUNC(two_zero)
 CLM_MAKE_FUNC(wave_train)
-CLM_MAKE_FUNC(waveshape)
 CLM_MAKE_FUNC(polyshape)
 CLM_MAKE_FUNC(polywave)
 
@@ -12986,7 +12984,6 @@ static void init_walkers(void)
   INIT_WALKER(S_firmant_p,        make_walker(firmant_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
   INIT_WALKER(S_formant_p,        make_walker(formant_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
   INIT_WALKER(S_wave_train_p,     make_walker(wave_train_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
-  INIT_WALKER(S_waveshape_p,      make_walker(waveshape_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
   INIT_WALKER(S_polyshape_p,      make_walker(polyshape_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
   INIT_WALKER(S_polywave_p,       make_walker(polywave_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
   INIT_WALKER(S_filter_p,         make_walker(filter_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));
@@ -13103,7 +13100,6 @@ static void init_walkers(void)
   INIT_WALKER(S_frame_ref,      make_walker(frame_ref_0, NULL, frame_set_1, 2, 2, R_FLOAT, false, 2, R_CLM, R_INT));
   INIT_WALKER(S_frame_set,      make_walker(frame_set_2, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_CLM, R_INT, R_NUMBER));
   INIT_WALKER(S_wave_train,     make_walker(wave_train_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
-  INIT_WALKER(S_waveshape,      make_walker(waveshape_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_polyshape,      make_walker(polyshape_1, NULL, NULL, 1, 3, R_FLOAT, false, 3, R_CLM, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_polywave,       make_walker(polywave_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
   INIT_WALKER(S_iir_filter,     make_walker(iir_filter_1, NULL, NULL, 1, 2, R_FLOAT, false, 2, R_CLM, R_NUMBER));
@@ -13209,7 +13205,6 @@ static void init_walkers(void)
   INIT_WALKER(S_make_two_pole,       make_walker(make_two_pole_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_two_zero,       make_walker(make_two_zero_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_wave_train,     make_walker(make_wave_train_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
-  INIT_WALKER(S_make_waveshape,      make_walker(make_waveshape_1, NULL, NULL, 0, 8, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_polyshape,      make_walker(make_polyshape_1, NULL, NULL, 0, 8, R_CLM, false, 1, -R_XEN));
   INIT_WALKER(S_make_polywave,       make_walker(make_polywave_1, NULL, NULL, 0, 6, R_CLM, false, 1, -R_XEN));
 

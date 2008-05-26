@@ -4125,7 +4125,7 @@ static XEN g_wave_train_p(XEN obj)
 
 
 
-/* ---------------- waveshape ---------------- */
+/* ---------------- waveshaping ---------------- */
 
 enum {NO_PROBLEM_IN_LIST, NULL_LIST, ODD_LENGTH_LIST, NON_NUMBER_IN_LIST, NEGATIVE_NUMBER_IN_LIST};
 
@@ -4194,7 +4194,7 @@ static Float *list_to_partials(XEN harms, int *npartials, int *error_code)
 
   partials = (Float *)CALLOC(maxpartial + 1, sizeof(Float));
   if (partials == NULL)
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate waveshape partials list");
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate waveshaping partials list");
   (*npartials) = maxpartial + 1;
   for (i = 0, lst = XEN_COPY_ARG(harms); i < listlen; i += 2, lst = XEN_CDDR(lst))
     {
@@ -4236,7 +4236,7 @@ Float *mus_vct_to_partials(vct *v, int *npartials, int *error_code)
 
   partials = (Float *)CALLOC(maxpartial + 1, sizeof(Float));
   if (partials == NULL)
-    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate waveshape partials list");
+    mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate waveshaping partials list");
   (*npartials) = maxpartial + 1;
 
   for (i = 0; i < len; i += 2)
@@ -4245,169 +4245,6 @@ Float *mus_vct_to_partials(vct *v, int *npartials, int *error_code)
       partials[curpartial] = v->data[i + 1];
     }
   return(partials);
-}
-
-
-static XEN g_make_waveshape(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7, XEN arg8)
-{
-  #if HAVE_SCHEME
-    #define make_waveshape_example "(" S_make_waveshape " :wave (" S_partials_to_waveshape " '(1 1.0)))"
-  #endif
-  #if HAVE_RUBY
-    #define make_waveshape_example "make_waveshape(:wave, partials2waveshape([1, 1.0]))"
-  #endif
-  #if HAVE_FORTH
-    #define make_waveshape_example "440.0 '( 1 1.0 ) make-waveshape"
-  #endif
-
-  #define H_make_waveshape "(" S_make_waveshape " (:frequency *clm-default-frequency*) (:partials '(1 1)) (:size clm-table-size) :wave): \
-return a new waveshaping generator (essentially table-lookup driven by a sinewave)\n  " make_waveshape_example " \n\
-is the same in effect as " S_make_oscil
-
-  mus_any *ge;
-  XEN args[8]; 
-  XEN keys[4];
-  int orig_arg[4] = {0, 0, 0, 0};
-  int vals, wsize = 0, npartials = 0;
-  bool partials_allocated = false;
-  vct *v = NULL;
-  XEN orig_v = XEN_FALSE;
-  Float freq;
-  Float *wave = NULL, *partials = NULL;
-
-  wsize = clm_table_size;
-  freq = clm_default_frequency;
-
-  keys[0] = kw_frequency;
-  keys[1] = kw_partials;
-  keys[2] = kw_size;
-  keys[3] = kw_wave;
-  args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6; args[6] = arg7; args[7] = arg8;
-
-  vals = mus_optkey_unscramble(S_make_waveshape, 4, keys, args, orig_arg);
-  if (vals > 0)
-    {
-      freq = mus_optkey_to_float(keys[0], S_make_waveshape, orig_arg[0], freq);
-      if (freq > (0.5 * mus_srate()))
-	XEN_OUT_OF_RANGE_ERROR(S_make_waveshape, orig_arg[0], keys[0], "freq ~A > srate/2?");
-
-      v = mus_optkey_to_vct(keys[3], S_make_waveshape, orig_arg[3], NULL);
-      if (v)
-	{
-	  orig_v = keys[3];
-	  wave = v->data;
-	  wsize = v->length;
-	}
-
-      wsize = mus_optkey_to_int(keys[2], S_make_waveshape, orig_arg[2], wsize);
-      if (wsize <= 0)
-	XEN_OUT_OF_RANGE_ERROR(S_make_waveshape, orig_arg[2], keys[2], "table size ~A <= 0?");
-      if (wsize > MAX_TABLE_SIZE)
-	XEN_OUT_OF_RANGE_ERROR(S_make_waveshape, orig_arg[2], keys[2], "table size ~A too big?");
-      if ((v) && (wsize > v->length))
-	XEN_OUT_OF_RANGE_ERROR(S_make_waveshape, orig_arg[3], keys[3], "size arg ~A bigger than size of provided wave");
-
-      if (!(XEN_KEYWORD_P(keys[1])))
-        {
-	  int error = NO_PROBLEM_IN_LIST;
-	  if (MUS_VCT_P(keys[1]))
-	    partials = mus_vct_to_partials(XEN_TO_VCT(keys[1]), &npartials, &error);
-	  else
-	    {
-	      XEN_ASSERT_TYPE(XEN_LIST_P(keys[1]), keys[1], orig_arg[1], S_make_waveshape, "a list");
-	      partials = list_to_partials(keys[1], &npartials, &error);
-	    }
-	  partials_allocated = true;
-	  if (partials == NULL)
-	    XEN_ERROR(NO_DATA, 
-		      XEN_LIST_3(C_TO_XEN_STRING(S_make_waveshape), 
-				 C_TO_XEN_STRING(list_to_partials_error_to_string(error)), 
-				 keys[1]));
-        }
-    }
-
-  if (wave == NULL) 
-    {
-      if (partials == NULL)
-	{
-	  /* clm.html says '(1 1) is the default */
-	  Float data[2];
-	  data[0] = 0.0; /* this is partial 0 */
-	  data[1] = 1.0; /* partial 1 */
-	  wave = mus_partials_to_waveshape(2, data, wsize, (Float *)CALLOC(wsize, sizeof(Float)));
-	}
-      else wave = mus_partials_to_waveshape(npartials, partials, wsize, (Float *)CALLOC(wsize, sizeof(Float)));
-      orig_v = xen_make_vct(wsize, wave);
-    }
-  if (partials_allocated) {FREE(partials); partials = NULL;}
-  ge = mus_make_waveshape(freq, 0.0, wave, wsize);  /* or initial-phase = M_PI_2 -- see note under make_polyshape */
-  if (ge) return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, orig_v)));
-  return(XEN_FALSE);
-}
-
-
-static XEN g_waveshape(XEN obj, XEN index, XEN fm)
-{
-  #define H_waveshape "(" S_waveshape " gen :optional (index 1.0) (fm 0.0)): next sample of waveshaper"
-  Float fm1 = 0.0, index1 = 1.0;
-  XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_waveshape_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_waveshape, "a waveshape generator");
-  if (XEN_NUMBER_P(index)) index1 = XEN_TO_C_DOUBLE(index); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(index), index, XEN_ARG_2, S_waveshape, "a number");
-  if (XEN_NUMBER_P(fm)) fm1 = XEN_TO_C_DOUBLE(fm); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(fm), fm, XEN_ARG_3, S_waveshape, "a number");
-  return(C_TO_XEN_DOUBLE(mus_waveshape(XEN_TO_MUS_ANY(obj), index1, fm1)));
-}
-
-
-static XEN g_waveshape_p(XEN obj) 
-{
-  #define H_waveshape_p "(" S_waveshape_p " gen): " PROC_TRUE " if gen is a " S_waveshape
-  return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_waveshape_p(XEN_TO_MUS_ANY(obj)))));
-}
-
-
-static XEN g_partials_to_waveshape(XEN amps, XEN s_size)
-{
-  #if HAVE_SCHEME
-    #define p2w_example "(" S_partials_to_waveshape " '(2 1.0 3 .5))"
-  #endif
-  #if HAVE_RUBY
-    #define p2w_example "partials2waveshape([2, 1.0, 3, 0.5])"
-  #endif
-  #if HAVE_FORTH
-    #define p2w_example "'( 2 1.0 3 0.5 ) partials->waveshape"
-  #endif
-
-  #define H_partials_to_waveshape "(" S_partials_to_waveshape " partials :optional (resultant-table-size 512)): \
-produce a waveshaping lookup table (suitable for the " S_waveshape " generator) \
-that will produce the harmonic spectrum given by the partials argument. " p2w_example " returns \
-partial 2 twice as loud as 3."
-
-  int npartials = 0, size;
-  Float *partials, *wave;
-  XEN gwave;
-  int error = NO_PROBLEM_IN_LIST;
-
-  XEN_ASSERT_TYPE(MUS_VCT_P(amps) || XEN_LIST_P(amps), amps, XEN_ARG_1, S_partials_to_waveshape, "a list or a vct");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(s_size), s_size, XEN_ARG_2, S_partials_to_waveshape, "an integer");
-  if (XEN_INTEGER_P(s_size))
-    size = XEN_TO_C_INT(s_size);
-  else size = clm_table_size;
-  if ((size <= 0) || (size > MAX_TABLE_SIZE))
-    XEN_OUT_OF_RANGE_ERROR(S_partials_to_waveshape, 2, s_size, "~A: bad size?");
-
-  if (MUS_VCT_P(amps))
-    partials = mus_vct_to_partials(XEN_TO_VCT(amps), &npartials, &error);
-  else partials = list_to_partials(amps, &npartials, &error);
-
-  if (partials == NULL)
-    XEN_ERROR(NO_DATA, 
-	      XEN_LIST_3(C_TO_XEN_STRING(S_partials_to_waveshape), 
-			 C_TO_XEN_STRING(list_to_partials_error_to_string(error)), 
-			 amps));
-
-  wave = mus_partials_to_waveshape(npartials, partials, size, (Float *)CALLOC(size, sizeof(Float)));
-  gwave = xen_make_vct(size, wave);
-  FREE(partials);
-  return(xen_return_first(gwave, amps));
 }
 
 
@@ -4620,7 +4457,7 @@ is the same in effect as " S_make_oscil
 
 static XEN g_polywave(XEN obj, XEN fm)
 {
-  #define H_polywave "(" S_polywave " gen :optional (fm 0.0)): next sample of polynomial-based waveshaper"
+  #define H_polywave "(" S_polywave " gen :optional (fm 0.0)): next sample of polywave waveshaper"
   Float fm1 = 0.0;
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_polywave_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_polywave, "a polywave generator");
   if (XEN_NUMBER_P(fm)) fm1 = XEN_TO_C_DOUBLE(fm); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(fm), fm, XEN_ARG_3, S_polywave, "a number");
@@ -7839,13 +7676,9 @@ XEN_ARGIFY_3(g_sample_to_frame_w, g_sample_to_frame)
 XEN_VARGIFY(g_make_wave_train_w, g_make_wave_train)
 XEN_ARGIFY_2(g_wave_train_w, g_wave_train)
 XEN_NARGIFY_1(g_wave_train_p_w, g_wave_train_p)
-XEN_ARGIFY_8(g_make_waveshape_w, g_make_waveshape)
-XEN_ARGIFY_3(g_waveshape_w, g_waveshape)
-XEN_NARGIFY_1(g_waveshape_p_w, g_waveshape_p)
 XEN_VARGIFY(g_make_polyshape_w, g_make_polyshape)
 XEN_ARGIFY_3(g_polyshape_w, g_polyshape)
 XEN_NARGIFY_1(g_polyshape_p_w, g_polyshape_p)
-XEN_ARGIFY_2(g_partials_to_waveshape_w, g_partials_to_waveshape)
 XEN_ARGIFY_2(g_partials_to_polynomial_w, g_partials_to_polynomial)
 XEN_NARGIFY_1(g_normalize_partials_w, g_normalize_partials)
 XEN_VARGIFY(g_make_polywave_w, g_make_polywave)
@@ -8145,13 +7978,9 @@ XEN_NARGIFY_2(g_mus_equalp_w, equalp_mus_xen)
 #define g_make_wave_train_w g_make_wave_train
 #define g_wave_train_w g_wave_train
 #define g_wave_train_p_w g_wave_train_p
-#define g_make_waveshape_w g_make_waveshape
-#define g_waveshape_w g_waveshape
-#define g_waveshape_p_w g_waveshape_p
 #define g_make_polyshape_w g_make_polyshape
 #define g_polyshape_w g_polyshape
 #define g_polyshape_p_w g_polyshape_p
-#define g_partials_to_waveshape_w g_partials_to_waveshape
 #define g_partials_to_polynomial_w g_partials_to_polynomial
 #define g_normalize_partials_w g_normalize_partials
 #define g_make_polywave_w g_make_polywave
@@ -8629,13 +8458,9 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_mus_set_formant_radius_and_frequency, g_set_formant_radius_and_frequency_w, 3, 0, 0, H_mus_set_formant_radius_and_frequency);
 
 
-  XEN_DEFINE_PROCEDURE(S_make_waveshape,         g_make_waveshape_w,         0, 8, 0, H_make_waveshape);
-  XEN_DEFINE_PROCEDURE(S_waveshape,              g_waveshape_w,              1, 2, 0, H_waveshape);
-  XEN_DEFINE_PROCEDURE(S_waveshape_p,            g_waveshape_p_w,            1, 0, 0, H_waveshape_p);
   XEN_DEFINE_PROCEDURE(S_make_polyshape,         g_make_polyshape_w,         0, 0, 1, H_make_polyshape);
   XEN_DEFINE_PROCEDURE(S_polyshape,              g_polyshape_w,              1, 2, 0, H_polyshape);
   XEN_DEFINE_PROCEDURE(S_polyshape_p,            g_polyshape_p_w,            1, 0, 0, H_polyshape_p);
-  XEN_DEFINE_PROCEDURE(S_partials_to_waveshape,  g_partials_to_waveshape_w,  1, 1, 0, H_partials_to_waveshape);
   XEN_DEFINE_PROCEDURE(S_partials_to_polynomial, g_partials_to_polynomial_w, 1, 1, 0, H_partials_to_polynomial);
   XEN_DEFINE_PROCEDURE(S_normalize_partials,     g_normalize_partials_w,     1, 0, 0, H_normalize_partials);
   XEN_DEFINE_PROCEDURE(S_make_polywave,          g_make_polywave_w,          0, 0, 1, H_make_polywave);
@@ -8954,7 +8779,6 @@ void mus_xen_init(void)
 	       S_make_two_pole,
 	       S_make_two_zero,
 	       S_make_wave_train,
-	       S_make_waveshape,
 	       S_mixer_add,
 	       S_mixer_multiply,
 	       S_mixer_p,
@@ -9044,7 +8868,6 @@ void mus_xen_init(void)
 	       S_output,
 	       S_partials_to_polynomial,
 	       S_partials_to_wave,
-	       S_partials_to_waveshape,
 	       S_parzen_window,
 	       S_phase_partials_to_wave,
 	       S_phase_vocoder,
@@ -9114,8 +8937,6 @@ void mus_xen_init(void)
 	       S_ultraspherical_window,
 	       S_wave_train,
 	       S_wave_train_p,
-	       S_waveshape,
-	       S_waveshape_p,
 	       S_welch_window,
 	       NULL);
 #endif

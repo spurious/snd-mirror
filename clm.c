@@ -111,7 +111,7 @@ memmove (void *dest0, void const *source0, size_t length)
 enum {MUS_OSCIL, MUS_NCOS, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PASS,
       MUS_TABLE_LOOKUP, MUS_SQUARE_WAVE, MUS_SAWTOOTH_WAVE, MUS_TRIANGLE_WAVE, MUS_PULSE_TRAIN,
       MUS_RAND, MUS_RAND_INTERP, MUS_ASYMMETRIC_FM, MUS_ONE_ZERO, MUS_ONE_POLE, MUS_TWO_ZERO, MUS_TWO_POLE, MUS_FORMANT,
-      MUS_WAVESHAPE, MUS_SRC, MUS_GRANULATE, MUS_WAVE_TRAIN, 
+      MUS_SRC, MUS_GRANULATE, MUS_WAVE_TRAIN, 
       MUS_FILTER, MUS_FIR_FILTER, MUS_IIR_FILTER, MUS_CONVOLVE, MUS_ENV, MUS_LOCSIG,
       MUS_FRAME, MUS_READIN, MUS_FILE_TO_SAMPLE, MUS_FILE_TO_FRAME,
       MUS_SAMPLE_TO_FILE, MUS_FRAME_TO_FILE, MUS_MIXER, MUS_PHASE_VOCODER,
@@ -2336,216 +2336,7 @@ mus_any *mus_make_table_lookup(Float freq, Float phase, Float *table, int table_
 
 
 
-/* ---------------- waveshape ---------------- */
-
-typedef struct {
-  mus_any_class *core;
-  mus_any *o;
-  Float *table;
-  int table_size;
-  Float offset;
-  bool table_allocated;
-} ws;
-
-
-static int free_ws(mus_any *pt) 
-{
-  ws *ptr = (ws *)pt;
-  if (ptr) 
-    {
-      mus_free(ptr->o);
-      if ((ptr->table) && (ptr->table_allocated)) FREE(ptr->table);
-      FREE(ptr); 
-    }
-  return(0);
-}
-
-
-static Float ws_freq(mus_any *ptr) {return(mus_frequency(((ws *)ptr)->o));}
-static Float ws_set_freq(mus_any *ptr, Float val) {return(mus_set_frequency(((ws *)ptr)->o, val));}
-
-static Float ws_increment(mus_any *ptr) {return(mus_increment(((ws *)ptr)->o));}
-static Float ws_set_increment(mus_any *ptr, Float val) {return(mus_set_increment(((ws *)ptr)->o, val));}
-
-static Float ws_phase(mus_any *ptr) {return(mus_phase(((ws *)ptr)->o));}
-static Float ws_set_phase(mus_any *ptr, Float val) {return(mus_set_phase(((ws *)ptr)->o, val));}
-
-static off_t ws_size(mus_any *ptr) {return(((ws *)ptr)->table_size);}
-static off_t ws_set_size(mus_any *ptr, off_t val) {((ws *)ptr)->table_size = (int)val; return(val);}
-
-static Float *ws_data(mus_any *ptr) {return(((ws *)ptr)->table);}
-
-
-static void ws_reset(mus_any *ptr)
-{
-  ws *gen = (ws *)ptr;
-  oscil_reset(gen->o);
-  mus_clear_array(gen->table, gen->table_size);
-}
-
-
-static bool ws_equalp(mus_any *p1, mus_any *p2)
-{
-  ws *w1 = (ws *)p1;
-  ws *w2 = (ws *)p2;
-  if (p1 == p2) return(true);
-  return((w1) && (w2) &&
-	 (w1->core->type == w2->core->type) &&
-	 (mus_equalp(w1->o, w2->o)) &&
-	 (w1->table_size == w2->table_size) &&
-	 (w1->offset == w2->offset) &&
-	 (clm_arrays_are_equal(w1->table, w2->table, w1->table_size)));
-}
-
-
-static Float *ws_set_data(mus_any *ptr, Float *val) 
-{
-  ws *gen = (ws *)ptr;
-  if (gen->table_allocated) {FREE(gen->table); gen->table_allocated = false;}
-  gen->table = val; 
-  return(val);
-}
-
-
-static char *describe_waveshape(mus_any *ptr)
-{
-  mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s freq: %.3fHz, phase: %.3f, size: %d",
-	       mus_name(ptr),
-	       mus_frequency(ptr),
-	       mus_phase(ptr),
-	       (int)ws_size(ptr));
-  return(describe_buffer);
-}
-
-
-static mus_any_class WAVESHAPE_CLASS = {
-  MUS_WAVESHAPE,
-  (char *)S_waveshape,
-  &free_ws,
-  &describe_waveshape,
-  &ws_equalp,
-  &ws_data,
-  &ws_set_data,
-  &ws_size,
-  &ws_set_size,
-  &ws_freq,
-  &ws_set_freq,
-  &ws_phase,
-  &ws_set_phase,
-  &fallback_scaler, 0,
-  &ws_increment,
-  &ws_set_increment,
-  &mus_waveshape,
-  MUS_NOT_SPECIAL, 
-  NULL, 0,
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0,
-  &ws_reset,
-  0
-};
-
-
-bool mus_waveshape_p(mus_any *ptr) 
-{
-  return((ptr) && 
-	 (ptr->core->type == MUS_WAVESHAPE));
-}
-
-
-mus_any *mus_make_waveshape(Float frequency, Float phase, Float *table, int size)
-{
-  ws *gen;
-  gen = (ws *)clm_calloc(1, sizeof(ws), S_make_waveshape);
-  gen->core = &WAVESHAPE_CLASS;
-  gen->o = mus_make_oscil(frequency, phase);
-  if (table)
-    {
-      gen->table = table;
-      gen->table_allocated = false;
-    }
-  else
-    {
-      gen->table = (Float *)clm_calloc_atomic(size, sizeof(Float), "waveshape table");
-      gen->table_allocated = true;
-    }
-  gen->table_size = size;
-  gen->offset = (Float)(size - 1) / 2.0;
-  return((mus_any *)gen);
-}
-
-
-Float mus_waveshape(mus_any *ptr, Float index, Float fm)
-{
-  ws *gen = (ws *)ptr;
-  Float table_index;
-  table_index = gen->offset * (1.0 + (mus_oscil_fm(gen->o, fm) * index));
-  return(mus_array_interp(gen->table, table_index, gen->table_size));
-}
-
-
-Float mus_waveshape_fm(mus_any *ptr, Float fm)
-{
-  ws *gen = (ws *)ptr;
-  Float table_index;
-  table_index = gen->offset * (1.0 + mus_oscil_fm(gen->o, fm));
-  return(mus_array_interp(gen->table, table_index, gen->table_size));
-}
-
-
-Float mus_waveshape_unmodulated(mus_any *ptr, Float index)
-{
-  ws *gen = (ws *)ptr;
-  Float table_index;
-  table_index = gen->offset * (1.0 + (mus_oscil_unmodulated(gen->o) * index));
-  return(mus_array_interp(gen->table, table_index, gen->table_size));
-}
-
-
-Float mus_waveshape_no_input(mus_any *ptr) /* default index is 1.0 */
-{
-  ws *gen = (ws *)ptr;
-  Float table_index;
-  table_index = gen->offset * (1.0 + mus_oscil_unmodulated(gen->o));
-  return(mus_array_interp(gen->table, table_index, gen->table_size));
-}
-
-
-Float *mus_partials_to_waveshape(int npartials, Float *partials, int size, Float *table)
-{
-  /* partials incoming is a list of partials amps indexed by partial number */
-  /* #<0.0, 0.0, 1.0> = 2nd partial 1.0, rest 0. from (partials->waveshape (vct 2 1)) */
-  int i;
-  Float maxI2, x;
-  Float *data;
-
-  if (partials == NULL) return(NULL);
-  if (table == NULL)
-    data = (Float *)clm_calloc_atomic(size, sizeof(Float), "waveshape table");
-  else data = table;
-  if (data == NULL) return(NULL);
-
-  maxI2 = 2.0 / (Float)(size - 1); /* was size, but mus.lisp was correct?!? */
-  for (i = 0, x = -1.0; i < size; i++, x += maxI2)
-    {
-      Float temp, Tn, Tn1, sum;
-      int hnum;
-      sum = 0.0;
-      temp = 0.0;
-      Tn = 1.0;
-      Tn1 = x;
-      for (hnum = 0; hnum < npartials; hnum++)
-	{
-	  sum += (Tn * partials[hnum]);
-	  temp = Tn1;
-	  Tn1 = (2.0 * Tn1 * x) - Tn;
-	  Tn = temp;
-	}
-      data[i] = sum;
-    }
-  return(array_normalize(data, size));
-}
-
+/* ---------------- polywave ---------------- */
 
 Float *mus_partials_to_polynomial(int npartials, Float *partials, mus_polynomial_t kind)
 {
@@ -2618,8 +2409,6 @@ Float *mus_normalize_partials(int num_partials, Float *partials)
 }
 
 
-
-/* ---------------- polywave ---------------- */
 
 typedef struct {
   mus_any_class *core;
@@ -2706,7 +2495,7 @@ static Float poly_TU(mus_any *ptr, Float fm)
 
   if (gen->cheby_choice != MUS_CHEBYSHEV_SECOND_KIND)
     return((Float)(b - b1 * x));
-  return((Float)(b - b1 * x2));
+  return((Float)(b));
 }
 
 

@@ -5642,23 +5642,114 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;;
 ;;; polyoid -- Tn + Un to get arbitrary initial-phases
 
+#|
 (defgenerator (polyoid
 	       :make-wrapper (lambda (g)
 			       (let* ((lst (polyoid-partial-amps-and-phases g))
-				      (len (length lst))
+				      (len (vct-length lst))
 				      (topk (let ((n 0))
 					      (do ((i 0 (+ i 3)))
 						  ((>= i len))
-						(set! n (max n (list-ref lst i))))
+						(set! n (max n (vct-ref lst i))))
+					      n))
+				      (sin-amps (make-vct (+ topk 1)))
+				      (cos-amps (make-vct (+ topk 1))))
+				 (do ((j 0 (+ j 3))
+				      (i 0 (+ i 1)))
+				     ((>= j len))
+				   (let ((n (inexact->exact (vct-ref lst j)))
+					 (amp (vct-ref lst (+ j 1)))
+					 (phase (vct-ref lst (+ j 2))))
+				     (if (> n 0)                                          ; constant only applies to cos side
+					 (vct-set! sin-amps (- n 1) (* amp (cos phase)))) ; Un = sin(n+1)/sin(n) then we multiply bby sin(n)
+				     (vct-set! cos-amps n (* amp (sin phase)))))
+				 (set! (polyoid-tn g) cos-amps)
+				 (set! (polyoid-un g) sin-amps)
+				 (set! (polyoid-frequency g) (hz->radians (polyoid-frequency g)))
+				 g)))
+  (frequency *clm-default-frequency*) (partial-amps-and-phases #f :type vct) (angle 0.0)
+  (tn #f :type vct) (un #f :type vct))
+
+
+(define (polyoid gen fm)
+  (declare (gen polyoid) (fm float))
+  (let* ((tn (polyoid-tn gen))
+	 (un (polyoid-un gen))
+	 (n (vct-length tn))
+	 (x (polyoid-angle gen))
+	 (cx (cos x))
+	 (cx2 (* 2 cx))
+	 (sx (sin x))
+	 (cx-val 0.0)
+	 (sx-val 0.0))
+
+    (set! (polyoid-angle gen) (+ x fm (polyoid-frequency gen)))
+
+    (let ((b (vct-ref tn (- n 1)))
+	  (b1 0.0)
+	  (b2 0.0))
+      (do ((i (- n 2) (- i 1)))
+	  ((< i 0))
+	(set! b2 b1)
+	(set! b1 b)
+	(set! b (+ (* cx2 b1) (- b2) (vct-ref tn i))))
+      (set! cx-val (- b (* b1 cx))))
+
+    (let ((b (vct-ref un (- n 1)))
+	  (b1 0.0)
+	  (b2 0.0))
+      (do ((i (- n 2) (- i 1)))
+	  ((< i 0))
+	(set! b2 b1)
+	(set! b1 b)
+	(set! b (+ (* cx2 b1) (- b2) (vct-ref un i))))
+      (set! sx-val b))
+
+    (+ cx-val (* sx sx-val))))
+|#
+
+#|
+(with-sound (:clipped #f)
+  (let ((samps 44100)
+	(gen (make-polyoid 100.0 (vct 1 1 0.0))))
+    (do ((i 0 (1+ i)))
+	((= i samps))
+      (outa i (polyoid gen 0.0)))))
+
+(with-sound (:clipped #f)
+  (let ((samps 44100)
+	(gen (make-polywave 100.0 '(1 1) mus-chebyshev-second-kind))
+	(gen1 (make-oscil 100.0)))
+    (set! (mus-phase gen) (* 0.5 pi))
+    (do ((i 0 (1+ i)))
+	((= i samps))
+      (outa i (* (oscil gen1) (polywave gen 0.0))))))
+|#
+
+
+;;; TODO: doc/test polyoid
+
+
+
+;;;; old polyoid
+
+(defgenerator (polyoid
+	       :make-wrapper (lambda (g)
+			       (let* ((lst (polyoid-partial-amps-and-phases g))
+				      (len (vct-length lst))
+				      (topk (let ((n 0))
+					      (do ((i 0 (+ i 3)))
+						  ((>= i len))
+						(set! n (max n (vct-ref lst i))))
 					      n))
 				      (sin-amps (make-vct (* 2 topk)))
 				      (cos-amps (make-vct (* 2 topk))))
 				 (do ((j 0 (+ j 3))
 				      (i 0 (+ i 2)))
 				     ((>= j len))
-				   (let ((n (list-ref lst j))
-					 (amp (list-ref lst (+ j 1)))
-					 (phase (list-ref lst (+ j 2))))
+				   (let ((n (vct-ref lst j))
+					 (amp (vct-ref lst (+ j 1)))
+					 (phase (vct-ref lst (+ j 2))))
 				     (vct-set! sin-amps i n)
 				     (vct-set! cos-amps i n)
 				     (vct-set! sin-amps (+ i 1) (* amp (cos phase)))
@@ -5667,7 +5758,7 @@ index 10 (so 10/2 is the bes-jn arg):
 				 (set! (polyoid-un g) (partials->polynomial sin-amps mus-chebyshev-second-kind))
 				 (set! (polyoid-frequency g) (hz->radians (polyoid-frequency g)))
 				 g)))
-  (frequency *clm-default-frequency*) (partial-amps-and-phases #f :type list) (angle 0.0)
+  (frequency *clm-default-frequency*) (partial-amps-and-phases #f :type vct) (angle 0.0)
   (tn #f :type vct) (un #f :type vct))
 
 
@@ -5684,19 +5775,6 @@ index 10 (so 10/2 is the bes-jn arg):
     (+ (polynomial tn cx)
        (* sx (polynomial un cx)))))
 
-#|
-(with-sound (:clipped #f)
-  (let ((samps 44100)
-	(gen (make-polyoid 100.0 (list 1 1 0.0))))
-    (do ((i 0 (1+ i)))
-	((= i samps))
-      (outa i (polyoid gen 0.0)))))
-|#
-
-
-;;; TODO: doc/test polyoid
-
-
 
 
 ;;; --------------------------------------------------------------------------------
@@ -5708,23 +5786,21 @@ index 10 (so 10/2 is the bes-jn arg):
 			       (let ((n (noid-n g))
 				     (frq (noid-frequency g))
 				     (phases (noid-phases g)))
-				 (set! (noid-gen g) (make-polyoid frq (let ((amps '()))
-									(do ((i 1 (1+ i)))
-									    ((> i n))
-									  (set! amps (cons 
-										      (if (vct? phases)
-											  (vct-ref phases (1- i))
-											  (random (* 2 pi)))
-										      (cons 1 (cons i amps)))))
-									(reverse amps))))
-			       g)))
-  (frequency 0.0) (n 1 :type int) (phases #f :type vct) 
-  (gen #f :type polyoid))
+				 (make-polyoid frq (let ((amps (make-vct (* 3 n))))
+						     (do ((i 1 (1+ i))
+							  (j 0 (+ j 3)))
+							 ((> i n))
+						       (vct-set! amps j i)
+						       (vct-set! amps (+ j 1) (/ 1.0 n))
+						       (vct-set! amps (+ j 2) 
+								 (if (vct? phases)
+								     (vct-ref phases (1- i))
+								     (random (* 2 pi)))))
+						     amps)))))
+  (frequency 0.0) (n 1 :type int) (phases #f :type vct))
 
+(define noid polyoid)
 
-(define (noid gen fm)
-  (declare (gen noid) (fm float))
-  (/ (polyoid (noid-gen gen) fm) (noid-n gen)))
 
 
 #|
@@ -5763,11 +5839,109 @@ index 10 (so 10/2 is the bes-jn arg):
       (outb i (nold gen2 0.0)))))
 |#
 
+
+#|
+1  1.0    #(0)
+
+2  1.76   #(0 0)
+
+3  1.980  #(0 23/39 6/19):  -0.775 0.303 4.954
+
+4  2.050  #(0 45/37 25/31 8/7)
+   2.040  #(0 33/35 67/50 10/9)
+
+5  2.383  #(0 34/29 9/29 47/78 2/5)
+   2.361  #(0 59/71 68/41 43/30 61/38)
+
+6  2.621  #(0 13/7 6/43 1/6 54/49 55/28)
+   2.567  #(0 36/19 7/25 18/55 23/17 5/26)
+
+7  2.715  #(0 7/48 31/29 38/29 11/14 3/2 89/79)
+
+8  3.1436 #(0 22/13 24/23 22/27 32/27 35/24 9/23 92/67)
+
+9  3.2793 #(0 46/91 3/22 23/37 85/171 7/44 56/33 31/44 40/33)
+
+10 3.4332 #(0 2/27 41/23 3/20 33/40 29/21 51/31 18/19 9/53 25/19)
+
+11 3.5519 #(0 28/29 4/27 4/23 34/33 67/34 11/30 1/13 33/31 31/22 19/17)
+
+12 3.9263 #(0 49/27 7/40 12/25 67/40 8/5 47/41 19/30 35/23 18/29 35/22 54/37)
+
+13 4.1939 #(0 53/39 40/29 7/16 2/21 10/53 24/29 81/41 49/34 4/13 25/16 37/21 33/17)
+
+16 4.778  #(0 5/13 18/37 14/57 1/5 12/47 21/13 73/85 43/22 
+	    19/14 39/70 41/47 7/57 37/34 45/29 1/17)
+
+32 7.4789 #(0 52/29 3/16 119/143 203/152 12/29 38/21 35/24 
+	    15/22 95/73 8/31 16/21 29/19 17/76 1/93 28/29 
+	    67/35 65/36 17/30 29/19 34/23 33/20 14/15 3/13 
+	    19/25 31/37 16/15 83/95 50/39 35/29 83/62 38/41)
+   7.4610  #(0 8/27 34/27 17/10 75/76 6/7 26/19 23/12 131/80 
+	     10/49 20/19 467/234 74/47 22/13 61/34 11/28 2/27 
+	     43/30 32/25 131/66 49/31 80/47 18/19 5/11 224/149 
+	     117/116 7/15 41/34 32/77 31/33 32/17 2/5))
+   7.2150  #(0 41/35 19/42 3/38 148/91 37/24 76/43 4/7 1/17 4/29
+             88/59 313/188 1/30 53/40 29/17 8/25 7/26 18/11 9/29 
+             6/25 248/149 6/17 95/49 76/91 54/43 26/19 16/35 73/53 
+             33/29 33/23 79/41 3/13)
+
+64 10.968 #(0 47/33 170/113 58/57 7/27 89/46 29/24 55/47 15/29 
+	    8/31 71/52 4/43 275/183 11/19 56/33 2/27 58/31 48/37 
+	    7/12 31/18 17/10 75/38 69/68 32/17 106/85 13/40 20/39 
+	    72/55 1 21/16 103/69 33/20 44/25 74/61 40/53 17/26 3/2 
+	    10/33 9/19 22/73 5/8 26/33 1/9 13/7 140/139 124/79 13/8 
+	    171/257 25/31 39/29 15/34 25/62 46/139 56/29 60/37 1/12 
+	    17/16 7/41 26/87 6/53 5/13 43/23 25/32 23/24)
+
+128 18.937 #(0 114/67 22/29 3/7 10/89 80/47 9/16 17/16 2/27 10/69 
+	     11/20 8/17 38/25 78/157 33/29 42/67 29/25 122/65 31/29 
+	     23/25 42/23 51/28 32/77 16/81 1/34 6/13 15/49 17/11 6/7 
+	     355/237 78/47 5/23 17/20 43/26 67/36 51/32 5/3 39/44 5/3 
+	     17/11 28/31 29/18 27/31 3/16 9/22 7/34 199/149 42/25 37/33 
+	     6/19 114/79 35/39 49/82 33/32 45/23 26/17 92/55 28/15 85/71 
+	     21/73 17/10 17/9 3/28 7/31 27/14 53/105 36/25 41/22 4/7 20/19 
+	     4/7 41/25 20/23 4/5 27/43 2/29 4/27 29/21 36/19 2/31 93/56 2/33 
+	     20/19 16/11 15/34 33/17 23/19 29/26 20/27 49/25 15/23 25/76 48/67 
+	     10/7 2/35 20/13 2/21 27/37 43/65 57/44 35/39 137/96 146/117 37/42 
+	     47/24 69/40 18/53 4/3 17/13 81/53 7/18 51/55 19/11 29/23 65/64 
+	     55/46 1/7 7/53 19/20 56/33 7/27 79/41 25/21 114/113 35/22 44/43 
+	     38/63 1/47)
+|#
+
 ;;; TODO: doc/test noid ("the unpulse") -- for small n this could use polyoid
 ;;; TODO: if :minimize-peak, remember norm, :maximize-peak->ncos
 ;;; TODO: would these phases work for any sum-of-sines (nrsin for example) that wants unpulsy output?
 ;;; TODO: L&S sq wave + fm? -- why isn't this already a generator or two?
 ;;; TODO: in triangle-wave section it shows FM tri(tri) -- what is spectrum?
+;;; TODO: check clm.html for polywave n>50 claims
+;;; TODO: try the monks with polyoid (changing amps and phases)
+;;; TODO: nrcos via polyoid -> phases etc
+;;; TODO: check Cheb recursion for ncos and nsin -- more flexible?
+;;; TODO: change amps/phases run-time polywave|oid [mus-data?]
+;;; TODO: interp pulse -> unpulse
+;;; TODO: snd-test needs real basic existence checks for 2nd Cheb
+;;; TODO: why does try-it n=128 seem to hang?
+;;; TODO: Un n+1 offset doc?
+;;; TODO: green borders in clm.html
+
+
+
+;;; ---------------- old waveshape generator ----------------
+
+(define waveshape? polyshape?)
+(define waveshape polyshape)
+(def-optkey-fun (make-waveshape (frequency *clm-default-frequency*) 
+				(partials '(1 1)) 
+				wave 
+				(size *clm-table-size*))
+  (if (not wave)
+      (make-polyshape frequency :partials partials)
+      (make-polyshape frequency :coeffs wave)))
+(def-optkey-fun (partials->waveshape partials 
+				     (size *clm-table-size*))
+  (partials->polynomial partials))
+		  
 
 
 ;;; --------------------------------------------------------------------------------

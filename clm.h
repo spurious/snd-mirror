@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 4
-#define MUS_REVISION 9
-#define MUS_DATE "25-May-08"
+#define MUS_REVISION 10
+#define MUS_DATE "27-May-08"
 
 /*
+ * 27-May:     mus_waveshape retired -- it's now just a wrapper for polyshape.
  * 25-May:     mus_polywave algorithm changed.
  * 17-May:     mus_normalize_partials.
  * 12-Apr:     added choice arg to mus_make_polywave.
@@ -315,14 +316,6 @@ typedef enum {MUS_CHEBYSHEV_EITHER_KIND, MUS_CHEBYSHEV_FIRST_KIND, MUS_CHEBYSHEV
 #define MUS_MAX_CLM_SINC_WIDTH 65536
 #define MUS_MAX_CLM_SRC 65536.0
 
-#if WITH_DOUBLES
-  /* if with-doubles, the worst case difference between Tn and sin is up to 5e-6 by 39, 7e-10 at 30 */
-  #define MUS_CHEBYSHEV_TOP 30
-#else
-  /* here (float case) error gets to 6e-6 by 20 which is about where all the other errors are */
-  #define MUS_CHEBYSHEV_TOP 20
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -586,14 +579,6 @@ Float mus_wave_train(mus_any *gen, Float fm);
 Float mus_wave_train_unmodulated(mus_any *gen);
 mus_any *mus_make_wave_train(Float freq, Float phase, Float *wave, int wsize, mus_interp_t type);
 bool mus_wave_train_p(mus_any *gen);
-
-mus_any *mus_make_waveshape(Float frequency, Float phase, Float *table, int size);
-Float mus_waveshape(mus_any *ptr, Float index, Float fm);
-Float mus_waveshape_fm(mus_any *ptr, Float fm);
-Float mus_waveshape_unmodulated(mus_any *ptr, Float index);
-Float mus_waveshape_no_input(mus_any *ptr);
-bool mus_waveshape_p(mus_any *ptr);
-Float *mus_partials_to_waveshape(int npartials, Float *partials, int size, Float *table);
 
 Float *mus_partials_to_polynomial(int npartials, Float *partials, mus_polynomial_t kind);
 Float *mus_normalize_partials(int num_partials, Float *partials);

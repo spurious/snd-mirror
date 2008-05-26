@@ -367,16 +367,6 @@
        (do ((i start (1+ i))) ((= i end))
 	 (out-any i (* amp (firmant oz (oscil os) (env frqf))) 0))))))
 
-(define (simple-wav beg dur freq amp)
-  "(simple-wav beg dur freq amp) test instrument for waveshape"
-  (let* ((w1 (make-waveshape :frequency freq :partials '(1 1 2 1 3 1)))
-	 (start (seconds->samples beg))
-	 (end (+ start (seconds->samples dur))))
-    (run
-     (lambda ()
-       (do ((i start (1+ i))) ((= i end))
-	 (out-any i (* amp (waveshape w1 1.0)) 0))))))
-
 ;(define w1 (make-polyshape :frequency 100.0 
 ;			   :partials (let ((frqs '()))
 ;				       (do ((i 1 (1+ i)))
@@ -1607,7 +1597,6 @@
 	    (simple-tz 3.25 .2 440.0 .1)
 	    (simple-tp 3.5 .2 440.0 .1)
 	    (simple-frm 3.75 .2 440.0 .1)
-	    (simple-wav 4.0 .2 440.0 .1)
 	    (simple-buf 4.5 .2 440.0 .1)
 	    (simple-dly 4.75 .2 440.0 .1)
 	    (simple-cmb 5.0 .2 440.0 .1)
@@ -2413,13 +2402,6 @@
 	   ((= i end))
 	 (outa i (* amp (table-lookup tab (* index (oscil osc))))))))))
 
-(definstrument (sndclmdoc-simp-6)
-  (let ((wav (make-waveshape 
-               :frequency 440 
-               :partials '(1 .5  2 .3  3 .2))))
-    (do ((i 0 (1+ i))) ((= i 10000))
-      (outa i (waveshape wav)))))
-
 (definstrument (sndclmdoc-bigbird start duration frequency freqskew amplitude freq-env amp-env partials)
   (let* ((beg (seconds->samples start))
          (end (+ beg (seconds->samples duration)))
@@ -2455,17 +2437,6 @@
 		       (polynomial sin-coeffs ax))
 		    (* (oscil carrier-cos) 
 		       (polynomial cos-coeffs ax))))))))))
-
-(def-optkey-fun (sndclmdoc-make-band-limited-triangle-wave (frequency 440.0) (order 1))
-  (let ((freqs '()))
-    (do ((i 1 (1+ i))
-	 (j 1 (+ j 2)))
-	((> i order))
-      (set! freqs (cons (/ 1.0 (* j j)) (cons j freqs))))
-    (make-waveshape frequency :wave (partials->waveshape (reverse freqs)))))
-
-(define* (sndclmdoc-band-limited-triangle-wave gen :optional (fm 0.0))
-  (waveshape gen 1.0 fm))
 
 (definstrument (sndclmdoc-bl-saw start dur frequency order)
   (let* ((norm (if (= order 1) 1.0     ; these peak amps were determined empirically
