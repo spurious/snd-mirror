@@ -4321,6 +4321,56 @@ partial amplitudes in the vct or list 'partials' by the inverse of their sum (so
 }
 
 
+static XEN g_chebyshev_tu_sum(XEN x, XEN tn, XEN un)
+{
+  #define H_chebyshev_tu_sum "(" S_mus_chebyshev_tu_sum " x n tn un) returns the sum of the weighted\
+Chebyshev polynomials Tn and Un (vcts), with phase x."
+
+  vct *Tn, *Un;
+  
+  XEN_ASSERT_TYPE(XEN_DOUBLE_P(x), x, XEN_ARG_1, S_mus_chebyshev_tu_sum, "a float");
+  XEN_ASSERT_TYPE(MUS_VCT_P(tn), tn, XEN_ARG_2, S_mus_chebyshev_tu_sum, "a vct");
+  XEN_ASSERT_TYPE(MUS_VCT_P(un), un, XEN_ARG_3, S_mus_chebyshev_tu_sum, "a vct");
+
+  Tn = XEN_TO_VCT(tn);
+  Un = XEN_TO_VCT(un);
+
+  return(C_TO_XEN_DOUBLE(mus_chebyshev_tu_sum(XEN_TO_C_DOUBLE(x), Tn->length, Tn->data, Un->data)));
+}
+
+
+static XEN g_chebyshev_t_sum(XEN x, XEN tn)
+{
+  #define H_chebyshev_t_sum "(" S_mus_chebyshev_t_sum " x n tn) returns the sum of the weighted \
+Chebyshev polynomials Tn (a vct)."
+
+  vct *Tn;
+  
+  XEN_ASSERT_TYPE(XEN_DOUBLE_P(x), x, XEN_ARG_1, S_mus_chebyshev_tu_sum, "a float");
+  XEN_ASSERT_TYPE(MUS_VCT_P(tn), tn, XEN_ARG_2, S_mus_chebyshev_tu_sum, "a vct");
+
+  Tn = XEN_TO_VCT(tn);
+
+  return(C_TO_XEN_DOUBLE(mus_chebyshev_t_sum(XEN_TO_C_DOUBLE(x), Tn->length, Tn->data)));
+}
+
+
+static XEN g_chebyshev_u_sum(XEN x, XEN un)
+{
+  #define H_chebyshev_u_sum "(" S_mus_chebyshev_u_sum " x n un) returns the sum of the weighted \
+Chebyshev polynomials Un (a vct)."
+
+  vct *Un;
+  
+  XEN_ASSERT_TYPE(XEN_DOUBLE_P(x), x, XEN_ARG_1, S_mus_chebyshev_tu_sum, "a float");
+  XEN_ASSERT_TYPE(MUS_VCT_P(un), un, XEN_ARG_2, S_mus_chebyshev_tu_sum, "a vct");
+
+  Un = XEN_TO_VCT(un);
+
+  return(C_TO_XEN_DOUBLE(mus_chebyshev_u_sum(XEN_TO_C_DOUBLE(x), Un->length, Un->data)));
+}
+
+
 
 
 /* ---------------- polyshape ---------------- */
@@ -7681,6 +7731,9 @@ XEN_ARGIFY_3(g_polyshape_w, g_polyshape)
 XEN_NARGIFY_1(g_polyshape_p_w, g_polyshape_p)
 XEN_ARGIFY_2(g_partials_to_polynomial_w, g_partials_to_polynomial)
 XEN_NARGIFY_1(g_normalize_partials_w, g_normalize_partials)
+XEN_NARGIFY_2(g_chebyshev_t_sum_w, g_chebyshev_t_sum)
+XEN_NARGIFY_2(g_chebyshev_u_sum_w, g_chebyshev_u_sum)
+XEN_NARGIFY_3(g_chebyshev_tu_sum_w, g_chebyshev_tu_sum)
 XEN_VARGIFY(g_make_polywave_w, g_make_polywave)
 XEN_ARGIFY_2(g_polywave_w, g_polywave)
 XEN_NARGIFY_1(g_polywave_p_w, g_polywave_p)
@@ -7983,6 +8036,9 @@ XEN_NARGIFY_2(g_mus_equalp_w, equalp_mus_xen)
 #define g_polyshape_p_w g_polyshape_p
 #define g_partials_to_polynomial_w g_partials_to_polynomial
 #define g_normalize_partials_w g_normalize_partials
+#define g_chebyshev_t_sum_w g_chebyshev_t_sum
+#define g_chebyshev_u_sum_w g_chebyshev_u_sum
+#define g_chebyshev_tu_sum_w g_chebyshev_tu_sum
 #define g_make_polywave_w g_make_polywave
 #define g_polywave_w g_polywave
 #define g_polywave_p_w g_polywave_p
@@ -8463,6 +8519,9 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_polyshape_p,            g_polyshape_p_w,            1, 0, 0, H_polyshape_p);
   XEN_DEFINE_PROCEDURE(S_partials_to_polynomial, g_partials_to_polynomial_w, 1, 1, 0, H_partials_to_polynomial);
   XEN_DEFINE_PROCEDURE(S_normalize_partials,     g_normalize_partials_w,     1, 0, 0, H_normalize_partials);
+  XEN_DEFINE_PROCEDURE(S_mus_chebyshev_t_sum,    g_chebyshev_t_sum_w,        2, 0, 0, H_chebyshev_t_sum);
+  XEN_DEFINE_PROCEDURE(S_mus_chebyshev_u_sum,    g_chebyshev_u_sum_w,        2, 0, 0, H_chebyshev_u_sum);
+  XEN_DEFINE_PROCEDURE(S_mus_chebyshev_tu_sum,   g_chebyshev_tu_sum_w,       3, 0, 0, H_chebyshev_tu_sum);
   XEN_DEFINE_PROCEDURE(S_make_polywave,          g_make_polywave_w,          0, 0, 1, H_make_polywave);
   XEN_DEFINE_PROCEDURE(S_polywave,               g_polywave_w,               1, 1, 0, H_polywave);
   XEN_DEFINE_PROCEDURE(S_polywave_p,             g_polywave_p_w,             1, 0, 0, H_polywave_p);
@@ -8797,6 +8856,9 @@ void mus_xen_init(void)
 	       S_mus_channels,
 	       S_mus_chebyshev_first_kind,
 	       S_mus_chebyshev_second_kind,
+	       S_mus_chebyshev_t_sum,
+	       S_mus_chebyshev_tu_sum,
+	       S_mus_chebyshev_u_sum,
 	       S_mus_close,
 	       S_mus_data,
 	       S_mus_describe,

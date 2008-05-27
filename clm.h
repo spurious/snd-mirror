@@ -8,6 +8,7 @@
 /*
  * 27-May:     mus_waveshape retired -- generators.scm has a wrapper for it.
  *             clm_free, clm_realloc etc for rt work.
+ *             mus_chebyshev_tu_sum.
  * 25-May:     mus_polywave algorithm changed.
  * 17-May:     mus_normalize_partials.
  * 12-Apr:     added choice arg to mus_make_polywave.
@@ -595,7 +596,9 @@ mus_any *mus_make_polywave(Float frequency, Float *coeffs, int n, int cheby_choi
 bool mus_polywave_p(mus_any *ptr);
 Float mus_polywave_unmodulated(mus_any *ptr);
 Float mus_polywave(mus_any *ptr, Float fm);
-
+Float mus_chebyshev_t_sum(Float x, int n, Float *tn);
+Float mus_chebyshev_u_sum(Float x, int n, Float *un);
+Float mus_chebyshev_tu_sum(Float x, int n, Float *tn, Float *un);
 
 Float mus_env(mus_any *ptr);
 mus_any *mus_make_env(Float *brkpts, int npts, double scaler, double offset, double base, double duration, off_t end, Float *odata);

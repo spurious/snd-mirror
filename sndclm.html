@@ -1614,6 +1614,10 @@ See also <a href="sndscm.html#granidoc">grani</a> and <a href="sndscm.html#displ
 
   <a class=def name="partialstopolynomial">partials-&gt;polynomial</a> partials :optional (kind mus-chebyshev-first-kind)
   <a class=def name="normalizepartials">normalize-partials</a> partials
+
+  <a class=def name="chebyshev-tu-sum">chebyshev-tu-sum</a> x n t-coeffs u-coeffs
+  <em class=emdef>chebyshev-t-sum</em> x n t-coeffs
+  <em class=emdef>chebyshev-u-sum</em> x n u-coeffs
 </pre>
 
 <!-- LATEX: sceq16
@@ -1625,7 +1629,7 @@ See also <a href="sndscm.html#granidoc">grani</a> and <a href="sndscm.html#displ
 A&S 22.3.15
 -->
 
-<p>polywave is the new form of polyshape; polyshape may eventually be deprecated. 
+<p>
 These two generators
 drive a sum of scaled Chebyshev polynomials with
 a sinusoid, creating a sort of cross between additive synthesis and FM; see
@@ -1638,15 +1642,13 @@ The basic idea is:
 We can add scaled Tns (polynomials) to get the spectrum we want, producing
 in the simplest case an inexpensive additive synthesis.  We can vary the peak amplitude of the
 input (cos theta) to get effects similar to those of FM. 
-</p>
-
-<p>
 polyshape uses a prebuilt sum of Chebyshev polynomials,
-whereas polywave uses the Chebyshev recursion.  Only polywave is stable and noise-free even with high partial numbers.
+whereas polywave uses the underlying Chebyshev recursion.  
+polywave is stable and noise-free even with high partial numbers (I've tried it with 16384 harmonics).
 The "partials" argument to the make function can
 be either a list or a vct.
 The "type" or "kind" argument determines which kind of Chebyshev polynomial
-is used internally:  mus-chebyshev-first-kind or mus-chebyshev-second-kind. (The <a href="#ncos">ncos</a> generator produces
+is used internally:  mus-chebyshev-first-kind (Tn) or mus-chebyshev-second-kind (Un). (The <a href="#ncos">ncos</a> generator produces
 Chebyshev polynomials of the fourth kind).  
 </p>
 
@@ -1689,16 +1691,16 @@ the generator.
 <table border=0 hspace=40><tr>
 <td bgcolor="#fafafa">
 <pre>
-(<a class=quiet href="sndscm.html#definstrument" onmouseout="UnTip()" onmouseover="Tip(sndscm_definstrument_tip)">definstrument</a> (simp)
+(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> ()
   (let ((wav (<em class=red>make-polyshape</em> 
-               :frequency 440 
+               :frequency 500.0
                :partials '(1 .5  2 .3  3 .2))))
-    (do ((i 0 (1+ i))) ((= i 10000))
+    (do ((i 0 (1+ i))) ((= i 40000))
       (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (<em class=red>polyshape</em> wav)))))
 </pre>
 </td>
 <td>
-<img src="pix/polyshape.png" alt="waveshaping">
+<img src="pix/polyshape.png" alt="waveshaping" hspace=40>
 </td>
 </tr></table>
 
@@ -1724,43 +1726,11 @@ the generator.
 </td>
 </tr></table>
 
-<p>we can also use
-partials-&gt;polynomial with polyshape:
-</p>
-
-<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
-<pre>
-(<a class=quiet href="sndscm.html#definstrument" onmouseout="UnTip()" onmouseover="Tip(sndscm_definstrument_tip)">definstrument</a> (bigbird start duration frequency freqskew amplitude freq-env amp-env partials)
-  (let* ((beg (<a class=quiet href="#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> start))
-         (end (+ beg (<a class=quiet href="#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> duration)))
-         (gls-env (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> freq-env (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> freqskew) duration))
-         (polyos (<em class=red>make-polyshape</em> frequency :coeffs (<em class=red>partials-&gt;polynomial</em> partials)))
-         (fil (<a class=quiet href="#make-one-pole" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_one_pole_tip)">make-one-pole</a> .1 .9))
-         (amp-env (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> amp-env amplitude duration)))
-    (<a class=quiet href="extsnd.html#run" onmouseout="UnTip()" onmouseover="Tip(extsnd_run_tip)">run</a>
-      (lambda ()
-        (do ((i beg (1+ i)))
-            ((= i end))
-          (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i 
-            (<a class=quiet href="#one-pole" onmouseout="UnTip()" onmouseover="Tip(sndclm_one_pole_tip)">one-pole</a> fil   ; for distance effects
-              (* (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> amp-env) 
-                 (<em class=red>polyshape</em> polyos 1.0 (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> gls-env))))))))))
-
-(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> ()
-  (bigbird 0 .05 1800 1800 .2
-           '(.00 .00 .40 1.00 .60 1.00 1.00 .0)         ; freq env
-           '(.00 .00 .25 1.00 .60 .70 .75 1.00 1.00 .0) ; amp env
-           '(1 .5  2 1  3 .5  4 .1  5 .01)))            ; bird song spectrum
-</pre>
-</td></tr></table>
-
 <p>See animals.scm for many more examples along these lines.
 normalize-partials makes sure that the component amplitudes (magnitudes) add to 1.0.  Its argument can be either a list or vct,
 but it always returns a vct.
 The <a href="sndscm.html#fmviolin">fm-violin</a> uses polyshape for the multiple FM section in some cases.
-</p>
-
-<p>The 'type' or 'kind' argument can also be <code>mus-chebyshev-second-kind</code>. In this case, the polynomial
+The 'type' or 'kind' argument can also be <code>mus-chebyshev-second-kind</code>. In this case, the polynomial
 turns out a sum of sines (when multiplied by sine) rather than cosines.  <a href="#make-polyoid">make-polyoid</a> (in generators.scm) combines the two forms
 to provide arbitrary initial phases.
 We can get single side-band spectra by using Chebyshev polynomials of the second kind.  
@@ -2151,7 +2121,7 @@ the DC term (coeffs[0]), but I haven't tried this.
 	(outc i cval)))))
 -->
 
-<p>Looking back at the bl-saw instrument, why does a high harmonic number give numerical problems?  The polynomials are related to each other
+<p>Looking back at the bl-saw instrument, why does a high harmonic number give numerical problems in the polyshape generator?  The polynomials are related to each other
 via the recursion: <img src="pix/sceq17.png" alt="Cheby recurse" align=absmiddle>, so the first
 few polynomials are:
 </p>
@@ -2191,7 +2161,9 @@ Even if we build Snd --with-doubles,
 we can only push the order up to around 46.  (But notice in the T5 case above, we have a component at 100 times
 the "fundamental"; we have to give up precise control over the resultant spectra).
 polywave builds up the sum of sines from the underlying recursion, which is only slightly
-slower than using the polynomial, and it is not bothered by these numerical problems.
+slower than using the polynomial, and it is not bothered by these numerical problems 
+(I have run polywave with 16384 harmonics, and the maximum error compared to the
+equivalent sum of sinusoids was around 5.0e-12).
 </p>
 
 <p>Since it is primarily used for additive synthesis,
@@ -2201,8 +2173,8 @@ and memory (the defunct table-lookup based waveshape generator and table-lookup 
 the main reason to use polywave is accuracy.  polywave
 produces output that is cleaner than the equivalent sum of oscils, whereas table-lookup 
 and waveshape, both of which interpolate into a sampled version of the desired function, are noisy.
-To make the difference almost appalling, here are spectra comparing a sum of oscils, polywave,
-waveshape, and table-lookup. 
+To make the difference almost appalling, here are spectra comparing a sum of oscils, polyshape,
+(table-lookup based) waveshape, and table-lookup. 
 </p>
 
 <img src="pix/4grfs.png" alt="compare ffts" hspace=40>

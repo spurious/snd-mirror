@@ -10488,6 +10488,45 @@ static xen_value *normalize_partials_1(ptree *prog, xen_value **args, int num_ar
 
 
 
+/* ---------------- mus-chebyshev-tu-sum ---------------- */
+
+static void mus_chebyshev_tu_sum_0(int *args, ptree *pt) 
+{
+  FLOAT_RESULT = mus_chebyshev_tu_sum(FLOAT_ARG_1, VCT_ARG_2->length, VCT_ARG_2->data, VCT_ARG_3->data);
+}
+
+
+static xen_value *mus_chebyshev_tu_sum_1(ptree *prog, xen_value **args, int num_args)
+{
+  return(package(prog, R_FLOAT, mus_chebyshev_tu_sum_0, "mus-chebyshev-tu-sum-0", args, 3));
+}
+
+
+static void mus_chebyshev_t_sum_0(int *args, ptree *pt) 
+{
+  FLOAT_RESULT = mus_chebyshev_t_sum(FLOAT_ARG_1, VCT_ARG_2->length, VCT_ARG_2->data);
+}
+
+
+static xen_value *mus_chebyshev_t_sum_1(ptree *prog, xen_value **args, int num_args)
+{
+  return(package(prog, R_FLOAT, mus_chebyshev_t_sum_0, "mus-chebyshev-t-sum-0", args, 2));
+}
+
+
+static void mus_chebyshev_u_sum_0(int *args, ptree *pt) 
+{
+  FLOAT_RESULT = mus_chebyshev_u_sum(FLOAT_ARG_1, VCT_ARG_2->length, VCT_ARG_2->data);
+}
+
+
+static xen_value *mus_chebyshev_u_sum_1(ptree *prog, xen_value **args, int num_args)
+{
+  return(package(prog, R_FLOAT, mus_chebyshev_u_sum_0, "mus-chebyshev-u-sum-0", args, 2));
+}
+
+
+
 /* ---------------- src ---------------- */
 
 GEN_P(src)
@@ -13210,6 +13249,9 @@ static void init_walkers(void)
 
   INIT_WALKER(S_partials_to_polynomial, make_walker(partials_to_polynomial_1, NULL, NULL, 1, 2, R_VCT, false, 2, R_VCT, R_INT));
   INIT_WALKER(S_normalize_partials,  make_walker(normalize_partials_1, NULL, NULL, 1, 1, R_VCT, false, 1, R_VCT));
+  INIT_WALKER(S_mus_chebyshev_t_sum, make_walker(mus_chebyshev_t_sum_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_FLOAT, R_VCT));
+  INIT_WALKER(S_mus_chebyshev_u_sum, make_walker(mus_chebyshev_u_sum_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_FLOAT, R_VCT));
+  INIT_WALKER(S_mus_chebyshev_tu_sum, make_walker(mus_chebyshev_tu_sum_1, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_FLOAT, R_VCT, R_VCT));
 
 
   /* -------- sndlib funcs */

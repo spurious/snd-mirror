@@ -2475,30 +2475,95 @@ static Float pw_index(mus_any *ptr) {return(((pw *)ptr)->index);}
 static Float pw_set_index(mus_any *ptr, Float val) {((pw *)ptr)->index = val; return(val);}
 
 
+Float mus_chebyshev_tu_sum(Float x, int n, Float *tn, Float *un)
+{
+  int i;
+  double x2, b, b1 = 0.0, b2 = 0.0, cx, cx_val;
+
+  cx = cos(x);
+  x2 = 2.0 * cx;
+
+  /* Tn calc */
+  b = tn[n - 1];
+  for (i = n - 2; i >= 0; i--)
+    {
+      b2 = b1;
+      b1 = b;
+      b = x2 * b1 - b2 + tn[i];
+    }
+  cx_val = b - b1 * cx;
+
+  /* Un calc */
+  b = un[n - 1];
+  b1 = 0.0;
+  for (i = n - 2; i >= 0; i--)
+    {
+      b2 = b1;
+      b1 = b;
+      b = x2 * b1 - b2 + un[i];
+    }
+
+  return((Float)(cx_val + (sin(x) * b)));
+}
+
+
+Float mus_chebyshev_t_sum(Float x, int n, Float *tn)
+{
+  int i;
+  double x2, b, b1 = 0.0, b2 = 0.0, cx;
+
+  cx = cos(x);
+  x2 = 2.0 * cx;
+
+  /* Tn calc */
+  b = tn[n - 1];
+  for (i = n - 2; i >= 0; i--)
+    {
+      b2 = b1;
+      b1 = b;
+      b = x2 * b1 - b2 + tn[i];
+    }
+  return((Float)(b - b1 * cx));
+}
+
+
+Float mus_chebyshev_u_sum(Float x, int n, Float *un)
+{
+  int i;
+  double x2, b, b1 = 0.0, b2 = 0.0, cx;
+
+  cx = cos(x);
+  x2 = 2.0 * cx;
+
+  /* Un calc */
+  b = un[n - 1];
+  for (i = n - 2; i >= 0; i--)
+    {
+      b2 = b1;
+      b1 = b;
+      b = x2 * b1 - b2 + un[i];
+    }
+
+  return((Float)(sin(x) * b));
+}
+
+
 static Float poly_TU(mus_any *ptr, Float fm)
 {
   /* changed to use recursion, rather than polynomial in x, 25-May-08
    *   this algorithm taken from Mason and Handscomb, "Chebyshev Polynomials" p27
    */
 
-  int i;
   pw *gen = (pw *)ptr;
-  double x, x2, b, b1 = 0.0, b2 = 0.0;
-
-  x = gen->index * mus_oscil_fm(gen->o, fm);
-  x2 = 2.0 * x;
-  b = gen->coeffs[gen->n - 1];
-
-  for (i = gen->n - 2; i >= 0; i--)
-    {
-      b2 = b1;
-      b1 = b;
-      b = x2 * b1 - b2 + gen->coeffs[i];
-    }
 
   if (gen->cheby_choice != MUS_CHEBYSHEV_SECOND_KIND)
-    return((Float)(b - b1 * x));
-  return((Float)(b));
+    return(mus_chebyshev_t_sum(gen->index * mus_oscil_fm(gen->o, fm),
+			       gen->n,
+			       gen->coeffs));
+
+  return(mus_chebyshev_u_sum(gen->index * mus_oscil_fm(gen->o, fm),
+			       gen->n,
+			       gen->coeffs));
 }
 
 
