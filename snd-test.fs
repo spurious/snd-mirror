@@ -2,13 +2,12 @@
 
 \ Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Sat Aug 05 00:09:28 CEST 2006
-\ Changed: Wed Apr 16 23:20:19 CEST 2008
+\ Changed: Tue May 27 16:58:45 CEST 2008
 
 \ Commentary:
 \
-\ The init file name has changed: .sndtest-forth-rc becomes
-\ .sndtest.fs.  If the old name exists in the current directory, it
-\ will be still read for backwards compatibility.
+\ You may use an init file name `pwd`/.sndtest.fs or ~/.sndtest.fs to set
+\ global variables or define other special functions, hooks, etc.
 \
 \ snd-forth -noinit -load snd-test.fs        \ all tests
 \ snd-forth -noinit -load snd-test.fs 3 7 20 \ test 3 7 20
@@ -20,6 +19,8 @@
 \ test 19: save and restore
 \ test 23: with-sound
 \ test 28: errors
+
+#f value under-valgrind
 
 'snd-motif provided? 'xm provided? not && [if] dl-load libxm Init_libxm [then]
 'snd-gtk   provided? 'xg provided? not && [if] dl-load libxg Init_libxg [then]
@@ -36,7 +37,9 @@ require mix
 require dsp
 'snd-motif provided? [if]
   require snd-xm
-  require effects
+  under-valgrind [unless]
+    require effects
+  [then]
 [then]
 
 nil value *arg1*
@@ -206,7 +209,7 @@ mus-audio-playback-amp value original-audio-amp
 	dialog car symbol? if
 	  dialog FXtIsManaged if dialog FXtUnmanageChild drop then
 	else
-	  dialog each to d
+	  dialog list->array each to d
 	    d car symbol? if
 	      d FXtIsManaged if d FXtUnmanageChild drop then
 	    then
@@ -218,14 +221,13 @@ mus-audio-playback-amp value original-audio-amp
 [else]
   'xg provided? [if]
     : dismiss-all-dialogs ( -- )
-      nil { dialog }
+      nil nil { dialog d }
       dialog-widgets each to dialog
 	dialog if
 	  dialog xmobj? if
 	    dialog Fgtk_widget_hide drop
 	  else
-	    nil { d }
-	    dialog each to d
+	    dialog list->array each to d
 	      d xmobj? if
 		d Fgtk_widget_hide drop
 	      then
@@ -260,25 +262,25 @@ mus-audio-playback-amp value original-audio-amp
 ;
 : start-snd-test ( -- )
   \ Global variables may be overridden in `pwd`/.sndtest.fs or ~/.sndtest.fs
-  ".sndtest-forth-rc" file-exists? if ".sndtest-forth-rc" else ".sndtest.fs" then load-init-file
+  ".sndtest.fs" load-init-file
   'snd-motif provided? if
-    "snd-motif"
+    "motif"
   else
     'snd-gtk provided? if
-      "snd-gtk"
+      "gtk"
     else
       'snd-nogui provided? if
 	#t set-with-mix-tags drop
-	"snd-nogui"
+	"nogui"
       else
-	"snd-unknown"
+	"unknown"
       then
     then
   then { kind }
   stack-reset
   "test.snd" file-exists? if "test.snd" 0o644 file-chmod then
-  $" === Snd version: %s (%s)" '( snd-version kind ) clm-message
-  $" === Fth version: %s"      '( fth-version )      clm-message
+  $" === Snd version: %s ('snd-%s)" '( snd-version kind ) clm-message
+  $" === Fth version: %s"           '( fth-version )      clm-message
   ""   '() clm-message
   date '() clm-message
   ""   '() clm-message
@@ -1337,202 +1339,202 @@ lambda: <{ x -- y }> pi random ; value random-pi-addr
       "insert-vct" )
    '( lambda: <{ -- val }> #f #f clm-channel-test ;
       $" lambda: <{ snd chn -- val }>  snd chn clm-channel-test drop ;"
-   "clm-channel-test" )
+      "clm-channel-test" )
    ( examp.fs )
    '( lambda: <{ -- val }> 1000 3000 #f #f fft-edit ;
       $" lambda: <{ snd chn -- val }> 1000 3000 snd chn fft-edit drop ;"
-   "fft-edit" )
+      "fft-edit" )
    '( lambda: <{ -- val }> 0.01 #f #f fft-squelch ;
       $" lambda: <{ snd chn -- val }> 0.01 snd chn fft-squelch drop ;"
-   "fft-sqelch" )
+      "fft-sqelch" )
    '( lambda: <{ -- val }> 1000 3000 #f #f fft-cancel ;
       $" lambda: <{ snd chn -- val }> 1000 3000 snd chn fft-cancel drop ;"
-   "fft-cancel" )
+      "fft-cancel" )
    '( lambda: <{ -- val }> #f #f squelch-vowels ;
       $" lambda: <{ snd chn -- val }>  snd chn squelch-vowels drop ;"
-   "squelch-vowels" )
+      "squelch-vowels" )
    '( lambda: <{ -- val }> '( 0 0 1 1 2 0 ) #f #f fft-env-edit ;
       $" lambda: <{ snd chn -- val }> '( 0 0 1 1 2 0 ) snd chn fft-env-edit drop ;"
-   "fft-env-edit" )
+      "fft-env-edit" )
    '( lambda: <{ -- val }> '( 0 0 1 1 2 0 ) '( 0 1 1 0 2 0 ) '( 0 0 1 1 ) #f #f fft-env-interp ;
       $" lambda: <{ snd chn -- val }> '( 0 0 1 1 2 0 ) '( 0 1 1 0 2 0 ) '( 0 0 1 1 ) snd chn fft-env-interp drop ;"
-   "fft-env-interp" )
+      "fft-env-interp" )
    '( lambda: <{ -- val }> 10 0.1 #f #f hello-dentist ;
       $" lambda: <{ snd chn -- val }> 10 0.1 snd chn hello-dentist drop ;"
-   "hello-dentist" )
+      "hello-dentist" )
    '( lambda: <{ -- val }> 1 0.3 20 #f #f fp ;
       $" lambda: <{ snd chn -- val }> 1 0.3 20 snd chn fp drop ;"
-   "fp" )
+      "fp" )
    '( lambda: <{ -- val }> '( 0 1 1 2 ) #f #f expsnd ;
       $" lambda: <{ snd chn -- val }> '( 0 1 1 2 ) snd chn expsnd drop ;"
-   "expsnd" )
+      "expsnd" )
    '( lambda: <{ -- val }> 1 256 2 2 #f #f voiced->unvoiced ;
       $" lambda: <{ snd chn -- val }> 1 256 2 2 snd chn voiced->unvoiced drop ;"
-   "voiced->unvoided" )
+      "voiced->unvoided" )
    '( lambda: <{ -- val }> '( 0 0 1 1 2 0 ) 2 #f #f env-sound-interp ;
       $" lambda: <{ snd chn -- val }> '( 0 0 1 1 2 0 ) 2 snd chn env-sound-interp drop ;"
-   "env-sound-interp" )
+      "env-sound-interp" )
    '( lambda: <{ -- val }> '( '( "1a.snd" ) '( "pistol.snd" 1 2 ) ) #f #f add-notes ;
       $" lambda: <{ snd chn -- val }> '( '( \"1a.snd\" ) '( \"pistol.snd\" 1 2 ) ) snd chn add-notes drop ;"
-   "add-notes" )
+      "add-notes" )
    '( lambda: <{ -- val }> 0 #f #f #f compand-channel ;
       $" lambda: <{ snd chn -- val }> 0 #f snd chn compand-channel drop ;"
-   "compand-channel" )
+      "compand-channel" )
    '( lambda: <{ -- val }> 0 #f #f #f #f smooth-channel-via-ptree ;
       $" lambda: <{ snd chn -- val }> 0 #f snd chn smooth-channel-via-ptree drop ;"
-   "smooth-channel-via-ptree" )
+      "smooth-channel-via-ptree" )
    '( lambda: <{ -- val }> 300 0 #f #f #f #f ring-modulate-channel ;
       $" lambda: <{ snd chn -- val }> 300 0 #f snd chn ring-modulate-channel drop ;"
-   "ring-modulate-channel" )
+      "ring-modulate-channel" )
    '( lambda: <{ -- val }> '( 0 0 1 1 2 0 ) #f #f filtered-env ;
       $" lambda: <{ snd chn -- val }> '( 0 0 1 1 2 0 ) snd chn filtered-env drop ;"
-   "filtered-env" )
+      "filtered-env" )
    '( lambda: <{ -- val }> 0.1 #f #f reverse-by-blocks ;
       $" lambda: <{ snd chn -- val }> 0.1 snd chn reverse-by-blocks drop ;"
-   "reverse-by-blocks" )
+      "reverse-by-blocks" )
    '( lambda: <{ -- val }> 0.1 #f #f reverse-within-blocks ;
       $" lambda: <{ snd chn -- val }> 0.1 snd chn reverse-within-blocks drop ;"
-   "reverse-within-blocks" )
+      "reverse-within-blocks" )
    ( extensions.fs )
    '( lambda: <{ -- val }> "1a.snd" 1200 #f #f #f #f mix-channel ;
       $" lambda: <{ snd chn -- val }> \"1a.snd\" 1200 #f snd chn mix-channel drop ;"
-   "mix-channel" )
+      "mix-channel" )
    '( lambda: <{ -- val }> "1a.snd" 1200 #f #f #f #f insert-channel ;
       $" lambda: <{ snd chn -- val }> \"1a.snd\" 1200 #f snd chn insert-channel drop ;"
-   "insert-channel" )
+      "insert-channel" )
    '( lambda: <{ -- val }> "1a.snd" 0.5 0.9 0 #f #f #f #f sine-ramp ;
       $" lambda: <{ snd chn -- val }> 0.5 0.9 0 #f snd chn sine-ramp drop ;"
-   "sine-ramp" )
+      "sine-ramp" )
    '( lambda: <{ -- val }> '( 0 0 1 1 2 -0.5 3 1 ) 0 #f #f #f #f sine-env-channel ;
       $" lambda: <{ snd chn -- val }> '( 0 0 1 1 2 -0.5 3 1 ) 0 #f snd chn sine-env-channel drop ;"
-   "sine-env-channel" )
+      "sine-env-channel" )
    '( lambda: <{ -- val }> 0 1 0 #f #f #f #f blackman4-ramp ;
       $" lambda: <{ snd chn -- val }> 0 1 0 #f snd chn blackman4-ramp drop ;"
-   "blackman4-ramp" )
+      "blackman4-ramp" )
    '( lambda: <{ -- val }> '( 0 0 1 1 2 -0.5 3 1 ) 0 #f #f #f #f blackman4-env-channel ;
       $" lambda: <{ snd chn -- val }> '( 0 0 1 1 2 -0.5 3 1 ) 0 #f snd chn blackman4-env-channel drop ;"
-   "blackman4-env-channel" )
+      "blackman4-env-channel" )
    '( lambda: <{ -- val }> 0.2 0.8 #t 0 #f #f #f #f ramp-squared ;
       $" lambda: <{ snd chn -- val }> 0.2 0.8 #t 0 #f snd chn ramp-squared drop ;"
-   "ramp-squared" )
+      "ramp-squared" )
    '( lambda: <{ -- val }> '( 0 0 1 1 ) #t 0 #f #f #f #f env-squared-channel ;
       $" lambda: <{ snd chn -- val }> '( 0 0 1 1 ) #t 0 #f snd chn env-squared-channel drop ;"
-   "env-squared-channel" )
+      "env-squared-channel" )
    '( lambda: <{ -- val }> 0.2 0.8 32 #t 0 #f #f #f #f ramp-expt ;
       $" lambda: <{ snd chn -- val }> 0.2 0.8 32 #t 0 #f snd chn ramp-expt drop ;"
-   "ramp-expt" )
+      "ramp-expt" )
    '( lambda: <{ -- val }> '( 0 0 1 1 ) 32 #t 0 #f #f #f #f env-expt-channel ;
       $" lambda: <{ snd chn -- val }> '( 0 0 1 1 ) 32 #t 0 #f snd chn env-expt-channel drop ;"
-   "env-expt-channel" )
+      "env-expt-channel" )
    '( lambda: <{ -- val }> 0.1 0 #f #f #f #f offset-channel ;
       $" lambda: <{ snd chn -- val }> 0.1 0 #f snd chn offset-channel drop ;"
-   "offset-channel" )
-     '( lambda: <{ -- val }> 0.1 0 #f #f #f #f dither-channel ;
-	$" lambda: <{ snd chn -- val }> 0.1 0 #f snd chn dither-channel drop ;"
-     "dither-channel" )
+      "offset-channel" )
+   '( lambda: <{ -- val }> 0.1 0 #f #f #f #f dither-channel ;
+      $" lambda: <{ snd chn -- val }> 0.1 0 #f snd chn dither-channel drop ;"
+      "dither-channel" )
    '( lambda: <{ -- val }> 0.1 0 #f #f #f #f contrast-channel ;
       $" lambda: <{ snd chn -- val }> 0.1 0 #f snd chn contrast-channel drop ;"
-   "contrast-channel" )
+      "contrast-channel" )
    ( dsp.fs )
    '( lambda: <{ -- val }> 550 600 10 40 50 0 #f #f #f #f ssb-bank ;
       $" lambda: <{ snd chn -- val }> 550 600 10 40 50 0 #f snd chn ssb-bank drop ;"
-   "ssb-bank" )
+      "ssb-bank" )
    '( lambda: <{ -- val }> 550 600 '( 0 1 1 2 ) 10 40 50 0 #f #f #f #f ssb-bank-env ;
       $" lambda: <{ snd chn -- val }> 550 600 '( 0 1 1 2 ) 10 40 50 0 #f snd chn ssb-bank-env drop ;"
-   "ssb-bank-env" )
+      "ssb-bank-env" )
    '( lambda: <{ -- val }> 1 #f #f down-oct ;
       $" lambda: <{ snd chn -- val }> 1 snd chn down-oct drop ;"
-   "donw-oct" )
+      "donw-oct" )
    '( lambda: <{ -- val }> 8 #f #f freqdiv ;
       $" lambda: <{ snd chn -- val }> 8 snd chn freqdiv drop ;"
-   "freqdiv" )
+      "freqdiv" )
    '( lambda: <{ -- val }> 8 0 #f #f #f adsat ;
       $" lambda: <{ snd chn -- val }> 8 0 #f snd chn adsat drop ;"
-   "adsat" )
+      "adsat" )
    '( lambda: <{ -- val }> #f #f spike ;
       $" lambda: <{ snd chn -- val }>  snd chn spike drop ;"
-   "spike" )
+      "spike" )
    '( lambda: <{ -- val }> #f #f zero-phase ;
       $" lambda: <{ snd chn -- val }>  snd chn zero-phase drop ;"
-   "zero-phase" )
+      "zero-phase" )
    '( lambda: <{ -- val }> <'> random-pi-func #f #f rotate-phase ;
       $" lambda: <{ snd chn -- val }> <'> random-pi-func snd chn rotate-phase drop ;"
-   "rotate-phase-proc" )
+      "rotate-phase-proc" )
    '( lambda: <{ -- val }> random-pi-addr #f #f rotate-phase ;
       $" lambda: <{ snd chn -- val }> <'> %s snd chn rotate-phase drop ;" '( random-pi-addr ) format
-   "rotate-phase-lambda" )
+      "rotate-phase-lambda" )
    '( lambda: <{ -- val }> 0.5 #f #f brighten-slightly ;
       $" lambda: <{ snd chn -- val }> 0.5 snd chn brighten-slightly drop ;"
-   "brighten-slightly" )
+      "brighten-slightly" )
    '( lambda: <{ -- val }> 100 40 0 #f #f #f #f shift-channel-pitch ;
       $" lambda: <{ snd chn -- val }> 100 40 0 #f snd chn shift-channel-pitch drop ;"
-   "shift-channel-pitch" )
+      "shift-channel-pitch" )
    '( lambda: <{ -- val }> vct( 0.0 0.5 ) #f #f channel-polynomial ;
       $" lambda: <{ snd chn -- val }> vct( 0.000 0.500 ) snd chn channel-polynomial drop ;"
-   "channel-polynomial" )
+      "channel-polynomial" )
    '( lambda: <{ -- val }> vct( 0.0 1.0 ) #f #f spectral-polynomial ;
       $" lambda: <{ snd chn -- val }> vct( 0.000 1.000 ) snd chn spectral-polynomial drop ;"
-   "spectral-polynomial" )
+      "spectral-polynomial" )
    '( lambda: <{ -- val }> '( 60.0 120.0 240.0 ) #f 0 #f #f #f #f #t 2 notch-channel ;
       $" lambda: <{ snd chn -- val }> '( 60.0 120.0 240.0 ) #f 0 #f snd chn notch-channel drop ;"
-   "notch-channel" )
-'snd-motif provided? [if]
-   ( effects.fs )
-   '( lambda: <{ -- val }> 0.1 128 effects-squelch-channel ;
-      $" lambda: <{ snd chn -- val }> 0.1 128 snd chn effects-squelch-channel drop ;"
-   "effects-sqelch-channel" )
-   '( lambda: <{ -- val }> #f 0.5 0.1 0 #f #f #f effects-echo ;
-      $" lambda: <{ snd chn -- val }> #f 0.5 0.1 0 #f snd chn effects-echo drop ;"
-   "effects-echo" )
-   '( lambda: <{ -- val }> 0.5 0.1 #f 0 #f #f #f effects-flecho ;
-      $" lambda: <{ snd chn -- val }> 0.5 0.1 #f 0 #f snd chn effects-flecho drop ;"
-   "effects-flecho" )
-   '( lambda: <{ -- val }> 0.75 0.75 6.0 10.0 #f 0 #f #f #f effects-zecho ;
-      $" lambda: <{ snd chn -- val }> 0.75 0.75 6.0 10.0 #f 0 #f snd chn effects-zecho drop ;"
-   "effects-zecho" )
-   '( lambda: <{ -- val }> 0.1 50 0 #f #f #f effects-comb-filter ;
-      $" lambda: <{ snd chn -- val }> 0.1 50 0 #f snd chn effects-comb-filter drop ;"
-   "effects-comb-filter" )
-   '( lambda: <{ -- val }> 10000 0.5 0 #f #f #f effects-moog ;
-      $" lambda: <{ snd chn -- val }> 10000 0.5 0 #f snd chn effects-moog drop ;"
-   "effects-moog" )
-   '( lambda: <{ -- val }> #f #f effects-remove-dc ;
-      $" lambda: <{ snd chn -- val }>  snd chn effects-remove-dc drop ;"
-   "effects-remove-dc" )
-   '( lambda: <{ -- val }> #f #f effects-compand ;
-      $" lambda: <{ snd chn -- val }>  snd chn effects-compand drop ;"
-   "effects-compand" )
-   '( lambda: <{ -- val }> 100.0 #f 0 #f #f #f effects-am ;
-      $" lambda: <{ snd chn -- val }> 100.0 #f 0 #f snd chn effects-am drop ;"
-   "effects-am" )
-   '( lambda: <{ -- val }> 100.0 #f 0 #f #f #f effects-rm ;
-      $" lambda: <{ snd chn -- val }> 100.0 #f 0 #f snd chn effects-rm drop ;"
-   "effects-rm" )
-   '( lambda: <{ -- val }> 1000.0 100.0 0 #f #f #f effects-bbp ;
-      $" lambda: <{ snd chn -- val }> 1000.0 100.0 0 #f snd chn effects-bbp drop ;"
-   "effects-bbp" )
-   '( lambda: <{ -- val }> 1000.0 100.0 0 #f #f #f effects-bbr ;
-      $" lambda: <{ snd chn -- val }> 1000.0 100.0 0 #f snd chn effects-bbr drop ;"
-   "effects-bbr" )
-   '( lambda: <{ -- val }> 1000.0 0 #f #f #f effects-bhp ;
-      $" lambda: <{ snd chn -- val }> 1000.0 0 #f snd chn effects-bhp drop ;"
-   "effects-bhp" )
-   '( lambda: <{ -- val }> 1000.0 0 #f #f #f effects-blp ;
-      $" lambda: <{ snd chn -- val }> 1000.0 0 #f snd chn effects-blp drop ;"
-   "effects-blp" )
-   '( lambda: <{ -- val }> 50.0 0.5 0 #f #f #f effects-hello-dentist ;
-      $" lambda: <{ snd chn -- val }> 50.0 0.5 0 #f snd chn effects-hello-dentist drop ;"
-   "effects-hello-dentist" )
-   '( lambda: <{ -- val }> 1.0 0.3 20.0 0 #f #f #f effects-fp ;
-      $" lambda: <{ snd chn -- val }> 1.0 0.3 20.0 0 #f snd chn effects-fp drop ;"
-      "effects-fp" )
-   '( lambda: <{ -- val }> 5.0 2.0 0.001 0 #f #f #f effects-flange ;
-      $" lambda: <{ snd chn -- val }> 5.0 2.0 0.001 0 #f snd chn effects-flange drop ;"
-   "effects-flange" )
-   '( lambda: <{ -- val }> 0.1 0 #f #f #f effects-jc-reverb-1 ;
-      $" lambda: <{ snd chn -- val }> 0.1 0 #f snd chn effects-jc-reverb-1 drop ;"
-   "effects-jc-reverb-1" )
-[then]
+      "notch-channel" )
+   'snd-motif provided? under-valgrind not && [if]
+     ( effects.fs )
+     '( lambda: <{ -- val }> 0.1 128 effects-squelch-channel ;
+	$" lambda: <{ snd chn -- val }> 0.1 128 snd chn effects-squelch-channel drop ;"
+	"effects-sqelch-channel" )
+     '( lambda: <{ -- val }> #f 0.5 0.1 0 #f #f #f effects-echo ;
+	$" lambda: <{ snd chn -- val }> #f 0.5 0.1 0 #f snd chn effects-echo drop ;"
+	"effects-echo" )
+     '( lambda: <{ -- val }> 0.5 0.1 #f 0 #f #f #f effects-flecho ;
+	$" lambda: <{ snd chn -- val }> 0.5 0.1 #f 0 #f snd chn effects-flecho drop ;"
+	"effects-flecho" )
+     '( lambda: <{ -- val }> 0.75 0.75 6.0 10.0 #f 0 #f #f #f effects-zecho ;
+	$" lambda: <{ snd chn -- val }> 0.75 0.75 6.0 10.0 #f 0 #f snd chn effects-zecho drop ;"
+	"effects-zecho" )
+     '( lambda: <{ -- val }> 0.1 50 0 #f #f #f effects-comb-filter ;
+	$" lambda: <{ snd chn -- val }> 0.1 50 0 #f snd chn effects-comb-filter drop ;"
+	"effects-comb-filter" )
+     '( lambda: <{ -- val }> 10000 0.5 0 #f #f #f effects-moog ;
+	$" lambda: <{ snd chn -- val }> 10000 0.5 0 #f snd chn effects-moog drop ;"
+	"effects-moog" )
+     '( lambda: <{ -- val }> #f #f effects-remove-dc ;
+	$" lambda: <{ snd chn -- val }>  snd chn effects-remove-dc drop ;"
+	"effects-remove-dc" )
+     '( lambda: <{ -- val }> #f #f effects-compand ;
+	$" lambda: <{ snd chn -- val }>  snd chn effects-compand drop ;"
+	"effects-compand" )
+     '( lambda: <{ -- val }> 100.0 #f 0 #f #f #f effects-am ;
+	$" lambda: <{ snd chn -- val }> 100.0 #f 0 #f snd chn effects-am drop ;"
+	"effects-am" )
+     '( lambda: <{ -- val }> 100.0 #f 0 #f #f #f effects-rm ;
+	$" lambda: <{ snd chn -- val }> 100.0 #f 0 #f snd chn effects-rm drop ;"
+	"effects-rm" )
+     '( lambda: <{ -- val }> 1000.0 100.0 0 #f #f #f effects-bbp ;
+	$" lambda: <{ snd chn -- val }> 1000.0 100.0 0 #f snd chn effects-bbp drop ;"
+	"effects-bbp" )
+     '( lambda: <{ -- val }> 1000.0 100.0 0 #f #f #f effects-bbr ;
+	$" lambda: <{ snd chn -- val }> 1000.0 100.0 0 #f snd chn effects-bbr drop ;"
+	"effects-bbr" )
+     '( lambda: <{ -- val }> 1000.0 0 #f #f #f effects-bhp ;
+	$" lambda: <{ snd chn -- val }> 1000.0 0 #f snd chn effects-bhp drop ;"
+	"effects-bhp" )
+     '( lambda: <{ -- val }> 1000.0 0 #f #f #f effects-blp ;
+	$" lambda: <{ snd chn -- val }> 1000.0 0 #f snd chn effects-blp drop ;"
+	"effects-blp" )
+     '( lambda: <{ -- val }> 50.0 0.5 0 #f #f #f effects-hello-dentist ;
+	$" lambda: <{ snd chn -- val }> 50.0 0.5 0 #f snd chn effects-hello-dentist drop ;"
+	"effects-hello-dentist" )
+     '( lambda: <{ -- val }> 1.0 0.3 20.0 0 #f #f #f effects-fp ;
+	$" lambda: <{ snd chn -- val }> 1.0 0.3 20.0 0 #f snd chn effects-fp drop ;"
+	"effects-fp" )
+     '( lambda: <{ -- val }> 5.0 2.0 0.001 0 #f #f #f effects-flange ;
+	$" lambda: <{ snd chn -- val }> 5.0 2.0 0.001 0 #f snd chn effects-flange drop ;"
+	"effects-flange" )
+     '( lambda: <{ -- val }> 0.1 0 #f #f #f effects-jc-reverb-1 ;
+	$" lambda: <{ snd chn -- val }> 0.1 0 #f snd chn effects-jc-reverb-1 drop ;"
+	"effects-jc-reverb-1" )
+   [then]
 ) value test19-*.fs
 
 : 19-save/restore ( -- )
@@ -1618,6 +1620,15 @@ include bird.fsm
 ;
 
 \ ====== test 28: errors
+: check-error-tag { xt expected-tag -- }
+  xt #t nil fth-catch { tag }
+  stack-reset
+  tag list? if
+    tag car expected-tag symbol= unless
+      $" %s: expected %s from %s, got %s?" '( get-func-name expected-tag xt tag ) snd-display
+    then
+  then
+;
 'snd-motif provided? [if]
   : snd-motif-error-checks ( -- )
     '( 'Widget 0 ) 	      <'> widget-position     'no-such-widget check-error-tag
@@ -1646,15 +1657,6 @@ include bird.fsm
       mx mixer? if chans 0 do mx i i 1.0 mixer-set! drop loop else #f to mx then
     then
     mx
-  ;
-  : check-error-tag { xt expected-tag -- }
-    xt #t nil fth-catch { tag }
-    stack-reset
-    tag list? if
-      tag car expected-tag symbol= unless
-	$" %s: expected %s from %s, got %s?" '( get-func-name expected-tag xt tag ) snd-display
-      then
-    then
   ;
 
   3 :initial-element 1 make-array constant color-95
@@ -1844,7 +1846,7 @@ include bird.fsm
      <'> notch <'> notch? <'> one-pole <'> one-pole?
      <'> one-zero <'> one-zero? <'> oscil <'> oscil?
      <'> out-any <'> outa <'> outb <'> outc
-     <'> outd <'> partials->polynomial <'> partials->wave 
+     <'> outd <'> partials->polynomial <'> partials->wave
      <'> phase-partials->wave <'> polynomial <'> pulse-train <'> pulse-train?
      <'> radians->degrees <'> radians->hz <'> rand <'> rand-interp
      <'> rand-interp? <'>  rand? <'> readin <'> readin?
@@ -1855,9 +1857,9 @@ include bird.fsm
      <'> ssb-am <'> sum-of-cosines? <'> sum-of-sines? <'> ssb-am?
      <'> table-lookup <'> table-lookup? <'> tap <'> triangle-wave
      <'> triangle-wave? <'> two-pole <'> two-pole? <'> two-zero
-     <'> two-zero? <'> wave-train <'> wave-train? 
-     <'>  make-vct <'> vct-add! <'> vct-subtract!
-     <'>  vct-copy <'> vct-length <'> vct-multiply! <'> vct-offset!
+     <'> two-zero? <'> wave-train <'> wave-train?
+     <'> make-vct <'> vct-add! <'> vct-subtract!
+     <'> vct-copy <'> vct-length <'> vct-multiply! <'> vct-offset!
      <'> vct-ref <'> vct-scale! <'> vct-fill! <'> vct-set!
      <'> mus-audio-describe <'> vct-peak <'> vct? <'> list->vct
      <'> vct->list <'> vector->vct <'> vct->vector <'> vct-move!
@@ -2227,7 +2229,7 @@ include bird.fsm
        <'> rand-interp? <'> rand? <'> readin? <'> sample->file?
        <'> sawtooth-wave? <'> sine-summation? <'> square-wave? <'> src?
        <'> sum-of-cosines? <'> sum-of-sines? <'> table-lookup? <'> triangle-wave?
-       <'> two-pole? <'> two-zero? <'> wave-train? 
+       <'> two-pole? <'> two-zero? <'> wave-train?
        <'> color? <'> mix-sample-reader? <'> moving-average? <'> ssb-am?
        <'> sample-reader? <'> region-sample-reader? <'> vct? ) { ?prcs }
     args-1 each to arg
@@ -3640,9 +3642,6 @@ SIGILL lambda: { sig -- }
   finish-snd-test
   2 snd-exit drop
 ; signal drop
-
-\ SIGSEGV SIG_IGN signal drop
-\ SIGILL  SIG_IGN signal drop
 
 SIGINT lambda: ( sig -- )
   stack-reset

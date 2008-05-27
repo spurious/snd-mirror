@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Changed: Wed Nov 21 01:31:25 CET 2007
+# Changed: Fri May 02 18:26:10 CEST 2008
 
 # Commentary:
 #
@@ -2197,7 +2197,7 @@ make_proc_with_setter(:debug_property,
                           unless array?(a = property(:debug, :names)) and a.push(name)
                             set_property(:debug, :names, [name])
                           end
-                          set_debug_properties(name, {key, [val]})
+                          set_debug_properties(name, {key => [val]})
                         end
                       })
 
@@ -2827,31 +2827,31 @@ class Break < StandardError
 end
 
 Ruby_exceptions = {
-  :script_error,          ScriptError,
-  :load_error,            LoadError,
-  :name_error,            NameError,
-  :not_implemented_error, NotImplementedError,
-  :syntax_error,          SyntaxError,
-  :interrupt,             Interrupt,
-  :system_exit,           SystemExit,
-  :standard_error,        StandardError,
-  :arg_error,             ArgumentError,
-  :float_domain_error,    FloatDomainError,
-  :index_error,           IndexError,
-  :io_error,              IOError,
-  :eof_error,             EOFError,
-  :local_jump_error,      LocalJumpError,
-  :no_memory_error,       NoMemoryError,
-  :range_error,           RangeError,
-  :regexp_error,          RegexpError,
-  :runtime_error,         RuntimeError,
-  :security_error,        SecurityError,
-  :system_call_error,     SystemCallError,
-  :system_stack_error,    SystemStackError,
-  :thread_error,          ThreadError,
-  :type_error,            TypeError,
-  :zero_division_error,   ZeroDivisionError,
-  :break,                 Break}
+  :script_error          => ScriptError,
+  :load_error            => LoadError,
+  :name_error            => NameError,
+  :not_implemented_error => NotImplementedError,
+  :syntax_error          => SyntaxError,
+  :interrupt             => Interrupt,
+  :system_exit           => SystemExit,
+  :standard_error        => StandardError,
+  :arg_error             => ArgumentError,
+  :float_domain_error    => FloatDomainError,
+  :index_error           => IndexError,
+  :io_error              => IOError,
+  :eof_error             => EOFError,
+  :local_jump_error      => LocalJumpError,
+  :no_memory_error       => NoMemoryError,
+  :range_error           => RangeError,
+  :regexp_error          => RegexpError,
+  :runtime_error         => RuntimeError,
+  :security_error        => SecurityError,
+  :system_call_error     => SystemCallError,
+  :system_stack_error    => SystemStackError,
+  :thread_error          => ThreadError,
+  :type_error            => TypeError,
+  :zero_division_error   => ZeroDivisionError,
+  :break                 => Break}
 
 add_help(:snd_raise,
          "snd_raise(tag, *rest)  \

@@ -5,6 +5,8 @@
 /* SOMEDAY: fft side needs a zoom capability, not just the drag now */
 /* TODO: set y-bounds doesn't always fixup the y zoom slider? */
 
+/* TODO: wavogram redraws itself incessantly and is very annoying! */
+
 /* it would be neat I think to change label font sizes/button sizes etc when dialog changes size
  *   but there's no way to trap the outer resizing event and
  *   in Gtk, the size is not (currently) allowed to go below the main buttons (as set by font/stock-labelling)
