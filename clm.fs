@@ -2,7 +2,7 @@
 
 \ Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 \ Created: Mon Mar 15 19:25:58 CET 2004
-\ Changed: Sat May 24 02:56:00 CEST 2008
+\ Changed: Mon May 26 23:40:51 CEST 2008
 
 \ Commentary:
 \
@@ -53,7 +53,7 @@
 \ with-mix             ( body-str args fname beg -- )
 \ sound-let            ( ws-xt-lst body-xt -- )
 
-$" fth 24-May-2008" value *clm-version*
+$" fth 27-May-2008" value *clm-version*
 
 \ defined in snd/snd-xen.c
 [ifundef] snd-print   : snd-print   ( str -- str )  dup .string ;             [then]
@@ -668,7 +668,7 @@ hide
 : ws-get-snd ( ws -- snd )
   { ws }
   ws :output hash-ref find-file { fname }
-  fname 0 find-sound dup sound? if ( snd ) save-sound drop then
+  fname 0 find-sound dup sound? if ( snd ) save-sound then drop
   fname open-sound ( snd )
 ;
 : ws-scaled-to ( ws -- )
@@ -1192,7 +1192,8 @@ event: inst-test ( -- )
   2.4 1.0 $" pistol.snd" $" fyow.snd" 0.2 conv-simp
 ;event
 
-'snd provided? [if]
+\ waveshape removed from clm.c
+#f 'snd provided? && [if]
   instrument: arpeggio <{ start dur freq amp :key ampenv '( 0 0 0.5 1 1 0 ) offset 1.0 -- }>
     start dur times->samples { end beg }
     12 make-array map!

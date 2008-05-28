@@ -1652,6 +1652,46 @@ is used internally:  mus-chebyshev-first-kind (Tn) or mus-chebyshev-second-kind 
 Chebyshev polynomials of the fourth kind).  
 </p>
 
+<p>normalize-partials takes the list or vct of partial number and amplitudes, and
+returns a vct with the amplitudes normalized so that their magnitudes add to 1.0. 
+</p>
+
+<pre>
+    <em class=listener>&gt;</em><em class=typing>(normalize-partials '(1 1 3 2 6 1))</em>
+    <em class=listener>#&lt;vct[len=6]: 1.000 0.250 3.000 0.500 6.000 0.250&gt;</em>
+    <em class=listener>&gt;</em><em class=typing>(normalize-partials (vct 1 .1 2 .1 3 -.2))</em>
+    <em class=listener>#&lt;vct[len=6]: 1.000 0.250 2.000 0.250 3.000 -0.500&gt;</em>
+</pre>
+
+<p>
+partials-&gt;polynomial
+takes a list or vct of partial numbers and amplitudes
+and returns the Chebyshev polynomial coefficients that 
+produce that spectrum.  These coefficients can be passed to
+polyshape (the coeffs argument), or used directly by <a href="#polynomial">polynomial</a> (there are examples of both below).
+</p>
+
+<pre>
+    <em class=listener>&gt;</em><em class=typing>(partials-&gt;polynomial '(1 1 3 2 6 1))</em>
+    <em class=listener>#&lt;vct[len=7]: -1.000 -5.000 18.000 8.000 -48.000 0.000 32.000&gt;</em>
+    <em class=listener>&gt;</em><em class=typing>(partials-&gt;polynomial '(1 1 3 2 6 1) mus-chebyshev-second-kind)</em>
+    <em class=listener>#&lt;vct[len=7]: -1.000 6.000 8.000 -32.000 0.000 32.000 0.000&gt;</em>
+    <em class=listener>&gt;</em><em class=typing>(partials-&gt;polynomial (vct 1 .1 2 .1 3 -.2))</em>
+    <em class=listener>#&lt;vct[len=4]: -0.100 0.700 0.200 -0.800&gt;</em>
+</pre>
+
+<p>mus-chebyshev-tu-sum and friends perform the same function as partials-&gt;polynomial, but
+use the much more stable and accurate underlying recursion (see below for a long-winded
+explanation).  They are the innards of the polywave and <a href="#polyoid">polyoid</a> generators.
+The arguments are "x" (normally a sinusoid), "n", the highest partial number, and one or two
+vcts of component amplitudes.  
+These functions makes it easy to do additive synthesis with Chebyshev polynomials
+with any number of harmonics (I've tried 16384), each with arbitrary
+initial-phase and amplitude, and each harmonic independently changeable 
+in phase and amplitude at run-time simply by setting a vct value.
+</p>
+
+
 <table border=1 hspace=100 cellpadding=8><tr><td>
 <p><small>The initial-phase defaults to 0.0 (i.e. a sine, not a cosine) for historical reasons.  This
 can be slightly confusing if you're comparing waveforms.  Using sin doesn't change the
@@ -2168,7 +2208,7 @@ equivalent sum of sinusoids was around 5.0e-12).
 
 <p>Since it is primarily used for additive synthesis,
 we might ask why we'd want polywave at all.  Leaving aside
-speed (the Chebyshev computation is much faster than the equivalent sum of oscils)
+speed (the Chebyshev computation is 10 to 20 times faster than the equivalent sum of oscils)
 and memory (the defunct table-lookup based waveshape generator and table-lookup itself use a table that has to be loaded),
 the main reason to use polywave is accuracy.  polywave
 produces output that is cleaner than the equivalent sum of oscils, whereas table-lookup 
@@ -2251,6 +2291,9 @@ is at its maximum:
      and we use array-interp to drive it with a sinusoid, so x=x!
 -->
 
+<p>
+See also <a href="#polyoid">polyoid and noid</a> in generators.scm.
+</p>
 
 <br><br>
 
@@ -6380,10 +6423,16 @@ frequency and the spacing between successive sidebands).
 
   <a class=def name="polyoid">polyoid</a> w :optional (fm 0.0)
   <a class=def name="polyoid?">polyoid?</a> w
+
+  <a class=def name="make-noid">make-noid</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency 0.0) (n 1) phases
+  <a class=def name="noid">noid</a> w :optional (fm 0.0)
 </pre>
 
 <p>polyoid combines the first and second Chebyshev polynomials to provide
 a sum of sinusoids with arbitrary amplitude and initial-phases.
+noid is a wrapper for polyoid that sets up n equal amplitude components, a generalization
+of <a href="#ncosdoc">ncos and nsin</a>.
+I may rename noid to "unpulse" &mdash; this is still work in progress.
 </p>
 <br>
 
