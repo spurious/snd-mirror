@@ -6,6 +6,7 @@
 /* TODO: set y-bounds doesn't always fixup the y zoom slider? */
 
 /* TODO: wavogram redraws itself incessantly and is very annoying! */
+/* TODO: when united chans have different y bounds, the graph tries to use both! */
 
 /* it would be neat I think to change label font sizes/button sizes etc when dialog changes size
  *   but there's no way to trap the outer resizing event and

@@ -9,28 +9,28 @@
 ;;;  test 6: vcts                               [13773]
 ;;;  test 7: colors                             [14041]
 ;;;  test 8: clm                                [14531]
-;;;  test 9: mix                                [26261]
-;;;  test 10: marks                             [28482]
-;;;  test 11: dialogs                           [29443]
-;;;  test 12: extensions                        [29688]
-;;;  test 13: menus, edit lists, hooks, etc     [29959]
-;;;  test 14: all together now                  [31668]
-;;;  test 15: chan-local vars                   [32713]
-;;;  test 16: regularized funcs                 [34352]
-;;;  test 17: dialogs and graphics              [39306]
-;;;  test 18: enved                             [39396]
-;;;  test 19: save and restore                  [39415]
-;;;  test 20: transforms                        [41257]
-;;;  test 21: new stuff                         [43240]
-;;;  test 22: run                               [45235]
-;;;  test 23: with-sound                        [51456]
-;;;  test 24: user-interface                    [55373]
-;;;  test 25: X/Xt/Xm                           [58767]
-;;;  test 26: Gtk                               [63375]
-;;;  test 27: GL                                [67227]
-;;;  test 28: errors                            [67351]
-;;;  test all done                              [69654]
-;;;  test the end                               [69892]
+;;;  test 9: mix                                [26214]
+;;;  test 10: marks                             [28435]
+;;;  test 11: dialogs                           [29396]
+;;;  test 12: extensions                        [29641]
+;;;  test 13: menus, edit lists, hooks, etc     [29912]
+;;;  test 14: all together now                  [31621]
+;;;  test 15: chan-local vars                   [32666]
+;;;  test 16: regularized funcs                 [34305]
+;;;  test 17: dialogs and graphics              [39259]
+;;;  test 18: enved                             [39349]
+;;;  test 19: save and restore                  [39368]
+;;;  test 20: transforms                        [41210]
+;;;  test 21: new stuff                         [43193]
+;;;  test 22: run                               [45188]
+;;;  test 23: with-sound                        [51404]
+;;;  test 24: user-interface                    [55351]
+;;;  test 25: X/Xt/Xm                           [58745]
+;;;  test 26: Gtk                               [63353]
+;;;  test 27: GL                                [67205]
+;;;  test 28: errors                            [67329]
+;;;  test all done                              [69634]
+;;;  test the end                               [69872]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -15588,6 +15588,60 @@ EDITS: 2
 		  (snd-display ";elliptic bs 8 .1 .2 spect: ~A" (cadr vals))))
 	    ))))
   
+  (define (test-polyoid n)
+    (let* ((res (with-sound (:channels 2 :clipped #f)
+			    (let ((angle 0.0)
+				  (incr (hz->radians 1.0))
+				  (cur-phases (make-vct (* 3 n))))
+			      (do ((i 0 (+ i 1))
+				   (j 0 (+ j 3)))
+				  ((= i n))
+				(vct-set! cur-phases j (+ i 1))
+				(vct-set! cur-phases (+ j 1) (/ 1.0 n))
+				(vct-set! cur-phases (+ j 2) (random (* 2 pi))))
+			      (let ((gen (make-polyoid 1.0 cur-phases)))
+				(do ((i 0 (1+ i)))
+				    ((= i 88200))
+				  (let ((poly-sum 0.0)
+					(sin-sum 0.0))
+				    (do ((k 0 (1+ k)))
+					((= k n))
+				      (set! sin-sum (+ sin-sum (sin (+ (* (+ k 1) angle) (vct-ref cur-phases (+ (* 3 k) 2)))))))
+				    (set! poly-sum (polyoid gen 0.0))
+				    (set! angle (+ angle incr))
+				    (outa i (/ sin-sum n))
+				    (outb i poly-sum)))))))
+	   (snd (find-sound res)))
+      (channel-distance snd 0 snd 1)))
+  
+  (define (test-polyoid-run n)
+    (let* ((res (with-sound (:channels 2 :clipped #f)
+			    (let ((angle 0.0)
+				  (incr (hz->radians 1.0))
+				  (cur-phases (make-vct (* 3 n))))
+			      (do ((i 0 (+ i 1))
+				   (j 0 (+ j 3)))
+				  ((= i n))
+				(vct-set! cur-phases j (+ i 1))
+				(vct-set! cur-phases (+ j 1) (/ 1.0 n))
+				(vct-set! cur-phases (+ j 2) (random (* 2 pi))))
+			      (let ((gen (make-polyoid 1.0 cur-phases)))
+				(run
+				 (lambda ()
+				   (do ((i 0 (1+ i)))
+				       ((= i 88200))
+				     (let ((poly-sum 0.0)
+					   (sin-sum 0.0))
+				       (do ((k 0 (1+ k)))
+					   ((= k n))
+					 (set! sin-sum (+ sin-sum (sin (+ (* (+ k 1) angle) (vct-ref cur-phases (+ (* 3 k) 2)))))))
+				       (set! poly-sum (polyoid gen 0.0))
+				       (set! angle (+ angle incr))
+				       (outa i (/ sin-sum n))
+				       (outb i poly-sum)))))))))
+	   (snd (find-sound res)))
+      (channel-distance snd 0 snd 1)))
+
   ;; ----------------
   (define (poly-roots-tests)
     (letrec ((ceql (lambda (a b)
@@ -21592,6 +21646,106 @@ EDITS: 2
 		(snd-display ";polyshape fm: ~A: ~A ~A" i val1 val2)
 		(set! happy #f))))))
     
+    (for-each 
+     (lambda (amps name)
+       (let* ((n (vct-length amps))
+	      (angle 0.0)
+	      (incr (hz->radians 1.0))
+	      (happy #t))
+	 (do ((i 0 (1+ i)))
+	     ((or (not happy) (= i 100)))
+	   (let ((sum (vct-ref amps 0))
+		 (cval (mus-chebyshev-t-sum angle amps)))
+	     (do ((k 1 (1+ k)))
+		 ((= k n))
+	       (set! sum (+ sum (* (vct-ref amps k) (cos (* k angle))))))
+	     (set! angle (+ angle incr))
+	     (if (fneq cval sum)
+		 (begin
+		   (snd-display ";cheb-t-sum ~A: [~D] ~A ~A" name i cval sum)
+		   (set! happy #f)))))))
+     (list (vct 0.0 1.0)
+	   (vct 0.0 0.5 0.25 0.25)
+	   (make-vct 100 0.01)
+	   (make-vct 1000 0.001))
+     (list 'one-cos
+	   'three-cos
+	   'hundred-cos
+	   'thousand-cos))
+    
+    (for-each 
+     (lambda (amps name)
+       (let* ((n (vct-length amps))
+	      (angle 0.0)
+	      (incr (hz->radians 1.0))
+	      (happy #t))
+	 (do ((i 0 (1+ i)))
+	     ((or (not happy) (= i 100)))
+	   (let ((sum 0.0)
+		 (cval (mus-chebyshev-u-sum angle amps))) ; * sin is embedded in func
+	     (do ((k 1 (1+ k)))
+		 ((= k n))
+	       (set! sum (+ sum (* (vct-ref amps k) (sin (* k angle))))))
+	     (set! angle (+ angle incr))
+	     (if (fneq cval sum)
+		 (begin
+		   (snd-display ";cheb-u-sum ~A: [~D] ~A ~A" name i cval sum)
+		   (set! happy #f)))))))
+     (list (vct 0.0 1.0)
+	   (vct 0.0 0.5 0.25 0.25)
+	   (make-vct 100 0.01)
+	   (make-vct 1000 0.001))
+     (list 'one-cos
+	   'three-cos
+	   'hundred-cos
+	   'thousand-cos))
+    
+    (for-each 
+     (lambda (camps samps name)
+       (let* ((n (vct-length camps))
+	      (angle 0.0)
+	      (incr (hz->radians 1.0))
+	      (happy #t))
+	 (do ((i 0 (1+ i)))
+	     ((or (not happy) (= i 100)))
+	   (let ((sum (vct-ref camps 0))
+		 (cval (mus-chebyshev-tu-sum angle camps samps)))
+	     (do ((k 1 (1+ k)))
+		 ((= k n))
+	       (set! sum (+ sum (+ (* (vct-ref samps k) (sin (* k angle)))
+				   (* (vct-ref camps k) (cos (* k angle)))))))
+	     (set! angle (+ angle incr))
+	     (if (fneq cval sum)
+		 (begin
+		   (snd-display ";cheb-tu-sum ~A: [~D] ~A ~A" name i cval sum)
+		   (set! happy #f)))))))
+     (list (vct 0.0 1.0)
+	   (vct 0.0 0.25 0.0 0.25)
+	   (make-vct 100 .004)
+	   (make-vct 1000 0.0005))
+     (list (vct 0.0 0.0)
+	   (vct 0.0 0.25 0.25 0.0)
+	   (make-vct 100 .006)
+	   (make-vct 1000 0.0005))
+     (list 'one-tu
+	   'three-tu
+	   'hundred-tu
+	   'thousand-tu))
+
+    (for-each
+     (lambda (n)
+       (let ((distance (test-polyoid n)))
+	 (if (fneq distance 0.0)
+	     (snd-display ";test polyoid ~A ~A" n distance))))
+     (list 1 3 10))
+
+    (for-each
+     (lambda (n)
+       (let ((distance (test-polyoid-run n)))
+	 (if (fneq distance 0.0)
+	     (snd-display ";test polyoid run ~A ~A" n distance))))
+     (list 1 8 32 100))
+
     ;; polywave
     (let ((gen0 (make-polywave 440.0 '(1 1)))
 	  (gen (make-polywave 440.0 :partials '(1 1) :type mus-chebyshev-first-kind))

@@ -2496,7 +2496,7 @@ Float mus_chebyshev_tu_sum(Float x, int n, Float *tn, Float *un)
   /* Un calc */
   b = un[n - 1];
   b1 = 0.0;
-  for (i = n - 2; i >= 0; i--)
+  for (i = n - 2; i > 0; i--)
     {
       b2 = b1;
       b1 = b;
@@ -2537,7 +2537,7 @@ Float mus_chebyshev_u_sum(Float x, int n, Float *un)
 
   /* Un calc */
   b = un[n - 1];
-  for (i = n - 2; i >= 0; i--)
+  for (i = n - 2; i > 0; i--)
     {
       b2 = b1;
       b1 = b;

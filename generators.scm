@@ -5659,13 +5659,35 @@ index 10 (so 10/2 is the bes-jn arg):
 				   (let ((n (inexact->exact (vct-ref lst j)))
 					 (amp (vct-ref lst (+ j 1)))
 					 (phase (vct-ref lst (+ j 2))))
-				     (if (> n 0)                                          ; constant only applies to cos side
-					 (vct-set! sin-amps (- n 1) (* amp (cos phase)))) ; Un = sin(n+1)/sin(n) then we multiply bby sin(n)
+				     (if (> n 0)                                   ; constant only applies to cos side
+					 (vct-set! sin-amps n (* amp (cos phase))))
 				     (vct-set! cos-amps n (* amp (sin phase)))))
 				 (set! (polyoid-tn g) cos-amps)
 				 (set! (polyoid-un g) sin-amps)
 				 (set! (polyoid-frequency g) (hz->radians (polyoid-frequency g)))
-				 g)))
+				 g))
+
+	       :methods (list
+			 (list 'mus-data
+			       (lambda (g)
+				 (polyoid-tn g)))
+			 (list 'mus-xcoeffs
+			       (lambda (g)
+				 (polyoid-tn g)))
+			 (list 'mus-ycoeffs
+			       (lambda (g)
+				 (polyoid-un g)))
+			 (list 'mus-xcoeff
+			       (lambda (g ind)
+				 (vct-ref (polyoid-tn g) ind))
+			       (lambda (g ind val)
+				 (vct-set! (poltoid-tn g) ind val)))
+			 (list 'mus-ycoeff
+			       (lambda (g ind)
+				 (vct-ref (polyoid-un g) ind))
+			       (lambda (g ind val)
+				 (vct-set! (poltoid-un g) ind val)))))
+
   (frequency *clm-default-frequency*) (partial-amps-and-phases #f :type vct) (angle 0.0)
   (tn #f :type vct) (un #f :type vct))
 
@@ -5780,141 +5802,116 @@ index 10 (so 10/2 is the bes-jn arg):
 		      ((> i n))
 		    (vct-set! amps j i)
 		    (vct-set! amps (+ j 1) (/ 1.0 n))
-		    (vct-set! amps (+ j 2) 
-			      (if (vct? phases)
-				  (vct-ref phases (1- i))
-				  (if (eq? phases :max-peak)
-				      (/ pi 2)
-				      (random (* 2 pi))))))
+		    (if (vct? phases)
+			(vct-set! amps (+ j 2) (vct-ref phases (1- i)))
+			(if (not phases)
+			    (vct-set! amps (+ j 2) (random (* 2 pi)))
+			    (if (eq? phases 'max-peak)
+				(vct-set! amps (+ j 2) (/ pi 2))
+				;; else min-peak, handled separately
+				))))
+
+		  (if (eq? phases 'min-peak)
+		      (let ((vector-find-if (lambda (func vect)
+					      (let ((len (vector-length vect))
+						    (result #f))
+						(do ((i 0 (1+ i)))
+						    ((or (= i len)
+							 result)
+						     result)
+						  (set! result (func (vector-ref vect i))))))))
+
+			(if (not (defined? 'noid-min-peak-phases))
+			    (load "peak-phases.scm"))
+
+			(let ((min-dat (vector-find-if 
+					(lambda (val)
+					  (and val
+					       (vector? val)
+					       (= (vector-ref val 0) n)
+					       (let* ((a-val (vector-ref val 1))
+						      (a-len (vector-length val))
+						      (a-data (list a-val (vector-ref val 2))))
+						 (do ((k 2 (1+ k)))
+						     ((= k a-len))
+						   (if (and (number? (vector-ref val k))
+							    (< (vector-ref val k) a-val))
+						       (begin
+							 (set! a-val (vector-ref val k))
+							 (set! a-data (list a-val (vector-ref val (+ k 1)))))))
+						 a-data)))
+					noid-min-peak-phases)))
+			  (if min-dat
+			      (let ((norm (car min-dat))
+				    (rats (cadr min-dat)))
+				(do ((i 1 (1+ i))
+				     (j 0 (+ j 3)))
+				    ((> i n))
+				  (vct-set! amps (+ j 1) (/ 1.0 norm))
+				  (vct-set! amps (+ j 2) (* pi (vector-ref rats (1- i))))))))))
+			      
 		  amps)))
 
 (define noid polyoid)
 (define noid? polyoid?)
 
 
-#|
-(define min-peak-phases (vector
-#(1  1.0    #(0))
-
-#(2  1.76   #(0 0))
-
-#(3  1.980  #(0 23/39 6/19)
-            #(0 16/39 32/19)
-            #(0 62/39 6/19)
-            #(0 55/39 32/19)
-            #(0 31/22 37/22)
-	    ;; best found by hand search of the graph: [-0.010 1.271 5.265] noid3a 203838
-     1.98053356757571 #(0 7/17 59/35))
-
-#(4  2.050  #(0 45/37 25/31 8/7)
-     2.040  #(0 33/35 67/50 10/9)
-            ;; graph: [-0.010 0.329 2.198 6.157] noid4
-            #(0 1/9 17/24 71/36))
-
-#(5  2.361  #(0 59/71 68/41 43/30 61/38)
-     2.358  #(0 31/27 14/45 10/19 6/17)
-            #(0 1/7 14/45 65/42 16/43)
-     2.353  #(0 3/20 52/155 30/19 2/5)) ; better than my graph noid5
-
-#(6  2.577  #(0 49/53 15/49 111/83 46/33 16/13)
-     2.567  #(0 36/19 7/25 18/55 23/17 5/26)
-     2.562  #(0 23/26 10/39 57/44 33/25 68/59))
-
-#(7  2.715  #(0 7/48 31/29 38/29 11/14 3/2 89/79))
-
-#(8  3.003  #(0 22/27 54/29 39/28 31/40 53/74 9/11 59/50))
-
-#(9  3.2178 #(0 13/12 44/43 39/20 1/16 14/33 1/48 4/7 91/50)
-     3.214  #(0 85/48 45/29 28/17 17/67 21/38 46/31 7/9 197/106))
-
-#(10 3.4332 #(0 2/27 41/23 3/20 33/40 29/21 51/31 18/19 9/53 25/19))
-
-#(11 3.5519 #(0 28/29 4/27 4/23 34/33 67/34 11/30 1/13 33/31 31/22 19/17))
-
-#(12 3.9263 #(0 49/27 7/40 12/25 67/40 8/5 47/41 19/30 35/23 18/29 35/22 54/37)
-     3.9110 #(0 1/14 9/58 3/47 9/37 27/17 25/14 4/7 17/24 1/22 31/24 11/45))
-
-#(13 4.1939 #(0 53/39 40/29 7/16 2/21 10/53 24/29 81/41 49/34 4/13 25/16 37/21 33/17)
-     4.0411 #(0 25/17 83/104 58/49 59/35 5/14 36/19 39/40 35/22 71/50 27/23 47/34 7/32))
-
-#(14 4.2167 #(0 22/17 2/19 31/18 20/13 23/28 15/17 61/107 107/106 2/29 6/7 
-              21/23 79/57 56/167))
-
-#(15 4.4777 #(0 83/49 38/61 185/98 69/44 15/23 60/49 40/49 83/47 3/23 33/25 
-	      277/208 14/13 37/26 33/19))
-
-#(16 4.778  #(0 5/13 18/37 14/57 1/5 12/47 21/13 73/85 43/22 
-	      19/14 39/70 41/47 7/57 37/34 45/29 1/17))
-
-#(17 4.7650 #(0 1/216 14/43 172/123 1/17 72/59 69/37 51/73 1/20 1/43 
-              17/41 1/9 55/32 13/17 13/20 13/8 61/31))
-
-#(18 4.9811 #(0 11/23 21/13 9/20 3/25 32/25 7/55 7/15 27/28 25/32 46/31 
-              5/16 5/14 15/68 3/28 53/37 19/27 27/35)
-     4.9449 #(0 25/19 11/15 4/15 3/10 23/18 196/131 105/62 4/11 8/33 97/56 
-              1/10 41/23 1/18 8/29 93/73 6/37 20/19))
-
-#(19 5.1175 #(0 65/48 107/58 36/31 248/249 11/16 103/72 3/8 22/15 12/19 151/108 
-              45/29 5/19 18/25 31/23 16/19 13/18 48/31 59/42)
-     5.0555 #(0 9/89 24/95 51/127 1/12 63/88 53/34 3/13 9/22 112/75 11/7 23/29 
-              59/178 1/83 44/39 1/18 91/73 16/31 8/9))
-
-#(20 5.2638 #(0 16/13 29/39 25/44 23/16 21/20 35/34 1/17 21/32 5/7 34/21 24/25 
-	      49/26 67/51 9/59 41/30 52/29 32/57 49/74 37/52))
-
-#(21 5.3575 #(0 11/27 1/25 87/44 29/21 45/34 45/26 25/26 59/49 2/11 37/40 61/35 
-	      59/58 6/61 45/49 58/83 3/20 34/57 31/42 20/19 38/35)
-     5.3539 #(0 59/33 39/22 39/22 10/23 7/55 11/47 28/41 47/27 124/69 9/31 1/24 
-              46/33 120/83 11/30 8/21 40/31 9/31 26/23 1/14 63/37))
-
-#(22 5.7811 #(0 43/34 23/16 17/29 31/23 14/23 17/11 2/35 69/43 220/219 86/45 15/13 
-	      11/30 41/23 27/16 2/5 11/19 34/39 23/20 32/31 32/41 6/19))
-
-#(32 7.2150  #(0 41/35 19/42 3/38 148/91 37/24 76/43 4/7 1/17 4/29
-               88/59 313/188 1/30 53/40 29/17 8/25 7/26 18/11 9/29 
-               6/25 248/149 6/17 95/49 76/91 54/43 26/19 16/35 73/53 
-               33/29 33/23 79/41 3/13))
-
-#(64 10.968 #(0 47/33 170/113 58/57 7/27 89/46 29/24 55/47 15/29 
-	      8/31 71/52 4/43 275/183 11/19 56/33 2/27 58/31 48/37 
-	      7/12 31/18 17/10 75/38 69/68 32/17 106/85 13/40 20/39 
-	      72/55 1 21/16 103/69 33/20 44/25 74/61 40/53 17/26 3/2 
-	      10/33 9/19 22/73 5/8 26/33 1/9 13/7 140/139 124/79 13/8 
-	      171/257 25/31 39/29 15/34 25/62 46/139 56/29 60/37 1/12 
-	      17/16 7/41 26/87 6/53 5/13 43/23 25/32 23/24))
-
-#(128 18.937 #(0 114/67 22/29 3/7 10/89 80/47 9/16 17/16 2/27 10/69 
-	       11/20 8/17 38/25 78/157 33/29 42/67 29/25 122/65 31/29 
-	       23/25 42/23 51/28 32/77 16/81 1/34 6/13 15/49 17/11 6/7 
-	       355/237 78/47 5/23 17/20 43/26 67/36 51/32 5/3 39/44 5/3 
-	       17/11 28/31 29/18 27/31 3/16 9/22 7/34 199/149 42/25 37/33 
-	       6/19 114/79 35/39 49/82 33/32 45/23 26/17 92/55 28/15 85/71 
-	       21/73 17/10 17/9 3/28 7/31 27/14 53/105 36/25 41/22 4/7 20/19 
-	       4/7 41/25 20/23 4/5 27/43 2/29 4/27 29/21 36/19 2/31 93/56 2/33 
-	       20/19 16/11 15/34 33/17 23/19 29/26 20/27 49/25 15/23 25/76 48/67 
-	       10/7 2/35 20/13 2/21 27/37 43/65 57/44 35/39 137/96 146/117 37/42 
-	       47/24 69/40 18/53 4/3 17/13 81/53 7/18 51/55 19/11 29/23 65/64 
-	       55/46 1/7 7/53 19/20 56/33 7/27 79/41 25/21 114/113 35/22 44/43 
-	       38/63 1/47))
-))
-
-|#
-
-;;; TODO: test noid ("the unpulse")
-;;; TODO: if :minimize-peak, remember norm, :maximize-peak->ncos
-;;; TODO: test polyoid
-;;; TODO: test mus-chebyshev-tu-sum et al
+;;; TODO: test new noid and snd-test
 ;;; TODO: would these phases work for any sum-of-sines (nrsin for example) that wants unpulsy output?
 ;;; TODO: L&S sq wave + fm? -- why isn't this already a generator or two?
 ;;; TODO: in triangle-wave section it shows FM tri(tri) -- what is spectrum?
 ;;; TODO: try the monks with polyoid (changing amps and phases)
 ;;; TODO: nrcos via polyoid -> phases etc
 ;;; TODO: check Cheb recursion for ncos and nsin -- more flexible?
-;;; TODO: change amps/phases run-time polywave|oid [mus-data?]
+;;; TODO: change amps/phases run-time polywave [mus-data?] -- check polyoid, implement polywave
 ;;; TODO: interp pulse -> unpulse
 ;;; TODO: snd-test needs real basic existence checks for 2nd Cheb
-;;; TODO: Un n+1 offset doc?
+;;; TODO: exploded graphs from the noid sound series + writeup
+;;; TODO: plot against expt 0.56? (tmp26)
+;;; TODO: chebyshev-*-sum in CL?
 
+#|
+(with-sound (:clipped #f)
+  (let ((samps 44100)
+	(gen (make-noid 100.0 3)))
+    (do ((i 0 (1+ i)))
+	((= i samps))
+      (outa i (noid gen 0.0)))))
+
+(with-sound (:clipped #f)
+  (let ((samps 44100)
+	(gen (make-noid 100.0 10 'min-peak)))
+    (do ((i 0 (1+ i)))
+	((= i samps))
+      (outa i (noid gen 0.0)))))
+
+(with-sound (:clipped #f :channels 4)
+  (let ((samps 44100)
+	(gen1 (make-noid 100.0 32 'max-peak))
+	(gen2 (make-noid 100.0 32 (make-vct 32 0.0)))
+	(gen3 (make-noid 100.0 32))
+	(gen4 (make-noid 100.0 32 'min-peak)))
+    (do ((i 0 (1+ i)))
+	((= i samps))
+      (outa i (noid gen1 0.0))
+      (outb i (noid gen2 0.0))
+      (outc i (noid gen3 0.0))
+      (outd i (noid gen4 0.0)))))
+
+
+  (do ((i 0 (1+ i)))
+      ((= i 4))
+    (with-sound (:clipped #f :output (string-append "test-noid-" (number->string i) ".snd"))
+      (let ((samps 44100)
+	    (gen (make-noid 100.0 32 (if (= i 0) 'max-peak
+					 (if (= i 1) (make-vct 32 0.0)
+					     (if (= i 2) #f
+						 'min-peak))))))
+	(do ((i 0 (1+ i)))
+	    ((= i samps))
+	  (outa i (noid gen 0.0))))))
+
+|#
 
 
 ;;; ---------------- old waveshape generator ----------------

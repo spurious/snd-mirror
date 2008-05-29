@@ -4323,7 +4323,7 @@ partial amplitudes in the vct or list 'partials' by the inverse of their sum (so
 
 static XEN g_chebyshev_tu_sum(XEN x, XEN tn, XEN un)
 {
-  #define H_chebyshev_tu_sum "(" S_mus_chebyshev_tu_sum " x n tn un) returns the sum of the weighted\
+  #define H_chebyshev_tu_sum "(" S_mus_chebyshev_tu_sum " x tn un) returns the sum of the weighted\
 Chebyshev polynomials Tn and Un (vcts), with phase x."
 
   vct *Tn, *Un;
@@ -4341,7 +4341,7 @@ Chebyshev polynomials Tn and Un (vcts), with phase x."
 
 static XEN g_chebyshev_t_sum(XEN x, XEN tn)
 {
-  #define H_chebyshev_t_sum "(" S_mus_chebyshev_t_sum " x n tn) returns the sum of the weighted \
+  #define H_chebyshev_t_sum "(" S_mus_chebyshev_t_sum " x tn) returns the sum of the weighted \
 Chebyshev polynomials Tn (a vct)."
 
   vct *Tn;
@@ -4357,7 +4357,7 @@ Chebyshev polynomials Tn (a vct)."
 
 static XEN g_chebyshev_u_sum(XEN x, XEN un)
 {
-  #define H_chebyshev_u_sum "(" S_mus_chebyshev_u_sum " x n un) returns the sum of the weighted \
+  #define H_chebyshev_u_sum "(" S_mus_chebyshev_u_sum " x un) returns the sum of the weighted \
 Chebyshev polynomials Un (a vct)."
 
   vct *Un;
