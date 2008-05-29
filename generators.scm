@@ -5847,7 +5847,7 @@ index 10 (so 10/2 is the bes-jn arg):
 				(do ((i 1 (1+ i))
 				     (j 0 (+ j 3)))
 				    ((> i n))
-				  (vct-set! amps (+ j 1) (/ 1.0 norm))
+				  (vct-set! amps (+ j 1) (/ 0.999 norm)) ; I'm truncating when saving the peak
 				  (vct-set! amps (+ j 2) (* pi (vector-ref rats (1- i))))))))))
 			      
 		  amps)))
@@ -5857,16 +5857,13 @@ index 10 (so 10/2 is the bes-jn arg):
 
 
 ;;; TODO: test new noid and snd-test
-;;; TODO: would these phases work for any sum-of-sines (nrsin for example) that wants unpulsy output?
 ;;; TODO: L&S sq wave + fm? -- why isn't this already a generator or two?
 ;;; TODO: in triangle-wave section it shows FM tri(tri) -- what is spectrum?
 ;;; TODO: try the monks with polyoid (changing amps and phases)
-;;; TODO: nrcos via polyoid -> phases etc
 ;;; TODO: check Cheb recursion for ncos and nsin -- more flexible?
 ;;; TODO: change amps/phases run-time polywave [mus-data?] -- check polyoid, implement polywave
-;;; TODO: interp pulse -> unpulse
+;;; TODO: interp pulse -> unpulse (example of diff?)
 ;;; TODO: snd-test needs real basic existence checks for 2nd Cheb
-;;; TODO: exploded graphs from the noid sound series + writeup
 ;;; TODO: plot against expt 0.56? (tmp26)
 ;;; TODO: chebyshev-*-sum in CL?
 

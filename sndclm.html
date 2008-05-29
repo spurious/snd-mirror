@@ -2886,12 +2886,12 @@ despite having the same spectrum.  Also, this example raises the burning questio
 harmonically related sinusoids, what is the minimum peak amplitude?  My guess is sqrt(n).  Here are (some of) the
 best minimum peaks I've found:
 <pre>
-  1 1.0, 2 1.762, 4 2.05, 8 3.1436, 16 4.777, 32 7.478, 64 10.968, 128 18.937
+    1 1.0, 2 1.762, 4 2.04, 8 3.003, 16 4.635, 32 7.215, 64 10.968, 128 18.937
 </pre>
-For the actual phases, and an ever-growing list of other results, developed with
+For the actual phases, the code used to find them, and an ever-growing list of other results, developed with
 amiable, if sometimes incomprehensible advice from Bill Gosper, Marc LeBrun,
 and Julius Smith, 
-see <a href="#polyoid">polyoid</a> in generators.scm.
+see peak-phases.scm.
 </small>
 </td></tr></table>
 
@@ -6442,7 +6442,7 @@ frequency and the spacing between successive sidebands).
 
 
 <br>
-<pre>
+<pre style="background-color: #f2f4ff">
   <a class=def name="make-polyoid">make-polyoid</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> 
          (frequency *clm-default-frequency*) 
          (partial-amps-and-phases '(1 1 0.0))   ; a list of harmonic numbers, their associated amplitudes, and their initial-phases
@@ -6458,12 +6458,11 @@ frequency and the spacing between successive sidebands).
 a sum of sinusoids with arbitrary amplitude and initial-phases.
 noid is a wrapper for polyoid that sets up n equal amplitude components, a generalization
 of <a href="#ncosdoc">ncos and nsin</a>.
-I may rename noid to "unpulse" &mdash; this is still work in progress.
-noid's phases argument can be omitted, a vct, <code>'min-peak</code>, or <code>'max-peak</code>.
+noid's phase argument can be a vct, <code>'min-peak</code>, <code>'max-peak</code>, or omitted (#f).
 If omitted, the phases are set to random numbers between 0 and 2 pi; if
-a vct, its values are the phases used; if 'max-peak, all phases are set
+a vct, the vct's values are used as the phases; if 'max-peak, all phases are set
 to pi/2 (ncos essentially &mdash; use <code>(make-vct n 0.0)</code> to get nsin);
-and if 'min-peak, the minimum peak amplitude phases in peak-phases.scm are used.
+and if 'min-peak, the minimum peak amplitude phases in <a href="sndscm.html#peakphasesdoc">peak-phases.scm</a> are used.
 In the 'min-peak and 'max-peak cases, noid's output is normalized to fall between -1.0 and 1.0.
 </p>
 
@@ -6483,6 +6482,22 @@ In the 'min-peak and 'max-peak cases, noid's output is normalized to fall betwee
 	    ((= i samps))
 	  (outa i (noid gen 0.0))))))
 -->
+
+<p>We can use the <a href="sndscm.html#peakphasesdoc">peak-phases.scm</a> phases to reduce the "spikiness" of the waveform with any
+set of components and component amplitudes.  We could, for example, change noid to use
+</p>
+
+<pre>
+    (vct-set! amps (+ j 1) (/ (expt r (- i 1)) norm))
+</pre>
+
+<p>where "r" is the ratio between successive component amplitude: "nroid"?
+This is not as pointless as it might at first appear.  Many of these waveforms actually
+sound different, despite having the same (magnitude) spectrum, and in all cases I've
+heard, the min-peak case sounds best ("fullest" perhaps).
+</p>
+
+
 
 <!--
 <img src="noid2.png">
