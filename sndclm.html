@@ -1615,9 +1615,9 @@ See also <a href="sndscm.html#granidoc">grani</a> and <a href="sndscm.html#displ
   <a class=def name="partialstopolynomial">partials-&gt;polynomial</a> partials :optional (kind mus-chebyshev-first-kind)
   <a class=def name="normalizepartials">normalize-partials</a> partials
 
-  <a class=def name="chebyshev-tu-sum">chebyshev-tu-sum</a> x n t-coeffs u-coeffs
-  <em class=emdef>chebyshev-t-sum</em> x n t-coeffs
-  <em class=emdef>chebyshev-u-sum</em> x n u-coeffs
+  <a class=def name="chebyshev-tu-sum">chebyshev-tu-sum</a> x t-coeffs u-coeffs
+  <em class=emdef>chebyshev-t-sum</em> x t-coeffs
+  <em class=emdef>chebyshev-u-sum</em> x u-coeffs
 </pre>
 
 <!-- LATEX: sceq16
@@ -1683,7 +1683,7 @@ polyshape (the coeffs argument), or used directly by <a href="#polynomial">polyn
 <p>mus-chebyshev-tu-sum and friends perform the same function as partials-&gt;polynomial, but
 use the much more stable and accurate underlying recursion (see below for a long-winded
 explanation).  They are the innards of the polywave and <a href="#polyoid">polyoid</a> generators.
-The arguments are "x" (normally a sinusoid), "n", the highest partial number, and one or two
+The arguments are "x" (normally a sinusoid), and one or two
 vcts of component amplitudes.  
 These functions makes it easy to do additive synthesis with Chebyshev polynomials
 with any number of harmonics (I've tried 16384), each with arbitrary
@@ -2891,7 +2891,7 @@ best minimum peaks I've found:
 For the actual phases, the code used to find them, and an ever-growing list of other results, developed with
 amiable, if sometimes incomprehensible advice from Bill Gosper, Marc LeBrun,
 and Julius Smith, 
-see peak-phases.scm.
+see <a href="sndscm.html#peakphasesdoc">peak-phases</a>.scm.
 </small>
 </td></tr></table>
 

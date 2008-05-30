@@ -5864,7 +5864,6 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;; TODO: change amps/phases run-time polywave [mus-data?] -- check polyoid, implement polywave
 ;;; TODO: interp pulse -> unpulse (example of diff?)
 ;;; TODO: snd-test needs real basic existence checks for 2nd Cheb
-;;; TODO: plot against expt 0.56? (tmp26)
 ;;; TODO: chebyshev-*-sum in CL?
 
 #|

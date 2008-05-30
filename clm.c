@@ -2415,7 +2415,7 @@ Float *mus_normalize_partials(int num_partials, Float *partials)
 
 typedef struct {
   mus_any_class *core;
-  mus_any *o;
+  double phase, freq;
   Float *coeffs;
   int n, cheby_choice;
   Float index;
@@ -2426,10 +2426,7 @@ static int free_pw(mus_any *pt)
 {
   pw *ptr = (pw *)pt;
   if (ptr) 
-    {
-      mus_free(ptr->o);
-      clm_free(ptr); 
-    }
+    clm_free(ptr); 
   return(0);
 }
 
@@ -2437,7 +2434,7 @@ static int free_pw(mus_any *pt)
 static void pw_reset(mus_any *ptr)
 {
   pw *gen = (pw *)ptr;
-  oscil_reset(gen->o);
+  gen->phase = 0.0;
 }
 
 
@@ -2448,7 +2445,8 @@ static bool pw_equalp(mus_any *p1, mus_any *p2)
   if (p1 == p2) return(true);
   return((w1) && (w2) &&
 	 (w1->core->type == w2->core->type) &&
-	 (mus_equalp(w1->o, w2->o)) &&
+	 (w1->freq == w2->freq) &&
+	 (w1->phase == w2->phase) &&
 	 (w1->n == w2->n) &&
 	 (w1->index == w2->index) &&
 	 (w1->cheby_choice == w2->cheby_choice) &&
@@ -2456,14 +2454,14 @@ static bool pw_equalp(mus_any *p1, mus_any *p2)
 }
 
 
-static Float pw_freq(mus_any *ptr) {return(mus_frequency(((pw *)ptr)->o));}
-static Float pw_set_freq(mus_any *ptr, Float val) {return(mus_set_frequency(((pw *)ptr)->o, val));}
+static Float pw_freq(mus_any *ptr) {return(mus_radians_to_hz(((pw *)ptr)->freq));}
+static Float pw_set_freq(mus_any *ptr, Float val) {((pw *)ptr)->freq = mus_hz_to_radians(val); return(val);}
 
-static Float pw_increment(mus_any *ptr) {return(mus_increment(((pw *)ptr)->o));}
-static Float pw_set_increment(mus_any *ptr, Float val) {return(mus_set_increment(((pw *)ptr)->o, val));}
+static Float pw_increment(mus_any *ptr) {return(((pw *)ptr)->freq);}
+static Float pw_set_increment(mus_any *ptr, Float val) {((pw *)ptr)->freq = val; return(val);}
 
-static Float pw_phase(mus_any *ptr) {return(mus_phase(((pw *)ptr)->o));}
-static Float pw_set_phase(mus_any *ptr, Float val) {return(mus_set_phase(((pw *)ptr)->o, val));}
+static Float pw_phase(mus_any *ptr) {return(fmod(((pw *)ptr)->phase, TWO_PI));}
+static Float pw_set_phase(mus_any *ptr, Float val) {((pw *)ptr)->phase = val; return(val);}
 
 static off_t pw_n(mus_any *ptr) {return(((pw *)ptr)->n);}
 static off_t pw_set_n(mus_any *ptr, off_t val) {((pw *)ptr)->n = (int)val; return(val);}
@@ -2548,6 +2546,47 @@ Float mus_chebyshev_u_sum(Float x, int n, Float *un)
 }
 
 
+static Float mus_chebyshev_t_sum_with_index(Float x, Float index, int n, Float *tn)
+{
+  int i;
+  double x2, b, b1 = 0.0, b2 = 0.0, cx;
+
+  cx = index * cos(x);
+  x2 = 2.0 * cx;
+
+  /* Tn calc */
+  b = tn[n - 1];
+  for (i = n - 2; i >= 0; i--)
+    {
+      b2 = b1;
+      b1 = b;
+      b = x2 * b1 - b2 + tn[i];
+    }
+  return((Float)(b - b1 * cx));
+}
+
+
+static Float mus_chebyshev_u_sum_with_index(Float x, Float index, int n, Float *un)
+{
+  int i;
+  double x2, b, b1 = 0.0, b2 = 0.0, cx;
+
+  cx = index * cos(x);
+  x2 = 2.0 * cx;
+
+  /* Un calc */
+  b = un[n - 1];
+  for (i = n - 2; i > 0; i--)
+    {
+      b2 = b1;
+      b1 = b;
+      b = x2 * b1 - b2 + un[i];
+    }
+
+  return((Float)(sin(x) * b));
+}
+
+
 static Float poly_TU(mus_any *ptr, Float fm)
 {
   /* changed to use recursion, rather than polynomial in x, 25-May-08
@@ -2555,15 +2594,19 @@ static Float poly_TU(mus_any *ptr, Float fm)
    */
 
   pw *gen = (pw *)ptr;
+  Float result;
 
   if (gen->cheby_choice != MUS_CHEBYSHEV_SECOND_KIND)
-    return(mus_chebyshev_t_sum(gen->index * mus_oscil_fm(gen->o, fm),
-			       gen->n,
-			       gen->coeffs));
-
-  return(mus_chebyshev_u_sum(gen->index * mus_oscil_fm(gen->o, fm),
-			       gen->n,
-			       gen->coeffs));
+    result = mus_chebyshev_t_sum_with_index(gen->phase,
+					    gen->index,
+					    gen->n,
+					    gen->coeffs);
+  else result = mus_chebyshev_u_sum_with_index(gen->phase,
+					       gen->index,
+					       gen->n,
+					       gen->coeffs);
+  gen->phase += (gen->freq + fm);
+  return(result);
 }
 
 
@@ -2632,8 +2675,8 @@ mus_any *mus_make_polywave(Float frequency, Float *coeffs, int n, int cheby_choi
   pw *gen;
   gen = (pw *)clm_calloc(1, sizeof(pw), S_make_polywave);
   gen->core = &POLYWAVE_CLASS;
-  gen->o = mus_make_oscil(frequency, 0.0);
-  /* phase of 0.0 means we're using sin, not cos as the driver -- we still get the same waveform, but the initial phase is off by pi/2 */
+  gen->phase = 0.0; /* cos used in cheby funcs above */
+  gen->freq = mus_hz_to_radians(frequency);
   gen->coeffs = coeffs;
   gen->n = n;
   gen->index = 1.0;
@@ -2648,6 +2691,8 @@ bool mus_polywave_p(mus_any *ptr)
 	 (ptr->core->type == MUS_POLYWAVE));
 }
 
+
+/* TODO: use of cos changes docs and tests */
 
 
 /* ---------------- polyshape ---------------- */
@@ -2671,20 +2716,26 @@ static char *describe_polyshape(mus_any *ptr)
 Float mus_polyshape(mus_any *ptr, Float index, Float fm)
 {
   pw *gen = (pw *)ptr;
+  Float result;
   gen->index = index;
-  return(mus_polynomial(gen->coeffs,
-			index * mus_oscil_fm(gen->o, fm), 
-			gen->n));
+  result = mus_polynomial(gen->coeffs,
+			  index * sin(gen->phase),
+			  gen->n);
+  gen->phase += (gen->freq + fm);
+  return(result);
 }
 
 
 Float mus_polyshape_unmodulated(mus_any *ptr, Float index)
 {
   pw *gen = (pw *)ptr;
+  Float result;
   gen->index = index;
-  return(mus_polynomial(gen->coeffs,
-			index * mus_oscil_unmodulated(gen->o), 
-			gen->n));
+  result = mus_polynomial(gen->coeffs,
+			  index * sin(gen->phase),
+			  gen->n);
+  gen->phase += gen->freq;
+  return(result);
 }
 
 
@@ -2719,7 +2770,7 @@ static mus_any_class POLYSHAPE_CLASS = {
 mus_any *mus_make_polyshape(Float frequency, Float phase, Float *coeffs, int size)
 {
   mus_any *gen;
-  gen = mus_make_polywave(frequency, coeffs, size, MUS_CHEBYSHEV_EITHER_KIND); /* use the polynomial no matter what */
+  gen = mus_make_polywave(frequency, coeffs, size, MUS_CHEBYSHEV_EITHER_KIND);
   gen->core = &POLYSHAPE_CLASS;
   pw_set_phase(gen, phase);
   return(gen);
