@@ -4496,7 +4496,7 @@ is the same in effect as " S_make_oscil
   if (XEN_FALSE_P(orig_v))
     orig_v = xen_make_vct(csize, coeffs);
 
-  ge = mus_make_polyshape(freq, phase, coeffs, csize);
+  ge = mus_make_polyshape(freq, phase, coeffs, csize, kind);
   if (ge) return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, orig_v)));
   return(XEN_FALSE);
 }
@@ -4598,7 +4598,7 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
       data[0] = 0.0;
       data[1] = 1.0;
       coeffs = data;
-      n = 2; /* TODO: or 1?? */
+      n = 2; 
     }
   orig_v = xen_make_vct(n, coeffs);
 

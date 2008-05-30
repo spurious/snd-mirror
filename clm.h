@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 4
-#define MUS_REVISION 10
-#define MUS_DATE "27-May-08"
+#define MUS_REVISION 11
+#define MUS_DATE "30-May-08"
 
 /*
+ * 30-May:     changed polyshape to use cos and added cheby_choice arg to mus_make_polyshape.
  * 27-May:     mus_waveshape retired -- generators.scm has a wrapper for it.
  *             clm_free, clm_realloc etc for rt work.
  *             mus_chebyshev_tu_sum.
@@ -585,7 +586,7 @@ bool mus_wave_train_p(mus_any *gen);
 Float *mus_partials_to_polynomial(int npartials, Float *partials, mus_polynomial_t kind);
 Float *mus_normalize_partials(int num_partials, Float *partials);
 
-mus_any *mus_make_polyshape(Float frequency, Float phase, Float *coeffs, int size);
+mus_any *mus_make_polyshape(Float frequency, Float phase, Float *coeffs, int size, int cheby_choice);
 Float mus_polyshape(mus_any *ptr, Float index, Float fm);
 #define mus_polyshape_fm(Obj, Fm) mus_polyshape(Obj, 1.0, Fm)
 Float mus_polyshape_unmodulated(mus_any *ptr, Float index);

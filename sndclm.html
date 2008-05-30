@@ -1632,7 +1632,7 @@ A&S 22.3.15
 <p>
 These two generators
 drive a sum of scaled Chebyshev polynomials with
-a sinusoid, creating a sort of cross between additive synthesis and FM; see
+a cosine, creating a sort of cross between additive synthesis and FM; see
 "Digital Waveshaping Synthesis" by Marc Le Brun in JAES 1979 April, vol 27, no 4, p250.
 The basic idea is:
 </p>
@@ -1648,8 +1648,8 @@ polywave is stable and noise-free even with high partial numbers (I've tried it 
 The "partials" argument to the make function can
 be either a list or a vct.
 The "type" or "kind" argument determines which kind of Chebyshev polynomial
-is used internally:  mus-chebyshev-first-kind (Tn) or mus-chebyshev-second-kind (Un). (The <a href="#ncos">ncos</a> generator produces
-Chebyshev polynomials of the fourth kind).  
+is used internally:  mus-chebyshev-first-kind (Tn) which produces a sum of cosines,
+or mus-chebyshev-second-kind (Un), which produces a sum of sines.
 </p>
 
 <p>normalize-partials takes the list or vct of partial number and amplitudes, and
@@ -1685,21 +1685,12 @@ use the much more stable and accurate underlying recursion (see below for a long
 explanation).  They are the innards of the polywave and <a href="#polyoid">polyoid</a> generators.
 The arguments are "x" (normally a sinusoid), and one or two
 vcts of component amplitudes.  
-These functions makes it easy to do additive synthesis with Chebyshev polynomials
+These functions makes it easy to do additive synthesis
 with any number of harmonics (I've tried 16384), each with arbitrary
 initial-phase and amplitude, and each harmonic independently changeable 
 in phase and amplitude at run-time simply by setting a vct value.
 </p>
 
-
-<table border=1 hspace=100 cellpadding=8><tr><td>
-<p><small>The initial-phase defaults to 0.0 (i.e. a sine, not a cosine) for historical reasons.  This
-can be slightly confusing if you're comparing waveforms.  Using sin doesn't change the
-shape of the output waveform, but affects its components' initial phases.  To get a sum of cosines,
-set the initial-phase to pi/2.  In the polywave case, set mus-phase to pi/2 after creating
-the generator.
-</small></p></td></tr></table>
-<br>
 
 <table border=1 align=left hspace=40 vspace=10 cellpadding=4>
 <tr><td colspan=2 bgcolor="beige"><center>polywave methods</center></td></tr>
@@ -1713,13 +1704,7 @@ the generator.
 
 <pre>
 <br>
-(let ((result (<a class=quiet href="#array-interp" onmouseout="UnTip()" onmouseover="Tip(sndclm_array_interp_tip)">array-interp</a> wave 
-                (* (length wave) 
-                   (+ 0.5 (* index 0.5 (sin phase)))))))
-  (set! phase (+ phase (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> frequency) fm))
-  result)
-
-(let ((result (<a class=quiet href="#polynomial" onmouseout="UnTip()" onmouseover="Tip(sndclm_polynomial_tip)">polynomial</a> wave (sin phase))))
+(let ((result (<a class=quiet href="#polynomial" onmouseout="UnTip()" onmouseover="Tip(sndclm_polynomial_tip)">polynomial</a> wave (cos phase))))
   (set! phase (+ phase (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> frequency) fm))
   result)
 </pre>
@@ -1770,12 +1755,9 @@ the generator.
 normalize-partials makes sure that the component amplitudes (magnitudes) add to 1.0.  Its argument can be either a list or vct,
 but it always returns a vct.
 The <a href="sndscm.html#fmviolin">fm-violin</a> uses polyshape for the multiple FM section in some cases.
-The 'type' or 'kind' argument can also be <code>mus-chebyshev-second-kind</code>. In this case, the polynomial
-turns out a sum of sines (when multiplied by sine) rather than cosines.  <a href="#make-polyoid">make-polyoid</a> (in generators.scm) combines the two forms
-to provide arbitrary initial phases.
-We can get single side-band spectra by using Chebyshev polynomials of the second kind.  
-The <a href="sndscm.html#pqw">pqw</a> and <a href="sndscm.html#pqwvox">pqwvox</a> instruments use this
-technique.  Here is a simplified example:
+The <a href="sndscm.html#pqw">pqw</a> and <a href="sndscm.html#pqwvox">pqwvox</a> instruments use
+both kinds of Chebyshev polynomials to produce single side-band spectra.
+Here is a somewhat low-level example:
 </p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
@@ -1806,8 +1788,6 @@ technique.  Here is a simplified example:
 <img src="pix/pqw.png" alt="pqw example">
 </td></tr></table>
 
-<!-- TODO: check this instrument! -->
-
 <p>We can use waveshaping to make a band-limited triangle-wave:
 </p>
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
@@ -1825,31 +1805,27 @@ technique.  Here is a simplified example:
 </pre>
 </td></tr></table>
 
-<p>Band-limited square or sawtooth waves need sines (as opposed to cosines), so if
-we absolutely insist on using waveshaping, we could do it this way:
+<p>Band-limited square or sawtooth waves need sines (as opposed to cosines):
 </p>
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
 (<a class=quiet href="sndscm.html#definstrument" onmouseout="UnTip()" onmouseover="Tip(sndscm_definstrument_tip)">definstrument</a> (bl-saw start dur frequency order)
   (let* ((norm (if (= order 1) 1.0     ; these peak amps were determined empirically
-                 (if (= order 2) 1.3   ;   actual limit is supposed to be pi/2 (G&amp;R 1.441)
-                   (if (&lt; order 9) 1.7 ;   but Gibbs phenomenon pushes it to 1.851
-                     1.9))))           ;   if order>25, numerical troubles &mdash; use table-lookup
+                 (if (= order 2) 1.3   ;   actual limit is supposed to be pi/2 (G&R 1.441)
+                   (if (< order 9) 1.7 ;   but Gibbs phenomenon pushes it to 1.851
+                     1.852))))           
          (freqs '()))
     (do ((i 1 (1+ i)))
-	((&gt; i order))
+	((> i order))
       (set! freqs (cons (/ 1.0 (* norm i)) (cons i freqs))))
-    (let* ((ccos (<a class=quiet href="#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> frequency (/ pi 2.0)))
-	   (csin (<a class=quiet href="#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> frequency))
-	   (coeffs (<em class=red>partials-&gt;polynomial</em> (reverse freqs) mus-chebyshev-second-kind))
+    (let* ((gen (<em class=red>make-polywave</em> frequency :partials (reverse freqs) :type <em class=red>mus-chebyshev-second-kind</em>))
 	   (beg (<a class=quiet href="#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> start))
 	   (end (+ beg (<a class=quiet href="#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> dur))))
       (<a class=quiet href="extsnd.html#run" onmouseout="UnTip()" onmouseover="Tip(extsnd_run_tip)">run</a> 
        (lambda ()
 	 (do ((i beg (1+ i))) 
 	     ((= i end))
-	   (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* (<a class=quiet href="#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> csin) 
-                      (<em class=red>polynomial</em> coeffs (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">oscil</a> ccos))))))))))
+	   (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (<em class=red>polywave</em> gen))))))))
 </pre></td></tr></table>
 
 <table border=0>
@@ -1989,7 +1965,7 @@ get changing spectra is to interpolate between two or more sets of coefficients.
 
 <p>
 But we can also vary 
-the index (the amplitude of the sinusoid driving the sum of polynomials), much as in FM.
+the index (the amplitude of the cosine driving the sum of polynomials), much as in FM.
 The kth partial's amplitude
 at a given index, given a set h[k] of coefficients, is:
 </p>
@@ -2187,7 +2163,10 @@ the DC term (coeffs[0]), but I haven't tried this.
 	(outc i cval)))))
 -->
 
-<p>Looking back at the bl-saw instrument, why does a high harmonic number give numerical problems in the polyshape generator?  The polynomials are related to each other
+<p>If you push the polyshape generator into high harmonics (above say 30), you'll
+run into numerical trouble (the polywave generator is immune to this bug).
+Where does the trouble lie?
+The polynomials are related to each other
 via the recursion: <img src="pix/sceq17.png" alt="Cheby recurse" align=absmiddle>, so the first
 few polynomials are:
 </p>
@@ -2224,15 +2203,14 @@ If we're using 32-bit floats, the first sign of trouble comes when the order is 
 If you look at some of the coefficients, you'll see numbers like -129026688.000 (in the 32 bit case), which
 should be -129026680.721 &mdash;  we have run out of bits in the mantissa!
 Even if we build Snd --with-doubles, 
-we can only push the order up to around 46.  (But notice in the T5 case above, we have a component at 100 times
-the "fundamental"; we have to give up precise control over the resultant spectra).
-polywave builds up the sum of sines from the underlying recursion, which is only slightly
+we can only push the order up to around 46. 
+polywave, on the other hand, builds up the sum of sines from the underlying recursion, which is only slightly
 slower than using the polynomial, and it is not bothered by these numerical problems 
-(I have run polywave with 16384 harmonics, and the maximum error compared to the
-equivalent sum of sinusoids was around 5.0e-12).
+I have run polywave with 16384 harmonics, and the maximum error compared to the
+equivalent sum of sinusoids was around 5.0e-12.
 </p>
 
-<p>Since it is primarily used for additive synthesis,
+<p>Since it is primarily used for additive synthesis, and we can always do that with oscils or table-lookup,
 we might ask why we'd want polywave at all.  Leaving aside
 speed (the Chebyshev computation is 10 to 20 times faster than the equivalent sum of oscils)
 and memory (the defunct table-lookup based waveshape generator and table-lookup itself use a table that has to be loaded),
@@ -4133,7 +4111,7 @@ the desired distribution function; the generator takes the
 inverse of the integral of this envelope, loads that into an array, and uses
 <code>(array-interp (random array-size))</code>.  This gives
 random numbers of any arbitrary distribution at a computational cost
-equivalent to the polyshape generator (which is very similar).
+equivalent to the old waveshape generator.
 The x axis of the envelope sets the output range (before scaling by the "amplitude" argument), and
 the y axis sets the relative weight of the corresponding x axis value.
 So, the default is <code>'(-1 1 1 1)</code> which says "output numbers between -1 and 1,
@@ -8030,10 +8008,7 @@ coeffs[0] is the constant term, and so on.
 <a href="sndscm.html#polydoc">poly.scm</a> has a variety of polynomial-related functions.
 Abramowitz and Stegun, "A Handbook of Mathematical Functions" is a
 treasure-trove of interesting polynomials.
-For waveshaping, use the function <a href="#partialstopolynomial">partials-&gt;polynomial</a> to
-generate the coefficients, then drive polynomial with a cosine; this is what the <a href="#polyshape">polyshape</a>
-generator does for you (see the <a href="sndscm.html#birddoc">bigbird</a> and <a href="sndscm.html#vdoc">fm-violin</a>
-instruments).  Here's a generator that uses polynomial to produce a Blackman4 waveform (see also <a href="#make-blackman">make-blackman</a> in generators.scm):
+Here's a generator that uses polynomial to produce a Blackman4 waveform (see also <a href="#make-blackman">make-blackman</a> in generators.scm):
 </p>
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>

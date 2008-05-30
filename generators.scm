@@ -5856,15 +5856,15 @@ index 10 (so 10/2 is the bes-jn arg):
 (define noid? polyoid?)
 
 
-;;; TODO: test new noid and snd-test
 ;;; TODO: L&S sq wave + fm? -- why isn't this already a generator or two?
 ;;; TODO: in triangle-wave section it shows FM tri(tri) -- what is spectrum?
 ;;; TODO: try the monks with polyoid (changing amps and phases)
 ;;; TODO: check Cheb recursion for ncos and nsin -- more flexible?
-;;; TODO: change amps/phases run-time polywave [mus-data?] -- check polyoid, implement polywave
 ;;; TODO: interp pulse -> unpulse (example of diff?)
-;;; TODO: snd-test needs real basic existence checks for 2nd Cheb
-;;; TODO: chebyshev-*-sum in CL?
+;;; TODO: chebyshev-*-sum in CL?  cos in CL!
+;;; TODO: poly(poly 11 index 0 -> 1)  and poly(sqr?)
+;;; TODO: what are min peak phases in nrcos case given various r's?
+;;; TODO: ditto sum of odd components 
 
 #|
 (with-sound (:clipped #f)
@@ -5873,6 +5873,16 @@ index 10 (so 10/2 is the bes-jn arg):
     (do ((i 0 (1+ i)))
 	((= i samps))
       (outa i (noid gen 0.0)))))
+
+(with-sound (:clipped #f :channels 2)
+  (let* ((samps 44100)
+	 (n 10)
+	 (gen (make-noid 1.0 n 'min-peak))
+	 (gen2 (make-oscil n (vct-ref (polyoid-partial-amps-and-phases gen) (1- (vct-length (polyoid-partial-amps-and-phases gen)))))))
+    (do ((i 0 (1+ i)))
+	((= i samps))
+      (outa i (noid gen 0.0))
+      (outb i (oscil gen2)))))
 
 (with-sound (:clipped #f)
   (let ((samps 44100)

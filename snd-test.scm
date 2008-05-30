@@ -9,28 +9,28 @@
 ;;;  test 6: vcts                               [13773]
 ;;;  test 7: colors                             [14041]
 ;;;  test 8: clm                                [14531]
-;;;  test 9: mix                                [26214]
-;;;  test 10: marks                             [28435]
-;;;  test 11: dialogs                           [29396]
-;;;  test 12: extensions                        [29641]
-;;;  test 13: menus, edit lists, hooks, etc     [29912]
-;;;  test 14: all together now                  [31621]
-;;;  test 15: chan-local vars                   [32666]
-;;;  test 16: regularized funcs                 [34305]
-;;;  test 17: dialogs and graphics              [39259]
-;;;  test 18: enved                             [39349]
-;;;  test 19: save and restore                  [39368]
-;;;  test 20: transforms                        [41210]
-;;;  test 21: new stuff                         [43193]
-;;;  test 22: run                               [45188]
-;;;  test 23: with-sound                        [51404]
-;;;  test 24: user-interface                    [55351]
-;;;  test 25: X/Xt/Xm                           [58745]
-;;;  test 26: Gtk                               [63353]
-;;;  test 27: GL                                [67205]
-;;;  test 28: errors                            [67329]
-;;;  test all done                              [69634]
-;;;  test the end                               [69872]
+;;;  test 9: mix                                [26320]
+;;;  test 10: marks                             [28541]
+;;;  test 11: dialogs                           [29502]
+;;;  test 12: extensions                        [29747]
+;;;  test 13: menus, edit lists, hooks, etc     [30018]
+;;;  test 14: all together now                  [31727]
+;;;  test 15: chan-local vars                   [32772]
+;;;  test 16: regularized funcs                 [34411]
+;;;  test 17: dialogs and graphics              [39365]
+;;;  test 18: enved                             [39455]
+;;;  test 19: save and restore                  [39474]
+;;;  test 20: transforms                        [41316]
+;;;  test 21: new stuff                         [43299]
+;;;  test 22: run                               [45294]
+;;;  test 23: with-sound                        [51510]
+;;;  test 24: user-interface                    [55477]
+;;;  test 25: X/Xt/Xm                           [58871]
+;;;  test 26: Gtk                               [63479]
+;;;  test 27: GL                                [67331]
+;;;  test 28: errors                            [67455]
+;;;  test all done                              [69760]
+;;;  test the end                               [69998]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -21549,7 +21549,7 @@ EDITS: 2
       (set! (mus-frequency gen) 100.0)
       (if (fneq (mus-frequency gen) 100.0) (snd-display ";polyshape frequency: ~F?" (mus-frequency gen)))
       (if (not (vct? (mus-data gen))) (snd-display ";mus-data polyshape: ~A" (mus-data gen)))
-      (if (or (fneq (vct-ref v0 1) 0.125) (fneq (vct-ref v0 8) .843)) (snd-display ";polyshape output: ~A" v0))
+      (if (or (fneq (vct-ref v0 1) 0.992) (fneq (vct-ref v0 8) 0.538)) (snd-display ";polyshape output: ~A" v0))
       (set! (mus-data gen0) (make-vct 32))
       (set! (mus-length gen0) 32)
       (if (not (= (mus-length gen0) 32)) (snd-display ";set mus-length polyshape: ~A" (mus-length gen0))))
@@ -21572,46 +21572,24 @@ EDITS: 2
       (do ((i 0 (1+ i)))
 	  ((or (not happy) (= i 1100)))
 	(let* ((a (mus-phase gen))
-	       (val1 (sin a))
+	       (val1 (cos a))
 	       (val2 (gen 1.0 0.0)))
 	  (if (fneq val1 val2)
 	      (begin
 		(snd-display ";polyshaper (1 1) ~A: ~A ~A" i val1 val2)
 		(set! happy #f))))))
     
-    (let ((gen (make-polyshape 440.0))) ; check default for partials: '(1 1)
+    (let ((gen (make-polyshape 440.0)) ; check default for partials: '(1 1)
+	  (happy #t))
       (do ((i 0 (1+ i)))
-	  ((= i 1100))
+	  ((or (not happy)
+	       (= i 1100)))
 	(let* ((a (mus-phase gen))
-	       (val1 (sin a))
-	       (val2 (gen 1.0 0.0)))
-	  (if (fneq val1 val2)
-	      (snd-display ";polyshaper default: '(1 1) ~A: ~A ~A" i val1 val2)))))
-    
-    (let ((gen (make-polyshape 440.0 :initial-phase (* 0.5 pi) :partials '(2 1)))
-	  (incr (/ (* 2.0 pi 440.0) (mus-srate)))
-	  (happy #t))
-      (do ((i 0 (1+ i))
-	   (a 0.0 (+ a incr)))
-	  ((or (not happy) (= i 1100)))
-	(let* ((val1 (cos (* 2 a)))
+	       (val1 (cos a))
 	       (val2 (gen 1.0 0.0)))
 	  (if (fneq val1 val2)
 	      (begin
-		(snd-display ";polyshaper (2 1) ~A: ~A ~A" i val1 val2)
-		(set! happy #f))))))
-    
-    (let ((gen (make-polyshape 440.0 :initial-phase (* 0.5 pi) :partials '(1 1 2 .5)))
-	  (incr (/ (* 2.0 pi 440.0) (mus-srate)))
-	  (happy #t))
-      (do ((i 0 (1+ i))
-	   (a 0.0 (+ a incr)))
-	  ((or (not happy) (= i 1100)))
-	(let* ((val1 (+ (cos a) (* .5 (cos (* 2 a)))))
-	       (val2 (gen 1.0 0.0)))
-	  (if (fneq val1 val2)
-	      (begin
-		(snd-display ";polyshaper (1 1 2 .5) ~A: ~A ~A" i val1 val2)
+		(snd-display ";polyshaper default: '(1 1) ~A: ~A ~A" i val1 val2)
 		(set! happy #f))))))
     
     (let ((gen (make-polyshape 440.0 :partials (vct 1 1)))
@@ -21619,7 +21597,7 @@ EDITS: 2
       (do ((i 0 (1+ i)))
 	  ((or (not happy) (= i 1100)))
 	(let* ((a (mus-phase gen))
-	       (val1 (* .5 (sin a)))
+	       (val1 (* .5 (cos a)))
 	       (val2 (gen 0.5 0.0)))
 	  (if (fneq val1 val2)
 	      (begin
@@ -21637,8 +21615,8 @@ EDITS: 2
       (do ((i 0 (1+ i))
 	   (a 0.0 (+ a (/ (* 2 pi 40.0) 22050.0))))
 	  ((or (not happy) (= i 400)))
-	(let* ((fm (sin a))
-	       (val1 (sin a1))
+	(let* ((fm (cos a))
+	       (val1 (cos a1))
 	       (val2 (polyshape gen 1.0 (polyshape gen1 1.0))))
 	  (set! a1 (+ a1 fm))
 	  (if (> (abs (- val1 val2)) .002)
@@ -21775,7 +21753,7 @@ EDITS: 2
       (set! (mus-frequency gen) 100.0)
       (if (fneq (mus-frequency gen) 100.0) (snd-display ";polywave frequency: ~F?" (mus-frequency gen)))
       (if (not (vct? (mus-data gen))) (snd-display ";mus-data polywave: ~A" (mus-data gen)))
-      (if (or (fneq (vct-ref v0 1) 0.125) (fneq (vct-ref v0 8) .843)) (snd-display ";polywave output: ~A" v0)))
+      (if (or (fneq (vct-ref v0 1) 0.992) (fneq (vct-ref v0 8) 0.538)) (snd-display ";polywave output: ~A" v0)))
     
     (test-gen-equal (make-polywave 440.0 :partials '(1 1)) 
 		    (make-polywave 440.0) 
@@ -21795,21 +21773,24 @@ EDITS: 2
       (do ((i 0 (1+ i)))
 	  ((or (not happy) (= i 1100)))
 	(let* ((a (mus-phase gen))
-	       (val1 (sin a))
+	       (val1 (cos a))
 	       (val2 (gen 0.0)))
 	  (if (fneq val1 val2)
 	      (begin
 		(snd-display ";polywaver (1 1) ~A: ~A ~A" i val1 val2)
 		(set! happy #f))))))
     
-    (let ((gen (make-polywave 440.0))) ; check default for partials: '(1 1)
+    (let ((gen (make-polywave 440.0)) ; check default for partials: '(1 1)
+	  (happy #t))
       (do ((i 0 (1+ i)))
-	  ((= i 1100))
+	  ((or (not happy) (= i 1100)))
 	(let* ((a (mus-phase gen))
-	       (val1 (sin a))
+	       (val1 (cos a))
 	       (val2 (gen 0.0)))
 	  (if (fneq val1 val2)
-	      (snd-display ";polywaver default: '(1 1) ~A: ~A ~A" i val1 val2)))))
+	      (begin
+		(snd-display ";polywaver default: '(1 1) ~A: ~A ~A" i val1 val2)
+		(set! happy #f))))))
     
     (let ((gen (make-polywave 440.0 (vct 1 1)))
 	  (happy #t))
@@ -21817,7 +21798,7 @@ EDITS: 2
       (do ((i 0 (1+ i)))
 	  ((or (not happy) (= i 1100)))
 	(let* ((a (mus-phase gen))
-	       (val1 (* .5 (sin a)))
+	       (val1 (* .5 (cos a)))
 	       (val2 (gen 0.0)))
 	  (if (fneq val1 val2)
 	      (begin
@@ -21832,7 +21813,7 @@ EDITS: 2
 	       (err-max-loc -1))
 	   (do ((i 0 (1+ i)))
 	       ((>= i 44100))
-	     (let* ((ph (- (mus-phase gen) (* 0.5 pi)))
+	     (let* ((ph (mus-phase gen))
 		    (gval (polywave gen))
 		    (sval (* 0.5 (+ (cos ph)
 				    (cos (* k ph)))))
@@ -21846,6 +21827,151 @@ EDITS: 2
 	       (snd-display ";polywave vs sin: ~D: ~A ~A ~A" k err err-max err-max-loc)))))
      (list 2 19 20 29 30 39 40 60 100))
     
+    (for-each
+     (lambda (n)
+       (let ((gen1 (make-polywave 100.0 (list n 1.0)))
+	     (gen2 (make-oscil (* n 100.0) (/ pi 2)))
+	     (happy #t))
+	 (do ((i 0 (1+ i)))
+	     ((or (not happy) (= i 1000)))
+	   (let ((val1 (polywave gen1))
+		 (val2 (oscil gen2)))
+	     (if (fneq val1 val2)
+		 (begin
+		   (set! happy #f)
+		   (snd-display ";polywave ~A at ~A: ~A ~A" n i val1 val2)))))))
+     (list 1 8 50 128))
+    
+    (for-each
+     (lambda (n)
+       (let ((gen1 (make-polywave 100.0 (list n 1.0) mus-chebyshev-second-kind))
+	     (gen2 (make-oscil (* n 100.0)))
+	     (happy #t))
+	 (do ((i 0 (1+ i)))
+	     ((or (not happy) (= i 1000)))
+	   (let ((val1 (polywave gen1))
+		 (val2 (oscil gen2)))
+	     (if (fneq val1 val2)
+		 (begin
+		   (set! happy #f)
+		   (snd-display ";polywave 2nd ~A at ~A: ~A ~A" n i val1 val2)))))))
+     (list 1 8 50 128))
+    
+    (for-each
+     (lambda (n)
+       (let ((gen1 (make-polyshape 100.0 :partials (list n 1.0)))
+	     (gen2 (make-oscil (* n 100.0) (/ pi 2)))
+	     (happy #t))
+	 (do ((i 0 (1+ i)))
+	     ((or (not happy) (= i 1000)))
+	   (let ((val1 (polyshape gen1))
+		 (val2 (oscil gen2)))
+	     (if (fneq val1 val2)
+		 (begin
+		   (set! happy #f)
+		   (snd-display ";polyshape ~A at ~A: ~A ~A" n i val1 val2)))))))
+     (list 1 8 16))
+    
+    (for-each
+     (lambda (n)
+       (let ((gen1 (make-polyshape 100.0 :partials (list n 1.0) :kind mus-chebyshev-second-kind))
+	     (gen2 (make-oscil (* n 100.0)))
+	     (happy #t))
+	 (do ((i 0 (1+ i)))
+	     ((or (not happy) (= i 1000)))
+	   (let ((val1 (polyshape gen1))
+		 (val2 (oscil gen2)))
+	     (if (fneq val1 val2)
+		 (begin
+		   (set! happy #f)
+		   (snd-display ";polyshape 2nd ~A at ~A: ~A ~A" n i val1 val2)))))))
+     (list 1 8 16))
+
+    (for-each
+     (lambda (n)
+       (let ((gen1 (make-polywave 100.0 (list n 1.0) mus-chebyshev-first-kind))
+	     (gen2 (make-oscil (* n 100.0) (/ pi 2)))
+	     (max-dist 0.0))
+	 (run 
+	  (lambda ()
+	    (do ((i 0 (1+ i)))
+		((= i 1000))
+	      (let ((val1 (polywave gen1))
+		    (val2 (oscil gen2)))
+		(set! max-dist (max max-dist (abs (- val1 val2))))))))
+	 (if (fneq max-dist 0.0)
+	     (snd-display ";polywave run ~A: ~A ~A" n val1 val2))))
+     (list 1 3 30 200))
+    
+    (for-each
+     (lambda (n)
+       (let ((gen1 (make-polywave 100.0 (list n 1.0) mus-chebyshev-second-kind))
+	     (gen2 (make-oscil (* n 100.0)))
+	     (max-dist 0.0))
+	 (run 
+	  (lambda ()
+	    (do ((i 0 (1+ i)))
+		((= i 1000))
+	      (let ((val1 (polywave gen1))
+		    (val2 (oscil gen2)))
+		(set! max-dist (max max-dist (abs (- val1 val2))))))))
+	 (if (fneq max-dist 0.0)
+	     (snd-display ";polywave 2nd run ~A: ~A ~A" n val1 val2))))
+     (list 1 3 30 200))
+    
+    (for-each
+     (lambda (n)
+       (let ((gen1 (make-polyshape 100.0 :partials (list n 1.0) :kind mus-chebyshev-first-kind))
+	     (gen2 (make-oscil (* n 100.0) (/ pi 2)))
+	     (max-dist 0.0))
+	 (run
+	  (lambda ()
+	    (do ((i 0 (1+ i)))
+		((= i 1000))
+	      (let ((val1 (polyshape gen1))
+		    (val2 (oscil gen2)))
+		(set! max-dist (max max-dist (abs (- val1 val2))))))))
+	 (if (fneq max-dist 0.0)
+	     (snd-display ";polyshape run ~A: ~A ~A" n val1 val2))))
+     (list 1 3 25))
+    
+    (for-each
+     (lambda (n)
+       (let ((gen1 (make-polyshape 100.0 :partials (list n 1.0) :kind mus-chebyshev-second-kind))
+	     (gen2 (make-oscil (* n 100.0)))
+	     (max-dist 0.0))
+	 (run
+	  (lambda ()
+	    (do ((i 0 (1+ i)))
+		((= i 1000))
+	      (let ((val1 (polyshape gen1))
+		    (val2 (oscil gen2)))
+		(set! max-dist (max max-dist (abs (- val1 val2))))))))
+	 (if (fneq max-dist 0.0)
+	     (snd-display ";polyshape 2nd run ~A: ~A ~A" n val1 val2))))
+     (list 1 3 25))
+    
+    (let ((gen (make-polywave 100.0 (list 1 .9 3 .1))))
+      (let ((vals (mus-data gen)))
+	(if (or (not (vct? vals))
+		(not (vequal vals (vct 0.000 0.900 0.000 0.100))))
+	    (snd-display ";polywave mus-data: ~A" vals)
+	    (begin
+	      (vct-set! (mus-data gen) 2 .1)
+	      (vct-set! (mus-data gen) 3 0.0)
+	      (let ((happy #t)
+		    (gen1 (make-oscil 100.0 (/ pi 2)))
+		    (gen2 (make-oscil 200.0 (/ pi 2))))
+		(do ((i 0 (1+ i)))
+		    ((or (not happy) (= i 1000)))
+		  (let ((val1 (polywave gen))
+			(val2 (+ (* .9 (oscil gen1))
+				 (* .1 (oscil gen2)))))
+		    (if (fneq val1 val2)
+			(begin
+			  (set! happy #f)
+			  (snd-display ";polywave set mus-data at ~A: ~A ~A" i val1 val2))))))))))
+
     (let ((var (catch #t (lambda () (make-polywave 440.0 3.14)) (lambda args args))))
       (if (not (eq? (car var) 'wrong-type-arg))
 	  (snd-display ";make-polywave bad coeffs: ~A" var)))
@@ -54136,6 +54262,26 @@ EDITS: 1
 	       (snd (find-sound res)))
 	  (if (not (sound? snd)) (snd-display ";nrcos ~A" snd))
 	  (if (fneq (maxamp snd) 1.0) (snd-display ";nrcos max: ~A" (maxamp snd))))
+
+	(let ((res (with-sound (:clipped #f)
+			       (let ((samps 44100)
+				     (gen (make-noid 100.0 3 'min-peak)))
+				 (do ((i 0 (1+ i)))
+				     ((= i samps))
+				   (outa i (noid gen 0.0))))))
+	      (snd (find-sound res)))
+	  (if (not (sound? snd)) (snd-display ";noid ~A" snd))
+	  (if (fneq (maxamp snd) 1.0) (snd-display ";noid min-peak max: ~A" (maxamp snd))))
+
+	(let ((res (with-sound (:clipped #f)
+			       (let ((samps 44100)
+				     (gen (make-noid 100.0 3 'max-peak)))
+				 (do ((i 0 (1+ i)))
+				     ((= i samps))
+				   (outa i (noid gen 0.0))))))
+	      (snd (find-sound res)))
+	  (if (not (sound? snd)) (snd-display ";noid ~A" snd))
+	  (if (fneq (maxamp snd) 1.0) (snd-display ";noid max-peak max: ~A" (maxamp snd))))
 
 	(let* ((res (with-sound (:clipped #f)
 				(let ((gen (make-nrcos 100 :n 15 :r 0.5))

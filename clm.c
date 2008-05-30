@@ -2692,8 +2692,6 @@ bool mus_polywave_p(mus_any *ptr)
 }
 
 
-/* TODO: use of cos changes docs and tests */
-
 
 /* ---------------- polyshape ---------------- */
 
@@ -2719,8 +2717,12 @@ Float mus_polyshape(mus_any *ptr, Float index, Float fm)
   Float result;
   gen->index = index;
   result = mus_polynomial(gen->coeffs,
-			  index * sin(gen->phase),
+			  index * cos(gen->phase),
 			  gen->n);
+
+  if (gen->cheby_choice == MUS_CHEBYSHEV_SECOND_KIND)
+    result *= sin(gen->phase);
+
   gen->phase += (gen->freq + fm);
   return(result);
 }
@@ -2732,8 +2734,12 @@ Float mus_polyshape_unmodulated(mus_any *ptr, Float index)
   Float result;
   gen->index = index;
   result = mus_polynomial(gen->coeffs,
-			  index * sin(gen->phase),
+			  index * cos(gen->phase),
 			  gen->n);
+
+  if (gen->cheby_choice == MUS_CHEBYSHEV_SECOND_KIND)
+    result *= sin(gen->phase);
+
   gen->phase += gen->freq;
   return(result);
 }
@@ -2767,10 +2773,10 @@ static mus_any_class POLYSHAPE_CLASS = {
 };
 
 
-mus_any *mus_make_polyshape(Float frequency, Float phase, Float *coeffs, int size)
+mus_any *mus_make_polyshape(Float frequency, Float phase, Float *coeffs, int size, int cheby_choice)
 {
   mus_any *gen;
-  gen = mus_make_polywave(frequency, coeffs, size, MUS_CHEBYSHEV_EITHER_KIND);
+  gen = mus_make_polywave(frequency, coeffs, size, cheby_choice);
   gen->core = &POLYSHAPE_CLASS;
   pw_set_phase(gen, phase);
   return(gen);
