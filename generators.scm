@@ -5695,8 +5695,8 @@ index 10 (so 10/2 is the bes-jn arg):
 (define (polyoid gen fm)
   (declare (gen polyoid) (fm float))
   (let ((result (mus-chebyshev-tu-sum (polyoid-angle gen)
-					 (polyoid-tn gen)
-					 (polyoid-un gen))))
+				      (polyoid-tn gen)
+				      (polyoid-un gen))))
 
     (set! (polyoid-angle gen) (+ (polyoid-angle gen) fm (polyoid-frequency gen)))
     result))
@@ -5862,7 +5862,6 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;; TODO: check Cheb recursion for ncos and nsin -- more flexible?
 ;;; TODO: interp pulse -> unpulse (example of diff?)
 ;;; TODO: chebyshev-*-sum in CL?  cos in CL!
-;;; TODO: poly(poly 11 index 0 -> 1)  and poly(sqr?)
 ;;; TODO: what are min peak phases in nrcos case given various r's?
 ;;; TODO: ditto sum of odd components 
 

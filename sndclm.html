@@ -2465,6 +2465,26 @@ Even more amusing is this algorithm:
 </pre>
 </td></tr></table>
 
+<p>And in the slightly batty category is this method which uses only nested sines:
+</p>
+
+<table border=0 bgcolor="#fafafa" hspace=40><tr><td>
+<pre>
+(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> ()
+  (let ((angle 0.0) (z 1.18)
+	(incr (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> 100.0)))
+    (do ((i 0 (1+ i)))
+	((= i 20000))
+      (let* ((result (* z (sin angle))))
+	(do ((k 0 (1+ k)))
+	    ((= k 100))  ; the limit here sets how square it is, and also the overall amplitude
+	  (set! result (* z (sin result))))
+	(set! angle (+ angle incr))
+	(<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i result)))))
+</pre>
+</td></tr></table>
+
+
 <p>For sawtooth output, see also <a href="#rksin">rksin</a>.
 In these generators, the "fm" argument is useful mainly for various sci-fi sound effects:
 </p>
@@ -2490,9 +2510,7 @@ In these generators, the "fm" argument is useful mainly for various sci-fi sound
 
 <p>On the other hand, animals.scm uses pulse-train's fm argument to track a frequency envelope,
 triggering a new peep each time the pulse goes by.
-</p>
-
-<p>I think just about every combination of oscil/triangle-wave/sawtooth-wave/square-wave has been
+I think just about every combination of oscil/triangle-wave/sawtooth-wave/square-wave has been
 used.  Even triangle-wave(square-wave) can make funny noises.  See <a href="#ncosdoc">ncos</a>
 for more dicussion about using these generators as FM modulators.
 </p>
@@ -6472,10 +6490,26 @@ set of components and component amplitudes.  We could, for example, change noid 
 <p>where "r" is the ratio between successive component amplitude: "nroid"?
 This is not as pointless as it might at first appear.  Many of these waveforms actually
 sound different, despite having the same (magnitude) spectrum, and in all cases I've
-heard, the min-peak case sounds best ("fullest" perhaps).
+heard, the min-peak case sounds best ("fullest" perhaps, certainly "loudest").
 </p>
 
-
+<!--
+(with-sound (:clipped #f)
+  (let* ((dur 2.0)
+	 (samps (seconds->samples dur))
+	 (gen1 (make-noid 40.0 128 'max-peak))
+	 (gen2 (make-noid 40.0 128 'min-peak))
+	 (ampf (make-env '(0 0 .1 1 1 1 2 .25 3 .25) :scaler 0.5 :duration dur))
+	 (indf (make-env '(0 0 1 0 2 1 3 1) :duration dur)))
+    (do ((i 0 (1+ i)))
+	((= i samps))
+      (let ((ind (env indf)))
+	(outa i (* (env ampf)
+		   (+ (* ind 
+			 (noid gen2 0.0))
+		      (* (- 1.0 ind) 
+			 (noid gen1 0.0)))))))))
+-->
 
 <!--
 <img src="noid2.png">

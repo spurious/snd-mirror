@@ -1,5 +1,6 @@
 Snd change log
 
+ 30-May:     peak-phases.scm.
  20-May:     rt-various.[ch], rt-coroutines.scm, rt-stalin.scm, rt-DotEmacs, and
                many other changes thanks to Kjetil.
 	     many const char* changes for g++ 4.3.0.
