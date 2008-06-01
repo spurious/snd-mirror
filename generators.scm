@@ -5859,11 +5859,19 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;; TODO: L&S sq wave + fm? -- why isn't this already a generator or two?
 ;;; TODO: in triangle-wave section it shows FM tri(tri) -- what is spectrum?
 ;;; TODO: try the monks with polyoid (changing amps and phases)
-;;; TODO: check Cheb recursion for ncos and nsin -- more flexible?
-;;; TODO: interp pulse -> unpulse (example of diff?)
-;;; TODO: chebyshev-*-sum in CL?  cos in CL!
+;;; TODO: chebyshev-*-sum in CL?  polywave in CL is currently all messed up
 ;;; TODO: what are min peak phases in nrcos case given various r's?
 ;;; TODO: ditto sum of odd components 
+;;; TODO: threads for clm instruments and all long computations (currently only used in huge FIR filters)
+;;;       could this be done at the level of with-sound? -- the run-loop ptree evaluation is already a function call(?)
+;;;       what about huge spectrograms in multi-chan settings?
+;;; ;can't find sndclm_seconds_to_samples_tip in wz_data.js
+    ;can't find sndclm_hz_to_radians_tip in wz_data.js
+    ;can't find sndclm_samplestoseconds_tip in wz_data.js
+    ;defined in wz_data.js but not used: sndclm_one_pole_tip
+    ;perhaps also add the peaks tester to va.scm and remove check for #(
+
+;;; TODO: various CL/lisp troubles
 
 #|
 (with-sound (:clipped #f)

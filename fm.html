@@ -1729,7 +1729,7 @@ it seems to be approaching a square wave as k heads into the stratosphere:
 <!--
 (with-sound () 
   (let ((angle 0.0)
-	(incr (hz-&gt;radians 100.0)))
+	(incr (hz->radians 100.0)))
     (do ((i 0 (1+ i)))
 	((= i 20000))
       (let* ((result (sin angle)))
@@ -1740,7 +1740,7 @@ it seems to be approaching a square wave as k heads into the stratosphere:
 	(outa i result)))))
 -->
 
-<table border=1 hspace=40 vspace=10>
+<table border=0 hspace=40 vspace=10>
 <tr>
 <td>
 <img src="pix/sin3.png" alt="3 sins">
@@ -1758,17 +1758,36 @@ it seems to be approaching a square wave as k heads into the stratosphere:
 <td bgcolor="#f6f8ff"><center>k=300</center></td>
 </tr></table>
 
-<table border=1 hspace=100 cellpadding=10 vspace=10><tr><td>
+<table border=1 hspace=100 cellpadding=4 vspace=10><tr><td>
 <small>
 If we use "cos" here instead of "sin", we get a constant, as Bill Gosper has shown:
 <br><img src="pix/coscoscos.png" alt="nested cos equation" hspace=50 vspace=10>
+<br>
+If z is greater than about 1.42, we get period doubling and chaos.
+<!-- actually 1.27 -> square wave until 1.81 -> involuted square waves -->
+<!-- TODO: get the actual limits for the continued cosine example -->
 </small>
 </td></tr></table>
+
+<!--
+(with-sound (:clipped #f :statistics #t) 
+  (let ((angle 0.0) 
+	(z 1.18)
+	(incr (hz->radians 100.0)))
+    (do ((i 0 (1+ i)))
+	((= i 20000))
+      (let* ((result (* z (cos angle))))
+	(do ((k 0 (1+ k)))
+	    ((= k 100))
+	  (set! result (* z (cos result))))
+	(set! angle (+ angle incr))
+	(outa i result)))))
+-->
 
 <!-- LATEX
 \large
 \begin{align*}
-&z \cos(z \cos(z\cdots)) = 2 \sum_{k=0}^{\infty} (-1)^{k} \frac{J_{2k+1}((2k+1)z)}{2k+1} \\
+&z \cos(z \cos(z\cdots)) = 2 \sum_{k=0}^{\infty} (-1)^{k} \frac{J_{2k+1}((2k+1)z)}{2k+1} & z<1.42 \\
 \end{align*}
 -->
 

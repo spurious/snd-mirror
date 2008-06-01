@@ -216,10 +216,11 @@ typedef struct {
   GtkWidget **mw, **pw;
 } state_context;
 
-#define DEFAULT_TINY_FONT "Fixed 8"
+#define DEFAULT_TINY_FONT "Sans 8"
 #define DEFAULT_PEAKS_FONT "Times Medium 10"
 #define DEFAULT_BOLD_PEAKS_FONT "Times Bold 10"
-#define DEFAULT_AXIS_NUMBERS_FONT "Fixed 10"
+#define DEFAULT_AXIS_NUMBERS_FONT "Sans 10"
+/* changed 31-May-08 for Gtk+-2.13.1 -- apparently Fixed 10 is no longer defined (or maybe this is Fedora 9's fault?) */
 #define DEFAULT_AXIS_LABEL_FONT "Times Medium 14"
 
 typedef enum {CONTAINER_ADD, PANED_ADD1, BOX_PACK, TABLE_ATTACH, PANED_ADD2, BOX_PACK_END} widget_add_t;
