@@ -1,5 +1,6 @@
 Snd change log
 
+ 2-June:     Snd 9.10.
  30-May:     peak-phases.scm.
  20-May:     rt-various.[ch], rt-coroutines.scm, rt-stalin.scm, rt-DotEmacs, and
                many other changes thanks to Kjetil.

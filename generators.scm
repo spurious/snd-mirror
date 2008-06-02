@@ -5865,11 +5865,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;; TODO: threads for clm instruments and all long computations (currently only used in huge FIR filters)
 ;;;       could this be done at the level of with-sound? -- the run-loop ptree evaluation is already a function call(?)
 ;;;       what about huge spectrograms in multi-chan settings?
-;;; ;can't find sndclm_seconds_to_samples_tip in wz_data.js
-    ;can't find sndclm_hz_to_radians_tip in wz_data.js
-    ;can't find sndclm_samplestoseconds_tip in wz_data.js
-    ;defined in wz_data.js but not used: sndclm_one_pole_tip
-    ;perhaps also add the peaks tester to va.scm and remove check for #(
+;;; ;perhaps also add the peaks tester (in peak-phases.scm) to va.scm and remove check for #(
 
 ;;; TODO: various CL/lisp troubles
 

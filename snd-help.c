@@ -444,8 +444,8 @@ char *version_info(void)
 #if SND_AS_WIDGET
 	  _("\n    compiled as a widget"),
 #endif
-#if (defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))
-	  _("\n    with large file support"),
+#if (!((defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > 4)) || (defined(_FILE_OFFSET_BITS) && (_FILE_OFFSET_BITS == 64))))
+	  _("\n    without large file support"),
 #endif
 #if ENABLE_NLS && HAVE_GETTEXT
 	  _("\n    with gettext: "),
@@ -512,6 +512,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+2-June:  Snd 9.10.\n\
 20-May:  rt-various.[ch], rt-coroutines.scm, rt-stalin.scm, rt-DotEmacs, and\n\
            many other changes thanks to Kjetil.\n\
          many const char* changes for g++ 4.3.0.\n\
@@ -519,9 +520,6 @@ void about_snd_help(void)
 12-May:  expandn (clm-ins.scm) thanks to Michael Klingbeil.\n\
 10-May:  merged green.scm into generators.scm.\n\
 5-May:   music5 port: music5.f, music5-examples, old-music5.f\n\
-24-Apr:  Snd 9.9.\n\
-25-Mar:  with-mixed-sound and with-mixed-sound->notelist (ws.scm)\n\
-18-Mar:  selection.scm.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",

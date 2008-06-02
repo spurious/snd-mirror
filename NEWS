@@ -1,24 +1,33 @@
-Snd 9.9
+Snd 9.10
 
-more rt and faust-related improvements thanks to Kjetil Matheussen
+real-time/stalin support thanks to Kjetil.
 
-freeverb bugfix thanks to Oded Ben-Tal.
+new version of autoc.ins thanks to Bret Battey
 
-rmsp.ins replaced by track-rms.ins thanks to Michael Edwards.
+more Forth-related improvements thanks to Mike.
 
-many Ruby and Forth-related improvements, and a bugfix in graphEq thanks to Mike.
+more jack-related changes thanks to Kjetil.
 
-most of my effort went into the documentation.
+7 more generators in generators.scm, moved green.scm to generators.scm,
+  moving moving-* from dsp.scm to generators.scm (and moved smoothing-filter
+  to snd9.scm).
 
-selection.scm (with various functions that used to be in examp.scm, extensions.scm etc)
+retired the waveshape generator finally (see generators.scm for replacement).
 
-with-marked-sound, with-mixed-sound and with-mixed-sound->notelist (ws.scm)
+added chebyshev-t-sum, chebyshev-u-sum, and chebyshev-tu-sum using the 
+  recursive version of the Tn and Un calculations.  Used by the polyoid 
+  and noid generators in generators.scm to compute peak-phases.scm.
 
-3 more generators in generators.scm
+4 more birds in animals.scm
 
-bess.scm can now be loaded into Snd (as well as run independently as a script)
+normalize-partials is now built-in (mus_normalize_partials in clm.c)
 
-checked: gsl 1.10, autoconf 2.62, cairo 1.6.4, sbcl 1.0.16
+music5 port: music5.f, music5-examples, old-music5.f
 
-Thanks!: Kjetil Matheussen, Oded Ben-Tal, Michael Edwards, Mike Scholz, Rick Taube.
+expandn.ins from clm translated to Snd/CLM scheme (clm-ins.scm)
 
+checked: Clozure CL 1.2, guile 1.8.5, fth 1.1.0, clisp 2.45, Fedora 9,
+         sbcl 1.0.17, gtk 2.13.1
+
+Thanks!: Bret Battey, Kjetil Matheussen, Mike Scholz, Bill Gosper,
+         Marc LeBrun, Julius Smith
