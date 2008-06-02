@@ -1696,7 +1696,7 @@ static void *pfilter_direct_run(void *context)
   sf = arg->sf;
 
   /* this code should not call anything that might tickle either Scheme or Ruby */
-  /*   I think it's possible for a ptree reader to call xen stuff in snd-run -- may need disable this? */
+  /*   I think it's possible for a ptree reader to call xen stuff in snd-run -- may need to disable this? */
 
   arg->data = (mus_sample_t **)MALLOC(sizeof(mus_sample_t *));
   arg->data[0] = (mus_sample_t *)CALLOC(MAX_BUFFER_SIZE, sizeof(mus_sample_t)); 

@@ -6,6 +6,8 @@
  *  and we already have an easy way to move between mixes: click the tag changes the dialog mix
  */
 
+/* TODO: dialog can be confused and think there are no active mixes after with-mixed-sound */
+
 #define NAME_COLUMNS 8
 
 /* ---------------- mix dialog ---------------- */

@@ -1813,7 +1813,7 @@ Here is a somewhat low-level example:
   (let* ((norm (if (= order 1) 1.0     ; these peak amps were determined empirically
                  (if (= order 2) 1.3   ;   actual limit is supposed to be pi/2 (G&amp;R 1.441)
                    (if (&lt; order 9) 1.7 ;   but Gibbs phenomenon pushes it to 1.851
-                     1.852))))           
+                     1.852))))
          (freqs '()))
     (do ((i 1 (1+ i)))
 	((&gt; i order))
@@ -2485,7 +2485,6 @@ Even more amusing is this algorithm:
 </td></tr></table>
 
 <!-- TODO: chaos and iterated (co)sines here -->
-<!-- TODO: gibbs and cancellation -->
 
 <p>For sawtooth output, see also <a href="#rksin">rksin</a>.
 In these generators, the "fm" argument is useful mainly for various sci-fi sound effects:

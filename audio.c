@@ -8083,6 +8083,12 @@ static inline void __attribute__ ((__unused__)) atomic_add(volatile int* __mem, 
 
 #elif defined(__powerpc__) || defined(__ppc__)
 
+#ifdef __PPC405__ 
+#define _STWCX "sync \n\tstwcx. " 
+#else 
+#define _STWCX "stwcx. " 
+#endif 
+
 static inline void __attribute__ ((__unused__)) atomic_add(volatile int* __mem, int __val)
 {
   int __tmp;

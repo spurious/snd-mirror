@@ -345,7 +345,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                --with-gtk --with-cairo --with-static-xg g++ doubles/threads --- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-gtk --with-static-xg CC=g++ --with-cairo --with-doubles --with-threads LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
+./configure --quiet --with-gtk --with-static-xg CC=g++ --with-cairo --with-doubles --enable-threads LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-gtk 'xg 'gl"

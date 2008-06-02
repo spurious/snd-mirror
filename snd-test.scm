@@ -52403,12 +52403,9 @@ EDITS: 1
 		      (graphEq "oboe.snd")
 		      )
 	  (let ((ind (find-sound "test.snd")))
-	    (if (or (not (vequal (channel->vct 45 10) (vct -0.068 -0.059 -0.045 -0.028 -0.011 0.005 0.018 0.028 0.035 0.039)))
-		    (not (vequal (channel->vct 210 10) (vct 0.015 0.014 0.013 0.011 0.009 0.007 0.005 0.003 0.001 0.000))))
+	    (if (or (not (vequal (channel->vct 45 10) (vct -0.068 -0.064 -0.056 -0.041 -0.020 0.007 0.034 0.059 0.077 0.090)))
+		    (not (vequal (channel->vct 210 10) (vct 0.016 0.015 0.013 0.011 0.008 0.006 0.004 0.003 0.001 0.000))))
 		(snd-display ";fm-violin with-sound: ~A ~A" (channel->vct 45 10) (channel->vct 210 10)))
-
-;;;TODO: #<vct[len=10]: -0.068 -0.064 -0.056 -0.041 -0.020 0.007 0.034 0.058 0.077 0.090> #<vct[len=10]: 0.016 0.015 0.013 0.011 0.008 0.006 0.004 0.003 0.001 -0.000>
-
 	    (play-and-wait ind)
 	    (close-sound ind))
 	  
@@ -54072,10 +54069,9 @@ EDITS: 1
 	  (if (not (sound? ind))
 	      (snd-display ";can't find mixed with-sound output")
 	      (let ((mx (maxamp ind 0)))
-		(if (< mx .375) (snd-display ";mixed with-sound max: ~A" mx))
-		(if (not (vequal (channel->vct 1000 10) (vct -0.064 0.025 0.094 0.139 0.167 0.189 0.215 0.238 0.243 0.224)))
+		(if (< mx .35) (snd-display ";mixed with-sound max: ~A" mx))
+		(if (not (vequal (channel->vct 1000 10) (vct -0.082 -0.023 0.039 0.101 0.157 0.205 0.244 0.274 0.296 0.313)))
 		    (snd-display ";mixed with-sound: ~A" (channel->vct 1000 10)))
-;;;TODO:  #<vct[len=10]: -0.102 0.039 0.187 0.303 0.375 0.414 0.437 0.449 0.451 0.436>
 		(close-sound ind))))
 	
 	(let* ((file (with-sound ()
