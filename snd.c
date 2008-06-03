@@ -3,12 +3,6 @@
  * originally intended as a re-implementation of my much-missed dpysnd -- the Foonly/SAIL/E/Mus10/Grnlib sound editor from ca 1983.
  */
 
-/*   MAJOR THINGS TO DO...
- *
- * TODO: openMP or similar multi-thread system for instruments?
- * TODO: dlocsig/move-sound in run
- */
-
 #include "snd.h"
 
 snd_state *ss = NULL;

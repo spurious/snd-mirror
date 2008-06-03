@@ -10862,21 +10862,19 @@ way to do this (<a href="http://www.tweedledum.com/rwg/gibbs.html">gibbs.html</a
 but it's easier to use with-mixed-sound and the Mixes dialog:
 </p>
 
-<!-- SOMEDAY: tips and urls here -->
-
 <table hspace=40 border=0><tr><td>
 <pre>
 (definstrument (sine-wave start dur freq amp)
-  (let* ((beg (seconds-&gt;samples start))
-	 (end (+ beg (seconds-&gt;samples dur)))
-	 (osc (make-oscil freq)))
+  (let* ((beg (<a class=quiet href="sndclm.html#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> start))
+	 (end (+ beg (<a class=quiet href="sndclm.html#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> dur)))
+	 (osc (<a class=quiet href="sndclm.html#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> freq)))
     (run 
      (lambda ()
        (do ((i beg (1+ i))) 
 	   ((= i end))
-	 (outa i (* amp (oscil osc))))))))
+	 (<a class=quiet href="sndclm.html#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* amp (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> osc))))))))
 
-(with-mixed-sound ()
+(<em class=red>with-mixed-sound</em> ()
   (sine-wave 0 1 10.0 1.0)
   (sine-wave 0 1 30.0 .333)
   (sine-wave 0 1 50.0 .2)
