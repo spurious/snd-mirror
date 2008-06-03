@@ -5859,15 +5859,16 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;; TODO: L&S sq wave + fm? -- why isn't this already a generator or two?
 ;;; TODO: in triangle-wave section it shows FM tri(tri) -- what is spectrum?
 ;;; TODO: try the monks with polyoid (changing amps and phases)
-;;; TODO: chebyshev-*-sum in CL?  polywave in CL is currently all messed up
-;;; TODO: what are min peak phases in nrcos case given various r's?
-;;; TODO: ditto sum of odd components 
+;;; TODO: chebyshev-*-sum in CL?  polywave in CL is currently all messed up, normalize-partials in CL?
+;;; TODO: what are min peak phases in nrcos case given various r's? same for sum of odd components?
 ;;; TODO: threads for clm instruments and all long computations (currently only used in huge FIR filters)
 ;;;       could this be done at the level of with-sound? -- the run-loop ptree evaluation is already a function call(?)
 ;;;       what about huge spectrograms in multi-chan settings?
-;;; ;perhaps also add the peaks tester (in peak-phases.scm) to va.scm and remove check for #(
+;;; TODO: need to run water 1 for fm-violin check (phase changes)
+;;; TODO: make a complete direct_filter test suite and merge threads/direct cases in snd-sig.c
+;;;       ultimately need macros here to make channel->thread cases as simple as possible
 
-;;; TODO: various CL/lisp troubles
+;;; TODO: various CL/lisp troubles [clisp on openbsd, 64x86 openmcl, clisp mac ug2 segfault]
 
 #|
 (with-sound (:clipped #f)

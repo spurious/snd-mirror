@@ -10855,6 +10855,77 @@ in the minibuffer.
       (fm-violin 1 .1 660 .1 :degree 45))
 </pre>
 
+<p>with-mixed-sound can be handy in non-compositional contexts.  For example,
+say we want to make a square wave from sines, but want to reduce the Gibbs
+overshoot by changing the component amplitudes (I got this example from Bill Gosper).  There is a mathematical
+way to do this (<a href="http://www.tweedledum.com/rwg/gibbs.html">gibbs.html</a>)
+but it's easier to use with-mixed-sound and the Mixes dialog:
+</p>
+
+<!-- SOMEDAY: tips and urls here -->
+
+<table hspace=40 border=0><tr><td>
+<pre>
+(definstrument (sine-wave start dur freq amp)
+  (let* ((beg (seconds-&gt;samples start))
+	 (end (+ beg (seconds-&gt;samples dur)))
+	 (osc (make-oscil freq)))
+    (run 
+     (lambda ()
+       (do ((i beg (1+ i))) 
+	   ((= i end))
+	 (outa i (* amp (oscil osc))))))))
+
+(with-mixed-sound ()
+  (sine-wave 0 1 10.0 1.0)
+  (sine-wave 0 1 30.0 .333)
+  (sine-wave 0 1 50.0 .2)
+  (sine-wave 0 1 70.0 .143))
+</pre>
+</td></tr></table>
+
+<p>
+Now we can play with the
+individual sinewave amplitudes in the Mixes dialog, seeing "in realtime" what
+effect an amplitude has on the waveform.  In the graph below, we've taken the original set of four sines
+and chosen amplitudes 1.16, .87, .46, .14 (these are multipliers on the original 1/n amps).
+The first graph is the original waveform, the last is the result of the
+amplitude changes, and the middle one shows 100 sines (it is the usual demo that
+the Gibbs overshoot is not reduced by adding lots more components).
+The peak amplitude should be pi/4, but the Gibbs phenomenon adds .14.
+</p>
+
+<img src="pix/smoothsq.png" alt="reduce Gibbs" hspace=40>
+<br>
+
+<!--
+(definstrument (sine-wave start dur freq amp)
+  (let* ((beg (seconds->samples start))
+	 (end (+ beg (seconds->samples dur)))
+	 (osc (make-oscil freq)))
+    (run 
+     (lambda ()
+       (do ((i beg (1+ i))) 
+	   ((= i end))
+	 (outa i (* amp (oscil osc))))))))
+
+(with-sound (:output "4-sines.snd")
+  (sine-wave 0 1 10.0 1.0)
+  (sine-wave 0 1 30.0 .333)
+  (sine-wave 0 1 50.0 .2)
+  (sine-wave 0 1 70.0 .143))
+
+(with-sound (:output "100-sines.snd")
+  (do ((i 1 (+ i 2)))
+      ((> i 200))
+    (sine-wave 0 1 (* i 10.0) (/ 1.0 i))))
+
+(with-mixed-sound (:output "4-sines-mixed.snd")
+  (sine-wave 0 1 10.0 1.0)
+  (sine-wave 0 1 30.0 .333)
+  (sine-wave 0 1 50.0 .2)
+  (sine-wave 0 1 70.0 .143))
+-->
 
 <p><a name="withmarkedsound">with-marked-sound</a> is yet another version of with-sound that 
 adds a mark at the start of each note.  

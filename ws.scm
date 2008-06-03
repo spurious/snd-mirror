@@ -253,7 +253,8 @@ returning you to the true top-level."
 				  (to-snd *to-snd*)
 				  (clipped 'unset)
 				  (notehook *clm-notehook*)               ; (with-sound (:notehook (lambda args (display args))) (fm-violin 0 1 440 .1))
-				  (scaled-by #f))
+				  (scaled-by #f)
+				  (ignore-output #f))
   "with-sound-helper is the business portion of the with-sound macro"
   (let ((old-srate (mus-srate))
 	(old-*output* *output*)
@@ -266,6 +267,11 @@ returning you to the true top-level."
 	(output-to-file (string? output))
 	(reverb-1 revfile)
 	(reverb-to-file (and reverb (string? revfile))))
+
+    (if ignore-output
+	(begin
+	  (set! output-1 *clm-file-name*)
+	  (set! output-to-file (string? output-1))))
 
     (dynamic-wind 
 
@@ -561,8 +567,10 @@ returning you to the true top-level."
 (defmacro with-mixed-sound (args . body)
   `(let* ((output (with-sound-helper (lambda () #f) ,@args :to-snd #t)) ; pick up args for output
 	  (outsnd (find-sound output)))
+
      (if (sound? outsnd)
-	 (let ((mix-info '()))
+	 (let ((mix-info '())
+	       (old-sync (sync outsnd)))
 
 	   ;; if multichannel output, make sure cross-chan mixes move together 
 	   (if (> (chans outsnd) 1)
@@ -591,6 +599,7 @@ returning you to the true top-level."
 
 	   (dynamic-wind
 	       (lambda ()
+		 (set! (sync outsnd) 0)
 		 (do ((chan 0 (1+ chan)))
 		     ((= chan (channels outsnd)))
 		   (set! (squelch-update outsnd chan) #t)))
@@ -598,7 +607,7 @@ returning you to the true top-level."
 	       (lambda ()
 		 (for-each
 		  (lambda (note)
-		    (let* ((snd (with-temp-sound ,args (eval (append (list (car note) 0.0) (cddr note)) (current-module))))
+		    (let* ((snd (with-temp-sound (list ,@args :ignore-output #t) (eval (append (list (car note) 0.0) (cddr note)) (current-module))))
 			   ;; I can't immediately find a way around the "eval" 
 			   ;;   current-module is a synonym for interaction-environment in Gauche
 			   (beg (inexact->exact (floor (* (srate outsnd) (cadr note)))))
@@ -614,6 +623,7 @@ returning you to the true top-level."
 		 (set! (sound-property 'with-mixed-sound-info outsnd) (reverse mix-info)))
 
 	       (lambda ()
+		 (set! (sync outsnd) old-sync)
 		 (do ((chan 0 (1+ chan)))
 		     ((= chan (channels outsnd)))
 		   (set! (squelch-update outsnd chan) #f)
