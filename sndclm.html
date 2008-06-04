@@ -1750,7 +1750,7 @@ polyshape (the coeffs argument), or used directly by <a href="#polynomial">polyn
 <p>mus-chebyshev-tu-sum and friends perform the same function as partials-&gt;polynomial, but
 use the much more stable and accurate underlying recursion (see below for a long-winded
 explanation).  They are the innards of the polywave and <a href="#polyoid">polyoid</a> generators.
-The arguments are "x" (normally a sinusoid), and one or two
+The arguments are "x" (normally a phase), and one or two
 vcts of component amplitudes.  
 These functions makes it easy to do additive synthesis
 with any number of harmonics (I've tried 16384), each with arbitrary
@@ -1865,10 +1865,10 @@ Here is a somewhat low-level example:
 	 (j 1 (+ j 2)))
 	((&gt; i order))
       (set! freqs (cons (/ 1.0 (* j j)) (cons j freqs))))
-    (<em class=red>make-polyshape</em> frequency :partials (reverse freqs))))
+    (<em class=red>make-polywave</em> frequency :partials (reverse freqs))))
 
 (define* (band-limited-triangle-wave gen :optional (fm 0.0))
-  (<em class=red>polyshape</em> gen 1.0 fm))
+  (<em class=red>polywave</em> gen fm))
 </pre>
 </td></tr></table>
 

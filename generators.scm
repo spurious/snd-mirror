@@ -5856,8 +5856,6 @@ index 10 (so 10/2 is the bes-jn arg):
 (define noid? polyoid?)
 
 
-;;; TODO: in triangle-wave section it shows FM tri(tri) -- what is spectrum?
-;;; TODO: polywave in CL is currently all messed up, normalize-partials in CL?
 ;;; TODO: what are min peak phases in nrcos case given various r's? same for sum of odd components?
 ;;; TODO: threads for clm instruments and all long computations (currently only used in huge FIR filters)
 ;;;       could this be done at the level of with-sound? -- the run-loop ptree evaluation is already a function call(?)
