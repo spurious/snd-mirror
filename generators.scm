@@ -5856,7 +5856,6 @@ index 10 (so 10/2 is the bes-jn arg):
 (define noid? polyoid?)
 
 
-;;; TODO: L&S sq wave + fm? -- why isn't this already a generator or two?
 ;;; TODO: in triangle-wave section it shows FM tri(tri) -- what is spectrum?
 ;;; TODO: polywave in CL is currently all messed up, normalize-partials in CL?
 ;;; TODO: what are min peak phases in nrcos case given various r's? same for sum of odd components?

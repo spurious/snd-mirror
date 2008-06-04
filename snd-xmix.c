@@ -4,9 +4,9 @@
  *  requires arg for mix-dialog-mix, loop in reflect, "New Viewer" button, 
  *  how to make sure two dialogs don't try to affect the same mix?
  *  and we already have an easy way to move between mixes: click the tag changes the dialog mix
+ *    or maybe not -- it would be better to have a list of the current active mixes in the dialog,
+ *    and click there would (?) move the view
  */
-
-/* TODO: dialog can be confused and think there are no active mixes after with-mixed-sound */
 
 #define NAME_COLUMNS 8
 
@@ -939,6 +939,7 @@ void reflect_mix_change(int mix_id)
     {
       if (mix_id != ANY_MIX_ID)
 	mix_dialog_id = mix_id;
+
       if (!(mix_exists(mix_dialog_id))) 
 	{
 	  mix_dialog_id = any_mix_id(); 

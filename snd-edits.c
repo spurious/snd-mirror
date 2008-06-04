@@ -7128,6 +7128,7 @@ int mix_file_with_tag(chan_info *cp, const char *filename, int chan, off_t beg, 
   add_ed_mix(cp->edits[cp->edit_ctr], ms);
 
   ripple_all(cp, 0, 0); /* 0,0 -> copy marks */
+  reflect_mix_change(ANY_MIX_ID);
   after_edit(cp);
 
   if (backup)
@@ -7180,6 +7181,7 @@ int mix_buffer_with_tag(chan_info *cp, mus_sample_t *data, off_t beg, off_t buf_
   add_ed_mix(cp->edits[cp->edit_ctr], ms);
 
   ripple_all(cp, 0, 0); /* 0,0 -> copy marks */
+  reflect_mix_change(ANY_MIX_ID);
   after_edit(cp);
 
   if (backup)
