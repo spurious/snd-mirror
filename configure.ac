@@ -2234,7 +2234,7 @@ if test "$ac_snd_have_extension_language" = no ; then
     if test "$ac_cv_header_dlfcn_h" = yes ; then
       LDFLAGS="$LDFLAGS -ldl"
     fi
-    AC_MSG_WARN([Snd needs either an extension language (Guile or Ruby), or a graphics toolkit (Gtk or Motif), or preferably both.  All four packages are available free, normally prepackaged and ready-to-use.  As currently configured, this version of Snd is useless.])
+    AC_MSG_WARN([Snd needs either an extension language (Guile, Gauche, Fth, or Ruby), or a graphics toolkit (Gtk or Motif), or preferably both.  As currently configured, this version of Snd is useless.])
     if test "$with_snd_as_pd_external" = yes ; then	
        AC_MSG_ERROR(Guile is needed when making snd as a pd external.)
     fi

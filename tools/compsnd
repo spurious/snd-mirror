@@ -41,7 +41,7 @@ echo ' '
 ./snd --version
 ./snd -noinit --features "'clm 'snd-guile 'snd-motif 'sndlib"
 ./snd tools/check-help.scm
-./snd generators.scm peak-phases.scm -e "(begin (test-peak-phases) (exit))"
+# ./snd generators.scm peak-phases.scm -e "(begin (test-peak-phases) (exit))"
 
 # echo '(let ((hxm (dlopen (string-append (getcwd) "/xm.so")))) (dlinit hxm "Init_libxm") (display XmARROWS_END) (exit))' > tmp.scm
 # ./snd tmp.scm
