@@ -6,7 +6,6 @@
 /* TODO: set y-bounds doesn't always fixup the y zoom slider? */
 
 /* TODO: wavogram redraws itself incessantly and is very annoying! */
-/* TODO: when united chans have different y bounds, the graph tries to use both! */
 /* TODO: I think that if y-position slider is not full up, update after srate change messes it up */
 
 /* it would be neat I think to change label font sizes/button sizes etc when dialog changes size
@@ -876,6 +875,9 @@ void apply_y_axis_change(axis_info *ap, chan_info *cp)
 	      nap = ncp->axis;
 	      if (nap)
 		{
+		  nap->y_ambit = ap->y_ambit;
+		  nap->ymin = ap->ymin;
+		  nap->ymax = ap->ymax;
 		  nap->zy = zy;
 		  nap->sy = sy;
 		  set_y_bounds(nap);

@@ -689,15 +689,13 @@ checks for NaN's causing various math functions to fail.
 
 
 
----- SGI/OpenGL ----
+---- Gtk and OpenGL ----
 
-OpenGL comes with the SGI, but its drawing area widget seems to be less
-than adequate -- I use Mesa on Linux where X drawing commands can be mixed
-with OpenGL.  On the SGI when using GL, the colors are all messed up.
-
-Don't run the Motif/GL and the Gtk/GL versions of Snd at the same time.
-This can kill the X server!
-
+The Gtk/GL version of Snd can kill the X server!  I don't know why, and
+others out in webland are equally bewildered.  I believe that gtkglext 
+has been resurrected -- it went officially unmaintained for awhile.
+Ideally, Gtk would flush cairo which is a total loss, and use openGL
+directly, but I guess technical criteria are not driving this process.
 
 
 ---- Sun ----

@@ -16514,6 +16514,7 @@ if test $ac_cv_lib_m_gdk_gl_context_copy = yes; then
 _ACEOF
 
               have_gl=yes
+              OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES gtkglext"
 
 else
 

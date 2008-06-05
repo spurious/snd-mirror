@@ -1423,15 +1423,19 @@ void cleanup_cw(chan_info *cp)
 
 void change_channel_style(snd_info *sp, channel_style_t new_style)
 {
-  if ((sp) && (sp->nchans > 1))
+  if ((sp) && 
+      (sp->nchans > 1))
     {
       int i;
       channel_style_t old_style;
+      
       old_style = sp->channel_style;
       sp->channel_style = new_style;
+
       if (new_style != old_style)
 	{
 	  int height;
+
 #if WITH_RELATIVE_PANES
 	  if ((new_style == CHANNELS_SEPARATE) || (old_style == CHANNELS_SEPARATE))
 	    {
@@ -1441,6 +1445,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		remake_edit_history(lst, sp->chans[0], true);
 	    }
 #endif
+
 	  if (old_style == CHANNELS_COMBINED)
 	    {
 	      hide_gz_scrollbars(sp);
@@ -1479,9 +1484,11 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 	    {
 	      chan_context *mcgx;
 	      chan_info *ncp;
+
 	      ncp = sp->chans[0];
 	      channel_lock_pane(ncp, height);
 	      mcgx = ncp->cgx;
+
 	      for (i = 1; i < sp->nchans; i++) 
 		{
 		  ncp = sp->chans[i];
@@ -1489,6 +1496,7 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		  ncp->tcgx = mcgx;
 		  /* reset_mix_graph_parent(ncp); */
 		}
+
 	      channel_open_pane(sp->chans[0]);
 	      channel_unlock_pane(sp->chans[0]);
 	      XmToggleButtonSetState(unite_button(sp), true, false);
@@ -1499,11 +1507,13 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		{
 		  axis_info *ap;
 		  chan_info *pcp;
+
 		  /* height = total space available */
 		  height /= sp->nchans;
 		  for_each_sound_chan_with_int(sp, channel_lock_pane, height);
 		  for_each_sound_chan(sp, channel_open_pane);
 		  for_each_sound_chan(sp, channel_unlock_pane);
+
 		  pcp = sp->chans[0];
 		  ap = pcp->axis;
 		  for (i = 1; i < sp->nchans; i++)
@@ -1512,23 +1522,30 @@ void change_channel_style(snd_info *sp, channel_style_t new_style)
 		      chan_context *cx;
 		      chan_info *cp;
 		      int j;
+
 		      cp = sp->chans[i];
 		      cp->tcgx = NULL;
 		      cx = cp->cgx;
 		      cw = cx->chan_widgets;
+
 		      for (j = 0; j < NUM_CHAN_WIDGETS - 1; j++)
 			if ((cw[j]) && (!XtIsManaged(cw[j]))) 
 			  XtManageChild(cw[j]);
+
 		      XmToggleButtonSetState(cw[W_f], (Boolean)(cp->graph_transform_p), false);
 		      XmToggleButtonSetState(cw[W_w], (Boolean)(cp->graph_time_p), false);
 		      /* these can get out of sync if changes are made in the unseparated case */
 		      set_axes(cp, ap->x0, ap->x1, ap->y0, ap->y1);
 		    }
+
 		  XmToggleButtonSetState(unite_button(sp), false, false);
 		  if (sp->selected_channel > 0) color_selected_channel(sp);
 		}
 	    }
-	  if ((new_style == CHANNELS_COMBINED) && (sp->selected_channel > 0)) color_selected_channel(sp);
+
+	  if ((new_style == CHANNELS_COMBINED) && 
+	      (sp->selected_channel > 0)) 
+	    color_selected_channel(sp);
 	}
     }
 }

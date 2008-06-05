@@ -521,7 +521,7 @@ static void set_up_icon(void)
 {
   picture_t *pix;
   GdkBitmap *mask;
-  pix = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), &mask, NULL, snd_icon_bits());
+  pix = gdk_pixmap_create_from_xpm_d(MAIN_WINDOW(ss), &mask, NULL, (gchar **)snd_icon_bits());
   gdk_window_set_icon(MAIN_WINDOW(ss), NULL, pix, mask);
 }
 #endif
@@ -551,7 +551,7 @@ color_t get_in_between_color(color_t fg, color_t bg)
 #if USE_CAIRO
   #define get_color(Color, Ignore1, Ignore2, Ignore3) Color
 #else
-static color_info *get_color(char *defined_color, char *fallback_color, char *second_fallback_color, bool use_white)
+static color_info *get_color(const char *defined_color, const char *fallback_color, const char *second_fallback_color, bool use_white)
 {
   GdkColor tmp_color; /* using Gdk color name handlers here */
   color_info *new_color;
@@ -616,14 +616,23 @@ void snd_doit(int argc, char **argv)
   GtkWidget *shell;
   int i;
   state_context *sx;
+
 #ifdef SND_AS_WIDGET
   set_error_display(error_func);
   ss = snd_main(argc, argv);
 #else
   gtk_init(&argc, &argv);
+
 #ifndef MUS_MAC_OSX
   gdk_set_locale();
 #endif
+
+#if HAVE_GL && USE_GTK
+  /* gtkglext can kill the X server somehow -- I can't see how, and the net gossip about it is not helpful. */
+  if (!(gtk_gl_init_check(&argc, &argv)))
+    fprintf(stderr, "gtkglext is unhappy!");
+#endif
+
 #endif
 
   ss->channel_min_height = CHANNEL_MIN_HEIGHT;

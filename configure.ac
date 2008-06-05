@@ -1106,6 +1106,7 @@ if test "$with_gl" = yes || test "$with_just_gl" = yes ; then
             [
 	      AC_DEFINE(HAVE_GDK_GL_CONTEXT_COPY)
               have_gl=yes
+              OPTIONAL_LIBRARIES="$OPTIONAL_LIBRARIES gtkglext"
             ],
             [
 	      AC_MSG_WARN([gtkglext version is too old])

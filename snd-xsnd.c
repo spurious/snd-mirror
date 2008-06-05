@@ -1191,6 +1191,7 @@ static void unite_button_callback(Widget w, XtPointer context, XtPointer info)
   channel_style_t val;
   ASSERT_WIDGET_TYPE(XmIsToggleButton(w), w);
   ev = (XButtonEvent *)(cb->event);
+
   if (cb->set)
     {
       if (ev->state & (snd_ControlMask | snd_MetaMask)) 
@@ -1198,6 +1199,7 @@ static void unite_button_callback(Widget w, XtPointer context, XtPointer info)
       else val = CHANNELS_COMBINED;
     }
   else val = CHANNELS_SEPARATE;
+
   set_sound_channel_style(sp, val);
 }
 
