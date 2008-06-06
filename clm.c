@@ -2475,6 +2475,7 @@ static Float pw_set_index(mus_any *ptr, Float val) {((pw *)ptr)->index = val; re
 
 Float mus_chebyshev_tu_sum(Float x, int n, Float *tn, Float *un)
 {
+  /* the Clenshaw algorithm */
   int i;
   double x2, b, b1 = 0.0, b2 = 0.0, cx, cx_val;
 
@@ -2523,6 +2524,32 @@ Float mus_chebyshev_t_sum(Float x, int n, Float *tn)
     }
   return((Float)(b - b1 * cx));
 }
+
+#if 0
+/* here is the trick to do odd Tn without doing the intervening evens: */
+(define (mus-chebyshev-odd-t-sum x n t2n)
+  (let* ((b1 0.0)
+	 (b2 0.0)
+	 (cx1 (cos x))
+	 (cx (- (* 2 cx1 cx1) 1))
+	 (x2 (* 2.0 cx))
+	 (b (vct-ref t2n (- n 1))))
+    (do ((i (- n 2) (1- i)))
+	((< i 0))
+      (set! b2 b1)
+      (set! b1 b)
+      (set! b (- (+ (* b1 x2) (vct-ref t2n i)) b2)))
+    (* cx1 (- b b1))))
+
+(with-sound () 
+  (let ((t2n (vct 0.5 0.25 0.25))
+	(x 0.0)
+	(dx (hz->radians 10.0)))
+    (do ((i 0 (1+ i)))
+	((= i 22050))
+      (outa i (mus-chebyshev-odd-t-sum x 3 t2n))
+      (set! x (+ x dx)))))
+#endif
 
 
 Float mus_chebyshev_u_sum(Float x, int n, Float *un)

@@ -3,10 +3,8 @@
 #include "clm-strings.h"
 
 /* SOMEDAY: fft side needs a zoom capability, not just the drag now */
-/* TODO: set y-bounds doesn't always fixup the y zoom slider? */
 
 /* TODO: wavogram redraws itself incessantly and is very annoying! */
-/* TODO: I think that if y-position slider is not full up, update after srate change messes it up */
 
 /* it would be neat I think to change label font sizes/button sizes etc when dialog changes size
  *   but there's no way to trap the outer resizing event and
@@ -7913,7 +7911,7 @@ static XEN g_set_y_bounds(XEN bounds, XEN snd_n, XEN chn_n)
       ap->y1 = hi;
       ap->zy = 1.0;
       ap->sy = 0.0;
-      resize_sy(cp);
+      resize_sy_and_zy(cp);
       apply_y_axis_change(ap, cp);
     }
   else XEN_OUT_OF_RANGE_ERROR(S_setB S_y_bounds, 1, bounds, "~A: y1 < y0?");

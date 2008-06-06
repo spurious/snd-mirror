@@ -5578,7 +5578,6 @@ index 10 (so 10/2 is the bes-jn arg):
 	 (* y mult))))))
 
 ;;; moving-mean = average
-;;; moving-variance? = (sum of (y - average)^2) n = (average (* (- y average-overall) (- y average-overall)))
 |#
 
 
@@ -5857,8 +5856,7 @@ index 10 (so 10/2 is the bes-jn arg):
 (define noid? polyoid?)
 
 
-;;; TODO: what are min peak phases in nrcos case given various r's? same for sum of odd components?
-;;; PERHAPS: we could also set up an automatic search for best match band-limited analog waveforms
+;;; TODO: what are min peak phases in nrcos case given various r's? same for sum of odd components? also do some 2^n to finish current set
 ;;; TODO: threads for clm instruments and all long computations (currently only used in huge FIR filters)
 ;;;       could this be done at the level of with-sound? -- the run-loop ptree evaluation is already a function call(?)
 ;;;       what about huge spectrograms in multi-chan settings?
