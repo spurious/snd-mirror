@@ -50,7 +50,8 @@ aiming primarily at the Scheme version.  Common Lisp users should check out clm.
 in the CLM tarball.
 CLM is based on a set of functions known
 as "generators".  These can be packaged into "instruments", and instrument calls
-can be packaged into "note lists".  The main emphasis here is on the generators;
+can be packaged into "note lists".  (These names are just convenient historical artifacts).
+The main emphasis here is on the generators;
 note lists and instruments are described in <a href="sndscm.html">sndscm.html</a>.
 </p>
 <br>
@@ -1682,9 +1683,9 @@ See also <a href="sndscm.html#granidoc">grani</a> and <a href="sndscm.html#displ
   <a class=def name="partialstopolynomial">partials-&gt;polynomial</a> partials :optional (kind mus-chebyshev-first-kind)
   <a class=def name="normalizepartials">normalize-partials</a> partials
 
-  <a class=def name="chebyshev-tu-sum">chebyshev-tu-sum</a> x t-coeffs u-coeffs
-  <em class=emdef>chebyshev-t-sum</em> x t-coeffs
-  <em class=emdef>chebyshev-u-sum</em> x u-coeffs
+  <a class=def name="mus-chebyshev-tu-sum">mus-chebyshev-tu-sum</a> x t-coeffs u-coeffs
+  <em class=emdef>mus-chebyshev-t-sum</em> x t-coeffs
+  <em class=emdef>mus-chebyshev-u-sum</em> x u-coeffs
 </pre>
 
 <!-- LATEX: sceq16
@@ -1703,6 +1704,7 @@ a cosine, creating a sort of cross between additive synthesis and FM; see
 "Digital Waveshaping Synthesis" by Marc Le Brun in JAES 1979 April, vol 27, no 4, p250.
 The basic idea is:
 </p>
+
 <img src="pix/sceq16.png" alt="Cheby eqs" hspace=40>
 
 <p>
@@ -1775,6 +1777,7 @@ in phase and amplitude at run-time simply by setting a vct value.
   (set! phase (+ phase (<a class=quiet href="#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> frequency) fm))
   result)
 </pre>
+
 <br clear=left>
 
 <p>In its simplest use, waveshaping is additive synthesis:

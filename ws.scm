@@ -524,6 +524,29 @@ returning you to the true top-level."
      snd))
 
 
+;;; -------- with-threaded-sound
+
+(defmacro with-threaded-sound (args . body)
+  `(with-sound-helper 
+    (lambda ()
+      (for-each 
+       (lambda (expr)
+	 (call-with-new-thread
+	  (lambda ()
+	    (eval expr (current-module)))))
+       ',body)
+      (let ((us (current-thread)))
+	(for-each 
+	 (lambda (expr) 
+	   (if (and (not (thread-exited? expr))
+		    (not (eq? expr us)))
+	       (join-thread expr)))
+	 (all-threads))))
+    ,@args))
+
+;;; TODO: CL side of with-threaded-sound, also Gauche, Ruby? Fth?, also test/time it
+
+
 ;;; -------- with-temp-sound --------
 
 (defmacro with-temp-sound (args . body)

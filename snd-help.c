@@ -512,6 +512,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+6-June:  with-threaded-sound (ws.scm)\n\
 2-June:  Snd 9.10.\n\
 20-May:  rt-various.[ch], rt-coroutines.scm, rt-stalin.scm, rt-DotEmacs, and\n\
            many other changes thanks to Kjetil.\n\

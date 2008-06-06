@@ -456,8 +456,9 @@ animals.scm contains several synthesized animal sounds: frogs, birds, insects, a
 To hear them all, <code>(calling-all-animals)</code>.  
 </p>
 
-
-<table width="30%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>How to Paint a Bird Song</h4></td></tr></table>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>How to Paint a Bird Song</h4></td></tr></table>
+</td></tr></table>
 
 <p>Back in 1980, I wanted some bird songs for "Colony", but my stabs at
 a fake bird song were completely unconvincing.  So I went to
@@ -825,7 +826,9 @@ clean-channel.
 </p>
 <br>
 
-<table width="30%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>A Noisy Story</h4></td></tr></table>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>A Noisy Story</h4></td></tr></table>
+</td></tr></table>
 <!-- INDEX cleandoc:Noise Reduction -->
 
 <p>There is no built-in noise reduction function in Snd.
@@ -7690,9 +7693,38 @@ n=5:
 equivalent minima; we're happy to find one that's reasonably close
 to the actual minimum.  On the other two questions: I see no pattern
 to these phases, and sqrt(n) is always too low.  Closer might be
-(expt n 0.56).
+(expt n 0.56).  Here is a graph of the values I've found so far
+(in blue &mdash; the code is in peak-phases.scm) plotted against sqrt(n) (in red):
 </p>
 
+<img src="pix/sqrt.png" alt="sqrt n" hspace=40>
+
+<!--
+(with-sound (:channels 2 :clipped #f)
+  (do ((i 0 (1+ i)))
+      ((> i 128))
+    (let ((min-val (vector-find-if (lambda (val)
+				     (and val
+					  (vector? val)
+					  (= (vector-ref val 0) i)
+					  (let ((a-val (vector-ref val 1))
+						(a-len (vector-length val)))
+					    (do ((k 2 (1+ k)))
+						((= k a-len))
+					      (if (and (number? (vector-ref val k))
+						       (< (vector-ref val k) a-val))
+						  (set! a-val (vector-ref val k))))
+					    a-val)))
+				   noid-min-peak-phases)))
+      (if min-val
+	  (outa i min-val))
+      (outb i (expt (exact->inexact i) .5)))))
+
+(set! (x-axis-label 0 0) "n")
+(set! (x-axis-label 0 1) "n")
+(set! (y-bounds) (list 0 19))
+(set! (selected-graph-color) (make-color 1 1 1))
+-->
 
 <br><br>
 
@@ -10399,7 +10431,7 @@ end
 <!-- ---------------------------------------- FILE: ws ---------------------------------------- -->
 
 <table border=0 bordercolor="lightgreen" width=100% cellpadding=2 cellspacing=0><tr><td bgcolor="lightgreen">
-<A NAME="wsdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>ws</h2></td></tr></table>
+<A NAME="wsdoc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>ws (with-sound)</h2></td></tr></table>
 </td></tr></table>
 
 <p>
@@ -10690,7 +10722,9 @@ begin time) in the Snd window title bar, and tries to use the xm module if it is
 
 
 <br>
-<table width="30%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>definstrument</h4></td></tr></table>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>definstrument</h4></td></tr></table>
+</td></tr></table>
 
 <p>
 definstrument
@@ -10769,12 +10803,15 @@ avoid lists, if possible, and fancy stuff like map or apply, and you should be f
 
 
 <br>
-<table width="30%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>sound-let</h4></td></tr></table>
 
-<p>There are several other versions of with-sound: with-temp-sound, with-mixed-sound, sound-let, clm-load, with-mix, and the Common Music
+<p>There are several other versions of with-sound: with-temp-sound, with-threaded-sound, with-mixed-sound, sound-let, clm-load, with-mix, and the Common Music
 handles, init-with-sound and finish-with-sound.
 <a name="withtempsound">with-temp-sound</a> and <a name="sound-let">sound-let</a> set up temporary bindings for embedded with-sounds.
 </p>
+
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>sound-let</h4></td></tr></table>
+</td></tr></table>
 
 <p>sound-let is a form of let* that creates temporary sound files
 within with-sound.  Its syntax is a combination of let* and with-sound:
@@ -10810,6 +10847,11 @@ Here's another example:
     (fm-violin 1 1 550 .1))                             ; add another fm-violin note
 </pre>
 
+<br>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>with-temp-sound</h4></td></tr></table>
+</td></tr></table>
+
 <p>with-temp-sound is like sound-let, but does not delete its output file:
 </p>
 <pre>
@@ -10836,6 +10878,27 @@ with_sound() do
 end
 </pre></td></tr></table>
 
+
+<br>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>with-threaded-sound</h4></td></tr></table>
+</td></tr></table>
+
+<p><a name="withthreadedsound">with-threaded-sound</a> looks exactly like with-sound, but
+each note (each separate expression in the with-sound body) is handled by a separate thread.
+</p>
+
+<pre>
+    (with-threaded-sound ()
+      (fm-violin 0 1 440 .1)
+      (fm-violin 0 1 660 .1))
+</pre>
+
+
+<br>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>with-mixed-sound</h4></td></tr></table>
+</td></tr></table>
 
 <p><a name="withmixedsound">with-mixed-sound</a> is a variant of with-sound that creates a
 <a href="extsnd.html#sndmixes">"mix"</a> for each note in the notelist.  If you move the
@@ -10925,10 +10988,20 @@ The peak amplitude should be pi/4, but the Gibbs phenomenon adds .14.
   (sine-wave 0 1 70.0 .143))
 -->
 
+<br>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>with-marked-sound</h4></td></tr></table>
+</td></tr></table>
+
 <p><a name="withmarkedsound">with-marked-sound</a> is yet another version of with-sound that 
 adds a mark at the start of each note.  
 </p>
 
+
+<br>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>clm-load</h4></td></tr></table>
+</td></tr></table>
 
 <p><a name="clmload">clm-load</a> provides a slightly different way to load a notelist.  Its first argument is a filename, assumed to
 be a text file containing notes (equivalent to the body of with-sound). The rest of the arguments to clm-load are the usual with-sound arguments, if any.
@@ -10942,6 +11015,12 @@ For example, if we have a file named clm-load-test.clm with these contents:
 then <code>(clm-load "clm-load-test.clm")</code> is the same as <code>(with-sound () (fm-violin 0 1 440 .1) (fm-violin 1 1 660 .1))</code>.
 Similarly for, <code>(clm-load "clm-load-test.clm" :srate 44100 :channels 2)</code> and so on.
 </p>
+
+
+<br>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>init-with-sound</h4></td></tr></table>
+</td></tr></table>
 
 <p><b>init-with-sound</b> and <b>finish-with-sound</b>
 split with-sound into two pieces, primarily for Common Music's benefit.
@@ -10960,7 +11039,9 @@ split with-sound into two pieces, primarily for Common Music's benefit.
 
 
 <br>
-<table width="30%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>with-mix</h4></td></tr></table>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>with-mix</h4></td></tr></table>
+</td></tr></table>
 
 <p><a name="with-mix">with-mix</a> is a "checkpointing" version of with-sound, more useful in the bad old days when computers
 were incredibly slow, but lingering on...
@@ -11017,7 +11098,9 @@ it in conjunction with mixer to scale and envelope all the various ins and outs.
 
 
 <br>
-<table width="30%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>def-clm-struct</h4></td></tr></table>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>def-clm-struct</h4></td></tr></table>
+</td></tr></table>
 
 <p><a name="def-clm-struct">def-clm-struct</a> is modelled after Common Lisp's defstruct. It sets up
 a structure, an object with named slots that you can get and set, and ties it into the
@@ -11158,7 +11241,9 @@ def-clm-struct is used in generators.scm, clm-ins.scm, dsp.scm, moog.scm, prc95.
 </p>
 
 <br>
-<A NAME="wsdebug"></a><table width="30%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>debugging help in with-sound</h4></td></tr></table>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<A NAME="wsdebug"></a><table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>debugging help in with-sound</h4></td></tr></table>
+</td></tr></table>
 
 <!-- INDEX wsdebug:Debugging (notelists) -->
 
@@ -11190,7 +11275,9 @@ The <b>ws-go</b> 'returned-value' is the value to return from the original call 
 </p>
 
 <br>
-<table width="30%" border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>other stuff associated with with-sound</h4></td></tr></table>
+<table border=0 bordercolor="lightgreen" width=50% cellpadding=1 cellspacing=0><tr><td bgcolor="lightgreen">
+<table width="100%" border=0><tr><td bgcolor="#EEFDEE"><h4>other stuff associated with with-sound</h4></td></tr></table>
+</td></tr></table>
 
 <p>
 The *clm-* variables are saved in the save-state
