@@ -817,7 +817,6 @@ with_snd_as_pd_external
 with_rt
 enable_largefile
 with_gnu_ld
-enable_threads
 with_x
 enable_readline
 with_ruby_prefix
@@ -1472,7 +1471,6 @@ Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --disable-largefile     omit support for large files
-  --enable-threads      include pthread support
   --enable-readline      include readline (the default)
   --enable-snd-debug      include internal Snd debugging functions
   --disable-nls           do not use Native Language Support
@@ -3753,7 +3751,6 @@ _ACEOF
 #   --without-xp          omit libXp even if it exists (for testing)
 #   --without-fam         libfam can be obsolete, but it's not clear how to test this
 #   --with-midi           include sndlib midi module
-#   --enable-threads      include pthread stuff
 #   --with-cairo          use cairo for Gtk graphics, if possible
 #   GUILE_CONFIG_path     where to look for guile-config
 #   GUILE_CONFIG_name     Fink (OSX) includes guile-config under funny names
@@ -9963,25 +9960,19 @@ fi
 
 
 # check for pthreads
-# Check whether --enable-threads was given.
-if test "${enable_threads+set}" = set; then
-  enableval=$enable_threads;
-  if test "$enable_threads" = yes ; then
-    if test "$ac_cv_header_pthread_h" = yes ; then
-      cat >>confdefs.h <<\_ACEOF
-#define MUS_WITH_THREADS 1
-_ACEOF
-
-      CFLAGS="$CFLAGS -D_REENTRANT"
-      LIBS="$LIBS -lpthread"
-      RANDOM_FEATURES="$RANDOM_FEATURES threads"
-    else
-      { $as_echo "$as_me:$LINENO: WARNING: can't enable threads -- can't find pthread.h" >&5
-$as_echo "$as_me: WARNING: can't enable threads -- can't find pthread.h" >&2;}
-    fi
-  fi
-fi
-
+# AC_ARG_ENABLE(threads,
+#   [  --enable-threads      include pthread support],
+#   [
+#   if test "$enable_threads" = yes ; then
+#     if test "$ac_cv_header_pthread_h" = yes ; then
+#       AC_DEFINE(MUS_WITH_THREADS)
+#       CFLAGS="$CFLAGS -D_REENTRANT"
+#       LIBS="$LIBS -lpthread"
+#       RANDOM_FEATURES="$RANDOM_FEATURES threads"
+#     else
+#       AC_MSG_WARN([can't enable threads -- can't find pthread.h])
+#     fi]
+#   fi)
 
 # look for special functions in libm
 { $as_echo "$as_me:$LINENO: checking for jn in -lm" >&5

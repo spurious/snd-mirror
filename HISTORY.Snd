@@ -1,5 +1,6 @@
 Snd change log
 
+ 8-June:     removed --enable-threads
  6-June:     with-threaded-sound (ws.scm)
  2-June:     Snd 9.10.
  30-May:     peak-phases.scm.

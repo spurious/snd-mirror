@@ -36,9 +36,6 @@
 #if HAVE_FAM_H
   #include <fam.h>
 #endif
-#if MUS_WITH_THREADS && HAVE_PTHREAD_H
-  #include <pthread.h>
-#endif
 
 #include "_sndlib.h"
 #include "xen.h"

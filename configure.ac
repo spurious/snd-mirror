@@ -72,7 +72,6 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --without-xp          omit libXp even if it exists (for testing)
 #   --without-fam         libfam can be obsolete, but it's not clear how to test this
 #   --with-midi           include sndlib midi module
-#   --enable-threads      include pthread stuff
 #   --with-cairo          use cairo for Gtk graphics, if possible
 #   GUILE_CONFIG_path     where to look for guile-config
 #   GUILE_CONFIG_name     Fink (OSX) includes guile-config under funny names
@@ -317,19 +316,19 @@ AC_LINK_IFELSE(
 AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
 
 # check for pthreads 
-AC_ARG_ENABLE(threads,
-  [  --enable-threads      include pthread support],
-  [
-  if test "$enable_threads" = yes ; then
-    if test "$ac_cv_header_pthread_h" = yes ; then
-      AC_DEFINE(MUS_WITH_THREADS)
-      CFLAGS="$CFLAGS -D_REENTRANT"
-      LIBS="$LIBS -lpthread"
-      RANDOM_FEATURES="$RANDOM_FEATURES threads"
-    else
-      AC_MSG_WARN([can't enable threads -- can't find pthread.h])
-    fi]
-  fi)
+# AC_ARG_ENABLE(threads,
+#   [  --enable-threads      include pthread support],
+#   [
+#   if test "$enable_threads" = yes ; then
+#     if test "$ac_cv_header_pthread_h" = yes ; then
+#       AC_DEFINE(MUS_WITH_THREADS)
+#       CFLAGS="$CFLAGS -D_REENTRANT"
+#       LIBS="$LIBS -lpthread"
+#       RANDOM_FEATURES="$RANDOM_FEATURES threads"
+#     else
+#       AC_MSG_WARN([can't enable threads -- can't find pthread.h])
+#     fi]
+#   fi)
 
 # look for special functions in libm
 AC_CHECK_LIB(m, jn, 
