@@ -550,7 +550,7 @@ I usually use this function to get the breakpoints:
 <p>Plug this list into the bird instrument (ampf).  Now switch to the FFT view (click "f" and "w"), open the
 FFT dialog (Options:Transform), choose Blackman10 window, sonogram, 512.  In the color dialog, choose the
 "jet" colormap.  In the envelope editor, switch from "amp" to "flt", and resize the dialog window so that
-its graph fits the displayed spectrum.  For fast moving sounds, its important to align the amp and freq
+its graph fits the displayed spectrum.  For fast moving sounds, it's important to align the amp and freq
 envelopes exactly, but the FFT delays or blurs stuff, so mess with the graph placement until the amplitude
 envelope and the spectrum match (bright spots at loud spots and so on).  I bind the arrow keys to precision
 movements for this reason (in my ~/.snd file, see <a href="extsnd.html#moveonepixel">move-one-pixel</a>).
@@ -7507,7 +7507,8 @@ so far haven't panned out.
 <em class=emdef>hermite</em> <code>(n x)</code><br>
 <em class=emdef>laguerre-polynomial</em> <code>(a x :optional (alpha 0.0))</code><br>
 <em class=emdef>laguerre</em> <code>(n x :optional (alpha 0.0))</code><br>
-<em class=emdef></em>
+<em class=emdef>Si</em> <code>x</code><br>
+<em class=emdef>Ci</em> <code>x</code><br>
 </td></tr></table>
 
 <p>In this case, "the code is the documentation" &mdash; these functions
@@ -7694,7 +7695,7 @@ equivalent minima; we're happy to find one that's reasonably close
 to the actual minimum.  On the other two questions: I see no pattern
 to these phases, and sqrt(n) is always too low.  Closer might be
 (expt n 0.56).  Here is a graph of the values I've found so far
-(in blue &mdash; the code is in peak-phases.scm) plotted against sqrt(n) (in red):
+(in blue &mdash; the searching code is in peak-phases.scm) plotted against sqrt(n) (in red):
 </p>
 
 <img src="pix/sqrt.png" alt="sqrt n" hspace=40>

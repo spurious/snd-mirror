@@ -5857,12 +5857,14 @@ index 10 (so 10/2 is the bes-jn arg):
 
 
 ;;; TODO: what are min peak phases in nrcos case given various r's? same for sum of odd components? also do some 2^n to finish current set
-;;; TODO: threads for clm instruments and all long computations (currently only used in huge FIR filters)
+;;; TODO: threads for all long computations (currently only used in huge FIR filters)
 ;;;       what about huge spectrograms in multi-chan settings?
 ;;;
 ;;; TODO: make a complete direct_filter test suite and merge threads/direct cases in snd-sig.c
 ;;;       ultimately need macros here to make channel->thread cases as simple as possible
 ;;;       and a set of before/after timing tests for 2 4 8 chans
+;;;
+;;; TODO: check 203 (13,14?) 237 Tn(bsink), 329, 332, 431, 470, 471?, 473?, 487?, 492
 
 #|
 (with-sound (:clipped #f)

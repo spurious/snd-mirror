@@ -526,6 +526,25 @@ returning you to the true top-level."
 
 ;;; -------- with-threaded-sound
 
+(defmacro with-threaded-sound (args . body) 
+  `(with-sound-helper 
+    (lambda () 
+      (begin 
+	,@(map (lambda (expr) 
+		 `(call-with-new-thread 
+		   (lambda () 
+		     ,expr))) 
+	       body)) 
+      (let ((us (current-thread))) 
+	(for-each 
+	 (lambda (expr) 
+	   (if (and (not (thread-exited? expr)) 
+		    (not (eq? expr us))) 
+	       (join-thread expr))) 
+	 (all-threads)))) 
+    ,@args))
+
+#|
 (defmacro with-threaded-sound (args . body)
   `(with-sound-helper 
     (lambda ()
@@ -543,8 +562,9 @@ returning you to the true top-level."
 	       (join-thread expr)))
 	 (all-threads))))
     ,@args))
+|#
 
-;;; TODO: CL side of with-threaded-sound, also Gauche, Ruby? Fth?, also test/time it
+;;; TODO: CL side of with-threaded-sound, also Ruby? Fth?, also test/time it -- possibly add yield in the for-each loop?
 
 
 ;;; -------- with-temp-sound --------
