@@ -573,9 +573,20 @@ typedef struct snd_state {
 #if HAVE_GL && MUS_WITH_GL2PS
   bool gl_printing;
 #endif
+#if HAVE_PTHREADS
+  pthread_mutex_t *snd_mutex;
+#endif
 } snd_state;
 
 extern snd_state *ss;
+
+#if HAVE_PTHREADS
+  #define SND_LOCK do {pthread_mutex_lock(ss->snd_mutex);} while (0)
+  #define SND_UNLOCK do {pthread_mutex_unlock(ss->snd_mutex);} while (0)
+#else
+  #define SND_LOCK do {} while(0)
+  #define SND_UNLOCK do {} while(0)
+#endif
 
 typedef struct {
   int chans;

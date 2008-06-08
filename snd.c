@@ -403,6 +403,12 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->fam_ok = false;
   ss->cg_seen = false;
   ss->startup_errors = NULL;
+
+#if HAVE_PTHREADS
+  ss->snd_mutex = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
+  pthread_mutex_init(ss->snd_mutex, NULL);
+#endif
+
   mus_sound_initialize(); /* has to precede version check (mus_audio_moniker needs to be setup in Alsa/Oss) */
 
 #if HAVE_FORTH || HAVE_GAUCHE || HAVE_RUBY

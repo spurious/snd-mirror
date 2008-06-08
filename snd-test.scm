@@ -47911,7 +47911,7 @@ EDITS: 1
 	(ftst '(let ((gen (make-wave-train))) (wave-train gen)) 0.0)
 	(ftst '(let ((gen (make-wave-train))) (gen)) 0.0)
 	(ftst '(let ((gen (make-polyshape))) (polyshape gen)) 1.0)
-	(ftst '(let ((gen (make-polyshape))) (gen)) 1.0)
+	(ftst '(let ((gen (make-polyshape))) (gen)) 1.0) ;; TODO: why is this different from the preceding?
 	(ftst '(let ((gen (make-polywave))) (polywave gen)) 1.0)
 	(ftst '(let ((gen (make-polywave))) (gen)) 1.0)
 	
@@ -70020,3 +70020,14 @@ EDITS: 1
 ;;; ---------------- test the end
 
 
+#|
+TODO: now fm-violin maxamp seems to be different:
+;fm-violin with-sound: #<vct[len=10]: 0.063 0.062 0.061 0.061 0.063 0.068 0.076 0.086 0.094 0.098> #<vct[len=10]: 0.006 0.004 0.002 0.001 -0.001 -0.001 -0.002 -0.002 -0.001 -0.000>
+;with-sound -> sound-data fm-violin maxamp (opt 2): (0.554553664143025)
+;rev with-sound -> sound-data fm-violin maxamp (1 opt): (0.292883289104225 0.292883289104225)
+;rev with-sound -> sound-data fm-violin maxamp (2 opt): (0.292883289104225 0.292883289104225)
+;1 rev with-sound -> vct fm-violin maxamp: 0.293401884641304
+;2 rev with-sound -> sound-data fm-violin maxamp: (0.294974972948822)
+;mixed with-sound: #<vct[len=10]: 0.255 0.275 0.316 0.364 0.391 0.379 0.337 0.283 0.228 0.170>
+;mixed with-sound via sound-let: #<vct[len=10]: 0.349 0.370 0.412 0.461 0.489 0.478 0.
+|#

@@ -309,6 +309,7 @@ static sound_file *add_to_sound_table(const char *name)
 {
   int pos;
   pos = previous_freed_sf;
+  previous_freed_sf = -1;
   if (pos == -1)
     {
       int i;
@@ -331,7 +332,6 @@ static sound_file *add_to_sound_table(const char *name)
 	    }
 	}
     }
-  else previous_freed_sf = -1;
   sound_table[pos] = (sound_file *)CALLOC(1, sizeof(sound_file));
   sound_table[pos]->table_pos = pos;
   sound_table[pos]->file_name = (char *)CALLOC(strlen(name) + 1, sizeof(char));

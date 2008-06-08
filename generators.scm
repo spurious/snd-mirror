@@ -5857,6 +5857,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 
 ;;; TODO: what are min peak phases in nrcos case given various r's? same for sum of odd components? also do some 2^n to finish current set
+;;; TODO: check valgrind 3.3.1
 
 #|
 (with-sound (:clipped #f)

@@ -41,6 +41,7 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --with-doubles        use doubles throughout (default is floats)
 #   --with-float-samples  represent samples internally as floats or doubles (default=yes)
 #   --enable-snd-debug    include Snd internal debugging stuff
+#   --enable-threads      include pthread stuff
 #   --disable-deprecated  do not include any deprecated stuff (in gtk, motif, guile, sndlib, clm, etc)
 #   --with-ladspa         include LADSPA plugin support (Linux)
 #   --with-sample-width=N use N bits of samples (default = 24)
@@ -254,13 +255,29 @@ esac
 LIBS=""
 
 AC_CHECK_HEADERS(fcntl.h limits.h unistd.h string.h sys/soundcard.h machine/soundcard.h sys/mixer.h stdbool.h sys/time.h)
-AC_CHECK_HEADERS(libc.h sys/statvfs.h setjmp.h dlfcn.h sys/param.h byteswap.h stdint.h pthread.h lrdf.h fam.h dirent.h)
+AC_CHECK_HEADERS(libc.h sys/statvfs.h setjmp.h dlfcn.h sys/param.h byteswap.h pthread.h stdint.h lrdf.h fam.h dirent.h)
 
 AC_CHECK_HEADER([sys/mount.h], [], [], [#if HAVE_SYS_PARAM_H
 				        #include <sys/param.h>
 				        #endif
 				       ])
 # this still screws up in netBSD!
+
+# check for pthreads 
+AC_ARG_ENABLE(threads,
+  [  --enable-threads      include pthread support],
+  [
+  if test "$enable_threads" = yes ; then
+    if test "$ac_cv_header_pthread_h" = yes ; then
+      AC_DEFINE(HAVE_PTHREADS)
+#     CFLAGS="$CFLAGS -D_REENTRANT"
+# what was this for?
+      LIBS="$LIBS -lpthread"
+      RANDOM_FEATURES="$RANDOM_FEATURES threads"
+    else
+      AC_MSG_WARN([can't enable threads -- can't find pthread.h])
+    fi]
+  fi)
 
 AC_CHECK_HEADER(/usr/local/lib/oss/include/sys/soundcard.h,[AC_DEFINE(MUS_HAVE_USR_LOCAL_LIB_OSS)])
 AC_CHECK_HEADER(/usr/lib/oss/include/sys/soundcard.h,[AC_DEFINE(MUS_HAVE_USR_LIB_OSS)])

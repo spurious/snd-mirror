@@ -22,6 +22,11 @@
   #endif
 #endif
 
+#if HAVE_PTHREAD_H
+  #include <pthread.h>
+#endif
+
+
 #include "_sndlib.h"
 #include "clm.h"
 #include "clm-strings.h"
@@ -108,6 +113,50 @@ memmove (void *dest0, void const *source0, size_t length)
   return dest0;
 }
 #endif
+#endif
+
+
+#if HAVE_PTHREADS
+
+static mus_error_handler_t *clm_lock_old_error_handler;
+static pthread_mutex_t clm_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+#define CLM_SIMPLE_LOCK \
+  do { \
+       pthread_mutex_lock(&clm_mutex); \
+     } while (0)
+
+#define CLM_SIMPLE_UNLOCK \
+  do { \
+       pthread_mutex_unlock(&clm_mutex); \
+     } while (0)
+
+#define CLM_LOCK \
+  do { \
+       pthread_mutex_lock(&clm_mutex); \
+       clm_lock_old_error_handler = mus_error_set_handler(clm_lock_mus_error_handler); \
+     } while (0)
+
+#define CLM_UNLOCK \
+  do { \
+       mus_error_set_handler(clm_lock_old_error_handler); \
+       pthread_mutex_unlock(&clm_mutex); \
+     } while (0)
+
+static void clm_lock_mus_error_handler(int type, char *msg)
+{
+  /* if mus_error is called while in a locked section, first unlock, then signal the error with the outer (original) error handler */
+  CLM_UNLOCK;
+  mus_error(type, msg);
+}
+
+#else
+
+#define CLM_SIMPLE_LOCK do {} while(0)
+#define CLM_SIMPLE_UNLOCK do {} while(0)
+#define CLM_LOCK do {} while(0)
+#define CLM_UNLOCK do {} while(0)
+
 #endif
 
 
@@ -2651,7 +2700,7 @@ static char *describe_polywave(mus_any *ptr)
 	       mus_phase(ptr),
 	       gen->n,
 	       str);
-  clm_free(str);
+  if (str) clm_free(str);
   return(describe_buffer);
 }
 
@@ -7607,6 +7656,7 @@ static Float sample_file(mus_any *ptr, off_t samp, int chan, Float val)
   rdout *gen = (rdout *)ptr;
   if (chan < gen->chans)
     {
+      CLM_LOCK; /* flush_buffers can call mus_error */
       if ((samp > gen->data_end) || 
 	  (samp < gen->data_start))
 	{
@@ -7621,6 +7671,7 @@ static Float sample_file(mus_any *ptr, off_t samp, int chan, Float val)
       gen->obufs[chan][samp - gen->data_start] += MUS_FLOAT_TO_SAMPLE(val);
       if (samp > gen->out_end) 
 	gen->out_end = samp;
+      CLM_UNLOCK;
     }
   return(val);
 }
@@ -7642,12 +7693,14 @@ static int sample_to_file_end(mus_any *ptr)
   if ((gen) && (gen->obufs))
     {
       int i;
+      CLM_LOCK;
       flush_buffers(gen);
       for (i = 0; i < gen->chans; i++)
 	if (gen->obufs[i]) 
 	  clm_free(gen->obufs[i]);
       clm_free(gen->obufs);
       gen->obufs = NULL;
+      CLM_UNLOCK;
     }
   return(0);
 }

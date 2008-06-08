@@ -526,6 +526,7 @@ returning you to the true top-level."
 
 ;;; -------- with-threaded-sound
 
+
 (defmacro with-threaded-sound (args . body) 
   `(with-sound-helper 
     (lambda () 
@@ -544,7 +545,9 @@ returning you to the true top-level."
 	 (all-threads)))) 
     ,@args))
 
+
 #|
+;;; older form:
 (defmacro with-threaded-sound (args . body)
   `(with-sound-helper 
     (lambda ()
@@ -563,6 +566,38 @@ returning you to the true top-level."
 	 (all-threads))))
     ,@args))
 |#
+
+#|
+;;; Gauche side:
+;;; 
+;;; gdb
+;;;    handle SIGPWR SIGXCPU nostop noprint
+
+(use gauche.threads)
+
+(defmacro with-threaded-sound (args . body) 
+  `(with-sound-helper 
+    (lambda () 
+      (let ((all-threads '()))
+	,@(map (lambda (expr) 
+		 `(let ((thread (make-thread (lambda () 
+					       ,expr))))
+		    (set! all-threads (cons thread all-threads))
+		    (thread-start! thread)))
+	       body)
+	(for-each 
+	 (lambda (thread) 
+	   (thread-join! thread))
+	 all-threads)))
+    ,@args))
+|#
+
+#|
+(with-threaded-sound ()
+  (fm-violin 0 1 440 .1)
+  (fm-violin 0 1 660 .1))
+|#
+
 
 ;;; TODO: CL side of with-threaded-sound, also Ruby? Fth?, also test/time it -- possibly add yield in the for-each loop?
 

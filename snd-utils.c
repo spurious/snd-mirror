@@ -856,18 +856,26 @@ static void set_padding(void *p1, void *p2, size_t len, int loc)
 }
 
 
+#define POINTER_DEBUGGING 0
+
 static void check_padding(void *p1, void *p2, size_t len, bool refill)
 {
   int i;
   size_t j;
   char *ip2;
+
+#if POINTER_DEBUGGING
+  fprintf(stderr, "check_padding: %p %p %d %d\n", p1, p2, (int)len, (int)refill);
+#endif
+
   if (!p2)
     {
-      fprintf(stderr, "history pointer null??");
+      fprintf(stderr, "history pointer null: ");
       describe_pointer(p1);
       fprintf(stderr, ")\n");
       abort();
     }
+
   ip2 = (char *)p2;
   for (i = 0; i < MEM_PAD_SIZE - 4; i++) 
     if (ip2[i] != pad[i])
@@ -877,8 +885,10 @@ static void check_padding(void *p1, void *p2, size_t len, bool refill)
 	fprintf(stderr, ")\n");
 	abort();
       }
+
   if (refill)
     memset((void *)(ip2 + MEM_PAD_SIZE), 'X', len);
+
   for (i = 0, j = len + MEM_PAD_SIZE; i < MEM_PAD_SIZE; i++, j++) 
     if (ip2[j] != pad[i])
       {
@@ -906,6 +916,10 @@ void check_pointer(void *ptr)
   char *p3 = (char *)ptr;
   void *rtp;
 
+#if POINTER_DEBUGGING
+  fprintf(stderr, "check_pointer: %p\n", ptr);
+#endif
+
   if (ptr == NULL) return;
   if (ptr == (void *)FREED_POINTER) {fprintf(stderr, " pointer has been freed"); abort();}
 
@@ -926,6 +940,10 @@ static void *forget_pointer(void *ptr, const char *func, const char *file, int l
   void *rtp;
   char *p3 = (char *)ptr;
 
+#if POINTER_DEBUGGING
+  fprintf(stderr, "forget_pointer: %p %s:%s[%d] (refill: %d)\n", ptr, func, file, line, refill);
+#endif
+
   if (ptr == NULL) {fprintf(stderr, "%s:%s[%d] attempt to free NULL", func, file, line); mem_report(); abort();}
   if (ptr == (void *)FREED_POINTER) {fprintf(stderr, "%s:%s[%d] attempt to free pointer twice", func, file, line); abort();}
 
@@ -944,6 +962,11 @@ static void *forget_pointer(void *ptr, const char *func, const char *file, int l
   true_pointers[loc] = 0;
   locations[loc] = 0;
   sizes[loc] = 0;
+
+#if POINTER_DEBUGGING
+  fprintf(stderr, "forget_pointer returns: %p\n", rtp);
+#endif
+
   return(rtp);
 }
 
@@ -951,6 +974,11 @@ static void *forget_pointer(void *ptr, const char *func, const char *file, int l
 static int remember_pointer(void *ptr, void *true_ptr, size_t len, const char *func, const char *file, int line)
 {
   int i, loc, temp;
+
+#if POINTER_DEBUGGING
+  fprintf(stderr, "remember_pointer: %p [%p:%d] %s:%s[%d]\n", ptr, true_ptr, (int)len, func, file, line);
+#endif
+
   if (mem_size == 0)
     {
       mem_size = 65536 * 128;
@@ -984,6 +1012,11 @@ static int remember_pointer(void *ptr, void *true_ptr, size_t len, const char *f
 void *mem_calloc(size_t len, size_t size, const char *func, const char *file, int line)
 {
   char *ptr, *true_ptr;
+
+#if POINTER_DEBUGGING
+  fprintf(stderr, "mem_calloc: %d %d %s:%s[%d]\n", (int)len, (int)size, func, file, line);
+#endif
+
   if ((len == 0) || ((len * size) > MAX_MALLOC) || (size == 0))
     {
       fprintf(stderr, "%s:%s[%d] attempt to calloc %Zu bytes", func, file, line, len * size);
@@ -1001,6 +1034,11 @@ void *mem_calloc(size_t len, size_t size, const char *func, const char *file, in
   ptr = (char *)(true_ptr + MEM_PAD_SIZE);
   if (ptr == NULL) {fprintf(stderr, "calloc->null"); abort();}
   remember_pointer((void *)ptr, (void *)true_ptr, len * size, func, file, line);
+
+#if POINTER_DEBUGGING
+  fprintf(stderr, "mem_calloc returns %p\n", ptr);
+#endif
+
   return((void *)ptr);
 }
 
@@ -1008,12 +1046,18 @@ void *mem_calloc(size_t len, size_t size, const char *func, const char *file, in
 void *mem_malloc(size_t len, const char *func, const char *file, int line)
 {
   char *ptr, *true_ptr;
+
+#if POINTER_DEBUGGING
+  fprintf(stderr, "mem_malloc: %d %s:%s[%d]\n", (int)len, func, file, line);
+#endif
+
   if ((len == 0) || (len > MAX_MALLOC))
     {
       fprintf(stderr, "%s:%s[%d] attempt to malloc %Zu bytes", func, file, line, len);
       mem_report(); 
       abort();
     }
+
   true_ptr = (char *)malloc(len + 2 * MEM_PAD_SIZE);
   if (!true_ptr)
     {
@@ -1021,18 +1065,28 @@ void *mem_malloc(size_t len, const char *func, const char *file, int line)
       mem_report();
       abort();
     }
+
   ptr = (char *)(true_ptr + MEM_PAD_SIZE);
   if (ptr == NULL) {fprintf(stderr, "malloc->null"); abort();}
   memset((void *)ptr, 3, len);  /* fill this block with some non-zero value */
   remember_pointer((void *)ptr, (void *)true_ptr, len, func, file, line);
+
+#if POINTER_DEBUGGING
+  fprintf(stderr, "mem_malloc returns %p\n", ptr);
+#endif
+
   return((void *)ptr);
 }
 
 
 void *mem_free(void *ptr, const char *func, const char *file, int line)
 {
+
+#if POINTER_DEBUGGING
+  fprintf(stderr, "mem_free: %p %s:%s[%d]\n", ptr, func, file, line);
+#endif
+
   void *true_ptr;
-  /* fprintf(stderr, "free %s %s[%d]: %p\n", func, file, line, ptr); */
   true_ptr = forget_pointer(ptr, func, file, line, true);
   free(true_ptr);
   return((void *)FREED_POINTER);
@@ -1042,6 +1096,11 @@ void *mem_free(void *ptr, const char *func, const char *file, int line)
 void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, int line)
 {
   char *new_ptr, *true_ptr, *new_true_ptr;
+
+#if POINTER_DEBUGGING
+  fprintf(stderr, "mem_realloc: %p %d %s:%s[%d]\n", ptr, (int)size, func, file, line);
+#endif
+
   if ((size == 0) || (size > MAX_MALLOC))
     {
       fprintf(stderr, "%s:%s[%d] attempt to realloc %Zu bytes", func, file, line, size);
@@ -1053,6 +1112,11 @@ void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, in
   new_ptr = (char *)(new_true_ptr + MEM_PAD_SIZE);
   if (new_ptr == NULL) {fprintf(stderr, "realloc->null"); abort();}
   remember_pointer((void *)new_ptr, (void *)new_true_ptr, size, func, file, line);
+
+#if POINTER_DEBUGGING
+  fprintf(stderr, "mem_realloc returns %p\n", new_ptr);
+#endif
+
   return((void *)new_ptr);
 }
 

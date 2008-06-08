@@ -815,6 +815,7 @@ with_doc_dir
 with_snd_as_widget
 with_snd_as_pd_external
 with_rt
+enable_threads
 enable_largefile
 with_gnu_ld
 with_x
@@ -1470,6 +1471,7 @@ Optional Features:
   --disable-option-checking  ignore unrecognized --enable/--with options
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+  --enable-threads      include pthread support
   --disable-largefile     omit support for large files
   --enable-readline      include readline (the default)
   --enable-snd-debug      include internal Snd debugging functions
@@ -3720,6 +3722,7 @@ _ACEOF
 #   --with-doubles        use doubles throughout (default is floats)
 #   --with-float-samples  represent samples internally as floats or doubles (default=yes)
 #   --enable-snd-debug    include Snd internal debugging stuff
+#   --enable-threads      include pthread stuff
 #   --disable-deprecated  do not include any deprecated stuff (in gtk, motif, guile, sndlib, clm, etc)
 #   --with-ladspa         include LADSPA plugin support (Linux)
 #   --with-sample-width=N use N bits of samples (default = 24)
@@ -4613,7 +4616,7 @@ done
 
 
 
-for ac_header in libc.h sys/statvfs.h setjmp.h dlfcn.h sys/param.h byteswap.h stdint.h pthread.h lrdf.h fam.h dirent.h
+for ac_header in libc.h sys/statvfs.h setjmp.h dlfcn.h sys/param.h byteswap.h pthread.h stdint.h lrdf.h fam.h dirent.h
 do
 as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 if { as_var=$as_ac_Header; eval "test \"\${$as_var+set}\" = set"; }; then
@@ -4814,6 +4817,27 @@ $as_echo "$ac_cv_header_sys_mount_h" >&6; }
 
 
 # this still screws up in netBSD!
+
+# check for pthreads
+# Check whether --enable-threads was given.
+if test "${enable_threads+set}" = set; then
+  enableval=$enable_threads;
+  if test "$enable_threads" = yes ; then
+    if test "$ac_cv_header_pthread_h" = yes ; then
+      cat >>confdefs.h <<\_ACEOF
+#define HAVE_PTHREADS 1
+_ACEOF
+
+#     CFLAGS="$CFLAGS -D_REENTRANT"
+      LIBS="$LIBS -lpthread"
+      RANDOM_FEATURES="$RANDOM_FEATURES threads"
+    else
+      { $as_echo "$as_me:$LINENO: WARNING: can't enable threads -- can't find pthread.h" >&5
+$as_echo "$as_me: WARNING: can't enable threads -- can't find pthread.h" >&2;}
+    fi
+  fi
+fi
+
 
 if test "${ac_cv_header__usr_local_lib_oss_include_sys_soundcard_h+set}" = set; then
   { $as_echo "$as_me:$LINENO: checking for /usr/local/lib/oss/include/sys/soundcard.h" >&5

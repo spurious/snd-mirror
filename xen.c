@@ -312,26 +312,27 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str)
     
   if (!xen_temp_strings)
     xen_temp_strings = (char **)calloc(XEN_TEMP_STRINGS_SIZE, sizeof(char *));
-  else
-    {
-      if (xen_temp_strings[xen_temp_strings_ctr]) 
-#if XEN_DEBUGGING
-	{
-	  int i, len;
-	  char *str;
-	  str = xen_temp_strings[xen_temp_strings_ctr];
-	  len = strlen(str);
-	  for (i = 0; i < len; i++) str[i] = 'X';
-	  if (!stored_strings) stored_strings = (char **)calloc(1024, sizeof(char *));
-	  if (stored_strings[stored_strings_ctr]) free(stored_strings[stored_strings_ctr]);
-	  stored_strings[stored_strings_ctr++] = str;
-	  if (stored_strings_ctr >= 1024) stored_strings_ctr = 0;
-	}
-#else
-	free(xen_temp_strings[xen_temp_strings_ctr]);
-#endif
-    }
+
   result = scm_to_locale_string(str); /* not XEN_TO_C_STRING here -- infinite recursion */
+
+  if (xen_temp_strings[xen_temp_strings_ctr]) 
+#if XEN_DEBUGGING
+    /* this flag is true only if -DXEN_DEBUGGING in CFLAGS -- it is not the same as MUS_DEBUGGING */
+    {
+      int i, len;
+      char *str;
+      str = xen_temp_strings[xen_temp_strings_ctr];
+      len = strlen(str);
+      for (i = 0; i < len; i++) str[i] = 'X';
+      if (!stored_strings) stored_strings = (char **)calloc(1024, sizeof(char *));
+      if (stored_strings[stored_strings_ctr]) free(stored_strings[stored_strings_ctr]);
+      stored_strings[stored_strings_ctr++] = str;
+      if (stored_strings_ctr >= 1024) stored_strings_ctr = 0;
+    }
+#else
+  free(xen_temp_strings[xen_temp_strings_ctr]);
+#endif
+
   xen_temp_strings[xen_temp_strings_ctr++] = result;
   if (xen_temp_strings_ctr >= XEN_TEMP_STRINGS_SIZE) xen_temp_strings_ctr = 0;
   return(result);

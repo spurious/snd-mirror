@@ -104,6 +104,8 @@
  *            would be nice to have gens accept/return complex values, but outa? Jn? [as arg=>In]
  *
  * would it simplify variable handling to store everything as xen_value?
+ *
+ * TODO: fix this silly message:  env argument 1 (list0(0x9c4e698)) is a list, not a clm?
  */
 
 
