@@ -598,9 +598,8 @@ returning you to the true top-level."
 |#
 
 
-;;; TODO: CL side of with-threaded-sound, also Ruby? Fth?, also test/time it -- possibly add yield in the for-each loop?
+;;;   also Ruby? Fth?, also test/time it -- possibly add yield in the for-each loop?
 ;;; TODO: Gauche/Guile compatible with-threaded-sound
-;;; TODO: CL/sndlib configure
 
 
 ;;; -------- with-temp-sound --------

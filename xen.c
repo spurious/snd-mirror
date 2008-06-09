@@ -10,6 +10,10 @@
   #include <stdint.h>
 #endif
 #include <math.h>
+#if HAVE_PTHREAD_H
+  #include <pthread.h>
+#endif
+
 #include "xen.h"
 
 

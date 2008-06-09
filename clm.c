@@ -7703,10 +7703,12 @@ Float mus_sample_to_file_current_value(mus_any *ptr, off_t samp, int chan)
 static int sample_to_file_end(mus_any *ptr)
 {
   rdout *gen = (rdout *)ptr;
+  
+  CLM_LOCK(WRITER_LOCK, clm_writer_lock_error_handler);
+
   if ((gen) && (gen->obufs))
     {
       int i;
-      CLM_LOCK(WRITER_LOCK, clm_writer_lock_error_handler);
 
       flush_buffers(gen);
       for (i = 0; i < gen->chans; i++)
@@ -7714,9 +7716,9 @@ static int sample_to_file_end(mus_any *ptr)
 	  clm_free(gen->obufs[i]);
       clm_free(gen->obufs);
       gen->obufs = NULL;
-
-      CLM_UNLOCK(WRITER_LOCK);
     }
+
+  CLM_UNLOCK(WRITER_LOCK);
   return(0);
 }
 
@@ -9400,8 +9402,13 @@ Float mus_granulate(mus_any *ptr, Float (*input)(void *arg, int direction))
 
 #if HAVE_FFTW3
 static double *rdata = NULL, *idata = NULL;
-static fftw_plan rplan, iplan;  /* this "plan" business makes multi-threaded reallocs less attractive */
-static int last_fft_size = 0;   /* PERHAPS: sinc-table-like fftw plan allocations */
+static fftw_plan rplan, iplan;  
+/* 
+ * this "plan" business makes multi-threaded reallocs less attractive --
+ *   I don't think a system like sinc_table would work here because we still have
+ *   to make sure only one thread is using a given set of arrays and their plan.
+ */
+static int last_fft_size = 0;   
 
 void mus_fftw(Float *rl, int n, int dir)
 {
@@ -11448,6 +11455,8 @@ Float mus_apply(mus_any *gen, Float f1, Float f2)
 }
 
 
+/* ---------------- init clm ---------------- */
+
 void init_mus_module(void)
 {
   #define MULAW_ZERO 255
@@ -11489,39 +11498,5 @@ void init_mus_module(void)
 #endif
 
 }
-
-/* clm4:
- *
- *   (9.9)
- *   with-mixed|marked-sound
- *   CL/CLM eval-when handling updated
- *
- *   (9.8)
- *   out* last arg defaults to *output*
- *   ncos, nsin
- *   nrxycos, nrxysin
- *   polywave
- *   added freq arg to formant
- *      removed gain arg from mus_make_formant and reversed order of frequency and radius args
- *      fixed incorrect gain calculation in formant
- *      removed mus-formant-radius (use mus-scaler)
- *   firmant (Mathews/Smith form of the formant generator)
- *   CL/CLM: moved really old, obsolete stuff to clm3.lisp
- *   make-two-pole|zero freq r in the "polar" case (reversed args)
- *   env-any
- *   envelopes can be in the form '((0 0) (100 1))
- *   defgenerator
- *   removed mus-cosines
- *   mus-run-with-fm-and-pm
- *   mus_set_name
- *   last arg to out-any (*output*) and last arg to in-any can be a function
- *   make-locsig defaults to *output* and *reverb* output locations (also make-move-sound)
- *   CL/CLM: error in run tries to call lisp error
- *
- *   (9.7)
- *   :dur and :end -> :length in make-env
- *   *clm-default-frequency* = 0.0
- *   make-wave-train|table-lookup-with-env
- */
 
 

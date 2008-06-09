@@ -26,6 +26,9 @@
   #include <string.h>
 #endif
 #include <stdarg.h>
+#if HAVE_PTHREAD_H
+  #include <pthread.h>
+#endif
 
 #include "_sndlib.h"
 

@@ -24,6 +24,9 @@
     #include <string.h>
   #endif
 #endif
+#if HAVE_PTHREAD_H
+  #include <pthread.h>
+#endif
 
 #include "_sndlib.h"
 #include "sndlib-strings.h"
@@ -43,6 +46,11 @@ mus_error_handler_t *mus_error_set_handler(mus_error_handler_t *new_error_handle
 static char *mus_error_buffer = NULL;
 static int mus_error_buffer_size = 1024;
 
+#if HAVE_PTHREADS
+static pthread_mutex_t sound_error_lock = PTHREAD_MUTEX_INITIALIZER;
+#endif
+
+
 int mus_error(int error, const char *format, ...)
 {
   int bytes_needed = 0;
@@ -51,7 +59,9 @@ int mus_error(int error, const char *format, ...)
   if (format == NULL) 
     return(MUS_ERROR); /* else bus error in Mac OSX */
 
-  /* TODO: mus_error_lock */
+#if HAVE_PTHREADS
+  pthread_mutex_lock(&sound_error_lock);
+#endif
 
   if (mus_error_buffer == NULL)
     mus_error_buffer = (char *)CALLOC(mus_error_buffer_size, sizeof(char));
@@ -78,6 +88,10 @@ int mus_error(int error, const char *format, ...)
       va_end(ap);
     }
 
+#if HAVE_PTHREADS
+  pthread_mutex_unlock(&sound_error_lock);
+#endif
+
   if (mus_error_handler)
     (*mus_error_handler)(error, mus_error_buffer);
   else 
@@ -85,6 +99,7 @@ int mus_error(int error, const char *format, ...)
       fprintf(stderr, mus_error_buffer);
       fputc('\n', stderr);
     }
+
   return(MUS_ERROR);
 }
 
@@ -100,18 +115,25 @@ mus_print_handler_t *mus_print_set_handler(mus_print_handler_t *new_print_handle
 }
 
 
+#if HAVE_PTHREADS
+static pthread_mutex_t sound_print_lock = PTHREAD_MUTEX_INITIALIZER;
+#endif
+
 void mus_print(const char *format, ...)
 {
-  int bytes_needed = 0;
   va_list ap;
-
-  /* TODO: mus_print_lock */
-
-  if (mus_error_buffer == NULL)
-    mus_error_buffer = (char *)CALLOC(mus_error_buffer_size, sizeof(char));
 
   if (mus_print_handler)
     {
+      int bytes_needed = 0;
+
+#if HAVE_PTHREADS
+      pthread_mutex_lock(&sound_print_lock);
+#endif
+
+      if (mus_error_buffer == NULL)
+	mus_error_buffer = (char *)CALLOC(mus_error_buffer_size, sizeof(char));
+
       va_start(ap, format);
 #if HAVE_VSNPRINTF
       bytes_needed = vsnprintf(mus_error_buffer, mus_error_buffer_size, format, ap);
@@ -132,6 +154,11 @@ void mus_print(const char *format, ...)
 #endif
 	  va_end(ap);
 	}
+
+#if HAVE_PTHREADS
+      pthread_mutex_unlock(&sound_print_lock);
+#endif
+
       (*mus_print_handler)(mus_error_buffer);
     }
   else

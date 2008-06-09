@@ -341,9 +341,11 @@ v[new--] = v[old--] if backwards is " PROC_FALSE "."
   XEN_ASSERT_TYPE(XEN_INTEGER_P(newi), newi, XEN_ARG_2, S_vct_moveB, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(oldi), oldi, XEN_ARG_3, S_vct_moveB, "an integer");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(backwards), backwards, XEN_ARG_4, S_vct_moveB, "a boolean");
+
   v = XEN_TO_VCT(obj);
   ni = XEN_TO_C_INT(newi);
   nj = XEN_TO_C_INT(oldi);
+
   if ((XEN_BOOLEAN_P(backwards)) && 
       (XEN_NOT_FALSE_P(backwards)))
     {
@@ -384,6 +386,7 @@ static XEN g_vct_ref(XEN obj, XEN pos)
   int loc;
   XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ARG_1, S_vct_ref, "a vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(pos), pos, XEN_ARG_2, S_vct_ref, "an integer");
+
   v = XEN_TO_VCT(obj);
   loc = XEN_TO_C_INT(pos);
   if (loc < 0)
@@ -402,6 +405,7 @@ static XEN g_vct_set(XEN obj, XEN pos, XEN val)
   XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ARG_1, S_vct_setB, "a vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(pos), pos, XEN_ARG_2, S_vct_setB, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, S_vct_setB, "a real number");
+
   v = XEN_TO_VCT(obj);
   loc = XEN_TO_C_INT(pos);
   if (loc < 0)
@@ -420,6 +424,7 @@ static XEN g_vct_multiply(XEN obj1, XEN obj2)
   vct *v1, *v2;
   XEN_ASSERT_TYPE(MUS_VCT_P(obj1), obj1, XEN_ARG_1, S_vct_multiplyB, "a vct");
   XEN_ASSERT_TYPE(MUS_VCT_P(obj2), obj2, XEN_ARG_2, S_vct_multiplyB, "a vct");
+
   v1 = XEN_TO_VCT(obj1);
   v2 = XEN_TO_VCT(obj2);
   lim = MIN(v1->length, v2->length);
@@ -436,6 +441,7 @@ static XEN g_vct_add(XEN obj1, XEN obj2, XEN offs)
   XEN_ASSERT_TYPE(MUS_VCT_P(obj1), obj1, XEN_ARG_1, S_vct_addB, "a vct");
   XEN_ASSERT_TYPE(MUS_VCT_P(obj2), obj2, XEN_ARG_2, S_vct_addB, "a vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(offs), offs, XEN_ARG_3, S_vct_addB, "an integer");
+
   v1 = XEN_TO_VCT(obj1);
   v2 = XEN_TO_VCT(obj2);
   lim = MIN(v1->length, v2->length);
@@ -462,6 +468,7 @@ static XEN g_vct_subtract(XEN obj1, XEN obj2)
   vct *v1, *v2;
   XEN_ASSERT_TYPE(MUS_VCT_P(obj1), obj1, XEN_ARG_1, S_vct_subtractB, "a vct");
   XEN_ASSERT_TYPE(MUS_VCT_P(obj2), obj2, XEN_ARG_2, S_vct_subtractB, "a vct");
+
   v1 = XEN_TO_VCT(obj1);
   v2 = XEN_TO_VCT(obj2);
   lim = MIN(v1->length, v2->length);
@@ -478,6 +485,7 @@ static XEN g_vct_scale(XEN obj1, XEN obj2)
   Float scl;
   XEN_ASSERT_TYPE(MUS_VCT_P(obj1), obj1, XEN_ARG_1, S_vct_scaleB, "a vct");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(obj2), obj2, XEN_ARG_2, S_vct_scaleB, "a number");
+
   v1 = XEN_TO_VCT(obj1);
   scl = XEN_TO_C_DOUBLE(obj2);
   if (scl == 0.0)
@@ -499,6 +507,7 @@ static XEN g_vct_offset(XEN obj1, XEN obj2)
   Float scl;
   XEN_ASSERT_TYPE(MUS_VCT_P(obj1), obj1, XEN_ARG_1, S_vct_offsetB, "a vct");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(obj2), obj2, XEN_ARG_2, S_vct_offsetB, "a number");
+
   v1 = XEN_TO_VCT(obj1);
   scl = XEN_TO_C_DOUBLE(obj2);
   if (scl != 0.0)
@@ -515,6 +524,7 @@ static XEN g_vct_fill(XEN obj1, XEN obj2)
   Float scl;
   XEN_ASSERT_TYPE(MUS_VCT_P(obj1), obj1, XEN_ARG_1, S_vct_fillB, "a vct");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(obj2), obj2, XEN_ARG_2, S_vct_fillB, "a number");
+
   v1 = XEN_TO_VCT(obj1);
   scl = XEN_TO_C_DOUBLE(obj2);
   if (scl == 0.0)
@@ -601,9 +611,11 @@ static XEN g_vct_subseq(XEN vobj, XEN start, XEN end, XEN newv)
   XEN_ASSERT_TYPE(MUS_VCT_P(vobj), vobj, XEN_ARG_1, S_vct_subseq, "a vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(start), start, XEN_ARG_2, S_vct_subseq, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(end), end, XEN_ARG_3, S_vct_subseq, "an integer");
+
   istart = XEN_TO_C_INT(start);
   if (istart < 0)
     XEN_OUT_OF_RANGE_ERROR(S_vct_subseq, 2, start, "start ~A < 0?");
+
   vold = XEN_TO_VCT(vobj);
   old_len = vold->length;
   if (XEN_INTEGER_P(end))
@@ -616,8 +628,10 @@ static XEN g_vct_subseq(XEN vobj, XEN start, XEN end, XEN newv)
       new_len = iend - istart + 1;
     }
   else new_len = old_len - istart;
+
   if (new_len <= 0) 
     return(XEN_FALSE);
+
   if (MUS_VCT_P(newv))
     res = newv;
   else res = xen_make_vct(new_len, (Float *)CALLOC(new_len, sizeof(Float)));
