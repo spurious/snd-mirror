@@ -357,6 +357,9 @@ char *version_info(void)
 #if WITH_MODULES
 	  _(", with modules"),
 #endif
+#if HAVE_PTHREADS
+	  ", with threads",
+#endif
 	  ")",
 	  (consistent) ? consistent : "",
 	  "\n    CLM ", snd_itoa(MUS_VERSION), ".", 

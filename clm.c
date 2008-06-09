@@ -116,46 +116,33 @@ memmove (void *dest0, void const *source0, size_t length)
 #endif
 
 
+enum {SINC_TABLE_LOCK, FFT_LOCK, READER_LOCK, WRITER_LOCK, FREE_READER_LOCK, NUM_CLM_LOCKS};
+
 #if HAVE_PTHREADS
+static pthread_mutex_t *clm_locks[NUM_CLM_LOCKS];
+static mus_error_handler_t *clm_old_lock_error_handlers[NUM_CLM_LOCKS];
 
-static mus_error_handler_t *clm_lock_old_error_handler;
-static pthread_mutex_t clm_mutex = PTHREAD_MUTEX_INITIALIZER;
+#define CLM_SIMPLE_LOCK(Lock)   pthread_mutex_lock(clm_locks[Lock])
+#define CLM_SIMPLE_UNLOCK(Lock) pthread_mutex_unlock(clm_locks[Lock])
 
-#define CLM_SIMPLE_LOCK \
+#define CLM_LOCK(Lock, Handler)			\
   do { \
-       pthread_mutex_lock(&clm_mutex); \
+       pthread_mutex_lock(clm_locks[Lock]); \
+       clm_old_lock_error_handlers[Lock] = mus_error_set_handler(Handler); \
      } while (0)
 
-#define CLM_SIMPLE_UNLOCK \
+#define CLM_UNLOCK(Lock)			\
   do { \
-       pthread_mutex_unlock(&clm_mutex); \
+       mus_error_set_handler(clm_old_lock_error_handlers[Lock]); \
+       pthread_mutex_unlock(clm_locks[Lock]); \
      } while (0)
-
-#define CLM_LOCK \
-  do { \
-       pthread_mutex_lock(&clm_mutex); \
-       clm_lock_old_error_handler = mus_error_set_handler(clm_lock_mus_error_handler); \
-     } while (0)
-
-#define CLM_UNLOCK \
-  do { \
-       mus_error_set_handler(clm_lock_old_error_handler); \
-       pthread_mutex_unlock(&clm_mutex); \
-     } while (0)
-
-static void clm_lock_mus_error_handler(int type, char *msg)
-{
-  /* if mus_error is called while in a locked section, first unlock, then signal the error with the outer (original) error handler */
-  CLM_UNLOCK;
-  mus_error(type, msg);
-}
 
 #else
 
-#define CLM_SIMPLE_LOCK do {} while(0)
-#define CLM_SIMPLE_UNLOCK do {} while(0)
-#define CLM_LOCK do {} while(0)
-#define CLM_UNLOCK do {} while(0)
+#define CLM_SIMPLE_LOCK(Lock) do {} while(0)
+#define CLM_SIMPLE_UNLOCK(Lock) do {} while(0)
+#define CLM_LOCK(Lock, Handler) do {} while(0)
+#define CLM_UNLOCK(Lock) do {} while(0)
 
 #endif
 
@@ -1619,7 +1606,7 @@ bool mus_nsin_p(mus_any *ptr)
 
 
 static Float nsin_maxamps[] = {1.0, 1.0, 1.761, 2.5, 3.24, 3.97, 4.7, 5.42, 6.15, 6.88,
-				       7.6, 8.33, 9.05, 9.78, 10.5, 11.23, 11.95, 12.68, 13.4, 14.13};
+			       7.6, 8.33, 9.05, 9.78, 10.5, 11.23, 11.95, 12.68, 13.4, 14.13};
 
 static Float nsin_50 = .743;
 static Float nsin_100 = .733;
@@ -7055,6 +7042,15 @@ static mus_any_class FILE_TO_SAMPLE_CLASS = {
 };
 
 
+
+static void clm_reader_lock_error_handler(int type, char *msg)
+{
+  /* if mus_error is called while in a locked section, first unlock, then signal the error with the outer (original) error handler */
+  CLM_UNLOCK(READER_LOCK);
+  mus_error(type, msg);
+}
+
+
 static Float file_sample(mus_any *ptr, off_t samp, int chan)
 {
   /* check in-core buffer bounds,
@@ -7066,6 +7062,8 @@ static Float file_sample(mus_any *ptr, off_t samp, int chan)
       (samp >= gen->file_end) ||
       (chan >= gen->chans))
     return(0.0);
+
+  CLM_LOCK(READER_LOCK, clm_reader_lock_error_handler);
 
   if ((samp > gen->data_end) || 
       (samp < gen->data_start))
@@ -7116,6 +7114,8 @@ static Float file_sample(mus_any *ptr, off_t samp, int chan)
 	}
     }
 
+  CLM_UNLOCK(READER_LOCK);
+
   return((Float)MUS_SAMPLE_TO_FLOAT(gen->ibufs[chan][samp - gen->data_start]));
 }
 
@@ -7128,11 +7128,15 @@ static int file_to_sample_end(mus_any *ptr)
       if (gen->ibufs)
 	{
 	  int i;
+	  CLM_SIMPLE_LOCK(FREE_READER_LOCK);
+
 	  for (i = 0; i < gen->chans; i++)
 	    if (gen->ibufs[i]) 
 	      clm_free(gen->ibufs[i]);
 	  clm_free(gen->ibufs);
 	  gen->ibufs = NULL;
+
+	  CLM_SIMPLE_UNLOCK(FREE_READER_LOCK);
 	}
     }
   return(0);
@@ -7651,12 +7655,20 @@ static void flush_buffers(rdout *gen)
 }
 
 
+static void clm_writer_lock_error_handler(int type, char *msg)
+{
+  CLM_UNLOCK(WRITER_LOCK);
+  mus_error(type, msg);
+}
+
+
 static Float sample_file(mus_any *ptr, off_t samp, int chan, Float val)
 {
   rdout *gen = (rdout *)ptr;
   if (chan < gen->chans)
     {
-      CLM_LOCK; /* flush_buffers can call mus_error */
+      CLM_LOCK(WRITER_LOCK, clm_writer_lock_error_handler); /* flush_buffers can call mus_error */
+
       if ((samp > gen->data_end) || 
 	  (samp < gen->data_start))
 	{
@@ -7671,7 +7683,8 @@ static Float sample_file(mus_any *ptr, off_t samp, int chan, Float val)
       gen->obufs[chan][samp - gen->data_start] += MUS_FLOAT_TO_SAMPLE(val);
       if (samp > gen->out_end) 
 	gen->out_end = samp;
-      CLM_UNLOCK;
+
+      CLM_UNLOCK(WRITER_LOCK);
     }
   return(val);
 }
@@ -7693,14 +7706,16 @@ static int sample_to_file_end(mus_any *ptr)
   if ((gen) && (gen->obufs))
     {
       int i;
-      CLM_LOCK;
+      CLM_LOCK(WRITER_LOCK, clm_writer_lock_error_handler);
+
       flush_buffers(gen);
       for (i = 0; i < gen->chans; i++)
 	if (gen->obufs[i]) 
 	  clm_free(gen->obufs[i]);
       clm_free(gen->obufs);
       gen->obufs = NULL;
-      CLM_UNLOCK;
+
+      CLM_UNLOCK(WRITER_LOCK);
     }
   return(0);
 }
@@ -8655,9 +8670,13 @@ static Float *init_sinc_table(int width)
 {
   int i, size, padded_size, loc;
   Float sinc_freq, win_freq, sinc_phase, win_phase;
+
   for (i = 0; i < sincs; i++)
     if (sinc_widths[i] == width)
       return(sinc_tables[i]);
+
+  CLM_SIMPLE_LOCK(SINC_TABLE_LOCK);
+
   if (sincs == 0)
     {
       sinc_tables = (Float **)clm_calloc(8, sizeof(Float *), "sinc tables");
@@ -8687,6 +8706,7 @@ static Float *init_sinc_table(int width)
 	  sincs += 8;
 	}
     }
+
   sinc_widths[loc] = width;
   size = width * SRC_SINC_DENSITY;
   padded_size = size + 4;
@@ -8696,6 +8716,9 @@ static Float *init_sinc_table(int width)
   sinc_tables[loc][0] = 1.0;
   for (i = 1, sinc_phase = sinc_freq, win_phase = win_freq; i < padded_size; i++, sinc_phase += sinc_freq, win_phase += win_freq)
     sinc_tables[loc][i] = sin(sinc_phase) * (0.5 + 0.5 * cos(win_phase)) / sinc_phase;
+
+  CLM_SIMPLE_UNLOCK(SINC_TABLE_LOCK);
+
   return(sinc_tables[loc]);
 }
 
@@ -9377,12 +9400,15 @@ Float mus_granulate(mus_any *ptr, Float (*input)(void *arg, int direction))
 
 #if HAVE_FFTW3
 static double *rdata = NULL, *idata = NULL;
-static fftw_plan rplan, iplan;
-static int last_fft_size = 0;
+static fftw_plan rplan, iplan;  /* this "plan" business makes multi-threaded reallocs less attractive */
+static int last_fft_size = 0;   /* PERHAPS: sinc-table-like fftw plan allocations */
 
 void mus_fftw(Float *rl, int n, int dir)
 {
   int i;
+
+  CLM_SIMPLE_LOCK(FFT_LOCK);
+
   if (n != last_fft_size)
     {
       if (rdata) {fftw_free(rdata); fftw_free(idata); fftw_destroy_plan(rplan); fftw_destroy_plan(iplan);}
@@ -9398,6 +9424,8 @@ void mus_fftw(Float *rl, int n, int dir)
     fftw_execute(rplan);
   else fftw_execute(iplan);
   for (i = 0; i < n; i++) rl[i] = idata[i];
+
+  CLM_SIMPLE_UNLOCK(FFT_LOCK);
 }
 
 #else
@@ -9410,6 +9438,9 @@ static int last_fft_size = 0;
 void mus_fftw(Float *rl, int n, int dir)
 {
   int i;
+
+  CLM_SIMPLE_LOCK(FFT_LOCK);
+
   if (n != last_fft_size)
     {
       if (rdata) {clm_free(rdata); clm_free(idata); rfftw_destroy_plan(rplan); rfftw_destroy_plan(iplan);}
@@ -9426,6 +9457,8 @@ void mus_fftw(Float *rl, int n, int dir)
     rfftw_one(rplan, rdata, idata);
   else rfftw_one(iplan, rdata, idata);
   for (i = 0; i < n; i++) rl[i] = idata[i];
+
+  CLM_SIMPLE_UNLOCK(FFT_LOCK);
 }
 #endif
 #endif
@@ -10611,6 +10644,7 @@ void mus_convolve_files(const char *file1, const char *file2, Float maxamp, cons
 
   clm_free(data1);
   clm_free(data2);
+
   if (errmsg)
     mus_error(MUS_CANT_OPEN_FILE, errmsg);
 }
@@ -11426,9 +11460,11 @@ void init_mus_module(void)
   w_rate = (TWO_PI / MUS_DEFAULT_SAMPLING_RATE);
   array_print_length = MUS_DEFAULT_ARRAY_PRINT_LENGTH;
   clm_file_buffer_size = MUS_DEFAULT_FILE_BUFFER_SIZE;
+
 #if HAVE_FFTW3 || HAVE_FFTW
   last_fft_size = 0;
 #endif
+
   nsin_50 = .743;
   nsin_100 = .733;
   sincs = 0;
@@ -11440,6 +11476,18 @@ void init_mus_module(void)
   data_format_zero[MUS_UBYTE] = UBYTE_ZERO;
   data_format_zero[MUS_UBSHORT] = USHORT_ZERO;
   data_format_zero[MUS_ULSHORT] = USHORT_ZERO;
+
+#if HAVE_PTHREADS
+  {
+    int i;
+    for (i = 0; i < NUM_CLM_LOCKS; i++)
+      {
+	clm_locks[i] = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
+	pthread_mutex_init(clm_locks[i], NULL);
+      }
+  }
+#endif
+
 }
 
 /* clm4:

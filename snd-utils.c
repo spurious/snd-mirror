@@ -970,6 +970,9 @@ static void *forget_pointer(void *ptr, const char *func, const char *file, int l
   return(rtp);
 }
 
+#if HAVE_PTHREADS
+static pthread_mutex_t pointer_lock = PTHREAD_MUTEX_INITIALIZER;
+#endif
 
 static int remember_pointer(void *ptr, void *true_ptr, size_t len, const char *func, const char *file, int line)
 {
@@ -977,6 +980,10 @@ static int remember_pointer(void *ptr, void *true_ptr, size_t len, const char *f
 
 #if POINTER_DEBUGGING
   fprintf(stderr, "remember_pointer: %p [%p:%d] %s:%s[%d]\n", ptr, true_ptr, (int)len, func, file, line);
+#endif
+
+#if HAVE_PTHREADS
+  pthread_mutex_lock(&pointer_lock);
 #endif
 
   if (mem_size == 0)
@@ -1003,6 +1010,11 @@ static int remember_pointer(void *ptr, void *true_ptr, size_t len, const char *f
   sizes[loc] = len;
   locations[loc] = find_mem_location(func, file, line);
   last_loc = locations[loc];
+
+#if HAVE_PTHREADS
+  pthread_mutex_unlock(&pointer_lock);
+#endif
+
   return(loc);
 }
 
@@ -1023,6 +1035,7 @@ void *mem_calloc(size_t len, size_t size, const char *func, const char *file, in
       mem_report(); 
       abort();
     }
+
   true_ptr = (char *)malloc(len * size + 2 * MEM_PAD_SIZE);
   if (!true_ptr)
     {
@@ -1030,6 +1043,7 @@ void *mem_calloc(size_t len, size_t size, const char *func, const char *file, in
       mem_report();
       abort();
     }
+
   memset(true_ptr, 0, len * size + 2 * MEM_PAD_SIZE);
   ptr = (char *)(true_ptr + MEM_PAD_SIZE);
   if (ptr == NULL) {fprintf(stderr, "calloc->null"); abort();}

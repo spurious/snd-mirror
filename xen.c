@@ -296,9 +296,8 @@ static char **xen_temp_strings = NULL;
 static int xen_temp_strings_ctr = 0;
 #define XEN_TEMP_STRINGS_SIZE 512
 
-#if XEN_DEBUGGING
-static char **stored_strings = NULL;
-static int stored_strings_ctr = 0;
+#if HAVE_PTHREADS
+static pthread_mutex_t xen_string_lock = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
 
@@ -315,26 +314,20 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str)
 
   result = scm_to_locale_string(str); /* not XEN_TO_C_STRING here -- infinite recursion */
 
-  if (xen_temp_strings[xen_temp_strings_ctr]) 
-#if XEN_DEBUGGING
-    /* this flag is true only if -DXEN_DEBUGGING in CFLAGS -- it is not the same as MUS_DEBUGGING */
-    {
-      int i, len;
-      char *str;
-      str = xen_temp_strings[xen_temp_strings_ctr];
-      len = strlen(str);
-      for (i = 0; i < len; i++) str[i] = 'X';
-      if (!stored_strings) stored_strings = (char **)calloc(1024, sizeof(char *));
-      if (stored_strings[stored_strings_ctr]) free(stored_strings[stored_strings_ctr]);
-      stored_strings[stored_strings_ctr++] = str;
-      if (stored_strings_ctr >= 1024) stored_strings_ctr = 0;
-    }
-#else
-  free(xen_temp_strings[xen_temp_strings_ctr]);
+#if HAVE_PTHREADS
+  pthread_mutex_lock(&xen_string_lock); 
 #endif
+
+  if (xen_temp_strings[xen_temp_strings_ctr]) 
+    free(xen_temp_strings[xen_temp_strings_ctr]);
 
   xen_temp_strings[xen_temp_strings_ctr++] = result;
   if (xen_temp_strings_ctr >= XEN_TEMP_STRINGS_SIZE) xen_temp_strings_ctr = 0;
+
+#if HAVE_PTHREADS
+  pthread_mutex_unlock(&xen_string_lock); 
+#endif
+
   return(result);
 }
 #endif

@@ -476,52 +476,65 @@ static int io_fd_size = 0;
 static io_fd **io_fds = NULL;
 #define IO_FD_ALLOC_SIZE 8
 
+#if HAVE_PTHREADS
+static pthread_mutex_t io_table_lock = PTHREAD_MUTEX_INITIALIZER;
+#endif
 
 int mus_file_open_descriptors(int tfd, const char *name, int format, int size /* datum size */, off_t location, int chans, int type)
 {
-  io_fd *fd;
-  int i, lim = -1;
+  int i, lim = -1, err = MUS_NO_ERROR;
+
+#if HAVE_PTHREADS
+  pthread_mutex_lock(&io_table_lock);
+#endif
+
   if (io_fd_size == 0)
     {
       io_fd_size = tfd + IO_FD_ALLOC_SIZE;
       io_fds = (io_fd **)CALLOC(io_fd_size, sizeof(io_fd *));
-      if (!io_fds) return(MUS_MEMORY_ALLOCATION_FAILED);
     }
-  if (io_fd_size <= tfd)
+  if (io_fds)
     {
-      lim = io_fd_size;
-      io_fd_size = tfd + IO_FD_ALLOC_SIZE;
-      io_fds = (io_fd **)REALLOC(io_fds, io_fd_size * sizeof(io_fd *));
-      for (i = lim; i < io_fd_size; i++) io_fds[i] = NULL;
-    }
-  if (io_fds[tfd] == NULL)
-    {
-      io_fds[tfd] = (io_fd *)CALLOC(1, sizeof(io_fd));
-      if (!(io_fds[tfd])) return(MUS_MEMORY_ALLOCATION_FAILED);
-    }
+      if (io_fd_size <= tfd)
+	{
+	  lim = io_fd_size;
+	  io_fd_size = tfd + IO_FD_ALLOC_SIZE;
+	  io_fds = (io_fd **)REALLOC(io_fds, io_fd_size * sizeof(io_fd *));
+	  for (i = lim; i < io_fd_size; i++) io_fds[i] = NULL;
+	}
 
-  fd = io_fds[tfd];
-  fd->data_format = format;
-  fd->bytes_per_sample = size;
+      if (io_fds[tfd] == NULL)
+	io_fds[tfd] = (io_fd *)CALLOC(1, sizeof(io_fd));
+
+      if (io_fds[tfd])
+	{
+	  io_fd *fd;
+	  fd = io_fds[tfd];
+	  fd->data_format = format;
+	  fd->bytes_per_sample = size;
+	  fd->data_location = location;
+	  fd->clipping = clipping_default;
+	  fd->prescaler = prescaler_default;
+	  fd->header_type = type;
+	  fd->chans = chans;
+	  if (name)
+	    {
+	      fd->name = (char *)CALLOC(strlen(name) + 1, sizeof(char));
 #if MUS_DEBUGGING
-  if (size != mus_bytes_per_sample(format))
-    fprintf(stderr, "format trouble in mus_file_open_descriptors: %d != %d\n", size, mus_bytes_per_sample(format));
+	      set_printable(PRINT_CHAR);
 #endif
-  fd->data_location = location;
-  fd->clipping = clipping_default;
-  fd->prescaler = prescaler_default;
-  fd->header_type = type;
-  fd->chans = chans;
-  if (name)
-    {
-      fd->name = (char *)CALLOC(strlen(name) + 1, sizeof(char));
-#if MUS_DEBUGGING
-      set_printable(PRINT_CHAR);
-#endif
-      strcpy(fd->name, name);
+	      strcpy(fd->name, name);
+	    }
+	}
+      else err = MUS_MEMORY_ALLOCATION_FAILED;
     }
-  /* fprintf(stderr,"open %d %s\n", tfd, fd->name); */
-  return(MUS_NO_ERROR);
+  else err = MUS_MEMORY_ALLOCATION_FAILED;
+
+#if HAVE_PTHREADS
+  pthread_mutex_unlock(&io_table_lock);
+#endif
+
+  return(err);
 }
 
 
