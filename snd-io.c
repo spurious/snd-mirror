@@ -561,6 +561,7 @@ typedef struct {
 static tempfile_ctr **tempfiles = NULL;
 static int tempfiles_size = 0;
 
+/* TODO: remember_temp lock? [gc-protect lock?] */
 
 void remember_temp(const char *filename, int chans)
 {

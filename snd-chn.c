@@ -4,12 +4,23 @@
 
 /* SOMEDAY: fft side needs a zoom capability, not just the drag now */
 
-/* TODO: wavogram redraws itself incessantly and is very annoying! */
+/* TODO: wavogram redraws itself incessantly and is very annoying! -- lisp graph has the same problem */
 
 /* it would be neat I think to change label font sizes/button sizes etc when dialog changes size
  *   but there's no way to trap the outer resizing event and
  *   in Gtk, the size is not (currently) allowed to go below the main buttons (as set by font/stock-labelling)
  */
+
+
+typedef struct lisp_grf {
+  int *len;
+  Float **data;
+  int graphs;
+  axis_info *axis;
+  int env_data;
+  show_axes_t show_axes;
+} lisp_grf;
+
 
 chan_info *get_cp(XEN x_snd_n, XEN x_chn_n, const char *caller)
 {
@@ -260,6 +271,8 @@ static void set_show_mix_waveforms(bool val)
 static void chans_show_axes(chan_info *cp, int value)
 {
   cp->show_axes = (show_axes_t)value;
+  if (cp->lisp_info)
+    cp->lisp_info->show_axes = cp->show_axes;
   update_graph(cp); 
 }
 
@@ -3291,16 +3304,6 @@ static int make_wavogram(chan_info *cp)
   free_snd_fd(sf);
   return(points);
 }
-
-
-typedef struct lisp_grf {
-  int *len;
-  Float **data;
-  int graphs;
-  axis_info *axis;
-  int env_data;
-  show_axes_t show_axes;
-} lisp_grf;
 
 
 axis_info *lisp_info_axis(chan_info *cp) 

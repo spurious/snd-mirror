@@ -529,6 +529,51 @@ returning you to the true top-level."
 (defmacro with-threaded-sound (args . body) 
   `(with-sound-helper 
     (lambda () 
+      (let ((threads '()))
+	,@(map (lambda (expr) 
+		 `(set! threads (cons (call-with-new-thread 
+				       (lambda () 
+					 ,expr))
+				      threads)))
+	       ;; here we could insert joins based on list length
+	       body)
+	(let ((us (current-thread))) 
+	  (for-each 
+	   (lambda (expr) 
+	     (if (and (not (thread-exited? expr)) 
+		      (not (eq? expr us))) 
+		 (join-thread expr))) 
+	   threads)))) ; using threads list, not (all-threads) because the latter hangs in the with-threads case below
+    ,@args))
+
+#|
+(define (with-threads func)
+  (let ((chns (chans))
+	(threads '()))
+    (do ((chn 0 (1+ chn)))
+	((= chn chns))
+      (set! threads (cons (call-with-new-thread (lambda () (func chn))) threads)))
+    (let ((us (current-thread)))
+      (for-each 
+       (lambda (expr) 
+	 (if (and (not (thread-exited? expr))
+		  (not (eq? expr us)))
+	     (join-thread expr)))
+       threads))))
+    
+;(with-threads (lambda (chn) (src-channel 2.0 0 #f #f chn)))
+
+;;; TODO: check filter-channel and map-channel/ptrees (with init func etc) here, also reverse, maybe smooth, convolve, scan
+
+;;; this works in the no-gui version of Snd, but gets an xcb lock complaint in Motif (at XmUpdateDisplay of hourglass icon)
+;;;   I think this is a bug in libxcb that has been fixed, but not yet distributed, so I'm loath to try to hack around it in snd-xsnd.c
+|#
+
+#|
+;;; older forms:
+(defmacro with-threaded-sound (args . body) 
+  `(with-sound-helper 
+    (lambda () 
       (begin 
 	,@(map (lambda (expr) 
 		 `(call-with-new-thread 
@@ -544,9 +589,6 @@ returning you to the true top-level."
 	 (all-threads)))) 
     ,@args))
 
-
-#|
-;;; older form:
 (defmacro with-threaded-sound (args . body)
   `(with-sound-helper 
     (lambda ()
