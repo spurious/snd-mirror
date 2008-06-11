@@ -526,6 +526,16 @@ returning you to the true top-level."
 
 ;;; -------- with-threaded-sound
 
+(if (provided? 'snd-gauche)
+    (use gauche.threads))
+(if (provided? 'snd-gauche)
+    (define join-thread thread-join!))
+(if (provided? 'snd-gauche)
+    (define (call-with-new-thread thunk)
+      (let ((thread (make-thread thunk)))
+	(thread-start! thread)
+	thread)))
+
 (defmacro with-threaded-sound (args . body) 
   `(with-sound-helper 
     (lambda () 
@@ -535,15 +545,12 @@ returning you to the true top-level."
 				       (lambda () 
 					 ,expr))
 				      threads)))
-	       ;; here we could insert joins based on list length
+	       ;; here we could insert joins based on list length (clearing threads)
 	       body)
-	(let ((us (current-thread))) 
-	  (for-each 
-	   (lambda (expr) 
-	     (if (and (not (thread-exited? expr)) 
-		      (not (eq? expr us))) 
-		 (join-thread expr))) 
-	   threads)))) ; using threads list, not (all-threads) because the latter hangs in the with-threads case below
+	(for-each 
+	 (lambda (thread) 
+	   (join-thread thread))
+	 threads))) ; using threads list, not (all-threads) because the latter hangs in the with-threads case below
     ,@args))
 
 #|
@@ -567,81 +574,13 @@ returning you to the true top-level."
 
 ;;; this works in the no-gui version of Snd, but gets an xcb lock complaint in Motif (at XmUpdateDisplay of hourglass icon)
 ;;;   I think this is a bug in libxcb that has been fixed, but not yet distributed, so I'm loath to try to hack around it in snd-xsnd.c
-|#
+;;;   Gauche also hits this bug in with-threaded-sound if run without any sound open
 
-#|
-;;; older forms:
-(defmacro with-threaded-sound (args . body) 
-  `(with-sound-helper 
-    (lambda () 
-      (begin 
-	,@(map (lambda (expr) 
-		 `(call-with-new-thread 
-		   (lambda () 
-		     ,expr))) 
-	       body)) 
-      (let ((us (current-thread))) 
-	(for-each 
-	 (lambda (expr) 
-	   (if (and (not (thread-exited? expr)) 
-		    (not (eq? expr us))) 
-	       (join-thread expr))) 
-	 (all-threads)))) 
-    ,@args))
-
-(defmacro with-threaded-sound (args . body)
-  `(with-sound-helper 
-    (lambda ()
-      (for-each 
-       (lambda (expr)
-	 (call-with-new-thread
-	  (lambda ()
-	    (eval expr (current-module)))))
-       ',body)
-      (let ((us (current-thread)))
-	(for-each 
-	 (lambda (expr) 
-	   (if (and (not (thread-exited? expr))
-		    (not (eq? expr us)))
-	       (join-thread expr)))
-	 (all-threads))))
-    ,@args))
-|#
-
-#|
-;;; Gauche side:
-;;; 
-;;; gdb
-;;;    handle SIGPWR SIGXCPU nostop noprint
-
-(use gauche.threads)
-
-(defmacro with-threaded-sound (args . body) 
-  `(with-sound-helper 
-    (lambda () 
-      (let ((all-threads '()))
-	,@(map (lambda (expr) 
-		 `(let ((thread (make-thread (lambda () 
-					       ,expr))))
-		    (set! all-threads (cons thread all-threads))
-		    (thread-start! thread)))
-	       body)
-	(for-each 
-	 (lambda (thread) 
-	   (thread-join! thread))
-	 all-threads)))
-    ,@args))
-|#
-
-#|
 (with-threaded-sound ()
   (fm-violin 0 1 440 .1)
   (fm-violin 0 1 660 .1))
 |#
-
-
 ;;;   also Ruby? Fth?, also test/time it -- possibly add yield in the for-each loop?
-;;; TODO: Gauche/Guile compatible with-threaded-sound
 
 
 ;;; -------- with-temp-sound --------
@@ -1345,3 +1284,29 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 		    (set! ctr (1+ ctr))
 		    val)))
 	      field-names field-types))))
+
+
+;;; ----------------
+;;;
+;;; display all the globals that might affect with-sound unexpectedly
+
+(define (clm-display-globals)
+
+  (format #f ";CLM globals:~%;  *clm-srate*: ~A (default: ~A, mus-srate: ~A)~%;  *clm-file-name*: ~A~%;  *clm-channels: ~A (default: ~A)~%;  *clm-data-format*: ~A (default: ~A)~%;  *clm-header-type*: ~A (default: ~A)~%;  *clm-reverb-channels*: ~A, *clm-reverb-data*: ~A~%;  *clm-table-size*: ~A~%;  *clm-file-buffer-size*: ~A (~A)~%;  *clm-locsig-type*: ~A~%;  *clm-array-print-length*: ~A (~A)~%;  *clm-notehook*: ~A~%;  *clm-default-frequency*: ~A~%;  *clm-clipped*: ~A, mus-clipping: ~A, mus-prescaler: ~A~%~%"
+
+	  *clm-srate* (default-output-srate) (mus-srate)
+	  *clm-file-name*
+	  *clm-channels* (default-output-chans)
+	  (mus-data-format->string *clm-data-format*) (mus-data-format->string (default-output-data-format))
+	  (mus-header-type->string *clm-header-type*) (mus-header-type->string (default-output-header-type))
+	  *clm-reverb-channels* *clm-reverb-data*
+	  *clm-table-size*
+	  *clm-file-buffer-size* (mus-file-buffer-size)
+	  *clm-locsig-type*
+	  *clm-array-print-length* (print-length)
+	  *clm-notehook*
+	  *clm-default-frequency*
+	  *clm-clipped* (mus-clipping)
+	  (mus-prescaler)))
+
+

@@ -14,6 +14,10 @@
  *              optimizer needs local variable access [this is not currently possible -- perhaps in 1.0 says Shiro]
  *              random is implemented via mus-i|frandom (clm.c).
  *              error handling is pessimal, but I've wasted enough time on it.
+ *      to load interactive:
+ *              (use gauche.interactive)
+ *      also perhaps we should always (use gauche.threads)
+ *      gdb: handle SIGPWR SIGXCPU nostop noprint
  */
 
 
@@ -2885,6 +2889,10 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 
 #if HAVE_GSL
   XEN_YES_WE_HAVE("gsl");
+#endif
+
+#if HAVE_PTHREADS
+  XEN_YES_WE_HAVE("snd-threads");
 #endif
 
 #if USE_MOTIF

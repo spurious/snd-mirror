@@ -5792,7 +5792,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;; noid -- sum of n sinusoids at arbitrary (default=random) initial phases
 ;;;
 ;;;   for max peak (all cos), set phases arg to (make-vct n (/ pi 2))
-;;;   for min peak, use one of the sets below (multiplied through by pi)
+;;;   for min peak, use one of the sets in peak-phases.scm (multiplied through by pi)
 
 (def-optkey-fun (make-noid (frequency 0.0) (n 1) (phases #f))
   (make-polyoid frequency
@@ -5856,8 +5856,7 @@ index 10 (so 10/2 is the bes-jn arg):
 (define noid? polyoid?)
 
 
-;;; TODO: what are min peak phases in nrcos case given various r's? same for sum of odd components? also do some 2^n to finish current set
-;;; TODO: check valgrind 3.3.1
+;;; TODO: what are min peak phases in nrcos case given various r's? same for sum of odd components?
 
 #|
 (with-sound (:clipped #f)
@@ -5880,6 +5879,13 @@ index 10 (so 10/2 is the bes-jn arg):
 (with-sound (:clipped #f)
   (let ((samps 44100)
 	(gen (make-noid 100.0 10 'min-peak)))
+    (do ((i 0 (1+ i)))
+	((= i samps))
+      (outa i (noid gen 0.0)))))
+
+(with-sound (:clipped #f :statistics #t)
+  (let ((samps 44100)
+	(gen (make-noid 10.0 1024 'min-peak)))
     (do ((i 0 (1+ i)))
 	((= i samps))
       (outa i (noid gen 0.0)))))

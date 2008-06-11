@@ -6589,6 +6589,19 @@ heard, the min-peak case sounds best ("fullest" perhaps, certainly "loudest").
 <img src="noid2.png">
 -->
 
+<p>Check out the n=1024 case:
+</p>
+
+<table border=0 cellpadding=5 hspace=20><tr>
+<td bgcolor="#fafafa"><pre>
+(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () 
+  (let ((samps 44100)
+	(gen (<em class=red>make-noid</em> 10.0 1024 'min-peak)))
+    (do ((i 0 (1+ i)))
+	((= i samps))
+      (<a class=quiet href="sndclm.html#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* 0.5 (<em class=red>noid</em> gen 0.0))))))
+</pre></td></tr></table>
+
 <br>
 
 

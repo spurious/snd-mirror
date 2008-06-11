@@ -561,12 +561,20 @@ typedef struct {
 static tempfile_ctr **tempfiles = NULL;
 static int tempfiles_size = 0;
 
-/* TODO: remember_temp lock? [gc-protect lock?] */
+
+#if HAVE_PTHREADS
+static pthread_mutex_t temp_file_lock = PTHREAD_MUTEX_INITIALIZER;
+#endif
 
 void remember_temp(const char *filename, int chans)
 {
   int i, old_size;
   tempfile_ctr *tmp = NULL;
+
+#if HAVE_PTHREADS
+  pthread_mutex_lock(&temp_file_lock);
+#endif
+
   if (tempfiles_size == 0)
     {
       tempfiles_size = 8;
@@ -578,10 +586,17 @@ void remember_temp(const char *filename, int chans)
       for (i = 0; i < tempfiles_size; i++)
 	if ((tempfiles[i]) &&
 	    (snd_strcmp(filename, tempfiles[i]->name)))
-	  return;
+	  {
+#if HAVE_PTHREADS
+	    pthread_mutex_unlock(&temp_file_lock);
+#endif
+	    return;
+	  }
+
       for (i = 0; i < tempfiles_size; i++)
 	if (tempfiles[i] == NULL)
 	  break;
+
       if (i >= tempfiles_size)
 	{
 	  old_size = tempfiles_size;
@@ -591,11 +606,16 @@ void remember_temp(const char *filename, int chans)
 	  i = old_size;
 	}
     }
+
   tmp = (tempfile_ctr *)CALLOC(1, sizeof(tempfile_ctr));
   tempfiles[i] = tmp;
   tmp->name = copy_string(filename);
   tmp->chans = chans;
   tmp->ticks = (int *)CALLOC(chans, sizeof(int));
+
+#if HAVE_PTHREADS
+  pthread_mutex_unlock(&temp_file_lock);
+#endif
 }
 
 
