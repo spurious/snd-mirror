@@ -1063,7 +1063,7 @@ echo ' -------------------------------------------------------------------------
 ./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --enable-threads --quiet
 make
 ./snd --version
-./snd -noinit --features "'clm 'snd-guile 'snd-motif"
+./snd -noinit --features "'clm 'snd-guile 'snd-motif 'snd-threads"
 make allclean
 
 echo ' '
@@ -1074,7 +1074,7 @@ echo ' -------------------------------------------------------------------------
 ./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --enable-threads --quiet CC=g++
 make
 ./snd --version
-./snd -noinit --features "'clm 'snd-guile"
+./snd -noinit --features "'clm 'snd-guile 'snd-threads"
 make allclean
 
 echo ' '

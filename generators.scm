@@ -5857,6 +5857,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 
 ;;; TODO: what are min peak phases in nrcos case given various r's? same for sum of odd components?
+;;; TODO: what r gives the min min so to speak?  Can we approach 0?
 
 #|
 (with-sound (:clipped #f)
@@ -5916,6 +5917,87 @@ index 10 (so 10/2 is the bes-jn arg):
 	    ((= i samps))
 	  (outa i (noid gen 0.0))))))
 
+|#
+
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; roid -- sum of n sinusoids at arbitrary (default=random) initial phases and amp r^n
+
+(def-optkey-fun (make-roid (frequency 0.0) (n 1) (r 1.0) (phases #f))
+  (make-polyoid frequency
+		(let ((amps (make-vct (* 3 n)))
+		      (rn (/ 1.0 n)))
+		  (do ((i 1 (1+ i))
+		       (j 0 (+ j 3)))
+		      ((> i n))
+		    (vct-set! amps j i)
+		    (vct-set! amps (+ j 1) rn)
+		    (set! rn (* rn r))
+		    (if (vct? phases)
+			(vct-set! amps (+ j 2) (vct-ref phases (1- i)))
+			(if (not phases)
+			    (vct-set! amps (+ j 2) (random (* 2 pi)))
+			    (if (eq? phases 'max-peak)
+				(vct-set! amps (+ j 2) (/ pi 2))
+				;; else min-peak, handled separately
+				))))
+
+		  (if (eq? phases 'min-peak)
+		      (let ((vector-find-if (lambda (func vect)
+					      (let ((len (vector-length vect))
+						    (result #f))
+						(do ((i 0 (1+ i)))
+						    ((or (= i len)
+							 result)
+						     result)
+						  (set! result (func (vector-ref vect i))))))))
+
+			(if (not (defined? 'roid-min-peak-phases))
+			    (load "peak-phases.scm"))
+
+			(let ((min-dat (vector-find-if 
+					(lambda (val)
+					  (and val
+					       (vector? val)
+					       (= (vector-ref val 0) n)
+					       (let* ((a-val (vector-ref val 1))
+						      (a-len (vector-length val))
+						      (a-data (list a-val (vector-ref val 2))))
+						 (do ((k 2 (1+ k)))
+						     ((= k a-len))
+						   (if (and (number? (vector-ref val k))
+							    (< (vector-ref val k) a-val))
+						       (begin
+							 (set! a-val (vector-ref val k))
+							 (set! a-data (list a-val (vector-ref val (+ k 1)))))))
+						 a-data)))
+					roid-min-peak-phases)))
+			  (if min-dat
+			      (let* ((norm (car min-dat))
+				     (rats (cadr min-dat))
+				     (rn (/ 0.999 norm)))
+				(do ((i 1 (1+ i))
+				     (j 0 (+ j 3)))
+				    ((> i n))
+				  (vct-set! amps (+ j 1) rn)
+				  (set! rn (* rn r))
+				  (vct-set! amps (+ j 2) (* pi (vector-ref rats (1- i))))))))))
+			      
+		  amps)))
+
+(define roid polyoid)
+(define roid? polyoid?)
+
+;;; PERHAPS: doc/snd-test roid
+
+#|
+(with-sound (:clipped #f)
+  (let ((samps 44100)
+	(gen (make-roid 100.0 6 0.5 'min-peak)))
+    (do ((i 0 (1+ i)))
+	((= i samps))
+      (outa i (roid gen 0.0)))))
 |#
 
 

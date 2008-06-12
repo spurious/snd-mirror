@@ -7608,7 +7608,7 @@ a run of 4 sinusoids between 0 and 2 pi, looking for the peak.  Since the equati
 themselves are borderline unsolvable (even when n=3), we have to try
 some other approach.  The one used here uses two stages: first we set the phases randomly,
 and check the peak; if it is close to the current best, we then systematically vary
-each phase, trying to reduce the peak.  For n &lt; 50 or so, I tried 20000 random guesses.
+each phase, trying to reduce the peak.  For n &lt; 50 or so, I tried 100000 random guesses.
 </p>
 
 <p>You might think something simpler would suffice, but the peak amplitude as a function
@@ -7695,7 +7695,8 @@ equivalent minima; we're happy to find one that's reasonably close
 to the actual minimum.  On the other two questions: I see no pattern
 to these phases, and sqrt(n) is always too low.  
 I think it's approaching (expt n .6) as n increases.  Here is a graph of the values I've found so far
-(minimum peak amp in blue plotted against sqrt(n) in red).
+(minimum peak amp in blue plotted against sqrt(n) in red).  If plotted as a log-log graph, it is
+a straight line with a slope just less than 0.6.
 On the right are the actual phases used, plotted as concentric circles from
 n=1 to n=128, using the "jet" colormap to show the component number and
 the position on the circle to show the phase; all fundamentals have initial
@@ -7736,123 +7737,7 @@ phase 0.0.
 (set! (selected-graph-color) (make-color 1 1 1))
 -->
 
-<!--
-;;; phases:
-
-(define (draw-circle x y size)
-  (let* ((drawer (car (channel-widgets)))
-	 (dpy (XtDisplay drawer))
-	 (wn (XtWindow drawer))
-	 (gc (car (snd-gcs))))
-    (XDrawArc dpy wn gc 
-	      (- x size)
-	      (- y size)
-	      (* 2 size) (* 2 size) 0 (* 360 64))))
-
-(define (draw-filled-circle x y size)
-  (let* ((drawer (car (channel-widgets)))
-	 (dpy (XtDisplay drawer))
-	 (wn (XtWindow drawer))
-	 (gc (cadr (snd-gcs))))
-    (XFillArc dpy wn gc 
-	      (- x size)
-	      (- y size)
-	      (* 2 size) (* 2 size) 0 (* 360 64))))
-
-
-(define (vector-find-if func vect)
-  (let ((len (vector-length vect))
-	(result #f))
-    (do ((i 0 (1+ i)))
-	((or (= i len)
-	     result)
-	 result)
-      (set! result (func (vector-ref vect i))))))
-
-
-(define (show-circles snd chn colors)
-  (let* ((axinfo (axis-info snd chn lisp-graph))
-	 (axis-x0 (list-ref axinfo 10))
-	 (axis-x1 (list-ref axinfo 12))
-	 (axis-y0 (list-ref axinfo 13))
-	 (axis-y1 (list-ref axinfo 11))
-	 (old-color (foreground-color snd chn))
-	 (phase-on-circle #t))
-
-  (do ((i 1 (1+ i)))
-      ((> i 128))
-    (let* ((min-vals (vector-find-if (lambda (val)
-				     (and val
-					  (vector? val)
-					  (= (vector-ref val 0) i)
-					  (let ((a-val (vector-ref val 1))
-						(a-len (vector-length val))
-						(a-vect (vector-ref val 2)))
-					    (do ((k 2 (1+ k)))
-						((= k a-len))
-					      (if (and (number? (vector-ref val k))
-						       (< (vector-ref val k) a-val))
-						  (begin
-						    (set! a-val (vector-ref val k))
-						    (set! a-vect (vector-ref val (+ k 1))))))
-					    (list a-val a-vect))))
-				   noid-min-peak-phases))
-	  (xscale (- axis-x1 axis-x0))
-	  (x (inexact->exact (round (* 0.5 xscale))))
-	  (yscale (- axis-y1 axis-y0))
-	  (y (inexact->exact (round (* 0.5 yscale)))))
-
-      (if min-vals
-	  (let* ((amp (car min-vals))
-		 (phases (cadr min-vals))
-		 (circle-size (* 5 i)))
-
-	    (draw-circle x y circle-size)
-	    (if phase-on-circle
-		(do ((k 0 (1+ k)))
-		    ((= k i))
-		  (let* ((phase (vector-ref phases k))
-			 ;(colx (exact->inexact (/ k i)))
-			 (colx (exact->inexact (/ k 128)))
-			 (ref (inexact->exact (floor (* (colormap-size) colx))))
-			 (color (or (vector-ref colors ref)
-				    (let ((new-color (apply make-color (colormap-ref (colormap) colx))))
-				      (vector-set! colors ref new-color)
-				      new-color))))
-		    (set! (foreground-color snd chn) color)
-		    (draw-filled-circle (inexact->exact (round (+ x (* circle-size (cos (* pi phase))))))
-					(inexact->exact (round (+ y (* circle-size (sin (* pi phase))))))
-					4)))
-		(do ((k 0 (1+ k)))
-		    ((= k i))
-		  (let* ((phase (vector-ref phases k))
-			 (colx (exact->inexact (/ k i)))
-			 (ref (inexact->exact (floor (* (colormap-size) (* 0.5 phase)))))
-			 (color (or (vector-ref colors ref)
-				    (let ((new-color (apply make-color (colormap-ref (colormap) (* 0.5 phase)))))
-				      (vector-set! colors ref new-color)
-				      new-color))))
-		    (set! (foreground-color snd chn) color)
-		    (draw-filled-circle (inexact->exact (round (+ x (* circle-size (cos (* 2 pi colx))))))
-					(inexact->exact (round (+ y (* circle-size (sin (* 2 pi colx))))))
-					4))))
-
-	    (set! (foreground-color snd chn) old-color)))))))
-
-(let* ((new-snd (new-sound))
-       (colors (make-vector (colormap-size) #f)))
-  (set! (show-axes new-snd 0) show-no-axes)
-  (set! (lisp-graph? new-snd 0) #t)
-  (set! (time-graph? new-snd 0) #f)
-  (set! (selected-graph-color) (make-color 1 1 1))
-  (set! (selected-data-color) (make-color 0 0 0))
-  (set! (colormap) 7)
-  (show-circles new-snd 0 colors)
-
-  (add-hook! after-lisp-graph-hook (lambda (s c) (show-circles s c colors))))
--->
-
-
+<!-- the circular phases code is in peak-phases.scm -->
 
 <br><br>
 

@@ -319,6 +319,7 @@ AC_LIB_PROG_LD
 AC_PROG_FGREP
 AC_DEFINE_UNQUOTED(FGREP_PROG, "$FGREP")
 
+
 AC_MSG_CHECKING(for __func__)
 AC_LINK_IFELSE(
   [AC_LANG_PROGRAM(,
@@ -332,20 +333,6 @@ AC_LINK_IFELSE(
 
 AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
 
-# check for pthreads 
-# AC_ARG_ENABLE(threads,
-#   [  --enable-threads      include pthread support],
-#   [
-#   if test "$enable_threads" = yes ; then
-#     if test "$ac_cv_header_pthread_h" = yes ; then
-#       AC_DEFINE(MUS_WITH_THREADS)
-#       CFLAGS="$CFLAGS -D_REENTRANT"
-#       LIBS="$LIBS -lpthread"
-#       RANDOM_FEATURES="$RANDOM_FEATURES threads"
-#     else
-#       AC_MSG_WARN([can't enable threads -- can't find pthread.h])
-#     fi]
-#   fi)
 
 # look for special functions in libm
 AC_CHECK_LIB(m, jn, 
