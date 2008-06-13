@@ -205,7 +205,7 @@ static void apply_enved(void)
 #endif
 	      apply_env(active_channel, active_env, 0,
 			CURRENT_SAMPLES(active_channel), 
-			apply_to_selection, FROM_ENVED, 
+			apply_to_selection, 
 			origin, NULL,
 			C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
 	      /* calls update_graph, I think, but in short files that doesn't update the amp-env */
@@ -228,7 +228,7 @@ static void apply_enved(void)
 #endif
 	      apply_filter(active_channel,
 			   (FIR_p) ? enved_filter_order(ss) : 0,
-			   active_env, FROM_ENVED, 
+			   active_env, 
 			   origin, NULL, apply_to_selection,
 			   NULL, NULL,
 			   C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0, false);
@@ -243,7 +243,7 @@ static void apply_enved(void)
 		  max_env->data[j] = .01;
 	      within_selection_src = true;
 	      src_env_or_num(active_channel, max_env, 0.0, 
-			     false, FROM_ENVED, "Enved: src", 
+			     false, "Enved: src", 
 			     apply_to_selection, NULL,
 			     C_TO_XEN_INT(AT_CURRENT_EDIT_POSITION), 0);
 	      within_selection_src = false;
@@ -530,17 +530,6 @@ void enved_display_point_label(Float x, Float y)
     mus_snprintf(brkpt_buf, LABEL_BUFFER_SIZE, "%.3f : %.5f", x, y);
   else mus_snprintf(brkpt_buf, LABEL_BUFFER_SIZE, "%.3f : %.3f", x, y);
   set_button_label(brkptL, brkpt_buf);
-}
-
-
-void display_enved_progress(char *str, Pixmap pix)
-{
-  if (pix == 0)
-    set_button_label(brkptL, str);
-  else XtVaSetValues(brkptL, 
-		     XmNlabelType, XmPIXMAP, 
-		     XmNlabelPixmap, pix, 
-		     NULL);
 }
 
 

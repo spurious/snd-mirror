@@ -801,7 +801,6 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
   /* type and format have already been checked */
   int ofd, bps;
   io_error_t io_err = IO_NO_ERROR;
-  bool reporting = false;
   off_t oloc;
   sync_info *si = NULL;
   off_t *ends;
@@ -895,8 +894,6 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
 	  return(IO_NO_ERROR);
 	}
     }
-  reporting = ((sp) && (dur > REPORTING_SIZE));
-  if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
   ends = (off_t *)CALLOC(chans, sizeof(off_t));
   sfs = (snd_fd **)CALLOC(chans, sizeof(snd_fd *));
   if (chan == SAVE_ALL_CHANS)
@@ -939,8 +936,6 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
 			  snd_io_strerror());
 	      break; 
 	    }
-	  if (reporting) 
-	    progress_report(sp, S_save_selection, chans - 1, chans, (Float)((double)ioff / (double)dur), NOT_FROM_ENVED);
 	  if (ss->stopped_explicitly)
 	    {
 	      ss->stopped_explicitly = false;
@@ -952,7 +947,6 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
     }
   if ((io_err == IO_NO_ERROR) && (j > 0)) 
     mus_file_write(ofd, 0, j - 1, chans, data);
-  if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
   for (i = 0; i < chans; i++)
     {
       free_snd_fd(sfs[i]);

@@ -5856,8 +5856,7 @@ index 10 (so 10/2 is the bes-jn arg):
 (define noid? polyoid?)
 
 
-;;; TODO: what are min peak phases in nrcos case given various r's? same for sum of odd components?
-;;; TODO: what r gives the min min so to speak?  Can we approach 0?
+;;; TODO: what are min peak phases for sum of odd components?
 
 #|
 (with-sound (:clipped #f)
@@ -5919,7 +5918,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 |#
 
-
+#|
 ;;; --------------------------------------------------------------------------------
 ;;;
 ;;; roid -- sum of n sinusoids at arbitrary (default=random) initial phases and amp r^n
@@ -5988,8 +5987,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (define roid polyoid)
 (define roid? polyoid?)
-
-;;; PERHAPS: doc/snd-test roid
+#|
 
 #|
 (with-sound (:clipped #f)

@@ -560,14 +560,11 @@ returning you to the true top-level."
     (do ((chn 0 (1+ chn)))
 	((= chn chns))
       (set! threads (cons (call-with-new-thread (lambda () (func chn))) threads)))
-    (let ((us (current-thread)))
-      (for-each 
-       (lambda (expr) 
-	 (if (and (not (thread-exited? expr))
-		  (not (eq? expr us)))
-	     (join-thread expr)))
-       threads))))
-    
+    (for-each 
+     (lambda (expr) 
+       (join-thread expr))
+     threads)))
+
 ;(with-threads (lambda (chn) (src-channel 2.0 0 #f #f chn)))
 
 ;;; TODO: check filter-channel and map-channel/ptrees (with init func etc) here, also reverse, maybe smooth, convolve, scan

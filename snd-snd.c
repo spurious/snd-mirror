@@ -1701,26 +1701,28 @@ static apply_state *free_apply_state(apply_state *ap)
 }
 
 
-#define APPLY_TICKS 4
-
-static int apply_tick = 0;
-static bool apply_reporting = false;
 static off_t apply_dur = 0, orig_dur, apply_beg = 0;
 
 static bool apply_controls(apply_state *ap)
 {
   snd_info *sp;
-  chan_info *cp;
+  chan_info *cp = NULL;
   sync_info *si;
   Float mult_dur;
   int i, curchan = 0, added_dur = 0;
+
   if (ap == NULL) return(false);
   sp = ap->sp;
   if ((!(sp->active)) || (sp->inuse != SOUND_NORMAL)) return(false);
-  if (sp->filter_control_p) added_dur = sp->filter_control_order;
+
+  if (sp->filter_control_p) 
+    added_dur = sp->filter_control_order;
   mult_dur = 1.0 / fabs(sp->speed_control);
-  if (sp->expand_control_p) mult_dur *= sp->expand_control;
-  if (sp->reverb_control_p) added_dur += (int)((SND_SRATE(sp) * sp->reverb_control_decay));
+  if (sp->expand_control_p) 
+    mult_dur *= sp->expand_control;
+  if (sp->reverb_control_p) 
+    added_dur += (int)((SND_SRATE(sp) * sp->reverb_control_decay));
+
   if ((ss->apply_choice != APPLY_TO_SELECTION) &&
       (snd_feq(sp->speed_control, 1.0)) && 
       (apply_beg == 0) &&
@@ -1730,6 +1732,7 @@ static bool apply_controls(apply_state *ap)
       int old_sync;
       bool need_scaling = false;
       Float *scalers = NULL;
+
       old_sync = sp->sync;
       /* get unused sync val */
       if (ss->apply_choice == APPLY_TO_SOUND)
@@ -1738,6 +1741,7 @@ static bool apply_controls(apply_state *ap)
 	  ss->sound_sync_max++;
 	}
       else sp->sync = 0;
+
       /* check for local amp_control vals */
       if (sp->selected_channel == NO_SELECTION) 
 	cp = sp->chans[0];
@@ -1748,6 +1752,7 @@ static bool apply_controls(apply_state *ap)
 	  sp->sync = old_sync;
 	  return(false);
 	}
+
       scalers = (Float *)CALLOC(si->chans, sizeof(Float));
       for (i = 0; i < si->chans; i++)
 	{
@@ -1758,9 +1763,11 @@ static bool apply_controls(apply_state *ap)
 	  else scalers[i] = sp->amp_control;
 	  if (!(snd_feq(scalers[i], 1.0))) need_scaling = true; /* could possibly check all edit_ctrs, but this seems easier */
 	}
+
       if (need_scaling)
 	scale_by(cp, scalers, si->chans, false);
       else snd_warning_without_format(_("apply controls: no changes to apply!"));
+
       sp->sync = old_sync;
       FREE(scalers);
       si = free_sync_info(si);
@@ -1769,7 +1776,9 @@ static bool apply_controls(apply_state *ap)
     {
       off_t orig_apply_dur;
       io_error_t io_err = IO_NO_ERROR;
+
       orig_apply_dur = apply_dur;
+
       switch (ap->slice)
 	{
 	case 0:
@@ -1777,6 +1786,7 @@ static bool apply_controls(apply_state *ap)
 	  ap->ofile = NULL;
 	  ap->ofile = snd_tempnam();
 	  ap->hdr = make_temp_header(ap->ofile, SND_SRATE(sp), sp->nchans, 0, (char *)c__FUNCTION__);
+
 	  switch (ss->apply_choice)
 	    {
 	    case APPLY_TO_CHANNEL:   
@@ -1800,6 +1810,7 @@ static bool apply_controls(apply_state *ap)
 		apply_dur = selection_len(); 
 	      break;
 	    }
+
 	  if (ap->origin == NULL)
 	    {
 	      /* from apply-controls */
@@ -1865,9 +1876,11 @@ static bool apply_controls(apply_state *ap)
 	      FREE(reverbstr);
 	      FREE(filterstr);
 	    }
+
 	  orig_dur = apply_dur;
 	  apply_dur = (off_t)(mult_dur * (apply_dur + added_dur));
 	  ap->ofd = open_temp_file(ap->ofile, ap->hdr->chans, ap->hdr, &io_err);
+
 	  if (ap->ofd == -1)
 	    {
 	      snd_error(_("%s apply temp file %s: %s\n"), 
@@ -1878,11 +1891,9 @@ static bool apply_controls(apply_state *ap)
 	      ap = free_apply_state(ap);
 	      return(false);
 	    }
+
 	  sp->apply_ok = true;
 	  initialize_apply(sp, ap->hdr->chans, apply_beg, orig_dur + added_dur); /* dur here is input dur */
-	  apply_reporting = (apply_dur > REPORTING_SIZE);
-	  if (apply_reporting) 
-	    start_progress_report(sp, NOT_FROM_ENVED);
 	  ap->i = 0;
 	  ap->slice++;
 	  return(true);
@@ -1905,30 +1916,13 @@ static bool apply_controls(apply_state *ap)
 	      check_for_event();
 	      /* if C-G, stop_applying called which cancels and backs out */
 	      if ((ss->stopped_explicitly) || (!(sp->active)))
-		{
-		  finish_progress_report(sp, NOT_FROM_ENVED);
-		  apply_reporting = false;
-		  ap->slice++;
-		}
-	      else
-		{
-		  if (apply_reporting) 
-		    {
-		      apply_tick++;
-		      if (apply_tick > APPLY_TICKS)
-			{
-			  apply_tick = 0;
-			  progress_report(sp, "apply controls", 1, 1, (double)(ap->i) / (double)apply_dur, NOT_FROM_ENVED);
-			}
-		    }
-		}
+		ap->slice++;
 	    }
 	  return(true);
 	  break;
 	  
 	case 2:
 	  finalize_apply(sp);
-	  if (apply_reporting) finish_progress_report(sp, NOT_FROM_ENVED);
 	  close_temp_file(ap->ofile,
 			  ap->ofd,
 			  ap->hdr->type,
@@ -5172,53 +5166,53 @@ If 'filename' is a sound index (an integer), 'size' is interpreted as an edit-po
 }
 
 
-static XEN g_start_progress_report(XEN snd)
+static XEN g_start_progress_report(XEN snd, XEN chn)
 {
-  #define H_start_progress_report "(" S_start_progress_report " :optional snd): post the hour-glass icon"
-  snd_info *sp;
-  ASSERT_SOUND(S_start_progress_report, snd, 1);
-  sp = get_sp(snd, NO_PLAYERS);
-  if (sp == NULL)
-    return(snd_no_such_sound_error(S_start_progress_report, snd));
-  start_progress_report(sp, NOT_FROM_ENVED);
-  return(snd);
+  #define H_start_progress_report "(" S_start_progress_report " :optional snd chn): post the hour-glass icon"
+  chan_info *cp;
+
+  ASSERT_CHANNEL(S_start_progress_report, snd, chn, 1);
+  cp = get_cp(snd, chn, S_start_progress_report);
+  if (!cp)
+    return(snd_no_such_channel_error(S_start_progress_report, snd, chn));
+
+  start_progress_report(cp);
+
+  return(XEN_TRUE);
 }
 
 
-static XEN g_finish_progress_report(XEN snd)
+static XEN g_finish_progress_report(XEN snd, XEN chn)
 {
-  #define H_finish_progress_report "(" S_finish_progress_report " :optional snd): remove the hour-glass icon"
-  snd_info *sp;
-  ASSERT_SOUND(S_finish_progress_report, snd, 1);
-  sp = get_sp(snd, NO_PLAYERS);
-  if (sp == NULL)
-    return(snd_no_such_sound_error(S_finish_progress_report, snd));
-  finish_progress_report(sp, NOT_FROM_ENVED);
-  return(snd); 
+  #define H_finish_progress_report "(" S_finish_progress_report " :optional snd chn): remove the hour-glass icon"
+  chan_info *cp;
+
+  ASSERT_CHANNEL(S_finish_progress_report, snd, chn, 1);
+  cp = get_cp(snd, chn, S_finish_progress_report);
+  if (!cp)
+    return(snd_no_such_channel_error(S_finish_progress_report, snd, chn));
+
+  finish_progress_report(cp);
+
+  return(XEN_FALSE);
 }
 
 
-static XEN g_progress_report(XEN pct, XEN name, XEN cur_chan, XEN chans, XEN snd)
+static XEN g_progress_report(XEN pct, XEN snd, XEN chn)
 {
-  #define H_progress_report "(" S_progress_report " pct :optional name cur-chan chans snd): \
-update an on-going 'progress report' (an animated hour-glass icon) in snd using pct to indicate how far along we are"
+  #define H_progress_report "(" S_progress_report " pct :optional snd chn): \
+update an on-going 'progress report' (an animated hour-glass icon) in snd's channel chn using pct to indicate how far along we are"
+  chan_info *cp;
 
-  snd_info *sp;
+  ASSERT_CHANNEL(S_progress_report, snd, chn, 2);
+  cp = get_cp(snd, chn, S_progress_report);
+  if (!cp)
+    return(snd_no_such_channel_error(S_progress_report, snd, chn));
+
   XEN_ASSERT_TYPE(XEN_NUMBER_P(pct), pct, XEN_ARG_1, S_progress_report, "a number");
-  ASSERT_SOUND(S_progress_report, snd, 5);
-  XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(name), name, XEN_ARG_2, S_progress_report, "a string");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(cur_chan), cur_chan, XEN_ARG_3, S_progress_report, "an integer");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chans), chans, XEN_ARG_4, S_progress_report, "an integer");
-  sp = get_sp(snd, NO_PLAYERS);
-  if (sp == NULL)
-    return(snd_no_such_sound_error(S_progress_report, snd));
-  progress_report(sp,
-		  (XEN_STRING_P(name)) ? XEN_TO_C_STRING(name) : "",
-		  XEN_TO_C_INT_OR_ELSE(cur_chan, 0),
-		  XEN_TO_C_INT_OR_ELSE(chans, sp->nchans),
-		  XEN_TO_C_DOUBLE(pct),
-		  NOT_FROM_ENVED);
-  return(snd);
+
+  progress_report(cp, XEN_TO_C_DOUBLE(pct));
+  return(pct);
 }
 
 
@@ -5358,9 +5352,9 @@ XEN_ARGIFY_3(g_peak_env_info_w, g_peak_env_info)
 XEN_NARGIFY_3(g_write_peak_env_info_file_w, g_write_peak_env_info_file)
 XEN_NARGIFY_3(g_read_peak_env_info_file_w, g_read_peak_env_info_file)
 XEN_ARGIFY_5(g_channel_amp_envs_w, g_channel_amp_envs);
-XEN_ARGIFY_1(g_start_progress_report_w, g_start_progress_report)
-XEN_ARGIFY_1(g_finish_progress_report_w, g_finish_progress_report)
-XEN_ARGIFY_5(g_progress_report_w, g_progress_report)
+XEN_ARGIFY_2(g_start_progress_report_w, g_start_progress_report)
+XEN_ARGIFY_2(g_finish_progress_report_w, g_finish_progress_report)
+XEN_ARGIFY_3(g_progress_report_w, g_progress_report)
 XEN_NARGIFY_0(g_sounds_w, g_sounds)
 #else
 #define g_sound_p_w g_sound_p
@@ -5534,9 +5528,12 @@ If it returns " PROC_TRUE ", the usual informative minibuffer babbling is squelc
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selected_channel, g_selected_channel_w, H_selected_channel, 
 				   S_setB S_selected_channel, g_set_selected_channel_w,  0, 1, 0, 2);
 
-  XEN_DEFINE_PROCEDURE(S_start_progress_report,  g_start_progress_report_w,   0, 1, 0, H_start_progress_report);
-  XEN_DEFINE_PROCEDURE(S_finish_progress_report, g_finish_progress_report_w,  0, 1, 0, H_finish_progress_report);
-  XEN_DEFINE_PROCEDURE(S_progress_report,        g_progress_report_w,         1, 4, 0, H_progress_report);
+  XEN_DEFINE_PROCEDURE(S_start_progress_report,  g_start_progress_report_w,   0, 2, 0, H_start_progress_report);
+  XEN_DEFINE_PROCEDURE(S_finish_progress_report, g_finish_progress_report_w,  0, 2, 0, H_finish_progress_report);
+  XEN_DEFINE_PROCEDURE(S_progress_report,        g_progress_report_w,         1, 2, 0, H_progress_report);
+
+  /* TODO: doc/test changes to progress report stuff */
+
   XEN_DEFINE_PROCEDURE(S_close_sound,            g_close_sound_w,             0, 1, 0, H_close_sound);
   XEN_DEFINE_PROCEDURE(S_update_sound,           g_update_sound_w,            0, 1, 0, H_update_sound);
   XEN_DEFINE_PROCEDURE(S_save_sound,             g_save_sound_w,              0, 1, 0, H_save_sound);

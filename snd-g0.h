@@ -156,6 +156,8 @@ typedef struct {
   bool mini_active;
   gulong minibuffer_watcher;
   axis_context *name_pix_ax, *stop_pix_ax, *speed_arrow_ax;
+  axis_context **clock_pix_ax;
+  GtkWidget **clock_widgets;
 } snd_context;
 
 typedef enum {NOT_A_SCANF_WIDGET, SRATE_WIDGET, CHANS_WIDGET, DATA_LOCATION_WIDGET, SAMPLES_WIDGET} scanf_widget_t;

@@ -1691,7 +1691,7 @@ static sono_slice_t set_up_sonogram(sonogram_state *sg)
     }
 
   cp->fft_changed = FFT_CHANGED;
-  start_progress_report(cp->sound, NOT_FROM_ENVED);
+  start_progress_report(cp);
   sg->minibuffer_needs_to_be_cleared = true;
   return(SONO_RUN);
 }
@@ -1716,11 +1716,7 @@ static sono_slice_t run_all_ffts(sonogram_state *sg)
 
   if (sg->msg_ctr == 0)
     {
-      progress_report(cp->sound, 
-		      (cp->transform_graph_type == GRAPH_AS_SONOGRAM) ? S_graph_as_sonogram : S_graph_as_spectrogram, 
-		      0, 0,
-		      ((Float)(si->active_slices) / (Float)(si->target_slices)), 
-		      NOT_FROM_ENVED);
+      progress_report(cp, ((Float)(si->active_slices) / (Float)(si->target_slices)));
       sg->minibuffer_needs_to_be_cleared = true;
       sg->msg_ctr = 8;
       if ((!(cp->graph_transform_p)) || 
@@ -1797,7 +1793,7 @@ static void finish_sonogram(sonogram_state *sg)
 	  cp->last_sonogram = sg;
 	  if (sg->minibuffer_needs_to_be_cleared)
 	    {
-	      finish_progress_report(cp->sound, NOT_FROM_ENVED);
+	      finish_progress_report(cp);
 	      sg->minibuffer_needs_to_be_cleared = false;
 	    }
 	}
@@ -1877,7 +1873,7 @@ static void spectral_multiply(Float* rl1, Float* rl2, int n)
 
 
 void c_convolve(const char *fname, Float amp, int filec, off_t filehdr, int filterc, off_t filterhdr, int filtersize,
-		int fftsize, int filter_chans, int filter_chan, int data_size, snd_info *gsp, enved_progress_t from_enved, int ip, int total_chans)
+		int fftsize, int filter_chans, int filter_chan, int data_size, snd_info *gsp, int ip, int total_chans)
 {
   int err;
 
@@ -1914,6 +1910,9 @@ void c_convolve(const char *fname, Float amp, int filec, off_t filehdr, int filt
 	  int i;
 	  Float scl;
 	  int tempfile;
+	  chan_info *gcp;
+	  gcp = gsp->chans[0];
+	  start_progress_report(gcp);
 
 	  tempfile = snd_reopen_write(fname);
 	  snd_file_open_descriptors(tempfile, fname, MUS_OUT_FORMAT, oloc, 1, MUS_NEXT);
@@ -1924,19 +1923,19 @@ void c_convolve(const char *fname, Float amp, int filec, off_t filehdr, int filt
 	  mus_file_read_any(filterc, 0, filter_chans, filtersize, fbuffer, fbuffer);
 	  for (i = 0; i < filtersize; i++) 
 	    rl1[i] = MUS_SAMPLE_TO_FLOAT(fbuffer[filter_chan][i]);
-	  progress_report(gsp, "convolve", ip + 1, total_chans, .1, from_enved);
+	  progress_report(gcp, .1);
 
 	  /* get the convolution data */
 	  mus_file_read_any(filec, 0, 1, data_size, pbuffer, pbuffer);
 	  for (i = 0; i < data_size; i++) rl0[i] = MUS_SAMPLE_TO_FLOAT(pbuf[i]);
 
-	  progress_report(gsp, "convolve", ip + 1, total_chans, .3, from_enved);
+	  progress_report(gcp, .3);
 	  mus_fft(rl0, rl1, fftsize, 1);
-	  progress_report(gsp, "convolve", ip + 1, total_chans, .5, from_enved);
+	  progress_report(gcp, .5);
 	  spectral_multiply(rl0, rl1, fftsize);
-	  progress_report(gsp, "convolve", ip + 1, total_chans, .6, from_enved);
+	  progress_report(gcp, .6);
 	  mus_fft(rl0, rl1, fftsize, -1);
-	  progress_report(gsp, "convolve", ip + 1, total_chans, .8, from_enved);
+	  progress_report(gcp, .8);
 
 	  if (amp != 0.0)
 	    {
@@ -1962,10 +1961,12 @@ void c_convolve(const char *fname, Float amp, int filec, off_t filehdr, int filt
 		pbuf[i] = MUS_FLOAT_TO_SAMPLE(rl0[i]);
 #endif
 	    }
-	  progress_report(gsp, "convolve", ip + 1, total_chans, .9, from_enved);
+	  progress_report(gcp, .9);
 
 	  /* and save as temp file */
 	  mus_file_write(tempfile, 0, data_size - 1, 1, &(pbuf));
+	  finish_progress_report(gcp);
+
 	  if (mus_file_close(tempfile) != 0)
 	    snd_error(_("convolve: can't close temp file %s!"), fname);
 	}

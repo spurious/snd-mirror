@@ -377,7 +377,7 @@ void stop_fft_in_progress(chan_info *cp)
       if (cx->fft_in_progress) 
 	{
 	  BACKGROUND_REMOVE(cx->fft_in_progress);
-	  finish_progress_report(cp->sound, NOT_FROM_ENVED);
+	  finish_progress_report(cp);
 	  cx->fft_in_progress = 0;
 	}
     }
@@ -402,7 +402,7 @@ void force_fft_clear(chan_info *cp)
   if ((cp->cgx) && (cp->cgx->fft_in_progress))
     {
       BACKGROUND_REMOVE(cp->cgx->fft_in_progress);
-      finish_progress_report(cp->sound, NOT_FROM_ENVED);
+      finish_progress_report(cp);
       cp->cgx->fft_in_progress = 0;
     }
   if (cp->fft) cp->fft = free_fft_info(cp->fft);

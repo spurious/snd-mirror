@@ -2759,7 +2759,7 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
   if (reporting) 
     {
       cp = sfs[0]->cp;
-      start_progress_report(cp->sound, NOT_FROM_ENVED);
+      start_progress_report(cp);
     }
   if (chans == 1)
     {
@@ -2777,7 +2777,7 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
 		  if (reporting)
 		    {
 		      total += FILE_BUFFER_SIZE;
-		      progress_report(cp->sound, NULL, 1, 1, (Float)((double)total / (double)length), NOT_FROM_ENVED);
+		      progress_report(cp, (Float)((double)total / (double)length));
 		    }
 		  /* this is a dangerous time to check for an event -- if in lock_affected_mixes,
 		   *   the current edit is in progress, so any attempt to display will segfault
@@ -2807,7 +2807,7 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
 	      if (reporting)
 		{
 		  total += FILE_BUFFER_SIZE;
-		  progress_report(cp->sound, NULL, 1, 1, (Float)((double)total / (double)length), NOT_FROM_ENVED);
+		  progress_report(cp, (Float)((double)total / (double)length));
 		}
 	    }
 	}
@@ -2825,7 +2825,7 @@ static io_error_t snd_make_file(const char *ofile, int chans, file_info *hdr, sn
       mus_file_close(ofd);
       io_err = sndlib_error_to_snd(sl_err);
     }
-  if (reporting) finish_progress_report(cp->sound, NOT_FROM_ENVED);
+  if (reporting) finish_progress_report(cp);
   for (i = 0; i < chans; i++) FREE(obufs[i]);
   FREE(obufs);
   return(io_err);

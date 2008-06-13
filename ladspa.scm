@@ -359,7 +359,7 @@
 			       (begin
 			       
 				 ;; Update hour-glass
-				 (progress-report (/ n length) "doing the ladspa" chans chans snd)
+				 (progress-report (/ n length) snd)
 				 
 				 ;; The length of sdobj must be the length of the data. Can only happen at last iteration.
 				 (if (< len buflen)

@@ -45,6 +45,7 @@ GtkWidget *w_snd_pane_box(snd_info *sp) {return(sp->sgx->snd_widgets[W_pane_box]
 #define SYNC_BUTTON(Sp)          Sp->sgx->snd_widgets[W_sync]
 #define PLAY_BUTTON(Sp)          Sp->sgx->snd_widgets[W_play]
 #define UNITE_BUTTON(Sp)         Sp->sgx->snd_widgets[W_unite]
+#define CLOCK_PIX(Sp, Chan)      Sp->sgx->clock_widgets[Chan]
 
 #define ERROR_INFO(Sp)           Sp->sgx->snd_widgets[W_error_info_label]
 #define ERROR_INFO_FRAME(Sp)     Sp->sgx->snd_widgets[W_error_info_frame]
@@ -257,24 +258,24 @@ void stop_bomb(snd_info *sp)
 
 
 #if (!USE_CAIRO)
-static void show_hourglass(snd_info *sp, int glass)
+static void show_hourglass(snd_info *sp, int chan, int glass)
 {
   if (sp->sgx)
-    draw_picture(sp->sgx->name_pix_ax, hourglasses[glass], 0, 0, 0, 4, 18, 16);
+    draw_picture(sp->sgx->clock_pix_ax[chan], hourglasses[glass], 0, 0, 0, 4, 18, 16);
 }
 
 
-static void hide_hourglass(snd_info *sp)
+static void hide_hourglass(snd_info *sp, int chan)
 {
   if (sp->sgx)
-    draw_picture(sp->sgx->name_pix_ax, sp->sgx->file_pix, 0, 0, 0, 4, 18, 16);
+    draw_picture(sp->sgx->clock_pix_ax[chan], sp->sgx->file_pix, 0, 0, 0, 4, 18, 16);
 }
 
 #else
 
-static GdkDrawable *sound_pix_wn(snd_info *sp)
+static GdkDrawable *sound_pix_wn(chan_info *cp)
 {
-  return(GDK_DRAWABLE(NAME_PIX(sp)->window));
+  return(GDK_DRAWABLE(CLOCK_PIX(cp->sound, cp->chan)->window));
 }
 
 
@@ -367,6 +368,22 @@ static gboolean name_pix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
       (NAME_PIX(sp)) &&
       (sp->sgx->name_pix_ax))
     draw_picture(sp->sgx->name_pix_ax, sp->sgx->file_pix, 0, 0, 0, 4, 16, 16);
+  return(false);
+}
+
+
+static gboolean clock_pix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
+{
+  chan_info *cp = (chan_info *)data;
+  snd_info *sp = NULL;
+  if (cp) sp = cp->sound;
+
+  if ((sp) &&
+      (sp->sgx) &&
+      (sp->sgx->file_pix) &&
+      (CLOCK_PIX(sp, cp->chan)) &&
+      (sp->sgx->clock_pix_ax[cp->chan]))
+    draw_picture(sp->sgx->clock_pix_ax[cp->chan], sp->sgx->file_pix, 0, 0, 0, 4, 16, 16);
   return(false);
 }
 
@@ -1645,6 +1662,25 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       sp->sgx->stop_pix_ax->gc = ss->sgx->basic_gc;
       SG_SIGNAL_CONNECT(STOP_PIX(sp), "button_press_event", stop_sign_press, sp);
 
+      {
+	int i;
+
+	sp->sgx->clock_widgets = (GtkWidget **)CALLOC(sp->nchans, sizeof(GtkWidget *));
+	sp->sgx->clock_pix_ax = (axis_context **)CALLOC(sp->nchans, sizeof(axis_context *));
+
+	for (i = 0; i < sp->nchans; i++)
+	  {
+	    CLOCK_PIX(sp, i) = gtk_drawing_area_new();
+	    gtk_widget_set_size_request(CLOCK_PIX(sp, i), 16, 16);
+	    gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), CLOCK_PIX(sp, i), false, false, 2);
+	    gtk_widget_show(CLOCK_PIX(sp, i));
+	    sp->sgx->clock_pix_ax[i] = (axis_context *)CALLOC(1, sizeof(axis_context));
+	    sp->sgx->clock_pix_ax[i]->wn = CLOCK_PIX(sp, i)->window;
+	    sp->sgx->clock_pix_ax[i]->gc = ss->sgx->basic_gc;
+	    SG_SIGNAL_CONNECT(CLOCK_PIX(sp, i), "expose_event", clock_pix_expose, sp->chans[i]);
+	  }
+      }
+
       MINIBUFFER_LABEL(sp) = gtk_label_new(NULL);
       gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), MINIBUFFER_LABEL(sp), false, false, 0);
       gtk_widget_show(MINIBUFFER_LABEL(sp));
@@ -2108,64 +2144,58 @@ int control_panel_height(snd_info *sp)
 GdkDrawable *enved_pix_wn(void);
 #endif
 
-void progress_report(snd_info *sp, const char *funcname, int curchan, int chans, Float pct, enved_progress_t from_enved)
+void progress_report(chan_info *cp, Float pct)
 {
+  snd_info *sp;
+  sp = cp->sound;
+
   if ((!sp) || (sp->inuse != SOUND_NORMAL)) return;
+
 #if (!USE_CAIRO)
   {
     int which;
     which = (int)(pct * NUM_HOURGLASSES);
     if (which >= NUM_HOURGLASSES) which = NUM_HOURGLASSES - 1;
     if (which < 0) which = 0;
-    if (from_enved == FROM_ENVED)
-      display_enved_progress(NULL, hourglasses[which]);
-    else show_hourglass(sp, which);
+    show_hourglass(sp, cp->chan, which);
   }
 #else
-    if (from_enved == FROM_ENVED)
-      show_happy_face(enved_pix_wn(), pct);
-    else show_happy_face(sound_pix_wn(sp), pct);
+  show_happy_face(sound_pix_wn(cp), pct);
 #endif
+
   check_for_event();
 }
 
 
-void finish_progress_report(snd_info *sp, enved_progress_t from_enved)
+void finish_progress_report(chan_info *cp)
 {
+  snd_info *sp;
+  sp = cp->sound;
+
   if (sp->inuse != SOUND_NORMAL) return;
 #if (!USE_CAIRO)
-  if (from_enved == FROM_ENVED)
-    display_enved_progress(NULL, NULL);
-  else
-    {
-      hide_hourglass(sp);
-      hide_stop_sign(sp);
-    }
+  hide_hourglass(sp, cp->chan);
 #else
-  if (from_enved == FROM_ENVED)
-    hide_happy_face(enved_pix_wn());
-  else
-    {
-      hide_happy_face(sound_pix_wn(sp));
-      hide_stop_sign(sp);
-    }
+  hide_happy_face(sound_pix_wn(cp));
 #endif
-  if (!(ss->stopped_explicitly)) clear_minibuffer(sp);
+  hide_stop_sign(sp);
 }
 
 
-void start_progress_report(snd_info *sp, enved_progress_t from_enved)
+void start_progress_report(chan_info *cp)
 {
+  snd_info *sp;
+  sp = cp->sound;
+
   if (sp->inuse != SOUND_NORMAL) return;
-  if (from_enved == NOT_FROM_ENVED) 
-    {
+
 #if (!USE_CAIRO)
-      show_hourglass(sp, 0);
+  show_hourglass(sp, cp->chan, 0);
 #else
-      show_happy_face(sound_pix_wn(sp), 0.0);
+  show_happy_face(sound_pix_wn(cp), 0.0);
 #endif
-      show_stop_sign(sp);
-    }
+
+  show_stop_sign(sp);
 }
 
 

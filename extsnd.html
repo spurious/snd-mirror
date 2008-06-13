@@ -6799,7 +6799,7 @@ See popup.scm, and files-popup-buffer, open-next-file-in-directory, and the "Buf
 
 <!-- finish-progress-report -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def name="finishprogressreport">finish-progress-report</a> (:optional snd)</code>
+<code><a class=def name="finishprogressreport">finish-progress-report</a> (:optional snd chn)</code>
 </td></tr><tr><td></td><td>
 This ends an on-going progress report (a visual indication of how far along some time-consuming process is). 
 See <a href="#progressreport">progress-report</a>.
@@ -7732,7 +7732,7 @@ See gui.scm for examples.
 
 <!-- progress-report -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def name="progressreport">progress-report</a> (pct :optional name current-channel channels snd)</code>
+<code><a class=def name="progressreport">progress-report</a> (pct :optional snd chn)</code>
 </td></tr><tr><td></td><td>
 The functions <a href="#startprogressreport">start-progress-report</a>, progress-report, and 
 <a href="#finishprogressreport">finish-progress-report</a> handle the animated hour-glass icon
@@ -9227,7 +9227,7 @@ If a <a href="#makeplayer">play-list</a> is waiting, this starts it.  'chans' de
 
 <!-- start-progress-report -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
-<code><a class=def name="startprogressreport">start-progress-report</a> (:optional snd)</code>
+<code><a class=def name="startprogressreport">start-progress-report</a> (:optional snd chn)</code>
 </td></tr><tr><td></td><td>
 This starts a <a href="#progressreport">progress-report</a>.
 </td></tr><tr><td colspan=2 height=18></td></tr>

@@ -103,6 +103,7 @@ typedef struct {
 typedef struct {
   Pixmap file_pix;
   Widget *snd_widgets;
+  Widget *progress_widgets;
   Widget tab;
   struct env_editor *flt;
   Widget dialog;

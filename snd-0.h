@@ -71,8 +71,13 @@
 #define PRINT_BUFFER_SIZE 512
 #define LABEL_BUFFER_SIZE 128
 #define REPORTING_SIZE (MAX_BUFFER_SIZE * 8)
+
 /* progress bar (hourglass icon) is displayed if more than this many samples are being processed */
-#define NUM_HOURGLASSES 15
+#if HAVE_XPM || USE_GTK
+  #define NUM_HOURGLASSES 15
+#else
+  #define NUM_HOURGLASSES 1
+#endif
 #define NUM_BOMBS 15
 
 #define MARK_PLAY_ARROW_SIZE 10
@@ -246,7 +251,6 @@ typedef enum {FILE_READ_WRITE, FILE_READ_ONLY} read_only_t;
 typedef enum {READ_FORWARD, READ_BACKWARD} read_direction_t;
 typedef enum {DONT_TRACK, ALWAYS_TRACK, TRACK_ONCE} tracking_cursor_t;
 typedef enum {DONT_UPDATE_DISPLAY, UPDATE_DISPLAY} cut_selection_regraph_t;
-typedef enum {NOT_FROM_ENVED, FROM_ENVED} enved_progress_t;
 typedef enum {SEARCH_OK, SEARCH_FAILED} search_result_t;
 typedef enum {IGNORE_CACHE, REMOVE_FROM_CACHE} cache_remove_t;
 typedef enum {FFT_UNCHANGED, FFT_CHANGED, FFT_CHANGE_LOCKED} fft_change_t;

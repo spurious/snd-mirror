@@ -101,6 +101,16 @@ void dump_protection(FILE *Fp)
 #endif
 
 
+#if HAVE_PTHREADS
+  static pthread_mutex_t gc_lock = PTHREAD_MUTEX_INITIALIZER;
+  #define GC_LOCK()   pthread_mutex_lock(&gc_lock)
+  #define GC_UNLOCK() pthread_mutex_unlock(&gc_lock)
+#else
+  #define GC_LOCK() do {} while(0)
+  #define GC_UNLOCK() do {} while(0)
+#endif
+
+
 #if MUS_DEBUGGING
 int snd_protect_1(XEN obj, const char *caller)
 #else
@@ -109,10 +119,14 @@ int snd_protect(XEN obj)
 {
   int i, old_size;
   XEN tmp;
+  
+  GC_LOCK();
+
 #if MUS_DEBUGGING
   cur_gc_index++;
   if (cur_gc_index > max_gc_index) max_gc_index = cur_gc_index;
 #endif
+
   if (gc_protection_size == 0)
     {
       gc_protection_size = 512;
@@ -137,6 +151,9 @@ int snd_protect(XEN obj)
 #endif
 	  gc_last_set = gc_last_cleared;
 	  gc_last_cleared = NOT_A_GC_LOC;
+
+	  GC_UNLOCK();
+
 	  return(gc_last_set);
 	}
 
@@ -148,8 +165,12 @@ int snd_protect(XEN obj)
 	    snd_protect_callers[i] = (char *)caller;
 #endif
 	    gc_last_set = i;
+	    
+	    GC_UNLOCK();
+
 	    return(gc_last_set);
 	  }
+
       for (i = 0; i < gc_last_set; i++)
 	if (XEN_EQ_P(XEN_VECTOR_REF(gc_protection, i), DEFAULT_GC_VALUE))
 	  {
@@ -159,6 +180,9 @@ int snd_protect(XEN obj)
 	    snd_protect_callers[i] = (char *)caller;
 #endif
 	    gc_last_set = i;
+
+	    GC_UNLOCK();
+
 	    return(gc_last_set);
 	  }
 
@@ -167,29 +191,37 @@ int snd_protect(XEN obj)
       gc_protection_size *= 2;
       gc_protection = XEN_MAKE_VECTOR(gc_protection_size, DEFAULT_GC_VALUE);
       XEN_PROTECT_FROM_GC(gc_protection);
+
       for (i = 0; i < old_size; i++)
 	{
 	  XEN_VECTOR_SET(gc_protection, i, XEN_VECTOR_REF(tmp, i));
 	  XEN_VECTOR_SET(tmp, i, DEFAULT_GC_VALUE);
 	}
+
       XEN_VECTOR_SET(gc_protection, old_size, obj);
+
       /* it would be ideal to unprotect the old table, but it's a permanent object in Guile terms */
       /*   in Ruby, I think we can unprotect it */
 #if HAVE_RUBY || HAVE_FORTH
       XEN_UNPROTECT_FROM_GC(tmp);
 #endif
+
 #if MUS_DEBUGGING
       snd_protect_callers = (char **)realloc(snd_protect_callers, gc_protection_size * sizeof(char *));
       snd_protect_callers[old_size] = (char *)caller;
 #endif
       gc_last_set = old_size;
     }
+
+  GC_UNLOCK();
   return(gc_last_set);
 }
 
 
 void snd_unprotect_at(int loc)
 {
+  GC_LOCK();
+
 #if MUS_DEBUGGING
   cur_gc_index--;
 #endif
@@ -199,6 +231,8 @@ void snd_unprotect_at(int loc)
       XEN_VECTOR_SET(gc_protection, loc, DEFAULT_GC_VALUE);
       gc_last_cleared = loc;
     }
+
+  GC_UNLOCK();
 }
 
 

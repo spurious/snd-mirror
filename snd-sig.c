@@ -2,6 +2,8 @@
 #include "clm2xen.h"
 #include "clm-strings.h"
 
+/* TODO: is it deliberate that (src-sound .1) of a stereo sound only hits chan 0? and chn=#t is not allowed? [sync is followed...] */
+
 
 /* collect syncd chans */
 typedef struct {
@@ -312,13 +314,8 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 	  if (!(editable_p(ucp))) continue;
 	  sp = ucp->sound;
 	  if (!(sp->active)) continue;
-	  if ((ip > 0) && (sp != gsp)) 
-	    finish_progress_report(gsp, NOT_FROM_ENVED);
 	  if ((ip == 0) || (sp != gsp)) 
-	    {
-	      gsp = ucp->sound; 
-	      start_progress_report(gsp, NOT_FROM_ENVED);
-	    }
+	    gsp = ucp->sound; 
 
 	  /* ofile here = new convolved data */
 	  ofile = snd_tempnam();
@@ -384,7 +381,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 				     mus_sound_data_location(saved_chan_file),
 				     fltfd, dataloc, filtersize, fftsize, filter_chans, impulse_chan,
 				     filtersize + filesize + 1,
-				     gsp, NOT_FROM_ENVED, ip, si->chans);
+				     gsp, ip, si->chans);
 			  impulse_chan++;
 			  if (impulse_chan >= filter_chans) 
 			    impulse_chan = 0;
@@ -441,7 +438,6 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
       FREE(origin); 
       origin = NULL;
     }
-  if (gsp) finish_progress_report(gsp, NOT_FROM_ENVED);
   if (ss->stopped_explicitly)
     {
       /* clean up and undo all edits up to stop_point */
@@ -669,7 +665,7 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur, 
   if ((!(editable_p(cp0))) || (!(editable_p(cp1)))) return;
   sp0 = cp0->sound;
   reporting = ((sp0) && (dur > REPORTING_SIZE) && (!(cp0->squelch_update)));
-  if (reporting) start_progress_report(sp0, NOT_FROM_ENVED);
+  if (reporting) start_progress_report(cp0);
   if (dur > MAX_BUFFER_SIZE)
     {
       temp_file = true; 
@@ -729,7 +725,7 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur, 
 	      if (err == -1) break;
 	      if (reporting) 
 		{
-		  progress_report(sp0, S_swap_channels, 1, 1, (Float)((double)k / (double)dur), NOT_FROM_ENVED);
+		  progress_report(cp0, (Float)((double)k / (double)dur));
 		  if (ss->stopped_explicitly) break;
 		  if ((cp0->active < CHANNEL_HAS_EDIT_LIST) || 
 		      (cp1->active < CHANNEL_HAS_EDIT_LIST))
@@ -764,7 +760,7 @@ static void swap_channels(chan_info *cp0, chan_info *cp1, off_t beg, off_t dur, 
 	}
       if (ofile0) {FREE(ofile0); ofile0 = NULL;}
       if (ofile1) {FREE(ofile1); ofile1 = NULL;}
-      if (reporting) finish_progress_report(sp0, NOT_FROM_ENVED);
+      if (reporting) finish_progress_report(cp0);
     }
   else 
     {
@@ -853,7 +849,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XE
 
 
 static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, Float ratio, mus_any *egen, 
-				    enved_progress_t from_enved, const char *origin, bool over_selection, int curchan, int chans,
+				    const char *origin, bool over_selection, int curchan, int chans,
 				    bool *clm_err)
 {
   snd_info *sp = NULL;
@@ -895,7 +891,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
   full_chan = ((beg == 0) && (dur == cp->edits[sf->edit_ctr]->samples)); /* not CURRENT_SAMPLES here! */
 
   reporting = ((sp) && (dur > REPORTING_SIZE) && (!(cp->squelch_update)));
-  if (reporting) start_progress_report(sp, from_enved);
+  if (reporting) start_progress_report(cp);
 
   ofile = snd_tempnam();
   hdr = make_temp_header(ofile, SND_SRATE(sp), 1, dur, (char *)origin);
@@ -932,7 +928,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
 		  if (err == -1) break;
 		  if (reporting) 
 		    {
-		      progress_report(sp, origin, curchan + 1, chans, (Float)((double)(sr->sample) / (double)dur), from_enved);
+		      progress_report(cp, (Float)((double)(sr->sample) / (double)dur));
 		      if (ss->stopped_explicitly) break;
 		      if (!(sp->active))
 			{
@@ -956,7 +952,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
 		  if (err == -1) break;
 		  if (reporting) 
 		    {
-		      progress_report(sp, origin, curchan + 1, chans, (Float)((double)(sr->sample) / (double)dur), from_enved);
+		      progress_report(cp, (Float)((double)(sr->sample) / (double)dur));
 		      if (ss->stopped_explicitly) break;
 		      if (!(sp->active))
 			{
@@ -1024,7 +1020,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
 	      if (err == -1) break;
 	      if (reporting) 
 		{
-		  progress_report(sp, origin, curchan + 1, chans, (Float)((double)(sr->sample) / (double)dur), from_enved);
+		  progress_report(cp, (Float)((double)(sr->sample) / (double)dur));
 		  if (ss->stopped_explicitly) break;
 		  if (!(sp->active))
 		    {
@@ -1056,7 +1052,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
 	}
     }
 
-  if (reporting) finish_progress_report(sp, from_enved);
+  if (reporting) finish_progress_report(cp);
   sr = free_src(sr);
   if ((!(ss->stopped_explicitly)) && (j > 0)) 
     mus_file_write(ofd, 0, j - 1, 1, data);
@@ -1190,7 +1186,7 @@ static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t 
 
 
 void src_env_or_num(chan_info *cp, env *e, Float ratio, bool just_num, 
-		    enved_progress_t from_enved, const char *origin, bool over_selection, mus_any *gen, XEN edpos, int arg_pos)
+		    const char *origin, bool over_selection, mus_any *gen, XEN edpos, int arg_pos)
 {
   snd_info *sp = NULL;
   sync_state *sc;
@@ -1208,7 +1204,7 @@ void src_env_or_num(chan_info *cp, env *e, Float ratio, bool just_num,
   sp = cp->sound;
   /* get current syncd chans */
   sc = get_sync_state(sp, cp, 0, over_selection, 
-		      (ratio < 0.0) ? READ_BACKWARD : READ_FORWARD, /* 0->beg, 0->over_selection (ratio = 0.0 if from_enved) */ 
+		      (ratio < 0.0) ? READ_BACKWARD : READ_FORWARD, /* 0->beg, 0->over_selection (ratio = 0.0 if from enved) */ 
 		      edpos,
 		      origin, arg_pos);      
   if (sc == NULL) return;
@@ -1239,7 +1235,7 @@ void src_env_or_num(chan_info *cp, env *e, Float ratio, bool just_num,
 	      else egen = gen;
 	      if (egen) ratio = 0.0;            /* added 14-Mar-01 otherwise the envelope is an offset? */
 	    }
-	  errmsg = src_channel_with_error(cp, sfs[i], si->begs[i], dur, ratio, egen, from_enved, origin, over_selection, i, si->chans, &clm_err);
+	  errmsg = src_channel_with_error(cp, sfs[i], si->begs[i], dur, ratio, egen, origin, over_selection, i, si->chans, &clm_err);
 	  if (egen)
 	    {
 	      if (e) 
@@ -1451,7 +1447,7 @@ static Float convolve_next_sample(void *ptr, int dir)
 
 
 static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t beg, off_t dur, 
-				const char *origin, enved_progress_t from_enved, Float *precalculated_coeffs)
+				const char *origin, Float *precalculated_coeffs)
 {
   snd_info *sp;
   file_info *hdr = NULL;
@@ -1506,7 +1502,7 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, of
       data = (mus_sample_t **)MALLOC(sizeof(mus_sample_t *));
       data[0] = (mus_sample_t *)CALLOC(MAX_BUFFER_SIZE, sizeof(mus_sample_t)); 
       idata = data[0];
-      if (reporting) start_progress_report(sp, from_enved);
+      if (reporting) start_progress_report(cp);
       ss->stopped_explicitly = false;
       for (offk = 0; offk < dur; offk++)
 	{
@@ -1521,7 +1517,7 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, of
 	      if (err == -1) break;
 	      if (reporting)
 		{
-		  progress_report(sp, origin, 1, 1, (Float)((double)offk / (double)dur), from_enved);
+		  progress_report(cp, (Float)((double)offk / (double)dur));
 		  if (ss->stopped_explicitly) break;
 		  if (!(sp->active))
 		    {
@@ -1531,7 +1527,7 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, of
 		}
 	    }
 	}
-      if (reporting) finish_progress_report(sp, from_enved);
+      if (reporting) finish_progress_report(cp);
       if ((j > 0) && (!(ss->stopped_explicitly)))
 	mus_file_write(ofd, 0, j - 1, 1, data);
       close_temp_file(ofile, ofd, hdr->type, dur * datumb);
@@ -1590,7 +1586,7 @@ static char *convolution_filter(chan_info *cp, int order, env *e, snd_fd *sf, of
 
 
 static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t beg, off_t dur, 
-			   const char *origin, bool truncate, enved_progress_t from_enved,
+			   const char *origin, bool truncate,
 			   bool over_selection, mus_any *gen, Float *precalculated_coeffs)
 {
   Float *a = NULL, *d = NULL;
@@ -1613,7 +1609,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t b
     dur += order;
   /* if over-selection this causes it to clobber samples beyond the selection end -- maybe mix? */
   reporting = ((sp) && (dur > REPORTING_SIZE) && (!(cp->squelch_update)));
-  if (reporting) start_progress_report(sp, from_enved);
+  if (reporting) start_progress_report(cp);
   if (dur > MAX_BUFFER_SIZE)
     {
       temp_file = true; 
@@ -1712,7 +1708,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t b
 	      if (err == -1) break;
 	      if (reporting) 
 		{
-		  progress_report(sp, origin, 1, 1, (Float)((double)offk / (double)dur), from_enved);
+		  progress_report(cp, (Float)((double)offk / (double)dur));
 		  if (ss->stopped_explicitly) return(NULL);
 		  if (!(sp->active))
 		    {
@@ -1754,7 +1750,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t b
       dur += order;
       free_snd_fd(sfold);
     }
-  if (reporting) finish_progress_report(sp, from_enved);
+  if (reporting) finish_progress_report(cp);
   if (origin)
     new_origin = copy_string(origin);
   else
@@ -1836,16 +1832,16 @@ static char *filter_channel(chan_info *cp, int order, env *e, off_t beg, off_t d
 #if HAVE_FFTW || HAVE_FFTW3
   if ((!over_selection) &&
       ((order == 0) || (order >= 128)))
-    errstr = convolution_filter(cp, order, e, sf, beg, dur, origin, NOT_FROM_ENVED, coeffs);
+    errstr = convolution_filter(cp, order, e, sf, beg, dur, origin, coeffs);
   else
 #endif
-    errstr = direct_filter(cp, order, e, sf, beg, dur, origin, truncate, NOT_FROM_ENVED, over_selection, NULL, coeffs);
+    errstr = direct_filter(cp, order, e, sf, beg, dur, origin, truncate, over_selection, NULL, coeffs);
   free_snd_fd(sf);
   return(errstr);
 }
 
 
-static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_progress_t from_enved, 
+static char *apply_filter_or_error(chan_info *ncp, int order, env *e, 
 				   const char *caller, const char *origin, bool over_selection, Float *ur_a, 
 				   mus_any *gen, XEN edpos, int arg_pos, bool truncate, bool *clm_error)
 {
@@ -1899,7 +1895,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
 	      sfs[i] = free_snd_fd(sfs[i]);
 	      continue;
 	    }
-	  errstr = convolution_filter(cp, order, e, sfs[i], si->begs[i], dur, (origin) ? origin : caller, from_enved, NULL);
+	  errstr = convolution_filter(cp, order, e, sfs[i], si->begs[i], dur, (origin) ? origin : caller, NULL);
 	  sfs[i] = free_snd_fd(sfs[i]);
 	  check_for_event();
 	  if ((errstr) || (ss->stopped_explicitly))
@@ -1943,7 +1939,7 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
 		  continue;
 		}
 	      errstr = direct_filter(cp, order, e, sfs[i], si->begs[i], dur,
-				     (origin) ? origin : caller, truncate, from_enved, over_selection,
+				     (origin) ? origin : caller, truncate, over_selection,
 				     gen, a);
 	      sfs[i] = free_snd_fd(sfs[i]);
 	      if ((errstr) || (ss->stopped_explicitly))
@@ -1970,13 +1966,13 @@ static char *apply_filter_or_error(chan_info *ncp, int order, env *e, enved_prog
   return(errstr);
 }
 
-void apply_filter(chan_info *ncp, int order, env *e, enved_progress_t from_enved, 
+void apply_filter(chan_info *ncp, int order, env *e,
 		  const char *caller, const char *origin, bool over_selection, Float *ur_a, mus_any *gen, 
 		  XEN edpos, int arg_pos, bool truncate)
 {
   char *error;
   bool err_type; /* ignored in this context */
-  error = apply_filter_or_error(ncp, order, e, from_enved, caller, origin, over_selection, ur_a, gen, edpos, arg_pos, truncate, &err_type);
+  error = apply_filter_or_error(ncp, order, e, caller, origin, over_selection, ur_a, gen, edpos, arg_pos, truncate, &err_type);
   if (error)
     {
       snd_error_without_format(error);
@@ -2201,7 +2197,7 @@ static char *edit_list_envelope(mus_any *egen, off_t beg, off_t env_dur, off_t c
 }
 
 void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection, 
-	       enved_progress_t from_enved, const char *origin, mus_any *gen, XEN edpos, int arg_pos)
+	       const char *origin, mus_any *gen, XEN edpos, int arg_pos)
 {
   /* basic cases: if env has 1 y value, use scale-channel,
    *              if step env (base == 0.0), use sequence of scale-channels,
@@ -2407,7 +2403,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 	}
       j = 0;
       reporting = ((dur > REPORTING_SIZE) && (!(cp->squelch_update)));
-      if (reporting) start_progress_report(sp, from_enved);
+      if (reporting) start_progress_report(cp);
       if (si->chans > 1)
 	{
 	  ss->stopped_explicitly = false;
@@ -2423,7 +2419,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 		    {
 		      if (reporting)
 			{
-			  progress_report(sp, origin, 0, 0, (Float)((double)ioff / ((double)dur)), from_enved);
+			  progress_report(cp, (Float)((double)ioff / ((double)dur)));
 			  if (ss->stopped_explicitly) break;
 			  if (!(sp->active))
 			    {
@@ -2462,7 +2458,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 		    {
 		      if (reporting)
 			{
-			  progress_report(sp, origin, 0, 0, (Float)((double)ioff / ((double)dur)), from_enved);
+			  progress_report(cp, (Float)((double)ioff / ((double)dur)));
 			  if (ss->stopped_explicitly) break;
 			  if (!(sp->active))
 			    {
@@ -2488,7 +2484,7 @@ void apply_env(chan_info *cp, env *e, off_t beg, off_t dur, bool over_selection,
 	  close_temp_file(ofile, ofd, hdr->type, dur * si->chans * datumb);
 	  free_file_info(hdr);
 	}
-      if (reporting) finish_progress_report(sp, from_enved);
+      if (reporting) finish_progress_report(cp);
       if (ss->stopped_explicitly)
 	{
 	  ss->stopped_explicitly = false;
@@ -3224,7 +3220,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 	  bool reporting = false;
 
 	  reporting = ((num > REPORTING_SIZE) && (!(cp->squelch_update)));
-	  if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
+	  if (reporting) start_progress_report(cp);
 	  rpt4 = MAX_BUFFER_SIZE / 4;
 
 	  filename = snd_tempnam();
@@ -3256,7 +3252,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 			    {
 			      if (outgen) mus_free(outgen);
 			      sf = free_snd_fd(sf);
-			      if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
+			      if (reporting) finish_progress_report(cp);
 			      snd_remove(filename, REMOVE_FROM_CACHE);
 			      FREE(filename);
 			      XEN_ERROR(BAD_TYPE,
@@ -3272,7 +3268,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 		  rpt++;
 		  if (rpt > rpt4)
 		    {
-		      progress_report(sp, caller, 1, 1, (Float)((double)kp / (double)num), NOT_FROM_ENVED);
+		      progress_report(cp, (Float)((double)kp / (double)num));
 		      if (!(sp->active))
 			{
 			  ss->stopped_explicitly = true;
@@ -3285,7 +3281,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 	    }
 	  if (outgen) mus_free(outgen);
 	  sf = free_snd_fd(sf);
-	  if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
+	  if (reporting) finish_progress_report(cp);
 	  if (ss->stopped_explicitly) 
 	    ss->stopped_explicitly = false;
 	  else
@@ -3649,13 +3645,14 @@ typedef struct {
   off_t beg, num;
   snd_fd *sf;
   snd_info *sp;
+  chan_info *cp;
   const char *caller;
   bool counting;
   bool reporting;
 } scan_context;
 
 
-static scan_context *make_scan_context(XEN p, off_t b, off_t n, snd_fd *f, snd_info *s, const char *orig, bool count)
+static scan_context *make_scan_context(XEN p, off_t b, off_t n, snd_fd *f, snd_info *s, chan_info *cp, const char *orig, bool count)
 {
   scan_context *sc;
   sc = (scan_context *)CALLOC(1, sizeof(scan_context));
@@ -3664,6 +3661,7 @@ static scan_context *make_scan_context(XEN p, off_t b, off_t n, snd_fd *f, snd_i
   sc->num = n;
   sc->sf = f;
   sc->sp = s;
+  sc->cp = cp;
   sc->caller = orig;
   sc->counting = count;
   sc->reporting = false;
@@ -3685,7 +3683,7 @@ static XEN scan_body(void *context)
   scan_context *sc = (scan_context *)context;
   sc->reporting = (sc->num > REPORTING_SIZE);
   rpt4 = MAX_BUFFER_SIZE / 4;
-  if (sc->reporting) start_progress_report(sc->sp, NOT_FROM_ENVED);
+  if (sc->reporting) start_progress_report(sc->cp);
   ss->stopped_explicitly = false;
   for (kp = 0; kp < sc->num; kp++)
     {
@@ -3706,7 +3704,7 @@ static XEN scan_body(void *context)
 	  rpt++;
 	  if (rpt > rpt4)
 	    {
-	      progress_report(sc->sp, sc->caller, 1, 1, (Float)((double)kp / (double)(sc->num)), NOT_FROM_ENVED);
+	      progress_report(sc->cp, (Float)((double)kp / (double)(sc->num)));
 	      if (!(sc->sp->active))
 		{
 		  ss->stopped_explicitly = true;
@@ -3732,7 +3730,7 @@ static void after_scan(void *context)
 {
   scan_context *sc = (scan_context *)context;
   sc->sf = free_snd_fd(sc->sf);
-  if (sc->reporting) finish_progress_report(sc->sp, NOT_FROM_ENVED);
+  if (sc->reporting) finish_progress_report(sc->cp);
   FREE(sc);
 }
 #endif
@@ -3824,7 +3822,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
   /* package up context and try to protect against errors/throws in the user's code */
   {
     scan_context *sc;
-    sc = make_scan_context(proc, beg, num, sf, sp, caller, counting);
+    sc = make_scan_context(proc, beg, num, sf, sp, cp, caller, counting);
     return(scm_internal_dynamic_wind((scm_t_guard)before_scan, 
 				     (scm_t_inner)scan_body, 
 				     (scm_t_guard)after_scan, 
@@ -3833,7 +3831,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
   }
 #else
   reporting = ((num > REPORTING_SIZE) && (!(cp->squelch_update)));
-  if (reporting) start_progress_report(sp, NOT_FROM_ENVED);
+  if (reporting) start_progress_report(cp);
   rpt4 = MAX_BUFFER_SIZE / 4;
   ss->stopped_explicitly = false;
   for (kp = 0; kp < num; kp++)
@@ -3851,7 +3849,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 	    {
 	      sf = free_snd_fd(sf);
 	      if (reporting) 
-		finish_progress_report(sp, NOT_FROM_ENVED);
+		finish_progress_report(cp);
 	      return(XEN_LIST_2(res,
 				C_TO_XEN_OFF_T(kp + beg)));
 	    }
@@ -3861,7 +3859,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 	  rpt++;
 	  if (rpt > rpt4)
 	    {
-	      progress_report(sp, caller, 1, 1, (Float)((double)kp / (double)num), NOT_FROM_ENVED);
+	      progress_report(cp, (Float)((double)kp / (double)num));
 	      if (!(sp->active))
 		{
 		  ss->stopped_explicitly = true;
@@ -3877,7 +3875,7 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 	  break;
 	}
     }
-  if (reporting) finish_progress_report(sp, NOT_FROM_ENVED);
+  if (reporting) finish_progress_report(cp);
   sf = free_snd_fd(sf);
   if (counting)
     return(C_TO_XEN_INT(counts));
@@ -4439,7 +4437,7 @@ static XEN g_env_1(XEN edata, off_t beg, off_t dur, XEN ebase, chan_info *cp, XE
 		  XEN_OUT_OF_RANGE_ERROR(caller, 4, ebase, "base ~A < 0.0?");
 		}
 	    }
-	  apply_env(cp, e, beg, dur, over_selection, NOT_FROM_ENVED, caller, NULL, edpos, 7);
+	  apply_env(cp, e, beg, dur, over_selection, caller, NULL, edpos, 7);
 	  free_env(e);
 	  return(edata);
 	}
@@ -4448,7 +4446,7 @@ static XEN g_env_1(XEN edata, off_t beg, off_t dur, XEN ebase, chan_info *cp, XE
     {
       mus_any *egen = NULL;
       XEN_ASSERT_TYPE((mus_xen_p(edata)) && (mus_env_p(egen = XEN_TO_MUS_ANY(edata))), edata, XEN_ARG_1, caller, "an env generator or a list");
-      apply_env(cp, NULL, beg, dur, over_selection, NOT_FROM_ENVED, caller, egen, edpos, 7);
+      apply_env(cp, NULL, beg, dur, over_selection, caller, egen, edpos, 7);
       return(edata);
     }
   return(XEN_FALSE);
@@ -5049,7 +5047,7 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
     sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
   else sf = init_sample_read_any(beg + dur - 1, cp, READ_BACKWARD, pos);
 
-  errmsg = src_channel_with_error(cp, sf, beg, dur, ratio, egen, NOT_FROM_ENVED, S_src_channel, OVER_SOUND, 1, 1, &clm_err);
+  errmsg = src_channel_with_error(cp, sf, beg, dur, ratio, egen, S_src_channel, OVER_SOUND, 1, 1, &clm_err);
   sf = free_snd_fd(sf);
   if (need_free) mus_free(egen);
   if (errmsg)
@@ -5077,7 +5075,7 @@ static XEN g_src_1(XEN ratio_or_env, XEN ebase, XEN snd_n, XEN chn_n, XEN edpos,
       ratio = XEN_TO_C_DOUBLE(ratio_or_env);
       if (ratio != 1.0)
 	src_env_or_num(cp, NULL, ratio,
-		       true, NOT_FROM_ENVED, caller,
+		       true, caller,
 		       over_selection, NULL, edpos, 5);
     }
   else 
@@ -5105,7 +5103,7 @@ static XEN g_src_1(XEN ratio_or_env, XEN ebase, XEN snd_n, XEN chn_n, XEN edpos,
 	    }
 	  else
 	    {
-	      src_env_or_num(cp, e, e_ratio, false, NOT_FROM_ENVED, caller, over_selection, NULL, edpos, 5);
+	      src_env_or_num(cp, e, e_ratio, false, caller, over_selection, NULL, edpos, 5);
 	      if (e) free_env(e);
 	    }
 	}
@@ -5128,7 +5126,7 @@ static XEN g_src_1(XEN ratio_or_env, XEN ebase, XEN snd_n, XEN chn_n, XEN edpos,
 	  else
 	    src_env_or_num(cp, NULL, 
 			   (mus_phase(egen) >= 0.0) ? 1.0 : -1.0, /* mus_phase of env apparently = current_value(!) */
-			   false, NOT_FROM_ENVED, caller, 
+			   false, caller, 
 			   over_selection, egen, edpos, 5);
 	}
     }
@@ -5223,7 +5221,7 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos, const c
     {
       char *error;
       bool clm_err = false;
-      error = apply_filter_or_error(cp, 0, NULL, NOT_FROM_ENVED, caller, origin, over_selection, NULL, XEN_TO_MUS_ANY(e), edpos, 5, truncate, &clm_err);
+      error = apply_filter_or_error(cp, 0, NULL, caller, origin, over_selection, NULL, XEN_TO_MUS_ANY(e), edpos, 5, truncate, &clm_err);
       if (error)
 	{
 	  XEN errstr;
@@ -5270,7 +5268,7 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos, const c
 #endif
 	    }
 	  else new_origin = copy_string(origin);
-	  apply_filter(cp, len, NULL, NOT_FROM_ENVED, caller, new_origin, over_selection, v->data, NULL, edpos, 5, truncate);
+	  apply_filter(cp, len, NULL, caller, new_origin, over_selection, v->data, NULL, edpos, 5, truncate);
 	  if (estr) FREE(estr);
 	  if (new_origin) FREE(new_origin);
 	}
@@ -5295,7 +5293,7 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos, const c
 	    }
 	  else new_origin = copy_string(origin);
 	  if (len == 0) len = ne->pts * 4;
-	  apply_filter(cp, len, ne, NOT_FROM_ENVED, caller, new_origin, over_selection, NULL, NULL, edpos, 5, truncate);
+	  apply_filter(cp, len, ne, caller, new_origin, over_selection, NULL, NULL, edpos, 5, truncate);
 	  if (ne) free_env(ne); 
 	  if (estr) FREE(estr);
 	  if (new_origin) FREE(new_origin);
