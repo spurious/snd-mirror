@@ -569,10 +569,6 @@ returning you to the true top-level."
 
 ;;; TODO: check filter-channel and map-channel/ptrees (with init func etc) here, also reverse, maybe smooth, convolve, scan
 
-;;; this works in the no-gui version of Snd, but gets an xcb lock complaint in Motif (at XmUpdateDisplay of hourglass icon)
-;;;   I think this is a bug in libxcb that has been fixed, but not yet distributed, so I'm loath to try to hack around it in snd-xsnd.c
-;;;   Gauche also hits this bug in with-threaded-sound if run without any sound open
-
 (with-threaded-sound ()
   (fm-violin 0 1 440 .1)
   (fm-violin 0 1 660 .1))

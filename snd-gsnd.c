@@ -2043,6 +2043,9 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
 void set_sound_pane_file_label(snd_info *sp, char *str)
 {
+#if HAVE_PTHREADS
+  pthread_mutex_lock(sp->starred_name_lock);
+#endif
   if ((sp->name_string == NULL) || 
       (strcmp(sp->name_string, str) != 0))
     {
@@ -2050,6 +2053,9 @@ void set_sound_pane_file_label(snd_info *sp, char *str)
       sp->name_string = copy_string(str);
       set_label(NAME_BUTTON(sp), str);
     }
+#if HAVE_PTHREADS
+  pthread_mutex_unlock(sp->starred_name_lock);
+#endif
 }
 
 

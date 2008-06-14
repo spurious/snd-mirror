@@ -224,6 +224,10 @@ snd_info *make_basic_snd_info(int chans)
   sp->allocated_chans = chans;
   sp->properties = XEN_FALSE; /* will be a vector of 1 element if it's ever used */
   sp->properties_loc = NOT_A_GC_LOC;
+#if HAVE_PTHREADS
+  sp->starred_name_lock = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
+  pthread_mutex_init(sp->starred_name_lock, NULL);
+#endif
   return(sp);
 }
 

@@ -2851,12 +2851,18 @@ void snd_info_cleanup(snd_info *sp)
 
 void set_sound_pane_file_label(snd_info *sp, char *str)
 {
+#if HAVE_PTHREADS
+  pthread_mutex_lock(sp->starred_name_lock);
+#endif
   if (!(snd_strcmp(sp->name_string, str)))
     {
       if (sp->name_string) FREE(sp->name_string);
       sp->name_string = copy_string(str);
       set_button_label(SND_NAME(sp), str); /* this causes an expose event, so it's worth minimizing */
     }
+#if HAVE_PTHREADS
+  pthread_mutex_unlock(sp->starred_name_lock);
+#endif
 }
 
 
@@ -2950,15 +2956,12 @@ int control_panel_height(snd_info *sp)
 void progress_report(chan_info *cp, Float pct)
 {
   int which;
-  char expr_str[8];
   snd_info *sp;
   sp = cp->sound;
 
   if ((!sp) || (sp->inuse != SOUND_NORMAL)) return;
 
   which = (int)(pct * NUM_HOURGLASSES);
-  mus_snprintf(expr_str, 8, "%.2f", pct);
-
   if (which >= NUM_HOURGLASSES) which = NUM_HOURGLASSES - 1;
   if (which < 0) which = 0;
 
@@ -2968,8 +2971,6 @@ void progress_report(chan_info *cp, Float pct)
       XtVaSetValues(PROGRESS_ICON(cp), XmNlabelPixmap, hourglasses[which], NULL);
       XmUpdateDisplay(PROGRESS_ICON(cp));
     }
-
-  /* TODO: expr_str */
 
   check_for_event();
 }
@@ -2989,10 +2990,7 @@ void finish_progress_report(chan_info *cp)
       hide_stop_sign(sp);
     }
 
-  /* TODO: possibly clear expr_str */
   /* TODO: limit clocks to 8 or 16 */
-  /* TODO: gtk side of multi-clock code */
-  /* PERHAPS: start and end with all clocks displayed in multichan cases */
 }
 
 

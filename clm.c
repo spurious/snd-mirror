@@ -116,37 +116,6 @@ memmove (void *dest0, void const *source0, size_t length)
 #endif
 
 
-enum {SINC_TABLE_LOCK, FFT_LOCK, READER_LOCK, WRITER_LOCK, FREE_READER_LOCK, NUM_CLM_LOCKS};
-
-#if HAVE_PTHREADS
-static pthread_mutex_t *clm_locks[NUM_CLM_LOCKS];
-static mus_error_handler_t *clm_old_lock_error_handlers[NUM_CLM_LOCKS];
-
-#define CLM_SIMPLE_LOCK(Lock)   pthread_mutex_lock(clm_locks[Lock])
-#define CLM_SIMPLE_UNLOCK(Lock) pthread_mutex_unlock(clm_locks[Lock])
-
-#define CLM_LOCK(Lock, Handler)			\
-  do { \
-       pthread_mutex_lock(clm_locks[Lock]); \
-       clm_old_lock_error_handlers[Lock] = mus_error_set_handler(Handler); \
-     } while (0)
-
-#define CLM_UNLOCK(Lock)			\
-  do { \
-       mus_error_set_handler(clm_old_lock_error_handlers[Lock]); \
-       pthread_mutex_unlock(clm_locks[Lock]); \
-     } while (0)
-
-#else
-
-#define CLM_SIMPLE_LOCK(Lock) do {} while(0)
-#define CLM_SIMPLE_UNLOCK(Lock) do {} while(0)
-#define CLM_LOCK(Lock, Handler) do {} while(0)
-#define CLM_UNLOCK(Lock) do {} while(0)
-
-#endif
-
-
 enum {MUS_OSCIL, MUS_NCOS, MUS_DELAY, MUS_COMB, MUS_NOTCH, MUS_ALL_PASS,
       MUS_TABLE_LOOKUP, MUS_SQUARE_WAVE, MUS_SAWTOOTH_WAVE, MUS_TRIANGLE_WAVE, MUS_PULSE_TRAIN,
       MUS_RAND, MUS_RAND_INTERP, MUS_ASYMMETRIC_FM, MUS_ONE_ZERO, MUS_ONE_POLE, MUS_TWO_ZERO, MUS_TWO_POLE, MUS_FORMANT,
@@ -6953,6 +6922,12 @@ typedef struct {
   mus_sample_t **ibufs;
   off_t data_start, data_end, file_end;
   int file_buffer_size;
+#if HAVE_PTHREADS
+  pthread_mutex_t *free_reader_lock;
+#if HAVE_NESTED_FUNCTIONS
+  pthread_mutex_t *reader_lock; /* if no nested functions, this lock is a global stopping all reads */
+#endif
+#endif
 } rdin;
 
 
@@ -6989,6 +6964,12 @@ static int free_file_to_sample(mus_any *p)
     {
       if (ptr->core->end) ((*ptr->core->end))(p);
       clm_free(ptr->file_name);
+#if HAVE_PTHREADS
+      pthread_mutex_destroy(ptr->free_reader_lock);
+#if HAVE_NESTED_FUNCTIONS
+      pthread_mutex_destroy(ptr->reader_lock);
+#endif
+#endif
       clm_free(ptr);
     }
   return(0);
@@ -6996,6 +6977,7 @@ static int free_file_to_sample(mus_any *p)
 
 
 static off_t file_to_sample_length(mus_any *ptr) {return((((rdin *)ptr)->file_end));}
+
 static int file_to_sample_channels(mus_any *ptr) {return((int)(((rdin *)ptr)->chans));}
 
 static Float file_to_sample_increment(mus_any *rd) {return((Float)(((rdin *)rd)->dir));}
@@ -7042,13 +7024,21 @@ static mus_any_class FILE_TO_SAMPLE_CLASS = {
 };
 
 
+#if HAVE_PTHREADS && (!HAVE_NESTED_FUNCTIONS)
+static pthread_mutex_t reader_lock = PTHREAD_MUTEX_INITIALIZER;
+
+static mus_error_handler_t *clm_old_reader_lock_error_handler;
 
 static void clm_reader_lock_error_handler(int type, char *msg)
 {
   /* if mus_error is called while in a locked section, first unlock, then signal the error with the outer (original) error handler */
-  CLM_UNLOCK(READER_LOCK);
+  /*   since in this case we don't have nested functions, there's no clean way to know which IO gen is holding the current lock */
+
+  mus_error_set_handler(clm_old_reader_lock_error_handler);
+  pthread_mutex_unlock(&reader_lock);
   mus_error(type, msg);
 }
+#endif
 
 
 static Float file_sample(mus_any *ptr, off_t samp, int chan)
@@ -7058,12 +7048,31 @@ static Float file_sample(mus_any *ptr, off_t samp, int chan)
    * return Float at samp (frame) 
    */
   rdin *gen = (rdin *)ptr;
+
+#if HAVE_PTHREADS && HAVE_NESTED_FUNCTIONS
+  mus_error_handler_t *clm_old_reader_lock_error_handler;
+  auto void clm_reader_lock_error_handler(int type, char *msg);
+  void clm_reader_lock_error_handler(int type, char *msg)
+  {
+    mus_error_set_handler(clm_old_reader_lock_error_handler);
+    pthread_mutex_unlock(gen->reader_lock);
+    mus_error(type, msg);
+  }
+#endif
+
   if ((samp < 0) || 
       (samp >= gen->file_end) ||
       (chan >= gen->chans))
     return(0.0);
 
-  CLM_LOCK(READER_LOCK, clm_reader_lock_error_handler);
+#if HAVE_PTHREADS
+#if HAVE_NESTED_FUNCTIONS
+  pthread_mutex_lock(gen->reader_lock);
+#else
+  pthread_mutex_lock(&reader_lock);
+#endif
+  clm_old_reader_lock_error_handler = mus_error_set_handler(clm_reader_lock_error_handler);
+#endif
 
   if ((samp > gen->data_end) || 
       (samp < gen->data_start))
@@ -7114,7 +7123,14 @@ static Float file_sample(mus_any *ptr, off_t samp, int chan)
 	}
     }
 
-  CLM_UNLOCK(READER_LOCK);
+#if HAVE_PTHREADS
+#if HAVE_NESTED_FUNCTIONS
+  pthread_mutex_unlock(gen->reader_lock);
+#else
+  pthread_mutex_unlock(&reader_lock);
+#endif
+  mus_error_set_handler(clm_old_reader_lock_error_handler);
+#endif
 
   return((Float)MUS_SAMPLE_TO_FLOAT(gen->ibufs[chan][samp - gen->data_start]));
 }
@@ -7128,15 +7144,17 @@ static int file_to_sample_end(mus_any *ptr)
       if (gen->ibufs)
 	{
 	  int i;
-	  CLM_SIMPLE_LOCK(FREE_READER_LOCK);
-
+#if HAVE_PTHREADS
+	  pthread_mutex_lock(gen->free_reader_lock);
+#endif
 	  for (i = 0; i < gen->chans; i++)
 	    if (gen->ibufs[i]) 
 	      clm_free(gen->ibufs[i]);
 	  clm_free(gen->ibufs);
 	  gen->ibufs = NULL;
-
-	  CLM_SIMPLE_UNLOCK(FREE_READER_LOCK);
+#if HAVE_PTHREADS
+	  pthread_mutex_unlock(gen->free_reader_lock);
+#endif
 	}
     }
   return(0);
@@ -7172,6 +7190,15 @@ mus_any *mus_make_file_to_sample_with_buffer_size(const char *filename, int buff
       gen->file_end = mus_sound_frames(gen->file_name);
       if (gen->file_end < 0) 
 	mus_error(MUS_NO_LENGTH, "%s frames: " OFF_TD, filename, gen->file_end);
+
+#if HAVE_PTHREADS
+      gen->free_reader_lock = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
+      pthread_mutex_init(gen->free_reader_lock, NULL);
+#if HAVE_NESTED_FUNCTIONS
+      gen->reader_lock = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
+      pthread_mutex_init(gen->reader_lock, NULL);
+#endif
+#endif
 
       return((mus_any *)gen);
     }
@@ -7422,6 +7449,9 @@ typedef struct {
   off_t out_end;
   int output_data_format;
   int output_header_type;
+#if HAVE_PTHREADS && HAVE_NESTED_FUNCTIONS
+  pthread_mutex_t *writer_lock;
+#endif
 } rdout;
 
 
@@ -7445,6 +7475,9 @@ static int free_sample_to_file(mus_any *p)
     {
       if (ptr->core->end) ((*ptr->core->end))(p);
       clm_free(ptr->file_name);
+#if HAVE_PTHREADS && HAVE_NESTED_FUNCTIONS
+      pthread_mutex_destroy(ptr->writer_lock);
+#endif
       clm_free(ptr);
     }
   return(0);
@@ -7655,19 +7688,46 @@ static void flush_buffers(rdout *gen)
 }
 
 
+#if HAVE_PTHREADS && (!HAVE_NESTED_FUNCTIONS)
+static pthread_mutex_t writer_lock = PTHREAD_MUTEX_INITIALIZER;
+
+static mus_error_handler_t *clm_old_writer_lock_error_handler;
+
 static void clm_writer_lock_error_handler(int type, char *msg)
 {
-  CLM_UNLOCK(WRITER_LOCK);
+  mus_error_set_handler(clm_old_writer_lock_error_handler);
+  pthread_mutex_unlock(&writer_lock);
   mus_error(type, msg);
 }
+#endif
 
 
 static Float sample_file(mus_any *ptr, off_t samp, int chan, Float val)
 {
   rdout *gen = (rdout *)ptr;
+
+#if HAVE_PTHREADS && HAVE_NESTED_FUNCTIONS
+  mus_error_handler_t *clm_old_writer_lock_error_handler;
+  auto void clm_writer_lock_error_handler(int type, char *msg);
+  void clm_writer_lock_error_handler(int type, char *msg)
+  {
+    mus_error_set_handler(clm_old_writer_lock_error_handler);
+    pthread_mutex_unlock(gen->writer_lock);
+    mus_error(type, msg);
+  }
+#endif
+
   if (chan < gen->chans)
     {
-      CLM_LOCK(WRITER_LOCK, clm_writer_lock_error_handler); /* flush_buffers can call mus_error */
+
+#if HAVE_PTHREADS
+#if HAVE_NESTED_FUNCTIONS
+      pthread_mutex_lock(gen->writer_lock);
+#else
+      pthread_mutex_lock(&writer_lock);
+#endif
+      clm_old_writer_lock_error_handler = mus_error_set_handler(clm_writer_lock_error_handler);
+#endif
 
       if ((samp > gen->data_end) || 
 	  (samp < gen->data_start))
@@ -7684,7 +7744,14 @@ static Float sample_file(mus_any *ptr, off_t samp, int chan, Float val)
       if (samp > gen->out_end) 
 	gen->out_end = samp;
 
-      CLM_UNLOCK(WRITER_LOCK);
+#if HAVE_PTHREADS
+#if HAVE_NESTED_FUNCTIONS
+      pthread_mutex_unlock(gen->writer_lock);
+#else
+      pthread_mutex_unlock(&writer_lock);
+#endif
+      mus_error_set_handler(clm_old_writer_lock_error_handler);
+#endif
     }
   return(val);
 }
@@ -7703,8 +7770,24 @@ Float mus_sample_to_file_current_value(mus_any *ptr, off_t samp, int chan)
 static int sample_to_file_end(mus_any *ptr)
 {
   rdout *gen = (rdout *)ptr;
+
+#if HAVE_PTHREADS
+#if HAVE_NESTED_FUNCTIONS
+  mus_error_handler_t *clm_old_writer_lock_error_handler;
+  auto void clm_writer_lock_error_handler(int type, char *msg);
+  void clm_writer_lock_error_handler(int type, char *msg)
+  {
+    mus_error_set_handler(clm_old_writer_lock_error_handler);
+    pthread_mutex_unlock(gen->writer_lock);
+    mus_error(type, msg);
+  }
   
-  CLM_LOCK(WRITER_LOCK, clm_writer_lock_error_handler);
+  pthread_mutex_lock(gen->writer_lock);
+#else
+  pthread_mutex_lock(&writer_lock);
+#endif
+  clm_old_writer_lock_error_handler = mus_error_set_handler(clm_writer_lock_error_handler);
+#endif
 
   if ((gen) && (gen->obufs))
     {
@@ -7718,7 +7801,14 @@ static int sample_to_file_end(mus_any *ptr)
       gen->obufs = NULL;
     }
 
-  CLM_UNLOCK(WRITER_LOCK);
+#if HAVE_PTHREADS
+#if HAVE_NESTED_FUNCTIONS
+  pthread_mutex_unlock(gen->writer_lock);
+#else
+  pthread_mutex_unlock(&writer_lock);
+#endif
+  mus_error_set_handler(clm_old_writer_lock_error_handler);
+#endif
   return(0);
 }
 
@@ -7766,6 +7856,11 @@ static mus_any *mus_make_sample_to_file_with_comment_1(const char *filename, int
 	    mus_error(MUS_CANT_CLOSE_FILE, 
 		      "close(%d, %s) -> %s", 
 		      fd, gen->file_name, STRERROR(errno));
+
+#if HAVE_PTHREADS && HAVE_NESTED_FUNCTIONS
+	  gen->writer_lock = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
+	  pthread_mutex_init(gen->writer_lock, NULL);
+#endif
 	  return((mus_any *)gen);
 	}
     }
@@ -8651,6 +8746,10 @@ static Float **sinc_tables = NULL;
 static int *sinc_widths = NULL;
 static int sincs = 0;
 
+#if HAVE_PTHREADS
+static pthread_mutex_t sinc_lock = PTHREAD_MUTEX_INITIALIZER;
+#endif
+
 void mus_clear_sinc_tables(void)
 {
   if (sincs)
@@ -8677,7 +8776,9 @@ static Float *init_sinc_table(int width)
     if (sinc_widths[i] == width)
       return(sinc_tables[i]);
 
-  CLM_SIMPLE_LOCK(SINC_TABLE_LOCK);
+#if HAVE_PTHREADS
+  pthread_mutex_lock(&sinc_lock);
+#endif
 
   if (sincs == 0)
     {
@@ -8719,7 +8820,9 @@ static Float *init_sinc_table(int width)
   for (i = 1, sinc_phase = sinc_freq, win_phase = win_freq; i < padded_size; i++, sinc_phase += sinc_freq, win_phase += win_freq)
     sinc_tables[loc][i] = sin(sinc_phase) * (0.5 + 0.5 * cos(win_phase)) / sinc_phase;
 
-  CLM_SIMPLE_UNLOCK(SINC_TABLE_LOCK);
+#if HAVE_PTHREADS
+  pthread_mutex_unlock(&sinc_lock);
+#endif
 
   return(sinc_tables[loc]);
 }
@@ -9410,11 +9513,18 @@ static fftw_plan rplan, iplan;
  */
 static int last_fft_size = 0;   
 
+#if HAVE_PTHREADS
+static pthread_mutex_t fft_lock = PTHREAD_MUTEX_INITIALIZER;
+#endif
+
+
 void mus_fftw(Float *rl, int n, int dir)
 {
   int i;
 
-  CLM_SIMPLE_LOCK(FFT_LOCK);
+#if HAVE_PTHREADS
+  pthread_mutex_lock(&fft_lock);
+#endif
 
   if (n != last_fft_size)
     {
@@ -9432,7 +9542,9 @@ void mus_fftw(Float *rl, int n, int dir)
   else fftw_execute(iplan);
   for (i = 0; i < n; i++) rl[i] = idata[i];
 
-  CLM_SIMPLE_UNLOCK(FFT_LOCK);
+#if HAVE_PTHREADS
+  pthread_mutex_unlock(&fft_lock);
+#endif
 }
 
 #else
@@ -9442,11 +9554,18 @@ static fftw_real *rdata = NULL, *idata = NULL;
 static rfftw_plan rplan, iplan;
 static int last_fft_size = 0;
 
+#if HAVE_PTHREADS
+static pthread_mutex_t fft_lock = PTHREAD_MUTEX_INITIALIZER;
+#endif
+
+
 void mus_fftw(Float *rl, int n, int dir)
 {
   int i;
 
-  CLM_SIMPLE_LOCK(FFT_LOCK);
+#if HAVE_PTHREADS
+  pthread_mutex_lock(&fft_lock);
+#endif
 
   if (n != last_fft_size)
     {
@@ -9465,7 +9584,9 @@ void mus_fftw(Float *rl, int n, int dir)
   else rfftw_one(iplan, rdata, idata);
   for (i = 0; i < n; i++) rl[i] = idata[i];
 
-  CLM_SIMPLE_UNLOCK(FFT_LOCK);
+#if HAVE_PTHREADS
+  pthread_mutex_unlock(&fft_lock);
+#endif
 }
 #endif
 #endif
@@ -11485,18 +11606,6 @@ void init_mus_module(void)
   data_format_zero[MUS_UBYTE] = UBYTE_ZERO;
   data_format_zero[MUS_UBSHORT] = USHORT_ZERO;
   data_format_zero[MUS_ULSHORT] = USHORT_ZERO;
-
-#if HAVE_PTHREADS
-  {
-    int i;
-    for (i = 0; i < NUM_CLM_LOCKS; i++)
-      {
-	clm_locks[i] = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
-	pthread_mutex_init(clm_locks[i], NULL);
-      }
-  }
-#endif
-
 }
 
 

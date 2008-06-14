@@ -5855,9 +5855,6 @@ index 10 (so 10/2 is the bes-jn arg):
 (define noid polyoid)
 (define noid? polyoid?)
 
-
-;;; TODO: what are min peak phases for sum of odd components?
-
 #|
 (with-sound (:clipped #f)
   (let ((samps 44100)
