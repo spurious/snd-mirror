@@ -4052,7 +4052,9 @@
 		(if (not (= (cursor ind) (* 44123 51234))) (snd-display ";bigger cursor 123: ~A" (cursor ind)))
 		(close-sound ind))))
 	
-	(let ((ind (new-sound "tmp.snd" mus-riff mus-l24int 22050 1 :size 100000)))
+	(let ((ind (new-sound "tmp.snd" mus-riff mus-l24int 22050 1 :size 100000))
+	      (old-selection-creates-region (selection-creates-region)))
+	  (set! (selection-creates-region) #t)
 	  (let ((x -0.5) 
 		(incr (/ 1.0 (frames)))) 
 	    (map-channel (lambda (n) 
@@ -4101,7 +4103,9 @@
 	      (close-sound ind1))
 	    (delete-file "tmp1.snd")
 	    (close-sound ind)
-	    (delete-file "tmp.snd")))
+	    (delete-file "tmp.snd"))
+	  (set! (selection-creates-region) old-selection-creates-region))
+
 	(let ((ind (new-sound "tmp.snd" mus-next mus-bfloat 22050 1 :size 10 :comment #f)))
 	  (map-channel (lambda (y) 1.0))
 	  (env-channel '(0 0 .1 .1 .2 .2 .3 .3 .4 .4 .5 .5 .6 .6 .7 .7 .8 .8 .9  .9))

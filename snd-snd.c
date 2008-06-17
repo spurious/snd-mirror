@@ -5532,8 +5532,6 @@ If it returns " PROC_TRUE ", the usual informative minibuffer babbling is squelc
   XEN_DEFINE_PROCEDURE(S_finish_progress_report, g_finish_progress_report_w,  0, 2, 0, H_finish_progress_report);
   XEN_DEFINE_PROCEDURE(S_progress_report,        g_progress_report_w,         1, 2, 0, H_progress_report);
 
-  /* TODO: doc/test changes to progress report stuff */
-
   XEN_DEFINE_PROCEDURE(S_close_sound,            g_close_sound_w,             0, 1, 0, H_close_sound);
   XEN_DEFINE_PROCEDURE(S_update_sound,           g_update_sound_w,            0, 1, 0, H_update_sound);
   XEN_DEFINE_PROCEDURE(S_save_sound,             g_save_sound_w,              0, 1, 0, H_save_sound);

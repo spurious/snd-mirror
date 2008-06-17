@@ -6922,11 +6922,7 @@ typedef struct {
   mus_sample_t **ibufs;
   off_t data_start, data_end, file_end;
   int file_buffer_size;
-#if HAVE_PTHREADS
-  pthread_mutex_t *reader_lock;
-#else
-  int reader_lock;
-#endif
+  mus_lock_t *reader_lock;
 } rdin;
 
 /* TODO: thread-local error handlers throughout, is read buffer the right size? why reverb write read header over and over but not pastorale? */
@@ -7205,7 +7201,7 @@ mus_any *mus_make_file_to_sample_with_buffer_size(const char *filename, int buff
 	mus_error(MUS_NO_LENGTH, "%s frames: " OFF_TD, filename, gen->file_end);
 
 #if HAVE_PTHREADS
-      gen->reader_lock = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
+      gen->reader_lock = (mus_lock_t *)malloc(sizeof(mus_lock_t));
       pthread_mutex_init(gen->reader_lock, NULL);
 #if MUS_DEBUGGING
       mus_lock_set_name(gen->reader_lock, "reader");
@@ -7461,11 +7457,7 @@ typedef struct {
   off_t out_end;
   int output_data_format;
   int output_header_type;
-#if HAVE_PTHREADS
-  pthread_mutex_t *writer_lock;
-#else
-  int writer_lock;
-#endif
+  mus_lock_t *writer_lock;
 } rdout;
 
 
@@ -7715,7 +7707,9 @@ static void flush_buffers(rdout *gen)
 static void writer_lock_error_handler(int type, char *msg)
 {
   rdout *gen;
+#if MUS_DEBUGGING
   fprintf(stderr, "hit writer error: %d (%s) %s\n", type, mus_error_type_to_string(type), msg);
+#endif
   gen = (rdout *)pthread_getspecific(mus_thread_generator);
   mus_error_set_handler(mus_thread_get_previous_error_handler());
   MUS_UNLOCK(gen->writer_lock);
@@ -7885,8 +7879,8 @@ static mus_any *mus_make_sample_to_file_with_comment_1(const char *filename, int
 		      "close(%d, %s) -> %s", 
 		      fd, gen->file_name, STRERROR(errno));
 
-#if HAVE_PTHREADS && HAVE_NESTED_FUNCTIONS
-	  gen->writer_lock = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
+#if HAVE_PTHREADS
+	  gen->writer_lock = (mus_lock_t *)malloc(sizeof(mus_lock_t));
 	  pthread_mutex_init(gen->writer_lock, NULL);
 #if MUS_DEBUGGING
 	  mus_lock_set_name(gen->writer_lock, "writer");
@@ -8776,12 +8770,7 @@ typedef struct {
 static Float **sinc_tables = NULL;
 static int *sinc_widths = NULL;
 static int sincs = 0;
-
-#if HAVE_PTHREADS
-static pthread_mutex_t sinc_lock = PTHREAD_MUTEX_INITIALIZER;
-#else
-static int sinc_lock = 0;
-#endif
+static mus_lock_t sinc_lock = MUS_LOCK_INITIALIZER;
 
 void mus_clear_sinc_tables(void)
 {
@@ -9541,12 +9530,7 @@ static fftw_plan rplan, iplan;
  *   to make sure only one thread is using a given set of arrays and their plan.
  */
 static int last_fft_size = 0;   
-
-#if HAVE_PTHREADS
-static pthread_mutex_t fft_lock = PTHREAD_MUTEX_INITIALIZER;
-#else
-static int fft_lock = 0;
-#endif
+static mus_lock_t fft_lock = MUS_LOCK_INITIALIZER;
 
 
 void mus_fftw(Float *rl, int n, int dir)
@@ -9580,12 +9564,7 @@ void mus_fftw(Float *rl, int n, int dir)
 static fftw_real *rdata = NULL, *idata = NULL;
 static rfftw_plan rplan, iplan;
 static int last_fft_size = 0;
-
-#if HAVE_PTHREADS
-static pthread_mutex_t fft_lock = PTHREAD_MUTEX_INITIALIZER;
-#else
-static int fft_lock = 0;
-#endif
+static mus_lock_t fft_lock = MUS_LOCK_INITIALIZER;
 
 
 void mus_fftw(Float *rl, int n, int dir)

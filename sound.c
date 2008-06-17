@@ -40,7 +40,7 @@ typedef struct {
   const char *file;
   int line;
   const char *func;
-  pthread_mutex_t *lock;
+  mus_lock_t *lock;
 } lock_info;
 
 typedef struct {
@@ -52,14 +52,14 @@ static pthread_key_t mus_thread_locks;
 
 
 typedef struct {
-  pthread_mutex_t *lock;
+  mus_lock_t *lock;
   const char *name;
 } lname;
 
 static lname **lnames = NULL;
 static int lnames_size = 0;
 
-static const char *lock_name(pthread_mutex_t *lock)
+static const char *lock_name(mus_lock_t *lock)
 {
   int i;
   for (i = 0; i < lnames_size; i++)
@@ -69,18 +69,19 @@ static const char *lock_name(pthread_mutex_t *lock)
 }
 
 
-void mus_lock_set_name(pthread_mutex_t *lock, const char *name)
+void mus_lock_set_name(mus_lock_t *lock, const char *name)
 {
   int i, pos = -1;
   if (lnames_size == 0)
     {
-      lnames = (lname **)calloc(32, sizeof(lname *));
+      lnames_size = 32;
+      lnames = (lname **)calloc(lnames_size, sizeof(lname *));
       pos = 0;
     }
   else
     {
       for (i = 0; i < lnames_size; i++)
-	if (lnames[i]->lock == NULL)
+	if (lnames[i] == NULL)
 	  {
 	    pos = i;
 	    break;
@@ -89,7 +90,9 @@ void mus_lock_set_name(pthread_mutex_t *lock, const char *name)
   if (pos < 0)
     {
       pos = lnames_size;
-      lnames = (lname **)realloc(lnames, (pos + 32) * sizeof(lname *));
+      lnames_size += 32;
+      lnames = (lname **)realloc(lnames, lnames_size * sizeof(lname *));
+      for (i = pos; i < lnames_size; i++) lnames[i] = NULL;
     }
   lnames[pos] = (lname *)calloc(1, sizeof(lname));
   lnames[pos]->lock = lock;
@@ -97,11 +100,12 @@ void mus_lock_set_name(pthread_mutex_t *lock, const char *name)
 }
 
 
-void mus_lock_unset_name(pthread_mutex_t *lock)
+void mus_lock_unset_name(mus_lock_t *lock)
 {
   int i;
   for (i = 0; i < lnames_size; i++)
-    if (lock == lnames[i]->lock)
+    if ((lnames[i]) &&
+	(lock == lnames[i]->lock))
       {
 	free(lnames[i]);
 	lnames[i] = NULL;
@@ -112,7 +116,7 @@ void mus_lock_unset_name(pthread_mutex_t *lock)
 
 static char lock_buffer[128];
 
-static char *describe_lock(pthread_mutex_t *lock)
+static char *describe_lock(mus_lock_t *lock)
 {
   mus_snprintf(lock_buffer, 128, "%p: %s", lock, lock_name(lock));
   return(lock_buffer);
@@ -122,17 +126,22 @@ static char *describe_lock(pthread_mutex_t *lock)
 static void describe_locks(thread_locks *locks)
 {
   int i;
-  fprintf(stderr, "\nCurrent locks:\n");
-  for (i = 0; i <= locks->top_lock; i++)
-    fprintf(stderr, "    %s: %s[%d] %s\n", 
-	    describe_lock(locks->lock_list[i].lock),
-	    locks->lock_list[i].file,
-	    locks->lock_list[i].line,
-	    locks->lock_list[i].func);
-  fprintf(stderr, "\n");
+  if (locks->top_lock < 0)
+    fprintf(stderr, "no current locks\n");
+  else
+    {
+      fprintf(stderr, "\nCurrent locks:\n");
+      for (i = 0; i <= locks->top_lock; i++)
+	fprintf(stderr, "    %s: %s[%d] %s\n", 
+		describe_lock(locks->lock_list[i].lock),
+		locks->lock_list[i].file,
+		locks->lock_list[i].line,
+		locks->lock_list[i].func);
+      fprintf(stderr, "\n");
+    }
 }
 
-int mus_lock(pthread_mutex_t *lock, const char *file, int line, const char *func)
+int mus_lock(mus_lock_t *lock, const char *file, int line, const char *func)
 {
   int result;
   thread_locks *locks;
@@ -176,7 +185,7 @@ int mus_lock(pthread_mutex_t *lock, const char *file, int line, const char *func
 }
 
 
-int mus_unlock(pthread_mutex_t *lock, const char *file, int line, const char *func)
+int mus_unlock(mus_lock_t *lock, const char *file, int line, const char *func)
 {
   int result;
   thread_locks *locks;
@@ -191,17 +200,18 @@ int mus_unlock(pthread_mutex_t *lock, const char *file, int line, const char *fu
     }
   else
     {
-      if (lock != locks->lock_list[locks->top_lock].lock)
+      if (locks->top_lock < 0)
 	{
-	  fprintf(stderr, "just released lock %s out of order? %s[%d]:%s\n", describe_lock(lock), file, line, func);
-	  describe_locks(locks);
+	  fprintf(stderr, "redundant unlock of %s? %s[%d]:%s\n", describe_lock(lock), file, line, func);
 	}
-      locks->top_lock--;
-      if (locks->top_lock < -1)  /* preincremented */
+      else
 	{
-	  fprintf(stderr, "released too many locks?? %s[%d]:%s\n", file, line, func);
-	  describe_locks(locks);
-	  locks->top_lock = -1;
+	  if (lock != locks->lock_list[locks->top_lock].lock)
+	    {
+	      fprintf(stderr, "just released lock %s out of order? %s[%d]:%s\n", describe_lock(lock), file, line, func);
+	      describe_locks(locks);
+	    }
+	  locks->top_lock--;
 	}
     }
   return(result);
@@ -219,7 +229,7 @@ static void free_locks(void *ulocks)
 
 
 /* mus_error handling is tricky enough without threads!  We have to keep the previous handlers
- *   intact within each thread, then in mus_error itself, as the thread what its current
+ *   intact within each thread, then in mus_error itself, ask the thread what its current
  *   error handler is.
  */
 
@@ -230,7 +240,7 @@ static pthread_key_t mus_thread_previous_error_handler;
 static mus_error_handler_t *mus_error_handler = NULL;
 #endif
 
-mus_error_handler_t *mus_error_set_handler_1(mus_error_handler_t *new_error_handler, const char *file, int line, const char *func)
+mus_error_handler_t *mus_error_set_handler(mus_error_handler_t *new_error_handler)
 {
   mus_error_handler_t *old_handler;
 #if HAVE_PTHREADS
@@ -262,12 +272,7 @@ mus_error_handler_t *mus_thread_get_previous_error_handler(void)
 static char *mus_error_buffer = NULL;
 static int mus_error_buffer_size = 1024;
 
-#if HAVE_PTHREADS
-static pthread_mutex_t sound_error_lock = PTHREAD_MUTEX_INITIALIZER;
-#else
-static int sound_error_lock = 0;
-#endif
-
+static mus_lock_t sound_error_lock = MUS_LOCK_INITIALIZER;
 
 int mus_error(int error, const char *format, ...)
 {
@@ -338,11 +343,8 @@ mus_print_handler_t *mus_print_set_handler(mus_print_handler_t *new_print_handle
 }
 
 
-#if HAVE_PTHREADS
-static pthread_mutex_t sound_print_lock = PTHREAD_MUTEX_INITIALIZER;
-#else
-static int sound_print_lock = 0;
-#endif
+
+static mus_lock_t sound_print_lock = MUS_LOCK_INITIALIZER;
 
 void mus_print(const char *format, ...)
 {
@@ -520,13 +522,7 @@ typedef struct {
 
 static int sound_table_size = 0;
 static sound_file **sound_table = NULL;
-
-#if HAVE_PTHREADS
-static pthread_mutex_t sound_table_lock = PTHREAD_MUTEX_INITIALIZER;
-#else
-static int sound_table_lock = 0;
-#endif
-
+static mus_lock_t sound_table_lock = MUS_LOCK_INITIALIZER;
 
 
 static void free_sound_file(sound_file *sf)
@@ -869,10 +865,48 @@ static sound_file *fill_sf_record(const char *name, sound_file *sf)
 }
 
 
-static sound_file *read_sound_file_header(const char *name) /* 2 calls on this */
+#if HAVE_PTHREADS
+static mus_error_handler_t *old_header_read_error_handler; /* this should be safe -- only one thread can hold sound_table_lock */
+
+static void sound_table_lock_error_handler(int type, char *msg)
 {
+  /* hit error during header read, so reset current error handler to the one we started with, unlock sound_table_lock, pass error to osiginal handler */
+#if MUS_DEBUGGING
+  fprintf(stderr, "hit header error: %d (%s) %s\n", type, mus_error_type_to_string(type), msg);
+#endif
+  mus_error_set_handler(old_header_read_error_handler);
+  MUS_UNLOCK(&sound_table_lock);
+  mus_error(type, msg);
+}
+#endif
+
+
+static sound_file *read_sound_file_header(const char *name) /* 2 calls on this: mus_sound_open_input and get_sf */
+{
+  int result;
   mus_sound_initialize();
-  if (mus_header_read(name) != MUS_ERROR)
+
+  /* if threads, sound_table_lock is set at this point, and the header read can throw an error, so
+   *    we need to unlock while spinning back up the error handler stack.  But there are only two
+   *    levels of error handler saved in the thread-specific data, so we need to make sure to
+   *    save and restore the current handler by hand, while not messing with the previous handler.
+   */
+  
+#if HAVE_PTHREADS
+  /* save current error handler, reset to sound_table_unlock case... */
+  old_header_read_error_handler = (mus_error_handler_t *)pthread_getspecific(mus_thread_error_handler);
+  pthread_setspecific(mus_thread_error_handler, (void *)sound_table_lock_error_handler);
+#endif
+
+  result = mus_header_read(name);
+
+#if HAVE_PTHREADS
+  /* no error, reset current error handler to the one we started with */
+  pthread_setspecific(mus_thread_error_handler, (void *)old_header_read_error_handler);
+#endif
+
+  /* this portion won't trigger mus_error */
+  if (result != MUS_ERROR)
     return(fill_sf_record(name, add_to_sound_table(name))); /* only call on fill_sf_record and add_to_sound_table */
   return(NULL);
 }
@@ -1257,24 +1291,22 @@ char *mus_sound_comment(const char *name)
 int mus_sound_open_input(const char *arg) 
 {
   int fd = -1;
-  MUS_LOCK(&sound_table_lock);
   if (!(mus_file_probe(arg)))
     mus_error(MUS_CANT_OPEN_FILE, S_mus_sound_open_input " can't open %s: %s", arg, STRERROR(errno));
   else
     {
       sound_file *sf = NULL;
       mus_sound_initialize();
-      sf = find_sound_file(arg);
-      if (!sf)
-	sf = read_sound_file_header(arg);
+      MUS_LOCK(&sound_table_lock);
+      sf = get_sf(arg);
       if (sf) 
 	{
 	  fd = mus_file_open_read(arg);
 	  mus_file_open_descriptors(fd, arg, sf->data_format, sf->datum_size, sf->data_location, sf->chans, sf->header_type);
 	  lseek(fd, sf->data_location, SEEK_SET);
 	}
+      MUS_UNLOCK(&sound_table_lock);
     }
-  MUS_UNLOCK(&sound_table_lock);
   return(fd);
 }
 
@@ -1287,7 +1319,6 @@ int mus_sound_open_output(const char *arg, int srate, int chans, int data_format
   err = mus_write_header(arg, header_type, srate, chans, 0, data_format, comment);
   if (err != MUS_ERROR)
     {
-      /* PERHAPS: io_lock?? */
       fd = mus_file_open_write(arg);
       if (fd != -1)
 	mus_file_open_descriptors(fd,

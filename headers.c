@@ -5758,7 +5758,7 @@ static void local_mus_error(int type, char *msg)
 }
 
 
-int mus_header_read_11(const char *name, const char *file, int line, const char *func)
+int mus_header_read(const char *name)
 {
   int fd, err = 0;
   fd = mus_file_open_read(name);

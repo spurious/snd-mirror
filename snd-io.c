@@ -560,13 +560,7 @@ typedef struct {
 
 static tempfile_ctr **tempfiles = NULL;
 static int tempfiles_size = 0;
-
-
-#if HAVE_PTHREADS
-static pthread_mutex_t temp_file_lock = PTHREAD_MUTEX_INITIALIZER;
-#else
-static int temp_file_lock = 0;
-#endif
+static mus_lock_t temp_file_lock = MUS_LOCK_INITIALIZER;
 
 void remember_temp(const char *filename, int chans)
 {

@@ -970,15 +970,13 @@ static void *forget_pointer(void *ptr, const char *func, const char *file, int l
   return(rtp);
 }
 
-#if HAVE_PTHREADS
-static pthread_mutex_t pointer_lock = PTHREAD_MUTEX_INITIALIZER;
-#if MUS_DEBUGGING
+static mus_lock_t pointer_lock = MUS_LOCK_INITIALIZER;
+#if HAVE_PTHREADS && MUS_DEBUGGING
 void utils_set_pointer_lock_name(void);
 void utils_set_pointer_lock_name(void)
 {
   mus_lock_set_name(&pointer_lock, "pointer");
 }
-#endif
 #endif
 
 static int remember_pointer(void *ptr, void *true_ptr, size_t len, const char *func, const char *file, int line)
