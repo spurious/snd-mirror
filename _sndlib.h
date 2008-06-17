@@ -360,7 +360,12 @@ extern "C" {
 
 typedef void mus_error_handler_t(int type, char *msg);
 
+#define mus_error_set_handler(Handler) mus_error_set_handler_1(Handler, __FILE__, __LINE__, __FUNCTION__)
+  mus_error_handler_t *mus_error_set_handler_1(mus_error_handler_t *new_error_handler, const char *file, int line, const char *func);
+#if 0
 mus_error_handler_t *mus_error_set_handler(mus_error_handler_t *new_error_handler);
+#endif
+
 int mus_make_error(const char *error_name);
 const char *mus_error_type_to_string(int err);
 
@@ -595,7 +600,11 @@ off_t mus_header_true_length(void);
 int mus_header_original_format(void);
 off_t mus_samples_to_bytes(int format, off_t size);
 off_t mus_bytes_to_samples(int format, off_t size);
+#define mus_header_read(Name) mus_header_read_11(Name, __FILE__, __LINE__, __FUNCTION__)
+  int mus_header_read_11(const char *name, const char *file, int line, const char *func);
+#if 0
 int mus_header_read(const char *name);
+#endif
 int mus_header_write(const char *name, int type, int srate, int chans, off_t loc, off_t size_in_samples, int format, const char *comment, int len);
 int mus_write_header(const char *name, int type, int in_srate, int in_chans, off_t size_in_samples, int format, const char *comment);
 off_t mus_header_aux_comment_start(int n);
@@ -654,6 +663,31 @@ char *strdup(const char *str);
 #if (!HAVE_FILENO)
 int fileno(FILE *fp);
 #endif
+
+
+#if HAVE_PTHREADS
+
+  void mus_thread_restore_error_handler(void);
+  mus_error_handler_t *mus_thread_get_previous_error_handler(void);
+
+#if MUS_DEBUGGING
+  /* io.c -- check for lock order troubles and so on */
+  #define MUS_LOCK(Lock) mus_lock(Lock, __FILE__, __LINE__, __FUNCTION__)
+  #define MUS_UNLOCK(Lock) mus_unlock(Lock, __FILE__, __LINE__, __FUNCTION__)
+  int mus_lock(pthread_mutex_t *lock, const char *file, int line, const char *func);
+  int mus_unlock(pthread_mutex_t *lock, const char *file, int line, const char *func);
+  void mus_lock_set_name(pthread_mutex_t *lock, const char *name);
+  void mus_lock_unset_name(pthread_mutex_t *lock);
+#else
+  #define MUS_LOCK(Lock) pthread_mutex_lock(Lock)
+  #define MUS_UNLOCK(Lock) pthread_mutex_unlock(Lock)
+#endif
+
+#else
+  #define MUS_LOCK(Lock) do {} while(0)
+  #define MUS_UNLOCK(Lock) do {} while(0)
+#endif
+
 
 #ifdef __cplusplus
 }

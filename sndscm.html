@@ -7690,13 +7690,15 @@ n=5:
 899171, 40000 2000
 -->
 
-<p>The upshot of all this is that there are apparently lots of
+<p>Durn thing looks like a warped, upside-down bed of nails.
+The upshot of all this is that there are apparently lots of
 equivalent minima; we're happy to find one that's reasonably close
 to the actual minimum.  On the other two questions: I see no pattern
 to these phases, and sqrt(n) is always too low.  
 I think it's approaching (expt n .6) as n increases.  Here is a graph of the values I've found so far
-(minimum peak amp in blue plotted against sqrt(n) in red).  If plotted as a log-log graph, it is
-a straight line with a slope just less than 0.6.
+(minimum peak amp in blue plotted against n^.6 in green).  If plotted as a log-log graph, it is
+a straight line with a slope just less than 0.6. I've included the n equal odd components min peak amp
+in red (I did not expect the two cases to have the same minima!).
 On the right are the actual phases used, plotted as concentric circles from
 n=1 to n=128, using the "jet" colormap to show the component number and
 the position on the circle to show the phase; all fundamentals have initial
@@ -7707,14 +7709,14 @@ phase 0.0.
 <img src="pix/sqrt.png" alt="sqrt n">
 </td><td width=40></td><td>
 <img src="pix/peakphases.png" alt="peak phases">
-</td></tr></table>
+</td></tr>
+</table>
 
 <!--
-;;; amp vs sqrt:
-(with-sound (:channels 2 :clipped #f)
+(with-sound (:channels 3 :clipped #f)
   (do ((i 0 (1+ i)))
       ((> i 128))
-    (let ((min-val (vector-find-if (lambda (val)
+    (let ((n-min-val (vector-find-if (lambda (val)
 				     (and val
 					  (vector? val)
 					  (= (vector-ref val 0) i)
@@ -7727,9 +7729,24 @@ phase 0.0.
 						  (set! a-val (vector-ref val k))))
 					    a-val)))
 				   noid-min-peak-phases)))
-      (if min-val
-	  (outa i min-val))
-      (outb i (expt (exact->inexact i) .5)))))
+
+      (let ((odd-min-val (vector-find-if (lambda (val)
+					   (and val
+						(vector? val)
+						(= (vector-ref val 0) i)
+						(let ((a-val (vector-ref val 1))
+						      (a-len (vector-length val)))
+						  (do ((k 2 (1+ k)))
+						      ((= k a-len))
+						    (if (and (number? (vector-ref val k))
+							     (< (vector-ref val k) a-val))
+							(set! a-val (vector-ref val k))))
+						  a-val)))
+					 nodd-min-peak-phases)))
+
+	(outa i (or n-min-val 0.0))
+	(outb i (or odd-min-val 0.0))
+	(outc i (expt (exact->inexact i) .6))))))
 
 (set! (x-axis-label 0 0) "n")
 (set! (x-axis-label 0 1) "n")
@@ -7739,7 +7756,8 @@ phase 0.0.
 
 <!-- the circular phases code is in peak-phases.scm -->
 
-<p>And on a really random note, if the component amplitudes are scaled by (say) 0.5^k,
+<p>
+And on a really random note, if the component amplitudes are scaled by (say) 0.5^k,
 you get a similar overall shape, but with the minimum points placed differently.  So, we can't
 simply re-use the equal amplitude phases.
 </p>
@@ -7755,7 +7773,7 @@ simply re-use the equal amplitude phases.
 <!-- main-index |pianodoc:piano model -->
 
 <p>These files are translations of CLM's piano.ins, a <A HREF="http://ccrma.stanford.edu/overview/pastmodeling.html#SECTION000922600000000000000">piano physical model</A> by Scott van Duyne.  There is also a paper:
-Julius O. Smith and Scott A. Van Duyne, "Commuted piano synthesis," in Proc. Int. Computer Music Conf., Banff, Canada, September 1995, pp. 335--342.
+Julius O. Smith and Scott A. Van Duyne, "Commuted piano synthesis," in Proc. Int. Computer Music Conf., Banff, Canada, September 1995, pp. 335 - 342.
 To paraphrase these sources, the model includes multiple coupled strings, a nonlinear hammer, and an arbitrarily large soundboard and enclosure.
 The actual instrument name is 'p':
 </p>

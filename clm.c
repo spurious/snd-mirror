@@ -6923,12 +6923,19 @@ typedef struct {
   off_t data_start, data_end, file_end;
   int file_buffer_size;
 #if HAVE_PTHREADS
-  pthread_mutex_t *free_reader_lock;
-#if HAVE_NESTED_FUNCTIONS
-  pthread_mutex_t *reader_lock; /* if no nested functions, this lock is a global stopping all reads */
-#endif
+  pthread_mutex_t *reader_lock;
+#else
+  int reader_lock;
 #endif
 } rdin;
+
+/* TODO: thread-local error handlers throughout, is read buffer the right size? why reverb write read header over and over but not pastorale? */
+/* TODO: what happens if joing thread, non-thread-local error causes gen holding lock to be freed? -- lock is destroyed but is thread also killed? */
+/* TODO: if error closes *output* and a bunch of threads are writing to it, how to clean up? */
+/*        could with-sound threads list be used to cleanup? -- each would have the associated gen -- how to access from scheme? */
+/*        thread-destroy routine could free its gen? */
+/* thread specific current and old error handlers -- don't depend on stack here */
+/* all locks need to be cleared at error exit (sinc etc), and sp->locks at sp close etc */
 
 
 static char *describe_file_to_sample(mus_any *ptr)
@@ -6965,10 +6972,11 @@ static int free_file_to_sample(mus_any *p)
       if (ptr->core->end) ((*ptr->core->end))(p);
       clm_free(ptr->file_name);
 #if HAVE_PTHREADS
-      pthread_mutex_destroy(ptr->free_reader_lock);
-#if HAVE_NESTED_FUNCTIONS
-      pthread_mutex_destroy(ptr->reader_lock);
+#if MUS_DEBUGGING
+      mus_lock_unset_name(ptr->reader_lock);
 #endif
+      /* MUS_UNLOCK(ptr->reader_lock); */
+      pthread_mutex_destroy(ptr->reader_lock);
 #endif
       clm_free(ptr);
     }
@@ -7024,18 +7032,22 @@ static mus_any_class FILE_TO_SAMPLE_CLASS = {
 };
 
 
-#if HAVE_PTHREADS && (!HAVE_NESTED_FUNCTIONS)
-static pthread_mutex_t reader_lock = PTHREAD_MUTEX_INITIALIZER;
+#if HAVE_PTHREADS
+static pthread_key_t mus_thread_generator;
 
-static mus_error_handler_t *clm_old_reader_lock_error_handler;
-
-static void clm_reader_lock_error_handler(int type, char *msg)
+static void reader_lock_error_handler(int type, char *msg)
 {
   /* if mus_error is called while in a locked section, first unlock, then signal the error with the outer (original) error handler */
-  /*   since in this case we don't have nested functions, there's no clean way to know which IO gen is holding the current lock */
 
-  mus_error_set_handler(clm_old_reader_lock_error_handler);
-  pthread_mutex_unlock(&reader_lock);
+  /* TODO: this needs to keep a stack of currently held locks, and unlock all of them.
+   *     for example, it is possible to have both writer_lock and sound_table_lock held by the same thread.
+   *     we don't actually care about the generator
+   */
+
+  rdin *gen;
+  gen = (rdin *)pthread_getspecific(mus_thread_generator);
+  mus_thread_restore_error_handler();
+  MUS_UNLOCK(gen->reader_lock);
   mus_error(type, msg);
 }
 #endif
@@ -7048,91 +7060,95 @@ static Float file_sample(mus_any *ptr, off_t samp, int chan)
    * return Float at samp (frame) 
    */
   rdin *gen = (rdin *)ptr;
+  Float result = 0.0;
 
-#if HAVE_PTHREADS && HAVE_NESTED_FUNCTIONS
-  mus_error_handler_t *clm_old_reader_lock_error_handler;
-  auto void clm_reader_lock_error_handler(int type, char *msg);
-  void clm_reader_lock_error_handler(int type, char *msg)
-  {
-    mus_error_set_handler(clm_old_reader_lock_error_handler);
-    pthread_mutex_unlock(gen->reader_lock);
-    mus_error(type, msg);
-  }
-#endif
-
-  if ((samp < 0) || 
-      (samp >= gen->file_end) ||
-      (chan >= gen->chans))
+  if (chan >= gen->chans)
     return(0.0);
 
-#if HAVE_PTHREADS
-#if HAVE_NESTED_FUNCTIONS
-  pthread_mutex_lock(gen->reader_lock);
-#else
-  pthread_mutex_lock(&reader_lock);
-#endif
-  clm_old_reader_lock_error_handler = mus_error_set_handler(clm_reader_lock_error_handler);
-#endif
+  MUS_LOCK(gen->reader_lock);
 
-  if ((samp > gen->data_end) || 
-      (samp < gen->data_start))
+  if ((samp <= gen->data_end) &&
+      (samp >= gen->data_start))
     {
-      int fd, i;
-      off_t newloc;
-      /* read in first buffer start either at samp (dir > 0) or samp-bufsize (dir < 0) */
-      if (gen->dir >= 0) 
-	newloc = samp; 
-      else newloc = (int)(samp - (gen->file_buffer_size * .75));
-      /* The .75 in the backwards read is trying to avoid reading the full buffer on 
-       * nearly every sample when we're oscillating around the
-       * nominal buffer start/end (in src driven by an oscil for example)
-       */
-      if (newloc < 0) newloc = 0;
-      gen->data_start = newloc;
-      gen->data_end = newloc + gen->file_buffer_size - 1;
-      fd = mus_sound_open_input(gen->file_name);
-      if (fd == -1)
-	return((Float)mus_error(MUS_CANT_OPEN_FILE, 
-				"open(%s) -> %s", 
-				gen->file_name, STRERROR(errno)));
-      else
-	{ 
-	  if (gen->ibufs == NULL) 
-	    {
-	      gen->ibufs = (mus_sample_t **)clm_malloc(gen->chans * sizeof(mus_sample_t *), "input buffers");
-	      for (i = 0; i < gen->chans; i++)
-		gen->ibufs[i] = (mus_sample_t *)clm_calloc_atomic(gen->file_buffer_size, sizeof(mus_sample_t), "input buffer");
-	    }
-	  mus_file_seek_frame(fd, gen->data_start);
-
-	  if ((gen->data_start + gen->file_buffer_size) >= gen->file_end)
-	    mus_file_read_chans(fd, 0, gen->file_end - gen->data_start - 1, gen->chans, gen->ibufs, gen->ibufs);
-	  else mus_file_read_chans(fd, 0, gen->file_buffer_size - 1, gen->chans, gen->ibufs, gen->ibufs);
-
-	  /* we have to check file_end here because chunked files can have trailing chunks containing
-	   *   comments or whatever.  io.c (mus_file_read_*) merely calls read, and translates bytes --
-	   *   if it gets fewer than requested, it zeros from the point where the incoming file data stopped,
-	   *   but that can be far beyond the actual end of the sample data!  It is at this level that
-	   *   we know how much data is actually supposed to be in the file. 
-	   *
-	   * Also, file_end is the number of frames, so we should not read samp # file_end (see above).
+      result = (Float)MUS_SAMPLE_TO_FLOAT(gen->ibufs[chan][samp - gen->data_start]);
+    }
+  else
+    {
+      if ((samp >= 0) &&
+	  (samp < gen->file_end))
+	{
+	  /* got to read it from the file */
+	  int fd, i;
+	  off_t newloc;
+	  /* read in first buffer start either at samp (dir > 0) or samp-bufsize (dir < 0) */
+	  
+#if HAVE_PTHREADS
+	  mus_error_handler_t *old_error_handler;
+	  
+	  pthread_setspecific(mus_thread_generator, (void *)gen);
+	  old_error_handler = mus_error_set_handler(reader_lock_error_handler);
+#endif
+	  
+	  if (gen->dir >= 0) 
+	    newloc = samp; 
+	  else newloc = (int)(samp - (gen->file_buffer_size * .75));
+	  /* The .75 in the backwards read is trying to avoid reading the full buffer on 
+	   * nearly every sample when we're oscillating around the
+	   * nominal buffer start/end (in src driven by an oscil for example)
 	   */
-
-	  mus_sound_close_input(fd);
-	  if (gen->data_end > gen->file_end) gen->data_end = gen->file_end;
+	  if (newloc < 0) newloc = 0;
+	  gen->data_start = newloc;
+	  gen->data_end = newloc + gen->file_buffer_size - 1;
+	  fd = mus_sound_open_input(gen->file_name);
+	  if (fd == -1)
+	    return((Float)mus_error(MUS_CANT_OPEN_FILE, 
+				    "open(%s) -> %s", 
+				    gen->file_name, STRERROR(errno)));
+	  else
+	    { 
+	      if (gen->ibufs == NULL) 
+		{
+		  gen->ibufs = (mus_sample_t **)clm_malloc(gen->chans * sizeof(mus_sample_t *), "input buffers");
+		  for (i = 0; i < gen->chans; i++)
+		    gen->ibufs[i] = (mus_sample_t *)clm_calloc_atomic(gen->file_buffer_size, sizeof(mus_sample_t), "input buffer");
+		}
+	      mus_file_seek_frame(fd, gen->data_start);
+	      
+	      if ((gen->data_start + gen->file_buffer_size) >= gen->file_end)
+		mus_file_read_chans(fd, 0, gen->file_end - gen->data_start - 1, gen->chans, gen->ibufs, gen->ibufs);
+	      else mus_file_read_chans(fd, 0, gen->file_buffer_size - 1, gen->chans, gen->ibufs, gen->ibufs);
+	      
+	      /* we have to check file_end here because chunked files can have trailing chunks containing
+	       *   comments or whatever.  io.c (mus_file_read_*) merely calls read, and translates bytes --
+	       *   if it gets fewer than requested, it zeros from the point where the incoming file data stopped,
+	       *   but that can be far beyond the actual end of the sample data!  It is at this level that
+	       *   we know how much data is actually supposed to be in the file. 
+	       *
+	       * Also, file_end is the number of frames, so we should not read samp # file_end (see above).
+	       */
+	      
+	      mus_sound_close_input(fd);
+	      if (gen->data_end > gen->file_end) gen->data_end = gen->file_end;
+	    }
+	  
+	  result = (Float)MUS_SAMPLE_TO_FLOAT(gen->ibufs[chan][samp - gen->data_start]);
+	  
+#if HAVE_PTHREADS
+	  mus_error_set_handler(old_error_handler);
+#endif
 	}
     }
 
-#if HAVE_PTHREADS
-#if HAVE_NESTED_FUNCTIONS
-  pthread_mutex_unlock(gen->reader_lock);
-#else
-  pthread_mutex_unlock(&reader_lock);
-#endif
-  mus_error_set_handler(clm_old_reader_lock_error_handler);
-#endif
+  MUS_UNLOCK(gen->reader_lock);
 
-  return((Float)MUS_SAMPLE_TO_FLOAT(gen->ibufs[chan][samp - gen->data_start]));
+#if MUS_DEBUGGING
+  if (fabs(result) > 100.0)
+    {
+      fprintf(stderr, "read %f at " OFF_TD " in chan %d of %s\n", result, samp, chan, mus_describe(ptr));
+      abort();
+    }
+#endif
+  return(result);
 }
 
 
@@ -7144,17 +7160,13 @@ static int file_to_sample_end(mus_any *ptr)
       if (gen->ibufs)
 	{
 	  int i;
-#if HAVE_PTHREADS
-	  pthread_mutex_lock(gen->free_reader_lock);
-#endif
+	  MUS_LOCK(gen->reader_lock);
 	  for (i = 0; i < gen->chans; i++)
 	    if (gen->ibufs[i]) 
 	      clm_free(gen->ibufs[i]);
 	  clm_free(gen->ibufs);
 	  gen->ibufs = NULL;
-#if HAVE_PTHREADS
-	  pthread_mutex_unlock(gen->free_reader_lock);
-#endif
+	  MUS_UNLOCK(gen->reader_lock);
 	}
     }
   return(0);
@@ -7171,6 +7183,7 @@ bool mus_file_to_sample_p(mus_any *ptr)
 mus_any *mus_make_file_to_sample_with_buffer_size(const char *filename, int buffer_size)
 {
   rdin *gen;
+
   if (filename == NULL)
     mus_error(MUS_NO_FILE_NAME_PROVIDED, S_make_file_to_sample " requires a file name");
   else
@@ -7192,11 +7205,10 @@ mus_any *mus_make_file_to_sample_with_buffer_size(const char *filename, int buff
 	mus_error(MUS_NO_LENGTH, "%s frames: " OFF_TD, filename, gen->file_end);
 
 #if HAVE_PTHREADS
-      gen->free_reader_lock = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
-      pthread_mutex_init(gen->free_reader_lock, NULL);
-#if HAVE_NESTED_FUNCTIONS
       gen->reader_lock = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
       pthread_mutex_init(gen->reader_lock, NULL);
+#if MUS_DEBUGGING
+      mus_lock_set_name(gen->reader_lock, "reader");
 #endif
 #endif
 
@@ -7449,8 +7461,10 @@ typedef struct {
   off_t out_end;
   int output_data_format;
   int output_header_type;
-#if HAVE_PTHREADS && HAVE_NESTED_FUNCTIONS
+#if HAVE_PTHREADS
   pthread_mutex_t *writer_lock;
+#else
+  int writer_lock;
 #endif
 } rdout;
 
@@ -7475,7 +7489,10 @@ static int free_sample_to_file(mus_any *p)
     {
       if (ptr->core->end) ((*ptr->core->end))(p);
       clm_free(ptr->file_name);
-#if HAVE_PTHREADS && HAVE_NESTED_FUNCTIONS
+#if HAVE_PTHREADS
+#if MUS_DEBUGGING
+      mus_lock_unset_name(ptr->writer_lock);
+#endif
       pthread_mutex_destroy(ptr->writer_lock);
 #endif
       clm_free(ptr);
@@ -7525,7 +7542,7 @@ static mus_any_class SAMPLE_TO_FILE_CLASS = {
 };
 
 static int *data_format_zero = NULL;
-
+int mus_sound_close_output_briefly(int fd, off_t bytes_of_data);
 
 static void flush_buffers(rdout *gen)
 {
@@ -7552,8 +7569,9 @@ static void flush_buffers(rdout *gen)
       else
 	{
 	  mus_file_write(fd, 0, gen->out_end, gen->chans, gen->obufs);
+	  /* briefly here */
 	  mus_sound_close_output(fd, 
-				 (gen->out_end + 1) * gen->chans * mus_bytes_per_sample(mus_sound_data_format(gen->file_name)));	  
+					 (gen->out_end + 1) * gen->chans * mus_bytes_per_sample(mus_sound_data_format(gen->file_name)));	  
 	}
     }
   else
@@ -7614,7 +7632,7 @@ static void flush_buffers(rdout *gen)
 
       /* if the caller reset clm_file_buffer_size during a run, frames_to_add might be greater than the assumed buffer size,
        *   so we need to complain and fix up the limits.  In CLM, the size is set in sound.lisp, begin-with-sound.
-       *   In Snd via mus_set_file_buffer_size in clm2xen.c.  The initial default is set in init_mus_module
+       *   In Snd via mus_set_file_buffer_size in clm2xen.c.  The initial default is set in mus_initialize
        *   called in CLM by clm-initialize-links via in cmus.c, and in Snd in clm2xen.c when the module is setup.
        */
       if (frames_to_add >= clm_file_buffer_size) 
@@ -7679,7 +7697,12 @@ static void flush_buffers(rdout *gen)
       mus_file_write(fd, 0, frames_to_add, gen->chans, addbufs);
       if (current_file_frames <= gen->out_end) current_file_frames = gen->out_end + 1;
 
+      /* briefly here */
       mus_sound_close_output(fd, current_file_frames * gen->chans * mus_bytes_per_sample(data_format));
+
+      /* TODO: update the sf record here so that we don't stupidly re-read the header on the next write! */
+      /* need to reset sf->write_date and sf->samples, true_file_length */
+      /* mus_sound_close_output should do this! */
 
       for (i = 0; i < gen->chans; i++) 
 	free(addbufs[i]);  /* used calloc above to make sure we can check for unsuccessful allocation */
@@ -7688,15 +7711,14 @@ static void flush_buffers(rdout *gen)
 }
 
 
-#if HAVE_PTHREADS && (!HAVE_NESTED_FUNCTIONS)
-static pthread_mutex_t writer_lock = PTHREAD_MUTEX_INITIALIZER;
-
-static mus_error_handler_t *clm_old_writer_lock_error_handler;
-
-static void clm_writer_lock_error_handler(int type, char *msg)
+#if HAVE_PTHREADS
+static void writer_lock_error_handler(int type, char *msg)
 {
-  mus_error_set_handler(clm_old_writer_lock_error_handler);
-  pthread_mutex_unlock(&writer_lock);
+  rdout *gen;
+  fprintf(stderr, "hit writer error: %d (%s) %s\n", type, mus_error_type_to_string(type), msg);
+  gen = (rdout *)pthread_getspecific(mus_thread_generator);
+  mus_error_set_handler(mus_thread_get_previous_error_handler());
+  MUS_UNLOCK(gen->writer_lock);
   mus_error(type, msg);
 }
 #endif
@@ -7705,54 +7727,71 @@ static void clm_writer_lock_error_handler(int type, char *msg)
 static Float sample_file(mus_any *ptr, off_t samp, int chan, Float val)
 {
   rdout *gen = (rdout *)ptr;
+  if (chan >= gen->chans)
+    return(val);
 
-#if HAVE_PTHREADS && HAVE_NESTED_FUNCTIONS
-  mus_error_handler_t *clm_old_writer_lock_error_handler;
-  auto void clm_writer_lock_error_handler(int type, char *msg);
-  void clm_writer_lock_error_handler(int type, char *msg)
-  {
-    mus_error_set_handler(clm_old_writer_lock_error_handler);
-    pthread_mutex_unlock(gen->writer_lock);
-    mus_error(type, msg);
-  }
-#endif
+  /* this can't be completely safe -- what if flush below is interrupted etc */
+  /* so set the lock here but not the error handler -- same in read case */
+  
+  MUS_LOCK(gen->writer_lock);
 
-  if (chan < gen->chans)
+  /* try to handle the simple case and get out */
+  if ((samp <= gen->data_end) &&
+      (samp >= gen->data_start))
     {
+      gen->obufs[chan][samp - gen->data_start] += MUS_FLOAT_TO_SAMPLE(val);
+#if MUS_DEBUGGING
+      if (fabs(gen->obufs[chan][samp - gen->data_start]) > 100.0)
+	{
+	  fprintf(stderr, "write %f -> %f at " OFF_TD " in chan %d of %s\n", 
+		  val, 
+		  MUS_SAMPLE_TO_FLOAT(gen->obufs[chan][samp - gen->data_start]),
+		  samp, chan, mus_describe(ptr));
+	  abort();
+	}
+#endif
+      if (samp > gen->out_end) 
+	gen->out_end = samp;
+    }
+  else
+    {
+      int j;
 
 #if HAVE_PTHREADS
-#if HAVE_NESTED_FUNCTIONS
-      pthread_mutex_lock(gen->writer_lock);
-#else
-      pthread_mutex_lock(&writer_lock);
-#endif
-      clm_old_writer_lock_error_handler = mus_error_set_handler(clm_writer_lock_error_handler);
+      mus_error_handler_t *old_error_handler;
+
+      pthread_setspecific(mus_thread_generator, (void *)gen);
+      old_error_handler = mus_error_set_handler(writer_lock_error_handler);
 #endif
 
-      if ((samp > gen->data_end) || 
-	  (samp < gen->data_start))
-	{
-	  int j;
-	  flush_buffers(gen);
-	  for (j = 0; j < gen->chans; j++)
-	    memset((void *)(gen->obufs[j]), 0, clm_file_buffer_size * sizeof(mus_sample_t));
-	  gen->data_start = samp;
-	  gen->data_end = samp + clm_file_buffer_size - 1;
-	  gen->out_end = samp;
-	}
+      flush_buffers(gen);
+      for (j = 0; j < gen->chans; j++)
+	memset((void *)(gen->obufs[j]), 0, clm_file_buffer_size * sizeof(mus_sample_t));
+      gen->data_start = samp;
+      gen->data_end = samp + clm_file_buffer_size - 1;
+      gen->out_end = samp;
+      
       gen->obufs[chan][samp - gen->data_start] += MUS_FLOAT_TO_SAMPLE(val);
+#if MUS_DEBUGGING
+      if (fabs(gen->obufs[chan][samp - gen->data_start]) > 100.0)
+	{
+	  fprintf(stderr, "flush write %f -> %f at " OFF_TD " in chan %d of %s\n", 
+		  val, 
+		  MUS_SAMPLE_TO_FLOAT(gen->obufs[chan][samp - gen->data_start]),
+		  samp, chan, mus_describe(ptr));
+	  abort();
+	}
+#endif
       if (samp > gen->out_end) 
 	gen->out_end = samp;
 
 #if HAVE_PTHREADS
-#if HAVE_NESTED_FUNCTIONS
-      pthread_mutex_unlock(gen->writer_lock);
-#else
-      pthread_mutex_unlock(&writer_lock);
-#endif
-      mus_error_set_handler(clm_old_writer_lock_error_handler);
+      mus_error_set_handler(old_error_handler);
 #endif
     }
+
+  MUS_UNLOCK(gen->writer_lock);
+
   return(val);
 }
 
@@ -7771,44 +7810,33 @@ static int sample_to_file_end(mus_any *ptr)
 {
   rdout *gen = (rdout *)ptr;
 
-#if HAVE_PTHREADS
-#if HAVE_NESTED_FUNCTIONS
-  mus_error_handler_t *clm_old_writer_lock_error_handler;
-  auto void clm_writer_lock_error_handler(int type, char *msg);
-  void clm_writer_lock_error_handler(int type, char *msg)
-  {
-    mus_error_set_handler(clm_old_writer_lock_error_handler);
-    pthread_mutex_unlock(gen->writer_lock);
-    mus_error(type, msg);
-  }
-  
-  pthread_mutex_lock(gen->writer_lock);
-#else
-  pthread_mutex_lock(&writer_lock);
-#endif
-  clm_old_writer_lock_error_handler = mus_error_set_handler(clm_writer_lock_error_handler);
-#endif
+  MUS_LOCK(gen->writer_lock);
 
   if ((gen) && (gen->obufs))
     {
       int i;
 
-      flush_buffers(gen);
+#if HAVE_PTHREADS
+      mus_error_handler_t *old_error_handler;
+
+      pthread_setspecific(mus_thread_generator, (void *)gen);
+      old_error_handler = mus_error_set_handler(writer_lock_error_handler);
+#endif
+
+      flush_buffers(gen); /* this forces the error handling stuff, unlike in free reader case */
       for (i = 0; i < gen->chans; i++)
 	if (gen->obufs[i]) 
 	  clm_free(gen->obufs[i]);
       clm_free(gen->obufs);
       gen->obufs = NULL;
-    }
 
 #if HAVE_PTHREADS
-#if HAVE_NESTED_FUNCTIONS
-  pthread_mutex_unlock(gen->writer_lock);
-#else
-  pthread_mutex_unlock(&writer_lock);
+      mus_error_set_handler(old_error_handler);
 #endif
-  mus_error_set_handler(clm_old_writer_lock_error_handler);
-#endif
+    }
+
+  MUS_UNLOCK(gen->writer_lock);
+
   return(0);
 }
 
@@ -7860,6 +7888,9 @@ static mus_any *mus_make_sample_to_file_with_comment_1(const char *filename, int
 #if HAVE_PTHREADS && HAVE_NESTED_FUNCTIONS
 	  gen->writer_lock = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
 	  pthread_mutex_init(gen->writer_lock, NULL);
+#if MUS_DEBUGGING
+	  mus_lock_set_name(gen->writer_lock, "writer");
+#endif
 #endif
 	  return((mus_any *)gen);
 	}
@@ -8748,6 +8779,8 @@ static int sincs = 0;
 
 #if HAVE_PTHREADS
 static pthread_mutex_t sinc_lock = PTHREAD_MUTEX_INITIALIZER;
+#else
+static int sinc_lock = 0;
 #endif
 
 void mus_clear_sinc_tables(void)
@@ -8776,9 +8809,7 @@ static Float *init_sinc_table(int width)
     if (sinc_widths[i] == width)
       return(sinc_tables[i]);
 
-#if HAVE_PTHREADS
-  pthread_mutex_lock(&sinc_lock);
-#endif
+  MUS_LOCK(&sinc_lock);
 
   if (sincs == 0)
     {
@@ -8820,9 +8851,7 @@ static Float *init_sinc_table(int width)
   for (i = 1, sinc_phase = sinc_freq, win_phase = win_freq; i < padded_size; i++, sinc_phase += sinc_freq, win_phase += win_freq)
     sinc_tables[loc][i] = sin(sinc_phase) * (0.5 + 0.5 * cos(win_phase)) / sinc_phase;
 
-#if HAVE_PTHREADS
-  pthread_mutex_unlock(&sinc_lock);
-#endif
+  MUS_UNLOCK(&sinc_lock);
 
   return(sinc_tables[loc]);
 }
@@ -9515,6 +9544,8 @@ static int last_fft_size = 0;
 
 #if HAVE_PTHREADS
 static pthread_mutex_t fft_lock = PTHREAD_MUTEX_INITIALIZER;
+#else
+static int fft_lock = 0;
 #endif
 
 
@@ -9522,9 +9553,7 @@ void mus_fftw(Float *rl, int n, int dir)
 {
   int i;
 
-#if HAVE_PTHREADS
-  pthread_mutex_lock(&fft_lock);
-#endif
+  MUS_LOCK(&fft_lock);
 
   if (n != last_fft_size)
     {
@@ -9542,9 +9571,7 @@ void mus_fftw(Float *rl, int n, int dir)
   else fftw_execute(iplan);
   for (i = 0; i < n; i++) rl[i] = idata[i];
 
-#if HAVE_PTHREADS
-  pthread_mutex_unlock(&fft_lock);
-#endif
+  MUS_UNLOCK(&fft_lock);
 }
 
 #else
@@ -9556,6 +9583,8 @@ static int last_fft_size = 0;
 
 #if HAVE_PTHREADS
 static pthread_mutex_t fft_lock = PTHREAD_MUTEX_INITIALIZER;
+#else
+static int fft_lock = 0;
 #endif
 
 
@@ -9563,9 +9592,7 @@ void mus_fftw(Float *rl, int n, int dir)
 {
   int i;
 
-#if HAVE_PTHREADS
-  pthread_mutex_lock(&fft_lock);
-#endif
+  MUS_LOCK(&fft_lock);
 
   if (n != last_fft_size)
     {
@@ -9584,9 +9611,7 @@ void mus_fftw(Float *rl, int n, int dir)
   else rfftw_one(iplan, rdata, idata);
   for (i = 0; i < n; i++) rl[i] = idata[i];
 
-#if HAVE_PTHREADS
-  pthread_mutex_unlock(&fft_lock);
-#endif
+  MUS_UNLOCK(&fft_lock);
 }
 #endif
 #endif
@@ -11578,7 +11603,7 @@ Float mus_apply(mus_any *gen, Float f1, Float f2)
 
 /* ---------------- init clm ---------------- */
 
-void init_mus_module(void)
+void mus_initialize(void)
 {
   #define MULAW_ZERO 255
   #define ALAW_ZERO 213
@@ -11606,6 +11631,14 @@ void init_mus_module(void)
   data_format_zero[MUS_UBYTE] = UBYTE_ZERO;
   data_format_zero[MUS_UBSHORT] = USHORT_ZERO;
   data_format_zero[MUS_ULSHORT] = USHORT_ZERO;
+
+#if HAVE_PTHREADS
+  pthread_key_create(&mus_thread_generator, NULL);
+#if MUS_DEBUGGING
+  mus_lock_set_name(&sinc_lock, "sinc");
+  mus_lock_set_name(&fft_lock, "fft");
+#endif
+#endif
 }
 
 

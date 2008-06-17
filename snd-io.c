@@ -564,6 +564,8 @@ static int tempfiles_size = 0;
 
 #if HAVE_PTHREADS
 static pthread_mutex_t temp_file_lock = PTHREAD_MUTEX_INITIALIZER;
+#else
+static int temp_file_lock = 0;
 #endif
 
 void remember_temp(const char *filename, int chans)
@@ -571,9 +573,7 @@ void remember_temp(const char *filename, int chans)
   int i, old_size;
   tempfile_ctr *tmp = NULL;
 
-#if HAVE_PTHREADS
-  pthread_mutex_lock(&temp_file_lock);
-#endif
+  MUS_LOCK(&temp_file_lock);
 
   if (tempfiles_size == 0)
     {
@@ -587,9 +587,7 @@ void remember_temp(const char *filename, int chans)
 	if ((tempfiles[i]) &&
 	    (snd_strcmp(filename, tempfiles[i]->name)))
 	  {
-#if HAVE_PTHREADS
-	    pthread_mutex_unlock(&temp_file_lock);
-#endif
+	    MUS_UNLOCK(&temp_file_lock);
 	    return;
 	  }
 
@@ -613,9 +611,7 @@ void remember_temp(const char *filename, int chans)
   tmp->chans = chans;
   tmp->ticks = (int *)CALLOC(chans, sizeof(int));
 
-#if HAVE_PTHREADS
-  pthread_mutex_unlock(&temp_file_lock);
-#endif
+  MUS_UNLOCK(&temp_file_lock);
 }
 
 

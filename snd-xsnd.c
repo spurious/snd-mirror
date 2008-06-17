@@ -2851,18 +2851,14 @@ void snd_info_cleanup(snd_info *sp)
 
 void set_sound_pane_file_label(snd_info *sp, char *str)
 {
-#if HAVE_PTHREADS
-  pthread_mutex_lock(sp->starred_name_lock);
-#endif
+  MUS_LOCK(sp->starred_name_lock);
   if (!(snd_strcmp(sp->name_string, str)))
     {
       if (sp->name_string) FREE(sp->name_string);
       sp->name_string = copy_string(str);
       set_button_label(SND_NAME(sp), str); /* this causes an expose event, so it's worth minimizing */
     }
-#if HAVE_PTHREADS
-  pthread_mutex_unlock(sp->starred_name_lock);
-#endif
+  MUS_UNLOCK(sp->starred_name_lock);
 }
 
 
@@ -2989,8 +2985,6 @@ void finish_progress_report(chan_info *cp)
       XmUpdateDisplay(PROGRESS_ICON(cp));
       hide_stop_sign(sp);
     }
-
-  /* TODO: limit clocks to 8 or 16 */
 }
 
 

@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 4
-#define MUS_REVISION 11
-#define MUS_DATE "30-May-08"
+#define MUS_REVISION 12
+#define MUS_DATE "16-June-08"
 
 /*
+ * 16-Jun:     changed init_mus_module to mus_initialize.
  * 30-May:     changed polyshape to use cos and added cheby_choice arg to mus_make_polyshape.
  * 27-May:     mus_waveshape retired -- generators.scm has a wrapper for it.
  *             clm_free, clm_realloc etc for rt work.
@@ -323,7 +324,7 @@ typedef enum {MUS_CHEBYSHEV_EITHER_KIND, MUS_CHEBYSHEV_FIRST_KIND, MUS_CHEBYSHEV
 extern "C" {
 #endif
 
-void init_mus_module(void);
+void mus_initialize(void);
 
 int mus_make_class_tag(void);
 Float mus_radians_to_hz(Float radians);
@@ -776,6 +777,8 @@ mus_any *mus_make_mixer_with_data(int chans, Float *data);
 
 
 #ifndef CLM_DISABLE_DEPRECATED
+
+  #define init_mus_module() mus_initialize()
 
   #define mus_cosines(Obj) mus_length(Obj)
   #define mus_set_cosines(Obj, Val) mus_set_length(Obj,Val)

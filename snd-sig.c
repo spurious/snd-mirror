@@ -2,8 +2,6 @@
 #include "clm2xen.h"
 #include "clm-strings.h"
 
-/* TODO: is it deliberate that (src-sound .1) of a stereo sound only hits chan 0? and chn=#t is not allowed? [sync is followed...] */
-
 
 /* collect syncd chans */
 typedef struct {

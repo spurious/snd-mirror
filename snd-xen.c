@@ -103,11 +103,15 @@ void dump_protection(FILE *Fp)
 
 #if HAVE_PTHREADS
   static pthread_mutex_t gc_lock = PTHREAD_MUTEX_INITIALIZER;
-  #define GC_LOCK()   pthread_mutex_lock(&gc_lock)
-  #define GC_UNLOCK() pthread_mutex_unlock(&gc_lock)
+#if MUS_DEBUGGING
+void xen_set_gc_lock_name(void);
+void xen_set_gc_lock_name(void)
+{
+  mus_lock_set_name(&gc_lock, "gc-protect");
+}
+#endif
 #else
-  #define GC_LOCK() do {} while(0)
-  #define GC_UNLOCK() do {} while(0)
+static int gc_lock = 0;
 #endif
 
 
@@ -120,7 +124,7 @@ int snd_protect(XEN obj)
   int i, old_size;
   XEN tmp;
   
-  GC_LOCK();
+  MUS_LOCK(&gc_lock);
 
 #if MUS_DEBUGGING
   cur_gc_index++;
@@ -152,7 +156,7 @@ int snd_protect(XEN obj)
 	  gc_last_set = gc_last_cleared;
 	  gc_last_cleared = NOT_A_GC_LOC;
 
-	  GC_UNLOCK();
+	  MUS_UNLOCK(&gc_lock);
 
 	  return(gc_last_set);
 	}
@@ -166,7 +170,7 @@ int snd_protect(XEN obj)
 #endif
 	    gc_last_set = i;
 	    
-	    GC_UNLOCK();
+	    MUS_UNLOCK(&gc_lock);
 
 	    return(gc_last_set);
 	  }
@@ -181,7 +185,7 @@ int snd_protect(XEN obj)
 #endif
 	    gc_last_set = i;
 
-	    GC_UNLOCK();
+	    MUS_UNLOCK(&gc_lock);
 
 	    return(gc_last_set);
 	  }
@@ -213,14 +217,14 @@ int snd_protect(XEN obj)
       gc_last_set = old_size;
     }
 
-  GC_UNLOCK();
+  MUS_UNLOCK(&gc_lock);
   return(gc_last_set);
 }
 
 
 void snd_unprotect_at(int loc)
 {
-  GC_LOCK();
+  MUS_LOCK(&gc_lock);
 
 #if MUS_DEBUGGING
   cur_gc_index--;
@@ -232,7 +236,7 @@ void snd_unprotect_at(int loc)
       gc_last_cleared = loc;
     }
 
-  GC_UNLOCK();
+  MUS_UNLOCK(&gc_lock);
 }
 
 

@@ -972,6 +972,13 @@ static void *forget_pointer(void *ptr, const char *func, const char *file, int l
 
 #if HAVE_PTHREADS
 static pthread_mutex_t pointer_lock = PTHREAD_MUTEX_INITIALIZER;
+#if MUS_DEBUGGING
+void utils_set_pointer_lock_name(void);
+void utils_set_pointer_lock_name(void)
+{
+  mus_lock_set_name(&pointer_lock, "pointer");
+}
+#endif
 #endif
 
 static int remember_pointer(void *ptr, void *true_ptr, size_t len, const char *func, const char *file, int line)
@@ -982,9 +989,7 @@ static int remember_pointer(void *ptr, void *true_ptr, size_t len, const char *f
   fprintf(stderr, "remember_pointer: %p [%p:%d] %s:%s[%d]\n", ptr, true_ptr, (int)len, func, file, line);
 #endif
 
-#if HAVE_PTHREADS
-  pthread_mutex_lock(&pointer_lock);
-#endif
+  MUS_LOCK(&pointer_lock);
 
   if (mem_size == 0)
     {
@@ -1011,9 +1016,7 @@ static int remember_pointer(void *ptr, void *true_ptr, size_t len, const char *f
   locations[loc] = find_mem_location(func, file, line);
   last_loc = locations[loc];
 
-#if HAVE_PTHREADS
-  pthread_mutex_unlock(&pointer_lock);
-#endif
+  MUS_UNLOCK(&pointer_lock);
 
   return(loc);
 }
@@ -1396,7 +1399,11 @@ void mem_report(void)
   save_listener_text(Fp);
   dump_protection(Fp);
   for (i = 0; i <= mem_location; i++)
-    if ((slocs[i].refs) && (slocs[i].refsize > 0)) free(slocs[i].refs);
+    if ((slocs[i].refs) && (slocs[i].refsize > 0)) 
+      {
+	free(slocs[i].refs);
+	slocs[i].refsize = 0;
+      }
   free(slocs);
   fclose(Fp);
 }

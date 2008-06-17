@@ -451,6 +451,8 @@ typedef struct snd_info {
   int watchers_size;
 #if HAVE_PTHREADS
   pthread_mutex_t *starred_name_lock;
+#else
+  int starred_name_lock;
 #endif
 } snd_info;
 

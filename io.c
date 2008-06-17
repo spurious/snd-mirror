@@ -481,15 +481,22 @@ static io_fd **io_fds = NULL;
 
 #if HAVE_PTHREADS
 static pthread_mutex_t io_table_lock = PTHREAD_MUTEX_INITIALIZER;
+#if MUS_DEBUGGING
+void io_set_table_lock_name(void);
+void io_set_table_lock_name(void)
+{
+  mus_lock_set_name(&io_table_lock, "io_table");
+}
+#endif
+#else
+static int io_table_lock = 0;
 #endif
 
 int mus_file_open_descriptors(int tfd, const char *name, int format, int size /* datum size */, off_t location, int chans, int type)
 {
   int i, lim = -1, err = MUS_NO_ERROR;
 
-#if HAVE_PTHREADS
-  pthread_mutex_lock(&io_table_lock);
-#endif
+  MUS_LOCK(&io_table_lock);
 
   if (io_fd_size == 0)
     {
@@ -533,9 +540,7 @@ int mus_file_open_descriptors(int tfd, const char *name, int format, int size /*
     }
   else err = MUS_MEMORY_ALLOCATION_FAILED;
 
-#if HAVE_PTHREADS
-  pthread_mutex_unlock(&io_table_lock);
-#endif
+  MUS_UNLOCK(&io_table_lock);
 
   return(err);
 }
@@ -685,7 +690,11 @@ int mus_file_close(int fd)
 {
   io_fd *fdp;
   int close_result = 0;
+
   if ((io_fds == NULL) || (fd >= io_fd_size) || (fd < 0) || (io_fds[fd] == NULL)) return(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED);
+
+  MUS_LOCK(&io_table_lock);
+
   fdp = io_fds[fd];
 
 #if USE_SND
@@ -697,6 +706,9 @@ int mus_file_close(int fd)
   if (fdp->name) {FREE(fdp->name); fdp->name = NULL;}
   FREE(fdp);
   io_fds[fd] = NULL;
+
+  MUS_UNLOCK(&io_table_lock);
+
   if (close_result < 0)
     return(MUS_CANT_CLOSE_FILE);
   return(MUS_NO_ERROR);

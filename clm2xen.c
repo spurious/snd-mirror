@@ -8170,7 +8170,7 @@ static void clm_init(void *ignore)
 void mus_xen_init(void)
 #endif
 {
-  init_mus_module();
+  mus_initialize();
 
 #if (!HAVE_GAUCHE)
   mus_xen_tag = XEN_MAKE_OBJECT_TYPE("Mus", sizeof(mus_xen));
