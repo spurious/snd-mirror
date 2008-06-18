@@ -5766,8 +5766,8 @@ int mus_header_read(const char *name)
     return(mus_error(MUS_CANT_OPEN_FILE, "can't open %s: %s", name, STRERROR(errno)));
   old_error_handler = mus_error_set_handler(local_mus_error);
   err = mus_header_read_1(name, fd);
-  mus_error_set_handler(old_error_handler);
   CLOSE(fd, name);
+  mus_error_set_handler(old_error_handler);
   if (err != MUS_NO_ERROR)
     return(mus_error(local_error_type, local_error_msg)); /* pass error info on up the chain now that we've cleaned up the open file descriptor */
   return(err);

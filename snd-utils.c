@@ -790,7 +790,7 @@ static int find_mem_location(const char *func, const char *file, int line)
 	  functions = (char **)realloc(functions, (mem_locations + 1024) * sizeof(char *));
 	  files = (char **)realloc(files, (mem_locations + 1024) * sizeof(char *));
 	  printable = (int *)realloc(printable, (mem_locations + 1024) * sizeof(int));
-	  lines = (int *)realloc(lines, (mem_location + 1024) * sizeof(int));
+	  lines = (int *)realloc(lines, (mem_locations + 1024) * sizeof(int));
 	  for (i = 0; i < 1024; i++) 
 	    {
 	      functions[i + mem_locations] = NULL;
@@ -1231,6 +1231,11 @@ void mem_report(void)
       ss->search_tree = NULL;
     }
   slocs = (sumloc *)calloc(mem_location + 1, sizeof(sumloc));
+  for (i = 0; i <= mem_location; i++)
+    {
+      slocs[i].refs = NULL;
+      slocs[i].refsize = 0;
+    }
 
   for (i = 0; i < mem_size; i++)
     if (pointers[i])

@@ -304,6 +304,7 @@ static int xen_temp_strings_ctr = 0;
 static pthread_mutex_t xen_string_lock = PTHREAD_MUTEX_INITIALIZER;
 #if MUS_DEBUGGING
 #include "_sndlib.h"
+void xen_set_string_lock_name(void);
 void xen_set_string_lock_name(void)
 {
   mus_lock_set_name(&xen_string_lock, "xen-string");

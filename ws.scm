@@ -181,12 +181,13 @@ returning you to the true top-level."
 (define *clm-locsig-type* mus-interp-linear)
 (define *clm-clipped* #t)
 (define *clm-array-print-length* (print-length))
-(define *clm-player* #f) ; default is play-and-wait (takes index of newly created sound, not the sound's file name)
+(define *clm-player* #f)          ; default is play-and-wait (takes index of newly created sound, not the sound's file name)
 (define *clm-notehook* #f)
 (define *clm-with-sound-depth* 0) ; for CM, not otherwise used
 (define *clm-default-frequency* 0.0)
-(define *clm-safety* run-safety) ; slightly different from CL/CLM but has similar effect
-(define *clm-delete-reverb* #f) ; should with-sound clean up reverb stream
+(define *clm-safety* run-safety)  ; slightly different from CL/CLM but has similar effect
+(define *clm-delete-reverb* #f)   ; should with-sound clean up reverb stream
+(define *clm-threads* 4)
 
 (define *to-snd* #t)
 
@@ -541,6 +542,35 @@ returning you to the true top-level."
     (lambda () 
       (let ((threads '()))
 	,@(map (lambda (expr) 
+		 `(begin (set! threads (cons (call-with-new-thread 
+					      (lambda () 
+						,expr))
+					     threads))
+			 (if (>= (length threads) *clm-threads*)
+			     (begin
+			       (for-each 
+				(lambda (thread) 
+				  (join-thread thread))
+				threads)
+			       (set! threads '())))))
+	       body)
+	(for-each 
+	 (lambda (thread) 
+	   (join-thread thread))
+	 threads)))
+    ,@args))
+
+;;; this still non-optimal because of thread handling overhead -- if I break the "body" into
+;;;   4 big pieces (4 threads total), it runs much faster.  So, off to make another version that
+;;;   somehow divides the body into n big pieces...
+
+
+#|
+(defmacro with-threaded-sound (args . body) 
+  `(with-sound-helper 
+    (lambda () 
+      (let ((threads '()))
+	,@(map (lambda (expr) 
 		 `(set! threads (cons (call-with-new-thread 
 				       (lambda () 
 					 ,expr))
@@ -553,7 +583,10 @@ returning you to the true top-level."
 	 threads))) ; using threads list, not (all-threads) because the latter hangs in the with-threads case below
     ,@args))
 
-#|
+;;; this form not good because we end up with "too many open files" -- apparently each thread
+;;;   counts its copy of the output file separately.
+
+
 (define (with-threads func)
   (let ((chns (chans))
 	(threads '()))

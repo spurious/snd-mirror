@@ -867,14 +867,16 @@ static sound_file *fill_sf_record(const char *name, sound_file *sf)
 
 #if HAVE_PTHREADS
 static mus_error_handler_t *old_header_read_error_handler; /* this should be safe -- only one thread can hold sound_table_lock */
+static mus_error_handler_t *old_previous_header_read_error_handler; 
 
 static void sound_table_lock_error_handler(int type, char *msg)
 {
-  /* hit error during header read, so reset current error handler to the one we started with, unlock sound_table_lock, pass error to osiginal handler */
-#if MUS_DEBUGGING
-  fprintf(stderr, "hit header error: %d (%s) %s\n", type, mus_error_type_to_string(type), msg);
-#endif
-  mus_error_set_handler(old_header_read_error_handler);
+  /* hit error during header read, so reset current error handler to the one we started with, unlock sound_table_lock, pass error to original handler */
+
+  /* fprintf(stderr, "hit header error: %d (%s) %s\n", type, mus_error_type_to_string(type), msg); */
+
+  pthread_setspecific(mus_thread_error_handler, (void *)old_header_read_error_handler);
+  pthread_setspecific(mus_thread_previous_error_handler, (void *)old_previous_header_read_error_handler);
   MUS_UNLOCK(&sound_table_lock);
   mus_error(type, msg);
 }
@@ -893,8 +895,9 @@ static sound_file *read_sound_file_header(const char *name) /* 2 calls on this: 
    */
   
 #if HAVE_PTHREADS
-  /* save current error handler, reset to sound_table_unlock case... */
+  /* save current error handler, reset to sound_table_unlock case... (save both just in case) */
   old_header_read_error_handler = (mus_error_handler_t *)pthread_getspecific(mus_thread_error_handler);
+  old_previous_header_read_error_handler = (mus_error_handler_t *)pthread_getspecific(mus_thread_previous_error_handler);
   pthread_setspecific(mus_thread_error_handler, (void *)sound_table_lock_error_handler);
 #endif
 
@@ -903,6 +906,7 @@ static sound_file *read_sound_file_header(const char *name) /* 2 calls on this: 
 #if HAVE_PTHREADS
   /* no error, reset current error handler to the one we started with */
   pthread_setspecific(mus_thread_error_handler, (void *)old_header_read_error_handler);
+  pthread_setspecific(mus_thread_previous_error_handler, (void *)old_previous_header_read_error_handler);
 #endif
 
   /* this portion won't trigger mus_error */

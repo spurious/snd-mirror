@@ -10669,6 +10669,7 @@ everything after that is evaluated as a note list.
     (define *reverb*                 #f)
     (define *output*                 #f)
     (define *clm-delete-reverb*      #f)
+    (define *clm-threads*            4)
 </pre>
 
 <p>You can set any of these to permanently change with-sound's defaults
@@ -10929,6 +10930,11 @@ each note (each separate expression in the with-sound body) is handled by a sepa
       (fm-violin 0 1 440 .1)
       (fm-violin 0 1 660 .1))
 </pre>
+
+<p>If you put each note in a separate thread, the computation slows down a lot due to
+all the thread overhead, so *clm-threads* sets the number of threads running
+through the note list at any one time.  It defaults to 4.
+</p>
 
 
 <br>
