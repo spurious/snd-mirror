@@ -246,9 +246,7 @@ static sync_state *get_sync_state_without_snd_fds(snd_info *sp, chan_info *cp, o
   if (si == NULL) 
     si = make_simple_sync(cp, beg);
   sc = (sync_state *)CALLOC(1, sizeof(sync_state));
-#if MUS_DEBUGGING
-  set_printable(PRINT_SYNC);
-#endif
+  MUS_SET_PRINTABLE(PRINT_SYNC);
   sc->dur = dur;
   sc->si = si;
   sc->sfs = NULL;

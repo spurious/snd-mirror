@@ -399,6 +399,7 @@ Float mus_file_set_prescaler(int tfd, Float val);
 Float mus_prescaler(void);
 Float mus_set_prescaler(Float new_value);
 
+#ifndef SNDLIB_DISABLE_DEPRECATED
 void mus_bint_to_char(unsigned char *j, int x);
 int mus_char_to_bint(const unsigned char *inp);
 void mus_lint_to_char(unsigned char *j, int x);
@@ -426,6 +427,7 @@ void mus_boff_t_to_char(unsigned char *j, off_t x);
 void mus_loff_t_to_char(unsigned char *j, off_t x);
 unsigned int mus_char_to_ubint(const unsigned char *inp);
 unsigned int mus_char_to_ulint(const unsigned char *inp);
+#endif
 
 int mus_iclamp(int lo, int val, int hi);
 off_t mus_oclamp(off_t lo, off_t val, off_t hi);

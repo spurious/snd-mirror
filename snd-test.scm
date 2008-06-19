@@ -5,32 +5,32 @@
 ;;;  test 2: headers                            [1321]
 ;;;  test 3: variables                          [1637]
 ;;;  test 4: sndlib                             [2286]
-;;;  test 5: simple overall checks              [4812]
-;;;  test 6: vcts                               [13773]
-;;;  test 7: colors                             [14041]
-;;;  test 8: clm                                [14531]
-;;;  test 9: mix                                [26342]
-;;;  test 10: marks                             [28563]
-;;;  test 11: dialogs                           [29524]
-;;;  test 12: extensions                        [29769]
-;;;  test 13: menus, edit lists, hooks, etc     [30040]
-;;;  test 14: all together now                  [31749]
-;;;  test 15: chan-local vars                   [32794]
-;;;  test 16: regularized funcs                 [34433]
-;;;  test 17: dialogs and graphics              [39387]
-;;;  test 18: enved                             [39477]
-;;;  test 19: save and restore                  [39496]
-;;;  test 20: transforms                        [41338]
-;;;  test 21: new stuff                         [43321]
-;;;  test 22: run                               [45316]
-;;;  test 23: with-sound                        [51532]
-;;;  test 24: user-interface                    [55498]
-;;;  test 25: X/Xt/Xm                           [58892]
-;;;  test 26: Gtk                               [63500]
-;;;  test 27: GL                                [67352]
-;;;  test 28: errors                            [67476]
-;;;  test all done                              [69781]
-;;;  test the end                               [70019]
+;;;  test 5: simple overall checks              [4976]
+;;;  test 6: vcts                               [13937]
+;;;  test 7: colors                             [14205]
+;;;  test 8: clm                                [14695]
+;;;  test 9: mix                                [26506]
+;;;  test 10: marks                             [28727]
+;;;  test 11: dialogs                           [29688]
+;;;  test 12: extensions                        [29933]
+;;;  test 13: menus, edit lists, hooks, etc     [30204]
+;;;  test 14: all together now                  [31913]
+;;;  test 15: chan-local vars                   [32958]
+;;;  test 16: regularized funcs                 [34597]
+;;;  test 17: dialogs and graphics              [39551]
+;;;  test 18: enved                             [39641]
+;;;  test 19: save and restore                  [39660]
+;;;  test 20: transforms                        [41502]
+;;;  test 21: new stuff                         [43485]
+;;;  test 22: run                               [45480]
+;;;  test 23: with-sound                        [51696]
+;;;  test 24: user-interface                    [55662]
+;;;  test 25: X/Xt/Xm                           [59056]
+;;;  test 26: Gtk                               [63664]
+;;;  test 27: GL                                [67516]
+;;;  test 28: errors                            [67640]
+;;;  test all done                              [69945]
+;;;  test the end                               [70183]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -2323,6 +2323,22 @@
 		     (mus-audio-close audio-fd)))))
 	   (lambda args (snd-display ";play-sound-1: can't open audio: ~A" args)))
     (mus-sound-close-input sound-fd)))
+
+(definstrument (out-samps beg chan data)
+  (let ((len (vct-length data)))
+    (run
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i len))
+	 (out-any (+ beg i) (vct-ref data i) chan))))))
+
+(definstrument (out-samps-invert beg chan data)
+  (let ((len (vct-length data)))
+    (run
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i len))
+	 (out-any (+ beg i) (- (vct-ref data i)) chan))))))
 
 (define (snd_test_4)
   
@@ -4810,6 +4826,150 @@
 	  (set! (mus-alsa-squelch-warning) #t)
 	  (if (not (mus-alsa-squelch-warning)) (snd-display ";set mus-alsa-squelch-warning: ~A" (mus-alsa-squelch-warning)))
 	  (set! (mus-alsa-squelch-warning) defwarn)))
+
+    (if (provided? 'snd-threads)
+	(let ((old-file-buffer-size *clm-file-buffer-size*))
+	  
+	  (let* ((result (with-threaded-sound ()
+					      (outa 0 0.5)
+					      (outa 1 0.25)
+					      (outa 2 0.125)
+					      (outa 3 -0.5)))
+		 (snd (find-sound result)))
+	    (if (not (sound? snd)) 
+		(snd-display ";with-threaded-sound 0 no output: ~A ~A" result snd)
+		(let ((samps (channel->vct 0 (frames snd) snd 0)))
+		  (if (not (vequal samps (vct 0.5 0.25 0.125 -0.5)))
+		      (snd-display ";with-threaded-sound 0 output: ~A" samps)))))
+	  
+	  (let* ((result (with-threaded-sound ()
+					      (outa 0 0.5)
+					      (outa 1 0.25)
+					      (outa 2 0.125)
+					      (outa 3 -0.5)
+					      (outa 4 -0.25)
+					      (outa 5 -0.125)))
+		 (snd (find-sound result)))
+	    (if (not (sound? snd)) 
+		(snd-display ";with-threaded-sound 0a no output: ~A ~A" result snd)
+		(let ((samps (channel->vct 0 (frames snd) snd 0)))
+		  (if (not (vequal samps (vct 0.5 0.25 0.125 -0.5 -0.25 -0.125)))
+		      (snd-display ";with-threaded-sound 0a output: ~A" samps)))))
+	  
+	  (let* ((result (with-threaded-sound ()
+					      (outa 0 0.5)
+					      (outa 1 0.25)
+					      (outa 1 -0.5)))
+		 (snd (find-sound result)))
+	    (if (not (sound? snd)) 
+		(snd-display ";with-threaded-sound 0b no output: ~A ~A" result snd)
+		(let ((samps (channel->vct 0 (frames snd) snd 0)))
+		  (if (not (vequal samps (vct 0.5 -0.25)))
+		      (snd-display ";with-threaded-sound 0b output: ~A" samps)))))
+	  
+	  (let ((samps (make-vct 512)))
+	    (do ((i 0 (1+ i)))
+		((= i 512))
+	      (vct-set! samps i (- (random 2.0) 1.0)))
+	    (let* ((result (with-threaded-sound (:channels 2)
+						(out-samps 0 0 samps)
+						(out-samps 0 1 samps)))
+		   (snd (find-sound result)))
+	      (if (not (sound? snd)) 
+		  (snd-display ";with-threaded-sound 1 no output: ~A ~A" result snd)
+		  (let ((new-samps-0 (channel->vct 0 (frames snd) snd 0))
+			(new-samps-1 (channel->vct 0 (frames snd) snd 1)))
+		    (if (not (vequal samps new-samps-0))
+			(snd-display ";with-threaded-sound 1 chan 0 output differs"))
+		    (if (not (vequal samps new-samps-1))
+			(snd-display ";with-threaded-sound 1 chan 1 output differs"))))))
+	  
+	  (for-each
+	   (lambda (buflen)
+	     (set! *clm-file-buffer-size* buflen)
+	     (let* ((len 1000000)
+		    (samps (make-vct len)))
+	       (do ((i 0 (1+ i)))
+		   ((= i len))
+		 (vct-set! samps i (- (random 2.0) 1.0)))
+	       (let* ((result (with-threaded-sound (:channels 2)
+						   (out-samps 0 0 samps)
+						   (out-samps 0 1 samps)))
+		      (snd (find-sound result)))
+		 (if (not (sound? snd)) 
+		     (snd-display ";with-threaded-sound 2 (~D) no output: ~A ~A" buflen result snd)
+		     (let ((new-samps-0 (channel->vct 0 (frames snd) snd 0))
+			   (new-samps-1 (channel->vct 0 (frames snd) snd 1)))
+		       (if (not (vequal samps new-samps-0))
+			   (snd-display ";with-threaded-sound 2 (~D) chan 0 output differs" buflen))
+		       (if (not (vequal samps new-samps-1))
+			   (snd-display ";with-threaded-sound 2 (~D) chan 1 output differs" buflen)))))))
+	   (list 65536 8192 1024 256 1234))
+	  (set! *clm-file-buffer-size* old-file-buffer-size)
+	  
+	  
+	  (let ((samps (make-vct 512)))
+	    (do ((i 0 (1+ i)))
+		((= i 512))
+	      (vct-set! samps i (- (random 2.0) 1.0)))
+	    (with-threaded-sound (:channels 1 :output "thread-test.snd")
+				 (out-samps 0 0 samps))
+	    (let* ((inp (make-file->sample "thread-test.snd"))
+		   (inres (make-vct 512))
+		   (result (with-threaded-sound ()
+						(do ((i 0 (1+ i)))
+						    ((= i 512))
+						  (let ((val (ina i inp)))
+						    (vct-set! inres i val)
+						    (outa i val)))))
+		   (snd (find-sound result)))
+	      (if (not (sound? snd)) 
+		  (snd-display ";with-threaded-sound 3 no output: ~A ~A" result snd)
+		  (let ((new-samps-0 (channel->vct 0 (frames snd) snd 0)))
+		    (if (not (vequal samps new-samps-0))
+			(snd-display ";with-threaded-sound 3 output differs"))
+		    (if (not (vequal samps inres))
+			(snd-display ";with-threaded-sound 3 input differs"))))
+	      (close-sound snd)
+	      (set! snd (find-sound "thread-test.snd"))
+	      (if (sound? snd) (close-sound snd))
+	      (delete-file "thread-test.snd")))
+	  
+	  (let ((samps (make-vct 512)))
+	    (do ((i 0 (1+ i)))
+		((= i 512))
+	      (vct-set! samps i (- (random 2.0) 1.0)))
+	    (let* ((result (with-threaded-sound (:channels 1)
+						(out-samps 0 0 samps)
+						(out-samps-invert 0 0 samps)))
+		   (snd (find-sound result)))
+	      (if (not (sound? snd)) 
+		  (snd-display ";with-threaded-sound 4 no output: ~A ~A" result snd)
+		  (let ((new-samps-0 (channel->vct 0 (frames snd) snd 0)))
+		    (if (fneq (vct-peak new-samps-0) 0.0)
+			(snd-display ";with-threaded-sound 4 chan 1 output differs"))))))
+	  
+	  (for-each
+	   (lambda (buflen)
+	     (set! *clm-file-buffer-size* buflen)
+	     (let* ((len 1000000)
+		    (samps (make-vct len)))
+	       (do ((i 0 (1+ i)))
+		   ((= i len))
+		 (vct-set! samps i (- (random 2.0) 1.0)))
+	       (let* ((result (with-threaded-sound (:channels 1)
+						   (out-samps 0 0 samps)
+						   (out-samps-invert 0 0 samps)))
+		      (snd (find-sound result)))
+		 (if (not (sound? snd)) 
+		     (snd-display ";with-threaded-sound 5 (~D) no output: ~A ~A" buflen result snd)
+		     (let ((new-samps-0 (channel->vct 0 (frames snd) snd 0)))
+		       (if (fneq (vct-peak new-samps-0) 0.0)
+			   (snd-display ";with-threaded-sound 5 chan 1 output differs")))))))
+	   (list 65536 8192 1024 256 1234))
+	  (set! *clm-file-buffer-size* old-file-buffer-size)
+	  (for-each (lambda (snd) (close-sound snd)) (sounds))
+	  ))
     
     ))
 

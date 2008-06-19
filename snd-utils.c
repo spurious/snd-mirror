@@ -94,7 +94,7 @@ char *copy_string_1(const char *str, const char *func, const char *file, int lin
   if (str)
     {
       newstr = (char *)mem_malloc((strlen(str) + 1) * sizeof(char), func, file, line);
-      set_printable(PRINT_CHAR);
+      MUS_SET_PRINTABLE(PRINT_CHAR);
       strcpy(newstr, str);
     }
   return(newstr);
@@ -525,9 +525,7 @@ static fam_info *make_fam_info(FAMRequest *rp, void *data, void (*action)(struct
 {
   fam_info *fp;
   fp = (fam_info *)CALLOC(1, sizeof(fam_info));
-#if MUS_DEBUGGING
-  set_printable(PRINT_FAM_INFO);
-#endif
+  MUS_SET_PRINTABLE(PRINT_FAM_INFO);
   fp->data = data;
   fp->action = action;
   fp->rp = rp;

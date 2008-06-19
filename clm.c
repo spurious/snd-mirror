@@ -239,13 +239,11 @@ static char *float_array_to_string(Float *arr, int len, int loc)
   lim = (array_print_length + 4) * MAX_NUM_SIZE; /* 4 for possible bounds below */
   if (lim > size) size = lim;
   base = (char *)clm_calloc_atomic(size, sizeof(char), "float_array_to_string");
-#if MUS_DEBUGGING
-  set_printable(PRINT_CHAR);
-#endif
+  MUS_SET_PRINTABLE(PRINT_CHAR);
+
   str = (char *)clm_calloc_atomic(STR_SIZE, sizeof(char), "float_array_to_string");
-#if MUS_DEBUGGING
-  set_printable(PRINT_CHAR);
-#endif
+  MUS_SET_PRINTABLE(PRINT_CHAR);
+
   sprintf(base, "[");
   lim = len;
   if (lim > array_print_length) lim = array_print_length;
@@ -257,9 +255,8 @@ static char *float_array_to_string(Float *arr, int len, int loc)
       if ((int)(strlen(base) + MAX_NUM_SIZE) > size)
 	{
 	  base = (char *)clm_realloc(base, size * 2 * sizeof(char));
-#if MUS_DEBUGGING
-	  set_printable(PRINT_CHAR);
-#endif
+	  MUS_SET_PRINTABLE(PRINT_CHAR);
+
 	  base[size] = 0;
 	  size *= 2;
 	}
@@ -7034,12 +7031,6 @@ static pthread_key_t mus_thread_generator;
 static void reader_lock_error_handler(int type, char *msg)
 {
   /* if mus_error is called while in a locked section, first unlock, then signal the error with the outer (original) error handler */
-
-  /* TODO: this needs to keep a stack of currently held locks, and unlock all of them.
-   *     for example, it is possible to have both writer_lock and sound_table_lock held by the same thread.
-   *     we don't actually care about the generator
-   */
-
   rdin *gen;
   gen = (rdin *)pthread_getspecific(mus_thread_generator);
   mus_thread_restore_error_handler();

@@ -3771,7 +3771,7 @@ static ed_fragment *make_ed_fragment(void)
 #if MUS_DEBUGGING
   ed_fragment *ed;
   ed = (ed_fragment *)CALLOC(1, sizeof(ed_fragment));
-  set_printable(PRINT_ED_FRAGMENT);
+  MUS_SET_PRINTABLE(PRINT_ED_FRAGMENT);
   return(ed);
 #else
   return((ed_fragment *)CALLOC(1, sizeof(ed_fragment)));
@@ -3919,9 +3919,8 @@ static ed_list *make_ed_list(int size)
   ed_list *ed;
   int i;
   ed = (ed_list *)CALLOC(1, sizeof(ed_list));
-#if MUS_DEBUGGING
-  set_printable(PRINT_ED_LIST);
-#endif
+  MUS_SET_PRINTABLE(PRINT_ED_LIST);
+
   ed->size = size;
   ed->allocated_size = size;
   ed->fragments = (ed_fragment **)malloc(size * sizeof(ed_fragment *)); /* can't use MALLOC/FREE -- compiler dislikes the assignment in FREE */
@@ -6138,9 +6137,7 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
   curlen = cp->edits[edit_position]->samples;
   /* snd_fd allocated only here */
   sf = (snd_fd *)CALLOC(1, sizeof(snd_fd)); /* only creation point (... oops -- see below...)*/
-#if MUS_DEBUGGING
-  set_printable(PRINT_SND_FD);
-#endif
+  MUS_SET_PRINTABLE(PRINT_SND_FD);
 
   sf->region = INVALID_REGION;
   sf->type = SAMPLE_READER;
@@ -7344,12 +7341,7 @@ snd_fd *make_virtual_mix_reader(chan_info *cp, off_t beg, off_t len, int index, 
   off_t ind0, ind1, indx;
 
   sf = (snd_fd *)CALLOC(1, sizeof(snd_fd));
-#if MUS_DEBUGGING
-  set_printable(PRINT_SND_FD);
-#endif
-
-  /* temporary */
-  /* sf->ramps = (void *)CALLOC(1, sizeof(reader_ramps)); */
+  MUS_SET_PRINTABLE(PRINT_SND_FD);
 
   sf->region = INVALID_MIX_ID;
   sf->type = MIX_READER;

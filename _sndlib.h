@@ -646,6 +646,9 @@ char *mus_midi_describe(void);
   void *mem_malloc(size_t len, const char *func, const char *file, int line);
   void *mem_free(void *ptr, const char *func, const char *file, int line);
   void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, int line);
+  #define MUS_SET_PRINTABLE(Type) set_printable(Type)
+#else
+  #define MUS_SET_PRINTABLE(Type) do {} while (0)
 #endif
 
 #if (!HAVE_STRDUP)

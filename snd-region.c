@@ -717,9 +717,7 @@ int define_region(sync_info *si, off_t *ends)
   len += 1;
   if (len <= 0) return(INVALID_REGION);
   r = (region *)CALLOC(1, sizeof(region));
-#if MUS_DEBUGGING
-  set_printable(PRINT_REGION);
-#endif
+  MUS_SET_PRINTABLE(PRINT_REGION);
   r->id = region_id_ctr++;
   cp0 = si->cps[0];
   sp0 = cp0->sound;

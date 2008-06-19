@@ -1528,9 +1528,7 @@ sound_data *c_make_sound_data(int chans, int frames)
   int i;
   sound_data *sd;
   sd = (sound_data *)MALLOC(sizeof(sound_data));
-#if MUS_DEBUGGING && USE_SND
-  set_printable(PRINT_SOUND_DATA);
-#endif
+  MUS_SET_PRINTABLE(PRINT_SOUND_DATA);
   sd->length = frames;
   sd->chans = chans;
   sd->wrapped = false;

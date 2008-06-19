@@ -227,6 +227,8 @@ static void free_locks(void *ulocks)
 }
 #endif
 
+/* -------------------------------------------------------------------------------- */
+
 
 /* mus_error handling is tricky enough without threads!  We have to keep the previous handlers
  *   intact within each thread, then in mus_error itself, ask the thread what its current
@@ -447,9 +449,7 @@ int mus_make_error(const char *error_name)
 	}
       len = strlen(error_name);
       mus_error_names[err] = (char *)CALLOC(len + 1, sizeof(char));
-#if MUS_DEBUGGING
-      set_printable(PRINT_CHAR);
-#endif
+      MUS_SET_PRINTABLE(PRINT_CHAR);
       strcpy(mus_error_names[err], error_name);
     }
   return(new_error);
@@ -573,9 +573,7 @@ static sound_file *add_to_sound_table(const char *name)
   sound_table[pos] = (sound_file *)CALLOC(1, sizeof(sound_file));
   sound_table[pos]->table_pos = pos;
   sound_table[pos]->file_name = (char *)CALLOC(strlen(name) + 1, sizeof(char));
-#if MUS_DEBUGGING
-  set_printable(PRINT_CHAR);
-#endif
+  MUS_SET_PRINTABLE(PRINT_CHAR);
   strcpy(sound_table[pos]->file_name, name);
 
   return(sound_table[pos]);

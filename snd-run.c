@@ -598,7 +598,7 @@ static xen_value *make_xen_value(int typ, int address, xen_value_constant_t cons
   xen_value *v;
   v = (xen_value *)CALLOC(1, sizeof(xen_value));
 #if MUS_DEBUGGING
-  set_printable(PRINT_XEN_VALUE);
+  MUS_SET_PRINTABLE(PRINT_XEN_VALUE);
   v->line = line;
 #endif
   v->type = typ;
@@ -1079,9 +1079,7 @@ static ptree *make_ptree(int initial_data_size)
   ptree *pt;
   got_lambda = false;
   pt = (ptree *)CALLOC(1, sizeof(ptree));
-#if MUS_DEBUGGING
-  set_printable(PRINT_PTREE);
-#endif
+  MUS_SET_PRINTABLE(PRINT_PTREE);
   if (initial_data_size > 0)
     {
       pt->ints = (Int *)CALLOC(initial_data_size, sizeof(Int));
@@ -1102,9 +1100,7 @@ static ptree *attach_to_ptree(ptree *pt)
   /* share all environment tables -- memcpy? */
   ptree *new_tree;
   new_tree = (ptree *)CALLOC(1, sizeof(ptree));
-#if MUS_DEBUGGING
-  set_printable(PRINT_PTREE);
-#endif
+  MUS_SET_PRINTABLE(PRINT_PTREE);
   memcpy((void *)new_tree, (void *)pt, sizeof(ptree));
   new_tree->program_size = 0;
   new_tree->triple_ctr = 0;
