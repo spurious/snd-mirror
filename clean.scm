@@ -278,7 +278,7 @@
 		  (run (lambda ()
 			 (do ((i 0 (1+ i)))
 			     ((= i 44100))
-			   (outa i (* (env e) (oscil osc)) *output*))))))))
+			   (outa i (* (env e) (oscil osc))))))))))
     
     (notch-channel (list 60.0) #f #f #f #f #f #f #t 8)
     (let ((mx (maxamp)))
@@ -293,7 +293,7 @@
 		  (run (lambda ()
 			 (do ((i 0 (1+ i)))
 			     ((= i 44100))
-			   (outa i (* (env e) (+ (oscil osc) (oscil osc1) (oscil osc2))) *output*))))))))
+			   (outa i (* (env e) (+ (oscil osc) (oscil osc1) (oscil osc2)))))))))))
     
     (let ((v60 (goertzel 60.0))
 	  (v40 (goertzel 40.0))
@@ -316,7 +316,7 @@
 		  (run (lambda ()
 			 (do ((i 0 (1+ i)))
 			     ((= i 44100))
-			   (outa i (* (env e) (+ (oscil osc) (oscil osc1) (oscil osc2))) *output*))))))))
+			   (outa i (* (env e) (+ (oscil osc) (oscil osc1) (oscil osc2)))))))))))
     
     (let ((v60 (goertzel 60.0))
 	  (v40 (goertzel 55.0))

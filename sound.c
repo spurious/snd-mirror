@@ -1373,42 +1373,6 @@ int mus_sound_close_output(int fd, off_t bytes_of_data)
 }
 
 
-int mus_sound_close_output_briefly(int fd, off_t bytes_of_data);
-int mus_sound_close_output_briefly(int fd, off_t bytes_of_data)
-{
-  char *name;
-  name = mus_file_fd_name(fd);
-  if (name)
-    {
-      int err = MUS_ERROR, old_type;
-      char *fname;
-      sound_file *sf = NULL;
-
-      fname = strdup(name); /* strdup defined, if necessary, in io.c */
-      old_type = mus_file_header_type(fd);
-      err = mus_file_close(fd);        /* this frees the original fd->name, so we copied above */
-      /* fd is NULL now */
-      mus_header_change_data_size(fname, old_type, bytes_of_data); /* this calls mus_read_header which seems unfortunate */
-      
-      MUS_LOCK(&sound_table_lock);
-      sf = find_sound_file(fname);    
-      if (sf)
-	{
-	  /* now rather than forget the sf table data (which forces a subsequent header read), we'll simply update it */
-	  sf->write_date = local_file_write_date(fname);
-	  sf->true_file_length = mus_header_true_length();
-	  sf->samples = mus_header_samples();
-	}
-      MUS_UNLOCK(&sound_table_lock);
-
-      free(fname);
-      return(err);
-    }
-  return(MUS_ERROR);
-}
-
-
-
 typedef enum {SF_CHANS, SF_SRATE, SF_TYPE, SF_FORMAT, SF_LOCATION, SF_SIZE} sf_field_t;
 
 static int mus_sound_set_field(const char *arg, sf_field_t field, int val)

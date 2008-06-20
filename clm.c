@@ -6922,12 +6922,11 @@ typedef struct {
   mus_lock_t *reader_lock;
 } rdin;
 
-/* TODO: thread-local error handlers throughout, is read buffer the right size? why reverb write read header over and over but not pastorale? */
 /* TODO: what happens if joing thread, non-thread-local error causes gen holding lock to be freed? -- lock is destroyed but is thread also killed? */
 /* TODO: if error closes *output* and a bunch of threads are writing to it, how to clean up? */
 /*        could with-sound threads list be used to cleanup? -- each would have the associated gen -- how to access from scheme? */
 /*        thread-destroy routine could free its gen? */
-/* thread specific current and old error handlers -- don't depend on stack here */
+
 /* all locks need to be cleared at error exit (sinc etc), and sp->locks at sp close etc */
 
 
@@ -7128,13 +7127,6 @@ static Float file_sample(mus_any *ptr, off_t samp, int chan)
 
   MUS_UNLOCK(gen->reader_lock);
 
-#if MUS_DEBUGGING
-  if (fabs(result) > 100.0)
-    {
-      fprintf(stderr, "read %f at " OFF_TD " in chan %d of %s\n", result, samp, chan, mus_describe(ptr));
-      abort();
-    }
-#endif
   return(result);
 }
 
@@ -7525,7 +7517,7 @@ static mus_any_class SAMPLE_TO_FILE_CLASS = {
 };
 
 static int *data_format_zero = NULL;
-int mus_sound_close_output_briefly(int fd, off_t bytes_of_data);
+
 
 static void flush_buffers(rdout *gen)
 {
@@ -7552,9 +7544,7 @@ static void flush_buffers(rdout *gen)
       else
 	{
 	  mus_file_write(fd, 0, gen->out_end, gen->chans, gen->obufs);
-	  /* briefly here */
-	  mus_sound_close_output(fd, 
-					 (gen->out_end + 1) * gen->chans * mus_bytes_per_sample(mus_sound_data_format(gen->file_name)));	  
+	  mus_sound_close_output(fd, (gen->out_end + 1) * gen->chans * mus_bytes_per_sample(mus_sound_data_format(gen->file_name))); 
 	}
     }
   else
@@ -7680,12 +7670,7 @@ static void flush_buffers(rdout *gen)
       mus_file_write(fd, 0, frames_to_add, gen->chans, addbufs);
       if (current_file_frames <= gen->out_end) current_file_frames = gen->out_end + 1;
 
-      /* briefly here */
       mus_sound_close_output(fd, current_file_frames * gen->chans * mus_bytes_per_sample(data_format));
-
-      /* TODO: update the sf record here so that we don't stupidly re-read the header on the next write! */
-      /* need to reset sf->write_date and sf->samples, true_file_length */
-      /* mus_sound_close_output should do this! */
 
       for (i = 0; i < gen->chans; i++) 
 	free(addbufs[i]);  /* used calloc above to make sure we can check for unsuccessful allocation */

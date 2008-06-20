@@ -611,6 +611,7 @@
 #define S_temp_dir                      "temp-dir"
 #define S_text_focus_color              "text-focus-color"
 #define S_time_graph                    "time-graph"
+#define S_time_graph_hook               "time-graph-hook"
 #define S_time_graph_p                  "time-graph?"
 #define S_time_graph_style              "time-graph-style"
 #define S_time_graph_type               "time-graph-type"

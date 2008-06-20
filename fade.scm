@@ -108,7 +108,7 @@
 					 (set! outval (+ outval (formant (vector-ref fs1 (+ k 1 half-fs)) 
 									 (+ (* rfs inval2) (* (- 1.0 rfs) inval1)))))))
 				     (set! val outval)))))))))
-	 (outa i (* amp val) *output*))))))
+	 (outa i (* amp val)))))))
 
 
 ;;; (vct->channel (with-sound (:output (make-vct 22050)) (cross-fade 0 .1 1 0 1 .01 .01 0 .1 256 2)))
@@ -174,7 +174,7 @@
 	       (set! outval (+ outval (formant (vector-ref fs k) (+ (* sp inval1) (* (- 1.0 sp) inval2)))))
 	       (if (> 1.0 sp 0.0)
 		   (vct-set! spectrum k (- (vct-ref spectrum k) ramp-inc)))))
-	   (outa i (* amp outval) *output*)))))))
+	   (outa i (* amp outval))))))))
 
 
 ;;; (with-sound () (dissolve-fade 0 1 1.0 "oboe.snd" "trumpet.snd" 256 2 0 128))

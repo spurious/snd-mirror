@@ -2645,37 +2645,40 @@ static int oss_mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
         case MUS_AUDIO_CHANNEL:
 
 	  channels = 0;
+
+	  /* at some point the Alsa emulator stopped supporting this ioctl, but there is no documentation
+	   *   or mention of what to replace it with -- typical of ALSA!
+	   */
           ioctl(fd, SOUND_MIXER_READ_STEREODEVS, &stereodevs);
 
-	  /* TODO: ALSA 1.0.15 no longer handles this ioctl, so I need some replacement */
-	  /*    for the time being... */
 	  if ((stereodevs == 0) && ((devmask & SOUND_MASK_VOLUME) == 0))
 	    channels = 2;
 	  else
-
-	  switch (dev)
 	    {
-	    case MUS_AUDIO_MICROPHONE: if (SOUND_MASK_MIC & devmask)     {if (SOUND_MASK_MIC & stereodevs) channels = 2; else channels = 1;}     break;
-	    case MUS_AUDIO_SPEAKERS:   if (SOUND_MASK_SPEAKER & devmask) {if (SOUND_MASK_SPEAKER & stereodevs) channels = 2; else channels = 1;} break;
-	    case MUS_AUDIO_LINE_IN:    if (SOUND_MASK_LINE & devmask)    {if (SOUND_MASK_LINE & stereodevs) channels = 2; else channels = 1;}    break;
-	    case MUS_AUDIO_LINE1:      if (SOUND_MASK_LINE1 & devmask)   {if (SOUND_MASK_LINE1 & stereodevs) channels = 2; else channels = 1;}   break;
-	    case MUS_AUDIO_LINE2:      if (SOUND_MASK_LINE2 & devmask)   {if (SOUND_MASK_LINE2 & stereodevs) channels = 2; else channels = 1;}   break;
-	    case MUS_AUDIO_LINE3:      if (SOUND_MASK_LINE3 & devmask)   {if (SOUND_MASK_LINE3 & stereodevs) channels = 2; else channels = 1;}   break;
-	    case MUS_AUDIO_DAC_OUT:    if (SOUND_MASK_VOLUME & devmask)  {if (SOUND_MASK_VOLUME & stereodevs) channels = 2; else channels = 1;}  break;
-	    case MUS_AUDIO_DEFAULT:    if (SOUND_MASK_VOLUME & devmask)  {if (SOUND_MASK_VOLUME & stereodevs) channels = 2; else channels = 1;}  break;
-	    case MUS_AUDIO_CD:         if (SOUND_MASK_CD & devmask)      {if (SOUND_MASK_CD & stereodevs) channels = 2; else channels = 1;}      break;
-	    case MUS_AUDIO_DUPLEX_DEFAULT: 
-	      err = ioctl(fd, SNDCTL_DSP_GETCAPS, &ind);
-	      if (err != -1)
-		channels = (ind & DSP_CAP_DUPLEX);
-	      else channels = 0;
-	      break;
-	    default: 
-	      RETURN_ERROR_EXIT(MUS_AUDIO_DEVICE_NOT_AVAILABLE, fd,
-				mus_format("can't read channel info from %s (%s)",
-					   mus_audio_device_name(dev), dev_name));
-	      break;
-            }
+	      switch (dev)
+		{
+		case MUS_AUDIO_MICROPHONE: if (SOUND_MASK_MIC & devmask)     {if (SOUND_MASK_MIC & stereodevs) channels = 2; else channels = 1;}     break;
+		case MUS_AUDIO_SPEAKERS:   if (SOUND_MASK_SPEAKER & devmask) {if (SOUND_MASK_SPEAKER & stereodevs) channels = 2; else channels = 1;} break;
+		case MUS_AUDIO_LINE_IN:    if (SOUND_MASK_LINE & devmask)    {if (SOUND_MASK_LINE & stereodevs) channels = 2; else channels = 1;}    break;
+		case MUS_AUDIO_LINE1:      if (SOUND_MASK_LINE1 & devmask)   {if (SOUND_MASK_LINE1 & stereodevs) channels = 2; else channels = 1;}   break;
+		case MUS_AUDIO_LINE2:      if (SOUND_MASK_LINE2 & devmask)   {if (SOUND_MASK_LINE2 & stereodevs) channels = 2; else channels = 1;}   break;
+		case MUS_AUDIO_LINE3:      if (SOUND_MASK_LINE3 & devmask)   {if (SOUND_MASK_LINE3 & stereodevs) channels = 2; else channels = 1;}   break;
+		case MUS_AUDIO_DAC_OUT:    if (SOUND_MASK_VOLUME & devmask)  {if (SOUND_MASK_VOLUME & stereodevs) channels = 2; else channels = 1;}  break;
+		case MUS_AUDIO_DEFAULT:    if (SOUND_MASK_VOLUME & devmask)  {if (SOUND_MASK_VOLUME & stereodevs) channels = 2; else channels = 1;}  break;
+		case MUS_AUDIO_CD:         if (SOUND_MASK_CD & devmask)      {if (SOUND_MASK_CD & stereodevs) channels = 2; else channels = 1;}      break;
+		case MUS_AUDIO_DUPLEX_DEFAULT: 
+		  err = ioctl(fd, SNDCTL_DSP_GETCAPS, &ind);
+		  if (err != -1)
+		    channels = (ind & DSP_CAP_DUPLEX);
+		  else channels = 0;
+		  break;
+		default: 
+		  RETURN_ERROR_EXIT(MUS_AUDIO_DEVICE_NOT_AVAILABLE, fd,
+				    mus_format("can't read channel info from %s (%s)",
+					       mus_audio_device_name(dev), dev_name));
+		  break;
+		}
+	    }
           val[0] = channels;
           break;
         case MUS_AUDIO_AMP:

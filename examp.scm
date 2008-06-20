@@ -2237,7 +2237,7 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 		   (if (readin? gen)
 		       (set! val (+ val (gen)))
 		       (set! val (gen val))))))
-	   (outa k val *output*)))))))
+	   (outa k val)))))))
 
 #|
 (with-sound ()

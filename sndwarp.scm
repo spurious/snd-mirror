@@ -290,10 +290,10 @@
 			       ;; mono in, mono out
 			       (set! outa-val (* amp-val sampa))))
 		       ;; output
-		       (outa i outa-val *output*)
+		       (outa i outa-val)
 		       (if stereo-o
 			   (begin
-			     (outb i outb-val *output*)	     
+			     (outb i outb-val)	     
 			     (if *reverb* (outa i (* rev-val outa-val) *reverb*)))))))
 	       (if (not eow-flag )
 		   (begin

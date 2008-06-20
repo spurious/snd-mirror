@@ -2606,6 +2606,24 @@ This hook is called when the selection finishes playing.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
+<!-- time-graph-hook -->
+<tr><td colspan=3 bgcolor="#f2f4ff">
+<code><a class=def name="timegraphhook">time-graph-hook</a> (snd chn)</code> [<b>progn</b>]
+</td></tr><tr><td></td><td colspan=2>
+This hook is called just before each channel's time domain graph is updated if <a href="#channelstyle">channel-style</a> is
+<code>channels-combined</code> (that is, when all the channels are superimposed in one graph).
+If its function returns a pixel, that color is used to draw that channel's data.
+
+<table border=0 cellpadding=5 vspace=10><tr><td bgcolor="#fafafa"><pre>
+(<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> <em class=red>time-graph-hook</em>
+	   (lambda (snd chn)
+	     (lambda ()
+	       (apply <a class=quiet href="#makecolor">make-color</a> (<a class=quiet href="#colormapref">colormap-ref</a> (<a class=quiet href="#colormap">colormap</a>) (/ chn (<a class=quiet href="#channels">channels</a> snd)))))))
+</pre></td></tr></table>
+
+</td></tr><tr><td colspan=3 height=16></td></tr>
+
+
 <!-- update-hook -->
 <tr><td colspan=3 bgcolor="#f2f4ff">
 <code><a class=def name="updatehook">update-hook</a> (snd)</code> [<b>or</b>]

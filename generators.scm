@@ -5372,7 +5372,7 @@ index 10 (so 10/2 is the bes-jn arg):
      (lambda ()
        (do ((i beg (1+ i)))
 	   ((= i end))
-	 (outa i (green-noise grn 0.0) *output*))))))
+	 (outa i (green-noise grn 0.0)))))))
 
 (definstrument (green2 beg end freq amp lo hi)
   (let ((grn (make-green-noise-interp :frequency freq :amplitude amp :high hi :low lo)))
@@ -5380,7 +5380,7 @@ index 10 (so 10/2 is the bes-jn arg):
      (lambda ()
        (do ((i beg (1+ i)))
 	   ((= i end))
-	 (outa i (green-noise-interp grn 0.0) *output*))))))
+	 (outa i (green-noise-interp grn 0.0)))))))
 
 (with-sound () (green1 0 10000 1000 0.1 -0.5 0.5) (green2 10000 20000 1000 0.1 -0.5 0.5))
 
@@ -5397,8 +5397,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	   ((= i end))
 	 (outa i (* (env e) 
 		    (+ 1.0 (green-noise-interp grn 0.0))
-		    (oscil osc)) 
-	       *output*))))))
+		    (oscil osc))))))))
 
 (with-sound () (green3 0 2.0 440 .5 '(0 0 1 1 2 1 3 0) 100 .2 .02))
 
@@ -5414,8 +5413,7 @@ index 10 (so 10/2 is the bes-jn arg):
      (lambda ()
        (do ((i beg (1+ i)))
 	   ((= i end))
-	 (outa i (* amp (oscil osc (hz->radians (+ (env e) (green-noise-interp grn 0.0)))))
-	       *output*))))))
+	 (outa i (* amp (oscil osc (hz->radians (+ (env e) (green-noise-interp grn 0.0)))))))))))
 
 (with-sound () (green4 0 2.0 440 .5 '(0 0 1 1 2 1 3 0) 440 100 100 10))
 

@@ -90,6 +90,6 @@
 	 (set! dt (+ 1 dt))
 	 (set! j (+ j (/ dy dx)));linear interpolation
 	 (set! output (/ j b));normalization -1 to 1
-	 (outa i (* amp output (env d-click)) *output*))))))
+	 (outa i (* amp output (env d-click))))))))
 
 ;(with-sound (:statistics #t)(stochastic 0 10 :xwig .25 :ywig 10.0))

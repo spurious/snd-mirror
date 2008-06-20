@@ -542,17 +542,18 @@ returning you to the true top-level."
     (lambda () 
       (let ((threads '()))
 	,@(map (lambda (expr) 
-		 `(begin (set! threads (cons (call-with-new-thread 
-					      (lambda () 
-						,expr))
-					     threads))
-			 (if (>= (length threads) *clm-threads*)
-			     (begin
-			       (for-each 
-				(lambda (thread) 
-				  (join-thread thread))
-				threads)
-			       (set! threads '())))))
+		 `(begin 
+		    (set! threads (cons (call-with-new-thread 
+					 (lambda () 
+					   ,expr))
+					threads))
+		    (if (>= (length threads) *clm-threads*)
+			(begin
+			  (for-each 
+			   (lambda (thread) 
+			     (join-thread thread))
+			   threads)
+			  (set! threads '())))))
 	       body)
 	(for-each 
 	 (lambda (thread) 
@@ -606,7 +607,7 @@ returning you to the true top-level."
   (fm-violin 0 1 440 .1)
   (fm-violin 0 1 660 .1))
 |#
-;;;   also Ruby? Fth?, also test/time it -- possibly add yield in the for-each loop?
+;;;   also Ruby? [ruby does have threads, but how to handle them in with_sound?]
 
 
 ;;; -------- with-temp-sound --------

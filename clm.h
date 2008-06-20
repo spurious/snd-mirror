@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 4
-#define MUS_REVISION 12
-#define MUS_DATE "16-June-08"
+#define MUS_REVISION 13
+#define MUS_DATE "20-June-08"
 
 /*
+ * 20-Jun:     support for pthreads.
  * 16-Jun:     changed init_mus_module to mus_initialize.
  * 30-May:     changed polyshape to use cos and added cheby_choice arg to mus_make_polyshape.
  * 27-May:     mus_waveshape retired -- generators.scm has a wrapper for it.

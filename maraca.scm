@@ -59,7 +59,7 @@
 	 (vct-set! output 1 (vct-ref output 0))
 	 (vct-set! output 0 input)
 	 ;; extra zero for spectral shape, also fixup amp since Perry is assuming maxamp 16384
-	 (outa i (* sndamp (- (vct-ref output 0) (vct-ref output 1))) *output*))))))
+	 (outa i (* sndamp (- (vct-ref output 0) (vct-ref output 1)))))))))
 
 ;;; maraca: (vct->channel (maraca 0 5 .5))
 ;;; cabasa: (vct->channel (maraca 0 5 .5 0.95 0.997 0.5 3000.0 0.7))
@@ -148,7 +148,7 @@
 	       (set! temp1 (+ last-diff diff)))
 	     (set! temp1 sum))
 	 ;; extra zero for spectral shape, also fixup amp since Perry is assuming maxamp 16384
-	 (outa i (* sndamp temp1) *output*))))))
+	 (outa i (* sndamp temp1)))))))
 
 ;;; tambourine: (big-maraca 0 1 .25 0.95 0.9985 .03125 '(2300 5600 8100) '(0.96 0.995 0.995) .01)
 ;;; sleighbells: (big-maraca 0 2 .5 0.97 0.9994 0.03125 '(2500 5300 6500 8300 9800) '(0.999 0.999 0.999 0.999 0.999))

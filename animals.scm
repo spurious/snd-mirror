@@ -10889,8 +10889,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (polywave gen1 (env frqf)))
-	       *output*))))))
+		    (polywave gen1 (env frqf)))))))))
 
 ;(with-sound (:play #t) (scrub-euphonia 0 .25))
 

@@ -6297,7 +6297,7 @@ an ordinary editing function:
 </p>
 
 <table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
-(if (not (defined? '*output*)) (load-from-path "ws.scm"))
+(if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 (define* (clm-reverb-sound reverb-amount reverb :optional (reverb-data '()) snd)
   (let ((output (<a class=quiet href="extsnd.html#sndtempnam" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndtempnam_tip)">snd-tempnam</a>))
 	(revout (<a class=quiet href="extsnd.html#sndtempnam" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndtempnam_tip)">snd-tempnam</a>))
@@ -7620,10 +7620,12 @@ starting phase on the X axis, and the resulting peak amplitude on the Y axis.
 
 
 <img src="pix/noid2.png" hspace=20 alt="n=2 case">
+<img src="pix/sum2.png" hspace=20 alt="n=2 case">
 
 
 <p>That one is easy; we can try the two minima (both initial phases 0.0, and one 0.0 the other pi)
-and find the minimum peak for n=2 is 1.76.  How hard can n=3 be?
+and find the minimum peak for n=2 is 1.76.  The graph on the right shows the two components at the phase=0 minimum and their sum.
+How hard can n=3 be?
 To graph the same function in that case seems to require a 3D projection (X axis for component 2's
 phase, Y axis for component 3's, and Z axis for the resultant peak).  But I found the graph 
 almost unreadable.  I think a much more legible approach that can be applied to any number
@@ -7755,6 +7757,10 @@ phase 0.0.
 -->
 
 <!-- the circular phases code is in peak-phases.scm -->
+<p>Here is the time domain view of the n=5 case when the minimum peak phases are chosen; the sum of the 5 components is in black.
+</p>
+
+<img src="pix/sum5.png" hspace=20 alt="n=5 case">
 
 <p>
 And on a really random note, if the component amplitudes are scaled by (say) 0.5^k,

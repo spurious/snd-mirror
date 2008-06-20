@@ -2245,7 +2245,7 @@
 		       'stop-player 'stop-playing 'stop-playing-hook 'stop-playing-selection-hook 'sum-of-cosines 'ncos
 		       'sum-of-cosines? 'ncos? 'sum-of-sines 'nsin 'sum-of-sines? 'nsin? 'swap-channels 'sync
 		       'sync-max 'syncd-marks 'table-lookup 'table-lookup? 'tap
-		       'temp-dir 'text-focus-color 'time-graph 'time-graph-style
+		       'temp-dir 'text-focus-color 'time-graph 'time-graph-hook 'time-graph-style
 		       'time-graph-type 'time-graph? 'tiny-font 
 		       'tracking-cursor-style 'transform->vct
 		       'transform-dialog 'transform-frames 'transform-graph 'transform-graph-style 'transform-graph-type
@@ -4906,7 +4906,7 @@
 			   (snd-display ";with-threaded-sound 2 (~D) chan 1 output differs" buflen)))))))
 	   (list 65536 8192 1024 256 1234))
 	  (set! *clm-file-buffer-size* old-file-buffer-size)
-	  
+	  (set! (mus-file-buffer-size) old-file-buffer-size)	  
 	  
 	  (let ((samps (make-vct 512)))
 	    (do ((i 0 (1+ i)))
@@ -4968,6 +4968,7 @@
 			   (snd-display ";with-threaded-sound 5 chan 1 output differs")))))))
 	   (list 65536 8192 1024 256 1234))
 	  (set! *clm-file-buffer-size* old-file-buffer-size)
+	  (set! (mus-file-buffer-size) old-file-buffer-size)
 	  (for-each (lambda (snd) (close-sound snd)) (sounds))
 	  ))
     
@@ -30403,6 +30404,7 @@ EDITS: 2
     (add-hook! after-graph-hook arg2) (carg2 after-graph-hook)
     (add-hook! after-lisp-graph-hook arg2) (carg2 after-lisp-graph-hook)
     (add-hook! lisp-graph-hook arg2) (carg2 lisp-graph-hook)
+    (add-hook! time-graph-hook arg2) (carg2 time-graph-hook)
     (add-hook! before-transform-hook arg2) (carg2 before-transform-hook)
     (add-hook! mix-release-hook arg2) (carg2 mix-release-hook)
     (add-hook! save-hook arg2) (carg2 save-hook)
@@ -54106,7 +54108,7 @@ EDITS: 1
 	      (with-sound (:output v1 :revfile v2 :reverb jc-reverb)
 			  (fm-violin 0 .1 440 .1 :reverb-amount 0.9)
 			  (fm-violin 0 .1 440 .1 :reverb-amount 0.9))
-	      (if (< (car (sound-data-maxamp v1)) .6) 
+	      (if (< (car (sound-data-maxamp v1)) .56) 
 		  (snd-display ";2 with-sound -> sound-data fm-violin maxamp (opt 2): ~A" (sound-data-maxamp v1))))))
 
 	(let ((oldopt (optimization)))
@@ -54128,7 +54130,7 @@ EDITS: 1
 	      (with-sound (:output v1 :revfile v2 :reverb jc-reverb)
 			  (fm-violin 0 .1 440 .1 :reverb-amount 0.9)
 			  (fm-violin 0 .1 440 .1 :reverb-amount 0.9))
-	      (if (< (car (sound-data-maxamp v1)) .6) 
+	      (if (< (car (sound-data-maxamp v1)) .5) 
 		  (snd-display ";2 with-sound -> sound-data fm-violin maxamp (opt 2): ~A" (sound-data-maxamp v1))))))
 
 	(let ((oldopt (optimization)))
@@ -68735,6 +68737,7 @@ EDITS: 1
 		    (list (list after-graph-hook 'after-graph-hook)
 			  (list after-lisp-graph-hook 'after-lisp-graph-hook)
 			  (list lisp-graph-hook 'lisp-graph-hook)
+			  (list time-graph-hook 'time-graph-hook)
 			  (list before-transform-hook 'before-transform-hook)
 			  (list mix-release-hook 'mix-release-hook)
 			  (list save-hook 'save-hook)

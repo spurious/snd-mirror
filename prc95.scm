@@ -97,7 +97,7 @@
        (do ((i start (1+ i)))
 	   ((= i end))
 	 (set! dout (delaya delayline (one-zero filter dout)))
-	 (outa i (* amplitude dout) *output*))))))
+	 (outa i (* amplitude dout)))))))
 
 
 ;;; freq is off in this one (in prc's original also)
@@ -157,7 +157,7 @@
 		     (set! bowing #f)
 		     (set! attackrate .0005)))
 	       (set! ctr (+ ctr 1))
-	       (outa i result *output*)))))))))
+	       (outa i result)))))))))
 
 
 (definstrument (brass beg dur freq amplitude maxa)
@@ -199,7 +199,7 @@
 		 (set! blowing #f)
 		 (set! attackrate .0005)))
 	   (set! ctr (+ ctr 1))
-	   (outa i result *output*)))))))
+	   (outa i result)))))))
 
 
 (definstrument (clarinet beg dur freq amplitude maxa)
@@ -243,7 +243,7 @@
 		   (set! blowing #f)
 		   (set! attackrate .0005)))
 	     (set! ctr (+ ctr 1))
-	     (outa i result *output*))))))))
+	     (outa i result))))))))
      
 
 (definstrument (flute beg dur freq amplitude maxa)
@@ -302,7 +302,7 @@
 		   (set! blowing #f)
 		   (set! attackrate .0005)))
 	     (set! ctr (+ ctr 1))
-	     (outa i result *output*))))))))
+	     (outa i result))))))))
 
 #|
 (with-sound ()

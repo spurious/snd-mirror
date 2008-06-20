@@ -102,7 +102,7 @@
 			 v)
 		       x))
 
-;;; (with-sound (:scaled-to 0.5) (do ((i 0 (1+ i)) (x 0.0 (+ x .1))) ((= i 10000)) (outa i (legendre 20 (cos x)) *output*)))
+;;; (with-sound (:scaled-to 0.5) (do ((i 0 (1+ i)) (x 0.0 (+ x .1))) ((= i 10000)) (outa i (legendre 20 (cos x)))))
 
 #|
 ;; if l odd, there seems to be sign confusion:
@@ -110,9 +110,9 @@
   (do ((i 0 (1+ i))
        (theta 0.0 (+ theta 0.01)))
       ((= i 10000))
-    (outa i (plgndr 1 1 (cos theta)) *output*)
+    (outa i (plgndr 1 1 (cos theta)))
     (let ((x (sin theta)))
-      (outb i (- x) *output*))))
+      (outb i (- x)))))
 
 ;; this works:
 (with-sound (:channels 2 :scaled-to 1.0)
@@ -120,8 +120,8 @@
        (theta 0.0 (+ theta 0.01)))
       ((= i 10000))
     (let ((x (cos theta)))
-      (outa i (plgndr 3 0 x) *output*)
-      (outb i (* 0.5 x (- (* 5 x x) 3)) *output*))))
+      (outa i (plgndr 3 0 x))
+      (outb i (* 0.5 x (- (* 5 x x) 3))))))
 |#
 
 
@@ -151,7 +151,7 @@
 			  (set! fn1 fn)))))))))
 
 
-;;; (with-sound (:scaled-to 0.5) (do ((i 0 (1+ i)) (x 0.0 (+ x .1))) ((= i 10000)) (outa i (gegenbauer 15 (cos x) 1.0) *output*)))
+;;; (with-sound (:scaled-to 0.5) (do ((i 0 (1+ i)) (x 0.0 (+ x .1))) ((= i 10000)) (outa i (gegenbauer 15 (cos x) 1.0))))
 
 #|
 (with-sound (:scaled-to 0.5)
@@ -159,7 +159,7 @@
        (theta 0.0 (+ theta 0.05)))
       ((= i 10000))
     (let ((x (cos theta)))
-      (outa i (gegenbauer 20 x) *output*))))
+      (outa i (gegenbauer 20 x)))))
 |#
 
 
@@ -330,3 +330,56 @@
 		  (if (= j n) (set! ans bip)))
 		(if (and (< x 0.0) (odd? n)) (set! ans (- ans)))
 		(* ans (/ (bes-i0 x) bi)))))))
+
+
+
+(define (aux-f x)			;1<=x<inf
+  (let ((x2 (* x x)))
+    (/ (+ 38.102495 (* x2 (+ 335.677320 (* x2 (+ 265.187033 (* x2 (+ 38.027264 x2)))))))
+       (* x (+ 157.105423 (* x2 (+ 570.236280 (* x2 (+ 322.624911 (* x2 (+ 40.021433 x2)))))))))))
+
+(define (aux-g x)
+  (let ((x2 (* x x)))
+    (/ (+ 21.821899 (* x2 (+ 352.018498 (* x2 (+ 302.757865 (* x2 (+ 42.242855 x2)))))))
+       (* x2 (+ 449.690326 (* x2 (+ 1114.978885 (* x2 (+ 482.485984 (* x2 (+ 48.196927 x2)))))))))))
+
+(define (Si x) 
+  (if (>= x 1.0)
+      (- (/ pi 2) (* (cos x) (aux-f x)) (* (sin x) (aux-g x)))
+    (let* ((sum x)
+	   (fact 2.0)
+	   (one -1.0)
+	   (xs x)
+	   (x2 (* x x))
+	   (err .000001)
+	   (unhappy #t))
+      (do ((i 3.0 (+ i 2.0)))
+	  ((not unhappy))
+	(set! xs (/ (* one x2 xs) (* i fact)))
+	(set! one (- one))
+	(set! fact (+ 1 fact))
+	(set! xs (/ xs fact))
+	(set! unhappy (> (abs xs) err))
+	(set! sum (+ sum xs)))
+      sum)))
+
+(define (Ci x) 
+  (if (>= x 1.0)
+      (- (* (sin x) (aux-f x)) (* (cos x) (aux-g x)))
+    (let* ((g .5772156649)
+	   (sum 0.0)
+	   (fact 1.0)
+	   (one -1.0)
+	   (xs 1.0)
+	   (x2 (* x x))
+	   (err .000001)
+	   (unhappy #t))
+      (do ((i 2.0 (+ i 2.0)))
+	  ((not unhappy))
+	(set! xs (/ (* one x2 xs) (* i fact)))
+	(set! one (- one))
+	(set! fact (+ 1 fact))
+	(set! xs (/ xs fact))
+	(set! unhappy (> (abs xs) err))
+	(set! sum (+ sum xs)))
+      (+ g (log x) sum))))

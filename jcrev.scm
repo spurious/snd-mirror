@@ -45,8 +45,8 @@
 	       (if low-pass
 		   (set! all-sums (+ (* .25 (+ comb-sum comb-sum-2)) (* .5 comb-sum-1)))
 		   (set! all-sums comb-sum))
-	       (outa i (* amp (delay outdel1 all-sums)) *output*)
-	       (if (> chns 1) (outb i (* amp (delay outdel2 all-sums)) *output*))))))
+	       (outa i (* amp (delay outdel1 all-sums)))
+	       (if (> chns 1) (outb i (* amp (delay outdel2 all-sums))))))))
 	(run
 	 (lambda ()
 	   (do ((i 0 (1+ i)))
@@ -57,7 +57,7 @@
 			(comb comb2 allpass-sum)
 			(comb comb3 allpass-sum)
 			(comb comb4 allpass-sum)))
-	       (outa i (* scl (delay outdel1 comb-sum)) *output*)
-	       (if (> chns 1) (outb i (* scl (delay outdel2 comb-sum)) *output*)))))))))
+	       (outa i (* scl (delay outdel1 comb-sum)))
+	       (if (> chns 1) (outb i (* scl (delay outdel2 comb-sum)))))))))))
 
 ;;; (with-sound (:reverb jc-reverb) (fm-violin 0 .1 440 .1 :reverb-amount .3))
