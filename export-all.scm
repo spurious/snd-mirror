@@ -142,7 +142,6 @@ make-triangle-wave
 make-two-pole
 make-two-zero
 make-wave-train
-make-waveshape
 mixer*
 mixer+
 mixer?
@@ -220,7 +219,6 @@ outc
 outd
 partials->polynomial
 partials->wave
-partials->waveshape
 parzen-window
 phase-vocoder
 phase-vocoder?
@@ -295,8 +293,6 @@ two-zero?
 ultraspherical-window
 wave-train
 wave-train?
-waveshape
-waveshape?
 welch-window
 array->file
 file->array
@@ -824,6 +820,7 @@ normalize-by-channel
 normalize-by-sound
 normalize-channel
 normalize-globally
+normalize-partials
 open-file-dialog
 open-file-dialog-directory
 open-hook
@@ -1053,6 +1050,7 @@ syncd-marks
 temp-dir
 text-focus-color
 time-graph
+time-graph-hook
 time-graph?
 time-graph-style
 time-graph-type

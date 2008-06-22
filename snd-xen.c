@@ -2184,6 +2184,7 @@ static XEN g_skip_block_comment(XEN ch, XEN port)
 #define NOT_A_WATCHER -1
 #define INITIAL_WATCHERS_SIZE 8
 #define WATCHERS_SIZE_INCREMENT 8
+
 static int *watchers = NULL;
 static int watchers_size = 0;
 
@@ -2254,7 +2255,6 @@ returns its id (an integer, used by " S_delete_watcher "). "
 }
 
 
-/* TODO: watcher fs / rb  */
 
 
 /* -------- source file extensions list -------- */

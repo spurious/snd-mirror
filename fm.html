@@ -106,7 +106,7 @@ functions that there is no difference in run-time computational expense or accur
 
 <!-- CLM CASE
 <pre>
-(definstrument pm (beg end freq amp mc-ratio index)
+(definstrument pm (beg end freq amp mc-ratio index) ; "mc-ratio" = modulator to carrier frequency ratio
   (let ((carrier-phase 0.0) ; set to pi/2 if someone tells you PM can't generate energy at DC
         (carrier-phase-incr (hz-&gt;radians freq))
         (modulator-phase 0.0)
@@ -149,7 +149,7 @@ functions that there is no difference in run-time computational expense or accur
 
 <!-- SND CASE -->
 <pre>
-(define (pm beg end freq amp mc-ratio index)
+(define (pm beg end freq amp mc-ratio index)  ; "mc-ratio" = modulator to carrier frequency ratio
   (let ((carrier-phase 0.0) ; set to pi/2 if someone tells you PM can't produce energy at 0Hz
         (carrier-phase-incr (hz-&gt;radians freq))
         (modulator-phase 0.0)

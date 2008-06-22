@@ -6922,7 +6922,7 @@ typedef struct {
   mus_lock_t *reader_lock;
 } rdin;
 
-/* TODO: what happens if joing thread, non-thread-local error causes gen holding lock to be freed? -- lock is destroyed but is thread also killed? */
+/* TODO: what happens if join thread, non-thread-local error causes gen holding lock to be freed? -- lock is destroyed but is thread also killed? */
 /* TODO: if error closes *output* and a bunch of threads are writing to it, how to clean up? */
 /*        could with-sound threads list be used to cleanup? -- each would have the associated gen -- how to access from scheme? */
 /*        thread-destroy routine could free its gen? */

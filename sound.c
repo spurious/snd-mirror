@@ -694,8 +694,6 @@ static sound_file *find_sound_file(const char *name)
   return(NULL);
 }
 
-/* TODO: if we just wrote samps, that should not trigger a re-read of the header just to get the chans */
-
 
 static void display_sound_file_entry(FILE *fp, const char *name, sound_file *sf)
 {

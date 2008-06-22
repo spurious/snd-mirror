@@ -3546,8 +3546,6 @@ static void display_channel_data_with_size(chan_info *cp,
       /* (add-hook! graph-hook (lambda (a b c d) (snd-print (format #f "~A ~A ~A ~A" a b c d)))) */
       ss->graph_hook_active = false;
       if (XEN_TRUE_P(res)) return;
-
-      /* TODO: allow graph-hook to return the foreground color, or add time-graph-hook? or just make a table? */
     }
 
   ap = cp->axis;
