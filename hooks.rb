@@ -2,7 +2,7 @@
 
 # Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Sun Dec 21 13:48:01 CET 2003
-# Changed: Fri Jul 06 01:53:44 CEST 2007
+# Changed: Mon Jun 23 22:40:23 CEST 2008
 
 # Commentary:
 #
@@ -137,6 +137,7 @@ need a String or Symbol, not %s"
   $after_graph_hook             = Hook.new("$after_graph_hook", 2)
   $after_lisp_graph_hook        = Hook.new("$after_lisp_graph_hook", 2)
   $lisp_graph_hook              = Hook.new("$lisp_graph_hook", 2)
+  $time_graph_hook              = Hook.new("$time_graph_hook", 2)
   $before_transform_hook        = Hook.new("$before_transform_hook", 2)
   $mix_release_hook             = Hook.new("$mix_release_hook", 2)
   $save_hook                    = Hook.new("$save_hook", 2)
@@ -266,6 +267,7 @@ if defined? $after_graph_hook
   Snd_hooks = [$after_graph_hook,
                $after_lisp_graph_hook,
                $lisp_graph_hook,
+               $time_graph_hook,
                $before_transform_hook,
                $mix_release_hook,
                $save_hook,

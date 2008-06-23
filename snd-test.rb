@@ -3863,6 +3863,7 @@ end
 
 def test124
   ind = new_sound("tmp.snd", Mus_riff, Mus_l24int, 22050, 1, :size, 100000)
+  old_selection_creates_region = selection_creates_region()
   x = -0.5
   incr = 1.0 / frames
   map_channel(lambda do |n|
@@ -3888,13 +3889,14 @@ def test124
                          fneq(val, n)
                        end, 0, 100000, ind1)
     if array?(err)
-      snd_display("%s (%s) selection not saved correctly? %s", df, ht, err)
+      snd_display("%s (%s) region not saved correctly? %s", df, ht, err)
     end
     close_sound(ind1)
   end
   delete_file("tmp1.snd")
   close_sound(ind)
   delete_file("tmp.snd")
+  set_selection_creates_region(old_selection_creates_region)
   ind = new_sound("tmp.snd", Mus_next, Mus_bfloat, 22050, 1, :size, 10, :comment, false)
   map_channel($init_channel)
   env_channel([0.0, 0.0, 0.1, 0.1, 0.2, 0.2, 0.3, 0.3, 0.4, 0.4,
@@ -11408,9 +11410,6 @@ def analog_filter_tests
   end
   f1 = make_chebyshev_highpass(10, 0.4)
   vals = sweep2bins(f1, 10)
-  if ffneq(vals[0], 0.78) and ffneq(vals[0], 0.86) # 0.5710 here [ms]
-    snd_display("chebyshev hp 10 max: %s?", vals[0])
-  end
   if (not vequal(vals[1], vct(0, 0, 0, 0, 0, 0, 0, 0.297, 0.786, 0.677))) and
       (not vequal(vals[1], vct(0, 0, 0, 0, 0, 0, 0, 0.301, 0.788, 0.660))) and
       (not vequal(vals[1], vct(0, 0, 0, 0, 0, 0, 0, 0.322, 0.861, 0.724)))
@@ -16312,7 +16311,7 @@ def test098
   gen.frequency = 100.0
   snd_display("polyshape set_frequency: %s?", gen.frequency) if fneq(gen.frequency, 100.0)
   snd_display("mus_data polyshape: %s?", gen.data) unless vct?(gen.data)
-  if fneq(v0[1], 0.125) or fneq(v0[8], 0.843)
+  if fneq(v0[1], 0.992) or fneq(v0[8], 0.538)
     snd_display("polyshape output: %s?", v0)
   end
   gen0.data = make_vct(32)
@@ -16329,7 +16328,7 @@ def test098
   gen = make_polyshape(440.0, :partials, [1, 1])
   1100.times do |i|
     a = gen.phase
-    if fneq(val1 = sin(a), val2 = gen.run(1.0, 0.0))
+    if fneq(val1 = cos(a), val2 = gen.run(1.0, 0.0))
       snd_display("polyshaper [1, 1] %d: %s %s?", i, val1, val2)
       break
     end
@@ -16337,26 +16336,7 @@ def test098
   gen = make_polyshape(440.0) # check default for partials: [1, 1])
   1100.times do |i|
     a = gen.phase
-    if fneq(val1 = sin(a), val2 = gen.run(1.0, 0.0))
-      snd_display("polyshaper default [1, 1] %d: %s %s?", i, val1, val2)
-      break
-    end
-  end
-  gen = make_polyshape(440.0, :initial_phase, HALF_PI, :partials, [2, 1])
-  incr = (TWO_PI * 440.0) / mus_srate
-  a = 0.0
-  1100.times do |i|
-    if fneq(val1 = cos(2.0 * a), val2 = gen.run(1.0, 0.0))
-      snd_display("polyshaper [2, 1] %d: %s %s?", i, val1, val2)
-      break
-    end
-    a += incr
-  end
-  gen = make_polyshape(440.0, :initial_phase, HALF_PI, :partials, [1, 1, 2, 0.5])
-  incr = (TWO_PI * 440.0) / mus_srate
-  a = 0.0
-  1100.times do |i|
-    val1 = cos(a) + 0.5 * cos(2.0 * a)
+    val1 = cos(a)
     if fneq(val1, val2 = gen.run(1.0, 0.0))
       snd_display("polyshaper [1, 1, 2, 0.5] %d: %s %s?", i, val1, val2)
       break
@@ -16366,8 +16346,8 @@ def test098
   gen = make_polyshape(440.0, :partials, [1, 1])
   1100.times do |i|
     a = gen.phase
-    if fneq(val1 = 0.5 * sin(a), val2 = gen.run(0.5, 0.0))
-      snd_display("polyshaper [1, 1] 0.5 %d: %s %s?", i, val1, val2)
+    if fneq(val1 = 0.5 * cos(a), val2 = gen.run(0.5, 0.0))
+      snd_display("polyshaper default [1, 1] 0.5 %d: %s %s?", i, val1, val2)
       break
     end
   end
@@ -16380,11 +16360,11 @@ def test098
   a1 = 0.0
   a = 0.0
   400.times do |i|
-    if ((val1 = sin(a1)) - (val2 = polyshape(gen, 1.0, polyshape(gen1, 1.0)))).abs > 0.002
+    if ((val1 = cos(a1)) - (val2 = polyshape(gen, 1.0, polyshape(gen1, 1.0)))).abs > 0.002
       snd_display("polyshape fm: %d: %s %s?", i, val1, val2)
       break
     end
-    a1 += sin(a)
+    a1 += cos(a)
     a += (TWO_PI * 40.0) / 22050.0
   end
 end
@@ -33890,9 +33870,9 @@ def test23_b
     res1 = channel2vct(45, 10, ind, 0)
     res2 = channel2vct(210, 10, ind, 0)
     if (not vfffequal(res1,
-                      vct(-0.068,-0.059,-0.045,-0.028,-0.011, 0.005, 0.018, 0.028, 0.035,0.039))) or
+                      vct(-0.068,-0.064,-0.056,-0.041,-0.020, 0.007, 0.034, 0.059, 0.077,0.090))) or
         (not vfffequal(res2,
-                       vct(0.015, 0.014, 0.013, 0.011, 0.009, 0.007, 0.005, 0.003, 0.001, 0.000)))
+                       vct(0.016, 0.015, 0.013, 0.011, 0.008, 0.006, 0.004, 0.003, 0.001, 0.000)))
       snd_display("fm_violin with_sound:\n#\t%s\n#\t%s", res1, res2)
     end
     play_and_wait(0, ind)

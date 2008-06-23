@@ -529,7 +529,7 @@ advantages whatsoever").
 If we add cosines at the amplitudes given by the Bessel functions (using additive synthesis to
 produce the same magnitude spectrum as FM produces), we get a very different waveform.  I think the
 FM version sounds richer and, far more importantly, louder (the FM RMS value here is 0.707, whereas
-the sum of cosines RMS value is 0.296):
+the sum of cosines RMS value is 0.243 since we scaled its original peak amplitude of 2.89 to 1.0):
 <p>
 
 <table border=0 hspace=100>
@@ -540,6 +540,12 @@ the sum of cosines RMS value is 0.296):
 <center>FM waveform (index: 3.0) vs sum of cosines with the same component amplitudes</center>
 </td></tr>
 </table>
+
+<p>This strikes me as a minor miracle.  I think FM gives the minimum peak amplitude that its
+sidebands could have produced, given any set of initial phases.
+</p>
+
+
 
 <!--
 (define (fm-it freq index)
@@ -553,14 +559,14 @@ the sum of cosines RMS value is 0.296):
 	   (j 0 (+ j 3)))
 	  ((> i n))
 	(vct-set! cur-phases j (+ 10 i))
-	(vct-set! cur-phases (+ j 1) (bes-jn i index))
+	(vct-set! cur-phases (+ j 1) (abs (bes-jn i index)))
 	(vct-set! cur-phases (+ j 2) (/ pi 2)))
 
       (do ((i 1 (+ i 1))
 	   (j (* (+ n 1) 3) (+ j 3)))
 	  ((> i n))
 	(vct-set! cur-phases j (- 10 i))
-	(vct-set! cur-phases (+ j 1) (bes-jn i index))
+	(vct-set! cur-phases (+ j 1) (abs (bes-jn i index)))
 	(vct-set! cur-phases (+ j 2) (/ pi 2)))
 
       (let ((gen (make-polyoid freq cur-phases)))
@@ -569,6 +575,39 @@ the sum of cosines RMS value is 0.296):
 	   (do ((i 0 (1+ i)))
 	       ((= i 88200))
 	     (outa i (polyoid gen 0.0)))))))))
+
+(with-sound (:output "test1.snd")
+  (let* ((cgen (make-oscil 1000))
+         (mgen (make-oscil 100))
+	 (index (hz->radians (* 3 100))))
+    (do ((i 0 (1+ i)))
+	((= i 44100))
+      (outa i (oscil cgen (* index (oscil mgen)))))))
+
+
+(define (all-fm freq index tries)
+  (let* ((incr (/ (* 2 pi) tries))
+	 (max-rms 0.0)
+	 (min-rms 1.0)
+	 (fm-index (hz->radians (* index freq))))
+
+    (with-sound (:clipped #f)
+      (do ((try 0 (1+ try))
+	   (mod-phase 0.0 (+ mod-phase incr)))
+	  ((= try tries))
+	(let* ((cargen (make-oscil (* freq 10) (/ pi 2))) ; or 0 phase
+	       (modgen (make-oscil freq mod-phase))
+	       (samps 44100)
+	       (sum 0.0))
+	  (do ((samp 0 (1+ samp)))
+	      ((= samp samps))
+	    (let ((val (oscil cargen (* fm-index (oscil modgen)))))
+	      (set! sum (+ sum (* val val)))))
+	  (let ((rms (sqrt (/ sum samps))))
+	    (set! max-rms (max max-rms rms))
+	    (set! min-rms (min min-rms rms))
+	    (outa try rms)))))
+    (list min-rms max-rms)))
 -->
 
 
