@@ -601,13 +601,13 @@ returning you to the true top-level."
 
 ;(with-threads (lambda (chn) (src-channel 2.0 0 #f #f chn)))
 
-;;; TODO: check filter-channel and map-channel/ptrees (with init func etc) here, also reverse, maybe smooth, convolve, scan
+;;; TODO: check filter-channel and map-channel/ptrees (with init func etc) here, also reverse, maybe smooth, convolve, scan [tmp38]
+;;;   also Ruby? [ruby does have threads, but how to handle them in with_sound?]
 
 (with-threaded-sound ()
   (fm-violin 0 1 440 .1)
   (fm-violin 0 1 660 .1))
 |#
-;;;   also Ruby? [ruby does have threads, but how to handle them in with_sound?]
 
 
 ;;; -------- with-temp-sound --------

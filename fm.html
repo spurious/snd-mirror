@@ -441,7 +441,7 @@ a sort of damped sinusoid:
 <img src="pix/jacobi.png" alt="page from Jacobi's works">
 </td></tr>
 <tr>
-<td bgcolor="f6f8ff">
+<td bgcolor="#f6f8ff">
 <center>C G J Jacobi, Gesammelte Werke, VI 101</center>
 </td></tr></table>
 </td></tr></table>
@@ -524,6 +524,55 @@ reduce the danger of aliasing by limiting the fm index to approximately (srate/2
 use srate/4 to be safer.  (Mr Carson's opinion of FM: "this method of modulation inherently distorts without any compensating
 advantages whatsoever").
 </p>
+
+<p>One hidden aspect of the FM expansion is that it produces a time domain waveform that is not "spikey".
+If we add cosines at the amplitudes given by the Bessel functions (using additive synthesis to
+produce the same magnitude spectrum as FM produces), we get a very different waveform.  I think the
+FM version sounds richer and, far more importantly, louder (the FM RMS value here is 0.707, whereas
+the sum of cosines RMS value is 0.296):
+<p>
+
+<table border=0 hspace=100>
+<tr><td>
+<img src="pix/fmtime.png" alt="time domain comparisons">
+</td></tr>
+<tr><td bgcolor="#f6f8ff">
+<center>FM waveform (index: 3.0) vs sum of cosines with the same component amplitudes</center>
+</td></tr>
+</table>
+
+<!--
+(define (fm-it freq index)
+  (with-sound (:channels 1 :clipped #f)
+    (let* ((angle 0.0)
+	   (incr (hz->radians 1.0))
+	   (n (inexact->exact (ceiling (+ index 5))))
+	   (cur-phases (make-vct (* (+ n 1) 3 2))))
+
+      (do ((i 0 (+ i 1))
+	   (j 0 (+ j 3)))
+	  ((> i n))
+	(vct-set! cur-phases j (+ 10 i))
+	(vct-set! cur-phases (+ j 1) (bes-jn i index))
+	(vct-set! cur-phases (+ j 2) (/ pi 2)))
+
+      (do ((i 1 (+ i 1))
+	   (j (* (+ n 1) 3) (+ j 3)))
+	  ((> i n))
+	(vct-set! cur-phases j (- 10 i))
+	(vct-set! cur-phases (+ j 1) (bes-jn i index))
+	(vct-set! cur-phases (+ j 2) (/ pi 2)))
+
+      (let ((gen (make-polyoid freq cur-phases)))
+	(run 
+	 (lambda ()
+	   (do ((i 0 (1+ i)))
+	       ((= i 88200))
+	     (outa i (polyoid gen 0.0)))))))))
+-->
+
+
+<br>
 
 
 <!-- LATEX sceq42: \frac{1}{2i}(e^{ix} - e^{-ix}) -->
@@ -2423,133 +2472,6 @@ Watson, "A Treatise on the Theory of Bessel Functions", Cambridge, 1922.
 </td></tr></table>
 
 </td></tr></table>
-
-
-
-
-<!-- fm2.html? --------------------------------------------------------------------------------
-
-
-sundry fm notes and curiousities
-
-
--------------------------
-fm with a complex index:
-
-magnitude: sqrt is 1 + (x-1)/2 - (x-1)^2/8 + (x-1)^3/16 - 5(x-1)^4/128 ...
-
--------------------------
-
-special cases:
-
-(define* (fmtri beg dur freq amp :optional (mc-ratio 1) (index 1.0) (phase 0.0))
-  (let* ((start (seconds->samples beg))
-         (end (+ start (seconds->samples dur)))
-	 (carrier (make-oscil freq phase))
-	 (modulator (make-triangle-wave (* freq mc-ratio)))
-	 (fm-index (hz->radians (* index freq mc-ratio)))
-	 (ampf (make-env '(0 0 1 1 10 1 11 0) :scaler amp :duration dur)))
-    (run
-     (lambda ()
-       (do ((i start (1+ i)))
-	   ((= i end))
-	 (outa i (* (env ampf)
-		    (oscil carrier (* fm-index (triangle-wave modulator))))))))))
-
-;(with-sound (:clipped #f :statistics #t) (fmtri 0 1 1000 .5 .1 1))
-
-;;; which is less bandwidth than the sine case even though it's an infinite sum of sines
-;;; what is the sideband amp here?
-
-(define* (fmsq beg dur freq amp :optional (mc-ratio 1) (index 1.0) (phase 0.0))
-  (let* ((start (seconds->samples beg))
-         (end (+ start (seconds->samples dur)))
-	 (carrier (make-oscil freq phase))
-	 (modulator (make-square-wave (* freq mc-ratio)))
-	 (fm-index (hz->radians (* index freq mc-ratio)))
-	 (ampf (make-env '(0 0 1 1 10 1 11 0) :scaler amp :duration dur)))
-    (run
-     (lambda ()
-       (do ((i start (1+ i)))
-	   ((= i end))
-	 (outa i (* (env ampf)
-		    (oscil carrier (* fm-index (* 2 (- (square-wave modulator) 0.5)))))))))))
-
-;(with-sound (:clipped #f :statistics #t) (fmsq 0 1 1000 .5 .1 1))
-
-;;; is broader than corresponding sine case 
-;;;   see formula below which does look like it fits
-
-
-perhaps spectra of sin(sin) vs sin(sq) sin(tri)
-   or sin(two sines at same freq) and sin(2 * sin)
-also sin(sin a + sin a) = sin (2 sin a) so in the m=n case, the JnJm's collapse to Jn(2..)
-
-
-(with-sound (:clipped #f :statistics #t) (fmsq 0 1 4000 .5 .025 5)) matches the
-case in Klapper p103 (except there x=1/4)
-
-; (/ (* 2 5 (sin (* 5 pi 0.5))) (* pi (- (* 5 5) (* 2 2)))) these match, and the n=index(5) case is 1.0 on both sides
-
-(define* (fmsin beg dur freq amp mc-ratio index)
-  (let* ((start (seconds->samples beg))
-         (end (+ start (seconds->samples dur)))
-	 (carrier (make-oscil freq))
-	 (modulator (make-oscil (* freq mc-ratio)))
-	 (fm-index (hz->radians (* index freq mc-ratio)))
-	 (ampf (make-env '(0 0 1 1 10 1 11 0) :scaler amp :duration dur)))
-    (run
-     (lambda ()
-       (do ((i start (1+ i)))
-	   ((= i end))
-	 (outa i (* (env ampf)
-		    (oscil carrier (* fm-index (oscil modulator))))))))))
-
-;(with-sound (:clipped #f :statistics #t) (fmsin 0 1 4000 .5 .025 5))
-
-(define* (sqsq beg dur freq amp :optional (mc-ratio 1) (index 1.0) (phase 0.0))
-  (let* ((start (seconds->samples beg))
-         (end (+ start (seconds->samples dur)))
-	 (carrier (make-square-wave freq))
-	 (modulator (make-square-wave (* freq mc-ratio)))
-	 (fm-index (hz->radians (* index freq mc-ratio)))
-	 (ampf (make-env '(0 0 1 1 10 1 11 0) :scaler amp :duration dur)))
-    (run
-     (lambda ()
-       (do ((i start (1+ i)))
-	   ((= i end))
-	 (outa i (* (env ampf)
-		    (- (square-wave carrier (* fm-index (* 2 (- (square-wave modulator) 0.5)))) 0.5))))))))
-
-;(with-sound (:clipped #f :statistics #t :srate 4410000) (sqsq 0 1 4000 .5 .01 5))
-;  huge srate because aliasing is a real problem -- does replicate
-;  but the apparent index is going up (each higher)
-
--------------------------
-
-          bessel fm cases
-
-Bessel FM is inspired by the observation that the Bessel functions are, in a sense,
-extensions of the sinusoids.  The hypergeometric forms of the functions make
-the kinship clear: 
-  sin x =                    x F(-;3/2;-x^2/4)
-  Jn(x) = (x/2)^n / Gamma(n+1) F(-;n+1;-x^2/4)
-
-J0(sin) but can we show that Jn(Jn) -> Jn(sin + factors)?
-what about sin(Jn)?  since Jn(x) is almost a sinusoid (the spectrum is
-incredibly clean), Jn(y + sin(x)) and friends are extremely close to sin(y + sin(x)) --
-symmetric spectra that look exactly the same.  So, Bessel-FM doesn't buy us
-anything in the simple cases.  The y=0 cases are different?
-
-          more on noise -- find an understandable derivation!
-            can we treat the "ears" as a limiting process? -- sort of...
-
-          it would be nice to have a bess-like applet behind the various graphs
-
-	  more on the JJ->1 stuff and perhaps the JJ->J match
--->
-
-
 
 </body>
 </html>
