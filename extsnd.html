@@ -13099,7 +13099,28 @@ If the colormap is inverted, the order of colors is reversed.
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <code><a class=def name="colorscale">color-scale</a> ()</code>
 </td></tr><tr><td></td><td>
-color-scale reflects the darkness setting in the View:<a href="snd.html#colorbrowser">Colors</a> dialog, divided by 100.
+color-scale reflects the darkness setting in the View:<a href="snd.html#colorbrowser">Colors</a> dialog.
+The mapping between the slider in the dialog and the color-scale value is not linear, and is
+currently different in Gtk and Motif.  
+The color chooser function in <a href="#timegraphhook">time-graph-hook</a> can use
+<a href="#colorinverted">color-inverted</a>
+and color-scale to drive colormap choices:
+
+<pre>
+  (add-hook! <a class=quiet href="#timegraphhook">time-graph-hook</a>
+	     (lambda (snd chn)
+               (apply <a class=quiet href="#makecolor">make-color</a> (<a class=quiet href="#colormapref">colormap-ref</a>
+		                   (<a class=quiet href="#colormap">colormap</a>) 
+		                   (let ((x (if (<em class=red>color-inverted</em>) 
+				                (/ chn n) ; n = total chans in this case
+				                (/ (- n chn) n)))
+			                 (base (<em class=red>color-scale</em>)))
+			             (if (= base 1.0)
+			                 x
+			                 (/ (- (expt base x) 1.0) 
+                                            (- base 1.0))))))))
+</pre>
+
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -13136,7 +13157,7 @@ rgb.scm defines the built-in colormap names.
 colormap-ref returns the rgb values of the colormap 'map' at position 'pos',
 suitable for use with make-color.  'pos' should be a float between
 0.0 and 1.0.
-See samples-via-colormap in draw.scm.
+See the example above, or samples-via-colormap in draw.scm.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
