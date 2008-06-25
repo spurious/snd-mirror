@@ -6814,7 +6814,7 @@ Use mus-scaler to set the duty-factor at run-time.
 <p>A similar trick can make, for example, a squared-off triangle-wave:
 </p>
 <pre>
-    (gen (<a class=quiet href="#make-triangle-wave">make-triangle-wave</a> 200.0 :amplitude 4))) ; amp sets slope
+    (gen (<a class=quiet href="#make-triangle-wave">make-triangle-wave</a> 200.0 :amplitude 4)) ; amp sets slope
     ...
     (outa i (max -1.0 (min 1.0 (<a class=quiet href="#triangle-wave">triangle-wave</a> gen))))
 </pre>

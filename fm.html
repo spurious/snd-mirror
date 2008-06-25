@@ -527,22 +527,25 @@ advantages whatsoever").
 
 <p>One hidden aspect of the FM expansion is that it produces a time domain waveform that is not "spikey".
 If we add cosines at the amplitudes given by the Bessel functions (using additive synthesis to
-produce the same magnitude spectrum as FM produces), we get a very different waveform.  I think the
-FM version sounds richer and, far more importantly, louder (the FM RMS value here is 0.707, whereas
-the sum of cosines RMS value is 0.243 since we scaled its original peak amplitude of 2.89 to 1.0):
-<p>
+produce the same magnitude spectrum as FM produces), we get a very different waveform.  Doesn't the
+FM version sound richer and, far more importantly, louder?  (The FM RMS value here is 0.707, whereas
+the sum of cosines RMS value is 0.243 because we scaled its original peak amplitude of 2.89 to 1.0):
+</p>
 
 <table border=0 hspace=100>
 <tr><td>
 <img src="pix/fmtime.png" alt="time domain comparisons">
 </td></tr>
 <tr><td bgcolor="#f6f8ff">
-<center>FM waveform (index: 3.0) vs sum of cosines with the same component amplitudes</center>
+<center>FM waveform (index: 3.0) vs sum of cosines with the same (relative) component amplitudes</center>
 </td></tr>
 </table>
 
 <p>I think FM gives the minimum peak amplitude that its
-components could have produced, given any set of initial phases. Here is an attempt to graph
+components could have produced, given any set of initial phases.  From one point of view (looking at FM as changing the phase passed to 
+the sin function), it's obvious that the output waveform should be this well behaved, but looking at it from its components,
+it strikes me as a minor miracle that there is a set of amplitudes (courtesy of the Bessel functions) that fits together so perfectly.
+Here is an attempt to graph
 the 15 main components, with their sum in black:
 </p>
 
