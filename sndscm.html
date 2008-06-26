@@ -7701,18 +7701,11 @@ I think it's approaching (expt n .6) as n increases.  Here is a graph of the val
 (minimum peak amp in blue plotted against n^.6 in green).  If plotted as a log-log graph, it is
 a straight line with a slope just less than 0.6. I've included the n equal odd components min peak amp
 in red (I did not expect the two cases to have the same minima!).
-On the right are the actual phases used, plotted as concentric circles from
-n=1 to n=128, using the "jet" colormap to show the component number and
-the position on the circle to show the phase; all fundamentals have initial
-phase 0.0.
 </p>
 
-<table border=0 hspace=40><tr><td>
-<img src="pix/sqrt.png" alt="sqrt n">
-</td><td width=40></td><td>
-<img src="pix/peakphases.png" alt="peak phases">
-</td></tr>
-</table>
+
+<img src="pix/sqrt.png" alt="sqrt n" hspace=40>
+
 
 <!--
 (with-sound (:channels 3 :clipped #f)
@@ -7756,7 +7749,7 @@ phase 0.0.
 (set! (selected-graph-color) (make-color 1 1 1))
 -->
 
-<!-- the circular phases code is in peak-phases.scm -->
+
 <p>Here is the time domain view of the n=5 case when the minimum peak phases are chosen; the sum of the 5 components is in black.
 </p>
 

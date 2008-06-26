@@ -538,28 +538,36 @@ returning you to the true top-level."
 	thread)))
 
 (defmacro with-threaded-sound (args . body) 
-  `(with-sound-helper 
-    (lambda () 
-      (let ((threads '()))
-	,@(map (lambda (expr) 
-		 `(begin 
-		    (set! threads (cons (call-with-new-thread 
-					 (lambda () 
-					   ,expr))
-					threads))
-		    (if (>= (length threads) *clm-threads*)
-			(begin
-			  (for-each 
-			   (lambda (thread) 
-			     (join-thread thread))
-			   threads)
-			  (set! threads '())))))
-	       body)
-	(for-each 
-	 (lambda (thread) 
-	   (join-thread thread))
-	 threads)))
-    ,@args))
+  (if (provided? 'snd-threads)
+      `(with-sound-helper 
+	(lambda () 
+	  (let ((threads '()))
+	    ,@(map (lambda (expr) 
+		     `(begin 
+			(set! threads (cons (call-with-new-thread 
+					     (lambda () 
+					       ,expr))
+					    threads))
+			(if (>= (length threads) *clm-threads*)
+			    (begin
+			      (for-each 
+			       (lambda (thread) 
+				 (join-thread thread))
+			       threads)
+			      (set! threads '())))))
+		   body)
+	    (for-each 
+	     (lambda (thread) 
+	       (join-thread thread))
+	     threads)))
+	,@args)
+
+      ;; if no threads, don't use the underlying threads since Snd is assuming various table references will not be interrupted
+      `(with-sound-helper
+	(lambda ()
+	  ,@body)
+	,@args)))
+
 
 ;;; this still non-optimal because of thread handling overhead -- if I break the "body" into
 ;;;   4 big pieces (4 threads total), it runs much faster.  So, off to make another version that

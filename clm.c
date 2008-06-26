@@ -7702,7 +7702,11 @@ static Float sample_file(mus_any *ptr, off_t samp, int chan, Float val)
 
   /* this can't be completely safe -- what if flush below is interrupted etc */
   /* so set the lock here but not the error handler -- same in read case */
-  
+
+  /* we set/unset this lock on every sample!  perhaps if this slows things down, we could 
+   *   write to a locsig-local output buffer, then flush here?
+   */
+
   MUS_LOCK(gen->writer_lock);
 
   /* try to handle the simple case and get out */
