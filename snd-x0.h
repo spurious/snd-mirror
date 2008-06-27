@@ -71,6 +71,7 @@ typedef enum {NOT_ACTIVATABLE, ACTIVATABLE, NOT_ACTIVATABLE_OR_FOCUSED, ACTIVATA
 #define color_t Pixel
 #define point_t XPoint
 #define gc_t GC
+#define NOT_A_COLOR -1
 
 #define rgb_t unsigned short
 #define RGB_MAX 65535
@@ -144,7 +145,7 @@ typedef struct {
   Pixel basic_color, selection_color, zoom_color, position_color, highlight_color, enved_waveform_color, cursor_color;
   Pixel text_focus_color, filter_control_waveform_color, mix_color, pushed_button_color, sash_color;
   Pixel help_button_color, doit_again_button_color, doit_button_color, quit_button_color, reset_button_color;
-  Pixel selected_grid_color, grid_color;
+  Pixel selected_grid_color, grid_color, axis_color;
 
   Pixel orig_data_color, orig_selected_data_color, orig_mark_color, orig_mix_color;
   Pixel orig_graph_color, orig_selected_graph_color, orig_listener_color, orig_listener_text_color, orig_cursor_color;

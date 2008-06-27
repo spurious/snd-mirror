@@ -3486,6 +3486,8 @@ static void make_lisp_graph(chan_info *cp, XEN pixel_list)
 static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool erase_first, with_grid_t grid, log_axis_t log_axes, show_axes_t axes)
 {
   snd_info *sp;
+  color_t old_color;
+
   if (!(ap->ax))
     ap->ax = cp->cgx->ax;
   sp = cp->sound;
@@ -3493,6 +3495,14 @@ static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool
   /* here is where the graph is cleared(!) -- only use of erase_rectangle (see also make_partial_graph) */
   if (erase_first == CLEAR_GRAPH)
     erase_rectangle(cp, ap->ax, ap->graph_x0, ap->y_offset, ap->width, ap->height); 
+
+  if (ss->sgx->axis_color != NOT_A_COLOR)
+    {
+      old_color = get_foreground_color(ap->ax);
+      /* if axis color has been set, use it, else use data color from preceding make_graph call */
+      set_foreground_color(ap->ax, ss->sgx->axis_color);
+    }
+
   make_axes_1(ap, 
 	      x_style, 
 	      SND_SRATE(sp), 
@@ -3506,6 +3516,9 @@ static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool
 	      grid, 
 	      log_axes,
 	      cp->grid_density);
+
+  if (ss->sgx->axis_color != NOT_A_COLOR)
+    set_foreground_color(ap->ax, old_color);
 }
 
 

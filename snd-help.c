@@ -512,6 +512,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+27-Jun:  axis-color.\n\
 20-Jun:  time-graph-hook.\n\
 6-June:  with-threaded-sound (ws.scm)\n\
 2-June:  Snd 9.10.\n\
@@ -520,8 +521,6 @@ void about_snd_help(void)
          many const char* changes for g++ 4.3.0.\n\
 17-May:  normalize-partials is now built-in.\n\
 12-May:  expandn (clm-ins.scm) thanks to Michael Klingbeil.\n\
-10-May:  merged green.scm into generators.scm.\n\
-5-May:   music5 port: music5.f, music5-examples, old-music5.f\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",

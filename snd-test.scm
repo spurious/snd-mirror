@@ -2037,7 +2037,7 @@
 		       'apply-controls 'apply-ladspa 'array->file 'array-interp 'as-one-edit
 		       'ask-before-overwrite 'asymmetric-fm 'asymmetric-fm? 'audio-input-device 'audio-output-device
 		       'auto-resize 'auto-update 'auto-update-interval 'autocorrelate 'autocorrelation
-		       'moving-average 'moving-average? 'axis-info 'axis-label-font 'axis-numbers-font
+		       'moving-average 'moving-average? 'axis-color 'axis-info 'axis-label-font 'axis-numbers-font
 		       'bad-header-hook 'bartlett-window 'bartlett-hann-window 'basic-color 'beats-per-measure 'beats-per-minute
 		       'before-close-hook 'before-exit-hook 'before-save-as-hook 'before-save-state-hook 'before-transform-hook
 		       'bind-key 'blackman2-window 'blackman3-window 'blackman4-window 
@@ -67761,7 +67761,7 @@ EDITS: 1
 		     add-mark add-sound-file-extension add-source-file-extension sound-file-extensions sound-file? 
 		     add-to-main-menu add-to-menu add-transform amp-control
 		     as-one-edit ask-before-overwrite audio-input-device audio-output-device ; add-player
-		     auto-resize auto-update autocorrelate axis-info axis-label-font axis-numbers-font
+		     auto-resize auto-update autocorrelate axis-color axis-info axis-label-font axis-numbers-font
 		     basic-color bind-key bomb c-g? apply-controls change-samples-with-origin channel-style
 		     channel-widgets channels chans peaks-font bold-peaks-font close-sound
 		     color-cutoff color-dialog colormap-ref add-colormap delete-colormap colormap-size colormap-name colormap?
@@ -67906,7 +67906,7 @@ EDITS: 1
 	     
 	     (set-procs (list 
 			 amp-control ask-before-overwrite audio-input-device audio-output-device auto-resize
-			 auto-update axis-label-font axis-numbers-font ;basic-color 
+			 auto-update axis-color axis-label-font axis-numbers-font ;basic-color 
 			 channel-style peaks-font bold-peaks-font sound-file-extensions
 			 color-cutoff color-inverted color-scale contrast-control contrast-control-amp 
 			 amp-control-bounds speed-control-bounds expand-control-bounds contrast-control-bounds
@@ -68703,7 +68703,7 @@ EDITS: 1
 			  (if (not (eq? tag 'wrong-type-arg))
 			      (snd-display ";~D: misc procs ~A: ~A" ctr n tag))
 			  (set! ctr (+ ctr 1))))
-		      (list enved-filter-order enved-filter filter-control-waveform-color ask-before-overwrite
+		      (list axis-color enved-filter-order enved-filter filter-control-waveform-color ask-before-overwrite
 			    auto-resize auto-update axis-label-font axis-numbers-font basic-color bind-key
 			    channel-style color-cutoff color-dialog color-inverted color-scale
 			    cursor-color dac-combines-channels dac-size clipping data-color default-output-chans 

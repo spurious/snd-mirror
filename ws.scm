@@ -575,27 +575,6 @@ returning you to the true top-level."
 
 
 #|
-(defmacro with-threaded-sound (args . body) 
-  `(with-sound-helper 
-    (lambda () 
-      (let ((threads '()))
-	,@(map (lambda (expr) 
-		 `(set! threads (cons (call-with-new-thread 
-				       (lambda () 
-					 ,expr))
-				      threads)))
-	       ;; here we could insert joins based on list length (clearing threads)
-	       body)
-	(for-each 
-	 (lambda (thread) 
-	   (join-thread thread))
-	 threads))) ; using threads list, not (all-threads) because the latter hangs in the with-threads case below
-    ,@args))
-
-;;; this form not good because we end up with "too many open files" -- apparently each thread
-;;;   counts its copy of the output file separately.
-
-
 (define (with-threads func)
   (let ((chns (chans))
 	(threads '()))

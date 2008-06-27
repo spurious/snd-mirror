@@ -34,6 +34,7 @@
 #define S_auto_update                   "auto-update"
 #define S_auto_update_interval          "auto-update-interval"
 #define S_autocorrelation               "autocorrelation"
+#define S_axis_color                    "axis-color"
 #define S_axis_info                     "axis-info"
 #define S_axis_label_font               "axis-label-font"
 #define S_axis_numbers_font             "axis-numbers-font"

@@ -7714,16 +7714,6 @@ static Float sample_file(mus_any *ptr, off_t samp, int chan, Float val)
       (samp >= gen->data_start))
     {
       gen->obufs[chan][samp - gen->data_start] += MUS_FLOAT_TO_SAMPLE(val);
-#if MUS_DEBUGGING
-      if (fabs(gen->obufs[chan][samp - gen->data_start]) > 100.0)
-	{
-	  fprintf(stderr, "write %f -> %f at " OFF_TD " in chan %d of %s\n", 
-		  val, 
-		  MUS_SAMPLE_TO_FLOAT(gen->obufs[chan][samp - gen->data_start]),
-		  samp, chan, mus_describe(ptr));
-	  abort();
-	}
-#endif
       if (samp > gen->out_end) 
 	gen->out_end = samp;
     }
@@ -7746,16 +7736,6 @@ static Float sample_file(mus_any *ptr, off_t samp, int chan, Float val)
       gen->out_end = samp;
       
       gen->obufs[chan][samp - gen->data_start] += MUS_FLOAT_TO_SAMPLE(val);
-#if MUS_DEBUGGING
-      if (fabs(gen->obufs[chan][samp - gen->data_start]) > 100.0)
-	{
-	  fprintf(stderr, "flush write %f -> %f at " OFF_TD " in chan %d of %s\n", 
-		  val, 
-		  MUS_SAMPLE_TO_FLOAT(gen->obufs[chan][samp - gen->data_start]),
-		  samp, chan, mus_describe(ptr));
-	  abort();
-	}
-#endif
       if (samp > gen->out_end) 
 	gen->out_end = samp;
 

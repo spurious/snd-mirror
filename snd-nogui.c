@@ -374,6 +374,7 @@ void snd_doit(int argc, char **argv)
   XEN_EVAL_C_STRING("(define " S_highlight_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
   XEN_EVAL_C_STRING("(define " S_listener_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
   XEN_EVAL_C_STRING("(define " S_listener_text_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
+  XEN_EVAL_C_STRING("(define " S_axis_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
   XEN_EVAL_C_STRING("(define " S_mark_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
   XEN_EVAL_C_STRING("(define " S_position_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
   XEN_EVAL_C_STRING("(define " S_pushed_button_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");

@@ -1209,6 +1209,11 @@ static XEN g_snd_color(XEN choice)
 
     case 31: col = ss->sgx->grid_color;                    break;
     case 32: col = ss->sgx->selected_grid_color;           break;
+    case 33: 
+      if (ss->sgx->axis_color != NO_COLOR)
+	col = ss->sgx->axis_color;
+      else col = ss->sgx->black;
+      break;
     default: col = ss->sgx->black;                         break;
     }
   return(XEN_WRAP_PIXEL(col));
@@ -1712,6 +1717,22 @@ static XEN g_selected_graph_color(void)
 }
 
 
+static XEN g_set_axis_color(XEN color) 
+{
+  XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_axis_color, "a color");
+  ss->sgx->axis_color = XEN_UNWRAP_PIXEL(color);
+  for_each_chan(update_graph);
+  return(color);
+}
+
+
+static XEN g_axis_color(void) 
+{
+  #define H_axis_color "(" S_axis_color "): color of axis (defaults to current data color)"
+  return(XEN_WRAP_PIXEL(ss->sgx->axis_color));
+}
+
+
 #if USE_MOTIF
 static void recolor_button(widget_t w)
 {
@@ -1893,6 +1914,8 @@ XEN_NARGIFY_0(g_selected_graph_color_w, g_selected_graph_color)
 XEN_NARGIFY_1(g_set_selected_graph_color_w, g_set_selected_graph_color)
 XEN_NARGIFY_0(g_selected_data_color_w, g_selected_data_color)
 XEN_NARGIFY_1(g_set_selected_data_color_w, g_set_selected_data_color)
+XEN_NARGIFY_0(g_axis_color_w, g_axis_color)
+XEN_NARGIFY_1(g_set_axis_color_w, g_set_axis_color)
 XEN_NARGIFY_0(g_basic_color_w, g_basic_color)
 XEN_NARGIFY_1(g_set_basic_color_w, g_set_basic_color)
 XEN_NARGIFY_0(g_pushed_button_color_w, g_pushed_button_color)
@@ -1971,6 +1994,8 @@ XEN_NARGIFY_1(g_color_p_w, g_color_p)
 #define g_set_selected_graph_color_w g_set_selected_graph_color
 #define g_selected_data_color_w g_selected_data_color
 #define g_set_selected_data_color_w g_set_selected_data_color
+#define g_axis_color_w g_axis_color
+#define g_set_axis_color_w g_set_axis_color
 #define g_basic_color_w g_basic_color
 #define g_set_basic_color_w g_set_basic_color
 #define g_pushed_button_color_w g_pushed_button_color
@@ -2082,6 +2107,9 @@ void g_init_draw(void)
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_selected_data_color, g_selected_data_color_w, H_selected_data_color,
 				   S_setB S_selected_data_color, g_set_selected_data_color_w,  0, 0, 1, 0);
+
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_axis_color, g_axis_color_w, H_axis_color,
+				   S_setB S_axis_color, g_set_axis_color_w,  0, 0, 1, 0);
 
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_basic_color, g_basic_color_w, H_basic_color,
 				   S_setB S_basic_color, g_set_basic_color_w,  0, 0, 1, 0);
