@@ -288,7 +288,6 @@ const char **mini_glass_bits(int n)
     }
 }
 
-
 /* from HView */
 static const char *stop_sign_xpm[] = {
 "17 17 5 1",
