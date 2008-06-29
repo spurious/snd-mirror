@@ -3014,15 +3014,19 @@ void progress_report(chan_info *cp, Float pct)
   if (which < 0) which = 0;
 
   if ((sp->sgx) && 
-      (hourglasses[which]))
+      (hourglasses[which]) &&
+      ((cp->chan == 0) ||
+       (sp->channel_style != CHANNELS_SUPERIMPOSED)))
     {
+#if MUS_DEBUGGING
+      if (!(XtIsWidget(PROGRESS_ICON(cp)))) fprintf(stderr, "finish_progress_report but no widget!");
+#endif
       XtVaSetValues(PROGRESS_ICON(cp), XmNlabelPixmap, hourglasses[which], NULL);
       XmUpdateDisplay(PROGRESS_ICON(cp));
     }
 
   check_for_event();
 }
-
 
 void finish_progress_report(chan_info *cp)
 {
@@ -3031,8 +3035,13 @@ void finish_progress_report(chan_info *cp)
 
   if ((!sp) || (sp->inuse != SOUND_NORMAL)) return;
 
-  if (sp->sgx)
+  if ((sp->sgx) &&
+      ((cp->chan == 0) ||
+       (sp->channel_style != CHANNELS_SUPERIMPOSED)))
     {
+#if MUS_DEBUGGING
+      if (!(XtIsWidget(PROGRESS_ICON(cp)))) fprintf(stderr, "finish_progress_report but no widget!");
+#endif
       XtVaSetValues(PROGRESS_ICON(cp), XmNlabelPixmap, sp->sgx->file_pix, NULL);
       XmUpdateDisplay(PROGRESS_ICON(cp));
       hide_stop_sign(sp);
@@ -3047,8 +3056,13 @@ void start_progress_report(chan_info *cp)
 
   if ((!sp) || (sp->inuse != SOUND_NORMAL)) return;
 
-  if (sp->sgx)
+  if ((sp->sgx) &&
+      ((cp->chan == 0) ||
+       (sp->channel_style != CHANNELS_SUPERIMPOSED)))
     {
+#if MUS_DEBUGGING
+      if (!(XtIsWidget(PROGRESS_ICON(cp)))) fprintf(stderr, "start_progress_report but no widget!");
+#endif
       XtVaSetValues(PROGRESS_ICON(cp), XmNlabelPixmap, hourglasses[0], NULL);
       XmUpdateDisplay(PROGRESS_ICON(cp));
       show_stop_sign(sp);

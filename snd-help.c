@@ -512,6 +512,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+30-Jun:  flatten-partials.\n\
 27-Jun:  axis-color.\n\
 20-Jun:  time-graph-hook.\n\
 6-June:  with-threaded-sound (ws.scm)\n\

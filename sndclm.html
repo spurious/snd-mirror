@@ -2074,11 +2074,11 @@ odd harmonics are independent:
 <pre>
   (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> ()
     (let ((gen (<em class=red>make-polyshape</em> 100.0 :partials (list 11 1 20 1)))
-	  (ampf (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1 20 1 21 0) :scaler .4 :length 88200)))
+	  (ampf (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1 20 1 21 0) :scaler .4 :length 88200))
 	  (indf (<a class=quiet href="#make-env" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_env_tip)">make-env</a> '(0 0 1 1 1.1 1) :length 88200)))
       (do ((i 0 (1+ i)))
 	  ((= i 88200))
-        (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> ampf) (<em class=red>polyshape</em> gen (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> indf))))))
+        (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> ampf) (<em class=red>polyshape</em> gen (<a class=quiet href="#env" onmouseout="UnTip()" onmouseover="Tip(sndclm_env_tip)">env</a> indf)))))))
 </pre>
 </td></tr>
 
@@ -2106,7 +2106,9 @@ pattern + + - -:
     (list 1 .5  2 .25  3 -.125  4 -.125) ; squeeze the amplitude change toward index=0
 </pre>
 
-<p>To follow an amplitude envelope despite a changing index, we can use a <a href="#moving-max">moving-max</a> generator (from generators.scm):
+<p>but now the peak amplitude is hard to predict (it's .6242 in this example).  Perhaps <a href="sndscm.html#flattenpartials">flatten-partials</a>
+would be a better choice here.
+To follow an amplitude envelope despite a changing index, we can use a <a href="#moving-max">moving-max</a> generator (from generators.scm):
 </p>
 
 <table border=0 hspace=20>

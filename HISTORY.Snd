@@ -1,5 +1,6 @@
 Snd change log
 
+ 30-Jun:     flatten-partials.
  27-Jun:     axis-color.
  20-Jun:     time-graph-hook.
  6-June:     with-threaded-sound (ws.scm)

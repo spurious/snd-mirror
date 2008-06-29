@@ -2933,6 +2933,18 @@ given the index 'a', and harmonic coefficients 'coeffs' (the 0th element is DC a
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
+
+<!-- flatten-partials -->
+<tr><td colspan=2 bgcolor="#f2f4ff">
+<A class=def NAME="flattenpartials">flatten-partials</A> <code>(partials :optional (tries 32))</code>
+</td></tr><tr><td></td><td>
+flatten-partials takes a list or vct of partial numbers and amplitudes, as passed to <a href="sndclm.html#make-polywave">make-polywave</a>,
+and tries to find an equivalent set of amplitudes that produces a less spikey waveform.  The difference is primarily one of loudness until
+you have a lot of partials.
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
+
 <!-- fm-parallel-component -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <A class=def NAME="fmparallelcomponent">fm-parallel-component</A> <code>(freq-we-want wc wms inds ns bs using-sine)</code><br>
@@ -7697,10 +7709,10 @@ The upshot of all this is that there are apparently lots of
 equivalent minima; we're happy to find one that's reasonably close
 to the actual minimum.  On the other two questions: I see no pattern
 to these phases, and sqrt(n) is always too low.  
-I think it's approaching (expt n .6) as n increases.  Here is a graph of the values I've found so far
-(minimum peak amp in blue plotted against n^.6 in green).  If plotted as a log-log graph, it is
-a straight line with a slope just less than 0.6. I've included the n equal odd components min peak amp
-in red (I did not expect the two cases to have the same minima!).
+I think it's slightly less than (expt n .6).  Here is a graph of the values I've found so far.
+If plotted as a log-log graph, it is
+a straight line with a slope just less than 0.6. I've included the n odd and prime-numbered components min peak amps
+as well.
 </p>
 
 
@@ -7708,45 +7720,78 @@ in red (I did not expect the two cases to have the same minima!).
 
 
 <!--
-(with-sound (:channels 3 :clipped #f)
-  (do ((i 0 (1+ i)))
-      ((> i 128))
-    (let ((n-min-val (vector-find-if (lambda (val)
-				     (and val
-					  (vector? val)
-					  (= (vector-ref val 0) i)
-					  (let ((a-val (vector-ref val 1))
-						(a-len (vector-length val)))
-					    (do ((k 2 (1+ k)))
-						((= k a-len))
-					      (if (and (number? (vector-ref val k))
-						       (< (vector-ref val k) a-val))
-						  (set! a-val (vector-ref val k))))
-					    a-val)))
-				   noid-min-peak-phases)))
+(define (make-sqrt-png)
+  (set! current-window-display-is-running #f)
+  (reset-hook! time-graph-hook)
+  (add-hook! time-graph-hook
+	     (lambda (snd chn)
+	       (if (= chn 0)
+		   black
+		   (if (= chn 1)
+		       red
+		       (if (= chn 2)
+			   blue
+			   green)))))
 
-      (let ((odd-min-val (vector-find-if (lambda (val)
-					   (and val
-						(vector? val)
-						(= (vector-ref val 0) i)
-						(let ((a-val (vector-ref val 1))
-						      (a-len (vector-length val)))
-						  (do ((k 2 (1+ k)))
-						      ((= k a-len))
-						    (if (and (number? (vector-ref val k))
-							     (< (vector-ref val k) a-val))
-							(set! a-val (vector-ref val k))))
-						  a-val)))
-					 nodd-min-peak-phases)))
+  (with-sound (:channels 4 :clipped #f)
 
-	(outa i (or n-min-val 0.0))
-	(outb i (or odd-min-val 0.0))
-	(outc i (expt (exact->inexact i) .6))))))
+    (do ((i 1 (1+ i)))
+	((> i 128))
+      (let ((n-min-val (vector-find-if (lambda (val)
+					 (and val
+					      (vector? val)
+					      (= (vector-ref val 0) i)
+					      (let ((a-val (vector-ref val 1))
+						    (a-len (vector-length val)))
+						(do ((k 2 (1+ k)))
+						    ((= k a-len))
+						  (if (and (number? (vector-ref val k))
+							   (< (vector-ref val k) a-val))
+						      (set! a-val (vector-ref val k))))
+						a-val)))
+				       noid-min-peak-phases)))
+	
+	(let ((odd-min-val (vector-find-if (lambda (val)
+					     (and val
+						  (vector? val)
+						  (= (vector-ref val 0) i)
+						  (let ((a-val (vector-ref val 1))
+							(a-len (vector-length val)))
+						    (do ((k 2 (1+ k)))
+							((= k a-len))
+						      (if (and (number? (vector-ref val k))
+							       (< (vector-ref val k) a-val))
+							  (set! a-val (vector-ref val k))))
+						    a-val)))
+					   nodd-min-peak-phases)))
+	  
+	  (let ((prime-min-val (vector-find-if (lambda (val)
+						 (and val
+						      (vector? val)
+						      (= (vector-ref val 0) i)
+						      (let ((a-val (vector-ref val 1))
+							    (a-len (vector-length val)))
+							(do ((k 2 (1+ k)))
+							    ((= k a-len))
+							  (if (and (number? (vector-ref val k))
+								   (< (vector-ref val k) a-val))
+							      (set! a-val (vector-ref val k))))
+							a-val)))
+					       primoid-min-peak-phases)))
 
-(set! (x-axis-label 0 0) "n")
-(set! (x-axis-label 0 1) "n")
-(set! (y-bounds) (list 0 19))
-(set! (selected-graph-color) (make-color 1 1 1))
+	      (outa i (or n-min-val 0.0))
+	      (outb i (or odd-min-val 0.0))
+	      (outc i (or prime-min-val 0.0))
+	      (outd i (expt (exact->inexact i) .6)))))))
+
+  (set! (y-bounds) (list 0 21))
+  (set! (channel-style) channels-superimposed)
+  (set! (axis-color) (make-color 0 0 0))
+  (set! (x-axis-style) x-axis-in-samples)
+  (do ((i 0 (1+ i))) ((= i 4)) (set! (x-axis-label 0 i) "n, black: all, red: odd, blue: prime, green: n^.6"))
+  (set! (selected-graph-color) (make-color 1 1 1))
+  (set! (axis-label-font( "9x15")
+  )
 -->
 
 

@@ -2151,7 +2151,11 @@ void progress_report(chan_info *cp, Float pct)
   snd_info *sp;
   sp = cp->sound;
 
-  if ((!sp) || (sp->inuse != SOUND_NORMAL)) return;
+  if ((!sp) || 
+      (sp->inuse != SOUND_NORMAL) ||
+      (cp->chan != 0) ||
+      (sp->channel_style == CHANNELS_SUPERIMPOSED))
+    return;
 
 #if (!USE_CAIRO)
   {
@@ -2174,7 +2178,12 @@ void finish_progress_report(chan_info *cp)
   snd_info *sp;
   sp = cp->sound;
 
-  if (sp->inuse != SOUND_NORMAL) return;
+  if ((!sp) || 
+      (sp->inuse != SOUND_NORMAL) ||
+      (cp->chan != 0) ||
+      (sp->channel_style == CHANNELS_SUPERIMPOSED))
+    return;
+
 #if (!USE_CAIRO)
   hide_hourglass(sp, cp->chan);
 #else
@@ -2189,7 +2198,11 @@ void start_progress_report(chan_info *cp)
   snd_info *sp;
   sp = cp->sound;
 
-  if (sp->inuse != SOUND_NORMAL) return;
+  if ((!sp) || 
+      (sp->inuse != SOUND_NORMAL) ||
+      (cp->chan != 0) ||
+      (sp->channel_style == CHANNELS_SUPERIMPOSED))
+    return;
 
 #if (!USE_CAIRO)
   show_hourglass(sp, cp->chan, 0);

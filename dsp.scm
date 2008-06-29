@@ -2514,3 +2514,82 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 
 (cheby-hka 1 0.25 (vct 0 .5 .25 .125 .125))
 |#
+
+
+;;; find not-so-spikey amps for waveshaping
+
+(define* (flatten-partials any-partials :optional (tries 32))
+
+  (define (cos-fft-to-max n cur-amps)
+    (let* ((size 1024)
+	   (fft-rl (make-vct size))
+	   (fft-im (make-vct size)))
+      (do ((i 0 (1+ i))
+	   (bin 2 (+ bin 2)))
+	  ((= i n))
+	(vct-set! fft-rl bin (vct-ref cur-amps i)))
+      (vct-peak (mus-fft fft-rl fft-im size -1))))
+
+  (let* ((partials (if (list? any-partials)
+		       (list->vct any-partials)
+		       any-partials))
+	 (len (vct-length partials))
+	 (topk 0)
+	 (DC 0.0)
+	 (original-sum (let ((sum 0.0))
+			 (do ((i 0 (+ i 2)))
+			     ((>= i len) sum)
+			   (let ((hnum (vct-ref partials i))
+				 (amp (vct-ref partials (+ i 1))))
+			     (if (= hnum 0)
+				 (set! DC amp)
+				 (begin
+				   (set! topk (max topk hnum))
+				   (set! sum (+ sum amp))))))))
+	 (min-sum original-sum)
+	 (original-partials (let ((v (make-vct topk)))
+			      (do ((i 0 (+ i 2)))
+				  ((>= i len) v)
+				(let ((hnum (vct-ref partials i)))
+				  (if (not (= hnum 0))
+				      (vct-set! v (1- hnum) (vct-ref partials (+ i 1))))))))
+	 (min-partials (vct-copy original-partials)))
+
+    (if (<= topk (/ (log tries) (log 2)))
+	(set! tries (inexact->exact (floor (expt 2 (1- topk))))))
+
+    (do ((try 0 (1+ try)))
+	((= try tries))
+      (let ((new-partials (vct-copy original-partials)))
+	(do ((k 0 (1+ k)))
+	    ((= k topk))
+	  (if (> (random 1.0) 0.5)
+	      (vct-set! new-partials k (- (vct-ref new-partials k)))))
+	(let ((new-sum (cos-fft-to-max topk new-partials)))
+	  (if (< new-sum min-sum)
+	      (begin
+		(set! min-partials (vct-copy new-partials))
+		(set! min-sum new-sum))))))
+
+    (let ((new-amps (vct-scale! min-partials (/ original-sum min-sum)))
+	  (new-partials (vct-copy partials)))
+      (do ((i 0 (+ i 2))
+	   (k 0 (+ k 1)))
+	  ((>= i len))
+	(let ((hnum (vct-ref new-partials i)))
+	  (if (= hnum 0)
+	      (vct-set! new-partials (+ i 1) DC)
+	      (vct-set! new-partials (+ i 1) (vct-ref new-amps (1- hnum))))))
+      new-partials)))
+
+      
+#|
+(with-sound (:clipped #f :statistics #t :channels 2)
+  (let* ((amps (normalize-partials (list 1 .25 2 .5 3 .25)))
+	 (gen1 (make-polywave 400.0 amps))
+	 (gen2 (make-polywave 400.0 (flatten-partials amps))))
+    (do ((i 0 (1+ i)))
+	((= i 44100))
+      (outa i (polywave gen1))
+      (outb i (polywave gen2)))))
+|#
