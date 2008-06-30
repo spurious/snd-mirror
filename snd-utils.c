@@ -1018,8 +1018,6 @@ static int remember_pointer(void *ptr, void *true_ptr, size_t len, const char *f
 }
 
 
-#define MAX_MALLOC (1 << 30)
-
 void *mem_calloc(size_t len, size_t size, const char *func, const char *file, int line)
 {
   char *ptr, *true_ptr;
@@ -1028,7 +1026,7 @@ void *mem_calloc(size_t len, size_t size, const char *func, const char *file, in
   fprintf(stderr, "mem_calloc: %d %d %s:%s[%d]\n", (int)len, (int)size, func, file, line);
 #endif
 
-  if ((len == 0) || ((len * size) > MAX_MALLOC) || (size == 0))
+  if ((len == 0) || ((len * size) > mus_max_malloc()) || (size == 0))
     {
       fprintf(stderr, "%s:%s[%d] attempt to calloc %Zu bytes", func, file, line, len * size);
       mem_report(); 
@@ -1064,7 +1062,7 @@ void *mem_malloc(size_t len, const char *func, const char *file, int line)
   fprintf(stderr, "mem_malloc: %d %s:%s[%d]\n", (int)len, func, file, line);
 #endif
 
-  if ((len == 0) || (len > MAX_MALLOC))
+  if ((len == 0) || (len > mus_max_malloc()))
     {
       fprintf(stderr, "%s:%s[%d] attempt to malloc %Zu bytes", func, file, line, len);
       mem_report(); 
@@ -1114,7 +1112,7 @@ void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, in
   fprintf(stderr, "mem_realloc: %p %d %s:%s[%d]\n", ptr, (int)size, func, file, line);
 #endif
 
-  if ((size == 0) || (size > MAX_MALLOC))
+  if ((size == 0) || (size > mus_max_malloc()))
     {
       fprintf(stderr, "%s:%s[%d] attempt to realloc %Zu bytes", func, file, line, size);
       mem_report(); 

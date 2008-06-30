@@ -1860,3 +1860,35 @@ int mus_samples_peak(unsigned char *data, int bytes, int chans, int format, Floa
     }
   return(MUS_NO_ERROR);
 }
+
+
+
+static off_t mus_maximum_malloc = MUS_MAX_MALLOC_DEFAULT;
+
+off_t mus_max_malloc(void)
+{
+  return(mus_maximum_malloc);
+}
+
+off_t mus_set_max_malloc(off_t new_max)
+{
+  mus_maximum_malloc = new_max;
+  return(new_max);
+}
+
+
+
+static off_t mus_maximum_table_size = MUS_MAX_TABLE_SIZE_DEFAULT;
+
+off_t mus_max_table_size(void)
+{
+  return(mus_maximum_table_size);
+}
+
+off_t mus_set_max_table_size(off_t new_max)
+{
+  mus_maximum_table_size = new_max;
+  return(new_max);
+}
+
+

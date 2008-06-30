@@ -349,13 +349,13 @@ Float mus_sine_bank(Float *amps, Float *phases, int size);
 Float mus_ring_modulate(Float s1, Float s2);
 Float mus_amplitude_modulate(Float s1, Float s2, Float s3);
 Float mus_contrast_enhancement(Float sig, Float index);
-Float mus_dot_product(Float *data1, Float *data2, int size);
+Float mus_dot_product(Float *data1, Float *data2, off_t size);
 #if HAVE_COMPLEX_TRIG
-complex double mus_edot_product(complex double freq, complex double *data, int size);
+complex double mus_edot_product(complex double freq, complex double *data, off_t size);
 #endif
 
-void mus_clear_array(Float *arr, int size);
-bool mus_arrays_are_equal(Float *arr1, Float *arr2, Float fudge, int len);
+void mus_clear_array(Float *arr, off_t size);
+bool mus_arrays_are_equal(Float *arr1, Float *arr2, Float fudge, off_t len);
 Float mus_polynomial(Float *coeffs, Float x, int ncoeffs);
 void mus_multiply_arrays(Float *data, Float *window, int len);
 void mus_rectangular_to_polar(Float *rl, Float *im, int size);
@@ -712,8 +712,8 @@ void mus_big_fft(Float *rl, Float *im, off_t n, int is);
 #if HAVE_FFTW || HAVE_FFTW3
 void mus_fftw(Float *rl, int n, int dir);
 #endif
-Float *mus_make_fft_window(mus_fft_window_t type, int size, Float beta);
-Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float beta, Float mu, Float *window);
+Float *mus_make_fft_window(mus_fft_window_t type, off_t size, Float beta);
+Float *mus_make_fft_window_with_window(mus_fft_window_t type, off_t size, Float beta, Float mu, Float *window);
 const char *mus_fft_window_name(mus_fft_window_t win);
 const char **mus_fft_window_names(void);
 

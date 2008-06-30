@@ -30,9 +30,6 @@
 #endif
 
 
-#define MAX_TABLE_SIZE (1024 * 1024 * 20) /* delay line allocation etc */
-#define MAX_ALLOC_SIZE (1 << 28)          /* fft size, grain size etc */
-
 #include "_sndlib.h"
 #include "xen.h"
 #include "clm.h"
@@ -374,8 +371,8 @@ static XEN g_set_clm_table_size(XEN val)
   #define H_clm_table_size "(" S_clm_table_size "): the default table size for most generators (512)"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_clm_table_size, "an integer");
   size = XEN_TO_C_INT(val);
-  if ((size <= 0) || (size > MAX_TABLE_SIZE))
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_clm_table_size, XEN_ARG_1, val, "invalid size: ~A");
+  if ((size <= 0) || (size > mus_max_table_size()))
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_clm_table_size, XEN_ARG_1, val, "invalid size: ~A (see mus-max-table-size)");
   clm_table_size = size;
   return(C_TO_XEN_INT(clm_table_size));
 }
@@ -577,15 +574,17 @@ static XEN g_dot_product(XEN val1, XEN val2, XEN size)
 {
   #define H_dot_product "(" S_dot_product " v1 v2 :optional size): sum of (vcts) v1[i] * v2[i] (also named scalar product)"
   vct *v1, *v2;
-  int len;  
+  off_t len;  
+
   XEN_ASSERT_TYPE(MUS_VCT_P(val1), val1, XEN_ARG_1, S_dot_product, "a vct");
   XEN_ASSERT_TYPE(MUS_VCT_P(val2), val2, XEN_ARG_2, S_dot_product, "a vct");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(size), size, XEN_ARG_3, S_dot_product, "an integer");
+  XEN_ASSERT_TYPE(XEN_OFF_T_IF_BOUND_P(size), size, XEN_ARG_3, S_dot_product, "an integer");
+
   v1 = XEN_TO_VCT(val1);
   v2 = XEN_TO_VCT(val2);
   if (XEN_INTEGER_P(size))
     {
-      len = XEN_TO_C_INT(size);
+      len = XEN_TO_C_OFF_T(size);
       if (len == 0) return(C_TO_XEN_DOUBLE(0.0));
       if (len < 0)
 	XEN_OUT_OF_RANGE_ERROR(S_dot_product, 3, size, "size ~A < 0?");
@@ -753,34 +752,43 @@ static XEN g_mus_fft(XEN url, XEN uim, XEN len, XEN usign)
   #define H_mus_fft "(" S_mus_fft " rl im :optional len (dir 1)): return the fft of vcts rl and im which contain \
 the real and imaginary parts of the data; len should be a power of 2, dir = 1 for fft, -1 for inverse-fft"
 
-  int sign, n, np;
-  Float nf;
+  int sign;
+  off_t n;
   vct *v1, *v2;
+
   XEN_ASSERT_TYPE((MUS_VCT_P(url)), url, XEN_ARG_1, S_mus_fft, "a vct");
   XEN_ASSERT_TYPE((MUS_VCT_P(uim)), uim, XEN_ARG_2, S_mus_fft, "a vct");
+
   v1 = XEN_TO_VCT(url);
   v2 = XEN_TO_VCT(uim);
   if (XEN_INTEGER_P(usign)) sign = XEN_TO_C_INT(usign); else sign = 1;
-  if (XEN_INTEGER_P(len)) 
+
+  if (XEN_OFF_T_P(len)) 
     {
-      n = XEN_TO_C_INT(len); 
+      n = XEN_TO_C_OFF_T(len); 
       if (n <= 0)
 	XEN_OUT_OF_RANGE_ERROR(S_mus_fft, 3, len, "size ~A <= 0?");
-      if (n > MAX_ALLOC_SIZE)
-	XEN_OUT_OF_RANGE_ERROR(S_mus_fft, 3, len, "size ~A too large");
+      if (n > mus_max_malloc())
+	XEN_OUT_OF_RANGE_ERROR(S_mus_fft, 3, len, "size ~A too large (see mus-max-malloc)");
       if (n > v1->length)
 	n = v1->length;
     }
   else n = v1->length;
+
   if (n > v2->length)
     n = v2->length;
+
   if (!(POWER_OF_2_P(n)))
     {
+      Float nf;
+      int np;
       nf = (log(n) / log(2.0));
       np = (int)nf;
-      n = (int)pow(2.0, np);
+      n = (off_t)pow(2.0, np);
     }
-  mus_fft(v1->data, v2->data, n, sign);
+  if ((n * sizeof(Float)) < INT_MAX)
+    mus_fft(v1->data, v2->data, n, sign);
+  else mus_big_fft(v1->data, v2->data, n, sign);
   return(xen_return_first(url, uim));
 }
 
@@ -802,19 +810,19 @@ type is one of the sndlib fft window identifiers such as " S_kaiser_window ", be
 is the window family parameter, if any:\n  " make_window_example
 
   Float beta = 0.0, alpha = 0.0;
-  int n;
+  off_t n;
   mus_fft_window_t t;
   Float *data;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(type), type, XEN_ARG_1, S_make_fft_window, "an integer (window type)");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(size), size, XEN_ARG_2, S_make_fft_window, "an integer");
+  XEN_ASSERT_TYPE(XEN_OFF_T_P(size), size, XEN_ARG_2, S_make_fft_window, "an integer");
 
   if (XEN_NUMBER_P(ubeta)) beta = XEN_TO_C_DOUBLE(ubeta);
   if (XEN_NUMBER_P(ualpha)) alpha = XEN_TO_C_DOUBLE(ualpha);
-  n = XEN_TO_C_INT(size);
+  n = XEN_TO_C_OFF_T(size);
   if (n <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_make_fft_window, 2, size, "size ~A <= 0?");
-  if (n > MAX_ALLOC_SIZE)
-    XEN_OUT_OF_RANGE_ERROR(S_make_fft_window, 2, size, "size arg ~A too large");
+  if (n > mus_max_malloc())
+    XEN_OUT_OF_RANGE_ERROR(S_make_fft_window, 2, size, "size arg ~A too large (see mus-max-malloc)");
   t = (mus_fft_window_t)XEN_TO_C_INT(type);
   if (!(MUS_FFT_WINDOW_OK(t)))
     XEN_OUT_OF_RANGE_ERROR(S_make_fft_window, 1, type, "~A: unknown fft window");
@@ -912,8 +920,8 @@ of vcts v1 with v2, using fft of size len (a power of 2), result in v1"
       n = XEN_TO_C_INT(un); 
       if (n <= 0)
 	XEN_OUT_OF_RANGE_ERROR(S_convolution, 3, un, "size ~A <= 0?");
-      if (n > MAX_ALLOC_SIZE)
-	XEN_OUT_OF_RANGE_ERROR(S_convolution, 3, un, "size ~A too large");
+      if (n > mus_max_malloc())
+	XEN_OUT_OF_RANGE_ERROR(S_convolution, 3, un, "size ~A too large (see mus-max-malloc)");
       if (n > v1->length)
 	n = v1->length;
     }
@@ -1839,8 +1847,8 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 	  size = mus_optkey_to_int(keys[size_key], caller, orig_arg[size_key], size); /* size can  be 0? -- surely we need a line in any case? */
 	  if (size < 0)
 	    XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[size_key], keys[size_key], "size ~A < 0?");
-	  if (size > MAX_TABLE_SIZE)
-	    XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[size_key], keys[size_key], "size ~A too large");
+	  if (size > mus_max_table_size())
+	    XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[size_key], keys[size_key], "size ~A too large (see mus-max-table-size)");
 	  size_set = true;
 	}
 
@@ -1849,8 +1857,8 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 	  max_size = mus_optkey_to_int(keys[max_size_key], caller, orig_arg[max_size_key], max_size); /* -1 = unset */
 	  if (max_size <= 0)
 	    XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[max_size_key], keys[max_size_key], "max-size ~A <= 0?");
-	  if (max_size > MAX_TABLE_SIZE)
-	    XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[max_size_key], keys[max_size_key], "max-size ~A too large");
+	  if (max_size > mus_max_table_size())
+	    XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[max_size_key], keys[max_size_key], "max-size ~A too large (see mus-max-table-size)");
 	  max_size_set = true;
 	}
 
@@ -2569,8 +2577,8 @@ static XEN g_make_noi(bool rand_case, const char *caller, XEN arglist)
       distribution_size = mus_optkey_to_int(keys[4], caller, orig_arg[4], distribution_size);
       if (distribution_size <= 0)
 	XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[4], keys[4], "distribution size ~A <= 0?");
-      if (distribution_size > MAX_TABLE_SIZE)
-	XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[4], keys[4], "distribution size ~A too large");
+      if (distribution_size > mus_max_table_size())
+	XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[4], keys[4], "distribution size ~A too large (see mus-max-table-size)");
 
       if (!(XEN_KEYWORD_P(keys[2]))) /* i.e. envelope arg was specified */
         {
@@ -2928,8 +2936,8 @@ is the same in effect as " S_make_oscil ".  'type' sets the interpolation choice
       table_size = mus_optkey_to_int(keys[3], S_make_table_lookup, orig_arg[3], table_size);
       if (table_size <= 0)
 	XEN_OUT_OF_RANGE_ERROR(S_make_table_lookup, orig_arg[3], keys[3], "size ~A <= 0?");
-      if (table_size > MAX_TABLE_SIZE)
-	XEN_OUT_OF_RANGE_ERROR(S_make_table_lookup, orig_arg[3], keys[3], "size ~A too large");
+      if (table_size > mus_max_table_size())
+	XEN_OUT_OF_RANGE_ERROR(S_make_table_lookup, orig_arg[3], keys[3], "size ~A too large (see mus-max-table-size)");
       if ((v) && (table_size > v->length))
 	XEN_OUT_OF_RANGE_ERROR(S_make_table_lookup, orig_arg[3], keys[3], "size arg ~A bigger than size of provided wave");
 
@@ -4085,8 +4093,8 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
       wsize = mus_optkey_to_int(keys[3], S_make_wave_train, orig_arg[3], wsize);
       if (wsize <= 0)
 	XEN_OUT_OF_RANGE_ERROR(S_make_wave_train, orig_arg[3], keys[3], "size ~A <= 0?");
-      if (wsize > MAX_TABLE_SIZE)
-	XEN_OUT_OF_RANGE_ERROR(S_make_wave_train, orig_arg[3], keys[3], "size ~A too large");
+      if (wsize > mus_max_table_size())
+	XEN_OUT_OF_RANGE_ERROR(S_make_wave_train, orig_arg[3], keys[3], "size ~A too large (see mus-max-table-size)");
       if ((v) && (wsize > v->length))
 	XEN_OUT_OF_RANGE_ERROR(S_make_wave_train, orig_arg[3], keys[3], "size arg ~A bigger than size of provided wave");
 
@@ -6185,7 +6193,7 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
 	  out_chans = XEN_TO_C_INT(keys[5]);
 	  if (out_chans < 0) 
 	    XEN_OUT_OF_RANGE_ERROR(S_make_locsig, orig_arg[5], keys[5], "chans ~A < 0?");
-	  if (out_chans > MAX_TABLE_SIZE) 
+	  if (out_chans > mus_max_table_size()) 
 	    XEN_OUT_OF_RANGE_ERROR(S_make_locsig, orig_arg[5], keys[5], "chans = ~A?");
 	}
 
@@ -6814,7 +6822,7 @@ The edit function, if any, should return the length in samples of the grain, or 
       XEN_ASSERT_TYPE((jitter >= 0.0) && (jitter < 100.0), keys[6], orig_arg[6], S_make_granulate, "0.0 .. 100.0");
 
       maxsize = mus_optkey_to_int(keys[7], S_make_granulate, orig_arg[7], maxsize);
-      if ((maxsize > MAX_ALLOC_SIZE) || 
+      if ((maxsize > mus_max_malloc()) || 
 	  (maxsize < 0) ||
 	  ((maxsize == 0) && (!XEN_KEYWORD_P(keys[7]))))
 	XEN_OUT_OF_RANGE_ERROR(S_make_granulate, orig_arg[7], keys[7], "max-size ~A?");
@@ -6917,8 +6925,8 @@ return a new convolution generator which convolves its input with the impulse re
       fft_size = mus_optkey_to_int(keys[2], S_make_convolve, orig_arg[2], fft_size);
       if ((fft_size  < 0) || 
 	  ((fft_size == 0) && (!XEN_KEYWORD_P(keys[2]))) ||
-	  (fft_size > MAX_ALLOC_SIZE))
-	XEN_OUT_OF_RANGE_ERROR(S_make_convolve, orig_arg[2], keys[2], "fft-size ~A?");
+	  (fft_size > mus_max_malloc()))
+	XEN_OUT_OF_RANGE_ERROR(S_make_convolve, orig_arg[2], keys[2], "fft-size ~A? (see mus-max-malloc))");
     }
 
   if (filter == NULL)
@@ -7148,8 +7156,8 @@ output. \n\n  " pv_example "\n\n  " pv_edit_example
       fft_size = mus_optkey_to_int(keys[1], S_make_phase_vocoder, orig_arg[1], fft_size);
       if (fft_size <= 1) 
 	XEN_OUT_OF_RANGE_ERROR(S_make_phase_vocoder, orig_arg[1], keys[1], "fft size ~A <= 1?");
-      if (fft_size > MAX_ALLOC_SIZE)
-	XEN_OUT_OF_RANGE_ERROR(S_make_phase_vocoder, orig_arg[1], keys[1], "fft size ~A too large");
+      if (fft_size > mus_max_malloc())
+	XEN_OUT_OF_RANGE_ERROR(S_make_phase_vocoder, orig_arg[1], keys[1], "fft size ~A too large (see mus-max-malloc)");
       if (!POWER_OF_2_P(fft_size))
 	XEN_OUT_OF_RANGE_ERROR(S_make_phase_vocoder, orig_arg[1], keys[1], "fft size ~A must be power of 2");
 

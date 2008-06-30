@@ -2162,7 +2162,7 @@
 		       'mus-interp-hermite 'mus-interp-lagrange 'mus-interp-linear 'mus-interp-none 'mus-interp-sinusoidal
 		       'mus-interp-type 'mus-interpolate 'mus-ircam 'mus-l24int 'mus-ldouble
 		       'mus-ldouble-unscaled 'mus-length 'mus-lfloat 'mus-lfloat-unscaled 'mus-lint
-		       'mus-lintn 'mus-location 'mus-lshort 'mus-midi-close
+		       'mus-lintn 'mus-location 'mus-lshort 'mus-max-malloc 'mus-max-table-size 'mus-midi-close
 		       'mus-midi-describe 'mus-midi-device-name 'mus-midi-open-read 'mus-midi-open-write 'mus-midi-read
 		       'mus-midi-write 'mus-mix 'mus-mulaw 'mus-name 'mus-netbsd-set-outputs
 		       'mus-next 'mus-nist 'mus-offset 'mus-order 'mus-oss-set-buffers

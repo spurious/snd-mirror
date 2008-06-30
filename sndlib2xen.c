@@ -2153,6 +2153,37 @@ static XEN g_rb_make_sound_data(XEN self, XEN chans, XEN frames)
 
 
 
+static XEN g_mus_max_malloc(void)
+{
+  #define H_mus_max_malloc "(" S_mus_max_malloc "): maximum number of bytes we will try to malloc."
+  return(C_TO_XEN_OFF_T(mus_max_malloc()));
+}
+
+
+static XEN g_mus_set_max_malloc(XEN val)
+{
+  XEN_ASSERT_TYPE(XEN_OFF_T_P(val), val, XEN_ONLY_ARG, S_setB S_mus_max_malloc, "an integer");
+  return(C_TO_XEN_OFF_T(mus_set_max_malloc(XEN_TO_C_OFF_T(val))));
+}
+
+
+
+static XEN g_mus_max_table_size(void)
+{
+  #define H_mus_max_table_size "(" S_mus_max_table_size "): maximum table size."
+  return(C_TO_XEN_OFF_T(mus_max_table_size()));
+}
+
+
+static XEN g_mus_set_max_table_size(XEN val)
+{
+  XEN_ASSERT_TYPE(XEN_OFF_T_P(val), val, XEN_ONLY_ARG, S_setB S_mus_max_table_size, "an integer");
+  return(C_TO_XEN_OFF_T(mus_set_max_table_size(XEN_TO_C_OFF_T(val))));
+}
+
+
+
+
 #ifdef XEN_ARGIFY_1
 XEN_NARGIFY_1(g_sound_data_length_w, g_sound_data_length)
 XEN_NARGIFY_1(g_sound_data_chans_w, g_sound_data_chans)
@@ -2261,6 +2292,12 @@ XEN_NARGIFY_1(g_mus_alsa_set_squelch_warning_w, g_mus_alsa_set_squelch_warning)
 #if HAVE_GAUCHE
 XEN_NARGIFY_2(g_sound_data_equalp_w, equalp_sound_data)
 #endif
+
+XEN_NARGIFY_0(g_mus_max_malloc_w, g_mus_max_malloc)
+XEN_NARGIFY_1(g_mus_set_max_malloc_w, g_mus_set_max_malloc)
+XEN_NARGIFY_0(g_mus_max_table_size_w, g_mus_max_table_size)
+XEN_NARGIFY_1(g_mus_set_max_table_size_w, g_mus_set_max_table_size)
+
 #else
 #define g_sound_data_length_w g_sound_data_length
 #define g_sound_data_chans_w g_sound_data_chans
@@ -2366,6 +2403,12 @@ XEN_NARGIFY_2(g_sound_data_equalp_w, equalp_sound_data)
 #if MUS_DEBUGGING && HAVE_SCHEME
 #define g_mus_header_original_format_name_w g_mus_header_original_format_name
 #endif
+
+#define g_mus_max_malloc_w g_mus_max_malloc
+#define g_mus_set_max_malloc_w g_mus_set_max_malloc
+#define g_mus_max_table_size_w g_mus_max_table_size
+#define g_mus_set_max_table_size_w g_mus_set_max_table_size
+
 #endif
 
 
@@ -2628,6 +2671,10 @@ void mus_sndlib_xen_initialize(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_alsa_squelch_warning, g_mus_alsa_squelch_warning_w, H_mus_alsa_squelch_warning,
 				   S_setB S_mus_alsa_squelch_warning, g_mus_alsa_set_squelch_warning_w, 0, 0, 1, 0);
 
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_max_malloc, g_mus_max_malloc_w, H_mus_max_malloc,
+				   S_setB S_mus_max_malloc, g_mus_set_max_malloc_w, 0, 0, 1, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_max_table_size, g_mus_max_table_size_w, H_mus_max_table_size,
+				   S_setB S_mus_max_table_size, g_mus_set_max_table_size_w, 0, 0, 1, 0);
 
 #if HAVE_OSS
   XEN_DEFINE_PROCEDURE(S_mus_audio_reinitialize,   g_mus_audio_reinitialize_w, 0, 0, 0,  H_mus_audio_reinitialize);
@@ -2744,6 +2791,8 @@ void mus_sndlib_xen_initialize(void)
 	       S_mus_lint,
 	       S_mus_lintn,
 	       S_mus_lshort,
+	       S_mus_max_malloc,
+	       S_mus_max_table_size,
 	       S_mus_mulaw,
 	       S_mus_netbsd_set_outputs,
 	       S_mus_next,

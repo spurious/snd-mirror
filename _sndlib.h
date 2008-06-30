@@ -112,6 +112,10 @@
 #define POWER_OF_2_P(x)	((((x) - 1) & (x)) == 0)
 /* from sys/param.h */
 
+#define MUS_MAX_MALLOC_DEFAULT (1 << 26)
+#define MUS_MAX_TABLE_SIZE_DEFAULT (1024 * 1024 * 20) /* delay line allocation etc */
+
+
 #ifndef SEEK_SET
   #define SEEK_SET 0
   #define SEEK_END 2
@@ -566,6 +570,11 @@ void mus_reset_headers_c(void);
 void mus_reset_audio_c(void);
 
 int mus_samples_peak(unsigned char *data, int bytes, int chans, int format, Float *maxes);
+
+off_t mus_max_malloc(void);
+off_t mus_set_max_malloc(off_t new_max);
+off_t mus_max_table_size(void);
+off_t mus_set_max_table_size(off_t new_max);
 
 
 /* -------- headers.c -------- */

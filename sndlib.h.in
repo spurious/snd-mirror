@@ -441,6 +441,11 @@ void mus_reset_audio_c(void);
 
 int mus_samples_peak(unsigned char *data, int bytes, int chans, int format, Float *maxes);
 
+off_t mus_max_malloc(void);
+off_t mus_set_max_malloc(off_t new_max);
+off_t mus_max_table_size(void);
+off_t mus_set_max_table_size(off_t new_max);
+
 
 /* -------- headers.c -------- */
 

@@ -93,6 +93,8 @@
 #define S_mus_lint                      "mus-lint"
 #define S_mus_lintn                     "mus-lintn"
 #define S_mus_lshort                    "mus-lshort"
+#define S_mus_max_malloc                "mus-max-malloc"
+#define S_mus_max_table_size            "mus-max-table-size"
 #define S_mus_mulaw                     "mus-mulaw"
 #define S_mus_netbsd_set_outputs        "mus-netbsd-set-outputs"
 #define S_mus_next                      "mus-next"

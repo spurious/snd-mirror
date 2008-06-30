@@ -3486,7 +3486,7 @@ static void make_lisp_graph(chan_info *cp, XEN pixel_list)
 static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool erase_first, with_grid_t grid, log_axis_t log_axes, show_axes_t axes)
 {
   snd_info *sp;
-  color_t old_color;
+  color_t old_color = NOT_A_COLOR;
 
   if (!(ap->ax))
     ap->ax = cp->cgx->ax;

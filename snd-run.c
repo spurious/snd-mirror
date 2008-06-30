@@ -6333,7 +6333,7 @@ static char *vect_to_string(vect *v, int type)
 
 	    case R_VCT_VECTOR:	  
 	      if (v->data.vcts[i])
-		mus_snprintf(flt, VECT_STRING_SIZE, " #<vct[len=%d]>", (v->data.vcts[i])->length);
+		mus_snprintf(flt, VECT_STRING_SIZE, " #<vct[len=" OFF_TD "]>", (v->data.vcts[i])->length);
 	      else mus_snprintf(flt, VECT_STRING_SIZE, " %s", PROC_FALSE);
 	      break;
 
@@ -7976,7 +7976,7 @@ static void vct_check_index_2(int *args, ptree *pt) {if (VCT_ARG_1->length < 3) 
 static void vct_check_index(int *args, ptree *pt) 
 {
   if (VCT_ARG_1->length <= INT_ARG_2) 
-    mus_error(MUS_NO_DATA, "vct index (" INT_PT ") too high (len = %d)", args[2], INT_ARG_2, VCT_ARG_1->length);
+    mus_error(MUS_NO_DATA, "vct index (" INT_PT ") too high (len = " OFF_TD ")", args[2], INT_ARG_2, VCT_ARG_1->length);
 }
 
 
@@ -8098,7 +8098,7 @@ static void make_vct_v(int *args, ptree *pt)
 static void make_vct_v2(int *args, ptree *pt) 
 {
   vct *v;
-  int i;
+  off_t i;
   if (VCT_RESULT) mus_vct_free(VCT_RESULT);
   v = mus_vct_make(INT_ARG_1);
   VCT_RESULT = v;
@@ -8112,7 +8112,7 @@ static void make_int_vector(int *args, ptree *pt)
   if (VECT_RESULT) free_vect(VECT_RESULT, R_INT_VECTOR);
   if (INT_ARG_1 > 0)
     {
-      int i;
+      off_t i;
       v = (vect *)CALLOC(1, sizeof(vect));
       v->length = INT_ARG_1;
       v->data.ints = (Int *)CALLOC(v->length, sizeof(Int));
@@ -8155,7 +8155,7 @@ static xen_value *make_vector_1(ptree *prog, xen_value **args, int num_args)
 
 static void vct_v(int *args, ptree *pt) 
 {
-  int i;
+  off_t i;
   vct *v;
   if (VCT_RESULT) VCT_RESULT = mus_vct_free(VCT_RESULT);
   v = mus_vct_make(pt->ints[args[1]]);
@@ -8196,7 +8196,7 @@ static xen_value *vct_copy_1(ptree *prog, xen_value **args, int num_args)
 #define VCT_OP_1(SName, CName, COp) \
 static void vct_ ## CName ## _f(int *args, ptree *pt) \
 { \
-  int i; \
+  off_t i; \
   vct *v = VCT_ARG_1; \
   if (v) for (i = 0; i < v->length; i++) v->data[i] COp FLOAT_ARG_2; \
   VCT_RESULT = VCT_ARG_1; \
@@ -8222,7 +8222,7 @@ VCT_OP_1(offset!, offset, +=)
 #define VCT_OP_2(SName, CName, COp) \
 static void vct_ ## CName ## _f(int *args, ptree *pt) \
 { \
-  int i, len; \
+  off_t i, len; \
   vct *v0 = VCT_ARG_1; \
   vct *v1 = VCT_ARG_2; \
   if ((v0) && (v1)) \
@@ -8245,9 +8245,9 @@ VCT_OP_2(multiply!, multiply, *=)
 VCT_OP_2(subtract!, subtract, -=)
 
 
-static void vct_reverse_v(vct *v, int len)
+static void vct_reverse_v(vct *v, off_t len)
 {
-  int i, j;
+  off_t i, j;
   if ((v) && (len > 1))
     {
       for (i = 0, j = len - 1; i < j; i++, j--)
@@ -8323,7 +8323,7 @@ static xen_value *vct_plus_1(ptree *prog, xen_value **args, int num_args)
 static void vct_move_0(int *args, ptree *pt) 
 {
   vct *v;
-  int i, j;
+  off_t i, j;
   v = VCT_ARG_1;
   for (i = INT_ARG_2, j = INT_ARG_3; (j < v->length) && (i < v->length); i++, j++) 
     v->data[i] = v->data[j];
@@ -8342,7 +8342,7 @@ static xen_value *vct_move_3(ptree *prog, xen_value **args, int num_args)
 
 static void vct_peak_v(int *args, ptree *pt) 
 {
-  int i;
+  off_t i;
   Double val = 0.0;
   vct *v;
   v = VCT_ARG_1;

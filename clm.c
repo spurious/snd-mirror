@@ -842,15 +842,15 @@ Float mus_contrast_enhancement(Float sig, Float index)
 }
 
 
-void mus_clear_array(Float *arr, int size) 
+void mus_clear_array(Float *arr, off_t size) 
 {
   memset((void *)arr, 0, size * sizeof(Float));
 }
 
 
-bool mus_arrays_are_equal(Float *arr1, Float *arr2, Float fudge, int len)
+bool mus_arrays_are_equal(Float *arr1, Float *arr2, Float fudge, off_t len)
 {
-  int i;
+  off_t i;
   if (fudge == 0.0)
     {
       for (i = 0; i < len; i++)
@@ -867,15 +867,15 @@ bool mus_arrays_are_equal(Float *arr1, Float *arr2, Float fudge, int len)
 }
 
 
-static bool clm_arrays_are_equal(Float *arr1, Float *arr2, int len)
+static bool clm_arrays_are_equal(Float *arr1, Float *arr2, off_t len)
 {
   return(mus_arrays_are_equal(arr1, arr2, float_equal_fudge_factor, len));
 }
 
 
-Float mus_dot_product(Float *data1, Float *data2, int size)
+Float mus_dot_product(Float *data1, Float *data2, off_t size)
 {
-  int i;
+  off_t i;
   Float sum = 0.0;
   for (i = 0; i < size; i++) 
     sum += (data1[i] * data2[i]);
@@ -888,9 +888,9 @@ Float mus_dot_product(Float *data1, Float *data2, int size)
   #include "xen.h" 
 #endif 
 
-complex double mus_edot_product(complex double freq, complex double *data, int size)
+complex double mus_edot_product(complex double freq, complex double *data, off_t size)
 {
-  int i;
+  off_t i;
   complex double sum = 0.0;
   for (i = 0; i < size; i++) 
     sum += (cexp(i * freq) * data[i]);
@@ -9634,9 +9634,11 @@ void mus_fft(Float *rl, Float *im, int n, int is)
 
 void mus_big_fft(Float *rl, Float *im, off_t n, int is)
 {
-  off_t m, j, mh, ldm, lg, i, i2, j2, imh;
+  off_t m, j, mh, ldm, i, i2, j2;
+  int imh, lg;
   double ur, ui, u, vr, vi, angle, c, s;
-  imh = (off_t)(log(n + 1) / log(2.0));
+
+  imh = (int)(log(n + 1) / log(2.0));
 
   j = 0;
   for (i = 0; i < n; i++)
@@ -9758,7 +9760,7 @@ static Float ultraspherical(int n, Float x, Float lambda)
 static Float sqr(Float x) {return(x * x);}
 
 
-Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float beta, Float mu, Float *window)
+Float *mus_make_fft_window_with_window(mus_fft_window_t type, off_t size, Float beta, Float mu, Float *window)
 {
   /* mostly taken from
    *    Fredric J. Harris, "On the Use of Windows for Harmonic Analysis with the
@@ -9769,7 +9771,7 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
    *    No. 1, February 1981, pp 84-91
    */
 
-  int i, j, midn, midp1;
+  off_t i, j, midn, midp1;
   double freq, rate, angle = 0.0, cx;
   if (window == NULL) return(NULL);
 
@@ -10301,7 +10303,7 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, int size, Float be
 }
 
 
-Float *mus_make_fft_window(mus_fft_window_t type, int size, Float beta)
+Float *mus_make_fft_window(mus_fft_window_t type, off_t size, Float beta)
 {
   return(mus_make_fft_window_with_window(type, size, beta, 0.0, (Float *)clm_calloc_atomic(size, sizeof(Float), S_make_fft_window)));
 }

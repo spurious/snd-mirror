@@ -1210,7 +1210,7 @@ static XEN g_snd_color(XEN choice)
     case 31: col = ss->sgx->grid_color;                    break;
     case 32: col = ss->sgx->selected_grid_color;           break;
     case 33: 
-      if (ss->sgx->axis_color != NO_COLOR)
+      if (ss->sgx->axis_color != NOT_A_COLOR)
 	col = ss->sgx->axis_color;
       else col = ss->sgx->black;
       break;

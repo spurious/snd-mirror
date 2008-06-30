@@ -7720,6 +7720,57 @@ as well.
 
 
 <!--
+(define (draw-sqrt-label xg yg) ; 20 3
+  (let* ((snd 0)
+	 (chn 0)
+	 (axinf (axis-info snd chn))
+	 (x (list-ref axinf 10))
+	 (y (list-ref axinf 13))
+	 (grf-width (- (list-ref axinf 12) x))
+	 (grf-height (- (list-ref axinf 11) y))
+
+	 (width 278)
+	 (height 95)
+
+	 (red (make-color 1 0 0))
+	 (blue (make-color 0 0 1))
+	 (green (make-color 0 1 0))
+	 (black (make-color 0 0 0))
+	 )
+
+    (set! (foreground-color snd chn) black)
+    (let ((x1 (+ x xg))
+	  (y1 (+ y yg))
+	  (yoff 20)
+	  (yinit 15)
+	  (ytext -7))
+
+      (fill-rectangle x1 y1 width 1 snd chn)
+      (fill-rectangle x1 (+ y1 height) width 1 snd chn)
+      (fill-rectangle x1 y1 1 height snd chn)
+      (fill-rectangle (+ x1 width -1) y1 1 height snd chn)
+
+      (set! (foreground-color snd chn) black)
+      (fill-rectangle (+ x1 10) (+ y1 yinit) 30 3 snd chn)
+      (set! (foreground-color snd chn) black)
+      (draw-string "all harmonics" (+ x1 50) (+ y1 yinit ytext) snd chn)
+
+      (set! (foreground-color snd chn) red)
+      (fill-rectangle (+ x1 10) (+ y1 yinit yoff) 30 3 snd chn)
+      (set! (foreground-color snd chn) black)
+      (draw-string "odd-numbered harmonics" (+ x1 50) (+ y1 yinit yoff ytext) snd chn)
+
+      (set! (foreground-color snd chn) blue)
+      (fill-rectangle (+ x1 10) (+ y1 yinit (* 2 yoff)) 30 3 snd chn)
+      (set! (foreground-color snd chn) black)
+      (draw-string "prime-numbered harmonics" (+ x1 50) (+ y1 yinit (* 2 yoff) ytext) snd chn)
+
+      (set! (foreground-color snd chn) green)
+      (fill-rectangle (+ x1 10) (+ y1 yinit (* 3 yoff)) 30 3 snd chn)
+      (set! (foreground-color snd chn) black)
+      (draw-string "n^.6" (+ x1 50) (+ y1 yinit (* 3 yoff) ytext) snd chn)
+      )))
+
 (define (make-sqrt-png)
   (set! current-window-display-is-running #f)
   (reset-hook! time-graph-hook)
@@ -7788,9 +7839,9 @@ as well.
   (set! (channel-style) channels-superimposed)
   (set! (axis-color) (make-color 0 0 0))
   (set! (x-axis-style) x-axis-in-samples)
-  (do ((i 0 (1+ i))) ((= i 4)) (set! (x-axis-label 0 i) "n, black: all, red: odd, blue: prime, green: n^.6"))
+  (do ((i 0 (1+ i))) ((= i 4)) (set! (x-axis-label 0 i) "n"))
   (set! (selected-graph-color) (make-color 1 1 1))
-  (set! (axis-label-font( "9x15")
+  (set! (axis-label-font) "9x15")
   )
 -->
 
@@ -10977,7 +11028,8 @@ each note (each separate expression in the with-sound body) is handled by a sepa
 
 <p>If you put each note in a separate thread, the computation slows down a lot due to
 all the thread overhead, so *clm-threads* sets the number of threads running
-through the note list at any one time.  It defaults to 4.
+through the note list at any one time.  It defaults to 4.  My tests indicate, unfortunately,
+that it is faster to use with-sound; I'm not sure why it is slower with threads.
 </p>
 
 

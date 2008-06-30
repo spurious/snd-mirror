@@ -11,11 +11,12 @@
  */
 
 #define XEN_MAJOR_VERSION 2
-#define XEN_MINOR_VERSION 16
-#define XEN_VERSION "2.16"
+#define XEN_MINOR_VERSION 17
+#define XEN_VERSION "2.17"
 
 /* HISTORY:
  *
+ *  30-Jun-08: XEN_OFF_T_IF_BOUND_P.
  *  19-May-08: more const char* arg declarations.
  *  14-May-08: changed XEN_ARITY in Guile to use scm_procedure_property.
  *  1-May-08:  XEN_NAN_P and XEN_INF_P (Guile).
@@ -2199,6 +2200,7 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 #if defined(__GNUC__) && (!(defined(__cplusplus)))
   #define XEN_BOOLEAN_IF_BOUND_P(Arg)            ({ XEN _xen_h_14_ = Arg; ((XEN_BOOLEAN_P(_xen_h_14_))   || (XEN_NOT_BOUND_P(_xen_h_14_))); })
   #define XEN_INTEGER_IF_BOUND_P(Arg)            ({ XEN _xen_h_15_ = Arg; ((XEN_NOT_BOUND_P(_xen_h_15_)) || (XEN_INTEGER_P(_xen_h_15_))); })
+  #define XEN_OFF_T_IF_BOUND_P(Arg)              ({ XEN _xen_h_15_ = Arg; ((XEN_NOT_BOUND_P(_xen_h_15_)) || (XEN_OFF_T_P(_xen_h_15_))); })
   #define XEN_NUMBER_IF_BOUND_P(Arg)             ({ XEN _xen_h_16_ = Arg; ((XEN_NOT_BOUND_P(_xen_h_16_)) || (XEN_NUMBER_P(_xen_h_16_))); })
   #define XEN_STRING_IF_BOUND_P(Arg)             ({ XEN _xen_h_17_ = Arg; ((XEN_NOT_BOUND_P(_xen_h_17_)) || (XEN_STRING_P(_xen_h_17_))); })
   #define XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(Arg) ({ XEN _xen_h_18_ = Arg; ((XEN_BOOLEAN_P(_xen_h_18_))   || (XEN_NOT_BOUND_P(_xen_h_18_)) || (XEN_INTEGER_P(_xen_h_18_))); })
@@ -2206,6 +2208,7 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 #else
   #define XEN_BOOLEAN_IF_BOUND_P(Arg)            ((XEN_BOOLEAN_P(Arg))   || (XEN_NOT_BOUND_P(Arg)))
   #define XEN_INTEGER_IF_BOUND_P(Arg)            ((XEN_NOT_BOUND_P(Arg)) || (XEN_INTEGER_P(Arg)))
+  #define XEN_OFF_T_IF_BOUND_P(Arg)              ((XEN_NOT_BOUND_P(Arg)) || (XEN_OFF_T_P(Arg)))
   #define XEN_NUMBER_IF_BOUND_P(Arg)             ((XEN_NOT_BOUND_P(Arg)) || (XEN_NUMBER_P(Arg)))
   #define XEN_STRING_IF_BOUND_P(Arg)             ((XEN_NOT_BOUND_P(Arg)) || (XEN_STRING_P(Arg)))
   #define XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(Arg) ((XEN_BOOLEAN_P(Arg))   || (XEN_NOT_BOUND_P(Arg)) || (XEN_INTEGER_P(Arg)))
