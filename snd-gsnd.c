@@ -260,14 +260,20 @@ void stop_bomb(snd_info *sp)
 #if (!USE_CAIRO)
 static void show_hourglass(snd_info *sp, int chan, int glass)
 {
-  if (sp->sgx)
+  if ((sp->sgx) &&
+      (chan < sp->sgx->num_clock_widgets) &&
+      (CLOCK_PIX(sp, chan)) &&
+      (sp->sgx->clock_pix_ax[chan]))
     draw_picture(sp->sgx->clock_pix_ax[chan], hourglasses[glass], 0, 0, 0, 4, 18, 16);
 }
 
 
 static void hide_hourglass(snd_info *sp, int chan)
 {
-  if (sp->sgx)
+  if ((sp->sgx) &&
+      (chan < sp->sgx->num_clock_widgets) &&
+      (CLOCK_PIX(sp, chan)) &&
+      (sp->sgx->clock_pix_ax[chan]))
     draw_picture(sp->sgx->clock_pix_ax[chan], sp->sgx->file_pix, 0, 0, 0, 4, 18, 16);
 }
 
@@ -275,7 +281,19 @@ static void hide_hourglass(snd_info *sp, int chan)
 
 static GdkDrawable *sound_pix_wn(chan_info *cp)
 {
-  return(GDK_DRAWABLE(CLOCK_PIX(cp->sound, cp->chan)->window));
+  snd_info *sp = NULL;
+  if (cp) sp = cp->sound;
+
+  if ((sp) &&
+      (sp->sgx))
+    {
+      if ((cp->chan < sp->sgx->num_clock_widgets) &&
+	  (CLOCK_PIX(sp, cp->chan)) &&
+	  (sp->sgx->clock_pix_ax[cp->chan]))
+	return(GDK_DRAWABLE(CLOCK_PIX(sp, cp->chan)->window));
+      return(GDK_DRAWABLE(CLOCK_PIX(sp, 0)->window));
+    }
+  return(NULL);
 }
 
 
@@ -381,6 +399,7 @@ static gboolean clock_pix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data
   if ((sp) &&
       (sp->sgx) &&
       (sp->sgx->file_pix) &&
+      (cp->chan < sp->sgx->num_clock_widgets) &&
       (CLOCK_PIX(sp, cp->chan)) &&
       (sp->sgx->clock_pix_ax[cp->chan]))
     draw_picture(sp->sgx->clock_pix_ax[cp->chan], sp->sgx->file_pix, 0, 0, 0, 4, 16, 16);
@@ -1667,6 +1686,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
 	sp->sgx->clock_widgets = (GtkWidget **)CALLOC(sp->nchans, sizeof(GtkWidget *));
 	sp->sgx->clock_pix_ax = (axis_context **)CALLOC(sp->nchans, sizeof(axis_context *));
+	sp->sgx->num_clock_widgets = sp->nchans;
 
 	for (i = 0; i < sp->nchans; i++)
 	  {

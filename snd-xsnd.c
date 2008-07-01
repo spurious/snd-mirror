@@ -1989,6 +1989,11 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
 	left_widget = LOCK_OR_BOMB(sp);
 	sp->sgx->progress_widgets = (Widget *)CALLOC(sp->nchans, sizeof(Widget));
+	sp->sgx->num_progress_widgets = sp->nchans;
+	/* when an unused sound is reopened in snd-data.c, it's possible for its channel number
+	 *   to be increased.  If we then try to draw the clock icon in the new channel, its
+	 *   widget will be unallocated -> segfault, so to keep things simple, we check this number.
+	 */
 
 	for (i = 0; i < sp->nchans; i++)
 	  {
@@ -3015,6 +3020,7 @@ void progress_report(chan_info *cp, Float pct)
 
   if ((sp->sgx) && 
       (hourglasses[which]) &&
+      (cp->chan < sp->sgx->num_progress_widgets) &&
       ((cp->chan == 0) ||
        (sp->channel_style != CHANNELS_SUPERIMPOSED)))
     {
@@ -3036,6 +3042,7 @@ void finish_progress_report(chan_info *cp)
   if ((!sp) || (sp->inuse != SOUND_NORMAL)) return;
 
   if ((sp->sgx) &&
+      (cp->chan < sp->sgx->num_progress_widgets) &&
       ((cp->chan == 0) ||
        (sp->channel_style != CHANNELS_SUPERIMPOSED)))
     {
@@ -3057,6 +3064,7 @@ void start_progress_report(chan_info *cp)
   if ((!sp) || (sp->inuse != SOUND_NORMAL)) return;
 
   if ((sp->sgx) &&
+      (cp->chan < sp->sgx->num_progress_widgets) &&
       ((cp->chan == 0) ||
        (sp->channel_style != CHANNELS_SUPERIMPOSED)))
     {

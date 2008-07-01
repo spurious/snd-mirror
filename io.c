@@ -840,22 +840,21 @@ static const int mulaw[256] = {
 #endif
 
 
-static int mus_read_any_1(int tfd, int beg, int chans, int nints, mus_sample_t **bufs, mus_sample_t **cm, char *inbuf)
+static off_t mus_read_any_1(int tfd, off_t beg, int chans, off_t nints, mus_sample_t **bufs, mus_sample_t **cm, char *inbuf)
 {
-  int loclim;
-  io_fd *fd;
-  int bytes, j, lim, siz, total, leftover, total_read, k, loc, oldloc, siz_chans, buflim, format;
+  int format, siz, siz_chans;
+  off_t bytes, j, lim, leftover, total_read, k, loc, oldloc, buflim;
   unsigned char *jchar;
   char *charbuf = NULL;
   mus_sample_t *buffer;
   float prescaling;
-  bool from_buffer = false;
 
   if (nints <= 0) return(0);
-  if (inbuf) from_buffer = true;
 
-  if (!from_buffer)
+  if (!inbuf)
     {
+      io_fd *fd;
+
       if ((io_fds == NULL) || (tfd >= io_fd_size) || (tfd < 0) || (io_fds[tfd] == NULL))
 	return(mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, "mus_read: no file descriptors!"));
 
@@ -873,6 +872,8 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, mus_sample_t *
 #endif
 	  )
 	{
+	  int total;
+
 	  bytes = nints * siz;
 	  total = read(tfd, (char *)(bufs[0]), bytes);
 	  if (total != bytes)
@@ -923,8 +924,10 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, mus_sample_t *
 	  bytes = buflim;
 	} 
       else leftover = 0;
-      if (!from_buffer)
+      if (!inbuf)
 	{
+	  int total;
+
 	  total = read(tfd, charbuf, bytes); 
 	  if (total <= 0) 
 	    {
@@ -961,6 +964,8 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, mus_sample_t *
 	      buffer = (mus_sample_t *)(bufs[k]);
 	      if (buffer)
 		{
+		  off_t loclim;
+
 		  loc = oldloc;
 		  loclim = loc + lim;
 		  jchar = (unsigned char *)charbuf;
@@ -1101,32 +1106,32 @@ static int mus_read_any_1(int tfd, int beg, int chans, int nints, mus_sample_t *
 	    }
 	}
     }
-  if (!from_buffer) FREE(charbuf);
+  if (!inbuf) FREE(charbuf);
   return(total_read);
 }
 
 
-int mus_file_read_any(int tfd, int beg, int chans, int nints, mus_sample_t **bufs, mus_sample_t **cm)
+off_t mus_file_read_any(int tfd, off_t beg, int chans, off_t nints, mus_sample_t **bufs, mus_sample_t **cm)
 {
   return(mus_read_any_1(tfd, beg, chans, nints, bufs, cm, NULL));
 }
 
 
-int mus_file_read_file(int tfd, int beg, int chans, int nints, mus_sample_t **bufs)
+off_t mus_file_read_file(int tfd, off_t beg, int chans, off_t nints, mus_sample_t **bufs)
 {
   return(mus_read_any_1(tfd, beg, chans, nints, bufs, NULL, NULL));
 }
 
 
-int mus_file_read_buffer(int charbuf_data_format, int beg, int chans, int nints, mus_sample_t **bufs, char *charbuf)
+off_t mus_file_read_buffer(int charbuf_data_format, off_t beg, int chans, off_t nints, mus_sample_t **bufs, char *charbuf)
 {
   return(mus_read_any_1(charbuf_data_format, beg, chans, nints, bufs, NULL, charbuf)); 
 }
 
 
-int mus_file_read(int tfd, int beg, int end, int chans, mus_sample_t **bufs)
+off_t mus_file_read(int tfd, off_t beg, off_t end, int chans, mus_sample_t **bufs)
 {
-  int num, rtn, k;
+  off_t num, rtn, k;
   num = (end - beg + 1);
   rtn = mus_read_any_1(tfd, beg, chans, num, bufs, NULL, NULL);
   if (rtn == MUS_ERROR) return(MUS_ERROR);
@@ -1134,7 +1139,7 @@ int mus_file_read(int tfd, int beg, int end, int chans, mus_sample_t **bufs)
     /* this zeroing can be fooled if the file is chunked and has trailing, non-data chunks */
     for (k = 0; k < chans; k++)
       {
-	int i;
+	off_t i;
 	mus_sample_t *buffer;
 	buffer = bufs[k];
 	i = rtn + beg;
@@ -1145,10 +1150,10 @@ int mus_file_read(int tfd, int beg, int end, int chans, mus_sample_t **bufs)
 }
 
 
-int mus_file_read_chans(int tfd, int beg, int end, int chans, mus_sample_t **bufs, mus_sample_t **cm)
+off_t mus_file_read_chans(int tfd, off_t beg, off_t end, int chans, mus_sample_t **bufs, mus_sample_t **cm)
 {
   /* an optimization of mus_file_read -- just reads the desired channels */
-  int num, rtn, k;
+  off_t num, rtn, k;
   num = (end - beg + 1);
   rtn = mus_read_any_1(tfd, beg, chans, num, bufs, cm, NULL);
   if (rtn == MUS_ERROR) return(MUS_ERROR);
@@ -1156,7 +1161,7 @@ int mus_file_read_chans(int tfd, int beg, int end, int chans, mus_sample_t **buf
     for (k = 0; k < chans; k++)
       if ((cm == NULL) || (cm[k]))
 	{
-	  int i;
+	  off_t i;
 	  mus_sample_t *buffer;
 	  buffer = bufs[k];
 	  i = rtn + beg;
@@ -1168,7 +1173,7 @@ int mus_file_read_chans(int tfd, int beg, int end, int chans, mus_sample_t **buf
 
 /* ---------------- write ---------------- */
 
-static int checked_write(int tfd, char *buf, int chars)
+static int checked_write(int tfd, char *buf, off_t chars)
 {
   ssize_t bytes;
   bytes = write(tfd, buf, chars);
@@ -1184,7 +1189,7 @@ static int checked_write(int tfd, char *buf, int chars)
 			 fd->name));
       else
 	return(mus_error(MUS_WRITE_ERROR,
-			 "mus_write: write error for %s%s%s: only " SSIZE_TD " of %d bytes written",
+			 "mus_write: write error for %s%s%s: only " SSIZE_TD " of " OFF_TD " bytes written",
 			 fd->name, (errno) ? ": " : "", (errno) ? STRERROR(errno) : "",
 			 bytes, chars));
     }
@@ -1203,23 +1208,20 @@ mus_clip_handler_t *mus_clip_set_handler(mus_clip_handler_t *new_clip_handler)
 }
 
 
-static int mus_write_1(int tfd, int beg, int end, int chans, mus_sample_t **bufs, char *inbuf, bool clipped)
+static int mus_write_1(int tfd, off_t beg, off_t end, int chans, mus_sample_t **bufs, char *inbuf, bool clipped)
 {
-  int loclim, c3;
-  int err;
-  io_fd *fd;
-  int bytes, j, k, lim, siz, leftover, loc, bk, val, oldloc, buflim, siz_chans, cliploc, data_format;
+  int err, siz, siz_chans, data_format, val;
+  off_t bytes, j, k, lim, leftover, loc, oldloc, buflim, cliploc;
   bool clipping = false;
   unsigned char *jchar;
   char *charbuf = NULL;
-
-  bool to_buffer = false;
   mus_sample_t *buffer;
+
   if (chans <= 0) return(0);
 
-  if (inbuf) to_buffer = true;
-  if (!to_buffer)
+  if (!inbuf)
     {
+      io_fd *fd;
       if ((io_fds == NULL) || 
 	  (tfd >= io_fd_size) || 
 	  (tfd < 0) || 
@@ -1274,6 +1276,8 @@ static int mus_write_1(int tfd, int beg, int end, int chans, mus_sample_t **bufs
 
       for (k = 0; k < chans; k++)
 	{
+	  off_t loclim;
+
 	  if (bufs[k] == NULL) continue;
 	  loc = oldloc;
 	  buffer = (mus_sample_t *)(bufs[k]);
@@ -1400,32 +1404,40 @@ static int mus_write_1(int tfd, int beg, int end, int chans, mus_sample_t **bufs
 		set_little_endian_unsigned_short(jchar, (unsigned short)(MUS_SAMPLE_TO_SHORT(buffer[loc]) + USHORT_ZERO));
 	      break;
 
-	    case MUS_B24INT:   
-	      bk = (k * 3);
-	      c3 = chans * 3;
-	      for (; loc < loclim; loc++, bk += c3) 
-		{
-		  val = MUS_SAMPLE_TO_INT24(buffer[loc]);
-		  charbuf[bk] = (val >> 16); 
-		  charbuf[bk + 1] = (val >> 8); 
-		  charbuf[bk + 2] = (val & 0xFF); 
-		}
+	    case MUS_B24INT: 
+	      {
+		int c3;
+		off_t bk;
+		bk = (k * 3);
+		c3 = chans * 3;
+		for (; loc < loclim; loc++, bk += c3) 
+		  {
+		    val = MUS_SAMPLE_TO_INT24(buffer[loc]);
+		    charbuf[bk] = (val >> 16); 
+		    charbuf[bk + 1] = (val >> 8); 
+		    charbuf[bk + 2] = (val & 0xFF); 
+		  }
+	      }
 	      break;
 
 	    case MUS_L24INT:   
-	      bk = (k * 3);
-	      c3 = chans * 3;
-	      for (; loc < loclim; loc++, bk += c3)
-		{
-		  val = MUS_SAMPLE_TO_INT24(buffer[loc]);
-		  charbuf[bk + 2] = (val >> 16); 
-		  charbuf[bk + 1] = (val >> 8); 
-		  charbuf[bk] = (val & 0xFF); 
-		}
+	      {
+		int c3;
+		off_t bk;
+		bk = (k * 3);
+		c3 = chans * 3;
+		for (; loc < loclim; loc++, bk += c3)
+		  {
+		    val = MUS_SAMPLE_TO_INT24(buffer[loc]);
+		    charbuf[bk + 2] = (val >> 16); 
+		    charbuf[bk + 1] = (val >> 8); 
+		    charbuf[bk] = (val & 0xFF); 
+		  }
+	      }
 	      break;
 	    }
 	}
-      if (!to_buffer)
+      if (!inbuf)
 	{
 	  err = checked_write(tfd, charbuf, bytes);
 	  if (err == MUS_ERROR) 
@@ -1435,24 +1447,24 @@ static int mus_write_1(int tfd, int beg, int end, int chans, mus_sample_t **bufs
 	    }
 	}
     }
-  if (!to_buffer) FREE(charbuf);
+  if (!inbuf) FREE(charbuf);
   return(MUS_NO_ERROR);
 }
 
 
-int mus_file_write(int tfd, int beg, int end, int chans, mus_sample_t **bufs)
+int mus_file_write(int tfd, off_t beg, off_t end, int chans, mus_sample_t **bufs)
 {
   return(mus_write_1(tfd, beg, end, chans, bufs, NULL, false));
 }
 
 
-int mus_file_write_file(int tfd, int beg, int end, int chans, mus_sample_t **bufs)
+int mus_file_write_file(int tfd, off_t beg, off_t end, int chans, mus_sample_t **bufs)
 {
   return(mus_write_1(tfd, beg, end, chans, bufs, NULL, false));
 }
 
 
-int mus_file_write_buffer(int charbuf_data_format, int beg, int end, int chans, mus_sample_t **bufs, char *charbuf, bool clipped)
+int mus_file_write_buffer(int charbuf_data_format, off_t beg, off_t end, int chans, mus_sample_t **bufs, char *charbuf, bool clipped)
 {
   return(mus_write_1(charbuf_data_format, beg, end, chans, bufs, charbuf, clipped));
 }

@@ -1834,12 +1834,18 @@ static int linux_audio_open(const char *pathname, int flags, mode_t mode, int sy
 static int linux_audio_open_with_error(const char *pathname, int flags, mode_t mode, int system)
 {
   int fd;
+  static bool already_warned = false;
+
   fd = linux_audio_open(pathname, flags, mode, system);
-  if (fd == -1)
-    MUS_STANDARD_IO_ERROR(MUS_AUDIO_CANT_OPEN,
-			  ((mode == O_RDONLY) ? "open read" : 
-			   (mode == O_WRONLY) ? "open write" : "open read/write"),
-			  pathname);
+  if ((fd == -1) &&
+      (!already_warned))
+    {
+      already_warned = true;
+      MUS_STANDARD_IO_ERROR(MUS_AUDIO_CANT_OPEN,
+			    ((mode == O_RDONLY) ? "open read" : 
+			     (mode == O_WRONLY) ? "open write" : "open read/write"),
+			    pathname);
+    }
   return(fd);
 }
 

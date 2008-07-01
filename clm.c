@@ -174,14 +174,14 @@ int mus_set_array_print_length(int val)
 }
 
 
-static int clm_file_buffer_size = MUS_DEFAULT_FILE_BUFFER_SIZE;
+static off_t clm_file_buffer_size = MUS_DEFAULT_FILE_BUFFER_SIZE;
 
-int mus_file_buffer_size(void) {return(clm_file_buffer_size);}
+off_t mus_file_buffer_size(void) {return(clm_file_buffer_size);}
 
-int mus_set_file_buffer_size(int size) 
+off_t mus_set_file_buffer_size(off_t size) 
 {
   /* this is set in with-sound, among other places */
-  int prev; 
+  off_t prev; 
   prev = clm_file_buffer_size; 
   clm_file_buffer_size = size; 
   return(prev);
@@ -6918,7 +6918,7 @@ typedef struct {
   int chans;
   mus_sample_t **ibufs;
   off_t data_start, data_end, file_end;
-  int file_buffer_size;
+  off_t file_buffer_size;
   mus_lock_t *reader_lock;
 } rdin;
 
@@ -7077,7 +7077,7 @@ static Float file_sample(mus_any *ptr, off_t samp, int chan)
 	  
 	  if (gen->dir >= 0) 
 	    newloc = samp; 
-	  else newloc = (int)(samp - (gen->file_buffer_size * .75));
+	  else newloc = (off_t)(samp - (gen->file_buffer_size * .75));
 	  /* The .75 in the backwards read is trying to avoid reading the full buffer on 
 	   * nearly every sample when we're oscillating around the
 	   * nominal buffer start/end (in src driven by an oscil for example)
@@ -7159,7 +7159,7 @@ bool mus_file_to_sample_p(mus_any *ptr)
 }
 
 
-mus_any *mus_make_file_to_sample_with_buffer_size(const char *filename, int buffer_size)
+mus_any *mus_make_file_to_sample_with_buffer_size(const char *filename, off_t buffer_size)
 {
   rdin *gen;
 
@@ -7480,7 +7480,7 @@ static int sample_to_file_channels(mus_any *ptr) {return((int)(((rdout *)ptr)->c
 
 static off_t bufferlen(mus_any *ptr) {return(clm_file_buffer_size);}
 
-static off_t set_bufferlen(mus_any *ptr, off_t len) {clm_file_buffer_size = (int)len; return(len);} 
+static off_t set_bufferlen(mus_any *ptr, off_t len) {clm_file_buffer_size = len; return(len);} 
 
 static char *sample_to_file_file_name(mus_any *ptr) {return(((rdout *)ptr)->file_name);}
 
@@ -7595,7 +7595,7 @@ static void flush_buffers(rdout *gen)
 	     *   and it might fail on the next call (if more chans), so we'll throw an error.  We could get
 	     *   say 1024 samps per chan, then run through a loop outputting the current buffer, but geez...
 	     */
-	    mus_error(MUS_MEMORY_ALLOCATION_FAILED, S_mus_file_buffer_size " (%d) is too large: we can't allocate the output buffers!", clm_file_buffer_size);
+	    mus_error(MUS_MEMORY_ALLOCATION_FAILED, S_mus_file_buffer_size " (" OFF_TD ") is too large: we can't allocate the output buffers!", clm_file_buffer_size);
 	    return;
 	  }
       }
@@ -7610,7 +7610,7 @@ static void flush_buffers(rdout *gen)
        */
       if (frames_to_add >= clm_file_buffer_size) 
 	{
-	  mus_print("clm-file-buffer-size changed? %d <= " OFF_TD, clm_file_buffer_size, frames_to_add);
+	  mus_print("clm-file-buffer-size changed? " OFF_TD " <= " OFF_TD, clm_file_buffer_size, frames_to_add);
 	  frames_to_add = clm_file_buffer_size - 1;
 	  /* this means we drop samples -- the other choice (short of throwing an error) would
 	   *   be to read/allocate the bigger size.
@@ -11381,7 +11381,8 @@ void mus_mix(const char *outfile, const char *infile, off_t out_start, off_t out
   else
     {
       mus_mixer *mx = (mus_mixer *)umx;
-      int i, j = 0, m, ofd, ifd;
+      off_t j = 0;
+      int i, m, ofd, ifd;
       Float scaler;
       mus_any *e;
       mus_sample_t **obufs, **ibufs;

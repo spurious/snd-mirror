@@ -105,6 +105,7 @@ typedef struct {
   Pixmap file_pix;
   Widget *snd_widgets;
   Widget *progress_widgets;
+  int num_progress_widgets;
   Widget tab;
   struct env_editor *flt;
   Widget dialog;

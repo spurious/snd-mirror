@@ -643,7 +643,7 @@ mus_any *mus_make_scalar_mixer(int chans, Float scalar);
 
 bool mus_file_to_sample_p(mus_any *ptr);
 mus_any *mus_make_file_to_sample(const char *filename);
-mus_any *mus_make_file_to_sample_with_buffer_size(const char *filename, int buffer_size);
+mus_any *mus_make_file_to_sample_with_buffer_size(const char *filename, off_t buffer_size);
 Float mus_file_to_sample(mus_any *ptr, off_t samp, int chan);
 
 Float mus_readin(mus_any *rd);
@@ -733,8 +733,8 @@ mus_any *mus_make_granulate(Float (*input)(void *arg, int direction),
 int mus_granulate_grain_max_length(mus_any *ptr);
 void mus_granulate_set_edit_function(mus_any *ptr, int (*edit)(void *closure));
 
-int mus_set_file_buffer_size(int size);
-int mus_file_buffer_size(void);
+off_t mus_set_file_buffer_size(off_t size);
+off_t mus_file_buffer_size(void);
 
 void mus_mix(const char *outfile, const char *infile, off_t out_start, off_t out_samps, off_t in_start, mus_any *mx, mus_any ***envs);
 void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, off_t out_start, off_t out_frames, off_t in_start, mus_any *umx, mus_any ***envs);
