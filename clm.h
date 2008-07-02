@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 4
-#define MUS_REVISION 13
-#define MUS_DATE "20-June-08"
+#define MUS_REVISION 14
+#define MUS_DATE "1-July-08"
 
 /*
+ * 1-July:     mus-safety and various ints changed to off_t.
  * 20-Jun:     support for pthreads.
  * 16-Jun:     changed init_mus_module to mus_initialize.
  * 30-May:     changed polyshape to use cos and added cheby_choice arg to mus_make_polyshape.
@@ -289,6 +290,8 @@ typedef struct mus_any_class {
   void *original_class; /* class chain perhaps */
   void (*reset)(mus_any *ptr);
   void *(*set_closure)(mus_any *gen, void *e);
+  int (*safety)(mus_any *ptr);
+  int (*set_safety)(mus_any *ptr, int val);
 } mus_any_class;
 
 typedef enum {MUS_INTERP_NONE, MUS_INTERP_LINEAR, MUS_INTERP_SINUSOIDAL, MUS_INTERP_ALL_PASS, 
@@ -412,6 +415,8 @@ Float mus_feedforward(mus_any *gen);
 Float mus_set_feedforward(mus_any *gen, Float val);
 Float mus_feedback(mus_any *rd);
 Float mus_set_feedback(mus_any *rd, Float dir);
+int mus_safety(mus_any *gen);
+int mus_set_safety(mus_any *gen, int val);
 
 
 /* -------- generators -------- */

@@ -218,7 +218,7 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
       MUS_NO_CHANNELS, MUS_NO_HOP, MUS_NO_WIDTH, MUS_NO_FILE_NAME, MUS_NO_RAMP, MUS_NO_RUN, 
       MUS_NO_INCREMENT, MUS_NO_OFFSET,
       MUS_NO_XCOEFF, MUS_NO_YCOEFF, MUS_NO_XCOEFFS, MUS_NO_YCOEFFS, MUS_NO_RESET, MUS_BAD_SIZE, MUS_CANT_CONVERT,
-      MUS_READ_ERROR,
+      MUS_READ_ERROR, MUS_NO_SAFETY,
       MUS_INITIAL_ERROR_TAG};
 
 /* keep this list in sync with mus_error_names in sound.c and snd-test.scm|rb */
@@ -309,11 +309,11 @@ int mus_sound_close_output(int fd, off_t bytes_of_data);
 off_t mus_sound_maxamps(const char *ifile, int chans, mus_sample_t *vals, off_t *times);
 int mus_sound_set_maxamps(const char *ifile, int chans, mus_sample_t *vals, off_t *times);
 bool mus_sound_maxamp_exists(const char *ifile);
-int mus_file_to_array(const char *filename, int chan, int start, int samples, mus_sample_t *array);
-int mus_array_to_file(const char *filename, mus_sample_t *ddata, int len, int srate, int channels);
-const char *mus_array_to_file_with_error(const char *filename, mus_sample_t *ddata, int len, int srate, int channels);
-int mus_file_to_float_array(const char *filename, int chan, off_t start, int samples, Float *array);
-int mus_float_array_to_file(const char *filename, Float *ddata, int len, int srate, int channels);
+off_t mus_file_to_array(const char *filename, int chan, off_t start, off_t samples, mus_sample_t *array);
+int mus_array_to_file(const char *filename, mus_sample_t *ddata, off_t len, int srate, int channels);
+const char *mus_array_to_file_with_error(const char *filename, mus_sample_t *ddata, off_t len, int srate, int channels);
+off_t mus_file_to_float_array(const char *filename, int chan, off_t start, off_t samples, Float *array);
+int mus_float_array_to_file(const char *filename, Float *ddata, off_t len, int srate, int channels);
 
 
 

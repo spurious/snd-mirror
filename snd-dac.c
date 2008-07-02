@@ -1731,7 +1731,8 @@ static int fill_dac_buffers(int write_ok)
 #else
 	  {
 	    sound_data *sd;
-	    int i, j;
+	    int j;
+	    off_t i;
 	    sdobj = make_sound_data(snd_dacp->channels, snd_dacp->frames);
 	    sdobj_loc = snd_protect(sdobj);
 	    sd = XEN_TO_SOUND_DATA(sdobj);

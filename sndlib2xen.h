@@ -12,7 +12,8 @@
 #define BAD_HEADER           XEN_ERROR_TYPE("bad-header")
 
 typedef struct {
-  int length, chans;
+  off_t length;
+  int chans;
   Float **data;
   bool wrapped;
 } sound_data;
@@ -21,10 +22,10 @@ bool sound_data_p(XEN obj);
 char *sound_data_to_string(sound_data *v);
 void sound_data_free(sound_data *v);
 bool sound_data_equalp(sound_data *v1, sound_data *v2);
-sound_data *c_make_sound_data(int chans, int frames);
-XEN make_sound_data(int chans, int frames);
+sound_data *c_make_sound_data(int chans, off_t frames);
+XEN make_sound_data(int chans, off_t frames);
 void mus_sndlib_xen_initialize (void);
-XEN wrap_sound_data(int chans, int frames, Float **data);
+XEN wrap_sound_data(int chans, off_t frames, Float **data);
 sound_data *sound_data_scale(sound_data *sd, Float scaler);
 sound_data *sound_data_fill(sound_data *sd, Float scaler);
 Float sound_data_peak(sound_data *sd);

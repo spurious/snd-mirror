@@ -492,7 +492,7 @@ void io_set_table_lock_name(void)
 
 int mus_file_open_descriptors(int tfd, const char *name, int format, int size /* datum size */, off_t location, int chans, int type)
 {
-  int i, lim = -1, err = MUS_NO_ERROR;
+  int err = MUS_NO_ERROR;
 
   MUS_LOCK(&io_table_lock);
 
@@ -501,10 +501,12 @@ int mus_file_open_descriptors(int tfd, const char *name, int format, int size /*
       io_fd_size = tfd + IO_FD_ALLOC_SIZE;
       io_fds = (io_fd **)CALLOC(io_fd_size, sizeof(io_fd *));
     }
+
   if (io_fds)
     {
       if (io_fd_size <= tfd)
 	{
+	  int i, lim;
 	  lim = io_fd_size;
 	  io_fd_size = tfd + IO_FD_ALLOC_SIZE;
 	  io_fds = (io_fd **)REALLOC(io_fds, io_fd_size * sizeof(io_fd *));
@@ -529,7 +531,6 @@ int mus_file_open_descriptors(int tfd, const char *name, int format, int size /*
 	    {
 	      fd->name = (char *)CALLOC(strlen(name) + 1, sizeof(char));
 	      MUS_SET_PRINTABLE(PRINT_CHAR);
-
 	      strcpy(fd->name, name);
 	    }
 	}
@@ -720,15 +721,19 @@ off_t mus_file_seek_frame(int tfd, off_t frame)
   io_fd *fd;
   if (io_fds == NULL) 
     return(mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, "mus_file_seek_frame: no file descriptors!"));
+
   if (tfd >= io_fd_size)
     return(mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED,
 		     "mus_file_seek_frame: file descriptors not realloc'd? (tfd: %d, io_fd_size: %d)", tfd, io_fd_size));
+
   if ((tfd < 0) || 
       (io_fds[tfd] == NULL))
     return(mus_error(MUS_FILE_DESCRIPTORS_NOT_INITIALIZED, "mus_file_seek_frame: file descriptor = %d?", tfd));
+
   fd = io_fds[tfd];
   if (fd->data_format == MUS_UNKNOWN) 
     return(mus_error(MUS_NOT_A_SOUND_FILE, "mus_file_seek_frame: invalid data format for %s", fd->name));
+
   return(lseek(tfd, fd->data_location + (fd->chans * frame * fd->bytes_per_sample), SEEK_SET));
 }
 
@@ -872,7 +877,7 @@ static off_t mus_read_any_1(int tfd, off_t beg, int chans, off_t nints, mus_samp
 #endif
 	  )
 	{
-	  int total;
+	  ssize_t total;
 
 	  bytes = nints * siz;
 	  total = read(tfd, (char *)(bufs[0]), bytes);
@@ -926,7 +931,7 @@ static off_t mus_read_any_1(int tfd, off_t beg, int chans, off_t nints, mus_samp
       else leftover = 0;
       if (!inbuf)
 	{
-	  int total;
+	  ssize_t total;
 
 	  total = read(tfd, charbuf, bytes); 
 	  if (total <= 0) 
@@ -1767,6 +1772,7 @@ int mus_samples_peak(unsigned char *data, int bytes, int chans, int format, Floa
 {
   /* returns MUS_ERROR if format can't be handled */
   /*   assumes maxes arrays has at least chans elements and that data array has at least bytes bytes */
+  /* this is used only by the recorder to move the VU meter needle, so it doesn't need to handle large (off_t) arrays */
   int chan, bytes_per_sample, bytes_per_frame;
   unsigned char *eod, *samp;
 

@@ -8212,7 +8212,8 @@ given channel.  Currently, this must be a channel (sound) created by " S_make_va
      */
     XEN result;
     sound_data *sd;
-    int i, loc;
+    off_t i;
+    int loc;
     result = make_sound_data(1, cp->edits[0]->samples); /* need actual gc-able object here */
     loc = snd_protect(result);
     sd = XEN_TO_SOUND_DATA(result);

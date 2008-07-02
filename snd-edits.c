@@ -9517,7 +9517,7 @@ static mus_any_class SND_TO_SAMPLE_CLASS = {
   &snd_to_sample_location,
   0,  /* set location (ptr, off_t loc) */
   0,
-  0, 0, 0, 0, 0, 0, 0
+  0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
 

@@ -188,6 +188,7 @@ returning you to the true top-level."
 (define *clm-safety* run-safety)  ; slightly different from CL/CLM but has similar effect
 (define *clm-delete-reverb* #f)   ; should with-sound clean up reverb stream
 (define *clm-threads* 4)
+(define *clm-output-safety* 0)    ; if 1, assume output buffers will not need to be flushed except at the very end
 
 (define *to-snd* #t)
 
@@ -255,7 +256,8 @@ returning you to the true top-level."
 				  (clipped 'unset)
 				  (notehook *clm-notehook*)               ; (with-sound (:notehook (lambda args (display args))) (fm-violin 0 1 440 .1))
 				  (scaled-by #f)
-				  (ignore-output #f))
+				  (ignore-output #f)
+				  (output-safety *clm-output-safety*))
   "with-sound-helper is the business portion of the with-sound macro"
   (let ((old-srate (mus-srate))
 	(old-*output* *output*)
@@ -295,17 +297,19 @@ returning you to the true top-level."
 
      (lambda ()
        (if output-to-file
-	   (if continue-old-file
-	       (begin
-		 (set! *output* (continue-sample->file output-1))
-		 (set! (mus-srate) (mus-sound-srate output-1))
-		 (let ((ind (find-sound output-1)))
-		   (if (sound? ind)
-		       (close-sound ind))))
-	       (begin
-		 (if (file-exists? output-1) 
-		     (delete-file output-1))
-		 (set! *output* (make-sample->file output-1 channels data-format header-type comment))))
+	   (begin
+	     (if continue-old-file
+		 (begin
+		   (set! *output* (continue-sample->file output-1))
+		   (set! (mus-srate) (mus-sound-srate output-1))
+		   (let ((ind (find-sound output-1)))
+		     (if (sound? ind)
+			 (close-sound ind))))
+		 (begin
+		   (if (file-exists? output-1) 
+		       (delete-file output-1))
+		   (set! *output* (make-sample->file output-1 channels data-format header-type comment))))
+	     (set! (mus-safety *output*) output-safety))
 	   (begin
 	     (if (not continue-old-file)
 		 (if (vct? output-1)
@@ -316,12 +320,14 @@ returning you to the true top-level."
 
        (if reverb
 	   (if reverb-to-file
-	       (if continue-old-file
-		   (set! *reverb* (continue-sample->file reverb-1))
-		   (begin
-		     (if (file-exists? reverb-1) 
-			 (delete-file reverb-1))
-		     (set! *reverb* (make-sample->file reverb-1 reverb-channels data-format header-type))))
+	       (begin
+		 (if continue-old-file
+		     (set! *reverb* (continue-sample->file reverb-1))
+		     (begin
+		       (if (file-exists? reverb-1) 
+			   (delete-file reverb-1))
+		       (set! *reverb* (make-sample->file reverb-1 reverb-channels data-format header-type))))
+		 (set! (mus-safety *reverb*) output-safety))
 	       (begin
 		 (if (not continue-old-file)
 		     (if (vct? reverb-1)

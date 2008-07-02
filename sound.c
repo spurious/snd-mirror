@@ -417,7 +417,7 @@ static const char *mus_initial_error_names[MUS_INITIAL_ERROR_TAG] = {
   "no channels method", "no hop method", "no width method", "no file-name method", "no ramp method", "no run method",
   "no increment method", "no offset method",
   "no xcoeff method", "no ycoeff method", "no xcoeffs method", "no ycoeffs method", "no reset", "bad size", "can't convert",
-  "read error"
+  "read error", "no safety method"
 };
 
 static char **mus_error_names = NULL;
@@ -1635,9 +1635,10 @@ int mus_sound_set_maxamps(const char *ifile, int chans, mus_sample_t *vals, off_
 }
 
 
-int mus_file_to_array(const char *filename, int chan, int start, int samples, mus_sample_t *array)
+off_t mus_file_to_array(const char *filename, int chan, off_t start, off_t samples, mus_sample_t *array)
 {
-  int ifd, chans, total_read;
+  int ifd, chans;
+  off_t total_read;
   mus_sample_t **bufs;
   ifd = mus_sound_open_input(filename);
   if (ifd == MUS_ERROR) return(MUS_ERROR);
@@ -1657,7 +1658,7 @@ int mus_file_to_array(const char *filename, int chan, int start, int samples, mu
 }
 
 
-const char *mus_array_to_file_with_error(const char *filename, mus_sample_t *ddata, int len, int srate, int channels)
+const char *mus_array_to_file_with_error(const char *filename, mus_sample_t *ddata, off_t len, int srate, int channels)
 {
   /* put ddata into a sound file, taking byte order into account */
   /* assume ddata is interleaved already if more than one channel */
@@ -1687,7 +1688,7 @@ const char *mus_array_to_file_with_error(const char *filename, mus_sample_t *dda
   return(NULL);
 }
 
-int mus_array_to_file(const char *filename, mus_sample_t *ddata, int len, int srate, int channels)
+int mus_array_to_file(const char *filename, mus_sample_t *ddata, off_t len, int srate, int channels)
 {
   const char *errmsg;
   errmsg = mus_array_to_file_with_error(filename, ddata, len, srate, channels);
@@ -1697,32 +1698,35 @@ int mus_array_to_file(const char *filename, mus_sample_t *ddata, int len, int sr
 }
 
 
-int mus_file_to_float_array(const char *filename, int chan, off_t start, int samples, Float *array)
+off_t mus_file_to_float_array(const char *filename, int chan, off_t start, off_t samples, Float *array)
 {
 #if SNDLIB_USE_FLOATS
   return(mus_file_to_array(filename, chan, start, samples, array));
 #else
   mus_sample_t *idata;
-  int i, len;
+  off_t i, len;
+
   idata = (mus_sample_t *)CALLOC(samples, sizeof(mus_sample_t));
   len = mus_file_to_array(filename, chan, start, samples, idata);
   if (len != -1) 
     for (i = 0; i < samples; i++)
       array[i] = MUS_SAMPLE_TO_FLOAT(idata[i]);
   FREE(idata);
+
   return(len);
 #endif
 }
 
 
-int mus_float_array_to_file(const char *filename, Float *ddata, int len, int srate, int channels)
+int mus_float_array_to_file(const char *filename, Float *ddata, off_t len, int srate, int channels)
 {
   const char *errmsg;
 #if SNDLIB_USE_FLOATS
   errmsg = mus_array_to_file_with_error(filename, ddata, len, srate, channels);
 #else
   mus_sample_t *idata;
-  int i;
+  off_t i;
+
   idata = (mus_sample_t *)CALLOC(len, sizeof(mus_sample_t));
   for (i = 0; i < len; i++) 
     idata[i] = MUS_FLOAT_TO_SAMPLE(ddata[i]);
@@ -1731,6 +1735,7 @@ int mus_float_array_to_file(const char *filename, Float *ddata, int len, int sra
 #endif
   if (errmsg)
     return(mus_error(MUS_CANT_OPEN_FILE, errmsg));
+
   return(MUS_NO_ERROR);
 }
 

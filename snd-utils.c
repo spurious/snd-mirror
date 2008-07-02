@@ -1338,7 +1338,7 @@ void mem_report(void)
 			case PRINT_SOUND_DATA:
 			  {
 			    sound_data *sd = (sound_data *)(pointers[orig_i]);
-			    fprintf(Fp, "[%p: %d %d]\n        ", sd, sd->chans, sd->length);
+			    fprintf(Fp, "[%p: %d " OFF_TD "]\n        ", sd, sd->chans, sd->length);
 			  }
 			  break;
 

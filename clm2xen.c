@@ -1432,6 +1432,24 @@ static XEN g_mus_set_scaler(XEN gen, XEN val)
 }
 
 
+static XEN g_mus_safety(XEN gen) 
+{
+  #define H_mus_safety "(" S_mus_safety " gen): gen's safety setting, if any."
+  if (XEN_LIST_P(gen)) return(call_get_method(gen, S_mus_safety));
+  XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ONLY_ARG, S_mus_safety, "a generator");
+  return(C_TO_XEN_INT(mus_safety(XEN_TO_MUS_ANY(gen))));
+}
+
+
+static XEN g_mus_set_safety(XEN gen, XEN val) 
+{
+  if (XEN_LIST_P(gen)) return(call_set_method(gen, val, S_mus_safety));
+  XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ARG_1, S_setB S_mus_safety, "a generator");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_2, S_setB S_mus_safety, "an integer");
+  return(C_TO_XEN_INT(mus_set_safety(XEN_TO_MUS_ANY(gen), XEN_TO_C_INT(val))));
+}
+
+
 static XEN g_mus_feedforward(XEN gen) 
 {
   #define H_mus_feedforward "(" S_mus_feedforward " gen): gen's feedforward field"
@@ -5764,18 +5782,18 @@ handled by the output generator 'obj' at frame 'samp'"
 static XEN g_mus_file_buffer_size(void)
 {
   #define H_mus_file_buffer_size "(" S_mus_file_buffer_size "): current CLM IO buffer size (default is 8192)"
-  return(C_TO_XEN_INT(mus_file_buffer_size()));
+  return(C_TO_XEN_OFF_T(mus_file_buffer_size()));
 }
 
 
 static XEN g_mus_set_file_buffer_size(XEN val)
 {
-  int len;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_mus_file_buffer_size, "an integer");
-  len = XEN_TO_C_INT(val);
+  off_t len;
+  XEN_ASSERT_TYPE(XEN_OFF_T_P(val), val, XEN_ONLY_ARG, S_setB S_mus_file_buffer_size, "an integer");
+  len = XEN_TO_C_OFF_T(val);
   if (len <= 0) 
     XEN_OUT_OF_RANGE_ERROR(S_setB S_mus_file_buffer_size, XEN_ONLY_ARG, val, "must be > 0");
-  return(C_TO_XEN_INT(mus_set_file_buffer_size(len)));
+  return(C_TO_XEN_OFF_T(mus_set_file_buffer_size(len)));
 }
 
 
@@ -7608,6 +7626,8 @@ XEN_NARGIFY_1(g_mus_width_w, g_mus_width)
 XEN_NARGIFY_2(g_mus_set_width_w, g_mus_set_width)
 XEN_NARGIFY_1(g_mus_scaler_w, g_mus_scaler)
 XEN_NARGIFY_2(g_mus_set_scaler_w, g_mus_set_scaler)
+XEN_NARGIFY_1(g_mus_safety_w, g_mus_safety)
+XEN_NARGIFY_2(g_mus_set_safety_w, g_mus_set_safety)
 XEN_NARGIFY_1(g_mus_feedforward_w, g_mus_feedforward)
 XEN_NARGIFY_2(g_mus_set_feedforward_w, g_mus_set_feedforward)
 XEN_NARGIFY_1(g_mus_reset_w, g_mus_reset)
@@ -7911,6 +7931,8 @@ XEN_NARGIFY_2(g_mus_equalp_w, equalp_mus_xen)
 #define g_mus_set_phase_w g_mus_set_phase
 #define g_mus_scaler_w g_mus_scaler
 #define g_mus_set_scaler_w g_mus_set_scaler
+#define g_mus_safety_w g_mus_safety
+#define g_mus_set_safety_w g_mus_set_safety
 #define g_mus_feedforward_w g_mus_feedforward
 #define g_mus_set_feedforward_w g_mus_set_feedforward
 #define g_mus_width_w g_mus_width
@@ -8357,6 +8379,7 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_name,      g_mus_name_w,      H_mus_name,      S_setB S_mus_name,      g_mus_set_name_w,       1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_phase,     g_mus_phase_w,     H_mus_phase,     S_setB S_mus_phase,     g_mus_set_phase_w,      1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_scaler,    g_mus_scaler_w,    H_mus_scaler,    S_setB S_mus_scaler,    g_mus_set_scaler_w,     1, 0, 2, 0);
+  XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_safety,    g_mus_safety_w,    H_mus_safety,    S_setB S_mus_safety,    g_mus_set_safety_w,     1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_width,     g_mus_width_w,     H_mus_width,     S_setB S_mus_width,     g_mus_set_width_w,      1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_frequency, g_mus_frequency_w, H_mus_frequency, S_setB S_mus_frequency, g_mus_set_frequency_w,  1, 0, 2, 0);
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_length,    g_mus_length_w,    H_mus_length,    S_setB S_mus_length,    g_mus_set_length_w,     1, 0, 2, 0);
@@ -8905,6 +8928,7 @@ void mus_xen_init(void)
 	       S_mus_random,
 	       S_mus_reset,
 	       S_mus_run,
+	       S_mus_safety,
 	       S_mus_scaler,
 	       S_mus_set_formant_radius_and_frequency,
 	       S_mus_srate,

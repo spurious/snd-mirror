@@ -7403,9 +7403,11 @@ static void mus_audio_write_0(int *args, ptree *pt)
 #else
   {
     mus_sample_t **sdata;
-    int i, j;
+    int i;
+    off_t j;
     sdata = (mus_sample_t **)CALLOC(sd->chans, sizeof(mus_sample_t *));
-    for (i = 0; i < sd->chans; i++) sdata[i] = (mus_sample_t *)CALLOC(sd->length, sizeof(mus_sample_t));
+    for (i = 0; i < sd->chans; i++) 
+      sdata[i] = (mus_sample_t *)CALLOC(sd->length, sizeof(mus_sample_t));
     for (i = 0; i < sd->chans; i++)
       for (j = 0; j < sd->length; j++)
 	sdata[i][j] = MUS_DOUBLE_TO_SAMPLE(sd->data[i][j]);
@@ -8423,7 +8425,7 @@ static void sound_data_check_index(int *args, ptree *pt)
   if (SOUND_DATA_ARG_1->chans <= INT_ARG_2) 
     mus_error(MUS_NO_DATA, "sound-data chan (" INT_PT ") too high (chans = %d)", args[2], INT_ARG_2, SOUND_DATA_ARG_1->chans);
   if (SOUND_DATA_ARG_1->length <= INT_ARG_3) 
-    mus_error(MUS_NO_DATA, "sound-data index (" INT_PT ") too high (length = %d)", args[3], INT_ARG_3, SOUND_DATA_ARG_1->length);
+    mus_error(MUS_NO_DATA, "sound-data index (" INT_PT ") too high (length = " OFF_TD ")", args[3], INT_ARG_3, SOUND_DATA_ARG_1->length);
 }
 
 
@@ -8672,7 +8674,8 @@ static void sound_data_to_vct_v(int *args, ptree *pt)
 {
   vct *v;
   sound_data *sd;
-  int chan, len;
+  int chan;
+  off_t len;
   v = VCT_ARG_3;
   sd = SOUND_DATA_ARG_1;
   chan = INT_ARG_2;
@@ -8695,7 +8698,8 @@ static void vct_to_sound_data_v(int *args, ptree *pt)
 {
   vct *v;
   sound_data *sd;
-  int chan, len;
+  int chan;
+  off_t len;
   v = VCT_ARG_1;
   sd = SOUND_DATA_ARG_2;
   chan = INT_ARG_3;
@@ -9194,6 +9198,7 @@ INT_GEN0(ramp)
 INT_GEN0(order)
 INT_GEN0(length)
 INT_GEN0(channel)
+INT_GEN0(safety)
 
 
 /* set methods have two (3?) args: (lambda (g val)...) so splice in method with args built on the spot */
@@ -9215,6 +9220,7 @@ SET_INT_GEN0(location)
 SET_INT_GEN0(ramp)
 SET_INT_GEN0(hop)
 SET_INT_GEN0(length)
+SET_INT_GEN0(safety)
 
 
 #define SET_DBL_GEN0(Name) \
@@ -13046,6 +13052,7 @@ static void init_walkers(void)
   INIT_WALKER(S_mus_phase,          make_walker(mus_phase_0, NULL, mus_set_phase_1, 1, 1, R_FLOAT, false, 1, R_GENERATOR));
   INIT_WALKER(S_mus_width,          make_walker(mus_width_0, NULL, mus_set_width_1, 1, 1, R_FLOAT, false, 1, R_GENERATOR));
   INIT_WALKER(S_mus_scaler,         make_walker(mus_scaler_0, NULL, mus_set_scaler_1, 1, 1, R_FLOAT, false, 1, R_GENERATOR));
+  INIT_WALKER(S_mus_safety,         make_walker(mus_safety_0, NULL, mus_set_safety_1, 1, 1, R_INT, false, 1, R_GENERATOR));
   INIT_WALKER(S_mus_reset,          make_walker(mus_reset_0, NULL, NULL, 1, 1, R_CLM, false, 1, R_GENERATOR));
   INIT_WALKER(S_mus_offset,         make_walker(mus_offset_0, NULL, mus_set_offset_1, 1, 1, R_FLOAT, false, 1, R_GENERATOR));
   INIT_WALKER("mus-formant-radius", make_walker(mus_scaler_0, NULL, mus_set_scaler_1, 1, 1, R_FLOAT, false, 1, R_GENERATOR)); /* backwards compatibility... */

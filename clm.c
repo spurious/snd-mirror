@@ -494,6 +494,24 @@ Float mus_set_phase(mus_any *gen, Float val)
 }
 
 
+int mus_safety(mus_any *gen)
+{
+  if ((check_gen(gen, S_mus_safety)) &&
+      (gen->core->safety))
+    return((*(gen->core->safety))(gen));
+  return(mus_error(MUS_NO_SAFETY, "can't get %s's safety", mus_name(gen)));
+}
+
+
+int mus_set_safety(mus_any *gen, int val)
+{
+  if ((check_gen(gen, S_setB S_mus_safety)) &&
+      (gen->core->set_safety))
+    return((*(gen->core->set_safety))(gen, val));
+  return((Float)mus_error(MUS_NO_SAFETY, "can't set %s's safety", mus_name(gen)));
+}
+
+
 Float mus_scaler(mus_any *gen)
 {
   if ((check_gen(gen, S_mus_scaler)) &&
@@ -1272,7 +1290,7 @@ static mus_any_class OSCIL_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &oscil_reset,
-  0
+  0, 0, 0
 };
 
 
@@ -1473,7 +1491,7 @@ static mus_any_class NCOS_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &ncos_reset,
-  0
+  0, 0, 0
 };
 
 
@@ -1648,7 +1666,7 @@ static mus_any_class NSIN_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &ncos_reset,
-  0
+  0, 0, 0
 };
 
 
@@ -1819,7 +1837,7 @@ static mus_any_class ASYMMETRIC_FM_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &asyfm_reset,
-  0
+  0, 0, 0
 };
 
 
@@ -1998,7 +2016,7 @@ static mus_any_class NRXYSIN_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &nrxy_reset,
-  0
+  0, 0, 0
 };
 
 
@@ -2106,7 +2124,7 @@ static mus_any_class NRXYCOS_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &nrxy_reset,
-  0
+  0, 0, 0
 };
 
 
@@ -2311,7 +2329,7 @@ static mus_any_class TABLE_LOOKUP_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &table_lookup_reset,
-  0
+  0, 0, 0
 };
 
 
@@ -2695,7 +2713,7 @@ static mus_any_class POLYWAVE_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &pw_reset,
-  0
+  0, 0, 0
 };
 
 
@@ -2798,7 +2816,7 @@ static mus_any_class POLYSHAPE_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &pw_reset,
-  0
+  0, 0, 0
 };
 
 
@@ -2986,7 +3004,7 @@ static mus_any_class WAVE_TRAIN_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &wt_reset,
-  0
+  0, 0, 0
 };
 
 
@@ -3245,7 +3263,7 @@ static mus_any_class DELAY_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &delay_reset,
-  0
+  0, 0, 0
 };
 
 
@@ -3352,7 +3370,7 @@ static mus_any_class COMB_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &delay_reset,
-  0
+  0, 0, 0
 };
 
 
@@ -3422,7 +3440,7 @@ static mus_any_class NOTCH_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &delay_reset,
-  0
+  0, 0, 0
 };
 
 
@@ -3535,7 +3553,7 @@ static mus_any_class ALL_PASS_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &delay_reset,
-  0
+  0, 0, 0
 };
 
 
@@ -3618,7 +3636,7 @@ static mus_any_class MOVING_AVERAGE_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &moving_average_reset,
-  0
+  0, 0, 0
 };
 
 
@@ -3736,7 +3754,7 @@ static mus_any_class FILTERED_COMB_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &filtered_comb_reset,
-  0
+  0, 0, 0
 };
 
 
@@ -3873,7 +3891,7 @@ static mus_any_class SAWTOOTH_WAVE_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &sawtooth_reset,
-  0
+  0, 0, 0
 };
 
 
@@ -3954,7 +3972,7 @@ static mus_any_class SQUARE_WAVE_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &square_wave_reset,
-  0
+  0, 0, 0
 };
 
 
@@ -4038,7 +4056,7 @@ static mus_any_class TRIANGLE_WAVE_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &triangle_wave_reset,
-  0
+  0, 0, 0
 };
 
 
@@ -4118,7 +4136,7 @@ static mus_any_class PULSE_TRAIN_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &pulse_train_reset,
-  0
+  0, 0, 0
 };
 
 
@@ -4349,7 +4367,7 @@ static mus_any_class RAND_INTERP_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &noi_reset,
-  0
+  0, 0, 0
 };
 
 
@@ -4376,7 +4394,7 @@ static mus_any_class RAND_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &noi_reset,
-  0
+  0, 0, 0
 };
 
 
@@ -4550,7 +4568,7 @@ static mus_any_class ONE_ZERO_CLASS = {
   0, 0, 
   &smp_xcoeffs, &smp_ycoeffs, 0,
   &smpflt_reset,
-  0
+  0, 0, 0
 };
 
 
@@ -4603,7 +4621,7 @@ static mus_any_class ONE_POLE_CLASS = {
   &smp_ycoeff, &smp_set_ycoeff, 
   &smp_xcoeffs, &smp_ycoeffs, 0,
   &smpflt_reset,
-  0
+  0, 0, 0
 };
 
 
@@ -4692,7 +4710,7 @@ static mus_any_class TWO_ZERO_CLASS = {
   0, 0,
   &smp_xcoeffs, &smp_ycoeffs, 0,
   &smpflt_reset,
-  0
+  0, 0, 0
 };
 
 
@@ -4788,7 +4806,7 @@ static mus_any_class TWO_POLE_CLASS = {
   &smp_ycoeff, &smp_set_ycoeff, 
   &smp_xcoeffs, &smp_ycoeffs, 0,
   &smpflt_reset,
-  0
+  0, 0, 0
 };
 
 
@@ -4992,7 +5010,7 @@ static mus_any_class FORMANT_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &frm_reset,
-  0
+  0, 0, 0
 };
 
 
@@ -5094,7 +5112,7 @@ static mus_any_class FIRMANT_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &frm_reset,
-  0
+  0, 0, 0
 };
 
 
@@ -5406,7 +5424,7 @@ static mus_any_class FILTER_CLASS = {
   &filter_xcoeffs, &filter_ycoeffs, 
   0,
   &filter_reset,
-  0
+  0, 0, 0
 };
 
 
@@ -5432,7 +5450,7 @@ static mus_any_class FIR_FILTER_CLASS = {
   0, 0, 
   &filter_xcoeffs, 0, 0,
   &filter_reset,
-  0
+  0, 0, 0
 };
 
 
@@ -5458,7 +5476,7 @@ static mus_any_class IIR_FILTER_CLASS = {
   &filter_ycoeff, &filter_set_ycoeff, 
   0, &filter_ycoeffs, 0,
   &filter_reset,
-  0
+  0, 0, 0
 };
 
 
@@ -5974,7 +5992,7 @@ static mus_any_class ENV_CLASS = {
   0,
   0, 0, 0, 0, 0,
   &env_reset,
-  0
+  0, 0, 0
 };
 
 
@@ -6244,7 +6262,7 @@ static mus_any_class FRAME_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &frame_reset,
-  0
+  0, 0, 0
 };
 
 
@@ -6517,7 +6535,7 @@ static mus_any_class MIXER_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &mixer_reset,
-  0
+  0, 0, 0
 };
 
 
@@ -6920,6 +6938,7 @@ typedef struct {
   off_t data_start, data_end, file_end;
   off_t file_buffer_size;
   mus_lock_t *reader_lock;
+  int safety;
 } rdin;
 
 /* TODO: what happens if join thread, non-thread-local error causes gen holding lock to be freed? -- lock is destroyed but is thread also killed? */
@@ -6980,6 +6999,9 @@ static off_t file_to_sample_length(mus_any *ptr) {return((((rdin *)ptr)->file_en
 
 static int file_to_sample_channels(mus_any *ptr) {return((int)(((rdin *)ptr)->chans));}
 
+static int file_to_sample_safety(mus_any *ptr) {return(((rdin *)ptr)->safety);}
+static int file_to_sample_set_safety(mus_any *ptr, int val) {((rdin *)ptr)->safety = val; return(val);}
+
 static Float file_to_sample_increment(mus_any *rd) {return((Float)(((rdin *)rd)->dir));}
 static Float file_to_sample_set_increment(mus_any *rd, Float val) {((rdin *)rd)->dir = (int)val; return(val);}
 
@@ -7020,7 +7042,9 @@ static mus_any_class FILE_TO_SAMPLE_CLASS = {
   0, /* channel */
   0, 0, 0, 0, 0,
   &no_reset,
-  0
+  0, 
+  &file_to_sample_safety,
+  &file_to_sample_set_safety
 };
 
 
@@ -7274,7 +7298,7 @@ static mus_any_class READIN_CLASS = {
   &rd_channel,
   0, 0, 0, 0, 0,
   &no_reset,
-  0
+  0, 0, 0
 };
 
 
@@ -7379,7 +7403,7 @@ static mus_any_class FILE_TO_FRAME_CLASS = {
   0, /* channel */
   0, 0, 0, 0, 0,
   &no_reset,
-  0
+  0, 0, 0
 };
 
 
@@ -7441,6 +7465,7 @@ typedef struct {
   int output_data_format;
   int output_header_type;
   mus_lock_t *writer_lock;
+  int safety;
 } rdout;
 
 
@@ -7484,6 +7509,9 @@ static off_t set_bufferlen(mus_any *ptr, off_t len) {clm_file_buffer_size = len;
 
 static char *sample_to_file_file_name(mus_any *ptr) {return(((rdout *)ptr)->file_name);}
 
+static int sample_to_file_safety(mus_any *ptr) {return(((rdout *)ptr)->safety);}
+static int sample_to_file_set_safety(mus_any *ptr, int val) {((rdout *)ptr)->safety = val; return(val);}
+
 static Float sample_file(mus_any *ptr, off_t samp, int chan, Float val);
 
 static int sample_to_file_end(mus_any *ptr);
@@ -7513,7 +7541,9 @@ static mus_any_class SAMPLE_TO_FILE_CLASS = {
   0, 0, 0,
   0, 0, 0, 0, 0,
   &no_reset,
-  0
+  0,
+  &sample_to_file_safety, 
+  &sample_to_file_set_safety
 };
 
 static int *data_format_zero = NULL;
@@ -7697,14 +7727,30 @@ static void writer_lock_error_handler(int type, char *msg)
 static Float sample_file(mus_any *ptr, off_t samp, int chan, Float val)
 {
   rdout *gen = (rdout *)ptr;
+  
+  if (gen->safety == 1)
+    {
+      gen->obufs[chan][samp] += MUS_FLOAT_TO_SAMPLE(val);
+      if (samp > gen->out_end) 
+	gen->out_end = samp;
+      return(val);
+    }
+
   if (chan >= gen->chans)
     return(val);
 
   /* this can't be completely safe -- what if flush below is interrupted etc */
   /* so set the lock here but not the error handler -- same in read case */
 
-  /* we set/unset this lock on every sample!  perhaps if this slows things down, we could 
-   *   write to a locsig-local output buffer, then flush here?
+  /* we set/unset this lock on every sample!  90% of threaded time is spent here --
+   *   if we assume *clm-file-buffer-size* is large enough to never flush, with-sound
+   *   runs 6 times as fast.  Perhaps some kind of check against that buffer?
+   *
+   * if I try to use a condition variable, it requires a lock, so what do I gain?
+   * if I write to a locsig local buffer, first there's the final flush that needs help,
+   *    second there's the close of the output pointer with waiting locsigs
+   * 
+   * so use mus-safety to signal this
    */
 
   MUS_LOCK(gen->writer_lock);
@@ -7714,8 +7760,6 @@ static Float sample_file(mus_any *ptr, off_t samp, int chan, Float val)
       (samp >= gen->data_start))
     {
       gen->obufs[chan][samp - gen->data_start] += MUS_FLOAT_TO_SAMPLE(val);
-      if (samp > gen->out_end) 
-	gen->out_end = samp;
     }
   else
     {
@@ -7733,31 +7777,20 @@ static Float sample_file(mus_any *ptr, off_t samp, int chan, Float val)
 	memset((void *)(gen->obufs[j]), 0, clm_file_buffer_size * sizeof(mus_sample_t));
       gen->data_start = samp;
       gen->data_end = samp + clm_file_buffer_size - 1;
-      gen->out_end = samp;
-      
       gen->obufs[chan][samp - gen->data_start] += MUS_FLOAT_TO_SAMPLE(val);
-      if (samp > gen->out_end) 
-	gen->out_end = samp;
 
 #if HAVE_PTHREADS
       mus_error_set_handler(old_error_handler);
 #endif
     }
 
+  if (samp > gen->out_end) 
+    gen->out_end = samp;
+
   MUS_UNLOCK(gen->writer_lock);
 
   return(val);
 }
-
-
-#if 0
-Float mus_sample_to_file_current_value(mus_any *ptr, off_t samp, int chan)
-{
-  /* this is only safe just after calling sample_file (mus_write_sample) */
-  rdout *gen = (rdout *)ptr;
-  return(MUS_SAMPLE_TO_FLOAT(gen->obufs[chan][samp - gen->data_start]));
-}
-#endif
 
 
 static int sample_to_file_end(mus_any *ptr)
@@ -7870,8 +7903,6 @@ mus_any *mus_make_sample_to_file_with_comment(const char *filename, int out_chan
 }
 
 
-/* the unchecked version of this would be sample_file(ptr, samp, chan, val) */
-
 Float mus_sample_to_file(mus_any *ptr, off_t samp, int chan, Float val)
 {
   return(mus_write_sample(ptr, samp, chan, val)); /* write_sample -> write_sample in class struct -> file_sample for example */
@@ -7890,6 +7921,7 @@ int mus_close_file(mus_any *ptr)
 
 Float mus_out_any(off_t samp, Float val, int chan, mus_any *IO)
 {
+  /* TODO: output is safe here */
   if (IO) 
     return(mus_sample_to_file(IO, samp, chan, val));
   return(val);
@@ -7939,7 +7971,9 @@ static mus_any_class FRAME_TO_FILE_CLASS = {
   0, 0, 0,
   0, 0, 0, 0, 0,
   &no_reset,
-  0
+  0,
+  &sample_to_file_safety, 
+  &sample_to_file_set_safety
 };
 
 
@@ -7963,6 +7997,7 @@ mus_any *mus_frame_to_file(mus_any *ptr, off_t samp, mus_any *udata)
 {
   rdout *gen = (rdout *)ptr;
   mus_frame *data = (mus_frame *)udata;
+
   if (data) 
     {
       if (data->chans == 1)
@@ -8285,7 +8320,8 @@ static mus_any_class LOCSIG_CLASS = {
   0, 0, 
   &locsig_xcoeffs, 0, 0,
   &locsig_reset,
-  &locsig_set_closure
+  &locsig_set_closure, 
+  0, 0
 };
 
 
@@ -8398,6 +8434,8 @@ Float mus_locsig(mus_any *ptr, off_t loc, Float val)
 {
   locs *gen = (locs *)ptr;
   int i;
+  /* TODO: safety = 1 here means skip the frames and go unchecked to the output buffer */
+
   for (i = 0; i < gen->chans; i++)
     (gen->outf)->vals[i] = val * gen->outn[i];
   for (i = 0; i < gen->rev_chans; i++)
@@ -8636,7 +8674,8 @@ static mus_any_class MOVE_SOUND_CLASS = {
   0, 0, 
   0, 0, 0,
   &move_sound_reset,
-  &move_sound_set_closure
+  &move_sound_set_closure,
+  0, 0
 };
 
 
@@ -8885,7 +8924,8 @@ static mus_any_class SRC_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &src_reset,
-  &src_set_closure
+  &src_set_closure, 
+  0, 0
 };
 
 
@@ -9256,7 +9296,8 @@ static mus_any_class GRANULATE_CLASS = {
   &grn_location, &grn_set_location, /* local randx */
   0, 0, 0, 0, 0, 0,
   &grn_reset,
-  &grn_set_closure
+  &grn_set_closure, 
+  0, 0
 };
 
 
@@ -10557,7 +10598,8 @@ static mus_any_class CONVOLVE_CLASS = {
   0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0,
   &convolve_reset,
-  &conv_set_closure
+  &conv_set_closure, 
+  0, 0
 };
 
 
@@ -10870,7 +10912,8 @@ static mus_any_class PHASE_VOCODER_CLASS = {
   &pv_outctr, &pv_set_outctr,
   0, 0, 0, 0, 0, 0,
   &pv_reset,
-  &pv_set_closure
+  &pv_set_closure, 
+  0, 0
 };
 
 
@@ -11206,7 +11249,7 @@ static mus_any_class SSB_AM_CLASS = {
   0, 0, 
   &ssb_am_xcoeffs, 0, 0,
   &ssb_reset,
-  0
+  0, 0, 0
 };
 
 
