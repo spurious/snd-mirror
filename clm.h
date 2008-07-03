@@ -360,12 +360,12 @@ complex double mus_edot_product(complex double freq, complex double *data, off_t
 void mus_clear_array(Float *arr, off_t size);
 bool mus_arrays_are_equal(Float *arr1, Float *arr2, Float fudge, off_t len);
 Float mus_polynomial(Float *coeffs, Float x, int ncoeffs);
-void mus_multiply_arrays(Float *data, Float *window, int len);
-void mus_rectangular_to_polar(Float *rl, Float *im, int size);
-void mus_polar_to_rectangular(Float *rl, Float *im, int size);
-Float mus_array_interp(Float *wave, Float phase, int size);
+void mus_multiply_arrays(Float *data, Float *window, off_t len);
+void mus_rectangular_to_polar(Float *rl, Float *im, off_t size);
+void mus_polar_to_rectangular(Float *rl, Float *im, off_t size);
+Float mus_array_interp(Float *wave, Float phase, off_t size);
 double mus_bessi0(Float x);
-Float mus_interpolate(mus_interp_t type, Float x, Float *table, int table_size, Float y);
+Float mus_interpolate(mus_interp_t type, Float x, Float *table, off_t table_size, Float y);
 
 
 /* -------- generic functions -------- */
@@ -488,10 +488,10 @@ Float mus_moving_average(mus_any *ptr, Float input);
 
 Float mus_table_lookup(mus_any *gen, Float fm);
 Float mus_table_lookup_unmodulated(mus_any *gen);
-mus_any *mus_make_table_lookup(Float freq, Float phase, Float *wave, int wave_size, mus_interp_t type);
+mus_any *mus_make_table_lookup(Float freq, Float phase, Float *wave, off_t wave_size, mus_interp_t type);
 bool mus_table_lookup_p(mus_any *ptr);
-Float *mus_partials_to_wave(Float *partial_data, int partials, Float *table, int table_size, bool normalize);
-Float *mus_phase_partials_to_wave(Float *partial_data, int partials, Float *table, int table_size, bool normalize);
+Float *mus_partials_to_wave(Float *partial_data, int partials, Float *table, off_t table_size, bool normalize);
+Float *mus_phase_partials_to_wave(Float *partial_data, int partials, Float *table, off_t table_size, bool normalize);
 
 Float mus_sawtooth_wave(mus_any *gen, Float fm);
 mus_any *mus_make_sawtooth_wave(Float freq, Float amp, Float phase);
@@ -587,7 +587,7 @@ mus_any *mus_make_filtered_comb(Float scaler, int size, Float *line, int line_si
 
 Float mus_wave_train(mus_any *gen, Float fm);
 Float mus_wave_train_unmodulated(mus_any *gen);
-mus_any *mus_make_wave_train(Float freq, Float phase, Float *wave, int wsize, mus_interp_t type);
+mus_any *mus_make_wave_train(Float freq, Float phase, Float *wave, off_t wsize, mus_interp_t type);
 bool mus_wave_train_p(mus_any *gen);
 
 Float *mus_partials_to_polynomial(int npartials, Float *partials, mus_polynomial_t kind);

@@ -930,17 +930,17 @@ Float mus_polynomial(Float *coeffs, Float x, int ncoeffs)
 }
 
 
-void mus_multiply_arrays(Float *data, Float *window, int len)
+void mus_multiply_arrays(Float *data, Float *window, off_t len)
 {
-  int i;
+  off_t i;
   for (i = 0; i < len; i++) 
     data[i] *= window[i];
 }
 
 
-void mus_rectangular_to_polar(Float *rl, Float *im, int size) 
+void mus_rectangular_to_polar(Float *rl, Float *im, off_t size) 
 {
-  int i; 
+  off_t i; 
   for (i = 0; i < size; i++)
     {
       Float temp; /* apparently floating underflows in sqrt are bringing us to a halt */
@@ -953,9 +953,9 @@ void mus_rectangular_to_polar(Float *rl, Float *im, int size)
 }
 
 
-void mus_polar_to_rectangular(Float *rl, Float *im, int size) 
+void mus_polar_to_rectangular(Float *rl, Float *im, off_t size) 
 {
-  int i; 
+  off_t i; 
   for (i = 0; i < size; i++)
     {
       Float temp;
@@ -966,10 +966,10 @@ void mus_polar_to_rectangular(Float *rl, Float *im, int size)
 }
 
 
-static Float *array_normalize(Float *table, int table_size)
+static Float *array_normalize(Float *table, off_t table_size)
 {
   Float amp = 0.0;
-  int i;
+  off_t i;
 
   for (i = 0; i < table_size; i++) 
     if (amp < (fabs(table[i]))) 
@@ -986,10 +986,10 @@ static Float *array_normalize(Float *table, int table_size)
 
 /* ---------------- interpolation ---------------- */
 
-Float mus_array_interp(Float *wave, Float phase, int size)
+Float mus_array_interp(Float *wave, Float phase, off_t size)
 {
   /* changed 26-Sep-00 to be closer to mus.lisp */
-  int int_part;
+  off_t int_part;
   Float frac_part;
   if ((phase < 0.0) || (phase > size))
     {
@@ -997,14 +997,14 @@ Float mus_array_interp(Float *wave, Float phase, int size)
       phase = fmod((double)phase, (double)size);
       if (phase < 0.0) phase += size;
     }
-  int_part = (int)floor(phase);
+  int_part = (off_t)floor(phase);
   frac_part = phase - int_part;
   if (int_part == size) int_part = 0;
   if (frac_part == 0.0) 
     return(wave[int_part]);
   else
     {
-      int inx;
+      off_t inx;
       inx = int_part + 1;
       if (inx >= size) inx = 0;
       return(wave[int_part] + (frac_part * (wave[inx] - wave[int_part])));
@@ -1012,17 +1012,17 @@ Float mus_array_interp(Float *wave, Float phase, int size)
 }
 
 
-static Float mus_array_all_pass_interp(Float *wave, Float phase, int size, Float yn1)
+static Float mus_array_all_pass_interp(Float *wave, Float phase, off_t size, Float yn1)
 {
   /* this is intended for delay lines where you have a stream of values; in table-lookup it can be a mess */
-  int int_part, inx;
+  off_t int_part, inx;
   Float frac_part;
   if ((phase < 0.0) || (phase > size))
     {
       phase = fmod((double)phase, (double)size);
       if (phase < 0.0) phase += size;
     }
-  int_part = (int)floor(phase);
+  int_part = (off_t)floor(phase);
   frac_part = phase - int_part;
   if (int_part == size) int_part = 0;
   inx = int_part + 1;
@@ -1041,18 +1041,18 @@ static Float mus_array_all_pass_interp(Float *wave, Float phase, int size, Float
 }
 
 
-static Float mus_array_lagrange_interp(Float *wave, Float x, int size)
+static Float mus_array_lagrange_interp(Float *wave, Float x, off_t size)
 {
   /* Abramovitz and Stegun 25.2.11 -- everyone badmouths this poor formula */
   /* x assumed to be in the middle, between second and third vals */
-  int x0, xp1, xm1;
+  off_t x0, xp1, xm1;
   Float p, pp;
   if ((x < 0.0) || (x > size))
     {
       x = fmod((double)x, (double)size);
       if (x < 0.0) x += size;
     }
-  x0 = (int)floor(x);
+  x0 = (off_t)floor(x);
   p = x - x0;
   if (x0 >= size) x0 -= size;
   if (p == 0.0) return(wave[x0]);
@@ -1067,17 +1067,17 @@ static Float mus_array_lagrange_interp(Float *wave, Float x, int size)
 }
 
 
-static Float mus_array_hermite_interp(Float *wave, Float x, int size)
+static Float mus_array_hermite_interp(Float *wave, Float x, off_t size)
 {
   /* from James McCartney */
-  int x0, x1, x2, x3;
+  off_t x0, x1, x2, x3;
   Float p, c0, c1, c2, c3, y0, y1, y2, y3;
   if ((x < 0.0) || (x > size))
     {
       x = fmod((double)x, (double)size);
       if (x < 0.0) x += size;
     }
-  x1 = (int)floor(x); 
+  x1 = (off_t)floor(x); 
   p = x - x1;
   if (x1 == size) x1 = 0;
   if (p == 0.0) return(wave[x1]);
@@ -1099,16 +1099,16 @@ static Float mus_array_hermite_interp(Float *wave, Float x, int size)
 }
 
 
-static Float mus_array_bezier_interp(Float *wave, Float x, int size)
+static Float mus_array_bezier_interp(Float *wave, Float x, off_t size)
 {
-  int x0, x1, x2, x3;
+  off_t x0, x1, x2, x3;
   Float p, y0, y1, y2, y3, ay, by, cy;
   if ((x < 0.0) || (x > size))
     {
       x = fmod((double)x, (double)size);
       if (x < 0.0) x += size;
     }
-  x1 = (int)floor(x); 
+  x1 = (off_t)floor(x); 
   p = ((x - x1) + 1.0) / 3.0;
   if (x1 == size) x1 = 0;
   x2 = x1 + 1;
@@ -1128,14 +1128,14 @@ static Float mus_array_bezier_interp(Float *wave, Float x, int size)
 }
 
 
-Float mus_interpolate(mus_interp_t type, Float x, Float *table, int table_size, Float y)
+Float mus_interpolate(mus_interp_t type, Float x, Float *table, off_t table_size, Float y)
 {
   switch (type)
     {
     case MUS_INTERP_NONE:
       {
-	int x0;
-	x0 = ((int)x) % table_size;
+	off_t x0;
+	x0 = ((off_t)x) % table_size;
 	if (x0 < 0) x0 += table_size;
 	return(table[x0]);
       }
@@ -2145,14 +2145,14 @@ typedef struct {
   mus_any_class *core;
   double freq, internal_mag, phase;
   Float *table;
-  int table_size;
+  off_t table_size;
   mus_interp_t type;
   bool table_allocated;
   Float yn1;
 } tbl;
 
 
-Float *mus_partials_to_wave(Float *partial_data, int partials, Float *table, int table_size, bool normalize)
+Float *mus_partials_to_wave(Float *partial_data, int partials, Float *table, off_t table_size, bool normalize)
 {
   int partial, k;
   mus_clear_array(table, table_size);
@@ -2162,7 +2162,7 @@ Float *mus_partials_to_wave(Float *partial_data, int partials, Float *table, int
       amp = partial_data[k];
       if (amp != 0.0)
 	{
-	  int i;
+	  off_t i;
 	  double freq, angle;
 	  freq = (partial_data[partial * 2] * TWO_PI) / (double)table_size;
 	  for (i = 0, angle = 0.0; i < table_size; i++, angle += freq) 
@@ -2175,7 +2175,7 @@ Float *mus_partials_to_wave(Float *partial_data, int partials, Float *table, int
 }
 
 
-Float *mus_phase_partials_to_wave(Float *partial_data, int partials, Float *table, int table_size, bool normalize)
+Float *mus_phase_partials_to_wave(Float *partial_data, int partials, Float *table, off_t table_size, bool normalize)
 {
   int partial, k, n;
   mus_clear_array(table, table_size);
@@ -2185,7 +2185,7 @@ Float *mus_phase_partials_to_wave(Float *partial_data, int partials, Float *tabl
       amp = partial_data[k];
       if (amp != 0.0)
 	{
-	  int i;
+	  off_t i;
 	  double freq, angle;
 	  freq = (partial_data[partial * 3] * TWO_PI) / (double)table_size;
 	  for (i = 0, angle = partial_data[n]; i < table_size; i++, angle += freq) 
@@ -2333,7 +2333,7 @@ static mus_any_class TABLE_LOOKUP_CLASS = {
 };
 
 
-mus_any *mus_make_table_lookup(Float freq, Float phase, Float *table, int table_size, mus_interp_t type)
+mus_any *mus_make_table_lookup(Float freq, Float phase, Float *table, off_t table_size, mus_interp_t type)
 {
   tbl *gen;
   gen = (tbl *)clm_calloc(1, sizeof(tbl), S_make_table_lookup);
@@ -2846,12 +2846,12 @@ typedef struct {
   mus_any_class *core;
   double freq, phase;
   Float *wave;        /* passed in from caller */
-  int wave_size;
+  off_t wave_size;
   Float *out_data;
-  int out_data_size;
+  off_t out_data_size;
   mus_interp_t interp_type; /* "type" field exists in core -- avoid confusion */
   Float next_wave_time;
-  int out_pos;
+  off_t out_pos;
   bool first_time;
   Float yn1;
 } wt;
@@ -2864,7 +2864,7 @@ static Float wt_phase(mus_any *ptr) {return(fmod(((TWO_PI * ((wt *)ptr)->phase) 
 static Float wt_set_phase(mus_any *ptr, Float val) {((wt *)ptr)->phase = (fmod(val, TWO_PI) * ((wt *)ptr)->wave_size) / TWO_PI; return(val);}
 
 static off_t wt_length(mus_any *ptr) {return(((wt *)ptr)->wave_size);}
-static off_t wt_set_length(mus_any *ptr, off_t val) {if (val > 0) ((wt *)ptr)->wave_size = (int)val; return((off_t)(((wt *)ptr)->wave_size));}
+static off_t wt_set_length(mus_any *ptr, off_t val) {if (val > 0) ((wt *)ptr)->wave_size = val; return(((wt *)ptr)->wave_size);}
 
 static int wt_interp_type(mus_any *ptr) {return((int)(((wt *)ptr)->interp_type));}
 
@@ -2911,10 +2911,10 @@ static Float mus_wave_train_any(mus_any *ptr, Float fm)
   gen->out_pos++;
   if (gen->out_pos >= gen->next_wave_time)
     {
-      int i;
+      off_t i;
       if (gen->out_pos < gen->out_data_size)
 	{
-	  int good_samps;
+	  off_t good_samps;
 	  good_samps = gen->out_data_size - gen->out_pos;
 	  memmove((void *)(gen->out_data), (void *)(gen->out_data + gen->out_pos), good_samps * sizeof(Float));
 	  memset((void *)(gen->out_data + good_samps), 0, gen->out_pos * sizeof(Float));
@@ -2928,7 +2928,7 @@ static Float mus_wave_train_any(mus_any *ptr, Float fm)
       if (gen->first_time)
 	{
 	  gen->first_time = false;
-	  gen->out_pos = (int)(gen->phase); /* initial phase, but as an integer in terms of wave table size (gad...) */
+	  gen->out_pos = (off_t)(gen->phase); /* initial phase, but as an integer in terms of wave table size (gad...) */
 	  if (gen->out_pos >= gen->wave_size)
 	    gen->out_pos = gen->out_pos % gen->wave_size;
 	  result = gen->out_data[gen->out_pos++];
@@ -3008,7 +3008,7 @@ static mus_any_class WAVE_TRAIN_CLASS = {
 };
 
 
-mus_any *mus_make_wave_train(Float freq, Float phase, Float *wave, int wave_size, mus_interp_t type)
+mus_any *mus_make_wave_train(Float freq, Float phase, Float *wave, off_t wave_size, mus_interp_t type)
 {
   wt *gen;
   gen = (wt *)clm_calloc(1, sizeof(wt), S_make_wave_train);
@@ -6988,6 +6988,8 @@ static int free_file_to_sample(mus_any *p)
 #endif
       /* MUS_UNLOCK(ptr->reader_lock); */
       pthread_mutex_destroy(ptr->reader_lock);
+      free(ptr->reader_lock);
+      ptr->reader_lock = NULL;
 #endif
       clm_free(ptr);
     }
@@ -7494,6 +7496,9 @@ static int free_sample_to_file(mus_any *p)
       mus_lock_unset_name(ptr->writer_lock);
 #endif
       pthread_mutex_destroy(ptr->writer_lock);
+      /* is valgrind confused, or is this not the equivalent of free? */
+      free(ptr->writer_lock);
+      ptr->writer_lock = NULL;
 #endif
       clm_free(ptr);
     }
@@ -7640,7 +7645,9 @@ static void flush_buffers(rdout *gen)
        */
       if (frames_to_add >= clm_file_buffer_size) 
 	{
-	  mus_print("clm-file-buffer-size changed? " OFF_TD " <= " OFF_TD, clm_file_buffer_size, frames_to_add);
+	  mus_print("clm-file-buffer-size changed? " OFF_TD " <= " OFF_TD " (start: " OFF_TD ", end: " OFF_TD ", " OFF_TD ")",
+		    clm_file_buffer_size, frames_to_add, gen->data_start, gen->data_end, gen->out_end);
+
 	  frames_to_add = clm_file_buffer_size - 1;
 	  /* this means we drop samples -- the other choice (short of throwing an error) would
 	   *   be to read/allocate the bigger size.
@@ -7778,6 +7785,7 @@ static Float sample_file(mus_any *ptr, off_t samp, int chan, Float val)
       gen->data_start = samp;
       gen->data_end = samp + clm_file_buffer_size - 1;
       gen->obufs[chan][samp - gen->data_start] += MUS_FLOAT_TO_SAMPLE(val);
+      gen->out_end = samp; /* this resets the current notion of where in the buffer the new data ends */
 
 #if HAVE_PTHREADS
       mus_error_set_handler(old_error_handler);
@@ -8049,6 +8057,7 @@ typedef struct {
   mus_interp_t type;
   Float reverb;
   void *closure;
+  int safety;
 } locs;
 
 
@@ -8151,6 +8160,9 @@ static int free_locsig(mus_any *p)
   return(0);
 }
 
+
+static int locsig_safety(mus_any *ptr) {return(((locs *)ptr)->safety);}
+static int locsig_set_safety(mus_any *ptr, int val) {((locs *)ptr)->safety = val; return(val);}
 
 static off_t locsig_length(mus_any *ptr) {return(((locs *)ptr)->chans);}
 
@@ -8321,7 +8333,7 @@ static mus_any_class LOCSIG_CLASS = {
   &locsig_xcoeffs, 0, 0,
   &locsig_reset,
   &locsig_set_closure, 
-  0, 0
+  &locsig_safety, &locsig_set_safety
 };
 
 
@@ -8426,6 +8438,10 @@ mus_any *mus_make_locsig(Float degree, Float distance, Float reverb,
       mus_locsig_fill(gen->revn, gen->rev_chans, degree, (reverb * sqrt(dist)), type);
     }
 
+  if ((gen->outn_writer) &&
+      (((rdout *)output)->safety == 1))
+    gen->safety = 1;
+
   return((mus_any *)gen);
 }
 
@@ -8434,16 +8450,43 @@ Float mus_locsig(mus_any *ptr, off_t loc, Float val)
 {
   locs *gen = (locs *)ptr;
   int i;
-  /* TODO: safety = 1 here means skip the frames and go unchecked to the output buffer */
 
-  for (i = 0; i < gen->chans; i++)
-    (gen->outf)->vals[i] = val * gen->outn[i];
-  for (i = 0; i < gen->rev_chans; i++)
-    (gen->revf)->vals[i] = val * gen->revn[i];
-  if (gen->revn_writer)
-    mus_frame_to_file(gen->revn_writer, loc, (mus_any *)(gen->revf));
-  if (gen->outn_writer)
-    mus_frame_to_file(gen->outn_writer, loc, (mus_any *)(gen->outf));
+  if (gen->safety == 1)
+    {
+      /* assume (since it's locsig) that we're eventually headed for sample->file, and
+       *   (since safety == 1) that everything is ready to go, and the output frames are
+       *   of no interest.
+       */
+      
+      if (gen->outn_writer)
+	{
+	  rdout *writer = (rdout *)(gen->outn_writer);
+	  for (i = 0; i < gen->chans; i++)
+	    writer->obufs[i][loc] += MUS_FLOAT_TO_SAMPLE(val * gen->outn[i]);   
+	  if (loc > writer->out_end) 
+	    writer->out_end = loc;
+	}
+
+      if (gen->revn_writer)
+	{
+	  rdout *writer = (rdout *)(gen->revn_writer);
+	  for (i = 0; i < gen->rev_chans; i++)
+	    writer->obufs[i][loc] += MUS_FLOAT_TO_SAMPLE(val * gen->revn[i]);   
+	  if (loc > writer->out_end) 
+	    writer->out_end = loc;
+	}
+    }
+  else
+    {
+      for (i = 0; i < gen->chans; i++)
+	(gen->outf)->vals[i] = val * gen->outn[i];
+      for (i = 0; i < gen->rev_chans; i++)
+	(gen->revf)->vals[i] = val * gen->revn[i];
+      if (gen->revn_writer)
+	mus_frame_to_file(gen->revn_writer, loc, (mus_any *)(gen->revf));
+      if (gen->outn_writer)
+	mus_frame_to_file(gen->outn_writer, loc, (mus_any *)(gen->outf));
+    }
   return(val);
 }
 
