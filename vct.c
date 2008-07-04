@@ -397,7 +397,7 @@ static XEN g_vct_length(XEN obj)
   vct *v;
   XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ONLY_ARG, S_vct_length, "a vct");
   v = XEN_TO_VCT(obj);
-  return(C_TO_XEN_INT(v->length));
+  return(C_TO_XEN_OFF_T(v->length));
 }
 
 
@@ -797,7 +797,7 @@ static XEN g_vct_reverse(XEN vobj, XEN size)
 
   v = XEN_TO_VCT(vobj);
   if (XEN_OFF_T_P(size))
-    len = XEN_TO_C_INT(size);
+    len = XEN_TO_C_OFF_T(size);
   if ((len <= 0) || (len > v->length))
     len = v->length;
   if (len == 1) return(vobj);

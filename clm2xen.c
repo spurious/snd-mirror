@@ -359,22 +359,23 @@ static void init_keywords(void)
 
 /* ---------------- *clm-table-size* ---------------- */
 
-static int clm_table_size = MUS_CLM_DEFAULT_TABLE_SIZE;
+static off_t clm_table_size = MUS_CLM_DEFAULT_TABLE_SIZE;
 
-int clm_default_table_size_c(void) {return(clm_table_size);}
+off_t clm_default_table_size_c(void) {return(clm_table_size);}
 
-static XEN g_clm_table_size(void) {return(C_TO_XEN_INT(clm_table_size));}
+static XEN g_clm_table_size(void) {return(C_TO_XEN_OFF_T(clm_table_size));}
 
 static XEN g_set_clm_table_size(XEN val) 
 {
-  int size;
+  off_t size;
   #define H_clm_table_size "(" S_clm_table_size "): the default table size for most generators (512)"
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_clm_table_size, "an integer");
-  size = XEN_TO_C_INT(val);
-  if ((size <= 0) || (size > mus_max_table_size()))
+  XEN_ASSERT_TYPE(XEN_OFF_T_P(val), val, XEN_ONLY_ARG, S_setB S_clm_table_size, "an integer");
+  size = XEN_TO_C_OFF_T(val);
+  if ((size <= 0) || 
+      (size > mus_max_table_size()))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_clm_table_size, XEN_ARG_1, val, "invalid size: ~A (see mus-max-table-size)");
   clm_table_size = size;
-  return(C_TO_XEN_INT(clm_table_size));
+  return(C_TO_XEN_OFF_T(clm_table_size));
 }
 
 
@@ -582,7 +583,7 @@ static XEN g_dot_product(XEN val1, XEN val2, XEN size)
 
   v1 = XEN_TO_VCT(val1);
   v2 = XEN_TO_VCT(val2);
-  if (XEN_INTEGER_P(size))
+  if (XEN_OFF_T_P(size))
     {
       len = XEN_TO_C_OFF_T(size);
       if (len == 0) return(C_TO_XEN_DOUBLE(0.0));
@@ -592,6 +593,7 @@ static XEN g_dot_product(XEN val1, XEN val2, XEN size)
     }
   else len = v1->length; 
   if (len > v2->length) len = v2->length;
+
   return(xen_return_first(C_TO_XEN_DOUBLE(mus_dot_product(v1->data, v2->data, len)), 
 			  val1, 
 			  val2));
@@ -670,9 +672,11 @@ static XEN g_sine_bank(XEN amps, XEN phases, XEN size)
   #define H_sine_bank "(" S_sine_bank " amps phases :optional size): sum of amps[i] * sin(phases[i])"
   vct *v1, *v2;
   int len;
+
   XEN_ASSERT_TYPE(MUS_VCT_P(amps), amps, XEN_ARG_1, S_sine_bank, "a vct");
   XEN_ASSERT_TYPE(MUS_VCT_P(phases), phases, XEN_ARG_2, S_sine_bank, "a vct");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(size), size, XEN_ARG_3, S_sine_bank, "an integer");
+
   v1 = XEN_TO_VCT(amps);
   v2 = XEN_TO_VCT(phases);
   if (XEN_INTEGER_P(size))
@@ -685,6 +689,7 @@ static XEN g_sine_bank(XEN amps, XEN phases, XEN size)
     }
   else len = v1->length; 
   if (len > v2->length) len = v2->length;
+
   return(xen_return_first(C_TO_XEN_DOUBLE(mus_sine_bank(v1->data, v2->data, len)),
 			  amps, 
 			  phases));
@@ -696,15 +701,17 @@ typedef enum {G_MULTIPLY_ARRAYS, G_RECTANGULAR_POLAR, G_POLAR_RECTANGULAR} xclm_
 static XEN g_fft_window_1(xclm_window_t choice, XEN val1, XEN val2, XEN ulen, const char *caller) 
 {
   vct *v1, *v2;
-  int len;
+  off_t len;
+
   XEN_ASSERT_TYPE(MUS_VCT_P(val1), val1, XEN_ARG_1, caller, "a vct");
   XEN_ASSERT_TYPE(MUS_VCT_P(val2), val2, XEN_ARG_2, caller, "a vct");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(ulen), ulen, XEN_ARG_3, caller, "an integer");
+  XEN_ASSERT_TYPE(XEN_OFF_T_IF_BOUND_P(ulen), ulen, XEN_ARG_3, caller, "an integer");
+
   v1 = XEN_TO_VCT(val1);
   v2 = XEN_TO_VCT(val2);
-  if (XEN_INTEGER_P(ulen))
+  if (XEN_OFF_T_P(ulen))
     {
-      len = XEN_TO_C_INT(ulen);
+      len = XEN_TO_C_OFF_T(ulen);
       if (len == 0) return(XEN_FALSE);
       if (len < 0)
 	XEN_OUT_OF_RANGE_ERROR(caller, 3, ulen, "size ~A < 0?");
@@ -761,7 +768,10 @@ the real and imaginary parts of the data; len should be a power of 2, dir = 1 fo
 
   v1 = XEN_TO_VCT(url);
   v2 = XEN_TO_VCT(uim);
-  if (XEN_INTEGER_P(usign)) sign = XEN_TO_C_INT(usign); else sign = 1;
+
+  if (XEN_INTEGER_P(usign)) 
+    sign = XEN_TO_C_INT(usign); 
+  else sign = 1;
 
   if (XEN_OFF_T_P(len)) 
     {
@@ -845,12 +855,15 @@ and type determines how the spectral data is scaled:\n\
 
   int n, type;
   vct *v1, *v2, *v3 = NULL;
+
   XEN_ASSERT_TYPE((MUS_VCT_P(url)), url, XEN_ARG_1, S_spectrum, "a vct");
   XEN_ASSERT_TYPE((MUS_VCT_P(uim)), uim, XEN_ARG_2, S_spectrum, "a vct");
   if (XEN_NOT_FALSE_P(uwin)) XEN_ASSERT_TYPE((MUS_VCT_P(uwin)), uwin, XEN_ARG_3, S_spectrum, "a vct or " PROC_FALSE);
+
   v1 = XEN_TO_VCT(url);
   v2 = XEN_TO_VCT(uim);
   if (XEN_NOT_FALSE_P(uwin)) v3 = XEN_TO_VCT(uwin);
+
   n = v1->length;
   if (n > v2->length)
     n = v2->length;
@@ -864,9 +877,13 @@ and type determines how the spectral data is scaled:\n\
       np = (int)nf;
       n = (int)pow(2.0, np);
     }
-  if (XEN_INTEGER_P(utype)) type = XEN_TO_C_INT(utype); else type = 1; /* linear normalized */
+
+  if (XEN_INTEGER_P(utype)) 
+    type = XEN_TO_C_INT(utype);
+  else type = 1; /* linear normalized */
   if ((type < 0) || (type > 2))
     XEN_OUT_OF_RANGE_ERROR(S_spectrum, 4, utype, "type must be 0..2");
+  
   mus_spectrum(v1->data, v2->data, (v3) ? (v3->data) : NULL, n, (mus_spectrum_t)type);
   return(xen_return_first(url, uim, uwin));
 }
@@ -911,10 +928,13 @@ of vcts v1 with v2, using fft of size len (a power of 2), result in v1"
 
   int n;
   vct *v1, *v2;
+
   XEN_ASSERT_TYPE((MUS_VCT_P(url1)), url1, XEN_ARG_1, S_convolution, "a vct");
   XEN_ASSERT_TYPE((MUS_VCT_P(url2)), url2, XEN_ARG_2, S_convolution, "a vct");
+
   v1 = XEN_TO_VCT(url1);
   v2 = XEN_TO_VCT(url2);
+
   if (XEN_INTEGER_P(un)) 
     {
       n = XEN_TO_C_INT(un); 
@@ -936,6 +956,7 @@ of vcts v1 with v2, using fft of size len (a power of 2), result in v1"
       np = (int)nf;
       n = (int)pow(2.0, np);
     }
+
   mus_convolution(v1->data, v2->data, n);
   return(xen_return_first(url1, url2));
 }
@@ -969,20 +990,24 @@ static XEN g_array_interp(XEN obj, XEN phase, XEN size) /* opt size */
   #define H_array_interp "(" S_array_interp " v phase :optional size): v[phase] \
 taking into account wrap-around (size is size of data), with linear interpolation if phase is not an integer."
 
-  int len;
+  off_t len;
   vct *v;
+
   XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ARG_1, S_array_interp, "a vct");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(phase), phase, XEN_ARG_2, S_array_interp, "a number");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(size), size, XEN_ARG_3, S_array_interp, "an integer");
+  XEN_ASSERT_TYPE(XEN_OFF_T_IF_BOUND_P(size), size, XEN_ARG_3, S_array_interp, "an integer");
+
   v = XEN_TO_VCT(obj);
   if (XEN_BOUND_P(size)) 
     {
-      len = XEN_TO_C_INT(size); 
+      len = XEN_TO_C_OFF_T(size); 
       if (len <= 0)
 	XEN_OUT_OF_RANGE_ERROR(S_array_interp, 3, size, "size ~A <= 0?");
-      if (len > v->length) len = v->length;
+      if (len > v->length) 
+	len = v->length;
     }
   else len = v->length;
+
   return(xen_return_first(C_TO_XEN_DOUBLE(mus_array_interp(v->data, XEN_TO_C_DOUBLE(phase), len)), obj));
 }
 
@@ -992,29 +1017,36 @@ static XEN g_mus_interpolate(XEN type, XEN x, XEN obj, XEN size, XEN yn1)
   #define H_mus_interpolate "(" S_mus_interpolate " type x v :optional size yn1): interpolate in \
 data ('v' is a vct) using interpolation 'type', such as " S_mus_interp_linear "."
 
-  int len;
+  off_t len;
   mus_interp_t itype;
   vct *v;
   Float y = 0.0;
+
   XEN_ASSERT_TYPE(XEN_INTEGER_P(type), type, XEN_ARG_1, S_mus_interpolate, "an integer (interp type such as " S_mus_interp_all_pass ")");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x), x, XEN_ARG_2, S_mus_interpolate, "a number");
   XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ARG_3, S_mus_interpolate, "a vct");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(size), size, XEN_ARG_4, S_mus_interpolate, "an integer");
+  XEN_ASSERT_TYPE(XEN_OFF_T_IF_BOUND_P(size), size, XEN_ARG_4, S_mus_interpolate, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(yn1), yn1, XEN_ARG_5, S_mus_interpolate, "a number");
+
   itype = (mus_interp_t)XEN_TO_C_INT(type);
   if (!(MUS_INTERP_TYPE_OK(itype)))
     XEN_OUT_OF_RANGE_ERROR(S_mus_interpolate, 1, type, "unknown interp type ~A");
+
   v = XEN_TO_VCT(obj);
+
   if (XEN_BOUND_P(size)) 
     {
-      len = XEN_TO_C_INT(size); 
+      len = XEN_TO_C_OFF_T(size); 
       if (len <= 0)
 	XEN_OUT_OF_RANGE_ERROR(S_mus_interpolate, 4, size, "size ~A <= 0?");
-      if (len > v->length) len = v->length;
+      if (len > v->length) 
+	len = v->length;
     }
   else len = v->length;
+
   if (XEN_NUMBER_P(yn1))
     y = XEN_TO_C_DOUBLE(yn1);
+
   return(xen_return_first(C_TO_XEN_DOUBLE(mus_interpolate(itype, XEN_TO_C_DOUBLE(x), v->data, len, y))));
 }
 

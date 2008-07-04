@@ -619,7 +619,7 @@ static void save_options(FILE *fd)
   if (fneq(mus_srate(), MUS_DEFAULT_SAMPLING_RATE)) pss_sf(fd, S_mus_srate, mus_srate());
   if (mus_file_buffer_size() != MUS_DEFAULT_FILE_BUFFER_SIZE) pss_sd(fd, S_mus_file_buffer_size, mus_file_buffer_size());
   if (mus_array_print_length() != MUS_DEFAULT_ARRAY_PRINT_LENGTH) pss_sd(fd, S_mus_array_print_length, mus_array_print_length());
-  if (clm_default_table_size_c() != MUS_CLM_DEFAULT_TABLE_SIZE) pss_sd(fd, S_clm_table_size, clm_default_table_size_c());
+  if (clm_default_table_size_c() != MUS_CLM_DEFAULT_TABLE_SIZE) pss_sod(fd, S_clm_table_size, clm_default_table_size_c());
   if (fneq(clm_default_frequency_c(), MUS_CLM_DEFAULT_FREQUENCY)) pss_sf(fd, S_clm_default_frequency, clm_default_frequency_c());
 
   {

@@ -1412,6 +1412,7 @@ void mem_report(void)
       fprintf(Fp, "[%d]: %s\n", i, mus_file_fd_name(i));
   fprintf(Fp, "\n\n");
 
+  /* when using (lots of) threads, 3 more find_mem_location calls are hidden in the next 2 calls, hence saved_mem_location */
   save_listener_text(Fp);
   dump_protection(Fp);
 
