@@ -1210,7 +1210,7 @@ static XEN g_snd_color(XEN choice)
     case 31: col = ss->sgx->grid_color;                    break;
     case 32: col = ss->sgx->selected_grid_color;           break;
     case 33: 
-      if (ss->sgx->axis_color != NOT_A_COLOR)
+      if (ss->sgx->axis_color_set)
 	col = ss->sgx->axis_color;
       else col = ss->sgx->black;
       break;
@@ -1721,6 +1721,7 @@ static XEN g_set_axis_color(XEN color)
 {
   XEN_ASSERT_TYPE(XEN_PIXEL_P(color), color, XEN_ONLY_ARG, S_setB S_axis_color, "a color");
   ss->sgx->axis_color = XEN_UNWRAP_PIXEL(color);
+  ss->sgx->axis_color_set = true;
   for_each_chan(update_graph);
   return(color);
 }

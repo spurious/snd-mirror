@@ -15,9 +15,6 @@ fgrep accomoda *.scm
 fgrep -e "the the " *.c
 fgrep -e "the the " *.html
 fgrep udpate *.c
-fgrep "if DEBUGGING" *.c
-fgrep "(DEBUGGING)" *.c
-fgrep "(!DEBUGGING)" *.c
 fgrep udpate *.html
 fgrep udpate *.scm
 fgrep ";;" *.[ch]
@@ -1213,72 +1210,6 @@ make
 ./snd -noinit --features "'clm 'snd-guile"
 make allclean
 
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
-echo ' -----                g++ GUILE_CONFIG_path=/home/bil/test/g13/bin           ---- '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet CFLAGS="-I/home/bil/test/g13/include -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/g13/lib -L/usr/X11R6/lib" CC=g++ GUILE_CONFIG_path=/home/bil/test/g13/bin
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-guile"
-make allclean
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
-echo ' -----                g++ GUILE_CONFIG_path=/home/bil/test/g14/bin           ---- '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet CFLAGS="-I/home/bil/test/g14/include -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/g14/lib -L/usr/X11R6/lib" CC=g++ GUILE_CONFIG_path=/home/bil/test/g14/bin
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-guile"
-make allclean
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
-echo ' ----                g++ GUILE_CONFIG_path=/home/bil/test/g13/bin --with-static-xm '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet CFLAGS="-I/home/bil/test/g13/include -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/g13/lib -L/usr/X11R6/lib" CC=g++ GUILE_CONFIG_path=/home/bil/test/g13/bin --with-static-xm
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-guile"
-make allclean
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
-echo ' -----                g++ GUILE_CONFIG_path=/home/bil/test/g14/bin --with-static-xm '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet CFLAGS="-I/home/bil/test/g14/include -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/g14/lib -L/usr/X11R6/lib" CC=g++ GUILE_CONFIG_path=/home/bil/test/g14/bin --with-static-xm
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-guile"
-make allclean
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
-echo ' -----                g++ GUILE_CONFIG_path=/home/bil/test/g13/bin --with-static-xg --with-gtk '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet CFLAGS="-I/home/bil/test/g13/include -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/g13/lib -L/usr/X11R6/lib" CC=g++ GUILE_CONFIG_path=/home/bil/test/g13/bin --with-static-xg --with-gtk
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-guile"
-make allclean
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
-echo ' -----                g++ GUILE_CONFIG_path=/home/bil/test/g14/bin --with-static-xg --with-gtk '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet CFLAGS="-I/home/bil/test/g14/include -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/g14/lib -L/usr/X11R6/lib" CC=g++ GUILE_CONFIG_path=/home/bil/test/g14/bin --with-static-xg --with-gtk
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-guile"
-make allclean
 
 cp ~/sndlib/* .
 echo ' -------------------------------------------------------------------------------- '

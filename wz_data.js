@@ -1128,8 +1128,6 @@ var sndclm_mussrate_tip = "<code>(mus-srate)</code>: current sampling rate";
 
 var sndclm_ncos_tip = "<code>(ncos gen :optional (fm 0.0))</code>: get the next sample from 'gen', an ncos generator";
 
-var sndclm_one_pole_tip = "<code>(one-pole gen :optional (input 0.0))</code>: one pole filter of input";
-
 var sndclm_optional_key_tip = "One special aspect of each generator make function is the way it reads its arguments.<br>" +
                 "I use the word <b>optional-key</b> to indicate that the arguments are keywords, but the keywords<br>" +
                 "themselves are optional. Take the make-oscil call, defined as:<br><br>" +

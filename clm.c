@@ -6937,7 +6937,9 @@ typedef struct {
   mus_sample_t **ibufs;
   off_t data_start, data_end, file_end;
   off_t file_buffer_size;
+#if HAVE_PTHREADS
   mus_lock_t *reader_lock;
+#endif
   int safety;
 } rdin;
 
@@ -7090,7 +7092,7 @@ static Float file_sample(mus_any *ptr, off_t samp, int chan)
 	  (samp < gen->file_end))
 	{
 	  /* got to read it from the file */
-	  int fd, i;
+	  int fd;
 	  off_t newloc;
 	  /* read in first buffer start either at samp (dir > 0) or samp-bufsize (dir < 0) */
 	  
@@ -7118,6 +7120,7 @@ static Float file_sample(mus_any *ptr, off_t samp, int chan)
 				    gen->file_name, STRERROR(errno)));
 	  else
 	    { 
+	      int i;
 	      if (gen->ibufs == NULL) 
 		{
 		  gen->ibufs = (mus_sample_t **)clm_malloc(gen->chans * sizeof(mus_sample_t *), "input buffers");
@@ -7311,7 +7314,7 @@ bool mus_readin_p(mus_any *ptr)
 }
 
 
-mus_any *mus_make_readin_with_buffer_size(const char *filename, int chan, off_t start, int direction, int buffer_size)
+mus_any *mus_make_readin_with_buffer_size(const char *filename, int chan, off_t start, int direction, off_t buffer_size)
 {
   rdin *gen;
   gen = (rdin *)mus_make_file_to_sample(filename);
@@ -7409,7 +7412,7 @@ static mus_any_class FILE_TO_FRAME_CLASS = {
 };
 
 
-mus_any *mus_make_file_to_frame_with_buffer_size(const char *filename, int buffer_size)
+mus_any *mus_make_file_to_frame_with_buffer_size(const char *filename, off_t buffer_size)
 {
   rdin *gen;
   gen = (rdin *)mus_make_file_to_sample_with_buffer_size(filename, buffer_size);
@@ -7466,7 +7469,9 @@ typedef struct {
   off_t out_end;
   int output_data_format;
   int output_header_type;
+#if HAVE_PTHREADS
   mus_lock_t *writer_lock;
+#endif
   int safety;
 } rdout;
 
@@ -8812,7 +8817,9 @@ typedef struct {
 static Float **sinc_tables = NULL;
 static int *sinc_widths = NULL;
 static int sincs = 0;
-static mus_lock_t sinc_lock = MUS_LOCK_INITIALIZER;
+#if HAVE_PTHREADS
+  static mus_lock_t sinc_lock = MUS_LOCK_INITIALIZER;
+#endif
 
 void mus_clear_sinc_tables(void)
 {
@@ -9573,8 +9580,11 @@ static fftw_plan rplan, iplan;
  *   I don't think a system like sinc_table would work here because we still have
  *   to make sure only one thread is using a given set of arrays and their plan.
  */
+
 static int last_fft_size = 0;   
-static mus_lock_t fft_lock = MUS_LOCK_INITIALIZER;
+#if HAVE_PTHREADS
+  static mus_lock_t fft_lock = MUS_LOCK_INITIALIZER;
+#endif
 
 
 void mus_fftw(Float *rl, int n, int dir)
@@ -9608,7 +9618,9 @@ void mus_fftw(Float *rl, int n, int dir)
 static fftw_real *rdata = NULL, *idata = NULL;
 static rfftw_plan rplan, iplan;
 static int last_fft_size = 0;
-static mus_lock_t fft_lock = MUS_LOCK_INITIALIZER;
+#if HAVE_PTHREADS
+  static mus_lock_t fft_lock = MUS_LOCK_INITIALIZER;
+#endif
 
 
 void mus_fftw(Float *rl, int n, int dir)

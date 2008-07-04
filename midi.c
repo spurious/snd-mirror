@@ -484,7 +484,7 @@ int mus_midi_read(int line, unsigned char *buffer, int bytes) {return(read(line,
 
 int mus_midi_write(int line, unsigned char *buffer, int bytes) {return(write(line, buffer, bytes));}
 
-char *mus_midi_device_name(int sysdev) {return("/dev/sequencer");}
+char *mus_midi_device_name(int sysdev) {return(strdup("/dev/sequencer"));}
 
 
 char *mus_midi_describe(void)

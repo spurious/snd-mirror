@@ -479,7 +479,9 @@ static int io_fd_size = 0;
 static io_fd **io_fds = NULL;
 #define IO_FD_ALLOC_SIZE 8
 
-static mus_lock_t io_table_lock = MUS_LOCK_INITIALIZER;
+#if HAVE_PTHREADS
+  static mus_lock_t io_table_lock = MUS_LOCK_INITIALIZER;
+#endif
 
 #if HAVE_PTHREADS && MUS_DEBUGGING
 void io_set_table_lock_name(void);

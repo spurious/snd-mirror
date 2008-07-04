@@ -3486,7 +3486,7 @@ static void make_lisp_graph(chan_info *cp, XEN pixel_list)
 static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool erase_first, with_grid_t grid, log_axis_t log_axes, show_axes_t axes)
 {
   snd_info *sp;
-  color_t old_color = NOT_A_COLOR;
+  color_t old_color = 0; /* make the compiler happy */
 
   if (!(ap->ax))
     ap->ax = cp->cgx->ax;
@@ -3496,7 +3496,7 @@ static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool
   if (erase_first == CLEAR_GRAPH)
     erase_rectangle(cp, ap->ax, ap->graph_x0, ap->y_offset, ap->width, ap->height); 
 
-  if (ss->sgx->axis_color != NOT_A_COLOR)
+  if (ss->sgx->axis_color_set)
     {
       old_color = get_foreground_color(ap->ax);
       /* if axis color has been set, use it, else use data color from preceding make_graph call */
@@ -3517,7 +3517,7 @@ static void make_axes(chan_info *cp, axis_info *ap, x_axis_style_t x_style, bool
 	      log_axes,
 	      cp->grid_density);
 
-  if (ss->sgx->axis_color != NOT_A_COLOR)
+  if (ss->sgx->axis_color_set)
     set_foreground_color(ap->ax, old_color);
 }
 

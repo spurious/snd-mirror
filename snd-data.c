@@ -369,14 +369,6 @@ snd_info *make_snd_info(snd_info *sip, const char *filename, file_info *hdr, int
 void free_snd_info(snd_info *sp)
 {
   int i;
-#if HAVE_PTHREADS
-  /* pthread_mutex_unlock(sp->starred_name_lock); */
-  /* is this necessary?  If a thread sets this lock, is interrupted, and another thread somehow
-   *   causes the sound to be closed, or that thread is killed somehow(?), we might end up with
-   *   this lock still set, making it impossible to set the name the next time we reuse this struct.
-   *   If I'm confused, is this harmless?
-   */
-#endif
   if (sp->watchers)
     {
       int i;

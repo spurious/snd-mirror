@@ -4449,7 +4449,7 @@ static XEN controls_to_channel_body(void *context)
     {
       redirect_snd_error_to(apply_controls_error, (void *)S_controls_to_channel);
       redirect_snd_warning_to(squelch_printout, NULL);
-      while (apply_controls(ap));
+      while (apply_controls(ap)) {};
       redirect_snd_warning_to(NULL, NULL); /* no-op message pointless within xen */
       redirect_snd_error_to(NULL, NULL);
     }
@@ -4606,7 +4606,7 @@ where each inner list entry can also be " PROC_FALSE "."
 	{
 	  redirect_snd_error_to(apply_controls_error, (void *)S_controls_to_channel);
 	  redirect_snd_warning_to(squelch_printout, NULL);
-	  while (apply_controls(ap));
+	  while (apply_controls(ap)) {};
 	  redirect_snd_warning_to(NULL, NULL); /* no-op message pointless within xen */
 	  redirect_snd_error_to(NULL, NULL);
 	}
@@ -4653,7 +4653,7 @@ The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to sele
 	{
 	  redirect_snd_error_to(apply_controls_error, (void *)S_apply_controls);
 	  redirect_snd_warning_to(squelch_printout, NULL);
-	  while (apply_controls(ap));
+	  while (apply_controls(ap)) {};
 	  redirect_snd_warning_to(NULL, NULL); /* no-op message pointless within xen */
 	  redirect_snd_error_to(NULL, NULL);
 	}
@@ -5041,7 +5041,7 @@ If 'filename' is a sound index (an integer), 'size' is interpreted as an edit-po
 	  es = make_env_state(cp, cp->edits[pos]->samples);
 	  if (es)
 	    {
-	      while (!(tick_peak_env(cp, es)));
+	      while (!(tick_peak_env(cp, es))) {};
 	      FREE(es);
 	      ep = cp->edits[pos]->peak_env;
 	      if (ep)
@@ -5153,7 +5153,7 @@ If 'filename' is a sound index (an integer), 'size' is interpreted as an edit-po
 	      id = (int)BACKGROUND_ADD(tick_it, (any_pointer_t)et);
 	      return(C_TO_XEN_INT(id));
 	    }
-	  while (!(tick_peak_env(cp, es)));
+	  while (!(tick_peak_env(cp, es))) {};
 	  free_snd_fd(es->sf);
 	  FREE(es);
 	  peak = g_env_info_to_vcts(cp->edits[0]->peak_env, len);

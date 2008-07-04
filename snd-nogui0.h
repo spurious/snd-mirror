@@ -43,7 +43,6 @@
 #define oclock_t int
 #define color_t int
 #define point_t int
-#define NOT_A_COLOR 0
 
 #define rgb_t unsigned short
 #define RGB_MAX 65535
@@ -91,6 +90,7 @@ typedef struct {
   int mix_gc;           
   struct dialog_play_info *ignore_me; /* for the compiler's benefit */
   int requestor_dialog;
+  bool axis_color_set;
 } state_context;
 
 #define snd_ShiftMask 0

@@ -731,7 +731,7 @@ void snd_doit(int argc, char **argv)
   sx->grid_color = get_in_between_color(sx->data_color, sx->graph_color);
   sx->selected_grid_color = get_in_between_color(sx->selected_data_color, sx->selected_graph_color);
 
-  sx->axis_color = NOT_A_COLOR;
+  sx->axis_color_set = false;
 
   sx->orig_data_color = sx->data_color;
   sx->orig_selected_data_color = sx->selected_data_color;

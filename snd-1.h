@@ -449,7 +449,9 @@ typedef struct snd_info {
   bool writing, bomb_in_progress;
   sp_watcher **watchers;
   int watchers_size;
+#if HAVE_PTHREADS
   mus_lock_t *starred_name_lock;
+#endif
 } snd_info;
 
 #define SND_SRATE(sp) (((sp)->hdr)->srate)

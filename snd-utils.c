@@ -727,6 +727,19 @@ fam_info *fam_unmonitor_directory(const char *filename, fam_info *fp)
  * MALLOC, REALLOC, and FREE.
  */
 
+
+#if HAVE_PTHREADS
+  static mus_lock_t pointer_lock = MUS_LOCK_INITIALIZER;
+#endif
+#if HAVE_PTHREADS && MUS_DEBUGGING
+void utils_set_pointer_lock_name(void);
+void utils_set_pointer_lock_name(void)
+{
+  mus_lock_set_name(&pointer_lock, "pointer");
+}
+#endif
+
+
 static char *kmg(size_t num)
 {
   /* return number 0..1024, then in terms of K, M, G */
@@ -771,6 +784,7 @@ static int find_mem_location(const char *func, const char *file, int line)
     if ((line == lines[i]) &&
 	(strcmp(file, files[i]) == 0))
       return(i);
+
   mem_location++;
   if (mem_location >= mem_locations)
     {
@@ -812,6 +826,7 @@ static int find_mem_location(const char *func, const char *file, int line)
 	lines_hit[line] = mem_location;
       else lines_hit[line] = -1;
     }
+
   return(mem_location);
 }
 
@@ -951,6 +966,8 @@ static void *forget_pointer(void *ptr, const char *func, const char *file, int l
       fprintf(stderr, "%s:%s[%d] loc clobbered: %p %d (%d)\n", func, file, line, ptr, loc, mem_size);
       abort();
     }
+
+  MUS_LOCK(&pointer_lock);
   freed[freed_in++] = loc;
   if (freed_in >= mem_size) freed_in = 0;
 
@@ -960,6 +977,7 @@ static void *forget_pointer(void *ptr, const char *func, const char *file, int l
   true_pointers[loc] = 0;
   locations[loc] = 0;
   sizes[loc] = 0;
+  MUS_UNLOCK(&pointer_lock);
 
 #if POINTER_DEBUGGING
   fprintf(stderr, "forget_pointer returns: %p\n", rtp);
@@ -968,14 +986,6 @@ static void *forget_pointer(void *ptr, const char *func, const char *file, int l
   return(rtp);
 }
 
-static mus_lock_t pointer_lock = MUS_LOCK_INITIALIZER;
-#if HAVE_PTHREADS && MUS_DEBUGGING
-void utils_set_pointer_lock_name(void);
-void utils_set_pointer_lock_name(void)
-{
-  mus_lock_set_name(&pointer_lock, "pointer");
-}
-#endif
 
 static int remember_pointer(void *ptr, void *true_ptr, size_t len, const char *func, const char *file, int line)
 {
@@ -1217,17 +1227,19 @@ static int sloc_bigger(const void *a, const void *b)
 
 void mem_report(void)
 {
-  int loc, i, j;
+  int loc, i, j, saved_mem_location;
   sumloc *slocs;
   FILE *Fp;
+
+  saved_mem_location = mem_location; /* protect from subsequent (hidden) allocation-driven changes */
 
   if (ss->search_tree)
     {
       free_ptree(ss->search_tree);
       ss->search_tree = NULL;
     }
-  slocs = (sumloc *)calloc(mem_location + 1, sizeof(sumloc));
-  for (i = 0; i <= mem_location; i++)
+  slocs = (sumloc *)calloc(saved_mem_location + 1, sizeof(sumloc));
+  for (i = 0; i <= saved_mem_location; i++)
     {
       slocs[i].refs = NULL;
       slocs[i].refsize = 0;
@@ -1237,7 +1249,7 @@ void mem_report(void)
     if (pointers[i])
       {
 	loc = locations[i];
-	if ((loc < 0) || (loc > mem_location))
+	if ((loc < 0) || (loc > saved_mem_location))
 	  fprintf(stderr, "locations[%d] == %d??", i, loc);
 	else
 	  {
@@ -1258,10 +1270,13 @@ void mem_report(void)
 		    for (;k < slocs[loc].refsize; k++) slocs[loc].refs[k] = 0;
 		  }
 	      }
+
+	    if (slocs[loc].ptrs >= slocs[loc].refsize)
+	      fprintf(stderr, "set refs[%d] but refsize: %d?\n", slocs[loc].ptrs, slocs[loc].refsize);
+	    slocs[loc].refs[slocs[loc].ptrs] = i;
+	    slocs[loc].ptrs++;
+	    slocs[loc].loc = loc; /* save for sort */
 	  }
-	slocs[loc].refs[slocs[loc].ptrs] = i;
-	slocs[loc].ptrs++;
-	slocs[loc].loc = loc; /* save for sort */
       }
 
   Fp = fopen("memlog", "w");
@@ -1274,9 +1289,9 @@ void mem_report(void)
     free(str);
   }
 
-  qsort((void *)slocs, mem_location + 1, sizeof(sumloc), sloc_bigger);
+  qsort((void *)slocs, saved_mem_location + 1, sizeof(sumloc), sloc_bigger);
 
-  for (i = 0; i <= mem_location; i++)
+  for (i = 0; i <= saved_mem_location; i++)
     {
       int ptrs;
       size_t sum;
@@ -1286,7 +1301,7 @@ void mem_report(void)
 
       if (sum > 0)
 	{
-	  if ((loc < 0) || (loc > mem_location))
+	  if ((loc < 0) || (loc > saved_mem_location))
 	    {
 	      fprintf(Fp, "impossible loc %d:  %Zu (%d)\n", loc, sum, ptrs);
 	    }
@@ -1391,18 +1406,22 @@ void mem_report(void)
     io_fds_in_use(&open, &closed, &top);
     fprintf(Fp, "ios: open: %d, closed: %d, top: %d\n", open, closed, top);
   }
+
   for (i = 0; i < 512; i++)
     if (mus_file_fd_name(i))
       fprintf(Fp, "[%d]: %s\n", i, mus_file_fd_name(i));
   fprintf(Fp, "\n\n");
+
   save_listener_text(Fp);
   dump_protection(Fp);
-  for (i = 0; i <= mem_location; i++)
+
+  for (i = 0; i <= saved_mem_location; i++)
     if ((slocs[i].refs) && (slocs[i].refsize > 0)) 
       {
 	free(slocs[i].refs);
 	slocs[i].refsize = 0;
       }
+
   free(slocs);
   fclose(Fp);
 }

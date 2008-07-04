@@ -2047,6 +2047,7 @@ static XEN g_vct_to_sound_data(XEN vobj, XEN sdobj, XEN chan)
 
 static void *off_t_memmove(char *dest, const char *source, off_t length)
 {
+  /* not void, as in gnulib, because that makes C++ unhappy! */
   char *d0 = dest;
   if (source < dest)
     /* Moving from low mem to hi mem; start at end.  */
@@ -2112,7 +2113,7 @@ copies sound-data sd-in's data from 0 for 'frames' frames into 'sd-out' starting
   if ((beg + len) < cycle)
     {
       for (i = 0; i < chans; i++)
-	off_t_memmove((void *)(sdo->data[i] + beg), (void *)(sdi->data[i]), len * sizeof(Float));
+	off_t_memmove((char *)(sdo->data[i] + beg), (const char *)(sdi->data[i]), len * sizeof(Float));
       j = beg + len;
     }
   else

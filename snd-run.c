@@ -409,9 +409,13 @@ static const char *type_name(int id)
   return("unknown");
 }
 
+#if HAVE_PTHREADS
+  static mus_lock_t new_type_lock = MUS_LOCK_INITIALIZER;
+#endif
 
 static int add_new_type(const char *new_type)
 {
+  MUS_LOCK(&new_type_lock);
   if (last_type == (type_names_size - 1))
     {
       int i;
@@ -421,6 +425,7 @@ static int add_new_type(const char *new_type)
     }
   last_type++;
   type_names[last_type] = copy_string(new_type);
+  MUS_UNLOCK(&new_type_lock);
 
   return(last_type);
 }
@@ -537,6 +542,7 @@ typedef struct ptree {
   walk_result_t walk_result;
   int *lambda_arg_types;
   int lambda_args;
+  bool got_lambda; /* a temporary kludge?? */
 } ptree;
 
 /*
@@ -1072,14 +1078,12 @@ void describe_ptree_for_memlog(FILE *Fp, void *ptr)
 #endif
 
 
-static bool got_lambda = false; /* a temporary kludge?? */
-
 static ptree *make_ptree(int initial_data_size)
 {
   ptree *pt;
-  got_lambda = false;
   pt = (ptree *)CALLOC(1, sizeof(ptree));
   MUS_SET_PRINTABLE(PRINT_PTREE);
+  pt->got_lambda = false;
   if (initial_data_size > 0)
     {
       pt->ints = (Int *)CALLOC(initial_data_size, sizeof(Int));
@@ -3390,7 +3394,7 @@ static xen_value *lambda_form(ptree *prog, XEN form, bool separate, xen_value **
   char *err = NULL;
   int locals_loc;
 
-  if (got_lambda)
+  if (prog->got_lambda)
     {
       /* start a new ptree, walk body, return ptree as R_FUNCTION variable */
       ptree *new_tree;
@@ -3432,7 +3436,7 @@ static xen_value *lambda_form(ptree *prog, XEN form, bool separate, xen_value **
     }
 
   /* outer level default arg type is float(?) */
-  got_lambda = true;
+  prog->got_lambda = true;
   locals_loc = prog->var_ctr;
   err = declare_args(prog, form, R_FLOAT, separate, args, num_args);
   if (err) return(run_warn_with_free(err));
@@ -3453,7 +3457,7 @@ static xen_value *let_star_form(ptree *prog, XEN form, walk_result_t need_result
   locals_loc = prog->var_ctr; /* lets can be nested */
   err = sequential_binds(prog, XEN_CADR(form), "let*");
   if (err) return(run_warn_with_free(err));
-  if (!got_lambda) prog->initial_pc = prog->triple_ctr;
+  if (!(prog->got_lambda)) prog->initial_pc = prog->triple_ctr;
   return(walk_then_undefine(prog, XEN_CDDR(form), need_result, "let*", locals_loc));
 }
 
@@ -3468,7 +3472,7 @@ static xen_value *let_form(ptree *prog, XEN form, walk_result_t need_result)
   locals_loc = prog->var_ctr; /* lets can be nested */
   trouble = parallel_binds(prog, lets, "let");
   if (trouble) return(run_warn_with_free(trouble));
-  if (!got_lambda) prog->initial_pc = prog->triple_ctr;
+  if (!(prog->got_lambda)) prog->initial_pc = prog->triple_ctr;
   return(walk_then_undefine(prog, XEN_CDDR(form), need_result, "let", locals_loc));
 }
 
@@ -9101,10 +9105,10 @@ static xen_value *splice_in_function_body(ptree *prog, XEN proc, xen_value **arg
       /* look for procedure source, use current arg types as auto-declaration */
       bool old_got_lambda;
       xen_value *v;
-      old_got_lambda = got_lambda;
-      got_lambda = true;
+      old_got_lambda = prog->got_lambda;
+      prog->got_lambda = true;
       v = lambda_form(prog, func_form, true, args, num_args, proc);
-      got_lambda = old_got_lambda;
+      prog->got_lambda = old_got_lambda;
       if (v) 
 	{
 	  xen_value *result;
@@ -9987,8 +9991,8 @@ static xen_value *out_any_function_body(ptree *prog, XEN proc, xen_value **args,
     {
       bool old_got_lambda;
       xen_value *v;
-      old_got_lambda = got_lambda;
-      got_lambda = true;
+      old_got_lambda = prog->got_lambda;
+      prog->got_lambda = true;
       /* normally when we're plugging in a separate function body the args are already
        *   processed, and we're looking at the name at the start of that list, so we
        *   can pass the current args and let lambda_form use them in lieu of the declare
@@ -9998,7 +10002,7 @@ static xen_value *out_any_function_body(ptree *prog, XEN proc, xen_value **args,
        *   then pass in the actual args so that the funcall works.
        */
       v = lambda_form(prog, func_form, true, args, 0, proc); /* must have "declare" here */
-      got_lambda = old_got_lambda;
+      prog->got_lambda = old_got_lambda;
       if (v) 
 	{
 	  xen_value *result;

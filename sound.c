@@ -248,7 +248,7 @@ mus_error_handler_t *mus_error_set_handler(mus_error_handler_t *new_error_handle
 #if HAVE_PTHREADS
   old_handler = (mus_error_handler_t *)pthread_getspecific(mus_thread_error_handler);
   pthread_setspecific(mus_thread_error_handler, (void *)new_error_handler);
-  pthread_setspecific(mus_thread_previous_error_handler, old_handler);
+  pthread_setspecific(mus_thread_previous_error_handler, (void *)old_handler);
 #else
   old_handler = mus_error_handler;
   mus_error_handler = new_error_handler;
@@ -261,7 +261,7 @@ mus_error_handler_t *mus_error_set_handler(mus_error_handler_t *new_error_handle
 
 void mus_thread_restore_error_handler(void)
 {
-  pthread_setspecific(mus_thread_error_handler, mus_error_set_handler(pthread_getspecific(mus_thread_previous_error_handler)));
+  pthread_setspecific(mus_thread_error_handler, (void *)mus_error_set_handler((mus_error_handler_t *)pthread_getspecific(mus_thread_previous_error_handler)));
 }
 
 
@@ -274,7 +274,9 @@ mus_error_handler_t *mus_thread_get_previous_error_handler(void)
 static char *mus_error_buffer = NULL;
 static int mus_error_buffer_size = 1024;
 
-static mus_lock_t sound_error_lock = MUS_LOCK_INITIALIZER;
+#if HAVE_PTHREADS
+  static mus_lock_t sound_error_lock = MUS_LOCK_INITIALIZER;
+#endif
 
 int mus_error(int error, const char *format, ...)
 {
@@ -345,8 +347,10 @@ mus_print_handler_t *mus_print_set_handler(mus_print_handler_t *new_print_handle
 }
 
 
+#if HAVE_PTHREADS
+  static mus_lock_t sound_print_lock = MUS_LOCK_INITIALIZER;
+#endif
 
-static mus_lock_t sound_print_lock = MUS_LOCK_INITIALIZER;
 
 void mus_print(const char *format, ...)
 {
@@ -522,7 +526,9 @@ typedef struct {
 
 static int sound_table_size = 0;
 static sound_file **sound_table = NULL;
-static mus_lock_t sound_table_lock = MUS_LOCK_INITIALIZER;
+#if HAVE_PTHREADS
+  static mus_lock_t sound_table_lock = MUS_LOCK_INITIALIZER;
+#endif
 
 
 static void free_sound_file(sound_file *sf)

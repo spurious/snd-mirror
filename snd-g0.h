@@ -55,7 +55,6 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 #define any_pointer_t gpointer
 #define oclock_t guint32
 #define point_t GdkPoint
-#define NOT_A_COLOR NULL
 
 #if USE_CAIRO
   #define rgb_t double
@@ -196,7 +195,6 @@ typedef struct {
   color_info *text_focus_color, *filter_control_waveform_color, *mix_color, *pushed_button_color, *sash_color;
   color_info *help_button_color, *doit_again_button_color, *doit_button_color, *quit_button_color, *reset_button_color;
   color_info *selected_grid_color, *grid_color, *axis_color;
-
   color_info *orig_data_color, *orig_selected_data_color, *orig_mark_color, *orig_mix_color;
   color_info *orig_graph_color, *orig_selected_graph_color, *orig_listener_color, *orig_listener_text_color, *orig_cursor_color;
   color_info *orig_basic_color, *orig_selection_color, *orig_zoom_color, *orig_position_color, *orig_highlight_color;
@@ -218,6 +216,7 @@ typedef struct {
   GdkCursor *arrow_cursor, *wait_cursor, *graph_cursor;
   gint fam_port;
   GtkWidget **mw, **pw;
+  bool axis_color_set;
 } state_context;
 
 #define DEFAULT_TINY_FONT "Sans 8"

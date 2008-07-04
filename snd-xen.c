@@ -101,7 +101,9 @@ void dump_protection(FILE *Fp)
 #endif
 
 
-static mus_lock_t gc_lock = MUS_LOCK_INITIALIZER;
+#if HAVE_PTHREADS
+  static mus_lock_t gc_lock = MUS_LOCK_INITIALIZER;
+#endif
 #if HAVE_PTHREADS && MUS_DEBUGGING
 void xen_set_gc_lock_name(void);
 void xen_set_gc_lock_name(void)

@@ -3051,7 +3051,9 @@ void finish_progress_report(chan_info *cp)
 #endif
       XtVaSetValues(PROGRESS_ICON(cp), XmNlabelPixmap, sp->sgx->file_pix, NULL);
       XmUpdateDisplay(PROGRESS_ICON(cp));
+#if HAVE_XPM
       hide_stop_sign(sp);
+#endif
     }
 }
 
@@ -3073,7 +3075,9 @@ void start_progress_report(chan_info *cp)
 #endif
       XtVaSetValues(PROGRESS_ICON(cp), XmNlabelPixmap, hourglasses[0], NULL);
       XmUpdateDisplay(PROGRESS_ICON(cp));
+#if HAVE_XPM
       show_stop_sign(sp);
+#endif
     }
 }
 

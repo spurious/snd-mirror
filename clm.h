@@ -652,7 +652,7 @@ mus_any *mus_make_file_to_sample_with_buffer_size(const char *filename, off_t bu
 Float mus_file_to_sample(mus_any *ptr, off_t samp, int chan);
 
 Float mus_readin(mus_any *rd);
-mus_any *mus_make_readin_with_buffer_size(const char *filename, int chan, off_t start, int direction, int buffer_size);
+mus_any *mus_make_readin_with_buffer_size(const char *filename, int chan, off_t start, int direction, off_t buffer_size);
 #define mus_make_readin(Filename, Chan, Start, Direction) mus_make_readin_with_buffer_size(Filename, Chan, Start, Direction, mus_file_buffer_size())
 bool mus_readin_p(mus_any *ptr);
 
@@ -663,7 +663,7 @@ Float mus_in_any(off_t frame, int chan, mus_any *IO);
 mus_any *mus_make_file_to_frame(const char *filename);
 bool mus_file_to_frame_p(mus_any *ptr);
 mus_any *mus_file_to_frame(mus_any *ptr, off_t samp, mus_any *f);
-mus_any *mus_make_file_to_frame_with_buffer_size(const char *filename, int buffer_size);
+mus_any *mus_make_file_to_frame_with_buffer_size(const char *filename, off_t buffer_size);
 
 bool mus_sample_to_file_p(mus_any *ptr);
 mus_any *mus_make_sample_to_file_with_comment(const char *filename, int out_chans, int out_format, int out_type, const char *comment);

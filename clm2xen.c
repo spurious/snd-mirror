@@ -5553,10 +5553,10 @@ static XEN g_make_file_to_sample(XEN name, XEN buffer_size)
   #define H_make_file_to_sample "(" S_make_file_to_sample " filename :optional buffer-size): return an input generator reading 'filename' (a sound file)"
 
   mus_any *ge;
-  int size;
+  off_t size;
 
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_make_file_to_sample, "a string");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(buffer_size), buffer_size, XEN_ARG_2, S_make_file_to_sample, "an integer");
+  XEN_ASSERT_TYPE(XEN_OFF_T_IF_BOUND_P(buffer_size), buffer_size, XEN_ARG_2, S_make_file_to_sample, "an integer");
 
   if (!(mus_file_probe(XEN_TO_C_STRING(name))))
     XEN_ERROR(NO_SUCH_FILE,
@@ -5564,9 +5564,9 @@ static XEN g_make_file_to_sample(XEN name, XEN buffer_size)
 			 name,
 			 C_TO_XEN_STRING(STRERROR(errno))));
 
-  if (XEN_INTEGER_P(buffer_size))
+  if (XEN_OFF_T_P(buffer_size))
     {
-      size = XEN_TO_C_INT(buffer_size);
+      size = XEN_TO_C_OFF_T(buffer_size);
       if (size <= 0)
 	XEN_OUT_OF_RANGE_ERROR(S_make_file_to_sample, XEN_ARG_2, buffer_size, "must be > 0");
     }
@@ -5681,17 +5681,17 @@ static XEN g_make_file_to_frame(XEN name, XEN buffer_size)
   #define H_make_file_to_frame "(" S_make_file_to_frame " filename :optional buffer-size): return an input generator reading 'filename' (a sound file)"
 
   mus_any *ge;
-  int size;
+  off_t size;
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_1, S_make_file_to_frame, "a string");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(buffer_size), buffer_size, XEN_ARG_2, S_make_file_to_frame, "an integer");
+  XEN_ASSERT_TYPE(XEN_OFF_T_IF_BOUND_P(buffer_size), buffer_size, XEN_ARG_2, S_make_file_to_frame, "an integer");
   if (!(mus_file_probe(XEN_TO_C_STRING(name))))
     XEN_ERROR(NO_SUCH_FILE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_make_file_to_frame),
 			 name,
 			 C_TO_XEN_STRING(STRERROR(errno))));
-  if (XEN_INTEGER_P(buffer_size))
+  if (XEN_OFF_T_P(buffer_size))
     {
-      size = XEN_TO_C_INT(buffer_size);
+      size = XEN_TO_C_OFF_T(buffer_size);
       if (size <= 0)
 	XEN_OUT_OF_RANGE_ERROR(S_make_file_to_frame, XEN_ARG_2, buffer_size, "must be > 0");
     }
@@ -5828,7 +5828,8 @@ return a new readin (file input) generator reading the sound file 'file' startin
   XEN args[MAX_ARGLIST_LEN]; 
   XEN keys[5];
   int orig_arg[5] = {0, 0, 0, 0, 0};
-  int i, vals, arglist_len, buffer_size;
+  int i, vals, arglist_len;
+  off_t buffer_size;
   int channel = 0, direction = 1;
   off_t start = 0;
 
@@ -5862,7 +5863,7 @@ return a new readin (file input) generator reading the sound file 'file' startin
 
       direction = mus_optkey_to_int(keys[3], S_make_readin, orig_arg[3], direction);
 
-      buffer_size = mus_optkey_to_int(keys[4], S_make_readin, orig_arg[4], buffer_size);
+      buffer_size = mus_optkey_to_off_t(keys[4], S_make_readin, orig_arg[4], buffer_size);
       if (buffer_size <= 0)
 	XEN_OUT_OF_RANGE_ERROR(S_make_readin, orig_arg[4], keys[4], "must be > 0");
     }
