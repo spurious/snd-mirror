@@ -134,6 +134,7 @@ typedef struct {
   int fft_pix_x0, fft_pix_y0;
   bool fft_pix_ready;
   Float fft_pix_cutoff;
+  int current_hourglass;
 #if USE_CAIRO
   GdkPixbuf *cursor_pix;
   unsigned int cursor_pix_width, cursor_pix_height;
@@ -147,7 +148,6 @@ typedef struct {
 } chan_context;
 
 typedef struct {
-  picture_t *file_pix;
   GtkWidget **snd_widgets;
   GtkObject **snd_adjs;
   struct env_editor *flt;

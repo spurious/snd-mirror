@@ -575,12 +575,7 @@ returning you to the true top-level."
 	,@args)))
 
 
-;;; this still non-optimal because of thread handling overhead -- if I break the "body" into
-;;;   4 big pieces (4 threads total), it runs much faster.  So, off to make another version that
-;;;   somehow divides the body into n big pieces...
 
-
-#|
 (define (with-threads func)
   (let ((chns (chans))
 	(threads '()))
@@ -592,6 +587,7 @@ returning you to the true top-level."
        (join-thread expr))
      threads)))
 
+#|
 ;(with-threads (lambda (chn) (src-channel 2.0 0 #f #f chn)))
 
 ;;; TODO: check filter-channel and map-channel/ptrees (with init func etc) here, also reverse, maybe smooth, convolve, scan [tmp38]

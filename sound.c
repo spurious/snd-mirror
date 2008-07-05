@@ -141,9 +141,9 @@ static void describe_locks(thread_locks *locks)
     }
 }
 
-int mus_lock(mus_lock_t *lock, const char *file, int line, const char *func)
+
+static thread_locks *before_lock(mus_lock_t *lock, const char *file, int line, const char *func)
 {
-  int result;
   thread_locks *locks;
 
   locks = (thread_locks *)pthread_getspecific(mus_thread_locks);
@@ -165,9 +165,13 @@ int mus_lock(mus_lock_t *lock, const char *file, int line, const char *func)
       locks->top_lock = -1;
       pthread_setspecific(mus_thread_locks, (void *)locks);
     }
-
-  result = pthread_mutex_lock(lock);
   
+  return(locks);
+}
+
+
+static void after_lock(mus_lock_t *lock, thread_locks *locks, const char *file, int line, const char *func)
+{
   locks->top_lock++;
   if (locks->top_lock >= 8)
     {
@@ -180,6 +184,31 @@ int mus_lock(mus_lock_t *lock, const char *file, int line, const char *func)
   locks->lock_list[locks->top_lock].line = line;
   locks->lock_list[locks->top_lock].func = func;
   locks->lock_list[locks->top_lock].lock = lock;
+}
+
+
+int mus_lock(mus_lock_t *lock, const char *file, int line, const char *func)
+{
+  int result;
+  thread_locks *locks;
+
+  locks = before_lock(lock, file, line, func);
+  result = pthread_mutex_lock(lock);
+  after_lock(lock, locks, file, line, func);
+
+  return(result);
+}
+
+
+int mus_try_lock(mus_lock_t *lock, const char *file, int line, const char *func)
+{
+  int result;
+  thread_locks *locks;
+
+  locks = before_lock(lock, file, line, func);
+  result = pthread_mutex_trylock(lock);
+  if (result == 0)
+    after_lock(lock, locks, file, line, func);
 
   return(result);
 }

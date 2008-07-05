@@ -164,59 +164,81 @@ static picture_t *bombs[NUM_BOMBS];
 
 void show_lock(snd_info *sp)
 {
-  if (mini_lock)
+  if (MUS_TRY_LOCK(sp->stop_sign_lock) != MUS_ALREADY_LOCKED)
     {
-      sp->sgx->file_pix = mini_lock;
-      draw_picture(sp->sgx->name_pix_ax, mini_lock, 0, 0, 0, 4, 18, 16);
+      if (mini_lock)
+	{
+	  draw_picture(sp->sgx->name_pix_ax, mini_lock, 0, 0, 0, 4, 18, 16);
+	}
+      MUS_UNLOCK(sp->stop_sign_lock);
     }
 }
 
 
 void hide_lock(snd_info *sp)
 {
-  if (mini_lock)
+  if (MUS_TRY_LOCK(sp->stop_sign_lock) != MUS_ALREADY_LOCKED)
     {
-      sp->sgx->file_pix = blank;
-      draw_picture(sp->sgx->name_pix_ax, blank, 0, 0, 0, 4, 18, 16);
+      if (mini_lock)
+	{
+	  draw_picture(sp->sgx->name_pix_ax, blank, 0, 0, 0, 4, 18, 16);
+	}
+      MUS_UNLOCK(sp->stop_sign_lock);
     }
 }
 
 
 static void show_stop_sign(snd_info *sp)
 {
-  if ((sp->sgx) && (stop_sign))
-    draw_picture(sp->sgx->stop_pix_ax, stop_sign, 0, 0, 0, 4, 18, 16);
+  if (MUS_TRY_LOCK(sp->stop_sign_lock) != MUS_ALREADY_LOCKED)
+    {
+      if ((sp->sgx) && 
+	  (stop_sign))
+	draw_picture(sp->sgx->stop_pix_ax, stop_sign, 0, 0, 0, 4, 18, 16);
+      MUS_UNLOCK(sp->stop_sign_lock);
+    }
 }
 
 
 static void hide_stop_sign(snd_info *sp)
 {
-  if ((sp->sgx) && (blank))
-    draw_picture(sp->sgx->stop_pix_ax, blank, 0, 0, 0, 4, 18, 16);
+  if (MUS_TRY_LOCK(sp->stop_sign_lock) != MUS_ALREADY_LOCKED)
+    {
+      if ((sp->sgx) && 
+	  (blank))
+	draw_picture(sp->sgx->stop_pix_ax, blank, 0, 0, 0, 4, 18, 16);
+      MUS_UNLOCK(sp->stop_sign_lock);
+    }
 }
 
 
 void show_bomb(snd_info *sp)
 {
-  if (sp->bomb_ctr >= NUM_BOMBS) 
-    sp->bomb_ctr = 0;
-  if (sp->sgx)
+  if (MUS_TRY_LOCK(sp->stop_sign_lock) != MUS_ALREADY_LOCKED)
     {
-      sp->sgx->file_pix = bombs[sp->bomb_ctr];
-      draw_picture(sp->sgx->name_pix_ax, sp->sgx->file_pix, 0, 0, 0, 4, 18, 16);
+      if (sp->bomb_ctr >= NUM_BOMBS) 
+	sp->bomb_ctr = 0;
+      if (sp->sgx)
+	{
+	  draw_picture(sp->sgx->name_pix_ax, bombs[sp->bomb_ctr], 0, 0, 0, 4, 18, 16);
+	}
+      sp->bomb_ctr++; 
+      MUS_UNLOCK(sp->stop_sign_lock);
     }
-  sp->bomb_ctr++; 
 }
 
 
 void hide_bomb(snd_info *sp)
 {
-  if (sp->sgx)
+  if (MUS_TRY_LOCK(sp->stop_sign_lock) != MUS_ALREADY_LOCKED)
     {
-      sp->sgx->file_pix = blank;
-      draw_picture(sp->sgx->name_pix_ax, sp->sgx->file_pix, 0, 0, 0, 4, 18, 16);
+      if (sp->sgx)
+	{
+	  draw_picture(sp->sgx->name_pix_ax, blank, 0, 0, 0, 4, 18, 16);
+	}
+      sp->bomb_ctr = 0;
+      MUS_UNLOCK(sp->stop_sign_lock);
     }
-  sp->bomb_ctr = 0;
 }
 
 
@@ -264,7 +286,10 @@ static void show_hourglass(snd_info *sp, int chan, int glass)
       (chan < sp->sgx->num_clock_widgets) &&
       (CLOCK_PIX(sp, chan)) &&
       (sp->sgx->clock_pix_ax[chan]))
-    draw_picture(sp->sgx->clock_pix_ax[chan], hourglasses[glass], 0, 0, 0, 4, 18, 16);
+    {
+      draw_picture(sp->sgx->clock_pix_ax[chan], hourglasses[glass], 0, 0, 0, 4, 18, 16);
+      sp->chans[chan]->cgx->current_hourglass = glass; /* for possible expose event */
+    }
 }
 
 
@@ -273,8 +298,11 @@ static void hide_hourglass(snd_info *sp, int chan)
   if ((sp->sgx) &&
       (chan < sp->sgx->num_clock_widgets) &&
       (CLOCK_PIX(sp, chan)) &&
-      (sp->sgx->clock_pix_ax[chan]))
-    draw_picture(sp->sgx->clock_pix_ax[chan], sp->sgx->file_pix, 0, 0, 0, 4, 18, 16);
+      (blank))
+    {
+      draw_picture(sp->sgx->clock_pix_ax[chan], blank, 0, 0, 0, 4, 18, 16);
+      sp->chans[chan]->cgx->current_hourglass = -1; /* for possible expose event */
+    }
 }
 
 #else
@@ -382,10 +410,14 @@ static gboolean name_pix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data)
   snd_info *sp = (snd_info *)data;
   if ((sp) &&
       (sp->sgx) &&
-      (sp->sgx->file_pix) &&
       (NAME_PIX(sp)) &&
       (sp->sgx->name_pix_ax))
-    draw_picture(sp->sgx->name_pix_ax, sp->sgx->file_pix, 0, 0, 0, 4, 16, 16);
+    {
+      if ((sp->user_read_only == FILE_READ_ONLY) || 
+	  (sp->file_read_only == FILE_READ_ONLY))
+	draw_picture(sp->sgx->name_pix_ax, mini_lock, 0, 0, 0, 4, 16, 16);
+      else draw_picture(sp->sgx->name_pix_ax, blank, 0, 0, 0, 4, 16, 16);
+    }
   return(false);
 }
 
@@ -398,11 +430,14 @@ static gboolean clock_pix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data
 
   if ((sp) &&
       (sp->sgx) &&
-      (sp->sgx->file_pix) &&
       (cp->chan < sp->sgx->num_clock_widgets) &&
       (CLOCK_PIX(sp, cp->chan)) &&
       (sp->sgx->clock_pix_ax[cp->chan]))
-    draw_picture(sp->sgx->clock_pix_ax[cp->chan], sp->sgx->file_pix, 0, 0, 0, 4, 16, 16);
+    {
+      if (cp->cgx->current_hourglass >= 0)
+	draw_picture(sp->sgx->clock_pix_ax[cp->chan], hourglasses[cp->cgx->current_hourglass], 0, 0, 0, 4, 16, 16);
+      else draw_picture(sp->sgx->clock_pix_ax[cp->chan], blank, 0, 0, 0, 4, 16, 16);
+    }
   return(false);
 }
 
@@ -1585,7 +1620,6 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
   sp = ss->sounds[snd_slot];
   sp->inuse = SOUND_NORMAL;
   sx = sp->sgx;
-  sx->file_pix = blank;
   sp->bomb_ctr = 0;
   make_pixmaps();
   if (sx->snd_widgets == NULL)
@@ -2063,15 +2097,17 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 
 void set_sound_pane_file_label(snd_info *sp, char *str)
 {
-  MUS_LOCK(sp->starred_name_lock);
-  if ((sp->name_string == NULL) || 
-      (strcmp(sp->name_string, str) != 0))
+  if (MUS_TRY_LOCK(sp->starred_name_lock) != MUS_ALREADY_LOCKED)
     {
-      if (sp->name_string) FREE(sp->name_string);
-      sp->name_string = copy_string(str);
-      set_label(NAME_BUTTON(sp), str);
+      if ((sp->name_string == NULL) || 
+	  (strcmp(sp->name_string, str) != 0))
+	{
+	  if (sp->name_string) FREE(sp->name_string);
+	  sp->name_string = copy_string(str);
+	  set_label(NAME_BUTTON(sp), str);
+	}
+      MUS_UNLOCK(sp->starred_name_lock);
     }
-  MUS_UNLOCK(sp->starred_name_lock);
 }
 
 

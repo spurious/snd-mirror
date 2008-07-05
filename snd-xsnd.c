@@ -1547,60 +1547,85 @@ static Pixmap stop_sign = 0;
 
 void show_lock(snd_info *sp)
 {
-  if ((sp->sgx) && (mini_lock))
+  if (MUS_TRY_LOCK(sp->stop_sign_lock) != MUS_ALREADY_LOCKED)
     {
-      sp->sgx->file_pix = mini_lock;
-      XtVaSetValues(LOCK_OR_BOMB(sp), XmNlabelPixmap, mini_lock, NULL);
+      if ((sp->sgx) && 
+	  (mini_lock))
+	{
+	  XtVaSetValues(LOCK_OR_BOMB(sp), XmNlabelPixmap, mini_lock, NULL);
+	}
+      MUS_UNLOCK(sp->stop_sign_lock);
     }
 }
 
 
 void hide_lock(snd_info *sp)
 {
-  if ((sp->sgx) && (mini_lock))
+  if (MUS_TRY_LOCK(sp->stop_sign_lock) != MUS_ALREADY_LOCKED)
     {
-      sp->sgx->file_pix = blank_pixmap;
-      XtVaSetValues(LOCK_OR_BOMB(sp), XmNlabelPixmap, blank_pixmap, NULL);
+      if ((sp->sgx) && 
+	  (mini_lock))
+	{
+	  XtVaSetValues(LOCK_OR_BOMB(sp), XmNlabelPixmap, blank_pixmap, NULL);
+	}
+      /* these Pixmaps can be null if the colormap is screwed up */
+      MUS_UNLOCK(sp->stop_sign_lock);
     }
-  /* these Pixmaps can be null if the colormap is screwed up */
 }
 
 
 static void show_stop_sign(snd_info *sp)
 {
-  if ((sp->sgx) && (stop_sign))
-    XtVaSetValues(STOP_ICON(sp), XmNlabelPixmap, stop_sign, NULL);
+  if (MUS_TRY_LOCK(sp->stop_sign_lock) != MUS_ALREADY_LOCKED)
+    {
+      if ((sp->sgx) && 
+	  (stop_sign))
+	XtVaSetValues(STOP_ICON(sp), XmNlabelPixmap, stop_sign, NULL);
+      MUS_UNLOCK(sp->stop_sign_lock);
+    }
 }
 
 
 static void hide_stop_sign(snd_info *sp)
 {
-  if ((sp->sgx) && (blank_pixmap))
-    XtVaSetValues(STOP_ICON(sp), XmNlabelPixmap, blank_pixmap, NULL);
+  if (MUS_TRY_LOCK(sp->stop_sign_lock) != MUS_ALREADY_LOCKED)
+    {
+      if ((sp->sgx) && 
+	  (blank_pixmap))
+	XtVaSetValues(STOP_ICON(sp), XmNlabelPixmap, blank_pixmap, NULL);
+      MUS_UNLOCK(sp->stop_sign_lock);
+    }
 }
 
 
 void show_bomb(snd_info *sp)
 {
-  if (sp->bomb_ctr >= NUM_BOMBS) 
-    sp->bomb_ctr = 0;
-  if ((sp->sgx) && (bombs[sp->bomb_ctr]))
+  if (MUS_TRY_LOCK(sp->stop_sign_lock) != MUS_ALREADY_LOCKED)
     {
-      sp->sgx->file_pix = bombs[sp->bomb_ctr];
-      XtVaSetValues(LOCK_OR_BOMB(sp), XmNlabelPixmap, sp->sgx->file_pix, NULL);
+      if (sp->bomb_ctr >= NUM_BOMBS) 
+	sp->bomb_ctr = 0;
+      if ((sp->sgx) && 
+	  (bombs[sp->bomb_ctr]))
+	{
+	  XtVaSetValues(LOCK_OR_BOMB(sp), XmNlabelPixmap, bombs[sp->bomb_ctr], NULL);
+	}
+      sp->bomb_ctr++; 
+      MUS_UNLOCK(sp->stop_sign_lock);
     }
-  sp->bomb_ctr++; 
 }
 
 
 void hide_bomb(snd_info *sp)
 {
-  if (sp->sgx)
+  if (MUS_TRY_LOCK(sp->stop_sign_lock) != MUS_ALREADY_LOCKED)
     {
-      sp->sgx->file_pix = blank_pixmap;
-      XtVaSetValues(LOCK_OR_BOMB(sp), XmNlabelPixmap, blank_pixmap, NULL);
+      if (sp->sgx)
+	{
+	  XtVaSetValues(LOCK_OR_BOMB(sp), XmNlabelPixmap, blank_pixmap, NULL);
+	}
+      sp->bomb_ctr = 0;
+      MUS_UNLOCK(sp->stop_sign_lock);
     }
-  sp->bomb_ctr = 0;
 }
 
 
@@ -1857,11 +1882,6 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
   sp = ss->sounds[snd_slot];
   sp->inuse = SOUND_NORMAL;
   sx = sp->sgx;
-#if HAVE_XPM
-  sx->file_pix = blank_pixmap;
-#else
-  sx->file_pix = (Pixmap)0;
-#endif
   sp->bomb_ctr = 0;
   if (sx->snd_widgets == NULL) 
     sx->snd_widgets = (Widget *)CALLOC(NUM_SND_WIDGETS, sizeof(Widget));
@@ -2908,14 +2928,16 @@ void snd_info_cleanup(snd_info *sp)
 
 void set_sound_pane_file_label(snd_info *sp, char *str)
 {
-  MUS_LOCK(sp->starred_name_lock);
-  if (!(snd_strcmp(sp->name_string, str)))
+  if (MUS_TRY_LOCK(sp->starred_name_lock) != MUS_ALREADY_LOCKED)
     {
-      if (sp->name_string) FREE(sp->name_string);
-      sp->name_string = copy_string(str);
-      set_button_label(SND_NAME(sp), str); /* this causes an expose event, so it's worth minimizing */
+      if (!(snd_strcmp(sp->name_string, str)))
+	{
+	  if (sp->name_string) FREE(sp->name_string);
+	  sp->name_string = copy_string(str);
+	  set_button_label(SND_NAME(sp), str); /* this causes an expose event, so it's worth minimizing */
+	}
+      MUS_UNLOCK(sp->starred_name_lock);
     }
-  MUS_UNLOCK(sp->starred_name_lock);
 }
 
 
@@ -3049,7 +3071,7 @@ void finish_progress_report(chan_info *cp)
 #if MUS_DEBUGGING
       if (!(XtIsWidget(PROGRESS_ICON(cp)))) fprintf(stderr, "finish_progress_report but no widget!");
 #endif
-      XtVaSetValues(PROGRESS_ICON(cp), XmNlabelPixmap, sp->sgx->file_pix, NULL);
+      XtVaSetValues(PROGRESS_ICON(cp), XmNlabelPixmap, blank_pixmap, NULL);
       XmUpdateDisplay(PROGRESS_ICON(cp));
 #if HAVE_XPM
       hide_stop_sign(sp);

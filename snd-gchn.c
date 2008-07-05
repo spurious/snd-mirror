@@ -712,6 +712,7 @@ int add_channel_window(snd_info *sp, int channel, int chan_y, int insertion, Gtk
   sp->chans[channel] = make_chan_info(sp->chans[channel], channel, sp);
   cp = sp->chans[channel];
   cx = cp->cgx;
+  cx->current_hourglass = -1;
   if (cx->chan_widgets == NULL) 
     {
       cw = (GtkWidget **)CALLOC(NUM_CHAN_WIDGETS, sizeof(GtkWidget *));

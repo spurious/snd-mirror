@@ -101,7 +101,6 @@ typedef struct {
 } chan_context;
 
 typedef struct {
-  Pixmap file_pix;
   Widget *snd_widgets;
   Widget *progress_widgets;
   int num_progress_widgets;

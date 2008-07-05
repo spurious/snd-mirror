@@ -1670,7 +1670,7 @@ static int oss_mus_audio_initialize(void)
 	  if (fd == -1)
 	    {
 	      close(md); 
-	      if (errno == EBUSY) /* in linux /usr/include/asm/errno.h */
+	      if (errno == EBUSY) /* in linux /usr/include/asm-generic/errno-base.h */
 		{
 		  fprintf(stderr, "%s is busy: can't access it\n", dname); 
 		  ndsp++;

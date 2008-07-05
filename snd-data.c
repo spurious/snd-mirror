@@ -225,10 +225,15 @@ snd_info *make_basic_snd_info(int chans)
   sp->properties = XEN_FALSE; /* will be a vector of 1 element if it's ever used */
   sp->properties_loc = NOT_A_GC_LOC;
 #if HAVE_PTHREADS
+  /* multichannel cases can all try to change the "*" in the file name */
   sp->starred_name_lock = (mus_lock_t *)malloc(sizeof(mus_lock_t));
   pthread_mutex_init(sp->starred_name_lock, NULL);
+  /* similarly the stop and bomb icons */
+  sp->stop_sign_lock = (mus_lock_t *)malloc(sizeof(mus_lock_t));
+  pthread_mutex_init(sp->stop_sign_lock, NULL);
 #if MUS_DEBUGGING
   mus_lock_set_name(sp->starred_name_lock, "starred-name");
+  mus_lock_set_name(sp->stop_sign_lock, "stop-sign");
 #endif
 #endif
   return(sp);
