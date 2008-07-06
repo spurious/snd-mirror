@@ -174,7 +174,12 @@ void set_minibuffer_string(snd_info *sp, char *str, bool update)
   if ((sp->inuse != SOUND_NORMAL) || (!(sp->sgx))) return;
   XmTextSetString(MINIBUFFER_TEXT(sp), str);
   /* updating clears the entire graph widget and triggers an expose event -- this is evil if we're currently displaying! */
+  /* there's also a bug in libxcb (fixed, but not propagated yet) that causes a segfault here if more than
+   *   one thread is affected by this global X queue flush.
+   */
+#if (!HAVE_PTHREADS)
   if (update) XmUpdateDisplay(MINIBUFFER_TEXT(sp));
+#endif
 }
 
 
@@ -3046,11 +3051,10 @@ void progress_report(chan_info *cp, Float pct)
       ((cp->chan == 0) ||
        (sp->channel_style != CHANNELS_SUPERIMPOSED)))
     {
-#if MUS_DEBUGGING
-      if (!(XtIsWidget(PROGRESS_ICON(cp)))) fprintf(stderr, "finish_progress_report but no widget!");
-#endif
       XtVaSetValues(PROGRESS_ICON(cp), XmNlabelPixmap, hourglasses[which], NULL);
+#if (!HAVE_PTHREADS)
       XmUpdateDisplay(PROGRESS_ICON(cp));
+#endif
     }
 
   check_for_event();
@@ -3068,11 +3072,10 @@ void finish_progress_report(chan_info *cp)
       ((cp->chan == 0) ||
        (sp->channel_style != CHANNELS_SUPERIMPOSED)))
     {
-#if MUS_DEBUGGING
-      if (!(XtIsWidget(PROGRESS_ICON(cp)))) fprintf(stderr, "finish_progress_report but no widget!");
-#endif
       XtVaSetValues(PROGRESS_ICON(cp), XmNlabelPixmap, blank_pixmap, NULL);
+#if (!HAVE_PTHREADS)
       XmUpdateDisplay(PROGRESS_ICON(cp));
+#endif
 #if HAVE_XPM
       hide_stop_sign(sp);
 #endif
@@ -3092,11 +3095,10 @@ void start_progress_report(chan_info *cp)
       ((cp->chan == 0) ||
        (sp->channel_style != CHANNELS_SUPERIMPOSED)))
     {
-#if MUS_DEBUGGING
-      if (!(XtIsWidget(PROGRESS_ICON(cp)))) fprintf(stderr, "start_progress_report but no widget!");
-#endif
       XtVaSetValues(PROGRESS_ICON(cp), XmNlabelPixmap, hourglasses[0], NULL);
+#if (!HAVE_PTHREADS)
       XmUpdateDisplay(PROGRESS_ICON(cp));
+#endif
 #if HAVE_XPM
       show_stop_sign(sp);
 #endif

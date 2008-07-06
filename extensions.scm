@@ -1074,3 +1074,23 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 
 
 
+;;; -------- with-threaded-channels
+
+(define (with-threaded-channels func)
+  (let ((chns (chans))
+	(threads '()))
+    (do ((chn 0 (1+ chn)))
+	((= chn chns))
+      (set! threads (cons (call-with-new-thread (lambda () (func chn))) threads)))
+    (for-each 
+     (lambda (expr) 
+       (join-thread expr))
+     threads)))
+
+
+;;; (with-threaded-channels (lambda (chn) (src-channel 2.0 0 #f #f chn)))
+
+
+;;; TODO: doc/snd-test with-threaded-channels, also gtk/no-gui/motif valgrind/helgrind, get stats
+;;; TODO: output-safety in cl, doc with-threaded-sound
+

@@ -576,29 +576,6 @@ returning you to the true top-level."
 
 
 
-(define (with-threads func)
-  (let ((chns (chans))
-	(threads '()))
-    (do ((chn 0 (1+ chn)))
-	((= chn chns))
-      (set! threads (cons (call-with-new-thread (lambda () (func chn))) threads)))
-    (for-each 
-     (lambda (expr) 
-       (join-thread expr))
-     threads)))
-
-#|
-;(with-threads (lambda (chn) (src-channel 2.0 0 #f #f chn)))
-
-;;; TODO: check filter-channel and map-channel/ptrees (with init func etc) here, also reverse, maybe smooth, convolve, scan [tmp38]
-;;;   also Ruby? [ruby does have threads, but how to handle them in with_sound?]
-
-(with-threaded-sound ()
-  (fm-violin 0 1 440 .1)
-  (fm-violin 0 1 660 .1))
-|#
-
-
 ;;; -------- with-temp-sound --------
 
 (defmacro with-temp-sound (args . body)
