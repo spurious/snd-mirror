@@ -10427,9 +10427,9 @@ const char **mus_fft_window_names(void)
 }
 
 
-Float *mus_spectrum(Float *rdat, Float *idat, Float *window, int n, mus_spectrum_t type)
+Float *mus_spectrum(Float *rdat, Float *idat, Float *window, off_t n, mus_spectrum_t type)
 {
-  int i;
+  off_t i;
   Float maxa, lowest;
   double val, todb;
 

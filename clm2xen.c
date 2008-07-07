@@ -853,7 +853,8 @@ and type determines how the spectral data is scaled:\n\
   1 (default) = linear and normalized\n\
   2 = linear and un-normalized."
 
-  int n, type;
+  int type;
+  off_t n;
   vct *v1, *v2, *v3 = NULL;
 
   XEN_ASSERT_TYPE((MUS_VCT_P(url)), url, XEN_ARG_1, S_spectrum, "a vct");
@@ -869,6 +870,7 @@ and type determines how the spectral data is scaled:\n\
     n = v2->length;
   if ((v3) && (n > v3->length))
     n = v3->length;
+
   if (!(POWER_OF_2_P(n)))
     {
       Float nf;

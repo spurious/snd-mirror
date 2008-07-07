@@ -711,7 +711,7 @@ bool mus_convolve_p(mus_any *ptr);
 Float mus_convolve(mus_any *ptr, Float (*input)(void *arg, int direction));
 mus_any *mus_make_convolve(Float (*input)(void *arg, int direction), Float *filter, int fftsize, int filtersize, void *closure);
 
-Float *mus_spectrum(Float *rdat, Float *idat, Float *window, int n, mus_spectrum_t type);
+Float *mus_spectrum(Float *rdat, Float *idat, Float *window, off_t n, mus_spectrum_t type);
 void mus_fft(Float *rl, Float *im, int n, int is);
 void mus_big_fft(Float *rl, Float *im, off_t n, int is);
 #if HAVE_FFTW || HAVE_FFTW3
