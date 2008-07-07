@@ -44,7 +44,7 @@ static void graph_redisplay(void)
   axis_context *ax;
   if (!(transform_dialog_is_active())) return;
   if (graph_drawer == NULL) return;
-  wn = graph_drawer->window;
+  wn = gtk_widget_get_window(graph_drawer);
   if (wn == NULL) return;
   if (!axis_ap)
     {
@@ -56,7 +56,7 @@ static void graph_redisplay(void)
     {
       ax = axis_ap->ax;
     }
-  ax->wn = graph_drawer->window;
+  ax->wn = gtk_widget_get_window(graph_drawer);
   ax->w = graph_drawer;
   ax->gc = gc;
   ax->current_font = AXIS_NUMBERS_FONT(ss);

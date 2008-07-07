@@ -1029,7 +1029,7 @@ static XEN g_reset_listener_cursor(void)
 {
   #define H_reset_listener_cursor "(" S_reset_listener_cursor "): reset listener cursor to the default pointer"
   if (listener_text)
-    gdk_window_set_cursor(listener_text->window, ss->sgx->arrow_cursor);
+    gdk_window_set_cursor(gtk_widget_get_window(listener_text), ss->sgx->arrow_cursor);
   return(XEN_FALSE);
 }
 

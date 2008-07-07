@@ -66284,7 +66284,7 @@ EDITS: 1
 			      (gtk_widget_set_events grf GDK_ALL_EVENTS_MASK)
 			      (gtk_box_pack_start (GTK_BOX scan-outer) grf #t #t 0)
 			      (gtk_widget_show grf)
-			      (gdk_window_set_background (.window grf) (graph-color))
+			      (gdk_window_set_background (gtk_widget_get_window grf) (graph-color))
 			      grf))
 		 (red-pixel
 		  (let ((tmp (GdkColor)))
@@ -66292,7 +66292,7 @@ EDITS: 1
 		    (let ((col (gdk_color_copy tmp)))
 		      (gdk_rgb_find_color (gdk_colormap_get_system) col)
 		      col)))
-		 (wnd (.window scan-pane))
+		 (wnd (gtk_widget_get_window scan-pane))
 		 (_GdkWindow_ wnd)
 		 (wn (GDK_DRAWABLE wnd))
 		 (vect (make-vector 4 0))
@@ -66441,7 +66441,7 @@ EDITS: 1
 	    (gdk_window_set_cursor _GdkWindow_ (gdk_cursor_new GDK_BOTTOM_TEE))
 	    (gdk_window_set_icon_name _GdkWindow_ "hiho")
 	    (gtk_window_move _GtkWindow_ 200 20)
-	    (gdk_window_resize (.window _GtkWidget_) 800 500)
+	    (gdk_window_resize (gtk_widget_get_window _GtkWidget_) 800 500)
 	    (let ((_guint (g_idle_add_full G_PRIORITY_DEFAULT_IDLE (lambda (n) #f) 1234 #f)))
 	      (g_source_remove _guint))
 	    

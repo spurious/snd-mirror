@@ -318,8 +318,8 @@ static GdkDrawable *sound_pix_wn(chan_info *cp)
       if ((cp->chan < sp->sgx->num_clock_widgets) &&
 	  (CLOCK_PIX(sp, cp->chan)) &&
 	  (sp->sgx->clock_pix_ax[cp->chan]))
-	return(GDK_DRAWABLE(CLOCK_PIX(sp, cp->chan)->window));
-      return(GDK_DRAWABLE(CLOCK_PIX(sp, 0)->window));
+	return(GDK_DRAWABLE(gtk_widget_get_window(CLOCK_PIX(sp, cp->chan))));
+      return(GDK_DRAWABLE(gtk_widget_get_window(CLOCK_PIX(sp, 0))));
     }
   return(NULL);
 }
@@ -1289,7 +1289,7 @@ void display_filter_env(snd_info *sp)
   width = widget_width(drawer);
   ax = (axis_context *)CALLOC(1, sizeof(axis_context));
   ax->gc = ss->sgx->fltenv_basic_gc;
-  ax->wn = drawer->window;
+  ax->wn = gtk_widget_get_window(drawer);
   ax->w = drawer;
 #if USE_CAIRO
   ax->cr = gdk_cairo_create(ax->wn);
@@ -1707,7 +1707,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), NAME_PIX(sp), false, false, 2);
       gtk_widget_show(NAME_PIX(sp));
       sp->sgx->name_pix_ax = (axis_context *)CALLOC(1, sizeof(axis_context));
-      sp->sgx->name_pix_ax->wn = NAME_PIX(sp)->window;
+      sp->sgx->name_pix_ax->wn = gtk_widget_get_window(NAME_PIX(sp));
       sp->sgx->name_pix_ax->gc = ss->sgx->basic_gc;
       SG_SIGNAL_CONNECT(NAME_PIX(sp), "expose_event", name_pix_expose, sp);
 
@@ -1717,7 +1717,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), STOP_PIX(sp), false, false, 2);
       gtk_widget_show(STOP_PIX(sp));
       sp->sgx->stop_pix_ax = (axis_context *)CALLOC(1, sizeof(axis_context));
-      sp->sgx->stop_pix_ax->wn = STOP_PIX(sp)->window;
+      sp->sgx->stop_pix_ax->wn = gtk_widget_get_window(STOP_PIX(sp));
       sp->sgx->stop_pix_ax->gc = ss->sgx->basic_gc;
       SG_SIGNAL_CONNECT(STOP_PIX(sp), "button_press_event", stop_sign_press, sp);
 
@@ -1735,7 +1735,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
 	    gtk_box_pack_start(GTK_BOX(NAME_HBOX(sp)), CLOCK_PIX(sp, i), false, false, 2);
 	    gtk_widget_show(CLOCK_PIX(sp, i));
 	    sp->sgx->clock_pix_ax[i] = (axis_context *)CALLOC(1, sizeof(axis_context));
-	    sp->sgx->clock_pix_ax[i]->wn = CLOCK_PIX(sp, i)->window;
+	    sp->sgx->clock_pix_ax[i]->wn = gtk_widget_get_window(CLOCK_PIX(sp, i));
 	    sp->sgx->clock_pix_ax[i]->gc = ss->sgx->basic_gc;
 	    SG_SIGNAL_CONNECT(CLOCK_PIX(sp, i), "expose_event", clock_pix_expose, sp->chans[i]);
 	  }
@@ -1854,7 +1854,7 @@ snd_info *add_sound_window(char *filename, read_only_t read_only, file_info *hdr
       gtk_widget_set_size_request(SPEED_ARROW(sp), 18, 16);
       gtk_widget_show(SPEED_ARROW(sp));
       sp->sgx->speed_arrow_ax = (axis_context *)CALLOC(1, sizeof(axis_context));
-      sp->sgx->speed_arrow_ax->wn = SPEED_ARROW(sp)->window;
+      sp->sgx->speed_arrow_ax->wn = gtk_widget_get_window(SPEED_ARROW(sp));
       sp->sgx->speed_arrow_ax->gc = ss->sgx->basic_gc;
       SG_SIGNAL_CONNECT(SPEED_ARROW(sp), "expose_event", speed_arrow_expose, sp);
       SG_SIGNAL_CONNECT(SPEED_ARROW(sp), "button_press_event", speed_arrow_press, sp);

@@ -1321,11 +1321,11 @@ static gboolean reflect_text_in_open_button(GtkWidget *w, GdkEventKey *event, gp
 
 static file_dialog_info *make_file_dialog(read_only_t read_only, const char *title, const char *file_title, const char *ok_title,
 					  snd_dialog_t which_dialog, 
-					  GtkSignalFunc file_ok_proc,
-					  GtkSignalFunc file_mkdir_proc,
-					  GtkSignalFunc file_delete_proc,
-					  GtkSignalFunc file_dismiss_proc,
-					  GtkSignalFunc file_help_proc,
+					  GCallback file_ok_proc,
+					  GCallback file_mkdir_proc,
+					  GCallback file_delete_proc,
+					  GCallback file_dismiss_proc,
+					  GCallback file_help_proc,
 					  const gchar *stock)
 {
   file_dialog_info *fd;
@@ -1608,11 +1608,11 @@ widget_t make_open_file_dialog(read_only_t read_only, bool managed)
 			      (char *)((read_only == FILE_READ_ONLY) ? _("view:") : _("open:")),
 			      NULL,
 			      FILE_OPEN_DIALOG,
-			      (GtkSignalFunc)file_open_dialog_ok,	
-			      (GtkSignalFunc)file_open_dialog_mkdir,
-			      (GtkSignalFunc)file_open_dialog_delete,
-			      (GtkSignalFunc)file_open_dialog_dismiss,
-			      (GtkSignalFunc)file_open_dialog_help,
+			      (GCallback)file_open_dialog_ok,	
+			      (GCallback)file_open_dialog_mkdir,
+			      (GCallback)file_open_dialog_delete,
+			      (GCallback)file_open_dialog_dismiss,
+			      (GCallback)file_open_dialog_help,
 			      GTK_STOCK_OPEN);
       preload_filenames(odat->fs->file_text_names);
     }
@@ -1712,11 +1712,11 @@ widget_t make_mix_file_dialog(bool managed)
   if (mdat == NULL)
     {
       mdat = make_file_dialog(FILE_READ_ONLY, _("Mix"), _("mix:"), _("Mix"), FILE_MIX_DIALOG,
-			      (GtkSignalFunc)file_mix_ok_callback,
+			      (GCallback)file_mix_ok_callback,
 			      NULL, /* no mkdir */
-			      (GtkSignalFunc)file_mix_delete_callback,
-			      (GtkSignalFunc)file_mix_cancel_callback,
-			      (GtkSignalFunc)file_mix_help_callback,
+			      (GCallback)file_mix_delete_callback,
+			      (GCallback)file_mix_cancel_callback,
+			      (GCallback)file_mix_help_callback,
 			      GTK_STOCK_ADD);
     }
   else
@@ -1812,11 +1812,11 @@ widget_t make_insert_file_dialog(bool managed)
 {
   if (idat == NULL)
     idat = make_file_dialog(FILE_READ_ONLY, _("Insert"), _("insert:"), _("Insert"), FILE_INSERT_DIALOG,
-			    (GtkSignalFunc)file_insert_ok_callback,
+			    (GCallback)file_insert_ok_callback,
 			    NULL, /* no mkdir */
-			    (GtkSignalFunc)file_insert_delete_callback,
-			    (GtkSignalFunc)file_insert_cancel_callback,
-			    (GtkSignalFunc)file_insert_help_callback,
+			    (GCallback)file_insert_delete_callback,
+			    (GCallback)file_insert_cancel_callback,
+			    (GCallback)file_insert_help_callback,
 			    GTK_STOCK_PASTE);
   else
     {
@@ -4318,7 +4318,7 @@ static gboolean select_event_callback(GtkWidget *w, GdkEventButton *ev, gpointer
 }
 
 
-static vf_row *make_vf_row(view_files_info *vdat, GtkSignalFunc play_callback, GtkSignalFunc name_callback)
+static vf_row *make_vf_row(view_files_info *vdat, GCallback play_callback, GCallback name_callback)
 {
   vf_row *r;
   r = (vf_row *)CALLOC(1, sizeof(vf_row));
@@ -4486,7 +4486,7 @@ static void view_files_play_callback(GtkWidget *w, gpointer context)
 
 vf_row *view_files_make_row(view_files_info *vdat, widget_t ignored)
 {
-  return(make_vf_row(vdat, (GtkSignalFunc)view_files_play_callback, (GtkSignalFunc)view_files_select_callback));
+  return(make_vf_row(vdat, (GCallback)view_files_play_callback, (GCallback)view_files_select_callback));
 }
 
 
@@ -5067,18 +5067,18 @@ static void vf_amp_env_resize(view_files_info *vdat, GtkWidget *w)
 {
   if (vdat->env_ax == NULL)
     {
-      vdat->env_gc = gc_new(w->window);
+      vdat->env_gc = gc_new(gtk_widget_get_window(w));
       gc_set_background(vdat->env_gc, ss->sgx->graph_color);
       gc_set_foreground(vdat->env_gc, ss->sgx->data_color);
       gc_set_function(vdat->env_gc, GDK_COPY);
       vdat->env_ax = (axis_context *)CALLOC(1, sizeof(axis_context));
-      vdat->env_ax->wn = w->window;
+      vdat->env_ax->wn = gtk_widget_get_window(w);
       vdat->env_ax->w = w;
       vdat->env_ax->gc = vdat->env_gc;
     }
   else clear_window(vdat->env_ax);
 #if USE_CAIRO
-  vdat->env_ax->cr = gdk_cairo_create(w->window);
+  vdat->env_ax->cr = gdk_cairo_create(gtk_widget_get_window(w));
 #endif
   vdat->spf->with_dots = true;
   env_editor_display_env(vdat->spf, vdat->amp_env, vdat->env_ax, NULL, 0, 0, widget_width(w), widget_height(w), NOT_PRINTING);

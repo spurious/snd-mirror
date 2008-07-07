@@ -439,9 +439,9 @@ widget_t record_file(void)
       set_dialog_widget(RECORDER_DIALOG, recorder);
 
       recorder_ax = (axis_context *)CALLOC(1, sizeof(axis_context));
-      recorder_ax->wn = meters->window;
+      recorder_ax->wn = gtk_widget_get_window(meters);
 #if (!USE_CAIRO)
-      recorder_ax->gc = gc_new(GDK_DRAWABLE(meters->window));
+      recorder_ax->gc = gc_new(GDK_DRAWABLE(gtk_widget_get_window(meters)));
       gc_set_background(recorder_ax->gc, ss->sgx->white);
       gc_set_foreground(recorder_ax->gc, ss->sgx->black);
       gc_set_function(recorder_ax->gc, GDK_COPY);

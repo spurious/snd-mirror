@@ -393,7 +393,7 @@ static gboolean regrow_mouse_leave_label(GtkWidget *w, GdkEventCrossing *ev, gpo
 }
 
 
-static regrow *make_regrow(GtkWidget *ww, GtkSignalFunc play_callback, GtkSignalFunc name_callback)
+static regrow *make_regrow(GtkWidget *ww, GCallback play_callback, GCallback name_callback)
 {
   regrow *r;
   r = (regrow *)CALLOC(1, sizeof(regrow));

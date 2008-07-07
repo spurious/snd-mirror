@@ -156,7 +156,7 @@
 		      (gtk_box_pack_start (GTK_BOX scan-outer) grf #t #t 0)
 		      (gtk_widget_show grf)
 		      (if (not (provided? 'cairo))
-			  (gdk_window_set_background (.window grf) (graph-color)))
+			  (gdk_window_set_background (gtk_widget_get_window grf) (graph-color)))
 		      grf))
 	 ;; the controllers
 	 (scan-start (let ((label (gtk_button_new_with_label "Start")))
@@ -203,7 +203,7 @@
 	       (> ay1 ay0))
 	  (if (provided? 'cairo)
 	      (let* ((diff (* 0.05 (- ay1 ay0))) ; assuming -10 to 10 
-		     (wn (GDK_DRAWABLE (.window scan-pane)))
+		     (wn (GDK_DRAWABLE (gtk_widget_get_window scan-pane)))
 		     (cr (gdk_cairo_create wn))
 		     (xincr (/ (- ax1 ax0) size))
 		     (bg-color (color->list (basic-color))))
@@ -235,7 +235,7 @@
 
 	      ;; gdk version
 	      (let ((diff (* 0.05 (- ay1 ay0))) ; assuming -10 to 10 
-		    (wn (GDK_DRAWABLE (.window scan-pane)))
+		    (wn (GDK_DRAWABLE (gtk_widget_get_window scan-pane)))
 		    (xincr (/ (- ax1 ax0) size)))
 		(if pts1
 		    (gdk_draw_lines wn egc (list 'GdkPoint_ pts1) size)
@@ -773,7 +773,7 @@ Reverb-feedback sets the scaler on the feedback.
 (define snd-clock-icon
   (if (provided? 'cairo)
       (lambda (snd hour)
-	(let* ((window (GDK_DRAWABLE (.window (list-ref (sound-widgets snd) 8))))
+	(let* ((window (GDK_DRAWABLE (gtk_widget_get_window (list-ref (sound-widgets snd) 8))))
 	       (cr (gdk_cairo_create window))
 	       (bg (color->list (basic-color))))
 	  (cairo_set_source_rgb cr (car bg) (cadr bg) (caddr bg))
@@ -810,7 +810,7 @@ Reverb-feedback sets the scaler on the feedback.
 			   (- 8 (inexact->exact (round (* 7 (cos (* i (/ 3.1416 6.0))))))))))
 	(gdk_gc_set_foreground dgc (data-color))
 	(lambda (snd hour)
-	  (gdk_draw_drawable (GDK_DRAWABLE (.window (list-ref (sound-widgets snd) 8))) dgc 
+	  (gdk_draw_drawable (GDK_DRAWABLE (gtk_widget_get_window (list-ref (sound-widgets snd) 8))) dgc 
 			     (GDK_DRAWABLE (vector-ref clock-pixmaps hour)) 0 0 0 4 16 16)
 	  #f)))))
 
@@ -819,7 +819,7 @@ Reverb-feedback sets the scaler on the feedback.
 ;;; this is the happy face progress bar
 
 (define (snd-happy-face snd progress)
-  (let* ((window (GDK_DRAWABLE (.window (list-ref (sound-widgets snd) 8))))
+  (let* ((window (GDK_DRAWABLE (gtk_widget_get_window (list-ref (sound-widgets snd) 8))))
 	 (cr (gdk_cairo_create window))
 	 (bg (color->list (basic-color)))
 	 (fc (list 1.0 progress 0.0)))
@@ -936,7 +936,7 @@ Reverb-feedback sets the scaler on the feedback.
 	(g_signal_connect meter "expose_event" (lambda (w e d) (display-level d)) context)
 	(g_signal_connect meter "configure_event" 
 			  (lambda (w e d)
-			    (let ((xy (gdk_drawable_get_size (GDK_DRAWABLE (.window w)))))
+			    (let ((xy (gdk_drawable_get_size (GDK_DRAWABLE (gtk_widget_get_window w)))))
 			      (list-set! d 5 (car xy))
 			      (list-set! d 6 (cadr xy))
 			      (display-level d)))
@@ -951,7 +951,7 @@ Reverb-feedback sets the scaler on the feedback.
 	 (width (list-ref meter-data 5))
 	 (height (list-ref meter-data 6))
 	 ;; (size (list-ref meter-data 2))
-	 (win (GDK_DRAWABLE (.window meter)))
+	 (win (GDK_DRAWABLE (gtk_widget_get_window meter)))
 	 (major-tick (inexact->exact (round (/ width 24))))
 	 (minor-tick (inexact->exact (round (* major-tick .6))))
 	 (wid2 (inexact->exact (floor (/ width 2))))
@@ -1106,7 +1106,7 @@ Reverb-feedback sets the scaler on the feedback.
   ;; add n level meters to a pane at the top of the Snd window
   (let* ((parent (list-ref (main-widgets) 5))
 	 (height (if (> n 2) 70 85))
-	 (parent-width (cadr (gdk_drawable_get_size (GDK_DRAWABLE (.window parent)))))
+	 (parent-width (cadr (gdk_drawable_get_size (GDK_DRAWABLE (gtk_widget_get_window parent)))))
 	 (width (inexact->exact (floor (/ parent-width n))))
 	 (meters (gtk_hbox_new #t 4))
 	 (meter-list '()))
@@ -1263,8 +1263,8 @@ Reverb-feedback sets the scaler on the feedback.
 (define (variable-display var widget)
 
   (define (force-update wid)
-    (gdk_window_invalidate_rect (GDK_WINDOW (.window (GTK_WIDGET wid))) (list 'GdkRectangle_ 0) #t)
-    (gdk_window_process_updates (GDK_WINDOW (.window (GTK_WIDGET wid))) #t))
+    (gdk_window_invalidate_rect (GDK_WINDOW (gtk_widget_get_window (GTK_WIDGET wid))) (list 'GdkRectangle_ 0) #t)
+    (gdk_window_process_updates (GDK_WINDOW (gtk_widget_get_window (GTK_WIDGET wid))) #t))
 
   (define (widget? w) (and (list? w) (= (length w) 2) (eq? (car w) 'GtkWidget_)))
 
@@ -1602,7 +1602,7 @@ Reverb-feedback sets the scaler on the feedback.
 
 (define* (c-circles :optional (xc 5.0)  (yc 5.0) (radius 100.0) (width 2))
   (let* ((drawer (car (channel-widgets)))
-	 (cr (gdk_cairo_create (GDK_DRAWABLE (.window drawer)))))
+	 (cr (gdk_cairo_create (GDK_DRAWABLE (gtk_widget_get_window drawer)))))
 
     (let ((angle1 0)
 	  (angle2 pi))
