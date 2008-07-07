@@ -4027,7 +4027,7 @@ static int alsa_max_capture_channels = 32;
 
 /* first default name for pcm configuration */
 
-static char *alsa_sndlib_device_name = "sndlib";
+static char *alsa_sndlib_device_name = (char *)"sndlib";
 
 /* second default for playback and capture: hardware pcm, first card, first device */
 /* pcms used by sndlib, playback and capture */

@@ -5354,6 +5354,19 @@ undo-channel is a "regularized" version of <a href="extsnd.html#undo">undo</a>.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
+<!-- with-threaded-channels -->
+<tr><td colspan=2 bgcolor="#f2f4ff">
+<em class=emdef>with-threaded-channels</em> <code>(func)</code>
+</td></tr><tr><td></td><td>
+with-threaded-channels is an experiment in multithreading.  It applies 'func', a function
+of one argument (the current channel number), to each channel in the current sound,
+using a separate thread for each call.  
+<pre>
+    (with-threaded-channels (lambda (chn) (src-channel 2.0 0 #f #f chn)))
+</pre>
+</td></tr><tr><td colspan=2 height=16></td></tr>
+
+
 <!-- with-reopen-menu -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <a class=def name="withreopenmenu">with-reopen-menu</a> <code>()</code>

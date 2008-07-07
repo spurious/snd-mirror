@@ -1124,16 +1124,17 @@ void cleanup_cw(chan_info *cp)
       chan_context *cx;
       GtkWidget **cw;
       free_fft_pix(cp);
+      cx = cp->cgx;
 #if USE_CAIRO
       free_cursor_pix(cp);
       free_sono_cursor_pix(cp);
+      cx->progress_pct = -1.0;
 #endif
       if (EDIT_HISTORY_LIST(cp)) 
 	{
 	  slist_clear(EDIT_HISTORY_LIST(cp));
-	  gtk_paned_set_position(GTK_PANED(cp->cgx->chan_widgets[W_main_window]), 1);
+	  gtk_paned_set_position(GTK_PANED(cx->chan_widgets[W_main_window]), 1);
 	}
-      cx = cp->cgx;
       cx->selected = false;
       cw = cx->chan_widgets;
       if (cw)

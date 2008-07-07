@@ -3072,7 +3072,9 @@ void finish_progress_report(chan_info *cp)
       ((cp->chan == 0) ||
        (sp->channel_style != CHANNELS_SUPERIMPOSED)))
     {
+#if HAVE_XPM
       XtVaSetValues(PROGRESS_ICON(cp), XmNlabelPixmap, blank_pixmap, NULL);
+#endif
 #if (!HAVE_PTHREADS)
       XmUpdateDisplay(PROGRESS_ICON(cp));
 #endif

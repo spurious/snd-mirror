@@ -434,9 +434,15 @@ static gboolean clock_pix_expose(GtkWidget *w, GdkEventExpose *ev, gpointer data
       (CLOCK_PIX(sp, cp->chan)) &&
       (sp->sgx->clock_pix_ax[cp->chan]))
     {
+#if (!USE_CAIRO)
       if (cp->cgx->current_hourglass >= 0)
 	draw_picture(sp->sgx->clock_pix_ax[cp->chan], hourglasses[cp->cgx->current_hourglass], 0, 0, 0, 4, 16, 16);
       else draw_picture(sp->sgx->clock_pix_ax[cp->chan], blank, 0, 0, 0, 4, 16, 16);
+#else
+      if (cp->cgx->progress_pct >= 0.0)
+	show_happy_face(sound_pix_wn(cp), cp->cgx->progress_pct);
+      else hide_happy_face(sound_pix_wn(cp));
+#endif
     }
   return(false);
 }
@@ -2222,7 +2228,10 @@ void progress_report(chan_info *cp, Float pct)
     show_hourglass(sp, cp->chan, which);
   }
 #else
-  show_happy_face(sound_pix_wn(cp), pct);
+  {
+    cp->cgx->progress_pct = pct;
+    show_happy_face(sound_pix_wn(cp), pct);
+  }
 #endif
 
   check_for_event();
@@ -2243,7 +2252,10 @@ void finish_progress_report(chan_info *cp)
 #if (!USE_CAIRO)
   hide_hourglass(sp, cp->chan);
 #else
-  hide_happy_face(sound_pix_wn(cp));
+  {
+    cp->cgx->progress_pct = -1.0;
+    hide_happy_face(sound_pix_wn(cp));
+  }
 #endif
   hide_stop_sign(sp);
 }
@@ -2263,7 +2275,10 @@ void start_progress_report(chan_info *cp)
 #if (!USE_CAIRO)
   show_hourglass(sp, cp->chan, 0);
 #else
-  show_happy_face(sound_pix_wn(cp), 0.0);
+  {
+    cp->cgx->progress_pct = 0.0;
+    show_happy_face(sound_pix_wn(cp), 0.0);
+  }
 #endif
 
   show_stop_sign(sp);

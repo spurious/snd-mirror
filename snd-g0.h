@@ -144,6 +144,7 @@ typedef struct {
   unsigned int sono_cursor_pix_width, sono_cursor_pix_height;
   int sono_cursor_pix_x0, sono_cursor_pix_y0;
   bool sono_cursor_pix_ready;
+  Float progress_pct;
 #endif
 } chan_context;
 

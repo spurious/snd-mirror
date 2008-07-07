@@ -983,7 +983,7 @@ void free_sono_info(chan_info *cp);
 void sono_update(chan_info *cp);
 void set_spectro_cutoff_and_redisplay(Float val);
 void c_convolve(const char *fname, Float amp, int filec, off_t filehdr, int filterc, off_t filterhdr, int filtersize,
-		 int fftsize, int filter_chans, int filter_chan, int data_size, snd_info *gsp, int ip, int total_chans);
+		int fftsize, int filter_chans, int filter_chan, int data_size, snd_info *gsp);
 void *make_sonogram_state(chan_info *cp, bool force_recalc);
 void single_fft(chan_info *cp, bool update_display, bool force_recalc);
 idle_func_t sonogram_in_slices(void *sono);

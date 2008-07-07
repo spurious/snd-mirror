@@ -377,7 +377,7 @@ static char *convolve_with_or_error(char *filename, Float amp, chan_info *cp, XE
 				     mus_sound_data_location(saved_chan_file),
 				     fltfd, dataloc, filtersize, fftsize, filter_chans, impulse_chan,
 				     filtersize + filesize + 1,
-				     gsp, ip, si->chans);
+				     gsp);
 			  impulse_chan++;
 			  if (impulse_chan >= filter_chans) 
 			    impulse_chan = 0;
@@ -845,7 +845,7 @@ static char *reverse_channel(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, XE
 
 
 static char *src_channel_with_error(chan_info *cp, snd_fd *sf, off_t beg, off_t dur, Float ratio, mus_any *egen, 
-				    const char *origin, bool over_selection, int curchan, int chans,
+				    const char *origin, bool over_selection,
 				    bool *clm_err)
 {
   snd_info *sp = NULL;
@@ -1231,7 +1231,7 @@ void src_env_or_num(chan_info *cp, env *e, Float ratio, bool just_num,
 	      else egen = gen;
 	      if (egen) ratio = 0.0;            /* added 14-Mar-01 otherwise the envelope is an offset? */
 	    }
-	  errmsg = src_channel_with_error(cp, sfs[i], si->begs[i], dur, ratio, egen, origin, over_selection, i, si->chans, &clm_err);
+	  errmsg = src_channel_with_error(cp, sfs[i], si->begs[i], dur, ratio, egen, origin, over_selection, &clm_err);
 	  if (egen)
 	    {
 	      if (e) 
@@ -5043,7 +5043,7 @@ sampling-rate convert snd's channel chn by ratio, or following an envelope (a li
     sf = init_sample_read_any(beg, cp, READ_FORWARD, pos);
   else sf = init_sample_read_any(beg + dur - 1, cp, READ_BACKWARD, pos);
 
-  errmsg = src_channel_with_error(cp, sf, beg, dur, ratio, egen, S_src_channel, OVER_SOUND, 1, 1, &clm_err);
+  errmsg = src_channel_with_error(cp, sf, beg, dur, ratio, egen, S_src_channel, OVER_SOUND, &clm_err);
   sf = free_snd_fd(sf);
   if (need_free) mus_free(egen);
   if (errmsg)

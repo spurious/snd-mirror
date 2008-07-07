@@ -748,7 +748,7 @@ void gl2ps_text(const char *msg)
 
 #else
 
-static XEN g_gl_graph_to_ps(XEN filename, XEN output_type, XEN snd, XEN chn)
+static XEN g_gl_graph_to_ps(XEN filename_ignore, XEN output_type_ignore, XEN snd_ignore, XEN chn_ignore)
 {
   #define H_gl_graph_to_ps "gl-graph->ps is a no-op in this version of Snd"
   return(XEN_FALSE);

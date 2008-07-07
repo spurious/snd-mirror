@@ -2532,7 +2532,7 @@ The saved file is " XEN_LANGUAGE_NAME " code, so to restore the marks, load that
 }
 
 
-static XEN g_restore_marks(XEN size, XEN snd, XEN chn, XEN marklist)
+static XEN g_restore_marks(XEN size_ignore, XEN snd_ignore, XEN chn_ignore, XEN marklist_ignore)
 {
   /* this exists so that old saved-state files will still load.  It is obviously now a no-op */
   return(XEN_FALSE);

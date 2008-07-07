@@ -1627,7 +1627,7 @@ static int read_caff_header(int fd)
 }
 
 
-static int write_caff_header(int fd, int wsrate, int wchans, off_t wsize, int format, const char *comment, int len)
+static int write_caff_header(int fd, int wsrate, int wchans, off_t wsize, int format)
 {
   int format_flags = 0, bytes_per_packet = 0, frames_per_packet = 1, bits_per_channel = 0;
 
@@ -5819,7 +5819,7 @@ int mus_header_write(const char *name, int type, int in_srate, int in_chans, off
     case MUS_AIFC:  err = write_aif_header(fd, in_srate, in_chans, siz, format, comment, len, true);             break;
     case MUS_AIFF:  err = write_aif_header(fd, in_srate, in_chans, siz, format, comment, len, false);            break;
     case MUS_RF64:  err = write_rf64_header(fd, in_srate, in_chans, siz, format, comment, len);                  break;
-    case MUS_CAFF:  err = write_caff_header(fd, in_srate, in_chans, siz, format, comment, len);                  break;
+    case MUS_CAFF:  err = write_caff_header(fd, in_srate, in_chans, siz, format);                                break;
     case MUS_IRCAM: err = write_ircam_header(fd, in_srate, in_chans, format, comment, len);                      break;
     case MUS_NIST:  err = write_nist_header(fd, in_srate, in_chans, siz, format);                                break;
     case MUS_RIFF:  
