@@ -1628,11 +1628,11 @@ widget_t start_preferences_dialog(void)
   gtk_widget_set_name(dismissB, "quit_button");
   set_stock_button_label(dismissB, _("Go Away"));
 
-  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(preferences_dialog)->action_area), dismissB, true, true, 10);
-  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(preferences_dialog)->action_area), revertB, true, true, 10);
-  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(preferences_dialog)->action_area), clearB, true, true, 10);
-  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(preferences_dialog)->action_area), saveB, true, true, 10);
-  gtk_box_pack_end(GTK_BOX(GTK_DIALOG(preferences_dialog)->action_area), helpB, true, true, 10);
+  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(preferences_dialog))), dismissB, true, true, 10);
+  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(preferences_dialog))), revertB, true, true, 10);
+  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(preferences_dialog))), clearB, true, true, 10);
+  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(preferences_dialog))), saveB, true, true, 10);
+  gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(preferences_dialog))), helpB, true, true, 10);
 
   SG_SIGNAL_CONNECT(preferences_dialog, "delete_event", preferences_delete_callback, NULL);
   SG_SIGNAL_CONNECT(dismissB, "clicked", preferences_dismiss_callback, NULL);
@@ -1649,7 +1649,7 @@ widget_t start_preferences_dialog(void)
 
   topics = gtk_vbox_new(false, 0);
   scroller = gtk_scrolled_window_new(NULL, NULL);
-  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(preferences_dialog)->vbox), scroller, true, true, 0);
+  gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(GTK_DIALOG(preferences_dialog))), scroller, true, true, 0);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
   gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroller), topics);
 

@@ -501,10 +501,10 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       orient_button = sg_button_new_from_stock_with_label(_("Orientation"), GTK_STOCK_PROPERTIES);
       gtk_widget_set_name(orient_button, "doit_again_button");
 
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(transform_dialog)->action_area), color_button, false, true, 10);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(transform_dialog)->action_area), orient_button, false, true, 10);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(transform_dialog)->action_area), dismiss_button, false, true, 10);
-      gtk_box_pack_end(GTK_BOX(GTK_DIALOG(transform_dialog)->action_area), help_button, false, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(transform_dialog))), color_button, false, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(transform_dialog))), orient_button, false, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(transform_dialog))), dismiss_button, false, true, 10);
+      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(transform_dialog))), help_button, false, true, 10);
 
       SG_SIGNAL_CONNECT(dismiss_button, "clicked", dismiss_transform_callback, NULL);
       SG_SIGNAL_CONNECT(color_button, "clicked", color_transform_callback, NULL);
@@ -517,7 +517,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       gtk_widget_show(help_button);
 
       outer_table = gtk_table_new(2, 4, false); /* rows cols */
-      gtk_container_add(GTK_CONTAINER(GTK_DIALOG(transform_dialog)->vbox), outer_table);
+      gtk_container_add(GTK_CONTAINER(DIALOG_CONTENT_AREA(GTK_DIALOG(transform_dialog))), outer_table);
       gtk_table_set_row_spacings(GTK_TABLE(outer_table), 16);
       gtk_table_set_col_spacings(GTK_TABLE(outer_table), 16);
       gtk_table_set_homogeneous(GTK_TABLE(outer_table), true);

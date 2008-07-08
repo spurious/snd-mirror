@@ -216,7 +216,7 @@
 							 (gtk_widget_hide oscope-dialog) 
 							 #t) 
 			  #f)
-	(gtk_box_pack_start (GTK_BOX (.action_area (GTK_DIALOG oscope-dialog))) dismiss-button #t #t 10)
+	(gtk_box_pack_start (GTK_BOX (gtk_dialog_get_action_area (GTK_DIALOG oscope-dialog))) dismiss-button #t #t 10)
 	(g_signal_connect dismiss-button "clicked" (lambda (w data)
 						     (set! oscope-power #f)
 						     (gtk_widget_hide oscope-dialog)) 
@@ -224,7 +224,7 @@
 	(gtk_widget_show dismiss-button)
 	;; to change button color:   gtk_widget_modify_base(w, GTK_STATE_NORMAL, col);
 	;;                           gtk_widget_modify_base(w, GTK_STATE_PRELIGHT, col);
-	(let ((mainform (.vbox (GTK_DIALOG oscope-dialog))))
+	(let ((mainform (gtk_dialog_get_content_area (GTK_DIALOG oscope-dialog))))
 	  (set! oscope-graph (make-variable-graph mainform "input" max-cycle audio-srate))
 	  (let* ((hbox (gtk_hbox_new #f 0))
 		 (power-button (gtk_toggle_button_new_with_label "power"))

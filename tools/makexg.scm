@@ -2018,6 +2018,7 @@
 (hey " *     win32-specific functions~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     8-Jul-08:  started removing all struct accessors (for Gtk 3).~%")
 (hey " *     --------~%")
 (hey " *     9-Mar:     removed all *_get_type functions (nearly 300!).~%")
 (hey " *     5-Mar-07:  cairo and more gtkprint.~%")

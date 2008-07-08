@@ -2886,7 +2886,14 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 #endif
 
 #if HAVE_SCHEME && USE_GTK && (!HAVE_GTK_ENTRY_GET_TEXT_LENGTH)
+  /* Gtk 3 is removing direct struct accesses (which they should have done years ago), so we need compatibility functions: */
   XEN_EVAL_C_STRING("(define (gtk_widget_get_window w) (.window w))");
+  XEN_EVAL_C_STRING("(define (gtk_font_selection_dialog_get_ok_button w) (.ok_button w))");
+  XEN_EVAL_C_STRING("(define (gtk_font_selection_dialog_get_apply_button w) (.apply_button w))");
+  XEN_EVAL_C_STRING("(define (gtk_font_selection_dialog_get_cancel_button w) (.cancel_button w))");
+  XEN_EVAL_C_STRING("(define (gtk_color_selection_dialog_get_color_selection w) (.colorsel w))");
+  XEN_EVAL_C_STRING("(define (gtk_dialog_get_action_area w) (.action_area w))");
+  XEN_EVAL_C_STRING("(define (gtk_dialog_get_content_area w) (.vbox w))");
 #endif
 
 #if HAVE_RUBY

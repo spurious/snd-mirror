@@ -164,10 +164,10 @@ static void make_edit_find_dialog(bool managed)
       next_button = gtk_button_new_from_stock(GTK_STOCK_GO_FORWARD);
       gtk_widget_set_name(next_button, "doit_button");
 
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_find_dialog)->action_area), cancelB, true, true, 10);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_find_dialog)->action_area), next_button, true, true, 10);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_find_dialog)->action_area), previous_button, true, true, 10);
-      gtk_box_pack_end(GTK_BOX(GTK_DIALOG(edit_find_dialog)->action_area), help_button, true, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(edit_find_dialog))), cancelB, true, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(edit_find_dialog))), next_button, true, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(edit_find_dialog))), previous_button, true, true, 10);
+      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(edit_find_dialog))), help_button, true, true, 10);
       SG_SIGNAL_CONNECT(cancelB, "clicked", edit_find_dismiss, NULL);
       SG_SIGNAL_CONNECT(help_button, "clicked", edit_find_help, NULL);
       SG_SIGNAL_CONNECT(next_button, "clicked", edit_find_next, NULL);
@@ -179,7 +179,7 @@ static void make_edit_find_dialog(bool managed)
       
 
       rc = gtk_hbox_new(false, 0);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_find_dialog)->vbox), rc, true, true, 4);
+      gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(GTK_DIALOG(edit_find_dialog))), rc, true, true, 4);
       gtk_widget_show(rc);
 
       dl = gtk_label_new(_("find:"));
@@ -190,12 +190,12 @@ static void make_edit_find_dialog(bool managed)
       SG_SIGNAL_CONNECT(edit_find_text, "activate", edit_find_next, NULL);
       
       edit_find_label = gtk_label_new(_("global search"));
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(edit_find_dialog)->vbox), edit_find_label, false, false, 4);
+      gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(GTK_DIALOG(edit_find_dialog))), edit_find_label, false, false, 4);
       gtk_widget_show(edit_find_label);
 
 
       find_error_frame = gtk_frame_new(NULL);
-      gtk_box_pack_end(GTK_BOX(GTK_DIALOG(edit_find_dialog)->vbox), find_error_frame, false, false, 4);
+      gtk_box_pack_end(GTK_BOX(DIALOG_CONTENT_AREA(GTK_DIALOG(edit_find_dialog))), find_error_frame, false, false, 4);
 
       find_error_label = gtk_label_new("");
       gtk_container_add(GTK_CONTAINER(find_error_frame), find_error_label);

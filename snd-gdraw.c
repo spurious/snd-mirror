@@ -913,15 +913,15 @@ static void start_view_color_dialog(bool managed)
       gtk_widget_set_name(dismiss_button, "quit_button");
       set_stock_button_label(dismiss_button, _("Go Away"));
 
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(ccd->dialog)->action_area), dismiss_button, false, true, 10);
-      gtk_box_pack_end(GTK_BOX(GTK_DIALOG(ccd->dialog)->action_area), help_button, false, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(ccd->dialog))), dismiss_button, false, true, 10);
+      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(ccd->dialog))), help_button, false, true, 10);
       SG_SIGNAL_CONNECT(dismiss_button, "clicked", dismiss_color_callback, ccd);
       SG_SIGNAL_CONNECT(help_button, "clicked", help_color_callback, NULL);
       gtk_widget_show(dismiss_button);
       gtk_widget_show(help_button);
 
       outer_table = gtk_table_new(5, 3, false);
-      gtk_container_add(GTK_CONTAINER(GTK_DIALOG(ccd->dialog)->vbox), outer_table);
+      gtk_container_add(GTK_CONTAINER(DIALOG_CONTENT_AREA(GTK_DIALOG(ccd->dialog))), outer_table);
 
       scale_box = gtk_table_new(2, 2, false);
       gtk_table_attach(GTK_TABLE(outer_table), scale_box, 0, 3, 0, 1,
@@ -1333,9 +1333,9 @@ static void start_view_orientation_dialog(bool managed)
       reset_button = gtk_button_new_from_stock(GTK_STOCK_REVERT_TO_SAVED);
       gtk_widget_set_name(reset_button, "reset_button");
 
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(oid->dialog)->action_area), dismiss_button, false, true, 10);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(oid->dialog)->action_area), reset_button, false, true, 10);
-      gtk_box_pack_end(GTK_BOX(GTK_DIALOG(oid->dialog)->action_area), help_button, false, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(oid->dialog))), dismiss_button, false, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(oid->dialog))), reset_button, false, true, 10);
+      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(oid->dialog))), help_button, false, true, 10);
       SG_SIGNAL_CONNECT(reset_button, "clicked", reset_orientation_callback, oid);
       SG_SIGNAL_CONNECT(dismiss_button, "clicked", dismiss_orientation_callback, oid);
       SG_SIGNAL_CONNECT(help_button, "clicked", help_orientation_callback, NULL);
@@ -1348,7 +1348,7 @@ static void start_view_orientation_dialog(bool managed)
 #else
       outer_table = gtk_table_new(4, 2, true);
 #endif
-      gtk_container_add(GTK_CONTAINER(GTK_DIALOG(oid->dialog)->vbox), outer_table);
+      gtk_container_add(GTK_CONTAINER(DIALOG_CONTENT_AREA(GTK_DIALOG(oid->dialog))), outer_table);
 
       /* AX */
       ax_box = gtk_table_new(2, 1, false);

@@ -460,11 +460,11 @@ static void make_region_dialog(void)
   save_as_button = gtk_button_new_from_stock(GTK_STOCK_SAVE_AS);
   gtk_widget_set_name(save_as_button, "reset_button");
 
-  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(region_dialog)->action_area), dismiss_button, true, true, 4);
-  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(region_dialog)->action_area), insert_button, true, true, 4);
-  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(region_dialog)->action_area), mix_button, true, true, 4);
-  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(region_dialog)->action_area), save_as_button, true, true, 4);
-  gtk_box_pack_end(GTK_BOX(GTK_DIALOG(region_dialog)->action_area), help_button, true, true, 4);
+  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(region_dialog))), dismiss_button, true, true, 4);
+  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(region_dialog))), insert_button, true, true, 4);
+  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(region_dialog))), mix_button, true, true, 4);
+  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(region_dialog))), save_as_button, true, true, 4);
+  gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(region_dialog))), help_button, true, true, 4);
 
   SG_SIGNAL_CONNECT(insert_button, "clicked", region_insert_callback, NULL);
   SG_SIGNAL_CONNECT(mix_button, "clicked", region_mix_callback, NULL);
@@ -479,7 +479,7 @@ static void make_region_dialog(void)
   gtk_widget_show(save_as_button);
 
   region_grf = gtk_vpaned_new();
-  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(region_dialog)->vbox), region_grf, true, true, 0);
+  gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(GTK_DIALOG(region_dialog))), region_grf, true, true, 0);
   gtk_widget_show(region_grf);
 
   toppane = gtk_hbox_new(false, 0);

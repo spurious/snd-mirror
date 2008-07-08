@@ -55,8 +55,12 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 #if HAVE_GTK_ENTRY_GET_TEXT_LENGTH
   /* 2.13.4 */
   #define WIDGET_TO_WINDOW(Widget) gtk_widget_get_window(Widget)
+  #define DIALOG_ACTION_AREA(Dialog) gtk_dialog_get_action_area(Dialog)
+  #define DIALOG_CONTENT_AREA(Dialog) gtk_dialog_get_content_area(Dialog)
 #else
   #define WIDGET_TO_WINDOW(Widget) ((Widget)->window)
+  #define DIALOG_ACTION_AREA(Dialog) ((Dialog)->action_area)
+  #define DIALOG_CONTENT_AREA(Dialog) ((Dialog)->vbox)
 #endif
 
 #define idle_t guint

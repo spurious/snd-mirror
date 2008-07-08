@@ -6743,12 +6743,33 @@
 (STRUCT "GdkWindowAttr gchar* title gint event_mask gint x gint y gint width gint height GdkVisual* visual GdkColormap* colormap GdkWindowType window_type GdkCursor* cursor gchar* wmclass_name gchar* wmclass_class gboolean override_redirect")
 (STRUCT "GdkGeometry gint min_width gint min_height gint max_width gint max_height gint base_width gint base_height gint width_inc gint height_inc gdouble min_aspect gdouble max_aspect GdkGravity win_gravity")
 
-(STRUCT "GtkAdjustment gdouble lower gdouble upper gdouble &value gdouble step_increment gdouble page_increment gdouble page_size")
-(STRUCT "GtkColorSelectionDialog GtkWidget* colorsel GtkWidget* ok_button GtkWidget* cancel_button GtkWidget* help_button")
-(STRUCT "GtkDialog GtkWidget* vbox GtkWidget* action_area GtkWidget* separator")
-(STRUCT "GtkFontSelectionDialog GtkWidget* fontsel GtkWidget* main_vbox GtkWidget* action_area GtkWidget* ok_button GtkWidget* apply_button GtkWidget* cancel_button gint dialog_width gboolean auto_resize")
 (STRUCT "GtkStyle GdkColor* fg GdkColor* bg GdkColor* light GdkColor* dark GdkColor* mid GdkColor* text GdkColor* base GdkColor* text_aa PangoFontDescription* font_desc gint xthickness gint ythickness GdkGC** fg_gc GdkGC** bg_gc GdkGC** light_gc GdkGC** dark_gc GdkGC** mid_gc GdkGC** text_gc GdkGC** base_gc GdkGC** text_aa_gc GdkGC* black_gc GdkGC* white_gc GdkPixmap** bg_pixmap gint attach_count gint depth GdkColormap* colormap GtkRcStyle* rc_style GSList* styles GArray* property_cache GSList* icon_factories")
-(STRUCT "GtkWidget guint8 state guint8 saved_state gchar* name GtkStyle* style GdkWindow* window GtkWidget* parent")
+
+(STRUCT "GtkAdjustment gdouble lower gdouble upper gdouble &value gdouble step_increment gdouble page_increment gdouble page_size")
+
+(STRUCT "GtkColorSelectionDialog GtkWidget* colorsel GtkWidget* ok_button GtkWidget* cancel_button GtkWidget* help_button") ; all sealed -- need button funcs
+
+
+;;; these still need to be included for backwards compatibility -- need a (!...) case in makexg.scm
+
+(STRUCT "GtkDialog GtkWidget* vbox GtkWidget* action_area GtkWidget* separator") ; all sealed
+(STRUCT "GtkFontSelectionDialog GtkWidget* fontsel GtkWidget* main_vbox GtkWidget* action_area GtkWidget* ok_button GtkWidget* apply_button GtkWidget* cancel_button gint dialog_width gboolean auto_resize") ;all sealed
+(STRUCT "GtkWidget guint8 state guint8 saved_state gchar* name GtkStyle* style GdkWindow* window GtkWidget* parent") ; all sealed
+
+
+;;; for 3.0...
+;;; color selection dialogs  buttons currently must go through the property access maze
+;;;
+;;; done:
+;;;   window -> gtk_widget_get_window
+;;;   vbox -> gtk_dialog_get_content_area
+;;;   action_area -> gtk_dialog_get_action_area
+;;;   colorsel -> gtk_color_selection_dialog_get_color_selection
+;;;   gtk_font_selection_dialog_get_ok|apply|cancel_button
+;;;
+;;; widget get allocation?
+
+
 
 (STRUCT-make "GdkColor guint32 &pixel guint16 &red guint16 &green guint16 &blue")
 (STRUCT-make "GdkCursor GdkCursorType type guint ref_count")

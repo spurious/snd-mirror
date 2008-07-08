@@ -57,21 +57,21 @@
 			(gtk_widget_hide new-dialog)
 			#t) ; this is crucial -- thanks to Kjetil for catching it!
 		      #f)
-    (gtk_box_pack_start (GTK_BOX (.action_area (GTK_DIALOG new-dialog))) dismiss-button #t #t 20)
+    (gtk_box_pack_start (GTK_BOX (gtk_dialog_get_action_area (GTK_DIALOG new-dialog))) dismiss-button #t #t 20)
     (g_signal_connect dismiss-button "clicked" (lambda (w data) (gtk_widget_hide new-dialog)) #f)
     (gtk_widget_show dismiss-button)
-    (gtk_box_pack_start (GTK_BOX (.action_area (GTK_DIALOG new-dialog))) ok-button #t #t 20)
+    (gtk_box_pack_start (GTK_BOX (gtk_dialog_get_action_area (GTK_DIALOG new-dialog))) ok-button #t #t 20)
     (g_signal_connect ok-button "clicked" ok-callback #f)
     (gtk_widget_show ok-button)
     (if reset-button
 	(begin
-	  (gtk_box_pack_start (GTK_BOX (.action_area (GTK_DIALOG new-dialog))) reset-button #t #t 20)
+	  (gtk_box_pack_start (GTK_BOX (gtk_dialog_get_action_area (GTK_DIALOG new-dialog))) reset-button #t #t 20)
 	  (g_signal_connect reset-button "clicked" reset-callback #f)
 	  (gtk_widget_show reset-button)))
-    (gtk_box_pack_end (GTK_BOX (.action_area (GTK_DIALOG new-dialog))) help-button #t #t 20)
+    (gtk_box_pack_end (GTK_BOX (gtk_dialog_get_action_area (GTK_DIALOG new-dialog))) help-button #t #t 20)
     (g_signal_connect help-button "clicked" help-callback #f)
     (gtk_widget_show help-button)
-    ;; build rest in (.vbox (GTK_DIALOG new-dialog))
+    ;; build rest in (gtk_dialog_get_content_area (GTK_DIALOG new-dialog))
 
     (if target-ok-callback
 	(begin
@@ -122,7 +122,7 @@
 	 (use-hbox (= (length sliders) 1))
 	 (table (if (not use-hbox) (gtk_table_new 2 (length sliders) #f)))
 	 (slider 0))
-    (gtk_box_pack_start (GTK_BOX (.vbox (GTK_DIALOG dialog))) mainform #f #f 4)
+    (gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG dialog))) mainform #f #f 4)
     (gtk_widget_show mainform)
     (if (not use-hbox)
 	(begin

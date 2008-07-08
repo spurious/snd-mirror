@@ -283,25 +283,25 @@ static void create_help_monolog(void)
 
   ok_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
   gtk_widget_set_name(ok_button, "quit_button");
-  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->action_area), ok_button, false, true, 20);
+  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(help_dialog))), ok_button, false, true, 20);
   SG_SIGNAL_CONNECT(ok_button, "clicked", dismiss_help_dialog, NULL);
   gtk_widget_show(ok_button);
   set_stock_button_label(ok_button, _("Go Away"));
 
   help_previous_button = gtk_button_new_from_stock(GTK_STOCK_GO_BACK);
   gtk_widget_set_name(help_previous_button, "reset_button");
-  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->action_area), help_previous_button, true, true, 10);
+  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(help_dialog))), help_previous_button, true, true, 10);
   SG_SIGNAL_CONNECT(help_previous_button, "clicked", help_previous_callback, NULL);
   gtk_widget_show(help_previous_button);
 
   help_next_button = gtk_button_new_from_stock(GTK_STOCK_GO_FORWARD);
   gtk_widget_set_name(help_next_button, "doit_button");
-  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->action_area), help_next_button, true, true, 10);
+  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(help_dialog))), help_next_button, true, true, 10);
   SG_SIGNAL_CONNECT(help_next_button, "clicked", help_next_callback, NULL);
   gtk_widget_show(help_next_button);
 
   frame = gtk_frame_new(NULL);
-  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->vbox), frame, true, true, 10); 
+  gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(GTK_DIALOG(help_dialog))), frame, true, true, 10); 
   gtk_widget_show(frame);
 
   help_text = make_scrolled_text(frame, false, 0, false); /* last arg ignored */
@@ -309,11 +309,11 @@ static void create_help_monolog(void)
   gtk_text_view_set_left_margin(GTK_TEXT_VIEW(help_text), 10);
   SG_SIGNAL_CONNECT(help_text, "button_release_event", text_release_callback, NULL);
 
-  related_items = slist_new_with_title(_("related topics"), GTK_DIALOG(help_dialog)->vbox, NULL, 0, BOX_PACK);
+  related_items = slist_new_with_title(_("related topics"), DIALOG_CONTENT_AREA(GTK_DIALOG(help_dialog)), NULL, 0, BOX_PACK);
   related_items->select_callback = help_browse_callback;
 
   hbox = gtk_hbox_new(false, 0);
-  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(help_dialog)->vbox), hbox, false, false, 10); 
+  gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(GTK_DIALOG(help_dialog))), hbox, false, false, 10); 
   gtk_widget_show(hbox);
 
   label = gtk_label_new(_("help topic:"));

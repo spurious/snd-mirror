@@ -291,9 +291,9 @@ static void start_print_dialog(void)
       print_ok_button = sg_button_new_from_stock_with_label(_("Print"), GTK_STOCK_PRINT);
       gtk_widget_set_name(print_ok_button, "doit_button");
 
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(print_dialog)->action_area), print_ok_button, true, true, 4);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(print_dialog)->action_area), dismiss_button, true, true, 4);
-      gtk_box_pack_end(GTK_BOX(GTK_DIALOG(print_dialog)->action_area), help_button, true, true, 4);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(print_dialog))), print_ok_button, true, true, 4);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(print_dialog))), dismiss_button, true, true, 4);
+      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(print_dialog))), help_button, true, true, 4);
       SG_SIGNAL_CONNECT(dismiss_button, "clicked", print_cancel_callback, NULL);
       SG_SIGNAL_CONNECT(help_button, "clicked", print_help_callback, NULL);
       SG_SIGNAL_CONNECT(print_ok_button, "clicked", print_ok_callback, NULL);
@@ -302,11 +302,11 @@ static void start_print_dialog(void)
       gtk_widget_show(help_button);
 
       print_message = gtk_label_new("");
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(print_dialog)->vbox), print_message, false, false, 6);
+      gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(GTK_DIALOG(print_dialog))), print_message, false, false, 6);
       gtk_widget_show(print_message);
 
       epsbox = gtk_hbox_new(false, 0);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(print_dialog)->vbox), epsbox, false, false, 6);
+      gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(GTK_DIALOG(print_dialog))), epsbox, false, false, 6);
       gtk_widget_show(epsbox);
       
       epslabel = gtk_label_new(_("eps file:"));
@@ -317,12 +317,12 @@ static void start_print_dialog(void)
       gtk_entry_set_text(GTK_ENTRY(print_name), eps_file(ss));
 
       print_eps_or_lpr = gtk_check_button_new_with_label(_("direct to printer"));
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(print_dialog)->vbox), print_eps_or_lpr, false, false, 6);
+      gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(GTK_DIALOG(print_dialog))), print_eps_or_lpr, false, false, 6);
       gtk_widget_show(print_eps_or_lpr);
       set_dialog_widget(PRINT_DIALOG, print_dialog);
 
       print_error_text = make_info_widget();
-      gtk_box_pack_end(GTK_BOX(GTK_DIALOG(print_dialog)->vbox), print_error_text, false, false, 0);
+      gtk_box_pack_end(GTK_BOX(DIALOG_CONTENT_AREA(GTK_DIALOG(print_dialog))), print_error_text, false, false, 0);
       gtk_widget_hide(print_error_text);
     }
 }

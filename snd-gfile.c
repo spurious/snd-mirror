@@ -422,11 +422,11 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
   else fs->ok_button = gtk_button_new_from_stock(stock);
   gtk_widget_set_name(fs->ok_button, "doit_button");
 
-  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(fs->dialog)->action_area), fs->ok_button, true, true, 10);
-  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(fs->dialog)->action_area), fs->cancel_button, true, true, 10);
-  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(fs->dialog)->action_area), fs->mkdir_button, true, true, 10);
-  if (with_extract) gtk_box_pack_start(GTK_BOX(GTK_DIALOG(fs->dialog)->action_area), fs->extract_button, true, true, 10);
-  gtk_box_pack_end(GTK_BOX(GTK_DIALOG(fs->dialog)->action_area), fs->help_button, true, true, 10);
+  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(fs->dialog))), fs->ok_button, true, true, 10);
+  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(fs->dialog))), fs->cancel_button, true, true, 10);
+  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(fs->dialog))), fs->mkdir_button, true, true, 10);
+  if (with_extract) gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(fs->dialog))), fs->extract_button, true, true, 10);
+  gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(fs->dialog))), fs->help_button, true, true, 10);
 
   gtk_widget_show(fs->ok_button);
   gtk_widget_show(fs->cancel_button);
@@ -444,7 +444,7 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
      */
 
     row = gtk_hbox_new(false, 10);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(fs->dialog)->vbox), row, false, false, 2);
+    gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(GTK_DIALOG(fs->dialog))), row, false, false, 2);
     gtk_widget_show(row);
 
     /* filter text entry */
@@ -478,7 +478,7 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
   fs->panes = gtk_hpaned_new();
   gtk_widget_set_name(fs->panes, "the_unpane"); /* normal color sash */
   gtk_container_set_border_width(GTK_CONTAINER(fs->panes), 2);
-  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(fs->dialog)->vbox), fs->panes, true, true, 10);
+  gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(GTK_DIALOG(fs->dialog))), fs->panes, true, true, 10);
   gtk_widget_show(fs->panes);
 
   fs->directory_list = slist_new(fs->panes, NULL, 0, PANED_ADD1);
@@ -498,7 +498,7 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
 
 
   /* -------- special case box -------- */
-  add_innards(GTK_DIALOG(fs->dialog)->vbox, data);
+  add_innards(DIALOG_CONTENT_AREA(GTK_DIALOG(fs->dialog)), data);
 
 
   /* -------- file -------- */
@@ -506,7 +506,7 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
     GtkWidget *row, *image;
 
     row = gtk_hbox_new(false, 10);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(fs->dialog)->vbox), row, false, false, 10);
+    gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(GTK_DIALOG(fs->dialog))), row, false, false, 10);
     gtk_widget_show(row);
 
     /* file text entry */
@@ -3412,14 +3412,14 @@ static void make_raw_data_dialog(raw_info *rp, const char *filename, const char 
   okB = gtk_button_new_from_stock(GTK_STOCK_OK);
   gtk_widget_set_name(okB, "doit_button");
 
-  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rp->dialog)->action_area), okB, true, true, 10);
-  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rp->dialog)->action_area), cancelB, true, true, 10);
-  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rp->dialog)->action_area), resetB, true, true, 10);
-  gtk_box_pack_end(GTK_BOX(GTK_DIALOG(rp->dialog)->action_area), helpB, true, true, 10);
+  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(rp->dialog))), okB, true, true, 10);
+  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(rp->dialog))), cancelB, true, true, 10);
+  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(rp->dialog))), resetB, true, true, 10);
+  gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(rp->dialog))), helpB, true, true, 10);
 
   mus_header_raw_defaults(&raw_srate, &raw_chans, &raw_data_format); /* pick up defaults */
 
-  rp->rdat = make_file_data_panel(GTK_DIALOG(rp->dialog)->vbox, "data-form", 
+  rp->rdat = make_file_data_panel(DIALOG_CONTENT_AREA(GTK_DIALOG(rp->dialog)), "data-form", 
 				  WITH_CHANNELS_FIELD, 
 				  MUS_RAW, raw_data_format, 
 				  WITH_DATA_LOCATION_FIELD, 
@@ -3716,13 +3716,13 @@ widget_t make_new_file_dialog(bool managed)
       reset_button = sg_button_new_from_stock_with_label(_("Reset"), GTK_STOCK_REFRESH);
       gtk_widget_set_name(reset_button, "reset_button");
 
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(new_file_dialog)->action_area), new_file_ok_button, true, true, 10);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(new_file_dialog)->action_area), cancel_button, true, true, 10);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(new_file_dialog)->action_area), reset_button, true, true, 10);
-      gtk_box_pack_end(GTK_BOX(GTK_DIALOG(new_file_dialog)->action_area), help_button, true, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(new_file_dialog))), new_file_ok_button, true, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(new_file_dialog))), cancel_button, true, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(new_file_dialog))), reset_button, true, true, 10);
+      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(new_file_dialog))), help_button, true, true, 10);
 
       hform = gtk_hbox_new(false, 0);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(new_file_dialog)->vbox), hform, false, false, 4);
+      gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(GTK_DIALOG(new_file_dialog))), hform, false, false, 4);
       gtk_widget_show(hform);
 
       name_label = gtk_label_new(_("New file:"));
@@ -3735,7 +3735,7 @@ widget_t make_new_file_dialog(bool managed)
       if ((newname) && (*newname))
 	gtk_entry_set_text(GTK_ENTRY(new_file_text), newname); /* output_name?? fix later */
 
-      ndat = make_file_data_panel(GTK_DIALOG(new_file_dialog)->vbox, "data-form", 
+      ndat = make_file_data_panel(DIALOG_CONTENT_AREA(GTK_DIALOG(new_file_dialog)), "data-form", 
 				  WITH_CHANNELS_FIELD, 
 				  default_output_header_type(ss), 
 				  default_output_data_format(ss), 
@@ -4090,11 +4090,11 @@ GtkWidget *edit_header(snd_info *sp)
       ep->save_button = gtk_button_new_from_stock(GTK_STOCK_SAVE);
       gtk_widget_set_name(ep->save_button, "doit_button");
 
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(ep->dialog)->action_area), ep->save_button, true, true, 10);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(ep->dialog)->action_area), cancel_button, true, true, 10);
-      gtk_box_pack_end(GTK_BOX(GTK_DIALOG(ep->dialog)->action_area), help_button, true, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(ep->dialog))), ep->save_button, true, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(ep->dialog))), cancel_button, true, true, 10);
+      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(ep->dialog))), help_button, true, true, 10);
 
-      ep->edat = make_file_data_panel(GTK_DIALOG(ep->dialog)->vbox, _("Edit Header"), 
+      ep->edat = make_file_data_panel(DIALOG_CONTENT_AREA(GTK_DIALOG(ep->dialog)), _("Edit Header"), 
 				      WITH_CHANNELS_FIELD, 
 				      hdr->type, 
 				      hdr->format, 
@@ -4200,11 +4200,11 @@ static void create_post_it_monolog(void)
   ok_button = gtk_button_new_from_stock(GTK_STOCK_OK);
   gtk_widget_set_name(ok_button, "quit_button");
 
-  gtk_box_pack_start(GTK_BOX(GTK_DIALOG(post_it_dialog)->action_area), ok_button, false, true, 20);
+  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(post_it_dialog))), ok_button, false, true, 20);
   SG_SIGNAL_CONNECT(ok_button, "clicked", dismiss_post_it, NULL);
   gtk_widget_show(ok_button);
 
-  post_it_text = make_scrolled_text(GTK_DIALOG(post_it_dialog)->vbox, false, 2, true);
+  post_it_text = make_scrolled_text(DIALOG_CONTENT_AREA(GTK_DIALOG(post_it_dialog)), false, 2, true);
   gtk_text_view_set_left_margin(GTK_TEXT_VIEW(post_it_text), 10);
   gtk_widget_show(post_it_dialog);
   set_dialog_widget(POST_IT_DIALOG, post_it_dialog);
@@ -5207,10 +5207,10 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
       resetB = sg_button_new_from_stock_with_label(_("Reset"), GTK_STOCK_REFRESH);
       gtk_widget_set_name(resetB, "reset_button");
 
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vdat->dialog)->action_area), newB, true, true, 10);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vdat->dialog)->action_area), dismissB, true, true, 10);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vdat->dialog)->action_area), resetB, true, true, 10);
-      gtk_box_pack_end(GTK_BOX(GTK_DIALOG(vdat->dialog)->action_area), helpB, true, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(vdat->dialog))), newB, true, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(vdat->dialog))), dismissB, true, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(vdat->dialog))), resetB, true, true, 10);
+      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(vdat->dialog))), helpB, true, true, 10);
 
       SG_SIGNAL_CONNECT(vdat->dialog, "delete_event", view_files_delete_callback, (gpointer)vdat);
       SG_SIGNAL_CONNECT(dismissB, "clicked", view_files_dismiss_callback, (gpointer)vdat);
@@ -5224,7 +5224,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
       gtk_widget_show(resetB);
 
       mainform = gtk_hpaned_new();
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vdat->dialog)->vbox), mainform, true, true, 0);
+      gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(GTK_DIALOG(vdat->dialog))), mainform, true, true, 0);
       gtk_widget_set_name(mainform, "the_unpane");
       gtk_widget_show(mainform);
 

@@ -628,26 +628,26 @@ GtkWidget *make_mix_dialog(void)
       
       dismiss_button = gtk_button_new_from_stock(GTK_STOCK_QUIT);
       gtk_widget_set_name(dismiss_button, "quit_button");
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(mix_dialog)->action_area), dismiss_button, false, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(mix_dialog))), dismiss_button, false, true, 10);
       SG_SIGNAL_CONNECT(dismiss_button, "clicked", dismiss_mix_dialog, NULL);
       gtk_widget_show(dismiss_button);
       set_stock_button_label(dismiss_button, _("Go Away"));
 
       apply_button = sg_button_new_from_stock_with_label(_("Apply Env"), GTK_STOCK_APPLY);
       gtk_widget_set_name(apply_button, "doit_again_button");
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(mix_dialog)->action_area), apply_button, false, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(mix_dialog))), apply_button, false, true, 10);
       SG_SIGNAL_CONNECT(apply_button, "clicked", apply_mix_dialog, NULL);
       gtk_widget_show(apply_button);
 
       help_button = gtk_button_new_from_stock(GTK_STOCK_HELP);
       gtk_widget_set_name(help_button, "help_button");
-      gtk_box_pack_end(GTK_BOX(GTK_DIALOG(mix_dialog)->action_area), help_button, true, true, 10);
+      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(mix_dialog))), help_button, true, true, 10);
       SG_SIGNAL_CONNECT(help_button, "clicked", mix_dialog_help_callback, NULL);
       gtk_widget_show(help_button);
 
       /* normally hidden error indication at top */
       error_frame = gtk_frame_new(NULL);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(mix_dialog)->vbox), error_frame, false, false, 4);
+      gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(GTK_DIALOG(mix_dialog))), error_frame, false, false, 4);
 
       error_label = make_info_widget();
       gtk_container_add(GTK_CONTAINER(error_frame), error_label);
@@ -657,7 +657,7 @@ GtkWidget *make_mix_dialog(void)
       /* top row of mix id name position */
 
       rc_top = gtk_hbox_new(false, 0);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(mix_dialog)->vbox), rc_top, false, false, 4);
+      gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(GTK_DIALOG(mix_dialog))), rc_top, false, false, 4);
       gtk_widget_show(rc_top);
 
       mix_frame = gtk_frame_new(NULL);
@@ -720,7 +720,7 @@ GtkWidget *make_mix_dialog(void)
 
       /* SPEED */
       w_speed_form = gtk_hbox_new(false, 2);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(mix_dialog)->vbox), w_speed_form, false, false, 4);
+      gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(GTK_DIALOG(mix_dialog))), w_speed_form, false, false, 4);
       
       w_speed_event = gtk_event_box_new();
       gtk_box_pack_start(GTK_BOX(w_speed_form), w_speed_event, false, false, 4);
@@ -759,7 +759,7 @@ GtkWidget *make_mix_dialog(void)
       spf = new_env_editor();
 
       w_amp_form = gtk_hbox_new(false, 2);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(mix_dialog)->vbox), w_amp_form, false, false, 0);
+      gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(GTK_DIALOG(mix_dialog))), w_amp_form, false, false, 0);
       
       w_amp_event = gtk_event_box_new();
       gtk_box_pack_start(GTK_BOX(w_amp_form), w_amp_event, false, false, 4);
@@ -787,7 +787,7 @@ GtkWidget *make_mix_dialog(void)
       gtk_widget_show(w_amp_form);
 
       lo_hbox = gtk_hbox_new(false, 0);
-      gtk_box_pack_start(GTK_BOX(GTK_DIALOG(mix_dialog)->vbox), lo_hbox, true, true, 5);
+      gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(GTK_DIALOG(mix_dialog))), lo_hbox, true, true, 5);
       gtk_widget_show(lo_hbox);
 
       /* GRAPH (frame) */
