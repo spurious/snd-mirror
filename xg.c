@@ -1026,7 +1026,6 @@ XM_TYPE(GtkCalendarDetailFunc, GtkCalendarDetailFunc)
 #if HAVE_GTK_ENTRY_GET_TEXT_LENGTH
 XM_TYPE_PTR_1(GtkMessageDialog_, GtkMessageDialog*)
 XM_TYPE_PTR(GtkScaleButton_, GtkScaleButton*)
-XM_TYPE(GtkAllocation, GtkAllocation)
 #endif
 
 #if HAVE_CAIRO_CREATE
@@ -30725,13 +30724,6 @@ static XEN gxg_gtk_socket_get_plug_window(XEN socket_)
   return(C_TO_XEN_GdkWindow_(gtk_socket_get_plug_window(XEN_TO_C_GtkSocket_(socket_))));
 }
 
-static XEN gxg_gtk_widget_get_allocation(XEN widget)
-{
-  #define H_gtk_widget_get_allocation "GtkAllocation gtk_widget_get_allocation(GtkWidget* widget)"
-  XEN_ASSERT_TYPE(XEN_GtkWidget__P(widget), widget, 1, "gtk_widget_get_allocation", "GtkWidget*");
-  return(C_TO_XEN_GtkAllocation(gtk_widget_get_allocation(XEN_TO_C_GtkWidget_(widget))));
-}
-
 static XEN gxg_gtk_widget_get_window(XEN widget)
 {
   #define H_gtk_widget_get_window "GdkWindow* gtk_widget_get_window(GtkWidget* widget)"
@@ -30744,13 +30736,6 @@ static XEN gxg_gtk_window_get_default(XEN window)
   #define H_gtk_window_get_default "GtkWidget* gtk_window_get_default(GtkWindow* window)"
   XEN_ASSERT_TYPE(XEN_GtkWindow__P(window), window, 1, "gtk_window_get_default", "GtkWindow*");
   return(C_TO_XEN_GtkWidget_(gtk_window_get_default(XEN_TO_C_GtkWindow_(window))));
-}
-
-static XEN gxg_gtk_window_group_list_windows(XEN window_group)
-{
-  #define H_gtk_window_group_list_windows "GList* gtk_window_group_list_windows(GtkWindowGroup* window_group)"
-  XEN_ASSERT_TYPE(XEN_GtkWindowGroup__P(window_group), window_group, 1, "gtk_window_group_list_windows", "GtkWindowGroup*");
-  return(C_TO_XEN_GList_(gtk_window_group_list_windows(XEN_TO_C_GtkWindowGroup_(window_group))));
 }
 
 static XEN gxg_gtk_accel_group_get_modifier_mask(XEN accel_group)
@@ -37896,10 +37881,8 @@ XEN_NARGIFY_1(gxg_gtk_selection_data_get_format_w, gxg_gtk_selection_data_get_fo
 XEN_NARGIFY_2(gxg_gtk_selection_data_get_data_w, gxg_gtk_selection_data_get_data)
 XEN_NARGIFY_1(gxg_gtk_selection_data_get_display_w, gxg_gtk_selection_data_get_display)
 XEN_NARGIFY_1(gxg_gtk_socket_get_plug_window_w, gxg_gtk_socket_get_plug_window)
-XEN_NARGIFY_1(gxg_gtk_widget_get_allocation_w, gxg_gtk_widget_get_allocation)
 XEN_NARGIFY_1(gxg_gtk_widget_get_window_w, gxg_gtk_widget_get_window)
 XEN_NARGIFY_1(gxg_gtk_window_get_default_w, gxg_gtk_window_get_default)
-XEN_NARGIFY_1(gxg_gtk_window_group_list_windows_w, gxg_gtk_window_group_list_windows)
 XEN_NARGIFY_1(gxg_gtk_accel_group_get_modifier_mask_w, gxg_gtk_accel_group_get_modifier_mask)
 #endif
 
@@ -41838,10 +41821,8 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_selection_data_get_data_w gxg_gtk_selection_data_get_data
 #define gxg_gtk_selection_data_get_display_w gxg_gtk_selection_data_get_display
 #define gxg_gtk_socket_get_plug_window_w gxg_gtk_socket_get_plug_window
-#define gxg_gtk_widget_get_allocation_w gxg_gtk_widget_get_allocation
 #define gxg_gtk_widget_get_window_w gxg_gtk_widget_get_window
 #define gxg_gtk_window_get_default_w gxg_gtk_window_get_default
-#define gxg_gtk_window_group_list_windows_w gxg_gtk_window_group_list_windows
 #define gxg_gtk_accel_group_get_modifier_mask_w gxg_gtk_accel_group_get_modifier_mask
 #endif
 
@@ -45787,10 +45768,8 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_selection_data_get_data, gxg_gtk_selection_data_get_data_w, 2, 0, 0, H_gtk_selection_data_get_data);
   XG_DEFINE_PROCEDURE(gtk_selection_data_get_display, gxg_gtk_selection_data_get_display_w, 1, 0, 0, H_gtk_selection_data_get_display);
   XG_DEFINE_PROCEDURE(gtk_socket_get_plug_window, gxg_gtk_socket_get_plug_window_w, 1, 0, 0, H_gtk_socket_get_plug_window);
-  XG_DEFINE_PROCEDURE(gtk_widget_get_allocation, gxg_gtk_widget_get_allocation_w, 1, 0, 0, H_gtk_widget_get_allocation);
   XG_DEFINE_PROCEDURE(gtk_widget_get_window, gxg_gtk_widget_get_window_w, 1, 0, 0, H_gtk_widget_get_window);
   XG_DEFINE_PROCEDURE(gtk_window_get_default, gxg_gtk_window_get_default_w, 1, 0, 0, H_gtk_window_get_default);
-  XG_DEFINE_PROCEDURE(gtk_window_group_list_windows, gxg_gtk_window_group_list_windows_w, 1, 0, 0, H_gtk_window_group_list_windows);
   XG_DEFINE_PROCEDURE(gtk_accel_group_get_modifier_mask, gxg_gtk_accel_group_get_modifier_mask_w, 1, 0, 0, H_gtk_accel_group_get_modifier_mask);
 #endif
 

@@ -1019,6 +1019,8 @@ else
 
 	# for 2.13.0
 	AC_CHECK_LIB(m, gtk_test_widget_click, [AC_DEFINE(HAVE_GTK_TEST_WIDGET_CLICK)], ,$GTK_LIBS)
+	# for 2.13.4
+	AC_CHECK_LIB(m, gtk_entry_get_text_length, [AC_DEFINE(HAVE_GTK_ENTRY_GET_TEXT_LENGTH)], ,$GTK_LIBS)
 
 	# for gdk|pango_cairo 
 	AC_CHECK_LIB(m, gdk_cairo_create, 
