@@ -279,7 +279,7 @@ static void mix_amp_env_resize(GtkWidget *w)
       gc_set_foreground(cur_gc, ss->sgx->data_color);
       gc_set_function(cur_gc, GDK_COPY);
       ax = (axis_context *)CALLOC(1, sizeof(axis_context));
-      ax->wn = gtk_widget_get_window(w_env);
+      ax->wn = WIDGET_TO_WINDOW(w_env);
       ax->w = w_env;
       ax->gc = cur_gc;
     }
@@ -589,11 +589,11 @@ static gboolean mix_dialog_expose(GtkWidget *widget, GdkEventExpose *expose)
       gc_set_background(ggc, ss->sgx->white);
       gc_set_foreground(ggc, ss->sgx->basic_color);
       gax = (axis_context *)CALLOC(1, sizeof(axis_context));
-      gax->wn = gtk_widget_get_window(widget);
+      gax->wn = WIDGET_TO_WINDOW(widget);
       gax->w = widget;
       gax->gc = ggc;
     }
-  gax->cr = gdk_cairo_create(gtk_widget_get_window(widget));
+  gax->cr = gdk_cairo_create(WIDGET_TO_WINDOW(widget));
   erase_rectangle(NULL, gax, 0, 0, widget->allocation.width, widget->allocation.height);
   cairo_destroy(gax->cr);
   return(false);
@@ -836,7 +836,7 @@ GtkWidget *make_mix_dialog(void)
       gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w_clip), true);
 
       mix_play_ax = (axis_context *)CALLOC(1, sizeof(axis_context));
-      mix_play_ax->wn = gtk_widget_get_window(mix_play_pix);
+      mix_play_ax->wn = WIDGET_TO_WINDOW(mix_play_pix);
       mix_play_ax->gc = ss->sgx->basic_gc;
 
       gtk_widget_hide(error_frame);

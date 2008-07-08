@@ -384,7 +384,7 @@ void setup_axis_context(chan_info *cp, axis_context *ax)
     w = channel_graph(sp->chans[0]);
   else w = channel_graph(cp);
   ax->gc = copy_GC(cp);
-  ax->wn = gtk_widget_get_window(w);
+  ax->wn = WIDGET_TO_WINDOW(w);
   ax->w = w;
 }
 

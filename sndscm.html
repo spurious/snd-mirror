@@ -11039,10 +11039,14 @@ each note (each separate expression in the with-sound body) is handled by a sepa
       (fm-violin 0 1 660 .1))
 </pre>
 
-<p>If you put each note in a separate thread, the computation slows down a lot due to
+<p>If start a thread for each note, then join them all at once, the computation slows down a lot due to
 all the thread overhead, so *clm-threads* sets the number of threads running
-through the note list at any one time.  It defaults to 4.  My tests indicate, unfortunately,
-that it is faster to use with-sound; I'm not sure why it is slower with threads.
+through the note list at any one time.  It defaults to 4.  You can speed up
+with-threaded-sound if you set *clm-file-buffer-size* large enough to accomodate
+the entire output, then pass :output-safety 1 to with-threaded-sound.
+You may also have to set <a href="extsnd.html#musmaxmalloc">mus-max-malloc</a> to tell Snd that the huge allocation is intentional.
+Even so, my tests indicate that 
+it is sometimes faster to use with-sound; I need to figure out why...
 </p>
 
 

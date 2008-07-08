@@ -2885,6 +2885,10 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(defmacro define+ (args . body) `(define ,args ,@(cdr body)))"); /* strip out documentation string if embedded defines */
 #endif
 
+#if HAVE_SCHEME && USE_GTK && (!HAVE_GTK_ENTRY_GET_TEXT_LENGTH)
+  XEN_EVAL_C_STRING("(define (gtk_widget_get_window w) (.window w))");
+#endif
+
 #if HAVE_RUBY
   XEN_EVAL_C_STRING("def clm_print(str, *args)\n\
                       snd_print format(str, *args)\n\

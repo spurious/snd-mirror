@@ -1656,7 +1656,7 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   ax->wn = XtWindow(w);
 #endif
 #if USE_GTK
-  ax->wn = gtk_widget_get_window(w);
+  ax->wn = WIDGET_TO_WINDOW(w);
   ax->w = w;
 #endif
 

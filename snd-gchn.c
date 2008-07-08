@@ -385,7 +385,7 @@ static gboolean graph_mouse_enter(GtkWidget *w, GdkEventCrossing *ev, gpointer d
 	     XEN_LIST_2(C_TO_XEN_INT(UNPACK_SOUND(pdata)),
 			C_TO_XEN_INT(UNPACK_CHANNEL(pdata))),
 	     S_mouse_enter_graph_hook);
-  gdk_window_set_cursor(gtk_widget_get_window(w), ss->sgx->graph_cursor);
+  gdk_window_set_cursor(WIDGET_TO_WINDOW(w), ss->sgx->graph_cursor);
   return(false);
 }
 
@@ -399,7 +399,7 @@ static gboolean graph_mouse_leave(GtkWidget *w, GdkEventCrossing *ev, gpointer d
 	     XEN_LIST_2(C_TO_XEN_INT(UNPACK_SOUND(pdata)),
 			C_TO_XEN_INT(UNPACK_CHANNEL(pdata))),
 	     S_mouse_leave_graph_hook);
-  gdk_window_set_cursor(gtk_widget_get_window(w), ss->sgx->arrow_cursor);
+  gdk_window_set_cursor(WIDGET_TO_WINDOW(w), ss->sgx->arrow_cursor);
   return(false);
 }
 
@@ -1264,7 +1264,7 @@ bool fixup_cp_cgx_ax_wn(chan_info *cp)
   if (cp->tcgx) 
     w = channel_graph(cp->sound->chans[0]);
   else w = channel_graph(cp);
-  ax->wn = gtk_widget_get_window(w);
+  ax->wn = WIDGET_TO_WINDOW(w);
   ax->w = w;
   return(ax->wn != NULL);
 }

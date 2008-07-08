@@ -36,7 +36,7 @@ static axis_context *pix_ax = NULL;
 
 static void fixup_axis_context(axis_context *ax, GtkWidget *w, gc_t *gc)
 {
-  ax->wn = gtk_widget_get_window(w);
+  ax->wn = WIDGET_TO_WINDOW(w);
   ax->w = w;
   if (gc) ax->gc = gc;
   ax->current_font = AXIS_NUMBERS_FONT(ss);
@@ -63,7 +63,7 @@ axis_info *enved_make_axis(const char *name, axis_context *ax,
       fixup_axis_context(gray_ap->ax, drawer, ggc);
     }
 #if USE_CAIRO
-  axis->ax->cr = gdk_cairo_create(gtk_widget_get_window(drawer));
+  axis->ax->cr = gdk_cairo_create(WIDGET_TO_WINDOW(drawer));
 #endif
   init_env_axes(axis, name, ex0, ey0, width, height, xmin, xmax, ymin, ymax, printing);
 #if USE_CAIRO
@@ -77,11 +77,11 @@ static void display_env(env *e, const char *name, gc_t *cur_gc, int x0, int y0, 
 {
   axis_context *ax = NULL;  
   ax = (axis_context *)CALLOC(1, sizeof(axis_context));
-  ax->wn = gtk_widget_get_window(drawer);
+  ax->wn = WIDGET_TO_WINDOW(drawer);
   ax->w = drawer;
   ax->gc = cur_gc;
 #if USE_CAIRO
-  ax->cr = gdk_cairo_create(gtk_widget_get_window(drawer));
+  ax->cr = gdk_cairo_create(WIDGET_TO_WINDOW(drawer));
 #endif
   ss->enved->with_dots = dots;
   env_editor_display_env(ss->enved, e, ax, name, x0, y0, width, height, printing);
@@ -262,7 +262,7 @@ static void env_redisplay_1(printing_t printing)
 {
   if (enved_dialog_is_active())
     {
-      gdk_window_clear(gtk_widget_get_window(drawer));
+      gdk_window_clear(WIDGET_TO_WINDOW(drawer));
       if (showing_all_envs) 
 	view_envs(env_window_width, env_window_height, printing);
       else 
@@ -273,7 +273,7 @@ static void env_redisplay_1(printing_t printing)
 	  if (enved_wave_p(ss))
 	    {
 #if USE_CAIRO
-	      gray_ap->ax->cr = gdk_cairo_create(gtk_widget_get_window(drawer));
+	      gray_ap->ax->cr = gdk_cairo_create(WIDGET_TO_WINDOW(drawer));
 #endif
 	      if ((enved_target(ss) == ENVED_SPECTRUM) && (active_env) && (FIR_p) && (printing == NOT_PRINTING))
 		display_frequency_response(active_env, axis, gray_ap->ax, enved_filter_order(ss), enved_in_dB(ss));
@@ -1162,10 +1162,10 @@ GtkWidget *create_envelope_editor(void)
       gtk_widget_show(enved_dialog);
 
       pix_ax = (axis_context *)CALLOC(1, sizeof(axis_context));
-      pix_ax->wn = GDK_DRAWABLE(gtk_widget_get_window(brkpixL));
+      pix_ax->wn = GDK_DRAWABLE(WIDGET_TO_WINDOW(brkpixL));
       pix_ax->gc = hgc;
 #if USE_CAIRO
-      pix_ax->cr = gdk_cairo_create(gtk_widget_get_window(brkpixL));
+      pix_ax->cr = gdk_cairo_create(WIDGET_TO_WINDOW(brkpixL));
 #endif
 
       SG_SIGNAL_CONNECT(drawer, "expose_event", drawer_expose, NULL);
@@ -1207,7 +1207,7 @@ GtkWidget *create_envelope_editor(void)
 GdkDrawable *enved_pix_wn(void);
 GdkDrawable *enved_pix_wn(void)
 {
-  return(GDK_DRAWABLE(gtk_widget_get_window(brkpixL)));
+  return(GDK_DRAWABLE(WIDGET_TO_WINDOW(brkpixL)));
 }
 #endif
 

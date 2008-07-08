@@ -5067,18 +5067,18 @@ static void vf_amp_env_resize(view_files_info *vdat, GtkWidget *w)
 {
   if (vdat->env_ax == NULL)
     {
-      vdat->env_gc = gc_new(gtk_widget_get_window(w));
+      vdat->env_gc = gc_new(WIDGET_TO_WINDOW(w));
       gc_set_background(vdat->env_gc, ss->sgx->graph_color);
       gc_set_foreground(vdat->env_gc, ss->sgx->data_color);
       gc_set_function(vdat->env_gc, GDK_COPY);
       vdat->env_ax = (axis_context *)CALLOC(1, sizeof(axis_context));
-      vdat->env_ax->wn = gtk_widget_get_window(w);
+      vdat->env_ax->wn = WIDGET_TO_WINDOW(w);
       vdat->env_ax->w = w;
       vdat->env_ax->gc = vdat->env_gc;
     }
   else clear_window(vdat->env_ax);
 #if USE_CAIRO
-  vdat->env_ax->cr = gdk_cairo_create(gtk_widget_get_window(w));
+  vdat->env_ax->cr = gdk_cairo_create(WIDGET_TO_WINDOW(w));
 #endif
   vdat->spf->with_dots = true;
   env_editor_display_env(vdat->spf, vdat->amp_env, vdat->env_ax, NULL, 0, 0, widget_width(w), widget_height(w), NOT_PRINTING);

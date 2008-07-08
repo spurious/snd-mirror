@@ -361,10 +361,10 @@ void check_for_event(void)
 
 void force_update(GtkWidget *wid)
 {
-  if ((wid) && (gtk_widget_get_window(wid)))
+  if ((wid) && (WIDGET_TO_WINDOW(wid)))
     {
-      gdk_window_invalidate_rect(GDK_WINDOW(gtk_widget_get_window(wid)), NULL, true);
-      gdk_window_process_updates(GDK_WINDOW(gtk_widget_get_window(wid)), true);
+      gdk_window_invalidate_rect(GDK_WINDOW(WIDGET_TO_WINDOW(wid)), NULL, true);
+      gdk_window_process_updates(GDK_WINDOW(WIDGET_TO_WINDOW(wid)), true);
     }
 }
 
@@ -628,7 +628,7 @@ void set_toggle_button(GtkWidget *wid, bool val, bool passed, void *data)
 guint16 widget_height(GtkWidget *w)
 {
   gint x, y;
-  gdk_drawable_get_size(gtk_widget_get_window(w), &x, &y);
+  gdk_drawable_get_size(WIDGET_TO_WINDOW(w), &x, &y);
   return(y);
 }
 
@@ -636,7 +636,7 @@ guint16 widget_height(GtkWidget *w)
 guint16 widget_width(GtkWidget *w)
 {
   gint x, y;
-  gdk_drawable_get_size(gtk_widget_get_window(w), &x, &y);
+  gdk_drawable_get_size(WIDGET_TO_WINDOW(w), &x, &y);
   return(x);
 }
 
@@ -656,7 +656,7 @@ void set_widget_width(GtkWidget *w, guint16 width)
 gint16 widget_x(GtkWidget *w)
 {
   gint x, y;
-  gdk_window_get_position(gtk_widget_get_window(w), &x, &y);
+  gdk_window_get_position(WIDGET_TO_WINDOW(w), &x, &y);
   return(x);
 }
 
@@ -664,7 +664,7 @@ gint16 widget_x(GtkWidget *w)
 gint16 widget_y(GtkWidget *w)
 {
   gint x, y;
-  gdk_window_get_position(gtk_widget_get_window(w), &x, &y);
+  gdk_window_get_position(WIDGET_TO_WINDOW(w), &x, &y);
   return(y);
 }
 
@@ -685,7 +685,7 @@ void set_widget_size(GtkWidget *w, guint16 width, guint16 height)
 {
 #if 1
   /* This one resizes the window. */
-  gdk_window_resize(gtk_widget_get_window(w), width, height);
+  gdk_window_resize(WIDGET_TO_WINDOW(w), width, height);
 #else
   /* This one doesn't seem to do anything, but the function name seems at least to be quite similar to set_widget_size. */
   GtkRequisition r;
