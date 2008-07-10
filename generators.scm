@@ -5647,7 +5647,7 @@ index 10 (so 10/2 is the bes-jn arg):
 				      (topk (let ((n 0))
 					      (do ((i 0 (+ i 3)))
 						  ((>= i len))
-						(set! n (max n (vct-ref lst i))))
+						(set! n (max n (inexact->exact (floor (vct-ref lst i))))))
 					      n))
 				      (sin-amps (make-vct (+ topk 1)))
 				      (cos-amps (make-vct (+ topk 1))))
@@ -5982,7 +5982,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (define roid polyoid)
 (define roid? polyoid?)
-#|
+|#
 
 #|
 (with-sound (:clipped #f)

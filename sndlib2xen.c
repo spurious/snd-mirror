@@ -642,6 +642,49 @@ header-type is a sndlib type indicator such as " S_mus_aiff "; sndlib currently 
 #else
       ht = XEN_TO_C_INT_OR_ELSE(header_type, MUS_NEXT);
 #endif
+      /* now check that data format and header type are ok together */
+      if (!mus_header_writable(ht, df))
+	{
+	  if ((XEN_INTEGER_P(data_format)) &&
+	      (XEN_INTEGER_P(header_type)))
+	    XEN_ERROR(XEN_ERROR_TYPE("incompatible header type and data format choices"),
+		      XEN_LIST_3(C_TO_XEN_STRING(S_mus_sound_open_output),
+				 C_TO_XEN_STRING(mus_header_type_name(ht)),
+				 C_TO_XEN_STRING(mus_data_format_name(df))));
+	}
+      if (!(XEN_INTEGER_P(data_format)))
+	{
+	  switch (df)
+	    {
+	    case MUS_BFLOAT:  df = MUS_LFLOAT;  break;
+	    case MUS_BDOUBLE: df = MUS_LDOUBLE; break;
+	    case MUS_BINT:    df = MUS_LINT;    break;
+	    case MUS_LFLOAT:  df = MUS_BFLOAT;  break;
+	    case MUS_LDOUBLE: df = MUS_BDOUBLE; break;
+	    case MUS_LINT:    df = MUS_BINT;    break;
+	    }
+	  if (!mus_header_writable(ht, df))
+	    {
+	      int i;
+	      for (i = 1; i < MUS_NUM_DATA_FORMATS; i++) /* MUS_UNSUPPORTED is 0 */
+		{
+		  df = i;
+		  if (mus_header_writable(ht, df))
+		    break;
+		}
+	    }
+	}
+      else
+	{
+	  ht = MUS_NEXT;
+	}
+
+      if (!mus_header_writable(ht, df))
+	XEN_ERROR(XEN_ERROR_TYPE("incompatible header type and data format choices"),
+		  XEN_LIST_3(C_TO_XEN_STRING(S_mus_sound_open_output),
+			     C_TO_XEN_STRING(mus_header_type_name(ht)),
+			     C_TO_XEN_STRING(mus_data_format_name(df))));
+
       if (MUS_HEADER_TYPE_OK(ht))
 	{
 	  int chns;

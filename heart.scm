@@ -51,6 +51,8 @@
   (set! (channel-style ind) channels-superimposed)
   (do ((chan 0 (1+ chan)))
       ((= chan 5))
+    (set! (x-axis-style ind chan) x-axis-in-samples)
+    (set! (x-axis-label ind chan) "days")
     (set! (y-bounds ind chan) (list 50 150)))
 
   ;; print the average readings over the full sequence

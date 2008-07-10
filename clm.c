@@ -508,7 +508,7 @@ int mus_set_safety(mus_any *gen, int val)
   if ((check_gen(gen, S_setB S_mus_safety)) &&
       (gen->core->set_safety))
     return((*(gen->core->set_safety))(gen, val));
-  return((Float)mus_error(MUS_NO_SAFETY, "can't set %s's safety", mus_name(gen)));
+  return(mus_error(MUS_NO_SAFETY, "can't set %s's safety", mus_name(gen)));
 }
 
 

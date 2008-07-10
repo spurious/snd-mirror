@@ -11042,7 +11042,7 @@ each note (each separate expression in the with-sound body) is handled by a sepa
 <p>If start a thread for each note, then join them all at once, the computation slows down a lot due to
 all the thread overhead, so *clm-threads* sets the number of threads running
 through the note list at any one time.  It defaults to 4.  You can speed up
-with-threaded-sound if you set *clm-file-buffer-size* large enough to accomodate
+with-threaded-sound if you set *clm-file-buffer-size* large enough to accommodate
 the entire output, then pass :output-safety 1 to with-threaded-sound.
 You may also have to set <a href="extsnd.html#musmaxmalloc">mus-max-malloc</a> to tell Snd that the huge allocation is intentional.
 Even so, my tests indicate that 

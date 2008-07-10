@@ -1237,8 +1237,11 @@ static XEN mus_optkey_to_input_procedure(XEN key, const char *caller, int n, XEN
   if ((!(XEN_KEYWORD_P(key))) && 
       (!(XEN_FALSE_P(key))))
     {
-      XEN_ASSERT_TYPE(XEN_PROCEDURE_P(key), key, n, caller, "a procedure");
-      if (!(local_arity_ok(key, required_args)))
+      XEN_ASSERT_TYPE(XEN_PROCEDURE_P(key) || MUS_XEN_P(key), key, n, caller, "a procedure or input generator");
+      /* MUS_XEN_P check is redundant except in Gauche */
+      
+      if ((XEN_PROCEDURE_P(key)) &&
+	  (!(local_arity_ok(key, required_args))))
 	XEN_BAD_ARITY_ERROR(caller, n, key, err);
 
       if (MUS_VCT_P(key))

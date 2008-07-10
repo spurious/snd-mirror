@@ -5827,7 +5827,11 @@ int mus_header_write(const char *name, int type, int in_srate, int in_chans, off
       if (err != MUS_NO_ERROR)
 	{
 	  CLOSE(fd, name);
-	  return(mus_error(err,  "can't write %s header for %s", mus_header_type_name(type), name));
+	  return(mus_error(err,  "can't write %s header for %s (fd: %d, format: %s, srate: %d, chans: %d)",
+			   mus_header_type_name(type), 
+			   name, fd,
+			   mus_data_format_short_name(format),
+			   in_srate, in_chans));
 	}
       break;
     case MUS_RAW: 

@@ -144,6 +144,7 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
   int pos;
   peak_env_info *ep;
   env_state *es;
+
   if (samples <= 0) return(NULL);
   stop_peak_env(cp);
   pos = cp->edit_ctr;
@@ -152,6 +153,7 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
   es->slice = 0;
   es->edpos = pos;
   es->m = 0;
+
   if (cp->edits[pos]->peak_env)
     {
       es->ep = cp->edits[pos]->peak_env;
@@ -166,10 +168,12 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
 	{
 	  peak_env_info *old_ep;
 	  old_ep = cp->edits[pos - 1]->peak_env;
+
 	  if ((old_ep) && 
 	      (old_ep->completed))
 	    {
 	      off_t start, end, old_samples;
+
 	      /* here in many cases, the preceding edit's amp env has most of the data we need.
 	       * cp->edits[cp->edit_ctr] describes the current edit, with beg and end, so in the
 	       * simplest case, we can just copy to the bin representing beg, and from the bin
@@ -177,15 +181,19 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
 	       * changed dramatically, we need to do it all.  fmin/fmax need to be set as we copy.
 	       * as-one-edit can mess this up...
 	       */
+
 	      old_samples = cp->edits[pos - 1]->samples;
 	      if (snd_abs_off_t(samples - old_samples) < (samples / 2))
 		{
 		  int start_bin, end_bin, old_end_bin;
+
 		  start = edit_changes_begin_at(cp, cp->edit_ctr);
 		  end = edit_changes_end_at(cp, cp->edit_ctr);
+
 		  if (snd_abs_off_t(end - start) < (samples / 2))
 		    {
 		      int i, j;
+
 		      /* here we'll try to take advantage of an existing envelope */
 		      old_ep = cp->edits[pos - 1]->peak_env;
 		      ep->samps_per_bin = old_ep->samps_per_bin;
@@ -234,6 +242,7 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
 	  int val;
 	  /* we want samps_per_bin to be useful over a wide range of file sizes */
 	  /* 160e6 = about a hour at 44KHz */
+
 	  val = (int)(log((double)(es->samples)));
 	  if (val > 20) val = 20;
 	  ep->peak_env_size = snd_int_pow2(val);
@@ -269,16 +278,19 @@ static bool tick_peak_env(chan_info *cp, env_state *es)
       int n, sb, lm;
       off_t samps_to_read;
       snd_fd *sfd;
+
       if (ep->top_bin != 0)
 	lm = (ep->top_bin - ep->bin + 1);
       else lm = (ep->peak_env_size - ep->bin);
       if (lm <= 0) lm = 1;
+
       samps_to_read = (off_t)(lm * ep->samps_per_bin);
       if (samps_to_read > 1000000)
 	{
 	  lm = 1000000 / ep->samps_per_bin;
 	  samps_to_read = (off_t)(lm * ep->samps_per_bin);
 	}
+
       sb = ep->bin;
       if (sb >= ep->peak_env_size)
 	{
@@ -288,12 +300,14 @@ static bool tick_peak_env(chan_info *cp, env_state *es)
 	  ep->completed = true;
 	  return(true);
 	}
+
       if (es->sf == NULL) 
 	{
 	  es->sf = init_sample_read_any(ep->bin * ep->samps_per_bin, cp, READ_FORWARD, es->edpos);
 	}
       sfd = es->sf;
       if (sfd == NULL) return(false);
+
       for (n = 0; (n < lm) && (sb < ep->peak_env_size); n++, sb++)
 	{
 	  Float ymin, ymax, val;
@@ -369,8 +383,10 @@ idle_func_t get_peak_env(any_pointer_t ptr)
   env_state *es;
   int pos;
   chan_context *cgx;
+
   if ((!cp) || (!(cp->cgx))) return(BACKGROUND_QUIT);
   cgx = cp->cgx;
+
   pos = cp->edit_ctr;
   if ((pos == -1) || 
       (cp->active < CHANNEL_HAS_EDIT_LIST))
@@ -378,8 +394,10 @@ idle_func_t get_peak_env(any_pointer_t ptr)
       free_peak_env_state(cp);
       return(BACKGROUND_QUIT);
     }
+
   if (!(cgx->peak_env_state)) 
     cgx->peak_env_state = make_env_state(cp, CURRENT_SAMPLES(cp));
+
   es = cgx->peak_env_state;
   if (es)
     {
@@ -431,9 +449,11 @@ bool peak_env_usable(chan_info *cp, Float samples_per_pixel, off_t hisamp, bool 
 {
   peak_env_info *ep;
   chan_context *cgx;
+
   cgx = cp->cgx;
   if ((!cgx) || (!(cp->edits)))
     return(false);
+
   ep = cp->edits[edit_pos]->peak_env;
   if (ep)
     {
@@ -444,6 +464,7 @@ bool peak_env_usable(chan_info *cp, Float samples_per_pixel, off_t hisamp, bool 
 	  ((ep->top_bin != 0) && (bin > ep->top_bin)))
 	return(samples_per_pixel >= (Float)(ep->samps_per_bin));
     }
+
   if ((finish_env) && (cgx->peak_env_in_progress) && (cgx->peak_env_state))
     {
       /* caller wants data, but a read is in progress -- finish it as quickly as possible */
@@ -456,6 +477,7 @@ bool peak_env_usable(chan_info *cp, Float samples_per_pixel, off_t hisamp, bool 
       run_peak_env_hook(cp);
       return(peak_env_usable(cp, samples_per_pixel, hisamp, start_new, edit_pos, false));
     }
+
   if ((start_new) &&
       (!(cgx->peak_env_in_progress)) && 
       (CURRENT_SAMPLES(cp) > PEAK_ENV_CUTOFF) &&
@@ -493,6 +515,7 @@ int peak_env_graph(chan_info *cp, axis_info *ap, Float samples_per_pixel, int sr
   if (cp->printing) pinc = (Float)samples_per_pixel / (Float)srate;
   ymin = ep->fmax;
   ymax = ep->fmin;
+
   while (i <= ap->hisamp)
     {
       int k, kk;
@@ -628,18 +651,22 @@ void pick_one_bin(peak_env_info *ep, int bin, off_t cursamp, chan_info *cp, int 
   snd_fd *sf;
   int n;
   Float val, ymin, ymax;
+
   /* here we have to read the current bin using the current fragments */
   sf = init_sample_read_any(cursamp, cp, READ_FORWARD, edpos);
   if (sf == NULL) return;
+
   val = read_sample(sf); 
   ymin = val;
   ymax = val;
+
   for (n = 1; n < ep->samps_per_bin; n++)
     {
       val = read_sample(sf); 
       if (ymin > val) ymin = val; 
       if (ymax < val) ymax = val;
     }
+
   ep->data_max[bin] = ymax;
   ep->data_min[bin] = ymin;
   free_snd_fd(sf);
@@ -649,6 +676,7 @@ void pick_one_bin(peak_env_info *ep, int bin, off_t cursamp, chan_info *cp, int 
 void peak_env_scale_selection_by(chan_info *cp, Float scl, off_t beg, off_t num, int pos)
 {
   peak_env_info *old_ep;
+
   old_ep = cp->edits[pos]->peak_env;
   if ((old_ep) && (old_ep->completed))
     {
@@ -656,20 +684,24 @@ void peak_env_scale_selection_by(chan_info *cp, Float scl, off_t beg, off_t num,
       off_t cursamp, start, end;
       int i;
       peak_env_info *new_ep;
+
       new_ep = cp->edits[cp->edit_ctr]->peak_env;
       if ((new_ep) && 
 	  (new_ep->peak_env_size != old_ep->peak_env_size)) 
 	new_ep = free_peak_env(cp, cp->edit_ctr);
+
       if (new_ep == NULL)
 	{
 	  new_ep = (peak_env_info *)CALLOC(1, sizeof(peak_env_info));
 	  new_ep->data_max = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
 	  new_ep->data_min = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
 	}
+
       new_ep->peak_env_size = old_ep->peak_env_size;
       new_ep->samps_per_bin = old_ep->samps_per_bin;
       end = beg + num - 1;
       start = beg - new_ep->samps_per_bin;
+
       for (i = 0, cursamp = 0; i < new_ep->peak_env_size; i++, cursamp += new_ep->samps_per_bin) 
 	{
 	  if ((cursamp >= end) || (cursamp <= start))
@@ -698,6 +730,7 @@ void peak_env_scale_selection_by(chan_info *cp, Float scl, off_t beg, off_t num,
 	  if (fmin > new_ep->data_min[i]) fmin = new_ep->data_min[i];
 	  if (fmax < new_ep->data_max[i]) fmax = new_ep->data_max[i];
 	}
+
       new_ep->fmin = fmin;
       new_ep->fmax = fmax;
       new_ep->completed = true;
@@ -715,13 +748,16 @@ peak_env_info *peak_env_section(chan_info *cp, off_t beg, off_t num, int edpos)
   Float fmax = MAX_INIT, fmin = MIN_INIT;
   int i, j;
   off_t cursamp, start, end;
+
   old_ep = cp->edits[edpos]->peak_env;
   if (old_ep == NULL) return(NULL);
+
   new_ep = (peak_env_info *)CALLOC(1, sizeof(peak_env_info));
   new_ep->data_max = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
   new_ep->data_min = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
   new_ep->peak_env_size = old_ep->peak_env_size;
   new_ep->samps_per_bin = old_ep->samps_per_bin;
+
   end = beg + num - 1;
   start = beg - new_ep->samps_per_bin;
   for (i = 0, j = 0, cursamp = 0; (i < new_ep->peak_env_size) && (cursamp < end); i++, cursamp += new_ep->samps_per_bin) 
@@ -756,6 +792,7 @@ peak_env_info *copy_peak_env_info(peak_env_info *old_ep, bool reversed)
       (old_ep->completed))
     {
       int i, j;
+
       new_ep = (peak_env_info *)CALLOC(1, sizeof(peak_env_info));
       new_ep->data_max = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
       new_ep->data_min = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
@@ -763,6 +800,7 @@ peak_env_info *copy_peak_env_info(peak_env_info *old_ep, bool reversed)
       new_ep->samps_per_bin = old_ep->samps_per_bin;
       new_ep->fmin = old_ep->fmin;
       new_ep->fmax = old_ep->fmax;
+
       if (reversed)
 	{
 	  for (i = 0, j = new_ep->peak_env_size - 1; i < new_ep->peak_env_size; i++, j--) 
@@ -776,6 +814,7 @@ peak_env_info *copy_peak_env_info(peak_env_info *old_ep, bool reversed)
 	  memcpy((void *)new_ep->data_min, (void *)old_ep->data_min, sizeof(Float) * new_ep->peak_env_size);
 	  memcpy((void *)new_ep->data_max, (void *)old_ep->data_max, sizeof(Float) * new_ep->peak_env_size);
 	}
+
       new_ep->completed = true;
       new_ep->bin = old_ep->bin;
       new_ep->top_bin = old_ep->top_bin;
@@ -800,16 +839,19 @@ void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos, Float base, Fl
       mus_any *e;
       Float val, fmin, fmax;
       peak_env_info *new_ep;
+
       new_ep = cp->edits[cp->edit_ctr]->peak_env;
       if ((new_ep) && 
 	  (new_ep->peak_env_size != old_ep->peak_env_size)) 
 	new_ep = free_peak_env(cp, cp->edit_ctr);
+
       if (new_ep == NULL)
 	{
 	  new_ep = (peak_env_info *)CALLOC(1, sizeof(peak_env_info));
 	  new_ep->data_max = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
 	  new_ep->data_min = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
 	}
+
       new_ep->peak_env_size = old_ep->peak_env_size;
       new_ep->samps_per_bin = old_ep->samps_per_bin;
       if (base == 1.0)
@@ -817,6 +859,7 @@ void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos, Float base, Fl
       else e = mus_make_env(brkpts, npts, 1.0, 0.0, base, 0.0, new_ep->peak_env_size - 1, brkpts);
       fmin = MIN_INIT;
       fmax = MAX_INIT;
+
       for (i = 0; i < new_ep->peak_env_size; i++) 
 	{
 	  val = mus_env(e);
@@ -833,6 +876,7 @@ void amp_env_env(chan_info *cp, Float *brkpts, int npts, int pos, Float base, Fl
 	  if (new_ep->data_min[i] < fmin) fmin = new_ep->data_min[i];
 	  if (new_ep->data_max[i] > fmax) fmax = new_ep->data_max[i];
 	}
+
       new_ep->fmin = fmin;
       new_ep->fmax = fmax;
       new_ep->completed = true;
@@ -856,22 +900,26 @@ void amp_env_env_selection_by(chan_info *cp, mus_any *e, off_t beg, off_t num, i
       int i;
       off_t cursamp, start, end;
       peak_env_info *new_ep;
+
       new_ep = cp->edits[cp->edit_ctr]->peak_env;
       if ((new_ep) && 
 	  (new_ep->peak_env_size != old_ep->peak_env_size)) 
 	new_ep = free_peak_env(cp, cp->edit_ctr);
+
       if (new_ep == NULL)
 	{
 	  new_ep = (peak_env_info *)CALLOC(1, sizeof(peak_env_info));
 	  new_ep->data_max = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
 	  new_ep->data_min = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
 	}
+
       new_ep->peak_env_size = old_ep->peak_env_size;
       new_ep->samps_per_bin = old_ep->samps_per_bin;
       end = beg + num - 1;
       start = beg - new_ep->samps_per_bin;
       data = mus_data(e);
       xmax = data[mus_env_breakpoints(e) * 2 - 2];
+
       for (i = 0, cursamp = 0; i < new_ep->peak_env_size; i++, cursamp += new_ep->samps_per_bin) 
 	{
 	  if ((cursamp >= end) || (cursamp <= start))
@@ -903,6 +951,7 @@ void amp_env_env_selection_by(chan_info *cp, mus_any *e, off_t beg, off_t num, i
 	  if (fmin > new_ep->data_min[i]) fmin = new_ep->data_min[i];
 	  if (fmax < new_ep->data_max[i]) fmax = new_ep->data_max[i];
 	}
+
       new_ep->fmin = fmin;
       new_ep->fmax = fmax;
       new_ep->completed = true;
@@ -923,20 +972,24 @@ void peak_env_ptree(chan_info *cp, struct ptree *pt, int pos, XEN init_func)
       vct *vlo = NULL, *vhi = NULL;
       Float fmin, fmax, dmin, dmax;
       peak_env_info *new_ep;
+
       new_ep = cp->edits[cp->edit_ctr]->peak_env;
       if ((new_ep) && 
 	  (new_ep->peak_env_size != old_ep->peak_env_size)) 
 	new_ep = free_peak_env(cp, cp->edit_ctr);
+
       if (new_ep == NULL)
 	{
 	  new_ep = (peak_env_info *)CALLOC(1, sizeof(peak_env_info));
 	  new_ep->data_max = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
 	  new_ep->data_min = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
 	}
+
       new_ep->peak_env_size = old_ep->peak_env_size;
       new_ep->samps_per_bin = old_ep->samps_per_bin;
       fmin = MIN_INIT;
       fmax = MAX_INIT;
+
       if (XEN_PROCEDURE_P(init_func))
 	{
 	  /* probably faster to copy locally than protect from GC */
@@ -946,6 +999,7 @@ void peak_env_ptree(chan_info *cp, struct ptree *pt, int pos, XEN init_func)
 						   S_ptree_channel " init func")));
 	  vhi = mus_vct_copy(vlo);
 	}
+
       for (i = 0; i < new_ep->peak_env_size; i++) 
 	{
 	  if (vlo)
@@ -971,6 +1025,7 @@ void peak_env_ptree(chan_info *cp, struct ptree *pt, int pos, XEN init_func)
 	  if (new_ep->data_min[i] < fmin) fmin = new_ep->data_min[i];
 	  if (new_ep->data_max[i] > fmax) fmax = new_ep->data_max[i];
 	}
+
       if (vlo) mus_vct_free(vlo);
       if (vhi) mus_vct_free(vhi);
       new_ep->fmin = fmin;
@@ -995,21 +1050,25 @@ void peak_env_ptree_selection(chan_info *cp, struct ptree *pt, off_t beg, off_t 
       bool closure = false, inited = false;
       vct *vlo = NULL, *vhi = NULL;
       off_t cursamp, start, end;
+
       new_ep = cp->edits[cp->edit_ctr]->peak_env;
       if ((new_ep) && 
 	  (new_ep->peak_env_size != old_ep->peak_env_size)) 
 	new_ep = free_peak_env(cp, cp->edit_ctr);
+
       if (new_ep == NULL)
 	{
 	  new_ep = (peak_env_info *)CALLOC(1, sizeof(peak_env_info));
 	  new_ep->data_max = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
 	  new_ep->data_min = (Float *)MALLOC(old_ep->peak_env_size * sizeof(Float));
 	}
+
       new_ep->peak_env_size = old_ep->peak_env_size;
       new_ep->samps_per_bin = old_ep->samps_per_bin;
       end = beg + num - 1;
       start = beg - new_ep->samps_per_bin;
       if (XEN_PROCEDURE_P(init_func)) closure = true;
+
       for (i = 0, cursamp = 0; i < new_ep->peak_env_size; i++, cursamp += new_ep->samps_per_bin) 
 	{
 	  if ((cursamp >= end) || (cursamp <= start))
@@ -1056,6 +1115,7 @@ void peak_env_ptree_selection(chan_info *cp, struct ptree *pt, off_t beg, off_t 
 	  if (fmin > new_ep->data_min[i]) fmin = new_ep->data_min[i];
 	  if (fmax < new_ep->data_max[i]) fmax = new_ep->data_max[i];
 	}
+
       if (vlo) mus_vct_free(vlo);
       if (vhi) mus_vct_free(vhi);
       new_ep->fmin = fmin;
@@ -1077,8 +1137,10 @@ void peak_env_insert_zeros(chan_info *cp, off_t beg, off_t num, int pos)
       off_t end, old_samps, cur_samps;
       int i, j, subsamp, val, bins;
       peak_env_info *new_ep;
+
       new_ep = cp->edits[cp->edit_ctr]->peak_env;
       if (new_ep) new_ep = free_peak_env(cp, cp->edit_ctr);
+
       old_samps = cp->edits[pos]->samples;
       cur_samps = CURRENT_SAMPLES(cp);
       val = (int)(log((double)(cur_samps)));
@@ -1086,6 +1148,7 @@ void peak_env_insert_zeros(chan_info *cp, off_t beg, off_t num, int pos)
       val = snd_int_pow2(val);
       subsamp = val / old_ep->peak_env_size;
       if (subsamp != 1) return;
+
       new_ep = (peak_env_info *)CALLOC(1, sizeof(peak_env_info));
       new_ep->samps_per_bin = old_ep->samps_per_bin;
       new_ep->peak_env_size = (int)(ceil(cur_samps / new_ep->samps_per_bin));
@@ -1100,6 +1163,7 @@ void peak_env_insert_zeros(chan_info *cp, off_t beg, off_t num, int pos)
       new_ep->fmax = old_ep->fmax;
       if (new_ep->fmax < 0.0) new_ep->fmax = 0.0;
       end = beg + num - 1;
+
       if (beg == 0)
 	{
 	  /* insert at start, so copy to end */
@@ -3796,15 +3860,25 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
       if (!mus_header_writable(ht, df)) 
 	df = MUS_OUT_FORMAT;
       if (!mus_header_writable(ht, df))
-	df = ((MUS_OUT_FORMAT == MUS_BFLOAT) ? MUS_LFLOAT : MUS_BFLOAT);
-      if (!mus_header_writable(ht, df))
 	{
-	  int i;
-	  for (i = 1; i < MUS_NUM_DATA_FORMATS; i++) /* MUS_UNSUPPORTED is 0 */
+	  switch (df)
 	    {
-	      df = i;
-	      if (mus_header_writable(ht, df))
-		break;
+	    case MUS_BFLOAT:  df = MUS_LFLOAT;  break;
+	    case MUS_BDOUBLE: df = MUS_LDOUBLE; break;
+	    case MUS_BINT:    df = MUS_LINT;    break;
+	    case MUS_LFLOAT:  df = MUS_BFLOAT;  break;
+	    case MUS_LDOUBLE: df = MUS_BDOUBLE; break;
+	    case MUS_LINT:    df = MUS_BINT;    break;
+	    }
+	  if (!mus_header_writable(ht, df))
+	    {
+	      int i;
+	      for (i = 1; i < MUS_NUM_DATA_FORMATS; i++) /* MUS_UNSUPPORTED is 0 */
+		{
+		  df = i;
+		  if (mus_header_writable(ht, df))
+		    break;
+		}
 	    }
 	}
     }
@@ -4474,10 +4548,12 @@ where each inner list entry can also be " PROC_FALSE "."
 
   snd_info *sp;
   chan_info *cp;
+
   ASSERT_CHANNEL(S_controls_to_channel, snd, chn, 4);
   XEN_ASSERT_TYPE(XEN_OFF_T_P(beg) || XEN_FALSE_P(beg) || XEN_NOT_BOUND_P(beg), beg, XEN_ARG_2, S_controls_to_channel, "an integer");
   XEN_ASSERT_TYPE(XEN_OFF_T_P(dur) || XEN_FALSE_P(dur) || XEN_NOT_BOUND_P(dur), dur, XEN_ARG_3, S_controls_to_channel, "an integer");
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(origin), origin, XEN_ARG_7, S_controls_to_channel, "a string");
+
   sp = get_sp(snd, NO_PLAYERS); /* control changes make sense, but not 'apply' -- expecting just 'play' if a player */
   if (sp)
     {
@@ -4626,10 +4702,12 @@ applies the current control panel state as an edit. \
 The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to selection).  If 'beg' is given, the apply starts there."
 
   snd_info *sp;
+
   ASSERT_SOUND(S_apply_controls, snd, 1);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(choice), choice, XEN_ARG_2, S_apply_controls, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(beg), beg, XEN_ARG_3, S_apply_controls, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(dur), dur, XEN_ARG_4, S_apply_controls, "an integer");
+
   sp = get_sp(snd, NO_PLAYERS); /* control changes make sense, but not 'apply' -- expecting just 'play' if a player */
   if (sp)
     {
@@ -4674,13 +4752,16 @@ the envelopes are complete (they are the result of a background process), and th
   peak_env_info *ep;
   int edpos;
   chan_context *cgx;
+
   ASSERT_CHANNEL(S_peak_env_info, snd, chn, 1);
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(pos), pos, XEN_ARG_3, S_peak_env_info, "an integer");
   cp = get_cp(snd, chn, S_peak_env_info);
   if (!cp) return(XEN_FALSE);
+
   cgx = cp->cgx;
   if ((!cgx) || (!(cp->edits)))
     return(XEN_EMPTY_LIST);
+
   edpos = XEN_TO_C_INT_OR_ELSE(pos, cp->edit_ctr);
   if (edpos == AT_CURRENT_EDIT_POSITION)
 	edpos = cp->edit_ctr;
@@ -4688,6 +4769,7 @@ the envelopes are complete (they are the result of a background process), and th
     XEN_ERROR(NO_SUCH_EDIT,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_peak_env_info),
 			 pos));
+
   ep = cp->edits[edpos]->peak_env;
   if (ep)
     return(XEN_LIST_3(C_TO_XEN_BOOLEAN(ep->completed),
@@ -4724,6 +4806,7 @@ static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
   int fd;
   int ibuf[PEAK_ENV_INTS];
   Float mbuf[PEAK_ENV_SAMPS];
+
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_2, S_write_peak_env_info_file, "a string");
   ASSERT_CHANNEL(S_write_peak_env_info_file, snd, chn, 1);
   cp = get_cp(snd, chn, S_write_peak_env_info_file);
@@ -4733,6 +4816,7 @@ static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
 	      XEN_LIST_3(C_TO_XEN_STRING(S_write_peak_env_info_file),
 			 snd,
 			 chn));
+
   fullname = mus_expand_filename(XEN_TO_C_STRING(name));
   fd = mus_file_create(fullname);
   if (fd == -1)
@@ -4784,6 +4868,7 @@ static peak_env_info *get_peak_env_info(const char *fullname, peak_env_error_t *
   ssize_t bytes;
   int ibuf[PEAK_ENV_INTS];
   Float mbuf[PEAK_ENV_SAMPS];
+
   fd = mus_file_open_read(fullname);
   if (fd == -1) 
     {
@@ -4846,10 +4931,12 @@ static XEN g_read_peak_env_info_file(XEN snd, XEN chn, XEN name)
   chan_info *cp;
   peak_env_error_t err = PEAK_ENV_NO_ERROR;
   char *fullname;
+
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_3, S_read_peak_env_info_file, "a string");
   ASSERT_CHANNEL(S_read_peak_env_info_file, snd, chn, 1);
   cp = get_cp(snd, chn, S_read_peak_env_info_file);
   if ((!cp) || (!(cp->edits))) return(XEN_FALSE);
+
   fullname = mus_expand_filename(XEN_TO_C_STRING(name));
   cp->edits[0]->peak_env = get_peak_env_info(fullname, &err);
   if (fullname) FREE(fullname);
@@ -5008,7 +5095,9 @@ If 'filename' is a sound index (an integer), 'size' is interpreted as an edit-po
   chan_info *cp = NULL;
   int id;
   peak_env_error_t err = PEAK_ENV_NO_ERROR;
+
   if (fullname) {FREE(fullname); fullname = NULL;}
+
   XEN_ASSERT_TYPE(XEN_STRING_P(filename) || XEN_INTEGER_P(filename) || XEN_NOT_BOUND_P(filename), 
 		  filename, XEN_ARG_1, S_channel_amp_envs, "a string or sound index");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_2, S_channel_amp_envs, "an integer");
