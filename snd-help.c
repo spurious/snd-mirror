@@ -512,6 +512,8 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+14-Jul:  Snd 9.11.\n\
+7-July:  with-threaded-channels.\n\
 30-Jun:  flatten-partials.\n\
 27-Jun:  axis-color.\n\
 20-Jun:  time-graph-hook.\n\
@@ -520,8 +522,6 @@ void about_snd_help(void)
 20-May:  rt-various.[ch], rt-coroutines.scm, rt-stalin.scm, rt-DotEmacs, and\n\
            many other changes thanks to Kjetil.\n\
          many const char* changes for g++ 4.3.0.\n\
-17-May:  normalize-partials is now built-in.\n\
-12-May:  expandn (clm-ins.scm) thanks to Michael Klingbeil.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",

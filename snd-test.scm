@@ -2820,7 +2820,7 @@
 	       (vct-set! v 6 0.0)
 	       (do ((i 7 (1+ i)))
 		   ((= i len))
-		 (let ((val (random 2.0)))
+		 (let ((val (random 1.9999)))
 		   (if (or (> val 2.0)
 			   (< val 0.0))
 		       (snd-display ";random 2.0 -> ~A?" val))
@@ -2838,11 +2838,10 @@
 			   (set! maxdiff diff)
 			   (set! maxpos i)))))
 		 (if (> maxdiff allowed-diff)
-		     (snd-display ";[line 2777] ~A: ~A at ~A (~A ~A)" 
+		     (snd-display ";[line 2841] ~A: ~A at ~A (~A ~A)" 
 				  (mus-data-format-name type) 
 				  maxdiff maxpos 
 				  (vct-ref v maxpos) (vct-ref v1 maxpos)))
-		 ;; on 64-bit machines, Guile's random currently returns garbage, so ignore this test
 		 (close-sound ind))))
 	   (list mus-bshort   mus-lshort   mus-mulaw   mus-alaw   mus-byte  
 		 mus-lfloat   mus-bint     mus-lint    mus-b24int mus-l24int
@@ -3002,6 +3001,7 @@
 	    (if (not (= (mus-sound-data-format "test.snd") mus-bshort)) 
 		(snd-display ";saved-as short -> ~A?" (mus-data-format-name (mus-sound-data-format "test.snd"))))
 	    (if (fneq (sample 1000 ab) samp) (snd-display ";next (short)[1000] = ~A?" (sample 1000 ab)))
+	    (reset-hook! update-hook)
 	    (set! (y-bounds ab 0) (list -3.0 3.0))
 	    (set! (data-format ab) mus-lshort)
 	    (if (not (= ab (find-sound "test.snd"))) (set! ab (find-sound "test.snd"))) ; these set!'s can change the index via update-sound
@@ -3607,13 +3607,14 @@
 	  (mus-sound-write fd 0 9 1 sdata)
 	  (mus-sound-close-output fd 20)
 	  (set! fd (mus-sound-open-input "fmv.snd"))
-	  (mus-sound-read fd 0 9 1 sdata)
-	  (if (or (fneq (sound-data-ref sdata 0 0) 0.0)
-		  (fneq (sound-data-ref sdata 0 1) 0.1)
-		  (fneq (sound-data-ref sdata 0 2) 0.1)
-		  (fneq (sound-data-ref sdata 0 3) 0.1)
-		  (fneq (sound-data-ref sdata 0 6) 0.0))
-	      (snd-display ";re-read/write: ~A?" (sound-data->list sdata)))
+	  (let ((sdata1 (make-sound-data 1 10)))
+	    (mus-sound-read fd 0 9 1 sdata1)
+	    (if (or (fneq (sound-data-ref sdata1 0 0) 0.0)
+		    (fneq (sound-data-ref sdata1 0 1) 0.1)
+		    (fneq (sound-data-ref sdata1 0 2) 0.1)
+		    (fneq (sound-data-ref sdata1 0 3) 0.1)
+		    (fneq (sound-data-ref sdata1 0 6) 0.0))
+		(snd-display ";re-read/write: ~A ~A?" (sound-data->list sdata1) (sound-data->lisp sdata))))
 	  (mus-sound-close-input fd)
 	  
 	  ;; check clipping choices
@@ -3769,6 +3770,7 @@
 	    (mus-sound-close-output snd 0))
 	  (delete-file "test.snd")
 	  (mus-sound-forget "test.snd")
+
 	  (set! (mus-clipping) #f) ; this is the default
 	  (set! (clipping) #f)
 	  
@@ -3802,15 +3804,16 @@
 	  (mus-sound-write fd 0 9 4 sdata)
 	  (mus-sound-close-output fd 80)
 	  (set! fd (mus-sound-open-input "fmv.snd"))
-	  (mus-sound-read fd 0 9 4 sdata)
-	  (do ((i 0 (1+ i)))
-	      ((= i 4))
-	    (if (or (fneq (sound-data-ref sdata i 0) 0.0)
-		    (fneq (sound-data-ref sdata i 1) 0.1)
-		    (fneq (sound-data-ref sdata i 2) 0.1)
-		    (fneq (sound-data-ref sdata i 3) 0.1)
-		    (fneq (sound-data-ref sdata i 6) 0.0))
-		(snd-display ";re-read/write[~A]: ~A?" i (sound-data-channel->list sdata i))))
+	  (let ((sdata1 (make-sound-data 4 10)))
+	    (mus-sound-read fd 0 9 4 sdata1)
+	    (do ((i 0 (1+ i)))
+		((= i 4))
+	      (if (or (fneq (sound-data-ref sdata1 i 0) 0.0)
+		      (fneq (sound-data-ref sdata1 i 1) 0.1)
+		      (fneq (sound-data-ref sdata1 i 2) 0.1)
+		      (fneq (sound-data-ref sdata1 i 3) 0.1)
+		      (fneq (sound-data-ref sdata1 i 6) 0.0))
+		  (snd-display ";re-read/write[~A]: ~A ~A?" i (sound-data-channel->list sdata1 i) (sound-data-channel->list sdata i)))))
 	  (mus-sound-close-input fd))
 	
 	(if (file-exists? (string-append sf-dir "32bit.sf"))

@@ -1,33 +1,31 @@
-Snd 9.10
+Snd 9.11
 
-real-time/stalin support thanks to Kjetil.
+more RT improvements from Kjetil
 
-new version of autoc.ins thanks to Bret Battey
+with-threaded-sound (ws.scm and sound.lisp), support in Snd/CLM for threads.
+with-threaded-channels (extensions.scm)
+  (these are still in the "alpha" stage, but bug reports are always welcome)
 
-more Forth-related improvements thanks to Mike.
+changed arguments to the progress-report funcs (need channel-specific
+  widgetry for multi-thread possibilities)
 
-more jack-related changes thanks to Kjetil.
+1 more generator in generators.scm
 
-7 more generators in generators.scm, moved green.scm to generators.scm,
-  moving moving-* from dsp.scm to generators.scm (and moved smoothing-filter
-  to snd9.scm).
+axis-color (to set the axis color in combined graphs)
 
-retired the waveshape generator finally (see generators.scm for replacement).
+time-graph-hook (to set data colors in combined graphs)
 
-added chebyshev-t-sum, chebyshev-u-sum, and chebyshev-tu-sum using the 
-  recursive version of the Tn and Un calculations.  Used by the polyoid 
-  and noid generators in generators.scm to compute peak-phases.scm.
+flatten-partials (avoid spikey waveforms)
 
-4 more birds in animals.scm
+mus-max-malloc, mus-max-table-size, *clm-file-buffer-size* can be a bignum (off_t)
+  (support in Snd/CLM for off_t sized arrays)
 
-normalize-partials is now built-in (mus_normalize_partials in clm.c)
+output-safety arg to with-sound, mus-safety method --
+   part of trying to get full speed from multicore machines.
 
-music5 port: music5.f, music5-examples, old-music5.f
 
-expandn.ins from clm translated to Snd/CLM scheme (clm-ins.scm)
+checked: gtk 2.13.2|3|4, ruby 1.8.7, clisp 2.46, sbcl 1.0.18
 
-checked: Clozure CL 1.2, guile 1.8.5, fth 1.1.0, clisp 2.45, Fedora 9,
-         sbcl 1.0.17, gtk 2.13.1
 
-Thanks!: Bret Battey, Kjetil Matheussen, Mike Scholz, Bill Gosper,
-         Marc LeBrun, Julius Smith
+Thanks!: Kjetil, Mike
+
