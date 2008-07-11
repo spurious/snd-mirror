@@ -133,14 +133,14 @@ static int main_not_alsa(int argc, char *argv[])
   afd = -1;
   afd0 = -1;
   afd1 = -1;
-  if (!(MUS_HEADER_TYPE_OK(mus_sound_header_type(name))))
+  if (!(mus_header_type_p(mus_sound_header_type(name))))
     {
       fprintf(stderr, "can't play %s (header type: %s?)\n",
 	      name,
 	      mus_header_type_name(mus_header_type()));
       exit(0);
     }
-  if (!(MUS_DATA_FORMAT_OK(mus_sound_data_format(name))))
+  if (!(mus_data_format_p(mus_sound_data_format(name))))
     {
       fprintf(stderr, "can't play %s (data format: %s (%s)?)\n",
 	      name,
@@ -378,14 +378,14 @@ static int main_alsa(int argc, char *argv[])
 		    }}}}}
   afd0 = -1;
   afd1 = -1;
-  if (!(MUS_HEADER_TYPE_OK(mus_sound_header_type(name))))
+  if (!(mus_header_type_p(mus_sound_header_type(name))))
     {
       fprintf(stderr, "can't play %s (header type: %s?)\n",
 	      name,
 	      mus_header_type_name(mus_header_type()));
       exit(0);
     }
-  if (!(MUS_DATA_FORMAT_OK(mus_sound_data_format(name))))
+  if (!(mus_data_format_p(mus_sound_data_format(name))))
     {
       fprintf(stderr, "can't play %s (data format: %s (%s)?)\n",
 	      name,

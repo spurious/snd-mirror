@@ -2,8 +2,8 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 20
-#define SNDLIB_REVISION 6
-#define SNDLIB_DATE "28-Mar-08"
+#define SNDLIB_REVISION 7
+#define SNDLIB_DATE "12-July-08"
 
 #include <mus-config.h>
 
@@ -175,6 +175,7 @@
   #define mus_sample_abs(Sample) fabs(Sample)
 #endif
 
+
 enum {MUS_UNSUPPORTED, MUS_NEXT, MUS_AIFC, MUS_RIFF, MUS_RF64, MUS_BICSF, MUS_NIST, MUS_INRS, MUS_ESPS, MUS_SVX, MUS_VOC, 
       MUS_SNDT, MUS_RAW, MUS_SMP, MUS_AVR, MUS_IRCAM, MUS_SD1, MUS_SPPACK, MUS_MUS10, MUS_HCOM, MUS_PSION, MUS_MAUD,
       MUS_IEEE, MUS_MATLAB, MUS_ADC, MUS_MIDI, MUS_SOUNDFONT, MUS_GRAVIS, MUS_COMDISCO, MUS_GOLDWAVE, MUS_SRFS,
@@ -186,11 +187,10 @@ enum {MUS_UNSUPPORTED, MUS_NEXT, MUS_AIFC, MUS_RIFF, MUS_RF64, MUS_BICSF, MUS_NI
       MUS_SHORTEN, MUS_TTA, MUS_WAVPACK, 
       MUS_NUM_HEADER_TYPES};
 
-#if defined(__GNUC__) && (!(defined(__cplusplus)))
-  #define MUS_HEADER_TYPE_OK(n) ({ int _sndlib_h_0 = n; ((_sndlib_h_0 > MUS_UNSUPPORTED) && (_sndlib_h_0 <= MUS_MAUI)); })
-#else
-  #define MUS_HEADER_TYPE_OK(n) (((n) > MUS_UNSUPPORTED) && ((n) <= MUS_MAUI))
+#ifndef SNDLIB_DISABLE_DEPRECATED
+  #define MUS_HEADER_TYPE_OK(n) mus_header_type_p(n)
 #endif
+
 
 enum {MUS_UNKNOWN, MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BFLOAT, MUS_BINT, MUS_ALAW, MUS_UBYTE, MUS_B24INT,
       MUS_BDOUBLE, MUS_LSHORT, MUS_LINT, MUS_LFLOAT, MUS_LDOUBLE, MUS_UBSHORT, MUS_ULSHORT, MUS_L24INT,
@@ -200,11 +200,10 @@ enum {MUS_UNKNOWN, MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BFLOAT, MUS_BINT, MUS_AL
 /* MUS_LINTN and MUS_BINTN refer to 32 bit ints with 31 bits of "fraction" -- the data is "left justified" */
 /* "unscaled" means the float value is used directly (i.e. not as -1.0 to 1.0, but (probably) -32768.0 to 32768.0) */
 
-#if defined(__GNUC__) && (!(defined(__cplusplus)))
-  #define MUS_DATA_FORMAT_OK(n) ({ int _sndlib_h_1 = n; ((_sndlib_h_1 > MUS_UNKNOWN) && (_sndlib_h_1 < MUS_NUM_DATA_FORMATS)); })
-#else
-  #define MUS_DATA_FORMAT_OK(n) (((n) > MUS_UNKNOWN) && ((n) < MUS_NUM_DATA_FORMATS))
+#ifndef SNDLIB_DISABLE_DEPRECATED
+  #define MUS_DATA_FORMAT_OK(n) mus_data_format_p(n)
 #endif
+
 
 #if MUS_MAC_OSX
   #if MUS_LITTLE_ENDIAN
@@ -227,6 +226,7 @@ enum {MUS_UNKNOWN, MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BFLOAT, MUS_BINT, MUS_AL
 #define MUS_AUDIO_SYSTEM(n) (((n) >> 16) & 0xffff)
 #define MUS_AUDIO_DEVICE(n) ((n) & 0xffff)
 
+
 enum {MUS_AUDIO_DEFAULT, MUS_AUDIO_DUPLEX_DEFAULT, MUS_AUDIO_ADAT_IN, MUS_AUDIO_AES_IN, MUS_AUDIO_LINE_OUT,
       MUS_AUDIO_LINE_IN, MUS_AUDIO_MICROPHONE, MUS_AUDIO_SPEAKERS, MUS_AUDIO_DIGITAL_IN, MUS_AUDIO_DIGITAL_OUT,
       MUS_AUDIO_DAC_OUT, MUS_AUDIO_ADAT_OUT, MUS_AUDIO_AES_OUT, MUS_AUDIO_DAC_FILTER, MUS_AUDIO_MIXER,
@@ -239,11 +239,10 @@ enum {MUS_AUDIO_DEFAULT, MUS_AUDIO_DUPLEX_DEFAULT, MUS_AUDIO_ADAT_IN, MUS_AUDIO_
 };
 /* Snd's recorder uses MUS_AUDIO_DIRECTION to find the size of this list */
 
-#if defined(__GNUC__) && (!(defined(__cplusplus)))
-  #define MUS_AUDIO_DEVICE_OK(a) ({ int _sndlib_h_2 = a; ((_sndlib_h_2 >= MUS_AUDIO_DEFAULT) && (_sndlib_h_2 <= MUS_AUDIO_DIRECTION)); })
-#else
-  #define MUS_AUDIO_DEVICE_OK(a) (((a) >= MUS_AUDIO_DEFAULT) && ((a) <= MUS_AUDIO_DIRECTION))
+#ifndef SNDLIB_DISABLE_DEPRECATED
+  #define MUS_AUDIO_DEVICE_OK(a) mus_audio_device_p(a)
 #endif
+
 
 #define MUS_ERROR -1
 
@@ -443,6 +442,7 @@ int mus_float_array_to_file(const char *filename, Float *ddata, off_t len, int s
 #define MUS_OSS_API 1
 #define MUS_JACK_API 2
 
+bool mus_audio_device_p(int n);
 void mus_audio_describe(void);
 char *mus_audio_report(void);
 int mus_audio_open_output(int dev, int srate, int chans, int format, int size);
@@ -578,6 +578,9 @@ off_t mus_set_max_table_size(off_t new_max);
 
 
 /* -------- headers.c -------- */
+
+bool mus_data_format_p(int n);
+bool mus_header_type_p(int n);
 
 off_t mus_header_samples(void);
 off_t mus_header_data_location(void);

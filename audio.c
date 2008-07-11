@@ -138,21 +138,42 @@ static const char *mus_audio_device_names[] = {
 
 static const char *mus_audio_device_name(int dev)
 {
-  if (MUS_AUDIO_DEVICE_OK(dev))
+  if (mus_audio_device_p(dev))
     return(mus_audio_device_names[dev]);
   return("invalid device");
 }
 
+bool mus_audio_device_p(int n)
+{
+  switch (n)
+    {
+    case MUS_AUDIO_DEFAULT: case MUS_AUDIO_DUPLEX_DEFAULT: case MUS_AUDIO_ADAT_IN: case MUS_AUDIO_AES_IN: 
+    case MUS_AUDIO_LINE_OUT: case MUS_AUDIO_LINE_IN: case MUS_AUDIO_MICROPHONE: case MUS_AUDIO_SPEAKERS: 
+    case MUS_AUDIO_DIGITAL_IN: case MUS_AUDIO_DIGITAL_OUT: case MUS_AUDIO_DAC_OUT: case MUS_AUDIO_ADAT_OUT: 
+    case MUS_AUDIO_AES_OUT: case MUS_AUDIO_DAC_FILTER: case MUS_AUDIO_MIXER: case MUS_AUDIO_LINE1: 
+    case MUS_AUDIO_LINE2: case MUS_AUDIO_LINE3: case MUS_AUDIO_AUX_INPUT: case MUS_AUDIO_CD: 
+    case MUS_AUDIO_AUX_OUTPUT: case MUS_AUDIO_SPDIF_IN: case MUS_AUDIO_SPDIF_OUT: case MUS_AUDIO_AMP: 
+    case MUS_AUDIO_SRATE: case MUS_AUDIO_CHANNEL: case MUS_AUDIO_FORMAT: case MUS_AUDIO_IMIX: 
+    case MUS_AUDIO_IGAIN: case MUS_AUDIO_RECLEV: case MUS_AUDIO_PCM: case MUS_AUDIO_PCM2: 
+    case MUS_AUDIO_OGAIN: case MUS_AUDIO_LINE: case MUS_AUDIO_SYNTH: case MUS_AUDIO_BASS: 
+    case MUS_AUDIO_TREBLE: case MUS_AUDIO_PORT: case MUS_AUDIO_SAMPLES_PER_CHANNEL: case MUS_AUDIO_DIRECTION:
+      return(true);
+      break;
+    }
+  return(false);
+}
+
+
 #if (!HAVE_OSS) || (HAVE_ALSA)
 static const char *mus_audio_format_names[] = {
-  "unknown", S_mus_bshort, S_mus_mulaw, S_mus_byte, S_mus_bfloat, S_mus_bint, S_mus_alaw, S_mus_ubyte, S_mus_b24int,
+	"unknown":  S_mus_bshort, S_mus_mulaw, S_mus_byte, S_mus_bfloat, S_mus_bint, S_mus_alaw, S_mus_ubyte, S_mus_b24int,
   S_mus_bdouble, S_mus_lshort, S_mus_lint, S_mus_lfloat, S_mus_ldouble, S_mus_ubshort, S_mus_ulshort, S_mus_l24int,
   S_mus_bintn, S_mus_lintn
 };
 
 static const char *mus_audio_format_name(int fr)
 {
-  if (MUS_DATA_FORMAT_OK(fr))
+  if (mus_data_format_p(fr))
     return(mus_audio_format_names[fr]);
   return("invalid format");
 }

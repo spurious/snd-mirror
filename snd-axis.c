@@ -1,6 +1,33 @@
 #include "snd.h"
 
 
+bool x_axis_style_p(int n)
+{
+  switch (n)
+    {
+    case X_AXIS_IN_SECONDS: case X_AXIS_IN_SAMPLES: case X_AXIS_AS_PERCENTAGE: 
+    case X_AXIS_IN_BEATS: case X_AXIS_IN_MEASURES: case X_AXIS_AS_CLOCK: 
+      return(true);
+      break;
+    }
+  return(false);
+}
+
+
+bool show_axes_p(int n)
+{
+  switch (n)
+    {
+    case SHOW_NO_AXES: case SHOW_ALL_AXES: case SHOW_X_AXIS: 
+    case SHOW_ALL_AXES_UNLABELLED: case SHOW_X_AXIS_UNLABELLED: 
+    case SHOW_BARE_X_AXIS: 
+      return(true);
+      break;
+    }
+  return(false);
+}
+
+
 typedef struct tick_descriptor {
   double hi, lo; 
   int max_ticks;
@@ -1536,9 +1563,6 @@ x0 y0 x1 y1 xmin ymin xmax ymax pix_x0 pix_y0 pix_x1 pix_y1 y_offset xscale ysca
 }
 
 
-#define AXIS_STYLE_OK(Id) (((Id) >= 0) && ((Id) < NUM_X_AXIS_STYLES))
-#define SHOW_AXES_OK(Id) (((Id) >= 0) && ((Id) < NUM_SHOW_AXES))
-
 #if USE_MOTIF
   #define XEN_UNWRAP_SND_GC(Value) XEN_TO_C_ULONG(XEN_CADR(Value))
   #define XEN_SND_GC_P(Value) (XEN_LIST_P(Value) && (XEN_LIST_LENGTH(Value) >= 2) && \
@@ -1635,7 +1659,7 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
 		      xstyle = XEN_LIST_REF(args, 7);
 		      XEN_ASSERT_TYPE(XEN_INTEGER_P(xstyle), xstyle, XEN_ARG_8, S_draw_axes, "axis style");
 		      tmp = XEN_TO_C_INT(xstyle);
-		      if (!(AXIS_STYLE_OK(tmp)))
+		      if (!(x_axis_style_p(tmp)))
 			XEN_OUT_OF_RANGE_ERROR(S_draw_axes, 7, xstyle, "axis style");
 		      x_style = (x_axis_style_t)tmp;
 		      if (len > 8) 
@@ -1643,7 +1667,7 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
 			  xaxes = XEN_LIST_REF(args, 8);
 			  XEN_ASSERT_TYPE(XEN_INTEGER_P(xaxes), xaxes, XEN_ARG_9, S_draw_axes, S_show_axes " choice");
 			  tmp = XEN_TO_C_INT(xaxes);
-			  if (!(SHOW_AXES_OK(tmp)))
+			  if (!(show_axes_p(tmp)))
 			    XEN_OUT_OF_RANGE_ERROR(S_draw_axes, 8, xaxes, S_show_axes " choice");
 			  axes = (show_axes_t)XEN_TO_C_INT(xaxes);
 			}}}}}}

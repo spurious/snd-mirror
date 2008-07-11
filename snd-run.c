@@ -9114,6 +9114,7 @@ static xen_value *splice_in_function_body(ptree *prog, XEN proc, xen_value **arg
 	  xen_value *result;
 	  if (funcname) add_var_to_ptree(prog, funcname, v);
 	  result = funcall_n(prog, args, num_args, v);
+	  /* TODO: valgrind says theres a memory leak here */
 	  FREE(v);
 	  /* return(clean_up(result, args, num_args)); */
 	  return(result);

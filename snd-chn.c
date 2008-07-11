@@ -12,6 +12,18 @@
  */
 
 
+bool graph_style_p(int grf)
+{
+  switch (grf)
+    {
+    case GRAPH_LINES: case GRAPH_DOTS: case GRAPH_FILLED: case GRAPH_DOTS_AND_LINES: case GRAPH_LOLLIPOPS: 
+      return(true);
+      break;
+    }
+  return(false);
+}
+
+
 typedef struct lisp_grf {
   int *len;
   Float **data;
@@ -7169,17 +7181,17 @@ choices are: " S_rectangular_window ", " S_hann_window ", " S_welch_window ", " 
 static XEN g_set_fft_window(XEN val, XEN snd, XEN chn)
 {
   int in_win;
-  mus_fft_window_t win;
+
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_1, S_setB S_fft_window, "an integer"); 
+
   in_win = XEN_TO_C_INT(val);
-  if (in_win < 0) /* stupid C++ */
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_fft_window, 1, val, "~A: fft data window must be >= 0");
-  win = (mus_fft_window_t)in_win;
-  if (!(MUS_FFT_WINDOW_OK(win)))
+  if (!(mus_fft_window_p(in_win)))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_fft_window, 1, val, "~A: unknown fft data window");
+
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, val, CP_FFT_WINDOW, S_setB S_fft_window));
-  set_fft_window(win);
+
+  set_fft_window((mus_fft_window_t)in_win);
   return(C_TO_XEN_INT((int)fft_window(ss)));
 }
 
@@ -7301,11 +7313,14 @@ void set_graph_style(graph_style_t val)
 
 static XEN g_set_graph_style(XEN style, XEN snd, XEN chn)
 {
-  graph_style_t val;
+  int val;
+
   XEN_ASSERT_TYPE(XEN_INTEGER_P(style), style, XEN_ARG_1, S_setB S_graph_style, "an integer"); 
-  val = (graph_style_t)XEN_TO_C_INT(style);
-  if (!(GRAPH_STYLE_OK(val)))
+
+  val = XEN_TO_C_INT(style);
+  if (!(graph_style_p(val)))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_graph_style, 1, style, "~A: unknown graph-style");
+
   if (XEN_BOUND_P(snd))
     {
       XEN xval;
@@ -7316,7 +7331,7 @@ static XEN g_set_graph_style(XEN style, XEN snd, XEN chn)
       channel_set(snd, chn, style, CP_TRANSFORM_GRAPH_STYLE, S_setB S_graph_style);
       return(xval);
     }
-  set_graph_style(val);
+  set_graph_style((graph_style_t)val);
   return(C_TO_XEN_INT((int)(graph_style(ss))));
 }
 
@@ -7335,11 +7350,14 @@ one of '(" S_graph_lines " " S_graph_dots " " S_graph_dots_and_lines " " S_graph
 static XEN g_set_time_graph_style(XEN style, XEN snd, XEN chn)
 {
   int val;
+
   XEN_ASSERT_TYPE(XEN_INTEGER_P(style), style, XEN_ARG_1, S_setB S_time_graph_style, "an integer"); 
   ASSERT_SOUND(S_time_graph_style, snd, 0);
+
   val = XEN_TO_C_INT(style);
-  if (!(GRAPH_STYLE_OK(val)))
+  if (!(graph_style_p(val)))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_time_graph_style, 1, style, "~A: unknown " S_time_graph_style);
+
   return(channel_set(snd, chn, style, CP_TIME_GRAPH_STYLE, S_setB S_time_graph_style));
 }
 
@@ -7358,11 +7376,14 @@ one of '(" S_graph_lines " " S_graph_dots " " S_graph_dots_and_lines " " S_graph
 static XEN g_set_lisp_graph_style(XEN style, XEN snd, XEN chn)
 {
   int val;
+
   XEN_ASSERT_TYPE(XEN_INTEGER_P(style), style, XEN_ARG_1, S_setB S_lisp_graph_style, "an integer"); 
   ASSERT_SOUND(S_lisp_graph_style, snd, 0);
+
   val = XEN_TO_C_INT(style);
-  if (!(GRAPH_STYLE_OK(val)))
+  if (!(graph_style_p(val)))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_lisp_graph_style, 1, style, "~A: unknown " S_lisp_graph_style);
+
   return(channel_set(snd, chn, style, CP_LISP_GRAPH_STYLE, S_setB S_lisp_graph_style));
 }
 
@@ -7381,11 +7402,15 @@ of '(" S_graph_lines " " S_graph_dots " " S_graph_dots_and_lines " " S_graph_lol
 static XEN g_set_transform_graph_style(XEN style, XEN snd, XEN chn)
 {
   int val;
+
   XEN_ASSERT_TYPE(XEN_INTEGER_P(style), style, XEN_ARG_1, S_setB S_transform_graph_style, "an integer"); 
   ASSERT_SOUND(S_transform_graph_style, snd, 0);
+
   val = XEN_TO_C_INT(style);
-  if (!(GRAPH_STYLE_OK(val)))
+
+  if (!(graph_style_p(val)))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_transform_graph_style, 1, style, "~A: unknown " S_transform_graph_style);
+
   return(channel_set(snd, chn, style, CP_TRANSFORM_GRAPH_STYLE, S_setB S_transform_graph_style));
 }
 
@@ -7463,24 +7488,18 @@ void set_x_axis_style(x_axis_style_t val)
 
 static XEN g_set_x_axis_style(XEN style, XEN snd, XEN chn)
 {
-  int in_val;
-  x_axis_style_t val;
+  int val;
 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(style), style, XEN_ARG_1, S_setB S_x_axis_style, "an integer"); 
 
-  in_val = XEN_TO_C_INT(style);
-  if (in_val < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_x_axis_style, 1, style, "~A, but must be >= 0");
-
-  val = (x_axis_style_t)in_val;
-  if (val >= NUM_X_AXIS_STYLES)
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_x_axis_style, 1, style, 
-	"~A, but must be " S_x_axis_in_seconds ", " S_x_axis_in_samples ", " S_x_axis_as_percentage ", " S_x_axis_in_beats ", " S_x_axis_in_measures ", or " S_x_axis_as_clock ".");
+  val = XEN_TO_C_INT(style);
+  if (!(x_axis_style_p(val)))
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_x_axis_style, 1, style, "~A is not an x-axis-style");
 
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, style, CP_X_AXIS_STYLE, S_setB S_x_axis_style));
 
-  set_x_axis_style(val);
+  set_x_axis_style((x_axis_style_t)val);
   /* snd-menu.c -- maps over chans */
   return(C_TO_XEN_INT((int)x_axis_style(ss)));
 }
@@ -7554,19 +7573,18 @@ The other choices are " S_show_no_axes ", " S_show_all_axes_unlabelled ", " S_sh
 
 static XEN g_set_show_axes(XEN on, XEN snd, XEN chn)
 {
-  int in_val;
-  show_axes_t val;
+  int val;
+
   XEN_ASSERT_TYPE(XEN_INTEGER_P(on), on, XEN_ARG_1, S_setB S_show_axes, "an integer");
-  in_val = XEN_TO_C_INT(on);
-  if (in_val < 0)
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_show_axes, 1, on, "~A, but must be >= 0");
-  val = (show_axes_t)in_val;
-  if (val >= NUM_SHOW_AXES)
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_show_axes, 1, on, "~A, but must be " S_show_all_axes ", " S_show_x_axis ", " S_show_no_axes ", \
-" S_show_all_axes_unlabelled ", " S_show_x_axis_unlabelled ", or " S_show_bare_x_axis ".");
+
+  val = XEN_TO_C_INT(on);
+  if (!(show_axes_p(val)))
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_show_axes, 1, on, "~A must be a show-axes choice");
+
   if (XEN_BOUND_P(snd))
     return(channel_set(snd, chn, on, CP_SHOW_AXES, S_setB S_show_axes));
-  set_show_axes(val);
+
+  set_show_axes((show_axes_t)val);
   return(C_TO_XEN_INT((int)show_axes(ss)));
 }
 

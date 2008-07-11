@@ -3114,7 +3114,8 @@
   (with-sound () (sndclmdoc-simple-add 0 1 220 .3))
   (with-sound () 
 	      (sndclmdoc-mapenv 0 1 440 .4 '(0 0 50 1 75 0 86 .5 100 0)))
-  (with-sound (:srate 44100) (sndclmdoc-looper 0 10 "/home/bil/sf1/forest.aiff" 1.0 0.5))
+  (if (file-exists? "/home/bil/sf1/forest.aiff")
+      (with-sound (:srate 44100) (sndclmdoc-looper 0 10 "/home/bil/sf1/forest.aiff" 1.0 0.5)))
   (with-sound ()
 	      (sndclmdoc-bigbird 0 .05 1800 1800 .2
 				 '(.00 .00 .40 1.00 .60 1.00 1.00 .0)         ; freq env

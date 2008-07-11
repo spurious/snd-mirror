@@ -2615,7 +2615,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, const char *caller)
       if (!(IS_PLAYER(sp))) 
 	{
 	  ival = XEN_TO_C_INT(val);
-	  if (MUS_DATA_FORMAT_OK(ival))
+	  if (mus_data_format_p(ival))
 	    {
 	      chan_info *cp;
 	      int old_format;
@@ -2644,7 +2644,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, const char *caller)
       if (!(IS_PLAYER(sp))) 
 	{
 	  ival = XEN_TO_C_INT(val);
-	  if (MUS_HEADER_TYPE_OK(ival))
+	  if (mus_header_type_p(ival))
 	    {
 	      mus_sound_set_header_type(sp->filename, ival);
 	      snd_update_within_xen(sp, caller); 
@@ -3882,6 +3882,7 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
 	    }
 	}
     }
+
   if (!mus_header_writable(ht, df))
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_4(C_TO_XEN_STRING(S_save_sound_as),
@@ -3997,10 +3998,12 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
       len = mus_optkey_to_off_t(keys[6], S_new_sound, orig_arg[6], len);
     }
 
-  if (!(MUS_HEADER_TYPE_OK(ht)))
+  if (!(mus_header_type_p(ht)))
     XEN_OUT_OF_RANGE_ERROR(S_new_sound, orig_arg[1], keys[1], "~A: invalid header type");
-  if (!(MUS_DATA_FORMAT_OK(df)))
+
+  if (!(mus_data_format_p(df)))
     XEN_OUT_OF_RANGE_ERROR(S_new_sound, orig_arg[2], keys[2], "~A: invalid data format");
+
   if (!(mus_header_writable(ht, df)))
     XEN_ERROR(BAD_HEADER,
 	      XEN_LIST_4(C_TO_XEN_STRING(S_new_sound),

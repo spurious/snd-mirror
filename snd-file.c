@@ -158,7 +158,7 @@ bool directory_exists(char *name)
 
 const char *short_data_format_name(int sndlib_format, const char *filename)
 {
-  if (MUS_DATA_FORMAT_OK(sndlib_format))
+  if (mus_data_format_p(sndlib_format))
     return(mus_data_format_short_name(sndlib_format));
   else return(mus_header_original_format_name(mus_sound_original_format(filename),
 					      mus_sound_header_type(filename)));
@@ -943,7 +943,7 @@ static file_info *make_file_info_1(const char *fullname)
       hdr->format = mus_sound_data_format(fullname);
       original_format = hdr->format;
     }
-  if (!(MUS_DATA_FORMAT_OK(hdr->format))) hdr->format = fallback_format;
+  if (!(mus_data_format_p(hdr->format))) hdr->format = fallback_format;
   if (hdr->srate <= 0) {if (fallback_srate > 0) hdr->srate = fallback_srate; else hdr->srate = 1;}
   if (hdr->chans <= 0) {if (fallback_chans > 0) hdr->chans = fallback_chans; else hdr->chans = 1;}
   hdr->samples = mus_sound_samples(fullname); /* total samples, not per channel */
@@ -1198,7 +1198,7 @@ file_info *make_file_info(const char *fullname, read_only_t read_only, bool sele
 	  return(translate_file(fullname, type));
 	}
 	  
-      if (MUS_HEADER_TYPE_OK(type)) 
+      if (mus_header_type_p(type)) 
 	{ /* at least the header type seems plausible */
 	  /* check header fields */
 	  int sr = 0, ch = 0;
@@ -1216,7 +1216,7 @@ file_info *make_file_info(const char *fullname, read_only_t read_only, bool sele
 	  else
 	    {
 	      format = mus_sound_data_format(fullname);
-	      if (MUS_DATA_FORMAT_OK(format))
+	      if (mus_data_format_p(format))
 		return(make_file_info_1(fullname));
 	      return(translate_file(fullname, type));
 	    }
@@ -2893,7 +2893,7 @@ static char *raw_data_explanation(const char *filename, file_info *hdr, char **i
   reason_str = snd_strcat(reason_str, tmp_str, &len);
 
   /* data format */
-  if (!(MUS_DATA_FORMAT_OK(original_format)))
+  if (!(mus_data_format_p(original_format)))
     {
       char *format_info;
       if (original_format != MUS_UNKNOWN)
@@ -5483,7 +5483,7 @@ normally " S_mus_bshort "; -1 here means try to use the current sound's data for
 are available, but not all are compatible with all header types"
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_default_output_data_format, "an integer"); 
   format = XEN_TO_C_INT(val);
-  if (MUS_DATA_FORMAT_OK(format))
+  if (mus_data_format_p(format))
     set_default_output_data_format(format); 
   else XEN_OUT_OF_RANGE_ERROR(S_setB S_default_output_data_format, 1, val, "~A: unknown data format");
   return(C_TO_XEN_INT(default_output_data_format(ss)));

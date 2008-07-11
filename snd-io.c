@@ -4,6 +4,10 @@
  *   I think I'll just issue a warning, and let the redirection mechanism deal with it.
  */
 
+
+/* TODO: in the no-gui case, files are sometimes left open upon close-sound */
+
+
 void snd_remove(const char *name, cache_remove_t forget)
 {
   int err;

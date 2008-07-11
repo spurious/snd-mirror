@@ -1233,6 +1233,7 @@ void dac_set_reverb_lowpass(snd_info *sp, Float newval);
 
 /* -------- snd-chn.c -------- */
 
+bool graph_style_p(int grf);
 chan_info *get_cp(XEN snd_n, XEN chn_n, const char *caller);
 snd_info *make_simple_channel_display(int srate, int initial_length, fw_button_t with_arrows, 
 				      graph_style_t grf_style, widget_t container, bool with_events);
@@ -1324,6 +1325,8 @@ void set_show_y_zero(bool val);
 
 /* -------- snd-axis.c -------- */
 
+bool x_axis_style_p(int n);
+bool show_axes_p(int n);
 axis_info *free_axis_info(axis_info *ap);
 char *x_axis_location_to_string(chan_info *cp, double loc);
 int grf_x(double val, axis_info *ap);

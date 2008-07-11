@@ -530,7 +530,7 @@ char *mus_data_format_to_string(int format)
 
 static const char *any_data_format_name(int sndlib_format)
 {
-  if (MUS_DATA_FORMAT_OK(sndlib_format))
+  if (mus_data_format_p(sndlib_format))
     return(mus_data_format_name(sndlib_format));
   else return(mus_header_original_format_name(mus_header_original_format(),
 					      mus_header_type()));
@@ -5244,7 +5244,7 @@ void mus_header_set_raw_defaults(int sr, int chn, int frm)
 {
   if (sr > 0) header_raw_srate = sr;
   if (chn > 0) header_raw_chans = chn;
-  if (MUS_DATA_FORMAT_OK(frm)) header_raw_format = frm;
+  if (mus_data_format_p(frm)) header_raw_format = frm;
 }
 
 
@@ -6606,3 +6606,44 @@ void mus_header_set_aiff_loop_info(int *data)
       loop_modes[1] = 0;
     }
 }
+
+
+bool mus_header_type_p(int n)
+{
+  switch (n)
+    {
+    case MUS_NEXT: case MUS_AIFC: case MUS_RIFF: case MUS_RF64: case MUS_BICSF: case MUS_NIST: 
+    case MUS_INRS: case MUS_ESPS: case MUS_SVX: case MUS_VOC: case MUS_SNDT: case MUS_RAW: 
+    case MUS_SMP: case MUS_AVR: case MUS_IRCAM: case MUS_SD1: case MUS_SPPACK: case MUS_MUS10: 
+    case MUS_HCOM: case MUS_PSION: case MUS_MAUD: case MUS_IEEE: case MUS_MATLAB: case MUS_ADC:
+    case MUS_MIDI: case MUS_SOUNDFONT: case MUS_GRAVIS: case MUS_COMDISCO: case MUS_GOLDWAVE: 
+    case MUS_SRFS: case MUS_MIDI_SAMPLE_DUMP: case MUS_DIAMONDWARE: case MUS_ADF: case MUS_SBSTUDIOII:
+    case MUS_DELUSION: case MUS_FARANDOLE: case MUS_SAMPLE_DUMP: case MUS_ULTRATRACKER: 
+    case MUS_YAMAHA_SY85: case MUS_YAMAHA_TX16W: case MUS_DIGIPLAYER: case MUS_COVOX: case MUS_AVI:
+    case MUS_OMF: case MUS_QUICKTIME: case MUS_ASF: case MUS_YAMAHA_SY99: case MUS_KURZWEIL_2000: 
+    case MUS_AIFF: case MUS_PAF: case MUS_CSL: case MUS_FILE_SAMP: case MUS_PVF: case MUS_SOUNDFORGE: 
+    case MUS_TWINVQ: case MUS_AKAI4: case MUS_IMPULSETRACKER: case MUS_KORG: case MUS_NVF: case MUS_CAFF: 
+    case MUS_MAUI: case MUS_SDIF: case MUS_OGG: case MUS_FLAC: case MUS_SPEEX: case MUS_MPEG: 
+    case MUS_SHORTEN: case MUS_TTA: case MUS_WAVPACK:  
+      return(true);
+      break;
+    }
+  return(false);
+}
+
+
+bool mus_data_format_p(int n)
+{
+  switch (n)
+    {
+    case MUS_BSHORT: case MUS_MULAW: case MUS_BYTE: case MUS_BFLOAT: case MUS_BINT: case MUS_ALAW: 
+    case MUS_UBYTE: case MUS_B24INT: case MUS_BDOUBLE: case MUS_LSHORT: case MUS_LINT: case MUS_LFLOAT: 
+    case MUS_LDOUBLE: case MUS_UBSHORT: case MUS_ULSHORT: case MUS_L24INT: case MUS_BINTN: case MUS_LINTN: 
+    case MUS_BFLOAT_UNSCALED: case MUS_LFLOAT_UNSCALED: case MUS_BDOUBLE_UNSCALED: case MUS_LDOUBLE_UNSCALED: 
+      return(true);
+      break;
+    }
+  return(false);
+}
+
+

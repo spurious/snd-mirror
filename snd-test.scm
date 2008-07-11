@@ -3793,7 +3793,7 @@
 		    (fneq (sound-data-ref sdata i 1) 0.1)
 		    (fneq (sound-data-ref sdata i 2) 0.0)
 		    (fneq (sound-data-ref sdata i 6) 0.0))
-		(snd-display ";read/write[~A]: ~A?" i (sound-data-channel->list sdata i))))
+		(snd-display ";1 read/write[~A]: ~A?" i (sound-data-channel->list sdata i))))
 	  (mus-sound-close-input fd)  
 	  (set! fd (mus-sound-reopen-output "fmv.snd" 4 mus-lshort mus-riff (mus-sound-data-location "fmv.snd")))
 	  (mus-sound-seek-frame fd 0)
@@ -3813,7 +3813,7 @@
 		      (fneq (sound-data-ref sdata1 i 2) 0.1)
 		      (fneq (sound-data-ref sdata1 i 3) 0.1)
 		      (fneq (sound-data-ref sdata1 i 6) 0.0))
-		  (snd-display ";re-read/write[~A]: ~A ~A?" i (sound-data-channel->list sdata1 i) (sound-data-channel->list sdata i)))))
+		  (snd-display ";2 re-read/write[~A]: ~A ~A?" i (sound-data-channel->list sdata1 i) (sound-data-channel->list sdata i)))))
 	  (mus-sound-close-input fd))
 	
 	(if (file-exists? (string-append sf-dir "32bit.sf"))

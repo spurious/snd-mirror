@@ -4758,8 +4758,7 @@ static XEN g_snd_spectrum(XEN data, XEN win, XEN len, XEN linear_or_dB, XEN beta
 magnitude spectrum of data (a vct), in data if in-place, using fft-window win and fft length len."
 
   bool linear = true, in_data = false, normed = true;
-  int i, j, n, n2;
-  mus_fft_window_t wtype;
+  int i, j, n, n2, wtype;
   Float maxa, lowest, b = 0.0;
   Float *rdat;
   vct *v;
@@ -4781,9 +4780,10 @@ magnitude spectrum of data (a vct), in data if in-place, using fft-window win an
   if (XEN_BOOLEAN_P(in_place)) in_data = XEN_TO_C_BOOLEAN(in_place);
   if (XEN_BOOLEAN_P(normalized)) normed = XEN_TO_C_BOOLEAN(normalized);
 
-  wtype = (mus_fft_window_t)XEN_TO_C_INT_OR_ELSE(win, MUS_RECTANGULAR_WINDOW);
-  if (!(MUS_FFT_WINDOW_OK(wtype)))
+  wtype = XEN_TO_C_INT_OR_ELSE(win, (int)MUS_RECTANGULAR_WINDOW);
+  if (!(mus_fft_window_p(wtype)))
     XEN_OUT_OF_RANGE_ERROR(S_snd_spectrum, 2, win, "~A: unknown fft window");
+
   if (XEN_NUMBER_P(beta)) b = XEN_TO_C_DOUBLE(beta);
   if (b < 0.0) b = 0.0; else if (b > 1.0) b = 1.0;
 
@@ -4796,11 +4796,11 @@ magnitude spectrum of data (a vct), in data if in-place, using fft-window win an
     }
   else rdat = v->data;
 
-  if (wtype != MUS_RECTANGULAR_WINDOW)
+  if (wtype != (int)MUS_RECTANGULAR_WINDOW)
     {
       Float *window;
       window = (Float *)CALLOC(n, sizeof(Float));
-      mus_make_fft_window_with_window(wtype, n, b * fft_beta_max(wtype), 0.0, window);
+      mus_make_fft_window_with_window((mus_fft_window_t)wtype, n, b * fft_beta_max((mus_fft_window_t)wtype), 0.0, window);
       for (i = 0; i < n; i++) rdat[i] *= window[i];
       FREE(window);
     }

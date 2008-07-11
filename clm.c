@@ -132,7 +132,7 @@ static const char *interp_name[] = {"step", "linear", "sinusoidal", "all-pass", 
 
 static const char *interp_type_to_string(int type)
 {
-  if ((type >= 0) && (type < MUS_NUM_INTERPS))
+  if (mus_interp_type_p(type))
     return(interp_name[type]);
   return("unknown");
 }
@@ -1125,6 +1125,25 @@ static Float mus_array_bezier_interp(Float *wave, Float x, off_t size)
   by = 3 * (y2 - y1) - cy;
   ay = y3 - y0 - cy - by;
   return(y0 + p * (cy + (p * (by + (p * ay)))));
+}
+
+
+bool mus_interp_type_p(int val)
+{
+  /* this is C++'s fault. */
+  switch (val)
+    {
+    case MUS_INTERP_NONE:    
+    case MUS_INTERP_LINEAR:
+    case MUS_INTERP_SINUSOIDAL:
+    case MUS_INTERP_LAGRANGE:
+    case MUS_INTERP_HERMITE:
+    case MUS_INTERP_ALL_PASS:
+    case MUS_INTERP_BEZIER:
+      return(true);
+      break;
+    }
+  return(false);
 }
 
 
@@ -9852,6 +9871,26 @@ static Float ultraspherical(int n, Float x, Float lambda)
 #endif
 
 
+bool mus_fft_window_p(int val)
+{
+  switch (val)
+    {
+    case MUS_RECTANGULAR_WINDOW: case MUS_HANN_WINDOW: case MUS_WELCH_WINDOW: case MUS_PARZEN_WINDOW: 
+    case MUS_BARTLETT_WINDOW: case MUS_HAMMING_WINDOW: case MUS_BLACKMAN2_WINDOW: case MUS_BLACKMAN3_WINDOW: 
+    case MUS_BLACKMAN4_WINDOW: case MUS_EXPONENTIAL_WINDOW: case MUS_RIEMANN_WINDOW: case MUS_KAISER_WINDOW: 
+    case MUS_CAUCHY_WINDOW: case MUS_POISSON_WINDOW: case MUS_GAUSSIAN_WINDOW: case MUS_TUKEY_WINDOW: 
+    case MUS_DOLPH_CHEBYSHEV_WINDOW: case MUS_HANN_POISSON_WINDOW: case MUS_CONNES_WINDOW: 
+    case MUS_SAMARAKI_WINDOW: case MUS_ULTRASPHERICAL_WINDOW: case MUS_BARTLETT_HANN_WINDOW: 
+    case MUS_BOHMAN_WINDOW: case MUS_FLAT_TOP_WINDOW: case MUS_BLACKMAN5_WINDOW: case MUS_BLACKMAN6_WINDOW: 
+    case MUS_BLACKMAN7_WINDOW: case MUS_BLACKMAN8_WINDOW: case MUS_BLACKMAN9_WINDOW: case MUS_BLACKMAN10_WINDOW: 
+    case MUS_RV2_WINDOW: case MUS_RV3_WINDOW: case MUS_RV4_WINDOW: case MUS_MLT_SINE_WINDOW: 
+      return(true);
+      break;
+    }
+  return(false);
+}
+
+
 static Float sqr(Float x) {return(x * x);}
 
 
@@ -10415,7 +10454,7 @@ static const char *fft_window_names[MUS_NUM_FFT_WINDOWS] =
 
 const char *mus_fft_window_name(mus_fft_window_t win)
 {
-  if (MUS_FFT_WINDOW_OK(win))
+  if (mus_fft_window_p((int)win))
     return(fft_window_names[(int)win]);
   return("unknown");
 }

@@ -634,7 +634,7 @@ header-type is a sndlib type indicator such as " S_mus_aiff "; sndlib currently 
   XEN_ASSERT_TYPE((XEN_STRING_P(comment) || (XEN_NOT_BOUND_P(comment))), comment, XEN_ARG_6, S_mus_sound_open_output, "a string");
 
   df = XEN_TO_C_INT_OR_ELSE(data_format, MUS_OUT_FORMAT);
-  if (MUS_DATA_FORMAT_OK(df))
+  if (mus_data_format_p(df))
     {
       int ht;
 #if MUS_LITTLE_ENDIAN
@@ -643,7 +643,7 @@ header-type is a sndlib type indicator such as " S_mus_aiff "; sndlib currently 
       ht = XEN_TO_C_INT_OR_ELSE(header_type, MUS_NEXT);
 #endif
       /* now check that data format and header type are ok together */
-      if (MUS_HEADER_TYPE_OK(ht))
+      if (mus_header_type_p(ht))
 	{
 	  int chns;
 
@@ -736,7 +736,7 @@ data-location should be retrieved from a previous call to " S_mus_sound_data_loc
       if (df == MUS_ERROR)
 	df = MUS_OUT_FORMAT;
     }
-  if (MUS_DATA_FORMAT_OK(df))
+  if (mus_data_format_p(df))
     {
       int ht;
       if (XEN_INTEGER_P(header_type))
@@ -751,7 +751,7 @@ data-location should be retrieved from a previous call to " S_mus_sound_data_loc
 	    ht = MUS_NEXT;
 #endif
 	}
-      if (MUS_HEADER_TYPE_OK(ht))
+      if (mus_header_type_p(ht))
 	{
 	  int chns;
 	  if (XEN_INTEGER_P(chans))
@@ -999,14 +999,16 @@ return the audio line number:\n  " audio_open_example
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chans), chans, XEN_ARG_3, S_mus_audio_open_output, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(format), format, XEN_ARG_4, S_mus_audio_open_output, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(size), size, XEN_ARG_5, S_mus_audio_open_output, "a number");
+
   idev = XEN_TO_C_INT(dev);
   israte = XEN_TO_C_INT_OR_ELSE(srate, 0);
   ichans = XEN_TO_C_INT(chans);
   ifmt = XEN_TO_C_INT(format);
   isize = XEN_TO_C_INT_OR_ELSE(size, 0);
-  if (!(MUS_AUDIO_DEVICE_OK(MUS_AUDIO_DEVICE(idev))))
+
+  if (!(mus_audio_device_p(MUS_AUDIO_DEVICE(idev))))
     XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_output, 1, dev, "~A: invalid device");
-  if (!(MUS_DATA_FORMAT_OK(ifmt)))
+  if (!(mus_data_format_p(ifmt)))
     XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_output, 4, format, "~A: invalid data format");
   if (isize < 0)
     XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_output, 5, size, "size ~A < 0?");
@@ -1014,6 +1016,7 @@ return the audio line number:\n  " audio_open_example
     XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_output, 2, srate, "srate ~A <= 0?");
   if ((ichans <= 0) || (ichans > 256))
     XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_output, 3, chans, "chans ~A <= 0 or > 256?");
+
   line = mus_audio_open_output(idev, israte, ichans, ifmt, isize);
   audio_io_set_write_format(line, ifmt);
   return(C_TO_XEN_INT(line));
@@ -1026,19 +1029,21 @@ static XEN g_mus_audio_open_input(XEN dev, XEN srate, XEN chans, XEN format, XEN
 open the audio device ready for input with the indicated attributes; return the audio line number"
 
   int line, idev, ifmt, isize, israte, ichans;
+
   XEN_ASSERT_TYPE(XEN_INTEGER_P(dev), dev, XEN_ARG_1, S_mus_audio_open_input, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(srate), srate, XEN_ARG_2, S_mus_audio_open_input, "a number");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chans), chans, XEN_ARG_3, S_mus_audio_open_input, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(format), format, XEN_ARG_4, S_mus_audio_open_input, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(size), size, XEN_ARG_5, S_mus_audio_open_input, "a number");
+
   idev = XEN_TO_C_INT(dev);
   israte = XEN_TO_C_INT_OR_ELSE(srate, 0);
   ichans = XEN_TO_C_INT(chans);
   ifmt = XEN_TO_C_INT(format);
   isize = XEN_TO_C_INT_OR_ELSE(size, 0);
-  if (!(MUS_AUDIO_DEVICE_OK(MUS_AUDIO_DEVICE(idev))))
+  if (!(mus_audio_device_p(MUS_AUDIO_DEVICE(idev))))
     XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_input, 1, dev, "~A: invalid device");
-  if (!(MUS_DATA_FORMAT_OK(ifmt)))
+  if (!(mus_data_format_p(ifmt)))
     XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_input, 4, format, "~A: invalid data format");
   if (isize < 0)
     XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_input, 5, size, "size ~A < 0?");
@@ -1046,6 +1051,7 @@ open the audio device ready for input with the indicated attributes; return the 
     XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_input, 2, srate, "srate ~A <= 0?");
   if (ichans <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_mus_audio_open_input, 3, chans, "chans ~A <= 0?");
+
   line = mus_audio_open_input(idev, israte, ichans, ifmt, isize);
   audio_io_set_read_format(line, ifmt);
   return(C_TO_XEN_INT(line));
@@ -1193,9 +1199,9 @@ sets " mixer_read_vct_example " to the default device's desired audio sample dat
   XEN_ASSERT_TYPE(XEN_INTEGER_P(field), field, XEN_ARG_2, S_mus_audio_mixer_read, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_3, S_mus_audio_mixer_read, "an integer");
   XEN_ASSERT_TYPE(MUS_VCT_P(vals), vals, XEN_ARG_4, S_mus_audio_mixer_read, "a vct");
-  if (!(MUS_AUDIO_DEVICE_OK(MUS_AUDIO_DEVICE(XEN_TO_C_INT(dev)))))
+  if (!(mus_audio_device_p(MUS_AUDIO_DEVICE(XEN_TO_C_INT(dev)))))
     XEN_OUT_OF_RANGE_ERROR(S_mus_audio_mixer_read, 1, dev, "~A: invalid device");
-  if (!(MUS_AUDIO_DEVICE_OK(MUS_AUDIO_DEVICE(XEN_TO_C_INT(field)))))
+  if (!(mus_audio_device_p(MUS_AUDIO_DEVICE(XEN_TO_C_INT(field)))))
     XEN_OUT_OF_RANGE_ERROR(S_mus_audio_mixer_read, 2, field, "~A: invalid field");
   v = XEN_TO_VCT(vals);
   len = v->length;
@@ -1217,14 +1223,17 @@ static XEN g_mus_audio_mixer_write(XEN dev, XEN field, XEN chan, XEN vals)
   int i, len, res;
   float *fvals;
   vct *v = NULL;
+
   XEN_ASSERT_TYPE(XEN_INTEGER_P(dev), dev, XEN_ARG_1, S_mus_audio_mixer_write, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(field), field, XEN_ARG_2, S_mus_audio_mixer_write, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_3, S_mus_audio_mixer_write, "an integer");
   XEN_ASSERT_TYPE(MUS_VCT_P(vals), vals, XEN_ARG_4, S_mus_audio_mixer_write, "a vct");
-  if (!(MUS_AUDIO_DEVICE_OK(MUS_AUDIO_DEVICE(XEN_TO_C_INT(dev)))))
+
+  if (!(mus_audio_device_p(MUS_AUDIO_DEVICE(XEN_TO_C_INT(dev)))))
     XEN_OUT_OF_RANGE_ERROR(S_mus_audio_mixer_write, 1, dev, "~A: invalid device");
-  if (!(MUS_AUDIO_DEVICE_OK(MUS_AUDIO_DEVICE(XEN_TO_C_INT(field)))))
+  if (!(mus_audio_device_p(MUS_AUDIO_DEVICE(XEN_TO_C_INT(field)))))
     XEN_OUT_OF_RANGE_ERROR(S_mus_audio_mixer_write, 2, field, "~A: invalid field");
+
   v = XEN_TO_VCT(vals);
   len = v->length;
   fvals = (float *)CALLOC(len, sizeof(float));

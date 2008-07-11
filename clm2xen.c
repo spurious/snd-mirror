@@ -822,24 +822,27 @@ is the window family parameter, if any:\n  " make_window_example
 
   Float beta = 0.0, alpha = 0.0;
   off_t n;
-  mus_fft_window_t t;
+  int fft_window;
   Float *data;
+
   XEN_ASSERT_TYPE(XEN_INTEGER_P(type), type, XEN_ARG_1, S_make_fft_window, "an integer (window type)");
   XEN_ASSERT_TYPE(XEN_OFF_T_P(size), size, XEN_ARG_2, S_make_fft_window, "an integer");
 
   if (XEN_NUMBER_P(ubeta)) beta = XEN_TO_C_DOUBLE(ubeta);
   if (XEN_NUMBER_P(ualpha)) alpha = XEN_TO_C_DOUBLE(ualpha);
+
   n = XEN_TO_C_OFF_T(size);
   if (n <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_make_fft_window, 2, size, "size ~A <= 0?");
   if (n > mus_max_malloc())
     XEN_OUT_OF_RANGE_ERROR(S_make_fft_window, 2, size, "size arg ~A too large (see mus-max-malloc)");
-  t = (mus_fft_window_t)XEN_TO_C_INT(type);
-  if (!(MUS_FFT_WINDOW_OK(t)))
+
+  fft_window = XEN_TO_C_INT(type);
+  if (!(mus_fft_window_p(fft_window)))
     XEN_OUT_OF_RANGE_ERROR(S_make_fft_window, 1, type, "~A: unknown fft window");
 
   data = (Float *)CALLOC(n, sizeof(Float));
-  mus_make_fft_window_with_window(t, n, beta, alpha, data);
+  mus_make_fft_window_with_window((mus_fft_window_t)fft_window, n, beta, alpha, data);
   return(xen_make_vct(n, data));
 }
 
@@ -1021,7 +1024,7 @@ static XEN g_mus_interpolate(XEN type, XEN x, XEN obj, XEN size, XEN yn1)
 data ('v' is a vct) using interpolation 'type', such as " S_mus_interp_linear "."
 
   off_t len;
-  mus_interp_t itype;
+  int itype;
   vct *v;
   Float y = 0.0;
 
@@ -1031,8 +1034,8 @@ data ('v' is a vct) using interpolation 'type', such as " S_mus_interp_linear ".
   XEN_ASSERT_TYPE(XEN_OFF_T_IF_BOUND_P(size), size, XEN_ARG_4, S_mus_interpolate, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(yn1), yn1, XEN_ARG_5, S_mus_interpolate, "a number");
 
-  itype = (mus_interp_t)XEN_TO_C_INT(type);
-  if (!(MUS_INTERP_TYPE_OK(itype)))
+  itype = XEN_TO_C_INT(type);
+  if (!(mus_interp_type_p(itype)))
     XEN_OUT_OF_RANGE_ERROR(S_mus_interpolate, 1, type, "unknown interp type ~A");
 
   v = XEN_TO_VCT(obj);
@@ -1050,7 +1053,7 @@ data ('v' is a vct) using interpolation 'type', such as " S_mus_interp_linear ".
   if (XEN_NUMBER_P(yn1))
     y = XEN_TO_C_DOUBLE(yn1);
 
-  return(xen_return_first(C_TO_XEN_DOUBLE(mus_interpolate(itype, XEN_TO_C_DOUBLE(x), v->data, len, y))));
+  return(xen_return_first(C_TO_XEN_DOUBLE(mus_interpolate((mus_interp_t)itype, XEN_TO_C_DOUBLE(x), v->data, len, y))));
 }
 
 
@@ -1862,7 +1865,7 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
   XEN xen_filt = XEN_FALSE;
   int orig_arg[9] = {0, 0, 0, 0, 0, 0, 0, (int)MUS_INTERP_NONE, 0};
   int vals, i, argn = 0, len = 0, arglist_len, max_size = -1, size = -1;
-  mus_interp_t interp_type = MUS_INTERP_NONE;
+  int interp_type = (int)MUS_INTERP_NONE;
   Float *line = NULL;
   Float scaler = 0.0, feedback = 0.0, feedforward = 0.0;
   vct *initial_contents = NULL;
@@ -1936,13 +1939,13 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
 	{
 	  /* if type not given, if max_size, assume linear interp (for possible tap), else no interp */
 	  if ((max_size_set) && (max_size != size))
-	    interp_type = MUS_INTERP_LINEAR;
-	  else interp_type = MUS_INTERP_NONE;
+	    interp_type = (int)MUS_INTERP_LINEAR;
+	  else interp_type = (int)MUS_INTERP_NONE;
 	}
       else
 	{
-	  interp_type = (mus_interp_t)mus_optkey_to_int(keys[interp_type_key], caller, orig_arg[interp_type_key], MUS_INTERP_LINEAR);
-	  if (!(MUS_INTERP_TYPE_OK(interp_type)))
+	  interp_type = mus_optkey_to_int(keys[interp_type_key], caller, orig_arg[interp_type_key], (int)MUS_INTERP_LINEAR);
+	  if (!(mus_interp_type_p(interp_type)))
 	    XEN_OUT_OF_RANGE_ERROR(caller, orig_arg[interp_type_key], keys[interp_type_key], "no such interp-type: ~A");
 	}
 
@@ -2055,12 +2058,12 @@ static XEN g_make_delay_1(xclm_delay_t choice, XEN arglist)
     old_error_handler = mus_error_set_handler(local_mus_error);
     switch (choice)
       {
-      case G_DELAY:    ge = mus_make_delay(size, line, max_size, interp_type); break;
+      case G_DELAY:    ge = mus_make_delay(size, line, max_size, (mus_interp_t)interp_type); break;
       case G_MOVING_AVERAGE:  ge = mus_make_moving_average(size, line); break;
-      case G_COMB:     ge = mus_make_comb(scaler, size, line, max_size, interp_type); break;
-      case G_NOTCH:    ge = mus_make_notch(scaler, size, line, max_size, interp_type); break;
-      case G_ALL_PASS: ge = mus_make_all_pass(feedback, feedforward, size, line, max_size, interp_type); break;
-      case G_FCOMB:    ge = mus_make_filtered_comb(scaler, size, line, max_size, interp_type, filt); break;
+      case G_COMB:     ge = mus_make_comb(scaler, size, line, max_size, (mus_interp_t)interp_type); break;
+      case G_NOTCH:    ge = mus_make_notch(scaler, size, line, max_size, (mus_interp_t)interp_type); break;
+      case G_ALL_PASS: ge = mus_make_all_pass(feedback, feedforward, size, line, max_size, (mus_interp_t)interp_type); break;
+      case G_FCOMB:    ge = mus_make_filtered_comb(scaler, size, line, max_size, (mus_interp_t)interp_type, filt); break;
       }
     mus_error_set_handler(old_error_handler);
   }
@@ -2969,8 +2972,8 @@ is the same in effect as " S_make_oscil ".  'type' sets the interpolation choice
   Float *table = NULL;
   vct *v = NULL;
   XEN orig_v = XEN_FALSE;
+  int interp_type = (int)MUS_INTERP_LINEAR;
 
-  mus_interp_t type = MUS_INTERP_LINEAR;
   freq = clm_default_frequency;
 
   keys[0] = kw_frequency;
@@ -3015,8 +3018,8 @@ is the same in effect as " S_make_oscil ".  'type' sets the interpolation choice
       if ((v) && (table_size > v->length))
 	XEN_OUT_OF_RANGE_ERROR(S_make_table_lookup, orig_arg[3], keys[3], "size arg ~A bigger than size of provided wave");
 
-      type = (mus_interp_t)mus_optkey_to_int(keys[4], S_make_table_lookup, orig_arg[4], type);
-      if (!(MUS_INTERP_TYPE_OK(type)))
+      interp_type = mus_optkey_to_int(keys[4], S_make_table_lookup, orig_arg[4], interp_type);
+      if (!(mus_interp_type_p(interp_type)))
 	XEN_OUT_OF_RANGE_ERROR(S_make_table_lookup, orig_arg[4], keys[4], "no such interp-type: ~A");
     }
 
@@ -3027,7 +3030,7 @@ is the same in effect as " S_make_oscil ".  'type' sets the interpolation choice
 	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate table-lookup table"));
       orig_v = xen_make_vct(table_size, table);
     }
-  ge = mus_make_table_lookup(freq, phase, table, table_size, type);
+  ge = mus_make_table_lookup(freq, phase, table, table_size, (mus_interp_t)interp_type);
   return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, orig_v)));
 }
 
@@ -4157,8 +4160,8 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
   XEN orig_v = XEN_FALSE;
   Float freq, phase = 0.0;
   Float *wave = NULL;
+  int interp_type = (int)MUS_INTERP_LINEAR;
 
-  mus_interp_t type = MUS_INTERP_LINEAR;
   freq = clm_default_frequency;
 
   keys[0] = kw_frequency;
@@ -4205,8 +4208,8 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
       if ((v) && (wsize > v->length))
 	XEN_OUT_OF_RANGE_ERROR(S_make_wave_train, orig_arg[3], keys[3], "size arg ~A bigger than size of provided wave");
 
-      type = (mus_interp_t)mus_optkey_to_int(keys[4], S_make_wave_train, orig_arg[4], type);
-      if (!(MUS_INTERP_TYPE_OK(type)))
+      interp_type = mus_optkey_to_int(keys[4], S_make_wave_train, orig_arg[4], interp_type);
+      if (!(mus_interp_type_p(interp_type)))
 	XEN_OUT_OF_RANGE_ERROR(S_make_wave_train, orig_arg[4], keys[4], "no such interp-type: ~A");
     }
 
@@ -4217,7 +4220,7 @@ the repetition rate of the wave found in wave. Successive waves can overlap."
 	return(clm_mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate wave-train table"));
       orig_v = xen_make_vct(wsize, wave);
     }
-  ge = mus_make_wave_train(freq, phase, wave, wsize, type);
+  ge = mus_make_wave_train(freq, phase, wave, wsize, (mus_interp_t)interp_type);
   return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, orig_v)));
 }
 
@@ -5727,11 +5730,11 @@ should be sndlib identifiers:\n  " make_sample_to_file_example
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(out_type), out_type, XEN_ARG_4, S_make_sample_to_file, "an integer (header type id)");
 
   df = XEN_TO_C_INT_OR_ELSE(out_format, MUS_OUT_FORMAT);
-  if (MUS_DATA_FORMAT_OK(df))
+  if (mus_data_format_p(df))
     {
       int ht;
       ht = XEN_TO_C_INT_OR_ELSE(out_type, MUS_NEXT);
-      if (MUS_HEADER_TYPE_OK(ht))
+      if (mus_header_type_p(ht))
 	{
 	  int chns;
 	  chns = XEN_TO_C_INT_OR_ELSE(chans, 1);
