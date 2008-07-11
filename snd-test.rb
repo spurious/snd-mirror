@@ -3625,6 +3625,7 @@ def test104
    "bad size",
    "can't convert",
    "read error",
+   "no safety method",
    "can't translate"].each_with_index do |err, i|
     if (res = mus_error_type2string(i)) != err
       snd_display("mus_error_type2string %d: %s %s?", i, err, res)

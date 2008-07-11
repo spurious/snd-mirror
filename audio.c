@@ -166,7 +166,7 @@ bool mus_audio_device_p(int n)
 
 #if (!HAVE_OSS) || (HAVE_ALSA)
 static const char *mus_audio_format_names[] = {
-	"unknown":  S_mus_bshort, S_mus_mulaw, S_mus_byte, S_mus_bfloat, S_mus_bint, S_mus_alaw, S_mus_ubyte, S_mus_b24int,
+  "unknown",  S_mus_bshort, S_mus_mulaw, S_mus_byte, S_mus_bfloat, S_mus_bint, S_mus_alaw, S_mus_ubyte, S_mus_b24int,
   S_mus_bdouble, S_mus_lshort, S_mus_lint, S_mus_lfloat, S_mus_ldouble, S_mus_ubshort, S_mus_ulshort, S_mus_l24int,
   S_mus_bintn, S_mus_lintn
 };
