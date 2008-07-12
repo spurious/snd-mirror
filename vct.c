@@ -325,7 +325,7 @@ initial-element: \n  " vct_make_example
   if (size <= 0) 
     XEN_OUT_OF_RANGE_ERROR(S_make_vct, 1, len, "len ~A <= 0?");
 
-  if ((size * sizeof(Float)) > mus_max_malloc())
+  if (((off_t)(size * sizeof(Float))) > mus_max_malloc())
     XEN_OUT_OF_RANGE_ERROR(S_make_vct, 1, len, "len ~A too large (see mus-max-malloc)");
 
   if (XEN_NUMBER_P(filler))

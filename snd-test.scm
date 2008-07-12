@@ -833,7 +833,7 @@
     (if (fneq (enved-base)  1.0 )
 	(snd-display ";enved-base set def: ~A" (enved-base)))
     (set! (enved-clip?) (enved-clip?))
-    (if (not (equal? (enved-clip?)  #f )) 
+    (if (not (equal? (enved-clip?)  #t )) 
 	(snd-display ";enved-clip? set def: ~A" (enved-clip?)))
     (set! (enved-filter) (enved-filter))
     (if (not (equal? (enved-filter) #t)) 
@@ -1201,7 +1201,7 @@
       'default-output-srate (default-output-srate) 44100
       'dot-size (dot-size) 1 
       'enved-base (enved-base) 1.0 
-      'enved-clip? (enved-clip?) #f 
+      'enved-clip? (enved-clip?) #t
       'enved-envelope (enved-envelope) '()
       'enved-filter (enved-filter) #t
       'enved-filter-order (enved-filter-order) 40

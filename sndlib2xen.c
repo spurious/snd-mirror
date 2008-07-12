@@ -1668,7 +1668,7 @@ static XEN g_make_sound_data(XEN chans, XEN frames)
   frms = XEN_TO_C_OFF_T(frames);
   if (frms <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_make_sound_data, 2, frames, "frames ~A <= 0?");
-  if ((frms * sizeof(Float)) > mus_max_malloc())
+  if (((off_t)(frms * sizeof(Float))) > mus_max_malloc())
     XEN_OUT_OF_RANGE_ERROR(S_make_sound_data, 2, frames, "frames arg ~A too large (see mus-max-malloc)");
 
   return(make_sound_data(chns, frms));

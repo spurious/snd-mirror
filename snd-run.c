@@ -9114,7 +9114,6 @@ static xen_value *splice_in_function_body(ptree *prog, XEN proc, xen_value **arg
 	  xen_value *result;
 	  if (funcname) add_var_to_ptree(prog, funcname, v);
 	  result = funcall_n(prog, args, num_args, v);
-	  /* TODO: valgrind says theres a memory leak here */
 	  FREE(v);
 	  /* return(clean_up(result, args, num_args)); */
 	  return(result);
@@ -9163,9 +9162,11 @@ static xen_value *splice_in_method(ptree *prog, xen_value **args, int num_args, 
 static void splice_in_set_method(ptree *prog, xen_value *in_v, xen_value *in_v1, xen_value *in_v2, xen_value *v, const char *method_name)
 {
   xen_value *args[3];
+  xen_value *tmp;
   args[1] = in_v;
   args[2] = v;
-  splice_in_method(prog, args, 2, method_name, USE_SET_METHOD);
+  tmp = splice_in_method(prog, args, 2, method_name, USE_SET_METHOD);
+  if (tmp) FREE(tmp);
 }
 
 
