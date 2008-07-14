@@ -79,6 +79,10 @@ typedef struct env_state {
   off_t samples, m;  
   peak_env_info *ep; 
   snd_fd *sf;
+
+  unsigned char *direct_data;
+  int format, chans, bytes, fd;
+
 } env_state;
 
 
@@ -153,6 +157,8 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
   es->slice = 0;
   es->edpos = pos;
   es->m = 0;
+  
+  es->direct_data = NULL;
 
   if (cp->edits[pos]->peak_env)
     {
@@ -269,9 +275,11 @@ void start_peak_env_state(chan_info *cp)
 }
 
 
+
 static bool tick_peak_env(chan_info *cp, env_state *es)
 {
   peak_env_info *ep;
+
   ep = es->ep;
   if (es->slice == 0)
     {
@@ -301,33 +309,95 @@ static bool tick_peak_env(chan_info *cp, env_state *es)
 	  return(true);
 	}
 
-      if (es->sf == NULL) 
+      if ((es->sf == NULL) &&
+	  (es->direct_data == NULL))
 	{
-	  es->sf = init_sample_read_any(ep->bin * ep->samps_per_bin, cp, READ_FORWARD, es->edpos);
-	}
-      sfd = es->sf;
-      if (sfd == NULL) return(false);
 
-      for (n = 0; (n < lm) && (sb < ep->peak_env_size); n++, sb++)
-	{
-	  Float ymin, ymax, val;
-	  int i;
-	  val = read_sample(sfd);
-	  ymin = val;
-	  ymax = val;
-	  for (i = 1; i < ep->samps_per_bin; i++)
+	  if ((cp->edit_ctr == 0) &&
+	      (cp->sound) &&
+	      (cp->sound->hdr) &&
+	      (cp->sounds) &&
+	      (cp->sounds[0]->io) &&
+	      (mus_file_prescaler(cp->sounds[0]->io->fd) == 1.0))
 	    {
-	      val = read_sample(sfd);
-	      if (ymin > val) 
-		ymin = val; 
-	      else 
-		if (ymax < val) 
-		  ymax = val;
+	      es->fd = mus_file_open_read(cp->sound->filename);
+	      lseek(es->fd, cp->sound->hdr->data_location, SEEK_SET);
+
+	      es->format = cp->sound->hdr->format;
+	      es->chans = cp->sound->nchans;
+	      es->bytes = ep->samps_per_bin * mus_bytes_per_sample(es->format) * es->chans;
+	      es->direct_data = (unsigned char *)MALLOC(es->bytes * lm);
 	    }
-	  ep->data_max[sb] = ymax;
-	  ep->data_min[sb] = ymin;
-	  if (ymin < ep->fmin) ep->fmin = ymin;
-	  if (ymax > ep->fmax) ep->fmax = ymax;
+	  else es->sf = init_sample_read_any(ep->bin * ep->samps_per_bin, cp, READ_FORWARD, es->edpos);
+	}
+      
+      if (es->direct_data == NULL)
+	{
+	  sfd = es->sf;
+	  if (sfd == NULL) return(false);
+
+	  for (n = 0; (n < lm) && (sb < ep->peak_env_size); n++, sb++)
+	    {
+	      Float ymin, ymax, val;
+	      int i;
+	      val = read_sample(sfd);
+	      ymin = val;
+	      ymax = val;
+	      for (i = 1; i < ep->samps_per_bin; i++)
+		{
+		  val = read_sample(sfd);
+		  if (ymin > val) 
+		    ymin = val; 
+		  else 
+		    if (ymax < val) 
+		      ymax = val;
+		}
+	      ep->data_max[sb] = ymax;
+	      ep->data_min[sb] = ymin;
+	      
+	      if (ymin < ep->fmin) ep->fmin = ymin;
+	      if (ymax > ep->fmax) ep->fmax = ymax;
+	    }
+	}
+      else
+	{
+	  ssize_t bytes_read;
+	  
+	  bytes_read = read(es->fd, (char *)(es->direct_data), lm * es->bytes);
+	  if (bytes_read < lm * es->bytes)
+	    {
+	      int zero_byte;
+	      zero_byte = mus_data_format_zero(es->format);
+	      if ((zero_byte == 0) ||
+		  ((es->format != MUS_UBSHORT) &&
+		   (es->format != MUS_ULSHORT)))
+		memset((void *)(es->direct_data + bytes_read), zero_byte, lm * es->bytes - bytes_read);
+	      else /* MUS_UB|LSHORT 32768 or 128(as a short)=>0 */
+		{
+		  int i, start, len;
+		  unsigned short *buf;
+
+		  /* (with-sound (:data-format mus-ubshort) (fm-violin 0 2 440 .1)) */
+
+		  buf = (unsigned short *)(es->direct_data);
+		  start = bytes_read / 2;
+		  len = lm * es->bytes / 2;
+		  for (i = start; i < len; i++)
+		    buf[i] = (unsigned short)zero_byte;
+		}
+	    }
+	  
+	  for (n = 0; (n < lm) && (sb < ep->peak_env_size); n++, sb++)
+	    {
+	      Float cur_min = 0.0, cur_max = 0.0;
+	      mus_samples_bounds((unsigned char *)(es->direct_data + es->bytes * n), es->bytes, cp->chan, es->chans, es->format, &cur_min, &cur_max);
+	      
+	      ep->data_max[sb] = cur_max;
+	      ep->data_min[sb] = cur_min;
+	      
+	      if (cur_min < ep->fmin) ep->fmin = cur_min;
+	      if (cur_max > ep->fmax) ep->fmax = cur_max;
+	    }
 	}
 
       es->m += samps_to_read;
@@ -336,7 +406,16 @@ static bool tick_peak_env(chan_info *cp, env_state *es)
 	  ((ep->top_bin > 0) && (ep->bin >= ep->top_bin))) /* this applies to partial amp envs */
 	{
 	  es->slice++;
-	  es->sf = free_snd_fd(es->sf);
+
+	  if (es->sf)
+	    es->sf = free_snd_fd(es->sf);
+
+	  if (es->direct_data)
+	    {
+	      FREE(es->direct_data);
+	      es->direct_data = NULL;
+	    }
+
 	  ep->completed = true;
 	  return(true);
 	}
@@ -4767,8 +4846,10 @@ the envelopes are complete (they are the result of a background process), and th
 
   edpos = XEN_TO_C_INT_OR_ELSE(pos, cp->edit_ctr);
   if (edpos == AT_CURRENT_EDIT_POSITION)
-	edpos = cp->edit_ctr;
-  if ((edpos < 0) || (edpos >= cp->edit_size) || (cp->edits[edpos] == NULL))
+    edpos = cp->edit_ctr;
+  if ((edpos < 0) || 
+      (edpos >= cp->edit_size) || 
+      (cp->edits[edpos] == NULL))
     XEN_ERROR(NO_SUCH_EDIT,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_peak_env_info),
 			 pos));
@@ -5110,7 +5191,7 @@ If 'filename' is a sound index (an integer), 'size' is interpreted as an edit-po
 		  (XEN_NOT_BOUND_P(peak_func)), 
 		  peak_func, XEN_ARG_4, S_channel_amp_envs, "a procedure of 2 args");
   XEN_ASSERT_TYPE(((XEN_PROCEDURE_P(done_func)) && (procedure_arity_ok(done_func, 3))) ||
-		  (XEN_FALSE_P(peak_func)) ||
+		  (XEN_FALSE_P(done_func)) ||
 		  (XEN_NOT_BOUND_P(done_func)), 
 		  done_func, XEN_ARG_5, S_channel_amp_envs, "a procedure of 3 args");
 
@@ -5122,12 +5203,16 @@ If 'filename' is a sound index (an integer), 'size' is interpreted as an edit-po
 	  env_state *es;
 	  peak_env_info *ep;
 	  int pos;
+
 	  pos = to_c_edit_position(cp, pts, S_channel_amp_envs, 3); /* here "pts" is edpos, not vector size */
 	  if (cp->edits == NULL)
 	    return(XEN_EMPTY_LIST);
+
 	  ep = cp->edits[pos]->peak_env; /* this can be null -- we run the peak envs if necessary */
-	  if (ep)
+	  if ((ep) &&
+	      (ep->completed))
 	    return(g_env_info_to_vcts(ep, ep->peak_env_size));
+
 	  /* force amp env to completion */
 	  stop_peak_env(cp);
 	  es = make_env_state(cp, cp->edits[pos]->samples);

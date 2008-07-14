@@ -2,8 +2,8 @@
 #define SNDLIB_H
 
 #define SNDLIB_VERSION 20
-#define SNDLIB_REVISION 7
-#define SNDLIB_DATE "12-July-08"
+#define SNDLIB_REVISION 8
+#define SNDLIB_DATE "14-July-08"
 
 
 /* these are picked up during configuration */
@@ -439,6 +439,7 @@ void mus_reset_headers_c(void);
 void mus_reset_audio_c(void);
 
 int mus_samples_peak(unsigned char *data, int bytes, int chans, int format, Float *maxes);
+int mus_samples_bounds(unsigned char *data, int bytes, int chan, int chans, int format, Float *min_samp, Float *max_samp);
 
 off_t mus_max_malloc(void);
 off_t mus_set_max_malloc(off_t new_max);

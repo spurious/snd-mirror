@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 4
-#define MUS_REVISION 15
-#define MUS_DATE "12-July-08"
+#define MUS_REVISION 16
+#define MUS_DATE "14-July-08"
 
 /*
+ * 14-Jul:     mus_data_format_zero.
  * 12-Jul:     mus_interp_type_p and mus_fft_window_p for C++'s benefit.
  * 1-July:     mus-safety and various ints changed to off_t.
  * 20-Jun:     support for pthreads.
@@ -381,6 +382,8 @@ double mus_bessi0(Float x);
 Float mus_interpolate(mus_interp_t type, Float x, Float *table, off_t table_size, Float y);
 bool mus_interp_type_p(int val);
 bool mus_fft_window_p(int val);
+
+int mus_data_format_zero(int format);
 
 
 /* -------- generic functions -------- */

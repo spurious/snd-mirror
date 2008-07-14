@@ -6018,7 +6018,7 @@ get out of sync somehow (<a href="#autoupdate">auto-update</a>).
 channel-amp-envs returns two vcts of length 'size' containing the peak-amp envelopes of the channel 'chan' of file 'file'.
 'peak-file-func' if any is used to get the name of the associated peak-env-info file if the file is very large.
 'work-proc-func' is called when the amp envs are ready if the amp envs are gathered in the background.
-If 'file' is a sound index (an integer), 'pts' is an edit-position, and the current amp envs (if any) are returned.
+If 'file' is a sound index (an integer), 'size' is an edit-position, and the current amp envs (if any) are returned.
 The arguments to 'peak-file-func' are the file and the channel.  If it returns a string, that is treated as the filename
 to read to get the peak info.  The arguments to 'work-proc-func' are the filename, the channel and the current peak.
 make-sound-icon in <a href="sndscm.html#makesoundbox">make-sound-box</a> in snd-motif.scm uses

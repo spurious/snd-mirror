@@ -1,36 +1,36 @@
 ;;; Snd tests
 ;;;
 ;;;  test 0: constants                          [548]
-;;;  test 1: defaults                           [1119]
-;;;  test 2: headers                            [1321]
-;;;  test 3: variables                          [1637]
-;;;  test 4: sndlib                             [2286]
-;;;  test 5: simple overall checks              [4976]
-;;;  test 6: vcts                               [13937]
-;;;  test 7: colors                             [14205]
-;;;  test 8: clm                                [14695]
-;;;  test 9: mix                                [26506]
-;;;  test 10: marks                             [28727]
-;;;  test 11: dialogs                           [29688]
-;;;  test 12: extensions                        [29933]
-;;;  test 13: menus, edit lists, hooks, etc     [30204]
-;;;  test 14: all together now                  [31913]
-;;;  test 15: chan-local vars                   [32958]
-;;;  test 16: regularized funcs                 [34597]
-;;;  test 17: dialogs and graphics              [39551]
-;;;  test 18: enved                             [39641]
-;;;  test 19: save and restore                  [39660]
-;;;  test 20: transforms                        [41502]
-;;;  test 21: new stuff                         [43485]
-;;;  test 22: run                               [45480]
-;;;  test 23: with-sound                        [51696]
-;;;  test 24: user-interface                    [55662]
-;;;  test 25: X/Xt/Xm                           [59056]
-;;;  test 26: Gtk                               [63664]
-;;;  test 27: GL                                [67516]
-;;;  test 28: errors                            [67640]
-;;;  test all done                              [69945]
-;;;  test the end                               [70183]
+;;;  test 1: defaults                           [1131]
+;;;  test 2: headers                            [1333]
+;;;  test 3: variables                          [1649]
+;;;  test 4: sndlib                             [2298]
+;;;  test 5: simple overall checks              [4992]
+;;;  test 6: vcts                               [13953]
+;;;  test 7: colors                             [14275]
+;;;  test 8: clm                                [14765]
+;;;  test 9: mix                                [26580]
+;;;  test 10: marks                             [28801]
+;;;  test 11: dialogs                           [29762]
+;;;  test 12: extensions                        [30007]
+;;;  test 13: menus, edit lists, hooks, etc     [30278]
+;;;  test 14: all together now                  [31988]
+;;;  test 15: chan-local vars                   [33033]
+;;;  test 16: regularized funcs                 [34672]
+;;;  test 17: dialogs and graphics              [39735]
+;;;  test 18: enved                             [39825]
+;;;  test 19: save and restore                  [39844]
+;;;  test 20: transforms                        [41686]
+;;;  test 21: new stuff                         [43669]
+;;;  test 22: run                               [45664]
+;;;  test 23: with-sound                        [51880]
+;;;  test 24: user-interface                    [55846]
+;;;  test 25: X/Xt/Xm                           [59240]
+;;;  test 26: Gtk                               [63848]
+;;;  test 27: GL                                [67700]
+;;;  test 28: errors                            [67824]
+;;;  test all done                              [70130]
+;;;  test the end                               [70368]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -38241,8 +38241,117 @@ EDITS: 3
 		      (snd-display ";ptree previous: ~A ~A" i val)
 		      (set! happy #f))))))
 	  (close-sound ind))
-	
-	;; recursion tests
+
+	;; peak envs
+	(let ((data-formats (list mus-bshort mus-lshort mus-mulaw mus-alaw mus-byte mus-ubyte mus-bfloat mus-lfloat
+				  mus-bint mus-lint mus-bintn mus-lintn mus-b24int mus-l24int mus-bdouble mus-ldouble
+				  mus-ubshort mus-ulshort mus-bfloat-unscaled mus-lfloat-unscaled mus-bdouble-unscaled 
+				  mus-ldouble-unscaled)))
+	  
+	  ;; PEAK_ENV_CUTOFF in snd-0.h is 50000, snd-chn.c 831 calls start_peak_env
+	  ;; peak-env-info snd chn pos:  (done? min max)
+	  ;; channel-amp-envs snd chn pos: (min-vct max-vct)
+	  
+	  ;; mono
+	  (for-each
+	   (lambda (frm)
+	     (let* ((file (with-sound (:srate 44100 :data-format frm) 
+			    (fm-violin 0 .5 440 .1) 
+			    (fm-violin 1.5 .5 660 .1)))
+		    (snd-direct (find-sound file))
+		    (snd-read (new-sound))
+		    (envs-direct (channel-amp-envs snd-direct 0))
+		    (info-direct (peak-env-info snd-direct 0)))
+	       
+	       (mix file 0 0 snd-read 0)
+	       
+	       (let* ((envs-read (channel-amp-envs snd-read 0))
+		      (info-read (peak-env-info snd-read 0)))
+		 
+		 (if (not (vequal (channel->vct 0 88200 snd-direct 0) (channel->vct 0 88200 snd-read 0)))
+		     (snd-display ";peak-env-info ~A direct != mix?" (mus-data-format->string frm)))
+		 
+		 (if (not (vequal (car envs-direct) (car envs-read)))
+		     (snd-display ";channel-amp-envs direct != read mins ~A" (mus-data-format->string frm)))
+		 (if (not (vequal (cadr envs-direct) (cadr envs-read)))
+		     (snd-display ";channel-amp-envs direct != read maxs ~A" (mus-data-format->string frm)))
+		 
+		 (if (not (member frm (list mus-byte mus-ubyte)))
+		     (begin
+		       (if (or (fneq (cadr info-direct) -.1) (fneq (caddr info-direct) .1))
+			   (snd-display ";peak-env-info direct ~A: ~A" (mus-data-format->string frm) info-direct))
+		       (if (or (fneq (cadr info-read) -.1) (fneq (caddr info-read) .1))
+			   (snd-display ";peak-env-info read ~A: ~A" (mus-data-format->string frm) info-read)))
+		     (begin
+		       (if (or (ffneq (cadr info-direct) -.1) (ffneq (caddr info-direct) .1))
+			   (snd-display ";peak-env-info direct ~A: ~A" (mus-data-format->string frm) info-direct))
+		       (if (or (ffneq (cadr info-read) -.1) (ffneq (caddr info-read) .1))
+			   (snd-display ";peak-env-info read ~A: ~A" (mus-data-format->string frm) info-read))))
+		 
+		 (close-sound snd-direct)
+		 (close-sound snd-read))))
+	   data-formats)
+	  
+	  ;; stereo
+	  (for-each
+	   (lambda (frm)
+	     (let* ((file (with-sound (:srate 44100 :data-format frm :channels 2) 
+			    (fm-violin 0 .5 440 .1 :degree 0) 
+			    (fm-violin 1.5 .5 660 .2 :degree 90)))
+		    (snd-direct (find-sound file))
+		    (snd-read (new-sound :channels 2))
+		    (envs-direct0 (channel-amp-envs snd-direct 0))
+		    (envs-direct1 (channel-amp-envs snd-direct 1))
+		    (info-direct0 (peak-env-info snd-direct 0))
+		    (info-direct1 (peak-env-info snd-direct 1)))
+	       
+	       (mix file 0 #t snd-read 0) ; #t for all chans, I hope
+	       
+	       (let* ((envs-read0 (channel-amp-envs snd-read 0))
+		      (envs-read1 (channel-amp-envs snd-read 1))
+		      (info-read0 (peak-env-info snd-read 0))
+		      (info-read1 (peak-env-info snd-read 1)))
+		 
+		 (if (not (vequal (channel->vct 0 88200 snd-direct 0) (channel->vct 0 88200 snd-read 0)))
+		     (snd-display ";peak-env-info ~A chan 0 direct != mix?" (mus-data-format->string frm)))
+		 (if (not (vequal (channel->vct 0 88200 snd-direct 1) (channel->vct 0 88200 snd-read 1)))
+		     (snd-display ";peak-env-info ~A chan 1 direct != mix?" (mus-data-format->string frm)))
+		 
+		 (if (not (vequal (car envs-direct0) (car envs-read0)))
+		     (snd-display ";channel-amp-envs chan 0 direct != read mins ~A" (mus-data-format->string frm)))
+		 (if (not (vequal (cadr envs-direct0) (cadr envs-read0)))
+		     (snd-display ";channel-amp-envs chan 0 direct != read maxs ~A" (mus-data-format->string frm)))
+		 (if (not (vequal (car envs-direct1) (car envs-read1)))
+		     (snd-display ";channel-amp-envs chan 1 direct != read mins ~A" (mus-data-format->string frm)))
+		 (if (not (vequal (cadr envs-direct1) (cadr envs-read1)))
+		     (snd-display ";channel-amp-envs chan 1 direct != read maxs ~A" (mus-data-format->string frm)))
+		 
+		 (if (not (member frm (list mus-byte mus-ubyte mus-mulaw)))
+		     (begin
+		       (if (or (fneq (cadr info-direct0) -.1) (fneq (caddr info-direct0) .1))
+			   (snd-display ";peak-env-info chan 0 direct ~A: ~A" (mus-data-format->string frm) info-direct0))
+		       (if (or (fneq (cadr info-read0) -.1) (fneq (caddr info-read0) .1))
+			   (snd-display ";peak-env-info chan 0 read ~A: ~A" (mus-data-format->string frm) info-read0))
+		       (if (or (fneq (cadr info-direct1) -.2) (fneq (caddr info-direct1) .2))
+			   (snd-display ";peak-env-info chan 1 direct ~A: ~A" (mus-data-format->string frm) info-direct1))
+		       (if (or (fneq (cadr info-read1) -.2) (fneq (caddr info-read1) .2))
+			   (snd-display ";peak-env-info chan 1 read ~A: ~A" (mus-data-format->string frm) info-read1)))
+		     (begin
+		       (if (or (ffneq (cadr info-direct0) -.1) (ffneq (caddr info-direct0) .1))
+			   (snd-display ";peak-env-info chan 0 direct ~A: ~A" (mus-data-format->string frm) info-direct0))
+		       (if (or (ffneq (cadr info-read0) -.1) (ffneq (caddr info-read0) .1))
+			   (snd-display ";peak-env-info chan 0 read ~A: ~A" (mus-data-format->string frm) info-read0))
+		       (if (or (ffneq (cadr info-direct1) -.2) (ffneq (caddr info-direct1) .2))
+			   (snd-display ";peak-env-info chan 1 direct ~A: ~A" (mus-data-format->string frm) info-direct1))
+		       (if (or (ffneq (cadr info-read1) -.2) (ffneq (caddr info-read1) .2))
+			   (snd-display ";peak-env-info chan 1 read ~A: ~A" (mus-data-format->string frm) info-read1))))
+		 
+		 (close-sound snd-direct)
+		 (close-sound snd-read))))
+	   data-formats))
+
+
+     	;; recursion tests
         (let ((old-opt (optimization))
 	      (ind (open-sound "oboe.snd")))
 	  (for-each

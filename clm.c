@@ -7575,7 +7575,13 @@ static mus_any_class SAMPLE_TO_FILE_CLASS = {
   &sample_to_file_set_safety
 };
 
+
 static int *data_format_zero = NULL;
+
+int mus_data_format_zero(int format)
+{
+  return(data_format_zero[format]);
+}
 
 
 static void flush_buffers(rdout *gen)
@@ -11707,8 +11713,13 @@ void mus_initialize(void)
   data_format_zero[MUS_MULAW] = MULAW_ZERO;
   data_format_zero[MUS_ALAW] = ALAW_ZERO;
   data_format_zero[MUS_UBYTE] = UBYTE_ZERO;
-  data_format_zero[MUS_UBSHORT] = USHORT_ZERO;
-  data_format_zero[MUS_ULSHORT] = USHORT_ZERO;
+#if MUS_LITTLE_ENDIAN
+  data_format_zero[MUS_UBSHORT] = 0x80;
+  data_format_zero[MUS_ULSHORT] = 0x8000;
+#else
+  data_format_zero[MUS_UBSHORT] = 0x8000;
+  data_format_zero[MUS_ULSHORT] = 0x80;
+#endif  
 
 #if HAVE_PTHREADS
   pthread_key_create(&mus_thread_generator, NULL);

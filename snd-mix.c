@@ -2799,8 +2799,9 @@ mix data (a vct) into snd's channel chn starting at beg; return the new mix id, 
 
 static XEN g_mix(XEN file, XEN chn_samp_n, XEN file_chn, XEN snd_n, XEN chn_n, XEN tag, XEN auto_delete)
 {
-  #define H_mix "(" S_mix " file :optional (beg 0) (file-chan 0) snd chn (with-tag " S_with_mix_tags ") auto-delete): \
-mix channel file-chan of file into snd's channel chn starting at beg (in the output), returning the new mix's id.  \
+  #define H_mix "(" S_mix " file :optional (beg 0) (in-chan 0) snd chn (with-tag " S_with_mix_tags ") auto-delete): \
+mix channel in-chan of file into snd's channel chn starting at beg (in the output), returning the new mix's id.  \
+If in-chan is #t, all input channels are mixed into successive channels of snd, starting at chn. \
 if with-tag is " PROC_FALSE ", no draggable tag is created.  If \
 auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer needed."
 

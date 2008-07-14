@@ -33,6 +33,36 @@
 #include "_sndlib.h"
 
 
+static off_t mus_maximum_malloc = MUS_MAX_MALLOC_DEFAULT;
+
+off_t mus_max_malloc(void)
+{
+  return(mus_maximum_malloc);
+}
+
+off_t mus_set_max_malloc(off_t new_max)
+{
+  mus_maximum_malloc = new_max;
+  return(new_max);
+}
+
+
+
+static off_t mus_maximum_table_size = MUS_MAX_TABLE_SIZE_DEFAULT;
+
+off_t mus_max_table_size(void)
+{
+  return(mus_maximum_table_size);
+}
+
+off_t mus_set_max_table_size(off_t new_max)
+{
+  mus_maximum_table_size = new_max;
+  return(new_max);
+}
+
+
+
 void mus_bint_to_char(unsigned char *j, int x)
 {
   unsigned char *ox = (unsigned char *)&x;
@@ -1770,17 +1800,496 @@ off_t mus_oclamp(off_t lo, off_t val, off_t hi)
 
 /* raw sample data peak value (without per-sample conversion) */
 
+
+/* ---------------- short ---------------- */
+
+#define SHORT_BYTES 2
+
+static void min_max_shorts(unsigned char *data, int bytes, int chan, int chans, Float *min_samp, Float *max_samp)
+{
+  short cur_min, cur_max;
+  short *sbuf;
+  int i, len;
+
+  sbuf = (short *)data;
+  len = bytes / SHORT_BYTES;
+
+  cur_min = sbuf[chan];
+  cur_max = cur_min;
+
+  for (i = (chans + chan); i < len; i += chans)
+    {
+      if (sbuf[i] < cur_min) cur_min = sbuf[i];
+      else if (sbuf[i] > cur_max) cur_max = sbuf[i];
+    }
+
+  (*min_samp) = (Float)cur_min / (Float)(1 << 15);
+  (*max_samp) = (Float)cur_max / (Float)(1 << 15);
+}
+
+
+static void min_max_switch_shorts(unsigned char *data, int bytes, int chan, int chans, Float *min_samp, Float *max_samp)
+{
+  short cur_min, cur_max;
+  /* frame based */
+  unsigned char *samp, *eod;
+  int bytes_per_frame;
+
+  bytes_per_frame = chans * SHORT_BYTES;
+  eod = (unsigned char *)(data + bytes);
+
+#if MUS_LITTLE_ENDIAN
+  cur_min = big_endian_short((unsigned char *)(data + (chan * SHORT_BYTES)));
+#else
+  cur_min = little_endian_short((unsigned char *)(data + (chan * SHORT_BYTES)));
+#endif
+  cur_max = cur_min;
+
+  for (samp = (unsigned char *)(data + (chan * SHORT_BYTES) + bytes_per_frame); samp < eod; samp += bytes_per_frame)
+    {
+      short val;
+#if MUS_LITTLE_ENDIAN
+      val = big_endian_short(samp);
+#else
+      val = little_endian_short(samp);
+#endif
+      if (val < cur_min) cur_min = val;
+      else if (val > cur_max) cur_max = val;
+    }
+
+  (*min_samp) = (Float)cur_min / (Float)(1 << 15);
+  (*max_samp) = (Float)cur_max / (Float)(1 << 15);
+}
+
+
+/* ---------------- unsigned short ---------------- */
+
+static void min_max_ushorts(unsigned char *data, int bytes, int chan, int chans, Float *min_samp, Float *max_samp)
+{
+  unsigned short cur_min, cur_max;
+  unsigned short *sbuf;
+  int i, len;
+
+  sbuf = (unsigned short *)data;
+  len = bytes / SHORT_BYTES;
+
+  cur_min = sbuf[chan];
+  cur_max = cur_min;
+
+  for (i = (chans + chan); i < len; i += chans)
+    {
+      if (sbuf[i] < cur_min) cur_min = sbuf[i];
+      else if (sbuf[i] > cur_max) cur_max = sbuf[i];
+    }
+
+  (*min_samp) = (Float)(cur_min - USHORT_ZERO) / (Float)(1 << 15);
+  (*max_samp) = (Float)(cur_max - USHORT_ZERO) / (Float)(1 << 15);
+}
+
+
+static void min_max_switch_ushorts(unsigned char *data, int bytes, int chan, int chans, Float *min_samp, Float *max_samp)
+{
+  unsigned short cur_min, cur_max;
+  /* frame based */
+  unsigned char *samp, *eod;
+  int bytes_per_frame;
+
+  bytes_per_frame = chans * SHORT_BYTES;
+  eod = (unsigned char *)(data + bytes);
+
+#if MUS_LITTLE_ENDIAN
+  cur_min = big_endian_unsigned_short((unsigned char *)(data + (chan * SHORT_BYTES)));
+#else
+  cur_min = little_endian_unsigned_short((unsigned char *)(data + (chan * SHORT_BYTES)));
+#endif
+  cur_max = cur_min;
+
+  for (samp = (unsigned char *)(data + (chan * SHORT_BYTES) + bytes_per_frame); samp < eod; samp += bytes_per_frame)
+    {
+      unsigned short val;
+#if MUS_LITTLE_ENDIAN
+      val = big_endian_unsigned_short(samp);
+#else
+      val = little_endian_unsigned_short(samp);
+#endif
+      if (val < cur_min) cur_min = val;
+      else if (val > cur_max) cur_max = val;
+    }
+
+  (*min_samp) = (Float)(cur_min - USHORT_ZERO) / (Float)(1 << 15);
+  (*max_samp) = (Float)(cur_max - USHORT_ZERO) / (Float)(1 << 15);
+}
+
+
+/* ---------------- int ---------------- */
+
+#define INT_BYTES 4
+
+static void min_max_ints(unsigned char *data, int bytes, int chan, int chans, Float *min_samp, Float *max_samp, bool standard)
+{
+  int cur_min, cur_max;
+  int *sbuf;
+  int i, len;
+
+  sbuf = (int *)data;
+  len = bytes / INT_BYTES;
+
+  cur_min = sbuf[chan];
+  cur_max = cur_min;
+
+  for (i = (chans + chan); i < len; i += chans)
+    {
+      if (sbuf[i] < cur_min) cur_min = sbuf[i];
+      else if (sbuf[i] > cur_max) cur_max = sbuf[i];
+    }
+  
+  (*min_samp) = (Float)cur_min / (Float)(1 << 23);
+  (*max_samp) = (Float)cur_max / (Float)(1 << 23);
+
+  if (!standard)
+    {
+      (*min_samp) = (Float)(*min_samp) / (Float)(1 << 8);
+      (*max_samp) = (Float)(*max_samp) / (Float)(1 << 8);
+    }
+}
+
+/* (with-sound (:data-format mus-lintn :statistics #t) (fm-violin 0 1 440 .1)) */
+
+
+static void min_max_switch_ints(unsigned char *data, int bytes, int chan, int chans, Float *min_samp, Float *max_samp, bool standard)
+{
+  int cur_min, cur_max;
+  /* frame based */
+  unsigned char *samp, *eod;
+  int bytes_per_frame;
+
+  bytes_per_frame = chans * INT_BYTES;
+  eod = (unsigned char *)(data + bytes);
+
+#if MUS_LITTLE_ENDIAN
+  cur_min = big_endian_int((unsigned char *)(data + (chan * INT_BYTES)));
+#else
+  cur_min = little_endian_int((unsigned char *)(data + (chan * INT_BYTES)));
+#endif
+  cur_max = cur_min;
+
+  for (samp = (unsigned char *)(data + (chan * INT_BYTES) + bytes_per_frame); samp < eod; samp += bytes_per_frame)
+    {
+      int val;
+#if MUS_LITTLE_ENDIAN
+      val = big_endian_int(samp);
+#else
+      val = little_endian_int(samp);
+#endif
+      if (val < cur_min) cur_min = val;
+      else if (val > cur_max) cur_max = val;
+    }
+
+  (*min_samp) = (Float)cur_min / (Float)(1 << 23);
+  (*max_samp) = (Float)cur_max / (Float)(1 << 23);
+
+  if (!standard)
+    {
+      (*min_samp) = (Float)(*min_samp) / (Float)(1 << 8);
+      (*max_samp) = (Float)(*max_samp) / (Float)(1 << 8);
+    }
+}
+
+
+
+/* ---------------- float ---------------- */
+
+#define FLOAT_BYTES 4
+
+static void min_max_floats(unsigned char *data, int bytes, int chan, int chans, Float *min_samp, Float *max_samp, bool unscaled)
+{
+  float cur_min, cur_max;
+  float *sbuf;
+  int i, len;
+
+  sbuf = (float *)data;
+  len = bytes / FLOAT_BYTES;
+
+  cur_min = sbuf[chan];
+  cur_max = cur_min;
+
+  for (i = (chans + chan); i < len; i += chans)
+    {
+      if (sbuf[i] < cur_min) cur_min = sbuf[i];
+      else if (sbuf[i] > cur_max) cur_max = sbuf[i];
+    }
+
+  if (unscaled)
+    {
+      (*min_samp) = cur_min / 32768.0;
+      (*max_samp) = cur_max / 32768.0;
+    }
+  else
+    {
+      (*min_samp) = cur_min;
+      (*max_samp) = cur_max;
+    }
+}
+
+
+static void min_max_switch_floats(unsigned char *data, int bytes, int chan, int chans, Float *min_samp, Float *max_samp, bool unscaled)
+{
+  float cur_min, cur_max;
+  /* frame based */
+  unsigned char *samp, *eod;
+  int bytes_per_frame;
+
+  bytes_per_frame = chans * FLOAT_BYTES;
+  eod = (unsigned char *)(data + bytes);
+
+#if MUS_LITTLE_ENDIAN
+  cur_min = big_endian_float((unsigned char *)(data + (chan * FLOAT_BYTES)));
+#else
+  cur_min = little_endian_float((unsigned char *)(data + (chan * FLOAT_BYTES)));
+#endif
+  cur_max = cur_min;
+
+  for (samp = (unsigned char *)(data + (chan * FLOAT_BYTES) + bytes_per_frame); samp < eod; samp += bytes_per_frame)
+    {
+      float val;
+#if MUS_LITTLE_ENDIAN
+      val = big_endian_float(samp);
+#else
+      val = little_endian_float(samp);
+#endif
+      if (val < cur_min) cur_min = val;
+      else if (val > cur_max) cur_max = val;
+    }
+
+  if (unscaled)
+    {
+      (*min_samp) = cur_min / 32768.0;
+      (*max_samp) = cur_max / 32768.0;
+    }
+  else
+    {
+      (*min_samp) = cur_min;
+      (*max_samp) = cur_max;
+    }
+}
+
+
+
+/* ---------------- double ---------------- */
+
+#define DOUBLE_BYTES 8
+
+static void min_max_doubles(unsigned char *data, int bytes, int chan, int chans, Float *min_samp, Float *max_samp, bool unscaled)
+{
+  double cur_min, cur_max;
+  double *sbuf;
+  int i, len;
+
+  sbuf = (double *)data;
+  len = bytes / DOUBLE_BYTES;
+
+  cur_min = sbuf[chan];
+  cur_max = cur_min;
+
+  for (i = (chans + chan); i < len; i += chans)
+    {
+      if (sbuf[i] < cur_min) cur_min = sbuf[i];
+      else if (sbuf[i] > cur_max) cur_max = sbuf[i];
+    }
+
+  if (unscaled)
+    {
+      (*min_samp) = cur_min / 32768.0;
+      (*max_samp) = cur_max / 32768.0;
+    }
+  else
+    {
+      (*min_samp) = cur_min;
+      (*max_samp) = cur_max;
+    }
+}
+
+
+static void min_max_switch_doubles(unsigned char *data, int bytes, int chan, int chans, Float *min_samp, Float *max_samp, bool unscaled)
+{
+  double cur_min, cur_max;
+  /* frame based */
+  unsigned char *samp, *eod;
+  int bytes_per_frame;
+
+  bytes_per_frame = chans * DOUBLE_BYTES;
+  eod = (unsigned char *)(data + bytes);
+
+#if MUS_LITTLE_ENDIAN
+  cur_min = big_endian_double((unsigned char *)(data + (chan * DOUBLE_BYTES)));
+#else
+  cur_min = little_endian_double((unsigned char *)(data + (chan * DOUBLE_BYTES)));
+#endif
+  cur_max = cur_min;
+
+  for (samp = (unsigned char *)(data + (chan * DOUBLE_BYTES) + bytes_per_frame); samp < eod; samp += bytes_per_frame)
+    {
+      double val;
+#if MUS_LITTLE_ENDIAN
+      val = big_endian_double(samp);
+#else
+      val = little_endian_double(samp);
+#endif
+      if (val < cur_min) cur_min = val;
+      else if (val > cur_max) cur_max = val;
+    }
+
+  if (unscaled)
+    {
+      (*min_samp) = cur_min / 32768.0;
+      (*max_samp) = cur_max / 32768.0;
+    }
+  else
+    {
+      (*min_samp) = cur_min;
+      (*max_samp) = cur_max;
+    }
+}
+
+
+
+/* ---------------- 3-byte samples ---------------- */
+
+#define THREE_BYTES 3
+
+static int three_bytes(unsigned char *data, int loc, bool big_endian)
+{
+  if (big_endian)
+    return((int)(((data[loc + 0] << 24) + 
+		  (data[loc + 1] << 16) + 
+		  (data[loc + 2] << 8)) >> 8));
+  return((int)(((data[loc + 2] << 24) + 
+		(data[loc + 1] << 16) + 
+		(data[loc + 0] << 8)) >> 8));
+}
+
+
+static void min_max_24s(unsigned char *data, int bytes, int chan, int chans, Float *min_samp, Float *max_samp, bool big_endian)
+{
+  int cur_min, cur_max;
+  int i, bytes_per_frame, len, offset;
+
+  bytes_per_frame = chans * THREE_BYTES;
+  len = bytes / bytes_per_frame;
+  offset = chan * THREE_BYTES;
+
+  cur_min = three_bytes(data, offset, big_endian);
+  cur_max = cur_min;
+
+  for (i = 1; i < len; i++)
+    {
+      int val;
+      val = three_bytes(data, i * bytes_per_frame + offset, big_endian);
+
+      if (val < cur_min) cur_min = val;
+      else if (val > cur_max) cur_max = val;
+    }
+
+  (*min_samp) = (Float)cur_min / (Float)(1 << 23);
+  (*max_samp) = (Float)cur_max / (Float)(1 << 23);
+}
+
+
+
+/* ---------------- mulaw, alaw, byte ---------------- */
+
+static void min_max_mulaw(unsigned char *data, int bytes, int chan, int chans, Float *min_samp, Float *max_samp)
+{
+  int cur_min, cur_max;
+  int i;
+
+  cur_min = mulaw[(int)data[chan]];
+  cur_max = cur_min;
+
+  for (i = (chans + chan); i < bytes; i += chans)
+    {
+      int val;
+      val = mulaw[(int)data[i]];
+      if (val < cur_min) cur_min = val;
+      else if (val > cur_max) cur_max = val;
+    }
+
+  (*min_samp) = (Float)cur_min / 32768.0;
+  (*max_samp) = (Float)cur_max / 32768.0;
+}
+
+
+static void min_max_alaw(unsigned char *data, int bytes, int chan, int chans, Float *min_samp, Float *max_samp)
+{
+  int cur_min, cur_max;
+  int i;
+
+  cur_min = alaw[(int)data[chan]];
+  cur_max = cur_min;
+
+  for (i = (chans + chan); i < bytes; i += chans)
+    {
+      int val;
+      val = alaw[(int)data[i]];
+      if (val < cur_min) cur_min = val;
+      else if (val > cur_max) cur_max = val;
+    }
+
+  (*min_samp) = (Float)cur_min / 32768.0;
+  (*max_samp) = (Float)cur_max / 32768.0;
+}
+
+
+static void min_max_bytes(unsigned char *data, int bytes, int chan, int chans, Float *min_samp, Float *max_samp)
+{
+  signed char cur_min, cur_max;
+  int i;
+
+  cur_min = (signed char)(data[chan]);
+  cur_max = cur_min;
+
+  for (i = (chans + chan); i < bytes; i += chans)
+    {
+      signed char val;
+      val = (signed char)(data[i]);
+      if (val < cur_min) cur_min = val;
+      else if (val > cur_max) cur_max = val;
+    }
+
+  (*min_samp) = (Float)cur_min / (Float)(1 << 7);
+  (*max_samp) = (Float)cur_max / (Float)(1 << 7);
+}
+
+
+static void min_max_ubytes(unsigned char *data, int bytes, int chan, int chans, Float *min_samp, Float *max_samp)
+{
+  unsigned char cur_min, cur_max;
+  int i;
+
+  cur_min = data[chan];
+  cur_max = cur_min;
+
+  for (i = (chans + chan); i < bytes; i += chans)
+    {
+      if (data[i] < cur_min) cur_min = data[i];
+      else if (data[i] > cur_max) cur_max = data[i];
+    }
+
+  (*min_samp) = (Float)(cur_min - UBYTE_ZERO) / (Float)(1 << 7);
+  (*max_samp) = (Float)(cur_max - UBYTE_ZERO) / (Float)(1 << 7);
+}
+
+
+
+
 int mus_samples_peak(unsigned char *data, int bytes, int chans, int format, Float *maxes)
 {
   /* returns MUS_ERROR if format can't be handled */
   /*   assumes maxes arrays has at least chans elements and that data array has at least bytes bytes */
   /* this is used only by the recorder to move the VU meter needle, so it doesn't need to handle large (off_t) arrays */
-  int chan, bytes_per_sample, bytes_per_frame;
-  unsigned char *eod, *samp;
 
-  bytes_per_sample = mus_bytes_per_sample(format);
-  bytes_per_frame = bytes_per_sample * chans;
-  eod = (unsigned char *)(data + bytes);
+  Float cur_min, cur_max;
+  int chan;
 
   for (chan = 0; chan < chans; chan++)
     {
@@ -1788,87 +2297,43 @@ int mus_samples_peak(unsigned char *data, int bytes, int chans, int format, Floa
       switch (format)
 	{
 	case MUS_BSHORT:
-	  {
-	    short max_samp = 0;
-	    for (samp = (unsigned char *)(data + (chan * bytes_per_sample)); samp < eod; samp += bytes_per_frame)
-	      {
-		short val;
-		val = big_endian_short(samp);
-		if (val < 0) val = -val;
-		if (val > max_samp) max_samp = val;
-	      }
-	    maxes[chan] = (Float)max_samp / 32768.0;
-	  }
+#if (!MUS_LITTLE_ENDIAN)
+	  min_max_shorts(data, bytes, chan, chans, &cur_min, &cur_max);
+#else
+	  min_max_switch_shorts(data, bytes, chan, chans, &cur_min, &cur_max);
+#endif
 	  break;
 
 	case MUS_LSHORT:
-	  {
-	    short max_samp = 0;
-	    for (samp = (unsigned char *)(data + (chan * bytes_per_sample)); samp < eod; samp += bytes_per_frame)
-	      {
-		short val;
-		val = little_endian_short(samp);
-		if (val < 0) val = -val;
-		if (val > max_samp) max_samp = val;
-	      }
-	    maxes[chan] = (Float)max_samp / 32768.0;
-	  }
+#if (MUS_LITTLE_ENDIAN)
+	  min_max_shorts(data, bytes, chan, chans, &cur_min, &cur_max);
+#else
+	  min_max_switch_shorts(data, bytes, chan, chans, &cur_min, &cur_max);
+#endif
 	  break;
 
 	case MUS_MULAW:  	              
-	  {
-	    short max_samp = 0;
-	    for (samp = (unsigned char *)(data + (chan * bytes_per_sample)); samp < eod; samp += bytes_per_frame)
-	      {
-		short val;
-		val = mulaw[*samp];
-		if (val < 0) val = -val;
-		if (val > max_samp) max_samp = val;
-	      }
-	    maxes[chan] = (Float)max_samp / 32768.0;
-	  }
+	  min_max_mulaw(data, bytes, chan, chans, &cur_min, &cur_max);
 	  break;
 
 	case MUS_ALAW:                  
-	  {
-	    short max_samp = 0;
-	    for (samp = (unsigned char *)(data + (chan * bytes_per_sample)); samp < eod; samp += bytes_per_frame)
-	      {
-		short val;
-		val = alaw[*samp];
-		if (val < 0) val = -val;
-		if (val > max_samp) max_samp = val;
-	      }
-	    maxes[chan] = (Float)max_samp / 32768.0;
-	  }
+	  min_max_alaw(data, bytes, chan, chans, &cur_min, &cur_max);
 	  break;
 
 	case MUS_BFLOAT:
-	  {
-	    float max_samp = 0.0;
-	    for (samp = (unsigned char *)(data + (chan * bytes_per_sample)); samp < eod; samp += bytes_per_frame)
-	      {
-		float val;
-		val = big_endian_float(samp);
-		if (val < 0.0) val = -val;
-		if (val > max_samp) max_samp = val;
-	      }
-	    maxes[chan] = (Float)max_samp;
-	  }
+#if (!MUS_LITTLE_ENDIAN)
+	  min_max_floats(data, bytes, chan, chans, &cur_min, &cur_max, false);
+#else
+	  min_max_switch_floats(data, bytes, chan, chans, &cur_min, &cur_max, false);
+#endif
 	  break;
 
 	case MUS_LFLOAT:
-	  {
-	    float max_samp = 0.0;
-	    for (samp = (unsigned char *)(data + (chan * bytes_per_sample)); samp < eod; samp += bytes_per_frame)
-	      {
-		float val;
-		val = little_endian_float(samp);
-		if (val < 0.0) val = -val;
-		if (val > max_samp) max_samp = val;
-	      }
-	    maxes[chan] = (Float)max_samp;
-	  }
+#if (MUS_LITTLE_ENDIAN)
+	  min_max_floats(data, bytes, chan, chans, &cur_min, &cur_max, false);
+#else
+	  min_max_switch_floats(data, bytes, chan, chans, &cur_min, &cur_max, false);
+#endif
 	  break;
 
 	default:
@@ -1877,38 +2342,123 @@ int mus_samples_peak(unsigned char *data, int bytes, int chans, int format, Floa
 	  return(MUS_ERROR);
 	  break;
 	}
+
+      if (-cur_min > cur_max)
+	maxes[chan] = -cur_min;
+      else maxes[chan] = cur_max;
     }
   return(MUS_NO_ERROR);
 }
 
 
-
-static off_t mus_maximum_malloc = MUS_MAX_MALLOC_DEFAULT;
-
-off_t mus_max_malloc(void)
+int mus_samples_bounds(unsigned char *data, int bytes, int chan, int chans, int format, Float *min_samp, Float *max_samp)
 {
-  return(mus_maximum_malloc);
+  switch (format)
+    {
+    case MUS_MULAW:
+      min_max_mulaw(data, bytes, chan, chans, min_samp, max_samp);
+      break;
+    case MUS_ALAW:
+      min_max_alaw(data, bytes, chan, chans, min_samp, max_samp);
+      break;
+    case MUS_BYTE:
+      min_max_bytes(data, bytes, chan, chans, min_samp, max_samp);
+      break;
+    case MUS_UBYTE:
+      min_max_ubytes(data, bytes, chan, chans, min_samp, max_samp);
+      break;
+    case MUS_L24INT:
+      min_max_24s(data, bytes, chan, chans, min_samp, max_samp, false);
+      break;
+    case MUS_B24INT:
+      min_max_24s(data, bytes, chan, chans, min_samp, max_samp, true);
+      break;
+
+#if MUS_LITTLE_ENDIAN
+
+    case MUS_LSHORT:
+      min_max_shorts(data, bytes, chan, chans, min_samp, max_samp);
+      break;
+    case MUS_BSHORT:
+      min_max_switch_shorts(data, bytes, chan, chans, min_samp, max_samp);
+      break;
+    case MUS_ULSHORT:
+      min_max_ushorts(data, bytes, chan, chans, min_samp, max_samp);
+      break;
+    case MUS_UBSHORT:
+      min_max_switch_ushorts(data, bytes, chan, chans, min_samp, max_samp);
+      break;
+    case MUS_LINT:
+    case MUS_LINTN:
+      min_max_ints(data, bytes, chan, chans, min_samp, max_samp, format == MUS_LINT);
+      break;
+    case MUS_BINT:
+    case MUS_BINTN:
+      min_max_switch_ints(data, bytes, chan, chans, min_samp, max_samp, format == MUS_BINT);
+      break;
+    case MUS_LFLOAT:
+    case MUS_LFLOAT_UNSCALED:
+      /* prescaler is known to be 1.0 here */
+      min_max_floats(data, bytes, chan, chans, min_samp, max_samp, format == MUS_LFLOAT_UNSCALED);
+      break;
+    case MUS_BFLOAT:
+    case MUS_BFLOAT_UNSCALED:
+      min_max_switch_floats(data, bytes, chan, chans, min_samp, max_samp, format == MUS_BFLOAT_UNSCALED);
+      break;
+    case MUS_LDOUBLE:
+    case MUS_LDOUBLE_UNSCALED:
+      min_max_doubles(data, bytes, chan, chans, min_samp, max_samp, format == MUS_LDOUBLE_UNSCALED);
+      break;
+    case MUS_BDOUBLE:
+    case MUS_BDOUBLE_UNSCALED:
+      min_max_switch_doubles(data, bytes, chan, chans, min_samp, max_samp, format == MUS_BDOUBLE_UNSCALED);
+      break;
+
+#else /* big endian */
+
+    case MUS_LSHORT:
+      min_max_switch_shorts(data, bytes, chan, chans, min_samp, max_samp);
+      break;
+    case MUS_BSHORT:
+      min_max_shorts(data, bytes, chan, chans, min_samp, max_samp);
+      break;
+    case MUS_ULSHORT:
+      min_max_switch_ushorts(data, bytes, chan, chans, min_samp, max_samp);
+      break;
+    case MUS_UBSHORT:
+      min_max_ushorts(data, bytes, chan, chans, min_samp, max_samp);
+      break;
+    case MUS_LINT:
+    case MUS_LINTN:
+      min_max_switch_ints(data, bytes, chan, chans, min_samp, max_samp, format == MUS_LINT);
+      break;
+    case MUS_BINT:
+    case MUS_BINTN:
+      min_max_ints(data, bytes, chan, chans, min_samp, max_samp, format == MUS_BINT);
+      break;
+    case MUS_LFLOAT:
+    case MUS_LFLOAT_UNSCALED:
+      min_max_switch_floats(data, bytes, chan, chans, min_samp, max_samp, format == MUS_LFLOAT_UNSCALED);
+      break;
+    case MUS_BFLOAT:
+    case MUS_BFLOAT_UNSCALED:
+      min_max_floats(data, bytes, chan, chans, min_samp, max_samp, format == MUS_BFLOAT_UNSCALED);
+      break;
+    case MUS_LDOUBLE:
+    case MUS_LDOUBLE_UNSCALED:
+      min_max_switch_doubles(data, bytes, chan, chans, min_samp, max_sampformat == MUS_LDOUBLE_UNSCALED);
+      break;
+    case MUS_BDOUBLE:
+    case MUS_BDOUBLE_UNSCALED:
+      min_max_doubles(data, bytes, chan, chans, min_samp, max_samp, format == MUS_BDOUBLE_UNSCALED);
+      break;
+
+#endif
+
+    default:
+      return(MUS_ERROR);
+      break;
+    }
+
+  return(MUS_NO_ERROR);
 }
-
-off_t mus_set_max_malloc(off_t new_max)
-{
-  mus_maximum_malloc = new_max;
-  return(new_max);
-}
-
-
-
-static off_t mus_maximum_table_size = MUS_MAX_TABLE_SIZE_DEFAULT;
-
-off_t mus_max_table_size(void)
-{
-  return(mus_maximum_table_size);
-}
-
-off_t mus_set_max_table_size(off_t new_max)
-{
-  mus_maximum_table_size = new_max;
-  return(new_max);
-}
-
-
