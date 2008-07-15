@@ -6106,10 +6106,13 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
   int len, i;
   off_t curlen;
   snd_data *first_snd = NULL;
+
   if (cp->active < CHANNEL_HAS_EDIT_LIST) return(NULL);
   if ((edit_position < 0) || (edit_position >= cp->edit_size)) return(NULL); /* was ">" not ">=": 6-Jan-05 */
+
   ed = cp->edits[edit_position];
   if (!ed) return(NULL);
+
   sp = cp->sound;
   if (sp->inuse == SOUND_IDLE) return(NULL);
 
@@ -6135,6 +6138,7 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
     }
 
   curlen = cp->edits[edit_position]->samples;
+
   /* snd_fd allocated only here */
   sf = (snd_fd *)CALLOC(1, sizeof(snd_fd)); /* only creation point (... oops -- see below...)*/
   MUS_SET_PRINTABLE(PRINT_SND_FD);
@@ -6147,12 +6151,15 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
   sf->direction = direction;
   sf->current_state = ed;
   sf->edit_ctr = edit_position;
+
   if ((curlen <= 0) ||    /* no samples, not ed->len (delete->len = #deleted samps) */
       (samp < 0) ||       /* this should never happen */
       ((samp >= curlen) && (direction == READ_FORWARD)))
     return(cancel_reader(sf));
+
   if (samp >= curlen) samp = curlen - 1;
   len = ed->size;
+
   for (i = 0; i < len; i++)
     {
       ed_fragment *cb;

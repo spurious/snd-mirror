@@ -1081,11 +1081,13 @@ static file_info *open_raw_sound(const char *fullname, read_only_t read_only, bo
 	}
       if (len > 3) data_location = XEN_TO_C_OFF_T(XEN_LIST_REF(res, 3)); else data_location = 0;
       if (len > 4) bytes = XEN_TO_C_OFF_T(XEN_LIST_REF(res, 4)); else bytes = mus_sound_length(fullname) - data_location;
+
       mus_header_set_raw_defaults(srate, chans, data_format);
       mus_sound_override_header(fullname, 
 				srate, chans, data_format, 
 				MUS_RAW, data_location,
 				mus_bytes_to_samples(data_format, bytes));
+
       if (res_loc != NOT_A_GC_LOC) snd_unprotect_at(res_loc);	      
       hdr = (file_info *)CALLOC(1, sizeof(file_info));
       hdr->name = copy_string(fullname);
@@ -1118,6 +1120,8 @@ static file_info *open_raw_sound(const char *fullname, read_only_t read_only, bo
       mus_snprintf(str, PRINT_BUFFER_SIZE, _("No header found for %s"), filename_without_directory(fullname));
       raw_data_dialog_to_file_info(fullname, str, NULL, read_only, selected);
     }
+#else
+  if (res_loc != NOT_A_GC_LOC) snd_unprotect_at(res_loc); /* maybe a value returned in no-gui case, but it wasn't a list */
 #endif
   return(NULL);
 }

@@ -531,12 +531,16 @@ static int calculate_fft_1(chan_info *cp, bool update_display)
   if ((cp->graph_transform_p) &&
       (!(chan_fft_in_progress(cp))))
     {
+#if (!USE_NO_GUI)
       if (cp->transform_graph_type == GRAPH_ONCE)
 	single_fft(cp, update_display, DONT_FORCE_REFFT);
       else set_chan_fft_in_progress(cp,
 				    BACKGROUND_ADD(sonogram_in_slices,
 						   make_sonogram_state(cp, 
 								       DONT_FORCE_REFFT)));
+#else
+      single_fft(cp, update_display, DONT_FORCE_REFFT);
+#endif
     }
   return(0);
 }
@@ -828,10 +832,12 @@ void add_channel_data(char *filename, chan_info *cp, channel_graph_t graphed)
 	  cp->sounds[0] = make_snd_data_file(filename, io, chdr, DONT_DELETE_ME, cp->edit_ctr, chn);
 	}
     }
+#if (!USE_NO_GUI)
   if ((CURRENT_SAMPLES(cp) > PEAK_ENV_CUTOFF) &&
       (cp->edits[0]->peak_env == NULL) &&              /* perhaps created in initial-graph-hook by read-peak-env-info-file */
       (cp->sound->short_filename != NULL))             /* region browser jumped in too soon during autotest */
     start_peak_env(cp);
+#endif
 }
 
 

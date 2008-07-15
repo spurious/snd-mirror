@@ -131,7 +131,13 @@ void free_peak_env_state(chan_info *cp)
 	  es = cgx->peak_env_state;
 	  if (es)
 	    {
-	      es->sf = free_snd_fd(es->sf);
+	      if (es->sf)
+		es->sf = free_snd_fd(es->sf);
+	      if (es->direct_data)
+		{
+		  FREE(es->direct_data);
+		  es->direct_data = NULL;
+		}
 	      FREE(es);
 	    }
 	  cgx->peak_env_state = NULL;
@@ -304,7 +310,13 @@ static bool tick_peak_env(chan_info *cp, env_state *es)
 	{
 	  /* oops... */
 	  es->slice++;
-	  es->sf = free_snd_fd(es->sf);
+	  if (es->sf)
+	    es->sf = free_snd_fd(es->sf);
+	  if (es->direct_data)
+	    {
+	      FREE(es->direct_data);
+	      es->direct_data = NULL;
+	    }
 	  ep->completed = true;
 	  return(true);
 	}
@@ -528,6 +540,10 @@ bool peak_env_usable(chan_info *cp, Float samples_per_pixel, off_t hisamp, bool 
 {
   peak_env_info *ep;
   chan_context *cgx;
+
+#if USE_NO_GUI
+  return(false);
+#endif
 
   cgx = cp->cgx;
   if ((!cgx) || (!(cp->edits)))
@@ -5116,6 +5132,8 @@ static XEN g_env_info_to_vcts(peak_env_info *ep, int len)
 }
 
 
+
+#if (!USE_NO_GUI)
 typedef struct {
   chan_info *cp;
   env_state *es;
@@ -5124,7 +5142,6 @@ typedef struct {
   XEN func;
   int func_gc_loc;
 } env_tick;
-
 
 static idle_func_t tick_it(any_pointer_t pet)
 {
@@ -5159,6 +5176,7 @@ static idle_func_t tick_it(any_pointer_t pet)
     }
   return(BACKGROUND_CONTINUE);
 }
+#endif
 
 
 static XEN g_channel_amp_envs(XEN filename, XEN chan, XEN pts, XEN peak_func, XEN done_func)
@@ -5177,7 +5195,6 @@ If 'filename' is a sound index (an integer), 'size' is interpreted as an edit-po
   int len, chn;
   snd_info *sp = NULL;
   chan_info *cp = NULL;
-  int id;
   peak_env_error_t err = PEAK_ENV_NO_ERROR;
 
   if (fullname) {FREE(fullname); fullname = NULL;}
@@ -5317,8 +5334,10 @@ If 'filename' is a sound index (an integer), 'size' is interpreted as an edit-po
       es = make_env_state(cp, cp->edits[0]->samples);
       if (es)
 	{
+#if (!USE_NO_GUI)
 	  if (XEN_PROCEDURE_P(done_func))
 	    {
+	      int id;
 	      env_tick *et;
 	      et = (env_tick *)CALLOC(1, sizeof(env_tick));
 	      et->cp = cp;
@@ -5330,8 +5349,15 @@ If 'filename' is a sound index (an integer), 'size' is interpreted as an edit-po
 	      id = (int)BACKGROUND_ADD(tick_it, (any_pointer_t)et);
 	      return(C_TO_XEN_INT(id));
 	    }
+#endif
 	  while (!(tick_peak_env(cp, es))) {};
-	  free_snd_fd(es->sf);
+	  if (es->sf)
+	    free_snd_fd(es->sf);
+	  if (es->direct_data)
+	    {
+	      FREE(es->direct_data);
+	      es->direct_data = NULL;
+	    }
 	  FREE(es);
 	  peak = g_env_info_to_vcts(cp->edits[0]->peak_env, len);
 	}
