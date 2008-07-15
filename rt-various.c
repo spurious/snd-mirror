@@ -229,11 +229,15 @@ void* clm_malloc(size_t size,const char* what){
 }
 
 void* clm_realloc(void* old,size_t newsize){
-  tar_mem_t *mem=(tar_mem_t*)(((char*)old)-sizeof(tar_mem_t));
-  size_t size=mem->size;
-  if(newsize<size)
-    size=newsize;
-  return memcpy(clm_malloc(newsize,"realloc"),old,size);
+  if(clm_tar_heap==NULL){
+    return REALLOC(old,newsize);
+  }else{
+    tar_mem_t *mem=(tar_mem_t*)(((char*)old)-sizeof(tar_mem_t));
+    size_t size=mem->size;
+    if(newsize<size)
+      size=newsize;
+    return memcpy(clm_malloc(newsize,"realloc"),old,size);
+  }
 }
 
 

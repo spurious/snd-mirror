@@ -39,6 +39,7 @@
 
 (set! (show-backtrace) #t)
 (debug-enable 'debug)
+(read-enable 'positions)
 (if #f
     (begin
       (read-enable 'positions)

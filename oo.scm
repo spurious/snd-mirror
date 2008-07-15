@@ -3,6 +3,8 @@
 ;;OO is a message based system to cause less typing doing object oriented programming with guile.
 ;;-Kjetil S. Matheussen, 9.2.2005
 
+;; This file has also become a container for all sorts of general functions and macros of various
+;; sizes.
 
 ;;What makes this system different from all the other systems I know about for scheme
 ;;(found at www.schemers.org), is that the methods are placed inside the classes, like
@@ -88,8 +90,15 @@
        (load-from-path (symbol->string (symbol-append ',filename '.scm)))))
 
 
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;; Various functions ;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
@@ -114,6 +123,9 @@
 (define <-> string-append)
 (define <_> symbol-append)
 
+(define (keyword->string k)
+  (symbol->string (keyword->symbol k)))
+
 (define (nth n list)
   (list-ref list n))
 
@@ -135,6 +147,13 @@
 		 (flatten (cdr tree))))
 	(else
 	 (cons (car tree) (flatten (cdr tree))))))
+
+(define (yppla list func)
+  (apply func list))
+(define-macro (curryppla args . code)
+  (define list (gensym))
+  `(lambda (,list)
+     (yppla ,list (lambda ,args ,@code))))
 
 (define-macro (push! val where)
   (let ((ret (gensym)))
@@ -181,6 +200,18 @@
 	     table))
 (define hash->list hash-table->alist)
 
+
+(define (deep-list-search what list)
+  (cond ((eq? what list)
+         #t)
+        ((pair? list)
+         (or (deep-list-search what (car list))
+             (deep-list-search what (cdr list))))
+        (else
+         #f)))
+#!
+(deep-list-search 'aiai '((((2 3) ((5 . aiai))))))
+!#
 
 (define (deep-list-copy list)
   (cond ((not (pair? list))
@@ -263,6 +294,481 @@
   (newline)
   result)
 
+#!
+!#
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;; labamba/delafina/etc. ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; labamba is a replacement for lambda*,
+;; and delafina is a replacement for define*.
+
+;; Differences between lambda* and labamba:
+;; 
+;;  * ":optional-key/:optkey" in addition to :key, :rest and :allow-other-keys
+;;  * ":optional" does not exist in labamba. (useless(?) when having optional-key/optkey)
+;;  * When calling a function, (func 2 3 :hmm) is the same as (func 2 3 :hmm #t)
+;;  * ":rest" only contains rest, not :rest, :key and everything else.
+;;  ;;* labamba has a very simple patternmatcher (case-lambda style)
+;;  * Gives more accurate and less verbose debugging information
+;;  * The result of macroexpanding labamba is less verbose than the result of macroexpanding lambda*
+;;    because the use of helper functions.
+;;  * labamba is probably very slow compared to lambda* since the patternmatching is performed
+;;    at runtime (where it compares a definition list against a call list) instead of
+;;    generating specific patternmatching logic at macroxpansion time.
+
+
+
+(define (labamba-parse function-name
+                       args
+                       must-provides
+                       optkeys
+                       keys
+                       key/optkey-defaults
+                       allow-other-keys?
+                       rest?
+                       cont)
+
+  (define org-args args)
+
+  (define keyargs (map (lambda (key)
+                         (cons key 'undefined))
+                       (append optkeys keys)))
+  (define rest '())
+  (define must-provide-results '())
+
+  (define (failed message)
+    (c-display message "\n arguments:" org-args)
+    (throw 'labamba-failed function-name))
+
+  ;; Parse arguments which must be provided
+  (let loop ((args* args)
+             (must-provides* must-provides))
+    (cond ((null? must-provides*)
+           (set! args args*))
+          ((null? args*)
+           (failed (<-> "Too few arguments for \"" function-name "\". Expected " (number->string (length must-provides))
+                        ", found " (number->string (length args)) ".")))
+          ((keyword? (car args*))
+           (failed (<-> "Misplaced keyword in the arguments for \"" function-name "\":\n :"
+                        (keyword->string (car args*)) " can not be placed here. Expected at least " (number->string (length must-provides))
+                        " arguments before keywords.")))
+          (else
+           (push! (car args*) must-provide-results)
+           (loop (cdr args*)
+                 (cdr must-provides*)))))
+  (set! must-provide-results (reverse! must-provide-results))
+  
+  ;; Parse optional-key arguments if supplied without using keywords.
+  (let loop ((args* args)
+             (optkeys* optkeys)
+             (keyargs* keyargs))
+    (cond ((or (null? optkeys*)
+               (null? args*)
+               (keyword? (car args*)))
+           (set! args args*))
+          (else
+           (set-cdr! (car keyargs*) (car args*))
+           (loop (cdr args*)
+                 (cdr optkeys*)
+                 (cdr keyargs*)))))
+
+  ;;(c-display "keyargs" keyargs)
+  ;;(c-display "res" res)
+
+  ;; Parse key args and build rest.
+  (let loop ((args* args))
+
+    (define (push-rest!)
+      (push! (car args*) rest)
+      (if (or (null? (cdr args*))
+              (keyword? (cadr args*)))
+          (push! #t rest)
+          (begin
+            (set! args* (cdr args*))
+            (push! (car args*) rest)))
+      (loop (cdr args*)))
+
+    (cond ((null? args*)
+           #t)
+          ((keyword? (car args*))
+           (let* ((arg0 (car args*))
+                  (hit (assq (keyword->symbol arg0) keyargs)))
+             (cond ((and (not hit)
+                         rest?
+                         allow-other-keys?)
+                    (push-rest!))
+                   ((not hit)
+                    (failed (<-> "Unknown key :" (keyword->string arg0))))
+                   ((not (eq? 'undefined (cdr hit)))
+                    (failed (<-> "Key :" (keyword->string arg0) " has already got a value.")))
+                   ((or (null? (cdr args*))
+                        (keyword? (cadr args*)))
+                    (set-cdr! hit #t)
+                    (loop (cdr args*)))
+                   (else
+                    (set-cdr! hit (cadr args*))
+                    (loop (cddr args*))))))
+          ((not rest?)
+           (c-display "Don't know how to handle:" args*)
+           (failed (<-> "Too many arguments."))) ;;. (Perhaps missing :rest ?)")))
+          (else
+           (push! (car args*) rest)
+           (loop (cdr args*)))))
+
+  (set! rest (reverse! rest))
+
+  ;; Check the content of rest
+;  (if (and rest?
+;           (not allow-other-keys?))
+;      (for-each (lambda (arg)
+;                  (if (keyword? arg)
+;                      (if (memq (keyword->symbol arg) (map car defaults))
+;                          (failed (<-> "Key :" (keyword->string arg) " has already got a value."))
+;                          (failed (<-> "Unknown key :" (keyword->string arg))))))
+;                args))
+
+
+  ;;(c-display "must-provide-results" must-provide-results)
+  ;;(c-display "keyargs" keyargs)
+  ;;(c-display "rest" rest rest?)
+
+  (let ()
+    (define das-args (append! must-provide-results
+                              (map (lambda (keyarg key-default)
+                                     (if (eq? 'undefined keyarg)
+                                         (if (procedure? key-default)
+                                             (key-default)
+                                             key-default)
+                                         keyarg))
+                                   (map cdr keyargs)
+                                   key/optkey-defaults)))
+    (if rest?
+        (apply cont (append! das-args (list rest)))
+        (apply cont das-args))))
+
+
+                       
+#!
+(labamba-parse "ano" '(50 60) '() '(a b) '() (list #f #f) #f #f (lambda x x))
+
+(catch 'labamba-failed
+       (lambda ()
+         (labamba-parse "ano"
+                        '(10 20 30 :e :d 90 34 :hmm :hmm2 35 36)
+                        '(a b)
+                        '(c)
+                        '(c d e)
+                        (list 3 4 5)
+                        #t
+                        #t
+                        (lambda (a b c d e rest)
+                          (c-display "a/b/c/d/e" a b c d e rest))))
+       (lambda x
+         (c-display "x" x)))
+!#
+
+
+
+(define (labamba-create-defaults def function-name)
+  (cons 'list (let loop ((def def)
+                         (got-key #f))
+                (cond ((null? def) '())
+                      ((or (eqv? (car def) :key)
+                           (eqv? (car def) :optkey)
+                           (eqv? (car def) :optional-key))
+                       (loop (cdr def) #t))
+                      ((eqv? (car def) :allow-other-keys)
+                       '())
+                      ((eqv? (car def) :rest)
+                       '())
+                      ((keyword? (car def))
+                       (c-display "Unknown keyword argument" (car def))
+                       (throw 'labamba-failed function-name))
+                      (got-key
+                       (cons (cond ((not (pair? (car def)))
+                                    #f)
+                                   (else
+                                    (let ()
+                                      (define val (cadar def))
+                                      (if (not (pair? val))
+                                          ;;(or (number? val)
+                                          ;;    (char?   val)
+                                          ;;    (string? val))
+                                          val
+                                          `(lambda ()
+                                             ,val)))))
+                             (loop (cdr def) #t)))
+                      (else
+                       (loop (cdr def) #f))))))
+
+#!
+(pretty-print (labamba-create-defaults '(a d :key b (c 9) (e aiai)  (d (+ 5 200)) :allow-other-keys :rest ba) "<anonymous>"))
+(pretty-print (labamba-create-defaults '(a d :optkey oa ob :key b (c 9) :optkey (e aiai) (f (+ 5 200)) :allow-other-keys :rest ba) "ano"))
+!#           
+           
+
+(define (labamba-create-arglist def function-name)
+  (catch 'labamba-failed-internal
+         (lambda ()
+           (define check-duplicate
+             (let ((names '()))
+               (lambda (name)
+                 (when (memq name names)
+                   (c-display (<-> "Argument name '" (symbol->string name) "' more than once.") def ".")
+                   (throw 'labamba-failed-internal function-name))
+                 (push! name names))))
+           (let loop ((def def)
+                      (got-key #f))
+             (cond ((null? def) '())
+                   ((or (eqv? (car def) :key)
+                        (eqv? (car def) :optkey)
+                        (eqv? (car def) :optional-key))
+                    (loop (cdr def) #t))
+                   ((eqv? (car def) :allow-other-keys)
+                    (loop (cdr def) #t))
+                   ((eqv? (car def) :rest)
+                    (check-duplicate (cadr def))
+                    (list (cadr def)))
+                   ((keyword? (car def))
+                    (c-display "Unknown keyword argument" (car def))
+                    (throw 'labamba-failed-internal function-name))
+                   (else
+                    (let ()
+                      (define name (if got-key
+                                       (if (not (pair? (car def)))
+                                           (car def)
+                                           (caar def))
+                                       (car def)))
+                      (check-duplicate name)
+                      (cons name
+                            (loop (cdr def) got-key)))))))
+         (lambda x
+           (apply throw (cons 'labamba-failed x)))))
+
+
+#!
+(labamba-create-arglist '(a d :key b (c 9) (e aiai) (f (+ 5 200)) :allow-other-keys :rest ba) "<anonymous>")
+(labamba-create-arglist '(a d :optkey oa ob :key b (c 9) :optkey (e aiai) (f (+ 5 200)) :allow-other-keys :rest ba) "ano")
+!#  
+
+
+(define (labamba-create-must-provide-list def)
+  (let loop ((def def))
+    (cond ((null? def) '())
+          ((keyword? (car def))
+           '())
+          (else
+           (cons (car def)
+                 (loop (cdr def)))))))
+
+#!
+(labamba-create-must-provide-list '(a d :optkey oa ob :key b (c 9) :optkey (e aiai) (f (+ 5 200)) :allow-other-keys :rest ba))
+(labamba-create-must-provide-list '(a d :key b (c 9) (e aiai) (f (+ 5 200)) :allow-other-keys :rest ba))
+!#  
+
+
+(define (labamba-create-optkeys-list def)
+
+  (let loop ((def def)
+             (collect #f))
+    (cond ((null? def) '())
+          ((or (eqv? :key-optional (car def))
+               (eqv? :optkey (car def)))
+           (loop (cdr def) #t))
+          ((keyword? (car def))
+           (loop (cdr def)
+                 #f))
+          (collect
+           (cons (if (pair? (car def))
+                     (caar def)
+                     (car def))
+                 (loop (cdr def) #t)))
+          (else
+           (loop (cdr def) #f)))))
+#!
+(labamba-create-optkeys-list '(a d :optkey oa ob :key b (c 9) :optkey (e aiai) (f (+ 5 200)) :allow-other-keys :rest ba))
+!#  
+
+
+
+(define (labamba-create-keys-list def)
+
+  (let loop ((def def)
+             (collect #f))
+    (cond ((null? def) '())
+          ((eqv? :key (car def))
+           (loop (cdr def) #t))
+          ((keyword? (car def))
+           (loop (cdr def)
+                 #f))
+          (collect
+           (cons (if (pair? (car def))
+                     (caar def)
+                     (car def))
+                 (loop (cdr def) #t)))
+          (else
+           (loop (cdr def) #f)))))
+#!
+(labamba-create-keys-list '(a d :optkey oa ob :key b (c 9) :optkey (e aiai) (f (+ 5 200)) :allow-other-keys :rest ba))
+!#  
+
+
+#!
+TODO
+(define (labamba-patternmatcher rest)
+  (for-each (curryppla (def body)
+              (c-display "def/body" def body))
+            rest)
+  )
+
+#!
+(labamba-patternmatcher '((()  #t)
+                          ((x)  x)
+                          ((x y . rest)
+                           y)
+                          ((x . rest)
+                           rest)))
+=>
+(lambda rest
+  (cond ((null? rest) #t)
+        (( = (length rest) 1)
+         (let ((x (car rest)))
+           x))
+        (else
+         (let ((x (car rest))
+               (rest (cdr rest)))
+           (define res (rt-gensym))
+           `(let ((res ,x))
+              (if res
+                  (and* ,@rest)
+                  #f))))))
+!#
+
+(define (labamba-allow-other-keys? def)
+  (and (memv :allow-other-keys def)
+       #t))
+
+(define (labamba-rest? def)
+  (and (memv :rest def)
+       #t))
+
+;; In case of improper list, replace with :rest
+(define (make-proper-labamba-def-list def)
+  (cond ((null? def) '())
+        ((not (pair? def))
+         `(:rest ,def))
+        (else
+         (cons (car def)
+               (make-proper-labamba-def-list (cdr def))))))
+
+(define-macro (labamba-onymous function-name def . code)
+  (define args (gensym))
+  (if (not function-name)
+      (set! function-name "<anonymous>"))
+  (set! def (make-proper-labamba-def-list def))
+  `(lambda ,args
+     (labamba-parse ,function-name
+                    ,args
+                    ',(labamba-create-must-provide-list def)
+                    ',(labamba-create-optkeys-list def)
+                    ',(labamba-create-keys-list def)
+                    ,(labamba-create-defaults def function-name)
+                    ,(labamba-allow-other-keys? def)
+                    ,(labamba-rest? def)
+                    (lambda ,(labamba-create-arglist def function-name)
+                      ,@code))))
+
+(define-macro (labamba def . code)
+  `(labamba-onymous "<anonymous>"
+                     ,def
+                     ,@code))
+
+#!
+( (labamba (:optkey hepp :rest ai)
+    hepp)
+  50)
+
+(pretty-print (macroexpand '(labamba (:optkey hepp)
+                              hepp)))
+
+(pretty-print (macroexpand '(labamba (a b c)
+                              (c-display "x" x))))
+
+( (labamba x
+    (c-display "x" x))
+  2 3 4)
+
+( (labamba (a b c)
+    (c-display "a b c" a b c)
+    (+ a b c));(car c)))
+  2 3 4)
+
+
+( (labamba (a b :key (d 100) :rest c)
+    (c-display "c:" c)
+    (+ a b d ));(car c)))
+  2 90 :d 50 70 :ai 90)
+
+
+( (labamba (a b :key (d 100) :allow-other-keys :rest c)
+           (c-display "c:" c)
+           (+ a b d ));(car c)))
+  2 90 :d 50 :wef 90 :b 3 'a 'b 'c 'fd 70)
+
+
+(macroexpand '(labamba (a b :key (d 100) :allow-other-keys :rest c)
+                       (c-display "c:" c)
+                       (+ a b d )))
+
+
+
+
+!#
+
+(define-macro (delafina def . body)
+  (define function-name (symbol->string (if (pair? def) (car def) def)))
+  (if (pair? def)
+      `(begin
+         (define ,(car def)
+           (labamba-onymous ,function-name
+                             ,(cdr def)
+                             ,@body)))
+      `(begin
+         (define ,def
+           (labamba-onymous ,function-name
+                             ,(car body)
+                             ,@(cdr body))))))
+
+#!
+(delafina (hello ai)
+  ai)
+(hello 2 3 4 5 :ai)
+
+(labamba (2 3)
+  (+ 2 3))
+!#
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;; define*2 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Fixes the ":rest" problem in "define*"
+
+;; define*2 is a lot less sophisticated than labamba/delafina/etc. and
+;; should probably not be used in new code.
+
 
 (define-macro (define*2 def . code)    
   (cond ((or (not (proper-list? def))
@@ -330,6 +836,16 @@
 (ai 3 4 5)
 !#
 
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;; letrec* ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
 (define-macro (letrec* vardecls . body)
   (let* ((sets '())
 	 (newvardecls (map (lambda (vardecl)
@@ -362,6 +878,15 @@
 !#
 	       
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;; c-time ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Like "time". Uses the rt engine to measure time.
+
 (define-macro (c-time form)
      `(let* ((t1 (rte-time))
 	     (r ,form)
@@ -370,6 +895,17 @@
 	(display (- t2 t1))
 	(newline)
 	r))
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;; container ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Holds all kind of data in a hash table in a convenient way.
 
 
 (define (make-container)
@@ -383,8 +919,39 @@
           (hashq-set! container which (car rest))))))
 
 
+
 #!
-(define c (make-container))
+
+(define (make-container)
+  (let ((container (make-hash-table 219)))
+    (hashq-set! container 'hash-table container)
+    (hashq-set! container 'reset (lambda ()
+				   (set! container (make-hash-table 219))))
+    (lambda (which . rest)
+      (if (null? rest)
+          (hashq-ref container which)
+          (hashq-set! container which (car rest))))))
+
+(define (make-bank sum)
+  (let ((attributes (make-hash-table)))
+    (define dispatcher
+      (lambda (which . rest)
+        (apply (hashq-ref attributes which) rest)))
+    (hashq-set! attributes 'sum (lambda ()
+                                  sum))
+    (hashq-set! attributes 'add (lambda (n)
+                                  (set! sum (+ n sum))))
+    dispatcher))
+
+
+(define bank (make-bank 0))
+(bank 'add 2)
+(bank 'sum)
+
+(bank 'sum)
+
+(bank 'add (lambda (n) (set!
+
 (c 'gakk 45)
 (c 'gakk)
 
@@ -397,6 +964,18 @@
 !#
 
 
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;; supereval ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Makes evaling very complicated expressions less inconvenient.
+;; (Slow, but a nice headache-avoider)
+
 (define (supereval func)
   (let* ((filename (tmpnam))
          (fd (open-file filename "w")))
@@ -408,6 +987,24 @@
     (close fd)
     (load filename)
     (delete-file filename)))
+  
+(define (supereval2 func)
+  (let* ((filename (tmpnam))
+         (fd (open-file filename "w"))
+         (ret (rt-gensym)))
+    (delete-at-exit filename)
+    (display "(define " fd)
+    (display ret fd)
+    (display " " fd)
+    (func (lambda something
+            (for-each (lambda (s)
+                        (display s fd))
+                      something)))
+    (display ")\n" fd)
+    (close fd)
+    (load filename)
+    (delete-file filename)
+    (primitive-eval ret)))
 
 #!
 (supereval (lambda (out)
@@ -416,6 +1013,16 @@
              (out '(c-display 'hello))
              (out '(newline))))
 !#
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;; schemecodeparser ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Helper function for scheme codewalking.
 
 
 (define schemecodeparser-varlist '())
@@ -484,6 +1091,9 @@
 	   `(delay ,@(blockhandlerfunc varlist (cdr expr))))
 	  ((eq? 'force (car expr))
 	   `(force ,@(blockhandlerfunc varlist (cdr expr))))
+          ((eq? 'begin (car expr))
+           `(begin
+              ,@(blockhandlerfunc varlist (cdr expr))))
 	  ((eq? 'do (car expr))
 	   (let* ((newvars (append (map car (cadr expr)) varlist))
 		  (first (map (lambda (a)
@@ -533,9 +1143,44 @@
 	   expr)
 	  ((or (eq? 'quasiquote (car expr))
 	       (eq? 'QUASIQUOTE (car expr)))
-	   ;;(c-display "Warning in macros.scm/schemecodeparser: quasiquote not handled")
-	   expr)
-	  ((eq? 'cond (car expr))
+           (letrec* ((unquotes '())
+                     (parser (lambda (expr)
+                               ;;(c-display "expr" expr)
+                               (cond ((and (pair? expr)
+                                           (eq? 'unquote (car expr)))
+                                      (let ((res (parse varlist (cadr expr))))
+                                        (cond ((not (pair? res))
+                                               ;;(c-display "heppsann" (cadr expr) res (list 'unquote res))
+                                               (list 'unquote res))
+                                              (else
+                                               (let ((name (rt-gensym)))
+                                                 ;;(c-display "got something:" expr (cadr expr))
+                                                 (push! (list name res) unquotes)
+                                                 (list 'unquote name))))))
+                                     ((and (pair? expr)
+                                           (eq? 'unquote-splicing (car expr)))
+                                      (let ((res (parse varlist (cadr expr))))
+                                        (cond ((not (pair? res))
+                                               (list 'unquote-splicing res))
+                                              (else
+                                               (let ((name (rt-gensym)))
+                                                 ;;(c-display "got something2:" expr (cadr expr))
+                                                 (push! (list name res) unquotes)
+                                                 (list 'unquote-splicing name))))))
+                                     ((pair? expr)
+                                      ;;(c-display "yes, pair:" expr)
+                                      ;;(c-display "car/cadr" (car expr) (cadr expr))
+                                      (map parser expr))
+                                     
+                                     (else
+                                      expr))))
+                     (newexpr (map parser expr)))
+             ;;(c-display "unquotes:" unquotes)
+             (if (null? unquotes)
+                 newexpr
+                 `(let ,(reverse! unquotes)
+                    ,newexpr))))
+          ((eq? 'cond (car expr))
 	   `(cond ,@(map (lambda (exprs)
 			   (let ((test (parse varlist (car exprs))))
 			     `(,test ,@(blockhandlerfunc varlist (cdr exprs)))))
@@ -555,6 +1200,9 @@
 	       `(,(parse varlist (car expr)) ,@(map (lambda (expr)
                                                       (parse varlist expr))
                                                     (cdr expr))))))))
+#!
+(schemecodeparser '(begin `(+ ,a 3)))
+!#
 
 (define (fix-defines-do terms)
   ;;(c-display terms)
@@ -606,6 +1254,15 @@
 
 
 !#
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;; c-loop is a macro for doing music loops ;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 
 (define-macro (c-loop var min-val check-func max-val inc-val . body)
@@ -1073,9 +1730,9 @@
   (define b #f)
   (set! a 5)
   (set! b a))
-  (define a 5)
-  (define b a)
-  )
+(define a 5)
+(define b a)
+
 (define (<gakk>)
   (define a 5)
   (define b a)

@@ -8,7 +8,7 @@ void init_rollendurchmesserzeitsammler(int a,int b,int c);
 
 /* hbgc->rollendurchmesserzeitsammler */
 
-// disabled for now since the mem main contain void* pointers.
+// disabled for now since the returned mem can be used to store void* pointers.
 //#define GC_malloc_atomic(size) tar_alloc_atomic(heap,size)
 
 #define GC_malloc_atomic(size) tar_alloc(heap,size)
@@ -44,3 +44,5 @@ void* clm_malloc(size_t size,const char* what);
 
 void* clm_realloc(void* old,size_t newsize);
 void clm_free(void* p);
+
+

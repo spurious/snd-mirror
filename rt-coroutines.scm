@@ -260,7 +260,8 @@
 		(lambda (,rt-globalvardecl)
   (<struct-rt_coroutine*> next (rt_get_first_coroutine_in_queue rt_globals))
   (if (!= next rt_globals->current_coroutine)
-      (rt_switch_to_coroutine rt_globals next))
+      (rt_switch_to_coroutine rt_globals next)
+      (set! rt_globals->time next->time))
   (let* ((coroutine <struct-rt_coroutine*> rt_globals->current_coroutine))
     (if (== 1 coroutine->stop_me)
         (begin
@@ -302,25 +303,25 @@
 
 ;; block
 ;; *****
-(define-rt-macro (block . rest);:key duration :rest code)
-  (define duration (rt-gensym))
-  (define das-duration #f)
-  (define code rest)
+(define-rt-macro (block 
+                   :key dur duration
+                   :rest code)
+  (define das-duration (rt-gensym))
 
-  (when (equal? (car rest) :duration)
-    (set! das-duration (cadr rest))
-    (set! code (cddr rest)))
+  ;;(c-display "HEPP")
 
-  (if das-duration
-      `(let ((,duration ,das-duration))
-         (declare (<int> ,duration))
-         (while (> ,duration 0)
+  (set! duration (or dur duration))
+
+  (if duration
+      `(let ((,das-duration ,duration))
+         (declare (<int> ,das-duration))
+         (while (> ,das-duration 0)
            (while (and (< (get-time)
                           (rt_get_next_scheduled_time))
-                       (> ,duration 0))
+                       (> ,das-duration 0))
              ,@code
              (rt_inc_current_time 1)
-             (set! ,duration (- ,duration 1)))
+             (set! ,das-duration (- ,das-duration 1)))
 
            ;; Now do an extra-low-priority yield:
            (rt_insert_coroutine_in_block_queue (rt_current_coroutine)

@@ -1425,13 +1425,13 @@ static int make_graph_1(chan_info *cp, double cur_srate, bool normal, bool *two_
    * we need to make decisions about in-between sample mouse clicks, and the cursor placement
    * must match the sample placement (which means that the initial x-axis offset from the
    * first sample (similarly the last) must be taken into account).  Currently, the selection
-   * definition (by mouse drag) has a sloppy rounding mechanism (snd-clip.c round_up) so that
+   * definition (by mouse drag) has a sloppy rounding mechanism so that
    * within reason only samples within the selection-rectangle are in the final selection,
    * and cursor placement (mouse click) rounds to the nearest sample (snd-xchn.c cursor_round).
    *
    * And lastly, the axis x_scale double can be enormous whereas the between-sample choice can
    * be tiny, so we're pushing the arithmetic into dangerous realms.  This stuff has been tested
-   * on some extreme cases (hour-long 44KHz stereo), but there's always another special case...
+   * on some extreme cases (week-long 44KHz stereo), but there's always another special case...
    */
 
   int pixels;

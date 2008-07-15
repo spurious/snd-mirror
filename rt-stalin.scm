@@ -1,7 +1,8 @@
 
 #!
-
-
+(let ((time 5960)
+      (n 10))
+  (- n (remainder time n)))
 !#
 
 
@@ -10,14 +11,20 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define *stalin-stack-size* (* 32 1024)) ;; total stack size (for safety)
-(define *stalin-stack-limit* (* 4 1024))  ;; If using more than this, instrument is stopped.
+(define *stalin-stack-limit* (* 4 1024))  ;; If using more than this, instrument is stopped. (checked every block)
 (define *stalin-queue-max-size* 1024) ;; max number of coroutines.
+(define *stalin-add-health-checks* #t)
+(define *stalin-backtrace-length* 20)
+
 (define *tar-atomic-heap-size* (* 1024 1024))
 (define *tar-nonatomic-heap-size* (* 1024 1024))
 (define *tar-roots-size* (* 1024 1024))
 
 (define *rt-local-stalin-code-environment* (the-environment))
 
+
+(define *rt-opt-stack-checks* #t)
+(define *rt-opt-cpu-checks* #t)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -106,6 +113,8 @@
 ;;  #t)
 
 #!
+(find-stalin-funcs '(vct a b))
+(pretty-print (generate-stalin-code '((vct a b))))
 (define-stalin *var* 0)
 (define-stalin (add2 a b)
   (+ a b *var* (add2 5 7)))
@@ -247,8 +256,9 @@
 
 (define (define-stalin-macro-do def body)
   (if (pair? def)
-      (hashq-set! stalin-macros (car def) (primitive-eval `(lambda* ,(cdr def)
-                                                                    ,@body)))
+      (hashq-set! stalin-macros (car def) (primitive-eval `(labamba-onymous ,(symbol->string (car def))
+                                                                            ,(cdr def)
+                                                                            ,@body)))
       (hashq-set! stalin-macros def (primitive-eval (car body)))))
 (define-macro (define-stalin-macro def . body)
   `(define-stalin-macro-do ',def ',body))
@@ -260,6 +270,18 @@
 
 (stalin-macroexpand '(testing 50))
 (pretty-print (get-stalin-macro 'testing))
+(pretty-print  (stalin-macroexpand '(wait-midi
+                                      (spawn
+                                        (wait-midi :cont #f
+                                          (when (and (midi-stop?)
+                                                     (= note
+                                                        (midi-note)))
+                                            (stop oscillator)
+                                            #t))))))
+(pretty-print  (stalin-macroexpand '(wait-midi
+                                      (wait-midi
+                                        50))))
+                                        
 !#
 
 (define (get-stalin-macro name)
@@ -291,12 +313,12 @@
 (define (stalin-macroexpand expr)
   (schemecodeparser expr
 		    :elsefunc (lambda (expr)
-                                (when (and (eq? 'set! (car expr))
-                                           (not (pair? (cadr expr)))
-                                           (is-stalin-defined? (cadr expr)))
-                                  (c-display "Bindings defined using define-stalin can not be set!:"
-                                             expr)
-                                  (throw 'compilation-error))
+                                ;;(when (and (eq? 'set! (car expr))
+                                ;;           (not (pair? (cadr expr)))
+                                ;;           (is-stalin-defined? (cadr expr)))
+                                ;;  (c-display "Bindings defined using define-stalin can not be set!:"
+                                ;;             expr)
+                                ;;  (throw 'compilation-error))
                                 (if (and (eq? 'set! (car expr))
                                          (pair? (cadr expr)))
                                     (stalin-macroexpand
@@ -311,6 +333,9 @@
 
 
 #!
+(stalin-macroexpand '(quasiquote ((unqoute a) 0)))
+(stalin-macroexpand '(quasiquote (((unquote a) 1))))
+
 (define-stalin-macro (dosomething b :key (c 100))
   `(+ 1 ,b 2 ,c))
 (stalin-macroexpand-1 '(dosomething 3 (symbol->keyword 'c) 2))
@@ -350,6 +375,9 @@
 (define-stalin-macro (unquote something)
   (local-eval something *rt-local-stalin-code-environment*))
 
+(define-stalin-macro (-> object command)
+  `(,object ',command))
+  
 (define-stalin-macro (1+ a) 
   `(+ 1 ,a))
 (define-stalin-macro (1- a) 
@@ -376,13 +404,31 @@
   `(not (= ,a ,b)))
 
 (define-stalin-macro (while test . body)
-  `(do ()
-       ((not ,test))
-       ,@body))
+  (define loop (rt-gensym))
+  (if (eq? #t test)
+      `(let ,loop ()
+         ,@body
+         (,loop))
+      `(let ,loop ()
+            (if ,test
+                (begin
+                  ,@body
+                  (,loop))))))
 
 (define-stalin-macro (when cond . rest)
   `(cond (,cond ,@rest)
 	 (else #f)))
+
+(define-stalin-macro (range name das-start das-end . body)
+  (define start (rt-gensym "start"))
+  (define end (rt-gensym "end"))
+  (define loop (rt-gensym "rangeloop"))
+  `(let ((,start ,das-start)
+         (,end ,das-end))
+     (let ,loop ((,name ,start))
+          (when (< ,name ,end)
+            ,@body
+            (,loop (1+ ,name))))))
 
 (define-stalin-macro (call/cc a)
   `(call-with-current-continuation ,a))
@@ -406,6 +452,10 @@
 (define-stalin-ec <void> lowlevel_debug1 (lambda ((<char*> string)
                                                   (<int> a))
                                            (rt_debug string a)))
+(define-stalin-ec <void> lowlevel_debug2 (lambda ((<char*> string)
+                                                  (<int> a)
+                                                  (<int> b))
+                                           (rt_debug string a b)))
 
 (define-stalin-macro (debug string . rest)
   (define something (rt-gensym))
@@ -572,7 +622,7 @@
               slot-names)
        )))
 
-(define-stalin-macro (setter!-=> object das-method . rest)
+(define-stalin-macro setter!-=> (lambda (object das-method . rest)
   (cond ((keyword? object)
          (let ((name (rt-gensym))
                (type object)
@@ -590,9 +640,9 @@
              (define object-name (if (null? (cdr object-decomposed))
                                      (car object-decomposed)
                                      (cadr object-decomposed)))
-             `(,(append-various 'setter!- struct-name ":" method) ,object-name ,@rest))))))
+             `(,(append-various 'setter!- struct-name ":" method) ,object-name ,@rest)))))))
 
-(define-stalin-macro (=> object das-method . rest)
+(define-stalin-macro => (lambda (object das-method . rest)
   (cond ((not (null? rest))
          (let ((name (rt-gensym))
                (type object)
@@ -615,7 +665,7 @@
              (define object-name (if (null? (cdr object-decomposed))
                                      (car object-decomposed)
                                      (cadr object-decomposed)))
-             `(,(append-various 'getter- struct-name ":" method) ,object-name))))))
+             `(,(append-various 'getter- struct-name ":" method) ,object-name)))))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -624,16 +674,16 @@
 (define-stalin-macro (infix-f t)
   t)
 (define-stalin-macro (infix-b t)
-  (* ,*rt-block-size* 1024 ,t))
+  `(* ,*rt-block-size* ,t))
 (define-stalin-macro (infix-ms t)
   `(inexact->exact (floor (/ (* ,t ,(rte-samplerate))
                              1000))))
 (define-stalin-macro (infix-s t)
-  `(* ,(rte-samplerate) ,t))
+  `(* ,(inexact->exact (rte-samplerate)) ,t))
 (define-stalin-macro (infix-m t)
-  `(* ,(* 60 (rte-samplerate)) ,t))
+  `(* ,(* 60 (inexact->exact (rte-samplerate))) ,t))
 (define-stalin-macro (infix-h t)
-  `(* ,(* 60 60 (rte-samplerate)) ,t))
+  `(* ,(* 60 60 (inexact->exact (rte-samplerate))) ,t))
 
 (define-stalin _block-time 0)
 (define-stalin _time 0)
@@ -690,6 +740,41 @@
       `(let ((,val ,(car rest)))
          (rt_write_out_bus 0 _time ,val)
          (rt_write_out_bus 1 _time ,val))))
+
+
+
+;; ADSR envelope
+
+(define-stalin (make-adsr-do a d s r)
+  (define in (rt_make_env (vct 0 0 a 1 (+ a d) s) (+ a d))) ;; Small optimization.
+  ;;(define in (make-env `((0 0)(,a 1)(,(+ a d) ,s)) :dur (+ a d)))
+  (define out (make-env '((0 1)(1 0)) :dur r))
+  (define do-out #f)
+  (define do-in #t)
+  (define vol 0.0)
+  (define time 0)
+  (lambda cut
+    (inc! time 1)
+    (cond ((not (null? cut))
+           (set! time 0)
+           (set! do-out #t))
+          (do-out
+           (if (= time r)
+               #f
+               (* vol (env out))))
+          (do-in
+           (cond ((= time (+ a d))
+                  (set! do-in #f)
+                  (set! vol s))
+                 (else
+                  (set! vol (env in))))
+           vol)
+          (else
+           vol))))
+(define-stalin-macro (make-adsr :optkey a d s r)
+  `(make-adsr-do ,a ,d ,s ,r))
+
+
 
 
 ;; CLM
@@ -779,15 +864,16 @@
 
 (define-stalin-macro (make-oscil :key
                                  (frequency *clm-default-frequency*)
-                                 (initial-phase 0.0))
-  `(make_oscil_ ,frequency ,initial-phase))
+                                 (initial-phase 0.0)
+                                 freq)
+  `(make_oscil_ ,(or freq frequency) ,initial-phase))
 
 (define-stalin-ec <float> oscil_ (lambda ((<void*> a)
                                           (<float> b)
                                           (<float> c))
                                    (return (mus_oscil (cast <mus_any*> a) b c))))
 
-(define-stalin-macro (oscil os :optional (fm-input 0.0) (pm-input 0.0))
+(define-stalin-macro (oscil os :key (fm-input 0.0) (pm-input 0.0))
   `(oscil_ ,os ,fm-input ,pm-input))
 
 
@@ -846,7 +932,6 @@
   ;         (debug "hello hello2")))
    (debug "hello hello3")))
 
-;; weird:
 (<rt-stalin>
  (spawn
    (debug "start0")
@@ -933,7 +1018,7 @@
                            argnames)
                  (out "))))\n")
                  
-                 (out "(define-stalin-macro (" name " :key ")
+                 (out "(define-stalin-macro (" name " :optkey ")
                  (for-each (lambda (arg)
                              (out arg " "))
                            fixed-args-list)
@@ -956,7 +1041,7 @@
 (begin stalin-ec-functions)
 (get-stalin-func 'make_delay_)
 
-(define-stalin-macro (make-waveshape :key
+(define-stalin-macro (make-waveshape :optkey
                                      (frequency *clm-default-frequency*)
                                      (partials (quote (1 1)))
                                      (size clm-table-size)
@@ -993,7 +1078,7 @@
                              (out must-arg " "))
                            (remove pair? args))
                  (when (not (equal? args (remove pair? args)))
-                   (out ":optional ")
+                   (out ":optkey ")
                    (for-each (lambda (opt-arg)
                                (out opt-arg " "))
                              (%filter pair? args)))
@@ -1012,6 +1097,15 @@
 (stalin-macroexpand '(oscil gen 3))
 (pretty-print (get-stalin-ec-function 'make_oscil_))
 !#
+
+;; Add the freq argument.
+(define-stalin-macro (make-oscil :optkey
+                                 (frequency *clm-default-frequency*)
+                                 (initial-phase 0.0)
+                                 freq)
+  `(make_oscil_ ,(or freq frequency) ,initial-phase))
+
+
 
 (define-stalin-ec <int> irandom (lambda ((<int> high))
                                   (return (mus_irandom high))))
@@ -1046,8 +1140,29 @@
                                              (<float> val))
                                       (<vct-*> das_vct (cast <vct-*> vvct))
                                       (set! das_vct->data[pos] val)))
-(define-stalin (vct-set! a b c)
-  (rt_vct_set a b c))
+(define-stalin (vct-set! vct pos val)
+  (rt_vct_set vct pos val))
+
+(define-stalin-macro (vct . values)
+  (define len (length values))
+  (define vct (rt-gensym))
+  `(let ((,vct (make-vct ,len)))
+     ,@(map (lambda (i val)
+              (if (number? val)
+                  (set! val (exact->inexact val)))
+              `(vct-set! ,vct ,i ,val))
+            (iota len)
+            values)
+     ,vct))
+
+(define-stalin (vct . values)
+  (let ((vct (make-vct values))
+        (i -1))
+    (for-each (lambda (val)
+                (vct-set! vct (inc! i 1) val))
+              values)
+    vct))
+  
 
 
 ;;;;; env (quick up-and-running. More work needed)
@@ -1065,25 +1180,58 @@
                                         (return ret)))
                                           
 
-(define-stalin (make-env-do data duration)
+(define-stalin (make-env-do data dur)
   (define vct (make-vct (length data)))
-  (let loop ((i 0)
-             (val (car data))
-             (rest (cdr data)))
-    (vct-set! vct i val)
-    (when (not (null? rest))
-      (loop (1+ i) (car rest) (cdr rest))))
-  (rt_make_env vct duration))
-    
+  (define i -1)
+  (for-each (lambda (val)
+              (vct-set! vct (inc! i 1) val))
+            data)
+  (rt_make_env vct dur))
 
-(define-stalin-macro (make-env data :key (duration 0) (end 0))
-  (if (and (number? duration)
-           (= 0 duration))
-      `(make-env-do ,data ,end)
-      `(make-env-do (flatten ,data) (begin ,duration):-s)))
+(define-stalin (make-env-do-pairs data dur)
+  (define vct (make-vct (* 2 (length data))))
+  (define i -1)
+  (for-each (lambda (val)
+              (vct-set! vct (inc! i 1) (car val))
+              (vct-set! vct (inc! i 1) (cadr val)))
+            data)
+  (rt_make_env vct dur))
 
+(define-stalin (make-env-parse-data-at-runtime data dur)
+  (if (pair? (car data))
+      (make-env-do-pairs data dur)
+      (make-env-do  data dur)))
+
+(define-stalin-macro (make-env-constant-data data dur)
+  `(rt_make_env (vct ,@(flatten data)) ,dur))
+
+(define-stalin-macro (make-env data :optkey duration dur end)
+  (define das-dur (or (and duration `(infix-s ,duration))
+                      dur
+                      end
+                      0))
+  (let ()
+    (define das-data (stalin-macroexpand data))
+    (cond ((not (pair? das-data))
+           `(make-env-parse-data-at-runtime ,das-data ,das-dur))
+          ((eq? 'quote (car das-data))
+           `(make-env-constant-data ,(cdr das-data) ,das-dur))
+          (else
+           `(make-env-parse-data-at-runtime ,das-data ,das-dur)))))
 
 #!
+(stalin-macroexpand '(make-env `((0 0)(,a 1)(,(+ a d) ,s)) :dur (+ a d)))
+(stalin-macroexpand '(make-env `((,a 1))))
+
+(stalin-macroexpand '(make-env `((0 ,a))))
+
+(make-env '(1 2 3))
+(make-env (list a b c d))
+(make-env )
+
+(pretty-print (stalin-macroexpand '(make-env '((0 1) (2 4)) :dur 900)))
+(pretty-print (stalin-macroexpand '(make-env `(aiai 2 3) :dur 9)))
+
 (<rt-stalin>
  (define das-env (make-env '(0 0.5 1 1) :end 5:-ms))
  (debug (number->string (inexact->exact (floor (* 1000000.0 (env das-env))))))
@@ -1101,7 +1249,7 @@
 
 ;;;;; Alsa midi
 
-;; Made by looking at the pd source
+;; midi-to-freq made by looking at the pd source
 (define-stalin (midi-to-freq freq)
   (cond ((<= freq 0) 0)
         ((> freq 135) 20000)
@@ -1162,98 +1310,121 @@
     (set! midi_eventnum 0)))
 (add-stalin-ec-binding '_rt_reset_midi 'midi_eventnum)
 
-;(define-stalin-struct midi-event
-;  :control
-;  :data1
-;  :data2)
-;
-;(define-stalin _curr-midi-event (make-midi-event 0 0 0))
+(define-stalin-ec <void> _rt_snatch_midi
+  (lambda ((<int> num))
+    (set! midi_control[num] -1)))
+(add-stalin-ec-binding '_rt_snatch_midi 'midi_control)
 
-(define-stalin-struct midi-task
-  :check
-  :cont)
+(define-stalin-ec <void> _rt_unsnatch_midi
+  (lambda ((<int> num)
+           (<int> control))
+    (set! midi_control[num] control)))
+(add-stalin-ec-binding '_rt_unsnatch_midi 'midi_control)
+
+(define-stalin (_rt-is-midi-snatched? control)
+  (= -1 control))
+
 
 (define-stalin _curr-midi-control 0)
 (define-stalin _curr-midi-data1 0)
 (define-stalin _curr-midi-data2 0)
 
-(define-stalin _midi-tasks '())
 
-(define-stalin (wait-midi-do check cont)
-  (cond ((not (null? _midi-tasks))
-         (push! (make-midi-task check cont)
-                _midi-tasks)
-         (neverending-scheduling))
-        (else
-         (push! (make-midi-task check cont)
-                _midi-tasks)
-         (let loop ()
-           (wait (- (+ _block-time ,*rt-block-size*)
-                    _time)
-             (define midi-events '())
-             (define num-waiting (_rt_receive_midi))
-             (let loop ((num 0))
-               (when (< num num-waiting)
-                 (set! _curr-midi-control (_rt_get_midi_control num))
-                 (set! _curr-midi-data1 (_rt_get_midi_data1 num))
-                 (set! _curr-midi-data2 (_rt_get_midi_data2 num))
-                 (set! _midi-tasks
-                       (let loop ((midi-tasks _midi-tasks))
-                         (cond ((null? midi-tasks)
-                                '())
-                               (else
-                                (define midi-task (car midi-tasks))
-                                (if ((=> midi-task :check))
-                                    (begin
-                                      (spawn :pleasedont ;; hack.
-                                        (let ((_continuation (=> midi-task :cont)))
-                                          (_continuation)))
-                                      (cdr midi-tasks))
-                                    (cons midi-task
-                                          (loop (cdr midi-tasks))))))))
-                 (loop (1+ num))))
-             (_rt_reset_midi)
-             (loop))))))
+(define-stalin _num-waiting-midi-messages 0)
 
-(define-stalin-macro (wait-midi . rest)
-  (define return (rt-gensym))
+(define-stalin _last-midi-receive-time -1)
+
+
+;; wait-midi/wait-midi-do is a bit messy. I had big problems
+;; making it produce code which stalin was able to tail-optimize
+;; without using -fully-convert-to-CPS
+(define-stalin (wait-midi-do check body)
+
+  (when (not (= _time _last-midi-receive-time))
+    ;;(lowlevel_debug2 "time: %d %d" _time _last-midi-receive-time)
+    (_rt_reset_midi)
+    (set! _num-waiting-midi-messages (_rt_receive_midi))
+    (set! _last-midi-receive-time _time))
+  
+  (let loop ((num 0))
+    (cond ((< num _num-waiting-midi-messages)
+           (let ((control (_rt_get_midi_control num)))
+             (cond ((not (_rt-is-midi-snatched? control))
+                    (_rt_snatch_midi num)
+                    (let ((data1 (_rt_get_midi_data1 num))
+                          (data2 (_rt_get_midi_data2 num)))
+                      (cond ((check control data1 data2)
+                             (set! _curr-midi-control control)
+                             (set! _curr-midi-data1   data1)
+                             (set! _curr-midi-data2   data2)
+                             (body control data1 data2)
+                             #t) ;; Return val
+                            (else
+                             (_rt_unsnatch_midi num control)
+                             (loop (1+ num))))))
+                   (else
+                    (loop (1+ num))))))
+          (else
+           #f)))) ;; Return val
+       
+
+(define-stalin-macro (wait-midi :key 
+                                 (command #t)
+                                 note
+                                 :rest rest)
+  (define control (rt-gensym "control"))
+  (define data1 (rt-gensym "data1"))
+  (define data2 (rt-gensym "data2"))
+  (define return (rt-gensym "return-from-midi"))
   (define code rest)
-  (define cont -1);'(lambda ()))
-  (when (eq? :cont (car rest))
-    (set! cont (nth 1 rest))
-    (if (not cont)
-        (set! cont '((lambda ()))))
-    (set! code (nth-cdr 2 rest)))
-  (if (number? cont)
-      `(call/cc (lambda (,return)
-                  (wait-midi-do (lambda ()
-                                  ,@code
-                                  )
-                                (lambda ()
-                                  (,return #t)))))
-      `(wait-midi-do (lambda ()
-                       ,@code
-                       )
-                     (lambda ()
-                       ,cont
-                       (neverending-scheduling)))))
+  `(call/cc
+    (lambda (,return)
+      (let loop ()
+        (if (wait-midi-do (lambda (,control ,data1 ,data2)
+                            ,(cond ((eq? command 'note-on)
+                                    `(_midi-play? ,control ,data2))
+                                   ((eq? command 'note-off)
+                                    `(and (_midi-stop? ,control ,data2)
+                                          (= ,data1 ,note)))))
+                          (lambda (_curr-midi-control
+                                   _curr-midi-data1
+                                   _curr-midi-data2)
+                            ,@code))
+            (,return #t)
+            (wait-synch 1:-b
+               (loop)))))))
 
 
-(define-stalin (midi-play?)
-  (and (>= _curr-midi-control #x90)
-       (< _curr-midi-control #xa0)
-       (> _curr-midi-data2 0)))
-(define-stalin (midi-stop?)
-  (or (and (>= _curr-midi-control #x90)
-           (<  _curr-midi-control #xa0)
-           (= 0 _curr-midi-data2))
-      (and (>= _curr-midi-control #x80)
-           (< _curr-midi-control #x90))))
-(define-stalin (midi-note)
-  _curr-midi-data1)
-(define-stalin (midi-volume)
-  (/ (exact->inexact _curr-midi-data2) 128.0))
 
+(define-stalin-macro (_midi-play? :optkey
+                                 (control '_curr-midi-control)
+                                 (data2 '_curr-midi-data2))
+  `(and (>= ,control #x90)
+        (<  ,control #xa0)
+        (>  ,data2 0)))
+
+(define-stalin-macro (midi-play?)
+  `(_midi-play?))
+
+(define-stalin-macro (_midi-stop? :optkey
+                                  (control '_curr-midi-control)
+                                  (data2 '_curr-midi-data2))
+  `(and (>= ,control #x80)
+        (< ,control #xa0)
+        (or (< ,control #x90)
+            (= 0 ,data2))))
+
+;;(stalin-macroexpand '(_midi-stop? 50 60))
+
+(define-stalin-macro (midi-stop?)
+  `(_midi-stop?))
+
+(define-stalin-macro (midi-note)
+  '_curr-midi-data1)
+(define-stalin-macro (_midi-vol :optkey (data2 '_curr-midi-data2))
+  `(/ (exact->inexact ,data2) 128.0))
+(define-stalin-macro (midi-vol)
+  `(_midi-vol))
 
 #!
 (<rt-stalin>
@@ -1516,11 +1687,9 @@
    (debug (number->string  _curr-midi-data1))
    (debug (number->string  _curr-midi-data2))))
 
-
-
 (<rt-stalin>
  (let loop ()
-   (wait-midi :cont (loop) ;;wait-midi burde provide midi-note osv. som lokale variable.
+   (wait-midi
      (when (midi-play?)
        (let ((note (midi-note)))
 
@@ -1542,6 +1711,38 @@
          #t))))) ;; Got it.
 
 (pretty-print (get-stalin-macro 'make-oscil))
+
+
+(lambda ()
+  (lowlevel_debug "starting")
+  (call-with-current-continuation
+   (lambda (return_40)
+     (wait-do_-11
+      (* 44100 1)
+      (lambda ()
+        (return_40 #t)))))
+  (lowlevel_debug "one second later")
+  (neverending-scheduling_-3)))))
+=>
+(lambda ()
+  (lowlevel_debug "starting")
+  (let ((return_40 (lambda (_rt_gen980)
+                     (lowlevel_debug "one second later")
+                     (neverending-scheduling_-3))))
+    (wait-do_-11
+     (* 44100 1)
+     (lambda ()
+       (return_40 #t)))))
+
+
+(let ((a (call/cc (lambda (return)
+                    (return "hmm")))))
+  (debug a)
+  (nevernding-scheduling))
+=>
+... (not important)
+
+
 
 !#
 
@@ -1648,18 +1849,17 @@
 ;;                     '(block-queue-size queue-size queue block-queue next-scheduled-time))
 
 
-;; Returns false in case the priority queue is full. (O(log n) efficiency)
-;; insert_coroutine_in_queue
-;; *************************
+;; insert_coroutine_in_queue  (O(log n) efficiency)
+;; ************************************************
 ;;
-;; Returns 0 in case the priority queue is full. (O(log n) efficiency)
+;; Returns false in case the priority queue is full.
 (define-stalin (insert-coroutine-in-queue! coroutine time priority)
 
   (define queue _queue)
 
   (if (>= _queue-size
           (- ,*stalin-queue-max-size* 2))
-      (error "coroutine queue full"))
+      (error "coroutine queue full. Increase *stalin-queue-max-size* to increase the queue size."))
 
   (inc! _queue-size 1)
 
@@ -1694,12 +1894,10 @@
 
   (define queue _block-queue)
 
-  (when (>= _block-queue-size
-            (- ,*stalin-queue-max-size* 2))
-    (debug "block coroutine queue full")
-    (remove-me))
+  (if (>= _block-queue-size
+          (- ,*stalin-queue-max-size* 2))
+      (error "block coroutine queue full."))
 
-  
   (inc! _block-queue-size 1)
 
   ;; Add priority info to the time attribute. ("priority" is a 2 bit integer)
@@ -1733,22 +1931,15 @@
   (set! _time (=> coroutine :time))
   ((=> coroutine :continuation)))
 
-;;  (when (call/cc (lambda (return)
-;;                   (set! (=> coroutine:_current-coroutine :continuation)
-;;                         (lambda ()
-;;                           (return #f)
-;;                           #f))
-;;                   #t))
-;;    (set! _current-coroutine coroutine)
-;;    ((=> coroutine :continuation))))
-
 (define-stalin (_run-scheduler _continuation)
   (let ((next (get-first-coroutine-in-queue)))
-    (if (=> coroutine:next :stop-me)
-        (_run-scheduler neverending-scheduling)
-        (if (not (eq? next _current-coroutine))  ;; Don't want to switch to a coroutine unnecessarily.
-            (_switch-to-coroutine next _continuation)
-            (_continuation)))))
+    (cond ((=> coroutine:next :stop-me)
+           (_run-scheduler _continuation))
+          ((not (eq? next _current-coroutine))  ;; Small optimization only.
+           (_switch-to-coroutine next _continuation))
+          (else
+           (set! _time (=> coroutine:next :time))
+           (_continuation)))))
 
 (define-stalin (yield-do _continuation)
   (insert-coroutine-in-queue! _current-coroutine 
@@ -1767,6 +1958,7 @@
                    ))))
 
 
+
 (define-stalin (wait-do n _continuation)
   (inc! _time (max 0 (floor (inexact->exact n))))
   (if (>= _time ;; Don't want to schedule unnecessarily.
@@ -1779,45 +1971,53 @@
       (_continuation)))
 
 (define-stalin-macro (wait n . code)
+  (define return (rt-gensym "return"))
   (if (null? code)
-      `(call/cc (lambda (return)
+      `(call/cc (lambda (,return)
                   (wait-do ,n (lambda ()
-                                (return #t)))))
+                                (,return #t)))))
       `(wait-do ,n (lambda ()
                      ,@code
                      (neverending-scheduling)
                      ))))
 
+(define-stalin-macro (wait-synch n . code)
+  (define das-n (rt-gensym "n"))
+  `(let* ((,das-n ,n))
+     (wait (- ,das-n (remainder _time ,das-n))
+       ,@code)))
 
-(define-stalin-macro (spawn . rest)
-  (define time (rt-gensym))
-  (define coroutine (rt-gensym))
-  (define wait 0)
-  (define code rest)
-  (define dont #f)
-  (when (eq? :pleasedont (car rest)) ;; This is a hack. Must remove when remove-dead-code is fixed.
-    (set! code (cdr rest))
-    (set! dont #t))
-  (when (eq? :wait (car rest))
-    (set! wait (cadr rest))
-    (set! code (cddr rest)))  
-  `(let* ((,time (+ _time
-                    (max 0 (inexact->exact (floor ,wait)))))
-          (,coroutine (make-coroutine ,time
-                                      #f
-                                      (lambda ()
-                                        ,@code
-                                        ,@(if dont
-                                              '()
-                                              '((neverending-scheduling)))
-                                        ))))
-     (insert-coroutine-in-queue! ,coroutine
-                                 ,time
-                                 1)
-     ,coroutine))
 
-(define-stalin (stop coroutine)
+(define-stalin (spawn-do time thunk)
+  (let ((coroutine (make-coroutine 0 ;; The time value is set in insert-coroutine-in-queue!
+                                   #f
+                                   thunk)))
+    (insert-coroutine-in-queue! coroutine
+                                time
+                                1)
+    coroutine))
+  
+(define-stalin-macro (spawn :key (wait 0) :rest code)
+  `(spawn-do ,(if (and (number? wait)
+                       (= 0 wait))
+                  '_time
+                  `(+ _time
+                      (max 0 (inexact->exact (floor ,wait)))))
+             (lambda ()
+               ,@code
+               (neverending-scheduling))))
+
+(define-stalin (stop . coroutine)
+  (set! coroutine
+        (if (null? coroutine)
+            _current-coroutine
+            (car coroutine)))
   (set! (=> coroutine :stop-me) #t))
+
+(define-stalin-macro (stop :optkey (coroutine '_current-coroutine))
+  `(set! (=> ,(symbol-append 'coroutine: coroutine) :stop-me) #t))
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;; Block (inner loop)
@@ -1830,21 +2030,20 @@
 
 ;; block
 ;; *****
-(define-stalin-macro (block . rest)
+(define-stalin-macro (block :key
+                            dur
+                            duration
+                            :rest rest)
   (define the-end (rt-gensym))
   (define next (rt-gensym))
   (define diff (rt-gensym))
   (define loop (rt-gensym))
-  (define duration (rt-gensym))
   (define das-duration #f)
   (define code rest)
   (define cont #f)
 
-  (when (or (equal? (car rest) :duration)
-            (equal? (car rest) :dur))
-    (if (cadr rest)
-        (set! das-duration `(inexact->exact (floor ,(cadr rest)))))
-    (set! code (cddr rest)))
+  (when (or duration dur)
+    (set! das-duration `(inexact->exact (floor ,(or dur duration)))))
 
   (when (equal? (car code) :cont)
     (set! cont (cadr code))
@@ -1924,7 +2123,7 @@
                (_run-scheduler ,loop)))))
 
 
-(define-stalin-macro (spawn-block . rest)
+(define-stalin-macro (spawn-block :allow-other-keys :rest rest)
   (define startname (rt-gensym))
   (define start 0)
   (define duration #f)
@@ -2429,7 +2628,7 @@
         ((memq (car expr) '(let let* letrec))
          (find-stalin-code-outcomes (cddr expr)))
         ((eq? 'lambda (car expr))
-         '(function))
+         `((_stalin-function ,expr)))
         ((pair? (car expr))
          (find-stalin-expr-outcomes (car expr)))
         ((eq? 'begin (car expr))
@@ -2437,25 +2636,43 @@
         (else
          (list (list (car expr))))))
 #!
+(find-stalin-expr-outcomes '(lambda () 50))
 (find-stalin-expr-outcomes '((a)))
 (find-stalin-expr-outcomes '(if a b (if 2 (c 2 3))))
+(find-stalin-expr-outcomes '(let ((a 9))
+                              (if a 
+                                  b
+                                  (if 2 
+                                      (let ((d 100))
+                                        (c 2 3))))))
 !#
 
+;; code is just a list of expressions.
 (define (find-stalin-code-outcomes code)
-  (define last-expr (last code))
-  (let loop ((code code))
-    (define expr (car code))
-    (cond ((eq? expr last-expr)
-           (find-stalin-expr-outcomes expr))
-          ((not (pair? expr))
-           (loop (cdr code)))
-          ;;((memq (car expr) stalin-noreturn-funcs)
-          ;; (car expr))
-          (else
-           (loop (cdr code))))))
-
+  (if (null? code)
+      '()
+      (let ()
+        (define last-expr (last code))
+        (let loop ((code code))
+          (define expr (car code))
+          (cond ((eq? expr last-expr)
+                 (find-stalin-expr-outcomes expr))
+                ((not (pair? expr))
+                 (loop (cdr code)))
+                ;;((memq (car expr) stalin-noreturn-funcs)
+                ;; (car expr))
+                (else
+                 (loop (cdr code))))))))
+  
 #!
+(find-stalin-code-outcomes (car lotsofcode))
 (find-stalin-code-outcomes '((let loop () (loop))))
+(find-stalin-code-outcomes '(let ((a 9))
+                              (if a 
+                                  b
+                                  (if 2 
+                                      (let ((d 100))
+                                        (c 2 3))))))
 !#
 
 (define (find-stalin-func-returns code)
@@ -2502,7 +2719,13 @@
 
 
 #!
-(find-stalin-func-returns '((let loop () (loop))))
+(find-stalin-func-returns '((let loop () (lambda ()))))
+(find-stalin-func-returns '((let loop () (loop) (lowlevel_remove_me))))
+(find-stalin-func-returns '((let loop ()
+                              (let loop2 ()
+                                (loop))
+                              (loop2))))
+
 (find-stalin-func-returns '((letrec ((loop (lambda ()
                                              (display gakk)
                                              (loop))))
@@ -2539,7 +2762,8 @@
 !#
 
 
-(define (find-stalin-noreturn-funcs func-returns known-noreturns)
+;; First implementation. Does not handle circular dependencies.
+(define (find-stalin-noreturn-funcs-internal-old func-returns known-noreturns)
   (define (find func-returns known-noreturns)
     (define ret known-noreturns)
     (map (lambda (func-return)
@@ -2562,13 +2786,148 @@
         (loop new)
         old)))
 
+;; Second implementation. Seems to work fine.
+;;
+;; Works by:
+;; 1. For each function, determine whether the function can return or not.
+;;    A function can return if either of its outcomes are
+;;       a) Not a function call.
+;;    But! A function can never return if all its outcomes are either:
+;;       b) In the known-noreturns list.
+;;       c) A call to a function which is in the func-noreturns list
+;;    If neither b) nor c), for any of its outcomes the function can return.
+;; 2. If it can return, put it into the return-funcs list.
+;; 3. Continue doing for-each until no function is put into the return-funcs list.
+;;
+(define (find-stalin-noreturn-funcs-internal func-returns known-noreturns known-returns)
+  (define noreturns (remove (lambda (noreturn?)
+                              (memq noreturn? known-returns))
+                            (map car func-returns)))
 
+  ;; One iteration of reducing the number of noreturns
+  (define (reduce-noreturns)
+    ;;(c-display "func-returns" func-returns)
+    (for-each (curryppla (name possible-returns)
+                (define noreturn #t)
+                (for-each (lambda (possible-return)
+                            (set! noreturn
+                                  (and noreturn
+                                       (cond ((not (pair? possible-return))                ;; 1a
+                                              #f)
+                                             ((memq (car possible-return) known-noreturns) ;; 1b
+                                              #t)
+                                             ((memq (car possible-return) noreturns)       ;; 1c
+                                              #t)
+                                             (else
+                                              #f)))))
+                          possible-returns)
+                ;;(c-display "name" name noreturns returns noreturn (not noreturn))
+                (if (not noreturn)
+                    (set! noreturns (delete! name noreturns eq?))))
+              func-returns))
+
+  ;; Call reduce noreturns again and again until it can not be reduced anymroe
+  (let loop ()
+    (define old-noreturns (list-copy noreturns))
+    (reduce-noreturns)
+    (if (not (equal? old-noreturns noreturns))
+        (loop)
+        (set! noreturns (delete-duplicates (append known-noreturns noreturns) eq?))))
+
+  
+  noreturns)
+  
+
+  
+
+
+(define* (find-stalin-noreturn-funcs code :optional (known-returns '()))
+  (define func-returns (find-stalin-func-returns
+                        (stalin-cond->if
+                         code)))
+  ;;(pretty-print func-returns)
+  (let ()
+    (define noreturns (find-stalin-noreturn-funcs-internal
+                       func-returns
+                       '(_continuation coroutine-continuation lowlevel_remove_me _switch-to-coroutine)
+                       known-returns))
+    
+    ;; Check if any of the noreturns is ever set! to something not in the noreturns list.
+    ;; In case, those noreturns are put into the "known-returns" list.
+    ;;  (this block may seem chaotic at first sight, but it's not that bad, although it could be better)
+    (let ((res (call/cc
+                (lambda (return)
+                  (let loop ((code code))
+                    (schemecodeparser code
+                                      :use-customsymbolhandler?
+                                      (lambda (expr)
+                                        (eq? 'set! (car expr)))
+                                      :customsymbolhandler
+                                      (lambda (expr)
+                                        (if (memq (nth 1 expr) noreturns)
+                                            (let ()
+                                              (when (not (call/cc (lambda (return)
+                                                                    (define func-checked '())
+                                                                    (define (check-func-call func-call)
+                                                                      (define func-name (car func-call))
+                                                                      (let ((hit (assq func-name func-returns)))
+                                                                        ;;(c-display "func-call / hit" func-call hit)
+                                                                        (if hit
+                                                                            (let ()
+                                                                              (if (memq func-name func-checked) ;;avoid circular
+                                                                                  (return #f))
+                                                                              (push! func-name func-checked)
+                                                                              (for-each check-something
+                                                                                        (nth 1 hit)))
+                                                                            (return #f))))
+                                                                    (define (check-something outcome)
+                                                                      ;;(c-display "outcome" outcome)
+                                                                      (cond ((and (pair? outcome)
+                                                                                  (eq? '_stalin-function (car outcome)))
+                                                                             (check-expr `(begin
+                                                                                            ,@(nth-cdr 2 (nth 1 outcome)))))
+                                                                            ((pair? outcome)
+                                                                             (check-func-call outcome))
+                                                                            ((not (memq outcome noreturns))
+                                                                             (return #f))))
+                                                                    (define (check-expr expr)
+                                                                      ;;(c-display "expr" expr)
+                                                                      (for-each check-something
+                                                                                (find-stalin-expr-outcomes expr)))
+                                                                    (check-expr (nth 2 expr))
+                                                                    #t)))
+                                                (return (nth 1 expr)))))
+                                        `(set! ,(nth 1 expr) ,(loop (nth 2 expr))))))
+                  #t))))
+      (if (eq? #t res)
+          (begin
+            ;;(c-display "NORETURNS" noreturns)
+            noreturns)
+          (find-stalin-noreturn-funcs code (cons res known-returns))))))
+        
 #!
+(find-stalin-noreturn-funcs '((define ai (lambda ()
+                                           (ai)))
+                              (define get-ai (lambda ()
+                                               ai))
+                              (define rt_vct_set                                
+                                (lambda (vvct_56 pos_57 val_58)
+                                  (set! ai (lambda ()
+                                             (get-ai)))
+                                  (ai)))))
+
 ;; cool.
-(find-stalin-noreturn-funcs (find-stalin-func-returns
-                             (stalin-cond->if
-                              (generate-stalin-code last-stalin)))
-                            '(_continuation coroutine-continuation lowlevel_remove_me _switch-to-coroutine))
+(find-stalin-noreturn-funcs '((let loop ()
+                                (let loop2 ()
+                                  (if (loop)
+                                      (loop)
+                                      (loop2)))
+                                ;;(set! loop2 loop5)
+                                (loop2))))
+
+
+(define lotsofcode (generate-stalin-code last-stalin))
+(find-stalin-noreturn-funcs lotsofcode)
 
 (find-stalin-noreturn-funcs (find-stalin-func-returns
                              (stalin-cond->if
@@ -2590,6 +2949,20 @@
 !#
 
 
+
+(define (stalin-is-expr-noreturn? expr no-returns)
+  (define outcomes (find-stalin-expr-outcomes expr))
+  ;;(c-display "hepp" expr (pair? (car outcomes)) (memq (car outcomes) no-returns))
+  (if (null? outcomes)
+      #f
+      (call/cc (lambda (return)
+                 (for-each (lambda (outcome)
+                             (if (or (not (pair? outcome))
+                                     (not (memq (car outcome) no-returns)))
+                                 (return #f)))
+                           outcomes)
+                 #t))))
+
 (define (stalin-remove-dead-code code no-returns cont)
   (define somethingisremoved #f)
   (let ((ret (let das-loop ((code code))
@@ -2602,8 +2975,13 @@
                                          (let ()
                                            (define expr0 (car expr))
                                            (if (and (pair? expr0)
-                                                    (memq (car expr0) no-returns)
-                                                    (not (null? (cdr expr))))
+                                                    ;;(memq (car expr0) no-returns)
+                                                    (not (null? (cdr expr)))
+                                                    (begin ;;(c-display "asking" expr no-returns)
+                                                           (let ((ret (stalin-is-expr-noreturn? expr0 no-returns)))
+                                                             ;;(c-display "ret" ret)
+                                                             ret))
+                                                    )
                                                (begin
                                                  (set! somethingisremoved #t)
                                                  (list (das-loop expr0)))
@@ -2612,6 +2990,28 @@
     (cont ret somethingisremoved)))
 
 #!
+(define lotsofcode
+  '((let ((a 9))
+      (+ 2 3)
+      (lowlevel_remove_me))
+    (+ 9 10)))
+
+;; This one is not handled.
+(define lotsofcode
+  '((let ((a 9))
+      (+ 2 3)
+      (let ((b (lowlevel_remove_me)))
+        (* 100 200)))
+    (+ 9 10)))
+
+;; This one is though.
+(define lotsofcode
+  '((let ((a 9))
+      (+ 2 3)
+      (lowlevel_remove_me)
+      (* 100 200))
+    (+ 9 10)))
+
 (stalin-remove-dead-code lotsofcode
                          (find-stalin-noreturn-funcs (find-stalin-func-returns
                                                       (stalin-cond->if
@@ -2619,20 +3019,18 @@
                                                      '(_continuation coroutine-continuation lowlevel_remove_me _switch-to-coroutine))
                          (lambda (code removed?)
                            (if removed?
-                               (pretty-print code))))
+                               (pretty-print code)
+                               "nothing-removed")))
 !#
 
 
-;; Ad-hoc fix for most situations where stalins tco is not sufficient.
-;; Does not handle situations where the name of a noreturn function has been set!.
-;; Basically, the function does this:
+;; Ad-hoc fix for most situations where stalins tco is not sufficiant.
+;;
+;; Basically, remove-dead-code does this:
 ;; (begin (remove-me) (+ 2 3)) -> (begin (remove-me))
 (define (stalin-remove-dead-code-recursively code)
   (stalin-remove-dead-code code
-                           (find-stalin-noreturn-funcs (find-stalin-func-returns
-                                                        (stalin-cond->if
-                                                         code))
-                                                       '(_continuation coroutine-continuation lowlevel_remove_me _switch-to-coroutine))
+                           (find-stalin-noreturn-funcs code)
                            (lambda (code removed?)
                              (if removed?
                                  (stalin-remove-dead-code-recursively code)
@@ -2647,6 +3045,312 @@
                (generate-stalin-code `( (spawn
                                           ,@last-stalin
                                           ((=> coroutine:_current-coroutine :continuation)))))))
+
+(<rt-stalin>
+ (wait 50))
+(begin last-stalin)
+!#
+
+(define (stalin-append-continuation code continuation)
+  (cond ((eq? 'cond (car code))
+         (stalin-append-continuation (stalin-cond->if code) continuation))
+        ((and (eq? 'if (car code))
+              (= 2 (length code)))
+         `(if ,(nth 1 code)
+              (begin
+                ,(nth 2 code)
+                ,continuation)))
+        ((and (eq? 'if (car code))
+              (= 3 (length code)))
+         `(if ,(nth 1 code)
+              (begin
+                ,(nth 2 code)
+                ,continuation)
+              (begin
+                ,(nth 3 code)
+                ,continuation)))
+        ((memq (car code) '(let let* letrec))
+         `(,(nth 0 code) ,(nth 1 code)
+           ,@(nth-cdr 2 code)
+           ,continuation))
+        (else
+         #f)))
+         
+
+#!
+(let ((a 9))
+  (call/cc (lambda (return)
+             ...)))
+=>
+(let ((a 9))
+  (call/cc (lambda (return)
+             ...))
+  (continuation))
+!#
+
+;; stalin-monad-do-ify-call/cc is making it easier for stalin-remove-call/cc to recognize
+;; call/cc-s which can be tranformed to simple continuations. After this
+;; transformation, stalin-remove-call/cc doesn't have to scan blocks to
+;; see if they might contain call/cc. Instead stalin-remove-call/cc can just
+;; do a simple (and (pair? expr0) (eq? 'call/cc (car expr0))) check.
+(define (stalin-monad-do-ify-call/cc code)
+  (schemecodeparser code
+                    :blockhandler
+                    (lambda (expr)
+                      (let loop ((expr expr))
+                        (if (null? expr)
+                            '()
+                            (let ()
+                              (define expr0 (car expr))
+                              (define monad-do (rt-gensym "monad-do"))
+                              ;;(c-display "expr0" expr0 (deep-list-search 'call-with-current-continuation
+                              ;;                                           expr0)
+                              ;;           (cdr expr))
+                              (cond ((and (pair? expr0)
+                                          (not (null? (cdr expr)))
+                                          (not (eq? 'call-with-current-continuation (car expr0)))
+                                          (deep-list-search 'call-with-current-continuation
+                                                            expr0)
+                                          (stalin-append-continuation expr0 `(,monad-do)))
+                                     => (lambda (new-expr0)
+                                          `((let ((,monad-do ,(stalin-monad-do-ify-call/cc
+                                                               `(lambda ()
+                                                                  ,@(cdr expr)))))
+                                              ,(stalin-monad-do-ify-call/cc new-expr0)))))
+                                    (else
+                                     (cons (stalin-monad-do-ify-call/cc expr0)
+                                           (loop (cdr expr)))))))))))
+
+#!
+(pretty-print (let ((code
+                     '(let a ()
+                        (let ((a 9))
+                          (call-with-current-continuation (lambda (ret)
+                                                            something))
+                          (+ a b))
+                        (lowlevel_remove_me))))
+                (stalin-monad-do-ify-call/cc code)))
+=>
+(begin
+  (let ((monad-do (lambda ()
+                    (lowlevel_remove_me))))
+    (let ((a 9))
+      (call/cc (lambda (ret)
+                 something))
+      (+ a b)
+      (monad-do))))
+!#
+
+
+
+#!
+Removes some unecessary call/cc-s by recognizing when the code continuing after the call/cc block
+"dissapears" in a function which will never return, and tranforming appropriately.
+
+The reason for doing this is that call/cc takes _a lot_ of time to compile with stalin.
+!#
+
+(define (stalin-remove-call/cc das-code)
+  ;;(pretty-print das-code)
+  ;;(c-display "noreturns:" (find-stalin-noreturn-funcs das-code))
+  (let das-loop ((code das-code))
+    (schemecodeparser code
+                      :blockhandler
+                      (lambda (expr)
+                        (let loop ((expr expr))
+                          (if (null? expr)
+                              '()
+                              (let ()
+                                (define expr0 (car expr))
+                                ;;(c-display "expr0" expr0 (find-stalin-noreturn-funcs das-code))
+                                (if (and (pair? expr0)
+                                         (eq? 'call-with-current-continuation (car expr0)) ;; Check if call-wi. is called inisde expr0.
+                                         (stalin-is-expr-noreturn? `(begin
+                                                                      ,@(cdr expr))
+                                                                   (find-stalin-noreturn-funcs das-code)))
+                                    (let ()
+                                      (define return (car (cadr (nth 1 expr0))))
+                                      ;;(pretty-print `(begin ,@(cdr expr)))
+                                      ;;(pretty-print expr)
+                                      ;;(c-display "found one" (stalin-is-expr-noreturn? `(begin
+                                      ;;                                                    ,@(cdr expr))
+                                      ;;                                                 (find-stalin-noreturn-funcs das-code)))
+                                      (das-loop
+                                       `((let ((,return (lambda (,(rt-gensym "call/cc-return"))
+                                                          ,@(cdr expr)
+                                                          )))
+                                           ,@(cddr (nth 1 expr0))))))
+                                    (cons (das-loop expr0)
+                                          (loop (cdr expr)))))))))))
+#!
+(pretty-print (stalin-remove-call/cc
+               '(lambda ()
+                  (lowlevel_debug "starting")
+                  (let loop ()
+                    (call-with-current-continuation
+                     (lambda (return_40)
+                       (wait-do_-11
+                        (* 44100 1)
+                        (lambda ()
+                          (return_40 #t)))))
+                    (lowlevel_debug "one second later")
+                    (loop)))))
+
+(pretty-print (stalin-remove-call/cc
+               '(lambda ()
+                  (lowlevel_debug "starting")
+                  (let loop ()
+                    (cond (#t
+                           (call-with-current-continuation
+                            (lambda (return_40)
+                              (wait-do_-11
+                               (* 44100 1)
+                               (lambda ()
+                                 (return_40 #t)))))
+                           (lowlevel_debug "one second later")
+                           (loop))
+                          (else #f))))))
+
+
+
+(pretty-print (stalin-remove-call/cc
+               '(lambda ()
+                  (lowlevel_debug "starting")
+                  (call-with-current-continuation
+                   (lambda (return_40)
+                     (wait-do_-11
+                      (* 44100 1)
+                      (lambda ()
+                        (return_40 #t)))))
+                  (lowlevel_debug "one second later")
+                  (lowlevel_remove_me))))
+=>
+(lambda ()
+  (lowlevel_debug "starting")
+  (let ((return_40 (lambda (_rt_gen980)
+                     (lowlevel_debug "one second later")
+                     (lowlevel_remove_me))))
+    (wait-do_-11
+     (* 44100 1)
+     (lambda ()
+       (return_40 #t)))))
+
+
+(<rt-stalin>
+ (debug "starting")
+ (wait 1:-s)
+ (debug "one second later"))
+
+(<rt-stalin>
+ (spawn (block :dur 500 (out 0))))
+
+
+;; icmc code
+(<rt-stalin>
+ (while #t
+   (wait (random 30):-ms)
+   (define osc (make-oscil :freq (between 50 2000)))
+   (define dur (between 400 2000):-ms)
+   (define e (make-env '((0 0)(.5 .05)(1 0)) :dur dur))
+   (spawn (block :dur dur
+            (out (* (env e) (oscil osc)))))))
+
+(<rt-stalin>
+ (while #t
+   (wait-midi :command note-on
+     (define adsr (make-adsr :a 20:-ms :d 20:-ms :s 0.2 :r 50:-ms))
+     (define osc
+       (make-oscil :freq (midi-to-freq (midi-note))))
+     (spawn
+       (spawn 
+         (block
+           (cond ((adsr)
+                  => (lambda (vol)
+                       (out (* 0.2 vol (midi-vol) (oscil osc)))))
+                 (else
+                  (stop)))))
+       (wait-midi :command note-off :note (midi-note)
+         (-> adsr stop-it))))))
+
+(<rt-stalin>
+ (while #t
+   (wait-midi :command note-on
+     (spawn
+       (define adsr (make-adsr :a 20:-ms :d 20:-ms :s 0.2 :r 50:-ms))
+       (define osc
+         (make-oscil :freq (midi-to-freq (midi-note))))
+       (spawn 
+         (block
+           (-> adsr run
+               (lambda (vol)
+                 (out (* 0.2 vol (midi-vol) (oscil osc))))
+               stop)))
+       (wait-midi :command note-off :note (midi-note)
+         (-> adsr stop-it))))))
+
+
+
+(<rt-stalin>
+ (while #t
+   (wait-midi :command note-on
+     (define adsr (make-adsr 20:-ms 20:-ms 0.2 50:-ms))
+     (define osc
+       (make-oscil :freq (midi-to-freq (midi-note))))
+     (spawn
+       (spawn 
+         (call/cc 
+          (lambda (break)
+            (block
+              (cond ((adsr)
+                     => (lambda (vol)
+                          (out (* vol 0.2 (midi-vol) (oscil osc)))))
+                    (else
+                     (break #t)))))))
+       (wait-midi :command note-off :note (midi-note)
+         (-> adsr stop-it))))))
+
+
+
+(<rt-stalin>
+ (while #t
+   (debug "waiting for midi")
+   (wait-midi :command note-on
+     (define vol 0.0)
+     (spawn
+       (define osc
+         (make-oscil :freq (midi-to-freq (midi-note))))
+       (define player
+         (spawn
+           (define e (make-env '((0 0)(1 2)(5 1)) :end 50:-ms))
+           (block :dur 50:-ms 
+             (set! vol (* 0.1 (midi-vol) (env e)))
+             (out (* vol (oscil osc))))
+           (block (out (* vol (oscil osc))))))
+       (wait-midi :command note-off :note (midi-note))
+       (stop player)
+       (define e (make-env '((0 1)(1 0)) :end 50:-ms))
+       (block :dur 50:-ms 
+         (out (* vol (env e) (oscil osc))))))))
+
+
+
+
+(<rt-stalin>
+ (define decay 50:-ms)
+ (while #t
+   (wait-midi :command note-on
+     (define osc
+       (make-oscil :freq (midi-to-freq (midi-note))))
+     (spawn
+       (define player
+         (spawn (block (out (* (midi-vol) (oscil osc))))))
+       (let ((a (midi-note)))
+         (wait-midi :command note-off :note a
+           (stop player))
+         (define env (make-env (list 0.0 (midi-vol) 1.0 0.0) :dur decay))
+         (block :dur decay
+           (out (* (env env) (oscil osc)))))))))
+
 
 !#
 
@@ -2680,8 +3384,8 @@
                                      ,body
                                      (cond ,@(nth-cdr 2 expr))))))))))
 #!
-(stalin-cond->if '(cond (a 1)(b 2)(else 3)))
-(stalin-cond->if '(cond (a => af)(b 2)(else 3)))
+(stalin-cond->if '(cond (a 1 2)(b 3)(else 4)))
+(stalin-cond->if '(cond (a => af)(b 3)(else 4)))
 !#
 
 
@@ -2700,7 +3404,46 @@
 
 #!
 (stalin-fix-defines '(define (a b c) d e f))
+(stalin-fix-defines '(define (((((a b)))) c d) d e f))
 !#
+
+
+;; Only renames the toplevel defines:
+;;   (define a (lambda () (a))) -> (define a_-1 (lambda () a))
+;; The rest is taken care of in stalin-uniqify-variables
+(define (stalin-get-renamed-toplevel-defines code)
+  (define get-new-var
+    (let ((num 0))
+      (lambda (old)
+        (if (or (memq old stalin-dont-rename-these)
+                (char=? #\_ (car (string->list (symbol->string old))))) ;; don't rename vars starting with "_".
+            old
+            (<_> old '_ (string->symbol (number->string (inc! num -1))))))))
+
+  (define renameds '())
+
+  (for-each (lambda (expr)
+              (if (and (pair? expr)
+                       (eq? 'define (car expr)))
+                  (let ()
+                    (define new-name (get-new-var (cadr expr)))
+                    (push! (list (cadr expr) new-name)
+                           renameds)
+                    `(define ,new-name
+                       ,@(cdr expr)))
+                  expr))
+            code)
+
+  renameds)
+
+
+#!
+(stalin-get-renamed-toplevel-defines
+ '((define a (lambda (b) (+ a (gakk))))
+   (define gakk (lambda () (let ((a (lambda () 2))) (a))))
+   (+ a b (gakk))))
+!#
+
 
 
 (define (stalin-uniqify-variables code)
@@ -2739,7 +3482,8 @@
 
   (let loop ((code code)
              (varlist '())
-             (renameds '()))
+             (renameds (stalin-get-renamed-toplevel-defines code)))
+    ;;(c-display "varlist" varlist)
     ;;(c-display "code" code "\n" varlist "\n" renameds)
     (schemecodeparser code
                       :varlist 
@@ -2753,10 +3497,21 @@
                               sym)))
                       :use-customsymbolhandler?
                       (lambda (expr)
-                        (memq (car expr) '(lambda let let* letrec)))
+                        (memq (car expr) '(define lambda let let* letrec)))
                       :customsymbolhandler
                       (lambda (expr)
-                        (cond ((eq? 'lambda (car expr))
+                        (cond (#f #f)
+
+                              ;; toplevel-define
+                              ((eq? 'define (car expr))
+                               (let ((name (loop (cadr expr) varlist renameds)))
+                               `(define ,name
+                                  ,@(loop (cddr expr)
+                                          (cons name varlist)
+                                          renameds))))
+
+                               ;; lambda
+                              ((eq? 'lambda (car expr))
                                (let* ((arglist (broken-list->list (cadr expr)))
                                       (new-varlist (map get-new-var arglist))
                                       (new-renameds (zip arglist new-varlist)))
@@ -2780,6 +3535,7 @@
                                                (append new-varlist varlist)
                                                (append new-renameds renameds)))))
 
+                              ;; let
                               ((eq? 'let (car expr))
                                (let* ((clean-varlist (map car (nth 1 expr)))
                                       (new-varlist (map get-new-var clean-varlist))
@@ -2793,6 +3549,7 @@
                                             (append new-varlist varlist)
                                             (append new-renameds renameds)))))
 
+                              ;; let*
                               ((eq? 'let* (car expr))
                                (let ((vars (map (lambda (name code)
                                                   (let* ((new-name (get-new-var name))
@@ -2807,6 +3564,7 @@
                                             varlist
                                             renameds))))
 
+                              ;; letrec
                               ((eq? 'letrec (car expr))
                                (let* ((clean-varlist (map car (nth 1 expr)))
                                       (new-varlist (map get-new-var clean-varlist))
@@ -2826,9 +3584,19 @@
 
 #!
 (stalin-uniqify-variables
- (stalin-uniqify-defines '((define time 0)
-                           (lambda (time)
-                             time))))
+ '((define time 0)
+   `(+ ,time 50)))
+
+(stalin-uniqify-variables
+ '((define time 0)
+   (lambda (time)
+     time)))
+
+(pretty-print (stalin-uniqify-variables
+               '((define a (lambda (b) (+ a (gakk))))
+                 (define gakk (lambda () (let ((a (lambda () 2))) (a))))
+                 (+ a b (gakk)))))
+
 (stalin-uniqify-defines
  (stalin-uniqify-variables '((define time 0)
                              (lambda (time)
@@ -2854,54 +3622,6 @@
 !#
 
 
-
-(define (stalin-uniqify-defines code)
-  (define get-new-var
-    (let ((num 0))
-      (lambda (old)
-        (if (or (memq old stalin-dont-rename-these)
-                (char=? #\_ (car (string->list (symbol->string old)))))
-            old
-            (<_> old '_ (string->symbol (number->string (inc! num -1))))))))
-
-  (let das-loop ((code code)
-                 (varlist '())
-                 (renameds '()))
-    (schemecodeparser code
-                      :varlist 
-                      varlist
-                      :symbolfunc
-                      (lambda (sym)
-                        ;;(c-display "got" sym (assq sym renameds))
-                        (let ((hit (assq sym renameds)))
-                          (if hit
-                              (cadr hit)
-                              sym)))
-                      :blockhandler
-                      (lambda (expr)
-                        (let loop ((expr expr))
-                          (if (null? expr)
-                              '()
-                              (let ()
-                                (define expr0 (car expr))
-                                (if (and (pair? expr0)
-                                         (eq? 'define (car expr0)))
-                                    (let ()
-                                      (define new-name (get-new-var (cadr expr0)))
-                                      (push! new-name varlist)
-                                      (push! (list (cadr expr0) new-name)
-                                             renameds)
-                                      (cons `(define ,new-name
-                                               ,(das-loop (nth 2 expr0)
-                                                          varlist
-                                                          renameds))
-                                            (loop (cdr expr))))
-                                    (cons (das-loop expr0 varlist renameds)
-                                          (loop (cdr expr)))))))))))
-#!
-(stalin-uniqify-defines '((define a (lambda (b) (+ a c)))
-                          (+ a b)))
-!#
 
 
 
@@ -3005,6 +3725,82 @@ had to be put into macroexpand instead.
 (fix-stalin-various '(+ 5 6 :-s))
 !#
 
+;;; Add a stack check, cpu check and backtrace at all lambda entries.
+(define (stalin-add-health-checks code)
+  (if (or (not *stalin-add-health-checks*)
+          (and (not *rt-opt-cpu-checks*)
+               (not *rt-opt-stack-checks*)))
+      code
+      `(
+        (define backtrace (make-vector ,*stalin-backtrace-length* ""))
+        (define backtrace-place 0)
+        (define (check_health function-name)
+          (if (> ((foreign-procedure () int "check_health_internal"))
+                 0)
+              (let loop ((i 0)
+                         (n backtrace-place))
+                (if (and (not (string=? "" (vector-ref backtrace n)))
+                         (< i ,*stalin-backtrace-length*))
+                    (begin
+                      ((foreign-procedure (int char*) void "print_backtrace")
+                       i (vector-ref backtrace n))
+                      (loop (+ i 1)
+                            (if (= 0 n) ,(1- *stalin-backtrace-length*) (- n 1))))
+                    ((foreign-procedure () void "health_exit")))))
+          (vector-set! backtrace backtrace-place function-name)
+          (set! backtrace-place (if (= backtrace-place ,(1- *stalin-backtrace-length*))
+                                    0
+                                    (+ 1 backtrace-place))))
+        ,@(let loop ((code code))
+            (schemecodeparser code
+                              :use-customsymbolhandler?
+                              (lambda (expr)
+                                (or (memq (car expr) '(let let* letrec))
+                                    (and (eq? 'define (car expr))
+                                         (pair? (nth 2 expr))
+                                         (eq? 'lambda (car (nth 2 expr))))))
+                              :customsymbolhandler
+                              (lambda (expr)
+                                (define expr0 (car expr))
+                                (cond ((eq? 'define expr0)
+                                       `(define ,(nth 1 expr)
+                                          (lambda ,(nth 1 (nth 2 expr))
+                                            (check_health ,(symbol->string (nth 1 expr)))
+                                            ,@(map loop (nth-cdr 2 (nth 2 expr))))))
+                                      ;; named let
+                                      ((and (eq? 'let expr0)
+                                            (symbol? (nth 1 expr)))
+                                       (let ((nonamed-let (loop `(let ,(nth 2 expr)
+                                                                   ,@(nth-cdr 3 expr)))))
+                                         `(let ,(nth 1 expr) ,(nth 1 nonamed-let)
+                                               (check_health ,(symbol->string (nth 1 expr)))
+                                               ,@(nth-cdr 2 nonamed-let))))
+                                      (else
+                                       (let ()
+                                         (define names (map car (nth 1 expr)))
+                                         (define values (map cadr (nth 1 expr)))
+                                         `(,expr0 ,(map (lambda (name value)
+                                                          (if (and (pair? value)
+                                                                   (eq? 'lambda (nth 0 value)))
+                                                              `(,name (lambda ,(nth 1 value)
+                                                                        (check_health ,(symbol->string name))
+                                                                        ,@(map loop (nth-cdr 2 value))))
+                                                              (list name (loop value))))
+                                                        names
+                                                        values)
+                                                  ,@(map loop (nth-cdr 2 expr))))))))))))
+#!
+;; Running out of stack
+(<rt-stalin>
+ (let loop ((i 2))
+   (+ 2 (loop (1+ i)))))
+;; Neverending loop.
+(<rt-stalin>
+ (let loop ()
+   (out 0.0)
+   (loop)))
+!#
+
 
 (define (stalin-super-generate code)
   (stalin-fix-defines 
@@ -3031,6 +3827,7 @@ had to be put into macroexpand instead.
 
   (define (find-dependencies trace code)
     (define funcs (find-stalin-funcs code))
+    ;;(c-display "find" code)
     (if (null? funcs)
         '(#f)
         (flatten (map (lambda (func)
@@ -3060,11 +3857,14 @@ had to be put into macroexpand instead.
   
 
 (define (generate-stalin-code code)
-  (define lotsofcode (stalin-uniqify-defines
-                      (stalin-uniqify-variables
-                       (stalin-fix-internal-defines
-                        (generate-stalin-code0 code)))))
-  (stalin-remove-dead-code-recursively lotsofcode))
+  (define lotsofcode (stalin-uniqify-variables
+                      (stalin-fix-internal-defines
+                       (generate-stalin-code0 code))))
+  (stalin-add-health-checks
+   (stalin-remove-call/cc
+    (stalin-monad-do-ify-call/cc
+     (stalin-remove-dead-code-recursively
+      lotsofcode)))))
 
    
 
@@ -3094,6 +3894,7 @@ had to be put into macroexpand instead.
   ;;(define command (<-> "stalin -On -no-clone-size-limit -c " basename ".scm"))
   ;;(define command (<-> "stalin -On -clone-size-limit 0 -no-escaping-continuations -c " basename ".scm"))
   ;;(define command (<-> "stalin -fully-convert-to-CPS -On -clone-size-limit 0 -c " basename ".scm"))
+  ;;(define command (<-> "stalin -On -no-clone-size-limit -split-even-if-no-widening  -c " basename ".scm"))
   (define command (<-> "stalin -On -clone-size-limit 0 -c " basename ".scm"))
   (delete-at-exit (<-> basename ".c"))
   (c-display command)
@@ -3122,29 +3923,46 @@ had to be put into macroexpand instead.
                                               (<char*> outfile))
                                        (fix_stalin_c_source infile outfile)))))
 
-(define (get-stalin-c-file generated-scheme-file)
+(define (get-stalin-c-file generated-scheme-file cont)
   (let* ((basename generated-scheme-file)
          (inname   (compile-stalin-file basename))
          (outname  (<-> (tmpnam) ".c")))
     (delete-at-exit outname)
     (fix-stalin-c-source inname outname)
     (c-display "inname" inname)
-    outname))
+    (cont basename
+          outname)))
 
 #!
 (get-stalin-c-file (schemecode->file (generate-stalin-code0 '((display (+ 2 3))(newline)))))
 !#
 
+#!
 (define (link-stalin-file c-file)
   (define o-file (<-> c-file ".o"))
   (if (not (= 0 (system (<-> "gcc " "-I" snd-header-files-path " " c-file " -shared -o " o-file " -fpic"))))
       (throw 'compilation-error))
   (delete-at-exit o-file)
   o-file)
-
+!#
 
 (eval-c "-O0 -lpcl"
         "#include <pcl.h>"
+;        (<int> use_some_stack (lambda ((<int> counter)
+;                                       (<void**> where))
+;                                (<int> dummy)
+;                                (cond ((== counter 20)
+;                                       (set! *where &dummy)
+;                                       (return counter))
+;                                      (else
+;                                       (return (+ 1 
+;                                                  (use_some_stack (+ counter 1) where)))))))
+
+;	(<nonstatic-void*> rt_get_stack_address (lambda ()
+;                                                  (<int> dummy)
+;                                                  (<char*> ret)
+;                                                  (use_some_stack 0 &ret)
+;                                                  (return ret)))
 	(<nonstatic-void*> rt_get_stack_address (lambda ()
                                                   (<int> dummy)
                                                   (return &dummy)))
@@ -3163,12 +3981,14 @@ had to be put into macroexpand instead.
 (define-ec-struct <RT_Stalin>
   <void*> freefunc)
 
-(define (link-stalin-file c-file program)
+
+(define (link-stalin-file basename c-file program)
   (c-display "c-file:" c-file)
   (apply eval-c-non-macro
          `(,(<-> "-I" snd-header-files-path " -I/home/kjetil/site/include" " -lpcl")
            #f
 
+           "#include <jack/jack.h>"
            "#include <jack/ringbuffer.h>"
            "#include <rollendurchmesserzeitsammler.h>"
            "#include <pcl.h>"
@@ -3193,6 +4013,9 @@ had to be put into macroexpand instead.
 
            (<int> remove_me 0)
 
+           (<struct-RT_Engine*> rt_engine)
+
+           ;;(<int64> g_time) ;; Not used so far.
            (<int> g_startframe)
            (<int> g_endframe)           
            (<int> block_time 0)
@@ -3205,6 +4028,8 @@ had to be put into macroexpand instead.
            (<char*> end_dyn NULL)
            (<char*> stack_top NULL)
            (<char*> stack_bot NULL)
+
+           (<jack_time_t> block_enter_time 0)
            
            (get-proto rt_debug)
            (get-proto rt_get_stack_address)
@@ -3289,12 +4114,48 @@ had to be put into macroexpand instead.
                                               (set! ret->next gc_uncollectable_mem)
                                               (set! gc_uncollectable_mem ret)
                                               (return ret+1)))
-
+           
            ,@(get-stalin-ec-funcs program)
+           
+           (<void> health_exit (lambda ()
+                                 (rt_debug (string ,(<-> "Scheme file: \\\"" basename ".scm\\\"")))
+                                 (set! remove_me 1)
+                                 (rt_no_return_co_resume)))
+           
+           (<void> print_backtrace
+                   (lambda ((<int> num)
+                            (<char*> function_name))
+                     (rt_debug (string "%d: %s") num function_name)))
+
+           (<int> check_health_internal
+                  (lambda ()
+                    (<char*> das_stack_bot (cast <char*> (rt_get_stack_address)))
+                    
+                    (cond ((and ,(if *rt-opt-stack-checks* 1 0)
+                                (< das_stack_bot
+                                   (- stack_top ,*stalin-stack-limit*)))
+                           (set! stack_bot das_stack_bot)
+                           (rt_debug (string "Error. Running out of stack. (Endless loop?)\\n\\nLast visisted: (newest->oldest)"))
+                           (return 1))
+                          ((and ,(if *rt-opt-cpu-checks* 1 0)
+                                (> block_enter_time 0)
+                                (> (jack_get_time)
+                                   (+ block_enter_time ,(c-integer (* 1
+                                                                      (/ (* 1000000 *rt-block-size*)
+                                                                         (rte-samplerate)))))))
+                           (rt_debug (string
+                                      ,(<-> "Using too much CPU. Stopping instrument in case this is an endless loop."
+                                            "In case not, use the :runtime-checks option to turn off off safety checks,\\n"
+                                            "programs usually runs magnitudes faster when doing so.\\n\\nLast visited: (newest->oldest)")))
+                           (return 2))
+                          (else
+                           (return 0)))))
            
            "#define fprintf(a,...) rt_debug(__VA_ARGS__)"
            "#define exit(a) myexit()"
+           ;;"static char* dynstart"
            ,(<-> "#include \"" c-file "\"")
+           ;;"static char* dynend"
            "#undef fprintf"
            "#undef exit"
 
@@ -3310,8 +4171,15 @@ had to be put into macroexpand instead.
                                   ;;(if (!= 0 remove_me)
                                   ;;    (return remove_me))
 
-                                  (if (== 0 startframe)
-                                      (clean_sounddata))
+                                  (<static-int> first_run 0)
+                                  (when (or (== 0 startframe)
+                                            (== 1 first_run))
+                                    (set! block_enter_time (- (jack_get_time)
+                                                              (/ (* 1000000 startframe)
+                                                                 ,(rte-samplerate))))
+                                    (clean_sounddata)
+                                    (set! first_run 0))
+
                                   
                                   (when (== false (tar_entering_audio_thread heap))
                                     (fprintf stderr (string "Using too much CPU. Skipping\\n"))
@@ -3319,6 +4187,8 @@ had to be put into macroexpand instead.
 
                                   (set! g_startframe startframe)
                                   (set! g_endframe endframe)
+
+                                  ;;(set! g_time (+ rt_engine->block_time startframe))
                                   
                                   (let* ((old_heap <tar_heap_t*> (clm_set_tar_heap heap))
                                          (old_ef  <error_func_t> (clm_set_error_func myerror)))
@@ -3327,7 +4197,7 @@ had to be put into macroexpand instead.
                                     (clm_set_tar_heap old_heap))
 
                                   (when (== 0 (% block_time (* ,*rt-block-size* 
-                                                               (/ (* 2 (cast <int> ,(-> *rt-engine* samplerate))) 
+                                                               (/ (* 2 (cast <int> ,(rte-samplerate)))
                                                                   ,*rt-block-size*))))
                                     (rt_debug (string "data: %d, stack: %d %p %p, num_allocs: %d")
                                               (abs (- end_dyn start_dyn))
@@ -3348,7 +4218,9 @@ had to be put into macroexpand instead.
                                                   )
                                         
                                         (tar_add_root heap start_dyn end_dyn) ; data
+                                        ;;(tar_add_root heap &dynstart &dynend) ;; This might work, but performance-vice it shouldn't matter. Probably better to be safe and just use start_dyn and end_dyn.
                                         (tar_add_root heap stack_bot stack_top) ; stack
+
                                         ;;(tar_add_root heap (- stack_top 120000) stack_top) ; stack
                                         (tar_add_root heap dsp_coroutine (+ (cast <char*> dsp_coroutine)
                                                                             (EC_MAX (sizeof <ucontext_t>) ;registers
@@ -3364,7 +4236,8 @@ had to be put into macroexpand instead.
 
                                   (when (< stack_bot
                                            (- stack_top ,*stalin-stack-limit*))
-                                    (rt_debug (string "Error. Running out of stack. This might be an error. Stopping instrument. (%d)\\n") (abs (- stack_top stack_bot)))
+                                    (rt_debug (string "Error. Running out of stack. This might be an error. Stopping instrument. (%d)\\n")
+                                              (abs (- stack_top stack_bot)))
                                     (rt_debug (string "If you need more stack, increase *stalin-stack-size* and *stalin-stack-limit*.\\n"))
                                     (set! remove_me 1))
 
@@ -3374,6 +4247,9 @@ had to be put into macroexpand instead.
            (<void> dsp_coroutine_func (lambda ((<void*> arg))
                                         (set! stack_top (rt_get_stack_address))
                                         (rt_call_and_use_some_stack 0 schememain)))
+
+
+           ;; Merk! Veldig lett aa benchmarke gc naa. Bare kjoer clinger's scheme tests med rollend.. og hbgc.
 
            ;; init (note that (debug) shouldn't be run from guile thread. Must fix)
            (run-now
@@ -3410,6 +4286,8 @@ had to be put into macroexpand instead.
            
            (public
             (<void-*> make-globals-func (lambda ((<struct-RT_Engine-*> engine))
+                                          (set! rt_engine engine)
+
                                           (if (== 1 remove_me)
                                               (return NULL))                                                      
                                           (<struct-RT_Stalin*> rt_stalin (calloc 1 (sizeof (struct <struct-RT_Stalin>))))
@@ -3446,24 +4324,37 @@ had to be put into macroexpand instead.
             
             ;;(c-display "generated" generated)
             ;;(check-stalin-syntax generated)
-            (define funcs (link-stalin-file (get-stalin-c-file (schemecode->file generated))
-                                            generated))
-            (if funcs
-                (let ()
-                  (define realtime (<realtime> (car funcs) (cadr funcs) '()))
-                  (-> realtime play)
-                  realtime)
-                #f)
-            ))
+            (get-stalin-c-file (schemecode->file generated)
+                               (lambda (basename c-file)
+                                 (define funcs (link-stalin-file basename c-file generated))
+                                 (if funcs
+                                     (let ()
+                                       (define realtime (<realtime> (car funcs) (cadr funcs) '()))
+                                       (-> realtime play)
+                                       realtime)
+                                     #f)
+                                 ))))
          (lambda x
            #f)))
 
 
 ;; what about (<rt-stalin> (block (out ...))) ?
-(define-macro (<rt-stalin> . code)
-  `(begin
-     (set! *rt-local-stalin-code-environment* (the-environment))
-     (<rt-stalin-do> ',code)))
+(define-macro <rt-stalin> 
+  (labamba (:key (stack-checks #t)
+                 (cpu-checks #t)
+                 (runtime-checks 'undefined)
+            :rest code)
+    (cond ((eq? #t runtime-checks)
+           (set! stack-checks #t)
+           (set! cpu-checks #t))
+          ((eq? #f runtime-checks)
+           (set! stack-checks #f)
+           (set! cpu-checks #f)))
+    `(begin
+       (set! *rt-local-stalin-code-environment* (the-environment))
+       (set! *rt-opt-stack-checks* ,stack-checks)
+       (set! *rt-opt-cpu-checks* ,cpu-checks)
+       (<rt-stalin-do> ',code))))
 
 
 #!

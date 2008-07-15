@@ -874,13 +874,11 @@ Usually just "", but can be "-lsnd" or something if needed.
        ")"))
 			 
 
-;; He he. :-)
-(define-c/faust-macro (unquote something)
+(define-c-macro (unquote something)
   (primitive-eval something))
 
-(define-c/faust-macro (unquote-splicing something)
+(define-c-macro (unquote-splicing something)
   (apply <-> (map eval-parse (primitive-eval something))))
-
 
 (define-c/faust-macro (include filename)
   (define ret "")

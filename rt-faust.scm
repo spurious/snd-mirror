@@ -2,6 +2,10 @@
 ;; This file is loaded by rt-compiler.scm
 
 
+
+(define *rt-local-faust-code-environment* (the-environment))
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;; Main struct ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -234,7 +238,7 @@
 (define (cleanup-faust-object faust)
   (c-display "      TRYING TO CLEANUP (never seen this message, something is not wrong if this message is snown, which it is not.")
   )
-;  (c-cleanup-faust-object faust))
+;;  (c-cleanup-faust-object faust))
 
 (define faust-gui-faust #f)
 
@@ -314,6 +318,7 @@
 !#
 
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;; Generate faust code ;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -330,6 +335,16 @@
 
 (define-faust-macro (out . rest)
   `(= process ,@rest))
+
+(define-faust-macro (unquote something)
+  (local-eval something *rt-local-faust-code-environment*)
+  (primitive-eval something))
+
+(define-faust-macro (unquote-splicing something)
+  (apply <-> (map eval-parse (local-eval something *rt-local-faust-code-environment*))))
+
+
+
 
 ;; Guile doesn't like "(: etc. etc.)"
 ;; moved into the general infix fixer in eval-c
@@ -415,7 +430,7 @@
 
 (rt-ec-function <vct-*> rt_faust_compute
 		(lambda (,rt-globalvardecl
-			 (<struct-mus_rt_faust-*> faust)
+			 (<faust> faust)
 			 (<vct-*> input))
 		  (<FaustComputeFunc> compute faust->compute_func)
 		  (<vct-*> output (rt_alloc_vct rt_globals faust->num_outputs))
@@ -430,7 +445,6 @@
 				(set! output->data[n] faust->outs[n][0])))
 		    (return output))))
 
-(<rt-func> 'rt_faust_compute '<vct-*> '(<faust> <vct-*>) :needs-rt-globals #t)
 
 (define-rt-macro (faust-compute faust-object input)
   `(rt_faust_compute ,faust-object ,input))
@@ -502,15 +516,17 @@
 
   ;;(c-display "in-bus/out-bus:" in-bus out-bus)
   
-  `(let* ((,faust (make-faust-object ',code))
-	  ,@(if in-bus `((in-bus ,in-bus)) '())
-	  ,@(if out-bus `((out-bus ,out-bus)) '())
-	  (,rt (<rt> (lambda () (out (in))))))
-     (-> ,rt faust ,faust)
-     (-> ,rt play)
-     (let ((rt-current-rt ,rt))
-       (start-faust-gui-if-necessary ,faust))
-     ,rt))
+  `(begin
+     (set! *rt-local-faust-code-environment* (the-environment))
+     (let* ((,faust (make-faust-object ',code))
+            ,@(if in-bus `((in-bus ,in-bus)) '())
+            ,@(if out-bus `((out-bus ,out-bus)) '())
+            (,rt (<rt> (lambda () (out (in))))))
+       (-> ,rt faust ,faust)
+       (-> ,rt play)
+       (let ((rt-current-rt ,rt))
+         (start-faust-gui-if-necessary ,faust))
+       ,rt)))
 
 (define-macro (<rt-faust> . code)
   (apply <rt-faust-do> code))
@@ -608,7 +624,7 @@
 
 (<rt-faust> (out (oscivol 500 0.2)))
 
-(<rt-out> (<faust> :in (vct (osci 200))
+(<rt-out> (<faust> :in (vct (oscil* 200))
 		   (= gain    (vslider "gain" 0.2 0 1 0.01))
 		   (= process (vgroup "ai" "*(gain)"))))
 

@@ -232,9 +232,9 @@ and run simple lisp[4] functions.
 (define rt-gensym-num 0)
 (define (rt-gensym-reset)
   (set! rt-gensym-num 0))
-(define (rt-gensym)
-    (set! rt-gensym-num (1+ rt-gensym-num))
-    (string->symbol (<-> "rt_gen" (number->string rt-gensym-num))))
+(define* (rt-gensym :optional (name ""))
+  (set! rt-gensym-num (1+ rt-gensym-num))
+  (string->symbol (<-> "rt_gen_" name (number->string rt-gensym-num))))
 (define rt-gensym-num2 0)
 (define (rt-gensym2)
   (set! rt-gensym-num2 (1+ rt-gensym-num2))
@@ -1296,8 +1296,12 @@ and run simple lisp[4] functions.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; rt-macroexpand . First thing to do.
-;; +setter handling
+;;
+;; + setter handling
 ;; (set! (asetter 5) 2)     -> (setter!-asetter 5 2)
+;;
+;; + infix handler:
+;; (+ 2:-ms a:-s b :-s (c):-ms) -> (+ (infix-ms 2) (infix-s a) (infix-s b) (infix-ms (c)))
 ;;
 (define (rt-macroexpand-1 term)
   (call-with-current-continuation
@@ -1397,13 +1401,82 @@ and run simple lisp[4] functions.
     res))
 
 
+;; (+ 2:-ms a:-s) -> (+ (infix-ms 2) (infix-s a))
+(define* (rt-fix-infix2 code :key (macroexpander rt-macroexpand))
+  (let loop ((code code))
+    (cond ((null? code) '())
+          ((symbol? code)
+           (let ((sym code))
+             (define first '())
+             (let loop ((string (string->list (symbol->string sym))))
+               (cond ((null? string)
+                      sym)
+                     ((and (char=? #\: (car string))
+                           (char=? #\- (cadr string)))
+                      (macroexpander
+                       `(,(string->symbol (<-> "infix-" (list->string (cddr string))))
+                         ,(let ((string (list->string (reverse! first))))
+                            (or (string->number string)
+                                (string->symbol string))))))
+                     (else
+                      (push! (car string) first)
+                      (loop (cdr string)))))))
+          ((not (pair? code))
+           code)
+          (else
+           (map loop code)))))
+
+;; (+ b :-s (c):-ms) -> (+ (infix-s b) (infix-ms (c)))
+(define (rt-fix-infix code)
+  (cond ((null? code) '())
+        ((not (pair? code)) code)
+        (else
+         (let ()
+           (define first '())
+           (let loop ((term code))
+             (cond ((null? term)
+                    (map rt-fix-infix code))
+                   ((and (not (null? first))
+                         (not (null? (cdr first)))
+                         (keyword? (car term))
+                         (char=? #\- (car (string->list (symbol->string (keyword->symbol (car term)))))))
+                    (rt-fix-infix
+                     `(,@(c-butlast first)
+                       (,(<_> 'infix (keyword->symbol (car term)))
+                        ,(last first))
+                       ,@(cdr term))))
+                   (else
+                    (set! first (append first (list (car term))))
+                    (loop (cdr term)))))))))
+#!
+(rt-fix-infix '(block :duration (between 200 1000):-:ms aiai more and more))
+(rt-fix-infix '(block :duration (between 200 1000):-m))
+!#
+
+(define (rt-fix-infix-nonrt code)
+  (rt-fix-infix2
+   (macroexpand
+    (rt-fix-infix code))
+   :macroexpander rt-fix-infix-nonrt))
+  
+#!
+(rt-fix-infix-nonrt '(<rt-out> :dur 0 3:-s (oscil)))
+!#
+
+;; add-rt-transformer stuff is not used.
 (add-rt-transformer rt-macroexpand-expand)
+(add-rt-transformer rt-fix-infix)
+
+
 
 ;; Not quite working yet. Full rewrite of the macrosystem is probably needed.
 ;;(define rt-macroexpand (lambda (expr)
 ;;			 (rt-transform expr)))
 
-(define rt-macroexpand rt-macroexpand-expand)
+(define (rt-macroexpand term)
+  (rt-fix-infix2
+   (rt-macroexpand-expand
+    (rt-fix-infix term))))
 
 
   
@@ -3123,6 +3196,10 @@ and run simple lisp[4] functions.
 		    ,@body))
 	       `(define-macro ,(cons (symbol-append rt-macro-prefix (car def)) (cdr def))
 		  ,@body))))
+        ((find keyword? (cdr def))
+         `(define-macro ,(symbol-append rt-macro-prefix (car def))
+            (labamba ,(cdr def)
+              ,@body)))
 	(else
 	 (let* ((name (car def))
 		(new-name (symbol-append rt-macro-prefix name))
@@ -3215,6 +3292,13 @@ and run simple lisp[4] functions.
 (rt-macroexpand '(add 1 2 :a4 9))
 (+ 1 2 3 9 5)
 !#
+
+
+
+(define-macro (define-rt+-macro . rest)
+  `(begin
+     (define-rt-macro ,@rest)
+     (define-macro ,@rest)))
 
 
 (define-macro (rt-renamefunc rt-name c-name returntype . args)
@@ -4290,6 +4374,36 @@ and run simple lisp[4] functions.
 (<rt-func> 'rt-printf/fprintf '<int> '(<char-*> <float>) #:min-arguments 1)
 
 
+(define-rt-macro (infix-f t)
+  t)
+(define-rt-macro (infix-b t)
+  `(* ,*rt-block-size* ,t))
+(define-rt-macro (infix-ms t)
+  `(inexact->exact (floor (/ (* ,t ,(rte-samplerate))
+                             1000))))
+(define-rt-macro (infix-s t)
+  `(* ,(inexact->exact (rte-samplerate)) ,t))
+(define-rt-macro (infix-m t)
+  `(* ,(* 60 (inexact->exact (rte-samplerate))) ,t))
+(define-rt-macro (infix-h t)
+  `(* ,(* 60 60 (inexact->exact (rte-samplerate))) ,t))
+
+
+(define-macro (infix-f t)
+  `(/ t (rte-samplerate)))
+(define-macro (infix-b t)
+  `(/ (* ,*rt-block-size* ,t) (rte-samplerate)))
+(define-macro (infix-ms t)
+  `(/ ,t 1000))
+(define-macro (infix-s t)
+  t)
+(define-macro (infix-m t)
+  `(* 60 ,t))
+(define-macro (infix-h t)
+  `(* 60 60 ,t))
+
+
+
 ;; let is implemented as a macro to easier be able to support named let. The real name for non-named let is rt-let/let*
 (define-rt-macro (let a b . c)
   (if (not (symbol? a))
@@ -5221,23 +5335,33 @@ and run simple lisp[4] functions.
 	  rt-clm-generators)
 
 
-#!
 (for-each (lambda (generator)
 	    (fix-defines
 	     (define basename (car generator))
-	     (define new-name (symbol-append basename '*))
+	     (define new-name (<_> basename '*))
 	     (define args (cadr generator))
 	     (define first-arg (and (not (null? args))
 				    (nth 0 args)))
 	     (when (equal? first-arg '(fm 0))
-	       (primitive-eval `(define-rt-macro ,new-name
-				  (lambda* (:optional (frequency 440))
-					   (if (number? frequency)
-					       `(,',basename :frequency ,frequency)
-					       `(,',basename :frequency 0
-							     (hz->radians ,frequency)))))))))
+               (let ((makename (<_> 'make- basename)))
+                 (primitive-eval `(define ,makename ;; Set default frequency back to 440.
+                                    (let ((old ,makename))
+                                      (lambda rest
+                                        (cond ((null? rest)
+                                               (old :frequency 440))
+                                              ((eqv? :freq (car rest))
+                                               (apply old (cons :frequency (cdr rest))))
+                                              (else
+                                               (apply old rest))))))))
+               (supereval (lambda (out)
+                            (out "(define-rt-macro " new-name)
+                            (out "  (labamba (:optkey (frequency 440))")
+                            (out "   (if (number? frequency)")
+                            (out "       `(" basename " :frequency ,frequency)")
+                            (out "       `(" basename " :frequency 0")
+                            (out "                      (hz->radians ,frequency)))))"))))))
 	  rt-clm-generators)
-!#
+
 
 #!
 (<rt-out> (oscil* (<slider> "freq" 0 200 5000 :log #t)))
@@ -9247,7 +9371,7 @@ Can alignmnet screw up this one?
 	,@(if out-bus `((out-bus ,out-bus)) '()))
      (rt-play-macro ,play-type
                     (<rt-block> ,(last rest))
-                    ,(c-butlast rest))))
+                    ,(rt-fix-infix-nonrt (c-butlast rest)))))
 #!
 (<rt-play-do> 'play :out-bus #f :gakk 9 2 3 4)
 !#
