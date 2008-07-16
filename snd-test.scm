@@ -38266,7 +38266,7 @@ EDITS: 3
 			    (fm-violin 0 .5 440 .1) 
 			    (fm-violin 1.5 .5 660 .1)))
 		    (snd-direct (find-sound file))
-		    (snd-read (new-sound))
+		    (snd-read (new-sound "peak-test.snd" :comment "peak env tests at 38270"))
 		    (envs-direct (channel-amp-envs snd-direct 0))
 		    (info-direct (peak-env-info snd-direct 0)))
 	       
@@ -38306,7 +38306,7 @@ EDITS: 3
 			    (fm-violin 0 .5 440 .1 :degree 0) 
 			    (fm-violin 1.5 .5 660 .2 :degree 90)))
 		    (snd-direct (find-sound file))
-		    (snd-read (new-sound :channels 2))
+		    (snd-read (new-sound "peak-test.snd" :comment "peak env tests at 38309" :channels 2))
 		    (envs-direct0 (channel-amp-envs snd-direct 0))
 		    (envs-direct1 (channel-amp-envs snd-direct 1))
 		    (info-direct0 (peak-env-info snd-direct 0))
@@ -38356,6 +38356,9 @@ EDITS: 3
 		 (close-sound snd-direct)
 		 (close-sound snd-read))))
 	   data-formats))
+
+	(if (file-exists? "peak-test.snd")
+	    (delete-file "peak-test.snd"))
 
 
      	;; recursion tests
@@ -70199,6 +70202,9 @@ EDITS: 1
 
 
 ;;; -------- cleanup temp files
+
+(if (provided? 'snd-nogui)
+    (set! (max-regions) 0))
 
 (if (file-exists? "saved-snd.scm") (delete-file "saved-snd.scm"))
 (if (file-exists? original-save-dir)

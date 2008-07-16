@@ -1051,6 +1051,7 @@ static file_info *open_raw_sound(const char *fullname, read_only_t read_only, bo
       /* choices already made, so just send back a header that reflects those choices */
       return(make_file_info_1(fullname));
     }
+
   if (XEN_HOOKED(open_raw_sound_hook))
     {
       procs = XEN_HOOK_PROCEDURES(open_raw_sound_hook);
@@ -1069,6 +1070,7 @@ static file_info *open_raw_sound(const char *fullname, read_only_t read_only, bo
   if (XEN_LIST_P(res)) /* empty list ok here -> accept all current defaults */
     {
       file_info *hdr;
+
       len = XEN_LIST_LENGTH(res);
       mus_header_raw_defaults(&srate, &chans, &data_format);
       if (len > 0) chans = XEN_TO_C_INT(XEN_CAR(res));
@@ -1100,10 +1102,8 @@ static file_info *open_raw_sound(const char *fullname, read_only_t read_only, bo
       hdr->comment = NULL;
       return(hdr);
     }
-#if (!USE_NO_GUI)
   else 
     {
-      char *str;
       bool just_quit = false;
       if (XEN_TRUE_P(res)) just_quit = true;
       if (res_loc != NOT_A_GC_LOC) snd_unprotect_at(res_loc);
@@ -1116,13 +1116,17 @@ static file_info *open_raw_sound(const char *fullname, read_only_t read_only, bo
 	  (ss->open_requestor == FROM_NEW_FILE_DIALOG))
 	return(make_file_info_1(fullname));
 
-      str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-      mus_snprintf(str, PRINT_BUFFER_SIZE, _("No header found for %s"), filename_without_directory(fullname));
-      raw_data_dialog_to_file_info(fullname, str, NULL, read_only, selected);
-    }
+#if (!USE_NO_GUI)
+      {
+	char *str;
+	str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+	mus_snprintf(str, PRINT_BUFFER_SIZE, _("No header found for %s"), filename_without_directory(fullname));
+	raw_data_dialog_to_file_info(fullname, str, NULL, read_only, selected); /* dialog frees str */
+      }
 #else
-  if (res_loc != NOT_A_GC_LOC) snd_unprotect_at(res_loc); /* maybe a value returned in no-gui case, but it wasn't a list */
+      fprintf(stderr, _("No header found for %s"), filename_without_directory(fullname));
 #endif
+    }
   return(NULL);
 }
 

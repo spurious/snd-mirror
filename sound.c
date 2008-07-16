@@ -1702,7 +1702,7 @@ const char *mus_array_to_file_with_error(const char *filename, mus_sample_t *dda
   mus_sample_t *bufs[1];
   mus_sound_forget(filename);
 
-  err = mus_write_header(filename, MUS_NEXT, srate, channels, len * channels, MUS_OUT_FORMAT, NULL);
+  err = mus_write_header(filename, MUS_NEXT, srate, channels, len * channels, MUS_OUT_FORMAT, "array->file");
   if (err != MUS_NO_ERROR)
     return("mus_array_to_file can't create output file");
   oloc = mus_header_data_location();

@@ -394,20 +394,24 @@ static void make_region_readable(region *r)
   snd_info *regsp;
   file_info *hdr;
   int i;
+
   if (r->use_temp_file == REGION_DEFERRED) 
     deferred_region_to_temp_file(r);
   if (r->rsp) return;
+
   regsp = make_basic_snd_info(r->chans);
   regsp->nchans = r->chans;
   regsp->hdr = (file_info *)CALLOC(1, sizeof(file_info));
   regsp->search_proc = XEN_UNDEFINED;
   regsp->prompt_callback = XEN_UNDEFINED;
   regsp->inuse = SOUND_READER;
+
   hdr = regsp->hdr;
   hdr->samples = r->frames * r->chans;
   hdr->srate = r->srate;
   hdr->chans = r->chans;
   hdr->comment = NULL;
+
   for (i = 0; i < r->chans; i++)
     {
       chan_info *cp;
@@ -457,9 +461,11 @@ file_info *fixup_region_data(chan_info *cp, int chan, int pos)
 	{
 	  snd_info *nsp;
 	  chan_info *ncp;
+
 	  make_region_readable(r);
 	  nsp = r->rsp;
 	  ncp = nsp->chans[chan];
+
 	  cp->sounds = ncp->sounds;
 	  cp->sound_size = ncp->sound_size;
 	  cp->edits = ncp->edits; /* ?? is this safe ?? */
@@ -467,6 +473,7 @@ file_info *fixup_region_data(chan_info *cp, int chan, int pos)
 	  cp->edit_ctr = ncp->edit_ctr;
 	  cp->edits[0]->samples = ncp->edits[0]->samples;
 	  cp->axis = ncp->axis;
+
 	  if ((r->peak_envs) && (r->peak_envs[chan]))
 	    cp->edits[0]->peak_env = r->peak_envs[chan];
 	  else
@@ -474,6 +481,7 @@ file_info *fixup_region_data(chan_info *cp, int chan, int pos)
 	      if (cp->edits[0]->peak_env)
 		cp->edits[0]->peak_env = NULL;
 	    }
+
 	  initialize_scrollbars(cp);
 	  return(nsp->hdr);
 	}
@@ -602,15 +610,21 @@ static int paste_region_1(int n, chan_info *cp, bool add, off_t beg, io_error_t 
   int i, id = -1;
   io_error_t io_err;
   sync_info *si = NULL;
+
   r = id_to_region(n);
-  if ((r == NULL) || (r->frames == 0)) return(INVALID_REGION);
+  if ((r == NULL) || 
+      (r->frames == 0)) 
+    return(INVALID_REGION);
+
   if (!(editable_p(cp))) 
     {
       (*err) = IO_EDIT_HOOK_CANCELLATION;
       return(NOT_EDITABLE);
     }
+
   if (r->use_temp_file == REGION_DEFERRED)
     deferred_region_to_temp_file(r);
+
   si = sync_to_chan(cp);
   if (add)
     {
@@ -710,20 +724,25 @@ int define_region(sync_info *si, off_t *ends)
   snd_info *sp0;
   region *r;
   deferred_region *drp;
+
   len = 0;
   for (i = 0; i < si->chans; i++)
     if (len < (ends[i] - si->begs[i]))
       len = ends[i] - si->begs[i];
   len += 1;
   if (len <= 0) return(INVALID_REGION);
+
+  cp0 = si->cps[0];
+  sp0 = cp0->sound;
+
   r = (region *)CALLOC(1, sizeof(region));
   MUS_SET_PRINTABLE(PRINT_REGION);
   r->id = region_id_ctr++;
-  cp0 = si->cps[0];
-  sp0 = cp0->sound;
+
   if (regions[0]) 
     add_to_region_list(r); 
   else regions[0] = r;
+
   r->header_type = (sp0->hdr)->type;
   r->srate = SND_SRATE(sp0);
   r->maxamp = -1.0;
@@ -737,6 +756,7 @@ int define_region(sync_info *si, off_t *ends)
   r->use_temp_file = REGION_DEFERRED;
   r->begs = (off_t *)CALLOC(r->chans, sizeof(off_t));
   r->lens = (off_t *)CALLOC(r->chans, sizeof(off_t));
+
   ss->deferred_regions++;
   r->dr = (deferred_region *)CALLOC(1, sizeof(deferred_region));
   drp = r->dr;
@@ -744,6 +764,7 @@ int define_region(sync_info *si, off_t *ends)
   drp->cps = (chan_info **)CALLOC(drp->chans, sizeof(chan_info *));
   drp->edpos = (int *)CALLOC(drp->chans, sizeof(int));
   drp->len = len;
+
   for (i = 0; i < drp->chans; i++)
     {
       drp->cps[i] = si->cps[i];
@@ -762,6 +783,7 @@ int define_region(sync_info *si, off_t *ends)
 	    }
 	}
     }
+
   reflect_regions_in_region_browser();
   if (region_browser_is_active()) update_region_browser(true);
   return(r->id);
@@ -779,6 +801,7 @@ static void deferred_region_to_temp_file(region *r)
   file_info *hdr = NULL;
   deferred_region *drp = NULL;
   mus_sample_t **data = NULL;
+
   ss->deferred_regions--;
   drp = r->dr;
   len = drp->len;
@@ -786,6 +809,7 @@ static void deferred_region_to_temp_file(region *r)
   r->use_temp_file = REGION_FILE;
   r->filename = snd_tempnam();
   sp0 = drp->cps[0]->sound;
+
   copy_ok = ((mus_header_writable(MUS_NEXT, sp0->hdr->format)) && 
 	     (r->chans == sp0->nchans) &&
 	     (r->peak_envs != NULL) &&
@@ -801,6 +825,7 @@ static void deferred_region_to_temp_file(region *r)
 	  copy_ok = false;
 	  break;
 	}
+
   if (copy_ok)
     {
       /* write next header with correct len
@@ -813,9 +838,10 @@ static void deferred_region_to_temp_file(region *r)
       char *buffer;
       Float ymax = 0.0;
       peak_env_info *ep;
-      datumb = mus_bytes_per_sample(sp0->hdr->format);
 
+      datumb = mus_bytes_per_sample(sp0->hdr->format);
       err = mus_write_header(r->filename, MUS_NEXT, r->srate, r->chans, drp->len * r->chans, sp0->hdr->format, "region deferred temp");
+
       if (err != MUS_NO_ERROR)
 	snd_error(_("can't write region temp file %s: %s"), r->filename, snd_io_strerror());
       else
@@ -1040,11 +1066,13 @@ void save_regions(FILE *fd)
 	  io_error_t io_err;
 	  char *newname;
 	  char *ofile = NULL;
+
 	  if (r->use_temp_file == REGION_DEFERRED) 
 	    deferred_region_to_temp_file(r);
 	  ofile = shorter_tempnam(save_dir(ss), "snd_save_");
 	  newname = run_save_state_hook(ofile);
 	  FREE(ofile);
+
 	  io_err = copy_file(r->filename, newname);
 	  if (io_err != IO_NO_ERROR)
 	    {
@@ -1158,20 +1186,25 @@ void save_region_backpointer(snd_info *sp)
   region *r;
   int i;
   io_error_t io_err;
+
   r = sp->edited_region;
   /* update r's data in file, deleting old, redisplay if browser active etc */
+
   if (r == regions[0]) deactivate_selection();
   free_region(r, CLEAR_REGION_DATA);
+
   r->use_temp_file = REGION_FILE;
   r->maxamp = 0.0;
   r->maxamp_position = -1;
   r->frames = CURRENT_SAMPLES(sp->chans[0]);
+
   for (i = 0; i < sp->nchans; i++)
     {
       Float val;
       val = channel_maxamp(sp->chans[i], AT_CURRENT_EDIT_POSITION);
       if (val > r->maxamp) r->maxamp = val;
     }
+
   /* make new region temp file */
   r->filename = snd_tempnam();
   io_err = copy_file(r->editor_name, r->filename);
@@ -1198,11 +1231,13 @@ io_error_t save_region(int rg, const char *name, int type, int format, const cha
   r = id_to_region(rg);
   if (r->use_temp_file == REGION_DEFERRED) 
     deferred_region_to_temp_file(r);
+
   io_err = snd_write_header(name, type, region_srate(rg), r->chans, r->chans * r->frames, format, comment, NULL);
   if (io_err == IO_NO_ERROR)
     {
       off_t oloc;
       int ofd;
+
       oloc = mus_header_data_location();
       ofd = snd_reopen_write(name);
       if (ofd != -1)
@@ -1212,15 +1247,18 @@ io_error_t save_region(int rg, const char *name, int type, int format, const cha
 	  mus_file_set_clipping(ofd, clipping(ss));
 	  lseek(ofd, oloc, SEEK_SET);
 	  /* copy r->filename with possible header/data format changes */
+
 	  ifd = snd_open_read(r->filename);
 	  if (ifd != -1)
 	    {
 	      off_t iloc, frames, cursamples;
 	      int chans, i, err = 0;
 	      mus_sample_t **bufs;
+
 	      chans = mus_sound_chans(r->filename);
 	      frames = mus_sound_samples(r->filename) / chans;
 	      iloc = mus_sound_data_location(r->filename);
+
 	      snd_file_open_descriptors(ifd,
 					r->filename,
 					mus_sound_data_format(r->filename),
@@ -1228,12 +1266,15 @@ io_error_t save_region(int rg, const char *name, int type, int format, const cha
 					chans,
 					mus_sound_header_type(r->filename));
 	      lseek(ifd, iloc, SEEK_SET);
+
 	      bufs = (mus_sample_t **)CALLOC(chans, sizeof(mus_sample_t *));
 	      for (i = 0; i < chans; i++) bufs[i] = (mus_sample_t *)CALLOC(FILE_BUFFER_SIZE, sizeof(mus_sample_t));
+
 	      if (((frames * chans * mus_sound_datum_size(r->filename)) >> 10) > disk_kspace(name))
 		snd_warning(_("not enough space to save region? -- need " OFF_TD " bytes"),
 			    frames * chans * mus_sound_datum_size(r->filename));
 	      err = 0;
+
 	      for (ioff = 0; ioff < frames; ioff += FILE_BUFFER_SIZE)
 		{
 		  if ((ioff + FILE_BUFFER_SIZE) < frames) 
@@ -1250,6 +1291,7 @@ io_error_t save_region(int rg, const char *name, int type, int format, const cha
 	      err = mus_file_close(ifd);
 	      for (i = 0; i < chans; i++) FREE(bufs[i]);
 	      FREE(bufs);
+
 	      if (err != 0)
 		snd_warning("can't close %s input!", S_save_region);
 	      err = mus_file_close(ofd);
@@ -1293,6 +1335,7 @@ static XEN g_restore_region(XEN pos, XEN chans, XEN len, XEN srate, XEN maxamp, 
   /* internal function used by save-state mechanism -- not intended for external use */
   region *r;
   int regn;
+
   XEN_ASSERT_TYPE(XEN_INTEGER_P(pos), pos, XEN_ARG_1, S_restore_region, "a region id");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chans), chans, XEN_ARG_2, S_restore_region, "an integer");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(len), len, XEN_ARG_3, S_restore_region, "an integer");
@@ -1303,7 +1346,9 @@ static XEN g_restore_region(XEN pos, XEN chans, XEN len, XEN srate, XEN maxamp, 
   XEN_ASSERT_TYPE(XEN_STRING_P(end), end, XEN_ARG_8, S_restore_region, "a string");
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ARG_9, S_restore_region, "a string");
   XEN_ASSERT_TYPE(XEN_LIST_P(date) && (XEN_LIST_LENGTH(date) == 2), date, XEN_ARG_10, S_restore_region, "a list: '(time bytes)");
+
   check_saved_temp_file("region", filename, date);
+
   r = (region *)CALLOC(1, sizeof(region));
   regn = XEN_TO_C_INT(pos);
   if (regions[regn]) free_region(regions[regn], COMPLETE_DELETION);
@@ -1322,6 +1367,7 @@ static XEN g_restore_region(XEN pos, XEN chans, XEN len, XEN srate, XEN maxamp, 
   r->end = copy_string(XEN_TO_C_STRING(end));
   r->use_temp_file = REGION_FILE;
   r->filename = copy_string(XEN_TO_C_STRING(filename));
+
   reflect_regions_in_region_browser();
   return(C_TO_XEN_INT(r->id));
 }
@@ -1336,16 +1382,22 @@ insert region data into snd's channel chn starting at start-samp"
   int rg;
   off_t samp;
   io_error_t err = IO_NO_ERROR;
+
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_insert_region, "a number");
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(reg_n), reg_n, XEN_ARG_2, S_insert_region, "a region id");
+
   ASSERT_CHANNEL(S_insert_region, snd_n, chn_n, 3);
   cp = get_cp(snd_n, chn_n, S_insert_region);
   if (!cp) return(XEN_FALSE);
+
   rg = XEN_REGION_TO_C_INT(reg_n);
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_insert_region, reg_n));
+
   samp = beg_to_sample(samp_n, S_insert_region);
+
   err = paste_region_2(rg, cp, false, samp);
+
   if (SERIOUS_IO_ERROR(err))
     XEN_ERROR(CANT_UPDATE_FILE,
 	      XEN_LIST_2(C_TO_XEN_STRING(S_insert_region),
@@ -1366,11 +1418,13 @@ static XEN g_set_max_regions(XEN n)
 {
   int regs;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(n), n, XEN_ONLY_ARG, S_setB S_max_regions, "an integer"); 
+
   regs = XEN_TO_C_INT(n);
   if (regs < 0)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_max_regions, 1, n, S_max_regions " ~A < 0?");
   if (regs > (1 << 26))
     XEN_OUT_OF_RANGE_ERROR(S_setB S_max_regions, 1, n, S_max_regions " ~A too large");
+
   set_max_regions(regs);
   return(C_TO_XEN_INT(max_regions(ss)));
 }
@@ -1390,16 +1444,20 @@ static XEN g_region_frames(XEN n, XEN chan)
   region *r;
   int rg, chn;
   #define H_region_frames "(" S_region_frames " :optional (reg 0) (chan 0)): region length in frames"
+
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ARG_1, S_region_frames, "a region id");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_2, S_region_frames, "an integer");
+
   rg = XEN_REGION_TO_C_INT(n);
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_region_frames, n));
+
   if (XEN_NOT_BOUND_P(chan))
     return(C_TO_XEN_OFF_T(region_len(rg)));
   chn = XEN_TO_C_INT(chan);
   if ((chn < 0) || (chn >= region_chans(rg)))
     return(snd_no_such_channel_error(S_region_frames, XEN_LIST_1(n), chan));
+
   r = id_to_region(rg);
   return(C_TO_XEN_OFF_T(r->lens[chn] + 1));
 }
@@ -1410,14 +1468,18 @@ static XEN g_region_position(XEN n, XEN chan)
   region *r;
   int rg, chn;
   #define H_region_position "(" S_region_position " :optional (reg 0) (chan 0)): region chan's original position"
+
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ARG_1, S_region_position, "a region id");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chan), chan, XEN_ARG_2, S_region_position, "an integer");
+
   rg = XEN_REGION_TO_C_INT(n);
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_region_position, n));
+
   chn = XEN_TO_C_INT_OR_ELSE(chan, 0);
   if ((chn < 0) || (chn >= region_chans(rg)))
     return(snd_no_such_channel_error(S_region_position, XEN_LIST_1(n), chan));
+
   r = id_to_region(rg);
   return(C_TO_XEN_OFF_T(r->begs[chn]));
 }
@@ -1431,6 +1493,7 @@ static XEN region_get(region_field_t field, XEN n, const char *caller)
   rg = XEN_REGION_TO_C_INT(n);
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(caller, n));
+
   switch (field)
     {
     case REGION_SRATE:  return(C_TO_XEN_INT(region_srate(rg))); break;
@@ -1507,6 +1570,7 @@ static XEN g_play_region(XEN n, XEN wait, XEN stop_proc)
   #define H_play_region "(" S_play_region " :optional (reg 0) wait stop-proc): play region reg; if wait is " PROC_TRUE ", play to end before returning"
   int rg;
   bool wt = false;
+
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(n), n, XEN_ARG_1, S_play_region, "a region id");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(wait), wait, XEN_ARG_2, S_play_region, "a boolean");
   XEN_ASSERT_TYPE(((XEN_PROCEDURE_P(stop_proc)) && (procedure_arity_ok(stop_proc, 1))) ||
@@ -1514,11 +1578,14 @@ static XEN g_play_region(XEN n, XEN wait, XEN stop_proc)
 		  (XEN_FALSE_P(stop_proc)), 
 		  stop_proc, XEN_ARG_3, S_play_region, "a procedure of 1 arg");
   if (XEN_TRUE_P(wait)) wt = true;
+
   rg = XEN_REGION_TO_C_INT(n);
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_play_region, n));
+
   make_region_readable(id_to_region(rg));
   play_region_1(rg, (wt) ? NOT_IN_BACKGROUND : IN_BACKGROUND, stop_proc);
+
   return(n);
 }
 
@@ -1542,6 +1609,7 @@ static XEN g_make_region(XEN beg, XEN end, XEN snd_n, XEN chn_n)
 If chn is " PROC_TRUE ", all chans are included, taking the snd sync field into account if it's not 0.  If no args are passed, the current \
 selection is used."
   int id = INVALID_REGION, old_sync, i;
+
   if (max_regions(ss) <= 0) return(XEN_FALSE);
   if (XEN_NOT_BOUND_P(beg))
     id = make_region_from_selection();
@@ -1552,10 +1620,13 @@ selection is used."
       snd_info *sp;
       off_t ibeg, iend;
       off_t *ends = NULL;
+
       XEN_ASSERT_TYPE(XEN_NUMBER_P(beg), beg, XEN_ARG_1, S_make_region, "a number");
       XEN_ASSERT_TYPE(XEN_NUMBER_P(end), end, XEN_ARG_2, S_make_region, "a number");
+
       ibeg = beg_to_sample(beg, S_make_region);
       iend = beg_to_sample(end, S_make_region);
+
       if (XEN_TRUE_P(chn_n))
 	{
 	  /* all chans and all sync'd chans if sync not 0 */
@@ -1579,6 +1650,7 @@ selection is used."
 	  cp = get_cp(snd_n, chn_n, S_make_region);
 	  si = make_simple_sync(cp, ibeg);
 	}
+
       ends = (off_t *)CALLOC(si->chans, sizeof(off_t));
       for (i = 0; i < si->chans; i++)
 	{
@@ -1644,10 +1716,13 @@ using data format (default depends on machine byte order), header type (" S_mus_
   keys[2] = kw_data_format;
   keys[3] = kw_comment;
   args[0] = arg1; args[1] = arg2; args[2] = arg3; args[3] = arg4; args[4] = arg5; args[5] = arg6; args[6] = arg7; args[7] = arg8; 
+
   XEN_ASSERT_TYPE(XEN_REGION_P(n), n, XEN_ARG_1, S_save_region, "a region id");
+
   rg = XEN_REGION_TO_C_INT(n);
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_save_region, n));
+
   vals = mus_optkey_unscramble(S_save_region, 4, keys, args, orig_arg);
   if (vals > 0)
     {
@@ -1656,11 +1731,14 @@ using data format (default depends on machine byte order), header type (" S_mus_
       data_format = mus_optkey_to_int(keys[2], S_save_region, orig_arg[2], data_format);
       com = mus_optkey_to_string(keys[3], S_save_region, orig_arg[3], NULL);
     }
+
   if (file == NULL) 
     XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
 	      XEN_LIST_2(C_TO_XEN_STRING(S_save_region),
 			 C_TO_XEN_STRING("no output file?")));
+
   name = mus_expand_filename(file);
+
   if (!(mus_header_writable(header_type, data_format))) 
     {
       if (mus_header_writable(MUS_NEXT, data_format))
@@ -1672,9 +1750,11 @@ using data format (default depends on machine byte order), header type (" S_mus_
 	  else header_type = MUS_RAW;
 	}
     }
+
   redirect_snd_error_to(save_region_to_xen_error, NULL); /* could perhaps pass name here for free in case of error */
   save_region(rg, name, header_type, data_format, com);
   redirect_snd_error_to(NULL, NULL);
+
   if (name) FREE(name);
   return(args[orig_arg[0] - 1]); /* -> filename, parallel save-selection */
 }
@@ -1689,21 +1769,28 @@ mix region's channel region-chan (or all chans if region-chan is " PROC_TRUE ") 
   off_t samp;
   io_error_t err = IO_NO_ERROR;
   int rg, id = -1, reg_chan = 0;
+
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(chn_samp_n), chn_samp_n, XEN_ARG_1, S_mix_region, "a number");
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(reg_n), reg_n, XEN_ARG_2, S_mix_region, "a region id");
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(reg_chn), reg_chn, XEN_ARG_5, S_mix_region, "an integer or " PROC_TRUE);
   ASSERT_CHANNEL(S_mix_region, snd_n, chn_n, 3);
+
   rg = XEN_REGION_TO_C_INT(reg_n);
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_mix_region, reg_n));
+
   cp = get_cp(snd_n, chn_n, S_mix_region);
   if (!cp) return(XEN_FALSE);
+
   if (XEN_BOUND_P(chn_samp_n))
     samp = beg_to_sample(chn_samp_n, S_mix_region);
   else samp = CURSOR(cp);
+
   if (XEN_INTEGER_P(reg_chn))
     reg_chan = XEN_TO_C_INT(reg_chn);
+
   id = paste_region_1(rg, cp, true, samp, &err, reg_chan);
+
   /* id might legitmately be invalid mix id if with_mix_tags is #f or virtual mix not ok */
   if (SERIOUS_IO_ERROR(err))
     XEN_ERROR(CANT_UPDATE_FILE,
@@ -1719,17 +1806,20 @@ static XEN g_region_sample(XEN samp_n, XEN reg_n, XEN chn_n)
 
   int rg, chan;
   off_t samp;
+
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_region_sample, "a number");
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(reg_n), reg_n, XEN_ARG_2, S_region_sample, "a region id");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn_n), chn_n, XEN_ARG_3, S_region_sample, "an integer");
+
   chan = XEN_TO_C_INT_OR_ELSE(chn_n, 0);
   rg = XEN_REGION_TO_C_INT(reg_n);
   if (!(region_ok(rg)))
     return(snd_no_such_region_error(S_region_sample, reg_n));
+
   samp = beg_to_sample(samp_n, S_region_sample);
   if ((chan >= 0) && (chan < region_chans(rg)))
     return(C_TO_XEN_DOUBLE(region_sample(rg, chan, samp)));
-  else return(snd_no_such_channel_error(S_region_sample, XEN_LIST_1(reg_n), chn_n));
+  return(snd_no_such_channel_error(S_region_sample, XEN_LIST_1(reg_n), chn_n));
 }
 
 
@@ -1742,21 +1832,26 @@ write region's samples starting at beg for samps in channel chan to vct v; retur
   int reg, chn;
   off_t len;
   vct *v1 = xen_to_vct(v);
+
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(beg_n), beg_n, XEN_ARG_1, S_region_to_vct, "a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(num), num, XEN_ARG_2, S_region_to_vct, "a number");
   XEN_ASSERT_TYPE(XEN_REGION_IF_BOUND_P(reg_n), reg_n, XEN_ARG_3, S_region_to_vct, "a region id");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(chn_n), chn_n, XEN_ARG_4, S_region_to_vct, "an integer");
+
   reg = XEN_REGION_TO_C_INT(reg_n);
   if (!(region_ok(reg)))
     return(snd_no_such_region_error(S_region_to_vct, reg_n));
+
   chn = XEN_TO_C_INT_OR_ELSE(chn_n, 0);
   if ((chn < 0) || (chn >= region_chans(reg)))
     return(snd_no_such_channel_error(S_region_to_vct, XEN_LIST_1(reg_n), chn_n));
+
   len = XEN_TO_C_OFF_T_OR_ELSE(num, 0);
   if (len < 0)
     XEN_OUT_OF_RANGE_ERROR(S_region_to_vct, 2, num, "length ~A < 0?");
   if ((len == 0) || (len > region_len(reg)))
     len = region_len(reg);
+
   if (len > 0)
     {
       off_t beg;

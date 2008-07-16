@@ -5288,7 +5288,7 @@ int mus_filter_set_order(mus_any *ptr, int order)
     {
       int i;
       gen->allocated_size = order;
-      gen->state = (Float *)REALLOC(gen->state, order * sizeof(Float));
+      gen->state = (Float *)clm_realloc(gen->state, order * sizeof(Float));
       for (i = old_order; i < order; i++)
 	gen->state[i] = 0.0; /* try to minimize click */
     }
@@ -8891,8 +8891,8 @@ static Float *init_sinc_table(int width)
 	  }
       if (loc == -1)
 	{
-	  sinc_tables = (Float **)REALLOC(sinc_tables, (sincs + 8) * sizeof(Float *));
-	  sinc_widths = (int *)REALLOC(sinc_widths, (sincs + 8) * sizeof(int));
+	  sinc_tables = (Float **)clm_realloc(sinc_tables, (sincs + 8) * sizeof(Float *));
+	  sinc_widths = (int *)clm_realloc(sinc_widths, (sincs + 8) * sizeof(int));
 	  for (i = sincs; i < (sincs + 8); i++) 
 	    {
 	      sinc_widths[i] = 0; 

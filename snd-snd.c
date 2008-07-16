@@ -4929,7 +4929,6 @@ static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
 			   errstr,
 			   C_TO_XEN_STRING(snd_open_strerror())));
     }
-  if (fullname) FREE(fullname);
   ep = cp->edits[0]->peak_env;
   ibuf[0] = ((ep->completed) ? 1 : 0) | PEAK_ENV_VERSION | (pack_env_info_type() << 16);
   ibuf[1] = ep->peak_env_size;
@@ -4947,6 +4946,7 @@ static XEN g_write_peak_env_info_file(XEN snd, XEN chn, XEN name)
     if (bytes == 0) fprintf(stderr, "write error in " S_write_peak_env_info_file);
   }
   snd_close(fd, fullname);
+  if (fullname) FREE(fullname);
   return(name);
 }
 

@@ -5,9 +5,6 @@
  */
 
 
-/* TODO: in the no-gui case, files are sometimes left open upon close-sound */
-
-
 void snd_remove(const char *name, cache_remove_t forget)
 {
   int err;
@@ -50,6 +47,8 @@ void snd_fclose(FILE *fd, const char *name)
 
 
 /* low level IO stuff to keep track of errno */
+
+/* OPEN and FOPEN (_sndlib.h) also come here, so any sound file in Snd is opened/closed here */
 
 FILE *snd_fopen(const char *filename, const char *modes)
 {

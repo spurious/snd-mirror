@@ -7627,6 +7627,7 @@ static void write_transform_peaks(FILE *fd, chan_info *ucp)
   sync_info *si = NULL;
 
   fprintf(fd, _("Snd: fft peaks (%s)\n\n"), snd_local_time());
+
   si = sync_to_chan(ucp);
   for (chn = 0; chn < si->chans; chn++)
     {
@@ -7714,10 +7715,13 @@ to the info dialog if filename is omitted"
   chan_info *cp;
   bool post_to_dialog = true;
   FILE *fd = NULL;
+
   XEN_ASSERT_TYPE((XEN_STRING_P(filename) || (XEN_FALSE_P(filename)) || (XEN_NOT_BOUND_P(filename))), filename, XEN_ARG_1, S_peaks, "a string or " PROC_FALSE);
+
   ASSERT_CHANNEL(S_peaks, snd_n, chn_n, 2);
   cp = get_cp(snd_n, chn_n, S_peaks);
   if (!cp) return(XEN_FALSE);
+
   if (XEN_STRING_P(filename))
     {
       name = mus_expand_filename(XEN_TO_C_STRING(filename));
@@ -7741,11 +7745,15 @@ to the info dialog if filename is omitted"
 
   write_transform_peaks(fd, cp);
   snd_fclose(fd, name);
+
   if (post_to_dialog)
     {
       str = file_to_string(name);
-      post_it("fft peaks", str);
-      FREE(str);
+      if (str)
+	{
+	  post_it("fft peaks", str);
+	  FREE(str);
+	}
       snd_remove(name, IGNORE_CACHE);
     }
   FREE(name);
