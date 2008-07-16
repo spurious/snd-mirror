@@ -76,7 +76,6 @@ and run simple lisp[4] functions.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (eval-c  (string-append "-I" snd-header-files-path)
-	 "#include <mus-config.h>"
 	 "#include <clm.h>"
 	 "#include <xen.h>"
 	 "#include <clm2xen.h>"
@@ -5747,7 +5746,6 @@ and run simple lisp[4] functions.
 
 
 (eval-c (<-> "-I" snd-header-files-path " " (string #\`) "pkg-config --libs sndfile" (string #\`) )
-	"#include <mus-config.h>"
 	"#include <clm.h>"
 	"#include <xen.h>"
 	"#include <clm2xen.h>"
@@ -6602,7 +6600,6 @@ old syntax: (not very nice)
 
 
 (eval-c (<-> "-I" snd-header-files-path " ")
-	"#include <mus-config.h>"
 	"#include <ladspa.h>"
 	"#include <clm.h>"
 	"#include <xen.h>"
@@ -7051,7 +7048,6 @@ old syntax: (not very nice)
 (define *rt-rb-overlap* 10) ;; 10% overlap
 
 (eval-c (<-> "-I" snd-header-files-path " -ffast-math ")
-	"#include <mus-config.h>"
 	"#include <clm.h>"
 	"#include <xen.h>"
 	"#include <vct.h>"
@@ -9210,7 +9206,6 @@ Can alignmnet screw up this one?
 	  
 	  (apply eval-c-non-macro (append (list (<-> "-I" snd-header-files-path " -ffast-math ") ;; "-ffast-math") ;; " -Werror "
 						#f
-						"#include <mus-config.h>"
 						"#include <math.h>"
 						"#include <clm.h>"
 						"#include <xen.h>"
@@ -9223,25 +9218,25 @@ Can alignmnet screw up this one?
 						    "#include <m_pd.h>"
 						    "")
 						(if (provided? 'snd-pd-external)
-						    "#include <snd_pd_external.h>"						
+						    "#include <snd_pd_external.h>"
 						    "")
 						"typedef struct {
-                                                 mus_any_class *core;
-                                                 int chans;
-                                                 Float *vals;
-                                                 bool data_allocated;
+                                                   mus_any_class *core;
+                                                   int chans;
+                                                   Float *vals;
+                                                   bool data_allocated;
                                                  } mus_frame"
 						
 						"typedef struct {
-						mus_any_class *core;
-						mus_any *outn_writer;
-						mus_any *revn_writer;
-						mus_frame *outf, *revf;
-						Float *outn;
-						Float *revn;
-						int chans, rev_chans;
-						mus_interp_t type;
-						Float reverb;
+						  mus_any_class *core;
+						  mus_any *outn_writer;
+						  mus_any *revn_writer;
+						  mus_frame *outf, *revf;
+						  Float *outn;
+						  Float *revn;
+						  int chans, rev_chans;
+						  mus_interp_t type;
+						  Float reverb;
 						} locs;"
 
 						)

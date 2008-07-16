@@ -3998,9 +3998,6 @@ had to be put into macroexpand instead.
                 "#include  <alsa/asoundlib.h>"
                 "/* */")
 
-           "#define off_t long long" ;; Must fix.
-
-           "#include <mus-config.h>"
            "#include <math.h>"
            "#include <_sndlib.h>"
            "#include <clm.h>"

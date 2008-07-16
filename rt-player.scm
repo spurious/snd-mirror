@@ -129,7 +129,6 @@ rt-player.scm
 
 
 (eval-c (<-> "-I" snd-header-files-path)
-	"#include <mus-config.h>"
 	"#include <xen.h>"
 	"#include <vct.h>"
 	
@@ -144,12 +143,14 @@ rt-player.scm
 					     (<int> num_samples))
 				      (<void-*> reader (cast <void-*> (SCM_SMOB_DATA scm_reader)))				      
 				      (<vct-*> v (cast <vct-*> (SCM_SMOB_DATA scm_v)))
+                                      ;;(fprintf stderr (string "v: %p, v->data: %p, reader: %p, v->length: %d\\n") v v->data reader (cast <int> v->length))
 				      (if (|| (> (+ startpos num_samples) v->length)
 					      (< startpos 0))
-					  (printf (string "sample-reader->vct error. startpos: %d, num_samples: %d, vct-length: %d\\n") startpos num_samples v->length)
+					  (printf (string "sample-reader->vct error. startpos: %d, num_samples: %d, vct-length: %d\\n") startpos num_samples (cast <int> v->length))
 					  (if (== 1 direction)
 					      (for-each startpos (+ startpos num_samples)
 							(lambda (i)
+                                                          ;;(fprintf stderr (string "i: %d\\n") i)
 							  (set! v->data[i] (protected_next_sample reader))))
 					      (for-each startpos (+ startpos num_samples)
 							(lambda (i)

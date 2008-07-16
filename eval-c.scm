@@ -1738,7 +1738,7 @@ int fgetc (FILE
 
 ;;;;;;;;;;;;;;;;;; Cache
 
-(define eval-c-generation 7) ;;Cached code with different generation can not be used, and file is automatically deleted.
+(define eval-c-generation 8) ;;Cached code with different generation can not be used, and file is automatically deleted.
 
 (define eval-c-cache-dir (<-> (getenv "HOME") "/snd-eval-c-cache"))
 
@@ -1923,7 +1923,8 @@ int fgetc (FILE
 
   (set! temp (map eval-c-parse-line terms))
   
-  `("#include <stdio.h>"
+  `(,(<-> "#include \"" snd-header-files-path "/mus-config.h\"")
+    "#include <stdio.h>"
     "#include <libguile.h>"
     "#include <string.h>"
     "#include <stdlib.h>"
