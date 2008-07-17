@@ -2452,16 +2452,16 @@ That file also defines <a href="#adjustable-triangle-wave">adjustable-triangle-w
 <a href="#adjustable-sawtooth-wave">adjustable-sawtooth-wave</a>.
 All of these generators produce non-band-limited output; if the frequency is too high, you can get foldover.
 A more reasonable square-wave can be generated via
-<code>(tanh (* n (sin theta)))</code>, where "n" (a float) sets how squared-off it is:
+<code>(tanh (* B (sin theta)))</code>, where "B" (a float) sets how squared-off it is:
 </p>
 
 <table border=1 hspace=20 vspace=10>
 <tr>
-<td bgcolor="#f2f4ff"><center>n: 1.0</center></td>
+<td bgcolor="#f2f4ff"><center>B: 1.0</center></td>
 <td width=16></td>
-<td bgcolor="#f2f4ff"><center>n: 3.0</center></td>
+<td bgcolor="#f2f4ff"><center>B: 3.0</center></td>
 <td width=16></td>
-<td bgcolor="#f2f4ff"><center>n: 100.0</center></td>
+<td bgcolor="#f2f4ff"><center>B: 100.0</center></td>
 </tr>
 <tr>
 <td>
@@ -2478,12 +2478,18 @@ A more reasonable square-wave can be generated via
 
 <!-- LATEX: \tanh(x) = x-\frac{x^{3}}{3}+\frac{2x^{5}}{15}-\frac{17x^{7}}{315}+\frac{62x^{9}}{2835}-\frac{1382x^{11}}{155925}\cdots -->
 <!-- LATEX: 
-\tanh(\sin(x)) = 140069/172800 \sin(x) + 13319/241920 \sin(3x) + 1973/483840 \sin(5x) + 799/1451520 \sin(7x) - 71/7257600 \sin(9x) + 691/79833600 \sin(11x) + \cdots -->
+\tanh(\sin(x)) = 140069/172800 \sin(x) + 13319/241920 \sin(3x) + 1973/483840 \sin(5x) + 799/1451520 \sin(7x) - 71/7257600 \sin(9x) + 691/79833600 \sin(11x) + \cdots 
+-->
+<!-- LATEX: tanhsum.png
+& \tanh(B \sin(x)) = \frac{\sinh(B \sin(x))}{\cosh(B \sin(x))} = \frac{\sum_{k=0}^{\infty} (-1)^{k} I_{2k+1}(B) \sin(2k+1)x}{\cosh(B \sin(x))}
+-->
 
+<br>
 <center>
-<table hspace=40 border=0 vspace=10 cellpadding=8>
+<table hspace=40 border=0 cellpadding=8>
 <tr><td>
-<p>The spectrum of tanh(sin) can be obtained by expanding tanh as a power series:
+<p>
+The spectrum of tanh(sin) can be obtained by expanding tanh as a power series:
 </p>
 <img src="pix/sceq11.png" alt="tanh power series" hspace=20>
 <p>
@@ -2492,19 +2498,147 @@ plugging in "sin" for "x", expanding the sine powers, and collecting terms (very
 <img src="pix/sceq12.png" alt="tanh sin power series" hspace=20>
 <p>
 which is promising since a square wave is made up of odd harmonics with amplitude 1/n.
-As the "n" in tanh(n sin(x)) increases, this series doesn't apply, but we can check the
+As the "B" in tanh(B sin(x)) increases above pi/2, this series doesn't apply.
+</p>
+<img src="pix/tanhsum.png" alt="more tanh" hspace=20>
+<p>but I haven't found a completion of this expansion that isn't ugly when B > pi/2. 
+In any case, we can check the
 formula for tanh, and see that the e^-x term will vanish (in the positive x case), giving 1.0.
 So we do get a square wave, but it's not band limited.  If a complex signal replaces the sin(x),
-we get "intermodulation products" (sum and difference tones).  
-</p>
-<p>
-(It is reassuring after all that
-arithmetic that 13319/241920 / 140069/172800 is 0.068 &mdash; we got
-.070 in the fft above, and 1973/483840 / 140069/172800 is 0.005 &mdash;
-we got .006).
+we get "intermodulation products" (sum and difference tones); this use of tanh as a soft clipper
+goes way back &mdash; I don't know who invented it.
 </p>
 </td></tr></table>
 </center>
+
+<p>If you try to make a square wave by adding harmonics at amplitude 1/n,
+you run into "Gibb's phenomenon": although the sum
+converges on a square wave, it does so "pointwise" &mdash; each point converges to the square wave,
+but the sum always has an overshoot.  To get something that looks square, we need to round-off the
+corners. 
+Bill Gosper shows one mathematical
+way to do this (<a href="http://www.tweedledum.com/rwg/gibbs.html">gibbs.html</a>).
+We could also use <a href="sndscm.html#withmixedsound">with-mixed-sound</a> and the Mixes dialog:
+</p>
+
+<table hspace=40 border=0><tr><td>
+<pre>
+(definstrument (sine-wave start dur freq amp)
+  (let* ((beg (<a class=quiet href="sndclm.html#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> start))
+	 (end (+ beg (<a class=quiet href="sndclm.html#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> dur)))
+	 (osc (<a class=quiet href="sndclm.html#make-oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_oscil_tip)">make-oscil</a> freq)))
+    (run 
+     (lambda ()
+       (do ((i beg (1+ i))) 
+	   ((= i end))
+	 (<a class=quiet href="sndclm.html#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* amp (<a class=quiet href="sndclm.html#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> osc))))))))
+
+(<em class=red>with-mixed-sound</em> ()
+  (sine-wave 0 1 10.0 1.0)
+  (sine-wave 0 1 30.0 .333)
+  (sine-wave 0 1 50.0 .2)
+  (sine-wave 0 1 70.0 .143))
+</pre>
+</td></tr></table>
+
+<p>
+Now we can play with the
+individual sinewave amplitudes in the Mixes dialog, seeing "in realtime" what
+effect an amplitude has on the waveform.  In the graph below, we've taken the original set of four sines
+and chosen amplitudes 1.16, .87, .46, .14 (these are multipliers on the original 1/n amps).
+The first graph is the original waveform, the last is the result of the
+amplitude changes, and the middle one shows 100 sines (it is the usual demo that
+the Gibbs overshoot is not reduced by adding lots more components).
+The peak amplitude should be pi/4, but the Gibbs phenomenon adds .14.
+</p>
+
+<img src="pix/smoothsq.png" alt="reduce Gibbs" hspace=40>
+<br>
+
+<!--
+(definstrument (sine-wave start dur freq amp)
+  (let* ((beg (seconds->samples start))
+	 (end (+ beg (seconds->samples dur)))
+	 (osc (make-oscil freq)))
+    (run 
+     (lambda ()
+       (do ((i beg (1+ i))) 
+	   ((= i end))
+	 (outa i (* amp (oscil osc))))))))
+
+(with-sound (:output "4-sines.snd")
+  (sine-wave 0 1 10.0 1.0)
+  (sine-wave 0 1 30.0 .333)
+  (sine-wave 0 1 50.0 .2)
+  (sine-wave 0 1 70.0 .143))
+
+(with-sound (:output "100-sines.snd")
+  (do ((i 1 (+ i 2)))
+      ((> i 200))
+    (sine-wave 0 1 (* i 10.0) (/ 1.0 i))))
+
+(with-mixed-sound (:output "4-sines-mixed.snd")
+  (sine-wave 0 1 10.0 1.0)
+  (sine-wave 0 1 30.0 .333)
+  (sine-wave 0 1 50.0 .2)
+  (sine-wave 0 1 70.0 .143))
+-->
+
+<p>But goofing with individual amplitudes quickly becomes tiresome.  This "realtime" business
+depends on luck; if we have some idea of what we're doing, we don't have to get lucky
+(this applies to improvisation vs composition too).
+Since 
+tanh(B sin(x)) produces a nice square wave, 
+we can truncate its spectrum at the desired number of harmonics:
+</p>
+
+
+<table hspace=40 border=0><tr><td>
+<pre>
+(define square-wave-&gt;coeffs
+  (let ((previous-results (make-vector 128 #f)))
+    (lambda* (n :optional B)
+      (or (and (&lt; n 128)
+	       (not B)
+	       (vector-ref previous-results n))
+	  (let* ((coeffs (make-vct (* 2 n)))
+		 (size (expt 2 12))
+		 (rl (make-vct size))
+		 (im (make-vct size))
+		 (incr (/ (* 2 pi) size))
+		 (index (or B (max 1 (inexact-&gt;exact (floor (/ n 2)))))))
+	    (do ((i 0 (1+ i))
+		 (x 0.0 (+ x incr)))
+		((= i size))
+	      (vct-set! rl i (tanh (* index (sin x))))) ; make our desired square wave
+	    (spectrum rl im #f 2)                       ; get its spectrum
+	    (do ((i 0 (+ i 1))
+		 (j 0 (+ j 2)))
+		((= i n))
+	      (vct-set! coeffs j (+ j 1))
+	      (vct-set! coeffs (+ j 1) (/ (* 1.995 (vct-ref rl (+ j 1))) size)))
+	    (if (and (&lt; n 128)                          ; save this set so we don't have to compute it again
+		     (not B))
+		(vector-set! previous-results n coeffs))
+	    coeffs)))))
+
+(with-sound (:clipped #f :statistics #t)
+  (let* ((samps (seconds-&gt;samples 1.0))
+	 (wave (make-polywave 100.0 
+			      :partials (square-wave-&gt;coeffs 16)
+			      :type mus-chebyshev-second-kind)))
+    (run
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i samps))
+	 (outa i (* 0.5 (polywave wave))))))))
+</pre>
+</td></tr></table>
+
+<table border=1 hspace=20 cellpadding=10 vspace=10><tr><td>
+<img src="pix/tanhexs.png">
+</td></tr></table>
+
 
 <p>Another square-wave choice is <a href="#eoddcos">eoddcos</a> in <a href="#othergenerators">generators.scm</a>, 
 based on atan; as its "r" parameter approaches 0.0, you get closer to a square wave.
