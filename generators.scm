@@ -5791,6 +5791,8 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;;
 ;;;   for max peak (all cos), set phases arg to (make-vct n (/ pi 2))
 ;;;   for min peak, use one of the sets in peak-phases.scm (multiplied through by pi)
+;;;
+;;; since initial phases are 0 or pi in peak-phases.scm if n>20, this code could be optimized
 
 (def-optkey-fun (make-noid (frequency 0.0) (n 1) (phases #f))
   (make-polyoid frequency

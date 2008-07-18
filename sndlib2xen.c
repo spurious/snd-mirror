@@ -57,7 +57,9 @@ static XEN g_mus_sound_loop_info(XEN gfilename)
 end1 start2 end2 base-note base-detune mode1 mode2)"
   int *res;
   XEN sres = XEN_EMPTY_LIST;
+
   XEN_ASSERT_TYPE(XEN_STRING_P(gfilename), gfilename, XEN_ONLY_ARG, S_mus_sound_loop_info, "a string"); 
+
   res = mus_sound_loop_info(local_mus_expand_filename(XEN_TO_C_STRING(gfilename)));
   if (res)
     {
@@ -76,7 +78,9 @@ static XEN g_mus_sound_mark_info(XEN gfilename)
   int *mark_ids, *mark_positions;
   int marks = 0;
   XEN sres = XEN_EMPTY_LIST;
+
   XEN_ASSERT_TYPE(XEN_STRING_P(gfilename), gfilename, XEN_ONLY_ARG, S_mus_sound_mark_info, "a string"); 
+
   marks = mus_sound_mark_info(local_mus_expand_filename(XEN_TO_C_STRING(gfilename)), &mark_ids, &mark_positions);
   if (marks > 0)
     {
@@ -540,7 +544,9 @@ static XEN g_mus_sound_maxamp(XEN file)
   int chans;
   char *filename;
   XEN res = XEN_EMPTY_LIST;
+
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_mus_sound_maxamp, "a string");
+
   filename = local_mus_expand_filename(XEN_TO_C_STRING(file));
   chans = mus_sound_chans(filename);
   if (chans > 0)
@@ -549,8 +555,10 @@ static XEN g_mus_sound_maxamp(XEN file)
       int i;
       mus_sample_t *vals;
       off_t *times;
+
       vals = (mus_sample_t *)CALLOC(chans, sizeof(mus_sample_t));
       times = (off_t *)CALLOC(chans, sizeof(off_t));
+
       rtn = mus_sound_maxamps(filename, chans, vals, times);
       if (rtn != MUS_ERROR)
 	for (i = chans - 1; i >= 0; i--)
@@ -570,10 +578,13 @@ static XEN g_mus_sound_set_maxamp(XEN file, XEN vals)
 {
   int chans;
   char *filename;
+
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_setB S_mus_sound_maxamp, "a string");
   XEN_ASSERT_TYPE(XEN_LIST_P(vals), vals, XEN_ARG_2, S_setB S_mus_sound_maxamp, "a list");
+
   filename = local_mus_expand_filename(XEN_TO_C_STRING(file));
   chans = mus_sound_chans(filename);
+
   /* presumably any actual error here will be trapped via mus-error (raised in mus_header_read via read_sound_file_header),
    *   so chans <= 0 is actually in the header?
    */
@@ -583,17 +594,21 @@ static XEN g_mus_sound_set_maxamp(XEN file, XEN vals)
       int i, j, len;
       mus_sample_t *mvals;
       off_t *times;
+
       len = XEN_LIST_LENGTH(vals);
       if (len < (chans * 2))
 	XEN_WRONG_TYPE_ARG_ERROR(S_setB S_mus_sound_maxamp, 2, vals, "max amp list length must = 2 * chans");
       if (len > chans * 2) len = chans * 2;
+
       mvals = (mus_sample_t *)CALLOC(chans, sizeof(mus_sample_t));
       times = (off_t *)CALLOC(chans, sizeof(off_t));
+
       for (i = 0, j = 0, lst = XEN_COPY_ARG(vals); i < len; i += 2, j++, lst = XEN_CDDR(lst))
 	{
 	  times[j] = XEN_TO_C_OFF_T_OR_ELSE(XEN_CAR(lst), 0);
 	  mvals[j] = MUS_DOUBLE_TO_SAMPLE(XEN_TO_C_DOUBLE(XEN_CADR(lst)));
 	}
+
       mus_sound_set_maxamps(filename, chans, mvals, times);
       FREE(mvals);
       FREE(times);

@@ -1875,7 +1875,7 @@ Here is a somewhat low-level example:
 </pre>
 </td></tr></table>
 
-<p>Band-limited square or sawtooth waves need sines (as opposed to cosines):
+<p>Band-limited square or sawtooth waves:
 </p>
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
@@ -2455,6 +2455,136 @@ A more reasonable square-wave can be generated via
 <code>(tanh (* B (sin theta)))</code>, where "B" (a float) sets how squared-off it is:
 </p>
 
+<!-- MAXIMA:
+
+(%i25) g:tanh(x);
+(%o25)                              tanh(x)
+
+(%i26) taylor(g, x, 0, 30);
+               3      5       7       9         11          13           15
+              x    2 x    17 x    62 x    1382 x     21844 x     929569 x
+(%o26)/T/ x - -- + ---- - ----- + ----- - -------- + --------- - ----------
+              3     15     315    2835     155925     6081075    638512875
+            17              19                21                 23
+   6404582 x     443861162 x     18888466084 x     113927491862 x
+ + ----------- - ------------- + --------------- - ----------------
+   10854718875   1856156927625   194896477400625   2900518163668125
+                   25                       27                         29
+   58870668456604 x       8374643517010684 x       689005380505609448 x
+ + ------------------- - ---------------------- + ------------------------
+   3698160658676859375   1298054391195577640625   263505041412702261046875
+ + . . .
+
+
+(%i27) %o26, x=sin(z);
+                                 29                             27
+(%o27)/R/ (689005380505609448 sin  (z) - 1700052633953168852 sin  (z)
+                          25                              23
+ + 4194711739538404812 sin  (z) - 10350036361494934650 sin  (z)
+                           21                              19
+ + 25537691106934706700 sin  (z) - 63011727151730106750 sin  (z)
+                            17                               15
+ + 155475205260997371750 sin  (z) - 383619700449993632625 sin  (z)
+                            13                                11
+ + 946543847036760472500 sin  (z) - 2335507245357412376250 sin  (z)
+                             9                                 7
+ + 5762720482394194068750 sin (z) - 14220906996875995040625 sin (z)
+                              5                                 3
+ + 35134005521693634806250 sin (z) - 87835013804234087015625 sin (z)
+ + 263505041412702261046875 sin(z))/263505041412702261046875
+
+(%i28) trigreduce(%);
+(%o28) (86125672563201181 sin(29 z) - 1647618187356249823 sin(27 z)
+ + 20405735981368709608 sin(25 z) - 143279266372116745248 sin(23 z)
+ + 988870340521967329881 sin(21 z) - 2752920136953483215355 sin(19 z)
+ + 29747753151337835654040 sin(17 z) + 129373079585789187237960 sin(15 z)
+ + 2185282463071876214254065 sin(13 z) + 24072873961147105570521045 sin(11 z)
+ + 287379988570533329332221360 sin(9 z) + 3380634686040416561206315320 sin(7 z)
+ + 39937948481686006738647866205 sin(5 z)
+ + 479626886628129180815136726345 sin(3 z)
+ + 7176645106520349975113077043760 sin(z))/8841761993739701954543616000000
+
+
+
+(%i40) tanh(sin(x));
+(%o40)                           tanh(sin(x))
+
+(%i41) exponentialize(%);
+                       %i x     - %i x            %i x     - %i x
+                 %i (%e     - %e      )     %i (%e     - %e      )
+               - ----------------------     ----------------------
+                           2                          2
+             %e                         - %e
+(%o41)       -----------------------------------------------------
+                     %i x     - %i x              %i x     - %i x
+               %i (%e     - %e      )       %i (%e     - %e      )
+               ----------------------     - ----------------------
+                         2                            2
+             %e                       + %e
+
+(%i42) ratsimp (%);
+                                  %i x          - %i x
+                             %i %e         %i %e
+                           %e          - %e
+(%o42)                   - ---------------------------
+                                  %i x          - %i x
+                             %i %e         %i %e
+                           %e          + %e
+
+(%i44) demoivre(%o42);
+                %i (%i sin(x) + cos(x))     %i (cos(x) - %i sin(x))
+              %e                        - %e
+(%o44)      - -----------------------------------------------------
+                %i (%i sin(x) + cos(x))     %i (cos(x) - %i sin(x))
+              %e                        + %e
+
+(%i45) trigsimp(%);
+                                  2 sin(x)
+                                %e         - 1
+(%o45)                          --------------
+                                  2 sin(x)
+                                %e         + 1
+
+(%i46) factor(%);
+                            sin(x)         sin(x)
+                         (%e       - 1) (%e       + 1)
+(%o46)                   -----------------------------
+                                  2 sin(x)
+                                %e         + 1
+;; if B sin x:
+(%i53) trigsimp(%);
+                                 2 sin(x) B
+                               %e           - 1
+(%o53)                         ----------------
+                                 2 sin(x) B
+                               %e           + 1
+
+(%i78) tex(%o53);
+$${{e^{2\,\sin x\,B}-1}\over{e^{2\,\sin x\,B}+1}}\leqno{\tt (\%o53)}$$
+(%o78)                              (\%o53)
+
+(%i79) bfloat(%o28);
+(%o79) 1.130996288644772B-31 (8.612567256320118B16 sin(2.9B1 z)
+ - 1.64761818735625B18 sin(2.7B1 z) + 2.040573598136871B19 sin(2.5B1 z)
+ - 1.432792663721167B20 sin(2.3B1 z) + 9.888703405219673B20 sin(2.1B1 z)
+ - 2.752920136953483B21 sin(1.9B1 z) + 2.974775315133784B22 sin(1.7B1 z)
+ + 1.293730795857892B23 sin(1.5B1 z) + 2.185282463071876B24 sin(1.3B1 z)
+ + 2.407287396114711B25 sin(1.1B1 z) + 2.873799885705333B26 sin(9.0B0 z)
+ + 3.380634686040417B27 sin(7.0B0 z) + 3.993794848168601B28 sin(5.0B0 z)
+ + 4.796268866281292B29 sin(3.0B0 z) + 7.17664510652035B30 sin(z))
+(%i80) expand(%);
+(%o80) 9.740781602601538B-15 sin(2.9B1 z) - 1.863450055003545B-13 sin(2.7B1 z)
+ + 2.307881166199309B-12 sin(2.5B1 z) - 1.620483185066097B-11 sin(2.3B1 z)
+ + 1.118408685081237B-10 sin(2.1B1 z) - 3.113542457829846B-10 sin(1.9B1 z)
+ + 3.36445984096839B-9 sin(1.7B1 z) + 1.463204728620722B-8 sin(1.5B1 z)
+ + 2.471546355374797B-7 sin(1.3B1 z) + 2.722633110707074B-6 sin(1.1B1 z)
+ + 3.250257005040501B-5 sin(9.0B0 z) + 3.823485283175494B-4 sin(7.0B0 z)
+ + 4.516967150887297B-3 sin(5.0B0 z) + 5.424562287106608B-2 sin(3.0B0 z)
+ + 8.116758980395178B-1 sin(z)
+
+-->
+
+
 <table border=1 hspace=20 vspace=10>
 <tr>
 <td bgcolor="#f2f4ff"><center>B: 1.0</center></td>
@@ -2476,12 +2606,29 @@ A more reasonable square-wave can be generated via
 <img src="pix/tanh100.png" alt="tanh 1">
 </td></tr></table>
 
-<!-- LATEX: \tanh(x) = x-\frac{x^{3}}{3}+\frac{2x^{5}}{15}-\frac{17x^{7}}{315}+\frac{62x^{9}}{2835}-\frac{1382x^{11}}{155925}\cdots -->
+<!-- LATEX:
+ \tanh(x) = x-\frac{x^{3}}{3}+\frac{2x^{5}}{15}-\frac{17x^{7}}{315}+\frac{62x^{9}}{2835}-\frac{1382x^{11}}{155925}\cdots 
+
+long form:
+
+\tanh(x) = x-\frac{x^{3}}{3}+\frac{2x^{5}}{15}-\frac{17x^{7}}{315}+\frac{62x^{9}}{2835}-\frac{1382x^{11}}{155925}+\frac{21844x^{13}}{6081075}-\frac{929569x^{15}}{638512875}\cdots
+
+-->
 <!-- LATEX: 
 \tanh(\sin(x)) = 140069/172800 \sin(x) + 13319/241920 \sin(3x) + 1973/483840 \sin(5x) + 799/1451520 \sin(7x) - 71/7257600 \sin(9x) + 691/79833600 \sin(11x) + \cdots 
 -->
 <!-- LATEX: tanhsum.png
-& \tanh(B \sin(x)) = \frac{\sinh(B \sin(x))}{\cosh(B \sin(x))} = \frac{\sum_{k=0}^{\infty} (-1)^{k} I_{2k+1}(B) \sin(2k+1)x}{\cosh(B \sin(x))}
+& \tanh(B \sin(x)) = \frac{\sinh(B \sin(x))}{\cosh(B \sin(x))} = \frac{2 \sum_{k=0}^{\infty} (-1)^{k} I_{2k+1}(B) \sin(2k+1)x}{\cosh(B \sin(x))}
+
+second try:
+& \tanh(B \sin(x)) = \frac{-i \sin(iB \sin(x))}{\cos(iB \sin(x))} = \frac{2 \sum_{k=0}^{\infty} (-1)^{k} I_{2k+1}(B) \sin(2k+1)x}{\cos(iB \sin(x))} = \frac{e^{2B\sin(x)} - 1}{e^{2B\sin(x)}+1}
+
+third try:
+\tanh(B \sin(x)) = \frac{-i \sin(iB \sin(x))}{\cos(iB \sin(x))} = \frac{2 \sum_{k=0}^{\infty} (-1)^{k} I_{2k+1}(B) \sin(2k+1)x}{\cos(iB \sin(x))} = \frac{e^{2B\sin(x)} - 1}{e^{2B\sin(x)}+1}
+
+fourth try (break it in 2!!):
+\tanh(B \sin(x)) = \frac{-i \sin(iB \sin(x))}{\cos(iB \sin(x))}
+= \frac{2 \sum_{k=0}^{\infty} (-1)^{k} I_{2k+1}(B) \sin(2k+1)x}{\cos(iB \sin(x))} = \frac{e^{2B\sin(x)} - 1}{e^{2B\sin(x)}+1}
 -->
 
 <br>
@@ -2500,7 +2647,15 @@ plugging in "sin" for "x", expanding the sine powers, and collecting terms (very
 which is promising since a square wave is made up of odd harmonics with amplitude 1/n.
 As the "B" in tanh(B sin(x)) increases above pi/2, this series doesn't apply.
 </p>
-<img src="pix/tanhsum.png" alt="more tanh" hspace=20>
+
+<!-- idiotic latex -- there's apparently no way to get latex and pdftex to either omit the indentation
+     or increase the paper size, so I have to do this as two separate equations pasted together in a table!
+-->
+
+<table border=0 cellpadding=0 cellspacing=4 hspace=20><tr><td>
+<img src="pix/tanhsum.png" alt="more tanh"></td><td><img src="pix/tanhsum2.png" alt="more tanh">
+</td></tr></table>
+
 <p>but I haven't found a completion of this expansion that isn't ugly when B > pi/2. 
 In any case, we can check the
 formula for tanh, and see that the e^-x term will vanish (in the positive x case), giving 1.0.
@@ -2585,8 +2740,7 @@ The peak amplitude should be pi/4, but the Gibbs phenomenon adds .14.
 -->
 
 <p>But goofing with individual amplitudes quickly becomes tiresome.  This "realtime" business
-depends on luck; if we have some idea of what we're doing, we don't have to get lucky
-(this applies to improvisation vs composition too).
+depends on luck; if we have some idea of what we're doing, we don't have to get lucky.
 Since 
 tanh(B sin(x)) produces a nice square wave, 
 we can truncate its spectrum at the desired number of harmonics:
@@ -2616,13 +2770,13 @@ we can truncate its spectrum at the desired number of harmonics:
 		 (j 0 (+ j 2)))
 		((= i n))
 	      (vct-set! coeffs j (+ j 1))
-	      (vct-set! coeffs (+ j 1) (/ (* 1.995 (vct-ref rl (+ j 1))) size)))
+	      (vct-set! coeffs (+ j 1) (/ (* 2 (vct-ref rl (+ j 1))) size)))
 	    (if (and (&lt; n 128)                          ; save this set so we don't have to compute it again
 		     (not B))
 		(vector-set! previous-results n coeffs))
 	    coeffs)))))
 
-(with-sound (:clipped #f :statistics #t)
+(with-sound ()
   (let* ((samps (seconds-&gt;samples 1.0))
 	 (wave (make-polywave 100.0 
 			      :partials (square-wave-&gt;coeffs 16)
@@ -3088,7 +3242,7 @@ despite having the same spectrum.  Also, this example raises the burning questio
 harmonically related sinusoids, what is the minimum peak amplitude?  sqrt(n) is too low.  Here are (some of) the
 best minimum peaks I've found:
 <pre>
-    1 1.0, 2 1.762, 4 2.04, 8 3.003, 16 4.635, 32 7.215, 64 10.968, 128 18.937
+    1 1.0, 2 1.76, 4 2.04, 8 2.875, 16 4.512, 32 6.791, 64 10.162, 128 17.283, 2048: 97.083
 </pre>
 For the actual phases, the code used to find them, and an ever-growing list of other results, developed with
 amiable, if sometimes incomprehensible advice from Bill Gosper, Marc LeBrun,
@@ -6700,7 +6854,7 @@ set of components and component amplitudes.  We could, for example, change noid 
 <p>where "r" is the ratio between successive component amplitude: "nroid"?
 This is not as pointless as it might at first appear.  Many of these waveforms actually
 sound different, despite having the same (magnitude) spectrum, and in all cases I've
-heard, the min-peak case sounds best ("fullest" perhaps, certainly "loudest").
+heard, the min-peak case sounds best: "fullest" perhaps (J A Moorer suggests "raspiest"), certainly "loudest".
 </p>
 
 <!--
@@ -7689,7 +7843,7 @@ can calculate the safe maximum r, given the current srate and frequency (this fu
 <pre>
     (define (safe-rk-max freq srate)
       (let ((topk (floor (/ srate (* 3 freq)))))
-        (expt (* .001 topk) (/ 1.0 topk))))
+        (min 0.999999 (expt (* .001 topk) (/ 1.0 topk)))))
 </pre>
 
 <p>

@@ -1681,6 +1681,9 @@ static void apply_unset_controls(snd_info *sp)
 
 /* ---------------- minibuffer/filter text history ---------------- */
 
+/* it would be nice if this worked in the no gui version, but I guess that means dealing with readline? */
+
+
 typedef struct mini_history {
   char **strings;
   int strings_size, strings_pos;
@@ -1693,16 +1696,19 @@ typedef enum {MINIBUFFER, FILTER_TEXT, LISTENER_TEXT} mini_history_t;
 
 static void remember_string(snd_info *sp, const char *str, mini_history_t which)
 {
-  /* sp can be NULL */
+  /* if we're called from the listener, sp is null */
+  
   mini_history *mh = NULL;
   int i, top;
+
+  if (!str) return;
 
   switch (which)
     {
     case MINIBUFFER:    mh = sp->minibuffer_history; break;
     case FILTER_TEXT:   mh = sp->filter_history;     break;
     case LISTENER_TEXT: mh = listener_history;       break;
-    default: return; break;
+    default:            return;                      break;
     }
 
   if (mh == NULL)
@@ -1717,19 +1723,37 @@ static void remember_string(snd_info *sp, const char *str, mini_history_t which)
 	case LISTENER_TEXT: listener_history = mh;       break;
 	}
     }
+  
+  mh->strings_pos = 0;
+  mh->first_time = true;
+
+  /* if str matches current history top entry, ignore it (as in tcsh) */
+  if ((mh->strings[0]) &&
+      (strcmp(str, mh->strings[0]) == 0))
+    return;
 
   top = mh->strings_size - 1;
   if (mh->strings[top]) FREE(mh->strings[top]);
   for (i = top; i > 0; i--) mh->strings[i] = mh->strings[i - 1];
+
   mh->strings[0] = copy_string(str);
-  mh->strings_pos = 0;
-  mh->first_time = true;
 }
 
 
-void remember_mini_string(snd_info *sp, const char *str) {remember_string(sp, str, MINIBUFFER);}
-void remember_filter_string(snd_info *sp, const char *str) {remember_string(sp, str, FILTER_TEXT);}
-void remember_listener_string(const char *str) {remember_string(NULL, str, LISTENER_TEXT);}
+void remember_mini_string(snd_info *sp, const char *str) 
+{
+  remember_string(sp, str, MINIBUFFER);
+}
+
+void remember_filter_string(snd_info *sp, const char *str) 
+{
+  remember_string(sp, str, FILTER_TEXT);
+}
+
+void remember_listener_string(const char *str) 
+{
+  remember_string(NULL, str, LISTENER_TEXT);
+}
 
 
 static void restore_string(snd_info *sp, bool back, mini_history_t which)

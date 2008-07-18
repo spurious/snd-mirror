@@ -3240,7 +3240,12 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool sepa
 	   the define* calls itself in its arg list -- finally decided this was too tricky and too dependent
 	   on Guile internals.
 
+       the-environment doesn't help -- it reworks slightly the info we already have.
+       :(define* (hiho a :optional (b 2) (c "hiho")) (the-environment))
+       :(hiho 1)
+       ((c . "hiho") (b . 2) ((a . lambda*:G411) 1) #<eval-closure 40444d40>)
       */
+
       /* local_proc was trailing arg */
 
       if ((!(XEN_FALSE_P(local_proc))) && 
