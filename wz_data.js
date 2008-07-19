@@ -1184,6 +1184,9 @@ var sndclm_reverb_tip = "<code>*reverb*</code> is the reverb stream.  The direct
 
 var sndclm_secondstosamples_tip = "<code>(seconds-&gt;samples secs)</code>: use mus-srate to convert seconds to samples";
 
+var sndclm_spectrum_tip = "<code>(spectrum rdat idat window norm-type</code>: return the spectrum of rdat and idat.<br>" +
+                          "norm-type defaults to linear (1); the other choices are raw (unnormalized: 2), and dB (0).";
+
 var sndclm_src_tip = "<code>(src gen :optional (pm 0.0) input-function)</code>: next sampling rate conversion sample.<br>" +
                      " 'pm' can be used to change the sampling rate on a sample-by-sample basis.<br>" +
                      " 'input-function' is a function of one argument (the current input direction, normally ignored)<br>" +

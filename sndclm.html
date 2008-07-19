@@ -590,6 +590,50 @@ you can use <a href="sndscm.html#def-clm-struct">def-clm-struct</a>, and <a href
   <a class=def name="sine-bank">sine-bank</a> amps phases
 </pre>
 
+
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+
+<tr>
+<td bgcolor="#f0f4ff">
+<pre>
+(with-sound (:play #t)
+  (let ((gen (make-oscil 440.0)))
+    (do ((i 0 (1+ i)))
+        ((= i 44100))
+      (outa i (* 0.5 (oscil gen))))))
+</pre>
+</td>
+
+<td width=4></td>
+
+<td bgcolor="#fbfbf0">
+<pre>
+with_sound(:play, true) do
+  gen = make_oscil(440.0);
+  44100.times do |i| 
+    outa(i, 0.5 * oscil(gen), $output) 
+    end
+  end.output
+</pre>
+</td>
+
+<td width=4></td>
+
+<td bgcolor="#effdef">
+<pre>
+44100 lambda: <{ len }> 
+  440.0 make-oscil { gen }
+  len 0 ?do
+  i gen 0.0 0.0 oscil 0.5 f* *output* outa drop
+  loop
+;
+:play #t :channels 1 :srate 44100 with-sound
+</pre>
+</td>
+</tr>
+</table>
+
+
 <p>oscil produces a sine wave (using sin) with optional frequency change (FM).
 Its first argument is an oscil created by make-oscil.
 Oscil's second argument is the 
@@ -2142,6 +2186,13 @@ On a related topic, if we drive the sum of Chebyshev polynomials with more than 
 we get sum and difference tones, much as in complex FM:
 </p>
 
+<!-- LATEX t5sum:
+\lefteqn{T_{5}\Big(  \frac{\cos(x) + \cos(20x)}{2}\Big) = } \\
+\frac{1}{32} \big( & \cos (100x)+5 \cos (81x)+5 \cos (79x)+10 \cos (62x)+5 \cos (60x)+ \\
+                   & 10 \cos (58x)+ 10 \cos (43x)-10  \cos (41x)-10 \cos (39x)+10 \cos (37x)+ \\
+                   & 5 \cos (24x)-10 \cos (22x)- 10 \cos (18x)+5 \cos (16x)+ \cos (5x)+5 \cos (3x) \big)
+-->
+
 <table border=1 cellpadding=10 hspace=20>
 <tr><td>
 <center>T5 driven with sinusoids at 100Hz and 2000Hz</center>
@@ -2157,6 +2208,8 @@ we get sum and difference tones, much as in complex FM:
                 (+ (* 0.5 (<a class=quiet href="#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> gen1))
 		   (* 0.5 (<a class=quiet href="#oscil" onmouseout="UnTip()" onmouseover="Tip(sndclm_oscil_tip)">oscil</a> gen2))))))))
 </pre>
+<hr>
+<center><img src="pix/t5sum.png"></center>
 </td>
 <td>
 <img src="pix/crosswave.png">
@@ -2582,6 +2635,54 @@ $${{e^{2\,\sin x\,B}-1}\over{e^{2\,\sin x\,B}+1}}\leqno{\tt (\%o53)}$$
  + 4.516967150887297B-3 sin(5.0B0 z) + 5.424562287106608B-2 sin(3.0B0 z)
  + 8.116758980395178B-1 sin(z)
 
+
+(%o3)                        tanh(sin(y) + sin(x))
+(%i4) exponentialize(%)
+;
+                 %i y     - %i y          %i x     - %i x
+           %i (%e     - %e      )   %i (%e     - %e      )
+         - ---------------------- - ----------------------
+                     2                        2
+(%o4) (%e
+           %i y     - %i y          %i x     - %i x
+     %i (%e     - %e      )   %i (%e     - %e      )
+     ---------------------- + ----------------------
+               2                        2
+ - %e                                               )
+          %i y     - %i y          %i x     - %i x
+    %i (%e     - %e      )   %i (%e     - %e      )
+    ---------------------- + ----------------------
+              2                        2
+/(%e
+             %i y     - %i y          %i x     - %i x
+       %i (%e     - %e      )   %i (%e     - %e      )
+     - ---------------------- - ----------------------
+                 2                        2
+ + %e                                                 )
+(%i5) ratsimp(%);
+                     %i y        %i x          - %i y        - %i x
+                %i %e     + %i %e         %i %e       + %i %e
+              %e                      - %e
+(%o5)       - -----------------------------------------------------
+                     %i y        %i x          - %i y        - %i x
+                %i %e     + %i %e         %i %e       + %i %e
+              %e                      + %e
+(%i6) demoivre(%);
+           %i (%i sin(y) + cos(y)) + %i (%i sin(x) + cos(x))
+(%o6) - (%e
+     %i (cos(y) - %i sin(y)) + %i (cos(x) - %i sin(x))
+ - %e                                                 )
+    %i (%i sin(y) + cos(y)) + %i (%i sin(x) + cos(x))
+/(%e
+     %i (cos(y) - %i sin(y)) + %i (cos(x) - %i sin(x))
+ + %e                                                 )
+(%i7) trigsimp(%);
+                             2 sin(y) + 2 sin(x)
+                           %e                    - 1
+(%o7)                      -------------------------
+                             2 sin(y) + 2 sin(x)
+                           %e                    + 1
+
 -->
 
 
@@ -2606,7 +2707,7 @@ $${{e^{2\,\sin x\,B}-1}\over{e^{2\,\sin x\,B}+1}}\leqno{\tt (\%o53)}$$
 <img src="pix/tanh100.png" alt="tanh 1">
 </td></tr></table>
 
-<!-- LATEX:
+<!-- LATEX: sceq11
  \tanh(x) = x-\frac{x^{3}}{3}+\frac{2x^{5}}{15}-\frac{17x^{7}}{315}+\frac{62x^{9}}{2835}-\frac{1382x^{11}}{155925}\cdots 
 
 long form:
@@ -2614,9 +2715,10 @@ long form:
 \tanh(x) = x-\frac{x^{3}}{3}+\frac{2x^{5}}{15}-\frac{17x^{7}}{315}+\frac{62x^{9}}{2835}-\frac{1382x^{11}}{155925}+\frac{21844x^{13}}{6081075}-\frac{929569x^{15}}{638512875}\cdots
 
 -->
-<!-- LATEX: 
-\tanh(\sin(x)) = 140069/172800 \sin(x) + 13319/241920 \sin(3x) + 1973/483840 \sin(5x) + 799/1451520 \sin(7x) - 71/7257600 \sin(9x) + 691/79833600 \sin(11x) + \cdots 
+<!-- LATEX: sceq12
+\tanh(\sin(x)) = \frac{140069}{172800} \sin(x) + \frac{13319}{241920} \sin(3x) + \frac{1973}{483840} \sin(5x) + \frac{799}{1451520} \sin(7x) - \frac{71}{7257600} \sin(9x) + \frac{691}{79833600} \sin(11x) + \cdots 
 -->
+
 <!-- LATEX: tanhsum.png
 & \tanh(B \sin(x)) = \frac{\sinh(B \sin(x))}{\cosh(B \sin(x))} = \frac{2 \sum_{k=0}^{\infty} (-1)^{k} I_{2k+1}(B) \sin(2k+1)x}{\cosh(B \sin(x))}
 
@@ -2629,6 +2731,10 @@ third try:
 fourth try (break it in 2!!):
 \tanh(B \sin(x)) = \frac{-i \sin(iB \sin(x))}{\cos(iB \sin(x))}
 = \frac{2 \sum_{k=0}^{\infty} (-1)^{k} I_{2k+1}(B) \sin(2k+1)x}{\cos(iB \sin(x))} = \frac{e^{2B\sin(x)} - 1}{e^{2B\sin(x)}+1}
+
+fifth try: do it as one, and set the "MediaBox" line in the pdf file by hand!!
+\tanh(B \sin(x)) = \frac{-i \sin(iB \sin(x))}{\cos(iB \sin(x))} = \frac{2 \sum_{k=0}^{\infty} (-1)^{k} I_{2k+1}(B) \sin(2k+1)x}{\cos(iB \sin(x))} = \frac{e^{2B\sin(x)} - 1}{e^{2B\sin(x)}+1}
+
 -->
 
 <br>
@@ -2648,15 +2754,9 @@ which is promising since a square wave is made up of odd harmonics with amplitud
 As the "B" in tanh(B sin(x)) increases above pi/2, this series doesn't apply.
 </p>
 
-<!-- idiotic latex -- there's apparently no way to get latex and pdftex to either omit the indentation
-     or increase the paper size, so I have to do this as two separate equations pasted together in a table!
--->
+<img src="pix/tanhsum.png" alt="more tanh" hspace=20>
 
-<table border=0 cellpadding=0 cellspacing=4 hspace=20><tr><td>
-<img src="pix/tanhsum.png" alt="more tanh"></td><td><img src="pix/tanhsum2.png" alt="more tanh">
-</td></tr></table>
-
-<p>but I haven't found a completion of this expansion that isn't ugly when B > pi/2. 
+<p>but I haven't found a completion of this expansion that isn't ugly when B &gt; pi/2. 
 In any case, we can check the
 formula for tanh, and see that the e^-x term will vanish (in the positive x case), giving 1.0.
 So we do get a square wave, but it's not band limited.  If a complex signal replaces the sin(x),
@@ -2755,37 +2855,37 @@ we can truncate its spectrum at the desired number of harmonics:
       (or (and (&lt; n 128)
 	       (not B)
 	       (vector-ref previous-results n))
-	  (let* ((coeffs (make-vct (* 2 n)))
+	  (let* ((coeffs (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> (* 2 n)))
 		 (size (expt 2 12))
-		 (rl (make-vct size))
-		 (im (make-vct size))
+		 (rl (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> size))
+		 (im (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> size))
 		 (incr (/ (* 2 pi) size))
 		 (index (or B (max 1 (inexact-&gt;exact (floor (/ n 2)))))))
 	    (do ((i 0 (1+ i))
 		 (x 0.0 (+ x incr)))
 		((= i size))
-	      (vct-set! rl i (tanh (* index (sin x))))) ; make our desired square wave
-	    (spectrum rl im #f 2)                       ; get its spectrum
+	      (<a class=quiet href="extsnd.html#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> rl i (tanh (* index (sin x))))) ; make our desired square wave
+	    (<a class=quiet href="#spectrum" onmouseout="UnTip()" onmouseover="Tip(sndclm_spectrum_tip)">spectrum</a> rl im #f 2)                       ; get its spectrum
 	    (do ((i 0 (+ i 1))
 		 (j 0 (+ j 2)))
 		((= i n))
-	      (vct-set! coeffs j (+ j 1))
-	      (vct-set! coeffs (+ j 1) (/ (* 2 (vct-ref rl (+ j 1))) size)))
+	      (<a class=quiet href="extsnd.html#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> coeffs j (+ j 1))
+	      (<a class=quiet href="extsnd.html#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> coeffs (+ j 1) (/ (* 2 (<a class=quiet href="extsnd.html#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> rl (+ j 1))) size)))
 	    (if (and (&lt; n 128)                          ; save this set so we don't have to compute it again
 		     (not B))
 		(vector-set! previous-results n coeffs))
 	    coeffs)))))
 
-(with-sound ()
-  (let* ((samps (seconds-&gt;samples 1.0))
-	 (wave (make-polywave 100.0 
-			      :partials (square-wave-&gt;coeffs 16)
+(<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> ()
+  (let* ((samps (<a class=quiet href="#secondstosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_secondstosamples_tip)">seconds-&gt;samples</a> 1.0))
+	 (wave (<a class=quiet href="#make-polywave" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_polywave_tip)">make-polywave</a> 100.0 
+			      :partials (<em class=red>square-wave-&gt;coeffs</em> 16)
 			      :type mus-chebyshev-second-kind)))
-    (run
+    (<a class=quiet href="extsnd.html#run" onmouseout="UnTip()" onmouseover="Tip(extsnd_run_tip)">run</a>
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i samps))
-	 (outa i (* 0.5 (polywave wave))))))))
+	 (<a class=quiet href="#outa" onmouseout="UnTip()" onmouseover="Tip(sndclm_outa_tip)">outa</a> i (* 0.5 (<a class=quiet href="#polywave" onmouseout="UnTip()" onmouseover="Tip(sndclm_polywave_tip)">polywave</a> wave))))))))
 </pre>
 </td></tr></table>
 
@@ -3034,9 +3134,9 @@ cursor 10584
 
 <p>If you go all the way and use a pulse-train as the FM source, you get a
 large component for the carrier, and all the others are very small.
-One very sketchy explanation is that since a pulse is close to 0 most of the time,
-the modulation during that time is nearly 0, so the carrier is affected less and less
-as we get closer to a spike.  I believe this is the basis of FM radio's
+One very sketchy explanation is that since a pulse is close to zero most of the time,
+the modulation is also close to zero.
+I believe this is the basis of FM radio's
 noise reduction: we can filter out the high stuff which is weak anyway, and otherwise
 the spike has no effect on our carrier.
 Another handwaving approach is:
@@ -4189,7 +4289,7 @@ We would replace the current make-ssb-am line with:
   <a class=def NAME="make-wave-train-with-env">make-wave-train-with-env</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> frequency env size
 </pre>
 
-<p>wave-train adds a copy its "wave" (a "grain" in more modern parlance) into its output at "frequency" times per second.
+<p>wave-train adds a copy of its "wave" (a "grain" in more modern parlance) into its output at "frequency" times per second.
 These copies can overlap or have long intervals of silence in between, so
 wave train can be viewed either as an extension of pulse-train and table-lookup,
 or as a primitive form of granular synthesis.
@@ -4316,7 +4416,9 @@ using the same frequency envelope as the wave-train, so we have some idea when t
 </pre>
 </td></tr></table>
 
-<p>wave-train is built on table-lookup and shares all of its questionable aspects.
+<p>wave-train is built on table-lookup and shares all of its questionable aspects.  See also the <a href="#pulsed-env">pulsed-env</a>e generator
+in generators.scm, used in animals.scm.  It is often simpler to use <a href="#pulse-train">pulse-train</a> as the repetition
+trigger, and mus-reset to restart an envelope.  
 </p>
 <br><br>
 
@@ -5136,10 +5238,10 @@ order (it is the size of the coefficient arrays).
 </td>
 </tr></table>
 
-<p>dsp.scm has a number of filter design functions,
+<p><a href="sndscm.html#dspdoc">dsp.scm</a> has a number of filter design functions,
 and various specializations of the filter generators, including such
 perennial favorites as biquad, butterworth, hilbert transform, and
-notch filters. Similarly, analog-filter.scm has
+notch filters. Similarly, <a href="sndscm.html#analogfilterdoc">analog-filter.scm</a> has
 the usual IIR suspects: Butterworth, Chebyshev, Bessel, and Elliptic filters.
 A biquad section can be implemented as:
 </p>
@@ -6651,8 +6753,11 @@ dlocsig macro.  All the necessary data is packaged up in a list:
 <!-- ---------------------------------------- GENERIC FUNCTIONS ---------------------------------------- -->
 
 
-<p>The generators respond to a set of "generic" functions.  mus-frequency, for example, tries to return (or set) a generator's
-frequency, wherever that makes sense.
+<p>Besides the 30 or so built-in generators, there are around 100 others defined in generators.scm. If we
+required separate functions for each generator for access to the generator internal state (current phase, for example),
+we'd end up with hundreds, or even thousands of accessors.  Instead, 
+all the generators respond to a set of "generic" functions.  mus-frequency, for example, tries to return (or set) a generator's
+frequency, for any generator that has some sort of frequency field.
 The generic functions are:
 </p>
 
@@ -6679,12 +6784,15 @@ The generic functions are:
 <tr><td><a class=def name="mus-ramp">mus-ramp</a></td><td></td><td>granulate grain envelope ramp setting</td></tr>
 <tr><td bgcolor="#f2f4ff"><a class=def name="mus-reset">mus-reset</a></td><td bgcolor="#f2f4ff"></td><td bgcolor="#f2f4ff">set gen to default starting state</td></tr>
 <tr><td><a class=def name="mus-run">mus-run</a></td><td></td><td>run any generator</td></tr>
-<tr><td bgcolor="#f2f4ff"><a class=def name="mus-scaler">mus-scaler</a></td><td bgcolor="#f2f4ff"></td><td bgcolor="#f2f4ff">scaler, normally on an amplitude</td></tr>
-<tr><td><a class=def name="mus-width">mus-width</a></td><td></td><td>width of interpolation tables, etc</td></tr>
-<tr><td bgcolor="#f2f4ff"><a class=def name="mus-xcoeff">mus-xcoeff</a></td><td bgcolor="#f2f4ff"></td><td bgcolor="#f2f4ff">x (input) coefficient</td></tr>
-<tr><td><a class=def name="mus-xcoeffs">mus-xcoeffs</a></td><td></td><td>vct of x (input) coefficients</td></tr>
-<tr><td bgcolor="#f2f4ff"><a class=def name="mus-ycoeff">mus-ycoeff</a></td><td bgcolor="#f2f4ff"></td><td bgcolor="#f2f4ff">y (output, feedback) coefficient</td></tr>
-<tr><td><a class=def name="mus-ycoeffs">mus-ycoeffs</a></td><td></td><td>vct of y (feedback) coefficients</td></tr>
+
+<tr><td bgcolor="#f2f4ff"><a class=def name="mus-safety">mus-safety</a></td><td bgcolor="#f2f4ff"></td><td bgcolor="#f2f4ff">experiment for multithread output</td></tr>
+
+<tr><td><a class=def name="mus-scaler">mus-scaler</a></td><td></td><td>scaler, normally on an amplitude</td></tr>
+<tr><td bgcolor="#f2f4ff"><a class=def name="mus-width">mus-width</a></td><td bgcolor="#f2f4ff"></td><td bgcolor="#f2f4ff">width of interpolation tables, etc</td></tr>
+<tr><td><a class=def name="mus-xcoeff">mus-xcoeff</a></td><td></td><td>x (input) coefficient</td></tr>
+<tr><td bgcolor="#f2f4ff"><a class=def name="mus-xcoeffs">mus-xcoeffs</a></td><td bgcolor="#f2f4ff"></td><td bgcolor="#f2f4ff">vct of x (input) coefficients</td></tr>
+<tr><td><a class=def name="mus-ycoeff">mus-ycoeff</a></td><td></td><td>y (output, feedback) coefficient</td></tr>
+<tr><td bgcolor="#f2f4ff"><a class=def name="mus-ycoeffs">mus-ycoeffs</a></td><td bgcolor="#f2f4ff"></td><td bgcolor="#f2f4ff">vct of y (feedback) coefficients</td></tr>
 </table>
 
 </td></tr></table>
