@@ -7094,7 +7094,7 @@ return a new convolution generator which convolves its input with the impulse re
       gn->nvcts = MUS_MAX_VCTS;
       gn->vcts = make_vcts(gn->nvcts);
       gn->vcts[MUS_INPUT_FUNCTION] = in_obj;
-      gn->vcts[2] = filt; /* why is this here? GC protection? */
+      gn->vcts[2] = filt; /* why is this here? GC protection? (might be a locally-allocated vct as from file->vct) */
       gn->gen = ge;
       return(mus_xen_to_object(gn));
     }
@@ -7119,10 +7119,14 @@ file1 and file2 writing outfile after scaling the convolution result to maxamp."
 
   f1 = XEN_TO_C_STRING(file1);
   f2 = XEN_TO_C_STRING(file2);
-  if (XEN_STRING_P(outfile)) f3 = XEN_TO_C_STRING(outfile); else f3 = "tmp.snd";
-  if (XEN_NUMBER_P(maxamp)) maxval = XEN_TO_C_DOUBLE(maxamp);
+  if (XEN_STRING_P(outfile)) 
+    f3 = XEN_TO_C_STRING(outfile); 
+  else f3 = "tmp.snd";
+  if (XEN_NUMBER_P(maxamp)) 
+    maxval = XEN_TO_C_DOUBLE(maxamp);
+
   mus_convolve_files(f1, f2, maxval, f3);
-  return(XEN_FALSE);
+  return(C_TO_XEN_STRING(f3));
 }
 
 

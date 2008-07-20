@@ -621,7 +621,7 @@ with_sound(:play, true) do
 
 <td bgcolor="#effdef">
 <pre>
-44100 lambda: <{ len }> 
+44100 lambda: &lt;{ len }&gt;
   440.0 make-oscil { gen }
   len 0 ?do
   i gen 0.0 0.0 oscil 0.5 f* *output* outa drop
@@ -1066,6 +1066,45 @@ at 440 Hz when the srate is 1000, 4000, and 16000:
   <a class=def name="env-any">env-any</a> e connecting-function
 </pre>
 
+
+
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+
+<tr>
+<td bgcolor="#f0f4ff">
+<pre>
+(with-sound (:play #t)
+  (let ((gen (make-oscil 440.0))
+        (ampf (make-env '(0 0  .01 1  .25 .1 .5 .01  1 0)
+	                :scaler 0.5
+                        :length 44100)))
+    (do ((i 0 (1+ i)))
+        ((= i 44100))
+      (outa i (* (env ampf) (oscil gen))))))
+</pre>
+</td>
+
+<td width=4></td>
+
+<td bgcolor="#fbfbf0">
+<pre>
+with_sound(:play, true) do
+  gen = make_oscil(440.0);
+  ampf = make_env([0, 0, 0.01, 1.0, 0.25, 0.1, 0.5, 0.01, 1, 0],
+                  :scaler, 0.5,
+                  :length, 44100);
+  44100.times do |i| 
+    outa(i, env(ampf) * oscil(gen), $output) 
+    end
+  end.output
+</pre>
+</td>
+</tr>
+</table>
+
+
+
+
 <table border=0 hspace=40 vspace=10><tr><td>
 <table border=1 cellpadding=4>
 <tr><td colspan=2 bgcolor="beige"><center>env methods</center></td></tr>
@@ -1420,6 +1459,37 @@ step envelope in pitch: <a href="#rxyk!cos">brassy</a> in generators.scm<br>
   <a class=def NAME="make-table-lookup-with-env">make-table-lookup-with-env</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> frequency env size
 </pre>
 
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+
+<tr>
+<td bgcolor="#f0f4ff">
+<pre>
+(with-sound (:play #t)
+  (let ((gen (make-table-lookup 440.0
+               :wave (partials-&gt;wave '(1 .5  2 .5)))))
+    (do ((i 0 (1+ i)))
+        ((= i 44100))
+      (outa i (* 0.5 (table-lookup gen))))))
+</pre>
+</td>
+
+<td width=4></td>
+
+<td bgcolor="#fbfbf0">
+<pre>
+with_sound(:play, true) do
+  gen = make_table_lookup(440.0,
+         :wave, partials2wave([1.0, 0.5, 2.0, 0.5]));
+  44100.times do |i| 
+    outa(i, 0.5 * table_lookup(gen), $output) 
+    end
+  end.output
+</pre>
+</td>
+</tr>
+</table>
+
+
 <p>table-lookup performs interpolating table lookup with a lookup index that moves
 through the table at a speed set by make-table-lookup's "frequency" argument and table-lookup's "fm-input" argument.
 That is, the waveform in the table is produced repeatedly, the repetition rate set by the frequency arguments.
@@ -1731,6 +1801,53 @@ See also <a href="sndscm.html#granidoc">grani</a> and <a href="sndscm.html#displ
   <em class=emdef>mus-chebyshev-t-sum</em> x t-coeffs
   <em class=emdef>mus-chebyshev-u-sum</em> x u-coeffs
 </pre>
+
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+
+<tr>
+<td bgcolor="#f0f4ff">
+<pre>
+(with-sound (:play #t)
+  (let ((gen (make-polywave 440.0
+               :partials '(1 .5  2 .5))))
+    (do ((i 0 (1+ i)))
+        ((= i 44100))
+      (outa i (* 0.5 (polywave gen))))))
+</pre>
+</td>
+
+<td width=4></td>
+
+<td bgcolor="#fbfbf0">
+<pre>
+with_sound(:play, true) do
+  gen = make_polywave(440.0,
+         :partials, [1.0, 0.5, 2.0, 0.5]);
+  44100.times do |i| 
+    outa(i, 0.5 * polywave(gen), $output) 
+    end
+  end.output
+</pre>
+</td>
+
+
+<td width=4></td>
+
+<td bgcolor="#effdef">
+<pre>
+44100 lambda: &lt;{ len }&gt;
+  440.0 '( 1 0.5 2 0.5 ) 1 make-polywave { gen }
+  len 0 ?do
+  i gen 0.0 polywave 0.5 f* *output* outa drop
+  loop
+;
+:play #t :channels 1 :srate 44100 with-sound
+</pre>
+</td>
+
+</tr>
+</table>
+
 
 <!-- LATEX: sceq16
 \begin{align*}
@@ -2456,6 +2573,53 @@ See also <a href="#polyoid">polyoid and noid</a> in generators.scm.
   <a class=def name="pulse-train?">pulse-train?</a> s
 </pre>
 
+
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+
+<tr>
+<td bgcolor="#f0f4ff">
+<pre>
+(with-sound (:play #t)
+  (let ((gen (make-triangle-wave 440.0)))
+    (do ((i 0 (1+ i)))
+        ((= i 44100))
+      (outa i (* 0.5 
+                 (triangle-wave gen))))))
+</pre>
+</td>
+
+<td width=4></td>
+
+<td bgcolor="#fbfbf0">
+<pre>
+with_sound(:play, true) do
+  gen = make_triangle_wave(440.0);
+  44100.times do |i| 
+    outa(i, 0.5 * triangle_wave(gen), 
+         $output) 
+    end
+  end.output
+</pre>
+</td>
+<td width=4></td>
+
+<td bgcolor="#effdef">
+<pre>
+44100 lambda: &lt;{ len }&gt;
+  440.0 make-triangle-wave { gen }
+  len 0 ?do
+  i gen 0.0 triangle-wave 0.5 f* *output* outa drop
+  loop
+;
+:play #t :channels 1 :srate 44100 with-sound
+</pre>
+</td>
+</tr>
+</table>
+
+
+
+
 <table border=1 align=left hspace=40 vspace=10 cellpadding=4>
 <tr><td colspan=2 bgcolor="beige"><center>saw-tooth and friends' methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
@@ -3005,6 +3169,48 @@ for more dicussion about using these generators as FM modulators.
   <a class=def name="sum-of-sines">sum-of-sines</a> cs :optional (fm 0.0)
   <a class=def name="sum-of-sines?">sum-of-sines?</a> cs
 </pre>
+
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+
+<tr>
+<td bgcolor="#f0f4ff">
+<pre>
+(with-sound (:play #t)
+  (let ((gen (make-ncos 440.0 10)))
+    (do ((i 0 (1+ i)))
+        ((= i 44100))
+      (outa i (* 0.5 (ncos gen))))))
+</pre>
+</td>
+
+<td width=4></td>
+
+<td bgcolor="#fbfbf0">
+<pre>
+with_sound(:play, true) do
+  gen = make_ncos(440.0, 10);
+  44100.times do |i| 
+    outa(i, 0.5 * ncos(gen), $output) 
+    end
+  end.output
+</pre>
+</td>
+<td width=4></td>
+
+<td bgcolor="#effdef">
+<pre>
+44100 lambda: &lt;{ len }&gt;
+  440.0 10 make-ncos { gen }
+  len 0 ?do
+  i gen 0.0 ncos 0.5 f* *output* outa drop
+  loop
+;
+:play #t :channels 1 :srate 44100 with-sound
+</pre>
+</td>
+</tr>
+</table>
+
 
 <p>ncos is the new form of sum-of-cosines, and nsin is the new form of sum-of sines.
 </p>
@@ -3930,6 +4136,49 @@ reflection, please send it to me, and I'll add it to this collection.
   <a class=def name="sine-summation?">sine-summation?</a> s
 </pre>
 
+
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+
+<tr>
+<td bgcolor="#f0f4ff">
+<pre>
+(with-sound (:play #t)
+  (let ((gen (make-nrxycos 440.0 :n 10)))
+    (do ((i 0 (1+ i)))
+        ((= i 44100))
+      (outa i (* 0.5 (nrxycos gen))))))
+</pre>
+</td>
+
+<td width=4></td>
+
+<td bgcolor="#fbfbf0">
+<pre>
+with_sound(:play, true) do
+  gen = make_nrxycos(440.0, 1.0, 10, 0.5);
+  44100.times do |i| 
+    outa(i, 0.5 * nrxycos(gen), $output) 
+    end
+  end.output
+</pre>
+</td>
+<td width=4></td>
+
+<td bgcolor="#effdef">
+<pre>
+44100 lambda: &lt;{ len }&gt;
+  440.0 1.0 10 0.5 make-nrxycos { gen }
+  len 0 ?do
+  i gen 0.0 nrxycos 0.5 f* *output* outa drop
+  loop
+;
+:play #t :channels 1 :srate 44100 with-sound
+</pre>
+</td>
+</tr>
+</table>
+
+
 <table border=0 hspace=20>
 
 <tr><td>
@@ -4091,6 +4340,40 @@ In the graph, r is 0 at the midpoint, r goes from -1.0 to 1.0 along the horizont
   <a class=def name="ssb-am">ssb-am</a> gen :optional (insig 0.0) (fm 0.0)
   <a class=def name="ssb-am?">ssb-am?</a> gen
 </pre>
+
+
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+
+<tr>
+<td bgcolor="#f0f4ff" width=500>
+<pre>
+(with-sound (:play #t)
+  (let ((shifter (make-ssb-am 440.0 20))
+	(osc (make-oscil 440.0)))
+    (do ((i 0 (1+ i)))
+	((= i 44100))
+      (outa i (* 0.5 (ssb-am shifter (oscil osc)))))))
+</pre>
+</td>
+
+<td width=4></td>
+
+<td bgcolor="#fbfbf0">
+<pre>
+with_sound(:play, true) do
+  shifter = make_ssb_am(440.0, 20);
+  osc = make_oscil(440.0);
+  44100.times do |i|
+    outa(i, 0.5 * ssb_am(shifter, oscil(osc)), $output);
+    end
+  end.output
+</pre>
+</td>
+
+</tr>
+</table>
+
+
 <p>ssb-am provides single sideband suppressed carrier amplitude modulation, normally used for frequency shifting.
 The basic notion is to shift a spectrum up or down while cancelling either the upper or lower half of the spectrum.
 See <a href="sndscm.html#ssbbank">dsp.scm</a> for a number of curious possibilities (time stretch without pitch shift for example).
@@ -4289,6 +4572,50 @@ We would replace the current make-ssb-am line with:
   <a class=def NAME="make-wave-train-with-env">make-wave-train-with-env</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> frequency env size
 </pre>
 
+
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+
+<tr>
+<td bgcolor="#f0f4ff" width=500>
+<pre>
+(with-sound (:play #t)
+  (let ((gen (make-wave-train 440.0
+	       :wave (let ((v (make-vct 64)) 
+			   (g (make-ncos 400 10)))
+		       (set! (mus-phase g) (* -0.5 pi))
+		       (do ((i 0 (1+ i))) 
+			   ((= i 64)) 
+			 (vct-set! v i (ncos g))) 
+		       v))))
+    (do ((i 0 (1+ i)))
+	((= i 44100))
+      (outa i (* 0.5 (wave-train gen))))))
+</pre>
+</td>
+
+<td width=4></td>
+
+<td bgcolor="#fbfbf0">
+<pre>
+with_sound(:play, true) do
+  v = make_vct(64);
+  g = make_ncos(400, 10);
+  g.phase =  -0.5 * 3.14159;
+  64.times do |i|
+    v[i] = ncos(g);
+    end
+  gen = make_wave_train(440.0, :wave, v);
+  44100.times do |i| 
+    outa(i, 0.5 * wave_train(gen), $output) 
+    end
+  end.output
+</pre>
+</td>
+
+</tr>
+</table>
+
+
 <p>wave-train adds a copy of its "wave" (a "grain" in more modern parlance) into its output at "frequency" times per second.
 These copies can overlap or have long intervals of silence in between, so
 wave train can be viewed either as an extension of pulse-train and table-lookup,
@@ -4416,7 +4743,7 @@ using the same frequency envelope as the wave-train, so we have some idea when t
 </pre>
 </td></tr></table>
 
-<p>wave-train is built on table-lookup and shares all of its questionable aspects.  See also the <a href="#pulsed-env">pulsed-env</a>e generator
+<p>wave-train is built on table-lookup and shares all of its questionable aspects.  See also the <a href="#pulsedenv">pulsed-env</a>e generator
 in generators.scm, used in animals.scm.  It is often simpler to use <a href="#pulse-train">pulse-train</a> as the repetition
 trigger, and mus-reset to restart an envelope.  
 </p>
@@ -4451,6 +4778,45 @@ trigger, and mus-reset to restart an envelope.
   <a class=def name="mus-random">mus-random</a> amp
   <a class=def Name="mus-rand-seed">mus-rand-seed</a>
 </pre>
+
+
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+
+<tr>
+<td bgcolor="#f0f4ff">
+<pre>
+(with-sound (:channels 2 :play #t)
+  (let ((ran1 (make-rand 5.0 (hz-&gt;radians 220.0)))
+	(ran2 (make-rand-interp 5.0 (hz-&gt;radians 220.0)))
+	(osc1 (make-oscil 440.0))
+	(osc2 (make-oscil 1320.0)))
+    (do ((i 0 (1+ i)))
+	((= i 88200))
+      (outa i (* 0.5 (oscil osc1 (rand ran1))))
+      (outb i (* 0.5 (oscil osc2 (rand-interp ran2)))))))
+</pre>
+</td>
+
+<td width=4></td>
+
+<td bgcolor="#fbfbf0">
+<pre>
+with_sound(:play, true, :channels, 2) do
+  ran1 = make_rand(5.0, hz2radians(220.0));
+  ran2 = make_rand_interp(5.0, hz2radians(220.0));
+  osc1 = make_oscil(440.0);  
+  osc2 = make_oscil(1320.0);
+  88200.times do |i|
+    outa(i, 0.5 * oscil(osc1, rand(ran1)), $output);
+    outb(i, 0.5 * oscil(osc2, rand_interp(ran2)), $output);
+    end
+  end.output
+</pre>
+</td>
+</tr>
+</table>
+
+
 
 <p>rand produces a sequence of random numbers between -amplitude and
 amplitude (a sort of step function).
@@ -4831,14 +5197,47 @@ and <a href="#green-noise">green-noise</a> (bounded Brownian noise).
    <a class=def name="one-zero">one-zero</a> f input 
    <a class=def name="one-zero?">one-zero?</a> f
 
-   <a class=def name="make-two-pole">make-two-pole</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> a0 b1 b2 frequency radius
+   <a class=def name="make-two-pole">make-two-pole</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> frequency [or a0] radius [or b1] b2
    <a class=def name="two-pole">two-pole</a> f input 
    <a class=def name="two-pole?">two-pole?</a> f
 
-   <a class=def name="make-two-zero">make-two-zero</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> a0 a1 a2 frequency radius
+   <a class=def name="make-two-zero">make-two-zero</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> frequency [or a0] radius [or a1] a2
    <a class=def name="two-zero">two-zero</a> f input 
    <a class=def name="two-zero?">two-zero?</a> f
 </pre>
+
+
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+
+<tr>
+<td bgcolor="#f0f4ff" width=500>
+<pre>
+(with-sound (:play #t)
+  (let ((flt (make-two-pole 1000.0 0.999))
+	(ran1 (make-rand 10000.0 .002)))
+    (do ((i 0 (1+ i)))
+	((= i 44100))
+      (outa i (* 0.5 (two-pole flt (rand ran1)))))))
+</pre>
+</td>
+
+<td width=4></td>
+
+<td bgcolor="#fbfbf0">
+<pre>
+with_sound(:play, true) do
+  flt = make_two_pole(1000.0, 0.999);
+  ran1 = make_rand(10000.0, 0.002); 
+  44100.times do |i|
+    outa(i, 0.5 * two_pole(flt, rand(ran1)), $output);
+    end
+  end.output
+</pre>
+</td>
+
+</tr>
+</table>
+
 
 <p>These are the simplest of filters. If you're curious about filters, 
 Julius Smith's on-line <a href="http://www-ccrma.stanford.edu/~jos/filters/">Introduction to Digital Filters</a> is
@@ -4982,6 +5381,39 @@ as the response at that frequency (in terms of a sampling rate of 1.0):
   <a class=def name="firmant">firmant</a> f input :optional center-frequency-in-radians
   <a class=def name="firmant?">firmant?</a> f
 </pre>
+
+
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+
+<tr>
+<td bgcolor="#f0f4ff" width=500>
+<pre>
+(with-sound (:play #t)
+  (let ((flt (make-firmant 1000.0 0.999))
+	(ran1 (make-rand 10000.0 5.0)))
+    (do ((i 0 (1+ i)))
+	((= i 44100))
+      (outa i (* 0.5 (firmant flt (rand ran1)))))))
+</pre>
+</td>
+
+<td width=4></td>
+
+<td bgcolor="#fbfbf0">
+<pre>
+with_sound(:play, true) do
+  flt = make_firmant(1000.0, 0.999);
+  ran1 = make_rand(10000.0, 5.0); 
+  44100.times do |i|
+    outa(i, 0.5 * firmant(flt, rand(ran1)), $output);
+    end
+  end.output
+</pre>
+</td>
+
+</tr>
+</table>
+
 
 <p>formant and firmant are resonators (two-pole, two-zero bandpass filters) centered at "frequency", with the bandwidth set by "radius".
 </p>
@@ -5199,9 +5631,42 @@ example that puts formant on the edge of disaster (the glitch is about to explod
    <em class=emdef>envelope-&gt;coeffs</em> :key order envelope dc
 </pre>
 
+
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+
+<tr>
+<td bgcolor="#f0f4ff" width=500>
+<pre>
+(with-sound (:play #t)
+  (let ((flt (make-iir-filter 3 (vct 0.0 -1.978 0.998)))
+	(ran1 (make-rand 10000.0 0.002)))
+    (do ((i 0 (1+ i)))
+	((= i 44100))
+      (outa i (* 0.5 (iir-filter flt (rand ran1)))))))
+</pre>
+</td>
+
+<td width=4></td>
+
+<td bgcolor="#fbfbf0">
+<pre>
+with_sound(:play, true) do
+  flt = make_iir_filter(3, vct(0.0, -1.978, 0.998));
+  ran1 = make_rand(10000.0, 0.002); 
+  44100.times do |i|
+    outa(i, 0.5 * iir_filter(flt, rand(ran1)), $output);
+    end
+  end.output
+</pre>
+</td>
+
+</tr>
+</table>
+
+
 <p>These are general FIR/IIR filters of arbitrary order.
 The "order" argument is one greater than the nominal filter
-order (it is the size of the coefficient arrays).
+order (it is the size of the coefficient array).
 </p>
 
 <table border=0 hspace=20 cellspacing=20><tr><td>
@@ -5341,6 +5806,43 @@ see also convolution, physical modeling, reverb, and <a href="sndscm.html#ssffts
   <a class=def name="delaytick">delay-tick</a> d input
 </pre>
 
+
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+
+<tr>
+<td bgcolor="#f0f4ff" width=500>
+<pre>
+(with-sound (:play #t)
+  (let ((dly (make-delay (seconds-&gt;samples 0.5)))
+	(osc1 (make-oscil 440.0))
+	(osc2 (make-oscil 660.0)))
+    (do ((i 0 (1+ i)))
+	((= i 44100))
+      (outa i (* 0.5 (+ (oscil osc1)
+			(delay dly (oscil osc2))))))))
+</pre>
+</td>
+
+<td width=4></td>
+
+<td bgcolor="#fbfbf0">
+<pre>
+with_sound(:play, true) do
+  dly = make_delay(seconds2samples(0.5));
+  osc1 = make_oscil(440.0);
+  osc2 = make_oscil(660.0);
+  44100.times do |i|
+    outa(i, 0.5 * (oscil(osc1) +
+                   delay(dly, oscil(osc2))), $output);
+    end
+  end.output
+</pre>
+</td>
+
+</tr>
+</table>
+
+
 <p>The delay generator is a delay line.  
 The make-delay "size" argument sets the delay line length (in samples).
 Input fed into a delay line reappears at the output size samples later. 
@@ -5419,7 +5921,7 @@ and is the basis for about a dozen extensions (comb and friends below).
 <table width="60%" border=0><tr><td bgcolor="lightgreen" valign="middle"><center><h3>comb, notch</h3></center></td></tr></table>
 
 <pre>
-  <a class=def name="make-comb">make-comb</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (scaler size 1.0) initial-contents (initial-element 0.0) max-size
+  <a class=def name="make-comb">make-comb</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (scaler 1.0) size initial-contents (initial-element 0.0) max-size
   <a class=def name="comb">comb</a> cflt input :optional (pm 0.0)
   <a class=def name="comb?">comb?</a> cflt
 
@@ -5431,6 +5933,44 @@ and is the basis for about a dozen extensions (comb and friends below).
   <a class=def name="notch">notch</a> cflt input :optional (pm 0.0)
   <a class=def name="notch?">notch?</a> cflt
 </pre>
+
+
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+
+<tr>
+<td bgcolor="#f0f4ff" width=500>
+<pre>
+(with-sound (:play #t)
+  (let ((cmb (make-comb 0.4 (seconds-&gt;samples 0.4)))
+	(osc (make-oscil 440.0))
+	(ampf (make-env '(0 0 1 1 2 1 3 0) 
+                        :length 4410)))
+    (do ((i 0 (1+ i)))
+	((= i 88200))
+      (outa i (* 0.5 (comb cmb (* (env ampf)
+				  (oscil osc))))))))
+</pre>
+</td>
+
+<td width=4></td>
+
+<td bgcolor="#fbfbf0">
+<pre>
+with_sound(:play, true) do
+  cmb = make_comb(0.4, seconds2samples(0.4));
+  osc = make_oscil(440.0);
+  ampf = make_env([0.0, 0.0, 1.0, 1.0, 2.0, 1.0, 3.0, 0.0],
+		  :length, 4410);
+  88200.times do |i|
+    outa(i, 0.5 * (comb(cmb, env(ampf) * oscil(osc))), $output);
+    end
+  end.output
+</pre>
+</td>
+
+</tr>
+</table>
+
 
 <p>The comb generator is a delay line with a scaler on the feedback.  notch
 is a delay line with a scaler on the current input.
@@ -5473,11 +6013,11 @@ and the other arguments are also handled as in <a href="#delay">delay</a>.
 7.0 * size / (1.0 - scaler) samples, so to get a decay of feedback-dur seconds,
 </p>
 <pre>
-    (make-delay :size size :scaler (- 1.0 (/ (* 7.0 size) (* feedback-dur (<a class=quiet href="#mussrate" onmouseout="UnTip()" onmouseover="Tip(sndclm_mussrate_tip)">mus-srate</a>)))))
+    (make-comb :size size :scaler (- 1.0 (/ (* 7.0 size) (* feedback-dur (<a class=quiet href="#mussrate" onmouseout="UnTip()" onmouseover="Tip(sndclm_mussrate_tip)">mus-srate</a>)))))
 </pre>
 
 <p>The peak gain is 1.0 / (1.0 - (abs scaler)).  The peaks (or valleys in notch's case) are evenly spaced
-at (<a class=quiet href="#mussrate" onmouseout="UnTip()" onmouseover="Tip(sndclm_mussrate_tip)">mus-srate</a>) / size. The height (or depth) thereof is determined by scaler --
+at (<a class=quiet href="#mussrate" onmouseout="UnTip()" onmouseover="Tip(sndclm_mussrate_tip)">mus-srate</a>) / size. The height (or depth) thereof is determined by scaler &mdash;
 the closer to 1.0 it is, the more pronounced the dips or peaks.
 See Julius Smith's "An Introduction to Digital Filter Theory" in
 Strawn "Digital Audio Signal Processing", or Smith's "Music Applications of
@@ -5612,6 +6152,43 @@ in the feedback loop:
   <a class=def name="all-pass?">all-pass?</a> f
 </pre>
 
+
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+
+<tr>
+<td bgcolor="#f0f4ff" width=500>
+<pre>
+(with-sound (:play #t)
+  (let ((alp (make-all-pass -0.4 0.4 (seconds-&gt;samples 0.4)))
+	(osc (make-oscil 440.0))
+	(ampf (make-env '(0 0 1 1 2 1 3 0) :length 4410)))
+    (do ((i 0 (1+ i)))
+	((= i 88200))
+      (outa i (* 0.5 (all-pass alp (* (env ampf)
+				      (oscil osc))))))))
+</pre>
+</td>
+
+<td width=4></td>
+
+<td bgcolor="#fbfbf0">
+<pre>
+with_sound(:play, true) do
+  alp = make_all_pass(-0.4, 0.4, seconds2samples(0.4));
+  osc = make_oscil(440.0);
+  ampf = make_env([0.0, 0.0, 1.0, 1.0, 2.0, 1.0, 3.0, 0.0],
+		  :length, 4410);
+  88200.times do |i|
+    outa(i, 0.5 * (all_pass(alp, env(ampf) * oscil(osc))), $output);
+    end
+  end.output
+</pre>
+</td>
+
+</tr>
+</table>
+
+
 <p>The all-pass or moving average comb generator is just like <a href="#comb">comb</a> but with
 an added scaler on the input ("feedforward" is Julius Smith's suggested name for it).  If feedforward is 0.0, we get a
 comb filter.  If both scale terms are 0.0, we get a pure delay line. 
@@ -5651,6 +6228,52 @@ To get the "all-pass" behavior, set feedback equal to -feedforward.
   <a class=def name="moving-average">moving-average</a> f input
   <a class=def name="moving-average?">moving-average?</a> f
 </pre>
+
+
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+
+<tr>
+<td bgcolor="#f0f4ff" width=500>
+<pre>
+(with-sound (:play #t)
+  (let ((avg (make-moving-average 4410))
+	(osc (make-oscil 440.0))
+	(stop (- 44100 4410)))
+    (do ((i 0 (1+ i)))
+	((= i stop))
+      (let ((val (oscil osc)))
+	(outa i (* val 
+                   (moving-average avg (abs val))))))
+    (do ((i stop (1+ i)))
+	((= i 44100))
+      (outa i (* (oscil osc) 
+                 (moving-average avg 0.0))))))
+</pre>
+</td>
+
+<td width=4></td>
+
+<td bgcolor="#fbfbf0">
+<pre>
+with_sound(:play, true) do
+  avg = make_moving_average(4410);
+  osc = make_oscil(440.0);
+  stop = 44100 - 4410;
+  stop.times do |i|
+    val = oscil(osc);
+    outa(i, val * moving_average(avg, val.abs), $output);
+    end
+  4410.times do |i|
+    outa(stop + i, oscil(osc) * 
+                   moving_average(avg, 0.0), $output);
+    end
+  end.output</pre>
+</td>
+
+</tr>
+</table>
+
+
 
 <p>The moving-average or moving window average generator returns the average of the last "size" values input to it.
 </p>
@@ -5715,18 +6338,86 @@ that are squelched and those that are unchanged (to avoid clicks):
   <a class=def name="src?">src?</a> s
 </pre>
 
-<table border=1 cellpadding=4 hspace=40 vspace=10>
-<tr><td colspan=2 bgcolor="beige"><center>src methods</center></td></tr>
-<tr><td><em class=gen>mus-increment</em></td><td>srate arg to make-src</td></tr>
+
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+
+<tr>
+<td bgcolor="#f0f4ff" width=500>
+<pre>
+(with-sound (:play #t :srate 22050)
+  (let* ((rd (make-readin "oboe.snd"))
+	 (len (* 2 (mus-sound-frames "oboe.snd")))
+	 (sr (make-src rd 0.5)))
+    (do ((i 0 (1+ i)))
+	((= i len))
+      (outa i (src sr)))))
+</pre>
+</td>
+
+<td width=4></td>
+
+<td bgcolor="#fbfbf0">
+<pre>
+with_sound(:play, true, :srate, 22050) do
+  rd = make_readin("oboe.snd");
+  len = 2 * mus_sound_frames("oboe.snd");
+  sr = make_src(lambda do |dir| readin(rd) end, 0.5);
+  len.times do |i|
+    outa(i, src(sr), $output);
+    end
+  end.output
+</pre>
+</td>
+
+</tr>
+<tr>
+<td bgcolor="#f0f4ff" width=500>
+<pre>
+(with-sound (:play #t)
+  (let ((osc (make-oscil 440.0))
+	(sr (make-src :srate 2.0)))
+    (do ((i 0 (1+ i)))
+	((= i 44100))
+      (outa i (src sr 0.0 
+		   (lambda (dir)
+		     (oscil osc)))))))
+</pre>
+</td>
+
+<td width=4></td>
+
+<td bgcolor="#fbfbf0">
+<pre>
+with_sound(:play, true) do
+  osc = make_oscil(440.0);
+  sr = make_src(:srate, 2.0);
+  44100.times do |i|
+    outa(i, src(sr, 0.0, lambda do |dir| 
+                           oscil(osc) 
+                           end), 
+                    $output);
+    end
+  end.output
+</pre>
+</td>
+
+</tr>
 </table>
+
+
 
 <p>The src generator performs sampling rate conversion
 by convolving its input with a sinc
 function.
 make-src's "srate" argument is the
 ratio between the old sampling rate and the new;  an srate of 2 causes the sound to be half as long, transposed up an octave.
-A negative "srate" reads the sound backwards, if possible.
 </p>
+
+<table border=1 cellpadding=4 hspace=40 vspace=10>
+<tr><td colspan=2 bgcolor="beige"><center>src methods</center></td></tr>
+<tr><td><em class=gen>mus-increment</em></td><td>srate arg to make-src</td></tr>
+</table>
+
 
 <p>
 The "width" argument sets how many neighboring samples to convolve with the sinc function.
@@ -5825,15 +6516,86 @@ envelope so that the result has a given duration, use <a href="sndscm.html#srcfi
   <a class=def name="convolvefiles">convolve-files</a> file1 file2 :optional (maxamp 1.0) (output-file "tmp.snd")
 </pre>
 
-<table border=1 cellpadding=4 hspace=40 vspace=10>
-<tr><td colspan=2 bgcolor="beige"><center>convolve methods</center></td></tr>
-<tr><td><em class=gen>mus-length</em></td><td>fft size used in the convolution</td></tr>
+
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+
+<tr>
+<td bgcolor="#f0f4ff" width=500>
+<pre>
+(with-sound (:play #t :statistics #t)
+  (let ((cnv (make-convolve 
+	      (make-readin "pistol.snd")
+	      (file-&gt;vct "oboe.snd")))) ; in examp.scm
+    (do ((i 0 (1+ i)))
+	((= i 88200))
+      (outa i (* 0.25 (convolve cnv))))))
+</pre>
+</td>
+
+<td width=4></td>
+
+<td bgcolor="#fbfbf0">
+<pre>
+with_sound(:play, true, :statistics, true) do
+  rd = make_readin("oboe.snd");
+  flt = file2vct("pistol.snd"); # in examp.rb
+  cnv = make_convolve(lambda { |dir| readin(rd)}, flt);
+  88200.times do |i|
+    outa(i, 0.25 * convolve(cnv), $output);
+    end
+  end.output
+</pre>
+</td>
+</tr>
+
+<tr>
+<td bgcolor="#f0f4ff" width=500>
+<pre>
+(with-sound (:play #t)
+  (let* ((tempfile (convolve-files "oboe.snd" 
+  		   		   "pistol.snd" 0.5 
+				   "convolved.snd"))
+	 (len (mus-sound-frames tempfile))
+	 (reader (make-readin tempfile)))
+    (do ((i 0 (1+ i)))
+	((= i len))
+      (outa i (readin reader)))
+    (delete-file tempfile)))
+</pre>
+</td>
+
+<td width=4></td>
+
+<td bgcolor="#fbfbf0">
+<pre>
+with_sound(:play, true) do
+  tempfile = convolve_files("oboe.snd", 
+  	                    "pistol.snd", 0.5, 
+			    "convolved.snd");
+  len = mus_sound_frames(tempfile);
+  reader = make_readin(tempfile);
+  len.times do |i|
+    outa(i, readin(reader), $output);
+    end
+  File.unlink(tempfile)
+  end.output
+</pre>
+</td>
+</tr>
 </table>
+
+
 
 <p>The convolve generator convolves its input with the impulse response "filter" (a vct).
 "input" and "input-function" are functions of one argument that are
 called whenever convolve needs input.
 </p>
+
+<table border=1 cellpadding=4 hspace=40 vspace=10>
+<tr><td colspan=2 bgcolor="beige"><center>convolve methods</center></td></tr>
+<tr><td><em class=gen>mus-length</em></td><td>fft size used in the convolution</td></tr>
+</table>
+
 
 <table border=0 bgcolor="#fafafa" hspace=40><tr><td>
 <pre>
@@ -5868,6 +6630,8 @@ but convolve uses an FFT internally, rather than a laborious dot-product.
 <br><br>
 
 
+
+<!-- TODO: granulate, phase-vocoder, file-array? amplitude-modulate fft spectrum convolution examples -->
 
 
 <A NAME="granulatedoc"></A>
@@ -6109,6 +6873,44 @@ generator).
   <a class=def name="asymmetric-fm?">asymmetric-fm?</a> af
 </pre>
 
+
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+
+<tr>
+<td bgcolor="#f0f4ff" width=500>
+<pre>
+(with-sound (:play #t)
+  (let ((fm (make-asymmetric-fm 440.0 0.0 0.9 0.5)))
+    (do ((i 0 (1+ i)))
+	((= i 44100))
+      (outa i (* 0.5 (asymmetric-fm fm 1.0))))))
+</pre>
+</td>
+
+<td width=4></td>
+
+<td bgcolor="#fbfbf0">
+<pre>
+with_sound(:play, true) do
+  fm = make_asymmetric_fm(440.0, 0.0, 0.9, 0.5);
+  44100.times do |i|
+    outa(i, 0.5 * asymmetric_fm(fm, 1.0), $output);
+    end
+  end.output
+</pre>
+</td>
+
+</tr>
+</table>
+
+
+<p>The asymmetric-fm generator provides a way around the symmetric spectra normally produced by FM.
+See  Palamin and Palamin, "A Method of Generating and Controlling Asymmetrical
+Spectra" JAES vol 36, no 9, Sept 88, p671-685.  P&amp;P use sin(sin), but I'm using cos(sin) so
+that we get a sum of cosines, and can therefore easily normalize the peak amplitude to -1.0..1.0.
+</p>
+
+
 <table align=left border=1 cellpadding=4 hspace=40 vspace=10>
 <tr><td colspan=2 bgcolor="beige"><center>asymmetric-fm methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
@@ -6141,12 +6943,6 @@ based on:
 <img src="pix/sceq22.png" alt="I form">
 
 <br clear=left>
-
-<p>The asymmetric-fm generator provides a way around the symmetric spectra normally produced by FM.
-See  Palamin and Palamin, "A Method of Generating and Controlling Asymmetrical
-Spectra" JAES vol 36, no 9, Sept 88, p671-685.  P&amp;P use sin(sin), but I'm using cos(sin) so
-that we get a sum of cosines, and can therefore easily normalize the peak amplitude to -1.0..1.0.
-</p>
 
 <p>"r" is the ratio between successive 
 sideband amplitudes, r &lt; 0.0 or r &gt; 1.0 pushes energy above the carrier, whereas r between 0.0 and 1.0 pushes it below. (r = 1.0
@@ -6382,6 +7178,51 @@ and you forget to call mus-close, the GC will eventually do it for you.
  <a class=def name="readin?">readin?</a> rd
 </pre>
 
+
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+
+<tr>
+<td bgcolor="#f0f4ff">
+<pre>
+(with-sound (:play #t)
+  (let ((reader (make-readin "oboe.snd")))
+    (do ((i 0 (1+ i)))
+	((= i 44100))
+      (outa i (* 2.0 (readin reader))))))
+</pre>
+</td>
+
+<td width=4></td>
+
+<td bgcolor="#fbfbf0">
+<pre>
+with_sound(:play, true) do
+  reader = make_readin("oboe.snd");
+  44100.times do |i|
+   outa(i, 2.0 * readin(reader), 
+        $output);
+   end
+  end.output
+</pre>
+</td>
+
+<td width=4></td>
+
+<td bgcolor="#effdef">
+<pre>
+44100 lambda: &lt;{ len }&gt;
+  "oboe.snd" make-readin { reader }
+  len 0 ?do
+  i reader readin 2.0 f* *output* outa drop
+  loop
+;
+:play #t :channels 1 :srate 44100 with-sound
+</pre>
+</td>
+</tr>
+</table>
+
+
 <table border=1 cellpadding=4 hspace=40 vspace=10>
 <tr><td colspan=2 bgcolor="beige"><center>readin methods</center></td></tr>
 <tr><td><em class=gen>mus-channel</em></td><td>channel arg to make-readin (no set!)</td></tr>
@@ -6444,6 +7285,53 @@ readin and <a href="#env">env</a>:
   <a class=def name="ina">ina</a> loc input
   <a class=def name="inb">inb</a> loc input
 </pre>
+
+
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+
+<tr>
+<td bgcolor="#f0f4ff">
+<pre>
+(with-sound (:play #t)
+  (let ((infile 
+          (make-file->sample "oboe.snd")))
+    (do ((i 0 (1+ i)))
+	((= i 44100))
+      (out-any i (in-any i 0 infile) 0))))
+</pre>
+</td>
+
+<td width=4></td>
+
+<td bgcolor="#fbfbf0">
+<pre>
+with_sound(:play, true) do
+  infile = make_file2sample("oboe.snd");
+  44100.times do |i|
+    out_any(i, in_any(i, 0, infile), 
+            0, $output);
+    end
+  end.output
+</pre>
+</td>
+
+<td width=4></td>
+
+<td bgcolor="#effdef">
+<pre>
+44100 lambda: &lt;{ len }&gt;
+  "oboe.snd" make-file->sample { infile }
+  len 0 ?do
+  i i 0 infile in-any 0 out-any drop
+  loop
+;
+:play #f :channels 1 :srate 44100 with-sound
+</pre>
+</td>
+</tr>
+</table>
+
+
 
 <p>These are the "generic" input and output functions.
 out-any adds its "data" argument (a sound sample) into the "output" object at sample
@@ -6572,6 +7460,60 @@ use its :output argument:
  <a class=def name="locsig-type">locsig-type</a> ()
 </pre>
 
+
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+
+<tr>
+<td bgcolor="#f0f4ff">
+<pre>
+(with-sound (:play #t :channels 2)
+  (let ((loc (make-locsig 60.0))
+	(osc (make-oscil 440.0)))
+    (do ((i 0 (1+ i)))
+	((= i 44100))
+      (locsig loc i 
+              (* 0.5 (oscil osc))))))
+</pre>
+</td>
+
+<td width=4></td>
+
+<td bgcolor="#fbfbf0">
+<pre>
+with_sound(:play, true, :channels, 2) do
+  loc = make_locsig(60.0, :output, $output);
+  osc = make_oscil(440.0);
+  44100.times do |i|
+    locsig(loc, i, 0.5 * oscil(osc));
+    end
+  end.output
+</pre>
+</td>
+
+<td width=4></td>
+
+<td bgcolor="#effdef">
+<pre>
+44100 lambda: &lt;{ len }&gt;
+  60.0 :output *output* make-locsig { loc }
+  440.0 make-oscil { osc }
+  len 0 ?do
+  loc i osc 0.0 0.0 oscil 0.5 f* locsig drop
+  loop
+;
+:play #t :channels 2 :srate 44100 with-sound
+</pre>
+</td>
+</tr>
+</table>
+
+
+<p>locsig places a sound in 
+an N-channel circle of speakers
+by scaling the respective channel amplitudes
+("that old trick <i>never</i> works"). It normally replaces <a href="#outa">out-any</a>.
+</p> 
+
 <table border=1 cellpadding=4 hspace=40>
 <tr><td colspan=2 bgcolor="beige"><center>locsig methods</center></td></tr>
 <tr><td><em class=gen>mus-data</em></td><td>output scalers (a vct)</td></tr>
@@ -6581,10 +7523,7 @@ use its :output argument:
 <tr><td><em class=gen>mus-length</em></td><td>output channels</td></tr>
 </table>
 
-<p>locsig normally takes the place of <a href="#outa">out-any</a> in an
-instrument.  It tries to place a signal in a N-channel circle
-by scaling the respective amplitudes
-("that old trick <i>never</i> works").  "reverb" determines how much of
+<p>"reverb" determines how much of
 the direct signal gets sent to the reverberator.  "distance" tries to
 imitate a distance cue by fooling with the relative amounts of direct and
 reverberated signal (independent of the "reverb" argument).  The distance should
@@ -7944,7 +8883,20 @@ The ercoser instrument uses ercos:
   <A class=def NAME="rkssb?">rkssb?</A> gen
 </pre>
 
-<p>These produce a sum of sinusoids scaled by (r^k)/k.  As r approaches 1.0 or -1.0, rksin approaches a sawtooth.  As with rcos, we
+<!--
+(with-sound (:output "r7.snd")
+  (let ((gen (make-rksin 100.0 :r .7)))
+    (do ((i 0 (1+ i)))
+        ((= i 44100))
+      (outa i (* 0.5 (rksin gen 0.0))))))
+-->
+
+<p>These produce a sum of sinusoids scaled by (r^k)/k.  As r approaches 1.0 or -1.0, rksin approaches a sawtooth.  
+</p>
+
+<img src="pix/rksin3.png" alt="sawtooths" hspace=40>
+
+<p>As with rcos, we
 can calculate the safe maximum r, given the current srate and frequency (this function is perhaps too cautious...):
 </p>
 
@@ -8804,7 +9756,7 @@ test 23 in snd-test.
 </p>
 
 
-<table border=8 bordercolor="lightgreen" cellpadding=2>
+<table border=8 bordercolor="lightgreen" cellpadding=2 hspace=10>
 <tr><th width=120 bgcolor="beige">instrument</th><th bgcolor="beige">function</th><th bgcolor="beige">CL</th><th bgcolor="beige">Scheme</th><th bgcolor="beige">Ruby</th><th bgcolor="beige">Forth</th></tr>
 <tr><td>complete-add</td>      
     <td>additive synthesis</td>
