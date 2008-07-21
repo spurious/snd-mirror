@@ -338,7 +338,7 @@ in frequency, run it through the filter, then view the entire sound, treating th
 in terms of srate = 1.0 (for convenience):
 </p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (define (filter-sweep flt chan)
   (let ((phase 0.0)
 	(freq 0.0)
@@ -855,7 +855,7 @@ returned 5437 (in 18 minutes of sound).  That seemed high, and I thought "maybe
 those are just one sample clicks that can easily be smoothed over", so
 </p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa">
+<table border=0 cellpadding=5 hspace=20><tr><td>
 <pre>
 (define* (count-clips :optional snd chn)
   (let ((y0 0.0))
@@ -874,7 +874,7 @@ portions (this function has at least one bug, but I plowed past it &mdash; no
 time for perfection...):
 </p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (define* (list-clips :optional snd chn)
   (let* ((max-clips (count-clips snd chn))
 	 (clip-data (make-vector (* 2 max-clips) 0))
@@ -931,7 +931,7 @@ Now to conjure up a plausible sine wave between the clip begin and
 end points.  (This is also "just-good-enough" software).
 </p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (if (not (defined? 'pi)) (define pi 3.141592653589793))
 
 (define (fix-clip clip-beg-1 clip-end-1)
@@ -1006,7 +1006,7 @@ telephone recordings, I assumed anything under 40 Hz or above
 4000 Hz was extraneous:
 </p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (define* (<a name="notchoutrumbleandhiss">notch-out-rumble-and-hiss</a> :optional snd chn)
   (let* ((cur-srate (exact-&gt;inexact (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a> snd))))
     (<a class=quiet href="extsnd.html#filtersound" onmouseout="UnTip()" onmouseover="Tip(extsnd_filtersound_tip)">filter-sound</a>
@@ -1031,7 +1031,7 @@ sound before and after an edit, sometimes with a tracking cursor.
 So I bound a few keys:
 </p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (define (play-from-cursor current)
   (<a class=quiet href="extsnd.html#play" onmouseout="UnTip()" onmouseover="Tip(extsnd_play_tip)">play</a> (<a class=quiet href="extsnd.html#cursor" onmouseout="UnTip()" onmouseover="Tip(extsnd_cursor_tip)">cursor</a>) #f #f #f #f (if current #f (1- (<a class=quiet href="extsnd.html#editposition" onmouseout="UnTip()" onmouseover="Tip(extsnd_editposition_tip)">edit-position</a>)))))
 
@@ -1922,7 +1922,7 @@ make-rmsgain returns the generator used by rms, gain, and balance.
 The 'hp' parameter sets the speed with which the balance process
 tracks the RMS signal.  An example is worth a zillion words:
 
-<table border=0 cellpadding=5 hspace=10 vspace=10><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=10 vspace=10><tr><td><pre>
       (<a class=quiet href="#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:channels 3)
         (let ((rg (make-rmsgain))
 	      (rg1 (make-rmsgain 40))
@@ -2313,7 +2313,7 @@ currently selected sound.  Click "Gnuplot" to get a pretty picture of the path (
 A simple instrument that uses dlocsig is:
 </p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (define* (sinewave start-time duration freq amp :key (amp-env '(0 1 1 1))
 		   (path (make-path :path '(-10 10 0 5 10 10))))
   (let* ((vals (<em class=red>make-dlocsig</em> :start-time start-time :duration duration :path path))
@@ -3691,7 +3691,7 @@ resource argument list is 'args'.  The editor's current envelope is accessible
 (read and write) as 'xe-envelope':
 </p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (define outer (add-main-pane "hiho" xmFormWidgetClass '()))
 (define editor (<em class=red>xe-create-enved</em> "a name" outer 
 			     (list XmNleftAttachment   XmATTACH_FORM
@@ -3842,7 +3842,7 @@ applies the function 'func' to each element of the spectrum, then inverse ffts. 
 current spectrum value.  
 </p>
 <table border=0 cellpadding=5 hspace=20>
-<tr><td bgcolor="#fafafa"><pre>
+<tr><td><pre>
 (define (brfft lofrq hifrq)
   "(brfft lofrq hifrq) removes all frequencies between lofrq and hifrq: (brfft 1000.0 2000.0)"
   (let* ((len (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a>))
@@ -5160,7 +5160,7 @@ The 'func' is passed one argument, the sound file name.
 map-sound-files returns a list of the results, if any, returned from 'func'.
 match-sound-files applies 'func' to each sound file in 'dir' and returns a list of files for which func does not return #f.
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (for-each-sound-file
   (lambda (n) 
     (if (&gt; (<a class=quiet href="extsnd.html#mussoundduration" onmouseout="UnTip()" onmouseover="Tip(extsnd_mussoundduration_tip)">mus-sound-duration</a> n) 10.0) 
@@ -5178,7 +5178,7 @@ We can use Guile's regexp support here to search for all .snd and .wav files:
 In fact, we could replace the built-in procedures <a href="extsnd.html#addsoundfileextension">add-sound-file-extension</a> and
 <a href="extsnd.html#soundfilesindirectory">sound-files-in-directory</a> (we're using some procedures written by Dirk Herrman here):
 
-<table border=0 cellpadding=5 hspace=20 vspace=10><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20 vspace=10><tr><td><pre>
 (define (filter-list pred? objects)
   (let loop ((objs objects)
 	     (result '()))
@@ -6321,7 +6321,7 @@ if 'low-pass' if #t, a low pass filter is inserted before the output;
 an ordinary editing function:
 </p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 (define* (clm-reverb-sound reverb-amount reverb :optional (reverb-data '()) snd)
   (let ((output (<a class=quiet href="extsnd.html#sndtempnam" onmouseout="UnTip()" onmouseover="Tip(extsnd_sndtempnam_tip)">snd-tempnam</a>))
@@ -7049,7 +7049,7 @@ mixes-maxamp returns the maxamp of the mixes in 'mix-list'.
 </td></tr><tr><td></td><td>
 move-mixes moves each mix in 'mix-list' by 'samps' samples.  To move all sync'd mixes together whenever one of them is dragged:
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_add_hook_tip)">add-hook!</a> <a class=quiet href="extsnd.html#mixreleasehook" onmouseout="UnTip()" onmouseover="Tip(extsnd_mixreleasehook_tip)">mix-release-hook</a>
 	   (lambda (id samps-moved)
 	     (let ((result (= (<a class=quiet href="extsnd.html#mixsync" onmouseout="UnTip()" onmouseover="Tip(extsnd_mixsync_tip)">mix-sync</a> id) 0)))
@@ -7347,7 +7347,7 @@ in Hz (more or less) and 'Q' controls the resonance: 0.0 = no resonance, whereas
 1.0 causes the filter to oscillate at 'frequency'. 
 </p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
   (define (moog freq Q)
     (let ((gen (<em class=red>make-moog-filter</em> freq Q)))
       (lambda (inval)
@@ -7381,7 +7381,7 @@ the clef instead.
 <br>
 <p>This was created with:
 </p>
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (<a class=quiet href="#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () (fm-violin 0 1 440 .1))
 
 (define (draw-staff x0 y0 width line-sep)
@@ -7582,7 +7582,7 @@ The variable 'save-peak-env-info'
 determines whether these envelopes are being saved (its default is #t).  The procedure
 </p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (define (peak-env-info-file-name snd chn)	
   (<a class=quiet onmouseout="UnTip()" onmouseover="Tip(scheme_format_tip)">format</a> #f "~A/~A-peaks-~D" save-peak-env-info-directory (<a class=quiet href="extsnd.html#shortfilename" onmouseout="UnTip()" onmouseover="Tip(extsnd_shortfilename_tip)">short-file-name</a> snd) chn))
 </pre></td></tr></table>
@@ -8036,7 +8036,7 @@ play-often plays the selected sound 'n' times.
 play-until-c-g plays the selected sound until you interrupt it via C-g.
 Similarly, play-region-forever plays region 'reg' until you interrupt it with C-g.
 
-<table border=0 cellpadding=5><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5><tr><td><pre>
     (<a class=quiet href="extsnd.html#bindkey" onmouseout="UnTip()" onmouseover="Tip(extsnd_bindkey_tip)">bind-key</a> #\p 0 
       (lambda (n) 
         "play often" 
@@ -8071,7 +8071,7 @@ play-sines produces a spectrum given a list of lists of frequency and amplitude:
 play-sound plays the current sound, calling <code>(func data)</code> on each buffer if 'func' is passed.
 The following doubles each sample in channel 0 during playback:
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (<em class=red>play-sound</em>
  (lambda (data)
    (let ((len (<a class=quiet href="extsnd.html#sounddatalength" onmouseout="UnTip()" onmouseover="Tip(extsnd_sounddatalength_tip)">sound-data-length</a> data)))
@@ -8102,7 +8102,7 @@ function of two arguments (the number of files, and the number of samples betwee
 'read-even-when-not-playing' is #t (the default is #f), the input files are constantly 
 read, even if not playing.  'files' is a list of files to be played.
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (vector-synthesis 
   (let ((ctr 0) (file 0)) 
     (lambda (files bufsize)
@@ -8295,7 +8295,7 @@ argument to pvocoder can be a function.
 <p>
 pvoc.scm also contains a few examples of using the CLM phase-vocoder generator:
 </p>
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (define test-pv-4
   (lambda (gate)
     (let ((pv (<a class=quiet href="sndclm.html#make-phase-vocoder" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_phase_vocoder_tip)">make-phase-vocoder</a> #f
@@ -8412,7 +8412,7 @@ See <a href="#oscopedoc">oscope</a> for a fancier version of the fft stuff.
 <p>Here's some info from Michael Scholz about the Ruby version of rtio:
 </p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 rt = make_rtio
 rt.show_input
 rt.show_input_fft
@@ -8503,7 +8503,7 @@ eval-over-selection evaluates 'func' on each sample in the current selection. A 
 name might be map-selection.
 The code:
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (<a class=quiet href="extsnd.html#bindkey" onmouseout="UnTip()" onmouseover="Tip(extsnd_bindkey_tip)">bind-key</a> #\x 4
   (lambda () "eval over selection"
     (if (<a class=quiet href="extsnd.html#selectionok" onmouseout="UnTip()" onmouseover="Tip(extsnd_selectionok_tip)">selection?</a>)
@@ -8915,7 +8915,7 @@ plane.  Use the View:Orientation dialog to change the
 viewing angle.  To move one sample at a time through a sound,
 you could bind the arrow keys:
 
-<table border=0 cellpadding=5 hspace=20 vspace=10><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20 vspace=10><tr><td><pre>
 (<a class=quiet href="extsnd.html#bindkey" onmouseout="UnTip()" onmouseover="Tip(extsnd_bindkey_tip)">bind-key</a> "Left" 0 (lambda () 
                      (set! (<a class=quiet href="extsnd.html#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a>) (max 0 (1- (<a class=quiet href="extsnd.html#leftsample" onmouseout="UnTip()" onmouseover="Tip(extsnd_leftsample_tip)">left-sample</a>)))) 
                      <a class=quiet onmouseout="UnTip()" onmouseover="Tip(extsnd_keyboard_no_action_tip)">keyboard-no-action</a>))
@@ -9203,7 +9203,7 @@ keep-file-dialog-open-upon-ok changes File:Open so that clicking "ok" does not u
 </td></tr><tr><td></td><td>
 load-font loads a font and returns a handle for it.
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (define new-font (<em class=red>load-font</em> "-*-helvetica-bold-r-*-*-14-*-*-*-*-*-*-*"))
 
 (define show-hiho
@@ -9354,7 +9354,7 @@ probe, picking out any arbitrary point in an instrument and displaying it as the
 instrument is running.  Display points can be organized as pages in a notebook
 widget:
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (define wid (make-variable-display "do-loop" "i*2" 'text))
 (define wid1 (make-variable-display "do-loop" "i" 'text))
 (do ((i 0 (1+ i)))
@@ -9438,7 +9438,7 @@ This is actually a bad idea since the menu names can change without warning.
 <em class=emdef>select-file</em> <code>(func :optional title dir filter help)</code>
 </td></tr><tr><td></td><td>
 select-file starts a file selection dialog, running 'func' if a file is selected:
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
  (<a class=quiet href="extsnd.html#addtomenu" onmouseout="UnTip()" onmouseover="Tip(extsnd_addtomenu_tip)">add-to-menu</a> 0 "Insert File" 
    (lambda () 
      (<em class=red>select-file</em>
@@ -9507,7 +9507,7 @@ mouse location in that channel.
 'sounds' is list of sound file names.
 'args' is list of resource settings for each icon.
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (make-sound-box "sounds"
 		(list-ref (<a class=quiet href="extsnd.html#mainwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_mainwidgets_tip)">main-widgets</a>) 3)
 		(lambda (file) 
@@ -9837,7 +9837,7 @@ to call in "real-time" situations.  Any other CLM-style instrument could
 be rewritten in the same form.
 </p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
   <em class=emdef>make-fm-violin</em>
     frequency amplitude :key (fm-index 1.0) (amp-env #f) 
     (periodic-vibrato-rate 5.0) (random-vibrato-rate 16.0)
@@ -9860,7 +9860,7 @@ normally only a few of them are used at a time.  There are two examples of calli
 in fmv.scm, the simpler one being:
 </p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (define test-v 
   (lambda (beg dur freq amp amp-env)
     (let ((v (<em class=red>make-fm-violin</em>
@@ -9896,7 +9896,7 @@ I can't resist including an historical digression.
 Here is a Mus10 version of fm-violin (in this code ":=" is used in place of the original SAIL left arrow character,
 and so on):
 </p>
-<table border=0 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 hspace=20><tr><td><pre>
 ARRAY GlissFunc, DecayFunc, AttackFunc, SineWave, AmpFunc(512);
 SYNTH(Sinewave); 1,1 999;
 SEG(AmpFunc); 0,0 1,25 1,50 0,75 0,100;
@@ -10028,7 +10028,7 @@ To give a feel for how one worked in those days, here's a brief quote from the M
 Leland Smith, May 1977):
 </small></p>
 
-<table border=0 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 hspace=20><tr><td><pre>
 The following generates  1 second of a  440 Hz sine wave  followed by
 1/2 sec. of a  660Hz sine wave. The output goes to a file, MUSIC.MSB,
 which is written on DSKM.  
@@ -10057,7 +10057,7 @@ of going away.
 In the Samson box world, this (in its initial "chorus" version) was:
 </small></p>
 
-<table border=0 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 hspace=20><tr><td><pre>
 Instrument(Violin);
 RECORD_POINTER(seg) nullfunc;
 INTEGER ARRAY gens[1:4],indgens[1:6], GensA[1:4],AmpGens[1:2];
@@ -10127,7 +10127,7 @@ The parallel in the Sambox world to the SIMP example above is (this is
 taken from SAMBOX.BIL, November 1984):
 </small></p>
 
-<table border=0 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 hspace=20><tr><td><pre>
     Instrument(Simp);
     Integer Gen1;
     Gen1:=Osc(Pns,OutA,Zero,SineMode,0,0,Pn[3]);
@@ -10137,7 +10137,7 @@ taken from SAMBOX.BIL, November 1984):
 
 <p><small>The CLM version of this is:</small></p>
 
-<table border=0 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 hspace=20><tr><td><pre>
 (<a class=quiet href="#definstrument" onmouseout="UnTip()" onmouseover="Tip(sndscm_definstrument_tip)">definstrument</a> simp (start-time duration frequency amplitude
                      &amp;optional (amp-env '(0 0 50 1 100 0)))
   (multiple-value-bind (beg end) (<a class=quiet href="sndclm.html#timestosamples" onmouseout="UnTip()" onmouseover="Tip(sndclm_timestosamples_tip)">times-&gt;samples</a> start-time duration)
@@ -10152,7 +10152,7 @@ taken from SAMBOX.BIL, November 1984):
 In CLM, the fm-violin became (fm.html, 1989):
 </small></p>
 
-<table border=0 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 hspace=20><tr><td><pre>
 (<a class=quiet href="#definstrument" onmouseout="UnTip()" onmouseover="Tip(sndscm_definstrument_tip)">definstrument</a> violin (beg end frequency amplitude fm-index)
   (let* ((frq-scl (<a class=quiet href="sndclm.html#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> frequency))
          (maxdev (* frq-scl fm-index))
@@ -10184,7 +10184,7 @@ In CLM, the fm-violin became (fm.html, 1989):
 <p><small>or in its actual (non-simplified) form:
 </small></p>
 
-<table border=0 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 hspace=20><tr><td><pre>
 (defun bit20 (x)			;Samson box modifier got 20 bit int interpreted as fraction 
   (if (&gt;= x (expt 2 19))                ;(keep fm-violin compatible with old note lists)
       (float (/ (- x (expt 2 20)) (expt 2 19)))
@@ -10325,7 +10325,7 @@ In CLM, the fm-violin became (fm.html, 1989):
 And I just found this out on the net; I'm no csound expert, so I merely quote what I find:
 </small></p>
 
-<table border=0 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 hspace=20><tr><td><pre>
 ;ORC
 ; edited by R. Pinkston, modified for use with MIDI2CS by R. Borrmann
 ;
@@ -10391,7 +10391,7 @@ continue:
 in C/CLM is:
 </small></p>
 
-<table border=0 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 hspace=20><tr><td><pre>
       if (noise_amount != 0.0) fuzz = mus_rand(fmnoi,0.0);
       if (frqf) vib = mus_env(frqf); else vib = 0.0;
       vib += mus_triangle_wave(pervib, 0.0) + 
@@ -10410,7 +10410,7 @@ in C/CLM is:
 
 <p><small>And here is the Ruby version, written by Michael Scholz (see examp.rb):</small></p>
 
-<table border=0 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 hspace=20><tr><td><pre>
 #
 # fm_violin([start=0.0[, dur=1.0[, freq=440.0[, amp=0.3[, *args]]]]])
 #
@@ -10877,7 +10877,7 @@ is very much like define, but with added code to support notehook and (for Commo
 So, an instrument that wants to cooperate fully with with-sound and Common Music has the form:
 </p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (definstrument (ins args)
   (let ...
     (ws-interrupt?) ; see <a href="#wsinterrupt">below</a>
@@ -10891,7 +10891,7 @@ So, an instrument that wants to cooperate fully with with-sound and Common Music
 <p>The <a href="sndclm.html#optional-key">optional-key</a> feature can be used with definstrument via def-optkey-instrument:
 </p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (def-optkey-instrument (simp beg dur (frequency 440.0) (amplitude 0.1))
   (let* ((os (make-oscil frequency)))
     (run (lambda ()
@@ -10908,7 +10908,7 @@ So, an instrument that wants to cooperate fully with with-sound and Common Music
 by calling the oscils and whatnot directly in the with-sound body:
 </p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (define (<a name="shepardtone">shepard-tone</a>)
   (let* ((x 0.0)
 	 (incr .000001)               ; sets speed of glissandoes
@@ -10962,7 +10962,7 @@ handles, init-with-sound and finish-with-sound.
 within with-sound.  Its syntax is a combination of let* and with-sound:
 with-sound:</p>
 
-<table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
+<table border=0 hspace=40 cellpadding=8 cellspacing=3><tr><td>
 <pre>
 (<em class=red>sound-let</em> ((temp-1 () (fm-violin 0 1 440 .1))
             (temp-2 () (fm-violin 0 2 660 .1)
@@ -11007,7 +11007,7 @@ Here's another example:
 
 <p>Here are Ruby examples:
 </p>
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 with_sound() do
   clm_mix(with_sound(:output, "hiho.snd") do
             fm_violin_rb(0, 1, 440, 0.1)
@@ -11137,7 +11137,7 @@ then upon a subsequent recomputation, tries to tell (via a string comparison) wh
 and does not need to be recomputed.
 </p>
 
-<table border=0 bgcolor="#fafafa" hspace=40 cellpadding=8 cellspacing=3><tr><td>
+<table border=0 hspace=40 cellpadding=8 cellspacing=3><tr><td>
 <pre>
 (<a class=quiet href="#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () 
   (fm-violin 0 .1 440 .1)
@@ -11175,7 +11175,7 @@ it in conjunction with mixer to scale and envelope all the various ins and outs.
 <a href="sndclm.html#filetoframe">file-&gt;frame</a> generator.
 </p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (<a class=quiet href="#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> () 
   (fm-violin 0 .1 440 .1) 
   (<a class=quiet href="#musmix" onmouseout="UnTip()" onmouseover="Tip(sndscm_musmix_tip)">mus-mix</a> <a class=quiet onmouseout="UnTip()" onmouseover="Tip(sndclm_output_tip)">*output*</a> "oboe.snd") 
@@ -11199,7 +11199,7 @@ So, as a first example, here is a way to define your own oscil using def-clm-str
 you could also use a vct &mdash; see <a href="sndclm.html#make-my-oscil">make-my-oscil</a>).
 </p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (<em class=red>def-clm-struct</em> osc freq phase)
 
 ;;; this defines a struct named "osc" with the (float) fields freq and phase.
@@ -11299,7 +11299,7 @@ wrapper to handle that:
 in CLM, add the desired methods as an association list with the name :methods:
 </p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (def-clm-struct (osc :make-wrapper
 		     (lambda (gen)
 		       (set! (osc-freq gen) (<a class=quiet href="sndclm.html#hztoradians" onmouseout="UnTip()" onmouseover="Tip(sndclm_hztoradians_tip)">hz-&gt;radians</a> (osc-freq gen)))
@@ -11412,7 +11412,7 @@ The following function sets up two sounds,
 an upward ramp and a downward ramp, then zips them together:
 </p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (define (ramp-test)
   (let ((data (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> 10000)))
     (<a class=quiet href="extsnd.html#newsound" onmouseout="UnTip()" onmouseover="Tip(extsnd_newsound_tip)">new-sound</a> "new-0.snd")

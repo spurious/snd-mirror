@@ -921,7 +921,7 @@ current window and is updated as the window bounds change.
 If you'd like the fft size to reflect the current time domain
 window size:</p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa">
+<table border=0 cellpadding=5 hspace=20><tr><td>
 <pre>
 (add-hook! <a class=quiet href="extsnd.html#graphhook" onmouseout="UnTip()" onmouseover="Tip(extsnd_graphhook_tip)">graph-hook</a>
   (lambda (snd chn y0 y1)
@@ -1556,7 +1556,7 @@ The search commands are:</p>
 <p>These searching functions can be closures; the following searches for
 the next positive-going zero crossing, placing the cursor just before it:</p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa">
+<table border=0 cellpadding=5 hspace=20><tr><td>
 <pre>
 (define (zero+)
   ;; return a closure to search for positive-going zero crossing.	

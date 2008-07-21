@@ -274,7 +274,7 @@ then .snd.  If you're always using just one version of Snd, it's simplest to sti
 Here's a more elaborate initialization file (~/.snd_guile):
 </p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (use-modules (ice-9 debug) (ice-9 format) (ice-9 optargs))
 (debug-set! stack 0)                ;turn off Guile's stack-size check
 
@@ -330,7 +330,7 @@ Here's a more elaborate initialization file (~/.snd_guile):
 
 <p>A similar Ruby initialization file (~/.snd_ruby):
 </p>
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 require "draw"
 require "popup"
 
@@ -361,7 +361,7 @@ $mouse_enter_text_hook.add_hook!("focus") do |widget| focus_widget(widget) end
 <p>And Forth:
 </p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 \ .snd_forth -- start up file for Snd/Forth -*- snd-forth -*-
 
 \ You can easily install the *.fs scripts with:
@@ -1037,7 +1037,7 @@ listener, and using the graph and spectrum functions.  Say we have
 these declarations in ~/.snd:
 </p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (define data-size 1024)
 (define data (<a class=quiet href="extsnd.html#makevct" onmouseout="UnTip()" onmouseover="Tip(extsnd_makevct_tip)">make-vct</a> data-size))
 
@@ -1064,7 +1064,7 @@ these declarations in ~/.snd:
 <p>Any CLM instrument or function can be used in this way 
 to edit sounds.  Say we want an echo effect:</p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (define echo 
   (lambda (scaler secs)
     (let ((del (<a class=quiet href="sndclm.html#make-delay" onmouseout="UnTip()" onmouseover="Tip(sndclm_make_delay_tip)">make-delay</a> (round (* secs (<a class=quiet href="extsnd.html#srate" onmouseout="UnTip()" onmouseover="Tip(extsnd_srate_tip)">srate</a>))))))
@@ -1384,7 +1384,7 @@ configure switch --with-static-xm, and the xm module will be included
 in the base Snd image.
 Here's a dialog window with a slider:</p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (define scale-dialog #f)
 (define current-scaler 1.0)
 
@@ -1443,7 +1443,7 @@ Here's a dialog window with a slider:</p>
 <p>
 In Ruby, this is:</p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 $scale_dialog = false
 $current_scaler = 1.0
 
@@ -1497,7 +1497,7 @@ The next function installs our own file filtering procedure into the File:Open d
 match-sound-files from extensions.scm):
 </p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (define (install-searcher proc)
   (define (XmString-&gt;string str)
     (cadr (XmStringGetLtoR str XmFONTLIST_DEFAULT_TAG)))
@@ -1539,7 +1539,7 @@ extension language if you loaded the xg module or built Snd with the configurati
 Here's the scale-dialog in xg/gtk:
 </p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (define scale-dialog #f)
 (define current-scaler 1.0)
 
@@ -1587,7 +1587,7 @@ a GtkWidget, so we have to cast a GtkAdjustment back to its original type.
 <p>Here are a couple other examples of things that aren't covered by the gtk code in snd-gtk.scm and
 friends:
 </p>
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 ;; report on mouse scroll wheel changes when in the channel graph
 (g_signal_connect 
  (car (<a class=quiet href="extsnd.html#channelwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_channelwidgets_tip)">channel-widgets</a>)) "scroll_event" 
@@ -1689,7 +1689,7 @@ can treat this version of Snd as a scripting engine.  For example,
 if you have an executable file with:
 </p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa">
+<table border=0 cellpadding=5 hspace=20><tr><td>
 <pre>
 #!/home/bil/test/snd-9/snd -l
 !#
@@ -1758,7 +1758,7 @@ a higher value, Snd will subsequently ignore the intervening arguments
 as it scans the startup arguments (see snd-test.scm).
 </p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 #!/home/bil/test/snd-9/snd -l
 !#
 (if (= (length (<a class=quiet href="extsnd.html#scriptargs" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptargs_tip)">script-args</a>)) 2) ;i.e. ("-l" "script")
@@ -1781,7 +1781,7 @@ doubling all the sounds or whatever by using a do loop --
 the following displays all the comments it finds:
 </p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 #!/home/bil/cl/snd -l
 !#
 (use-modules (ice-9 format))
@@ -1817,7 +1817,7 @@ Here's another script; it looks for any sounds that are longer
 than 40 seconds in duration, and truncates them to 40 seconds:
 </p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 #!/usr/local/bin/snd -l
 !#
 (if (= (length (<a class=quiet href="extsnd.html#scriptargs" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptargs_tip)">script-args</a>)) 2)
@@ -1835,7 +1835,7 @@ than 40 seconds in duration, and truncates them to 40 seconds:
 
 <p>Here's a sndplay replacement script:</p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 #!snd -b
 !#
 (<a class=quiet href="extsnd.html#playandwait" onmouseout="UnTip()" onmouseover="Tip(extsnd_playandwait_tip)">play-and-wait</a> (list-ref (<a class=quiet href="extsnd.html#scriptargs" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptargs_tip)">script-args</a>) (+ (<a class=quiet href="extsnd.html#scriptarg" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptarg_tip)">script-arg</a>) 1)))
@@ -1846,7 +1846,7 @@ than 40 seconds in duration, and truncates them to 40 seconds:
 into a bunch of mono files:
 </p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 #!snd -b
 !#
 (if (= (length (<a class=quiet href="extsnd.html#scriptargs" onmouseout="UnTip()" onmouseover="Tip(extsnd_scriptargs_tip)">script-args</a>)) 2)
@@ -1892,7 +1892,7 @@ Here's a Ruby version of the init file given
 above:
 </p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 set_window_width 800
 set_window_height 500
 
@@ -1958,7 +1958,7 @@ Keywords, CLM generic functions, and optional arguments work as in Scheme:
 Here's one more example, a translation of display-energy in draw.scm:
 </p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 def display_energy(snd, chn)
   ls = left_sample
   rs = right_sample
@@ -2010,7 +2010,7 @@ Scheme and Ruby files described above &mdash; see *.fs.  See also Mike's very fi
 Here's an example from his fth.texi file showing how to define an instrument and use it in with-sound:
 </p>
 
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 instrument: src-simp { start dur amp sr sr-env fname -- }
     :file fname make-readin { f }
     :input f input-fn :srate sr make-src { sr }
@@ -2114,7 +2114,7 @@ than one input is required, the first argument to apply-ladspa should be a list 
 </pre>
 <p><a name="ladspachannel"></a>The "regularized" version of apply-ladspa could be defined:
 </p>
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (define* (ladspa-channel ladspa-data :optional (beg 0) ndur snd chn (edpos -1))
   (let* ((dur (or ndur (- (<a class=quiet href="extsnd.html#frames" onmouseout="UnTip()" onmouseover="Tip(extsnd_frames_tip)">frames</a> snd chn) beg)))
 	 (reader (<a class=quiet href="extsnd.html#makesamplereader" onmouseout="UnTip()" onmouseover="Tip(extsnd_makesamplereader_tip)">make-sample-reader</a> beg snd chn 1 edpos)))
@@ -2152,7 +2152,7 @@ than one input is required, the first argument to apply-ladspa should be a list 
 </pre>
 <p>See ladspa.h for full details. We could replace analyse-ladspa using these functions:
 </p>
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (define (analyze-ladspa library label)
   (let* ((descriptor (<em class=red>ladspa-descriptor</em> library label))
 	 (data '())
@@ -2190,7 +2190,7 @@ than one input is required, the first argument to apply-ladspa should be a list 
 <p>Here's a function that processes a channel of data through a plugin, sending the 
 data directly to the DAC:
 </p>
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (define* (ladspa-it library label :rest plugin-parameters)
   ;; (ladspa-it "cmt" "delay_5s" .3 .5)
   (init-ladspa)
@@ -2367,7 +2367,7 @@ Any of the Snd drawing area widgets (or your own) can receive GL graphics
 commands.  Here is a translation of the SGI/xjournal glxmotif
 program:
 </p>
-<table border=0 cellpadding=5 hspace=20><tr><td bgcolor="#fafafa"><pre>
+<table border=0 cellpadding=5 hspace=20><tr><td><pre>
 (define (draw-it)
   (glXMakeCurrent (XtDisplay (cadr (<a class=quiet href="extsnd.html#mainwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_mainwidgets_tip)">main-widgets</a>))) 
 		  (XtWindow (car (<a class=quiet href="extsnd.html#channelwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_channelwidgets_tip)">channel-widgets</a>)))
