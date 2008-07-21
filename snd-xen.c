@@ -2356,7 +2356,6 @@ static char *find_source_file(char *orig)
 }
 
 
-
 #ifdef XEN_ARGIFY_1
 #if HAVE_SCHEME && HAVE_DLFCN_H
   XEN_NARGIFY_1(g_dlopen_w, g_dlopen)
@@ -2468,6 +2467,7 @@ XEN_NARGIFY_1(g_add_watcher_w, g_add_watcher)
 #endif
 #define g_delete_watcher_w g_delete_watcher
 #define g_add_watcher_w g_add_watcher
+
 #endif
 
 
