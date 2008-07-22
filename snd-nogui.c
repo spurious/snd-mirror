@@ -407,6 +407,7 @@ void snd_doit(int argc, char **argv)
   XEN_EVAL_C_STRING("(define (in time thunk) (join-thread (call-with-new-thread (lambda () (usleep (* 1000 time)) (thunk)))))");
 #else
   XEN_EVAL_C_STRING("(define (" S_in " . args) #f)"); 
+  /* in Gauche perhaps: (let ((thread (make-thread (lambda () (sys-nanosleep (* 1000 1000 time)) (thunk))))) (thread-start! thread) (thread-join! thread)) */
 #endif
   XEN_EVAL_C_STRING("(define (" S_main_widgets " . args) #f)");
   XEN_EVAL_C_STRING("(define (" S_make_color " . args) #f)");

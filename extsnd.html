@@ -12298,7 +12298,7 @@ and <a href="#aftersavestatehook">after-save-state-hook</a> is called afterwards
 or some variant thereof.
 <br><br>
 There are a variety of
-limitations to this process; the worst is that save-state does not try to save hook values or global variable values --
+limitations to this process; the worst is that save-state does not try to save hook values or global variable values &mdash;
 see also <a href="#ptreechannel">ptree-channel</a> in this regard.
 If you call save-state with active regions, and have the region browser running all the time, and subsequently
 want to back up to the saved state, it's safer to delete all the regions first (via <a href="#forgetregion">forget-region</a>), 

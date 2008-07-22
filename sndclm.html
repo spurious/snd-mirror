@@ -4922,7 +4922,7 @@ both reflect that in their spectra (spectrum y axis is in dB):
 <pre>
   (/ (log (max .01 (random 1.0))) (log .01))
 </pre>
-<p>where the ".01"'s affect how tightly the resultant values cluster toward 0.0 --
+<p>where the ".01"'s affect how tightly the resultant values cluster toward 0.0 &mdash;
 set them to .0001, for example, to get most of the random values close to 0.0.
 The central-limit theorem says that you can get closer and closer to gaussian
 noise simply by adding rand's together.  Orfanidis in 
@@ -9882,7 +9882,7 @@ with_sound(:play, true) do
 </table>
 
 
-<p>ring-modulation is sometimes called "double-sideband-suppressed-carrier" modulation --
+<p>ring-modulation is sometimes called "double-sideband-suppressed-carrier" modulation &mdash;
 that is, amplitude modulation with the carrier subtracted out (set to 0.0 above).
 The nomenclature here is a bit confusing &mdash; I can't remember now why I used
 these names; think of "carrier" as "carrier amplitude" and "in1" as "carrier". Normal amplitude modulation using this function would be:

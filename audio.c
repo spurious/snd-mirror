@@ -7293,6 +7293,15 @@ static int dac_out_chans, dac_out_srate;
 static int incoming_out_chans = 1, incoming_out_srate = 44100;
 static int fill_point = 0;
 static unsigned int bufsize = 0, current_bufsize = 0;
+static bool match_dac_to_sound = true;
+
+
+bool mus_audio_output_properties_mutable(bool mutable)
+{
+  match_dac_to_sound = mutable;
+  return(mutable);
+}
+
 
 /* I'm getting bogus buffer sizes from the audio conversion stuff from Apple,
  *   and I think AudioConvert doesn't handle cases like 4->6 chans correctly
@@ -7305,8 +7314,10 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
   OSStatus err = noErr;
   UInt32 sizeof_device, sizeof_format, sizeof_bufsize;
   AudioStreamBasicDescription device_desc;
+
   sizeof_device = sizeof(AudioDeviceID);
   sizeof_bufsize = sizeof(unsigned int);
+
   err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultOutputDevice, &sizeof_device, (void *)(&device));
   bufsize = 4096;
   if (err == noErr) 
@@ -7316,74 +7327,81 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
       fprintf(stderr, "open audio output err: %d %s\n", (int)err, osx_error(err));
       return(MUS_ERROR);
     }
-  /* now check for srate/chan mismatches and so on */
-  sizeof_format = sizeof(AudioStreamBasicDescription);
-  err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyStreamFormat, &sizeof_format, &device_desc);
-  if (err != noErr)
+
+  if (match_dac_to_sound)
     {
-      fprintf(stderr, "open audio output (get device format) err: %d %s\n", (int)err, osx_error(err));
-      return(MUS_ERROR);
-    }
-  /* current DAC state: device_desc.mChannelsPerFrame, (int)(device_desc.mSampleRate) */
-  /* apparently get stream format can return noErr but chans == 0?? */
-  if ((device_desc.mChannelsPerFrame != chans) || 
-      ((int)(device_desc.mSampleRate) != srate))
-    {
-      /* try to match DAC settings to current sound */
-      device_desc.mChannelsPerFrame = chans;
-      device_desc.mSampleRate = srate;
-      device_desc.mBytesPerPacket = chans * 4; /* assume 1 frame/packet and float32 data */
-      device_desc.mBytesPerFrame = chans * 4;
+      /* now check for srate/chan mismatches and so on */
       sizeof_format = sizeof(AudioStreamBasicDescription);
-      err = AudioDeviceSetProperty(device, 0, 0, false, kAudioDevicePropertyStreamFormat, sizeof_format, &device_desc);
-
-      /* this error is bogus in some cases -- other audio systems just ignore it,
-       *   but in my case (a standard MacIntel with no special audio hardware), if I leave
-       *   this block out, the sound is played back at the wrong rate, and the volume
-       *   of outa is set to 0.0?? 
-       */
-
+      err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyStreamFormat, &sizeof_format, &device_desc);
       if (err != noErr)
 	{
-	  /* it must have failed for some reason -- look for closest match available */
-	  /* if srate = 22050 try 44100, if chans = 1 try 2 */
-	  /* the "get closest match" business appears to be completely bogus... */
-	  device_desc.mChannelsPerFrame = (chans == 1) ? 2 : chans;
-	  device_desc.mSampleRate = (srate == 22050) ? 44100 : srate;
-	  device_desc.mBytesPerPacket = device_desc.mChannelsPerFrame * 4; /* assume 1 frame/packet and float32 data */
-	  device_desc.mBytesPerFrame = device_desc.mChannelsPerFrame * 4;
+	  fprintf(stderr, "open audio output (get device format) err: %d %s\n", (int)err, osx_error(err));
+	  return(MUS_ERROR);
+	}
+      
+      /* current DAC state: device_desc.mChannelsPerFrame, (int)(device_desc.mSampleRate) */
+      /* apparently get stream format can return noErr but chans == 0?? */
+      if ((device_desc.mChannelsPerFrame != chans) || 
+	  ((int)(device_desc.mSampleRate) != srate))
+	{
+	  /* try to match DAC settings to current sound */
+	  device_desc.mChannelsPerFrame = chans;
+	  device_desc.mSampleRate = srate;
+	  device_desc.mBytesPerPacket = chans * 4; /* assume 1 frame/packet and float32 data */
+	  device_desc.mBytesPerFrame = chans * 4;
 	  sizeof_format = sizeof(AudioStreamBasicDescription);
 	  err = AudioDeviceSetProperty(device, 0, 0, false, kAudioDevicePropertyStreamFormat, sizeof_format, &device_desc);
+	  
+	  /* this error is bogus in some cases -- other audio systems just ignore it,
+	   *   but in my case (a standard MacIntel with no special audio hardware), if I leave
+	   *   this block out, the sound is played back at the wrong rate, and the volume
+	   *   of outa is set to 0.0?? 
+	   */
+	  
 	  if (err != noErr)
 	    {
+	      /* it must have failed for some reason -- look for closest match available */
+	      /* if srate = 22050 try 44100, if chans = 1 try 2 */
+	      /* the "get closest match" business appears to be completely bogus... */
+	      device_desc.mChannelsPerFrame = (chans == 1) ? 2 : chans;
+	      device_desc.mSampleRate = (srate == 22050) ? 44100 : srate;
+	      device_desc.mBytesPerPacket = device_desc.mChannelsPerFrame * 4; /* assume 1 frame/packet and float32 data */
+	      device_desc.mBytesPerFrame = device_desc.mChannelsPerFrame * 4;
 	      sizeof_format = sizeof(AudioStreamBasicDescription);
-	      err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyStreamFormatMatch, &sizeof_format, &device_desc);
-	      if (err == noErr)
+	      err = AudioDeviceSetProperty(device, 0, 0, false, kAudioDevicePropertyStreamFormat, sizeof_format, &device_desc);
+	      if (err != noErr)
 		{
-		  /* match suggests: device_desc.mChannelsPerFrame, (int)(device_desc.mSampleRate) */
-		  /* try to set DAC to reflect that match */
-		  /* a bug here in emagic 2|6 -- we can get 6 channel match, but then can't set it?? */
 		  sizeof_format = sizeof(AudioStreamBasicDescription);
-		  err = AudioDeviceSetProperty(device, 0, 0, false, kAudioDevicePropertyStreamFormat, sizeof_format, &device_desc);
-		  if (err != noErr) 
+		  err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyStreamFormatMatch, &sizeof_format, &device_desc);
+		  if (err == noErr)
 		    {
-		      /* no luck -- get current DAC settings at least */
+		      /* match suggests: device_desc.mChannelsPerFrame, (int)(device_desc.mSampleRate) */
+		      /* try to set DAC to reflect that match */
+		      /* a bug here in emagic 2|6 -- we can get 6 channel match, but then can't set it?? */
 		      sizeof_format = sizeof(AudioStreamBasicDescription);
-		      AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyStreamFormat, &sizeof_format, &device_desc);
+		      err = AudioDeviceSetProperty(device, 0, 0, false, kAudioDevicePropertyStreamFormat, sizeof_format, &device_desc);
+		      if (err != noErr) 
+			{
+			  /* no luck -- get current DAC settings at least */
+			  sizeof_format = sizeof(AudioStreamBasicDescription);
+			  AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyStreamFormat, &sizeof_format, &device_desc);
+			}
 		    }
 		}
-	    }
-	  else 
-	    {
-	      /* nothing matches? -- get current DAC settings */
-	      sizeof_format = sizeof(AudioStreamBasicDescription);
-	      AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyStreamFormat, &sizeof_format, &device_desc);
+	      else 
+		{
+		  /* nothing matches? -- get current DAC settings */
+		  sizeof_format = sizeof(AudioStreamBasicDescription);
+		  AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyStreamFormat, &sizeof_format, &device_desc);
+		}
 	    }
 	}
-    }
+    } /* end mismatch check */
+
   /* now DAC claims it is ready for device_desc.mChannelsPerFrame, (int)(device_desc.mSampleRate) */
   dac_out_chans = device_desc.mChannelsPerFrame; /* use better variable names */
   dac_out_srate = (int)(device_desc.mSampleRate);
+
   open_for_input = false;
   if ((bufs == NULL) || (bufsize > current_bufsize))
     {
@@ -7398,6 +7416,7 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
 	bufs[i] = (char *)CALLOC(bufsize, sizeof(char));
       current_bufsize = bufsize;
     }
+
   in_buf = 0;
   out_buf = 0;
   fill_point = 0;
@@ -7448,6 +7467,7 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
     }
   return(MUS_NO_ERROR);
 }
+
 
 static void convert_incoming(char *to_buf, int fill_point, int lim, char *buf)
 {
@@ -7518,6 +7538,7 @@ static void convert_incoming(char *to_buf, int fill_point, int lim, char *buf)
       break;
     }
 }
+
 
 int mus_audio_write(int line, char *buf, int bytes) 
 {
