@@ -17,6 +17,8 @@
   <float-**> outs
   <int> num_inputs
   <int> num_outputs
+  <void*> newDsp
+  <void*> init
   <void*> handle
   <void*> conclude
   <void*> deleteDsp)
@@ -77,22 +79,19 @@
 
   (c-display (<-> "compiling " file ".dsp"))
 
-  (system (<-> "faust -a " (if make-gui
-			       "snd-rt-gtk.cpp "
-			       "module.cpp ")
-	       "-o " file ".cpp " file ".dsp"))
-
+  (system (<-> "faust -a snd-rt-gtk.cpp -o " file ".cpp " file ".dsp"))
 
   ;; Uncomment line below if linking with RTLD_GLOBAL
   ;;(system (<-> "sed -i -e 's/mydsp/mydsp" (number->string (inc! num-compiled-faust-files 1)) "/g' " file ".cpp"))
-  (system (<-> "g++ -O3 -ffast-math "
+  (system (<-> "g++ -O3 -ffast-math -I" snd-header-files-path
+               " " (if make-gui "-DMAKE_GUI" "")
 	       " " (or (getenv "CFLAGS") "") " "
 	       " " *eval-c-CFLAGS* " "
 	       (if make-gui
 		   (<-> (string-append (string #\`) "pkg-config --cflags --libs gtk+-2.0" (string #\`)) " ")
 		   " ")
 	       " " (or (getenv "LDFLAGS") "") " "
-	       file ".cpp -shared -fpic -o " file ".so"))
+	       file ".cpp -shared -fPIC -o " file ".so"))
 
   (for-each delete-at-exit
 	    (list (<-> file ".dsp")
@@ -200,16 +199,16 @@
 					     ((<int> (<void*>)) getNumInputs)
 					     ((<int> (<void*>)) getNumOutputs)
 					     ((<void> (<void*> <int>)) init)
-					     ;((<void*> (<char*>)) newGTKUI)
-					     ;((<void> (<void*> <void*>)) buildUserInterface)
-					     ;((<void> (<void*>)) runGTKUI)
+                                        ;((<void*> (<char*>)) newGTKUI)
+                                        ;((<void> (<void*> <void*>)) buildUserInterface)
+                                        ;((<void> (<void*>)) runGTKUI)
 					     )
 				      ;;(printf (string "ai %p\\n") newDsp);faust)
 				      (set! faust->dsp (newDsp))
 				      (if (== NULL faust->dsp)
 					  (return SCM_BOOL_F))
 
-				      (init faust->dsp ,(mus-srate))
+				      (init faust->dsp ,(rte-samplerate))
 
 				      (set! faust->num_inputs (getNumInputs faust->dsp))
 				      (set! faust->num_outputs (getNumOutputs faust->dsp))
@@ -242,7 +241,7 @@
 
 (define faust-gui-faust #f)
 
-(define (make-faust-object source) ;;file)
+(define (make-faust-object source)
 
   (define handle (find-faust-cache source))
   (define first-one? (not has-compiled-faust-gui))
@@ -297,6 +296,8 @@
 				  (-> faust gtkui)
 				  (c-dlsym (-> faust-gui-faust handle) "runGTKUI"))))
 
+	   (-> faust newDsp (c-dlsym (-> faust handle) "newDsp"))
+	   (-> faust init (c-dlsym (-> faust handle) "init"))
 	   (-> faust conclude (c-dlsym (-> faust handle) "conclude"))
 	   (-> faust deleteDsp (c-dlsym (-> faust handle) "deleteDsp"))
 	   (add-finalizer (-> faust get-c-object) cleanup-faust-object)
@@ -306,7 +307,7 @@
 
 
 #!
-(define test (make-faust-object "/home/kjetil/snd-run/osc"))
+(define test (make-faust-object "/home/kjetil/snd-run-old4/osc"))
 (-> test get-c-object)
 (-> test dir)
 (-> test compute_func)
@@ -379,6 +380,7 @@
    (define basename (tmpnam))
    (define sourcefile (<-> basename ".dsp"))
    (define fd (open-file sourcefile "w"))
+   ;;(c-display "hepp" sourcelines)
    (for-each (lambda (code)
 	       (write-line (<-> code "") fd))
 	     sourcelines)
@@ -446,7 +448,7 @@
 		    (return output))))
 
 
-(define-rt-macro (faust-compute faust-object input)
+(define-faust-macro (faust-compute faust-object input)
   `(rt_faust_compute ,faust-object ,input))
 
 
@@ -533,6 +535,126 @@
 
 (define-macro (<rt-faust-url> url)
   `(<rt-faust> (url ,url)))
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;; <faust> in Stalin '';;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(define-stalin-ec <void-*> rt_faust_compute
+  (lambda ((<void*> vfaust)
+           (<void*> vinput))
+    (<vct-*> input (cast <vct*> vinput))
+    (<struct-mus_rt_faust-*> faust (cast <struct-mus_rt_faust-*> vfaust))
+    (<FaustComputeFunc> compute faust->compute_func)
+    (<vct-*> output (rt_alloc_vct faust->num_outputs))
+    ;;(printf (string "faust->compute_func: %p %p\\n") compute faust->dsp)
+    (let* ((minin <int> (MIN faust->num_inputs input->length)))
+      (for-each 0 minin
+                (lambda (n)
+                  (set! faust->ins[n][0] input->data[n])))
+      (compute faust->dsp 1 faust->ins faust->outs)
+      (for-each 0 faust->num_outputs
+                (lambda (n)
+                  (set! output->data[n] faust->outs[n][0])))
+      (return output))))
+
+(define-stalin-macro (faust-compute faust-object input)
+  `(rt_faust_compute ,faust-object ,input))
+
+
+(define-stalin-ec <void*> rt_faust_make_faust
+  (lambda ((<void*> vfaust))
+    (<struct-mus_rt_faust-*> faust (cast <struct-mus_rt_faust-*> vfaust))
+    (<struct-mus_rt_faust-*> copy (tar_alloc_atomic heap (sizeof <struct-mus_rt_faust>)))
+    ((<void*> (<void>)) newDsp faust->newDsp) ;;(cast ((<void*> (<void>)) newDsp)
+    ((<void> (<void*> int)) init faust->init) ;;(cast ((<void*> (<void>)) newDsp)
+    (memcpy copy faust (sizeof <struct-mus_rt_faust>))
+    (set! faust->dsp (newDsp))
+    (init faust->dsp ,(rte-samplerate))
+    (return copy)
+    ))
+    
+(define-stalin-macro (make-faust . code)
+  (set! code (apply generate-faust-source code))
+  (let ((faust (make-faust-object code)))
+    (start-faust-gui-if-necessary faust)
+    (c-display "addr" (cadr (-> faust get-c-object)))
+    `(rt_faust_make_faust (ulong_to_void_ ,(cadr (-> faust get-c-object))))))
+
+(define-stalin-macro (<faust-vct> :key 
+                                  (in '(vct))
+                                  :rest code)
+  (set! code (apply generate-faust-source code))
+  (c-display "code" code)
+  `(faust-compute (ulong_to_void_ ,(let ((faust (make-faust-object code)))
+                                      (start-faust-gui-if-necessary faust)
+                                      (cadr (-> faust get-c-object))))
+		  ,in))
+
+(define-stalin-macro (<faust> :key (in '(vct)) :rest rest)
+  (if (and (null? (cdr rest))
+           (symbol? (car rest)))
+      `(vct-ref (faust-compute ,(car rest) ,in) 0)
+      `(vct-ref (<faust-vct> :in ,in ,@rest) 0)))
+
+
+#!
+(define test (make-faust-object (generate-faust-source '(include "/home/kjetil/snd-run-old4/osc.dsp"))))
+(-> test get-c-object)
+(-> test dsp)
+(-> test dir)
+(-> test compute_func)
+(-> test num_inputs)
+(-> test num_outputs)
+(-> test ins)
+
+(<rt-stalin>
+ (define faust-oscillator ,(cadr (-> test get-c-object)))
+ (block
+   (out (<faust> faust-oscillator))))
+
+
+(<rt-stalin>
+ (define osc (make-faust (out (* 0.29 (osc (vslider "freq" 600 0 2400 0.1))))))
+ (block
+   (out (<faust> osc))))
+
+(<rt-stalin>
+ (while #t
+   (define osc (make-faust "process = osc(500)*0.22;"))
+   (block :dur 1:-s
+     (out (<faust> osc)))
+   (wait 0.5:-s)))
+
+(<rt-stalin>
+ (block
+   (out (<faust> "process = osc(500)*0.3;"))))
+
+
+(let ((code ("import(\"music.lib\");" "process = osc(500)*0.2; ")))
+  (let ((faust (make-faust-object ',code)))
+    (start-faust-gui-if-necessary faust)
+    (cadr (-> faust c-object))
+    ))
+
+
+!#
+
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;; Testing  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
 #!

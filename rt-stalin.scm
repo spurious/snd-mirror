@@ -1,10 +1,4 @@
 
-#!
-(let ((time 5960)
-      (n 10))
-  (- n (remainder time n)))
-!#
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;; globals ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -53,17 +47,16 @@
 ;;;;;;;;;;;;;;;;; Garbage collector ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(if (not (defined? '*tar-is-started*))
-    (primitive-eval '(define *tar-is-started* #f)))
+(define *tar-is-started* (defined? '*tar-is-started*))
 
-(if (not *tar-is-started*)
-    (eval-c (<-> "-I" snd-header-files-path)
-            "#include <rt-various.h>"
-            (run-now
-             (init_rollendurchmesserzeitsammler ,*tar-atomic-heap-size*
-                                                ,*tar-nonatomic-heap-size*
-                                                ,*tar-roots-size*))))
-(set! *tar-is-started* #t)
+(when (not *tar-is-started*)
+  (eval-c (<-> "-I" snd-header-files-path)
+          "#include <rt-various.h>"
+          (run-now
+           (init_rollendurchmesserzeitsammler ,*tar-atomic-heap-size*
+                                              ,*tar-nonatomic-heap-size*
+                                              ,*tar-roots-size*)))
+  (set! *tar-is-started* #t))
 
 
 
@@ -137,14 +130,23 @@
 ;; stalin seems to be missing long long which is needed for time.
 (define (get-legal-stalin-type type)
   (fix-defines
-   (define s (eval-c-etype->ctype (eval-c-get-known-type type)))
+   (define s (eval-c-etype->ctype type)) ;;(eval-c-get-known-type type)))
    (define clean (string->symbol s))
+   ;;(c-display "type" type "clean" clean)
    (cond ((string=? s "char *")
           'char*)
-         ((memq clean '(void char short int float double void*))
+         ((memq clean '(void char short int unsigned long float double void*))
           clean)
+         ((memq clean '(#{signed char}# #{unsigned short}# #{unsigned long}# #{long double}#))
+          (string->symbol (list->string (cdr (c-butlast (string->list (symbol->string (eval-c-ctype->etype s))))))))
          (else
           'void*))))
+
+#!
+(get-legal-stalin-type '<unsigned-long>)
+(eval-c-get-known-type '<unsigned-long>)
+(eval-c-etype->ctype '<unsigned-long>)
+!#
  
 ;;(eval-c-etype->ctype (eval-c-get-known-type '<char-*>))
 
@@ -175,9 +177,10 @@
                                                ,@(map (lambda (arg)
                                                         (let ((type (car arg))
                                                               (name (cadr arg)))
+                                                          ;;(c-display "name:" name ", type:" type)
                                                           (cond ((memq type '(<float> <double>))
                                                                  `(exact->inexact ,name))
-                                                                ((memq type '(<int> <short> <char>))
+                                                                ((memq type '(<int> <unsigned-long> <short> <char>))
                                                                  `(inexact->exact (floor ,name)))
                                                                 (else
                                                                  name))))
@@ -307,7 +310,9 @@
                                      "\" in expression")
                                 expr)
                      (c-display x)
-                     (throw 'compilation-error)))))))
+                     (throw 'compilation-error)
+                     ;;(error "uffda")
+                     ))))))
 
 
 (define (stalin-macroexpand expr)
@@ -497,6 +502,9 @@
 	(else
 	 (cons (car tree) (flatten (cdr tree))))))
 
+(define-stalin-ec <void*> ulong_to_void_
+  (lambda ((<unsigned-long> address))
+    (return (cast <void*> address))))
 
 
 
@@ -1125,13 +1133,15 @@
 
 ;;;;; vct (quick up-and-running. More work needed)
 
-(define-stalin-ec <void*> rt_alloc_vct (lambda ((<int> length))
-                                         (let* ((ret <vct-*> (tar_alloc heap (sizeof <vct>)))
-                                                (floats <float-*> (tar_alloc_atomic heap (* (sizeof <float>) length))))
-                                           (set! ret->length length)
-                                           (set! ret->data floats)
-                                           (memset floats 0 (* (sizeof <float>) length))
-                                           (return ret))))
+(define-stalin-ec <void*> rt_alloc_vct
+  (lambda ((<int> length))
+    (let* ((ret <vct-*> (tar_alloc heap (sizeof <vct>)))
+           (floats <float-*> (tar_alloc_atomic heap (* (sizeof <float>) length))))
+      (set! ret->length length)
+      (set! ret->data floats)
+      (memset floats 0 (* (sizeof <float>) length))
+      (return ret))))
+
 (define-stalin (make-vct len)
   (rt_alloc_vct len))
 
@@ -1142,6 +1152,14 @@
                                       (set! das_vct->data[pos] val)))
 (define-stalin (vct-set! vct pos val)
   (rt_vct_set vct pos val))
+
+
+(define-stalin-ec <float> rt_vct_ref (lambda ((<void*> vvct)
+                                              (<int> pos))
+                                       (return "((vct*)vvct)->data[pos]")))
+(define-stalin (vct-ref vct pos)
+  (rt_vct_ref vct pos))
+
 
 (define-stalin-macro (vct . values)
   (define len (length values))
@@ -2826,7 +2844,7 @@
                     (set! noreturns (delete! name noreturns eq?))))
               func-returns))
 
-  ;; Call reduce noreturns again and again until it can not be reduced anymroe
+  ;; Call reduce-noreturns again and again until it can not be reduced anymroe
   (let loop ()
     (define old-noreturns (list-copy noreturns))
     (reduce-noreturns)
@@ -3271,6 +3289,41 @@ The reason for doing this is that call/cc takes _a lot_ of time to compile with 
                   (stop)))))
        (wait-midi :command note-off :note (midi-note)
          (-> adsr stop-it))))))
+
+(<rt-stalin>
+ (while #t
+   (wait-midi :command note-on
+     (define adsr (make-adsr :a 20:-ms :d 20:-ms :s 0.2 :r 50:-ms))
+     (define osc
+       (make-oscil :freq (midi-to-freq (midi-note))))
+     (spawn
+       (block
+         (cond ((adsr)
+                => (lambda (vol)
+                     (out (* 0.2 vol (midi-vol) (oscil osc)))))
+               (else
+                (stop)))))
+     (spawn
+       (wait-midi :command note-off :note (midi-note)
+         (-> adsr stop-it))))))
+
+
+(<rt-stalin>
+ (while #t
+   (wait-midi :command note-on
+     (define adsr (make-adsr :a 20:-ms :d 20:-ms :s 0.2 :r 50:-ms))
+     (define osc
+       (make-oscil :freq (midi-to-freq (midi-note))))
+     (spawn
+       (block
+         (define vol (adsr))
+         (if vol
+             (out (* 0.2 vol (midi-vol) (oscil osc)))
+             (stop))))
+     (spawn
+       (wait-midi :command note-off :note (midi-note)
+         (-> adsr stop))))))
+
 
 (<rt-stalin>
  (while #t
@@ -4007,6 +4060,9 @@ had to be put into macroexpand instead.
 
            (shared-struct <RT_Engine>)
            (shared-struct <RT_Stalin>)
+           (shared-struct <mus_rt_faust>)
+
+           "typedef void (*FaustComputeFunc)(void* self,int len,float** inputs,float** outputs)"
 
            (<int> remove_me 0)
 

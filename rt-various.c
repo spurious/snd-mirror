@@ -111,8 +111,10 @@ static void create_mark_thread(tar_threadstart threadstart){
   pthread_create(thread,NULL,threadstart_mark,threadstart);
 }
 
+static pid_t mainpid=0;
 
 void init_rollendurchmesserzeitsammler(int a,int b,int c){
+  mainpid=getpid();
   tar_init(a,
 	   b,
 	   c,
@@ -179,7 +181,7 @@ int rt_mus_error(int type,const char* fmt,...){
 
 
 void* clm_calloc_atomic(int num,size_t size,const char* what){
-  if(clm_tar_heap==NULL){
+  if(clm_tar_heap==NULL || mainpid==0 || getpid()==mainpid){
     return CALLOC(num,size);
   }else{
     void *ret=tar_alloc_atomic(clm_tar_heap,num*size);
@@ -193,7 +195,7 @@ void* clm_calloc_atomic(int num,size_t size,const char* what){
 
 
 void* clm_calloc(int num,size_t size,const char* what){
-  if(clm_tar_heap==NULL){
+  if(clm_tar_heap==NULL || mainpid==0 || getpid()==mainpid){
     return CALLOC(num,size);
   }else{
     void *ret=tar_alloc(clm_tar_heap,num*size);
@@ -205,7 +207,7 @@ void* clm_calloc(int num,size_t size,const char* what){
 }
 
 void* clm_malloc_atomic(size_t size,const char* what){
-  if(clm_tar_heap==NULL){
+  if(clm_tar_heap==NULL || mainpid==0 || getpid()==mainpid){
     return MALLOC(size);
   }else{
     void *ret=tar_alloc_atomic(clm_tar_heap,size);
@@ -217,7 +219,7 @@ void* clm_malloc_atomic(size_t size,const char* what){
 }
 
 void* clm_malloc(size_t size,const char* what){
-  if(clm_tar_heap==NULL){
+  if(clm_tar_heap==NULL || mainpid==0 || getpid()==mainpid){
     return MALLOC(size);
   }else{
     void *ret=tar_alloc(clm_tar_heap,size);
@@ -229,7 +231,7 @@ void* clm_malloc(size_t size,const char* what){
 }
 
 void* clm_realloc(void* old,size_t newsize){
-  if(clm_tar_heap==NULL){
+  if(clm_tar_heap==NULL || mainpid==0 || getpid()==mainpid){
     return REALLOC(old,newsize);
   }else{
     tar_mem_t *mem=(tar_mem_t*)(((char*)old)-sizeof(tar_mem_t));
@@ -242,9 +244,9 @@ void* clm_realloc(void* old,size_t newsize){
 
 
 void clm_free(void* p){
-  if(clm_tar_heap==NULL)
+  if(clm_tar_heap==NULL || mainpid==0 || getpid()==mainpid){
     FREE(p);
-}
+  }
 
 
 #endif // WITH_RT

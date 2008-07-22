@@ -3299,6 +3299,11 @@ and run simple lisp[4] functions.
      (define-rt-macro ,@rest)
      (define-macro ,@rest)))
 
+(define-macro (define-rt/stalin-macro . rest)
+  `(begin
+     (define-rt-macro ,@rest)
+     (define-stalin-macro ,@rest)))
+
 
 (define-macro (rt-renamefunc rt-name c-name returntype . args)
   (rt-clear-cache!)
@@ -7011,6 +7016,18 @@ old syntax: (not very nice)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;; Stalin ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(c-load-from-path rt-stalin)
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;; Faust ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -7868,7 +7885,7 @@ Can alignmnet screw up this one?
 (add-extern-rt-variable 'a (make-oscil))
 (rt-extern-reset)
 !#
-(define-rt-macro (extern . rest)
+(define-rt/stalin-macro (extern . rest)
   (fix-defines
    (cond ((null? (cdr rest))
 	  (define varname (rt-gensym))
