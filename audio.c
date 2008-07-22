@@ -7479,6 +7479,7 @@ static void convert_incoming(char *to_buf, int fill_point, int lim, char *buf)
       for (i = 0; i < lim; i++)
 	to_buf[i + fill_point] = buf[i];
       break;
+
     case CONVERT_COPY:
       /* copy sample to mimic lower srate */
       for (i = 0, j = fill_point; i < lim; i += 8, j += 16)
@@ -7488,6 +7489,7 @@ static void convert_incoming(char *to_buf, int fill_point, int lim, char *buf)
 	    to_buf[j + k + 8] = buf[i + k];
 	  }
       break;
+
     case CONVERT_SKIP:
       /* skip sample for empty chan */
       for (i = 0, j = fill_point; i < lim; i += 4, j += 8)
@@ -7497,6 +7499,7 @@ static void convert_incoming(char *to_buf, int fill_point, int lim, char *buf)
 	    to_buf[j + k + 4] = 0;
 	  }
       break;
+
     case CONVERT_SKIP_N:
       /* copy incoming_out_chans then skip up to dac_out_chans */
       jc = dac_out_chans * 4;
@@ -7507,6 +7510,7 @@ static void convert_incoming(char *to_buf, int fill_point, int lim, char *buf)
 	  for (k = ic; k < jc; k++) to_buf[j + k] = 0;
 	}
       break;
+
     case CONVERT_COPY_AND_SKIP:
       for (i = 0, j = fill_point; i < lim; i += 4, j += 16)
 	for (k = 0; k < 4; k++)
@@ -7517,6 +7521,7 @@ static void convert_incoming(char *to_buf, int fill_point, int lim, char *buf)
 	    to_buf[j + k + 12] = 0;
 	  }
       break;
+
     case CONVERT_COPY_AND_SKIP_N:
       /* copy for each active chan, skip rest */
       jc = dac_out_chans * 8;
