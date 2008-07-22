@@ -7191,7 +7191,8 @@ The form <code>(frame-&gt;frame frame mixer frame)</code> multiplies a row vecto
 by a matrix (the mixer), whereas <code>(frame-&gt;frame mixer frame frame)</code> multiplies
 a matrix by a column vector.
 See <a href="sndscm.html#framedoc">frame.scm</a> for many more
-frame-related functions, and <a href="sndscm.html#mixerdoc">mixer.scm</a> for mixer functions.
+frame-related functions, <a href="sndscm.html#mixerdoc">mixer.scm</a> for mixer functions,
+and fullmix in clm-ins.scm for an extended example.
 In Ruby, frame* is frame_multiply, frame+ is frame_add, and mixer* is mixer_multiply.
 </p>
 
@@ -7286,6 +7287,50 @@ object.
   <a class=def name="*reverb*">*reverb*</a>
   <a class=def name="musfilebuffersize">mus-file-buffer-size</a>
 </pre>
+
+
+<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+
+<tr>
+<td bgcolor="#f0f4ff">
+<pre>
+(with-sound (:channels 2)
+  ;; swap channels of stereo file
+  (let* ((input (make-file-&gt;frame "stereo.snd"))
+	 (len (mus-sound-frames "stereo.snd"))
+	 (frame (make-frame 2)))
+    (do ((i 0 (1+ i)))
+	((= i len))
+      (file-&gt;frame input i frame)
+      (let ((val (frame-ref frame 0)))
+	(frame-set! frame 0 (frame-ref frame 1))
+	(frame-set! frame 1 val))
+      (frame-&gt;file *output* i frame))))
+</pre>
+</td>
+
+<td width=4></td>
+
+<td bgcolor="#fbfbf0">
+<pre>
+with_sound(:channels, 2) do
+  input = make_file2frame("stereo.snd");
+  len = mus_sound_frames("stereo.snd");
+  frame = make_frame(2);
+  len.times do |i|
+    file2frame(input, i, frame);
+    val = frame_ref(frame, 0);
+    frame_set!(frame, 0, frame_ref(frame, 1));
+    frame_set!(frame, 1, val);
+    frame2file($output, i, frame);
+    end
+  end.output
+</pre>
+</td>
+
+</tr>
+</table>
+
 
 <p>file-&gt;sample writes a sample to a file, frame-&gt;file writes a frame, file-&gt;sample reads a sample
 from a file, and file-&gt;frame reads a frame.

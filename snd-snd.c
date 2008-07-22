@@ -1681,9 +1681,6 @@ static void apply_unset_controls(snd_info *sp)
 
 /* ---------------- minibuffer/filter text history ---------------- */
 
-/* it would be nice if this worked in the no gui version, but I guess that means dealing with readline? */
-
-
 typedef struct mini_history {
   char **strings;
   int strings_size, strings_pos;

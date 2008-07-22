@@ -61,9 +61,10 @@ static void set_volume(mus_sample_t **buf, int chans, int length, double volume)
 
 /* special case multicard quad code split out for clarity (it could be folded into the main branches) */
 
-/* 22-Nov-00: moved alsa support to separate block */
-/* 8-Apr-04:  added start/end (seconds-based) args */
-/* 2-Nov-05:  added -volume arg */
+/* 22-Nov-00:  moved alsa support to separate block */
+/* 8-Apr-04:   added start/end (seconds-based) args */
+/* 2-Nov-05:   added -volume arg */
+/* 22-July-08: added -mutable arg */
 
 static int main_not_alsa(int argc, char *argv[])
 {
@@ -78,6 +79,7 @@ static int main_not_alsa(int argc, char *argv[])
   char *name = NULL;
   off_t start = 0, end = 0;
   double begin_time = 0.0, end_time = 0.0, volume = 1.0;
+  int mutable = 1, include_mutable = 0;
 
   for (i = 1; i < argc; i++)
     {
@@ -115,18 +117,26 @@ static int main_not_alsa(int argc, char *argv[])
 			  i++;
 			}
 		      else 
-			{ 
-			  if (strcmp(argv[i], "-volume") == 0)
+			{
+			  if (strcmp(argv[i], "-mutable") == 0) 
+			    {
+			      mutable = atoi(argv[i + 1]);
+			      include_mutable = 1;
+			      i++;
+			    }
+			  else 
 			    { 
-			      volume = atof(argv[i + 1]);
-			      use_volume = 1;
-			      i++; 
-			    } 
-			  else name = argv[i];
-			}}}}}}
+			      if (strcmp(argv[i], "-volume") == 0)
+				{ 
+				  volume = atof(argv[i + 1]);
+				  use_volume = 1;
+				  i++; 
+				} 
+			      else name = argv[i];
+			    }}}}}}}
   if (name == NULL) 
     {
-      printf("usage: sndplay file [-start 1.0] [-end 1.0] [-bufsize %d] [-buffers 2x12] [-volume 1.0] [-describe]\n", BUFFER_SIZE); 
+      printf("usage: sndplay file [-start 1.0] [-end 1.0] [-bufsize %d] [-buffers 2x12] [-volume 1.0] [-mutable 1] [-describe]\n", BUFFER_SIZE); 
       exit(0);
     }
 
@@ -221,6 +231,10 @@ static int main_not_alsa(int argc, char *argv[])
 			}
 		    }
 		}
+#if MUS_MAC_OSX
+	      if (include_mutable == 1)
+		mus_audio_output_properties_mutable(mutable);
+#endif
 	      if (afd == -1)
 		{
 #if defined(MUS_LINUX) && defined(PPC)
