@@ -2168,9 +2168,10 @@ static XEN g_abortq(void)
 {
   #define H_abortQ "(" S_c_g "): allow pending user interface events to occur, returning " PROC_TRUE " if C-g was typed"
   check_for_event();
-  if (ss->stopped_explicitly)
+  if ((ss->cg_seen) || (ss->stopped_explicitly))
     {
       ss->stopped_explicitly = false;
+      ss->cg_seen = false;
       return(XEN_TRUE);
     }
   return(XEN_FALSE);

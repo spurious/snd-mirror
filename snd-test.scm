@@ -6,31 +6,31 @@
 ;;;  test 3: variables                          [1649]
 ;;;  test 4: sndlib                             [2298]
 ;;;  test 5: simple overall checks              [4992]
-;;;  test 6: vcts                               [13953]
-;;;  test 7: colors                             [14275]
-;;;  test 8: clm                                [14765]
-;;;  test 9: mix                                [26580]
-;;;  test 10: marks                             [28801]
-;;;  test 11: dialogs                           [29762]
-;;;  test 12: extensions                        [30007]
-;;;  test 13: menus, edit lists, hooks, etc     [30278]
-;;;  test 14: all together now                  [31988]
-;;;  test 15: chan-local vars                   [33033]
-;;;  test 16: regularized funcs                 [34672]
-;;;  test 17: dialogs and graphics              [39735]
-;;;  test 18: enved                             [39825]
-;;;  test 19: save and restore                  [39844]
-;;;  test 20: transforms                        [41686]
-;;;  test 21: new stuff                         [43669]
-;;;  test 22: run                               [45664]
-;;;  test 23: with-sound                        [51880]
-;;;  test 24: user-interface                    [55846]
-;;;  test 25: X/Xt/Xm                           [59240]
-;;;  test 26: Gtk                               [63848]
-;;;  test 27: GL                                [67700]
-;;;  test 28: errors                            [67824]
-;;;  test all done                              [70130]
-;;;  test the end                               [70368]
+;;;  test 6: vcts                               [13957]
+;;;  test 7: colors                             [14279]
+;;;  test 8: clm                                [14769]
+;;;  test 9: mix                                [26584]
+;;;  test 10: marks                             [28805]
+;;;  test 11: dialogs                           [29766]
+;;;  test 12: extensions                        [30011]
+;;;  test 13: menus, edit lists, hooks, etc     [30282]
+;;;  test 14: all together now                  [31992]
+;;;  test 15: chan-local vars                   [33040]
+;;;  test 16: regularized funcs                 [34679]
+;;;  test 17: dialogs and graphics              [39745]
+;;;  test 18: enved                             [39835]
+;;;  test 19: save and restore                  [39854]
+;;;  test 20: transforms                        [41696]
+;;;  test 21: new stuff                         [43679]
+;;;  test 22: run                               [45683]
+;;;  test 23: with-sound                        [51899]
+;;;  test 24: user-interface                    [56135]
+;;;  test 25: X/Xt/Xm                           [59529]
+;;;  test 26: Gtk                               [64137]
+;;;  test 27: GL                                [67989]
+;;;  test 28: errors                            [68113]
+;;;  test all done                              [70419]
+;;;  test the end                               [70660]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -52241,6 +52241,275 @@ EDITS: 1
 	       (outa (+ i beg) (* amplitude (oscil os))))))))
   
   
+  (define (test-ws-errors)
+    ;; since we only catch 'mus-error and 'with-sound-interrupt above, any other error
+    ;;   closes *output* and returns to the top-level -- are there languishing threads?
+    ;;   Need a way outside with-sound to see what threads are out there.
+    ;;     Guile: all-threads and current-thread, thread-exited?
+    
+    (define (bad-ins start)
+      (c-g!))
+    
+    (set! *clm-threads* 4)
+    
+    (let ((prev (find-sound "test.snd")))
+      (if (sound? prev)
+	  (close-sound prev)))
+    
+    (if (mus-output? *output*)
+	(begin
+	  (snd-display ";ws-error start: *output*: ~A" *output*)
+	  (mus-close *output*)
+	  (set! *output* #f)))
+    
+    
+    ;; ---------------- catch 'wrong-type-arg (not handled by with-sound) ----------------
+    
+    (let ((tag (catch #t
+		      (lambda ()
+			(with-sound (:output "test.snd")
+				    (fm-violin 0 1 440 .1)
+				    (fm-violin .1 1 660 .1)
+				    (fm-violin .2 1 880 .1)
+				    (fm-violin .3 1 -220 .1)))
+		      (lambda args args))))
+      
+      (if (or (not (list? tag))
+	      (not (eq? (car tag) 'wrong-type-arg)))
+	  (snd-display ";ws-error -220: ~A" tag))
+      (if (mus-output? *output*)
+	  (begin
+	    (snd-display ";ws-error -220: *output*: ~A" *output*)
+	    (mus-close *output*)
+	    (set! *output* #f)))
+      (let ((prev (find-sound "test.snd")))
+	(if (sound? prev)
+	    (begin
+	      (snd-display ";ws error -220 opened test.snd?")
+	      (close-sound prev))))
+      (if *ws-finish*
+	  (snd-display ";ws error -220 caught interrupt? ~A" *ws-finish*)))
+    
+    
+    (let ((current-threads (all-threads)))
+      (if (not (equal? current-threads (list (current-thread))))
+	  (snd-display ";ws error threaded start threads: ~A, current:~A" current-threads (current-thread)))
+      
+      (let ((tag (catch #t
+			(lambda ()
+			  (with-threaded-sound (:output "test.snd")
+					       (fm-violin 0 1 440 .1)
+					       (fm-violin .1 1 660 .1)
+					       (fm-violin .2 1 880 .1)
+					       (fm-violin .3 1 -220 .1)))
+			(lambda args args))))
+	
+	(if (or (not (list? tag))
+		(not (eq? (car tag) 'wrong-type-arg)))
+	    (snd-display ";ws-error threaded -220: ~A" tag))
+	(if (mus-output? *output*)
+	    (begin
+	      (snd-display ";ws-error threaded -220: *output*: ~A" *output*)
+	      (mus-close *output*)
+	      (set! *output* #f)))
+	(let ((prev (find-sound "test.snd")))
+	  (if (sound? prev)
+	      (begin
+		(snd-display ";ws error threaded -220 opened test.snd?")
+		(close-sound prev))))
+	(if *ws-finish*
+	    (snd-display ";ws error threaded -220 caught interrupt? ~A" *ws-finish*))
+	
+	(if (not (equal? current-threads (all-threads)))
+	    (snd-display ";ws error threaded -220 threads: ~A, current:~A, all: ~A" current-threads (current-thread) (all-threads))))
+      
+      (let ((tag (catch #t
+			(lambda ()
+			  (with-threaded-sound (:output "test.snd")
+					       (fm-violin .3 1 44220 .1)))
+			(lambda args args))))
+	
+	(if (or (not (list? tag))
+		(not (eq? (car tag) 'out-of-range)))
+	    (snd-display ";ws-error threaded -220 1: ~A" tag))
+	(if (mus-output? *output*)
+	    (begin
+	      (snd-display ";ws-error threaded -220 1: *output*: ~A" *output*)
+	      (mus-close *output*)
+	      (set! *output* #f)))
+	(let ((prev (find-sound "test.snd")))
+	  (if (sound? prev)
+	      (begin
+		(snd-display ";ws error threaded -220 1 opened test.snd?")
+		(close-sound prev))))
+	(if *ws-finish*
+	    (snd-display ";ws error threaded -220 1 caught interrupt? ~A" *ws-finish*))
+	
+	(if (not (equal? current-threads (all-threads)))
+	    (snd-display ";ws error threaded -220 1 threads: ~A, current:~A, all: ~A" current-threads (current-thread) (all-threads))))
+      
+      (let ((tag (catch #t
+			(lambda ()
+			  (with-threaded-sound (:output "test.snd" :reverb jc-reverb)
+					       (fm-violin 0 1 440 .1)
+					       (fm-violin .1 1 660 .1)
+					       (fm-violin .2 1 880 .1)
+					       (fm-violin .2 1 880 .1)
+					       (fm-violin .3 -1 220 .1)))
+			(lambda args args))))
+	
+	(if (or (not (list? tag))
+		(not (eq? (car tag) 'out-of-range)))
+	    (snd-display ";ws-error threaded -220 2: ~A" tag))
+	(if (mus-output? *output*)
+	    (begin
+	      (snd-display ";ws-error threaded -220 2: *output*: ~A" *output*)
+	      (mus-close *output*)
+	      (set! *output* #f)))
+	(if (mus-output? *reverb*)
+	    (begin
+	      (snd-display ";ws-error threaded -220 2: *reverb*: ~A" *reverb*)
+	      (mus-close *reverb*)
+	      (set! *reverb* #f)))
+	(let ((prev (find-sound "test.snd")))
+	  (if (sound? prev)
+	      (begin
+		(snd-display ";ws error threaded -220 2 opened test.snd?")
+		(close-sound prev))))
+	(if *ws-finish*
+	    (snd-display ";ws error threaded -220 2 caught interrupt? ~A" *ws-finish*))
+	
+	(if (not (equal? current-threads (all-threads)))
+	    (snd-display ";ws error threaded -220 2 threads: ~A, current:~A, all: ~A" current-threads (current-thread) (all-threads))))
+      )
+    
+    
+    ;; ---------------- catch 'mus-error (handled by with-sound, but no continuation -- appears to exit after cleaning up) ----------------      
+    
+    (snd-display ";error printout expected.....")
+    
+    (let ((tag (catch #t
+		      (lambda ()
+			(with-sound (:output "test.snd")
+				    (fm-violin 0 1 440 .1)
+				    (fm-violin .1 1 660 .1)
+				    (fm-violin .2 1 880 .1)
+				    (fm-violin .3 1 220 .1 :amp-env '(0 0 1 1 .5 1 0 0))))
+		      (lambda args args))))
+      
+      (if (or (not (string? tag))
+	      (not (string=? tag "test.snd")))
+	  (snd-display ";ws-error bad env: ~A" tag))
+      (if (mus-output? *output*)
+	  (begin
+	    (snd-display ";ws-error bad env: *output*: ~A" *output*)
+	    (mus-close *output*)
+	    (set! *output* #f)))
+      (let ((prev (find-sound "test.snd")))
+	(if (not (sound? prev))
+	    (snd-display ";ws error bad env did not open test.snd?")
+	    (close-sound prev)))
+      (if *ws-finish*
+	  (snd-display ";ws error bad env caught interrupt? ~A" *ws-finish*)))
+    
+    
+    (let ((current-threads (all-threads)))
+      (if (not (equal? current-threads (list (current-thread))))
+	  (snd-display ";ws error threaded start 1 threads: ~A, current:~A" current-threads (current-thread)))
+      
+      (let ((tag (catch #t
+			(lambda ()
+			  (with-threaded-sound (:output "test.snd")
+					       (fm-violin 0 1 440 .1)
+					       (fm-violin .1 1 660 .1)
+					       (fm-violin .2 1 880 .1)
+					       (fm-violin .3 1 220 .1 :amp-env '(0 0 1 1 .5 1 0 0))))
+			(lambda args args))))
+	
+	(if (or (not (string? tag))
+		(not (string=? tag "test.snd")))
+	    (snd-display ";ws-error threaded bad env: ~A" tag))
+	(if (mus-output? *output*)
+	    (begin
+	      (snd-display ";ws-error threaded bad env: *output*: ~A" *output*)
+	      (mus-close *output*)
+	      (set! *output* #f)))
+	(let ((prev (find-sound "test.snd")))
+	  (if (not (sound? prev))
+	      (snd-display ";ws error threaded bad env did not open test.snd?")
+	      (close-sound prev)))
+	(if *ws-finish*
+	    (snd-display ";ws error threaded bad env caught interrupt? ~A" *ws-finish*)))
+      
+      (if (not (equal? current-threads (all-threads)))
+	  (snd-display ";ws error threaded bad env threads: ~A, current:~A, all: ~A" current-threads (current-thread) (all-threads))))
+    
+    
+    ;; ---------------- interrupt with-sound ----------------
+    
+    (let ((tag (catch #t
+		      (lambda ()
+			(with-sound (:output "test.snd")
+				    (fm-violin 0 1 440 .1)
+				    (bad-ins 1)
+				    (fm-violin 2 1 220 .1)))
+		      (lambda args args))))
+      
+      (ws-quit!)
+      (if (mus-output? *output*)
+	  (begin
+	    (snd-display ";ws-error interrupt quit: *output*: ~A" *output*)
+	    (mus-close *output*)
+	    (set! *output* #f)))
+      (let ((prev (find-sound "test.snd")))
+	(if (not (sound? prev))
+	    (snd-display ";ws error interrupt quit did not open test.snd?")
+	    (close-sound prev)))
+      (if *ws-finish*
+	  (snd-display ";ws error interrupt not complete? ~A" *ws-finish*)))
+    
+    (let ((tag (catch #t
+		      (lambda ()
+			(with-threaded-sound (:output "test.snd")
+					     (fm-violin 0 1 440 .1)
+					     (bad-ins 1)
+					     (fm-violin 2 1 220 .1)))
+		      (lambda args args))))
+      
+      (ws-quit!)
+      (if (mus-output? *output*)
+	  (begin
+	    (snd-display ";ws-error threaded interrupt quit: *output*: ~A" *output*)
+	    (mus-close *output*)
+	    (set! *output* #f)))
+      (let ((prev (find-sound "test.snd")))
+	(if (not (sound? prev))
+	    (snd-display ";ws error threaded interrupt quit did not open test.snd?")
+	    (close-sound prev)))
+      (if *ws-finish*
+	  (snd-display ";ws error threaded interrupt not complete? ~A" *ws-finish*)))
+    
+    
+    (snd-display ";end error printout.")
+    
+    (let ((tag (with-sound (:output "test.snd" :srate 44100) (fm-violin 0 1 440 .1))))
+      (if (or (not (string? tag))
+	      (not (string=? tag "test.snd")))
+	  (snd-display ";ws-error all done: ~A" tag))
+      (if (not (= (mus-sound-frames "test.snd") 44100))
+	  (snd-display ";ws-error all done frames: ~A" (mus-sound-frames "test.snd"))))
+    
+    (let ((tag (with-threaded-sound (:output "test.snd" :srate 44100) (fm-violin 0 1 440 .1))))
+      (if (or (not (string? tag))
+	      (not (string=? tag "test.snd")))
+	  (snd-display ";ws-error threaded all done: ~A" tag))
+      (if (not (= (mus-sound-frames "test.snd") 44100))
+	  (snd-display ";ws-error threaded all done frames: ~A" (mus-sound-frames "test.snd"))))
+    
+    (close-sound (find-sound "test.snd"))
+    (delete-file "test.snd")
+    )
+  
   (if (provided? 'run)
       (begin
 	
@@ -55857,6 +56126,9 @@ EDITS: 1
 	(if (provided? 'snd-guile)
 	    (test-documentation-instruments)) ; clm23.scm
 	
+	(if (provided? 'snd-guile)
+	    (test-ws-errors))
+
 	)))
 
 

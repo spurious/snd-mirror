@@ -7328,19 +7328,21 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
       return(MUS_ERROR);
     }
 
+  sizeof_format = sizeof(AudioStreamBasicDescription);
+  err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyStreamFormat, &sizeof_format, &device_desc);
+  if (err != noErr)
+    {
+      fprintf(stderr, "open audio output (get device format) err: %d %s\n", (int)err, osx_error(err));
+      return(MUS_ERROR);
+    }
+
   if (match_dac_to_sound)
     {
       /* now check for srate/chan mismatches and so on */
-      sizeof_format = sizeof(AudioStreamBasicDescription);
-      err = AudioDeviceGetProperty(device, 0, false, kAudioDevicePropertyStreamFormat, &sizeof_format, &device_desc);
-      if (err != noErr)
-	{
-	  fprintf(stderr, "open audio output (get device format) err: %d %s\n", (int)err, osx_error(err));
-	  return(MUS_ERROR);
-	}
       
       /* current DAC state: device_desc.mChannelsPerFrame, (int)(device_desc.mSampleRate) */
       /* apparently get stream format can return noErr but chans == 0?? */
+
       if ((device_desc.mChannelsPerFrame != chans) || 
 	  ((int)(device_desc.mSampleRate) != srate))
 	{
@@ -9444,10 +9446,12 @@ int mus_audio_read(int line, char *buf, int bytes)
 
 #if defined(MUS_NETBSD) && (!(defined(AUDIO_OK)))
 #define AUDIO_OK
+
 /* started from Xanim a long time ago..., bugfixes from Thomas Klausner 30-Jul-05, worked into better shape Aug-05 */
 #include <fcntl.h>
 #include <sys/audioio.h>
 #include <sys/ioctl.h>
+
 
 #define RETURN_ERROR_EXIT(Error_Type, Audio_Line, Ur_Error_Message) \
   do { char *Error_Message; Error_Message = Ur_Error_Message; \
@@ -9457,6 +9461,7 @@ int mus_audio_read(int line, char *buf, int bytes)
     else MUS_STANDARD_ERROR(Error_Type, mus_error_type_to_string(Error_Type)); \
     return(MUS_ERROR); \
   } while (false)
+
 
 static int bsd_format_to_sndlib(int encoding)
 {
@@ -9479,6 +9484,7 @@ static int bsd_format_to_sndlib(int encoding)
   return(MUS_UNKNOWN);
 }
 
+
 static int sndlib_format_to_bsd(int encoding)
 {
   switch (encoding)
@@ -9495,25 +9501,30 @@ static int sndlib_format_to_bsd(int encoding)
   return(AUDIO_ENCODING_NONE);
 }
 
+
 int mus_audio_initialize(void) 
 {
   return(MUS_NO_ERROR);
 }
+
 
 int mus_audio_systems(void) 
 {
   return(1);
 }
 
+
 char *mus_audio_system_name(int system) 
 {
   return("NetBSD");
 }
 
+
 char *mus_audio_moniker(void) 
 {
   return("NetBSD audio");
 }
+
 
 static int cur_chans = 1, cur_srate = 22050;
 
@@ -9524,8 +9535,10 @@ int mus_audio_write(int line, char *buf, int bytes)
    *   it introduces interruptions.  Not sure what to do...
    */
   int b = 0;
+
   b = write(line, buf, bytes);
   usleep(10000);
+
   if ((b != bytes) && (b > 0)) /* b <= 0 presumably some sort of error, and we want to avoid infinite recursion below */
     {
       /* hangs at close if we don't handle this somehow */
@@ -9537,6 +9550,7 @@ int mus_audio_write(int line, char *buf, int bytes)
   return(MUS_NO_ERROR);
 }
 
+
 int mus_audio_close(int line) 
 {
   usleep(100000);
@@ -9544,6 +9558,7 @@ int mus_audio_close(int line)
   close(line);
   return(MUS_NO_ERROR);
 }
+
 
 static int netbsd_default_outputs = (AUDIO_HEADPHONE | AUDIO_LINE_OUT | AUDIO_SPEAKER);
 
@@ -9554,6 +9569,7 @@ void mus_netbsd_set_outputs(int speakers, int headphones, int line_out)
   if (headphones) netbsd_default_outputs |= AUDIO_HEADPHONE;
   if (line_out) netbsd_default_outputs |= AUDIO_LINE_OUT;
 }
+
 
 int mus_audio_open_output(int dev, int srate, int chans, int format, int size) 
 {
@@ -9576,10 +9592,12 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
 		      mus_format("format %d (%s) not available",
 				 format, 
 				 mus_data_format_name(format)));
+
   a_info.play.encoding = encode;
   a_info.mode = AUMODE_PLAY | AUMODE_PLAY_ALL;
   a_info.play.precision = mus_bytes_per_sample(format) * 8;
   a_info.play.sample_rate = srate;
+
   if (dev == MUS_AUDIO_LINE_OUT)
     a_info.play.port = AUDIO_LINE_OUT;
   else
@@ -9588,6 +9606,7 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
 	a_info.play.port = AUDIO_SPEAKER | (netbsd_default_outputs & AUDIO_HEADPHONE);
       else a_info.play.port = netbsd_default_outputs;
     }
+
   a_info.play.channels = chans;
   ioctl(line, AUDIO_SETINFO, &a_info);
   /* actually doesn't set the "ports" field -- always 0 */
@@ -9607,11 +9626,13 @@ int mus_audio_open_output(int dev, int srate, int chans, int format, int size)
   return(line);
 }
 
+
 int mus_audio_read(int line, char *buf, int bytes) 
 {
   read(line, buf, bytes);
   return(MUS_NO_ERROR);
 }
+
 
 static void describe_audio_state_1(void) 
 {
@@ -9739,6 +9760,7 @@ static void describe_audio_state_1(void)
 #endif
 }
 
+
 int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val) 
 {
   int i, audio_fd, err, dev;
@@ -9847,6 +9869,7 @@ int mus_audio_mixer_read(int ur_dev, int field, int chan, float *val)
   return(mus_audio_close(audio_fd));
 }
 
+
 int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val) 
 {
   audio_info_t info;
@@ -9890,6 +9913,7 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
 	  break;
         }
       break;
+
     case MUS_AUDIO_MICROPHONE:
       switch (field)
 	{
@@ -9908,6 +9932,7 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
 	  break;
 	}
       break;
+
     case MUS_AUDIO_LINE_IN:
     case MUS_AUDIO_DUPLEX_DEFAULT:
     case MUS_AUDIO_CD:
@@ -9928,6 +9953,7 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
 	  break;
         }
       break;
+
     default: 
       ok = false;
       break;
@@ -9942,6 +9968,7 @@ int mus_audio_mixer_write(int ur_dev, int field, int chan, float *val)
 				 mus_audio_device_name(field)));
   return(mus_audio_close(audio_fd));
 }
+
 
 int mus_audio_open_input(int ur_dev, int srate, int chans, int format, int size) 
 {
@@ -10000,6 +10027,8 @@ char *mus_audio_moniker(void) {return("no audio support");}
 
 
 
+/* -------------------------------- pprint etc -------------------------------- */
+
 static char *save_it = NULL;
 static int print_it = 1;
 static int save_it_len = 0;
@@ -10029,6 +10058,7 @@ static void pprint(const char *str)
     }
 }
 
+
 char *mus_audio_report(void)
 {
   mus_audio_initialize();
@@ -10044,6 +10074,7 @@ char *mus_audio_report(void)
   return(save_it);
 }
 
+
 void mus_audio_describe(void)
 {
   mus_audio_initialize();
@@ -10051,6 +10082,7 @@ void mus_audio_describe(void)
   if (!audio_strbuf) audio_strbuf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
   describe_audio_state_1();
 }
+
 
 /* for CLM */
 void mus_reset_audio_c(void)
@@ -10072,26 +10104,32 @@ int mus_audio_compatible_format(int dev)
   int err, i;
   float val[32];
   int ival[32];
+
   err = mus_audio_mixer_read(dev, MUS_AUDIO_FORMAT, 32, val);
   if (err != MUS_ERROR)
     {
       for (i = 0; i <= (int)(val[0]); i++) ival[i] = (int)(val[i]);
       /*               ^ this cast is vital!  Memory clobbered otherwise in LinuxPPC */
+
       for (i = 1; i <= ival[0]; i++)
 	if (ival[i] == MUS_AUDIO_COMPATIBLE_FORMAT) 
 	  return(MUS_AUDIO_COMPATIBLE_FORMAT);
+
       for (i = 1; i <= ival[0]; i++) 
 	if ((ival[i] == MUS_BINT) || (ival[i] == MUS_LINT) ||
 	    (ival[i] == MUS_BFLOAT) || (ival[i] == MUS_LFLOAT) ||
 	    (ival[i] == MUS_BSHORT) || (ival[i] == MUS_LSHORT))
 	  return(ival[i]);
+
       for (i = 1; i <= ival[0]; i++) 
 	if ((ival[i] == MUS_MULAW) || (ival[i] == MUS_ALAW) ||
 	    (ival[i] == MUS_UBYTE) || (ival[i] == MUS_BYTE))
 	  return(ival[i]);
+
       return(ival[1]);
     }
 #endif
+
   return(MUS_AUDIO_COMPATIBLE_FORMAT);
 }
 
@@ -10113,6 +10151,7 @@ int mus_audio_write_buffers(int port, int frames, int chans, mus_sample_t **bufs
   mus_file_write_buffer(output_format, 0, frames - 1, chans, bufs, output_buffer, clipped);
   return(mus_audio_write(port, output_buffer, bytes));
 }
+
 
 static char *input_buffer = NULL;
 static int input_buffer_size = 0;

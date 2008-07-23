@@ -403,12 +403,14 @@ void snd_doit(int argc, char **argv)
   XEN_EVAL_C_STRING("(define (" S_current_font ") #f)");
   XEN_EVAL_C_STRING("(define (" S_dialog_widgets ") #f)");
   XEN_EVAL_C_STRING("(define (" S_graph_data " . args) #f)");
-#if HAVE_GUILE
-  XEN_EVAL_C_STRING("(define (in time thunk) (join-thread (call-with-new-thread (lambda () (usleep (* 1000 time)) (thunk)))))");
-#else
+
   XEN_EVAL_C_STRING("(define (" S_in " . args) #f)"); 
-  /* in Gauche perhaps: (let ((thread (make-thread (lambda () (sys-nanosleep (* 1000 1000 time)) (thunk))))) (thread-start! thread) (thread-join! thread)) */
-#endif
+  /* Guile: XEN_EVAL_C_STRING("(define (in time thunk) (join-thread (call-with-new-thread (lambda () (usleep (* 1000 time)) (thunk)))))"); */
+  /* Gauche: (use gauche.threads) ... (let ((thread (make-thread (lambda () (sys-nanosleep (* 1000 1000 time)) (thunk))))) (thread-start! thread) (thread-join! thread)) */
+  /* 
+   * but these require a join somewhere, which makes it kinda pointless
+   * and select on SIGALRM is too tricky
+   */
   XEN_EVAL_C_STRING("(define (" S_main_widgets " . args) #f)");
   XEN_EVAL_C_STRING("(define (" S_make_color " . args) #f)");
   XEN_EVAL_C_STRING("(define (" S_make_graph_data " . args) #f)");

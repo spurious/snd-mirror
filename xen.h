@@ -16,6 +16,7 @@
 
 /* HISTORY:
  *
+ *  23-Jul-08: be more careful about wrapping POINTERs (they say 64-bit MS C void* == unsigned long long, but not unsigned long).
  *  30-Jun-08: XEN_OFF_T_IF_BOUND_P.
  *  19-May-08: more const char* arg declarations.
  *  14-May-08: changed XEN_ARITY in Guile to use scm_procedure_property.
@@ -537,14 +538,20 @@
     return(0); \
   }
 
+#if (SIZEOF_VOID_P == SIZEOF_UNSIGNED_LONG)
 /* (need a way to pass an uninterpreted pointer from C to XEN then back to C) */
 #if (SCM_DEBUG_TYPING_STRICTNESS == 2)
-  #define XEN_WRAP_C_POINTER(a)       (C_TO_XEN_ULONG((unsigned long)a))
+  #define XEN_WRAP_C_POINTER(a)       C_TO_XEN_ULONG((unsigned long)a)
 #else
   #define XEN_WRAP_C_POINTER(a)       ((XEN)(C_TO_XEN_ULONG((unsigned long)a)))
 #endif
+  #define XEN_UNWRAP_C_POINTER(a)     XEN_TO_C_ULONG(a)
 
-#define XEN_UNWRAP_C_POINTER(a)       XEN_TO_C_ULONG(a)
+#else
+  #define XEN_WRAP_C_POINTER(a)       C_TO_XEN_OFF_T((off_t)a)
+  #define XEN_UNWRAP_C_POINTER(a)     XEN_TO_C_OFF_T(a)
+#endif
+
 #define XEN_WRAPPED_C_POINTER_P(a)    XEN_NOT_FALSE_P(scm_number_p(a))
 
 #define XEN_SET_DOCUMENTATION(Func, Help) scm_set_object_property_x(C_STRING_TO_XEN_SYMBOL(Func), XEN_DOCUMENTATION_SYMBOL, C_TO_XEN_STRING(Help))
@@ -1470,8 +1477,15 @@ XEN xen_rb_add_to_load_path(char *path);
 #define XEN_OBJECT_HELP(Name)           fth_documentation_ref(Name)
 
 #define XEN_WRAPPED_C_POINTER_P(a)      XEN_ULONG_P(a)
-#define XEN_WRAP_C_POINTER(a)           C_TO_XEN_ULONG((unsigned long)(a))
-#define XEN_UNWRAP_C_POINTER(a)         XEN_TO_C_ULONG(a)
+
+#if (SIZEOF_VOID_P == SIZEOF_UNSIGNED_LONG)
+  #define XEN_WRAP_C_POINTER(a)         C_TO_XEN_ULONG((unsigned long)(a))
+  #define XEN_UNWRAP_C_POINTER(a)       XEN_TO_C_ULONG(a)
+#else
+  #define XEN_WRAP_C_POINTER(a)         C_TO_XEN_OFF_T((off_t)(a))
+  #define XEN_UNWRAP_C_POINTER(a)       XEN_TO_C_OFF_T(a)
+#endif
+
 #define XEN_PROTECT_FROM_GC(Obj)        fth_gc_protect(Obj)
 #define XEN_UNPROTECT_FROM_GC(Obj)      fth_gc_unprotect(Obj)
 
@@ -1670,8 +1684,14 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_SYMBOL_TO_C_STRING(a)    XEN_TO_C_STRING(SCM_SYMBOL_NAME(a))
 #define XEN_TO_STRING(Obj)           xen_gauche_object_to_string(Obj)
 
-#define XEN_WRAP_C_POINTER(a)        ((XEN)(C_TO_XEN_ULONG((unsigned long)a)))
-#define XEN_UNWRAP_C_POINTER(a)      XEN_TO_C_ULONG(a)
+#if (SIZEOF_VOID_P == SIZEOF_UNSIGNED_LONG)
+  #define XEN_WRAP_C_POINTER(a)      ((XEN)(C_TO_XEN_ULONG((unsigned long)a)))
+  #define XEN_UNWRAP_C_POINTER(a)    XEN_TO_C_ULONG(a)
+#else
+  #define XEN_WRAP_C_POINTER(a)      C_TO_XEN_OFF_T((off_t)(a))
+  #define XEN_UNWRAP_C_POINTER(a)    XEN_TO_C_OFF_T(a)
+#endif
+
 #define XEN_WRAPPED_C_POINTER_P(a)   XEN_NUMBER_P(a)
 
 #define XEN_DEFINE_CONSTANT(Name, Value, Help) xen_gauche_define_constant(Name, Value, Help)
