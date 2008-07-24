@@ -1052,21 +1052,32 @@ Widget menu_widget(int which_menu)
   Widget w;
   CompositeWidget cw;
   int menu;
-  if (which_menu == 5) return(popup_menu); /* special case -- not in main menuBar, presumably */
-  w = main_menu;
-  cw = (CompositeWidget)w;
-  for (i = 0; i < cw->composite.num_children; i++)
+  switch (which_menu)
     {
-      w = cw->composite.children[i];
-      if ((w) && (XtIsManaged(w)))
+    case 0: return(file_menu);    break;
+    case 1: return(edit_menu);    break;
+    case 2: return(view_menu);    break;
+    case 3: return(options_menu); break;
+    case 4: return(help_menu);    break;
+    case 5: return(popup_menu);   break;
+      
+    default:
+      /* this code hangs in XtGetValues if threads and no optimization in gcc and called from init file? */
+      w = main_menu;
+      cw = (CompositeWidget)w;
+      for (i = 0; i < cw->composite.num_children; i++)
 	{
-	  XtVaGetValues(w, XmNuserData, &menu, NULL);
-	  /* fprintf(stderr,"%s: menu: %d, slot: %d (%x)\n", XtName(w), MENU_INDEX(menu), CALL_INDEX(menu), menu); */
-	  if (which_menu == MENU_INDEX(menu))
+	  w = cw->composite.children[i];
+	  if ((w) && (XtIsManaged(w)))
 	    {
-	      Widget subw;
-	      XtVaGetValues(w, XmNsubMenuId, &subw, NULL);
-	      return(subw);
+	      XtVaGetValues(w, XmNuserData, &menu, NULL);
+	      /* fprintf(stderr,"%s: menu: %d, slot: %d (%x)\n", XtName(w), MENU_INDEX(menu), CALL_INDEX(menu), menu); */
+	      if (which_menu == MENU_INDEX(menu))
+		{
+		  Widget subw;
+		  XtVaGetValues(w, XmNsubMenuId, &subw, NULL);
+		  return(subw);
+		}
 	    }
 	}
     }

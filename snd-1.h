@@ -1640,6 +1640,7 @@ int snd_translate(const char *oldname, const char *newname, int type);
 
 /* -------- snd.c -------- */
 
+void mus_error_to_snd(int type, char *msg);
 void snd_set_global_defaults(bool need_cleanup);
 #if SND_AS_WIDGET
   snd_state *snd_main(int argc, char **argv);

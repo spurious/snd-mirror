@@ -543,16 +543,13 @@ returning you to the true top-level."
 	(thread-start! thread)
 	thread)))
 
-(defmacro* ws-note->string (name #:rest args)
-  ;; note list expr might contain quoted list, so we can't use quote below (and there's some bug in Guile's format...)
-  `(list ',name ,@args))
-		       
 (defmacro with-threaded-sound (args . body) 
   (if (provided? 'snd-threads)
       `(with-sound-helper 
 	(lambda ()
 	  (let* ((threads '())
 		 (ws-error #f))
+
 	    (call-with-current-continuation
 	     (lambda (error-exit)
 	       ,@(map (lambda (expr)
@@ -562,15 +559,15 @@ returning you to the true top-level."
 						  ,expr)
 						;; call-with-new-thread sets up a "continution barrier" so we can't jump
 						;;   out of the thread thunk directly.  But if an error occurs, we need
-						;;   to catch it or it falls back on Guile's error handler.  And ideally,
-						;;   the error would stop this map, and rethrow at the with-sound-helper
-						;;   level so that the outer error handling comes into play.
+						;;   to catch it or it falls back on Guile's error handler.
+						;;   The error stops this map, and (later) rethrows at the with-sound-helper level.
 						(lambda args
-						  (display (format #f "~%;error: ~A in ~A" args (ws-note->string ,@expr)))
-						  (set! ws-error args)
-						  )) ; can't jump out...
+						  ;; this is the handler of an implicit catch #t (in Guile)
+						  ;;   I'd like to print the current expr to help the user track down the error,
+						  ;;   but that runs into a series of bugs in format.
+						  (set! ws-error args))) ; can't jump out...
 					       threads))
-			   (if ws-error
+			   (if ws-error         ; interrupt the map over the with-sound body (an error has occurred)
 			       (error-exit))
 			   (if (>= (length threads) *clm-threads*)
 			       (begin
@@ -580,12 +577,14 @@ returning you to the true top-level."
 				  threads)
 				 (set! threads '())))))
 		      body)))
-	    ;; need to join the threads so that there aren't dangling references to *output* in the error case
+
+	    ;; even if error, we need to join the threads so that there aren't dangling references to *output*
 	    (for-each 
 	     (lambda (thread) 
 	       (join-thread thread))
 	     threads)
-	    (if ws-error
+
+	    (if ws-error  ; if error, re-throw it so that outer level error handlers will see it
 		(apply throw (car ws-error) (cdr ws-error))
 		#f)))
 	,@args)

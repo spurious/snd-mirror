@@ -353,8 +353,13 @@ int mus_error(int error, const char *format, ...)
     (*mus_error_handler)(error, mus_error_buffer);
   else 
     {
+#if USE_SND && HAVE_PTHREADS
+      /* thread local error handler isn't set up with the default error handler so... */
+      mus_error_to_snd(error, mus_error_buffer);
+#else
       fprintf(stderr, mus_error_buffer);
       fputc('\n', stderr);
+#endif
     }
 
 #if HAVE_PTHREADS
