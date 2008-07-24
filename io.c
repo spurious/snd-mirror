@@ -2280,77 +2280,6 @@ static void min_max_ubytes(unsigned char *data, int bytes, int chan, int chans, 
 }
 
 
-
-
-int mus_samples_peak(unsigned char *data, int bytes, int chans, int format, Float *maxes)
-{
-  /* returns MUS_ERROR if format can't be handled */
-  /*   assumes maxes arrays has at least chans elements and that data array has at least bytes bytes */
-  /* this is used only by the recorder to move the VU meter needle, so it doesn't need to handle large (off_t) arrays */
-
-  Float cur_min, cur_max;
-  int chan;
-
-  for (chan = 0; chan < chans; chan++)
-    {
-      maxes[chan] = 0.0;
-      switch (format)
-	{
-	case MUS_BSHORT:
-#if (!MUS_LITTLE_ENDIAN)
-	  min_max_shorts(data, bytes, chan, chans, &cur_min, &cur_max);
-#else
-	  min_max_switch_shorts(data, bytes, chan, chans, &cur_min, &cur_max);
-#endif
-	  break;
-
-	case MUS_LSHORT:
-#if (MUS_LITTLE_ENDIAN)
-	  min_max_shorts(data, bytes, chan, chans, &cur_min, &cur_max);
-#else
-	  min_max_switch_shorts(data, bytes, chan, chans, &cur_min, &cur_max);
-#endif
-	  break;
-
-	case MUS_MULAW:  	              
-	  min_max_mulaw(data, bytes, chan, chans, &cur_min, &cur_max);
-	  break;
-
-	case MUS_ALAW:                  
-	  min_max_alaw(data, bytes, chan, chans, &cur_min, &cur_max);
-	  break;
-
-	case MUS_BFLOAT:
-#if (!MUS_LITTLE_ENDIAN)
-	  min_max_floats(data, bytes, chan, chans, &cur_min, &cur_max, false);
-#else
-	  min_max_switch_floats(data, bytes, chan, chans, &cur_min, &cur_max, false);
-#endif
-	  break;
-
-	case MUS_LFLOAT:
-#if (MUS_LITTLE_ENDIAN)
-	  min_max_floats(data, bytes, chan, chans, &cur_min, &cur_max, false);
-#else
-	  min_max_switch_floats(data, bytes, chan, chans, &cur_min, &cur_max, false);
-#endif
-	  break;
-
-	default:
-	  /* int cases are problematic because the scaling is unknown */
-	  /* byte, double, 24-bit, unsigned short and unscaled cases are absurd */
-	  return(MUS_ERROR);
-	  break;
-	}
-
-      if (-cur_min > cur_max)
-	maxes[chan] = -cur_min;
-      else maxes[chan] = cur_max;
-    }
-  return(MUS_NO_ERROR);
-}
-
-
 int mus_samples_bounds(unsigned char *data, int bytes, int chan, int chans, int format, Float *min_samp, Float *max_samp)
 {
   switch (format)
@@ -2462,3 +2391,20 @@ int mus_samples_bounds(unsigned char *data, int bytes, int chan, int chans, int 
 
   return(MUS_NO_ERROR);
 }
+
+
+int mus_samples_peak(unsigned char *data, int bytes, int chans, int format, Float *maxes)
+{
+  int chan;
+  for (chan = 0; chan < chans; chan++)
+    {
+      Float cur_min, cur_max;
+      mus_samples_bounds(data, bytes, chan, chans, format, &cur_min, &cur_max);
+      if (-cur_min > cur_max)
+	maxes[chan] = -cur_min;
+      else maxes[chan] = cur_max;
+    }
+  return(MUS_NO_ERROR);
+}
+
+

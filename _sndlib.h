@@ -686,7 +686,7 @@ int fileno(FILE *fp);
   #define MUS_ALREADY_LOCKED EBUSY
 
 #if MUS_DEBUGGING
-  /* io.c -- check for lock order troubles and so on */
+  /* sound.c -- check for lock order troubles and so on */
   #define MUS_LOCK(Lock) mus_lock(Lock, __FILE__, __LINE__, __FUNCTION__)
   #define MUS_UNLOCK(Lock) mus_unlock(Lock, __FILE__, __LINE__, __FUNCTION__)
   #define MUS_TRY_LOCK(Lock) mus_try_lock(Lock, __FILE__, __LINE__, __FUNCTION__)

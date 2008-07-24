@@ -4510,16 +4510,19 @@ static char *describe_smpflt(mus_any *ptr)
 		   mus_name(ptr),
 		   gen->xs[0], gen->xs[1], gen->x1); 
       break;
+
     case MUS_ONE_POLE: 
       mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s a0: %.3f, b1: %.3f, y1: %.3f", 
 		   mus_name(ptr),
 		   gen->xs[0], gen->ys[1], gen->y1); 
       break;
+
     case MUS_TWO_ZERO: 
       mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s a0: %.3f, a1: %.3f, a2: %.3f, x1: %.3f, x2: %.3f",
 		   mus_name(ptr),
 		   gen->xs[0], gen->xs[1], gen->xs[2], gen->x1, gen->x2); 
       break;
+
     case MUS_TWO_POLE: 
       mus_snprintf(describe_buffer, DESCRIBE_BUFFER_SIZE, "%s a0: %.3f, b1: %.3f, b2: %.3f, y1: %.3f, y2: %.3f",
 		   mus_name(ptr),
@@ -9830,17 +9833,17 @@ double mus_bessi0(Float x)
     {
       Float z, denominator, numerator;
       z = x * x;
-      numerator=(z * (z * (z * (z * (z * (z * (z * (z * (z * (z * (z * (z * (z * (z * 
-										  0.210580722890567e-22 + 0.380715242345326e-19) +
-									     0.479440257548300e-16) + 0.435125971262668e-13) +
-								   0.300931127112960e-10) + 0.160224679395361e-7) +
-							 0.654858370096785e-5) + 0.202591084143397e-2) +
-					       0.463076284721000e0) + 0.754337328948189e2) +
-				     0.830792541809429e4) + 0.571661130563785e6) +
-			   0.216415572361227e8) + 0.356644482244025e9) +
-		 0.144048298227235e10);
-      denominator=(z * (z * (z - 0.307646912682801e4) +
-			0.347626332405882e7) - 0.144048298227235e10);
+      numerator = (z * (z * (z * (z * (z * (z * (z * (z * (z * (z * (z * (z * (z * (z * 
+										    0.210580722890567e-22 + 0.380715242345326e-19) +
+									       0.479440257548300e-16) + 0.435125971262668e-13) +
+								     0.300931127112960e-10) + 0.160224679395361e-7) +
+							   0.654858370096785e-5) + 0.202591084143397e-2) +
+						 0.463076284721000e0) + 0.754337328948189e2) +
+				       0.830792541809429e4) + 0.571661130563785e6) +
+			     0.216415572361227e8) + 0.356644482244025e9) +
+		   0.144048298227235e10);
+      denominator = (z * (z * (z - 0.307646912682801e4) +
+			  0.347626332405882e7) - 0.144048298227235e10);
       return(-numerator / denominator);
     } 
   return(1.0);
@@ -10386,6 +10389,7 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, off_t size, Float 
 			             gsl_complex_arccos_real(alpha * cos(angle)),
 				     (double)size)));
 		break;
+
 	      case MUS_SAMARAKI_WINDOW:
 		rl[i] = GSL_REAL(gsl_complex_div(
 		                   gsl_complex_sin(
@@ -10395,9 +10399,11 @@ Float *mus_make_fft_window_with_window(mus_fft_window_t type, off_t size, Float 
 				   gsl_complex_sin(
 				     gsl_complex_arccos_real(alpha * cos(angle)))));
 		break;
+
 	      case MUS_ULTRASPHERICAL_WINDOW:
 		rl[i] = ultraspherical(size, alpha * cos(angle), mu);
 		break;
+
 	      default: 
 		break;
 	      }
@@ -11449,7 +11455,9 @@ void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, off_t out_start
     {
     case ENVELOPED_MONO_MIX:
     case ENVELOPED_MIX:
-      if (umx == NULL) mx = (mus_mixer *)mus_make_identity_mixer(mix_chans); /* fall through */
+      if (umx == NULL) 
+	mx = (mus_mixer *)mus_make_identity_mixer(mix_chans); /* fall through */
+
     case ALL_MIX:
       /* the general case -- possible envs/scalers on every mixer cell */
       for (offi = 0, inc = in_start, outc = out_start; offi < out_frames; offi++, inc++, outc++)
@@ -11467,11 +11475,13 @@ void mus_mix_with_reader_and_writer(mus_any *outf, mus_any *inf, off_t out_start
 	}
       if (umx == NULL) mus_free((mus_any *)mx);
       break;
+
     case IDENTITY_MIX:
     case IDENTITY_MONO_MIX:
       for (offi = 0, inc = in_start, outc = out_start; offi < out_frames; offi++, inc++, outc++)
 	mus_frame_to_file(outf, outc, mus_file_to_frame(inf, inc, (mus_any *)frin));
       break;
+
     case SCALED_MONO_MIX:
     case SCALED_MIX:
       for (offi = 0, inc = in_start, outc = out_start; offi < out_frames; offi++, inc++, outc++)

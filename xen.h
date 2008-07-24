@@ -11,8 +11,8 @@
  */
 
 #define XEN_MAJOR_VERSION 2
-#define XEN_MINOR_VERSION 17
-#define XEN_VERSION "2.17"
+#define XEN_MINOR_VERSION 18
+#define XEN_VERSION "2.18"
 
 /* HISTORY:
  *

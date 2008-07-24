@@ -2755,6 +2755,8 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define BOOL_RESULT pt->ints[args[0]]
 #define BOOL_ARG_1 ((bool)(pt->ints[args[1]]))
 #define BOOL_ARG_3 ((bool)(pt->ints[args[3]]))
+#define BOOL_ARG_OK(Arg) ((pt->ints) && ((pt->outer_tree) || ((args[Arg] >= 0) && (args[Arg] <= pt->int_ctr) && (args[Arg] < pt->ints_size))))
+/* an embedded ptree is evalled by simply copying the outer data pointers, but not their ctr/size vars, so we need to accept those */
 
 #define INT_RESULT pt->ints[args[0]]
 #define INT_ARG_1 pt->ints[args[1]]
@@ -2762,6 +2764,7 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define INT_ARG_3 pt->ints[args[3]]
 #define INT_ARG_4 pt->ints[args[4]]
 #define INT_ARG_5 pt->ints[args[5]]
+#define INT_ARG_OK(Arg) ((pt->ints) && ((pt->outer_tree) || ((args[Arg] >= 0) && (args[Arg] <= pt->int_ctr) && (args[Arg] < pt->ints_size))))
 
 #define FLOAT_RESULT pt->dbls[args[0]]
 #define FLOAT_ARG_1 pt->dbls[args[1]]
@@ -2769,27 +2772,32 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define FLOAT_ARG_3 pt->dbls[args[3]]
 #define FLOAT_ARG_4 pt->dbls[args[4]]
 #define FLOAT_ARG_5 pt->dbls[args[5]]
+#define FLOAT_ARG_OK(Arg) ((pt->dbls) && ((pt->outer_tree) || ((args[Arg] >= 0) && (args[Arg] <= pt->dbl_ctr) && (args[Arg] < pt->dbls_size))))
 
 #define VCT_RESULT pt->vcts[args[0]]
 #define VCT_ARG_1 pt->vcts[args[1]]
 #define VCT_ARG_2 pt->vcts[args[2]]
 #define VCT_ARG_3 pt->vcts[args[3]]
 #define VCT_ARG_4 pt->vcts[args[4]]
+#define VCT_ARG_OK(Arg) ((pt->vcts) && ((pt->outer_tree) || ((args[Arg] >= 0) && (args[Arg] <= pt->vct_ctr) && (args[Arg] < pt->vcts_size))))
 
 #define SOUND_DATA_RESULT pt->sds[args[0]]
 #define SOUND_DATA_ARG_1 pt->sds[args[1]]
 #define SOUND_DATA_ARG_2 pt->sds[args[2]]
 #define SOUND_DATA_ARG_3 pt->sds[args[3]]
 #define SOUND_DATA_ARG_4 pt->sds[args[4]]
+#define SOUND_DATA_ARG_OK(Arg) ((pt->sds) && ((pt->outer_tree) || ((args[Arg] >= 0) && (args[Arg] <= pt->sd_ctr) && (args[Arg] < pt->sds_size))))
 
 #define STRING_RESULT pt->strs[args[0]]
 #define STRING_ARG_1 pt->strs[args[1]]
 #define STRING_ARG_3 pt->strs[args[3]]
+#define STRING_ARG_OK(Arg) ((pt->strs) && ((pt->outer_tree) || ((args[Arg] >= 0) && (args[Arg] <= pt->str_ctr) && (args[Arg] < pt->strs_size))))
 
 #define CHAR_RESULT pt->ints[args[0]]
 #define CHAR_ARG_1 ((char)(pt->ints[args[1]]))
 #define CHAR_ARG_2 ((char)(pt->ints[args[2]]))
 #define CHAR_ARG_3 ((char)(pt->ints[args[3]]))
+#define CHAR_ARG_OK(Arg) ((pt->ints) && ((pt->outer_tree) || ((args[Arg] >= 0) && (args[Arg] <= pt->int_ctr) && (args[Arg] < pt->ints_size))))
 
 #define CLM_RESULT pt->clms[args[0]]
 #define CLM_LOC pt->clm_locs[args[0]]
@@ -2797,16 +2805,19 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define CLM_ARG_2 pt->clms[args[2]]
 #define CLM_ARG_3 pt->clms[args[3]]
 #define CLM_ARG_4 pt->clms[args[4]]
+#define CLM_ARG_OK(Arg) ((pt->clms) && ((pt->outer_tree) || ((args[Arg] >= 0) && (args[Arg] <= pt->clm_ctr) && (args[Arg] < pt->clms_size))))
 
 #define READER_RESULT pt->readers[args[0]]
 #define READER_ARG_1 pt->readers[args[1]]
 #define READER_ARG_2 pt->readers[args[2]]
 #define READER_ARG_3 pt->readers[args[3]]
+#define READER_ARG_OK(Arg) ((pt->readers) && ((pt->outer_tree) || ((args[Arg] >= 0) && (args[Arg] <= pt->reader_ctr) && (args[Arg] < pt->readers_size))))
 
 #define MIX_READER_RESULT pt->mix_readers[args[0]]
 #define MIX_READER_ARG_1 pt->mix_readers[args[1]]
 #define MIX_READER_ARG_2 pt->mix_readers[args[2]]
 #define MIX_READER_ARG_3 pt->mix_readers[args[3]]
+#define MIX_READER_ARG_OK(Arg) ((pt->mix_readers) && ((pt->outer_tree) || ((args[Arg] >= 0) && (args[Arg] <= pt->mix_reader_ctr) && (args[Arg] < pt->mix_readers_size))))
 
 #define FNC_RESULT ((ptree **)(pt->fncs))[args[0]]
 #define FNC_ARG_1 ((ptree **)(pt->fncs))[args[1]]
@@ -2815,22 +2826,26 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define FNC_ARG_4 ((ptree **)(pt->fncs))[args[4]]
 #define FNC_ARG_5 ((ptree **)(pt->fncs))[args[5]]
 #define FNC_ARG_6 ((ptree **)(pt->fncs))[args[6]]
+#define FNC_ARG_OK(Arg) ((pt->fncs) && ((pt->outer_tree) || ((args[Arg] >= 0) && (args[Arg] <= pt->fnc_ctr) && (args[Arg] < pt->fncs_size))))
 
 #define XEN_RESULT pt->xens[args[0]]
 #define RXEN_ARG_1 pt->xens[args[1]]
 #define RXEN_ARG_2 pt->xens[args[2]]
 #define RXEN_ARG_3 pt->xens[args[3]]
 /* using "RXEN" here because XEN_ARG_* is already used in xen.h */
+#define RXEN_ARG_OK(Arg) ((pt->xens) && ((pt->outer_tree) || ((args[Arg] >= 0) && (args[Arg] <= pt->xen_ctr) && (args[Arg] < pt->xens_size))))
 
 #define VECT_RESULT pt->vects[args[0]]
 #define VECT_ARG_1 pt->vects[args[1]]
 #define VECT_ARG_2 pt->vects[args[2]]
 #define VECT_ARG_3 pt->vects[args[3]]
+#define VECT_ARG_OK(Arg) ((pt->vects) && ((pt->outer_tree) || ((args[Arg] >= 0) && (args[Arg] <= pt->vect_ctr) && (args[Arg] < pt->vects_size))))
 
 #define LIST_RESULT pt->lists[args[0]]
 #define LIST_ARG_1 pt->lists[args[1]]
 #define LIST_ARG_2 pt->lists[args[2]]
 #define LIST_ARG_3 pt->lists[args[3]]
+#define LIST_ARG_OK(Arg) ((pt->lists) && ((pt->outer_tree) || ((args[Arg] >= 0) && (args[Arg] <= pt->list_ctr) && (args[Arg] < pt->lists_size))))
 
 
 static void quit(int *args, ptree *pt) {ALL_DONE = (Int)true;}
@@ -4433,6 +4448,8 @@ static xen_value *temp_package(ptree *prog,
 
 static void dbl_check_1(int *args, ptree *pt)
 {
+  if (!(FLOAT_ARG_OK(1))) 
+    mus_error(MUS_NO_DATA, "float arg 1 addr (%d) is invalid (%d of %d)", args[1], pt->dbl_ctr, pt->dbls_size);
 #if HAVE_DECL_ISNAN
   if (isnan(FLOAT_ARG_1)) mus_error(MUS_ARG_OUT_OF_RANGE, "float arg 1 is NaN");
 #endif
@@ -4441,6 +4458,8 @@ static void dbl_check_1(int *args, ptree *pt)
 
 static void dbl_check_2(int *args, ptree *pt)
 {
+  if (!(FLOAT_ARG_OK(2))) 
+    mus_error(MUS_NO_DATA, "float arg 2 addr (%d) is invalid (%d of %d)", args[2], pt->dbl_ctr, pt->dbls_size);
 #if HAVE_DECL_ISNAN
   if (isnan(FLOAT_ARG_2)) mus_error(MUS_ARG_OUT_OF_RANGE, "float arg 2 is NaN");
 #endif
@@ -4449,6 +4468,8 @@ static void dbl_check_2(int *args, ptree *pt)
 
 static void dbl_check_3(int *args, ptree *pt)
 {
+  if (!(FLOAT_ARG_OK(3))) 
+    mus_error(MUS_NO_DATA, "float arg 3 addr (%d) is invalid (%d of %d)", args[3], pt->dbl_ctr, pt->dbls_size);
 #if HAVE_DECL_ISNAN
   if (isnan(FLOAT_ARG_3)) mus_error(MUS_ARG_OUT_OF_RANGE, "float arg 3 is NaN");
 #endif
@@ -7269,10 +7290,18 @@ static xen_value *c_g_p_1(ptree *pt, xen_value **args, int num_args)
 }
 
 
-static void vct_check_1(int *args, ptree *pt) {if (!(VCT_ARG_1)) mus_error(MUS_NO_DATA, "arg 1 (vct) is null");}
+static void vct_check_1(int *args, ptree *pt) 
+{
+  if (!(VCT_ARG_OK(1))) mus_error(MUS_NO_DATA, "vct arg 1 addr (%d) is invalid (%d of %d)", args[1], pt->vct_ctr, pt->vcts_size);
+  if (!(VCT_ARG_1)) mus_error(MUS_NO_DATA, "arg 1 (vct) is null");
+}
 
 
-static void vct_check_2(int *args, ptree *pt) {if (!(VCT_ARG_2)) mus_error(MUS_NO_DATA, "arg 2 (vct) is null");}
+static void vct_check_2(int *args, ptree *pt) 
+{
+  if (!(VCT_ARG_OK(2))) mus_error(MUS_NO_DATA, "vct arg 2 addr (%d) is invalid (%d of %d)", args[2], pt->vct_ctr, pt->vcts_size);
+  if (!(VCT_ARG_2)) mus_error(MUS_NO_DATA, "arg 2 (vct) is null");
+}
 
 
 
@@ -7651,7 +7680,11 @@ static void list_ref(int *args, ptree *pt)
 }
 
 
-static void list_check_1(int *args, ptree *pt) {if (!(LIST_ARG_1)) mus_error(MUS_NO_DATA, "arg 1 (list) is null");}
+static void list_check_1(int *args, ptree *pt) 
+{
+  if (!(LIST_ARG_OK(1))) mus_error(MUS_NO_DATA, "list arg 1 addr (%d) is invalid (%d of %d)", args[1], pt->list_ctr, pt->lists_size);
+  if (!(LIST_ARG_1)) mus_error(MUS_NO_DATA, "arg 1 (list) is null");
+}
 
 
 static xen_value *list_ref_1(ptree *prog, xen_value **args, int num_args)
@@ -7825,6 +7858,9 @@ static void clm_struct_field_set_1(ptree *prog, xen_value *in_v, xen_value *in_v
 /* float vectors are handled as vcts
  */
 
+/* SOMEDAY: vector (string, char, fnc) arg safety checks */
+
+
 /* length */
 
 static void vector_length_f(int *args, ptree *pt) {INT_RESULT = VCT_ARG_1->length;}
@@ -7978,11 +8014,21 @@ static xen_value *vector_fill_1(ptree *prog, xen_value **args, int num_args)
 
 /* ---------------- vct stuff ---------------- */
 
-static void vct_check_arg_1(int *args, ptree *pt) {if ((!args) || (!(VCT_ARG_1))) mus_error(MUS_NO_DATA, "arg 1 (vct) is null");}
+static void vct_check_arg_1(int *args, ptree *pt) 
+{
+  if (!(VCT_ARG_OK(1))) mus_error(MUS_NO_DATA, "vct arg 1 addr (%d) is invalid (%d of %d)", args[1], pt->vct_ctr, pt->vcts_size);
+  if (!(VCT_ARG_1)) mus_error(MUS_NO_DATA, "arg 1 (vct) is null");
+}
 
-static void vct_check_index_1(int *args, ptree *pt) {if (VCT_ARG_1->length < 2) mus_error(MUS_NO_DATA, "vct index (1) too high");}
+static void vct_check_index_1(int *args, ptree *pt) 
+{
+  if (VCT_ARG_1->length < 2) mus_error(MUS_NO_DATA, "vct index (1) too high");
+}
 
-static void vct_check_index_2(int *args, ptree *pt) {if (VCT_ARG_1->length < 3) mus_error(MUS_NO_DATA, "vct index (2) too high");}
+static void vct_check_index_2(int *args, ptree *pt) 
+{
+  if (VCT_ARG_1->length < 3) mus_error(MUS_NO_DATA, "vct index (2) too high");
+}
 
 static void vct_check_index(int *args, ptree *pt) 
 {
@@ -8423,10 +8469,18 @@ static xen_value *vct_to_channel_1(ptree *pt, xen_value **args, int num_args)
 
 /* ---------------- sound-data ---------------- */
 
-static void sound_data_check_1(int *args, ptree *pt) {if ((!args) || (!(SOUND_DATA_ARG_1))) mus_error(MUS_NO_DATA, "arg 1 (sound-data) is null");}
+static void sound_data_check_1(int *args, ptree *pt) 
+{
+  if (!(SOUND_DATA_ARG_OK(1))) mus_error(MUS_NO_DATA, "sound-data arg 1 addr (%d) is invalid (%d of %d)", args[1], pt->sd_ctr, pt->sds_size);
+  if (!(SOUND_DATA_ARG_1)) mus_error(MUS_NO_DATA, "arg 1 (sound-data) is null");
+}
 
 
-static void sound_data_check_2(int *args, ptree *pt) {if ((!args) || (!(SOUND_DATA_ARG_2))) mus_error(MUS_NO_DATA, "arg 2 (sound-data) is null");}
+static void sound_data_check_2(int *args, ptree *pt) 
+{
+  if (!(SOUND_DATA_ARG_OK(2))) mus_error(MUS_NO_DATA, "sound-data arg 2 addr (%d) is invalid (%d of %d)", args[2], pt->sd_ctr, pt->sds_size);
+  if (!(SOUND_DATA_ARG_2)) mus_error(MUS_NO_DATA, "arg 2 (sound-data) is null");
+}
 
 
 static void sound_data_check_index(int *args, ptree *pt) 
@@ -8746,8 +8800,11 @@ static xen_value *mus_generator_p_1(ptree *prog, xen_value **args, int num_args)
       return(package(prog, R_BOOL, Name ## _0p, #Name "_0p", args, 1)); \
     return(make_xen_value(R_BOOL, add_int_to_ptree(prog, (Int)false), R_CONSTANT)); \
   } \
-  static void Name ## _check(int *args, ptree *pt) { \
-    if (!mus_ ## Name ## _p(CLM_ARG_1)) mus_error(MUS_NO_GEN, #Name ": bad arg: %s", (CLM_ARG_1) ? mus_name(CLM_ARG_1) : "null");}
+  static void Name ## _check(int *args, ptree *pt) \
+  { \
+    if (!(CLM_ARG_OK(1))) mus_error(MUS_NO_DATA, "clm generator arg 1 addr (%d) is invalid (%d of %d)", args[1], pt->clm_ctr, pt->clms_size); \
+    if (!mus_ ## Name ## _p(CLM_ARG_1)) mus_error(MUS_NO_GEN, #Name ": bad arg: %s", (CLM_ARG_1) ? mus_name(CLM_ARG_1) : "null"); \
+  }
 
 /* GEN_P but no check procs for run-safety */
 #define GEN_P_1(Name) \
@@ -8970,6 +9027,8 @@ static void tap_1f(int *args, ptree *pt) {FLOAT_RESULT = mus_tap(CLM_ARG_1, FLOA
 
 static void tap_delay_line_check(int *args, ptree *pt)
 {
+  if (!(CLM_ARG_OK(1))) 
+    mus_error(MUS_NO_DATA, "delay gen arg 1 addr (%d) is invalid (%d of %d)", args[1], pt->clm_ctr, pt->clms_size);
   if (!mus_delay_line_p(CLM_ARG_1)) 
     mus_error(MUS_NO_GEN, "tap: gen arg: %s is not a delay line", (CLM_ARG_1) ? mus_name(CLM_ARG_1) : "null");
 }
@@ -8988,6 +9047,8 @@ static xen_value *tap_1(ptree *prog, xen_value **args, int num_args)
 
 static void tick_delay_line_check(int *args, ptree *pt)
 {
+  if (!(CLM_ARG_OK(1))) 
+    mus_error(MUS_NO_DATA, "tick delay gen arg 1 addr (%d) is invalid (%d of %d)", args[1], pt->clm_ctr, pt->clms_size);
   if (!mus_delay_line_p(CLM_ARG_1)) 
     mus_error(MUS_NO_GEN, "delay-tick: gen arg: %s is not a delay line", (CLM_ARG_1) ? mus_name(CLM_ARG_1) : "null");
 }
@@ -9781,6 +9842,8 @@ static void frame_to_file_3(int *args, ptree *pt)
 
 static void frame_file_check(int *args, ptree *pt)
 {
+  if (!(CLM_ARG_OK(1))) 
+    mus_error(MUS_NO_DATA, "frame->file gen arg 1 addr (%d) is invalid (%d of %d)", args[1], pt->clm_ctr, pt->clms_size);
   if (!mus_output_p(CLM_ARG_1)) 
     mus_error(MUS_NO_GEN, "frame->file: gen arg: %s is not an output generator", (CLM_ARG_1) ? mus_name(CLM_ARG_1) : "null");
 }
@@ -9807,6 +9870,8 @@ static void file_to_frame_2(int *args, ptree *pt)
 
 static void file_frame_check(int *args, ptree *pt)
 {
+  if (!(CLM_ARG_OK(1))) 
+    mus_error(MUS_NO_DATA, "file->frame gen arg 1 addr (%d) is invalid (%d of %d)", args[1], pt->clm_ctr, pt->clms_size);
   if (!mus_input_p(CLM_ARG_1)) 
     mus_error(MUS_NO_GEN, "file->frame: gen arg: %s is not an input generator", (CLM_ARG_1) ? mus_name(CLM_ARG_1) : "null");
 }

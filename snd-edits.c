@@ -6220,7 +6220,6 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
 	      if (direction == READ_FORWARD)
 		file_buffers_forward(ind0, ind1, indx, sf, first_snd);
 	      else file_buffers_back(ind0, ind1, indx, sf, first_snd);
-	      /* TODO: can this be confused by threads? do we need locks around this or in snd-io.c? */
 	    }
 	  else 
 	    {

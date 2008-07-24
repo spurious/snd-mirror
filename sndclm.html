@@ -1124,7 +1124,7 @@ with_sound(:play, true) do
 
 
 
-<table border=0 hspace=40 vspace=10><tr><td>
+<table border=0 hspace=40 vspace=20><tr><td>
 <table border=1 cellpadding=4>
 <tr><td colspan=2 bgcolor="beige"><center>env methods</center></td></tr>
 <tr><td><em class=gen>mus-location</em></td><td>number of calls so far on this env</td></tr>
@@ -2640,7 +2640,7 @@ with_sound(:play, true) do
 
 
 
-<table border=1 align=left hspace=40 vspace=10 cellpadding=4>
+<table border=1 align=left hspace=40 vspace=20 cellpadding=4>
 <tr><td colspan=2 bgcolor="beige"><center>saw-tooth and friends' methods</center></td></tr>
 <tr><td><em class=gen>mus-frequency</em></td><td>frequency in Hz</td></tr>
 <tr><td><em class=gen>mus-phase</em></td><td>phase in radians</td></tr>
@@ -9891,7 +9891,7 @@ And a sort of converse is <a href="sndscm.html#soundinterp">sound-interp</a>.
 </pre>
 
 
-<table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
+<table border=1 bordercolor="lightgray" hspace=20 vspace=10 cellspacing=2 cellpadding=5>
 
 <tr>
 <td bgcolor="#f0f4ff">
@@ -9928,9 +9928,9 @@ with_sound(:play, true) do
 
 
 <p>ring-modulation is sometimes called "double-sideband-suppressed-carrier" modulation &mdash;
-that is, amplitude modulation with the carrier subtracted out (set to 0.0 above).
+that is, amplitude modulation with the carrier omitted (set to 0.0 above).
 The nomenclature here is a bit confusing &mdash; I can't remember now why I used
-these names; think of "carrier" as "carrier amplitude" and "in1" as "carrier". Normal amplitude modulation using this function would be:
+these names; think of "carrier" as "carrier amplitude" and "in1" as "carrier". Normal amplitude modulation using this function is:
 </p>
 
 <pre>
