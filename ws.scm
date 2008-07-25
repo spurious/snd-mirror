@@ -538,7 +538,7 @@ returning you to the true top-level."
 (if (provided? 'snd-gauche)
     (define join-thread thread-join!))
 (if (provided? 'snd-gauche)
-    (define (call-with-new-thread thunk)
+    (define (call-with-new-thread thunk handler)
       (let ((thread (make-thread thunk)))
 	(thread-start! thread)
 	thread)))

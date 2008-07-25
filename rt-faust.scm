@@ -448,7 +448,7 @@
 		    (return output))))
 
 
-(define-faust-macro (faust-compute faust-object input)
+(define-rt-macro (faust-compute faust-object input)
   `(rt_faust_compute ,faust-object ,input))
 
 
@@ -459,6 +459,7 @@
      (when (-> ,faust contains-ui?)
        (-> ,faust open-gui dialog)
        (-> dialog show))))
+
 
 (define*2 (rt-<faust>-do :key 
 			 (in '(vct))
@@ -476,8 +477,15 @@
 (define-rt-macro (<faust-vct> . rest)
   (apply rt-<faust>-do rest))
 
-(define-rt-macro (<faust> . rest)
-  `(vct-ref (<faust-vct> ,@rest) 0))
+(define-rt-macro <faust>
+  (labamba (:key (in '(vct)) :rest rest)
+    (if (and (null? (cdr rest))
+	     (symbol? (car rest)))
+	`(vct-ref (faust-compute ,(car rest) ,in) 0)
+	`(vct-ref (<faust-vct> :in ,in ,@rest) 0))))
+
+;;(define-rt-macro (<faust> . rest)
+;;  `(vct-ref (<faust-vct> ,@rest) 0))
 
 
 #!
@@ -539,6 +547,30 @@
 
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;; Allocating faust instances in RT ;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(rt-ec-function <faust> rt_faust_make_faust
+  (lambda (,rt-globalvardecl
+	   (<faust> faust))
+    (<struct-mus_rt_faust-*> copy (tar_alloc rt_globals->heap (sizeof <struct-mus_rt_faust>)))
+    ((<void*> (<void>)) newDsp faust->newDsp)
+    ((<void> (<void*> int)) init faust->init)
+    (memcpy copy faust (sizeof <struct-mus_rt_faust>))
+    (set! copy->dsp (newDsp))
+    (init copy->dsp ,(rte-samplerate))
+    (return copy)
+    ))
+    
+(define-rt-macro (make-faust . code)
+  (set! code (apply generate-faust-source code))
+  `(rt_faust_make_faust (extern (let ((faust (make-faust-object ',code)))
+				  (start-faust-gui-if-necessary faust)
+				  (c-display "addr" (cadr (-> faust get-c-object)))
+				  faust))))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;; <faust> in Stalin '';;;;;;;;;;;;;;;;;;;;;;
@@ -571,12 +603,12 @@
 (define-stalin-ec <void*> rt_faust_make_faust
   (lambda ((<void*> vfaust))
     (<struct-mus_rt_faust-*> faust (cast <struct-mus_rt_faust-*> vfaust))
-    (<struct-mus_rt_faust-*> copy (tar_alloc_atomic heap (sizeof <struct-mus_rt_faust>)))
+    (<struct-mus_rt_faust-*> copy (tar_alloc heap (sizeof <struct-mus_rt_faust>)))
     ((<void*> (<void>)) newDsp faust->newDsp) ;;(cast ((<void*> (<void>)) newDsp)
     ((<void> (<void*> int)) init faust->init) ;;(cast ((<void*> (<void>)) newDsp)
     (memcpy copy faust (sizeof <struct-mus_rt_faust>))
-    (set! faust->dsp (newDsp))
-    (init faust->dsp ,(rte-samplerate))
+    (set! copy->dsp (newDsp))
+    (init copy->dsp ,(rte-samplerate))
     (return copy)
     ))
     

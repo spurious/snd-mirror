@@ -10,6 +10,7 @@
   <int> stop_me
   <int> run_scheduler_when_removed
   <struct-rt_coroutine*> next
+  <void*> stack_high
   <void*> stack_low
   <coroutine_t> co
   <struct-RT_Globals*> rt_globals)
@@ -403,29 +404,30 @@
 ;;	(<nonstatic-void> coroutine_entry (lambda ((<volatile-void*> arg))
 ;;				  (<volatile-struct-rt_coroutine*> coroutine arg)
 	(<nonstatic-void> coroutine_entry (lambda ((<struct-rt_coroutine*> coroutine))
-				  (if (== 0 (setjmp coroutine->remove_me))
-				      (co_resume)
-				      (begin ;;throw thunk
-                                        ;;(rt_debug (string "ai1 %p") coroutine)
-					(rt_push_to_pool coroutine NULL ,(get-rt-pool-num 'coroutine))
-                                        ;;(rt_debug (string "ai2 %p %d %d %d")
-                                        ;;          coroutine
-                                        ;;          coroutine->run_scheduler_when_removed
-                                        ;;          coroutine->rt_globals->queue_size
-                                        ;;          coroutine->rt_globals->block_queue_size)
-					(if coroutine->run_scheduler_when_removed
-                                            (rt_run_scheduler coroutine->rt_globals)
-					    (co_resume))))
-                                  ;;(rt_debug (string "ai3 %p") coroutine)
-				  (set! coroutine->run_scheduler_when_removed 1)
-				  (while 1
-				    ;;(fprintf stderr (string "top while %p\\n") (co_current))
-				    ((<int> (<void*>)) func coroutine->func)
-                                    ;;(rt_debug (string "ai4 %p %p") coroutine func)
-				    (func coroutine->rt_globals)
-				    (rt_push_to_pool coroutine NULL ,(get-rt-pool-num 'coroutine))
-				    (rt_run_scheduler coroutine->rt_globals)
-				    )))
+                                            (if (== 0 (setjmp coroutine->remove_me))
+                                                (co_resume)
+                                                (begin ;;throw thunk
+                                                  ;;(rt_debug (string "ai1 %p") coroutine)
+                                                  (rt_push_to_pool coroutine NULL ,(get-rt-pool-num 'coroutine))
+                                                  ;;(rt_debug (string "ai2 %p %d %d %d")
+                                                  ;;          coroutine
+                                                  ;;          coroutine->run_scheduler_when_removed
+                                                  ;;          coroutine->rt_globals->queue_size
+                                                  ;;          coroutine->rt_globals->block_queue_size)
+                                                  (if coroutine->run_scheduler_when_removed
+                                                      (rt_run_scheduler coroutine->rt_globals)
+                                                      (co_resume))))
+                                            ;;(rt_debug (string "ai3 %p") coroutine)
+                                            (set! coroutine->run_scheduler_when_removed 1)
+                                            (while 1
+                                              ;;(fprintf stderr (string "top while %p\\n") (co_current))
+                                              ((<int> (<void*>)) func coroutine->func)
+                                              ;;(rt_debug (string "ai4 %p %p") coroutine func)
+                                              (set! coroutine->stack_high &func)
+                                              (func coroutine->rt_globals)
+                                              (rt_push_to_pool coroutine NULL ,(get-rt-pool-num 'coroutine))
+                                              (rt_run_scheduler coroutine->rt_globals)
+                                              )))
 	(public
 	 (<void> init_coroutine (lambda ((<struct-rt_coroutine*> coroutine)
 					 (<int> stacksize))

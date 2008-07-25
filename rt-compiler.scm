@@ -3516,7 +3516,7 @@ and run simple lisp[4] functions.
     `(rt_create_thread ,thunk))
   
   
-  (rt-ec-private-function <void-*> rt_alloc (lambda (,rt-globalvardecl (<int> size))
+  (rt-ec-private-function <void-*> rt_alloc_old (lambda (,rt-globalvardecl (<int> size))
 					      (let* ((ret <void-*> rt_globals->allocplace)
 						     (alignment <int> (sizeof <long>))
 						     (new <char-*> (+= rt_globals->allocplace size)))
@@ -3527,6 +3527,10 @@ and run simple lisp[4] functions.
 							  (rt_error rt_globals (string "Out of memory when calling rt_alloc.")))
 						     "/* */")
 						(return ret))))
+
+  (rt-ec-private-function <void*> rt_alloc (lambda (,rt-globalvardecl
+						    (<int> size))
+					     (return (tar_alloc_atomic rt_globals->heap size))))
 
   (rt-ec-private-function <void-*> rt_alloc_zero (lambda (,rt-globalvardecl (<int> size))
 						   (let* ((ret <void-*> (rt_alloc rt_globals size)))
@@ -8514,6 +8518,9 @@ Can alignmnet screw up this one?
 		   ;;  <SCM> errorvariable
 		   ;;  <int> errorvarnum)
 
+                  "#include <rollendurchmesserzeitsammler.h>"
+                  "#include <ucontext.h>"
+
 		  "#include <jack/ringbuffer.h>"
 		  ,(if *use-alsa-midi*
 		       "#include  <alsa/asoundlib.h>"
@@ -8559,9 +8566,14 @@ Can alignmnet screw up this one?
 		    ,@(apply append (map (lambda (vardecl)
 					   (list (car vardecl) (caddr vardecl)))
 					 busnames))
+
 		    <struct-RT_Engine*> engine
+
 		    ;;<struct-rt_coroutine*> coroutines
 		    <struct-mus_rt_faust*> faust
+
+                    ;; for the GC
+                    <tar_heap_t*> heap
 		    )
 
 		  
@@ -8600,6 +8612,7 @@ Can alignmnet screw up this one?
 			  busnames)
 		   )
 		  
+
 		  ;;(get-proto copyheap)
 
 		  (get-proto get_rt_readin_tag)
@@ -8622,18 +8635,25 @@ Can alignmnet screw up this one?
 
 		  ;;(get-proto coroutine_entry)
 		  (get-proto rt_set_stack_low_value)
-		   
-		  ;;"extern float rt_readin(struct mus_rt_readin*)"
-		  ;;"extern void rt_receive_midi(struct RT_Globals *,int,snd_seq_t*,void (*)(struct RT_Globals *, int, int, int))"
-
-		   "typedef float (*ThreadFunc)(void)"
-		   "typedef float (*ReadinFunc)(struct mus_rt_readin*)"
-		   "typedef void (*FaustComputeFunc)(void* self,int len,float** inputs,float** outputs)"
-
-		   (<struct-rt_coroutine> dummy_coroutine)
 
 
-		   ;; Preserve the values of local variables made global because of nested functions.
+                  "typedef float (*ThreadFunc)(void)"
+                  "typedef float (*ReadinFunc)(struct mus_rt_readin*)"
+                  "typedef void (*FaustComputeFunc)(void* self,int len,float** inputs,float** outputs)"
+
+                  (<struct-rt_coroutine> dummy_coroutine)
+                   
+
+                  (<char*> start_dyn)
+                  (<char*> end_dyn)
+
+                  (run-now
+                   (if (== 0 (tar_get_dynamic_roots_for (cast <char*> &dummy_coroutine)
+                                                        &start_dyn
+                                                        &end_dyn))
+                       (printf (string "Error. Could not find dynamic start and end. Not good.\\n"))))
+                  
+                   ;; Preserve the values of local variables made global because of nested functions.
                    (<void> rt_switch_to_coroutine (lambda (,rt-globalvardecl
                                                            (<struct-rt_coroutine*> coroutine))
                                                     ,@(map (lambda (globalvar)
@@ -8769,8 +8789,8 @@ Can alignmnet screw up this one?
                                                      (fprintf stderr (string "hepp, deleting rt_globals %p %p\\n") rt_globals rt_globals->main_coroutine.co)
                                                      (free rt_globals->queue)
                                                      (free rt_globals->block_queue)
+                                                     (tar_delete rt_globals->heap)
                                                      (free rt_globals)
-                                                     
                                                      )
                                                    (begin ;; In case the scheduler in rt_engine has removed us, the coroutines will be freed here. (this can be quite heavy...)
                                                      ;; rescheduling everything to mininmize number of context switches.
@@ -8810,6 +8830,10 @@ Can alignmnet screw up this one?
 								   (set! rt_globals->queue[i] &dummy_coroutine)
 								   (set! rt_globals->block_queue[i] &dummy_coroutine))))
 
+                                                     (fprintf stderr (string "new heap start %p\\n") &dummy_coroutine)
+                                                     (set! rt_globals->heap (tar_new_heap))
+                                                     (fprintf stderr (string "new heap end %p %p\\n") start_dyn end_dyn)
+
 						     (return rt_globals))))
 		   
 
@@ -8832,12 +8856,18 @@ Can alignmnet screw up this one?
 					       `(begin
 						  ;;(fprintf stderr (string "jepp %u\\n") rt_globals->engine)
 						  (<struct-RT_Engine-*> engine rt_globals->engine)
+                                                  (<tar_heap_t*> heap rt_globals->heap)
 
 						  (if (not (== 0 rt_globals->remove_me))
 						      (return 1))
 
 						  (if (!= NULL rt_globals->faust)
 						      (return (rt_faustprocess rt_globals startframe endframe)))
+
+                                                  (when (== false (tar_entering_audio_thread heap))
+                                                    (rt_debug (string "Using too much CPU. Skipping\\n"))
+                                                    (return 0))
+
 						  
 						  (set! rt_globals->prev_block_time engine->prev_block_time)
 						  (set! rt_globals->block_time engine->block_time)
@@ -8871,13 +8901,40 @@ Can alignmnet screw up this one?
 						  (if (and (== 0 rt_globals->queue_size)
                                                            (== 0 rt_globals->block_queue_size))
 						      (set! rt_globals->remove_me 1))
-						  ))
+						  
 
-						  (return rt_globals->remove_me))
-						
-					       `(begin
-						  (rt_error rt_globals (string "Main function can not take any arguments."))
-						  (return 1))))
+                                                  (if (tar_leave_audio_thread heap)
+                                                      (when (== 0 rt_globals->remove_me)
+                                                        (rt_debug (string "data: %d, stack: %d %p %p, num_allocs: %d")
+                                                                  (abs (- end_dyn start_dyn))
+                                                                  -1 -1 -1
+								  ;;(abs (- stack_top stack_bot))
+                                                                  ;;stack_bot
+                                                                  ;;stack_top
+                                                                  heap->num_allocs
+                                                                  )
+                                                
+                                                        (tar_add_root heap start_dyn end_dyn) ; static data
+                                                        
+                                                        (for-each 0 rt_globals->queue_size
+                                                                  (lambda (i)
+                                                                    (<struct-rt_coroutine*> coroutine rt_globals->queue[i])
+                                                                    (tar_add_root heap coroutine->stack_low coroutine->stack_high) ;stacks
+                                                                    (tar_add_root heap coroutine (+ (cast <char*> coroutine)   ;registerss
+                                                                                                    (EC_MAX (sizeof <ucontext_t>)
+                                                                                                            (sizeof <jmp_buf>))))))
+                                                        
+                                                        (tar_add_root heap rt_globals (+ rt_globals (sizeof <struct-RT_Globals>))) ;; dynamic data
+
+                                                        (tar_run_gc heap)
+                                                        ;;heap->num_allocs=0
+                                                        ))
+
+                                                  (return rt_globals->remove_me))
+                           
+                                               `(begin
+                                                  (rt_error rt_globals (string "Main function can not take any arguments."))
+                                                  (return 1))))))
 		   
 		   (public			      
 		    (<float> ,funcname (lambda ((<SCM> argvect))

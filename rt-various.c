@@ -247,6 +247,6 @@ void clm_free(void* p){
   if(clm_tar_heap==NULL || mainpid==0 || getpid()==mainpid){
     FREE(p);
   }
-
+}
 
 #endif // WITH_RT

@@ -4235,7 +4235,7 @@ had to be put into macroexpand instead.
 
                                   
                                   (when (== false (tar_entering_audio_thread heap))
-                                    (fprintf stderr (string "Using too much CPU. Skipping\\n"))
+                                    (rt_debug (string "Using too much CPU. Skipping\\n"))
                                     (return 0))
 
                                   (set! g_startframe startframe)
