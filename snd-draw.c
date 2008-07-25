@@ -1004,8 +1004,8 @@ static XEN g_widget_text(XEN wid)
 	return(C_TO_XEN_STRING((char *)gtk_entry_get_text(GTK_ENTRY(w))));
       else
 	{
-	  if ((GTK_IS_BIN(w)) && (GTK_IS_LABEL(GTK_BIN(w)->child)))
-	    return(C_TO_XEN_STRING((char *)gtk_label_get_text(GTK_LABEL(GTK_BIN(w)->child))));
+	  if ((GTK_IS_BIN(w)) && (GTK_IS_LABEL(BIN_CHILD(w))))
+	    return(C_TO_XEN_STRING((char *)gtk_label_get_text(GTK_LABEL(BIN_CHILD(w)))));
 	  else
 	    {
 	      if (GTK_IS_LABEL(w))

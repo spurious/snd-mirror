@@ -76,11 +76,11 @@ static void snd_callback(GtkWidget *w, gpointer data)
       gtk_widget_show(snd);
       snd_open_file("~/cl/oboe.snd", FILE_READ_WRITE); 
       snd_running = true;
-      gtk_label_set_text(GTK_LABEL(GTK_BIN(label)->child), "Push to quit Snd");
+      gtk_label_set_text(GTK_LABEL(BIN_CHILD(label)), "Push to quit Snd");
     }
   else
     {
-      gtk_label_set_text(GTK_LABEL(GTK_BIN(label)->child), "Push for Snd");
+      gtk_label_set_text(GTK_LABEL(BIN_CHILD(label)), "Push for Snd");
       gtk_widget_hide(snd);
       snd_running = 0;
     }

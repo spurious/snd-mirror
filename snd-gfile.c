@@ -961,7 +961,7 @@ static void sort_files_and_redisplay(fsb *fs)
 static void just_sounds_callback(GtkWidget *w, gpointer data)
 {
   fsb *fs = (fsb *)data;
-  if (GTK_TOGGLE_BUTTON(w)->active)
+  if (TOGGLE_BUTTON_ACTIVE(w))
     fs->filter_choice = JUST_SOUNDS_FILTER;
   else fs->filter_choice = NO_FILE_FILTER;
   force_directory_reread(fs);
@@ -997,7 +997,7 @@ void clear_deleted_snd_info(struct dialog_play_info *dp)
 static void play_selected_callback(GtkWidget *w, gpointer data)
 {
   dialog_play_info *dp = (dialog_play_info *)data;
-  if (GTK_TOGGLE_BUTTON(w)->active)
+  if (TOGGLE_BUTTON_ACTIVE(w))
     {
       char *filename;
       if ((dp->player) && 
@@ -4478,7 +4478,7 @@ static void view_files_play_callback(GtkWidget *w, gpointer context)
   vf_row *r = (vf_row *)context;
   view_files_info *vdat;
   vdat = (view_files_info *)(r->vdat);
-  if (view_files_play(vdat, r->pos, GTK_TOGGLE_BUTTON(w)->active))
+  if (view_files_play(vdat, r->pos, TOGGLE_BUTTON_ACTIVE(w)))
     set_toggle_button(w, false, false, (void *)vdat);
   else vdat->current_play_button = w;
 }

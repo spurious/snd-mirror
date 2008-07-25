@@ -312,7 +312,7 @@ void set_stock_button_label(GtkWidget *w, const char *new_label)
 	     
 void set_button_label(GtkWidget *label, const char *str)
 {
-  gtk_label_set_text(GTK_LABEL(GTK_BIN(label)->child), str);
+  gtk_label_set_text(GTK_LABEL(BIN_CHILD(label)), str);
 }
 
 
@@ -325,8 +325,8 @@ void set_label(GtkWidget *label, const char *str)
 void sg_left_justify_button(GtkWidget *button)
 {
   gfloat x, y;
-  gtk_misc_get_alignment(GTK_MISC(GTK_LABEL(GTK_BIN(button)->child)), &x, &y);
-  gtk_misc_set_alignment(GTK_MISC(GTK_LABEL(GTK_BIN(button)->child)), 0.05, y);
+  gtk_misc_get_alignment(GTK_MISC(GTK_LABEL(BIN_CHILD(button))), &x, &y);
+  gtk_misc_set_alignment(GTK_MISC(GTK_LABEL(BIN_CHILD(button))), 0.05, y);
 }
 
 

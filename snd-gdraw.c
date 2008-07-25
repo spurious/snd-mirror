@@ -770,7 +770,7 @@ static void update_graph_setting_fft_changed(chan_info *cp)
 
 static void invert_color_callback(GtkWidget *w, gpointer context)
 {
-  in_set_color_inverted(GTK_TOGGLE_BUTTON(w)->active);
+  in_set_color_inverted(TOGGLE_BUTTON_ACTIVE(w));
   check_color_hook();
   for_each_chan(update_graph_setting_fft_changed);
 }
@@ -1292,7 +1292,7 @@ static void reset_orientation_callback(GtkWidget *w, gpointer context)
 static void glbutton_callback(GtkWidget *w, gpointer context)
 {
   sgl_save_currents();
-  in_set_with_gl(GTK_TOGGLE_BUTTON(w)->active);
+  in_set_with_gl(TOGGLE_BUTTON_ACTIVE(w));
   sgl_set_currents(true);
   /* for_each_chan(update_graph); */
 }

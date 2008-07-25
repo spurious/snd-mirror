@@ -209,7 +209,7 @@ static void print_ok_callback(GtkWidget *w, gpointer context)
 	  set_label(print_message, print_string);
 	}
       printing = PRINTING;
-      print_it = (bool)(GTK_TOGGLE_BUTTON(print_eps_or_lpr)->active);
+      print_it = (bool)(TOGGLE_BUTTON_ACTIVE(print_eps_or_lpr));
       quit = (ss->print_choice == PRINT_ENV);
       if (print_it)
 	{
@@ -357,13 +357,13 @@ void save_print_dialog_state(FILE *fd)
   if ((print_dialog) && (GTK_WIDGET_VISIBLE(print_dialog)))
     {
 #if HAVE_SCHEME
-      fprintf(fd, "(%s #t %s)\n", S_print_dialog, ((bool)(GTK_TOGGLE_BUTTON(print_eps_or_lpr)->active)) ? "#t" : "#f");
+      fprintf(fd, "(%s #t %s)\n", S_print_dialog, ((bool)(TOGGLE_BUTTON_ACTIVE(print_eps_or_lpr))) ? "#t" : "#f");
 #endif
 #if HAVE_RUBY
-      fprintf(fd, "%s(true, %s)\n", TO_PROC_NAME(S_print_dialog), ((bool)(GTK_TOGGLE_BUTTON(print_eps_or_lpr)->active)) ? "true" : "false");
+      fprintf(fd, "%s(true, %s)\n", TO_PROC_NAME(S_print_dialog), ((bool)(TOGGLE_BUTTON_ACTIVE(print_eps_or_lpr))) ? "true" : "false");
 #endif
 #if HAVE_FORTH
-      fprintf(fd, "#t %s %s drop\n", ((bool)(GTK_TOGGLE_BUTTON(print_eps_or_lpr)->active)) ? "#t" : "#f", S_print_dialog);
+      fprintf(fd, "#t %s %s drop\n", ((bool)(TOGGLE_BUTTON_ACTIVE(print_eps_or_lpr))) ? "#t" : "#f", S_print_dialog);
 #endif
     }
 }

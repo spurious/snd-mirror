@@ -50,6 +50,7 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 
 #define SG_SIGNAL_CONNECT(Widget, Signal, Function, Data) g_signal_connect(G_OBJECT(Widget), Signal, G_CALLBACK(Function), (gpointer)Data)
 
+
 /* GtkType -> GType, GtkSignalFunc -> GCallback version 2.13.4 7-Jul-08 */
 
 #if HAVE_GTK_ENTRY_GET_TEXT_LENGTH
@@ -66,10 +67,14 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
   #define DIALOG_CONTENT_AREA(Dialog) ((GTK_DIALOG(Dialog))->vbox)
   #define ADJUSTMENT_VALUE(Adjust) ((GTK_ADJUSTMENT(Adjust))->value)
 #endif
+
 #define ADJUSTMENT_SET_VALUE(Adjust, Value) gtk_adjustment_set_value(GTK_ADJUSTMENT(Adjust), (gdouble)(Value))
 /* this is different from setting the value field directly because it calls gtk_adjustment_value_changed
  *   which itself is different (generates a different signal) from gtk_adjustment_changed.
  */
+#define TOGGLE_BUTTON_ACTIVE(Button) gtk_toggle_button_get_active((GTK_TOGGLE_BUTTON(Button)))
+#define BIN_CHILD(Bin) gtk_bin_get_child(GTK_BIN(Bin))
+
 
 #define idle_t guint
 #define idle_func_t gboolean

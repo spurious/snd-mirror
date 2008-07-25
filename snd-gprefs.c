@@ -101,8 +101,8 @@ static void set_text(GtkWidget *w, const char *value)
     sg_entry_set_text(GTK_ENTRY(w), value);
   else
     {
-      if (GTK_IS_ENTRY(GTK_BIN(w)->child))
-	sg_entry_set_text(GTK_ENTRY(GTK_BIN(w)->child), value);
+      if (GTK_IS_ENTRY(BIN_CHILD(w)))
+	sg_entry_set_text(GTK_ENTRY(BIN_CHILD(w)), value);
 #if MUS_DEBUGGING
       else
 	{
@@ -118,8 +118,8 @@ static char *get_text(GtkWidget *w)
 {
   if (GTK_IS_ENTRY(w))
     return((char *)gtk_entry_get_text(GTK_ENTRY(w)));
-  if (GTK_IS_ENTRY(GTK_BIN(w)->child))
-    return((char *)gtk_entry_get_text(GTK_ENTRY(GTK_BIN(w)->child)));
+  if (GTK_IS_ENTRY(BIN_CHILD(w)))
+    return((char *)gtk_entry_get_text(GTK_ENTRY(BIN_CHILD(w))));
 #if MUS_DEBUGGING
   fprintf(stderr,"get oops");
   abort();
@@ -1125,7 +1125,7 @@ static prefs_info *prefs_row_with_list(const char *label, const char *varname, c
   prf->text = gtk_combo_box_entry_new_text();
   for (i = 0; i < num_values; i++)
     gtk_combo_box_append_text(GTK_COMBO_BOX(prf->text), (values[i]) ? values[i] : " ");
-  sg_entry_set_text(GTK_ENTRY(GTK_BIN(prf->text)->child), value);
+  sg_entry_set_text(GTK_ENTRY(BIN_CHILD(prf->text)), value);
   gtk_box_pack_start(GTK_BOX(hb), prf->text, false, false, 4);
   gtk_widget_show(prf->text);
 

@@ -213,7 +213,7 @@ static void transform_browse_callback(const char *name, int row, void *data)
 static void normal_fft_callback(GtkWidget *w, gpointer context)
 {
   if (ignore_callbacks) return;
-  if (GTK_TOGGLE_BUTTON(w)->active)
+  if (TOGGLE_BUTTON_ACTIVE(w))
     in_set_transform_graph_type(GRAPH_ONCE);
   else in_set_transform_graph_type(GRAPH_AS_SONOGRAM);
   for_each_chan(calculate_fft);
@@ -223,7 +223,7 @@ static void normal_fft_callback(GtkWidget *w, gpointer context)
 static void sonogram_callback(GtkWidget *w, gpointer context)
 {
   if (ignore_callbacks) return;
-  if (GTK_TOGGLE_BUTTON(w)->active)
+  if (TOGGLE_BUTTON_ACTIVE(w))
     in_set_transform_graph_type(GRAPH_AS_SONOGRAM);
   else in_set_transform_graph_type(GRAPH_ONCE);
   for_each_chan(calculate_fft);
@@ -233,7 +233,7 @@ static void sonogram_callback(GtkWidget *w, gpointer context)
 static void spectrogram_callback(GtkWidget *w, gpointer context)
 {
   if (ignore_callbacks) return;
-  if (GTK_TOGGLE_BUTTON(w)->active)
+  if (TOGGLE_BUTTON_ACTIVE(w))
     in_set_transform_graph_type(GRAPH_AS_SPECTROGRAM);
   else in_set_transform_graph_type(GRAPH_ONCE);
   for_each_chan(calculate_fft);
@@ -249,7 +249,7 @@ static void map_show_transform_peaks(chan_info *cp, bool value)
 static void peaks_callback(GtkWidget *w, gpointer context)
 {
   bool val = false;
-  val = (bool)(GTK_TOGGLE_BUTTON(w)->active);
+  val = (bool)(TOGGLE_BUTTON_ACTIVE(w));
   in_set_show_transform_peaks(val);
   for_each_chan_with_bool(map_show_transform_peaks, val);
   for_each_chan(calculate_fft);
@@ -266,7 +266,7 @@ static void chans_fft_log_magnitude(chan_info *cp, bool value)
 static void db_callback(GtkWidget *w, gpointer context)
 {
   bool val;
-  val = (bool)(GTK_TOGGLE_BUTTON(w)->active);
+  val = (bool)(TOGGLE_BUTTON_ACTIVE(w));
   in_set_fft_log_magnitude(val);
   graph_redisplay();
   for_each_chan_with_bool(chans_fft_log_magnitude, val);
@@ -284,7 +284,7 @@ static void chans_fft_log_frequency(chan_info *cp, bool value)
 static void logfreq_callback(GtkWidget *w, gpointer context)
 {
   bool val;
-  val = (bool)(GTK_TOGGLE_BUTTON(w)->active);
+  val = (bool)(TOGGLE_BUTTON_ACTIVE(w));
   in_set_fft_log_frequency(val);
   for_each_chan_with_bool(chans_fft_log_frequency, val);
   for_each_chan(calculate_fft);
@@ -301,7 +301,9 @@ static void chans_transform_normalization(chan_info *cp, int value)
 static void normalize_callback(GtkWidget *w, gpointer context)
 {
   fft_normalize_t choice;
-  if (GTK_TOGGLE_BUTTON(w)->active) choice = NORMALIZE_BY_CHANNEL; else choice = DONT_NORMALIZE;
+  if (TOGGLE_BUTTON_ACTIVE(w)) 
+    choice = NORMALIZE_BY_CHANNEL; 
+  else choice = DONT_NORMALIZE;
   in_set_transform_normalization(choice);
   for_each_chan_with_int(chans_transform_normalization, (int)choice);
   for_each_chan(calculate_fft);
@@ -310,7 +312,7 @@ static void normalize_callback(GtkWidget *w, gpointer context)
 
 static void selection_callback(GtkWidget *w, gpointer context)
 {
-  in_set_show_selection_transform(GTK_TOGGLE_BUTTON(w)->active);
+  in_set_show_selection_transform(TOGGLE_BUTTON_ACTIVE(w));
   for_each_chan(calculate_fft);
 }
 
@@ -325,7 +327,7 @@ static void chans_fft_with_phases(chan_info *cp, bool value)
 static void phases_callback(GtkWidget *w, gpointer context)
 {
   bool val;
-  val = (bool)(GTK_TOGGLE_BUTTON(w)->active);
+  val = (bool)(TOGGLE_BUTTON_ACTIVE(w));
   in_set_fft_with_phases(val);
   graph_redisplay();
   for_each_chan_with_bool(chans_fft_with_phases, val);

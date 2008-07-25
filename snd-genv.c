@@ -745,21 +745,21 @@ static void env_browse_callback(const char *name, int row, void *data)
 
 static void graph_button_callback(GtkWidget *w, gpointer context)
 {
-  in_set_enved_wave_p(GTK_TOGGLE_BUTTON(w)->active);
+  in_set_enved_wave_p(TOGGLE_BUTTON_ACTIVE(w));
   env_redisplay();
 }
 
 
 static void dB_button_callback(GtkWidget *w, gpointer context)
 {
-  in_set_enved_in_dB(GTK_TOGGLE_BUTTON(w)->active);
+  in_set_enved_in_dB(TOGGLE_BUTTON_ACTIVE(w));
   env_redisplay();
 }
 
 
 static void clip_button_callback(GtkWidget *w, gpointer context)
 {
-  in_set_enved_clip_p(GTK_TOGGLE_BUTTON(w)->active);
+  in_set_enved_clip_p(TOGGLE_BUTTON_ACTIVE(w));
 }
 
 

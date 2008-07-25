@@ -594,7 +594,7 @@ static void play_button_click_callback(GtkWidget *w, gpointer data)
   snd_info *sp = (snd_info *)data;
   chan_info *cp;
   bool on;
-  on = (bool)(GTK_TOGGLE_BUTTON(w)->active);
+  on = (bool)(TOGGLE_BUTTON_ACTIVE(w));
   if (sp->playing) 
     stop_playing_sound_no_toggle(sp, PLAY_BUTTON_UNSET);
   if (sp->with_tracking_cursor != ALWAYS_TRACK)         /* can be set in init file */
@@ -686,7 +686,7 @@ static void sync_button_click(GtkWidget *w, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
   bool on;
-  on = (bool)(GTK_TOGGLE_BUTTON(w)->active);
+  on = (bool)(TOGGLE_BUTTON_ACTIVE(w));
   if (on)
     if (last_sync_state & snd_ControlMask) 
       if (last_sync_state & snd_MetaMask)
@@ -725,7 +725,7 @@ static void unite_button_click(GtkWidget *w, gpointer data)
   channel_style_t val;
   bool on;
   snd_info *sp = (snd_info *)data;
-  on = (bool)(GTK_TOGGLE_BUTTON(w)->active);
+  on = (bool)(TOGGLE_BUTTON_ACTIVE(w));
   if (on)
     {
       if (last_combine_state & (snd_ControlMask | snd_MetaMask)) 
@@ -1024,7 +1024,7 @@ static gboolean expand_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer
 static void expand_button_callback(GtkWidget *w, gpointer context)
 {
   snd_info *sp = (snd_info *)context;
-  sp->expand_control_p = GTK_TOGGLE_BUTTON(w)->active;
+  sp->expand_control_p = TOGGLE_BUTTON_ACTIVE(w);
   /* to change the trough color: (widget_modify_bg (list-ref (channel-widgets) 3) GTK_STATE_ACTIVE (zoom-color)) */
   /*   and the slider color:     (widget_modify_bg (list-ref (channel-widgets) 3) GTK_STATE_PRELIGHT (highlight-color)) */
 }
@@ -1106,7 +1106,7 @@ static gboolean contrast_release_callback(GtkWidget *w, GdkEventButton *ev, gpoi
 static void contrast_button_callback(GtkWidget *w, gpointer context)
 {
   snd_info *sp = (snd_info *)context;
-  sp->contrast_control_p = GTK_TOGGLE_BUTTON(w)->active;
+  sp->contrast_control_p = TOGGLE_BUTTON_ACTIVE(w);
 }
 
 
@@ -1259,7 +1259,7 @@ static gboolean revlen_release_callback(GtkWidget *w, GdkEventButton *ev, gpoint
 static void reverb_button_callback(GtkWidget *w, gpointer context)
 {
   snd_info *sp = (snd_info *)context;
-  sp->reverb_control_p = GTK_TOGGLE_BUTTON(w)->active;
+  sp->reverb_control_p = TOGGLE_BUTTON_ACTIVE(w);
 }
 
 
@@ -1394,7 +1394,7 @@ static gboolean filter_drawer_resize(GtkWidget *w, GdkEventConfigure *ev, gpoint
 static void filter_button_callback(GtkWidget *w, gpointer context)
 {
   snd_info *sp = (snd_info *)context;
-  sp->filter_control_p = GTK_TOGGLE_BUTTON(w)->active;
+  sp->filter_control_p = TOGGLE_BUTTON_ACTIVE(w);
 }
 
 
@@ -1409,7 +1409,7 @@ void toggle_filter_button(snd_info *sp, bool state)
 static void filter_db_callback(GtkWidget *w, gpointer context)
 {
   snd_info *sp = (snd_info *)context;
-  sp->filter_control_in_dB = GTK_TOGGLE_BUTTON(w)->active;
+  sp->filter_control_in_dB = TOGGLE_BUTTON_ACTIVE(w);
   display_filter_env(sp);
 }
 
@@ -1439,7 +1439,7 @@ static void new_in_hz(snd_info *sp, bool val)
 static void filter_hz_callback(GtkWidget *w, gpointer context)
 {
   snd_info *sp = (snd_info *)context;
-  new_in_hz(sp, GTK_TOGGLE_BUTTON(w)->active);
+  new_in_hz(sp, TOGGLE_BUTTON_ACTIVE(w));
   display_filter_env(sp);
 }
 

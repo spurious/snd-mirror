@@ -348,7 +348,7 @@ static gboolean meters_resize(GtkWidget *w, GdkEventConfigure *ev, gpointer data
 
 static void db_callback(GtkWidget *w, gpointer context)
 {
-  meters_in_db = (bool)(GTK_TOGGLE_BUTTON(w)->active);
+  meters_in_db = (bool)(TOGGLE_BUTTON_ACTIVE(w));
 }
 
 

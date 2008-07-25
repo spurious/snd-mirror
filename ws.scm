@@ -552,31 +552,33 @@ returning you to the true top-level."
 
 	    (call-with-current-continuation
 	     (lambda (error-exit)
-	       ,@(map (lambda (expr)
-			`(begin 
-			   (set! threads (cons (call-with-new-thread 
-						(lambda () 
-						  ,expr)
-						;; call-with-new-thread sets up a "continution barrier" so we can't jump
-						;;   out of the thread thunk directly.  But if an error occurs, we need
-						;;   to catch it or it falls back on Guile's error handler.
-						;;   The error stops this map, and (later) rethrows at the with-sound-helper level.
-						(lambda args
-						  ;; this is the handler of an implicit catch #t (in Guile)
-						  ;;   I'd like to print the current expr to help the user track down the error,
-						  ;;   but that runs into a series of bugs in format.
-						  (set! ws-error args))) ; can't jump out...
-					       threads))
-			   (if ws-error         ; interrupt the map over the with-sound body (an error has occurred)
-			       (error-exit))
-			   (if (>= (length threads) *clm-threads*)
-			       (begin
-				 (for-each 
-				  (lambda (thread) 
-				    (join-thread thread))
-				  threads)
-				 (set! threads '())))))
-		      body)))
+	       ,@(map 
+		  (lambda (expr)
+		    `(begin 
+		       (set! threads 
+			     (cons (call-with-new-thread 
+				    (lambda () 
+				      ,expr)
+				    ;; call-with-new-thread sets up a "continution barrier" so we can't jump
+				    ;;   out of the thread thunk directly.  But if an error occurs, we need
+				    ;;   to catch it or it falls back on Guile's error handler.
+				    ;;   The error stops this map, and (later) rethrows at the with-sound-helper level.
+				    (lambda args
+				      ;; this is the handler of an implicit catch #t (in Guile)
+				      ;;   I'd like to print the current expr to help the user track down the error,
+				      ;;   but that runs into a series of bugs in format.
+				      (set! ws-error args))) ; can't jump out...
+				   threads))
+		       (if ws-error         ; interrupt the map over the with-sound body (an error has occurred)
+			   (error-exit))
+		       (if (>= (length threads) *clm-threads*)
+			   (begin
+			     (for-each 
+			      (lambda (thread) 
+				(join-thread thread))
+			      threads)
+			     (set! threads '())))))
+		  body)))
 
 	    ;; even if error, we need to join the threads so that there aren't dangling references to *output*
 	    (for-each 

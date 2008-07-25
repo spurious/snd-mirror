@@ -324,7 +324,7 @@ static gboolean f_toggle_callback(GtkWidget *w, GdkEventButton *ev, gpointer dat
 static void f_toggle_click_callback(GtkWidget *w, gpointer data)
 {
   f_button_callback((chan_info *)data, 
-		    (GTK_TOGGLE_BUTTON(w)->active), 
+		    TOGGLE_BUTTON_ACTIVE(w), 
 		    (last_f_state & snd_ControlMask));
 }
 
@@ -341,7 +341,7 @@ static gboolean w_toggle_callback(GtkWidget *w, GdkEventButton *ev, gpointer dat
 static void w_toggle_click_callback(GtkWidget *w, gpointer data)
 {
   w_button_callback((chan_info *)data, 
-		    (GTK_TOGGLE_BUTTON(w)->active), 
+		    TOGGLE_BUTTON_ACTIVE(w), 
 		    (last_w_state & snd_ControlMask));
 }
 

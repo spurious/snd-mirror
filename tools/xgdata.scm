@@ -6765,7 +6765,6 @@
 
 
 ;;; for 3.0...
-;;; color selection dialogs  buttons currently must go through the property access maze
 ;;;
 ;;; done:
 ;;;   window -> gtk_widget_get_window
@@ -6776,6 +6775,15 @@
 ;;;
 ;;;   allocation -> gtk_widget_get_allocation
 ;;;   value -> gtk_adjustment_get|set_value
+;;;   active -> gtk_toggle_button_get_active
+;;;   child -> gtk_bin_get_child
+;;;
+;;; not done:
+;;; gdk_event_get_time|state|coords[x and y]|type|button|window|keyval etc
+;;; [gdk_event_get_time|state|coords] but no accessor for button|window|keyval|type?
+;;; adj page_size [no accessor apparently]
+;;; GdkColor ->pixel, ->red|green|blue [no accessors apparently]
+;;; color selection dialog buttons currently must go through the property access maze
 
 
 (STRUCT-make "GdkColor guint32 &pixel guint16 &red guint16 &green guint16 &blue")

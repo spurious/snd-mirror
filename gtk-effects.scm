@@ -368,7 +368,7 @@
 				  (gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG gate-dialog))) toggle #f #f 4)
 				  (gtk_widget_show toggle)
 				  (gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON toggle) omit-silence)
-				  (g_signal_connect toggle "clicked" (lambda (w d) (set! omit-silence (.active (GTK_TOGGLE_BUTTON toggle)))) #f))))
+				  (g_signal_connect toggle "clicked" (lambda (w d) (set! omit-silence (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON toggle)))) #f))))
 			  (activate-dialog gate-dialog))
 			#f)
       (set! amp-menu-list (cons (lambda ()

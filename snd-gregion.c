@@ -326,7 +326,7 @@ void reflect_play_region_stop(int n)
 static void region_play_callback(GtkWidget *w, gpointer context)
 {
   regrow *r = (regrow *)context;
-  if (GTK_TOGGLE_BUTTON(r->pl)->active)
+  if (TOGGLE_BUTTON_ACTIVE(r->pl))
     play_region(region_list_position_to_id(r->pos), IN_BACKGROUND);
   else stop_playing_region(region_list_position_to_id(r->pos), PLAY_BUTTON_UNSET);
 }
@@ -368,7 +368,7 @@ static void reflect_file_in_region_browser(ss_watcher_reason_t reason, void *ign
 char *regrow_get_label(void *ur)
 {
   regrow *r = (regrow *)ur;
-  return((char *)gtk_label_get_text(GTK_LABEL(GTK_BIN(r->nm)->child)));
+  return((char *)gtk_label_get_text(GTK_LABEL(BIN_CHILD(r->nm))));
 }
 
 
