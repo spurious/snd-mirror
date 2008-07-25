@@ -67,8 +67,8 @@ static void post_prefs_error(const char *msg, prefs_info *data);
 #define SET_TEXT(Text, Val)       set_text(Text, Val)
 #define FREE_TEXT(Val)            
 #define TIMEOUT(Func)             g_timeout_add_full(0, ERROR_WAIT_TIME, Func, (gpointer)prf, NULL)
-#define SET_SCALE(Value)          gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->adj), Value)
-#define GET_SCALE()               (GTK_ADJUSTMENT(prf->adj)->value * prf->scale_max)
+#define SET_SCALE(Value)          ADJUSTMENT_SET_VALUE(prf->adj, Value)
+#define GET_SCALE()               (ADJUSTMENT_VALUE(prf->adj) * prf->scale_max)
 #define SET_SENSITIVE(Wid, Val)   gtk_widget_set_sensitive(Wid, Val)
 #define black_text(Prf)
 #define red_text(Prf)
@@ -923,7 +923,7 @@ static void call_scale_text_func(GtkWidget *w, gpointer context)
 static void prefs_scale_callback(GtkWidget *w, gpointer context)
 {
   prefs_info *prf = (prefs_info *)context;
-  float_to_textfield(prf->text, GTK_ADJUSTMENT(prf->adj)->value * prf->scale_max);
+  float_to_textfield(prf->text, ADJUSTMENT_VALUE(prf->adj) * prf->scale_max);
 }
 
 
@@ -1158,11 +1158,11 @@ static void scale_set_color(prefs_info *prf, color_t pixel)
   float r = 0.0, g = 0.0, b = 0.0;
   pixel_to_rgb(pixel, &r, &g, &b);
   float_to_textfield(prf->rtxt, r);
-  gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->radj), r);
+  ADJUSTMENT_SET_VALUE(prf->radj, r);
   float_to_textfield(prf->gtxt, g);
-  gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->gadj), g);
+  ADJUSTMENT_SET_VALUE(prf->gadj, g);
   float_to_textfield(prf->btxt, b);
-  gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->badj), b);
+  ADJUSTMENT_SET_VALUE(prf->badj, b);
   widget_modify_bg(prf->color, GTK_STATE_NORMAL, pixel);
 }
 
@@ -1172,9 +1172,9 @@ static void reflect_color(prefs_info *prf)
   Float r, g, b;
   color_info *current_color;
 
-  r = GTK_ADJUSTMENT(prf->radj)->value;
-  g = GTK_ADJUSTMENT(prf->gadj)->value;
-  b = GTK_ADJUSTMENT(prf->badj)->value;
+  r = ADJUSTMENT_VALUE(prf->radj);
+  g = ADJUSTMENT_VALUE(prf->gadj);
+  b = ADJUSTMENT_VALUE(prf->badj);
 
   current_color = rgb_to_color(r, g, b);
   widget_modify_bg(prf->color, GTK_STATE_NORMAL, current_color);
@@ -1227,7 +1227,7 @@ static void prefs_r_callback(GtkWidget *w, gpointer context)
   redirect_errors_to(NULL, NULL);
   if (!(prf->got_error))
     {
-      gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->radj), (float)mus_fclamp(0.0, r, 1.0));
+      ADJUSTMENT_SET_VALUE(prf->radj, (float)mus_fclamp(0.0, r, 1.0));
       reflect_color(prf);
     }
 }
@@ -1244,7 +1244,7 @@ static void prefs_g_callback(GtkWidget *w, gpointer context)
   redirect_errors_to(NULL, NULL);
   if (!(prf->got_error))
     {
-      gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->gadj), (float)mus_fclamp(0.0, r, 1.0));
+      ADJUSTMENT_SET_VALUE(prf->gadj, (float)mus_fclamp(0.0, r, 1.0));
       reflect_color(prf);
     }
 }
@@ -1261,7 +1261,7 @@ static void prefs_b_callback(GtkWidget *w, gpointer context)
   redirect_errors_to(NULL, NULL);
   if (!(prf->got_error))
     {
-      gtk_adjustment_set_value(GTK_ADJUSTMENT(prf->badj), (float)mus_fclamp(0.0, r, 1.0));
+      ADJUSTMENT_SET_VALUE(prf->badj, (float)mus_fclamp(0.0, r, 1.0));
       reflect_color(prf);
     }
 }
@@ -1273,9 +1273,9 @@ static void prefs_call_color_func_callback(GtkWidget *w, gpointer context)
   if ((prf) && (prf->color_func))
     {
       float r, g, b;
-      r = GTK_ADJUSTMENT(prf->radj)->value;
-      g = GTK_ADJUSTMENT(prf->gadj)->value;
-      b = GTK_ADJUSTMENT(prf->badj)->value;
+      r = ADJUSTMENT_VALUE(prf->radj);
+      g = ADJUSTMENT_VALUE(prf->gadj);
+      b = ADJUSTMENT_VALUE(prf->badj);
       (*(prf->color_func))(prf, r, g, b);
     }
 }
@@ -1628,11 +1628,11 @@ widget_t start_preferences_dialog(void)
   gtk_widget_set_name(dismissB, "quit_button");
   set_stock_button_label(dismissB, _("Go Away"));
 
-  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(preferences_dialog))), dismissB, true, true, 10);
-  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(preferences_dialog))), revertB, true, true, 10);
-  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(preferences_dialog))), clearB, true, true, 10);
-  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(preferences_dialog))), saveB, true, true, 10);
-  gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(preferences_dialog))), helpB, true, true, 10);
+  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(preferences_dialog)), dismissB, true, true, 10);
+  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(preferences_dialog)), revertB, true, true, 10);
+  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(preferences_dialog)), clearB, true, true, 10);
+  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(preferences_dialog)), saveB, true, true, 10);
+  gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(preferences_dialog)), helpB, true, true, 10);
 
   SG_SIGNAL_CONNECT(preferences_dialog, "delete_event", preferences_delete_callback, NULL);
   SG_SIGNAL_CONNECT(dismissB, "clicked", preferences_dismiss_callback, NULL);
@@ -1649,7 +1649,7 @@ widget_t start_preferences_dialog(void)
 
   topics = gtk_vbox_new(false, 0);
   scroller = gtk_scrolled_window_new(NULL, NULL);
-  gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(GTK_DIALOG(preferences_dialog))), scroller, true, true, 0);
+  gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(preferences_dialog)), scroller, true, true, 0);
   gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
   gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroller), topics);
 

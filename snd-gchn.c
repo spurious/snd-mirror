@@ -135,8 +135,8 @@ static void zx_changed(float value, chan_info *cp)
 static void set_scrollbar(GtkObject *adj, Float position, Float range) /* position and range 0 to 1.0 */
 {
   GTK_ADJUSTMENT(adj)->page_size = range;
-  GTK_ADJUSTMENT(adj)->value = position;
-  gtk_adjustment_changed(GTK_ADJUSTMENT(adj));
+  ADJUSTMENT_SET_VALUE(adj, position);
+  /* gtk_adjustment_changed(GTK_ADJUSTMENT(adj)); */
 }
 
 
@@ -146,11 +146,12 @@ void change_gzy(Float val, chan_info *cp)
 {
   /* from snd_update */
   GTK_ADJUSTMENT(gsy_adj(cp))->page_size = 1.0 - val; 
-  GTK_ADJUSTMENT(gsy_adj(cp))->value = cp->gsy;
-  gtk_adjustment_changed(GTK_ADJUSTMENT(gsy_adj(cp)));
 
-  GTK_ADJUSTMENT(gzy_adj(cp))->value = val;
-  gtk_adjustment_changed(GTK_ADJUSTMENT(gzy_adj(cp)));
+  ADJUSTMENT_SET_VALUE(gsy_adj(cp), cp->gsy);
+  /* gtk_adjustment_changed(GTK_ADJUSTMENT(gsy_adj(cp))); */
+
+  ADJUSTMENT_SET_VALUE(gzy_adj(cp), val);
+  /* gtk_adjustment_changed(GTK_ADJUSTMENT(gzy_adj(cp))); */
 }
 
 
@@ -251,7 +252,7 @@ static void sy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
   chan_info *cp;
   cp = (chan_info *)get_user_data(G_OBJECT(adj));
   if (cp->active == CHANNEL_HAS_AXES)
-    sy_changed(1.0 - adj->value, cp);
+    sy_changed(1.0 - ADJUSTMENT_VALUE(adj), cp);
 }
 
 
@@ -260,7 +261,7 @@ static void sx_valuechanged_callback(GtkAdjustment *adj, gpointer context)
   chan_info *cp;
   cp = (chan_info *)get_user_data(G_OBJECT(adj));
   if (cp->active == CHANNEL_HAS_AXES)
-    sx_changed(adj->value, cp);
+    sx_changed(ADJUSTMENT_VALUE(adj), cp);
 }
 
 
@@ -269,7 +270,7 @@ static void zy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
   chan_info *cp;
   cp = (chan_info *)get_user_data(G_OBJECT(adj));
   if (cp->active == CHANNEL_HAS_AXES)
-    zy_changed(1.0 - adj->value, cp);
+    zy_changed(1.0 - ADJUSTMENT_VALUE(adj), cp);
 }
 
 
@@ -278,7 +279,7 @@ static void zx_valuechanged_callback(GtkAdjustment *adj, gpointer context)
   chan_info *cp;
   cp = (chan_info *)get_user_data(G_OBJECT(adj));
   if (cp->active == CHANNEL_HAS_AXES)
-    zx_changed(adj->value, cp);
+    zx_changed(ADJUSTMENT_VALUE(adj), cp);
 }
 
 
@@ -286,16 +287,16 @@ static void gzy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
 {
   chan_info *cp;
   cp = (chan_info *)get_user_data(G_OBJECT(adj));
-  cp->gzy = adj->value;
+  cp->gzy = ADJUSTMENT_VALUE(adj);
   if (cp->active == CHANNEL_HAS_AXES)
     {
-      GTK_ADJUSTMENT(gsy_adj(cp))->page_size = 1.0 - adj->value; 
+      GTK_ADJUSTMENT(gsy_adj(cp))->page_size = 1.0 - ADJUSTMENT_VALUE(adj); 
       if (cp->gsy > cp->gzy)
 	{
-	  cp->gsy = adj->value;
-	  GTK_ADJUSTMENT(gsy_adj(cp))->value = adj->value; 
+	  cp->gsy = ADJUSTMENT_VALUE(adj);
+	  ADJUSTMENT_SET_VALUE(gsy_adj(cp), cp->gsy);
 	}
-      gtk_adjustment_changed(GTK_ADJUSTMENT(gsy_adj(cp)));
+      else gtk_adjustment_changed(GTK_ADJUSTMENT(gsy_adj(cp)));
       for_each_sound_chan(cp->sound, update_graph_or_warn);
     }
 }
@@ -305,7 +306,7 @@ static void gsy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
 {
   chan_info *cp;
   cp = (chan_info *)get_user_data(G_OBJECT(adj));
-  cp->gsy = adj->value;
+  cp->gsy = ADJUSTMENT_VALUE(adj);
   if (cp->active == CHANNEL_HAS_AXES)
     for_each_sound_chan(cp->sound, update_graph_or_warn);
 }

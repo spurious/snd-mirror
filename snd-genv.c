@@ -849,15 +849,15 @@ static void reflect_changed_base(Float val)
 	  else ival = (0.5 + ((0.5 * (pow(val, (1.0 / (enved_power(ss)))) - 1)) / 10.0));
 	}
     }
-  GTK_ADJUSTMENT(baseAdj)->value = ival;
-  gtk_adjustment_value_changed(GTK_ADJUSTMENT(baseAdj));
+  ADJUSTMENT_SET_VALUE(baseAdj, ival);
+  /* gtk_adjustment_value_changed(GTK_ADJUSTMENT(baseAdj)); */
   make_base_label(val);
 }
 
 
 static void base_changed_callback(GtkAdjustment *adj, gpointer context)
 {
-  base_changed(adj->value);
+  base_changed(ADJUSTMENT_VALUE(adj));
 }
 
 
@@ -933,11 +933,11 @@ GtkWidget *create_envelope_editor(void)
       resetB = sg_button_new_from_stock_with_label(_("Reset"), GTK_STOCK_REFRESH);
       gtk_widget_set_name(resetB, "reset_button");
 
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(enved_dialog))), applyB, false, true, 10);
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(enved_dialog))), apply2B, false, true, 10);
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(enved_dialog))), cancelB, false, true, 10);
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(enved_dialog))), resetB, false, true, 10);
-      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(enved_dialog))), helpB, false, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(enved_dialog)), applyB, false, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(enved_dialog)), apply2B, false, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(enved_dialog)), cancelB, false, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(enved_dialog)), resetB, false, true, 10);
+      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(enved_dialog)), helpB, false, true, 10);
 
       SG_SIGNAL_CONNECT(cancelB, "clicked", dismiss_enved_callback, NULL);
       SG_SIGNAL_CONNECT(applyB, "clicked", apply_enved_callback, NULL);
@@ -952,7 +952,7 @@ GtkWidget *create_envelope_editor(void)
       gtk_widget_show(helpB);
 
       mainform = gtk_hbox_new(false, 0); /* buttons + graph */
-      gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(GTK_DIALOG(enved_dialog))), mainform, true, true, 0);
+      gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(enved_dialog)), mainform, true, true, 0);
 
       leftframe = gtk_frame_new(NULL);
       gtk_box_pack_start(GTK_BOX(mainform), leftframe, false, false, 0);
@@ -965,7 +965,7 @@ GtkWidget *create_envelope_editor(void)
       gtk_widget_show(leftbox);
 
       bottombox = gtk_vbox_new(false, 0);
-      gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(GTK_DIALOG(enved_dialog))), bottombox, false, false, 0);
+      gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(enved_dialog)), bottombox, false, false, 0);
       gtk_widget_show(bottombox);
 
       drawer = gtk_drawing_area_new();

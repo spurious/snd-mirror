@@ -968,8 +968,8 @@ void ensure_scrolled_window_row_visible(widget_t list, int row, int num_rows)
 	new_value = maximum;
       else new_value = ((row + 0.5) * ((maximum - minimum) / (float)(num_rows - 1)));
     }
-  if (new_value != v->value)
-    gtk_adjustment_set_value(v, new_value);
+  if (new_value != ADJUSTMENT_VALUE(v))
+    ADJUSTMENT_SET_VALUE(v, new_value);
 }
 
 

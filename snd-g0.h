@@ -55,13 +55,21 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 #if HAVE_GTK_ENTRY_GET_TEXT_LENGTH
   /* 2.13.4 */
   #define WIDGET_TO_WINDOW(Widget) gtk_widget_get_window(Widget)
-  #define DIALOG_ACTION_AREA(Dialog) gtk_dialog_get_action_area(Dialog)
-  #define DIALOG_CONTENT_AREA(Dialog) gtk_dialog_get_content_area(Dialog)
+  #define WIDGET_TO_ALLOCATION(Widget) gtk_widget_get_allocation(Widget)
+  #define DIALOG_ACTION_AREA(Dialog) gtk_dialog_get_action_area(GTK_DIALOG(Dialog))
+  #define DIALOG_CONTENT_AREA(Dialog) gtk_dialog_get_content_area(GTK_DIALOG(Dialog))
+  #define ADJUSTMENT_VALUE(Adjust) gtk_adjustment_get_value(GTK_ADJUSTMENT(Adjust))
 #else
   #define WIDGET_TO_WINDOW(Widget) ((Widget)->window)
-  #define DIALOG_ACTION_AREA(Dialog) ((Dialog)->action_area)
-  #define DIALOG_CONTENT_AREA(Dialog) ((Dialog)->vbox)
+  #define WIDGET_TO_ALLOCATION(Widget) ((Widget)->allocation)
+  #define DIALOG_ACTION_AREA(Dialog) ((GTK_DIALOG(Dialog))->action_area)
+  #define DIALOG_CONTENT_AREA(Dialog) ((GTK_DIALOG(Dialog))->vbox)
+  #define ADJUSTMENT_VALUE(Adjust) ((GTK_ADJUSTMENT(Adjust))->value)
 #endif
+#define ADJUSTMENT_SET_VALUE(Adjust, Value) gtk_adjustment_set_value(GTK_ADJUSTMENT(Adjust), (gdouble)(Value))
+/* this is different from setting the value field directly because it calls gtk_adjustment_value_changed
+ *   which itself is different (generates a different signal) from gtk_adjustment_changed.
+ */
 
 #define idle_t guint
 #define idle_func_t gboolean

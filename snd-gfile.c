@@ -150,7 +150,7 @@ static void fsb_update_lists(fsb *fs)
 	if (adj->upper < files->len * 16)
 	  adj->upper = files->len * 16;
 	adj = gtk_viewport_get_vadjustment(GTK_VIEWPORT(gtk_widget_get_parent(fs->directory_list->topics)));
-	gtk_adjustment_set_value(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->directory_list->scroller)), list_top);
+	ADJUSTMENT_SET_VALUE(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->directory_list->scroller)), list_top);
       }
     else slist_moveto(fs->directory_list, 0);
     FREE(dir_case);
@@ -197,7 +197,7 @@ static void fsb_update_lists(fsb *fs)
 	if (adj->upper < files->len * 16)
 	  adj->upper = files->len * 16;
 	adj = gtk_viewport_get_vadjustment(GTK_VIEWPORT(gtk_widget_get_parent(fs->file_list->topics)));
-	gtk_adjustment_set_value(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->file_list->scroller)), list_top);
+	ADJUSTMENT_SET_VALUE(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->file_list->scroller)), list_top);
       }
     else slist_moveto(fs->file_list, 0);
   }
@@ -245,7 +245,7 @@ static void fsb_directory_select_callback(const char *dir_name, int row, void *d
 	  position_t position;
 	  char *dir_case;
 	  dir_case = mus_format("dir:%s", fs->directory_name);
-	  position = gtk_adjustment_get_value(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->directory_list->scroller)));
+	  position = ADJUSTMENT_VALUE(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->directory_list->scroller)));
 	  dirpos_update(fs->dir_list, dir_case, position);
 	  FREE(dir_case);
 	}
@@ -298,7 +298,7 @@ static void fsb_file_select_callback(const char *file_name, int row, void *data)
       /* save current file list position */
       {
 	position_t position;
-	position = gtk_adjustment_get_value(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->file_list->scroller)));
+	position = ADJUSTMENT_VALUE(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->file_list->scroller)));
 	dirpos_update(fs->dir_list, fs->directory_name, position);
       }
 
@@ -422,11 +422,11 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
   else fs->ok_button = gtk_button_new_from_stock(stock);
   gtk_widget_set_name(fs->ok_button, "doit_button");
 
-  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(fs->dialog))), fs->ok_button, true, true, 10);
-  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(fs->dialog))), fs->cancel_button, true, true, 10);
-  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(fs->dialog))), fs->mkdir_button, true, true, 10);
-  if (with_extract) gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(fs->dialog))), fs->extract_button, true, true, 10);
-  gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(fs->dialog))), fs->help_button, true, true, 10);
+  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(fs->dialog)), fs->ok_button, true, true, 10);
+  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(fs->dialog)), fs->cancel_button, true, true, 10);
+  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(fs->dialog)), fs->mkdir_button, true, true, 10);
+  if (with_extract) gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(fs->dialog)), fs->extract_button, true, true, 10);
+  gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(fs->dialog)), fs->help_button, true, true, 10);
 
   gtk_widget_show(fs->ok_button);
   gtk_widget_show(fs->cancel_button);
@@ -444,7 +444,7 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
      */
 
     row = gtk_hbox_new(false, 10);
-    gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(GTK_DIALOG(fs->dialog))), row, false, false, 2);
+    gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(fs->dialog)), row, false, false, 2);
     gtk_widget_show(row);
 
     /* filter text entry */
@@ -478,7 +478,7 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
   fs->panes = gtk_hpaned_new();
   gtk_widget_set_name(fs->panes, "the_unpane"); /* normal color sash */
   gtk_container_set_border_width(GTK_CONTAINER(fs->panes), 2);
-  gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(GTK_DIALOG(fs->dialog))), fs->panes, true, true, 10);
+  gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(fs->dialog)), fs->panes, true, true, 10);
   gtk_widget_show(fs->panes);
 
   fs->directory_list = slist_new(fs->panes, NULL, 0, PANED_ADD1);
@@ -498,7 +498,7 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
 
 
   /* -------- special case box -------- */
-  add_innards(DIALOG_CONTENT_AREA(GTK_DIALOG(fs->dialog)), data);
+  add_innards(DIALOG_CONTENT_AREA(fs->dialog), data);
 
 
   /* -------- file -------- */
@@ -506,7 +506,7 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
     GtkWidget *row, *image;
 
     row = gtk_hbox_new(false, 10);
-    gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(GTK_DIALOG(fs->dialog))), row, false, false, 10);
+    gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(fs->dialog)), row, false, false, 10);
     gtk_widget_show(row);
 
     /* file text entry */
@@ -557,7 +557,7 @@ static void force_directory_reread(fsb *fs)
   int i;
   selected = copy_string(slist_selection(fs->file_list));
   filename = copy_string(fsb_file_text(fs));
-  scroller_position = gtk_adjustment_get_value(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->file_list->scroller)));
+  scroller_position = ADJUSTMENT_VALUE(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->file_list->scroller)));
   fsb_update_lists(fs);
   fsb_file_set_text(fs, filename);
   if (selected)
@@ -571,7 +571,7 @@ static void force_directory_reread(fsb *fs)
       FREE(selected);
     }
   if (filename) FREE(filename);
-  gtk_adjustment_set_value(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->file_list->scroller)), scroller_position);
+  ADJUSTMENT_SET_VALUE(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->file_list->scroller)), scroller_position);
 }
 
 
@@ -930,7 +930,7 @@ static void sort_files_and_redisplay(fsb *fs)
   char *selected;
   gdouble scroller_position;
   cur_dir = fs->current_files;
-  scroller_position = gtk_adjustment_get_value(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->file_list->scroller)));
+  scroller_position = ADJUSTMENT_VALUE(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->file_list->scroller)));
   selected = copy_string(slist_selection(fs->file_list));
   slist_clear(fs->file_list);
   if (cur_dir->len == 0)
@@ -954,7 +954,7 @@ static void sort_files_and_redisplay(fsb *fs)
 	  }
       FREE(selected);
     }
-  gtk_adjustment_set_value(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->file_list->scroller)), scroller_position);
+  ADJUSTMENT_SET_VALUE(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->file_list->scroller)), scroller_position);
 }
 
 
@@ -3412,14 +3412,14 @@ static void make_raw_data_dialog(raw_info *rp, const char *filename, const char 
   okB = gtk_button_new_from_stock(GTK_STOCK_OK);
   gtk_widget_set_name(okB, "doit_button");
 
-  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(rp->dialog))), okB, true, true, 10);
-  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(rp->dialog))), cancelB, true, true, 10);
-  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(rp->dialog))), resetB, true, true, 10);
-  gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(rp->dialog))), helpB, true, true, 10);
+  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(rp->dialog)), okB, true, true, 10);
+  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(rp->dialog)), cancelB, true, true, 10);
+  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(rp->dialog)), resetB, true, true, 10);
+  gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(rp->dialog)), helpB, true, true, 10);
 
   mus_header_raw_defaults(&raw_srate, &raw_chans, &raw_data_format); /* pick up defaults */
 
-  rp->rdat = make_file_data_panel(DIALOG_CONTENT_AREA(GTK_DIALOG(rp->dialog)), "data-form", 
+  rp->rdat = make_file_data_panel(DIALOG_CONTENT_AREA(rp->dialog), "data-form", 
 				  WITH_CHANNELS_FIELD, 
 				  MUS_RAW, raw_data_format, 
 				  WITH_DATA_LOCATION_FIELD, 
@@ -3716,13 +3716,13 @@ widget_t make_new_file_dialog(bool managed)
       reset_button = sg_button_new_from_stock_with_label(_("Reset"), GTK_STOCK_REFRESH);
       gtk_widget_set_name(reset_button, "reset_button");
 
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(new_file_dialog))), new_file_ok_button, true, true, 10);
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(new_file_dialog))), cancel_button, true, true, 10);
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(new_file_dialog))), reset_button, true, true, 10);
-      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(new_file_dialog))), help_button, true, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(new_file_dialog)), new_file_ok_button, true, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(new_file_dialog)), cancel_button, true, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(new_file_dialog)), reset_button, true, true, 10);
+      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(new_file_dialog)), help_button, true, true, 10);
 
       hform = gtk_hbox_new(false, 0);
-      gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(GTK_DIALOG(new_file_dialog))), hform, false, false, 4);
+      gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(new_file_dialog)), hform, false, false, 4);
       gtk_widget_show(hform);
 
       name_label = gtk_label_new(_("New file:"));
@@ -3735,7 +3735,7 @@ widget_t make_new_file_dialog(bool managed)
       if ((newname) && (*newname))
 	gtk_entry_set_text(GTK_ENTRY(new_file_text), newname); /* output_name?? fix later */
 
-      ndat = make_file_data_panel(DIALOG_CONTENT_AREA(GTK_DIALOG(new_file_dialog)), "data-form", 
+      ndat = make_file_data_panel(DIALOG_CONTENT_AREA(new_file_dialog), "data-form", 
 				  WITH_CHANNELS_FIELD, 
 				  default_output_header_type(ss), 
 				  default_output_data_format(ss), 
@@ -4090,11 +4090,11 @@ GtkWidget *edit_header(snd_info *sp)
       ep->save_button = gtk_button_new_from_stock(GTK_STOCK_SAVE);
       gtk_widget_set_name(ep->save_button, "doit_button");
 
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(ep->dialog))), ep->save_button, true, true, 10);
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(ep->dialog))), cancel_button, true, true, 10);
-      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(ep->dialog))), help_button, true, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(ep->dialog)), ep->save_button, true, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(ep->dialog)), cancel_button, true, true, 10);
+      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(ep->dialog)), help_button, true, true, 10);
 
-      ep->edat = make_file_data_panel(DIALOG_CONTENT_AREA(GTK_DIALOG(ep->dialog)), _("Edit Header"), 
+      ep->edat = make_file_data_panel(DIALOG_CONTENT_AREA(ep->dialog), _("Edit Header"), 
 				      WITH_CHANNELS_FIELD, 
 				      hdr->type, 
 				      hdr->format, 
@@ -4200,11 +4200,11 @@ static void create_post_it_monolog(void)
   ok_button = gtk_button_new_from_stock(GTK_STOCK_OK);
   gtk_widget_set_name(ok_button, "quit_button");
 
-  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(post_it_dialog))), ok_button, false, true, 20);
+  gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(post_it_dialog)), ok_button, false, true, 20);
   SG_SIGNAL_CONNECT(ok_button, "clicked", dismiss_post_it, NULL);
   gtk_widget_show(ok_button);
 
-  post_it_text = make_scrolled_text(DIALOG_CONTENT_AREA(GTK_DIALOG(post_it_dialog)), false, 2, true);
+  post_it_text = make_scrolled_text(DIALOG_CONTENT_AREA(post_it_dialog), false, 2, true);
   gtk_text_view_set_left_margin(GTK_TEXT_VIEW(post_it_text), 10);
   gtk_widget_show(post_it_dialog);
   set_dialog_widget(POST_IT_DIALOG, post_it_dialog);
@@ -4911,8 +4911,8 @@ static void vf_set_speed_label(view_files_info *vdat, Float val)
 void vf_set_speed(view_files_info *vdat, Float val)
 {
   vf_set_speed_label(vdat, val);
-  GTK_ADJUSTMENT(vdat->speed_adj)->value = vf_speed_to_scroll(speed_control_min(ss), vdat->speed, speed_control_max(ss));
-  gtk_adjustment_value_changed(GTK_ADJUSTMENT(vdat->speed_adj));
+  ADJUSTMENT_SET_VALUE(vdat->speed_adj, vf_speed_to_scroll(speed_control_min(ss), vdat->speed, speed_control_max(ss)));
+  /* gtk_adjustment_value_changed(GTK_ADJUSTMENT(vdat->speed_adj)); */
 }
 
 
@@ -4940,7 +4940,7 @@ static gboolean vf_speed_label_click_callback(GtkWidget *w, GdkEventButton *ev, 
     case SPEED_CONTROL_AS_SEMITONE: vdat->speed_style = SPEED_CONTROL_AS_FLOAT;    break;
     }
 
-  vf_set_speed_label(vdat, vf_scroll_to_speed(GTK_ADJUSTMENT(vdat->speed_adj)->value));
+  vf_set_speed_label(vdat, vf_scroll_to_speed(ADJUSTMENT_VALUE(vdat->speed_adj)));
   return(false);
 }
 
@@ -4950,7 +4950,7 @@ static gboolean vf_speed_motion_callback(GtkWidget *w, GdkEventMotion *ev, gpoin
   view_files_info *vdat = (view_files_info *)data;
   if (!speed_pressed) {speed_dragged = false; return(false);}
   speed_dragged = true;
-  vf_set_speed_label(vdat, vf_scroll_to_speed(GTK_ADJUSTMENT(vdat->speed_adj)->value));
+  vf_set_speed_label(vdat, vf_scroll_to_speed(ADJUSTMENT_VALUE(vdat->speed_adj)));
   return(false);
 }
 
@@ -4960,7 +4960,7 @@ static gboolean vf_speed_release_callback(GtkWidget *w, GdkEventButton *ev, gpoi
   view_files_info *vdat = (view_files_info *)data;
   speed_pressed = false;
   speed_dragged = false;
-  vf_set_speed_label(vdat, vf_scroll_to_speed(GTK_ADJUSTMENT(vdat->speed_adj)->value));
+  vf_set_speed_label(vdat, vf_scroll_to_speed(ADJUSTMENT_VALUE(vdat->speed_adj)));
   return(false);
 }
 
@@ -5001,8 +5001,8 @@ void vf_set_amp(view_files_info *vdat, Float val)
   vdat->amp = val;
   mus_snprintf(sfs, 6, "%.2f", val);
   set_label(vdat->amp_number, sfs);
-  GTK_ADJUSTMENT(vdat->amp_adj)->value = vf_amp_to_scroll(vdat->amp);
-  gtk_adjustment_value_changed(GTK_ADJUSTMENT(vdat->amp_adj));
+  ADJUSTMENT_SET_VALUE(vdat->amp_adj, vf_amp_to_scroll(vdat->amp));
+  /* gtk_adjustment_value_changed(GTK_ADJUSTMENT(vdat->amp_adj)); */
 }
 
 
@@ -5024,7 +5024,7 @@ static gboolean vf_amp_motion_callback(GtkWidget *w, GdkEventMotion *ev, gpointe
   if (!amp_pressed) {amp_dragged = false; return(false);}
   amp_dragged = true;
 
-  scrollval = GTK_ADJUSTMENT(vdat->amp_adj)->value;
+  scrollval = ADJUSTMENT_VALUE(vdat->amp_adj);
   vdat->amp = vf_scroll_to_amp(scrollval);
   mus_snprintf(sfs, 6, "%.2f", vdat->amp);
   set_label(vdat->amp_number, sfs);
@@ -5043,7 +5043,7 @@ static gboolean vf_amp_release_callback(GtkWidget *w, GdkEventButton *ev, gpoint
   /* if (!amp_dragged) return(false); */
   amp_dragged = false;
 
-  scrollval = GTK_ADJUSTMENT(vdat->amp_adj)->value;
+  scrollval = ADJUSTMENT_VALUE(vdat->amp_adj);
   vdat->amp = vf_scroll_to_amp(scrollval);
   mus_snprintf(sfs, 6, "%.2f", vdat->amp);
   set_label(vdat->amp_number, sfs);
@@ -5207,10 +5207,10 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
       resetB = sg_button_new_from_stock_with_label(_("Reset"), GTK_STOCK_REFRESH);
       gtk_widget_set_name(resetB, "reset_button");
 
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(vdat->dialog))), newB, true, true, 10);
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(vdat->dialog))), dismissB, true, true, 10);
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(vdat->dialog))), resetB, true, true, 10);
-      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(vdat->dialog))), helpB, true, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(vdat->dialog)), newB, true, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(vdat->dialog)), dismissB, true, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(vdat->dialog)), resetB, true, true, 10);
+      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(vdat->dialog)), helpB, true, true, 10);
 
       SG_SIGNAL_CONNECT(vdat->dialog, "delete_event", view_files_delete_callback, (gpointer)vdat);
       SG_SIGNAL_CONNECT(dismissB, "clicked", view_files_dismiss_callback, (gpointer)vdat);
@@ -5224,7 +5224,7 @@ GtkWidget *start_view_files_dialog_1(view_files_info *vdat, bool managed)
       gtk_widget_show(resetB);
 
       mainform = gtk_hpaned_new();
-      gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(GTK_DIALOG(vdat->dialog))), mainform, true, true, 0);
+      gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(vdat->dialog)), mainform, true, true, 0);
       gtk_widget_set_name(mainform, "the_unpane");
       gtk_widget_show(mainform);
 

@@ -379,9 +379,9 @@ widget_t record_file(void)
 #endif
       gtk_widget_set_name(record_button, "doit_button");
 
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(recorder))), quit_button, true, true, 10);
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(recorder))), record_button, true, true, 10);
-      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(recorder))), help_button, true, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(recorder)), quit_button, true, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(recorder)), record_button, true, true, 10);
+      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(recorder)), help_button, true, true, 10);
 
       SG_SIGNAL_CONNECT(quit_button, "clicked", quit_recorder, NULL);
       SG_SIGNAL_CONNECT(help_button, "clicked", recorder_help, NULL);
@@ -392,11 +392,11 @@ widget_t record_file(void)
       gtk_widget_show(help_button);
 
       meters = gtk_drawing_area_new();
-      gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(GTK_DIALOG(recorder))), meters, true, true, 8);
+      gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(recorder)), meters, true, true, 8);
       gtk_widget_show(meters);
 
       hbox = gtk_hbox_new(false, 0);
-      gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(GTK_DIALOG(recorder))), hbox, false, false, 6);
+      gtk_box_pack_start(GTK_BOX(DIALOG_CONTENT_AREA(recorder)), hbox, false, false, 6);
       gtk_widget_show(hbox);
 
       output_label = gtk_label_new(_("file:"));
@@ -415,7 +415,7 @@ widget_t record_file(void)
 	GtkWidget *frame, *hbox, *fsep;
 
 	hbox = gtk_hbox_new(false, 0);
-	gtk_box_pack_end(GTK_BOX(DIALOG_CONTENT_AREA(GTK_DIALOG(recorder))), hbox, false, false, 8);
+	gtk_box_pack_end(GTK_BOX(DIALOG_CONTENT_AREA(recorder)), hbox, false, false, 8);
 	gtk_widget_show(hbox);
 
 	fsep = gtk_hseparator_new();

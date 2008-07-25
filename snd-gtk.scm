@@ -306,7 +306,7 @@
 	 (gtk_widget_show scale)
 	 (gtk_box_pack_start (GTK_BOX scan-row) label #t #t 0)
 	 (gtk_widget_show label)
-	 (g_signal_connect adj "value_changed" (lambda (w d) (func (.value (GTK_ADJUSTMENT adj)))) #f)))
+	 (g_signal_connect adj "value_changed" (lambda (w d) (func (gtk_adjustment_get_value (GTK_ADJUSTMENT adj)))) #f)))
      (list (list "mass" 1 200 100 2 (lambda (val) (set! mass (/ val 100.0))))
 	   (list "spring" 1 100 10 2 (lambda (val) (set! xspring (/ val 100.0))))
 	   (list "damping" 0 100 0 4 (lambda (val) (set! damp (/ val 10000.0))))))
@@ -374,8 +374,8 @@
       (gtk_widget_show amp-scale)
       (gtk_widget_show freq-label)
       (gtk_widget_show amp-label)
-      (g_signal_connect freq-adj "value_changed" (lambda (w d) (set! (mus-frequency tbl) (.value (GTK_ADJUSTMENT freq-adj)))) #f)
-      (g_signal_connect amp-adj "value_changed" (lambda (w d) (set! amplitude (.value (GTK_ADJUSTMENT amp-adj)))) #f)
+      (g_signal_connect freq-adj "value_changed" (lambda (w d) (set! (mus-frequency tbl) (gtk_adjustment_get_value (GTK_ADJUSTMENT freq-adj)))) #f)
+      (g_signal_connect amp-adj "value_changed" (lambda (w d) (set! amplitude (gtk_adjustment_get_value (GTK_ADJUSTMENT amp-adj)))) #f)
       )
     
     (g_signal_connect scan-pane "expose_event" (lambda (w e d) (redraw-graph)) #f)
@@ -560,7 +560,7 @@
 (define (add-dragger snd)
 
   (define (dragger-callback adj context)
-    (let ((val (- 1.0 (.value (GTK_ADJUSTMENT adj))))
+    (let ((val (- 1.0 (gtk_adjustment_get_value (GTK_ADJUSTMENT adj))))
 	  (snd (car context))
 	  (chn (cadr context)))
       (if (sound-property 'dragger snd)
@@ -639,8 +639,9 @@ Reverb-feedback sets the scaler on the feedback.
     (for-each
      (lambda (ctl)
        (set! ((caddr ctl)) (cadr ctl))
-       (set! (.value (GTK_ADJUSTMENT (car ctl))) (cadr ctl))
-       (gtk_adjustment_value_changed (GTK_ADJUSTMENT (car ctl))))
+       (gtk_adjustment_set_value (GTK_ADJUSTMENT (car ctl)) (cadr ctl))
+       ;;; (gtk_adjustment_value_changed (GTK_ADJUSTMENT (car ctl)))
+       )
      hidden-controls))
 
   (if (not hidden-controls-dialog)
@@ -686,7 +687,7 @@ Reverb-feedback sets the scaler on the feedback.
 	       (gtk_box_pack_start (GTK_BOX mainform) slider #t #t 4)
 	       (gtk_box_pack_start (GTK_BOX mainform) label #t #t 4)
 	       (set! hidden-controls (cons (list adj initial func) hidden-controls))	       
-	       (g_signal_connect adj "value_changed" (lambda (adj data) (set! (func) (.value (GTK_ADJUSTMENT adj)))) #f)
+	       (g_signal_connect adj "value_changed" (lambda (adj data) (set! (func) (gtk_adjustment_get_value (GTK_ADJUSTMENT adj)))) #f)
 	       (gtk_widget_show slider)
 	       (gtk_widget_show label)))
 

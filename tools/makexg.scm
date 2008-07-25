@@ -216,6 +216,7 @@
 	"cairo_font_weight_t" "cairo_font_slant_t"
 
 	"GtkPrintOperationAction"
+	"GtkTooltip*" "GtkCalendarDetailFunc" "GtkScaleButton*"
 	))
 
 (define no-xen-p 

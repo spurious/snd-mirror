@@ -788,8 +788,8 @@ void set_amp(snd_info *sp, Float amp)
       GtkObject *adj;
       scroll_to_amp(sp, scrollval = amp_to_scroll(sp->amp_control_min, amp, sp->amp_control_max));
       adj = AMP_ADJUSTMENT(sp);
-      GTK_ADJUSTMENT(adj)->value = scrollval;
-      gtk_adjustment_value_changed(GTK_ADJUSTMENT(adj));
+      ADJUSTMENT_SET_VALUE(adj, scrollval);
+      /* gtk_adjustment_value_changed(GTK_ADJUSTMENT(adj)); */
     }
 }
 
@@ -808,7 +808,7 @@ static gboolean amp_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer da
 
 static void amp_changed_callback(GtkAdjustment *adj, gpointer data)
 {
-  scroll_to_amp((snd_info *)data, (Float)(adj->value));
+  scroll_to_amp((snd_info *)data, (Float)(ADJUSTMENT_VALUE(adj)));
 }
 
 
@@ -855,8 +855,8 @@ void set_speed(snd_info *sp, Float val)
       GtkObject *adj;
       adj = SPEED_ADJUSTMENT(sp);
       ignore_callback = true;
-      GTK_ADJUSTMENT(adj)->value = scroll_to_speed(sp, speed_to_scroll(sp->speed_control_min, val, sp->speed_control_max));
-      gtk_adjustment_value_changed(GTK_ADJUSTMENT(adj));
+      ADJUSTMENT_SET_VALUE(adj, scroll_to_speed(sp, speed_to_scroll(sp->speed_control_min, val, sp->speed_control_max)));
+      /* gtk_adjustment_value_changed(GTK_ADJUSTMENT(adj)); */
       ignore_callback = false;
     }
 }
@@ -897,7 +897,7 @@ static void speed_changed_callback(GtkAdjustment *adj, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
   if (ignore_callback) return;
-  scroll_to_speed(sp, adj->value);
+  scroll_to_speed(sp, ADJUSTMENT_VALUE(adj));
 #if XEN_HAVE_RATIOS
   if (sp->speed_control_style == SPEED_CONTROL_AS_RATIO)
     snd_rationalize(sp->speed_control, &(sp->speed_control_numerator), &(sp->speed_control_denominator));
@@ -986,8 +986,8 @@ void set_expand(snd_info *sp, Float val)
       GtkObject *adj;
       adj = EXPAND_ADJUSTMENT(sp);
       ignore_callback = true;
-      GTK_ADJUSTMENT(adj)->value = scroll_to_expand(sp, expand_to_scroll(sp->expand_control_min, val, sp->expand_control_max));
-      gtk_adjustment_value_changed(GTK_ADJUSTMENT(adj));
+      ADJUSTMENT_SET_VALUE(adj, scroll_to_expand(sp, expand_to_scroll(sp->expand_control_min, val, sp->expand_control_max)));
+      /* gtk_adjustment_value_changed(GTK_ADJUSTMENT(adj)); */
       ignore_callback = false;
     }
 }
@@ -996,7 +996,7 @@ void set_expand(snd_info *sp, Float val)
 static void expand_changed_callback(GtkAdjustment *adj, gpointer data)
 {
   if (ignore_callback) return;
-  scroll_to_expand((snd_info *)data, adj->value);
+  scroll_to_expand((snd_info *)data, ADJUSTMENT_VALUE(adj));
 }
 
 
@@ -1067,8 +1067,8 @@ void set_contrast(snd_info *sp, Float val)
       GtkObject *adj;
       adj = CONTRAST_ADJUSTMENT(sp);
       ignore_callback = true;
-      GTK_ADJUSTMENT(adj)->value = scroll_to_contrast(sp, contrast_to_scroll(sp->contrast_control_min, val, sp->contrast_control_max));
-      gtk_adjustment_value_changed(GTK_ADJUSTMENT(adj));
+      ADJUSTMENT_SET_VALUE(adj, scroll_to_contrast(sp, contrast_to_scroll(sp->contrast_control_min, val, sp->contrast_control_max)));
+      /* gtk_adjustment_value_changed(GTK_ADJUSTMENT(adj)); */
       ignore_callback = false;
     }
 }
@@ -1090,7 +1090,7 @@ static void contrast_changed_callback(GtkAdjustment *adj, gpointer data)
 {
   snd_info *sp = (snd_info *)data;
   if (ignore_callback) return;
-  scroll_to_contrast(sp, adj->value);
+  scroll_to_contrast(sp, ADJUSTMENT_VALUE(adj));
 }
 
 
@@ -1158,8 +1158,8 @@ void set_revscl(snd_info *sp, Float val)
       GtkObject *adj;
       adj = REVSCL_ADJUSTMENT(sp);
       ignore_callback = true;
-      GTK_ADJUSTMENT(adj)->value = scroll_to_revscl(sp, revscl_to_scroll(sp->reverb_control_scale_min, val, sp->reverb_control_scale_max));
-      gtk_adjustment_value_changed(GTK_ADJUSTMENT(adj));
+      ADJUSTMENT_SET_VALUE(adj, scroll_to_revscl(sp, revscl_to_scroll(sp->reverb_control_scale_min, val, sp->reverb_control_scale_max)));
+      /* gtk_adjustment_value_changed(GTK_ADJUSTMENT(adj)); */
       ignore_callback = false;
     }
 }
@@ -1180,7 +1180,7 @@ static gboolean revscl_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer
 static void revscl_changed_callback(GtkAdjustment *adj, gpointer data)
 {
   if (ignore_callback) return;
-  scroll_to_revscl((snd_info *)data, adj->value);
+  scroll_to_revscl((snd_info *)data, ADJUSTMENT_VALUE(adj));
 }
 
 
@@ -1221,8 +1221,8 @@ void set_revlen(snd_info *sp, Float val)
       GtkObject *adj;
       adj = REVLEN_ADJUSTMENT(sp);
       ignore_callback = true;
-      GTK_ADJUSTMENT(adj)->value = scroll_to_revlen(sp, revlen_to_scroll(sp->reverb_control_length_min, val, sp->reverb_control_length_max));
-      gtk_adjustment_value_changed(GTK_ADJUSTMENT(adj));
+      ADJUSTMENT_SET_VALUE(adj, scroll_to_revlen(sp, revlen_to_scroll(sp->reverb_control_length_min, val, sp->reverb_control_length_max)));
+      /* gtk_adjustment_value_changed(GTK_ADJUSTMENT(adj)); */
       ignore_callback = false;
     }
 }
@@ -1243,7 +1243,7 @@ static gboolean revlen_click_callback(GtkWidget *w, GdkEventButton *ev, gpointer
 static void revlen_changed_callback(GtkAdjustment *adj, gpointer data)
 {
   if (ignore_callback) return;
-  scroll_to_revlen((snd_info *)data, adj->value);
+  scroll_to_revlen((snd_info *)data, ADJUSTMENT_VALUE(adj));
 }
 
 

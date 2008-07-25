@@ -1307,8 +1307,8 @@
 ;;;;(CFNC "GType gtk_box_get_type void")
 (CFNC "void gtk_box_pack_start GtkBox* box GtkWidget* child gboolean expand gboolean fill guint padding")
 (CFNC "void gtk_box_pack_end GtkBox* box GtkWidget* child gboolean expand gboolean fill guint padding")
-(CFNC "void gtk_box_pack_start_defaults GtkBox* box GtkWidget* widget")
-(CFNC "void gtk_box_pack_end_defaults GtkBox* box GtkWidget* widget")
+;;; out 2.13.5 (CFNC "void gtk_box_pack_start_defaults GtkBox* box GtkWidget* widget")
+;;; out 2.13.5 (CFNC "void gtk_box_pack_end_defaults GtkBox* box GtkWidget* widget")
 (CFNC "void gtk_box_set_homogeneous GtkBox* box gboolean homogeneous")
 (CFNC "gboolean gtk_box_get_homogeneous GtkBox* box")
 (CFNC "void gtk_box_set_spacing GtkBox* box gint spacing")
@@ -6715,18 +6715,19 @@
 
 ;;; Gtk 3.0 will probably disable a lot of these struct field accessors, so I need to start removing them
 
-(STRUCT "GdkColormap gint size GdkColor* colors GdkVisual* visual gpointer windowing_data")
-(STRUCT "GdkDragContext GdkDragProtocol protocol gboolean is_source GdkWindow* source_window GdkWindow* dest_window GList* targets GdkDragAction actions GdkDragAction suggested_action GdkDragAction action guint32 start_time gpointer windowing_data")
 (STRUCT "GdkEventAny GdkEventType type GdkWindow* window gint8 send_event")
-(STRUCT "GdkEventExpose GdkEventType type GdkWindow* window gint8 send_event GdkRegion* region gint count")
-(STRUCT "GdkEventNoExpose GdkEventType type GdkWindow* window gint8 send_event")
-(STRUCT "GdkEventVisibility GdkEventType type GdkWindow* window gint8 send_event GdkVisibilityState state")
 (STRUCT "GdkEventMotion GdkEventType type GdkWindow* window gint8 send_event guint32 time gdouble x gdouble y gdouble* axes guint state gint16 is_hint GdkDevice* device gdouble x_root gdouble y_root")
 (STRUCT "GdkEventButton GdkEventType type GdkWindow* window gint8 send_event guint32 time gdouble x gdouble y gdouble* axes guint state guint button GdkDevice* device gdouble x_root gdouble y_root")
 (STRUCT "GdkEventScroll GdkEventType type GdkWindow* window gint8 send_event guint32 time gdouble x gdouble y guint state GdkScrollDirection direction GdkDevice* device gdouble x_root gdouble y_root")
 (STRUCT "GdkEventKey GdkEventType type GdkWindow* window gint8 send_event guint32 time guint state guint keyval gint length gchar* string guint16 hardware_keycode guint8 group")
-(STRUCT "GdkEventCrossing GdkEventType type GdkWindow* window gint8 send_event GdkWindow* subwindow guint32 time gdouble x gdouble y gdouble x_root gdouble y_root GdkCrossingMode mode GdkNotifyType detail gboolean focus guint state")
+
+
+;;; unused?
 (STRUCT "GdkEventFocus GdkEventType type GdkWindow* window gint8 send_event gint16 in")
+(STRUCT "GdkEventExpose GdkEventType type GdkWindow* window gint8 send_event GdkRegion* region gint count")
+(STRUCT "GdkEventNoExpose GdkEventType type GdkWindow* window gint8 send_event")
+(STRUCT "GdkEventVisibility GdkEventType type GdkWindow* window gint8 send_event GdkVisibilityState state")
+(STRUCT "GdkEventCrossing GdkEventType type GdkWindow* window gint8 send_event GdkWindow* subwindow guint32 time gdouble x gdouble y gdouble x_root gdouble y_root GdkCrossingMode mode GdkNotifyType detail gboolean focus guint state")
 (STRUCT "GdkEventConfigure GdkEventType type GdkWindow* window gint8 send_event gint x gint y gint width gint height")
 (STRUCT "GdkEventProperty GdkEventType type GdkWindow* window gint8 send_event GdkAtom atom guint32 time guint state")
 (STRUCT "GdkEventSelection GdkEventType type GdkWindow* window gint8 send_event GdkAtom selection GdkAtom target GdkAtom property guint32 time GdkNativeWindow requestor")
@@ -6734,6 +6735,11 @@
 (STRUCT "GdkEventSetting GdkEventType type GdkWindow* window gint8 send_event GdkSettingAction action char* name")
 (STRUCT "GdkEventWindowState GdkEventType type GdkWindow* window gint8 send_event GdkWindowState changed_mask GdkWindowState new_window_state")
 (STRUCT "GdkEventDND GdkEventType type GdkWindow* window gint8 send_event GdkDragContext* context guint32 time gshort x_root gshort y_root")
+
+
+;;; I don't think these are currently in use
+(STRUCT "GdkColormap gint size GdkColor* colors GdkVisual* visual gpointer windowing_data")
+(STRUCT "GdkDragContext GdkDragProtocol protocol gboolean is_source GdkWindow* source_window GdkWindow* dest_window GList* targets GdkDragAction actions GdkDragAction suggested_action GdkDragAction action guint32 start_time gpointer windowing_data")
 (STRUCT "GdkGCValues GdkFunction function GdkFill fill GdkPixmap* tile GdkPixmap* stipple GdkPixmap* clip_mask GdkSubwindowMode subwindow_mode gint ts_x_origin gint ts_y_origin gint clip_x_origin gint clip_y_origin gint graphics_exposures gint line_width GdkLineStyle line_style GdkCapStyle cap_style GdkJoinStyle join_style")
 (STRUCT "GdkGC gint clip_x_origin gint clip_y_origin gint ts_x_origin gint ts_y_origin GdkColormap* colormap")
 (STRUCT "GdkImage GdkImageType type GdkVisual* visual GdkByteOrder byte_order gint width gint height guint16 depth guint16 bpp guint16 bpl guint16 bits_per_pixel gpointer mem GdkColormap* colormap gpointer windowing_data")
@@ -6742,6 +6748,7 @@
 (STRUCT "GdkVisual GdkVisualType type gint depth GdkByteOrder byte_order gint colormap_size gint bits_per_rgb guint32 red_mask gint red_shift gint red_prec guint32 green_mask gint green_shift gint green_prec guint32 blue_mask gint blue_shift gint blue_prec")
 (STRUCT "GdkWindowAttr gchar* title gint event_mask gint x gint y gint width gint height GdkVisual* visual GdkColormap* colormap GdkWindowType window_type GdkCursor* cursor gchar* wmclass_name gchar* wmclass_class gboolean override_redirect")
 (STRUCT "GdkGeometry gint min_width gint min_height gint max_width gint max_height gint base_width gint base_height gint width_inc gint height_inc gdouble min_aspect gdouble max_aspect GdkGravity win_gravity")
+
 
 (STRUCT "GtkStyle GdkColor* fg GdkColor* bg GdkColor* light GdkColor* dark GdkColor* mid GdkColor* text GdkColor* base GdkColor* text_aa PangoFontDescription* font_desc gint xthickness gint ythickness GdkGC** fg_gc GdkGC** bg_gc GdkGC** light_gc GdkGC** dark_gc GdkGC** mid_gc GdkGC** text_gc GdkGC** base_gc GdkGC** text_aa_gc GdkGC* black_gc GdkGC* white_gc GdkPixmap** bg_pixmap gint attach_count gint depth GdkColormap* colormap GtkRcStyle* rc_style GSList* styles GArray* property_cache GSList* icon_factories")
 
@@ -6767,8 +6774,8 @@
 ;;;   colorsel -> gtk_color_selection_dialog_get_color_selection
 ;;;   gtk_font_selection_dialog_get_ok|apply|cancel_button
 ;;;
-;;; widget get allocation?
-
+;;;   allocation -> gtk_widget_get_allocation
+;;;   value -> gtk_adjustment_get|set_value
 
 
 (STRUCT-make "GdkColor guint32 &pixel guint16 &red guint16 &green guint16 &blue")

@@ -338,8 +338,8 @@ static void phases_callback(GtkWidget *w, gpointer context)
 
 static void beta_callback(GtkAdjustment *adj, gpointer context)
 {
-  in_set_fft_window_beta((Float)(adj->value));
-  chans_field(FCP_BETA, (Float)(adj->value));
+  in_set_fft_window_beta((Float)(ADJUSTMENT_VALUE(adj)));
+  chans_field(FCP_BETA, (Float)(ADJUSTMENT_VALUE(adj)));
   if (fft_window_beta_in_use(fft_window(ss)))
     {
       get_fft_window_data();
@@ -352,8 +352,8 @@ static void beta_callback(GtkAdjustment *adj, gpointer context)
 
 static void alpha_callback(GtkAdjustment *adj, gpointer context)
 {
-  in_set_fft_window_alpha((Float)(adj->value));
-  chans_field(FCP_ALPHA, (Float)(adj->value));
+  in_set_fft_window_alpha((Float)(ADJUSTMENT_VALUE(adj)));
+  chans_field(FCP_ALPHA, (Float)(ADJUSTMENT_VALUE(adj)));
   if (fft_window_alpha_in_use(fft_window(ss)))
     {
       get_fft_window_data();
@@ -501,10 +501,10 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       orient_button = sg_button_new_from_stock_with_label(_("Orientation"), GTK_STOCK_PROPERTIES);
       gtk_widget_set_name(orient_button, "doit_again_button");
 
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(transform_dialog))), color_button, false, true, 10);
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(transform_dialog))), orient_button, false, true, 10);
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(transform_dialog))), dismiss_button, false, true, 10);
-      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(transform_dialog))), help_button, false, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(transform_dialog)), color_button, false, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(transform_dialog)), orient_button, false, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(transform_dialog)), dismiss_button, false, true, 10);
+      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(transform_dialog)), help_button, false, true, 10);
 
       SG_SIGNAL_CONNECT(dismiss_button, "clicked", dismiss_transform_callback, NULL);
       SG_SIGNAL_CONNECT(color_button, "clicked", color_transform_callback, NULL);
@@ -517,7 +517,7 @@ GtkWidget *fire_up_transform_dialog(bool managed)
       gtk_widget_show(help_button);
 
       outer_table = gtk_table_new(2, 4, false); /* rows cols */
-      gtk_container_add(GTK_CONTAINER(DIALOG_CONTENT_AREA(GTK_DIALOG(transform_dialog))), outer_table);
+      gtk_container_add(GTK_CONTAINER(DIALOG_CONTENT_AREA(transform_dialog)), outer_table);
       gtk_table_set_row_spacings(GTK_TABLE(outer_table), 16);
       gtk_table_set_col_spacings(GTK_TABLE(outer_table), 16);
       gtk_table_set_homogeneous(GTK_TABLE(outer_table), true);
@@ -804,7 +804,7 @@ void set_fft_window_beta(Float val)
   chans_field(FCP_BETA, val);
   if (transform_dialog) 
     {
-      gtk_adjustment_set_value(GTK_ADJUSTMENT(beta_adj), val);
+      ADJUSTMENT_SET_VALUE(beta_adj, val);
       get_fft_window_data();
       graph_redisplay();
     }
@@ -818,7 +818,7 @@ void set_fft_window_alpha(Float val)
   chans_field(FCP_ALPHA, val);
   if (transform_dialog) 
     {
-      gtk_adjustment_set_value(GTK_ADJUSTMENT(alpha_adj), val);
+      ADJUSTMENT_SET_VALUE(alpha_adj, val);
       get_fft_window_data();
       graph_redisplay();
     }

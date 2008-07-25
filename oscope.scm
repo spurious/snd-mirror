@@ -248,7 +248,7 @@
 	      (gtk_widget_show scale)
 	      (gtk_box_pack_start (GTK_BOX mainform) label #f #f 0)
 	      (gtk_widget_show label)
-	      (g_signal_connect adj "value_changed" (lambda (w d) (cycle-func (inexact->exact (.value (GTK_ADJUSTMENT adj)))) #f))
+	      (g_signal_connect adj "value_changed" (lambda (w d) (cycle-func (inexact->exact (gtk_adjustment_get_value (GTK_ADJUSTMENT adj)))) #f))
 	      (set! (right-sample oscope-graph 0) cycle-length)
 	      (set! (max-transform-peaks oscope-graph 0) 10)
 	      (g_signal_connect freeze-button "toggled" (lambda (w d) (freeze-func) #f))

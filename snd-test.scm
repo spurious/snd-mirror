@@ -64663,7 +64663,7 @@ EDITS: 1
 		    (lst (c-array->list arr 3)))
 	       (if (not (feql lst '(1.0 2.0 3.0)))
 		   (snd-display ";~A c-array->list not invertible?: ~A ~A" type arr lst))))
-	   (list "gfloat*" "gdouble*"))
+	   (list "gfloat*"))
 	  
 	  (for-each
 	   (lambda (type)
@@ -66318,9 +66318,9 @@ EDITS: 1
 	    (if (not _gboolean) (snd-display ";box not homogenous"))
 	    (if (not (= _gint 0)) (snd-display ";box spacing: ~A" _gint))
 	    (gtk_box_pack_start _GtkBox_ _GtkWidget_ #f #f 10)
-	    (gtk_box_pack_start_defaults _GtkBox_ _GtkWidget_1)
+;	    (gtk_box_pack_start_defaults _GtkBox_ _GtkWidget_1)
 	    (gtk_box_pack_end _GtkBox_ _GtkWidget_2 #t #t 10)
-	    (gtk_box_pack_end_defaults _GtkBox_ _GtkWidget_3)
+;	    (gtk_box_pack_end_defaults _GtkBox_ _GtkWidget_3)
 	    (let ((vals (gtk_box_query_child_packing _GtkBox_ _GtkWidget_)))
 	      (if (not (equal? vals (list #f #f 10 0))) (snd-display ";box child packing: ~A" vals)))
 	    (gtk_box_set_homogeneous _GtkBox_ #t)
@@ -67279,7 +67279,7 @@ EDITS: 1
 		   gtk_binding_set_activate gtk_binding_set_add_path
 		   gtk_binding_set_by_class gtk_binding_set_find gtk_binding_set_new gtk_bindings_activate gtk_border_copy
 		   gtk_border_free gtk_box_get_homogeneous gtk_box_get_spacing
-		   gtk_box_pack_end gtk_box_pack_end_defaults gtk_box_pack_start gtk_box_pack_start_defaults gtk_box_query_child_packing
+		   gtk_box_pack_end gtk_box_pack_start gtk_box_query_child_packing
 		   gtk_box_reorder_child gtk_box_set_child_packing gtk_box_set_homogeneous gtk_box_set_spacing gtk_button_box_get_child_secondary
 		   gtk_button_box_get_layout gtk_button_box_set_child_secondary gtk_button_box_set_layout gtk_button_clicked
 		   gtk_button_enter gtk_button_get_alignment gtk_button_get_focus_on_click gtk_button_get_image gtk_button_get_label

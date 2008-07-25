@@ -185,7 +185,7 @@
 				 (change-label label 
 					       (format #f "~A: ~,2F" 
 						       title 
-						       (scale-log-label low (.value (GTK_ADJUSTMENT adj)) high))))
+						       (scale-log-label low (gtk_adjustment_get_value (GTK_ADJUSTMENT adj)) high))))
 			       #f)
 	     (g_signal_connect adj "value_changed" func #f))
 	 adj))

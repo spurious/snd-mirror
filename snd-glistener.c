@@ -62,14 +62,14 @@ static void start_completion_dialog(int num_items, char **items)
       gtk_widget_set_name(dismiss_button, "quit_button");
       set_stock_button_label(dismiss_button, _("Go Away"));
 
-      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(completion_dialog))), dismiss_button, false, true, 10);
-      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(GTK_DIALOG(completion_dialog))), help_button, false, true, 10);
+      gtk_box_pack_start(GTK_BOX(DIALOG_ACTION_AREA(completion_dialog)), dismiss_button, false, true, 10);
+      gtk_box_pack_end(GTK_BOX(DIALOG_ACTION_AREA(completion_dialog)), help_button, false, true, 10);
       SG_SIGNAL_CONNECT(dismiss_button, "clicked", dismiss_completion_callback, NULL);
       SG_SIGNAL_CONNECT(help_button, "clicked", help_completion_callback, NULL);
       gtk_widget_show(dismiss_button);
       gtk_widget_show(help_button);
   
-      completion_list = slist_new(DIALOG_CONTENT_AREA(GTK_DIALOG(completion_dialog)), items, num_items, CONTAINER_ADD);
+      completion_list = slist_new(DIALOG_CONTENT_AREA(completion_dialog), items, num_items, CONTAINER_ADD);
       completion_list->select_callback = list_completions_callback;
       set_dialog_widget(COMPLETION_DIALOG, completion_dialog);
     }
