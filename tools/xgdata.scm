@@ -6737,17 +6737,18 @@
 (STRUCT "GdkEventDND GdkEventType type GdkWindow* window gint8 send_event GdkDragContext* context guint32 time gshort x_root gshort y_root")
 
 
-;;; I don't think these are currently in use
-(STRUCT "GdkColormap gint size GdkColor* colors GdkVisual* visual gpointer windowing_data")
-(STRUCT "GdkDragContext GdkDragProtocol protocol gboolean is_source GdkWindow* source_window GdkWindow* dest_window GList* targets GdkDragAction actions GdkDragAction suggested_action GdkDragAction action guint32 start_time gpointer windowing_data")
 (STRUCT "GdkGCValues GdkFunction function GdkFill fill GdkPixmap* tile GdkPixmap* stipple GdkPixmap* clip_mask GdkSubwindowMode subwindow_mode gint ts_x_origin gint ts_y_origin gint clip_x_origin gint clip_y_origin gint graphics_exposures gint line_width GdkLineStyle line_style GdkCapStyle cap_style GdkJoinStyle join_style")
-(STRUCT "GdkGC gint clip_x_origin gint clip_y_origin gint ts_x_origin gint ts_y_origin GdkColormap* colormap")
-(STRUCT "GdkImage GdkImageType type GdkVisual* visual GdkByteOrder byte_order gint width gint height guint16 depth guint16 bpp guint16 bpl guint16 bits_per_pixel gpointer mem GdkColormap* colormap gpointer windowing_data")
-(STRUCT "GdkKeymapKey guint keycode gint group gint level")
-(STRUCT "GdkRgbCmap guint32* colors gint n_colors GSList* info_list")
-(STRUCT "GdkVisual GdkVisualType type gint depth GdkByteOrder byte_order gint colormap_size gint bits_per_rgb guint32 red_mask gint red_shift gint red_prec guint32 green_mask gint green_shift gint green_prec guint32 blue_mask gint blue_shift gint blue_prec")
-(STRUCT "GdkWindowAttr gchar* title gint event_mask gint x gint y gint width gint height GdkVisual* visual GdkColormap* colormap GdkWindowType window_type GdkCursor* cursor gchar* wmclass_name gchar* wmclass_class gboolean override_redirect")
-(STRUCT "GdkGeometry gint min_width gint min_height gint max_width gint max_height gint base_width gint base_height gint width_inc gint height_inc gdouble min_aspect gdouble max_aspect GdkGravity win_gravity")
+
+;;; I don't think these are currently in use
+;(STRUCT "GdkGC gint clip_x_origin gint clip_y_origin gint ts_x_origin gint ts_y_origin GdkColormap* colormap")
+;(STRUCT "GdkColormap gint size GdkColor* colors GdkVisual* visual gpointer windowing_data")
+;(STRUCT "GdkDragContext GdkDragProtocol protocol gboolean is_source GdkWindow* source_window GdkWindow* dest_window GList* targets GdkDragAction actions GdkDragAction suggested_action GdkDragAction action guint32 start_time gpointer windowing_data")
+;(STRUCT "GdkImage GdkImageType type GdkVisual* visual GdkByteOrder byte_order gint width gint height guint16 depth guint16 bpp guint16 bpl guint16 bits_per_pixel gpointer mem GdkColormap* colormap gpointer windowing_data")
+;(STRUCT "GdkKeymapKey guint keycode gint group gint level")
+;(STRUCT "GdkRgbCmap guint32* colors gint n_colors GSList* info_list")
+;(STRUCT "GdkVisual GdkVisualType type gint depth GdkByteOrder byte_order gint colormap_size gint bits_per_rgb guint32 red_mask gint red_shift gint red_prec guint32 green_mask gint green_shift gint green_prec guint32 blue_mask gint blue_shift gint blue_prec")
+;(STRUCT "GdkWindowAttr gchar* title gint event_mask gint x gint y gint width gint height GdkVisual* visual GdkColormap* colormap GdkWindowType window_type GdkCursor* cursor gchar* wmclass_name gchar* wmclass_class gboolean override_redirect")
+;(STRUCT "GdkGeometry gint min_width gint min_height gint max_width gint max_height gint base_width gint base_height gint width_inc gint height_inc gdouble min_aspect gdouble max_aspect GdkGravity win_gravity")
 
 
 (STRUCT "GtkStyle GdkColor* fg GdkColor* bg GdkColor* light GdkColor* dark GdkColor* mid GdkColor* text GdkColor* base GdkColor* text_aa PangoFontDescription* font_desc gint xthickness gint ythickness GdkGC** fg_gc GdkGC** bg_gc GdkGC** light_gc GdkGC** dark_gc GdkGC** mid_gc GdkGC** text_gc GdkGC** base_gc GdkGC** text_aa_gc GdkGC* black_gc GdkGC* white_gc GdkPixmap** bg_pixmap gint attach_count gint depth GdkColormap* colormap GtkRcStyle* rc_style GSList* styles GArray* property_cache GSList* icon_factories")

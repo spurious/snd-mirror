@@ -161,6 +161,10 @@
 (define all-types '())
 (define all-check-types '())
 
+;;; preset some types that are getting confused
+(set! types (list "GdkEventMotion*" "GtkColorSelectionDialog*"))
+(set! all-types (list "GdkEventMotion*" "GtkColorSelectionDialog*"))
+
 (define idlers (list "g_source_remove" "g_idle_remove_by_data"
 		     "gtk_quit_remove" "gtk_quit_remove_by_data" 
 		     "gtk_key_snooper_remove"))
@@ -216,7 +220,7 @@
 	"cairo_font_weight_t" "cairo_font_slant_t"
 
 	"GtkPrintOperationAction"
-	"GtkTooltip*" "GtkCalendarDetailFunc" "GtkScaleButton*"
+	"GtkTooltip*" "GtkCalendarDetailFunc" "GtkScaleButton*" "guint32*"
 	))
 
 (define no-xen-p 
