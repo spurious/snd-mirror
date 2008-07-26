@@ -6766,7 +6766,7 @@
 
 ;;; for 3.0...
 ;;;
-;;; done:
+;;; done (except for rt-related scheme code, and the ruby/forth stuff)
 ;;;   window -> gtk_widget_get_window
 ;;;   vbox -> gtk_dialog_get_content_area
 ;;;   action_area -> gtk_dialog_get_action_area

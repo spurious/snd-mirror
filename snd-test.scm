@@ -15976,7 +15976,8 @@ EDITS: 2
       
       ;; degree>4
       (let ((vals (poly-roots (poly-reduce (poly* (vct 1 1) (poly* (poly* (vct 2 1) (vct -3 1)) (poly* (vct -1 1) (vct -2 1))))))))
-	(if (not (feql vals (list 3.0 2.0 -1.0 -2.0 1.0))) (snd-display ";poly-roots n(1): ~A" vals)))
+	(if (not (feql vals (list 3.0 2.0 -1.0 -2.0 1.0))) 
+	    (snd-display ";poly-roots n(1): ~A from ~A" vals (poly-reduce (poly* (vct 1 1) (poly* (poly* (vct 2 1) (vct -3 1)) (poly* (vct -1 1) (vct -2 1))))))))
       (let ((vals (poly-roots (poly-reduce (poly* (vct 1 1) (poly* (poly* (vct 2 1) (vct -3 1)) (poly* (vct 8 1) (vct -9 1))))))))
 	(if (not (feql vals (list 9.0 3.0 -2.0 -8.0 -1.0))) (snd-display ";poly-roots n(2): ~A" vals)))
       (let ((vals (poly-roots (poly-reduce (poly* (vct -1 0 1) (poly* (poly* (vct 9 1) (vct -3 1)) (poly* (vct -10 1) (vct -2 1))))))))
@@ -42739,9 +42740,9 @@ EDITS: 1
 		     (begin
 		       (snd-display ";flat fft: ~A at ~A: ~A ~A" len i (vct-ref rl i) (vct-ref xrl i))
 		       (set! happy #f)))))
-	     (if (fneq (vct-ref rl 0) (* len len)) (snd-display ";~A at 0: ~A" len (vct-ref rl 0)))
+	     (if (fneq (vct-ref rl 0) (* len len)) (snd-display ";snd-transform ~A at 0: ~A" len (vct-ref rl 0)))
 	     (vct-set! rl 0 0.0)
-	     (if (> (vct-peak rl) .001) (snd-display ";~A impulse: ~A" len (vct-peak rl)))))
+	     (if (> (vct-peak rl) .001) (snd-display ";snd-transform ~A impulse: ~A" len (vct-peak rl)))))
 	 (list 16 128 512 1024))
 	
 	(for-each
@@ -42954,7 +42955,7 @@ EDITS: 1
 		   ((or (not happy) (= i len2)))
 		 (if (fneq (vct-ref rl i) (vct-ref xrl i))
 		     (begin
-		       (snd-display ";~A at ~A: ~A ~A" len i (vct-ref rl i) (vct-ref xrl i))
+		       (snd-display ";mus-fft? ~A at ~A: ~A ~A" len i (vct-ref rl i) (vct-ref xrl i))
 		       (set! happy #f)))))
 	     (vct-set! rl 0 0.0)
 	     (vct-set! rl 4 0.0)
@@ -43047,7 +43048,7 @@ EDITS: 1
 		   ((or (not happy) (= i len)))
 		 (if (fneq (vct-ref rl i) (vct-ref xrl i))
 		     (begin
-		       (snd-display ";~A at ~A: ~A ~A" len i (vct-ref rl i) (vct-ref xrl i))
+		       (snd-display ";mus-fft?? ~A at ~A: ~A ~A" len i (vct-ref rl i) (vct-ref xrl i))
 		       (set! happy #f)))))))
 	 (list 16 64 256 512))
 	
@@ -51801,10 +51802,6 @@ EDITS: 1
 	    (if (fneq x 3.0) (snd-display ";run list-vector call-hi: ~A" x))))
 	
 	(let ((val (vector (make-hi308 1.0 2.0) (make-hi308 3.0 4.0))))
-	  (run (lambda () (set-hi308 (vector-ref val 1))))
-	  (if (fneq (call-hi308 (vector-ref val 1)) (* 3.5 3.0)) (snd-display ";run list-vector set-hi: ~A" val)))
-	
-	(let ((val (vector (make-hi308 1.0 2.0) (make-hi308 3.0 4.0))))
 	  (let ((x (run (lambda () (set-hi308 (vector-ref val 1)) (call-hi308 (vector-ref val 1))))))
 	    (if (fneq x (* 3.5 3.0)) (snd-display ";run list-vector set-hi+call-hi: ~A" val))))
 	
@@ -54545,18 +54542,18 @@ EDITS: 1
 		(v4 (with-sound (:output (make-vct 44100)) 
 				(fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))))
 	    (if (vequal v1 v4) (snd-display ";1 reverb output not written to vct?"))
-	    (if (< (vct-peak v1) .3)
+	    (if (< (vct-peak v1) .28)
 		(snd-display ";1 rev with-sound -> vct fm-violin maxamp (opt): ~A" (vct-peak v1)))
 	    (set! (optimization) 0)
 	    (let ((v2 (with-sound (:output (make-vct 44100) :revfile (make-vct 44100) :reverb jc-reverb) 
 				  (fm-violin 0 .1 440 .1 :reverb-amount 0.9))))
-	      (if (< (vct-peak v2) .3) 
+	      (if (< (vct-peak v2) .28) 
 		  (snd-display ";1 rev with-sound -> vct fm-violin maxamp: ~A" (vct-peak v2)))
 	      (set! (optimization) 6)
 	      (with-sound (:output v1 :revfile v2 :channels 1 :reverb jc-reverb)
 			  (fm-violin 0 .1 440 .1 :reverb-amount 0.9)
 			  (fm-violin 0 .1 440 .1 :reverb-amount 0.9))
-	      (if (< (vct-peak v1) .3) 
+	      (if (< (vct-peak v1) .28) 
 		  (snd-display ";1 rev with-sound -> vct fm-violin maxamp (opt 2): ~A" (vct-peak v1))))))
 	
 	(let ((oldopt (optimization)))
@@ -55307,7 +55304,7 @@ EDITS: 1
 	  (if (fneq (maxamp snd) 1.0) (snd-display ";rk!ssb max: ~A" (maxamp snd))))
 	
 	(let* ((res (with-sound (:clipped #f)
-		    (let ((gen (make-jpcos 100.0 :a 1.0 :r 1.0 :k 1)))
+		    (let ((gen (make-jpcos 100.0 :a 1.0 :r 0.99 :k 1)))
 		      (run 
 		       (lambda ()
 			 (do ((i 0 (1+ i)))

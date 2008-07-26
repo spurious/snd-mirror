@@ -7858,7 +7858,11 @@ static void clm_struct_field_set_1(ptree *prog, xen_value *in_v, xen_value *in_v
 /* float vectors are handled as vcts
  */
 
-/* SOMEDAY: vector (string, char, fnc) arg safety checks */
+static void vect_check_1(int *args, ptree *pt) 
+{
+  if (!(VECT_ARG_OK(1))) mus_error(MUS_NO_DATA, "vector arg 1 addr (%d) is invalid (%d of %d)", args[1], pt->vect_ctr, pt->vects_size);
+  if (!(VECT_ARG_1)) mus_error(MUS_NO_DATA, "arg 1 (vector) is null");
+}
 
 
 /* length */
@@ -7870,13 +7874,23 @@ static void vector_length_i(int *args, ptree *pt) {INT_RESULT = VECT_ARG_1->leng
 
 static xen_value *vector_length_1(ptree *prog, xen_value **args, int num_args)
 {
+  if (run_safety == RUN_SAFE) 
+    {
+      if (args[1]->type == R_FLOAT_VECTOR)
+	temp_package(prog, R_BOOL, vct_check_1, "vct_check_1", args, 1);
+      else temp_package(prog, R_BOOL, vect_check_1, "vect_check_1", args, 1);
+    }
   switch (args[1]->type)
     {
-    case R_FLOAT_VECTOR: return(package(prog, R_INT, vector_length_f, "vector_length_f", args, 1));
+    case R_FLOAT_VECTOR: 
+      return(package(prog, R_INT, vector_length_f, "vector_length_f", args, 1));
+      break;
     case R_LIST_VECTOR:  
     case R_INT_VECTOR:  
     case R_VCT_VECTOR:  
-    case R_CLM_VECTOR:   return(package(prog, R_INT, vector_length_i, "vector_length", args, 1));
+    case R_CLM_VECTOR:   
+      return(package(prog, R_INT, vector_length_i, "vector_length", args, 1));
+      break;
     }
   return(NULL);
 }
@@ -7897,6 +7911,12 @@ static void vector_ref_l(int *args, ptree *pt) {LIST_RESULT = VECT_ARG_1->data.l
 
 static xen_value *vector_ref_1(ptree *prog, xen_value **args, int num_args)
 {
+  if (run_safety == RUN_SAFE) 
+    {
+      if (args[1]->type == R_FLOAT_VECTOR)
+	temp_package(prog, R_BOOL, vct_check_1, "vct_check_1", args, 1);
+      else temp_package(prog, R_BOOL, vect_check_1, "vect_check_1", args, 1);
+    }
   switch (args[1]->type)
     {
     case R_FLOAT_VECTOR: return(package(prog, R_FLOAT, vector_ref_f, "vector_ref_f", args, 2)); break;
@@ -7931,6 +7951,12 @@ static void vector_set_c(int *args, ptree *pt) {VECT_ARG_1->data.gens[INT_ARG_2]
 static xen_value *vector_set_1(ptree *prog, xen_value **args, int num_args)
 {
   xen_var *var;
+  if (run_safety == RUN_SAFE) 
+    {
+      if (args[1]->type == R_FLOAT_VECTOR)
+	temp_package(prog, R_BOOL, vct_check_1, "vct_check_1", args, 1);
+      else temp_package(prog, R_BOOL, vect_check_1, "vect_check_1", args, 1);
+    }
   var = find_var_in_ptree_via_addr(prog, args[1]->type, args[1]->addr);
   if (var) var->unclean = true;
   switch (args[1]->type)
@@ -7985,6 +8011,12 @@ static void vector_fill_c(int *args, ptree *pt)
 
 static xen_value *vector_fill_1(ptree *prog, xen_value **args, int num_args)
 {
+  if (run_safety == RUN_SAFE) 
+    {
+      if (args[1]->type == R_FLOAT_VECTOR)
+	temp_package(prog, R_BOOL, vct_check_1, "vct_check_1", args, 1);
+      else temp_package(prog, R_BOOL, vect_check_1, "vect_check_1", args, 1);
+    }
   switch (args[1]->type)
     {
     case R_FLOAT_VECTOR: 
@@ -8014,12 +8046,6 @@ static xen_value *vector_fill_1(ptree *prog, xen_value **args, int num_args)
 
 /* ---------------- vct stuff ---------------- */
 
-static void vct_check_arg_1(int *args, ptree *pt) 
-{
-  if (!(VCT_ARG_OK(1))) mus_error(MUS_NO_DATA, "vct arg 1 addr (%d) is invalid (%d of %d)", args[1], pt->vct_ctr, pt->vcts_size);
-  if (!(VCT_ARG_1)) mus_error(MUS_NO_DATA, "arg 1 (vct) is null");
-}
-
 static void vct_check_index_1(int *args, ptree *pt) 
 {
   if (VCT_ARG_1->length < 2) mus_error(MUS_NO_DATA, "vct index (1) too high");
@@ -8043,7 +8069,7 @@ static void vct_length_i(int *args, ptree *pt) {INT_RESULT = VCT_ARG_1->length;}
 
 static xen_value *vct_length_1(ptree *prog, xen_value **args, int num_args)
 {
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_arg_1, "vct_check_arg_1", args, 1);
+  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_1, "vct_check_1", args, 1);
   return(package(prog, R_INT, vct_length_i, "vct_length_i", args, 1));
 }
 
@@ -8059,7 +8085,7 @@ static void vct_ref_f(int *args, ptree *pt) {FLOAT_RESULT = VCT_ARG_1->data[INT_
 
 static xen_value *vct_ref_1(ptree *prog, xen_value **args, int num_args)
 {
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_arg_1, "vct_check_arg_1", args, 1);
+  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_1, "vct_check_1", args, 1);
   if (args[2]->constant == R_CONSTANT)
     {
       if (prog->ints[args[2]->addr] == 0)
@@ -8118,7 +8144,7 @@ static xen_value *vct_set_2(ptree *prog, xen_value **args, int num_args)
   xen_var *var;
   var = find_var_in_ptree_via_addr(prog, args[1]->type, args[1]->addr);
   if (var) var->unclean = true;
-  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_arg_1, "vct_check_arg_1", args, 1);
+  if (run_safety == RUN_SAFE) temp_package(prog, R_BOOL, vct_check_1, "vct_check_1", args, 1);
   if (args[3]->type == R_FLOAT)
     {
       if (args[2]->constant == R_CONSTANT)
@@ -11582,7 +11608,8 @@ static void throw_s_1(int *args, ptree *pt)
   XEN res;
   res = pt->xens[args[1]];
   free_ptree(pt);
-  /* free_ptree handles cleanup/global resets -- can we safely call it here? (i.e. no possible catch within run itself) */
+  /* free_ptree handles cleanup/global resets -- can we safely call it here? (i.e. no possible catch within run itself),
+   */
   saw_mus_error = 0;
   pt = NULL;
   XEN_THROW(res, XEN_FALSE);

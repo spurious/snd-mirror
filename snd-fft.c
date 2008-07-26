@@ -824,7 +824,9 @@ void fourier_spectrum(snd_fd *sf, Float *fft_data, off_t fft_size_1, off_t data_
 #if HAVE_FFTW || HAVE_FFTW3
   {
     int j;
+
     mus_fftw(fft_data, fft_size, 1);
+
     fft_data[0] = fabs(fft_data[0]);
     fft_data[fft_size / 2] = fabs(fft_data[fft_size / 2]);
 
@@ -856,7 +858,9 @@ void fourier_spectrum(snd_fd *sf, Float *fft_data, off_t fft_size_1, off_t data_
   {
     Float *idata;
     idata = (Float *)CALLOC(fft_size, sizeof(Float));
+
     mus_fft(fft_data, idata, fft_size, 1);
+
     if ((cp) && (cp->fft_with_phases))
       {
 	for (i = 0; i < fft_size; i++)
@@ -1007,6 +1011,7 @@ static void display_fft(fft_state *fs)
 
   cp = fs->cp;
   if ((cp == NULL) || (cp->active < CHANNEL_HAS_AXES)) return;
+  if (cp->transform_graph_type != GRAPH_ONCE) return;
 
   fp = cp->fft;
   if (fp == NULL) return; /* can happen if selection transform set, but no selection */
@@ -1015,153 +1020,151 @@ static void display_fft(fft_state *fs)
   if (data == NULL) return;
 
   sp = cp->sound;
-  if (cp->transform_graph_type == GRAPH_ONCE)
+  xlabel = spectro_xlabel(cp);
+
+  switch (cp->transform_type)
     {
-      xlabel = spectro_xlabel(cp);
-      switch (cp->transform_type)
+    case FOURIER: 
+      max_freq = ((Float)(SND_SRATE(sp)) * 0.5 * cp->spectro_cutoff);
+      if ((cp->fft_log_frequency) && ((SND_SRATE(sp) * 0.5 * cp->spectro_start) < log_freq_start(ss)))
+	min_freq = log_freq_start(ss);
+      else min_freq = ((Float)(SND_SRATE(sp)) * 0.5 * cp->spectro_start);
+      break;
+      
+    case WAVELET: case WALSH: case HAAR:
+      max_freq = fs->size * cp->spectro_cutoff; 
+      min_freq = fs->size * cp->spectro_start; 
+      break;
+      
+    case AUTOCORRELATION: case CEPSTRUM:
+      max_freq = fs->size * cp->spectro_cutoff / 2; 
+      min_freq = fs->size * cp->spectro_start / 2; 
+      break;
+      
+    default:
+      min_freq = added_transform_lo(cp->transform_type) * fs->size * cp->spectro_cutoff; 
+      max_freq = added_transform_hi(cp->transform_type) * fs->size * cp->spectro_cutoff; 
+      break;
+    }
+  
+  if (cp->transform_normalization == DONT_NORMALIZE)
+    {
+      lo = 0;
+      hi = (int)(fp->current_size / 2);
+    }
+  else
+    {
+      if (cp->transform_type == FOURIER)
 	{
-	case FOURIER: 
-	  max_freq = ((Float)(SND_SRATE(sp)) * 0.5 * cp->spectro_cutoff);
-	  if ((cp->fft_log_frequency) && ((SND_SRATE(sp) * 0.5 * cp->spectro_start) < log_freq_start(ss)))
-	    min_freq = log_freq_start(ss);
-	  else min_freq = ((Float)(SND_SRATE(sp)) * 0.5 * cp->spectro_start);
-	  break;
-
-	case WAVELET: case WALSH: case HAAR:
-	  max_freq = fs->size * cp->spectro_cutoff; 
-	  min_freq = fs->size * cp->spectro_start; 
-	  break;
-
-	case AUTOCORRELATION: case CEPSTRUM:
-	  max_freq = fs->size * cp->spectro_cutoff / 2; 
-	  min_freq = fs->size * cp->spectro_start / 2; 
-	  break;
-
-	default:
-	  min_freq = added_transform_lo(cp->transform_type) * fs->size * cp->spectro_cutoff; 
-	  max_freq = added_transform_hi(cp->transform_type) * fs->size * cp->spectro_cutoff; 
-	  break;
-	}
-
-      if (cp->transform_normalization == DONT_NORMALIZE)
-	{
-	  lo = 0;
-	  hi = (int)(fp->current_size / 2);
-	}
-      else
-	{
-	  if (cp->transform_type == FOURIER)
-	    {
-	      hi = (int)(fs->size * cp->spectro_cutoff / 2);
-	      lo = (int)(fs->size * cp->spectro_start / 2);
-	    }
-	  else
-	    {
-	      hi = (int)(fs->size * cp->spectro_cutoff);
-	      lo = (int)(fs->size * cp->spectro_start);
-	    }
-	}
-
-      data_max = 0.0;
-      if ((cp->transform_normalization == NORMALIZE_BY_SOUND) ||
-	  ((cp->transform_normalization == DONT_NORMALIZE) && 
-	   (sp->nchans > 1) && 
-	   (sp->channel_style == CHANNELS_SUPERIMPOSED)))
-	{
-	  for (j = 0; j < sp->nchans; j++)
-	    {
-	      ncp = sp->chans[j];
-	      if ((ncp->graph_transform_p) && (ncp->fft)) /* normalize-by-sound but not ffting all chans? */
-		{
-		  nfp = ncp->fft;
-		  tdata = nfp->data;
-		  for (i = lo; i < hi; i++) 
-		    if (tdata[i] > data_max) 
-		      data_max = tdata[i];
-		}
-	    }
+	  hi = (int)(fs->size * cp->spectro_cutoff / 2);
+	  lo = (int)(fs->size * cp->spectro_start / 2);
 	}
       else
 	{
-	  if (cp->transform_type == FOURIER)
+	  hi = (int)(fs->size * cp->spectro_cutoff);
+	  lo = (int)(fs->size * cp->spectro_start);
+	}
+    }
+  
+  data_max = 0.0;
+  if ((cp->transform_normalization == NORMALIZE_BY_SOUND) ||
+      ((cp->transform_normalization == DONT_NORMALIZE) && 
+       (sp->nchans > 1) && 
+       (sp->channel_style == CHANNELS_SUPERIMPOSED)))
+    {
+      for (j = 0; j < sp->nchans; j++)
+	{
+	  ncp = sp->chans[j];
+	  if ((ncp->graph_transform_p) && (ncp->fft)) /* normalize-by-sound but not ffting all chans? */
 	    {
+	      nfp = ncp->fft;
+	      tdata = nfp->data;
 	      for (i = lo; i < hi; i++) 
-		if (data[i] > data_max) 
-		  data_max = data[i];
-	    }
-	  else
-	    {
-	      for (i = lo; i < hi; i++)
-		{
-		  if (data[i] > data_max) 
-		    data_max = data[i];
-		  else
-		    if (data[i] < -data_max) 
-		      data_max = -data[i];
-		}
+		if (tdata[i] > data_max) 
+		  data_max = tdata[i];
 	    }
 	}
-
-      if (data_max == 0.0) data_max = 1.0;
-      if (cp->transform_normalization != DONT_NORMALIZE)
-	scale = 1.0 / data_max;
-      else 
+    }
+  else
+    {
+      if (cp->transform_type == FOURIER)
 	{
-	  if (cp->transform_type == FOURIER)
+	  for (i = lo; i < hi; i++) 
+	    if (data[i] > data_max) 
+	      data_max = data[i];
+	}
+      else
+	{
+	  for (i = lo; i < hi; i++)
 	    {
-	      scale = 2.0 / (Float)(fs->size);
-	      di = (int)(10 * data_max * scale + 1);
+	      if (data[i] > data_max) 
+		data_max = data[i];
+	      else
+		if (data[i] < -data_max) 
+		  data_max = -data[i];
+	    }
+	}
+    }
+  
+  if (data_max == 0.0) data_max = 1.0;
+  if (cp->transform_normalization != DONT_NORMALIZE)
+    scale = 1.0 / data_max;
+  else 
+    {
+      if (cp->transform_type == FOURIER)
+	{
+	  scale = 2.0 / (Float)(fs->size);
+	  di = (int)(10 * data_max * scale + 1);
+	  if (di == 1)
+	    {
+	      di = (int)(100 * data_max * scale + 1);
 	      if (di == 1)
 		{
-		  di = (int)(100 * data_max * scale + 1);
-		  if (di == 1)
-		    {
-		      di = (int)(1000 * data_max * scale + 1);
-		      data_max = (Float)di / 1000.0;
-		    }
-		  else data_max = (Float)di / 100.0;
+		  di = (int)(1000 * data_max * scale + 1);
+		  data_max = (Float)di / 1000.0;
 		}
-	      else data_max = (Float)di / 10.0;
+	      else data_max = (Float)di / 100.0;
 	    }
-	  else 
-	    {
-	      scale = 1.0;
-	    }
-	}
-
-      if (cp->fft_log_magnitude) 
-	{
-	  /* the DONT_NORMALIZE option is ignored because it really looks dumb in this context */
-	  max_val = 0.0;
-	  min_val = cp->min_dB;
+	  else data_max = (Float)di / 10.0;
 	}
       else 
 	{
-	  if (cp->transform_normalization == DONT_NORMALIZE)
-	    {
-	      if (cp->transform_type == FOURIER)
-		min_val = 0.0;
-	      else min_val = -data_max;
-	      max_val = data_max;
-	    }
-	  else
-	    {
-	      if (cp->transform_type == FOURIER)
-		min_val = 0.0;
-	      else min_val = -1.0;
-	      max_val = 1.0;
-	    }
+	  scale = 1.0;
 	}
-
-      fp->scale = scale;
-      fp->axis = make_axis_info(cp,
-				min_freq, max_freq,
-				min_val, max_val,
-				xlabel,
-				min_freq, max_freq,
-				min_val, max_val,
-				fp->axis);
     }
+  
+  if (cp->fft_log_magnitude) 
+    {
+      /* the DONT_NORMALIZE option is ignored because it really looks dumb in this context */
+      max_val = 0.0;
+      min_val = cp->min_dB;
+    }
+  else 
+    {
+      if (cp->transform_normalization == DONT_NORMALIZE)
+	{
+	  if (cp->transform_type == FOURIER)
+	    min_val = 0.0;
+	  else min_val = -data_max;
+	  max_val = data_max;
+	}
+      else
+	{
+	  if (cp->transform_type == FOURIER)
+	    min_val = 0.0;
+	  else min_val = -1.0;
+	  max_val = 1.0;
+	}
+    }
+  
+  fp->scale = scale;
+  fp->axis = make_axis_info(cp,
+			    min_freq, max_freq,
+			    min_val, max_val,
+			    xlabel,
+			    min_freq, max_freq,
+			    min_val, max_val,
+			    fp->axis);
 }
 
 
@@ -1706,7 +1709,9 @@ static sono_slice_t run_all_ffts(sonogram_state *sg)
   Float val;
   int i;
   /* check for losamp/hisamp change? */
+
   one_fft((fft_state *)(sg->fs));
+
   fs = sg->fs;
   cp = sg->cp;
   si = cp->sonogram_data;

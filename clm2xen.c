@@ -797,9 +797,11 @@ the real and imaginary parts of the data; len should be a power of 2, dir = 1 fo
       np = (int)nf;
       n = (off_t)pow(2.0, np);
     }
+
   if ((n * sizeof(Float)) < INT_MAX)
     mus_fft(v1->data, v2->data, n, sign);
   else mus_big_fft(v1->data, v2->data, n, sign);
+
   return(xen_return_first(url, uim));
 }
 
