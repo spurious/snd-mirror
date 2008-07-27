@@ -430,22 +430,22 @@
 	     (-> faust get-c-object))
 	   :c-type '<struct-mus_rt_faust-*>)
 
-(rt-ec-function <vct-*> rt_faust_compute
-		(lambda (,rt-globalvardecl
-			 (<faust> faust)
-			 (<vct-*> input))
-		  (<FaustComputeFunc> compute faust->compute_func)
-		  (<vct-*> output (rt_alloc_vct rt_globals faust->num_outputs))
-		  ;;(printf (string "faust->compute_func: %p %p\\n") compute faust->dsp)
-		  (let* ((minin <int> (MIN faust->num_inputs input->length)))
-		    (for-each 0 minin
-			      (lambda (n)
-				(set! faust->ins[n][0] input->data[n])))
-		    (compute faust->dsp 1 faust->ins faust->outs)
-		    (for-each 0 faust->num_outputs
-			      (lambda (n)
-				(set! output->data[n] faust->outs[n][0])))
-		    (return output))))
+(define-rt-ec <vct-*> rt_faust_compute
+  (lambda (,rt-globalvardecl
+           (<faust> faust)
+           (<vct-*> input))
+    (<FaustComputeFunc> compute faust->compute_func)
+    (<vct-*> output (rt_alloc_vct rt_globals faust->num_outputs))
+    ;;(printf (string "faust->compute_func: %p %p\\n") compute faust->dsp)
+    (let* ((minin <int> (MIN faust->num_inputs input->length)))
+      (for-each 0 minin
+                (lambda (n)
+                  (set! faust->ins[n][0] input->data[n])))
+      (compute faust->dsp 1 faust->ins faust->outs)
+      (for-each 0 faust->num_outputs
+                (lambda (n)
+                  (set! output->data[n] faust->outs[n][0])))
+      (return output))))
 
 
 (define-rt-macro (faust-compute faust-object input)
@@ -552,7 +552,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(rt-ec-function <faust> rt_faust_make_faust
+(define-rt-ec <faust> rt_faust_make_faust
   (lambda (,rt-globalvardecl
 	   (<faust> faust))
     (<struct-mus_rt_faust-*> copy (tar_alloc rt_globals->heap (sizeof <struct-mus_rt_faust>)))

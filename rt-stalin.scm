@@ -767,7 +767,7 @@
            (set! time 0)
            (set! do-out #t))
           (do-out
-           (if (= time r)
+           (if (>= time r)
                #f
                (* vol (env out))))
           (do-in
@@ -990,7 +990,8 @@
 
 !#
 
-
+;; clm constructors
+;;
 ;; This is just a quick get-up-and-running implementation. More work is needed.
 (for-each (lambda (clm-def)
             ;;(c-display "clm-def" clm-def)
@@ -1135,8 +1136,10 @@
 
 (define-stalin-ec <void*> rt_alloc_vct
   (lambda ((<int> length))
-    (let* ((ret <vct-*> (tar_alloc heap (sizeof <vct>)))
-           (floats <float-*> (tar_alloc_atomic heap (* (sizeof <float>) length))))
+    (let* ((ret <vct-*> (tar_alloc_atomic heap
+                                          (+ (sizeof <vct>)
+                                             (* (sizeof <float>) length))))
+           (floats <float-*> (cast <float-*> (+ ret 1))))
       (set! ret->length length)
       (set! ret->data floats)
       (memset floats 0 (* (sizeof <float>) length))

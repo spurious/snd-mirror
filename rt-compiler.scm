@@ -316,7 +316,11 @@ and run simple lisp[4] functions.
 						     (make-proper-type (cadr t2) name))
 						   (cadr t)))))
 	  (else
-	   (-> (hashq-ref rt-types t) c-type))))
+           (let ()
+             (define type (hashq-ref rt-types t))
+             (if (not type)
+                 (error "Unknown type" t))
+             (-> type c-type)))))
     
   (define globals (cadr term))
 			  
@@ -3399,10 +3403,10 @@ and run simple lisp[4] functions.
 					(list (list ',name
 						    '(,@dependents)
 						    '(,ret-type ,name ,body))))))))
-(define-macro (rt-ec-function ret-type name body)
+(define-macro (define-rt-ec ret-type name body)
   (fix-defines
    (when (not (eq? 'lambda (car body)))
-     (c-display "Illegal body for rt-ec-function: " body)
+     (c-display "Illegal body for define-rt-ec: " body)
      (throw 'anerror))
    (define def (cadr body))
    (cond ((null? def)
@@ -3418,6 +3422,8 @@ and run simple lisp[4] functions.
 	  `(begin
 	     (rt-ec-private-function ,ret-type ,name ,body)
 	     (<rt-func> ',name ',ret-type ',(map car def) :needs-rt-globals #f))))))
+
+
 #!
 (pretty-print
  (macroexpand '(rt-ec-private-function <nonstatic-void> rt_error (lambda (,rt-globalvardecl (<char-*> msg))
@@ -3432,10 +3438,10 @@ and run simple lisp[4] functions.
  (macroexpand '(rt-ec-private-function <void> hello1 (lambda ((<bus> ai))
 					       #t))))
 (pretty-print
- (macroexpand '(rt-ec-function <void> hello1 (lambda (,rt-globalvardecl)
+ (macroexpand '(define-rt-ec <void> hello1 (lambda (,rt-globalvardecl)
 					       #t))))
 (pretty-print
- (macroexpand '(rt-ec-function <void> hello1 (lambda (,rt-globalvardecl (<void> gakk))
+ (macroexpand '(define-rt-ec <void> hello1 (lambda (,rt-globalvardecl (<void> gakk))
 					       #t))))
 !#
 
@@ -3455,7 +3461,7 @@ and run simple lisp[4] functions.
     `(rt_error ,@rest))
   
   ;; scm_to_double
-  (rt-ec-function <double> rt_scm_to_double (lambda (,rt-globalvardecl (<SCM> name))
+  (define-rt-ec <double> rt_scm_to_double (lambda (,rt-globalvardecl (<SCM> name))
 					   (if (SCM_INUMP name)
 					       (return (SCM_INUM name))
 					       (if (SCM_REALP name)
@@ -3466,7 +3472,7 @@ and run simple lisp[4] functions.
   
 
   ;;; scm_to_float
-  (rt-ec-function <float> rt_scm_to_float (lambda (,rt-globalvardecl (<SCM> name))
+  (define-rt-ec <float> rt_scm_to_float (lambda (,rt-globalvardecl (<SCM> name))
 					 (if (SCM_INUMP name)
 					     (return (SCM_INUM name))
 					     (if (SCM_REALP name)
@@ -3477,7 +3483,7 @@ and run simple lisp[4] functions.
   
   
   ;; scm_to_int
-  (rt-ec-function <int> rt_scm_to_int (lambda (,rt-globalvardecl (<SCM> name))
+  (define-rt-ec <int> rt_scm_to_int (lambda (,rt-globalvardecl (<SCM> name))
 				     (if (SCM_INUMP name)
 					 (return (SCM_INUM name))
 					 (if (SCM_REALP name)
@@ -3488,7 +3494,7 @@ and run simple lisp[4] functions.
 
 
   ;; scm_to_mus_any
-  (rt-ec-function <mus_any-*> rt_scm_to_mus_any (lambda (,rt-globalvardecl (<SCM> name))
+  (define-rt-ec <mus_any-*> rt_scm_to_mus_any (lambda (,rt-globalvardecl (<SCM> name))
 						  (if (mus_xen_p name)
 						      (return (cast <void-*> (XEN_TO_MUS_ANY name)))
 						      (if (not (SCM_SMOB_PREDICATE rt_readin_tag name))
@@ -3500,7 +3506,7 @@ and run simple lisp[4] functions.
 
 
   ;; create-thread
-  (rt-ec-function <void> rt_create_thread (lambda ((<ThreadFunc> func))
+  (define-rt-ec <void> rt_create_thread (lambda ((<ThreadFunc> func))
 					 "pthread_t _rt_thread={0}"
 					 (<int> isrunning 0)
 					 (<void-*> threadfunc (lambda ((<void-*> arg))
@@ -3530,10 +3536,14 @@ and run simple lisp[4] functions.
 
   (rt-ec-private-function <void*> rt_alloc (lambda (,rt-globalvardecl
 						    (<int> size))
-					     (return (tar_alloc_atomic rt_globals->heap size))))
+					     (return (tar_alloc rt_globals->heap size))))
+
+  (rt-ec-private-function <void*> rt_alloc_atomic (lambda (,rt-globalvardecl
+                                                           (<int> size))
+                                                    (return (tar_alloc_atomic rt_globals->heap size))))
 
   (rt-ec-private-function <void-*> rt_alloc_zero (lambda (,rt-globalvardecl (<int> size))
-						   (let* ((ret <void-*> (rt_alloc rt_globals size)))
+						   (let* ((ret <void-*> (rt_alloc_atomic rt_globals size)))
 						     (memset ret 0 size)
 						     (return ret))))
   
@@ -4779,7 +4789,7 @@ and run simple lisp[4] functions.
          (printf (string "len: %d\\n") (strlen (string "1234")))))
 !#
 
-;;rt-ec-function <void> debug
+;;define-rt-ec <void> debug
 ;;(lambda (,rt-globalvardecl
 ;;         (<char-*> string))
 
@@ -4957,7 +4967,7 @@ and run simple lisp[4] functions.
 
 ;;;;;; CLM Generators ;;;;;;;;;;;;;;;
 
-;; This expressions is generated from the commented out in rt-stalin.scm
+;; This expressions is generated from code commented out in rt-stalin.scm
 ;; This struct is hopefully just going to be a temporary solution.
 (define clm-constructor-protos
 '((make-all-pass
@@ -5197,6 +5207,70 @@ and run simple lisp[4] functions.
    (#:partials (quote (1 1)))
    (#:size (clm-table-size))
    #:wave)))
+
+
+;; clm constructors
+;;
+;; This is just a _very_ quick get-up-and-running implementation. More work is needed.
+(for-each (lambda (clm-def)
+            ;;(c-display "clm-def" clm-def)
+            (let* ((name (car clm-def)) ;; make-oscil
+                   (gen-name (string->symbol (substring (symbol->string name) 5 (string-length (symbol->string name))))) ;; oscil
+                   (args (cdr clm-def))
+                   (argnames (map (lambda x (rt-gensym)) (iota (length args))))
+                   (fixed-args-list (map (lambda (arg)
+                                           (let ((def 0)
+                                                 (n #f))
+                                             (if (pair? arg)
+                                                 (begin
+                                                   (set! n (car arg))
+                                                   (if (not (null? (cdr arg)))
+                                                       (set! def (primitive-eval (cadr arg)))))
+                                                 (set! n arg))
+                                             (if (keyword? n)
+                                                 (set! n (keyword->symbol n)))
+                                             (list n def)))
+                                         args))
+                   )
+
+              (supereval
+               (lambda (out)
+
+                 (out "(define-rt-ec <mus_any-*> make_" gen-name "_ (lambda (")
+                 (for-each (lambda (arg)
+                             (out `(<float> ,arg)))
+                           argnames)
+                 (out ")(return (mus_make_" gen-name " ")
+                 (for-each (lambda (arg)
+                             (out " " arg))
+                           argnames)
+                 (out "))))\n")
+                 
+                 (out "(define-rt-macro " name)
+                 (out "  (labamba (:optkey")
+                 (for-each (lambda (arg)
+                             (out arg " "))
+                           fixed-args-list)
+                 (out ")\n")
+                 (out "  `(" 'make_ gen-name "_ ")
+                 (for-each (lambda (arg)
+                             (out "," (car arg) " "))
+                           fixed-args-list)
+                 (out ")))\n")))))
+          clm-constructor-protos)
+
+#!
+(define-rt-ec <mus_any-*> make_oscil_
+  (lambda ((<float> a)
+           (<float> b))
+    (return (mus_make_oscil a b))))
+
+(define-rt-macro (make-oscil :optkey
+                             (frequency *clm-default-frequency*)
+                             (initial-phase 0.0)
+                             freq)
+  `(make_oscil_ ,(or freq frequency) ,initial-phase))
+!#
 
 (define rt-clm-generators `((all-pass     (input (pm 0)))
 			    (asymmetric-fm (index (fm 0)))
@@ -6019,7 +6093,7 @@ and run simple lisp[4] functions.
 	   )
 
 
-(rt-ec-function <struct-mus_rt_readin-*> rt_scm_to_rt_readin
+(define-rt-ec <struct-mus_rt_readin-*> rt_scm_to_rt_readin
 	     (lambda (,rt-globalvardecl (<SCM> name))
 	       ,(if (rt-is-safety?)
 		    `(if (not (SCM_SMOB_PREDICATE rt_readin_tag name))
@@ -6961,7 +7035,7 @@ old syntax: (not very nice)
 
 
 ;; SCM->ladspa converter
-(rt-ec-function <struct-mus_rt_readin-*> rt_scm_to_rt_ladspa
+(define-rt-ec <struct-mus_rt_readin-*> rt_scm_to_rt_ladspa
 		(lambda (,rt-globalvardecl (<SCM> name))
 		  (<SCM> ladspa (SCM_CAR (SCM_CDR name)))
 		  ,(if (rt-is-safety?)
@@ -6985,7 +7059,7 @@ old syntax: (not very nice)
 
 ;; The ladspa-run function, ladspa-run calls rt_ladspa_run which replace data in the vct.
 ;; (Yes, some kind of general buffer mechanism should be implemented. This is inefficient.)
-(rt-ec-function <vct-*> rt_ladspa_run
+(define-rt-ec <vct-*> rt_ladspa_run
 		(lambda ((<ladspa> ladspa)
 			 (<vct-*> input))
 		  (let* ((minin <int> (MIN ladspa->num_audio_ins input->length)))
@@ -7004,7 +7078,7 @@ old syntax: (not very nice)
 
 
 ;; The ladspa-set function
-(rt-ec-function <void> rt_ladspa_set
+(define-rt-ec <void> rt_ladspa_set
 	     (lambda ((<ladspa> ladspa)
 		      (<int> controlnum)
 		      (<float> val))
@@ -7321,7 +7395,7 @@ old syntax: (not very nice)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 #!
-(rt-ec-function <struct-mus_rt_readin-*> rt_scm_to_rt_bus
+(define-rt-ec <struct-mus_rt_readin-*> rt_scm_to_rt_bus
 	     (lambda (,rt-globalvardecl (<SCM> name))
 	       ,(if (rt-is-safety?)
 		    `(if (not (SCM_SMOB_PREDICATE rt_bus_tag name))
@@ -7354,7 +7428,7 @@ old syntax: (not very nice)
 	 (+= data->val ,val))
      (set! data->last_written_to block_time)))
 
-(rt-ec-function <void> rt_write_bus (lambda (,rt-globalvardecl (<bus> bus) (<int> ch) (<float> val))
+(define-rt-ec <void> rt_write_bus (lambda (,rt-globalvardecl (<bus> bus) (<int> ch) (<float> val))
 				   ,(if (rt-is-safety?)
 					'(if (< ch 0)
 					     (rt_error rt_globals (string "Channel number for write-bus less than zero")))
@@ -7371,7 +7445,7 @@ old syntax: (not very nice)
 (-> (hashq-ref rt-types '<bus>) c-type)
 !#
 
-(rt-ec-function <void> rt_write_bus_vct (lambda (,rt-globalvardecl (<bus> bus) (<vct-*> vct))
+(define-rt-ec <void> rt_write_bus_vct (lambda (,rt-globalvardecl (<bus> bus) (<vct-*> vct))
 				       (<float-*> vctdata vct->data)
 				       (<int> num_channels (EC_MIN vct->length bus->num_channels))
 				       (<int> block_time rt_globals->block_time)
@@ -7383,7 +7457,7 @@ old syntax: (not very nice)
 						     ,(rt-clean-write-bus 'vctdata[ch]))))))
 
 
-(rt-ec-function <float> rt_read_bus (lambda (,rt-globalvardecl (<bus> bus) (<int> ch))
+(define-rt-ec <float> rt_read_bus (lambda (,rt-globalvardecl (<bus> bus) (<int> ch))
 				   ,(if (rt-is-safety?)
 					'(if (< ch 0)
 					     (rt_error rt_globals (string "Channel number for read-bus less than zero")))
@@ -7398,7 +7472,7 @@ old syntax: (not very nice)
 						     0
 						     data->val)))))
 
-(rt-ec-function <vct-*> rt_read_bus_vct (lambda (,rt-globalvardecl (<bus> bus))
+(define-rt-ec <vct-*> rt_read_bus_vct (lambda (,rt-globalvardecl (<bus> bus))
 					  (let* ((vct <vct-*> (rt_alloc_vct rt_globals bus->num_channels))
 						 (vctdata <float-*> vct->data)
 						 (time <int> rt_globals->prev_block_time)
@@ -7519,7 +7593,7 @@ old syntax: (not very nice)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; scm_to_vct
-(rt-ec-function <vct-*> rt_scm_to_vct (lambda (,rt-globalvardecl (<SCM> name))
+(define-rt-ec <vct-*> rt_scm_to_vct (lambda (,rt-globalvardecl (<SCM> name))
 				     ,(if (rt-is-safety?)
 					  `(if (mus_vct_p name)
 					       (return (XEN_TO_VCT name))
@@ -7528,27 +7602,27 @@ old syntax: (not very nice)
 						 (return NULL)))
 					  `(return (XEN_TO_VCT name)))))
 
-
-(rt-ec-function <vct-*> rt_alloc_vct (lambda (,rt-globalvardecl (<int> length))
-                                       (let* ((ret <vct-*> (rt_alloc rt_globals (sizeof <vct>)))
-                                              (floats <float-*> (rt_alloc rt_globals (* (sizeof <float>) length))))
-                                         (set! ret->length length)
-                                         (set! ret->data floats)
-                                         (return ret))))
-
 #!
-Can alignmnet screw up this one?
-(rt-ec-function <vct-*> rt_alloc_vct (lambda (,rt-globalvardecl (<int> length))
-                                       (let* ((ret <vct-*> (rt_alloc rt_globals (+ (sizeof <vct>)
-                                                                                   (* (sizeof <float>) length))))
-                                              (floats <float-*> (cast <float-*> (+ ret 1))))
+(define-rt-ec <vct-*> rt_alloc_vct (lambda (,rt-globalvardecl (<int> length))
+                                       (let* ((ret <vct-*> (rt_alloc rt_globals (sizeof <vct>)))
+                                              (floats <float-*> (rt_alloc_atomic rt_globals (* (sizeof <float>) length))))
                                          (set! ret->length length)
                                          (set! ret->data floats)
                                          (return ret))))
 !#
 
+(define-rt-ec <vct-*> rt_alloc_vct (lambda (,rt-globalvardecl (<int> length))
+                                       (let* ((ret <vct-*> (rt_alloc_atomic rt_globals
+                                                                            (+ (sizeof <vct>)
+                                                                               (* (sizeof <float>) length))))
+                                              (floats <float-*> (cast <float-*> (+ ret 1))))
+                                         (set! ret->length length)
+                                         (set! ret->data floats)
+                                         (memset floats 0 (* (sizeof <float>) length))
+                                         (return ret))))
 
-(rt-ec-function <vct-*> rt_vct_scale (lambda ((<vct-*> vct) (<float> scl))
+
+(define-rt-ec <vct-*> rt_vct_scale (lambda ((<vct-*> vct) (<float> scl))
 				       (<int> lokke)
 				       "for(lokke=0;lokke<vct->length;lokke++){"
 				       (*= vct->data[lokke] scl)
@@ -7556,7 +7630,7 @@ Can alignmnet screw up this one?
 				       (return vct)))
 
 
-(rt-ec-function <vct-*> rt_vct_offset (lambda ((<vct-*> vct) (<float> scl))
+(define-rt-ec <vct-*> rt_vct_offset (lambda ((<vct-*> vct) (<float> scl))
 					(<int> lokke)
 					"for(lokke=0;lokke<vct->length;lokke++){"
 					(+= vct->data[lokke] scl)
@@ -7564,7 +7638,7 @@ Can alignmnet screw up this one?
 					(return vct)))
 
 
-(rt-ec-function <vct-*> rt_vct_fill (lambda ((<vct-*> vct) (<float> scl))
+(define-rt-ec <vct-*> rt_vct_fill (lambda ((<vct-*> vct) (<float> scl))
 				      (<int> lokke)
 				      "for(lokke=0;lokke<vct->length;lokke++){"
 				      (set! vct->data[lokke] scl)
@@ -7860,7 +7934,7 @@ Can alignmnet screw up this one?
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(rt-ec-function <void> rt_return_void
+(define-rt-ec <void> rt_return_void
 		(lambda ()
 		  (rt-dummy/dummy)
 		  ))
@@ -8521,6 +8595,8 @@ Can alignmnet screw up this one?
                   "#include <rollendurchmesserzeitsammler.h>"
                   "#include <ucontext.h>"
 
+                  "#include <rt-various.h>"
+
 		  "#include <jack/ringbuffer.h>"
 		  ,(if *use-alsa-midi*
 		       "#include  <alsa/asoundlib.h>"
@@ -8667,7 +8743,7 @@ Can alignmnet screw up this one?
                                                              `(set! ,(<_> 'rt_globals-> (cadr globalvar)) ,(cadr globalvar)))
                                                            globalvars)))
 
-		   ;; Finding needed rt-ec-functions to include in this file.
+		   ;; Finding needed define-rt-ecs to include in this file.
 		   ,@(let ((function-names '())
 			   (functions '()))
 
@@ -8845,7 +8921,10 @@ Can alignmnet screw up this one?
 						       (return faust))))
 						
 		    
-		   
+
+                   (<void> myerror (lambda ((<char*> string))
+                                     (rt_debug (string "Error: %s.") string)))
+
 		   (functions->public
 
 		    (<int> ,rt-funcname (lambda (,rt-globalvardecl
@@ -8896,7 +8975,11 @@ Can alignmnet screw up this one?
 										(+ rt_globals->block_time
 										   endframe)
 										0)
-						  (rt_run_scheduler rt_globals)
+                                                  (let* ((old_heap <tar_heap_t*> (clm_set_tar_heap heap))
+                                                         (old_ef  <error_func_t> (clm_set_error_func myerror)))
+                                                    (rt_run_scheduler rt_globals)
+                                                    (clm_set_error_func old_ef)
+                                                    (clm_set_tar_heap old_heap))
 
 						  (if (and (== 0 rt_globals->queue_size)
                                                            (== 0 rt_globals->block_queue_size))
@@ -8923,11 +9006,18 @@ Can alignmnet screw up this one?
                                                                     (tar_add_root heap coroutine (+ (cast <char*> coroutine)   ;registerss
                                                                                                     (EC_MAX (sizeof <ucontext_t>)
                                                                                                             (sizeof <jmp_buf>))))))
+                                                        (for-each 0 rt_globals->block_queue_size
+                                                                  (lambda (i)
+                                                                    (<struct-rt_coroutine*> coroutine rt_globals->block_queue[i])
+                                                                    (tar_add_root heap coroutine->stack_low coroutine->stack_high) ;stacks
+                                                                    (tar_add_root heap coroutine (+ (cast <char*> coroutine)   ;registerss
+                                                                                                    (EC_MAX (sizeof <ucontext_t>)
+                                                                                                            (sizeof <jmp_buf>))))))
                                                         
                                                         (tar_add_root heap rt_globals (+ rt_globals (sizeof <struct-RT_Globals>))) ;; dynamic data
 
                                                         (tar_run_gc heap)
-                                                        ;;heap->num_allocs=0
+
                                                         ))
 
                                                   (return rt_globals->remove_me))

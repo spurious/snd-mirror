@@ -3899,9 +3899,6 @@
 (CFNC "gboolean pango_language_matches PangoLanguage* language char* range_list")
 
 
-
-;;; could this use xen rather than gpointer?
-
 (CLNG "GTK_TYPE_ACCEL_GROUP")
 (CLNG "GTK_TYPE_ACCEL_LABEL")
 (CLNG "GTK_TYPE_ACCESSIBLE")

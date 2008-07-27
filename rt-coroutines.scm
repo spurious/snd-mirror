@@ -116,7 +116,7 @@
 ;; *************************
 ;;
 ;; Returns 0 in case the priority queue is full. (O(log n) efficiency)
-(rt-ec-function <int> rt_insert_coroutine_in_queue
+(define-rt-ec <int> rt_insert_coroutine_in_queue
 		(lambda (,rt-globalvardecl
 			 (<coroutine> coroutine)
 			 (<int> time)
@@ -157,12 +157,12 @@
   (return 1)))
 
 
-(rt-ec-function <int> rt_insert_coroutine_in_block_queue
-		(lambda (,rt-globalvardecl
-			 (<coroutine> coroutine)
-                         (<int> time)
-			 (<int> priority))
-
+(define-rt-ec <int> rt_insert_coroutine_in_block_queue
+  (lambda (,rt-globalvardecl
+           (<coroutine> coroutine)
+           (<int> time)
+           (<int> priority))
+    
   (<struct-rt_coroutine-**> queue rt_globals->block_queue)
 
   (if (>= rt_globals->block_queue_size
@@ -257,17 +257,20 @@
 ;;
 ;; run_scheduler
 ;; *************
-(rt-ec-function <void> rt_run_scheduler
-		(lambda (,rt-globalvardecl)
-  (<struct-rt_coroutine*> next (rt_get_first_coroutine_in_queue rt_globals))
-  (if (!= next rt_globals->current_coroutine)
-      (rt_switch_to_coroutine rt_globals next)
-      (set! rt_globals->time next->time))
-  (let* ((coroutine <struct-rt_coroutine*> rt_globals->current_coroutine))
-    (if (== 1 coroutine->stop_me)
-        (begin
-          (set! coroutine->stop_me 0)
-          (longjmp coroutine->remove_me 1))))))
+(define-rt-ec <void> rt_run_scheduler
+  (lambda (,rt-globalvardecl)
+    (<struct-rt_coroutine*> next (rt_get_first_coroutine_in_queue rt_globals))
+    (if (!= next rt_globals->current_coroutine)
+        (rt_switch_to_coroutine rt_globals next)
+        (set! rt_globals->time next->time))
+    (let* ((coroutine <struct-rt_coroutine*> rt_globals->current_coroutine))
+      (cond ((and (== &rt_globals->main_coroutine coroutine)
+                  (== 1 rt_globals->remove_me))
+             (rt_debug (string "happ")))
+            ((== 1 coroutine->stop_me)
+             (begin
+               (set! coroutine->stop_me 0)
+               (longjmp coroutine->remove_me 1)))))))
 
 
 
@@ -500,18 +503,18 @@
 	       (rt_return_void))
 	     ,wait))
 
-(rt-ec-function <int> rt_get_stop_me
-                (lambda (,rt-globalvardecl)
-                  (return rt_globals->current_coroutine->stop_me)))
+(define-rt-ec <int> rt_get_stop_me
+  (lambda (,rt-globalvardecl)
+    (return rt_globals->current_coroutine->stop_me)))
 
-(rt-ec-function <void> rt_stop
-                (lambda ((<coroutine> coroutine))
-                  (set! coroutine->stop_me 1)))
+(define-rt-ec <void> rt_stop
+  (lambda ((<coroutine> coroutine))
+    (set! coroutine->stop_me 1)))
 
-(rt-ec-function <void> rt_stop_me
-                (lambda (,rt-globalvardecl)
-                  (set! rt_globals->current_coroutine->stop_me 0) ;; In case another coroutine have sat it.
-                  (longjmp rt_globals->current_coroutine->remove_me 1)))
+(define-rt-ec <void> rt_stop_me
+  (lambda (,rt-globalvardecl)
+    (set! rt_globals->current_coroutine->stop_me 0) ;; In case another coroutine have sat it.
+    (longjmp rt_globals->current_coroutine->remove_me 1)))
 
 (define-rt-macro (stop . coroutine)
   (if (null? coroutine)
@@ -526,8 +529,8 @@
 #!
 (gc)
 ;; usleep probably mess with signals...
-(rt-ec-function <void> my_usleep (lambda ((<int> n))
-				(usleep n)))
+(define-rt-ec <void> my_usleep (lambda ((<int> n))
+                                 (usleep n)))
 (while #t
   (usleep 500)
   (if (< (nth 4 (rte-info)) 2)

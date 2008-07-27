@@ -1374,11 +1374,9 @@ Asymmetric FM with index=2.0, r=0.5:
 (with-sound ()
   (let ((gen (make-asymmetric-fm 2000.0 
                        :ratio .2 :r 0.5)))
-    (run 
-      (lambda ()
-        (do ((i 0 (1+ i)))
-	    ((= i 20000))
-          (outa i (asymmetric-fm gen 2.0)))))))
+    (do ((i 0 (1+ i)))
+        ((= i 20000))
+      (outa i (asymmetric-fm gen 2.0)))))
 </pre>
 </td>
 
@@ -1955,13 +1953,11 @@ so, just as in normal FM, if the index is 0, we get a pure sine wave.
 	 (end (+ start (seconds-&gt;samples dur)))
 	 (y 0.0)
 	 (x-incr (hz-&gt;radians freq)))
-    (run 
-     (lambda ()
-       (do ((i start (1+ i))
-	    (x 0.0 (+ x x-incr)))
-	   ((= i end))
-	 (set! y (+ x (* index (sin y))))
-	 (outa i (* amp (sin y))))))))
+    (do ((i start (1+ i))
+         (x 0.0 (+ x x-incr)))
+        ((= i end))
+      (set! y (+ x (* index (sin y))))
+      (outa i (* amp (sin y))))))
 
 (with-sound () (feedbk 0 1 100.0 1.0 1.0))
 </pre>
