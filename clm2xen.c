@@ -668,6 +668,7 @@ static XEN g_edot_product(XEN val1, XEN val2)
 #endif
 
 
+#ifndef CLM_DISABLE_DEPRECATED
 static XEN g_sine_bank(XEN amps, XEN phases, XEN size)
 {
   #define H_sine_bank "(" S_sine_bank " amps phases :optional size): sum of amps[i] * sin(phases[i])"
@@ -695,6 +696,7 @@ static XEN g_sine_bank(XEN amps, XEN phases, XEN size)
 			  amps, 
 			  phases));
 }
+#endif
 
 
 typedef enum {G_MULTIPLY_ARRAYS, G_RECTANGULAR_POLAR, G_POLAR_RECTANGULAR} xclm_window_t;
@@ -7764,7 +7766,9 @@ XEN_NARGIFY_2(g_rectangular_to_polar_w, g_rectangular_to_polar)
 XEN_NARGIFY_2(g_polar_to_rectangular_w, g_polar_to_rectangular)
 XEN_ARGIFY_3(g_array_interp_w, g_array_interp)
 XEN_ARGIFY_5(g_mus_interpolate_w, g_mus_interpolate)
-XEN_ARGIFY_3(g_sine_bank_w, g_sine_bank)
+#ifndef CLM_DISABLE_DEPRECATED
+  XEN_ARGIFY_3(g_sine_bank_w, g_sine_bank)
+#endif
 XEN_NARGIFY_1(g_mus_describe_w, g_mus_describe)
 XEN_NARGIFY_1(g_mus_name_w, g_mus_name)
 XEN_NARGIFY_2(g_mus_set_name_w, g_mus_set_name)
@@ -8071,7 +8075,9 @@ XEN_NARGIFY_2(g_mus_equalp_w, equalp_mus_xen)
 #define g_polar_to_rectangular_w g_polar_to_rectangular
 #define g_array_interp_w g_array_interp
 #define g_mus_interpolate_w g_mus_interpolate
-#define g_sine_bank_w g_sine_bank
+#ifndef CLM_DISABLE_DEPRECATED
+  #define g_sine_bank_w g_sine_bank
+#endif
 #define g_mus_describe_w g_mus_describe
 #define g_mus_name_w g_mus_name
 #define g_mus_set_name_w g_mus_set_name
@@ -8470,7 +8476,9 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_polar_to_rectangular, g_polar_to_rectangular_w, 2, 0, 0, H_polar_to_rectangular);
   XEN_DEFINE_PROCEDURE(S_array_interp,         g_array_interp_w,         2, 1, 0, H_array_interp);
   XEN_DEFINE_PROCEDURE(S_mus_interpolate,      g_mus_interpolate_w,      3, 2, 0, H_mus_interpolate);
+#ifndef CLM_DISABLE_DEPRECATED
   XEN_DEFINE_PROCEDURE(S_sine_bank,            g_sine_bank_w,            2, 1, 0, H_sine_bank);
+#endif
   XEN_DEFINE_PROCEDURE(S_mus_frandom,          g_mus_frandom_w,          1, 0, 0, "internal testing function");
   XEN_DEFINE_PROCEDURE(S_mus_irandom,          g_mus_irandom_w,          1, 0, 0, "internal testing function");
 
@@ -9153,7 +9161,9 @@ void mus_xen_init(void)
 	       S_sawtooth_wave,
 	       S_sawtooth_wave_p,
 	       S_seconds_to_samples,
+#ifndef CLM_DISABLE_DEPRECATED
 	       S_sine_bank,
+#endif
 	       S_sine_summation,
 	       S_sine_summation_p,
 	       S_spectrum,

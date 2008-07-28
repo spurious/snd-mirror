@@ -55661,6 +55661,18 @@ EDITS: 1
 	  (if (not (sound? snd)) (snd-display ";green-noise-interp .5 ~A" snd))
 	  (if (or (< (maxamp snd) 0.01) (> (maxamp snd) 0.5)) (snd-display ";green-noise-interp .5 max: ~A" (maxamp snd))))
 
+	(let* ((res (with-sound (:clipped #f)
+		    (let ((gen (make-tanhsin 440.0 2.0)))
+		      (run 
+		       (lambda ()
+			 (do ((i 0 (1+ i)))
+			     ((= i 10000))
+			   (outa i (tanhsin gen 0.0))))))))
+	       (snd (find-sound res)))
+	  (if (not (sound? snd)) (snd-display ";tanhsin ~A" snd))
+	  (if (> (abs (- 1.0 (maxamp snd))) 0.1) (snd-display ";tanhsin max: ~A" (maxamp snd))))
+
+
 	(let ((val (make-vector 3))
 	      (frq 0.0))
 	  (vector-set! val 0 (make-nrcos 100))  

@@ -1231,6 +1231,7 @@ Float mus_oscil_pm(mus_any *ptr, Float pm)
 }
 
 
+#ifndef CLM_DISABLE_DEPRECATED
 Float mus_sine_bank(Float *amps, Float *phases, int size)
 {
   int i;
@@ -1240,6 +1241,7 @@ Float mus_sine_bank(Float *amps, Float *phases, int size)
       sum += (amps[i] * sin(phases[i]));
   return(sum);
 }
+#endif
 
 
 bool mus_oscil_p(mus_any *ptr) 
@@ -11073,14 +11075,18 @@ Float mus_phase_vocoder_with_editors(mus_any *ptr,
   pv_info *pv = (pv_info *)ptr;
   int N2, i;
   Float (*pv_synthesize)(void *arg) = synthesize;
+  Float sum = 0.0;
+
   if (pv_synthesize == NULL) pv_synthesize = pv->synthesize;
   N2 = pv->N / 2;
+
   if (pv->outctr >= pv->interp)
     {
       Float scl;
       Float (*pv_input)(void *arg, int direction) = input;
       bool (*pv_analyze)(void *arg, Float (*input)(void *arg1, int direction)) = analyze;
       int (*pv_edit)(void *arg) = edit;
+
       if (pv_input == NULL) 
 	{
 	  pv_input = pv->input;
@@ -11091,7 +11097,9 @@ Float mus_phase_vocoder_with_editors(mus_any *ptr,
       if (pv_edit == NULL) pv_edit = pv->edit;
 
       pv->outctr = 0;
-      if ((pv_analyze == NULL) || ((*pv_analyze)(pv->closure, pv_input)))
+
+      if ((pv_analyze == NULL) || 
+	  ((*pv_analyze)(pv->closure, pv_input)))
 	{
 	  int j, buf;
 	  mus_clear_array(pv->freqs, pv->N);
@@ -11116,7 +11124,8 @@ Float mus_phase_vocoder_with_editors(mus_any *ptr,
 	  mus_rectangular_to_polar(pv->ampinc, pv->freqs, N2);
 	}
       
-      if ((pv_edit == NULL) || ((*pv_edit)(pv->closure)))
+      if ((pv_edit == NULL) || 
+	  ((*pv_edit)(pv->closure)))
 	{
 	  Float pscl, kscl, ks;
 	  pscl = 1.0 / (Float)(pv->D);
@@ -11138,20 +11147,24 @@ Float mus_phase_vocoder_with_editors(mus_any *ptr,
 	  pv->ampinc[i] = scl * (pv->ampinc[i] - pv->amps[i]);
 	  pv->freqs[i] = scl * (pv->freqs[i] - pv->phaseinc[i]);
 	}
+
     }
   
   pv->outctr++;
-  if (pv_synthesize)
+
+  if (pv_synthesize) 
     return((*pv_synthesize)(pv->closure));
+
   for (i = 0; i < N2; i++)
     {
       pv->amps[i] += pv->ampinc[i];
       pv->phaseinc[i] += pv->freqs[i];
       pv->phases[i] += pv->phaseinc[i];
+      sum += (pv->amps[i] * sin(pv->phases[i]));
     }
-  return(mus_sine_bank(pv->amps, pv->phases, N2));
+  return(sum);
 }
-
+    
 
 Float mus_phase_vocoder(mus_any *ptr, Float (*input)(void *arg, int direction))
 {

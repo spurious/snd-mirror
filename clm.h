@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 4
-#define MUS_REVISION 16
-#define MUS_DATE "14-July-08"
+#define MUS_REVISION 17
+#define MUS_DATE "29-July-08"
 
 /*
+ * 29-Jul:     mark mus_sine_bank for eventual removal.
  * 14-Jul:     mus_data_format_zero.
  * 12-Jul:     mus_interp_type_p and mus_fft_window_p for C++'s benefit.
  * 1-July:     mus-safety and various ints changed to off_t.
@@ -361,7 +362,9 @@ int mus_set_array_print_length(int val);
 Float mus_float_equal_fudge_factor(void);
 Float mus_set_float_equal_fudge_factor(Float val);
 
-Float mus_sine_bank(Float *amps, Float *phases, int size);
+#ifndef CLM_DISABLE_DEPRECATED
+  Float mus_sine_bank(Float *amps, Float *phases, int size);
+#endif
 
 Float mus_ring_modulate(Float s1, Float s2);
 Float mus_amplitude_modulate(Float s1, Float s2, Float s3);

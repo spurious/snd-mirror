@@ -606,7 +606,6 @@ you can use <a href="sndscm.html#def-clm-struct">def-clm-struct</a>, and <a href
   <a class=def name="make-oscil">make-oscil</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency *clm-default-frequency*) (initial-phase 0.0)
   <a class=def name="oscil">oscil</a> os :optional (fm-input 0.0) (pm-input 0.0)
   <a class=def name="oscil?">oscil?</a> os
-  <a class=def name="sine-bank">sine-bank</a> amps phases
 </pre>
 
 
@@ -661,11 +660,6 @@ phase change (phase modulation).
 The initial-phase argument to make-oscil is in radians. You can
 use <a href="#degreestoradians">degrees-&gt;radians</a> to convert from degrees to radians.
 To get a cosine (as opposed to sine), set the initial-phase to (/ pi 2).
-</p>
-
-<p>sine-bank simply loops through its arrays of amps and phases, summing
-(* amp (sin phase)) &mdash; it is mostly a convenience function for additive synthesis
-(the phase-vocoder in particular).
 </p>
 
 <table border=1 align=left hspace=40 vspace=10 cellpadding=4>
@@ -1027,7 +1021,6 @@ Some instruments that use oscil are
 <a href="sndscm.html#fmbell">fm-bell</a> (clm-ins.scm).  
 Interesting extensions of oscil include the various
 summation formulas in <a href="#othergenerators">generators.scm</a>.
-For a sine-bank example, see pvoc.scm.
 To goof around with FM from a graphical interface, see bess.scm and bess1.scm.
 </p>
 
@@ -2795,10 +2788,6 @@ A more reasonable square-wave can be generated via
 (%o53)                         ----------------
                                  2 sin(x) B
                                %e           + 1
-
-(%i78) tex(%o53);
-$${{e^{2\,\sin x\,B}-1}\over{e^{2\,\sin x\,B}+1}}\leqno{\tt (\%o53)}$$
-(%o78)                              (\%o53)
 
 (%i79) bfloat(%o28);
 (%o79) 1.130996288644772B-31 (8.612567256320118B16 sin(2.9B1 z)
@@ -6966,7 +6955,7 @@ arguments are omitted from make-phase-vocoder or the phase-vocoder generator.  T
 phase-vocoder generator.  The analyze argument is a function of two arguments, the generator and
 the input function. The default is to read the current input,
 take an fft, get the new amplitudes and phases (as the edit
-function default), then resynthesize using <a href="sndclm.html#sine-bank">sine-bank</a> (the synthesize function default); so, the
+function default), then resynthesize using sines; so, the
 default case simply returns a resynthesis of the original input.  The "interp" argument sets the time between
 ffts (for time stretching, etc). 
 </p>
@@ -7005,6 +6994,41 @@ specifies all of the functions with their default values (that is, it explicitly
 in functions that do what the phase-vocoder would have done without any function arguments).
 pvoc.scm implements the phase-vocoder directly in Scheme (rather than going through the CLM
 generator).
+In the next example we use all these special functions to resynthesize down an octave:
+</p>
+
+
+<table border=0 hspace=40><tr><td>
+<pre>
+
+(with-sound (:srate 22050 :statistics #t)
+  (let ((pv (<em class=red>make-phase-vocoder</em>
+	     (make-readin "oboe.snd")
+	     512 4 128 1.0
+	     #f ; no change to analysis method
+	     #f ; no change to spectrum
+	     (lambda (gen) ; resynthesis function
+	       (vct-add! (phase-vocoder-amps gen) (phase-vocoder-amp-increments gen))
+	       (vct-add! (phase-vocoder-phase-increments gen) (phase-vocoder-freqs gen))
+	       (vct-add! (phase-vocoder-phases gen) (phase-vocoder-phase-increments gen))
+	       (let ((sum 0.0) ; normally we'd call sine-bank here with amps and phases
+		     (n (vct-length (phase-vocoder-amps gen))))
+		 (do ((k 0 (1+ k)))
+		     ((= k n))
+		   (set! sum (+ sum (* (vct-ref (phase-vocoder-amps gen) k)
+				       (sin (* 0.5 (vct-ref (phase-vocoder-phases gen) k)))))))
+		 sum)))))
+    (run
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i 44100))
+	 (outa i (<em class=red>phase-vocoder</em> pv))))))))
+</pre>
+</td></tr></table>
+
+<p>but, sadly, this code crawls.  It won't actually be useful until I optimize
+handling of the caller's resynthesis function, but I am dragging my feet because I've never felt
+that the phase-vocoder was the "right thing".  
 </p>
 
 <br><br>
@@ -9470,6 +9494,17 @@ this is not a very flexible generator!
 variants of those given above.
 </p>
 
+<br><br>
+
+
+<pre style="background-color: #f2f4ff">
+  <A class=def NAME="make-tanhsin">make-tanhsin</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (frequency *clm-default-frequency*) (r 1.0) (initial-phase 0.0)
+  <A class=def NAME="tanhsin">tanhsin</A> gen fm
+  <A class=def NAME="tanhsin?">tanhsin?</A> gen
+</pre>
+
+<p>This produces tanh(r * sin(x)) which approaches a square wave as "r" increases.
+</p>
 <br><br>
 
 

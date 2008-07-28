@@ -290,3 +290,21 @@ the amp (more or less), 'N'  is 1..10 or thereabouts, 'fi' is the phase incremen
     (* (/ n (1- n))   ; scale back to 1.0
        (- val (* (mus-increment gen) 0.5 (+ old-sig sig))))))
 
+
+;;; -------- sine-bank
+;;;
+;;; not yet removed from clm.c, but will be eventually
+
+(if (not (defined? 'sine-bank))
+    (define (sine-bank amps phases)
+      (let ((len (vct-length amps))
+	    (sum 0.0))
+	(do ((i 0 (1+ i)))
+	    ((= i len))
+	  (set! sum (+ sum (* (vct-ref amps i)
+			      (sin (vct-ref phases i))))))
+	sum)))
+
+
+
+    

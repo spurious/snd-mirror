@@ -6000,6 +6000,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 (define waveshape? polyshape?)
 (define waveshape polyshape)
+
 (def-optkey-fun (make-waveshape (frequency *clm-default-frequency*) 
 				(partials '(1 1)) 
 				wave 
@@ -6011,6 +6012,25 @@ index 10 (so 10/2 is the bes-jn arg):
 				     (size *clm-table-size*))
   (partials->polynomial partials))
 		  
+
+
+;;; ---------------- tanh(sin(x)) ----------------
+
+(defgenerator (tanhsin
+	       :make-wrapper (lambda (g)
+			       (set! (tanhsin-osc g) (make-oscil (tanhsin-frequency g) (tanhsin-initial-phase g)))
+			       g))
+  (frequency *clm-default-frequency*) (r 1.0) (initial-phase 0.0)
+  (osc #f :type clm))
+
+
+(define (tanhsin gen fm)
+  "(make-tanhsin (frequency 0.0) (r 1.0) (initial-phase 0.0) returns a tanhsin generator.\n\
+(tanhsin gen fm) produces tanh(r*sin) which approaches a square wave as r increases."
+  (declare (gen tanhsin) (fm float))
+  (tanh (* (tanhsin-r gen)
+	   (oscil (tanhsin-osc gen) fm))))
+
 
 
 ;;; --------------------------------------------------------------------------------
@@ -6032,6 +6052,7 @@ index 10 (so 10/2 is the bes-jn arg):
 		adjustable-square-wave adjustable-triangle-wave adjustable-sawtooth-wave adjustable-oscil 
 		round-interp sinc-train pink-noise green-noise brown-noise green-noise-interp
 		moving-max moving-sum moving-rms moving-length weighted-moving-average exponentially-weighted-moving-average 
+		tanhsin
 		))
      (list make-nssb make-nxysin make-nxycos make-nxy1cos make-nxy1sin make-noddsin make-noddcos make-noddssb make-ncos2 make-npcos
 	   make-nrsin make-nrcos make-nrssb make-nkssb make-nsincos make-rcos make-rssb make-rxysin make-rxycos
@@ -6042,6 +6063,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	   make-adjustable-square-wave make-adjustable-triangle-wave make-adjustable-sawtooth-wave make-adjustable-oscil
 	   make-round-interp make-sinc-train make-pink-noise make-green-noise make-brown-noise make-green-noise-interp
 	   make-moving-max make-moving-sum make-moving-rms make-moving-length make-weighted-moving-average make-exponentially-weighted-moving-average 
+	   make-tanhsin
 	   )))
 
 
