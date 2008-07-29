@@ -6033,6 +6033,26 @@ index 10 (so 10/2 is the bes-jn arg):
 
 
 
+
+;;; TODO: for sndclm: syn pv example but make it optimized somehow
+;;; TODO:   moving-spectrum here: also would be nice to either find a real use for analyze and edit funcs, or get rid of them
+;;; TODO:   also the pitch and time args seem pointless
+;;; TODO:   how to change time arbitrarily? via env?
+;;; TODO: tanhsin as sin in phase-vocoder + "index" env?
+;;; TODO: syn+tanh   (amp*tanh(b*amp*sin))
+;;; TODO: also sawtoothize and other such substitutions
+;;; TODO: amp>n sin^2
+;;; TODO: narrow band noise on some or on loud ones
+;;; TODO: change vib (no vib)
+;;; TODO:   moving-spectrum generator (fft + rectangular->polar + interpolation)
+;;;           if no phase vct passed, ignore phases?
+;;;           this could replace all the formant bank stuff eventually
+;;; TODO:   moving-window (delay data) (two delays + pulse = gran), would need an open-ended delay [outa?], window-ref, array of frames?
+;;; TODO:   moving-lpc? (dsp.scm has lpc-coeffs which is optimizable) [moving-poly?] [cheb approx?]
+
+
+
+
 ;;; --------------------------------------------------------------------------------
 ;;;
 ;;; set up make-* help strings

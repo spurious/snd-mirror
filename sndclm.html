@@ -3037,7 +3037,7 @@ we can truncate its spectrum at the desired number of harmonics:
 	    (do ((i 0 (1+ i))
 		 (x 0.0 (+ x incr)))
 		((= i size))
-	      (<a class=quiet href="extsnd.html#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> rl i (tanh (* index (sin x))))) ; make our desired square wave
+	      (<a class=quiet href="extsnd.html#vctset" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctset_tip)">vct-set!</a> rl i (<em class=red>tanh</em> (* index (<em class=red>sin</em> x))))) ; make our desired square wave
 	    (<a class=quiet href="#spectrum" onmouseout="UnTip()" onmouseover="Tip(sndclm_spectrum_tip)">spectrum</a> rl im #f 2)                       ; get its spectrum
 	    (do ((i 0 (+ i 1))
 		 (j 0 (+ j 2)))

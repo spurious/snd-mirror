@@ -2692,6 +2692,8 @@ before returning."
 
 static XEN g_play_and_wait(XEN samp_n, XEN snd_n, XEN chn_n, XEN syncd, XEN end_n, XEN edpos, XEN stop_proc, XEN out_chan) 
 {
+  XEN result;
+
   #if HAVE_SCHEME
     #define play_and_wait_example "(play-and-wait \"oboe.snd\")"
   #endif
@@ -2706,7 +2708,18 @@ static XEN g_play_and_wait(XEN samp_n, XEN snd_n, XEN chn_n, XEN syncd, XEN end_
 play snd or snd's channel chn starting at start \
 and wait for the play to complete before returning.  'start' can also be a function or a filename:\n  " play_and_wait_example
 
-  return(g_play_1(samp_n, snd_n, chn_n, false, TO_C_BOOLEAN_OR_FALSE(syncd), end_n, edpos, S_play_and_wait, 6, stop_proc, out_chan));
+  result = g_play_1(samp_n, snd_n, chn_n, false, TO_C_BOOLEAN_OR_FALSE(syncd), end_n, edpos, S_play_and_wait, 6, stop_proc, out_chan);
+
+  /* dac-hook might call c-g! leaving these flags set -- this can cause confusion (much) later.
+   *   the problem is that one or both of these flags is set by c-g!, but if not cleared, anything
+   *   might call (c-g?) later which will see the (long previous) c-g! -- I'd clear the flags
+   *   before calling check-for-event in g_abortq (snd-main.c), but that assumes no one else
+   *   called it earlier.  c-g! appears to be problematic...
+   */
+
+  ss->stopped_explicitly = false;
+  ss->cg_seen = false;
+  return(result);
 }
 
 

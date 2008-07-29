@@ -223,7 +223,8 @@ static void name_click_callback(Widget w, XtPointer context, XtPointer info)
 static void stop_sign_click_callback(Widget w, XtPointer context, XtPointer info) 
 {
   snd_info *sp = (snd_info *)context;
-  if ((ss->checking_explicitly) || (play_in_progress())) ss->stopped_explicitly = true; 
+  if ((ss->checking_explicitly) || (play_in_progress()))
+    ss->stopped_explicitly = true; 
   stop_playing_all_sounds(PLAY_C_G);
   if (sp->applying) stop_applying(sp);
   for_each_sound_chan(sp, stop_fft_in_progress);

@@ -12153,6 +12153,9 @@ See examp.scm and play.scm for other examples.
 <code><a class=def name="cgx">c-g!</a> ()</code>
 </td></tr><tr><td></td><td>
 This simulates typing C-g.  It is intended for use with <a href="#bindkey">bind-key</a> to remap C-g.
+If you use it in some other situation (a hook for example), there are annoying problems with clearing
+the "I've been interrupted" flags.  Probably the safest thing is to call (c-g?) after the interruption 
+has taken effect.
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 

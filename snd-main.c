@@ -435,6 +435,46 @@ static void pcp_sl(FILE *fd, const char *name, Float val1, Float val2, int chan)
 #endif
 
 
+#if HAVE_CL
+static void pss_ss(FILE *fd, const char *name, const char *val) {fprintf(fd, "(setf (%s) %s)\n", name, val);}
+static void pss_sq(FILE *fd, const char *name, const char *val) {fprintf(fd, "(setf (%s) \"%s\")\n", name, val);}
+static void pss_sd(FILE *fd, const char *name, int val)   {fprintf(fd, "(setf (%s) %d)\n", name, val);}
+static void pss_sod(FILE *fd, const char *name, off_t val)   {fprintf(fd, "(setf (%s) " OFF_TD ")\n", name, val);}
+static void pss_sf(FILE *fd, const char *name, Float val) {fprintf(fd, "(setf (%s) %.4f)\n", name, val);}
+static void pss_sl(FILE *fd, const char *name, Float val1, Float val2) {fprintf(fd, "(setf (%s) (list %f %f))\n", name, val1, val2);}
+
+static void psp_ss(FILE *fd, const char *name, const char *val) 
+  {b_ok = true; fprintf(fd, "%s(setf (%s sfile) %s)\n", white_space, name, val);}
+
+static void psp_sd(FILE *fd, const char *name, int val)   
+  {b_ok = true; fprintf(fd, "%s(setf (%s sfile) %d)\n", white_space, name, val);}
+
+static void psp_sf(FILE *fd, const char *name, Float val) 
+  {b_ok = true; fprintf(fd, "%s(setf (%s sfile) %.4f)\n", white_space, name, val);}
+
+static void psp_sl(FILE *fd, const char *name, Float val1, Float val2) 
+  {b_ok = true; fprintf(fd, "%s(setf (%s sfile) (list %f %f))\n", white_space, name, val1, val2);}
+
+static void pcp_ss(FILE *fd, const char *name, const char *val, int chan) 
+  {b_ok = true; fprintf(fd, "%s(setf (%s sfile %d) %s)\n", white_space, name, chan, val);}
+
+static void pcp_sss(FILE *fd, const char *name, const char *val, int chan, const char *grf) 
+  {b_ok = true; fprintf(fd, "%s(setf (%s sfile %d %s) \"%s\")\n", white_space, name, chan, grf, val);}
+
+static void pcp_sd(FILE *fd, const char *name, int val, int chan)   
+  {b_ok = true; fprintf(fd, "%s(setf (%s sfile %d) %d)\n", white_space, name, chan, val);}
+
+static void pcp_sod(FILE *fd, const char *name, off_t val, int chan)   
+  {b_ok = true; fprintf(fd, "%s(setf (%s sfile %d) " OFF_TD ")\n", white_space, name, chan, val);}
+
+static void pcp_sf(FILE *fd, const char *name, Float val, int chan) 
+  {b_ok = true; fprintf(fd, "%s(setf (%s sfile %d) %.4f)\n", white_space, name, chan, val);}
+
+static void pcp_sl(FILE *fd, const char *name, Float val1, Float val2, int chan) 
+  {b_ok = true; fprintf(fd, "%s(setf (%s sfile %d) (list %f %f))\n", white_space, name, chan, val1, val2);}
+#endif
+
+
 static void save_options(FILE *fd)
 {
   char *locale = NULL;
@@ -632,6 +672,12 @@ static void save_options(FILE *fd)
       {
 #if HAVE_SCHEME
 	fprintf(fd, "(set! (mus-header-raw-defaults) (list %d %d %s))\n",
+		srate,
+		chans,
+		tmp_format = mus_data_format_to_string(format));
+#endif
+#if HAVE_CL
+	fprintf(fd, "(setf (mus-header-raw-defaults) (list %d %d %s))\n",
 		srate,
 		chans,
 		tmp_format = mus_data_format_to_string(format));
@@ -935,6 +981,14 @@ void open_save_sound_block(snd_info *sp, FILE *fd, bool with_nth)
 	  (sp->user_read_only == FILE_READ_ONLY) ? S_view_sound : S_open_sound,
 	  sp->filename);
 #endif
+#if HAVE_CL
+  fprintf(fd, "(let ((sfile (or (%s \"%s\" %d) (%s \"%s\"))))\n  (if sfile\n    (progn\n",
+	  S_find_sound,
+	  sp->short_filename, /* short filename ok because find-sound searches for that name as well as the full filename */
+	  (with_nth) ? find_sound_nth(sp) : 0,
+	  (sp->user_read_only == FILE_READ_ONLY) ? S_view_sound : S_open_sound,
+	  sp->filename);
+#endif
 #if HAVE_FORTH
   fprintf(fd, "\"%s\" %d %s to sfile\nsfile false? [if] \"%s\" %s to sfile [then]\n",
 	  sp->short_filename,
@@ -955,6 +1009,9 @@ void close_save_sound_block(FILE *fd, bool need_f)
   if (need_f)
     fprintf(fd, "      #f)))\n"); /* avoid empty begin if no field was output */
   else fprintf(fd, "      )))\n");
+#endif
+#if HAVE_CL
+  fprintf(fd, "      )))\n");
 #endif
 #if HAVE_FORTH
   fprintf(fd, "\n");
@@ -1160,6 +1217,10 @@ static void save_sound_state(snd_info *sp, void *ptr)
 	  fprintf(fd, "%s(set! _saved_snd_selected_sound_ sfile)\n", white_space);
 	  fprintf(fd, "%s(set! _saved_snd_selected_channel_ %d)\n", white_space, cp->chan);
 #endif
+#if HAVE_CL
+	  fprintf(fd, "%s(setf _saved_snd_selected_sound_ sfile)\n", white_space);
+	  fprintf(fd, "%s(setf _saved_snd_selected_channel_ %d)\n", white_space, cp->chan);
+#endif
 #if HAVE_RUBY
 	  fprintf(fd, "%ssaved_snd_selected_sound = sfile\n", white_space);
 	  fprintf(fd, "%ssaved_snd_selected_channel = %d\n", white_space, cp->chan);
@@ -1224,6 +1285,10 @@ void save_state(const char *save_state_name)
 	  fprintf(save_fd, "\n(define _saved_snd_selected_sound_ #f)\n");
 	  fprintf(save_fd, "(define _saved_snd_selected_channel_ #f)\n");
 #endif
+#if HAVE_CL
+	  fprintf(save_fd, "\n(defvar _saved_snd_selected_sound_ nil)\n");
+	  fprintf(save_fd, "(defvar _saved_snd_selected_channel_ nil)\n");
+#endif
 #if HAVE_RUBY
 	  fprintf(save_fd, "\nsaved_snd_selected_sound = -1\n");
 	  fprintf(save_fd, "saved_snd_selected_channel = -1\n");
@@ -1240,6 +1305,12 @@ void save_state(const char *save_state_name)
 #if HAVE_SCHEME
 	  fprintf(save_fd, "(if _saved_snd_selected_sound_\n");
 	  fprintf(save_fd, "  (begin\n");
+	  fprintf(save_fd, "    (%s _saved_snd_selected_sound_)\n", S_select_sound);
+	  fprintf(save_fd, "    (%s _saved_snd_selected_channel_)))\n", S_select_channel);
+#endif
+#if HAVE_CL
+	  fprintf(save_fd, "(if _saved_snd_selected_sound_\n");
+	  fprintf(save_fd, "  (progn\n");
 	  fprintf(save_fd, "    (%s _saved_snd_selected_sound_)\n", S_select_sound);
 	  fprintf(save_fd, "    (%s _saved_snd_selected_channel_)))\n", S_select_channel);
 #endif
@@ -1344,6 +1415,9 @@ const char *save_options_in_prefs(void)
 #endif
 #if HAVE_FORTH
   #define SND_PREFS "~/.snd_prefs_forth"
+#endif
+#if HAVE_ECL
+  #define SND_PREFS "~/.snd_prefs_ecl"
 #endif
   fullname = mus_expand_filename(SND_PREFS);
   fd = FOPEN(fullname, "w");
@@ -2169,6 +2243,7 @@ static XEN g_abortq(void)
   #define H_abortQ "(" S_c_g "): allow pending user interface events to occur, returning " PROC_TRUE " if C-g was typed"
   check_for_event();
   if ((ss->cg_seen) || (ss->stopped_explicitly))
+
     {
       ss->stopped_explicitly = false;
       ss->cg_seen = false;

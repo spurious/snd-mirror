@@ -2079,6 +2079,7 @@ and replaces it with the spectrum given in coeffs"
 		  (vector-set! wk1 j (- (vector-ref wk1 j) (* (vector-ref wkm k) (vector-ref wk2 j))))
 		  (vector-set! wk2 j (- (vector-ref wk2 (1+ j)) (* (vector-ref wkm k) (vector-ref wk1 (1+ j)))))))))))))
   
+
 (define* (lpc-predict data n coeffs m nf :optional clipped)
   ;; translated and changed to use 0-based arrays from predic of NRinC
   ;; incoming coeffs are assumed to be in a vector (from lpc-coeffs)

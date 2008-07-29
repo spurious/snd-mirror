@@ -9333,9 +9333,11 @@ EDITS: 5
 	(if (not (= a-ctr 0)) (snd-display ";unbind-key: ~A?" a-ctr))
 	(if (fneq xp 0.0) (snd-display ";x-position-slider: ~A?" xp))
 	(if (fneq yp 0.0) (snd-display ";y-position-slider: ~A?" yp))
-	(if (fneq xz 0.04338) (snd-display ";x-zoom-slider: ~A?" xz))
+	(if (and (fneq xz 0.04338) (fneq xz 1.0)) (snd-display ";x-zoom-slider: ~A?" xz))
 	(if (fneq yz 1.0) (snd-display ";y-zoom-slider: ~A?" yz))
-	(if (or (fneq (car bnds) 0.0) (fneq (cadr bnds) 0.1)) (snd-display ";x-bounds: ~A?" bnds))
+	(if (and (or (fneq (car bnds) 0.0) (fneq (cadr bnds) 0.1)) 
+		 (or (fneq (car bnds) 0.0) (fneq (cadr bnds) 2.305))) ; open-hook from ~/.snd*
+	    (snd-display ";x-bounds: ~A?" bnds))
 	(if (not (= (find-sound "oboe.snd") index)) (snd-display ";oboe: index ~D /= ~D?" (find-sound "oboe.snd") index))
 	(if (not (sound? index)) (snd-display ";oboe: ~D not ok?" index))
 	(if (not (= (chans index) 1)) (snd-display ";oboe: chans ~D?" (chans index)))
@@ -14134,6 +14136,7 @@ EDITS: 2
 	(let ((v1 (vct 1 2 3 4)))
 	  (if (fneq (v1 1) 2.0)
 	      (snd-display ";(v1 1) = ~A?" (v1 1))))
+
 	(let ((ind (open-sound "oboe.snd"))
 	      (ctr 0))
 	  (set! (speed-control ind) .5)
@@ -14155,7 +14158,7 @@ EDITS: 2
 		  (< (abs (sample 9327)) .01))
 	      (snd-display ";apply-controls srate -1.0 samples: ~A ~A" (maxamp) (sample 9327)))
 	  (if (fneq (speed-control ind) 1.0) (snd-display ";apply-controls -1.0 -> ~A?" (speed-control ind)))
-	  
+
 	  (add-hook! dac-hook (lambda (data) 
 				(set! ctr (1+ ctr))
 				(if (>= ctr 3) (c-g!))))
@@ -14194,8 +14197,8 @@ EDITS: 2
 				      (snd-display ";dac-hook: recursive attempt apply-controls: ~A" tag)))))
 	  (reset-hook! dac-hook)
 	  (revert-sound)
-	  
 	  (close-sound ind))
+
 	(let ((v1 (make-vct 32)))
 	  (vct-map! v1
 		    (lambda ()
@@ -14272,6 +14275,7 @@ EDITS: 2
     (let ((ho (vct-subseq hi (- (expt 2 31) 3) (+ (expt 2 31) 1))))
       (if (not (vequal ho (vct 10.0 1.0 1.0 10.0 1.0)))
 	  (snd-display ";subseq: ~A" ho)))
+
     )))
 
 
@@ -15977,7 +15981,12 @@ EDITS: 2
       ;; degree>4
       (let ((vals (poly-roots (poly-reduce (poly* (vct 1 1) (poly* (poly* (vct 2 1) (vct -3 1)) (poly* (vct -1 1) (vct -2 1))))))))
 	(if (not (feql vals (list 3.0 2.0 -1.0 -2.0 1.0))) 
-	    (snd-display ";poly-roots n(1): ~A from ~A" vals (poly-reduce (poly* (vct 1 1) (poly* (poly* (vct 2 1) (vct -3 1)) (poly* (vct -1 1) (vct -2 1))))))))
+	    (snd-display ";poly-roots n(1): ~A from ~A ~A ~A" 
+			 vals 
+			 (poly-reduce (poly* (vct 1 1) (poly* (poly* (vct 2 1) (vct -3 1)) (poly* (vct -1 1) (vct -2 1)))))
+			 (mus-float-equal-fudge-factor) 
+			 poly-roots-epsilon)))
+
       (let ((vals (poly-roots (poly-reduce (poly* (vct 1 1) (poly* (poly* (vct 2 1) (vct -3 1)) (poly* (vct 8 1) (vct -9 1))))))))
 	(if (not (feql vals (list 9.0 3.0 -2.0 -8.0 -1.0))) (snd-display ";poly-roots n(2): ~A" vals)))
       (let ((vals (poly-roots (poly-reduce (poly* (vct -1 0 1) (poly* (poly* (vct 9 1) (vct -3 1)) (poly* (vct -10 1) (vct -2 1))))))))
@@ -21713,7 +21722,9 @@ EDITS: 2
 		 ((= i 10))
 	       (vct-set! v i (table-lookup tbl1 (/ (* 2 pi .2) 4))))
 	     (if (and (not (vequal v vals))
-		      (not (= type mus-interp-all-pass)))
+		      (not (= type mus-interp-all-pass))
+		      (or (not (= type mus-interp-none))
+			  (not (vequal v (vct 0.000 0.000 0.000 0.000 0.000 0.000 1.000 1.000 1.000 1.000)))))
 		 (snd-display ";tbl interp ~A: ~A" type v))
 	     (if (not (= (mus-interp-type tbl1) type)) (snd-display ";tbl interp-type (~A): ~A" type (mus-interp-type tbl1)))))))
      (list 
@@ -25582,7 +25593,7 @@ EDITS: 2
 	    (snd-display ";edit-position(6): ~A ~A?" (edit-position) eds)))
       (set! (edit-position) 1)
       (if (not (= (edit-position) 1))
-	  (snd-display ";set edit-position(1): ~A?" (edit-position)))
+	  (snd-display ";set edit-position(1) ~A?" (edit-position)))
       (set! (edit-position) 4)
       (if (not (= (edit-position) 4))
 	  (snd-display ";set edit-position(4): ~A?" (edit-position)))
@@ -33263,7 +33274,9 @@ EDITS: 2
 	      (if (not (equal? (all-chans) '(() ()))) (snd-display ";all-chans(0): ~A?" (all-chans)))
 	      (set! obi (open-sound "oboe.snd"))
 	      (set! (cursor obi) 1000)
-	      (if (not (= (locate-zero .001) 1050)) (snd-display ";locate-zero: ~A?" (locate-zero .001)))
+	      (let ((tick (locate-zero .001)))
+		(if (not (= tick 1050)) 
+		    (snd-display ";locate-zero: ~A = ~A (second try: ~A)?" tick (sample tick) (locate-zero .001))))
 	      (add-hook! graph-hook auto-dot)
 	      (add-hook! graph-hook superimpose-ffts)
 	      (set! (transform-graph? obi 0) #t)
