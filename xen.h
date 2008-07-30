@@ -2055,7 +2055,6 @@ bool xen_gauche_hook_p(XEN val);
 #define XEN_CADDDR(a) 0
 #define XEN_CDR(a) 0
 #define XEN_CDDR(a) 0
-#define XEN_EMPTY_LIST 0
 #define XEN_LIST_P(Arg) 0
 #define XEN_LIST_P_WITH_LENGTH(Arg, Len) 0
 #define XEN_LIST_LENGTH(Arg) 0

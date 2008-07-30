@@ -6051,9 +6051,11 @@ index 10 (so 10/2 is the bes-jn arg):
 				 (vct-scale! (moving-spectrum-fft-window g) (/ 2.0 (* 0.54 n)))
 				 (set! (moving-spectrum-outctr g) (+ n 1)) ; first time fill flag
 				 g)))
-  (input #f :type clm) (n 512) (hop 128) (outctr 0 :type int)
+  (input #f :type clm) (n 512) (hop 128) 
+  (outctr 0 :type int)
   (amps #f :type vct) (phases #f :type vct) 
-  (amp-incs #f :type vct) (freqs #f :type vct) (freq-incs #f :type vct) (new-freq-incs #f :type vct) (fft-window #f :type vct)
+  (amp-incs #f :type vct) (freqs #f :type vct) (freq-incs #f :type vct) (new-freq-incs #f :type vct) 
+  (fft-window #f :type vct)
   (data #f :type vct) (dataloc 0 :type int))
 
 (define (moving-spectrum gen)
@@ -6086,7 +6088,7 @@ index 10 (so 10/2 is the bes-jn arg):
 		    ((= i n))
 		  (vct-set! data i (readin (moving-spectrum-input gen))))))
 
-	  (set! outctr 0)
+	  (set! outctr 0) ; -1??
 	  (set! dataloc (modulo dataloc n))
 
 	  (clear-array new-freq-incs)
@@ -6148,15 +6150,26 @@ index 10 (so 10/2 is the bes-jn arg):
 	(if (fneq (vct-ref (moving-spectrum-freqs sv) i) (vct-ref (phase-vocoder-phase-increments pv) i))
 	    (snd-display ";~D freqs: ~A ~A" i (vct-ref (moving-spectrum-freqs sv) i) (vct-ref (phase-vocoder-phase-increments pv) i)))))))
 
+#|
+(with-sound (:channels 2)
+  (let* ((gen (make-moving-spectrum (make-readin "oboe.snd")))
+	 (pv (make-phase-vocoder (make-readin "oboe.snd")))
+	 (samps (mus-sound-frames "oboe.snd")))
+    (run
+     (lambda ()
+       (do ((i 0 (1+ i)))
+	   ((= i samps))
+	 (moving-spectrum gen)
+	 (outa i (sine-bank (moving-spectrum-amps gen) (moving-spectrum-phases gen) 256)) ; size = n/2 as in pv
+	 (outb i (phase-vocoder pv)))))))
+
+; :(channel-distance 0 0 0 1)
+; 7.902601100022e-9
+|#
 
 
 
-;;; TODO: for sndclm: syn pv example but make it optimized somehow
-;;; TODO:   moving-spectrum here: also would be nice to either find a real use for analyze and edit funcs, or get rid of them
-;;; TODO:   also the pitch and time args seem pointless
 ;;; TODO:   how to change time arbitrarily? via env?
-;;; TODO: tanhsin as sin in phase-vocoder + "index" env?
-;;; TODO: syn+tanh   (amp*tanh(b*amp*sin))
 ;;; TODO: also sawtoothize and other such substitutions
 ;;; TODO: amp>n sin^2
 ;;; TODO: narrow band noise on some or on loud ones
@@ -6164,7 +6177,7 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;;           moving-spectrum could replace all the formant bank stuff eventually
 ;;; TODO:   moving-window (delay data) (two delays + pulse = gran), would need an open-ended delay [outa?], window-ref, array of frames?
 ;;; TODO:   moving-lpc? (dsp.scm has lpc-coeffs which is optimizable) [moving-poly?] [cheb approx?]
-;;; TODO: doc/snd-test moving-spectrum
+
 
 
 

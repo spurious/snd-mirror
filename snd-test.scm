@@ -55685,6 +55685,7 @@ EDITS: 1
 	  (if (not (sound? snd)) (snd-display ";tanhsin ~A" snd))
 	  (if (> (abs (- 1.0 (maxamp snd))) 0.1) (snd-display ";tanhsin max: ~A" (maxamp snd))))
 
+	(test-sv)
 
 	(let ((val (make-vector 3))
 	      (frq 0.0))

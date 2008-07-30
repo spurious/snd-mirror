@@ -3066,8 +3066,8 @@ we can truncate its spectrum at the desired number of harmonics:
 <img src="pix/tanhexs.png">
 </td></tr></table>
 
-
-<p>Another square-wave choice is <a href="#eoddcos">eoddcos</a> in <a href="#othergenerators">generators.scm</a>, 
+<p>See also the <a href="#tanhsin">tanhsin</a> in generators.scm.
+Another square-wave choice is <a href="#eoddcos">eoddcos</a> in <a href="#othergenerators">generators.scm</a>, 
 based on atan; as its "r" parameter approaches 0.0, you get closer to a square wave.
 Even more amusing is this algorithm (related to tanh(sin)):
 <img src="pix/sceq13.png" alt="square" align=absmiddle hspace=10>
@@ -7022,13 +7022,14 @@ In the next example we use all these special functions to resynthesize down an o
      (lambda ()
        (do ((i 0 (1+ i)))
 	   ((= i 44100))
-	 (outa i (<em class=red>phase-vocoder</em> pv))))))))
+	 (outa i (<em class=red>phase-vocoder</em> pv)))))))
 </pre>
 </td></tr></table>
 
 <p>but, sadly, this code crawls.  It won't actually be useful until I optimize
 handling of the caller's resynthesis function, but I am dragging my feet because I've never felt
-that the phase-vocoder was the "right thing".  
+that this phase-vocoder (as a generator) was the "right thing".  The first step toward something less stupid is
+<a href="#movingspectrum">moving-spectrum</a> in generators.scm.
 </p>
 
 <br><br>
@@ -9504,6 +9505,19 @@ variants of those given above.
 </pre>
 
 <p>This produces tanh(r * sin(x)) which approaches a square wave as "r" increases.
+</p>
+<br>
+
+<pre style="background-color: #f2f4ff">
+  <a class=def name="make-moving-spectrum">make-moving-spectrum</A> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> (input #f :type clm) (n 512) (hop 128)
+  <a class=def name="moving-spectrum">moving-spectrum</A> gen fm
+  <a class=def name="moving-spectrum?">moving-spectrum?</A> gen
+</pre>
+
+<p>moving-spectrum provides a sample-by-sample spectrum (amplitudes, frequencies, and current phases) of its
+input (currently assumed to be a readin generator).  It is identical to the first (analysis) portion of
+the phase-vocoder generator (see test-sv in generators.scm for details).  To access the current amps and so on,
+use moving-spectrum-amps, moving-spectrum-phases, and moving-spectrum-freqs.
 </p>
 <br><br>
 
