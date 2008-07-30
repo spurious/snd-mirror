@@ -6868,7 +6868,7 @@ In the following example, we use the edit function to reverse every other grain:
 
 <pre>
   <a class=def name="make-phase-vocoder">make-phase-vocoder</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> 
-        input (fft-size 512) (overlap 4) interp (pitch 1.0) analyze edit synthesize
+        input (fft-size 512) (overlap 4) (interp 128) (pitch 1.0) analyze edit synthesize
   <a class=def name="phase-vocoder">phase-vocoder</a> pv input-function analyze-function edit-function synthesize-function
   <a class=def name="phase-vocoder?">phase-vocoder?</a> pv
 </pre>

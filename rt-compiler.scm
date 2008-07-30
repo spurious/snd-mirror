@@ -35,12 +35,15 @@ and run simple lisp[4] functions.
 
 !#
 
-
-
-
-
-
 (provide 'snd-rt-compiler.scm)
+
+
+
+(define *tar-atomic-heap-size* (* 4 1024 1024))
+(define *tar-nonatomic-heap-size* (* 1 1024 1024))
+(define *tar-roots-size* (* 1024 1024))
+
+
 
 ;;(use-modules (srfi srfi-1))
 
@@ -7091,6 +7094,27 @@ old syntax: (not very nice)
 
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;; Garbage collector ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define *tar-is-started* (defined? '*tar-is-started*))
+
+(when (not *tar-is-started*)
+  (primitive-eval `(eval-c (<-> "-I" snd-header-files-path)
+                           "#include <rt-various.h>"
+                           (run-now
+                            (init_rollendurchmesserzeitsammler ,*tar-atomic-heap-size*
+                                                               ,*tar-nonatomic-heap-size*
+                                                               ,*tar-roots-size*))))
+  (set! *tar-is-started* #t))
+
+
+
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -8986,7 +9010,7 @@ old syntax: (not very nice)
 						      (set! rt_globals->remove_me 1))
 						  
 
-                                                  (if (tar_leave_audio_thread heap)
+                                                  (if (tar_leave_audio_thread heap false)
                                                       (when (== 0 rt_globals->remove_me)
                                                         (rt_debug (string "data: %d, stack: %d %p %p, num_allocs: %d")
                                                                   (abs (- end_dyn start_dyn))
@@ -9016,7 +9040,7 @@ old syntax: (not very nice)
                                                         
                                                         (tar_add_root heap rt_globals (+ rt_globals (sizeof <struct-RT_Globals>))) ;; dynamic data
 
-                                                        (tar_run_gc heap)
+                                                        (tar_run_gc heap false)
 
                                                         ))
 

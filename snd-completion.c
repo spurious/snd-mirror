@@ -239,7 +239,7 @@ static int completions(char *text)
 #endif
 
 
-#if (!HAVE_EXTENSION_LANGUAGE)
+#if (!HAVE_EXTENSION_LANGUAGE) || HAVE_ECL || HAVE_LIBREP
 static int completions(char *text) {return(0);}
 #endif
 
@@ -260,7 +260,7 @@ bool separator_char_p(char c)
 	 (c != '!') &&
 	 (c != '_') &&
 #endif
-#if HAVE_SCHEME
+#if HAVE_SCHEME || HAVE_CL
 	 (c != '-') &&
 	 (c != '_') &&
 	 (c != '>') &&

@@ -908,7 +908,7 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
 
 
 #if HAVE_EXTENSION_LANGUAGE
-#if HAVE_SCHEME
+#if HAVE_SCHEME || HAVE_CL
   #define FIELD_PREFIX "."
 #endif
 #if HAVE_RUBY

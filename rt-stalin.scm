@@ -10,10 +10,6 @@
 (define *stalin-add-health-checks* #t)
 (define *stalin-backtrace-length* 20)
 
-(define *tar-atomic-heap-size* (* 1024 1024))
-(define *tar-nonatomic-heap-size* (* 1024 1024))
-(define *tar-roots-size* (* 1024 1024))
-
 (define *rt-local-stalin-code-environment* (the-environment))
 
 
@@ -40,23 +36,6 @@
       (close fd)
       (system (<-> "rm " logfilename))
       (cont output ret))))
-
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;; Garbage collector ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(define *tar-is-started* (defined? '*tar-is-started*))
-
-(when (not *tar-is-started*)
-  (eval-c (<-> "-I" snd-header-files-path)
-          "#include <rt-various.h>"
-          (run-now
-           (init_rollendurchmesserzeitsammler ,*tar-atomic-heap-size*
-                                              ,*tar-nonatomic-heap-size*
-                                              ,*tar-roots-size*)))
-  (set! *tar-is-started* #t))
 
 
 
@@ -4215,6 +4194,9 @@ had to be put into macroexpand instead.
            "#undef fprintf"
            "#undef exit"
 
+           (<int> full_copy_counter ,(rte-samplerate)) ;; Do full copy each second.
+           (<bool> want_full_copy false)
+
            ;; public
            (functions->public
             (<int> process_func (lambda ((<void*> something)
@@ -4236,10 +4218,14 @@ had to be put into macroexpand instead.
                                     (clean_sounddata)
                                     (set! first_run 0))
 
-                                  
                                   (when (== false (tar_entering_audio_thread heap))
                                     (rt_debug (string "Using too much CPU. Skipping\\n"))
                                     (return 0))
+
+                                  full_copy_counter-=endframe-startframe
+                                  (when (<= full_copy_counter 0)
+                                    (set! full_copy_counter ,(rte-samplerate))
+                                    (set! want_full_copy true))
 
                                   (set! g_startframe startframe)
                                   (set! g_endframe endframe)
@@ -4263,7 +4249,7 @@ had to be put into macroexpand instead.
                                               heap->num_allocs
                                               ))
 
-                                  (if (tar_leave_audio_thread heap)
+                                  (if (tar_leave_audio_thread heap want_full_copy)
                                       (when (== 0 remove_me)
                                         (rt_debug (string "data: %d, stack: %d %p %p, num_allocs: %d")
                                                   (abs (- end_dyn start_dyn))
@@ -4281,7 +4267,10 @@ had to be put into macroexpand instead.
                                         (tar_add_root heap dsp_coroutine (+ (cast <char*> dsp_coroutine)
                                                                             (EC_MAX (sizeof <ucontext_t>) ;registers
                                                                                     (sizeof <jmp_buf>))))
-                                        (tar_run_gc heap)
+                                        (if (== true want_full_copy)
+                                            (fprintf stderr (string "hepp\\n")))
+                                        (tar_run_gc heap want_full_copy)
+                                        (set! want_full_copy false)
                                         ;;heap->num_allocs=0
                                         ))
                                   

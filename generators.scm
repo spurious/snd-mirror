@@ -6032,6 +6032,123 @@ index 10 (so 10/2 is the bes-jn arg):
 	   (oscil (tanhsin-osc gen) fm))))
 
 
+;;; ---------------- moving spectrum ----------------
+;;;
+;;; this is the first half of the phase-vocoder (modulo ignoring "interp!=hop" business)
+;;;   I will probably move this into C eventually
+
+(defgenerator (moving-spectrum
+	       :make-wrapper (lambda (g)
+			       (let ((n (moving-spectrum-n g)))
+				 (set! (moving-spectrum-amps g) (make-vct n))
+				 (set! (moving-spectrum-phases g) (make-vct n))
+				 (set! (moving-spectrum-amp-incs g) (make-vct n))
+				 (set! (moving-spectrum-freqs g) (make-vct n))
+				 (set! (moving-spectrum-freq-incs g) (make-vct n))
+				 (set! (moving-spectrum-new-freq-incs g) (make-vct n))
+				 (set! (moving-spectrum-data g) (make-vct n))
+				 (set! (moving-spectrum-fft-window g) (make-fft-window hamming-window n))
+				 (vct-scale! (moving-spectrum-fft-window g) (/ 2.0 (* 0.54 n)))
+				 (set! (moving-spectrum-outctr g) (+ n 1)) ; first time fill flag
+				 g)))
+  (input #f :type clm) (n 512) (hop 128) (outctr 0 :type int)
+  (amps #f :type vct) (phases #f :type vct) 
+  (amp-incs #f :type vct) (freqs #f :type vct) (freq-incs #f :type vct) (new-freq-incs #f :type vct) (fft-window #f :type vct)
+  (data #f :type vct) (dataloc 0 :type int))
+
+(define (moving-spectrum gen)
+  (let* ((n (moving-spectrum-n gen))
+	 (n2 (/ n 2))
+	 (amps (moving-spectrum-amps gen))
+	 (phases (moving-spectrum-phases gen))
+	 (amp-incs (moving-spectrum-amp-incs gen))
+	 (freqs (moving-spectrum-freqs gen))
+	 (new-freq-incs (moving-spectrum-new-freq-incs gen))
+	 (hop (moving-spectrum-hop gen))
+	 (outctr (moving-spectrum-outctr gen)))
+    (if (>= outctr hop)
+	(let* ((data (moving-spectrum-data gen))
+	       (dataloc (moving-spectrum-dataloc gen))
+	       (fft-window (moving-spectrum-fft-window gen))
+	       (freq-incs (moving-spectrum-freq-incs gen)))
+
+	  (if (> outctr n) ; must be first time through -- fill data array
+	      (begin
+		(do ((i 0 (1+ i)))
+		    ((= i n))
+		  (vct-set! data i (readin (moving-spectrum-input gen)))))
+	      (begin
+		(do ((i 0 (1+ i))
+		     (j hop (1+ j)))
+		    ((= j n))
+		  (vct-set! data i (vct-ref data j)))
+		(do ((i (- n hop) (1+ i)))
+		    ((= i n))
+		  (vct-set! data i (readin (moving-spectrum-input gen))))))
+
+	  (set! outctr 0)
+	  (set! dataloc (modulo dataloc n))
+
+	  (clear-array new-freq-incs)
+	  (do ((i 0 (1+ i))
+	       (j dataloc (1+ j)))
+	      ((= i n))
+	    (if (= j n) (set! j 0))
+	    (vct-set! amp-incs j (* (vct-ref fft-window i)
+				    (vct-ref data i))))
+
+	  (set! (moving-spectrum-dataloc gen) (+ dataloc hop))
+	  
+	  (mus-fft amp-incs new-freq-incs n 1)
+	  (rectangular->polar amp-incs new-freq-incs)
+
+	  (let ((scl (/ 1.0 hop))
+		(kscl (/ (* 2 pi) n)))
+	    (vct-subtract! amp-incs amps)
+	    (vct-scale! amp-incs scl)
+
+	    (do ((i 0 (1+ i))
+		 (ks 0.0 (+ ks kscl)))
+		((= i n2))
+	      (let ((diff (fmod (- (vct-ref new-freq-incs i) (vct-ref freq-incs i)) (* 2 pi))))
+		(vct-set! freq-incs i (vct-ref new-freq-incs i))
+		(if (> diff pi) (set! diff (- diff (* 2 pi))))
+		(if (< diff (- pi)) (set! diff (+ diff (* 2 pi))))
+		(vct-set! new-freq-incs i (+ (* diff scl) ks))))
+
+	    (vct-subtract! new-freq-incs freqs)
+	    (vct-scale! new-freq-incs scl))))
+	  
+    (set! (moving-spectrum-outctr gen) (+ outctr 1))
+
+    (vct-add! amps amp-incs)
+    (vct-add! freqs new-freq-incs)
+    (vct-add! phases freqs)))
+
+
+(define (test-sv)
+  ;; sv-amps = pv-amps (but len is diff)
+  ;; sv-phases = pv-phases
+  ;; sv-freqs = pv-phase-increments
+
+  (let ((pv (make-phase-vocoder (make-readin "oboe.snd") ))
+	(sv (make-moving-spectrum (make-readin "oboe.snd"))))
+    (do ((k 0 (1+ k)))
+	((= k 20))
+      (do ((i 0 (1+ i))) 
+	  ((= i 2000)) 
+	(phase-vocoder pv) 
+	(moving-spectrum sv))
+      (do ((i 0 (1+ i)))
+	  ((= i 256))
+	(if (fneq (vct-ref (moving-spectrum-amps sv) i) (vct-ref (phase-vocoder-amps pv) i))
+	    (snd-display ";~D amps: ~A ~A" i (vct-ref (moving-spectrum-amps sv) i) (vct-ref (phase-vocoder-amps pv) i)))
+	(if (fneq (vct-ref (moving-spectrum-phases sv) i) (vct-ref (phase-vocoder-phases pv) i))
+	    (snd-display ";~D phases: ~A ~A" i (vct-ref (moving-spectrum-phases sv) i) (vct-ref (phase-vocoder-phases pv) i)))
+	(if (fneq (vct-ref (moving-spectrum-freqs sv) i) (vct-ref (phase-vocoder-phase-increments pv) i))
+	    (snd-display ";~D freqs: ~A ~A" i (vct-ref (moving-spectrum-freqs sv) i) (vct-ref (phase-vocoder-phase-increments pv) i)))))))
+
+
 
 
 ;;; TODO: for sndclm: syn pv example but make it optimized somehow
@@ -6044,12 +6161,10 @@ index 10 (so 10/2 is the bes-jn arg):
 ;;; TODO: amp>n sin^2
 ;;; TODO: narrow band noise on some or on loud ones
 ;;; TODO: change vib (no vib)
-;;; TODO:   moving-spectrum generator (fft + rectangular->polar + interpolation)
-;;;           if no phase vct passed, ignore phases?
-;;;           this could replace all the formant bank stuff eventually
+;;;           moving-spectrum could replace all the formant bank stuff eventually
 ;;; TODO:   moving-window (delay data) (two delays + pulse = gran), would need an open-ended delay [outa?], window-ref, array of frames?
 ;;; TODO:   moving-lpc? (dsp.scm has lpc-coeffs which is optimizable) [moving-poly?] [cheb approx?]
-
+;;; TODO: doc/snd-test moving-spectrum
 
 
 

@@ -537,7 +537,7 @@
 		(setf help-urls (reverse help-urls))
 		(let ((len (length help-names)))
 		  (format sfil "#define HELP_NAMES_SIZE ~D~%" len)
-		  (format sfil "#if HAVE_SCHEME || HAVE_FORTH~%")
+		  (format sfil "#if HAVE_SCHEME || HAVE_FORTH || HAVE_CL~%")
 		  (format sfil "static const char *help_names[HELP_NAMES_SIZE] = {~%  ")
 		  (format sfil "~S" (car help-names))
 		  (loop for ctr from 1 and name in (cdr help-names) do

@@ -130,9 +130,9 @@ void rt_various_dummy(void){
 
   tar_get_dynamic_roots_for(NULL,NULL,NULL);
   tar_entering_audio_thread(NULL);
-  tar_leave_audio_thread(NULL);
+  tar_leave_audio_thread(NULL,false);
   tar_add_root(NULL,NULL,NULL);
-  tar_run_gc(NULL);
+  tar_run_gc(NULL,false);
   tar_new_heap();
   tar_delete(NULL);
   tar_alloc(NULL,0);
