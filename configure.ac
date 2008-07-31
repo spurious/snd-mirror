@@ -18,12 +18,12 @@ OPTIONAL_LIBRARIES=""
 LOCAL_LANGUAGE="None"
 GRAPHICS_TOOLKIT="None"
 
-PACKAGE=snd
-VERSION=9.12
-AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE")
-AC_DEFINE_UNQUOTED(VERSION, "$VERSION")
-AC_SUBST(PACKAGE)
-AC_SUBST(VERSION)
+SND_PACKAGE=Snd
+SND_VERSION=9.12
+AC_DEFINE_UNQUOTED(SND_PACKAGE, "$SND_PACKAGE")
+AC_DEFINE_UNQUOTED(SND_VERSION, "$SND_VERSION")
+AC_SUBST(SND_PACKAGE)
+AC_SUBST(SND_VERSION)
 
 AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 
@@ -1391,7 +1391,7 @@ if test "$with_guile" = yes && test "$ac_snd_have_extension_language" = yes ; th
   AC_MSG_WARN([You asked for both Guile and $LOCAL_LANGUAGE -- $LOCAL_LANGUAGE will be used])
 fi
 
-if test "$with_guile" != no && test "$with_ruby" != yes && test "$with_forth" != yes && test "$with_gauche" != yes ; then
+if test "$with_guile" != no && test "$ac_snd_have_extension_language" != yes ; then
 
 XEN_LIBS=""
 XEN_CFLAGS=""
@@ -2261,7 +2261,7 @@ AC_OUTPUT
 AC_MSG_RESULT([
   Options selected
   -------------------------
-  Snd version ...........: $VERSION
+  Snd version ...........: $SND_VERSION
   CFLAGS ................: $CFLAGS
   LDFLAGS ...............:$LDFLAGS
   prefix.................: ${prefix}

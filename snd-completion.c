@@ -239,7 +239,7 @@ static int completions(char *text)
 #endif
 
 
-#if (!HAVE_EXTENSION_LANGUAGE) || HAVE_ECL || HAVE_LIBREP
+#if (!HAVE_EXTENSION_LANGUAGE)
 static int completions(char *text) {return(0);}
 #endif
 

@@ -85,7 +85,7 @@
 
 #include "snd_pd_external.h"
 
-static char *version = "Snd " VERSION " made by Bill Schottstaedt, bil@ccrma.stanford.edu.\nSnd as a PD external made by Kjetil S. Matheussen, kjetil@ccrma.stanford.edu.";
+static char *version = "Snd " SND_VERSION " made by Bill Schottstaedt, bil@ccrma.stanford.edu.\nSnd as a PD external made by Kjetil S. Matheussen, kjetil@ccrma.stanford.edu.";
 
 static t_class *snd_pd_class, *snd_pd_workaroundclass;
 

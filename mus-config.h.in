@@ -87,8 +87,8 @@
 #undef HAVE_PTHREADS
 
 #undef ENABLE_NLS
-#undef PACKAGE
-#undef VERSION
+#undef SND_PACKAGE
+#undef SND_VERSION
 #undef SND_HOST
 
 #undef MUS_LINUX

@@ -1404,6 +1404,7 @@ const char *save_options_in_prefs(void)
 #if HAVE_EXTENSION_LANGUAGE
   FILE *fd;
   char *fullname;
+
 #if HAVE_GUILE
   #define SND_PREFS "~/.snd_prefs_guile"
 #endif
@@ -1416,9 +1417,7 @@ const char *save_options_in_prefs(void)
 #if HAVE_FORTH
   #define SND_PREFS "~/.snd_prefs_forth"
 #endif
-#if HAVE_ECL
-  #define SND_PREFS "~/.snd_prefs_ecl"
-#endif
+
   fullname = mus_expand_filename(SND_PREFS);
   fd = FOPEN(fullname, "w");
   if (!fd)

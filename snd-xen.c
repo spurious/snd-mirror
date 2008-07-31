@@ -26,22 +26,21 @@
  * ch:          (C)      not open source?
  * chicken:     (Scheme) looks clean, but no vararg functions, no bignums, gc protection looks iffy, not clear
  *                         how to call C function from Scheme.
- * ecl:         (CL)     do-able; will require that all direct refs be through xen.c (can't include its header files!)
- *                         it also uses the field "complex" which confuses C.  I started this, got Snd to run ecl
- *                         embedded via xen_repl...
+ * Cint:        (C++)    c++, uses a separate program to handle linkages? -- not an extension language as far as I can tell
+ * ecl:         (CL)     See tools/ecl.txt.
  * eel:         (C)      a commercial product
+ * EiC:         (C)      only void func(void) through EiC_parsestring, but otherwise? Lua-like stack handling.
+ *                       Someone should combine this with libffi.
  * elastic:     (C)      looks dead (no change since 2001), like Lua in calling sequences
- * elk:         (Scheme) looks dead (no change since 1996) and has very severe name-space problems
+ * elk:         (Scheme) looks ok except for GC stuff.
  * Gambit:      (Scheme) not an extension language, complicated connection to C
  * GameMonkey:  ()       c++, windows oriented (no linux I think)
  * haskell               This looks do-able -- it has an FFI to C and can be embedded -- see GHC.
- * (Larceny appears to be call-out only)
- * librep:      (CL)     looks dead, was very hard to debug a long time ago, but I still have the macros (xen.h).
- *                       Maybe it's not dead?  Someone is updating the sources -- see sawfish at sourceforge.
+ * Larceny      (Scheme) appears to be call-out only
+ * librep:      (CL)     see tools/librep.txt.
  * lua:         (C)      do-able, very primitive -- push-pop-stack etc. (I'm told it is freeware, just a funny license)
  * lush:        (CL)     compilation problem, serious name-space problems (not really an extension language)
- * maxima       (CL)     This would be cool...  Perhaps if I got clisp or ecl(?), maxima would run on top?
- *                         But currently clisp is not embeddable.
+ * maxima       (CL)     This would be cool...  but there is no embeddable common lisp.
  * mzscheme:    (Scheme) support semi-exists (I have the xen.h macros for it), but I refuse to touch it
  * ocaml:       (ML)     not an extension language, as far as I can tell
  * octave:      (Matlab) c++, probably do-able; standard linkage is through octave_value_list arg list.
@@ -50,18 +49,25 @@
  * python:      ()       looks like ruby to me -- why duplicate? (I have about 1/4 of xen.h for this)
  *                         as with scheme48, this requires explicit local var ref incrs! ruby-style func defs
  * rscheme:     (Scheme) serious name-space problems
- * scheme48:    (Scheme) this looks doable -- need to get the initialization straight, and find eval-c-string (how do you exit this damned thing?)
- * SCM:         (Scheme) looks tricky -- name space troubles, no bignums
+ * scheme48:    (Scheme) need to get the initialization straight, and find eval-c-string (missing I think),
+ *                         how do you exit this damned thing?, and no smobs? -- how to know when to GC a vct?
+ *                         also import-lambda-definition needs to be callable in C.  Too many troubles.
+ * SCM:         (Scheme) looks tricky -- name space troubles, no bignums; if we include scm.h, we collide
+ *                         with /usr/local/include/gtk-2.0/gdk/gdkrgb.h use of "verbose" as an argument name,
+ *                         since scm.h defines it as (scm_verbose+0) -- this looks bizarre (checked 5e5)
  * s-lang:      (C)      probably doable -- would need to wrap everything in my own struct, and 7 args max is too few.
  * squirrel:    ()       c++, like lua in call sequence
- * stklos:      (Scheme) doesn't build libstklos yet, and has many non-unique names in its headers (checked 0.97)
+ * stklos:      (Scheme) doesn't build libstklos yet, and has many non-unique names in its headers (checked 0.98):
+ *                         stklos.h includes the stklos config file, so we collide with PACKAGE, VERSION (easy to hack around).
+ *                         As with others, it looks like the boot process assumes stklos is the main program.
+ *                         Other than that, this looks complete and not too hard.
  *
  * there are a number of "extension languages" which are "call-out only"; that is, they allow you to extend
  *   their current set of names with calls on foreign functions, but this is not what I mean by an extension language.
  *   Here we want C to be in control, calling into the extension language whenever we feel like it.
  *   I'd call it an "embedded language", but even that phrase seems to be used in confused ways
  *   (for example, newLisp can be "embedded", but it stays completely separate from the caller,
- *   as if I were calling "calc" via execlp).
+ *   as if I were calling "calc" via execlp). 
  */
 
 

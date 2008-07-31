@@ -387,8 +387,8 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   #if HAVE_SETLOCALE
     setlocale (LC_ALL, "");
   #endif
-  bindtextdomain (PACKAGE, LOCALE_DIR);
-  textdomain (PACKAGE);
+  bindtextdomain(SND_PACKAGE, LOCALE_DIR);
+  textdomain (SND_PACKAGE);
   /*
     (bindtextdomain "snd" "/usr/local/share/locale")
     (textdomain "snd")
