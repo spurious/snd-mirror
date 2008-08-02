@@ -18,10 +18,10 @@ OPTIONAL_LIBRARIES=""
 LOCAL_LANGUAGE="None"
 GRAPHICS_TOOLKIT="None"
 
-SND_PACKAGE=Snd
-SND_VERSION=9.12
-AC_DEFINE_UNQUOTED(SND_PACKAGE, "$SND_PACKAGE")
-AC_DEFINE_UNQUOTED(SND_VERSION, "$SND_VERSION")
+PACKAGE=Snd
+VERSION=9.12
+AC_DEFINE_UNQUOTED(SND_PACKAGE, "$PACKAGE")
+AC_DEFINE_UNQUOTED(SND_VERSION, "$VERSION")
 AC_SUBST(SND_PACKAGE)
 AC_SUBST(SND_VERSION)
 
@@ -53,7 +53,9 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --with-forth          try to use Forth as the extension language
 #   --with-ruby           try to use Ruby as the extension language
 #   --with-ruby-prefix    set location of Ruby
+#   --with-s7             try to use S7 as the extension language
 #   --with-gauche         try to use Gauche as the extension language
+#   --with-extension-language use some extension language (default=yes)
 #   --with-hobbit         include hobbit-style function arity checking
 #   --with-rt             make Snd capable of running Snd-Rt
 #   --with-static-xm      include xm module
@@ -114,6 +116,9 @@ AC_ARG_WITH(fftw,        [  --with-fftw		  use fftw, default=yes])
 AC_ARG_WITH(xpm,         [  --with-xpm		  use xpm, default=yes])
 AC_ARG_WITH(xp,          [  --with-xp		  use xp, default=no])
 AC_ARG_WITH(fam,         [  --with-fam		  use libfam (Gamin), default=yes])
+
+AC_ARG_WITH(s7,          [  --with-s7  	          use S7])
+AC_ARG_WITH(extension-language, [  --with-extension-language	use some extension language, default=yes])
 
 
 # -------- internal sample data type --------
@@ -1391,7 +1396,7 @@ if test "$with_guile" = yes && test "$ac_snd_have_extension_language" = yes ; th
   AC_MSG_WARN([You asked for both Guile and $LOCAL_LANGUAGE -- $LOCAL_LANGUAGE will be used])
 fi
 
-if test "$with_guile" != no && test "$ac_snd_have_extension_language" != yes ; then
+if test "$with_guile" = yes ; then
 
 XEN_LIBS=""
 XEN_CFLAGS=""
@@ -1574,6 +1579,30 @@ else
 fi
 fi
 fi
+
+
+
+#--------------------------------------------------------------------------------
+# S7 (the default)
+#--------------------------------------------------------------------------------
+
+if test "$with_s7" = yes && test "$ac_snd_have_extension_language" = yes ; then
+  with_s7=no
+  AC_MSG_WARN([You asked for both s7 and $LOCAL_LANGUAGE -- $LOCAL_LANGUAGE will be used])
+fi
+
+if test "$with_s7" != no && test "$ac_with_extension_language" != no && test "$ac_snd_have_extension_language" != yes ; then
+  AC_DEFINE(HAVE_S7)	
+  AC_DEFINE(HAVE_SCHEME)	
+  ac_snd_have_extension_language=yes
+  AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
+  LOCAL_LANGUAGE="s7"
+  if test "$ac_cv_header_dlfcn_h" = yes ; then
+    LDFLAGS="$LDFLAGS -ldl"
+  fi
+fi
+
+
 
 
 #--------------------------------------------------------------------------------
@@ -2261,7 +2290,7 @@ AC_OUTPUT
 AC_MSG_RESULT([
   Options selected
   -------------------------
-  Snd version ...........: $SND_VERSION
+  Snd version ...........: $VERSION
   CFLAGS ................: $CFLAGS
   LDFLAGS ...............:$LDFLAGS
   prefix.................: ${prefix}

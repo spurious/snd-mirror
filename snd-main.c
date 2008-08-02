@@ -1417,6 +1417,9 @@ const char *save_options_in_prefs(void)
 #if HAVE_FORTH
   #define SND_PREFS "~/.snd_prefs_forth"
 #endif
+#if HAVE_S7
+  #define SND_PREFS "~/.snd_prefs_s7"
+#endif
 
   fullname = mus_expand_filename(SND_PREFS);
   fd = FOPEN(fullname, "w");

@@ -11,12 +11,6 @@ More translations! (See po/snd.pot for the list of translatable
 A graphic-EQ effect (effects.scm) -- this could use the CLM formant generator. 
     A CLM version (non-graphical) is in clm-ins.scm.
 
-A better pitch tracker than spot-freq in examp.scm.
-
-a path envelope editor dialog for dlocsig (as in dlocsig.rb)
-
-A CD building script.
-
 "waterfall" spectrum display in oscope.scm.
 
 Physical model of a thunder machine.
@@ -33,10 +27,10 @@ Should the Scheme/Ruby files be gettext-ized?  Here's a Guile example:
     (format #t (_ "This program is running as process number ~D.") (getpid))
     (newline)
 
-Key bindings to mimic other editors (along the lines of snd_frg.scm)
+lua, octave, python, stklos, elk, haskell support!
+    (see brief comments in snd-xen.c).
 
-lua, octave, python, scheme48, ecl support!
+The move-sound generator is a temporary kludge that fossilized.
 
-an "auto-freeze" function -- find loop points automatically
+A new paned window widget for gtk.
 
-Perry Cook's reverb (nrev+initial echos)

@@ -1152,6 +1152,9 @@ void mus_vct_init(void)
 #endif
 {
 
+#if HAVE_S7
+  vct_tag = XEN_MAKE_OBJECT_TYPE("<vct>", print_vct, free_vct); /* defines the foreign_type entry for a vct */
+#else
 #if (!HAVE_GAUCHE)
   vct_tag = XEN_MAKE_OBJECT_TYPE("Vct", sizeof(vct));
 #else
@@ -1178,7 +1181,7 @@ void mus_vct_init(void)
    *
    * see gauche.collection and gauche.sequence: call-with-iterator, and inherit <collection> and probably <sequence>
    */
-
+#endif
 #endif
 
 #if HAVE_GUILE

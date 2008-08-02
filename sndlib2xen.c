@@ -2616,6 +2616,9 @@ void mus_sndlib_xen_initialize(void)
 {
   mus_sound_initialize();
 
+#if HAVE_S7
+  sound_data_tag = XEN_MAKE_OBJECT_TYPE("<sound-data>", print_sound_data, free_sound_data);
+#else
 #if (!HAVE_GAUCHE)
   sound_data_tag = XEN_MAKE_OBJECT_TYPE("SoundData", sizeof(sound_data));
 #else
@@ -2624,6 +2627,7 @@ void mus_sndlib_xen_initialize(void)
   XEN_EVAL_C_STRING("(define-method (setter object-apply) ((sd <sound-data>) (c <integer>) (i <integer>) (val <number>)) (sound-data-set! sd c i val))");
   XEN_EVAL_C_STRING("(define-method equal? ((sd1 <sound-data>) (sd2 <sound-data>)) (sound-data-equal? sd1 sd2))");
   XEN_DEFINE_PROCEDURE("sound-data-equal?", g_sound_data_equalp_w, 2, 0, 0, "internal function for aound-data equal?");
+#endif
 #endif
 
 #if HAVE_GUILE

@@ -2447,6 +2447,7 @@ static XEN sound_get(XEN snd_n, sp_field_t fld, const char *caller)
   snd_info *sp;
   int i;
   XEN res = XEN_EMPTY_LIST;
+
   if (XEN_TRUE_P(snd_n))
     {
       for (i = ss->max_sounds - 1; i >= 0; i--)
@@ -2457,10 +2458,12 @@ static XEN sound_get(XEN snd_n, sp_field_t fld, const char *caller)
 	}
       return(res);
     }
+
   ASSERT_SOUND(caller, snd_n, 1);
   sp = get_sp(snd_n, PLAYERS_OK);
   if ((sp == NULL) || (sp->inuse == SOUND_WRAPPER))
     return(snd_no_such_sound_error(caller, snd_n));
+
   switch (fld)
     {
     case SP_SYNC:                return(C_TO_XEN_INT(sp->sync));                       break;

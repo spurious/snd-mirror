@@ -5482,7 +5482,7 @@ static int g_imin(int mn, XEN val, int def)
 static int g_omin(off_t mn, XEN val, off_t def)
 {
   off_t nval;
-  nval = xen_to_c_off_t_or_else(val, def);
+  nval = XEN_TO_C_OFF_T_OR_ELSE(val, def);
   if (nval >= mn) return(nval);
   return(mn);
 }

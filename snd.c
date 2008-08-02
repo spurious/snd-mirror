@@ -406,7 +406,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
 
   mus_sound_initialize(); /* has to precede version check (mus_audio_moniker needs to be setup in Alsa/Oss) */
 
-#if HAVE_FORTH || HAVE_GAUCHE || HAVE_RUBY
+#if HAVE_FORTH || HAVE_GAUCHE || HAVE_RUBY || HAVE_S7
   xen_initialize();
 #endif
 

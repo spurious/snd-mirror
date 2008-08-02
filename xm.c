@@ -394,14 +394,20 @@ static XEN make_xm_obj(void *ptr)
 
 static void define_xm_obj(void)
 {
+#if HAVE_S7
+  xm_obj_tag = XEN_MAKE_OBJECT_TYPE("<XmObj>", NULL, xm_obj_free);
+#else
 #if (!HAVE_GAUCHE)
   xm_obj_tag = XEN_MAKE_OBJECT_TYPE("XmObj", sizeof(void *));
 #else
-  xm_obj_tag = XEN_MAKE_OBJECT_TYPE("XmObj", sizeof(void *), NULL, xm_obj_free);
+  xm_obj_tag = XEN_MAKE_OBJECT_TYPE("<XmObj>", sizeof(void *), NULL, xm_obj_free);
 #endif
+#endif
+
 #if HAVE_GUILE
   scm_set_smob_free(xm_obj_tag, xm_obj_free);
 #endif
+
 #if HAVE_FORTH
   fth_set_object_free(xm_obj_tag, xm_obj_free);
 #endif

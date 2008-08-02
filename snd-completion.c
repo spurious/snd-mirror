@@ -162,6 +162,9 @@ static int completions(char *text) {return(0);}
 #endif
 /* end Guile && SCM_MODULE_OBARRAY */
 
+#if HAVE_S7
+static int completions(char *text) {return(0);}
+#endif
 
 #if HAVE_RUBY
 static XEN snd_rb_methods(void)

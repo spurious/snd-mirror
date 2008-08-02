@@ -1178,6 +1178,14 @@ static void print_mus_xen(XEN obj, ScmPort *port, ScmWriteContext *pstate)
 #endif
 
 
+#if HAVE_S7
+static char *print_mus_xen(void *obj)
+{
+  return(mus_describe((mus_any *)obj));
+}
+#endif
+
+
 #if HAVE_RUBY
 static XEN mus_xen_to_s(XEN obj)
 {
@@ -8357,6 +8365,9 @@ void mus_xen_init(void)
 {
   mus_initialize();
 
+#if HAVE_S7
+  mus_xen_tag = XEN_MAKE_OBJECT_TYPE("<mus>", print_mus_xen, free_mus_xen);
+#else
 #if (!HAVE_GAUCHE)
   mus_xen_tag = XEN_MAKE_OBJECT_TYPE("Mus", sizeof(mus_xen));
 #else
@@ -8366,6 +8377,7 @@ void mus_xen_init(void)
   XEN_EVAL_C_STRING("(define-method object-apply ((g <mus>) (val1 <number>) (val2 <number>)) (mus-apply g val1 val2))");
   XEN_EVAL_C_STRING("(define-method equal? ((g1 <mus>) (g2 <mus>)) (mus-equal? g1 g2))");
   XEN_DEFINE_PROCEDURE("mus-equal?", g_mus_equalp_w, 2, 0, 0, "internal function for generator equal?");
+#endif
 #endif
 
 #if HAVE_GUILE
@@ -8553,8 +8565,9 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_mus_apply,   g_mus_apply_w,   0, 0, 1, H_mus_apply);
 
 
-#if HAVE_SCHEME
+#if HAVE_SCHEME && (!HAVE_S7)
   XEN_EVAL_C_STRING("(define %delay delay)"); /* protect the original meaning (a Scheme built-in function) */
+  /* in S7 delay is a "syntax" -- not sure how to protect it */
 #endif
   XEN_DEFINE_PROCEDURE(S_make_delay,      g_make_delay_w,      0, 0, 1, H_make_delay);
   XEN_DEFINE_PROCEDURE(S_make_comb,       g_make_comb_w,       0, 0, 1, H_make_comb);

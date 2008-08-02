@@ -32,7 +32,7 @@
  * EiC:         (C)      only void func(void) through EiC_parsestring, but otherwise? Lua-like stack handling.
  *                       Someone should combine this with libffi.
  * elastic:     (C)      looks dead (no change since 2001), like Lua in calling sequences
- * elk:         (Scheme) looks ok except for GC stuff.
+ * elk:         (Scheme) looks ok except for GC stuff (is it still maintained? -- last change 2006)
  * Gambit:      (Scheme) not an extension language, complicated connection to C
  * GameMonkey:  ()       c++, windows oriented (no linux I think)
  * haskell               This looks do-able -- it has an FFI to C and can be embedded -- see GHC.
@@ -48,7 +48,7 @@
  * pike:        (C)      not an extension language
  * python:      ()       looks like ruby to me -- why duplicate? (I have about 1/4 of xen.h for this)
  *                         as with scheme48, this requires explicit local var ref incrs! ruby-style func defs
- * rscheme:     (Scheme) serious name-space problems
+ * rscheme:     (Scheme) not an extension language.
  * scheme48:    (Scheme) need to get the initialization straight, and find eval-c-string (missing I think),
  *                         how do you exit this damned thing?, and no smobs? -- how to know when to GC a vct?
  *                         also import-lambda-definition needs to be callable in C.  Too many troubles.
@@ -61,6 +61,7 @@
  *                         stklos.h includes the stklos config file, so we collide with PACKAGE, VERSION (easy to hack around).
  *                         As with others, it looks like the boot process assumes stklos is the main program.
  *                         Other than that, this looks complete and not too hard.
+ * tinyscheme   (Scheme) now this is very interesting...
  *
  * there are a number of "extension languages" which are "call-out only"; that is, they allow you to extend
  *   their current set of names with calls on foreign functions, but this is not what I mean by an extension language.
@@ -813,7 +814,7 @@ XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
 #endif
 
 
-#if HAVE_RUBY || HAVE_FORTH
+#if HAVE_RUBY || HAVE_FORTH || HAVE_S7
 XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
 {
   return((*body)(body_data));
@@ -1066,7 +1067,7 @@ static XEN eval_file_wrapper(void *data)
 
 char *g_print_1(XEN obj) /* free return val */
 {
-#if HAVE_GAUCHE || HAVE_FORTH || HAVE_RUBY
+#if HAVE_GAUCHE || HAVE_FORTH || HAVE_RUBY || HAVE_S7
   return(copy_string(XEN_AS_STRING(obj))); 
 #endif
 #if HAVE_GUILE
@@ -1346,6 +1347,12 @@ void snd_load_init_file(bool no_global, bool no_init)
   #define SND_EXT_CONF "/etc/snd_forth.conf"
   #define SND_PREFS "~/.snd_prefs_forth"
   #define SND_INIT "~/.snd_forth"
+#endif
+
+#if HAVE_S7
+  #define SND_EXT_CONF "/etc/snd_s7.conf"
+  #define SND_PREFS "~/.snd_prefs_s7"
+  #define SND_INIT "~/.snd_s7"
 #endif
 
 #define SND_INIT_FILE_ENVIRONMENT_NAME "SND_INIT_FILE"
@@ -1825,6 +1832,12 @@ static XEN g_continuation_p(XEN obj)
 static XEN g_continuation_p(XEN obj)
 {
   return(XEN_FALSE);
+}
+#endif
+#if HAVE_S7
+static XEN g_continuation_p(XEN obj)
+{
+  return(C_TO_XEN_BOOLEAN(is_continuation(obj)));
 }
 #endif
 #endif
@@ -2504,6 +2517,7 @@ XEN_NARGIFY_1(g_add_watcher_w, g_add_watcher)
 
 
 #if HAVE_GUILE
+
 #define S_write_byte "write-byte"
 
 static XEN g_write_byte(XEN byte) /* this collides with CM */
@@ -2515,10 +2529,12 @@ static XEN g_write_byte(XEN byte) /* this collides with CM */
   scm_putc(XEN_TO_C_INT(byte), SCM_COERCE_OUTPORT(port));
   return(byte);
 }
+
 #endif
 
 
 #if HAVE_GAUCHE
+
 static XEN g_eval_string(XEN str)
 {
   char *cstr;
@@ -2535,7 +2551,9 @@ static XEN g_ftell(XEN fd)
 {
   return(C_TO_XEN_OFF_T(lseek(XEN_TO_C_INT(fd), 0, SEEK_CUR)));
 }
+
 XEN_NARGIFY_1(g_ftell_w, g_ftell)
+
 #endif
 
 
@@ -2982,6 +3000,10 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 
 #if HAVE_FORTH
   XEN_YES_WE_HAVE("snd-forth");
+#endif
+
+#if HAVE_S7
+  XEN_YES_WE_HAVE("snd-s7");
 #endif
 
 #if USE_CAIRO
