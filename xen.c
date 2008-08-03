@@ -2265,23 +2265,22 @@ char *xen_version(void)
 void xen_repl(int argc, char **argv)
 {
   int size = 512, ctr = 0;
-  char **buffer = NULL;
-  buffer = (char **)calloc(1, sizeof(char *));
-  buffer[0] = (char *)calloc(size, sizeof(char));
+  char *buffer = NULL;
+  buffer = (char *)calloc(size, sizeof(char *));
 
   while (true)
     {
       char *temp;
       fprintf(stdout, "\n>");
-      fgets(buffer[0], size, stdin);
-      if (buffer[0])
+      fgets(buffer, size, stdin);
+      if ((buffer[0] != '\n') || (strlen(buffer) > 1))
 	{
-	  temp = (char *)malloc(strlen(buffer[0]) + 128);
+	  temp = (char *)malloc(strlen(buffer) + 128);
 	  sprintf(temp, 
 		  /*		  "(catch #t (lambda () (write %s)) (lambda args (display args)))", */
 		  /* need to rewrite the catch implementation in s7.scm */
 		  "(write %s)",
-		  buffer[0]);           /* use write, not display so that strings are in double quotes */
+		  buffer);           /* use write, not display so that strings are in double quotes */
 	  XEN_EVAL_C_STRING(temp);
 	  free(temp);
 	}
@@ -2289,7 +2288,6 @@ void xen_repl(int argc, char **argv)
       if (ctr > 10000) break;
     }
 
-  free(buffer[0]);
   free(buffer);
 }
 
@@ -2378,11 +2376,10 @@ XEN s7_mk_ulong(unsigned long num)
 }
 
 
-/* use symbols for now */
-
 bool s7_is_keyword(XEN obj)
 {
-  return(XEN_SYMBOL_P(obj));
+  return((XEN_SYMBOL_P(obj)) &&
+	 (symname(obj)[0] == ':'));
 }
 
 bool s7_keyword_eq_p(XEN k1, XEN k2)
@@ -2392,7 +2389,14 @@ bool s7_keyword_eq_p(XEN k1, XEN k2)
 
 XEN s7_mk_keyword(const char *key)
 {
-  return(C_STRING_TO_XEN_SYMBOL(key));
+  XEN sym;
+  char *name;
+  name = (char *)calloc(strlen(key) + 2, sizeof(char));
+  sprintf(name, ":%s", key);                     /* prepend ":" */
+  sym = C_STRING_TO_XEN_SYMBOL(name);
+  free(name);
+  new_slot_spec_in_env(s7, s7->global_env, sym, sym); /* GC protect (?) */
+  return(sym);
 }
 
 
@@ -2434,13 +2438,6 @@ XEN s7_member(XEN sym, XEN lst)
     if (sym == XEN_CAR(x))
       return(XEN_CAR(x));
   return(XEN_FALSE);
-}
-
-
-bool s7_bound_p(XEN obj)
-{
-  return((obj != XEN_UNDEFINED) &&
-	 (oblist_find_by_name(s7, symname(obj)) != XEN_UNDEFINED)); /* or maybe find_slot_in_env? */
 }
 
 
@@ -2533,6 +2530,7 @@ typedef struct {
   const char *name;
   char *(*print)(void *value);
   void (*free)(void *value);
+  /* TODO: equal? getter? setter? gc-mark for embedded objects? */
 } fobject;
 
 static fobject *foreign_types = NULL;
@@ -2563,16 +2561,17 @@ int s7_new_foreign_type(const char *name, char *(*print)(void *value), void (*fr
   return(tag);
 }
 
-char *describe_object(pointer a)
+char *describe_foreign_object(pointer a)
 {
   int tag;
   tag = a->_object._fobj.type;
   if (foreign_types[tag].print)
     return((*(foreign_types[tag].print))(a->_object._fobj.value));
+  fprintf(stderr,"use name");
   return(strdup(foreign_types[tag].name));
 }
 
-void free_object(pointer a)
+void free_foreign_object(pointer a)
 {
   int tag;
   tag = a->_object._fobj.type;

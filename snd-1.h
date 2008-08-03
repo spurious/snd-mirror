@@ -93,12 +93,51 @@ static XEN name_reversed(XEN *argv, int argc, void *self) \
 }}}
 
 #else
+
+#if HAVE_S7
+
+#define WITH_TWO_SETTER_ARGS(name_reversed, name)	   \
+  static pointer name_reversed(scheme *sc, pointer args)   \
+  {                                                        \
+    if (XEN_NOT_BOUND_P(XEN_CADR(args)))		   \
+      return(name(XEN_CAR(args), XEN_UNDEFINED));	   \
+    return(name(XEN_CADR(args), XEN_CAR(args)));	   \
+  }
+
+#define WITH_THREE_SETTER_ARGS(name_reversed, name)                      \
+  static pointer name_reversed(scheme *sc, pointer args)                 \
+  {							                 \
+    if (XEN_NOT_BOUND_P(XEN_CADR(args)))		                 \
+      return(name(XEN_CAR(args), XEN_UNDEFINED, XEN_UNDEFINED));         \
+    else {					 		         \
+      if (XEN_NOT_BOUND_P(XEN_CADDR(args)))				 \
+      return(name(XEN_CADR(args), XEN_CAR(args), XEN_UNDEFINED));	 \
+      else return(name(XEN_CADDR(args), XEN_CAR(args), XEN_CADR(args))); \
+  }}
+
+#define WITH_FOUR_SETTER_ARGS(name_reversed, name)                                         \
+  static pointer name_reversed(scheme *sc, pointer args)                                   \
+{							                                   \
+  if (XEN_NOT_BOUND_P(XEN_CADR(args)))					                   \
+    return(name(XEN_CAR(args), XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));              \
+  else {								                   \
+    if (XEN_NOT_BOUND_P(XEN_CADDR(args)))				                   \
+      return(name(XEN_CADR(args), XEN_CAR(args), XEN_UNDEFINED, XEN_UNDEFINED));           \
+    else {								                   \
+      if (XEN_NOT_BOUND_P(XEN_CADDDR(args)))				                   \
+	return(name(XEN_CADDR(args), XEN_CAR(args), XEN_CADR(args), XEN_UNDEFINED));       \
+      else return(name(XEN_CADDDR(args), XEN_CAR(args), XEN_CADR(args), XEN_CADDR(args))); \
+  }}}
+
+#else
+
 #define WITH_TWO_SETTER_ARGS(name_reversed, name)
 #define WITH_THREE_SETTER_ARGS(name_reversed, name)
 #define WITH_FOUR_SETTER_ARGS(name_reversed, name)
-#endif
-#endif
 
+#endif
+#endif
+#endif
 
 #define ASSERT_SAMPLE_TYPE(Origin, Beg, Offset) \
   XEN_ASSERT_TYPE(XEN_NUMBER_P(Beg) || XEN_FALSE_P(Beg) || XEN_NOT_BOUND_P(Beg), Beg, Offset, Origin, "a number or " PROC_FALSE)

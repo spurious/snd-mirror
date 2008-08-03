@@ -108,6 +108,15 @@ int mus_optkey_unscramble(const char *caller, int nkeys, XEN *keys, XEN *args, i
   int arg_ctr = 0, key_start = 0, rtn_ctr = 0, nargs;
   bool keying = false, key_found = false;
   nargs = nkeys * 2;
+
+#if 0
+  fprintf(stderr, "keys: %d ", nargs);
+  {
+    int i;
+    for (i = 0; i < nargs; i++) fprintf(stderr," %s ", XEN_AS_STRING(args[i]));
+  }
+#endif
+
   while ((arg_ctr < nargs) && 
 	 (XEN_BOUND_P(args[arg_ctr])))
     {
@@ -1181,7 +1190,7 @@ static void print_mus_xen(XEN obj, ScmPort *port, ScmWriteContext *pstate)
 #if HAVE_S7
 static char *print_mus_xen(void *obj)
 {
-  return(mus_describe((mus_any *)obj));
+  return(mus_describe(((mus_xen *)obj)->gen));
 }
 #endif
 

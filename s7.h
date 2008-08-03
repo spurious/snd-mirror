@@ -144,7 +144,7 @@ pointer gensym(scheme *sc);
 pointer mk_string(scheme *sc, const char *str);
 pointer mk_counted_string(scheme *sc, const char *str, int len);
 pointer mk_character(scheme *sc, int c);
-pointer mk_foreign_func(scheme *sc, foreign_func f);
+pointer mk_foreign_function(scheme *sc, foreign_func f);
 pointer mk_foreign_object(scheme *sc, int type, void *value);
 
 void putstr(scheme *sc, const char *s);
@@ -174,7 +174,7 @@ struct scheme_interface {
   pointer (*mk_counted_string)(scheme *sc, const char *str, int len);
   pointer (*mk_character)(scheme *sc, int c);
   pointer (*mk_vector)(scheme *sc, int len);
-  pointer (*mk_foreign_func)(scheme *sc, foreign_func f);
+  pointer (*mk_foreign_function)(scheme *sc, foreign_func f);
   void (*putstr)(scheme *sc, const char *s);
   void (*putcharacter)(scheme *sc, int c);
   
@@ -313,6 +313,10 @@ struct cell _HASHF;
 pointer F;               /* special cell representing #f */
 struct cell _EOF_OBJ;
 pointer EOF_OBJ;         /* special cell representing end-of-file object */
+
+struct cell _UNDEFINED;  
+pointer UNDEFINED;       /* special cell representing unset or undefined object */
+
 pointer oblist;          /* pointer to symbol table */
 pointer global_env;      /* pointer to global environment */
 

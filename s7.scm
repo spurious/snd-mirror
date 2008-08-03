@@ -64,8 +64,11 @@
      (foldr (lambda (a b) (if (> a b) a b)) (car lst) (cdr lst)))
 (define (min . lst)
      (foldr (lambda (a b) (if (< a b) a b)) (car lst) (cdr lst)))
-(define (succ x) (+ x 1))
-(define (pred x) (- x 1))
+
+(define (log10 n) (/ (log n) (log 10)))
+
+(define (1+ x) (+ x 1))
+(define (1- x) (- x 1))
 (define (gcd a b)
   (let ((aa (abs a))
 	(bb (abs b)))
@@ -98,13 +101,13 @@
           (let loop ((i 0))
                (if (= i n)
                     s
-                    (begin (string-set! s i e) (loop (succ i)))))))
+                    (begin (string-set! s i e) (loop (1+ i)))))))
 
 (define (string->list s)
-     (let loop ((n (pred (string-length s))) (l '()))
+     (let loop ((n (1- (string-length s))) (l '()))
           (if (= n -1)
                l
-               (loop (pred n) (cons (string-ref s n) l)))))
+               (loop (1- n) (cons (string-ref s n) l)))))
 
 (define (string-copy str)
      (string-append str))
@@ -151,7 +154,7 @@
                     ((= i nb)
                          (cmp 1 0))
                     ((chcmp = (string-ref a i) (string-ref b i))
-                         (loop (succ i)))
+                         (loop (1+ i)))
                     (else
                          (chcmp cmp (string-ref a i) (string-ref b i)))))))
 
@@ -232,7 +235,7 @@
                     (if (= i n)
                          #t
                          (and (equal? (vector-ref x i) (vector-ref y i))
-                              (loop (succ i))))))))
+                              (loop (1+ i))))))))
 
 (define (list->vector x)
      (apply vector x))
@@ -242,13 +245,13 @@
           (let loop ((i 0))
                (if (= i n)
                     v
-                    (begin (vector-set! v i e) (loop (succ i)))))))
+                    (begin (vector-set! v i e) (loop (1+ i)))))))
 
 (define (vector->list v)
-     (let loop ((n (pred (vector-length v))) (l '()))
+     (let loop ((n (1- (vector-length v))) (l '()))
           (if (= n -1)
                l
-               (loop (pred n) (cons (vector-ref v n) l)))))
+               (loop (1- n) (cons (vector-ref v n) l)))))
 
 ;; The following quasiquote macro is due to Eric S. Tiedemann.
 ;;   Copyright 1988 by Eric S. Tiedemann; all rights reserved.
@@ -541,6 +544,7 @@
                     (* (quotient *seed* q) r)))
           (if (< *seed* 0) (set! *seed* (+ *seed* m)))
           *seed*))
+
 ;; SRFI-0 
 ;; COND-EXPAND
 ;; Implemented as a macro
@@ -575,9 +579,20 @@
 			   (not (cond-eval (cadr condition)))))
 		(else (error "cond-expand : unknown operator" (car condition)))))))
 
-(gc-verbose #f)
+(gc-verbose #t)
+(tracing 0)
 
 ;;; --------------------------------------------------------------------------------
 
-(define *features* (list 's7))
+(set! *features* (cons 's7 *features*))
 (define *load-path* '())
+
+;;; defmacro from slib
+(define-macro (defmacro name args . body)
+ `(define-macro (,name ,@args) ,@body))
+
+;;; scheme side make-procedure-with-setter
+(defmacro make-procedure-with-setter (getter setter)
+  `(let ()
+     (define ,(string->symbol (string-append "set-" (symbol->string name))) ,setter)
+     ,getter))

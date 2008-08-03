@@ -8710,6 +8710,30 @@ static XEN g_set_sample_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg
 }
 #endif
 
+#if HAVE_S7
+static XEN g_set_sample_reversed(scheme *sc, pointer args)
+{
+  if (XEN_NOT_BOUND_P(XEN_LIST_REF(args, 1)))
+    return(g_set_sample(XEN_UNDEFINED, XEN_LIST_REF(args, 0), XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
+  else
+    {
+      if (XEN_NOT_BOUND_P(XEN_LIST_REF(args, 2)))
+	return(g_set_sample(XEN_LIST_REF(args, 0), XEN_LIST_REF(args, 1), XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
+      else 
+	{
+	  if (XEN_NOT_BOUND_P(XEN_LIST_REF(args, 3))) 
+	    return(g_set_sample(XEN_LIST_REF(args, 0), XEN_LIST_REF(args, 2), XEN_LIST_REF(args, 1), XEN_UNDEFINED, XEN_UNDEFINED)); 
+	  else 
+	    {
+	      if (XEN_NOT_BOUND_P(XEN_LIST_REF(args, 4))) 
+		return(g_set_sample(XEN_LIST_REF(args, 0), XEN_LIST_REF(args, 3), XEN_LIST_REF(args, 1), XEN_LIST_REF(args, 2), XEN_UNDEFINED)); 
+	      else return(g_set_sample(XEN_LIST_REF(args, 0), XEN_LIST_REF(args, 4), XEN_LIST_REF(args, 1), XEN_LIST_REF(args, 2), XEN_LIST_REF(args, 3)));
+	    }
+	}
+    }
+}
+#endif
+
 #if HAVE_GAUCHE
 static XEN g_set_sample_reversed(XEN *argv, int argc, void *self)
 {
@@ -9024,6 +9048,65 @@ static XEN g_set_samples_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN ar
 	    }
 	}
     }
+}
+#endif
+
+#if HAVE_S7
+static XEN g_set_samples_reversed(scheme *sc, pointer args)
+{
+  if (XEN_NOT_BOUND_P(XEN_LIST_REF(args, 3)))
+    return(g_set_samples(XEN_LIST_REF(args, 0), XEN_LIST_REF(args, 1), XEN_LIST_REF(args, 2), 
+			 XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, 
+			 XEN_UNDEFINED, XEN_UNDEFINED));
+  else
+    {
+      if (XEN_NOT_BOUND_P(XEN_LIST_REF(args, 4)))
+	return(g_set_samples(XEN_LIST_REF(args, 0), XEN_LIST_REF(args, 1), XEN_LIST_REF(args, 3), XEN_LIST_REF(args, 2), 
+			     XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
+      else 
+	{
+	  if (XEN_NOT_BOUND_P(XEN_LIST_REF(args, 5))) 
+	    return(g_set_samples(XEN_LIST_REF(args, 0), XEN_LIST_REF(args, 1), XEN_LIST_REF(args, 4), 
+				 XEN_LIST_REF(args, 2), XEN_LIST_REF(args, 3), 
+				 XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
+	  else
+	    {
+	      if (XEN_NOT_BOUND_P(XEN_LIST_REF(args, 6))) 
+		return(g_set_samples(XEN_LIST_REF(args, 0), XEN_LIST_REF(args, 1), XEN_LIST_REF(args, 5), 
+				     XEN_LIST_REF(args, 2), XEN_LIST_REF(args, 3), XEN_LIST_REF(args, 4), 
+				     XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
+	      else
+		{
+		  if (XEN_NOT_BOUND_P(XEN_LIST_REF(args, 7))) 
+		    return(g_set_samples(XEN_LIST_REF(args, 0), XEN_LIST_REF(args, 1), XEN_LIST_REF(args, 6), 
+					 XEN_LIST_REF(args, 2), XEN_LIST_REF(args, 3), XEN_LIST_REF(args, 4), 
+					 XEN_LIST_REF(args, 5), 
+					 XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
+		  else
+		    {
+		      if (XEN_NOT_BOUND_P(XEN_LIST_REF(args, 8))) 
+			return(g_set_samples(XEN_LIST_REF(args, 0), XEN_LIST_REF(args, 1), XEN_LIST_REF(args, 7),
+					     XEN_LIST_REF(args, 2), XEN_LIST_REF(args, 3), XEN_LIST_REF(args, 4), 
+					     XEN_LIST_REF(args, 5), XEN_LIST_REF(args, 6),
+					     XEN_UNDEFINED, XEN_UNDEFINED));
+		      else 
+			{
+			  if (XEN_NOT_BOUND_P(XEN_LIST_REF(args, 9)))
+			    return(g_set_samples(XEN_LIST_REF(args, 0), XEN_LIST_REF(args, 1), XEN_LIST_REF(args, 8),
+						 XEN_LIST_REF(args, 2), XEN_LIST_REF(args, 3), XEN_LIST_REF(args, 4),
+						 XEN_LIST_REF(args, 5), XEN_LIST_REF(args, 6), XEN_LIST_REF(args, 7), 
+						 XEN_UNDEFINED));
+			  else return(g_set_samples(XEN_LIST_REF(args, 0), XEN_LIST_REF(args, 1), XEN_LIST_REF(args, 9),
+						    XEN_LIST_REF(args, 2), XEN_LIST_REF(args, 3), XEN_LIST_REF(args, 4),
+						    XEN_LIST_REF(args, 5), XEN_LIST_REF(args, 6), XEN_LIST_REF(args, 7),
+						    XEN_LIST_REF(args, 8)));
+			}
+		    }
+		}
+	    }
+	}
+    }
+
 }
 #endif
 

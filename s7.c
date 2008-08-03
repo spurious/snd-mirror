@@ -20,17 +20,27 @@
  *     made several procedures global (eqv, list_length, append, reverse, reverse_in_place, atom2str and others)
  *     scheme_call returns sc->value
  *     merged scheme-private.h into scheme.h and changed names to s7.[ch], init.scm -> s7.scm, opdefines.h -> s7-ops.h
- *     added *features* and *load-path* to s7.scm
+ *     added 's7 to *features* and defined *load-path* (s7.scm)
  *     changed final initializer at dispatch_table preload to make C happier
  *     added T_FOREIGN_OBJECT (and renamed old T_FOREIGN to T_FOREIGN_FUNCTION, is_foreign to is_foreign_function)
  *       and various code to support it (is_foreign_object, _fobj struct in s7.h etc, mk_foreign_object)
+ *     sc->UNDEFINED for unset (optional) args
+ *     no inexact ints, so print 440.0 as 440.0 (not 440)
+ *     added OP_SET2 and code for generalized set!
+ *     changed succ to 1+ and pred to 1- in s7.scm.  added log10.
+ *     added atan asin acos atanh asinh acosh
  *
  * need catch like guile
  *      unwind-protect
- *      perhaps set USE_SCHEME_STACK for continuations?
- *      procedure-with-setter
  *      define* et al
  *      applicable types
+ *      ratio and complex, int->off_t
+ *      modulo of float -> fmod, floor/ceiling/truncate rtn ints!
+ *        make-polar make-rectangular real-part imag-part magnitude angle
+ *        rationalize numerator denominator
+ *      block comment #| |#
+ *      procedure arity, source, and documentation
+ *      eq? of objs? etc
  */
 
 #define _SCHEME_SOURCE
@@ -145,7 +155,12 @@ enum scheme_types {
 };
 
 /* 5 bits here so only 31 types allowed currently */
-
+/*
+  T_RATIO=16,
+  T_COMPLEX=17,
+  T_HOOK=18, (can this be done with lists in init.scm?)
+  T_C_POINTER=20?? (unsigned long wrappers)
+*/
 
 /* ADJ is enough slack to align cells in a TYPE_BITS-bit boundary */
 #define ADJ 32
@@ -236,8 +251,8 @@ INTERFACE INLINE int is_proc(pointer p)     { return (type(p)==T_PROC); }
 INTERFACE INLINE int is_foreign_function(pointer p)  { return (type(p)==T_FOREIGN_FUNCTION); }
 INTERFACE INLINE int is_foreign_object(pointer p) { return(type(p)==T_FOREIGN_OBJECT); }
 
-char *describe_object(pointer a);
-void free_object(pointer a);
+char *describe_foreign_object(pointer a);
+void free_foreign_object(pointer a);
 
 INTERFACE INLINE char *syntaxname(pointer p) { return strvalue(car(p)); }
 #define procnum(p)       ivalue(p)
@@ -868,7 +883,7 @@ static pointer mk_port(scheme *sc, port *p) {
   return (x);
 }
 
-pointer mk_foreign_func(scheme *sc, foreign_func f) {
+pointer mk_foreign_function(scheme *sc, foreign_func f) {
   pointer x = get_cell(sc, sc->NIL, sc->NIL);
   
   typeflag(x) = (T_FOREIGN_FUNCTION | T_ATOM);
@@ -913,6 +928,7 @@ INTERFACE pointer mk_real(scheme *sc, double n) {
   typeflag(x) = (T_NUMBER | T_ATOM);
   rvalue_unchecked(x)= n;
   set_real(x);
+
   return (x);
 }
 
@@ -1098,6 +1114,7 @@ static pointer mk_atom(scheme *sc, char *q) {
                return (mk_symbol(sc, strlwr(q)));
           }
      }
+
      if(has_dec_point) {
           return mk_real(sc,atof(q));
      }
@@ -1299,7 +1316,7 @@ static void finalize_cell(scheme *sc, pointer a)
       else
 	{
 	  if (is_foreign_object(a))
-	    free_object(a);
+	    free_foreign_object(a);
 	}
     }
 }
@@ -1796,6 +1813,8 @@ void atom2str(scheme *sc, pointer l, int f, char **pp, int *plen) {
           p = "#f";
      } else if (l == sc->EOF_OBJ) {
           p = "#<EOF>";
+     } else if (l == sc->UNDEFINED) {
+          p = "#<undefined>";
      } else if (is_port(l)) {
           p = sc->strbuff;
           strcpy(p, "#<PORT>");
@@ -1804,7 +1823,17 @@ void atom2str(scheme *sc, pointer l, int f, char **pp, int *plen) {
           if(is_integer(l)) {
                sprintf(p, "%ld", ivalue_unchecked(l));
           } else {
-               sprintf(p, "%.10g", rvalue_unchecked(l));
+	    int i, len;
+               sprintf(p, "%.14g", rvalue_unchecked(l));
+	       len = strlen(p);
+	       for (i = 0; i < len; i++)  /* make it explicitly a float! */
+		 if (p[i] == '.') break;
+	       if (i == len)
+		 {
+		   p[i]='.';
+		   p[i+1]='0';
+		   p[i+2]='\0';
+		 }
           }
      } else if (is_string(l)) {
           if (!f) {
@@ -1863,7 +1892,7 @@ void atom2str(scheme *sc, pointer l, int f, char **pp, int *plen) {
      } else if (is_continuation(l)) {
           p = "#<CONTINUATION>";
      } else if (is_foreign_object(l)) {
-          p = describe_object(l);
+       p = describe_foreign_object(l);
      } else {
           p = "#<ERROR>";
      }
@@ -2427,6 +2456,7 @@ static pointer opexe_0(scheme *sc, enum scheme_opcodes op) {
                s_goto(sc,OP_APPLY);
           }
 
+
 #if USE_TRACING
      case OP_TRACING: {
        int tr=sc->tracing;
@@ -2447,13 +2477,21 @@ static pointer opexe_0(scheme *sc, enum scheme_opcodes op) {
        /* fall through */
      case OP_REAL_APPLY:
 #endif
-          if (is_proc(sc->code)) {
-               s_goto(sc,procnum(sc->code));   /* PROCEDURE */
-          } else if (is_foreign_function(sc->code)) {
-               x=sc->code->_object._ff(sc,sc->args);
-               s_return(sc,x);
-          } else if (is_closure(sc->code) || is_macro(sc->code) 
-		     || is_promise(sc->code)) { /* CLOSURE */
+          if (is_proc(sc->code)) 
+	    {
+	      s_goto(sc,procnum(sc->code));   /* PROCEDURE */
+	    } 
+	  else 
+	    if (is_foreign_function(sc->code)) 
+	      {
+		x=sc->code->_object._ff(sc,sc->args);
+		s_return(sc,x);
+	      } 
+
+	  /* TODO: if foreign_object getter */
+
+	    else if (is_closure(sc->code) || is_macro(sc->code) || is_promise(sc->code)) 
+	      { /* CLOSURE */
 	    /* Should not accept promise */
                /* make environment */
                new_frame_in_env(sc, closure_env(sc->code)); 
@@ -2483,6 +2521,7 @@ static pointer opexe_0(scheme *sc, enum scheme_opcodes op) {
                sc->dump = cont_dump(sc->code);
                s_return(sc,sc->args != sc->NIL ? car(sc->args) : sc->NIL);
           } else {
+
                Error_0(sc,"illegal function");
           }
 
@@ -2510,7 +2549,7 @@ static pointer opexe_0(scheme *sc, enum scheme_opcodes op) {
           s_return(sc,car(sc->code));
 
      case OP_DEF0:  /* define */
-          if(is_immutable(car(sc->code)))
+          if (is_immutable(car(sc->code)))
             Error_1(sc,"define: unable to alter immutable", car(sc->code));
 
           if (is_pair(car(sc->code))) {
@@ -2544,21 +2583,39 @@ static pointer opexe_0(scheme *sc, enum scheme_opcodes op) {
           s_retbool(find_slot_in_env(sc,x,car(sc->args),1)!=sc->NIL);
 
      case OP_SET0:       /* set! */
-          if(is_immutable(car(sc->code)))
-                Error_1(sc,"set!: unable to alter immutable variable",car(sc->code));
-          s_save(sc,OP_SET1, sc->NIL, car(sc->code));
+          if (is_immutable(car(sc->code)))
+	    Error_1(sc,"set!: unable to alter immutable variable",car(sc->code));
+
+	  if (is_pair(car(sc->code))) /* has accessor */
+	    s_save(sc, OP_SET2, sc->NIL, sc->code);
+	  else s_save(sc,OP_SET1, sc->NIL, car(sc->code));
           sc->code = cadr(sc->code);
           s_goto(sc,OP_EVAL);
 
-     case OP_SET1:       /* set! */
-       y=find_slot_in_env(sc,sc->envir,sc->code,1);
-          if (y != sc->NIL) {
-               set_slot_in_env(sc, y, sc->value); 
-               s_return(sc,sc->value);
-          } else {
-               Error_1(sc,"set!: unbound variable:", sc->code); 
-          }
+     case OP_SET2:      /* generalized set! */
+       {
+	 char *sym, *name;
+	 name = symname(caar(sc->code));
+	 sym = (char *)calloc(strlen(name) + 6, sizeof(char));
+	 sprintf(sym, "set-%s", name);
+	 caar(sc->code) = mk_symbol(sc, sym);
+       }
+       /* TODO: save set symbol for quicker access */
 
+       sc->code = append(sc, car(sc->code), cons(sc, sc->value, sc->NIL));
+       s_goto(sc, OP_EVAL);
+
+     case OP_SET1:       /* normal set! */
+	   y = find_slot_in_env(sc, sc->envir, sc->code, 1);
+	   if (y != sc->NIL) 
+	     {
+	       set_slot_in_env(sc, y, sc->value); 
+	       s_return(sc, sc->value);
+	     }
+	   else 
+	     {
+	       Error_1(sc, "set!: unbound variable:", sc->code); 
+	     }
 
      case OP_BEGIN:      /* begin */
           if (!is_pair(sc->code)) {
@@ -2921,6 +2978,30 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op) {
                s_return(sc, mk_real(sc, atan2(rvalue(x),rvalue(y))));
           }
 
+     case OP_SINH:
+          x=car(sc->args);
+          s_return(sc, mk_real(sc, sinh(rvalue(x))));
+
+     case OP_COSH:
+          x=car(sc->args);
+          s_return(sc, mk_real(sc, cosh(rvalue(x))));
+
+     case OP_TANH:
+          x=car(sc->args);
+          s_return(sc, mk_real(sc, tanh(rvalue(x))));
+
+     case OP_ASINH:
+          x=car(sc->args);
+          s_return(sc, mk_real(sc, asinh(rvalue(x))));
+
+     case OP_ACOSH:
+          x=car(sc->args);
+          s_return(sc, mk_real(sc, acosh(rvalue(x))));
+
+     case OP_ATANH:
+          x=car(sc->args);
+	  s_return(sc, mk_real(sc, atanh(rvalue(x))));
+
      case OP_SQRT:
           x=car(sc->args);
           s_return(sc, mk_real(sc, sqrt(rvalue(x))));
@@ -3106,6 +3187,8 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op) {
           setimmutable(x);
           s_return(sc,x);
      case OP_ATOM2STR: /* atom->string */
+       fprintf(stderr,"atom2str??");
+
        x=car(sc->args);
        if(is_number(x) || is_character(x) || is_string(x) || is_symbol(x)) {
 	 char *p;
@@ -3921,6 +4004,7 @@ static pointer opexe_6(scheme *sc, enum scheme_opcodes op) {
      long v;
 
      switch (op) {
+
      case OP_LIST_LENGTH:     /* length */   /* a.k */
           v=list_length(sc,car(sc->args));
           if(v<0) {
@@ -4209,7 +4293,7 @@ static struct scheme_interface vtbl ={
   mk_counted_string,
   mk_character,
   mk_vector,
-  mk_foreign_func,
+  mk_foreign_function,
   putstr,
   putcharacter,
 
@@ -4304,6 +4388,7 @@ int scheme_init_custom_alloc(scheme *sc, func_alloc malloc, func_dealloc free) {
   sc->T = &sc->_HASHT;
   sc->F = &sc->_HASHF;
   sc->EOF_OBJ=&sc->_EOF_OBJ;
+  sc->UNDEFINED=&sc->_UNDEFINED;
   sc->free_cell = &sc->_NIL;
   sc->fcells = 0;
   sc->no_memory=0;
@@ -4542,7 +4627,7 @@ int main(int argc, char **argv) {
   scheme_set_input_port_file(&sc, stdin);
   scheme_set_output_port_file(&sc, stdout);
 #if USE_DL
-  scheme_define(&sc,sc.global_env,mk_symbol(&sc,"load-extension"),mk_foreign_func(&sc, scm_load_ext));
+  scheme_define(&sc,sc.global_env,mk_symbol(&sc,"load-extension"),mk_foreign_function(&sc, scm_load_ext));
 #endif
   argv++;
   if(access(file_name,0)!=0) {

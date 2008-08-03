@@ -1814,10 +1814,13 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 #define XEN_PROCEDURE_CAST (XEN (*)())
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
   xen_gauche_define_procedure(Name, XEN_PROCEDURE_CAST Func, ReqArg, OptArg, RstArg, Doc)
+
 #define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   xen_gauche_define_procedure_with_setter(Get_Name, Get_Func, Get_Help, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt)
+
 #define XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   xen_gauche_define_procedure_with_reversed_setter(Get_Name, Get_Func, Get_Help, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt)
+
 
 void xen_gauche_define_procedure(const char *Name, XEN (*Func)(), int ReqArg, int OptArg, int RstArg, const char *Doc);
 void xen_gauche_define_procedure_with_reversed_setter(const char *get_name, XEN (*get_func)(), const char *get_help, XEN (*set_func)(), XEN (*reversed_set_func)(), 
@@ -1830,8 +1833,10 @@ void xen_gauche_define_procedure_with_setter(const char *get_name, XEN (*get_fun
 #define XEN_PROCEDURE_CAST (ScmHeaderRec* (*)(ScmHeaderRec**, int, void*))
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
   xen_gauche_define_procedure(Name, XEN_PROCEDURE_CAST Func, ReqArg, OptArg, RstArg, Doc)
+
 #define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   xen_gauche_define_procedure_with_setter(Get_Name, XEN_PROCEDURE_CAST Get_Func, Get_Help, XEN_PROCEDURE_CAST Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt)
+
 #define XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   xen_gauche_define_procedure_with_reversed_setter(Get_Name, XEN_PROCEDURE_CAST Get_Func, Get_Help, XEN_PROCEDURE_CAST Set_Func, XEN_PROCEDURE_CAST Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt)
 
@@ -2066,10 +2071,10 @@ extern scheme *s7;  /* s7 is a pointer to the current scheme */
 #define XEN_TO_C_BOOLEAN(Arg)                      ((XEN_TRUE_P(Arg)) ? true : false)
 
 #define XEN_NULL_P(Arg)                            ((Arg) == s7->NIL)
-#define XEN_BOUND_P(Arg)                           s7_bound_p(Arg)
-#define XEN_NOT_BOUND_P(Arg)                       (!XEN_BOUND_P(Arg))
+#define XEN_BOUND_P(Arg)                           ((Arg) != s7->UNDEFINED)
+#define XEN_NOT_BOUND_P(Arg)                       ((Arg) == s7->UNDEFINED)
 #define XEN_EMPTY_LIST                             s7->NIL
-#define XEN_UNDEFINED                              s7->NIL
+#define XEN_UNDEFINED                              s7->UNDEFINED
 
 #define XEN_EQ_P(Arg1, Arg2)                       s7_eq_p(Arg1, Arg2)
 #define XEN_EQV_P(Arg1, Arg2)                      (eqv(s7, Arg1, Arg2) != 0)
@@ -2112,25 +2117,30 @@ extern scheme *s7;  /* s7 is a pointer to the current scheme */
 #define C_TO_XEN_STRINGN(Str, Len)                 s7->vptr->mk_counted_string(s7, Str, Len) /* Len + 1?? */
 
 #define XEN_ZERO                                   s7->vptr->mk_integer(s7, 0)
-#define XEN_NUMBER_P(Arg)                          is_number(Arg)
-#define XEN_DOUBLE_P(Arg)                          is_real(Arg)
-#define XEN_TO_C_DOUBLE(Arg)                       rvalue(Arg)
-#define XEN_TO_C_DOUBLE_OR_ELSE(Arg, Def)          ((XEN_NUMBER_P(Arg)) ? XEN_TO_C_DOUBLE(Arg) : Def)
-#define C_TO_XEN_DOUBLE(Arg)                       s7->vptr->mk_real(s7, Arg)
 #define XEN_INTEGER_P(Arg)                         is_integer(Arg)
 #define C_TO_XEN_INT(Arg)                          s7->vptr->mk_integer(s7, Arg)
 #define XEN_TO_C_INT(Arg)                          ivalue(Arg)
 #define XEN_TO_C_INT_OR_ELSE(Arg, Def)             ((XEN_INTEGER_P(Arg)) ? XEN_TO_C_INT(Arg) : Def)
+
 #define XEN_ULONG_P(Arg)                           s7_is_ulong(Arg)
 #define XEN_TO_C_ULONG(Arg)                        s7_uvalue(Arg)
 #define C_TO_XEN_ULONG(Arg)                        s7_mk_ulong(Arg)
+
 #define C_TO_XEN_LONG_LONG(Arg)                    C_TO_XEN_OFF_T(Arg)
 #define XEN_TO_C_LONG_LONG(Arg)                    XEN_TO_C_OFF_T(Arg)
-#define XEN_EXACT_P(Arg)                           s7_is_exact(Arg)
+
 #define XEN_OFF_T_P(Arg)                           XEN_INTEGER_P(Arg) /* I'm going to use off_t's throughout */
 #define XEN_TO_C_OFF_T_OR_ELSE(Arg, Def)           XEN_TO_C_INT_OR_ELSE(Arg, Def)
 #define C_TO_XEN_OFF_T(Arg)                        C_TO_XEN_INT(Arg)
 #define XEN_TO_C_OFF_T(Arg)                        XEN_TO_C_INT(Arg)
+
+#define XEN_NUMBER_P(Arg)                          is_number(Arg)
+#define XEN_EXACT_P(Arg)                           s7_is_exact(Arg)
+
+#define XEN_DOUBLE_P(Arg)                          is_real(Arg)
+#define XEN_TO_C_DOUBLE(Arg)                       rvalue(Arg)
+#define XEN_TO_C_DOUBLE_OR_ELSE(Arg, Def)          ((XEN_NUMBER_P(Arg)) ? XEN_TO_C_DOUBLE(Arg) : Def)
+#define C_TO_XEN_DOUBLE(Arg)                       s7->vptr->mk_real(s7, Arg)
 
 #define C_STRING_TO_XEN_FORM(Str)                  s7_string_to_form(Str)
 #define XEN_EVAL_FORM(Form)                        s7_eval_form(Form)
@@ -2401,16 +2411,19 @@ extern scheme *s7;  /* s7 is a pointer to the current scheme */
     return(InName(args)); \
   }
 
-
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
   s7->vptr->scheme_define(s7, s7->global_env, \
-                          s7->vptr->mk_symbol(s7, Name), \
-                          s7->vptr->mk_foreign_func(s7, Func))
+                          mk_symbol(s7, Name), \
+                          mk_foreign_function(s7, Func))
 
 #define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
+  XEN_DEFINE_PROCEDURE(Get_Name, Get_Func, Get_Req, Get_Opt, 0, Get_Help); \
+  XEN_DEFINE_PROCEDURE("set-" Get_Name, Set_Func, Set_Req, Set_Opt, 0, Get_Help)
 
 
 #define XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
+  XEN_DEFINE_PROCEDURE(Get_Name, Get_Func, Get_Req, Get_Opt, 0, Get_Help); \
+  XEN_DEFINE_PROCEDURE("set-" Get_Name, Rev_Func, Set_Req, Set_Opt, 0, Get_Help)
 
 
 #define XEN_ARITY(Func) 0
@@ -2431,6 +2444,7 @@ extern scheme *s7;  /* s7 is a pointer to the current scheme */
 #define XEN_CALL_2_NO_CATCH(Func, Arg1, Arg2)                         scheme_call(s7, Func, XEN_LIST_2(Arg1, Arg2))
 #define XEN_CALL_3_NO_CATCH(Func, Arg1, Arg2, Arg3)                   scheme_call(s7, Func, XEN_LIST_3(Arg1, Arg2, Arg3))
 #define XEN_APPLY_NO_CATCH(Func, Args)                                scheme_call(s7, Func, Args)
+typedef XEN (*XEN_CATCH_BODY_TYPE)                                    (void *data);
 
 #define XEN_DEFINE_CONSTANT(Name, Value, Help) \
   s7->vptr->scheme_define(s7, s7->global_env, \
@@ -2477,11 +2491,10 @@ extern scheme *s7;  /* s7 is a pointer to the current scheme */
 #define XEN_HOOK_PROCEDURES(Arg) 0
 
 #define XEN_YES_WE_HAVE(Feature)                                    s7_provide(Feature)
-
 #define XEN_PROTECT_FROM_GC(Arg) 0
 
 
-typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
+
 
 bool s7_is_ulong(XEN arg);
 unsigned long s7_uvalue(XEN num);
@@ -2492,7 +2505,6 @@ XEN s7_list_ref(XEN lst, int num);
 XEN s7_assoc(XEN sym, XEN lst);
 XEN s7_member(XEN sym, XEN lst);
 
-bool s7_bound_p(XEN obj);
 bool s7_eq_p(XEN obj1, XEN obj2);
 
 bool s7_is_keyword(XEN obj);
