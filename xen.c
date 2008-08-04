@@ -2243,11 +2243,10 @@ void xen_initialize(void)
 
 #if HAVE_S7
 
-#include "s7.c"
+#include "s7.h"
 
 scheme *s7;
 
-#define S7_VERSION "0"
 
 char *xen_version(void)
 {
@@ -2292,323 +2291,58 @@ void xen_repl(int argc, char **argv)
 }
 
 
+static XEN protected_objects;             /* these are permanently protected things */
+static int protected_objects_size = 0;
+static int protected_objects_top = 0;
+#define INITIAL_GC_PROTECTION_SIZE 256
+
 void xen_initialize(void)
 {
   FILE *init;
 
-  s7 = scheme_init_new();
+  s7 = s7_init_new();
   if (!s7) fprintf(stderr, "Can't initialize S7!\n");
 
-  scheme_set_input_port_file(s7, stdin);
-  scheme_set_output_port_file(s7, stdout);
+  s7_set_input_port_file(s7, stdin);
+  s7_set_output_port_file(s7, stdout);
+
+  /* we'll use the ext_data pointer to handle foreign objects that need GC protection */
+  /*   it includes anything that wants permanent GC protection, via XEN_PROTECT_FROM_GC */
+
+  protected_objects = XEN_MAKE_VECTOR(INITIAL_GC_PROTECTION_SIZE, XEN_EMPTY_LIST);
+  protected_objects_size = INITIAL_GC_PROTECTION_SIZE;
+  s7_set_external_data(s7, protected_objects);
 
   init = fopen("s7.scm", "r");
   if (init)
-    scheme_load_file(s7, init);
+    s7_load_open_file(s7, init);
   else fprintf(stderr, "Can't find s7.scm?");
   fclose(init);
 }
 
 
-void s7_provide(const char *feature)
+void xen_protect_from_gc(XEN obj)
 {
-  char *expr;
-  int len;
-  len = strlen(feature) + 64;
-  expr = (char *)calloc(len, sizeof(char));
-  snprintf(expr, len, "(set! *features* (cons '%s *features*))", feature);
-  XEN_EVAL_C_STRING(expr);
-  free(expr);
-}
+  XEN_VECTOR_SET(protected_objects, protected_objects_top++, obj);
 
-
-XEN s7_load_file(const char *file)
-{
-  FILE *fp;
-  fp = fopen(file, "r");
-  if (fp)
+  if (protected_objects_top == (protected_objects_size + 1))                  /* only room for 1 more -- link in another vector */
     {
-      scheme_load_file(s7, fp);
-      fclose(fp);
-      return(XEN_TRUE);
+      int new_size;
+      XEN new_vector;
+      new_size = protected_objects_size += INITIAL_GC_PROTECTION_SIZE;        /* make the next (attached) table bigger */
+      new_vector = XEN_MAKE_VECTOR(new_size, XEN_EMPTY_LIST);
+      XEN_VECTOR_SET(protected_objects, protected_objects_top, new_vector);   /* attach to old */
+      protected_objects = new_vector;                                         /* now start filling the new vector */
+      protected_objects_top = 0;
+      protected_objects_size = new_size;
     }
-  return(XEN_FALSE);
 }
-
-
-XEN s7_load_path(void)
-{
-  return(XEN_EVAL_C_STRING("*load-path*"));
-}
-
-
-XEN s7_add_to_load_path(const char *file)
-{
-  return(XEN_FALSE);
-}
-
-XEN s7_load_file_with_path(const char *file)
-{
-  return(s7_load_file(file));
-}
-
 
 
 void xen_gc_mark(XEN val)
 {
+  s7_mark_object(val);
 }
-
-/* for now, treat as int */
-
-bool s7_is_ulong(XEN arg)
-{
-  return(XEN_INTEGER_P(arg));
-}
-
-unsigned long s7_uvalue(XEN num)
-{
-  return((unsigned long)ivalue(num));
-}
-
-XEN s7_mk_ulong(unsigned long num)
-{
-  return(mk_integer(s7, num));
-}
-
-
-bool s7_is_keyword(XEN obj)
-{
-  return((XEN_SYMBOL_P(obj)) &&
-	 (symname(obj)[0] == ':'));
-}
-
-bool s7_keyword_eq_p(XEN k1, XEN k2)
-{
-  return(k1 == k2);
-}
-
-XEN s7_mk_keyword(const char *key)
-{
-  XEN sym;
-  char *name;
-  name = (char *)calloc(strlen(key) + 2, sizeof(char));
-  sprintf(name, ":%s", key);                     /* prepend ":" */
-  sym = C_STRING_TO_XEN_SYMBOL(name);
-  free(name);
-  new_slot_spec_in_env(s7, s7->global_env, sym, sym); /* GC protect (?) */
-  return(sym);
-}
-
-
-
-XEN s7_make_and_fill_vector(int len, XEN fill)
-{
-  XEN vect;
-  vect = s7->vptr->mk_vector(s7, len);
-  s7->vptr->fill_vector(vect, fill);
-  return(vect);
-}
-
-
-XEN s7_list_ref(XEN lst, int num)
-{
-  if (num == 0)
-    return(XEN_CAR(lst));
-  return(s7_list_ref(XEN_CDR(lst), num - 1));
-}
-
-XEN s7_list_set(XEN lst, int num, XEN val)
-{
-}
-
-
-XEN s7_assoc(XEN sym, XEN lst)
-{
-  XEN x;
-  int v;
-  for (x = lst, v = 0; is_pair(x); x = cdr(x))
-    if ((is_pair(XEN_CAR(x))) &&
-	(sym == XEN_CAR(XEN_CAR(x))))
-      return(XEN_CAR(x));
-  return(XEN_FALSE);
-}
-
-
-XEN s7_member(XEN sym, XEN lst)
-{
-  XEN x;
-  int v;
-  for (x = lst, v = 0; is_pair(x); x = cdr(x))
-    if (sym == XEN_CAR(x))
-      return(XEN_CAR(x));
-  return(XEN_FALSE);
-}
-
-XEN s7_vector_to_list(XEN vect)
-{
-  return(XEN_EMPTY_LIST);
-}
-
-
-bool s7_eq_p(XEN obj1, XEN obj2)
-{
-  return(obj1 == obj2);
-}
-
-
-XEN s7_eval_string(const char *str)
-{
-  scheme_load_string(s7, str);
-  return(s7->value);
-}
-
-
-XEN s7_eval_form(XEN form)
-{
-  return(XEN_FALSE);
-}
-
-
-XEN s7_name_to_value(const char *name)
-{
-  XEN x;
-  x = find_slot_in_env(s7, s7->global_env, C_STRING_TO_XEN_SYMBOL(name), 0);
-  if (x != s7->NIL)
-    return(slot_value_in_env(x));
-  return(XEN_FALSE);
-}
-
-
-XEN s7_string_to_form(const char *str)
-{
-  return(XEN_FALSE);
-}
-
-
-pointer call_scheme(const char *func_name, pointer func_args);
-pointer call_scheme(const char *func_name, pointer func_args) 
-{ 
-  pointer carx = mk_symbol(s7,func_name);
-  pointer cdrx = func_args;
-
-  dump_stack_reset(s7); 
-  s7->envir = s7->global_env;
-  s7->code = cons(s7, carx, cdrx);
-  s7->interactive_repl=0;
-  s7->retcode=0;
-  Eval_Cycle(s7, OP_EVAL);
-  return(s7->value);
-} 
-
-XEN s7_display(XEN obj)
-{
-  char *p;
-  int len;
-  /* TODO: figure out how to call write here */
-  atom2str(s7, obj, 0, &p, &len);
-  return(mk_counted_string(s7, p, len));
-  /*
-  return(call_scheme(s7, "WRITE", XEN_LIST_1(func_args)));
-  */
-}
-
-
-XEN s7_error(XEN type, XEN info)
-{
-  return(XEN_FALSE);
-}
-
-XEN s7_throw(XEN type, XEN info)
-{
-  return(XEN_FALSE);
-}
-
-XEN s7_wrong_type_arg_error(const char *caller, int arg_n, XEN arg, const char *descr)
-{
-  return(XEN_FALSE);
-}
-
-XEN s7_out_of_range_error(const char *caller, int arg_n, XEN arg, const char *descr)
-{
-  return(XEN_FALSE);
-}
-
-
-typedef struct {
-  int type;
-  const char *name;
-  char *(*print)(void *value);
-  void (*free)(void *value);
-  bool (*equal)(void *val1, void *val2);
-  /* TODO: getter? setter? gc-mark for embedded objects? */
-} fobject;
-
-static fobject *foreign_types = NULL;
-static int foreign_types_size = 0;
-static int num_foreign_types = 0;
-
-int s7_new_foreign_type(const char *name, 
-			char *(*print)(void *value), 
-			void (*free)(void *value), 
-			bool (*equal)(void *val1, void *val2))
-{
-  int tag;
-  tag = num_foreign_types++;
-  if (tag >= foreign_types_size)
-    {
-      if (foreign_types_size == 0)
-	{
-	  foreign_types_size = 8;
-	  foreign_types = (fobject *)calloc(foreign_types_size, sizeof(fobject));
-	}
-      else
-	{
-	  foreign_types_size = tag + 8;
-	  foreign_types = (fobject *)realloc((void *)foreign_types, foreign_types_size * sizeof(fobject));
-	}
-    }
-  foreign_types[tag].type = tag;
-  foreign_types[tag].name = strdup(name);
-  foreign_types[tag].free = free;
-  foreign_types[tag].print = print;
-  foreign_types[tag].equal = equal;
-  return(tag);
-}
-
-char *describe_foreign_object(pointer a)
-{
-  int tag;
-  tag = a->_object._fobj.type;
-  if (foreign_types[tag].print)
-    return((*(foreign_types[tag].print))(a->_object._fobj.value));
-  fprintf(stderr,"use name");
-  return(strdup(foreign_types[tag].name));
-}
-
-void free_foreign_object(pointer a)
-{
-  int tag;
-  tag = a->_object._fobj.type;
-  if (foreign_types[tag].free)
-    (*(foreign_types[tag].free))(a->_object._fobj.value);
-}
-
-bool equalp_foreign_objects(pointer a, pointer b)
-{
-  if ((is_foreign_object(a)) &&
-      (is_foreign_object(b)) &&
-      (a->_object._fobj.type == b->_object._fobj.type))
-    {
-      int tag;
-      tag = a->_object._fobj.type;
-      if (foreign_types[tag].equal)
-	return((*(foreign_types[tag].equal))(a->_object._fobj.value, b->_object._fobj.value));
-      return(a == b);
-    }
-  return(false);
-}
-
-
 
 
 #endif

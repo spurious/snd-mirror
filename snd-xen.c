@@ -1837,7 +1837,7 @@ static XEN g_continuation_p(XEN obj)
 #if HAVE_S7
 static XEN g_continuation_p(XEN obj)
 {
-  return(C_TO_XEN_BOOLEAN(is_continuation(obj)));
+  return(C_TO_XEN_BOOLEAN(s7_is_continuation(obj)));
 }
 #endif
 #endif

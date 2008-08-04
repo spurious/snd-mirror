@@ -1162,7 +1162,7 @@ void mus_vct_init(void)
 {
 
 #if HAVE_S7
-  vct_tag = XEN_MAKE_OBJECT_TYPE("<vct>", print_vct, free_vct, s7_mus_vct_equalp);
+  vct_tag = XEN_MAKE_OBJECT_TYPE("<vct>", print_vct, free_vct, s7_mus_vct_equalp, 0);
 #else
 #if (!HAVE_GAUCHE)
   vct_tag = XEN_MAKE_OBJECT_TYPE("Vct", sizeof(vct));

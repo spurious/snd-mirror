@@ -1119,17 +1119,21 @@ static XEN *make_vcts(int size)
 
 enum {MUS_DATA_WRAPPER, MUS_INPUT_FUNCTION, MUS_ANALYZE_FUNCTION, MUS_EDIT_FUNCTION, MUS_SYNTHESIZE_FUNCTION, MUS_SELF_WRAPPER, MUS_MAX_VCTS};
 
+#if HAVE_S7
+static XEN_MARK_OBJECT_TYPE mark_mus_xen(void *obj) 
+#else
 static XEN_MARK_OBJECT_TYPE mark_mus_xen(XEN obj) 
+#endif
 {
 #if HAVE_GAUCHE
   static const char *keys[6] = {"mus-data", "mus-input", "mus-analyze", "mus-edit", "mus-synthesize", "mus-self"};
 #endif
   mus_xen *ms;
-#if HAVE_RUBY
-  /* rb_gc_mark passes us the actual value, not the XEN wrapper! */
+#if HAVE_RUBY || HAVE_S7
+  /* rb_gc_mark and scheme_mark_object pass us the actual value, not the XEN wrapper */
   ms = (mus_xen *)obj;
 #endif
-#if HAVE_SCHEME || HAVE_FORTH
+#if HAVE_GAUCHE || HAVE_GUILE || HAVE_FORTH
   ms = XEN_TO_MUS_XEN(obj);
 #endif
   if (ms->vcts) 
@@ -1148,7 +1152,7 @@ static XEN_MARK_OBJECT_TYPE mark_mus_xen(XEN obj)
 #if HAVE_RUBY
   return(NULL);
 #endif
-#if !HAVE_FORTH
+#if HAVE_GUILE || HAVE_GAUCHE
   return(XEN_FALSE);
 #endif
 }
@@ -8382,7 +8386,7 @@ void mus_xen_init(void)
   mus_initialize();
 
 #if HAVE_S7
-  mus_xen_tag = XEN_MAKE_OBJECT_TYPE("<mus>", print_mus_xen, free_mus_xen, s7_equalp_mus_xen);
+  mus_xen_tag = XEN_MAKE_OBJECT_TYPE("<mus>", print_mus_xen, free_mus_xen, s7_equalp_mus_xen, mark_mus_xen);
 #else
 #if (!HAVE_GAUCHE)
   mus_xen_tag = XEN_MAKE_OBJECT_TYPE("Mus", sizeof(mus_xen));

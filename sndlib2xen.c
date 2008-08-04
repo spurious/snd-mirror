@@ -2624,7 +2624,7 @@ void mus_sndlib_xen_initialize(void)
   mus_sound_initialize();
 
 #if HAVE_S7
-  sound_data_tag = XEN_MAKE_OBJECT_TYPE("<sound-data>", print_sound_data, free_sound_data, s7_equalp_sound_data);
+  sound_data_tag = XEN_MAKE_OBJECT_TYPE("<sound-data>", print_sound_data, free_sound_data, s7_equalp_sound_data, 0);
 #else
 #if (!HAVE_GAUCHE)
   sound_data_tag = XEN_MAKE_OBJECT_TYPE("SoundData", sizeof(sound_data));

@@ -1387,6 +1387,35 @@ AC_ARG_WITH(forth,
 	fi)
 
 
+
+#--------------------------------------------------------------------------------
+# S7 (the default someday)
+#--------------------------------------------------------------------------------
+
+S7_LIB=""
+
+if test "$with_s7" = yes && test "$ac_snd_have_extension_language" = yes ; then
+  with_s7=no
+  AC_MSG_WARN([You asked for both s7 and $LOCAL_LANGUAGE -- $LOCAL_LANGUAGE will be used])
+fi
+
+if test "$with_s7" = yes && test "$ac_with_extension_language" != no && test "$ac_snd_have_extension_language" != yes ; then
+  AC_DEFINE(HAVE_S7)	
+  AC_DEFINE(HAVE_SCHEME)	
+  ac_snd_have_extension_language=yes
+  AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
+  LOCAL_LANGUAGE="s7"
+  S7_LIB="s7.o"
+  if test "$ac_cv_header_dlfcn_h" = yes ; then
+    LDFLAGS="$LDFLAGS -ldl"
+  fi
+fi
+
+AC_SUBST(S7_LIB)
+
+
+
+
 #--------------------------------------------------------------------------------
 # Guile
 #--------------------------------------------------------------------------------
@@ -1396,7 +1425,7 @@ if test "$with_guile" = yes && test "$ac_snd_have_extension_language" = yes ; th
   AC_MSG_WARN([You asked for both Guile and $LOCAL_LANGUAGE -- $LOCAL_LANGUAGE will be used])
 fi
 
-if test "$with_guile" = yes ; then
+if test "$with_guile" != no && test "$ac_with_extension_language" != no && test "$ac_snd_have_extension_language" != yes ; then
 
 XEN_LIBS=""
 XEN_CFLAGS=""
@@ -1579,29 +1608,6 @@ else
 fi
 fi
 fi
-
-
-
-#--------------------------------------------------------------------------------
-# S7 (the default)
-#--------------------------------------------------------------------------------
-
-if test "$with_s7" = yes && test "$ac_snd_have_extension_language" = yes ; then
-  with_s7=no
-  AC_MSG_WARN([You asked for both s7 and $LOCAL_LANGUAGE -- $LOCAL_LANGUAGE will be used])
-fi
-
-if test "$with_s7" != no && test "$ac_with_extension_language" != no && test "$ac_snd_have_extension_language" != yes ; then
-  AC_DEFINE(HAVE_S7)	
-  AC_DEFINE(HAVE_SCHEME)	
-  ac_snd_have_extension_language=yes
-  AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
-  LOCAL_LANGUAGE="s7"
-  if test "$ac_cv_header_dlfcn_h" = yes ; then
-    LDFLAGS="$LDFLAGS -ldl"
-  fi
-fi
-
 
 
 

@@ -9818,7 +9818,7 @@ XEN_NARGIFY_1(g_edit_fragment_type_name_w, g_edit_fragment_type_name)
 void g_init_edits(void)
 {
 #if HAVE_S7
-  sf_tag = XEN_MAKE_OBJECT_TYPE("<sample-reader>", print_sf, free_sf, s7_equalp_sf);
+  sf_tag = XEN_MAKE_OBJECT_TYPE("<sample-reader>", print_sf, free_sf, s7_equalp_sf, 0);
 #else
 #if (!HAVE_GAUCHE)
   sf_tag = XEN_MAKE_OBJECT_TYPE("SampleReader", sizeof(snd_fd));

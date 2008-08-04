@@ -5830,7 +5830,7 @@ static Int c_gcd_1(Int a, Int b)
       if (a > b)
 	{
 	  Int rem;
-	  rem = mod(a, b);
+	  rem = c_mod(a, b);
 	  if (rem == 0) return(b);
 	  else return(c_gcd_1(b, rem));
 	}
@@ -5979,17 +5979,6 @@ static xen_value *lcm_1(ptree *prog, xen_value **args, int num_args)
 
 
 /* ---------------- remainder, quotient, modulo ---------------- */
-
-static Int c_mod(Int x, Int y)
-{
-  Int z;
-  if (y == 0) return(x); /* else arithmetic exception */
-  z = x % y;
-  if (((y < 0) && (z > 0)) ||
-      ((y > 0) && (z < 0)))
-    return(z + y);
-  return(z);
-}
 
 
 static void modulo_i(int *args, ptree *pt) {INT_RESULT = c_mod(INT_ARG_1, INT_ARG_2);}

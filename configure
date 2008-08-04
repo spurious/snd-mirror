@@ -731,6 +731,7 @@ FTH_LIBS
 FTH_HAVE_COMPLEX
 FTH_HAVE_RATIO
 FTH
+S7_LIB
 XM_LIBS
 LD_XM_LIBS
 AUDIO_LIB
@@ -807,6 +808,8 @@ with_fftw
 with_xpm
 with_xp
 with_fam
+with_s7
+with_extension_language
 with_sample_width
 with_motif_prefix
 with_temp_dir
@@ -1513,6 +1516,8 @@ Optional Packages:
   --with-xpm		  use xpm, default=yes
   --with-xp		  use xp, default=no
   --with-fam		  use libfam (Gamin), default=yes
+  --with-s7  	          use S7
+  --with-extension-language	use some extension language, default=yes
   --with-sample-width=N   use N bits of samples
   --with-motif-prefix=PFX where Motif is installed
   --with-temp-dir	  directory to use for temp files
@@ -3690,14 +3695,14 @@ OPTIONAL_LIBRARIES=""
 LOCAL_LANGUAGE="None"
 GRAPHICS_TOOLKIT="None"
 
-SND_PACKAGE=Snd
-SND_VERSION=9.12
+PACKAGE=Snd
+VERSION=9.12
 cat >>confdefs.h <<_ACEOF
-#define SND_PACKAGE "$SND_PACKAGE"
+#define SND_PACKAGE "$PACKAGE"
 _ACEOF
 
 cat >>confdefs.h <<_ACEOF
-#define SND_VERSION "$SND_VERSION"
+#define SND_VERSION "$VERSION"
 _ACEOF
 
 
@@ -3734,7 +3739,9 @@ _ACEOF
 #   --with-forth          try to use Forth as the extension language
 #   --with-ruby           try to use Ruby as the extension language
 #   --with-ruby-prefix    set location of Ruby
+#   --with-s7             try to use S7 as the extension language
 #   --with-gauche         try to use Gauche as the extension language
+#   --with-extension-language use some extension language (default=yes)
 #   --with-hobbit         include hobbit-style function arity checking
 #   --with-rt             make Snd capable of running Snd-Rt
 #   --with-static-xm      include xm module
@@ -3948,6 +3955,19 @@ fi
 # Check whether --with-fam was given.
 if test "${with_fam+set}" = set; then
   withval=$with_fam;
+fi
+
+
+
+# Check whether --with-s7 was given.
+if test "${with_s7+set}" = set; then
+  withval=$with_s7;
+fi
+
+
+# Check whether --with-extension-language was given.
+if test "${with_extension_language+set}" = set; then
+  withval=$with_extension_language;
 fi
 
 
@@ -18509,6 +18529,45 @@ fi
 
 
 
+
+#--------------------------------------------------------------------------------
+# S7 (the default someday)
+#--------------------------------------------------------------------------------
+
+S7_LIB=""
+
+if test "$with_s7" = yes && test "$ac_snd_have_extension_language" = yes ; then
+  with_s7=no
+  { $as_echo "$as_me:$LINENO: WARNING: You asked for both s7 and $LOCAL_LANGUAGE -- $LOCAL_LANGUAGE will be used" >&5
+$as_echo "$as_me: WARNING: You asked for both s7 and $LOCAL_LANGUAGE -- $LOCAL_LANGUAGE will be used" >&2;}
+fi
+
+if test "$with_s7" = yes && test "$ac_with_extension_language" != no && test "$ac_snd_have_extension_language" != yes ; then
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_S7 1
+_ACEOF
+
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_SCHEME 1
+_ACEOF
+
+  ac_snd_have_extension_language=yes
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_EXTENSION_LANGUAGE 1
+_ACEOF
+
+  LOCAL_LANGUAGE="s7"
+  S7_LIB="s7.o"
+  if test "$ac_cv_header_dlfcn_h" = yes ; then
+    LDFLAGS="$LDFLAGS -ldl"
+  fi
+fi
+
+
+
+
+
+
 #--------------------------------------------------------------------------------
 # Guile
 #--------------------------------------------------------------------------------
@@ -18519,7 +18578,7 @@ if test "$with_guile" = yes && test "$ac_snd_have_extension_language" = yes ; th
 $as_echo "$as_me: WARNING: You asked for both Guile and $LOCAL_LANGUAGE -- $LOCAL_LANGUAGE will be used" >&2;}
 fi
 
-if test "$with_guile" != no && test "$ac_snd_have_extension_language" != yes ; then
+if test "$with_guile" != no && test "$ac_with_extension_language" != no && test "$ac_snd_have_extension_language" != yes ; then
 
 XEN_LIBS=""
 XEN_CFLAGS=""
@@ -20979,6 +21038,7 @@ _ACEOF
 fi
 fi
 fi
+
 
 
 #--------------------------------------------------------------------------------
@@ -26945,7 +27005,7 @@ fi
 { $as_echo "$as_me:$LINENO: result:
   Options selected
   -------------------------
-  Snd version ...........: $SND_VERSION
+  Snd version ...........: $VERSION
   CFLAGS ................: $CFLAGS
   LDFLAGS ...............:$LDFLAGS
   prefix.................: ${prefix}
@@ -26959,7 +27019,7 @@ fi
 $as_echo "
   Options selected
   -------------------------
-  Snd version ...........: $SND_VERSION
+  Snd version ...........: $VERSION
   CFLAGS ................: $CFLAGS
   LDFLAGS ...............:$LDFLAGS
   prefix.................: ${prefix}

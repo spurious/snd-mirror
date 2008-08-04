@@ -2062,38 +2062,38 @@ extern scheme *s7;  /* s7 is a pointer to the current scheme */
 #define XEN_LANGUAGE_NAME                          "S7"
 #define XEN_COMMENT_STRING                         ";"
 
-#define XEN_FALSE                                  s7->F
-#define XEN_TRUE                                   s7->T
+#define XEN_FALSE                                  s7_F(s7)
+#define XEN_TRUE                                   s7_T(s7)
 #define XEN_TRUE_P(Arg)                            ((Arg) == XEN_TRUE)  /* not scheme-wise, but Snd-wise (#t as special arg) */
 #define XEN_FALSE_P(Arg)                           ((Arg) == XEN_FALSE)
 #define XEN_BOOLEAN_P(Arg)                         (((Arg) == XEN_TRUE) || ((Arg) == XEN_FALSE))
 #define C_TO_XEN_BOOLEAN(Arg)                      ((Arg) ? XEN_TRUE : XEN_FALSE)
 #define XEN_TO_C_BOOLEAN(Arg)                      ((XEN_TRUE_P(Arg)) ? true : false)
 
-#define XEN_NULL_P(Arg)                            ((Arg) == s7->NIL)
-#define XEN_BOUND_P(Arg)                           ((Arg) != s7->UNDEFINED)
-#define XEN_NOT_BOUND_P(Arg)                       ((Arg) == s7->UNDEFINED)
-#define XEN_EMPTY_LIST                             s7->NIL
-#define XEN_UNDEFINED                              s7->UNDEFINED
+#define XEN_NULL_P(Arg)                            ((Arg) == s7_NIL(s7))
+#define XEN_BOUND_P(Arg)                           ((Arg) != s7_UNDEFINED(s7))
+#define XEN_NOT_BOUND_P(Arg)                       ((Arg) == s7_UNDEFINED(s7))
+#define XEN_EMPTY_LIST                             s7_NIL(s7)
+#define XEN_UNDEFINED                              s7_UNDEFINED(s7)
 
 #define XEN_EQ_P(Arg1, Arg2)                       s7_eq_p(Arg1, Arg2)
-#define XEN_EQV_P(Arg1, Arg2)                      (eqv(s7, Arg1, Arg2) != 0)
+#define XEN_EQV_P(Arg1, Arg2)                      s7_eqv_p(s7, Arg1, Arg2)
 #define XEN_EQUAL_P(Arg1, Arg2)                    s7_equal_p(Arg1, Arg2)
 
 #define XEN_CONS_P(Arg)                            s7_cons_p(Arg)
-#define XEN_CONS(Arg1, Arg2)                       cons(s7, Arg1, Arg2)
-#define XEN_CONS_2(Arg1, Arg2, Arg3)               cons(s7, Arg1, XEN_CONS(Arg2, Arg3))
-#define XEN_PAIR_P(Arg)                            is_pair(Arg)
-#define XEN_CAR(Arg)                               pair_car(Arg)
-#define XEN_CDR(Arg)                               pair_cdr(Arg)
+#define XEN_CONS(Arg1, Arg2)                       s7_cons(s7, Arg1, Arg2)
+#define XEN_CONS_2(Arg1, Arg2, Arg3)               s7_cons(s7, Arg1, XEN_CONS(Arg2, Arg3))
+#define XEN_PAIR_P(Arg)                            s7_is_pair(Arg)
+#define XEN_CAR(Arg)                               s7_car(Arg)
+#define XEN_CDR(Arg)                               s7_cdr(Arg)
 #define XEN_CADR(Arg)                              XEN_CAR(XEN_CDR(Arg))
 #define XEN_CADDR(Arg)                             XEN_CAR(XEN_CDR(XEN_CDR(Arg)))
 #define XEN_CADDDR(Arg)                            XEN_CAR(XEN_CDR(XEN_CDR(XEN_CDR(Arg))))
 #define XEN_CDDR(Arg)                              XEN_CDR(XEN_CDR(Arg))
 #define XEN_LIST_P(Arg)                            XEN_PAIR_P(Arg)
-#define XEN_LIST_LENGTH(Arg)                       list_length(s7, Arg)
+#define XEN_LIST_LENGTH(Arg)                       s7_list_length(s7, Arg)
 #define XEN_LIST_P_WITH_LENGTH(Arg, Len)           ((XEN_PAIR_P(Arg)) && ((Len = XEN_LIST_LENGTH(Arg)) > 0))
-#define XEN_LIST_1(a)                              XEN_CONS(a, s7->NIL)
+#define XEN_LIST_1(a)                              XEN_CONS(a, s7_NIL(s7))
 #define XEN_LIST_2(a, b)                           XEN_CONS(a, XEN_LIST_1(b))
 #define XEN_LIST_3(a, b, c)                        XEN_CONS(a, XEN_LIST_2(b, c))
 #define XEN_LIST_4(a, b, c, d)                     XEN_CONS(a, XEN_LIST_3(b, c, d))
@@ -2102,29 +2102,29 @@ extern scheme *s7;  /* s7 is a pointer to the current scheme */
 #define XEN_LIST_7(a, b, c, d, e, f, g)            XEN_CONS(a, XEN_LIST_6(b, c, d, e, f, g))
 #define XEN_LIST_8(a, b, c, d, e, f, g, h)         XEN_CONS(a, XEN_LIST_7(b, c, d, e, f, g, h))
 #define XEN_LIST_9(a, b, c, d, e, f, g, h, i)      XEN_CONS(a, XEN_LIST_8(b, c, d, e, f, g, h, i))
-#define XEN_LIST_REF(Lst, Num)                     s7_list_ref(Lst, Num)
-#define XEN_LIST_SET(Lst, Num, Val)                s7_list_set(Lst, Num, Val)
-#define XEN_LIST_REVERSE(Lst)                      reverse(s7, Lst)
+#define XEN_LIST_REF(Lst, Num)                     s7_list_ref(s7, Lst, Num)
+#define XEN_LIST_SET(Lst, Num, Val)                s7_list_set(s7, Lst, Num, Val)
+#define XEN_LIST_REVERSE(Lst)                      s7_reverse(s7, Lst)
 #define XEN_COPY_ARG(Lst)                          Lst
-#define XEN_APPEND(Arg1, Arg2)                     append(s7, Arg1, Arg2)
-#define XEN_ASSOC(Sym, Lst)                        s7_assoc(Sym, Lst)
-#define XEN_MEMBER(Sym, Lst)                       s7_member(Sym, Lst)
+#define XEN_APPEND(Arg1, Arg2)                     s7_append(s7, Arg1, Arg2)
+#define XEN_ASSOC(Sym, Lst)                        s7_assoc(s7, Sym, Lst)
+#define XEN_MEMBER(Sym, Lst)                       s7_member(s7, Sym, Lst)
 
-#define XEN_STRING_P(Arg)                          is_string(Arg)
-#define XEN_NAME_AS_C_STRING_TO_VALUE(Arg)         s7_name_to_value(Arg)
-#define XEN_TO_C_STRING(Str)                       string_value(Str)
-#define C_TO_XEN_STRING(Arg)                       s7->vptr->mk_string(s7, Arg) /* strlen here so perhaps add 1 to len and use mk_counted_string */
-#define C_TO_XEN_STRINGN(Str, Len)                 s7->vptr->mk_counted_string(s7, Str, Len) /* Len + 1?? */
+#define XEN_STRING_P(Arg)                          s7_is_string(Arg)
+#define XEN_NAME_AS_C_STRING_TO_VALUE(Arg)         s7_name_to_value(s7, Arg)
+#define XEN_TO_C_STRING(Str)                       s7_string_value(Str)
+#define C_TO_XEN_STRING(Arg)                       s7_mk_string(s7, Arg) /* strlen here so perhaps add 1 to len and use mk_counted_string */
+#define C_TO_XEN_STRINGN(Str, Len)                 s7_mk_counted_string(s7, Str, Len) /* Len + 1?? */
 
-#define XEN_ZERO                                   s7->vptr->mk_integer(s7, 0)
-#define XEN_INTEGER_P(Arg)                         is_integer(Arg)
-#define C_TO_XEN_INT(Arg)                          s7->vptr->mk_integer(s7, Arg)
-#define XEN_TO_C_INT(Arg)                          ivalue(Arg)
+#define XEN_ZERO                                   s7_mk_integer(s7, 0)
+#define XEN_INTEGER_P(Arg)                         s7_is_integer(Arg)
+#define C_TO_XEN_INT(Arg)                          s7_mk_integer(s7, Arg)
+#define XEN_TO_C_INT(Arg)                          s7_ivalue(Arg)
 #define XEN_TO_C_INT_OR_ELSE(Arg, Def)             ((XEN_INTEGER_P(Arg)) ? XEN_TO_C_INT(Arg) : Def)
 
 #define XEN_ULONG_P(Arg)                           s7_is_ulong(Arg)
 #define XEN_TO_C_ULONG(Arg)                        s7_uvalue(Arg)
-#define C_TO_XEN_ULONG(Arg)                        s7_mk_ulong((unsigned long)Arg)
+#define C_TO_XEN_ULONG(Arg)                        s7_mk_ulong(s7, (unsigned long)Arg)
 
 #define C_TO_XEN_LONG_LONG(Arg)                    C_TO_XEN_OFF_T(Arg)
 #define XEN_TO_C_LONG_LONG(Arg)                    XEN_TO_C_OFF_T(Arg)
@@ -2134,60 +2134,64 @@ extern scheme *s7;  /* s7 is a pointer to the current scheme */
 #define C_TO_XEN_OFF_T(Arg)                        C_TO_XEN_INT(Arg)
 #define XEN_TO_C_OFF_T(Arg)                        XEN_TO_C_INT(Arg)
 
-#define XEN_NUMBER_P(Arg)                          is_number(Arg)
+#define XEN_NUMBER_P(Arg)                          s7_is_number(Arg)
 #define XEN_EXACT_P(Arg)                           s7_is_exact(Arg)
 
-#define XEN_DOUBLE_P(Arg)                          is_real(Arg)
-#define XEN_TO_C_DOUBLE(Arg)                       rvalue(Arg)
+#define XEN_DOUBLE_P(Arg)                          s7_is_real(Arg)
+#define XEN_TO_C_DOUBLE(Arg)                       s7_rvalue(Arg)
 #define XEN_TO_C_DOUBLE_OR_ELSE(Arg, Def)          ((XEN_NUMBER_P(Arg)) ? XEN_TO_C_DOUBLE(Arg) : Def)
-#define C_TO_XEN_DOUBLE(Arg)                       s7->vptr->mk_real(s7, Arg)
+#define C_TO_XEN_DOUBLE(Arg)                       s7_mk_real(s7, Arg)
 
-#define C_STRING_TO_XEN_FORM(Str)                  s7_string_to_form(Str)
-#define XEN_EVAL_FORM(Form)                        s7_eval_form(Form)
-#define XEN_EVAL_C_STRING(Arg)                     s7_eval_string(Arg)
-#define XEN_TO_STRING(Obj)                         s7_display(Obj)
+#define C_STRING_TO_XEN_FORM(Str)                  s7_string_to_form(s7, Str)
+#define XEN_EVAL_FORM(Form)                        s7_eval_form(s7, Form)
+#define XEN_EVAL_C_STRING(Arg)                     s7_eval_string(s7, Arg)
+#define XEN_TO_STRING(Obj)                         s7_display(s7, Obj)
 
-#define XEN_SYMBOL_TO_C_STRING(Arg)                symname(Arg)
-#define XEN_SYMBOL_P(Arg)                          is_symbol(Arg)
-#define C_STRING_TO_XEN_SYMBOL(Arg)                s7->vptr->mk_symbol(s7, Arg)
+#define XEN_SYMBOL_TO_C_STRING(Arg)                s7_symname(Arg)
+#define XEN_SYMBOL_P(Arg)                          s7_is_symbol(Arg)
+#define C_STRING_TO_XEN_SYMBOL(Arg)                s7_mk_symbol(s7, Arg)
 #define XEN_DOCUMENTATION_SYMBOL                   C_STRING_TO_XEN_SYMBOL("documentation")
 
 #define XEN_WRAP_C_POINTER(Arg)                    C_TO_XEN_ULONG((unsigned long)Arg)
 #define XEN_UNWRAP_C_POINTER(Arg)                  XEN_TO_C_ULONG(Arg)
 #define XEN_WRAPPED_C_POINTER_P(Arg)               XEN_ULONG_P(Arg)
 
-#define XEN_VECTOR_P(Arg)                          is_vector(Arg)
-#define XEN_VECTOR_LENGTH(Arg)                     s7->vptr->vector_length(Arg)
-#define XEN_VECTOR_REF(Vect, Num)                  s7->vptr->vector_elem(Vect, Num)
-#define XEN_VECTOR_SET(Vect, Num, Val)             s7->vptr->set_vector_elem(Vect, Num, Val)
-#define XEN_MAKE_VECTOR(Num, Fill)                 s7_make_and_fill_vector(Num, Fill)
+#define XEN_VECTOR_P(Arg)                          s7_is_vector(Arg)
+#define XEN_VECTOR_LENGTH(Arg)                     s7_vector_length(Arg)
+#define XEN_VECTOR_REF(Vect, Num)                  s7_vector_elem(Vect, Num)
+#define XEN_VECTOR_SET(Vect, Num, Val)             s7_set_vector_elem(Vect, Num, Val)
+#define XEN_MAKE_VECTOR(Num, Fill)                 s7_make_and_fill_vector(s7, Num, Fill)
 #define XEN_VECTOR_TO_LIST(Vect)                   s7_vector_to_list(Vect)
 
-#define XEN_CHAR_P(Arg)                            is_character(Arg)
-#define XEN_TO_C_CHAR(Arg)                         charvalue(Arg)
-#define C_TO_XEN_CHAR(Arg)                         s7->vptr->mk_character(s7, Arg)
+#define XEN_CHAR_P(Arg)                            s7_is_character(Arg)
+#define XEN_TO_C_CHAR(Arg)                         s7_charvalue(Arg)
+#define C_TO_XEN_CHAR(Arg)                         s7_mk_character(s7, Arg)
 
 #define XEN_KEYWORD_P(Obj)                         s7_is_keyword(Obj)
 #define XEN_KEYWORD_EQ_P(k1, k2)                   s7_keyword_eq_p(k1, k2)
-#define XEN_MAKE_KEYWORD(Arg)                      s7_mk_keyword(Arg)
+#define XEN_MAKE_KEYWORD(Arg)                      s7_mk_keyword(s7, Arg)
 
-#define XEN_PROCEDURE_P(Arg)                       (is_proc(Arg) || is_closure(Arg))
+#define XEN_PROCEDURE_P(Arg)                       (s7_is_proc(Arg) || s7_is_closure(Arg))
 #define XEN_PROCEDURE_SOURCE(Func)                 s7_procedure_source(Func)
 
-#define XEN_LOAD_FILE(File)                        s7_load_file(File)
-#define XEN_LOAD_FILE_WITH_PATH(File)              s7_load_file_with_path(File)
-#define XEN_LOAD_PATH                              s7_load_path()
-#define XEN_ADD_TO_LOAD_PATH(Path)                 s7_add_to_load_path(Path)
+#define XEN_LOAD_FILE(File)                        s7_load_file(s7, File)
+#define XEN_LOAD_FILE_WITH_PATH(File)              s7_load_file_with_path(s7, File)
+#define XEN_LOAD_PATH                              s7_load_path(s7)
+#define XEN_ADD_TO_LOAD_PATH(Path)                 s7_add_to_load_path(s7, Path)
 
 #define XEN_ERROR_TYPE(Typ)                        C_STRING_TO_XEN_SYMBOL(Typ)
-#define XEN_ERROR(Type, Info)                      s7_error(Type, Info)
-#define XEN_THROW(Type, Info)                      s7_throw(Type, Info)
+#define XEN_ERROR(Type, Info)                      s7_error(s7, Type, Info)
+#define XEN_THROW(Type, Info)                      s7_throw(s7, Type, Info)
+
+#define XEN_YES_WE_HAVE(Feature)                   s7_provide(s7, Feature)
+#define XEN_PROTECT_FROM_GC(Arg)                   xen_protect_from_gc(Arg)
+
 
 #define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr) \
-   s7_wrong_type_arg_error(Caller, ArgN, Arg, Descr)
+   s7_wrong_type_arg_error(s7, Caller, ArgN, Arg, Descr)
 
 #define XEN_OUT_OF_RANGE_ERROR(Caller, ArgN, Arg, Descr) \
-   s7_out_of_range_error(Caller, ArgN, Arg, Descr)
+   s7_out_of_range_error(s7, Caller, ArgN, Arg, Descr)
 
 #define XEN_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) \
   if (!(Assertion)) XEN_WRONG_TYPE_ARG_ERROR(Caller, Position, Arg, Correct_Type)
@@ -2412,9 +2416,7 @@ extern scheme *s7;  /* s7 is a pointer to the current scheme */
   }
 
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
-  s7->vptr->scheme_define(s7, s7->global_env, \
-                          mk_symbol(s7, Name), \
-                          mk_foreign_function(s7, Func))
+  s7_define(s7, s7_global_env(s7), s7_mk_symbol(s7, Name), s7_mk_foreign_function(s7, Func))
 
 #define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   XEN_DEFINE_PROCEDURE(Get_Name, Get_Func, Get_Req, Get_Opt, 0, Get_Help); \
@@ -2430,39 +2432,32 @@ extern scheme *s7;  /* s7 is a pointer to the current scheme */
 #define XEN_REQUIRED_ARGS(Func) 0
 #define XEN_REQUIRED_ARGS_OK(Func, Args) false
 
-#define XEN_CALL_0(Func, Caller)                                      scheme_call(s7, Func, XEN_EMPTY_LIST) /* these need a catch */
-#define XEN_CALL_1(Func, Arg1, Caller)                                scheme_call(s7, Func, XEN_LIST_1(Arg1))
-#define XEN_CALL_2(Func, Arg1, Arg2, Caller)                          scheme_call(s7, Func, XEN_LIST_2(Arg1, Arg2))
-#define XEN_CALL_3(Func, Arg1, Arg2, Arg3, Caller)                    scheme_call(s7, Func, XEN_LIST_3(Arg1, Arg2, Arg3))
-#define XEN_CALL_4(Func, Arg1, Arg2, Arg3, Arg4, Caller)              scheme_call(s7, Func, XEN_LIST_4(Arg1, Arg2, Arg3, Arg4))
-#define XEN_CALL_5(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Caller)        scheme_call(s7, Func, XEN_LIST_5(Arg1, Arg2, Arg3, Arg4, Arg5))
-#define XEN_CALL_6(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Caller)  scheme_call(s7, Func, XEN_LIST_6(Arg1, Arg2, Arg3, Arg4, Arg5, Arg6))
-#define XEN_APPLY(Func, Args, Caller)                                 scheme_call(s7, Func, Args)
+#define XEN_CALL_0(Func, Caller)                                      s7_call(s7, Func, XEN_EMPTY_LIST) /* these need a catch */
+#define XEN_CALL_1(Func, Arg1, Caller)                                s7_call(s7, Func, XEN_LIST_1(Arg1))
+#define XEN_CALL_2(Func, Arg1, Arg2, Caller)                          s7_call(s7, Func, XEN_LIST_2(Arg1, Arg2))
+#define XEN_CALL_3(Func, Arg1, Arg2, Arg3, Caller)                    s7_call(s7, Func, XEN_LIST_3(Arg1, Arg2, Arg3))
+#define XEN_CALL_4(Func, Arg1, Arg2, Arg3, Arg4, Caller)              s7_call(s7, Func, XEN_LIST_4(Arg1, Arg2, Arg3, Arg4))
+#define XEN_CALL_5(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Caller)        s7_call(s7, Func, XEN_LIST_5(Arg1, Arg2, Arg3, Arg4, Arg5))
+#define XEN_CALL_6(Func, Arg1, Arg2, Arg3, Arg4, Arg5, Arg6, Caller)  s7_call(s7, Func, XEN_LIST_6(Arg1, Arg2, Arg3, Arg4, Arg5, Arg6))
+#define XEN_APPLY(Func, Args, Caller)                                 s7_call(s7, Func, Args)
 #define XEN_APPLY_ARG_LIST_END                                        XEN_EMPTY_LIST
-#define XEN_CALL_0_NO_CATCH(Func)                                     scheme_call(s7, Func, XEN_EMPTY_LIST)
-#define XEN_CALL_1_NO_CATCH(Func, Arg1)                               scheme_call(s7, Func, XEN_LIST_1(Arg1))
-#define XEN_CALL_2_NO_CATCH(Func, Arg1, Arg2)                         scheme_call(s7, Func, XEN_LIST_2(Arg1, Arg2))
-#define XEN_CALL_3_NO_CATCH(Func, Arg1, Arg2, Arg3)                   scheme_call(s7, Func, XEN_LIST_3(Arg1, Arg2, Arg3))
-#define XEN_APPLY_NO_CATCH(Func, Args)                                scheme_call(s7, Func, Args)
+#define XEN_CALL_0_NO_CATCH(Func)                                     s7_call(s7, Func, XEN_EMPTY_LIST)
+#define XEN_CALL_1_NO_CATCH(Func, Arg1)                               s7_call(s7, Func, XEN_LIST_1(Arg1))
+#define XEN_CALL_2_NO_CATCH(Func, Arg1, Arg2)                         s7_call(s7, Func, XEN_LIST_2(Arg1, Arg2))
+#define XEN_CALL_3_NO_CATCH(Func, Arg1, Arg2, Arg3)                   s7_call(s7, Func, XEN_LIST_3(Arg1, Arg2, Arg3))
+#define XEN_APPLY_NO_CATCH(Func, Args)                                s7_call(s7, Func, Args)
 typedef XEN (*XEN_CATCH_BODY_TYPE)                                    (void *data);
 
-#define XEN_DEFINE_CONSTANT(Name, Value, Help) \
-  s7->vptr->scheme_define(s7, s7->global_env, \
-                          s7->vptr->mk_symbol(s7, Name), \
-                          s7->vptr->mk_integer(s7, Value))
-
-#define XEN_DEFINE(Name, Value) \
-  s7->vptr->scheme_define(s7, s7->global_env, \
-                          s7->vptr->mk_symbol(s7, Name), \
-			  Value)
+#define XEN_DEFINE_CONSTANT(Name, Value, Help)                        s7_define(s7, s7_global_env(s7), s7_mk_symbol(s7, Name), s7_mk_integer(s7, Value))
+#define XEN_DEFINE(Name, Value)                                       s7_define(s7, s7_global_env(s7), s7_mk_symbol(s7, Name), Value)
 
 #define XEN_DEFINE_VARIABLE(Name, Value, Help)
 #define XEN_VARIABLE_SET(Var, Val)
 #define XEN_VARIABLE_REF(Var) 0
 
-#define XEN_MARK_OBJECT_TYPE                                           XEN
+#define XEN_MARK_OBJECT_TYPE                                           void
 
-#define XEN_MAKE_OBJECT_TYPE(Name, Print, Free, Equal)                 s7_new_foreign_type(Name, Print, Free, Equal)
+#define XEN_MAKE_OBJECT_TYPE(Name, Print, Free, Equal, Gc_Mark)        s7_new_foreign_type(Name, Print, Free, Equal, Gc_Mark)
 
 #define XEN_MAKE_OBJECT_FREE_PROCEDURE(Type, Wrapped_Free, Original_Free) \
   static void Wrapped_Free(void *obj) \
@@ -2476,8 +2471,8 @@ typedef XEN (*XEN_CATCH_BODY_TYPE)                                    (void *dat
     return(Original_Print((Type *)obj)); \
   }
 
-#define XEN_MAKE_AND_RETURN_OBJECT(Tag, Val, ig1, ig2)                 return(mk_foreign_object(s7, Tag, Val))
-#define XEN_OBJECT_REF(Arg)                                            ((Arg)->_object._fobj.value)
+#define XEN_MAKE_AND_RETURN_OBJECT(Tag, Val, ig1, ig2)                 return(s7_mk_foreign_object(s7, Tag, Val))
+#define XEN_OBJECT_REF(Arg)                                            s7_foreign_object_value(Arg)
 #define XEN_OBJECT_TYPE                                                int /* tag type */
 #define XEN_OBJECT_TYPE_P(Obj, Tag)                                    XEN_FALSE
 #define XEN_OBJECT_HELP(Name)                                          XEN_FALSE
@@ -2490,49 +2485,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE)                                    (void *dat
 #define XEN_CLEAR_HOOK(Arg)
 #define XEN_HOOK_PROCEDURES(Arg) 0
 
-#define XEN_YES_WE_HAVE(Feature)                                    s7_provide(Feature)
-#define XEN_PROTECT_FROM_GC(Arg) 0
-
-
-
-
-bool s7_is_ulong(XEN arg);
-unsigned long s7_uvalue(XEN num);
-XEN s7_mk_ulong(unsigned long num);
-
-XEN s7_make_and_fill_vector(int len, XEN fill);
-XEN s7_list_ref(XEN lst, int num);
-XEN s7_list_set(XEN lst, int num, XEN val);
-XEN s7_assoc(XEN sym, XEN lst);
-XEN s7_member(XEN sym, XEN lst);
-
-XEN s7_vector_to_list(XEN vect);
-bool s7_eq_p(XEN obj1, XEN obj2);
-
-bool s7_is_keyword(XEN obj);
-bool s7_keyword_eq_p(XEN k1, XEN k2);
-XEN s7_mk_keyword(const char *key);
-
-XEN s7_eval_string(const char *str);
-XEN s7_eval_form(XEN form);
-XEN s7_name_to_value(const char *name);
-XEN s7_string_to_form(const char *str);
-XEN s7_display(XEN arg);
-XEN s7_load_file(const char *file);
-XEN s7_load_path(void);
-XEN s7_add_to_load_path(const char *file);
-XEN s7_load_file_with_path(const char *file);
-void s7_provide(const char *feature);
-
-XEN s7_error(XEN type, XEN info);
-XEN s7_throw(XEN type, XEN info);
-XEN s7_wrong_type_arg_error(const char *caller, int arg_n, XEN arg, const char *descr);
-XEN s7_out_of_range_error(const char *caller, int arg_n, XEN arg, const char *descr);
-
-int s7_new_foreign_type(const char *name, 
-                        char *(*print)(void *value), 
-			void (*free)(void *value), 
-			bool (*equal)(void *val1, void *val2));
+void xen_protect_from_gc(pointer obj);
 
 #endif
 /* end S7 */
