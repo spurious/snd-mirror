@@ -172,6 +172,16 @@ static void xm_obj_free(XEN obj)
   FREE(val);
 }
 #endif
+#if HAVE_S7
+static void xm_obj_free(void *val)
+{
+  FREE(val);
+}
+static bool s7_equalp_xm(void *x1, void *x2)
+{
+  return(x1 == x2);
+}
+#endif
 static XEN make_xm_obj(void *ptr)
 {
   XEN_MAKE_AND_RETURN_OBJECT(xm_obj_tag, ptr, 0, xm_obj_free);
@@ -179,7 +189,7 @@ static XEN make_xm_obj(void *ptr)
 static void define_xm_obj(void)
 {
 #if HAVE_S7
- xm_obj_tag = XEN_MAKE_OBJECT_TYPE("<XmObj>", NULL, xm_obj_free);
+ xm_obj_tag = XEN_MAKE_OBJECT_TYPE("<XmObj>", NULL, xm_obj_free, s7_equalp_xm);
 #else
 #if (!HAVE_GAUCHE)
   xm_obj_tag = XEN_MAKE_OBJECT_TYPE("XmObj", sizeof(void *));
@@ -532,7 +542,7 @@ XM_TYPE_PTR(PangoAttribute_, PangoAttribute*)
 #define XEN_TO_C_GdkRgbDither(Arg) (GdkRgbDither)(XEN_TO_C_INT(Arg))
 #define XEN_GdkRgbDither_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR(GdkRgbCmap_, GdkRgbCmap*)
-XM_TYPE_PTR_1(guint32_, guint32*)
+XM_TYPE_PTR(guint32_, guint32*)
 #define C_TO_XEN_GdkVisualType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkVisualType(Arg) (GdkVisualType)(XEN_TO_C_INT(Arg))
 #define XEN_GdkVisualType_P(Arg) XEN_INTEGER_P(Arg)
@@ -1112,9 +1122,9 @@ static XEN c_to_xen_string(XEN str)
 
 /* -------------------------------- gc protection -------------------------------- */
 
-static XEN xm_protected = XEN_FALSE;
+static XEN xm_protected;
 static int xm_protected_size = 0;
-static XEN xm_gc_table = XEN_FALSE;
+static XEN xm_gc_table;
 static int last_xm_unprotect = NOT_A_GC_LOC;
 
 static int xm_protect(XEN obj)
@@ -47890,7 +47900,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("02-Aug-08"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("03-Aug-08"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

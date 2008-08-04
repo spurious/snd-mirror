@@ -387,6 +387,18 @@ static void xm_obj_free(XEN obj)
 }
 #endif
 
+#if HAVE_S7
+static void xm_obj_free(void *val)
+{
+  FREE(val);
+}
+
+static bool s7_equalp_xm(void *x1, void *x2)
+{
+  return(x1 == x2);
+}
+#endif
+
 static XEN make_xm_obj(void *ptr)
 {
   XEN_MAKE_AND_RETURN_OBJECT(xm_obj_tag, ptr, 0, xm_obj_free);
@@ -395,7 +407,7 @@ static XEN make_xm_obj(void *ptr)
 static void define_xm_obj(void)
 {
 #if HAVE_S7
-  xm_obj_tag = XEN_MAKE_OBJECT_TYPE("<XmObj>", NULL, xm_obj_free);
+  xm_obj_tag = XEN_MAKE_OBJECT_TYPE("<XmObj>", NULL, xm_obj_free, s7_equalp_xm);
 #else
 #if (!HAVE_GAUCHE)
   xm_obj_tag = XEN_MAKE_OBJECT_TYPE("XmObj", sizeof(void *));
@@ -1609,7 +1621,7 @@ static XmIncludeStatus gxm_Parse_Callback(XtPointer *in_out, XtPointer text_end,
   return(0);
 }
 
-static XEN xm_XmColorAllocationProc = XEN_FALSE;
+static XEN xm_XmColorAllocationProc;
 
 static void gxm_XmAllocColorProc(Display *dpy, Colormap color, XColor *bs)
 {
@@ -1624,7 +1636,7 @@ static void gxm_XmAllocColorProc(Display *dpy, Colormap color, XColor *bs)
   bs = XEN_TO_C_XColor(val);
 }
 
-static XEN xm_XmColorCalculationProc = XEN_FALSE;
+static XEN xm_XmColorCalculationProc;
 
 static void gxm_XmColorCalculationProc(Screen *scr, XColor *bg, XColor *fg, XColor *sel, XColor *ts, XColor *bs)
 {
@@ -1647,7 +1659,7 @@ static void gxm_XmColorCalculationProc(Screen *scr, XColor *bg, XColor *fg, XCol
   xm_unprotect_at(loc);
 }
 
-static XEN xm_XmColorProc = XEN_FALSE; /* XmColorProc is not the same as XmScreen color calculation proc */
+static XEN xm_XmColorProc; /* XmColorProc is not the same as XmScreen color calculation proc */
 
 static void gxm_XmColorProc(XColor *bg, XColor *fg, XColor *sel, XColor *ts, XColor *bs)
 {
@@ -1702,7 +1714,8 @@ static XEN C_TO_XEN_STRING_WITH_TERMINATION(char *str, unsigned long len)
   return(C_TO_XEN_STRING(str));
 }
 
-static XEN xm_XtSelectionCallback_Descr = XEN_FALSE;
+static XEN xm_XtSelectionCallback_Descr;
+
 static void gxm_XtSelectionCallbackProc(Widget w, XtPointer x, Atom *a1, Atom *a2, XtPointer x1, unsigned long *l, int *i)
 {
   XEN_APPLY(XEN_CAR(xm_XtSelectionCallback_Descr),
@@ -1716,7 +1729,8 @@ static void gxm_XtSelectionCallbackProc(Widget w, XtPointer x, Atom *a1, Atom *a
 	    c__FUNCTION__);
 }
 
-static XEN xm_XtConvertSelectionIncr_Descr = XEN_FALSE;
+static XEN xm_XtConvertSelectionIncr_Descr;
+
 static Boolean gxm_XtConvertSelectionIncrProc(Widget w, Atom *selection, Atom *target, 
 					   Atom *type_return, XtPointer *value_return, 
 					   unsigned long *length_return, int *format_return, 
@@ -2454,9 +2468,9 @@ static XEN gxm_XtGetValues_1(XEN arg1, XEN larg2, int len)
 
 /* -------------------------------- gc protection -------------------------------- */
 
-static XEN xm_protected = XEN_FALSE;
+static XEN xm_protected;
 static int xm_protected_size = 0;
-static XEN xm_gc_table = XEN_FALSE;
+static XEN xm_gc_table;
 static int last_xm_unprotect = NOT_A_GC_LOC;
 
 static int xm_protect(XEN obj)
@@ -7217,7 +7231,7 @@ to temporary storage for later copying to clipboard"
 }
 
 /* There's just one clipboard, I think, so these callbacks must be globals */
-static XEN xm_XmCutPasteProc = XEN_FALSE;
+static XEN xm_XmCutPasteProc;
 
 static void gxm_XmCutPasteProc(Widget w, long *data, long *privater, int *reason)
 {
@@ -7252,7 +7266,8 @@ sets up a storage and data structure, returns id"
 		    C_TO_XEN_INT(id)));
 }
 
-static XEN xm_XmVoidProc = XEN_FALSE;
+static XEN xm_XmVoidProc;
+
 static void gxm_XmVoidProc(Widget w, int *data, int *privater, int *reason)
 {
   XEN_CALL_4(xm_XmVoidProc, 
@@ -10266,7 +10281,8 @@ from the event queue."
   return(C_TO_XEN_INT(XPending(XEN_TO_C_Display(arg1))));
 }
 
-static XEN xm_XPeekIfEventProc = XEN_FALSE;
+static XEN xm_XPeekIfEventProc;
+
 static Bool gxm_XPeekIfEventProc(Display *dpy, XEvent *e, XtPointer p)
 {
   return(XEN_TO_C_BOOLEAN(XEN_CALL_3(xm_XPeekIfEventProc, C_TO_XEN_Display(dpy), C_TO_XEN_XEvent(e), (XEN)(p), c__FUNCTION__)));
@@ -12540,7 +12556,7 @@ structures that describe the types of Z format images supported by the specified
 }
 
 
-static XEN xm_XIOErrorHandler = XEN_FALSE;
+static XEN xm_XIOErrorHandler;
 static int gxm_XIOErrorHandler(Display *dpy)
 {
   XEN_CALL_1(xm_XIOErrorHandler, C_TO_XEN_Display(dpy), c__FUNCTION__);
@@ -12562,7 +12578,8 @@ static XEN gxm_XSetIOErrorHandler(XEN arg1)
   return(old_val);
 }
 
-static XEN xm_XErrorHandler = XEN_FALSE;
+static XEN xm_XErrorHandler;
+
 static int gxm_XErrorHandler(Display *dpy, XErrorEvent *e)
 {
   XEN_CALL_2(xm_XErrorHandler, C_TO_XEN_Display(dpy), C_TO_XEN_XErrorEvent((XErrorEvent *)e), c__FUNCTION__);
@@ -13206,8 +13223,10 @@ static XEN gxm_XInternAtom(XEN arg1, XEN arg2, XEN arg3)
   return(C_TO_XEN_Atom(XInternAtom(XEN_TO_C_Display(arg1), XEN_TO_C_STRING(arg2), XEN_TO_C_BOOLEAN(arg3))));
 }
 
-static XEN xm_AfterFunction = XEN_FALSE;
+static XEN xm_AfterFunction;
+
 static int default_after_function(Display *ignore) {return(0);}
+
 static int gxm_AfterFunction(Display *dpy)
 {
   return(XEN_TO_C_INT(XEN_CALL_1(xm_AfterFunction, 
@@ -14869,8 +14888,8 @@ static XEN gxm_XtError(XEN arg1)
 }
 #endif
 
-static XEN xm_XtErrorHandler = XEN_FALSE;
-static XEN xm_XtWarningHandler = XEN_FALSE;
+static XEN xm_XtErrorHandler;
+static XEN xm_XtWarningHandler;
 
 static void gxm_XtErrorHandler(String msg)
 {
@@ -15058,8 +15077,8 @@ handler and passes the specified information."
   return(xen_return_first(XEN_FALSE, arg6));
 }
 
-static XEN xm_XtErrorMsgHandler = XEN_FALSE;
-static XEN xm_XtWarningMsgHandler = XEN_FALSE;
+static XEN xm_XtErrorMsgHandler;
+static XEN xm_XtWarningMsgHandler;
 
 static void gxm_XtErrorMsgHandler(String name, String type, String clas, String defp, String *pars, Cardinal *num)
 {
@@ -15644,7 +15663,7 @@ builds the resource database, calls the Xlib XrmParseCommand to parse the comman
 /* -------- XtLanguage callback -------- */
 /* (456) a global */
 
-static XEN xm_language_proc = XEN_FALSE;
+static XEN xm_language_proc;
 
 static String gxm_XtLanguageProc(Display* d, String s, XtPointer context) 
 {
@@ -16871,7 +16890,8 @@ static XEN gxm_XtConvertCase(XEN arg1, XEN arg2)
 
 /* (424) convert case XtRegisterCaseConverter global */
 
-static XEN xm_XtCaseProc = XEN_FALSE;
+static XEN xm_XtCaseProc;
+
 static void gxm_XtCaseProc(Display* d, KeySym k1, KeySym* k2, KeySym* k3)
 {
   XEN val;
@@ -16909,7 +16929,8 @@ static XEN gxm_XtRegisterCaseConverter(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 /* -------- keyproc -------- */
 /* (454) XtSetKeyTranslator global */
 
-static XEN xm_XtKeyProc = XEN_FALSE;
+static XEN xm_XtKeyProc;
+
 static void gxm_XtKeyProc(Display *dpy, KeyCode c, Modifiers m, Modifiers *mp, KeySym *sym)
 {
   XEN val;
@@ -17036,7 +17057,8 @@ when multiple events are interpreted as a repeated event."
   return(XEN_FALSE);
 }
 
-static XEN register_proc = XEN_FALSE;
+static XEN register_proc;
+
 static void gxm_XtRegisterGrabActionProc(Widget w, XEvent* e, String* s, Cardinal* c) 
 {
   XEN_CALL_3(register_proc,
@@ -29891,6 +29913,28 @@ void Init_libxm(void)
   /* perhaps nicer here to check the features list for 'xm */
   if (!xm_already_inited)
     {
+      xm_XmColorAllocationProc = XEN_FALSE;
+      xm_XmColorCalculationProc = XEN_FALSE;
+      xm_XmColorProc = XEN_FALSE;
+      xm_XtSelectionCallback_Descr = XEN_FALSE;
+      xm_XtConvertSelectionIncr_Descr = XEN_FALSE;
+      xm_protected = XEN_FALSE;
+      xm_gc_table = XEN_FALSE;
+      xm_XmCutPasteProc = XEN_FALSE;
+      xm_XmVoidProc = XEN_FALSE;
+      xm_XPeekIfEventProc = XEN_FALSE;
+      xm_XIOErrorHandler = XEN_FALSE;
+      xm_XErrorHandler = XEN_FALSE;
+      xm_AfterFunction = XEN_FALSE;
+      xm_XtErrorHandler = XEN_FALSE;
+      xm_XtWarningHandler = XEN_FALSE;
+      xm_XtErrorMsgHandler = XEN_FALSE;
+      xm_XtWarningMsgHandler = XEN_FALSE;
+      xm_language_proc = XEN_FALSE;
+      xm_XtCaseProc = XEN_FALSE;
+      xm_XtKeyProc = XEN_FALSE;
+      register_proc = XEN_FALSE;
+
       define_xm_obj();
 #if HAVE_MOTIF  
       define_makes();

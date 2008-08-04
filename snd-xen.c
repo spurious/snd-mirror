@@ -2921,6 +2921,15 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(defmacro define+ (args . body) `(define ,args ,@(cdr body)))"); /* strip out documentation string if embedded defines */
 #endif
 
+#if HAVE_S7
+  /* these are for compatibility with Guile (rather than add hundreds of "if provided?" checks) */
+  XEN_EVAL_C_STRING("(defmacro use-modules (arg . args) #f)");
+  XEN_EVAL_C_STRING("(define (debug-enable . args) #f)");
+  XEN_EVAL_C_STRING("(define (read-enable . args) #f)");
+  XEN_EVAL_C_STRING("(define (debug-set! . args) #f)");
+  XEN_EVAL_C_STRING("(define (make-soft-port . args) #f)");
+#endif
+
 #if HAVE_SCHEME && USE_GTK && (!HAVE_GTK_ENTRY_GET_TEXT_LENGTH)
   /* Gtk 3 is removing direct struct accesses (which they should have done years ago), so we need compatibility functions: */
   XEN_EVAL_C_STRING("(define (gtk_widget_get_window w) (.window w))");

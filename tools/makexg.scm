@@ -220,7 +220,7 @@
 	"cairo_font_weight_t" "cairo_font_slant_t"
 
 	"GtkPrintOperationAction"
-	"GtkTooltip*" "GtkCalendarDetailFunc" "GtkScaleButton*" "guint32*"
+	"GtkTooltip*" "GtkCalendarDetailFunc" "GtkScaleButton*" 
 	))
 
 (define no-xen-p 
@@ -2139,6 +2139,16 @@
 (hey "  FREE(val);~%")
 (hey "}~%")
 (hey "#endif~%")
+(hey "#if HAVE_S7~%")
+(hey "static void xm_obj_free(void *val)~%")
+(hey "{~%")
+(hey "  FREE(val);~%")
+(hey "}~%")
+(hey "static bool s7_equalp_xm(void *x1, void *x2)~%")
+(hey "{~%")
+(hey "  return(x1 == x2);~%")
+(hey "}~%")
+(hey "#endif~%")
 (hey "static XEN make_xm_obj(void *ptr)~%")
 (hey "{~%")
 (hey "  XEN_MAKE_AND_RETURN_OBJECT(xm_obj_tag, ptr, 0, xm_obj_free);~%")
@@ -2146,7 +2156,7 @@
 (hey "static void define_xm_obj(void)~%")
 (hey "{~%")
 (hey "#if HAVE_S7~%")
-(hey " xm_obj_tag = XEN_MAKE_OBJECT_TYPE(\"<XmObj>\", NULL, xm_obj_free);~%")
+(hey " xm_obj_tag = XEN_MAKE_OBJECT_TYPE(\"<XmObj>\", NULL, xm_obj_free, s7_equalp_xm);~%")
 (hey "#else~%")
 (hey "#if (!HAVE_GAUCHE)~%")
 (hey "  xm_obj_tag = XEN_MAKE_OBJECT_TYPE(\"XmObj\", sizeof(void *));~%")
@@ -2324,9 +2334,9 @@
 
 (hey "/* -------------------------------- gc protection -------------------------------- */~%")
 (hey "~%")
-(hey "static XEN xm_protected = XEN_FALSE;~%")
+(hey "static XEN xm_protected;~%")
 (hey "static int xm_protected_size = 0;~%")
-(hey "static XEN xm_gc_table = XEN_FALSE;~%")
+(hey "static XEN xm_gc_table;~%")
 (hey "static int last_xm_unprotect = NOT_A_GC_LOC;~%")
 (hey "~%")
 (hey "static int xm_protect(XEN obj)~%")

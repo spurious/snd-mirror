@@ -54,7 +54,6 @@
     _OP_DEF(opexe_1, "eval",                           1,  2,       TST_ANY TST_ENVIRONMENT,         OP_PEVAL            )
     _OP_DEF(opexe_1, "apply",                          1,  INF_ARG, TST_NONE,                        OP_PAPPLY           )
     _OP_DEF(opexe_1, "call-with-current-continuation", 1,  1,       TST_NONE,                        OP_CONTINUATION     )
-#if USE_MATH
     _OP_DEF(opexe_2, "inexact->exact",                 1,  1,       TST_NUMBER,                      OP_INEX2EX          )
     _OP_DEF(opexe_2, "exp",                            1,  1,       TST_NUMBER,                      OP_EXP              )
     _OP_DEF(opexe_2, "log",                            1,  1,       TST_NUMBER,                      OP_LOG              )
@@ -76,7 +75,8 @@
     _OP_DEF(opexe_2, "ceiling",                        1,  1,       TST_NUMBER,                      OP_CEILING          )
     _OP_DEF(opexe_2, "truncate",                       1,  1,       TST_NUMBER,                      OP_TRUNCATE         )
     _OP_DEF(opexe_2, "round",                          1,  1,       TST_NUMBER,                      OP_ROUND            )
-#endif
+    _OP_DEF(opexe_2, "lcm",                            0,  INF_ARG, TST_INTEGER,                     OP_LCM              )
+    _OP_DEF(opexe_2, "gcd",                            0,  INF_ARG, TST_INTEGER,                     OP_GCD              )
     _OP_DEF(opexe_2, "+",                              0,  INF_ARG, TST_NUMBER,                      OP_ADD              )
     _OP_DEF(opexe_2, "-",                              1,  INF_ARG, TST_NUMBER,                      OP_SUB              )
     _OP_DEF(opexe_2, "*",                              0,  INF_ARG, TST_NUMBER,                      OP_MUL              )
@@ -140,6 +140,7 @@
     _OP_DEF(opexe_3, "vector?",                        1,  1,       TST_ANY,                         OP_VECTORP          )
     _OP_DEF(opexe_3, "eq?",                            2,  2,       TST_ANY,                         OP_EQ               )
     _OP_DEF(opexe_3, "eqv?",                           2,  2,       TST_ANY,                         OP_EQV              )
+    _OP_DEF(opexe_3, "equal?",                         2,  2,       TST_ANY,                         OP_EQUAL            )
     _OP_DEF(opexe_4, "force",                          1,  1,       TST_ANY,                         OP_FORCE            )
     _OP_DEF(opexe_4, 0,                                0,  0,       0,                               OP_SAVE_FORCED      )
     _OP_DEF(opexe_4, "write",                          1,  2,       TST_ANY TST_OUTPORT,             OP_WRITE            )

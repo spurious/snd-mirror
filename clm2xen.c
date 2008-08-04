@@ -1192,6 +1192,11 @@ static char *print_mus_xen(void *obj)
 {
   return(mus_describe(((mus_xen *)obj)->gen));
 }
+
+static bool s7_equalp_mus_xen(void *val1, void *val2)
+{
+  return(mus_equalp(((mus_xen *)val1)->gen, ((mus_xen *)val2)->gen));
+}
 #endif
 
 
@@ -1211,11 +1216,13 @@ static XEN print_mus_xen(XEN obj)
 #endif
 
 
+#if (!HAVE_S7)
 static XEN equalp_mus_xen(XEN obj1, XEN obj2) 
 {
   if ((!(MUS_XEN_P(obj1))) || (!(MUS_XEN_P(obj2)))) return(XEN_FALSE);
   return(C_TO_XEN_BOOLEAN(mus_equalp(XEN_TO_MUS_ANY(obj1), XEN_TO_MUS_ANY(obj2))));
 }
+#endif
 
 
 #if HAVE_RUBY || HAVE_APPLICABLE_SMOB || HAVE_FORTH
@@ -8375,7 +8382,7 @@ void mus_xen_init(void)
   mus_initialize();
 
 #if HAVE_S7
-  mus_xen_tag = XEN_MAKE_OBJECT_TYPE("<mus>", print_mus_xen, free_mus_xen);
+  mus_xen_tag = XEN_MAKE_OBJECT_TYPE("<mus>", print_mus_xen, free_mus_xen, s7_equalp_mus_xen);
 #else
 #if (!HAVE_GAUCHE)
   mus_xen_tag = XEN_MAKE_OBJECT_TYPE("Mus", sizeof(mus_xen));

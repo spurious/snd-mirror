@@ -2124,7 +2124,7 @@ extern scheme *s7;  /* s7 is a pointer to the current scheme */
 
 #define XEN_ULONG_P(Arg)                           s7_is_ulong(Arg)
 #define XEN_TO_C_ULONG(Arg)                        s7_uvalue(Arg)
-#define C_TO_XEN_ULONG(Arg)                        s7_mk_ulong(Arg)
+#define C_TO_XEN_ULONG(Arg)                        s7_mk_ulong((unsigned long)Arg)
 
 #define C_TO_XEN_LONG_LONG(Arg)                    C_TO_XEN_OFF_T(Arg)
 #define XEN_TO_C_LONG_LONG(Arg)                    XEN_TO_C_OFF_T(Arg)
@@ -2175,7 +2175,7 @@ extern scheme *s7;  /* s7 is a pointer to the current scheme */
 #define XEN_PROCEDURE_SOURCE(Func)                 s7_procedure_source(Func)
 
 #define XEN_LOAD_FILE(File)                        s7_load_file(File)
-#define XEN_LOAD_FILE_WITH_PATH(Arg)               s7_load_file_with_path(File)
+#define XEN_LOAD_FILE_WITH_PATH(File)              s7_load_file_with_path(File)
 #define XEN_LOAD_PATH                              s7_load_path()
 #define XEN_ADD_TO_LOAD_PATH(Path)                 s7_add_to_load_path(Path)
 
@@ -2462,7 +2462,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE)                                    (void *dat
 
 #define XEN_MARK_OBJECT_TYPE                                           XEN
 
-#define XEN_MAKE_OBJECT_TYPE(Name, Print, Free)                        s7_new_foreign_type(Name, Print, Free)
+#define XEN_MAKE_OBJECT_TYPE(Name, Print, Free, Equal)                 s7_new_foreign_type(Name, Print, Free, Equal)
 
 #define XEN_MAKE_OBJECT_FREE_PROCEDURE(Type, Wrapped_Free, Original_Free) \
   static void Wrapped_Free(void *obj) \
@@ -2502,9 +2502,11 @@ XEN s7_mk_ulong(unsigned long num);
 
 XEN s7_make_and_fill_vector(int len, XEN fill);
 XEN s7_list_ref(XEN lst, int num);
+XEN s7_list_set(XEN lst, int num, XEN val);
 XEN s7_assoc(XEN sym, XEN lst);
 XEN s7_member(XEN sym, XEN lst);
 
+XEN s7_vector_to_list(XEN vect);
 bool s7_eq_p(XEN obj1, XEN obj2);
 
 bool s7_is_keyword(XEN obj);
@@ -2527,7 +2529,10 @@ XEN s7_throw(XEN type, XEN info);
 XEN s7_wrong_type_arg_error(const char *caller, int arg_n, XEN arg, const char *descr);
 XEN s7_out_of_range_error(const char *caller, int arg_n, XEN arg, const char *descr);
 
-int s7_new_foreign_type(const char *name, char *(*print)(void *value), void (*free)(void *value));
+int s7_new_foreign_type(const char *name, 
+                        char *(*print)(void *value), 
+			void (*free)(void *value), 
+			bool (*equal)(void *val1, void *val2));
 
 #endif
 /* end S7 */

@@ -20,15 +20,20 @@
  *     made several procedures global (eqv, list_length, append, reverse, reverse_in_place, atom2str and others)
  *     scheme_call returns sc->value
  *     merged scheme-private.h into scheme.h and changed names to s7.[ch], init.scm -> s7.scm, opdefines.h -> s7-ops.h
- *     added 's7 to *features* and defined *load-path* (s7.scm)
+ *     defined *load-path*, defmacro, a stub for make-procedure-with-setter (s7.scm)
  *     changed final initializer at dispatch_table preload to make C happier
  *     added T_FOREIGN_OBJECT (and renamed old T_FOREIGN to T_FOREIGN_FUNCTION, is_foreign to is_foreign_function)
  *       and various code to support it (is_foreign_object, _fobj struct in s7.h etc, mk_foreign_object)
+ *       added OP_EQUAL and is_equal for equal? (needs to be in C, not s7.scm because foreign objects have private equality tests)
  *     sc->UNDEFINED for unset (optional) args
  *     no inexact ints, so print 440.0 as 440.0 (not 440)
  *     added OP_SET2 and code for generalized set!
- *     changed succ to 1+ and pred to 1- in s7.scm.  added log10.
+ *     changed succ to 1+ and pred to 1- in s7.scm.  added log10 (s7.scm).
  *     added atan asin acos atanh asinh acosh
+ *     moved lcm and gcd from s7.scm to c to handle argnum!=2 cases
+ *     added case for expt of ints with 2nd arg >= 0 or 1st arg +/-1(return an int)
+ *     (eqv? 0 0.0) should return #f I believe
+ *       so leaving aside a few quibbles, this passes all of Jaffer's r4rstest.scm tests
  *
  * need catch like guile
  *      unwind-protect
@@ -40,7 +45,14 @@
  *        rationalize numerator denominator
  *      block comment #| |#
  *      procedure arity, source, and documentation
- *      eq? of objs? etc
+ *      file sys etc from snd-xen.c
+ *      completions (oblist?)
+ *
+ * [number->string has no "radix" arg]
+ *
+ * slib logical.scm has logior etc
+ * slib dynwind.scm has dynamic-wind
+ * guile's optargs.scm has define*
  */
 
 #define _SCHEME_SOURCE
@@ -51,9 +63,7 @@
 #if USE_DL
 # include "dynload.h"
 #endif
-#if USE_MATH
-# include <math.h>
-#endif
+#include <math.h>
 #include <limits.h>
 #include <float.h>
 #include <ctype.h>
@@ -154,6 +164,25 @@ enum scheme_types {
   T_LAST_SYSTEM_TYPE=15
 };
 
+static const char *type_names[] = {
+  "nil",
+  "string",
+  "number",
+  "symbol",
+  "proc",
+  "pair",
+  "closure",
+  "continuation",
+  "foreign",
+  "character",
+  "port",
+  "vector",
+  "macro",
+  "promise",
+  "environment",
+  "foreign"
+};
+
 /* 5 bits here so only 31 types allowed currently */
 /*
   T_RATIO=16,
@@ -187,9 +216,7 @@ static int num_ge(num a, num b);
 static int num_lt(num a, num b);
 static int num_le(num a, num b);
 
-#if USE_MATH
 static double round_per_R5RS(double x);
-#endif
 static int is_zero_double(double x);
 
 static num num_zero;
@@ -253,6 +280,7 @@ INTERFACE INLINE int is_foreign_object(pointer p) { return(type(p)==T_FOREIGN_OB
 
 char *describe_foreign_object(pointer a);
 void free_foreign_object(pointer a);
+bool equalp_foreign_objects(pointer a, pointer b);
 
 INTERFACE INLINE char *syntaxname(pointer p) { return strvalue(car(p)); }
 #define procnum(p)       ivalue(p)
@@ -551,7 +579,6 @@ static int num_le(num a, num b) {
  return !num_gt(a,b);
 }
 
-#if USE_MATH
 /* Round to nearest. Round to even if midway */
 static double round_per_R5RS(double x) {
  double fl=floor(x);
@@ -570,7 +597,6 @@ static double round_per_R5RS(double x) {
      }
  }
 }
-#endif
 
 static int is_zero_double(double x) {
  return x<DBL_MIN && x>-DBL_MIN;
@@ -994,7 +1020,7 @@ INTERFACE static void fill_vector(pointer vec, pointer obj) {
      int i;
      int num=ivalue(vec)/2+ivalue(vec)%2;
      for(i=0; i<num; i++) {
-          typeflag(vec+1+i) = T_PAIR;
+       typeflag(vec+1+i) = T_PAIR;
           setimmutable(vec+1+i);
           car(vec+1+i)=obj;
           cdr(vec+1+i)=obj;
@@ -1983,35 +2009,36 @@ pointer append(scheme *sc, pointer a, pointer b) {
 /* equivalence of atoms */
 int eqv(pointer a, pointer b) 
 {
-     if (is_string(a)) {
-          if (is_string(b))
-               return (strvalue(a) == strvalue(b));
-          else
-               return (0);
-     } else if (is_number(a)) {
-          if (is_number(b))
-               return num_eq(nvalue(a),nvalue(b));
-          else
-               return (0);
-     } else if (is_character(a)) {
-          if (is_character(b))
-               return charvalue(a)==charvalue(b);
-          else
-               return (0);
-     } else if (is_port(a)) {
-          if (is_port(b))
-               return a==b;
-          else
-               return (0);
-     } else if (is_proc(a)) {
-          if (is_proc(b))
-               return procnum(a)==procnum(b);
-          else
-               return (0);
-     } else {
-          return (a == b);
-     }
+  if (a == b) 
+    return(1);
+
+  if (type(a) != type(b)) 
+    return(0);
+
+  if (is_string(a)) 
+    return(strvalue(a) == strvalue(b));
+
+  if (is_number(a))
+    {
+      /* (eqv? 1 1.0) -> #f! */
+      if (is_integer(a))
+	return((is_integer(b)) &&
+	       (ivalue_unchecked(a) == ivalue_unchecked(b)));
+
+      if (is_real(a))
+	return((is_real(b)) &&
+	       (rvalue_unchecked(a) == rvalue_unchecked(b)));
+    }
+
+  if (is_character(a))
+    return(charvalue(a) == charvalue(b));
+
+  if (is_proc(a))
+    return(procnum(a) == procnum(b));
+  
+  return(0);
 }
+
 
 /* true or false value macro */
 /* () is #t in R5RS */
@@ -2331,6 +2358,107 @@ static INLINE void dump_stack_mark(scheme *sc)
 #endif 
 
 #define s_retbool(tf)    s_return(sc,(tf) ? sc->T : sc->F)
+
+static bool is_equal(scheme *sc, pointer x, pointer y);
+
+static bool vectors_equal(scheme *sc, pointer x, pointer y)
+{
+  int i, len;
+  len = ivalue_unchecked(x);
+  if (len != ivalue_unchecked(y)) return(false);
+  for (i = 0; i < len; i++)
+    if (!(is_equal(sc, vector_elem(x, i), vector_elem(y, i))))
+      return(false);
+  return(true);
+}
+
+static bool is_equal(scheme *sc, pointer x, pointer y)
+{
+  if (x == y) 
+    return(true);
+
+  if (type(x) != type(y)) 
+    return(false);
+
+  if (is_pair(x))
+    return((is_equal(sc, car(x), car(y))) &&
+	   (is_equal(sc, cdr(x), cdr(y))));
+
+  if (is_string(x))
+    return((strlength(x) == strlength(y)) &&
+	   ((strlength(x) == 0) ||
+	    (strcmp(strvalue(x), strvalue(y)) == 0)));
+
+  if (is_foreign_object(x))
+    return(equalp_foreign_objects(x, y));
+	   
+  if (is_proc(x))
+    return(procnum(x) == procnum(y));
+
+  if (is_vector(x))
+    return(vectors_equal(sc, x, y));
+
+  if (is_character(x)) 
+    return(charvalue(x) == charvalue(y));
+
+  if (is_number(x))
+    {
+      /* (equal? 1 1.0) -> #f but (= 1.0 1) -> #t ! */
+      if (is_integer(x))
+	return((is_integer(y)) &&
+	       (ivalue_unchecked(x) == ivalue_unchecked(y)));
+
+      if (is_real(x))
+	return((is_real(y)) &&
+	       (rvalue_unchecked(x) == rvalue_unchecked(y)));
+    }
+
+  return(false); /* we already checked that x != y (port etc) */
+}
+
+static int c_mod(int x, int y)
+{
+  int z;
+  if (y == 0) return(x); /* else arithmetic exception */
+  z = x % y;
+  if (((y < 0) && (z > 0)) ||
+      ((y > 0) && (z < 0)))
+    return(z + y);
+  return(z);
+}
+
+static int c_gcd_1(int a, int b)
+{
+  if (a == b) return(a);
+  if (a == 0) return(b);
+  if (b == 0) return(a);
+  if (a > b)
+    {
+      int rem;
+      rem = c_mod(a, b);
+      if (rem == 0) return(b);
+      return(c_gcd_1(b, rem));
+    }
+  return(c_gcd_1(b, a));
+}
+
+
+static int c_gcd(int a, int b)
+{
+  if (a < 0) a = -a;
+  if (b < 0) b = -b;
+  return(c_gcd_1(a, b));
+}
+
+
+static int c_lcm(int a, int b)
+{
+  if ((a == 0) || (b == 0)) return(0);
+  if (a < 0) a = -a;
+  if (b < 0) b = -b;
+  return((a * b) / c_gcd_1(a, b));
+}
+
 
 static pointer opexe_0(scheme *sc, enum scheme_opcodes op) {
      pointer x, y;
@@ -2925,12 +3053,9 @@ static pointer opexe_1(scheme *sc, enum scheme_opcodes op) {
 static pointer opexe_2(scheme *sc, enum scheme_opcodes op) {
      pointer x;
      num v;
-#if USE_MATH
      double dd;
-#endif
 
      switch (op) {
-#if USE_MATH
      case OP_INEX2EX:    /* inexact->exact */
           x=car(sc->args);
           if(is_integer(x)) {
@@ -3007,13 +3132,17 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op) {
           s_return(sc, mk_real(sc, sqrt(rvalue(x))));
 
      case OP_EXPT:
-          x=car(sc->args);
-          if(cdr(sc->args)==sc->NIL) {
-               Error_0(sc,"expt: needs two arguments");
-          } else {
-               pointer y=cadr(sc->args);
-               s_return(sc, mk_real(sc, pow(rvalue(x),rvalue(y))));
-          }
+       {
+	 pointer y;
+	 x=car(sc->args);
+	 y=cadr(sc->args);
+	 if ((is_integer(x)) &&
+	     (is_integer(y)) &&
+	     ((ivalue_unchecked(y) >= 0) || 
+	      (abs(ivalue_unchecked(x)) == 1)))
+	   s_return(sc, mk_integer(sc, (int)pow(ivalue_unchecked(x), ivalue_unchecked(y))));
+	 s_return(sc, mk_real(sc, pow(rvalue(x),rvalue(y))));
+       }
 
      case OP_FLOOR:
           x=car(sc->args);
@@ -3032,12 +3161,35 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op) {
 	  } else {
 	    s_return(sc, mk_real(sc, ceil(rvalue_of_x)));
 	  }
-     }
+         }
+
+     case OP_LCM:
+       {
+	 int val = 1;
+	 for (x = sc->args; x != sc->NIL; x = cdr(x)) 
+	   {
+	     val = c_lcm(val, ivalue_unchecked(car(x)));
+	     if (val == 0)
+	       s_return(sc, mk_integer(sc, 0));
+	   }
+	 s_return(sc, mk_integer(sc, val));
+       }
+
+     case OP_GCD:
+       {
+	 int val = 0;
+	 for (x = sc->args; x != sc->NIL; x = cdr(x)) 
+	   {
+	     val = c_gcd(val, ivalue_unchecked(car(x)));
+	     if (val == 1)
+	       s_return(sc, mk_integer(sc, 1));
+	   }
+	 s_return(sc, mk_integer(sc, val));
+       }
 
      case OP_ROUND:
        x=car(sc->args);
        s_return(sc, mk_real(sc, round_per_R5RS(rvalue(x))));
-#endif
 
      case OP_ADD:        /* + */
        v=num_zero;
@@ -3187,8 +3339,6 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op) {
           setimmutable(x);
           s_return(sc,x);
      case OP_ATOM2STR: /* atom->string */
-       fprintf(stderr,"atom2str??");
-
        x=car(sc->args);
        if(is_number(x) || is_character(x) || is_string(x) || is_symbol(x)) {
 	 char *p;
@@ -3483,6 +3633,8 @@ static pointer opexe_3(scheme *sc, enum scheme_opcodes op) {
           s_retbool(car(sc->args) == cadr(sc->args));
      case OP_EQV:        /* eqv? */
           s_retbool(eqv(car(sc->args), cadr(sc->args)));
+     case OP_EQUAL:        /* equal? */
+       s_retbool(is_equal(sc, car(sc->args), cadr(sc->args)));
      default:
           sprintf(sc->strbuff, "%d: illegal operator", sc->op);
           Error_0(sc,sc->strbuff);

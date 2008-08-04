@@ -7733,6 +7733,12 @@ bool sample_reader_p(XEN obj) {return(XEN_OBJECT_TYPE_P(obj, sf_tag));}
 snd_fd *xen_to_sample_reader(XEN obj) {if (SAMPLE_READER_P(obj)) return((snd_fd *)XEN_OBJECT_REF(obj)); else return(NULL);}
 #define XEN_TO_SAMPLE_READER(obj) ((snd_fd *)XEN_OBJECT_REF(obj))
 
+#if HAVE_S7
+static bool s7_equalp_sf(void *s1, void *s2)
+{
+  return(s1 == s2);
+}
+#endif
 
 char *sample_reader_to_string(snd_fd *fd)
 {
@@ -9812,7 +9818,7 @@ XEN_NARGIFY_1(g_edit_fragment_type_name_w, g_edit_fragment_type_name)
 void g_init_edits(void)
 {
 #if HAVE_S7
-  sf_tag = XEN_MAKE_OBJECT_TYPE("<sample-reader>", print_sf, free_sf);
+  sf_tag = XEN_MAKE_OBJECT_TYPE("<sample-reader>", print_sf, free_sf, s7_equalp_sf);
 #else
 #if (!HAVE_GAUCHE)
   sf_tag = XEN_MAKE_OBJECT_TYPE("SampleReader", sizeof(snd_fd));

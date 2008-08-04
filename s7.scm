@@ -69,16 +69,16 @@
 
 (define (1+ x) (+ x 1))
 (define (1- x) (- x 1))
-(define (gcd a b)
-  (let ((aa (abs a))
-	(bb (abs b)))
-     (if (= bb 0)
-          aa
-          (gcd bb (remainder aa bb)))))
-(define (lcm a b)
-     (if (or (= a 0) (= b 0))
-          0
-          (abs (* (quotient a (gcd a b)) b))))
+;(define (gcd a b)
+;  (let ((aa (abs a))
+;	(bb (abs b)))
+;     (if (= bb 0)
+;          aa
+;          (gcd bb (remainder aa bb)))))
+;(define (lcm a b)
+;     (if (or (= a 0) (= b 0))
+;          0
+;          (abs (* (quotient a (gcd a b)) b))))
 
 (define call/cc call-with-current-continuation)
 
@@ -113,17 +113,16 @@
      (string-append str))
 
 (define (string->anyatom str pred)
-     (let* ((a (string->atom str)))
-       (if (pred a) a
-	   (error "string->xxx: not a xxx" a))))
+  (let* ((a (string->atom str)))
+    (and (pred a) a)))
 
-(define (string->number str) (string->anyatom str number?))
+(define (string->number str)
+  (string->anyatom str number?))
 
 (define (anyatom->string n pred)
   (if (pred n)
       (atom->string n)
       (error "xxx->string: not a xxx" n)))
-  
 
 (define (number->string n) (anyatom->string n number?))    
 
@@ -228,14 +227,15 @@
 
 (define (tail stream) (force (cdr stream)))
 
-(define (vector-equal? x y)
-     (and (vector? x) (vector? y) (= (vector-length x) (vector-length y))
-          (let ((n (vector-length x)))
-               (let loop ((i 0))
-                    (if (= i n)
-                         #t
-                         (and (equal? (vector-ref x i) (vector-ref y i))
-                              (loop (1+ i))))))))
+;;; see note below re equal?
+;(define (vector-equal? x y)
+;     (and (vector? x) (vector? y) (= (vector-length x) (vector-length y))
+;          (let ((n (vector-length x)))
+;              (let loop ((i 0))
+;                    (if (= i n)
+;                         #t
+;                         (and (equal? (vector-ref x i) (vector-ref y i))
+;                              (loop (1+ i))))))))
 
 (define (list->vector x)
      (apply vector x))
@@ -319,17 +319,18 @@
   (not (pair? x)))
 
 ;;;;    equal?
-(define (equal? x y)
-     (cond
-          ((pair? x)
-               (and (pair? y)
-                    (equal? (car x) (car y))
-                    (equal? (cdr x) (cdr y))))
-          ((vector? x)
-               (and (vector? y) (vector-equal? x y)))
-          ((string? x)
-               (and (string? y) (string=? x y)))
-          (else (eqv? x y))))
+;;; in Snd, equal? needs to be in C because foreign objects have their own choice of equality testing
+;(define (equal? x y)
+;     (cond
+;          ((pair? x)
+;               (and (pair? y)
+;                    (equal? (car x) (car y))
+;                    (equal? (cdr x) (cdr y))))
+;          ((vector? x)
+;               (and (vector? y) (vector-equal? x y)))
+;          ((string? x)
+;               (and (string? y) (string=? x y)))
+;          (else (eqv? x y))))
 
 ;;;; (do ((var init inc) ...) (endtest result ...) body ...)
 ;;
@@ -579,20 +580,26 @@
 			   (not (cond-eval (cadr condition)))))
 		(else (error "cond-expand : unknown operator" (car condition)))))))
 
-(gc-verbose #t)
+(gc-verbose #f)
 (tracing 0)
 
 ;;; --------------------------------------------------------------------------------
 
-(set! *features* (cons 's7 *features*))
+(define (provide sym)
+  (set! *features* (cons sym *features*)))
+
 (define *load-path* '())
 
 ;;; defmacro from slib
 (define-macro (defmacro name args . body)
  `(define-macro (,name ,@args) ,@body))
 
-;;; scheme side make-procedure-with-setter
-(defmacro make-procedure-with-setter (getter setter)
-  `(let ()
-     (define ,(string->symbol (string-append "set-" (symbol->string name))) ,setter)
+;;; scheme side make-procedure-with-setter -- not pretty (only needed for snd-nogui.c fallbacks)
+(defmacro make-procedure-with-setter (name getter setter)
+  `(begin
+     (define ,(string->symbol (string-append "set-" name)) ,setter)
      ,getter))
+
+;(define-syntax defmacro
+;  (syntax-rules ()
+;    ((_ name params . body) (define-macro (name . params) . body)))))

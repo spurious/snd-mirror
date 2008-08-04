@@ -3024,6 +3024,12 @@ static void mf_free(mix_fd *fd)
 
 XEN_MAKE_OBJECT_FREE_PROCEDURE(mix_fd, free_mf, mf_free)
 
+#if HAVE_S7
+static bool s7_equalp_mf(void *m1, void *m2)
+{
+  return(m1 == m2);
+}
+#endif
 
 static XEN g_make_mix_sample_reader(XEN mix_id, XEN ubeg)
 {
@@ -3341,7 +3347,7 @@ XEN_NARGIFY_1(g_set_mix_dialog_mix_w, g_set_mix_dialog_mix)
 void g_init_mix(void)
 {
 #if HAVE_S7
-  mf_tag = XEN_MAKE_OBJECT_TYPE("<mix-sample-reader>", print_mf, free_mf);
+  mf_tag = XEN_MAKE_OBJECT_TYPE("<mix-sample-reader>", print_mf, free_mf, s7_equalp_mf);
 #else
 #if (!HAVE_GAUCHE)
   mf_tag = XEN_MAKE_OBJECT_TYPE("MixSampleReader", sizeof(mix_fd));

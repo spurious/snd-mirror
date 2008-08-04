@@ -2417,6 +2417,10 @@ XEN s7_list_ref(XEN lst, int num)
   return(s7_list_ref(XEN_CDR(lst), num - 1));
 }
 
+XEN s7_list_set(XEN lst, int num, XEN val)
+{
+}
+
 
 XEN s7_assoc(XEN sym, XEN lst)
 {
@@ -2438,6 +2442,11 @@ XEN s7_member(XEN sym, XEN lst)
     if (sym == XEN_CAR(x))
       return(XEN_CAR(x));
   return(XEN_FALSE);
+}
+
+XEN s7_vector_to_list(XEN vect)
+{
+  return(XEN_EMPTY_LIST);
 }
 
 
@@ -2530,14 +2539,18 @@ typedef struct {
   const char *name;
   char *(*print)(void *value);
   void (*free)(void *value);
-  /* TODO: equal? getter? setter? gc-mark for embedded objects? */
+  bool (*equal)(void *val1, void *val2);
+  /* TODO: getter? setter? gc-mark for embedded objects? */
 } fobject;
 
 static fobject *foreign_types = NULL;
 static int foreign_types_size = 0;
 static int num_foreign_types = 0;
 
-int s7_new_foreign_type(const char *name, char *(*print)(void *value), void (*free)(void *value))
+int s7_new_foreign_type(const char *name, 
+			char *(*print)(void *value), 
+			void (*free)(void *value), 
+			bool (*equal)(void *val1, void *val2))
 {
   int tag;
   tag = num_foreign_types++;
@@ -2558,6 +2571,7 @@ int s7_new_foreign_type(const char *name, char *(*print)(void *value), void (*fr
   foreign_types[tag].name = strdup(name);
   foreign_types[tag].free = free;
   foreign_types[tag].print = print;
+  foreign_types[tag].equal = equal;
   return(tag);
 }
 
@@ -2577,6 +2591,21 @@ void free_foreign_object(pointer a)
   tag = a->_object._fobj.type;
   if (foreign_types[tag].free)
     (*(foreign_types[tag].free))(a->_object._fobj.value);
+}
+
+bool equalp_foreign_objects(pointer a, pointer b)
+{
+  if ((is_foreign_object(a)) &&
+      (is_foreign_object(b)) &&
+      (a->_object._fobj.type == b->_object._fobj.type))
+    {
+      int tag;
+      tag = a->_object._fobj.type;
+      if (foreign_types[tag].equal)
+	return((*(foreign_types[tag].equal))(a->_object._fobj.value, b->_object._fobj.value));
+      return(a == b);
+    }
+  return(false);
 }
 
 

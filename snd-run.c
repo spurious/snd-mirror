@@ -5811,6 +5811,17 @@ static xen_value *inexact2exact_1(ptree *prog, xen_value **args, int num_args)
 
 /* ---------------- gcd, lcm ---------------- */
 
+static Int c_mod(Int x, Int y)
+{
+  Int z;
+  if (y == 0) return(x); /* else arithmetic exception */
+  z = x % y;
+  if (((y < 0) && (z > 0)) ||
+      ((y > 0) && (z < 0)))
+    return(z + y);
+  return(z);
+}
+
 static Int c_gcd_1(Int a, Int b)
 {
   if (a == b) return(a);
@@ -5819,8 +5830,8 @@ static Int c_gcd_1(Int a, Int b)
       if (a > b)
 	{
 	  Int rem;
-	  rem = (Int)(fmod(a, b));
-	  if (rem == 0.0) return(b);
+	  rem = mod(a, b);
+	  if (rem == 0) return(b);
 	  else return(c_gcd_1(b, rem));
 	}
       else return(c_gcd_1(b, a));

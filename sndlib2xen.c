@@ -1605,6 +1605,13 @@ bool sound_data_equalp(sound_data *v1, sound_data *v2)
   return(false);
 }
 
+#if HAVE_S7
+static bool s7_equalp_sound_data(void *s1, void *s2)
+{
+  return(sound_data_equalp((sound_data *)s1, (sound_data *)s2));
+}
+#endif
+
 
 static XEN equalp_sound_data(XEN obj1, XEN obj2)
 {
@@ -2617,7 +2624,7 @@ void mus_sndlib_xen_initialize(void)
   mus_sound_initialize();
 
 #if HAVE_S7
-  sound_data_tag = XEN_MAKE_OBJECT_TYPE("<sound-data>", print_sound_data, free_sound_data);
+  sound_data_tag = XEN_MAKE_OBJECT_TYPE("<sound-data>", print_sound_data, free_sound_data, s7_equalp_sound_data);
 #else
 #if (!HAVE_GAUCHE)
   sound_data_tag = XEN_MAKE_OBJECT_TYPE("SoundData", sizeof(sound_data));

@@ -229,6 +229,15 @@ bool mus_vct_equalp(vct *v1, vct *v2)
 			       v1->length)));
 }
 
+#if (HAVE_S7)
+bool s7_mus_vct_equalp(void *uv1, void *uv2)
+{
+  return(mus_vct_equalp((vct *)uv1, (vct *)uv2));
+}
+#endif
+
+
+
 XEN_MAKE_OBJECT_PRINT_PROCEDURE(vct, print_vct, mus_vct_to_string)
 
 
@@ -1153,7 +1162,7 @@ void mus_vct_init(void)
 {
 
 #if HAVE_S7
-  vct_tag = XEN_MAKE_OBJECT_TYPE("<vct>", print_vct, free_vct); /* defines the foreign_type entry for a vct */
+  vct_tag = XEN_MAKE_OBJECT_TYPE("<vct>", print_vct, free_vct, s7_mus_vct_equalp);
 #else
 #if (!HAVE_GAUCHE)
   vct_tag = XEN_MAKE_OBJECT_TYPE("Vct", sizeof(vct));

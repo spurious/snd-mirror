@@ -29,7 +29,6 @@
 #endif
 
 #if USE_NO_FEATURES
-# define USE_MATH 0
 # define USE_CHAR_CLASSIFIERS 0
 # define USE_ASCII_NAMES 0
 # define USE_STRING_PORTS 0
@@ -49,10 +48,6 @@
 
 # define USE_INTERFACE 1
 
-
-#ifndef USE_MATH         /* If math support is needed */
-# define USE_MATH 1
-#endif
 
 #ifndef USE_CHAR_CLASSIFIERS  /* If char classifiers are needed */
 # define USE_CHAR_CLASSIFIERS 1
