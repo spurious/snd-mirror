@@ -588,12 +588,20 @@ void command_return(widget_t w, int last_prompt)
        *   eval_str_wrapper can't be used since it assumes the string is still valid.
        *   I assume the form is ok because the continuation will preserve it somehow.
        */
+
 #if HAVE_GUILE || HAVE_GAUCHE
       if ((snd_strlen(str) > 1) || (str[0] != '\n'))
 	form = string_to_form(str);
-#else
+#endif
+
+#if HAVE_RUBY || HAVE_FORTH
       form = XEN_EVAL_C_STRING(str);
 #endif
+
+#if HAVE_S7
+      form = XEN_EVAL_C_STRING(str); /* TODO: add a catch */
+#endif
+
       FREE(str);
       str = NULL;
       snd_report_listener_result(form); /* used to check for unbound form here, but that's no good in Ruby,
@@ -696,6 +704,8 @@ void set_listener_prompt(const char *new_prompt)
 #if HAVE_RUBY
     xen_rb_repl_set_prompt(listener_prompt(ss));
 #endif
+
+    /* TODO: the s7 xen_repl prompt */
   }
 
 #else

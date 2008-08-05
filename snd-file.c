@@ -1469,7 +1469,7 @@ snd_info *finish_opening_sound(snd_info *sp, bool selected)
 #if HAVE_RUBY || HAVE_FORTH || HAVE_GAUCHE
       XEN_VARIABLE_SET(S_snd_opened_sound, C_TO_XEN_INT(sp->index));
 #endif
-#if HAVE_GUILE
+#if HAVE_GUILE || HAVE_S7
       XEN_VARIABLE_SET(snd_opened_sound, C_TO_XEN_INT(sp->index));
 #endif
       sp->write_date = file_write_date(sp->filename);
@@ -4907,6 +4907,9 @@ static XEN g_file_write_date(XEN file)
   #endif
   #if HAVE_FORTH
     #define write_date_equivalent "Equivalent to Forth's file-mtime"
+  #endif
+  #if HAVE_S7
+    #define write_date_equivalent ""
   #endif
 
   #define S_file_write_date "file-write-date"

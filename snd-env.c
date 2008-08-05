@@ -1412,7 +1412,7 @@ void add_or_edit_symbol(const char *name, env *val)
   snd_catch_any(eval_str_wrapper, buf, buf);
   FREE(buf);
 #endif
-#if HAVE_GUILE
+#if HAVE_GUILE || HAVE_S7
   XEN e;
   if (!val) return;
   if (XEN_DEFINED_P(name))

@@ -364,6 +364,7 @@ static void prefs_help(prefs_info *prf)
 	  prefs_helping = true;
 	  (*(prf->help_func))(prf);
 	}
+#if (!HAVE_S7)
       else
 	{
 	  XEN sym;
@@ -396,6 +397,7 @@ static void prefs_help(prefs_info *prf)
 		}
 	    }
 	}
+#endif
     }
 }
 

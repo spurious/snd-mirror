@@ -5444,7 +5444,7 @@ static XEN g_env_any(XEN e, XEN func)
 
 static XEN clm_output, clm_reverb; /* *output* and *reverb* at extlang level -- these can be output streams, vct, sound-data objects etc */
 
-#if HAVE_GUILE
+#if HAVE_GUILE || HAVE_S7
 XEN mus_clm_output(void) {return(XEN_VARIABLE_REF(clm_output));}
 XEN mus_clm_reverb(void) {return(XEN_VARIABLE_REF(clm_reverb));}
 #else
@@ -5595,7 +5595,7 @@ static XEN g_out_any_1(const char *caller, XEN frame, XEN chan, XEN val, XEN out
 
   inv = XEN_TO_C_DOUBLE(val);
 
-#if HAVE_GUILE
+#if HAVE_GUILE || HAVE_S7
   if (XEN_NOT_BOUND_P(outp))
     outp = XEN_VARIABLE_REF(clm_output);
 #else

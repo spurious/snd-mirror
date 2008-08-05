@@ -1484,6 +1484,103 @@ void xen_initialize(void)
 
 
 
+/* ------------------------------ ghooks ------------------------------ */
+
+#if HAVE_GAUCHE || HAVE_S7
+
+typedef struct {
+  int arity;
+  XEN functions;
+} ghook;
+
+static XEN_OBJECT_TYPE ghook_tag;
+
+#define XEN_TO_GHOOK(Obj) (ghook *)XEN_OBJECT_REF(Obj)
+
+static int ghook_arity(ghook *hook) {return(hook->arity);}
+
+static XEN ghook_functions(ghook *hook) {return(hook->functions);}
+
+static void reset_ghook(ghook *hook) {hook->functions = XEN_EMPTY_LIST;}
+
+
+static ghook *make_ghook(int arity)
+{
+  ghook *hook;
+  hook = (ghook *)calloc(1, sizeof(ghook));
+  hook->arity = arity;
+  hook->functions = XEN_EMPTY_LIST;
+  return(hook);
+}
+
+
+static void free_ghook(ghook *hook)
+{
+  if (hook)
+    {
+      hook->functions = XEN_FALSE;
+      free(hook);
+    }
+}
+
+
+static char *hook_to_string(ghook *hook)
+{
+  if (hook)
+    {
+      int len;
+      char *functions, *str;
+      functions = XEN_AS_STRING(hook->functions);
+      len = 64 + strlen(functions);
+      str = (char *)calloc(len, sizeof(char));
+      snprintf(str, len, "<hook arity: %d, hooks: %s>", hook->arity, functions);
+      return(str);
+    }
+  return(NULL);
+}
+
+
+static void add_ghook(ghook *hook, XEN function, bool at_end) 
+{
+  if (at_end)
+    hook->functions = XEN_APPEND(hook->functions, XEN_LIST_1(function));
+  else hook->functions = XEN_CONS(function, hook->functions);
+}
+
+
+bool xen_hook_p(XEN obj) 
+{
+  return(XEN_OBJECT_TYPE_P(obj, ghook_tag));
+}
+
+
+static XEN g_hook_p(XEN val) 
+{
+  return(C_TO_XEN_BOOLEAN(xen_hook_p(val)));
+}
+
+
+static XEN g_hook_empty_p(XEN hook)
+{
+  XEN_ASSERT_TYPE(xen_hook_p(hook), hook, XEN_ONLY_ARG, "hook-empty?", "a hook");
+  return(C_TO_XEN_BOOLEAN(XEN_NULL_P(ghook_functions(XEN_TO_GHOOK(hook)))));
+}
+
+
+bool xen_hook_empty_p(XEN hook)
+{
+  return(XEN_NULL_P(ghook_functions(XEN_TO_GHOOK(hook))));
+}
+
+XEN xen_hook_to_list(XEN hook)
+{
+  XEN_ASSERT_TYPE(xen_hook_p(hook), hook, XEN_ONLY_ARG, "hook->list", "a hook");
+  return(ghook_functions(XEN_TO_GHOOK(hook)));
+}
+
+#endif
+
+
 
 /* ------------------------------ GAUCHE ------------------------------ */
 
@@ -1974,59 +2071,10 @@ static XEN g_xen_gauche_provided_p(XEN feature)
 }
 
 
-/* hooks */
-
-typedef struct {
-  int arity;
-  XEN functions;
-} ghook;
-
-static XEN_OBJECT_TYPE ghook_tag;
-
-
-static ghook *make_ghook(int arity)
-{
-  ghook *hook;
-  hook = (ghook *)calloc(1, sizeof(ghook));
-  hook->arity = arity;
-  hook->functions = XEN_EMPTY_LIST;
-  return(hook);
-}
-
-#define XEN_TO_GHOOK(Obj) (ghook *)XEN_OBJECT_REF(Obj)
-
-
-static void free_ghook(ghook *hook)
-{
-  if (hook)
-    {
-      hook->functions = XEN_FALSE;
-      free(hook);
-    }
-}
-
-
-XEN_MAKE_OBJECT_FREE_PROCEDURE(ghook, free_hook, free_ghook)
-
-static char *hook_to_string(ghook *hook)
-{
-  if (hook)
-    {
-      int len;
-      char *functions, *str;
-      functions = XEN_AS_STRING(hook->functions);
-      len = 64 + strlen(functions);
-      str = (char *)calloc(len, sizeof(char));
-      snprintf(str, len, "<hook arity: %d, hooks: %s>", hook->arity, functions);
-      return(str);
-    }
-  return(NULL);
-}
-
-
 #define FREE free
 XEN_MAKE_OBJECT_PRINT_PROCEDURE(ghook, print_hook, hook_to_string)
 
+XEN_MAKE_OBJECT_FREE_PROCEDURE(ghook, free_hook, free_ghook)
 
 static XEN_MARK_OBJECT_TYPE mark_ghook(XEN obj)
 {
@@ -2034,42 +2082,6 @@ static XEN_MARK_OBJECT_TYPE mark_ghook(XEN obj)
   hook = XEN_TO_GHOOK(obj);
   Scm_ForeignPointerAttrSet(SCM_FOREIGN_POINTER(obj), SCM_INTERN("functions"), hook->functions);
   return(XEN_FALSE);
-}
-
-
-static int ghook_arity(ghook *hook) {return(hook->arity);}
-
-static XEN ghook_functions(ghook *hook) {return(hook->functions);}
-
-static void reset_ghook(ghook *hook) {hook->functions = XEN_EMPTY_LIST;}
-
-bool xen_gauche_hook_p(XEN obj) {return(XEN_OBJECT_TYPE_P(obj, ghook_tag));}
-
-
-static void add_ghook(ghook *hook, XEN function, bool at_end) 
-{
-  if (at_end)
-    hook->functions = XEN_APPEND(hook->functions, XEN_LIST_1(function));
-  else hook->functions = XEN_CONS(function, hook->functions);
-}
-
-
-static XEN g_hook_p(XEN val) 
-{
-  return(C_TO_XEN_BOOLEAN(xen_gauche_hook_p(val)));
-}
-
-
-static XEN g_hook_empty_p(XEN hook)
-{
-  XEN_ASSERT_TYPE(xen_gauche_hook_p(hook), hook, XEN_ONLY_ARG, "hook-empty?", "a hook");
-  return(C_TO_XEN_BOOLEAN(XEN_NULL_P(ghook_functions(XEN_TO_GHOOK(hook)))));
-}
-
-
-bool xen_gauche_hook_empty_p(XEN hook)
-{
-  return(XEN_NULL_P(ghook_functions(XEN_TO_GHOOK(hook))));
 }
 
 
@@ -2087,7 +2099,7 @@ static XEN g_add_hook(XEN hook, XEN function, XEN position)
 {
   ghook *obj;
   bool at_end = false;
-  XEN_ASSERT_TYPE(xen_gauche_hook_p(hook), hook, XEN_ARG_1, "add-hook!", "a hook");
+  XEN_ASSERT_TYPE(xen_hook_p(hook), hook, XEN_ARG_1, "add-hook!", "a hook");
   obj = XEN_TO_GHOOK(hook);
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(function) && 
 		  ((XEN_REQUIRED_ARGS(function) == ghook_arity(obj)) ||
@@ -2104,7 +2116,7 @@ static XEN g_add_hook(XEN hook, XEN function, XEN position)
 XEN xen_gauche_reset_hook(XEN hook)
 {
   ghook *obj;
-  XEN_ASSERT_TYPE(xen_gauche_hook_p(hook), hook, XEN_ONLY_ARG, "reset-hook!", "a hook");
+  XEN_ASSERT_TYPE(xen_hook_p(hook), hook, XEN_ONLY_ARG, "reset-hook!", "a hook");
   obj = XEN_TO_GHOOK(hook);
   reset_ghook(obj);
   Scm_ForeignPointerAttrSet(SCM_FOREIGN_POINTER(hook), SCM_INTERN("functions"), obj->functions);  
@@ -2119,7 +2131,7 @@ static XEN g_run_hook(XEN all_args)
   int arglen;
   XEN functions, val = XEN_FALSE;
   hook = XEN_CAR(all_args);
-  XEN_ASSERT_TYPE(xen_gauche_hook_p(hook), hook, XEN_ARG_1, "run-hook", "a hook");
+  XEN_ASSERT_TYPE(xen_hook_p(hook), hook, XEN_ARG_1, "run-hook", "a hook");
   obj = XEN_TO_GHOOK(hook);
   args = XEN_CDR(all_args);
   arglen = XEN_LIST_LENGTH(args);
@@ -2144,19 +2156,12 @@ static XEN g_run_hook(XEN all_args)
 static XEN g_remove_hook(XEN hook, XEN function)
 {
   ghook *obj;
-  XEN_ASSERT_TYPE(xen_gauche_hook_p(hook), hook, XEN_ARG_1, "remove-hook!", "a hook");
+  XEN_ASSERT_TYPE(xen_hook_p(hook), hook, XEN_ARG_1, "remove-hook!", "a hook");
   obj = XEN_TO_GHOOK(hook);
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(function), function, XEN_ARG_2, "remove-hook!", "a function");
   obj->functions = Scm_DeleteX(function, obj->functions, SCM_CMP_EQ);
   Scm_ForeignPointerAttrSet(SCM_FOREIGN_POINTER(hook), SCM_INTERN("functions"), obj->functions);  
   return(hook);
-}
-
-
-XEN xen_gauche_hook_to_list(XEN hook)
-{
-  XEN_ASSERT_TYPE(xen_gauche_hook_p(hook), hook, XEN_ONLY_ARG, "reset-hook!", "a hook");
-  return(ghook_functions(XEN_TO_GHOOK(hook)));
 }
 
 
@@ -2182,13 +2187,13 @@ static XEN g_procedure_arity(XEN func)
 XEN_NARGIFY_1(g_defined_p_w, g_defined_p)
 XEN_NARGIFY_1(g_xen_gauche_provided_p_w, g_xen_gauche_provided_p)
 XEN_NARGIFY_1(g_xen_gauche_provide_w, g_xen_gauche_provide)
-XEN_NARGIFY_1(g_xen_gauche_object_to_string_w, xen_gauche_object_to_string)
 XEN_NARGIFY_1(g_procedure_arity_w, g_procedure_arity)
+XEN_NARGIFY_1(g_xen_gauche_object_to_string_w, xen_gauche_object_to_string)
 
 XEN_NARGIFY_1(g_hook_p_w, g_hook_p);
 XEN_NARGIFY_1(g_hook_empty_p_w, g_hook_empty_p)
 XEN_NARGIFY_2(g_remove_hook_w, g_remove_hook)
-XEN_NARGIFY_1(g_hook_to_list_w, xen_gauche_hook_to_list)
+XEN_NARGIFY_1(g_hook_to_list_w, xen_hook_to_list)
 XEN_VARGIFY(g_run_hook_w, g_run_hook)
 XEN_NARGIFY_1(g_reset_hook_w, xen_gauche_reset_hook)
 XEN_ARGIFY_2(g_make_hook_w, g_make_hook)
@@ -2219,8 +2224,8 @@ void xen_initialize(void)
   XEN_DEFINE_PROCEDURE("defined?",        g_defined_p_w,                   1, 0, 0, "(defined? arg) -> #t if arg is defined");
   XEN_DEFINE_PROCEDURE("provided?",       g_xen_gauche_provided_p_w,       1, 0, 0, "(provided? arg) -> #t if arg is on the *features* list");
   XEN_DEFINE_PROCEDURE("provide",         g_xen_gauche_provide_w,          1, 0, 0, "(provide arg) -> add arg to *features* list");
-  XEN_DEFINE_PROCEDURE("object->string",  g_xen_gauche_object_to_string_w, 1, 0, 0, "return string representation of arg");
   XEN_DEFINE_PROCEDURE("procedure-arity", g_procedure_arity_w,             1, 0, 0, "return (list required optional) args");
+  XEN_DEFINE_PROCEDURE("object->string",  g_xen_gauche_object_to_string_w, 1, 0, 0, "return string representation of arg");
 
   ghook_tag = XEN_MAKE_OBJECT_TYPE("<hook>", sizeof(ghook), print_hook, free_hook);
 
@@ -2246,7 +2251,7 @@ void xen_initialize(void)
 #include "s7.h"
 
 scheme *s7;
-
+XEN xen_false, xen_true, xen_nil, xen_undefined;
 
 char *xen_version(void)
 {
@@ -2291,6 +2296,142 @@ void xen_repl(int argc, char **argv)
 }
 
 
+bool xen_s7_type_p(XEN obj, XEN_OBJECT_TYPE type)
+{
+  return((s7_is_foreign_object(obj)) &&
+	 (s7_foreign_object_value(obj)) && /* i.e. not a null object */
+	 (s7_foreign_object_type(obj) == type));
+}
+
+
+void xen_s7_ignore(foreign_func func) /* squelch compiler warnings */
+{
+}
+
+
+static XEN g_make_hook(XEN arity, XEN help)
+{
+  ghook *hook;
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arity), arity, XEN_ARG_1, "make-hook", "an integer");
+  XEN_ASSERT_TYPE(XEN_STRING_P(help) || XEN_NOT_BOUND_P(help), help, XEN_ARG_2, "make-hook", "a string if bound");
+  hook = make_ghook(XEN_TO_C_INT(arity));
+  XEN_MAKE_AND_RETURN_OBJECT(ghook_tag, hook, 0, 0);
+}
+
+
+static XEN g_add_hook(XEN hook, XEN function, XEN position)
+{
+  ghook *obj;
+  bool at_end = false;
+  obj = XEN_TO_GHOOK(hook);
+  XEN_ASSERT_TYPE(xen_hook_p(hook), hook, XEN_ARG_1, "add-hook!", "a hook");
+#if 0
+  /* TODO: check hook func */
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(function) && 
+		  ((XEN_REQUIRED_ARGS(function) == ghook_arity(obj)) ||
+		   ((SCM_PROCEDURE_REQUIRED(function) + SCM_PROCEDURE_OPTIONAL(function)) == ghook_arity(obj))),
+		  function, XEN_ARG_2, "add-hook!", "a function");
+#endif
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(position), position, XEN_ARG_3, "add-hook!", "boolean");
+  if (XEN_BOOLEAN_P(position)) at_end = XEN_TO_C_BOOLEAN(position);
+  add_ghook(obj, function, at_end);
+  return(hook);
+}
+
+
+XEN xen_s7_reset_hook(XEN hook)
+{
+  XEN_ASSERT_TYPE(xen_hook_p(hook), hook, XEN_ONLY_ARG, "reset-hook!", "a hook");
+  reset_ghook(XEN_TO_GHOOK(hook));
+  return(hook);
+}
+
+
+static XEN g_run_hook(XEN all_args)
+{
+  XEN hook, args;
+  ghook *obj;
+  int arglen;
+  XEN functions, val = XEN_FALSE;
+  hook = XEN_CAR(all_args);
+  XEN_ASSERT_TYPE(xen_hook_p(hook), hook, XEN_ARG_1, "run-hook", "a hook");
+  obj = XEN_TO_GHOOK(hook);
+  args = XEN_CDR(all_args);
+  arglen = XEN_LIST_LENGTH(args);
+  if (ghook_arity(obj) != arglen)
+    XEN_ERROR(XEN_ERROR_TYPE("wrong-number-of-args"),
+	      XEN_LIST_2(C_TO_XEN_STRING("run-hook"),
+			 args));
+  functions = ghook_functions(obj);
+  while (XEN_NOT_NULL_P(functions))
+    {
+      val = XEN_APPLY(XEN_CAR(functions), args, "run-hook");
+      functions = XEN_CDR(functions);
+    }
+  return(val);
+}
+
+
+static XEN g_remove_hook(XEN hook, XEN function)
+{
+  ghook *obj;
+  XEN_ASSERT_TYPE(xen_hook_p(hook), hook, XEN_ARG_1, "remove-hook!", "a hook");
+  obj = XEN_TO_GHOOK(hook);
+  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(function), function, XEN_ARG_2, "remove-hook!", "a function");
+  obj->functions = s7_remv(s7, obj->functions, function);
+  return(hook);
+}
+
+
+XEN xen_s7_define_hook(const char *name, int arity, const char *help)
+{
+  XEN hook;
+  hook = g_make_hook(C_TO_XEN_INT(arity), (help) ? C_TO_XEN_STRING(help) : XEN_UNDEFINED);
+  if (name)
+    {
+      XEN_DEFINE(name, hook);
+    }
+  return(hook);
+}
+
+XEN xen_define_variable(const char *name, XEN value)
+{
+  XEN_DEFINE(name, value);
+  return(C_STRING_TO_XEN_SYMBOL(name));
+}
+
+
+static bool equalp_hook(void *uv1, void *uv2)
+{
+  return(uv1 == uv2);
+}
+
+static void mark_hook(void *v)
+{
+  s7_mark_object(((ghook *)v)->functions);
+}
+
+static void free_hook(void *v)
+{
+  free_ghook((ghook *)v);
+}
+
+static char *print_hook(void *v)
+{
+  return(hook_to_string((ghook *)v));
+}
+
+
+XEN_NARGIFY_1(g_hook_p_w, g_hook_p);
+XEN_NARGIFY_1(g_hook_empty_p_w, g_hook_empty_p)
+XEN_NARGIFY_2(g_remove_hook_w, g_remove_hook)
+XEN_NARGIFY_1(g_hook_to_list_w, xen_hook_to_list)
+XEN_VARGIFY(g_run_hook_w, g_run_hook)
+XEN_NARGIFY_1(g_reset_hook_w, xen_s7_reset_hook)
+XEN_ARGIFY_2(g_make_hook_w, g_make_hook)
+XEN_ARGIFY_3(g_add_hook_w, g_add_hook)
+
+
 static XEN protected_objects;             /* these are permanently protected things */
 static int protected_objects_size = 0;
 static int protected_objects_top = 0;
@@ -2305,6 +2446,10 @@ void xen_initialize(void)
 
   s7_set_input_port_file(s7, stdin);
   s7_set_output_port_file(s7, stdout);
+  xen_false = s7_F(s7);
+  xen_true = s7_T(s7);
+  xen_nil = s7_NIL(s7);
+  xen_undefined = s7_UNDEFINED(s7);
 
   /* we'll use the ext_data pointer to handle foreign objects that need GC protection */
   /*   it includes anything that wants permanent GC protection, via XEN_PROTECT_FROM_GC */
@@ -2318,10 +2463,23 @@ void xen_initialize(void)
     s7_load_open_file(s7, init);
   else fprintf(stderr, "Can't find s7.scm?");
   fclose(init);
+
+
+  ghook_tag = XEN_MAKE_OBJECT_TYPE("<hook>", print_hook, free_hook, equalp_hook, mark_hook);
+
+  XEN_DEFINE_PROCEDURE("hook?",        g_hook_p_w,       1, 0, 0, "(hook? obj) -> #t if obj is a hook");
+  XEN_DEFINE_PROCEDURE("hook-empty?",  g_hook_empty_p_w, 1, 0, 0, "(hook-empty? hook) -> #t if obj is an empty hook");
+  XEN_DEFINE_PROCEDURE("remove-hook!", g_remove_hook_w,  2, 0, 0, "(remove-hook! hook func) removes func from hook obj");
+  XEN_DEFINE_PROCEDURE("reset-hook!",  g_reset_hook_w,   1, 0, 0, "(reset-hook! hook) removes all funcs from hook obj");
+  XEN_DEFINE_PROCEDURE("hook->list",   g_hook_to_list_w, 1, 0, 0, "(hook->list hook) -> list of functions on hook obj");
+  XEN_DEFINE_PROCEDURE("run-hook",     g_run_hook_w,     0, 0, 1, "(run-hook hook . args) applies each hook function to args");
+  XEN_DEFINE_PROCEDURE("make-hook",    g_make_hook_w,    1, 1, 0, "(make-hook arity :optional help) makes a new hook object");
+  XEN_DEFINE_PROCEDURE("add-hook!",    g_add_hook_w,     2, 1, 0, "(add-hook! hook func :optional append) adds func to the hooks function list");
+
 }
 
 
-void xen_protect_from_gc(XEN obj)
+XEN xen_protect_from_gc(XEN obj)
 {
   XEN_VECTOR_SET(protected_objects, protected_objects_top++, obj);
 
@@ -2336,14 +2494,19 @@ void xen_protect_from_gc(XEN obj)
       protected_objects_top = 0;
       protected_objects_size = new_size;
     }
+  return(obj);
 }
-
 
 void xen_gc_mark(XEN val)
 {
-  s7_mark_object(val);
+  s7_mark_object((void *)val);
 }
 
+
+const char *xen_s7_object_help(XEN sym)
+{
+  return(s7_foreign_function_doc(XEN_VARIABLE_REF(sym)));
+}
 
 #endif
 

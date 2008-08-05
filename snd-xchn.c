@@ -445,14 +445,6 @@ static void w_toggle_callback(Widget w, XtPointer context, XtPointer info)
   w_button_callback((chan_info *)context, cb->set, (ev->state & snd_ControlMask));
 }
 
-#if MUS_DEBUGGING
-static bool expose_debugging = false;
-static XEN g_expose_debugging(void)
-{
-  expose_debugging = true;
-  return(XEN_TRUE);
-}
-#endif
 
 static void channel_expose_callback(Widget w, XtPointer context, XtPointer info)
 {
@@ -474,12 +466,6 @@ static void channel_expose_callback(Widget w, XtPointer context, XtPointer info)
    *   be useless, and we'll drop the earlier ones anyway, so if cp != last_cp, expose
    *   last_cp if last_count>0 or times equal (not sure which is safest).
    */
-
-#if MUS_DEBUGGING
-  if (expose_debugging)
-    fprintf(stderr,"%d: expose count: %d, width: %d, times: %d %d, cps: %p %p\n",
-	    cp->chan, ev->count, ev->width, (int)last_expose_event_time, (int)XtLastTimestampProcessed(MAIN_DISPLAY(ss)), cp, last_cp);
-#endif
 
   curtime = XtLastTimestampProcessed(MAIN_DISPLAY(ss));
 
@@ -1622,8 +1608,4 @@ leaves the drawing area (graph pane) of the given channel."
 
   mouse_enter_graph_hook = XEN_DEFINE_HOOK(S_mouse_enter_graph_hook, 2, H_mouse_enter_graph_hook);    /* args = snd chn */
   mouse_leave_graph_hook = XEN_DEFINE_HOOK(S_mouse_leave_graph_hook, 2, H_mouse_leave_graph_hook);    /* args = snd chn */
-
-#if MUS_DEBUGGING
-  XEN_DEFINE_PROCEDURE("expose-debugging", g_expose_debugging, 0, 0, 0, "this is ridiculous...");
-#endif
 }

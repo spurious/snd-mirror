@@ -1763,13 +1763,13 @@ typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 
 #define XEN_DEFINE(Name, Value)       SCM_DEFINE(Scm_UserModule(), Name, Value)
 
-#define XEN_HOOK_P(Arg)                    xen_gauche_hook_p(Arg)
+#define XEN_HOOK_P(Arg)                    xen_hook_p(Arg)
 #define XEN_DEFINE_HOOK(Name, Arity, Help) xen_gauche_define_hook(Name, Arity, Help)
 /* "simple hooks are for channel-local hooks (unnamed, accessed through the channel) */
 #define XEN_DEFINE_SIMPLE_HOOK(Arity)      xen_gauche_define_hook(NULL, Arity, NULL)
-#define XEN_HOOKED(Arg)                    (!xen_gauche_hook_empty_p(Arg))
+#define XEN_HOOKED(Arg)                    (!xen_hook_empty_p(Arg))
 #define XEN_CLEAR_HOOK(Arg)                xen_gauche_reset_hook(Arg)
-#define XEN_HOOK_PROCEDURES(Arg)           xen_gauche_hook_to_list(Arg)
+#define XEN_HOOK_PROCEDURES(Arg)           xen_hook_to_list(Arg)
 
 #define XEN_ERROR_TYPE(Typ)                 C_STRING_TO_XEN_SYMBOL(Typ)
 #define XEN_ERROR(Type, Info)               Scm_Raise(XEN_CONS(Type, Info))
@@ -2034,15 +2034,16 @@ const char *xen_gauche_features(void);
 XEN xen_gauche_make_object(XEN_OBJECT_TYPE type, void *val, XEN_MARK_OBJECT_TYPE (*protect_func)(XEN obj));
 void *xen_gauche_object_ref(XEN obj);
 XEN_OBJECT_TYPE xen_gauche_new_type(const char *name, ScmClassPrintProc print, ScmForeignCleanupProc cleanup);
-bool xen_gauche_type_p(XEN obj, XEN_OBJECT_TYPE type);
 XEN xen_gauche_help(XEN proc);
 void xen_gauche_set_help(XEN proc, const char *help);
 XEN xen_gauche_define_constant(const char *name, int value, const char *help);
+
+bool xen_gauche_type_p(XEN obj, XEN_OBJECT_TYPE type);
 XEN xen_gauche_define_hook(const char *name, int arity, const char *help);
-XEN xen_gauche_hook_to_list(XEN hook);
 XEN xen_gauche_reset_hook(XEN hook);
-bool xen_gauche_hook_empty_p(XEN hook);
-bool xen_gauche_hook_p(XEN val);
+XEN xen_hook_to_list(XEN hook);
+bool xen_hook_empty_p(XEN hook);
+bool xen_hook_p(XEN val);
 #endif
 
 
@@ -2062,19 +2063,21 @@ extern scheme *s7;  /* s7 is a pointer to the current scheme */
 #define XEN_LANGUAGE_NAME                          "S7"
 #define XEN_COMMENT_STRING                         ";"
 
-#define XEN_FALSE                                  s7_F(s7)
-#define XEN_TRUE                                   s7_T(s7)
+extern XEN xen_false, xen_true, xen_nil, xen_undefined;
+
+#define XEN_FALSE                                  xen_false
+#define XEN_TRUE                                   xen_true
 #define XEN_TRUE_P(Arg)                            ((Arg) == XEN_TRUE)  /* not scheme-wise, but Snd-wise (#t as special arg) */
 #define XEN_FALSE_P(Arg)                           ((Arg) == XEN_FALSE)
 #define XEN_BOOLEAN_P(Arg)                         (((Arg) == XEN_TRUE) || ((Arg) == XEN_FALSE))
 #define C_TO_XEN_BOOLEAN(Arg)                      ((Arg) ? XEN_TRUE : XEN_FALSE)
 #define XEN_TO_C_BOOLEAN(Arg)                      ((XEN_TRUE_P(Arg)) ? true : false)
 
-#define XEN_NULL_P(Arg)                            ((Arg) == s7_NIL(s7))
-#define XEN_BOUND_P(Arg)                           ((Arg) != s7_UNDEFINED(s7))
-#define XEN_NOT_BOUND_P(Arg)                       ((Arg) == s7_UNDEFINED(s7))
-#define XEN_EMPTY_LIST                             s7_NIL(s7)
-#define XEN_UNDEFINED                              s7_UNDEFINED(s7)
+#define XEN_NULL_P(Arg)                            ((Arg) == xen_nil)
+#define XEN_BOUND_P(Arg)                           ((Arg) != xen_undefined)
+#define XEN_NOT_BOUND_P(Arg)                       ((Arg) == xen_undefined)
+#define XEN_EMPTY_LIST                             xen_nil
+#define XEN_UNDEFINED                              xen_undefined
 
 #define XEN_EQ_P(Arg1, Arg2)                       s7_eq_p(Arg1, Arg2)
 #define XEN_EQV_P(Arg1, Arg2)                      s7_eqv_p(s7, Arg1, Arg2)
@@ -2093,7 +2096,7 @@ extern scheme *s7;  /* s7 is a pointer to the current scheme */
 #define XEN_LIST_P(Arg)                            XEN_PAIR_P(Arg)
 #define XEN_LIST_LENGTH(Arg)                       s7_list_length(s7, Arg)
 #define XEN_LIST_P_WITH_LENGTH(Arg, Len)           ((XEN_PAIR_P(Arg)) && ((Len = XEN_LIST_LENGTH(Arg)) > 0))
-#define XEN_LIST_1(a)                              XEN_CONS(a, s7_NIL(s7))
+#define XEN_LIST_1(a)                              XEN_CONS(a, xen_nil)
 #define XEN_LIST_2(a, b)                           XEN_CONS(a, XEN_LIST_1(b))
 #define XEN_LIST_3(a, b, c)                        XEN_CONS(a, XEN_LIST_2(b, c))
 #define XEN_LIST_4(a, b, c, d)                     XEN_CONS(a, XEN_LIST_3(b, c, d))
@@ -2113,18 +2116,18 @@ extern scheme *s7;  /* s7 is a pointer to the current scheme */
 #define XEN_STRING_P(Arg)                          s7_is_string(Arg)
 #define XEN_NAME_AS_C_STRING_TO_VALUE(Arg)         s7_name_to_value(s7, Arg)
 #define XEN_TO_C_STRING(Str)                       s7_string_value(Str)
-#define C_TO_XEN_STRING(Arg)                       s7_mk_string(s7, Arg) /* strlen here so perhaps add 1 to len and use mk_counted_string */
-#define C_TO_XEN_STRINGN(Str, Len)                 s7_mk_counted_string(s7, Str, Len) /* Len + 1?? */
+#define C_TO_XEN_STRING(Arg)                       s7_make_string(s7, Arg) /* strlen here so perhaps add 1 to len and use mk_counted_string */
+#define C_TO_XEN_STRINGN(Str, Len)                 s7_make_counted_string(s7, Str, Len) /* Len + 1?? */
 
-#define XEN_ZERO                                   s7_mk_integer(s7, 0)
+#define XEN_ZERO                                   s7_make_integer(s7, 0)
 #define XEN_INTEGER_P(Arg)                         s7_is_integer(Arg)
-#define C_TO_XEN_INT(Arg)                          s7_mk_integer(s7, Arg)
+#define C_TO_XEN_INT(Arg)                          s7_make_integer(s7, Arg)
 #define XEN_TO_C_INT(Arg)                          s7_ivalue(Arg)
 #define XEN_TO_C_INT_OR_ELSE(Arg, Def)             ((XEN_INTEGER_P(Arg)) ? XEN_TO_C_INT(Arg) : Def)
 
 #define XEN_ULONG_P(Arg)                           s7_is_ulong(Arg)
 #define XEN_TO_C_ULONG(Arg)                        s7_uvalue(Arg)
-#define C_TO_XEN_ULONG(Arg)                        s7_mk_ulong(s7, (unsigned long)Arg)
+#define C_TO_XEN_ULONG(Arg)                        s7_make_ulong(s7, (unsigned long)Arg)
 
 #define C_TO_XEN_LONG_LONG(Arg)                    C_TO_XEN_OFF_T(Arg)
 #define XEN_TO_C_LONG_LONG(Arg)                    XEN_TO_C_OFF_T(Arg)
@@ -2140,16 +2143,16 @@ extern scheme *s7;  /* s7 is a pointer to the current scheme */
 #define XEN_DOUBLE_P(Arg)                          s7_is_real(Arg)
 #define XEN_TO_C_DOUBLE(Arg)                       s7_rvalue(Arg)
 #define XEN_TO_C_DOUBLE_OR_ELSE(Arg, Def)          ((XEN_NUMBER_P(Arg)) ? XEN_TO_C_DOUBLE(Arg) : Def)
-#define C_TO_XEN_DOUBLE(Arg)                       s7_mk_real(s7, Arg)
+#define C_TO_XEN_DOUBLE(Arg)                       s7_make_real(s7, Arg)
 
 #define C_STRING_TO_XEN_FORM(Str)                  s7_string_to_form(s7, Str)
 #define XEN_EVAL_FORM(Form)                        s7_eval_form(s7, Form)
 #define XEN_EVAL_C_STRING(Arg)                     s7_eval_string(s7, Arg)
-#define XEN_TO_STRING(Obj)                         s7_display(s7, Obj)
+#define XEN_TO_STRING(Obj)                         s7_object_to_string(s7, Obj)
 
 #define XEN_SYMBOL_TO_C_STRING(Arg)                s7_symname(Arg)
 #define XEN_SYMBOL_P(Arg)                          s7_is_symbol(Arg)
-#define C_STRING_TO_XEN_SYMBOL(Arg)                s7_mk_symbol(s7, Arg)
+#define C_STRING_TO_XEN_SYMBOL(Arg)                s7_make_symbol(s7, Arg)
 #define XEN_DOCUMENTATION_SYMBOL                   C_STRING_TO_XEN_SYMBOL("documentation")
 
 #define XEN_WRAP_C_POINTER(Arg)                    C_TO_XEN_ULONG((unsigned long)Arg)
@@ -2161,15 +2164,15 @@ extern scheme *s7;  /* s7 is a pointer to the current scheme */
 #define XEN_VECTOR_REF(Vect, Num)                  s7_vector_elem(Vect, Num)
 #define XEN_VECTOR_SET(Vect, Num, Val)             s7_set_vector_elem(Vect, Num, Val)
 #define XEN_MAKE_VECTOR(Num, Fill)                 s7_make_and_fill_vector(s7, Num, Fill)
-#define XEN_VECTOR_TO_LIST(Vect)                   s7_vector_to_list(Vect)
+#define XEN_VECTOR_TO_LIST(Vect)                   s7_vector_to_list(s7, Vect)
 
 #define XEN_CHAR_P(Arg)                            s7_is_character(Arg)
 #define XEN_TO_C_CHAR(Arg)                         s7_charvalue(Arg)
-#define C_TO_XEN_CHAR(Arg)                         s7_mk_character(s7, Arg)
+#define C_TO_XEN_CHAR(Arg)                         s7_make_character(s7, Arg)
 
 #define XEN_KEYWORD_P(Obj)                         s7_is_keyword(Obj)
 #define XEN_KEYWORD_EQ_P(k1, k2)                   s7_keyword_eq_p(k1, k2)
-#define XEN_MAKE_KEYWORD(Arg)                      s7_mk_keyword(s7, Arg)
+#define XEN_MAKE_KEYWORD(Arg)                      s7_make_keyword(s7, Arg)
 
 #define XEN_PROCEDURE_P(Arg)                       (s7_is_proc(Arg) || s7_is_closure(Arg))
 #define XEN_PROCEDURE_SOURCE(Func)                 s7_procedure_source(Func)
@@ -2416,15 +2419,15 @@ extern scheme *s7;  /* s7 is a pointer to the current scheme */
   }
 
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
-  s7_define(s7, s7_global_env(s7), s7_mk_symbol(s7, Name), s7_mk_foreign_function(s7, Func))
+  s7_define(s7, s7_global_env(s7), s7_make_symbol(s7, Name), s7_make_foreign_function(s7, Func, Doc))
 
 #define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   XEN_DEFINE_PROCEDURE(Get_Name, Get_Func, Get_Req, Get_Opt, 0, Get_Help); \
   XEN_DEFINE_PROCEDURE("set-" Get_Name, Set_Func, Set_Req, Set_Opt, 0, Get_Help)
 
-
 #define XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   XEN_DEFINE_PROCEDURE(Get_Name, Get_Func, Get_Req, Get_Opt, 0, Get_Help); \
+  xen_s7_ignore(Set_Func); \
   XEN_DEFINE_PROCEDURE("set-" Get_Name, Rev_Func, Set_Req, Set_Opt, 0, Get_Help)
 
 
@@ -2448,15 +2451,15 @@ extern scheme *s7;  /* s7 is a pointer to the current scheme */
 #define XEN_APPLY_NO_CATCH(Func, Args)                                s7_call(s7, Func, Args)
 typedef XEN (*XEN_CATCH_BODY_TYPE)                                    (void *data);
 
-#define XEN_DEFINE_CONSTANT(Name, Value, Help)                        s7_define(s7, s7_global_env(s7), s7_mk_symbol(s7, Name), s7_mk_integer(s7, Value))
-#define XEN_DEFINE(Name, Value)                                       s7_define(s7, s7_global_env(s7), s7_mk_symbol(s7, Name), Value)
+#define XEN_DEFINE_CONSTANT(Name, Value, Help)                        s7_define(s7, s7_global_env(s7), s7_make_symbol(s7, Name), s7_make_integer(s7, Value))
+#define XEN_DEFINE(Name, Value)                                       s7_define(s7, s7_global_env(s7), s7_make_symbol(s7, Name), Value)
 
-#define XEN_DEFINE_VARIABLE(Name, Value, Help)
-#define XEN_VARIABLE_SET(Var, Val)
-#define XEN_VARIABLE_REF(Var) 0
+#define XEN_DEFINE_VARIABLE(Name, Var, Value)                         Var = XEN_PROTECT_FROM_GC(xen_define_variable(Name, Value))
+#define XEN_VARIABLE_SET(Var, Val)                                    s7_symbol_set_value(s7, Var, Val)
+#define XEN_VARIABLE_REF(Var)                                         s7_symbol_value(s7, Var)
+#define XEN_NAME_AS_C_STRING_TO_VARIABLE(a)                           s7_make_symbol(s7, a)
 
 #define XEN_MARK_OBJECT_TYPE                                           void
-
 #define XEN_MAKE_OBJECT_TYPE(Name, Print, Free, Equal, Gc_Mark)        s7_new_foreign_type(Name, Print, Free, Equal, Gc_Mark)
 
 #define XEN_MAKE_OBJECT_FREE_PROCEDURE(Type, Wrapped_Free, Original_Free) \
@@ -2471,21 +2474,32 @@ typedef XEN (*XEN_CATCH_BODY_TYPE)                                    (void *dat
     return(Original_Print((Type *)obj)); \
   }
 
-#define XEN_MAKE_AND_RETURN_OBJECT(Tag, Val, ig1, ig2)                 return(s7_mk_foreign_object(s7, Tag, Val))
-#define XEN_OBJECT_REF(Arg)                                            s7_foreign_object_value(Arg)
-#define XEN_OBJECT_TYPE                                                int /* tag type */
-#define XEN_OBJECT_TYPE_P(Obj, Tag)                                    XEN_FALSE
-#define XEN_OBJECT_HELP(Name)                                          XEN_FALSE
+#define XEN_MAKE_AND_RETURN_OBJECT(Tag, Val, ig1, ig2)   return(s7_make_foreign_object(s7, Tag, Val))
+#define XEN_OBJECT_REF(Arg)                              s7_foreign_object_value(Arg)
+#define XEN_OBJECT_TYPE                                  int /* tag type */
+#define XEN_OBJECT_TYPE_P(Obj, Tag)                      xen_s7_type_p(Obj, Tag)
+#define XEN_OBJECT_HELP(Sym)                             xen_s7_object_help(Sym)
 
-/* I think this could be done without foreign types except that the GC might move things? */
-#define XEN_HOOK_P(Arg) 0
-#define XEN_HOOKED(Arg) 0
-#define XEN_DEFINE_HOOK(Name, Arity, Help) 0
-#define XEN_DEFINE_SIMPLE_HOOK(Arity) 0
-#define XEN_CLEAR_HOOK(Arg)
-#define XEN_HOOK_PROCEDURES(Arg) 0
 
-void xen_protect_from_gc(pointer obj);
+#define XEN_HOOK_P(Arg)                                  xen_hook_p(Arg)
+#define XEN_DEFINE_HOOK(Name, Arity, Help)               xen_s7_define_hook(Name, Arity, Help)
+/* "simple hooks are for channel-local hooks (unnamed, accessed through the channel) */
+#define XEN_DEFINE_SIMPLE_HOOK(Arity)                    xen_s7_define_hook(NULL, Arity, NULL)
+#define XEN_HOOKED(Arg)                                  (!xen_hook_empty_p(Arg))
+#define XEN_CLEAR_HOOK(Arg)                              xen_s7_reset_hook(Arg)
+#define XEN_HOOK_PROCEDURES(Arg)                         xen_hook_to_list(Arg)
+
+
+XEN xen_protect_from_gc(pointer obj);
+bool xen_s7_type_p(XEN obj, XEN_OBJECT_TYPE type);
+XEN xen_s7_define_hook(const char *name, int arity, const char *help);
+XEN xen_s7_reset_hook(XEN hook);
+XEN xen_hook_to_list(XEN hook);
+bool xen_hook_empty_p(XEN hook);
+bool xen_hook_p(XEN val);
+XEN xen_define_variable(const char *name, XEN value);
+void xen_s7_ignore(foreign_func func); /* squelch compiler warnings */
+const char *xen_s7_object_help(XEN sym);
 
 #endif
 /* end S7 */

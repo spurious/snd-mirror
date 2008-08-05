@@ -69,16 +69,6 @@
 
 (define (1+ x) (+ x 1))
 (define (1- x) (- x 1))
-;(define (gcd a b)
-;  (let ((aa (abs a))
-;	(bb (abs b)))
-;     (if (= bb 0)
-;          aa
-;          (gcd bb (remainder aa bb)))))
-;(define (lcm a b)
-;     (if (or (= a 0) (= b 0))
-;          0
-;          (abs (* (quotient a (gcd a b)) b))))
 
 (define call/cc call-with-current-continuation)
 
@@ -318,19 +308,6 @@
 (define (atom? x)
   (not (pair? x)))
 
-;;;;    equal?
-;;; in Snd, equal? needs to be in C because foreign objects have their own choice of equality testing
-;(define (equal? x y)
-;     (cond
-;          ((pair? x)
-;               (and (pair? y)
-;                    (equal? (car x) (car y))
-;                    (equal? (cdr x) (cdr y))))
-;          ((vector? x)
-;               (and (vector? y) (vector-equal? x y)))
-;          ((string? x)
-;               (and (string? y) (string=? x y)))
-;          (else (eqv? x y))))
 
 ;;;; (do ((var init inc) ...) (endtest result ...) body ...)
 ;;
@@ -436,15 +413,25 @@
           (apply (pop-handler))
           (apply error x)))
 
+(define *error-hook* throw)
+
+;(macro (old-catch form)
+;     (let ((label (gensym)))
+;          `(call/cc (lambda (exit)
+;               (push-handler (lambda () (exit ,(cadr form))))
+;               (let ((,label (begin ,@(cddr form))))
+;                    (pop-handler)
+;                    ,label)))))
+
 (macro (catch form)
      (let ((label (gensym)))
           `(call/cc (lambda (exit)
-               (push-handler (lambda () (exit ,(cadr form))))
-               (let ((,label (begin ,@(cddr form))))
+               (push-handler (lambda () (exit (,(caddr form)))))
+               (let ((,label (,(cadddr form))))
                     (pop-handler)
                     ,label)))))
 
-(define *error-hook* throw)
+;;; TODO: currently the tag (cadr form) is ignored -- can we pop until we find it, then call that error handler?
 
 
 ;;;;; Definition of MAKE-ENVIRONMENT, to be used with two-argument EVAL
@@ -583,10 +570,14 @@
 (gc-verbose #f)
 (tracing 0)
 
+
 ;;; --------------------------------------------------------------------------------
 
 (define (provide sym)
   (set! *features* (cons sym *features*)))
+
+(define (provided? sym)
+  (member sym *features*))
 
 (define *load-path* '())
 
@@ -603,3 +594,5 @@
 ;(define-syntax defmacro
 ;  (syntax-rules ()
 ;    ((_ name params . body) (define-macro (name . params) . body)))))
+
+(define object->string display)

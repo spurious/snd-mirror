@@ -62,7 +62,6 @@ char *s7_symname(pointer p);
 int s7_hasprop(pointer p);
 
 int s7_is_foreign_function(pointer p);
-int s7_is_foreign_object(pointer p);
 int s7_is_closure(pointer p);
 pointer s7_closure_code(pointer p);
 pointer s7_closure_env(pointer p);
@@ -87,15 +86,15 @@ pointer s7_apply1(scheme *sc, const char *procname, pointer);
 void s7_set_external_data(scheme *sc, void *p);
 void s7_define(scheme *sc, pointer env, pointer symbol, pointer value);
 
-pointer s7_mk_integer(scheme *sc, long num);
-pointer s7_mk_real(scheme *sc, double num);
-pointer s7_mk_symbol(scheme *sc, const char *name);
+pointer s7_make_integer(scheme *sc, long num);
+pointer s7_make_real(scheme *sc, double num);
+pointer s7_make_symbol(scheme *sc, const char *name);
 pointer s7_gensym(scheme *sc);
-pointer s7_mk_string(scheme *sc, const char *str);
-pointer s7_mk_counted_string(scheme *sc, const char *str, int len);
-pointer s7_mk_character(scheme *sc, int c);
-pointer s7_mk_foreign_function(scheme *sc, foreign_func f);
-pointer s7_mk_foreign_object(scheme *sc, int type, void *value);
+pointer s7_make_string(scheme *sc, const char *str);
+pointer s7_make_counted_string(scheme *sc, const char *str, int len);
+pointer s7_make_character(scheme *sc, int c);
+pointer s7_make_foreign_function(scheme *sc, foreign_func f, const char *doc);
+const char *s7_foreign_function_doc(pointer p);
 
 void s7_putstr(scheme *sc, const char *s);
 
@@ -112,13 +111,17 @@ void s7_atom2str(scheme *sc, pointer l, int f, char **pp, int *plen);
 void s7_fill_vector(pointer vec, pointer obj);
 pointer s7_vector_elem(pointer vec, int ielem);
 pointer s7_set_vector_elem(pointer vec, int ielem, pointer a);
-pointer s7_mk_vector(scheme *sc, int len);
+pointer s7_make_vector(scheme *sc, int len);
 int s7_vector_length(pointer vec);
 
 
 void s7_putchars(scheme *sc, const char *s, int len) ;
 void s7_new_slot_spec_in_env(scheme *sc, pointer env, pointer variable, pointer value);
+pointer s7_find_slot_in_env(scheme *sc, pointer env, pointer sym, int all);
+pointer s7_slot_value_in_env(pointer slot);
 
+pointer s7_make_closure(scheme *sc, pointer c, pointer e);
+pointer s7_make_continuation(scheme *sc, pointer d);
 
 
 
@@ -129,26 +132,29 @@ void s7_new_slot_spec_in_env(scheme *sc, pointer env, pointer variable, pointer 
 
 bool s7_is_ulong(pointer arg);
 unsigned long s7_uvalue(pointer num);
-pointer s7_mk_ulong(scheme *sc, unsigned long num);
+pointer s7_make_ulong(scheme *sc, unsigned long num);
 
 pointer s7_make_and_fill_vector(scheme *sc, int len, pointer fill);
 pointer s7_list_ref(scheme *sc, pointer lst, int num);
 pointer s7_list_set(scheme *sc, pointer lst, int num, pointer val);
 pointer s7_assoc(scheme *sc, pointer sym, pointer lst);
 pointer s7_member(scheme *sc, pointer sym, pointer lst);
+pointer s7_remv(scheme *sc, pointer a, pointer obj);
 
 pointer s7_vector_to_list(scheme *sc, pointer vect);
 bool s7_eq_p(pointer obj1, pointer obj2);
 
 bool s7_is_keyword(pointer obj);
 bool s7_keyword_eq_p(pointer k1, pointer k2);
-pointer s7_mk_keyword(scheme *sc, const char *key);
+pointer s7_make_keyword(scheme *sc, const char *key);
 
 pointer s7_eval_string(scheme *sc, const char *str);
 pointer s7_eval_form(scheme *sc, pointer form);
 pointer s7_name_to_value(scheme *sc, const char *name);
+pointer s7_symbol_value(scheme *sc, pointer sym);
+pointer s7_symbol_set_value(scheme *sc, pointer sym, pointer val);
 pointer s7_string_to_form(scheme *sc, const char *str);
-pointer s7_display(scheme *sc, pointer arg);
+pointer s7_object_to_string(scheme *sc, pointer arg);
 pointer s7_load_file(scheme *sc, const char *file);
 pointer s7_load_path(scheme *sc);
 pointer s7_add_to_load_path(scheme *sc, const char *file);
@@ -167,6 +173,13 @@ int s7_new_foreign_type(const char *name,
 			void (*gc_mark)(void *val));
 
 void *s7_foreign_object_value(pointer obj);
+int s7_foreign_object_type(pointer obj);
+int s7_is_foreign_object(pointer p);
+pointer s7_make_foreign_object(scheme *sc, int type, void *value);
+char *s7_describe_foreign_object(pointer a);
+void s7_free_foreign_object(pointer a);
+bool s7_equalp_foreign_objects(pointer a, pointer b);
+void s7_mark_object(pointer a); /* s7 for foreign objects with embedded scheme objects */
 
 #endif
 

@@ -1168,7 +1168,7 @@ void snd_report_result(XEN result, const char *buf)
 
 void snd_report_listener_result(XEN form)
 {
-#if HAVE_RUBY || HAVE_FORTH
+#if HAVE_RUBY || HAVE_FORTH || HAVE_S7
   snd_report_result(form, "\n");
 #endif
 #if (HAVE_GUILE && (SCM_DEBUG_TYPING_STRICTNESS != 2)) || HAVE_GAUCHE
@@ -2928,6 +2928,10 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(define (read-enable . args) #f)");
   XEN_EVAL_C_STRING("(define (debug-set! . args) #f)");
   XEN_EVAL_C_STRING("(define (make-soft-port . args) #f)");
+
+  XEN_EVAL_C_STRING("(define (symbol->keyword key) (make-keyword (symbol->string key)))");
+  XEN_EVAL_C_STRING("(define (keyword->symbol key) (string->symbol (keyword->string key)))");
+  XEN_EVAL_C_STRING("(define load-from-path load)");
 #endif
 
 #if HAVE_SCHEME && USE_GTK && (!HAVE_GTK_ENTRY_GET_TEXT_LENGTH)

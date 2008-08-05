@@ -230,7 +230,7 @@ bool mus_vct_equalp(vct *v1, vct *v2)
 }
 
 #if (HAVE_S7)
-bool s7_mus_vct_equalp(void *uv1, void *uv2)
+static bool s7_mus_vct_equalp(void *uv1, void *uv2)
 {
   return(mus_vct_equalp((vct *)uv1, (vct *)uv2));
 }
@@ -240,13 +240,13 @@ bool s7_mus_vct_equalp(void *uv1, void *uv2)
 
 XEN_MAKE_OBJECT_PRINT_PROCEDURE(vct, print_vct, mus_vct_to_string)
 
-
+#if (!HAVE_S7)
 static XEN equalp_vct(XEN obj1, XEN obj2)
 {
   if ((!(MUS_VCT_P(obj1))) || (!(MUS_VCT_P(obj2)))) return(XEN_FALSE);
   return(xen_return_first(C_TO_XEN_BOOLEAN(mus_vct_equalp(XEN_TO_VCT(obj1), XEN_TO_VCT(obj2))), obj1, obj2));
 }
-
+#endif
 
 vct *mus_vct_make(off_t len)
 {

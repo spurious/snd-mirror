@@ -3903,6 +3903,21 @@ and its value is returned."
   str = XEN_AS_STRING(XEN_OBJECT_HELP(text));
 #endif
 
+#if HAVE_S7
+  {
+    XEN sym = XEN_FALSE;
+    if (XEN_STRING_P(text))
+      sym = C_STRING_TO_XEN_SYMBOL(XEN_TO_C_STRING(text));
+    else
+      {
+	if (XEN_SYMBOL_P(text))
+	  sym = text;
+      }
+    if (XEN_SYMBOL_P(sym))
+      str = (char *)XEN_OBJECT_HELP(sym);
+  }
+#endif
+
 #if HAVE_GAUCHE
   {
     XEN sym = XEN_FALSE;
