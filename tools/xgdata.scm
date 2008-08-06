@@ -4881,7 +4881,7 @@
 (CFNC-236 "gfloat gtk_entry_get_alignment GtkEntry* entry")
 (CFNC-236 "void gtk_file_chooser_set_use_preview_label GtkFileChooser* chooser gboolean use_label")
 (CFNC-236 "gboolean gtk_file_chooser_get_use_preview_label GtkFileChooser* chooser")
-(CFNC-236 "GtkWidget* gtk_file_chooser_widget_new_with_backend GtkFileChooserAction action gchar* backend")
+;;; 2.13.6. (CFNC-236 "GtkWidget* gtk_file_chooser_widget_new_with_backend GtkFileChooserAction action gchar* backend")
 ;(CFNC-236 "void gtk_rc_reset_styles GtkSettings* settings")
 ;;;(CFNC-236 "void gtk_text_layout_set_keyboard_direction GtkTextLayout* layout GtkTextDirection keyboard_dir")
 ;;;GtkTextLayout is buggy
@@ -5313,7 +5313,7 @@
 
 (CFNC-260 "void gtk_cell_renderer_stop_editing GtkCellRenderer* cell gboolean canceled")
 (CFNC-260 "GtkWidget* gtk_file_chooser_button_new gchar* title GtkFileChooserAction action" 'const)
-(CFNC-260 "GtkWidget* gtk_file_chooser_button_new_with_backend gchar* title GtkFileChooserAction action gchar* backend" 'const)
+;;; 2.13.6 (CFNC-260 "GtkWidget* gtk_file_chooser_button_new_with_backend gchar* title GtkFileChooserAction action gchar* backend" 'const)
 (CFNC-260 "void gtk_icon_view_set_columns GtkIconView* icon_view gint columns")
 (CFNC-260 "gint gtk_icon_view_get_columns GtkIconView* icon_view")
 (CFNC-260 "void gtk_icon_view_set_item_width GtkIconView* icon_view gint item_width")
@@ -6779,7 +6779,7 @@
 ;;; not done:
 ;;; gdk_event_get_time|state|coords[x and y]|type|button|window|keyval etc
 ;;; [gdk_event_get_time|state|coords] but no accessor for button|window|keyval|type?
-;;; adj page_size [no accessor apparently]
+;;; adj page_size [no accessor apparently] -- added 2.13.6
 ;;; GdkColor ->pixel, ->red|green|blue [no accessors apparently]
 ;;; color selection dialog buttons currently must go through the property access maze
 
@@ -6798,3 +6798,43 @@
 (STRUCT-make "PangoColor")
 (STRUCT-make "PangoRectangle")
 (STRUCT-make "PangoLogAttr")
+
+#|
+;;; gtk 1.13.6
+!   GDK_CROSSING_GTK_GRAB,
+!   GDK_CROSSING_GTK_UNGRAB,
+!   GDK_CROSSING_STATE_CHANGED
+  } GdkCrossingMode;
+
+
+guint gdk_threads_add_timeout_seconds_full gint priority guint interval GSourceFunc function gpointer data GDestroyNotify notify
+guint gdk_threads_add_timeout_seconds guint interval GSourceFunc function gpointer data
+gdouble gtk_adjustment_get_lower GtkAdjustment* adjustment
+void gtk_adjustment_set_lower GtkAdjustment* adjustment gdouble lower
+gdouble gtk_adjustment_get_upper GtkAdjustment* adjustment
+void gtk_adjustment_set_upper GtkAdjustment* adjustment gdouble upper
+gdouble gtk_adjustment_get_step_increment GtkAdjustment* adjustment
+void gtk_adjustment_set_step_increment GtkAdjustment* adjustment gdouble step_increment
+gdouble gtk_adjustment_get_page_increment GtkAdjustment* adjustment
+void gtk_adjustment_set_page_increment GtkAdjustment* adjustment gdouble page_increment
+gdouble gtk_adjustment_get_page_size GtkAdjustment* adjustment
+void gtk_adjustment_set_page_size GtkAdjustment* adjustment gdouble page_size
+void gtk_adjustment_configure GtkAdjustment* adjustment gdouble value gdouble lower gdouble upper gdouble step_increment gdouble page_increment gdouble page_size
+void gtk_combo_box_set_button_sensitivity GtkComboBox* combo_box GtkSensitivityType sensitivity
+GtkSensitivityType gtk_combo_box_get_button_sensitivity GtkComboBox* combo_box
+GFile* gtk_file_chooser_get_file GtkFileChooser* chooser
+gboolean gtk_file_chooser_set_file GtkFileChooser* chooser GFile* file GError** error
+gboolean gtk_file_chooser_select_file GtkFileChooser* chooser GFile* file GError** error
+void gtk_file_chooser_unselect_file GtkFileChooser* chooser GFile* file
+GSList* gtk_file_chooser_get_files GtkFileChooser* chooser
+gboolean gtk_file_chooser_set_current_folder_file GtkFileChooser* chooser GFile* file GError** error
+GFile* gtk_file_chooser_get_current_folder_file GtkFileChooser* chooser
+GFile* gtk_file_chooser_get_preview_file GtkFileChooser* chooser
+
+
+gtkdestroynotify -> gdestroynotify
+! GtkWidget* gtk_window_get_default GtkWindow* window changed to:
+! GtkWidget* gtk_window_get_default_widget GtkWindow* window
+
+TODO: gtk 2.13.6 changes including adj fields fold into the 2.13.5 changes)
+|#

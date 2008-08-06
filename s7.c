@@ -49,8 +49,9 @@
  *        rationalize numerator denominator
  *      block comment #| |#
  *      procedure arity, source
- *      file sys etc from snd-xen.c
+ *      file sys etc in snd-xen.c: tmpnam and time stuff 
  *      completions (oblist?)
+ *      s7_write so strings are quoted in object->string
  *
  * [number->string has no "radix" arg]
  *
@@ -95,8 +96,8 @@
 #endif
 
 
-#define _SCHEME_SOURCE
 #include "s7.h"
+
 #ifndef WIN32
 # include <unistd.h>
 #endif
@@ -1951,6 +1952,7 @@ static int token(scheme *sc) {
           if (c == '(') {
                return (TOK_VEC);
           } else if(c == '!') {
+	    /* TODO: block comment, this is wrong! */
                while ((c=inchar(sc)) != '\n' && c!=EOF)
                    ;
                return (token(sc));

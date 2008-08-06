@@ -2146,7 +2146,7 @@ static XEN g_gsl_roots(XEN poly)
 #endif
 
 
-#if HAVE_GAUCHE
+#if HAVE_GAUCHE || HAVE_S7
 static XEN g_random(XEN val)
 {
   if (XEN_INTEGER_P(val))
@@ -2163,6 +2163,11 @@ static XEN g_random(XEN val)
 static XEN g_get_internal_real_time(void) 
 {
   return(C_TO_XEN_INT((int)(100.0 * ((double)clock() / (double)CLOCKS_PER_SEC))));
+}
+
+static XEN g_ftell(XEN fd)
+{
+  return(C_TO_XEN_OFF_T(lseek(XEN_TO_C_INT(fd), 0, SEEK_CUR)));
 }
 #endif
 
@@ -2192,7 +2197,7 @@ static XEN g_skip_block_comment(XEN ch, XEN port)
   while (true)
     {
       int c;
-      c = scm_getc (port);
+      c = scm_getc(port);
       if (c == EOF)
 	{
 	  snd_warning("unterminated `#| ... |#' comment");
@@ -2440,9 +2445,10 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
   #endif
 #endif
 
-#if HAVE_GAUCHE
+#if HAVE_GAUCHE || HAVE_S7
   XEN_NARGIFY_1(g_random_w, g_random)
   XEN_NARGIFY_0(g_get_internal_real_time_w, g_get_internal_real_time)
+  XEN_NARGIFY_1(g_ftell_w, g_ftell)
 #endif
 
 XEN_NARGIFY_1(g_delete_watcher_w, g_delete_watcher)
@@ -2545,15 +2551,6 @@ static XEN g_eval_string(XEN str)
 }
 
 XEN_NARGIFY_1(g_eval_string_w, g_eval_string)
-
-
-static XEN g_ftell(XEN fd)
-{
-  return(C_TO_XEN_OFF_T(lseek(XEN_TO_C_INT(fd), 0, SEEK_CUR)));
-}
-
-XEN_NARGIFY_1(g_ftell_w, g_ftell)
-
 #endif
 
 
@@ -2575,6 +2572,82 @@ static char* legalize_path(const char *in_str)
 
   return(out_str); 
 } 
+
+#if HAVE_S7
+static XEN g_file_exists_p(XEN name)
+{
+  #define H_file_exists_p "(file-exists? filename): #t if the file exists"
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, "file-exists?", "a string");
+  return(C_TO_XEN_BOOLEAN(mus_file_probe(XEN_TO_C_STRING(name))));
+}
+
+static XEN g_system(XEN command)
+{
+  #define H_system "(system command): execute command"
+  XEN_ASSERT_TYPE(XEN_STRING_P(command), command, XEN_ONLY_ARG, "system", "a string");
+  return(C_TO_XEN_INT(system(XEN_TO_C_STRING(command))));
+}
+
+static XEN g_getenv(XEN var)
+{
+  #define H_getenv "(getenv var): return value of environment variable var"
+  XEN_ASSERT_TYPE(XEN_STRING_P(var), var, XEN_ONLY_ARG, "getenv", "a string");
+  return(C_TO_XEN_STRING(getenv(XEN_TO_C_STRING(var))));
+}
+
+static XEN g_delete_file(XEN name)
+{
+  #define H_delete_file "(delete-file filename): deletes the file"
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, "delete-file", "a string");
+  return(C_TO_XEN_BOOLEAN(unlink(XEN_TO_C_STRING(name))));
+}
+
+static XEN g_getcwd(void)
+{
+  #define H_getcwd "(getcwd) returns the name of the current working directory"
+  char *buf;
+  XEN result;
+  buf = (char *)CALLOC(1024, sizeof(char));
+  getcwd(buf, 1024);
+  result = C_TO_XEN_STRING(buf);
+  FREE(buf);
+  return(result);
+}
+
+static XEN g_strftime(XEN format, XEN tm)
+{
+  #define H_strftime "(strftime format time) returns the time formatted via format"
+  char *buf;
+  XEN result;
+  XEN_ASSERT_TYPE(XEN_STRING_P(format), format, XEN_ARG_1, "strftime", "a string");
+  buf = (char *)CALLOC(1024, sizeof(char));
+  /* TODO: s7 time stuff needs checking, current-time corresponds to gettimeofday */
+  /*   get-internal-real|run-time */
+
+#if 0
+  strftime(buf, 1024, XEN_TO_C_STRING(format), (const struct tm *)XEN_TO_C_ULONG(tm));
+#endif
+  result = C_TO_XEN_STRING(buf);
+  FREE(buf);
+  return(result);
+}
+
+static XEN g_localtime(XEN tm)
+{
+  #define H_localtime "(localtime tm) breaks up tm into something suitable for strftime"
+#if 0
+  return(C_TO_XEN_ULONG((unsigned long)localtime((const time_t *)(XEN_TO_C_ULONG(tm)))));
+#endif
+}
+
+XEN_NARGIFY_1(g_file_exists_p_w, g_file_exists_p)
+XEN_NARGIFY_1(g_system_w, g_system)
+XEN_NARGIFY_1(g_getenv_w, g_getenv)
+XEN_NARGIFY_1(g_delete_file_w, g_delete_file)
+XEN_NARGIFY_0(g_getcwd_w, g_getcwd)
+XEN_NARGIFY_2(g_strftime_w, g_strftime)
+XEN_NARGIFY_1(g_localtime_w, g_localtime)
+#endif
 
 
 void g_xen_initialize(void)
@@ -2677,6 +2750,20 @@ void g_xen_initialize(void)
   XEN_DEFINE_PROCEDURE("get-internal-real-time", g_get_internal_real_time_w, 0, 0, 0, "get system time");
   XEN_DEFINE_PROCEDURE("ftell",                  g_ftell_w,                  1, 0, 0, "(ftell fd): lseek");
   XEN_DEFINE_PROCEDURE("eval-string",            g_eval_string_w,            1, 0, 0, "eval a string");
+#endif
+
+#if HAVE_S7
+  XEN_DEFINE_PROCEDURE("file-exists?", g_file_exists_p_w, 1, 0, 0, H_file_exists_p);
+  XEN_DEFINE_PROCEDURE("system", g_system_w, 1, 0, 0, H_system);
+  XEN_DEFINE_PROCEDURE("getenv", g_getenv_w, 1, 0, 0, H_getenv);
+  XEN_DEFINE_PROCEDURE("delete-file", g_delete_file_w, 1, 0, 0, H_delete_file);
+  XEN_DEFINE_PROCEDURE("getcwd", g_getcwd_w, 0, 0, 0, H_getcwd);
+  XEN_DEFINE_PROCEDURE("strftime", g_strftime_w, 2, 0, 0, H_strftime);
+  XEN_DEFINE_PROCEDURE("localtime", g_localtime_w, 2, 0, 0, H_localtime);
+  XEN_DEFINE_CONSTANT("internal-time-units-per-second", 100, "clock speed");
+  XEN_DEFINE_PROCEDURE("random", g_random_w, 1, 0, 0, "(random arg): random number between 0 and arg ");
+  XEN_DEFINE_PROCEDURE("get-internal-real-time", g_get_internal_real_time_w, 0, 0, 0, "get system time");
+  XEN_DEFINE_PROCEDURE("ftell", g_ftell_w, 1, 0, 0, "(ftell fd): lseek");
 #endif
 
   XEN_DEFINE_PROCEDURE(S_delete_watcher, g_delete_watcher_w, 1, 0, 0, H_delete_watcher);
@@ -2922,6 +3009,13 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 #endif
 
 #if HAVE_S7
+  XEN_EVAL_C_STRING("(define redo-edit redo)");        /* consistency with Ruby */
+  XEN_EVAL_C_STRING("(define undo-edit undo)");
+
+  /* from ice-9/r4rs.scm but with output to snd listener */
+  XEN_EVAL_C_STRING("(define *snd-loaded-files* '())");
+  XEN_EVAL_C_STRING("(define *snd-remember-paths* #t)");
+
   /* these are for compatibility with Guile (rather than add hundreds of "if provided?" checks) */
   XEN_EVAL_C_STRING("(defmacro use-modules (arg . args) #f)");
   XEN_EVAL_C_STRING("(define (debug-enable . args) #f)");
@@ -2932,6 +3026,8 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(define (symbol->keyword key) (make-keyword (symbol->string key)))");
   XEN_EVAL_C_STRING("(define (keyword->symbol key) (string->symbol (keyword->string key)))");
   XEN_EVAL_C_STRING("(define load-from-path load)");
+
+  XEN_EVAL_C_STRING("(define shell system)");
 #endif
 
 #if HAVE_SCHEME && USE_GTK && (!HAVE_GTK_ENTRY_GET_TEXT_LENGTH)

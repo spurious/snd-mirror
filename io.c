@@ -2375,7 +2375,7 @@ int mus_samples_bounds(unsigned char *data, int bytes, int chan, int chans, int 
       break;
     case MUS_LDOUBLE:
     case MUS_LDOUBLE_UNSCALED:
-      min_max_switch_doubles(data, bytes, chan, chans, min_samp, max_sampformat == MUS_LDOUBLE_UNSCALED);
+      min_max_switch_doubles(data, bytes, chan, chans, min_samp, max_samp, format == MUS_LDOUBLE_UNSCALED);
       break;
     case MUS_BDOUBLE:
     case MUS_BDOUBLE_UNSCALED:

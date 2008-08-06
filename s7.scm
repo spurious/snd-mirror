@@ -596,3 +596,5 @@
 ;    ((_ name params . body) (define-macro (name . params) . body)))))
 
 (define object->string display)
+
+(define pi 3.141592653589793)
