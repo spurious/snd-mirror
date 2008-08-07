@@ -46,24 +46,6 @@
       `(macro (,(caadr dform) ,form)
          (apply (lambda ,(cdadr dform) ,@(cddr dform)) (cdr ,form))))))
 
-; Utilities for math. Notice that inexact->exact is primitive,
-; but exact->inexact is not.
-(define exact? integer?)
-(define (inexact? x) (and (real? x) (not (integer? x))))
-(define (even? n) (= (remainder n 2) 0))
-(define (odd? n) (not (= (remainder n 2) 0)))
-(define (zero? n) (= n 0))
-(define (positive? n) (> n 0))
-(define (negative? n) (< n 0))
-(define complex? number?)
-(define rational? real?)
-(define (abs n) (if (>= n 0) n (- n)))
-(define (exact->inexact n) (* n 1.0))
-(define (<> n1 n2) (not (= n1 n2)))
-(define (max . lst)
-     (foldr (lambda (a b) (if (> a b) a b)) (car lst) (cdr lst)))
-(define (min . lst)
-     (foldr (lambda (a b) (if (< a b) a b)) (car lst) (cdr lst)))
 
 (define (log10 n) (/ (log n) (log 10)))
 
@@ -217,16 +199,6 @@
 
 (define (tail stream) (force (cdr stream)))
 
-;;; see note below re equal?
-;(define (vector-equal? x y)
-;     (and (vector? x) (vector? y) (= (vector-length x) (vector-length y))
-;          (let ((n (vector-length x)))
-;              (let loop ((i 0))
-;                    (if (= i n)
-;                         #t
-;                         (and (equal? (vector-ref x i) (vector-ref y i))
-;                              (loop (1+ i))))))))
-
 (define (list->vector x)
      (apply vector x))
 
@@ -378,61 +350,6 @@
      `(define ,(cadr form)
           (call/cc (lambda (return) ,@(cddr form)))))
 
-;;;; Simple exception handling
-;
-;    Exceptions are caught as follows:
-;
-;         (catch (do-something to-recover and-return meaningful-value)
-;              (if-something goes-wrong)
-;              (with-these calls))
-;
-;    "Catch" establishes a scope spanning multiple call-frames
-;    until another "catch" is encountered.
-;
-;    Exceptions are thrown with:
-;
-;         (throw "message")
-;
-;    If used outside a (catch ...), reverts to (error "message)
-
-(define *handlers* (list))
-
-(define (push-handler proc)
-     (set! *handlers* (cons proc *handlers*)))
-
-(define (pop-handler)
-     (let ((h (car *handlers*)))
-          (set! *handlers* (cdr *handlers*))
-          h))
-
-(define (more-handlers?)
-     (pair? *handlers*))
-
-(define (throw . x)
-     (if (more-handlers?)
-          (apply (pop-handler))
-          (apply error x)))
-
-(define *error-hook* throw)
-
-;(macro (old-catch form)
-;     (let ((label (gensym)))
-;          `(call/cc (lambda (exit)
-;               (push-handler (lambda () (exit ,(cadr form))))
-;               (let ((,label (begin ,@(cddr form))))
-;                    (pop-handler)
-;                    ,label)))))
-
-(macro (catch form)
-     (let ((label (gensym)))
-          `(call/cc (lambda (exit)
-               (push-handler (lambda () (exit (,(caddr form)))))
-               (let ((,label (,(cadddr form))))
-                    (pop-handler)
-                    ,label)))))
-
-;;; TODO: currently the tag (cadr form) is ignored -- can we pop until we find it, then call that error handler?
-
 
 ;;;;; Definition of MAKE-ENVIRONMENT, to be used with two-argument EVAL
 
@@ -522,16 +439,6 @@
                          (set-output-port prev-outport)
                          res)))))
 
-; Random number generator (maximum cycle)
-(define *seed* 1)
-(define (random-next)
-     (let* ((a 16807) (m 2147483647) (q (quotient m a)) (r (modulo m a)))
-          (set! *seed*
-               (-   (* a (- *seed*
-                         (* (quotient *seed* q) q)))
-                    (* (quotient *seed* q) r)))
-          (if (< *seed* 0) (set! *seed* (+ *seed* m)))
-          *seed*))
 
 ;; SRFI-0 
 ;; COND-EXPAND
@@ -581,6 +488,20 @@
 
 (define *load-path* '())
 
+(define (call-with-output-string t)
+  (let* ((p (open-output-string))
+	 (r (t p))
+	 (s (get-output-string p)))
+    (close-output-port p)
+    s))
+
+(define (call-with-input-string s t)
+  (let* ((p (open-input-string s))
+	 (r (t p)))
+    (close-input-port p)
+    r))
+
+
 ;;; defmacro from slib
 (define-macro (defmacro name args . body)
  `(define-macro (,name ,@args) ,@body))
@@ -595,6 +516,89 @@
 ;  (syntax-rules ()
 ;    ((_ name params . body) (define-macro (name . params) . body)))))
 
-(define object->string display)
+(define (object->string obj)
+  (call-with-output-string
+   (lambda (port)
+     (write obj port))))
 
-(define pi 3.141592653589793)
+
+(define *catchers* '())
+(define *tag* #f)
+
+(define (throw tag . args)
+  (define (find-tag-match)
+    (if (null? *catchers*)
+	(error "uncaught throw:" tag args)
+	(let ((catcher (car *catchers*)))
+	  (set! *catchers* (cdr *catchers*))
+	  (if (or (eq? (car catcher) #t)
+		  (equal? tag (car catcher)))
+	      (cdr catcher)
+	      (find-tag-match)))))
+    (apply (find-tag-match) args))
+
+(define *error-hook* throw)
+
+(define (catch tag body tag-handler)
+  (call/cc
+   (lambda (catcher)
+     (set! *catchers* (cons (cons tag (lambda args
+					(apply tag-handler args)
+					(apply catcher args)))
+			    *catchers*))
+     (let ((result (body)))
+       (set! *catchers* (cdr *catchers*))
+       result))))
+
+;;; TODO: this still needs to reset error-hook upon exit, or error needs explicit handling
+
+(define (dynamic-wind init body quit)
+  (init)
+  (catch #t
+	 (body)
+	 (lambda args
+	   (quit)
+	   (throw *tag* args)))
+  (quit))
+
+
+
+
+;;; from Guile
+(defmacro and-let* (vars . body)
+
+  (define (expand vars body)
+    (cond
+     ((null? vars)
+      (if (null? body)
+	  #t
+	  `(begin ,@body)))
+     ((pair? vars)
+      (let ((exp (car vars)))
+        (cond
+         ((pair? exp)
+          (cond
+           ((null? (cdr exp))
+            `(and ,(car exp) ,(expand (cdr vars) body)))
+           (else
+            (let ((var (car exp)))
+              `(let (,exp)
+                 (and ,var ,(expand (cdr vars) body)))))))
+         (else
+          `(and ,exp ,(expand (cdr vars) body))))))
+     (else
+      (error "not a proper list" vars))))
+
+  (expand vars body))
+
+
+(define (with-output-to-string thunk)
+  (let* ((output-port (current-output-port))
+	 (string-port (open-output-string)))
+    (set-output-port string-port)
+    (thunk)
+    (let ((result (get-output-string string-port)))
+      (set-output-port output-port)
+      (close-output-port string-port)
+      result)))
+

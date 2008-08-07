@@ -599,7 +599,17 @@ void command_return(widget_t w, int last_prompt)
 #endif
 
 #if HAVE_S7
-      form = XEN_EVAL_C_STRING(str); /* TODO: add a catch */
+      if ((snd_strlen(str) > 1) || (str[0] != '\n'))
+	{
+#if 0
+	  char *temp;
+	  temp = (char *)CALLOC(snd_strlen(str) + 128, sizeof(char));
+	  sprintf(temp, "(catch #t (lambda () %s) (lambda args args))", str);
+	  form = XEN_EVAL_C_STRING(temp);
+	  FREE(temp);
+#endif
+	  form = XEN_EVAL_C_STRING(str);
+	}
 #endif
 
       FREE(str);

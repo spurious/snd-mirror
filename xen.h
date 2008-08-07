@@ -6,7 +6,8 @@
  * Guile:     covers 1.3.4 to present (1.8.0)
  * Ruby:      covers 1.6 to present (1.9)
  * Forth:     covers 1.0
- * Gauche:    covers 0.8.7 and 0.8.8
+ * Gauche:    covers 0.8.7 to 0.8.13
+ * S7:        all versions
  * None:      covers all known versions of None
  */
 
@@ -16,7 +17,7 @@
 
 /* HISTORY:
  *
- *  whenever:  S7.
+ *  10-Aug-08: S7, a TinyScheme derivative.
  *  23-Jul-08: be more careful about wrapping POINTERs (they say 64-bit MS C void* == unsigned long long, but not unsigned long).
  *  30-Jun-08: XEN_OFF_T_IF_BOUND_P.
  *  19-May-08: more const char* arg declarations.
@@ -2122,11 +2123,11 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 #define XEN_ZERO                                   s7_make_integer(s7, 0)
 #define XEN_INTEGER_P(Arg)                         s7_is_integer(Arg)
 #define C_TO_XEN_INT(Arg)                          s7_make_integer(s7, Arg)
-#define XEN_TO_C_INT(Arg)                          s7_ivalue(Arg)
+#define XEN_TO_C_INT(Arg)                          s7_to_c_int(Arg)
 #define XEN_TO_C_INT_OR_ELSE(Arg, Def)             ((XEN_INTEGER_P(Arg)) ? XEN_TO_C_INT(Arg) : Def)
 
 #define XEN_ULONG_P(Arg)                           s7_is_ulong(Arg)
-#define XEN_TO_C_ULONG(Arg)                        s7_uvalue(Arg)
+#define XEN_TO_C_ULONG(Arg)                        s7_to_c_ulong(Arg)
 #define C_TO_XEN_ULONG(Arg)                        s7_make_ulong(s7, (unsigned long)Arg)
 
 #define C_TO_XEN_LONG_LONG(Arg)                    C_TO_XEN_OFF_T(Arg)
@@ -2141,7 +2142,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 #define XEN_EXACT_P(Arg)                           s7_is_exact(Arg)
 
 #define XEN_DOUBLE_P(Arg)                          s7_is_real(Arg)
-#define XEN_TO_C_DOUBLE(Arg)                       s7_rvalue(Arg)
+#define XEN_TO_C_DOUBLE(Arg)                       s7_to_c_double(Arg)
 #define XEN_TO_C_DOUBLE_OR_ELSE(Arg, Def)          ((XEN_NUMBER_P(Arg)) ? XEN_TO_C_DOUBLE(Arg) : Def)
 #define C_TO_XEN_DOUBLE(Arg)                       s7_make_real(s7, Arg)
 
