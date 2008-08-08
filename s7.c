@@ -55,7 +55,7 @@
  * need dynamic-wind tested, define* et al (gauche-optargs loads but doesn't work yet).
  *      applicable types
 
- *        make-polar magnitude angle [read ratio and complex]
+ *        [read ratio and complex]
 
  *      block comment #| |#
  *      procedure arity, source
@@ -68,7 +68,6 @@
  *      use FREE and friends so we can track memory leaks
  *      list or list* for xen connection
  *      split the hidden ivalue uses off into separate structs
- *      need the xen.h tie-ins to the ratio and complex stuff
  *
  * [number->string has no "radix" arg]
  *
@@ -118,13 +117,18 @@ enum scheme_opcodes {
   OP_MAXDEFINED 
 }; 
 
+#if 0
 static char *opcode_names[] = {
 #define _OP_DEF(A,B,C,D,E,OP) #OP,
 #include "s7-ops.h"
 };
+#endif
 
 #define ALL_NUMBERS 1
 
+#if ALL_NUMBERS
+#include <complex.h>
+#endif
 
 
 /* num, for generic arithmetic */
@@ -533,6 +537,18 @@ bool s7_is_rational(pointer p)
 #endif
 }
 
+bool s7_is_ratio(pointer p)
+{
+  if (!(s7_is_number(p)))
+    return(false);
+
+#if ALL_NUMBERS
+  return(object_number_type(p) == NUM_RATIO);
+#else
+  return(false);
+#endif
+}
+
 bool s7_is_complex(pointer p)
 {
   return(s7_is_number(p));
@@ -577,10 +593,22 @@ static long ivalue(pointer p)
   return (s7_is_integer(p) ? (p)->_object._number.value.ivalue : (long)(p)->_object._number.value.rvalue);
 }
 
+#if ALL_NUMBERS
+static double rvalue(pointer p)    
+{
+  if (object_number_type(p) >= NUM_REAL)
+    return(real(p->_object._number));
+  if (object_number_type(p) == NUM_INT)
+    return((double)integer(p->_object._number));
+  return(fraction(p->_object._number));
+  
+}
+#else
 static double rvalue(pointer p)    
 { 
   return (!s7_is_integer(p) ? (p)->_object._number.value.rvalue : (double)(p)->_object._number.value.ivalue);
 }
+#endif
 
 #define ivalue_unchecked(p) ((p)->_object._number.value.ivalue)
 #define rvalue_unchecked(p) ((p)->_object._number.value.rvalue)
@@ -641,7 +669,7 @@ bool s7_is_symbol(pointer p)
   return (type(p) == T_SYMBOL);
 }
 
-char *s7_symname(pointer p)   
+char *s7_symbol_name(pointer p)   
 { 
   return strvalue(car(p));
 }
@@ -784,7 +812,7 @@ static void s7_mark_embedded_foreign_objects(pointer a);
 
 /* -------------------------------- numbers -------------------------------- */
 
-#define DEFAULT_MIN_RATIONALIZE_ERROR 1.0e-12
+#define DEFAULT_RATIONALIZE_ERROR 1.0e-12
 
 static off_t c_mod(off_t x, off_t y)
 {
@@ -797,14 +825,17 @@ static off_t c_mod(off_t x, off_t y)
   return(z);
 }
 
-static off_t c_gcd(off_t a, off_t b)
+static off_t c_gcd(off_t u, off_t v)
 {
+  off_t a, b, temp;
+
+  a = abs(u);
+  b = abs(v);
   while (b != 0)
     {
-      off_t temp;
-      temp = b;
-      b = a % b;
-      a = temp;
+      temp = a % b;
+      a = b;
+      b = temp;
     }
   if (a < 0)
     return(-a);
@@ -824,7 +855,7 @@ static off_t c_lcm(off_t a, off_t b)
 static bool c_rationalize(double ux, double error, off_t *numer, off_t *denom)
 {
   off_t a1 = 0, a2 = 1, b1 = 1, b2 = 0, tt = 1, a = 0, b = 0, ctr;
-  double x, err;
+  double x;
 
   if (ux == 0.0)
     {
@@ -860,6 +891,14 @@ static bool c_rationalize(double ux, double error, off_t *numer, off_t *denom)
       b1 = b;
     }
   return(false);
+}
+
+pointer s7_rationalize(scheme *sc, double x, double error)
+{
+  off_t numer = 0, denom = 1;
+  if (c_rationalize(x, error, &numer, &denom))
+    return(s7_make_ratio(sc, numer, denom));
+  return(s7_make_real(sc, x));
 }
 
 
@@ -913,6 +952,7 @@ static num make_ratio(scheme *sc, off_t numer, off_t denom)
 {
   num ret;
   off_t divisor;
+
   if (denom == 0)
     _Error_1(sc, "/: division by 0", 0);
 
@@ -953,6 +993,7 @@ static num make_complex(double rl, double im)
     }
   else
     {
+      ret.type = NUM_COMPLEX;
       real_part(ret) = rl;
       imag_part(ret) = im;
     }
@@ -960,6 +1001,42 @@ static num make_complex(double rl, double im)
 }
 
 #endif
+
+off_t s7_numerator(pointer x)
+{
+#if ALL_NUMBERS
+  return(numerator(x->_object._number));
+#else
+  return(0);
+#endif
+}
+
+off_t s7_denominator(pointer x)
+{
+#if ALL_NUMBERS
+  return(denominator(x->_object._number));
+#else
+  return(1);
+#endif
+}
+
+double s7_real_part(pointer x)
+{
+#if ALL_NUMBERS
+  return(real_part(x->_object._number));
+#else
+  return(0.0);
+#endif
+}
+
+double s7_imag_part(pointer x)
+{
+#if ALL_NUMBERS
+  return(imag_part(x->_object._number));
+#else
+  return(0.0);
+#endif
+}
 
 #if ALL_NUMBERS
 int s7_to_c_int(pointer p)
@@ -970,6 +1047,18 @@ int s7_to_c_int(pointer p)
 double s7_to_c_double(pointer p)
 {
   return(num_to_real(p->_object._number));
+}
+
+static double complex s7_to_c_complex(pointer p)
+{
+  if (object_number_type(p) < NUM_COMPLEX)
+    return(num_to_real(p->_object._number) + 0.0 * _Complex_I);
+  return(s7_real_part(p) + s7_imag_part(p) * _Complex_I);
+}
+
+static pointer s7_from_c_complex(scheme *sc, double complex z)
+{
+  return(s7_make_complex(sc, creal(z), cimag(z)));
 }
 
 #else
@@ -1364,13 +1453,13 @@ static double round_per_R5RS(double x)
   return(ce);
 }
 
-
+#if 0
 static bool is_zero_double(double x) 
 {
   return((x < DBL_MIN) && 
 	 (x > -DBL_MIN));
 }
-
+#endif
 
 static long binary_decode(const char *s) 
 {
@@ -1648,8 +1737,8 @@ static pointer oblist_add_by_name(scheme *sc, const char *name)
   s7_setimmutable(car(x)); 
   
   location = hash_fn(name, ivalue_unchecked(sc->oblist)); 
-  s7_set_vector_elem(sc->oblist, location, 
-		     s7_immutable_cons(sc, x, s7_vector_elem(sc->oblist, location))); 
+  s7_vector_set(sc->oblist, location, 
+		     s7_immutable_cons(sc, x, s7_vector_ref(sc->oblist, location))); 
   return x; 
 } 
 
@@ -1660,9 +1749,9 @@ static  pointer oblist_find_by_name(scheme *sc, const char *name)
   char *s; 
   
   location = hash_fn(name, ivalue_unchecked(sc->oblist)); 
-  for (x = s7_vector_elem(sc->oblist, location); x != sc->NIL; x = cdr(x)) 
+  for (x = s7_vector_ref(sc->oblist, location); x != sc->NIL; x = cdr(x)) 
     { 
-      s = s7_symname(car(x)); 
+      s = s7_symbol_name(car(x)); 
       /* case-insensitive, per R5RS section 2. */ 
       if (strcasecmp(name, s) == 0) 
 	{ 
@@ -1680,7 +1769,7 @@ static pointer oblist_all_symbols(scheme *sc)
   
   for (i = 0; i < ivalue_unchecked(sc->oblist); i++) 
     { 
-      for (x  = s7_vector_elem(sc->oblist, i); x != sc->NIL; x = cdr(x)) 
+      for (x  = s7_vector_ref(sc->oblist, i); x != sc->NIL; x = cdr(x)) 
 	{ 
 	  ob_list = cons(sc, x, ob_list); 
 	} 
@@ -1702,7 +1791,7 @@ static  pointer oblist_find_by_name(scheme *sc, const char *name)
   
   for (x = sc->oblist; x != sc->NIL; x = cdr(x)) 
     { 
-      s = s7_symname(car(x)); 
+      s = s7_symbol_name(car(x)); 
       /* case-insensitive, per R5RS section 2. */ 
       if (strcasecmp(name, s) == 0) 
 	{ 
@@ -1800,29 +1889,6 @@ pointer s7_make_real(scheme *sc, double n)
   return(x);
 }
 
-pointer s7_make_ratio(scheme *sc, off_t a, off_t b)
-{
-#if ALL_NUMBERS
-  num ret;
-  pointer x = get_cell(sc, sc->NIL, sc->NIL);
-  typeflag(x) = (T_NUMBER | T_ATOM);
-  ret = make_ratio(sc, a, b);
-
-  x->_object._number.type = ret.type;
-  if (ret.type == NUM_INT)
-    x->_object._number.value.ivalue = numerator(ret);
-  else
-    {
-      numerator(x->_object._number) = numerator(ret);
-      denominator(x->_object._number) = denominator(ret);
-    }
-
-  return(x);
-#else
-  return(sc->NIL);
-#endif
-}
-
 pointer s7_make_complex(scheme *sc, double a, double b)
 {
 #if ALL_NUMBERS
@@ -1839,6 +1905,31 @@ pointer s7_make_complex(scheme *sc, double a, double b)
       real_part(x->_object._number) = real_part(ret);
       imag_part(x->_object._number) = imag_part(ret);
     }
+  return(x);
+#else
+  return(sc->NIL);
+#endif
+}
+
+pointer s7_make_ratio(scheme *sc, off_t a, off_t b)
+{
+  /* make_number calls us, so we can't call it as a convenience! */
+
+#if ALL_NUMBERS
+  num ret;
+  pointer x = get_cell(sc, sc->NIL, sc->NIL);
+  typeflag(x) = (T_NUMBER | T_ATOM);
+  ret = make_ratio(sc, a, b);
+
+  x->_object._number.type = ret.type;
+  if (ret.type == NUM_INT)
+    x->_object._number.value.ivalue = numerator(ret);
+  else
+    {
+      numerator(x->_object._number) = numerator(ret);
+      denominator(x->_object._number) = denominator(ret);
+    }
+
   return(x);
 #else
   return(sc->NIL);
@@ -1862,6 +1953,8 @@ static pointer make_number(scheme *sc, num n)
   else return(s7_make_real(sc, n.value.rvalue));
 #endif
 }
+
+
 
 /* allocate name to string area */
 static char *store_string(scheme *sc, int len_str, const char *str, char fill) 
@@ -1940,7 +2033,7 @@ void s7_fill_vector(pointer vec, pointer obj)
     }
 }
 
-pointer s7_vector_elem(pointer vec, int ielem) 
+pointer s7_vector_ref(pointer vec, int ielem) 
 {
   int n=ielem/2;
   if (ielem%2== 0) 
@@ -1953,7 +2046,7 @@ pointer s7_vector_elem(pointer vec, int ielem)
     }
 }
 
-pointer s7_set_vector_elem(pointer vec, int ielem, pointer a) 
+pointer s7_vector_set(pointer vec, int ielem, pointer a) 
 {
   int n=ielem/2;
   if (ielem%2== 0) 
@@ -2011,12 +2104,14 @@ pointer s7_gensym(scheme *sc)
 } 
 
 /* make symbol or number atom from string */
-static pointer mk_atom(scheme *sc, char *q) 
+#if 0
+/* the original */
+static pointer make_atom(scheme *sc, char *q) 
 {
   char    c, *p;
   int has_dec_point = 0;
   int has_fp_exp = 0;
-  
+
 #if USE_COLON_HOOK
   if ((p = strstr(q, "::"))!= 0) 
     {
@@ -2025,7 +2120,7 @@ static pointer mk_atom(scheme *sc, char *q)
 		  cons(sc,
 		       cons(sc,
 			    sc->QUOTE,
-			    cons(sc, mk_atom(sc, p+2), sc->NIL)),
+			    cons(sc, make_atom(sc, p+2), sc->NIL)),
 		       cons(sc, s7_make_symbol(sc,strlwr(q)), sc->NIL)));
     }
 #endif
@@ -2093,6 +2188,160 @@ static pointer mk_atom(scheme *sc, char *q)
   return (s7_make_integer(sc, atoll(q)));
 }
 
+#else
+
+static pointer make_atom(scheme *sc, char *q) 
+{
+  char c, *p, *slash, *plus;
+  bool has_dec_point = false, has_slash = false, has_i = false; 
+  int has_plus_or_minus = 0;
+  bool has_fp_exp = false;
+  
+#if USE_COLON_HOOK
+  if ((p = strstr(q, "::")) != 0) 
+    {
+      *p = 0;
+      return cons(sc, sc->COLON_HOOK,
+		  cons(sc,
+		       cons(sc,
+			    sc->QUOTE,
+			    cons(sc, make_atom(sc, p + 2), sc->NIL)),
+		       cons(sc, s7_make_symbol(sc,strlwr(q)), sc->NIL)));
+    }
+#endif
+  
+  p = q;
+  c = *p++; 
+
+  /* a number starts with + - . or digit */
+
+  if ((c == '+') || (c == '-')) 
+    { 
+      c = *p++; 
+      if (c == '.') 
+	{ 
+	  has_dec_point = true; 
+	  c = *p++; 
+	} 
+      if (!isdigit(c)) 
+	return(s7_make_symbol(sc, strlwr(q))); 
+    } 
+  else 
+    {
+      if (c == '.') 
+	{ 
+	  has_dec_point = true; 
+	  c = *p++; 
+	  if (!isdigit(c)) 
+	    return(s7_make_symbol(sc, strlwr(q))); 
+	} 
+      else 
+	{
+	  if (!isdigit(c)) 
+	    return(s7_make_symbol(sc, strlwr(q))); 
+	}
+    }
+  
+  for ( ; (c = *p) != 0; ++p) 
+    {
+      if (!isdigit(c)) 
+	{
+	  if (c =='.') 
+	    {
+	      if (!has_dec_point) 
+		{
+		  has_dec_point = true;
+		  continue;
+		}
+	    }
+	  else 
+	    {
+	      if ((c == 'e') || (c == 'E')) 
+		{
+		  if (!has_fp_exp) 
+		    {
+		      has_dec_point = true; /* decimal point illegal from now on */
+		      p++;
+		      if ((*p == '-') || (*p == '+') || isdigit(*p)) 
+			{
+			  continue;
+			}
+		    }  
+		}
+	      else
+		{
+		  if ((c == '+') || (c == '-'))
+		    {
+		      if ((has_slash) || (has_plus_or_minus != 0) || (!has_dec_point) || (has_fp_exp))
+			return(s7_make_symbol(sc, strlwr(q)));
+
+		      if (c == '+') has_plus_or_minus = 1; else has_plus_or_minus = -1;
+		      has_dec_point = false;
+		      plus = (char *)(p + 1);
+		      continue;
+		    }
+		  else
+		    {
+		      if (c == '/')
+			{
+			  if ((has_dec_point) || (has_plus_or_minus != 0) || (has_slash) || (has_fp_exp))
+			    return(s7_make_symbol(sc, strlwr(q)));
+
+			  has_slash = true;
+			  slash = (char *)(p + 1);
+			  continue;
+			}
+		      else
+			{
+			  if ((has_plus_or_minus != 0) && (!has_i) && (c == 'i'))
+			    {
+			      if (has_slash)
+				return(s7_make_symbol(sc, strlwr(q)));
+			      has_i = true;
+			      continue;
+			    }
+			}
+		    }
+		}
+	    }
+	  return(s7_make_symbol(sc, strlwr(q)));
+	}
+    }
+
+  if ((has_slash) &&
+      ((has_dec_point) || (has_plus_or_minus != 0)))
+    return(s7_make_symbol(sc, strlwr(q)));
+
+  if (has_dec_point)
+    {
+      if (has_plus_or_minus != 0)
+	{
+	  if (has_i)
+	    {
+	      int len;
+	      len = strlen(q);
+
+	      if (q[len - 1] != 'i')
+		return(s7_make_symbol(sc, strlwr(q)));
+	      q[len - 1] = '\0'; /* remove 'i' */
+
+	      /* what about 1.0+.i ? */
+	      if (has_plus_or_minus == 1)
+		return(sc, s7_make_complex(sc, atof(q), atof(plus)));
+	      return(sc, s7_make_complex(sc, atof(q), -atof(plus)));
+	    }
+	  else return(s7_make_symbol(sc, strlwr(q)));
+	}
+
+      return(s7_make_real(sc, atof(q)));
+    }
+  
+  if (has_slash)
+    return(s7_make_ratio(sc, atoll(q), atoll(slash)));
+
+  return(s7_make_integer(sc, atoll(q)));
+}
+#endif
 
 /* make constant */
 static pointer make_sharp_const(scheme *sc, char *name) 
@@ -3075,7 +3324,9 @@ void s7_atom2str(scheme *sc, pointer l, int f, char **pp, int *plen)
 	  sprintf(p, "%lld/%lld", numerator(l->_object._number), denominator(l->_object._number));
 	  break;
 	default:
-	  sprintf(p, "%.14g+%.14gi", real_part(l->_object._number), imag_part(l->_object._number));
+	  if (imag_part(l->_object._number) >= 0.0)
+	    sprintf(p, "%.14g+%.14gi", real_part(l->_object._number), imag_part(l->_object._number));
+	  else sprintf(p, "%.14g-%.14gi", real_part(l->_object._number), fabs(imag_part(l->_object._number)));
 	  break;
 #endif
 	}
@@ -3126,7 +3377,7 @@ void s7_atom2str(scheme *sc, pointer l, int f, char **pp, int *plen)
     } 
   else if (s7_is_symbol(l)) 
     {
-      p = s7_symname(l);
+      p = s7_symbol_name(l);
     } 
   else if (s7_is_proc(l)) 
     {
@@ -3192,7 +3443,7 @@ static pointer vector_to_string(scheme *sc, pointer vect)
   elements = (char **)malloc(len * sizeof(char *));
   for (i = 0; i < len; i++)
     {
-      elements[i] = strdup(strvalue(s7_object_to_string(sc, s7_vector_elem(vect, i))));
+      elements[i] = strdup(strvalue(s7_object_to_string(sc, s7_vector_ref(vect, i))));
       bufsize += strlen(elements[i]);
     }
   bufsize += 128;
@@ -3357,6 +3608,7 @@ bool s7_eqv_p(pointer a, pointer b)
 	return((s7_is_integer(b)) &&
 	       (ivalue_unchecked(a) == ivalue_unchecked(b)));
       
+      /* TODO fix eqv */
       if (s7_is_real(a))
 	return((s7_is_real(b)) &&
 	       (rvalue_unchecked(a) == rvalue_unchecked(b)));
@@ -3433,10 +3685,10 @@ void s7_new_slot_spec_in_env(scheme *sc, pointer env,
   
   if (s7_is_vector(car(env))) 
     { 
-      int location = hash_fn(s7_symname(variable), ivalue_unchecked(car(env))); 
+      int location = hash_fn(s7_symbol_name(variable), ivalue_unchecked(car(env))); 
       
-      s7_set_vector_elem(car(env), location, 
-			 s7_immutable_cons(sc, slot, s7_vector_elem(car(env), location))); 
+      s7_vector_set(car(env), location, 
+			 s7_immutable_cons(sc, slot, s7_vector_ref(car(env), location))); 
     } 
   else 
     { 
@@ -3453,8 +3705,8 @@ pointer s7_find_slot_in_env(scheme *sc, pointer env, pointer hdl, int all)
     { 
       if (s7_is_vector(car(x))) 
 	{ 
-	  location = hash_fn(s7_symname(hdl), ivalue_unchecked(car(x))); 
-	  y = s7_vector_elem(car(x), location); 
+	  location = hash_fn(s7_symbol_name(hdl), ivalue_unchecked(car(x))); 
+	  y = s7_vector_ref(car(x), location); 
 	} 
       else 
 	{ 
@@ -3737,7 +3989,7 @@ static bool vectors_equal(scheme *sc, pointer x, pointer y)
   len = ivalue_unchecked(x);
   if (len != ivalue_unchecked(y)) return(false);
   for (i = 0; i < len; i++)
-    if (!(s7_is_equal(sc, s7_vector_elem(x, i), s7_vector_elem(y, i))))
+    if (!(s7_is_equal(sc, s7_vector_ref(x, i), s7_vector_ref(y, i))))
       return(false);
   return(true);
 }
@@ -3771,6 +4023,7 @@ bool s7_is_equal(scheme *sc, pointer x, pointer y)
   if (s7_is_character(x)) 
     return(s7_charvalue(x) == s7_charvalue(y));
   
+  /* TODO: fix is_equal for new nums */
   if (s7_is_number(x))
     {
       /* (equal? 1 1.0) -> #f but (= 1.0 1) -> #t ! */
@@ -4099,7 +4352,7 @@ static pointer opexe_0(scheme *sc, enum scheme_opcodes op)
       if (s7_is_pair(car(sc->code))) /* has accessor */
 	{
 	  char *sym, *name;
-	  name = s7_symname(caar(sc->code));
+	  name = s7_symbol_name(caar(sc->code));
 	  sym = (char *)calloc(strlen(name) + 6, sizeof(char));
 	  sprintf(sym, "set-%s", name);
 	  caar(sc->code) = s7_make_symbol(sc, sym);               /* [set!] ((x a b...) y) -> ((set-x a b..) y) */
@@ -4487,7 +4740,7 @@ static pointer opexe_1(scheme *sc, enum scheme_opcodes op)
       s_goto(sc, OP_APPLY);
       
     default:
-      sprintf(sc->strbuff, "%d: illegal operator", sc->op);
+      sprintf(sc->strbuff, "opexe_1 %d: illegal operator", sc->op);
       Error_0(sc, sc->strbuff);
     }
   return sc->T;
@@ -4541,6 +4794,63 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
 #else
       s_return(sc, s7_make_integer(sc, 0));
 #endif
+
+    case OP_MAKE_POLAR:
+#if ALL_NUMBERS
+      {
+	double s, c, ang, mag;
+	mag = num_to_real((car(sc->args))->_object._number);
+	ang = num_to_real((cadr(sc->args))->_object._number);
+	s = sin(ang);
+	c = cos(ang);
+	s_return(sc, s7_make_complex(sc, mag * c, mag * s));
+      }
+#else
+      s_return(sc, s7_make_integer(sc, 0));
+#endif
+
+    case OP_ANGLE:
+      x = car(sc->args);
+#if ALL_NUMBERS
+      if (!s7_is_real(x))
+	s_return(sc, s7_make_real(sc, atan2(imag_part(x->_object._number), real_part(x->_object._number))));
+      if (num_to_real(x->_object._number) < 0.0)
+	s_return(sc, s7_make_real(sc, atan2(0.0, -1.0)));
+#endif
+      s_return(sc, s7_make_real(sc, 0.0));
+
+    case OP_MAGNITUDE:
+      v = nvalue(car(sc->args));
+      switch (num_type(v))
+	{
+#if ALL_NUMBERS
+	case NUM_REAL2: 
+#endif
+	case NUM_REAL: 
+	  real(v) = fabs(real(v)); 
+	  break;
+	  
+	case NUM_INT:
+	  integer(v) = abs(integer(v));
+	  break;
+#if ALL_NUMBERS
+	case NUM_RATIO:
+	  numerator(v) = abs(numerator(v));
+	  break;
+
+	default:
+	  {
+	    double a, b;
+	    a = imag_part(v);
+	    b = real_part(v);
+	    v.type = NUM_REAL;
+	    real(v) = hypot(a, b);
+	  }
+	  break;
+#endif
+	}
+	  
+      s_return(sc, make_number(sc, v));
 
     case OP_EXACTP:     /* exact? */
       s_retbool(s7_is_exact(car(sc->args)));
@@ -4597,7 +4907,7 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
     case OP_RATIONALIZE:    /* rationalize */
 #if ALL_NUMBERS
       {
-	double error = DEFAULT_MIN_RATIONALIZE_ERROR;
+	double error = DEFAULT_RATIONALIZE_ERROR;
 	off_t numer = 0, denom = 1;
 	x = car(sc->args);
 	if (s7_is_exact(x)) 
@@ -4620,14 +4930,12 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
 #if ALL_NUMBERS
       {
 	off_t numer = 0, denom = 1;
-	if (c_rationalize(real(x->_object._number), DEFAULT_MIN_RATIONALIZE_ERROR, &numer, &denom))
+	if (c_rationalize(real(x->_object._number), DEFAULT_RATIONALIZE_ERROR, &numer, &denom))
 	  s_return(sc, s7_make_ratio(sc, numer, denom));
 	else s_return(sc, s7_make_integer(sc, (off_t)real(x->_object._number)));
       }
 #else
-      if (modf(rvalue_unchecked(x), &dd) == 0.0) 
-	s_return(sc, s7_make_integer(sc, ivalue(x)));
-      else Error_1(sc, "inexact->exact: not integral:", x);
+      s_return(sc, s7_make_integer(sc, ivalue(x)));
 #endif
       
     case OP_EX2INEX:    /* exact->inexact */
@@ -4658,87 +4966,166 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
 #else
       else integer(v) = abs(integer(v));
 #endif
-      s_return(sc, make_number(sc, v));
-      
+      s_return(sc, make_number(sc, v));      
+
+
     case OP_EXP:
       x = car(sc->args);
-      s_return(sc, s7_make_real(sc, exp(rvalue(x))));
+      if (s7_is_real(x))
+	s_return(sc, s7_make_real(sc, exp(rvalue(x))));
+#if ALL_NUMBERS
+      s_return(sc, s7_from_c_complex(sc, cexp(s7_to_c_complex(x))));
+#endif
       
     case OP_LOG:
       x = car(sc->args);
-      s_return(sc, s7_make_real(sc, log(rvalue(x))));
+      if ((s7_is_real(x)) &&
+	  (real(x->_object._number) > 0.0))
+	s_return(sc, s7_make_real(sc, log(rvalue(x))));
+#if ALL_NUMBERS
+      /* if < 0 use log(-x) + pi*i */
+      s_return(sc, s7_from_c_complex(sc, clog(s7_to_c_complex(x))));
+#endif
       
     case OP_SIN:
       x = car(sc->args);
-      s_return(sc, s7_make_real(sc, sin(rvalue(x))));
+      if (s7_is_real(x))
+	s_return(sc, s7_make_real(sc, sin(rvalue(x))));
+#if ALL_NUMBERS
+      s_return(sc, s7_from_c_complex(sc, csin(s7_to_c_complex(x))));
+#endif
       
     case OP_COS:
       x = car(sc->args);
-      s_return(sc, s7_make_real(sc, cos(rvalue(x))));
+      if (s7_is_real(x))
+	s_return(sc, s7_make_real(sc, cos(rvalue(x))));
+#if ALL_NUMBERS
+      s_return(sc, s7_from_c_complex(sc, ccos(s7_to_c_complex(x))));
+#endif
       
     case OP_TAN:
       x = car(sc->args);
-      s_return(sc, s7_make_real(sc, tan(rvalue(x))));
+      if (s7_is_real(x))
+	s_return(sc, s7_make_real(sc, tan(rvalue(x))));
+#if ALL_NUMBERS
+      s_return(sc, s7_from_c_complex(sc, ctan(s7_to_c_complex(x))));
+#endif
       
     case OP_ASIN:
       x = car(sc->args);
-      s_return(sc, s7_make_real(sc, asin(rvalue(x))));
+      if ((s7_is_real(x)) &&
+	  (fabs(real(x->_object._number) <= 1.0)))
+	s_return(sc, s7_make_real(sc, asin(rvalue(x))));
+#if ALL_NUMBERS
+      s_return(sc, s7_from_c_complex(sc, casin(s7_to_c_complex(x))));
+#endif
       
     case OP_ACOS:
       x = car(sc->args);
-      s_return(sc, s7_make_real(sc, acos(rvalue(x))));
+      if ((s7_is_real(x)) &&
+	  (fabs(real(x->_object._number) <= 1.0)))
+	s_return(sc, s7_make_real(sc, acos(rvalue(x))));
+#if ALL_NUMBERS
+      s_return(sc, s7_from_c_complex(sc, cacos(s7_to_c_complex(x))));
+#endif
       
     case OP_ATAN:
       x = car(sc->args);
       if (cdr(sc->args) == sc->NIL) 
 	{
-	  s_return(sc, s7_make_real(sc, atan(rvalue(x))));
+	  if (s7_is_real(x))
+	    s_return(sc, s7_make_real(sc, atan(rvalue(x))));
+#if ALL_NUMBERS
+      s_return(sc, s7_from_c_complex(sc, catan(s7_to_c_complex(x))));
+#endif
 	} 
       else 
 	{
-	  pointer y= cadr(sc->args);
+	  pointer y = cadr(sc->args);
 	  s_return(sc, s7_make_real(sc, atan2(rvalue(x), rvalue(y))));
+	  /* atan2 args should be real */
 	}
       
     case OP_SINH:
       x = car(sc->args);
-      s_return(sc, s7_make_real(sc, sinh(rvalue(x))));
+      if (s7_is_real(x))
+	s_return(sc, s7_make_real(sc, sinh(rvalue(x))));
+#if ALL_NUMBERS
+      s_return(sc, s7_from_c_complex(sc, csinh(s7_to_c_complex(x))));
+#endif
       
     case OP_COSH:
       x = car(sc->args);
-      s_return(sc, s7_make_real(sc, cosh(rvalue(x))));
+      if (s7_is_real(x))
+	s_return(sc, s7_make_real(sc, cosh(rvalue(x))));
+#if ALL_NUMBERS
+      s_return(sc, s7_from_c_complex(sc, ccosh(s7_to_c_complex(x))));
+#endif
       
     case OP_TANH:
       x = car(sc->args);
-      s_return(sc, s7_make_real(sc, tanh(rvalue(x))));
+      if (s7_is_real(x))
+	s_return(sc, s7_make_real(sc, tanh(rvalue(x))));
+#if ALL_NUMBERS
+      s_return(sc, s7_from_c_complex(sc, ctanh(s7_to_c_complex(x))));
+#endif
       
     case OP_ASINH:
       x = car(sc->args);
-      s_return(sc, s7_make_real(sc, asinh(rvalue(x))));
+      if (s7_is_real(x))
+	s_return(sc, s7_make_real(sc, asinh(rvalue(x))));
+#if ALL_NUMBERS
+      s_return(sc, s7_from_c_complex(sc, casinh(s7_to_c_complex(x))));
+#endif
       
     case OP_ACOSH:
       x = car(sc->args);
-      s_return(sc, s7_make_real(sc, acosh(rvalue(x))));
+      if ((s7_is_real(x)) &&
+	  (real(x->_object._number) >= 1.0))
+	s_return(sc, s7_make_real(sc, acosh(rvalue(x))));
+#if ALL_NUMBERS
+      s_return(sc, s7_from_c_complex(sc, cacosh(s7_to_c_complex(x))));
+#endif
       
     case OP_ATANH:
       x = car(sc->args);
-      s_return(sc, s7_make_real(sc, atanh(rvalue(x))));
+      if ((s7_is_real(x)) &&
+	  (fabs(real(x->_object._number) < 1.0)))
+	s_return(sc, s7_make_real(sc, atanh(rvalue(x))));
+#if ALL_NUMBERS
+      s_return(sc, s7_from_c_complex(sc, catanh(s7_to_c_complex(x))));
+#endif
       
     case OP_SQRT:
       x = car(sc->args);
-      s_return(sc, s7_make_real(sc, sqrt(rvalue(x))));
+      if ((s7_is_real(x)) &&
+	  (real(x->_object._number) >= 0.0))
+	s_return(sc, s7_make_real(sc, sqrt(rvalue(x))));
+#if ALL_NUMBERS
+      /* if < 0 use sqrt(-num)*i */
+      s_return(sc, s7_from_c_complex(sc, csqrt(s7_to_c_complex(x))));
+#endif
       
     case OP_EXPT:
       {
 	pointer y;
 	x = car(sc->args);
 	y = cadr(sc->args);
+
 	if ((s7_is_integer(x)) &&
 	    (s7_is_integer(y)) &&
 	    ((ivalue_unchecked(y) >= 0) || 
 	     (abs(ivalue_unchecked(x)) == 1)))
 	  s_return(sc, s7_make_integer(sc, (off_t)pow(ivalue_unchecked(x), ivalue_unchecked(y))));
-	s_return(sc, s7_make_real(sc, pow(rvalue(x), rvalue(y))));
+
+	if ((s7_is_real(x)) &&
+	    (s7_is_real(y)) &&
+	    (real(y->_object._number) >= 0.0))
+	  s_return(sc, s7_make_real(sc, pow(rvalue(x), rvalue(y))));
+
+#if ALL_NUMBERS
+	s_return(sc, s7_from_c_complex(sc, cpow(s7_to_c_complex(x), s7_to_c_complex(y))));
+#endif
       }
       
     case OP_FLOOR:
@@ -4839,7 +5226,7 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
 	}
       for (; x != sc->NIL; x = cdr(x)) 
 	v = num_div(sc, v, nvalue(car(x)));
-      s_return(sc,make_number(sc, v));
+      s_return(sc, make_number(sc, v));
       
     case OP_QUOTIENT:        /* quotient */
       if (cdr(sc->args) == sc->NIL) 
@@ -4950,11 +5337,11 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
 	char *s = strvalue(car(sc->args));
 	if (*s == '#') 
 	  s_return(sc, make_sharp_const(sc, s + 1));
-	else s_return(sc, mk_atom(sc, s));
+	else s_return(sc, make_atom(sc, s));
       }
       
     case OP_SYM2STR: /* symbol->string */
-      x = s7_make_string(sc, s7_symname(car(sc->args)));
+      x = s7_make_string(sc, s7_symbol_name(car(sc->args)));
       s7_setimmutable(x);
       s_return(sc,x);
 
@@ -5092,7 +5479,7 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
       vec = s7_make_vector(sc,len);
       for (x = sc->args, i = 0; s7_is_pair(x); x = cdr(x), i++) 
 	{
-	  s7_set_vector_elem(vec,i, car(x));
+	  s7_vector_set(vec,i, car(x));
 	}
       s_return(sc,vec);
     }
@@ -5129,7 +5516,7 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
 	  Error_1(sc, "vector-ref: out of bounds:",cadr(sc->args));
 	}
       
-      s_return(sc,s7_vector_elem(car(sc->args),index));
+      s_return(sc,s7_vector_ref(car(sc->args),index));
     }
       
     case OP_VECSET: {   /* vector-set! */
@@ -5146,12 +5533,12 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
 	  Error_1(sc, "vector-set!: out of bounds:",cadr(sc->args));
 	}
       
-      s7_set_vector_elem(car(sc->args),index,caddr(sc->args));
+      s7_vector_set(car(sc->args),index,caddr(sc->args));
       s_return(sc, car(sc->args));
     }
       
     default:
-      sprintf(sc->strbuff, "%d: illegal operator", sc->op);
+      sprintf(sc->strbuff, "opexe_2 %d: illegal operator", sc->op);
       Error_0(sc, sc->strbuff);
     }
   return sc->T;
@@ -5308,7 +5695,7 @@ static pointer opexe_3(scheme *sc, enum scheme_opcodes op)
       s_retbool(s7_is_equal(sc, car(sc->args), cadr(sc->args)));
 
     default:
-      sprintf(sc->strbuff, "%d: illegal operator", sc->op);
+      sprintf(sc->strbuff, "opexe_3 %d: illegal operator", sc->op);
       Error_0(sc, sc->strbuff);
     }
   return sc->T;
@@ -5496,7 +5883,8 @@ static pointer opexe_4(scheme *sc, enum scheme_opcodes op)
       s_return(sc, s7_open_output_string(sc));
       
     case OP_OPEN_INSTRING: /* open-input-string */
-    case OP_OPEN_INOUTSTRING: /* open-input-output-string */ {
+    case OP_OPEN_INOUTSTRING: /* open-input-output-string */ 
+      {
       int prop = 0;
       pointer p;
       switch(op) 
@@ -5511,7 +5899,7 @@ static pointer opexe_4(scheme *sc, enum scheme_opcodes op)
 	  s_return(sc, sc->F);
 	}
       s_return(sc, p);
-    }
+      }
       
     case OP_CLOSE_INPORT: /* close-input-port */
       port_close(sc, car(sc->args), port_input);
@@ -5527,6 +5915,10 @@ static pointer opexe_4(scheme *sc, enum scheme_opcodes op)
     case OP_CURR_ENV: /* current-environment */
       s_return(sc, sc->envir);
       
+    default:
+      sprintf(sc->strbuff, "opexe_4 %d: illegal operator", sc->op);
+      Error_0(sc, sc->strbuff);
+
     }
   return sc->T;
 }
@@ -5678,7 +6070,7 @@ static pointer opexe_5(scheme *sc, enum scheme_opcodes op)
 	  sc->tok = token(sc);
 	  s_goto(sc, OP_RDSEXPR);
 	case TOK_ATOM:
-	  s_return(sc,mk_atom(sc, readstr_upto(sc, "();\t\n\r ")));
+	  s_return(sc,make_atom(sc, readstr_upto(sc, "();\t\n\r ")));
 	case TOK_DQUOTE:
 	  x =readstrexp(sc);
 	  if (x == sc->F) 
@@ -5868,7 +6260,8 @@ static pointer opexe_5(scheme *sc, enum scheme_opcodes op)
 	  s7_putstr(sc, ")");
 	  s_return(sc, sc->T);
 	}
-    case OP_PVECFROM: {
+    case OP_PVECFROM: 
+      {
       int i = ivalue_unchecked(cdr(sc->args));
       pointer vec = car(sc->args);
       int len = ivalue_unchecked(vec);
@@ -5879,17 +6272,17 @@ static pointer opexe_5(scheme *sc, enum scheme_opcodes op)
 	} 
       else 
 	{
-	  pointer elem = s7_vector_elem(vec,i);
+	  pointer elem = s7_vector_ref(vec,i);
 	  ivalue_unchecked(cdr(sc->args)) = i + 1;
 	  s_save(sc, OP_PVECFROM, sc->args, sc->NIL);
 	  sc->args = elem;
 	  s7_putstr(sc, " ");
 	  s_goto(sc, OP_P0LIST);
 	}
-    }
+      }
       
     default:
-      sprintf(sc->strbuff, "%d: illegal operator", sc->op);
+      sprintf(sc->strbuff, "opexe_5 %d: illegal operator", sc->op);
       Error_0(sc, sc->strbuff);
       
     }
@@ -5959,8 +6352,9 @@ static pointer opexe_6(scheme *sc, enum scheme_opcodes op)
       s_retbool(s7_is_closure(car(sc->args)));
     case OP_MACROP:          /* macro? */
       s_retbool(is_macro(car(sc->args)));
+
     default:
-      sprintf(sc->strbuff, "%d: illegal operator", sc->op);
+      sprintf(sc->strbuff, "opexe_5 %d: illegal operator", sc->op);
       Error_0(sc, sc->strbuff);
     }
   return sc->T; /* NOTREACHED */
@@ -6705,7 +7099,7 @@ pointer s7_make_ulong(scheme *sc, unsigned long num)
 bool s7_is_keyword(pointer obj)
 {
   return((s7_is_symbol(obj)) &&
-	 (s7_symname(obj)[0] == ':'));
+	 (s7_symbol_name(obj)[0] == ':'));
 }
 
 bool s7_keyword_eq_p(pointer k1, pointer k2)

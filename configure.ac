@@ -1404,6 +1404,9 @@ if test "$with_s7" = yes && test "$ac_with_extension_language" != no && test "$a
   AC_DEFINE(HAVE_SCHEME)	
   ac_snd_have_extension_language=yes
   AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
+  AC_DEFINE(HAVE_SCM_MAKE_RATIO)
+  AC_DEFINE(HAVE_SCM_C_MAKE_RECTANGULAR)
+  AC_DEFINE(HAVE_COMPLEX_TRIG)
   LOCAL_LANGUAGE="s7"
   S7_LIB="s7.o"
   if test "$ac_cv_header_dlfcn_h" = yes ; then

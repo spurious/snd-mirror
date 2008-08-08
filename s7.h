@@ -83,16 +83,21 @@ unsigned long s7_to_c_ulong(pointer num);
 pointer s7_make_ulong(scheme *sc, unsigned long num);
 
 bool s7_is_rational(pointer arg);
+bool s7_is_ratio(pointer arg);
 pointer s7_make_ratio(scheme *sc, off_t a, off_t b);
+pointer s7_rationalize(scheme *sc, double x, double error);
+off_t s7_numerator(pointer x);
+off_t s7_denominator(pointer x);
 
 bool s7_is_complex(pointer arg);
 pointer s7_make_complex(scheme *sc, double a, double b);
-
+double s7_real_part(pointer z);
+double s7_imag_part(pointer z);
 
 bool s7_is_vector(pointer p);
 void s7_fill_vector(pointer vec, pointer obj);
-pointer s7_vector_elem(pointer vec, int ielem);
-pointer s7_set_vector_elem(pointer vec, int ielem, pointer a);
+pointer s7_vector_ref(pointer vec, int ielem);
+pointer s7_vector_set(pointer vec, int ielem, pointer a);
 pointer s7_make_vector(scheme *sc, int len);
 pointer s7_make_and_fill_vector(scheme *sc, int len, pointer fill);
 int s7_vector_length(pointer vec);
@@ -103,7 +108,7 @@ bool s7_is_proc(pointer p);
 
 
 bool s7_is_symbol(pointer p);
-char *s7_symname(pointer p);
+char *s7_symbol_name(pointer p);
 pointer s7_make_symbol(scheme *sc, const char *name);
 pointer s7_gensym(scheme *sc);
 

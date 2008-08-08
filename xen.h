@@ -12,12 +12,13 @@
  */
 
 #define XEN_MAJOR_VERSION 2
-#define XEN_MINOR_VERSION 19
-#define XEN_VERSION "2.19"
+#define XEN_MINOR_VERSION 20
+#define XEN_VERSION "2.20"
 
 /* HISTORY:
  *
  *  10-Aug-08: S7, a TinyScheme derivative.
+ *             changed XEN_NUMERATOR and XEN_DENOMINATOR to return off_t not XEN.
  *  23-Jul-08: be more careful about wrapping POINTERs (they say 64-bit MS C void* == unsigned long long, but not unsigned long).
  *  30-Jun-08: XEN_OFF_T_IF_BOUND_P.
  *  19-May-08: more const char* arg declarations.
@@ -271,8 +272,8 @@
 
 #if HAVE_SCM_MAKE_RATIO || HAVE_SCM_C_MAKE_RECTANGULAR
   #define XEN_HAVE_RATIOS                 1
-  #define XEN_NUMERATOR(Arg)          scm_numerator(Arg)
-  #define XEN_DENOMINATOR(Arg)        scm_denominator(Arg)
+  #define XEN_NUMERATOR(Arg)          XEN_TO_C_OFF_T(scm_numerator(Arg))
+  #define XEN_DENOMINATOR(Arg)        XEN_TO_C_OFF_T(scm_denominator(Arg))
   #define XEN_RATIONALIZE(Arg1, Arg2) scm_rationalize(scm_inexact_to_exact(Arg1), scm_inexact_to_exact(Arg2))
   #define XEN_RATIO_P(Arg)            SCM_FRACTIONP(Arg)
   #if HAVE_SCM_C_MAKE_RECTANGULAR
@@ -1342,8 +1343,8 @@ XEN xen_rb_add_to_load_path(char *path);
 # define XEN_HAVE_RATIOS                    true
 # define XEN_RATIO_P(Arg)               FTH_RATIO_P(Arg)
 # define XEN_MAKE_RATIO(Num, Den)       fth_make_ratio(Num, Den)
-# define XEN_NUMERATOR(Arg)             fth_numerator(Arg)
-# define XEN_DENOMINATOR(Arg)           fth_denominator(Arg)
+# define XEN_NUMERATOR(Arg)             XEN_TO_C_OFF_T(fth_numerator(Arg))
+# define XEN_DENOMINATOR(Arg)           XEN_TO_C_OFF_T(fth_denominator(Arg))
 # define XEN_RATIONALIZE(Arg1, Arg2)    fth_rationalize(Arg1, Arg2)
 #endif
 
@@ -2146,12 +2147,28 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 #define XEN_TO_C_DOUBLE_OR_ELSE(Arg, Def)          ((XEN_NUMBER_P(Arg)) ? XEN_TO_C_DOUBLE(Arg) : Def)
 #define C_TO_XEN_DOUBLE(Arg)                       s7_make_real(s7, Arg)
 
+#if HAVE_SCM_C_MAKE_RECTANGULAR
+  #define XEN_HAVE_COMPLEX_NUMBERS                 1
+  #define XEN_COMPLEX_P(Arg)                       s7_is_complex(Arg)
+  #define XEN_TO_C_COMPLEX(a)                      (s7_real_part(a) + s7_imag_part(a) * _Complex_I)
+  #define C_TO_XEN_COMPLEX(a)                      s7_make_complex(s7, creal(a), cimag(a))
+#endif
+
+#if HAVE_SCM_MAKE_RATIO
+  #define XEN_HAVE_RATIOS                          1
+  #define XEN_NUMERATOR(Arg)                       s7_numerator(Arg)
+  #define XEN_DENOMINATOR(Arg)                     s7_denominator(Arg)
+  #define XEN_RATIONALIZE(Arg1, Arg2)              s7_rationalize(s7, XEN_TO_C_DOUBLE(Arg1), XEN_TO_C_DOUBLE(Arg2))
+  #define XEN_RATIO_P(Arg)                         s7_is_ratio(Arg)
+  #define XEN_MAKE_RATIO(Num, Den)                 s7_make_ratio(s7, XEN_TO_C_OFF_T(Num), XEN_TO_C_OFF_T(Den))
+#endif
+
 #define C_STRING_TO_XEN_FORM(Str)                  s7_string_to_form(s7, Str)
 #define XEN_EVAL_FORM(Form)                        s7_eval_form(s7, Form)
 #define XEN_EVAL_C_STRING(Arg)                     s7_eval_string(s7, Arg)
 #define XEN_TO_STRING(Obj)                         s7_object_to_string(s7, Obj)
 
-#define XEN_SYMBOL_TO_C_STRING(Arg)                s7_symname(Arg)
+#define XEN_SYMBOL_TO_C_STRING(Arg)                s7_symbol_name(Arg)
 #define XEN_SYMBOL_P(Arg)                          s7_is_symbol(Arg)
 #define C_STRING_TO_XEN_SYMBOL(Arg)                s7_make_symbol(s7, Arg)
 #define XEN_DOCUMENTATION_SYMBOL                   C_STRING_TO_XEN_SYMBOL("documentation")
@@ -2162,8 +2179,8 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 
 #define XEN_VECTOR_P(Arg)                          s7_is_vector(Arg)
 #define XEN_VECTOR_LENGTH(Arg)                     s7_vector_length(Arg)
-#define XEN_VECTOR_REF(Vect, Num)                  s7_vector_elem(Vect, Num)
-#define XEN_VECTOR_SET(Vect, Num, Val)             s7_set_vector_elem(Vect, Num, Val)
+#define XEN_VECTOR_REF(Vect, Num)                  s7_vector_ref(Vect, Num)
+#define XEN_VECTOR_SET(Vect, Num, Val)             s7_vector_set(Vect, Num, Val)
 #define XEN_MAKE_VECTOR(Num, Fill)                 s7_make_and_fill_vector(s7, Num, Fill)
 #define XEN_VECTOR_TO_LIST(Vect)                   s7_vector_to_list(s7, Vect)
 

@@ -18556,6 +18556,18 @@ _ACEOF
 #define HAVE_EXTENSION_LANGUAGE 1
 _ACEOF
 
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_SCM_MAKE_RATIO 1
+_ACEOF
+
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_SCM_C_MAKE_RECTANGULAR 1
+_ACEOF
+
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_COMPLEX_TRIG 1
+_ACEOF
+
   LOCAL_LANGUAGE="s7"
   S7_LIB="s7.o"
   if test "$ac_cv_header_dlfcn_h" = yes ; then

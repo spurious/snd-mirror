@@ -1318,8 +1318,8 @@ void snd_rationalize(Float a, int *num, int *den)
   int gloc;
   ratio = XEN_RATIONALIZE(C_TO_XEN_DOUBLE(a), C_TO_XEN_DOUBLE(a * .04)); /* was .02 until 13-Dec-07 but that gives too many useless choices */
   gloc = snd_protect(ratio);
-  (*num) = XEN_TO_C_INT(XEN_NUMERATOR(ratio));
-  (*den) = XEN_TO_C_INT(XEN_DENOMINATOR(ratio));
+  (*num) = (int)XEN_NUMERATOR(ratio);
+  (*den) = (int)XEN_DENOMINATOR(ratio);
   snd_unprotect_at(gloc);
 }
 #endif
@@ -2907,8 +2907,8 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, const char *caller)
       if ((sp->speed_control_style == SPEED_CONTROL_AS_RATIO) &&
 	  (XEN_RATIO_P(val)))
 	{
-	  sp->speed_control_numerator = XEN_TO_C_INT(XEN_NUMERATOR(val));
-	  sp->speed_control_denominator = XEN_TO_C_INT(XEN_DENOMINATOR(val));
+	  sp->speed_control_numerator = (int)XEN_NUMERATOR(val);
+	  sp->speed_control_denominator = (int)XEN_DENOMINATOR(val);
 	  fval = (Float)(sp->speed_control_numerator) / (Float)(sp->speed_control_denominator);
 	  if (sp->speed_control_numerator < 0)
 	    {
