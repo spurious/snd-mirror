@@ -32,6 +32,20 @@
 (define (cdddar x) (cdr (cdr (cdr (car x)))))
 (define (cddddr x) (cdr (cdr (cdr (cdr x)))))
 
+(define (list-tail x k)
+  (if (zero? k)
+      x
+      (list-tail (cdr x) (- k 1))))
+
+(define (list-head l n)
+  (reverse (list-tail (reverse l) (- (length l) n))))
+
+(define (list-copy list)
+  (if (null? list)
+      '()
+      (cons (car list)
+            (list-copy (cdr list)))))
+
 (macro (unless form)
      `(if (not ,(cadr form)) (begin ,@(cddr form))))
 
@@ -524,29 +538,35 @@
 
 (define *catchers* '())
 (define *tag* #f)
+(define *error-hook* #f)
 
 (define (throw tag . args)
   (define (find-tag-match)
     (if (null? *catchers*)
-	(error "uncaught throw:" tag args)
+	(error tag args)
 	(let ((catcher (car *catchers*)))
 	  (set! *catchers* (cdr *catchers*))
 	  (if (or (eq? (car catcher) #t)
 		  (equal? tag (car catcher)))
-	      (cdr catcher)
+	      (let ()
+		(set! *error-hook* (caddr catcher))
+		(cdr catcher))
 	      (find-tag-match)))))
     (apply (find-tag-match) args))
 
-(define *error-hook* throw)
 
 (define (catch tag body tag-handler)
   (call/cc
    (lambda (catcher)
-     (set! *catchers* (cons (cons tag (lambda args
-					(apply tag-handler args)
-					(apply catcher args)))
+     (set! *catchers* (cons (list tag 
+				  (lambda args
+				    (apply tag-handler args)
+				    (apply catcher args))
+				  *error-hook*)
 			    *catchers*))
+     (set! *error-hook* throw)
      (let ((result (body)))
+       (set! *error-hook* (caddr (car *catchers*)))
        (set! *catchers* (cdr *catchers*))
        result))))
 
@@ -560,9 +580,6 @@
 	   (quit)
 	   (throw *tag* args)))
   (quit))
-
-
-
 
 ;;; from Guile
 (defmacro and-let* (vars . body)

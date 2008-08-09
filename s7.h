@@ -15,6 +15,9 @@
 #endif
 #endif
 
+#define Int int
+#define Int_d "%d"
+
 
 #define S7_VERSION "0"
 
@@ -72,7 +75,7 @@ bool s7_is_inexact(pointer p);
 
 int s7_to_c_int(pointer p);
 bool s7_is_integer(pointer p);
-pointer s7_make_integer(scheme *sc, off_t num);
+pointer s7_make_integer(scheme *sc, Int num);
 
 bool s7_is_real(pointer p);
 double s7_to_c_double(pointer p);
@@ -84,10 +87,10 @@ pointer s7_make_ulong(scheme *sc, unsigned long num);
 
 bool s7_is_rational(pointer arg);
 bool s7_is_ratio(pointer arg);
-pointer s7_make_ratio(scheme *sc, off_t a, off_t b);
+pointer s7_make_ratio(scheme *sc, Int a, Int b);
 pointer s7_rationalize(scheme *sc, double x, double error);
-off_t s7_numerator(pointer x);
-off_t s7_denominator(pointer x);
+Int s7_numerator(pointer x);
+Int s7_denominator(pointer x);
 
 bool s7_is_complex(pointer arg);
 pointer s7_make_complex(scheme *sc, double a, double b);

@@ -41,21 +41,23 @@
  *     added doc field for foreign funcs
  *     floor/ceiling/truncate return ints! (This is not RnRS)
  *     guile-style catch/throw in s7.scm
- *     added get-output-string for open-string-output (useless otherwise)
+ *     added get-output-string for open-string-output (useless otherwise), and current-error-port
  *     open-output-string takes 0 args, reallocs internal buffer as needed
  *     started reformatting the text so I don't have to squint all the time
  *     #\page in sharp reader so that gauche-format.scm will load.
  *     added complex and ratio numbers on the ALL_NUMBERS switch
  *        make-polar make-rectangular real-part imag-part magnitude angle
  *        rationalize numerator denominator
- *        ints are off_t's in this case
+ *        ints are off_t's in this case [this has been put on hold -- GC troubles until I separate usages]
  *        had to move all the numeric stuff in s7.scm into s7-ops.h and s7.c
  *
+ *
+ * there's no arg number mismatch check for caller-defined functions!
  *
  * need dynamic-wind tested, define* et al (gauche-optargs loads but doesn't work yet).
  *      applicable types
 
- *        [read ratio and complex]
+ *        [read complex]
 
  *      block comment #| |#
  *      procedure arity, source
@@ -124,6 +126,8 @@ static char *opcode_names[] = {
 };
 #endif
 
+static char error_buf[1024];
+
 #define ALL_NUMBERS 1
 
 #if ALL_NUMBERS
@@ -135,13 +139,13 @@ static char *opcode_names[] = {
 typedef struct num {
   char type;
   union {
-    off_t ivalue;  /* is this the same as long long? */
+    Int ivalue;  /* is this the same as long long? */
     double rvalue; /* or possibly long double */
 
 #if ALL_NUMBERS
     struct {
-      off_t numerator;
-      off_t denominator;
+      Int numerator;
+      Int denominator;
     } fvalue;
 
     struct {
@@ -268,7 +272,6 @@ struct cell {
   } _object;
 };
 
-
 struct scheme {
   /* arrays for segments */
   func_alloc malloc;
@@ -326,6 +329,7 @@ struct scheme {
   
   pointer inport;
   pointer outport;
+  pointer errport;
   pointer save_inport;
   pointer loadport;
   
@@ -335,8 +339,8 @@ struct scheme {
   int file_i;
   int nesting;
   
-  char gc_verbose;      /* if gc_verbose is not zero, print gc status */
-  char no_memory;       /* Whether mem. alloc. has failed */
+  bool gc_verbose;      /* if gc_verbose is not zero, print gc status */
+  bool no_memory;       /* Whether mem. alloc. has failed */
   
   #define LINESIZE 1024
   char linebuff[LINESIZE];
@@ -346,8 +350,11 @@ struct scheme {
   int tok;
   int print_flag;
   pointer value;
-  int op;
-  
+
+  Int op;
+  /* not int until I clean up ivalues -- otherwise we stomp on ext_data! */
+  Int nada;
+
   void *ext_data;     /* For the benefit of foreign functions */
   long gensym_cnt;
   
@@ -445,6 +452,13 @@ enum scheme_types {
 };
 
 
+static const char *type_names[16] = {
+  "none", "string", "number", "symbol", "proc", "pair", "closure", "continuation",
+  "foreign-function", "character", "port", "vector", "macro", "promise", "environment",
+  "foreign-object"
+};
+
+
 /* 5 bits here so only 31 types allowed currently */
 
 /* ADJ is enough slack to align cells in a TYPE_BITS-bit boundary */
@@ -470,6 +484,23 @@ static num num_one;
 /* macros for cell operations */
 #define typeflag(p) ((p)->_flag)
 #define type(p)     (typeflag(p) & T_MASKTYPE)
+
+
+
+static void dump_object(pointer x)
+{
+  fprintf(stderr, "dump %p:\n", x);
+  if ((x) &&
+      (type(x) >= 0) &&
+      (type(x) < T_LAST_SYSTEM_TYPE))
+    {
+      fprintf(stderr, "type: %s (%x)\n", type_names[type(x)], typeflag(x));
+      
+    }
+  else fprintf(stderr, "bogus: %x\n", typeflag(x));
+}
+
+
 
 
 bool s7_is_string(pointer p)
@@ -505,7 +536,9 @@ bool s7_is_integer(pointer p)
   /* the evaluator tries to use the ivalue field in devious ways, so p may not be a number
    *   this needs to be fixed!
    */
-
+  /*
+  fprintf(stderr,"is int: %d\n", type(p));
+  */
 #if ALL_NUMBERS
   return(object_number_type(p) == NUM_INT);
 #else
@@ -710,12 +743,12 @@ static bool is_macro(pointer p)
 
 pointer s7_closure_code(pointer p)   
 { 
-  return car(p);
+  return(car(p));
 }
 
 pointer s7_closure_env(pointer p)    
 { 
-  return cdr(p);
+  return(cdr(p));
 }
 
 bool s7_is_continuation(pointer p)    
@@ -814,9 +847,9 @@ static void s7_mark_embedded_foreign_objects(pointer a);
 
 #define DEFAULT_RATIONALIZE_ERROR 1.0e-12
 
-static off_t c_mod(off_t x, off_t y)
+static Int c_mod(Int x, Int y)
 {
-  off_t z;
+  Int z;
   if (y == 0) return(x); /* else arithmetic exception */
   z = x % y;
   if (((y < 0) && (z > 0)) ||
@@ -825,9 +858,9 @@ static off_t c_mod(off_t x, off_t y)
   return(z);
 }
 
-static off_t c_gcd(off_t u, off_t v)
+static Int c_gcd(Int u, Int v)
 {
-  off_t a, b, temp;
+  Int a, b, temp;
 
   a = abs(u);
   b = abs(v);
@@ -843,7 +876,7 @@ static off_t c_gcd(off_t u, off_t v)
 }
 
 
-static off_t c_lcm(off_t a, off_t b)
+static Int c_lcm(Int a, Int b)
 {
   if ((a == 0) || (b == 0)) return(0);
   if (a < 0) a = -a;
@@ -852,9 +885,9 @@ static off_t c_lcm(off_t a, off_t b)
 }
 
 
-static bool c_rationalize(double ux, double error, off_t *numer, off_t *denom)
+static bool c_rationalize(double ux, double error, Int *numer, Int *denom)
 {
-  off_t a1 = 0, a2 = 1, b1 = 1, b2 = 0, tt = 1, a = 0, b = 0, ctr;
+  Int a1 = 0, a2 = 1, b1 = 1, b2 = 0, tt = 1, a = 0, b = 0, ctr;
   double x;
 
   if (ux == 0.0)
@@ -884,7 +917,7 @@ static bool c_rationalize(double ux, double error, off_t *numer, off_t *denom)
       if (x == tt)
 	return(false);
       x = 1.0 / (x - tt);
-      tt = (off_t)floor(x);
+      tt = (Int)floor(x);
       a2 = a1;
       b2 = b1;
       a1 = a;
@@ -895,7 +928,7 @@ static bool c_rationalize(double ux, double error, off_t *numer, off_t *denom)
 
 pointer s7_rationalize(scheme *sc, double x, double error)
 {
-  off_t numer = 0, denom = 1;
+  Int numer = 0, denom = 1;
   if (c_rationalize(x, error, &numer, &denom))
     return(s7_make_ratio(sc, numer, denom));
   return(s7_make_real(sc, x));
@@ -916,14 +949,14 @@ static double num_to_real(num n)
   return(fraction(n));
 }
 
-static off_t num_to_numerator(num n)
+static Int num_to_numerator(num n)
 {
   if (n.type == NUM_RATIO)
     return(numerator(n));
   return(integer(n));
 }
 
-static off_t num_to_denominator(num n)
+static Int num_to_denominator(num n)
 {
   if (n.type == NUM_RATIO)
     return(denominator(n));
@@ -948,10 +981,10 @@ static double num_to_imag_part(num n)
   return(0.0);
 }
 
-static num make_ratio(scheme *sc, off_t numer, off_t denom)
+static num make_ratio(scheme *sc, Int numer, Int denom)
 {
   num ret;
-  off_t divisor;
+  Int divisor;
 
   if (denom == 0)
     _Error_1(sc, "/: division by 0", 0);
@@ -1002,7 +1035,7 @@ static num make_complex(double rl, double im)
 
 #endif
 
-off_t s7_numerator(pointer x)
+Int s7_numerator(pointer x)
 {
 #if ALL_NUMBERS
   return(numerator(x->_object._number));
@@ -1011,7 +1044,7 @@ off_t s7_numerator(pointer x)
 #endif
 }
 
-off_t s7_denominator(pointer x)
+Int s7_denominator(pointer x)
 {
 #if ALL_NUMBERS
   return(denominator(x->_object._number));
@@ -1051,9 +1084,7 @@ double s7_to_c_double(pointer p)
 
 static double complex s7_to_c_complex(pointer p)
 {
-  if (object_number_type(p) < NUM_COMPLEX)
-    return(num_to_real(p->_object._number) + 0.0 * _Complex_I);
-  return(s7_real_part(p) + s7_imag_part(p) * _Complex_I);
+  return(num_to_real_part(p->_object._number) + num_to_imag_part(p->_object._number) * _Complex_I);
 }
 
 static pointer s7_from_c_complex(scheme *sc, double complex z)
@@ -1486,26 +1517,32 @@ static int alloc_cellseg(scheme *sc, int n)
   char *cp;
   long i;
   int k;
-  int adj=ADJ;
+  int adj = ADJ;
   
-  if (adj<sizeof(struct cell)) 
+  if (adj < sizeof(struct cell)) 
     {
-      adj= sizeof(struct cell);
+      adj = sizeof(struct cell);
+      fprintf(stderr, "adj from %d to %d\n", ADJ, adj);
     }
   
   for (k = 0; k < n; k++) 
     {
       if (sc->last_cell_seg >= CELL_NSEGMENT - 1)
 	return k;
-      cp = (char*) sc->malloc(CELL_SEGSIZE * sizeof(struct cell)+adj);
+      cp = (char*)sc->malloc(CELL_SEGSIZE * sizeof(struct cell) + adj);
       if (cp == 0)
-	return k;
+	{
+	  fprintf(stderr, "attempt to alloc %d bytes failed\n", CELL_SEGSIZE * sizeof(struct cell) + adj);
+	  return k;
+	}
       i = ++sc->last_cell_seg ;
       sc->alloc_seg[i] = cp;
       /* adjust in TYPE_BITS-bit boundary */
-      if (((unsigned)cp)%adj!= 0) 
+      if (((unsigned)cp) % adj != 0) 
 	{
-	  cp = (char*)(adj*((unsigned long)cp/adj+1));
+	  fprintf(stderr, "adjusting cp %p to ", cp);
+	  cp = (char *)(adj * ((unsigned long)cp / adj + 1));
+	  fprintf(stderr, "%p\n", cp);
 	}
       /* insert new segment in address order */
       newp = (pointer)cp;
@@ -1572,9 +1609,11 @@ static pointer _get_cell(scheme *sc, pointer a, pointer b)
 	  || sc->free_cell == sc->NIL) 
 	{
 	  /* if only a few recovered, get more to avoid fruitless gc's */
-	  if (!alloc_cellseg(sc, 1) && sc->free_cell == sc->NIL) 
+	  if ((!alloc_cellseg(sc, 1))&& 
+	      (sc->free_cell == sc->NIL))
 	    {
-	      sc->no_memory= 1;
+	      fprintf(stderr, "failed in _get_cell\n");
+	      sc->no_memory = true;
 	      return sc->sink;
 	    }
 	}
@@ -1604,14 +1643,16 @@ static pointer reserve_cells(scheme *sc, int n)
 	  /* If there still aren't, try getting more heap */
 	  if (!alloc_cellseg(sc, 1)) 
 	    {
-	      sc->no_memory= 1;
+	      fprintf(stderr, "failed in reserve_cells\n");
+	      sc->no_memory = true;
 	      return sc->NIL;
 	    }
 	}
       if (sc->fcells < n) 
 	{
 	  /* If all fail, report failure */
-	  sc->no_memory= 1;
+	  fprintf(stderr, "failed in reserve_cells (2)\n");
+	  sc->no_memory = true;
 	  return sc->NIL;
 	}
     }
@@ -1625,31 +1666,43 @@ static pointer get_consecutive_cells(scheme *sc, int n)
   
   if (sc->no_memory) 
     {
-      return sc->sink;
+      return(sc->sink);
     }
   
   /* Are there any cells available? */
   x = find_consecutive_cells(sc,n);
+
   if (x == sc->NIL) 
     {
       /* If not, try gc'ing some */
+      fprintf(stderr, "gc to free consecutive cells");
+
       gc(sc, sc->NIL, sc->NIL);
-      x = find_consecutive_cells(sc,n);
+
+      x = find_consecutive_cells(sc, n);
       if (x == sc->NIL) 
 	{
+	  fprintf(stderr, "first search");
 	  /* If there still aren't, try getting more heap */
 	  if (!alloc_cellseg(sc, 1)) 
 	    {
-	      sc->no_memory= 1;
+	      fprintf(stderr, "failed in get_consecutive_cells\n");
+	      sc->no_memory = true;
 	      return sc->sink;
 	    }
 	}
-      x = find_consecutive_cells(sc,n);
-      if (x == sc->NIL) 
+      else fprintf(stderr, "x is ok");
+
+      if (x == sc->NIL)
 	{
-	  /* If all fail, report failure */
-	  sc->no_memory= 1;
-	  return sc->sink;
+	  x = find_consecutive_cells(sc, n);
+	  if (x == sc->NIL) 
+	    {
+	      /* If all fail, report failure */
+	      fprintf(stderr, "failed in get_consecutive_cells (2)\n");
+	      sc->no_memory = true;
+	      return(sc->sink);
+	    }
 	}
     }
   return (x);
@@ -1864,10 +1917,13 @@ pointer s7_make_character(scheme *sc, int c)
   typeflag(x) = (T_CHARACTER | T_ATOM);
   ivalue_unchecked(x) = c;
   set_integer(x);
+  /*
+  fprintf(stderr,"%c type %d\n", c, type(x));
+  */
   return (x);
 }
 
-pointer s7_make_integer(scheme *sc, off_t n) 
+pointer s7_make_integer(scheme *sc, Int n) 
 {
   pointer x = get_cell(sc, sc->NIL, sc->NIL);
   typeflag(x) = (T_NUMBER | T_ATOM);
@@ -1911,7 +1967,7 @@ pointer s7_make_complex(scheme *sc, double a, double b)
 #endif
 }
 
-pointer s7_make_ratio(scheme *sc, off_t a, off_t b)
+pointer s7_make_ratio(scheme *sc, Int a, Int b)
 {
   /* make_number calls us, so we can't call it as a convenience! */
 
@@ -1964,7 +2020,8 @@ static char *store_string(scheme *sc, int len_str, const char *str, char fill)
   q = (char*)sc->malloc(len_str+1);
   if (q == 0) 
     {
-      sc->no_memory = 1;
+      fprintf(stderr, "failed in store_string\n");
+      sc->no_memory = true;
       return(sc->strbuff);
     }
   if (str!= 0) 
@@ -2193,10 +2250,10 @@ static pointer make_atom(scheme *sc, char *q)
 static pointer make_atom(scheme *sc, char *q) 
 {
   char c, *p, *slash, *plus;
-  bool has_dec_point = false, has_slash = false, has_i = false; 
+  bool has_dec_point = false, has_slash = false, has_i = false, has_previous_dec_point = false; 
   int has_plus_or_minus = 0;
   bool has_fp_exp = false;
-  
+
 #if USE_COLON_HOOK
   if ((p = strstr(q, "::")) != 0) 
     {
@@ -2213,7 +2270,7 @@ static pointer make_atom(scheme *sc, char *q)
   p = q;
   c = *p++; 
 
-  /* a number starts with + - . or digit */
+  /* a number starts with + - . or digit, but so does 1+ for example */
 
   if ((c == '+') || (c == '-')) 
     { 
@@ -2241,7 +2298,7 @@ static pointer make_atom(scheme *sc, char *q)
 	    return(s7_make_symbol(sc, strlwr(q))); 
 	}
     }
-  
+
   for ( ; (c = *p) != 0; ++p) 
     {
       if (!isdigit(c)) 
@@ -2272,10 +2329,11 @@ static pointer make_atom(scheme *sc, char *q)
 		{
 		  if ((c == '+') || (c == '-'))
 		    {
-		      if ((has_slash) || (has_plus_or_minus != 0) || (!has_dec_point) || (has_fp_exp))
+		      if ((has_slash) || (has_plus_or_minus != 0) || (has_fp_exp))
 			return(s7_make_symbol(sc, strlwr(q)));
 
 		      if (c == '+') has_plus_or_minus = 1; else has_plus_or_minus = -1;
+		      has_previous_dec_point = has_dec_point;
 		      has_dec_point = false;
 		      plus = (char *)(p + 1);
 		      continue;
@@ -2284,7 +2342,7 @@ static pointer make_atom(scheme *sc, char *q)
 		    {
 		      if (c == '/')
 			{
-			  if ((has_dec_point) || (has_plus_or_minus != 0) || (has_slash) || (has_fp_exp))
+			  if ((has_dec_point) || (has_plus_or_minus != 0) || (has_slash) || (has_fp_exp) || (has_previous_dec_point))
 			    return(s7_make_symbol(sc, strlwr(q)));
 
 			  has_slash = true;
@@ -2308,30 +2366,65 @@ static pointer make_atom(scheme *sc, char *q)
 	}
     }
 
-  if ((has_slash) &&
-      ((has_dec_point) || (has_plus_or_minus != 0)))
+  if ((has_plus_or_minus != 0) &&
+      (!has_i))
     return(s7_make_symbol(sc, strlwr(q)));
 
-  if (has_dec_point)
+  if ((has_slash) &&
+      ((has_dec_point) || 
+       (has_previous_dec_point) ||
+       (has_plus_or_minus != 0)))
+    return(s7_make_symbol(sc, strlwr(q)));
+
+  if (has_i)
     {
-      if (has_plus_or_minus != 0)
+      int len;
+      len = strlen(q);
+
+      if (q[len - 1] != 'i')
+	return(s7_make_symbol(sc, strlwr(q)));
+      q[len - 1] = '\0'; /* remove 'i' */
+      
+      if (has_previous_dec_point)
 	{
-	  if (has_i)
+	  if (has_dec_point)
 	    {
-	      int len;
-	      len = strlen(q);
-
-	      if (q[len - 1] != 'i')
-		return(s7_make_symbol(sc, strlwr(q)));
-	      q[len - 1] = '\0'; /* remove 'i' */
-
-	      /* what about 1.0+.i ? */
+	      /* both are floats */
 	      if (has_plus_or_minus == 1)
 		return(sc, s7_make_complex(sc, atof(q), atof(plus)));
 	      return(sc, s7_make_complex(sc, atof(q), -atof(plus)));
 	    }
-	  else return(s7_make_symbol(sc, strlwr(q)));
+	  else
+	    {
+	      /* first was float */
+	      if (has_plus_or_minus == 1)
+		return(sc, s7_make_complex(sc, atof(q), atoll(plus)));
+	      return(sc, s7_make_complex(sc, atof(q), -atoll(plus)));
+	    }
 	}
+      else
+	{
+	  if (has_dec_point)
+	    {
+	      /* second is float */
+	      if (has_plus_or_minus == 1)
+		return(sc, s7_make_complex(sc, atoll(q), atof(plus)));
+	      return(sc, s7_make_complex(sc, atoll(q), -atof(plus)));
+	    }
+	  else
+	    {
+	      /* both are ints */
+	      if (has_plus_or_minus == 1)
+		return(sc, s7_make_complex(sc, atoll(q), atoll(plus)));
+	      return(sc, s7_make_complex(sc, atoll(q), -atoll(plus)));
+	    }
+	}
+    }
+
+  if (has_dec_point)
+    {
+      if ((has_plus_or_minus != 0) || (has_previous_dec_point))
+	return(s7_make_symbol(sc, strlwr(q)));
 
       return(s7_make_real(sc, atof(q)));
     }
@@ -2527,7 +2620,9 @@ static void gc(scheme *sc, pointer a, pointer b)
   mark(sc->inport);
   mark(sc->save_inport);
   mark(sc->outport);
+  mark(sc->errport);
   mark(sc->loadport);
+  
   mark(sc->ext_data); /* s7 */
   
   /* mark variables a, b */
@@ -2863,15 +2958,15 @@ static int basic_inchar(port *pt)
 static void backchar(scheme *sc, int c) 
 {
   port *pt;
-  if (c ==EOF) return;
+  if (c == EOF) return;
   pt = sc->inport->_object._port;
-  if (pt->kind&port_file) 
+  if (pt->kind & port_file) 
     {
       ungetc(c, pt->rep.stdio.file);
     } 
   else 
     {
-      if (pt->rep.string.curr!= pt->rep.string.start) 
+      if (pt->rep.string.curr != pt->rep.string.start) 
 	{
 	  --pt->rep.string.curr;
 	}
@@ -3114,9 +3209,9 @@ static  bool is_one_of(char *s, int c)
 static  void skipspace(scheme *sc) 
 {
   int c;
-  while (isspace(c =inchar(sc)))
+  while (isspace(c = inchar(sc)))
     ;
-  if (c!=EOF) 
+  if (c != EOF) 
     {
       backchar(sc,c);
     }
@@ -3206,59 +3301,59 @@ static void printslashstring(scheme *sc, char *p, int len)
 {
   int i;
   unsigned char *s = (unsigned char*)p;
-  s7_putcharacter(sc,'"');
+  s7_putcharacter(sc, '"');
   for ( i = 0; i<len; i++) 
     {
-      if (*s == 0xff || *s =='"' || *s<' ' || *s =='\\') 
+      if (*s == 0xff || *s == '"' || *s < ' ' || *s == '\\') 
 	{
-	  s7_putcharacter(sc,'\\');
+	  s7_putcharacter(sc, '\\');
 	  switch(*s) 
 	    {
 	    case '"':
-	      s7_putcharacter(sc,'"');
+	      s7_putcharacter(sc, '"');
 	      break;
 	    case '\n':
-	      s7_putcharacter(sc,'n');
+	      s7_putcharacter(sc, 'n');
 	      break;
 	    case '\t':
-	      s7_putcharacter(sc,'t');
+	      s7_putcharacter(sc, 't');
 	      break;
 	    case '\r':
-	      s7_putcharacter(sc,'r');
+	      s7_putcharacter(sc, 'r');
 	      break;
 	    case '\\':
-	      s7_putcharacter(sc,'\\');
+	      s7_putcharacter(sc, '\\');
 	      break;
 	    default: { 
 	      int d =*s/16;
-	      s7_putcharacter(sc,'x');
+	      s7_putcharacter(sc, 'x');
 	      if (d<10) 
 		{
-		  s7_putcharacter(sc,d+'0');
+		  s7_putcharacter(sc, d + '0');
 		} 
 	      else 
 		{
-		  s7_putcharacter(sc,d-10+'A');
+		  s7_putcharacter(sc, d - 10 + 'A');
 		}
-	      d =*s%16;
-	      if (d<10) 
+	      d = *s % 16;
+	      if (d < 10) 
 		{
-		  s7_putcharacter(sc,d+'0');
+		  s7_putcharacter(sc, d + '0');
 		} 
 	      else 
 		{
-		  s7_putcharacter(sc,d-10+'A');
+		  s7_putcharacter(sc, d - 10 + 'A');
 		}
 	    }
 	    }
 	} 
       else 
 	{
-	  s7_putcharacter(sc,*s);
+	  s7_putcharacter(sc, *s);
 	}
       s++; 
     }
-  s7_putcharacter(sc,'"');
+  s7_putcharacter(sc, '"');
 }
 
 
@@ -3299,7 +3394,7 @@ void s7_atom2str(scheme *sc, pointer l, int f, char **pp, int *plen)
       switch (object_number_type(l))
 	{
 	case NUM_INT:
-	  sprintf(p, "%lld", ivalue_unchecked(l));
+	  sprintf(p, Int_d, ivalue_unchecked(l));
 	  break;
 #if ALL_NUMBERS
 	case NUM_REAL2:
@@ -3321,7 +3416,7 @@ void s7_atom2str(scheme *sc, pointer l, int f, char **pp, int *plen)
 	  break;
 #if ALL_NUMBERS
 	case NUM_RATIO:
-	  sprintf(p, "%lld/%lld", numerator(l->_object._number), denominator(l->_object._number));
+	  sprintf(p, Int_d "/" Int_d, numerator(l->_object._number), denominator(l->_object._number));
 	  break;
 	default:
 	  if (imag_part(l->_object._number) >= 0.0)
@@ -3390,6 +3485,7 @@ void s7_atom2str(scheme *sc, pointer l, int f, char **pp, int *plen)
     } 
   else if (s7_is_closure(l)) 
     {
+      fprintf(stderr, "closure: %s\n", s7_object_to_string(sc, car(l)));
       p = "#<CLOSURE>";
     } 
   else if (is_promise(l)) 
@@ -3473,6 +3569,9 @@ static pointer list_to_string(scheme *sc, pointer lst)
   char **elements = NULL;
   char *buf;
   len = s7_list_length(sc, lst);
+  if (len <= 0)
+    return(s7_make_string(sc, "unknown"));
+
   elements = (char **)malloc(len * sizeof(char *));
   for (x = lst, i = 0; s7_is_pair(x); i++, x = s7_cdr(x))
     {
@@ -3529,11 +3628,11 @@ static pointer list_star(scheme *sc, pointer d)
       return car(d);
     }
   p = cons(sc, car(d), cdr(d));
-  q= p;
+  q = p;
   while(cdr(cdr(p))!= sc->NIL) 
     {
       d = cons(sc, car(p), cdr(p));
-      if (cdr(cdr(p))!= sc->NIL) 
+      if (cdr(cdr(p)) != sc->NIL) 
 	{
 	  p = cdr(d);
 	}
@@ -3606,12 +3705,23 @@ bool s7_eqv_p(pointer a, pointer b)
       /* (eqv? 1 1.0) -> #f! */
       if (s7_is_integer(a))
 	return((s7_is_integer(b)) &&
-	       (ivalue_unchecked(a) == ivalue_unchecked(b)));
+	       (integer(a->_object._number) == integer(b->_object._number)));
       
-      /* TODO fix eqv */
       if (s7_is_real(a))
 	return((s7_is_real(b)) &&
-	       (rvalue_unchecked(a) == rvalue_unchecked(b)));
+	       (real(a->_object._number) == real(b->_object._number)));
+#if ALL_NUMBERS
+      if (s7_is_ratio(a))
+	return((s7_is_ratio(b)) &&
+	       (numerator(a->_object._number) == numerator(b->_object._number)) &&
+	       (denominator(a->_object._number) == denominator(b->_object._number)));
+
+      if (s7_is_complex(a))
+	return((s7_is_complex(b)) &&
+	       (real_part(a->_object._number) == real_part(b->_object._number)) &&
+	       (imag_part(a->_object._number) == imag_part(b->_object._number)));
+#endif
+      return(false);
     }
   
   if (s7_is_character(a))
@@ -4222,82 +4332,113 @@ static pointer opexe_0(scheme *sc, enum scheme_opcodes op)
 	  s_goto(sc, procnum(sc->code));   /* PROCEDURE */
 	} 
       else 
-	if (s7_is_foreign_function(sc->code)) 
-	  {
-	    x = sc->code->_object._ffunc._ff(sc, sc->args);
-	    s_return(sc,x);
-	  } 
+	{
+	  if (s7_is_foreign_function(sc->code)) 
+	    {
+	      x = sc->code->_object._ffunc._ff(sc, sc->args);
+	      s_return(sc,x);
+	    } 
       
       /* TODO: if foreign_object getter */
       
-	else if (s7_is_closure(sc->code) || is_macro(sc->code) || is_promise(sc->code)) 
-	  { /* CLOSURE */
-	    /* Should not accept promise */
-	    /* make environment */
-	    new_frame_in_env(sc, s7_closure_env(sc->code)); 
-	    for (x = car(s7_closure_code(sc->code)), y = sc->args;
-		 s7_is_pair(x); x = cdr(x), y = cdr(y)) 
-	      {
-		if (y == sc->NIL) 
-		  {
-		    Error_0(sc, "not enough arguments");
-		  } 
-		else 
-		  {
-		    new_slot_in_env(sc, car(x), car(y)); 
-		  }
-	      }
-	    if (x == sc->NIL) 
-	      {
-		/*--
-		 * if (y != sc->NIL) 
-		 {
-		 *   Error_0(sc, "too many arguments");
-		 * }
-		 */
-	      } 
-	    else if (s7_is_symbol(x))
-	      new_slot_in_env(sc, x, y); 
-	    else {
-	      Error_1(sc, "syntax error in closure: not a symbol:", x); 
+	  else 
+	    {
+	      if (s7_is_closure(sc->code) || is_macro(sc->code) || is_promise(sc->code)) 
+		{ /* CLOSURE */
+		  /* Should not accept promise */
+		  /* make environment */
+		  new_frame_in_env(sc, s7_closure_env(sc->code)); 
+
+		  /* s7_is_pair(x) here assumes the func has more than 1 arg? */
+		  
+#if 0
+		  y = sc->args;
+		  x = car(s7_closure_code(sc->code));
+
+		  if ((x == sc->NIL) &&
+		      (y != sc->NIL))
+		    fprintf(stderr, "0 args func got 1 arg?");
+
+		  if ((!s7_is_pair(x)) &&
+		      (s7_is_pair(y)))
+		    fprintf(stderr, "1 arg func got too many args?");
+
+		  if ((!s7_is_pair(x)) &&
+		      (y == sc->NIL))
+		    fprintf(stderr, "1 arg func got 0 args?");
+
+		  if ((s7_is_pair(x)) &&
+		      (!s7_is_pair(y)))
+		    fprintf(stderr, "n arg func got 1 arg?");
+#endif
+
+		  for (x = car(s7_closure_code(sc->code)), y = sc->args; s7_is_pair(x); x = cdr(x), y = cdr(y)) 
+		    {
+		      if (y == sc->NIL) 
+			{
+			  Error_0(sc, "not enough arguments");
+			} 
+		      else 
+			{
+			  new_slot_in_env(sc, car(x), car(y)); 
+			}
+		    }
+		  if (x == sc->NIL) 
+		    {
+		      /* why commented out? */
+
+		      /*--
+		       * if (y != sc->NIL) 
+		       {
+		       *   Error_0(sc, "too many arguments");
+		       * }
+		       */
+		    } 
+		  else 
+		    {
+		      if (s7_is_symbol(x))
+			new_slot_in_env(sc, x, y); 
+		      else 
+			{
+			  Error_1(sc, "syntax error in closure: not a symbol:", x); 
+			}
+		    }
+		  sc->code = cdr(s7_closure_code(sc->code));
+		  sc->args = sc->NIL;
+		  s_goto(sc, OP_BEGIN);
+		}
+	      else 
+		{
+		  if (s7_is_continuation(sc->code)) 
+		    { /* CONTINUATION */
+		      sc->dump = cont_dump(sc->code);
+		      s_return(sc, sc->args != sc->NIL ? car(sc->args) : sc->NIL);
+		    } 
+		  else 
+		    {
+		      Error_0(sc, "illegal function");
+		    }
+		}
 	    }
-	    sc->code = cdr(s7_closure_code(sc->code));
-	    sc->args = sc->NIL;
-	    s_goto(sc, OP_BEGIN);
-	  } 
-	else if (s7_is_continuation(sc->code)) 
-	  { /* CONTINUATION */
-	    sc->dump = cont_dump(sc->code);
-	    s_return(sc, sc->args != sc->NIL ? car(sc->args) : sc->NIL);
-	  } 
-	else 
-	  {
-	    
-	    Error_0(sc, "illegal function");
-	  }
+	}
       
     case OP_DOMACRO:    /* do macro */
       sc->code = sc->value;
       s_goto(sc, OP_EVAL);
       
     case OP_LAMBDA:     /* lambda */
-      s_return(sc,s7_make_closure(sc, sc->code, sc->envir));
+      s_return(sc, s7_make_closure(sc, sc->code, sc->envir));
       
     case OP_MKCLOSURE: /* make-closure */
       x = car(sc->args);
       if (car(x) == sc->LAMBDA) 
-	{
-	  x = cdr(x);
-	}
+	x = cdr(x);
+
       if (cdr(sc->args) == sc->NIL) 
-	{
-	  y= sc->envir;
-	} 
-      else 
-	{
-	  y= cadr(sc->args);
-	}
-      s_return(sc,s7_make_closure(sc, x, y));
+	y = sc->envir;
+      else y = cadr(sc->args);
+
+      s_return(sc, s7_make_closure(sc, x, y));
       
     case OP_QUOTE:      /* quote */
       x = car(sc->code); 
@@ -4319,7 +4460,7 @@ static pointer opexe_0(scheme *sc, enum scheme_opcodes op)
 	}
       if (!s7_is_symbol(x)) 
 	{
-	  Error_0(sc, "variable is not a symbol");
+	  Error_0(sc, "define of a non-symbol?");
 	}
       s_save(sc, OP_DEF1, sc->NIL, x);
       s_goto(sc, OP_EVAL);
@@ -4908,7 +5049,7 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
 #if ALL_NUMBERS
       {
 	double error = DEFAULT_RATIONALIZE_ERROR;
-	off_t numer = 0, denom = 1;
+	Int numer = 0, denom = 1;
 	x = car(sc->args);
 	if (s7_is_exact(x)) 
 	  s_return(sc, x);
@@ -4929,10 +5070,10 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
 	s_return(sc, x);
 #if ALL_NUMBERS
       {
-	off_t numer = 0, denom = 1;
+	Int numer = 0, denom = 1;
 	if (c_rationalize(real(x->_object._number), DEFAULT_RATIONALIZE_ERROR, &numer, &denom))
 	  s_return(sc, s7_make_ratio(sc, numer, denom));
-	else s_return(sc, s7_make_integer(sc, (off_t)real(x->_object._number)));
+	else s_return(sc, s7_make_integer(sc, (Int)real(x->_object._number)));
       }
 #else
       s_return(sc, s7_make_integer(sc, ivalue(x)));
@@ -4980,7 +5121,7 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
     case OP_LOG:
       x = car(sc->args);
       if ((s7_is_real(x)) &&
-	  (real(x->_object._number) > 0.0))
+	  (rvalue(x) > 0.0))
 	s_return(sc, s7_make_real(sc, log(rvalue(x))));
 #if ALL_NUMBERS
       /* if < 0 use log(-x) + pi*i */
@@ -5014,7 +5155,7 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
     case OP_ASIN:
       x = car(sc->args);
       if ((s7_is_real(x)) &&
-	  (fabs(real(x->_object._number) <= 1.0)))
+	  (fabs(rvalue(x) <= 1.0)))
 	s_return(sc, s7_make_real(sc, asin(rvalue(x))));
 #if ALL_NUMBERS
       s_return(sc, s7_from_c_complex(sc, casin(s7_to_c_complex(x))));
@@ -5023,7 +5164,7 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
     case OP_ACOS:
       x = car(sc->args);
       if ((s7_is_real(x)) &&
-	  (fabs(real(x->_object._number) <= 1.0)))
+	  (fabs(rvalue(x) <= 1.0)))
 	s_return(sc, s7_make_real(sc, acos(rvalue(x))));
 #if ALL_NUMBERS
       s_return(sc, s7_from_c_complex(sc, cacos(s7_to_c_complex(x))));
@@ -5081,7 +5222,7 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
     case OP_ACOSH:
       x = car(sc->args);
       if ((s7_is_real(x)) &&
-	  (real(x->_object._number) >= 1.0))
+	  (rvalue(x) >= 1.0))
 	s_return(sc, s7_make_real(sc, acosh(rvalue(x))));
 #if ALL_NUMBERS
       s_return(sc, s7_from_c_complex(sc, cacosh(s7_to_c_complex(x))));
@@ -5090,7 +5231,7 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
     case OP_ATANH:
       x = car(sc->args);
       if ((s7_is_real(x)) &&
-	  (fabs(real(x->_object._number) < 1.0)))
+	  (fabs(rvalue(x) < 1.0)))
 	s_return(sc, s7_make_real(sc, atanh(rvalue(x))));
 #if ALL_NUMBERS
       s_return(sc, s7_from_c_complex(sc, catanh(s7_to_c_complex(x))));
@@ -5099,7 +5240,7 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
     case OP_SQRT:
       x = car(sc->args);
       if ((s7_is_real(x)) &&
-	  (real(x->_object._number) >= 0.0))
+	  (rvalue(x) >= 0.0))
 	s_return(sc, s7_make_real(sc, sqrt(rvalue(x))));
 #if ALL_NUMBERS
       /* if < 0 use sqrt(-num)*i */
@@ -5116,11 +5257,11 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
 	    (s7_is_integer(y)) &&
 	    ((ivalue_unchecked(y) >= 0) || 
 	     (abs(ivalue_unchecked(x)) == 1)))
-	  s_return(sc, s7_make_integer(sc, (off_t)pow(ivalue_unchecked(x), ivalue_unchecked(y))));
+	  s_return(sc, s7_make_integer(sc, (Int)pow(ivalue_unchecked(x), ivalue_unchecked(y))));
 
 	if ((s7_is_real(x)) &&
 	    (s7_is_real(y)) &&
-	    (real(y->_object._number) >= 0.0))
+	    (rvalue(y) >= 0.0))
 	  s_return(sc, s7_make_real(sc, pow(rvalue(x), rvalue(y))));
 
 #if ALL_NUMBERS
@@ -5130,11 +5271,11 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
       
     case OP_FLOOR:
       x = car(sc->args);
-      s_return(sc, s7_make_integer(sc, (off_t)floor(rvalue(x)))); /* used to be real result */
+      s_return(sc, s7_make_integer(sc, (Int)floor(rvalue(x)))); /* used to be real result */
       
     case OP_CEILING:
       x = car(sc->args);
-      s_return(sc, s7_make_integer(sc, (off_t)ceil(rvalue(x))));
+      s_return(sc, s7_make_integer(sc, (Int)ceil(rvalue(x))));
       
     case OP_TRUNCATE: 
       {
@@ -5142,13 +5283,13 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
 	x = car(sc->args);
 	rvalue_of_x = rvalue(x);
 	if (rvalue_of_x > 0) 
-	  s_return(sc, s7_make_integer(sc, (off_t)floor(rvalue_of_x)));
-	s_return(sc, s7_make_integer(sc, (off_t)ceil(rvalue_of_x)));
+	  s_return(sc, s7_make_integer(sc, (Int)floor(rvalue_of_x)));
+	s_return(sc, s7_make_integer(sc, (Int)ceil(rvalue_of_x)));
       }
       
     case OP_LCM:
       { /* TODO: fix (and gcd) for new case */
-	off_t val = 1;
+	Int val = 1;
 	for (x = sc->args; x != sc->NIL; x = cdr(x)) 
 	  {
 	    val = c_lcm(val, ivalue_unchecked(car(x)));
@@ -5160,7 +5301,7 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
       
     case OP_GCD:
       {
-	off_t val = 0;
+	Int val = 0;
 	for (x = sc->args; x != sc->NIL; x = cdr(x)) 
 	  {
 	    val = c_gcd(val, ivalue_unchecked(car(x)));
@@ -5732,6 +5873,11 @@ static pointer opexe_4(scheme *sc, enum scheme_opcodes op)
 	{
 	  if (cadr(sc->args) != sc->outport) 
 	    {
+#if 0
+	      fprintf(stderr, "2nd arg %p (%s) is not current output %p (%s)\n", 
+		      cadr(sc->args), s7_object_to_string(sc, cadr(sc->args)),
+		      sc->outport, s7_object_to_string(sc, sc->outport));
+#endif
 	      x = cons(sc, sc->outport, sc->NIL);
 	      s_save(sc, OP_SET_OUTPORT, x, sc->NIL);
 	      sc->outport = cadr(sc->args);
@@ -5739,13 +5885,8 @@ static pointer opexe_4(scheme *sc, enum scheme_opcodes op)
 	}
       sc->args = car(sc->args);
       if (op ==OP_WRITE) 
-	{
-	  sc->print_flag = 1;
-	} 
-      else 
-	{
-	  sc->print_flag = 0;
-	}
+	sc->print_flag = 1;
+      else sc->print_flag = 0;
       s_goto(sc, OP_P0LIST);
       
     case OP_NEWLINE:    /* newline */
@@ -5852,6 +5993,9 @@ static pointer opexe_4(scheme *sc, enum scheme_opcodes op)
       
     case OP_CURR_OUTPORT: /* current-output-port */
       s_return(sc, sc->outport);
+      
+    case OP_CURR_ERRPORT: /* current-error-port */
+      s_return(sc, sc->errport);
       
     case OP_OPEN_INFILE: /* open-input-file */
     case OP_OPEN_OUTFILE: /* open-output-file */
@@ -5971,15 +6115,15 @@ static pointer opexe_5(scheme *sc, enum scheme_opcodes op)
 	    }
 	}
       c =inchar(sc);
-      if (c ==EOF) 
+      if (c == EOF) 
 	{
 	  s_return(sc, sc->EOF_OBJ);
 	}
-      if (sc->op ==OP_PEEK_CHAR) 
+      if (sc->op == OP_PEEK_CHAR) 
 	{
-	  backchar(sc,c);
+	  backchar(sc, c);
 	}
-      s_return(sc,s7_make_character(sc,c));
+      s_return(sc, s7_make_character(sc, c));
     }
       
     case OP_CHAR_READY: /* char-ready? */ {
@@ -5989,7 +6133,7 @@ static pointer opexe_5(scheme *sc, enum scheme_opcodes op)
 	{
 	  p = car(sc->args);
 	}
-      res = p->_object._port->kind&port_string;
+      res = p->_object._port->kind & port_string;
       s_retbool(res);
     }
       
@@ -6493,29 +6637,29 @@ static void Eval_Cycle(scheme *sc, enum scheme_opcodes op)
       if (pcd->name != 0) 
 	{ /* if built-in function, check arguments */
 	  char msg[512];
-	  int ok = 1;
+	  bool ok = true;
 	  int n = s7_list_length(sc, sc->args);
 	  
 	  /* Check number of arguments */
 	  if (n < pcd->min_arity) 
 	    {
-	      ok = 0;
-	      abort();
+	      ok = false;
 	      sprintf(msg, "%s: needs%s %d argument%s",
 		      pcd->name,
 		      pcd->min_arity == pcd->max_arity?"":" at least",
 		      pcd->min_arity,
 		      (pcd->min_arity != 1) ? "s" : "");
+	      fprintf(stderr, msg);
 	    }
 	  if (ok && n > pcd->max_arity) 
 	    {
-	      ok = 0;
-	      abort();
+	      ok = false;
 	      sprintf(msg, "%s: needs%s %d argument%s",
 		      pcd->name,
 		      pcd->min_arity== pcd->max_arity?"":" at most",
 		      pcd->max_arity,
 		      (pcd->max_arity != 1) ? "s" : "");
+	      fprintf(stderr, msg);
 	    }
 	  if (ok) 
 	    {
@@ -6554,21 +6698,21 @@ static void Eval_Cycle(scheme *sc, enum scheme_opcodes op)
 		  } while(i<n);
 		  if (i<n) 
 		    {
-		      ok= 0;
+		      ok = false;
 		      sprintf(msg, "%s: argument %d must be: %s",
 			      pcd->name,
-			      i+1,
+			      i + 1,
 			      tests[j].kind);
 		    }
 		}
 	    }
 	  if (!ok) 
 	    {
-	      if (_Error_1(sc,msg, 0) == sc->NIL) 
+	      if (_Error_1(sc, msg, 0) == sc->NIL) 
 		{
 		  return;
 		}
-	      pcd =dispatch_table+sc->op;
+	      pcd = dispatch_table + sc->op;
 	    }
 	}
       old_op = sc->op;
@@ -6687,12 +6831,12 @@ scheme *s7_init_new_custom_alloc(func_alloc malloc, func_dealloc free)
 
 int s7_init(scheme *sc) 
 {
-  return s7_init_custom_alloc(sc,malloc,free);
+  return s7_init_custom_alloc(sc, malloc, free);
 }
 
 int s7_init_custom_alloc(scheme *sc, func_alloc malloc, func_dealloc free) 
 {
-  int i, n= sizeof(dispatch_table)/sizeof(dispatch_table[0]);
+  int i, n = sizeof(dispatch_table) / sizeof(dispatch_table[0]);
   pointer x;
   
   num_zero.type = NUM_INT;
@@ -6712,17 +6856,19 @@ int s7_init_custom_alloc(scheme *sc, func_alloc malloc, func_dealloc free)
   sc->UNDEFINED =&sc->_UNDEFINED;
   sc->free_cell = &sc->_NIL;
   sc->fcells = 0;
-  sc->no_memory= 0;
+  sc->no_memory = false;
   sc->inport = sc->NIL;
   sc->outport = sc->NIL;
+  sc->errport = sc->NIL;
   sc->save_inport = sc->NIL;
   sc->loadport = sc->NIL;
   sc->nesting = 0;
   sc->interactive_repl= false;
   
-  if (alloc_cellseg(sc,FIRST_CELLSEGS) != FIRST_CELLSEGS) 
+  if (alloc_cellseg(sc, FIRST_CELLSEGS) != FIRST_CELLSEGS) 
     {
-      sc->no_memory= 1;
+      fprintf(stderr, "failed in init\n");
+      sc->no_memory = true;
       return 0;
     }
   sc->gc_verbose = 0;
@@ -6782,6 +6928,8 @@ int s7_init_custom_alloc(scheme *sc, func_alloc malloc, func_dealloc free)
   sc->COLON_HOOK = s7_make_symbol(sc, "*colon-hook*");
   sc->ERROR_HOOK = s7_make_symbol(sc, "*error-hook*");
   sc->SHARP_HOOK = s7_make_symbol(sc, "*sharp-hook*");
+
+  sc->errport = sc->outport;
   
   return(!sc->no_memory);
 }
