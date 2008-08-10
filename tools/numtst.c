@@ -51,7 +51,7 @@
 /* -------------------------------------------------------------------------------- */
 static bool test_ratios = true;
 static bool test_complex = true;
-static const char *scheme_name = "s7"; /* also guile, gauche */
+static const char *scheme_name = "s7"; /* also guile, gauche, stklos */
 /* -------------------------------------------------------------------------------- */
 
 
@@ -923,9 +923,9 @@ int main(int argc, char **argv)
 	      fprintf(fp, ")\n");
 	      if ((op != 12) &&
 		  (cimag(result) == 0.0) &&
-		  (!(strcmp(op_names[op], "cosh"))) &&
-		  (!(strcmp(op_names[op], "acosh"))) &&
-		  (!(strcmp(op_names[op], "exp"))))
+		  (strcmp(op_names[op], "cosh") != 0) &&
+		  (strcmp(op_names[op], "acosh") != 0) &&
+		  (strcmp(op_names[op], "exp") != 0))
 		fprintf(fp, "(test (morally-equal (%s (%s %s)) %s) #t)\n", 
 			inverse_op_names[op], op_names[op], argstr, argstr);
 	    }
@@ -958,9 +958,9 @@ int main(int argc, char **argv)
 		  fprintf(fp, ")\n");
 		  if ((op != 12) &&
 		      (cimag(result) == 0.0) &&
-		      (!(strcmp(op_names[op], "cosh"))) &&
-		      (!(strcmp(op_names[op], "acosh"))) &&
-		      (!(strcmp(op_names[op], "exp"))))
+		      (strcmp(op_names[op], "cosh") != 0) &&
+		      (strcmp(op_names[op], "acosh") != 0) &&
+		      (strcmp(op_names[op], "exp") != 0))
 		    fprintf(fp, "(test (morally-equal (%s (%s %s)) %s) #t)\n", 
 			    inverse_op_names[op], op_names[op], argstr, argstr);
 		}
@@ -991,9 +991,9 @@ int main(int argc, char **argv)
 	      fprintf(fp, ")\n");
 	      if ((op != 12) &&
 		  (cimag(result) == 0.0) &&
-		  (!(strcmp(op_names[op], "cosh"))) &&
-		  (!(strcmp(op_names[op], "acosh"))) &&
-		  (!(strcmp(op_names[op], "exp"))))
+		  (strcmp(op_names[op], "cosh") != 0) &&
+		  (strcmp(op_names[op], "acosh") != 0) &&
+		  (strcmp(op_names[op], "exp") != 0))
 		fprintf(fp, "(test (< (abs (- (%s (%s %s)) %s)) 1.0e-4) #t)\n", 
 			inverse_op_names[op], op_names[op], argstr, argstr);
 	    }
@@ -1035,9 +1035,9 @@ int main(int argc, char **argv)
 		  complex_to_string(fp, result);
 		  fprintf(fp, ")\n");
 		  if ((op != 12) &&
-		      (!(strcmp(op_names[op], "cosh"))) &&
-		      (!(strcmp(op_names[op], "acosh"))) &&
-		      (!(strcmp(op_names[op], "exp"))))
+		      (strcmp(op_names[op], "cosh") != 0) &&
+		      (strcmp(op_names[op], "acosh") != 0) &&
+		      (strcmp(op_names[op], "exp") != 0))
 		    fprintf(fp, "(test (< (magnitude (- (%s (%s %s)) %s)) 1.0e-4) #t)\n", 
 			    inverse_op_names[op], op_names[op], 
 			    argstr, argstr);

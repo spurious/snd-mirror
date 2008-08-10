@@ -46,6 +46,16 @@
       (cons (car list)
             (list-copy (cdr list)))))
 
+(define (list-ref x k)
+    (car (list-tail x k)))
+
+(define (last-pair x)
+    (if (pair? (cdr x))
+        (last-pair (cdr x))
+        x))
+
+
+
 (macro (unless form)
      `(if (not ,(cadr form)) (begin ,@(cddr form))))
 
@@ -195,19 +205,6 @@
 		 (cars (car unz))
 		 (cdrs (cdr unz)))
 	    (apply proc cars) (apply map (cons proc cdrs))))))
-
-(define (list-tail x k)
-    (if (zero? k)
-        x
-        (list-tail (cdr x) (- k 1))))
-
-(define (list-ref x k)
-    (car (list-tail x k)))
-
-(define (last-pair x)
-    (if (pair? (cdr x))
-        (last-pair (cdr x))
-        x))
 
 (define (head stream) (car stream))
 
