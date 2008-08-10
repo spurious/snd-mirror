@@ -956,9 +956,9 @@ void ensure_scrolled_window_row_visible(widget_t list, int row, int num_rows)
   gdouble maximum, size, new_value, minimum;
   parent = gtk_widget_get_parent(list);
   v = gtk_viewport_get_vadjustment(GTK_VIEWPORT(parent));
-  maximum = v->upper;
-  minimum = v->lower;
-  size = v->page_size;
+  maximum = ADJUSTMENT_UPPER(v);
+  minimum = ADJUSTMENT_LOWER(v);
+  size = ADJUSTMENT_PAGE_SIZE(v);
   maximum -= size;
   if (row == 0)
     new_value = 0.0;

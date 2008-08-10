@@ -1925,7 +1925,7 @@
   (dpy "#endif~%~%"))
 
 (define (with-2134 dpy thunk)
-  (dpy "#if HAVE_GTK_ENTRY_GET_TEXT_LENGTH~%")
+  (dpy "#if HAVE_GTK_ADJUSTMENT_GET_UPPER~%")
   (thunk)
   (dpy "#endif~%~%"))
 
@@ -1972,7 +1972,7 @@
 (hey " *     HAVE_GTK_LABEL_GET_LINE_WRAP_MODE for 2.10.0~%")
 (hey " *     HAVE_GTK_WIDGET_GET_HAS_TOOLTIP for 2.11.n~%")
 (hey " *     HAVE_GTK_TEST_WIDGET_CLICK for 2.13.0~%")
-(hey " *     HAVE_GTK_ENTRY_GET_TEXT_LENGTH for 2.13.4~%")
+(hey " *     HAVE_GTK_ADJUSTMENT_GET_UPPER for 2.13.4..6~%")
 (hey " *     HAVE_CAIRO_CREATE for cairo~%")
 (hey " *     HAVE_CAIRO_GET_USER_DATA for cairo 1.4.0~%")
 (hey " *~%")

@@ -53,19 +53,29 @@ typedef enum {WITH_DEFAULT_BACKGROUND, WITH_WHITE_BACKGROUND} snd_entry_bg_t;
 
 /* GtkType -> GType, GtkSignalFunc -> GCallback version 2.13.4 7-Jul-08 */
 
-#if HAVE_GTK_ENTRY_GET_TEXT_LENGTH
-  /* 2.13.4 */
-  #define WIDGET_TO_WINDOW(Widget) gtk_widget_get_window(Widget)
-  #define WIDGET_TO_ALLOCATION(Widget) gtk_widget_get_allocation(Widget)
-  #define DIALOG_ACTION_AREA(Dialog) gtk_dialog_get_action_area(GTK_DIALOG(Dialog))
-  #define DIALOG_CONTENT_AREA(Dialog) gtk_dialog_get_content_area(GTK_DIALOG(Dialog))
-  #define ADJUSTMENT_VALUE(Adjust) gtk_adjustment_get_value(GTK_ADJUSTMENT(Adjust))
+#if HAVE_GTK_ADJUSTMENT_GET_UPPER
+  /* 2.13.6 */
+  #define WIDGET_TO_WINDOW(Widget)                gtk_widget_get_window(Widget)
+  #define WIDGET_TO_ALLOCATION(Widget)            gtk_widget_get_allocation(Widget)
+  #define DIALOG_ACTION_AREA(Dialog)              gtk_dialog_get_action_area(GTK_DIALOG(Dialog))
+  #define DIALOG_CONTENT_AREA(Dialog)             gtk_dialog_get_content_area(GTK_DIALOG(Dialog))
+  #define ADJUSTMENT_VALUE(Adjust)                gtk_adjustment_get_value(GTK_ADJUSTMENT(Adjust))
+  #define ADJUSTMENT_LOWER(Adjust)                gtk_adjustment_get_lower(GTK_ADJUSTMENT(Adjust))
+  #define ADJUSTMENT_UPPER(Adjust)                gtk_adjustment_get_upper(GTK_ADJUSTMENT(Adjust))
+  #define ADJUSTMENT_SET_UPPER(Adjust, Value)     gtk_adjustment_set_upper(GTK_ADJUSTMENT(Adjust), Value)
+  #define ADJUSTMENT_PAGE_SIZE(Adjust)            gtk_adjustment_get_page_size(GTK_ADJUSTMENT(Adjust))
+  #define ADJUSTMENT_SET_PAGE_SIZE(Adjust, Value) gtk_adjustment_set_page_size(GTK_ADJUSTMENT(Adjust), Value)
 #else
-  #define WIDGET_TO_WINDOW(Widget) ((Widget)->window)
-  #define WIDGET_TO_ALLOCATION(Widget) ((Widget)->allocation)
-  #define DIALOG_ACTION_AREA(Dialog) ((GTK_DIALOG(Dialog))->action_area)
-  #define DIALOG_CONTENT_AREA(Dialog) ((GTK_DIALOG(Dialog))->vbox)
-  #define ADJUSTMENT_VALUE(Adjust) ((GTK_ADJUSTMENT(Adjust))->value)
+  #define WIDGET_TO_WINDOW(Widget)                ((Widget)->window)
+  #define WIDGET_TO_ALLOCATION(Widget)            ((Widget)->allocation)
+  #define DIALOG_ACTION_AREA(Dialog)              ((GTK_DIALOG(Dialog))->action_area)
+  #define DIALOG_CONTENT_AREA(Dialog)             ((GTK_DIALOG(Dialog))->vbox)
+  #define ADJUSTMENT_VALUE(Adjust)                ((GTK_ADJUSTMENT(Adjust))->value)
+  #define ADJUSTMENT_LOWER(Adjust)                ((GTK_ADJUSTMENT(Adjust))->lower)
+  #define ADJUSTMENT_UPPER(Adjust)                ((GTK_ADJUSTMENT(Adjust))->upper)
+  #define ADJUSTMENT_SET_UPPER(Adjust, Value)     (GTK_ADJUSTMENT(Adjust))->upper = Value
+  #define ADJUSTMENT_PAGE_SIZE(Adjust)            ((GTK_ADJUSTMENT(Adjust))->page_size)
+  #define ADJUSTMENT_SET_PAGE_SIZE(Adjust, Value) (GTK_ADJUSTMENT(Adjust))->page_size = Value
 #endif
 
 #define ADJUSTMENT_SET_VALUE(Adjust, Value) gtk_adjustment_set_value(GTK_ADJUSTMENT(Adjust), (gdouble)(Value))

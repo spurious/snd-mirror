@@ -147,8 +147,8 @@ static void fsb_update_lists(fsb *fs)
       {
 	GtkAdjustment *adj;
 	adj = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->directory_list->scroller));
-	if (adj->upper < files->len * 16)
-	  adj->upper = files->len * 16;
+	if (ADJUSTMENT_UPPER(adj) < files->len * 16)
+	  ADJUSTMENT_SET_UPPER(adj, files->len * 16);
 	adj = gtk_viewport_get_vadjustment(GTK_VIEWPORT(gtk_widget_get_parent(fs->directory_list->topics)));
 	ADJUSTMENT_SET_VALUE(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->directory_list->scroller)), list_top);
       }
@@ -194,8 +194,8 @@ static void fsb_update_lists(fsb *fs)
 	 *    I can't position the list!  I suppose I could have a timed call one second from here that would set
 	 *    the position, but then I have to worry about the user clicking before I get to it.
 	 */
-	if (adj->upper < files->len * 16)
-	  adj->upper = files->len * 16;
+	if (ADJUSTMENT_UPPER(adj) < files->len * 16)
+	  ADJUSTMENT_SET_UPPER(adj, files->len * 16);
 	adj = gtk_viewport_get_vadjustment(GTK_VIEWPORT(gtk_widget_get_parent(fs->file_list->topics)));
 	ADJUSTMENT_SET_VALUE(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->file_list->scroller)), list_top);
       }

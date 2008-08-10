@@ -564,3 +564,26 @@
        (set! *catcher* #f)
        result))))
      
+
+;;; the standard format won't work currently -- string port troubles
+(define (format dest str . args)
+  (let ((len (string-length str))
+	(tilde #f)
+	(result ""))
+    (do ((i 0 (1+ i)))
+	((= i len))
+      (let ((c (string-ref str i)))
+	(if (char=? c #\~)
+	    (set! tilde #t)
+	    (if (not tilde)
+		(set! result (string-append result (string c)))
+		(begin
+		  (set! tilde #f)
+		  (if (member c (list #\A #\D #\F))
+		      (begin
+			(set! result (string-append result (object->string (car args))))
+			(set! args (cdr args)))
+		      (if (char=? c #\%)
+			  (set! result (string-append result (string #\newline)))
+			  (display (string-append ";unknown format directive: ~" (string c))))))))))
+    result))

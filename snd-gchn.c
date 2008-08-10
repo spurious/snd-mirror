@@ -134,9 +134,8 @@ static void zx_changed(float value, chan_info *cp)
 
 static void set_scrollbar(GtkObject *adj, Float position, Float range) /* position and range 0 to 1.0 */
 {
-  GTK_ADJUSTMENT(adj)->page_size = range;
+  ADJUSTMENT_SET_PAGE_SIZE(adj, range);
   ADJUSTMENT_SET_VALUE(adj, position);
-  /* gtk_adjustment_changed(GTK_ADJUSTMENT(adj)); */
 }
 
 
@@ -145,25 +144,21 @@ static void set_scrollbar(GtkObject *adj, Float position, Float range) /* positi
 void change_gzy(Float val, chan_info *cp)
 {
   /* from snd_update */
-  GTK_ADJUSTMENT(gsy_adj(cp))->page_size = 1.0 - val; 
-
+  ADJUSTMENT_SET_PAGE_SIZE(gsy_adj(cp), 1.0 - val); 
   ADJUSTMENT_SET_VALUE(gsy_adj(cp), cp->gsy);
-  /* gtk_adjustment_changed(GTK_ADJUSTMENT(gsy_adj(cp))); */
-
   ADJUSTMENT_SET_VALUE(gzy_adj(cp), val);
-  /* gtk_adjustment_changed(GTK_ADJUSTMENT(gzy_adj(cp))); */
 }
 
 
 Float gsy_value(chan_info *cp)
 {
-  return(1.0 - (cp->gsy + GTK_ADJUSTMENT(gsy_adj(cp))->page_size));
+  return(1.0 - (cp->gsy + ADJUSTMENT_PAGE_SIZE(gsy_adj(cp))));
 }
 
 
 Float gsy_size(chan_info *cp)
 {
-  return(GTK_ADJUSTMENT(gsy_adj(cp))->page_size);
+  return(ADJUSTMENT_PAGE_SIZE(gsy_adj(cp)));
 }
 
 
@@ -290,7 +285,7 @@ static void gzy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
   cp->gzy = ADJUSTMENT_VALUE(adj);
   if (cp->active == CHANNEL_HAS_AXES)
     {
-      GTK_ADJUSTMENT(gsy_adj(cp))->page_size = 1.0 - ADJUSTMENT_VALUE(adj); 
+      ADJUSTMENT_SET_PAGE_SIZE(gsy_adj(cp), 1.0 - ADJUSTMENT_VALUE(adj)); 
       if (cp->gsy > cp->gzy)
 	{
 	  cp->gsy = ADJUSTMENT_VALUE(adj);

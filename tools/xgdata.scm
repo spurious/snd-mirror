@@ -6495,7 +6495,7 @@
 (CFNC-211 "guint gdk_threads_add_timeout_full gint priority guint interval GSourceFunc func lambda_data func_info GDestroyNotify notify")
 (CFNC-211 "guint gdk_threads_add_timeout guint interval GSourceFunc func lambda_data #func_info")
 
-(CFNC-211 "void gdk_window_set_startup_id GdkWindow* window gchar* startup_id ")
+(CFNC-211 "void gdk_window_set_startup_id GdkWindow* window gchar* startup_id")
 (CFNC-211 "void gdk_window_beep GdkWindow* window")
 (CFNC-211 "void gdk_window_set_opacity GdkWindow* window gdouble opacity")
 (CFNC-211 "GtkWidget* gtk_action_create_menu GtkAction* action")
@@ -6704,7 +6704,7 @@
 (CFNC-2134 "GdkWindow* gtk_socket_get_plug_window GtkSocket* socket_")
 ;(CFNC-2134 "GtkAllocation gtk_widget_get_allocation GtkWidget* widget")
 (CFNC-2134 "GdkWindow* gtk_widget_get_window GtkWidget* widget")
-(CFNC-2134 "GtkWidget* gtk_window_get_default GtkWindow* window")
+;;; (CFNC-2134 "GtkWidget* gtk_window_get_default GtkWindow* window")
 ;(CFNC-2134 "GList* gtk_window_group_list_windows GtkWindowGroup* window_group")
 (CFNC-2134 "GdkModifierType gtk_accel_group_get_modifier_mask GtkAccelGroup* accel_group")
 
@@ -6746,11 +6746,10 @@
 ;(STRUCT "GdkVisual GdkVisualType type gint depth GdkByteOrder byte_order gint colormap_size gint bits_per_rgb guint32 red_mask gint red_shift gint red_prec guint32 green_mask gint green_shift gint green_prec guint32 blue_mask gint blue_shift gint blue_prec")
 ;(STRUCT "GdkWindowAttr gchar* title gint event_mask gint x gint y gint width gint height GdkVisual* visual GdkColormap* colormap GdkWindowType window_type GdkCursor* cursor gchar* wmclass_name gchar* wmclass_class gboolean override_redirect")
 ;(STRUCT "GdkGeometry gint min_width gint min_height gint max_width gint max_height gint base_width gint base_height gint width_inc gint height_inc gdouble min_aspect gdouble max_aspect GdkGravity win_gravity")
+;;; 2.13.6 (STRUCT "GtkAdjustment gdouble lower gdouble upper gdouble &value gdouble step_increment gdouble page_increment gdouble page_size")
 
 
 (STRUCT "GtkStyle GdkColor* fg GdkColor* bg GdkColor* light GdkColor* dark GdkColor* mid GdkColor* text GdkColor* base GdkColor* text_aa PangoFontDescription* font_desc gint xthickness gint ythickness GdkGC** fg_gc GdkGC** bg_gc GdkGC** light_gc GdkGC** dark_gc GdkGC** mid_gc GdkGC** text_gc GdkGC** base_gc GdkGC** text_aa_gc GdkGC* black_gc GdkGC* white_gc GdkPixmap** bg_pixmap gint attach_count gint depth GdkColormap* colormap GtkRcStyle* rc_style GSList* styles GArray* property_cache GSList* icon_factories")
-
-(STRUCT "GtkAdjustment gdouble lower gdouble upper gdouble &value gdouble step_increment gdouble page_increment gdouble page_size")
 
 (STRUCT "GtkColorSelectionDialog GtkWidget* colorsel GtkWidget* ok_button GtkWidget* cancel_button GtkWidget* help_button") ; all sealed -- need button funcs
 
@@ -6775,11 +6774,11 @@
 ;;;   value -> gtk_adjustment_get|set_value
 ;;;   active -> gtk_toggle_button_get_active
 ;;;   child -> gtk_bin_get_child
+;;;   lower, upper, page_size -> gtk_adjustment
 ;;;
 ;;; not done:
 ;;; gdk_event_get_time|state|coords[x and y]|type|button|window|keyval etc
 ;;; [gdk_event_get_time|state|coords] but no accessor for button|window|keyval|type?
-;;; adj page_size [no accessor apparently] -- added 2.13.6
 ;;; GdkColor ->pixel, ->red|green|blue [no accessors apparently]
 ;;; color selection dialog buttons currently must go through the property access maze
 
@@ -6799,42 +6798,39 @@
 (STRUCT-make "PangoRectangle")
 (STRUCT-make "PangoLogAttr")
 
-#|
+
 ;;; gtk 1.13.6
-!   GDK_CROSSING_GTK_GRAB,
-!   GDK_CROSSING_GTK_UNGRAB,
-!   GDK_CROSSING_STATE_CHANGED
-  } GdkCrossingMode;
+(CINT-2134 "GDK_CROSSING_GTK_GRAB" "GdkCrossingMode")
+(CINT-2134 "GDK_CROSSING_GTK_UNGRAB" "GdkCrossingMode")
+(CINT-2134 "GDK_CROSSING_STATE_CHANGED" "GdkCrossingMode")
 
 
-guint gdk_threads_add_timeout_seconds_full gint priority guint interval GSourceFunc function gpointer data GDestroyNotify notify
-guint gdk_threads_add_timeout_seconds guint interval GSourceFunc function gpointer data
-gdouble gtk_adjustment_get_lower GtkAdjustment* adjustment
-void gtk_adjustment_set_lower GtkAdjustment* adjustment gdouble lower
-gdouble gtk_adjustment_get_upper GtkAdjustment* adjustment
-void gtk_adjustment_set_upper GtkAdjustment* adjustment gdouble upper
-gdouble gtk_adjustment_get_step_increment GtkAdjustment* adjustment
-void gtk_adjustment_set_step_increment GtkAdjustment* adjustment gdouble step_increment
-gdouble gtk_adjustment_get_page_increment GtkAdjustment* adjustment
-void gtk_adjustment_set_page_increment GtkAdjustment* adjustment gdouble page_increment
-gdouble gtk_adjustment_get_page_size GtkAdjustment* adjustment
-void gtk_adjustment_set_page_size GtkAdjustment* adjustment gdouble page_size
-void gtk_adjustment_configure GtkAdjustment* adjustment gdouble value gdouble lower gdouble upper gdouble step_increment gdouble page_increment gdouble page_size
-void gtk_combo_box_set_button_sensitivity GtkComboBox* combo_box GtkSensitivityType sensitivity
-GtkSensitivityType gtk_combo_box_get_button_sensitivity GtkComboBox* combo_box
-GFile* gtk_file_chooser_get_file GtkFileChooser* chooser
-gboolean gtk_file_chooser_set_file GtkFileChooser* chooser GFile* file GError** error
-gboolean gtk_file_chooser_select_file GtkFileChooser* chooser GFile* file GError** error
-void gtk_file_chooser_unselect_file GtkFileChooser* chooser GFile* file
-GSList* gtk_file_chooser_get_files GtkFileChooser* chooser
-gboolean gtk_file_chooser_set_current_folder_file GtkFileChooser* chooser GFile* file GError** error
-GFile* gtk_file_chooser_get_current_folder_file GtkFileChooser* chooser
-GFile* gtk_file_chooser_get_preview_file GtkFileChooser* chooser
+(CFNC-2134 "guint gdk_threads_add_timeout_seconds_full gint priority guint interval GSourceFunc function lambda_data func_info GDestroyNotify notify")
+(CFNC-2134 "guint gdk_threads_add_timeout_seconds guint interval GSourceFunc function lambda_data #func_info")
+(CFNC-2134 "gdouble gtk_adjustment_get_lower GtkAdjustment* adjustment")
+(CFNC-2134 "void gtk_adjustment_set_lower GtkAdjustment* adjustment gdouble lower")
+(CFNC-2134 "gdouble gtk_adjustment_get_upper GtkAdjustment* adjustment")
+(CFNC-2134 "void gtk_adjustment_set_upper GtkAdjustment* adjustment gdouble upper")
+(CFNC-2134 "gdouble gtk_adjustment_get_step_increment GtkAdjustment* adjustment")
+(CFNC-2134 "void gtk_adjustment_set_step_increment GtkAdjustment* adjustment gdouble step_increment")
+(CFNC-2134 "gdouble gtk_adjustment_get_page_increment GtkAdjustment* adjustment")
+(CFNC-2134 "void gtk_adjustment_set_page_increment GtkAdjustment* adjustment gdouble page_increment")
+(CFNC-2134 "gdouble gtk_adjustment_get_page_size GtkAdjustment* adjustment")
+(CFNC-2134 "void gtk_adjustment_set_page_size GtkAdjustment* adjustment gdouble page_size")
+(CFNC-2134 "void gtk_adjustment_configure GtkAdjustment* adjustment gdouble value gdouble lower gdouble upper gdouble step_increment gdouble page_increment gdouble page_size")
+(CFNC-2134 "void gtk_combo_box_set_button_sensitivity GtkComboBox* combo_box GtkSensitivityType sensitivity")
+(CFNC-2134 "GtkSensitivityType gtk_combo_box_get_button_sensitivity GtkComboBox* combo_box")
+(CFNC-2134 "GFile* gtk_file_chooser_get_file GtkFileChooser* chooser")
+(CFNC-2134 "gboolean gtk_file_chooser_set_file GtkFileChooser* chooser GFile* file GError** error")
+(CFNC-2134 "gboolean gtk_file_chooser_select_file GtkFileChooser* chooser GFile* file GError** error")
+(CFNC-2134 "void gtk_file_chooser_unselect_file GtkFileChooser* chooser GFile* file")
+(CFNC-2134 "GSList* gtk_file_chooser_get_files GtkFileChooser* chooser")
+(CFNC-2134 "gboolean gtk_file_chooser_set_current_folder_file GtkFileChooser* chooser GFile* file GError** error")
+(CFNC-2134 "GFile* gtk_file_chooser_get_current_folder_file GtkFileChooser* chooser")
+(CFNC-2134 "GFile* gtk_file_chooser_get_preview_file GtkFileChooser* chooser")
+
+(CFNC-2134 "GtkWidget* gtk_window_get_default_widget GtkWindow* window")
+
+;;; gtkdestroynotify -> gdestroynotify
 
 
-gtkdestroynotify -> gdestroynotify
-! GtkWidget* gtk_window_get_default GtkWindow* window changed to:
-! GtkWidget* gtk_window_get_default_widget GtkWindow* window
-
-TODO: gtk 2.13.6 changes including adj fields fold into the 2.13.5 changes)
-|#
