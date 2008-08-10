@@ -134,7 +134,7 @@ static op_stuff numeric_data[NUMERIC_FUNCS] = {
   {"acosh", 1, 1, ARG_COMPLEX}, 
   {"atanh", 1, 1, ARG_COMPLEX}, 
   {"string->number", 1, 1, ARG_ANY}, 
-  {"number->string", 1, 1, ARG_COMPLEX}, 
+  {"number->string", 1, 2, ARG_COMPLEX}, 
 };
 
 static char *non_numeric_args[] =

@@ -15,8 +15,8 @@
 #endif
 #endif
 
-#define Int int
-#define Int_d "%d"
+#define Int off_t
+#define Int_d "%lld"
 
 
 #define S7_VERSION "0"
@@ -60,12 +60,12 @@ pointer s7_remv(scheme *sc, pointer a, pointer obj);
 
 
 bool s7_is_string(pointer p);
-char *s7_string_value(pointer p);
+char *s7_string(pointer p);
 pointer s7_make_string(scheme *sc, const char *str);
 pointer s7_make_counted_string(scheme *sc, const char *str, int len);
 
 bool s7_is_character(pointer p);
-long s7_charvalue(pointer p);
+char s7_character(pointer p);
 pointer s7_make_character(scheme *sc, int c);
 
 
@@ -73,16 +73,16 @@ bool s7_is_number(pointer p);
 bool s7_is_exact(pointer p);
 bool s7_is_inexact(pointer p);
 
-int s7_to_c_int(pointer p);
+Int s7_integer(pointer p);
 bool s7_is_integer(pointer p);
 pointer s7_make_integer(scheme *sc, Int num);
 
 bool s7_is_real(pointer p);
-double s7_to_c_double(pointer p);
+double s7_double(pointer p);
 pointer s7_make_real(scheme *sc, double num);
 
 bool s7_is_ulong(pointer arg);
-unsigned long s7_to_c_ulong(pointer num);
+unsigned long s7_ulong(pointer num);
 pointer s7_make_ulong(scheme *sc, unsigned long num);
 
 bool s7_is_rational(pointer arg);

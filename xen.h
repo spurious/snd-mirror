@@ -2117,18 +2117,18 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 
 #define XEN_STRING_P(Arg)                          s7_is_string(Arg)
 #define XEN_NAME_AS_C_STRING_TO_VALUE(Arg)         s7_name_to_value(s7, Arg)
-#define XEN_TO_C_STRING(Str)                       s7_string_value(Str)
+#define XEN_TO_C_STRING(Str)                       s7_string(Str)
 #define C_TO_XEN_STRING(Arg)                       s7_make_string(s7, Arg) /* strlen here so perhaps add 1 to len and use mk_counted_string */
 #define C_TO_XEN_STRINGN(Str, Len)                 s7_make_counted_string(s7, Str, Len) /* Len + 1?? */
 
 #define XEN_ZERO                                   s7_make_integer(s7, 0)
 #define XEN_INTEGER_P(Arg)                         s7_is_integer(Arg)
 #define C_TO_XEN_INT(Arg)                          s7_make_integer(s7, Arg)
-#define XEN_TO_C_INT(Arg)                          s7_to_c_int(Arg)
+#define XEN_TO_C_INT(Arg)                          s7_integer(Arg)
 #define XEN_TO_C_INT_OR_ELSE(Arg, Def)             ((XEN_INTEGER_P(Arg)) ? XEN_TO_C_INT(Arg) : Def)
 
 #define XEN_ULONG_P(Arg)                           s7_is_ulong(Arg)
-#define XEN_TO_C_ULONG(Arg)                        s7_to_c_ulong(Arg)
+#define XEN_TO_C_ULONG(Arg)                        s7_ulong(Arg)
 #define C_TO_XEN_ULONG(Arg)                        s7_make_ulong(s7, (unsigned long)Arg)
 
 #define C_TO_XEN_LONG_LONG(Arg)                    C_TO_XEN_OFF_T(Arg)
@@ -2143,7 +2143,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 #define XEN_EXACT_P(Arg)                           s7_is_exact(Arg)
 
 #define XEN_DOUBLE_P(Arg)                          s7_is_real(Arg)
-#define XEN_TO_C_DOUBLE(Arg)                       s7_to_c_double(Arg)
+#define XEN_TO_C_DOUBLE(Arg)                       s7_double(Arg)
 #define XEN_TO_C_DOUBLE_OR_ELSE(Arg, Def)          ((XEN_NUMBER_P(Arg)) ? XEN_TO_C_DOUBLE(Arg) : Def)
 #define C_TO_XEN_DOUBLE(Arg)                       s7_make_real(s7, Arg)
 
@@ -2185,7 +2185,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 #define XEN_VECTOR_TO_LIST(Vect)                   s7_vector_to_list(s7, Vect)
 
 #define XEN_CHAR_P(Arg)                            s7_is_character(Arg)
-#define XEN_TO_C_CHAR(Arg)                         s7_charvalue(Arg)
+#define XEN_TO_C_CHAR(Arg)                         s7_character(Arg)
 #define C_TO_XEN_CHAR(Arg)                         s7_make_character(s7, Arg)
 
 #define XEN_KEYWORD_P(Obj)                         s7_is_keyword(Obj)
