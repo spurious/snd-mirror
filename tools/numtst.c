@@ -59,10 +59,6 @@ static const char *op_names[] = {
   "sin", "cos", "tan", "asin", "acos", "atan", "sinh", "cosh", "tanh", "asinh", "acosh", "atanh", "sqrt", "exp", "log"
 };
 
-static const char *inverse_op_names[] = {
-  "asin", "acos", "atan", "sin", "cos", "tan", "asinh", "acosh", "atanh", "sinh", "cosh", "tanh", "square", "log", "exp"
-};
-
 #define OP_NAMES 15
 
 
@@ -559,6 +555,16 @@ static char *complex_arg_name(int a1, int a2, int s1, int s2)
   return(argbuf);
 }
 
+static char *complex_arg(int a1, int a2, int s1, int s2)
+{
+  char *t1, *t2;
+  
+  sprintf(argbuf, "%s%s%s%si", (s1 == -1) ? "-" : "", t1 = gstr(double_args[a1]), (s2 == -1) ? "-" : "+", t2 = gstr(double_args[a2]));
+  free(t1);
+  free(t2);
+  return(argbuf);
+}
+
 
 
 /* -------------------------------------------------------------------------------- */
@@ -607,7 +613,7 @@ int main(int argc, char **argv)
 		  (not (= result ,expected)))\n\
 	     (and (real? ,expected)\n\
 		  (real? result)\n\
-		  (> (abs (- result ,expected)) 1.0e-6))\n\
+		  (> (abs (- result ,expected)) 1.0e-5))\n\
 	     (and (number? result)\n\
 	          (or (not (real? ,expected))\n\
 		      (not (real? result)))\n\
@@ -617,6 +623,7 @@ int main(int argc, char **argv)
 			   (> (abs (imag-part (+ result ,expected))) 1.0e-4)))))\n\
 	 (display (format #f \";~A got ~A, but expected ~A~%%\" ',tst result ',expected)))))\n\n");
     }
+
 
   fprintf(fp, "\n\
 (for-each\n\
@@ -900,14 +907,6 @@ int main(int argc, char **argv)
 
   fprintf(fp, "\n\n");
 
-  fprintf(fp, "\n\
-(define (morally-equal x y)\n\
-  (or (= x y)\n\
-      (= (exact->inexact x) (exact->inexact y))\n\
-      (< (abs (- (magnitude x) (magnitude y))) 1.0e-4)\n\
-      (< (abs (- (magnitude x) (magnitude (- 3.14159265 y)))) 1.0e-4)\n\
-      (< (abs (- (magnitude x) (magnitude (+ 3.14159265 y)))) 1.0e-4)))\n\n");
-  
   for (op = 0; op < OP_NAMES; op++)
     {
       for (i = 0; i < INT_ARGS; i++)
@@ -921,13 +920,6 @@ int main(int argc, char **argv)
 	      fprintf(fp, "(test (%s %s) ", op_names[op], argstr);
 	      complex_to_string(fp, result);
 	      fprintf(fp, ")\n");
-	      if ((op != 12) &&
-		  (cimag(result) == 0.0) &&
-		  (strcmp(op_names[op], "cosh") != 0) &&
-		  (strcmp(op_names[op], "acosh") != 0) &&
-		  (strcmp(op_names[op], "exp") != 0))
-		fprintf(fp, "(test (morally-equal (%s (%s %s)) %s) #t)\n", 
-			inverse_op_names[op], op_names[op], argstr, argstr);
 	    }
 	  if (int_args[i] != 0)
 	    {
@@ -956,13 +948,6 @@ int main(int argc, char **argv)
 		  fprintf(fp, "(test (%s %s) ", op_names[op], ratio_arg_name(i, j));
 		  complex_to_string(fp, result);
 		  fprintf(fp, ")\n");
-		  if ((op != 12) &&
-		      (cimag(result) == 0.0) &&
-		      (strcmp(op_names[op], "cosh") != 0) &&
-		      (strcmp(op_names[op], "acosh") != 0) &&
-		      (strcmp(op_names[op], "exp") != 0))
-		    fprintf(fp, "(test (morally-equal (%s (%s %s)) %s) #t)\n", 
-			    inverse_op_names[op], op_names[op], argstr, argstr);
 		}
 	      if (int_args[i] != 0)
 		{
@@ -989,13 +974,6 @@ int main(int argc, char **argv)
 	      fprintf(fp, "(test (%s %s) ", op_names[op], argstr);
 	      complex_to_string(fp, result);
 	      fprintf(fp, ")\n");
-	      if ((op != 12) &&
-		  (cimag(result) == 0.0) &&
-		  (strcmp(op_names[op], "cosh") != 0) &&
-		  (strcmp(op_names[op], "acosh") != 0) &&
-		  (strcmp(op_names[op], "exp") != 0))
-		fprintf(fp, "(test (< (abs (- (%s (%s %s)) %s)) 1.0e-4) #t)\n", 
-			inverse_op_names[op], op_names[op], argstr, argstr);
 	    }
 	  if (double_args[i] != 0.0)
 	    {
@@ -1034,13 +1012,6 @@ int main(int argc, char **argv)
 		  fprintf(fp, "(test (%s %s) ", op_names[op], argstr);
 		  complex_to_string(fp, result);
 		  fprintf(fp, ")\n");
-		  if ((op != 12) &&
-		      (strcmp(op_names[op], "cosh") != 0) &&
-		      (strcmp(op_names[op], "acosh") != 0) &&
-		      (strcmp(op_names[op], "exp") != 0))
-		    fprintf(fp, "(test (< (magnitude (- (%s (%s %s)) %s)) 1.0e-4) #t)\n", 
-			    inverse_op_names[op], op_names[op], 
-			    argstr, argstr);
 		}
 	    }
     }
@@ -1141,6 +1112,9 @@ int main(int argc, char **argv)
   
   
   fprintf(fp, "\n;;; --------------------------------------------------------------------------------\n");
+
+
+  fprintf(fp, "(display \";all done!\") (newline)\n");
   
   /* expt with float and complex
      remainder modulo quotient gcd lcm
