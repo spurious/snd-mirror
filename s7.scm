@@ -65,10 +65,10 @@
 ; DEFINE-MACRO Contributed by Andy Gaynor
 (macro (define-macro dform)
   (if (symbol? (cadr dform))
-    `(macro ,@(cdr dform))
-    (let ((form (gensym)))
-      `(macro (,(caadr dform) ,form)
-         (apply (lambda ,(cdadr dform) ,@(cddr dform)) (cdr ,form))))))
+      `(macro ,@(cdr dform))
+      (let ((form (gensym)))
+	`(macro (,(caadr dform) ,form)
+	   (apply (lambda ,(cdadr dform) ,@(cddr dform)) (cdr ,form))))))
 
 
 (define (log10 n) (/ (log n) (log 10)))
@@ -118,7 +118,7 @@
 (define (anyatom->string n pred)
   (if (pred n)
       (atom->string n)
-      (error "xxx->string: not a xxx" n)))
+      #f)) ; TODO error should go through error hook
 
 (define (number->string n) (anyatom->string n number?))    
 
@@ -532,80 +532,6 @@
    (lambda (port)
      (write obj port))))
 
-
-(define *catchers* '())
-(define *tag* #f)
-(define *error-hook* #f)
-
-(define (throw tag . args)
-  (define (find-tag-match)
-    (if (null? *catchers*)
-	(error tag args)
-	(let ((catcher (car *catchers*)))
-	  (set! *catchers* (cdr *catchers*))
-	  (if (or (eq? (car catcher) #t)
-		  (equal? tag (car catcher)))
-	      (let ()
-		(set! *error-hook* (caddr catcher))
-		(cdr catcher))
-	      (find-tag-match)))))
-    (apply (find-tag-match) args))
-
-
-(define (catch tag body tag-handler)
-  (call/cc
-   (lambda (catcher)
-     (set! *catchers* (cons (list tag 
-				  (lambda args
-				    (apply tag-handler args)
-				    (apply catcher args))
-				  *error-hook*)
-			    *catchers*))
-     (set! *error-hook* throw)
-     (let ((result (body)))
-       (set! *error-hook* (caddr (car *catchers*)))
-       (set! *catchers* (cdr *catchers*))
-       result))))
-
-;;; TODO: this still needs to reset error-hook upon exit, or error needs explicit handling
-
-(define (dynamic-wind init body quit)
-  (init)
-  (catch #t
-	 (body)
-	 (lambda args
-	   (quit)
-	   (throw *tag* args)))
-  (quit))
-
-;;; from Guile
-(defmacro and-let* (vars . body)
-
-  (define (expand vars body)
-    (cond
-     ((null? vars)
-      (if (null? body)
-	  #t
-	  `(begin ,@body)))
-     ((pair? vars)
-      (let ((exp (car vars)))
-        (cond
-         ((pair? exp)
-          (cond
-           ((null? (cdr exp))
-            `(and ,(car exp) ,(expand (cdr vars) body)))
-           (else
-            (let ((var (car exp)))
-              `(let (,exp)
-                 (and ,var ,(expand (cdr vars) body)))))))
-         (else
-          `(and ,exp ,(expand (cdr vars) body))))))
-     (else
-      (error "not a proper list" vars))))
-
-  (expand vars body))
-
-
 (define (with-output-to-string thunk)
   (let* ((output-port (current-output-port))
 	 (string-port (open-output-string)))
@@ -616,3 +542,25 @@
       (close-output-port string-port)
       result)))
 
+
+(define *catcher* #f)
+(define *tag* #f)
+
+(define (throw . args)
+  (if *catcher*
+      (begin
+	(apply *catcher* (append *tag* args))
+	(set! *catcher* #f)))
+  'error)
+
+(define *error-hook* throw)
+
+(define (catch tag body tag-handler)
+  (call/cc
+   (lambda (catcher)
+     (set! *catcher* catcher)
+     (set! *tag* tag)
+     (let ((result (body)))
+       (set! *catcher* #f)
+       result))))
+     

@@ -600,6 +600,28 @@ int main(int argc, char **argv)
       (strcmp(scheme_name, "gauche") == 0))
     {
       fprintf(fp, "\n\
+(define (format dest str . args)\n\
+  (let ((len (string-length str))\n\
+	(tilde #f)\n\
+	(result \"\"))\n\
+    (do ((i 0 (1+ i)))\n\
+	((= i len))\n\
+      (let ((c (string-ref str i)))\n\
+	(if (char=? c #\~)\n\
+	    (set! tilde #t)\n\
+	    (if (not tilde)\n\
+		(set! result (string-append result (string c)))\n\
+		(begin\n\
+		  (set! tilde #f)\n\
+		  (if (member c (list #\A #\D #\F))\n\
+		      (begin\n\
+			(set! result (string-append result (object->string (car args))))\n\
+			(set! args (cdr args)))\n\
+		      (if (char=? c #\%)\n\
+			  (set! result (string-append result (string #\newline)))\n\
+			  (display (string-append \";unknown format directive: ~\" (string c))))))))))\n\
+    result))\n\
+\n\
 (defmacro test (tst expected)\n\
   `(let ((result (catch #t (lambda () ,tst) (lambda args 'error))))\n\
      (if (or (and (eq? ,expected 'error)\n\
@@ -784,7 +806,7 @@ int main(int argc, char **argv)
 				       (search mid hi)\n\
 				       (search lo mid)))))))\n\
 		   (return (search last-good (* 2 last-good))))))))))\n\
-  (if (number? first-bad)\n\						\
+  (if (number? first-bad)\n\
       (display (format #f \";string->number ratios fail around ~A (2^~A)~%%\" first-bad (/ (log first-bad) (log 2.0))))))\n\n");
   
   for (i = 0; i < INT_ARGS; i++)
