@@ -9,11 +9,14 @@
  *    To compile on Cygwin: 
  *    gcc -mno-cygwin -o numtest numtst.c 
  *    Else complex.h seems to be not included :| 
+ *  also
+ *    #define off_t long long
+ *  at the top somewhere
  *
  * this does not pay much attention to inexact integers or ratios
  *
  * in Gauche, it omits arg errors because they seem to be uncatchable.
- *   also Gauche hangs on (expt 1/500029 120960)
+ *   also Gauche hangs on (expt 1/500029 120960) -- I removed this test
  *
  * SCM thinks 1.0 is an unbound variable??
  *
@@ -590,7 +593,7 @@ static char *complex_arg_name(int a1, int a2, int s1, int s2)
   return(argbuf);
 }
 
-#if 0
+
 static char *complex_arg(int a1, int a2, int s1, int s2)
 {
   char *t1, *t2;
@@ -600,7 +603,7 @@ static char *complex_arg(int a1, int a2, int s1, int s2)
   free(t2);
   return(argbuf);
 }
-#endif
+
 
 
 /* -------------------------------------------------------------------------------- */
@@ -632,11 +635,13 @@ int main(int argc, char **argv)
   (guard (err (else (apply error-handler (if (list? err) err (list err)))))\n\
 	 (body)))\n");
 
+  if (strcmp(scheme_name, "gauche") == 0)
+    fprintf(fp, "\n\
+(define object->string x->string)\n");
 
   if (strcmp(scheme_name, "gambit") == 0)
     fprintf(stderr, "\n\
 (define (1+ n) (+ n 1))\n");
-
 
   if ((strcmp(scheme_name, "s7") == 0) ||
       (strcmp(scheme_name, "guile") == 0) ||
@@ -1433,8 +1438,7 @@ int main(int argc, char **argv)
 	    if ((isnormal(creal(result))) &&
 		(isnormal(cimag(result))) &&
 		(cabs(result) < 1.0e9) &&
-		((strcmp(scheme_name, "gauche") != 0) ||
-		 ((int_args[i] < 100) && (int_args[j] < 100))))
+		((int_args[i] != 0) || (int_args[j] != 0)))
 	      {
 		fprintf(fp, "(test (expt %lld %lld) ", -int_args[i], int_args[j]);
 		fprintf(fp, "%lld", (off_t)oround(creal(result)));
@@ -1478,8 +1482,8 @@ int main(int argc, char **argv)
 	    if ((isnormal(creal(result))) &&
 		(isnormal(cimag(result))) &&
 		(cabs(result) < 1.0e9) &&
-		((strcmp(scheme_name, "gauche") != 0) ||
-		 ((int_args[i] < 100) && (int_args[j] < 100) && (int_args[arg3] < 100) && (int_args[arg4] < 100))))
+		(int_args[i] < 1000) && (int_args[j] < 1000) && (int_args[arg3] < 1000) && (int_args[arg4] < 1000) &&
+		((int_args[i] != 0) || (int_args[arg3] != 0)))
 	      {
 		fprintf(fp, "(test (expt %lld/%lld %lld/%lld) ", int_args[i], int_args[j], int_args[arg3], int_args[arg4]);
 		complex_to_string(fp, result);
@@ -1500,8 +1504,8 @@ int main(int argc, char **argv)
 	    if ((isnormal(creal(result))) &&
 		(isnormal(cimag(result))) &&
 		(cabs(result) < 1.0e9) &&
-		((strcmp(scheme_name, "gauche") != 0) ||
-		 ((int_args[i] < 100) && (int_args[j] < 100) && (int_args[arg3] < 100) && (int_args[arg4] < 100))))
+		(int_args[i] < 1000) && (int_args[j] < 1000) && (int_args[arg3] < 1000) && (int_args[arg4] < 1000) &&
+		((int_args[i] != 0) || (int_args[arg3] != 0)))
 	      {
 		fprintf(fp, "(test (expt %lld/%lld %lld/%lld) ", -int_args[i], int_args[j], int_args[arg3], int_args[arg4]);
 		complex_to_string(fp, result);
@@ -1539,7 +1543,8 @@ int main(int argc, char **argv)
 	      }
 	    if ((isnormal(creal(result))) &&
 		(isnormal(cimag(result))) &&
-		(cabs(result) < 1.0e9))
+		(cabs(result) < 1.0e9) &&
+		((int_args[i] != 0) || double_args[j] != 0.0))
 	      {
 		fprintf(fp, "(test (expt %lld %s) ", -int_args[i], t1 = gstr(double_args[j]));
 		free(t1);
@@ -1552,7 +1557,8 @@ int main(int argc, char **argv)
 		continue;
 	      }
 	    if ((isnormal(creal(result))) &&
-		(isnormal(cimag(result))))
+		(isnormal(cimag(result))) &&
+		((int_args[i] != 0) || double_args[j] != 0.0))
 	      {
 		fprintf(fp, "(test (expt %lld %s) ", int_args[i], t1 = gstr(-double_args[j]));
 		free(t1);
@@ -1643,7 +1649,8 @@ int main(int argc, char **argv)
 	  }
 	if ((isnormal(creal(result))) &&
 	    (isnormal(cimag(result))) &&
-	    (cabs(result) < 1.0e9))
+	    (cabs(result) < 1.0e9) &&
+	    ((double_args[i] != 0.0) || int_args[i] != 0))
 	  {
 	    fprintf(fp, "(test (expt %s %lld) ", t2 = gstr(double_args[i]), int_args[j]);
 	    free(t2);
@@ -1657,7 +1664,8 @@ int main(int argc, char **argv)
 	  }
 	if ((isnormal(creal(result))) &&
 	    (isnormal(cimag(result))) &&
-	    (cabs(result) < 1.0e9))
+	    (cabs(result) < 1.0e9) &&
+	    ((double_args[i] != 0.0) || int_args[i] != 0))
 	  {
 	    fprintf(fp, "(test (expt %s %lld) ", t2 = gstr(-double_args[i]), int_args[j]);
 	    free(t2);
@@ -1671,7 +1679,8 @@ int main(int argc, char **argv)
 	  }
 	if ((isnormal(creal(result))) &&
 	    (isnormal(cimag(result))) &&
-	    (cabs(result) < 1.0e9))
+	    (cabs(result) < 1.0e9) &&
+	    ((double_args[i] != 0.0) || int_args[i] != 0))
 	  {
 	    fprintf(fp, "(test (expt %s %lld) ", t2 = gstr(double_args[i]), -int_args[j]);
 	    free(t2);
@@ -1684,7 +1693,8 @@ int main(int argc, char **argv)
 	    continue;
 	  }
 	if ((isnormal(creal(result))) &&
-	    (isnormal(cimag(result))))
+	    (isnormal(cimag(result))) &&
+	    ((double_args[i] != 0.0) || int_args[i] != 0))
 	  {
 	    fprintf(fp, "(test (expt %s %lld) ", t2 = gstr(-double_args[i]), -int_args[j]);
 	    free(t2);
@@ -1760,7 +1770,13 @@ int main(int argc, char **argv)
 
   fprintf(fp, "\n\n\
 (test (gcd) 0)\n\
-(test (lcm) 1)\n");
+(test (lcm) 1)\n\
+(test (gcd 1.4 2.3) 'error)\n\
+(test (lcm 1.4 2.3) 'error)\n\
+(test (gcd 2/3 1) 'error)\n\
+(test (lcm 2/3 1) 'error)\n\
+(test (gcd 2 1.0+0.5i) 'error)\n\
+(test (lcm 2 1.0+0.5i) 'error)\n");
 
   for (i = 0; i < INT_ARGS; i++)
     {
@@ -1820,18 +1836,99 @@ int main(int argc, char **argv)
 (test (gcd 323 28747 27113) 19)\n\
 (test (lcm 323 28747 27113) 41021969)\n\n");
 
+  fprintf(fp, "\n\n\
+(test (real-part 1) 1)\n\
+(test (imag-part 1) 0)\n\
+(test (real-part 2.0) 2.0)\n\
+(test (imag-part -2.0) 0.0)\n\
+(test (real-part 2/3) 2/3)\n\
+(test (imag-part 2/3) 0)\n");
 
+  k = 0;
+  for (i = 0; i < DOUBLE_ARGS; i++)
+    for (j = 0; j < DOUBLE_ARGS; j++)
+      {
+	int s1 = 1, s2 = 1;
+	char *t1;
+	switch (k)
+	  {
+	  case 0: s1 = 1; s2 = 1; break;
+	  case 1: s1 = -1; s2 = 1; break;
+	  case 2: s1 = 1; s2 = -1; break;
+	  case 3: s1 = -1; s2 = -1; break;
+	  }
+	k++;
+	if (k == 4) k = 0;
+	fprintf(fp, "(test (real-part %s) %s)\n", complex_arg(i, j, s1, s2), t1 = gstr(s1 * double_args[i]));
+	free(t1);
+	fprintf(fp, "(test (imag-part %s) %s)\n", complex_arg(i, j, s1, s2), t1 = gstr(s2 * double_args[j]));
+      }
+
+  fprintf(fp, "\n\
+(test (numerator 1) 1)\n\
+(test (numerator 2/3) 2)\n\
+(test (numerator -2/3) -2)\n\
+(test (denominator -2/3) 3)\n\
+(test (denominator 1) 1)\n\
+(test (denominator 2/3) 3)\n\
+(test (numerator 2.3+0.5i) 'error)\n\
+(test (denominator 2.3+0.5i) 'error)\n");
+
+  k = 0;
+  for (i = 0; i < INT_ARGS; i++)
+    for (j = 0; j < INT_ARGS; j++)
+      {
+	int a1, a2, s1 = 1, s2 = 1;
+	a1 = cint_mod(i + j, INT_ARGS);
+	a2 = cint_mod(i - j, INT_ARGS);
+	if (a2 == 0) a2 = 4;
+	switch (k)
+	  {
+	  case 0: s1 = 1; s2 = 1; break;
+	  case 1: s1 = -1; s2 = 1; break;
+	  case 2: s1 = 1; s2 = -1; break;
+	  case 3: s1 = -1; s2 = -1; break;
+	  }
+	k++;
+	if (k == 4) k = 0;
+	if (int_args[j] != 0)
+	  {
+	    off_t divisor;
+	    divisor = c_gcd(int_args[i], int_args[j]);
+	    fprintf(fp, "(test (numerator %lld/%lld) %lld)\n", s1 * int_args[i], int_args[j], s1 * int_args[i] / divisor);
+	    fprintf(fp, "(test (denominator %lld/%lld) %lld)\n", s1 * int_args[i], int_args[j], int_args[j] / divisor);
+	  }
+      }
+
+  for (i = 0; i < INT_ARGS; i++)
+    for (j = 0; j < INT_ARGS; j++)
+      {
+	if (int_args[j] != 0)
+	  {
+	    fprintf(fp, "(test (modulo %lld %lld) %lld)\n", int_args[i], int_args[j], c_mod(int_args[i], int_args[j]));
+	    fprintf(fp, "(test (remainder %lld %lld) %lld)\n", int_args[i], int_args[j], (int_args[i] % int_args[j]));
+
+	    fprintf(fp, "(test (modulo %lld %lld) %lld)\n", -int_args[i], int_args[j], c_mod(-int_args[i], int_args[j]));
+	    fprintf(fp, "(test (remainder %lld %lld) %lld)\n", -int_args[i], int_args[j], (-int_args[i] % int_args[j]));
+
+	    fprintf(fp, "(test (modulo %lld %lld) %lld)\n", int_args[i], -int_args[j], c_mod(int_args[i], -int_args[j]));
+	    fprintf(fp, "(test (remainder %lld %lld) %lld)\n", int_args[i], -int_args[j], (int_args[i] % -int_args[j]));
+
+	    fprintf(fp, "(test (modulo %lld %lld) %lld)\n", -int_args[i], -int_args[j], c_mod(-int_args[i], -int_args[j]));
+	    fprintf(fp, "(test (remainder %lld %lld) %lld)\n", -int_args[i], -int_args[j], (-int_args[i] % -int_args[j]));
+	  }
+      }
 
   fprintf(fp, "(display \";all done!\") (newline)\n");
   
-  /* expt with float and complex
-     remainder modulo quotient
+  /* remaining expt cases
+     quotient
      + - * / < <= > >= = max min
      abs
-     real-part imag-part numerator denominator make-rectangular make-polar 
+     make-rectangular make-polar 
      angle magnitude
 
-     string->n going 1/2, exprs as args, funcs
+     string->n going 1/2
      
   */
   
