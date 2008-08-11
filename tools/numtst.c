@@ -300,7 +300,7 @@ static off_t c_lcm(off_t a, off_t b)
   return((a * b) / c_gcd(a, b));
 }
 
-
+#if 0
 static bool c_rationalize(double ux, double error, off_t *numer, off_t *denom)
 {
   off_t a1 = 0, a2 = 1, b1 = 1, b2 = 0, tt = 1, a = 0, b = 0, ctr, int_part = 0;
@@ -364,6 +364,41 @@ static bool c_rationalize(double ux, double error, off_t *numer, off_t *denom)
     }
   return(false);
 }
+#else
+static bool c_rationalize(double ux, double error, off_t *n, off_t *d)
+{
+  off_t numer, denom, lim, sign = 0;
+  lim = 1.0 / error;
+  if (ux < 0.0)
+    {
+      ux = -ux;
+      sign = 1;
+    }
+  
+  for (denom = 1; denom <= lim; denom++)
+    {
+      numer = (off_t)floor(ux * denom);
+      if ((((double)numer / (double)denom) + error) > ux)
+	{
+	  if (sign)
+	    (*n) = -numer;
+	  else (*n) = numer;
+	  (*d) = denom;
+	  return(true);
+	}
+      numer++;
+      if ((((double)numer / (double)denom) - error) < ux)
+	{
+	  if (sign)
+	    (*n) = -numer;
+	  else (*n) = numer;
+	  (*d) = denom;
+	  return(true);
+	}
+    }
+  return(false);
+}
+#endif
 
 static off_t oround(double x)
 {
