@@ -64,6 +64,7 @@ static const char *scheme_name = "s7"; /* also guile, gauche, stklos, gambit */
 /* -------------------------------------------------------------------------------- */
 
 static bool ask_maxima = false;
+static bool include_big_fractions_in_expt = true;
 
 static const char *op_names[] = {
   "sin", "cos", "tan", "asin", "acos", "atan", "sinh", "cosh", "tanh", "asinh", "acosh", "atanh", "sqrt", "exp", "log"
@@ -365,6 +366,7 @@ static bool c_rationalize(double ux, double error, off_t *numer, off_t *denom)
   return(false);
 }
 #else
+/* this is UGLY! */
 static bool c_rationalize(double ux, double error, off_t *n, off_t *d)
 {
   off_t numer, denom, lim, sign = 0;
@@ -374,11 +376,11 @@ static bool c_rationalize(double ux, double error, off_t *n, off_t *d)
       ux = -ux;
       sign = 1;
     }
-  
+
   for (denom = 1; denom <= lim; denom++)
     {
       numer = (off_t)floor(ux * denom);
-      if ((((double)numer / (double)denom) + error) > ux)
+      if ((((double)numer / (double)denom) + error) >= ux)
 	{
 	  if (sign)
 	    (*n) = -numer;
@@ -387,7 +389,7 @@ static bool c_rationalize(double ux, double error, off_t *n, off_t *d)
 	  return(true);
 	}
       numer++;
-      if ((((double)numer / (double)denom) - error) < ux)
+      if ((((double)numer / (double)denom) - error) <= ux)
 	{
 	  if (sign)
 	    (*n) = -numer;
@@ -1538,7 +1540,8 @@ int main(int argc, char **argv)
 	    if ((isnormal(creal(result))) &&
 		(isnormal(cimag(result))) &&
 		(cabs(result) < 1.0e9) &&
-		(int_args[i] < 1000) && (int_args[j] < 1000) && (int_args[arg3] < 1000) && (int_args[arg4] < 1000) &&
+		((include_big_fractions_in_expt) ||
+		 ((int_args[i] < 1000) && (int_args[j] < 1000) && (int_args[arg3] < 1000) && (int_args[arg4] < 1000))) &&
 		((int_args[i] != 0) || (int_args[arg3] != 0)))
 	      {
 		fprintf(fp, "(test (expt %lld/%lld %lld/%lld) ", int_args[i], int_args[j], int_args[arg3], int_args[arg4]);
@@ -1560,7 +1563,8 @@ int main(int argc, char **argv)
 	    if ((isnormal(creal(result))) &&
 		(isnormal(cimag(result))) &&
 		(cabs(result) < 1.0e9) &&
-		(int_args[i] < 1000) && (int_args[j] < 1000) && (int_args[arg3] < 1000) && (int_args[arg4] < 1000) &&
+		((include_big_fractions_in_expt) ||
+		 ((int_args[i] < 1000) && (int_args[j] < 1000) && (int_args[arg3] < 1000) && (int_args[arg4] < 1000))) &&
 		((int_args[i] != 0) || (int_args[arg3] != 0)))
 	      {
 		fprintf(fp, "(test (expt %lld/%lld %lld/%lld) ", -int_args[i], int_args[j], int_args[arg3], int_args[arg4]);
