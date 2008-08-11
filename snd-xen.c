@@ -3030,7 +3030,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(define shell system)");
 #endif
 
-#if HAVE_SCHEME && USE_GTK && (!HAVE_GTK_ENTRY_GET_TEXT_LENGTH)
+#if HAVE_SCHEME && USE_GTK && (!HAVE_GTK_ADJUSTMENT_GET_UPPER)
   /* Gtk 3 is removing direct struct accesses (which they should have done years ago), so we need compatibility functions: */
   XEN_EVAL_C_STRING("(define (gtk_widget_get_window w) (.window w))");
   XEN_EVAL_C_STRING("(define (gtk_font_selection_dialog_get_ok_button w) (.ok_button w))");
@@ -3039,6 +3039,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(define (gtk_color_selection_dialog_get_color_selection w) (.colorsel w))");
   XEN_EVAL_C_STRING("(define (gtk_dialog_get_action_area w) (.action_area w))");
   XEN_EVAL_C_STRING("(define (gtk_dialog_get_content_area w) (.vbox w))");
+  /* also gtk_adjustment fields, but I think they are not in use in Snd's gtk code */
 #endif
 
 #if HAVE_RUBY

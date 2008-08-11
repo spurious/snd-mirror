@@ -2,8 +2,13 @@
  *
  *  gcc numtst.c -o numtst -lm
  *  numtst <name>
- *    <name> defaults to s7, can also be guile, gauche, stklos
+ *    <name> defaults to s7, can also be guile, gauche, stklos, gambit
  *  run scheme and load test.scm
+ *
+ * Leppie (comp.lang.scheme) says:
+ *    To compile on Cygwin: 
+ *    gcc -mno-cygwin -o numtest numtst.c 
+ *    Else complex.h seems to be not included :| 
  *
  * this does not pay much attention to inexact integers or ratios
  *
@@ -14,11 +19,13 @@
  *
  * stklos segfaults on (sin 0/1234000000) or anything involving that fraction
  *
+ * Gambit support thanks to Brad Lucier
+ *
  * the trig functions can return many equally correct results, and have arbitrary
  *   ranges, so unless something is way off, those reports should be treated
  *   as merely curiousities.  I didn't include much of complex tanh because
  *   C's ctanh is incredibly buggy.  (It over/underflows at the drop of a
- *   hat, and returns +/-0 when the answer is cleary (almost)+/-1).
+ *   hat, and returns +/-0 when the answer is clearly (almost)+/-1).
  */
 
 #define _FILE_OFFSET_BITS 64
@@ -49,9 +56,7 @@
 #endif
 
 /* -------------------------------------------------------------------------------- */
-static bool test_ratios = true;
-static bool test_complex = true;
-static const char *scheme_name = "s7"; /* also guile, gauche, stklos */
+static const char *scheme_name = "s7"; /* also guile, gauche, stklos, gambit */
 /* -------------------------------------------------------------------------------- */
 
 
@@ -136,13 +141,6 @@ static op_stuff numeric_data[NUMERIC_FUNCS] = {
   {"string->number", 1, 1, ARG_ANY}, 
   {"number->string", 1, 2, ARG_COMPLEX}, 
 };
-
-static char *non_numeric_args[] =
-  {"'symbol", "\"hi\"", "(1 . 2)", "#\\c", "'#(1 2)",
-  };
-
-#define NON_NUMERIC_ARGS 5
-
 
 
 static double complex csquare(double complex z)
@@ -289,7 +287,8 @@ static off_t c_lcm(off_t a, off_t b)
 
 static bool c_rationalize(double ux, double error, off_t *numer, off_t *denom)
 {
-  off_t a1 = 0, a2 = 1, b1 = 1, b2 = 0, tt = 1, a = 0, b = 0, ctr;
+  off_t a1 = 0, a2 = 1, b1 = 1, b2 = 0, tt = 1, a = 0, b = 0, ctr, int_part = 0;
+  bool neg = false;
   double x;
   
   if (ux == 0.0)
@@ -298,13 +297,34 @@ static bool c_rationalize(double ux, double error, off_t *numer, off_t *denom)
       (*denom) = 1;
       return(true);
     }
+
+  if (ux < 0.0)
+    {
+      neg = true;
+      ux = -ux;
+    }
+
   if (ux == 1.0)
     {
-      (*numer) = 1;
+      (*numer) = (neg) ? -1 : 1;
       (*denom) = 1;
       return(true);
     }
-  
+
+  if (ux > 1.0)
+    {
+      int_part = (off_t)floor(ux);
+      ux -= int_part;
+    }
+
+  if (ux < error)
+    {
+      if (ux > 0.5) int_part++;
+      (*numer) = (neg) ? -int_part : int_part;
+      (*denom) = 1;
+      return(true);
+    }
+
   x = 1.0 / ux;
   for (ctr = 0; (ctr < 100) && (x != tt); ctr++)
     {
@@ -312,7 +332,8 @@ static bool c_rationalize(double ux, double error, off_t *numer, off_t *denom)
       b = b2 + b1 * tt;
       if (fabs(ux - (double)a / (double)b) < error)
 	{
-	  (*numer) = a;
+	  a += (b * int_part);
+	  (*numer) = (neg) ? -a : a;
 	  (*denom) = b;
 	  return(true);
 	}
@@ -338,6 +359,7 @@ static off_t oround(double x)
 
 
 /* we are plagued by under/overflows here that are not reported as NaN or inf */
+
 #define isnormal(x) ((!isnan(x)) && (!isinf(x)))
 
 static double complex anyf(int op, double complex arg)
@@ -581,6 +603,7 @@ int main(int argc, char **argv)
   if (argc > 1)
     scheme_name = argv[1];
 
+
   if ((strcmp(scheme_name, "gauche") == 0) ||
       (strcmp(scheme_name, "stklos") == 0))
     fprintf(fp, "\n\
@@ -595,11 +618,17 @@ int main(int argc, char **argv)
   (guard (err (else (apply error-handler (if (list? err) err (list err)))))\n\
 	 (body)))\n");
 
+
+  if (strcmp(scheme_name, "gambit") == 0)
+    fprintf(stderr, "\n\
+(define (1+ n) (+ n 1))\n");
+
+
   if ((strcmp(scheme_name, "s7") == 0) ||
       (strcmp(scheme_name, "guile") == 0) ||
+      (strcmp(scheme_name, "gambit") == 0) ||
       (strcmp(scheme_name, "gauche") == 0))
-    {
-      fprintf(fp, "\n\
+    fprintf(fp, "\n\
 (define (format dest str . args)\n\
   (let ((len (string-length str))\n\
 	(tilde #f)\n\
@@ -607,21 +636,26 @@ int main(int argc, char **argv)
     (do ((i 0 (1+ i)))\n\
 	((= i len))\n\
       (let ((c (string-ref str i)))\n\
-	(if (char=? c #\~)\n\
+	(if (char=? c #\\~)\n\
 	    (set! tilde #t)\n\
 	    (if (not tilde)\n\
 		(set! result (string-append result (string c)))\n\
 		(begin\n\
 		  (set! tilde #f)\n\
-		  (if (member c (list #\A #\D #\F))\n\
+		  (if (member c (list #\\A #\\D #\\F))\n\
 		      (begin\n\
 			(set! result (string-append result (object->string (car args))))\n\
 			(set! args (cdr args)))\n\
-		      (if (char=? c #\%)\n\
-			  (set! result (string-append result (string #\newline)))\n\
+		      (if (char=? c #\\%%)\n\
+			  (set! result (string-append result (string #\\newline)))\n\
 			  (display (string-append \";unknown format directive: ~\" (string c))))))))))\n\
-    result))\n\
-\n\
+    result))\n\n");
+
+
+  if ((strcmp(scheme_name, "s7") == 0) ||
+      (strcmp(scheme_name, "guile") == 0) ||
+      (strcmp(scheme_name, "gauche") == 0))
+    fprintf(fp, "\n\
 (defmacro test (tst expected)\n\
   `(let ((result (catch #t (lambda () ,tst) (lambda args 'error))))\n\
      (if (or (and (eq? ,expected 'error)\n\
@@ -644,7 +678,34 @@ int main(int argc, char **argv)
 		      (and (> (abs (imag-part (- result ,expected))) 1.0e-4)\n\
 			   (> (abs (imag-part (+ result ,expected))) 1.0e-4)))))\n\
 	 (display (format #f \";~A got ~A, but expected ~A~%%\" ',tst result ',expected)))))\n\n");
-    }
+
+
+  if (strcmp(scheme_name, "gambit") == 0)
+    fprintf(stderr, "\n\
+(define-macro (test tst expected)\n\
+  `(let ((result\n\
+     (with-exception-handler (lambda e 'error)\n\
+                             (lambda () ,tst))))\n\
+     (if (or (and (eq? ,expected 'error)\n\
+		  (not (eq? result 'error)))\n\
+	     (and (eq? ,expected #t)\n\
+		  (not result))\n\
+	     (and (eq? ,expected #f)\n\
+		  result)\n\
+             (and (integer? ,expected)\n\
+		  (integer? result)\n\
+		  (not (= result ,expected)))\n\
+	     (and (real? ,expected)\n\
+		  (real? result)\n\
+		  (> (abs (- result ,expected)) 1.0e-5))\n\
+	     (and (number? result)\n\
+	          (or (not (real? ,expected))\n\
+		      (not (real? result)))\n\
+		  (or (and (> (abs (real-part (- result ,expected))) 1.0e-4)\n\
+			   (> (abs (real-part (+ result ,expected))) 1.0e-4))\n\
+		      (and (> (abs (imag-part (- result ,expected))) 1.0e-4)\n\
+			   (> (abs (imag-part (+ result ,expected))) 1.0e-4)))))\n\
+	 (display (format #f \";~A got ~A, but expected ~A~%%\" ',tst result ',expected)))))\n\n");
 
 
   fprintf(fp, "\n\
@@ -844,80 +905,81 @@ int main(int argc, char **argv)
   /* Gauche "compile error" seems to be uncatchable, and halts the load */
   if (strcmp(scheme_name, "gauche") != 0)
     {
-  for (i = 0; i < NUMERIC_FUNCS; i++)
-    {
-      if (numeric_data[i].min_args != -1)
+      for (i = 0; i < NUMERIC_FUNCS; i++)
 	{
-	  /* try correct args but wrong type, and incorrect num args high and low */
-	  for (j = 0; j < numeric_data[i].min_args; j++)
+	  if (numeric_data[i].min_args != -1)
 	    {
-	      fprintf(fp, "(test (%s", numeric_data[i].name);
+	      /* try correct args but wrong type, and incorrect num args high and low */
+	      for (j = 0; j < numeric_data[i].min_args; j++)
+		{
+		  fprintf(fp, "(test (%s", numeric_data[i].name);
+		  if (j > 0)
+		    {
+		      fprintf(fp, " ");
+		      for (k = 0; k < j; k++)
+			{
+			  switch (numeric_data[i].arg_type)
+			    {
+			    case ARG_INT: fprintf(fp, "123"); break;
+			    case ARG_RATIO: fprintf(fp, "1/3"); break;
+			    case ARG_REAL: fprintf(fp, "1.23"); break;
+			    case ARG_COMPLEX: fprintf(fp, "1.0+23.0i"); break;
+			    case ARG_ANY: fprintf(fp, "\"1.0\""); break;
+			    }
+			  if (k < j - 1) fprintf(fp, " "); 
+			}
+		    }
+		  fprintf(fp, ") 'error)\n");
+		}
+	    }
+	  for (j = numeric_data[i].min_args; j <= numeric_data[i].min_args; j++)
+	    {
 	      if (j > 0)
 		{
-		  fprintf(fp, " ");
+		  fprintf(fp, "(test (%s ", numeric_data[i].name);
 		  for (k = 0; k < j; k++)
 		    {
 		      switch (numeric_data[i].arg_type)
 			{
-			case ARG_INT: fprintf(fp, "123"); break;
-			case ARG_RATIO: fprintf(fp, "1/3"); break;
-			case ARG_REAL: fprintf(fp, "1.23"); break;
-			case ARG_COMPLEX: fprintf(fp, "1.0+23.0i"); break;
-			case ARG_ANY: fprintf(fp, "\"1.0\""); break;
+			case ARG_INT: fprintf(fp, "1.23"); break;
+			case ARG_RATIO: fprintf(fp, "1.3"); break;
+			case ARG_REAL: fprintf(fp, "1.23+1.0i"); break;
+			case ARG_COMPLEX: fprintf(fp, "\"hi\""); break;
+			case ARG_ANY: fprintf(fp, "'symbol"); break;
 			}
 		      if (k < j - 1) fprintf(fp, " "); 
 		    }
+		  fprintf(fp, ") 'error)\n");
 		}
-	      fprintf(fp, ") 'error)\n");
 	    }
-	}
-      for (j = numeric_data[i].min_args; j <= numeric_data[i].min_args; j++)
-	{
-	  if (j > 0)
+	  if (numeric_data[i].max_args != -1)
 	    {
 	      fprintf(fp, "(test (%s ", numeric_data[i].name);
-	      for (k = 0; k < j; k++)
+	      for (k = 0; k <= numeric_data[i].max_args; k++)
 		{
 		  switch (numeric_data[i].arg_type)
 		    {
-		    case ARG_INT: fprintf(fp, "1.23"); break;
-		    case ARG_RATIO: fprintf(fp, "1.3"); break;
-		    case ARG_REAL: fprintf(fp, "1.23+1.0i"); break;
-		    case ARG_COMPLEX: fprintf(fp, "\"hi\""); break;
-		    case ARG_ANY: fprintf(fp, "'symbol"); break;
+		    case ARG_INT: fprintf(fp, "123"); break;
+		    case ARG_RATIO: fprintf(fp, "1/3"); break;
+		    case ARG_REAL: fprintf(fp, "1.23"); break;
+		    case ARG_COMPLEX: fprintf(fp, "1.0+23.0i"); break;
+		    case ARG_ANY: fprintf(fp, "\"1.0\""); break;
 		    }
-		  if (k < j - 1) fprintf(fp, " "); 
+		  if (k < numeric_data[i].max_args) fprintf(fp, " "); 
 		}
 	      fprintf(fp, ") 'error)\n");
 	    }
 	}
-      if (numeric_data[i].max_args != -1)
-	{
-	  fprintf(fp, "(test (%s ", numeric_data[i].name);
-	  for (k = 0; k <= numeric_data[i].max_args; k++)
-	    {
-	      switch (numeric_data[i].arg_type)
-		{
-		case ARG_INT: fprintf(fp, "123"); break;
-		case ARG_RATIO: fprintf(fp, "1/3"); break;
-		case ARG_REAL: fprintf(fp, "1.23"); break;
-		case ARG_COMPLEX: fprintf(fp, "1.0+23.0i"); break;
-		case ARG_ANY: fprintf(fp, "\"1.0\""); break;
-		}
-	      if (k < numeric_data[i].max_args) fprintf(fp, " "); 
-	    }
-	  fprintf(fp, ") 'error)\n");
-	}
-    }
     }
   
   fprintf(fp, "\n;;; --------------------------------------------------------------------------------\n");
-
+  
   for (i = 0; i < INT_ARGS; i++)
     {
       fprintf(fp, "(define int-%d %lld)\n", i, int_args[i]);
       fprintf(fp, "(define ratio-%d %lld/%lld)\n", i, int_args[i], int_args[3]);
     }
+
   for (i = 0; i < DOUBLE_ARGS; i++)
     {
       char *t1, *t2;
@@ -926,9 +988,9 @@ int main(int argc, char **argv)
       free(t1);
       free(t2);
     }
-
+  
   fprintf(fp, "\n\n");
-
+  
   for (op = 0; op < OP_NAMES; op++)
     {
       for (i = 0; i < INT_ARGS; i++)
@@ -1040,7 +1102,7 @@ int main(int argc, char **argv)
   
   fprintf(fp, "\n;;; --------------------------------------------------------------------------------\n");
   
-  
+  /* int ^ int */
   for (i = 0; i < INT_ARGS; i++)
     for (j = 0; j < INT_ARGS; j++)
       {
@@ -1084,6 +1146,7 @@ int main(int argc, char **argv)
 	  }
       }
   
+  /* ratio ^ ratio */
   for (i = 0; i < INT_ARGS; i++)
     for (j = 0; j < INT_ARGS; j++)
       {
@@ -1130,11 +1193,220 @@ int main(int argc, char **argv)
 	    
 	  }
       }
+
+  /* int ^ double */
+  for (i = 0; i < INT_ARGS; i++)
+    for (j = 0; j < DOUBLE_ARGS; j++)
+      {
+	char *t1;
+	result = expt_op(float_to_complex((double)int_args[i]), float_to_complex(double_args[j]));
+	if (creal(result) == 54321.0) continue;
+	if ((isnormal(creal(result))) &&
+	    (isnormal(cimag(result))) &&
+	    (cabs(result) < 1.0e9))
+	  {
+	    fprintf(fp, "(test (expt %lld %s) ", int_args[i], t1 = gstr(double_args[j]));
+	    free(t1);
+	    complex_to_string(fp, result);
+	    fprintf(fp, ")\n");
+	  }
+	if (int_args[i] != 0)
+	  {
+	    result = expt_op(float_to_complex(-(double)int_args[i]), float_to_complex(double_args[j]));
+	    if (creal(result) == 54321.0) continue;
+	    if ((isnormal(creal(result))) &&
+		(isnormal(cimag(result))) &&
+		(cabs(result) < 1.0e9))
+	      {
+		fprintf(fp, "(test (expt %lld %s) ", -int_args[i], t1 = gstr(double_args[j]));
+		free(t1);
+		complex_to_string(fp, result);			
+		fprintf(fp, ")\n");
+	      }
+	    result = expt_op(float_to_complex((double)int_args[i]), float_to_complex(-double_args[j]));
+	    if (creal(result) == 54321.0) continue;
+	    if ((isnormal(creal(result))) &&
+		(isnormal(cimag(result))))
+	      {
+		fprintf(fp, "(test (expt %lld %s) ", int_args[i], t1 = gstr(-double_args[j]));
+		free(t1);
+		complex_to_string(fp, result);
+		fprintf(fp, ")\n");
+	      }
+	  }
+      }
   
+  /* double ^ double */
+  for (i = 0; i < DOUBLE_ARGS; i++)
+    for (j = 0; j < DOUBLE_ARGS; j++)
+      {
+	char *t1, *t2;
+	result = expt_op(float_to_complex(double_args[i]), float_to_complex(double_args[j]));
+	if (creal(result) == 54321.0) continue;
+	if ((isnormal(creal(result))) &&
+	    (isnormal(cimag(result))) &&
+	    (cabs(result) < 1.0e9))
+	  {
+	    fprintf(fp, "(test (expt %s %s) ", t2 = gstr(double_args[i]), t1 = gstr(double_args[j]));
+	    free(t1);
+	    free(t2);
+	    complex_to_string(fp, result);
+	    fprintf(fp, ")\n");
+	  }
+
+	result = expt_op(float_to_complex(-double_args[i]), float_to_complex(double_args[j]));
+	if (creal(result) == 54321.0) continue;
+	if ((isnormal(creal(result))) &&
+	    (isnormal(cimag(result))) &&
+	    (cabs(result) < 1.0e9))
+	  {
+	    fprintf(fp, "(test (expt %s %s) ", t2 = gstr(-double_args[i]), t1 = gstr(double_args[j]));
+	    free(t1);
+	    free(t2);
+	    complex_to_string(fp, result);			
+	    fprintf(fp, ")\n");
+	  }
+
+	result = expt_op(float_to_complex(double_args[i]), float_to_complex(-double_args[j]));
+	if (creal(result) == 54321.0) continue;
+	if ((isnormal(creal(result))) &&
+	    (isnormal(cimag(result))) &&
+	    (cabs(result) < 1.0e9))
+	  {
+	    fprintf(fp, "(test (expt %s %s) ", t2 = gstr(double_args[i]), t1 = gstr(-double_args[j]));
+	    free(t1);
+	    free(t2);
+	    complex_to_string(fp, result);			
+	    fprintf(fp, ")\n");
+	  }
+
+	result = expt_op(float_to_complex((double)-double_args[i]), float_to_complex(-double_args[j]));
+	if (creal(result) == 54321.0) continue;
+	if ((isnormal(creal(result))) &&
+	    (isnormal(cimag(result))))
+	  {
+	    fprintf(fp, "(test (expt %s %s) ", t2 = gstr(-double_args[i]), t1 = gstr(-double_args[j]));
+	    free(t1);
+	    free(t2);
+	    complex_to_string(fp, result);
+	    fprintf(fp, ")\n");
+	  }
+      }
   
+  /* double ^ int */
+  for (i = 0; i < DOUBLE_ARGS; i++)
+    for (j = 0; j < INT_ARGS; j++)
+      {
+	char *t2;
+	result = expt_op(float_to_complex(double_args[i]), float_to_complex((double)int_args[j]));
+	if (creal(result) == 54321.0) continue;
+	if ((isnormal(creal(result))) &&
+	    (isnormal(cimag(result))) &&
+	    (cabs(result) < 1.0e9))
+	  {
+	    fprintf(fp, "(test (expt %s %lld) ", t2 = gstr(double_args[i]), int_args[j]);
+	    free(t2);
+	    complex_to_string(fp, result);
+	    fprintf(fp, ")\n");
+	  }
+	result = expt_op(float_to_complex(-double_args[i]), float_to_complex((double)int_args[j]));
+	if (creal(result) == 54321.0) continue;
+	if ((isnormal(creal(result))) &&
+	    (isnormal(cimag(result))) &&
+	    (cabs(result) < 1.0e9))
+	  {
+	    fprintf(fp, "(test (expt %s %lld) ", t2 = gstr(-double_args[i]), int_args[j]);
+	    free(t2);
+	    complex_to_string(fp, result);			
+	    fprintf(fp, ")\n");
+	  }
+	result = expt_op(float_to_complex(double_args[i]), float_to_complex((double)-int_args[j]));
+	if (creal(result) == 54321.0) continue;
+	if ((isnormal(creal(result))) &&
+	    (isnormal(cimag(result))) &&
+	    (cabs(result) < 1.0e9))
+	  {
+	    fprintf(fp, "(test (expt %s %lld) ", t2 = gstr(double_args[i]), -int_args[j]);
+	    free(t2);
+	    complex_to_string(fp, result);			
+	    fprintf(fp, ")\n");
+	  }
+	result = expt_op(float_to_complex(-double_args[i]), float_to_complex(-(double)int_args[j]));
+	if (creal(result) == 54321.0) continue;
+	if ((isnormal(creal(result))) &&
+	    (isnormal(cimag(result))))
+	  {
+	    fprintf(fp, "(test (expt %s %lld) ", t2 = gstr(-double_args[i]), -int_args[j]);
+	    free(t2);
+	    complex_to_string(fp, result);
+	    fprintf(fp, ")\n");
+	  }
+      }
+
+#if 0
+  int ^ rat
+  rat ^ int
+  rat ^ double
+  rat ^ cmp
+    
+    cmp ^ cmp
+    cmp ^ double
+    int ^ cmp
+    cmp ^ int
+
+	int arg3, arg4;
+	arg3 = c_mod(i + j, INT_ARGS);
+	arg4 = c_mod(i - j, INT_ARGS);
+#endif
   
+
   fprintf(fp, "\n;;; --------------------------------------------------------------------------------\n");
 
+
+  {
+    #define ERROR_ARGS 6
+    double error_args[ERROR_ARGS] = {
+      1.0, 0.1, .001, 0.003, .00002, 0.00000001
+    };
+
+    #define RAT_ARGS 13
+    static double rat_args[RAT_ARGS] = {
+      0.0, 0.00000001, 1.0, 
+      3.141592653589793, 2.718281828459045, 
+      1234.1234, 1234000000.01234,
+      0.33, 0.9999, 0.501, 0.499, 1.501, 1.499
+    };
+
+    for (i = 0; i < RAT_ARGS; i++)
+      for (j = 0; j < ERROR_ARGS; j++)
+	{
+	  off_t num = 0, den = 0;
+	  bool happy = true;
+	  char *t1, *t2;
+	  happy = c_rationalize(rat_args[i], error_args[j], &num, &den);
+	  if (happy)
+	    {
+	      fprintf(fp, "(test (rationalize %s %s) %lld/%lld)\n", 
+		      t2 = gstr(rat_args[i]), 
+		      t1 = gstr(error_args[j]),
+		      num, den);
+	      free(t1);
+	      free(t2);
+	    }
+	  else fprintf(stderr, "oops: %f %f?", rat_args[i], error_args[j]);
+	  happy = c_rationalize(-rat_args[i], error_args[j], &num, &den);
+	  if (happy)
+	    {
+	      fprintf(fp, "(test (rationalize %s %s) %lld/%lld)\n", 
+		      t2 = gstr(-rat_args[i]), 
+		      t1 = gstr(error_args[j]),
+		      num, den);
+	      free(t1);
+	      free(t2);
+	    }
+	  else fprintf(stderr, "oops: %f %f?", rat_args[i], error_args[j]);
+	}
+  }
 
   fprintf(fp, "(display \";all done!\") (newline)\n");
   
