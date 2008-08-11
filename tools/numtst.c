@@ -507,7 +507,7 @@ static char *gstr(double val)
   return(temp);
 }
 
-static void complex_to_string(FILE *fp, double complex z)
+static void complex_to_file(FILE *fp, double complex z)
 {
   double rl, im;
   char *t1, *t2;
@@ -525,6 +525,27 @@ static void complex_to_string(FILE *fp, double complex z)
     {
       fprintf(fp, "%s", t1 = gstr(rl));
       free(t1);
+    }
+}
+
+static char *split_complex_to_string(double rl, double im)
+{
+  if (im != 0.0)
+    {
+      char *t1, *t2, *temp;
+      t1 = gstr(rl);
+      if (im > 0.0)
+	t2 = gstr(im);
+      else t2 = gstr(fabs(im));
+      temp = (char *)calloc(2 + strlen(t1) + strlen(t2), sizeof(char));
+      sprintf(temp, "%s%s%si", t1, (im > 0.0) ? "+" : "-", t2);
+      free(t1);
+      free(t2);
+      return(temp);
+    }
+  else 
+    {
+      return(gstr(rl));
     }
 }
 
@@ -1032,7 +1053,7 @@ int main(int argc, char **argv)
 	    {
 	      argstr = int_arg_name(i);
 	      fprintf(fp, "(test (%s %s) ", op_names[op], argstr);
-	      complex_to_string(fp, result);
+	      complex_to_file(fp, result);
 	      fprintf(fp, ")\n");
 	    }
 	  if (int_args[i] != 0)
@@ -1050,7 +1071,7 @@ int main(int argc, char **argv)
 		  (isnormal(cimag(result))))
 		{
 		  fprintf(fp, "(test (%s %lld) ", op_names[op], -int_args[i]);
-		  complex_to_string(fp, result);
+		  complex_to_file(fp, result);
 		  fprintf(fp, ")\n");
 		}
 	    }
@@ -1074,7 +1095,7 @@ int main(int argc, char **argv)
 		{
 		  argstr = ratio_arg_name(i, j);
 		  fprintf(fp, "(test (%s %s) ", op_names[op], ratio_arg_name(i, j));
-		  complex_to_string(fp, result);
+		  complex_to_file(fp, result);
 		  fprintf(fp, ")\n");
 		}
 	      if (int_args[i] != 0)
@@ -1092,7 +1113,7 @@ int main(int argc, char **argv)
 		      (isnormal(cimag(result))))
 		    {
 		      fprintf(fp, "(test (%s %lld/%lld) ", op_names[op], -int_args[i], int_args[j]);
-		      complex_to_string(fp, result);
+		      complex_to_file(fp, result);
 		      fprintf(fp, ")\n");
 		    }
 		}
@@ -1118,7 +1139,7 @@ int main(int argc, char **argv)
 	    {
 	      argstr = double_arg_name(i);
 	      fprintf(fp, "(test (%s %s) ", op_names[op], argstr);
-	      complex_to_string(fp, result);
+	      complex_to_file(fp, result);
 	      fprintf(fp, ")\n");
 	    }
 	  if (double_args[i] != 0.0)
@@ -1140,7 +1161,7 @@ int main(int argc, char **argv)
 		{
 		  fprintf(fp, "(test (%s %s) ", op_names[op], t1 = gstr(-double_args[i]));
 		  free(t1);
-		  complex_to_string(fp, result);
+		  complex_to_file(fp, result);
 		  fprintf(fp, ")\n");
 		}
 	    }
@@ -1177,7 +1198,7 @@ int main(int argc, char **argv)
 		{
 		  argstr = complex_arg_name(i, j, s1, s2);
 		  fprintf(fp, "(test (%s %s) ", op_names[op], argstr);
-		  complex_to_string(fp, result);
+		  complex_to_file(fp, result);
 		  fprintf(fp, ")\n");
 		}
 	    }
@@ -1455,7 +1476,7 @@ int main(int argc, char **argv)
 		 ((int_args[i] < 100) && (int_args[j] < 100))))
 	      {
 		fprintf(fp, "(test (expt %lld %lld) ", int_args[i], -int_args[j]);
-		complex_to_string(fp, result);
+		complex_to_file(fp, result);
 		fprintf(fp, ")\n");
 	      }
 	  }
@@ -1486,7 +1507,7 @@ int main(int argc, char **argv)
 		((int_args[i] != 0) || (int_args[arg3] != 0)))
 	      {
 		fprintf(fp, "(test (expt %lld/%lld %lld/%lld) ", int_args[i], int_args[j], int_args[arg3], int_args[arg4]);
-		complex_to_string(fp, result);
+		complex_to_file(fp, result);
 		fprintf(fp, ")\n");
 	      }
 	  }
@@ -1508,7 +1529,7 @@ int main(int argc, char **argv)
 		((int_args[i] != 0) || (int_args[arg3] != 0)))
 	      {
 		fprintf(fp, "(test (expt %lld/%lld %lld/%lld) ", -int_args[i], int_args[j], int_args[arg3], int_args[arg4]);
-		complex_to_string(fp, result);
+		complex_to_file(fp, result);
 		fprintf(fp, ")\n");
 	      }
 	    
@@ -1531,7 +1552,7 @@ int main(int argc, char **argv)
 	  {
 	    fprintf(fp, "(test (expt %lld %s) ", int_args[i], t1 = gstr(double_args[j]));
 	    free(t1);
-	    complex_to_string(fp, result);
+	    complex_to_file(fp, result);
 	    fprintf(fp, ")\n");
 	  }
 	if (int_args[i] != 0)
@@ -1548,7 +1569,7 @@ int main(int argc, char **argv)
 	      {
 		fprintf(fp, "(test (expt %lld %s) ", -int_args[i], t1 = gstr(double_args[j]));
 		free(t1);
-		complex_to_string(fp, result);			
+		complex_to_file(fp, result);			
 		fprintf(fp, ")\n");
 	      }
 	    result = expt_op(float_to_complex((double)int_args[i]), float_to_complex(-double_args[j]));
@@ -1562,7 +1583,7 @@ int main(int argc, char **argv)
 	      {
 		fprintf(fp, "(test (expt %lld %s) ", int_args[i], t1 = gstr(-double_args[j]));
 		free(t1);
-		complex_to_string(fp, result);
+		complex_to_file(fp, result);
 		fprintf(fp, ")\n");
 	      }
 	  }
@@ -1585,7 +1606,7 @@ int main(int argc, char **argv)
 	    fprintf(fp, "(test (expt %s %s) ", t2 = gstr(double_args[i]), t1 = gstr(double_args[j]));
 	    free(t1);
 	    free(t2);
-	    complex_to_string(fp, result);
+	    complex_to_file(fp, result);
 	    fprintf(fp, ")\n");
 	  }
 
@@ -1601,7 +1622,7 @@ int main(int argc, char **argv)
 	    fprintf(fp, "(test (expt %s %s) ", t2 = gstr(-double_args[i]), t1 = gstr(double_args[j]));
 	    free(t1);
 	    free(t2);
-	    complex_to_string(fp, result);			
+	    complex_to_file(fp, result);			
 	    fprintf(fp, ")\n");
 	  }
 
@@ -1617,7 +1638,7 @@ int main(int argc, char **argv)
 	    fprintf(fp, "(test (expt %s %s) ", t2 = gstr(double_args[i]), t1 = gstr(-double_args[j]));
 	    free(t1);
 	    free(t2);
-	    complex_to_string(fp, result);			
+	    complex_to_file(fp, result);			
 	    fprintf(fp, ")\n");
 	  }
 
@@ -1632,7 +1653,7 @@ int main(int argc, char **argv)
 	    fprintf(fp, "(test (expt %s %s) ", t2 = gstr(-double_args[i]), t1 = gstr(-double_args[j]));
 	    free(t1);
 	    free(t2);
-	    complex_to_string(fp, result);
+	    complex_to_file(fp, result);
 	    fprintf(fp, ")\n");
 	  }
       }
@@ -1654,7 +1675,7 @@ int main(int argc, char **argv)
 	  {
 	    fprintf(fp, "(test (expt %s %lld) ", t2 = gstr(double_args[i]), int_args[j]);
 	    free(t2);
-	    complex_to_string(fp, result);
+	    complex_to_file(fp, result);
 	    fprintf(fp, ")\n");
 	  }
 	result = expt_op(float_to_complex(-double_args[i]), float_to_complex((double)int_args[j]));
@@ -1669,7 +1690,7 @@ int main(int argc, char **argv)
 	  {
 	    fprintf(fp, "(test (expt %s %lld) ", t2 = gstr(-double_args[i]), int_args[j]);
 	    free(t2);
-	    complex_to_string(fp, result);			
+	    complex_to_file(fp, result);			
 	    fprintf(fp, ")\n");
 	  }
 	result = expt_op(float_to_complex(double_args[i]), float_to_complex((double)-int_args[j]));
@@ -1684,7 +1705,7 @@ int main(int argc, char **argv)
 	  {
 	    fprintf(fp, "(test (expt %s %lld) ", t2 = gstr(double_args[i]), -int_args[j]);
 	    free(t2);
-	    complex_to_string(fp, result);			
+	    complex_to_file(fp, result);			
 	    fprintf(fp, ")\n");
 	  }
 	result = expt_op(float_to_complex(-double_args[i]), float_to_complex(-(double)int_args[j]));
@@ -1698,7 +1719,7 @@ int main(int argc, char **argv)
 	  {
 	    fprintf(fp, "(test (expt %s %lld) ", t2 = gstr(-double_args[i]), -int_args[j]);
 	    free(t2);
-	    complex_to_string(fp, result);
+	    complex_to_file(fp, result);
 	    fprintf(fp, ")\n");
 	  }
       }
@@ -1919,20 +1940,218 @@ int main(int argc, char **argv)
 	  }
       }
 
-  fprintf(fp, "(display \";all done!\") (newline)\n");
-  
-  /* remaining expt cases
-     quotient
-     + - * / < <= > >= = max min
-     abs
-     make-rectangular make-polar 
-     angle magnitude
+  for (i = 0; i < INT_ARGS; i += 2)
+    {
+      fprintf(fp, "(test (min %lld) %lld)\n", int_args[i], int_args[i]);
+      fprintf(fp, "(test (max %lld) %lld)\n", int_args[i], int_args[i]);
+      fprintf(fp, "(test (+ %lld) %lld)\n", int_args[i], int_args[i]);
+      fprintf(fp, "(test (- %lld) %lld)\n", int_args[i], -int_args[i]);
+      fprintf(fp, "(test (* %lld) %lld)\n", int_args[i], int_args[i]);
+      if (int_args[i] != 0)
+	fprintf(fp, "(test (/ %lld) 1/%lld)\n", int_args[i], int_args[i]);
 
-     string->n going 1/2
-     
-  */
-  
-  fclose(fp);
-  
-  return(0);
+      fprintf(fp, "(test (< %lld) #t)\n", int_args[i]);
+      fprintf(fp, "(test (<= %lld) #t)\n", int_args[i]);
+      fprintf(fp, "(test (= %lld) #t)\n", int_args[i]);
+      fprintf(fp, "(test (> %lld) #t)\n", int_args[i]);
+      fprintf(fp, "(test (>= %lld) #t)\n", int_args[i]);
+
+      fprintf(fp, "(test (abs %lld) %lld)\n", int_args[i], int_args[i]);
+
+      fprintf(fp, "(test (min %lld) %lld)\n", -int_args[i], -int_args[i]);
+      fprintf(fp, "(test (max %lld) %lld)\n", -int_args[i], -int_args[i]);
+      fprintf(fp, "(test (+ %lld) %lld)\n", -int_args[i], -int_args[i]);
+      fprintf(fp, "(test (- %lld) %lld)\n", -int_args[i], int_args[i]);
+      fprintf(fp, "(test (* %lld) %lld)\n", -int_args[i], -int_args[i]);
+      if (int_args[i] != 0)
+	fprintf(fp, "(test (/ %lld) -1/%lld)\n", -int_args[i], int_args[i]);
+
+      fprintf(fp, "(test (abs %lld) %lld)\n", -int_args[i], int_args[i]);
+    }
+
+  j = 1;
+  for (i = 0; i < INT_ARGS; i += 2, j++)
+    {
+      if (j == INT_ARGS) j = 0;
+      if (int_args[j] == 0) j++;
+
+      fprintf(fp, "(test (min %lld/%lld) %lld/%lld)\n", int_args[i], int_args[j], int_args[i], int_args[j]);
+      fprintf(fp, "(test (max %lld/%lld) %lld/%lld)\n", int_args[i], int_args[j], int_args[i], int_args[j]);
+      fprintf(fp, "(test (+ %lld/%lld) %lld/%lld)\n", int_args[i], int_args[j], int_args[i], int_args[j]);
+      fprintf(fp, "(test (- %lld/%lld) %lld/%lld)\n", int_args[i], int_args[j], -int_args[i], int_args[j]);
+      fprintf(fp, "(test (* %lld/%lld) %lld/%lld)\n", int_args[i], int_args[j], int_args[i], int_args[j]);
+      if (int_args[i] != 0)
+	fprintf(fp, "(test (/ %lld/%lld) %lld/%lld)\n", int_args[i], int_args[j], int_args[j], int_args[i]);
+      
+      fprintf(fp, "(test (< %lld/%lld) #t)\n", int_args[i], int_args[j]);
+      fprintf(fp, "(test (<= %lld/%lld) #t)\n", int_args[i], int_args[j]);
+      fprintf(fp, "(test (= %lld/%lld) #t)\n", int_args[i], int_args[j]);
+      fprintf(fp, "(test (> %lld/%lld) #t)\n", int_args[i], int_args[j]);
+      fprintf(fp, "(test (>= %lld/%lld) #t)\n", int_args[i], int_args[j]);
+      
+      fprintf(fp, "(test (abs %lld/%lld) %lld/%lld)\n", int_args[i], int_args[j], int_args[i], int_args[j]);
+      
+      fprintf(fp, "(test (min %lld/%lld) %lld/%lld)\n", -int_args[i], int_args[j], -int_args[i], int_args[j]);
+      fprintf(fp, "(test (max %lld/%lld) %lld/%lld)\n", -int_args[i], int_args[j], -int_args[i], int_args[j]);
+      fprintf(fp, "(test (+ %lld/%lld) %lld/%lld)\n", -int_args[i], int_args[j], -int_args[i], int_args[j]);
+      fprintf(fp, "(test (- %lld/%lld) %lld/%lld)\n", -int_args[i], int_args[j], int_args[i], int_args[j]);
+      fprintf(fp, "(test (* %lld/%lld) %lld/%lld)\n", -int_args[i], int_args[j], -int_args[i], int_args[j]);
+      if (int_args[i] != 0)
+	fprintf(fp, "(test (/ %lld/%lld) %lld/%lld)\n", -int_args[i], int_args[j], -int_args[j], int_args[i]);
+      
+      fprintf(fp, "(test (abs %lld/%lld) %lld/%lld)\n", -int_args[i], int_args[j], int_args[i], int_args[j]);
+    }
+
+  for (i = 0; i < DOUBLE_ARGS; i += 2)
+    {
+      char *t1, *t2;
+      fprintf(fp, "(test (min %s) %s)\n", t1 = gstr(double_args[i]), t2 = gstr(double_args[i])); free(t1); free(t2);
+      fprintf(fp, "(test (max %s) %s)\n", t1 = gstr(double_args[i]), t2 = gstr(double_args[i])); free(t1); free(t2);
+      fprintf(fp, "(test (+ %s) %s)\n", t1 = gstr(double_args[i]), t2 = gstr(double_args[i])); free(t1); free(t2);
+      fprintf(fp, "(test (- %s) %s)\n", t1 = gstr(double_args[i]), t2 = gstr(-double_args[i])); free(t1); free(t2);
+      fprintf(fp, "(test (* %s) %s)\n", t1 = gstr(double_args[i]), t2 = gstr(double_args[i])); free(t1); free(t2);
+      if (double_args[i] != 0)
+	{
+	  fprintf(fp, "(test (/ %s) %s)\n", t1 = gstr(double_args[i]), t2 = gstr(1.0 / double_args[i])); 
+	  free(t1); free(t2);
+	}
+
+      fprintf(fp, "(test (< %s) #t)\n", t1 = gstr(double_args[i])); free(t1);
+      fprintf(fp, "(test (<= %s) #t)\n", t1 = gstr(double_args[i])); free(t1);
+      fprintf(fp, "(test (= %s) #t)\n", t1 = gstr(double_args[i])); free(t1);
+      fprintf(fp, "(test (> %s) #t)\n", t1 = gstr(double_args[i])); free(t1);
+      fprintf(fp, "(test (>= %s) #t)\n", t1 = gstr(double_args[i])); free(t1);
+
+      fprintf(fp, "(test (abs %s) %s)\n", t1 = gstr(double_args[i]), t2 = gstr(double_args[i])); free(t1); free(t2);
+
+      fprintf(fp, "(test (min %s) %s)\n", t1 = gstr(-double_args[i]), t2 = gstr(-double_args[i])); free(t1); free(t2);
+      fprintf(fp, "(test (max %s) %s)\n", t1 = gstr(-double_args[i]), t2 = gstr(-double_args[i])); free(t1); free(t2);
+      fprintf(fp, "(test (+ %s) %s)\n", t1 = gstr(-double_args[i]), t2 = gstr(-double_args[i])); free(t1); free(t2);
+      fprintf(fp, "(test (- %s) %s)\n", t1 = gstr(-double_args[i]), t2 = gstr(double_args[i])); free(t1); free(t2);
+      fprintf(fp, "(test (* %s) %s)\n", t1 = gstr(-double_args[i]), t2 = gstr(-double_args[i])); free(t1); free(t2);
+      if (double_args[i] != 0.0)
+	{
+	  fprintf(fp, "(test (/ %s) %s)\n", t1 = gstr(-double_args[i]), t2 = gstr(-1.0 / double_args[i])); 
+	  free(t1); free(t2);
+	}
+
+      fprintf(fp, "(test (abs %s) %s)\n", t1 = gstr(-double_args[i]), t2 = gstr(double_args[i])); free(t1); free(t2);
+    }
+
+  j = 1;
+  for (i = 0; i < DOUBLE_ARGS; i += 2, j++)
+    {
+      char *t1, *t2;
+      if (j == DOUBLE_ARGS) j = 0;
+      if (double_args[j] == 0.0) j++;
+
+      fprintf(fp, "(test (min %s) %s)\n",
+	      t1 = split_complex_to_string(double_args[i], double_args[j]), 
+	      t2 = split_complex_to_string(double_args[i], double_args[j]));
+      free(t1); free(t2); 
+      fprintf(fp, "(test (max %s) %s)\n", 
+	      t1 = split_complex_to_string(double_args[i], double_args[j]), 
+	      t2 = split_complex_to_string(double_args[i], double_args[j]));
+      free(t1); free(t2); 
+      fprintf(fp, "(test (+ %s) %s)\n", 
+	      t1 = split_complex_to_string(double_args[i], double_args[j]), 
+	      t2 = split_complex_to_string(double_args[i], double_args[j]));
+      free(t1); free(t2);
+      fprintf(fp, "(test (- %s) %s)\n", 
+	      t1 = split_complex_to_string(double_args[i], double_args[j]), 
+	      t2 = split_complex_to_string(-double_args[i],double_args[j]));
+      free(t1); free(t2); 
+      fprintf(fp, "(test (* %s) %s)\n", 
+	      t1 = split_complex_to_string(double_args[i], double_args[j]), 
+	      t2 = split_complex_to_string(double_args[i], double_args[j]));
+      free(t1); free(t2); 
+
+      if ((double_args[i] != 0.0) || (double_args[j] != 0.0))
+	{
+	  double complex z;
+	  z = 1.0 / (double_args[i] + double_args[j] * _Complex_I);
+	  fprintf(fp, "(test (/ %s) %s)\n", 
+		  t1 = split_complex_to_string(double_args[i], double_args[j]),
+		  t2 = split_complex_to_string(creal(z), cimag(z)));
+	  free(t1); free(t2);
+	}
+      
+      fprintf(fp, "(test (< %s) 'error)\n", t1 = split_complex_to_string(double_args[i], double_args[j]));
+      free(t1);
+	      fprintf(fp, "(test (<= %s) 'error)\n", t1 = split_complex_to_string(double_args[i], double_args[j]));
+      free(t1); 
+      fprintf(fp, "(test (= %s) #t)\n", t1 = split_complex_to_string(double_args[i], double_args[j]));
+      free(t1); 
+      fprintf(fp, "(test (> %s) 'error)\n", t1 = split_complex_to_string(double_args[i], double_args[j]));
+      free(t1); 
+      fprintf(fp, "(test (>= %s) 'error)\n", t1 = split_complex_to_string(double_args[i], double_args[j]));
+      free(t1); 
+      
+      {
+	double mag;
+	mag = cabs(double_args[i] + double_args[j] * _Complex_I);
+	fprintf(fp, "(test (magnitude %s) %s)\n", 
+		t1 = split_complex_to_string(double_args[i], double_args[j]), 
+		t2 = split_complex_to_string(creal(mag), cimag(mag)));
+	free(t1); free(t2);
+      }
+      
+      fprintf(fp, "(test (min %s) %s)\n", 
+	      t1 = split_complex_to_string(-double_args[i], double_args[j]), 
+	      t2 = split_complex_to_string(-double_args[i], double_args[j]));
+      free(t1); free(t2);
+      fprintf(fp, "(test (max %s) %s)\n", 
+	      t1 = split_complex_to_string(-double_args[i], double_args[j]), 
+	      t2 = split_complex_to_string(-double_args[i], double_args[j]));
+      free(t1); free(t2);
+      fprintf(fp, "(test (+ %s) %s)\n", 
+	      t1 = split_complex_to_string(-double_args[i], double_args[j]), 
+	      t2 = split_complex_to_string(-double_args[i], double_args[j]));
+      free(t1); free(t2);
+      fprintf(fp, "(test (- %s) %s)\n", 
+	      t1 = split_complex_to_string(-double_args[i], double_args[j]), 
+	      t2 = split_complex_to_string(double_args[i], double_args[j]));
+      free(t1); free(t2);
+      fprintf(fp, "(test (* %s) %s)\n", 
+	      t1 = split_complex_to_string(-double_args[i], double_args[j]), 
+	      t2 = split_complex_to_string(-double_args[i], double_args[j]));
+      free(t1); free(t2);
+      if ((double_args[i] != 0.0) || (double_args[j] != 0.0))
+	{
+	  double complex z;
+	  z = 1.0 / (-double_args[i] + double_args[j] * _Complex_I);
+	  fprintf(fp, "(test (/ %s) %s)\n", 
+		  t1 = split_complex_to_string(-double_args[i], double_args[j]),
+		  t2 = split_complex_to_string(creal(z), cimag(z)));
+	  free(t1); free(t2);
+	}
+
+      {
+	double mag;
+	mag = cabs(-double_args[i] + double_args[j] * _Complex_I);
+	fprintf(fp, "(test (magnitude %s) %s)\n", 
+		t1 = split_complex_to_string(-double_args[i], double_args[j]), 
+		t2 = split_complex_to_string(creal(mag), cimag(mag)));
+	free(t1); free(t2);
+      }
+    }
+
+
+
+fprintf(fp, "(display \";all done!\") (newline)\n");
+
+/* remaining expt cases
+   quotient
+   + - * / < <= > >= = max min
+   abs
+   make-rectangular make-polar 
+   angle magnitude
+   
+   string->n going 1/2
+   
+*/
+
+fclose(fp);
+
+return(0);
 }
