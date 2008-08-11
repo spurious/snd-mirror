@@ -61,10 +61,12 @@
 
 /* -------------------------------------------------------------------------------- */
 static const char *scheme_name = "s7"; /* also guile, gauche, stklos, gambit */
-/* -------------------------------------------------------------------------------- */
 
 static bool ask_maxima = false;
 static bool include_big_fractions_in_expt = true;
+static bool use_continued_fractions_in_rationalize = false;
+/* -------------------------------------------------------------------------------- */
+
 
 static const char *op_names[] = {
   "sin", "cos", "tan", "asin", "acos", "atan", "sinh", "cosh", "tanh", "asinh", "acosh", "atanh", "sqrt", "exp", "log"
@@ -131,7 +133,7 @@ static op_stuff numeric_data[NUMERIC_FUNCS] = {
   {"make-rectangular", 2, 2, ARG_REAL}, 
   {"sqrt", 1, 1, ARG_COMPLEX}, 
   {"exp", 1, 1, ARG_COMPLEX}, 
-  {"log", 1, 1, ARG_COMPLEX}, 
+  {"log", 1, 2, ARG_COMPLEX},       /* apparently r6rs includes the base? */
   {"sin", 1, 1, ARG_COMPLEX}, 
   {"cos", 1, 1, ARG_COMPLEX}, 
   {"tan", 1, 1, ARG_COMPLEX}, 
@@ -301,8 +303,8 @@ static off_t c_lcm(off_t a, off_t b)
   return((a * b) / c_gcd(a, b));
 }
 
-#if 0
-static bool c_rationalize(double ux, double error, off_t *numer, off_t *denom)
+
+static bool continued_fraction_rationalize(double ux, double error, off_t *numer, off_t *denom)
 {
   off_t a1 = 0, a2 = 1, b1 = 1, b2 = 0, tt = 1, a = 0, b = 0, ctr, int_part = 0;
   bool neg = false;
@@ -365,7 +367,7 @@ static bool c_rationalize(double ux, double error, off_t *numer, off_t *denom)
     }
   return(false);
 }
-#else
+
 /* this is UGLY! */
 static bool c_rationalize(double ux, double error, off_t *n, off_t *d)
 {
@@ -377,6 +379,10 @@ static bool c_rationalize(double ux, double error, off_t *n, off_t *d)
       sign = 1;
     }
 
+  /* perhaps use continued fractions to get a good result, then
+   *   back up the denominator until we lose?  As it is, this
+   *   is very slow!
+   */
   for (denom = 1; denom <= lim; denom++)
     {
       numer = (off_t)floor(ux * denom);
@@ -400,7 +406,6 @@ static bool c_rationalize(double ux, double error, off_t *n, off_t *d)
     }
   return(false);
 }
-#endif
 
 static off_t oround(double x)
 {
@@ -678,7 +683,6 @@ int main(int argc, char **argv)
   if (argc > 1)
     scheme_name = argv[1];
 
-
   if ((strcmp(scheme_name, "gauche") == 0) ||
       (strcmp(scheme_name, "stklos") == 0))
     fprintf(fp, "\n\
@@ -737,6 +741,8 @@ int main(int argc, char **argv)
   `(let ((result (catch #t (lambda () ,tst) (lambda args 'error))))\n\
      (if (or (and (eq? ,expected 'error)\n\
 		  (not (eq? result 'error)))\n\
+             (and (eq? result 'error)\n\
+                  (not (eq? ,expected 'error)))\n\
 	     (and (eq? ,expected #t)\n\
 		  (not result))\n\
 	     (and (eq? ,expected #f)\n\
@@ -767,8 +773,10 @@ int main(int argc, char **argv)
   `(let ((result\n\
      (with-exception-handler (lambda e 'error)\n\
                              (lambda () ,tst))))\n\
-     (if (or (and (eq? ,expected 'error)\n\
-		  (not (eq? result 'error)))\n\
+     (if (or (and (eq? result 'error)\n\
+                  (not (eq? ,expected 'error)))\n\
+	     (and (eq? ,expected #t)\n\
+		  (not result))\n\
 	     (and (eq? ,expected #t)\n\
 		  (not result))\n\
 	     (and (eq? ,expected #f)\n\
@@ -787,6 +795,22 @@ int main(int argc, char **argv)
 		      (and (> (abs (imag-part (- result ,expected))) 1.0e-4)\n\
 			   (> (abs (imag-part (+ result ,expected))) 1.0e-4)))))\n\
 	 (display (format #f \";~A got ~A, but expected ~A~%%\" ',tst result ',expected)))))\n\n");
+
+
+  for (i = 0; i < INT_ARGS; i++)
+    {
+      fprintf(fp, "(define int-%d %lld)\n", i, int_args[i]);
+      fprintf(fp, "(define ratio-%d %lld/%lld)\n", i, int_args[i], int_args[3]);
+    }
+
+  for (i = 0; i < DOUBLE_ARGS; i++)
+    {
+      char *t1, *t2;
+      fprintf(fp, "(define double-%d %s)\n", i, t1 = gstr(double_args[i]));
+      fprintf(fp, "(define complex-%d %s+%si)\n", i, t1, t2 = gstr(double_args[3]));
+      free(t1);
+      free(t2);
+    }
 
 
   fprintf(fp, "\n\
@@ -819,68 +843,68 @@ int main(int argc, char **argv)
        (display (format #f \";~A is not a real?~%%\" arg))))\n\
  (list 1 1.0 1/2))\n\
 \n\
-(if (not (rational? 1/2)) (snd-display \";1/2 is not rational?~%%\"))\n\
-(if (not (rational? 2)) (snd-display \";2 is not rational?~%%\"))\n\n");
+(if (not (rational? 1/2)) (display (format #f \";1/2 is not rational?~%%\")))\n\
+(if (not (rational? 2)) (display (format #f \";2 is not rational?~%%\")))\n\n");
 
   fprintf(fp, "\n\
 (for-each\n\
  (lambda (n)\n\
    (if (not (even? n))\n\
-       (display (format #f \";~A is not even?\" arg))))\n\
+       (display (format #f \";~A is not even?\" n))))\n\
  (list 0 2 1234 -4 -10000002 1000000006))\n\
 \n\
 (for-each\n\
  (lambda (n)\n\
    (if (odd? n)\n\
-       (display (format #f \";~A is odd?\" arg))))\n\
+       (display (format #f \";~A is odd?\" n))))\n\
  (list 0 2 1234 -4 -10000002 1000000006))\n\
 \n\
 (for-each\n\
  (lambda (n)\n\
    (if (even? n)\n\
-       (display (format #f \";~A is even?\" arg))))\n\
+       (display (format #f \";~A is even?\" n))))\n\
  (list 1 -1 31 50001 543321))\n\
 \n\
 (for-each\n\
  (lambda (n)\n\
    (if (not (odd? n))\n\
-       (display (format #f \";~A is not odd?\" arg))))\n\
+       (display (format #f \";~A is not odd?\" n))))\n\
  (list 1 -1 31 50001 543321))\n\
 \n\
 (for-each\n\
  (lambda (n)\n\
    (if (not (positive? n))\n\
-       (display (format #f \";~A is not positive?\" arg))))\n\
+       (display (format #f \";~A is not positive?\" n))))\n\
  (list 1 123 123456123 1.4 0.001 1/2 124124124.2))\n\
 \n\
 (for-each\n\
  (lambda (n)\n\
    (if (negative? n)\n\
-       (display (format #f \";~A is negative?\" arg))))\n\
+       (display (format #f \";~A is negative?\" n))))\n\
  (list 1 123 123456123 1.4 0.001 1/2 12341243124.2))\n\
 \n\
 (for-each\n\
  (lambda (n)\n\
    (if (positive? n)\n\
-       (display (format #f \";~A is positive?\" arg))))\n\
+       (display (format #f \";~A is positive?\" n))))\n\
  (list -1 -123 -123456123 -3/2 -0.00001 -1.4 -123124124.1))\n\
 \n\
 (for-each\n\
  (lambda (n)\n\
    (if (not (negative? n))\n\
-       (display (format #f \";~A is not negative?\" arg))))\n\
+       (display (format #f \";~A is not negative?\" n))))\n\
  (list -1 -123 -123456123 -2/3 -0.00001 -1.4 -123124124.1))\n\
 \n\
 (for-each\n\
  (lambda (n)\n\
    (if (not (zero? n))\n\
-       (display (format #f \";~A is not zero?\" arg))))\n\
+       (display (format #f \";~A is not zero?\" n))))\n\
  (list 0 0.0 0+0i 0/1 0.0-0.0i))\n\
 \n\
 (for-each\n\
  (lambda (n)\n\
    (if (zero? n)\n\
-       (display (format #f \";~A is zero?\" arg))))\n\
+       (display (format #f \";~A is zero?\" n))))\n\
  (list 1 1/100 -0.001 0.0+1.0i))\n\n\
 (let* ((last-good 0)\n\
        (first-bad \n\
@@ -892,7 +916,7 @@ int main(int argc, char **argv)
 	     (if (and (eqv? k (string->number (number->string k)))\n\
 		      (eqv? (- k) (string->number (number->string (- k)))))\n\
 		 (set! last-good k)\n\
-		 (let ((search \n\
+		 (letrec ((search \n\
 			(lambda (lo hi)\n\
 			  (if (= lo hi)\n\
 			      hi\n\
@@ -1054,21 +1078,6 @@ int main(int argc, char **argv)
     }
   
   fprintf(fp, "\n;;; --------------------------------------------------------------------------------\n");
-  
-  for (i = 0; i < INT_ARGS; i++)
-    {
-      fprintf(fp, "(define int-%d %lld)\n", i, int_args[i]);
-      fprintf(fp, "(define ratio-%d %lld/%lld)\n", i, int_args[i], int_args[3]);
-    }
-
-  for (i = 0; i < DOUBLE_ARGS; i++)
-    {
-      char *t1, *t2;
-      fprintf(fp, "(define real-%d %s)\n", i, t1 = gstr(double_args[i]));
-      fprintf(fp, "(define complex-%d %s+%si)\n", i, t1, t2 = gstr(double_args[3]));
-      free(t1);
-      free(t2);
-    }
   
   fprintf(fp, "\n\n");
   
@@ -1803,7 +1812,9 @@ int main(int argc, char **argv)
 	  off_t num = 0, den = 0;
 	  bool happy = true;
 	  char *t1, *t2;
-	  happy = c_rationalize(rat_args[i], error_args[j], &num, &den);
+	  if (use_continued_fractions_in_rationalize)
+	    happy = continued_fraction_rationalize(rat_args[i], error_args[j], &num, &den);
+	  else happy = c_rationalize(rat_args[i], error_args[j], &num, &den);
 	  if (happy)
 	    {
 	      fprintf(fp, "(test (rationalize %s %s) %lld/%lld)\n", 
@@ -1814,7 +1825,10 @@ int main(int argc, char **argv)
 	      free(t2);
 	    }
 	  else fprintf(stderr, "oops: %f %f?", rat_args[i], error_args[j]);
-	  happy = c_rationalize(-rat_args[i], error_args[j], &num, &den);
+
+	  if (use_continued_fractions_in_rationalize)
+	    happy = continued_fraction_rationalize(-rat_args[i], error_args[j], &num, &den);
+	  else happy = c_rationalize(-rat_args[i], error_args[j], &num, &den);
 	  if (happy)
 	    {
 	      fprintf(fp, "(test (rationalize %s %s) %lld/%lld)\n", 
@@ -2084,14 +2098,12 @@ int main(int argc, char **argv)
       if (j == DOUBLE_ARGS) j = 0;
       if (double_args[j] == 0.0) j++;
 
-      fprintf(fp, "(test (min %s) %s)\n",
-	      t1 = split_complex_to_string(double_args[i], double_args[j]), 
-	      t2 = split_complex_to_string(double_args[i], double_args[j]));
-      free(t1); free(t2); 
-      fprintf(fp, "(test (max %s) %s)\n", 
-	      t1 = split_complex_to_string(double_args[i], double_args[j]), 
-	      t2 = split_complex_to_string(double_args[i], double_args[j]));
-      free(t1); free(t2); 
+      fprintf(fp, "(test (min %s) 'error)\n",
+	      t1 = split_complex_to_string(double_args[i], double_args[j]));
+      free(t1); 
+      fprintf(fp, "(test (max %s) 'error)\n", 
+	      t1 = split_complex_to_string(double_args[i], double_args[j]));
+      free(t1); 
       fprintf(fp, "(test (+ %s) %s)\n", 
 	      t1 = split_complex_to_string(double_args[i], double_args[j]), 
 	      t2 = split_complex_to_string(double_args[i], double_args[j]));
@@ -2135,14 +2147,12 @@ int main(int argc, char **argv)
 	free(t1); free(t2);
       }
       
-      fprintf(fp, "(test (min %s) %s)\n", 
-	      t1 = split_complex_to_string(-double_args[i], double_args[j]), 
-	      t2 = split_complex_to_string(-double_args[i], double_args[j]));
-      free(t1); free(t2);
-      fprintf(fp, "(test (max %s) %s)\n", 
-	      t1 = split_complex_to_string(-double_args[i], double_args[j]), 
-	      t2 = split_complex_to_string(-double_args[i], double_args[j]));
-      free(t1); free(t2);
+      fprintf(fp, "(test (min %s) 'error)\n", 
+	      t1 = split_complex_to_string(-double_args[i], double_args[j]));
+      free(t1); 
+      fprintf(fp, "(test (max %s) 'error)\n", 
+	      t1 = split_complex_to_string(-double_args[i], double_args[j]));
+      free(t1); 
       fprintf(fp, "(test (+ %s) %s)\n", 
 	      t1 = split_complex_to_string(-double_args[i], double_args[j]), 
 	      t2 = split_complex_to_string(-double_args[i], double_args[j]));
