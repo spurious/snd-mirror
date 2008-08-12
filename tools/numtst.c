@@ -300,7 +300,7 @@ static off_t c_lcm(off_t a, off_t b)
   if ((a == 0) || (b == 0)) return(0);
   if (a < 0) a = -a;   /* in Scheme, lcm is always positive */
   if (b < 0) b = -b;
-  return((a * b) / c_gcd(a, b));
+  return((a / c_gcd(a, b)) * b);
 }
 
 
@@ -1051,6 +1051,294 @@ static char *divide(int args, ...)
   return(temp);
 }
 
+static char *equal(int args, ...)
+{
+  /* assume ratios incoming are in lowest terms */
+  int i, cur_arg, type = ARG_INT;
+  va_list ap;
+  off_t on = 0, od = 1;
+  double ox = 0.0;
+  double complex oz = 0.0 + 0.0 * _Complex_I;
+  va_start(ap, args);
+  for (i = 0; i < args; i++)
+    {
+      cur_arg = va_arg(ap, int);
+      if (arg_data[cur_arg].type > type)
+	type = arg_data[cur_arg].type;
+    }
+  va_end(ap);
+  va_start(ap, args);
+  cur_arg = va_arg(ap, int);
+  switch (type)
+    {
+    case ARG_INT: 
+      on = arg_data[cur_arg].n; 
+      break;
+    case ARG_RATIO: 
+      if (arg_data[cur_arg].type == ARG_INT)
+	on = arg_data[cur_arg].n;
+      else 
+	{
+	  on = arg_data[cur_arg].n;
+	  od = arg_data[cur_arg].d;
+	}
+      break;
+    case ARG_REAL: 
+      if (arg_data[cur_arg].type == ARG_INT)
+	ox = (double)arg_data[cur_arg].n;
+      else 
+	{
+	  if (arg_data[cur_arg].type == ARG_RATIO)
+	    ox = (double)arg_data[cur_arg].n / (double)arg_data[cur_arg].d; 
+	  else ox = arg_data[cur_arg].x;
+	}
+      break;
+    case ARG_COMPLEX: 
+      switch (arg_data[cur_arg].type)
+	{
+	case ARG_INT: oz = (double)arg_data[cur_arg].n; break;
+	case ARG_RATIO: oz = (double)arg_data[cur_arg].n / (double)arg_data[cur_arg].d; break;
+	case ARG_REAL: oz = arg_data[cur_arg].x; break;
+	case ARG_COMPLEX: oz = arg_data[cur_arg].z; break;
+	}
+      break;
+    }
+  for (i = 1; i < args; i++)
+    {
+      cur_arg = va_arg(ap, int);
+      switch (type)
+	{
+	case ARG_INT: 
+	  if (on != arg_data[cur_arg].n) 
+	    {
+	      va_end(ap); 
+	      return("#f");
+	    }
+	  break;
+	case ARG_RATIO: 
+	  if (((arg_data[cur_arg].type == ARG_INT) &&
+	       ((od != 1) || (arg_data[cur_arg].n != on))) ||
+	      ((arg_data[cur_arg].type == ARG_RATIO) &&
+	       ((on != arg_data[cur_arg].n) || (od != arg_data[cur_arg].d))))
+	    {
+	      va_end(ap);
+	      return("#f");
+	    }
+	  break;
+	case ARG_REAL: 
+	  if (((arg_data[cur_arg].type == ARG_INT) &&
+	       (ox != (double)arg_data[cur_arg].n)) ||
+	      ((arg_data[cur_arg].type == ARG_RATIO) &&
+	       (ox != (double)arg_data[cur_arg].n / (double)arg_data[cur_arg].d)) ||
+	      ((arg_data[cur_arg].type == ARG_REAL) &&
+	       (ox != arg_data[cur_arg].x)))
+	    {
+	      va_end(ap);
+	      return("#f");
+	    }
+	  break;
+	case ARG_COMPLEX: 
+	  switch (arg_data[cur_arg].type)
+	    {
+	    case ARG_INT: if (oz != (double)arg_data[cur_arg].n) {va_end(ap); return("#f");} break;
+	    case ARG_RATIO: if (oz != (double)arg_data[cur_arg].n / (double)arg_data[cur_arg].d) {va_end(ap); return("#f");} break;
+	    case ARG_REAL: if (oz != arg_data[cur_arg].x) {va_end(ap); return("#f");} break;
+	    case ARG_COMPLEX: if (oz != arg_data[cur_arg].z) {va_end(ap); return("#f");} break;
+	    }
+	  break;
+	}
+    }
+  va_end(ap);
+  return("#t");
+}
+
+enum {LESS, LESS_OR_EQUAL, GREATER, GREATER_OR_EQUAL};
+
+static char *unequal(int op, int args, ...)
+{
+  int i, cur_arg;
+  va_list ap;
+  double ox = 0.0, nx;
+
+  va_start(ap, args);
+  cur_arg = va_arg(ap, int);
+
+  switch (arg_data[cur_arg].type)
+    {
+    case ARG_INT:    ox = (double)arg_data[cur_arg].n; break;
+    case ARG_RATIO:  ox = (double)arg_data[cur_arg].n / (double)arg_data[cur_arg].d; break;
+    case ARG_REAL:   ox = arg_data[cur_arg].x; break;
+    }
+
+  for (i = 1; i < args; i++)
+    {
+      cur_arg = va_arg(ap, int);
+      switch (op)
+	{
+	case LESS:
+	  {
+	    switch (arg_data[cur_arg].type)
+	      {
+	      case ARG_INT:    if (ox >= (nx = (double)arg_data[cur_arg].n)) {va_end(ap); return("#f");} break;
+	      case ARG_RATIO:  if (ox >= (nx = (double)arg_data[cur_arg].n / (double)arg_data[cur_arg].d)) {va_end(ap); return("#f");} break;
+	      case ARG_REAL:   if (ox >= (nx = arg_data[cur_arg].x)) {va_end(ap); return("#f");} break;
+	      }
+	  }
+	  break;
+	case LESS_OR_EQUAL:
+	  {
+	    switch (arg_data[cur_arg].type)
+	      {
+	      case ARG_INT:    if (ox > (nx = (double)arg_data[cur_arg].n)) {va_end(ap); return("#f");} break;
+	      case ARG_RATIO:  if (ox > (nx = (double)arg_data[cur_arg].n / (double)arg_data[cur_arg].d)) {va_end(ap); return("#f");} break;
+	      case ARG_REAL:   if (ox > (nx = arg_data[cur_arg].x)) {va_end(ap); return("#f");} break;
+	      }
+	  }
+	  break;
+	case GREATER:
+	  {
+	    switch (arg_data[cur_arg].type)
+	      {
+	      case ARG_INT:    if (ox <= (nx = (double)arg_data[cur_arg].n)) {va_end(ap); return("#f");} break;
+	      case ARG_RATIO:  if (ox <= (nx = (double)arg_data[cur_arg].n / (double)arg_data[cur_arg].d)) {va_end(ap); return("#f");} break;
+	      case ARG_REAL:   if (ox <= (nx = arg_data[cur_arg].x)) {va_end(ap); return("#f");} break;
+	      }
+	  }
+	  break;
+	case GREATER_OR_EQUAL:
+	  {
+	    switch (arg_data[cur_arg].type)
+	      {
+	      case ARG_INT:    if (ox < (nx = (double)arg_data[cur_arg].n)) {va_end(ap); return("#f");} break;
+	      case ARG_RATIO:  if (ox < (nx = (double)arg_data[cur_arg].n / (double)arg_data[cur_arg].d)) {va_end(ap); return("#f");} break;
+	      case ARG_REAL:   if (ox < (nx = arg_data[cur_arg].x)) {va_end(ap); return("#f");} break;
+	      }
+	  }
+	  break;
+	}
+      ox = nx;
+    }
+  va_end(ap);
+  return("#t");
+}
+
+static char *minmax(bool min_case, int args, ...)
+{
+  int i, cur_arg, type = ARG_INT;
+  va_list ap;
+  char *temp;
+  off_t on = 0, od = 1;
+  double ox, oy;
+
+  va_start(ap, args);
+  for (i = 0; i < args; i++)
+    {
+      cur_arg = va_arg(ap, int);
+      if (arg_data[cur_arg].type > type)
+	type = arg_data[cur_arg].type;
+    }
+  va_end(ap);
+
+  va_start(ap, args);
+  cur_arg = va_arg(ap, int);
+  switch (type)
+    {
+    case ARG_INT: 
+      on = arg_data[cur_arg].n; 
+      break;
+    case ARG_RATIO: 
+      if (arg_data[cur_arg].type == ARG_INT)
+	ox = (double)arg_data[cur_arg].n;
+      else ox = (double)arg_data[cur_arg].n / (double)arg_data[cur_arg].d; 
+      break;
+    case ARG_REAL: 
+      if (arg_data[cur_arg].type == ARG_INT)
+	ox = (double)arg_data[cur_arg].n;
+      else 
+	{
+	  if (arg_data[cur_arg].type == ARG_RATIO)
+	    ox = (double)arg_data[cur_arg].n / (double)arg_data[cur_arg].d; 
+	  else ox = arg_data[cur_arg].x;
+	}
+      break;
+    }
+
+  for (i = 1; i < args; i++)
+    {
+      cur_arg = va_arg(ap, int);
+      switch (type)
+	{
+	case ARG_INT: 
+	  if (min_case)
+	    {
+	      if (on > arg_data[cur_arg].n)
+		on = arg_data[cur_arg].n;
+	    }
+	  else
+	    {
+	      if (on < arg_data[cur_arg].n)
+		on = arg_data[cur_arg].n;
+	    }
+	  break;
+	case ARG_RATIO: 
+	  if (arg_data[cur_arg].type == ARG_INT)
+	    oy = (double)arg_data[cur_arg].n;
+	  else oy = (double)arg_data[cur_arg].n / (double)arg_data[cur_arg].d;
+	  if (min_case)
+	    {
+	      if (ox > oy)
+		ox = oy;
+	    }
+	  else
+	    {
+	      if (ox < oy)
+		ox = oy;
+	    }
+	  break;
+	case ARG_REAL: 
+	  if (arg_data[cur_arg].type == ARG_INT)
+	    oy = (double)arg_data[cur_arg].n;
+	  else 
+	    {
+	      if (arg_data[cur_arg].type == ARG_RATIO)
+		oy = (double)arg_data[cur_arg].n / (double)arg_data[cur_arg].d; 
+	      else oy = arg_data[cur_arg].x;
+	    }
+	  if (min_case)
+	    {
+	      if (ox > oy)
+		ox = oy;
+	    }
+	  else
+	    {
+	      if (ox < oy)
+		ox = oy;
+	    }
+	  break;
+	}
+    }
+  va_end(ap);
+
+  switch (type)
+    {
+    case ARG_INT: 
+      temp = (char *)calloc(128, sizeof(char));
+      sprintf(temp, "%lld", on);
+      break;
+    case ARG_RATIO: 
+      temp = (char *)calloc(128, sizeof(char));
+      c_rationalize(ox, 0.000001, &on, &od);
+      if (od == 1)
+	sprintf(temp, "%lld", on);
+      else sprintf(temp, "%lld/%lld", on, od);
+      break;
+    case ARG_REAL:
+      temp = gstr(ox);
+      break;
+    }
+  return(temp);
+}
+
 
 
 /* -------------------------------------------------------------------------------- */
@@ -1628,6 +1916,18 @@ int main(int argc, char **argv)
 		}
 	    }
     }
+
+
+  for (i = 0; i < DOUBLE_ARGS; i++)
+    for (j = 0; j < DOUBLE_ARGS; j++)
+      {
+	char *t1, *t2, *t3;
+	fprintf(fp, "(test (atan %s %s) %s)\n", 
+		t1 = gstr(double_args[i]), t2 = gstr(double_args[j]), 
+		t3 = gstr(atan2(double_args[i], double_args[j])));
+	free(t1); free(t2); free(t3); 
+      }
+
 
   fprintf(fp, "\n\n\
 (test (sin 10/3) -0.1905679628754527) \n\
@@ -2287,7 +2587,9 @@ int main(int argc, char **argv)
 
   fprintf(fp, "\n\n\
 (test (gcd 323 28747 27113) 19)\n\
-(test (lcm 323 28747 27113) 41021969)\n\n");
+(test (lcm 323 28747 27113) 41021969)\n\
+(test (lcm (* 512 500057) (* 128 500057) (* 2048 500057)) 1024116736)\n\
+(test (gcd (* 512 500057) (* 128 500057) (* 2048 500057)) 64007296)\n");
 
   fprintf(fp, "\n\n\
 (test (real-part 1) 1)\n\
@@ -2360,15 +2662,19 @@ int main(int argc, char **argv)
 	  {
 	    fprintf(fp, "(test (modulo %lld %lld) %lld)\n", int_args[i], int_args[j], c_mod(int_args[i], int_args[j]));
 	    fprintf(fp, "(test (remainder %lld %lld) %lld)\n", int_args[i], int_args[j], (int_args[i] % int_args[j]));
+	    fprintf(fp, "(test (quotient %lld %lld) %lld)\n", int_args[i], int_args[j], (off_t)(int_args[i] / int_args[j]));
 
 	    fprintf(fp, "(test (modulo %lld %lld) %lld)\n", -int_args[i], int_args[j], c_mod(-int_args[i], int_args[j]));
 	    fprintf(fp, "(test (remainder %lld %lld) %lld)\n", -int_args[i], int_args[j], (-int_args[i] % int_args[j]));
+	    fprintf(fp, "(test (quotient %lld %lld) %lld)\n", -int_args[i], int_args[j], (off_t)(-int_args[i] / int_args[j]));
 
 	    fprintf(fp, "(test (modulo %lld %lld) %lld)\n", int_args[i], -int_args[j], c_mod(int_args[i], -int_args[j]));
 	    fprintf(fp, "(test (remainder %lld %lld) %lld)\n", int_args[i], -int_args[j], (int_args[i] % -int_args[j]));
+	    fprintf(fp, "(test (quotient %lld %lld) %lld)\n", int_args[i], -int_args[j], (off_t)(int_args[i] / -int_args[j]));
 
 	    fprintf(fp, "(test (modulo %lld %lld) %lld)\n", -int_args[i], -int_args[j], c_mod(-int_args[i], -int_args[j]));
 	    fprintf(fp, "(test (remainder %lld %lld) %lld)\n", -int_args[i], -int_args[j], (-int_args[i] % -int_args[j]));
+	    fprintf(fp, "(test (quotient %lld %lld) %lld)\n", -int_args[i], -int_args[j], (off_t)(-int_args[i] / -int_args[j]));
 	  }
       }
 
@@ -2390,8 +2696,12 @@ int main(int argc, char **argv)
       fprintf(fp, "(test (abs -%lld) %lld)\n", int_args[i], int_args[i]);
       fprintf(fp, "(test (magnitude %lld) %lld)\n", int_args[i], int_args[i]);
       fprintf(fp, "(test (magnitude -%lld) %lld)\n", int_args[i], int_args[i]);
-      fprintf(fp, "(test (angle %lld) 0)\n", int_args[i]);
-      fprintf(fp, "(test (angle -%lld) %s)\n", int_args[i], (int_args[i] == 0) ? "0" : "3.14159265");
+
+      if (int_args[i] != 0)
+	{
+	  fprintf(fp, "(test (angle %lld) 0)\n", int_args[i]);
+	  fprintf(fp, "(test (angle -%lld) 3.14159265)\n", int_args[i]);
+	}
       
       for (j = 1; j < INT_ARGS; j++)
 	{
@@ -2401,8 +2711,12 @@ int main(int argc, char **argv)
 	  fprintf(fp, "(test (abs -%lld/%lld) %lld/%lld)\n", int_args[i], int_args[j], int_args[i], int_args[j]);
 	  fprintf(fp, "(test (magnitude %lld/%lld) %lld/%lld)\n", int_args[i], int_args[j], int_args[i], int_args[j]);
 	  fprintf(fp, "(test (magnitude -%lld/%lld) %lld/%lld)\n", int_args[i], int_args[j], int_args[i], int_args[j]);
-	  fprintf(fp, "(test (angle %lld/%lld) 0)\n", int_args[i], int_args[j]);
-	  fprintf(fp, "(test (angle -%lld/%lld) %s)\n", int_args[i], int_args[j], (int_args[i] == 0) ? "0" : "3.14159265");
+
+	  if (int_args[i] != 0)
+	    {
+	      fprintf(fp, "(test (angle %lld/%lld) 0)\n", int_args[i], int_args[j]);
+	      fprintf(fp, "(test (angle -%lld/%lld) 3.14159265)\n", int_args[i], int_args[j]);
+	    }
 
 	  t1 = split_complex_to_string((double)int_args[i], (double)int_args[j]);
 	  fprintf(fp, "(test (make-rectangular %lld %lld) %s)\n", int_args[i], int_args[j], t1);
@@ -2448,14 +2762,18 @@ int main(int argc, char **argv)
       t1 = gstr(double_args[i]);
       fprintf(fp, "(test (abs %s) %s)\n", t1, t1);
       fprintf(fp, "(test (abs -%s) %s)\n", t1, t1);
-      free(t1);
-      t1 = gstr(double_args[i]);
+
       fprintf(fp, "(test (magnitude %s) %s)\n", t1, t1);
       fprintf(fp, "(test (magnitude -%s) %s)\n", t1, t1);
-      fprintf(fp, "(test (angle %s) 0.0)\n", t1);
-      fprintf(fp, "(test (angle -%s) %s)\n", t1, (double_args[i] == 0.0) ? "0.0" : "3.14159265");
 
-      for (j = 1; j < INT_ARGS; j++)
+      if (double_args[i] != 0.0)
+	{
+	  fprintf(fp, "(test (angle %s) 0.0)\n", t1);
+	  fprintf(fp, "(test (angle -%s) 3.14159265)\n", t1);
+	}
+      free(t1);
+
+      for (j = 1; j < DOUBLE_ARGS; j++)
 	{
 	  double mag, ang;
 	  double complex z;
@@ -2466,28 +2784,36 @@ int main(int argc, char **argv)
 	  ang = carg(double_args[i] + double_args[j] * _Complex_I);
 	  t3 = split_complex_to_string(creal(ang), cimag(ang));
 	  fprintf(fp, "(test (magnitude %s) %s)\n", t1, t2);
-	  fprintf(fp, "(test (angle %s) %s)\n", t1, t3);
+
+	  if ((double_args[i] != 0.0) || (double_args[j] != 0.0))
+	    fprintf(fp, "(test (angle %s) %s)\n", t1, t3);
 	  free(t1); free(t3);
 
 	  t1 = split_complex_to_string(-double_args[i], double_args[j]);
 	  ang = carg(-double_args[i] + double_args[j] * _Complex_I);
 	  t3 = split_complex_to_string(creal(ang), cimag(ang));
 	  fprintf(fp, "(test (magnitude %s) %s)\n", t1, t2);
-	  fprintf(fp, "(test (angle %s) %s)\n", t1, t3);
+
+	  if ((double_args[i] != 0.0) || (double_args[j] != 0.0))
+	    fprintf(fp, "(test (angle %s) %s)\n", t1, t3);
 	  free(t1); free(t3);
 
 	  t1 = split_complex_to_string(double_args[i], -double_args[j]);
 	  ang = carg(double_args[i] - double_args[j] * _Complex_I);
 	  t3 = split_complex_to_string(creal(ang), cimag(ang));
 	  fprintf(fp, "(test (magnitude %s) %s)\n", t1, t2);
-	  fprintf(fp, "(test (angle %s) %s)\n", t1, t3);
+
+	  if ((double_args[i] != 0.0) || (double_args[j] != 0.0))
+	    fprintf(fp, "(test (angle %s) %s)\n", t1, t3);
 	  free(t1); free(t3);
 
 	  t1 = split_complex_to_string(-double_args[i], -double_args[j]);
 	  ang = carg(-double_args[i] - double_args[j] * _Complex_I);
 	  t3 = split_complex_to_string(creal(ang), cimag(ang));
 	  fprintf(fp, "(test (magnitude %s) %s)\n", t1, t2);
-	  fprintf(fp, "(test (angle %s) %s)\n", t1, t3);
+
+	  if ((double_args[i] != 0.0) || (double_args[j] != 0.0))
+	    fprintf(fp, "(test (angle %s) %s)\n", t1, t3);
 	  free(t1); free(t2); free(t3);
 
 	  t1 = split_complex_to_string(double_args[i], double_args[j]);
@@ -2753,7 +3079,19 @@ int main(int argc, char **argv)
 	fprintf(fp, "(test (/ %s %s) %s)\n", arg_data[i].name, arg_data[j].name, t1 = divide(2, i, j));
 	free(t1);
 
+	fprintf(fp, "(test (= %s %s) %s)\n", arg_data[i].name, arg_data[j].name, equal(2, i, j));
 
+	if ((arg_data[i].type != ARG_COMPLEX) &&
+	    (arg_data[j].type != ARG_COMPLEX))
+	  {
+	    fprintf(fp, "(test (< %s %s) %s)\n", arg_data[i].name, arg_data[j].name, unequal(LESS, 2, i, j));
+	    fprintf(fp, "(test (<= %s %s) %s)\n", arg_data[i].name, arg_data[j].name, unequal(LESS_OR_EQUAL, 2, i, j));
+	    fprintf(fp, "(test (> %s %s) %s)\n", arg_data[i].name, arg_data[j].name, unequal(GREATER, 2, i, j));
+	    fprintf(fp, "(test (>= %s %s) %s)\n", arg_data[i].name, arg_data[j].name, unequal(GREATER_OR_EQUAL, 2, i, j));
+
+	    fprintf(fp, "(test (min %s %s) %s)\n", arg_data[i].name, arg_data[j].name, minmax(true, 2, i, j));
+	    fprintf(fp, "(test (max %s %s) %s)\n", arg_data[i].name, arg_data[j].name, minmax(false, 2, i, j));
+	  }
       }
 
   for (i = 0; i < NUMERIC_ARGS; i++)
@@ -2786,21 +3124,28 @@ int main(int argc, char **argv)
 	      }
 	    fprintf(fp, "(test (/ %s %s %s) %s)\n", arg_data[i].name, arg_data[j].name, arg_data[k].name, t1 = divide(3, i, j, k));
 	    free(t1);
+
+	    fprintf(fp, "(test (= %s %s %s) %s)\n", arg_data[i].name, arg_data[j].name, arg_data[k].name, equal(3, i, j, k));
+
+	    if ((arg_data[i].type != ARG_COMPLEX) &&
+		(arg_data[j].type != ARG_COMPLEX) &&
+		(arg_data[k].type != ARG_COMPLEX))
+	      {
+		fprintf(fp, "(test (< %s %s %s) %s)\n", arg_data[i].name, arg_data[j].name, arg_data[k].name, unequal(LESS, 3, i, j, k));
+		fprintf(fp, "(test (<= %s %s %s) %s)\n", arg_data[i].name, arg_data[j].name, arg_data[k].name, unequal(LESS_OR_EQUAL, 3, i, j, k));
+		fprintf(fp, "(test (> %s %s %s) %s)\n", arg_data[i].name, arg_data[j].name, arg_data[k].name, unequal(GREATER, 3, i, j, k));
+		fprintf(fp, "(test (>= %s %s %s) %s)\n", arg_data[i].name, arg_data[j].name, arg_data[k].name, unequal(GREATER_OR_EQUAL, 3, i, j, k));
+
+		fprintf(fp, "(test (min %s %s %s) %s)\n", arg_data[i].name, arg_data[j].name, arg_data[k].name, minmax(true, 3, i, j, k));
+		fprintf(fp, "(test (max %s %s %s) %s)\n", arg_data[i].name, arg_data[j].name, arg_data[k].name, minmax(false, 3, i, j, k));
+	      }
 	  }
 
       }
 
-    fprintf(fp, "(display \";all done!\") (newline)\n");
+  fprintf(fp, "(display \";all done!\") (newline)\n");
 
-/* remaining expt cases
-   quotient
-   + - * / < <= > >= = max min
-   2 arg atan
-   string->n going 1/2
-   
-*/
+  fclose(fp);
 
-fclose(fp);
-
-return(0);
+  return(0);
 }
