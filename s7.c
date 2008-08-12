@@ -97,6 +97,12 @@
   #define STDIO_ADDS_CR 0
 #endif
 
+/*
+#define USE_OBJECT_LIST 1
+#define USE_ALIST_ENV 1
+*/
+
+
 #define _FILE_OFFSET_BITS 64
 
 #include <unistd.h>
@@ -119,12 +125,12 @@ enum scheme_opcodes {
   OP_MAXDEFINED 
 }; 
 
-#if 0
+
 static char *opcode_names[] = {
 #define _OP_DEF(A,B,C,D,E,OP) #OP,
 #include "s7-ops.h"
 };
-#endif
+
 
 static char error_buf[1024];
 
@@ -525,9 +531,8 @@ static const char *type_names[16] = {
 #define UNMARK       32767    /* 0111111111111111 */
 
 
-static pointer _Error_1(scheme *sc, const char *s, pointer a);
-#define Error_1(sc, s, a) return _Error_1(sc, s, a)
-#define Error_0(sc, s)    return _Error_1(sc, s, 0)
+static pointer Error_1(scheme *sc, const char *s, pointer a);
+#define Error_0(sc, s) return Error_1(sc, s, 0)
 
 static num num_zero;
 static num num_one;
@@ -968,7 +973,7 @@ static num make_ratio(scheme *sc, Int numer, Int denom)
   Int divisor;
 
   if (denom == 0)
-    _Error_1(sc, "/: division by 0", 0);
+    Error_1(sc, "/: division by 0", 0);
 
   if (denom < 0)
     {
@@ -1242,7 +1247,7 @@ static num num_div(scheme *sc, num a, num b)
 	double rb;
 	rb = num_to_real(b);
 	if (rb == 0.0)
-	  _Error_1(sc, "/: division by 0.0", 0);
+	  Error_1(sc, "/: division by 0.0", 0);
 	real(ret) = num_to_real(a) / rb;
       }
       break;
@@ -1256,7 +1261,7 @@ static num num_div(scheme *sc, num a, num b)
 	i2 = num_to_imag_part(b);
 	den = (r2 * r2 + i2 * i2);
 	if (den == 0.0)
-	  _Error_1(sc, "/: complex division by 0.0", 0);
+	  Error_1(sc, "/: complex division by 0.0", 0);
 	ret = make_complex((r1 * r2 + i1 * i2) / den, (r2 * i1 - r1 * i2) / den);
       }
       break;
@@ -2981,71 +2986,65 @@ static int token(scheme *sc)
 {
   int c;
   skipspace(sc);
-  switch (c =inchar(sc)) 
+  switch (c = inchar(sc)) 
     {
     case EOF:
       return (TOK_EOF);
+
     case '(':
       return (TOK_LPAREN);
+
     case ')':
       return (TOK_RPAREN);
+
     case '.':
-      c =inchar(sc);
-      if (is_one_of(" \n\t",c)) 
-	{
-	  return (TOK_DOT);
-	} 
-      else 
-	{
-	  backchar(sc,c);
-	  backchar(sc,'.');
-	  return TOK_ATOM;
-	}
+      c = inchar(sc);
+      if (is_one_of(" \n\t", c)) 
+	return (TOK_DOT);
+
+      backchar(sc, c);
+      backchar(sc, '.');
+      return TOK_ATOM;
+
     case '\'':
       return (TOK_QUOTE);
+
     case ';':
-      while ((c =inchar(sc)) != '\n' && c!=EOF)
+      while ((c = inchar(sc)) != '\n' && c != EOF)
 	;
       return (token(sc));
+
     case '"':
       return (TOK_DQUOTE);
+
     case BACKQUOTE:
       return (TOK_BQUOTE);
+
     case ',':
-      if ((c =inchar(sc)) == '@') 
-	{
-	  return (TOK_ATMARK);
-	} 
-      else 
-	{
-	  backchar(sc,c);
-	  return (TOK_COMMA);
-	}
+      if ((c = inchar(sc)) == '@') 
+	return (TOK_ATMARK);
+
+      backchar(sc, c);
+      return (TOK_COMMA);
+
     case '#':
-      c =inchar(sc);
+      c = inchar(sc);
       if (c == '(') 
-	{
-	  return (TOK_VEC);
-	} 
-      else if (c == '!') 
+	return (TOK_VEC);
+
+      if (c == '!') 
 	{
 	  /* TODO: block comment, this is wrong! */
 	  while ((c =inchar(sc)) != '\n' && c!=EOF)
 	    ;
 	  return (token(sc));
-	} 
-      else 
-	{
-	  backchar(sc,c);
-	  if (is_one_of(" tfodxb\\",c)) 
-	    {
-	      return TOK_SHARP_CONST;
-	    } 
-	  else 
-	    {
-	      return (TOK_SHARP);
-	    }
 	}
+
+      backchar(sc,c);
+      if (is_one_of(" tfodxb\\", c)) 
+	return TOK_SHARP_CONST;
+      return (TOK_SHARP);
+
     default:
       backchar(sc,c);
       return (TOK_ATOM);
@@ -3337,7 +3336,7 @@ static pointer list_to_string(scheme *sc, pointer lst)
       elements[i] = strdup(string_value(s7_object_to_string(sc, car(x))));
       bufsize += strlen(elements[i]);
     }
-  bufsize += 128;
+  bufsize += (128 + len); /* len spaces */
   buf = (char *)calloc(bufsize, sizeof(char));
   sprintf(buf, "(");
   for (i = 0; i < len - 1; i++)
@@ -3615,13 +3614,13 @@ static  void new_frame_in_env(scheme *sc, pointer old_env)
   setenvironment(sc->envir); 
 } 
 
-static  void new_slot_spec_in_env(scheme *sc, pointer env, 
+void s7_new_slot_spec_in_env(scheme *sc, pointer env, 
 				  pointer variable, pointer value) 
 { 
   car(env) = s7_immutable_cons(sc, s7_immutable_cons(sc, variable, value), car(env)); 
 } 
 
-static pointer s7_find_slot_in_env(scheme *sc, pointer env, pointer hdl, int all) 
+pointer s7_find_slot_in_env(scheme *sc, pointer env, pointer hdl, int all) 
 { 
   pointer x,y; 
   for (x = env; x != sc->NIL; x = cdr(x)) 
@@ -3671,7 +3670,7 @@ pointer s7_slot_value_in_env(pointer slot)
 /* ========== Evaluation Cycle ========== */
 
 
-static pointer _Error_1(scheme *sc, const char *s, pointer a) 
+static pointer Error_1(scheme *sc, const char *s, pointer a) 
 {
 #if USE_ERROR_HOOK
   pointer x;
@@ -3685,13 +3684,9 @@ static pointer _Error_1(scheme *sc, const char *s, pointer a)
       (x != sc->F))
     {
       if (a != 0) 
-	{
-	  set_sc_code(sc, cons(sc, cons(sc, sc->QUOTE, cons(sc, a, sc->NIL)), sc->NIL));
-	} 
-      else 
-	{
-	  set_sc_code(sc, sc->NIL);
-	}
+	set_sc_code(sc, cons(sc, cons(sc, sc->QUOTE, cons(sc, a, sc->NIL)), sc->NIL));
+      else set_sc_code(sc, sc->NIL);
+
       set_sc_code(sc, cons(sc, s7_make_string(sc, s), sc->code));
       s7_setimmutable(car(sc->code));
       set_sc_code(sc, cons(sc, s7_slot_value_in_env(x), sc->code)); 
@@ -5006,9 +5001,8 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
       v = nvalue(car(sc->args));
       if (s7_integer(cadr(sc->args)) != 0)
 	v = num_rem(v, nvalue(cadr(sc->args)));
-      else {
-	Error_0(sc, "remainder: division by zero");
-      }
+      else Error_0(sc, "remainder: division by zero");
+
       s_return(sc,make_number(sc, v));
       
     case OP_MOD:        /* modulo */
@@ -5036,10 +5030,7 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
 	  caar(sc->args) = cadr(sc->args);
 	  s_return(sc, car(sc->args));
 	} 
-      else 
-	{
-	  Error_0(sc, "set-car!: unable to alter immutable pair");
-	}
+      else Error_0(sc, "set-car!: unable to alter immutable pair");
       
     case OP_SETCDR:     /* set-cdr! */
       if (!s7_is_immutable(car(sc->args))) 
@@ -5047,10 +5038,7 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
 	  cdar(sc->args) = cadr(sc->args);
 	  s_return(sc, car(sc->args));
 	} 
-      else 
-	{
-	  Error_0(sc, "set-cdr!: unable to alter immutable pair");
-	}
+      else Error_0(sc, "set-cdr!: unable to alter immutable pair");
       
     case OP_CHAR2INT:  /* char->integer */
       { 
@@ -5107,10 +5095,7 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
 	  s7_atom2str(sc, x, 0, &p, &len);
 	  s_return(sc, s7_make_counted_string(sc, p, len));
 	} 
-      else 
-	{
-	  Error_1(sc, "atom->string: not an atom:", x);
-	}
+      else Error_1(sc, "atom->string: not an atom:", x);
       
     case OP_MKSTRING: /* make-string */
       { 
@@ -5135,9 +5120,7 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
 	str = string_value(car(sc->args));
 	index = s7_integer(cadr(sc->args));
 	if (index >= string_length(car(sc->args))) 
-	  {
-	    Error_1(sc, "string-ref: out of bounds:", cadr(sc->args));
-	  }
+	  Error_1(sc, "string-ref: out of bounds:", cadr(sc->args));
       
 	s_return(sc, s7_make_character(sc, ((unsigned char*)str)[index]));
       }
@@ -5873,23 +5856,23 @@ static pointer opexe_5(scheme *sc, enum scheme_opcodes op)
 	}
       
     case OP_RDQUOTE:
-      s_return(sc,cons(sc, sc->QUOTE, cons(sc, sc->value, sc->NIL)));
+      s_return(sc, cons(sc, sc->QUOTE, cons(sc, sc->value, sc->NIL)));
       
     case OP_RDQQUOTE:
-      s_return(sc,cons(sc, sc->QQUOTE, cons(sc, sc->value, sc->NIL)));
+      s_return(sc, cons(sc, sc->QQUOTE, cons(sc, sc->value, sc->NIL)));
       
     case OP_RDQQUOTEVEC:
-      s_return(sc,cons(sc, s7_make_symbol(sc, "apply"),
-		       cons(sc, s7_make_symbol(sc, "vector"), 
-			    cons(sc,cons(sc, sc->QQUOTE, 
-					 cons(sc, sc->value, sc->NIL)),
-				 sc->NIL))));
+      s_return(sc, cons(sc, s7_make_symbol(sc, "apply"),
+			cons(sc, s7_make_symbol(sc, "vector"), 
+			     cons(sc,cons(sc, sc->QQUOTE, 
+					  cons(sc, sc->value, sc->NIL)),
+				  sc->NIL))));
       
     case OP_RDUNQUOTE:
-      s_return(sc,cons(sc, sc->UNQUOTE, cons(sc, sc->value, sc->NIL)));
+      s_return(sc, cons(sc, sc->UNQUOTE, cons(sc, sc->value, sc->NIL)));
       
     case OP_RDUQTSP:
-      s_return(sc,cons(sc, sc->UNQUOTESP, cons(sc, sc->value, sc->NIL)));
+      s_return(sc, cons(sc, sc->UNQUOTESP, cons(sc, sc->value, sc->NIL)));
       
     case OP_RDVEC:
       sc->args = sc->value;
@@ -6187,7 +6170,7 @@ static void Eval_Cycle(scheme *sc, enum scheme_opcodes op)
 	    }
 	  if (ok) 
 	    {
-	      if (pcd->arg_tests_encoding!= 0) 
+	      if (pcd->arg_tests_encoding != 0) 
 		{
 		  int i = 0;
 		  int j;
@@ -6196,17 +6179,17 @@ static void Eval_Cycle(scheme *sc, enum scheme_opcodes op)
 		  do {
 		    pointer arg = car(arglist);
 		    j = (int)t[0];
-		    if (j== TST_INPORT[0]) 
+		    if (j == TST_INPORT[0]) 
 		      {
 			if (!is_inport(arg)) break;
 		      } 
 		    else 
-		      if (j== TST_OUTPORT[0]) 
+		      if (j == TST_OUTPORT[0]) 
 			{
 			  if (!is_outport(arg)) break;
 			} 
 		      else 
-			if (j== TST_LIST[0]) 
+			if (j == TST_LIST[0]) 
 			  {
 			    if (arg!= sc->NIL && !s7_is_pair(arg)) break; 	      
 			  } 
@@ -6234,14 +6217,14 @@ static void Eval_Cycle(scheme *sc, enum scheme_opcodes op)
 	    }
 	  if (!ok) 
 	    {
-	      if (_Error_1(sc, msg, 0) == sc->NIL) 
+	      if (Error_1(sc, msg, 0) == sc->NIL) 
 		return;
 
 	      pcd = dispatch_table + sc->op;
 	    }
 	}
       old_op = sc->op;
-      if (pcd->func(sc, sc->op) == sc->NIL) 
+      if (pcd->func(sc, sc->op) == sc->NIL) /* here we call the op -- func is one of the opexe_n's */
 	return;
 
       if (sc->no_memory) 

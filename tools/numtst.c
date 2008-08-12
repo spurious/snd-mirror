@@ -46,6 +46,7 @@
 #include <sys/types.h>
 #include <ctype.h>
 #include <complex.h>
+#include <stdarg.h>
 
 #ifndef __cplusplus
 #if HAVE_STDBOOL_H
@@ -78,9 +79,8 @@ static const char *op_names[] = {
 #define ARG_INT 0
 #define ARG_RATIO 1
 #define ARG_REAL 2
-#define ARG_REAL2 3
-#define ARG_COMPLEX 4
-#define ARG_ANY 5
+#define ARG_COMPLEX 3
+#define ARG_ANY 4
 
 typedef struct {
   char *name;
@@ -579,7 +579,7 @@ static char *split_complex_to_string(double rl, double im)
       if (im > 0.0)
 	t2 = gstr(im);
       else t2 = gstr(fabs(im));
-      temp = (char *)calloc(2 + strlen(t1) + strlen(t2), sizeof(char));
+      temp = (char *)calloc(4 + strlen(t1) + strlen(t2), sizeof(char));
       sprintf(temp, "%s%s%si", t1, (im > 0.0) ? "+" : "-", t2);
       free(t1);
       free(t2);
@@ -669,6 +669,390 @@ static char *complex_arg(int a1, int a2, int s1, int s2)
 
 
 
+typedef struct {
+  char *name;
+  int type;
+  off_t n;
+  off_t d;
+  double x;
+  double complex z;
+} arg_stuff;
+
+#define NUMERIC_ARGS 12
+
+static arg_stuff arg_data[NUMERIC_ARGS] = {
+  {"1",            ARG_INT,     1,    0,  0.0,   0.0},
+  {"1.0",          ARG_REAL,    0,    0,  1.0,   0.0},
+  {"1/1",          ARG_RATIO,   1,    1,  0.0,   0.0},
+  {"1.0+1.0i",     ARG_COMPLEX, 0,    0,  0.0,   1.0 + 1.0 * _Complex_I},
+  {"0",            ARG_INT,     0,    0,  0.0,   0.0},
+  {"0.0",          ARG_REAL,    0,    0,  0.0,   0.0},
+  {"1234",         ARG_INT,     1234, 0,  0.0,   0.0},
+  {"123.4",        ARG_REAL,    0,    0,  123.4, 0.0},
+  {"1234/11",      ARG_RATIO,   1234, 11, 0.0,   0.0},
+  {"1.234+1.234i", ARG_COMPLEX, 0,    0,  0.0,   1.234 + 1.234 * _Complex_I},
+  {"-1.0+1.0i",    ARG_COMPLEX, 0,    0,  0.0,   -1.0 + 1.0 * _Complex_I},
+  {"0.0+1.0i",     ARG_COMPLEX, 0,    0,  0.0,   0.0 + 1.0 * _Complex_I},
+};
+
+static char *add(int args, ...)
+{
+  int i, cur_arg, type = ARG_INT;
+  va_list ap;
+  char *temp;
+  off_t on = 0, od = 1;
+  double ox = 0.0;
+  double complex oz = 0.0 + 0.0 * _Complex_I;
+  va_start(ap, args);
+  for (i = 0; i < args; i++)
+    {
+      cur_arg = va_arg(ap, int);
+      if (arg_data[cur_arg].type > type)
+	type = arg_data[cur_arg].type;
+    }
+  va_end(ap);
+  va_start(ap, args);
+  for (i = 0; i < args; i++)
+    {
+      cur_arg = va_arg(ap, int);
+      switch (type)
+	{
+	case ARG_INT: 
+	  on += arg_data[cur_arg].n; 
+	  break;
+	case ARG_RATIO: 
+	  if (arg_data[cur_arg].type == ARG_INT)
+	    ox += (double)arg_data[cur_arg].n;
+	  else ox += (double)arg_data[cur_arg].n / (double)arg_data[cur_arg].d; 
+	  break;
+	case ARG_REAL: 
+	  if (arg_data[cur_arg].type == ARG_INT)
+	    ox += (double)arg_data[cur_arg].n;
+	  else 
+	    {
+	      if (arg_data[cur_arg].type == ARG_RATIO)
+		ox += (double)arg_data[cur_arg].n / (double)arg_data[cur_arg].d; 
+	      else ox += arg_data[cur_arg].x;
+	    }
+	  break;
+	case ARG_COMPLEX: 
+	  switch (arg_data[cur_arg].type)
+	    {
+	    case ARG_INT: oz += (double)arg_data[cur_arg].n; break;
+	    case ARG_RATIO: oz += (double)arg_data[cur_arg].n / (double)arg_data[cur_arg].d; break;
+	    case ARG_REAL: oz += arg_data[cur_arg].x; break;
+	    case ARG_COMPLEX: oz += arg_data[cur_arg].z; break;
+	    }
+	  break;
+	}
+    }
+  va_end(ap);
+  switch (type)
+    {
+    case ARG_INT: 
+      temp = (char *)calloc(128, sizeof(char));
+      sprintf(temp, "%lld", on);
+      break;
+    case ARG_RATIO: 
+      temp = (char *)calloc(128, sizeof(char));
+      c_rationalize(ox, 0.000001, &on, &od);
+      if (od == 1)
+	sprintf(temp, "%lld", on);
+      else sprintf(temp, "%lld/%lld", on, od);
+      break;
+    case ARG_REAL:
+      temp = gstr(ox);
+      break;
+    case ARG_COMPLEX:
+      temp = split_complex_to_string(creal(oz), cimag(oz));
+      break;
+    }
+  return(temp);
+}
+
+static char *subtract(int args, ...)
+{
+  int i, cur_arg, type = ARG_INT;
+  va_list ap;
+  char *temp;
+  off_t on = 0, od = 1;
+  double ox = 0.0;
+  double complex oz = 0.0 + 0.0 * _Complex_I;
+  va_start(ap, args);
+  for (i = 0; i < args; i++)
+    {
+      cur_arg = va_arg(ap, int);
+      if (arg_data[cur_arg].type > type)
+	type = arg_data[cur_arg].type;
+    }
+  va_end(ap);
+  va_start(ap, args);
+  cur_arg = va_arg(ap, int);
+  switch (type)
+    {
+    case ARG_INT: 
+      on = arg_data[cur_arg].n; 
+      break;
+    case ARG_RATIO: 
+      if (arg_data[cur_arg].type == ARG_INT)
+	ox = (double)arg_data[cur_arg].n;
+      else ox = (double)arg_data[cur_arg].n / (double)arg_data[cur_arg].d; 
+      break;
+    case ARG_REAL: 
+      if (arg_data[cur_arg].type == ARG_INT)
+	ox = (double)arg_data[cur_arg].n;
+      else 
+	{
+	  if (arg_data[cur_arg].type == ARG_RATIO)
+	    ox = (double)arg_data[cur_arg].n / (double)arg_data[cur_arg].d; 
+	  else ox = arg_data[cur_arg].x;
+	}
+      break;
+    case ARG_COMPLEX: 
+      switch (arg_data[cur_arg].type)
+	{
+	case ARG_INT: oz = (double)arg_data[cur_arg].n; break;
+	case ARG_RATIO: oz = (double)arg_data[cur_arg].n / (double)arg_data[cur_arg].d; break;
+	case ARG_REAL: oz = arg_data[cur_arg].x; break;
+	case ARG_COMPLEX: oz = arg_data[cur_arg].z; break;
+	}
+      break;
+    }
+  for (i = 1; i < args; i++)
+    {
+      cur_arg = va_arg(ap, int);
+      switch (type)
+	{
+	case ARG_INT: 
+	  on -= arg_data[cur_arg].n; 
+	  break;
+	case ARG_RATIO: 
+	  if (arg_data[cur_arg].type == ARG_INT)
+	    ox -= (double)arg_data[cur_arg].n;
+	  else ox -= (double)arg_data[cur_arg].n / (double)arg_data[cur_arg].d; 
+	  break;
+	case ARG_REAL: 
+	  if (arg_data[cur_arg].type == ARG_INT)
+	    ox -= (double)arg_data[cur_arg].n;
+	  else 
+	    {
+	      if (arg_data[cur_arg].type == ARG_RATIO)
+		ox -= (double)arg_data[cur_arg].n / (double)arg_data[cur_arg].d; 
+	      else ox -= arg_data[cur_arg].x;
+	    }
+	  break;
+	case ARG_COMPLEX: 
+	  switch (arg_data[cur_arg].type)
+	    {
+	    case ARG_INT: oz -= (double)arg_data[cur_arg].n; break;
+	    case ARG_RATIO: oz -= (double)arg_data[cur_arg].n / (double)arg_data[cur_arg].d; break;
+	    case ARG_REAL: oz -= arg_data[cur_arg].x; break;
+	    case ARG_COMPLEX: oz -= arg_data[cur_arg].z; break;
+	    }
+	  break;
+	}
+    }
+  va_end(ap);
+  switch (type)
+    {
+    case ARG_INT: 
+      temp = (char *)calloc(128, sizeof(char));
+      sprintf(temp, "%lld", on);
+      break;
+    case ARG_RATIO: 
+      temp = (char *)calloc(128, sizeof(char));
+      c_rationalize(ox, 0.000001, &on, &od);
+      if (od == 1)
+	sprintf(temp, "%lld", on);
+      else sprintf(temp, "%lld/%lld", on, od);
+      break;
+    case ARG_REAL:
+      temp = gstr(ox);
+      break;
+    case ARG_COMPLEX:
+      temp = split_complex_to_string(creal(oz), cimag(oz));
+      break;
+    }
+  return(temp);
+}
+
+static char *multiply(int args, ...)
+{
+  int i, cur_arg, type = ARG_INT;
+  va_list ap;
+  char *temp;
+  off_t on = 1, od = 1;
+  double ox = 1.0;
+  double complex oz = 1.0 + 0.0 * _Complex_I;
+  va_start(ap, args);
+  for (i = 0; i < args; i++)
+    {
+      cur_arg = va_arg(ap, int);
+      if (arg_data[cur_arg].type > type)
+	type = arg_data[cur_arg].type;
+    }
+  va_end(ap);
+  va_start(ap, args);
+  for (i = 0; i < args; i++)
+    {
+      cur_arg = va_arg(ap, int);
+      switch (type)
+	{
+	case ARG_INT: 
+	  on *= arg_data[cur_arg].n; 
+	  break;
+	case ARG_RATIO: 
+	  if (arg_data[cur_arg].type == ARG_INT)
+	    ox *= (double)arg_data[cur_arg].n;
+	  else ox *= (double)arg_data[cur_arg].n / (double)arg_data[cur_arg].d; 
+	  break;
+	case ARG_REAL: 
+	  if (arg_data[cur_arg].type == ARG_INT)
+	    ox *= (double)arg_data[cur_arg].n;
+	  else 
+	    {
+	      if (arg_data[cur_arg].type == ARG_RATIO)
+		ox *= (double)arg_data[cur_arg].n / (double)arg_data[cur_arg].d; 
+	      else ox *= arg_data[cur_arg].x;
+	    }
+	  break;
+	case ARG_COMPLEX: 
+	  switch (arg_data[cur_arg].type)
+	    {
+	    case ARG_INT: oz *= (double)arg_data[cur_arg].n; break;
+	    case ARG_RATIO: oz *= (double)arg_data[cur_arg].n / (double)arg_data[cur_arg].d; break;
+	    case ARG_REAL: oz *= arg_data[cur_arg].x; break;
+	    case ARG_COMPLEX: oz *= arg_data[cur_arg].z; break;
+	    }
+	  break;
+	}
+    }
+  va_end(ap);
+  switch (type)
+    {
+    case ARG_INT: 
+      temp = (char *)calloc(128, sizeof(char));
+      sprintf(temp, "%lld", on);
+      break;
+    case ARG_RATIO: 
+      temp = (char *)calloc(128, sizeof(char));
+      c_rationalize(ox, 0.000001, &on, &od);
+      if (od == 1)
+	sprintf(temp, "%lld", on);
+      else sprintf(temp, "%lld/%lld", on, od);
+      break;
+    case ARG_REAL:
+      temp = gstr(ox);
+      break;
+    case ARG_COMPLEX:
+      temp = split_complex_to_string(creal(oz), cimag(oz));
+      break;
+    }
+  return(temp);
+}
+
+static char *divide(int args, ...)
+{
+  int i, cur_arg, type = ARG_INT;
+  va_list ap;
+  char *temp;
+  off_t on = 0, od = 1;
+  double ox = 0.0;
+  double complex oz = 0.0 + 0.0 * _Complex_I;
+
+  va_start(ap, args);
+  for (i = 0; i < args; i++)
+    {
+      cur_arg = va_arg(ap, int);
+      if (arg_data[cur_arg].type > type)
+	type = arg_data[cur_arg].type;
+    }
+  va_end(ap);
+  if (type == ARG_INT) type = ARG_RATIO;
+
+  va_start(ap, args);
+  cur_arg = va_arg(ap, int);
+  switch (type)
+    {
+    case ARG_RATIO: 
+      if (arg_data[cur_arg].type == ARG_INT)
+	ox = (double)arg_data[cur_arg].n;
+      else ox = (double)arg_data[cur_arg].n / (double)arg_data[cur_arg].d; 
+      break;
+    case ARG_REAL: 
+      if (arg_data[cur_arg].type == ARG_INT)
+	ox = (double)arg_data[cur_arg].n;
+      else 
+	{
+	  if (arg_data[cur_arg].type == ARG_RATIO)
+	    ox = (double)arg_data[cur_arg].n / (double)arg_data[cur_arg].d; 
+	  else ox = arg_data[cur_arg].x;
+	}
+      break;
+    case ARG_COMPLEX: 
+      switch (arg_data[cur_arg].type)
+	{
+	case ARG_INT: oz = (double)arg_data[cur_arg].n; break;
+	case ARG_RATIO: oz = (double)arg_data[cur_arg].n / (double)arg_data[cur_arg].d; break;
+	case ARG_REAL: oz = arg_data[cur_arg].x; break;
+	case ARG_COMPLEX: oz = arg_data[cur_arg].z; break;
+	}
+      break;
+    }
+
+  for (i = 1; i < args; i++)
+    {
+      cur_arg = va_arg(ap, int);
+      switch (type)
+	{
+	case ARG_RATIO: 
+	  if (arg_data[cur_arg].type == ARG_INT)
+	    ox /= (double)arg_data[cur_arg].n;
+	  else ox /= (double)arg_data[cur_arg].n / (double)arg_data[cur_arg].d; 
+	  break;
+	case ARG_REAL: 
+	  if (arg_data[cur_arg].type == ARG_INT)
+	    ox /= (double)arg_data[cur_arg].n;
+	  else 
+	    {
+	      if (arg_data[cur_arg].type == ARG_RATIO)
+		ox /= (double)arg_data[cur_arg].n / (double)arg_data[cur_arg].d; 
+	      else ox /= arg_data[cur_arg].x;
+	    }
+	  break;
+	case ARG_COMPLEX: 
+	  switch (arg_data[cur_arg].type)
+	    {
+	    case ARG_INT: oz /= (double)arg_data[cur_arg].n; break;
+	    case ARG_RATIO: oz /= (double)arg_data[cur_arg].n / (double)arg_data[cur_arg].d; break;
+	    case ARG_REAL: oz /= arg_data[cur_arg].x; break;
+	    case ARG_COMPLEX: oz /= arg_data[cur_arg].z; break;
+	    }
+	  break;
+	}
+    }
+  va_end(ap);
+  switch (type)
+    {
+    case ARG_RATIO: 
+      temp = (char *)calloc(128, sizeof(char));
+      c_rationalize(ox, 0.000001, &on, &od);
+      if (od == 1)
+	sprintf(temp, "%lld", on);
+      else sprintf(temp, "%lld/%lld", on, od);
+      break;
+    case ARG_REAL:
+      temp = gstr(ox);
+      break;
+    case ARG_COMPLEX:
+      temp = split_complex_to_string(creal(oz), cimag(oz));
+      break;
+    }
+  return(temp);
+}
+
+
+
 /* -------------------------------------------------------------------------------- */
 
 int main(int argc, char **argv)
@@ -690,7 +1074,6 @@ int main(int argc, char **argv)
   (syntax-rules ()\n\
     ((_ name params . body) (define-macro (name . params) . body))))\n\
 \n\
-(define (1+ n) (+ n 1))\n\
 (define (throw . args) (raise args))\n\
 \n\
 (define (catch tag body error-handler)\n\
@@ -701,10 +1084,6 @@ int main(int argc, char **argv)
     fprintf(fp, "\n\
 (define object->string x->string)\n");
 
-  if (strcmp(scheme_name, "gambit") == 0)
-    fprintf(stderr, "\n\
-(define (1+ n) (+ n 1))\n");
-
   if ((strcmp(scheme_name, "s7") == 0) ||
       (strcmp(scheme_name, "guile") == 0) ||
       (strcmp(scheme_name, "gambit") == 0) ||
@@ -714,7 +1093,7 @@ int main(int argc, char **argv)
   (let ((len (string-length str))\n\
 	(tilde #f)\n\
 	(result \"\"))\n\
-    (do ((i 0 (1+ i)))\n\
+    (do ((i 0 (+ i 1)))\n\
 	((= i len))\n\
       (let ((c (string-ref str i)))\n\
 	(if (char=? c #\\~)\n\
@@ -910,7 +1289,7 @@ int main(int argc, char **argv)
        (first-bad \n\
 	(call/cc\n\
 	 (lambda (return)\n\
-	   (do ((i 1 (1+ i))\n\
+	   (do ((i 1 (+ i 1))\n\
 		(k 1 (* k 2)))\n\
 	       ((= i 62) #f)\n\
 	     (if (and (eqv? k (string->number (number->string k)))\n\
@@ -933,7 +1312,7 @@ int main(int argc, char **argv)
        (first-bad \n\
 	(call/cc\n\
 	 (lambda (return)\n\
-	   (do ((i 1 (1+ i))\n\
+	   (do ((i 1 (+ i 1))\n\
 		(k 1.0 (* k 2.0)))\n\
 	       ((= i 62) #f)\n\
 	     (if (and (eqv? k (string->number (number->string k)))\n\
@@ -956,7 +1335,7 @@ int main(int argc, char **argv)
        (first-bad \n\
 	(call/cc\n\
 	 (lambda (return)\n\
-	   (do ((i 1 (1+ i))\n\
+	   (do ((i 1 (+ i 1))\n\
 		(k 1/3 (* k 2)))\n\
 	       ((= i 62) #f)\n\
 	     (if (and (eqv? k (string->number (number->string k)))\n\
@@ -1324,7 +1703,7 @@ int main(int argc, char **argv)
 (test (tan 10/3) .1941255059835657) \n\
 (test (tan 1234/3) -0.2186940320047828) \n\
 (test (tan 1234/10) 1.204471256531804) \n\
-(test (tan 1234000000/3) -18.7821359357167) \n\
+(test (tan 1234000000/3) -18.78094727276203)\n\
 (test (tan 1234000000/500029) -7.31654379832009) \n\
 (test (tan 1234000000/362880) 4.911576750502133) \n\
 (test (tan 500029/2) .2804673425353792) \n\
@@ -1993,6 +2372,174 @@ int main(int argc, char **argv)
 	  }
       }
 
+  fprintf(fp, "\n\
+(test (modulo 3 2.3) 'error)\n\
+(test (modulo 2.3 3) 'error)\n\
+(test (modulo 1/3 2.3) 'error)\n\
+(test (modulo 2.3 1.0+0.1i) 'error)\n\
+(test (modulo 3.0+2.3i 3) 'error)\n\
+(test (remainder 3 2.3) 'error)\n\
+(test (remainder 2.3 3) 'error)\n\
+(test (remainder 1/3 2.3) 'error)\n\
+(test (remainder 2.3 1.0+0.1i) 'error)\n\
+(test (remainder 3.0+2.3i 3) 'error)\n");
+
+  for (i = 0; i < INT_ARGS; i++)
+    {
+      fprintf(fp, "(test (abs %lld) %lld)\n", int_args[i], int_args[i]);
+      fprintf(fp, "(test (abs -%lld) %lld)\n", int_args[i], int_args[i]);
+      fprintf(fp, "(test (magnitude %lld) %lld)\n", int_args[i], int_args[i]);
+      fprintf(fp, "(test (magnitude -%lld) %lld)\n", int_args[i], int_args[i]);
+      fprintf(fp, "(test (angle %lld) 0)\n", int_args[i]);
+      fprintf(fp, "(test (angle -%lld) %s)\n", int_args[i], (int_args[i] == 0) ? "0" : "3.14159265");
+      
+      for (j = 1; j < INT_ARGS; j++)
+	{
+	  char *t1;
+	  double complex z;
+	  fprintf(fp, "(test (abs %lld/%lld) %lld/%lld)\n", int_args[i], int_args[j], int_args[i], int_args[j]);
+	  fprintf(fp, "(test (abs -%lld/%lld) %lld/%lld)\n", int_args[i], int_args[j], int_args[i], int_args[j]);
+	  fprintf(fp, "(test (magnitude %lld/%lld) %lld/%lld)\n", int_args[i], int_args[j], int_args[i], int_args[j]);
+	  fprintf(fp, "(test (magnitude -%lld/%lld) %lld/%lld)\n", int_args[i], int_args[j], int_args[i], int_args[j]);
+	  fprintf(fp, "(test (angle %lld/%lld) 0)\n", int_args[i], int_args[j]);
+	  fprintf(fp, "(test (angle -%lld/%lld) %s)\n", int_args[i], int_args[j], (int_args[i] == 0) ? "0" : "3.14159265");
+
+	  t1 = split_complex_to_string((double)int_args[i], (double)int_args[j]);
+	  fprintf(fp, "(test (make-rectangular %lld %lld) %s)\n", int_args[i], int_args[j], t1);
+	  free(t1);	
+
+	  t1 = split_complex_to_string(-(double)int_args[i], (double)int_args[j]);
+	  fprintf(fp, "(test (make-rectangular -%lld %lld) %s)\n", int_args[i], int_args[j], t1);
+	  free(t1);	
+
+	  t1 = split_complex_to_string((double)int_args[i], -(double)int_args[j]);
+	  fprintf(fp, "(test (make-rectangular %lld -%lld) %s)\n", int_args[i], int_args[j], t1);
+	  free(t1);	
+
+	  t1 = split_complex_to_string(-(double)int_args[i], -(double)int_args[j]);
+	  fprintf(fp, "(test (make-rectangular -%lld -%lld) %s)\n", int_args[i], int_args[j], t1);
+	  free(t1);	
+
+	  
+	  z = (double)int_args[i] * (cos((double)int_args[j]) + sin((double)int_args[j]) * _Complex_I);
+	  t1 = split_complex_to_string(creal(z), cimag(z));
+	  fprintf(fp, "(test (make-polar %lld %lld) %s)\n", int_args[i], int_args[j], t1);
+	  free(t1);	
+
+	  z = -(double)int_args[i] * (cos((double)int_args[j]) + sin((double)int_args[j]) * _Complex_I);
+	  t1 = split_complex_to_string(creal(z), cimag(z));
+	  fprintf(fp, "(test (make-polar -%lld %lld) %s)\n", int_args[i], int_args[j], t1);
+	  free(t1);	
+
+	  z = (double)int_args[i] * (cos(-(double)int_args[j]) + sin(-(double)int_args[j]) * _Complex_I);
+	  t1 = split_complex_to_string(creal(z), cimag(z));
+	  fprintf(fp, "(test (make-polar %lld -%lld) %s)\n", int_args[i], int_args[j], t1);
+	  free(t1);	
+
+	  z = -(double)int_args[i] * (cos(-(double)int_args[j]) + sin(-(double)int_args[j]) * _Complex_I);
+	  t1 = split_complex_to_string(creal(z), cimag(z));
+	  fprintf(fp, "(test (make-polar -%lld -%lld) %s)\n", int_args[i], int_args[j], t1);
+	  free(t1);	
+	}
+    }
+  for (i = 0; i < DOUBLE_ARGS; i++)
+    {
+      char *t1;
+      t1 = gstr(double_args[i]);
+      fprintf(fp, "(test (abs %s) %s)\n", t1, t1);
+      fprintf(fp, "(test (abs -%s) %s)\n", t1, t1);
+      free(t1);
+      t1 = gstr(double_args[i]);
+      fprintf(fp, "(test (magnitude %s) %s)\n", t1, t1);
+      fprintf(fp, "(test (magnitude -%s) %s)\n", t1, t1);
+      fprintf(fp, "(test (angle %s) 0.0)\n", t1);
+      fprintf(fp, "(test (angle -%s) %s)\n", t1, (double_args[i] == 0.0) ? "0.0" : "3.14159265");
+
+      for (j = 1; j < INT_ARGS; j++)
+	{
+	  double mag, ang;
+	  double complex z;
+	  char *t2, *t3;
+	  mag = cabs(double_args[i] + double_args[j] * _Complex_I);
+	  t2 = gstr(mag);
+	  t1 = split_complex_to_string(double_args[i], double_args[j]);
+	  ang = carg(double_args[i] + double_args[j] * _Complex_I);
+	  t3 = split_complex_to_string(creal(ang), cimag(ang));
+	  fprintf(fp, "(test (magnitude %s) %s)\n", t1, t2);
+	  fprintf(fp, "(test (angle %s) %s)\n", t1, t3);
+	  free(t1); free(t3);
+
+	  t1 = split_complex_to_string(-double_args[i], double_args[j]);
+	  ang = carg(-double_args[i] + double_args[j] * _Complex_I);
+	  t3 = split_complex_to_string(creal(ang), cimag(ang));
+	  fprintf(fp, "(test (magnitude %s) %s)\n", t1, t2);
+	  fprintf(fp, "(test (angle %s) %s)\n", t1, t3);
+	  free(t1); free(t3);
+
+	  t1 = split_complex_to_string(double_args[i], -double_args[j]);
+	  ang = carg(double_args[i] - double_args[j] * _Complex_I);
+	  t3 = split_complex_to_string(creal(ang), cimag(ang));
+	  fprintf(fp, "(test (magnitude %s) %s)\n", t1, t2);
+	  fprintf(fp, "(test (angle %s) %s)\n", t1, t3);
+	  free(t1); free(t3);
+
+	  t1 = split_complex_to_string(-double_args[i], -double_args[j]);
+	  ang = carg(-double_args[i] - double_args[j] * _Complex_I);
+	  t3 = split_complex_to_string(creal(ang), cimag(ang));
+	  fprintf(fp, "(test (magnitude %s) %s)\n", t1, t2);
+	  fprintf(fp, "(test (angle %s) %s)\n", t1, t3);
+	  free(t1); free(t2); free(t3);
+
+	  t1 = split_complex_to_string(double_args[i], double_args[j]);
+	  fprintf(fp, "(test (make-rectangular %s %s) %s)\n", t2 = gstr(double_args[i]), t3 = gstr(double_args[j]), t1);
+	  free(t1);	
+
+	  t1 = split_complex_to_string(-double_args[i], double_args[j]);
+	  fprintf(fp, "(test (make-rectangular -%s %s) %s)\n", t2 = gstr(double_args[i]), t3 = gstr(double_args[j]), t1);
+	  free(t1);	
+
+	  t1 = split_complex_to_string(double_args[i], -double_args[j]);
+	  fprintf(fp, "(test (make-rectangular %s -%s) %s)\n", t2 = gstr(double_args[i]), t3 = gstr(double_args[j]), t1);
+	  free(t1);	
+
+	  t1 = split_complex_to_string(-double_args[i], -double_args[j]);
+	  fprintf(fp, "(test (make-rectangular -%s -%s) %s)\n", t2 = gstr(double_args[i]), t3 = gstr(double_args[j]), t1);
+	  free(t1);	
+
+	  
+	  z = double_args[i] * (cos(double_args[j]) + sin(double_args[j]) * _Complex_I);
+	  t1 = split_complex_to_string(creal(z), cimag(z));
+	  fprintf(fp, "(test (make-polar %s %s) %s)\n", t2 = gstr(double_args[i]), t3 = gstr(double_args[j]), t1);
+	  free(t1);	
+
+	  z = -double_args[i] * (cos(double_args[j]) + sin(double_args[j]) * _Complex_I);
+	  t1 = split_complex_to_string(creal(z), cimag(z));
+	  fprintf(fp, "(test (make-polar -%s %s) %s)\n", t2 = gstr(double_args[i]), t3 = gstr(double_args[j]), t1);
+	  free(t1);	
+
+	  z = double_args[i] * (cos(-double_args[j]) + sin(-double_args[j]) * _Complex_I);
+	  t1 = split_complex_to_string(creal(z), cimag(z));
+	  fprintf(fp, "(test (make-polar %s -%s) %s)\n", t2 = gstr(double_args[i]), t3 = gstr(double_args[j]), t1);
+	  free(t1);	
+
+	  z = -double_args[i] * (cos(-double_args[j]) + sin(-double_args[j]) * _Complex_I);
+	  t1 = split_complex_to_string(creal(z), cimag(z));
+	  fprintf(fp, "(test (make-polar -%s -%s) %s)\n", t2 = gstr(double_args[i]), t3 = gstr(double_args[j]), t1);
+	  free(t1);	
+
+	}
+    }
+  
+  fprintf(fp, "\n\
+(test (abs 1.0+0.1i) 'error)\n\
+(test (make-polar 1.0 1.0+0.1i) 'error)\n\
+(test (make-polar 1.0+0.1i 0.0) 'error)\n\
+(test (make-rectangular 1.0 1.0+0.1i) 'error)\n\
+(test (make-rectangular 1.0+0.1i 1.0) 'error)\n");
+
+
+  fprintf(fp, ";;; --------------------------------------------------------------------------------\n\n");
+
   for (i = 0; i < INT_ARGS; i += 2)
     {
       fprintf(fp, "(test (min %lld) %lld)\n", int_args[i], int_args[i]);
@@ -2185,17 +2732,70 @@ int main(int argc, char **argv)
       }
     }
 
+  for (i = 0; i < NUMERIC_ARGS; i++)
+    for (j = 0; j < NUMERIC_ARGS; j++)
+      {
+	char *t1;
+	fprintf(fp, "(test (+ %s %s) %s)\n", arg_data[i].name, arg_data[j].name, t1 = add(2, i, j));
+	free(t1);
+	fprintf(fp, "(test (- %s %s) %s)\n", arg_data[i].name, arg_data[j].name, t1 = subtract(2, i, j));
+	free(t1);
+	fprintf(fp, "(test (* %s %s) %s)\n", arg_data[i].name, arg_data[j].name, t1 = multiply(2, i, j));
+	free(t1);
+	/* skip divide by 0 cases -- these can generate many different things */
+	switch (arg_data[j].type)
+	  {
+	  case ARG_INT: if (arg_data[j].n == 0) continue; break;
+	  case ARG_RATIO: if (arg_data[j].n == 0) continue; break;
+	  case ARG_REAL: if (arg_data[j].x == 0.0) continue; break;
+	  case ARG_COMPLEX: if (arg_data[j].z == 0.0 + 0.0 * _Complex_I) continue; break;
+	}
+	fprintf(fp, "(test (/ %s %s) %s)\n", arg_data[i].name, arg_data[j].name, t1 = divide(2, i, j));
+	free(t1);
 
 
-fprintf(fp, "(display \";all done!\") (newline)\n");
+      }
+
+  for (i = 0; i < NUMERIC_ARGS; i++)
+    for (j = 0; j < NUMERIC_ARGS; j++)
+      {
+	int k;
+	for (k = 0; k < NUMERIC_ARGS; k++)
+	  {
+	    char *t1;
+	    fprintf(fp, "(test (+ %s %s %s) %s)\n", arg_data[i].name, arg_data[j].name, arg_data[k].name, t1 = add(3, i, j, k));
+	    free(t1);
+	    fprintf(fp, "(test (- %s %s %s) %s)\n", arg_data[i].name, arg_data[j].name, arg_data[k].name, t1 = subtract(3, i, j, k));
+	    free(t1);
+	    fprintf(fp, "(test (* %s %s %s) %s)\n", arg_data[i].name, arg_data[j].name, arg_data[k].name, t1 = multiply(3, i, j, k));
+	    free(t1);
+	    /* skip divide by 0 cases -- these can generate many different things */
+	    switch (arg_data[j].type)
+	      {
+	      case ARG_INT: if (arg_data[j].n == 0) continue; break;
+	      case ARG_RATIO: if (arg_data[j].n == 0) continue; break;
+	      case ARG_REAL: if (arg_data[j].x == 0.0) continue; break;
+	      case ARG_COMPLEX: if (arg_data[j].z == 0.0 + 0.0 * _Complex_I) continue; break;
+	      }
+	    switch (arg_data[k].type)
+	      {
+	      case ARG_INT: if (arg_data[k].n == 0) continue; break;
+	      case ARG_RATIO: if (arg_data[k].n == 0) continue; break;
+	      case ARG_REAL: if (arg_data[k].x == 0.0) continue; break;
+	      case ARG_COMPLEX: if (arg_data[k].z == 0.0 + 0.0 * _Complex_I) continue; break;
+	      }
+	    fprintf(fp, "(test (/ %s %s %s) %s)\n", arg_data[i].name, arg_data[j].name, arg_data[k].name, t1 = divide(3, i, j, k));
+	    free(t1);
+	  }
+
+      }
+
+    fprintf(fp, "(display \";all done!\") (newline)\n");
 
 /* remaining expt cases
    quotient
    + - * / < <= > >= = max min
-   abs
-   make-rectangular make-polar 
-   angle magnitude
-   
+   2 arg atan
    string->n going 1/2
    
 */
