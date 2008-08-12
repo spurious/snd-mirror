@@ -2617,6 +2617,7 @@ int main(int argc, char **argv)
 	fprintf(fp, "(test (real-part %s) %s)\n", complex_arg(i, j, s1, s2), t1 = gstr(s1 * double_args[i]));
 	free(t1);
 	fprintf(fp, "(test (imag-part %s) %s)\n", complex_arg(i, j, s1, s2), t1 = gstr(s2 * double_args[j]));
+	free(t1);
       }
 
   fprintf(fp, "\n\
@@ -2818,40 +2819,40 @@ int main(int argc, char **argv)
 
 	  t1 = split_complex_to_string(double_args[i], double_args[j]);
 	  fprintf(fp, "(test (make-rectangular %s %s) %s)\n", t2 = gstr(double_args[i]), t3 = gstr(double_args[j]), t1);
-	  free(t1);	
+	  free(t1); free(t2); free(t3);
 
 	  t1 = split_complex_to_string(-double_args[i], double_args[j]);
 	  fprintf(fp, "(test (make-rectangular -%s %s) %s)\n", t2 = gstr(double_args[i]), t3 = gstr(double_args[j]), t1);
-	  free(t1);	
+	  free(t1); free(t2); free(t3);
 
 	  t1 = split_complex_to_string(double_args[i], -double_args[j]);
 	  fprintf(fp, "(test (make-rectangular %s -%s) %s)\n", t2 = gstr(double_args[i]), t3 = gstr(double_args[j]), t1);
-	  free(t1);	
+	  free(t1); free(t2); free(t3);
 
 	  t1 = split_complex_to_string(-double_args[i], -double_args[j]);
 	  fprintf(fp, "(test (make-rectangular -%s -%s) %s)\n", t2 = gstr(double_args[i]), t3 = gstr(double_args[j]), t1);
-	  free(t1);	
+	  free(t1); free(t2); free(t3);
 
 	  
 	  z = double_args[i] * (cos(double_args[j]) + sin(double_args[j]) * _Complex_I);
 	  t1 = split_complex_to_string(creal(z), cimag(z));
 	  fprintf(fp, "(test (make-polar %s %s) %s)\n", t2 = gstr(double_args[i]), t3 = gstr(double_args[j]), t1);
-	  free(t1);	
+	  free(t1); free(t2); free(t3);
 
 	  z = -double_args[i] * (cos(double_args[j]) + sin(double_args[j]) * _Complex_I);
 	  t1 = split_complex_to_string(creal(z), cimag(z));
 	  fprintf(fp, "(test (make-polar -%s %s) %s)\n", t2 = gstr(double_args[i]), t3 = gstr(double_args[j]), t1);
-	  free(t1);	
+	  free(t1); free(t2); free(t3);
 
 	  z = double_args[i] * (cos(-double_args[j]) + sin(-double_args[j]) * _Complex_I);
 	  t1 = split_complex_to_string(creal(z), cimag(z));
 	  fprintf(fp, "(test (make-polar %s -%s) %s)\n", t2 = gstr(double_args[i]), t3 = gstr(double_args[j]), t1);
-	  free(t1);	
+	  free(t1); free(t2); free(t3);
 
 	  z = -double_args[i] * (cos(-double_args[j]) + sin(-double_args[j]) * _Complex_I);
 	  t1 = split_complex_to_string(creal(z), cimag(z));
 	  fprintf(fp, "(test (make-polar -%s -%s) %s)\n", t2 = gstr(double_args[i]), t3 = gstr(double_args[j]), t1);
-	  free(t1);	
+	  free(t1); free(t2); free(t3);
 
 	}
     }
@@ -3061,7 +3062,7 @@ int main(int argc, char **argv)
   for (i = 0; i < NUMERIC_ARGS; i++)
     for (j = 0; j < NUMERIC_ARGS; j++)
       {
-	char *t1;
+	char *t1, *t2;
 	fprintf(fp, "(test (+ %s %s) %s)\n", arg_data[i].name, arg_data[j].name, t1 = add(2, i, j));
 	free(t1);
 	fprintf(fp, "(test (- %s %s) %s)\n", arg_data[i].name, arg_data[j].name, t1 = subtract(2, i, j));
@@ -3089,8 +3090,9 @@ int main(int argc, char **argv)
 	    fprintf(fp, "(test (> %s %s) %s)\n", arg_data[i].name, arg_data[j].name, unequal(GREATER, 2, i, j));
 	    fprintf(fp, "(test (>= %s %s) %s)\n", arg_data[i].name, arg_data[j].name, unequal(GREATER_OR_EQUAL, 2, i, j));
 
-	    fprintf(fp, "(test (min %s %s) %s)\n", arg_data[i].name, arg_data[j].name, minmax(true, 2, i, j));
-	    fprintf(fp, "(test (max %s %s) %s)\n", arg_data[i].name, arg_data[j].name, minmax(false, 2, i, j));
+	    fprintf(fp, "(test (min %s %s) %s)\n", arg_data[i].name, arg_data[j].name, t1 = minmax(true, 2, i, j));
+	    fprintf(fp, "(test (max %s %s) %s)\n", arg_data[i].name, arg_data[j].name, t2 = minmax(false, 2, i, j));
+	    free(t1); free(t2);
 	  }
       }
 
@@ -3100,7 +3102,7 @@ int main(int argc, char **argv)
 	int k;
 	for (k = 0; k < NUMERIC_ARGS; k++)
 	  {
-	    char *t1;
+	    char *t1, *t2;
 	    fprintf(fp, "(test (+ %s %s %s) %s)\n", arg_data[i].name, arg_data[j].name, arg_data[k].name, t1 = add(3, i, j, k));
 	    free(t1);
 	    fprintf(fp, "(test (- %s %s %s) %s)\n", arg_data[i].name, arg_data[j].name, arg_data[k].name, t1 = subtract(3, i, j, k));
@@ -3136,8 +3138,9 @@ int main(int argc, char **argv)
 		fprintf(fp, "(test (> %s %s %s) %s)\n", arg_data[i].name, arg_data[j].name, arg_data[k].name, unequal(GREATER, 3, i, j, k));
 		fprintf(fp, "(test (>= %s %s %s) %s)\n", arg_data[i].name, arg_data[j].name, arg_data[k].name, unequal(GREATER_OR_EQUAL, 3, i, j, k));
 
-		fprintf(fp, "(test (min %s %s %s) %s)\n", arg_data[i].name, arg_data[j].name, arg_data[k].name, minmax(true, 3, i, j, k));
-		fprintf(fp, "(test (max %s %s %s) %s)\n", arg_data[i].name, arg_data[j].name, arg_data[k].name, minmax(false, 3, i, j, k));
+		fprintf(fp, "(test (min %s %s %s) %s)\n", arg_data[i].name, arg_data[j].name, arg_data[k].name, t1 = minmax(true, 3, i, j, k));
+		fprintf(fp, "(test (max %s %s %s) %s)\n", arg_data[i].name, arg_data[j].name, arg_data[k].name, t2 = minmax(false, 3, i, j, k));
+		free(t1); free(t2);
 	      }
 	  }
 
