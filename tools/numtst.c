@@ -63,8 +63,12 @@ static bool ask_maxima = false;
 static bool include_big_fractions_in_expt = true;
 static bool use_continued_fractions_in_rationalize = false;
 static bool include_hyperbolic_functions = true;
+static bool relational_functions_require_2_arguments = true;
+
 /* -------------------------------------------------------------------------------- */
 
+
+static const char *relational_1_arg_result;
 
 static const char *op_names[] = {
   "sin", "cos", "tan", "asin", "acos", "atan", "sinh", "cosh", "tanh", "asinh", "acosh", "atanh", "sqrt", "exp", "log"
@@ -1350,13 +1354,20 @@ int main(int argc, char **argv)
   int i, j, k, op;
   double complex result;
   char *argstr = NULL;
-  
+
   FILE *fp;
   fp = fopen("test.scm", "w");
 
   if (argc > 1)
     scheme_name = argv[1];
 
+  if (strcmp(scheme_name, "guile") == 0)
+    relational_functions_require_2_arguments = false;
+
+  if (relational_functions_require_2_arguments)
+    relational_1_arg_result = "'error";
+  else relational_1_arg_result = "#t";
+  
   if ((strcmp(scheme_name, "gauche") == 0) ||
       (strcmp(scheme_name, "stklos") == 0))
     fprintf(fp, "\n\
@@ -2898,11 +2909,11 @@ int main(int argc, char **argv)
       if (int_args[i] != 0)
 	fprintf(fp, "(test (/ %lld) 1/%lld)\n", int_args[i], int_args[i]);
 
-      fprintf(fp, "(test (< %lld) #t)\n", int_args[i]);
-      fprintf(fp, "(test (<= %lld) #t)\n", int_args[i]);
-      fprintf(fp, "(test (= %lld) #t)\n", int_args[i]);
-      fprintf(fp, "(test (> %lld) #t)\n", int_args[i]);
-      fprintf(fp, "(test (>= %lld) #t)\n", int_args[i]);
+      fprintf(fp, "(test (< %lld) %s)\n", int_args[i], relational_1_arg_result);
+      fprintf(fp, "(test (<= %lld) %s)\n", int_args[i], relational_1_arg_result);
+      fprintf(fp, "(test (= %lld) %s)\n", int_args[i], relational_1_arg_result);
+      fprintf(fp, "(test (> %lld) %s)\n", int_args[i], relational_1_arg_result);
+      fprintf(fp, "(test (>= %lld) %s)\n", int_args[i], relational_1_arg_result);
 
       fprintf(fp, "(test (abs %lld) %lld)\n", int_args[i], int_args[i]);
 
@@ -2931,11 +2942,11 @@ int main(int argc, char **argv)
       if (int_args[i] != 0)
 	fprintf(fp, "(test (/ %lld/%lld) %lld/%lld)\n", int_args[i], int_args[j], int_args[j], int_args[i]);
       
-      fprintf(fp, "(test (< %lld/%lld) #t)\n", int_args[i], int_args[j]);
-      fprintf(fp, "(test (<= %lld/%lld) #t)\n", int_args[i], int_args[j]);
-      fprintf(fp, "(test (= %lld/%lld) #t)\n", int_args[i], int_args[j]);
-      fprintf(fp, "(test (> %lld/%lld) #t)\n", int_args[i], int_args[j]);
-      fprintf(fp, "(test (>= %lld/%lld) #t)\n", int_args[i], int_args[j]);
+      fprintf(fp, "(test (< %lld/%lld) %s)\n", int_args[i], int_args[j], relational_1_arg_result);
+      fprintf(fp, "(test (<= %lld/%lld) %s)\n", int_args[i], int_args[j], relational_1_arg_result);
+      fprintf(fp, "(test (= %lld/%lld) %s)\n", int_args[i], int_args[j], relational_1_arg_result);
+      fprintf(fp, "(test (> %lld/%lld) %s)\n", int_args[i], int_args[j], relational_1_arg_result);
+      fprintf(fp, "(test (>= %lld/%lld) %s)\n", int_args[i], int_args[j], relational_1_arg_result);
       
       fprintf(fp, "(test (abs %lld/%lld) %lld/%lld)\n", int_args[i], int_args[j], int_args[i], int_args[j]);
       
@@ -2964,11 +2975,11 @@ int main(int argc, char **argv)
 	  free(t1); free(t2);
 	}
 
-      fprintf(fp, "(test (< %s) #t)\n", t1 = gstr(double_args[i])); free(t1);
-      fprintf(fp, "(test (<= %s) #t)\n", t1 = gstr(double_args[i])); free(t1);
-      fprintf(fp, "(test (= %s) #t)\n", t1 = gstr(double_args[i])); free(t1);
-      fprintf(fp, "(test (> %s) #t)\n", t1 = gstr(double_args[i])); free(t1);
-      fprintf(fp, "(test (>= %s) #t)\n", t1 = gstr(double_args[i])); free(t1);
+      fprintf(fp, "(test (< %s) %s)\n", t1 = gstr(double_args[i]), relational_1_arg_result); free(t1);
+      fprintf(fp, "(test (<= %s) %s)\n", t1 = gstr(double_args[i]), relational_1_arg_result); free(t1);
+      fprintf(fp, "(test (= %s) %s)\n", t1 = gstr(double_args[i]), relational_1_arg_result); free(t1);
+      fprintf(fp, "(test (> %s) %s)\n", t1 = gstr(double_args[i]), relational_1_arg_result); free(t1);
+      fprintf(fp, "(test (>= %s) %s)\n", t1 = gstr(double_args[i]), relational_1_arg_result); free(t1);
 
       fprintf(fp, "(test (abs %s) %s)\n", t1 = gstr(double_args[i]), t2 = gstr(double_args[i])); free(t1); free(t2);
 
