@@ -6,8 +6,55 @@
 static char *current_match = NULL;
 
 /* TAB completion requires knowing what is currently defined, which requires scrounging
- *   around in the symbol tables (an "obarray" in Guile, hash table in Gauche, vector in Ruby)
+ *   around in the symbol tables (an "obarray" in Guile, hash table in Gauche, vector in Ruby, "oblist" in S7)
  */
+
+#if HAVE_S7
+
+typedef struct {
+  const char *text;
+  int matches, len;
+} match_info;
+
+static void compare_names(const char *symbol_name, void *data)
+{
+  match_info *m = (match_info *)data;
+  if (strncmp(m->text, symbol_name, m->len) == 0)
+    {
+      m->matches++;
+      add_possible_completion(symbol_name);
+      if (current_match == NULL)
+	current_match = copy_string(symbol_name);
+      else 
+	{
+	  int j, curlen;
+	  curlen = snd_strlen(current_match);
+	  for (j = 0; j < curlen; j++)
+	    if (current_match[j] != symbol_name[j])
+	      {
+		current_match[j] = '\0';
+		break;
+	      }
+	}
+    }
+}
+
+static int completions(char *text)
+{
+  match_info *m;
+  int matches;
+  m = (match_info *)CALLOC(1, sizeof(match_info));
+  m->text = text;
+  m->len = strlen(text);
+  m->matches = 0;
+  s7_for_each_symbol_name(s7, compare_names, (void *)m);
+  matches = m->matches;
+  FREE(m);
+  return(matches);
+}
+
+#endif
+
 
 
 #if HAVE_GAUCHE
@@ -162,9 +209,6 @@ static int completions(char *text) {return(0);}
 #endif
 /* end Guile && SCM_MODULE_OBARRAY */
 
-#if HAVE_S7
-static int completions(char *text) {return(0);}
-#endif
 
 #if HAVE_RUBY
 static XEN snd_rb_methods(void)

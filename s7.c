@@ -54,8 +54,9 @@
  *        had to move all the numeric stuff in s7.scm into s7-ops.h and s7.c
  *     split the hidden ivalue uses off into separate structs
  *     changed the layout of vectors (found the GC bug related to it: (make-vector 0) in r4rstest.scm was deadly to preceding version)
- *     removed the old memory allocation junk (at no cost in speed)
- *
+ *     removed the old memory allocation junk -- the current GC is about as simple as it can be
+ *        with this change, all the old segfaults appear to be fixed
+ *     s7_for_each_symbol_name for tab-completions (in the Snd listener).
  *
  * there's no arg number mismatch check for caller-defined functions!
  * dies if undefined func? (asb 1) as typo
@@ -65,24 +66,49 @@
  *      block comment #| |#
  *      procedure arity, source
  *      file sys etc in snd-xen.c: tmpnam and time stuff 
- *      completions (oblist?)
  *      s7_write so strings are quoted in object->string
  *      soft port for Snd (need to trap error reports somehow)
  *      doc strings for scheme funcs
- *      <CLOSURE> should give the name [s7_define could a backpointer to the symbol in the value]
+ *      <CLOSURE> should give the name [s7_define could a backpointer to the symbol in the value,
+ *          or perhaps search for a match -- the oblist is not that big -- closure code is car(p)]
  *      list or list* for xen connection
  *      continuations might be fixable by invoking a new interpreter on each one, copying the state of its parent
  *      (keyword? :asd) segfaults! -- need the names make-keyword, keyword? 
  *
  * [number->string has no "radix" arg]
+ * [log in r6rs has a 2nd arg, probably base]
+ * [need to get rid of all 1+'s in my scheme code]
  *
  * slib logical.scm has logior etc
  * slib dynwind.scm has dynamic-wind
  * guile's optargs.scm has define*
- */
+ *
+ * test.scm: (46 min), gc cells size is 32000
+ ;(= 1 1.0) got #f, but expected #t
+;(= 1.0 1) got #f, but expected #t
+;(= 1.0 1) got #f, but expected #t
+;(= 1 1.0) got #f, but expected #t
+;(= 1 1 1.0) got #f, but expected #t
+;(= 1 1.0 1) got #f, but expected #t
+;(= 1 1.0 1.0) got #f, but expected #t
+;(= 1 1.0 1) got #f, but expected #t
+;(= 1 1 1.0) got #f, but expected #t
+;(= 1.0 1 1) got #f, but expected #t
+;(= 1.0 1 1.0) got #f, but expected #t
+;(= 1.0 1 1) got #f, but expected #t
+;(= 1.0 1.0 1) got #f, but expected #t
+;(= 1.0 1.0 1) got #f, but expected #t
+;(= 1.0 1 1) got #f, but expected #t
+;(= 1.0 1 1.0) got #f, but expected #t
+;(= 1.0 1 1) got #f, but expected #t
+;(= 1 1 1.0) got #f, but expected #t
+;(= 1 1.0 1) got #f, but expected #t
+;(= 1 1.0 1.0) got #f, but expected #t
+;(= 1 1.0 1) got #f, but expected #t
+;(= 1 1 1.0) got #f, but expected #t
+rationalize does not converge or returns infs
 
-/* if not defined, gc segfaults... */
-#define USE_SCHEME_STACK 1
+ */
 
 #ifndef USE_TRACING
   #define USE_TRACING 1
@@ -96,12 +122,6 @@
 #ifndef USE_COLON_HOOK   /* Enable qualified qualifier -- what?? */
   #define USE_COLON_HOOK 1
 #endif
-
-/*
-#define USE_OBJECT_LIST 1
-#define USE_ALIST_ENV 1
-*/
-
 
 #define _FILE_OFFSET_BITS 64
 
@@ -165,43 +185,6 @@ typedef struct num {
 
   } value;
 } num;
-
-
-#define NUM_INT 0
-#define NUM_RATIO 1
-#define NUM_REAL 2
-#define NUM_REAL2 3
-#define NUM_COMPLEX 4
-
-/* so int = 0, exact < 2, ratio = 1, complex >= 4, real 2 or 3
- *   (I'm not going to support exact complex or inexact ratio etc)
- */
-
-#define num_is_fixnum(n) (n.type == NUM_INT)
-#define object_is_fixnum(p) (p->object.number.type == NUM_INT)
-
-#define num_is_ratio(n) (n.type == NUM_RATIO)
-#define object_is_ratio(p) (p->object.number.type == NUM_RATIO)
-
-#define num_is_real(n) ((n.type & (NUM_REAL | NUM_COMPLEX)) == NUM_REAL)
-#define object_is_real(p) ((p->object.number.type & (NUM_REAL | NUM_COMPLEX)) == NUM_REAL
-
-#define num_is_complex(n) (n.type & NUM_COMPLEX)
-#define object_is_complex(p) (p->object.number.type & NUM_COMPLEX)
-
-#define num_type(n) (n.type)
-#define object_number_type(p) (p->object.number.type)
-
-#define numerator(n) n.value.fvalue.numerator
-#define denominator(n) n.value.fvalue.denominator
-
-#define real_part(n) n.value.cvalue.real
-#define imag_part(n) n.value.cvalue.imag
-
-#define fraction(n) (((double)numerator(n)) / ((double)denominator(n)))
-
-#define integer(n) n.value.ivalue
-#define real(n)    n.value.rvalue
 
 
 enum scheme_port_kind { 
@@ -270,61 +253,13 @@ typedef struct cell {
   } object;
 } cell;
 
-#define cons(sc, a,b) _cons(sc, a, b, 0)
-#define immutable_cons(sc, a,b) _cons(sc, a, b, 1)
-
-#define car(p) ((p)->object.cons.car)
-#define cdr(p) ((p)->object.cons.cdr)
-
-#define string_value(p)  ((p)->object.string.svalue)
-#define string_length(p) ((p)->object.string.length)
-
-#define character(p) ((p)->object.cvalue)
-
-#define loop_counter(p) ((p)->object.number.value.ivalue)
-
-#define set_integer(p) (p)->object.number.type = NUM_INT;
-
-#define is_inport(p) (type(p) == T_PORT && p->object.port->kind & port_input)
-#define is_outport(p) (type(p) == T_PORT && p->object.port->kind & port_output)
-
-/* #define procedure_index(p) ((p)->object.number.value.ivalue) */
-#define procedure_index(p) ((p)->object.proc_num)
-
-#define cont_dump(p)     cdr(p)
-
-#define setenvironment(p)    typeflag(p) = T_ENVIRONMENT
-
-#define is_atom(p)       (typeflag(p)&T_ATOM)
-#define setatom(p)       typeflag(p) |= T_ATOM
-#define clratom(p)       typeflag(p) &= CLRATOM
-
-#define is_mark(p)       (typeflag(p) & MARK)
-#define setmark(p)       typeflag(p)  |= MARK
-#define clrmark(p)       typeflag(p)  &= UNMARK
-
-#define caar(p)          car(car(p))
-#define cadr(p)          car(cdr(p))
-#define cdar(p)          cdr(car(p))
-#define cddr(p)          cdr(cdr(p))
-#define cadar(p)         car(cdr(car(p)))
-#define caddr(p)         car(cdr(cdr(p)))
-#define cadaar(p)        car(cdr(car(car(p))))
-#define cadddr(p)        car(cdr(cdr(cdr(p))))
-#define cddddr(p)        cdr(cdr(cdr(cdr(p))))
-
-#define vector_length(p)     ((p)->object.vector.length)
-#define vector_element(p, i) ((p)->object.vector.elements[i])
-
-
-
-
 struct scheme {
   /* return code */
   int retcode;
   bool tracing;
+  bool gc_off;
   
-  pointer *cells;
+  cell **cells;
   int cells_top, cells_size;
   
   /* We use 4 registers. */
@@ -368,7 +303,7 @@ struct scheme {
   pointer save_inport;
   pointer loadport;
   
-#define MAXFIL 64
+  #define MAXFIL 64
   port load_stack[MAXFIL];     /* Stack of open files for port -1 (LOADing) */
   int nesting_stack[MAXFIL];
   int file_i;
@@ -393,59 +328,170 @@ struct scheme {
   int dump_size;		 /* number of frames allocated for dump stack */
 };
 
+
+enum scheme_types {
+  T_NIL_TYPE = 1,
+  T_STRING = 2,
+  T_NUMBER = 3,
+  T_SYMBOL = 4,
+  T_PROC = 5,
+  T_PAIR = 6,
+  T_CLOSURE = 7,
+  T_CONTINUATION = 8,
+  T_FOREIGN_FUNCTION = 9,
+  T_CHARACTER = 10,
+  T_PORT = 11,
+  T_VECTOR = 12,
+  T_MACRO = 13,
+  T_PROMISE = 14,
+  T_FOREIGN_OBJECT = 15,
+  T_LAST_TYPE = 15
+};
+
+
+static const char *type_names[16] = {
+  "none", "string", "number", "symbol", "proc", "pair", "closure", "continuation",
+  "foreign-function", "character", "port", "vector", "macro", "promise", "environment",
+  "foreign-object"
+};
+
+
+
+#define TYPE_BITS          16
+#define T_MASKTYPE         0xffff
+
+#define typeflag(p)        ((p)->flag)
+#define type(p)            (typeflag(p) & T_MASKTYPE)
+#define set_type_1(p, f)   typeflag(p) = ((f) | T_OBJECT)
+
+#define T_SYNTAX           (1 << (TYPE_BITS + 1))
+#define T_IMMUTABLE        (1 << (TYPE_BITS + 2))
+
+#define is_immutable(p)    (typeflag(p) & T_IMMUTABLE)
+#define set_immutable(p)   typeflag(p) |= T_IMMUTABLE
+#define set_mutable(p)     typeflag(p) &= (~T_IMMUTABLE)
+
+#define T_ATOM             (1 << (TYPE_BITS + 3))
+
+#define is_atom(p)         (typeflag(p) & T_ATOM)
+#define set_atom(p)        typeflag(p) |= T_ATOM
+
+#define T_GC_MARK          (1 << (TYPE_BITS + 4))
+
+#define is_marked(p)       (typeflag(p) &  T_GC_MARK)
+#define set_mark(p)        typeflag(p)  |= T_GC_MARK
+#define clear_mark(p)      typeflag(p)  &= (~T_GC_MARK)
+
+#define T_GC_PROTECT       (1 << (TYPE_BITS + 5))
+#define gc_protect(x)      typeflag(x) |= T_GC_PROTECT
+#define gc_unprotect(x)    typeflag(x) &= (~T_GC_PROTECT)
+#define is_gc_protected(x) (typeflag(x) & T_GC_PROTECT)
+
+#define T_UNUSED_BITS      0xff800000
+#define T_OBJECT           (1 << (TYPE_BITS + 6))
+
+#define is_object(x)       (((typeflag(x) & (T_UNUSED_BITS | T_OBJECT)) == T_OBJECT) && (type(x) != 0) && (type(x) <= T_LAST_TYPE))
+
+
+static char *describe_type(pointer p)
+{
+  sprintf(error_buf, "%s%s%s%s%s%s%s%s",
+	  type_names[type(p)],
+	  (typeflag(p) & T_SYNTAX) ? " syntax" : "",
+	  (typeflag(p) & T_IMMUTABLE) ? " immutable" : "",
+	  (typeflag(p) & T_ATOM) ? " atom" : "",
+	  (typeflag(p) & T_GC_MARK) ? " marked" : "",
+	  (typeflag(p) & T_GC_PROTECT) ? " protected" : "",
+	  (typeflag(p) & T_OBJECT) ? " object" : "",
+	  (typeflag(p) & T_UNUSED_BITS) ? " and other garbage bits!" : "");
+  return(error_buf);
+}
+
+#define NUM_INT 0
+#define NUM_RATIO 1
+#define NUM_REAL 2
+#define NUM_REAL2 3
+#define NUM_COMPLEX 4
+
+/* so int = 0, exact < 2, ratio = 1, complex >= 4, real 2 or 3
+ *   (I'm not going to support exact complex or inexact ratio etc)
+ */
+
+#define num_is_fixnum(n) (n.type == NUM_INT)
+#define object_is_fixnum(p) (p->object.number.type == NUM_INT)
+
+#define num_is_ratio(n) (n.type == NUM_RATIO)
+#define object_is_ratio(p) (p->object.number.type == NUM_RATIO)
+
+#define num_is_real(n) ((n.type & (NUM_REAL | NUM_COMPLEX)) == NUM_REAL)
+#define object_is_real(p) ((p->object.number.type & (NUM_REAL | NUM_COMPLEX)) == NUM_REAL
+
+#define num_is_complex(n) (n.type & NUM_COMPLEX)
+#define object_is_complex(p) (p->object.number.type & NUM_COMPLEX)
+
+#define num_type(n) (n.type)
+#define object_number_type(p) (p->object.number.type)
+
+#define numerator(n) n.value.fvalue.numerator
+#define denominator(n) n.value.fvalue.denominator
+
+#define real_part(n) n.value.cvalue.real
+#define imag_part(n) n.value.cvalue.imag
+
+#define fraction(n) (((double)numerator(n)) / ((double)denominator(n)))
+
+#define integer(n) n.value.ivalue
+#define real(n)    n.value.rvalue
+
+#define cons(sc, a,b) cons_1(sc, a, b, false)
+#define immutable_cons(sc, a,b) cons_1(sc, a, b, true)
+
+#define car(p) ((p)->object.cons.car)
+#define cdr(p) ((p)->object.cons.cdr)
+
+#define string_value(p)  ((p)->object.string.svalue)
+#define string_length(p) ((p)->object.string.length)
+
+#define character(p) ((p)->object.cvalue)
+
+#define loop_counter(p) ((p)->object.number.value.ivalue)
+
+#define set_integer(p) (p)->object.number.type = NUM_INT;
+
+#define is_inport(p) (type(p) == T_PORT && p->object.port->kind & port_input)
+#define is_outport(p) (type(p) == T_PORT && p->object.port->kind & port_output)
+
+/* #define procedure_index(p) ((p)->object.number.value.ivalue) */
+#define procedure_index(p) ((p)->object.proc_num)
+
+#define cont_dump(p)     cdr(p)
+
+#define caar(p)          car(car(p))
+#define cadr(p)          car(cdr(p))
+#define cdar(p)          cdr(car(p))
+#define cddr(p)          cdr(cdr(p))
+#define cadar(p)         car(cdr(car(p)))
+#define caddr(p)         car(cdr(cdr(p)))
+#define cadaar(p)        car(cdr(car(car(p))))
+#define cadddr(p)        car(cdr(cdr(cdr(p))))
+#define cddddr(p)        cdr(cdr(cdr(cdr(p))))
+
+#define vector_length(p)     ((p)->object.vector.length)
+#define vector_element(p, i) ((p)->object.vector.elements[i])
+
 #define is_true(p)       ((p) != sc->F)
 #define is_false(p)      ((p) == sc->F)
 
 
-#define HISTORY_SIZE 1000000
-static pointer history_ptr[HISTORY_SIZE];
-static int history_line[HISTORY_SIZE];
-static const char *history_func[HISTORY_SIZE];
-static int history_ctr = 0;
-
-static pointer set_sc_code_1(scheme *sc, pointer p, int line, const char *func)
+static void set_type(pointer p, int f)
 {
-  history_ptr[history_ctr] = p;
-  history_line[history_ctr] = line;
-  history_func[history_ctr] = func;
-  sc->code = p;
-  history_ctr++;
-  if (history_ctr >= HISTORY_SIZE) history_ctr = 0;
-  return(p);
-}
-
-static void gc(scheme *sc, pointer a, pointer b);
-
-static pointer new_cell_protected(scheme *sc, pointer a, pointer b)
-{
-  pointer p;
-  p = (cell *)CALLOC(1, sizeof(cell));
-  if (!sc->cells[sc->cells_top])
-    sc->cells[sc->cells_top++] = p;
-  else
+  if (is_immutable(p))
     {
-      gc(sc, a, b);
-      if (sc->cells_top >= sc->cells_size)
-	{
-	  for (sc->cells_top = 0; sc->cells_top < sc->cells_size; sc->cells_top++)
-	    if (!sc->cells[sc->cells_top])
-	      {
-		sc->cells[sc->cells_top++] = p;
-		return(p);
-	      }
-	  sc->cells_size *= 2;
-	  sc->cells = (cell **)REALLOC(sc->cells, sc->cells_size * sizeof(cell *));
-	  sc->cells[sc->cells_top++] = p;
-	}
+      fprintf(stderr, "set type wants to clobber immutable element");
+      abort();
     }
-  return(p);
+  set_type_1(p, f);
 }
-
-static pointer new_cell(scheme *sc)
-{
-  return(new_cell_protected(sc, sc->NIL, sc->NIL));
-}
-
 
 #define set_sc_code(sc, p) set_sc_code_1(sc, p, __LINE__, __FUNCTION__)
 
@@ -514,60 +560,85 @@ static const char *string_downcase(char *s)
 #define prompt "> "
 #endif
 
-#ifndef FIRST_CELLSEGS
-#define FIRST_CELLSEGS 3
-#endif
 
-/* T_BOOL = 0 */
+#define HISTORY_SIZE 1000000
+static pointer history_ptr[HISTORY_SIZE];
+static int history_line[HISTORY_SIZE];
+static const char *history_func[HISTORY_SIZE];
+static int history_ctr = 0;
 
-enum scheme_types {
-  T_STRING = 1,
-  T_NUMBER = 2,
-  T_SYMBOL = 3,
-  T_PROC = 4,
-  T_PAIR = 5,
-  T_CLOSURE = 6,
-  T_CONTINUATION = 7,
-  T_FOREIGN_FUNCTION = 8,
-  T_CHARACTER = 9,
-  T_PORT = 10,
-  T_VECTOR = 11,
-  T_MACRO = 12,
-  T_PROMISE = 13,
-  T_ENVIRONMENT = 14,
-  T_FOREIGN_OBJECT = 15,
-  T_LAST_SYSTEM_TYPE = 15
-};
+static pointer set_sc_code_1(scheme *sc, pointer p, int line, const char *func)
+{
+  if (!is_object(p))
+    {
+      fprintf(stderr, "sc->code new value is not an object!");
+      abort();
+    }
+  history_ptr[history_ctr] = p;
+  history_line[history_ctr] = line;
+  history_func[history_ctr] = func;
+  sc->code = p;
+  history_ctr++;
+  if (history_ctr >= HISTORY_SIZE) history_ctr = 0;
+  return(p);
+}
+
+static int gc(scheme *sc);
+
+static pointer new_cell(scheme *sc)
+{
+  pointer p;
+  p = (cell *)CALLOC(1, sizeof(cell));
+
+  /*
+  fprintf(stderr, "alloc %p (%d of %d, currently %p)\n", p, sc->cells_top, sc->cells_size, sc->cells[sc->cells_top]);
+  */
+  if (!sc->cells[sc->cells_top])
+    sc->cells[sc->cells_top++] = p;
+  else
+    {
+      for (sc->cells_top++; sc->cells_top < sc->cells_size; sc->cells_top++)
+	if (!sc->cells[sc->cells_top])
+	  {
+	    sc->cells[sc->cells_top++] = p;
+	    return(p);
+	  }
+      if (sc->cells_top >= sc->cells_size)
+	{
+	  int k, old_size, freed_cells = 0;
+	  if (!(sc->gc_off)) 
+	    freed_cells = gc(sc);
+	  if (freed_cells > 100)
+	    {
+	      for (sc->cells_top = 0; sc->cells_top < sc->cells_size; sc->cells_top++)
+		if (!sc->cells[sc->cells_top])
+		  {
+		    sc->cells[sc->cells_top++] = p;
+		    return(p);
+		  }
+	    }
+	  /*
+	  fprintf(stderr, "\n--------------------------------------------------------------------------------\n");
+	  fprintf(stderr, "%d free cells, and gc_off: %d (about to set %d)\n", freed_cells, sc->gc_off, sc->cells_top);
+	  */
+
+	  if (sc->cells_size > 1000000) abort();
+
+	  old_size = sc->cells_size;
+	  sc->cells_size *= 2;
+	  sc->cells = (cell **)REALLOC(sc->cells, sc->cells_size * sizeof(cell *));
+	  for (k = old_size; k < sc->cells_size; k++)
+	    sc->cells[k] = NULL;
+	  sc->cells[sc->cells_top++] = p;
+	}
+    }
+  return(p);
+}
 
 
-static const char *type_names[16] = {
-  "none", "string", "number", "symbol", "proc", "pair", "closure", "continuation",
-  "foreign-function", "character", "port", "vector", "macro", "promise", "environment",
-  "foreign-object"
-};
-
-
-/* 5 bits here so only 31 types allowed currently */
-
-#define TYPE_BITS 5
-#define T_MASKTYPE      31    /* 0000000000011111 */
-#define T_SYNTAX      4096    /* 0001000000000000 */
-#define T_IMMUTABLE   8192    /* 0010000000000000 */
-#define T_ATOM       16384    /* 0100000000000000 */   /* only for gc */
-#define CLRATOM      49151    /* 1011111111111111 */   /* only for gc */
-#define MARK         32768    /* 1000000000000000 */
-#define UNMARK       32767    /* 0111111111111111 */
-
-
-static pointer Error_1(scheme *sc, const char *s, pointer a);
-#define Error_0(sc, s) return Error_1(sc, s, 0)
 
 static num num_zero;
 static num num_one;
-
-/* macros for cell operations */
-#define typeflag(p) ((p)->flag)
-#define type(p)     (typeflag(p) & T_MASKTYPE)
 
 
 
@@ -584,12 +655,11 @@ static void dump_object(scheme *sc, pointer x)
   else
     {
       if ((x) &&
-	  (type(x) >= 0) &&
-	  (type(x) < T_LAST_SYSTEM_TYPE))
+	  (is_object(x)))
 	{
 	  fprintf(stderr, "type: %s (%x)\n", type_names[type(x)], typeflag(x));
 	}
-      else fprintf(stderr, "bogus: %x\n", typeflag(x));
+      else fprintf(stderr, "bogus object: %x\n", typeflag(x));
     }
 }
 
@@ -685,7 +755,7 @@ bool s7_is_port(pointer p)
 
 bool s7_is_pair(pointer p)     
 { 
-  return (type(p) == T_PAIR);
+  return(type(p) == T_PAIR);
 }
 
 pointer s7_car(pointer p)           
@@ -700,27 +770,53 @@ pointer s7_cdr(pointer p)
 
 pointer s7_pair_car(pointer p)   
 { 
-  return car(p);
+  return(car(p));
 }
 
 pointer s7_pair_cdr(pointer p)   
 { 
-  return cdr(p);
+  return(cdr(p));
 }
 
 pointer s7_set_car(pointer p, pointer q) 
 { 
-  return car(p) =q;
+  if (is_immutable(car(p)))
+    {
+      fprintf(stderr, "set-car! wants to clobber immutable element");
+      abort();
+    }
+
+  if (is_object(q))
+    car(p) = q;
+  else 
+    {
+      fprintf(stderr, "set-car! bogus value");
+      abort();
+    }
+  return(q);
 }
 
 pointer s7_set_cdr(pointer p, pointer q) 
 { 
-  return cdr(p) =q;
+  if (is_immutable(car(p)))
+    {
+      fprintf(stderr, "set-cdr! wants to clobber immutable element");
+      abort();
+    }
+
+  if (is_object(q))
+    cdr(p) = q;
+  else 
+    {
+      fprintf(stderr, "set-cdr! bogus value");
+      abort();
+    }
+  return(q);
 }
 
 bool s7_is_symbol(pointer p)   
 { 
-  return (type(p) == T_SYMBOL);
+  return(type(p) == T_SYMBOL);
 }
 
 char *s7_symbol_name(pointer p)   
@@ -730,17 +826,17 @@ char *s7_symbol_name(pointer p)
 
 static bool s7_is_syntax(pointer p)   
 { 
-  return (typeflag(p) & T_SYNTAX);
+  return(typeflag(p) & T_SYNTAX);
 }
 
 bool s7_is_proc(pointer p)     
 { 
-  return (type(p) == T_PROC);
+  return(type(p) == T_PROC);
 }
 
 bool s7_is_foreign_function(pointer p)  
 { 
-  return (type(p) == T_FOREIGN_FUNCTION);
+  return(type(p) == T_FOREIGN_FUNCTION);
 }
 
 bool s7_is_foreign_object(pointer p) 
@@ -752,12 +848,12 @@ static const char *procname(pointer x);
 
 bool s7_is_closure(pointer p)  
 { 
-  return (type(p) == T_CLOSURE);
+  return(type(p) == T_CLOSURE);
 }
 
 static bool is_macro(pointer p)    
 { 
-  return (type(p) == T_MACRO);
+  return(type(p) == T_MACRO);
 }
 
 pointer s7_closure_code(pointer p)   
@@ -772,26 +868,21 @@ pointer s7_closure_env(pointer p)
 
 bool s7_is_continuation(pointer p)    
 { 
-  return (type(p) == T_CONTINUATION);
+  return(type(p) == T_CONTINUATION);
 }
 
 /* To do: promise should be forced ONCE only */
 static bool is_promise(pointer p)  
 { 
-  return (type(p) == T_PROMISE);
-}
-
-bool s7_is_environment(pointer p) 
-{ 
-  return (type(p) == T_ENVIRONMENT);
+  return(type(p) == T_PROMISE);
 }
 
 bool s7_is_immutable(pointer p) 
 { 
-  return (typeflag(p) & T_IMMUTABLE);
+  return(typeflag(p) & T_IMMUTABLE);
 }
 
-void s7_setimmutable(pointer p) 
+void s7_set_immutable(pointer p) 
 { 
   typeflag(p) |= T_IMMUTABLE;
 }
@@ -822,11 +913,10 @@ static  int Cislower(int c)
 }
 
 
-
+static pointer internal_error(scheme *sc, const char *s, pointer a);
 static pointer _get_cell(scheme *sc, pointer a, pointer b);
 static pointer find_consecutive_cells(scheme *sc, int n);
 static port *port_rep_from_file(scheme *sc, FILE *, int prop);
-static void dump_stack_mark(scheme *);
 static int syntaxnum(pointer p);
 static void finalize_cell(scheme *sc, pointer a);
 static bool file_interactive(scheme *sc);
@@ -875,7 +965,7 @@ static Int c_lcm(Int a, Int b)
   if ((a == 0) || (b == 0)) return(0);
   if (a < 0) a = -a;
   if (b < 0) b = -b;
-  return((a * b) / c_gcd(a, b));
+  return((a / c_gcd(a, b)) * b);
 }
 
 static bool c_rationalize(double ux, double error, off_t *numer, off_t *denom)
@@ -883,6 +973,8 @@ static bool c_rationalize(double ux, double error, off_t *numer, off_t *denom)
   off_t a1 = 0, a2 = 1, b1 = 1, b2 = 0, tt = 1, a = 0, b = 0, ctr, int_part = 0;
   bool neg = false;
   double x;
+
+  fprintf(stderr, "rationalize %f %f\n", ux, error);
   
   if (ux == 0.0)
     {
@@ -997,9 +1089,6 @@ static num make_ratio(scheme *sc, Int numer, Int denom)
 {
   num ret;
   Int divisor;
-
-  if (denom == 0)
-    Error_1(sc, "/: division by 0", 0);
 
   if (denom < 0)
     {
@@ -1272,8 +1361,6 @@ static num num_div(scheme *sc, num a, num b)
       {
 	double rb;
 	rb = num_to_real(b);
-	if (rb == 0.0)
-	  Error_1(sc, "/: division by 0.0", 0);
 	real(ret) = num_to_real(a) / rb;
       }
       break;
@@ -1286,8 +1373,6 @@ static num num_div(scheme *sc, num a, num b)
 	i1 = num_to_imag_part(a);
 	i2 = num_to_imag_part(b);
 	den = (r2 * r2 + i2 * i2);
-	if (den == 0.0)
-	  Error_1(sc, "/: complex division by 0.0", 0);
 	ret = make_complex((r1 * r2 + i1 * i2) / den, (r2 * i1 - r1 * i2) / den);
       }
       break;
@@ -1395,14 +1480,31 @@ static long binary_decode(const char *s)
 }
 
 /* get new cons cell */
-static pointer _cons(scheme *sc, pointer a, pointer b, int immutable) 
+static pointer cons_1(scheme *sc, pointer a, pointer b, bool immutable) 
 {
   pointer x;
-  x = new_cell_protected(sc, a, b);
+
+  if (!is_object(a))
+    {
+      fprintf(stderr, "cons car is not an object!");
+      abort();
+    }
+  if (!is_object(b))
+    {
+      fprintf(stderr, "cons cdr is not an object!");
+      abort();
+    }
+
+  gc_protect(a);
+  gc_protect(b);
+  x = new_cell(sc);
+  gc_unprotect(a);
+  gc_unprotect(b);
   
-  typeflag(x) = T_PAIR;
+  set_type(x, T_PAIR);
   if (immutable) 
-    s7_setimmutable(x);
+    s7_set_immutable(x);
+
   car(x) = a;
   cdr(x) = b;
   return(x);
@@ -1410,42 +1512,67 @@ static pointer _cons(scheme *sc, pointer a, pointer b, int immutable)
 
 pointer s7_immutable_cons(scheme *sc, pointer a, pointer b) 
 {
-  return(_cons(sc, a, b, 1));
+  return(cons_1(sc, a, b, true));
 }
 
 pointer s7_cons(scheme *sc, pointer a, pointer b) 
 {
-  return(_cons(sc, a, b, 0));
+  return(cons_1(sc, a, b, false));
 }
 
 
 
 /* ========== oblist implementation  ========== */ 
 
-#ifndef USE_OBJECT_LIST 
+#define INITIAL_OBLIST_SIZE 9601
+/* perhaps 4603? */
 
-static int hash_fn(const char *key, int table_size); 
+
+static int hash_fn(const char *key, int table_size) 
+{ 
+  /* I tried several other hash functions, but they gave about the same incidence of collisions */
+  unsigned int hashed = 0; 
+  const char *c; 
+  int bits_per_int = sizeof(unsigned int) * 8; 
+  
+  for (c = key; *c; c++) 
+    { 
+      /* letters have about 5 bits in them */ 
+      hashed = (hashed << 5) | (hashed >> (bits_per_int - 5)); 
+      hashed ^= *c; 
+    } 
+  return(hashed % table_size); 
+} 
+
 
 static pointer oblist_initial_value(scheme *sc) 
 { 
-  return(s7_make_vector(sc, 461)); /* probably should be bigger */ 
+  return(s7_make_vector(sc, INITIAL_OBLIST_SIZE));
 } 
 
 /* returns the new symbol */ 
+
+/* r4rs: hashes: 2346, collisions: 513
+ */
+
 static pointer oblist_add_by_name(scheme *sc, const char *name) 
 { 
   pointer x; 
   int location; 
   
-  x = s7_immutable_cons(sc, s7_make_string(sc, name), sc->NIL); 
-  typeflag(x) = T_SYMBOL; 
-  s7_setimmutable(car(x)); 
-  
+  x = cons(sc, s7_make_string(sc, name), sc->NIL); 
+  set_type(x, T_SYMBOL | T_GC_PROTECT);
+  s7_set_immutable(car(x)); 
+  /*
+  fprintf(stderr, "oblist: %s %p\n", name, x);
+  */
   location = hash_fn(name, vector_length(sc->oblist)); 
+
   s7_vector_set(sc->oblist, 
 		location, 
 		s7_immutable_cons(sc, x, s7_vector_ref(sc->oblist, location))); 
-  return x; 
+  gc_unprotect(x);
+  return(x); 
 } 
 
 static  pointer oblist_find_by_name(scheme *sc, const char *name) 
@@ -1460,9 +1587,7 @@ static  pointer oblist_find_by_name(scheme *sc, const char *name)
       s = s7_symbol_name(car(x)); 
       /* case-insensitive, per R5RS section 2. */ 
       if (strcasecmp(name, s) == 0) 
-	{ 
-	  return car(x); 
-	} 
+	return(car(x)); 
     } 
   return sc->NIL; 
 } 
@@ -1480,64 +1605,30 @@ static pointer oblist_all_symbols(scheme *sc)
   return ob_list; 
 } 
 
-#else 
-
-static pointer oblist_initial_value(scheme *sc) 
-{ 
-  return sc->NIL; 
-} 
-
-static  pointer oblist_find_by_name(scheme *sc, const char *name) 
-{ 
+void s7_for_each_symbol_name(scheme *sc, void (*oblist_func)(const char *symbol_name, void *data), void *data)
+{
+  int i; 
   pointer x; 
-  char    *s; 
+  pointer ob_list = sc->NIL; 
   
-  for (x = sc->oblist; x != sc->NIL; x = cdr(x)) 
-    { 
-      s = s7_symbol_name(car(x)); 
-      /* case-insensitive, per R5RS section 2. */ 
-      if (strcasecmp(name, s) == 0) 
-	{ 
-	  return car(x); 
-	} 
-    } 
-  return sc->NIL; 
-} 
-
-/* returns the new symbol */ 
-static pointer oblist_add_by_name(scheme *sc, const char *name) 
-{ 
-  pointer x; 
-  
-  x = immutable_cons(sc, s7_make_string(sc, name), sc->NIL); 
-  typeflag(x) = T_SYMBOL; 
-  s7_setimmutable(car(x)); 
-  sc->oblist = immutable_cons(sc, x, sc->oblist); 
-  return x; 
-} 
-static pointer oblist_all_symbols(scheme *sc) 
-{ 
-  return sc->oblist; 
-} 
-
-#endif 
-
-
-
+  for (i = 0; i < vector_length(sc->oblist); i++) 
+    for (x  = s7_vector_ref(sc->oblist, i); x != sc->NIL; x = cdr(x)) 
+      oblist_func(s7_symbol_name(car(x)), data);
+}
 
 static pointer make_port(scheme *sc, port *p) 
 {
   pointer x = new_cell(sc);
   
-  typeflag(x) = T_PORT|T_ATOM;
+  set_type(x, T_PORT | T_ATOM);
   x->object.port = p;
-  return (x);
+  return(x);
 }
 
 pointer s7_make_foreign_function(scheme *sc, foreign_func f, const char *doc) 
 {
   pointer x = new_cell(sc);
-  typeflag(x) = (T_FOREIGN_FUNCTION | T_ATOM);
+  set_type(x, T_FOREIGN_FUNCTION | T_ATOM);
   x->object.ffunc.ff = f;
   x->object.ffunc.doc = doc;
   return(x);
@@ -1554,24 +1645,24 @@ pointer s7_make_foreign_object(scheme *sc, int type, void *value)
 {
   pointer x;
   x = new_cell(sc);
-  typeflag(x) = (T_FOREIGN_OBJECT | T_ATOM);
+  set_type(x, T_FOREIGN_OBJECT | T_ATOM);
   x->object.fobj.type = type;
   x->object.fobj.value = value;
-  return (x);
+  return(x);
 }
 
 pointer s7_make_character(scheme *sc, int c) 
 {
   pointer x = new_cell(sc);
-  typeflag(x) = (T_CHARACTER | T_ATOM);
+  set_type(x, T_CHARACTER | T_ATOM);
   character(x) = c;
-  return (x);
+  return(x);
 }
 
 pointer s7_make_integer(scheme *sc, Int n) 
 {
   pointer x = new_cell(sc);
-  typeflag(x) = (T_NUMBER | T_ATOM);
+  set_type(x, T_NUMBER | T_ATOM);
 
   x->object.number.type = NUM_INT;
   integer(x->object.number) = n;
@@ -1582,7 +1673,7 @@ pointer s7_make_integer(scheme *sc, Int n)
 pointer s7_make_real(scheme *sc, double n) 
 {
   pointer x = new_cell(sc);
-  typeflag(x) = (T_NUMBER | T_ATOM);
+  set_type(x, T_NUMBER | T_ATOM);
 
   x->object.number.type = NUM_REAL;
   real(x->object.number) = n;
@@ -1594,7 +1685,7 @@ pointer s7_make_complex(scheme *sc, double a, double b)
 {
   num ret;
   pointer x = new_cell(sc);
-  typeflag(x) = (T_NUMBER | T_ATOM);
+  set_type(x, T_NUMBER | T_ATOM);
   ret = make_complex(a, b);
 
   x->object.number.type = ret.type;
@@ -1614,7 +1705,7 @@ pointer s7_make_ratio(scheme *sc, Int a, Int b)
 
   num ret;
   pointer x = new_cell(sc);
-  typeflag(x) = (T_NUMBER | T_ATOM);
+  set_type(x, T_NUMBER | T_ATOM);
   ret = make_ratio(sc, a, b);
 
   x->object.number.type = ret.type;
@@ -1672,36 +1763,42 @@ pointer s7_make_string(scheme *sc, const char *str)
 
 pointer s7_make_counted_string(scheme *sc, const char *str, int len) 
 {
-  pointer x = new_cell(sc);
-  
+  pointer x;
+  x = new_cell(sc);
+  gc_protect(x);
   string_value(x) = store_string(sc, len, str, 0);
-  typeflag(x) = (T_STRING | T_ATOM);
+  set_type(x, T_STRING | T_ATOM);
   string_length(x) = len;
-  return (x);
+  gc_unprotect(x);
+  return(x);
 }
 
 static pointer mk_empty_string(scheme *sc, int len, char fill) 
 {
-  pointer x = new_cell(sc);
-  
+  pointer x;
+  x = new_cell(sc);
+  gc_protect(x);  
   string_value(x) = store_string(sc,len, 0,fill);
-  typeflag(x) = (T_STRING | T_ATOM);
+  set_type(x, T_STRING | T_ATOM);
   string_length(x) = len;
-  return (x);
+  gc_unprotect(x);
+  return(x);
 }
 
 pointer s7_make_vector(scheme *sc, int len) 
 {
   pointer x;
   x = new_cell(sc);
-  typeflag(x) = (T_VECTOR | T_ATOM);
+  gc_protect(x);
+  set_type(x, T_VECTOR);
   vector_length(x) = len;
   if (len > 0)
     {
       x->object.vector.elements = (pointer *)CALLOC(len, sizeof(pointer));
       s7_fill_vector(x, sc->NIL);
     }
-  return x;
+  gc_unprotect(x);
+  return(x);
 }
 
 int s7_vector_length(pointer vec)
@@ -1726,8 +1823,15 @@ pointer s7_vector_ref(pointer vec, int elem)
 
 pointer s7_vector_set(pointer vec, int elem, pointer a) 
 {
+  if (!is_object(a))
+    {
+      fprintf(stderr, "vector-set! value is not an object!");
+      abort();
+    }
+
   if (elem >= vector_length(vec))
     fprintf(stderr, "vector-set past end of vector: %d %d\n", elem, vector_length(vec));
+
   vector_element(vec, elem) = a;
 }
 
@@ -1735,18 +1839,24 @@ pointer s7_vector_set(pointer vec, int elem, pointer a)
 pointer s7_make_symbol(scheme *sc, const char *name) 
 { 
   pointer x; 
-  
+  /*
+  fprintf(stderr, "make_symbol %s\n", name);
+  */
   /* first check oblist */ 
   x = oblist_find_by_name(sc, name); 
   if (x != sc->NIL) 
-    { 
-      return (x); 
-    } 
-  else 
-    { 
-      x = oblist_add_by_name(sc, name); 
-      return (x); 
-    } 
+    {
+      /*
+      fprintf(stderr, "already exists: %p\n", x);
+      */
+      return(x); 
+    }
+
+  x = oblist_add_by_name(sc, name); 
+  /*
+  fprintf(stderr, "new loc: %p\n", x);
+  */
+  return(x); 
 } 
 
 pointer s7_gensym(scheme *sc) 
@@ -1754,7 +1864,7 @@ pointer s7_gensym(scheme *sc)
   pointer x; 
   char name[40]; 
   
-  for(; sc->gensym_cnt<LONG_MAX; sc->gensym_cnt++) 
+  for(; sc->gensym_cnt < LONG_MAX; sc->gensym_cnt++) 
     { 
       sprintf(name, "gensym-%ld", sc->gensym_cnt); 
       
@@ -1762,14 +1872,10 @@ pointer s7_gensym(scheme *sc)
       x = oblist_find_by_name(sc, name); 
       
       if (x != sc->NIL) 
-	{ 
-	  continue; 
-	} 
-      else 
-	{ 
-	  x = oblist_add_by_name(sc, name); 
-	  return (x); 
-	} 
+	continue; 
+
+      x = oblist_add_by_name(sc, name); 
+      return(x); 
     } 
   
   return sc->NIL; 
@@ -1974,10 +2080,10 @@ static pointer make_sharp_const(scheme *sc, char *name)
   char tmp[256];
 
   if (!strcmp(name, "t"))
-    return (sc->T);
+    return(sc->T);
 
   if (!strcmp(name, "f"))
-    return (sc->F);
+    return(sc->F);
 
   if (*name == 'o') /* #o (octal) */
     {
@@ -2055,125 +2161,81 @@ static pointer make_sharp_const(scheme *sc, char *name)
 
 /* ========== garbage collector ========== */
 
-/*--
- *  We use algorithm E (Knuth, The Art of Computer Programming Vol.1,
- *  sec. 2.3.5), the Schorr-Deutsch-Waite link-inversion algorithm, 
- *  for marking. 
- */
-static void mark(pointer a) 
+void s7_mark_object(pointer p)
 {
-  pointer t, q, p;
-  
-  t = (pointer) 0;
-  p = a;
- E2:  setmark(p);
+  if (is_marked(p)) return; 
+
+  set_mark(p);
+  if (is_atom(p))
+    return;
+
   if (s7_is_vector(p)) 
     {
       int i, len;
       len = vector_length(p);
       for(i = 0; i < len; i++) 
-	mark(vector_element(p, i));
-    }
-  else
-    {
-      if (s7_is_foreign_object(p))
-	s7_mark_embedded_foreign_objects(p);
+	s7_mark_object(vector_element(p, i));
+      return;
     }
 
-  if (is_atom(p))
-    goto E6;
-  /* E4: down car */
-  q = car(p);
-  if (q && !is_mark(q)) 
+  if (s7_is_foreign_object(p))
     {
-      setatom(p);  /* a note that we have moved car */ 
-      car(p) = t;
-      t = p;
-      p = q;
-      goto E2;
+      s7_mark_embedded_foreign_objects(p);
+      return;
     }
- E5:  q = cdr(p); /* down cdr */
-  if (q && !is_mark(q)) 
-    {
-      cdr(p) = t;
-      t = p;
-      p = q;
-      goto E2;
-    }
- E6:   /* up.  Undo the link switching from steps E4 and E5. */ 
-  if (!t)
-    return;
-  q = t;
-  if (is_atom(q)) 
-    {
-      clratom(q);
-      t = car(q);
-      car(q) = p;
-      p = q;
-      goto E5;
-    } 
-  else 
-    {
-      t = cdr(q);
-      cdr(q) = p;
-      p = q;
-      goto E6;
-    }
+  /*
+  fprintf(stderr, "mark %p: %s, %x %s\n", p, type_names[type(p)], typeflag(p), describe_type(p));
+  */
+  if (car(p))
+    s7_mark_object(car(p));
+
+  if (cdr(p))
+    s7_mark_object(cdr(p));
 }
 
-void s7_mark_object(pointer a)
-{
-  mark(a);
-}
-
-
-static void gc(scheme *sc, pointer a, pointer b) 
+static int gc(scheme *sc) 
 {
   pointer p;
   int i, freed_cells = 0;
   
-  if (sc->gc_verbose) 
-    {
-      s7_putstr(sc, "gc...");
-    }
+  if ((sc->gc_verbose) &&
+      (sc->outport != sc->NIL))
+    s7_putstr(sc, "gc...................................................................................\n");
   
   /* mark system globals */
-  mark(sc->oblist);
-  mark(sc->global_env);
+  s7_mark_object(sc->oblist);
+  s7_mark_object(sc->global_env);
   
   /* mark current registers */
-  mark(sc->args);
-  mark(sc->envir);
-  mark(sc->code);
-  dump_stack_mark(sc); 
-  mark(sc->value);
-  mark(sc->inport);
-  mark(sc->save_inport);
-  mark(sc->outport);
-  mark(sc->errport);
-  mark(sc->loadport);
-  mark(a);
-  mark(b);
-  mark(sc->ext_data); /* s7 */
+  s7_mark_object(sc->args);
+  s7_mark_object(sc->envir);
+  s7_mark_object(sc->code);
+  s7_mark_object(sc->dump); 
+  s7_mark_object(sc->value);
+  s7_mark_object(sc->inport);
+  s7_mark_object(sc->save_inport);
+  s7_mark_object(sc->outport);
+  s7_mark_object(sc->errport);
+  s7_mark_object(sc->loadport);
+  s7_mark_object(sc->ext_data);
   
   /* garbage collect */
-  clrmark(sc->NIL);
+  clear_mark(sc->NIL);
 
   for (i = 0; i < sc->cells_size; i++)
     {
       p = sc->cells[i];
       if (p)
 	{
-	  if (is_mark(p)) 
-	    clrmark(p);
+	  if (is_marked(p)) 
+	    clear_mark(p);
 	  else 
 	    {
-	      /* reclaim cell */
-	      if (typeflag(p) != 0) 
-		{ 
+	      if (!is_gc_protected(p))
+		{
+		  /* reclaim cell */
 		  finalize_cell(sc, p); 
-		  typeflag(p) = 0; 
-		  car(p) = sc->NIL; 
+		  typeflag(p) = 0;
 		  FREE(p);
 		  sc->cells[i] = NULL;
 		} 
@@ -2182,12 +2244,14 @@ static void gc(scheme *sc, pointer a, pointer b)
 	}
     }
   
-  if (sc->gc_verbose) 
+  if ((sc->gc_verbose) &&
+      (sc->outport != sc->NIL))
     {
       char msg[80];
-      sprintf(msg, "done: %ld cells were recovered.\n", freed_cells);
+      sprintf(msg, "done: %ld cells were recovered, size: %d\n", freed_cells, sc->cells_size);
       s7_putstr(sc,msg);
     }
+  return(freed_cells);
 }
 
 
@@ -2449,7 +2513,7 @@ static int inchar(scheme *sc)
       (sc->file_i != 0))
     {
       file_pop(sc);
-      if (sc->nesting!= 0) 
+      if (sc->nesting != 0) 
 	return(EOF);
       else return('\n');
       goto again;
@@ -2467,7 +2531,7 @@ static int basic_inchar(port *pt)
     {
       if ((*pt->rep.string.curr == 0) || 
 	  (pt->rep.string.curr == pt->rep.string.past_the_end))
-	return (EOF);
+	return(EOF);
       else return(*pt->rep.string.curr++);
     }
 }
@@ -2748,65 +2812,65 @@ static int token(scheme *sc)
   switch (c = inchar(sc)) 
     {
     case EOF:
-      return (TOK_EOF);
+      return(TOK_EOF);
 
     case '(':
-      return (TOK_LPAREN);
+      return(TOK_LPAREN);
 
     case ')':
-      return (TOK_RPAREN);
+      return(TOK_RPAREN);
 
     case '.':
       c = inchar(sc);
       if (is_one_of(" \n\t", c)) 
-	return (TOK_DOT);
+	return(TOK_DOT);
 
       backchar(sc, c);
       backchar(sc, '.');
       return TOK_ATOM;
 
     case '\'':
-      return (TOK_QUOTE);
+      return(TOK_QUOTE);
 
     case ';':
       while ((c = inchar(sc)) != '\n' && c != EOF)
 	;
-      return (token(sc));
+      return(token(sc));
 
     case '"':
-      return (TOK_DQUOTE);
+      return(TOK_DQUOTE);
 
     case BACKQUOTE:
-      return (TOK_BQUOTE);
+      return(TOK_BQUOTE);
 
     case ',':
       if ((c = inchar(sc)) == '@') 
-	return (TOK_ATMARK);
+	return(TOK_ATMARK);
 
       backchar(sc, c);
-      return (TOK_COMMA);
+      return(TOK_COMMA);
 
     case '#':
       c = inchar(sc);
       if (c == '(') 
-	return (TOK_VEC);
+	return(TOK_VEC);
 
       if (c == '!') 
 	{
 	  /* TODO: block comment, this is wrong! */
 	  while ((c =inchar(sc)) != '\n' && c!=EOF)
 	    ;
-	  return (token(sc));
+	  return(token(sc));
 	}
 
       backchar(sc,c);
       if (is_one_of(" tfodxb\\", c)) 
 	return TOK_SHARP_CONST;
-      return (TOK_SHARP);
+      return(TOK_SHARP);
 
     default:
       backchar(sc,c);
-      return (TOK_ATOM);
+      return(TOK_ATOM);
     }
 }
 
@@ -3040,9 +3104,9 @@ static void printatom(scheme *sc, pointer l, int f)
 }
 
 
-static pointer vector_to_string(scheme *sc, pointer vect)
+char *s7_vector_to_c_string(scheme *sc, pointer vect);
+char *s7_vector_to_c_string(scheme *sc, pointer vect)
 {
-  pointer result;
   int i, len, bufsize = 0;
   bool too_long = false;
   char **elements = NULL;
@@ -3074,20 +3138,30 @@ static pointer vector_to_string(scheme *sc, pointer vect)
   if (too_long)
     strcat(buf, " ...");
   strcat(buf, ")");
+  return(buf);
+}
+
+pointer s7_vector_to_string(scheme *sc, pointer vect);
+pointer s7_vector_to_string(scheme *sc, pointer vect)
+{
+  char *buf;
+  pointer result;
+  buf = s7_vector_to_c_string(sc, vect);
   result = s7_make_string(sc, buf);
   FREE(buf);
   return(result);
 }
 
-static pointer list_to_string(scheme *sc, pointer lst)
+char *s7_list_to_c_string(scheme *sc, pointer lst);
+char *s7_list_to_c_string(scheme *sc, pointer lst)
 {
-  pointer x, result;
+  pointer x;
   int i, len, bufsize = 0;
   char **elements = NULL;
   char *buf;
   len = s7_list_length(sc, lst);
   if (len <= 0)
-    return(s7_make_string(sc, "unknown"));
+    return(copy_string("unknown"));
 
   elements = (char **)MALLOC(len * sizeof(char *));
   for (x = lst, i = 0; s7_is_pair(x); i++, x = s7_cdr(x))
@@ -3112,10 +3186,49 @@ static pointer list_to_string(scheme *sc, pointer lst)
   for (i = 0; i < len; i++)
     FREE(elements[i]);
   FREE(elements);
+  return(buf);
+}
 
+pointer s7_list_to_string(scheme *sc, pointer lst);
+pointer s7_list_to_string(scheme *sc, pointer lst)
+{
+  pointer result;
+  char *buf;
+  buf = s7_list_to_c_string(sc, lst);
   result = s7_make_string(sc, buf);
   FREE(buf);
   return(result);
+}
+
+char *s7_object_to_c_string(scheme *sc, pointer obj)
+{
+  char *p;
+  int len;
+  if (s7_is_vector(obj))
+    return(s7_vector_to_c_string(sc, obj));
+  if (s7_is_pair(obj))
+    return(s7_list_to_c_string(sc, obj));
+  s7_atom2str(sc, obj, 0, &p, &len);
+  return(p);
+}
+
+pointer s7_object_to_string(scheme *sc, pointer obj)
+{
+  char *p;
+  int len;
+  if (s7_is_vector(obj))
+    return(s7_vector_to_string(sc, obj));
+  if (s7_is_pair(obj))
+    return(s7_list_to_string(sc, obj));
+  s7_atom2str(sc, obj, 0, &p, &len);
+  return(s7_make_counted_string(sc, p, len));
+}
+
+
+char *po(scheme *sc, pointer obj); /* gdb convenience */
+char *po(scheme *sc, pointer obj)
+{
+  return(s7_object_to_c_string(sc, obj));
 }
 
 
@@ -3125,11 +3238,22 @@ static pointer list_to_string(scheme *sc, pointer lst)
 pointer s7_make_closure(scheme *sc, pointer c, pointer e) 
 {
   pointer x = new_cell(sc);
-  
-  typeflag(x) = T_CLOSURE;
+  set_type(x, T_CLOSURE);
+
+  if (!is_object(c))
+    {
+      fprintf(stderr, "closure code is not an object!");
+      abort();
+    }
+  if (!is_object(e))
+    {
+      fprintf(stderr, "closure environment is not an object!");
+      abort();
+    }
+
   car(x) = c;
   cdr(x) = e;
-  return (x);
+  return(x);
 }
 
 /* make continuation. */
@@ -3139,9 +3263,9 @@ pointer s7_make_continuation(scheme *sc, pointer d)
   /*
   fprintf(stderr,"make continuation %p %p ", x, d);
   */
-  typeflag(x) = T_CONTINUATION;
+  set_type(x, T_CONTINUATION);
   cont_dump(x) = d;
-  return (x);
+  return(x);
 }
 
 static pointer list_star(scheme *sc, pointer d) 
@@ -3174,7 +3298,7 @@ pointer s7_reverse(scheme *sc, pointer a)
     {
       p = cons(sc, car(a), p);
     }
-  return (p);
+  return(p);
 }
 
 /* reverse list --- in-place */
@@ -3189,7 +3313,7 @@ pointer s7_reverse_in_place(scheme *sc, pointer term, pointer list)
       result = p;
       p = q;
     }
-  return (result);
+  return(result);
 }
 
 /* append list -- produce new list */
@@ -3208,7 +3332,7 @@ pointer s7_append(scheme *sc, pointer a, pointer b)
 	  a = q;
 	}
     }
-  return (p);
+  return(p);
 }
 
 static bool numbers_are_eqv(pointer a, pointer b)
@@ -3264,27 +3388,6 @@ bool s7_eqv_p(pointer a, pointer b)
 /* () is #t in R5RS */
 
 /* ========== Environment implementation  ========== */ 
-
-#if !defined(USE_ALIST_ENV) || !defined(USE_OBJECT_LIST) 
-
-static int hash_fn(const char *key, int table_size) 
-{ 
-  unsigned int hashed = 0; 
-  const char *c; 
-  int bits_per_int = sizeof(unsigned int)*8; 
-  
-  for (c = key; *c; c++) 
-    { 
-      /* letters have about 5 bits in them */ 
-      hashed = (hashed<<5) | (hashed>>(bits_per_int-5)); 
-      hashed ^= *c; 
-    } 
-  return hashed % table_size; 
-} 
-#endif 
-
-#ifndef USE_ALIST_ENV 
-
 /* 
  * In this implementation, each frame of the environment may be 
  * a hash table: a vector of alists hashed by variable name. 
@@ -3299,18 +3402,19 @@ static void new_frame_in_env(scheme *sc, pointer old_env)
   
   /* The interaction-environment has about 300 variables in it. */ 
   if (old_env == sc->NIL) 
-    new_frame = s7_make_vector(sc, 461); 
+    new_frame = s7_make_vector(sc, INITIAL_OBLIST_SIZE); 
   else new_frame = sc->NIL; 
-  
+  gc_protect(new_frame);
+   
   sc->envir = immutable_cons(sc, new_frame, old_env); 
-  setenvironment(sc->envir); 
+  gc_unprotect(new_frame);
 } 
 
 
-void s7_new_slot_spec_in_env(scheme *sc, pointer env, 
-			     pointer variable, pointer value) 
+void s7_new_slot_spec_in_env(scheme *sc, pointer env, pointer variable, pointer value) 
 { 
-  pointer slot = s7_immutable_cons(sc, variable, value); 
+  pointer slot;
+  slot = s7_immutable_cons(sc, variable, value); 
   
   if (s7_is_vector(car(env))) 
     { 
@@ -3328,7 +3432,7 @@ void s7_new_slot_spec_in_env(scheme *sc, pointer env,
 
 pointer s7_find_slot_in_env(scheme *sc, pointer env, pointer hdl, int all) 
 { 
-  pointer x,y; 
+  pointer x, y; 
   int location; 
   
   for (x = env; x != sc->NIL; x = cdr(x)) 
@@ -3343,79 +3447,30 @@ pointer s7_find_slot_in_env(scheme *sc, pointer env, pointer hdl, int all)
 	  y = car(x); 
 	} 
       for ( ; y != sc->NIL; y = cdr(y)) 
-	{ 
-	  if (caar(y) == hdl) 
-	    { 
-	      break; 
-	    } 
-	} 
-      if (y != sc->NIL) 
-	{ 
+	if (caar(y) == hdl) 
 	  break; 
-	} 
-      if (!all) 
-	{ 
-	  return sc->NIL; 
-	} 
-    } 
-  if (x != sc->NIL) 
-    { 
-      return car(y); 
-    } 
-  return sc->NIL; 
-} 
 
-
-#else /* USE_ALIST_ENV */ 
-
-static  void new_frame_in_env(scheme *sc, pointer old_env) 
-{ 
-  sc->envir = s7_immutable_cons(sc, sc->NIL, old_env); 
-  setenvironment(sc->envir); 
-} 
-
-void s7_new_slot_spec_in_env(scheme *sc, pointer env, 
-				  pointer variable, pointer value) 
-{ 
-  car(env) = s7_immutable_cons(sc, s7_immutable_cons(sc, variable, value), car(env)); 
-} 
-
-pointer s7_find_slot_in_env(scheme *sc, pointer env, pointer hdl, int all) 
-{ 
-  pointer x,y; 
-  for (x = env; x != sc->NIL; x = cdr(x)) 
-    { 
-      for (y = car(x); y != sc->NIL; y = cdr(y)) 
-	{ 
-	  if (caar(y) == hdl) 
-	    { 
-	      break; 
-	    } 
-	} 
       if (y != sc->NIL) 
-	{ 
-	  break; 
-	} 
+	break; 
+
       if (!all) 
-	{ 
-	  return sc->NIL; 
-	} 
+	return(sc->NIL); 
     } 
+
   if (x != sc->NIL) 
-    { 
-      return car(y); 
-    } 
-  return sc->NIL; 
+    return(car(y)); 
+
+  return(sc->NIL); 
 } 
 
-#endif /* USE_ALIST_ENV else */ 
 
-static  void new_slot_in_env(scheme *sc, pointer variable, pointer value) 
+
+static void new_slot_in_env(scheme *sc, pointer variable, pointer value) 
 { 
   s7_new_slot_spec_in_env(sc, sc->envir, variable, value); 
 } 
 
-static  void set_slot_in_env(scheme *sc, pointer slot, pointer value) 
+static void set_slot_in_env(scheme *sc, pointer slot, pointer value) 
 { 
   cdr(slot) = value; 
 } 
@@ -3430,15 +3485,15 @@ pointer s7_slot_value_in_env(pointer slot)
 /* ========== Evaluation Cycle ========== */
 
 
-static pointer Error_1(scheme *sc, const char *s, pointer a) 
+static pointer internal_error(scheme *sc, const char *s, pointer a) 
 {
 #if USE_ERROR_HOOK
   pointer x;
   pointer hdl = sc->ERROR_HOOK;
-  /*
+
   fprintf(stderr, "error: %s ", s);
   fprintf(stderr, "\n");
-  */
+
   x = s7_find_slot_in_env(sc, sc->envir, hdl, 1);
   if ((x != sc->NIL) &&
       (x != sc->F))
@@ -3448,7 +3503,7 @@ static pointer Error_1(scheme *sc, const char *s, pointer a)
       else set_sc_code(sc, sc->NIL);
 
       set_sc_code(sc, cons(sc, s7_make_string(sc, s), sc->code));
-      s7_setimmutable(car(sc->code));
+      s7_set_immutable(car(sc->code));
       set_sc_code(sc, cons(sc, s7_slot_value_in_env(x), sc->code)); 
       sc->op = OP_EVAL;
       return(sc->T);
@@ -3464,103 +3519,18 @@ static pointer Error_1(scheme *sc, const char *s, pointer a)
       sc->args = sc->NIL;
     }
   sc->args = cons(sc, s7_make_string(sc, (s)), sc->args);
-  s7_setimmutable(car(sc->args));
+  s7_set_immutable(car(sc->args));
   sc->op = OP_ERR0;
   return(sc->T);
 }
 
+#define error_0(sc, s)    return internal_error(sc, s, NULL)
+#define error_1(sc, s, x) return internal_error(sc, s, x)
 
-#define s_goto(sc, a) do {sc->op = a; return(sc->T);} while (0)
+#define s_goto(sc, a)   do {sc->op = a; return(sc->T);} while (0)
 #define s_return(sc, a) return _s_return(sc, a) 
+#define s_retbool(tf)   s_return(sc, (tf) ? sc->T : sc->F)
 
-#ifndef USE_SCHEME_STACK 
-
-/* this structure holds all the interpreter's registers */ 
-struct dump_stack_frame { 
-  enum scheme_opcodes op; 
-  pointer args; 
-  pointer envir; 
-  pointer code; 
-}; 
-
-#define STACK_GROWTH 3 
-
-static void s_save(scheme *sc, enum scheme_opcodes op, pointer args, pointer code) 
-{ 
-  int nframes = (int)sc->dump; 
-  struct dump_stack_frame *next_frame; 
-  
-  /* enough room for the next frame? */ 
-  if (nframes >= sc->dump_size) 
-    { 
-      sc->dump_size += STACK_GROWTH; 
-      sc->dump_base = REALLOC(sc->dump_base, 
-			      sizeof(struct dump_stack_frame) * sc->dump_size); 
-    } 
-  next_frame = (struct dump_stack_frame *)sc->dump_base + nframes; 
-  next_frame->op = op; 
-  next_frame->args = args; 
-  next_frame->envir = sc->envir; 
-  next_frame->code = code; 
-  sc->dump = (pointer)(nframes+1); 
-} 
-
-static pointer _s_return(scheme *sc, pointer a) 
-{ 
-  int nframes = (int)sc->dump; 
-  struct dump_stack_frame *frame; 
-  
-  sc->value = (a); 
-  if (nframes <= 0) 
-    { 
-      return sc->NIL; 
-    } 
-  nframes--; 
-  frame = (struct dump_stack_frame *)sc->dump_base + nframes; 
-  sc->op = frame->op; 
-  sc->args = frame->args; 
-  sc->envir = frame->envir; 
-  set_sc_code(sc, frame->code); 
-  sc->dump = (pointer)nframes; 
-  return sc->T; 
-} 
-
-static  void dump_stack_reset(scheme *sc) 
-{ 
-  /* in this implementation, sc->dump is the number of frames on the stack */ 
-  sc->dump = (pointer)0; 
-} 
-
-static  void dump_stack_initialize(scheme *sc) 
-{ 
-  sc->dump_size = 0; 
-  sc->dump_base = NULL; 
-  dump_stack_reset(sc); 
-} 
-
-static void dump_stack_free(scheme *sc) 
-{ 
-  FREE(sc->dump_base); 
-  sc->dump_base = NULL; 
-  sc->dump = (pointer)0; 
-  sc->dump_size = 0; 
-} 
-
-static  void dump_stack_mark(scheme *sc) 
-{ 
-  int nframes = (int)sc->dump;
-  int i;
-  for(i = 0; i<nframes; i++) 
-    {
-      struct dump_stack_frame *frame;
-      frame = (struct dump_stack_frame *)sc->dump_base + i;
-      mark(frame->args);
-      mark(frame->envir);
-      mark(frame->code);
-    } 
-} 
-
-#else 
 
 static  void dump_stack_reset(scheme *sc) 
 { 
@@ -3596,13 +3566,7 @@ static void s_save(scheme *sc, enum scheme_opcodes op, pointer args, pointer cod
   sc->dump = cons(sc, s7_make_integer(sc, (int)op), sc->dump); 
 } 
 
-static  void dump_stack_mark(scheme *sc) 
-{ 
-  mark(sc->dump); 
-} 
-#endif 
 
-#define s_retbool(tf)    s_return(sc, (tf) ? sc->T : sc->F)
 
 bool s7_is_equal(scheme *sc, pointer x, pointer y);
 
@@ -3663,7 +3627,7 @@ static pointer opexe_0(scheme *sc, enum scheme_opcodes op)
 	fprintf(sc->outport->object.port->rep.stdio.file, "Loading %s\n", string_value(car(sc->args)));
 
       if (!file_push(sc,string_value(car(sc->args)))) 
-	Error_1(sc, "unable to open", car(sc->args));
+	error_1(sc, "unable to open", car(sc->args));
       s_goto(sc, OP_T0LVL);
       
     case OP_T0LVL: /* top level */
@@ -3741,13 +3705,8 @@ static pointer opexe_0(scheme *sc, enum scheme_opcodes op)
 	{    /* symbol */
 	  x = s7_find_slot_in_env(sc, sc->envir, sc->code, 1);
 	  if (x != sc->NIL) 
-	    {
-	      s_return(sc,s7_slot_value_in_env(x)); 
-	    } 
-	  else 
-	    {
-	      Error_1(sc, "eval: unbound variable:", sc->code);
-	    }
+	    s_return(sc, s7_slot_value_in_env(x)); 
+	  error_1(sc, "eval: unbound variable:", sc->code);
 	} 
       else if (s7_is_pair(sc->code)) 
 	{
@@ -3851,13 +3810,8 @@ static pointer opexe_0(scheme *sc, enum scheme_opcodes op)
 		  for (x = car(s7_closure_code(sc->code)), y = sc->args; s7_is_pair(x); x = cdr(x), y = cdr(y)) 
 		    {
 		      if (y == sc->NIL) 
-			{
-			  Error_0(sc, "not enough arguments");
-			} 
-		      else 
-			{
-			  new_slot_in_env(sc, car(x), car(y)); 
-			}
+			error_0(sc, "not enough arguments");
+		      else new_slot_in_env(sc, car(x), car(y)); 
 		    }
 		  if (x == sc->NIL) 
 		    {
@@ -3866,7 +3820,7 @@ static pointer opexe_0(scheme *sc, enum scheme_opcodes op)
 		      /*--
 		       * if (y != sc->NIL) 
 		       {
-		       *   Error_0(sc, "too many arguments");
+		       *   error_0(sc, "too many arguments");
 		       * }
 		       */
 		    } 
@@ -3876,7 +3830,7 @@ static pointer opexe_0(scheme *sc, enum scheme_opcodes op)
 			new_slot_in_env(sc, x, y); 
 		      else 
 			{
-			  Error_1(sc, "syntax error in closure: not a symbol:", x); 
+			  error_1(sc, "syntax error in closure: not a symbol:", x); 
 			}
 		    }
 		  set_sc_code(sc, cdr(s7_closure_code(sc->code)));
@@ -3896,10 +3850,10 @@ static pointer opexe_0(scheme *sc, enum scheme_opcodes op)
 		    } 
 		  else 
 		    {
-		      fprintf(stderr, "bad entry, type: %d, obj: ", type(sc->code));
+		      fprintf(stderr, "bad entry, type: %x, obj: ", type(sc->code));
 		      dump_object(sc, sc->code);
 
-		      Error_0(sc, "illegal function");
+		      error_0(sc, "illegal function");
 		    }
 		}
 	    }
@@ -3929,7 +3883,7 @@ static pointer opexe_0(scheme *sc, enum scheme_opcodes op)
       
     case OP_DEF0:  /* define */
       if (s7_is_immutable(car(sc->code)))
-	Error_1(sc, "define: unable to alter immutable", car(sc->code));
+	error_1(sc, "define: unable to alter immutable", car(sc->code));
       
       if (s7_is_pair(car(sc->code))) 
 	{
@@ -3942,7 +3896,7 @@ static pointer opexe_0(scheme *sc, enum scheme_opcodes op)
 	  set_sc_code(sc, cadr(sc->code));
 	}
       if (!s7_is_symbol(x)) 
-	Error_0(sc, "define of a non-symbol?");
+	error_0(sc, "define of a non-symbol?");
 
       s_save(sc, OP_DEF1, sc->NIL, x);
       s_goto(sc, OP_EVAL);
@@ -3962,7 +3916,7 @@ static pointer opexe_0(scheme *sc, enum scheme_opcodes op)
       
     case OP_SET0:       /* set! */
       if (s7_is_immutable(car(sc->code)))
-	Error_1(sc, "set!: unable to alter immutable variable", car(sc->code));
+	error_1(sc, "set!: unable to alter immutable variable", car(sc->code));
       
       if (s7_is_pair(car(sc->code))) /* has accessor */
 	{
@@ -3987,7 +3941,7 @@ static pointer opexe_0(scheme *sc, enum scheme_opcodes op)
 	  set_slot_in_env(sc, y, sc->value); 
 	  s_return(sc, sc->value);
 	}
-      else Error_1(sc, "set!: unbound variable:", sc->code); 
+      else error_1(sc, "set!: unbound variable:", sc->code); 
       
     case OP_BEGIN:      /* begin */
       if (!s7_is_pair(sc->code)) 
@@ -4092,7 +4046,7 @@ static pointer opexe_0(scheme *sc, enum scheme_opcodes op)
 	}
     default:
       sprintf(sc->strbuff, "%d: illegal operator", sc->op);
-      Error_0(sc, sc->strbuff);
+      error_0(sc, sc->strbuff);
     }
   return sc->T;
 }
@@ -4139,7 +4093,7 @@ static pointer opexe_1(scheme *sc, enum scheme_opcodes op)
     case OP_COND0:      /* cond */
       if (!s7_is_pair(sc->code)) 
 	{
-	  Error_0(sc, "syntax error in cond");
+	  error_0(sc, "syntax error in cond");
 	}
       s_save(sc, OP_COND1, sc->NIL, sc->code);
       set_sc_code(sc, caar(sc->code));
@@ -4156,7 +4110,7 @@ static pointer opexe_1(scheme *sc, enum scheme_opcodes op)
 	    {
 	      if (!s7_is_pair(cdr(sc->code))) 
 		{
-		  Error_0(sc, "syntax error in cond");
+		  error_0(sc, "syntax error in cond");
 		}
 	      x = cons(sc, sc->QUOTE, cons(sc, sc->value, sc->NIL));
 	      set_sc_code(sc, cons(sc,cadr(sc->code),cons(sc,x, sc->NIL)));
@@ -4180,7 +4134,7 @@ static pointer opexe_1(scheme *sc, enum scheme_opcodes op)
       
     case OP_DELAY:      /* delay */
       x = s7_make_closure(sc, cons(sc, sc->NIL, sc->code), sc->envir);
-      typeflag(x) = T_PROMISE;
+      set_type(x, T_PROMISE);
       s_return(sc,x);
       
     case OP_AND0:       /* and */
@@ -4229,7 +4183,7 @@ static pointer opexe_1(scheme *sc, enum scheme_opcodes op)
     case OP_C1STREAM:   /* cons-stream */
       sc->args = sc->value;  /* save sc->value to register sc->args for gc */
       x = s7_make_closure(sc, cons(sc, sc->NIL, sc->code), sc->envir);
-      typeflag(x) = T_PROMISE;
+      set_type(x, T_PROMISE);
       s_return(sc,cons(sc, sc->args, x));
       
     case OP_MACRO0:     /* macro */
@@ -4244,17 +4198,20 @@ static pointer opexe_1(scheme *sc, enum scheme_opcodes op)
 	  set_sc_code(sc, cadr(sc->code));
 	}
       if (!s7_is_symbol(x)) 
-	Error_0(sc, "variable is not a symbol");
+	error_0(sc, "variable is not a symbol");
 
       s_save(sc, OP_MACRO1, sc->NIL, x);
       s_goto(sc, OP_EVAL);
       
     case OP_MACRO1:     /* macro */
-      typeflag(sc->value) = T_MACRO;
+      
+      set_type(sc->value, T_MACRO);
+
       x = s7_find_slot_in_env(sc, sc->envir, sc->code, 0); 
       if (x != sc->NIL) 
 	set_slot_in_env(sc, x, sc->value); 
       else new_slot_in_env(sc, sc->code, sc->value); 
+
       s_return(sc, sc->code);
       
     case OP_CASE0:      /* case */
@@ -4331,7 +4288,7 @@ static pointer opexe_1(scheme *sc, enum scheme_opcodes op)
       
     default:
       sprintf(sc->strbuff, "opexe_1 %d: illegal operator", sc->op);
-      Error_0(sc, sc->strbuff);
+      error_0(sc, sc->strbuff);
     }
   return sc->T;
 }
@@ -4462,15 +4419,17 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
       {
 	double error = DEFAULT_RATIONALIZE_ERROR;
 	Int numer = 0, denom = 1;
+
 	x = car(sc->args);
 	if (s7_is_exact(x)) 
 	  s_return(sc, x);
 
 	if (cdr(sc->args) != sc->NIL)
-	  error = real((cdr(sc->args))->object.number);
+	  error = s7_double(cdr(sc->args));
+
 	if (c_rationalize(s7_double(x), error, &numer, &denom))
 	  s_return(sc, s7_make_ratio(sc, numer, denom));
-	else Error_1(sc, "rationalize did not converge?!?", x);
+	else error_1(sc, "rationalize did not converge?!?", x);
       }
 
     case OP_INEX2EX:    /* inexact->exact */
@@ -4749,7 +4708,7 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
 	  if (s7_integer(car(x)) != 0)
 	    v = num_quotient(v, nvalue(car(x)));
 	  else {
-	    Error_0(sc, "quotient: division by zero");
+	    error_0(sc, "quotient: division by zero");
 	  }
 	}
       s_return(sc,make_number(sc, v));
@@ -4758,7 +4717,7 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
       v = nvalue(car(sc->args));
       if (s7_integer(cadr(sc->args)) != 0)
 	v = num_rem(v, nvalue(cadr(sc->args)));
-      else Error_0(sc, "remainder: division by zero");
+      else error_0(sc, "remainder: division by zero");
 
       s_return(sc,make_number(sc, v));
       
@@ -4767,7 +4726,7 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
       if (s7_integer(cadr(sc->args)) != 0)
 	v = num_mod(v, nvalue(cadr(sc->args)));
       else {
-	Error_0(sc, "modulo: division by zero");
+	error_0(sc, "modulo: division by zero");
       }
       s_return(sc, make_number(sc, v));
       
@@ -4787,7 +4746,7 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
 	  caar(sc->args) = cadr(sc->args);
 	  s_return(sc, car(sc->args));
 	} 
-      else Error_0(sc, "set-car!: unable to alter immutable pair");
+      else error_0(sc, "set-car!: unable to alter immutable pair");
       
     case OP_SETCDR:     /* set-cdr! */
       if (!s7_is_immutable(car(sc->args))) 
@@ -4795,7 +4754,7 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
 	  cdar(sc->args) = cadr(sc->args);
 	  s_return(sc, car(sc->args));
 	} 
-      else Error_0(sc, "set-cdr!: unable to alter immutable pair");
+      else error_0(sc, "set-cdr!: unable to alter immutable pair");
       
     case OP_CHAR2INT:  /* char->integer */
       { 
@@ -4840,7 +4799,7 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
       
     case OP_SYM2STR: /* symbol->string */
       x = s7_make_string(sc, s7_symbol_name(car(sc->args)));
-      s7_setimmutable(x);
+      s7_set_immutable(x);
       s_return(sc,x);
 
     case OP_ATOM2STR: /* atom->string */
@@ -4852,7 +4811,7 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
 	  s7_atom2str(sc, x, 0, &p, &len);
 	  s_return(sc, s7_make_counted_string(sc, p, len));
 	} 
-      else Error_1(sc, "atom->string: not an atom:", x);
+      else error_1(sc, "atom->string: not an atom:", x);
       
     case OP_MKSTRING: /* make-string */
       { 
@@ -4877,7 +4836,7 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
 	str = string_value(car(sc->args));
 	index = s7_integer(cadr(sc->args));
 	if (index >= string_length(car(sc->args))) 
-	  Error_1(sc, "string-ref: out of bounds:", cadr(sc->args));
+	  error_1(sc, "string-ref: out of bounds:", cadr(sc->args));
       
 	s_return(sc, s7_make_character(sc, ((unsigned char*)str)[index]));
       }
@@ -4890,14 +4849,14 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
       
 	if (s7_is_immutable(car(sc->args))) 
 	  {
-	    Error_1(sc, "string-set!: unable to alter immutable string:", car(sc->args));
+	    error_1(sc, "string-set!: unable to alter immutable string:", car(sc->args));
 	  }
 
 	str = string_value(car(sc->args));
 	index = s7_integer(cadr(sc->args));
 	if (index >= string_length(car(sc->args))) 
 	  {
-	    Error_1(sc, "string-set!: out of bounds:",cadr(sc->args));
+	    error_1(sc, "string-set!: out of bounds:",cadr(sc->args));
 	  }
       
 	c = s7_character(caddr(sc->args));
@@ -4937,7 +4896,7 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
       
       if (index0>string_length(car(sc->args))) 
 	{
-	  Error_1(sc, "substring: start out of bounds:",cadr(sc->args));
+	  error_1(sc, "substring: start out of bounds:",cadr(sc->args));
 	}
       
       if (cddr(sc->args)!= sc->NIL) 
@@ -4945,7 +4904,7 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
 	  index1 = s7_integer(caddr(sc->args));
 	  if (index1>string_length(car(sc->args)) || index1<index0) 
 	    {
-	      Error_1(sc, "substring: end out of bounds:",caddr(sc->args));
+	      error_1(sc, "substring: end out of bounds:",caddr(sc->args));
 	    }
 	} 
       else 
@@ -4967,7 +4926,7 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
 	pointer vec;
 	int len = s7_list_length(sc, sc->args);
 	if (len < 0) 
-	  Error_1(sc, "vector: not a proper list:", sc->args);
+	  error_1(sc, "vector: not a proper list:", sc->args);
 
 	vec = s7_make_vector(sc, len);
 	for (x = sc->args, i = 0; s7_is_pair(x); x = cdr(x), i++) 
@@ -5003,7 +4962,7 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
 	index = s7_integer(cadr(sc->args));
       
 	if (index >= vector_length(car(sc->args))) 
-	  Error_1(sc, "vector-ref: out of bounds:", cadr(sc->args));
+	  error_1(sc, "vector-ref: out of bounds:", cadr(sc->args));
       
 	s_return(sc, vector_element(car(sc->args), index));
       }
@@ -5013,11 +4972,11 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
 	int index;
       
 	if (s7_is_immutable(car(sc->args))) 
-	  Error_1(sc, "vector-set!: unable to alter immutable vector:", car(sc->args));
+	  error_1(sc, "vector-set!: unable to alter immutable vector:", car(sc->args));
       
 	index = s7_integer(cadr(sc->args));
 	if (index >= vector_length(car(sc->args))) 
-	  Error_1(sc, "vector-set!: out of bounds:",cadr(sc->args));
+	  error_1(sc, "vector-set!: out of bounds:",cadr(sc->args));
       
 	vector_element(car(sc->args), index) = caddr(sc->args);
 	s_return(sc, car(sc->args));
@@ -5025,7 +4984,7 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
       
     default:
       sprintf(sc->strbuff, "opexe_2 %d: illegal operator", sc->op);
-      Error_0(sc, sc->strbuff);
+      error_0(sc, sc->strbuff);
     }
   return sc->T;
 }
@@ -5169,7 +5128,7 @@ static pointer opexe_3(scheme *sc, enum scheme_opcodes op)
 	}
     }
     case OP_ENVP:        /* environment? */
-      s_retbool(s7_is_environment(car(sc->args)));
+      s_retbool(s7_is_vector(car(sc->args)));
 
     case OP_VECTORP:     /* vector? */
       s_retbool(s7_is_vector(car(sc->args)));
@@ -5185,7 +5144,7 @@ static pointer opexe_3(scheme *sc, enum scheme_opcodes op)
 
     default:
       sprintf(sc->strbuff, "opexe_3 %d: illegal operator", sc->op);
-      Error_0(sc, sc->strbuff);
+      error_0(sc, sc->strbuff);
     }
   return sc->T;
 }
@@ -5223,8 +5182,8 @@ static pointer opexe_4(scheme *sc, enum scheme_opcodes op)
 	    {
 #if 0
 	      fprintf(stderr, "2nd arg %p (%s) is not current output %p (%s)\n", 
-		      cadr(sc->args), s7_object_to_string(sc, cadr(sc->args)),
-		      sc->outport, s7_object_to_string(sc, sc->outport));
+		      cadr(sc->args), s7_object_to_c_string(sc, cadr(sc->args)),
+		      sc->outport, s7_object_to_c_string(sc, sc->outport));
 #endif
 	      x = cons(sc, sc->outport, sc->NIL);
 	      s_save(sc, OP_SET_OUTPORT, x, sc->NIL);
@@ -5240,7 +5199,7 @@ static pointer opexe_4(scheme *sc, enum scheme_opcodes op)
     case OP_NEWLINE:    /* newline */
       if (s7_is_pair(sc->args)) 
 	{
-	  if (car(sc->args)!= sc->outport) 
+	  if (car(sc->args) != sc->outport) 
 	    {
 	      x = cons(sc, sc->outport, sc->NIL);
 	      s_save(sc, OP_SET_OUTPORT, x, sc->NIL);
@@ -5255,9 +5214,9 @@ static pointer opexe_4(scheme *sc, enum scheme_opcodes op)
       if (!s7_is_string(car(sc->args))) 
 	{
 	  sc->args = cons(sc, s7_make_string(sc, " -- "), sc->args);
-	  s7_setimmutable(car(sc->args));
+	  s7_set_immutable(car(sc->args));
 	}
-      s7_putstr(sc, "Error: ");
+      s7_putstr(sc, "error: ");
       s7_putstr(sc, string_value(car(sc->args)));
       sc->args = cdr(sc->args);
       s_goto(sc, OP_ERR1);
@@ -5300,10 +5259,10 @@ static pointer opexe_4(scheme *sc, enum scheme_opcodes op)
     case OP_QUIT:       /* quit */
       if (s7_is_pair(sc->args)) 
 	sc->retcode = s7_integer(car(sc->args));
-      return (sc->NIL);
+      return(sc->NIL);
       
     case OP_GC:         /* gc */
-      gc(sc, sc->NIL, sc->NIL);
+      gc(sc);
       s_return(sc, sc->T);
       
     case OP_GCVERB:          /* gc-verbose */
@@ -5390,7 +5349,7 @@ static pointer opexe_4(scheme *sc, enum scheme_opcodes op)
       
     default:
       sprintf(sc->strbuff, "opexe_4 %d: illegal operator", sc->op);
-      Error_0(sc, sc->strbuff);
+      error_0(sc, sc->strbuff);
 
     }
   return sc->T;
@@ -5405,7 +5364,7 @@ static pointer opexe_5(scheme *sc, enum scheme_opcodes op)
       int n= sc->nesting;
       sc->nesting = 0;
       sc->retcode =-1;
-      Error_1(sc, "unmatched parentheses:", s7_make_integer(sc, n));
+      error_1(sc, "unmatched parentheses:", s7_make_integer(sc, n));
     }
   
   switch (op) 
@@ -5418,7 +5377,7 @@ static pointer opexe_5(scheme *sc, enum scheme_opcodes op)
 	}
       if (!is_inport(car(sc->args))) 
 	{
-	  Error_1(sc, "read: not an input port:", car(sc->args));
+	  error_1(sc, "read: not an input port:", car(sc->args));
 	}
       if (car(sc->args) == sc->inport) 
 	{
@@ -5435,7 +5394,7 @@ static pointer opexe_5(scheme *sc, enum scheme_opcodes op)
       int c;
       if (s7_is_pair(sc->args)) 
 	{
-	  if (car(sc->args)!= sc->inport) 
+	  if (car(sc->args) != sc->inport) 
 	    {
 	      x = sc->inport;
 	      x = cons(sc,x, sc->NIL);
@@ -5494,7 +5453,7 @@ static pointer opexe_5(scheme *sc, enum scheme_opcodes op)
 	  else 
 	    {
 	      if (sc->tok == TOK_DOT) 
-		Error_0(sc, "syntax error: illegal dot expression");
+		error_0(sc, "syntax error: illegal dot expression");
 	      else 
 		{
 		  sc->nesting_stack[sc->file_i]++;
@@ -5536,16 +5495,16 @@ static pointer opexe_5(scheme *sc, enum scheme_opcodes op)
 	  x =readstrexp(sc);
 	  if (x == sc->F) 
 	    {
-	      Error_0(sc, "Error reading string");
+	      error_0(sc, "error reading string");
 	    }
-	  s7_setimmutable(x);
+	  s7_set_immutable(x);
 	  s_return(sc, x);
 
 	case TOK_SHARP: 
 	  {
 	  pointer f= s7_find_slot_in_env(sc, sc->envir, sc->SHARP_HOOK, 1);
 	  if (f == sc->NIL) 
-	    Error_0(sc, "undefined sharp expression");
+	    error_0(sc, "undefined sharp expression");
 	  else 
 	    {
 	      set_sc_code(sc, cons(sc, s7_slot_value_in_env(f), sc->NIL)); 
@@ -5558,11 +5517,11 @@ static pointer opexe_5(scheme *sc, enum scheme_opcodes op)
 	    char *expr;
 	    expr = readstr_upto(sc, "();\t\n\r ");
 	    if ((x = make_sharp_const(sc, expr)) == sc->NIL)
-	      Error_1(sc, "undefined sharp expression", s7_make_string(sc, expr));
+	      error_1(sc, "undefined sharp expression", s7_make_string(sc, expr));
 	    else s_return(sc, x);
 	  }
 	default:
-	  Error_0(sc, "syntax error: illegal token");
+	  error_0(sc, "syntax error: illegal token");
 	}
       break;
       
@@ -5602,7 +5561,7 @@ static pointer opexe_5(scheme *sc, enum scheme_opcodes op)
       
     case OP_RDDOT:
       if (token(sc) != TOK_RPAREN) 
-	Error_0(sc, "syntax error: illegal dot expression");
+	error_0(sc, "syntax error: illegal dot expression");
       else 
 	{
 	  sc->nesting_stack[sc->file_i]--;
@@ -5639,11 +5598,6 @@ static pointer opexe_5(scheme *sc, enum scheme_opcodes op)
 	  s7_putstr(sc, "#(");
 	  sc->args = cons(sc, sc->args, s7_make_integer(sc, 0)); /* loop_counter? */
 	  s_goto(sc, OP_PVECFROM);
-	} 
-      else if (s7_is_environment(sc->args)) 
-	{
-	  s7_putstr(sc, "#<ENVIRONMENT>");
-	  s_return(sc, sc->T);
 	} 
       else if (!s7_is_pair(sc->args)) 
 	{
@@ -5729,7 +5683,7 @@ static pointer opexe_5(scheme *sc, enum scheme_opcodes op)
       
     default:
       sprintf(sc->strbuff, "opexe_5 %d: illegal operator", sc->op);
-      Error_0(sc, sc->strbuff);
+      error_0(sc, sc->strbuff);
       
     }
   return sc->T;
@@ -5753,7 +5707,7 @@ static pointer opexe_6(scheme *sc, enum scheme_opcodes op)
     case OP_LIST_LENGTH:     /* length */   /* a.k */
       v = s7_list_length(sc, car(sc->args));
       if (v < 0) 
-	Error_1(sc, "length: not a list:", car(sc->args));
+	error_1(sc, "length: not a list:", car(sc->args));
       s_return(sc, s7_make_integer(sc, v));
       
     case OP_ASSQ:       /* assq */     /* a.k */
@@ -5761,7 +5715,7 @@ static pointer opexe_6(scheme *sc, enum scheme_opcodes op)
       for (y = cadr(sc->args); s7_is_pair(y); y = cdr(y)) 
 	{
 	  if (!s7_is_pair(car(y))) 
-	    Error_0(sc, "unable to handle non pair element");
+	    error_0(sc, "unable to handle non pair element");
 
 	  if (x == caar(y))
 	    break;
@@ -5799,7 +5753,7 @@ static pointer opexe_6(scheme *sc, enum scheme_opcodes op)
 
     default:
       sprintf(sc->strbuff, "opexe_6 %d: illegal operator", sc->op);
-      Error_0(sc, sc->strbuff);
+      error_0(sc, sc->strbuff);
     }
   return sc->T; /* NOTREACHED */
 }
@@ -5833,7 +5787,7 @@ static struct {
   {s7_is_port, "port"},
   {0, "input port"},
   {0, "output_port"},
-  {s7_is_environment, "environment"},
+  {0, "defunct"},
   {s7_is_pair, "pair"},
   {0, "pair or '()"},
   {s7_is_character, "character"},
@@ -5852,7 +5806,6 @@ static struct {
 #define TST_PORT "\004"
 #define TST_INPORT "\005"
 #define TST_OUTPORT "\006"
-#define TST_ENVIRONMENT "\007"
 #define TST_PAIR "\010"
 #define TST_LIST "\011"
 #define TST_CHAR "\012"
@@ -5978,7 +5931,7 @@ static void Eval_Cycle(scheme *sc, enum scheme_opcodes op)
 	    }
 	  if (!ok) 
 	    {
-	      if (Error_1(sc, msg, 0) == sc->NIL) 
+	      if (internal_error(sc, msg, 0) == sc->NIL) 
 		return;
 
 	      pcd = dispatch_table + sc->op;
@@ -5998,14 +5951,14 @@ static void assign_syntax(scheme *sc, char *name)
 {
   pointer x;
   x = oblist_add_by_name(sc, name); 
-  typeflag(x) |= T_SYNTAX; 
+  typeflag(x) |= (T_SYNTAX | T_IMMUTABLE); 
 }
 
 static pointer make_proc(scheme *sc, enum scheme_opcodes op) 
 {
   pointer y;
   y = new_cell(sc);
-  typeflag(y) = (T_PROC | T_ATOM);
+  set_type(y, T_PROC | T_ATOM | T_IMMUTABLE);
   procedure_index(y) = op;
   return(y);
 }
@@ -6015,8 +5968,12 @@ static void assign_proc(scheme *sc, enum scheme_opcodes op, char *name)
   pointer x, y;
   
   x = s7_make_symbol(sc, name);
+  gc_protect(x);
   y = make_proc(sc, op);
+  gc_protect(y);
   new_slot_in_env(sc, x, y); 
+  gc_unprotect(x);
+  gc_unprotect(y);
 }
 
 /* Hard-coded for the given keywords. Remember to rewrite if more are added! */
@@ -6060,42 +6017,15 @@ static int syntaxnum(pointer p)
 }
 
 
-scheme *s7_init_new(void) 
-{
-  scheme *sc = (scheme*)MALLOC(sizeof(scheme));
-  if (!s7_init(sc)) 
-    {
-      FREE(sc);
-      return(NULL);
-    } 
-  else 
-    {
-      return(sc);
-    }
-}
-
-scheme *s7_init_new_custom_alloc(void)
-{
-  scheme *sc;
-  sc = (scheme *)MALLOC(sizeof(scheme));
-  if (!s7_init_custom_alloc(sc))
-    {
-      FREE(sc);
-      return(NULL);
-    } 
-  return(sc);
-}
-
-
-int s7_init(scheme *sc) 
-{
-  return(s7_init_custom_alloc(sc));
-}
-
-int s7_init_custom_alloc(scheme *sc)
+scheme *s7_init(void) 
 {
   int i, n = sizeof(dispatch_table) / sizeof(dispatch_table[0]);
   pointer x;
+
+  scheme *sc;
+  sc = (scheme*)MALLOC(sizeof(scheme));
+
+  sc->gc_off = true; /* sc->args and so on are not set yet, so a gc during init -> segfault */
   
   num_zero.type = NUM_INT;
   integer(num_zero) = 0;
@@ -6110,6 +6040,22 @@ int s7_init_custom_alloc(scheme *sc)
   sc->EOF_OBJ = &sc->_EOF_OBJ;
   sc->UNDEFINED = &sc->_UNDEFINED;
 
+  set_type(sc->NIL, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_GC_PROTECT | T_IMMUTABLE);
+  car(sc->NIL) = cdr(sc->NIL) = sc->NIL;
+
+  set_type(sc->T, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_GC_PROTECT | T_IMMUTABLE);
+  car(sc->T) = cdr(sc->T) = sc->T;
+
+  set_type(sc->F, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_GC_PROTECT | T_IMMUTABLE);
+  car(sc->F) = cdr(sc->F) = sc->F;
+
+  set_type(sc->EOF_OBJ, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_GC_PROTECT | T_IMMUTABLE);
+  car(sc->EOF_OBJ) = cdr(sc->EOF_OBJ) = sc->F;
+
+  set_type(sc->UNDEFINED, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_GC_PROTECT | T_IMMUTABLE);
+  car(sc->UNDEFINED) = cdr(sc->UNDEFINED) = sc->F;
+
+
   sc->inport = sc->NIL;
   sc->outport = sc->NIL;
   sc->errport = sc->NIL;
@@ -6118,30 +6064,23 @@ int s7_init_custom_alloc(scheme *sc)
   sc->nesting = 0;
   sc->interactive_repl= false;
 
-  sc->cells_size = 500000;
+  sc->cells_size = 500;
   sc->cells = (pointer *)CALLOC(sc->cells_size, sizeof(pointer));
   sc->cells_top = 0;
 
-  sc->gc_verbose = true;
+  sc->gc_verbose = false;
   dump_stack_initialize(sc); 
   set_sc_code(sc, sc->NIL);
   sc->tracing = false;
   
-  /* init sc->NIL */
-  typeflag(sc->NIL) = (T_ATOM | MARK);
-  car(sc->NIL) = cdr(sc->NIL) = sc->NIL;
-  /* init T */
-  typeflag(sc->T) = (T_ATOM | MARK);
-  car(sc->T) = cdr(sc->T) = sc->T;
-  /* init F */
-  typeflag(sc->F) = (T_ATOM | MARK);
-  car(sc->F) = cdr(sc->F) = sc->F;
-
   sc->oblist = oblist_initial_value(sc); 
-  /* init global_env */
+  gc_protect(sc->oblist);
+  set_immutable(sc->oblist);
+
   new_frame_in_env(sc, sc->NIL); 
   sc->global_env = sc->envir; 
-  /* init else */
+  set_immutable(sc->global_env);
+
   x = s7_make_symbol(sc, "else");
   new_slot_in_env(sc, x, sc->T); 
   
@@ -6177,8 +6116,9 @@ int s7_init_custom_alloc(scheme *sc)
   sc->ERROR_HOOK = s7_make_symbol(sc, "*error-hook*");
   sc->SHARP_HOOK = s7_make_symbol(sc, "*sharp-hook*");
 
-  sc->errport = sc->outport;
-  return(1);
+  sc->gc_off = false;
+
+  return(sc);
 }
 
 
@@ -6212,7 +6152,7 @@ void s7_set_external_data(scheme *sc, void *p)
 }
 
 
-void s7_deinit(scheme *sc) 
+void s7_kill(scheme *sc) 
 {
   int i;
   
@@ -6223,24 +6163,12 @@ void s7_deinit(scheme *sc)
   set_sc_code(sc, sc->NIL);
   sc->args = sc->NIL;
   sc->value = sc->NIL;
-  if (s7_is_port(sc->inport)) 
-    {
-      typeflag(sc->inport) = T_ATOM;
-    }
   sc->inport = sc->NIL;
   sc->outport = sc->NIL;
-  if (s7_is_port(sc->save_inport)) 
-    {
-      typeflag(sc->save_inport) = T_ATOM;
-    }
   sc->save_inport = sc->NIL;
-  if (s7_is_port(sc->loadport)) 
-    {
-      typeflag(sc->loadport) = T_ATOM;
-    }
   sc->loadport = sc->NIL;
-  sc->gc_verbose = 0;
-  gc(sc, sc->NIL, sc->NIL);
+  sc->gc_verbose = false;
+  gc(sc);
 }
 
 void s7_load_open_file(scheme *sc, FILE *fin) 
@@ -6256,7 +6184,7 @@ void s7_load_open_file(scheme *sc, FILE *fin)
     sc->interactive_repl = true;
   sc->inport = sc->loadport;
   Eval_Cycle(sc, OP_T0LVL);
-  typeflag(sc->loadport) = T_ATOM;
+  set_type(sc->loadport, T_ATOM);
   if (sc->retcode == 0) 
     sc->retcode = (sc->nesting != 0);
 }
@@ -6275,7 +6203,7 @@ void s7_load_string(scheme *sc, const char *cmd)
   sc->interactive_repl = false;
   sc->inport = sc->loadport;
   Eval_Cycle(sc, OP_T0LVL);
-  typeflag(sc->loadport) = T_ATOM;
+  set_type(sc->loadport, T_ATOM);
   if (sc->retcode == 0) 
     sc->retcode = (sc->nesting != 0);
 }
@@ -6283,16 +6211,10 @@ void s7_load_string(scheme *sc, const char *cmd)
 void s7_define(scheme *sc, pointer envir, pointer symbol, pointer value) 
 {
   pointer x;
-  
-  x = s7_find_slot_in_env(sc,envir,symbol, 0);
+  x = s7_find_slot_in_env(sc, envir, symbol, 0);
   if (x != sc->NIL) 
-    { 
-      set_slot_in_env(sc, x, value); 
-    } 
-  else 
-    { 
-      s7_new_slot_spec_in_env(sc, envir, symbol, value); 
-    } 
+    set_slot_in_env(sc, x, value); 
+  else s7_new_slot_spec_in_env(sc, envir, symbol, value); 
 }
 
 
@@ -6612,20 +6534,6 @@ pointer s7_string_to_form(scheme *sc, const char *str)
   return(s7_F(sc));
 }
 
-
-pointer s7_object_to_string(scheme *sc, pointer obj)
-{
-  char *p;
-  int len;
-  if (s7_is_vector(obj))
-    return(vector_to_string(sc, obj));
-  if (s7_is_pair(obj))
-    return(list_to_string(sc, obj));
-  s7_atom2str(sc, obj, 0, &p, &len);
-  return(s7_make_counted_string(sc, p, len));
-}
-
-
 pointer s7_error(scheme *sc, pointer type, pointer info)
 {
   return(s7_F(sc));
@@ -6654,4 +6562,14 @@ pointer s7_remv(scheme *sc, pointer a, pointer obj)
     if (car(a) != obj)
       p = cons(sc, car(a), p);
   return(s7_reverse(sc, p));
+}
+
+void s7_gc_protect(pointer x)
+{
+  gc_protect(x);
+}
+
+void s7_gc_unprotect(pointer x)
+{
+  gc_unprotect(x);
 }

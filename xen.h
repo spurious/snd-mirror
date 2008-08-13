@@ -2437,7 +2437,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
   }
 
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
-  s7_define(s7, s7_global_env(s7), s7_make_symbol(s7, Name), s7_make_foreign_function(s7, Func, Doc))
+  xen_s7_define_foreign_function(s7, Name, Func, Doc)
 
 #define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   XEN_DEFINE_PROCEDURE(Get_Name, Get_Func, Get_Req, Get_Opt, 0, Get_Help); \
@@ -2518,6 +2518,7 @@ bool xen_hook_p(XEN val);
 XEN xen_define_variable(const char *name, XEN value);
 void xen_s7_ignore(foreign_func func); /* squelch compiler warnings */
 const char *xen_s7_object_help(XEN sym);
+void xen_s7_define_foreign_function(scheme *sc, const char *name, foreign_func func, const char *doc);
 
 #endif
 /* end S7 */
@@ -2759,9 +2760,11 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 #define XEN_TO_C_OFF_T_OR_ELSE(a, b)  xen_to_c_off_t_or_else(a, b)
 #define C_TO_XEN_OFF_T(a)             c_to_xen_off_t(a)
 #define XEN_TO_C_OFF_T(a)             xen_to_c_off_t(a)
+#define XEN_AS_STRING(form)           XEN_TO_C_STRING(XEN_TO_STRING(form))
+#else
+#define XEN_AS_STRING(form)           s7_object_to_c_string(s7, form)
 #endif
 
-#define XEN_AS_STRING(form)           XEN_TO_C_STRING(XEN_TO_STRING(form))
 
 #define XEN_BAD_ARITY_ERROR(Caller, ArgN, Arg, Descr) \
   XEN_ERROR(XEN_ERROR_TYPE("bad-arity"), \

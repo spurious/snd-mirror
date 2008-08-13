@@ -485,7 +485,7 @@
 			   (not (cond-eval (cadr condition)))))
 		(else (error "cond-expand : unknown operator" (car condition)))))))
 
-;(gc-verbose #f)
+(gc-verbose #f)
 (tracing 0)
 
 

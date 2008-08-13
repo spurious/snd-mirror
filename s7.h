@@ -34,7 +34,7 @@ pointer s7_EOF_OBJ(scheme *sc);
 pointer s7_global_env(scheme *sc);
 
 bool s7_is_immutable(pointer p);
-void s7_setimmutable(pointer p);
+void s7_set_immutable(pointer p);
 pointer s7_immutable_cons(scheme *sc, pointer a, pointer b);
 
 pointer s7_cons(scheme *sc, pointer a, pointer b);
@@ -146,14 +146,8 @@ pointer s7_make_closure(scheme *sc, pointer c, pointer e);
 pointer s7_make_continuation(scheme *sc, pointer d);
 bool s7_is_continuation(pointer p);
 
-bool s7_is_environment(pointer p);
-
-
-scheme *s7_init_new(void);
-scheme *s7_init_new_custom_alloc(void);
-int s7_init(scheme *sc);
-int s7_init_custom_alloc(scheme *sc);
-void s7_deinit(scheme *sc);
+scheme *s7_init(void);
+void s7_kill(scheme *sc);
 void s7_set_input_port_file(scheme *sc, FILE *fin);
 void s7_set_input_port_string(scheme *sc, char *start, char *past_the_end);
 void s7_set_output_port_file(scheme *sc, FILE *fin);
@@ -188,6 +182,7 @@ pointer s7_eval_form(scheme *sc, pointer form);
 
 pointer s7_string_to_form(scheme *sc, const char *str);
 pointer s7_object_to_string(scheme *sc, pointer arg);
+char *s7_object_to_c_string(scheme *sc, pointer obj);
 void s7_load_string(scheme *sc, const char *cmd);
 
 void s7_load_open_file(scheme *sc, FILE *fin);
@@ -207,6 +202,10 @@ pointer s7_throw(scheme *sc, pointer type, pointer info);
 pointer s7_wrong_type_arg_error(scheme *sc, const char *caller, int arg_n, pointer arg, const char *descr);
 pointer s7_out_of_range_error(scheme *sc, const char *caller, int arg_n, pointer arg, const char *descr);
 
+void s7_gc_protect(pointer x);
+void s7_gc_unprotect(pointer x);
+
+void s7_for_each_symbol_name(scheme *sc, void (*oblist_func)(const char *symbol_name, void *data), void *data);
 
 #endif
 

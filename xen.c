@@ -2421,6 +2421,17 @@ static char *print_hook(void *v)
   return(hook_to_string((ghook *)v));
 }
 
+void xen_s7_define_foreign_function(scheme *sc, const char *name, foreign_func func, const char *doc)
+{
+  XEN ffunc, sym;
+  ffunc = s7_make_foreign_function(s7, func, doc);
+  s7_gc_protect(ffunc);
+  sym = s7_make_symbol(s7, name);
+  s7_gc_protect(sym);
+  s7_define(s7, s7_global_env(s7), sym, ffunc);
+  s7_gc_unprotect(ffunc);
+  s7_gc_unprotect(sym);
+}
 
 XEN_NARGIFY_1(g_hook_p_w, g_hook_p);
 XEN_NARGIFY_1(g_hook_empty_p_w, g_hook_empty_p)
@@ -2441,11 +2452,11 @@ void xen_initialize(void)
 {
   FILE *init;
 
-  s7 = s7_init_new();
+  s7 = s7_init();
   if (!s7) fprintf(stderr, "Can't initialize S7!\n");
 
   s7_set_input_port_file(s7, stdin);
-  s7_set_output_port_file(s7, stdout);
+  s7_set_output_port_file(s7, stderr);
   xen_false = s7_F(s7);
   xen_true = s7_T(s7);
   xen_nil = s7_NIL(s7);
