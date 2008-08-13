@@ -2,6 +2,8 @@
  *    derived from:
  */
 
+#define USE_SND 1
+
 /* T I N Y S C H E M E    1 . 3 9
  *   Dimitrios Souflis (dsouflis@acm.org)
  *   Based on MiniScheme (original credits follow)
@@ -51,6 +53,8 @@
  *        ints are off_t's in this case
  *        had to move all the numeric stuff in s7.scm into s7-ops.h and s7.c
  *     split the hidden ivalue uses off into separate structs
+ *     changed the layout of vectors (found the GC bug related to it: (make-vector 0) in r4rstest.scm was deadly to preceding version)
+ *     removed the old memory allocation junk (at no cost in speed)
  *
  *
  * there's no arg number mismatch check for caller-defined functions!
@@ -66,7 +70,6 @@
  *      soft port for Snd (need to trap error reports somehow)
  *      doc strings for scheme funcs
  *      <CLOSURE> should give the name [s7_define could a backpointer to the symbol in the value]
- *      use FREE and friends so we can track memory leaks
  *      list or list* for xen connection
  *      continuations might be fixable by invoking a new interpreter on each one, copying the state of its parent
  *      (keyword? :asd) segfaults! -- need the names make-keyword, keyword? 
@@ -78,6 +81,7 @@
  * guile's optargs.scm has define*
  */
 
+/* if not defined, gc segfaults... */
 #define USE_SCHEME_STACK 1
 
 #ifndef USE_TRACING
@@ -89,12 +93,8 @@
   #define USE_ERROR_HOOK 1
 #endif
 
-#ifndef USE_COLON_HOOK   /* Enable qualified qualifier */
+#ifndef USE_COLON_HOOK   /* Enable qualified qualifier -- what?? */
   #define USE_COLON_HOOK 1
-#endif
-
-#ifndef STDIO_ADDS_CR    /* Define if DOS/Windows */
-  #define STDIO_ADDS_CR 0
 #endif
 
 /*
@@ -114,6 +114,13 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
+
+#if USE_SND
+#define MUS_DEBUGGING 1
+#define copy_string(Str) copy_string_1(Str, __FUNCTION__, __FILE__, __LINE__)
+char *copy_string_1(const char *str, const char *func, const char *file, int line);
+#include "_sndlib.h"
+#endif
 
 #include "s7.h"
 
@@ -223,7 +230,7 @@ typedef struct port {
 
 
 /* cell structure */
-struct cell {
+typedef struct cell {
   unsigned int flag;
   union {
     
@@ -240,7 +247,10 @@ struct cell {
 
     enum scheme_opcodes proc_num;
 
-    int vector_length;
+    struct {
+     int length;
+      pointer *elements;
+    } vector;
     
     struct {
       foreign_func ff;
@@ -258,7 +268,7 @@ struct cell {
     } fobj;
     
   } object;
-};
+} cell;
 
 #define cons(sc, a,b) _cons(sc, a, b, 0)
 #define immutable_cons(sc, a,b) _cons(sc, a, b, 1)
@@ -289,9 +299,9 @@ struct cell {
 #define setatom(p)       typeflag(p) |= T_ATOM
 #define clratom(p)       typeflag(p) &= CLRATOM
 
-#define is_mark(p)       (typeflag(p)&MARK)
-#define setmark(p)       typeflag(p) |= MARK
-#define clrmark(p)       typeflag(p) &= UNMARK
+#define is_mark(p)       (typeflag(p) & MARK)
+#define setmark(p)       typeflag(p)  |= MARK
+#define clrmark(p)       typeflag(p)  &= UNMARK
 
 #define caar(p)          car(car(p))
 #define cadr(p)          car(cdr(p))
@@ -303,25 +313,19 @@ struct cell {
 #define cadddr(p)        car(cdr(cdr(cdr(p))))
 #define cddddr(p)        cdr(cdr(cdr(cdr(p))))
 
-#define vector_length(p) ((p)->object.vector_length)
+#define vector_length(p)     ((p)->object.vector.length)
+#define vector_element(p, i) ((p)->object.vector.elements[i])
 
 
 
 
 struct scheme {
-  /* arrays for segments */
-  func_alloc malloc;
-  func_dealloc free;
-  
   /* return code */
   int retcode;
   bool tracing;
   
-  #define CELL_SEGSIZE    5000  /* # of cells in one segment */
-  #define CELL_NSEGMENT   10    /* # of segments for cells */
-  char *alloc_seg[CELL_NSEGMENT];
-  pointer cell_seg[CELL_NSEGMENT];
-  int last_cell_seg;
+  pointer *cells;
+  int cells_top, cells_size;
   
   /* We use 4 registers. */
   pointer args;            /* register for arguments of function */
@@ -331,8 +335,6 @@ struct scheme {
   
   bool interactive_repl;   /* are we in an interactive REPL? */
   
-  struct cell _sink;
-  pointer sink;            /* when mem. alloc. fails */
   struct cell _NIL;
   pointer NIL;             /* special cell representing empty cell */
   struct cell _HASHT;
@@ -360,9 +362,6 @@ struct scheme {
   pointer ERROR_HOOK;      /* *error-hook* */
   pointer SHARP_HOOK;      /* *sharp-hook* */
   
-  pointer free_cell;       /* pointer to top of free cells */
-  long    fcells;          /* # of free cells */
-  
   pointer inport;
   pointer outport;
   pointer errport;
@@ -376,13 +375,11 @@ struct scheme {
   int nesting;
   
   bool gc_verbose;      /* if gc_verbose is not zero, print gc status */
-  bool no_memory;       /* Whether mem. alloc. has failed */
   
   #define LINESIZE 1024
   char linebuff[LINESIZE];
   char strbuff[256];
   
-  FILE *tmpfp;
   int tok;
   int print_flag;
   pointer value;
@@ -405,6 +402,7 @@ static pointer history_ptr[HISTORY_SIZE];
 static int history_line[HISTORY_SIZE];
 static const char *history_func[HISTORY_SIZE];
 static int history_ctr = 0;
+
 static pointer set_sc_code_1(scheme *sc, pointer p, int line, const char *func)
 {
   history_ptr[history_ctr] = p;
@@ -415,6 +413,39 @@ static pointer set_sc_code_1(scheme *sc, pointer p, int line, const char *func)
   if (history_ctr >= HISTORY_SIZE) history_ctr = 0;
   return(p);
 }
+
+static void gc(scheme *sc, pointer a, pointer b);
+
+static pointer new_cell_protected(scheme *sc, pointer a, pointer b)
+{
+  pointer p;
+  p = (cell *)CALLOC(1, sizeof(cell));
+  if (!sc->cells[sc->cells_top])
+    sc->cells[sc->cells_top++] = p;
+  else
+    {
+      gc(sc, a, b);
+      if (sc->cells_top >= sc->cells_size)
+	{
+	  for (sc->cells_top = 0; sc->cells_top < sc->cells_size; sc->cells_top++)
+	    if (!sc->cells[sc->cells_top])
+	      {
+		sc->cells[sc->cells_top++] = p;
+		return(p);
+	      }
+	  sc->cells_size *= 2;
+	  sc->cells = (cell **)REALLOC(sc->cells, sc->cells_size * sizeof(cell *));
+	  sc->cells[sc->cells_top++] = p;
+	}
+    }
+  return(p);
+}
+
+static pointer new_cell(scheme *sc)
+{
+  return(new_cell_protected(sc, sc->NIL, sc->NIL));
+}
+
 
 #define set_sc_code(sc, p) set_sc_code_1(sc, p, __LINE__, __FUNCTION__)
 
@@ -518,9 +549,6 @@ static const char *type_names[16] = {
 
 /* 5 bits here so only 31 types allowed currently */
 
-/* ADJ is enough slack to align cells in a TYPE_BITS-bit boundary */
-#define ADJ 32
-
 #define TYPE_BITS 5
 #define T_MASKTYPE      31    /* 0000000000011111 */
 #define T_SYNTAX      4096    /* 0001000000000000 */
@@ -555,14 +583,13 @@ static void dump_object(scheme *sc, pointer x)
     fprintf(stderr, "nil");
   else
     {
-  if ((x) &&
-      (type(x) >= 0) &&
-      (type(x) < T_LAST_SYSTEM_TYPE))
-    {
-      fprintf(stderr, "type: %s (%x)\n", type_names[type(x)], typeflag(x));
-      
-    }
-  else fprintf(stderr, "bogus: %x\n", typeflag(x));
+      if ((x) &&
+	  (type(x) >= 0) &&
+	  (type(x) < T_LAST_SYSTEM_TYPE))
+	{
+	  fprintf(stderr, "type: %s (%x)\n", type_names[type(x)], typeflag(x));
+	}
+      else fprintf(stderr, "bogus: %x\n", typeflag(x));
     }
 }
 
@@ -804,7 +831,6 @@ static int syntaxnum(pointer p);
 static void finalize_cell(scheme *sc, pointer a);
 static bool file_interactive(scheme *sc);
 static int basic_inchar(port *pt);
-static void gc(scheme *sc, pointer a, pointer b);
 static void port_close(scheme *sc, pointer p, int flag);
 static bool is_one_of(char *s, int c);
 static void s7_mark_embedded_foreign_objects(pointer a);
@@ -1313,7 +1339,7 @@ static bool num_eq(num a, num b)
 }
 
 
-static int num_gt(num a, num b) 
+static bool num_gt(num a, num b) 
 {
   if ((num_type(a) == NUM_INT) &&
       (num_type(b) == NUM_INT))
@@ -1321,7 +1347,7 @@ static int num_gt(num a, num b)
   return(num_to_real(a) > num_to_real(b));
 }
 
-static int num_lt(num a, num b) 
+static bool num_lt(num a, num b) 
 {
   if ((num_type(a) == NUM_INT) &&
       (num_type(b) == NUM_INT))
@@ -1329,12 +1355,12 @@ static int num_lt(num a, num b)
   return(num_to_real(a) < num_to_real(b));
 }
 
-static int num_ge(num a, num b) 
+static bool num_ge(num a, num b) 
 {
   return(!num_lt(a, b));
 }
 
-static int num_le(num a, num b) 
+static bool num_le(num a, num b) 
 {
   return(!num_gt(a, b));
 }
@@ -1354,14 +1380,6 @@ static double round_per_R5RS(double x)
   return(ce);
 }
 
-#if 0
-static bool is_zero_double(double x) 
-{
-  return((x < DBL_MIN) && 
-	 (x > -DBL_MIN));
-}
-#endif
-
 static long binary_decode(const char *s) 
 {
   long x = 0;
@@ -1376,254 +1394,18 @@ static long binary_decode(const char *s)
   return x;
 }
 
-
-
-/* allocate new cell segment */
-static int alloc_cellseg(scheme *sc, int n) 
-{
-  pointer newp;
-  pointer last;
-  pointer p;
-  char *cp;
-  long i;
-  int k;
-  int adj = ADJ;
-  
-  if (adj < sizeof(struct cell)) 
-    {
-      adj = sizeof(struct cell);
-      fprintf(stderr, "adj from %d to %d\n", ADJ, adj);
-    }
-  
-  for (k = 0; k < n; k++) 
-    {
-      if (sc->last_cell_seg >= CELL_NSEGMENT - 1)
-	return k;
-      cp = (char*)sc->malloc(CELL_SEGSIZE * sizeof(struct cell) + adj);
-      if (cp == 0)
-	{
-	  fprintf(stderr, "attempt to alloc %d bytes failed\n", CELL_SEGSIZE * sizeof(struct cell) + adj);
-	  return k;
-	}
-      i = ++sc->last_cell_seg ;
-      sc->alloc_seg[i] = cp;
-      /* adjust in TYPE_BITS-bit boundary */
-      if (((unsigned)cp) % adj != 0) 
-	{
-	  fprintf(stderr, "adjusting cp %p to ", cp);
-	  cp = (char *)(adj * ((unsigned long)cp / adj + 1));
-	  fprintf(stderr, "%p\n", cp);
-	}
-      /* insert new segment in address order */
-      newp = (pointer)cp;
-      sc->cell_seg[i] = newp;
-      while (i > 0 && sc->cell_seg[i - 1] > sc->cell_seg[i]) 
-	{
-	  p = sc->cell_seg[i];
-	  sc->cell_seg[i] = sc->cell_seg[i - 1];
-	  sc->cell_seg[--i] = p;
-	}
-      sc->fcells += CELL_SEGSIZE;
-      last = newp + CELL_SEGSIZE - 1;
-      for (p = newp; p <= last; p++) 
-	{
-	  typeflag(p) = 0;
-	  cdr(p) = p + 1;
-	  car(p) = sc->NIL;
-	}
-      /* insert new cells in address order on free list */
-      if (sc->free_cell == sc->NIL || p < sc->free_cell) 
-	{
-	  cdr(last) = sc->free_cell;
-	  sc->free_cell = newp;
-	} 
-      else 
-	{
-	  p = sc->free_cell;
-	  while (cdr(p) != sc->NIL && newp > cdr(p))
-	    p = cdr(p);
-	  cdr(last) = cdr(p);
-	  cdr(p) = newp;
-	}
-    }
-  return n;
-}
-
-static  pointer get_cell(scheme *sc, pointer a, pointer b) 
-{
-  if (sc->free_cell != sc->NIL) 
-    {
-      pointer x = sc->free_cell;
-      sc->free_cell = cdr(x);
-      --sc->fcells;
-      return (x);
-    } 
-  return _get_cell (sc, a, b);
-}
-
-
-/* get new cell.  parameter a, b is marked by gc. */
-static pointer _get_cell(scheme *sc, pointer a, pointer b) 
-{
-  pointer x;
-  
-  if (sc->no_memory) 
-    {
-      return sc->sink;
-    }
-  
-  if (sc->free_cell == sc->NIL) 
-    {
-      gc(sc, a, b);
-      if (sc->fcells < sc->last_cell_seg*8
-	  || sc->free_cell == sc->NIL) 
-	{
-	  /* if only a few recovered, get more to avoid fruitless gc's */
-	  if ((!alloc_cellseg(sc, 1))&& 
-	      (sc->free_cell == sc->NIL))
-	    {
-	      fprintf(stderr, "failed in _get_cell\n");
-	      sc->no_memory = true;
-	      return sc->sink;
-	    }
-	}
-    }
-  x = sc->free_cell;
-  sc->free_cell = cdr(x);
-  --sc->fcells;
-  return (x);
-}
-
-#if 0
-/* make sure that there is a given number of cells free */
-static pointer reserve_cells(scheme *sc, int n) 
-{
-  if (sc->no_memory) 
-    {
-      return sc->NIL;
-    }
-  
-  /* Are there enough cells available? */
-  if (sc->fcells < n) 
-    {
-      /* If not, try gc'ing some */
-      gc(sc, sc->NIL, sc->NIL);
-      if (sc->fcells < n) 
-	{
-	  /* If there still aren't, try getting more heap */
-	  if (!alloc_cellseg(sc, 1)) 
-	    {
-	      fprintf(stderr, "failed in reserve_cells\n");
-	      sc->no_memory = true;
-	      return sc->NIL;
-	    }
-	}
-      if (sc->fcells < n) 
-	{
-	  /* If all fail, report failure */
-	  fprintf(stderr, "failed in reserve_cells (2)\n");
-	  sc->no_memory = true;
-	  return sc->NIL;
-	}
-    }
-  return (sc->T);
-}
-#endif
-
-static pointer get_consecutive_cells(scheme *sc, int n) 
-{
-  pointer x;
-  
-  if (sc->no_memory) 
-    {
-      return(sc->sink);
-    }
-  
-  /* Are there any cells available? */
-  x = find_consecutive_cells(sc,n);
-
-  if (x == sc->NIL) 
-    {
-      /* If not, try gc'ing some */
-      fprintf(stderr, "gc to free consecutive cells");
-
-      gc(sc, sc->NIL, sc->NIL);
-
-      x = find_consecutive_cells(sc, n);
-      if (x == sc->NIL) 
-	{
-	  fprintf(stderr, "first search");
-	  /* If there still aren't, try getting more heap */
-	  if (!alloc_cellseg(sc, 1)) 
-	    {
-	      fprintf(stderr, "failed in get_consecutive_cells\n");
-	      sc->no_memory = true;
-	      return sc->sink;
-	    }
-	}
-      else fprintf(stderr, "x is ok");
-
-      if (x == sc->NIL) /* added 9-Aug-08 */
-	{
-	  x = find_consecutive_cells(sc, n);
-	  if (x == sc->NIL) 
-	    {
-	      /* If all fail, report failure */
-	      fprintf(stderr, "failed in get_consecutive_cells (2)\n");
-	      sc->no_memory = true;
-	      return(sc->sink);
-	    }
-	}
-    }
-  return (x);
-}
-
-static int count_consecutive_cells(pointer x, int needed) 
-{
-  int n= 1;
-  while(cdr(x) ==x+1) 
-    {
-      x = cdr(x);
-      n++;
-      if (n>needed) return n;
-    }
-  return n;
-}
-
-static pointer find_consecutive_cells(scheme *sc, int n) 
-{
-  pointer *pp;
-  int cnt;
-  
-  pp =&sc->free_cell;
-  while(*pp!= sc->NIL) 
-    {
-      cnt = count_consecutive_cells(*pp,n);
-      if (cnt>= n) 
-	{
-	  pointer x =*pp;
-	  *pp = cdr(*pp+n-1);
-	  sc->fcells -= n;
-	  return x;
-	}
-      pp =&cdr(*pp+cnt-1);
-    }
-  return sc->NIL;
-}
-
 /* get new cons cell */
 static pointer _cons(scheme *sc, pointer a, pointer b, int immutable) 
 {
-  pointer x = get_cell(sc, a, b);
+  pointer x;
+  x = new_cell_protected(sc, a, b);
   
   typeflag(x) = T_PAIR;
   if (immutable) 
-    {
-      s7_setimmutable(x);
-    }
+    s7_setimmutable(x);
   car(x) = a;
   cdr(x) = b;
-  return (x);
+  return(x);
 }
 
 pointer s7_immutable_cons(scheme *sc, pointer a, pointer b) 
@@ -1646,7 +1428,7 @@ static int hash_fn(const char *key, int table_size);
 
 static pointer oblist_initial_value(scheme *sc) 
 { 
-  return s7_make_vector(sc, 461); /* probably should be bigger */ 
+  return(s7_make_vector(sc, 461)); /* probably should be bigger */ 
 } 
 
 /* returns the new symbol */ 
@@ -1660,8 +1442,9 @@ static pointer oblist_add_by_name(scheme *sc, const char *name)
   s7_setimmutable(car(x)); 
   
   location = hash_fn(name, vector_length(sc->oblist)); 
-  s7_vector_set(sc->oblist, location, 
-		     s7_immutable_cons(sc, x, s7_vector_ref(sc->oblist, location))); 
+  s7_vector_set(sc->oblist, 
+		location, 
+		s7_immutable_cons(sc, x, s7_vector_ref(sc->oblist, location))); 
   return x; 
 } 
 
@@ -1691,12 +1474,9 @@ static pointer oblist_all_symbols(scheme *sc)
   pointer ob_list = sc->NIL; 
   
   for (i = 0; i < vector_length(sc->oblist); i++) 
-    { 
-      for (x  = s7_vector_ref(sc->oblist, i); x != sc->NIL; x = cdr(x)) 
-	{ 
-	  ob_list = cons(sc, x, ob_list); 
-	} 
-    } 
+    for (x  = s7_vector_ref(sc->oblist, i); x != sc->NIL; x = cdr(x)) 
+      ob_list = cons(sc, x, ob_list); 
+
   return ob_list; 
 } 
 
@@ -1747,7 +1527,7 @@ static pointer oblist_all_symbols(scheme *sc)
 
 static pointer make_port(scheme *sc, port *p) 
 {
-  pointer x = get_cell(sc, sc->NIL, sc->NIL);
+  pointer x = new_cell(sc);
   
   typeflag(x) = T_PORT|T_ATOM;
   x->object.port = p;
@@ -1756,7 +1536,7 @@ static pointer make_port(scheme *sc, port *p)
 
 pointer s7_make_foreign_function(scheme *sc, foreign_func f, const char *doc) 
 {
-  pointer x = get_cell(sc, sc->NIL, sc->NIL);
+  pointer x = new_cell(sc);
   typeflag(x) = (T_FOREIGN_FUNCTION | T_ATOM);
   x->object.ffunc.ff = f;
   x->object.ffunc.doc = doc;
@@ -1773,7 +1553,7 @@ const char *s7_foreign_function_doc(pointer x)
 pointer s7_make_foreign_object(scheme *sc, int type, void *value)
 {
   pointer x;
-  x = get_cell(sc, sc->NIL, sc->NIL);
+  x = new_cell(sc);
   typeflag(x) = (T_FOREIGN_OBJECT | T_ATOM);
   x->object.fobj.type = type;
   x->object.fobj.value = value;
@@ -1782,7 +1562,7 @@ pointer s7_make_foreign_object(scheme *sc, int type, void *value)
 
 pointer s7_make_character(scheme *sc, int c) 
 {
-  pointer x = get_cell(sc, sc->NIL, sc->NIL);
+  pointer x = new_cell(sc);
   typeflag(x) = (T_CHARACTER | T_ATOM);
   character(x) = c;
   return (x);
@@ -1790,7 +1570,7 @@ pointer s7_make_character(scheme *sc, int c)
 
 pointer s7_make_integer(scheme *sc, Int n) 
 {
-  pointer x = get_cell(sc, sc->NIL, sc->NIL);
+  pointer x = new_cell(sc);
   typeflag(x) = (T_NUMBER | T_ATOM);
 
   x->object.number.type = NUM_INT;
@@ -1801,7 +1581,7 @@ pointer s7_make_integer(scheme *sc, Int n)
 
 pointer s7_make_real(scheme *sc, double n) 
 {
-  pointer x = get_cell(sc, sc->NIL, sc->NIL);
+  pointer x = new_cell(sc);
   typeflag(x) = (T_NUMBER | T_ATOM);
 
   x->object.number.type = NUM_REAL;
@@ -1813,7 +1593,7 @@ pointer s7_make_real(scheme *sc, double n)
 pointer s7_make_complex(scheme *sc, double a, double b)
 {
   num ret;
-  pointer x = get_cell(sc, sc->NIL, sc->NIL);
+  pointer x = new_cell(sc);
   typeflag(x) = (T_NUMBER | T_ATOM);
   ret = make_complex(a, b);
 
@@ -1833,7 +1613,7 @@ pointer s7_make_ratio(scheme *sc, Int a, Int b)
   /* make_number calls us, so we can't call it as a convenience! */
 
   num ret;
-  pointer x = get_cell(sc, sc->NIL, sc->NIL);
+  pointer x = new_cell(sc);
   typeflag(x) = (T_NUMBER | T_ATOM);
   ret = make_ratio(sc, a, b);
 
@@ -1868,11 +1648,10 @@ static char *store_string(scheme *sc, int len_str, const char *str, char fill)
 {
   char *q;
   
-  q = (char*)sc->malloc(len_str + 1);
+  q = (char*)MALLOC(len_str + 1);
   if (q == 0) 
     {
       fprintf(stderr, "failed in store_string\n");
-      sc->no_memory = true;
       return(sc->strbuff);
     }
   if (str != 0) 
@@ -1882,18 +1661,18 @@ static char *store_string(scheme *sc, int len_str, const char *str, char fill)
       memset(q, fill, len_str);
       q[len_str]= 0;
     }
-  return (q);
+  return(q);
 }
 
 /* get new string */
 pointer s7_make_string(scheme *sc, const char *str) 
 {
-  return s7_make_counted_string(sc, str, strlen(str));
+  return(s7_make_counted_string(sc, str, strlen(str)));
 }
 
 pointer s7_make_counted_string(scheme *sc, const char *str, int len) 
 {
-  pointer x = get_cell(sc, sc->NIL, sc->NIL);
+  pointer x = new_cell(sc);
   
   string_value(x) = store_string(sc, len, str, 0);
   typeflag(x) = (T_STRING | T_ATOM);
@@ -1903,7 +1682,7 @@ pointer s7_make_counted_string(scheme *sc, const char *str, int len)
 
 static pointer mk_empty_string(scheme *sc, int len, char fill) 
 {
-  pointer x = get_cell(sc, sc->NIL, sc->NIL);
+  pointer x = new_cell(sc);
   
   string_value(x) = store_string(sc,len, 0,fill);
   typeflag(x) = (T_STRING | T_ATOM);
@@ -1913,10 +1692,15 @@ static pointer mk_empty_string(scheme *sc, int len, char fill)
 
 pointer s7_make_vector(scheme *sc, int len) 
 {
-  pointer x = get_consecutive_cells(sc,len/2+len%2+1);
+  pointer x;
+  x = new_cell(sc);
   typeflag(x) = (T_VECTOR | T_ATOM);
   vector_length(x) = len;
-  s7_fill_vector(x, sc->NIL);
+  if (len > 0)
+    {
+      x->object.vector.elements = (pointer *)CALLOC(len, sizeof(pointer));
+      s7_fill_vector(x, sc->NIL);
+    }
   return x;
 }
 
@@ -1928,32 +1712,23 @@ int s7_vector_length(pointer vec)
 void s7_fill_vector(pointer vec, pointer obj) 
 {
   int i, len;
-  int n;
   len = vector_length(vec);
-  n = len/2 + len % 2;
-  for(i = 0; i < n; i++) 
-    {
-      typeflag(vec + 1 + i) = T_PAIR;
-      s7_setimmutable(vec + 1 + i);
-      car(vec + 1 + i) = obj;
-      cdr(vec + 1 + i) = obj;
-    }
+  for(i = 0; i < len; i++) 
+    vector_element(vec, i) = obj;
 }
 
-pointer s7_vector_ref(pointer vec, int ielem) 
+pointer s7_vector_ref(pointer vec, int elem) 
 {
-  int n = ielem / 2;
-  if (ielem % 2 == 0) 
-    return(car(vec + 1 + n));
-  else return(cdr(vec + 1 + n));
+  if (elem >= vector_length(vec))
+    fprintf(stderr, "vector-ref past end of vector: %d %d\n", elem, vector_length(vec));
+  return(vector_element(vec, elem));
 }
 
-pointer s7_vector_set(pointer vec, int ielem, pointer a) 
+pointer s7_vector_set(pointer vec, int elem, pointer a) 
 {
-  int n = ielem / 2;
-  if (ielem % 2 == 0) 
-    return(car(vec + 1 + n) = a);
-  else return(cdr(vec + 1 + n) = a);
+  if (elem >= vector_length(vec))
+    fprintf(stderr, "vector-set past end of vector: %d %d\n", elem, vector_length(vec));
+  vector_element(vec, elem) = a;
 }
 
 /* get new symbol */
@@ -2295,14 +2070,9 @@ static void mark(pointer a)
   if (s7_is_vector(p)) 
     {
       int i, len;
-      int num;
       len = vector_length(p);
-      num = len / 2 + len % 2;
-      for(i = 0; i < num; i++) 
-	{
-	  /* Vector cells will be treated like ordinary cells */
-	  mark(p + 1 + i);
-	}
+      for(i = 0; i < len; i++) 
+	mark(vector_element(p, i));
     }
   else
     {
@@ -2356,11 +2126,11 @@ void s7_mark_object(pointer a)
   mark(a);
 }
 
-/* garbage collection. parameter a, b is marked. */
+
 static void gc(scheme *sc, pointer a, pointer b) 
 {
   pointer p;
-  int i;
+  int i, freed_cells = 0;
   
   if (sc->gc_verbose) 
     {
@@ -2382,31 +2152,20 @@ static void gc(scheme *sc, pointer a, pointer b)
   mark(sc->outport);
   mark(sc->errport);
   mark(sc->loadport);
-  
-  mark(sc->ext_data); /* s7 */
-  
-  /* mark variables a, b */
   mark(a);
   mark(b);
+  mark(sc->ext_data); /* s7 */
   
   /* garbage collect */
   clrmark(sc->NIL);
-  sc->fcells = 0;
-  sc->free_cell = sc->NIL;
-  /* free-list is kept sorted by address so as to maintain consecutive
-     ranges, if possible, for use with vectors. Here we scan the cells
-     (which are also kept sorted by address) downwards to build the
-     free-list in sorted order.
-  */
-  for (i = sc->last_cell_seg; i >= 0; i--) 
+
+  for (i = 0; i < sc->cells_size; i++)
     {
-      p = sc->cell_seg[i] + CELL_SEGSIZE;
-      while (--p >= sc->cell_seg[i]) 
+      p = sc->cells[i];
+      if (p)
 	{
 	  if (is_mark(p)) 
-	    {
-	      clrmark(p);
-	    } 
+	    clrmark(p);
 	  else 
 	    {
 	      /* reclaim cell */
@@ -2415,10 +2174,10 @@ static void gc(scheme *sc, pointer a, pointer b)
 		  finalize_cell(sc, p); 
 		  typeflag(p) = 0; 
 		  car(p) = sc->NIL; 
+		  FREE(p);
+		  sc->cells[i] = NULL;
 		} 
-	      ++sc->fcells; 
-	      cdr(p) = sc->free_cell; 
-	      sc->free_cell = p; 
+	      freed_cells++;
 	    }
 	}
     }
@@ -2426,7 +2185,7 @@ static void gc(scheme *sc, pointer a, pointer b)
   if (sc->gc_verbose) 
     {
       char msg[80];
-      sprintf(msg, "done: %ld cells were recovered.\n", sc->fcells);
+      sprintf(msg, "done: %ld cells were recovered.\n", freed_cells);
       s7_putstr(sc,msg);
     }
 }
@@ -2436,7 +2195,7 @@ static void finalize_cell(scheme *sc, pointer a)
 {
   if (s7_is_string(a)) 
     {
-      sc->free(string_value(a));
+      FREE(string_value(a)); /* malloc'd in store_string */
     } 
   else 
     {
@@ -2451,11 +2210,11 @@ static void finalize_cell(scheme *sc, pointer a)
 	      (a->object.port->kind & port_output) &&
 	      (a->object.port->rep.string.start))
 	    {
-	      free(a->object.port->rep.string.start);
+	      FREE(a->object.port->rep.string.start);
 	      a->object.port->rep.string.start = NULL;
 	    }
 
-	  sc->free(a->object.port);
+	  FREE(a->object.port);
 	}
       else
 	{
@@ -2549,10 +2308,10 @@ static port *port_rep_from_file(scheme *sc, FILE *f, int prop)
 {
   char *rw;
   port *pt;
-  pt = (port*)sc->malloc(sizeof(port));
+  pt = (port*)MALLOC(sizeof(port));
   if (pt == 0) 
     {
-      return 0;
+      return(NULL);
     }
   if (prop == (port_input | port_output)) 
     {
@@ -2586,10 +2345,10 @@ static pointer port_from_file(scheme *sc, FILE *f, int prop)
 static port *port_rep_from_string(scheme *sc, char *start, char *past_the_end, int prop) 
 {
   port *pt;
-  pt = (port*)sc->malloc(sizeof(port));
+  pt = (port*)MALLOC(sizeof(port));
   if (pt == 0) 
     {
-      return 0;
+      return(NULL);
     }
   pt->kind = port_string | prop;
   pt->rep.string.start = start;
@@ -2740,7 +2499,7 @@ static void put_char(port *pt, char c)
     {
       int loc;
       loc = (int)(pt->rep.string.curr - pt->rep.string.start);
-      pt->rep.string.start = (char *)realloc(pt->rep.string.start, loc * 2);
+      pt->rep.string.start = (char *)REALLOC(pt->rep.string.start, loc * 2);
       pt->rep.string.curr = (char *)(pt->rep.string.start + loc);
       pt->rep.string.past_the_end = (char *)(pt->rep.string.start + (loc * 2));
     }
@@ -2792,7 +2551,7 @@ static void s7_putcharacter(scheme *sc, int c)
 pointer s7_open_output_string(scheme *sc)
 {
   char *tmp;
-  tmp = (char *)calloc(128, sizeof(char));
+  tmp = (char *)CALLOC(128, sizeof(char));
   return(port_from_string(sc, tmp, (char *)(tmp + 128), port_output));
 }
 
@@ -2964,7 +2723,7 @@ static pointer readstrexp(scheme *sc)
 /* check c is in chars */
 static  bool is_one_of(char *s, int c) 
 {
-  if (c == EOF) return 1;
+  if (c == EOF) return(true);
   while (*s)
     if (*s++ == c)
       return(true);
@@ -3294,29 +3053,29 @@ static pointer vector_to_string(scheme *sc, pointer vect)
       too_long = true;
       len = 8;
     }
-  elements = (char **)malloc(len * sizeof(char *));
+  elements = (char **)MALLOC(len * sizeof(char *));
   for (i = 0; i < len; i++)
     {
-      elements[i] = strdup(string_value(s7_object_to_string(sc, s7_vector_ref(vect, i))));
+      elements[i] = copy_string(string_value(s7_object_to_string(sc, s7_vector_ref(vect, i))));
       bufsize += strlen(elements[i]);
     }
   bufsize += 128;
-  buf = (char *)calloc(bufsize, sizeof(char));
+  buf = (char *)CALLOC(bufsize, sizeof(char));
   sprintf(buf, "#(");
   for (i = 0; i < len - 1; i++)
     {
       strcat(buf, elements[i]);
-      free(elements[i]);
+      FREE(elements[i]);
       strcat(buf, " ");
     }
   strcat(buf, elements[len - 1]);
-  free(elements[len - 1]);
-  free(elements);
+  FREE(elements[len - 1]);
+  FREE(elements);
   if (too_long)
     strcat(buf, " ...");
   strcat(buf, ")");
   result = s7_make_string(sc, buf);
-  free(buf);
+  FREE(buf);
   return(result);
 }
 
@@ -3330,27 +3089,32 @@ static pointer list_to_string(scheme *sc, pointer lst)
   if (len <= 0)
     return(s7_make_string(sc, "unknown"));
 
-  elements = (char **)malloc(len * sizeof(char *));
+  elements = (char **)MALLOC(len * sizeof(char *));
   for (x = lst, i = 0; s7_is_pair(x); i++, x = s7_cdr(x))
     {
-      elements[i] = strdup(string_value(s7_object_to_string(sc, car(x))));
+      elements[i] = copy_string(string_value(s7_object_to_string(sc, car(x))));
       bufsize += strlen(elements[i]);
     }
+  if (i != len)
+    fprintf(stderr, "list->string list len: %d, but got %d elements?", len, i);
+
   bufsize += (128 + len); /* len spaces */
-  buf = (char *)calloc(bufsize, sizeof(char));
+  buf = (char *)CALLOC(bufsize, sizeof(char));
   sprintf(buf, "(");
   for (i = 0; i < len - 1; i++)
     {
       strcat(buf, elements[i]);
-      free(elements[i]);
       strcat(buf, " ");
     }
   strcat(buf, elements[len - 1]);
-  free(elements[len - 1]);
-  free(elements);
   strcat(buf, ")");
+
+  for (i = 0; i < len; i++)
+    FREE(elements[i]);
+  FREE(elements);
+
   result = s7_make_string(sc, buf);
-  free(buf);
+  FREE(buf);
   return(result);
 }
 
@@ -3360,7 +3124,7 @@ static pointer list_to_string(scheme *sc, pointer lst)
 /* make closure. c is code. e is environment */
 pointer s7_make_closure(scheme *sc, pointer c, pointer e) 
 {
-  pointer x = get_cell(sc, c, e);
+  pointer x = new_cell(sc);
   
   typeflag(x) = T_CLOSURE;
   car(x) = c;
@@ -3371,7 +3135,7 @@ pointer s7_make_closure(scheme *sc, pointer c, pointer e)
 /* make continuation. */
 pointer s7_make_continuation(scheme *sc, pointer d) 
 {
-  pointer x = get_cell(sc, sc->NIL, d);
+  pointer x = new_cell(sc);
   /*
   fprintf(stderr,"make continuation %p %p ", x, d);
   */
@@ -3535,13 +3299,8 @@ static void new_frame_in_env(scheme *sc, pointer old_env)
   
   /* The interaction-environment has about 300 variables in it. */ 
   if (old_env == sc->NIL) 
-    { 
-      new_frame = s7_make_vector(sc, 461); 
-    } 
-  else 
-    { 
-      new_frame = sc->NIL; 
-    } 
+    new_frame = s7_make_vector(sc, 461); 
+  else new_frame = sc->NIL; 
   
   sc->envir = immutable_cons(sc, new_frame, old_env); 
   setenvironment(sc->envir); 
@@ -3557,8 +3316,9 @@ void s7_new_slot_spec_in_env(scheme *sc, pointer env,
     { 
       int location = hash_fn(s7_symbol_name(variable), vector_length(car(env))); 
       
-      s7_vector_set(car(env), location, 
-			 s7_immutable_cons(sc, slot, s7_vector_ref(car(env), location))); 
+      s7_vector_set(car(env), 
+		    location, 
+		    s7_immutable_cons(sc, slot, s7_vector_ref(car(env), location))); 
     } 
   else 
     { 
@@ -3734,8 +3494,7 @@ static void s_save(scheme *sc, enum scheme_opcodes op, pointer args, pointer cod
   if (nframes >= sc->dump_size) 
     { 
       sc->dump_size += STACK_GROWTH; 
-      /* alas there is no sc->realloc */ 
-      sc->dump_base = realloc(sc->dump_base, 
+      sc->dump_base = REALLOC(sc->dump_base, 
 			      sizeof(struct dump_stack_frame) * sc->dump_size); 
     } 
   next_frame = (struct dump_stack_frame *)sc->dump_base + nframes; 
@@ -3781,7 +3540,7 @@ static  void dump_stack_initialize(scheme *sc)
 
 static void dump_stack_free(scheme *sc) 
 { 
-  free(sc->dump_base); 
+  FREE(sc->dump_base); 
   sc->dump_base = NULL; 
   sc->dump = (pointer)0; 
   sc->dump_size = 0; 
@@ -3853,7 +3612,7 @@ static bool vectors_equal(scheme *sc, pointer x, pointer y)
   len = vector_length(x);
   if (len != vector_length(y)) return(false);
   for (i = 0; i < len; i++)
-    if (!(s7_is_equal(sc, s7_vector_ref(x, i), s7_vector_ref(y, i))))
+    if (!(s7_is_equal(sc, vector_element(x, i), vector_element(y, i))))
       return(false);
   return(true);
 }
@@ -4209,7 +3968,7 @@ static pointer opexe_0(scheme *sc, enum scheme_opcodes op)
 	{
 	  char *sym, *name;
 	  name = s7_symbol_name(caar(sc->code));
-	  sym = (char *)calloc(strlen(name) + 6, sizeof(char));
+	  sym = (char *)CALLOC(strlen(name) + 6, sizeof(char));
 	  sprintf(sym, "set-%s", name);
 	  caar(sc->code) = s7_make_symbol(sc, sym);               /* [set!] ((x a b...) y) -> ((set-x a b..) y) */
 	  set_sc_code(sc, s7_append(sc, car(sc->code), cdr(sc->code))); /* -> (set-x a b ... y) */
@@ -4286,10 +4045,8 @@ static pointer opexe_0(scheme *sc, enum scheme_opcodes op)
       if (s7_is_symbol(car(sc->code))) 
 	{    /* named let */
 	  for (x = cadr(sc->code), sc->args = sc->NIL; x != sc->NIL; x = cdr(x)) 
-	    {
-	      
-	      sc->args = cons(sc, caar(x), sc->args);
-	    }
+	    sc->args = cons(sc, caar(x), sc->args);
+
 	  x = s7_make_closure(sc, cons(sc, s7_reverse_in_place(sc, sc->NIL, sc->args), cddr(sc->code)), sc->envir); 
 	  new_slot_in_env(sc, car(sc->code), x); 
 	  set_sc_code(sc, cddr(sc->code));
@@ -5214,7 +4971,7 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
 
 	vec = s7_make_vector(sc, len);
 	for (x = sc->args, i = 0; s7_is_pair(x); x = cdr(x), i++) 
-	  s7_vector_set(vec,i, car(x));
+	  vector_element(vec, i) =  car(x);
 
 	s_return(sc,vec);
       }
@@ -5227,17 +4984,18 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
       
 	len = s7_integer(car(sc->args));
       
-	if (cdr(sc->args)!= sc->NIL) 
-	  fill= cadr(sc->args);
+	if (cdr(sc->args) != sc->NIL) 
+	  fill = cadr(sc->args);
 
 	vec = s7_make_vector(sc, len);
-	if (fill != sc->NIL) 
+	if (fill != sc->NIL)
 	  s7_fill_vector(vec, fill);
+
 	s_return(sc,vec);
       }
       
     case OP_VECLEN:  /* vector-length */
-      s_return(sc,s7_make_integer(sc, vector_length(car(sc->args))));
+      s_return(sc, s7_make_integer(sc, vector_length(car(sc->args))));
       
     case OP_VECREF: /* vector-ref */
       { 
@@ -5247,7 +5005,7 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
 	if (index >= vector_length(car(sc->args))) 
 	  Error_1(sc, "vector-ref: out of bounds:", cadr(sc->args));
       
-	s_return(sc,s7_vector_ref(car(sc->args),index));
+	s_return(sc, vector_element(car(sc->args), index));
       }
       
     case OP_VECSET:/* vector-set! */
@@ -5261,7 +5019,7 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
 	if (index >= vector_length(car(sc->args))) 
 	  Error_1(sc, "vector-set!: out of bounds:",cadr(sc->args));
       
-	s7_vector_set(car(sc->args), index, caddr(sc->args));
+	vector_element(car(sc->args), index) = caddr(sc->args);
 	s_return(sc, car(sc->args));
       }
       
@@ -5287,7 +5045,6 @@ static pointer opexe_3(scheme *sc, enum scheme_opcodes op)
 {
   pointer x;
   num v;
-  int (*comp_func)(num,num) = 0;
   
   switch (op) 
     {
@@ -5308,25 +5065,28 @@ static pointer opexe_3(scheme *sc, enum scheme_opcodes op)
     case OP_GRE:        /* > */
     case OP_LEQ:        /* <= */
     case OP_GEQ:        /* >= */
-      switch(op) 
-	{
-	case OP_NUMEQ: comp_func = num_eq; break;
-	case OP_LESS:  comp_func = num_lt; break;
-	case OP_GRE:   comp_func = num_gt; break;
-	case OP_LEQ:   comp_func = num_le; break;
-	case OP_GEQ:   comp_func = num_ge; break;
-	}
-      x = sc->args;
-      v = nvalue(car(x));
-      x = cdr(x);
+      {
+	bool (*comp_func)(num, num);
+	switch(op) 
+	  {
+	  case OP_NUMEQ: comp_func = num_eq; break;
+	  case OP_LESS:  comp_func = num_lt; break;
+	  case OP_GRE:   comp_func = num_gt; break;
+	  case OP_LEQ:   comp_func = num_le; break;
+	  case OP_GEQ:   comp_func = num_ge; break;
+	  }
+	x = sc->args;
+	v = nvalue(car(x));
+	x = cdr(x);
       
-      for (; x != sc->NIL; x = cdr(x)) 
-	{
-	  if (!comp_func(v, nvalue(car(x)))) 
-	    s_retbool(false);
-	  v = nvalue(car(x));
-	}
-      s_retbool(true);
+	for (; x != sc->NIL; x = cdr(x)) 
+	  {
+	    if (!comp_func(v, nvalue(car(x)))) 
+	      s_retbool(false);
+	    v = nvalue(car(x));
+	  }
+	s_retbool(true);
+      }
 
     case OP_SYMBOLP:     /* symbol? */
       s_retbool(s7_is_symbol(car(sc->args)));
@@ -5388,7 +5148,8 @@ static pointer opexe_3(scheme *sc, enum scheme_opcodes op)
     case OP_PAIRP:       /* pair? */
       s_retbool(s7_is_pair(car(sc->args)));
 
-    case OP_LISTP: {     /* list? */
+    case OP_LISTP:  /* list? */
+      {    
       pointer slow, fast;
       slow = fast = car(sc->args);
       while (1) 
@@ -5552,13 +5313,6 @@ static pointer opexe_4(scheme *sc, enum scheme_opcodes op)
 	sc->gc_verbose = (car(sc->args) != sc->F);
 	s_retbool(was);
       }
-      
-    case OP_NEWSEGMENT: /* new-segment */
-      if (!s7_is_pair(sc->args) || !s7_is_number(car(sc->args))) 
-	Error_0(sc, "new-segment: argument must be a number");
-
-      alloc_cellseg(sc, s7_integer(car(sc->args)));
-      s_return(sc, sc->T);
       
     case OP_OBLIST: /* oblist */
       s_return(sc, oblist_all_symbols(sc)); 
@@ -5964,7 +5718,7 @@ static pointer opexe_5(scheme *sc, enum scheme_opcodes op)
 	} 
       else 
 	{
-	  pointer elem = s7_vector_ref(vec,i);
+	  pointer elem = vector_element(vec, i);
 	  loop_counter(cdr(sc->args)) = i + 1;
 	  s_save(sc, OP_PVECFROM, sc->args, sc->NIL);
 	  sc->args = elem;
@@ -5988,6 +5742,13 @@ static pointer opexe_6(scheme *sc, enum scheme_opcodes op)
   
   switch (op) 
     {
+      
+    case OP_OBJECT_TO_STRING:
+      {
+	pointer p;
+	x = car(sc->args);
+	s_return(sc, s7_object_to_string(sc, x));
+      } 
       
     case OP_LIST_LENGTH:     /* length */   /* a.k */
       v = s7_list_length(sc, car(sc->args));
@@ -6047,7 +5808,7 @@ typedef pointer (*dispatch_func)(scheme *, enum scheme_opcodes);
 
 
 
-typedef int (*test_predicate)(pointer);
+typedef bool (*test_predicate)(pointer);
 
 static bool is_any(pointer p) 
 { 
@@ -6227,11 +5988,6 @@ static void Eval_Cycle(scheme *sc, enum scheme_opcodes op)
       if (pcd->func(sc, sc->op) == sc->NIL) /* here we call the op -- func is one of the opexe_n's */
 	return;
 
-      if (sc->no_memory) 
-	{
-	  fprintf(stderr, "No memory!\n");
-	  return;
-	}
       count++;
     }
 }
@@ -6248,7 +6004,7 @@ static void assign_syntax(scheme *sc, char *name)
 static pointer make_proc(scheme *sc, enum scheme_opcodes op) 
 {
   pointer y;
-  y = get_cell(sc, sc->NIL, sc->NIL);
+  y = new_cell(sc);
   typeflag(y) = (T_PROC | T_ATOM);
   procedure_index(y) = op;
   return(y);
@@ -6306,11 +6062,11 @@ static int syntaxnum(pointer p)
 
 scheme *s7_init_new(void) 
 {
-  scheme *sc = (scheme*)malloc(sizeof(scheme));
+  scheme *sc = (scheme*)MALLOC(sizeof(scheme));
   if (!s7_init(sc)) 
     {
-      free(sc);
-      return 0;
+      FREE(sc);
+      return(NULL);
     } 
   else 
     {
@@ -6318,27 +6074,25 @@ scheme *s7_init_new(void)
     }
 }
 
-scheme *s7_init_new_custom_alloc(func_alloc malloc, func_dealloc free) 
+scheme *s7_init_new_custom_alloc(void)
 {
-  scheme *sc = (scheme*)malloc(sizeof(scheme));
-  if (!s7_init_custom_alloc(sc,malloc,free)) 
+  scheme *sc;
+  sc = (scheme *)MALLOC(sizeof(scheme));
+  if (!s7_init_custom_alloc(sc))
     {
-      free(sc);
-      return 0;
+      FREE(sc);
+      return(NULL);
     } 
-  else 
-    {
-      return(sc);
-    }
+  return(sc);
 }
 
 
 int s7_init(scheme *sc) 
 {
-  return(s7_init_custom_alloc(sc, malloc, free));
+  return(s7_init_custom_alloc(sc));
 }
 
-int s7_init_custom_alloc(scheme *sc, func_alloc malloc, func_dealloc free) 
+int s7_init_custom_alloc(scheme *sc)
 {
   int i, n = sizeof(dispatch_table) / sizeof(dispatch_table[0]);
   pointer x;
@@ -6349,18 +6103,13 @@ int s7_init_custom_alloc(scheme *sc, func_alloc malloc, func_dealloc free)
   integer(num_one) = 1;
   
   sc->gensym_cnt = 0;
-  sc->malloc = malloc;
-  sc->free = free;
-  sc->last_cell_seg = -1;
-  sc->sink = &sc->_sink;
+
   sc->NIL = &sc->_NIL;
   sc->T = &sc->_HASHT;
   sc->F = &sc->_HASHF;
   sc->EOF_OBJ = &sc->_EOF_OBJ;
   sc->UNDEFINED = &sc->_UNDEFINED;
-  sc->free_cell = &sc->_NIL;
-  sc->fcells = 0;
-  sc->no_memory = false;
+
   sc->inport = sc->NIL;
   sc->outport = sc->NIL;
   sc->errport = sc->NIL;
@@ -6368,14 +6117,12 @@ int s7_init_custom_alloc(scheme *sc, func_alloc malloc, func_dealloc free)
   sc->loadport = sc->NIL;
   sc->nesting = 0;
   sc->interactive_repl= false;
-  
-  if (alloc_cellseg(sc, FIRST_CELLSEGS) != FIRST_CELLSEGS) 
-    {
-      fprintf(stderr, "failed in init\n");
-      sc->no_memory = true;
-      return 0;
-    }
-  sc->gc_verbose = 0;
+
+  sc->cells_size = 500000;
+  sc->cells = (pointer *)CALLOC(sc->cells_size, sizeof(pointer));
+  sc->cells_top = 0;
+
+  sc->gc_verbose = true;
   dump_stack_initialize(sc); 
   set_sc_code(sc, sc->NIL);
   sc->tracing = false;
@@ -6431,8 +6178,7 @@ int s7_init_custom_alloc(scheme *sc, func_alloc malloc, func_dealloc free)
   sc->SHARP_HOOK = s7_make_symbol(sc, "*sharp-hook*");
 
   sc->errport = sc->outport;
-  
-  return(!sc->no_memory);
+  return(1);
 }
 
 
@@ -6495,11 +6241,6 @@ void s7_deinit(scheme *sc)
   sc->loadport = sc->NIL;
   sc->gc_verbose = 0;
   gc(sc, sc->NIL, sc->NIL);
-  
-  for(i = 0; i<= sc->last_cell_seg; i++) 
-    {
-      sc->free(sc->alloc_seg[i]);
-    }
 }
 
 void s7_load_open_file(scheme *sc, FILE *fin) 
@@ -6611,16 +6352,16 @@ int s7_new_foreign_type(const char *name,
       if (foreign_types_size == 0)
 	{
 	  foreign_types_size = 8;
-	  foreign_types = (fobject *)calloc(foreign_types_size, sizeof(fobject));
+	  foreign_types = (fobject *)CALLOC(foreign_types_size, sizeof(fobject));
 	}
       else
 	{
 	  foreign_types_size = tag + 8;
-	  foreign_types = (fobject *)realloc((void *)foreign_types, foreign_types_size * sizeof(fobject));
+	  foreign_types = (fobject *)REALLOC((void *)foreign_types, foreign_types_size * sizeof(fobject));
 	}
     }
   foreign_types[tag].type = tag;
-  foreign_types[tag].name = strdup(name);
+  foreign_types[tag].name = copy_string(name);
   foreign_types[tag].free = free;
   foreign_types[tag].print = print;
   foreign_types[tag].equal = equal;
@@ -6634,7 +6375,7 @@ char *s7_describe_foreign_object(pointer a)
   tag = a->object.fobj.type;
   if (foreign_types[tag].print)
     return((*(foreign_types[tag].print))(a->object.fobj.value));
-  return(strdup(foreign_types[tag].name));
+  return(copy_string(foreign_types[tag].name));
 }
 
 void s7_free_foreign_object(pointer a)
@@ -6690,10 +6431,10 @@ void s7_provide(scheme *sc, const char *feature)
   char *expr;
   int len;
   len = strlen(feature) + 64;
-  expr = (char *)calloc(len, sizeof(char));
+  expr = (char *)CALLOC(len, sizeof(char));
   snprintf(expr, len, "(set! *features* (cons '%s *features*))", feature);
   s7_eval_string(sc, expr);
-  free(expr);
+  FREE(expr);
 }
 
 
@@ -6760,10 +6501,10 @@ pointer s7_make_keyword(scheme *sc, const char *key)
 {
   pointer sym;
   char *name;
-  name = (char *)calloc(strlen(key) + 2, sizeof(char));
+  name = (char *)CALLOC(strlen(key) + 2, sizeof(char));
   sprintf(name, ":%s", key);                     /* prepend ":" */
   sym = s7_make_symbol(sc, name);
-  free(name);
+  FREE(name);
   s7_new_slot_spec_in_env(sc, s7_global_env(sc), sym, sym); /* GC protect (?) */
   return(sym);
 }
@@ -6774,7 +6515,8 @@ pointer s7_make_and_fill_vector(scheme *sc, int len, pointer fill)
 {
   pointer vect;
   vect = s7_make_vector(sc, len);
-  s7_fill_vector(vect, fill);
+  if (fill != sc->NIL)
+    s7_fill_vector(vect, fill);
   return(vect);
 }
 

@@ -15,12 +15,8 @@
  *
  * this does not pay much attention to inexact integers or ratios
  *
- * in Gauche, it omits arg errors because they seem to be uncatchable.
- *   also Gauche hangs on (expt 1/500029 120960) -- I removed this test
- *
- * SCM thinks 1.0 is an unbound variable??
- *
- * stklos segfaults on (sin 0/1234000000) or anything involving that fraction
+ * in Gauche, I omit arg errors because they seem to be uncatchable.
+ *   also Gauche hangs on (expt 1/500029 120960), so I omit those tests in the Gauche case
  *
  * Gambit support thanks to Brad Lucier
  *
@@ -66,6 +62,7 @@ static const char *scheme_name = "s7"; /* also guile, gauche, stklos, gambit */
 static bool ask_maxima = false;
 static bool include_big_fractions_in_expt = true;
 static bool use_continued_fractions_in_rationalize = false;
+static bool include_hyperbolic_functions = true;
 /* -------------------------------------------------------------------------------- */
 
 
@@ -74,6 +71,8 @@ static const char *op_names[] = {
 };
 
 #define OP_NAMES 15
+#define OP_HYPER_START 5
+#define OP_HYPER_END 11
 
 
 #define ARG_INT 0
@@ -149,6 +148,9 @@ static op_stuff numeric_data[NUMERIC_FUNCS] = {
   {"string->number", 1, 1, ARG_ANY}, 
   {"number->string", 1, 2, ARG_COMPLEX}, 
 };
+
+#define HYPERBOLIC_START 49
+#define HYPERBOLIC_END 54
 
 
 static double complex csquare(double complex z)
@@ -1369,8 +1371,14 @@ int main(int argc, char **argv)
 	 (body)))\n");
 
   if (strcmp(scheme_name, "gauche") == 0)
-    fprintf(fp, "\n\
+    {
+      include_big_fractions_in_expt = false;
+      fprintf(fp, "\n\
 (define object->string x->string)\n");
+    }
+
+  if (strcmp(scheme_name, "gambit") == 0)
+    include_hyperbolic_functions = false;
 
   if ((strcmp(scheme_name, "s7") == 0) ||
       (strcmp(scheme_name, "guile") == 0) ||
@@ -1435,7 +1443,7 @@ int main(int argc, char **argv)
 
 
   if (strcmp(scheme_name, "gambit") == 0)
-    fprintf(stderr, "\n\
+    fprintf(fp, "\n\
 (define-macro (test tst expected)\n\
   `(let ((result\n\
      (with-exception-handler (lambda e 'error)\n\
@@ -1679,6 +1687,11 @@ int main(int argc, char **argv)
     {
       for (i = 0; i < NUMERIC_FUNCS; i++)
 	{
+	  if ((!include_hyperbolic_functions) &&
+	      (i >= HYPERBOLIC_START) &&
+	      (i <= HYPERBOLIC_END))
+	    continue;
+
 	  if (numeric_data[i].min_args != -1)
 	    {
 	      /* try correct args but wrong type, and incorrect num args high and low */
@@ -1750,6 +1763,11 @@ int main(int argc, char **argv)
   
   for (op = 0; op < OP_NAMES; op++)
     {
+      if ((!include_hyperbolic_functions) &&
+	  (op >= OP_HYPER_START) &&
+	  (op <= OP_HYPER_END))
+	continue;
+
       for (i = 0; i < INT_ARGS; i++)
 	{
 	  result = anyf(op, int_to_complex(int_args[i]));
@@ -2054,7 +2072,16 @@ int main(int argc, char **argv)
 (test (atan 2.71828182845905+1234000000.0i) +1.570796326794897+8.103727714748784E-10i) \n\
 (test (atan 1234000000.0+0.00000001000000i) +1.570796325984524+6.567040287478756E-27i) \n\
 (test (atan 1234000000.0+3.14159265358979i) +1.570796325984524+2.063096552297151E-18i) \n\
-(test (atan 1234000000.0+2.71828182845905i) +1.570796325984524+1.785106628021167E-18i) \n\
+(test (atan 1234000000.0+2.71828182845905i) +1.570796325984524+1.785106628021167E-18i)\n\
+(test (exp 0.00000001000000+1234.0i) -0.7985506315730906+0.601927660781774i) \n\
+(test (exp 0.00000001000000+1234000000.0i) .1589091324793142-0.987293222712823i) \n\
+(test (exp 3.14159265358979+1234.0i) -18.47901453215463+13.92902284602872i) \n\
+(test (exp 3.14159265358979+1234000000.0i) 3.677267354472762-22.8466487767572i) \n\
+(test (exp 2.71828182845905+1234.0i) -12.1014455629425+9.121769530669065i) \n\
+(test (exp 2.71828182845905+1234000000.0i) 2.408150642075881-14.96170025660763i)\n");
+
+  if (include_hyperbolic_functions)
+    fprintf(fp, "\n\
 (test (sinh 1234/3) 2.18155865313939E+178) \n\
 (test (sinh 1234/10) 1.953930316004457E+53) \n\
 (test (sinh 0.0+3.14159265358979i) 0.0-6.982889851335445E-15i) \n\
@@ -2144,13 +2171,7 @@ int main(int argc, char **argv)
 (test (asinh 3.14159265358979+1234000000.0i) +21.62667394298955+1.570796327200083i) \n\
 (test (asinh 2.71828182845905+1234000000.0i) +21.62667394298955+1.570796327200083i) \n\
 (test (asinh 1234000000.0+0.00000001000000i) +21.62667380877375+8.103725052149596E-18i) \n\
-(test (asinh 1234000000.0+2.71828182845905i) +21.62667380877375+2.2028207814967068E-9i) \n\
-(test (exp 0.00000001000000+1234.0i) -0.7985506315730906+0.601927660781774i) \n\
-(test (exp 0.00000001000000+1234000000.0i) .1589091324793142-0.987293222712823i) \n\
-(test (exp 3.14159265358979+1234.0i) -18.47901453215463+13.92902284602872i) \n\
-(test (exp 3.14159265358979+1234000000.0i) 3.677267354472762-22.8466487767572i) \n\
-(test (exp 2.71828182845905+1234.0i) -12.1014455629425+9.121769530669065i) \n\
-(test (exp 2.71828182845905+1234000000.0i) 2.408150642075881-14.96170025660763i)\n");
+(test (asinh 1234000000.0+2.71828182845905i) +21.62667380877375+2.2028207814967068E-9i)\n");
 
 
   fprintf(fp, "\n;;; --------------------------------------------------------------------------------\n");

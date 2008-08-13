@@ -12,6 +12,7 @@
 #endif
 
 #include <sys/types.h>
+#include <stdio.h>
 
 #ifndef __cplusplus
 #if HAVE_STDBOOL_H

@@ -23,8 +23,6 @@
 
 typedef struct scheme scheme;
 typedef struct cell *pointer;
-typedef void *(*func_alloc)(size_t);
-typedef void (*func_dealloc)(void *);
 
 typedef pointer (*foreign_func)(scheme *scheme, pointer a);
 
@@ -152,9 +150,9 @@ bool s7_is_environment(pointer p);
 
 
 scheme *s7_init_new(void);
-scheme *s7_init_new_custom_alloc(func_alloc smalloc, func_dealloc free);
+scheme *s7_init_new_custom_alloc(void);
 int s7_init(scheme *sc);
-int s7_init_custom_alloc(scheme *sc, func_alloc, func_dealloc);
+int s7_init_custom_alloc(scheme *sc);
 void s7_deinit(scheme *sc);
 void s7_set_input_port_file(scheme *sc, FILE *fin);
 void s7_set_input_port_string(scheme *sc, char *start, char *past_the_end);

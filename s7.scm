@@ -485,7 +485,7 @@
 			   (not (cond-eval (cadr condition)))))
 		(else (error "cond-expand : unknown operator" (car condition)))))))
 
-(gc-verbose #f)
+;(gc-verbose #f)
 (tracing 0)
 
 
@@ -527,11 +527,6 @@
 					;  (syntax-rules ()
 					;    ((_ name params . body) (define-macro (name . params) . body)))))
 
-(define (object->string obj)
-  (call-with-output-string
-   (lambda (port)
-     (write obj port))))
-
 (define (with-output-to-string thunk)
   (let* ((output-port (current-output-port))
 	 (string-port (open-output-string)))
@@ -539,7 +534,7 @@
     (thunk)
     (let ((result (get-output-string string-port)))
       (set-output-port output-port)
-      (close-output-port string-port)
+      ;(close-output-port string-port)
       result)))
 
 
