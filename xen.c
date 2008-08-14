@@ -2421,18 +2421,6 @@ static char *print_hook(void *v)
   return(hook_to_string((ghook *)v));
 }
 
-void xen_s7_define_foreign_function(scheme *sc, const char *name, foreign_func func, const char *doc)
-{
-  XEN ffunc, sym;
-  ffunc = s7_make_foreign_function(s7, func, doc);
-  s7_gc_protect(ffunc);
-  sym = s7_make_symbol(s7, name);
-  s7_gc_protect(sym);
-  s7_define(s7, s7_global_env(s7), sym, ffunc);
-  s7_gc_unprotect(ffunc);
-  s7_gc_unprotect(sym);
-}
-
 XEN_NARGIFY_1(g_hook_p_w, g_hook_p);
 XEN_NARGIFY_1(g_hook_empty_p_w, g_hook_empty_p)
 XEN_NARGIFY_2(g_remove_hook_w, g_remove_hook)

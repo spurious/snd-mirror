@@ -16,7 +16,7 @@ typedef struct {
   int matches, len;
 } match_info;
 
-static void compare_names(const char *symbol_name, void *data)
+static bool compare_names(const char *symbol_name, void *data)
 {
   match_info *m = (match_info *)data;
   if (strncmp(m->text, symbol_name, m->len) == 0)
@@ -37,6 +37,7 @@ static void compare_names(const char *symbol_name, void *data)
 	      }
 	}
     }
+  return(false);
 }
 
 static int completions(char *text)

@@ -2437,7 +2437,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
   }
 
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
-  xen_s7_define_foreign_function(s7, Name, Func, Doc)
+  s7_define_foreign_function(s7, Name, Func, Doc)
 
 #define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   XEN_DEFINE_PROCEDURE(Get_Name, Get_Func, Get_Req, Get_Opt, 0, Get_Help); \
@@ -2469,8 +2469,8 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 #define XEN_APPLY_NO_CATCH(Func, Args)                                s7_call(s7, Func, Args)
 typedef XEN (*XEN_CATCH_BODY_TYPE)                                    (void *data);
 
-#define XEN_DEFINE_CONSTANT(Name, Value, Help)                        s7_define(s7, s7_global_env(s7), s7_make_symbol(s7, Name), s7_make_integer(s7, Value))
-#define XEN_DEFINE(Name, Value)                                       s7_define(s7, s7_global_env(s7), s7_make_symbol(s7, Name), Value)
+#define XEN_DEFINE_CONSTANT(Name, Value, Help)                        s7_define_variable(s7, Name, s7_make_integer(s7, Value))
+#define XEN_DEFINE(Name, Value)                                       s7_define_variable(s7, Name, Value)
 
 #define XEN_DEFINE_VARIABLE(Name, Var, Value)                         Var = XEN_PROTECT_FROM_GC(xen_define_variable(Name, Value))
 #define XEN_VARIABLE_SET(Var, Val)                                    s7_symbol_set_value(s7, Var, Val)
@@ -2518,7 +2518,8 @@ bool xen_hook_p(XEN val);
 XEN xen_define_variable(const char *name, XEN value);
 void xen_s7_ignore(foreign_func func); /* squelch compiler warnings */
 const char *xen_s7_object_help(XEN sym);
-void xen_s7_define_foreign_function(scheme *sc, const char *name, foreign_func func, const char *doc);
+void s7_define_foreign_function(scheme *sc, const char *name, foreign_func func, const char *doc);
+void s7_define_variable(scheme *sc, const char *name, pointer value);
 
 #endif
 /* end S7 */

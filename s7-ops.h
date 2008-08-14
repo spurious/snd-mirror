@@ -75,7 +75,7 @@
     _OP_DEF(opexe_2, "abs",                            1,  1,       TST_REAL,                        OP_ABS              )
 
     _OP_DEF(opexe_2, "exp",                            1,  1,       TST_NUMBER,                      OP_EXP              )
-    _OP_DEF(opexe_2, "log",                            1,  1,       TST_NUMBER,                      OP_LOG              )
+    _OP_DEF(opexe_2, "log",                            1,  2,       TST_NUMBER,                      OP_LOG              )
     _OP_DEF(opexe_2, "sin",                            1,  1,       TST_NUMBER,                      OP_SIN              )
     _OP_DEF(opexe_2, "cos",                            1,  1,       TST_NUMBER,                      OP_COS              )
     _OP_DEF(opexe_2, "tan",                            1,  1,       TST_NUMBER,                      OP_TAN              )

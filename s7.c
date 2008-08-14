@@ -2,8 +2,6 @@
  *    derived from:
  */
 
-#define USE_SND 1
-
 /* T I N Y S C H E M E    1 . 3 9
  *   Dimitrios Souflis (dsouflis@acm.org)
  *   Based on MiniScheme (original credits follow)
@@ -26,20 +24,18 @@
  *     defined *load-path*, defmacro, a stub for make-procedure-with-setter (s7.scm)
  *     changed final initializer at dispatch_table preload to make C happier
  *     added T_FOREIGN_OBJECT (and renamed old T_FOREIGN to T_FOREIGN_FUNCTION, is_foreign to is_foreign_function)
- *       and various code to support it (is_foreign_object, _fobj struct in s7.h etc, mk_foreign_object)
+ *       and various code to support it (is_foreign_object, _fobj struct in s7.h etc, make_foreign_object)
  *       added OP_EQUAL and is_equal for equal? (needs to be in C, not s7.scm because foreign objects have private equality tests)
  *     sc->UNDEFINED for unset (optional) args
  *     no inexact ints, so print 440.0 as 440.0 (not 440)
  *     added OP_SET1 code for generalized set!
- *     changed succ to 1+ and pred to 1- in s7.scm.  added log10 (s7.scm).
- *     added atan asin acos atanh asinh acosh
+ *     added atan asin acos atanh asinh acosh, also log10  in s7.scm
  *     moved lcm and gcd from s7.scm to c to handle argnum!= 2 cases
  *     added case for expt of ints with 2nd arg >= 0 or 1st arg +/-1 (return an int)
  *     (eqv? 0 0.0) should return #f I believe
  *       so leaving aside a few quibbles, this passes all of Jaffer's r4rstest.scm tests
- *     decided (sigh) to clean up the names throughout -- exported functions start with "s7_"
+ *     decided (sigh) to clean up the names throughout -- exported functions start with "s7_", "mk"->"make", etc
  *       also, I've tried to hide all struct details in this file -- only s7.h stuff is exported.
- *       changed mk_* to make_*
  *     added doc field for foreign funcs
  *     floor/ceiling/truncate return ints! (This is not RnRS)
  *     guile-style catch/throw in s7.scm
@@ -57,6 +53,8 @@
  *     removed the old memory allocation junk -- the current GC is about as simple as it can be
  *        with this change, all the old segfaults appear to be fixed
  *     s7_for_each_symbol_name for tab-completions (in the Snd listener).
+ *     stack is now a vector, not a list.
+ *     continuations half-implemented?
  *
  * there's no arg number mismatch check for caller-defined functions!
  * dies if undefined func? (asb 1) as typo
@@ -72,7 +70,6 @@
  *      <CLOSURE> should give the name [s7_define could a backpointer to the symbol in the value,
  *          or perhaps search for a match -- the oblist is not that big -- closure code is car(p)]
  *      list or list* for xen connection
- *      continuations might be fixable by invoking a new interpreter on each one, copying the state of its parent
  *      (keyword? :asd) segfaults! -- need the names make-keyword, keyword? 
  *
  * [number->string has no "radix" arg]
@@ -83,32 +80,9 @@
  * slib dynwind.scm has dynamic-wind
  * guile's optargs.scm has define*
  *
- * test.scm: (46 min), gc cells size is 32000
- ;(= 1 1.0) got #f, but expected #t
-;(= 1.0 1) got #f, but expected #t
-;(= 1.0 1) got #f, but expected #t
-;(= 1 1.0) got #f, but expected #t
-;(= 1 1 1.0) got #f, but expected #t
-;(= 1 1.0 1) got #f, but expected #t
-;(= 1 1.0 1.0) got #f, but expected #t
-;(= 1 1.0 1) got #f, but expected #t
-;(= 1 1 1.0) got #f, but expected #t
-;(= 1.0 1 1) got #f, but expected #t
-;(= 1.0 1 1.0) got #f, but expected #t
-;(= 1.0 1 1) got #f, but expected #t
-;(= 1.0 1.0 1) got #f, but expected #t
-;(= 1.0 1.0 1) got #f, but expected #t
-;(= 1.0 1 1) got #f, but expected #t
-;(= 1.0 1 1.0) got #f, but expected #t
-;(= 1.0 1 1) got #f, but expected #t
-;(= 1 1 1.0) got #f, but expected #t
-;(= 1 1.0 1) got #f, but expected #t
-;(= 1 1.0 1.0) got #f, but expected #t
-;(= 1 1.0 1) got #f, but expected #t
-;(= 1 1 1.0) got #f, but expected #t
-rationalize does not converge or returns infs
-
  */
+
+#define USE_SND 1
 
 #ifndef USE_TRACING
   #define USE_TRACING 1
@@ -186,6 +160,9 @@ typedef struct num {
   } value;
 } num;
 
+static num num_zero;
+static num num_one;
+
 
 enum scheme_port_kind { 
   port_free = 0, 
@@ -210,6 +187,14 @@ typedef struct port {
     } string;
   } rep;
 } port;
+
+
+typedef struct continuation {
+  int stack_size, stack_top;
+  pointer stack;
+  int cc_stack_size, cc_stack_top;
+  pointer cc_stack;
+} continuation;
 
 
 /* cell structure */
@@ -249,9 +234,12 @@ typedef struct cell {
       int type;
       void *value;
     } fobj;
+
+    continuation *cc;
     
   } object;
 } cell;
+
 
 struct scheme {
   /* return code */
@@ -259,14 +247,20 @@ struct scheme {
   bool tracing;
   bool gc_off;
   
+  int *free_cells;
+  int free_cells_top, free_cells_size;
+
   cell **cells;
   int cells_top, cells_size;
   
   /* We use 4 registers. */
-  pointer args;            /* register for arguments of function */
-  pointer envir;           /* stack register for current environment */
-  pointer code;            /* register for current code */
-  pointer dump;            /* stack register for next evaluation */
+  pointer args;            /* arguments of current function */
+  pointer envir;           /* current environment */
+  pointer code;            /* current code */
+
+  pointer stack;           /* stack is a vector in this case */
+  int stack_size, stack_top;
+  cell **opcodes;          /* permanent numbers for opcode entries in the stack */
   
   bool interactive_repl;   /* are we in an interactive REPL? */
   
@@ -323,9 +317,6 @@ struct scheme {
 
   void *ext_data;     /* For the benefit of foreign functions */
   long gensym_cnt;
-  
-  void *dump_base;	 /* pointer to base of allocated dump stack */
-  int dump_size;		 /* number of frames allocated for dump stack */
 };
 
 
@@ -350,9 +341,8 @@ enum scheme_types {
 
 
 static const char *type_names[16] = {
-  "none", "string", "number", "symbol", "proc", "pair", "closure", "continuation",
-  "foreign-function", "character", "port", "vector", "macro", "promise", "environment",
-  "foreign-object"
+  "unused!", "nil", "string", "number", "symbol", "proc", "pair", "closure", "continuation",
+  "foreign-function", "character", "port", "vector", "macro", "promise", "foreign-object"
 };
 
 
@@ -443,8 +433,8 @@ static char *describe_type(pointer p)
 #define integer(n) n.value.ivalue
 #define real(n)    n.value.rvalue
 
-#define cons(sc, a,b) cons_1(sc, a, b, false)
-#define immutable_cons(sc, a,b) cons_1(sc, a, b, true)
+#define cons(sc, a, b) cons_1(sc, a, b, false)
+#define immutable_cons(sc, a, b) cons_1(sc, a, b, true)
 
 #define car(p) ((p)->object.cons.car)
 #define cdr(p) ((p)->object.cons.cdr)
@@ -464,8 +454,6 @@ static char *describe_type(pointer p)
 /* #define procedure_index(p) ((p)->object.number.value.ivalue) */
 #define procedure_index(p) ((p)->object.proc_num)
 
-#define cont_dump(p)     cdr(p)
-
 #define caar(p)          car(car(p))
 #define cadr(p)          car(cdr(p))
 #define cdar(p)          cdr(car(p))
@@ -482,6 +470,12 @@ static char *describe_type(pointer p)
 #define is_true(p)       ((p) != sc->F)
 #define is_false(p)      ((p) == sc->F)
 
+#define continuation_stack_size(p)    (p)->object.cc->stack_size
+#define continuation_stack_top(p)     (p)->object.cc->stack_top
+#define continuation_stack(p)         (p)->object.cc->stack
+#define continuation_cc_stack_size(p) (p)->object.cc->cc_stack_size
+#define continuation_cc_stack_top(p)  (p)->object.cc->cc_stack_top
+#define continuation_cc_stack(p)      (p)->object.cc->cc_stack
 
 static void set_type(pointer p, int f)
 {
@@ -493,7 +487,6 @@ static void set_type(pointer p, int f)
   set_type_1(p, f);
 }
 
-#define set_sc_code(sc, p) set_sc_code_1(sc, p, __LINE__, __FUNCTION__)
 
 pointer s7_F(scheme *sc) 
 {
@@ -556,99 +549,257 @@ static const char *string_downcase(char *s)
 }
 
 
-#ifndef prompt
-#define prompt "> "
-#endif
 
 
-#define HISTORY_SIZE 1000000
-static pointer history_ptr[HISTORY_SIZE];
-static int history_line[HISTORY_SIZE];
-static const char *history_func[HISTORY_SIZE];
-static int history_ctr = 0;
+static pointer internal_error(scheme *sc, const char *s, pointer a);
+static port *port_rep_from_file(scheme *sc, FILE *, int prop);
+static int syntaxnum(pointer p);
+static bool file_interactive(scheme *sc);
+static int basic_inchar(port *pt);
+static void port_close(scheme *sc, pointer p, int flag);
+static bool is_one_of(char *s, int c);
+static void s7_mark_embedded_foreign_objects(pointer a); /* called by gc, calls fobj's mark func */
 
-static pointer set_sc_code_1(scheme *sc, pointer p, int line, const char *func)
+
+
+/* -------------------------------- GC -------------------------------- */
+
+#define INITIAL_CELLS_SIZE 4000
+
+static void finalize_cell(scheme *sc, pointer a) 
 {
-  if (!is_object(p))
+  if (s7_is_string(a)) 
     {
-      fprintf(stderr, "sc->code new value is not an object!");
-      abort();
+      FREE(string_value(a)); /* malloc'd in store_string */
+    } 
+  else 
+    {
+      if (s7_is_port(a)) 
+	{
+	  if ((a->object.port->kind & port_file) &&
+	      (a->object.port->rep.stdio.close_it))
+	    {
+	      port_close(sc, a, port_input | port_output);
+	    }
+	  if ((a->object.port->kind & port_string) &&
+	      (a->object.port->kind & port_output) &&
+	      (a->object.port->rep.string.start))
+	    {
+	      FREE(a->object.port->rep.string.start);
+	      a->object.port->rep.string.start = NULL;
+	    }
+
+	  FREE(a->object.port);
+	}
+      else
+	{
+	  if (s7_is_foreign_object(a))
+	    s7_free_foreign_object(a);
+	  else
+	    {
+	      if ((s7_is_vector(a)) &&
+		  (vector_length(a) > 0))
+		FREE(a->object.vector.elements);
+	      else
+		{
+		  if ((s7_is_continuation(a)) &&
+		      (a->object.cc))
+		    {
+		      FREE(a->object.cc);
+		      
+		      /*
+		      fprintf(stderr, "free continuation");
+		      */
+		    }
+		}
+	    }
+	}
     }
-  history_ptr[history_ctr] = p;
-  history_line[history_ctr] = line;
-  history_func[history_ctr] = func;
-  sc->code = p;
-  history_ctr++;
-  if (history_ctr >= HISTORY_SIZE) history_ctr = 0;
-  return(p);
+
+  memset((void *)a, 0, sizeof(cell));
 }
 
-static int gc(scheme *sc);
+
+void s7_mark_object(pointer p)
+{
+  if (is_marked(p)) return; 
+
+  set_mark(p);
+  if (is_atom(p))
+    return;
+
+  if (s7_is_vector(p)) 
+    {
+      int i, len;
+      len = vector_length(p);
+      for(i = 0; i < len; i++) 
+	s7_mark_object(vector_element(p, i));
+      return;
+    }
+
+  if (s7_is_foreign_object(p))
+    {
+      s7_mark_embedded_foreign_objects(p);
+      return;
+    }
+
+  if (s7_is_continuation(p))
+    {
+      s7_mark_object(continuation_stack(p));
+      s7_mark_object(continuation_cc_stack(p));
+      return;
+    }
+
+  /*
+  fprintf(stderr, "mark %p: %s, %x %s\n", p, type_names[type(p)], typeflag(p), describe_type(p));
+  */
+  if (car(p))
+    s7_mark_object(car(p));
+
+  if (cdr(p))
+    s7_mark_object(cdr(p));
+}
+
+
+static void free_cell(scheme *sc, int loc)
+{
+  /* free_cells_top points past end 
+   *   free -> top++
+   *   alloc <- --top
+   */
+  if (sc->free_cells_top >= sc->free_cells_size)
+    {
+      int k, old_size;
+      old_size = sc->free_cells_size;
+      sc->free_cells_size *= 2;
+      /*
+      fprintf(stderr, "realloc free: %d %d\n", old_size, sc->free_cells_size);
+      */
+      sc->free_cells = (int *)REALLOC(sc->free_cells, sc->free_cells_size * sizeof(int));
+      for (k = old_size; k < sc->free_cells_size; k++)
+	sc->free_cells[k] = -1;
+    }
+  /*
+  fprintf(stderr, "free %d (%d)\n", loc, sc->free_cells_top);
+  */
+  sc->free_cells[sc->free_cells_top++] = loc;
+}
+
+static pointer alloc_cell(scheme *sc)
+{
+  if (sc->free_cells_top > 0)
+    {
+      /*
+      fprintf(stderr, "return %p at %d\n", sc->cells[sc->free_cells[sc->free_cells_top - 1]], sc->free_cells_top - 1);
+      */
+      return(sc->cells[sc->free_cells[--(sc->free_cells_top)]]);
+    }
+  /*
+  fprintf(stderr, "return nil\n");
+  */
+  return(NULL);
+}
+
+
+static int gc(scheme *sc) 
+{
+  pointer p;
+  int i, freed_cells = 0;
+  
+  if ((sc->gc_verbose) &&
+      (sc->outport != sc->NIL))
+    s7_putstr(sc, "gc...\n");
+  
+  /* mark system globals */
+  s7_mark_object(sc->oblist);
+  s7_mark_object(sc->global_env);
+  
+  /* mark current registers */
+  s7_mark_object(sc->args);
+  s7_mark_object(sc->envir);
+  s7_mark_object(sc->code);
+  s7_mark_object(sc->stack); 
+  s7_mark_object(sc->value);
+  s7_mark_object(sc->inport);
+  s7_mark_object(sc->save_inport);
+  s7_mark_object(sc->outport);
+  s7_mark_object(sc->errport);
+  s7_mark_object(sc->loadport);
+  s7_mark_object(sc->ext_data);
+  
+  /* garbage collect */
+  clear_mark(sc->NIL);
+
+  for (i = 0; i < sc->cells_size; i++)
+    {
+      p = sc->cells[i];
+      if (!p) fprintf(stderr, "nil ptr in cells!");
+      if (p)
+	{
+	  if (is_marked(p)) 
+	    clear_mark(p);
+	  else 
+	    {
+	      if (!is_gc_protected(p))
+		{
+		  /* reclaim cell */
+		  finalize_cell(sc, p); 
+		  free_cell(sc, i);
+		} 
+	      freed_cells++;
+	    }
+	}
+    }
+  
+  if ((sc->gc_verbose) &&
+      (sc->outport != sc->NIL))
+    {
+      char msg[80];
+      sprintf(msg, "done: %ld cells were recovered, total cells: %d\n", freed_cells, sc->cells_size);
+      s7_putstr(sc,msg);
+    }
+  return(freed_cells);
+}
+
 
 static pointer new_cell(scheme *sc)
 {
   pointer p;
-  p = (cell *)CALLOC(1, sizeof(cell));
-
-  /*
-  fprintf(stderr, "alloc %p (%d of %d, currently %p)\n", p, sc->cells_top, sc->cells_size, sc->cells[sc->cells_top]);
-  */
-  if (!sc->cells[sc->cells_top])
-    sc->cells[sc->cells_top++] = p;
-  else
+  p = alloc_cell(sc);
+  if (!p)
     {
-      for (sc->cells_top++; sc->cells_top < sc->cells_size; sc->cells_top++)
-	if (!sc->cells[sc->cells_top])
-	  {
-	    sc->cells[sc->cells_top++] = p;
-	    return(p);
-	  }
-      if (sc->cells_top >= sc->cells_size)
+      /* no free cells */
+      int k, old_size, freed_cells = 0;
+
+      if (!(sc->gc_off)) 
+	freed_cells = gc(sc);
+
+      if (freed_cells < 100)
 	{
-	  int k, old_size, freed_cells = 0;
-	  if (!(sc->gc_off)) 
-	    freed_cells = gc(sc);
-	  if (freed_cells > 100)
-	    {
-	      for (sc->cells_top = 0; sc->cells_top < sc->cells_size; sc->cells_top++)
-		if (!sc->cells[sc->cells_top])
-		  {
-		    sc->cells[sc->cells_top++] = p;
-		    return(p);
-		  }
-	    }
-	  /*
-	  fprintf(stderr, "\n--------------------------------------------------------------------------------\n");
-	  fprintf(stderr, "%d free cells, and gc_off: %d (about to set %d)\n", freed_cells, sc->gc_off, sc->cells_top);
-	  */
-
-	  if (sc->cells_size > 1000000) abort();
-
+	  /* alloc more cells */
 	  old_size = sc->cells_size;
 	  sc->cells_size *= 2;
 	  sc->cells = (cell **)REALLOC(sc->cells, sc->cells_size * sizeof(cell *));
 	  for (k = old_size; k < sc->cells_size; k++)
-	    sc->cells[k] = NULL;
-	  sc->cells[sc->cells_top++] = p;
+	    {
+	      sc->cells[k] = (cell *)CALLOC(1, sizeof(cell));
+	      free_cell(sc, k);
+	    }
 	}
+
+      p = alloc_cell(sc);
     }
+
   return(p);
 }
 
+/* -------------------------------------------------------------------------------- */
 
-
-static num num_zero;
-static num num_one;
 
 
 
 static void dump_object(scheme *sc, pointer x)
 {
-  int i;
-  for (i = 0; i < HISTORY_SIZE; i++)
-    if (x == history_ptr[i])
-      fprintf(stderr, "history[%d]: %s[%d]\n", i, history_func[i], history_line[i]);
-
   fprintf(stderr, "dump %p:\n", x);
   if (x == sc->NIL)
     fprintf(stderr, "nil");
@@ -913,18 +1064,6 @@ static  int Cislower(int c)
 }
 
 
-static pointer internal_error(scheme *sc, const char *s, pointer a);
-static pointer _get_cell(scheme *sc, pointer a, pointer b);
-static pointer find_consecutive_cells(scheme *sc, int n);
-static port *port_rep_from_file(scheme *sc, FILE *, int prop);
-static int syntaxnum(pointer p);
-static void finalize_cell(scheme *sc, pointer a);
-static bool file_interactive(scheme *sc);
-static int basic_inchar(port *pt);
-static void port_close(scheme *sc, pointer p, int flag);
-static bool is_one_of(char *s, int c);
-static void s7_mark_embedded_foreign_objects(pointer a);
-
 
 
 /* -------------------------------- numbers -------------------------------- */
@@ -968,6 +1107,7 @@ static Int c_lcm(Int a, Int b)
   return((a / c_gcd(a, b)) * b);
 }
 
+#if 0
 static bool c_rationalize(double ux, double error, off_t *numer, off_t *denom)
 {
   off_t a1 = 0, a2 = 1, b1 = 1, b2 = 0, tt = 1, a = 0, b = 0, ctr, int_part = 0;
@@ -1033,6 +1173,41 @@ static bool c_rationalize(double ux, double error, off_t *numer, off_t *denom)
     }
   return(false);
 }
+#else
+static bool c_rationalize(double ux, double error, off_t *n, off_t *d)
+{
+  off_t numer, denom, lim, sign = 0;
+  lim = 1.0 / error;
+  if (ux < 0.0)
+    {
+      ux = -ux;
+      sign = 1;
+    }
+
+  for (denom = 1; denom <= lim; denom++)
+    {
+      numer = (off_t)floor(ux * denom);
+      if ((((double)numer / (double)denom) + error) >= ux)
+	{
+	  if (sign)
+	    (*n) = -numer;
+	  else (*n) = numer;
+	  (*d) = denom;
+	  return(true);
+	}
+      numer++;
+      if ((((double)numer / (double)denom) - error) <= ux)
+	{
+	  if (sign)
+	    (*n) = -numer;
+	  else (*n) = numer;
+	  (*d) = denom;
+	  return(true);
+	}
+    }
+  return(false);
+}
+#endif
 
 pointer s7_rationalize(scheme *sc, double x, double error)
 {
@@ -1410,17 +1585,67 @@ static num num_mod(num a, num b)
 
 static bool num_eq(num a, num b) 
 {
-  if (num_type(a) != num_type(b)) return(false);
   switch (num_type(a))
     {
-    case NUM_INT:     return(integer(a) == integer(b));
-    case NUM_RATIO:   return((numerator(a) == numerator(b)) &&
-			     (denominator(a) == denominator(b)));
+    case NUM_INT:
+      switch (num_type(b))
+	{
+	case NUM_INT: 
+	  return(integer(a) == integer(b));
+	case NUM_RATIO:
+	  return(false);
+	case NUM_REAL:
+	case NUM_REAL2:
+	  return(integer(a) == real(b));
+	default: 
+	  return((real_part(b) == integer(a)) &&
+		 (imag_part(b) == 0.0));
+	}
+      break;
+
+    case NUM_RATIO:  
+      if (num_type(b) != NUM_RATIO)
+	return(false);
+      return((numerator(a) == numerator(b)) &&
+	     (denominator(a) == denominator(b)));
+      break;
+
     case NUM_REAL2:
-    case NUM_REAL:    return(real(a) == real(b));
-    default:          return((real_part(a) == real_part(b)) &&
-			     (imag_part(a) == imag_part(b)));
+    case NUM_REAL:    
+      switch (num_type(b))
+	{
+	case NUM_INT:
+	  return(real(a) == integer(b));
+	case NUM_RATIO:
+	  return(false);
+	case NUM_REAL:
+	case NUM_REAL2:
+	  return(real(a) == real(b));
+	default:
+	  return((real_part(b) == real(a)) &&
+		 (imag_part(b) == 0.0));
+	}
+      break;
+
+    default:
+      switch (num_type(b))
+	{
+	case NUM_INT:
+	  return((real_part(a) == integer(b)) &&
+		 (imag_part(a) == 0.0));
+	case NUM_RATIO:
+	  return(false);
+	case NUM_REAL:
+	case NUM_REAL2:
+	  return((real_part(a) == real(b)) &&
+		 (imag_part(a) == 0.0));
+	default:
+	  return((real_part(a) == real_part(b)) &&
+		 (imag_part(a) == imag_part(b)));
+	}
+      break;
     }
+  return(false);
 }
 
 
@@ -1484,6 +1709,9 @@ static pointer cons_1(scheme *sc, pointer a, pointer b, bool immutable)
 {
   pointer x;
 
+  gc_protect(a);
+  gc_protect(b);
+
   if (!is_object(a))
     {
       fprintf(stderr, "cons car is not an object!");
@@ -1495,11 +1723,7 @@ static pointer cons_1(scheme *sc, pointer a, pointer b, bool immutable)
       abort();
     }
 
-  gc_protect(a);
-  gc_protect(b);
   x = new_cell(sc);
-  gc_unprotect(a);
-  gc_unprotect(b);
   
   set_type(x, T_PAIR);
   if (immutable) 
@@ -1507,6 +1731,9 @@ static pointer cons_1(scheme *sc, pointer a, pointer b, bool immutable)
 
   car(x) = a;
   cdr(x) = b;
+
+  gc_unprotect(a);
+  gc_unprotect(b);
   return(x);
 }
 
@@ -1605,7 +1832,7 @@ static pointer oblist_all_symbols(scheme *sc)
   return ob_list; 
 } 
 
-void s7_for_each_symbol_name(scheme *sc, void (*oblist_func)(const char *symbol_name, void *data), void *data)
+void s7_for_each_symbol_name(scheme *sc, bool (*oblist_func)(const char *symbol_name, void *data), void *data)
 {
   int i; 
   pointer x; 
@@ -1613,7 +1840,20 @@ void s7_for_each_symbol_name(scheme *sc, void (*oblist_func)(const char *symbol_
   
   for (i = 0; i < vector_length(sc->oblist); i++) 
     for (x  = s7_vector_ref(sc->oblist, i); x != sc->NIL; x = cdr(x)) 
-      oblist_func(s7_symbol_name(car(x)), data);
+      if (oblist_func(s7_symbol_name(car(x)), data))
+	return;
+}
+
+void s7_for_each_symbol(scheme *sc, bool (*oblist_func)(const char *symbol_name, pointer symbol_value, void *data), void *data)
+{
+  int i; 
+  pointer x; 
+  pointer ob_list = sc->NIL; 
+  
+  for (i = 0; i < vector_length(sc->oblist); i++) 
+    for (x  = s7_vector_ref(sc->oblist, i); x != sc->NIL; x = cdr(x)) 
+      if (oblist_func(s7_symbol_name(car(x)), cdr(x), data))
+	return;
 }
 
 static pointer make_port(scheme *sc, port *p) 
@@ -1765,21 +2005,19 @@ pointer s7_make_counted_string(scheme *sc, const char *str, int len)
 {
   pointer x;
   x = new_cell(sc);
-  gc_protect(x);
+  set_type(x, T_STRING | T_ATOM | T_GC_PROTECT);
   string_value(x) = store_string(sc, len, str, 0);
-  set_type(x, T_STRING | T_ATOM);
   string_length(x) = len;
   gc_unprotect(x);
   return(x);
 }
 
-static pointer mk_empty_string(scheme *sc, int len, char fill) 
+static pointer make_empty_string(scheme *sc, int len, char fill) 
 {
   pointer x;
   x = new_cell(sc);
-  gc_protect(x);  
+  set_type(x, T_STRING | T_ATOM | T_GC_PROTECT);
   string_value(x) = store_string(sc,len, 0,fill);
-  set_type(x, T_STRING | T_ATOM);
   string_length(x) = len;
   gc_unprotect(x);
   return(x);
@@ -1788,9 +2026,9 @@ static pointer mk_empty_string(scheme *sc, int len, char fill)
 pointer s7_make_vector(scheme *sc, int len) 
 {
   pointer x;
+
   x = new_cell(sc);
-  gc_protect(x);
-  set_type(x, T_VECTOR);
+  set_type(x, T_VECTOR | T_GC_PROTECT);
   vector_length(x) = len;
   if (len > 0)
     {
@@ -2159,149 +2397,21 @@ static pointer make_sharp_const(scheme *sc, char *name)
 
 
 
-/* ========== garbage collector ========== */
-
-void s7_mark_object(pointer p)
-{
-  if (is_marked(p)) return; 
-
-  set_mark(p);
-  if (is_atom(p))
-    return;
-
-  if (s7_is_vector(p)) 
-    {
-      int i, len;
-      len = vector_length(p);
-      for(i = 0; i < len; i++) 
-	s7_mark_object(vector_element(p, i));
-      return;
-    }
-
-  if (s7_is_foreign_object(p))
-    {
-      s7_mark_embedded_foreign_objects(p);
-      return;
-    }
-  /*
-  fprintf(stderr, "mark %p: %s, %x %s\n", p, type_names[type(p)], typeflag(p), describe_type(p));
-  */
-  if (car(p))
-    s7_mark_object(car(p));
-
-  if (cdr(p))
-    s7_mark_object(cdr(p));
-}
-
-static int gc(scheme *sc) 
-{
-  pointer p;
-  int i, freed_cells = 0;
-  
-  if ((sc->gc_verbose) &&
-      (sc->outport != sc->NIL))
-    s7_putstr(sc, "gc...................................................................................\n");
-  
-  /* mark system globals */
-  s7_mark_object(sc->oblist);
-  s7_mark_object(sc->global_env);
-  
-  /* mark current registers */
-  s7_mark_object(sc->args);
-  s7_mark_object(sc->envir);
-  s7_mark_object(sc->code);
-  s7_mark_object(sc->dump); 
-  s7_mark_object(sc->value);
-  s7_mark_object(sc->inport);
-  s7_mark_object(sc->save_inport);
-  s7_mark_object(sc->outport);
-  s7_mark_object(sc->errport);
-  s7_mark_object(sc->loadport);
-  s7_mark_object(sc->ext_data);
-  
-  /* garbage collect */
-  clear_mark(sc->NIL);
-
-  for (i = 0; i < sc->cells_size; i++)
-    {
-      p = sc->cells[i];
-      if (p)
-	{
-	  if (is_marked(p)) 
-	    clear_mark(p);
-	  else 
-	    {
-	      if (!is_gc_protected(p))
-		{
-		  /* reclaim cell */
-		  finalize_cell(sc, p); 
-		  typeflag(p) = 0;
-		  FREE(p);
-		  sc->cells[i] = NULL;
-		} 
-	      freed_cells++;
-	    }
-	}
-    }
-  
-  if ((sc->gc_verbose) &&
-      (sc->outport != sc->NIL))
-    {
-      char msg[80];
-      sprintf(msg, "done: %ld cells were recovered, size: %d\n", freed_cells, sc->cells_size);
-      s7_putstr(sc,msg);
-    }
-  return(freed_cells);
-}
-
-
-static void finalize_cell(scheme *sc, pointer a) 
-{
-  if (s7_is_string(a)) 
-    {
-      FREE(string_value(a)); /* malloc'd in store_string */
-    } 
-  else 
-    {
-      if (s7_is_port(a)) 
-	{
-	  if ((a->object.port->kind & port_file) &&
-	      (a->object.port->rep.stdio.close_it))
-	    {
-	      port_close(sc, a, port_input | port_output);
-	    }
-	  if ((a->object.port->kind & port_string) &&
-	      (a->object.port->kind & port_output) &&
-	      (a->object.port->rep.string.start))
-	    {
-	      FREE(a->object.port->rep.string.start);
-	      a->object.port->rep.string.start = NULL;
-	    }
-
-	  FREE(a->object.port);
-	}
-      else
-	{
-	  if (s7_is_foreign_object(a))
-	    s7_free_foreign_object(a);
-	}
-    }
-}
 
 
 /* ========== Routines for Reading ========== */
 
 static int file_push(scheme *sc, const char *fname) 
 {
-  FILE *fin= fopen(fname, "r");
+  FILE *fin = fopen(fname, "r");
   if (fin!= 0) 
     {
       sc->file_i++;
-      sc->load_stack[sc->file_i].kind = port_file|port_input;
+      sc->load_stack[sc->file_i].kind = port_file | port_input;
       sc->load_stack[sc->file_i].rep.stdio.file = fin;
       sc->load_stack[sc->file_i].rep.stdio.close_it = true;
       sc->nesting_stack[sc->file_i] = 0;
-      sc->loadport->object.port = sc->load_stack+sc->file_i;
+      sc->loadport->object.port = sc->load_stack + sc->file_i;
     }
   return fin!= 0;
 }
@@ -2313,10 +2423,10 @@ static void file_pop(scheme *sc)
     {
       port_close(sc, sc->loadport, port_input);
       sc->file_i--;
-      sc->loadport->object.port = sc->load_stack+sc->file_i;
+      sc->loadport->object.port = sc->load_stack + sc->file_i;
       if (file_interactive(sc)) 
 	{
-	  s7_putstr(sc, prompt);
+	  s7_putstr(sc, ">");
 	}
     }
 }
@@ -3088,8 +3198,12 @@ void s7_atom2str(scheme *sc, pointer l, int f, char **pp, int *plen)
     } 
   else 
     {
+      fprintf(stderr, "atom2str: %s\n", describe_type(l));
       p = "<error in atom->string!>";
     }
+  /*
+  fprintf(stderr, "atom2str: %p\n", p);
+  */
   *pp = p;
   *plen = strlen(p);
 }
@@ -3256,16 +3370,63 @@ pointer s7_make_closure(scheme *sc, pointer c, pointer e)
   return(x);
 }
 
-/* make continuation. */
-pointer s7_make_continuation(scheme *sc, pointer d) 
+
+static pointer copy_vector(scheme *sc, pointer old_v)
 {
+  int i, len;
+  pointer new_v;
+  len = vector_length(old_v);
+  new_v = s7_make_vector(sc, len);
+#if 0
+  for (i = 0; i < len; i++)
+    vector_element(new_v, i) = vector_element(old_v, i);
+#else
+  memcpy((void *)(new_v->object.vector.elements), 
+	 (void *)(old_v->object.vector.elements), 
+	 len * sizeof(pointer));
+#endif
+  return(new_v);
+}
+
+static pointer s7_make_continuation(scheme *sc) 
+{
+  continuation *c;
   pointer x = new_cell(sc);
+  set_type(x, T_CONTINUATION | T_GC_PROTECT);
+  c = (continuation *)CALLOC(1, sizeof(continuation));
+
+  /* make new stack */
+  c->stack_top = sc->stack_top;
+  c->stack_size = sc->stack_size;
+  c->stack = copy_vector(sc, sc->stack);
+
+  /* save old */
+  c->cc_stack_top = sc->stack_top;
+  c->cc_stack_size = sc->stack_size;
+  c->cc_stack = sc->stack;
+
+  x->object.cc = c;
+
+  sc->stack = c->stack; /* we're now in the continuation */
   /*
-  fprintf(stderr,"make continuation %p %p ", x, d);
+  fprintf(stderr, "returning %p %s\n", x, describe_type(x));
   */
-  set_type(x, T_CONTINUATION);
-  cont_dump(x) = d;
+  gc_unprotect(x);
+
   return(x);
+}
+
+static pointer s7_call_continuation(scheme *sc, pointer p)
+{
+  continuation *c;
+  c = p->object.cc;
+  c->stack_top = sc->stack_top; /* for possible return */
+  c->stack_size = sc->stack_size;
+
+  sc->stack = c->cc_stack;
+  sc->stack_size = c->cc_stack_size;
+  sc->stack_top = c->cc_stack_top;
+  return(sc->value);
 }
 
 static pointer list_star(scheme *sc, pointer d) 
@@ -3477,12 +3638,14 @@ static void set_slot_in_env(scheme *sc, pointer slot, pointer value)
 
 pointer s7_slot_value_in_env(pointer slot) 
 { 
-  return cdr(slot); 
+  return(cdr(slot)); 
 } 
 
 
 
 /* ========== Evaluation Cycle ========== */
+
+#define set_sc_code(Sc, Ptr) (sc->code = Ptr)
 
 
 static pointer internal_error(scheme *sc, const char *s, pointer a) 
@@ -3532,38 +3695,65 @@ static pointer internal_error(scheme *sc, const char *s, pointer a)
 #define s_retbool(tf)   s_return(sc, (tf) ? sc->T : sc->F)
 
 
-static  void dump_stack_reset(scheme *sc) 
+static  void stack_reset(scheme *sc) 
 { 
-  sc->dump = sc->NIL; 
+  sc->stack_top = 0;
 } 
 
-static  void dump_stack_initialize(scheme *sc) 
+static  void stack_initialize(scheme *sc) 
 { 
-  dump_stack_reset(sc); 
+  stack_reset(sc); 
 } 
 
-static void dump_stack_free(scheme *sc) 
+static void stack_free(scheme *sc) 
 { 
-  sc->dump = sc->NIL; 
+  sc->stack = sc->NIL; 
 } 
 
 static pointer _s_return(scheme *sc, pointer a) 
 { 
+  int top;
   sc->value = a; 
-  if (sc->dump == sc->NIL) return sc->NIL; 
-  sc->op = (enum scheme_opcodes)s7_integer(car(sc->dump)); /* passed in as int from s_save below */
-  sc->args = cadr(sc->dump); 
-  sc->envir = caddr(sc->dump); 
-  set_sc_code(sc, cadddr(sc->dump)); 
-  sc->dump = cddddr(sc->dump); 
-  return sc->T; 
+  if (sc->stack_top == 0)
+    return(sc->NIL); 
+
+  top = sc->stack_top;
+
+  sc->op =   (enum scheme_opcodes)integer(vector_element(sc->stack, top - 1)->object.number);
+  /*
+  fprintf(stderr, "op: %d", sc->op);
+  fprintf(stderr, " %s\n", opcode_names[sc->op]);
+  */
+  sc->args =       vector_element(sc->stack, top - 2);
+  sc->envir =      vector_element(sc->stack, top - 3);
+  set_sc_code(sc,  vector_element(sc->stack, top - 4));
+  sc->stack_top -= 4;
+  return(sc->T); 
 } 
 
 static void s_save(scheme *sc, enum scheme_opcodes op, pointer args, pointer code) 
 { 
-  sc->dump = cons(sc, sc->envir, cons(sc, (code), sc->dump)); 
-  sc->dump = cons(sc, (args), sc->dump); 
-  sc->dump = cons(sc, s7_make_integer(sc, (int)op), sc->dump); 
+  int top;
+  top = sc->stack_top;
+  if (top + 4 >= sc->stack_size)
+    {
+      int new_size;
+      new_size = sc->stack_size * 2;
+
+      fprintf(stderr, "realloc stack to %d\n", new_size);
+
+      sc->stack->object.vector.elements = (pointer *)REALLOC(sc->stack->object.vector.elements, new_size * sizeof(pointer));
+      sc->stack->object.vector.length = new_size;
+    }
+
+  vector_element(sc->stack, top + 0) = code;
+  vector_element(sc->stack, top + 1) = sc->envir;
+  vector_element(sc->stack, top + 2) = args;
+  vector_element(sc->stack, top + 3) = sc->opcodes[(int)op];
+  sc->stack_top += 4;
+  /*
+  fprintf(stderr, "stack %d %s\n", sc->stack_top, s7_object_to_c_string(sc, sc->opcodes[op]));
+  */
 } 
 
 
@@ -3635,7 +3825,7 @@ static pointer opexe_0(scheme *sc, enum scheme_opcodes op)
 	s7_putstr(sc, "\n");
 
       sc->nesting = 0;
-      dump_stack_reset(sc); 
+      stack_reset(sc); 
       sc->envir = sc->global_env;
       sc->save_inport = sc->inport;
       sc->inport = sc->loadport;
@@ -3644,7 +3834,7 @@ static pointer opexe_0(scheme *sc, enum scheme_opcodes op)
       s_save(sc, OP_T1LVL, sc->NIL, sc->NIL);
 
       if (file_interactive(sc)) 
-	s7_putstr(sc, prompt);
+	s7_putstr(sc, ">");
 
       s_goto(sc, OP_READ_INTERNAL);
       
@@ -3776,11 +3966,11 @@ static pointer opexe_0(scheme *sc, enum scheme_opcodes op)
 	{
 	  s_save(sc, OP_REAL_APPLY, sc->args, sc->code);
 	  sc->print_flag = 1;
-	  /*	 sc->args = cons(sc, sc->code, sc->args);*/
 	  s7_putstr(sc, "\nApply to: ");
 	  s_goto(sc, OP_P0LIST);
 	}
       /* fall through */
+
     case OP_REAL_APPLY:
 #endif
       if (s7_is_proc(sc->code)) 
@@ -3841,11 +4031,9 @@ static pointer opexe_0(scheme *sc, enum scheme_opcodes op)
 		{
 		  if (s7_is_continuation(sc->code)) 
 		    { /* CONTINUATION */
+		      
+		      s7_call_continuation(sc, sc->code);
 
-		      sc->dump = cont_dump(sc->code);
-		      /*
-		      fprintf(stderr,"in apply of continuation %p %p ", sc->dump, sc->code);
-		      */
 		      s_return(sc, sc->args != sc->NIL ? car(sc->args) : sc->NIL);
 		    } 
 		  else 
@@ -3926,6 +4114,7 @@ static pointer opexe_0(scheme *sc, enum scheme_opcodes op)
 	  sprintf(sym, "set-%s", name);
 	  caar(sc->code) = s7_make_symbol(sc, sym);               /* [set!] ((x a b...) y) -> ((set-x a b..) y) */
 	  set_sc_code(sc, s7_append(sc, car(sc->code), cdr(sc->code))); /* -> (set-x a b ... y) */
+	  FREE(sym); /* I think s7_make_symbol copies the name */
 	}
       else 
 	{
@@ -4282,8 +4471,10 @@ static pointer opexe_1(scheme *sc, enum scheme_opcodes op)
       
     case OP_CONTINUATION:    /* call-with-current-continuation */
       set_sc_code(sc, car(sc->args));
-      sc->args = cons(sc, s7_make_continuation(sc, sc->dump), sc->NIL);
-      /* fprintf(stderr, "call/cc... %p %p %p ", sc->code, sc->dump, car(sc->args)); */
+      sc->args = cons(sc, s7_make_continuation(sc), sc->NIL);
+      /*
+      fprintf(stderr, "call/cc... %p %p %p ", sc->code, sc->stack, car(sc->args));
+      */
       s_goto(sc, OP_APPLY);
       
     default:
@@ -4425,7 +4616,7 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
 	  s_return(sc, x);
 
 	if (cdr(sc->args) != sc->NIL)
-	  error = s7_double(cdr(sc->args));
+	  error = s7_double(cadr(sc->args));
 
 	if (c_rationalize(s7_double(x), error, &numer, &denom))
 	  s_return(sc, s7_make_ratio(sc, numer, denom));
@@ -4472,6 +4663,9 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
       s_return(sc, s7_from_c_complex(sc, cexp(s7_complex(x))));
       
     case OP_LOG:
+      
+      /* TODO: cadr can be base */
+
       x = car(sc->args);
       if ((s7_is_real(x)) &&
 	  (num_to_real(x->object.number) > 0.0))
@@ -4822,7 +5016,7 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
 	if (cdr(sc->args) != sc->NIL) 
 	  fill = s7_character(cadr(sc->args));
 
-	s_return(sc, mk_empty_string(sc, len, (char)fill));
+	s_return(sc, make_empty_string(sc, len, (char)fill));
       }
       
     case OP_STRLEN:  /* string-length */
@@ -4875,7 +5069,7 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
 	for (x = sc->args; x != sc->NIL; x = cdr(x)) 
 	  len += string_length(car(x));
 
-	newstr = mk_empty_string(sc, len, ' ');
+	newstr = make_empty_string(sc, len, ' ');
 	/* store the contents of the argument strings into the new string */
 	for (pos = string_value(newstr), x = sc->args; x != sc->NIL;
 	     pos += string_length(car(x)), x = cdr(x)) 
@@ -4913,7 +5107,7 @@ static pointer opexe_2(scheme *sc, enum scheme_opcodes op)
 	}
       
       len=index1 - index0;
-      x = mk_empty_string(sc,len,' ');
+      x = make_empty_string(sc,len,' ');
       memcpy(string_value(x),str+index0,len);
       string_value(x)[len]= 0;
       
@@ -5359,9 +5553,9 @@ static pointer opexe_5(scheme *sc, enum scheme_opcodes op)
 {
   pointer x;
   
-  if (sc->nesting!= 0) 
+  if (sc->nesting != 0) 
     {
-      int n= sc->nesting;
+      int n = sc->nesting;
       sc->nesting = 0;
       sc->retcode =-1;
       error_1(sc, "unmatched parentheses:", s7_make_integer(sc, n));
@@ -5402,15 +5596,13 @@ static pointer opexe_5(scheme *sc, enum scheme_opcodes op)
 	      sc->inport = car(sc->args);
 	    }
 	}
-      c =inchar(sc);
+      c = inchar(sc);
       if (c == EOF) 
-	{
-	  s_return(sc, sc->EOF_OBJ);
-	}
+	s_return(sc, sc->EOF_OBJ);
+
       if (sc->op == OP_PEEK_CHAR) 
-	{
-	  backchar(sc, c);
-	}
+	backchar(sc, c);
+
       s_return(sc, s7_make_character(sc, c));
     }
       
@@ -5965,7 +6157,7 @@ static pointer make_proc(scheme *sc, enum scheme_opcodes op)
 
 static void assign_proc(scheme *sc, enum scheme_opcodes op, char *name) 
 {
-  pointer x, y;
+  pointer x, y, p;
   
   x = s7_make_symbol(sc, name);
   gc_protect(x);
@@ -5984,10 +6176,10 @@ static int syntaxnum(pointer p)
     {
     case 2:
       if (s[0]=='i') return OP_IF0;        /* if */
-      else return OP_OR0;                 /* or */ 
+      else return OP_OR0;                  /* or */ 
     case 3:
       if (s[0]=='a') return OP_AND0;      /* and */
-      else return OP_LET0;               /* let */
+      else return OP_LET0;                /* let */
     case 4:
       switch(s[3]) 
 	{
@@ -6014,111 +6206,6 @@ static int syntaxnum(pointer p)
     default:
       return OP_C0STREAM;                /* cons-stream */
     }
-}
-
-
-scheme *s7_init(void) 
-{
-  int i, n = sizeof(dispatch_table) / sizeof(dispatch_table[0]);
-  pointer x;
-
-  scheme *sc;
-  sc = (scheme*)MALLOC(sizeof(scheme));
-
-  sc->gc_off = true; /* sc->args and so on are not set yet, so a gc during init -> segfault */
-  
-  num_zero.type = NUM_INT;
-  integer(num_zero) = 0;
-  num_one.type = NUM_INT;
-  integer(num_one) = 1;
-  
-  sc->gensym_cnt = 0;
-
-  sc->NIL = &sc->_NIL;
-  sc->T = &sc->_HASHT;
-  sc->F = &sc->_HASHF;
-  sc->EOF_OBJ = &sc->_EOF_OBJ;
-  sc->UNDEFINED = &sc->_UNDEFINED;
-
-  set_type(sc->NIL, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_GC_PROTECT | T_IMMUTABLE);
-  car(sc->NIL) = cdr(sc->NIL) = sc->NIL;
-
-  set_type(sc->T, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_GC_PROTECT | T_IMMUTABLE);
-  car(sc->T) = cdr(sc->T) = sc->T;
-
-  set_type(sc->F, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_GC_PROTECT | T_IMMUTABLE);
-  car(sc->F) = cdr(sc->F) = sc->F;
-
-  set_type(sc->EOF_OBJ, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_GC_PROTECT | T_IMMUTABLE);
-  car(sc->EOF_OBJ) = cdr(sc->EOF_OBJ) = sc->F;
-
-  set_type(sc->UNDEFINED, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_GC_PROTECT | T_IMMUTABLE);
-  car(sc->UNDEFINED) = cdr(sc->UNDEFINED) = sc->F;
-
-
-  sc->inport = sc->NIL;
-  sc->outport = sc->NIL;
-  sc->errport = sc->NIL;
-  sc->save_inport = sc->NIL;
-  sc->loadport = sc->NIL;
-  sc->nesting = 0;
-  sc->interactive_repl= false;
-
-  sc->cells_size = 500;
-  sc->cells = (pointer *)CALLOC(sc->cells_size, sizeof(pointer));
-  sc->cells_top = 0;
-
-  sc->gc_verbose = false;
-  dump_stack_initialize(sc); 
-  set_sc_code(sc, sc->NIL);
-  sc->tracing = false;
-  
-  sc->oblist = oblist_initial_value(sc); 
-  gc_protect(sc->oblist);
-  set_immutable(sc->oblist);
-
-  new_frame_in_env(sc, sc->NIL); 
-  sc->global_env = sc->envir; 
-  set_immutable(sc->global_env);
-
-  x = s7_make_symbol(sc, "else");
-  new_slot_in_env(sc, x, sc->T); 
-  
-  assign_syntax(sc, "lambda");
-  assign_syntax(sc, "quote");
-  assign_syntax(sc, "define");
-  assign_syntax(sc, "if");
-  assign_syntax(sc, "begin");
-  assign_syntax(sc, "set!");
-  assign_syntax(sc, "let");
-  assign_syntax(sc, "let*");
-  assign_syntax(sc, "letrec");
-  assign_syntax(sc, "cond");
-  assign_syntax(sc, "delay");
-  assign_syntax(sc, "and");
-  assign_syntax(sc, "or");
-  assign_syntax(sc, "cons-stream");
-  assign_syntax(sc, "macro");
-  assign_syntax(sc, "case");
-  
-  for(i = 0; i < n; i++) 
-    if (dispatch_table[i].name != 0) 
-      assign_proc(sc, (enum scheme_opcodes)i, dispatch_table[i].name);
-  
-  /* initialization of global pointers to special symbols */
-  sc->LAMBDA = s7_make_symbol(sc, "lambda");
-  sc->QUOTE = s7_make_symbol(sc, "quote");
-  sc->QQUOTE = s7_make_symbol(sc, "quasiquote");
-  sc->UNQUOTE = s7_make_symbol(sc, "unquote");
-  sc->UNQUOTESP = s7_make_symbol(sc, "unquote-splicing");
-  sc->FEED_TO = s7_make_symbol(sc, "=>");
-  sc->COLON_HOOK = s7_make_symbol(sc, "*colon-hook*");
-  sc->ERROR_HOOK = s7_make_symbol(sc, "*error-hook*");
-  sc->SHARP_HOOK = s7_make_symbol(sc, "*sharp-hook*");
-
-  sc->gc_off = false;
-
-  return(sc);
 }
 
 
@@ -6154,11 +6241,9 @@ void s7_set_external_data(scheme *sc, void *p)
 
 void s7_kill(scheme *sc) 
 {
-  int i;
-  
   sc->oblist = sc->NIL;
   sc->global_env = sc->NIL;
-  dump_stack_free(sc); 
+  stack_free(sc); 
   sc->envir= sc->NIL;
   set_sc_code(sc, sc->NIL);
   sc->args = sc->NIL;
@@ -6173,7 +6258,7 @@ void s7_kill(scheme *sc)
 
 void s7_load_open_file(scheme *sc, FILE *fin) 
 {
-  dump_stack_reset(sc); 
+  stack_reset(sc); 
   sc->envir = sc->global_env;
   sc->file_i = 0;
   sc->load_stack[0].kind = port_input | port_file;
@@ -6191,7 +6276,7 @@ void s7_load_open_file(scheme *sc, FILE *fin)
 
 void s7_load_string(scheme *sc, const char *cmd) 
 {
-  dump_stack_reset(sc); 
+  stack_reset(sc); 
   sc->envir = sc->global_env;
   sc->file_i = 0;
   sc->load_stack[0].kind = port_input | port_string;
@@ -6223,7 +6308,7 @@ pointer s7_apply0(scheme *sc, const char *procname)
   pointer carx = s7_make_symbol(sc, procname);
   pointer cdrx = sc->NIL;
   
-  dump_stack_reset(sc); 
+  stack_reset(sc); 
   sc->envir = sc->global_env;
   set_sc_code(sc, cons(sc, carx, cdrx));
   sc->interactive_repl = false;
@@ -6234,7 +6319,7 @@ pointer s7_apply0(scheme *sc, const char *procname)
 
 pointer s7_call(scheme *sc, pointer func, pointer args) 
 { 
-  dump_stack_reset(sc); 
+  stack_reset(sc); 
   sc->envir = sc->global_env; 
   sc->args = args; 
   set_sc_code(sc, func); 
@@ -6335,7 +6420,6 @@ static void s7_mark_embedded_foreign_objects(pointer a) /* called by gc, calls f
   else fprintf(stderr, "%p, found bad type: %x %d %x\n", a, tag, tag, a->flag);
 }
 
-
 void *s7_foreign_object_value(pointer obj)
 {
   return(obj->object.fobj.value);
@@ -6346,6 +6430,31 @@ int s7_foreign_object_type(pointer obj)
 {
   return(obj->object.fobj.type);
 }
+
+void s7_define_foreign_function(scheme *sc, const char *name, foreign_func func, const char *doc)
+{
+  pointer ffunc, sym;
+  ffunc = s7_make_foreign_function(sc, func, doc);
+  gc_protect(ffunc);
+  sym = s7_make_symbol(sc, name);
+  gc_protect(sym);
+  s7_define(sc, s7_global_env(sc), sym, ffunc);
+  gc_unprotect(ffunc);
+  gc_unprotect(sym);
+}
+
+
+void s7_define_variable(scheme *sc, const char *name, pointer value)
+{
+  pointer sym;
+  gc_protect(value);
+  sym = s7_make_symbol(sc, name);
+  gc_protect(sym);
+  s7_define(sc, s7_global_env(sc), sym, value);
+  gc_unprotect(value);
+  gc_unprotect(sym);
+}
+
 
 
 void s7_provide(scheme *sc, const char *feature)
@@ -6573,3 +6682,137 @@ void s7_gc_unprotect(pointer x)
 {
   gc_unprotect(x);
 }
+
+#define INITIAL_STACK_SIZE 1000
+
+scheme *s7_init(void) 
+{
+  int i, n;
+  pointer x;
+
+  scheme *sc;
+  sc = (scheme*)MALLOC(sizeof(scheme));
+
+  sc->gc_off = true; /* sc->args and so on are not set yet, so a gc during init -> segfault */
+  
+  num_zero.type = NUM_INT;
+  integer(num_zero) = 0;
+  num_one.type = NUM_INT;
+  integer(num_one) = 1;
+  
+  sc->gensym_cnt = 0;
+
+  sc->NIL = &sc->_NIL;
+  sc->T = &sc->_HASHT;
+  sc->F = &sc->_HASHF;
+  sc->EOF_OBJ = &sc->_EOF_OBJ;
+  sc->UNDEFINED = &sc->_UNDEFINED;
+
+  set_type(sc->NIL, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_GC_PROTECT | T_IMMUTABLE);
+  car(sc->NIL) = cdr(sc->NIL) = sc->NIL;
+
+  set_type(sc->T, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_GC_PROTECT | T_IMMUTABLE);
+  car(sc->T) = cdr(sc->T) = sc->T;
+
+  set_type(sc->F, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_GC_PROTECT | T_IMMUTABLE);
+  car(sc->F) = cdr(sc->F) = sc->F;
+
+  set_type(sc->EOF_OBJ, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_GC_PROTECT | T_IMMUTABLE);
+  car(sc->EOF_OBJ) = cdr(sc->EOF_OBJ) = sc->F;
+
+  set_type(sc->UNDEFINED, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_GC_PROTECT | T_IMMUTABLE);
+  car(sc->UNDEFINED) = cdr(sc->UNDEFINED) = sc->F;
+
+
+  sc->inport = sc->NIL;
+  sc->outport = sc->NIL;
+  sc->errport = sc->NIL;
+  sc->save_inport = sc->NIL;
+  sc->loadport = sc->NIL;
+  sc->nesting = 0;
+  sc->interactive_repl= false;
+
+  sc->cells_size = INITIAL_CELLS_SIZE;
+  sc->cells = (pointer *)CALLOC(sc->cells_size, sizeof(pointer));
+  sc->cells_top = 0;
+
+  sc->free_cells_size = INITIAL_CELLS_SIZE;
+  sc->free_cells = (int *)CALLOC(sc->free_cells_size, sizeof(int));
+  sc->free_cells_top = 0;
+  {
+    for (i = 0; i < INITIAL_CELLS_SIZE; i++)
+      {
+	sc->cells[i] = (cell *)CALLOC(1, sizeof(cell));
+	free_cell(sc, i);
+      }
+  }
+
+  sc->stack_top = 0;
+  sc->stack = s7_make_vector(sc, INITIAL_STACK_SIZE);
+
+  sc->gc_verbose = false;
+  stack_initialize(sc); 
+  set_sc_code(sc, sc->NIL);
+  sc->tracing = false;
+  
+  sc->oblist = oblist_initial_value(sc); 
+  gc_protect(sc->oblist);
+  set_immutable(sc->oblist);
+
+  new_frame_in_env(sc, sc->NIL); 
+  sc->global_env = sc->envir; 
+  set_immutable(sc->global_env);
+
+  x = s7_make_symbol(sc, "else");
+  new_slot_in_env(sc, x, sc->T); 
+  
+  assign_syntax(sc, "lambda");
+  assign_syntax(sc, "quote");
+  assign_syntax(sc, "define");
+  assign_syntax(sc, "if");
+  assign_syntax(sc, "begin");
+  assign_syntax(sc, "set!");
+  assign_syntax(sc, "let");
+  assign_syntax(sc, "let*");
+  assign_syntax(sc, "letrec");
+  assign_syntax(sc, "cond");
+  assign_syntax(sc, "delay");
+  assign_syntax(sc, "and");
+  assign_syntax(sc, "or");
+  assign_syntax(sc, "cons-stream");
+  assign_syntax(sc, "macro");
+  assign_syntax(sc, "case");
+  
+  n = sizeof(dispatch_table) / sizeof(dispatch_table[0]);
+  sc->opcodes = (cell **)CALLOC(n + 1, sizeof(cell *));
+
+  for(i = 0; i < n; i++) 
+    {
+      pointer p;
+      if (dispatch_table[i].name != 0) 
+	assign_proc(sc, (enum scheme_opcodes)i, dispatch_table[i].name);
+
+      sc->opcodes[i] = (cell *)CALLOC(1, sizeof(cell));
+      p = sc->opcodes[i];
+      p->flag = T_OBJECT | T_GC_PROTECT | T_IMMUTABLE | T_ATOM | T_NUMBER;
+      p->object.number.type = NUM_INT;
+      integer(p->object.number) = (off_t)i;
+    }
+
+  /* initialization of global pointers to special symbols */
+  sc->LAMBDA = s7_make_symbol(sc, "lambda");
+  sc->QUOTE = s7_make_symbol(sc, "quote");
+  sc->QQUOTE = s7_make_symbol(sc, "quasiquote");
+  sc->UNQUOTE = s7_make_symbol(sc, "unquote");
+  sc->UNQUOTESP = s7_make_symbol(sc, "unquote-splicing");
+  sc->FEED_TO = s7_make_symbol(sc, "=>");
+  sc->COLON_HOOK = s7_make_symbol(sc, "*colon-hook*");
+  sc->ERROR_HOOK = s7_make_symbol(sc, "*error-hook*");
+  sc->SHARP_HOOK = s7_make_symbol(sc, "*sharp-hook*");
+
+  sc->gc_off = false;
+
+  return(sc);
+}
+
+

@@ -385,10 +385,6 @@ static bool c_rationalize(double ux, double error, off_t *n, off_t *d)
       sign = 1;
     }
 
-  /* perhaps use continued fractions to get a good result, then
-   *   back up the denominator until we lose?  As it is, this
-   *   is very slow!
-   */
   for (denom = 1; denom <= lim; denom++)
     {
       numer = (off_t)floor(ux * denom);

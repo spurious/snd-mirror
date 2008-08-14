@@ -143,7 +143,6 @@ pointer s7_closure_code(pointer p);
 pointer s7_closure_env(pointer p);
 pointer s7_make_closure(scheme *sc, pointer c, pointer e);
 
-pointer s7_make_continuation(scheme *sc, pointer d);
 bool s7_is_continuation(pointer p);
 
 scheme *s7_init(void);
@@ -205,7 +204,7 @@ pointer s7_out_of_range_error(scheme *sc, const char *caller, int arg_n, pointer
 void s7_gc_protect(pointer x);
 void s7_gc_unprotect(pointer x);
 
-void s7_for_each_symbol_name(scheme *sc, void (*oblist_func)(const char *symbol_name, void *data), void *data);
-
+void s7_for_each_symbol_name(scheme *sc, bool (*oblist_func)(const char *symbol_name, void *data), void *data);
+void s7_for_each_symbol(scheme *sc, bool (*oblist_func)(const char *symbol_name, pointer symbol_value, void *data), void *data);
 #endif
 
