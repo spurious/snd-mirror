@@ -5,16 +5,11 @@
     _OP_DEF(opexe_0, "gensym",                         0,  0,       0,                               OP_GENSYM           )
     _OP_DEF(opexe_0, 0,                                0,  0,       0,                               OP_VALUEPRINT       )
     _OP_DEF(opexe_0, 0,                                0,  0,       0,                               OP_EVAL             )
-#if USE_TRACING
     _OP_DEF(opexe_0, 0,                                0,  0,       0,                               OP_REAL_EVAL        )
-#endif
     _OP_DEF(opexe_0, 0,                                0,  0,       0,                               OP_E0ARGS           )
     _OP_DEF(opexe_0, 0,                                0,  0,       0,                               OP_E1ARGS           )
     _OP_DEF(opexe_0, 0,                                0,  0,       0,                               OP_APPLY            )
-#if USE_TRACING
     _OP_DEF(opexe_0, 0,                                0,  0,       0,                               OP_REAL_APPLY       )
-    _OP_DEF(opexe_0, "tracing",                        1,  1,       TST_NATURAL,                     OP_TRACING          )
-#endif
     _OP_DEF(opexe_0, 0,                                0,  0,       0,                               OP_DOMACRO          )
     _OP_DEF(opexe_0, 0,                                0,  0,       0,                               OP_LAMBDA           )
     _OP_DEF(opexe_0, "make-closure",                   1,  2,       TST_PAIR TST_PAIR,             OP_MKCLOSURE        )
@@ -53,8 +48,8 @@
     _OP_DEF(opexe_1, "eval",                           1,  2,       TST_ANY TST_PAIR,              OP_PEVAL            )
     _OP_DEF(opexe_1, "apply",                          1,  INF_ARG, TST_NONE,                        OP_PAPPLY           )
     _OP_DEF(opexe_1, "call-with-current-continuation", 1,  1,       TST_NONE,                        OP_CONTINUATION     )
+    _OP_DEF(opexe_1, "call-with-exit",                 1,  1,       TST_NONE,                        OP_GOTO     )
     _OP_DEF(opexe_2, "inexact->exact",                 1,  1,       TST_NUMBER,                      OP_INEX2EX          )
-
     _OP_DEF(opexe_2, "exact->inexact",                 1,  1,       TST_NUMBER,                      OP_EX2INEX          )
     _OP_DEF(opexe_2, "make-polar",                     2,  2,       TST_REAL,                        OP_MAKE_POLAR       )
     _OP_DEF(opexe_2, "make-rectangular",               2,  2,       TST_REAL,                        OP_MAKE_RECTANGULAR )
@@ -116,9 +111,9 @@
     _OP_DEF(opexe_2, "char-upcase",                    1,  1,       TST_CHAR,                        OP_CHARUPCASE       )
     _OP_DEF(opexe_2, "char-downcase",                  1,  1,       TST_CHAR,                        OP_CHARDNCASE       )
     _OP_DEF(opexe_2, "symbol->string",                 1,  1,       TST_SYMBOL,                      OP_SYM2STR          )
-    _OP_DEF(opexe_2, "atom->string",                   1,  1,       TST_ANY,                         OP_ATOM2STR         )
+    _OP_DEF(opexe_2, "number->string",                 1,  1,       TST_NUMBER,                         OP_NUMBER_TO_STRING         )
     _OP_DEF(opexe_2, "string->symbol",                 1,  1,       TST_STRING,                      OP_STR2SYM          )
-    _OP_DEF(opexe_2, "string->atom",                   1,  1,       TST_STRING,                      OP_STR2ATOM         )
+    _OP_DEF(opexe_2, "string->number",                 1,  3,       TST_STRING TST_INTEGER,                      OP_STRING_TO_NUMBER         )
     _OP_DEF(opexe_2, "make-string",                    1,  2,       TST_NATURAL TST_CHAR,            OP_MKSTRING         )
     _OP_DEF(opexe_2, "string-length",                  1,  1,       TST_STRING,                      OP_STRLEN           )
     _OP_DEF(opexe_2, "string-ref",                     2,  2,       TST_STRING TST_NATURAL,          OP_STRREF           )
@@ -143,10 +138,8 @@
     _OP_DEF(opexe_3, "number?",                        1,  1,       TST_ANY,                         OP_NUMBERP          )
     _OP_DEF(opexe_3, "integer?",                       1,  1,       TST_ANY,                         OP_INTEGERP         )
     _OP_DEF(opexe_3, "real?",                          1,  1,       TST_ANY,                         OP_REALP            )
-
     _OP_DEF(opexe_3, "complex?",                       1,  1,       TST_ANY,                         OP_COMPLEXP         )
     _OP_DEF(opexe_3, "rational?",                      1,  1,       TST_ANY,                         OP_RATIONALP        )
-
     _OP_DEF(opexe_3, "string?",                        1,  1,       TST_ANY,                         OP_STRINGP          )
     _OP_DEF(opexe_3, "char?",                          1,  1,       TST_ANY,                         OP_CHARP            )
     _OP_DEF(opexe_3, "char-alphabetic?",               1,  1,       TST_CHAR,                        OP_CHARAP           )
@@ -171,15 +164,14 @@
     _OP_DEF(opexe_4, "write-char",                     1,  2,       TST_CHAR TST_OUTPORT,            OP_WRITE_CHAR       )
     _OP_DEF(opexe_4, "display",                        1,  2,       TST_ANY TST_OUTPORT,             OP_DISPLAY          )
     _OP_DEF(opexe_4, "newline",                        0,  1,       TST_OUTPORT,                     OP_NEWLINE          )
-    _OP_DEF(opexe_4, "error",                          1,  INF_ARG, TST_NONE,                        OP_ERR0             )
+    _OP_DEF(opexe_4, 0,                                1,  INF_ARG, TST_NONE,                        OP_ERR0             ) /* was "error" */
     _OP_DEF(opexe_4, 0,                                0,  0,       0,                               OP_ERR1             )
     _OP_DEF(opexe_4, "reverse",                        1,  1,       TST_PAIR,                        OP_REVERSE          )
     _OP_DEF(opexe_4, "list*",                          1,  INF_ARG, TST_NONE,                        OP_LIST_STAR        )
     _OP_DEF(opexe_4, "append",                         0,  INF_ARG, TST_NONE,                        OP_APPEND           )
     _OP_DEF(opexe_4, "quit",                           0,  1,       TST_NUMBER,                      OP_QUIT             )
     _OP_DEF(opexe_4, "gc",                             0,  0,       0,                               OP_GC               )
-    _OP_DEF(opexe_4, "gc-verbose",                     0,  1,       TST_NONE,                        OP_GCVERB           )
-    _OP_DEF(opexe_4, "oblist",                         0,  0,       0,                               OP_OBLIST           )
+    _OP_DEF(opexe_4, "symbol-table",                   0,  0,       0,                               OP_SYMBOL_TABLE           )
     _OP_DEF(opexe_4, "current-input-port",             0,  0,       0,                               OP_CURR_INPORT      )
     _OP_DEF(opexe_4, "current-output-port",            0,  0,       0,                               OP_CURR_OUTPORT     )
     _OP_DEF(opexe_4, "current-error-port",             0,  0,       0,                               OP_CURR_ERRPORT     )

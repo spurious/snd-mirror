@@ -2182,6 +2182,9 @@ int main(int argc, char **argv)
 
 
   fprintf(fp, "\n;;; --------------------------------------------------------------------------------\n");
+
+  fprintf(fp, "\n\
+(test (expt 0 0) 1)\n");
   
   /* int ^ int */
   for (i = 0; i < INT_ARGS; i++)
@@ -3033,7 +3036,7 @@ int main(int argc, char **argv)
       free(t1);
 	      fprintf(fp, "(test (<= %s) 'error)\n", t1 = split_complex_to_string(double_args[i], double_args[j]));
       free(t1); 
-      fprintf(fp, "(test (= %s) #t)\n", t1 = split_complex_to_string(double_args[i], double_args[j]));
+      fprintf(fp, "(test (= %s) 'error)\n", t1 = split_complex_to_string(double_args[i], double_args[j]));
       free(t1); 
       fprintf(fp, "(test (> %s) 'error)\n", t1 = split_complex_to_string(double_args[i], double_args[j]));
       free(t1); 

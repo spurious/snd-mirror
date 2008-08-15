@@ -24,7 +24,7 @@
 typedef struct scheme scheme;
 typedef struct cell *pointer;
 
-typedef pointer (*foreign_func)(scheme *scheme, pointer a);
+typedef pointer (*foreign_func)(scheme *sc, pointer a);
 
 pointer s7_F(scheme *sc);
 pointer s7_T(scheme *sc);
@@ -119,7 +119,7 @@ pointer s7_make_keyword(scheme *sc, const char *key);
 
 
 bool s7_is_foreign_function(pointer p);
-pointer s7_make_foreign_function(scheme *sc, foreign_func f, const char *doc);
+pointer s7_make_foreign_function(scheme *sc, foreign_func f, const char *name, const char *doc);
 const char *s7_foreign_function_doc(pointer p);
 
 int s7_new_foreign_type(const char *name, 
@@ -151,9 +151,6 @@ void s7_set_input_port_file(scheme *sc, FILE *fin);
 void s7_set_input_port_string(scheme *sc, char *start, char *past_the_end);
 void s7_set_output_port_file(scheme *sc, FILE *fin);
 void s7_set_output_port_string(scheme *sc, char *start, char *past_the_end);
-
-void s7_set_external_data(scheme *sc, void *p);
-
 
 void s7_putstr(scheme *sc, const char *s);
 void s7_putchars(scheme *sc, const char *s, int len);
@@ -201,10 +198,11 @@ pointer s7_throw(scheme *sc, pointer type, pointer info);
 pointer s7_wrong_type_arg_error(scheme *sc, const char *caller, int arg_n, pointer arg, const char *descr);
 pointer s7_out_of_range_error(scheme *sc, const char *caller, int arg_n, pointer arg, const char *descr);
 
-void s7_gc_protect(pointer x);
-void s7_gc_unprotect(pointer x);
+int s7_gc_protect(scheme *sc, pointer x);
+void s7_gc_unprotect(scheme *sc, pointer x);
+void s7_gc_unprotect_at(scheme *sc, int loc);
 
-void s7_for_each_symbol_name(scheme *sc, bool (*oblist_func)(const char *symbol_name, void *data), void *data);
-void s7_for_each_symbol(scheme *sc, bool (*oblist_func)(const char *symbol_name, pointer symbol_value, void *data), void *data);
+void s7_for_each_symbol_name(scheme *sc, bool (*symbol_func)(const char *symbol_name, void *data), void *data);
+void s7_for_each_symbol(scheme *sc, bool (*symbol_func)(const char *symbol_name, pointer symbol_value, void *data), void *data);
 #endif
 

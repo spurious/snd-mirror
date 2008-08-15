@@ -108,20 +108,6 @@
 (define (string-copy str)
   (string-append str))
 
-(define (string->anyatom str pred)
-  (let* ((a (string->atom str)))
-    (and (pred a) a)))
-
-(define (string->number str)
-  (string->anyatom str number?))
-
-(define (anyatom->string n pred)
-  (if (pred n)
-      (atom->string n)
-      #f)) ; TODO error should go through error hook
-
-(define (number->string n) (anyatom->string n number?))    
-
 (define (char-cmp? cmp a b)
   (cmp (char->integer a) (char->integer b)))
 (define (char-ci-cmp? cmp a b)
@@ -486,7 +472,7 @@
 		(else (error "cond-expand : unknown operator" (car condition)))))))
 
 (gc-verbose #f)
-(tracing 0)
+(tracing #f)
 
 
 ;;; --------------------------------------------------------------------------------
@@ -538,27 +524,14 @@
       result)))
 
 
-(define *catcher* #f)
-(define *tag* #f)
+(defmacro catch (tag body tag-handler)
+  `(call-with-exit
+    (lambda (exiter)
+      (let ((error (lambda args
+		     (exiter (apply ,tag-handler args)))))
+	(,body)))))
 
-(define (throw . args)
-  (if *catcher*
-      (begin
-	(apply *catcher* (append *tag* args))
-	(set! *catcher* #f)))
-  'error)
-
-(define *error-hook* throw)
-
-(define (catch tag body tag-handler)
-  (call/cc
-   (lambda (catcher)
-     (set! *catcher* catcher)
-     (set! *tag* tag)
-     (let ((result (body)))
-       (set! *catcher* #f)
-       result))))
-
+; (let ((tag (catch #t (lambda () (display "before") (error 'oops) (display "after")) (lambda args (display "in handler") 'error)))) tag)
 
 ;;; the standard format won't work currently -- string port troubles
 (define (format dest str . args)

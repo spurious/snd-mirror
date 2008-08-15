@@ -2205,7 +2205,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 #define XEN_THROW(Type, Info)                      s7_throw(s7, Type, Info)
 
 #define XEN_YES_WE_HAVE(Feature)                   s7_provide(s7, Feature)
-#define XEN_PROTECT_FROM_GC(Arg)                   xen_protect_from_gc(Arg)
+#define XEN_PROTECT_FROM_GC(Arg)                   s7_gc_protect(s7, Arg)
 
 
 #define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr) \
@@ -2508,7 +2508,6 @@ typedef XEN (*XEN_CATCH_BODY_TYPE)                                    (void *dat
 #define XEN_HOOK_PROCEDURES(Arg)                         xen_hook_to_list(Arg)
 
 
-XEN xen_protect_from_gc(pointer obj);
 bool xen_s7_type_p(XEN obj, XEN_OBJECT_TYPE type);
 XEN xen_s7_define_hook(const char *name, int arity, const char *help);
 XEN xen_s7_reset_hook(XEN hook);

@@ -2431,11 +2431,6 @@ XEN_ARGIFY_2(g_make_hook_w, g_make_hook)
 XEN_ARGIFY_3(g_add_hook_w, g_add_hook)
 
 
-static XEN protected_objects;             /* these are permanently protected things */
-static int protected_objects_size = 0;
-static int protected_objects_top = 0;
-#define INITIAL_GC_PROTECTION_SIZE 256
-
 void xen_initialize(void)
 {
   FILE *init;
@@ -2450,19 +2445,11 @@ void xen_initialize(void)
   xen_nil = s7_NIL(s7);
   xen_undefined = s7_UNDEFINED(s7);
 
-  /* we'll use the ext_data pointer to handle foreign objects that need GC protection */
-  /*   it includes anything that wants permanent GC protection, via XEN_PROTECT_FROM_GC */
-
-  protected_objects = XEN_MAKE_VECTOR(INITIAL_GC_PROTECTION_SIZE, XEN_EMPTY_LIST);
-  protected_objects_size = INITIAL_GC_PROTECTION_SIZE;
-  s7_set_external_data(s7, protected_objects);
-
   init = fopen("s7.scm", "r");
   if (init)
     s7_load_open_file(s7, init);
   else fprintf(stderr, "Can't find s7.scm?");
   fclose(init);
-
 
   ghook_tag = XEN_MAKE_OBJECT_TYPE("<hook>", print_hook, free_hook, equalp_hook, mark_hook);
 
@@ -2474,27 +2461,8 @@ void xen_initialize(void)
   XEN_DEFINE_PROCEDURE("run-hook",     g_run_hook_w,     0, 0, 1, "(run-hook hook . args) applies each hook function to args");
   XEN_DEFINE_PROCEDURE("make-hook",    g_make_hook_w,    1, 1, 0, "(make-hook arity :optional help) makes a new hook object");
   XEN_DEFINE_PROCEDURE("add-hook!",    g_add_hook_w,     2, 1, 0, "(add-hook! hook func :optional append) adds func to the hooks function list");
-
 }
 
-
-XEN xen_protect_from_gc(XEN obj)
-{
-  XEN_VECTOR_SET(protected_objects, protected_objects_top++, obj);
-
-  if (protected_objects_top == (protected_objects_size + 1))                  /* only room for 1 more -- link in another vector */
-    {
-      int new_size;
-      XEN new_vector;
-      new_size = protected_objects_size += INITIAL_GC_PROTECTION_SIZE;        /* make the next (attached) table bigger */
-      new_vector = XEN_MAKE_VECTOR(new_size, XEN_EMPTY_LIST);
-      XEN_VECTOR_SET(protected_objects, protected_objects_top, new_vector);   /* attach to old */
-      protected_objects = new_vector;                                         /* now start filling the new vector */
-      protected_objects_top = 0;
-      protected_objects_size = new_size;
-    }
-  return(obj);
-}
 
 void xen_gc_mark(XEN val)
 {
