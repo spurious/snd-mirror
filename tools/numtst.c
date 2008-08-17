@@ -28,6 +28,11 @@
  *   I added tanh (and other) tests via maxima.
  */
 
+/* TODO: finish expt, merge in the r6rs changes (did I finish atan2?)
+ * PERHAPS: inexact<->exact
+ * PERHAPS: borderline and bizarre stuff
+ */
+
 #define _FILE_OFFSET_BITS 64
 
 #include <stdio.h>
@@ -1389,64 +1394,45 @@ int main(int argc, char **argv)
 
   if ((strcmp(scheme_name, "s7") == 0) ||
       (strcmp(scheme_name, "guile") == 0) ||
-      (strcmp(scheme_name, "gambit") == 0) ||
       (strcmp(scheme_name, "gauche") == 0))
     fprintf(fp, "\n\
-(define (format dest str . args)\n\
-  (let ((len (string-length str))\n\
-	(tilde #f)\n\
-	(result \"\"))\n\
-    (do ((i 0 (+ i 1)))\n\
-	((= i len))\n\
-      (let ((c (string-ref str i)))\n\
-	(if (char=? c #\\~)\n\
-	    (set! tilde #t)\n\
-	    (if (not tilde)\n\
-		(set! result (string-append result (string c)))\n\
-		(begin\n\
-		  (set! tilde #f)\n\
-		  (if (member c (list #\\A #\\D #\\F))\n\
-		      (begin\n\
-			(set! result (string-append result (object->string (car args))))\n\
-			(set! args (cdr args)))\n\
-		      (if (char=? c #\\%%)\n\
-			  (set! result (string-append result (string #\\newline)))\n\
-			  (display (string-append \";unknown format directive: ~\" (string c))))))))))\n\
-    result))\n\n");
-
-
-  if ((strcmp(scheme_name, "s7") == 0) ||
-      (strcmp(scheme_name, "guile") == 0) ||
-      (strcmp(scheme_name, "gauche") == 0))
-    fprintf(fp, "\n\
-(defmacro test (tst expected)\n\
-  `(let ((result (catch #t (lambda () ,tst) (lambda args 'error))))\n\
-     (if (or (and (eq? ,expected 'error)\n\
+(define (ok? tst result expected)\n\
+  (if (or (and (eq? expected 'error)\n\
 		  (not (eq? result 'error)))\n\
              (and (eq? result 'error)\n\
-                  (not (eq? ,expected 'error)))\n\
-	     (and (eq? ,expected #t)\n\
+                  (not (eq? expected 'error)))\n\
+	     (and (eq? expected #t)\n\
 		  (not result))\n\
-	     (and (eq? ,expected #f)\n\
+	     (and (eq? expected #f)\n\
 		  result)\n\
-             (and (integer? ,expected)\n\
+             (and (integer? expected)\n\
 		  (integer? result)\n\
-		  (not (= result ,expected))\n\
-		  (or (< (abs ,expected) 1.0e9)\n\
-		      (> (abs (- (log (abs ,expected)) (log (abs result)))) 1.0e-2)))\n\
-	     (and (real? ,expected)\n\
+		  (not (= result expected))\n\
+		  (or (< (abs expected) 1.0e9)\n\
+		      (> (abs (- (log (abs expected)) (log (abs result)))) 1.0e-2)))\n\
+	     (and (real? expected)\n\
 		  (real? result)\n\
-		  (> (abs (- result ,expected)) 1.0e-5)\n\
-		  (or (< 1.0e-6 (abs ,expected) 1.0e6)\n\
-		      (> (abs (- (log (abs ,expected)) (log (abs result)))) 1.0e-2)))\n\
+		  (> (abs (- result expected)) 1.0e-5)\n\
+		  (or (< 1.0e-6 (abs expected) 1.0e6)\n\
+		      (> (abs (- (log (abs expected)) (log (abs result)))) 1.0e-2)))\n\
 	     (and (number? result)\n\
-	          (or (not (real? ,expected))\n\
+	          (or (not (real? expected))\n\
 		      (not (real? result)))\n\
-		  (or (and (> (abs (real-part (- result ,expected))) 1.0e-4)\n\
-			   (> (abs (real-part (+ result ,expected))) 1.0e-4))\n\
-		      (and (> (abs (imag-part (- result ,expected))) 1.0e-4)\n\
-			   (> (abs (imag-part (+ result ,expected))) 1.0e-4)))))\n\
-	 (display (format #f \";~A got ~A, but expected ~A~%%\" ',tst result ',expected)))))\n\n");
+		  (or (and (> (abs (real-part (- result expected))) 1.0e-4)\n\
+			   (> (abs (real-part (+ result expected))) 1.0e-4))\n\
+		      (and (> (abs (imag-part (- result expected))) 1.0e-4)\n\
+			   (> (abs (imag-part (+ result expected))) 1.0e-4)))))\n\
+	 (begin\n\
+           (display (object->string tst))\n\
+           (display \" got \")\n\
+           (display (object->string result))\n\
+           (display \" but expected \")\n\
+           (display (object->string expected))\n\
+           (newline))))\n\
+\n\
+(defmacro test (tst expected)\n\
+  `(let ((result (catch #t (lambda () ,tst) (lambda args 'error))))\n\
+     (ok? ',tst result ,expected)))\n\n");
 
 
   if (strcmp(scheme_name, "gambit") == 0)
@@ -1476,7 +1462,13 @@ int main(int argc, char **argv)
 			   (> (abs (real-part (+ result ,expected))) 1.0e-4))\n\
 		      (and (> (abs (imag-part (- result ,expected))) 1.0e-4)\n\
 			   (> (abs (imag-part (+ result ,expected))) 1.0e-4)))))\n\
-	 (display (format #f \";~A got ~A, but expected ~A~%%\" ',tst result ',expected)))))\n\n");
+	 (begin\n\
+           (display (object->string ',tst))\n\
+           (display \" got \")\n\
+           (display (object->string result))\n\
+           (display \" but expected \")\n\
+           (display (object->string ',expected))\n\
+           (newline)))))\n\n");
 
 
   for (i = 0; i < INT_ARGS; i++)

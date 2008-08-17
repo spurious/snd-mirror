@@ -41,8 +41,6 @@ pointer s7_cons(scheme *sc, pointer a, pointer b);
 pointer s7_car(pointer p);
 pointer s7_cdr(pointer p);
 bool s7_is_pair(pointer p);
-pointer s7_pair_car(pointer p);
-pointer s7_pair_cdr(pointer p);
 pointer s7_set_car(pointer p, pointer q);
 pointer s7_set_cdr(pointer p, pointer q);
 
@@ -139,8 +137,8 @@ void s7_mark_object(pointer a); /* s7 for foreign objects with embedded scheme o
 
 
 bool s7_is_closure(pointer p);
-pointer s7_closure_code(pointer p);
-pointer s7_closure_env(pointer p);
+pointer s7_procedure_source(pointer p);
+pointer s7_procedure_environment(pointer p);
 pointer s7_make_closure(scheme *sc, pointer c, pointer e);
 
 bool s7_is_continuation(pointer p);
@@ -165,7 +163,6 @@ bool s7_eq_p(pointer obj1, pointer obj2);
 void s7_atom2str(scheme *sc, pointer l, int f, char **pp, int *plen);
 
 void s7_define(scheme *sc, pointer env, pointer symbol, pointer value);
-void s7_new_slot_spec_in_env(scheme *sc, pointer env, pointer variable, pointer value);
 pointer s7_find_slot_in_env(scheme *sc, pointer env, pointer sym, int all);
 pointer s7_slot_value_in_env(pointer slot);
 pointer s7_name_to_value(scheme *sc, const char *name);

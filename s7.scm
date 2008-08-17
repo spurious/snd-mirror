@@ -62,15 +62,6 @@
 (macro (when form)
   `(if ,(cadr form) (begin ,@(cddr form))))
 
-					; DEFINE-MACRO Contributed by Andy Gaynor
-(macro (define-macro dform)
-  (if (symbol? (cadr dform))
-      `(macro ,@(cdr dform))
-      (let ((form (gensym)))
-	`(macro (,(caadr dform) ,form)
-	   (apply (lambda ,(cdadr dform) ,@(cddr dform)) (cdr ,form))))))
-
-
 (define (log10 n) (/ (log n) (log 10)))
 
 (define (1+ x) (+ x 1))
@@ -212,6 +203,7 @@
 	l
 	(loop (1- n) (cons (vector-ref v n) l)))))
 
+					; DEFINE-MACRO Contributed by Andy Gaynor
 ;; The following quasiquote macro is due to Eric S. Tiedemann.
 ;;   Copyright 1988 by Eric S. Tiedemann; all rights reserved.
 ;;
@@ -269,6 +261,15 @@
 			  (#t (mcons form (foo level (car form))
 				     (foo level (cdr form)))))))))
     (foo 0 (car (cdr l)))))
+
+
+(macro (define-macro dform)
+  (if (symbol? (cadr dform))
+      `(macro ,@(cdr dform))
+      (let ((form (gensym)))
+	`(macro (,(caadr dform) ,form)
+	   (apply (lambda ,(cdadr dform) ,@(cddr dform)) (cdr ,form))))))
+
 
 
 ;;;;; atom? and equal? written by a.k
@@ -339,13 +340,14 @@
 
 ;;;; Utility to ease macro creation
 (define (macro-expand form)
-  ((eval (get-closure-code (eval (car form)))) form))
+  ((eval (procedure-source (eval (car form)))) form))
 
 ;;;; Handy for imperative programs
 ;;;; Used as: (define-with-return (foo x y) .... (return z) ...)
+
 (macro (define-with-return form)
   `(define ,(cadr form)
-     (call/cc (lambda (return) ,@(cddr form)))))
+     (call-with-exit (lambda (return) ,@(cddr form)))))
 
 
 ;;;;; Definition of MAKE-ENVIRONMENT, to be used with two-argument EVAL
@@ -360,12 +362,11 @@
   (let* ((env (if (null? envl) (current-environment) (eval (car envl))))
          (xval (eval x env)))
     (if (closure? xval)
-	(make-closure (get-closure-code xval) env)
+	(make-closure (procedure-source xval) env)
 	xval)))
 
 					; Redefine this if you install another package infrastructure
 					; Also redefine 'package'
-(define *colon-hook* eval)
 
 ;;;;; I/O
 
@@ -523,13 +524,16 @@
       ;(close-output-port string-port)
       result)))
 
+(define (error . args) (display "error: ") (display args) (newline) 'error)
+;(define (error . args) 'error)
 
-(defmacro catch (tag body tag-handler)
-  `(call-with-exit
-    (lambda (exiter)
-      (let ((error (lambda args
-		     (exiter (apply ,tag-handler args)))))
-	(,body)))))
+(define (catch tag body tag-handler)
+  (call-with-exit
+   (lambda (exiter)
+     (let ((error (lambda args
+		    (exiter 
+		     (apply tag-handler args)))))
+	(body)))))
 
 ; (let ((tag (catch #t (lambda () (display "before") (error 'oops) (display "after")) (lambda args (display "in handler") 'error)))) tag)
 
