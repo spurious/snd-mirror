@@ -33,7 +33,7 @@
  *     moved lcm and gcd from s7.scm to c to handle argnum!= 2 cases
  *     added case for expt of ints with 2nd arg >= 0 or 1st arg +/-1 (return an int)
  *     (eqv? 0 0.0) should return #f I believe
- *       so leaving aside a few quibbles, this passes all of Jaffer's r4rstest.scm tests
+ *       so leaving aside a few quibbles, this passes most of Jaffer's r4rstest.scm tests
  *     decided (sigh) to clean up the names throughout -- exported functions start with "s7_", "mk"->"make", etc
  *       also, I've tried to hide all struct details in this file -- only s7.h stuff is exported.
  *     added doc field for foreign funcs
@@ -60,12 +60,14 @@
  *     tracing and gc-verbose are now "foreign functions", not built-in operators
  *     removed environment?, changed interaction-environment to global-environment
  *     changed get-closure-code|env to procedure-source|environment
+ *     added #<unspecified>
  *
  *
  * there's no arg number mismatch check for caller-defined functions!
  * dies if undefined func? (asb 1) as typo
  *
- * need dynamic-wind tested, define* et al (gauche-optargs loads but doesn't work yet).
+ * need dynamic-wind tested, 
+ *      define* et al (gauche-optargs loads but doesn't work yet).
  *      applicable types
  *      block comment #| |#
  *      procedure arity -- is this in the "env"?
@@ -75,8 +77,12 @@
  *      doc strings for scheme funcs
  *      <CLOSURE> should give the name [s7_define could a backpointer to the symbol in the value,
  *          or perhaps search for a match -- the symbol_table is not that big -- closure code is car(p)]
- *      list or list* for xen connection
+ *      list or list* for xen connection, vector->list not yet written in C -- is it needed?
  *      (keyword? :asd) segfaults! -- need the names make-keyword, keyword? 
+ *      need much better error handling and backtrace
+ *      change interface "slot" to symbol-something
+ *      why is there a symbol table and a global environment?
+ *      r4rstest.scm turns up some bugs in number reading
  *
  * [number->string has no "radix" arg]
  * [log in r6rs has a 2nd arg, probably base]
@@ -86,9 +92,32 @@
  * slib dynwind.scm has dynamic-wind
  * guile's optargs.scm has define*
  *
+ * TODO: remove built-in even? odd? positive? negative? zero?
+ * TODO: exact? -> rational? and inexact -> not something
+ * TODO: rename the ops?
+ * TODO: define modulo to handle ratios and reals
+ *
+ * clm2xen.c
+ *  clm2xen.c: In function 'mus_xen_init':
+ *  clm2xen.c:8892: warning: assignment makes pointer from integer without a cast
+ *  clm2xen.c:8893: warning: assignment makes pointer from integer without a cast
+ *  
+ *  snd-file.c: In function 'g_init_file':
+ *  snd-file.c:5687: warning: assignment makes pointer from integer without a cast
+ *  
+ *  snd-env.c: In function 'g_define_envelope':
+ *  snd-env.c:1385: warning: assignment makes pointer from integer without a cast
+ *  snd-env.c: In function 'add_or_edit_symbol':
+ *  snd-env.c:1423: warning: assignment makes pointer from integer without a cast
+ *
+ *  test-cont in r4rs hangs?
+ *
+ * figure out how to replace macro with defmacro, add syntax-rules
+ * there are only 18 s_gotos left -- might as well remove them
  */
 
-#define TIMING 1
+
+#define TIMING 0
 /* 
  * test.scm, with 256k heap: mark: 1.5 secs, sweep: 10.5 secs, of total 65 secs
  *   the problem here is macro expansion -- if I use a function instead, .3 secs:
@@ -313,6 +342,9 @@ struct scheme {
   
   struct cell _UNDEFINED;  
   pointer UNDEFINED;       /* special cell representing unset or undefined object */
+  
+  struct cell _UNSPECIFIED;
+  pointer UNSPECIFIED;     /* special cell representing the unspecified value */
   
   pointer symbol_table;    /* pointer to symbol table */
   pointer global_env;      /* pointer to global environment */
@@ -3133,6 +3165,10 @@ void s7_atom2str(scheme *sc, pointer l, int f, char **pp, int *plen)
     {
       p = "#<undefined>";
     } 
+  else if (l == sc->UNSPECIFIED) 
+    {
+      p = "#<unspecified>";
+    } 
   else if (s7_is_port(l)) 
     {
       p = describe_port(sc, l);
@@ -4255,7 +4291,28 @@ static void eval(scheme *sc, opcode_t first_op)
 	/* e1args causes 80 to 90% of the consing in the evaluator! */
 
       case OP_E1ARGS:     /* eval arguments */
-	sc->args = cons(sc, sc->value, sc->args);
+	sc->args = cons(sc, sc->value, sc->args);  /* this line is the speed killer for the whole program */
+	                                           /*   I've failed twice to find a way to reduce the consing */
+	/*  the no cons method:
+	 * E0ARGS:	    sc->args = sc->code;
+	 * E1ARGS:          car(sc->code) = sc->value;
+	 *                  sc->code = cdr(sc->code);
+	 *                  if (s7_is_pair(sc->code))
+	 *                    {
+	 *                      push_stack(sc, OP_E1ARGS, sc->args, sc->code);
+	 *                      sc->code = car(sc->code);
+	 *                      sc->args = sc->NIL;
+	 *                      goto EVAL;
+	 *                    }
+	 *                  else
+	 *                    {
+	 *                      sc->code = car(sc->args);
+	 *                      sc->args = cdr(sc->args);
+	 *                      -- drop into apply --
+	 *                    }
+         * but even with copy-tree of the procedure-source (below), this fails in odd cases --
+         * somehow the current arg list infects the original procedure-source.
+         */
 
 	if (s7_is_pair(sc->code)) 
 	  { /* continue */
@@ -4465,7 +4522,7 @@ static void eval(scheme *sc, opcode_t first_op)
 	if (is_true(sc->value))
 	  sc->code = car(sc->code);
 	else
-	  sc->code = cadr(sc->code);  /* (if #f 1) ==> () because car(sc->NIL) = sc->NIL */
+	  sc->code = cadr(sc->code);  /* (if #f 1) ==> #<unspecified> because car(sc->NIL) = sc->UNSPECIFIED */
 	goto EVAL;
 	
       case OP_LET0:       /* let */
@@ -6158,12 +6215,6 @@ static void eval(scheme *sc, opcode_t first_op)
 }
 
 
-
-
-
-
-/* ========== Initialization of internal keywords ========== */
-
 static void assign_syntax(scheme *sc, char *name, opcode_t op) 
 {
   pointer x;
@@ -6475,6 +6526,7 @@ pointer s7_load_path(scheme *sc)
 
 pointer s7_add_to_load_path(scheme *sc, const char *file)
 {
+  /* TODO: load path stuff */
   return(s7_F(sc));
 }
 
@@ -6545,6 +6597,7 @@ pointer s7_list_ref(scheme *sc, pointer lst, int num)
 
 pointer s7_list_set(scheme *sc, pointer lst, int num, pointer val)
 {
+  /* TODO: list-set! */
   return(s7_F(sc));
 }
 
@@ -6573,12 +6626,14 @@ pointer s7_member(scheme *sc, pointer sym, pointer lst)
 
 pointer s7_vector_to_list(scheme *sc, pointer vect)
 {
+  /* TODO vector->list */
   return(s7_NIL(sc));
 }
 
 
 bool s7_eq_p(pointer obj1, pointer obj2)
 {
+  /* TODO: eqv?? */
   return(obj1 == obj2);
 }
 
@@ -6592,6 +6647,7 @@ pointer s7_eval_string(scheme *sc, const char *str)
 
 pointer s7_eval_form(scheme *sc, pointer form)
 {
+  /* TODO: eval form */
   return(s7_F(sc));
 }
 
@@ -6634,6 +6690,7 @@ pointer s7_error(scheme *sc, pointer type, pointer info)
 
 pointer s7_throw(scheme *sc, pointer type, pointer info)
 {
+  /* TODO: throw and error handling in C */
   return(s7_F(sc));
 }
 
@@ -6722,22 +6779,26 @@ scheme *s7_init(void)
   sc->F = &sc->_HASHF;
   sc->EOF_OBJ = &sc->_EOF_OBJ;
   sc->UNDEFINED = &sc->_UNDEFINED;
+  sc->UNSPECIFIED = &sc->_UNSPECIFIED;
+  
+  set_type(sc->UNSPECIFIED, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT);
+  car(sc->UNSPECIFIED) = cdr(sc->UNSPECIFIED) = sc->UNSPECIFIED;
   
   set_type(sc->NIL, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT);
-  car(sc->NIL) = cdr(sc->NIL) = sc->NIL;
+  car(sc->NIL) = cdr(sc->NIL) = sc->UNSPECIFIED;
   tst_NIL = sc->NIL;
   
   set_type(sc->T, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT);
-  car(sc->T) = cdr(sc->T) = sc->T;
+  car(sc->T) = cdr(sc->T) = sc->UNSPECIFIED;
   
   set_type(sc->F, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT);
-  car(sc->F) = cdr(sc->F) = sc->F;
+  car(sc->F) = cdr(sc->F) = sc->UNSPECIFIED;
   
   set_type(sc->EOF_OBJ, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT);
-  car(sc->EOF_OBJ) = cdr(sc->EOF_OBJ) = sc->F;
+  car(sc->EOF_OBJ) = cdr(sc->EOF_OBJ) = sc->UNSPECIFIED;
   
   set_type(sc->UNDEFINED, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT);
-  car(sc->UNDEFINED) = cdr(sc->UNDEFINED) = sc->F;
+  car(sc->UNDEFINED) = cdr(sc->UNDEFINED) = sc->UNSPECIFIED;
   
   sc->inport = sc->NIL;
   sc->outport = sc->NIL;
@@ -6840,33 +6901,10 @@ scheme *s7_init(void)
   
   sc->gc_off = false;
   
-  s7_define_foreign_function(sc, "tracing", g_tracing, "(tracing bool) turns tracing on or off)");
+  s7_define_foreign_function(sc, "tracing",    g_tracing,    "(tracing bool) turns tracing on or off)");
   s7_define_foreign_function(sc, "gc-verbose", g_gc_verbose, "(gc-verbose bool) turns GC reportage on or off)");
   
   return(sc);
 }
-
-
-/* TODO: remove built-in even? odd? positive? negative? zero?
- * TODO: exact? -> rational? and inexact -> not something
- * TODO: rename the ops?
- * TODO: define modulo to handle ratios and reals
- */
-/*
-  clm2xen.c
-  clm2xen.c: In function 'mus_xen_init':
-  clm2xen.c:8892: warning: assignment makes pointer from integer without a cast
-  clm2xen.c:8893: warning: assignment makes pointer from integer without a cast
-  
-  snd-file.c: In function 'g_init_file':
-  snd-file.c:5687: warning: assignment makes pointer from integer without a cast
-  
-  snd-env.c: In function 'g_define_envelope':
-  snd-env.c:1385: warning: assignment makes pointer from integer without a cast
-  snd-env.c: In function 'add_or_edit_symbol':
-  snd-env.c:1423: warning: assignment makes pointer from integer without a cast
-
-  test-cont in r4rs hangs?
-*/
 
 
