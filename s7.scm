@@ -1,10 +1,31 @@
+(gc-verbose #f)
+(tracing #f)
+
+
+(define (error . args) 
+  (display "error: ") 
+  (display args) 
+  (newline) 
+  (if (port-filename (current-input-port))
+      (begin
+	(display "    ")
+	(display (port-filename (current-input-port)))
+	(display ", line ")
+	(display (port-line-number (current-input-port)))
+	(stacktrace)
+	(newline)))
+  'error)
+
+;(define (error . args) 'error)
+
+
 ;;; init for S7 from:
 
 					;    Initialization file for TinySCHEME 1.39
 
 					; Per R5RS, up to four deep compositions should be defined
 (define (caar x) (car (car x)))
-(define (cadr x) (car (cdr x)))
+;(define (cadr x) (car (cdr x)))
 (define (cdar x) (cdr (car x)))
 (define (cddr x) (cdr (cdr x)))
 (define (caaar x) (car (car (car x))))
@@ -203,7 +224,7 @@
 	l
 	(loop (1- n) (cons (vector-ref v n) l)))))
 
-					; DEFINE-MACRO Contributed by Andy Gaynor
+
 ;; The following quasiquote macro is due to Eric S. Tiedemann.
 ;;   Copyright 1988 by Eric S. Tiedemann; all rights reserved.
 ;;
@@ -212,6 +233,7 @@
 (macro
     quasiquote
   (lambda (l)
+
     (define (mcons f l r)
       (if (and (pair? r)
 	       (eq? (car r) 'quote)
@@ -226,6 +248,7 @@
 	      (apply l (eval r))
 	      (list 'cons l r)
 	      )))
+
     (define (mappend f l r)
       (if (or (null? (cdr f))
 	      (and (pair? r)
@@ -233,6 +256,7 @@
 		   (eq? (car (cdr r)) '())))
 	  l
 	  (list 'append l r)))
+
     (define (foo level form)
       (cond ((not (pair? form))
 	     (if (or (procedure? form) (number? form) (string? form))
@@ -241,17 +265,22 @@
 	     )
 	    ((eq? 'quasiquote (car form))
 	     (mcons form ''quasiquote (foo (+ level 1) (cdr form))))
+
 	    (#t (if (zero? level)
-		    (cond ((eq? (car form) 'unquote) (car (cdr form)))
+		    (cond ((eq? (car form) 'unquote)
+			   (car (cdr form)))
+
 			  ((eq? (car form) 'unquote-splicing)
-			   (error "Unquote-splicing wasn't in a list:"
-				  form))
+			   form)
+
 			  ((and (pair? (car form))
 				(eq? (car (car form)) 'unquote-splicing))
 			   (mappend form (car (cdr (car form)))
 				    (foo level (cdr form))))
+
 			  (#t (mcons form (foo level (car form))
 				     (foo level (cdr form)))))
+
 		    (cond ((eq? (car form) 'unquote)
 			   (mcons form ''unquote (foo (- level 1)
 						      (cdr form))))
@@ -263,13 +292,27 @@
     (foo 0 (car (cdr l)))))
 
 
-(macro (define-macro dform)
-  (if (symbol? (cadr dform))
-      `(macro ,@(cdr dform))
-      (let ((form (gensym)))
-	`(macro (,(caadr dform) ,form)
-	   (apply (lambda ,(cdadr dform) ,@(cddr dform)) (cdr ,form))))))
 
+					; DEFINE-MACRO Contributed by Andy Gaynor
+(macro (define-macro dform)
+  (if (symbol? (cadr dform))            
+      `(macro ,@(cdr dform))            
+      (let ((form (gensym)))            ; rename args of (define-macro (name . args) body)
+	`(macro (,(caadr dform) ,form)  ; new initial (name args) list with the renamed args and original name
+	   (apply 
+	    (lambda ,(cdadr dform)      ; (lambda (orig args...)
+	      ,@(cddr dform))           ; body 
+	    (cdr ,form))))))            ; apply's arg list with the args renamed
+
+#|
+(quasiquote 
+ (macro ((unquote (caadr dform)) 
+	 (unquote form))
+   (apply 
+    (lambda (unquote (cdadr dform)) 
+      (unquote-splicing (cddr dform)))
+    (cdr (unquote form)))))
+|#
 
 
 ;;;;; atom? and equal? written by a.k
@@ -338,18 +381,24 @@
 
 (define (acons x y z) (cons (cons x y) z))
 
+
 ;;;; Utility to ease macro creation
-(define (macro-expand form)
+(define (macroexpand form)
   ((eval (procedure-source (eval (car form)))) form))
+
+
 
 ;;;; Handy for imperative programs
 ;;;; Used as: (define-with-return (foo x y) .... (return z) ...)
 
 (macro (define-with-return form)
   `(define ,(cadr form)
-     (call-with-exit (lambda (return) ,@(cddr form)))))
+     (call-with-exit
+      (lambda (return) 
+	,@(cddr form)))))
 
 
+#!
 ;;;;; Definition of MAKE-ENVIRONMENT, to be used with two-argument EVAL
 
 (macro (make-environment form)
@@ -364,37 +413,26 @@
     (if (closure? xval)
 	(make-closure (procedure-source xval) env)
 	xval)))
+!#
 
-					; Redefine this if you install another package infrastructure
-					; Also redefine 'package'
 
 ;;;;; I/O
 
-(define (input-output-port? p)
-  (and (input-port? p) (output-port? p)))
+(define (call-with-input-file filename func)
+  (let ((inport (open-input-file filename)))
+    (and (input-port? inport)
+	 (let ((res (func inport)))
+	   (close-input-port inport)
+	   res))))
 
-(define (close-port p)
-  (cond 
-   ((input-output-port? p) (close-input-port (close-output-port p)))
-   ((input-port? p) (close-input-port p))
-   ((output-port? p) (close-output-port p))
-   (else (throw "Not a port" p))))
+(define (call-with-output-file filename func)
+  (let ((outport (open-output-file filename)))
+    (and (output-port? outport)
+	 (let ((res (func outport)))
+	   (close-output-port outport)
+	   res))))
 
-(define (call-with-input-file s p)
-  (let ((inport (open-input-file s)))
-    (if (eq? inport #f)
-	#f
-	(let ((res (p inport)))
-	  (close-input-port inport)
-	  res))))
 
-(define (call-with-output-file s p)
-  (let ((outport (open-output-file s)))
-    (if (eq? outport #f)
-	#f
-	(let ((res (p outport)))
-	  (close-output-port outport)
-	  res))))
 
 (define (with-input-from-file s p)
   (let ((inport (open-input-file s)))
@@ -418,65 +456,14 @@
 	    (set-output-port prev-outport)
 	    res)))))
 
-(define (with-input-output-from-to-files si so p)
-  (let ((inport (open-input-file si))
-	(outport (open-input-file so)))
-    (if (not (and inport outport))
-	(begin
-	  (close-input-port inport)
-	  (close-output-port outport)
-	  #f)
-	(let ((prev-inport (current-input-port))
-	      (prev-outport (current-output-port)))
-	  (set-input-port inport)
-	  (set-output-port outport)
-	  (let ((res (p)))
-	    (close-input-port inport)
-	    (close-output-port outport)
-	    (set-input-port prev-inport)
-	    (set-output-port prev-outport)
-	    res)))))
 
-
-;; SRFI-0 
-;; COND-EXPAND
-;; Implemented as a macro
-(define *features* '(srfi-0))
-
-(define-macro (cond-expand . cond-action-list)
-  (cond-expand-runtime cond-action-list))
-
-(define (cond-expand-runtime cond-action-list)
-  (if (null? cond-action-list)
-      #t
-      (if (cond-eval (caar cond-action-list))
-          `(begin ,@(cdar cond-action-list))
-          (cond-expand-runtime (cdr cond-action-list)))))
-
-(define (cond-eval-and cond-list)
-  (foldr (lambda (x y) (and (cond-eval x) (cond-eval y))) #t cond-list))
-
-(define (cond-eval-or cond-list)
-  (foldr (lambda (x y) (or (cond-eval x) (cond-eval y))) #f cond-list))
-
-(define (cond-eval condition)
-  (cond ((symbol? condition)
-	 (if (member condition *features*) #t #f))
-	((eq? condition #t) #t)
-	((eq? condition #f) #f)
-	(else (case (car condition)
-		((and) (cond-eval-and (cdr condition)))
-		((or) (cond-eval-or (cdr condition)))
-		((not) (if (not (null? (cddr condition)))
-			   (error "cond-expand : 'not' takes 1 argument")
-			   (not (cond-eval (cadr condition)))))
-		(else (error "cond-expand : unknown operator" (car condition)))))))
-
-(gc-verbose #f)
-(tracing #f)
 
 
 ;;; --------------------------------------------------------------------------------
+
+
+
+(define *features* '())
 
 (define (provide sym)
   (set! *features* (cons sym *features*)))
@@ -500,9 +487,14 @@
     r))
 
 
-;;; defmacro from slib
-(define-macro (defmacro name args . body)
-  `(define-macro (,name ,@args) ,@body))
+(macro (defmacro dform)
+  (let ((form (gensym)))            ; rename args 
+    `(macro (,(cadr dform) ,form)   ; new initial (name args) list with the renamed args and original name
+       (apply 
+	(lambda ,(caddr dform)      ; (lambda (orig args...)
+	  ,@(cdddr dform))          ; body 
+	(cdr ,form))))))            ; apply's arg list with the args renamed
+
 
 ;;; scheme side make-procedure-with-setter -- not pretty (only needed for snd-nogui.c fallbacks)
 (defmacro make-procedure-with-setter (name getter setter)
@@ -517,15 +509,12 @@
 (define (with-output-to-string thunk)
   (let* ((output-port (current-output-port))
 	 (string-port (open-output-string)))
-    (set-output-port string-port)
     (thunk)
     (let ((result (get-output-string string-port)))
-      (set-output-port output-port)
-      ;(close-output-port string-port)
+      (close-output-port string-port)
       result)))
 
-(define (error . args) (display "error: ") (display args) (newline) 'error)
-;(define (error . args) 'error)
+
 
 (define (catch tag body tag-handler)
   (call-with-exit
@@ -536,6 +525,7 @@
 	(body)))))
 
 ; (let ((tag (catch #t (lambda () (display "before") (error 'oops) (display "after")) (lambda args (display "in handler") 'error)))) tag)
+
 
 ;;; the standard format won't work currently -- string port troubles
 (define (format dest str . args)

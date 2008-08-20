@@ -240,7 +240,7 @@ static bool local_arity_ok(XEN proc, int args) /* from snd-xen.c minus (inconven
   return (rargs == args);
 #endif
 
-#if HAVE_GUILE
+#if HAVE_GUILE || HAVE_S7
   {
     int oargs, restargs;
     rargs = XEN_TO_C_INT(XEN_CAR(arity));

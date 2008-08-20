@@ -339,6 +339,13 @@ static RETSIGTYPE snd_sigusr1(int ignored)
    */
   XEN_ERROR(XEN_ERROR_TYPE("snd-top-level"), XEN_EMPTY_LIST);
 }
+
+#if HAVE_S7
+static void jump_to_top_level(void)
+{
+  top_level_catch(1);
+}
+#endif
 #endif
 
 
@@ -408,6 +415,9 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
 
 #if HAVE_FORTH || HAVE_GAUCHE || HAVE_RUBY || HAVE_S7
   xen_initialize();
+#if HAVE_S7 && HAVE_SETJMP_H
+  s7_set_error_exiter(s7, jump_to_top_level);
+#endif
 #endif
 
   for (i = 1; i < argc; i++)

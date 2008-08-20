@@ -7126,6 +7126,7 @@ static XEN g_transform_size(XEN snd, XEN chn)
 static XEN g_set_transform_size(XEN val, XEN snd, XEN chn)
 {
   off_t len;
+
   XEN_ASSERT_TYPE(XEN_OFF_T_P(val), val, XEN_ARG_1, S_setB S_transform_size, "an integer"); 
   len = XEN_TO_C_OFF_T(val);
   if (len <= 0)
@@ -7889,8 +7890,10 @@ static XEN g_x_bounds(XEN snd_n, XEN chn_n)
 static XEN g_set_x_bounds(XEN bounds, XEN snd_n, XEN chn_n)
 {
   chan_info *cp;
+
   ASSERT_CHANNEL(S_setB S_x_bounds, snd_n, chn_n, 2);
   XEN_ASSERT_TYPE(XEN_LIST_P(bounds) && (XEN_LIST_LENGTH(bounds) == 2), bounds, XEN_ARG_1, S_setB S_x_bounds, "a list: (x0 x1)");
+
   cp = get_cp(snd_n, chn_n, S_setB S_x_bounds);
   if (!cp) return(XEN_FALSE);
   if (cp->time_graph_type == GRAPH_ONCE) 

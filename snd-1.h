@@ -97,40 +97,41 @@ static XEN name_reversed(XEN *argv, int argc, void *self) \
 #if HAVE_S7
 
 #define WITH_TWO_SETTER_ARGS(name_reversed, name)	   \
-  static pointer name_reversed(scheme *sc, pointer args)   \
+  static s7_pointer name_reversed(s7_scheme *sc, s7_pointer args)   \
   {                                                        \
-    if (XEN_NOT_BOUND_P(XEN_CADR(args)))		   \
+    if (XEN_NULL_P(XEN_CDR(args)))		   \
       return(name(XEN_CAR(args), XEN_UNDEFINED));	   \
     return(name(XEN_CADR(args), XEN_CAR(args)));	   \
   }
 
 #define WITH_THREE_SETTER_ARGS(name_reversed, name)                      \
-  static pointer name_reversed(scheme *sc, pointer args)                 \
+  static s7_pointer name_reversed(s7_scheme *sc, s7_pointer args)                 \
   {							                 \
-    if (XEN_NOT_BOUND_P(XEN_CADR(args)))		                 \
+    if (XEN_NULL_P(XEN_CDR(args)))		                 \
       return(name(XEN_CAR(args), XEN_UNDEFINED, XEN_UNDEFINED));         \
     else {					 		         \
-      if (XEN_NOT_BOUND_P(XEN_CADDR(args)))				 \
-      return(name(XEN_CADR(args), XEN_CAR(args), XEN_UNDEFINED));	 \
+      if (XEN_NULL_P(XEN_CDDR(args)))				 \
+	return(name(XEN_CADR(args), XEN_CAR(args), XEN_UNDEFINED));	\
       else return(name(XEN_CADDR(args), XEN_CAR(args), XEN_CADR(args))); \
   }}
 
 #define WITH_FOUR_SETTER_ARGS(name_reversed, name)                                         \
-  static pointer name_reversed(scheme *sc, pointer args)                                   \
+  static s7_pointer name_reversed(s7_scheme *sc, s7_pointer args)                                   \
 {							                                   \
-  if (XEN_NOT_BOUND_P(XEN_CADR(args)))					                   \
+  if (XEN_NULL_P(XEN_CDR(args)))					                   \
     return(name(XEN_CAR(args), XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));              \
   else {								                   \
-    if (XEN_NOT_BOUND_P(XEN_CADDR(args)))				                   \
+    if (XEN_NULL_P(XEN_CDDR(args)))				                   \
       return(name(XEN_CADR(args), XEN_CAR(args), XEN_UNDEFINED, XEN_UNDEFINED));           \
     else {								                   \
-      if (XEN_NOT_BOUND_P(XEN_CADDDR(args)))				                   \
+      if (XEN_NULL_P(XEN_CDDDR(args)))				                   \
 	return(name(XEN_CADDR(args), XEN_CAR(args), XEN_CADR(args), XEN_UNDEFINED));       \
       else return(name(XEN_CADDDR(args), XEN_CAR(args), XEN_CADR(args), XEN_CADDR(args))); \
   }}}
 
 #else
 
+/* 10 case in snd-edits for set-samples and a 5 case for set-sample */
 #define WITH_TWO_SETTER_ARGS(name_reversed, name)
 #define WITH_THREE_SETTER_ARGS(name_reversed, name)
 #define WITH_FOUR_SETTER_ARGS(name_reversed, name)
@@ -1214,7 +1215,7 @@ int enved_all_envs_top(void);
 char *enved_all_names(int n);
 void set_enved_env_list_top(int n);
 env *enved_all_envs(int pos);
-void alert_envelope_editor(char *name, env *val);
+void alert_envelope_editor(const char *name, env *val);
 void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool apply_to_selection, bool show_fft, printing_t printing);
 void save_envelope_editor_state(FILE *fd);
 char *env_name_completer(widget_t w, char *text, void *data);
@@ -1223,7 +1224,7 @@ env *string_to_env(const char *str);
 void add_or_edit_symbol(const char *name, env *val);
 env* name_to_env(const char *str);
 env *position_to_env(int pos);
-void delete_envelope(char *name);
+void delete_envelope(const char *name);
 enved_fft *free_enved_fft(enved_fft *ef);
 void reflect_enved_fft_change(chan_info *cp);
 

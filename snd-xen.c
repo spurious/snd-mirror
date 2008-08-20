@@ -851,7 +851,7 @@ bool procedure_arity_ok(XEN proc, int args)
     return(false);
 #endif
 
-#if HAVE_GUILE
+#if HAVE_GUILE || HAVE_S7
   {
     int oargs, restargs, loc;
     loc = snd_protect(arity);
@@ -914,7 +914,7 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
       */
 #endif
 
-#if HAVE_GUILE
+#if HAVE_GUILE || HAVE_S7
       {
 	int oargs, restargs, loc;
 	loc = snd_protect(arity);
@@ -2614,30 +2614,47 @@ static XEN g_getcwd(void)
   return(result);
 }
 
+#if HAVE_SYS_TIME_H
+  #include <sys/time.h>
+#endif
+
 static XEN g_strftime(XEN format, XEN tm)
 {
-  #define H_strftime "(strftime format time) returns the time formatted via format"
+  #define H_strftime "(strftime format time) returns a string describing the time: (strftime \"%d-%b %H:%M %Z\" (localtime (current-time)))"
   char *buf;
   XEN result;
   XEN_ASSERT_TYPE(XEN_STRING_P(format), format, XEN_ARG_1, "strftime", "a string");
   buf = (char *)CALLOC(1024, sizeof(char));
-  /* TODO: s7 time stuff needs checking, current-time corresponds to gettimeofday */
-  /*   get-internal-real|run-time */
-
-#if 0
   strftime(buf, 1024, XEN_TO_C_STRING(format), (const struct tm *)XEN_TO_C_ULONG(tm));
-#endif
   result = C_TO_XEN_STRING(buf);
   FREE(buf);
   return(result);
 }
 
+/* (snd-display ";~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time)))) */
+
 static XEN g_localtime(XEN tm)
 {
   #define H_localtime "(localtime tm) breaks up tm into something suitable for strftime"
-#if 0
   return(C_TO_XEN_ULONG((unsigned long)localtime((const time_t *)(XEN_TO_C_ULONG(tm)))));
-#endif
+}
+
+static XEN g_current_time(XEN tm)
+{
+  static time_t curtime;
+  #define H_current_time "(current-time tm) gets the current time (for localtime and strftime)"
+  curtime = time(NULL);
+  return(C_TO_XEN_ULONG((unsigned long)(&curtime)));
+}
+
+static XEN g_tmpnam(void)
+{
+  XEN str;
+  char *result;
+  result = snd_tempnam();
+  str = C_TO_XEN_STRING(result);
+  FREE(result);
+  return(str);
 }
 
 XEN_NARGIFY_1(g_file_exists_p_w, g_file_exists_p)
@@ -2647,6 +2664,8 @@ XEN_NARGIFY_1(g_delete_file_w, g_delete_file)
 XEN_NARGIFY_0(g_getcwd_w, g_getcwd)
 XEN_NARGIFY_2(g_strftime_w, g_strftime)
 XEN_NARGIFY_1(g_localtime_w, g_localtime)
+XEN_NARGIFY_1(g_current_time_w, g_current_time)
+XEN_NARGIFY_0(g_tmpnam_w, g_tmpnam)
 #endif
 
 
@@ -2753,17 +2772,19 @@ void g_xen_initialize(void)
 #endif
 
 #if HAVE_S7
-  XEN_DEFINE_PROCEDURE("file-exists?", g_file_exists_p_w, 1, 0, 0, H_file_exists_p);
-  XEN_DEFINE_PROCEDURE("system", g_system_w, 1, 0, 0, H_system);
-  XEN_DEFINE_PROCEDURE("getenv", g_getenv_w, 1, 0, 0, H_getenv);
-  XEN_DEFINE_PROCEDURE("delete-file", g_delete_file_w, 1, 0, 0, H_delete_file);
-  XEN_DEFINE_PROCEDURE("getcwd", g_getcwd_w, 0, 0, 0, H_getcwd);
-  XEN_DEFINE_PROCEDURE("strftime", g_strftime_w, 2, 0, 0, H_strftime);
-  XEN_DEFINE_PROCEDURE("localtime", g_localtime_w, 2, 0, 0, H_localtime);
+  XEN_DEFINE_PROCEDURE("file-exists?",           g_file_exists_p_w,          1, 0, 0, H_file_exists_p);
+  XEN_DEFINE_PROCEDURE("system",                 g_system_w,                 1, 0, 0, H_system);
+  XEN_DEFINE_PROCEDURE("getenv",                 g_getenv_w,                 1, 0, 0, H_getenv);
+  XEN_DEFINE_PROCEDURE("delete-file",            g_delete_file_w,            1, 0, 0, H_delete_file);
+  XEN_DEFINE_PROCEDURE("getcwd",                 g_getcwd_w,                 0, 0, 0, H_getcwd);
+  XEN_DEFINE_PROCEDURE("strftime",               g_strftime_w,               2, 0, 0, H_strftime);
+  XEN_DEFINE_PROCEDURE("tmpnam",                 g_tmpnam_w,                 0, 0, 0, H_localtime);
+  XEN_DEFINE_PROCEDURE("localtime",              g_localtime_w,              1, 0, 0, H_localtime);
+  XEN_DEFINE_PROCEDURE("current-time",           g_current_time_w,           1, 0, 0, H_current_time);
   XEN_DEFINE_CONSTANT("internal-time-units-per-second", 100, "clock speed");
-  XEN_DEFINE_PROCEDURE("random", g_random_w, 1, 0, 0, "(random arg): random number between 0 and arg ");
+  XEN_DEFINE_PROCEDURE("random",                 g_random_w,                 1, 0, 0, "(random arg): random number between 0 and arg ");
   XEN_DEFINE_PROCEDURE("get-internal-real-time", g_get_internal_real_time_w, 0, 0, 0, "get system time");
-  XEN_DEFINE_PROCEDURE("ftell", g_ftell_w, 1, 0, 0, "(ftell fd): lseek");
+  XEN_DEFINE_PROCEDURE("ftell",                  g_ftell_w,                  1, 0, 0, "(ftell fd): lseek");
 #endif
 
   XEN_DEFINE_PROCEDURE(S_delete_watcher, g_delete_watcher_w, 1, 0, 0, H_delete_watcher);

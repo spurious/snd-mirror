@@ -1,6 +1,9 @@
 #ifndef _S7_H
 #define _S7_H
 
+#define S7_VERSION "0"
+#define S7_DATE "1-Sep-08"
+
 #include <stdio.h>
 
 #ifndef __cplusplus
@@ -15,191 +18,197 @@
 #endif
 #endif
 
-#define Int off_t
-#define Int_d "%lld"
+#define s7_Int off_t
+#define s7_Int_d "%lld"
+
+typedef struct s7_scheme s7_scheme;
+typedef struct s7_cell *s7_pointer;
+
+typedef s7_pointer (*s7_function)(s7_scheme *sc, s7_pointer a);
+
+s7_pointer s7_F(s7_scheme *sc);
+s7_pointer s7_T(s7_scheme *sc);
+s7_pointer s7_NIL(s7_scheme *sc);
+s7_pointer s7_UNDEFINED(s7_scheme *sc);
+s7_pointer s7_EOF_OBJ(s7_scheme *sc);
+s7_pointer s7_global_env(s7_scheme *sc);
+
+bool s7_is_immutable(s7_pointer p);
+void s7_set_immutable(s7_pointer p);
+s7_pointer s7_immutable_cons(s7_scheme *sc, s7_pointer a, s7_pointer b);
+
+s7_pointer s7_cons(s7_scheme *sc, s7_pointer a, s7_pointer b);
+s7_pointer s7_car(s7_pointer p);
+s7_pointer s7_cdr(s7_pointer p);
+bool s7_is_pair(s7_pointer p);
+s7_pointer s7_set_car(s7_pointer p, s7_pointer q);
+s7_pointer s7_set_cdr(s7_pointer p, s7_pointer q);
+
+int s7_list_length(s7_scheme *sc, s7_pointer a);
+s7_pointer s7_reverse(s7_scheme *sc, s7_pointer a);
+s7_pointer s7_reverse_in_place(s7_scheme *sc, s7_pointer term, s7_pointer list);
+s7_pointer s7_append(s7_scheme *sc, s7_pointer a, s7_pointer b);
+s7_pointer s7_list_ref(s7_scheme *sc, s7_pointer lst, int num);
+s7_pointer s7_list_set(s7_scheme *sc, s7_pointer lst, int num, s7_pointer val);
+s7_pointer s7_assoc(s7_scheme *sc, s7_pointer sym, s7_pointer lst);
+s7_pointer s7_member(s7_scheme *sc, s7_pointer sym, s7_pointer lst);
+s7_pointer s7_remv(s7_scheme *sc, s7_pointer a, s7_pointer obj);
 
 
-#define S7_VERSION "0"
+bool s7_is_string(s7_pointer p);
+char *s7_string(s7_pointer p);
+s7_pointer s7_make_string(s7_scheme *sc, const char *str);
+s7_pointer s7_make_counted_string(s7_scheme *sc, const char *str, int len);
 
-typedef struct scheme scheme;
-typedef struct cell *pointer;
-
-typedef pointer (*foreign_func)(scheme *sc, pointer a);
-
-pointer s7_F(scheme *sc);
-pointer s7_T(scheme *sc);
-pointer s7_NIL(scheme *sc);
-pointer s7_UNDEFINED(scheme *sc);
-pointer s7_EOF_OBJ(scheme *sc);
-pointer s7_global_env(scheme *sc);
-
-bool s7_is_immutable(pointer p);
-void s7_set_immutable(pointer p);
-pointer s7_immutable_cons(scheme *sc, pointer a, pointer b);
-
-pointer s7_cons(scheme *sc, pointer a, pointer b);
-pointer s7_car(pointer p);
-pointer s7_cdr(pointer p);
-bool s7_is_pair(pointer p);
-pointer s7_set_car(pointer p, pointer q);
-pointer s7_set_cdr(pointer p, pointer q);
-
-int s7_list_length(scheme *sc, pointer a);
-pointer s7_reverse(scheme *sc, pointer a);
-pointer s7_reverse_in_place(scheme *sc, pointer term, pointer list);
-pointer s7_append(scheme *sc, pointer a, pointer b);
-pointer s7_list_ref(scheme *sc, pointer lst, int num);
-pointer s7_list_set(scheme *sc, pointer lst, int num, pointer val);
-pointer s7_assoc(scheme *sc, pointer sym, pointer lst);
-pointer s7_member(scheme *sc, pointer sym, pointer lst);
-pointer s7_remv(scheme *sc, pointer a, pointer obj);
+bool s7_is_character(s7_pointer p);
+char s7_character(s7_pointer p);
+s7_pointer s7_make_character(s7_scheme *sc, int c);
 
 
-bool s7_is_string(pointer p);
-char *s7_string(pointer p);
-pointer s7_make_string(scheme *sc, const char *str);
-pointer s7_make_counted_string(scheme *sc, const char *str, int len);
+bool s7_is_number(s7_pointer p);
+bool s7_is_exact(s7_pointer p);
+bool s7_is_inexact(s7_pointer p);
 
-bool s7_is_character(pointer p);
-char s7_character(pointer p);
-pointer s7_make_character(scheme *sc, int c);
+s7_Int s7_integer(s7_pointer p);
+bool s7_is_integer(s7_pointer p);
+s7_pointer s7_make_integer(s7_scheme *sc, s7_Int num);
 
+bool s7_is_real(s7_pointer p);
+double s7_real(s7_pointer p);
+s7_pointer s7_make_real(s7_scheme *sc, double num);
 
-bool s7_is_number(pointer p);
-bool s7_is_exact(pointer p);
-bool s7_is_inexact(pointer p);
+bool s7_is_ulong(s7_pointer arg);
+unsigned long s7_ulong(s7_pointer num);
+s7_pointer s7_make_ulong(s7_scheme *sc, unsigned long num);
 
-Int s7_integer(pointer p);
-bool s7_is_integer(pointer p);
-pointer s7_make_integer(scheme *sc, Int num);
+bool s7_is_rational(s7_pointer arg);
+bool s7_is_ratio(s7_pointer arg);
+s7_pointer s7_make_ratio(s7_scheme *sc, s7_Int a, s7_Int b);
+s7_pointer s7_rationalize(s7_scheme *sc, double x, double error);
+s7_Int s7_numerator(s7_pointer x);
+s7_Int s7_denominator(s7_pointer x);
 
-bool s7_is_real(pointer p);
-double s7_double(pointer p);
-pointer s7_make_real(scheme *sc, double num);
+bool s7_is_complex(s7_pointer arg);
+s7_pointer s7_make_complex(s7_scheme *sc, double a, double b);
+double s7_real_part(s7_pointer z);
+double s7_imag_part(s7_pointer z);
 
-bool s7_is_ulong(pointer arg);
-unsigned long s7_ulong(pointer num);
-pointer s7_make_ulong(scheme *sc, unsigned long num);
+bool s7_is_vector(s7_pointer p);
+void s7_fill_vector(s7_pointer vec, s7_pointer obj);
+s7_pointer s7_vector_ref(s7_pointer vec, int ielem);
+s7_pointer s7_vector_set(s7_pointer vec, int ielem, s7_pointer a);
+s7_pointer s7_make_vector(s7_scheme *sc, int len);
+s7_pointer s7_make_and_fill_vector(s7_scheme *sc, int len, s7_pointer fill);
+int s7_vector_length(s7_pointer vec);
+s7_pointer s7_vector_to_list(s7_scheme *sc, s7_pointer vect);
 
-bool s7_is_rational(pointer arg);
-bool s7_is_ratio(pointer arg);
-pointer s7_make_ratio(scheme *sc, Int a, Int b);
-pointer s7_rationalize(scheme *sc, double x, double error);
-Int s7_numerator(pointer x);
-Int s7_denominator(pointer x);
+bool s7_is_symbol(s7_pointer p);
+char *s7_symbol_name(s7_pointer p);
+s7_pointer s7_make_symbol(s7_scheme *sc, const char *name);
+s7_pointer s7_gensym(s7_scheme *sc);
 
-bool s7_is_complex(pointer arg);
-pointer s7_make_complex(scheme *sc, double a, double b);
-double s7_real_part(pointer z);
-double s7_imag_part(pointer z);
-
-bool s7_is_vector(pointer p);
-void s7_fill_vector(pointer vec, pointer obj);
-pointer s7_vector_ref(pointer vec, int ielem);
-pointer s7_vector_set(pointer vec, int ielem, pointer a);
-pointer s7_make_vector(scheme *sc, int len);
-pointer s7_make_and_fill_vector(scheme *sc, int len, pointer fill);
-int s7_vector_length(pointer vec);
-pointer s7_vector_to_list(scheme *sc, pointer vect);
-
-bool s7_is_port(pointer p);
-bool s7_is_proc(pointer p);
+bool s7_is_keyword(s7_pointer obj);
+bool s7_keyword_eq_p(s7_pointer k1, s7_pointer k2);
+s7_pointer s7_make_keyword(s7_scheme *sc, const char *key);
 
 
-bool s7_is_symbol(pointer p);
-char *s7_symbol_name(pointer p);
-pointer s7_make_symbol(scheme *sc, const char *name);
-pointer s7_gensym(scheme *sc);
+bool s7_is_function(s7_pointer p);
+s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
+void s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
+const char *s7_function_documentation(s7_pointer p);
+s7_pointer s7_function_arity(s7_scheme *sc, s7_pointer x);
 
-bool s7_is_keyword(pointer obj);
-bool s7_keyword_eq_p(pointer k1, pointer k2);
-pointer s7_make_keyword(scheme *sc, const char *key);
-
-
-bool s7_is_foreign_function(pointer p);
-pointer s7_make_foreign_function(scheme *sc, foreign_func f, const char *name, const char *doc);
-const char *s7_foreign_function_doc(pointer p);
-
-int s7_new_foreign_type(const char *name, 
+int s7_new_type(const char *name, 
 			char *(*print)(void *value), 
 			void (*free)(void *value), 
 			bool (*equal)(void *val1, void *val2),
 			void (*gc_mark)(void *val));
 
-void *s7_foreign_object_value(pointer obj);
-int s7_foreign_object_type(pointer obj);
-bool s7_is_foreign_object(pointer p);
-pointer s7_make_foreign_object(scheme *sc, int type, void *value);
-char *s7_describe_foreign_object(pointer a);
-void s7_free_foreign_object(pointer a);
-bool s7_equalp_foreign_objects(pointer a, pointer b);
-void s7_mark_object(pointer a); /* s7 for foreign objects with embedded scheme objects */
+void *s7_object_value(s7_pointer obj);
+int s7_object_type(s7_pointer obj);
+bool s7_is_object(s7_pointer p);
+s7_pointer s7_make_object(s7_scheme *sc, int type, void *value);
+char *s7_describe_object(s7_pointer a);
+void s7_free_object(s7_pointer a);
+bool s7_equalp_objects(s7_pointer a, s7_pointer b);
+void s7_mark_object(s7_pointer a);
+
+void s7_define_variable(s7_scheme *sc, const char *name, s7_pointer value);
 
 
-bool s7_is_closure(pointer p);
-pointer s7_procedure_source(pointer p);
-pointer s7_procedure_environment(pointer p);
-pointer s7_make_closure(scheme *sc, pointer c, pointer e);
+bool s7_is_closure(s7_pointer p);
+s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p);
+s7_pointer s7_procedure_environment(s7_pointer p);
+s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e);
 
-bool s7_is_continuation(pointer p);
+bool s7_is_continuation(s7_pointer p);
 
-scheme *s7_init(void);
-void s7_kill(scheme *sc);
-void s7_set_input_port_file(scheme *sc, FILE *fin);
-void s7_set_input_port_string(scheme *sc, char *start, char *past_the_end);
-void s7_set_output_port_file(scheme *sc, FILE *fin);
-void s7_set_output_port_string(scheme *sc, char *start, char *past_the_end);
+s7_scheme *s7_init(void);
+void s7_kill(s7_scheme *sc);
 
-void s7_putstr(scheme *sc, const char *s);
-void s7_putchars(scheme *sc, const char *s, int len);
+s7_pointer s7_apply1(s7_scheme *sc, const char *procname, s7_pointer args);
+s7_pointer s7_apply0(s7_scheme *sc, const char *procname);
+s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args);
 
-pointer s7_apply1(scheme *sc, const char *procname, pointer);
-pointer s7_apply0(scheme *sc, const char *procname);
-pointer s7_call(scheme *sc, pointer func, pointer args);
+bool s7_eqv_p(s7_pointer a, s7_pointer b);
+bool s7_eq_p(s7_pointer obj1, s7_pointer obj2);
 
-bool s7_eqv_p(pointer a, pointer b);
-bool s7_eq_p(pointer obj1, pointer obj2);
+void s7_define(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_pointer value);
+s7_pointer s7_name_to_value(s7_scheme *sc, const char *name);
+s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym);
+s7_pointer s7_symbol_set_value(s7_scheme *sc, s7_pointer sym, s7_pointer val);
 
-void s7_atom2str(scheme *sc, pointer l, int f, char **pp, int *plen);
+s7_pointer s7_eval_string(s7_scheme *sc, const char *str);
+s7_pointer s7_eval_form(s7_scheme *sc, s7_pointer form);
 
-void s7_define(scheme *sc, pointer env, pointer symbol, pointer value);
-pointer s7_find_slot_in_env(scheme *sc, pointer env, pointer sym, int all);
-pointer s7_slot_value_in_env(pointer slot);
-pointer s7_name_to_value(scheme *sc, const char *name);
-pointer s7_symbol_value(scheme *sc, pointer sym);
-pointer s7_symbol_set_value(scheme *sc, pointer sym, pointer val);
+s7_pointer s7_string_to_form(s7_scheme *sc, const char *str);
+s7_pointer s7_object_to_string(s7_scheme *sc, s7_pointer arg);
+char *s7_object_to_c_string(s7_scheme *sc, s7_pointer obj);
 
+s7_pointer s7_load(s7_scheme *sc, const char *file);
+s7_pointer s7_load_path(s7_scheme *sc);
+s7_pointer s7_add_to_load_path(s7_scheme *sc, const char *file);
+s7_pointer s7_load_with_path(s7_scheme *sc, const char *file);
 
-pointer s7_eval_string(scheme *sc, const char *str);
-pointer s7_eval_form(scheme *sc, pointer form);
+void s7_provide(s7_scheme *sc, const char *feature);
 
-pointer s7_string_to_form(scheme *sc, const char *str);
-pointer s7_object_to_string(scheme *sc, pointer arg);
-char *s7_object_to_c_string(scheme *sc, pointer obj);
-void s7_load_string(scheme *sc, const char *cmd);
-
-void s7_load_open_file(scheme *sc, FILE *fin);
-pointer s7_load_file(scheme *sc, const char *file);
-pointer s7_load_path(scheme *sc);
-pointer s7_add_to_load_path(scheme *sc, const char *file);
-pointer s7_load_file_with_path(scheme *sc, const char *file);
-
-void s7_provide(scheme *sc, const char *feature);
-
-const char *s7_get_output_string(scheme *sc, pointer p);
-pointer s7_open_output_string(scheme *sc);
+s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info);
+void s7_error_and_exit(s7_scheme *sc, s7_pointer type, s7_pointer info);
+s7_pointer s7_throw(s7_scheme *sc, s7_pointer type, s7_pointer info);
+void s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n, s7_pointer arg, const char *descr);
+void s7_out_of_range_error(s7_scheme *sc, const char *caller, int arg_n, s7_pointer arg, const char *descr);
+void s7_set_error_exiter(s7_scheme *sc, void (*error_exiter)(void));
 
 
-pointer s7_error(scheme *sc, pointer type, pointer info);
-pointer s7_throw(scheme *sc, pointer type, pointer info);
-pointer s7_wrong_type_arg_error(scheme *sc, const char *caller, int arg_n, pointer arg, const char *descr);
-pointer s7_out_of_range_error(scheme *sc, const char *caller, int arg_n, pointer arg, const char *descr);
+int s7_gc_protect(s7_scheme *sc, s7_pointer x);
+void s7_gc_unprotect(s7_scheme *sc, s7_pointer x);
+void s7_gc_unprotect_at(s7_scheme *sc, int loc);
 
-int s7_gc_protect(scheme *sc, pointer x);
-void s7_gc_unprotect(scheme *sc, pointer x);
-void s7_gc_unprotect_at(scheme *sc, int loc);
+void s7_for_each_symbol_name(s7_scheme *sc, bool (*symbol_func)(const char *symbol_name, void *data), void *data);
+void s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_name, s7_pointer symbol_value, void *data), void *data);
 
-void s7_for_each_symbol_name(scheme *sc, bool (*symbol_func)(const char *symbol_name, void *data), void *data);
-void s7_for_each_symbol(scheme *sc, bool (*symbol_func)(const char *symbol_name, pointer symbol_value, void *data), void *data);
+bool s7_is_procedure(s7_pointer p);
+bool s7_is_function(s7_pointer p);
+
+
+bool s7_is_input_port(s7_scheme *sc, s7_pointer p);
+bool s7_is_output_port(s7_scheme *sc, s7_pointer p);
+s7_pointer s7_current_input_port(s7_scheme *sc);
+s7_pointer s7_current_output_port(s7_scheme *sc);
+void s7_close_input_port(s7_scheme *sc, s7_pointer p);
+void s7_close_output_port(s7_scheme *sc, s7_pointer p);
+s7_pointer s7_open_input_file(s7_scheme *sc, const char *name);
+s7_pointer s7_open_output_file(s7_scheme *sc, const char *name);
+s7_pointer s7_open_input_string(s7_scheme *sc, const char *input_string);
+s7_pointer s7_open_output_string(s7_scheme *sc);
+char *s7_get_output_string(s7_scheme *sc, s7_pointer out_port);
+char s7_read_char(s7_scheme *sc, s7_pointer port);
+char s7_peek_char(s7_scheme *sc, s7_pointer port);
+s7_pointer s7_read(s7_scheme *sc, s7_pointer port);
+void s7_newline(s7_scheme *sc, s7_pointer port);
+void s7_write_char(s7_scheme *sc, char c, s7_pointer port);
+void s7_write(s7_scheme *sc, s7_pointer obj, s7_pointer port);
+void s7_display(s7_scheme *sc, s7_pointer obj, s7_pointer port);
+
 #endif
 

@@ -1610,8 +1610,7 @@ static bool s7_equalp_sound_data(void *s1, void *s2)
 {
   return(sound_data_equalp((sound_data *)s1, (sound_data *)s2));
 }
-#endif
-
+#else
 
 static XEN equalp_sound_data(XEN obj1, XEN obj2)
 {
@@ -1620,7 +1619,7 @@ static XEN equalp_sound_data(XEN obj1, XEN obj2)
 #endif
   return(xen_return_first(C_TO_XEN_BOOLEAN(sound_data_equalp(XEN_TO_SOUND_DATA(obj1), XEN_TO_SOUND_DATA(obj2))), obj1, obj2));
 }
-
+#endif
 
 static XEN g_sound_data_length(XEN obj)
 {

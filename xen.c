@@ -2250,7 +2250,7 @@ void xen_initialize(void)
 
 #include "s7.h"
 
-scheme *s7;
+s7_scheme *s7;
 XEN xen_false, xen_true, xen_nil, xen_undefined;
 
 char *xen_version(void)
@@ -2258,12 +2258,31 @@ char *xen_version(void)
   char *buf;
   buf = (char *)calloc(64, sizeof(char));
 #if HAVE_SNPRINTF
-  snprintf(buf, 64, "S7: %s, Xen: %s", S7_VERSION, XEN_VERSION);
+  snprintf(buf, 64, "S7: %s (%s), Xen: %s", S7_VERSION, S7_DATE, XEN_VERSION);
 #else
-  sprintf(buf, "S7: %s, Xen: %s", S7_VERSION, XEN_VERSION);
+  sprintf(buf, "S7: %s (%s), Xen: %s", S7_VERSION, S7_DATE, XEN_VERSION);
 #endif
   return(buf);
 }
+
+
+double xen_to_c_double(XEN a) 
+{
+  if (s7_is_integer(a))
+    return((double)s7_integer(a));
+  if (s7_is_rational(a))
+    return((double)s7_numerator(a) / (double)s7_denominator(a));
+  return(s7_real(a));
+}
+
+
+double xen_to_c_double_or_else(XEN a, double b) 
+{
+  if (XEN_NUMBER_P(a))
+    return(xen_to_c_double(a));
+  return(b);
+}
+
 
 
 void xen_repl(int argc, char **argv)
@@ -2298,13 +2317,13 @@ void xen_repl(int argc, char **argv)
 
 bool xen_s7_type_p(XEN obj, XEN_OBJECT_TYPE type)
 {
-  return((s7_is_foreign_object(obj)) &&
-	 (s7_foreign_object_value(obj)) && /* i.e. not a null object */
-	 (s7_foreign_object_type(obj) == type));
+  return((s7_is_object(obj)) &&
+	 (s7_object_value(obj)) && /* i.e. not a null object */
+	 (s7_object_type(obj) == type));
 }
 
 
-void xen_s7_ignore(foreign_func func) /* squelch compiler warnings */
+void xen_s7_ignore(s7_function func) /* squelch compiler warnings */
 {
 }
 
@@ -2397,6 +2416,7 @@ XEN xen_s7_define_hook(const char *name, int arity, const char *help)
 XEN xen_define_variable(const char *name, XEN value)
 {
   XEN_DEFINE(name, value);
+  s7_gc_protect(s7, value);
   return(C_STRING_TO_XEN_SYMBOL(name));
 }
 
@@ -2433,23 +2453,17 @@ XEN_ARGIFY_3(g_add_hook_w, g_add_hook)
 
 void xen_initialize(void)
 {
-  FILE *init;
-
   s7 = s7_init();
-  if (!s7) fprintf(stderr, "Can't initialize S7!\n");
+  if (!s7) 
+    {
+      fprintf(stderr, "Can't initialize S7!\n");
+      return;
+    }
 
-  s7_set_input_port_file(s7, stdin);
-  s7_set_output_port_file(s7, stderr);
   xen_false = s7_F(s7);
   xen_true = s7_T(s7);
   xen_nil = s7_NIL(s7);
   xen_undefined = s7_UNDEFINED(s7);
-
-  init = fopen("s7.scm", "r");
-  if (init)
-    s7_load_open_file(s7, init);
-  else fprintf(stderr, "Can't find s7.scm?");
-  fclose(init);
 
   ghook_tag = XEN_MAKE_OBJECT_TYPE("<hook>", print_hook, free_hook, equalp_hook, mark_hook);
 
@@ -2461,6 +2475,8 @@ void xen_initialize(void)
   XEN_DEFINE_PROCEDURE("run-hook",     g_run_hook_w,     0, 0, 1, "(run-hook hook . args) applies each hook function to args");
   XEN_DEFINE_PROCEDURE("make-hook",    g_make_hook_w,    1, 1, 0, "(make-hook arity :optional help) makes a new hook object");
   XEN_DEFINE_PROCEDURE("add-hook!",    g_add_hook_w,     2, 1, 0, "(add-hook! hook func :optional append) adds func to the hooks function list");
+
+  s7_load(s7, "s7.scm");
 }
 
 
@@ -2472,7 +2488,7 @@ void xen_gc_mark(XEN val)
 
 const char *xen_s7_object_help(XEN sym)
 {
-  return(s7_foreign_function_doc(XEN_VARIABLE_REF(sym)));
+  return(s7_function_documentation(XEN_VARIABLE_REF(sym)));
 }
 
 #endif

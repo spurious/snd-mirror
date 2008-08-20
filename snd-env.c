@@ -830,7 +830,7 @@ void set_enved_env_list_top(int n) {env_list_top = n;}
 env *enved_all_envs(int pos) {return(all_envs[pos]);}
 
 
-static void add_envelope(char *name, env *val)
+static void add_envelope(const char *name, env *val)
 {
   if (all_envs_top == all_envs_size)
     {
@@ -860,7 +860,7 @@ static void add_envelope(char *name, env *val)
 }
 
 
-void delete_envelope(char *name)
+void delete_envelope(const char *name)
 {
   int pos;
   pos = find_env(name);
@@ -886,7 +886,7 @@ void delete_envelope(char *name)
 }
 
 
-void alert_envelope_editor(char *name, env *val)
+void alert_envelope_editor(const char *name, env *val)
 {
   /* whenever an envelope is defined, we get notification through this function */
   int i;
@@ -1357,18 +1357,24 @@ static XEN g_define_envelope(XEN name, XEN data, XEN base)
 {
   env *e;
   char *ename;
+
   #define H_define_envelope "(" S_define_envelope " name data :optional base): load 'name' with associated 'data', a list of breakpoints \
 into the envelope editor."
+
   XEN_ASSERT_TYPE(XEN_STRING_P(name) || XEN_SYMBOL_P(name), name, XEN_ARG_1, S_define_envelope, "a string or symbol");
   XEN_ASSERT_TYPE(XEN_LIST_P(data), data, XEN_ARG_2, S_define_envelope, "a list of breakpoints");
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(base) || XEN_FALSE_P(base), base, XEN_ARG_3, S_define_envelope, "a float or " PROC_FALSE);
+
   if (XEN_STRING_P(name))
     ename = XEN_TO_C_STRING(name);
   else ename = XEN_SYMBOL_TO_C_STRING(name);
+
   e = xen_to_env(data);
   if (!e) return(XEN_FALSE);
+
   if (XEN_NUMBER_P(base))
     e->base = XEN_TO_C_DOUBLE(base);
+
 #if HAVE_RUBY
   alert_envelope_editor(xen_scheme_global_variable_to_ruby(ename), e);
   if (env_index >= SND_ENV_MAX_VARS)
@@ -1378,6 +1384,7 @@ into the envelope editor."
   XEN_DEFINE_VARIABLE(ename, snd_env_array[env_index], data); /* need global C variable */
   return(snd_env_array[env_index]);
 #endif
+
 #if HAVE_SCHEME || HAVE_FORTH
   {
     XEN temp;
@@ -1403,15 +1410,19 @@ void add_or_edit_symbol(const char *name, env *val)
 #if HAVE_RUBY
   char *buf, *tmpstr = NULL;
   int len;
+
   if (!val) return;
   tmpstr = env_to_string(val);
   len = snd_strlen(tmpstr) + snd_strlen(name) + 32;
   buf = (char *)CALLOC(len, sizeof(char));
   mus_snprintf(buf, len, "%s = %s", name, tmpstr);
   if (tmpstr) FREE(tmpstr);
+
   snd_catch_any(eval_str_wrapper, buf, buf);
+
   FREE(buf);
 #endif
+
 #if HAVE_GUILE || HAVE_S7
   XEN e;
   if (!val) return;
@@ -1422,6 +1433,7 @@ void add_or_edit_symbol(const char *name, env *val)
     }
   else XEN_DEFINE_VARIABLE(name, e, env_to_xen(val));
 #endif
+
 #if HAVE_FORTH || HAVE_GAUCHE
   XEN e;
   if (!val) return;
@@ -1436,13 +1448,16 @@ env *get_env(XEN e, const char *origin) /* list in e */
 {
   int i, len = 0;
   env *new_env;
+
   XEN_ASSERT_TYPE(XEN_LIST_P_WITH_LENGTH(e, len), e, XEN_ARG_1, origin, "a list");
+
   if (len == 0)
     XEN_ERROR(NO_DATA,
 	      XEN_LIST_3(C_TO_XEN_STRING(origin), 
 			 C_TO_XEN_STRING("null env"), 
 			 e));
   new_env = xen_to_env(e);
+
   for (i = 2; i < new_env->pts * 2; i += 2)
     if (new_env->data[i - 2] > new_env->data[i])
       {
@@ -1467,11 +1482,13 @@ static XEN g_save_envelopes(XEN filename)
   #define H_save_envelopes "(" S_save_envelopes " :optional filename): save the envelopes known to the envelope editor in filename"
   char *name = NULL;
   FILE *fd;
+
   XEN_ASSERT_TYPE((XEN_STRING_P(filename) || (XEN_FALSE_P(filename)) || (XEN_NOT_BOUND_P(filename))), 
 		  filename, XEN_ONLY_ARG, S_save_envelopes, "a string or " PROC_FALSE);
   if (XEN_STRING_P(filename)) 
     name = mus_expand_filename(XEN_TO_C_STRING(filename));
   else name = copy_string("envs.save");
+
   fd = FOPEN(name, "w");
   if (fd) 
     {
@@ -1733,8 +1750,9 @@ void g_init_env(void)
 
 #if HAVE_SCHEME
   XEN_DEFINE_PROCEDURE(S_define_envelope "-1", g_define_envelope_w, 2, 1, 0, H_define_envelope);
-  XEN_EVAL_C_STRING("(defmacro define-envelope (a . b) `(define-envelope-1 ',a ,@b))");
+  XEN_EVAL_C_STRING("(defmacro define-envelope (a  b) `(define-envelope-1 ',a ,b))");
   XEN_EVAL_C_STRING("(defmacro defvar (a b) `(define-envelope-1 ',a ,b))");
+  /* macro used here to ensure that "ampf" in (defvar ampf '(0 0 1 1)) is not evaluated */
 #else
   XEN_DEFINE_PROCEDURE(S_define_envelope, g_define_envelope_w, 2, 1, 0, H_define_envelope);
 #endif

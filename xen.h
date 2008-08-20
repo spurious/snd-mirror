@@ -2058,9 +2058,9 @@ bool xen_hook_p(XEN val);
 
 #include "s7.h"
 
-extern scheme *s7;  /* s7 is a pointer to the current scheme */
+extern s7_scheme *s7;  /* s7 is a pointer to the current scheme */
 
-#define XEN                                        pointer
+#define XEN                                        s7_pointer
 #define XEN_FILE_EXTENSION                         "scm"
 #define XEN_LANGUAGE_NAME                          "S7"
 #define XEN_COMMENT_STRING                         ";"
@@ -2095,6 +2095,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 #define XEN_CADDR(Arg)                             XEN_CAR(XEN_CDR(XEN_CDR(Arg)))
 #define XEN_CADDDR(Arg)                            XEN_CAR(XEN_CDR(XEN_CDR(XEN_CDR(Arg))))
 #define XEN_CDDR(Arg)                              XEN_CDR(XEN_CDR(Arg))
+#define XEN_CDDDR(Arg)                             XEN_CDR(XEN_CDR(XEN_CDR(Arg)))
 #define XEN_LIST_P(Arg)                            XEN_PAIR_P(Arg)
 #define XEN_LIST_LENGTH(Arg)                       s7_list_length(s7, Arg)
 #define XEN_LIST_P_WITH_LENGTH(Arg, Len)           ((XEN_PAIR_P(Arg)) && ((Len = XEN_LIST_LENGTH(Arg)) > 0))
@@ -2143,8 +2144,8 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 #define XEN_EXACT_P(Arg)                           s7_is_exact(Arg)
 
 #define XEN_DOUBLE_P(Arg)                          s7_is_real(Arg)
-#define XEN_TO_C_DOUBLE(Arg)                       s7_double(Arg)
-#define XEN_TO_C_DOUBLE_OR_ELSE(Arg, Def)          ((XEN_NUMBER_P(Arg)) ? XEN_TO_C_DOUBLE(Arg) : Def)
+#define XEN_TO_C_DOUBLE(Arg)                       xen_to_c_double(Arg)
+#define XEN_TO_C_DOUBLE_OR_ELSE(Arg, Def)          xen_to_c_double_or_else(Arg, Def)
 #define C_TO_XEN_DOUBLE(Arg)                       s7_make_real(s7, Arg)
 
 #if HAVE_SCM_C_MAKE_RECTANGULAR
@@ -2192,16 +2193,16 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 #define XEN_KEYWORD_EQ_P(k1, k2)                   s7_keyword_eq_p(k1, k2)
 #define XEN_MAKE_KEYWORD(Arg)                      s7_make_keyword(s7, Arg)
 
-#define XEN_PROCEDURE_P(Arg)                       (s7_is_proc(Arg) || s7_is_closure(Arg))
+#define XEN_PROCEDURE_P(Arg)                       (s7_is_procedure(Arg) || s7_is_closure(Arg) || s7_is_function(Arg))
 #define XEN_PROCEDURE_SOURCE(Func)                 s7_procedure_source(Func)
 
-#define XEN_LOAD_FILE(File)                        s7_load_file(s7, File)
-#define XEN_LOAD_FILE_WITH_PATH(File)              s7_load_file_with_path(s7, File)
+#define XEN_LOAD_FILE(File)                        s7_load(s7, File)
+#define XEN_LOAD_FILE_WITH_PATH(File)              s7_load_with_path(s7, File)
 #define XEN_LOAD_PATH                              s7_load_path(s7)
 #define XEN_ADD_TO_LOAD_PATH(Path)                 s7_add_to_load_path(s7, Path)
 
 #define XEN_ERROR_TYPE(Typ)                        C_STRING_TO_XEN_SYMBOL(Typ)
-#define XEN_ERROR(Type, Info)                      s7_error(s7, Type, Info)
+#define XEN_ERROR(Type, Info)                      s7_error_and_exit(s7, Type, Info)
 #define XEN_THROW(Type, Info)                      s7_throw(s7, Type, Info)
 
 #define XEN_YES_WE_HAVE(Feature)                   s7_provide(s7, Feature)
@@ -2222,56 +2223,56 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 
 
 #define XEN_NARGIFY_0(OutName, InName) \
-  static pointer OutName(scheme *sc, pointer args) \
+  static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
   { \
     if (!(XEN_NULL_P(args))) XEN_WRONG_NUMBER_OF_ARGS_ERROR(#InName, args); \
     return(InName()); \
   }
 
 #define XEN_NARGIFY_1(OutName, InName) \
-  static pointer OutName(scheme *sc, pointer args) \
+  static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
   { \
     if (XEN_LIST_LENGTH(args) != 1) XEN_WRONG_NUMBER_OF_ARGS_ERROR(#InName, args); \
     return(InName(XEN_CAR(args))); \
   }
   
 #define XEN_NARGIFY_2(OutName, InName) \
-  static pointer OutName(scheme *sc, pointer args) \
+  static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
   { \
     if (XEN_LIST_LENGTH(args) != 2) XEN_WRONG_NUMBER_OF_ARGS_ERROR(#InName, args); \
     return(InName(XEN_CAR(args), XEN_CADR(args))); \
   }
   
 #define XEN_NARGIFY_3(OutName, InName) \
-  static pointer OutName(scheme *sc, pointer args) \
+  static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
   { \
     if (XEN_LIST_LENGTH(args) != 3) XEN_WRONG_NUMBER_OF_ARGS_ERROR(#InName, args); \
     return(InName(XEN_CAR(args), XEN_CADR(args), XEN_LIST_REF(args, 2))); \
   }
 
 #define XEN_NARGIFY_4(OutName, InName) \
-  static pointer OutName(scheme *sc, pointer args) \
+  static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
   { \
     if (XEN_LIST_LENGTH(args) != 4) XEN_WRONG_NUMBER_OF_ARGS_ERROR(#InName, args); \
     return(InName(XEN_CAR(args), XEN_CADR(args), XEN_LIST_REF(args, 2), XEN_LIST_REF(args, 3))); \
   }
 
 #define XEN_NARGIFY_5(OutName, InName) \
-  static pointer OutName(scheme *sc, pointer args) \
+  static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
   { \
     if (XEN_LIST_LENGTH(args) != 5) XEN_WRONG_NUMBER_OF_ARGS_ERROR(#InName, args); \
     return(InName(XEN_CAR(args), XEN_CADR(args), XEN_LIST_REF(args, 2), XEN_LIST_REF(args, 3), XEN_LIST_REF(args, 4))); \
   }
 
 #define XEN_NARGIFY_6(OutName, InName) \
-  static pointer OutName(scheme *sc, pointer args) \
+  static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
   { \
     if (XEN_LIST_LENGTH(args) != 6) XEN_WRONG_NUMBER_OF_ARGS_ERROR(#InName, args); \
     return(InName(XEN_CAR(args), XEN_CADR(args), XEN_LIST_REF(args, 2), XEN_LIST_REF(args, 3), XEN_LIST_REF(args, 4), XEN_LIST_REF(args, 5))); \
   }
 
 #define XEN_NARGIFY_7(OutName, InName) \
-  static pointer OutName(scheme *sc, pointer args) \
+  static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
   { \
     if (XEN_LIST_LENGTH(args) != 7) XEN_WRONG_NUMBER_OF_ARGS_ERROR(#InName, args); \
     return(InName(XEN_CAR(args), XEN_CADR(args), XEN_LIST_REF(args, 2), XEN_LIST_REF(args, 3), \
@@ -2279,7 +2280,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
   }
 
 #define XEN_NARGIFY_8(OutName, InName) \
-  static pointer OutName(scheme *sc, pointer args) \
+  static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
   { \
     if (XEN_LIST_LENGTH(args) != 8) XEN_WRONG_NUMBER_OF_ARGS_ERROR(#InName, args); \
     return(InName(XEN_CAR(args), XEN_CADR(args), XEN_LIST_REF(args, 2), XEN_LIST_REF(args, 3), \
@@ -2287,7 +2288,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
   }
 
 #define XEN_NARGIFY_9(OutName, InName) \
-  static pointer OutName(scheme *sc, pointer args) \
+  static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
   { \
     if (XEN_LIST_LENGTH(args) != 9) XEN_WRONG_NUMBER_OF_ARGS_ERROR(#InName, args); \
     return(InName(XEN_CAR(args), XEN_CADR(args), XEN_LIST_REF(args, 2), XEN_LIST_REF(args, 3), \
@@ -2296,7 +2297,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 
 
 #define XEN_ARGIFY_1(OutName, InName) \
-  static pointer OutName(scheme *sc, pointer args) \
+  static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
   { \
     int len; \
     len = XEN_LIST_LENGTH(args); \
@@ -2305,7 +2306,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
   }
 
 #define XEN_ARGIFY_2(OutName, InName) \
-  static pointer OutName(scheme *sc, pointer args) \
+  static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
   { \
     int len; \
     len = XEN_LIST_LENGTH(args); \
@@ -2315,18 +2316,19 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
   }
 
 #define XEN_ARGIFY_3(OutName, InName) \
-  static pointer OutName(scheme *sc, pointer args) \
+  static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
   { \
     int len; \
     len = XEN_LIST_LENGTH(args); \
     if (len > 3) XEN_WRONG_NUMBER_OF_ARGS_ERROR(#InName, args); \
+    fprintf(stderr, "argify: %d %s\n", len, s7_object_to_c_string(s7, args));\
     return(InName((len > 0) ? XEN_CAR(args) : XEN_UNDEFINED, \
                   (len > 1) ? XEN_CADR(args) : XEN_UNDEFINED, \
                   (len > 2) ? XEN_LIST_REF(args, 2) : XEN_UNDEFINED)); \
   }
 
 #define XEN_ARGIFY_4(OutName, InName) \
-  static pointer OutName(scheme *sc, pointer args) \
+  static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
   { \
     int len; \
     len = XEN_LIST_LENGTH(args); \
@@ -2338,7 +2340,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
   }
 
 #define XEN_ARGIFY_5(OutName, InName) \
-  static pointer OutName(scheme *sc, pointer args) \
+  static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
   { \
     int len; \
     len = XEN_LIST_LENGTH(args); \
@@ -2351,7 +2353,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
   }
 
 #define XEN_ARGIFY_6(OutName, InName) \
-  static pointer OutName(scheme *sc, pointer args) \
+  static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
   { \
     int len; \
     len = XEN_LIST_LENGTH(args); \
@@ -2365,7 +2367,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
   }
 
 #define XEN_ARGIFY_7(OutName, InName) \
-  static pointer OutName(scheme *sc, pointer args) \
+  static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
   { \
     int len; \
     len = XEN_LIST_LENGTH(args); \
@@ -2380,7 +2382,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
   }
 
 #define XEN_ARGIFY_8(OutName, InName) \
-  static pointer OutName(scheme *sc, pointer args) \
+  static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
   { \
     int len; \
     len = XEN_LIST_LENGTH(args); \
@@ -2396,7 +2398,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
   }
 
 #define XEN_ARGIFY_9(OutName, InName) \
-  static pointer OutName(scheme *sc, pointer args) \
+  static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
   { \
     int len; \
     len = XEN_LIST_LENGTH(args); \
@@ -2413,7 +2415,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
   }
 
 #define XEN_ARGIFY_10(OutName, InName) \
-  static pointer OutName(scheme *sc, pointer args) \
+  static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
   { \
     int len; \
     len = XEN_LIST_LENGTH(args); \
@@ -2431,13 +2433,13 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
   }
 
 #define XEN_VARGIFY(OutName, InName) \
-  static pointer OutName(scheme *sc, pointer args) \
+  static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \
   { \
     return(InName(args)); \
   }
 
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
-  s7_define_foreign_function(s7, Name, Func, Doc)
+  s7_define_function(s7, Name, Func, ReqArg, OptArg, RstArg, Doc)
 
 #define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
   XEN_DEFINE_PROCEDURE(Get_Name, Get_Func, Get_Req, Get_Opt, 0, Get_Help); \
@@ -2449,9 +2451,9 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
   XEN_DEFINE_PROCEDURE("set-" Get_Name, Rev_Func, Set_Req, Set_Opt, 0, Get_Help)
 
 
-#define XEN_ARITY(Func) 0
-#define XEN_REQUIRED_ARGS(Func) 0
-#define XEN_REQUIRED_ARGS_OK(Func, Args) false
+#define XEN_ARITY(Func)                                               s7_function_arity(s7, Func)
+#define XEN_REQUIRED_ARGS(Func)                                       XEN_TO_C_INT(XEN_CAR(XEN_ARITY(Func)))
+#define XEN_REQUIRED_ARGS_OK(Func, Args)                              (XEN_REQUIRED_ARGS(Func) == Args)
 
 #define XEN_CALL_0(Func, Caller)                                      s7_call(s7, Func, XEN_EMPTY_LIST) /* these need a catch */
 #define XEN_CALL_1(Func, Arg1, Caller)                                s7_call(s7, Func, XEN_LIST_1(Arg1))
@@ -2472,13 +2474,13 @@ typedef XEN (*XEN_CATCH_BODY_TYPE)                                    (void *dat
 #define XEN_DEFINE_CONSTANT(Name, Value, Help)                        s7_define_variable(s7, Name, s7_make_integer(s7, Value))
 #define XEN_DEFINE(Name, Value)                                       s7_define_variable(s7, Name, Value)
 
-#define XEN_DEFINE_VARIABLE(Name, Var, Value)                         Var = XEN_PROTECT_FROM_GC(xen_define_variable(Name, Value))
+#define XEN_DEFINE_VARIABLE(Name, Var, Value)                         Var = xen_define_variable(Name, Value)
 #define XEN_VARIABLE_SET(Var, Val)                                    s7_symbol_set_value(s7, Var, Val)
 #define XEN_VARIABLE_REF(Var)                                         s7_symbol_value(s7, Var)
 #define XEN_NAME_AS_C_STRING_TO_VARIABLE(a)                           s7_make_symbol(s7, a)
 
 #define XEN_MARK_OBJECT_TYPE                                           void
-#define XEN_MAKE_OBJECT_TYPE(Name, Print, Free, Equal, Gc_Mark)        s7_new_foreign_type(Name, Print, Free, Equal, Gc_Mark)
+#define XEN_MAKE_OBJECT_TYPE(Name, Print, Free, Equal, Gc_Mark)        s7_new_type(Name, Print, Free, Equal, Gc_Mark)
 
 #define XEN_MAKE_OBJECT_FREE_PROCEDURE(Type, Wrapped_Free, Original_Free) \
   static void Wrapped_Free(void *obj) \
@@ -2492,8 +2494,8 @@ typedef XEN (*XEN_CATCH_BODY_TYPE)                                    (void *dat
     return(Original_Print((Type *)obj)); \
   }
 
-#define XEN_MAKE_AND_RETURN_OBJECT(Tag, Val, ig1, ig2)   return(s7_make_foreign_object(s7, Tag, Val))
-#define XEN_OBJECT_REF(Arg)                              s7_foreign_object_value(Arg)
+#define XEN_MAKE_AND_RETURN_OBJECT(Tag, Val, ig1, ig2)   return(s7_make_object(s7, Tag, Val))
+#define XEN_OBJECT_REF(Arg)                              s7_object_value(Arg)
 #define XEN_OBJECT_TYPE                                  int /* tag type */
 #define XEN_OBJECT_TYPE_P(Obj, Tag)                      xen_s7_type_p(Obj, Tag)
 #define XEN_OBJECT_HELP(Sym)                             xen_s7_object_help(Sym)
@@ -2515,10 +2517,10 @@ XEN xen_hook_to_list(XEN hook);
 bool xen_hook_empty_p(XEN hook);
 bool xen_hook_p(XEN val);
 XEN xen_define_variable(const char *name, XEN value);
-void xen_s7_ignore(foreign_func func); /* squelch compiler warnings */
+void xen_s7_ignore(s7_function func); /* squelch compiler warnings */
 const char *xen_s7_object_help(XEN sym);
-void s7_define_foreign_function(scheme *sc, const char *name, foreign_func func, const char *doc);
-void s7_define_variable(scheme *sc, const char *name, pointer value);
+double xen_to_c_double(XEN a);
+double xen_to_c_double_or_else(XEN a, double b);
 
 #endif
 /* end S7 */
