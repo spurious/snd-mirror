@@ -30472,25 +30472,11 @@ static XEN gxg_gtk_entry_get_text_length(XEN entry)
   return(C_TO_XEN_guint16(gtk_entry_get_text_length(XEN_TO_C_GtkEntry_(entry))));
 }
 
-static XEN gxg_gtk_font_selection_get_family_entry(XEN fontsel)
-{
-  #define H_gtk_font_selection_get_family_entry "GtkWidget* gtk_font_selection_get_family_entry(GtkFontSelection* fontsel)"
-  XEN_ASSERT_TYPE(XEN_GtkFontSelection__P(fontsel), fontsel, 1, "gtk_font_selection_get_family_entry", "GtkFontSelection*");
-  return(C_TO_XEN_GtkWidget_(gtk_font_selection_get_family_entry(XEN_TO_C_GtkFontSelection_(fontsel))));
-}
-
 static XEN gxg_gtk_font_selection_get_family_list(XEN fontsel)
 {
   #define H_gtk_font_selection_get_family_list "GtkWidget* gtk_font_selection_get_family_list(GtkFontSelection* fontsel)"
   XEN_ASSERT_TYPE(XEN_GtkFontSelection__P(fontsel), fontsel, 1, "gtk_font_selection_get_family_list", "GtkFontSelection*");
   return(C_TO_XEN_GtkWidget_(gtk_font_selection_get_family_list(XEN_TO_C_GtkFontSelection_(fontsel))));
-}
-
-static XEN gxg_gtk_font_selection_get_face_entry(XEN fontsel)
-{
-  #define H_gtk_font_selection_get_face_entry "GtkWidget* gtk_font_selection_get_face_entry(GtkFontSelection* fontsel)"
-  XEN_ASSERT_TYPE(XEN_GtkFontSelection__P(fontsel), fontsel, 1, "gtk_font_selection_get_face_entry", "GtkFontSelection*");
-  return(C_TO_XEN_GtkWidget_(gtk_font_selection_get_face_entry(XEN_TO_C_GtkFontSelection_(fontsel))));
 }
 
 static XEN gxg_gtk_font_selection_get_face_list(XEN fontsel)
@@ -37665,9 +37651,7 @@ XEN_NARGIFY_1(gxg_gtk_dialog_get_content_area_w, gxg_gtk_dialog_get_content_area
 XEN_NARGIFY_2(gxg_gtk_entry_set_overwrite_mode_w, gxg_gtk_entry_set_overwrite_mode)
 XEN_NARGIFY_1(gxg_gtk_entry_get_overwrite_mode_w, gxg_gtk_entry_get_overwrite_mode)
 XEN_NARGIFY_1(gxg_gtk_entry_get_text_length_w, gxg_gtk_entry_get_text_length)
-XEN_NARGIFY_1(gxg_gtk_font_selection_get_family_entry_w, gxg_gtk_font_selection_get_family_entry)
 XEN_NARGIFY_1(gxg_gtk_font_selection_get_family_list_w, gxg_gtk_font_selection_get_family_list)
-XEN_NARGIFY_1(gxg_gtk_font_selection_get_face_entry_w, gxg_gtk_font_selection_get_face_entry)
 XEN_NARGIFY_1(gxg_gtk_font_selection_get_face_list_w, gxg_gtk_font_selection_get_face_list)
 XEN_NARGIFY_1(gxg_gtk_font_selection_get_size_entry_w, gxg_gtk_font_selection_get_size_entry)
 XEN_NARGIFY_1(gxg_gtk_font_selection_get_size_list_w, gxg_gtk_font_selection_get_size_list)
@@ -41567,9 +41551,7 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_entry_set_overwrite_mode_w gxg_gtk_entry_set_overwrite_mode
 #define gxg_gtk_entry_get_overwrite_mode_w gxg_gtk_entry_get_overwrite_mode
 #define gxg_gtk_entry_get_text_length_w gxg_gtk_entry_get_text_length
-#define gxg_gtk_font_selection_get_family_entry_w gxg_gtk_font_selection_get_family_entry
 #define gxg_gtk_font_selection_get_family_list_w gxg_gtk_font_selection_get_family_list
-#define gxg_gtk_font_selection_get_face_entry_w gxg_gtk_font_selection_get_face_entry
 #define gxg_gtk_font_selection_get_face_list_w gxg_gtk_font_selection_get_face_list
 #define gxg_gtk_font_selection_get_size_entry_w gxg_gtk_font_selection_get_size_entry
 #define gxg_gtk_font_selection_get_size_list_w gxg_gtk_font_selection_get_size_list
@@ -45476,9 +45458,7 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_entry_set_overwrite_mode, gxg_gtk_entry_set_overwrite_mode_w, 2, 0, 0, H_gtk_entry_set_overwrite_mode);
   XG_DEFINE_PROCEDURE(gtk_entry_get_overwrite_mode, gxg_gtk_entry_get_overwrite_mode_w, 1, 0, 0, H_gtk_entry_get_overwrite_mode);
   XG_DEFINE_PROCEDURE(gtk_entry_get_text_length, gxg_gtk_entry_get_text_length_w, 1, 0, 0, H_gtk_entry_get_text_length);
-  XG_DEFINE_PROCEDURE(gtk_font_selection_get_family_entry, gxg_gtk_font_selection_get_family_entry_w, 1, 0, 0, H_gtk_font_selection_get_family_entry);
   XG_DEFINE_PROCEDURE(gtk_font_selection_get_family_list, gxg_gtk_font_selection_get_family_list_w, 1, 0, 0, H_gtk_font_selection_get_family_list);
-  XG_DEFINE_PROCEDURE(gtk_font_selection_get_face_entry, gxg_gtk_font_selection_get_face_entry_w, 1, 0, 0, H_gtk_font_selection_get_face_entry);
   XG_DEFINE_PROCEDURE(gtk_font_selection_get_face_list, gxg_gtk_font_selection_get_face_list_w, 1, 0, 0, H_gtk_font_selection_get_face_list);
   XG_DEFINE_PROCEDURE(gtk_font_selection_get_size_entry, gxg_gtk_font_selection_get_size_entry_w, 1, 0, 0, H_gtk_font_selection_get_size_entry);
   XG_DEFINE_PROCEDURE(gtk_font_selection_get_size_list, gxg_gtk_font_selection_get_size_list_w, 1, 0, 0, H_gtk_font_selection_get_size_list);
@@ -48114,7 +48094,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("10-Aug-08"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("21-Aug-08"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

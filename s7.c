@@ -63,7 +63,7 @@
  *     added #<unspecified>
  *     added block comments in #| |# and fixed block comments in #! !#
  *     all internal errors go through the check for a user-defined error func, and give filename and line-number
- *
+ *     added defmacro
  *
  * there's no arg number mismatch check for caller-defined functions!
  * dies if undefined func? (asb 1) as typo
@@ -227,7 +227,7 @@ typedef struct num {
 
 
 typedef struct port {
-  bool is_free;
+  bool is_closed;
   bool is_file;
   bool needs_close;
   int paren_depth;
@@ -356,10 +356,9 @@ struct s7_scheme {
   s7_pointer FEED_TO;         /* => */
   
   s7_pointer inport;          /* current-input-port (nil = stdin) */
-  s7_pointer inport_stack;    /*   input port stack */
+  s7_pointer inport_stack;    /*   input port stack (load and read internally) */
   s7_pointer outport;         /* current-output-port (nil = stderr) */
-  s7_pointer outport_stack;   /*   output port stack */
-  
+
   bool gc_verbose;            /* if gc_verbose is true, print gc status */
   
   #define LINESIZE 1024
@@ -455,6 +454,9 @@ static const char *type_names[T_LAST_TYPE + 1] = {
 #define function_required_args(f)   (f)->object.ffptr->required_args
 #define function_optional_args(f)   (f)->object.ffptr->optional_args
 #define function_has_rest_arg(f)    (f)->object.ffptr->rest_arg
+
+#define is_input_port(p) (type(p) == T_INPUT_PORT) 
+#define is_output_port(p) (type(p) == T_OUTPUT_PORT)
 
 
 static char *describe_type(s7_pointer p)
@@ -606,7 +608,10 @@ static bool is_one_of(char *s, int c);
 static void s7_mark_embedded_objects(s7_pointer a); /* called by gc, calls fobj's mark func */
 static void eval(s7_scheme *sc, opcode_t first_op);
 static const char *procedure_name(s7_pointer x);
+static s7_pointer g_stacktrace(s7_scheme *sc, s7_pointer args);
 
+
+static void gp(s7_scheme *sc) {g_stacktrace(sc, sc->args);} /* for gdb */
 
 
 /* -------------------------------- GC -------------------------------- */
@@ -673,7 +678,7 @@ static void finalize_s7_cell(s7_scheme *sc, s7_pointer a)
 	} 
       else 
 	{
-	  if (s7_is_input_port(sc, a)) 
+	  if (is_input_port(a)) 
 	    {
 	      if (port_needs_close(a))
 		s7_close_input_port(sc, a);
@@ -681,7 +686,7 @@ static void finalize_s7_cell(s7_scheme *sc, s7_pointer a)
 	    }
 	  else
 	    {
-	      if (s7_is_output_port(sc, a))
+	      if (is_output_port(a))
 		{
 		  s7_close_output_port(sc, a);
 		  FREE(a->object.port);
@@ -807,7 +812,6 @@ static int gc(s7_scheme *sc)
   s7_mark_object(sc->inport);
   s7_mark_object(sc->inport_stack);
   s7_mark_object(sc->outport);
-  s7_mark_object(sc->outport_stack);
 
   s7_mark_object(sc->protected_objects);
   s7_mark_object(sc->x);
@@ -882,8 +886,8 @@ static s7_pointer copy_object(s7_scheme *sc, s7_pointer obj)
       (s7_is_object(obj)) ||
       (s7_is_vector(obj)) ||
       (s7_is_continuation(obj)) ||
-      (s7_is_input_port(sc, obj)) ||
-      (s7_is_output_port(sc, obj)))
+      (is_input_port(obj)) ||
+      (is_output_port(obj)))
     return(obj);
   
   nobj = new_cell(sc);
@@ -910,7 +914,6 @@ static void stack_reset(s7_scheme *sc)
 static void pop_stack(s7_scheme *sc, s7_pointer a) 
 { 
   int top;
-
   sc->value = a; 
 #if 0
   if (sc->stack_top == 0)
@@ -922,7 +925,7 @@ static void pop_stack(s7_scheme *sc, s7_pointer a)
   sc->op =         (opcode_t)integer(vector_element(sc->stack, top - 1)->object.number);
   sc->args =       vector_element(sc->stack, top - 2);
   sc->envir =      vector_element(sc->stack, top - 3);
-  sc->code =  vector_element(sc->stack, top - 4);
+  sc->code =       vector_element(sc->stack, top - 4);
 #if 0
   {
     int i;
@@ -967,22 +970,6 @@ static void push_stack(s7_scheme *sc, opcode_t op, s7_pointer args, s7_pointer c
 
 /* -------------------------------------------------------------------------------- */
 
-
-static void dump_object(s7_scheme *sc, s7_pointer x)
-{
-  fprintf(stderr, "dump %p:\n", x);
-  if (x == sc->NIL)
-    fprintf(stderr, "nil");
-  else
-    {
-      if ((x) &&
-	  (is_object(x)))
-	{
-	  fprintf(stderr, "type: %s (%x)\n", type_names[type(x)], typeflag(x));
-	}
-      else fprintf(stderr, "bogus object: %x\n", typeflag(x));
-    }
-}
 
 
 bool s7_is_string(s7_pointer p)
@@ -1158,24 +1145,20 @@ static bool is_promise(s7_pointer p)
   return(type(p) == T_PROMISE);
 }
 
-s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p)   
+static s7_pointer procedure_source(s7_pointer p)   
 { 
-  if (s7_is_closure(sc->code) || is_macro(sc->code) || is_promise(sc->code))
-    return(car(p));
-
-  if (s7_is_function(p))
-    return(car(p));
-
-  if (s7_is_symbol(p))
-    return(s7_symbol_value(sc, p));
-  return(sc->F);
+  return(car(p));
 }
       
 
 static s7_pointer g_function_source(s7_scheme *sc, s7_pointer args)
 {
   #define H_function_source "(function-source func) tries to return the definition of func"
-  return(s7_procedure_source(sc, car(args)));
+
+  sc->y = s7_symbol_value(sc, car(args));
+  if (sc->y != sc->NIL)
+    return(procedure_source(sc->y));
+  return(sc->NIL);
 }
 
 
@@ -2509,21 +2492,19 @@ static s7_pointer make_sharp_const(s7_scheme *sc, char *name)
 
 /* -------------------------------- ports -------------------------------- */
 
-#define is_input_port(p) (type(p) == T_INPUT_PORT) 
-#define is_output_port(p) (type(p) == T_OUTPUT_PORT)
 #define port_paren_depth(p) (p)->object.port->paren_depth
 #define is_string_port(p) (!((p)->object.port->is_file))
 #define is_file_port(p) (p)->object.port->is_file
 #define port_line_number(p) (p)->object.port->rep.stdio.line_number
 #define port_filename(p) (p)->object.port->rep.stdio.filename
 #define port_file(p) (p)->object.port->rep.stdio.file
-#define port_is_free(p) (p)->object.port->is_free
+#define port_is_closed(p) (p)->object.port->is_closed
 
 static char *describe_port(s7_scheme *sc, s7_pointer p)
 {
   char *desc;
-  desc = sc->strbuf;
-  sprintf(desc, "<port");
+  desc = (char *)CALLOC(64, sizeof(char));
+  snprintf(desc, 64, "<port");
 
   if (is_file_port(p))
     strcat(desc, " file");
@@ -2532,6 +2513,10 @@ static char *describe_port(s7_scheme *sc, s7_pointer p)
   if (is_input_port(p))
     strcat(desc, " input");
   else strcat(desc, " output");
+
+  if (port_is_closed(p))
+    strcat(desc, " (closed)");
+
   strcat(desc, ">");
   return(desc);
 }
@@ -2564,10 +2549,10 @@ static s7_pointer g_port_filename(s7_scheme *sc, s7_pointer args)
 
 /* -------- input-port? -------- */
 
-bool s7_is_input_port(s7_scheme *sc, s7_pointer p)     
+bool s7_is_input_port(s7_scheme *sc, s7_pointer p)   
 { 
   return((p == sc->NIL) || /* stdin? */
-	 is_input_port(p));
+	 (is_input_port(p)));
 }
 
 static s7_pointer g_is_input_port(s7_scheme *sc, s7_pointer args)
@@ -2582,7 +2567,7 @@ static s7_pointer g_is_input_port(s7_scheme *sc, s7_pointer args)
 bool s7_is_output_port(s7_scheme *sc, s7_pointer p)     
 { 
   return((p == sc->NIL) ||  /* stderr? */
-	 is_output_port(p));
+	 (is_output_port(p)));
 }
 
 static s7_pointer g_is_output_port(s7_scheme *sc, s7_pointer args)
@@ -2628,12 +2613,12 @@ static s7_pointer g_is_char_ready(s7_scheme *sc, s7_pointer args)
   if (s7_is_pair(args))
     {
       s7_pointer pt = car(args);
-      if (!is_input_port(pt))
+      if (!s7_is_input_port(sc, pt))
 	return(s7_error(sc, s7_make_string(sc, "char-ready? argument should be an input port"), pt));
 
       return(to_s7_bool(sc, is_string_port(pt)));
     }
-  return(to_s7_bool(sc, (is_input_port(sc->inport)) && (is_string_port(sc->inport))));
+  return(to_s7_bool(sc, (is_input_port(sc->inport)) && (is_string_port(sc->inport))));  /* TODO: need to check for waiting input on files */
 }      
 
 
@@ -2650,7 +2635,8 @@ static s7_pointer g_is_eof_object(s7_scheme *sc, s7_pointer args)
 
 void s7_close_input_port(s7_scheme *sc, s7_pointer p)
 {
-  if (p == sc->NIL)
+  if ((p == sc->NIL) ||
+      ((is_input_port(p)) && (port_is_closed(p))))
     return;
 
   if ((is_file_port(p)) &&
@@ -2661,7 +2647,7 @@ void s7_close_input_port(s7_scheme *sc, s7_pointer p)
       port_needs_close(p) = false;
     }
   /* if input string, someone else is dealing with GC */
-  port_is_free(p) = true;
+  port_is_closed(p) = true;
 }
 
 static s7_pointer g_close_input_port(s7_scheme *sc, s7_pointer args)
@@ -2679,7 +2665,8 @@ static s7_pointer g_close_input_port(s7_scheme *sc, s7_pointer args)
 
 void s7_close_output_port(s7_scheme *sc, s7_pointer p)
 {
-  if (p == sc->NIL)
+  if ((p == sc->NIL) ||
+      ((is_output_port(p)) && (port_is_closed(p))))
     return;
 
   if (is_file_port(p))
@@ -2699,7 +2686,7 @@ void s7_close_output_port(s7_scheme *sc, s7_pointer p)
 	  p->object.port->rep.string.start = NULL;
 	}
     }
-  port_is_free(p) = true;
+  port_is_closed(p) = true;
 }
 
 static s7_pointer g_close_output_port(s7_scheme *sc, s7_pointer args)
@@ -2731,7 +2718,7 @@ s7_pointer s7_open_input_file(s7_scheme *sc, const char *name)
   sc->x->object.port = (port *)MALLOC(sizeof(port));
   port_file(sc->x) = fp;
   is_file_port(sc->x) = true;
-  port_is_free(sc->x) = false;
+  port_is_closed(sc->x) = false;
   port_filename(sc->x) = copy_string(name);  /* TODO: gc the name */
   port_line_number(sc->x) = 0;
   port_paren_depth(sc->x) = 0;
@@ -2768,11 +2755,12 @@ s7_pointer s7_open_output_file(s7_scheme *sc, const char *name)
   /* set up the port struct */
   sc->x->object.port = (port *)MALLOC(sizeof(port));
   is_file_port(sc->x) = true;
-  port_is_free(sc->x) = false;
+  port_is_closed(sc->x) = false;
   port_filename(sc->x) = copy_string(name);  /* TODO: gc the name */
   port_line_number(sc->x) = 0;
   port_paren_depth(sc->x) = 0;
   port_needs_close(sc->x) = false;
+  port_file(sc->x) = fp;
 
   return(sc->x);
 }
@@ -2798,7 +2786,7 @@ s7_pointer s7_open_input_string(s7_scheme *sc, const char *input_string)
   /* set up the port struct */
   sc->x->object.port = (port *)MALLOC(sizeof(port));
   is_file_port(sc->x) = false;
-  port_is_free(sc->x) = false;
+  port_is_closed(sc->x) = false;
   port_paren_depth(sc->x) = 0;
   sc->x->object.port->rep.string.start = (char *)input_string;
   sc->x->object.port->rep.string.curr = (char *)input_string;
@@ -2829,7 +2817,7 @@ s7_pointer s7_open_output_string(s7_scheme *sc)
   /* set up the port struct */
   sc->x->object.port = (port *)MALLOC(sizeof(port));
   is_file_port(sc->x) = false;
-  port_is_free(sc->x) = false;
+  port_is_closed(sc->x) = false;
   temp = (char *)CALLOC(128, sizeof(char));
   sc->x->object.port->rep.string.start = temp;
   sc->x->object.port->rep.string.curr = temp;
@@ -2863,8 +2851,6 @@ static s7_pointer g_get_output_string(s7_scheme *sc, s7_pointer args)
 }
 
 
-/* -------- load -------- */
-
 static bool push_input_port(s7_scheme *sc, s7_pointer new_port)
 {
   sc->inport_stack = cons(sc, sc->inport, sc->inport_stack);
@@ -2872,88 +2858,24 @@ static bool push_input_port(s7_scheme *sc, s7_pointer new_port)
   return(sc->inport != sc->NIL);
 }
 
-static bool push_output_port(s7_scheme *sc, s7_pointer new_port)
+static s7_pointer pop_input_port(s7_scheme *sc)
 {
-  sc->outport_stack = cons(sc, sc->outport, sc->outport_stack);
-  sc->outport = new_port;
-  return(sc->outport != sc->NIL);
-}
-
-s7_pointer s7_load(s7_scheme *sc, const char *filename)
-{
-  push_input_port(sc, s7_open_input_file(sc, filename));
-  eval(sc, OP_TOP_LEVEL);
-  return(sc->inport);
-}
-
-static s7_pointer g_load(s7_scheme *sc, s7_pointer args)
-{
-  s7_pointer name, port;
-  name = car(args);
-  if (!s7_is_string(name))
-    return(s7_error(sc, s7_make_string(sc, "load argument should be a string (a filename)"), name));
-  port = s7_open_input_file(sc, s7_string(name));
-  port_needs_close(port) = true;
-  push_input_port(sc, port);
-  eval(sc, OP_TOP_LEVEL);
-  return(sc->inport);
-}
-
-
-/* -------- reads and writes -------- */
-
-static s7_pointer pop_input_port(s7_scheme *sc) 
-{
-  s7_pointer result = sc->F;
-
-  if (s7_is_input_port(sc, sc->inport))
-    {
-      if (port_paren_depth(sc->inport) != 0)
-	result = s7_error(sc, s7_make_string(sc, "unmatched open parenthesis"), sc->inport);
-
-      /* clean up, then jump to the error handler */
-      if (port_needs_close(sc->inport))
-	s7_close_input_port(sc, sc->inport);
-    }
-
   if (s7_is_pair(sc->inport_stack))
     {
       sc->inport = car(sc->inport_stack);
       sc->inport_stack = cdr(sc->inport_stack);
     }
   else sc->inport = sc->NIL;
-
-  if (result != sc->F)
-    {
-      fprintf(stderr, "unmatched paren");
-      abort();
-      eval(sc, OP_ERROR);
-    }
-  return(result);
+  return(sc->inport);
 }
-
-static s7_pointer pop_output_port(s7_scheme *sc) 
-{
-  
-  if ((s7_is_output_port(sc, sc->outport)) &&
-      (port_needs_close(sc->outport)))
-    s7_close_output_port(sc, sc->outport);
-
-  if (s7_is_pair(sc->outport_stack))
-    {
-      sc->outport = car(sc->outport_stack);
-      sc->outport_stack = cdr(sc->outport_stack);
-    }
-  else sc->outport = sc->NIL;
-  return(sc->UNSPECIFIED);
-}
-
 
 
 /* -------- get new character from input file -------- */
 
-static int basic_inchar(s7_pointer pt)
+static int inchar(s7_scheme *sc, s7_pointer pt)
 {
+  if (pt == sc->NIL) return(EOF);
+
   if (is_file_port(pt))
     {
       int c;
@@ -2971,37 +2893,12 @@ static int basic_inchar(s7_pointer pt)
     }
 }
 
-static int inchar(s7_scheme *sc) 
-{
-  int c; /* int since EOF is -1 */
-
- AGAIN:
-  if ((sc->inport == sc->NIL) ||
-      (port_is_free(sc->inport)))
-    return(EOF);
-
-  c = basic_inchar(sc->inport);
-
-  if (c == EOF)
-    {
-      pop_input_port(sc);
-      if (sc->inport != sc->NIL)
-	goto AGAIN;
-      return(EOF);
-    }
-  return(c);
-}
 
 /* -------- put character back into input buffer -------- */
 
-static void backchar(s7_scheme *sc, char c) 
+static void backchar(s7_scheme *sc, char c, s7_pointer pt) 
 {
-  s7_pointer pt;
-
-  if (port_is_free(sc->inport))
-    return;
-
-  pt = sc->inport;
+  if (pt == sc->NIL) return;
 
   if (is_file_port(pt))
     {
@@ -3021,17 +2918,17 @@ static void backchar(s7_scheme *sc, char c)
 
 /* read characters up to delimiter, but cater to character constants */
 
-static char *readstr_upto(s7_scheme *sc, char *delim) 
+static char *read_string_upto(s7_scheme *sc, char *delim, s7_pointer pt) 
 {
   char *p = sc->strbuf;
   
-  while (!is_one_of(delim, (*p++ = inchar(sc))));
+  while (!is_one_of(delim, (*p++ = inchar(sc, pt))));
   if ((p == sc->strbuf + 2) && 
       (p[-2] == '\\'))
     *p = 0;
   else 
     {
-      backchar(sc, p[-1]);
+      backchar(sc, p[-1], pt);
       *--p = '\0';
     }
 
@@ -3040,7 +2937,8 @@ static char *readstr_upto(s7_scheme *sc, char *delim)
 
 
 /* read string expression "xxx...xxx" */
-static s7_pointer readstrexp(s7_scheme *sc) 
+
+static s7_pointer read_string_expression(s7_scheme *sc, s7_pointer pt) 
 {
   char *p = sc->strbuf;
   int c;
@@ -3049,7 +2947,7 @@ static s7_pointer readstrexp(s7_scheme *sc)
   
   for (;;) 
     {
-      c = inchar(sc);
+      c = inchar(sc, pt);
       if ((c == EOF) || 
 	  (p - sc->strbuf > sizeof(sc->strbuf) - 1))
 	return(sc->F);
@@ -3150,7 +3048,7 @@ static s7_pointer readstrexp(s7_scheme *sc)
 		return(sc->F);
 	      
 	      *p++ = c1;
-	      backchar(sc, c);
+	      backchar(sc, c, pt);
 	      state = ST_OK;
 	    }
 	  else
@@ -3177,6 +3075,7 @@ static s7_pointer readstrexp(s7_scheme *sc)
     }
 }
 
+
 /* check c is in chars */
 
 static  bool is_one_of(char *s, int c) 
@@ -3190,22 +3089,22 @@ static  bool is_one_of(char *s, int c)
 
 /* skip white characters */
 
-static  void skipspace(s7_scheme *sc) 
+static  void skipspace(s7_scheme *sc, s7_pointer pt) 
 {
   int c;
-  while (isspace(c = inchar(sc)))
+  while (isspace(c = inchar(sc, pt)))
     ;
   if (c != EOF) 
-    backchar(sc, c);
+    backchar(sc, c, pt);
 }
 
 /* get token */
 
-static int token(s7_scheme *sc) 
+static int token(s7_scheme *sc, s7_pointer pt) 
 {
   int c;
-  skipspace(sc);
-  switch (c = inchar(sc)) 
+  skipspace(sc, pt);
+  switch (c = inchar(sc, pt)) 
     {
     case EOF:
       return(TOK_EOF);
@@ -3217,21 +3116,21 @@ static int token(s7_scheme *sc)
       return(TOK_RPAREN);
 
     case '.':
-      c = inchar(sc);
+      c = inchar(sc, pt);
       if (is_one_of(" \n\t", c)) 
 	return(TOK_DOT);
 
-      backchar(sc, c);
-      backchar(sc, '.');
+      backchar(sc, c, pt);
+      backchar(sc, '.', pt);
       return(TOK_ATOM);
 
     case '\'':
       return(TOK_QUOTE);
 
     case ';':
-      while ((c = inchar(sc)) != '\n' && (c != EOF))
+      while ((c = inchar(sc, pt)) != '\n' && (c != EOF))
 	;
-      return(token(sc));
+      return(token(sc, pt));
 
     case '"':
       return(TOK_DQUOTE);
@@ -3240,14 +3139,14 @@ static int token(s7_scheme *sc)
       return(TOK_BQUOTE);
 
     case ',':
-      if ((c = inchar(sc)) == '@') 
+      if ((c = inchar(sc, pt)) == '@') 
 	return(TOK_ATMARK);
 
-      backchar(sc, c);
+      backchar(sc, c, pt);
       return(TOK_COMMA);
 
     case '#':
-      c = inchar(sc);
+      c = inchar(sc, pt);
       if (c == '(') 
 	return(TOK_VEC);
 
@@ -3256,14 +3155,14 @@ static int token(s7_scheme *sc)
 	{
 	  char last_char;
 	  last_char = c;
-	  while ((c = inchar(sc)) != EOF)
+	  while ((c = inchar(sc, pt)) != EOF)
 	    {
 	      if ((c == '#') &&
 		  (last_char == '!'))
 		break;
 	      last_char = c;
 	    }
-	  return(token(sc));
+	  return(token(sc, pt));
 	}
 
       /*   or #| ... |# */
@@ -3271,24 +3170,24 @@ static int token(s7_scheme *sc)
 	{
 	  char last_char;
 	  last_char = c;
-	  while ((c = inchar(sc)) != EOF)
+	  while ((c = inchar(sc, pt)) != EOF)
 	    {
 	      if ((c == '#') &&
 		  (last_char == '|'))
 		break;
 	      last_char = c;
 	    }
-	  return(token(sc));
+	  return(token(sc, pt));
 	}
 
-      backchar(sc,c);
+      backchar(sc, c, pt);
       if (is_one_of(" tfodxb\\", c)) 
 	return TOK_SHARP_CONST;
 
       return(TOK_ATOM);
 
     default:
-      backchar(sc,c);
+      backchar(sc, c, pt);
       return(TOK_ATOM);
     }
 }
@@ -3301,23 +3200,9 @@ static char s7_read_char_1(s7_scheme *sc, s7_pointer port, bool peek)
 {
   /* port nil -> as if read-char with no arg -> use current input port */
   int c;
-  bool need_pop = false;
-  if (s7_is_input_port(sc, port))
-    {
-      if (port != sc->inport) /* protect current setting */
-	{
-	  push_input_port(sc, port);
-	  need_pop = true;
-	}
-    }
-  c = inchar(sc);
-
+  c = inchar(sc, port);
   if ((peek) && (c != EOF))
-    backchar(sc, c);
-
-  if (need_pop)
-    pop_input_port(sc);
-
+    backchar(sc, c, port);
   return(c);
 }
 
@@ -3338,10 +3223,7 @@ static s7_pointer g_read_char_1(s7_scheme *sc, s7_pointer args, bool peek)
     c = s7_read_char_1(sc, car(args), peek);
   else c = s7_read_char_1(sc, sc->inport, peek);
   if (c == EOF)
-    {
-      pop_input_port(sc);
-      return(sc->EOF_OBJECT); 
-    }
+    return(sc->EOF_OBJECT); 
   return(s7_make_character(sc, c));
 }
 
@@ -3365,28 +3247,20 @@ s7_pointer s7_read(s7_scheme *sc, s7_pointer port)
   if (s7_is_input_port(sc, port))
     {
       push_input_port(sc, port);
-      /* TODO: finish read ... */
-#if 0
-      sc->tok = token(sc);
-	if (sc->tok == TOK_EOF) 
-	  {
-	    if (sc->inport == sc->NIL)
-	      {
-		sc->args = sc->NIL;
-		goto QUIT;
-	      } 
-	    else s_pop(sc, sc->EOF_OBJECT);
-	  }
-	goto RDSEXPR;
-#endif
+      push_stack(sc, OP_READ_RETURN_EXPRESSION, port, sc->NIL);
+      eval(sc, OP_READ_INTERNAL);
+      pop_input_port(sc);
+      return(sc->value);
     }
-  return(sc->NIL);
+  return(s7_error(sc, s7_make_string(sc, "read's argument should be an input port"), port));  
 }
+
 
 static s7_pointer g_read(s7_scheme *sc, s7_pointer args)
 {
   #define H_read "(read :optional port) returns the next object in the input port"
   s7_pointer port;
+
   if (s7_is_pair(args))
     port = car(args);
   else port = sc->inport;
@@ -3394,20 +3268,84 @@ static s7_pointer g_read(s7_scheme *sc, s7_pointer args)
   if (!s7_is_input_port(sc, port))
     return(s7_error(sc, s7_make_string(sc, "read needs an input port"), port));
 
-  if (port != sc->inport)
-    {
-      push_input_port(sc, port);
-      push_stack(sc, OP_POP_INPUT_PORT, sc->NIL, sc->NIL);
-    }
-  sc->op = OP_READ_INTERNAL;
+  push_input_port(sc, port);
+  push_stack(sc, OP_READ_POP_AND_RETURN_EXPRESSION, sc->NIL, sc->NIL); /* this stops the internal read process so we only get one form */
+  push_stack(sc, OP_READ_INTERNAL, sc->NIL, sc->NIL);
   return(port);
 }
-      
+
+
+/* -------- load -------- */
+
+s7_pointer s7_load(s7_scheme *sc, const char *filename)
+{
+  s7_pointer port;
+
+  port = s7_open_input_file(sc, filename);
+  if (port == sc->ERROR)
+    return(port);
+  port_needs_close(port) = true;
+
+  push_input_port(sc, port);
+  push_stack(sc, OP_LOAD_RETURN_IF_EOF, port, sc->NIL);
+  eval(sc, OP_READ_INTERNAL);
+  /* TODO: check paren count and below */
+  
+  pop_input_port(sc);
+  s7_close_input_port(sc, port);
+
+  return(sc->UNSPECIFIED);
+}
+
+static s7_pointer g_load(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer name, port;
+
+  name = car(args);
+  if (!s7_is_string(name))
+    return(s7_error(sc, s7_make_string(sc, "load argument should be a string (a filename)"), name));
+
+  port = s7_open_input_file(sc, s7_string(name));
+  if (port == sc->ERROR)
+    return(port);
+  port_needs_close(port) = true;
+
+  push_input_port(sc, port);
+  push_stack(sc, OP_LOAD_CLOSE_AND_POP_IF_EOF, port, sc->NIL);
+  push_stack(sc, OP_READ_INTERNAL, sc->NIL, sc->NIL);
+
+  return(sc->UNSPECIFIED);
+}
+
+
+/* -------- eval string -------- */
+
+s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
+{
+  s7_pointer port;
+  stack_reset(sc); 
+  sc->envir = sc->global_env;
+  port = s7_open_input_string(sc, str);
+  push_input_port(sc, port);
+  push_stack(sc, OP_EVAL_STRING, port, sc->NIL);
+  eval(sc, OP_READ_INTERNAL);
+  pop_input_port(sc);
+  s7_close_input_port(sc, port);
+  return(sc->value);
+}
+
+
+s7_pointer s7_eval_form(s7_scheme *sc, s7_pointer form)
+{
+  /* TODO: eval form */
+  return(sc->F);
+}
+
 
 
 /* -------- output -------- */
 
-static void char_to_string_port(port *pt, char c)
+static void char_to_string_port(char c, port *pt)
 {
   if (pt->rep.string.curr >= pt->rep.string.past_the_end)
     {
@@ -3421,43 +3359,43 @@ static void char_to_string_port(port *pt, char c)
 }
 
 
-static void write_char(s7_scheme *sc, char c) 
+static void write_char(s7_scheme *sc, char c, s7_pointer pt) 
 {
-  if (sc->outport == sc->NIL)
+  if (pt == sc->NIL)
     fputc(c, stderr);
   else
     {
-      if (port_is_free(sc->outport))
+      if (port_is_closed(pt))
 	return;
 
-      if (is_file_port(sc->outport))
-	fputc(c, port_file(sc->outport));
-      else char_to_string_port(sc->outport->object.port, c);
+      if (is_file_port(pt))
+	fputc(c, port_file(pt));
+      else char_to_string_port(c, pt->object.port);
     }
 }
 
 
-static void write_string(s7_scheme *sc, const char *s) 
+static void write_string(s7_scheme *sc, const char *s, s7_pointer pt) 
 {
-  if (sc->outport == sc->NIL)
+  if (pt == sc->NIL)
     fputs(s, stderr);
   else
     {
-      if (port_is_free(sc->outport))
+      if (port_is_closed(pt))
 	return;
 
-      if (is_file_port(sc->outport))
-	fputs(s, port_file(sc->outport));
+      if (is_file_port(pt))
+	fputs(s, port_file(pt));
       else 
 	{
 	  for(; *s; s++)
-	    char_to_string_port(sc->outport->object.port, *s);
+	    char_to_string_port(*s, pt->object.port);
 	}
     }
 }
 
 
-static char *write_slash_string(s7_scheme *sc, const char *p, int len) 
+static char *slashify_string(s7_scheme *sc, const char *p, int len) 
 {
   int i, j = 0;
   char *s;
@@ -3536,8 +3474,8 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
   if (obj == sc->ERROR) 
     return(copy_string("#<error>"));
 
-  if ((s7_is_input_port(sc, obj)) || (s7_is_output_port(sc, obj)))
-    return(copy_string(describe_port(sc, obj)));
+  if ((is_input_port(obj)) || (is_output_port(obj)))
+    return(describe_port(sc, obj));
 
   if (s7_is_number(obj)) 
     {
@@ -3585,7 +3523,7 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
     {
       if (!use_write) 
 	return(copy_string(string_value(obj)));
-      return(write_slash_string(sc, string_value(obj), string_length(obj)));
+      return(slashify_string(sc, string_value(obj), string_length(obj)));
     }
  
   if (s7_is_character(obj)) 
@@ -3642,7 +3580,7 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
   if (s7_is_function(obj)) 
     {
       char *p;
-      p = (char *)CALLOC(2 + safe_strlen(function_name(obj)), sizeof(char));
+      p = (char *)CALLOC(32 + safe_strlen(function_name(obj)), sizeof(char));
       sprintf(p, "<%s>", function_name(obj));
       return(p);
     } 
@@ -3657,18 +3595,6 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
     return(copy_string(s7_describe_object(obj)));
 
   return(copy_string("#<unknown object!>"));
-}
-
-
-static void print_atom(s7_scheme *sc, s7_pointer obj)
-{
-  char *p;
-  p = s7_atom_to_c_string(sc, obj, true);
-  if (p)
-    {
-      write_string(sc, p);
-      FREE(p);
-    }
 }
 
 
@@ -3793,7 +3719,7 @@ static char *s7_object_to_c_string_1(s7_scheme *sc, s7_pointer obj, bool use_wri
 
 char *s7_object_to_c_string(s7_scheme *sc, s7_pointer obj)
 {
-  return(s7_object_to_c_string_1(sc, obj, false));
+  return(s7_object_to_c_string_1(sc, obj, true));
 }
 
 s7_pointer s7_object_to_string(s7_scheme *sc, s7_pointer obj)
@@ -3802,36 +3728,29 @@ s7_pointer s7_object_to_string(s7_scheme *sc, s7_pointer obj)
     return(s7_vector_to_string(sc, obj));
   if (s7_is_pair(obj))
     return(s7_list_to_string(sc, obj));
-  return(s7_make_string(sc, s7_atom_to_c_string(sc, obj, false)));
+  return(s7_make_string(sc, s7_atom_to_c_string(sc, obj, true)));
+}
+
+
+static void print_atom(s7_scheme *sc, s7_pointer obj)
+{
+  /* this is used in the eval loop, always assuming current-output-port (eval|error output, etc) */
+  char *p;
+  p = s7_atom_to_c_string(sc, obj, true);
+  if (p)
+    {
+      write_string(sc, p, sc->outport);
+      FREE(p);
+    }
 }
 
 
 
 /* -------- newline -------- */
 
-static bool push_output_if_needed(s7_scheme *sc, s7_pointer port)
-{
-  if (s7_is_output_port(sc, port))
-    {
-      if ((port != sc->outport) &&
-	  (port != sc->NIL))
-	{
-	  push_output_port(sc, port);
-	  return(true);
-	}
-    }
-  return(false);
-}
-
 void s7_newline(s7_scheme *sc, s7_pointer port)
 {
-  bool need_pop;
-  need_pop = push_output_if_needed(sc, port);
-
-  write_char(sc, '\n');
-
-  if (need_pop)
-    pop_output_port(sc);
+  write_char(sc, '\n', port);
 }
 
 static s7_pointer g_newline(s7_scheme *sc, s7_pointer args)
@@ -3856,13 +3775,7 @@ static s7_pointer g_newline(s7_scheme *sc, s7_pointer args)
 
 void s7_write_char(s7_scheme *sc, char c, s7_pointer port)
 {
-  bool need_pop;
-  need_pop = push_output_if_needed(sc, port);
-
-  write_char(sc, c);
-
-  if (need_pop)
-    pop_output_port(sc);
+  write_char(sc, c, port);
 }
 
 static s7_pointer g_write_char(s7_scheme *sc, s7_pointer args)
@@ -3889,19 +3802,11 @@ static s7_pointer g_write_char(s7_scheme *sc, s7_pointer args)
 
 static void write_or_display(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool use_write)
 {
-  bool need_pop;
   char *val;
-
-  need_pop = push_output_if_needed(sc, port);
-  val = s7_object_to_c_string(sc, obj);
-  
-  write_string(sc, val);
-
+  val = s7_object_to_c_string_1(sc, obj, use_write);
+  write_string(sc, val, port);
   FREE(val);
-  if (need_pop)
-    pop_output_port(sc);
 }
-
 
 void s7_write(s7_scheme *sc, s7_pointer obj, s7_pointer port)
 {
@@ -3982,6 +3887,9 @@ static s7_pointer g_stacktrace(s7_scheme *sc, s7_pointer args)
   #define H_stacktrace "(stacktrace) prints out the current stack contents"
   int i;
   sc->gc_off = true;
+
+  if (sc->args == NULL) fprintf(stderr, "trace null args");
+
   for (i = 0; i < sc->stack_top; i +=4)
     print_stack_entry(sc, 
 		      (opcode_t)s7_integer(vector_element(sc->stack, i + 3)),
@@ -4469,6 +4377,9 @@ static const char *procedure_name(s7_pointer x)
 
 /* -------------------------------- eval -------------------------------- */
 
+/* all explicit write-* in eval assume current-output-port -- tracing, error fallback handling, etc */
+/*   internal reads assume sc->inport is the input port */
+
 static void eval(s7_scheme *sc, opcode_t first_op) 
 {
   #define s_pop(sc, a)    {pop_stack(sc, a); goto START;}
@@ -4476,7 +4387,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
   /* TODO: get rid of s_pop|s_retbool */
 
   sc->op = first_op;
-  
+
   START:
   {
     if (sc->op >= OP_DEFP)
@@ -4552,1598 +4463,1743 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  }
       }
   }
-  
+
+  /* g_stacktrace(sc, sc->NIL); */
+
   switch (sc->op) 
     {
-      case OP_TOP_LEVEL: /* top level */
-	if (s7_is_input_port(sc, sc->inport))
-	  port_paren_depth(sc->inport) = 0;
 
-	stack_reset(sc); 
-	sc->envir = sc->global_env;
-	push_stack(sc, OP_TOP_LEVEL, sc->NIL, sc->NIL);
-	push_stack(sc, OP_VALUEPRINT, sc->NIL, sc->NIL);
-	push_stack(sc, OP_T1LVL, sc->NIL, sc->NIL);
-	goto READ_INTERNAL;
-	
-	
-      case OP_T1LVL: /* top level */
-	sc->code = sc->value;
-	goto EVAL;
-	
-	
-      READ_INTERNAL:
-      case OP_READ_INTERNAL:       /* internal read */
-	sc->tok = token(sc);
-	if (sc->tok == TOK_EOF) 
-	  {
-	    if (sc->inport == sc->NIL)
-	      {
-		sc->args = sc->NIL;
-		goto QUIT;
-	      } 
-	    else s_pop(sc, sc->EOF_OBJECT);
-	  }
-	goto RDSEXPR;
+    case OP_PEVAL: /* eval */
+      if (cdr(sc->args) != sc->NIL) 
+	sc->envir = cadr(sc->args);
+      sc->code = car(sc->args);
+      goto EVAL;
 
-    case OP_POP_INPUT_PORT:
-      pop_input_port(sc);
-      goto START;
-
-      case OP_GENSYM:
-	s_pop(sc, s7_gensym(sc));
-
-	
-      case OP_VALUEPRINT: /* print evaluation result */
-	if (sc->tracing) 
-	  write_string(sc, "\nGives: ");
+    case OP_TOP_LEVEL: /* top level */
+      if (is_input_port(sc->inport))
+	port_paren_depth(sc->inport) = 0;
+      
+      stack_reset(sc); 
+      sc->envir = sc->global_env;
+      push_stack(sc, OP_TOP_LEVEL, sc->NIL, sc->NIL);
+      push_stack(sc, OP_VALUEPRINT, sc->NIL, sc->NIL);
+      push_stack(sc, OP_T1LVL, sc->NIL, sc->NIL);
+      goto READ_INTERNAL;
+      
+      
+    case OP_T1LVL: /* top level */
+      sc->code = sc->value;
+      goto EVAL;
+      
+      
+    READ_INTERNAL:
+    case OP_READ_INTERNAL:       /* internal read */
+      sc->tok = token(sc, sc->inport);
+      if (sc->tok == TOK_EOF) 
 	s_pop(sc, sc->value);
-	
-	
-      BEGIN:
-      case OP_BEGIN:      /* begin */
-	if (!s7_is_pair(sc->code)) 
-	  s_pop(sc, sc->code);
-	
-	if (cdr(sc->code) != sc->NIL) 
-	  push_stack(sc, OP_BEGIN, sc->NIL, cdr(sc->code));
-	
-	sc->code = car(sc->code);
-	/* goto EVAL; */
-	
-	
-      EVAL:
-      case OP_EVAL:       /* main part of evaluation */
-	
-	if (sc->tracing) 
-	  {
-	    /*push_stack(sc, OP_VALUEPRINT, sc->NIL, sc->NIL);*/
-	    push_stack(sc, OP_REAL_EVAL, sc->args, sc->code);
-	    sc->args = sc->code;
-	    write_string(sc, "\nEval: ");
-	    goto P0LIST;
-	  }
-	/* fall through */
-	
-	
-      case OP_REAL_EVAL:
-	
-	if (s7_is_symbol(sc->code)) 
-	  {
-	    sc->x = s7_find_slot_in_env(sc, sc->envir, sc->code, 1);
-	    if (sc->x != sc->NIL) 
-	      s_pop(sc, s7_slot_value_in_env(sc->x)); 
-	    
-	    fprintf(stderr, "unbound: %s\n", s7_symbol_name(sc->code));
+      goto READ_EXPRESSION;
+      
+      
+      /* g_read(p) from C 
+       *   read one expr, return it, let caller deal with input port setup 
+       */
+    case OP_READ_RETURN_EXPRESSION:
+      return;
 
-	    sc->value = s7_make_string(sc, "eval: unbound variable:");
-	    sc->args = sc->code;
-	    goto ERROR;
-	  } 
-	else 
-	  if (s7_is_pair(sc->code)) 
-	    {
-	      if (s7_is_syntax(sc->x = car(sc->code))) 
-		{     
-		  sc->code = cdr(sc->code);
-		  sc->op = integer(syntax_opcode(sc->x)->object.number);
-		  goto START;
-		} 
-	      else 
-		{
-		  /* first, eval top element and eval arguments */
-		  push_stack(sc, OP_E0ARGS, sc->NIL, sc->code);
-		  sc->code = car(sc->code);
-		  goto EVAL;
-		}
-	    } 
-	  else 
-	    {
-	      s_pop(sc, sc->code);
-	    }
-	
-      case OP_E0ARGS:     /* eval arguments */
-	if (is_macro(sc->value)) 
-	  {    
-	    /* macro expansion */
-	    push_stack(sc, OP_DOMACRO, sc->NIL, sc->NIL);
-	    sc->args = cons(sc, sc->code, sc->NIL);
-	    sc->code = sc->value;
-	    goto APPLY;
-	  } 
-	else 
-	  {
-	    sc->code = cdr(sc->code);
-	    
-	    /* here args is nil, value is the operator (car of list), code is the rest -- the args.
-	     *   e0args can be called within e1args loop if it's a nested expression:
-	     * (+ 1 2 (* 2 3)):
-	     e0args: (), value: +, code: (1 2 (* 2 3))
-	     e1args: (+), value: +, code: (1 2 (* 2 3))
-	     e1args: (1 +), value: +, code: (2 (* 2 3))
-	     e1args: (2 1 +), value: +, code: ((* 2 3))
-	     e0args: (), value: *, code: (2 3)
-	     e1args: (*), value: *, code: (2 3)
-	     e1args: (2 *), value: *, code: (3)
-	     e1args: (3 2 *), value: *, code: ()
-	     <end -> apply the * op>
-	     e1args: (6 2 1 +), value: +, code: ()
-	    */
-	    
-	  }
-	
-	/* e1args causes 80 to 90% of the consing in the evaluator! */
-	
-      case OP_E1ARGS:     /* eval arguments */
-	sc->args = cons(sc, sc->value, sc->args);  /* this line is the speed killer for the whole program */
-	                                           /*   I've failed twice to find a way to reduce the consing */
-	/*  the no cons method:
-	 * E0ARGS:	    sc->args = sc->code;
-	 * E1ARGS:          car(sc->code) = sc->value;
-	 *                  sc->code = cdr(sc->code);
-	 *                  if (s7_is_pair(sc->code))
-	 *                    {
-	 *                      push_stack(sc, OP_E1ARGS, sc->args, sc->code);
-	 *                      sc->code = car(sc->code);
-	 *                      sc->args = sc->NIL;
-	 *                      goto EVAL;
-	 *                    }
-	 *                  else
-	 *                    {
-	 *                      sc->code = car(sc->args);
-	 *                      sc->args = cdr(sc->args);
-	 *                      -- drop into apply --
-	 *                    }
-         * but even with copy-tree of the procedure-source (below), this fails in odd cases --
-         * somehow the current arg list infects the original procedure-source.
-         */
-	
-	if (s7_is_pair(sc->code)) 
-	  { /* continue */
-	    push_stack(sc, OP_E1ARGS, sc->args, cdr(sc->code));
-	    
-	    sc->code = car(sc->code);
-	    sc->args = sc->NIL;
-	    goto EVAL;
-	  } 
-	else 
-	  {  /* end */
-	    sc->args = s7_reverse_in_place(sc, sc->NIL, sc->args); 
-	    sc->code = car(sc->args);
-	    sc->args = cdr(sc->args);
-	    /* goto APPLY;  */
-	  }
-	
-      APPLY:
-      case OP_APPLY:      /* apply 'code' to 'args' */
-	
-	if (sc->tracing) 
-	  {
-	    push_stack(sc, OP_REAL_APPLY, sc->args, sc->code);
-	    write_string(sc, "\nApply to: ");
-	    goto P0LIST;
-	  }
-	/* fall through */
-	
-      case OP_REAL_APPLY:
-	
-	if (s7_is_procedure(sc->code)) 
-	  {
-	    sc->op = procedure_index(sc->code);
-	    goto START;
-	  } 
-	else 
-	  {
-	    if (s7_is_function(sc->code))
-	      {
-		int len;
-		len = s7_list_length(sc, sc->args);
-		if (len < function_required_args(sc->code))
-		  {
-		    sc->value = s7_make_string(sc, "not enough args");
-		    goto ERROR;
-		  }
-		if ((!function_has_rest_arg(sc->code)) &&
-		    ((function_required_args(sc->code) + function_optional_args(sc->code)) < len))
-		  {
-		    sc->value = s7_make_string(sc, "too many args");
-		    goto ERROR;
-		  }
-		sc ->x = function_call(sc->code)(sc, sc->args);
 
-		if (sc->x == sc->ERROR)
-		  goto ERROR;
-		s_pop(sc, sc->x);
-		
-		/* so to throw an error from a function,
-		 *   set sc->value to the error string, sc->args to the error args, return sc->ERROR
-		 */
-	      }
-	    
-	    /* TODO: if object getter */
-	    
-	    else 
-	      {
-		if (s7_is_closure(sc->code) || is_macro(sc->code) || is_promise(sc->code)) 
-		  { /* CLOSURE */
-		    /* Should not accept promise */
-		    /* make environment */
-		    /*
-		      fprintf(stderr, "proc env: %s\n", s7_object_to_c_string(sc, s7_procedure_environment(sc->code)));
-		    */
-		    new_frame_in_env(sc, s7_procedure_environment(sc->code)); 
-		    
-		    /* s7_is_pair(sc->x) here assumes the func has more than 1 arg? */
-		    
-		    for (sc->x = car(s7_procedure_source(sc, sc->code)), sc->y = sc->args; s7_is_pair(sc->x); sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
-		      {
-			if (sc->y == sc->NIL)
-			  {
-			    sc->value = s7_make_string(sc, "not enough arguments");
-			    goto ERROR;
-			  }
-			else new_slot_in_env(sc, car(sc->x), car(sc->y)); 
-		      }
-		    if (sc->x == sc->NIL) 
-		      {
-			/* why commented out? */
-			
-			/*--
-			 * if (sc->y != sc->NIL) 
-			 {
-			 *   "too many arguments"
-			 * }
-			 */
-		      } 
-		    else 
-		      {
-			if (s7_is_symbol(sc->x))
-			  new_slot_in_env(sc, sc->x, sc->y); 
-			else
-			  {
-			    sc->args = sc->x;
-			    sc->value = s7_make_string(sc, "syntax error in closure: not a symbol:");
-			    goto ERROR;
-			  }
-		      }
-		    sc->code = cdr(s7_procedure_source(sc, sc->code));
-		    sc->args = sc->NIL;
-		    goto BEGIN;
-		  }
-		else 
-		  {
-		    if (s7_is_continuation(sc->code)) 
-		      { /* continuation */
-			s7_call_continuation(sc, sc->code);
-			s_pop(sc, sc->args != sc->NIL ? car(sc->args) : sc->NIL);
-		      } 
-		    else 
-		      {
-			if (is_goto(sc->code))
-			  {
-			    sc->stack_top = (sc->code)->object.goto_loc;
-			    s_pop(sc, sc->args != sc->NIL ? car(sc->args) : sc->NIL);
-			  }
-			else
-			  {
-			    fprintf(stderr, "bad entry, type: %x %s, obj: ", type(sc->code), describe_type(sc->code));
-			    dump_object(sc, sc->code);
-			    
-			    sc->args = sc->code;
-			    sc->value = s7_make_string(sc, "illegal function");
-			    goto ERROR;
-			  }
-		      }
-		  }
-	      }
-	  }
-	
-      case OP_DOMACRO:    /* do macro */
-	sc->code = sc->value;
-	goto EVAL;
-	
-      case OP_LAMBDA:     /* lambda */
-	s_pop(sc, s7_make_closure(sc, sc->code, sc->envir));
-	
-      case OP_MKCLOSURE: /* make-closure */
-	sc->x = car(sc->args);
-	if (car(sc->x) == sc->LAMBDA) 
-	  sc->x = cdr(sc->x);
-	
-	if (cdr(sc->args) == sc->NIL) 
-	  sc->y = sc->envir;
-	else sc->y = cadr(sc->args);
-	
-	s_pop(sc, s7_make_closure(sc, sc->x, sc->y));
-	
-      case OP_QUOTE:      /* quote */
-	s_pop(sc, car(sc->code));
-	
-      case OP_DEF0:  /* define */
-	if (s7_is_immutable(car(sc->code)))
-	  {
-	    sc->value = s7_make_string(sc, "define: unable to alter immutable");
-	    sc->args = car(sc->code);
-	    goto ERROR;
-	  }
-	
-	if (s7_is_pair(car(sc->code))) 
-	  {
-	    sc->x = caar(sc->code);
-	    sc->code = cons(sc, sc->LAMBDA, cons(sc, cdar(sc->code), cdr(sc->code)));
-	  } 
-	else 
-	  {
-	    sc->x = car(sc->code);
-	    sc->code = cadr(sc->code);
-	  }
-	if (!s7_is_symbol(sc->x))
-	  {
-	    sc->value = s7_make_string(sc, "define of a non-symbol?");
-	    sc->args = sc->x;
-	    goto ERROR;
-	  }
-	
-	push_stack(sc, OP_DEF1, sc->NIL, sc->x);
-	goto EVAL;
-	
-      case OP_DEF1:  /* define */
-	sc->x = s7_find_slot_in_env(sc, sc->envir, sc->code, 0);
-	if (sc->x != sc->NIL) 
-	  set_slot_in_env(sc, sc->x, sc->value); 
-	else new_slot_in_env(sc, sc->code, sc->value); 
+      /* (read p) from scheme
+       *    "p" becomes current input port for eval's duration, then pops back before returning value into calling expr
+       */
+    case OP_READ_POP_AND_RETURN_EXPRESSION:
+      pop_input_port(sc);
+      if (sc->tok == TOK_EOF)
+	s_pop(sc, sc->EOF_OBJECT);
+      s_pop(sc, sc->value);
+      
+
+      /* load("file"); from C (g_load) -- assume caller will clean up
+       *   read and evaluate exprs until EOF that matches (stack reflects nesting)
+       */
+    case OP_LOAD_RETURN_IF_EOF:  /* loop here until eof (via push stack below) */
+      if (sc->tok != TOK_EOF)
+	{
+	  push_stack(sc, OP_LOAD_RETURN_IF_EOF, sc->NIL, sc->NIL);
+	  push_stack(sc, OP_READ_INTERNAL, sc->NIL, sc->NIL);
+	  sc->code = sc->value;
+	  goto EVAL;             /* we read an expression, now evaluate it, and return to read the next */
+	}
+      return;
+      
+      
+      /* (load "file") in scheme 
+       *    read and evaluate all exprs, then upon EOF, close current and pop input port stack
+       */
+    case OP_LOAD_CLOSE_AND_POP_IF_EOF:
+      if (sc->tok != TOK_EOF)
+	{
+	  push_stack(sc, OP_LOAD_CLOSE_AND_POP_IF_EOF, sc->NIL, sc->NIL);
+	  push_stack(sc, OP_READ_INTERNAL, sc->NIL, sc->NIL);
+	  sc->code = sc->value;
+	  goto EVAL;             /* we read an expression, now evaluate it, and return to read the next */
+	}
+      s7_close_input_port(sc, sc->inport);
+      pop_input_port(sc);
+      s_pop(sc, sc->UNSPECIFIED);
+      
+
+      /* read and evaluate string expression(s?)
+       *    assume caller (C via g_eval_c_string) is dealing with the string port
+       */
+    case OP_EVAL_STRING:
+      push_stack(sc, OP_EVAL_STRING_DONE, sc->NIL, sc->NIL); /* TODO: multiple exprs in string?? */
+      sc->code = sc->value;
+      goto EVAL;
+
+    case OP_EVAL_STRING_DONE:
+      return;
+      
+    case OP_GENSYM:
+      s_pop(sc, s7_gensym(sc));
+      
+      
+    case OP_VALUEPRINT: /* print evaluation result */
+      if (sc->tracing) 
+	write_string(sc, "\nGives: ", sc->outport);
+      s_pop(sc, sc->value);
+      
+      
+    BEGIN:
+    case OP_BEGIN:      /* begin */
+      if (!s7_is_pair(sc->code)) 
 	s_pop(sc, sc->code);
-	
-      case OP_DEFP:  /* defined? */
-	sc->x = sc->envir;
-	if (cdr(sc->args) != sc->NIL) 
-	  sc->x = cadr(sc->args);
-	s_retbool(s7_find_slot_in_env(sc, sc->x, car(sc->args), 1) != sc->NIL);
-	
-      case OP_SET0:       /* set! */
-	if (s7_is_immutable(car(sc->code)))
-	  {
-	    sc->value = s7_make_string(sc, "set!: unable to alter immutable variable");
-	    sc->args = car(sc->code);
-	    goto ERROR;
-	  }
-	
-	if (s7_is_pair(car(sc->code))) /* has accessor */
-	  {
-	    char *sym, *name;
-	    name = s7_symbol_name(caar(sc->code));
-	    sym = (char *)CALLOC(safe_strlen(name) + 6, sizeof(char));
-	    sprintf(sym, "set-%s", name);
-	    caar(sc->code) = s7_make_symbol(sc, sym);               /* [set!] ((x a b...) y) -> ((set-x a b..) y) */
-	    sc->code = s7_append(sc, car(sc->code), cdr(sc->code)); /* -> (set-x a b ... y) */
-	    FREE(sym); /* I think s7_make_symbol copies the name */
-	  }
-	else 
-	  {
-	    push_stack(sc, OP_SET1, sc->NIL, car(sc->code));
-	    sc->code = cadr(sc->code);
-	  }
-	goto EVAL;
-	
-      case OP_SET1:      
-	sc->y = s7_find_slot_in_env(sc, sc->envir, sc->code, 1);
-	if (sc->y != sc->NIL) 
-	  {
-	    set_slot_in_env(sc, sc->y, sc->value); 
-	    s_pop(sc, sc->value);
-	  }
-	else 
-	  {
-	    sc->value = s7_make_string(sc, "set!: unbound variable:");
-	    sc->args = sc->code;
-	    goto ERROR;
-	  }
-	
-      case OP_IF0:        /* if */
-	
-	push_stack(sc, OP_IF1, sc->NIL, cdr(sc->code));
-	sc->code = car(sc->code);
-	goto EVAL;
-	
-      case OP_IF1:        /* if */
-	
-	if (is_true(sc->value))
-	  sc->code = car(sc->code);
-	else
-	  sc->code = cadr(sc->code);  /* (if #f 1) ==> #<unspecified> because car(sc->NIL) = sc->UNSPECIFIED */
-	goto EVAL;
-	
-      case OP_LET0:       /* let */
-	sc->args = sc->NIL;
-	sc->value = sc->code;
-	sc->code = s7_is_symbol(car(sc->code)) ? cadr(sc->code) : car(sc->code);
-	
-      case OP_LET1:       /* let (calculate parameters) */
-	sc->args = cons(sc, sc->value, sc->args);
-	if (s7_is_pair(sc->code)) 
-	  { /* continue */
-	    push_stack(sc, OP_LET1, sc->args, cdr(sc->code));
-	    sc->code = cadar(sc->code);
-	    sc->args = sc->NIL;
-	    goto EVAL;
-	  } 
-	else 
-	  {  /* end */
-	    sc->args = s7_reverse_in_place(sc, sc->NIL, sc->args);
-	    sc->code = car(sc->args);
-	    sc->args = cdr(sc->args);
-	  }
-	
-      case OP_LET2:       /* let */
-	new_frame_in_env(sc, sc->envir); 
-	for (sc->x = s7_is_symbol(car(sc->code)) ? cadr(sc->code) : car(sc->code), sc->y = sc->args;
-	     sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
-	  {
-	    new_slot_in_env(sc, caar(sc->x), car(sc->y)); 
-	  }
-	if (s7_is_symbol(car(sc->code))) 
-	  {    /* named let */
-	    for (sc->x = cadr(sc->code), sc->args = sc->NIL; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
-	      sc->args = cons(sc, caar(sc->x), sc->args);
-	    
-	    sc->x = s7_make_closure(sc, cons(sc, s7_reverse_in_place(sc, sc->NIL, sc->args), cddr(sc->code)), sc->envir); 
-	    new_slot_in_env(sc, car(sc->code), sc->x); 
-	    sc->code = cddr(sc->code);
-	    sc->args = sc->NIL;
-	  } 
-	else 
-	  {
-	    sc->code = cdr(sc->code);
-	    sc->args = sc->NIL;
-	  }
-	goto BEGIN;
-	
-      case OP_LET0AST:    /* let* */
-	if (car(sc->code) == sc->NIL) 
-	  {
-	    new_frame_in_env(sc, sc->envir); 
-	    sc->code = cdr(sc->code);
-	    goto BEGIN;
-	  }
-	push_stack(sc, OP_LET1AST, cdr(sc->code), car(sc->code));
-	sc->code = cadaar(sc->code);
-	goto EVAL;
-	
-      case OP_LET1AST:    /* let* (make new frame) */
-	new_frame_in_env(sc, sc->envir); 
-	
-      case OP_LET2AST:    /* let* (calculate parameters) */
-	new_slot_in_env(sc, caar(sc->code), sc->value); 
-	sc->code = cdr(sc->code);
-	if (s7_is_pair(sc->code)) 
-	  { /* continue */
-	    push_stack(sc, OP_LET2AST, sc->args, sc->code);
-	    sc->code = cadar(sc->code);
-	    sc->args = sc->NIL;
-	    goto EVAL;
-	  } 
-	else 
-	  {  /* end */
-	    sc->code = sc->args;
-	    sc->args = sc->NIL;
-	    goto BEGIN;
-	  }
-	
-	
-      case OP_LET0REC:    /* letrec */
-	new_frame_in_env(sc, sc->envir); 
-	sc->args = sc->NIL;
-	sc->value = sc->code;
-	sc->code = car(sc->code);
-	
-      case OP_LET1REC:    /* letrec (calculate parameters) */
-	sc->args = cons(sc, sc->value, sc->args);
-	if (s7_is_pair(sc->code)) 
-	  { /* continue */
-	    push_stack(sc, OP_LET1REC, sc->args, cdr(sc->code));
-	    sc->code = cadar(sc->code);
-	    sc->args = sc->NIL;
-	    goto EVAL;
-	  } 
-	else 
-	  {  /* end */
-	    sc->args = s7_reverse_in_place(sc, sc->NIL, sc->args); 
-	    sc->code = car(sc->args);
-	    sc->args = cdr(sc->args);
-	  }
-	
-      case OP_LET2REC:    /* letrec */
-	for (sc->x = car(sc->code), sc->y = sc->args; sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
-	  new_slot_in_env(sc, caar(sc->x), car(sc->y)); 
-	
-	sc->code = cdr(sc->code);
-	sc->args = sc->NIL;
-	goto BEGIN;
-	
-      case OP_COND0:      /* cond */
-	if (!s7_is_pair(sc->code)) 
-	  {
-	    sc->value = s7_make_string(sc, "syntax error in cond");
-	    goto ERROR;
-	  }
-	push_stack(sc, OP_COND1, sc->NIL, sc->code);
-	sc->code = caar(sc->code);
-	goto EVAL;
-	
-      case OP_COND1:      /* cond */
-	if (is_true(sc->value)) 
-	  {
-	    sc->code = cdar(sc->code);
-	    if (sc->code == sc->NIL)
-	      {
-		s_pop(sc, sc->value);
-	      }
-	    if (car(sc->code) == sc->FEED_TO) 
-	      {
-		if (!s7_is_pair(cdr(sc->code))) 
-		  {
-		    sc->value = s7_make_string(sc, "syntax error in cond");
-		    goto ERROR;
-		  }
-		sc->x = cons(sc, sc->QUOTE, cons(sc, sc->value, sc->NIL));
-		sc->code = cons(sc, cadr(sc->code), cons(sc, sc->x, sc->NIL));
-		goto EVAL;
-	      }
-	    goto BEGIN;
-	  }
-	else 
-	  {
-	    sc->code = cdr(sc->code);
-	    if (sc->code == sc->NIL)
-	      {
-		s_pop(sc, sc->NIL);
-	      } 
-	    else 
-	      {
-		push_stack(sc, OP_COND1, sc->NIL, sc->code);
-		sc->code = caar(sc->code);
-		goto EVAL;
-	      }
-	  }
-	
-      case OP_DELAY:      /* delay */
-	sc->x = s7_make_closure(sc, cons(sc, sc->NIL, sc->code), sc->envir);
-	set_type(sc->x, T_PROMISE);
-	s_pop(sc, sc->x);
-	
-      case OP_AND0:       /* and */
-	if (sc->code == sc->NIL) 
-	  s_pop(sc, sc->T);
-	
-	push_stack(sc, OP_AND1, sc->NIL, cdr(sc->code));
-	sc->code = car(sc->code);
-	goto EVAL;
-	
-      case OP_AND1:       /* and */
-	if (is_false(sc->value)) 
-	  s_pop(sc, sc->value);
-	
-	if (sc->code == sc->NIL) 
-	  s_pop(sc, sc->value);
-	
-	push_stack(sc, OP_AND1, sc->NIL, cdr(sc->code));
-	sc->code = car(sc->code);
-	goto EVAL;
-	
-      case OP_OR0:        /* or */
-	if (sc->code == sc->NIL) 
-	  s_pop(sc, sc->F);
-	
-	push_stack(sc, OP_OR1, sc->NIL, cdr(sc->code));
-	sc->code = car(sc->code);
-	goto EVAL;
-	
-      case OP_OR1:        /* or */
-	if (is_true(sc->value)) 
-	  s_pop(sc, sc->value);
-	
-	if (sc->code == sc->NIL) 
-	  s_pop(sc, sc->value);
-	
-	push_stack(sc, OP_OR1, sc->NIL, cdr(sc->code));
-	sc->code = car(sc->code);
-	goto EVAL;
-	
-      case OP_C0STREAM:   /* cons-stream */
-	push_stack(sc, OP_C1STREAM, sc->NIL, cdr(sc->code));
-	sc->code = car(sc->code);
-	goto EVAL;
-	
-      case OP_C1STREAM:   /* cons-stream */
-	sc->args = sc->value;  /* save sc->value to register sc->args for gc */
-	sc->x = s7_make_closure(sc, cons(sc, sc->NIL, sc->code), sc->envir);
-	set_type(sc->x, T_PROMISE);
-	s_pop(sc,cons(sc, sc->args, sc->x));
-	
-      case OP_MACRO0:     /* macro */
-	if (s7_is_pair(car(sc->code))) 
-	  {
-	    sc->x = caar(sc->code);
-	    sc->code = cons(sc, sc->LAMBDA, cons(sc, cdar(sc->code), cdr(sc->code)));
-	  } 
-	else 
-	  {
-	    sc->x = car(sc->code);
-	    sc->code = cadr(sc->code);
-	  }
-
-	if (!s7_is_symbol(sc->x)) 
-	  {
-	    sc->value = s7_make_string(sc, "variable is not a symbol");
-	    sc->args = sc->x;
-	    goto ERROR;
-	  }
-	
-	push_stack(sc, OP_MACRO1, sc->NIL, sc->x);
-	goto EVAL;
-	
-      case OP_MACRO1:     /* macro */
-	set_type(sc->value, T_MACRO);
-	sc->x = s7_find_slot_in_env(sc, sc->envir, sc->code, 0); 
-	if (sc->x != sc->NIL) 
-	  set_slot_in_env(sc, sc->x, sc->value); 
-	else new_slot_in_env(sc, sc->code, sc->value); 
-	
-	s_pop(sc, sc->code);
-	
-      case OP_CASE0:      /* case */
-	push_stack(sc, OP_CASE1, sc->NIL, cdr(sc->code));
-	sc->code = car(sc->code);
-	goto EVAL;
-	
-      case OP_CASE1:      /* case */
-	for (sc->x = sc->code; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
-	  {
-	    if (!s7_is_pair(sc->y = caar(sc->x))) 
-	      {
-		break;
-	      }
-	    for ( ; sc->y != sc->NIL; sc->y = cdr(sc->y)) 
-	      {
-		if (s7_eqv_p(car(sc->y), sc->value)) 
-		  {
-		    break;
-		  }
-	      }
-	    if (sc->y != sc->NIL) 
-	      {
-		break;
-	      }
-	  }
-	if (sc->x != sc->NIL) 
-	  {
-	    if (s7_is_pair(caar(sc->x))) 
-	      {
-		sc->code = cdar(sc->x);
-		goto BEGIN;
-	      } 
-	    else 
-	      {/* else */
-		push_stack(sc, OP_CASE2, sc->NIL, cdar(sc->x));
-		sc->code = caar(sc->x);
-		goto EVAL;
-	      }
-	  } 
-	else 
-	  {
-	    s_pop(sc, sc->NIL);
-	  }
-	
-      case OP_CASE2:      /* case */
-	if (is_true(sc->value)) 
-	  {
-	    goto BEGIN;
-	  } 
-	else 
-	  {
-	    s_pop(sc, sc->NIL);
-	  }
-	
-      case OP_PAPPLY:     /* apply */
-	sc->code = car(sc->args);
-	sc->args = list_star(sc, cdr(sc->args));
-	goto APPLY;
-	
-      case OP_CONTINUATION:    /* call-with-current-continuation */
-	sc->code = car(sc->args);
-	sc->args = cons(sc, s7_make_continuation(sc), sc->NIL);
-	/*
-	  fprintf(stderr, "call/cc... %p %p %p ", sc->code, sc->stack, car(sc->args));
-	*/
-	goto APPLY;
-	
-      case OP_GOTO:    /* call-with-exit */
-	sc->code = car(sc->args);
-	sc->args = cons(sc, s7_make_goto(sc), sc->NIL);
-	goto APPLY;
-	
-	
-      case OP_REAL_PART:     /* real-part */
-	s_pop(sc, s7_make_real(sc, s7_real_part(car(sc->args))));
-	
-      case OP_IMAG_PART:     /* imag-part */
-	s_pop(sc, s7_make_real(sc, s7_imag_part(car(sc->args))));
-	
-      case OP_NUMERATOR:     /* numerator */
-	s_pop(sc, s7_make_integer(sc, num_to_numerator((car(sc->args))->object.number)));
-	
-      case OP_DENOMINATOR:     /* denominator */
-	s_pop(sc, s7_make_integer(sc, num_to_denominator((car(sc->args))->object.number)));
-	
-      case OP_MAKE_RECTANGULAR:     /* make-rectangular */
-	s_pop(sc, s7_make_complex(sc, num_to_real((car(sc->args))->object.number), 
-				  num_to_real((cadr(sc->args))->object.number)));
-	
-      case OP_MAKE_POLAR:
+      
+      if (cdr(sc->code) != sc->NIL) 
+	push_stack(sc, OP_BEGIN, sc->NIL, cdr(sc->code));
+      
+      sc->code = car(sc->code);
+      /* goto EVAL; */
+      
+      
+    EVAL:
+    case OP_EVAL:       /* main part of evaluation */
+      
+      if (sc->tracing) 
 	{
-	  double s, c, ang, mag;
-	  mag = num_to_real((car(sc->args))->object.number);
-	  ang = num_to_real((cadr(sc->args))->object.number);
-	  s = sin(ang);
-	  c = cos(ang);
-	  s_pop(sc, s7_make_complex(sc, mag * c, mag * s));
+	  /*push_stack(sc, OP_VALUEPRINT, sc->NIL, sc->NIL);*/
+	  push_stack(sc, OP_REAL_EVAL, sc->args, sc->code);
+	  sc->args = sc->code;
+	  write_string(sc, "\nEval: ", sc->outport);
+	  goto P0LIST;
 	}
-	
-      case OP_ANGLE:
-	sc->x = car(sc->args);
-	
-	if (!s7_is_real(sc->x))
-	  s_pop(sc, s7_make_real(sc, atan2(s7_imag_part(sc->x), s7_real_part(sc->x))));
-	if (num_to_real(sc->x->object.number) < 0.0)
-	  s_pop(sc, s7_make_real(sc, atan2(0.0, -1.0)));
-	
-	s_pop(sc, s7_make_real(sc, 0.0));
-	
-      case OP_MAGNITUDE:
-	sc->v = nvalue(car(sc->args));
-	switch (num_type(sc->v))
-	  {
-	  case NUM_REAL2: 
-	  case NUM_REAL: 
-	    real(sc->v) = fabs(real(sc->v)); 
-	    break;
-	    
-	  case NUM_INT:
-	    integer(sc->v) = abs(integer(sc->v));
-	    break;
-	  case NUM_RATIO:
-	    numerator(sc->v) = abs(numerator(sc->v));
-	    break;
-	    
-	  default:
-	    {
-	      double a, b;
-	      a = imag_part(sc->v);
-	      b = real_part(sc->v);
-	      sc->v.type = NUM_REAL;
-	      real(sc->v) = hypot(a, b);
-	    }
-	    break;
-	  }
-	s_pop(sc, make_number(sc, sc->v));
-	
-      case OP_EXACTP:     /* exact? */
-	s_retbool(s7_is_exact(car(sc->args)));
-	
-      case OP_INEXACTP:     /* exact? */
-	s_retbool(s7_is_inexact(car(sc->args)));
-	
-      case OP_EVENP:     /* even? */
-	s_retbool((s7_integer(car(sc->args)) & 1) == 0);
-	
-      case OP_ODDP:     /* odd? */
-	s_retbool((s7_integer(car(sc->args)) & 1) == 1);
-	
-      case OP_POSITIVEP:     /* positive? */
-	sc->x = car(sc->args);
-	switch (object_number_type(sc->x))
-	  {
-	  case NUM_INT:   s_retbool(s7_integer(sc->x) > 0);
-	  case NUM_RATIO: s_retbool(s7_numerator(sc->x) > 0);
-	  default:        s_retbool(s7_real(sc->x) > 0);
-	  }
-	
-      case OP_NEGATIVEP:     /* negative? */
-	sc->x = car(sc->args);
-	switch (object_number_type(sc->x))
-	  {
-	  case NUM_INT:   s_retbool(s7_integer(sc->x) < 0);
-	  case NUM_RATIO: s_retbool(s7_numerator(sc->x) < 0);
-	  default:        s_retbool(s7_real(sc->x) < 0);
-	  }
-	
-      case OP_ZEROP:     /* zero? */
-	sc->x = car(sc->args);
-	switch (object_number_type(sc->x))
-	  {
-	  case NUM_INT:   s_retbool(s7_integer(sc->x) == 0);
-	  case NUM_REAL2:
-	  case NUM_REAL:  s_retbool(s7_real(sc->x) == 0.0);
-	  case NUM_RATIO: s_retbool(s7_numerator(sc->x) == 0);
-	  default:        s_retbool((s7_real_part(sc->x) == 0.0) &&
-				    (s7_imag_part(sc->x) == 0.0));
-	  }
-	
-      case OP_RATIONALIZE:    /* rationalize */
+      /* fall through */
+      
+      
+    case OP_REAL_EVAL:
+      
+      if (s7_is_symbol(sc->code)) 
 	{
-	  double err;
-	  s7_Int numer = 0, denom = 1;
+	  sc->x = s7_find_slot_in_env(sc, sc->envir, sc->code, 1);
+	  if (sc->x != sc->NIL) 
+	    s_pop(sc, s7_slot_value_in_env(sc->x)); 
 	  
-	  sc->x = car(sc->args);
-	  if (s7_is_exact(sc->x)) 
-	    s_pop(sc, sc->x);
+	  fprintf(stderr, "unbound: %s\n", s7_symbol_name(sc->code));
 	  
-	  err = s7_real(cadr(sc->args));
-	  
-	  if (c_rationalize(s7_real(sc->x), err, &numer, &denom))
-	    s_pop(sc, s7_make_ratio(sc, numer, denom))
-	    else 
-	      {
-		sc->value = s7_make_string(sc, "rationalize did not converge?!?");
-		sc->args = sc->x;
-		goto ERROR;
-	      }
-	}
-	
-      case OP_INEX2EX:    /* inexact->exact */
-	sc->x = car(sc->args);
-	if (s7_is_exact(sc->x)) 
-	  s_pop(sc, sc->x);
-	{
-	  s7_Int numer = 0, denom = 1;
-	  if (c_rationalize(s7_real(sc->x), DEFAULT_RATIONALIZE_ERROR, &numer, &denom))
-	    s_pop(sc, s7_make_ratio(sc, numer, denom))
-	    else s_pop(sc, s7_make_integer(sc, (s7_Int)s7_real(sc->x)));
-	}
-	
-      case OP_EX2INEX:    /* exact->inexact */
-	sc->x = car(sc->args);
-	if (s7_is_inexact(sc->x)) 
-	  s_pop(sc, sc->x);
-	
-	if (s7_is_integer(sc->x))
-	  s_pop(sc, s7_make_real(sc, (double)s7_integer(sc->x)))
-	  else s_pop(sc, s7_make_real(sc, fraction(sc->x->object.number)));
-	
-	
-      case OP_ABS:
-	sc->v = nvalue(car(sc->args));
-	if (num_type(sc->v) >= NUM_REAL)
-	  real(sc->v) = fabs(real(sc->v));
-	else
-	  {
-	    if (num_type(sc->v) == NUM_INT)
-	      integer(sc->v) = abs(integer(sc->v));
-	    else numerator(sc->v) = abs(numerator(sc->v));
-	  }
-	s_pop(sc, make_number(sc, sc->v));      
-	
-      case OP_EXP:
-	sc->x = car(sc->args);
-	if (s7_is_real(sc->x))
-	  s_pop(sc, s7_make_real(sc, exp(num_to_real(sc->x->object.number))));
-	s_pop(sc, s7_from_c_complex(sc, cexp(s7_complex(sc->x))));
-	
-      case OP_LOG:
-	
-	/* TODO: cadr can be base */
-	
-	sc->x = car(sc->args);
-	if ((s7_is_real(sc->x)) &&
-	    (num_to_real(sc->x->object.number) > 0.0))
-	  s_pop(sc, s7_make_real(sc, log(num_to_real(sc->x->object.number))));
-	/* if < 0 use log(-x) + pi*i */
-	s_pop(sc, s7_from_c_complex(sc, clog(s7_complex(sc->x))));
-	
-      case OP_SIN:
-	sc->x = car(sc->args);
-	if (s7_is_real(sc->x))
-	  s_pop(sc, s7_make_real(sc, sin(num_to_real(sc->x->object.number))));
-	s_pop(sc, s7_from_c_complex(sc, csin(s7_complex(sc->x))));
-	
-      case OP_COS:
-	sc->x = car(sc->args);
-	if (s7_is_real(sc->x))
-	  s_pop(sc, s7_make_real(sc, cos(num_to_real(sc->x->object.number))));
-	s_pop(sc, s7_from_c_complex(sc, ccos(s7_complex(sc->x))));
-	
-      case OP_TAN:
-	sc->x = car(sc->args);
-	if (s7_is_real(sc->x))
-	  s_pop(sc, s7_make_real(sc, tan(num_to_real(sc->x->object.number))));
-	s_pop(sc, s7_from_c_complex(sc, ctan(s7_complex(sc->x))));
-	
-      case OP_ASIN:
-	sc->x = car(sc->args);
-	if ((s7_is_real(sc->x)) &&
-	    (fabs(num_to_real(sc->x->object.number)) <= 1.0))
-	  s_pop(sc, s7_make_real(sc, asin(num_to_real(sc->x->object.number))));
-	s_pop(sc, s7_from_c_complex(sc, casin(s7_complex(sc->x))));
-	
-      case OP_ACOS:
-	sc->x = car(sc->args);
-	if ((s7_is_real(sc->x)) &&
-	    (fabs(num_to_real(sc->x->object.number)) <= 1.0))
-	  s_pop(sc, s7_make_real(sc, acos(num_to_real(sc->x->object.number))));
-	s_pop(sc, s7_from_c_complex(sc, cacos(s7_complex(sc->x))));
-	
-      case OP_ATAN:
-	sc->x = car(sc->args);
-	if (cdr(sc->args) == sc->NIL) 
-	  {
-	    if (s7_is_real(sc->x))
-	      s_pop(sc, s7_make_real(sc, atan(num_to_real(sc->x->object.number))));
-	    s_pop(sc, s7_from_c_complex(sc, catan(s7_complex(sc->x))));
-	  } 
-	else 
-	  {
-	    sc->y = cadr(sc->args);
-	    s_pop(sc, s7_make_real(sc, atan2(num_to_real(sc->x->object.number), num_to_real(sc->y->object.number))));
-	    /* atan2 args should be real */
-	  }
-	
-      case OP_SINH:
-	sc->x = car(sc->args);
-	if (s7_is_real(sc->x))
-	  s_pop(sc, s7_make_real(sc, sinh(num_to_real(sc->x->object.number))));
-	s_pop(sc, s7_from_c_complex(sc, csinh(s7_complex(sc->x))));
-	
-      case OP_COSH:
-	sc->x = car(sc->args);
-	if (s7_is_real(sc->x))
-	  s_pop(sc, s7_make_real(sc, cosh(num_to_real(sc->x->object.number))));
-	s_pop(sc, s7_from_c_complex(sc, ccosh(s7_complex(sc->x))));
-	
-      case OP_TANH:
-	sc->x = car(sc->args);
-	if (s7_is_real(sc->x))
-	  s_pop(sc, s7_make_real(sc, tanh(num_to_real(sc->x->object.number))));
-	s_pop(sc, s7_from_c_complex(sc, ctanh(s7_complex(sc->x))));
-	
-      case OP_ASINH:
-	sc->x = car(sc->args);
-	if (s7_is_real(sc->x))
-	  s_pop(sc, s7_make_real(sc, asinh(num_to_real(sc->x->object.number))));
-	s_pop(sc, s7_from_c_complex(sc, casinh(s7_complex(sc->x))));
-	
-      case OP_ACOSH:
-	sc->x = car(sc->args);
-	if ((s7_is_real(sc->x)) &&
-	    (num_to_real(sc->x->object.number) >= 1.0))
-	  s_pop(sc, s7_make_real(sc, acosh(num_to_real(sc->x->object.number))));
-	s_pop(sc, s7_from_c_complex(sc, cacosh(s7_complex(sc->x))));
-	
-      case OP_ATANH:
-	sc->x = car(sc->args);
-	if ((s7_is_real(sc->x)) &&
-	    (fabs(num_to_real(sc->x->object.number)) < 1.0))
-	  s_pop(sc, s7_make_real(sc, atanh(num_to_real(sc->x->object.number))));
-	s_pop(sc, s7_from_c_complex(sc, catanh(s7_complex(sc->x))));
-	
-      case OP_SQRT:
-	sc->x = car(sc->args);
-	if ((s7_is_real(sc->x)) &&
-	    (num_to_real(sc->x->object.number) >= 0.0))
-	  s_pop(sc, s7_make_real(sc, sqrt(num_to_real(sc->x->object.number))));
-	/* if < 0 use sqrt(-num)*i */
-	s_pop(sc, s7_from_c_complex(sc, csqrt(s7_complex(sc->x))));
-	
-      case OP_EXPT:
-	{
-	  sc->x = car(sc->args);
-	  sc->y = cadr(sc->args);
-	  
-	  if ((s7_is_integer(sc->x)) &&
-	      (s7_is_integer(sc->y)) &&
-	      ((s7_integer(sc->y) >= 0) || 
-	       (abs(s7_integer(sc->x)) == 1)))
-	    s_pop(sc, s7_make_integer(sc, (s7_Int)pow(s7_integer(sc->x), s7_integer(sc->y))));
-	  
-	  if ((s7_is_real(sc->x)) &&
-	      (s7_is_real(sc->y)) &&
-	      (num_to_real(sc->x->object.number) > 0.0) &&
-	      (num_to_real(sc->y->object.number) >= 0.0))
-	    s_pop(sc, s7_make_real(sc, pow(num_to_real(sc->x->object.number), num_to_real(sc->y->object.number))));
-	  
-	  s_pop(sc, s7_from_c_complex(sc, cpow(s7_complex(sc->x), s7_complex(sc->y))));
-	}
-	
-      case OP_FLOOR:
-	sc->x = car(sc->args);
-	s_pop(sc, s7_make_integer(sc, (s7_Int)floor(num_to_real(sc->x->object.number)))); /* used to be real result */
-	
-      case OP_CEILING:
-	sc->x = car(sc->args);
-	s_pop(sc, s7_make_integer(sc, (s7_Int)ceil(num_to_real(sc->x->object.number))));
-	
-      case OP_ROUND: 
-	sc->x = car(sc->args);
-	s_pop(sc, s7_make_integer(sc, (s7_Int)round_per_R5RS(num_to_real(sc->x->object.number))));
-	
-      case OP_TRUNCATE: 
-	{
-	  double xf;
-	  sc->x = car(sc->args);
-	  xf = num_to_real(sc->x->object.number);
-	  if (xf > 0) 
-	    s_pop(sc, s7_make_integer(sc, (s7_Int)floor(xf)));
-	  s_pop(sc, s7_make_integer(sc, (s7_Int)ceil(xf)));
-	}
-	
-      case OP_LCM:
-	{ /* TODO: fix (and gcd) for new case */
-	  s7_Int val = 1;
-	  for (sc->x = sc->args; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
-	    {
-	      val = c_lcm(val, s7_integer(car(sc->x)));
-	      if (val == 0)
-		s_pop(sc, s7_make_integer(sc, 0));
-	    }
-	  s_pop(sc, s7_make_integer(sc, val));
-	}
-	
-      case OP_GCD:
-	{
-	  s7_Int val = 0;
-	  for (sc->x = sc->args; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
-	    {
-	      val = c_gcd(val, s7_integer(car(sc->x)));
-	      if (val == 1)
-		s_pop(sc, s7_make_integer(sc, 1));
-	    }
-	  s_pop(sc, s7_make_integer(sc, val));
-	}
-	
-      case OP_MAX:        /* max */
-	sc->v = nvalue(car(sc->args));
-	for (sc->x = cdr(sc->args); sc->x != sc->NIL; sc->x = cdr(sc->x)) 
-	  sc->v = num_max(sc, sc->v, nvalue(car(sc->x)));
-	s_pop(sc, make_number(sc, sc->v));
-	
-      case OP_MIN:        /* min */
-	sc->v = nvalue(car(sc->args));
-	for (sc->x = cdr(sc->args); sc->x != sc->NIL; sc->x = cdr(sc->x)) 
-	  sc->v = num_min(sc, sc->v, nvalue(car(sc->x)));
-	s_pop(sc, make_number(sc, sc->v));
-	
-      case OP_ADD:        /* + */
-	sc->v = small_int_as_num(sc, 0);
-	
-	for (sc->x = sc->args; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
-	  sc->v = num_add(sc, sc->v, nvalue(car(sc->x)));
-	s_pop(sc, make_number(sc, sc->v));
-	
-      case OP_MUL:        /* * */
-	sc->v = small_int_as_num(sc, 1);
-	
-	for (sc->x = sc->args; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
-	  sc->v = num_mul(sc, sc->v, nvalue(car(sc->x)));
-	s_pop(sc, make_number(sc, sc->v));
-	
-      case OP_SUB:        /* - */
-	if (cdr(sc->args) == sc->NIL) 
-	  {
-	    sc->x = sc->args;
-	    sc->v = small_int_as_num(sc, 0);
-	  } 
-	else 
-	  {
-	    sc->x = cdr(sc->args);
-	    sc->v = nvalue(car(sc->args));
-	  }
-	for (; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
-	  sc->v = num_sub(sc, sc->v, nvalue(car(sc->x)));
-	s_pop(sc, make_number(sc, sc->v));
-	
-      case OP_DIV:        /* / */
-	if (cdr(sc->args) == sc->NIL) 
-	  {
-	    sc->x = sc->args;
-	    sc->v = small_int_as_num(sc, 1);
-	  } 
-	else 
-	  {
-	    sc->x = cdr(sc->args);
-	    sc->v = nvalue(car(sc->args));
-	  }
-	for (; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
-	  sc->v = num_div(sc, sc->v, nvalue(car(sc->x)));
-	s_pop(sc, make_number(sc, sc->v));
-	
-      case OP_QUOTIENT:        /* quotient */
-	if (cdr(sc->args) == sc->NIL) 
-	  {
-	    sc->x = sc->args;
-	    sc->v = small_int_as_num(sc, 1);
-	  } 
-	else 
-	  {
-	    sc->x = cdr(sc->args);
-	    sc->v = nvalue(car(sc->args));
-	  }
-	for (; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
-	  {
-	    if (s7_integer(car(sc->x)) != 0)
-	      sc->v = num_quotient(sc->v, nvalue(car(sc->x)));
-	    else 
-	      {
-		sc->value = s7_make_string(sc, "quotient: division by zero");
-		goto ERROR;
-	      }
-	  }
-	s_pop(sc,make_number(sc, sc->v));
-	
-      case OP_REM:        /* remainder */
-	sc->v = nvalue(car(sc->args));
-	if (s7_integer(cadr(sc->args)) != 0)
-	  sc->v = num_rem(sc->v, nvalue(cadr(sc->args)));
-	else 
-	  {
-	    sc->value = s7_make_string(sc, "remainder: division by zero");
-	    goto ERROR;
-	  }
-	
-	s_pop(sc,make_number(sc, sc->v));
-	
-      case OP_MOD:        /* modulo */
-	sc->v = nvalue(car(sc->args));
-	if (s7_integer(cadr(sc->args)) != 0)
-	  sc->v = num_mod(sc->v, nvalue(cadr(sc->args)));
-	else 
-	  {
-	    sc->value = s7_make_string(sc, "modulo: division by zero");
-	    goto ERROR;
-	  }
-	s_pop(sc, make_number(sc, sc->v));
-	
-      case OP_CAR:        /* car */
-	s_pop(sc, caar(sc->args));
-	
-      case OP_CDR:        /* cdr */
-	s_pop(sc, cdar(sc->args));
-	
-      case OP_CONS:       /* cons */
-	cdr(sc->args) = cadr(sc->args);
-	s_pop(sc, sc->args);
-	
-      case OP_SETCAR:     /* set-car! */
-	if (!s7_is_immutable(car(sc->args))) 
-	  {
-	    caar(sc->args) = cadr(sc->args);
-	    s_pop(sc, car(sc->args));
-	  } 
-	else 
-	  {
-	    sc->value = s7_make_string(sc, "set-car!: unable to alter immutable pair");
-	    goto ERROR;
-	  }
-	
-      case OP_SETCDR:     /* set-cdr! */
-	if (!s7_is_immutable(car(sc->args))) 
-	  {
-	    cdar(sc->args) = cadr(sc->args);
-	    s_pop(sc, car(sc->args));
-	  } 
-	else 
-	  {
-	    sc->value = s7_make_string(sc, "set-cdr!: unable to alter immutable pair");
-	    goto ERROR;
-	  }
-	
-      case OP_CHAR2INT:  /* char->integer */
-	{ 
-	  char c;
-	  c = (char)character(car(sc->args));
-	  s_pop(sc, s7_make_integer(sc, (unsigned char)c));
-	}
-	
-      case OP_INT2CHAR: /* integer->char */
-	{ 
-	  unsigned char c;
-	  c = (unsigned char)s7_integer(car(sc->args)); /* int here -> char */
-	  s_pop(sc, s7_make_character(sc, (char)c));
-	}
-	
-      case OP_CHARUPCASE: 
-	{
-	  unsigned char c;
-	  c = (unsigned char)character(car(sc->args));
-	  c = toupper(c);
-	  s_pop(sc, s7_make_character(sc, (char)c));
-	}
-	
-      case OP_CHARDNCASE: 
-	{
-	  unsigned char c;
-	  c = (unsigned char)character(car(sc->args));
-	  c = tolower(c);
-	  s_pop(sc, s7_make_character(sc, (char)c));
-	}
-	
-      case OP_STR2SYM:  /* string->symbol */
-	s_pop(sc, s7_make_symbol(sc, string_value(car(sc->args))));
-	
-      case OP_STRING_TO_NUMBER:
-	{
-	  char *s = string_value(car(sc->args));
-	  sc->x = make_atom(sc, s);
-	  if (s7_is_number(sc->x))
-	    s_pop(sc, sc->x)
-	    else s_pop(sc, sc->F);
-	}
-	
-      case OP_SYM2STR: /* symbol->string */
-	sc->x = s7_make_string(sc, s7_symbol_name(car(sc->args)));
-	s7_set_immutable(sc->x);
-	s_pop(sc, sc->x);
-	
-      case OP_NUMBER_TO_STRING:
-	{
-	  /* TODO if cdr not nil, we've got a radix */
-	  s_pop(sc, s7_make_string(sc, s7_atom_to_c_string(sc, car(sc->args), false)));
+	  sc->value = s7_make_string(sc, "eval: unbound variable:");
+	  sc->args = sc->code;
+	  goto ERROR;
 	} 
-	
-      case OP_MKSTRING: /* make-string */
-	{ 
-	  char fill = ' ';
-	  int len;
-	  
-	  len = s7_integer(car(sc->args));
-	  if (cdr(sc->args) != sc->NIL) 
-	    fill = s7_character(cadr(sc->args));
-	  
-	  s_pop(sc, make_empty_string(sc, len, (char)fill));
-	}
-	
-      case OP_STRLEN:  /* string-length */
-	s_pop(sc, s7_make_integer(sc, string_length(car(sc->args))));
-	
-      case OP_STRREF:  /* string-ref */
-	{
-	  char *str;
-	  int index;
-	  
-	  str = string_value(car(sc->args));
-	  index = s7_integer(cadr(sc->args));
-	  if (index >= string_length(car(sc->args))) 
-	    {
-	      sc->value = s7_make_string(sc, "string-ref: out of bounds:");
-	      goto ERROR;
-	    }
-	  
-	  s_pop(sc, s7_make_character(sc, ((unsigned char*)str)[index]));
-	}
-	
-      case OP_STRSET: /* string-set! */
-	{ 
-	  char *str;
-	  int index;
-	  char c;
-	  
-	  if (s7_is_immutable(car(sc->args))) 
-	    {
-	      sc->value = s7_make_string(sc, "string-set!: unable to alter immutable string:");
-	      goto ERROR;
-	    }
-	  
-	  str = string_value(car(sc->args));
-	  index = s7_integer(cadr(sc->args));
-	  if (index >= string_length(car(sc->args))) 
-	    {
-	      sc->value = s7_make_string(sc, "string-set!: out of bounds:");
-	      goto ERROR;
-	    }
-	  
-	  c = s7_character(caddr(sc->args));
-	  str[index] = (char)c;
-	  s_pop(sc, car(sc->args));
-	}
-	
-      case OP_STRAPPEND: /* string-append */
-	{ 
-	  /* in 1.29 string-append was in Scheme in init.scm but was too slow */
-	  int len = 0;
-	  s7_pointer newstr;
-	  char *pos;
-	  
-	  /* compute needed length for new string */
-	  for (sc->x = sc->args; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
-	    len += string_length(car(sc->x));
-	  
-	  newstr = make_empty_string(sc, len, ' ');
-	  /* store the contents of the argument strings into the new string */
-	  for (pos = string_value(newstr), sc->x = sc->args; sc->x != sc->NIL;
-	       pos += string_length(car(sc->x)), sc->x = cdr(sc->x)) 
-	    memcpy(pos, string_value(car(sc->x)), string_length(car(sc->x)));
-	  
-	  s_pop(sc, newstr);
-	}
-	
-      case OP_SUBSTR: { /* substring */
-	char *str;
-	int index0;
-	int index1;
-	int len;
-	
-	str = string_value(car(sc->args));
-	
-	index0 = s7_integer(cadr(sc->args));
-	
-	if (index0 > string_length(car(sc->args))) 
+      else 
+	if (s7_is_pair(sc->code)) 
 	  {
-	    sc->value = s7_make_string(sc, "substring: start out of bounds:");
-	    goto ERROR;
-	  }
-	
-	if (cddr(sc->args)!= sc->NIL) 
-	  {
-	    index1 = s7_integer(caddr(sc->args));
-	    if (index1 > string_length(car(sc->args)) || index1 < index0) 
+	    if (s7_is_syntax(sc->x = car(sc->code))) 
+	      {     
+		sc->code = cdr(sc->code);
+		sc->op = integer(syntax_opcode(sc->x)->object.number);
+		goto START;
+	      } 
+	    else 
 	      {
-		sc->value = s7_make_string(sc, "substring: end out of bounds:");
-		goto ERROR;
+		/* first, eval top element and eval arguments */
+		push_stack(sc, OP_E0ARGS, sc->NIL, sc->code);
+		sc->code = car(sc->code);
+		goto EVAL;
 	      }
-	  } 
-	else 
-	  {
-	    index1 = string_length(car(sc->args));
-	  }
-	
-	len=index1 - index0;
-	sc->x = make_empty_string(sc, len,' ');
-	memcpy(string_value(sc->x), str + index0, len);
-	string_value(sc->x)[len] = 0;
-	
-	s_pop(sc, sc->x);
-      }
-	
-      VECTOR:
-      case OP_VECTOR: /* vector */
-	{   
-	  int i;
-	  s7_pointer vec;
-	  int len = s7_list_length(sc, sc->args);
-	  if (len < 0) 
-	    {
-	      sc->value = s7_make_string(sc, "vector: not a proper list:");
-	      goto ERROR;
-	    }
-	  
-	  vec = s7_make_vector(sc, len);
-	  for (sc->x = sc->args, i = 0; s7_is_pair(sc->x); sc->x = cdr(sc->x), i++) 
-	    vector_element(vec, i) =  car(sc->x);
-	  
-	  s_pop(sc,vec);
-	}
-	
-      case OP_MKVECTOR: /* make-vector */
-	{ 
-	  s7_pointer fill= sc->NIL;
-	  int len;
-	  s7_pointer vec;
-	  
-	  len = s7_integer(car(sc->args));
-	  
-	  if (cdr(sc->args) != sc->NIL) 
-	    fill = cadr(sc->args);
-	  
-	  vec = s7_make_vector(sc, len);
-	  if (fill != sc->NIL)
-	    s7_fill_vector(vec, fill);
-	  
-	  s_pop(sc,vec);
-	}
-	
-      case OP_VECLEN:  /* vector-length */
-	s_pop(sc, s7_make_integer(sc, vector_length(car(sc->args))));
-	
-      case OP_VECREF: /* vector-ref */
-	{ 
-	  int index;
-	  index = s7_integer(cadr(sc->args));
-	  
-	  if (index >= vector_length(car(sc->args))) 
-	    {
-	      sc->value = s7_make_string(sc, "vector-ref: out of bounds:");
-	      goto ERROR;
-	    }
-	  
-	  s_pop(sc, vector_element(car(sc->args), index));
-	}
-	
-      case OP_VECSET:/* vector-set! */
-	{   
-	  int index;
-	  
-	  if (s7_is_immutable(car(sc->args))) 
-	    {
-	      sc->value = s7_make_string(sc, "vector-set!: unable to alter immutable vector:");
-	      goto ERROR;
-	    }
-	  
-	  index = s7_integer(cadr(sc->args));
-	  if (index >= vector_length(car(sc->args))) 
-	    {
-	      sc->value = s7_make_string(sc, "vector-set!: out of bounds:");
-	      goto ERROR;
-	    }
-	  
-	  vector_element(car(sc->args), index) = caddr(sc->args);
-	  s_pop(sc, car(sc->args));
-	}
-	
-	
-      case OP_NOT:        /* not */
-	s_retbool(is_false(car(sc->args)));
-	
-      case OP_BOOLP:       /* boolean? */
-	s_retbool(car(sc->args) == sc->F || car(sc->args) == sc->T);
-	
-      case OP_NULLP:       /* null? */
-	s_retbool(car(sc->args) == sc->NIL);
-	
-      case OP_NUMEQ:      /* = */
-      case OP_LESS:       /* < */
-      case OP_GRE:        /* > */
-      case OP_LEQ:        /* <= */
-      case OP_GEQ:        /* >= */
-	{
-	  bool (*comp_func)(num a, num b);
-	  switch(sc->op) 
-	    {
-	    case OP_NUMEQ: comp_func = num_eq; break;
-	    case OP_LESS:  comp_func = num_lt; break;
-	    case OP_GRE:   comp_func = num_gt; break;
-	    case OP_LEQ:   comp_func = num_le; break;
-	    case OP_GEQ:   comp_func = num_ge; break;
-	    default: fprintf(stderr, "oops");  break;
-	    }
-	  sc->x = sc->args;
-	  sc->v = nvalue(car(sc->x));
-	  sc->x = cdr(sc->x);
-	  
-	  for (; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
-	    {
-	      if (!comp_func(sc->v, nvalue(car(sc->x)))) 
-		s_retbool(false);
-	      sc->v = nvalue(car(sc->x));
-	    }
-	  
-	  s_retbool(true);
-	}
-	
-      case OP_SYMBOLP:     /* symbol? */
-	s_retbool(s7_is_symbol(car(sc->args)));
-	
-      case OP_NUMBERP:     /* number? */
-	s_retbool(s7_is_number(car(sc->args)));
-	
-      case OP_STRINGP:     /* string? */
-	s_retbool(s7_is_string(car(sc->args)));
-	
-      case OP_INTEGERP:     /* integer? */
-	s_retbool(s7_is_integer(car(sc->args)));
-	
-      case OP_REALP:     /* real? */
-	s_retbool(s7_is_real(car(sc->args))); 
-	
-      case OP_RATIONALP:     /* rational? */
-	s_retbool(s7_is_rational(car(sc->args)));
-	
-      case OP_COMPLEXP:     /* complex? */
-	s_retbool(s7_is_complex(car(sc->args)));
-	
-      case OP_CHARP:     /* char? */
-	s_retbool(s7_is_character(car(sc->args)));
-	
-      case OP_CHARAP:     /* char-alphabetic? */
-	s_retbool(Cisalpha(character(car(sc->args))));
-	
-      case OP_CHARNP:     /* char-numeric? */
-	s_retbool(Cisdigit(character(car(sc->args))));
-	
-      case OP_CHARWP:     /* char-whitespace? */
-	s_retbool(Cisspace(character(car(sc->args))));
-	
-      case OP_CHARUP:     /* char-upper-case? */
-	s_retbool(Cisupper(character(car(sc->args))));
-	
-      case OP_CHARLP:     /* char-lower-case? */
-	s_retbool(Cislower(character(car(sc->args))));
-	
-      case OP_PROCP:       /* procedure? */
-	/*--
-	 * continuation should be procedure by the example
-	 * (call-with-current-continuation procedure?) ==> #t
-	 * in R^3 report sec. 6.9
-	 */
-	s_retbool(s7_is_procedure(car(sc->args)) || 
-		  s7_is_closure(car(sc->args)) || 
-		  (is_goto(car(sc->args))) || 
-		  s7_is_continuation(car(sc->args)) || 
-		  s7_is_function(car(sc->args)));
-	
-      case OP_PAIRP:       /* pair? */
-	s_retbool(s7_is_pair(car(sc->args)));
-	
-      case OP_LISTP:  /* list? */
-	{    
-	  s7_pointer slow, fast;
-	  slow = fast = car(sc->args);
-	  while (1) 
-	    {
-	      if (!s7_is_pair(fast)) s_retbool(fast == sc->NIL);
-	      fast = cdr(fast);
-	      if (!s7_is_pair(fast)) s_retbool(fast == sc->NIL);
-	      fast = cdr(fast);
-	      slow = cdr(slow);
-	      if (fast == slow) 
-		{
-		  /* the fast s7_pointer has looped back around and caught up
-		     with the slow s7_pointer, hence the structure is circular,
-		     not of finite length, and therefore not a list */
-		  s_retbool(false);
-		}
-	    }
-	}
-	
-      case OP_VECTORP:     /* vector? */
-	s_retbool(s7_is_vector(car(sc->args)));
-	
-      case OP_EQ:         /* eq? */
-	s_retbool(car(sc->args) == cadr(sc->args));
-	
-      case OP_EQV:        /* eqv? */
-	s_retbool(s7_eqv_p(car(sc->args), cadr(sc->args)));
-	
-      case OP_EQUAL:        /* equal? */
-	s_retbool(s7_is_equal(sc, car(sc->args), cadr(sc->args)));
-	
-	
-      case OP_FORCE:      /* force */
-	sc->code = car(sc->args);
-	if (is_promise(sc->code)) 
-	  {
-	    /* Should change type to closure here */
-	    push_stack(sc, OP_SAVE_FORCED, sc->NIL, sc->code);
-	    sc->args = sc->NIL;
-	    goto APPLY;
 	  } 
 	else 
 	  {
 	    s_pop(sc, sc->code);
 	  }
-	
-      case OP_SAVE_FORCED:     /* Save forced value replacing promise */
-	memcpy(sc->code, sc->value,sizeof(struct s7_cell));
+      
+    case OP_E0ARGS:     /* eval arguments */
+      if (is_macro(sc->value)) 
+	{    
+	  /* macro expansion */
+	  push_stack(sc, OP_DOMACRO, sc->NIL, sc->NIL);
+	  sc->args = cons(sc, sc->code, sc->NIL);
+	  sc->code = sc->value;
+	  goto APPLY;
+	} 
+      else 
+	{
+	  sc->code = cdr(sc->code);
+	  
+	  /* here args is nil, value is the operator (car of list), code is the rest -- the args.
+	   *   e0args can be called within e1args loop if it's a nested expression:
+	   * (+ 1 2 (* 2 3)):
+	   e0args: (), value: +, code: (1 2 (* 2 3))
+	   e1args: (+), value: +, code: (1 2 (* 2 3))
+	   e1args: (1 +), value: +, code: (2 (* 2 3))
+	   e1args: (2 1 +), value: +, code: ((* 2 3))
+	   e0args: (), value: *, code: (2 3)
+	   e1args: (*), value: *, code: (2 3)
+	   e1args: (2 *), value: *, code: (3)
+	   e1args: (3 2 *), value: *, code: ()
+	   <end -> apply the * op>
+	   e1args: (6 2 1 +), value: +, code: ()
+	  */
+	  
+	}
+      
+      /* e1args causes 80 to 90% of the consing in the evaluator! */
+      
+    case OP_E1ARGS:     /* eval arguments */
+      sc->args = cons(sc, sc->value, sc->args);  /* this line is the speed killer for the whole program */
+      /*   I've failed twice to find a way to reduce the consing */
+      /*  the no cons method:
+       * E0ARGS:	    sc->args = sc->code;
+       * E1ARGS:          car(sc->code) = sc->value;
+       *                  sc->code = cdr(sc->code);
+       *                  if (s7_is_pair(sc->code))
+       *                    {
+       *                      push_stack(sc, OP_E1ARGS, sc->args, sc->code);
+       *                      sc->code = car(sc->code);
+       *                      sc->args = sc->NIL;
+       *                      goto EVAL;
+       *                    }
+       *                  else
+       *                    {
+       *                      sc->code = car(sc->args);
+       *                      sc->args = cdr(sc->args);
+       *                      -- drop into apply --
+       *                    }
+       * but even with copy-tree of the procedure-source (below), this fails in odd cases --
+       * somehow the current arg list infects the original procedure-source.
+       */
+      
+      if (s7_is_pair(sc->code)) 
+	{ /* continue */
+	  push_stack(sc, OP_E1ARGS, sc->args, cdr(sc->code));
+	  
+	  sc->code = car(sc->code);
+	  sc->args = sc->NIL;
+	  goto EVAL;
+	} 
+      else 
+	{  /* end */
+	  sc->args = s7_reverse_in_place(sc, sc->NIL, sc->args); 
+	  sc->code = car(sc->args);
+	  sc->args = cdr(sc->args);
+	  /* goto APPLY;  */
+	}
+      
+    APPLY:
+    case OP_APPLY:      /* apply 'code' to 'args' */
+      
+      if (sc->tracing) 
+	{
+	  push_stack(sc, OP_REAL_APPLY, sc->args, sc->code);
+	  write_string(sc, "\nApply to: ", sc->outport);
+	  goto P0LIST;
+	}
+      /* fall through */
+      
+    case OP_REAL_APPLY:
+      
+      if (s7_is_procedure(sc->code)) 
+	{
+	  sc->op = procedure_index(sc->code);
+	  goto START;
+	} 
+      else 
+	{
+	  if (s7_is_function(sc->code))
+	    {
+	      int len;
+	      len = s7_list_length(sc, sc->args);
+	      if (len < function_required_args(sc->code))
+		{
+		  sc->value = s7_make_string(sc, "not enough args");
+		  goto ERROR;
+		}
+	      if ((!function_has_rest_arg(sc->code)) &&
+		  ((function_required_args(sc->code) + function_optional_args(sc->code)) < len))
+		{
+		  sc->value = s7_make_string(sc, "too many args");
+		  goto ERROR;
+		}
+	      sc ->x = function_call(sc->code)(sc, sc->args);
+	      
+	      if (sc->x == sc->ERROR)
+		goto ERROR;
+	      s_pop(sc, sc->x);
+	      
+	      /* so to throw an error from a function,
+	       *   set sc->value to the error string, sc->args to the error args, return sc->ERROR
+	       */
+	    }
+	  
+	  /* TODO: if object getter */
+	  
+	  else 
+	    {
+	      if (s7_is_closure(sc->code) || is_macro(sc->code) || is_promise(sc->code)) 
+		{ /* CLOSURE */
+		  /* Should not accept promise */
+		  /* make environment */
+		  /*
+		    fprintf(stderr, "proc env: %s\n", s7_object_to_c_string(sc, s7_procedure_environment(sc->code)));
+		  */
+		  new_frame_in_env(sc, s7_procedure_environment(sc->code)); 
+		  
+		  /* s7_is_pair(sc->x) here assumes the func has more than 1 arg? */
+		  
+
+		  /* load up the current args into the ((args) (lambda)) layout [via the current environment] */
+		  for (sc->x = car(procedure_source(sc->code)), sc->y = sc->args; s7_is_pair(sc->x); sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
+		    {
+		      if (sc->y == sc->NIL)
+			{
+			  sc->value = s7_make_string(sc, "not enough arguments");
+			  goto ERROR;
+			}
+		      else new_slot_in_env(sc, car(sc->x), car(sc->y));
+		    }
+
+		  if (sc->x == sc->NIL) 
+		    {
+		      if (sc->y != sc->NIL)
+			fprintf(stderr, "%s too many args? %s\n", 
+				s7_object_to_c_string(sc, sc->code),
+				s7_object_to_c_string(sc, sc->args));
+		    } 
+		  else 
+		    {
+		      if (s7_is_symbol(sc->x))
+			new_slot_in_env(sc, sc->x, sc->y); 
+		      else
+			{
+			  sc->args = sc->x;
+			  sc->value = s7_make_string(sc, "syntax error in closure: not a symbol:");
+			  goto ERROR;
+			}
+		    }
+		  sc->code = cdr(procedure_source(sc->code));
+		  sc->args = sc->NIL;
+		  goto BEGIN;
+		}
+	      else 
+		{
+		  if (s7_is_continuation(sc->code)) 
+		    { /* continuation */
+		      s7_call_continuation(sc, sc->code);
+		      s_pop(sc, sc->args != sc->NIL ? car(sc->args) : sc->NIL);
+		    } 
+		  else 
+		    {
+		      if (is_goto(sc->code))
+			{
+			  sc->stack_top = (sc->code)->object.goto_loc;
+			  s_pop(sc, sc->args != sc->NIL ? car(sc->args) : sc->NIL);
+			}
+		      else
+			{
+			  fprintf(stderr, "apply %s?", s7_object_to_c_string(sc, sc->code));
+			  sc->args = sc->code;
+			  sc->value = s7_make_string(sc, "illegal function");
+			  goto ERROR;
+			}
+		    }
+		}
+	    }
+	}
+      
+    case OP_DOMACRO:    /* do macro */
+      sc->code = sc->value;
+      goto EVAL;
+      
+    case OP_LAMBDA:     /* lambda */
+      s_pop(sc, s7_make_closure(sc, sc->code, sc->envir));
+      
+    case OP_MKCLOSURE: /* make-closure */
+      sc->x = car(sc->args);
+      if (car(sc->x) == sc->LAMBDA) 
+	sc->x = cdr(sc->x);
+      
+      if (cdr(sc->args) == sc->NIL) 
+	sc->y = sc->envir;
+      else sc->y = cadr(sc->args);
+      
+      s_pop(sc, s7_make_closure(sc, sc->x, sc->y));
+      
+    case OP_QUOTE:      /* quote */
+      s_pop(sc, car(sc->code));
+      
+    case OP_DEF0:  /* define */
+      if (s7_is_immutable(car(sc->code)))
+	{
+	  sc->value = s7_make_string(sc, "define: unable to alter immutable");
+	  sc->args = car(sc->code);
+	  goto ERROR;
+	}
+      
+      if (s7_is_pair(car(sc->code))) 
+	{
+	  sc->x = caar(sc->code);
+	  sc->code = cons(sc, sc->LAMBDA, cons(sc, cdar(sc->code), cdr(sc->code)));
+	} 
+      else 
+	{
+	  sc->x = car(sc->code);
+	  sc->code = cadr(sc->code);
+	}
+      if (!s7_is_symbol(sc->x))
+	{
+	  sc->value = s7_make_string(sc, "define of a non-symbol?");
+	  sc->args = sc->x;
+	  goto ERROR;
+	}
+      
+      push_stack(sc, OP_DEF1, sc->NIL, sc->x);
+      goto EVAL;
+      
+    case OP_DEF1:  /* define */
+      sc->x = s7_find_slot_in_env(sc, sc->envir, sc->code, 0);
+      if (sc->x != sc->NIL) 
+	set_slot_in_env(sc, sc->x, sc->value); 
+      else new_slot_in_env(sc, sc->code, sc->value); 
+      s_pop(sc, sc->code);
+      
+    case OP_DEFP:  /* defined? */
+      sc->x = sc->envir;
+      if (cdr(sc->args) != sc->NIL) 
+	sc->x = cadr(sc->args);
+      s_retbool(s7_find_slot_in_env(sc, sc->x, car(sc->args), 1) != sc->NIL);
+      
+    case OP_SET0:       /* set! */
+      if (s7_is_immutable(car(sc->code)))
+	{
+	  sc->value = s7_make_string(sc, "set!: unable to alter immutable variable");
+	  sc->args = car(sc->code);
+	  goto ERROR;
+	}
+      
+      if (s7_is_pair(car(sc->code))) /* has accessor */
+	{
+	  char *sym, *name;
+	  name = s7_symbol_name(caar(sc->code));
+	  sym = (char *)CALLOC(safe_strlen(name) + 6, sizeof(char));
+	  sprintf(sym, "set-%s", name);
+	  caar(sc->code) = s7_make_symbol(sc, sym);               /* [set!] ((x a b...) y) -> ((set-x a b..) y) */
+	  sc->code = s7_append(sc, car(sc->code), cdr(sc->code)); /* -> (set-x a b ... y) */
+	  FREE(sym); /* I think s7_make_symbol copies the name */
+	}
+      else 
+	{
+	  push_stack(sc, OP_SET1, sc->NIL, car(sc->code));
+	  sc->code = cadr(sc->code);
+	}
+      goto EVAL;
+      
+    case OP_SET1:      
+      sc->y = s7_find_slot_in_env(sc, sc->envir, sc->code, 1);
+      if (sc->y != sc->NIL) 
+	{
+	  set_slot_in_env(sc, sc->y, sc->value); 
+	  s_pop(sc, sc->value);
+	}
+      else 
+	{
+	  sc->value = s7_make_string(sc, "set!: unbound variable:");
+	  sc->args = sc->code;
+	  goto ERROR;
+	}
+      
+    case OP_IF0:        /* if */
+      
+      push_stack(sc, OP_IF1, sc->NIL, cdr(sc->code));
+      sc->code = car(sc->code);
+      goto EVAL;
+      
+    case OP_IF1:        /* if */
+      
+      if (is_true(sc->value))
+	sc->code = car(sc->code);
+      else
+	sc->code = cadr(sc->code);  /* (if #f 1) ==> #<unspecified> because car(sc->NIL) = sc->UNSPECIFIED */
+      goto EVAL;
+      
+    case OP_LET0:       /* let */
+      sc->args = sc->NIL;
+      sc->value = sc->code;
+      sc->code = s7_is_symbol(car(sc->code)) ? cadr(sc->code) : car(sc->code);
+      
+    case OP_LET1:       /* let (calculate parameters) */
+      sc->args = cons(sc, sc->value, sc->args);
+      if (s7_is_pair(sc->code)) 
+	{ /* continue */
+	  push_stack(sc, OP_LET1, sc->args, cdr(sc->code));
+	  sc->code = cadar(sc->code);
+	  sc->args = sc->NIL;
+	  goto EVAL;
+	} 
+      else 
+	{  /* end */
+	  sc->args = s7_reverse_in_place(sc, sc->NIL, sc->args);
+	  sc->code = car(sc->args);
+	  sc->args = cdr(sc->args);
+	}
+      
+    case OP_LET2:       /* let */
+      new_frame_in_env(sc, sc->envir); 
+      for (sc->x = s7_is_symbol(car(sc->code)) ? cadr(sc->code) : car(sc->code), sc->y = sc->args;
+	   sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
+	{
+	  new_slot_in_env(sc, caar(sc->x), car(sc->y)); 
+	}
+      if (s7_is_symbol(car(sc->code))) 
+	{    /* named let */
+	  for (sc->x = cadr(sc->code), sc->args = sc->NIL; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+	    sc->args = cons(sc, caar(sc->x), sc->args);
+	  
+	  sc->x = s7_make_closure(sc, cons(sc, s7_reverse_in_place(sc, sc->NIL, sc->args), cddr(sc->code)), sc->envir); 
+	  new_slot_in_env(sc, car(sc->code), sc->x); 
+	  sc->code = cddr(sc->code);
+	  sc->args = sc->NIL;
+	} 
+      else 
+	{
+	  sc->code = cdr(sc->code);
+	  sc->args = sc->NIL;
+	}
+      goto BEGIN;
+      
+    case OP_LET0AST:    /* let* */
+      if (car(sc->code) == sc->NIL) 
+	{
+	  new_frame_in_env(sc, sc->envir); 
+	  sc->code = cdr(sc->code);
+	  goto BEGIN;
+	}
+      push_stack(sc, OP_LET1AST, cdr(sc->code), car(sc->code));
+      sc->code = cadaar(sc->code);
+      goto EVAL;
+      
+    case OP_LET1AST:    /* let* (make new frame) */
+      new_frame_in_env(sc, sc->envir); 
+      
+    case OP_LET2AST:    /* let* (calculate parameters) */
+      new_slot_in_env(sc, caar(sc->code), sc->value); 
+      sc->code = cdr(sc->code);
+      if (s7_is_pair(sc->code)) 
+	{ /* continue */
+	  push_stack(sc, OP_LET2AST, sc->args, sc->code);
+	  sc->code = cadar(sc->code);
+	  sc->args = sc->NIL;
+	  goto EVAL;
+	} 
+      else 
+	{  /* end */
+	  sc->code = sc->args;
+	  sc->args = sc->NIL;
+	  goto BEGIN;
+	}
+      
+      
+    case OP_LET0REC:    /* letrec */
+      new_frame_in_env(sc, sc->envir); 
+      sc->args = sc->NIL;
+      sc->value = sc->code;
+      sc->code = car(sc->code);
+      
+    case OP_LET1REC:    /* letrec (calculate parameters) */
+      sc->args = cons(sc, sc->value, sc->args);
+      if (s7_is_pair(sc->code)) 
+	{ /* continue */
+	  push_stack(sc, OP_LET1REC, sc->args, cdr(sc->code));
+	  sc->code = cadar(sc->code);
+	  sc->args = sc->NIL;
+	  goto EVAL;
+	} 
+      else 
+	{  /* end */
+	  sc->args = s7_reverse_in_place(sc, sc->NIL, sc->args); 
+	  sc->code = car(sc->args);
+	  sc->args = cdr(sc->args);
+	}
+      
+    case OP_LET2REC:    /* letrec */
+      for (sc->x = car(sc->code), sc->y = sc->args; sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
+	new_slot_in_env(sc, caar(sc->x), car(sc->y)); 
+      
+      sc->code = cdr(sc->code);
+      sc->args = sc->NIL;
+      goto BEGIN;
+      
+    case OP_COND0:      /* cond */
+      if (!s7_is_pair(sc->code)) 
+	{
+	  sc->value = s7_make_string(sc, "syntax error in cond");
+	  goto ERROR;
+	}
+      push_stack(sc, OP_COND1, sc->NIL, sc->code);
+      sc->code = caar(sc->code);
+      goto EVAL;
+      
+    case OP_COND1:      /* cond */
+      if (is_true(sc->value)) 
+	{
+	  sc->code = cdar(sc->code);
+	  if (sc->code == sc->NIL)
+	    {
+	      s_pop(sc, sc->value);
+	    }
+	  if (car(sc->code) == sc->FEED_TO) 
+	    {
+	      if (!s7_is_pair(cdr(sc->code))) 
+		{
+		  sc->value = s7_make_string(sc, "syntax error in cond");
+		  goto ERROR;
+		}
+	      sc->x = cons(sc, sc->QUOTE, cons(sc, sc->value, sc->NIL));
+	      sc->code = cons(sc, cadr(sc->code), cons(sc, sc->x, sc->NIL));
+	      goto EVAL;
+	    }
+	  goto BEGIN;
+	}
+      else 
+	{
+	  sc->code = cdr(sc->code);
+	  if (sc->code == sc->NIL)
+	    {
+	      s_pop(sc, sc->NIL);
+	    } 
+	  else 
+	    {
+	      push_stack(sc, OP_COND1, sc->NIL, sc->code);
+	      sc->code = caar(sc->code);
+	      goto EVAL;
+	    }
+	}
+      
+    case OP_DELAY:      /* delay */
+      sc->x = s7_make_closure(sc, cons(sc, sc->NIL, sc->code), sc->envir);
+      set_type(sc->x, T_PROMISE);
+      s_pop(sc, sc->x);
+      
+    case OP_AND0:       /* and */
+      if (sc->code == sc->NIL) 
+	s_pop(sc, sc->T);
+      
+      push_stack(sc, OP_AND1, sc->NIL, cdr(sc->code));
+      sc->code = car(sc->code);
+      goto EVAL;
+      
+    case OP_AND1:       /* and */
+      if (is_false(sc->value)) 
 	s_pop(sc, sc->value);
+      
+      if (sc->code == sc->NIL) 
+	s_pop(sc, sc->value);
+      
+      push_stack(sc, OP_AND1, sc->NIL, cdr(sc->code));
+      sc->code = car(sc->code);
+      goto EVAL;
+      
+    case OP_OR0:        /* or */
+      if (sc->code == sc->NIL) 
+	s_pop(sc, sc->F);
+      
+      push_stack(sc, OP_OR1, sc->NIL, cdr(sc->code));
+      sc->code = car(sc->code);
+      goto EVAL;
+      
+    case OP_OR1:        /* or */
+      if (is_true(sc->value)) 
+	s_pop(sc, sc->value);
+      
+      if (sc->code == sc->NIL) 
+	s_pop(sc, sc->value);
+      
+      push_stack(sc, OP_OR1, sc->NIL, cdr(sc->code));
+      sc->code = car(sc->code);
+      goto EVAL;
+      
+    case OP_C0STREAM:   /* cons-stream */
+      push_stack(sc, OP_C1STREAM, sc->NIL, cdr(sc->code));
+      sc->code = car(sc->code);
+      goto EVAL;
+      
+    case OP_C1STREAM:   /* cons-stream */
+      sc->args = sc->value;  /* save sc->value to register sc->args for gc */
+      sc->x = s7_make_closure(sc, cons(sc, sc->NIL, sc->code), sc->envir);
+      set_type(sc->x, T_PROMISE);
+      s_pop(sc,cons(sc, sc->args, sc->x));
+      
+
+    case OP_MACRO0:     /* macro */
+      /* (macro (when form) ...) or (macro do (lambda (form) ...))
+       *   sc->code is the business after the "macro"
+       *   so in 1st case, car(sc->code) is '(when form), and in 2nd it is 'do
+       *   in 1st case, put caar(sc->code) "when" into sc->x for later symbol definition, in 2nd use car(sc->code)
+       *   in 1st case, wrap up a lambda:
+       *      '(lambda (form) ...)
+       *   in 2nd case, it's ready to go
+       * goto eval popping to OP_MACRO1
+       *   eval sees the lambda and creates a closure (s7_make_closure): car => code, cdr => environment
+       */
+      if (s7_is_pair(car(sc->code))) 
+	{
+	  sc->x = caar(sc->code);
+	  sc->code = cons(sc, sc->LAMBDA, cons(sc, cdar(sc->code), cdr(sc->code)));
+	} 
+      else 
+	{
+	  sc->x = car(sc->code);
+	  sc->code = cadr(sc->code);
+	}
+      
+      if (!s7_is_symbol(sc->x)) 
+	{
+	  sc->value = s7_make_string(sc, "variable is not a symbol");
+	  sc->args = sc->x;
+	  goto ERROR;
+	}
+      /*
+      fprintf(stderr, "orig macro mid: %s\n", 
+	      s7_object_to_c_string(sc, sc->code));
+      */
+      
+      push_stack(sc, OP_MACRO1, sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO1 */
+      goto EVAL;
+      
+    case OP_MACRO1:     /* macro */
+
+      /* here sc->code is the name (a symbol), sc->value is a closure object, its car is the form as called
+       *   
+       *     (macro (when form)
+       *       `(if ,(cadr form) (begin ,@(cddr form))))
+       * has become:
+       *     ((form) 
+       *      (quasiquote 
+       *        (if (unquote (cadr form)) 
+       *            (begin (unquote-splicing (cddr form))))))
+       * with 
+       *   sc->code: when 
+       *   sc->value: #<closure> 
+       * where "form" is the thing presented to us in the code, i.e. (when mumble do-this)
+       *   and the following code takes that as its argument and transforms it in some way
+       */
+      /*
+      fprintf(stderr, "macro def: %s %s\n", 
+	      s7_object_to_c_string(sc, sc->code), 
+	      s7_object_to_c_string(sc, car(sc->value)));
+      */
+      set_type(sc->value, T_MACRO);
+      
+      /* find name in environment, and define it */
+      sc->x = s7_find_slot_in_env(sc, sc->envir, sc->code, 0); 
+      if (sc->x != sc->NIL) 
+	set_slot_in_env(sc, sc->x, sc->value); 
+      else new_slot_in_env(sc, sc->code, sc->value); 
+      
+      /* pop back to wherever the macro call was */
+      s_pop(sc, sc->code);
+
+
+    case OP_DEFMACRO0:
+      
+      /* (defmacro name (args) body) ->
+       *
+       *    (macro (defmacro dform)
+       *      (let ((form (gensym)))            
+       *        `(macro (,(cadr dform) ,form)   
+       *          (apply
+       *            (lambda ,(caddr dform)      
+       *             ,@(cdddr dform))          
+       *            (cdr ,form)))))             
+       *    
+       *    end up with name as sc->x going to OP_MACRO1, ((gensym) (lambda (args) body) going to eval
+       */
+      
+      /*
+      fprintf(stderr, "macro start: %s %s\n", 
+	      s7_object_to_c_string(sc, car(sc->code)), 
+	      s7_object_to_c_string(sc, cddr(sc->value)));
+      */
+
+      sc->y = s7_gensym(sc);
+      sc->x = car(sc->code);
+
+      sc->code = cons(sc,
+		      sc->LAMBDA,
+		      cons(sc, 
+			   cons(sc, sc->y, sc->NIL),
+			   cons(sc, 
+				cons(sc, 
+				     s7_make_symbol(sc, "apply"),
+				     cons(sc, 
+					  cons(sc, sc->LAMBDA, cddr(sc->value)),
+					  cons(sc, 
+					       cons(sc,
+						    s7_make_symbol(sc, "cdr"), 
+						    cons(sc, 
+							 sc->y, 
+							 sc->NIL)),
+					       sc->NIL))),
+				sc->NIL)));
+      /* what could be simpler? */
+
+      /*
+      fprintf(stderr, "macro mid: %s\n", 
+	      s7_object_to_c_string(sc, sc->code));
+      */
+      push_stack(sc, OP_MACRO1, sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO1 */
+      goto EVAL;
+      
+
+    case OP_CASE0:      /* case */
+      push_stack(sc, OP_CASE1, sc->NIL, cdr(sc->code));
+      sc->code = car(sc->code);
+      goto EVAL;
+      
+    case OP_CASE1:      /* case */
+      for (sc->x = sc->code; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+	{
+	  if (!s7_is_pair(sc->y = caar(sc->x))) 
+	    {
+	      break;
+	    }
+	  for ( ; sc->y != sc->NIL; sc->y = cdr(sc->y)) 
+	    {
+	      if (s7_eqv_p(car(sc->y), sc->value)) 
+		{
+		  break;
+		}
+	    }
+	  if (sc->y != sc->NIL) 
+	    {
+	      break;
+	    }
+	}
+      if (sc->x != sc->NIL) 
+	{
+	  if (s7_is_pair(caar(sc->x))) 
+	    {
+	      sc->code = cdar(sc->x);
+	      goto BEGIN;
+	    } 
+	  else 
+	    {/* else */
+	      push_stack(sc, OP_CASE2, sc->NIL, cdar(sc->x));
+	      sc->code = caar(sc->x);
+	      goto EVAL;
+	    }
+	} 
+      else 
+	{
+	  s_pop(sc, sc->NIL);
+	}
+      
+    case OP_CASE2:      /* case */
+      if (is_true(sc->value)) 
+	{
+	  goto BEGIN;
+	} 
+      else 
+	{
+	  s_pop(sc, sc->NIL);
+	}
+      
+    case OP_PAPPLY:     /* apply */
+      sc->code = car(sc->args);
+      sc->args = list_star(sc, cdr(sc->args));
+      goto APPLY;
+      
+    case OP_CONTINUATION:    /* call-with-current-continuation */
+      sc->code = car(sc->args);
+      sc->args = cons(sc, s7_make_continuation(sc), sc->NIL);
+      /*
+	fprintf(stderr, "call/cc... %p %p %p ", sc->code, sc->stack, car(sc->args));
+      */
+      goto APPLY;
+      
+    case OP_GOTO:    /* call-with-exit */
+      sc->code = car(sc->args);
+      sc->args = cons(sc, s7_make_goto(sc), sc->NIL);
+      goto APPLY;
+      
+      
+    case OP_REAL_PART:     /* real-part */
+      s_pop(sc, s7_make_real(sc, s7_real_part(car(sc->args))));
+      
+    case OP_IMAG_PART:     /* imag-part */
+      s_pop(sc, s7_make_real(sc, s7_imag_part(car(sc->args))));
+      
+    case OP_NUMERATOR:     /* numerator */
+      s_pop(sc, s7_make_integer(sc, num_to_numerator((car(sc->args))->object.number)));
+      
+    case OP_DENOMINATOR:     /* denominator */
+      s_pop(sc, s7_make_integer(sc, num_to_denominator((car(sc->args))->object.number)));
+      
+    case OP_MAKE_RECTANGULAR:     /* make-rectangular */
+      s_pop(sc, s7_make_complex(sc, num_to_real((car(sc->args))->object.number), 
+				num_to_real((cadr(sc->args))->object.number)));
+      
+    case OP_MAKE_POLAR:
+      {
+	double s, c, ang, mag;
+	mag = num_to_real((car(sc->args))->object.number);
+	ang = num_to_real((cadr(sc->args))->object.number);
+	s = sin(ang);
+	c = cos(ang);
+	s_pop(sc, s7_make_complex(sc, mag * c, mag * s));
+      }
+      
+    case OP_ANGLE:
+      sc->x = car(sc->args);
+      
+      if (!s7_is_real(sc->x))
+	s_pop(sc, s7_make_real(sc, atan2(s7_imag_part(sc->x), s7_real_part(sc->x))));
+      if (num_to_real(sc->x->object.number) < 0.0)
+	s_pop(sc, s7_make_real(sc, atan2(0.0, -1.0)));
+      
+      s_pop(sc, s7_make_real(sc, 0.0));
+      
+    case OP_MAGNITUDE:
+      sc->v = nvalue(car(sc->args));
+      switch (num_type(sc->v))
+	{
+	case NUM_REAL2: 
+	case NUM_REAL: 
+	  real(sc->v) = fabs(real(sc->v)); 
+	  break;
+	  
+	case NUM_INT:
+	  integer(sc->v) = abs(integer(sc->v));
+	  break;
+	case NUM_RATIO:
+	  numerator(sc->v) = abs(numerator(sc->v));
+	  break;
+	  
+	default:
+	  {
+	    double a, b;
+	    a = imag_part(sc->v);
+	    b = real_part(sc->v);
+	    sc->v.type = NUM_REAL;
+	    real(sc->v) = hypot(a, b);
+	  }
+	  break;
+	}
+      s_pop(sc, make_number(sc, sc->v));
+      
+    case OP_EXACTP:     /* exact? */
+      s_retbool(s7_is_exact(car(sc->args)));
+      
+    case OP_INEXACTP:     /* exact? */
+      s_retbool(s7_is_inexact(car(sc->args)));
+      
+    case OP_EVENP:     /* even? */
+      s_retbool((s7_integer(car(sc->args)) & 1) == 0);
+      
+    case OP_ODDP:     /* odd? */
+      s_retbool((s7_integer(car(sc->args)) & 1) == 1);
+      
+    case OP_POSITIVEP:     /* positive? */
+      sc->x = car(sc->args);
+      switch (object_number_type(sc->x))
+	{
+	case NUM_INT:   s_retbool(s7_integer(sc->x) > 0);
+	case NUM_RATIO: s_retbool(s7_numerator(sc->x) > 0);
+	default:        s_retbool(s7_real(sc->x) > 0);
+	}
+      
+    case OP_NEGATIVEP:     /* negative? */
+      sc->x = car(sc->args);
+      switch (object_number_type(sc->x))
+	{
+	case NUM_INT:   s_retbool(s7_integer(sc->x) < 0);
+	case NUM_RATIO: s_retbool(s7_numerator(sc->x) < 0);
+	default:        s_retbool(s7_real(sc->x) < 0);
+	}
+      
+    case OP_ZEROP:     /* zero? */
+      sc->x = car(sc->args);
+      switch (object_number_type(sc->x))
+	{
+	case NUM_INT:   s_retbool(s7_integer(sc->x) == 0);
+	case NUM_REAL2:
+	case NUM_REAL:  s_retbool(s7_real(sc->x) == 0.0);
+	case NUM_RATIO: s_retbool(s7_numerator(sc->x) == 0);
+	default:        s_retbool((s7_real_part(sc->x) == 0.0) &&
+				  (s7_imag_part(sc->x) == 0.0));
+	}
+      
+    case OP_RATIONALIZE:    /* rationalize */
+      {
+	double err;
+	s7_Int numer = 0, denom = 1;
 	
+	sc->x = car(sc->args);
+	if (s7_is_exact(sc->x)) 
+	  s_pop(sc, sc->x);
 	
+	err = s7_real(cadr(sc->args));
+	
+	if (c_rationalize(s7_real(sc->x), err, &numer, &denom))
+	  s_pop(sc, s7_make_ratio(sc, numer, denom))
+	  else 
+	    {
+	      sc->value = s7_make_string(sc, "rationalize did not converge?!?");
+	      sc->args = sc->x;
+	      goto ERROR;
+	    }
+      }
+      
+    case OP_INEX2EX:    /* inexact->exact */
+      sc->x = car(sc->args);
+      if (s7_is_exact(sc->x)) 
+	s_pop(sc, sc->x);
+      {
+	s7_Int numer = 0, denom = 1;
+	if (c_rationalize(s7_real(sc->x), DEFAULT_RATIONALIZE_ERROR, &numer, &denom))
+	  s_pop(sc, s7_make_ratio(sc, numer, denom))
+	  else s_pop(sc, s7_make_integer(sc, (s7_Int)s7_real(sc->x)));
+      }
+      
+    case OP_EX2INEX:    /* exact->inexact */
+      sc->x = car(sc->args);
+      if (s7_is_inexact(sc->x)) 
+	s_pop(sc, sc->x);
+      
+      if (s7_is_integer(sc->x))
+	s_pop(sc, s7_make_real(sc, (double)s7_integer(sc->x)))
+	else s_pop(sc, s7_make_real(sc, fraction(sc->x->object.number)));
+      
+      
+    case OP_ABS:
+      sc->v = nvalue(car(sc->args));
+      if (num_type(sc->v) >= NUM_REAL)
+	real(sc->v) = fabs(real(sc->v));
+      else
+	{
+	  if (num_type(sc->v) == NUM_INT)
+	    integer(sc->v) = abs(integer(sc->v));
+	  else numerator(sc->v) = abs(numerator(sc->v));
+	}
+      s_pop(sc, make_number(sc, sc->v));      
+      
+    case OP_EXP:
+      sc->x = car(sc->args);
+      if (s7_is_real(sc->x))
+	s_pop(sc, s7_make_real(sc, exp(num_to_real(sc->x->object.number))));
+      s_pop(sc, s7_from_c_complex(sc, cexp(s7_complex(sc->x))));
+      
+    case OP_LOG:
+      
+      /* TODO: cadr can be base */
+      
+      sc->x = car(sc->args);
+      if ((s7_is_real(sc->x)) &&
+	  (num_to_real(sc->x->object.number) > 0.0))
+	s_pop(sc, s7_make_real(sc, log(num_to_real(sc->x->object.number))));
+      /* if < 0 use log(-x) + pi*i */
+      s_pop(sc, s7_from_c_complex(sc, clog(s7_complex(sc->x))));
+      
+    case OP_SIN:
+      sc->x = car(sc->args);
+      if (s7_is_real(sc->x))
+	s_pop(sc, s7_make_real(sc, sin(num_to_real(sc->x->object.number))));
+      s_pop(sc, s7_from_c_complex(sc, csin(s7_complex(sc->x))));
+      
+    case OP_COS:
+      sc->x = car(sc->args);
+      if (s7_is_real(sc->x))
+	s_pop(sc, s7_make_real(sc, cos(num_to_real(sc->x->object.number))));
+      s_pop(sc, s7_from_c_complex(sc, ccos(s7_complex(sc->x))));
+      
+    case OP_TAN:
+      sc->x = car(sc->args);
+      if (s7_is_real(sc->x))
+	s_pop(sc, s7_make_real(sc, tan(num_to_real(sc->x->object.number))));
+      s_pop(sc, s7_from_c_complex(sc, ctan(s7_complex(sc->x))));
+      
+    case OP_ASIN:
+      sc->x = car(sc->args);
+      if ((s7_is_real(sc->x)) &&
+	  (fabs(num_to_real(sc->x->object.number)) <= 1.0))
+	s_pop(sc, s7_make_real(sc, asin(num_to_real(sc->x->object.number))));
+      s_pop(sc, s7_from_c_complex(sc, casin(s7_complex(sc->x))));
+      
+    case OP_ACOS:
+      sc->x = car(sc->args);
+      if ((s7_is_real(sc->x)) &&
+	  (fabs(num_to_real(sc->x->object.number)) <= 1.0))
+	s_pop(sc, s7_make_real(sc, acos(num_to_real(sc->x->object.number))));
+      s_pop(sc, s7_from_c_complex(sc, cacos(s7_complex(sc->x))));
+      
+    case OP_ATAN:
+      sc->x = car(sc->args);
+      if (cdr(sc->args) == sc->NIL) 
+	{
+	  if (s7_is_real(sc->x))
+	    s_pop(sc, s7_make_real(sc, atan(num_to_real(sc->x->object.number))));
+	  s_pop(sc, s7_from_c_complex(sc, catan(s7_complex(sc->x))));
+	} 
+      else 
+	{
+	  sc->y = cadr(sc->args);
+	  s_pop(sc, s7_make_real(sc, atan2(num_to_real(sc->x->object.number), num_to_real(sc->y->object.number))));
+	  /* atan2 args should be real */
+	}
+      
+    case OP_SINH:
+      sc->x = car(sc->args);
+      if (s7_is_real(sc->x))
+	s_pop(sc, s7_make_real(sc, sinh(num_to_real(sc->x->object.number))));
+      s_pop(sc, s7_from_c_complex(sc, csinh(s7_complex(sc->x))));
+      
+    case OP_COSH:
+      sc->x = car(sc->args);
+      if (s7_is_real(sc->x))
+	s_pop(sc, s7_make_real(sc, cosh(num_to_real(sc->x->object.number))));
+      s_pop(sc, s7_from_c_complex(sc, ccosh(s7_complex(sc->x))));
+      
+    case OP_TANH:
+      sc->x = car(sc->args);
+      if (s7_is_real(sc->x))
+	s_pop(sc, s7_make_real(sc, tanh(num_to_real(sc->x->object.number))));
+      s_pop(sc, s7_from_c_complex(sc, ctanh(s7_complex(sc->x))));
+      
+    case OP_ASINH:
+      sc->x = car(sc->args);
+      if (s7_is_real(sc->x))
+	s_pop(sc, s7_make_real(sc, asinh(num_to_real(sc->x->object.number))));
+      s_pop(sc, s7_from_c_complex(sc, casinh(s7_complex(sc->x))));
+      
+    case OP_ACOSH:
+      sc->x = car(sc->args);
+      if ((s7_is_real(sc->x)) &&
+	  (num_to_real(sc->x->object.number) >= 1.0))
+	s_pop(sc, s7_make_real(sc, acosh(num_to_real(sc->x->object.number))));
+      s_pop(sc, s7_from_c_complex(sc, cacosh(s7_complex(sc->x))));
+      
+    case OP_ATANH:
+      sc->x = car(sc->args);
+      if ((s7_is_real(sc->x)) &&
+	  (fabs(num_to_real(sc->x->object.number)) < 1.0))
+	s_pop(sc, s7_make_real(sc, atanh(num_to_real(sc->x->object.number))));
+      s_pop(sc, s7_from_c_complex(sc, catanh(s7_complex(sc->x))));
+      
+    case OP_SQRT:
+      sc->x = car(sc->args);
+      if ((s7_is_real(sc->x)) &&
+	  (num_to_real(sc->x->object.number) >= 0.0))
+	s_pop(sc, s7_make_real(sc, sqrt(num_to_real(sc->x->object.number))));
+      /* if < 0 use sqrt(-num)*i */
+      s_pop(sc, s7_from_c_complex(sc, csqrt(s7_complex(sc->x))));
+      
+    case OP_EXPT:
+      {
+	sc->x = car(sc->args);
+	sc->y = cadr(sc->args);
+	
+	if ((s7_is_integer(sc->x)) &&
+	    (s7_is_integer(sc->y)) &&
+	    ((s7_integer(sc->y) >= 0) || 
+	     (abs(s7_integer(sc->x)) == 1)))
+	  s_pop(sc, s7_make_integer(sc, (s7_Int)pow(s7_integer(sc->x), s7_integer(sc->y))));
+	
+	if ((s7_is_real(sc->x)) &&
+	    (s7_is_real(sc->y)) &&
+	    (num_to_real(sc->x->object.number) > 0.0) &&
+	    (num_to_real(sc->y->object.number) >= 0.0))
+	  s_pop(sc, s7_make_real(sc, pow(num_to_real(sc->x->object.number), num_to_real(sc->y->object.number))));
+	
+	s_pop(sc, s7_from_c_complex(sc, cpow(s7_complex(sc->x), s7_complex(sc->y))));
+      }
+      
+    case OP_FLOOR:
+      sc->x = car(sc->args);
+      s_pop(sc, s7_make_integer(sc, (s7_Int)floor(num_to_real(sc->x->object.number)))); /* used to be real result */
+      
+    case OP_CEILING:
+      sc->x = car(sc->args);
+      s_pop(sc, s7_make_integer(sc, (s7_Int)ceil(num_to_real(sc->x->object.number))));
+      
+    case OP_ROUND: 
+      sc->x = car(sc->args);
+      s_pop(sc, s7_make_integer(sc, (s7_Int)round_per_R5RS(num_to_real(sc->x->object.number))));
+      
+    case OP_TRUNCATE: 
+      {
+	double xf;
+	sc->x = car(sc->args);
+	xf = num_to_real(sc->x->object.number);
+	if (xf > 0) 
+	  s_pop(sc, s7_make_integer(sc, (s7_Int)floor(xf)));
+	s_pop(sc, s7_make_integer(sc, (s7_Int)ceil(xf)));
+      }
+      
+    case OP_LCM:
+      { /* TODO: fix (and gcd) for new case */
+	s7_Int val = 1;
+	for (sc->x = sc->args; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+	  {
+	    val = c_lcm(val, s7_integer(car(sc->x)));
+	    if (val == 0)
+	      s_pop(sc, s7_make_integer(sc, 0));
+	  }
+	s_pop(sc, s7_make_integer(sc, val));
+      }
+      
+    case OP_GCD:
+      {
+	s7_Int val = 0;
+	for (sc->x = sc->args; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+	  {
+	    val = c_gcd(val, s7_integer(car(sc->x)));
+	    if (val == 1)
+	      s_pop(sc, s7_make_integer(sc, 1));
+	  }
+	s_pop(sc, s7_make_integer(sc, val));
+      }
+      
+    case OP_MAX:        /* max */
+      sc->v = nvalue(car(sc->args));
+      for (sc->x = cdr(sc->args); sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+	sc->v = num_max(sc, sc->v, nvalue(car(sc->x)));
+      s_pop(sc, make_number(sc, sc->v));
+      
+    case OP_MIN:        /* min */
+      sc->v = nvalue(car(sc->args));
+      for (sc->x = cdr(sc->args); sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+	sc->v = num_min(sc, sc->v, nvalue(car(sc->x)));
+      s_pop(sc, make_number(sc, sc->v));
+      
+    case OP_ADD:        /* + */
+      sc->v = small_int_as_num(sc, 0);
+      
+      for (sc->x = sc->args; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+	sc->v = num_add(sc, sc->v, nvalue(car(sc->x)));
+      s_pop(sc, make_number(sc, sc->v));
+      
+    case OP_MUL:        /* * */
+      sc->v = small_int_as_num(sc, 1);
+      
+      for (sc->x = sc->args; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+	sc->v = num_mul(sc, sc->v, nvalue(car(sc->x)));
+      s_pop(sc, make_number(sc, sc->v));
+      
+    case OP_SUB:        /* - */
+      if (cdr(sc->args) == sc->NIL) 
+	{
+	  sc->x = sc->args;
+	  sc->v = small_int_as_num(sc, 0);
+	} 
+      else 
+	{
+	  sc->x = cdr(sc->args);
+	  sc->v = nvalue(car(sc->args));
+	}
+      for (; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+	sc->v = num_sub(sc, sc->v, nvalue(car(sc->x)));
+      s_pop(sc, make_number(sc, sc->v));
+      
+    case OP_DIV:        /* / */
+      if (cdr(sc->args) == sc->NIL) 
+	{
+	  sc->x = sc->args;
+	  sc->v = small_int_as_num(sc, 1);
+	} 
+      else 
+	{
+	  sc->x = cdr(sc->args);
+	  sc->v = nvalue(car(sc->args));
+	}
+      for (; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+	sc->v = num_div(sc, sc->v, nvalue(car(sc->x)));
+      s_pop(sc, make_number(sc, sc->v));
+      
+    case OP_QUOTIENT:        /* quotient */
+      if (cdr(sc->args) == sc->NIL) 
+	{
+	  sc->x = sc->args;
+	  sc->v = small_int_as_num(sc, 1);
+	} 
+      else 
+	{
+	  sc->x = cdr(sc->args);
+	  sc->v = nvalue(car(sc->args));
+	}
+      for (; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+	{
+	  if (s7_integer(car(sc->x)) != 0)
+	    sc->v = num_quotient(sc->v, nvalue(car(sc->x)));
+	  else 
+	    {
+	      sc->value = s7_make_string(sc, "quotient: division by zero");
+	      goto ERROR;
+	    }
+	}
+      s_pop(sc,make_number(sc, sc->v));
+      
+    case OP_REM:        /* remainder */
+      sc->v = nvalue(car(sc->args));
+      if (s7_integer(cadr(sc->args)) != 0)
+	sc->v = num_rem(sc->v, nvalue(cadr(sc->args)));
+      else 
+	{
+	  sc->value = s7_make_string(sc, "remainder: division by zero");
+	  goto ERROR;
+	}
+      
+      s_pop(sc,make_number(sc, sc->v));
+      
+    case OP_MOD:        /* modulo */
+      sc->v = nvalue(car(sc->args));
+      if (s7_integer(cadr(sc->args)) != 0)
+	sc->v = num_mod(sc->v, nvalue(cadr(sc->args)));
+      else 
+	{
+	  sc->value = s7_make_string(sc, "modulo: division by zero");
+	  goto ERROR;
+	}
+      s_pop(sc, make_number(sc, sc->v));
+      
+    case OP_CAR:        /* car */
+      s_pop(sc, caar(sc->args));
+      
+    case OP_CDR:        /* cdr */
+      s_pop(sc, cdar(sc->args));
+      
+    case OP_CONS:       /* cons */
+      cdr(sc->args) = cadr(sc->args);
+      s_pop(sc, sc->args);
+      
+    case OP_SETCAR:     /* set-car! */
+      if (!s7_is_immutable(car(sc->args))) 
+	{
+	  caar(sc->args) = cadr(sc->args);
+	  s_pop(sc, car(sc->args));
+	} 
+      else 
+	{
+	  sc->value = s7_make_string(sc, "set-car!: unable to alter immutable pair");
+	  goto ERROR;
+	}
+      
+    case OP_SETCDR:     /* set-cdr! */
+      if (!s7_is_immutable(car(sc->args))) 
+	{
+	  cdar(sc->args) = cadr(sc->args);
+	  s_pop(sc, car(sc->args));
+	} 
+      else 
+	{
+	  sc->value = s7_make_string(sc, "set-cdr!: unable to alter immutable pair");
+	  goto ERROR;
+	}
+      
+    case OP_CHAR2INT:  /* char->integer */
+      { 
+	char c;
+	c = (char)character(car(sc->args));
+	s_pop(sc, s7_make_integer(sc, (unsigned char)c));
+      }
+      
+    case OP_INT2CHAR: /* integer->char */
+      { 
+	unsigned char c;
+	c = (unsigned char)s7_integer(car(sc->args)); /* int here -> char */
+	s_pop(sc, s7_make_character(sc, (char)c));
+      }
+      
+    case OP_CHARUPCASE: 
+      {
+	unsigned char c;
+	c = (unsigned char)character(car(sc->args));
+	c = toupper(c);
+	s_pop(sc, s7_make_character(sc, (char)c));
+      }
+      
+    case OP_CHARDNCASE: 
+      {
+	unsigned char c;
+	c = (unsigned char)character(car(sc->args));
+	c = tolower(c);
+	s_pop(sc, s7_make_character(sc, (char)c));
+      }
+      
+    case OP_STR2SYM:  /* string->symbol */
+      s_pop(sc, s7_make_symbol(sc, string_value(car(sc->args))));
+      
+    case OP_STRING_TO_NUMBER:
+      {
+	char *s = string_value(car(sc->args));
+	sc->x = make_atom(sc, s);
+	if (s7_is_number(sc->x))
+	  s_pop(sc, sc->x)
+	  else s_pop(sc, sc->F);
+      }
+      
+    case OP_SYM2STR: /* symbol->string */
+      sc->x = s7_make_string(sc, s7_symbol_name(car(sc->args)));
+      s7_set_immutable(sc->x);
+      s_pop(sc, sc->x);
+      
+    case OP_NUMBER_TO_STRING:
+      {
+	/* TODO if cdr not nil, we've got a radix */
+	s_pop(sc, s7_make_string(sc, s7_atom_to_c_string(sc, car(sc->args), false)));
+      } 
+      
+    case OP_MKSTRING: /* make-string */
+      { 
+	char fill = ' ';
+	int len;
+	
+	len = s7_integer(car(sc->args));
+	if (cdr(sc->args) != sc->NIL) 
+	  fill = s7_character(cadr(sc->args));
+	
+	s_pop(sc, make_empty_string(sc, len, (char)fill));
+      }
+      
+    case OP_STRLEN:  /* string-length */
+      s_pop(sc, s7_make_integer(sc, string_length(car(sc->args))));
+      
+    case OP_STRREF:  /* string-ref */
+      {
+	char *str;
+	int index;
+	
+	str = string_value(car(sc->args));
+	index = s7_integer(cadr(sc->args));
+	if (index >= string_length(car(sc->args))) 
+	  {
+	    sc->value = s7_make_string(sc, "string-ref: out of bounds:");
+	    goto ERROR;
+	  }
+	
+	s_pop(sc, s7_make_character(sc, ((unsigned char*)str)[index]));
+      }
+      
+    case OP_STRSET: /* string-set! */
+      { 
+	char *str;
+	int index;
+	char c;
+	
+	if (s7_is_immutable(car(sc->args))) 
+	  {
+	    sc->value = s7_make_string(sc, "string-set!: unable to alter immutable string:");
+	    goto ERROR;
+	  }
+	
+	str = string_value(car(sc->args));
+	index = s7_integer(cadr(sc->args));
+	if (index >= string_length(car(sc->args))) 
+	  {
+	    sc->value = s7_make_string(sc, "string-set!: out of bounds:");
+	    goto ERROR;
+	  }
+	
+	c = s7_character(caddr(sc->args));
+	str[index] = (char)c;
+	s_pop(sc, car(sc->args));
+      }
+      
+    case OP_STRAPPEND: /* string-append */
+      { 
+	/* in 1.29 string-append was in Scheme in init.scm but was too slow */
+	int len = 0;
+	s7_pointer newstr;
+	char *pos;
+	
+	/* compute needed length for new string */
+	for (sc->x = sc->args; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+	  len += string_length(car(sc->x));
+	
+	newstr = make_empty_string(sc, len, ' ');
+	/* store the contents of the argument strings into the new string */
+	for (pos = string_value(newstr), sc->x = sc->args; sc->x != sc->NIL;
+	     pos += string_length(car(sc->x)), sc->x = cdr(sc->x)) 
+	  memcpy(pos, string_value(car(sc->x)), string_length(car(sc->x)));
+	
+	s_pop(sc, newstr);
+      }
+      
+    case OP_SUBSTR: { /* substring */
+      char *str;
+      int index0;
+      int index1;
+      int len;
+      
+      str = string_value(car(sc->args));
+      
+      index0 = s7_integer(cadr(sc->args));
+      
+      if (index0 > string_length(car(sc->args))) 
+	{
+	  sc->value = s7_make_string(sc, "substring: start out of bounds:");
+	  goto ERROR;
+	}
+      
+      if (cddr(sc->args)!= sc->NIL) 
+	{
+	  index1 = s7_integer(caddr(sc->args));
+	  if (index1 > string_length(car(sc->args)) || index1 < index0) 
+	    {
+	      sc->value = s7_make_string(sc, "substring: end out of bounds:");
+	      goto ERROR;
+	    }
+	} 
+      else 
+	{
+	  index1 = string_length(car(sc->args));
+	}
+      
+      len=index1 - index0;
+      sc->x = make_empty_string(sc, len,' ');
+      memcpy(string_value(sc->x), str + index0, len);
+      string_value(sc->x)[len] = 0;
+      
+      s_pop(sc, sc->x);
+    }
+      
+    VECTOR:
+    case OP_VECTOR: /* vector */
+      {   
+	int i;
+	s7_pointer vec;
+	int len = s7_list_length(sc, sc->args);
+	if (len < 0) 
+	  {
+	    sc->value = s7_make_string(sc, "vector: not a proper list:");
+	    goto ERROR;
+	  }
+	
+	vec = s7_make_vector(sc, len);
+	for (sc->x = sc->args, i = 0; s7_is_pair(sc->x); sc->x = cdr(sc->x), i++) 
+	  vector_element(vec, i) =  car(sc->x);
+	
+	s_pop(sc,vec);
+      }
+      
+    case OP_MKVECTOR: /* make-vector */
+      { 
+	s7_pointer fill= sc->NIL;
+	int len;
+	s7_pointer vec;
+	
+	len = s7_integer(car(sc->args));
+	
+	if (cdr(sc->args) != sc->NIL) 
+	  fill = cadr(sc->args);
+	
+	vec = s7_make_vector(sc, len);
+	if (fill != sc->NIL)
+	  s7_fill_vector(vec, fill);
+	
+	s_pop(sc,vec);
+      }
+      
+    case OP_VECLEN:  /* vector-length */
+      s_pop(sc, s7_make_integer(sc, vector_length(car(sc->args))));
+      
+    case OP_VECREF: /* vector-ref */
+      { 
+	int index;
+	index = s7_integer(cadr(sc->args));
+	
+	if (index >= vector_length(car(sc->args))) 
+	  {
+	    sc->value = s7_make_string(sc, "vector-ref: out of bounds:");
+	    goto ERROR;
+	  }
+	
+	s_pop(sc, vector_element(car(sc->args), index));
+      }
+      
+    case OP_VECSET:/* vector-set! */
+      {   
+	int index;
+	
+	if (s7_is_immutable(car(sc->args))) 
+	  {
+	    sc->value = s7_make_string(sc, "vector-set!: unable to alter immutable vector:");
+	    goto ERROR;
+	  }
+	
+	index = s7_integer(cadr(sc->args));
+	if (index >= vector_length(car(sc->args))) 
+	  {
+	    sc->value = s7_make_string(sc, "vector-set!: out of bounds:");
+	    goto ERROR;
+	  }
+	
+	vector_element(car(sc->args), index) = caddr(sc->args);
+	s_pop(sc, car(sc->args));
+      }
+      
+      
+    case OP_NOT:        /* not */
+      s_retbool(is_false(car(sc->args)));
+      
+    case OP_BOOLP:       /* boolean? */
+      s_retbool(car(sc->args) == sc->F || car(sc->args) == sc->T);
+      
+    case OP_NULLP:       /* null? */
+      s_retbool(car(sc->args) == sc->NIL);
+      
+    case OP_NUMEQ:      /* = */
+    case OP_LESS:       /* < */
+    case OP_GRE:        /* > */
+    case OP_LEQ:        /* <= */
+    case OP_GEQ:        /* >= */
+      {
+	bool (*comp_func)(num a, num b);
+	switch(sc->op) 
+	  {
+	  case OP_NUMEQ: comp_func = num_eq; break;
+	  case OP_LESS:  comp_func = num_lt; break;
+	  case OP_GRE:   comp_func = num_gt; break;
+	  case OP_LEQ:   comp_func = num_le; break;
+	  case OP_GEQ:   comp_func = num_ge; break;
+	  default: fprintf(stderr, "oops");  break;
+	  }
+	sc->x = sc->args;
+	sc->v = nvalue(car(sc->x));
+	sc->x = cdr(sc->x);
+	
+	for (; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+	  {
+	    if (!comp_func(sc->v, nvalue(car(sc->x)))) 
+	      s_retbool(false);
+	    sc->v = nvalue(car(sc->x));
+	  }
+	
+	s_retbool(true);
+      }
+      
+    case OP_SYMBOLP:     /* symbol? */
+      s_retbool(s7_is_symbol(car(sc->args)));
+      
+    case OP_NUMBERP:     /* number? */
+      s_retbool(s7_is_number(car(sc->args)));
+      
+    case OP_STRINGP:     /* string? */
+      s_retbool(s7_is_string(car(sc->args)));
+      
+    case OP_INTEGERP:     /* integer? */
+      s_retbool(s7_is_integer(car(sc->args)));
+      
+    case OP_REALP:     /* real? */
+      s_retbool(s7_is_real(car(sc->args))); 
+      
+    case OP_RATIONALP:     /* rational? */
+      s_retbool(s7_is_rational(car(sc->args)));
+      
+    case OP_COMPLEXP:     /* complex? */
+      s_retbool(s7_is_complex(car(sc->args)));
+      
+    case OP_CHARP:     /* char? */
+      s_retbool(s7_is_character(car(sc->args)));
+      
+    case OP_CHARAP:     /* char-alphabetic? */
+      s_retbool(Cisalpha(character(car(sc->args))));
+      
+    case OP_CHARNP:     /* char-numeric? */
+      s_retbool(Cisdigit(character(car(sc->args))));
+      
+    case OP_CHARWP:     /* char-whitespace? */
+      s_retbool(Cisspace(character(car(sc->args))));
+      
+    case OP_CHARUP:     /* char-upper-case? */
+      s_retbool(Cisupper(character(car(sc->args))));
+      
+    case OP_CHARLP:     /* char-lower-case? */
+      s_retbool(Cislower(character(car(sc->args))));
+      
+    case OP_PROCP:       /* procedure? */
+      /*--
+       * continuation should be procedure by the example
+       * (call-with-current-continuation procedure?) ==> #t
+       * in R^3 report sec. 6.9
+       */
+      s_retbool(s7_is_procedure(car(sc->args)) || 
+		s7_is_closure(car(sc->args)) || 
+		(is_goto(car(sc->args))) || 
+		s7_is_continuation(car(sc->args)) || 
+		s7_is_function(car(sc->args)));
+      
+    case OP_PAIRP:       /* pair? */
+      s_retbool(s7_is_pair(car(sc->args)));
+      
+    case OP_LISTP:  /* list? */
+      {    
+	s7_pointer slow, fast;
+	slow = fast = car(sc->args);
+	while (1) 
+	  {
+	    if (!s7_is_pair(fast)) s_retbool(fast == sc->NIL);
+	    fast = cdr(fast);
+	    if (!s7_is_pair(fast)) s_retbool(fast == sc->NIL);
+	    fast = cdr(fast);
+	    slow = cdr(slow);
+	    if (fast == slow) 
+	      {
+		/* the fast s7_pointer has looped back around and caught up
+		   with the slow s7_pointer, hence the structure is circular,
+		   not of finite length, and therefore not a list */
+		s_retbool(false);
+	      }
+	  }
+      }
+      
+    case OP_VECTORP:     /* vector? */
+      s_retbool(s7_is_vector(car(sc->args)));
+      
+    case OP_EQ:         /* eq? */
+      s_retbool(car(sc->args) == cadr(sc->args));
+      
+    case OP_EQV:        /* eqv? */
+      s_retbool(s7_eqv_p(car(sc->args), cadr(sc->args)));
+      
+    case OP_EQUAL:        /* equal? */
+      s_retbool(s7_is_equal(sc, car(sc->args), cadr(sc->args)));
+      
+      
+    case OP_FORCE:      /* force */
+      sc->code = car(sc->args);
+      if (is_promise(sc->code)) 
+	{
+	  /* Should change type to closure here */
+	  push_stack(sc, OP_SAVE_FORCED, sc->NIL, sc->code);
+	  sc->args = sc->NIL;
+	  goto APPLY;
+	} 
+      else 
+	{
+	  s_pop(sc, sc->code);
+	}
+      
+    case OP_SAVE_FORCED:     /* Save forced value replacing promise */
+      memcpy(sc->code, sc->value,sizeof(struct s7_cell));
+      s_pop(sc, sc->value);
+      
+      
     ERROR:
     case OP_ERROR:
       {
@@ -6171,15 +6227,15 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	/* fallback */
 	sc->args = cons(sc, sc->value, sc->args);
 	s7_set_immutable(car(sc->args));
-      
+	
 	/* (old ERR0) */
-	write_string(sc, "error: ");
+	write_string(sc, "error: ", sc->outport);
 	if (s7_is_string(sc->value))
-	  write_string(sc, string_value(sc->value));
+	  write_string(sc, string_value(sc->value), sc->outport);
       }
-
+      
     case OP_ERR1:  /* error */
-      write_string(sc, " ");
+      write_string(sc, " ", sc->outport);
       if (sc->args != sc->NIL) 
 	{
 	  push_stack(sc, OP_ERR1, cdr(sc->args), sc->NIL);
@@ -6188,17 +6244,17 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	} 
       else 
 	{
-	  write_string(sc, "\n");
+	  write_string(sc, "\n", sc->outport);
 	  sc->x = g_port_filename(sc, sc->inport);
 	  if (sc->x != sc->F)
 	    {
 	      char linebuf[64];
-	      write_string(sc, s7_string(sc->x));
-	      write_string(sc, ": ");
-	      write_string(sc, "line ");
+	      write_string(sc, s7_string(sc->x), sc->outport);
+	      write_string(sc, ": ", sc->outport);
+	      write_string(sc, "line ", sc->outport);
 	      snprintf(linebuf, 64, "%d", port_line_number(sc->inport));
-	      write_string(sc, linebuf);
-	      write_string(sc, "\n");
+	      write_string(sc, linebuf, sc->outport);
+	      write_string(sc, "\n", sc->outport);
 	    }
 	  return;
 	}
@@ -6221,7 +6277,6 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	sc->x = s7_append(sc, sc->x, car(sc->y));
       s_pop(sc, sc->x);
       
-    QUIT:
     case OP_QUIT:       /* quit */
       return;
       break;
@@ -6229,7 +6284,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
     case OP_SYMBOL_TABLE: /* symbol_table */
       s_pop(sc, symbol_table_all_symbols(sc)); 
       
-
+      
     case OP_GLOBAL_ENVIRONMENT: /* global-environment */
       s_pop(sc, sc->global_env);
       
@@ -6240,25 +6295,20 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       
       /* ========== reading part ========== */
       
-    RDSEXPR:
-    case OP_RDSEXPR:
-
+    READ_EXPRESSION:
+    case OP_READ_EXPRESSION:
+      
       switch (sc->tok) 
 	{
 	case TOK_EOF:
-	  if (sc->inport == sc->NIL) 
-	    {
-	      sc->args = sc->NIL;
-	      goto QUIT;
-	    } 
-	  else s_pop(sc, sc->EOF_OBJECT);
+	  s_pop(sc, sc->EOF_OBJECT);
 	  
 	case TOK_VEC:
 	  push_stack(sc, OP_RDVEC, sc->NIL, sc->NIL);
 	  /* fall through */
 	  
 	case TOK_LPAREN:
-	  sc->tok = token(sc);
+	  sc->tok = token(sc, sc->inport);
 	  if (sc->tok == TOK_RPAREN) 
 	    s_pop(sc, sc->NIL)
 	    else 
@@ -6270,44 +6320,44 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 		  }
 		else 
 		  {
-		    if (s7_is_port(sc->inport))
+		    if (is_input_port(sc->inport))
 		      port_paren_depth(sc->inport)++;
 		    push_stack(sc, OP_RDLIST, sc->NIL, sc->NIL);
-		    goto RDSEXPR;
+		    goto READ_EXPRESSION;
 		  }
 	      }
 	  
 	case TOK_QUOTE:
 	  push_stack(sc, OP_RDQUOTE, sc->NIL, sc->NIL);
-	  sc->tok = token(sc);
-	  goto RDSEXPR;
+	  sc->tok = token(sc, sc->inport);
+	  goto READ_EXPRESSION;
 	  
 	case TOK_BQUOTE:
-	  sc->tok = token(sc);
+	  sc->tok = token(sc, sc->inport);
 	  if (sc->tok== TOK_VEC) 
 	    {
 	      push_stack(sc, OP_RDQQUOTEVEC, sc->NIL, sc->NIL);
 	      sc->tok= TOK_LPAREN;
-	      goto RDSEXPR;
+	      goto READ_EXPRESSION;
 	    } 
 	  else push_stack(sc, OP_RDQQUOTE, sc->NIL, sc->NIL);
-	  goto RDSEXPR;
+	  goto READ_EXPRESSION;
 	  
 	case TOK_COMMA:
 	  push_stack(sc, OP_RDUNQUOTE, sc->NIL, sc->NIL);
-	  sc->tok = token(sc);
-	  goto RDSEXPR;
+	  sc->tok = token(sc, sc->inport);
+	  goto READ_EXPRESSION;
 	  
 	case TOK_ATMARK:
 	  push_stack(sc, OP_RDUQTSP, sc->NIL, sc->NIL);
-	  sc->tok = token(sc);
-	  goto RDSEXPR;
+	  sc->tok = token(sc, sc->inport);
+	  goto READ_EXPRESSION;
 	  
 	case TOK_ATOM:
-	  s_pop(sc, make_atom(sc, readstr_upto(sc, "();\t\n\r ")));
+	  s_pop(sc, make_atom(sc, read_string_upto(sc, "();\t\n\r ", sc->inport))); /* if reading list (from lparen), this will finally get us to rdlist */
 	  
 	case TOK_DQUOTE:
-	  sc->x = readstrexp(sc);
+	  sc->x = read_string_expression(sc, sc->inport);
 	  if (sc->x == sc->F) 
 	    {
 	      sc->value = s7_make_string(sc, "error reading string");
@@ -6320,7 +6370,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	case TOK_SHARP_CONST:
 	  {
 	    char *expr;
-	    expr = readstr_upto(sc, "();\t\n\r ");
+	    expr = read_string_upto(sc, "();\t\n\r ", sc->inport);
 	    if ((sc->x = make_sharp_const(sc, expr)) == sc->NIL)
 	      {
 		sc->value = s7_make_string(sc, "undefined sharp expression");
@@ -6331,7 +6381,9 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  }
 	default:
 	  {
-	    sc->value = s7_make_string(sc, "syntax error: illegal token");
+	    if (sc->tok == TOK_RPAREN)
+	      sc->value = s7_make_string(sc, "too many close parens");
+	    else sc->value = s7_make_string(sc, "syntax error: illegal token");
 	    goto ERROR;
 	  }
 	}
@@ -6340,43 +6392,43 @@ static void eval(s7_scheme *sc, opcode_t first_op)
     case OP_RDLIST: 
       {
 	sc->args = cons(sc, sc->value, sc->args);
-
-	sc->tok = token(sc);
+	
+	sc->tok = token(sc, sc->inport);
 	if (sc->tok == TOK_RPAREN) 
 	  {
 	    int c;
-	    if (s7_is_input_port(sc, sc->inport))
+	    if (is_input_port(sc->inport))
 	      port_paren_depth(sc->inport)--;
-
-	    c = inchar(sc);
-	    if (c != '\n') backchar(sc,c);
-
+	    
+	    c = inchar(sc, sc->inport);
+	    if (c != '\n') backchar(sc, c, sc->inport);
+	    
 	    s_pop(sc, s7_reverse_in_place(sc, sc->NIL, sc->args));
 	  } 
 	else if (sc->tok == TOK_DOT) 
 	  {
 	    push_stack(sc, OP_RDDOT, sc->args, sc->NIL);
-	    sc->tok = token(sc);
-	    goto RDSEXPR;
+	    sc->tok = token(sc, sc->inport);
+	    goto READ_EXPRESSION;
 	  } 
 	else 
 	  {
 	    push_stack(sc, OP_RDLIST, sc->args, sc->NIL);;
-	    goto RDSEXPR;
+	    goto READ_EXPRESSION;
 	  }
       }
       
     case OP_RDDOT:
-      if (token(sc) != TOK_RPAREN) 
+      if (token(sc, sc->inport) != TOK_RPAREN) 
 	{
 	  sc->value = s7_make_string(sc, "syntax error: illegal dot expression");
 	  goto ERROR;
 	}
       else 
 	{
-	  if (s7_is_port(sc->inport))
+	  if (is_input_port(sc->inport))
 	    port_paren_depth(sc->inport)--;
-
+	  
 	  s_pop(sc, s7_reverse_in_place(sc, sc->value, sc->args));
 	}
       
@@ -6409,7 +6461,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
     case OP_P0LIST:
       if (s7_is_vector(sc->args)) 
 	{
-	  write_string(sc, "#(");
+	  write_string(sc, "#(", sc->outport);
 	  sc->args = cons(sc, sc->args, s7_make_integer(sc, 0)); /* loop_counter? */
 	  goto PVECFROM;
 	} 
@@ -6420,31 +6472,31 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	} 
       else if (car(sc->args) == sc->QUOTE && ok_abbrev(cdr(sc->args))) 
 	{
-	  write_string(sc, "'");
+	  write_string(sc, "'", sc->outport);
 	  sc->args = cadr(sc->args);
 	  goto P0LIST;
 	} 
       else if (car(sc->args) == sc->QQUOTE && ok_abbrev(cdr(sc->args))) 
 	{
-	  write_string(sc, "`");
+	  write_string(sc, "`", sc->outport);
 	  sc->args = cadr(sc->args);
 	  goto P0LIST;
 	} 
       else if (car(sc->args) == sc->UNQUOTE && ok_abbrev(cdr(sc->args))) 
 	{
-	  write_string(sc, ", ");
+	  write_string(sc, ", ", sc->outport);
 	  sc->args = cadr(sc->args);
 	  goto P0LIST;
 	} 
       else if (car(sc->args) == sc->UNQUOTESP && ok_abbrev(cdr(sc->args))) 
 	{
-	  write_string(sc, ",@");
+	  write_string(sc, ",@", sc->outport);
 	  sc->args = cadr(sc->args);
 	  goto P0LIST;
 	} 
       else 
 	{
-	  write_string(sc, "(");
+	  write_string(sc, "(", sc->outport);
 	  push_stack(sc, OP_P1LIST, cdr(sc->args), sc->NIL);
 	  sc->args = car(sc->args);
 	  goto P0LIST;
@@ -6454,24 +6506,24 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       if (s7_is_pair(sc->args)) 
 	{
 	  push_stack(sc, OP_P1LIST, cdr(sc->args), sc->NIL);
-	  write_string(sc, " ");
+	  write_string(sc, " ", sc->outport);
 	  sc->args = car(sc->args);
 	  goto P0LIST;
 	} 
       else if (s7_is_vector(sc->args)) 
 	{
 	  push_stack(sc, OP_P1LIST, sc->NIL, sc->NIL);
-	  write_string(sc, " . ");
+	  write_string(sc, " . ", sc->outport);
 	  goto P0LIST;
 	} 
       else 
 	{
 	  if (sc->args != sc->NIL) 
 	    {
-	      write_string(sc, " . ");
+	      write_string(sc, " . ", sc->outport);
 	      print_atom(sc, sc->args);
 	    }
-	  write_string(sc, ")");
+	  write_string(sc, ")", sc->outport);
 	  s_pop(sc, sc->T);
 	}
       
@@ -6483,7 +6535,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	int len = vector_length(vec);
 	if (i == len) 
 	  {
-	    write_string(sc, ")");
+	    write_string(sc, ")", sc->outport);
 	    s_pop(sc, sc->T);
 	  } 
 	else 
@@ -6492,7 +6544,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	    loop_counter(cdr(sc->args)) = i + 1;
 	    push_stack(sc, OP_PVECFROM, sc->args, sc->NIL);
 	    sc->args = elem;
-	    write_string(sc, " ");
+	    write_string(sc, " ", sc->outport);
 	    goto P0LIST;
 	  }
       }
@@ -6692,10 +6744,10 @@ static int object_types_size = 0;
 static int num_types = 0;
 
 int s7_new_type(const char *name, 
-			char *(*print)(void *value), 
-			void (*free)(void *value), 
-			bool (*equal)(void *val1, void *val2),
-			void (*gc_mark)(void *val))
+		char *(*print)(void *value), 
+		void (*free)(void *value), 
+		bool (*equal)(void *val1, void *val2),
+		void (*gc_mark)(void *val))
 {
   int tag;
   tag = num_types++;
@@ -6799,14 +6851,14 @@ void s7_provide(s7_scheme *sc, const char *feature)
   len = safe_strlen(feature) + 64;
   expr = (char *)CALLOC(len, sizeof(char));
   snprintf(expr, len, "(set! *features* (cons '%s *features*))", feature);
-  s7_eval_string(sc, expr);
+  s7_eval_c_string(sc, expr);
   FREE(expr);
 }
 
 
 s7_pointer s7_load_path(s7_scheme *sc)
 {
-  return(s7_eval_string(sc, "*load-path*"));
+  return(s7_eval_c_string(sc, "*load-path*"));
 }
 
 
@@ -6934,23 +6986,6 @@ bool s7_eq_p(s7_pointer obj1, s7_pointer obj2)
   return(obj1 == obj2);
 }
 
-
-
-s7_pointer s7_eval_string(s7_scheme *sc, const char *str)
-{
-  stack_reset(sc); 
-  sc->envir = sc->global_env;
-  push_input_port(sc, s7_open_input_string(sc, str));
-  eval(sc, OP_TOP_LEVEL);
-  return(sc->value);
-}
-
-
-s7_pointer s7_eval_form(s7_scheme *sc, s7_pointer form)
-{
-  /* TODO: eval form */
-  return(sc->F);
-}
 
 
 s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym)
@@ -7084,7 +7119,7 @@ void s7_error_and_exit(s7_scheme *sc, s7_pointer type, s7_pointer info)
 /* TODO: arg checks... */
 static s7_pointer g_tracing(s7_scheme *sc, s7_pointer a)
 {
-  #define H_tracing "(tracing bool) turns tracing on or off"
+#define H_tracing "(tracing bool) turns tracing on or off"
   s7_pointer old_val;
   old_val = (sc->tracing) ? sc->T : sc->F;
   sc->tracing = (car(a) != sc->F);
@@ -7093,7 +7128,7 @@ static s7_pointer g_tracing(s7_scheme *sc, s7_pointer a)
 
 static s7_pointer g_gc_verbose(s7_scheme *sc, s7_pointer a)
 {
-  #define H_gc_verbose "(gc-verbose bool) turns GC reportage on or off"
+#define H_gc_verbose "(gc-verbose bool) turns GC reportage on or off"
   s7_pointer old_val;
   old_val = (sc->gc_verbose) ? sc->T : sc->F;
   sc->gc_verbose = (car(a) != sc->F);
@@ -7102,23 +7137,23 @@ static s7_pointer g_gc_verbose(s7_scheme *sc, s7_pointer a)
 
 static s7_pointer g_gc(s7_scheme *sc, s7_pointer a)
 {
-  #define H_gc "(gc) runs the garbage collector"
+#define H_gc "(gc) runs the garbage collector"
   gc(sc);
   return(sc->UNSPECIFIED);
 }
 
 static s7_pointer g_cadr(s7_scheme *sc, s7_pointer a)
 {
-  #define H_cadr "(cadr lst) returns (car (cdr lst))"
+#define H_cadr "(cadr lst) returns (car (cdr lst))"
   s7_pointer lst = car(a);
   if ((s7_is_pair(lst)) && (s7_is_pair(cdr(lst))))
     return(cadr(lst));
   return(s7_error(sc, s7_make_string(sc, "cadr bad argument: "), a));
 }
-  
+
 static s7_pointer g_function_documentation(s7_scheme *sc, s7_pointer x)
 {
-  #define H_function_documentation "(function-documentation func) returns func's documentation string"
+#define H_function_documentation "(function-documentation func) returns func's documentation string"
   if (s7_is_function(x))
     return(s7_make_string(sc, s7_function_documentation(x)));
   return(sc->F);
@@ -7126,7 +7161,7 @@ static s7_pointer g_function_documentation(s7_scheme *sc, s7_pointer x)
 
 s7_pointer s7_function_arity(s7_scheme *sc, s7_pointer x)
 {
-  #define H_function_arity "(function-arity func) returns a list '(required optional rest)"
+#define H_function_arity "(function-arity func) returns a list '(required optional rest)"
   s7_pointer lst = sc->NIL;
   if (s7_is_function(x))
     {
@@ -7146,34 +7181,34 @@ void s7_set_error_exiter(s7_scheme *sc, void (*error_exiter)(void))
 }
 
 /*
-(define (caar x) (car (car x)))
-;(define (cadr x) (car (cdr x)))
-(define (cdar x) (cdr (car x)))
-(define (cddr x) (cdr (cdr x)))
-(define (caaar x) (car (car (car x))))
-(define (caadr x) (car (car (cdr x))))
-(define (cadar x) (car (cdr (car x))))
-(define (caddr x) (car (cdr (cdr x))))
-(define (cdaar x) (cdr (car (car x))))
-(define (cdadr x) (cdr (car (cdr x))))
-(define (cddar x) (cdr (cdr (car x))))
-(define (cdddr x) (cdr (cdr (cdr x))))
-(define (caaaar x) (car (car (car (car x)))))
-(define (caaadr x) (car (car (car (cdr x)))))
-(define (caadar x) (car (car (cdr (car x)))))
-(define (caaddr x) (car (car (cdr (cdr x)))))
-(define (cadaar x) (car (cdr (car (car x)))))
-(define (cadadr x) (car (cdr (car (cdr x)))))
-(define (caddar x) (car (cdr (cdr (car x)))))
-(define (cadddr x) (car (cdr (cdr (cdr x)))))
-(define (cdaaar x) (cdr (car (car (car x)))))
-(define (cdaadr x) (cdr (car (car (cdr x)))))
-(define (cdadar x) (cdr (car (cdr (car x)))))
-(define (cdaddr x) (cdr (car (cdr (cdr x)))))
-(define (cddaar x) (cdr (cdr (car (car x)))))
-(define (cddadr x) (cdr (cdr (car (cdr x)))))
-(define (cdddar x) (cdr (cdr (cdr (car x)))))
-(define (cddddr x) (cdr (cdr (cdr (cdr x)))))
+  (define (caar x) (car (car x)))
+  ;(define (cadr x) (car (cdr x)))
+  (define (cdar x) (cdr (car x)))
+  (define (cddr x) (cdr (cdr x)))
+  (define (caaar x) (car (car (car x))))
+  (define (caadr x) (car (car (cdr x))))
+  (define (cadar x) (car (cdr (car x))))
+  (define (caddr x) (car (cdr (cdr x))))
+  (define (cdaar x) (cdr (car (car x))))
+  (define (cdadr x) (cdr (car (cdr x))))
+  (define (cddar x) (cdr (cdr (car x))))
+  (define (cdddr x) (cdr (cdr (cdr x))))
+  (define (caaaar x) (car (car (car (car x)))))
+  (define (caaadr x) (car (car (car (cdr x)))))
+  (define (caadar x) (car (car (cdr (car x)))))
+  (define (caaddr x) (car (car (cdr (cdr x)))))
+  (define (cadaar x) (car (cdr (car (car x)))))
+  (define (cadadr x) (car (cdr (car (cdr x)))))
+  (define (caddar x) (car (cdr (cdr (car x)))))
+  (define (cadddr x) (car (cdr (cdr (cdr x)))))
+  (define (cdaaar x) (cdr (car (car (car x)))))
+  (define (cdaadr x) (cdr (car (car (cdr x)))))
+  (define (cdadar x) (cdr (car (cdr (car x)))))
+  (define (cdaddr x) (cdr (car (cdr (cdr x)))))
+  (define (cddaar x) (cdr (cdr (car (car x)))))
+  (define (cddadr x) (cdr (cdr (car (cdr x)))))
+  (define (cdddar x) (cdr (cdr (cdr (car x)))))
+  (define (cddddr x) (cdr (cdr (cdr (cdr x)))))
 */
 
 
@@ -7221,11 +7256,10 @@ s7_scheme *s7_init(void)
   sc->inport = sc->NIL;
   sc->inport_stack = sc->NIL;
   sc->outport = sc->NIL;
-  sc->outport_stack = sc->NIL;
   
   sc->x = sc->NIL;
   sc->y = sc->NIL;
-
+  
   sc->error_exiter = NULL;
   
 #if TIMING
@@ -7265,8 +7299,10 @@ s7_scheme *s7_init(void)
   typeflag(sc->symbol_table) |= T_CONSTANT;
   
   sc->gc_verbose = false;
-  sc->code = sc->NIL;
   sc->tracing = false;
+  
+  sc->code = sc->NIL;
+  sc->args = sc->NIL;
   
   new_frame_in_env(sc, sc->NIL); 
   
@@ -7310,6 +7346,8 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "cons-stream", OP_C0STREAM); /* what is this?? -- something to do with "promise"? */
   assign_syntax(sc, "macro",       OP_MACRO0);
   assign_syntax(sc, "case",        OP_CASE0);
+  assign_syntax(sc, "defmacro",    OP_DEFMACRO0);
+
   
   sc->LAMBDA = s7_make_symbol(sc, "lambda");
   typeflag(sc->LAMBDA) |= (T_IMMUTABLE | T_CONSTANT); 
@@ -7327,7 +7365,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "function-documentation", g_function_documentation,    1, 0, false, H_function_documentation);
   s7_define_function(sc, "function-arity",      s7_function_arity,    1, 0, false, H_function_arity);
   s7_define_function(sc, "function-source",     g_function_source, 1, 0, false, H_function_source);
-
+  
   /* ports */
   s7_define_function(sc, "port-line-number",    g_port_line_number,    1, 0, false, H_port_line_number);
   s7_define_function(sc, "port-filename",       g_port_filename,       1, 0, false, H_port_filename);
@@ -7351,24 +7389,18 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "write-char",          g_write_char,          1, 1, false, H_write_char);
   s7_define_function(sc, "write",               g_write,               1, 1, false, H_write);
   s7_define_function(sc, "display",             g_display,             1, 1, false, H_display);
-
+  
   s7_define_function(sc, "load",                g_load,                1, 0, false, H_display);
-
+  
   s7_define_function(sc, "tracing",    g_tracing,    1, 0, false, H_tracing);
   s7_define_function(sc, "gc-verbose", g_gc_verbose, 1, 0, false, H_gc_verbose);
   s7_define_function(sc, "stacktrace", g_stacktrace, 0, 0, false, H_stacktrace);
   s7_define_function(sc, "gc",         g_gc,         0, 0, false, H_gc);
-
-
+  
+  
   s7_define_function(sc, "cadr",       g_cadr,       1, 0, false, H_cadr);
   
   sc->gc_off = false;
   return(sc);
 }
-
-
-#if 0
->     _OP_DEF("eval",                           1,  2,       TST_ANY TST_PAIR,              OP_PEVAL            )
-#endif
-
 

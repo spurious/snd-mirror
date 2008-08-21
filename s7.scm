@@ -291,7 +291,30 @@
 				     (foo level (cdr form)))))))))
     (foo 0 (car (cdr l)))))
 
+#|
+(define (expand-quasiquote x)
+  (if (pair? x)
+      (if (eq? (car x) 'unquote)
+          (cadr x)
+      (if (eq? (car x) 'unquote-splicing)
+          (error "unquote-splicing not inside list")
+      (if (and (pair? (car x)) (eq? (caar x) 'unquote-splicing))
+          (list 'append
+                (cadar x)
+                (expand-quasiquote (cdr x)))
+          (list 'cons
+                (expand-quasiquote (car x))
+                (expand-quasiquote (cdr x))))))
+      (list 'quote x)))
 
+(defmacro quasiquote (x) (expand-quasiquote x))
+
+(defmacro unquote (x)
+  (error "unquote not inside quasiquote"))
+
+(defmacro unquote-splicing (x)
+  (error "unquote-splicing not inside quasiquote"))
+|#
 
 					; DEFINE-MACRO Contributed by Andy Gaynor
 (macro (define-macro dform)
@@ -382,9 +405,10 @@
 (define (acons x y z) (cons (cons x y) z))
 
 
+#|
 ;;;; Utility to ease macro creation
 (define (macroexpand form)
-  ((eval (procedure-source (eval (car form)))) form))
+  ((eval (function-source (eval (car form)))) form))
 
 
 
@@ -396,6 +420,7 @@
      (call-with-exit
       (lambda (return) 
 	,@(cddr form)))))
+|#
 
 
 #!
@@ -487,14 +512,17 @@
     r))
 
 
-(macro (defmacro dform)
-  (let ((form (gensym)))            ; rename args 
-    `(macro (,(cadr dform) ,form)   ; new initial (name args) list with the renamed args and original name
-       (apply 
-	(lambda ,(caddr dform)      ; (lambda (orig args...)
-	  ,@(cdddr dform))          ; body 
-	(cdr ,form))))))            ; apply's arg list with the args renamed
+;(defmacro hi (a b) `(+ ,a ,b))
 
+#|
+(macro (defmacro-1 dform)
+  (let ((form (gensym)))            
+    `(macro (,(cadr dform) ,form)   
+       (apply
+	(lambda ,(caddr dform)      
+	  ,@(cdddr dform))          
+	(cdr ,form)))))             
+|#
 
 ;;; scheme side make-procedure-with-setter -- not pretty (only needed for snd-nogui.c fallbacks)
 (defmacro make-procedure-with-setter (name getter setter)

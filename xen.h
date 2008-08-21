@@ -2166,7 +2166,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 
 #define C_STRING_TO_XEN_FORM(Str)                  s7_string_to_form(s7, Str)
 #define XEN_EVAL_FORM(Form)                        s7_eval_form(s7, Form)
-#define XEN_EVAL_C_STRING(Arg)                     s7_eval_string(s7, Arg)
+#define XEN_EVAL_C_STRING(Arg)                     s7_eval_c_string(s7, Arg)
 #define XEN_TO_STRING(Obj)                         s7_object_to_string(s7, Obj)
 
 #define XEN_SYMBOL_TO_C_STRING(Arg)                s7_symbol_name(Arg)

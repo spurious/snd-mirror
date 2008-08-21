@@ -6670,9 +6670,9 @@
 (CFNC-2134 "void gtk_entry_set_overwrite_mode GtkEntry* entry gboolean overwrite")
 (CFNC-2134 "gboolean gtk_entry_get_overwrite_mode GtkEntry* entry")
 (CFNC-2134 "guint16 gtk_entry_get_text_length GtkEntry* entry")
-(CFNC-2134 "GtkWidget* gtk_font_selection_get_family_entry GtkFontSelection* fontsel")
+;;; out 2.13.7 (CFNC-2134 "GtkWidget* gtk_font_selection_get_family_entry GtkFontSelection* fontsel")
 (CFNC-2134 "GtkWidget* gtk_font_selection_get_family_list GtkFontSelection* fontsel")
-(CFNC-2134 "GtkWidget* gtk_font_selection_get_face_entry GtkFontSelection* fontsel")
+;;; out 2.13.7 (CFNC-2134 "GtkWidget* gtk_font_selection_get_face_entry GtkFontSelection* fontsel")
 (CFNC-2134 "GtkWidget* gtk_font_selection_get_face_list GtkFontSelection* fontsel")
 (CFNC-2134 "GtkWidget* gtk_font_selection_get_size_entry GtkFontSelection* fontsel")
 (CFNC-2134 "GtkWidget* gtk_font_selection_get_size_list GtkFontSelection* fontsel")
@@ -6834,3 +6834,9 @@
 ;;; gtkdestroynotify -> gdestroynotify
 
 
+#!
+2.13.7:
++ gboolean              gtk_link_button_get_visited       (GtkLinkButton *link_button);
++ void                  gtk_link_button_set_visited       (GtkLinkButton *link_button,
++                                                          gboolean       visited);
+!#
