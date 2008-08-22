@@ -18,7 +18,6 @@
 
 /* changed to fit into Snd, Bill Schottstaedt, n-Aug-08
  *
- *     made several procedures global (eqv, list_length, append, reverse, reverse_in_place, atom_to_c_string and others)
  *     scheme_call returns sc->value
  *     merged scheme-private.h into scheme.h and changed names to s7.[ch], init.scm -> s7.scm, opdefines.h -> s7-ops.h
  *     defined *load-path*, defmacro, a stub for make-procedure-with-setter (s7.scm)
@@ -64,13 +63,16 @@
  *     added block comments in #| |# and fixed block comments in #! !#
  *     all internal errors go through the check for a user-defined error func, and give filename and line-number
  *     added defmacro
+ *     added keywords
+ *     optargs.scm now works given the keyword declarations, so define* works
+ *     s7 is case sensitive (on the CASE SENSITIVE switch)
+ *     added applicable objects
  *
  * there's no arg number mismatch check for caller-defined functions!
  * dies if undefined func? (asb 1) as typo
  *
  * need dynamic-wind tested, 
  *      define* et al (gauche-optargs loads but doesn't work yet).
- *      applicable types
  *      procedure arity -- is this in the "env"?
  *      s7_write so strings are quoted in object->string
  *      soft port for Snd (need to trap error reports somehow)
@@ -78,7 +80,6 @@
  *      <CLOSURE> should give the name [s7_define could a backpointer to the symbol in the value,
  *          or perhaps search for a match -- the symbol_table is not that big -- closure code is car(p)]
  *      list or list* for xen connection
- *      (keyword? :asd) segfaults! -- need the names make-keyword, keyword? 
  *      need much better error handling and backtrace
  *      why is there a symbol table and a global environment?
  *      r4rstest.scm turns up some bugs in number reading
@@ -86,12 +87,10 @@
  *      move rest of s7.scm into init funcs, and maybe more of s7-ops (see g_cadr)
  *
  * [number->string has no "radix" arg]
- * [log in r6rs has a 2nd arg, probably base]
  * [need to get rid of all 1+'s in my scheme code]
  *
  * slib logical.scm has logior etc
  * slib dynwind.scm has dynamic-wind
- * guile's optargs.scm has define*
  *
  * TODO: remove built-in even? odd? positive? negative? zero?
  * TODO: exact? -> rational? and inexact -> not something
@@ -100,19 +99,20 @@
  *
  *  test-cont in r4rs hangs?
  *
- * figure out how to replace macro with defmacro, add syntax-rules
- * (set! (x-bounds) (list 0.0 1.0)) gets #<unspecified> for all args
- *
- * error line nums not sent out for 1st file?  but are ok after that?
- *   stack trace is doable -- maybe a switch if saving line # on stack?
+ * figure out how add syntax-rules
  *
  * TODO: the s7.scm versions of the char funcs need to take any number of args
  * TODO: the main loop should be able to check arg arity troubles for all funcs
-
- * s7_error after cleanup call eval(sc, OP_ERROR) to jump out -- this provides a throw as well?
  * catch = put op_catch + tag + handler on stack
  * throw = go up stack looking for matching catch, if found call its handler, else goto error
  * same for unwind-protect -- and throw could notice them and run their exit funcs
+ *
+ * for format.scm, need #\page, and radix arg for number->string [see itoa ... -- this needs support for each type and radix]
+ * (define (quo x1 x2) (truncate (/ x1 x2))) ; slib
+ * (define (rem x1 x2) (- x1 (* x2 (quo x1 x2))))
+ * (define (mod x1 x2) (- x1 (* x2 (floor (/ x1 x2)))))
+ *
+ * define-type (make-type in ext)
  */
 
 
@@ -585,7 +585,10 @@ static void set_type(s7_pointer p, int f)
 
 #define BACKQUOTE '`'
 
-
+#define CASE_SENSITIVE 1
+#if CASE_SENSITIVE
+#define string_downcase(Str) Str
+#else
 static const char *string_downcase(char *s) 
 {
   const char *p = s;
@@ -596,6 +599,7 @@ static const char *string_downcase(char *s)
     }
   return(p);
 }
+#endif
 
 static int safe_strlen(const char *str)
 {
@@ -609,6 +613,7 @@ static void s7_mark_embedded_objects(s7_pointer a); /* called by gc, calls fobj'
 static void eval(s7_scheme *sc, opcode_t first_op);
 static const char *procedure_name(s7_pointer x);
 static s7_pointer g_stacktrace(s7_scheme *sc, s7_pointer args);
+static s7_pointer cons_1(s7_scheme *sc, s7_pointer a, s7_pointer b, bool immutable);
 
 
 static void gp(s7_scheme *sc) {g_stacktrace(sc, sc->args);} /* for gdb */
@@ -876,34 +881,6 @@ static s7_pointer new_cell(s7_scheme *sc)
 }
 
 
-static s7_pointer copy_object(s7_scheme *sc, s7_pointer obj)
-{
-  s7_pointer nobj;
-
-  if ((is_constant(obj)) || 
-      (s7_is_symbol(obj)) ||
-      (is_atom(obj)) ||
-      (s7_is_object(obj)) ||
-      (s7_is_vector(obj)) ||
-      (s7_is_continuation(obj)) ||
-      (is_input_port(obj)) ||
-      (is_output_port(obj)))
-    return(obj);
-  
-  nobj = new_cell(sc);
-  memcpy((void *)nobj, (void *)obj, sizeof(s7_cell));
-
-  local_protect(nobj);
-  if (car(obj))
-    car(nobj) = copy_object(sc, car(obj));
-  if (cdr(obj))
-    cdr(nobj) = copy_object(sc, cdr(obj));
-  local_unprotect(nobj);
-
-  return(nobj);
-}
-
-
 /* -------------------------------- stack -------------------------------- */
 
 static void stack_reset(s7_scheme *sc) 
@@ -968,19 +945,186 @@ static void push_stack(s7_scheme *sc, opcode_t op, s7_pointer args, s7_pointer c
 } 
 
 
-/* -------------------------------------------------------------------------------- */
+/* -------------------------------- symbols -------------------------------- */
 
-
-
-bool s7_is_string(s7_pointer p)
-{
-  return((type(p) == T_STRING)); 
-}
-
-bool s7_is_vector(s7_pointer p)    
+static int hash_fn(const char *key, int table_size) 
 { 
-  return(type(p) == T_VECTOR);
+  /* I tried several other hash functions, but they gave about the same incidence of collisions */
+  unsigned int hashed = 0; 
+  const char *c; 
+  for (c = key; *c; c++) 
+    hashed = *c + hashed * 37;
+  return(hashed % table_size); 
+} 
+
+
+static s7_pointer symbol_table_add_by_name(s7_scheme *sc, const char *name) 
+{ 
+  s7_pointer x; 
+  int location;
+  
+  x = cons(sc, s7_make_string(sc, name), sc->NIL); 
+  set_type(x, (T_SYMBOL | T_FINALIZABLE));
+  local_protect(x);
+  s7_set_immutable(car(x)); 
+
+  location = hash_fn(name, vector_length(sc->symbol_table)); 
+  vector_element(sc->symbol_table, location) = s7_immutable_cons(sc, x, vector_element(sc->symbol_table, location)); 
+
+  local_unprotect(x);
+  return(x); 
+} 
+
+
+static  s7_pointer symbol_table_find_by_name(s7_scheme *sc, const char *name) 
+{ 
+  int location; 
+  s7_pointer x; 
+  char *s; 
+  
+  location = hash_fn(name, vector_length(sc->symbol_table)); 
+  for (x = vector_element(sc->symbol_table, location); x != sc->NIL; x = cdr(x)) 
+    { 
+      s = s7_symbol_name(car(x)); 
+      /* case-insensitive, per R5RS section 2. */ 
+      if (strcasecmp(name, s) == 0) 
+	return(car(x)); 
+    } 
+  return sc->NIL; 
+} 
+
+static s7_pointer symbol_table_all_symbols(s7_scheme *sc) 
+{ 
+  int i; 
+  s7_pointer x; 
+  s7_pointer ob_list = sc->NIL; 
+
+  sc->gc_off = true;
+  for (i = 0; i < vector_length(sc->symbol_table); i++) 
+    for (x  = vector_element(sc->symbol_table, i); x != sc->NIL; x = cdr(x)) 
+      ob_list = cons(sc, x, ob_list); 
+  sc->gc_off = false;
+
+  return(ob_list); 
+} 
+
+static s7_pointer g_symbol_table(s7_scheme *sc, s7_pointer args)
+{
+  #define H_symbol_table "(symbol-table) returns a list of all known symbols"
+  return(symbol_table_all_symbols(sc));
 }
+
+
+void s7_for_each_symbol_name(s7_scheme *sc, bool (*symbol_func)(const char *symbol_name, void *data), void *data)
+{
+  int i; 
+  s7_pointer x; 
+  for (i = 0; i < vector_length(sc->symbol_table); i++) 
+    for (x  = vector_element(sc->symbol_table, i); x != sc->NIL; x = cdr(x)) 
+      if (symbol_func(s7_symbol_name(car(x)), data))
+	return;
+}
+
+void s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_name, s7_pointer symbol_value, void *data), void *data)
+{
+  int i; 
+  s7_pointer x; 
+  for (i = 0; i < vector_length(sc->symbol_table); i++) 
+    for (x  = vector_element(sc->symbol_table, i); x != sc->NIL; x = cdr(x)) 
+      if (symbol_func(s7_symbol_name(car(x)), cdr(x), data))
+	return;
+}
+
+s7_pointer s7_make_symbol(s7_scheme *sc, const char *name) 
+{ 
+  s7_pointer x; 
+  x = symbol_table_find_by_name(sc, name); 
+  if (x != sc->NIL) 
+    return(x); 
+  return(symbol_table_add_by_name(sc, name)); 
+} 
+
+s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
+{ 
+  char *name;
+  int len;
+  s7_pointer x;
+
+  len = safe_strlen(prefix) + 32;
+  name = (char *)CALLOC(len, sizeof(char));
+  
+  for(; sc->gensym_cnt < LONG_MAX; sc->gensym_cnt++) 
+    { 
+      snprintf(name, len, "%s-%ld", prefix, sc->gensym_cnt); 
+      
+      /* first check symbol_table */ 
+      x = symbol_table_find_by_name(sc, name); 
+      if (x != sc->NIL) 
+	continue; 
+
+      x = symbol_table_add_by_name(sc, name); 
+      FREE(name);
+      return(x); 
+    } 
+  FREE(name);
+  return(sc->NIL); 
+} 
+
+s7_pointer g_gensym(s7_scheme *sc, s7_pointer args) 
+{
+  #define H_gensym "(gensym :optional prefix) creates a new symbol"
+  if (s7_is_pair(args))
+    {
+      if (!s7_is_string(car(args)))
+	return(s7_error(sc, s7_make_string(sc, "gensym arg should be a string"), car(args)));
+      return(s7_gensym(sc, string_value(car(args))));
+    }
+  return(s7_gensym(sc, "gensym"));
+}
+
+
+s7_pointer s7_name_to_value(s7_scheme *sc, const char *name)
+{
+  return(s7_symbol_value(sc, s7_make_symbol(sc, name)));
+}
+
+
+bool s7_is_symbol(s7_pointer p)   
+{ 
+  return(type(p) == T_SYMBOL);
+}
+
+static s7_pointer g_is_symbol(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_symbol "(symbol? obj) returns #t if obj is a symbol"
+  return(to_s7_bool(sc, s7_is_symbol(car(args))));
+}
+
+
+char *s7_symbol_name(s7_pointer p)   
+{ 
+  return(string_value(car(p)));
+}
+
+
+static s7_pointer g_symbol_to_string(s7_scheme *sc, s7_pointer args)
+{
+  #define H_symbol_to_string "(symbol->string sym) returns sym converted to a string"
+  if (!s7_is_symbol(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "symbol->string argument should be a symbol"), args));
+  return(s7_make_string(sc, s7_symbol_name(car(args))));
+}
+
+static s7_pointer g_string_to_symbol(s7_scheme *sc, s7_pointer args)
+{
+  #define H_string_to_symbol "(string->symbol str) returns str converted to a symbol"
+  if (!s7_is_string(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "string->symbol argument should be a string"), args));
+  return(s7_make_symbol(sc, string_value(car(args))));
+}
+
+
+/* -------------------------------- numbers -------------------------------- */
 
 bool s7_is_number(s7_pointer p)
 {
@@ -1034,186 +1178,10 @@ bool s7_is_inexact(s7_pointer p)
   return(!s7_is_rational(p));
 }
 
-
-bool s7_is_character(s7_pointer p) 
-{ 
-  return(type(p) == T_CHARACTER);
-}
-
-char *s7_string(s7_pointer p) 
-{ 
-  return(string_value(p));
-}
-
 static num nvalue(s7_pointer p)       
 { 
   return((p)->object.number);
 }
-
-
-char s7_character(s7_pointer p)  
-{ 
-  return(character(p));
-}
-
-bool s7_is_pair(s7_pointer p)     
-{ 
-  return(type(p) == T_PAIR);
-}
-
-s7_pointer s7_car(s7_pointer p)           
-{
-  return((p)->object.cons.car);
-}
-
-s7_pointer s7_cdr(s7_pointer p)           
-{
-  return((p)->object.cons.cdr);
-}
-
-s7_pointer s7_set_car(s7_pointer p, s7_pointer q) 
-{ 
-  if (is_immutable(car(p)))
-    {
-      fprintf(stderr, "set-car! wants to clobber immutable element");
-      abort();
-    }
-
-  car(p) = q;
-  return(q);
-}
-
-s7_pointer s7_set_cdr(s7_pointer p, s7_pointer q) 
-{ 
-  if (is_immutable(car(p)))
-    {
-      fprintf(stderr, "set-cdr! wants to clobber immutable element");
-      abort();
-    }
-
-  cdr(p) = q;
-  return(q);
-}
-
-bool s7_is_symbol(s7_pointer p)   
-{ 
-  return(type(p) == T_SYMBOL);
-}
-
-char *s7_symbol_name(s7_pointer p)   
-{ 
-  return(string_value(car(p)));
-}
-
-static bool s7_is_syntax(s7_pointer p)   
-{ 
-  return(typeflag(p) & T_SYNTAX);
-}
-
-s7_pointer s7_load_file_with_path(s7_scheme *sc, const char *file)
-{
-  return(s7_load(sc, file));
-}
-
-bool s7_is_procedure(s7_pointer p)     
-{ 
-  return(type(p) == T_PROC);
-}
-
-bool s7_is_function(s7_pointer p)  
-{ 
-  return(type(p) == T_S7_FUNCTION);
-}
-
-bool s7_is_object(s7_pointer p) 
-{ 
-  return(type(p) == T_S7_OBJECT);
-}
-
-bool s7_is_closure(s7_pointer p)  
-{ 
-  return(type(p) == T_CLOSURE);
-}
-
-static bool is_macro(s7_pointer p)    
-{ 
-  return(type(p) == T_MACRO);
-}
-
-static bool is_promise(s7_pointer p)  
-{ 
-  return(type(p) == T_PROMISE);
-}
-
-static s7_pointer procedure_source(s7_pointer p)   
-{ 
-  return(car(p));
-}
-      
-
-static s7_pointer g_function_source(s7_scheme *sc, s7_pointer args)
-{
-  #define H_function_source "(function-source func) tries to return the definition of func"
-
-  sc->y = s7_symbol_value(sc, car(args));
-  if (sc->y != sc->NIL)
-    return(procedure_source(sc->y));
-  return(sc->NIL);
-}
-
-
-s7_pointer s7_procedure_environment(s7_pointer p)    
-{ 
-  return(cdr(p));
-}
-
-bool s7_is_continuation(s7_pointer p)    
-{ 
-  return(type(p) == T_CONTINUATION);
-}
-
-
-
-/* To do: promise should be forced ONCE only */
-bool s7_is_immutable(s7_pointer p) 
-{ 
-  return(typeflag(p) & T_IMMUTABLE);
-}
-
-void s7_set_immutable(s7_pointer p) 
-{ 
-  typeflag(p) |= T_IMMUTABLE;
-}
-
-static int Cisalpha(int c) 
-{ 
-  return(isascii(c) && isalpha(c));
-}
-
-static int Cisdigit(int c) 
-{ 
-  return(isascii(c) && isdigit(c));
-}
-
-static int Cisspace(int c) 
-{ 
-  return(isascii(c) && isspace(c));
-}
-
-static int Cisupper(int c) 
-{ 
-  return(isascii(c) && isupper(c));
-}
-
-static int Cislower(int c) 
-{ 
-  return(isascii(c) && islower(c));
-}
-
-
-
-
-/* -------------------------------- numbers -------------------------------- */
 
 #define DEFAULT_RATIONALIZE_ERROR 1.0e-12
 
@@ -1452,6 +1420,81 @@ static num make_complex(double rl, double im)
       imag_part(ret) = im;
     }
   return(ret);
+}
+
+s7_pointer s7_make_integer(s7_scheme *sc, s7_Int n) 
+{
+  s7_pointer x;
+  x = new_cell(sc);
+  set_type(x, T_NUMBER | T_ATOM);
+
+  x->object.number.type = NUM_INT;
+  integer(x->object.number) = n;
+
+  return(x);
+}
+
+s7_pointer s7_make_real(s7_scheme *sc, double n) 
+{
+  s7_pointer x = new_cell(sc);
+  set_type(x, T_NUMBER | T_ATOM);
+
+  x->object.number.type = NUM_REAL;
+  real(x->object.number) = n;
+
+  return(x);
+}
+
+
+s7_pointer s7_make_complex(s7_scheme *sc, double a, double b)
+{
+  num ret;
+  s7_pointer x = new_cell(sc);
+  set_type(x, T_NUMBER | T_ATOM);
+  ret = make_complex(a, b);
+
+  x->object.number.type = ret.type;
+  if (ret.type == NUM_REAL)
+    real(x->object.number) = real_part(ret);
+  else
+    {
+      real_part(x->object.number) = real_part(ret);
+      imag_part(x->object.number) = imag_part(ret);
+    }
+  return(x);
+}
+
+s7_pointer s7_make_ratio(s7_scheme *sc, s7_Int a, s7_Int b)
+{
+  /* make_number calls us, so we can't call it as a convenience! */
+
+  num ret;
+  s7_pointer x = new_cell(sc);
+  set_type(x, T_NUMBER | T_ATOM);
+  ret = make_ratio(sc, a, b);
+
+  x->object.number.type = ret.type;
+  if (ret.type == NUM_INT)
+    integer(x->object.number) = numerator(ret);
+  else
+    {
+      numerator(x->object.number) = numerator(ret);
+      denominator(x->object.number) = denominator(ret);
+    }
+
+  return(x);
+}
+
+static s7_pointer make_number(s7_scheme *sc, num n) 
+{
+  switch (num_type(n))
+    {
+    case NUM_INT:     return(s7_make_integer(sc, integer(n)));
+    case NUM_RATIO:   return(s7_make_ratio(sc, numerator(n), denominator(n)));
+    case NUM_REAL2:
+    case NUM_REAL:    return(s7_make_real(sc, real(n)));
+    default:          return(s7_make_complex(sc, real_part(n), imag_part(n)));
+    }
 }
 
 
@@ -1837,397 +1880,104 @@ static double round_per_R5RS(double x)
 static long binary_decode(const char *s) 
 {
   long x = 0;
-  
-  while(*s != 0 && (*s =='1' || *s =='0')) 
+  while(*s != 0 && (*s == '1' || *s == '0')) 
     {
       x <<= 1;
       x += *s - '0';
       s++;
     }
-  
   return x;
 }
 
-/* static off_t conses = 0; */
-
-static s7_pointer cons_1(s7_scheme *sc, s7_pointer a, s7_pointer b, bool immutable) 
+/* TODO: fix! */
+static bool s7_is_negative(s7_pointer obj)
 {
-  s7_pointer x;
+  return(false);
+}
+      
+static char *s7_number_to_string(s7_scheme *sc, s7_pointer obj, int radix)
+{
+  char *p;
+  p = (char *)CALLOC(256, sizeof(char));
 
-  local_protect(a);
-  local_protect(b);
-#if 0
-  if (!is_object(a))
+  switch (object_number_type(obj))
     {
-      fprintf(stderr, "cons car is not an object!");
-      abort();
-    }
-  if (!is_object(b))
-    {
-      fprintf(stderr, "cons cdr is not an object!");
-      abort();
-    }
-#endif
-  x = new_cell(sc);
-  /* conses++; */
+    case NUM_INT:
+      if (radix == 10)
+	snprintf(p, 256, s7_Int_d, s7_integer(obj));
+      else
+	{
+	  if (radix == 8)
+	    {
+	      bool sign;
+	      unsigned int x;
+	      sign = s7_is_negative(obj);
+	      x = (unsigned int)abs(s7_integer(obj));
+	      snprintf(p, 256, "%s%o", (sign) ? "-" : "", x);
+	    }
+	  else snprintf(p, 256, "%llx", s7_integer(obj));
+	}
+      break;
 
-  if (immutable) 
-    set_type(x, T_PAIR | T_IMMUTABLE);
-  else set_type(x, T_PAIR);   
+    case NUM_RATIO:
+      snprintf(p, 256, s7_Int_d "/" s7_Int_d, s7_numerator(obj), s7_denominator(obj));
+      break;
 
-  car(x) = a;
-  cdr(x) = b;
-
-  local_unprotect(a);
-  local_unprotect(b);
-  return(x);
-}
-
-s7_pointer s7_immutable_cons(s7_scheme *sc, s7_pointer a, s7_pointer b) 
-{
-  return(cons_1(sc, a, b, true));
-}
-
-s7_pointer s7_cons(s7_scheme *sc, s7_pointer a, s7_pointer b) 
-{
-  return(cons_1(sc, a, b, false));
-}
-
-
-
-/* ========== symbol_table implementation  ========== */ 
-
-
-static int hash_fn(const char *key, int table_size) 
-{ 
-  /* I tried several other hash functions, but they gave about the same incidence of collisions */
-  /*    the first is from the original tinyScheme, the second from Guile */
-  unsigned int hashed = 0; 
-  const char *c; 
-  
-#if 0
-  int bits_per_int = sizeof(unsigned int) * 8; 
-  for (c = key; *c; c++) 
-    { 
-      /* letters have about 5 bits in them */ 
-      hashed = (hashed << 5) | (hashed >> (bits_per_int - 5)); 
-      hashed ^= *c; 
-    } 
-#else
-  for (c = key; *c; c++) 
-    hashed = *c + hashed * 37;
-#endif
-  return(hashed % table_size); 
-} 
-
-
-/* returns the new symbol */ 
-
-/* r4rs: hashes: 2346, collisions: 513, bigger table: hashes: 2338, collisions: 276, 2nd (simpler) form: 2338, collisions: 267
- */
-
-static s7_pointer symbol_table_add_by_name(s7_scheme *sc, const char *name) 
-{ 
-  s7_pointer x; 
-  int location;
-  
-  x = cons(sc, s7_make_string(sc, name), sc->NIL); 
-  set_type(x, (T_SYMBOL | T_FINALIZABLE));
-  local_protect(x);
-  s7_set_immutable(car(x)); 
-
-  location = hash_fn(name, vector_length(sc->symbol_table)); 
-  vector_element(sc->symbol_table, location) = s7_immutable_cons(sc, x, vector_element(sc->symbol_table, location)); 
-
-  local_unprotect(x);
-  return(x); 
-} 
-
-static  s7_pointer symbol_table_find_by_name(s7_scheme *sc, const char *name) 
-{ 
-  int location; 
-  s7_pointer x; 
-  char *s; 
-  
-  location = hash_fn(name, vector_length(sc->symbol_table)); 
-  for (x = vector_element(sc->symbol_table, location); x != sc->NIL; x = cdr(x)) 
-    { 
-      s = s7_symbol_name(car(x)); 
-      /* case-insensitive, per R5RS section 2. */ 
-      if (strcasecmp(name, s) == 0) 
-	return(car(x)); 
-    } 
-  return sc->NIL; 
-} 
-
-static s7_pointer symbol_table_all_symbols(s7_scheme *sc) 
-{ 
-  int i; 
-  s7_pointer x; 
-  s7_pointer ob_list = sc->NIL; 
-  
-  for (i = 0; i < vector_length(sc->symbol_table); i++) 
-    for (x  = vector_element(sc->symbol_table, i); x != sc->NIL; x = cdr(x)) 
-      ob_list = cons(sc, x, ob_list); 
-
-  return ob_list; 
-} 
-
-void s7_for_each_symbol_name(s7_scheme *sc, bool (*symbol_func)(const char *symbol_name, void *data), void *data)
-{
-  int i; 
-  s7_pointer x; 
-  for (i = 0; i < vector_length(sc->symbol_table); i++) 
-    for (x  = vector_element(sc->symbol_table, i); x != sc->NIL; x = cdr(x)) 
-      if (symbol_func(s7_symbol_name(car(x)), data))
-	return;
-}
-
-void s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_name, s7_pointer symbol_value, void *data), void *data)
-{
-  int i; 
-  s7_pointer x; 
-  for (i = 0; i < vector_length(sc->symbol_table); i++) 
-    for (x  = vector_element(sc->symbol_table, i); x != sc->NIL; x = cdr(x)) 
-      if (symbol_func(s7_symbol_name(car(x)), cdr(x), data))
-	return;
-}
-
-s7_pointer s7_make_character(s7_scheme *sc, int c) 
-{
-  s7_pointer x = new_cell(sc);
-  set_type(x, T_CHARACTER | T_ATOM);
-  character(x) = c;
-  return(x);
-}
-
-s7_pointer s7_make_integer(s7_scheme *sc, s7_Int n) 
-{
-  s7_pointer x;
-  x = new_cell(sc);
-  set_type(x, T_NUMBER | T_ATOM);
-
-  x->object.number.type = NUM_INT;
-  integer(x->object.number) = n;
-
-  return(x);
-}
-
-s7_pointer s7_make_real(s7_scheme *sc, double n) 
-{
-  s7_pointer x = new_cell(sc);
-  set_type(x, T_NUMBER | T_ATOM);
-
-  x->object.number.type = NUM_REAL;
-  real(x->object.number) = n;
-
-  return(x);
-}
-
-s7_pointer s7_make_complex(s7_scheme *sc, double a, double b)
-{
-  num ret;
-  s7_pointer x = new_cell(sc);
-  set_type(x, T_NUMBER | T_ATOM);
-  ret = make_complex(a, b);
-
-  x->object.number.type = ret.type;
-  if (ret.type == NUM_REAL)
-    real(x->object.number) = real_part(ret);
-  else
-    {
-      real_part(x->object.number) = real_part(ret);
-      imag_part(x->object.number) = imag_part(ret);
-    }
-  return(x);
-}
-
-s7_pointer s7_make_ratio(s7_scheme *sc, s7_Int a, s7_Int b)
-{
-  /* make_number calls us, so we can't call it as a convenience! */
-
-  num ret;
-  s7_pointer x = new_cell(sc);
-  set_type(x, T_NUMBER | T_ATOM);
-  ret = make_ratio(sc, a, b);
-
-  x->object.number.type = ret.type;
-  if (ret.type == NUM_INT)
-    integer(x->object.number) = numerator(ret);
-  else
-    {
-      numerator(x->object.number) = numerator(ret);
-      denominator(x->object.number) = denominator(ret);
-    }
-
-  return(x);
-}
-
-static s7_pointer make_number(s7_scheme *sc, num n) 
-{
-  switch (num_type(n))
-    {
-    case NUM_INT:     return(s7_make_integer(sc, integer(n)));
-    case NUM_RATIO:   return(s7_make_ratio(sc, numerator(n), denominator(n)));
     case NUM_REAL2:
-    case NUM_REAL:    return(s7_make_real(sc, real(n)));
-    default:          return(s7_make_complex(sc, real_part(n), imag_part(n)));
+    case NUM_REAL:
+      {
+	int i, len;
+	snprintf(p, 256, "%.14g", s7_real(obj));
+	len = safe_strlen(p);
+	for (i = 0; i < len; i++)  /* make it explicitly a float! */
+	  if (p[i] == '.') break;
+	if (i == len)
+	  {
+	    p[i]='.';
+	    p[i+1]='0';
+	    p[i+2]='\0';
+	  }
+      }
+      break;
+
+    default:
+      if (s7_imag_part(obj) >= 0.0)
+	snprintf(p, 256, "%.14g+%.14gi", s7_real_part(obj), s7_imag_part(obj));
+      else snprintf(p, 256, "%.14g-%.14gi", s7_real_part(obj), fabs(s7_imag_part(obj)));
+      break;
+
     }
+  return(p);
 }
 
 
-
-/* allocate name to string area */
-static char *store_string(s7_scheme *sc, int len_str, const char *str, char fill) 
+static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
 {
-  char *q;
-  
-  q = (char *)MALLOC(len_str + 1);
-  if (q == 0) 
+  #define H_number_to_string "(number->string num :optional (radix 10)) converts num into a string"
+  int radix = 0;
+  char *res;
+  if (!s7_is_number(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "number->string argument should be a number"), args));
+  if (s7_is_pair(cdr(args)))
     {
-      fprintf(stderr, "failed in store_string\n");
-      return(sc->strbuf);
+      if (s7_is_integer(cadr(args)))
+	radix = s7_integer(cadr(args));
+      if ((radix != 10) &&
+	  (radix != 8) &&
+	  (radix != 16))
+	return(s7_error(sc, s7_make_string(sc, "number->string radix should be 8, 10, or 16"), args));
     }
-  if (str != 0) 
-    strcpy(q, str);
-  else 
-    {
-      memset(q, fill, len_str);
-      q[len_str]= 0;
-    }
-  return(q);
+  else radix = 10;
+  res = s7_number_to_string(sc, car(args), radix);
+  sc->y = s7_make_string(sc, res);
+  FREE(res);
+  return(sc->y);
 }
 
-/* get new string */
-s7_pointer s7_make_string(s7_scheme *sc, const char *str) 
-{
-  return(s7_make_counted_string(sc, str, safe_strlen(str)));
-}
-
-s7_pointer s7_make_counted_string(s7_scheme *sc, const char *str, int len) 
-{
-  s7_pointer x;
-
-  x = new_cell(sc);
-  set_type(x, T_STRING | T_ATOM | T_FINALIZABLE);
-  local_protect(x);
-  string_value(x) = store_string(sc, len, str, 0);
-  string_length(x) = len;
-  local_unprotect(x);
-  return(x);
-}
-
-static s7_pointer make_empty_string(s7_scheme *sc, int len, char fill) 
-{
-  s7_pointer x;
-  x = new_cell(sc);
-  set_type(x, T_STRING | T_ATOM | T_FINALIZABLE);
-  local_protect(x);
-  string_value(x) = store_string(sc,len, 0,fill);
-  string_length(x) = len;
-  local_unprotect(x);
-  return(x);
-}
-
-s7_pointer s7_make_vector(s7_scheme *sc, int len) 
-{
-  s7_pointer x;
-  x = new_cell(sc);
-  set_type(x, T_VECTOR | T_FINALIZABLE);
-  vector_length(x) = len;
-  if (len > 0)
-    {
-      x->object.vector.elements = (s7_pointer *)CALLOC(len, sizeof(s7_pointer));
-      s7_fill_vector(x, sc->NIL);
-    }
-  return(x);
-}
-
-int s7_vector_length(s7_pointer vec)
-{
-  return(vector_length(vec));
-}
-
-void s7_fill_vector(s7_pointer vec, s7_pointer obj) 
-{
-  int i, len;
-  len = vector_length(vec);
-  for(i = 0; i < len; i++) 
-    vector_element(vec, i) = obj;
-}
-
-s7_pointer s7_vector_ref(s7_pointer vec, int elem) 
-{
-  if (elem >= vector_length(vec))
-    fprintf(stderr, "vector-ref past end of vector: %d %d\n", elem, vector_length(vec));
-  return(vector_element(vec, elem));
-}
-
-s7_pointer s7_vector_set(s7_pointer vec, int elem, s7_pointer a) 
-{
-  if (!is_object(a))
-    {
-      fprintf(stderr, "vector-set! value is not an object!");
-      abort();
-    }
-
-  if (elem >= vector_length(vec))
-    fprintf(stderr, "vector-set past end of vector: %d %d\n", elem, vector_length(vec));
-
-  vector_element(vec, elem) = a;
-  return(a);
-}
-
-/* get new symbol */
-s7_pointer s7_make_symbol(s7_scheme *sc, const char *name) 
-{ 
-  s7_pointer x; 
-  /*
-  fprintf(stderr, "make_symbol %s\n", name);
-  */
-  /* first check symbol_table */ 
-  x = symbol_table_find_by_name(sc, name); 
-  if (x != sc->NIL) 
-    {
-      /*
-      fprintf(stderr, "already exists: %p\n", x);
-      */
-      return(x); 
-    }
-
-  x = symbol_table_add_by_name(sc, name); 
-  /*
-  fprintf(stderr, "new loc: %p\n", x);
-  */
-  return(x); 
-} 
-
-s7_pointer s7_gensym(s7_scheme *sc) 
-{ 
-  s7_pointer x; 
-  char name[40]; 
-  
-  for(; sc->gensym_cnt < LONG_MAX; sc->gensym_cnt++) 
-    { 
-      sprintf(name, "gensym-%ld", sc->gensym_cnt); 
       
-      /* first check symbol_table */ 
-      x = symbol_table_find_by_name(sc, name); 
-      
-      if (x != sc->NIL) 
-	continue; 
-
-      x = symbol_table_add_by_name(sc, name); 
-      return(x); 
-    } 
-  
-  return sc->NIL; 
-} 
-
-
 /* make symbol or number atom from string */
 
-static s7_pointer make_atom(s7_scheme *sc, char *q) 
+static s7_pointer make_atom(s7_scheme *sc, char *q, int radix) 
 {
   char c, *p, *slash, *plus;
   bool has_dec_point = false, has_slash = false, has_i = false, has_previous_dec_point = false; 
@@ -2402,6 +2152,35 @@ static s7_pointer make_atom(s7_scheme *sc, char *q)
   return(s7_make_integer(sc, atoll(q)));
 }
 
+static s7_pointer s7_string_to_number(s7_scheme *sc, char *str, int radix)
+{
+  /* TODO: this actually isn't right -- in string->number there's no "#x" or whatever */
+  s7_pointer x;
+  x = make_atom(sc, str, radix);
+  if (s7_is_number(x))
+    return(x);
+  return(sc->F);
+}
+
+
+static s7_pointer g_string_to_number(s7_scheme *sc, s7_pointer args)
+{
+  #define H_string_to_number "(string->number str :optional (radix 10)) converts str into a number"
+  int radix = 0;
+  if (!s7_is_string(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "string->number argument should be a string"), args));
+  if (s7_is_pair(cdr(args)))
+    {
+      if (s7_is_integer(cadr(args)))
+	radix = s7_integer(cadr(args));
+      if ((radix < 2) ||
+	  (radix > 36))
+	return(s7_error(sc, s7_make_string(sc, "string->number radix should be an integer between 2 and 36"), args));
+    }
+  else radix = 10;
+  return(s7_string_to_number(sc, string_value(car(args)), radix));
+}
+
 
 /* make constant */
 static s7_pointer make_sharp_const(s7_scheme *sc, char *name) 
@@ -2485,6 +2264,1154 @@ static s7_pointer make_sharp_const(s7_scheme *sc, char *name)
     }
   return(sc->NIL);
 }
+
+static bool numbers_are_eqv(s7_pointer a, s7_pointer b)
+{
+  /* (eqv? 1 1.0) -> #f! */
+  if (s7_is_integer(a))
+    return((s7_is_integer(b)) &&
+	   (integer(a->object.number) == integer(b->object.number)));
+      
+  if (s7_is_ratio(a))
+    return((s7_is_ratio(b)) &&
+	   (numerator(a->object.number) == numerator(b->object.number)) &&
+	   (denominator(a->object.number) == denominator(b->object.number)));
+
+  if (s7_is_real(a))
+    return((s7_is_real(b)) &&
+	   (real(a->object.number) == real(b->object.number)));
+
+  if (s7_is_complex(a))
+    return((s7_is_complex(b)) &&
+	   (real_part(a->object.number) == real_part(b->object.number)) &&
+	   (imag_part(a->object.number) == imag_part(b->object.number)));
+
+  return(false);
+}
+
+
+/* -------- tie into eval -------- */
+
+static s7_pointer g_make_polar(s7_scheme *sc, s7_pointer args)
+{
+  double ang, mag;
+  #define H_make_polar "(make-polar mag ang) returns a complex number with magnitude mag and angle ang"
+  if ((!s7_is_real(car(args))) || (!s7_is_real(cadr(args))))
+    return(s7_error(sc, s7_make_string(sc, "both arguments to make-polar should be real numbers"), args));
+  mag = num_to_real((car(args))->object.number);
+  ang = num_to_real((cadr(args))->object.number);
+  return(s7_make_complex(sc, mag * cos(ang), mag * sin(ang)));
+}
+
+static s7_pointer g_make_rectangular(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_rectangular "(make-rectangular x1 x2) returns a complex number with real-part x1 and imaginary-part x2"
+  if ((!s7_is_real(car(args))) || (!s7_is_real(cadr(args))))
+    return(s7_error(sc, s7_make_string(sc, "both arguments to make-rectangular should be real numbers"), args));
+  return(s7_make_complex(sc, 
+			 num_to_real((car(args))->object.number), 
+			 num_to_real((cadr(args))->object.number)));
+}
+
+static s7_pointer g_magnitude(s7_scheme *sc, s7_pointer args)
+{
+  #define H_magnitude "(magnitude z) returns the magnitude of z"
+  if (!s7_is_number(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "magnitude argument should be a number"), args));
+  sc->v = nvalue(car(args));
+  switch (num_type(sc->v))
+    {
+    case NUM_REAL2: 
+    case NUM_REAL: 
+      real(sc->v) = fabs(real(sc->v)); 
+      break;
+    case NUM_INT:
+      integer(sc->v) = abs(integer(sc->v));
+      break;
+    case NUM_RATIO:
+      numerator(sc->v) = abs(numerator(sc->v));
+      break;
+    default:
+      {
+	double a, b;
+	a = imag_part(sc->v);
+	b = real_part(sc->v);
+	sc->v.type = NUM_REAL;
+	real(sc->v) = hypot(a, b);
+      }
+      break;
+    }
+  return(make_number(sc, sc->v));
+}
+
+static s7_pointer g_angle(s7_scheme *sc, s7_pointer args)
+{
+  #define H_angle "(angle z) returns the angle of z"
+  if (!s7_is_number(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "angle argument should be a number"), args));
+  sc->x = car(args);
+  if (!s7_is_real(sc->x))
+    return(s7_make_real(sc, atan2(s7_imag_part(sc->x), s7_real_part(sc->x))));
+  if (num_to_real(sc->x->object.number) < 0.0)
+    return(s7_make_real(sc, atan2(0.0, -1.0)));
+  return(s7_make_real(sc, 0.0));
+}
+
+static s7_pointer g_rationalize(s7_scheme *sc, s7_pointer args)
+{
+  double err;
+  s7_Int numer = 0, denom = 1;
+  #define H_rationalize "(rationalize x err) returns a ratio within err of x"
+  if (!s7_is_real(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "rationalize argument should be a real number"), args));
+  sc->x = car(args);
+  if (s7_is_exact(sc->x)) 
+    return(sc->x);
+  err = s7_real(cadr(args));
+  if (c_rationalize(s7_real(sc->x), err, &numer, &denom))
+    return(s7_make_ratio(sc, numer, denom));
+  return(s7_error(sc, s7_make_string(sc, "rationalize did not converge?!?"), args));
+}
+
+static s7_pointer g_abs(s7_scheme *sc, s7_pointer args)
+{
+  #define H_abs "(abs x) returns the absolute value of x"
+  if (!s7_is_real(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "abs argument should be a real number"), args));
+  sc->v = nvalue(car(args));
+  if (num_type(sc->v) >= NUM_REAL)
+    real(sc->v) = fabs(real(sc->v));
+  else
+    {
+      if (num_type(sc->v) == NUM_INT)
+	integer(sc->v) = abs(integer(sc->v));
+      else numerator(sc->v) = abs(numerator(sc->v));
+    }
+  return(make_number(sc, sc->v));      
+}
+
+static s7_pointer g_exp(s7_scheme *sc, s7_pointer args)
+{
+  #define H_exp "(exp z) returns e^z"
+  if (!s7_is_number(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "exp argument should be a number"), args));
+  sc->x = car(args);
+  if (s7_is_real(sc->x))
+    return(s7_make_real(sc, exp(num_to_real(sc->x->object.number))));
+  return(s7_from_c_complex(sc, cexp(s7_complex(sc->x))));
+}
+
+static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
+{
+  #define H_log "(log z1 z2) returns log(z1) / log(z2) where z2 defaults to e"
+  if ((!s7_is_number(car(args))) ||
+      ((s7_is_pair(cdr(args))) &&
+       (!(s7_is_number(cadr(args))))))
+    return(s7_error(sc, s7_make_string(sc, "log arguments should be numbers"), args));
+  sc->x = car(args);
+  if (s7_is_pair(cdr(args)))
+    {
+      sc->y = cadr(args);
+      if ((s7_is_real(sc->x)) &&
+	  (s7_is_real(sc->y)) &&
+	  (num_to_real(sc->x->object.number) > 0.0))
+	return(s7_make_real(sc, log(num_to_real(sc->x->object.number)) / log(num_to_real(sc->y->object.number))));
+      /* if < 0 use log(-x) + pi*i */
+      return(s7_from_c_complex(sc, clog(s7_complex(sc->x)) / clog(s7_complex(sc->y))));
+    }
+  else
+    {
+      if ((s7_is_real(sc->x)) &&
+	  (num_to_real(sc->x->object.number) > 0.0))
+	return(s7_make_real(sc, log(num_to_real(sc->x->object.number))));
+      /* if < 0 use log(-x) + pi*i */
+      return(s7_from_c_complex(sc, clog(s7_complex(sc->x))));
+    }
+}
+
+static s7_pointer g_sin(s7_scheme *sc, s7_pointer args)
+{
+  #define H_sin "(sin z) returns sin(z)"
+  if (!s7_is_number(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "sin argument should be a number"), args));
+  sc->x = car(args);
+  if (s7_is_real(sc->x))
+    return(s7_make_real(sc, sin(num_to_real(sc->x->object.number))));
+  return(s7_from_c_complex(sc, csin(s7_complex(sc->x))));
+}
+
+static s7_pointer g_cos(s7_scheme *sc, s7_pointer args)
+{
+  #define H_cos "(cos z) returns cos(z)"
+  if (!s7_is_number(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "cos argument should be a number"), args));
+  sc->x = car(args);
+  if (s7_is_real(sc->x))
+    return(s7_make_real(sc, cos(num_to_real(sc->x->object.number))));
+  return(s7_from_c_complex(sc, ccos(s7_complex(sc->x))));
+}
+
+static s7_pointer g_tan(s7_scheme *sc, s7_pointer args)
+{
+  #define H_tan "(tan z) returns tan(z)"
+  if (!s7_is_number(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "tan argument should be a number"), args));
+  sc->x = car(args);
+  if (s7_is_real(sc->x))
+    return(s7_make_real(sc, tan(num_to_real(sc->x->object.number))));
+  return(s7_from_c_complex(sc, ctan(s7_complex(sc->x))));
+}
+
+static s7_pointer g_asin(s7_scheme *sc, s7_pointer args)
+{
+  #define H_asin "(asin z) returns asin(z)"
+  if (!s7_is_number(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "asin argument should be a number"), args));
+  sc->x = car(args);
+  if ((s7_is_real(sc->x)) &&
+      (fabs(num_to_real(sc->x->object.number)) <= 1.0))
+    return(s7_make_real(sc, asin(num_to_real(sc->x->object.number))));
+  return(s7_from_c_complex(sc, casin(s7_complex(sc->x))));
+}
+
+static s7_pointer g_acos(s7_scheme *sc, s7_pointer args)
+{
+  #define H_acos "(acos z) returns acos(z)"
+  if (!s7_is_number(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "acos argument should be a number"), args));
+  sc->x = car(args);
+  if ((s7_is_real(sc->x)) &&
+      (fabs(num_to_real(sc->x->object.number)) <= 1.0))
+    return(s7_make_real(sc, acos(num_to_real(sc->x->object.number))));
+  return(s7_from_c_complex(sc, cacos(s7_complex(sc->x))));
+}
+
+static s7_pointer g_atan(s7_scheme *sc, s7_pointer args)
+{
+  #define H_atan "(atan z) returns atan(z)"
+  sc->x = car(args);
+  if (!s7_is_pair(cdr(args)))
+    {
+      if (!s7_is_number(sc->x))
+	return(s7_error(sc, s7_make_string(sc, "atan argument should be a number"), args));
+      if (s7_is_real(sc->x))
+	return(s7_make_real(sc, atan(num_to_real(sc->x->object.number))));
+      return(s7_from_c_complex(sc, catan(s7_complex(sc->x))));
+    } 
+  else 
+    {
+      sc->y = cadr(args);
+      if ((!s7_is_real(sc->x)) || (!s7_is_real(sc->y)))
+	return(s7_error(sc, s7_make_string(sc, "atan arguments should be reals"), args));
+      return(s7_make_real(sc, atan2(num_to_real(sc->x->object.number), num_to_real(sc->y->object.number))));
+    }
+}  
+
+static s7_pointer g_sinh(s7_scheme *sc, s7_pointer args)
+{
+  #define H_sinh "(sinh z) returns sinh(z)"
+  if (!s7_is_number(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "sinh argument should be a number"), args));
+  sc->x = car(args);
+  if (s7_is_real(sc->x))
+    return(s7_make_real(sc, sinh(num_to_real(sc->x->object.number))));
+  return(s7_from_c_complex(sc, csinh(s7_complex(sc->x))));
+}
+
+static s7_pointer g_cosh(s7_scheme *sc, s7_pointer args)
+{
+  #define H_cosh "(cosh z) returns cosh(z)"
+  if (!s7_is_number(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "cosh argument should be a number"), args));
+  sc->x = car(args);
+  if (s7_is_real(sc->x))
+    return(s7_make_real(sc, cosh(num_to_real(sc->x->object.number))));
+  return(s7_from_c_complex(sc, ccosh(s7_complex(sc->x))));
+}
+
+static s7_pointer g_tanh(s7_scheme *sc, s7_pointer args)
+{
+  #define H_tanh "(tanh z) returns tanh(z)"
+  if (!s7_is_number(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "tanh argument should be a number"), args));
+  sc->x = car(args);
+  if (s7_is_real(sc->x))
+    return(s7_make_real(sc, tanh(num_to_real(sc->x->object.number))));
+  return(s7_from_c_complex(sc, ctanh(s7_complex(sc->x))));
+}
+
+static s7_pointer g_asinh(s7_scheme *sc, s7_pointer args)
+{
+  #define H_asinh "(asinh z) returns asinh(z)"
+  if (!s7_is_number(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "asinh argument should be a number"), args));
+  sc->x = car(args);
+  if (s7_is_real(sc->x))
+    return(s7_make_real(sc, asinh(num_to_real(sc->x->object.number))));
+  return(s7_from_c_complex(sc, casinh(s7_complex(sc->x))));
+}
+
+static s7_pointer g_acosh(s7_scheme *sc, s7_pointer args)
+{
+  #define H_acosh "(acosh z) returns acosh(z)"
+  if (!s7_is_number(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "acosh argument should be a number"), args));
+  sc->x = car(args);
+  if ((s7_is_real(sc->x)) &&
+      (num_to_real(sc->x->object.number) >= 1.0))
+    return(s7_make_real(sc, acosh(num_to_real(sc->x->object.number))));
+  return(s7_from_c_complex(sc, cacosh(s7_complex(sc->x))));
+}
+
+static s7_pointer g_atanh(s7_scheme *sc, s7_pointer args)
+{
+  #define H_atanh "(atanh z) returns atanh(z)"
+  if (!s7_is_number(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "atanh argument should be a number"), args));
+  sc->x = car(args);
+  if ((s7_is_real(sc->x)) &&
+      (fabs(num_to_real(sc->x->object.number)) < 1.0))
+    return(s7_make_real(sc, atanh(num_to_real(sc->x->object.number))));
+  return(s7_from_c_complex(sc, catanh(s7_complex(sc->x))));
+}
+
+static s7_pointer g_sqrt(s7_scheme *sc, s7_pointer args)
+{
+  #define H_sqrt "(sqrt z) returns sqrt(z)"
+  if (!s7_is_number(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "sqrt argument should be a number"), args));
+  sc->x = car(args);
+  if ((s7_is_real(sc->x)) &&
+      (num_to_real(sc->x->object.number) >= 0.0))
+    return(s7_make_real(sc, sqrt(num_to_real(sc->x->object.number))));
+  /* if < 0 use sqrt(-num)*i */
+  return(s7_from_c_complex(sc, csqrt(s7_complex(sc->x))));
+}
+
+static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
+{
+  #define H_expt "(expt z1 z2) returns z1^z2"
+  if ((!s7_is_number(car(args))) ||
+      (!s7_is_number(cadr(args))))
+    return(s7_error(sc, s7_make_string(sc, "expt arguments should be numbers"), args));
+
+  sc->x = car(args);
+  sc->y = cadr(args);
+
+  if ((s7_is_integer(sc->x)) &&
+      (s7_is_integer(sc->y)) &&
+      ((s7_integer(sc->y) >= 0) || 
+       (abs(s7_integer(sc->x)) == 1)))
+    return(s7_make_integer(sc, (s7_Int)pow(s7_integer(sc->x), s7_integer(sc->y))));
+	
+  if ((s7_is_real(sc->x)) &&
+      (s7_is_real(sc->y)) &&
+      (num_to_real(sc->x->object.number) > 0.0) &&
+      (num_to_real(sc->y->object.number) >= 0.0))
+    return(s7_make_real(sc, pow(num_to_real(sc->x->object.number), num_to_real(sc->y->object.number))));
+	
+  return(s7_from_c_complex(sc, cpow(s7_complex(sc->x), s7_complex(sc->y))));
+}
+
+static s7_pointer g_floor(s7_scheme *sc, s7_pointer args)
+{
+  #define H_floor "(floor x) returns the integer closest to x toward -inf"
+  if (!s7_is_real(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "floor argument should be a real number"), args));
+  sc->x = car(args);
+  return(s7_make_integer(sc, (s7_Int)floor(num_to_real(sc->x->object.number)))); /* used to be real result */
+}
+
+static s7_pointer g_ceiling(s7_scheme *sc, s7_pointer args)
+{
+  #define H_ceiling "(ceiling x) returns the integer closest to x toward inf"
+  if (!s7_is_real(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "ceiling argument should be a real number"), args));
+  sc->x = car(args);
+  return(s7_make_integer(sc, (s7_Int)ceil(num_to_real(sc->x->object.number))));
+}
+
+static s7_pointer g_truncate(s7_scheme *sc, s7_pointer args)
+{
+  double xf;
+  #define H_truncate "(truncate x) returns the integer closest to x toward 0"
+  if (!s7_is_real(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "truncate argument should be a real number"), args));
+  sc->x = car(args);
+  xf = num_to_real(sc->x->object.number);
+  if (xf > 0) 
+    return(s7_make_integer(sc, (s7_Int)floor(xf)));
+  return(s7_make_integer(sc, (s7_Int)ceil(xf)));
+}
+
+static s7_pointer g_round(s7_scheme *sc, s7_pointer args)
+{
+  #define H_round "(round x) returns the integer closest to x"
+  if (!s7_is_real(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "round argument should be a real number"), args));
+  sc->x = car(args);
+  return(s7_make_integer(sc, (s7_Int)round_per_R5RS(num_to_real(sc->x->object.number))));
+}
+
+static s7_pointer g_lcm(s7_scheme *sc, s7_pointer args)
+{
+  s7_Int val = 1;
+  #define H_lcm "(lcm ...) returns the least common multiple of its arguments"
+  for (sc->x = args; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+    if (!s7_is_integer(car(sc->x)))
+      return(s7_error(sc, s7_make_string(sc, "lcm arguments should be integers"), args));
+  for (sc->x = args; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+    {
+      val = c_lcm(val, s7_integer(car(sc->x)));
+      if (val == 0)
+	return(s7_make_integer(sc, 0));
+    }
+  return(s7_make_integer(sc, val));
+}
+
+static s7_pointer g_gcd(s7_scheme *sc, s7_pointer args)
+{
+  s7_Int val = 0;
+  #define H_gcd "(gcd ...) returns the greatest common divisor of its arguments"
+  for (sc->x = args; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+    if (!s7_is_integer(car(sc->x)))
+      return(s7_error(sc, s7_make_string(sc, "gcd arguments should be integers"), args));
+  for (sc->x = args; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+    {
+      val = c_gcd(val, s7_integer(car(sc->x)));
+      if (val == 1)
+	return(s7_make_integer(sc, 1));
+    }
+  return(s7_make_integer(sc, val));
+}
+      
+
+static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
+{
+  #define H_add "(+ ...) adds its arguments"
+  sc->v = small_int_as_num(sc, 0);
+  for (sc->x = args; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+    {
+      if (!s7_is_number(car(sc->x)))
+	return(s7_error(sc, s7_make_string(sc, "+ arguments should be numbers"), args));
+      sc->v = num_add(sc, sc->v, nvalue(car(sc->x)));
+    }
+  return(make_number(sc, sc->v));
+}
+
+static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
+{
+  #define H_subtract "(- x1 ...) subtract its trailing arguments from the first, or negates the first if only one argument is given"
+  if (!s7_is_number(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "- argument should be a number"), args));
+
+  if (cdr(args) == sc->NIL) 
+    {
+      sc->x = args;
+      sc->v = small_int_as_num(sc, 0);
+    } 
+  else 
+    {
+      sc->x = cdr(args);
+      sc->v = nvalue(car(args));
+    }
+  for (; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+    {
+      if (!s7_is_number(car(sc->x)))
+	return(s7_error(sc, s7_make_string(sc, "- arguments should be numbers"), args));
+      sc->v = num_sub(sc, sc->v, nvalue(car(sc->x)));
+    }
+  return(make_number(sc, sc->v));
+}
+
+static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
+{
+  #define H_multiply "(* ...) multiplies its arguments"
+  sc->v = small_int_as_num(sc, 1);
+  for (sc->x = args; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+    {
+      if (!s7_is_number(car(sc->x)))
+	return(s7_error(sc, s7_make_string(sc, "* arguments should be numbers"), args));
+      sc->v = num_mul(sc, sc->v, nvalue(car(sc->x)));
+    }
+  return(make_number(sc, sc->v));
+}
+
+static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
+{
+  #define H_divide "(- x1 ...) divides its first argument by the rest, or inverts the first if there is only one argument"
+  if (!s7_is_number(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "/ argument should be a number"), args));
+
+  if (cdr(args) == sc->NIL) 
+    {
+      sc->x = args;
+      sc->v = small_int_as_num(sc, 1);
+    } 
+  else 
+    {
+      sc->x = cdr(args);
+      sc->v = nvalue(car(args));
+    }
+  for (; sc->x != sc->NIL; sc->x = cdr(sc->x))
+    {
+      if (!s7_is_number(car(sc->x)))
+	return(s7_error(sc, s7_make_string(sc, "/ arguments should be numbers"), args));
+      sc->v = num_div(sc, sc->v, nvalue(car(sc->x)));
+    }
+  return(make_number(sc, sc->v));
+}
+
+static s7_pointer g_max(s7_scheme *sc, s7_pointer args)
+{
+  #define H_max "(max ...) returns the maximum of its arguments"
+  if (!s7_is_real(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "max argument should be a real number"), args));
+  sc->v = nvalue(car(args));
+  for (sc->x = cdr(args); sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+    {
+      if (!s7_is_real(car(sc->x)))
+	return(s7_error(sc, s7_make_string(sc, "max arguments should be real numbers"), args));
+      sc->v = num_max(sc, sc->v, nvalue(car(sc->x)));
+    }
+  return(make_number(sc, sc->v));
+}
+
+static s7_pointer g_min(s7_scheme *sc, s7_pointer args)
+{
+  #define H_min "(min ...) returns the minimum of its arguments"
+  if (!s7_is_real(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "min argument should be a real number"), args));
+  sc->v = nvalue(car(args));
+  for (sc->x = cdr(args); sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+    {
+      if (!s7_is_real(car(sc->x)))
+	return(s7_error(sc, s7_make_string(sc, "min arguments should be real numbers"), args));
+      sc->v = num_min(sc, sc->v, nvalue(car(sc->x)));
+    }
+  return(make_number(sc, sc->v));
+}
+
+static s7_pointer g_quotient(s7_scheme *sc, s7_pointer args)
+{
+  #define H_quotient "(quotient i1 i2) returns the integer quotient of i1 and i2"
+  if ((!s7_is_integer(car(args))) || (!s7_is_integer(cadr(args))))
+    return(s7_error(sc, s7_make_string(sc, "quotient arguments should be integers"), args));
+  
+  sc->v = nvalue(car(args));
+  if (s7_integer(cadr(args)) != 0)
+    sc->v = num_quotient(sc->v, nvalue(cadr(args)));
+  else return(s7_error(sc, s7_make_string(sc, "quotient division by 0"), args));
+  return(make_number(sc, sc->v));
+}
+
+static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
+{
+  #define H_remainder "(remainder i1 i2) returns the integer remainder of i1 and i2"
+  if ((!s7_is_integer(car(args))) || (!s7_is_integer(cadr(args))))
+    return(s7_error(sc, s7_make_string(sc, "remainder arguments should be integers"), args));
+  sc->v = nvalue(car(args));
+  if (s7_integer(cadr(args)) != 0)
+    sc->v = num_rem(sc->v, nvalue(cadr(args)));
+  else return(s7_error(sc, s7_make_string(sc, "remainder division by 0"), args));
+  return(make_number(sc, sc->v));
+}
+
+static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
+{
+  #define H_modulo "(modulo i1 i2) returns i1 mod i2"
+  if ((!s7_is_integer(car(args))) || (!s7_is_integer(cadr(args))))
+    return(s7_error(sc, s7_make_string(sc, "modulo arguments should be integers"), args));
+  sc->v = nvalue(car(args));
+  if (s7_integer(cadr(args)) != 0)
+    sc->v = num_mod(sc->v, nvalue(cadr(args)));
+  else return(s7_error(sc, s7_make_string(sc, "modulo division by 0"), args));
+  return(make_number(sc, sc->v));
+}
+
+enum {N_EQUAL, N_LESS, N_GREATER, N_LESS_OR_EQUAL, N_GREATER_OR_EQUAL};
+
+static s7_pointer compare_numbers(s7_scheme *sc, int op, s7_pointer args)
+{
+  bool (*comp_func)(num a, num b);
+  bool (*arg_checker)(s7_pointer x);
+  const char *arg_type, *op_name;
+  switch (op)
+    {
+    case N_EQUAL:            comp_func = num_eq; arg_checker = s7_is_number; arg_type = "number"; op_name = "=";  break;
+    case N_LESS:             comp_func = num_lt; arg_checker = s7_is_real;   arg_type = "real";   op_name = "<";  break;
+    case N_GREATER:          comp_func = num_gt; arg_checker = s7_is_real;   arg_type = "real";   op_name = ">";  break;
+    case N_LESS_OR_EQUAL:    comp_func = num_le; arg_checker = s7_is_real;   arg_type = "real";   op_name = "<="; break;
+    case N_GREATER_OR_EQUAL: comp_func = num_ge; arg_checker = s7_is_real;   arg_type = "real";   op_name = ">="; break;
+    }
+  
+  if (!arg_checker(car(args)))
+    {
+      sprintf(sc->strbuf, "%s arguments should be %s", op_name, arg_type);
+      return(s7_error(sc, s7_make_string(sc, sc->strbuf), args));
+    }
+
+  sc->v = nvalue(car(args));
+  for (sc->x = cdr(args); sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+    {
+      if (!arg_checker(car(sc->x)))
+	{
+	  sprintf(sc->strbuf, "%s arguments should be %s", op_name, arg_type);
+	  return(s7_error(sc, s7_make_string(sc, sc->strbuf), args));
+	}
+
+      if (!comp_func(sc->v, nvalue(car(sc->x)))) 
+	return(sc->F);
+      sc->v = nvalue(car(sc->x));
+    }
+  return(sc->T);
+}
+
+static s7_pointer g_equal(s7_scheme *sc, s7_pointer args)
+{
+  #define H_equal "(= z1 ...) returns #t if all its arguments are equal"
+  return(compare_numbers(sc, N_EQUAL, args));
+}
+
+static s7_pointer g_less(s7_scheme *sc, s7_pointer args)
+{
+  #define H_less "(< x1 ...) returns #t if its arguments are in increasing order"
+  return(compare_numbers(sc, N_LESS, args));
+}
+
+static s7_pointer g_greater(s7_scheme *sc, s7_pointer args)
+{
+  #define H_greater "(> x1 ...) returns #t if its arguments are in decreasing order"
+  return(compare_numbers(sc, N_GREATER, args));
+}
+
+static s7_pointer g_less_or_equal(s7_scheme *sc, s7_pointer args)
+{
+  #define H_less_or_equal "(<= x1 ...) returns #t if its arguments are in increasing order"
+  return(compare_numbers(sc, N_LESS_OR_EQUAL, args));
+}
+
+static s7_pointer g_greater_or_equal(s7_scheme *sc, s7_pointer args)
+{
+  #define H_greater_or_equal "(>= x1 ...) returns #t if its arguments are in decreasing order"
+  return(compare_numbers(sc, N_GREATER_OR_EQUAL, args));
+}
+      
+
+static s7_pointer g_real_part(s7_scheme *sc, s7_pointer args)
+{
+  #define H_real_part "(real-part num) returns the real part of num"
+  if (!s7_is_number(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "real-part argument should be a number"), args));
+  return(s7_make_real(sc, s7_real_part(car(args))));
+}
+
+static s7_pointer g_imag_part(s7_scheme *sc, s7_pointer args)
+{
+  #define H_imag_part "(imag-part num) returns the imaginary part of num"
+  if (!s7_is_number(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "imag-part argument should be a number"), args));
+  return(s7_make_real(sc, s7_imag_part(car(args))));
+}
+
+static s7_pointer g_numerator(s7_scheme *sc, s7_pointer args)
+{
+  #define H_numerator "(numerator rat) returns the numerator of the rational number rat"
+  if (!s7_is_rational(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "numerator argument should be a rational number"), args));
+  return(s7_make_integer(sc, num_to_numerator((car(args))->object.number)));
+}
+
+static s7_pointer g_denominator(s7_scheme *sc, s7_pointer args)
+{
+  #define H_denominator "(denominator rat) returns the denominator of the rational number rat"
+  if (!s7_is_rational(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "denominator argument should be a rational number"), args));
+  return(s7_make_integer(sc, num_to_denominator((car(args))->object.number)));
+}
+
+static s7_pointer g_is_number(s7_scheme *sc, s7_pointer args) 
+{
+  #define H_is_number "(number? obj) returns #t if obj is a number"
+  return(to_s7_bool(sc, s7_is_number(car(args))));
+}
+
+static s7_pointer g_is_integer(s7_scheme *sc, s7_pointer args) 
+{
+  #define H_is_integer "(integer? obj) returns #t if obj is an integer"
+  return(to_s7_bool(sc, s7_is_integer(car(args))));
+}
+
+static s7_pointer g_is_real(s7_scheme *sc, s7_pointer args) 
+{
+  #define H_is_real "(real? obj) returns #t if obj is a real number"
+  return(to_s7_bool(sc, s7_is_real(car(args))));
+}
+
+static s7_pointer g_is_complex(s7_scheme *sc, s7_pointer args) 
+{
+  #define H_is_complex "(complex? obj) returns #t if obj is a complex number"
+  return(to_s7_bool(sc, s7_is_complex(car(args))));
+}
+
+static s7_pointer g_is_rational(s7_scheme *sc, s7_pointer args) 
+{
+  #define H_is_rational "(rational? obj) returns #t if obj is a rational number"
+  return(to_s7_bool(sc, s7_is_rational(car(args))));
+}
+
+static s7_pointer g_is_even(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_even "(even? int) returns #t if the integer int is even"
+  if (!s7_is_integer(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "even? argument should be an integer"), args));
+  return(to_s7_bool(sc, (s7_integer(car(args)) & 1) == 0));
+}
+
+static s7_pointer g_is_odd(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_odd "(odd? int) returns #t if the integer int is odd"
+  if (!s7_is_integer(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "odd? argument should be an integer"), args));
+  return(to_s7_bool(sc, (s7_integer(car(args)) & 1) == 1));
+}
+
+static s7_pointer g_is_zero(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_zero "(zero? num) returns #t if the number num is zero"
+  if (!s7_is_number(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "zero? argument should be a number"), args));
+  sc->x = car(args);
+  switch (object_number_type(sc->x))
+    {
+    case NUM_INT:   return(to_s7_bool(sc, (s7_integer(sc->x) == 0)));
+    case NUM_REAL2:
+    case NUM_REAL:  return(to_s7_bool(sc, (s7_real(sc->x) == 0.0)));
+    case NUM_RATIO: return(to_s7_bool(sc, (s7_numerator(sc->x) == 0)));
+    default:        return(to_s7_bool(sc, ((s7_real_part(sc->x) == 0.0) &&
+					   (s7_imag_part(sc->x) == 0.0))));
+    }
+}
+
+static s7_pointer g_is_positive(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_positive "(positive? num) returns #t if the real number num is positive"
+  if (!s7_is_real(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "positive? argument should be a real number"), args));
+  sc->x = car(args);
+  switch (object_number_type(sc->x))
+    {
+    case NUM_INT:   return(to_s7_bool(sc, (s7_integer(sc->x) > 0)));
+    case NUM_RATIO: return(to_s7_bool(sc, (s7_numerator(sc->x) > 0)));
+    default:        return(to_s7_bool(sc, (s7_real(sc->x) > 0)));
+    }
+}
+
+static s7_pointer g_is_negative(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_negative "(negative? num) returns #t if the real number num is negative"
+  if (!s7_is_real(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "negative? argument should be a real number"), args));
+  sc->x = car(args);
+  switch (object_number_type(sc->x))
+    {
+    case NUM_INT:   return(to_s7_bool(sc, (s7_integer(sc->x) < 0)));
+    case NUM_RATIO: return(to_s7_bool(sc, (s7_numerator(sc->x) < 0)));
+    default:        return(to_s7_bool(sc, (s7_real(sc->x) < 0)));
+    }
+}
+      
+static s7_pointer g_inexact_to_exact(s7_scheme *sc, s7_pointer args)
+{
+  #define H_inexact_to_exact "(inexact->exact num) converts num to an exact number"
+  s7_Int numer = 0, denom = 1;
+  if (!s7_is_number(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "inexact->exact argument should be a number"), args));
+  sc->x = car(args);
+  if (s7_is_exact(sc->x)) 
+    return(sc->x);
+  if (c_rationalize(s7_real(sc->x), DEFAULT_RATIONALIZE_ERROR, &numer, &denom))
+    return(s7_make_ratio(sc, numer, denom));
+  return(s7_make_integer(sc, (s7_Int)s7_real(sc->x)));
+}
+
+static s7_pointer g_exact_to_inexact(s7_scheme *sc, s7_pointer args)
+{
+  #define H_exact_to_inexact "(exact->inexact num) converts num to an inexact number"
+  if (!s7_is_number(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "exact->inexact argument should be a number"), args));
+  sc->x = car(args);
+  if (s7_is_inexact(sc->x)) 
+    return(sc->x);
+  if (s7_is_integer(sc->x))
+    return(s7_make_real(sc, (double)s7_integer(sc->x)));
+  return(s7_make_real(sc, fraction(sc->x->object.number)));
+}
+
+static s7_pointer g_is_exact(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_exact "(exact? num) returns #t if num is exact"
+  if (!s7_is_number(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "exact? argument should be a number"), args));
+  return(to_s7_bool(sc, s7_is_exact(car(args))));
+}
+
+static s7_pointer g_is_inexact(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_inexact "(inexact? num) returns #t if num is inexact"
+  if (!s7_is_number(car(args)))
+    return(s7_error(sc, s7_make_string(sc, "inexact? argument should be a number"), args));
+  return(to_s7_bool(sc, s7_is_inexact(car(args))));
+}
+
+
+
+/* -------------------------------------------------------------------------------- */
+/* static off_t conses = 0; */
+
+static s7_pointer cons_1(s7_scheme *sc, s7_pointer a, s7_pointer b, bool immutable) 
+{
+  s7_pointer x;
+
+  local_protect(a);
+  local_protect(b);
+  x = new_cell(sc);
+
+  if (immutable) 
+    set_type(x, T_PAIR | T_IMMUTABLE);
+  else set_type(x, T_PAIR);   
+
+  car(x) = a;
+  cdr(x) = b;
+
+  local_unprotect(a);
+  local_unprotect(b);
+  return(x);
+}
+
+
+s7_pointer s7_immutable_cons(s7_scheme *sc, s7_pointer a, s7_pointer b) 
+{
+  return(cons_1(sc, a, b, true));
+}
+
+s7_pointer s7_cons(s7_scheme *sc, s7_pointer a, s7_pointer b) 
+{
+  return(cons_1(sc, a, b, false));
+}
+
+
+s7_pointer s7_make_character(s7_scheme *sc, int c) 
+{
+  s7_pointer x = new_cell(sc);
+  set_type(x, T_CHARACTER | T_ATOM);
+  character(x) = c;
+  return(x);
+}
+
+
+/* allocate name to string area */
+static char *store_string(s7_scheme *sc, int len_str, const char *str, char fill) 
+{
+  char *q;
+  
+  q = (char *)MALLOC(len_str + 1);
+  if (q == 0) 
+    {
+      fprintf(stderr, "failed in store_string\n");
+      return(sc->strbuf);
+    }
+  if (str != 0) 
+    strcpy(q, str);
+  else 
+    {
+      memset(q, fill, len_str);
+      q[len_str]= 0;
+    }
+  return(q);
+}
+
+/* get new string */
+s7_pointer s7_make_string(s7_scheme *sc, const char *str) 
+{
+  return(s7_make_counted_string(sc, str, safe_strlen(str)));
+}
+
+s7_pointer s7_make_counted_string(s7_scheme *sc, const char *str, int len) 
+{
+  s7_pointer x;
+
+  x = new_cell(sc);
+  set_type(x, T_STRING | T_ATOM | T_FINALIZABLE);
+  local_protect(x);
+  string_value(x) = store_string(sc, len, str, 0);
+  string_length(x) = len;
+  local_unprotect(x);
+  return(x);
+}
+
+static s7_pointer make_empty_string(s7_scheme *sc, int len, char fill) 
+{
+  s7_pointer x;
+  x = new_cell(sc);
+  set_type(x, T_STRING | T_ATOM | T_FINALIZABLE);
+  local_protect(x);
+  string_value(x) = store_string(sc,len, 0,fill);
+  string_length(x) = len;
+  local_unprotect(x);
+  return(x);
+}
+
+s7_pointer s7_make_vector(s7_scheme *sc, int len) 
+{
+  s7_pointer x;
+  x = new_cell(sc);
+  set_type(x, T_VECTOR | T_FINALIZABLE);
+  vector_length(x) = len;
+  if (len > 0)
+    {
+      x->object.vector.elements = (s7_pointer *)CALLOC(len, sizeof(s7_pointer));
+      s7_fill_vector(x, sc->NIL);
+    }
+  return(x);
+}
+
+
+int s7_vector_length(s7_pointer vec)
+{
+  return(vector_length(vec));
+}
+
+void s7_fill_vector(s7_pointer vec, s7_pointer obj) 
+{
+  int i, len;
+  len = vector_length(vec);
+  for(i = 0; i < len; i++) 
+    vector_element(vec, i) = obj;
+}
+
+s7_pointer s7_vector_ref(s7_pointer vec, int elem) 
+{
+  if (elem >= vector_length(vec))
+    fprintf(stderr, "vector-ref past end of vector: %d %d\n", elem, vector_length(vec));
+  return(vector_element(vec, elem));
+}
+
+s7_pointer s7_vector_set(s7_pointer vec, int elem, s7_pointer a) 
+{
+  if (!is_object(a))
+    {
+      fprintf(stderr, "vector-set! value is not an object!");
+      abort();
+    }
+
+  if (elem >= vector_length(vec))
+    fprintf(stderr, "vector-set past end of vector: %d %d\n", elem, vector_length(vec));
+
+  vector_element(vec, elem) = a;
+  return(a);
+}
+
+
+static s7_pointer copy_object(s7_scheme *sc, s7_pointer obj)
+{
+  s7_pointer nobj;
+
+  if ((is_constant(obj)) || 
+      (s7_is_symbol(obj)) ||
+      (is_atom(obj)) ||
+      (s7_is_object(obj)) ||
+      (s7_is_vector(obj)) ||
+      (s7_is_continuation(obj)) ||
+      (is_input_port(obj)) ||
+      (is_output_port(obj)))
+    return(obj);
+  
+  nobj = new_cell(sc);
+  memcpy((void *)nobj, (void *)obj, sizeof(s7_cell));
+
+  local_protect(nobj);
+  if (car(obj))
+    car(nobj) = copy_object(sc, car(obj));
+  if (cdr(obj))
+    cdr(nobj) = copy_object(sc, cdr(obj));
+  local_unprotect(nobj);
+
+  return(nobj);
+}
+
+
+bool s7_is_string(s7_pointer p)
+{
+  return((type(p) == T_STRING)); 
+}
+
+bool s7_is_vector(s7_pointer p)    
+{ 
+  return(type(p) == T_VECTOR);
+}
+
+bool s7_is_character(s7_pointer p) 
+{ 
+  return(type(p) == T_CHARACTER);
+}
+
+char *s7_string(s7_pointer p) 
+{ 
+  return(string_value(p));
+}
+
+
+char s7_character(s7_pointer p)  
+{ 
+  return(character(p));
+}
+
+bool s7_is_pair(s7_pointer p)     
+{ 
+  return(type(p) == T_PAIR);
+}
+
+s7_pointer s7_car(s7_pointer p)           
+{
+  return((p)->object.cons.car);
+}
+
+s7_pointer s7_cdr(s7_pointer p)           
+{
+  return((p)->object.cons.cdr);
+}
+
+s7_pointer s7_set_car(s7_pointer p, s7_pointer q) 
+{ 
+  if (is_immutable(car(p)))
+    {
+      fprintf(stderr, "set-car! wants to clobber immutable element");
+      abort();
+    }
+
+  car(p) = q;
+  return(q);
+}
+
+s7_pointer s7_set_cdr(s7_pointer p, s7_pointer q) 
+{ 
+  if (is_immutable(car(p)))
+    {
+      fprintf(stderr, "set-cdr! wants to clobber immutable element");
+      abort();
+    }
+
+  cdr(p) = q;
+  return(q);
+}
+
+static bool s7_is_syntax(s7_pointer p)   
+{ 
+  return(typeflag(p) & T_SYNTAX);
+}
+
+s7_pointer s7_load_file_with_path(s7_scheme *sc, const char *file)
+{
+  return(s7_load(sc, file));
+}
+
+bool s7_is_procedure(s7_pointer p)     
+{ 
+  return(type(p) == T_PROC);
+}
+
+bool s7_is_function(s7_pointer p)  
+{ 
+  return(type(p) == T_S7_FUNCTION);
+}
+
+bool s7_is_object(s7_pointer p) 
+{ 
+  return(type(p) == T_S7_OBJECT);
+}
+
+bool s7_is_closure(s7_pointer p)  
+{ 
+  return(type(p) == T_CLOSURE);
+}
+
+static bool is_macro(s7_pointer p)    
+{ 
+  return(type(p) == T_MACRO);
+}
+
+static bool is_promise(s7_pointer p)  
+{ 
+  return(type(p) == T_PROMISE);
+}
+
+static s7_pointer procedure_source(s7_pointer p)   
+{ 
+  return(car(p));
+}
+      
+
+static s7_pointer g_function_source(s7_scheme *sc, s7_pointer args)
+{
+  #define H_function_source "(function-source func) tries to return the definition of func"
+
+  sc->y = s7_symbol_value(sc, car(args));
+  if (sc->y != sc->NIL)
+    return(procedure_source(sc->y));
+  return(sc->NIL);
+}
+
+
+s7_pointer s7_procedure_environment(s7_pointer p)    
+{ 
+  return(cdr(p));
+}
+
+bool s7_is_continuation(s7_pointer p)    
+{ 
+  return(type(p) == T_CONTINUATION);
+}
+
+
+
+/* To do: promise should be forced ONCE only */
+bool s7_is_immutable(s7_pointer p) 
+{ 
+  return(typeflag(p) & T_IMMUTABLE);
+}
+
+void s7_set_immutable(s7_pointer p) 
+{ 
+  typeflag(p) |= T_IMMUTABLE;
+}
+
+static int Cisalpha(int c) 
+{ 
+  return(isascii(c) && isalpha(c));
+}
+
+static int Cisdigit(int c) 
+{ 
+  return(isascii(c) && isdigit(c));
+}
+
+static int Cisspace(int c) 
+{ 
+  return(isascii(c) && isspace(c));
+}
+
+static int Cisupper(int c) 
+{ 
+  return(isascii(c) && isupper(c));
+}
+
+static int Cislower(int c) 
+{ 
+  return(isascii(c) && islower(c));
+}
+
+
 
 
 
@@ -3477,47 +4404,8 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
   if ((is_input_port(obj)) || (is_output_port(obj)))
     return(describe_port(sc, obj));
 
-  if (s7_is_number(obj)) 
-    {
-      char *p;
-      p = (char *)CALLOC(256, sizeof(char));
-
-      switch (object_number_type(obj))
-	{
-	case NUM_INT:
-	  snprintf(p, 256, s7_Int_d, s7_integer(obj));
-	  break;
-
-	case NUM_REAL2:
-	case NUM_REAL:
-	  {
-	    int i, len;
-	    snprintf(p, 256, "%.14g", s7_real(obj));
-	    len = safe_strlen(p);
-	    for (i = 0; i < len; i++)  /* make it explicitly a float! */
-	      if (p[i] == '.') break;
-	    if (i == len)
-	      {
-		p[i]='.';
-		p[i+1]='0';
-		p[i+2]='\0';
-	      }
-	  }
-	  break;
-
-	case NUM_RATIO:
-	  snprintf(p, 256, s7_Int_d "/" s7_Int_d, s7_numerator(obj), s7_denominator(obj));
-	  break;
-
-	default:
-	  if (s7_imag_part(obj) >= 0.0)
-	    snprintf(p, 256, "%.14g+%.14gi", s7_real_part(obj), s7_imag_part(obj));
-	  else snprintf(p, 256, "%.14g-%.14gi", s7_real_part(obj), fabs(s7_imag_part(obj)));
-	  break;
-
-	}
-      return(p);
-    }
+  if (s7_is_number(obj))
+    return(s7_number_to_string(sc, obj, 10));
 
   if (s7_is_string(obj)) 
     {
@@ -3581,7 +4469,7 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
     {
       char *p;
       p = (char *)CALLOC(32 + safe_strlen(function_name(obj)), sizeof(char));
-      sprintf(p, "<%s>", function_name(obj));
+      sprintf(p, "%s", function_name(obj));
       return(p);
     } 
   
@@ -3852,6 +4740,10 @@ static s7_pointer g_display(s7_scheme *sc, s7_pointer args)
 }
 
 
+
+/* -------------------------------------------------------------------------------- */
+
+
 /* -------- stacktrace -------- */
 
 
@@ -4011,9 +4903,7 @@ static s7_pointer list_star(s7_scheme *sc, s7_pointer d)
     {
       d = cons(sc, car(p), cdr(p));
       if (cdr(cdr(p)) != sc->NIL) 
-	{
-	  p = cdr(d);
-	}
+	p = cdr(d);
     }
   cdr(p) = car(cdr(p));
   return(q);
@@ -4022,13 +4912,11 @@ static s7_pointer list_star(s7_scheme *sc, s7_pointer d)
 /* reverse list -- produce new list */
 s7_pointer s7_reverse(s7_scheme *sc, s7_pointer a) 
 {
-  /* a must be checked by gc */
   s7_pointer p = sc->NIL;
-  
+  local_protect(a);
   for ( ; s7_is_pair(a); a = cdr(a)) 
-    {
-      p = cons(sc, car(a), p);
-    }
+    p = cons(sc, car(a), p);
+  local_unprotect(a);
   return(p);
 }
 
@@ -4063,30 +4951,6 @@ s7_pointer s7_append(s7_scheme *sc, s7_pointer a, s7_pointer b)
 	}
     }
   return(p);
-}
-
-static bool numbers_are_eqv(s7_pointer a, s7_pointer b)
-{
-  /* (eqv? 1 1.0) -> #f! */
-  if (s7_is_integer(a))
-    return((s7_is_integer(b)) &&
-	   (integer(a->object.number) == integer(b->object.number)));
-      
-  if (s7_is_ratio(a))
-    return((s7_is_ratio(b)) &&
-	   (numerator(a->object.number) == numerator(b->object.number)) &&
-	   (denominator(a->object.number) == denominator(b->object.number)));
-
-  if (s7_is_real(a))
-    return((s7_is_real(b)) &&
-	   (real(a->object.number) == real(b->object.number)));
-
-  if (s7_is_complex(a))
-    return((s7_is_complex(b)) &&
-	   (real_part(a->object.number) == real_part(b->object.number)) &&
-	   (imag_part(a->object.number) == imag_part(b->object.number)));
-
-  return(false);
 }
 
 /* equivalence of atoms */
@@ -4198,6 +5062,26 @@ static s7_pointer s7_slot_value_in_env(s7_pointer slot)
 { 
   return(cdr(slot)); 
 } 
+
+
+s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym)
+{
+  s7_pointer x;
+  x = s7_find_slot_in_env(sc, s7_global_env(sc), sym, 0);
+  if (x != s7_NIL(sc))
+    return(s7_slot_value_in_env(x));
+  return(sc->F);
+}
+
+
+s7_pointer s7_symbol_set_value(s7_scheme *sc, s7_pointer sym, s7_pointer val)
+{
+  s7_pointer x;
+  x = s7_find_slot_in_env(sc, s7_global_env(sc), sym, 0);
+  if (x != s7_NIL(sc))
+    set_slot_in_env(sc, x, val);
+  return(val);
+}
 
 
 
@@ -4380,6 +5264,11 @@ static const char *procedure_name(s7_pointer x)
 /* all explicit write-* in eval assume current-output-port -- tracing, error fallback handling, etc */
 /*   internal reads assume sc->inport is the input port */
 
+static s7_pointer s7_apply_object(s7_pointer obj, s7_pointer args);
+static void s7_set_object(s7_pointer obj, s7_pointer args);
+
+
+
 static void eval(s7_scheme *sc, opcode_t first_op) 
 {
   #define s_pop(sc, a)    {pop_stack(sc, a); goto START;}
@@ -4557,10 +5446,6 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 
     case OP_EVAL_STRING_DONE:
       return;
-      
-    case OP_GENSYM:
-      s_pop(sc, s7_gensym(sc));
-      
       
     case OP_VALUEPRINT: /* print evaluation result */
       if (sc->tracing) 
@@ -4748,8 +5633,6 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	       */
 	    }
 	  
-	  /* TODO: if object getter */
-	  
 	  else 
 	    {
 	      if (s7_is_closure(sc->code) || is_macro(sc->code) || is_promise(sc->code)) 
@@ -4813,10 +5696,21 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 			}
 		      else
 			{
-			  fprintf(stderr, "apply %s?", s7_object_to_c_string(sc, sc->code));
-			  sc->args = sc->code;
-			  sc->value = s7_make_string(sc, "illegal function");
-			  goto ERROR;
+			  if (s7_is_object(sc->code))
+			    {
+			      sc ->x = s7_apply_object(sc->code, sc->args);
+	      
+			      if (sc->x == sc->ERROR)
+				goto ERROR;
+			      s_pop(sc, sc->x);
+			    }
+			  else
+			    {
+			      fprintf(stderr, "apply %s?", s7_object_to_c_string(sc, sc->code));
+			      sc->args = sc->code;
+			      sc->value = s7_make_string(sc, "illegal function");
+			      goto ERROR;
+			    }
 			}
 		    }
 		}
@@ -4847,7 +5741,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
     case OP_DEF0:  /* define */
       if (s7_is_immutable(car(sc->code)))
 	{
-	  sc->value = s7_make_string(sc, "define: unable to alter immutable");
+	  sc->value = s7_make_string(sc, "define: unable to alter immutable object");
 	  sc->args = car(sc->code);
 	  goto ERROR;
 	}
@@ -4873,17 +5767,23 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL;
       
     case OP_DEF1:  /* define */
+      /* sc->code is the symbol being defined, sc->value is its value */
+
+      /* TODO: here if procedure-with-setter, define both */
+
       sc->x = s7_find_slot_in_env(sc, sc->envir, sc->code, 0);
       if (sc->x != sc->NIL) 
 	set_slot_in_env(sc, sc->x, sc->value); 
       else new_slot_in_env(sc, sc->code, sc->value); 
       s_pop(sc, sc->code);
       
+
     case OP_DEFP:  /* defined? */
       sc->x = sc->envir;
       if (cdr(sc->args) != sc->NIL) 
 	sc->x = cadr(sc->args);
       s_retbool(s7_find_slot_in_env(sc, sc->x, car(sc->args), 1) != sc->NIL);
+
       
     case OP_SET0:       /* set! */
       if (s7_is_immutable(car(sc->code)))
@@ -4895,13 +5795,28 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       
       if (s7_is_pair(car(sc->code))) /* has accessor */
 	{
-	  char *sym, *name;
-	  name = s7_symbol_name(caar(sc->code));
-	  sym = (char *)CALLOC(safe_strlen(name) + 6, sizeof(char));
-	  sprintf(sym, "set-%s", name);
-	  caar(sc->code) = s7_make_symbol(sc, sym);               /* [set!] ((x a b...) y) -> ((set-x a b..) y) */
-	  sc->code = s7_append(sc, car(sc->code), cdr(sc->code)); /* -> (set-x a b ... y) */
-	  FREE(sym); /* I think s7_make_symbol copies the name */
+	  fprintf(stderr, "set %d %s\n", s7_is_object(caar(sc->code)), s7_object_to_c_string(sc, sc->code));
+
+	  if (s7_is_object(caar(sc->code)))
+	    {
+	      /* use set method */
+	      /* s7_set_object(sc->code, sc->args); eventually (need to eval everything) */
+	      push_stack(sc, OP_SET2, sc->NIL, caar(sc->code));
+	      sc->code = cons(sc, 
+			      s7_make_symbol(sc, "list*"),
+			      s7_append(sc, cdar(sc->code), cdr(sc->code)));
+	      goto EVAL;
+	    }
+	  else
+	    {
+	      char *sym, *name;
+	      name = s7_symbol_name(caar(sc->code));
+	      sym = (char *)CALLOC(safe_strlen(name) + 6, sizeof(char));
+	      sprintf(sym, "set-%s", name);
+	      caar(sc->code) = s7_make_symbol(sc, sym);               /* [set!] ((x a b...) y) -> ((set-x a b..) y) */
+	      sc->code = s7_append(sc, car(sc->code), cdr(sc->code)); /* -> (set-x a b ... y) */
+	      FREE(sym); /* I think s7_make_symbol copies the name */
+	    }
 	}
       else 
 	{
@@ -4923,6 +5838,13 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  sc->args = sc->code;
 	  goto ERROR;
 	}
+
+    case OP_SET2:
+      fprintf(stderr, "gen set: %s %s\n", s7_object_to_c_string(sc, sc->code), s7_object_to_c_string(sc, sc->args));
+
+      sc->y = s7_find_slot_in_env(sc, sc->envir, sc->code, 1);
+      s7_set_object(sc->y, sc->args);
+      s_pop(sc, sc->UNSPECIFIED);
       
     case OP_IF0:        /* if */
       
@@ -5216,12 +6138,12 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       s_pop(sc, sc->code);
 
 
-    case OP_DEFMACRO0:
+    case OP_DEFMACRO:
       
       /* (defmacro name (args) body) ->
        *
        *    (macro (defmacro dform)
-       *      (let ((form (gensym)))            
+       *      (let ((form (gensym "gensym")))            
        *        `(macro (,(cadr dform) ,form)   
        *          (apply
        *            (lambda ,(caddr dform)      
@@ -5237,7 +6159,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	      s7_object_to_c_string(sc, cddr(sc->value)));
       */
 
-      sc->y = s7_gensym(sc);
+      sc->y = s7_gensym(sc, "defmac");
       sc->x = car(sc->code);
 
       sc->code = cons(sc,
@@ -5339,444 +6261,6 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       goto APPLY;
       
       
-    case OP_REAL_PART:     /* real-part */
-      s_pop(sc, s7_make_real(sc, s7_real_part(car(sc->args))));
-      
-    case OP_IMAG_PART:     /* imag-part */
-      s_pop(sc, s7_make_real(sc, s7_imag_part(car(sc->args))));
-      
-    case OP_NUMERATOR:     /* numerator */
-      s_pop(sc, s7_make_integer(sc, num_to_numerator((car(sc->args))->object.number)));
-      
-    case OP_DENOMINATOR:     /* denominator */
-      s_pop(sc, s7_make_integer(sc, num_to_denominator((car(sc->args))->object.number)));
-      
-    case OP_MAKE_RECTANGULAR:     /* make-rectangular */
-      s_pop(sc, s7_make_complex(sc, num_to_real((car(sc->args))->object.number), 
-				num_to_real((cadr(sc->args))->object.number)));
-      
-    case OP_MAKE_POLAR:
-      {
-	double s, c, ang, mag;
-	mag = num_to_real((car(sc->args))->object.number);
-	ang = num_to_real((cadr(sc->args))->object.number);
-	s = sin(ang);
-	c = cos(ang);
-	s_pop(sc, s7_make_complex(sc, mag * c, mag * s));
-      }
-      
-    case OP_ANGLE:
-      sc->x = car(sc->args);
-      
-      if (!s7_is_real(sc->x))
-	s_pop(sc, s7_make_real(sc, atan2(s7_imag_part(sc->x), s7_real_part(sc->x))));
-      if (num_to_real(sc->x->object.number) < 0.0)
-	s_pop(sc, s7_make_real(sc, atan2(0.0, -1.0)));
-      
-      s_pop(sc, s7_make_real(sc, 0.0));
-      
-    case OP_MAGNITUDE:
-      sc->v = nvalue(car(sc->args));
-      switch (num_type(sc->v))
-	{
-	case NUM_REAL2: 
-	case NUM_REAL: 
-	  real(sc->v) = fabs(real(sc->v)); 
-	  break;
-	  
-	case NUM_INT:
-	  integer(sc->v) = abs(integer(sc->v));
-	  break;
-	case NUM_RATIO:
-	  numerator(sc->v) = abs(numerator(sc->v));
-	  break;
-	  
-	default:
-	  {
-	    double a, b;
-	    a = imag_part(sc->v);
-	    b = real_part(sc->v);
-	    sc->v.type = NUM_REAL;
-	    real(sc->v) = hypot(a, b);
-	  }
-	  break;
-	}
-      s_pop(sc, make_number(sc, sc->v));
-      
-    case OP_EXACTP:     /* exact? */
-      s_retbool(s7_is_exact(car(sc->args)));
-      
-    case OP_INEXACTP:     /* exact? */
-      s_retbool(s7_is_inexact(car(sc->args)));
-      
-    case OP_EVENP:     /* even? */
-      s_retbool((s7_integer(car(sc->args)) & 1) == 0);
-      
-    case OP_ODDP:     /* odd? */
-      s_retbool((s7_integer(car(sc->args)) & 1) == 1);
-      
-    case OP_POSITIVEP:     /* positive? */
-      sc->x = car(sc->args);
-      switch (object_number_type(sc->x))
-	{
-	case NUM_INT:   s_retbool(s7_integer(sc->x) > 0);
-	case NUM_RATIO: s_retbool(s7_numerator(sc->x) > 0);
-	default:        s_retbool(s7_real(sc->x) > 0);
-	}
-      
-    case OP_NEGATIVEP:     /* negative? */
-      sc->x = car(sc->args);
-      switch (object_number_type(sc->x))
-	{
-	case NUM_INT:   s_retbool(s7_integer(sc->x) < 0);
-	case NUM_RATIO: s_retbool(s7_numerator(sc->x) < 0);
-	default:        s_retbool(s7_real(sc->x) < 0);
-	}
-      
-    case OP_ZEROP:     /* zero? */
-      sc->x = car(sc->args);
-      switch (object_number_type(sc->x))
-	{
-	case NUM_INT:   s_retbool(s7_integer(sc->x) == 0);
-	case NUM_REAL2:
-	case NUM_REAL:  s_retbool(s7_real(sc->x) == 0.0);
-	case NUM_RATIO: s_retbool(s7_numerator(sc->x) == 0);
-	default:        s_retbool((s7_real_part(sc->x) == 0.0) &&
-				  (s7_imag_part(sc->x) == 0.0));
-	}
-      
-    case OP_RATIONALIZE:    /* rationalize */
-      {
-	double err;
-	s7_Int numer = 0, denom = 1;
-	
-	sc->x = car(sc->args);
-	if (s7_is_exact(sc->x)) 
-	  s_pop(sc, sc->x);
-	
-	err = s7_real(cadr(sc->args));
-	
-	if (c_rationalize(s7_real(sc->x), err, &numer, &denom))
-	  s_pop(sc, s7_make_ratio(sc, numer, denom))
-	  else 
-	    {
-	      sc->value = s7_make_string(sc, "rationalize did not converge?!?");
-	      sc->args = sc->x;
-	      goto ERROR;
-	    }
-      }
-      
-    case OP_INEX2EX:    /* inexact->exact */
-      sc->x = car(sc->args);
-      if (s7_is_exact(sc->x)) 
-	s_pop(sc, sc->x);
-      {
-	s7_Int numer = 0, denom = 1;
-	if (c_rationalize(s7_real(sc->x), DEFAULT_RATIONALIZE_ERROR, &numer, &denom))
-	  s_pop(sc, s7_make_ratio(sc, numer, denom))
-	  else s_pop(sc, s7_make_integer(sc, (s7_Int)s7_real(sc->x)));
-      }
-      
-    case OP_EX2INEX:    /* exact->inexact */
-      sc->x = car(sc->args);
-      if (s7_is_inexact(sc->x)) 
-	s_pop(sc, sc->x);
-      
-      if (s7_is_integer(sc->x))
-	s_pop(sc, s7_make_real(sc, (double)s7_integer(sc->x)))
-	else s_pop(sc, s7_make_real(sc, fraction(sc->x->object.number)));
-      
-      
-    case OP_ABS:
-      sc->v = nvalue(car(sc->args));
-      if (num_type(sc->v) >= NUM_REAL)
-	real(sc->v) = fabs(real(sc->v));
-      else
-	{
-	  if (num_type(sc->v) == NUM_INT)
-	    integer(sc->v) = abs(integer(sc->v));
-	  else numerator(sc->v) = abs(numerator(sc->v));
-	}
-      s_pop(sc, make_number(sc, sc->v));      
-      
-    case OP_EXP:
-      sc->x = car(sc->args);
-      if (s7_is_real(sc->x))
-	s_pop(sc, s7_make_real(sc, exp(num_to_real(sc->x->object.number))));
-      s_pop(sc, s7_from_c_complex(sc, cexp(s7_complex(sc->x))));
-      
-    case OP_LOG:
-      
-      /* TODO: cadr can be base */
-      
-      sc->x = car(sc->args);
-      if ((s7_is_real(sc->x)) &&
-	  (num_to_real(sc->x->object.number) > 0.0))
-	s_pop(sc, s7_make_real(sc, log(num_to_real(sc->x->object.number))));
-      /* if < 0 use log(-x) + pi*i */
-      s_pop(sc, s7_from_c_complex(sc, clog(s7_complex(sc->x))));
-      
-    case OP_SIN:
-      sc->x = car(sc->args);
-      if (s7_is_real(sc->x))
-	s_pop(sc, s7_make_real(sc, sin(num_to_real(sc->x->object.number))));
-      s_pop(sc, s7_from_c_complex(sc, csin(s7_complex(sc->x))));
-      
-    case OP_COS:
-      sc->x = car(sc->args);
-      if (s7_is_real(sc->x))
-	s_pop(sc, s7_make_real(sc, cos(num_to_real(sc->x->object.number))));
-      s_pop(sc, s7_from_c_complex(sc, ccos(s7_complex(sc->x))));
-      
-    case OP_TAN:
-      sc->x = car(sc->args);
-      if (s7_is_real(sc->x))
-	s_pop(sc, s7_make_real(sc, tan(num_to_real(sc->x->object.number))));
-      s_pop(sc, s7_from_c_complex(sc, ctan(s7_complex(sc->x))));
-      
-    case OP_ASIN:
-      sc->x = car(sc->args);
-      if ((s7_is_real(sc->x)) &&
-	  (fabs(num_to_real(sc->x->object.number)) <= 1.0))
-	s_pop(sc, s7_make_real(sc, asin(num_to_real(sc->x->object.number))));
-      s_pop(sc, s7_from_c_complex(sc, casin(s7_complex(sc->x))));
-      
-    case OP_ACOS:
-      sc->x = car(sc->args);
-      if ((s7_is_real(sc->x)) &&
-	  (fabs(num_to_real(sc->x->object.number)) <= 1.0))
-	s_pop(sc, s7_make_real(sc, acos(num_to_real(sc->x->object.number))));
-      s_pop(sc, s7_from_c_complex(sc, cacos(s7_complex(sc->x))));
-      
-    case OP_ATAN:
-      sc->x = car(sc->args);
-      if (cdr(sc->args) == sc->NIL) 
-	{
-	  if (s7_is_real(sc->x))
-	    s_pop(sc, s7_make_real(sc, atan(num_to_real(sc->x->object.number))));
-	  s_pop(sc, s7_from_c_complex(sc, catan(s7_complex(sc->x))));
-	} 
-      else 
-	{
-	  sc->y = cadr(sc->args);
-	  s_pop(sc, s7_make_real(sc, atan2(num_to_real(sc->x->object.number), num_to_real(sc->y->object.number))));
-	  /* atan2 args should be real */
-	}
-      
-    case OP_SINH:
-      sc->x = car(sc->args);
-      if (s7_is_real(sc->x))
-	s_pop(sc, s7_make_real(sc, sinh(num_to_real(sc->x->object.number))));
-      s_pop(sc, s7_from_c_complex(sc, csinh(s7_complex(sc->x))));
-      
-    case OP_COSH:
-      sc->x = car(sc->args);
-      if (s7_is_real(sc->x))
-	s_pop(sc, s7_make_real(sc, cosh(num_to_real(sc->x->object.number))));
-      s_pop(sc, s7_from_c_complex(sc, ccosh(s7_complex(sc->x))));
-      
-    case OP_TANH:
-      sc->x = car(sc->args);
-      if (s7_is_real(sc->x))
-	s_pop(sc, s7_make_real(sc, tanh(num_to_real(sc->x->object.number))));
-      s_pop(sc, s7_from_c_complex(sc, ctanh(s7_complex(sc->x))));
-      
-    case OP_ASINH:
-      sc->x = car(sc->args);
-      if (s7_is_real(sc->x))
-	s_pop(sc, s7_make_real(sc, asinh(num_to_real(sc->x->object.number))));
-      s_pop(sc, s7_from_c_complex(sc, casinh(s7_complex(sc->x))));
-      
-    case OP_ACOSH:
-      sc->x = car(sc->args);
-      if ((s7_is_real(sc->x)) &&
-	  (num_to_real(sc->x->object.number) >= 1.0))
-	s_pop(sc, s7_make_real(sc, acosh(num_to_real(sc->x->object.number))));
-      s_pop(sc, s7_from_c_complex(sc, cacosh(s7_complex(sc->x))));
-      
-    case OP_ATANH:
-      sc->x = car(sc->args);
-      if ((s7_is_real(sc->x)) &&
-	  (fabs(num_to_real(sc->x->object.number)) < 1.0))
-	s_pop(sc, s7_make_real(sc, atanh(num_to_real(sc->x->object.number))));
-      s_pop(sc, s7_from_c_complex(sc, catanh(s7_complex(sc->x))));
-      
-    case OP_SQRT:
-      sc->x = car(sc->args);
-      if ((s7_is_real(sc->x)) &&
-	  (num_to_real(sc->x->object.number) >= 0.0))
-	s_pop(sc, s7_make_real(sc, sqrt(num_to_real(sc->x->object.number))));
-      /* if < 0 use sqrt(-num)*i */
-      s_pop(sc, s7_from_c_complex(sc, csqrt(s7_complex(sc->x))));
-      
-    case OP_EXPT:
-      {
-	sc->x = car(sc->args);
-	sc->y = cadr(sc->args);
-	
-	if ((s7_is_integer(sc->x)) &&
-	    (s7_is_integer(sc->y)) &&
-	    ((s7_integer(sc->y) >= 0) || 
-	     (abs(s7_integer(sc->x)) == 1)))
-	  s_pop(sc, s7_make_integer(sc, (s7_Int)pow(s7_integer(sc->x), s7_integer(sc->y))));
-	
-	if ((s7_is_real(sc->x)) &&
-	    (s7_is_real(sc->y)) &&
-	    (num_to_real(sc->x->object.number) > 0.0) &&
-	    (num_to_real(sc->y->object.number) >= 0.0))
-	  s_pop(sc, s7_make_real(sc, pow(num_to_real(sc->x->object.number), num_to_real(sc->y->object.number))));
-	
-	s_pop(sc, s7_from_c_complex(sc, cpow(s7_complex(sc->x), s7_complex(sc->y))));
-      }
-      
-    case OP_FLOOR:
-      sc->x = car(sc->args);
-      s_pop(sc, s7_make_integer(sc, (s7_Int)floor(num_to_real(sc->x->object.number)))); /* used to be real result */
-      
-    case OP_CEILING:
-      sc->x = car(sc->args);
-      s_pop(sc, s7_make_integer(sc, (s7_Int)ceil(num_to_real(sc->x->object.number))));
-      
-    case OP_ROUND: 
-      sc->x = car(sc->args);
-      s_pop(sc, s7_make_integer(sc, (s7_Int)round_per_R5RS(num_to_real(sc->x->object.number))));
-      
-    case OP_TRUNCATE: 
-      {
-	double xf;
-	sc->x = car(sc->args);
-	xf = num_to_real(sc->x->object.number);
-	if (xf > 0) 
-	  s_pop(sc, s7_make_integer(sc, (s7_Int)floor(xf)));
-	s_pop(sc, s7_make_integer(sc, (s7_Int)ceil(xf)));
-      }
-      
-    case OP_LCM:
-      { /* TODO: fix (and gcd) for new case */
-	s7_Int val = 1;
-	for (sc->x = sc->args; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
-	  {
-	    val = c_lcm(val, s7_integer(car(sc->x)));
-	    if (val == 0)
-	      s_pop(sc, s7_make_integer(sc, 0));
-	  }
-	s_pop(sc, s7_make_integer(sc, val));
-      }
-      
-    case OP_GCD:
-      {
-	s7_Int val = 0;
-	for (sc->x = sc->args; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
-	  {
-	    val = c_gcd(val, s7_integer(car(sc->x)));
-	    if (val == 1)
-	      s_pop(sc, s7_make_integer(sc, 1));
-	  }
-	s_pop(sc, s7_make_integer(sc, val));
-      }
-      
-    case OP_MAX:        /* max */
-      sc->v = nvalue(car(sc->args));
-      for (sc->x = cdr(sc->args); sc->x != sc->NIL; sc->x = cdr(sc->x)) 
-	sc->v = num_max(sc, sc->v, nvalue(car(sc->x)));
-      s_pop(sc, make_number(sc, sc->v));
-      
-    case OP_MIN:        /* min */
-      sc->v = nvalue(car(sc->args));
-      for (sc->x = cdr(sc->args); sc->x != sc->NIL; sc->x = cdr(sc->x)) 
-	sc->v = num_min(sc, sc->v, nvalue(car(sc->x)));
-      s_pop(sc, make_number(sc, sc->v));
-      
-    case OP_ADD:        /* + */
-      sc->v = small_int_as_num(sc, 0);
-      
-      for (sc->x = sc->args; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
-	sc->v = num_add(sc, sc->v, nvalue(car(sc->x)));
-      s_pop(sc, make_number(sc, sc->v));
-      
-    case OP_MUL:        /* * */
-      sc->v = small_int_as_num(sc, 1);
-      
-      for (sc->x = sc->args; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
-	sc->v = num_mul(sc, sc->v, nvalue(car(sc->x)));
-      s_pop(sc, make_number(sc, sc->v));
-      
-    case OP_SUB:        /* - */
-      if (cdr(sc->args) == sc->NIL) 
-	{
-	  sc->x = sc->args;
-	  sc->v = small_int_as_num(sc, 0);
-	} 
-      else 
-	{
-	  sc->x = cdr(sc->args);
-	  sc->v = nvalue(car(sc->args));
-	}
-      for (; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
-	sc->v = num_sub(sc, sc->v, nvalue(car(sc->x)));
-      s_pop(sc, make_number(sc, sc->v));
-      
-    case OP_DIV:        /* / */
-      if (cdr(sc->args) == sc->NIL) 
-	{
-	  sc->x = sc->args;
-	  sc->v = small_int_as_num(sc, 1);
-	} 
-      else 
-	{
-	  sc->x = cdr(sc->args);
-	  sc->v = nvalue(car(sc->args));
-	}
-      for (; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
-	sc->v = num_div(sc, sc->v, nvalue(car(sc->x)));
-      s_pop(sc, make_number(sc, sc->v));
-      
-    case OP_QUOTIENT:        /* quotient */
-      if (cdr(sc->args) == sc->NIL) 
-	{
-	  sc->x = sc->args;
-	  sc->v = small_int_as_num(sc, 1);
-	} 
-      else 
-	{
-	  sc->x = cdr(sc->args);
-	  sc->v = nvalue(car(sc->args));
-	}
-      for (; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
-	{
-	  if (s7_integer(car(sc->x)) != 0)
-	    sc->v = num_quotient(sc->v, nvalue(car(sc->x)));
-	  else 
-	    {
-	      sc->value = s7_make_string(sc, "quotient: division by zero");
-	      goto ERROR;
-	    }
-	}
-      s_pop(sc,make_number(sc, sc->v));
-      
-    case OP_REM:        /* remainder */
-      sc->v = nvalue(car(sc->args));
-      if (s7_integer(cadr(sc->args)) != 0)
-	sc->v = num_rem(sc->v, nvalue(cadr(sc->args)));
-      else 
-	{
-	  sc->value = s7_make_string(sc, "remainder: division by zero");
-	  goto ERROR;
-	}
-      
-      s_pop(sc,make_number(sc, sc->v));
-      
-    case OP_MOD:        /* modulo */
-      sc->v = nvalue(car(sc->args));
-      if (s7_integer(cadr(sc->args)) != 0)
-	sc->v = num_mod(sc->v, nvalue(cadr(sc->args)));
-      else 
-	{
-	  sc->value = s7_make_string(sc, "modulo: division by zero");
-	  goto ERROR;
-	}
-      s_pop(sc, make_number(sc, sc->v));
-      
     case OP_CAR:        /* car */
       s_pop(sc, caar(sc->args));
       
@@ -5840,29 +6324,6 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	c = tolower(c);
 	s_pop(sc, s7_make_character(sc, (char)c));
       }
-      
-    case OP_STR2SYM:  /* string->symbol */
-      s_pop(sc, s7_make_symbol(sc, string_value(car(sc->args))));
-      
-    case OP_STRING_TO_NUMBER:
-      {
-	char *s = string_value(car(sc->args));
-	sc->x = make_atom(sc, s);
-	if (s7_is_number(sc->x))
-	  s_pop(sc, sc->x)
-	  else s_pop(sc, sc->F);
-      }
-      
-    case OP_SYM2STR: /* symbol->string */
-      sc->x = s7_make_string(sc, s7_symbol_name(car(sc->args)));
-      s7_set_immutable(sc->x);
-      s_pop(sc, sc->x);
-      
-    case OP_NUMBER_TO_STRING:
-      {
-	/* TODO if cdr not nil, we've got a radix */
-	s_pop(sc, s7_make_string(sc, s7_atom_to_c_string(sc, car(sc->args), false)));
-      } 
       
     case OP_MKSTRING: /* make-string */
       { 
@@ -6063,56 +6524,8 @@ static void eval(s7_scheme *sc, opcode_t first_op)
     case OP_NULLP:       /* null? */
       s_retbool(car(sc->args) == sc->NIL);
       
-    case OP_NUMEQ:      /* = */
-    case OP_LESS:       /* < */
-    case OP_GRE:        /* > */
-    case OP_LEQ:        /* <= */
-    case OP_GEQ:        /* >= */
-      {
-	bool (*comp_func)(num a, num b);
-	switch(sc->op) 
-	  {
-	  case OP_NUMEQ: comp_func = num_eq; break;
-	  case OP_LESS:  comp_func = num_lt; break;
-	  case OP_GRE:   comp_func = num_gt; break;
-	  case OP_LEQ:   comp_func = num_le; break;
-	  case OP_GEQ:   comp_func = num_ge; break;
-	  default: fprintf(stderr, "oops");  break;
-	  }
-	sc->x = sc->args;
-	sc->v = nvalue(car(sc->x));
-	sc->x = cdr(sc->x);
-	
-	for (; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
-	  {
-	    if (!comp_func(sc->v, nvalue(car(sc->x)))) 
-	      s_retbool(false);
-	    sc->v = nvalue(car(sc->x));
-	  }
-	
-	s_retbool(true);
-      }
-      
-    case OP_SYMBOLP:     /* symbol? */
-      s_retbool(s7_is_symbol(car(sc->args)));
-      
-    case OP_NUMBERP:     /* number? */
-      s_retbool(s7_is_number(car(sc->args)));
-      
     case OP_STRINGP:     /* string? */
       s_retbool(s7_is_string(car(sc->args)));
-      
-    case OP_INTEGERP:     /* integer? */
-      s_retbool(s7_is_integer(car(sc->args)));
-      
-    case OP_REALP:     /* real? */
-      s_retbool(s7_is_real(car(sc->args))); 
-      
-    case OP_RATIONALP:     /* rational? */
-      s_retbool(s7_is_rational(car(sc->args)));
-      
-    case OP_COMPLEXP:     /* complex? */
-      s_retbool(s7_is_complex(car(sc->args)));
       
     case OP_CHARP:     /* char? */
       s_retbool(s7_is_character(car(sc->args)));
@@ -6259,9 +6672,6 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  return;
 	}
       
-    case OP_REVERSE:    /* reverse */
-      s_pop(sc, s7_reverse(sc, car(sc->args)));
-      
     case OP_LIST_STAR: /* list* */
       s_pop(sc, list_star(sc, sc->args));
       
@@ -6280,9 +6690,6 @@ static void eval(s7_scheme *sc, opcode_t first_op)
     case OP_QUIT:       /* quit */
       return;
       break;
-      
-    case OP_SYMBOL_TABLE: /* symbol_table */
-      s_pop(sc, symbol_table_all_symbols(sc)); 
       
       
     case OP_GLOBAL_ENVIRONMENT: /* global-environment */
@@ -6354,7 +6761,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  goto READ_EXPRESSION;
 	  
 	case TOK_ATOM:
-	  s_pop(sc, make_atom(sc, read_string_upto(sc, "();\t\n\r ", sc->inport))); /* if reading list (from lparen), this will finally get us to rdlist */
+	  s_pop(sc, make_atom(sc, read_string_upto(sc, "();\t\n\r ", sc->inport), 10)); /* if reading list (from lparen), this will finally get us to rdlist */
 	  
 	case TOK_DQUOTE:
 	  sc->x = read_string_expression(sc, sc->inport);
@@ -6719,15 +7126,6 @@ const char *s7_function_documentation(s7_pointer x)
   return("no help");
 }
 
-s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
-{
-  s7_pointer x;
-  x = new_cell(sc);
-  set_type(x, T_S7_OBJECT | T_ATOM | T_FINALIZABLE);
-  x->object.fobj.type = type;
-  x->object.fobj.value = value;
-  return(x);
-}
 
 typedef struct {
   int type;
@@ -6736,18 +7134,22 @@ typedef struct {
   void (*free)(void *value);
   bool (*equal)(void *val1, void *val2);
   void (*gc_mark)(void *val);
-  /* TODO: getter? setter? */
+  s7_pointer (*apply)(s7_pointer obj, s7_pointer args);
+  void (*set)(s7_pointer obj, s7_pointer args);
 } fobject;
 
 static fobject *object_types = NULL;
 static int object_types_size = 0;
 static int num_types = 0;
+static s7_pointer apply_fallback_value;
 
 int s7_new_type(const char *name, 
 		char *(*print)(void *value), 
 		void (*free)(void *value), 
 		bool (*equal)(void *val1, void *val2),
-		void (*gc_mark)(void *val))
+		void (*gc_mark)(void *val),
+                s7_pointer (*apply)(s7_pointer obj, s7_pointer args),
+                void (*set)(s7_pointer obj, s7_pointer args))
 {
   int tag;
   tag = num_types++;
@@ -6770,6 +7172,8 @@ int s7_new_type(const char *name,
   object_types[tag].print = print;
   object_types[tag].equal = equal;
   object_types[tag].gc_mark = gc_mark;
+  object_types[tag].apply = apply;
+  object_types[tag].set = set;
   return(tag);
 }
 
@@ -6817,6 +7221,23 @@ static void s7_mark_embedded_objects(s7_pointer a) /* called by gc, calls fobj's
   else fprintf(stderr, "%p, found bad type: %x %d %x\n", a, tag, tag, a->flag);
 }
 
+static s7_pointer s7_apply_object(s7_pointer obj, s7_pointer args)
+{
+  int tag;
+  tag = obj->object.fobj.type;
+  if (object_types[tag].apply)
+    return((*(object_types[tag].apply))(obj, args));
+  return(apply_fallback_value);
+}
+
+static void s7_set_object(s7_pointer obj, s7_pointer args)
+{
+  int tag;
+  tag = obj->object.fobj.type;
+  if (object_types[tag].set)
+    (*(object_types[tag].set))(obj, args);
+}
+
 void *s7_object_value(s7_pointer obj)
 {
   return(obj->object.fobj.value);
@@ -6826,6 +7247,16 @@ void *s7_object_value(s7_pointer obj)
 int s7_object_type(s7_pointer obj)
 {
   return(obj->object.fobj.type);
+}
+
+s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
+{
+  s7_pointer x;
+  x = new_cell(sc);
+  set_type(x, T_S7_OBJECT | T_ATOM | T_FINALIZABLE);
+  x->object.fobj.type = type;
+  x->object.fobj.value = value;
+  return(x);
 }
 
 void s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc)
@@ -6890,6 +7321,10 @@ s7_pointer s7_make_ulong(s7_scheme *sc, unsigned long num)
 }
 
 
+bool s7_keyword_eq_p(s7_pointer obj1, s7_pointer obj2)
+{
+  return(obj1 == obj2);
+}
 
 bool s7_is_keyword(s7_pointer obj)
 {
@@ -6897,9 +7332,10 @@ bool s7_is_keyword(s7_pointer obj)
 	 (s7_symbol_name(obj)[0] == ':'));
 }
 
-bool s7_keyword_eq_p(s7_pointer k1, s7_pointer k2)
+static s7_pointer g_is_keyword(s7_scheme *sc, s7_pointer args)
 {
-  return(k1 == k2);
+  #define H_is_keyword "(keyword? obj) returns #t if obj is a keyword"
+  return(to_s7_bool(sc, s7_is_keyword(car(args))));
 }
 
 s7_pointer s7_make_keyword(s7_scheme *sc, const char *key)
@@ -6909,11 +7345,17 @@ s7_pointer s7_make_keyword(s7_scheme *sc, const char *key)
   name = (char *)CALLOC(safe_strlen(key) + 2, sizeof(char));
   sprintf(name, ":%s", key);                     /* prepend ":" */
   sym = s7_make_symbol(sc, name);
+  typeflag(sym) |= (T_IMMUTABLE | T_CONSTANT); 
   FREE(name);
-  s7_new_slot_spec_in_env(sc, s7_global_env(sc), sym, sym); /* GC protect (?) */
+  s7_new_slot_spec_in_env(sc, s7_global_env(sc), sym, sym); 
   return(sym);
 }
 
+static s7_pointer g_make_keyword(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_keyword "(make-keyword str) prepends ':' to str and defines that as a keyword"
+  return(s7_make_keyword(sc, string_value(car(args))));
+}
 
 
 s7_pointer s7_make_and_fill_vector(s7_scheme *sc, int len, s7_pointer fill)
@@ -6986,32 +7428,6 @@ bool s7_eq_p(s7_pointer obj1, s7_pointer obj2)
   return(obj1 == obj2);
 }
 
-
-
-s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym)
-{
-  s7_pointer x;
-  x = s7_find_slot_in_env(sc, s7_global_env(sc), sym, 0);
-  if (x != s7_NIL(sc))
-    return(s7_slot_value_in_env(x));
-  return(sc->F);
-}
-
-
-s7_pointer s7_symbol_set_value(s7_scheme *sc, s7_pointer sym, s7_pointer val)
-{
-  s7_pointer x;
-  x = s7_find_slot_in_env(sc, s7_global_env(sc), sym, 0);
-  if (x != s7_NIL(sc))
-    set_slot_in_env(sc, x, val);
-  return(val);
-}
-
-
-s7_pointer s7_name_to_value(s7_scheme *sc, const char *name)
-{
-  return(s7_symbol_value(sc, s7_make_symbol(sc, name)));
-}
 
 
 s7_pointer s7_string_to_form(s7_scheme *sc, const char *str)
@@ -7174,6 +7590,15 @@ s7_pointer s7_function_arity(s7_scheme *sc, s7_pointer x)
   return(lst);
 }
 
+static s7_pointer g_reverse(s7_scheme *sc, s7_pointer args)
+{
+  #define H_reverse "(reverse lst) returns a list with the elements of lst in reverse order"
+  s7_pointer p;
+  p = car(args);
+  if (p == sc->NIL)
+    return(sc->NIL);
+  return(s7_reverse(sc, p));
+}
 
 void s7_set_error_exiter(s7_scheme *sc, void (*error_exiter)(void))
 {
@@ -7252,6 +7677,8 @@ s7_scheme *s7_init(void)
   
   set_type(sc->ERROR, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT);
   car(sc->ERROR) = cdr(sc->ERROR) = sc->UNSPECIFIED;
+
+  apply_fallback_value = sc->ERROR;
   
   sc->inport = sc->NIL;
   sc->inport_stack = sc->NIL;
@@ -7346,7 +7773,7 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "cons-stream", OP_C0STREAM); /* what is this?? -- something to do with "promise"? */
   assign_syntax(sc, "macro",       OP_MACRO0);
   assign_syntax(sc, "case",        OP_CASE0);
-  assign_syntax(sc, "defmacro",    OP_DEFMACRO0);
+  assign_syntax(sc, "defmacro",    OP_DEFMACRO);
 
   
   sc->LAMBDA = s7_make_symbol(sc, "lambda");
@@ -7361,11 +7788,17 @@ s7_scheme *s7_init(void)
   typeflag(sc->UNQUOTESP) |= (T_IMMUTABLE | T_CONSTANT); 
   sc->FEED_TO = s7_make_symbol(sc, "=>");
   typeflag(sc->FEED_TO) |= (T_IMMUTABLE | T_CONSTANT); 
-  
-  s7_define_function(sc, "function-documentation", g_function_documentation,    1, 0, false, H_function_documentation);
-  s7_define_function(sc, "function-arity",      s7_function_arity,    1, 0, false, H_function_arity);
-  s7_define_function(sc, "function-source",     g_function_source, 1, 0, false, H_function_source);
-  
+
+
+  /* symbols */
+  s7_define_function(sc, "gensym",              g_gensym,              0, 1, false, H_gensym);
+  s7_define_function(sc, "symbol-table",        g_symbol_table,        0, 0, false, H_symbol_table);
+  s7_define_function(sc, "symbol?",             g_is_symbol,           1, 0, false, H_is_symbol);
+  s7_define_function(sc, "symbol->string",      g_symbol_to_string,    1, 0, false, H_symbol_to_string);
+  s7_define_function(sc, "string->symbol",      g_string_to_symbol,    1, 0, false, H_string_to_symbol);
+  s7_define_function(sc, "keyword?",            g_is_keyword,          1, 0, false, H_is_keyword);
+  s7_define_function(sc, "make-keyword",        g_make_keyword,        1, 0, false, H_make_keyword);
+
   /* ports */
   s7_define_function(sc, "port-line-number",    g_port_line_number,    1, 0, false, H_port_line_number);
   s7_define_function(sc, "port-filename",       g_port_filename,       1, 0, false, H_port_filename);
@@ -7389,16 +7822,87 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "write-char",          g_write_char,          1, 1, false, H_write_char);
   s7_define_function(sc, "write",               g_write,               1, 1, false, H_write);
   s7_define_function(sc, "display",             g_display,             1, 1, false, H_display);
+
+  /* numbers */
+  s7_define_function(sc, "number->string",      g_number_to_string,    1, 2, false, H_number_to_string);
+  s7_define_function(sc, "string->number",      g_string_to_number,    1, 2, false, H_string_to_number);
+  s7_define_function(sc, "make-polar",          g_make_polar,          2, 0, false, H_make_polar);
+  s7_define_function(sc, "make-rectangular",    g_make_rectangular,    2, 0, false, H_make_rectangular);
+  s7_define_function(sc, "magnitude",           g_magnitude,           1, 0, false, H_magnitude);
+  s7_define_function(sc, "angle",               g_angle,               1, 0, false, H_angle);
+  s7_define_function(sc, "rationalize",         g_rationalize,         2, 0, false, H_rationalize);
+  s7_define_function(sc, "abs",                 g_abs,                 1, 0, false, H_abs);
+  s7_define_function(sc, "exp",                 g_exp,                 1, 0, false, H_exp);
+  s7_define_function(sc, "log",                 g_log,                 1, 1, false, H_log);
+  s7_define_function(sc, "sin",                 g_sin,                 1, 0, false, H_sin);
+  s7_define_function(sc, "cos",                 g_cos,                 1, 0, false, H_cos);
+  s7_define_function(sc, "tan",                 g_tan,                 1, 0, false, H_tan);
+  s7_define_function(sc, "asin",                g_asin,                1, 0, false, H_asin);
+  s7_define_function(sc, "acos",                g_acos,                1, 0, false, H_acos);
+  s7_define_function(sc, "atan",                g_atan,                1, 1, false, H_atan);
+  s7_define_function(sc, "sinh",                g_sinh,                1, 0, false, H_sinh);
+  s7_define_function(sc, "cosh",                g_cosh,                1, 0, false, H_cosh);
+  s7_define_function(sc, "tanh",                g_tanh,                1, 0, false, H_tanh);
+  s7_define_function(sc, "asinh",               g_asinh,               1, 0, false, H_asinh);
+  s7_define_function(sc, "acosh",               g_acosh,               1, 0, false, H_acosh);
+  s7_define_function(sc, "atanh",               g_atanh,               1, 0, false, H_atanh);
+  s7_define_function(sc, "sqrt",                g_sqrt,                1, 0, false, H_sqrt);
+  s7_define_function(sc, "expt",                g_expt,                2, 0, false, H_expt);
+  s7_define_function(sc, "floor",               g_floor,               1, 0, false, H_floor);
+  s7_define_function(sc, "ceiling",             g_ceiling,             1, 0, false, H_ceiling);
+  s7_define_function(sc, "truncate",            g_truncate,            1, 0, false, H_truncate);
+  s7_define_function(sc, "round",               g_round,               1, 0, false, H_round);
+  s7_define_function(sc, "lcm",                 g_lcm,                 0, 0, true,  H_lcm);
+  s7_define_function(sc, "gcd",                 g_gcd,                 0, 0, true,  H_gcd);
+  s7_define_function(sc, "+",                   g_add,                 0, 0, true,  H_add);
+  s7_define_function(sc, "-",                   g_subtract,            1, 0, true,  H_subtract);
+  s7_define_function(sc, "*",                   g_multiply,            0, 0, true,  H_multiply);
+  s7_define_function(sc, "/",                   g_divide,              1, 0, true,  H_divide);
+  s7_define_function(sc, "max",                 g_max,                 1, 0, true,  H_max);
+  s7_define_function(sc, "min",                 g_min,                 1, 0, true,  H_min);
+  s7_define_function(sc, "quotient",            g_quotient,            2, 0, false, H_quotient);
+  s7_define_function(sc, "remainder",           g_remainder,           2, 0, false, H_remainder);
+  s7_define_function(sc, "modulo",              g_modulo,              2, 0, false, H_modulo);
+  s7_define_function(sc, "=",                   g_equal,               2, 0, true,  H_equal);
+  s7_define_function(sc, "<",                   g_less,                2, 0, true,  H_less);
+  s7_define_function(sc, ">",                   g_greater,             2, 0, true,  H_greater);
+  s7_define_function(sc, "<=",                  g_less_or_equal,       2, 0, true,  H_less_or_equal);
+  s7_define_function(sc, ">=",                  g_greater_or_equal,    2, 0, true,  H_greater_or_equal);
+  s7_define_function(sc, "number?",             g_is_number,           1, 0, false, H_is_number);
+  s7_define_function(sc, "integer?",            g_is_integer,          1, 0, false, H_is_integer);
+  s7_define_function(sc, "real?",               g_is_real,             1, 0, false, H_is_real);
+  s7_define_function(sc, "complex?",            g_is_complex,          1, 0, false, H_is_complex);
+  s7_define_function(sc, "rational?",           g_is_rational,         1, 0, false, H_is_rational);
+  s7_define_function(sc, "even?",               g_is_even,             1, 0, false, H_is_even);
+  s7_define_function(sc, "odd?",                g_is_odd,              1, 0, false, H_is_odd);
+  s7_define_function(sc, "zero?",               g_is_zero,             1, 0, false, H_is_zero);
+  s7_define_function(sc, "positive?",           g_is_positive,         1, 0, false, H_is_positive);
+  s7_define_function(sc, "negative?",           g_is_negative,         1, 0, false, H_is_negative);
+  s7_define_function(sc, "real-part",           g_real_part,           1, 0, false, H_real_part);
+  s7_define_function(sc, "imag-part",           g_imag_part,           1, 0, false, H_imag_part);
+  s7_define_function(sc, "numerator",           g_numerator,           1, 0, false, H_numerator);
+  s7_define_function(sc, "denominator",         g_denominator,         1, 0, false, H_denominator);
+  s7_define_function(sc, "inexact->exact",      g_inexact_to_exact,    1, 0, false, H_inexact_to_exact);
+  s7_define_function(sc, "exact->inexact",      g_exact_to_inexact,    1, 0, false, H_exact_to_inexact);
+  s7_define_function(sc, "exact?",              g_is_exact,            1, 0, false, H_is_exact);
+  s7_define_function(sc, "inexact?",            g_is_inexact,          1, 0, false, H_is_inexact);
+
+  
+  s7_define_function(sc, "tracing",             g_tracing,             1, 0, false, H_tracing);
+  s7_define_function(sc, "gc-verbose",          g_gc_verbose,          1, 0, false, H_gc_verbose);
+  s7_define_function(sc, "stacktrace",          g_stacktrace,          0, 0, false, H_stacktrace);
+  s7_define_function(sc, "gc",                  g_gc,                  0, 0, false, H_gc);
   
   s7_define_function(sc, "load",                g_load,                1, 0, false, H_display);
   
-  s7_define_function(sc, "tracing",    g_tracing,    1, 0, false, H_tracing);
-  s7_define_function(sc, "gc-verbose", g_gc_verbose, 1, 0, false, H_gc_verbose);
-  s7_define_function(sc, "stacktrace", g_stacktrace, 0, 0, false, H_stacktrace);
-  s7_define_function(sc, "gc",         g_gc,         0, 0, false, H_gc);
+  s7_define_function(sc, "function-documentation", g_function_documentation,    1, 0, false, H_function_documentation);
+  s7_define_function(sc, "function-arity",      s7_function_arity,    1, 0, false, H_function_arity);
+  s7_define_function(sc, "function-source",     g_function_source, 1, 0, false, H_function_source);
   
-  
-  s7_define_function(sc, "cadr",       g_cadr,       1, 0, false, H_cadr);
+
+
+  s7_define_function(sc, "reverse",             g_reverse,             1, 0, false, H_reverse);
+  s7_define_function(sc, "cadr",                g_cadr,                1, 0, false, H_cadr);
   
   sc->gc_off = false;
   return(sc);

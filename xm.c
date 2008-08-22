@@ -407,7 +407,7 @@ static XEN make_xm_obj(void *ptr)
 static void define_xm_obj(void)
 {
 #if HAVE_S7
-  xm_obj_tag = XEN_MAKE_OBJECT_TYPE("<XmObj>", NULL, xm_obj_free, s7_equalp_xm, 0);
+  xm_obj_tag = XEN_MAKE_OBJECT_TYPE("<XmObj>", NULL, xm_obj_free, s7_equalp_xm, NULL, NULL, NULL);
 #else
 #if (!HAVE_GAUCHE)
   xm_obj_tag = XEN_MAKE_OBJECT_TYPE("XmObj", sizeof(void *));

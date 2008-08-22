@@ -199,8 +199,9 @@
 	  (set! format:case-conversion #f)	; modifier case
 					; conversion procedure
 	  (set! format:flush-output #f)		; ~! reset
-	  (and-let* ((col (port-column port)))	; get current column from port
-		    (set! format:output-col col))
+	  (let ((col (port-column port)))	; get current column from port
+	    (if col
+		(set! format:output-col col)))
 	  (let ((arg-pos (format:format-work fmt args))
 		(arg-len (length args)))
 	    (cond
@@ -483,12 +484,6 @@
 		       (if (one-positive-integer? params)
 			   (format:out-fill (car params) #\tab)
 			   (format:out-char #\tab))
-		       (anychar-dispatch))
-		      ((#\|)			; Page seperator
-		       (if (one-positive-integer? params)
-			   (format:out-fill (car params) #\page)
-			   (format:out-char #\page))
-		       (set! format:output-col 0)
 		       (anychar-dispatch))
 		      ((#\T)			; Tabulate
 		       (format:tabulate modifier params)

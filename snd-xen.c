@@ -2639,10 +2639,10 @@ static XEN g_localtime(XEN tm)
   return(C_TO_XEN_ULONG((unsigned long)localtime((const time_t *)(XEN_TO_C_ULONG(tm)))));
 }
 
-static XEN g_current_time(XEN tm)
+static XEN g_current_time(void)
 {
   static time_t curtime;
-  #define H_current_time "(current-time tm) gets the current time (for localtime and strftime)"
+  #define H_current_time "(current-time) returns the current time (for localtime and strftime)"
   curtime = time(NULL);
   return(C_TO_XEN_ULONG((unsigned long)(&curtime)));
 }
@@ -2664,7 +2664,7 @@ XEN_NARGIFY_1(g_delete_file_w, g_delete_file)
 XEN_NARGIFY_0(g_getcwd_w, g_getcwd)
 XEN_NARGIFY_2(g_strftime_w, g_strftime)
 XEN_NARGIFY_1(g_localtime_w, g_localtime)
-XEN_NARGIFY_1(g_current_time_w, g_current_time)
+XEN_NARGIFY_0(g_current_time_w, g_current_time)
 XEN_NARGIFY_0(g_tmpnam_w, g_tmpnam)
 #endif
 
@@ -2780,7 +2780,7 @@ void g_xen_initialize(void)
   XEN_DEFINE_PROCEDURE("strftime",               g_strftime_w,               2, 0, 0, H_strftime);
   XEN_DEFINE_PROCEDURE("tmpnam",                 g_tmpnam_w,                 0, 0, 0, H_localtime);
   XEN_DEFINE_PROCEDURE("localtime",              g_localtime_w,              1, 0, 0, H_localtime);
-  XEN_DEFINE_PROCEDURE("current-time",           g_current_time_w,           1, 0, 0, H_current_time);
+  XEN_DEFINE_PROCEDURE("current-time",           g_current_time_w,           0, 0, 0, H_current_time);
   XEN_DEFINE_CONSTANT("internal-time-units-per-second", 100, "clock speed");
   XEN_DEFINE_PROCEDURE("random",                 g_random_w,                 1, 0, 0, "(random arg): random number between 0 and arg ");
   XEN_DEFINE_PROCEDURE("get-internal-real-time", g_get_internal_real_time_w, 0, 0, 0, "get system time");
@@ -3044,8 +3044,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(define (debug-set! . args) #f)");
   XEN_EVAL_C_STRING("(define (make-soft-port . args) #f)");
 
-  XEN_EVAL_C_STRING("(define (make-keyword str) (string->symbol (string-append \":\" str)))");
-  XEN_EVAL_C_STRING("(define (keyword? obj) (and (symbol? obj) (char=? (string-ref (symbol->string obj) 0) #\\:)))");
   XEN_EVAL_C_STRING("(define (symbol->keyword key) (make-keyword (symbol->string key)))");
   XEN_EVAL_C_STRING("(define (keyword->symbol key) (string->symbol (keyword->string key)))");
   XEN_EVAL_C_STRING("(define load-from-path load)");

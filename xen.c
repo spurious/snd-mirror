@@ -2465,7 +2465,7 @@ void xen_initialize(void)
   xen_nil = s7_NIL(s7);
   xen_undefined = s7_UNDEFINED(s7);
 
-  ghook_tag = XEN_MAKE_OBJECT_TYPE("<hook>", print_hook, free_hook, equalp_hook, mark_hook);
+  ghook_tag = XEN_MAKE_OBJECT_TYPE("<hook>", print_hook, free_hook, equalp_hook, mark_hook, NULL, NULL);
 
   XEN_DEFINE_PROCEDURE("hook?",        g_hook_p_w,       1, 0, 0, "(hook? obj) -> #t if obj is a hook");
   XEN_DEFINE_PROCEDURE("hook-empty?",  g_hook_empty_p_w, 1, 0, 0, "(hook-empty? hook) -> #t if obj is an empty hook");

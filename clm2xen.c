@@ -1241,6 +1241,21 @@ static XEN mus_xen_apply(XEN gen, XEN arg1, XEN arg2)
 }
 #endif
 
+#if HAVE_S7
+static XEN mus_xen_apply(XEN gen, XEN args)
+{
+  Float arg1 = 0.0, arg2 = 0.0;
+  int len;
+  len = XEN_LIST_LENGTH(args);
+  if ((len > 0) &&
+      (XEN_NUMBER_P(XEN_CAR(args))))
+    arg1 = XEN_TO_C_DOUBLE(XEN_CAR(args));
+  if ((len > 1) &&
+      (XEN_NUMBER_P(XEN_CADR(args))))
+    arg2 = XEN_TO_C_DOUBLE(XEN_CADR(args));
+  return(C_TO_XEN_DOUBLE(mus_run(XEN_TO_MUS_ANY(gen), arg1, arg2)));
+}
+#endif
 
 XEN mus_xen_to_object(mus_xen *gn) /* global for user-defined gens */
 {
@@ -8386,7 +8401,7 @@ void mus_xen_init(void)
   mus_initialize();
 
 #if HAVE_S7
-  mus_xen_tag = XEN_MAKE_OBJECT_TYPE("<mus>", print_mus_xen, free_mus_xen, s7_equalp_mus_xen, mark_mus_xen);
+  mus_xen_tag = XEN_MAKE_OBJECT_TYPE("<mus>", print_mus_xen, free_mus_xen, s7_equalp_mus_xen, mark_mus_xen, mus_xen_apply, NULL);
 #else
 #if (!HAVE_GAUCHE)
   mus_xen_tag = XEN_MAKE_OBJECT_TYPE("Mus", sizeof(mus_xen));

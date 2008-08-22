@@ -2321,7 +2321,6 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
     int len; \
     len = XEN_LIST_LENGTH(args); \
     if (len > 3) XEN_WRONG_NUMBER_OF_ARGS_ERROR(#InName, args); \
-    fprintf(stderr, "argify: %d %s\n", len, s7_object_to_c_string(s7, args));\
     return(InName((len > 0) ? XEN_CAR(args) : XEN_UNDEFINED, \
                   (len > 1) ? XEN_CADR(args) : XEN_UNDEFINED, \
                   (len > 2) ? XEN_LIST_REF(args, 2) : XEN_UNDEFINED)); \
@@ -2480,7 +2479,7 @@ typedef XEN (*XEN_CATCH_BODY_TYPE)                                    (void *dat
 #define XEN_NAME_AS_C_STRING_TO_VARIABLE(a)                           s7_make_symbol(s7, a)
 
 #define XEN_MARK_OBJECT_TYPE                                           void
-#define XEN_MAKE_OBJECT_TYPE(Name, Print, Free, Equal, Gc_Mark)        s7_new_type(Name, Print, Free, Equal, Gc_Mark)
+#define XEN_MAKE_OBJECT_TYPE(Name, Print, Free, Equal, Gc_Mark, Apply, Set) s7_new_type(Name, Print, Free, Equal, Gc_Mark, Apply, Set)
 
 #define XEN_MAKE_OBJECT_FREE_PROCEDURE(Type, Wrapped_Free, Original_Free) \
   static void Wrapped_Free(void *obj) \

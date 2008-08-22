@@ -105,12 +105,11 @@ s7_pointer s7_vector_to_list(s7_scheme *sc, s7_pointer vect);
 bool s7_is_symbol(s7_pointer p);
 char *s7_symbol_name(s7_pointer p);
 s7_pointer s7_make_symbol(s7_scheme *sc, const char *name);
-s7_pointer s7_gensym(s7_scheme *sc);
+s7_pointer s7_gensym(s7_scheme *sc, const char *prefix);
 
 bool s7_is_keyword(s7_pointer obj);
-bool s7_keyword_eq_p(s7_pointer k1, s7_pointer k2);
 s7_pointer s7_make_keyword(s7_scheme *sc, const char *key);
-
+bool s7_keyword_eq_p(s7_pointer obj1, s7_pointer obj2);
 
 bool s7_is_function(s7_pointer p);
 s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
@@ -122,7 +121,9 @@ int s7_new_type(const char *name,
 			char *(*print)(void *value), 
 			void (*free)(void *value), 
 			bool (*equal)(void *val1, void *val2),
-			void (*gc_mark)(void *val));
+		        void (*gc_mark)(void *val),
+                        s7_pointer (*apply)(s7_pointer obj, s7_pointer args),
+         		void (*set)(s7_pointer obj, s7_pointer args));
 
 void *s7_object_value(s7_pointer obj);
 int s7_object_type(s7_pointer obj);

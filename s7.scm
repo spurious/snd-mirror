@@ -3,17 +3,19 @@
 
 
 (define (error . args) 
-  (display "error: ") 
+  ;(display "error: ") 
   (display args) 
-  (newline) 
+  ;(newline) 
   (if (port-filename (current-input-port))
       (begin
 	(display "    ")
 	(display (port-filename (current-input-port)))
 	(display ", line ")
 	(display (port-line-number (current-input-port)))
-	(stacktrace)
-	(newline)))
+;	(stacktrace)
+	(newline)
+	))
+  ;(quit)
   'error)
 
 ;(define (error . args) 'error)
@@ -122,6 +124,7 @@
 
 (define (char-cmp? cmp a b)
   (cmp (char->integer a) (char->integer b)))
+
 (define (char-ci-cmp? cmp a b)
   (cmp (char->integer (char-downcase a)) (char->integer (char-downcase b))))
 
@@ -137,7 +140,7 @@
 (define (char-ci<=? a b) (char-ci-cmp? <= a b))
 (define (char-ci>=? a b) (char-ci-cmp? >= a b))
 
-					; Note the trick of returning (cmp x y)
+
 (define (string-cmp? chcmp cmp a b)
   (let ((na (string-length a)) (nb (string-length b)))
     (let loop ((i 0))
@@ -340,10 +343,11 @@
 
 ;;;;; atom? and equal? written by a.k
 
+#|
 ;;;; atom?
 (define (atom? x)
   (not (pair? x)))
-
+|#
 
 ;;;; (do ((var init inc) ...) (endtest result ...) body ...)
 ;;
@@ -383,8 +387,10 @@
 
 (define (memq obj lst)
   (generic-member eq? obj lst))
+
 (define (memv obj lst)
   (generic-member eqv? obj lst))
+
 (define (member obj lst)
   (generic-member equal? obj lst))
 
@@ -524,12 +530,6 @@
 	(cdr ,form)))))             
 |#
 
-;;; scheme side make-procedure-with-setter -- not pretty (only needed for snd-nogui.c fallbacks)
-(defmacro make-procedure-with-setter (name getter setter)
-  `(begin
-     (define ,(string->symbol (string-append "set-" name)) ,setter)
-     ,getter))
-
 					;(define-syntax defmacro
 					;  (syntax-rules ()
 					;    ((_ name params . body) (define-macro (name . params) . body)))))
@@ -554,7 +554,7 @@
 
 ; (let ((tag (catch #t (lambda () (display "before") (error 'oops) (display "after")) (lambda args (display "in handler") 'error)))) tag)
 
-
+#|
 ;;; the standard format won't work currently -- string port troubles
 (define (format dest str . args)
   (let ((len (string-length str))
@@ -577,3 +577,7 @@
 			  (set! result (string-append result (string #\newline)))
 			  (display (string-append ";unknown format directive: ~" (string c))))))))))
     result))
+|#
+
+(defmacro define+ (name value)
+  `(define ,name ,value))

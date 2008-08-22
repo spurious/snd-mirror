@@ -189,7 +189,7 @@ static XEN make_xm_obj(void *ptr)
 static void define_xm_obj(void)
 {
 #if HAVE_S7
- xm_obj_tag = XEN_MAKE_OBJECT_TYPE("<XmObj>", NULL, xm_obj_free, s7_equalp_xm, 0);
+ xm_obj_tag = XEN_MAKE_OBJECT_TYPE("<XmObj>", NULL, xm_obj_free, s7_equalp_xm, NULL, NULL, NULL);
 #else
 #if (!HAVE_GAUCHE)
   xm_obj_tag = XEN_MAKE_OBJECT_TYPE("XmObj", sizeof(void *));
@@ -48094,7 +48094,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("21-Aug-08"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("22-Aug-08"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

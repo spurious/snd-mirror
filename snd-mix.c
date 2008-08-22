@@ -3070,6 +3070,13 @@ static XEN g_read_mix_sample(XEN obj)
   return(C_TO_XEN_DOUBLE(read_sample(mf->sf)));
 }
 
+#if HAVE_S7
+static XEN s7_read_mix_sample(XEN obj, XEN args)
+{
+  return(g_read_mix_sample(obj));
+}
+#endif
+
 
 /* tie into generic sample-reader procedures (snd-edits.c) */
 
@@ -3347,7 +3354,7 @@ XEN_NARGIFY_1(g_set_mix_dialog_mix_w, g_set_mix_dialog_mix)
 void g_init_mix(void)
 {
 #if HAVE_S7
-  mf_tag = XEN_MAKE_OBJECT_TYPE("<mix-sample-reader>", print_mf, free_mf, s7_equalp_mf, 0);
+  mf_tag = XEN_MAKE_OBJECT_TYPE("<mix-sample-reader>", print_mf, free_mf, s7_equalp_mf, NULL, s7_read_mix_sample, NULL);
 #else
 #if (!HAVE_GAUCHE)
   mf_tag = XEN_MAKE_OBJECT_TYPE("MixSampleReader", sizeof(mix_fd));

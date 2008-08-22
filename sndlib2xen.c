@@ -1800,6 +1800,12 @@ static XEN sound_data_apply(XEN obj, XEN chan, XEN i)
   return(g_sound_data_ref(obj, chan, i));
 }
 #endif
+#if HAVE_S7
+static XEN sound_data_apply(XEN obj, XEN args)
+{
+  return(g_sound_data_ref(obj, XEN_CAR(args), XEN_CADR(args)));
+}
+#endif
 
 
 static XEN g_sound_data_set(XEN obj, XEN chan, XEN frame_num, XEN val)
@@ -2623,7 +2629,7 @@ void mus_sndlib_xen_initialize(void)
   mus_sound_initialize();
 
 #if HAVE_S7
-  sound_data_tag = XEN_MAKE_OBJECT_TYPE("<sound-data>", print_sound_data, free_sound_data, s7_equalp_sound_data, 0);
+  sound_data_tag = XEN_MAKE_OBJECT_TYPE("<sound-data>", print_sound_data, free_sound_data, s7_equalp_sound_data, NULL, sound_data_apply, NULL);
 #else
 #if (!HAVE_GAUCHE)
   sound_data_tag = XEN_MAKE_OBJECT_TYPE("SoundData", sizeof(sound_data));

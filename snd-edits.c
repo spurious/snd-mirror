@@ -8146,6 +8146,13 @@ static XEN g_read_sample(XEN obj)
   return(C_TO_XEN_DOUBLE(read_sample(XEN_TO_SAMPLE_READER(obj))));
 }
 
+#if HAVE_S7
+static XEN s7_read_sample(XEN obj, XEN args)
+{
+  return(g_read_sample(obj));
+}
+#endif
+
 
 static XEN g_previous_sample(XEN obj)
 {
@@ -9803,7 +9810,7 @@ XEN_NARGIFY_1(g_edit_fragment_type_name_w, g_edit_fragment_type_name)
 void g_init_edits(void)
 {
 #if HAVE_S7
-  sf_tag = XEN_MAKE_OBJECT_TYPE("<sample-reader>", print_sf, free_sf, s7_equalp_sf, 0);
+  sf_tag = XEN_MAKE_OBJECT_TYPE("<sample-reader>", print_sf, free_sf, s7_equalp_sf, NULL, s7_read_sample, NULL);
 #else
 #if (!HAVE_GAUCHE)
   sf_tag = XEN_MAKE_OBJECT_TYPE("SampleReader", sizeof(snd_fd));
