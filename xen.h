@@ -2081,9 +2081,9 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 #define XEN_EMPTY_LIST                             xen_nil
 #define XEN_UNDEFINED                              xen_undefined
 
-#define XEN_EQ_P(Arg1, Arg2)                       s7_eq_p(Arg1, Arg2)
-#define XEN_EQV_P(Arg1, Arg2)                      s7_eqv_p(s7, Arg1, Arg2)
-#define XEN_EQUAL_P(Arg1, Arg2)                    s7_equal_p(Arg1, Arg2)
+#define XEN_EQ_P(Arg1, Arg2)                       s7_is_eq(Arg1, Arg2)
+#define XEN_EQV_P(Arg1, Arg2)                      s7_is_eqv(s7, Arg1, Arg2)
+#define XEN_EQUAL_P(Arg1, Arg2)                    s7_is_equal(Arg1, Arg2)
 
 #define XEN_CONS_P(Arg)                            s7_cons_p(Arg)
 #define XEN_CONS(Arg1, Arg2)                       s7_cons(s7, Arg1, Arg2)
@@ -2193,7 +2193,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 #define XEN_KEYWORD_EQ_P(k1, k2)                   s7_keyword_eq_p(k1, k2)
 #define XEN_MAKE_KEYWORD(Arg)                      s7_make_keyword(s7, Arg)
 
-#define XEN_PROCEDURE_P(Arg)                       (s7_is_procedure(Arg) || s7_is_closure(Arg) || s7_is_function(Arg))
+#define XEN_PROCEDURE_P(Arg)                       (s7_is_closure(Arg) || s7_is_function(Arg))
 #define XEN_PROCEDURE_SOURCE(Func)                 s7_procedure_source(Func)
 
 #define XEN_LOAD_FILE(File)                        s7_load(s7, File)

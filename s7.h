@@ -31,7 +31,9 @@ s7_pointer s7_T(s7_scheme *sc);
 s7_pointer s7_NIL(s7_scheme *sc);
 s7_pointer s7_UNDEFINED(s7_scheme *sc);
 s7_pointer s7_EOF_OBJ(s7_scheme *sc);
-s7_pointer s7_global_env(s7_scheme *sc);
+
+s7_pointer s7_global_environment(s7_scheme *sc);
+s7_pointer s7_current_environment(s7_scheme *sc);
 
 bool s7_is_immutable(s7_pointer p);
 void s7_set_immutable(s7_pointer p);
@@ -151,8 +153,9 @@ s7_pointer s7_apply1(s7_scheme *sc, const char *procname, s7_pointer args);
 s7_pointer s7_apply0(s7_scheme *sc, const char *procname);
 s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args);
 
-bool s7_eqv_p(s7_pointer a, s7_pointer b);
-bool s7_eq_p(s7_pointer obj1, s7_pointer obj2);
+bool s7_is_eqv(s7_pointer a, s7_pointer b);
+bool s7_is_eq(s7_pointer obj1, s7_pointer obj2);
+bool s7_is_equal(s7_pointer obj1, s7_pointer obj2);
 
 void s7_define(s7_scheme *sc, s7_pointer env, s7_pointer symbol, s7_pointer value);
 s7_pointer s7_name_to_value(s7_scheme *sc, const char *name);
@@ -188,7 +191,6 @@ void s7_gc_unprotect_at(s7_scheme *sc, int loc);
 void s7_for_each_symbol_name(s7_scheme *sc, bool (*symbol_func)(const char *symbol_name, void *data), void *data);
 void s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_name, s7_pointer symbol_value, void *data), void *data);
 
-bool s7_is_procedure(s7_pointer p);
 bool s7_is_function(s7_pointer p);
 
 
