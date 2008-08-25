@@ -16483,10 +16483,10 @@ _ACEOF
 
 fi
 
-	# for 2.13.4
-	{ $as_echo "$as_me:$LINENO: checking for gtk_entry_get_text_length in -lm" >&5
-$as_echo_n "checking for gtk_entry_get_text_length in -lm... " >&6; }
-if test "${ac_cv_lib_m_gtk_entry_get_text_length+set}" = set; then
+	# for 2.13.6 (uses 2134)
+	{ $as_echo "$as_me:$LINENO: checking for gtk_adjustment_get_upper in -lm" >&5
+$as_echo_n "checking for gtk_adjustment_get_upper in -lm... " >&6; }
+if test "${ac_cv_lib_m_gtk_adjustment_get_upper+set}" = set; then
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -16504,11 +16504,11 @@ cat >>conftest.$ac_ext <<_ACEOF
 #ifdef __cplusplus
 extern "C"
 #endif
-char gtk_entry_get_text_length ();
+char gtk_adjustment_get_upper ();
 int
 main ()
 {
-return gtk_entry_get_text_length ();
+return gtk_adjustment_get_upper ();
   ;
   return 0;
 }
@@ -16534,12 +16534,12 @@ $as_echo "$ac_try_echo") >&5
 	 test "$cross_compiling" = yes ||
 	 $as_test_x conftest$ac_exeext
        }; then
-  ac_cv_lib_m_gtk_entry_get_text_length=yes
+  ac_cv_lib_m_gtk_adjustment_get_upper=yes
 else
   $as_echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	ac_cv_lib_m_gtk_entry_get_text_length=no
+	ac_cv_lib_m_gtk_adjustment_get_upper=no
 fi
 
 rm -rf conftest.dSYM
@@ -16547,11 +16547,11 @@ rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ $as_echo "$as_me:$LINENO: result: $ac_cv_lib_m_gtk_entry_get_text_length" >&5
-$as_echo "$ac_cv_lib_m_gtk_entry_get_text_length" >&6; }
-if test $ac_cv_lib_m_gtk_entry_get_text_length = yes; then
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_lib_m_gtk_adjustment_get_upper" >&5
+$as_echo "$ac_cv_lib_m_gtk_adjustment_get_upper" >&6; }
+if test $ac_cv_lib_m_gtk_adjustment_get_upper = yes; then
   cat >>confdefs.h <<\_ACEOF
-#define HAVE_GTK_ENTRY_GET_TEXT_LENGTH 1
+#define HAVE_GTK_ADJUSTMENT_GET_UPPER 1
 _ACEOF
 
 fi
@@ -18566,6 +18566,10 @@ _ACEOF
 
   cat >>confdefs.h <<\_ACEOF
 #define HAVE_COMPLEX_TRIG 1
+_ACEOF
+
+  cat >>confdefs.h <<\_ACEOF
+#define WITH_RUN 1
 _ACEOF
 
   LOCAL_LANGUAGE="s7"

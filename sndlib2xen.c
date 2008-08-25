@@ -1801,7 +1801,7 @@ static XEN sound_data_apply(XEN obj, XEN chan, XEN i)
 }
 #endif
 #if HAVE_S7
-static XEN sound_data_apply(XEN obj, XEN args)
+static XEN sound_data_apply(s7_scheme *sc, XEN obj, XEN args)
 {
   return(g_sound_data_ref(obj, XEN_CAR(args), XEN_CADR(args)));
 }

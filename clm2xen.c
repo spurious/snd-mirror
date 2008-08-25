@@ -1242,7 +1242,7 @@ static XEN mus_xen_apply(XEN gen, XEN arg1, XEN arg2)
 #endif
 
 #if HAVE_S7
-static XEN mus_xen_apply(XEN gen, XEN args)
+static XEN mus_xen_apply(s7_scheme *sc, XEN gen, XEN args)
 {
   Float arg1 = 0.0, arg2 = 0.0;
   int len;

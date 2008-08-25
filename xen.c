@@ -2475,8 +2475,6 @@ void xen_initialize(void)
   XEN_DEFINE_PROCEDURE("run-hook",     g_run_hook_w,     0, 0, 1, "(run-hook hook . args) applies each hook function to args");
   XEN_DEFINE_PROCEDURE("make-hook",    g_make_hook_w,    1, 1, 0, "(make-hook arity :optional help) makes a new hook object");
   XEN_DEFINE_PROCEDURE("add-hook!",    g_add_hook_w,     2, 1, 0, "(add-hook! hook func :optional append) adds func to the hooks function list");
-
-  s7_load(s7, "s7.scm");
 }
 
 

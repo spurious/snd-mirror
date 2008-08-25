@@ -8147,7 +8147,7 @@ static XEN g_read_sample(XEN obj)
 }
 
 #if HAVE_S7
-static XEN s7_read_sample(XEN obj, XEN args)
+static XEN s7_read_sample(s7_scheme *sc, XEN obj, XEN args)
 {
   return(g_read_sample(obj));
 }

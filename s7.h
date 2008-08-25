@@ -95,8 +95,10 @@ s7_pointer s7_make_complex(s7_scheme *sc, double a, double b);
 double s7_real_part(s7_pointer z);
 double s7_imag_part(s7_pointer z);
 
+char *s7_number_to_string(s7_scheme *sc, s7_pointer obj, int radix);
+
 bool s7_is_vector(s7_pointer p);
-void s7_fill_vector(s7_pointer vec, s7_pointer obj);
+void s7_vector_fill(s7_pointer vec, s7_pointer obj);
 s7_pointer s7_vector_ref(s7_pointer vec, int ielem);
 s7_pointer s7_vector_set(s7_pointer vec, int ielem, s7_pointer a);
 s7_pointer s7_make_vector(s7_scheme *sc, int len);
@@ -120,12 +122,12 @@ const char *s7_function_documentation(s7_pointer p);
 s7_pointer s7_function_arity(s7_scheme *sc, s7_pointer x);
 
 int s7_new_type(const char *name, 
-			char *(*print)(void *value), 
-			void (*free)(void *value), 
-			bool (*equal)(void *val1, void *val2),
-		        void (*gc_mark)(void *val),
-                        s7_pointer (*apply)(s7_pointer obj, s7_pointer args),
-         		void (*set)(s7_pointer obj, s7_pointer args));
+		char *(*print)(void *value), 
+		void (*free)(void *value), 
+		bool (*equal)(void *val1, void *val2),
+		void (*gc_mark)(void *val),
+		s7_pointer (*apply)(s7_scheme *sc, s7_pointer obj, s7_pointer args),
+		void (*set)(s7_scheme *sc, s7_pointer obj, s7_pointer args));
 
 void *s7_object_value(s7_pointer obj);
 int s7_object_type(s7_pointer obj);
@@ -147,10 +149,7 @@ s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e);
 bool s7_is_continuation(s7_pointer p);
 
 s7_scheme *s7_init(void);
-void s7_kill(s7_scheme *sc);
 
-s7_pointer s7_apply1(s7_scheme *sc, const char *procname, s7_pointer args);
-s7_pointer s7_apply0(s7_scheme *sc, const char *procname);
 s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args);
 
 bool s7_is_eqv(s7_pointer a, s7_pointer b);
@@ -212,6 +211,16 @@ void s7_newline(s7_scheme *sc, s7_pointer port);
 void s7_write_char(s7_scheme *sc, char c, s7_pointer port);
 void s7_write(s7_scheme *sc, s7_pointer obj, s7_pointer port);
 void s7_display(s7_scheme *sc, s7_pointer obj, s7_pointer port);
+
+s7_pointer s7_make_procedure_with_setter(s7_scheme *sc, 
+					 s7_pointer (*getter)(s7_scheme *sc, s7_pointer args), 
+					 s7_pointer (*setter)(s7_scheme *sc, s7_pointer args),
+					 const char *documentation);
+bool s7_is_procedure_with_setter(s7_pointer obj);
+
+#define s7_make_hash_table(Sc, Size) s7_make_vector(Sc, Size)
+s7_pointer s7_hash_table_ref(s7_scheme *sc, s7_pointer table, const char *name);
+s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, const char *name, s7_pointer value);
 
 #endif
 

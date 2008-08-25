@@ -236,10 +236,16 @@ static bool s7_mus_vct_equalp(void *uv1, void *uv2)
 }
 
 static XEN g_vct_ref(XEN obj, XEN pos);
+static XEN g_vct_set(XEN obj, XEN pos, XEN val);
 
-static XEN s7_mus_vct_apply(XEN obj, XEN args)
+static XEN s7_mus_vct_apply(s7_scheme *sc, XEN obj, XEN args)
 {
   return(g_vct_ref(obj, XEN_CAR(args)));
+}
+
+static void s7_mus_vct_set(s7_scheme *sc, XEN obj, XEN args)
+{
+  g_vct_set(obj, XEN_CAR(args), XEN_CADR(args));
 }
 #endif
 
@@ -1169,7 +1175,7 @@ void mus_vct_init(void)
 {
 
 #if HAVE_S7
-  vct_tag = XEN_MAKE_OBJECT_TYPE("<vct>", print_vct, free_vct, s7_mus_vct_equalp, NULL, s7_mus_vct_apply, NULL);
+  vct_tag = XEN_MAKE_OBJECT_TYPE("<vct>", print_vct, free_vct, s7_mus_vct_equalp, NULL, s7_mus_vct_apply, s7_mus_vct_set);
 #else
 #if (!HAVE_GAUCHE)
   vct_tag = XEN_MAKE_OBJECT_TYPE("Vct", sizeof(vct));

@@ -2082,7 +2082,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 #define XEN_UNDEFINED                              xen_undefined
 
 #define XEN_EQ_P(Arg1, Arg2)                       s7_is_eq(Arg1, Arg2)
-#define XEN_EQV_P(Arg1, Arg2)                      s7_is_eqv(s7, Arg1, Arg2)
+#define XEN_EQV_P(Arg1, Arg2)                      s7_is_eqv(Arg1, Arg2)
 #define XEN_EQUAL_P(Arg1, Arg2)                    s7_is_equal(Arg1, Arg2)
 
 #define XEN_CONS_P(Arg)                            s7_cons_p(Arg)
@@ -2173,6 +2173,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 #define XEN_SYMBOL_P(Arg)                          s7_is_symbol(Arg)
 #define C_STRING_TO_XEN_SYMBOL(Arg)                s7_make_symbol(s7, Arg)
 #define XEN_DOCUMENTATION_SYMBOL                   C_STRING_TO_XEN_SYMBOL("documentation")
+#define XEN_SET_DOCUMENTATION(Var, Doc) 
 
 #define XEN_WRAP_C_POINTER(Arg)                    C_TO_XEN_ULONG((unsigned long)Arg)
 #define XEN_UNWRAP_C_POINTER(Arg)                  XEN_TO_C_ULONG(Arg)
@@ -2194,7 +2195,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 #define XEN_MAKE_KEYWORD(Arg)                      s7_make_keyword(s7, Arg)
 
 #define XEN_PROCEDURE_P(Arg)                       (s7_is_closure(Arg) || s7_is_function(Arg))
-#define XEN_PROCEDURE_SOURCE(Func)                 s7_procedure_source(Func)
+#define XEN_PROCEDURE_SOURCE(Func)                 s7_procedure_source(s7, Func)
 
 #define XEN_LOAD_FILE(File)                        s7_load(s7, File)
 #define XEN_LOAD_FILE_WITH_PATH(File)              s7_load_with_path(s7, File)
@@ -2441,13 +2442,11 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
   s7_define_function(s7, Name, Func, ReqArg, OptArg, RstArg, Doc)
 
 #define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
-  XEN_DEFINE_PROCEDURE(Get_Name, Get_Func, Get_Req, Get_Opt, 0, Get_Help); \
-  XEN_DEFINE_PROCEDURE("set-" Get_Name, Set_Func, Set_Req, Set_Opt, 0, Get_Help)
+  s7_define_variable(s7, Get_Name, s7_make_procedure_with_setter(s7, Get_Func, Set_Func, Get_Help))
 
 #define XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
-  XEN_DEFINE_PROCEDURE(Get_Name, Get_Func, Get_Req, Get_Opt, 0, Get_Help); \
-  xen_s7_ignore(Set_Func); \
-  XEN_DEFINE_PROCEDURE("set-" Get_Name, Rev_Func, Set_Req, Set_Opt, 0, Get_Help)
+  s7_define_variable(s7, Get_Name, s7_make_procedure_with_setter(s7, Get_Func, Rev_Func, Get_Help)); \
+  xen_s7_ignore(Set_Func)
 
 
 #define XEN_ARITY(Func)                                               s7_function_arity(s7, Func)

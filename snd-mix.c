@@ -3071,7 +3071,7 @@ static XEN g_read_mix_sample(XEN obj)
 }
 
 #if HAVE_S7
-static XEN s7_read_mix_sample(XEN obj, XEN args)
+static XEN s7_read_mix_sample(s7_scheme *sc, XEN obj, XEN args)
 {
   return(g_read_mix_sample(obj));
 }

@@ -134,10 +134,15 @@ static int run_safety = RUN_UNSAFE;
 #define GLOBAL_SET_OK 5
 #define SOURCE_OK 6
 
+#if (!HAVE_S7)
 #define XEN_CDDDR(a)                        XEN_CDR(XEN_CDR(XEN_CDR(a)))
+#endif
 #define XEN_CAAR(a)                         XEN_CAR(XEN_CAR(a))
 #define XEN_CDAR(a)                         XEN_CDR(XEN_CAR(a))
 #define XEN_CDADR(a)                        XEN_CDR(XEN_CADR(a))
+
+
+/* -------------------------------------------------------------------------------- */
 
 #if HAVE_GUILE
 #define XEN_APPLICABLE_SMOB_P(a)            (SCM_TYP7(a) == scm_tc7_smob)
@@ -147,11 +152,11 @@ static int run_safety = RUN_UNSAFE;
 #define INTEGER_TO_STRING_WITH_RADIX(a, b)  XEN_TO_C_STRING(scm_number_to_string(R_C_TO_XEN_INT(a), R_C_TO_XEN_INT(b)))
 #define DOUBLE_TO_STRING(a)                 XEN_TO_C_STRING(scm_number_to_string(C_TO_XEN_DOUBLE(a), XEN_UNDEFINED))
 #define DOUBLE_TO_STRING_WITH_RADIX(a, b)   XEN_TO_C_STRING(scm_number_to_string(C_TO_XEN_DOUBLE(a), R_C_TO_XEN_INT(b)))
-#define XEN_LIST_REF_WRAPPED(a, b)          scm_list_ref(a, b)
 #define XEN_WALKER(Obj)                     scm_object_property(Obj, walk_sym)
 #define XEN_SET_WALKER(Obj, Val)            scm_set_object_property_x(Obj, walk_sym, Val)
 #define XEN_PROCEDURE_WITH_SETTER_P(Proc)   scm_procedure_with_setter_p(Proc)
 #endif
+
 
 #if HAVE_GAUCHE
 #define XEN_APPLICABLE_SMOB_P(a)            true
@@ -159,15 +164,13 @@ static int run_safety = RUN_UNSAFE;
 #define INTEGER_TO_STRING_WITH_RADIX(a, b)  XEN_TO_C_STRING(Scm_NumberToString(R_C_TO_XEN_INT(a), b, false))
 #define DOUBLE_TO_STRING(a)                 XEN_TO_C_STRING(Scm_NumberToString(C_TO_XEN_DOUBLE(a), 10, false))
 #define DOUBLE_TO_STRING_WITH_RADIX(a, b)   XEN_TO_C_STRING(Scm_NumberToString(C_TO_XEN_DOUBLE(a), b, false))
-#define XEN_LIST_REF_WRAPPED(a, b)          Scm_ListRef(a, XEN_TO_C_INT(b), false)
-
 
 /* obj is a symbol, I think */
 
 #define XEN_WALKER(Obj)                     gauche_walker(Obj)
 #define XEN_SET_WALKER(Obj, Val)            gauche_set_walker(Obj, Val)
 
-/* Prop is always walk_sym, Val is always ulong result of make_walker */
+/* Proc is always walk_sym, Val is always ulong result of make_walker */
 
 #define XEN_PROCEDURE_WITH_SETTER_P(Proc)   C_TO_XEN_BOOLEAN(Scm_HasSetter(Proc))
 
@@ -191,14 +194,36 @@ static XEN gauche_set_walker(XEN func, XEN walker)
 #endif
 
 
+#if HAVE_S7
+
+#define XEN_APPLICABLE_SMOB_P(a)            true
+/* I don't think this is a problem in S7 because s7_is_procedure does not return true for applicable objects */
+#define XEN_PROCEDURE_WITH_SETTER_P(Proc)   s7_is_procedure_with_setter(Proc)
+
+#define INTEGER_TO_STRING(a)                s7_number_to_string(s7, R_C_TO_XEN_INT(a), 10)
+#define INTEGER_TO_STRING_WITH_RADIX(a, b)  s7_number_to_string(s7, R_C_TO_XEN_INT(a), b)
+#define DOUBLE_TO_STRING(a)                 s7_number_to_string(s7, C_TO_XEN_DOUBLE(a), 10)
+#define DOUBLE_TO_STRING_WITH_RADIX(a, b)   s7_number_to_string(s7, C_TO_XEN_DOUBLE(a), b)
+
+static XEN walker_hash_table;
+#define XEN_WALKER(Obj)                     s7_hash_table_ref(s7, walker_hash_table, s7_symbol_name(Obj))
+#define XEN_SET_WALKER(Obj, Val)            s7_hash_table_set(s7, walker_hash_table, s7_symbol_name(Obj), Val)
+
+#endif
+
+/* -------------------------------------------------------------------------------- */
+
+
 #define UNLIMITED_ARGS -1
 
-#if (SCM_DEBUG_TYPING_STRICTNESS != 2)
+#if ((SCM_DEBUG_TYPING_STRICTNESS != 2) && (!HAVE_S7))
   static XEN walk_sym = XEN_FALSE;
 #else
   static XEN walk_sym;
 #endif
 
+
+/* -------------------------------------------------------------------------------- */
 
 /* find and set (Scheme) variable values */
 
@@ -373,6 +398,32 @@ static void symbol_set_value(XEN code, XEN sym, XEN new_val)
   /* fprintf(stderr, "can't find %s", XEN_AS_STRING(sym)); */
 }
 #endif
+
+
+#if HAVE_S7
+static void xen_symbol_name_set_value(const char *a, XEN b)
+{
+  XEN var = XEN_FALSE;
+  var = XEN_NAME_AS_C_STRING_TO_VARIABLE(a);
+  if (!(XEN_FALSE_P(var)))
+    XEN_VARIABLE_SET(var, b);
+}
+
+static XEN symbol_to_value(XEN code, XEN sym, bool *local)
+{
+  /* local_var here is a check against GLOBAL_SET_OK -- not a big deal! */
+  (*local) = false; /* just a guess... */
+  return(s7_symbol_value(s7, sym));
+}
+
+static void symbol_set_value(XEN code, XEN sym, XEN new_val)
+{
+  s7_symbol_set_value(s7, sym, new_val);
+}
+#endif
+
+
+/* -------------------------------------------------------------------------------- */
 
 
 enum {R_UNSPECIFIED, R_INT, R_FLOAT, R_BOOL, R_CHAR, R_STRING, R_LIST,
@@ -9225,6 +9276,8 @@ static xen_value *splice_in_method(ptree *prog, xen_value **args, int num_args, 
 	{
 	  if (use_getter == USE_GET_METHOD)
 	    result = splice_in_function_body(prog, XEN_CADR(pair), args, num_args, NULL);
+
+	  /* TODO: s7 can also splice in here */
 #if HAVE_GUILE
 	  else
 	    {
@@ -11571,7 +11624,7 @@ static XEN xen_values_to_list(ptree *pt, int *args)
 }
 
 
-#if (SCM_DEBUG_TYPING_STRICTNESS != 2)
+#if ((SCM_DEBUG_TYPING_STRICTNESS != 2) && (!HAVE_S7))
   static XEN format_func = XEN_FALSE;
 #else
   static XEN format_func;
@@ -11716,7 +11769,7 @@ static xen_value *clm_print_1(ptree *prog, xen_value **args, int num_args)
 {
   if (!clm_print_walk_property_set)
     {
-#if HAVE_GUILE
+#if HAVE_GUILE || HAVE_S7
       XEN_SET_WALKER(XEN_NAME_AS_C_STRING_TO_VARIABLE("clm-print"),
 		     C_TO_XEN_ULONG(make_walker(clm_print_1, NULL, NULL, 1, UNLIMITED_ARGS, R_STRING, false, 1, -R_XEN)));
 #else
@@ -11735,7 +11788,7 @@ static xen_value *set_up_format(ptree *prog, xen_value **args, int num_args, boo
 {
   XEN format_var = XEN_FALSE;
   format_var = (XEN)XEN_NAME_AS_C_STRING_TO_VARIABLE("format");
-#if HAVE_GUILE
+#if HAVE_GUILE || HAVE_S7
   if ((!(XEN_FALSE_P(format_var))) &&
       (XEN_PROCEDURE_P(XEN_VARIABLE_REF(format_var))))
 #else
@@ -11756,7 +11809,7 @@ static xen_value *set_up_format(ptree *prog, xen_value **args, int num_args, boo
 	   *       ==22922==    by 0x5A2195: set_up_format (snd-run.c:10102)
 	   *   surely valgrind is confused?
 	   */
-#if HAVE_GUILE
+#if HAVE_GUILE || HAVE_S7
 	  XEN_SET_WALKER(format_var, 
 			 C_TO_XEN_ULONG(make_walker(format_1, NULL, NULL, 1, UNLIMITED_ARGS, R_STRING, false, 1, -R_XEN)));
 #else
@@ -11767,7 +11820,7 @@ static xen_value *set_up_format(ptree *prog, xen_value **args, int num_args, boo
 	  return(run_warn("format not implemented"));
 #endif
 	}
-#if HAVE_GUILE
+#if HAVE_GUILE || HAVE_S7
       format_func = XEN_VARIABLE_REF(format_var);
 #else
       format_func = XEN_VARIABLE_REF("format");
@@ -11793,7 +11846,7 @@ static xen_value *set_up_format(ptree *prog, xen_value **args, int num_args, boo
 
 /* -------- CLM make functions -------- */
 
-#if HAVE_GUILE
+#if HAVE_GUILE || HAVE_S7
 #define CLM_MAKE_FUNC(Name) \
 static void make_ ## Name ## _0(int *args, ptree *pt) \
 { \
@@ -11884,7 +11937,7 @@ CLM_MAKE_FUNC(polywave)
 static void make_fft_window_0(int *args, ptree *pt)
 {
   XEN res;
-#if HAVE_GUILE
+#if HAVE_GUILE || HAVE_S7
   res = XEN_APPLY(XEN_VARIABLE_REF(XEN_NAME_AS_C_STRING_TO_VARIABLE(S_make_fft_window)), xen_values_to_list(pt, args), S_make_fft_window);
 #else
   res = XEN_APPLY(XEN_VARIABLE_REF(S_make_fft_window), xen_values_to_list(pt, args), S_make_fft_window);
@@ -12502,7 +12555,12 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
       if ((v == NULL) && 
 	  (current_optimization >= SOURCE_OK) &&
 	  (XEN_PROCEDURE_P(rtnval)) &&
-	  (XEN_FALSE_P(XEN_PROCEDURE_WITH_SETTER_P(rtnval))))
+#if HAVE_S7
+	  (XEN_PROCEDURE_WITH_SETTER_P(rtnval))
+#else
+	  (XEN_FALSE_P(XEN_PROCEDURE_WITH_SETTER_P(rtnval)))
+#endif
+	  )
 	{
 	  v = splice_in_function_body(prog, rtnval, args, num_args, funcname);
 	  if (v) 
@@ -12630,7 +12688,7 @@ static struct ptree *form_to_ptree_1(XEN code, int decls, int *types)
   prog->lambda_args = decls;
   prog->lambda_arg_types = types;
 
-#if HAVE_GUILE
+#if HAVE_GUILE || HAVE_S7
   if ((XEN_PROCEDURE_P(XEN_CADR(code))) && 
       (!(XEN_APPLICABLE_SMOB_P(XEN_CADR(code))))) /* applicable smobs cause confusion here */
     prog->code = XEN_CADR(code);                  /* need env before starting to walk the code */
@@ -13539,7 +13597,7 @@ static XEN g_run_eval(XEN code, XEN arg, XEN arg1, XEN arg2)
       return(eval_ptree_to_xen(pt));
     }
   if (pt) free_ptree(pt);
-#if HAVE_GUILE
+#if HAVE_GUILE || HAVE_S7
   XEN_ERROR(XEN_ERROR_TYPE("cannot-parse"), code);
 #endif
   return(XEN_FALSE);
@@ -13556,7 +13614,7 @@ to Scheme and is equivalent to (thunk)."
   ptree *pt = NULL;
   code = XEN_CADR(proc_and_code);
 
-#if HAVE_GUILE
+#if HAVE_GUILE || HAVE_S7
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code) && (XEN_REQUIRED_ARGS_OK(code, 0)), code, XEN_ONLY_ARG, S_run, "a thunk");
   pt = form_to_ptree(proc_and_code);
 #else
@@ -13593,7 +13651,7 @@ static XEN g_optimization(void) {return(C_TO_XEN_INT(optimization(ss)));}
 
 static XEN g_set_optimization(XEN val) 
 {
-#if HAVE_GUILE
+#if HAVE_GUILE || HAVE_S7
   #define H_optimization "(" S_optimization "): the current 'run' optimization level (default 0 = off, max is 6)"
   #define MAX_OPTIMIZATION 6
 #else
@@ -13658,20 +13716,36 @@ XEN_ARGIFY_4(g_run_eval_w, g_run_eval)
 void g_init_run(void)
 {
 #if WITH_RUN
+#if (!HAVE_S7)
+
   XEN_DEFINE_PROCEDURE("run-internal",  g_run_w,           1, 0, 0, "run macro testing...");
   XEN_EVAL_C_STRING("(defmacro " S_run " (thunk) `(run-internal (list ',thunk ,thunk)))");
   XEN_SET_DOCUMENTATION(S_run, H_run);
   XEN_DEFINE_PROCEDURE("run-eval",      g_run_eval_w,      1, 3, 0, "run macro testing...");
+
+#else
+
+  XEN_DEFINE_PROCEDURE("run",           g_run_w,           1, 0, 0, "run macro testing...");
+  XEN_DEFINE_PROCEDURE("run-eval",      g_run_eval_w,      1, 3, 0, "run macro testing...");
+
+#endif
+
   XEN_DEFINE_PROCEDURE(S_add_clm_field, g_add_clm_field_w, 4, 0, 0, H_add_clm_field);
   XEN_DEFINE_PROCEDURE(S_show_ptree,    g_show_ptree_w,    1, 0, 0, H_show_ptree);
 		       
   XEN_YES_WE_HAVE("run");
 
 #if HAVE_GAUCHE
-  walker_hash_table = Scm_MakeHashTableSimple(SCM_HASH_EQ, 1024);
+  walker_hash_table = Scm_MakeHashTableSimple(SCM_HASH_EQ, 1031);
   xen_gauche_permanent_object(walker_hash_table);
 #endif
-#else
+
+#if HAVE_S7
+  walker_hash_table = s7_make_hash_table(s7, 1031);
+  s7_gc_protect(s7, walker_hash_table);
+#endif
+
+#else /* else not with run */
 #if HAVE_SCHEME
   XEN_EVAL_C_STRING("(defmacro " S_run " (thunk) `(,thunk))");
 #endif
