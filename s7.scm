@@ -15,22 +15,11 @@
 ;	(stacktrace)
 	(newline)
 	))
-  ;(quit)
+  (quit)
   'error)
 
-;(define (error . args) 'error)
+(define (error . args) 'error)
 
-
-;;; init for S7 from:
-
-					;    Initialization file for TinySCHEME 1.39
-
-					; Per R5RS, up to four deep compositions should be defined
-(define (caar x) (car (car x)))
-;(define (cadr x) (car (cdr x)))
-(define (cdar x) (cdr (car x)))
-(define (cddr x) (cdr (cdr x)))
-(define (caaar x) (car (car (car x))))
 (define (caadr x) (car (car (cdr x))))
 (define (cadar x) (car (cdr (car x))))
 (define (caddr x) (car (cdr (cdr x))))
@@ -85,12 +74,10 @@
 (macro (when form)
   `(if ,(cadr form) (begin ,@(cddr form))))
 
-(define (log10 n) (/ (log n) (log 10)))
+;(define (log10 n) (/ (log n) (log 10)))
 
 (define (1+ x) (+ x 1))
 (define (1- x) (- x 1))
-
-(define call/cc call-with-current-continuation)
 
 (define (string . charlist)
   (list->string charlist))
@@ -118,54 +105,6 @@
     (if (= n -1)
 	l
 	(loop (1- n) (cons (string-ref s n) l)))))
-
-(define (string-copy str)
-  (string-append str))
-
-(define (char-cmp? cmp a b)
-  (cmp (char->integer a) (char->integer b)))
-
-(define (char-ci-cmp? cmp a b)
-  (cmp (char->integer (char-downcase a)) (char->integer (char-downcase b))))
-
-(define (char=? a b) (char-cmp? = a b))
-(define (char<? a b) (char-cmp? < a b))
-(define (char>? a b) (char-cmp? > a b))
-(define (char<=? a b) (char-cmp? <= a b))
-(define (char>=? a b) (char-cmp? >= a b))
-
-(define (char-ci=? a b) (char-ci-cmp? = a b))
-(define (char-ci<? a b) (char-ci-cmp? < a b))
-(define (char-ci>? a b) (char-ci-cmp? > a b))
-(define (char-ci<=? a b) (char-ci-cmp? <= a b))
-(define (char-ci>=? a b) (char-ci-cmp? >= a b))
-
-
-(define (string-cmp? chcmp cmp a b)
-  (let ((na (string-length a)) (nb (string-length b)))
-    (let loop ((i 0))
-      (cond
-       ((= i na)
-	(if (= i nb) (cmp 0 0) (cmp 0 1)))
-       ((= i nb)
-	(cmp 1 0))
-       ((chcmp = (string-ref a i) (string-ref b i))
-	(loop (1+ i)))
-       (else
-	(chcmp cmp (string-ref a i) (string-ref b i)))))))
-
-
-(define (string=? a b) (string-cmp? char-cmp? = a b))
-(define (string<? a b) (string-cmp? char-cmp? < a b))
-(define (string>? a b) (string-cmp? char-cmp? > a b))
-(define (string<=? a b) (string-cmp? char-cmp? <= a b))
-(define (string>=? a b) (string-cmp? char-cmp? >= a b))
-
-(define (string-ci=? a b) (string-cmp? char-ci-cmp? = a b))
-(define (string-ci<? a b) (string-cmp? char-ci-cmp? < a b))
-(define (string-ci>? a b) (string-cmp? char-ci-cmp? > a b))
-(define (string-ci<=? a b) (string-cmp? char-ci-cmp? <= a b))
-(define (string-ci>=? a b) (string-cmp? char-ci-cmp? >= a b))
 
 (define (list . x) x)
 
@@ -197,6 +136,7 @@
 		 (cdrs (cdr unz)))
 	    (cons (apply proc cars) (apply map (cons proc cdrs)))))))
 
+
 (define (for-each proc . lists)
   (if (null? lists)
       (apply proc)
@@ -207,25 +147,11 @@
 		 (cdrs (cdr unz)))
 	    (apply proc cars) (apply map (cons proc cdrs))))))
 
+
+
 (define (head stream) (car stream))
 
 (define (tail stream) (force (cdr stream)))
-
-(define (list->vector x)
-  (apply vector x))
-
-(define (vector-fill! v e)
-  (let ((n (vector-length v)))
-    (let loop ((i 0))
-      (if (= i n)
-	  v
-	  (begin (vector-set! v i e) (loop (1+ i)))))))
-
-(define (vector->list v)
-  (let loop ((n (1- (vector-length v))) (l '()))
-    (if (= n -1)
-	l
-	(loop (1- n) (cons (vector-ref v n) l)))))
 
 
 ;; The following quasiquote macro is due to Eric S. Tiedemann.
@@ -278,7 +204,9 @@
 
 			  ((and (pair? (car form))
 				(eq? (car (car form)) 'unquote-splicing))
-			   (mappend form (car (cdr (car form)))
+
+			   (mappend form 
+				    (car (cdr (car form)))
 				    (foo level (cdr form))))
 
 			  (#t (mcons form (foo level (car form))
@@ -319,35 +247,6 @@
   (error "unquote-splicing not inside quasiquote"))
 |#
 
-					; DEFINE-MACRO Contributed by Andy Gaynor
-(macro (define-macro dform)
-  (if (symbol? (cadr dform))            
-      `(macro ,@(cdr dform))            
-      (let ((form (gensym)))            ; rename args of (define-macro (name . args) body)
-	`(macro (,(caadr dform) ,form)  ; new initial (name args) list with the renamed args and original name
-	   (apply 
-	    (lambda ,(cdadr dform)      ; (lambda (orig args...)
-	      ,@(cddr dform))           ; body 
-	    (cdr ,form))))))            ; apply's arg list with the args renamed
-
-#|
-(quasiquote 
- (macro ((unquote (caadr dform)) 
-	 (unquote form))
-   (apply 
-    (lambda (unquote (cdadr dform)) 
-      (unquote-splicing (cddr dform)))
-    (cdr (unquote form)))))
-|#
-
-
-;;;;; atom? and equal? written by a.k
-
-#|
-;;;; atom?
-(define (atom? x)
-  (not (pair? x)))
-|#
 
 ;;;; (do ((var init inc) ...) (endtest result ...) body ...)
 ;;
@@ -394,61 +293,6 @@
 (define (member obj lst)
   (generic-member equal? obj lst))
 
-;;;; generic-assoc
-(define (generic-assoc cmp obj alst)
-  (cond
-   ((null? alst) #f)
-   ((cmp obj (caar alst)) (car alst))
-   (else (generic-assoc cmp obj (cdr alst)))))
-
-(define (assq obj alst)
-  (generic-assoc eq? obj alst))
-(define (assv obj alst)
-  (generic-assoc eqv? obj alst))
-(define (assoc obj alst)
-  (generic-assoc equal? obj alst))
-
-(define (acons x y z) (cons (cons x y) z))
-
-
-#|
-;;;; Utility to ease macro creation
-(define (macroexpand form)
-  ((eval (function-source (eval (car form)))) form))
-
-
-
-;;;; Handy for imperative programs
-;;;; Used as: (define-with-return (foo x y) .... (return z) ...)
-
-(macro (define-with-return form)
-  `(define ,(cadr form)
-     (call-with-exit
-      (lambda (return) 
-	,@(cddr form)))))
-|#
-
-
-#!
-;;;;; Definition of MAKE-ENVIRONMENT, to be used with two-argument EVAL
-
-(macro (make-environment form)
-  `(apply (lambda ()
-	    ,@(cdr form)
-	    (current-environment))))
-
-(define-macro (eval-polymorphic x . envl)
-  (display envl)
-  (let* ((env (if (null? envl) (current-environment) (eval (car envl))))
-         (xval (eval x env)))
-    (if (closure? xval)
-	(make-closure (procedure-source xval) env)
-	xval)))
-!#
-
-
-;;;;; I/O
-
 (define (call-with-input-file filename func)
   (let ((inport (open-input-file filename)))
     (and (input-port? inport)
@@ -462,8 +306,6 @@
 	 (let ((res (func outport)))
 	   (close-output-port outport)
 	   res))))
-
-
 
 (define (with-input-from-file s p)
   (let ((inport (open-input-file s)))
@@ -488,21 +330,11 @@
 	    res)))))
 
 
-
-
-;;; --------------------------------------------------------------------------------
-
-
-
-(define *features* '())
-
 (define (provide sym)
   (set! *features* (cons sym *features*)))
 
 (define (provided? sym)
   (member sym *features*))
-
-(define *load-path* '())
 
 (define (call-with-output-string t)
   (let* ((p (open-output-string))
@@ -517,23 +349,6 @@
     (close-input-port p)
     r))
 
-
-;(defmacro hi (a b) `(+ ,a ,b))
-
-#|
-(macro (defmacro-1 dform)
-  (let ((form (gensym)))            
-    `(macro (,(cadr dform) ,form)   
-       (apply
-	(lambda ,(caddr dform)      
-	  ,@(cdddr dform))          
-	(cdr ,form)))))             
-|#
-
-					;(define-syntax defmacro
-					;  (syntax-rules ()
-					;    ((_ name params . body) (define-macro (name . params) . body)))))
-
 (define (with-output-to-string thunk)
   (let* ((output-port (current-output-port))
 	 (string-port (open-output-string)))
@@ -541,8 +356,6 @@
     (let ((result (get-output-string string-port)))
       (close-output-port string-port)
       result)))
-
-
 
 (define (catch tag body tag-handler)
   (call-with-exit
@@ -553,31 +366,6 @@
 	(body)))))
 
 ; (let ((tag (catch #t (lambda () (display "before") (error 'oops) (display "after")) (lambda args (display "in handler") 'error)))) tag)
-
-#|
-;;; the standard format won't work currently -- string port troubles
-(define (format dest str . args)
-  (let ((len (string-length str))
-	(tilde #f)
-	(result ""))
-    (do ((i 0 (1+ i)))
-	((= i len))
-      (let ((c (string-ref str i)))
-	(if (char=? c #\~)
-	    (set! tilde #t)
-	    (if (not tilde)
-		(set! result (string-append result (string c)))
-		(begin
-		  (set! tilde #f)
-		  (if (member c (list #\A #\D #\F))
-		      (begin
-			(set! result (string-append result (object->string (car args))))
-			(set! args (cdr args)))
-		      (if (char=? c #\%)
-			  (set! result (string-append result (string #\newline)))
-			  (display (string-append ";unknown format directive: ~" (string c))))))))))
-    result))
-|#
 
 (defmacro define+ (name value)
   `(define ,name ,value))
