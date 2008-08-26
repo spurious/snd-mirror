@@ -264,94 +264,94 @@ int in_user_keymap(int key, int state, bool cx_extended)
 
 
 #if HAVE_S7
-  #define xen_false 0
+  #define kbd_false 0
 #else
-  #define xen_false XEN_FALSE
+  #define kbd_false XEN_FALSE
 #endif
 
 #define NUM_BUILT_IN_KEY_BINDINGS 76
 
 #if (SCM_DEBUG_TYPING_STRICTNESS != 2)
 static key_entry built_in_key_bindings[NUM_BUILT_IN_KEY_BINDINGS] = {
-  {snd_K_Down,    0, 0, xen_false, false, "zoom out",                                                    NULL, -1},
-  {snd_K_Up,      0, 0, xen_false, false, "zoom in",                                                     NULL, -1},
-  {snd_K_Left,    0, 0, xen_false, false, "move window left",                                            NULL, -1},
-  {snd_K_Right,   0, 0, xen_false, false, "move window right",                                           NULL, -1},
-  {snd_K_less,    0, 0, xen_false, false, "move cursor to sample 0",                                     NULL, -1},
-  {snd_K_greater, 0, 0, xen_false, false, "move cursor to last sample",                                  NULL, -1},
+  {snd_K_Down,    0, 0, kbd_false, false, "zoom out",                                                    NULL, -1},
+  {snd_K_Up,      0, 0, kbd_false, false, "zoom in",                                                     NULL, -1},
+  {snd_K_Left,    0, 0, kbd_false, false, "move window left",                                            NULL, -1},
+  {snd_K_Right,   0, 0, kbd_false, false, "move window right",                                           NULL, -1},
+  {snd_K_less,    0, 0, kbd_false, false, "move cursor to sample 0",                                     NULL, -1},
+  {snd_K_greater, 0, 0, kbd_false, false, "move cursor to last sample",                                  NULL, -1},
 
-  {snd_K_less,       snd_ControlMask, 0, xen_false, false, "move cursor to sample 0",                    NULL, -1},
-  {snd_K_greater,    snd_ControlMask, 0, xen_false, false, "move cursor to last sample",                 NULL, -1},
-  {snd_K_a,          snd_ControlMask, 0, xen_false, false, "move cursor to window start",                NULL, -1},
-  {snd_K_b,          snd_ControlMask, 0, xen_false, false, "move cursor back one sample",                NULL, -1},
-  {snd_K_d,          snd_ControlMask, 0, xen_false, false, "delete sample at cursor",                    NULL, -1},
-  {snd_K_e,          snd_ControlMask, 0, xen_false, false, "move cursor to window end",                  NULL, -1},
-  {snd_K_f,          snd_ControlMask, 0, xen_false, false, "move cursor ahead one sample",               NULL, -1},
-  {snd_K_g,          snd_ControlMask, 0, xen_false, false, "abort current command",                      NULL, -1},
-  {snd_K_h,          snd_ControlMask, 0, xen_false, false, "delete previous sample",                     NULL, -1},
-  {snd_K_i,          snd_ControlMask, 0, xen_false, false, "display cursor info",                        NULL, -1},
-  {snd_K_j,          snd_ControlMask, 0, xen_false, false, "goto mark",                                  NULL, -1},
-  {snd_K_k,          snd_ControlMask, 0, xen_false, false, "delete one line's worth of samples",         NULL, -1},
-  {snd_K_l,          snd_ControlMask, 0, xen_false, false, "position window so cursor is in the middle", NULL, -1},
-  {snd_K_m,          snd_ControlMask, 0, xen_false, false, "place (or remove) mark at cursor location",  NULL, -1},
-  {snd_K_n,          snd_ControlMask, 0, xen_false, false, "move cursor ahead one 'line'",               NULL, -1},
-  {snd_K_o,          snd_ControlMask, 0, xen_false, false, "insert one zero sample at cursor",           NULL, -1},
-  {snd_K_p,          snd_ControlMask, 0, xen_false, false, "move cursor back one 'line'",                NULL, -1},
-  {snd_K_q,          snd_ControlMask, 0, xen_false, false, "play current channel starting at cursor",    "play-channel-from-cursor", -1},
-  {snd_K_r,          snd_ControlMask, 0, xen_false, false, "search backwards",                           NULL, -1},
-  {snd_K_s,          snd_ControlMask, 0, xen_false, false, "search forwards",                            NULL, -1},
-  {snd_K_t,          snd_ControlMask, 0, xen_false, false, "stop playing",                               NULL, -1},
-  {snd_K_u,          snd_ControlMask, 0, xen_false, false, "start arg count definition.",                NULL, -1},
-  {snd_K_v,          snd_ControlMask, 0, xen_false, false, "move cursor to mid-window",                  NULL, -1},
-  {snd_K_w,          snd_ControlMask, 0, xen_false, false, "delete selection",                           "delete-selection", -1},
-  {snd_K_y,          snd_ControlMask, 0, xen_false, false, "insert selection.",                          "insert-selection", -1},
-  {snd_K_z,          snd_ControlMask, 0, xen_false, false, "set sample at cursor to 0.0",                NULL, -1},
-  {snd_K_underscore, snd_ControlMask, 0, xen_false, false, "undo",                                       NULL, -1},
-  {snd_K_space,      snd_ControlMask, 0, xen_false, false, "start selection definition",                 NULL, -1},
-  {snd_K_g,          snd_ControlMask | snd_MetaMask, 0, xen_false, false, "clear listener",              NULL, -1},
-  {snd_K_less,       snd_MetaMask,    0, xen_false, false, "move cursor to sample 0",                    NULL, -1},
-  {snd_K_greater,    snd_MetaMask,    0, xen_false, false, "move cursor to last sample",                 NULL, -1},
+  {snd_K_less,       snd_ControlMask, 0, kbd_false, false, "move cursor to sample 0",                    NULL, -1},
+  {snd_K_greater,    snd_ControlMask, 0, kbd_false, false, "move cursor to last sample",                 NULL, -1},
+  {snd_K_a,          snd_ControlMask, 0, kbd_false, false, "move cursor to window start",                NULL, -1},
+  {snd_K_b,          snd_ControlMask, 0, kbd_false, false, "move cursor back one sample",                NULL, -1},
+  {snd_K_d,          snd_ControlMask, 0, kbd_false, false, "delete sample at cursor",                    NULL, -1},
+  {snd_K_e,          snd_ControlMask, 0, kbd_false, false, "move cursor to window end",                  NULL, -1},
+  {snd_K_f,          snd_ControlMask, 0, kbd_false, false, "move cursor ahead one sample",               NULL, -1},
+  {snd_K_g,          snd_ControlMask, 0, kbd_false, false, "abort current command",                      NULL, -1},
+  {snd_K_h,          snd_ControlMask, 0, kbd_false, false, "delete previous sample",                     NULL, -1},
+  {snd_K_i,          snd_ControlMask, 0, kbd_false, false, "display cursor info",                        NULL, -1},
+  {snd_K_j,          snd_ControlMask, 0, kbd_false, false, "goto mark",                                  NULL, -1},
+  {snd_K_k,          snd_ControlMask, 0, kbd_false, false, "delete one line's worth of samples",         NULL, -1},
+  {snd_K_l,          snd_ControlMask, 0, kbd_false, false, "position window so cursor is in the middle", NULL, -1},
+  {snd_K_m,          snd_ControlMask, 0, kbd_false, false, "place (or remove) mark at cursor location",  NULL, -1},
+  {snd_K_n,          snd_ControlMask, 0, kbd_false, false, "move cursor ahead one 'line'",               NULL, -1},
+  {snd_K_o,          snd_ControlMask, 0, kbd_false, false, "insert one zero sample at cursor",           NULL, -1},
+  {snd_K_p,          snd_ControlMask, 0, kbd_false, false, "move cursor back one 'line'",                NULL, -1},
+  {snd_K_q,          snd_ControlMask, 0, kbd_false, false, "play current channel starting at cursor",    "play-channel-from-cursor", -1},
+  {snd_K_r,          snd_ControlMask, 0, kbd_false, false, "search backwards",                           NULL, -1},
+  {snd_K_s,          snd_ControlMask, 0, kbd_false, false, "search forwards",                            NULL, -1},
+  {snd_K_t,          snd_ControlMask, 0, kbd_false, false, "stop playing",                               NULL, -1},
+  {snd_K_u,          snd_ControlMask, 0, kbd_false, false, "start arg count definition.",                NULL, -1},
+  {snd_K_v,          snd_ControlMask, 0, kbd_false, false, "move cursor to mid-window",                  NULL, -1},
+  {snd_K_w,          snd_ControlMask, 0, kbd_false, false, "delete selection",                           "delete-selection", -1},
+  {snd_K_y,          snd_ControlMask, 0, kbd_false, false, "insert selection.",                          "insert-selection", -1},
+  {snd_K_z,          snd_ControlMask, 0, kbd_false, false, "set sample at cursor to 0.0",                NULL, -1},
+  {snd_K_underscore, snd_ControlMask, 0, kbd_false, false, "undo",                                       NULL, -1},
+  {snd_K_space,      snd_ControlMask, 0, kbd_false, false, "start selection definition",                 NULL, -1},
+  {snd_K_g,          snd_ControlMask | snd_MetaMask, 0, kbd_false, false, "clear listener",              NULL, -1},
+  {snd_K_less,       snd_MetaMask,    0, kbd_false, false, "move cursor to sample 0",                    NULL, -1},
+  {snd_K_greater,    snd_MetaMask,    0, kbd_false, false, "move cursor to last sample",                 NULL, -1},
 
-  {snd_K_a,          0, 0, xen_false, true, "apply envelope to selection",                               NULL, -1},
-  {snd_K_b,          0, 0, xen_false, true, "position window so cursor is on left margin",               NULL, -1},
-  {snd_K_c,          0, 0, xen_false, true, "define selection from cursor to nth mark",                  NULL, -1},
-  {snd_K_d,          0, 0, xen_false, true, "set temp dir name",                                         NULL, -1},
-  {snd_K_e,          0, 0, xen_false, true, "execute keyboard macro",                                    NULL, -1},
-  {snd_K_f,          0, 0, xen_false, true, "position window so cursor is on right margin",              NULL, -1},
-  {snd_K_i,          0, 0, xen_false, true, "insert region",                                             "insert-selection", -1},
-  {snd_K_j,          0, 0, xen_false, true, "goto named mark",                                           NULL, -1},
-  {snd_K_k,          0, 0, xen_false, true, "close file",                                                NULL, -1},
-  {snd_K_l,          0, 0, xen_false, true, "position selection in mid-view",                            NULL, -1},
-  {snd_K_o,          0, 0, xen_false, true, "move to next or previous graph",                            NULL, -1},
-  {snd_K_p,          0, 0, xen_false, true, "play selection or region n",                                "play-selection", -1},
-  {snd_K_q,          0, 0, xen_false, true, "mix in selection",                                          "mix-selection", -1},
-  {snd_K_r,          0, 0, xen_false, true, "redo",                                                      NULL, -1},
-  {snd_K_u,          0, 0, xen_false, true, "undo",                                                      NULL, -1},
-  {snd_K_v,          0, 0, xen_false, true, "position window over selection",                            NULL, -1},
-  {snd_K_w,          0, 0, xen_false, true, "save selection as file",                                    NULL, -1},
-  {snd_K_z,          0, 0, xen_false, true, "smooth selection",                                          NULL, -1},
-  {snd_K_slash,      0, 0, xen_false, true, "place named mark",                                          NULL, -1},
-  {snd_K_openparen,  0, 0, xen_false, true, "begin keyboard macro definition",                           NULL, -1},
-  {snd_K_closeparen, 0, 0, xen_false, true, "end keyboard macro definition",                             NULL, -1},
+  {snd_K_a,          0, 0, kbd_false, true, "apply envelope to selection",                               NULL, -1},
+  {snd_K_b,          0, 0, kbd_false, true, "position window so cursor is on left margin",               NULL, -1},
+  {snd_K_c,          0, 0, kbd_false, true, "define selection from cursor to nth mark",                  NULL, -1},
+  {snd_K_d,          0, 0, kbd_false, true, "set temp dir name",                                         NULL, -1},
+  {snd_K_e,          0, 0, kbd_false, true, "execute keyboard macro",                                    NULL, -1},
+  {snd_K_f,          0, 0, kbd_false, true, "position window so cursor is on right margin",              NULL, -1},
+  {snd_K_i,          0, 0, kbd_false, true, "insert region",                                             "insert-selection", -1},
+  {snd_K_j,          0, 0, kbd_false, true, "goto named mark",                                           NULL, -1},
+  {snd_K_k,          0, 0, kbd_false, true, "close file",                                                NULL, -1},
+  {snd_K_l,          0, 0, kbd_false, true, "position selection in mid-view",                            NULL, -1},
+  {snd_K_o,          0, 0, kbd_false, true, "move to next or previous graph",                            NULL, -1},
+  {snd_K_p,          0, 0, kbd_false, true, "play selection or region n",                                "play-selection", -1},
+  {snd_K_q,          0, 0, kbd_false, true, "mix in selection",                                          "mix-selection", -1},
+  {snd_K_r,          0, 0, kbd_false, true, "redo",                                                      NULL, -1},
+  {snd_K_u,          0, 0, kbd_false, true, "undo",                                                      NULL, -1},
+  {snd_K_v,          0, 0, kbd_false, true, "position window over selection",                            NULL, -1},
+  {snd_K_w,          0, 0, kbd_false, true, "save selection as file",                                    NULL, -1},
+  {snd_K_z,          0, 0, kbd_false, true, "smooth selection",                                          NULL, -1},
+  {snd_K_slash,      0, 0, kbd_false, true, "place named mark",                                          NULL, -1},
+  {snd_K_openparen,  0, 0, kbd_false, true, "begin keyboard macro definition",                           NULL, -1},
+  {snd_K_closeparen, 0, 0, kbd_false, true, "end keyboard macro definition",                             NULL, -1},
 
-  {snd_K_a, snd_ControlMask, 0, xen_false, true, "apply envelope",                                       NULL, -1},
-  {snd_K_b, snd_ControlMask, 0, xen_false, true, "set x window bounds (preceded by 1 arg)",              NULL, -1},
-  {snd_K_c, snd_ControlMask, 0, xen_false, true, "hide control panel",                                   NULL, -1},
-  {snd_K_d, snd_ControlMask, 0, xen_false, true, "print",                                                NULL, -1},
-  {snd_K_e, snd_ControlMask, 0, xen_false, true, "give last keyboard macro a name",                      NULL, -1},
-  {snd_K_f, snd_ControlMask, 0, xen_false, true, "open file",                                            NULL, -1},
-  {snd_K_g, snd_ControlMask, 0, xen_false, true, "abort command",                                        NULL, -1},
-  {snd_K_i, snd_ControlMask, 0, xen_false, true, "insert file",                                          NULL, -1},
-  {snd_K_m, snd_ControlMask, 0, xen_false, true, "add named mark",                                       NULL, -1},
-  {snd_K_o, snd_ControlMask, 0, xen_false, true, "show control panel",                                   NULL, -1},
-  {snd_K_p, snd_ControlMask, 0, xen_false, true, "set window size (preceded by 1 arg)",                  NULL, -1},
-  {snd_K_q, snd_ControlMask, 0, xen_false, true, "mix in file",                                          NULL, -1},
-  {snd_K_r, snd_ControlMask, 0, xen_false, true, "redo",                                                 "save-sound", -1},
-  {snd_K_s, snd_ControlMask, 0, xen_false, true, "save file",                                            NULL, -1},
-  {snd_K_u, snd_ControlMask, 0, xen_false, true, "undo",                                                 NULL, -1},
-  {snd_K_v, snd_ControlMask, 0, xen_false, true, "set window size as percentage of total",               NULL, -1},
-  {snd_K_w, snd_ControlMask, 0, xen_false, true, "save current channel in file",                         NULL, -1},
-  {snd_K_z, snd_ControlMask, 0, xen_false, true, "smooth using cosine",                                  NULL, -1},
+  {snd_K_a, snd_ControlMask, 0, kbd_false, true, "apply envelope",                                       NULL, -1},
+  {snd_K_b, snd_ControlMask, 0, kbd_false, true, "set x window bounds (preceded by 1 arg)",              NULL, -1},
+  {snd_K_c, snd_ControlMask, 0, kbd_false, true, "hide control panel",                                   NULL, -1},
+  {snd_K_d, snd_ControlMask, 0, kbd_false, true, "print",                                                NULL, -1},
+  {snd_K_e, snd_ControlMask, 0, kbd_false, true, "give last keyboard macro a name",                      NULL, -1},
+  {snd_K_f, snd_ControlMask, 0, kbd_false, true, "open file",                                            NULL, -1},
+  {snd_K_g, snd_ControlMask, 0, kbd_false, true, "abort command",                                        NULL, -1},
+  {snd_K_i, snd_ControlMask, 0, kbd_false, true, "insert file",                                          NULL, -1},
+  {snd_K_m, snd_ControlMask, 0, kbd_false, true, "add named mark",                                       NULL, -1},
+  {snd_K_o, snd_ControlMask, 0, kbd_false, true, "show control panel",                                   NULL, -1},
+  {snd_K_p, snd_ControlMask, 0, kbd_false, true, "set window size (preceded by 1 arg)",                  NULL, -1},
+  {snd_K_q, snd_ControlMask, 0, kbd_false, true, "mix in file",                                          NULL, -1},
+  {snd_K_r, snd_ControlMask, 0, kbd_false, true, "redo",                                                 "save-sound", -1},
+  {snd_K_s, snd_ControlMask, 0, kbd_false, true, "save file",                                            NULL, -1},
+  {snd_K_u, snd_ControlMask, 0, kbd_false, true, "undo",                                                 NULL, -1},
+  {snd_K_v, snd_ControlMask, 0, kbd_false, true, "set window size as percentage of total",               NULL, -1},
+  {snd_K_w, snd_ControlMask, 0, kbd_false, true, "save current channel in file",                         NULL, -1},
+  {snd_K_z, snd_ControlMask, 0, kbd_false, true, "smooth using cosine",                                  NULL, -1},
 };
 
 #else
@@ -2413,6 +2413,7 @@ static XEN g_bind_key_1(XEN key, XEN state, XEN code, XEN cx_extended, XEN origi
 	  char *errstr;
 	  errstr = mus_format(_(S_bind_key " function arg should take either zero or one args, not %d"), args);
 	  errmsg = C_TO_XEN_STRING(errstr);
+
 	  FREE(errstr);
 	  return(snd_bad_arity_error(caller, errmsg, code));
 	}
@@ -2420,6 +2421,7 @@ static XEN g_bind_key_1(XEN key, XEN state, XEN code, XEN cx_extended, XEN origi
       if (XEN_STRING_P(prefs_info)) prefs = XEN_TO_C_STRING(prefs_info);
       set_keymap_entry(k, s, args, code, e, comment, prefs);
     }
+
   return(code);
 }
 

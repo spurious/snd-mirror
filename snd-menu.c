@@ -382,20 +382,27 @@ func (a function of no args) when the new menu is activated. Returns the new men
 
   widget_t result;
   char *errmsg = NULL;
+
   XEN_ASSERT_TYPE(XEN_STRING_P(label) || XEN_FALSE_P(label), label, XEN_ARG_2, S_add_to_menu, "a string");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(menu), menu, XEN_ARG_1, S_add_to_menu, "an integer");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(callback) || XEN_FALSE_P(callback), callback, XEN_ARG_3, S_add_to_menu, "a procedure");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(gpos), gpos, XEN_ARG_4, S_add_to_menu, "an integer");
+
+  /* fprintf(stderr, "add-to-menu %s\n", XEN_AS_STRING(XEN_CAR(callback))); */
+
   if (XEN_PROCEDURE_P(callback))
     errmsg = procedure_ok(callback, 0, S_add_to_menu, "menu callback", 3);
   if (errmsg == NULL)
     {
       int slot = -1, m, position = -1;
+
       m = XEN_TO_C_INT(menu);
       if (m < 0)
 	return(snd_no_such_menu_error(S_add_to_menu, menu));
+
       if (XEN_PROCEDURE_P(callback)) slot = make_callback_slot();
       if (XEN_INTEGER_P(gpos)) position = XEN_TO_C_INT(gpos);
+
       result = g_add_to_menu(m,
 #if (MUS_SGI) && (!(HAVE_EXTENSION_LANGUAGE)) && (!(defined(__GNUC__)))
 			     /* SGI C-compiler thinks NULL:NULL can't be char*! */
@@ -433,8 +440,10 @@ static XEN gl_remove_from_menu(XEN menu, XEN label)
 {
   #define H_remove_from_menu "(" S_remove_from_menu " menu label): removes menu item label from menu"
   int m;
+
   XEN_ASSERT_TYPE(XEN_STRING_P(label), label, XEN_ARG_2, S_remove_from_menu, "a string");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(menu), menu, XEN_ARG_1, S_remove_from_menu, "an integer");
+
   m = XEN_TO_C_INT(menu);
   if (m < 0) 
     return(snd_no_such_menu_error(S_remove_from_menu, menu));
@@ -446,6 +455,7 @@ static XEN g_main_menu(XEN which)
 {
   #define H_main_menu "(" S_main_menu " menu): the top-level menu widget referred to by menu"
   int which_menu;
+
   XEN_ASSERT_TYPE(XEN_INTEGER_P(which), which, XEN_ONLY_ARG, S_main_menu, "an integer");
   which_menu = XEN_TO_C_INT(which);
   if ((which_menu < 0) || (which_menu >= MAX_MAIN_MENUS))

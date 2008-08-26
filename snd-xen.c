@@ -3049,9 +3049,9 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(define load-from-path load)");
 
   XEN_EVAL_C_STRING("(define shell system)");
-  XEN_EVAL_C_STRING("(defmacro define+ (name value) `(define ,name ,value))");
   XEN_EVAL_C_STRING("(define (1+ x) (+ x 1))");
   XEN_EVAL_C_STRING("(define (1- x) (- x 1))");
+  XEN_EVAL_C_STRING("(defmacro while (cond . body) `(do () ((not ,cond)) ,@body))");
 
 #endif
 

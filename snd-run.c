@@ -3255,12 +3255,15 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool sepa
   char *type;
 
   /* this can be (declare (arg1 type1)...) or (snd-declare (quote ((arg1 type1...)))) -- see snd-xen.c for an explanation of snd-declare */
-
-  /* fprintf(stderr, "declare: %s, %d %d\n", XEN_AS_STRING(form), separate, num_args); */
-
+  /*
+  fprintf(stderr, "declare: %s, %d %d\n", XEN_AS_STRING(form), separate, num_args); 
+  */
   if (separate)
     args = XEN_CADR(form);
   else args = XEN_CDADR(form);
+  /*
+  fprintf(stderr, "args: %s %d\n", XEN_AS_STRING(args), XEN_LIST_P(args));
+  */
   if (!(XEN_LIST_P(args))) 
     {
 #if 0
@@ -12682,21 +12685,30 @@ static struct ptree *form_to_ptree_1(XEN code, int decls, int *types)
   current_optimization = optimization(ss);
   if (current_optimization == DONT_OPTIMIZE) return(NULL);
 
+#if !HAVE_S7
   form = XEN_CAR(code);
+#else
+  form = code;
+#endif
+
   prog = make_ptree(8);
 
   prog->lambda_args = decls;
   prog->lambda_arg_types = types;
 
-#if HAVE_GUILE || HAVE_S7
+#if HAVE_GUILE
   if ((XEN_PROCEDURE_P(XEN_CADR(code))) && 
       (!(XEN_APPLICABLE_SMOB_P(XEN_CADR(code))))) /* applicable smobs cause confusion here */
     prog->code = XEN_CADR(code);                  /* need env before starting to walk the code */
   else prog->code = XEN_FALSE;                    /* many confusing cases here -- we'll just give up */
-#else
+#endif
+#if HAVE_GAUCHE
   if ((SCM_CLOSUREP(XEN_CADR(code))) || (SCM_PROCEDUREP(XEN_CADR(code))))
     prog->code = XEN_CADR(code);
   else prog->code = XEN_FALSE;
+#endif
+#if HAVE_S7
+  prog->code = code;
 #endif
 
   if (XEN_SYMBOL_P(form))
@@ -13612,12 +13624,20 @@ to Scheme and is equivalent to (thunk)."
 
   XEN code;
   ptree *pt = NULL;
+#if (!HAVE_S7)
   code = XEN_CADR(proc_and_code);
+#else
+  code = XEN_APPEND(XEN_CONS(C_STRING_TO_XEN_SYMBOL("lambda"), 
+			     XEN_EMPTY_LIST),
+		    XEN_CAR(proc_and_code));
+  pt = form_to_ptree(code);
+#endif
 
-#if HAVE_GUILE || HAVE_S7
+#if HAVE_GUILE
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code) && (XEN_REQUIRED_ARGS_OK(code, 0)), code, XEN_ONLY_ARG, S_run, "a thunk");
   pt = form_to_ptree(proc_and_code);
-#else
+#endif
+#if HAVE_GAUCHE
   pt = form_to_ptree(XEN_LIST_2(XEN_CAR(proc_and_code), XEN_FALSE));
 #endif
 

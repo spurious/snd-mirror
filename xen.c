@@ -2300,8 +2300,6 @@ void xen_repl(int argc, char **argv)
 	{
 	  temp = (char *)malloc(strlen(buffer) + 128);
 	  sprintf(temp, 
-		  /*		  "(catch #t (lambda () (write %s)) (lambda args (display args)))", */
-		  /* need to rewrite the catch implementation in s7.scm */
 		  "(write %s)",
 		  buffer);           /* use write, not display so that strings are in double quotes */
 	  XEN_EVAL_C_STRING(temp);
@@ -2341,17 +2339,30 @@ static XEN g_make_hook(XEN arity, XEN help)
 static XEN g_add_hook(XEN hook, XEN function, XEN position)
 {
   ghook *obj;
-  bool at_end = false;
+  XEN arity;
+  bool at_end = false, arity_ok;
+  int gc_loc;
+
   obj = XEN_TO_GHOOK(hook);
   XEN_ASSERT_TYPE(xen_hook_p(hook), hook, XEN_ARG_1, "add-hook!", "a hook");
-#if 0
-  /* TODO: check hook func */
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(function) && 
-		  ((XEN_REQUIRED_ARGS(function) == ghook_arity(obj)) ||
-		   ((SCM_PROCEDURE_REQUIRED(function) + SCM_PROCEDURE_OPTIONAL(function)) == ghook_arity(obj))),
-		  function, XEN_ARG_2, "add-hook!", "a function");
-#endif
+
+  arity = XEN_ARITY(function);
+  gc_loc = s7_gc_protect(s7, arity);
+  arity_ok = ((XEN_TO_C_INT(XEN_CAR(arity)) == ghook_arity(obj)) ||
+	      (XEN_TO_C_INT(XEN_CAR(arity)) + XEN_TO_C_INT(XEN_CADR(arity)) >= ghook_arity(obj)) ||
+	      (XEN_TRUE_P(XEN_CADDR(arity))));
+
+  if (!arity_ok)
+    fprintf(stderr, "arity: %s, hook: %d (%s), func: %s\n",
+	    XEN_AS_STRING(arity), ghook_arity(obj), XEN_AS_STRING(hook),
+	    XEN_AS_STRING(XEN_CAR(function)));
+
+  s7_gc_unprotect_at(s7, gc_loc);
+
+
+  XEN_ASSERT_TYPE((XEN_PROCEDURE_P(function)) && (arity_ok), function, XEN_ARG_2, "add-hook!", "a function");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(position), position, XEN_ARG_3, "add-hook!", "boolean");
+
   if (XEN_BOOLEAN_P(position)) at_end = XEN_TO_C_BOOLEAN(position);
   add_ghook(obj, function, at_end);
   return(hook);
@@ -2410,6 +2421,7 @@ XEN xen_s7_define_hook(const char *name, int arity, const char *help)
     {
       XEN_DEFINE(name, hook);
     }
+  s7_gc_protect(s7, hook);
   return(hook);
 }
 

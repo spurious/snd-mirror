@@ -37,7 +37,9 @@ s7_pointer s7_current_environment(s7_scheme *sc);
 
 bool s7_is_immutable(s7_pointer p);
 void s7_set_immutable(s7_pointer p);
-s7_pointer s7_immutable_cons(s7_scheme *sc, s7_pointer a, s7_pointer b);
+#define s7_immutable_cons(sc, a, b) s7_immutable_cons_1(sc, a, b, __FUNCTION__, __LINE__)
+
+s7_pointer s7_immutable_cons_1(s7_scheme *sc, s7_pointer a, s7_pointer b, const char *function, int line);
 
 s7_pointer s7_cons(s7_scheme *sc, s7_pointer a, s7_pointer b);
 s7_pointer s7_car(s7_pointer p);
@@ -55,7 +57,7 @@ s7_pointer s7_list_set(s7_scheme *sc, s7_pointer lst, int num, s7_pointer val);
 s7_pointer s7_assoc(s7_scheme *sc, s7_pointer sym, s7_pointer lst);
 s7_pointer s7_member(s7_scheme *sc, s7_pointer sym, s7_pointer lst);
 s7_pointer s7_remv(s7_scheme *sc, s7_pointer a, s7_pointer obj);
-
+bool s7_is_list(s7_scheme *sc, s7_pointer p);
 
 bool s7_is_string(s7_pointer p);
 char *s7_string(s7_pointer p);
@@ -150,7 +152,9 @@ bool s7_is_continuation(s7_pointer p);
 
 s7_scheme *s7_init(void);
 
-s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args);
+#define s7_call(Sc, Func, Args) s7_call_1(Sc, Func, Args, __FILE__, __FUNCTION__, __LINE__)
+s7_pointer s7_call_1(s7_scheme *sc, s7_pointer func, s7_pointer args, const char *file, const char *function, int line);
+/* s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args); */
 
 bool s7_is_eqv(s7_pointer a, s7_pointer b);
 bool s7_is_eq(s7_pointer obj1, s7_pointer obj2);
