@@ -2204,7 +2204,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 
 #define XEN_ERROR_TYPE(Typ)                        C_STRING_TO_XEN_SYMBOL(Typ)
 #define XEN_ERROR(Type, Info)                      s7_error_and_exit(s7, Type, Info)
-#define XEN_THROW(Type, Info)                      s7_throw(s7, Type, Info)
+#define XEN_THROW(Type, Info)                      s7_error(s7, Type, Info)
 
 #define XEN_YES_WE_HAVE(Feature)                   s7_provide(s7, Feature)
 #define XEN_PROTECT_FROM_GC(Arg)                   s7_gc_protect(s7, Arg)
@@ -2519,6 +2519,7 @@ void xen_s7_ignore(s7_function func); /* squelch compiler warnings */
 const char *xen_s7_object_help(XEN sym);
 double xen_to_c_double(XEN a);
 double xen_to_c_double_or_else(XEN a, double b);
+void xen_s7_set_repl_prompt(const char *new_prompt);
 
 #endif
 /* end S7 */

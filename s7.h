@@ -180,10 +180,9 @@ s7_pointer s7_load_with_path(s7_scheme *sc, const char *file);
 void s7_provide(s7_scheme *sc, const char *feature);
 
 s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info);
-void s7_error_and_exit(s7_scheme *sc, s7_pointer type, s7_pointer info);
-s7_pointer s7_throw(s7_scheme *sc, s7_pointer type, s7_pointer info);
-void s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n, s7_pointer arg, const char *descr);
-void s7_out_of_range_error(s7_scheme *sc, const char *caller, int arg_n, s7_pointer arg, const char *descr);
+s7_pointer s7_error_and_exit(s7_scheme *sc, s7_pointer type, s7_pointer info);
+s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n, s7_pointer arg, const char *descr);
+s7_pointer s7_out_of_range_error(s7_scheme *sc, const char *caller, int arg_n, s7_pointer arg, const char *descr);
 void s7_set_error_exiter(s7_scheme *sc, void (*error_exiter)(void));
 
 

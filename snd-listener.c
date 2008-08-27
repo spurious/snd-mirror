@@ -715,7 +715,9 @@ void set_listener_prompt(const char *new_prompt)
     xen_rb_repl_set_prompt(listener_prompt(ss));
 #endif
 
-    /* TODO: the s7 xen_repl prompt */
+#if HAVE_S7
+    xen_s7_set_repl_prompt(listener_prompt(ss));
+#endif
   }
 
 #else

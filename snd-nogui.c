@@ -336,6 +336,9 @@ void snd_doit(int argc, char **argv)
 #if HAVE_GUILE
   XEN_EVAL_C_STRING("(set! scm-repl-prompt \"snd> \")");
 #endif
+#if HAVE_S7
+  xen_s7_set_repl_prompt("snd>");
+#endif
 
 #if HAVE_SCHEME
   XEN_EVAL_C_STRING("(define " S_color_hook " (make-hook 0))");

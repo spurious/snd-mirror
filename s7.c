@@ -19,45 +19,40 @@
 /* changed to fit into Snd, Bill Schottstaedt, Aug-08
  *
  *   major changes: 
- *         just two files: s7.c and s7.h, source-level embeddable (no library, no run-time init files)
- *         full continuations, call-with-exit for goto or return
- *         ratios and complex numbers (and ints are 64-bit)
- *         generalized set!, procedure-with-setter
- *         defmacro, keywords, hash tables, block comments
- *         applicable objects
- *         (in Snd, the run macro works giving S7 a byte compiler)
+ *        just two files: s7.c and s7.h, source-level embeddable (no library, no run-time init files)
+ *        full continuations, call-with-exit for goto or return
+ *        ratios and complex numbers (and ints are 64-bit)
+ *        generalized set!, procedure-with-setter
+ *        defmacro, keywords, hash tables, block comments
+ *        applicable objects
+ *        error handling using error and catch
+ *        (in Snd, the run macro works giving S7 a byte compiler)
  *
  *   many minor changes!
  *
  *   deliberate omissions from r5rs: 
- *        no inexact integers or ratios (so, for example, truncate returns an exact integer)
- *        the 5-way cxxxxr functions are omitted -- has anyone ever used these things?  Was it a good idea?
+ *        no inexact integer or ratio (so, for example, truncate returns an exact integer), no exact complex or exact real
+ *        no cxxxxr built-in
+ *
+ *   deliberate difference from r5rs:
+ *        modulo, remainder, and quotient take integer, ratio, or real args
  *
  * still to do:
+ *   random 0 -> 0 (is this built-in)?
  *   there's no arg number mismatch check for caller-defined functions!
  *   dynamic-wind tested, 
  *   soft port for Snd (need to trap error reports somehow)
- *   need much better error handling and backtrace
  *   threads: call-with-new-thread[s7?], join-thread
  *   help for vars (objects)
  *   current-error-port -- do we need the set cases?
- *   read/write-byte
- *
- * slib logical.scm has logior etc
- * slib dynwind.scm has dynamic-wind
- *
- * TODO: define modulo et al to handle ratios and reals
- * TODO: format loads and runs, but has some bizarre problems
- * figure out how add syntax-rules, for-each, map, do
- *
- * catch = put op_catch + tag + handler on stack
- * throw = go up stack looking for matching catch, if found call its handler, else goto error
- * same for unwind-protect -- and throw could notice them and run their exit funcs
- *
- * radix arg for number->string [see itoa ... -- this needs support for each type and radix]
- * (define (quo x1 x2) (truncate (/ x1 x2))) ; slib
- * (define (rem x1 x2) (- x1 (* x2 (quo x1 x2))))
- * (define (mod x1 x2) (- x1 (* x2 (floor (/ x1 x2)))))
+ *   format loads and runs, but has some bizarre problems
+ *   figure out how add syntax-rules, for-each, map, do, all the call-with-* stuff
+ *     could we piggy-back on the "simple-macro" code?
+ *   catch = put op_catch + tag + handler on stack
+ *     throw = go up stack looking for matching catch, if found call its handler, else goto error
+ *   same for unwind-protect -- and throw could notice them and run their exit funcs
+ *     slib dynwind.scm has dynamic-wind
+ *   radix arg for number->string [see itoa ... -- this needs support for each type and radix]
  *
  * define-type (make-type in ext)
  (define-type "name"
@@ -194,8 +189,6 @@ static char *opcode_names[OP_MAX_DEFINED] = {
 
 
 
-
-
 /* num, for generic arithmetic */
 typedef struct num {
   char type;
@@ -219,7 +212,6 @@ typedef struct num {
 } num;
 
 
-
 typedef struct port {
   bool is_closed;
   bool is_file;
@@ -229,7 +221,7 @@ typedef struct port {
     struct {
       FILE *file;
       int line_number;
-      const char *filename;
+      char *filename;
     } stdio;
     struct {
       char *start;
@@ -245,6 +237,7 @@ typedef struct continuation {
   s7_pointer cc_stack;
 } continuation;
 
+
 typedef struct ffunc {
   s7_function ff;
   const char *name;
@@ -252,6 +245,13 @@ typedef struct ffunc {
   int required_args, optional_args;
   bool rest_arg;
 } ffunc;
+
+
+typedef struct catch {
+  int goto_loc;
+  s7_pointer tag;
+  s7_pointer handler;
+} catch;
 
 
 /* cell structure */
@@ -292,6 +292,8 @@ typedef struct s7_cell {
     continuation *cc;
 
     int goto_loc;
+
+    catch *catcher;
     
   } object;
 } s7_cell;
@@ -333,9 +335,6 @@ struct s7_scheme {
   
   struct s7_cell _UNSPECIFIED;
   s7_pointer UNSPECIFIED;     /* the unspecified value */
-  
-  struct s7_cell _ERROR;
-  s7_pointer ERROR;           /* error indication */
   
   s7_pointer symbol_table;    /* symbol table */
   s7_pointer global_env;      /* global environment */
@@ -393,63 +392,149 @@ enum scheme_types {
   T_S7_OBJECT = 15,
   T_GOTO = 16,
   T_OUTPUT_PORT = 17,
-  T_LAST_TYPE = 17
+  T_CATCH = 18,
+  T_LAST_TYPE = 18
 };
-
 
 static const char *type_names[T_LAST_TYPE + 1] = {
   "unused!", "nil", "string", "number", "symbol", "procedure", "pair", "closure", "continuation",
   "s7-function", "character", "input port", "vector", "macro", "promise", "s7-object", 
-  "goto", "output port"
+  "goto", "output port", "catch"
 };
 
 
+#define TYPE_BITS                     16
+#define T_MASKTYPE                    0xffff
 
-#define TYPE_BITS          16
-#define T_MASKTYPE         0xffff
+#define typeflag(p)                   ((p)->flag)
+#define type(p)                       (typeflag(p) & T_MASKTYPE)
+#define set_type_1(p, f)              typeflag(p) = ((f) | T_OBJECT)
 
-#define typeflag(p)        ((p)->flag)
-#define type(p)            (typeflag(p) & T_MASKTYPE)
-#define set_type_1(p, f)   typeflag(p) = ((f) | T_OBJECT)
+#define T_SYNTAX                      (1 << (TYPE_BITS + 1))
+#define is_syntax(p)                  (typeflag(p) & T_SYNTAX)
+#define syntax_opcode(x)              cdr(x)
 
-#define T_SYNTAX           (1 << (TYPE_BITS + 1))
-#define is_syntax(p)       (typeflag(p) & T_SYNTAX)
+#define T_IMMUTABLE                   (1 << (TYPE_BITS + 2))
+#define is_immutable(p)               (typeflag(p) & T_IMMUTABLE)
+#define set_immutable(p)              typeflag(p) |= T_IMMUTABLE
+#define set_mutable(p)                typeflag(p) &= (~T_IMMUTABLE)
 
-#define T_IMMUTABLE        (1 << (TYPE_BITS + 2))
-#define is_immutable(p)    (typeflag(p) & T_IMMUTABLE)
-#define set_immutable(p)   typeflag(p) |= T_IMMUTABLE
-#define set_mutable(p)     typeflag(p) &= (~T_IMMUTABLE)
+#define T_ATOM                        (1 << (TYPE_BITS + 3))
+#define is_atom(p)                    (typeflag(p) & T_ATOM)
+#define set_atom(p)                   typeflag(p) |= T_ATOM
 
-#define T_ATOM             (1 << (TYPE_BITS + 3))
-#define is_atom(p)         (typeflag(p) & T_ATOM)
-#define set_atom(p)        typeflag(p) |= T_ATOM
+#define T_GC_MARK                     (1 << (TYPE_BITS + 4))
+#define is_marked(p)                  (typeflag(p) &  T_GC_MARK)
+#define set_mark(p)                   typeflag(p)  |= T_GC_MARK
+#define clear_mark(p)                 typeflag(p)  &= (~T_GC_MARK)
 
-#define T_GC_MARK          (1 << (TYPE_BITS + 4))
-#define is_marked(p)       (typeflag(p) &  T_GC_MARK)
-#define set_mark(p)        typeflag(p)  |= T_GC_MARK
-#define clear_mark(p)      typeflag(p)  &= (~T_GC_MARK)
+#define T_CONSTANT                    (1 << (TYPE_BITS + 5))
+#define is_constant(p)                (typeflag(p) & T_CONSTANT)
+#define local_protect(p)              typeflag(p) |= T_CONSTANT
+#define local_unprotect(p)            typeflag(p) &= (~T_CONSTANT)
 
-#define T_CONSTANT         (1 << (TYPE_BITS + 5))
-#define is_constant(p)     (typeflag(p) & T_CONSTANT)
-#define local_protect(p)   typeflag(p) |= T_CONSTANT
-#define local_unprotect(p) typeflag(p) &= (~T_CONSTANT)
+#define T_UNUSED_BITS                 0xff000000
+#define T_OBJECT                      (1 << (TYPE_BITS + 6))
+#define T_FINALIZABLE                 (1 << (TYPE_BITS + 7))
 
-#define T_UNUSED_BITS      0xff000000
-#define T_OBJECT           (1 << (TYPE_BITS + 6))
-#define T_FINALIZABLE      (1 << (TYPE_BITS + 7))
+#define is_object(x)                  ((x) && (((typeflag(x) & (T_UNUSED_BITS | T_OBJECT)) == T_OBJECT) && (type(x) != 0) && (type(x) <= T_LAST_TYPE)))
 
-#define is_object(x)       ((x) && (((typeflag(x) & (T_UNUSED_BITS | T_OBJECT)) == T_OBJECT) && (type(x) != 0) && (type(x) <= T_LAST_TYPE)))
+#define is_true(p)                    ((p) != sc->F)
+#define is_false(p)                   ((p) == sc->F)
+#define to_s7_bool(sc, Val)           ((Val) ? sc->T : sc->F)
 
-#define function_call(f)            (f)->object.ffptr->ff
-#define function_name(f)            (f)->object.ffptr->name
-#define function_documentation(f)   (f)->object.ffptr->doc
-#define function_required_args(f)   (f)->object.ffptr->required_args
-#define function_optional_args(f)   (f)->object.ffptr->optional_args
-#define function_has_rest_arg(f)    (f)->object.ffptr->rest_arg
+#define is_pair(p)                    (type(p) == T_PAIR)
+#define cons(sc, a, b)                cons_1(sc, a, b, false)
+#define car(p)                        ((p)->object.cons.car)
+#define cdr(p)                        ((p)->object.cons.cdr)
+#define caar(p)                       car(car(p))
+#define cadr(p)                       car(cdr(p))
+#define cdar(p)                       cdr(car(p))
+#define cddr(p)                       cdr(cdr(p))
+#define cadar(p)                      car(cdr(car(p)))
+#define caddr(p)                      car(cdr(cdr(p)))
+#define cadaar(p)                     car(cdr(car(car(p))))
+#define cadddr(p)                     car(cdr(cdr(cdr(p))))
+#define cddddr(p)                     cdr(cdr(cdr(cdr(p))))
 
-#define is_input_port(p) (type(p) == T_INPUT_PORT) 
-#define is_output_port(p) (type(p) == T_OUTPUT_PORT)
+#define string_value(p)               ((p)->object.string.svalue)
+#define string_length(p)              ((p)->object.string.length)
+#define character(p)                  ((p)->object.cvalue)
 
+#define vector_length(p)              ((p)->object.vector.length)
+#define vector_element(p, i)          ((p)->object.vector.elements[i])
+#define small_int(Sc, Val)            vector_element(Sc->small_ints, Val)
+#define small_int_as_num(Sc, Val)     small_int(Sc, Val)->object.number
+
+#define is_input_port(p)              (type(p) == T_INPUT_PORT) 
+#define is_output_port(p)             (type(p) == T_OUTPUT_PORT)
+#define port_paren_depth(p)           (p)->object.port->paren_depth
+#define is_string_port(p)             (!((p)->object.port->is_file))
+#define is_file_port(p)               (p)->object.port->is_file
+#define port_line_number(p)           (p)->object.port->rep.stdio.line_number
+#define port_filename(p)              (p)->object.port->rep.stdio.filename
+#define port_file(p)                  (p)->object.port->rep.stdio.file
+#define port_is_closed(p)             (p)->object.port->is_closed
+#define port_needs_close(p)           (p)->object.port->needs_close
+
+#define function_call(f)              (f)->object.ffptr->ff
+#define function_name(f)              (f)->object.ffptr->name
+#define function_documentation(f)     (f)->object.ffptr->doc
+#define function_required_args(f)     (f)->object.ffptr->required_args
+#define function_optional_args(f)     (f)->object.ffptr->optional_args
+#define function_has_rest_arg(f)      (f)->object.ffptr->rest_arg
+
+#define continuation_cc_stack_size(p) (p)->object.cc->cc_stack_size
+#define continuation_cc_stack_top(p)  (p)->object.cc->cc_stack_top
+#define continuation_cc_stack(p)      (p)->object.cc->cc_stack
+
+#define is_goto(p)                    (type(p) == T_GOTO)
+#define is_macro(p)                   (type(p) == T_MACRO)
+#define is_promise(p)                 (type(p) == T_PROMISE)
+
+#define is_catch(p)                   (type(p) == T_CATCH)
+#define catch_tag(p)                  (p)->object.catcher->tag
+#define catch_goto_loc(p)             (p)->object.catcher->goto_loc
+#define catch_handler(p)              (p)->object.catcher->handler
+
+
+#define NUM_INT 0
+#define NUM_RATIO 1
+#define NUM_REAL 2
+#define NUM_REAL2 3
+#define NUM_COMPLEX 4
+
+/* so int = 0, exact < 2, ratio = 1, complex >= 4, real 2 or 3
+ *   (I'm not going to support exact complex or inexact ratio etc)
+ */
+
+#define num_is_fixnum(n)              (n.type == NUM_INT)
+#define object_is_fixnum(p)           (p->object.number.type == NUM_INT)
+
+#define num_is_ratio(n)               (n.type == NUM_RATIO)
+#define object_is_ratio(p)            (p->object.number.type == NUM_RATIO)
+
+#define num_is_real(n)                ((n.type & (NUM_REAL | NUM_COMPLEX)) == NUM_REAL)
+#define object_is_real(p)             ((p->object.number.type & (NUM_REAL | NUM_COMPLEX)) == NUM_REAL
+
+#define num_is_complex(n)             (n.type & NUM_COMPLEX)
+#define object_is_complex(p)          (p->object.number.type & NUM_COMPLEX)
+
+#define num_type(n)                   (n.type)
+#define object_number_type(p)         (p->object.number.type)
+
+#define numerator(n)                  n.value.fvalue.numerator
+#define denominator(n)                n.value.fvalue.denominator
+
+#define real_part(n)                  n.value.cvalue.real
+#define imag_part(n)                  n.value.cvalue.imag
+
+#define fraction(n)                   (((double)numerator(n)) / ((double)denominator(n)))
+
+#define integer(n)                    n.value.ivalue
+#define real(n)                       n.value.rvalue
+
+#define loop_counter(p)               ((p)->object.number.value.ivalue)
 
 
 
@@ -468,93 +553,6 @@ static char *describe_type(s7_pointer p)
 	  (typeflag(p) & T_UNUSED_BITS) ? " and other garbage bits!" : "");
   return(buf);
 }
-
-#define NUM_INT 0
-#define NUM_RATIO 1
-#define NUM_REAL 2
-#define NUM_REAL2 3
-#define NUM_COMPLEX 4
-
-/* so int = 0, exact < 2, ratio = 1, complex >= 4, real 2 or 3
- *   (I'm not going to support exact complex or inexact ratio etc)
- */
-
-#define num_is_fixnum(n) (n.type == NUM_INT)
-#define object_is_fixnum(p) (p->object.number.type == NUM_INT)
-
-#define num_is_ratio(n) (n.type == NUM_RATIO)
-#define object_is_ratio(p) (p->object.number.type == NUM_RATIO)
-
-#define num_is_real(n) ((n.type & (NUM_REAL | NUM_COMPLEX)) == NUM_REAL)
-#define object_is_real(p) ((p->object.number.type & (NUM_REAL | NUM_COMPLEX)) == NUM_REAL
-
-#define num_is_complex(n) (n.type & NUM_COMPLEX)
-#define object_is_complex(p) (p->object.number.type & NUM_COMPLEX)
-
-#define num_type(n) (n.type)
-#define object_number_type(p) (p->object.number.type)
-
-#define numerator(n) n.value.fvalue.numerator
-#define denominator(n) n.value.fvalue.denominator
-
-#define real_part(n) n.value.cvalue.real
-#define imag_part(n) n.value.cvalue.imag
-
-#define fraction(n) (((double)numerator(n)) / ((double)denominator(n)))
-
-#define integer(n) n.value.ivalue
-#define real(n)    n.value.rvalue
-
-#define cons(sc, a, b) cons_1(sc, a, b, false)
-
-#define car(p) ((p)->object.cons.car)
-#define cdr(p) ((p)->object.cons.cdr)
-
-#define string_value(p)  ((p)->object.string.svalue)
-#define string_length(p) ((p)->object.string.length)
-
-#define character(p) ((p)->object.cvalue)
-
-#define loop_counter(p) ((p)->object.number.value.ivalue)
-
-#define set_integer(p) (p)->object.number.type = NUM_INT;
-
-
-/* #define procedure_index(p) ((p)->object.number.value.ivalue) */
-#define procedure_index(p) ((p)->object.proc_num)
-
-#define syntax_opcode(x) cdr(x)
-
-#define caar(p)          car(car(p))
-#define cadr(p)          car(cdr(p))
-#define cdar(p)          cdr(car(p))
-#define cddr(p)          cdr(cdr(p))
-#define cadar(p)         car(cdr(car(p)))
-#define caddr(p)         car(cdr(cdr(p)))
-#define cadaar(p)        car(cdr(car(car(p))))
-#define cadddr(p)        car(cdr(cdr(cdr(p))))
-#define cddddr(p)        cdr(cdr(cdr(cdr(p))))
-
-#define vector_length(p)          ((p)->object.vector.length)
-#define vector_element(p, i)      ((p)->object.vector.elements[i])
-#define small_int(Sc, Val)        vector_element(Sc->small_ints, Val)
-#define small_int_as_num(Sc, Val) small_int(Sc, Val)->object.number
-
-#define is_true(p)           ((p) != sc->F)
-#define is_false(p)          ((p) == sc->F)
-#define to_s7_bool(sc, Val)  ((Val) ? sc->T : sc->F)
-
-#define continuation_cc_stack_size(p) (p)->object.cc->cc_stack_size
-#define continuation_cc_stack_top(p)  (p)->object.cc->cc_stack_top
-#define continuation_cc_stack(p)      (p)->object.cc->cc_stack
-
-#define is_goto(p)    (type(p) == T_GOTO)
-#define is_macro(p)   (type(p) == T_MACRO)
-#define is_promise(p) (type(p) == T_PROMISE)
-#define is_pair(p)    (type(p) == T_PAIR)
-
-
-#define port_needs_close(p) (p)->object.port->needs_close
 
 #define set_type(p, f) set_type_2(sc, p, f, __FUNCTION__, __LINE__)
 static void set_type_2(s7_scheme *sc, s7_pointer p, int f, const char *func, int line)
@@ -613,6 +611,8 @@ static void eval(s7_scheme *sc, opcode_t first_op);
 static s7_pointer g_stacktrace(s7_scheme *sc, s7_pointer args);
 static s7_pointer cons_1(s7_scheme *sc, s7_pointer a, s7_pointer b, bool immutable);
 static s7_pointer s7_string_concatenate(s7_scheme *sc, const char *s1, const char *s2);
+static s7_pointer s7_division_by_zero_error(s7_scheme *sc, const char *caller, s7_pointer arg);
+static s7_pointer s7_file_error(s7_scheme *sc, const char *caller, const char *descr, const char *name);
 
 
 static void gp(s7_scheme *sc) {g_stacktrace(sc, sc->args);} /* for gdb */
@@ -734,44 +734,56 @@ static void finalize_s7_cell(s7_scheme *sc, s7_pointer a)
 {
   if (typeflag(a) & T_FINALIZABLE)
     {
-      if ((s7_is_string(a)) ||
-	  (s7_is_symbol(a)))
+      switch (type(a))
 	{
-	  FREE(string_value(a)); /* malloc'd in store_string */
-	} 
-      else 
-	{
-	  if (is_input_port(a)) 
+	case T_STRING:
+	case T_SYMBOL:
+	  FREE(string_value(a)); /* calloc'd in make-*-string */
+	  break;
+
+	case T_INPUT_PORT:
+	  if (port_needs_close(a))
+	    s7_close_input_port(sc, a);
+	  if ((is_file_port(a)) && 
+	      (port_filename(a)))
 	    {
-	      if (port_needs_close(a))
-		s7_close_input_port(sc, a);
-	      FREE(a->object.port);
+	      FREE(port_filename(a));
+	      port_filename(a) = NULL;
 	    }
-	  else
+	  FREE(a->object.port);
+	  break;
+
+	case T_OUTPUT_PORT:
+	  s7_close_output_port(sc, a);
+	  if ((is_file_port(a)) && 
+	      (port_filename(a)))
 	    {
-	      if (is_output_port(a))
-		{
-		  s7_close_output_port(sc, a);
-		  FREE(a->object.port);
-		}
-	      else
-		{
-		  if (s7_is_object(a))
-		    s7_free_object(a);
-		  else
-		    {
-		      if ((s7_is_vector(a)) &&
-			  (vector_length(a) > 0))
-			FREE(a->object.vector.elements);
-		      else
-			{
-			  if ((s7_is_continuation(a)) &&
-			      (a->object.cc))
-			    FREE(a->object.cc);
-			}
-		    }
-		}
+	      FREE(port_filename(a));
+	      port_filename(a) = NULL;
 	    }
+	  FREE(a->object.port);
+	  break;
+
+	case T_S7_OBJECT:
+	  s7_free_object(a);
+	  break;
+
+	case T_VECTOR:
+	  if (vector_length(a) > 0)
+	    FREE(a->object.vector.elements);
+	  break;
+
+	case T_CONTINUATION:
+	  if (a->object.cc)
+	    FREE(a->object.cc);
+	  break;
+
+	case T_CATCH:
+	  FREE(a->object.catcher);
+	  break;
+
+	default:
+	  break;
 	}
     }
 #if USE_SND
@@ -795,6 +807,7 @@ void s7_mark_object(s7_pointer p)
 #if USE_SND
   if (!p) return;
 #endif
+
   if (is_marked(p)) return; 
 
   set_mark(p);
@@ -817,6 +830,13 @@ void s7_mark_object(s7_pointer p)
       return;
     }
 
+  if (is_catch(p))
+    {
+      s7_mark_object(catch_tag(p));
+      s7_mark_object(catch_handler(p));
+      return;
+    }
+
   /* this should follow s7_is_object -- the latter is an atom, but we have to run the object's internal mark function */
   if (is_atom(p))
     return;
@@ -827,6 +847,7 @@ void s7_mark_object(s7_pointer p)
   if (cdr(p))
     s7_mark_object(cdr(p));
 }
+
 
 static void free_s7_cell(s7_scheme *sc, int loc)
 {
@@ -858,23 +879,22 @@ static void free_s7_cell(s7_scheme *sc, int loc)
   sc->free_heap[sc->free_heap_top++] = loc;
 }
 
+
 static s7_pointer alloc_s7_cell(s7_scheme *sc)
 {
   if (sc->free_heap_top <= 0)
-    {
-      fprintf(stderr, "nothing free...");
-      return(NULL);
-    }
+    return(NULL);
+
 #if USE_SND
-  int loc;
-  loc = sc->free_heap[--(sc->free_heap_top)];
-  sc->heap[loc] = (s7_cell *)CALLOC(1, sizeof(s7_cell));
-  return(sc->heap[loc]);
+  {
+    int loc;
+    loc = sc->free_heap[--(sc->free_heap_top)];
+    sc->heap[loc] = (s7_cell *)CALLOC(1, sizeof(s7_cell));
+    return(sc->heap[loc]);
+  }
 #else
-  if (sc->free_heap_top > 0)
-    return(sc->heap[sc->free_heap[--(sc->free_heap_top)]]);
+  return(sc->heap[sc->free_heap[--(sc->free_heap_top)]]);
 #endif
-  return(NULL);
 }
 
 
@@ -940,6 +960,7 @@ static int gc(s7_scheme *sc, const char *function, int line)
   return(freed_heap);
 }
 
+
 #define new_cell(Sc) new_cell_1(Sc, __FUNCTION__, __LINE__)
 static s7_pointer new_cell_1(s7_scheme *sc, const char *function, int line)
 {
@@ -973,6 +994,7 @@ static s7_pointer new_cell_1(s7_scheme *sc, const char *function, int line)
   return(p);
 }
 
+
 static s7_pointer g_gc_verbose(s7_scheme *sc, s7_pointer a)
 {
   #define H_gc_verbose "(gc-verbose bool) turns GC reportage on or off"
@@ -981,6 +1003,7 @@ static s7_pointer g_gc_verbose(s7_scheme *sc, s7_pointer a)
   sc->gc_verbose = (car(a) != sc->F);
   return(old_val);
 }
+
 
 static s7_pointer g_gc(s7_scheme *sc, s7_pointer a)
 {
@@ -1010,6 +1033,7 @@ static void stack_reset(s7_scheme *sc)
   sc->stack_top = 0;
 } 
 
+
 static void pop_stack(s7_scheme *sc, s7_pointer a) 
 { 
   int top;
@@ -1036,6 +1060,7 @@ static void pop_stack(s7_scheme *sc, s7_pointer a)
   sc->code =       vector_element(sc->stack, top - 4);
   sc->stack_top -= 4;
 } 
+
 
 static void push_stack(s7_scheme *sc, opcode_t op, s7_pointer args, s7_pointer code) 
 { 
@@ -1084,27 +1109,37 @@ static void push_stack(s7_scheme *sc, opcode_t op, s7_pointer args, s7_pointer c
   vector_element(sc->stack, top + 3) = vector_element(sc->small_ints, (int)op);
 } 
 
+
 /* TODO: use scheme output funcs here */
 
 static void print_stack_entry(s7_scheme *sc, opcode_t op, s7_pointer code, s7_pointer args)
 {
+  char *str1 = NULL, *str2 = NULL;
   if (op != OP_APPLY)
     {
       char *temp;
       temp = copy_string(opcode_names[op]);
       fprintf(stderr, "\n%s: args: [%p] %s, code: %s", 
 	      string_downcase(temp),
-	      args, s7_object_to_c_string(sc, args),
-	      s7_object_to_c_string(sc, code));
+	      args, 
+	      str1 = s7_object_to_c_string(sc, args),
+	      str2 = s7_object_to_c_string(sc, code));
       FREE(temp);
     }
   else
     {
       if (s7_is_function(code))
-	fprintf(stderr, "\n(%s %s)", function_name(code), s7_object_to_c_string(sc, args));
-      else fprintf(stderr, "\n(%s %s)", s7_object_to_c_string(sc, code), s7_object_to_c_string(sc, args));
+	fprintf(stderr, "\n(%s %s)", 
+		function_name(code), 
+		str1 = s7_object_to_c_string(sc, args));
+      else fprintf(stderr, "\n(%s %s)", 
+		   str1 = s7_object_to_c_string(sc, code), 
+		   str2 = s7_object_to_c_string(sc, args));
     }
+  if (str1) FREE(str1);
+  if (str2) FREE(str2);
 }
+
 
 static s7_pointer g_stacktrace(s7_scheme *sc, s7_pointer args)
 {
@@ -1136,7 +1171,6 @@ static int hash_fn(const char *key, int table_size)
     hashed = *c + hashed * 37;
   return(hashed % table_size); 
 } 
-
 
 
 static s7_pointer symbol_table_add_by_name(s7_scheme *sc, const char *name) 
@@ -1174,6 +1208,7 @@ static  s7_pointer symbol_table_find_by_name(s7_scheme *sc, const char *name)
   return sc->NIL; 
 } 
 
+
 static s7_pointer symbol_table_all_symbols(s7_scheme *sc) 
 { 
   int i; 
@@ -1188,6 +1223,7 @@ static s7_pointer symbol_table_all_symbols(s7_scheme *sc)
 
   return(ob_list); 
 } 
+
 
 static s7_pointer g_symbol_table(s7_scheme *sc, s7_pointer args)
 {
@@ -1206,6 +1242,7 @@ void s7_for_each_symbol_name(s7_scheme *sc, bool (*symbol_func)(const char *symb
 	return;
 }
 
+
 void s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_name, s7_pointer symbol_value, void *data), void *data)
 {
   int i; 
@@ -1216,6 +1253,7 @@ void s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_na
 	return;
 }
 
+
 s7_pointer s7_make_symbol(s7_scheme *sc, const char *name) 
 { 
   s7_pointer x; 
@@ -1224,6 +1262,7 @@ s7_pointer s7_make_symbol(s7_scheme *sc, const char *name)
     return(x); 
   return(symbol_table_add_by_name(sc, name)); 
 } 
+
 
 s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
 { 
@@ -1251,13 +1290,14 @@ s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
   return(sc->NIL); 
 } 
 
+
 s7_pointer g_gensym(s7_scheme *sc, s7_pointer args) 
 {
   #define H_gensym "(gensym :optional prefix) creates a new symbol"
   if (s7_is_pair(args))
     {
       if (!s7_is_string(car(args)))
-	return(s7_error(sc, s7_make_string(sc, "gensym arg should be a string"), car(args)));
+	return(s7_wrong_type_arg_error(sc, "gensym", 1, car(args), "a string"));
       return(s7_gensym(sc, string_value(car(args))));
     }
   return(s7_gensym(sc, "gensym"));
@@ -1292,7 +1332,7 @@ static s7_pointer g_symbol_to_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_symbol_to_string "(symbol->string sym) returns sym converted to a string"
   if (!s7_is_symbol(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "symbol->string argument should be a symbol"), args));
+    return(s7_wrong_type_arg_error(sc, "symbol->string", 1, car(args), "a symbol"));
   return(s7_make_string(sc, s7_symbol_name(car(args))));
 }
 
@@ -1300,7 +1340,7 @@ static s7_pointer g_string_to_symbol(s7_scheme *sc, s7_pointer args)
 {
   #define H_string_to_symbol "(string->symbol str) returns str converted to a symbol"
   if (!s7_is_string(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "string->symbol argument should be a string"), args));
+    return(s7_wrong_type_arg_error(sc, "string->symbol", 1, car(args), "a string"));
   return(s7_make_symbol(sc, string_value(car(args))));
 }
 
@@ -1327,7 +1367,7 @@ void s7_provide(s7_scheme *sc, const char *feature)
  * Subsequent frames prepend an alist to this vector.
  */ 
 
-static void new_frame_in_env(s7_scheme *sc, s7_pointer old_env) 
+static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env) 
 { 
   s7_pointer new_frame; 
 
@@ -1339,6 +1379,7 @@ static void new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
    
   sc->envir = s7_immutable_cons(sc, new_frame, old_env); 
   local_unprotect(new_frame);
+  return(sc->envir);
 } 
 
 static void s7_new_slot_spec_in_env(s7_scheme *sc, s7_pointer env, s7_pointer variable, s7_pointer value) 
@@ -1473,12 +1514,12 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
   #define H_is_defined "(defined? obj :optional env) returns #t if obj has a binding (a value) in the environment env"
   
   if (!s7_is_symbol(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "defined? first argument should be a symbol"), args));
+    return(s7_wrong_type_arg_error(sc, "defined?", 1, car(args), "a symbol"));
 
   if (cdr(args) != sc->NIL)
     {
       if (!s7_is_pair(cadr(args)))
-	return(s7_error(sc, s7_make_string(sc, "defined? second argument should be an environment"), args));
+	return(s7_wrong_type_arg_error(sc, "defined?", 2, cadr(args), "an enivronment"));
       sc->x = cadr(args);
     }
   else sc->x = sc->envir;
@@ -1507,6 +1548,30 @@ void s7_define_variable(s7_scheme *sc, const char *name, s7_pointer value)
 }
 
 
+static s7_pointer s7_search_environment(s7_scheme *sc, s7_pointer env, bool (*searcher)(s7_scheme *sc, s7_pointer binding, s7_pointer data), s7_pointer data)
+{ 
+  int i, len;
+  s7_pointer x, y, vec; 
+
+  /* fprintf(stderr, "search: %s\n", s7_object_to_c_string(sc, env)); */
+
+  for (x = env; (x != sc->NIL) && (!s7_is_vector(car(x))); x = cdr(x)) 
+    for (y = car(x); y != sc->NIL; y = cdr(y)) 
+      if (searcher(sc, car(y), data))
+	return(car(y));
+  
+  if (s7_is_vector(car(x)))
+    {
+      vec = car(x);
+      len = vector_length(vec);
+      for (i = 0; i < len; i++)
+	if (vector_element(vec, i) != sc->NIL)
+	  for (y = vector_element(vec, i); y != sc->NIL; y = cdr(y)) 
+	    if (searcher(sc, car(y), data))
+	      return(car(y));
+    }
+  return(sc->F); 
+} 
 
 
 
@@ -1605,20 +1670,6 @@ static s7_pointer s7_make_continuation(s7_scheme *sc)
   c->cc_stack_top = sc->stack_top;
   c->cc_stack_size = sc->stack_size;
   c->cc_stack = copy_stack(sc, sc->stack, sc->stack_top);
-#if 0
-  fprintf(stderr, "%p saved stack:", c);
-  {
-    int i;
-    sc->gc_off = true;
-    for (i = 0; i < c->cc_stack_top; i +=4)
-      print_stack_entry(sc, 
-			(opcode_t)s7_integer(vector_element(c->cc_stack, i + 3)),
-			vector_element(c->cc_stack, i + 0),
-			vector_element(c->cc_stack, i + 2));
-    fprintf(stderr,"\n");
-    sc->gc_off = false;
-  }
-#endif
   x->object.cc = c;
   local_unprotect(x);
 
@@ -1645,12 +1696,25 @@ static s7_pointer g_call_cc(s7_scheme *sc, s7_pointer args)
   return(sc->NIL);
 }
 
-static s7_pointer g_call_goto(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
 {
-  #define H_call_goto "(call-with-exit ...) is a simplified call/cc"
-  sc->code = car(args);
-  sc->args = cons(sc, s7_make_goto(sc), sc->NIL);
-  push_stack(sc, OP_APPLY, sc->args, sc->code);
+  #define H_call_with_exit "(call-with-exit ...) is a simplified call/cc"
+
+  /* (call-with-exit (lambda (return) ...)) */
+
+  sc->code = car(args);                           /* the lambda form */
+  sc->args = cons(sc, s7_make_goto(sc), sc->NIL); /*   the argument to the lambda (the goto = "return" above) */
+  push_stack(sc, OP_APPLY, sc->args, sc->code);   /* apply looks at sc->code to decide what to do (it will see the lambda) */
+
+  /* if the lambda body calls the argument as a function, 
+   *   it is applied to its arguments, apply notices that it is a goto, and...
+   *   
+   *      sc->stack_top = (sc->code)->object.goto_loc;           
+   *      s_pop(sc, sc->args != sc->NIL ? car(sc->args) : sc->NIL);
+   * 
+   *   which jumps to the point of the goto returning car(args)
+   */
+
   return(sc->NIL);
 }
 
@@ -2278,29 +2342,66 @@ static num num_div(s7_scheme *sc, num a, num b)
 }
 
 
+static s7_Int s7_truncate(double xf)
+{
+  if (xf > 0.0)
+    return((s7_Int)floor(xf));
+  return((s7_Int)ceil(xf));
+}
+
 static num num_quotient(num a, num b) 
 {
+  /* (define (quo x1 x2) (truncate (/ x1 x2))) ; slib */
+  num ret;
+  ret.type = NUM_INT;
+  if ((a.type | b.type) == NUM_INT)
+    integer(ret) = integer(a) / integer(b);
+  else integer(ret) = s7_truncate(num_to_real(a) / num_to_real(b));
+  return(ret);
+}
+
+static num num_rem(s7_scheme *sc, num a, num b) 
+{
+  /* (define (rem x1 x2) (- x1 (* x2 (quo x1 x2)))) ; slib */
   num ret;
   ret.type = a.type | b.type;
-  if (num_is_fixnum(ret)) 
-    integer(ret) = integer(a) / integer(b);
-  else real(ret) = num_to_real(a) / num_to_real(b);
+  switch (ret.type)
+    {
+    case NUM_INT: 
+      integer(ret) = integer(a) % integer(b);
+      break;
+    case NUM_RATIO: 
+      ret = make_ratio(sc, 
+		       numerator(a) * denominator(b) - numerator(b) * denominator(a) * integer(num_quotient(a, b)),
+		       denominator(a) * denominator(b));
+      break;
+    default:
+      real(ret) = num_to_real(a) - num_to_real(b) * integer(num_quotient(a, b));
+      break;
+    }
   return(ret);
 }
 
-static num num_rem(num a, num b) 
+static num num_mod(s7_scheme *sc, num a, num b) 
 {
+  /* (define (mod x1 x2) (- x1 (* x2 (floor (/ x1 x2))))) ; slib */
   num ret;
-  ret.type = NUM_INT;
-  integer(ret) = integer(a) % integer(b);
-  return(ret);
-}
-
-static num num_mod(num a, num b) 
-{
-  num ret;
-  ret.type = NUM_INT;
-  integer(ret) = c_mod(integer(a), integer(b));
+  ret.type = a.type | b.type;
+  switch (ret.type)
+    {
+    case NUM_INT:
+      integer(ret) = c_mod(integer(a), integer(b));
+      break;
+    case NUM_RATIO:
+      ret = make_ratio(sc, 
+		       numerator(a) * denominator(b) - numerator(b) * denominator(a) * (s7_Int)floor(num_to_real(a) / num_to_real(b)),
+		       denominator(a) * denominator(b));
+      break;
+    default:
+      real(ret) = num_to_real(a) - num_to_real(b) * (s7_Int)floor(num_to_real(a) / num_to_real(b));
+      break;
+    }
+  
   return(ret);
 }
 
@@ -2423,12 +2524,40 @@ static long binary_decode(const char *s)
   return x;
 }
 
-/* TODO: fix! */
 static bool s7_is_negative(s7_pointer obj)
 {
-  return(false);
+  switch (object_number_type(obj))
+    {
+    case NUM_INT:   return(s7_integer(obj) < 0);
+    case NUM_RATIO: return(s7_numerator(obj) < 0);
+    default:        return(s7_real(obj) < 0);
+    }
 }
-      
+
+static bool s7_is_positive(s7_pointer x)
+{
+  switch (object_number_type(x))
+    {
+    case NUM_INT:   return(s7_integer(x) > 0);
+    case NUM_RATIO: return(s7_numerator(x) > 0);
+    default:        return(s7_real(x) > 0);
+    }
+}
+
+static bool s7_is_zero(s7_pointer x)
+{
+  switch (object_number_type(x))
+    {
+    case NUM_INT:   return(s7_integer(x) == 0);
+    case NUM_REAL2:
+    case NUM_REAL:  return(s7_real(x) == 0.0);
+    case NUM_RATIO: return(s7_numerator(x) == 0);
+    default:        return((s7_real_part(x) == 0.0) &&
+			   (s7_imag_part(x) == 0.0));
+    }
+}
+
+
 char *s7_number_to_string(s7_scheme *sc, s7_pointer obj, int radix)
 {
   char *p;
@@ -2491,7 +2620,7 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
   int radix = 0;
   char *res;
   if (!s7_is_number(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "number->string argument should be a number"), args));
+    return(s7_wrong_type_arg_error(sc, "number->string", 1, car(args), "a number"));
   if (s7_is_pair(cdr(args)))
     {
       if (s7_is_integer(cadr(args)))
@@ -2499,7 +2628,7 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
       if ((radix != 10) &&
 	  (radix != 8) &&
 	  (radix != 16))
-	return(s7_error(sc, s7_make_string(sc, "number->string radix should be 8, 10, or 16"), args));
+	return(s7_out_of_range_error(sc, "number->string", 2, cadr(args), "8, 10, or 16"));
     }
   else radix = 10;
   res = s7_number_to_string(sc, car(args), radix);
@@ -2702,14 +2831,14 @@ static s7_pointer g_string_to_number(s7_scheme *sc, s7_pointer args)
   #define H_string_to_number "(string->number str :optional (radix 10)) converts str into a number"
   int radix = 0;
   if (!s7_is_string(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "string->number argument should be a string"), args));
+    return(s7_wrong_type_arg_error(sc, "string->number", 1, car(args), "a string"));
   if (s7_is_pair(cdr(args)))
     {
       if (s7_is_integer(cadr(args)))
 	radix = s7_integer(cadr(args));
       if ((radix < 2) ||
 	  (radix > 36))
-	return(s7_error(sc, s7_make_string(sc, "string->number radix should be an integer between 2 and 36"), args));
+	return(s7_out_of_range_error(sc, "string->number", 2, cadr(args), "between 2 and 36"));
     }
   else radix = 10;
   return(s7_string_to_number(sc, string_value(car(args)), radix));
@@ -2830,8 +2959,12 @@ static s7_pointer g_make_polar(s7_scheme *sc, s7_pointer args)
 {
   double ang, mag;
   #define H_make_polar "(make-polar mag ang) returns a complex number with magnitude mag and angle ang"
-  if ((!s7_is_real(car(args))) || (!s7_is_real(cadr(args))))
-    return(s7_error(sc, s7_make_string(sc, "both arguments to make-polar should be real numbers"), args));
+
+  if (!s7_is_real(car(args)))
+    return(s7_wrong_type_arg_error(sc, "make-polar", 1, car(args), "a real"));
+  if (!s7_is_real(cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "make-polar", 2, cadr(args), "a real"));
+
   mag = num_to_real((car(args))->object.number);
   ang = num_to_real((cadr(args))->object.number);
   return(s7_make_complex(sc, mag * cos(ang), mag * sin(ang)));
@@ -2840,8 +2973,12 @@ static s7_pointer g_make_polar(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_make_rectangular(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_rectangular "(make-rectangular x1 x2) returns a complex number with real-part x1 and imaginary-part x2"
-  if ((!s7_is_real(car(args))) || (!s7_is_real(cadr(args))))
-    return(s7_error(sc, s7_make_string(sc, "both arguments to make-rectangular should be real numbers"), args));
+
+  if (!s7_is_real(car(args)))
+    return(s7_wrong_type_arg_error(sc, "make-rectangular", 1, car(args), "a real"));
+  if (!s7_is_real(cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "make-rectangular", 2, cadr(args), "a real"));
+
   return(s7_make_complex(sc, 
 			 num_to_real((car(args))->object.number), 
 			 num_to_real((cadr(args))->object.number)));
@@ -2851,7 +2988,7 @@ static s7_pointer g_magnitude(s7_scheme *sc, s7_pointer args)
 {
   #define H_magnitude "(magnitude z) returns the magnitude of z"
   if (!s7_is_number(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "magnitude argument should be a number"), args));
+    return(s7_wrong_type_arg_error(sc, "magnitude", 1, car(args), "a number"));
   sc->v = nvalue(car(args));
   switch (num_type(sc->v))
     {
@@ -2882,7 +3019,7 @@ static s7_pointer g_angle(s7_scheme *sc, s7_pointer args)
 {
   #define H_angle "(angle z) returns the angle of z"
   if (!s7_is_number(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "angle argument should be a number"), args));
+    return(s7_wrong_type_arg_error(sc, "angle", 1, car(args), "a number"));
   sc->x = car(args);
   if (!s7_is_real(sc->x))
     return(s7_make_real(sc, atan2(s7_imag_part(sc->x), s7_real_part(sc->x))));
@@ -2897,21 +3034,21 @@ static s7_pointer g_rationalize(s7_scheme *sc, s7_pointer args)
   s7_Int numer = 0, denom = 1;
   #define H_rationalize "(rationalize x err) returns a ratio within err of x"
   if (!s7_is_real(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "rationalize argument should be a real number"), args));
+    return(s7_wrong_type_arg_error(sc, "rationalize", 1, car(args), "a real"));
   sc->x = car(args);
   if (s7_is_exact(sc->x)) 
     return(sc->x);
   err = s7_real(cadr(args));
   if (c_rationalize(s7_real(sc->x), err, &numer, &denom))
     return(s7_make_ratio(sc, numer, denom));
-  return(s7_error(sc, s7_make_string(sc, "rationalize did not converge?!?"), args));
+  return(sc->F);
 }
 
 static s7_pointer g_abs(s7_scheme *sc, s7_pointer args)
 {
   #define H_abs "(abs x) returns the absolute value of x"
   if (!s7_is_real(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "abs argument should be a real number"), args));
+    return(s7_wrong_type_arg_error(sc, "abs", 1, car(args), "a real"));
   sc->v = nvalue(car(args));
   if (num_type(sc->v) >= NUM_REAL)
     real(sc->v) = fabs(real(sc->v));
@@ -2928,7 +3065,7 @@ static s7_pointer g_exp(s7_scheme *sc, s7_pointer args)
 {
   #define H_exp "(exp z) returns e^z"
   if (!s7_is_number(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "exp argument should be a number"), args));
+    return(s7_wrong_type_arg_error(sc, "exp", 1, car(args), "a number"));
   sc->x = car(args);
   if (s7_is_real(sc->x))
     return(s7_make_real(sc, exp(num_to_real(sc->x->object.number))));
@@ -2938,10 +3075,13 @@ static s7_pointer g_exp(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
 {
   #define H_log "(log z1 z2) returns log(z1) / log(z2) where z2 defaults to e"
-  if ((!s7_is_number(car(args))) ||
-      ((s7_is_pair(cdr(args))) &&
-       (!(s7_is_number(cadr(args))))))
-    return(s7_error(sc, s7_make_string(sc, "log arguments should be numbers"), args));
+
+  if (!s7_is_number(car(args)))
+    return(s7_wrong_type_arg_error(sc, "log", 1, car(args), "a number"));
+  if ((s7_is_pair(cdr(args))) &&
+      (!(s7_is_number(cadr(args)))))
+    return(s7_wrong_type_arg_error(sc, "log", 2, cadr(args), "a number"));
+
   sc->x = car(args);
   if (s7_is_pair(cdr(args)))
     {
@@ -2967,7 +3107,7 @@ static s7_pointer g_sin(s7_scheme *sc, s7_pointer args)
 {
   #define H_sin "(sin z) returns sin(z)"
   if (!s7_is_number(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "sin argument should be a number"), args));
+    return(s7_wrong_type_arg_error(sc, "sin", 1, car(args), "a number"));
   sc->x = car(args);
   if (s7_is_real(sc->x))
     return(s7_make_real(sc, sin(num_to_real(sc->x->object.number))));
@@ -2978,7 +3118,7 @@ static s7_pointer g_cos(s7_scheme *sc, s7_pointer args)
 {
   #define H_cos "(cos z) returns cos(z)"
   if (!s7_is_number(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "cos argument should be a number"), args));
+    return(s7_wrong_type_arg_error(sc, "cos", 1, car(args), "a number"));
   sc->x = car(args);
   if (s7_is_real(sc->x))
     return(s7_make_real(sc, cos(num_to_real(sc->x->object.number))));
@@ -2989,7 +3129,7 @@ static s7_pointer g_tan(s7_scheme *sc, s7_pointer args)
 {
   #define H_tan "(tan z) returns tan(z)"
   if (!s7_is_number(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "tan argument should be a number"), args));
+    return(s7_wrong_type_arg_error(sc, "tan", 1, car(args), "a number"));
   sc->x = car(args);
   if (s7_is_real(sc->x))
     return(s7_make_real(sc, tan(num_to_real(sc->x->object.number))));
@@ -3000,7 +3140,7 @@ static s7_pointer g_asin(s7_scheme *sc, s7_pointer args)
 {
   #define H_asin "(asin z) returns asin(z)"
   if (!s7_is_number(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "asin argument should be a number"), args));
+    return(s7_wrong_type_arg_error(sc, "asin", 1, car(args), "a number"));
   sc->x = car(args);
   if ((s7_is_real(sc->x)) &&
       (fabs(num_to_real(sc->x->object.number)) <= 1.0))
@@ -3012,7 +3152,7 @@ static s7_pointer g_acos(s7_scheme *sc, s7_pointer args)
 {
   #define H_acos "(acos z) returns acos(z)"
   if (!s7_is_number(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "acos argument should be a number"), args));
+    return(s7_wrong_type_arg_error(sc, "acos", 1, car(args), "a number"));
   sc->x = car(args);
   if ((s7_is_real(sc->x)) &&
       (fabs(num_to_real(sc->x->object.number)) <= 1.0))
@@ -3027,7 +3167,7 @@ static s7_pointer g_atan(s7_scheme *sc, s7_pointer args)
   if (!s7_is_pair(cdr(args)))
     {
       if (!s7_is_number(sc->x))
-	return(s7_error(sc, s7_make_string(sc, "atan argument should be a number"), args));
+	return(s7_wrong_type_arg_error(sc, "atan", 1, sc->x, "a number"));
       if (s7_is_real(sc->x))
 	return(s7_make_real(sc, atan(num_to_real(sc->x->object.number))));
       return(s7_from_c_complex(sc, catan(s7_complex(sc->x))));
@@ -3035,9 +3175,12 @@ static s7_pointer g_atan(s7_scheme *sc, s7_pointer args)
   else 
     {
       sc->y = cadr(args);
-      if ((!s7_is_real(sc->x)) || (!s7_is_real(sc->y)))
-	return(s7_error(sc, s7_make_string(sc, "atan arguments should be reals"), args));
-      return(s7_make_real(sc, atan2(num_to_real(sc->x->object.number), num_to_real(sc->y->object.number))));
+      if (!s7_is_real(sc->x))
+	return(s7_wrong_type_arg_error(sc, "atan", 1, sc->x, "a real"));
+      if (!s7_is_real(sc->y))
+	return(s7_wrong_type_arg_error(sc, "atan", 2, sc->y, "a real"));
+      return(s7_make_real(sc, atan2(num_to_real(sc->x->object.number), 
+				    num_to_real(sc->y->object.number))));
     }
 }  
 
@@ -3045,7 +3188,7 @@ static s7_pointer g_sinh(s7_scheme *sc, s7_pointer args)
 {
   #define H_sinh "(sinh z) returns sinh(z)"
   if (!s7_is_number(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "sinh argument should be a number"), args));
+    return(s7_wrong_type_arg_error(sc, "sinh", 1, car(args), "a number"));
   sc->x = car(args);
   if (s7_is_real(sc->x))
     return(s7_make_real(sc, sinh(num_to_real(sc->x->object.number))));
@@ -3056,7 +3199,7 @@ static s7_pointer g_cosh(s7_scheme *sc, s7_pointer args)
 {
   #define H_cosh "(cosh z) returns cosh(z)"
   if (!s7_is_number(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "cosh argument should be a number"), args));
+    return(s7_wrong_type_arg_error(sc, "cosh", 1, car(args), "a number"));
   sc->x = car(args);
   if (s7_is_real(sc->x))
     return(s7_make_real(sc, cosh(num_to_real(sc->x->object.number))));
@@ -3067,7 +3210,7 @@ static s7_pointer g_tanh(s7_scheme *sc, s7_pointer args)
 {
   #define H_tanh "(tanh z) returns tanh(z)"
   if (!s7_is_number(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "tanh argument should be a number"), args));
+    return(s7_wrong_type_arg_error(sc, "tanh", 1, car(args), "a number"));
   sc->x = car(args);
   if (s7_is_real(sc->x))
     return(s7_make_real(sc, tanh(num_to_real(sc->x->object.number))));
@@ -3078,7 +3221,7 @@ static s7_pointer g_asinh(s7_scheme *sc, s7_pointer args)
 {
   #define H_asinh "(asinh z) returns asinh(z)"
   if (!s7_is_number(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "asinh argument should be a number"), args));
+    return(s7_wrong_type_arg_error(sc, "asinh", 1, car(args), "a number"));
   sc->x = car(args);
   if (s7_is_real(sc->x))
     return(s7_make_real(sc, asinh(num_to_real(sc->x->object.number))));
@@ -3089,7 +3232,7 @@ static s7_pointer g_acosh(s7_scheme *sc, s7_pointer args)
 {
   #define H_acosh "(acosh z) returns acosh(z)"
   if (!s7_is_number(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "acosh argument should be a number"), args));
+    return(s7_wrong_type_arg_error(sc, "acosh", 1, car(args), "a number"));
   sc->x = car(args);
   if ((s7_is_real(sc->x)) &&
       (num_to_real(sc->x->object.number) >= 1.0))
@@ -3101,7 +3244,7 @@ static s7_pointer g_atanh(s7_scheme *sc, s7_pointer args)
 {
   #define H_atanh "(atanh z) returns atanh(z)"
   if (!s7_is_number(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "atanh argument should be a number"), args));
+    return(s7_wrong_type_arg_error(sc, "atanh", 1, car(args), "a number"));
   sc->x = car(args);
   if ((s7_is_real(sc->x)) &&
       (fabs(num_to_real(sc->x->object.number)) < 1.0))
@@ -3113,7 +3256,7 @@ static s7_pointer g_sqrt(s7_scheme *sc, s7_pointer args)
 {
   #define H_sqrt "(sqrt z) returns sqrt(z)"
   if (!s7_is_number(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "sqrt argument should be a number"), args));
+    return(s7_wrong_type_arg_error(sc, "sqrt", 1, car(args), "a number"));
   sc->x = car(args);
   if ((s7_is_real(sc->x)) &&
       (num_to_real(sc->x->object.number) >= 0.0))
@@ -3125,9 +3268,10 @@ static s7_pointer g_sqrt(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 {
   #define H_expt "(expt z1 z2) returns z1^z2"
-  if ((!s7_is_number(car(args))) ||
-      (!s7_is_number(cadr(args))))
-    return(s7_error(sc, s7_make_string(sc, "expt arguments should be numbers"), args));
+  if (!s7_is_number(car(args)))
+    return(s7_wrong_type_arg_error(sc, "expt", 1, car(args), "a number"));
+  if (!s7_is_number(cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "expt", 2, cadr(args), "a number"));
 
   sc->x = car(args);
   sc->y = cadr(args);
@@ -3151,7 +3295,7 @@ static s7_pointer g_floor(s7_scheme *sc, s7_pointer args)
 {
   #define H_floor "(floor x) returns the integer closest to x toward -inf"
   if (!s7_is_real(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "floor argument should be a real number"), args));
+    return(s7_wrong_type_arg_error(sc, "floor", 1, car(args), "a real"));
   sc->x = car(args);
   return(s7_make_integer(sc, (s7_Int)floor(num_to_real(sc->x->object.number)))); /* used to be real result */
 }
@@ -3160,40 +3304,38 @@ static s7_pointer g_ceiling(s7_scheme *sc, s7_pointer args)
 {
   #define H_ceiling "(ceiling x) returns the integer closest to x toward inf"
   if (!s7_is_real(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "ceiling argument should be a real number"), args));
+    return(s7_wrong_type_arg_error(sc, "ceiling", 1, car(args), "a real"));
   sc->x = car(args);
   return(s7_make_integer(sc, (s7_Int)ceil(num_to_real(sc->x->object.number))));
 }
 
 static s7_pointer g_truncate(s7_scheme *sc, s7_pointer args)
 {
-  double xf;
   #define H_truncate "(truncate x) returns the integer closest to x toward 0"
   if (!s7_is_real(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "truncate argument should be a real number"), args));
-  sc->x = car(args);
-  xf = num_to_real(sc->x->object.number);
-  if (xf > 0) 
-    return(s7_make_integer(sc, (s7_Int)floor(xf)));
-  return(s7_make_integer(sc, (s7_Int)ceil(xf)));
+    return(s7_wrong_type_arg_error(sc, "truncate", 1, car(args), "a real"));
+  return(s7_make_integer(sc, s7_truncate(num_to_real(car(args)->object.number))));
 }
 
 static s7_pointer g_round(s7_scheme *sc, s7_pointer args)
 {
   #define H_round "(round x) returns the integer closest to x"
   if (!s7_is_real(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "round argument should be a real number"), args));
+    return(s7_wrong_type_arg_error(sc, "round", 1, car(args), "a real"));
   sc->x = car(args);
   return(s7_make_integer(sc, (s7_Int)round_per_R5RS(num_to_real(sc->x->object.number))));
 }
 
 static s7_pointer g_lcm(s7_scheme *sc, s7_pointer args)
 {
+  int i;
   s7_Int val = 1;
   #define H_lcm "(lcm ...) returns the least common multiple of its arguments"
-  for (sc->x = args; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+
+  for (i = 1, sc->x = args; sc->x != sc->NIL; i++, sc->x = cdr(sc->x)) 
     if (!s7_is_integer(car(sc->x)))
-      return(s7_error(sc, s7_make_string(sc, "lcm arguments should be integers"), args));
+      return(s7_wrong_type_arg_error(sc, "lcm", i, car(sc->x), "an integer"));
+
   for (sc->x = args; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
     {
       val = c_lcm(val, s7_integer(car(sc->x)));
@@ -3205,11 +3347,14 @@ static s7_pointer g_lcm(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_gcd(s7_scheme *sc, s7_pointer args)
 {
+  int i;
   s7_Int val = 0;
   #define H_gcd "(gcd ...) returns the greatest common divisor of its arguments"
-  for (sc->x = args; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+
+  for (i = 1, sc->x = args; sc->x != sc->NIL; i++, sc->x = cdr(sc->x)) 
     if (!s7_is_integer(car(sc->x)))
-      return(s7_error(sc, s7_make_string(sc, "gcd arguments should be integers"), args));
+      return(s7_wrong_type_arg_error(sc, "gcd", i, car(sc->x), "an integer"));
+
   for (sc->x = args; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
     {
       val = c_gcd(val, s7_integer(car(sc->x)));
@@ -3223,11 +3368,12 @@ static s7_pointer g_gcd(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 {
   #define H_add "(+ ...) adds its arguments"
+  int i;
   sc->v = small_int_as_num(sc, 0);
-  for (sc->x = args; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+  for (i = 1, sc->x = args; sc->x != sc->NIL; i++, sc->x = cdr(sc->x)) 
     {
       if (!s7_is_number(car(sc->x)))
-	return(s7_error(sc, s7_make_string(sc, "+ arguments should be numbers"), args));
+	return(s7_wrong_type_arg_error(sc, "+", i, car(sc->x), "a number"));
       sc->v = num_add(sc, sc->v, nvalue(car(sc->x)));
     }
   return(make_number(sc, sc->v));
@@ -3236,8 +3382,9 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
 {
   #define H_subtract "(- x1 ...) subtract its trailing arguments from the first, or negates the first if only one argument is given"
+  int i;
   if (!s7_is_number(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "- argument should be a number"), args));
+    return(s7_wrong_type_arg_error(sc, "-", 1, car(args), "a number"));
 
   if (cdr(args) == sc->NIL) 
     {
@@ -3249,10 +3396,10 @@ static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
       sc->x = cdr(args);
       sc->v = nvalue(car(args));
     }
-  for (; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+  for (i = 2; sc->x != sc->NIL; i++, sc->x = cdr(sc->x)) 
     {
       if (!s7_is_number(car(sc->x)))
-	return(s7_error(sc, s7_make_string(sc, "- arguments should be numbers"), args));
+	return(s7_wrong_type_arg_error(sc, "-", i, car(sc->x), "a number"));
       sc->v = num_sub(sc, sc->v, nvalue(car(sc->x)));
     }
   return(make_number(sc, sc->v));
@@ -3261,11 +3408,12 @@ static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 {
   #define H_multiply "(* ...) multiplies its arguments"
+  int i;
   sc->v = small_int_as_num(sc, 1);
-  for (sc->x = args; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+  for (i = 1, sc->x = args; sc->x != sc->NIL; i++, sc->x = cdr(sc->x)) 
     {
       if (!s7_is_number(car(sc->x)))
-	return(s7_error(sc, s7_make_string(sc, "* arguments should be numbers"), args));
+	return(s7_wrong_type_arg_error(sc, "*", i, car(sc->x), "a number"));
       sc->v = num_mul(sc, sc->v, nvalue(car(sc->x)));
     }
   return(make_number(sc, sc->v));
@@ -3274,8 +3422,9 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 {
   #define H_divide "(- x1 ...) divides its first argument by the rest, or inverts the first if there is only one argument"
+  int i;
   if (!s7_is_number(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "/ argument should be a number"), args));
+    return(s7_wrong_type_arg_error(sc, "/", 1, car(args), "a number"));
 
   if (cdr(args) == sc->NIL) 
     {
@@ -3287,10 +3436,11 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
       sc->x = cdr(args);
       sc->v = nvalue(car(args));
     }
-  for (; sc->x != sc->NIL; sc->x = cdr(sc->x))
+  for (i = 2; sc->x != sc->NIL; i++, sc->x = cdr(sc->x))
     {
       if (!s7_is_number(car(sc->x)))
-	return(s7_error(sc, s7_make_string(sc, "/ arguments should be numbers"), args));
+	return(s7_wrong_type_arg_error(sc, "/", i, car(sc->x), "a number"));
+      /* TODO: /0 check? */
       sc->v = num_div(sc, sc->v, nvalue(car(sc->x)));
     }
   return(make_number(sc, sc->v));
@@ -3299,13 +3449,14 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_max(s7_scheme *sc, s7_pointer args)
 {
   #define H_max "(max ...) returns the maximum of its arguments"
+  int i;
   if (!s7_is_real(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "max argument should be a real number"), args));
+    return(s7_wrong_type_arg_error(sc, "max", 1, car(args), "a real"));
   sc->v = nvalue(car(args));
-  for (sc->x = cdr(args); sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+  for (i = 2, sc->x = cdr(args); sc->x != sc->NIL; i++, sc->x = cdr(sc->x)) 
     {
       if (!s7_is_real(car(sc->x)))
-	return(s7_error(sc, s7_make_string(sc, "max arguments should be real numbers"), args));
+	return(s7_wrong_type_arg_error(sc, "max", i, car(sc->x), "a real"));
       sc->v = num_max(sc, sc->v, nvalue(car(sc->x)));
     }
   return(make_number(sc, sc->v));
@@ -3314,13 +3465,14 @@ static s7_pointer g_max(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_min(s7_scheme *sc, s7_pointer args)
 {
   #define H_min "(min ...) returns the minimum of its arguments"
+  int i;
   if (!s7_is_real(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "min argument should be a real number"), args));
+    return(s7_wrong_type_arg_error(sc, "min", 1, car(args), "a real"));
   sc->v = nvalue(car(args));
-  for (sc->x = cdr(args); sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+  for (i = 2, sc->x = cdr(args); sc->x != sc->NIL; i++, sc->x = cdr(sc->x)) 
     {
       if (!s7_is_real(car(sc->x)))
-	return(s7_error(sc, s7_make_string(sc, "min arguments should be real numbers"), args));
+	return(s7_wrong_type_arg_error(sc, "min", i, car(sc->x), "a real"));
       sc->v = num_min(sc, sc->v, nvalue(car(sc->x)));
     }
   return(make_number(sc, sc->v));
@@ -3328,38 +3480,49 @@ static s7_pointer g_min(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_quotient(s7_scheme *sc, s7_pointer args)
 {
-  #define H_quotient "(quotient i1 i2) returns the integer quotient of i1 and i2"
-  if ((!s7_is_integer(car(args))) || (!s7_is_integer(cadr(args))))
-    return(s7_error(sc, s7_make_string(sc, "quotient arguments should be integers"), args));
+  #define H_quotient "(quotient x1 x2) returns the integer quotient of x1 and x2"
+
+  if (!s7_is_real(car(args)))
+    return(s7_wrong_type_arg_error(sc, "quotient", 1, car(args), "a real"));
+  if (!s7_is_real(cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "quotient", 2, cadr(args), "a real"));
   
   sc->v = nvalue(car(args));
-  if (s7_integer(cadr(args)) != 0)
+  if (!s7_is_zero(cadr(args)))
     sc->v = num_quotient(sc->v, nvalue(cadr(args)));
-  else return(s7_error(sc, s7_make_string(sc, "quotient division by 0"), args));
+  else return(s7_division_by_zero_error(sc, "quotient", cadr(args)));
   return(make_number(sc, sc->v));
 }
 
 static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
 {
-  #define H_remainder "(remainder i1 i2) returns the integer remainder of i1 and i2"
-  if ((!s7_is_integer(car(args))) || (!s7_is_integer(cadr(args))))
-    return(s7_error(sc, s7_make_string(sc, "remainder arguments should be integers"), args));
+  #define H_remainder "(remainder x1 x2) returns the integer remainder of x1 and x2"
+
+  if (!s7_is_real(car(args)))
+    return(s7_wrong_type_arg_error(sc, "remainder", 1, car(args), "a real"));
+  if (!s7_is_real(cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "remainder", 2, cadr(args), "a real"));
+
   sc->v = nvalue(car(args));
-  if (s7_integer(cadr(args)) != 0)
-    sc->v = num_rem(sc->v, nvalue(cadr(args)));
-  else return(s7_error(sc, s7_make_string(sc, "remainder division by 0"), args));
+  if (!s7_is_zero(cadr(args)))
+    sc->v = num_rem(sc, sc->v, nvalue(cadr(args)));
+  else return(s7_division_by_zero_error(sc, "remainder", cadr(args)));
   return(make_number(sc, sc->v));
 }
 
 static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
 {
-  #define H_modulo "(modulo i1 i2) returns i1 mod i2"
-  if ((!s7_is_integer(car(args))) || (!s7_is_integer(cadr(args))))
-    return(s7_error(sc, s7_make_string(sc, "modulo arguments should be integers"), args));
+  #define H_modulo "(modulo x1 x2) returns x1 mod x2"
+
+  if (!s7_is_real(car(args)))
+    return(s7_wrong_type_arg_error(sc, "modulo", 1, car(args), "a real"));
+  if (!s7_is_real(cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "modulo", 2, cadr(args), "a real"));
+
   sc->v = nvalue(car(args));
-  if (s7_integer(cadr(args)) != 0)
-    sc->v = num_mod(sc->v, nvalue(cadr(args)));
-  else return(s7_error(sc, s7_make_string(sc, "modulo division by 0"), args));
+  if (!s7_is_zero(cadr(args)))
+    sc->v = num_mod(sc, sc->v, nvalue(cadr(args)));
+  else return(s7_division_by_zero_error(sc, "modulo", cadr(args)));
   return(make_number(sc, sc->v));
 }
 
@@ -3367,6 +3530,7 @@ enum {N_EQUAL, N_LESS, N_GREATER, N_LESS_OR_EQUAL, N_GREATER_OR_EQUAL};
 
 static s7_pointer compare_numbers(s7_scheme *sc, int op, s7_pointer args)
 {
+  int i;
   bool (*comp_func)(num a, num b);
   bool (*arg_checker)(s7_pointer x);
   const char *arg_type, *op_name;
@@ -3380,19 +3544,13 @@ static s7_pointer compare_numbers(s7_scheme *sc, int op, s7_pointer args)
     }
   
   if (!arg_checker(car(args)))
-    {
-      snprintf(sc->strbuf, STRBUF_SIZE, "%s arguments should be %s", op_name, arg_type);
-      return(s7_error(sc, s7_make_string(sc, sc->strbuf), args));
-    }
+    s7_wrong_type_arg_error(sc, op_name, 1, car(args), arg_type);
 
   sc->v = nvalue(car(args));
-  for (sc->x = cdr(args); sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+  for (i = 2, sc->x = cdr(args); sc->x != sc->NIL; i++, sc->x = cdr(sc->x)) 
     {
       if (!arg_checker(car(sc->x)))
-	{
-	  snprintf(sc->strbuf, STRBUF_SIZE, "%s arguments should be %s", op_name, arg_type);
-	  return(s7_error(sc, s7_make_string(sc, sc->strbuf), args));
-	}
+	s7_wrong_type_arg_error(sc, op_name, i, car(sc->x), arg_type);
 
       if (!comp_func(sc->v, nvalue(car(sc->x)))) 
 	return(sc->F);
@@ -3436,7 +3594,7 @@ static s7_pointer g_real_part(s7_scheme *sc, s7_pointer args)
 {
   #define H_real_part "(real-part num) returns the real part of num"
   if (!s7_is_number(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "real-part argument should be a number"), args));
+    return(s7_wrong_type_arg_error(sc, "real-part", 1, car(args), "a number"));
   return(s7_make_real(sc, s7_real_part(car(args))));
 }
 
@@ -3444,7 +3602,7 @@ static s7_pointer g_imag_part(s7_scheme *sc, s7_pointer args)
 {
   #define H_imag_part "(imag-part num) returns the imaginary part of num"
   if (!s7_is_number(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "imag-part argument should be a number"), args));
+    return(s7_wrong_type_arg_error(sc, "imag-part", 1, car(args), "a number"));
   return(s7_make_real(sc, s7_imag_part(car(args))));
 }
 
@@ -3452,7 +3610,7 @@ static s7_pointer g_numerator(s7_scheme *sc, s7_pointer args)
 {
   #define H_numerator "(numerator rat) returns the numerator of the rational number rat"
   if (!s7_is_rational(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "numerator argument should be a rational number"), args));
+    return(s7_wrong_type_arg_error(sc, "numerator", 1, car(args), "a rational"));
   return(s7_make_integer(sc, num_to_numerator((car(args))->object.number)));
 }
 
@@ -3460,7 +3618,7 @@ static s7_pointer g_denominator(s7_scheme *sc, s7_pointer args)
 {
   #define H_denominator "(denominator rat) returns the denominator of the rational number rat"
   if (!s7_is_rational(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "denominator argument should be a rational number"), args));
+    return(s7_wrong_type_arg_error(sc, "denominator", 1, car(args), "a rational"));
   return(s7_make_integer(sc, num_to_denominator((car(args))->object.number)));
 }
 
@@ -3498,7 +3656,7 @@ static s7_pointer g_is_even(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_even "(even? int) returns #t if the integer int is even"
   if (!s7_is_integer(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "even? argument should be an integer"), args));
+    return(s7_wrong_type_arg_error(sc, "even?", 1, car(args), "an integer"));
   return(to_s7_bool(sc, (s7_integer(car(args)) & 1) == 0));
 }
 
@@ -3506,7 +3664,7 @@ static s7_pointer g_is_odd(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_odd "(odd? int) returns #t if the integer int is odd"
   if (!s7_is_integer(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "odd? argument should be an integer"), args));
+    return(s7_wrong_type_arg_error(sc, "odd?", 1, car(args), "an integer"));
   return(to_s7_bool(sc, (s7_integer(car(args)) & 1) == 1));
 }
 
@@ -3514,45 +3672,24 @@ static s7_pointer g_is_zero(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_zero "(zero? num) returns #t if the number num is zero"
   if (!s7_is_number(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "zero? argument should be a number"), args));
-  sc->x = car(args);
-  switch (object_number_type(sc->x))
-    {
-    case NUM_INT:   return(to_s7_bool(sc, (s7_integer(sc->x) == 0)));
-    case NUM_REAL2:
-    case NUM_REAL:  return(to_s7_bool(sc, (s7_real(sc->x) == 0.0)));
-    case NUM_RATIO: return(to_s7_bool(sc, (s7_numerator(sc->x) == 0)));
-    default:        return(to_s7_bool(sc, ((s7_real_part(sc->x) == 0.0) &&
-					   (s7_imag_part(sc->x) == 0.0))));
-    }
+    return(s7_wrong_type_arg_error(sc, "zero?", 1, car(args), "a number"));
+  return(to_s7_bool(sc, s7_is_zero(car(args))));
 }
 
 static s7_pointer g_is_positive(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_positive "(positive? num) returns #t if the real number num is positive"
   if (!s7_is_real(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "positive? argument should be a real number"), args));
-  sc->x = car(args);
-  switch (object_number_type(sc->x))
-    {
-    case NUM_INT:   return(to_s7_bool(sc, (s7_integer(sc->x) > 0)));
-    case NUM_RATIO: return(to_s7_bool(sc, (s7_numerator(sc->x) > 0)));
-    default:        return(to_s7_bool(sc, (s7_real(sc->x) > 0)));
-    }
+    return(s7_wrong_type_arg_error(sc, "positive?", 1, car(args), "a real"));
+  return(to_s7_bool(sc, s7_is_positive(car(args))));
 }
 
 static s7_pointer g_is_negative(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_negative "(negative? num) returns #t if the real number num is negative"
   if (!s7_is_real(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "negative? argument should be a real number"), args));
-  sc->x = car(args);
-  switch (object_number_type(sc->x))
-    {
-    case NUM_INT:   return(to_s7_bool(sc, (s7_integer(sc->x) < 0)));
-    case NUM_RATIO: return(to_s7_bool(sc, (s7_numerator(sc->x) < 0)));
-    default:        return(to_s7_bool(sc, (s7_real(sc->x) < 0)));
-    }
+    return(s7_wrong_type_arg_error(sc, "negative?", 1, car(args), "a real"));
+  return(to_s7_bool(sc, s7_is_negative(car(args))));
 }
       
 static s7_pointer g_inexact_to_exact(s7_scheme *sc, s7_pointer args)
@@ -3560,7 +3697,7 @@ static s7_pointer g_inexact_to_exact(s7_scheme *sc, s7_pointer args)
   #define H_inexact_to_exact "(inexact->exact num) converts num to an exact number"
   s7_Int numer = 0, denom = 1;
   if (!s7_is_number(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "inexact->exact argument should be a number"), args));
+    return(s7_wrong_type_arg_error(sc, "inexact->exact", 1, car(args), "a number"));
   sc->x = car(args);
   if (s7_is_exact(sc->x)) 
     return(sc->x);
@@ -3573,7 +3710,7 @@ static s7_pointer g_exact_to_inexact(s7_scheme *sc, s7_pointer args)
 {
   #define H_exact_to_inexact "(exact->inexact num) converts num to an inexact number"
   if (!s7_is_number(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "exact->inexact argument should be a number"), args));
+    return(s7_wrong_type_arg_error(sc, "exact->inexact", 1, car(args), "a number"));
   sc->x = car(args);
   if (s7_is_inexact(sc->x)) 
     return(sc->x);
@@ -3586,7 +3723,7 @@ static s7_pointer g_is_exact(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_exact "(exact? num) returns #t if num is exact"
   if (!s7_is_number(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "exact? argument should be a number"), args));
+    return(s7_wrong_type_arg_error(sc, "exact?", 1, car(args), "a number"));
   return(to_s7_bool(sc, s7_is_exact(car(args))));
 }
 
@@ -3594,7 +3731,7 @@ static s7_pointer g_is_inexact(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_inexact "(inexact? num) returns #t if num is inexact"
   if (!s7_is_number(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "inexact? argument should be a number"), args));
+    return(s7_wrong_type_arg_error(sc, "inexact?", 1, car(args), "a number"));
   return(to_s7_bool(sc, s7_is_inexact(car(args))));
 }
 
@@ -3622,7 +3759,7 @@ static s7_pointer g_char_to_integer(s7_scheme *sc, s7_pointer args)
 {
   #define H_char_to_integer "(char->integer c) converts the character c to an integer"
   if (!s7_is_character(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "char->integer argument should be a character"), args));
+    return(s7_wrong_type_arg_error(sc, "char->integer", 1, car(args), "a character"));
   return(s7_make_integer(sc, (unsigned char)character(car(args))));
 }
 
@@ -3630,7 +3767,7 @@ static s7_pointer g_integer_to_char(s7_scheme *sc, s7_pointer args)
 {
   #define H_integer_to_char "(integer->char i) converts the non-negative integer i to a character"
   if ((!s7_is_integer(car(args))) || (s7_integer(car(args)) < 0))
-    return(s7_error(sc, s7_make_string(sc, "integer->char argument should be a non-negative integer"), args));
+    return(s7_wrong_type_arg_error(sc, "integer->char", 1, car(args), "a non-negative integer"));
   return(s7_make_character(sc, (char)s7_integer(car(args))));
 }
 
@@ -3638,7 +3775,7 @@ static s7_pointer g_char_upcase(s7_scheme *sc, s7_pointer args)
 {
   #define H_char_upcase "(char-upcase c) converts the character c to upper case"
   if (!s7_is_character(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "char-upcase argument should be a character"), args));
+    return(s7_wrong_type_arg_error(sc, "char-upcase", 1, car(args), "a character"));
   return(s7_make_character(sc, (char)toupper((unsigned char)character(car(args)))));
 }
 
@@ -3646,7 +3783,7 @@ static s7_pointer g_char_downcase(s7_scheme *sc, s7_pointer args)
 {
   #define H_char_downcase "(char-downcase c) converts the character c to lower case"
   if (!s7_is_character(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "char-downcase argument should be a character"), args));
+    return(s7_wrong_type_arg_error(sc, "char-downcase", 1, car(args), "a character"));
   return(s7_make_character(sc, (char)tolower((unsigned char)character(car(args)))));
 }
 
@@ -3659,7 +3796,7 @@ static s7_pointer g_is_char_alphabetic(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_char_alphabetic "(char-alphabetic? c) returns #t if the character c is alphabetic"
   if (!s7_is_character(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "char-alphabetic? argument should be a character"), args));
+    return(s7_wrong_type_arg_error(sc, "char-alphabetic?", 1, car(args), "a character"));
   return(to_s7_bool(sc, c_is_alpha(character(car(args)))));
 }
 
@@ -3672,7 +3809,7 @@ static s7_pointer g_is_char_numeric(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_char_numeric "(char-numeric? c) returns #t if the character c is a digit"
   if (!s7_is_character(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "char-numeric? argument should be a character"), args));
+    return(s7_wrong_type_arg_error(sc, "char-numeric?", 1, car(args), "a character"));
   return(to_s7_bool(sc, c_is_digit(character(car(args)))));
 }
 
@@ -3685,7 +3822,7 @@ static s7_pointer g_is_char_whitespace(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_char_whitespace "(char-whitespace? c) returns #t if the character c is non-printing character"
   if (!s7_is_character(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "char-whitespace? argument should be a character"), args));
+    return(s7_wrong_type_arg_error(sc, "char-whitespace?", 1, car(args), "a character"));
   return(to_s7_bool(sc, c_is_space(character(car(args)))));
 }
 
@@ -3698,7 +3835,7 @@ static s7_pointer g_is_char_upper_case(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_char_upper_case "(char-upper-case? c) returns #t if the character c is in upper case"
   if (!s7_is_character(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "char-upper-case? argument should be a character"), args));
+    return(s7_wrong_type_arg_error(sc, "char-upper-case?", 1, car(args), "a character"));
   return(to_s7_bool(sc, c_is_upper(character(car(args)))));
 }
 
@@ -3711,7 +3848,7 @@ static s7_pointer g_is_char_lower_case(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_char_lower_case "(char-lower-case? c) returns #t if the character c is in lower case"
   if (!s7_is_character(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "char-lower-case? argument should be a character"), args));
+    return(s7_wrong_type_arg_error(sc, "char-lower-case?", 1, car(args), "a character"));
   return(to_s7_bool(sc, c_is_lower(character(car(args)))));
 }
 
@@ -3756,18 +3893,19 @@ static int charcmp(char c1, char c2, bool ci)
 
 static s7_pointer g_char_cmp(s7_scheme *sc, s7_pointer args, int val, const char *name, bool ci)
 {
+  int i;
   s7_pointer x;
   bool happy = true;
   char last_chr;
 
   if (!s7_is_character(car(args)))
-    return(s7_error(sc, s7_string_concatenate(sc, name, " arguments should be chars"), args));
+    return(s7_wrong_type_arg_error(sc, name, 1, car(args), "a character"));
 
   last_chr = character(car(args));
-  for (x = cdr(args); x != sc->NIL; x = cdr(x))
+  for (i = 2, x = cdr(args); x != sc->NIL; i++, x = cdr(x))
     {
       if (!s7_is_character(car(x)))
-	return(s7_error(sc, s7_string_concatenate(sc, name, " arguments should be chars"), args));
+	return(s7_wrong_type_arg_error(sc, name, i, car(x), "a character"));
       if (happy)
 	{
 	  happy = (charcmp(last_chr, character(car(x)), ci) == val);
@@ -3840,33 +3978,8 @@ static s7_pointer g_chars_are_ci_leq(s7_scheme *sc, s7_pointer args)
 
 /* -------------------------------- strings -------------------------------- */
 
-/* allocate name to string area */
-static char *store_string(s7_scheme *sc, int len_str, const char *str, char fill) 
-{
-  char *q;
-  
-  q = (char *)MALLOC(len_str + 1);
-  if (q == 0) 
-    {
-      fprintf(stderr, "failed in store_string\n");
-      return(sc->strbuf);
-    }
-  if (str != 0) 
-    strcpy(q, str);
-  else 
-    {
-      memset(q, fill, len_str);
-      q[len_str]= 0;
-    }
-  return(q);
-}
 
 /* get new string */
-s7_pointer s7_make_string(s7_scheme *sc, const char *str) 
-{
-  return(s7_make_counted_string(sc, str, safe_strlen(str)));
-}
-
 s7_pointer s7_make_counted_string(s7_scheme *sc, const char *str, int len) 
 {
   s7_pointer x;
@@ -3881,7 +3994,7 @@ s7_pointer s7_make_counted_string(s7_scheme *sc, const char *str, int len)
 
   set_type(x, T_STRING | T_ATOM | T_FINALIZABLE);
   local_protect(x);
-  string_value(x) = store_string(sc, len, str, 0);
+  string_value(x) = copy_string(str);
   string_length(x) = len;
   local_unprotect(x);
   return(x);
@@ -3893,10 +4006,17 @@ static s7_pointer make_empty_string(s7_scheme *sc, int len, char fill)
   x = new_cell(sc);
   set_type(x, T_STRING | T_ATOM | T_FINALIZABLE);
   local_protect(x);
-  string_value(x) = store_string(sc, len, 0, fill);
+  string_value(x) = (char *)CALLOC(len + 1, sizeof(char));
+  if (fill != 0)
+    memset((void *)(string_value(x)), fill, len);
   string_length(x) = len;
   local_unprotect(x);
   return(x);
+}
+
+s7_pointer s7_make_string(s7_scheme *sc, const char *str) 
+{
+  return(s7_make_counted_string(sc, str, safe_strlen(str)));
 }
 
 bool s7_is_string(s7_pointer p)
@@ -3923,13 +4043,13 @@ static s7_pointer g_make_string(s7_scheme *sc, s7_pointer args)
   char fill = ' ';
 
   if ((!s7_is_integer(car(args))) || (s7_integer(car(args)) < 0))
-    return(s7_error(sc, s7_make_string(sc, "make-string's first argument should be a non-negative integer"), args));
+    return(s7_wrong_type_arg_error(sc, "make-string", 1, car(args), "a non-negative integer"));
 
   len = s7_integer(car(args));
   if (cdr(args) != sc->NIL) 
     {
       if (!s7_is_character(cadr(args)))
-	return(s7_error(sc, s7_make_string(sc, "make-string's second argument should be a character"), args));
+	return(s7_wrong_type_arg_error(sc, "make-string", 2, cadr(args), "a character"));
       fill = s7_character(cadr(args));
     }
   return(make_empty_string(sc, len, fill));
@@ -3939,7 +4059,7 @@ static s7_pointer g_string_length(s7_scheme *sc, s7_pointer args)
 {
   #define H_string_length "(string-length str) returns the length of the string str"
   if (!s7_is_string(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "string-length's argument should be a string"), args));
+    return(s7_wrong_type_arg_error(sc, "string-length", 1, car(args), "string"));
   return(s7_make_integer(sc, string_length(car(args))));
 }
 	
@@ -3952,12 +4072,12 @@ static s7_pointer g_string_ref(s7_scheme *sc, s7_pointer args)
   index = cadr(args);
 
   if (!s7_is_string(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "string-ref's argument should be a string"), args));
+    return(s7_wrong_type_arg_error(sc, "string-ref", 1, car(args), "a string"));
 
   if ((!s7_is_integer(index)) || (s7_integer(index) < 0))
-    return(s7_error(sc, s7_make_string(sc, "string-ref index argument should be non-negative integer"), args));
+    return(s7_wrong_type_arg_error(sc, "string-ref", 2, index, "a non-negative integer"));
   if (s7_integer(index) >= string_length(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "string-ref index too high"), args));
+    return(s7_out_of_range_error(sc, "string-ref", 2, index, "less than string length"));
 
   str = string_value(car(args));
   return(s7_make_character(sc, ((unsigned char*)str)[s7_integer(index)]));
@@ -3972,17 +4092,17 @@ static s7_pointer g_string_set(s7_scheme *sc, s7_pointer args)
   index = cadr(args);
 
   if (!s7_is_string(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "string-set!'s argument should be a string"), args));
+    return(s7_wrong_type_arg_error(sc, "string-set!", 1, car(args), "a string"));
   if (!s7_is_character(caddr(args)))
-    return(s7_error(sc, s7_make_string(sc, "string-set!'s third argument should be a character"), args));
+    return(s7_wrong_type_arg_error(sc, "string-set!", 3, caddr(args), "a character"));
 
   if ((!s7_is_integer(index)) || (s7_integer(index) < 0))
-    return(s7_error(sc, s7_make_string(sc, "string-set! index argument should be non-negative integer"), args));
+    return(s7_wrong_type_arg_error(sc, "string-set!", 2, index, "a non-negative integer"));
   if (s7_integer(index) >= string_length(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "string-set! index too high"), args));
+    return(s7_out_of_range_error(sc, "string-set!", 2, index, "less than string length"));
 
   if (s7_is_immutable(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "string-set! can't change an immutable string:"), args));
+    return(s7_wrong_type_arg_error(sc, "string-set!", 1, car(args), "a mutable string"));
 
   str = string_value(car(args));
   str[s7_integer(index)] = (char)s7_character(caddr(args));
@@ -3993,16 +4113,17 @@ static s7_pointer s7_string_concatenate(s7_scheme *sc, const char *s1, const cha
 {
   int len;
   s7_pointer newstr;
-  len = strlen(s1) + strlen(s2) + 2;
-  newstr = make_empty_string(sc, len, ' ');
-  strcat(string_value(newstr), s1);
+  len = strlen(s1) + strlen(s2) + 8;
+  newstr = make_empty_string(sc, len, 0);
   strcat(string_value(newstr), s2);
+  strcat(string_value(newstr), ": ");
+  strcat(string_value(newstr), s1);
   return(newstr);
 }
 
 static s7_pointer g_string_append_1(s7_scheme *sc, s7_pointer args, const char *name)
 {
-  int len = 0;
+  int i, len = 0;
   s7_pointer newstr;
   char *pos;
 
@@ -4010,15 +4131,15 @@ static s7_pointer g_string_append_1(s7_scheme *sc, s7_pointer args, const char *
     return(s7_make_string(sc, ""));
 	
   /* get length for new string */
-  for (sc->x = args; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+  for (i = 1, sc->x = args; sc->x != sc->NIL; i++, sc->x = cdr(sc->x)) 
     {
       if (!s7_is_string(car(sc->x)))
-	return(s7_error(sc, s7_string_concatenate(sc, name, "'s arguments should be strings"), args));
+	return(s7_wrong_type_arg_error(sc, name, i, car(sc->x), "a string"));
       len += string_length(car(sc->x));
     }
 	
   /* store the contents of the argument strings into the new string */
-  newstr = make_empty_string(sc, len, ' ');
+  newstr = make_empty_string(sc, len, 0);
   for (pos = string_value(newstr), sc->x = args; sc->x != sc->NIL; pos += string_length(car(sc->x)), sc->x = cdr(sc->x)) 
     memcpy(pos, string_value(car(sc->x)), string_length(car(sc->x)));
   
@@ -4049,16 +4170,16 @@ static s7_pointer g_substring(s7_scheme *sc, s7_pointer args)
   start = cadr(args);
 
   if (!s7_is_string(str))
-    return(s7_error(sc, s7_make_string(sc, "substring's first argument should be a string"), args));
+    return(s7_wrong_type_arg_error(sc, "substring", 1, car(args), "a string"));
 
   if ((!s7_is_integer(start)) || (s7_integer(start) < 0))
-    return(s7_error(sc, s7_make_string(sc, "substring's start (second) argument should be non-negative integer"), args));
+    return(s7_wrong_type_arg_error(sc, "substring", 2, start, "a non-negative integer"));
 
   if (cddr(args) != sc->NIL)
     {
       end = caddr(args);
       if ((!s7_is_integer(end)) || (s7_integer(end) < 0))
-	return(s7_error(sc, s7_make_string(sc, "substring's end (third) argument should be non-negative integer"), args));
+	return(s7_wrong_type_arg_error(sc, "substring", 3, end, "an integer > start"));
       i1 = s7_integer(end);
     }
   else i1 = string_length(str);
@@ -4068,10 +4189,10 @@ static s7_pointer g_substring(s7_scheme *sc, s7_pointer args)
 
   if ((i0 > i1) || 
       (i1 > string_length(str)))
-    return(s7_error(sc, s7_make_string(sc, "substring indices are out of whack"), args));
+    return(s7_out_of_range_error(sc, "substring", 2, start, "start <= end <= string length"));
 
   len = i1 - i0;
-  sc->x = make_empty_string(sc, len, ' ');
+  sc->x = make_empty_string(sc, len, 0);
   memcpy(string_value(sc->x), s + i0, len);
   string_value(sc->x)[len] = 0;
   return(sc->x);
@@ -4103,18 +4224,19 @@ static int safe_strcmp(const char *s1, const char *s2)
 
 static s7_pointer g_string_cmp(s7_scheme *sc, s7_pointer args, int val, const char *name)
 {
+  int i;
   s7_pointer x;
   bool happy = true;
   const char *last_str = NULL;
 
   if (!s7_is_string(car(args)))
-    return(s7_error(sc, s7_string_concatenate(sc, name, " arguments should be strings"), args));
+    return(s7_wrong_type_arg_error(sc, name, 1, car(args), "a string"));
 
   last_str = string_value(car(args));
-  for (x = cdr(args); x != sc->NIL; x = cdr(x))
+  for (i = 2, x = cdr(args); x != sc->NIL; i++, x = cdr(x))
     {
       if (!s7_is_string(car(x)))
-	return(s7_error(sc, s7_string_concatenate(sc, name, " arguments should be strings"), args));
+	return(s7_wrong_type_arg_error(sc, name, i, car(x), "a string"));
       if (happy)
 	{
 	  happy = (safe_strcmp(last_str, string_value(car(x))) == val);
@@ -4189,18 +4311,19 @@ static int safe_strcasecmp(const char *s1, const char *s2)
 
 static s7_pointer g_string_ci_cmp(s7_scheme *sc, s7_pointer args, int val, const char *name)
 {
+  int i;
   s7_pointer x;
   bool happy = true;
   const char *last_str = NULL;
 
   if (!s7_is_string(car(args)))
-    return(s7_error(sc, s7_string_concatenate(sc, name, " arguments should be strings"), args));
+    return(s7_wrong_type_arg_error(sc, name, 1, car(args), "a string"));
 
   last_str = string_value(car(args));
-  for (x = cdr(args); x != sc->NIL; x = cdr(x))
+  for (i = 2, x = cdr(args); x != sc->NIL; i++, x = cdr(x))
     {
       if (!s7_is_string(car(x)))
-	return(s7_error(sc, s7_string_concatenate(sc, name, " arguments should be strings"), args));
+	return(s7_wrong_type_arg_error(sc, name, i, car(x), "a string"));
       if (happy)
 	{
 	  happy = (safe_strcasecmp(last_str, string_value(car(x))) == val);
@@ -4248,9 +4371,9 @@ static s7_pointer g_string_fill(s7_scheme *sc, s7_pointer args)
   char c;
 
   if (!s7_is_string(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "string-fill's first argument should be a string"), args));
+    return(s7_wrong_type_arg_error(sc, "string-fill", 1, car(args), "a string"));
   if (!s7_is_character(cadr(args)))
-    return(s7_error(sc, s7_make_string(sc, "string-fill's second argument should be a character"), args));
+    return(s7_wrong_type_arg_error(sc, "string-fill", 2, cadr(args), "a character"));
 
   str = string_value(car(args));
   c = character(cadr(args));
@@ -4270,9 +4393,9 @@ static s7_pointer g_string_1(s7_scheme *sc, s7_pointer args, const char *name)
   /* get length for new string and check arg types */
   for (len = 0, sc->x = args; sc->x != sc->NIL; len++, sc->x = cdr(sc->x)) 
     if (!s7_is_character(car(sc->x)))
-      return(s7_error(sc, s7_string_concatenate(sc, name, "'s arguments should be characters"), args));
+      return(s7_wrong_type_arg_error(sc, name, len + 1, car(sc->x), "a character"));
 	
-  newstr = make_empty_string(sc, len, ' ');
+  newstr = make_empty_string(sc, len, 0);
   for (i = 0, sc->x = args; sc->x != sc->NIL; i++, sc->x = cdr(sc->x)) 
     string_value(newstr)[i] = character(car(sc->x));
   
@@ -4293,7 +4416,7 @@ static s7_pointer g_list_to_string(s7_scheme *sc, s7_pointer args)
   if (car(args) == sc->NIL)
     return(s7_make_string(sc, ""));
   if (!s7_is_pair(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "list->string's argument should be a list of characters"), args));
+    return(s7_wrong_type_arg_error(sc, "list->string", 1, car(args), "a list of characters"));
   return(g_string_1(sc, car(args), "list->string"));
 }
 
@@ -4307,7 +4430,7 @@ static s7_pointer g_string_to_list(s7_scheme *sc, s7_pointer args)
   lst = sc->NIL;
 
   if (!s7_is_string(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "string->list's argument should be a string"), args));
+    return(s7_wrong_type_arg_error(sc, "string->list", 1, car(args), "a string"));
 
   str = string_value(car(args));
   if (str) len = strlen(str);
@@ -4325,14 +4448,6 @@ static s7_pointer g_string_to_list(s7_scheme *sc, s7_pointer args)
 
 
 /* -------------------------------- ports -------------------------------- */
-
-#define port_paren_depth(p) (p)->object.port->paren_depth
-#define is_string_port(p) (!((p)->object.port->is_file))
-#define is_file_port(p) (p)->object.port->is_file
-#define port_line_number(p) (p)->object.port->rep.stdio.line_number
-#define port_filename(p) (p)->object.port->rep.stdio.filename
-#define port_file(p) (p)->object.port->rep.stdio.file
-#define port_is_closed(p) (p)->object.port->is_closed
 
 static char *describe_port(s7_scheme *sc, s7_pointer p)
 {
@@ -4433,7 +4548,7 @@ static s7_pointer g_set_current_input_port(s7_scheme *sc, s7_pointer args)
   if ((port == sc->NIL) ||
       (is_input_port(port)))
     sc->inport = port;
-  else return(s7_error(sc, s7_make_string(sc, "set-current-input-port argument should be an input port or '()"), args));
+  else return(s7_wrong_type_arg_error(sc, "set-current-input-port", 1, car(args), "an input port or nil"));
   return(old_port);
 }
 
@@ -4460,7 +4575,7 @@ static s7_pointer g_set_current_output_port(s7_scheme *sc, s7_pointer args)
   if ((port == sc->NIL) ||
       (is_output_port(port)))
     sc->outport = port;
-  else return(s7_error(sc, s7_make_string(sc, "set-current-output-port argument should be an output port or '()"), args));
+  else return(s7_wrong_type_arg_error(sc, "set-current-output-port", 1, car(args), "an output port or nil"));
   return(old_port);
 }
 
@@ -4474,7 +4589,7 @@ static s7_pointer g_is_char_ready(s7_scheme *sc, s7_pointer args)
     {
       s7_pointer pt = car(args);
       if (!s7_is_input_port(sc, pt))
-	return(s7_error(sc, s7_make_string(sc, "char-ready? argument should be an input port"), pt));
+	return(s7_wrong_type_arg_error(sc, "char-ready?", 1, car(args), "an input port"));
 
       return(to_s7_bool(sc, is_string_port(pt)));
     }
@@ -4502,6 +4617,8 @@ void s7_close_input_port(s7_scheme *sc, s7_pointer p)
   if ((is_file_port(p)) &&
       (port_file(p)))
     {
+      /* fprintf(stderr, "---------------------------------------- close %s\n", port_filename(p)); */
+
       fclose(port_file(p));
       port_file(p) = NULL;
       port_needs_close(p) = false;
@@ -4515,7 +4632,7 @@ static s7_pointer g_close_input_port(s7_scheme *sc, s7_pointer args)
   #define H_close_input_port "(close-input-port port) closes the port"
   s7_pointer pt = car(args);
   if (!is_input_port(pt))
-    return(s7_error(sc, s7_make_string(sc, "close-input-port argument should be an input port"), pt));
+    return(s7_wrong_type_arg_error(sc, "close-input-port", 1, pt, "an input port"));
   s7_close_input_port(sc, pt);
   return(sc->UNSPECIFIED);
 }
@@ -4533,6 +4650,8 @@ void s7_close_output_port(s7_scheme *sc, s7_pointer p)
     {
       if (port_file(p))
 	{
+	  /* fprintf(stderr, "---------------------------------------- close %s\n", port_filename(p)); */
+
 	  fclose(port_file(p));
 	  port_file(p) = NULL;
 	  port_needs_close(p) = false;
@@ -4554,7 +4673,7 @@ static s7_pointer g_close_output_port(s7_scheme *sc, s7_pointer args)
   #define H_close_output_port "(close-output-port port) closes the port"
   s7_pointer pt = car(args);
   if (!is_output_port(pt))
-    return(s7_error(sc, s7_make_string(sc, "close-output-port argument should be an output port"), pt));
+    return(s7_wrong_type_arg_error(sc, "close-output-port", 1, pt, "an output port"));
   s7_close_output_port(sc, pt);
   return(sc->UNSPECIFIED);
 }
@@ -4569,7 +4688,9 @@ s7_pointer s7_open_input_file(s7_scheme *sc, const char *name)
 
   fp = fopen(name, "r");
   if (!fp)
-    return(s7_error(sc, s7_make_string(sc, "open-input-file can't open file"), s7_make_string(sc, name)));
+    return(s7_file_error(sc, "open-input-file", "can't open", name));
+
+  /* fprintf(stderr, "---------------------------------------- open %s\n", name); */
 
   sc->x = new_cell(sc);
   set_type(sc->x, T_INPUT_PORT | T_ATOM | T_FINALIZABLE);
@@ -4579,7 +4700,7 @@ s7_pointer s7_open_input_file(s7_scheme *sc, const char *name)
   port_file(sc->x) = fp;
   is_file_port(sc->x) = true;
   port_is_closed(sc->x) = false;
-  port_filename(sc->x) = copy_string(name);  /* TODO: gc the name */
+  port_filename(sc->x) = copy_string(name);
   port_line_number(sc->x) = 0;
   port_paren_depth(sc->x) = 0;
   port_needs_close(sc->x) = false;
@@ -4592,7 +4713,7 @@ static s7_pointer g_open_input_file(s7_scheme *sc, s7_pointer args)
   #define H_open_input_file "(open-input-file filename) opens filename for reading"
   s7_pointer name = car(args);
   if (!s7_is_string(name))
-    return(s7_error(sc, s7_make_string(sc, "open-input-file argument should be a string (a filename)"), name));
+    return(s7_wrong_type_arg_error(sc, "open-input-file", 1, car(args), "a string (a filename)"));
   
   return(s7_open_input_file(sc, s7_string(name)));
 }
@@ -4607,7 +4728,9 @@ s7_pointer s7_open_output_file(s7_scheme *sc, const char *name)
 
   fp = fopen(name, "w");
   if (!fp)
-    return(s7_error(sc, s7_make_string(sc, "open-output-file can't open file"), s7_make_string(sc, name)));
+    return(s7_file_error(sc, "open-output-file", "can't open", name));
+
+  /* fprintf(stderr, "---------------------------------------- open %s\n", name); */
 
   sc->x = new_cell(sc);
   set_type(sc->x, T_OUTPUT_PORT | T_ATOM | T_FINALIZABLE);
@@ -4616,7 +4739,7 @@ s7_pointer s7_open_output_file(s7_scheme *sc, const char *name)
   sc->x->object.port = (port *)MALLOC(sizeof(port));
   is_file_port(sc->x) = true;
   port_is_closed(sc->x) = false;
-  port_filename(sc->x) = copy_string(name);  /* TODO: gc the name */
+  port_filename(sc->x) = copy_string(name);
   port_line_number(sc->x) = 0;
   port_paren_depth(sc->x) = 0;
   port_needs_close(sc->x) = false;
@@ -4630,7 +4753,7 @@ static s7_pointer g_open_output_file(s7_scheme *sc, s7_pointer args)
   #define H_open_output_file "(open-output-file filename) opens filename for writing"
   s7_pointer name = car(args);
   if (!s7_is_string(name))
-    return(s7_error(sc, s7_make_string(sc, "open-output-file argument should be a string (a filename)"), name));
+    return(s7_wrong_type_arg_error(sc, "open-output-file", 1, car(args), "a string (a filename)"));
   
   return(s7_open_output_file(sc, s7_string(name)));
 }
@@ -4660,7 +4783,7 @@ static s7_pointer g_open_input_string(s7_scheme *sc, s7_pointer args)
   #define H_open_input_string "(open-input-string str) opens an input port reading str"
   s7_pointer input_string = car(args);
   if (!s7_is_string(input_string))
-    return(s7_error(sc, s7_make_string(sc, "open-input-string argument should be a string"), input_string));
+    return(s7_wrong_type_arg_error(sc, "open-input-string", 1, car(args), "a string"));
   
   return(s7_open_input_string(sc, s7_string(input_string))); /* presumably the caller is protecting the input string?? */
 }
@@ -4706,7 +4829,7 @@ static s7_pointer g_get_output_string(s7_scheme *sc, s7_pointer args)
   s7_pointer p = car(args);
   if ((!is_output_port(p)) ||
       (!is_string_port(p)))
-    return(s7_error(sc, s7_make_string(sc, "get-output-string argument should be an output string port"), p));
+    return(s7_wrong_type_arg_error(sc, "get-output-string", 1, car(args), "an output string port"));
   return(s7_make_string(sc, s7_get_output_string(sc, p)));
 }
 
@@ -5116,7 +5239,7 @@ s7_pointer s7_read(s7_scheme *sc, s7_pointer port)
       pop_input_port(sc);
       return(sc->value);
     }
-  return(s7_error(sc, s7_make_string(sc, "read's argument should be an input port"), port));  
+  return(s7_wrong_type_arg_error(sc, "read", 1, port, "an input port"));
 }
 
 
@@ -5130,7 +5253,7 @@ static s7_pointer g_read(s7_scheme *sc, s7_pointer args)
   else port = sc->inport;
 
   if (!s7_is_input_port(sc, port))
-    return(s7_error(sc, s7_make_string(sc, "read needs an input port"), port));
+    return(s7_wrong_type_arg_error(sc, "read", 1, car(args), "an input port"));
 
   push_input_port(sc, port);
   push_stack(sc, OP_READ_POP_AND_RETURN_EXPRESSION, sc->NIL, sc->NIL); /* this stops the internal read process so we only get one form */
@@ -5146,8 +5269,6 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
   s7_pointer port;
 
   port = s7_open_input_file(sc, filename);
-  if (port == sc->ERROR)
-    return(port);
   port_needs_close(port) = true;
 
   push_input_port(sc, port);
@@ -5167,11 +5288,9 @@ static s7_pointer g_load(s7_scheme *sc, s7_pointer args)
 
   name = car(args);
   if (!s7_is_string(name))
-    return(s7_error(sc, s7_make_string(sc, "load argument should be a string (a filename)"), name));
+    return(s7_wrong_type_arg_error(sc, "load", 1, car(args), "a string (a filename)"));
 
   port = s7_open_input_file(sc, s7_string(name));
-  if (port == sc->ERROR)
-    return(port);
   port_needs_close(port) = true;
 
   push_input_port(sc, port);
@@ -5278,11 +5397,12 @@ static void write_string(s7_scheme *sc, const char *s, s7_pointer pt)
 }
 
 
-static char *slashify_string(s7_scheme *sc, const char *p, int len) 
+static char *slashify_string(s7_scheme *sc, const char *p)
 {
-  int i, j = 0;
+  int i, j = 0, len;
   char *s;
-  s = (char *)CALLOC(safe_strlen(p) + 256, sizeof(char));
+  len = safe_strlen(p);
+  s = (char *)CALLOC(len + 256, sizeof(char));
 
   s[j++] = '"';
   for (i = 0; i < len; i++) 
@@ -5354,9 +5474,6 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
   if (obj == sc->UNSPECIFIED) 
     return(copy_string("#<unspecified>"));
 
-  if (obj == sc->ERROR) 
-    return(copy_string("#<error>"));
-
   if ((is_input_port(obj)) || (is_output_port(obj)))
     return(describe_port(sc, obj));
 
@@ -5367,7 +5484,7 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
     {
       if (!use_write) 
 	return(copy_string(string_value(obj)));
-      return(slashify_string(sc, string_value(obj), string_length(obj)));
+      return(slashify_string(sc, string_value(obj)));
     }
  
   if (s7_is_character(obj)) 
@@ -5413,10 +5530,7 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
     return(copy_string("#<macro>"));
 
   if (s7_is_closure(obj)) 
-    {
-      fprintf(stderr, "closure: %s\n", s7_object_to_c_string(sc, car(obj)));
-      return(copy_string("#<closure>"));
-    }
+    return(copy_string("#<closure>"));
 
   if (is_promise(obj)) 
     return(copy_string("#<promise>"));
@@ -5434,6 +5548,9 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 
   if (is_goto(obj)) 
     return(copy_string("#<goto>"));
+
+  if (is_catch(obj)) 
+    return(copy_string("#<catch>"));
 
   if (s7_is_object(obj)) 
     return(copy_string(s7_describe_object(obj)));
@@ -5570,11 +5687,15 @@ char *s7_object_to_c_string(s7_scheme *sc, s7_pointer obj)
 
 s7_pointer s7_object_to_string(s7_scheme *sc, s7_pointer obj)
 {
+  char *str = NULL;
+  s7_pointer x;
   if (s7_is_vector(obj))
     return(s7_vector_to_string(sc, obj));
   if (s7_is_pair(obj))
     return(s7_list_to_string(sc, obj));
-  return(s7_make_string(sc, s7_atom_to_c_string(sc, obj, true)));
+  x = s7_make_string(sc, str = s7_atom_to_c_string(sc, obj, true));
+  if (str) FREE(str);
+  return(x);
 }
 
 
@@ -5608,7 +5729,7 @@ static s7_pointer g_newline(s7_scheme *sc, s7_pointer args)
     {
       port = car(args);
       if (!is_output_port(port))
-	return(s7_error(sc, s7_make_string(sc, "newline port argument should be an output port"), port));
+	return(s7_wrong_type_arg_error(sc, "newline", 1, car(args), "an output port"));
     }
   else port = sc->outport;
 
@@ -5630,13 +5751,13 @@ static s7_pointer g_write_char(s7_scheme *sc, s7_pointer args)
   s7_pointer port;
 
   if (!s7_is_character(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "write-char 1st argument should be a character"), args));
+    return(s7_wrong_type_arg_error(sc, "write-char", 1, car(args), "a character"));
 
   if (s7_is_pair(cdr(args)))
     {
       port = cadr(args);
       if (!is_output_port(port))
-	return(s7_error(sc, s7_make_string(sc, "write-char port argument should be an output port"), port));
+	return(s7_wrong_type_arg_error(sc, "write-char", 2, port, "an output port"));
     }
   else port = sc->outport;
   s7_write_char(sc, s7_character(car(args)), port);
@@ -5668,7 +5789,7 @@ static s7_pointer g_write(s7_scheme *sc, s7_pointer args)
     {
       port = cadr(args);
       if (!is_output_port(port))
-	return(s7_error(sc, s7_make_string(sc, "write port argument should be an output port"), port));
+	return(s7_wrong_type_arg_error(sc, "write", 2, port, "an output port"));
     }
   else port = sc->outport;
   write_or_display(sc, car(args), port, true);
@@ -5690,12 +5811,53 @@ static s7_pointer g_display(s7_scheme *sc, s7_pointer args)
     {
       port = cadr(args);
       if (!is_output_port(port))
-	return(s7_error(sc, s7_make_string(sc, "display port argument should be an output port"), port));
+	return(s7_wrong_type_arg_error(sc, "display", 1, port, "an output port"));
     }
   else port = sc->outport;
   write_or_display(sc, car(args), port, false);
   return(sc->UNSPECIFIED);
 }
+
+
+/* -------- read|write-byte -------- */
+
+static s7_pointer g_read_byte(s7_scheme *sc, s7_pointer args)
+{
+  #define H_read_byte "(read-byte :optional port): reads a byte from the input port"
+  s7_pointer port;
+
+  if (s7_is_pair(args))
+    {
+      port = car(args);
+      if ((!is_input_port(port)) ||
+	  (!is_file_port(port)))
+	return(s7_wrong_type_arg_error(sc, "read-byte", 1, car(args), "an input file port"));
+    }
+  else port = sc->inport;
+  return(s7_make_integer(sc, fgetc(port_file(port))));
+}
+
+static s7_pointer g_write_byte(s7_scheme *sc, s7_pointer args)
+{
+  #define H_write_byte "(write-byte byte :optional port): writes byte to the output port"
+  s7_pointer port;
+
+  if (!s7_is_integer(car(args)))
+    return(s7_wrong_type_arg_error(sc, "write-byte", 1, car(args), "an integer"));
+
+  if (s7_is_pair(cdr(args)))
+    {
+      port = cadr(args);
+      if ((!is_output_port(port)) ||
+	  (!is_file_port(port)))
+	return(s7_wrong_type_arg_error(sc, "write-byte", 2, port, "an output file port"));
+    }
+  else port = sc->outport;
+
+  fputc((unsigned char)s7_integer(car(args)), port_file(port));
+  return(car(args));
+}
+
 
 
 /* -------------------------------- lists -------------------------------- */
@@ -5830,6 +5992,7 @@ static s7_pointer list_star(s7_scheme *sc, s7_pointer d)
 
   p = cons(sc, car(d), cdr(d));
   q = p;
+  local_protect(q);
   while(cdr(cdr(p)) != sc->NIL) 
     {
       d = cons(sc, car(p), cdr(p));
@@ -5837,6 +6000,7 @@ static s7_pointer list_star(s7_scheme *sc, s7_pointer d)
 	p = cdr(d);
     }
   cdr(p) = car(cdr(p));
+  local_unprotect(q);
   return(q);
 }
 
@@ -5953,17 +6117,17 @@ static s7_pointer g_list_ref(s7_scheme *sc, s7_pointer args)
   int i, index;
   s7_pointer p;
   if (!is_pair(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "list-ref first argument should be a list"), args));
+    return(s7_wrong_type_arg_error(sc, "list-ref", 1, car(args), "a pair"));
   if (!s7_is_integer(cadr(args)))
-    return(s7_error(sc, s7_make_string(sc, "list-ref index should be an integer"), args));
+    return(s7_wrong_type_arg_error(sc, "list-ref", 2, cadr(args), "an integer"));
 
   index = s7_integer(cadr(args));
   if (index < 0)
-    return(s7_error(sc, s7_make_string(sc, "list-ref index should be non-negative"), args));
+    return(s7_out_of_range_error(sc, "list-ref", 2, cadr(args), "non-negative"));
 
   for (i = 0, p = car(args); (i < index) && (p != sc->NIL); i++, p = cdr(p)) {}
   if (p == sc->NIL)
-    return(s7_error(sc, s7_make_string(sc, "list-ref index too high"), args));
+    return(s7_out_of_range_error(sc, "list-ref", 2, cadr(args), "less than list length"));
 
   return(car(p));
 }
@@ -5975,17 +6139,17 @@ static s7_pointer g_list_set(s7_scheme *sc, s7_pointer args)
   int i, index;
   s7_pointer p;
   if (!is_pair(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "list-set! first argument should be a list"), args));
+    return(s7_wrong_type_arg_error(sc, "list-set!", 1, car(args), "a pair"));
   if (!s7_is_integer(cadr(args)))
-    return(s7_error(sc, s7_make_string(sc, "list-set! index should be an integer"), args));
+    return(s7_wrong_type_arg_error(sc, "list-set!", 2, cadr(args), "an integer"));
 
   index = s7_integer(cadr(args));
   if (index < 0)
-    return(s7_error(sc, s7_make_string(sc, "list-set! index should be non-negative"), args));
+    return(s7_out_of_range_error(sc, "list-set!", 2, cadr(args), "non-negative"));
 
   for (i = 0, p = car(args); (i < index) && (p != sc->NIL); i++, p = cdr(p)) {}
   if (p == sc->NIL)
-    return(s7_error(sc, s7_make_string(sc, "list-set! index too high"), args));
+    return(s7_out_of_range_error(sc, "list-set!", 2, cadr(args), "less than list length"));
 
   car(p) = caddr(args);
   return(caddr(args));
@@ -5998,17 +6162,17 @@ static s7_pointer g_list_tail(s7_scheme *sc, s7_pointer args)
   int i, index;
   s7_pointer p;
   if (!is_pair(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "list-tail first argument should be a list"), args));
+    return(s7_wrong_type_arg_error(sc, "list-tail", 1, car(args), "a list"));
   if (!s7_is_integer(cadr(args)))
-    return(s7_error(sc, s7_make_string(sc, "list-tail index should be an integer"), args));
+    return(s7_wrong_type_arg_error(sc, "list-tail", 2, cadr(args), "an integer"));
 
   index = s7_integer(cadr(args));
   if (index < 0)
-    return(s7_error(sc, s7_make_string(sc, "list-tail index should be non-negative"), args));
+    return(s7_out_of_range_error(sc, "list-tail", 2, cadr(args), "non-negative"));
 
   for (i = 0, p = car(args); (i < index) && (p != sc->NIL); i++, p = cdr(p)) {}
   if (i < index)
-    return(s7_error(sc, s7_make_string(sc, "list-ref index too high"), args));
+    return(s7_out_of_range_error(sc, "list-tail", 2, cadr(args), "less than list length"));
 
   return(p);
 }
@@ -6018,7 +6182,7 @@ static s7_pointer g_car(s7_scheme *sc, s7_pointer args)
   #define H_car "(car pair) returns the first element of the pair"
 
   if (!is_pair(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "car argument should be a pair"), args));
+    return(s7_wrong_type_arg_error(sc, "car", 1, car(args), "a pair"));
   
   return(caar(args));
 }
@@ -6028,7 +6192,7 @@ static s7_pointer g_cdr(s7_scheme *sc, s7_pointer args)
   #define H_cdr "(cdr pair) returns the second element of the pair"
 
   if (!is_pair(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "cdr argument should be a pair"), args));
+    return(s7_wrong_type_arg_error(sc, "cdr", 1, car(args), "a pair"));
   
   return(cdar(args));
 }
@@ -6046,10 +6210,10 @@ static s7_pointer g_set_car(s7_scheme *sc, s7_pointer args)
   #define H_set_car "(set-car! pair val) sets the pair's first element to val"
 
   if (!is_pair(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "set-car! first argument should be a pair"), args));
+    return(s7_wrong_type_arg_error(sc, "set-car!", 1, car(args), "a pair"));
   
   if (s7_is_immutable(car(args))) 
-    return(s7_error(sc, s7_make_string(sc, "set-car! pair is immutable"), args));
+    return(s7_wrong_type_arg_error(sc, "set-car!", 1, car(args), "a mutable pair"));
 
   caar(args) = cadr(args);
   return(args);
@@ -6060,10 +6224,10 @@ static s7_pointer g_set_cdr(s7_scheme *sc, s7_pointer args)
   #define H_set_cdr "(set-cdr! pair val) sets the pair's second element to val"
 
   if (!is_pair(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "set-cdr! first argument should be a pair"), args));
+    return(s7_wrong_type_arg_error(sc, "set-cdr!", 1, car(args), "a pair"));
   
   if (s7_is_immutable(car(args))) 
-    return(s7_error(sc, s7_make_string(sc, "set-cdr! pair is immutable"), args));
+    return(s7_wrong_type_arg_error(sc, "set-cdr!", 1, car(args), "a mutable pair"));
 
   cdar(args) = cadr(args);
   return(args);
@@ -6074,7 +6238,7 @@ static s7_pointer g_caar(s7_scheme *sc, s7_pointer args)
   #define H_caar "(caar lst) returns (car (car lst))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(car(lst)))) return(car(car(lst)));
-  return(s7_error(sc, s7_make_string(sc, "caar bad argument: "), args));
+  return(s7_wrong_type_arg_error(sc, "caar", 1, car(args), "a pair"));
 }
 
 static s7_pointer g_cadr(s7_scheme *sc, s7_pointer args)
@@ -6082,7 +6246,7 @@ static s7_pointer g_cadr(s7_scheme *sc, s7_pointer args)
   #define H_cadr "(cadr lst) returns (car (cdr lst))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(cdr(lst)))) return(car(cdr(lst)));
-  return(s7_error(sc, s7_make_string(sc, "cadr bad argument: "), args));
+  return(s7_wrong_type_arg_error(sc, "cadr", 1, car(args), "a pair"));
 }
 
 static s7_pointer g_cdar(s7_scheme *sc, s7_pointer args)
@@ -6090,7 +6254,7 @@ static s7_pointer g_cdar(s7_scheme *sc, s7_pointer args)
   #define H_cdar "(cdar lst) returns (cdr (car lst))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(car(lst)))) return(cdr(car(lst)));
-  return(s7_error(sc, s7_make_string(sc, "cdar bad argument: "), args));
+  return(s7_wrong_type_arg_error(sc, "cdar", 1, car(args), "a pair"));
 }
 
 static s7_pointer g_cddr(s7_scheme *sc, s7_pointer args)
@@ -6098,7 +6262,7 @@ static s7_pointer g_cddr(s7_scheme *sc, s7_pointer args)
   #define H_cddr "(cddr lst) returns (cdr (cdr lst))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(cdr(lst)))) return(cdr(cdr(lst)));
-  return(s7_error(sc, s7_make_string(sc, "cddr bad argument: "), args));
+  return(s7_wrong_type_arg_error(sc, "cddr", 1, car(args), "a pair"));
 }
 
 static s7_pointer g_caaar(s7_scheme *sc, s7_pointer args)
@@ -6106,7 +6270,7 @@ static s7_pointer g_caaar(s7_scheme *sc, s7_pointer args)
   #define H_caaar "(caaar lst) returns (car (car (car lst)))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(car(lst))) && (is_pair(car(car(lst))))) return(car(car(car(lst))));
-  return(s7_error(sc, s7_make_string(sc, "caaar bad argument: "), args));
+  return(s7_wrong_type_arg_error(sc, "caaar", 1, car(args), "a pair"));
 }
 
 static s7_pointer g_caadr(s7_scheme *sc, s7_pointer args)
@@ -6114,7 +6278,7 @@ static s7_pointer g_caadr(s7_scheme *sc, s7_pointer args)
   #define H_caadr "(caadr lst) returns (car (car (cdr lst)))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(cdr(lst))) && (is_pair(cadr(lst)))) return(car(car(cdr(lst))));
-  return(s7_error(sc, s7_make_string(sc, "caadr bad argument: "), args));
+  return(s7_wrong_type_arg_error(sc, "caadr", 1, car(args), "a pair"));
 }
 
 static s7_pointer g_cadar(s7_scheme *sc, s7_pointer args)
@@ -6122,7 +6286,7 @@ static s7_pointer g_cadar(s7_scheme *sc, s7_pointer args)
   #define H_cadar "(cadar lst) returns (car (cdr (car lst)))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(car(lst))) && (is_pair(cdr(car(lst))))) return(car(cdr(car(lst))));
-  return(s7_error(sc, s7_make_string(sc, "cadar bad argument: "), args));
+  return(s7_wrong_type_arg_error(sc, "cadar", 1, car(args), "a pair"));
 }
 
 static s7_pointer g_cdaar(s7_scheme *sc, s7_pointer args)
@@ -6130,7 +6294,7 @@ static s7_pointer g_cdaar(s7_scheme *sc, s7_pointer args)
   #define H_cdaar "(cdaar lst) returns (cdr (car (car lst)))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(car(lst))) && (is_pair(car(car(lst))))) return(cdr(car(car(lst))));
-  return(s7_error(sc, s7_make_string(sc, "cdaar bad argument: "), args));
+  return(s7_wrong_type_arg_error(sc, "cdaar", 1, car(args), "a pair"));
 }
 
 static s7_pointer g_caddr(s7_scheme *sc, s7_pointer args)
@@ -6138,7 +6302,7 @@ static s7_pointer g_caddr(s7_scheme *sc, s7_pointer args)
   #define H_caddr "(caddr lst) returns (car (cdr (cdr lst)))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(cdr(lst))) && (is_pair(cddr(lst)))) return(car(cdr(cdr(lst))));
-  return(s7_error(sc, s7_make_string(sc, "caddr bad argument: "), args));
+  return(s7_wrong_type_arg_error(sc, "caddr", 1, car(args), "a pair"));
 }
 
 static s7_pointer g_cdddr(s7_scheme *sc, s7_pointer args)
@@ -6146,7 +6310,7 @@ static s7_pointer g_cdddr(s7_scheme *sc, s7_pointer args)
   #define H_cdddr "(cdddr lst) returns (cdr (cdr (cdr lst)))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(cdr(lst))) && (is_pair(cddr(lst)))) return(cdr(cdr(cdr(lst))));
-  return(s7_error(sc, s7_make_string(sc, "cdddr bad argument: "), args));
+  return(s7_wrong_type_arg_error(sc, "cdddr", 1, car(args), "a pair"));
 }
 
 static s7_pointer g_cdadr(s7_scheme *sc, s7_pointer args)
@@ -6154,7 +6318,7 @@ static s7_pointer g_cdadr(s7_scheme *sc, s7_pointer args)
   #define H_cdadr "(cdadr lst) returns (cdr (car (cdr lst)))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(cdr(lst))) && (is_pair(cadr(lst)))) return(cdr(car(cdr(lst))));
-  return(s7_error(sc, s7_make_string(sc, "cdadr bad argument: "), args));
+  return(s7_wrong_type_arg_error(sc, "cdadr", 1, car(args), "a pair"));
 }
 
 static s7_pointer g_cddar(s7_scheme *sc, s7_pointer args)
@@ -6162,31 +6326,8 @@ static s7_pointer g_cddar(s7_scheme *sc, s7_pointer args)
   #define H_cddar "(cddar lst) returns (cdr (cdr (car lst)))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(car(lst))) && (is_pair(cdar(lst)))) return(cdr(cdr(car(lst))));
-  return(s7_error(sc, s7_make_string(sc, "cddar bad argument: "), args));
+  return(s7_wrong_type_arg_error(sc, "cddar", 1, car(args), "a pair"));
 }
-
-
-/*
-  (define (caaaar x) (car (car (car (car x)))))
-  (define (caaadr x) (car (car (car (cdr x)))))
-  (define (caadar x) (car (car (cdr (car x)))))
-  (define (caaddr x) (car (car (cdr (cdr x)))))
-  (define (cadaar x) (car (cdr (car (car x)))))
-  (define (cadadr x) (car (cdr (car (cdr x)))))
-  (define (caddar x) (car (cdr (cdr (car x)))))
-  (define (cadddr x) (car (cdr (cdr (cdr x)))))
-  (define (cdaaar x) (cdr (car (car (car x)))))
-  (define (cdaadr x) (cdr (car (car (cdr x)))))
-  (define (cdadar x) (cdr (car (cdr (car x)))))
-  (define (cdaddr x) (cdr (car (cdr (cdr x)))))
-  (define (cddaar x) (cdr (cdr (car (car x)))))
-  (define (cddadr x) (cdr (cdr (car (cdr x)))))
-  (define (cdddar x) (cdr (cdr (cdr (car x)))))
-  (define (cddddr x) (cdr (cdr (cdr (cdr x)))))
-*/
-
-
-
 
 static s7_pointer g_reverse(s7_scheme *sc, s7_pointer args)
 {
@@ -6219,24 +6360,24 @@ static s7_pointer g_length(s7_scheme *sc, s7_pointer args)
     return(s7_make_integer(sc, 0));
 
   if (!s7_is_pair(car(args))) 
-    return(s7_error(sc, s7_make_string(sc, "length's argument should be a list"), args));
+    return(s7_wrong_type_arg_error(sc, "length", 1, car(args), "a list"));
 
   len = s7_list_length(sc, car(args));
 
   if (len < 0) 
-    return(s7_error(sc, s7_make_string(sc, "length: not a proper list:"), args));
+    return(s7_wrong_type_arg_error(sc, "length:", 1, car(args), "a proper (not a dotted) list"));
   return(s7_make_integer(sc, len));
 }
       
 
-static s7_pointer g_assq_1(s7_scheme *sc, s7_pointer args, bool (*eq_func)(s7_pointer a, s7_pointer b))
+static s7_pointer g_assq_1(s7_scheme *sc, s7_pointer args, const char *name, bool (*eq_func)(s7_pointer a, s7_pointer b))
 {
   #define H_assq "(assq obj alist) returns the key-value pair associated (via eq?) with the key obj in the association list alist"
   #define H_assv "(assv obj alist) returns the key-value pair associated (via eqv?) with the key obj in the association list alist"
   #define H_assoc "(assoc obj alist) returns the key-value pair associated (via equal?) with the key obj in the association list alist"
 
   if ((!s7_is_pair(cadr(args))) && (cadr(args) != sc->NIL))
-    return(s7_error(sc, s7_make_string(sc, "assq|v|oc's second argument should be an association list"), args));
+    return(s7_wrong_type_arg_error(sc, name, 2, cadr(args), "a list"));
 
   sc->x = car(args);
   for (sc->y = cadr(args); s7_is_pair(sc->y); sc->y = cdr(sc->y)) 
@@ -6246,19 +6387,19 @@ static s7_pointer g_assq_1(s7_scheme *sc, s7_pointer args, bool (*eq_func)(s7_po
   return(sc->F);
 }      
       
-static s7_pointer g_assq(s7_scheme *sc, s7_pointer args) {return(g_assq_1(sc, args, s7_is_eq));}
-static s7_pointer g_assv(s7_scheme *sc, s7_pointer args) {return(g_assq_1(sc, args, s7_is_eqv));}
-static s7_pointer g_assoc(s7_scheme *sc, s7_pointer args) {return(g_assq_1(sc, args, s7_is_equal));}
+static s7_pointer g_assq(s7_scheme *sc, s7_pointer args) {return(g_assq_1(sc, args, "assq", s7_is_eq));}
+static s7_pointer g_assv(s7_scheme *sc, s7_pointer args) {return(g_assq_1(sc, args, "assv", s7_is_eqv));}
+static s7_pointer g_assoc(s7_scheme *sc, s7_pointer args) {return(g_assq_1(sc, args, "assoc", s7_is_equal));}
       
 
-static s7_pointer g_memq_1(s7_scheme *sc, s7_pointer args, bool (*eq_func)(s7_pointer a, s7_pointer b))
+static s7_pointer g_memq_1(s7_scheme *sc, s7_pointer args, const char *name, bool (*eq_func)(s7_pointer a, s7_pointer b))
 {
   #define H_memq "(memq obj list) looks for obj in list and returns the list from that point if it is found, otherwise #f. memq uses eq?"
   #define H_memv "(memv obj list) looks for obj in list and returns the list from that point if it is found, otherwise #f. memv uses eqv?"
   #define H_member "(member obj list) looks for obj in list and returns the list from that point if it is found, otherwise #f. member uses equal?"
 
   if ((!s7_is_pair(cadr(args))) && (cadr(args) != sc->NIL))
-    return(s7_error(sc, s7_make_string(sc, "memq|v|ber's second argument should be a list"), args));
+    return(s7_wrong_type_arg_error(sc, name, 2, cadr(args), "a list"));
 
   for (sc->x = cadr(args); s7_is_pair(sc->x); sc->x = cdr(sc->x)) 
     if (eq_func(car(args), car(sc->x)))
@@ -6267,15 +6408,15 @@ static s7_pointer g_memq_1(s7_scheme *sc, s7_pointer args, bool (*eq_func)(s7_po
   return(sc->F);
 }      
       
-static s7_pointer g_memq(s7_scheme *sc, s7_pointer args) {return(g_memq_1(sc, args, s7_is_eq));}
-static s7_pointer g_memv(s7_scheme *sc, s7_pointer args) {return(g_memq_1(sc, args, s7_is_eqv));}
-static s7_pointer g_member(s7_scheme *sc, s7_pointer args) {return(g_memq_1(sc, args, s7_is_equal));}
+static s7_pointer g_memq(s7_scheme *sc, s7_pointer args) {return(g_memq_1(sc, args, "memq", s7_is_eq));}
+static s7_pointer g_memv(s7_scheme *sc, s7_pointer args) {return(g_memq_1(sc, args, "memv", s7_is_eqv));}
+static s7_pointer g_member(s7_scheme *sc, s7_pointer args) {return(g_memq_1(sc, args, "member", s7_is_equal));}
       
 static s7_pointer g_is_provided(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_provided "(provided? sym) returns #t if sym is a member of the *features* list"
   if (!s7_is_symbol(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "provided?'s first argument should be a symbol"), args));
+    return(s7_wrong_type_arg_error(sc, "provided?", 1, car(args), "a symbol"));
   return(g_member(sc, 
 		  cons(sc, 
 		       car(args),
@@ -6286,7 +6427,7 @@ static s7_pointer g_provide(s7_scheme *sc, s7_pointer args)
 {
   #define H_provide "(provide sym) adds sym to the *features* list"
   if (!s7_is_symbol(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "provide's first argument should be a symbol"), args));
+    return(s7_wrong_type_arg_error(sc, "provide", 1, car(args), "a symbol"));
   s7_symbol_set_value(sc, 
 		      s7_make_symbol(sc, "*features*"),
 		      cons(sc, 
@@ -6307,25 +6448,17 @@ static s7_pointer g_append(s7_scheme *sc, s7_pointer args)
 {
   #define H_append "(append ...) returns its argument lists appended into one list"
 
+  int i;
   if (args == sc->NIL) 
     return(sc->NIL);
   if (cdr(args) == sc->NIL)
     return(car(args)); 
       
-  /*
-  if ((!s7_is_pair(car(args))) && (car(args) != sc->NIL))
-    return(s7_error(sc, s7_make_string(sc, "append's arguments should be lists"), args));
-  */
-
   sc->x = car(args);
-  for (sc->y = cdr(args); sc->y != sc->NIL; sc->y = cdr(sc->y)) 
+  for (i = 1, sc->y = cdr(args); sc->y != sc->NIL; i++, sc->y = cdr(sc->y)) 
     {
-      /*
-      if ((!s7_is_pair(car(sc->y))) && (car(sc->y) != sc->NIL))
-	return(s7_error(sc, s7_make_string(sc, "append's arguments should be lists"), args));
-      */
       if (!s7_is_list(sc, sc->x))
-	return(s7_error(sc, s7_make_string(sc, "append's arguments should be lists (except for the last one)"), args));
+	return(s7_wrong_type_arg_error(sc, "append", i, sc->x, "a list"));
       sc->x = s7_append(sc, sc->x, car(sc->y));
     }
   return(sc->x);
@@ -6374,7 +6507,7 @@ static s7_pointer g_vector_fill(s7_scheme *sc, s7_pointer args)
 {
   #define H_vector_fill "(vector-fill! v val) sets all elements of the vector v to val"
   if (!s7_is_vector(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "vector-fill! first argument should be a vector"), args));
+    return(s7_wrong_type_arg_error(sc, "vector-fill!", 1, car(args), "a vector"));
   s7_vector_fill(car(args), cadr(args));
   return(sc->UNSPECIFIED);
 }
@@ -6417,7 +6550,7 @@ static s7_pointer g_vector_to_list(s7_scheme *sc, s7_pointer args)
 {
   #define H_vector_to_list "(vector->list v) returns the elements of the vector v as a list"
   if (!s7_is_vector(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "vector->list argument should be a vector"), args));
+    return(s7_wrong_type_arg_error(sc, "vector->list", 1, car(args), "a vector"));
   return(s7_vector_to_list(sc, car(args)));
 }
 
@@ -6450,7 +6583,7 @@ static s7_pointer g_vector(s7_scheme *sc, s7_pointer args)
 
   len = s7_list_length(sc, args);
   if (len < 0) 
-    return(s7_error(sc, s7_make_string(sc, "vector: not a proper list:"), args));
+    return(s7_wrong_type_arg_error(sc, "vector", 1, car(args), "a proper list"));
 	
   vec = s7_make_vector(sc, len);
   if (len > 0)
@@ -6471,7 +6604,7 @@ static s7_pointer g_list_to_vector(s7_scheme *sc, s7_pointer args)
     return(s7_make_vector(sc, 0));
 
   if (!s7_is_pair(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "list->vector argument should be a list"), args));
+    return(s7_wrong_type_arg_error(sc, "list->vector", 1, car(args), "a list"));
   return(g_vector(sc, car(args)));
 }
 
@@ -6479,7 +6612,7 @@ static s7_pointer g_vector_length(s7_scheme *sc, s7_pointer args)
 {
   #define H_vector_length "(vector-length v) returns the length of vector v"
   if (!s7_is_vector(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "vector-length argument should be a vector"), args));
+    return(s7_wrong_type_arg_error(sc, "vector-length", 1, car(args), "a vector"));
   return(s7_make_integer(sc, vector_length(car(args))));
 }
 
@@ -6491,12 +6624,13 @@ static s7_pointer g_vector_ref(s7_scheme *sc, s7_pointer args)
   index = cadr(args);
 
   if (!s7_is_vector(vec))
-    return(s7_error(sc, s7_make_string(sc, "vector-ref first argument should be a vector"), args));
+    return(s7_wrong_type_arg_error(sc, "vector-ref", 1, car(args), "a vector"));
 
   if ((!s7_is_integer(index)) || (s7_integer(index) < 0))
-    return(s7_error(sc, s7_make_string(sc, "vector-ref index argument should be non-negative integer"), args));
+    return(s7_wrong_type_arg_error(sc, "vector-ref", 2, index, "a non-negative integer"));
+
   if (s7_integer(index) >= vector_length(vec))
-    return(s7_error(sc, s7_make_string(sc, "vector-ref index too high"), args));
+    return(s7_out_of_range_error(sc, "vector-ref", 2, index, "less than vector length"));
 
   return(vector_element(vec, s7_integer(index)));
 }
@@ -6511,15 +6645,16 @@ static s7_pointer g_vector_set(s7_scheme *sc, s7_pointer args)
   val = caddr(args);
 
   if (!s7_is_vector(vec))
-    return(s7_error(sc, s7_make_string(sc, "vector-set! first argument should be a vector"), args));
+    return(s7_wrong_type_arg_error(sc, "vector-set!", 1, car(args), "a vector"));
 
   if ((!s7_is_integer(index)) || (s7_integer(index) < 0))
-    return(s7_error(sc, s7_make_string(sc, "vector-set! index argument should be non-negative integer"), args));
+    return(s7_wrong_type_arg_error(sc, "vector-set!", 2, index, "a non-negative integer"));
+
   if (s7_integer(index) >= vector_length(vec))
-    return(s7_error(sc, s7_make_string(sc, "vector-set! index too high"), args));
+    return(s7_out_of_range_error(sc, "vector-set!", 2, index, "less than vector length"));
 
   if (s7_is_immutable(vec))
-    return(s7_error(sc, s7_make_string(sc, "vector-set! can't change an immutable vector"), args));
+    return(s7_wrong_type_arg_error(sc, "vector-set!", 1, vec, "a mutable vector"));
 
   vector_element(vec, s7_integer(index)) = val;
   return(val);
@@ -6532,7 +6667,7 @@ static s7_pointer g_make_vector(s7_scheme *sc, s7_pointer args)
   s7_pointer fill = sc->UNSPECIFIED, vec;
 
   if ((!s7_is_integer(car(args))) || (s7_integer(car(args)) < 0))
-    return(s7_error(sc, s7_make_string(sc, "make-vector length argument should be non-negative integer"), args));
+    return(s7_wrong_type_arg_error(sc, "make-vector", 1, car(args), "a non-negative integer"));
 
   len = s7_integer(car(args));
   if (cdr(args) != sc->NIL) 
@@ -6632,18 +6767,18 @@ static s7_pointer g_make_closure(s7_scheme *sc, s7_pointer args)
   #define H_make_closure "(make_closure obj :optional env) returns a closure of obj within env"
 
   if (!s7_is_pair(car(args)))
-    return(s7_error(sc, s7_make_string(sc, "make-closure first argument should be a lambda form"), args));
+    return(s7_wrong_type_arg_error(sc, "make-closure", 1, car(args), "a lambda form"));
 
   sc->x = car(args);
   if (car(sc->x) == sc->LAMBDA) 
-	sc->x = cdr(sc->x);
+    sc->x = cdr(sc->x);
       
   if (cdr(args) == sc->NIL)
     sc->y = sc->envir;
   else 
     {
       if (!s7_is_pair(cadr(args)))
-	return(s7_error(sc, s7_make_string(sc, "make-closure's second argument should be an environment"), args));
+	return(s7_wrong_type_arg_error(sc, "make-closure", 2, cadr(args), "an environment"));
       sc->y = cadr(args);
     }
       
@@ -6751,7 +6886,6 @@ typedef struct {
 static fobject *object_types = NULL;
 static int object_types_size = 0;
 static int num_types = 0;
-static s7_pointer apply_fallback_value;
 
 int s7_new_type(const char *name, 
 		char *(*print)(void *value), 
@@ -6837,7 +6971,7 @@ static s7_pointer s7_apply_object(s7_scheme *sc, s7_pointer obj, s7_pointer args
   tag = obj->object.fobj.type;
   if (object_types[tag].apply)
     return((*(object_types[tag].apply))(sc, obj, args));
-  return(apply_fallback_value);
+  return(sc->F);
 }
 
 #define object_set_function(Obj) object_types[(Obj)->object.fobj.type].set
@@ -7110,15 +7244,19 @@ static s7_pointer g_make_keyword(s7_scheme *sc, s7_pointer args)
 
 /* -------- hash tables -------- */
 
-/* TODO: arg type checking here */
+/* TODO: arg type checking here on ref/set */
 
 
 static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_hash_table "(make-hash-table :optional size) returns a new hash table"
   int size = 461;
-  if (s7_is_integer(car(args)))
-    size = s7_integer(car(args));
+  if (car(args) != sc->NIL)
+    {
+      if (s7_is_integer(car(args)))
+	size = s7_integer(car(args));
+      else return(s7_wrong_type_arg_error(sc, "make-hash-table", 1, car(args), "an integer"));
+    }
   return(s7_make_vector(sc, size));
 }
 
@@ -7186,13 +7324,7 @@ static s7_pointer g_hash_table_set(s7_scheme *sc, s7_pointer args)
 
 /* -------------------------------- errors -------------------------------- */
 
-s7_pointer s7_throw(s7_scheme *sc, s7_pointer type, s7_pointer info)
-{
-  /* TODO: throw and error handling in C */
-  return(sc->F);
-}
-
-void s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n, s7_pointer arg, const char *descr)
+s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n, s7_pointer arg, const char *descr)
 {
   int len;
   char *errmsg, *argstr;
@@ -7204,10 +7336,10 @@ void s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n, s7_po
   sc->x = s7_make_string(sc, errmsg);
   FREE(errmsg);
   FREE(argstr);
-  s7_error_and_exit(sc, sc->x, arg);
+  return(s7_error(sc, s7_make_symbol(sc, "wrong-type-arg"), sc->x));
 }
 
-void s7_out_of_range_error(s7_scheme *sc, const char *caller, int arg_n, s7_pointer arg, const char *descr)
+s7_pointer s7_out_of_range_error(s7_scheme *sc, const char *caller, int arg_n, s7_pointer arg, const char *descr)
 {
   int len;
   char *errmsg, *argstr;
@@ -7219,25 +7351,31 @@ void s7_out_of_range_error(s7_scheme *sc, const char *caller, int arg_n, s7_poin
   sc->x = s7_make_string(sc, errmsg);
   FREE(errmsg);
   FREE(argstr);
-  s7_error_and_exit(sc, sc->x, arg);
+  return(s7_error(sc, s7_make_symbol(sc, "out-of-range"), sc->x));
 }
 
-
-s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
+static s7_pointer s7_division_by_zero_error(s7_scheme *sc, const char *caller, s7_pointer arg)
 {
-  /* fprintf(stderr, "error: %s %s\n", s7_object_to_c_string(sc, type), s7_object_to_c_string(sc, info)); */
-  sc->value = type;
-  sc->args = info;
-  return(sc->ERROR);
+  int len;
+  char *errmsg;
+  len = safe_strlen(caller) + 128;
+  errmsg = (char *)CALLOC(len, sizeof(char));
+  snprintf(errmsg, len, "%s: division by zero", caller);
+  sc->x = s7_make_string(sc, errmsg);
+  FREE(errmsg);
+  return(s7_error(sc, s7_make_symbol(sc, "division-by-zero"), sc->x));
 }
 
-void s7_error_and_exit(s7_scheme *sc, s7_pointer type, s7_pointer info)
+static s7_pointer s7_file_error(s7_scheme *sc, const char *caller, const char *descr, const char *name)
 {
-  fprintf(stderr, "exiting error: %s %s\n", s7_object_to_c_string(sc, type), s7_object_to_c_string(sc, info));
-  s7_error(sc, type, info);
-  eval(sc, OP_ERROR);
-  if (sc->error_exiter)
-    (*(sc->error_exiter))();
+  int len;
+  char *errmsg;
+  len = safe_strlen(descr) + safe_strlen(name) + safe_strlen(caller) + 128;
+  errmsg = (char *)CALLOC(len, sizeof(char));
+  snprintf(errmsg, len, "%s: %s %s", caller, descr, name);
+  sc->x = s7_make_string(sc, errmsg);
+  FREE(errmsg);
+  return(s7_error(sc, s7_make_symbol(sc, "io-error"), sc->x));
 }
 
 void s7_set_error_exiter(s7_scheme *sc, void (*error_exiter)(void))
@@ -7245,8 +7383,146 @@ void s7_set_error_exiter(s7_scheme *sc, void (*error_exiter)(void))
   sc->error_exiter = error_exiter;
 }
 
+static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
+{
+  #define H_catch "(catch tag thunk handler) evaluates thunk; if an error occurs that matches tag (#t matches all), the handler is called"
+  s7_pointer p;
+  catch *c;
+
+  /* TODO: error checks for catch */
+
+  c = (catch *)CALLOC(1, sizeof(catch));
+  c->tag = car(args);
+  c->goto_loc = sc->stack_top;
+  c->handler = caddr(args);
+
+  p = new_cell(sc);
+  local_protect(p);
+  set_type(p, T_CATCH | T_FINALIZABLE);
+  p->object.catcher = c;
+
+  new_frame_in_env(sc, sc->envir);
+  new_slot_in_env(sc, s7_gensym(sc, "catch"), p);
+  
+  /* fprintf(stderr, "car(cadr): %s\n", s7_object_to_c_string(sc, car(cadr(args)))); */
+
+  local_unprotect(p);
+  sc->args = sc->NIL;
+  /* sc->code = cadr(args); */
+  sc->code = s7_make_closure(sc, car(cadr(args)), sc->envir);
+  /* can't mess with the procedure environment of the original cadr, and
+   *   it seems too bothersome to recognize catch as a "syntax" and set up
+   *   the current environment then, so make a new closure with the current
+   *   catch prepended.  OP_APPLY in eval gets the procedure local environment
+   *   so we can't just add the catch to the current environment, and if we
+   *   cd(cadr(args)) = new env, all hell breaks loose -- gdb dies with no
+   *   stack, and valgrind says we're executing some unknown instruction!
+   *   cross fingers...
+   */
+
+  push_stack(sc, OP_APPLY, sc->args, sc->code);
+
+  return(sc->F);
+}
+
+static bool find_catch(s7_scheme *sc, s7_pointer binding, s7_pointer data)
+{
+  return((is_catch(cdr(binding))) &&
+	 ((data == sc->T) ||
+	  (catch_tag(cdr(binding)) == sc->T) ||
+	  (s7_is_eq(data, catch_tag(cdr(binding))))));
+}
+
+s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
+{
+  s7_pointer catcher;
+  /*
+   * search the current environment for a catch that can handle our type
+   *   if found, reset the stack to its location, 
+   *      and call its handler with (list type info)
+   *   if not found, try to report the error and its file/line number (if relevant),
+   *      then quit the evaluation
+   *   if error and exit, call the exiter, rather than simply quitting eval
+   *
+   * except for the type-matching, this is more or less:
+   *
+   *   (define (catch tag body tag-handler)
+   *     (call-with-exit
+   *      (lambda (exiter)
+   *        (let ((error (lambda args
+   *   		           (exiter
+   *   		             (apply tag-handler args)))))
+   *   	      (body)))))
+   */
+  /* TODO: currently Snd assumes the error handler will not return, but that is not the case here
+   *        so, we should give the other cases the XEN type so that we can explicitly exit
+   *        for now, use error_and_exit in Snd, though that makes error handling pretty dumb
+   */
+  
+  /* fprintf(stderr, "error: %s %s\n", s7_object_to_c_string(sc, type), s7_object_to_c_string(sc, info)); */
+
+  /* (catch #t (lambda () (display "hi") (error 'ho "a error") (display "oops")) (lambda args 'error)) */
+  /* (catch #t (lambda () (display "a") (catch 'ha (lambda () (display "hi") (error 'ho "a error") (display "oops")) (lambda args 'error)) (display "yow")) (lambda args 'a-error)) */
+
+  catcher = s7_search_environment(sc, sc->envir, find_catch, type);
+
+  /*
+   * catch has a gensym'd symbol name (car) and a catch struct (cdr)
+   */
+  if (catcher != sc->F)
+    {
+      /* fprintf(stderr, "found one "); */
+      sc->args = cons(sc, type, sc->x = cons(sc, info, sc->NIL));
+      sc->code = catch_handler(cdr(catcher));
+      sc->stack_top = catch_goto_loc(cdr(catcher));
+      /* fprintf(stderr, "top: %d\n", sc->stack_top); */
+      push_stack(sc, OP_APPLY, sc->args, sc->code);
+    }
+  else
+    {
+      /* TODO: use s7 ports here */
+      char *str1, *str2;
+      fprintf(stderr, "error: %s %s", 
+	      str1 = s7_object_to_c_string(sc, type), 
+	      str2 = s7_object_to_c_string(sc, info));
+      FREE(str1);
+      FREE(str2);
+      if ((is_input_port(sc->inport)) &&
+	  (is_file_port(sc->inport)))
+	  fprintf(stderr, ", %s line %d", port_filename(sc->inport), port_line_number(sc->inport));
+      fprintf(stderr, "\n");
+
+      sc->value = type;
+      push_stack(sc, OP_QUIT, sc->args, sc->code);
+    }
+  return(type);
+}
+
+s7_pointer s7_error_and_exit(s7_scheme *sc, s7_pointer type, s7_pointer info)
+{
+  s7_error(sc, type, info);
+  if (sc->error_exiter)
+    (*(sc->error_exiter))();
+  return(sc->F);
+}
+
+static s7_pointer eval_error(s7_scheme *sc, const char *errmsg, s7_pointer obj)
+{
+  char *str;
+  str = s7_object_to_c_string(sc, obj);
+  sc->x = s7_string_concatenate(sc, errmsg, str);
+  FREE(str);
+  return(s7_error(sc, s7_make_symbol(sc, "error"), sc->x));
+}
 
 
+static s7_pointer g_error(s7_scheme *sc, s7_pointer args)
+{
+  #define H_error "(error type ...) signals an error"
+  if (s7_is_pair(args))
+    return(s7_error(sc, car(args), cdr(args)));
+  return(s7_error(sc, sc->NIL, sc->NIL));
+}
 
 
 /* -------------------------------- leftovers -------------------------------- */
@@ -7275,10 +7551,22 @@ static s7_pointer g_force(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
 {
-  /* TODO: (apply (lambda (a) (+ a 1) 123)) segfaults or hangs in list_star */
+
+  /* TODO: (apply (lambda (a) (+ a 1) 123) 1) segfaults or hangs in s7_new_slot_spec_in_env */
+
   #define H_apply "(apply func ...) applies func to the rest of the arguments"
+  int i;
   sc->code = car(args);
-  sc->args = list_star(sc, cdr(args));
+  if (cdr(args) == sc->NIL)
+    sc->args = sc->NIL;
+  else 
+    {
+      s7_pointer x;
+      for (i = 1, x = cdr(args); cdr(x) != sc->NIL; i++, x = cdr(x)) {}
+      if (!s7_is_pair(x))
+	return(s7_wrong_type_arg_error(sc, "apply", i, x, "a list"));
+      sc->args = list_star(sc, cdr(args));
+    }
   push_stack(sc, OP_APPLY, sc->args, sc->code);
   return(sc->NIL);
 }
@@ -7302,21 +7590,6 @@ static void assign_syntax(s7_scheme *sc, char *name, opcode_t op)
   syntax_opcode(x) = small_int(sc, (int)op);
 }
 
-#if 0
-s7_pointer s7_apply0(s7_scheme *sc, const char *proc_name) 
-{
-  s7_pointer carx = s7_make_symbol(sc, proc_name);
-  s7_pointer cdrx = sc->NIL;
-  
-  /* this is not the right thing */
-  stack_reset(sc); 
-  sc->envir = sc->global_env;
-  sc->code = cons(sc, carx, cdrx);
-  eval(sc, OP_EVAL);
-  return(sc->value);
-}
-#endif
-
 s7_pointer s7_call_1(s7_scheme *sc, s7_pointer func, s7_pointer args, const char *file, const char *function, int line)
 { 
   /*
@@ -7325,27 +7598,15 @@ s7_pointer s7_call_1(s7_scheme *sc, s7_pointer func, s7_pointer args, const char
   */
   /* this can be called while we are in the eval loop (within eval_c_string for instance),
    *   and if we reset the stack, the previously running evaluation steps off the end
-   *   of the stack == segfault.  Now, should I save everything first?
+   *   of the stack == segfault. 
    */
 
   /* fprintf(stderr, "%s %s[%d] s7_call %p...(%d, %p %p)\n", file, function, line, func, sc->stack_top, sc->code, sc->args); */
 
-  if (sc->stack_top > 0) 
-    {
-      /*
-      g_stacktrace(sc, sc->NIL);
-      */
-      /* fprintf(stderr, "calls: %s\n", s7_object_to_c_string(sc, func)); */
-    }
-
-  push_stack(sc, OP_EVAL_STRING_DONE, sc->args, sc->code); 
-
+  push_stack(sc, OP_EVAL_STRING_DONE, sc->args, sc->code); /* this saves the current evaluation and will eventually finish this (possibly) nested call */
   sc->args = args; 
   sc->code = func; 
   eval(sc, OP_APPLY);
-
-  /* fprintf(stderr, "s7_return %p %s (%d %p %p)\n", func, s7_object_to_c_string(sc, sc->value), sc->stack_top, sc->code, sc->args); */
-
   return(sc->value);
 } 
 
@@ -7378,10 +7639,7 @@ static s7_pointer g_tracing(s7_scheme *sc, s7_pointer a)
 
 static void eval(s7_scheme *sc, opcode_t first_op) 
 {
-  #define s_pop(sc, a)    {pop_stack(sc, a); goto START;}
-  #define s_retbool(tf)   {pop_stack(sc, (tf) ? sc->T : sc->F); goto START;}
   #define   ok_abbrev(x)   (s7_is_pair(x) && cdr(x) == sc->NIL)
-  /* TODO: get rid of s_pop|s_retbool */
 
   sc->op = first_op;
 
@@ -7414,7 +7672,10 @@ static void eval(s7_scheme *sc, opcode_t first_op)
     case OP_READ_INTERNAL:       /* internal read */
       sc->tok = token(sc, sc->inport);
       if (sc->tok == TOK_EOF) 
-	s_pop(sc, sc->value);
+	{
+	  pop_stack(sc, sc->value);
+	  goto START;
+	}
       goto READ_EXPRESSION;
       
       
@@ -7431,11 +7692,16 @@ static void eval(s7_scheme *sc, opcode_t first_op)
        */
     case OP_READ_POP_AND_RETURN_EXPRESSION:
       pop_input_port(sc);
-      fprintf(stderr, "read pop %d\n", sc->tok);
+
       if (sc->tok == TOK_EOF)
-	s_pop(sc, sc->EOF_OBJECT);
-      s_pop(sc, sc->value);
-      
+	{
+	  pop_stack(sc, sc->EOF_OBJECT);
+	  goto START;
+	}
+
+      pop_stack(sc, sc->value);
+      goto START;
+
 
       /* load("file"); from C (g_load) -- assume caller will clean up
        *   read and evaluate exprs until EOF that matches (stack reflects nesting)
@@ -7464,8 +7730,9 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	}
       s7_close_input_port(sc, sc->inport);
       pop_input_port(sc);
-      s_pop(sc, sc->UNSPECIFIED);
-      
+      pop_stack(sc, sc->UNSPECIFIED);
+      goto START;
+
 
       /* read and evaluate string expression(s?)
        *    assume caller (C via g_eval_c_string) is dealing with the string port
@@ -7493,13 +7760,17 @@ static void eval(s7_scheme *sc, opcode_t first_op)
     case OP_VALUEPRINT: /* print evaluation result */
       if (sc->tracing) 
 	write_string(sc, "\nGives: ", sc->outport);
-      s_pop(sc, sc->value);
-      
+      pop_stack(sc, sc->value);
+      goto START;
+
       
     BEGIN:
     case OP_BEGIN:      /* begin */
       if (!s7_is_pair(sc->code)) 
-	s_pop(sc, sc->code);
+	{
+	  pop_stack(sc, sc->code);
+	  goto START;
+	}
       
       if (cdr(sc->code) != sc->NIL) 
 	push_stack(sc, OP_BEGIN, sc->NIL, cdr(sc->code));
@@ -7528,13 +7799,13 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  sc->x = s7_find_slot_in_env(sc, sc->envir, sc->code, true);
 	  if (sc->x != sc->NIL) 
-	    s_pop(sc, s7_slot_value_in_env(sc->x)); 
-	  
-	  fprintf(stderr, "unbound: %s\n", s7_symbol_name(sc->code));
-	  
-	  sc->value = s7_make_string(sc, "eval: unbound variable:");
-	  sc->args = sc->code;
-	  goto ERROR;
+	    {
+	      pop_stack(sc, s7_slot_value_in_env(sc->x));
+	      goto START;
+	    }
+
+	  pop_stack(sc, eval_error(sc, "unbound variable", sc->code));
+	  goto START;
 	} 
       else 
 	if (s7_is_pair(sc->code)) 
@@ -7556,7 +7827,8 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  } 
 	else 
 	  {
-	    s_pop(sc, sc->code);
+	    pop_stack(sc, sc->code);
+	    goto START;
 	  }
       
     case OP_E0ARGS:     /* eval arguments */
@@ -7653,15 +7925,17 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  len = s7_list_length(sc, sc->args);
 	  if (len < function_required_args(sc->code))
 	    {
-	      sc->value = s7_make_string(sc, "not enough args");
-	      goto ERROR;
+	      pop_stack(sc, eval_error(sc, "not enough arguments", sc->code));
+	      goto START;
 	    }
+
 	  if ((!function_has_rest_arg(sc->code)) &&
 	      ((function_required_args(sc->code) + function_optional_args(sc->code)) < len))
 	    {
-	      sc->value = s7_make_string(sc, "too many args");
-	      goto ERROR;
+	      pop_stack(sc, eval_error(sc, "too many arguments", sc->code));
+	      goto START;
 	    }
+
 	  sc ->x = function_call(sc->code)(sc, sc->args);
 	  
 	  if (!is_object(sc->x))
@@ -7669,39 +7943,35 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	      fprintf(stderr, "%s returned: %p\n", function_name(sc->code), sc->x);
 	      abort();
 	    }
-	  
-	  if (sc->x == sc->ERROR)
-	    goto ERROR;
-	  s_pop(sc, sc->x);
-	  
-	  /* so to throw an error from a function,
-	   *   set sc->value to the error string, sc->args to the error args, return sc->ERROR
-	   */
+
+	  pop_stack(sc, sc->x);
+	  goto START;
 	}
       
       else 
 	{
 	  if (s7_is_closure(sc->code) || is_macro(sc->code) || is_promise(sc->code)) 
-	    { /* CLOSURE */
+	    { 
 	      /* Should not accept promise */
 	      /* make environment */
 	      /*
-		fprintf(stderr, "proc env: %s\n", s7_object_to_c_string(sc, s7_procedure_environment(sc->code)));
+	      fprintf(stderr, "pre proc env: %s\n", s7_object_to_c_string(sc, sc->envir));
 	      */
 	      new_frame_in_env(sc, s7_procedure_environment(sc->code)); 
-	      
-	      /* s7_is_pair(sc->x) here assumes the func has more than 1 arg? */
-	      
-	      
+	      /*
+	      fprintf(stderr, "proc env: %s\n", s7_object_to_c_string(sc, sc->envir));
+	      */
+
 	      /* load up the current args into the ((args) (lambda)) layout [via the current environment] */
 	      for (sc->x = car(procedure_source(sc->code)), sc->y = sc->args; s7_is_pair(sc->x); sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
 		{
 		  if (sc->y == sc->NIL)
 		    {
-		      sc->value = s7_make_string(sc, "not enough arguments");
-		      goto ERROR;
+		      pop_stack(sc, eval_error(sc, "not enough arguments", sc->code));
+		      goto START;
 		    }
-		  else new_slot_in_env(sc, car(sc->x), car(sc->y));
+		  
+		  new_slot_in_env(sc, car(sc->x), car(sc->y));
 		}
 	      
 	      if (sc->x == sc->NIL) 
@@ -7715,11 +7985,10 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 		{
 		  if (s7_is_symbol(sc->x))
 		    new_slot_in_env(sc, sc->x, sc->y); 
-		  else
+		  else 
 		    {
-		      sc->args = sc->x;
-		      sc->value = s7_make_string(sc, "syntax error in closure: not a symbol:");
-		      goto ERROR;
+		      pop_stack(sc, eval_error(sc, "syntax error in closure: not a symbol", sc->x));
+		      goto START;
 		    }
 		}
 	      sc->code = cdr(procedure_source(sc->code));
@@ -7729,55 +7998,54 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  else 
 	    {
 	      if (s7_is_continuation(sc->code)) 
-		{ /* continuation */
+		{ 
 		  s7_call_continuation(sc, sc->code);
-		  s_pop(sc, sc->args != sc->NIL ? car(sc->args) : sc->NIL);
+		  pop_stack(sc, sc->args != sc->NIL ? car(sc->args) : sc->NIL);
+		  goto START;
 		} 
 	      else 
 		{
 		  if (is_goto(sc->code))
 		    {
 		      sc->stack_top = (sc->code)->object.goto_loc;
-		      s_pop(sc, sc->args != sc->NIL ? car(sc->args) : sc->NIL);
+		      pop_stack(sc, sc->args != sc->NIL ? car(sc->args) : sc->NIL);
+		      goto START;
 		    }
 		  else
 		    {
 		      if (s7_is_object(sc->code))
 			{
 			  sc ->x = s7_apply_object(sc, sc->code, sc->args);
-			  
-			  if (sc->x == sc->ERROR)
-			    goto ERROR;
-			  s_pop(sc, sc->x);
+			  pop_stack(sc, sc->x);
+			  goto START;
 			}
-		      else
+		      else 
 			{
-			  fprintf(stderr, "apply %s?", s7_object_to_c_string(sc, sc->code));
-			  sc->args = sc->code;
-			  sc->value = s7_make_string(sc, "illegal function");
-			  goto ERROR;
+			  pop_stack(sc, eval_error(sc, "apply of non-function?", sc->code));
+			  goto START;
 			}
 		    }
 		}
 	    }
 	}
       
-    case OP_DOMACRO:    /* do macro */
+    case OP_DOMACRO:    /* macro after args are gathered */
       sc->code = sc->value;
       goto EVAL;
       
     case OP_LAMBDA:     /* lambda */
-      s_pop(sc, s7_make_closure(sc, sc->code, sc->envir));
+      pop_stack(sc, s7_make_closure(sc, sc->code, sc->envir));
+      goto START;
       
     case OP_QUOTE:      /* quote */
-      s_pop(sc, car(sc->code));
+      pop_stack(sc, car(sc->code));
+      goto START;
       
     case OP_DEF0:  /* define */
       if (s7_is_immutable(car(sc->code)))
 	{
-	  sc->value = s7_make_string(sc, "define: unable to alter immutable object");
-	  sc->args = car(sc->code);
-	  goto ERROR;
+	  pop_stack(sc, eval_error(sc, "define: unable to alter immutable object", car(sc->code)));
+	  goto START;
 	}
       
       if (s7_is_pair(car(sc->code))) 
@@ -7792,9 +8060,8 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	}
       if (!s7_is_symbol(sc->x))
 	{
-	  sc->value = s7_make_string(sc, "define of a non-symbol?");
-	  sc->args = sc->x;
-	  goto ERROR;
+	  pop_stack(sc, eval_error(sc, "define a non-symbol?", sc->x));
+	  goto START;
 	}
       
       push_stack(sc, OP_DEF1, sc->NIL, sc->x);
@@ -7815,15 +8082,15 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       if (sc->x != sc->NIL) 
 	set_slot_in_env(sc, sc->x, sc->value); 
       else new_slot_in_env(sc, sc->code, sc->value); 
-      s_pop(sc, sc->code);
+      pop_stack(sc, sc->code);
+      goto START;
       
 
     case OP_SET0:       /* set! */
       if (s7_is_immutable(car(sc->code)))
 	{
-	  sc->value = s7_make_string(sc, "set!: unable to alter immutable variable");
-	  sc->args = car(sc->code);
-	  goto ERROR;
+	  pop_stack(sc, eval_error(sc, "set!: unable to alter immutable variable", car(sc->code)));
+	  goto START;
 	}
       
       if (s7_is_pair(car(sc->code))) /* has accessor */
@@ -7831,15 +8098,11 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  sc->x = s7_symbol_value(sc, caar(sc->code));
 	  if ((s7_is_object(sc->x)) &&
 	      (object_set_function(sc->x)))
-	    {
-	      /* use set method */
-	      sc->code = cons(sc, sc->SET_OBJECT, s7_append(sc, car(sc->code), cdr(sc->code)));
-	    }
+	    sc->code = cons(sc, sc->SET_OBJECT, s7_append(sc, car(sc->code), cdr(sc->code)));   /* use set method */
 	  else 
 	    {
-	      sc->value = s7_make_string(sc, "no generalized set for this variable");
-	      sc->args = caar(sc->code);
-	      goto ERROR;
+	      pop_stack(sc, eval_error(sc, "no generalized set for this variable", caar(sc->code)));
+	      goto START;
 	    }
 	}
       else 
@@ -7854,13 +8117,13 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       if (sc->y != sc->NIL) 
 	{
 	  set_slot_in_env(sc, sc->y, sc->value); 
-	  s_pop(sc, sc->value);
+	  pop_stack(sc, sc->value);
+	  goto START;
 	}
       else 
 	{
-	  sc->value = s7_make_string(sc, "set!: unbound variable:");
-	  sc->args = sc->code;
-	  goto ERROR;
+	  pop_stack(sc, eval_error(sc, "set!: unbound variable", sc->code));
+	  goto START;
 	}
       
     case OP_IF0:        /* if */
@@ -7987,8 +8250,8 @@ static void eval(s7_scheme *sc, opcode_t first_op)
     case OP_COND0:      /* cond */
       if (!s7_is_pair(sc->code)) 
 	{
-	  sc->value = s7_make_string(sc, "syntax error in cond");
-	  goto ERROR;
+	  pop_stack(sc, eval_error(sc, "syntax error in cond", sc->code));
+	  goto START;
 	}
       push_stack(sc, OP_COND1, sc->NIL, sc->code);
       sc->code = caar(sc->code);
@@ -8000,14 +8263,15 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  sc->code = cdar(sc->code);
 	  if (sc->code == sc->NIL)
 	    {
-	      s_pop(sc, sc->value);
+	      pop_stack(sc, sc->value);
+	      goto START;
 	    }
 	  if (car(sc->code) == sc->FEED_TO) 
 	    {
 	      if (!s7_is_pair(cdr(sc->code))) 
 		{
-		  sc->value = s7_make_string(sc, "syntax error in cond");
-		  goto ERROR;
+		  pop_stack(sc, eval_error(sc, "syntax error in cond", cdr(sc->code)));
+		  goto START;
 		}
 	      sc->x = cons(sc, sc->QUOTE, cons(sc, sc->value, sc->NIL));
 	      sc->code = cons(sc, cadr(sc->code), cons(sc, sc->x, sc->NIL));
@@ -8020,7 +8284,8 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  sc->code = cdr(sc->code);
 	  if (sc->code == sc->NIL)
 	    {
-	      s_pop(sc, sc->NIL);
+	      pop_stack(sc, sc->NIL);
+	      goto START;
 	    } 
 	  else 
 	    {
@@ -8033,11 +8298,15 @@ static void eval(s7_scheme *sc, opcode_t first_op)
     case OP_DELAY:      /* delay */
       sc->x = s7_make_closure(sc, cons(sc, sc->NIL, sc->code), sc->envir);
       set_type(sc->x, T_PROMISE);
-      s_pop(sc, sc->x);
+      pop_stack(sc, sc->x);
+      goto START;
       
     case OP_AND0:       /* and */
       if (sc->code == sc->NIL) 
-	s_pop(sc, sc->T);
+	{
+	  pop_stack(sc, sc->T);
+	  goto START;
+	}
       
       push_stack(sc, OP_AND1, sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
@@ -8045,10 +8314,16 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_AND1:       /* and */
       if (is_false(sc->value)) 
-	s_pop(sc, sc->value);
+	{
+	  pop_stack(sc, sc->value);
+	  goto START;
+	}
       
       if (sc->code == sc->NIL) 
-	s_pop(sc, sc->value);
+	{
+	  pop_stack(sc, sc->value);
+	  goto START;
+	}
       
       push_stack(sc, OP_AND1, sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
@@ -8056,7 +8331,10 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_OR0:        /* or */
       if (sc->code == sc->NIL) 
-	s_pop(sc, sc->F);
+	{
+	  pop_stack(sc, sc->F);
+	  goto START;
+	}
       
       push_stack(sc, OP_OR1, sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
@@ -8064,10 +8342,16 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_OR1:        /* or */
       if (is_true(sc->value)) 
-	s_pop(sc, sc->value);
+	{
+	  pop_stack(sc, sc->value);
+	  goto START;
+	}
       
       if (sc->code == sc->NIL) 
-	s_pop(sc, sc->value);
+	{
+	  pop_stack(sc, sc->value);
+	  goto START;
+	}
       
       push_stack(sc, OP_OR1, sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
@@ -8082,8 +8366,8 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       sc->args = sc->value;  /* save sc->value to register sc->args for gc */
       sc->x = s7_make_closure(sc, cons(sc, sc->NIL, sc->code), sc->envir);
       set_type(sc->x, T_PROMISE);
-      s_pop(sc,cons(sc, sc->args, sc->x));
-      
+      pop_stack(sc,cons(sc, sc->args, sc->x));
+      goto START;      
 
     case OP_MACRO0:     /* macro */
       /*
@@ -8113,9 +8397,8 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       
       if (!s7_is_symbol(sc->x)) 
 	{
-	  sc->value = s7_make_string(sc, "variable is not a symbol");
-	  sc->args = sc->x;
-	  goto ERROR;
+	  pop_stack(sc, eval_error(sc, "variable is not a symbol", sc->x));
+	  goto START;
 	}
       /*
       fprintf(stderr, "orig macro mid: %s\n", 
@@ -8156,8 +8439,8 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       else new_slot_in_env(sc, sc->code, sc->value); 
       
       /* pop back to wherever the macro call was */
-      s_pop(sc, sc->code);
-
+      pop_stack(sc, sc->code);
+      goto START;
 
     case OP_DEFMACRO:
       
@@ -8245,78 +8528,21 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	} 
       else 
 	{
-	  s_pop(sc, sc->NIL);
+	  pop_stack(sc, sc->NIL);
+	  goto START;
 	}
       
     case OP_CASE2:      /* case */
       if (is_true(sc->value)) 
 	goto BEGIN;
-      s_pop(sc, sc->NIL);
+      pop_stack(sc, sc->NIL);
+      goto START;
 
       
     case OP_SAVE_FORCED:     /* Save forced value replacing promise */
       memcpy(sc->code, sc->value, sizeof(struct s7_cell));
-      s_pop(sc, sc->value);
-      
-      
-    ERROR:
-    case OP_ERROR:
-      {
-	/* first look for the symbol "error", presumably caller-defined 
-	 *   if none, try to jump back to the top level
-	 * sc->value is the string
-	 */
-	sc->x = sc->NIL;
-	sc->y = symbol_table_find_by_name(sc, "error"); 
-	if (sc->y != sc->NIL)
-	  sc->x = s7_find_slot_in_env(sc, sc->envir, sc->y, true);
-	if (sc->x != sc->NIL)
-	  {
-	    if (sc->args != sc->NIL)
-	      sc->code = cons(sc, cons(sc, sc->QUOTE, cons(sc, sc->args, sc->NIL)), sc->NIL);
-	    else sc->code = sc->NIL;
-	    
-	    sc->code = cons(sc, sc->value, sc->code);
-	    set_immutable(car(sc->code));
-	    sc->code = cons(sc, s7_slot_value_in_env(sc->x), sc->code); 
-	    goto EVAL;
-	  }
-	else fprintf(stderr, "can't find 'error?");
-	
-	/* fallback */
-	sc->args = cons(sc, sc->value, sc->args);
-	s7_set_immutable(car(sc->args));
-	
-	/* (old ERR0) */
-	write_string(sc, "error: ", sc->outport);
-	if (s7_is_string(sc->value))
-	  write_string(sc, string_value(sc->value), sc->outport);
-      }
-      
-    case OP_ERR1:  /* error */
-      write_string(sc, " ", sc->outport);
-      if (sc->args != sc->NIL) 
-	{
-	  push_stack(sc, OP_ERR1, cdr(sc->args), sc->NIL);
-	  sc->args = car(sc->args);
-	  goto P0LIST;
-	} 
-      else 
-	{
-	  write_string(sc, "\n", sc->outport);
-	  sc->x = g_port_filename(sc, sc->inport);
-	  if (sc->x != sc->F)
-	    {
-	      char linebuf[64];
-	      write_string(sc, s7_string(sc->x), sc->outport);
-	      write_string(sc, ": ", sc->outport);
-	      write_string(sc, "line ", sc->outport);
-	      snprintf(linebuf, 64, "%d", port_line_number(sc->inport));
-	      write_string(sc, linebuf, sc->outport);
-	      write_string(sc, "\n", sc->outport);
-	    }
-	  return;
-	}
+      pop_stack(sc, sc->value);
+      goto START;
       
     case OP_QUIT:       /* quit */
       return;
@@ -8331,8 +8557,9 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       switch (sc->tok) 
 	{
 	case TOK_EOF:
-	  s_pop(sc, sc->EOF_OBJECT);
-	  
+	  pop_stack(sc, sc->EOF_OBJECT);
+	  goto START;
+
 	case TOK_VEC:
 	  push_stack(sc, OP_RDVEC, sc->NIL, sc->NIL);
 	  /* fall through */
@@ -8340,24 +8567,26 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	case TOK_LPAREN:
 	  sc->tok = token(sc, sc->inport);
 	  if (sc->tok == TOK_RPAREN) 
+	    {
+	      pop_stack(sc, sc->NIL);
+	      goto START;
+	    }
 
-	    s_pop(sc, sc->NIL)
-
-	    else 
-	      {
-		if (sc->tok == TOK_DOT) 
-		  {
-		    sc->value = s7_make_string(sc, "syntax error: illegal dot expression");
-		    goto ERROR;
-		  }
-		else 
-		  {
-		    if (is_input_port(sc->inport))
-		      port_paren_depth(sc->inport)++;
-		    push_stack(sc, OP_RDLIST, sc->NIL, sc->NIL);
-		    goto READ_EXPRESSION;
-		  }
-	      }
+	  else 
+	    {
+	      if (sc->tok == TOK_DOT) 
+		{
+		  pop_stack(sc, eval_error(sc, "syntax error: illegal dot expression", sc->code)); /* just a guess -- maybe sc->args */
+		  goto START;
+		}
+	      else 
+		{
+		  if (is_input_port(sc->inport))
+		    port_paren_depth(sc->inport)++;
+		  push_stack(sc, OP_RDLIST, sc->NIL, sc->NIL);
+		  goto READ_EXPRESSION;
+		}
+	    }
 	  
 	case TOK_QUOTE:
 	  push_stack(sc, OP_RDQUOTE, sc->NIL, sc->NIL);
@@ -8386,18 +8615,19 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  goto READ_EXPRESSION;
 	  
 	case TOK_ATOM:
-	  s_pop(sc, make_atom(sc, read_string_upto(sc, "();\t\n\r ", sc->inport), 10)); /* if reading list (from lparen), this will finally get us to rdlist */
+	  pop_stack(sc, make_atom(sc, read_string_upto(sc, "();\t\n\r ", sc->inport), 10)); /* if reading list (from lparen), this will finally get us to rdlist */
+	  goto START;
 	  
 	case TOK_DQUOTE:
 	  sc->x = read_string_expression(sc, sc->inport);
 	  if (sc->x == sc->F) 
 	    {
-	      sc->value = s7_make_string(sc, "error reading string");
-	      sc->args = sc->x;
-	      goto ERROR;
+	      pop_stack(sc, eval_error(sc, "error reading string", sc->code));
+	      goto START;
 	    }
 	  s7_set_immutable(sc->x);
-	  s_pop(sc, sc->x);
+	  pop_stack(sc, sc->x);
+	  goto START;
 	  
 	case TOK_SHARP_CONST:
 	  {
@@ -8405,19 +8635,26 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	    expr = read_string_upto(sc, "();\t\n\r ", sc->inport);
 	    if ((sc->x = make_sharp_const(sc, expr)) == sc->NIL)
 	      {
-		sc->value = s7_make_string(sc, "undefined sharp expression");
-		sc->args = s7_make_string(sc, expr);
-		goto ERROR;
+		pop_stack(sc, eval_error(sc, "undefined sharp expression", sc->code));
+		goto START;
 	      }
-	    else s_pop(sc, sc->x);
+	    else 
+	      {
+		pop_stack(sc, sc->x);
+		goto START;
+	      }
 	  }
 	default:
-	  {
-	    if (sc->tok == TOK_RPAREN)
-	      sc->value = s7_make_string(sc, "too many close parens");
-	    else sc->value = s7_make_string(sc, "syntax error: illegal token");
-	    goto ERROR;
-	  }
+	  if (sc->tok == TOK_RPAREN)
+	    {
+	      pop_stack(sc, eval_error(sc, "too many close parens", sc->code));
+	      goto START;
+	    }
+	  else 
+	    {
+	      pop_stack(sc, eval_error(sc, "syntax error: illegal token", sc->code));
+	      goto START;
+	    }
 	}
       break;
       
@@ -8436,7 +8673,8 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	    if ((c != '\n') && (c != EOF))
 	      backchar(sc, c, sc->inport);
 	    
-	    s_pop(sc, s7_reverse_in_place(sc, sc->NIL, sc->args));
+	    pop_stack(sc, s7_reverse_in_place(sc, sc->NIL, sc->args));
+	    goto START;
 	  } 
 	else if (sc->tok == TOK_DOT) 
 	  {
@@ -8452,44 +8690,50 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       }
       
     case OP_RDDOT:
-      if (token(sc, sc->inport) != TOK_RPAREN) 
+      if (token(sc, sc->inport) != TOK_RPAREN)
 	{
-	  sc->value = s7_make_string(sc, "syntax error: illegal dot expression");
-	  goto ERROR;
+	  pop_stack(sc, eval_error(sc, "syntax error: illegal dot expression", sc->code));
+	  goto START;
 	}
       else 
 	{
 	  if (is_input_port(sc->inport))
 	    port_paren_depth(sc->inport)--;
 	  
-	  s_pop(sc, s7_reverse_in_place(sc, sc->value, sc->args));
+	  pop_stack(sc, s7_reverse_in_place(sc, sc->value, sc->args));
+	  goto START;
 	}
       
     case OP_RDQUOTE:
-      s_pop(sc, cons(sc, sc->QUOTE, cons(sc, sc->value, sc->NIL)));
+      pop_stack(sc, cons(sc, sc->QUOTE, cons(sc, sc->value, sc->NIL)));
+      goto START;      
       
     case OP_RDQQUOTE:
-      s_pop(sc, cons(sc, sc->QQUOTE, cons(sc, sc->value, sc->NIL)));
+      pop_stack(sc, cons(sc, sc->QQUOTE, cons(sc, sc->value, sc->NIL)));
+      goto START;
       
     case OP_RDQQUOTEVEC:
-      s_pop(sc, cons(sc, s7_make_symbol(sc, "apply"),
+      pop_stack(sc, cons(sc, s7_make_symbol(sc, "apply"),
 		     cons(sc, s7_make_symbol(sc, "vector"), 
 			  cons(sc,cons(sc, sc->QQUOTE, 
 				       cons(sc, sc->value, sc->NIL)),
 			       sc->NIL))));
+      goto START;
       
     case OP_RDUNQUOTE:
-      s_pop(sc, cons(sc, sc->UNQUOTE, cons(sc, sc->value, sc->NIL)));
+      pop_stack(sc, cons(sc, sc->UNQUOTE, cons(sc, sc->value, sc->NIL)));
+      goto START;
       
     case OP_RDUQTSP:
-      s_pop(sc, cons(sc, sc->UNQUOTESP, cons(sc, sc->value, sc->NIL)));
+      pop_stack(sc, cons(sc, sc->UNQUOTESP, cons(sc, sc->value, sc->NIL)));
+      goto START;
       
     case OP_RDVEC:
       sc->args = sc->value;
-      s_pop(sc, g_vector(sc, sc->args));
-
-
+      pop_stack(sc, g_vector(sc, sc->args));
+      goto START;
       
+
       /* ========== printing part ========== */
       
     P0LIST:
@@ -8503,7 +8747,8 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       else if (!s7_is_pair(sc->args)) 
 	{
 	  print_atom(sc, sc->args);
-	  s_pop(sc, sc->T);
+	  pop_stack(sc, sc->T);
+	  goto START;
 	} 
       else if (car(sc->args) == sc->QUOTE && ok_abbrev(cdr(sc->args))) 
 	{
@@ -8559,7 +8804,8 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	      print_atom(sc, sc->args);
 	    }
 	  write_string(sc, ")", sc->outport);
-	  s_pop(sc, sc->T);
+	  pop_stack(sc, sc->T);
+	  goto START;
 	}
       
     PVECFROM:
@@ -8571,7 +8817,8 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	if (i == len) 
 	  {
 	    write_string(sc, ")", sc->outport);
-	    s_pop(sc, sc->T);
+	    pop_stack(sc, sc->T);
+	    goto START;
 	  } 
 	else 
 	  {
@@ -8585,9 +8832,8 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       }
       
     default:
-      sprintf(sc->strbuf, "%d: illegal operator", sc->op);
-      sc->value = s7_make_string(sc, sc->strbuf);
-      goto ERROR;
+      pop_stack(sc, eval_error(sc, "unknown operator!", s7_make_integer(sc, sc->op)));
+      goto START;
     }
 }
 
@@ -8612,7 +8858,6 @@ s7_scheme *s7_init(void)
   sc->EOF_OBJECT = &sc->_EOF_OBJECT;
   sc->UNDEFINED = &sc->_UNDEFINED;
   sc->UNSPECIFIED = &sc->_UNSPECIFIED;
-  sc->ERROR = &sc->_ERROR;
   
   set_type(sc->UNSPECIFIED, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT);
   car(sc->UNSPECIFIED) = cdr(sc->UNSPECIFIED) = sc->UNSPECIFIED;
@@ -8631,11 +8876,6 @@ s7_scheme *s7_init(void)
   
   set_type(sc->UNDEFINED, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT);
   car(sc->UNDEFINED) = cdr(sc->UNDEFINED) = sc->UNSPECIFIED;
-  
-  set_type(sc->ERROR, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT);
-  car(sc->ERROR) = cdr(sc->ERROR) = sc->UNSPECIFIED;
-
-  apply_fallback_value = sc->ERROR;
   
   sc->inport = sc->NIL;
   sc->inport_stack = sc->NIL;
@@ -8788,6 +9028,8 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "write-char",          g_write_char,          1, 1, false, H_write_char);
   s7_define_function(sc, "write",               g_write,               1, 1, false, H_write);
   s7_define_function(sc, "display",             g_display,             1, 1, false, H_display);
+  s7_define_function(sc, "read-byte",           g_read_byte,           0, 1, false, H_read_byte);
+  s7_define_function(sc, "write-byte",          g_write_byte,          1, 1, false, H_write_byte);
 
   /* call-with-output|input-file with-output-to-file with-input-from-file */
 
@@ -8960,6 +9202,8 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "stacktrace",          g_stacktrace,          0, 0, false, H_stacktrace);
   s7_define_function(sc, "gc",                  g_gc,                  0, 0, false, H_gc);
   s7_define_function(sc, "quit",                g_quit,                0, 0, false, H_quit);
+  s7_define_function(sc, "catch",               g_catch,               3, 0, false, H_catch);
+  s7_define_function(sc, "error",               g_error,               0, 0, true,  H_error);
   s7_define_function(sc, "force",               g_force,               1, 0, false, H_force);
   s7_define_function(sc, "global-environment",  g_global_environment,  0, 0, false, H_global_environment);
   s7_define_function(sc, "current-environment", g_current_environment, 0, 0, false, H_current_environment);
@@ -8967,7 +9211,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "make-closure",        g_make_closure,        1, 1, false, H_make_closure);
   s7_define_function(sc, "call/cc",             g_call_cc,             1, 0, false, H_call_cc);
   s7_define_function(sc, "call-with-current-continuation", g_call_cc,  1, 0, false, H_call_cc);
-  s7_define_function(sc, "call-with-exit",      g_call_goto,           1, 0, false, H_call_goto);
+  s7_define_function(sc, "call-with-exit",      g_call_with_exit,      1, 0, false, H_call_with_exit);
   s7_define_function(sc, "provided?",           g_is_provided,         1, 0, false, H_is_provided);
   s7_define_function(sc, "provide",             g_provide,             1, 0, false, H_provide);
   
@@ -9006,15 +9250,12 @@ s7_scheme *s7_init(void)
   s7_define_variable(sc, "*features*", sc->NIL);
   s7_define_variable(sc, "*load-path*", sc->NIL);
   
-  sc->gc_verbose = true;
+  sc->gc_verbose = false;
   sc->gc_off = false;
 
   /* leftovers from s7.scm -- this stuff will mostly go away! */
 
   s7_eval_c_string(sc, "\n\
-\n\
-(define (error . args) 'error)\n\
-\n\
 (define (unzip1-with-cdr . lists)\n\
   (unzip1-with-cdr-iterative lists '() '()))\n\
 \n\
@@ -9145,14 +9386,6 @@ s7_scheme *s7_init(void)
 				'()))\n\
 			  `,vars)))))\n\
 	   do-macro)))\n\
-\n\
-(define (catch tag body tag-handler)\n\
-  (call-with-exit\n\
-   (lambda (exiter)\n\
-     (let ((error (lambda args\n\
-		    (exiter \n\
-		     (apply tag-handler args)))))\n\
-	(body)))))\n\
 \n\
 (define (call-with-input-file filename func)\n\
   (let ((inport (open-input-file filename)))\n\

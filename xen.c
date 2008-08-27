@@ -2284,17 +2284,23 @@ double xen_to_c_double_or_else(XEN a, double b)
 }
 
 
+static char *xen_s7_repl_prompt = ">";
+
+void xen_s7_set_repl_prompt(const char *new_prompt)
+{
+  xen_s7_repl_prompt = strdup(new_prompt);
+}
 
 void xen_repl(int argc, char **argv)
 {
-  int size = 512, ctr = 0;
+  int size = 512;
   char *buffer = NULL;
   buffer = (char *)calloc(size, sizeof(char *));
 
   while (true)
     {
       char *temp;
-      fprintf(stdout, "\n>");
+      fprintf(stdout, "\n%s", xen_s7_repl_prompt);
       fgets(buffer, size, stdin);
       if ((buffer[0] != '\n') || (strlen(buffer) > 1))
 	{
@@ -2305,8 +2311,6 @@ void xen_repl(int argc, char **argv)
 	  XEN_EVAL_C_STRING(temp);
 	  free(temp);
 	}
-      ctr++;
-      if (ctr > 10000) break;
     }
 
   free(buffer);
