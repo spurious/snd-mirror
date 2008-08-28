@@ -1139,11 +1139,8 @@ static char *gl_print(XEN result)
 }
 
 
-void snd_report_result(XEN result, const char *buf)
+void snd_display_result(const char *str, const char *endstr)
 {
-  /* kbd macros, startup evalled args */
-  char *str = NULL;
-  str = gl_print(result);
   if (ss->snd_print_handler)
     {
       /* make sure it doesn't call itself recursively */
@@ -1159,9 +1156,17 @@ void snd_report_result(XEN result, const char *buf)
     }
   else
     {
-      if (buf) listener_append(buf);
+      if (endstr) listener_append(endstr);
       listener_append_and_prompt(str);
     }
+}
+
+
+void snd_report_result(XEN result, const char *buf)
+{
+  char *str = NULL;
+  str = gl_print(result);
+  snd_display_result(str, buf);
   if (str) FREE(str);
 }
 

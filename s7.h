@@ -200,6 +200,8 @@ bool s7_is_input_port(s7_scheme *sc, s7_pointer p);
 bool s7_is_output_port(s7_scheme *sc, s7_pointer p);
 s7_pointer s7_current_input_port(s7_scheme *sc);
 s7_pointer s7_current_output_port(s7_scheme *sc);
+s7_pointer s7_current_error_port(s7_scheme *sc);
+s7_pointer s7_set_current_error_port(s7_scheme *sc, s7_pointer port);
 void s7_close_input_port(s7_scheme *sc, s7_pointer p);
 void s7_close_output_port(s7_scheme *sc, s7_pointer p);
 s7_pointer s7_open_input_file(s7_scheme *sc, const char *name);

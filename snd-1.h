@@ -1105,6 +1105,7 @@ off_t string_to_off_t(char *str, off_t lo, const char *field_name);
 char *output_comment(file_info *hdr);
 void snd_load_init_file(bool nog, bool noi);
 void snd_load_file(char *filename);
+void snd_display_result(const char *str, const char *endstr);
 void snd_report_result(XEN result, const char *buf);
 void snd_report_listener_result(XEN form);
 void snd_eval_stdin_str(char *buf);

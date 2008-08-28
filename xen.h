@@ -2203,7 +2203,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 #define XEN_ADD_TO_LOAD_PATH(Path)                 s7_add_to_load_path(s7, Path)
 
 #define XEN_ERROR_TYPE(Typ)                        C_STRING_TO_XEN_SYMBOL(Typ)
-#define XEN_ERROR(Type, Info)                      s7_error_and_exit(s7, Type, Info)
+#define XEN_ERROR(Type, Info)                      s7_error(s7, Type, Info)
 #define XEN_THROW(Type, Info)                      s7_error(s7, Type, Info)
 
 #define XEN_YES_WE_HAVE(Feature)                   s7_provide(s7, Feature)

@@ -601,14 +601,28 @@ void command_return(widget_t w, int last_prompt)
 #if HAVE_S7
       if ((snd_strlen(str) > 1) || (str[0] != '\n'))
 	{
-#if 0
-	  char *temp;
-	  temp = (char *)CALLOC(snd_strlen(str) + 128, sizeof(char));
-	  sprintf(temp, "(catch #t (lambda () %s) (lambda args args))", str);
-	  form = XEN_EVAL_C_STRING(temp);
-	  FREE(temp);
-#endif
+	  char *errmsg;
+	  int gc_loc = -1;
+	  s7_pointer old_port;
+
+	  old_port = s7_set_current_error_port(s7, s7_open_output_string(s7));
+	  if (old_port != xen_nil) 
+	    gc_loc = s7_gc_protect(s7, old_port);
+
 	  form = XEN_EVAL_C_STRING(str);
+
+	  errmsg = copy_string(s7_get_output_string(s7, s7_current_error_port(s7)));
+	  s7_close_output_port(s7, s7_current_error_port(s7));
+	  s7_set_current_error_port(s7, old_port);
+	  if (gc_loc != -1)
+	    s7_gc_unprotect_at(s7, gc_loc);
+
+	  if (errmsg)
+	    {
+	      if (*errmsg)
+		snd_display_result(errmsg, NULL);
+	      FREE(errmsg);
+	    }
 	}
 #endif
 
