@@ -1347,7 +1347,7 @@ void mus_vct_init(void)
 	       S_vct_to_string,
 	       S_vct_times,
 	       S_vct_plus,
-#if WITH_RUN && USE_SND
+#if WITH_RUN && USE_SND && (!HAVE_S7)
 	       "vct-map-1",
 #endif
 	       NULL);

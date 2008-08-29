@@ -10489,7 +10489,9 @@ static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args)  \
   else return(package(prog, R_FLOAT, CName ## _3f, #CName "_3f", args, 3)); \
 }
 
-VCT_2_F(sine_bank, sine-bank)
+#ifndef CLM_DISABLE_DEPRECATED
+  VCT_2_F(sine_bank, sine-bank)
+#endif
 VCT_2_F(dot_product, dot-product)
 
 
@@ -13334,7 +13336,9 @@ static void init_walkers(void)
   INIT_WALKER(S_amplitude_modulate,   make_walker(amplitude_modulate_1, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_NUMBER, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_contrast_enhancement, make_walker(contrast_enhancement_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_dot_product,          make_walker(dot_product_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_VCT, R_VCT, R_INT));
+#ifndef CLM_DISABLE_DEPRECATED
   INIT_WALKER(S_sine_bank,            make_walker(sine_bank_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_VCT, R_VCT, R_INT));
+#endif
   INIT_WALKER(S_polar_to_rectangular, make_walker(polar_to_rectangular_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_VCT, R_VCT));
   INIT_WALKER(S_rectangular_to_polar, make_walker(rectangular_to_polar_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_VCT, R_VCT));
   INIT_WALKER(S_multiply_arrays,      make_walker(multiply_arrays_1, NULL, NULL, 2, 3, R_VCT, false, 3, R_VCT, R_VCT, R_INT));

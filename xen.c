@@ -2284,7 +2284,7 @@ double xen_to_c_double_or_else(XEN a, double b)
 }
 
 
-static char *xen_s7_repl_prompt = ">";
+static char *xen_s7_repl_prompt = (char *)">";
 
 void xen_s7_set_repl_prompt(const char *new_prompt)
 {
@@ -2312,7 +2312,6 @@ void xen_repl(int argc, char **argv)
 	  free(temp);
 	}
     }
-
   free(buffer);
 }
 
@@ -2496,7 +2495,7 @@ void xen_initialize(void)
 
 void xen_gc_mark(XEN val)
 {
-  s7_mark_object((void *)val);
+  s7_mark_object(val);
 }
 
 

@@ -79,7 +79,7 @@ static int main_not_alsa(int argc, char *argv[])
   char *name = NULL;
   off_t start = 0, end = 0;
   double begin_time = 0.0, end_time = 0.0, volume = 1.0;
-  int mutable = 1, include_mutable = 0;
+  int mutate = 1, include_mutate = 0;
 
   for (i = 1; i < argc; i++)
     {
@@ -120,8 +120,8 @@ static int main_not_alsa(int argc, char *argv[])
 			{
 			  if (strcmp(argv[i], "-mutable") == 0) 
 			    {
-			      mutable = atoi(argv[i + 1]);
-			      include_mutable = 1;
+			      mutate = atoi(argv[i + 1]);
+			      include_mutate = 1;
 			      i++;
 			    }
 			  else 
@@ -232,8 +232,8 @@ static int main_not_alsa(int argc, char *argv[])
 		    }
 		}
 #if MUS_MAC_OSX
-	      if (include_mutable == 1)
-		mus_audio_output_properties_mutable(mutable);
+	      if (include_mutate == 1)
+		mus_audio_output_properties_mutable(mutate);
 #endif
 	      if (afd == -1)
 		{

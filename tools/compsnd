@@ -675,7 +675,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                g++ --with-static-xm                                   ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure LDFLAGS="-L/usr/X11R6/lib" --quiet CC=g++ --with-static-xm
+./configure LDFLAGS="-L/usr/X11R6/lib" --quiet CC=g++ --with-static-xm CFLAGS="-I/usr/X11R6/include"
 make xm
 
 make allclean

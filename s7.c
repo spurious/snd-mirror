@@ -38,11 +38,11 @@
  *        modulo, remainder, and quotient take integer, ratio, or real args
  *
  * still to do:
+ *   dynamic-wind and its interaction with continuations
+ *   threads: call-with-new-thread[s7?], join-thread
  *   built-in define-macro
  *   there's no arg number mismatch check for caller-defined functions!
- *   dynamic-wind and its interaction with continuations
  *   soft port for Snd
- *   threads: call-with-new-thread[s7?], join-thread
  *   help for vars (objects)
  *   figure out how add syntax-rules, for-each, map, do, all the call-with-* stuff
  *     could we piggy-back on the "simple-macro" code?
@@ -171,7 +171,7 @@ typedef enum {OP_TOP_LEVEL, OP_T1LVL, OP_READ_INTERNAL, OP_VALUEPRINT, OP_EVAL, 
 } opcode_t;
 
 
-static char *opcode_names[OP_MAX_DEFINED] = {
+static const char *opcode_names[OP_MAX_DEFINED] = {
               "op_top_level", "op_t1lvl", "op_read_internal", "op_valueprint", "op_eval", "op_real_eval", 
 	      "op_e0args", "op_e1args", "op_apply", "op_real_apply", "op_domacro", "op_lambda", "op_quote", 
 	      "op_def0", "op_def1", "op_begin", "op_if0", "op_if1", "op_set0", "op_set1",
@@ -210,7 +210,7 @@ typedef struct num {
 } num;
 
 
-typedef struct port {
+typedef struct rport {
   bool is_closed;
   bool is_file;
   bool needs_close;
@@ -227,7 +227,7 @@ typedef struct port {
       char *curr;
     } string;
   } rep;
-} port;
+} rport;
 
 
 typedef struct continuation {
@@ -245,11 +245,11 @@ typedef struct ffunc {
 } ffunc;
 
 
-typedef struct catch {
+typedef struct rcatch {
   int goto_loc;
   s7_pointer tag;
   s7_pointer handler;
-} catch;
+} rcatch;
 
 
 /* cell structure */
@@ -264,7 +264,7 @@ typedef struct s7_cell {
     
     num number;
     
-    port *port;
+    rport *port;
 
     char cvalue;
 
@@ -291,7 +291,7 @@ typedef struct s7_cell {
 
     int goto_loc;
 
-    catch *catcher;
+    rcatch *catcher;
     
   } object;
 } s7_cell;
@@ -2667,7 +2667,7 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer make_atom(s7_scheme *sc, char *q, int radix) 
 {
-  char c, *p, *slash, *plus;
+  char c, *p, *slash = NULL, *plus = NULL;
   bool has_dec_point = false, has_slash = false, has_i = false, has_previous_dec_point = false; 
   int has_plus_or_minus = 0;
   bool has_fp_exp = false;
@@ -3559,9 +3559,9 @@ enum {N_EQUAL, N_LESS, N_GREATER, N_LESS_OR_EQUAL, N_GREATER_OR_EQUAL};
 static s7_pointer compare_numbers(s7_scheme *sc, int op, s7_pointer args)
 {
   int i;
-  bool (*comp_func)(num a, num b);
-  bool (*arg_checker)(s7_pointer x);
-  const char *arg_type, *op_name;
+  bool (*comp_func)(num a, num b) = NULL;
+  bool (*arg_checker)(s7_pointer x) = NULL;
+  const char *arg_type = NULL, *op_name = NULL;
   switch (op)
     {
     case N_EQUAL:            comp_func = num_eq; arg_checker = s7_is_number; arg_type = "number"; op_name = "=";  break;
@@ -4769,7 +4769,7 @@ s7_pointer s7_open_input_file(s7_scheme *sc, const char *name)
   local_protect(x);
 
   /* set up the port struct */
-  x->object.port = (port *)MALLOC(sizeof(port));
+  x->object.port = (rport *)MALLOC(sizeof(rport));
   port_file(x) = fp;
   is_file_port(x) = true;
   port_is_closed(x) = false;
@@ -4812,7 +4812,7 @@ s7_pointer s7_open_output_file(s7_scheme *sc, const char *name)
   local_protect(x);
 
   /* set up the port struct */
-  x->object.port = (port *)MALLOC(sizeof(port));
+  x->object.port = (rport *)MALLOC(sizeof(rport));
   is_file_port(x) = true;
   port_is_closed(x) = false;
   port_filename(x) = copy_string(name);
@@ -4846,7 +4846,7 @@ s7_pointer s7_open_input_string(s7_scheme *sc, const char *input_string)
   local_protect(x);
 
   /* set up the port struct */
-  x->object.port = (port *)MALLOC(sizeof(port));
+  x->object.port = (rport *)MALLOC(sizeof(rport));
   is_file_port(x) = false;
   port_is_closed(x) = false;
   port_paren_depth(x) = 0;
@@ -4880,7 +4880,7 @@ s7_pointer s7_open_output_string(s7_scheme *sc)
   local_protect(x);
 
   /* set up the port struct */
-  x->object.port = (port *)MALLOC(sizeof(port));
+  x->object.port = (rport *)MALLOC(sizeof(rport));
   is_file_port(x) = false;
   port_is_closed(x) = false;
   temp = (char *)CALLOC(128, sizeof(char));
@@ -4984,7 +4984,7 @@ static void backchar(s7_scheme *sc, char c, s7_pointer pt)
 
 /* check c is in chars */
 
-static  bool is_one_of(char *s, int c) 
+static  bool is_one_of(const char *s, int c) 
 {
   if (c == EOF) 
     return(true);
@@ -4997,7 +4997,7 @@ static  bool is_one_of(char *s, int c)
 
 /* read characters up to delimiter, but cater to character constants */
 
-static char *read_string_upto(s7_scheme *sc, char *delim, s7_pointer pt) 
+static char *read_string_upto(s7_scheme *sc, const char *delim, s7_pointer pt) 
 {
   char *p = sc->strbuf;
   
@@ -5030,7 +5030,7 @@ static s7_pointer read_string_expression(s7_scheme *sc, s7_pointer pt)
     {
       c = inchar(sc, pt);
       if ((c == EOF) || 
-	  (p - sc->strbuf > sizeof(sc->strbuf) - 1))
+	  ((int)(p - sc->strbuf) > (int)(sizeof(sc->strbuf) - 1)))
 	return(sc->F);
 
       switch(state) 
@@ -5451,7 +5451,7 @@ s7_pointer s7_eval_form(s7_scheme *sc, s7_pointer form)
 
 /* -------- output -------- */
 
-static void char_to_string_port(char c, port *pt)
+static void char_to_string_port(char c, rport *pt)
 {
   if (pt->rep.string.curr >= pt->rep.string.past_the_end)
     {
@@ -7183,7 +7183,7 @@ s7_pointer s7_make_procedure_with_setter(s7_scheme *sc,
 
 static char *pws_print(void *obj)
 {
-  return("#<procedure-with-setter>");
+  return((char *)"#<procedure-with-setter>");
 }
 
 static void pws_free(void *obj)
@@ -7214,7 +7214,7 @@ static bool pws_equal(void *obj1, void *obj2)
 static s7_pointer pws_apply(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 {
   pws *f;
-  f = s7_object_value(obj);
+  f = (pws *)s7_object_value(obj);
   if (f->getter != NULL)
     return((*(f->getter))(sc, args));
   return(s7_call(sc, f->scheme_getter, args));
@@ -7224,7 +7224,7 @@ static s7_pointer pws_apply(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 static void pws_set(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 {
   pws *f;
-  f = s7_object_value(obj);
+  f = (pws *)s7_object_value(obj);
   if (f->setter != NULL)
     (*(f->setter))(sc, args);
   else s7_call(sc, f->scheme_setter, args);
@@ -7235,7 +7235,7 @@ static s7_pointer g_make_procedure_with_setter(s7_scheme *sc, s7_pointer args)
   s7_pointer p;
   pws *f;
   p = s7_make_procedure_with_setter(sc, NULL, NULL, NULL);
-  f = s7_object_value(p);
+  f = (pws *)s7_object_value(p);
   f->scheme_getter = car(args);
   f->scheme_setter = cadr(args);
   return(p);
@@ -7561,11 +7561,11 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
 {
   #define H_catch "(catch tag thunk handler) evaluates thunk; if an error occurs that matches tag (#t matches all), the handler is called"
   s7_pointer p;
-  catch *c;
+  rcatch *c;
 
   /* TODO: error checks for catch */
 
-  c = (catch *)CALLOC(1, sizeof(catch));
+  c = (rcatch *)CALLOC(1, sizeof(rcatch));
   c->tag = car(args);
   c->goto_loc = sc->stack_top;
   /* fprintf(stderr, "catch %p loc: %d\n", c, c->goto_loc); */
@@ -7790,7 +7790,7 @@ static s7_pointer g_eval(s7_scheme *sc, s7_pointer args)
   return(sc->NIL);
 }
 
-static void assign_syntax(s7_scheme *sc, char *name, opcode_t op) 
+static void assign_syntax(s7_scheme *sc, const char *name, opcode_t op) 
 {
   s7_pointer x;
   x = symbol_table_add_by_name(sc, name); 
@@ -7859,7 +7859,10 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 
   sc->op = first_op;
 
-  /* this procedure can be entered recursively (via s7_call for example), so it's no place for a setjmp */
+  /* this procedure can be entered recursively (via s7_call for example), so it's no place for a setjmp
+   *   I don't think the recursion can hurt our continuations because s7_call is coming from hooks and
+   *   callbacks that are implicit in our stack.
+   */
 
   START:
   
@@ -7871,7 +7874,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
   switch (sc->op) 
     {
 
-    case OP_TOP_LEVEL: /* top level */
+    case OP_TOP_LEVEL:
       if (is_input_port(sc->input_port))
 	port_paren_depth(sc->input_port) = 0;
       
@@ -7889,7 +7892,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       
       
     READ_INTERNAL:
-    case OP_READ_INTERNAL:       /* internal read */
+    case OP_READ_INTERNAL:
       sc->tok = token(sc, sc->input_port);
       if (sc->tok == TOK_EOF) 
 	{
@@ -7918,7 +7921,6 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  pop_stack(sc, sc->EOF_OBJECT);
 	  goto START;
 	}
-
       pop_stack(sc, sc->value);
       goto START;
 
@@ -7973,9 +7975,11 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       sc->code = sc->value;
       goto EVAL;
 
+
     case OP_EVAL_STRING_DONE:
       /* fprintf(stderr, "value: %s\n", s7_object_to_c_string(sc, sc->value)); */
       return;
+
       
     case OP_VALUEPRINT: /* print evaluation result */
       if (sc->tracing) 
@@ -8040,7 +8044,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	    if (is_syntax(sc->x))
 	      {     
 		sc->code = cdr(sc->code);
-		sc->op = integer(syntax_opcode(sc->x)->object.number);
+		sc->op = (opcode_t)integer(syntax_opcode(sc->x)->object.number);
 		goto START;
 	      } 
 	    else 
@@ -8088,6 +8092,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	}
       
       /* e1args causes 80 to 90% of the consing in the evaluator! */
+
       
     case OP_E1ARGS:     /* eval arguments */
       /*
@@ -8132,6 +8137,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  /* goto APPLY;  */
 	}
       
+
     APPLY:
     case OP_APPLY:      /* apply 'code' to 'args' */
       
@@ -8143,6 +8149,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	}
       /* fall through */
       
+
     case OP_REAL_APPLY:
       
       if (s7_is_function(sc->code))
@@ -8258,18 +8265,22 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	    }
 	}
       
+
     case OP_DOMACRO:    /* macro after args are gathered */
       sc->code = sc->value;
       goto EVAL;
       
+
     case OP_LAMBDA:     /* lambda */
       pop_stack(sc, s7_make_closure(sc, sc->code, sc->envir));
       goto START;
       
+
     case OP_QUOTE:      /* quote */
       pop_stack(sc, car(sc->code));
       goto START;
       
+
     case OP_DEF0:  /* define */
       if (s7_is_immutable(car(sc->code)))
 	{
@@ -8296,6 +8307,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       push_stack(sc, OP_DEF1, sc->NIL, sc->x);
       goto EVAL;
       
+
     case OP_DEF1:  /* define */
       /* sc->code is the symbol being defined, sc->value is its value
        *   if sc->value is a closure, car is or the form ((args...) body...)
@@ -8315,7 +8327,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       goto START;
       
 
-    case OP_SET0:       /* set! */
+    case OP_SET0:
       if (s7_is_immutable(car(sc->code)))
 	{
 	  pop_stack(sc, eval_error(sc, "set!: unable to alter immutable variable", car(sc->code)));
@@ -8341,6 +8353,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	}
       goto EVAL;
       
+
     case OP_SET1:      
       sc->y = s7_find_slot_in_env(sc, sc->envir, sc->code, true);
       if (sc->y != sc->NIL) 
@@ -8355,25 +8368,27 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 	}
       
-    case OP_IF0:        /* if */
-      
+
+    case OP_IF0:
       push_stack(sc, OP_IF1, sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
       goto EVAL;
       
-    case OP_IF1:        /* if */
-      
+
+    case OP_IF1:
       if (is_true(sc->value))
 	sc->code = car(sc->code);
       else
 	sc->code = cadr(sc->code);  /* (if #f 1) ==> #<unspecified> because car(sc->NIL) = sc->UNSPECIFIED */
       goto EVAL;
       
+
     case OP_LET0:       /* let */
       sc->args = sc->NIL;
       sc->value = sc->code;
       sc->code = s7_is_symbol(car(sc->code)) ? cadr(sc->code) : car(sc->code);
       
+
     case OP_LET1:       /* let (calculate parameters) */
       sc->args = cons(sc, sc->value, sc->args);
       if (s7_is_pair(sc->code)) 
@@ -8390,6 +8405,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  sc->args = cdr(sc->args);
 	}
       
+
     case OP_LET2:       /* let */
       new_frame_in_env(sc, sc->envir); 
       for (sc->x = s7_is_symbol(car(sc->code)) ? cadr(sc->code) : car(sc->code), sc->y = sc->args;
@@ -8414,6 +8430,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	}
       goto BEGIN;
       
+
     case OP_LET0AST:    /* let* */
       if (car(sc->code) == sc->NIL) 
 	{
@@ -8425,9 +8442,11 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       sc->code = cadaar(sc->code);
       goto EVAL;
       
+
     case OP_LET1AST:    /* let* (make new frame) */
       new_frame_in_env(sc, sc->envir); 
       
+
     case OP_LET2AST:    /* let* (calculate parameters) */
       new_slot_in_env(sc, caar(sc->code), sc->value); 
       sc->code = cdr(sc->code);
@@ -8452,6 +8471,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       sc->value = sc->code;
       sc->code = car(sc->code);
       
+
     case OP_LET1REC:    /* letrec (calculate parameters) */
       sc->args = cons(sc, sc->value, sc->args);
       if (s7_is_pair(sc->code)) 
@@ -8467,6 +8487,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  sc->code = car(sc->args);
 	  sc->args = cdr(sc->args);
 	}
+
       
     case OP_LET2REC:    /* letrec */
       for (sc->x = car(sc->code), sc->y = sc->args; sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
@@ -8476,6 +8497,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       sc->args = sc->NIL;
       goto BEGIN;
       
+
     case OP_COND0:      /* cond */
       if (!s7_is_pair(sc->code)) 
 	{
@@ -8486,6 +8508,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       sc->code = caar(sc->code);
       goto EVAL;
       
+
     case OP_COND1:      /* cond */
       if (is_true(sc->value)) 
 	{
@@ -8523,6 +8546,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	      goto EVAL;
 	    }
 	}
+
       
     case OP_DELAY:      /* delay */
       sc->x = s7_make_closure(sc, cons(sc, sc->NIL, sc->code), sc->envir);
@@ -8530,16 +8554,17 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       pop_stack(sc, sc->x);
       goto START;
       
+
     case OP_AND0:       /* and */
       if (sc->code == sc->NIL) 
 	{
 	  pop_stack(sc, sc->T);
 	  goto START;
 	}
-      
       push_stack(sc, OP_AND1, sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
       goto EVAL;
+
       
     case OP_AND1:       /* and */
       if (is_false(sc->value)) 
@@ -8547,49 +8572,48 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  pop_stack(sc, sc->value);
 	  goto START;
 	}
-      
       if (sc->code == sc->NIL) 
 	{
 	  pop_stack(sc, sc->value);
 	  goto START;
 	}
-      
       push_stack(sc, OP_AND1, sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
       goto EVAL;
       
+
     case OP_OR0:        /* or */
       if (sc->code == sc->NIL) 
 	{
 	  pop_stack(sc, sc->F);
 	  goto START;
 	}
-      
       push_stack(sc, OP_OR1, sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
       goto EVAL;
       
+
     case OP_OR1:        /* or */
       if (is_true(sc->value)) 
 	{
 	  pop_stack(sc, sc->value);
 	  goto START;
 	}
-      
       if (sc->code == sc->NIL) 
 	{
 	  pop_stack(sc, sc->value);
 	  goto START;
 	}
-      
       push_stack(sc, OP_OR1, sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
       goto EVAL;
+
       
     case OP_C0STREAM:   /* cons-stream */
       push_stack(sc, OP_C1STREAM, sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
       goto EVAL;
+
       
     case OP_C1STREAM:   /* cons-stream */
       sc->args = sc->value;  /* save sc->value to register sc->args for gc */
@@ -8597,6 +8621,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       set_type(sc->x, T_PROMISE);
       pop_stack(sc,cons(sc, sc->args, sc->x));
       goto START;      
+
 
     case OP_MACRO0:     /* macro */
       /*
@@ -8637,6 +8662,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       push_stack(sc, OP_MACRO1, sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO1 */
       goto EVAL;
       
+
     case OP_MACRO1:     /* macro */
 
       /* here sc->code is the name (a symbol), sc->value is a closure object, its car is the form as called
@@ -8725,6 +8751,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       sc->code = car(sc->code);
       goto EVAL;
       
+
     case OP_CASE1:      /* case */
       for (sc->x = sc->code; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
 	{
@@ -8759,6 +8786,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 	}
       
+
     case OP_CASE2:      /* case */
       if (is_true(sc->value)) 
 	goto BEGIN;
@@ -8771,17 +8799,17 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       pop_stack(sc, sc->value);
       goto START;
       
+
     case OP_QUIT:
       return;
       break;
+
 
     case OP_CATCH:
       pop_stack(sc, sc->value);
       goto START;
       break;
       
-      
-      /* ========== reading part ========== */
       
     READ_EXPRESSION:
     case OP_READ_EXPRESSION:
@@ -8890,6 +8918,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	}
       break;
       
+
     case OP_RDLIST: 
       sc->args = cons(sc, sc->value, sc->args);
       sc->tok = token(sc, sc->input_port);
@@ -8929,6 +8958,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	    }
 	}
       
+
     case OP_RDDOT:
       if (token(sc, sc->input_port) != TOK_RPAREN)
 	{
@@ -8944,14 +8974,17 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 	}
       
+
     case OP_RDQUOTE:
       pop_stack(sc, cons(sc, sc->QUOTE, cons(sc, sc->value, sc->NIL)));
       goto START;      
       
+
     case OP_RDQQUOTE:
       pop_stack(sc, cons(sc, sc->QQUOTE, cons(sc, sc->value, sc->NIL)));
       goto START;
       
+
     case OP_RDQQUOTEVEC:
       pop_stack(sc, cons(sc, s7_make_symbol(sc, "apply"),
 		     cons(sc, s7_make_symbol(sc, "vector"), 
@@ -8960,21 +8993,22 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 			       sc->NIL))));
       goto START;
       
+
     case OP_RDUNQUOTE:
       pop_stack(sc, cons(sc, sc->UNQUOTE, cons(sc, sc->value, sc->NIL)));
       goto START;
       
+
     case OP_RDUQTSP:
       pop_stack(sc, cons(sc, sc->UNQUOTESP, cons(sc, sc->value, sc->NIL)));
       goto START;
       
+
     case OP_RDVEC:
       sc->args = sc->value;
       pop_stack(sc, g_vector(sc, sc->args));
       goto START;
       
-
-      /* ========== printing part ========== */
       
     P0LIST:
     case OP_P0LIST:
@@ -9022,6 +9056,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  goto P0LIST;
 	}
       
+
     case OP_P1LIST:
       if (s7_is_pair(sc->args)) 
 	{
@@ -9048,6 +9083,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 	}
       
+
     PVECFROM:
     case OP_PVECFROM: 
       {
@@ -9071,6 +9107,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  }
       }
       
+
     default:
       pop_stack(sc, eval_error(sc, "unknown operator!", s7_make_integer(sc, sc->op)));
       goto START;

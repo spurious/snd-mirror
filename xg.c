@@ -382,6 +382,7 @@ static XEN C_TO_XEN_GError_(GError *err)
 
 /* ---------------------------------------- types ---------------------------------------- */
 
+XM_TYPE_PTR(gdouble_, gdouble*)
 XM_TYPE_PTR_1(GtkColorSelectionDialog_, GtkColorSelectionDialog*)
 XM_TYPE_PTR_1(GdkEventMotion_, GdkEventMotion*)
 XM_TYPE_PTR(GdkWindow_, GdkWindow*)
@@ -1066,7 +1067,6 @@ XM_TYPE_PTR(cairo_pattern_t_, cairo_pattern_t*)
 #define C_TO_XEN_cairo_line_join_t(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_cairo_line_join_t(Arg) (cairo_line_join_t)(XEN_TO_C_INT(Arg))
 #define XEN_cairo_line_join_t_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_PTR(gdouble_, gdouble*)
 XM_TYPE_PTR_1(cairo_matrix_t_, cairo_matrix_t*)
 #define C_TO_XEN_bool(Arg) C_TO_XEN_BOOLEAN(Arg)
 XM_TYPE_PTR(cairo_font_options_t_, cairo_font_options_t*)
@@ -33404,6 +33404,12 @@ static XEN c_array_to_xen_list(XEN val_1, XEN clen)
   if (!(XEN_LIST_P(val_1))) return(XEN_FALSE); /* type:location cons */
   val = XEN_COPY_ARG(val_1); /* protect Ruby arg */
   ctype = XEN_SYMBOL_TO_C_STRING(XEN_CAR(val));
+  if (strcmp(ctype, "gdouble_") == 0)
+    {
+      gdouble* arr; arr = (gdouble*)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
+      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gdouble(arr[i]), result);
+    }
   if (strcmp(ctype, "gint_") == 0)
     {
       gint* arr; arr = (gint*)XEN_TO_C_ULONG(XEN_CADR(val)); 
@@ -33568,6 +33574,12 @@ static XEN xen_list_to_c_array(XEN val, XEN type)
   char *ctype;
   len = XEN_LIST_LENGTH(val);
   ctype = XEN_TO_C_STRING(type);
+  if (strcmp(ctype, "gdouble*") == 0)
+    {
+      gdouble* arr; arr = (gdouble*)CALLOC(len + 1, sizeof(gdouble));
+      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_gdouble(XEN_CAR(val));
+      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("gdouble_"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
+    }
   if (strcmp(ctype, "gint*") == 0)
     {
       gint* arr; arr = (gint*)CALLOC(len + 1, sizeof(gint));

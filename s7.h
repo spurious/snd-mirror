@@ -1,7 +1,7 @@
 #ifndef _S7_H
 #define _S7_H
 
-#define S7_VERSION "0"
+#define S7_VERSION "0.3"
 #define S7_DATE "1-Sep-08"
 
 #include <stdio.h>
@@ -67,7 +67,6 @@ s7_pointer s7_make_counted_string(s7_scheme *sc, const char *str, int len);
 bool s7_is_character(s7_pointer p);
 char s7_character(s7_pointer p);
 s7_pointer s7_make_character(s7_scheme *sc, int c);
-
 
 bool s7_is_number(s7_pointer p);
 bool s7_is_exact(s7_pointer p);
@@ -147,7 +146,6 @@ bool s7_is_closure(s7_pointer p);
 s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p);
 s7_pointer s7_procedure_environment(s7_pointer p);
 s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e);
-
 bool s7_is_continuation(s7_pointer p);
 
 s7_scheme *s7_init(void);
@@ -185,16 +183,12 @@ s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n,
 s7_pointer s7_out_of_range_error(s7_scheme *sc, const char *caller, int arg_n, s7_pointer arg, const char *descr);
 void s7_set_error_exiter(s7_scheme *sc, void (*error_exiter)(void));
 
-
 int s7_gc_protect(s7_scheme *sc, s7_pointer x);
 void s7_gc_unprotect(s7_scheme *sc, s7_pointer x);
 void s7_gc_unprotect_at(s7_scheme *sc, int loc);
 
 void s7_for_each_symbol_name(s7_scheme *sc, bool (*symbol_func)(const char *symbol_name, void *data), void *data);
 void s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_name, s7_pointer symbol_value, void *data), void *data);
-
-bool s7_is_function(s7_pointer p);
-
 
 bool s7_is_input_port(s7_scheme *sc, s7_pointer p);
 bool s7_is_output_port(s7_scheme *sc, s7_pointer p);

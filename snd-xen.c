@@ -2593,7 +2593,7 @@ static XEN g_system(XEN command)
   return(C_TO_XEN_INT(system(XEN_TO_C_STRING(command))));
 }
 
-static XEN g_getenv(XEN var)
+static XEN g_s7_getenv(XEN var) /* "g_getenv" is in use in glib! */
 {
   #define H_getenv "(getenv var): return value of environment variable var"
   XEN_ASSERT_TYPE(XEN_STRING_P(var), var, XEN_ONLY_ARG, "getenv", "a string");
@@ -2664,7 +2664,7 @@ static XEN g_tmpnam(void)
 
 XEN_NARGIFY_1(g_file_exists_p_w, g_file_exists_p)
 XEN_NARGIFY_1(g_system_w, g_system)
-XEN_NARGIFY_1(g_getenv_w, g_getenv)
+XEN_NARGIFY_1(g_s7_getenv_w, g_s7_getenv)
 XEN_NARGIFY_1(g_delete_file_w, g_delete_file)
 XEN_NARGIFY_0(g_getcwd_w, g_getcwd)
 XEN_NARGIFY_2(g_strftime_w, g_strftime)
@@ -2779,7 +2779,7 @@ void g_xen_initialize(void)
 #if HAVE_S7
   XEN_DEFINE_PROCEDURE("file-exists?",           g_file_exists_p_w,          1, 0, 0, H_file_exists_p);
   XEN_DEFINE_PROCEDURE("system",                 g_system_w,                 1, 0, 0, H_system);
-  XEN_DEFINE_PROCEDURE("getenv",                 g_getenv_w,                 1, 0, 0, H_getenv);
+  XEN_DEFINE_PROCEDURE("getenv",                 g_s7_getenv_w,              1, 0, 0, H_getenv);
   XEN_DEFINE_PROCEDURE("delete-file",            g_delete_file_w,            1, 0, 0, H_delete_file);
   XEN_DEFINE_PROCEDURE("getcwd",                 g_getcwd_w,                 0, 0, 0, H_getcwd);
   XEN_DEFINE_PROCEDURE("strftime",               g_strftime_w,               2, 0, 0, H_strftime);
