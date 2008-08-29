@@ -410,6 +410,61 @@ make
 make allclean
 
 echo ' '
+echo ' '
+echo ' -------------------------------------------------------------------------------- '
+echo ' ----                 --with-s7                                          ---- '
+echo ' -------------------------------------------------------------------------------- '
+./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-s7
+make
+./snd --version
+./snd -noinit --features "'clm 'snd-s7 'snd-motif"
+make allclean
+
+echo ' '
+echo ' '
+echo ' -------------------------------------------------------------------------------- '
+echo ' ----                --with-s7 --enable-snd-debug --with-static-xm --with-editres --with-gl '
+echo ' -------------------------------------------------------------------------------- '
+./configure --quiet --with-s7 --enable-snd-debug --with-static-xm --with-editres --with-gl LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --with-midi
+make
+./snd --version
+./snd -noinit --features "'clm 'snd-s7 'xm 'gl"
+make allclean
+
+echo ' '
+echo ' '
+echo ' -------------------------------------------------------------------------------- '
+echo ' ----                --with-s7 --with-gtk --with-static-xg --with-gl      --- '
+echo ' -------------------------------------------------------------------------------- '
+./configure --quiet --with-s7 --with-gtk --with-static-xg --with-gl LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
+make
+./snd --version
+./snd -noinit --features "'clm 'snd-gtk 'xg 'gl"
+make allclean
+
+echo ' '
+echo ' '
+echo ' -------------------------------------------------------------------------------- '
+echo ' -----                --with-s7 --with-no-gui                             --- '
+echo ' -------------------------------------------------------------------------------- '
+./configure --quiet --with-s7 --with-no-gui LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
+make
+./snd --version
+./snd -noinit --features "'clm 'snd-s7 'snd-nogui"
+make allclean
+
+echo ' '
+echo ' '
+echo ' -------------------------------------------------------------------------------- '
+echo ' -----                --with-s7 g++ --disable-deprecated                  --- '
+echo ' -------------------------------------------------------------------------------- '
+./configure --quiet --with-s7 CC=g++ --disable-deprecated LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
+make
+./snd --version
+./snd -noinit --features "'clm 'snd-s7"
+make allclean
+
+echo ' '
 make allclean
 rm -f snd
 rm -f config.cache
@@ -1253,7 +1308,10 @@ make clean
 ./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-gauche
 make
 make clean
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --without-guile --without-ruby --without-gauche --without-forth
+./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-s7
+make
+make clean
+./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --without-extension-language
 make
 make clean
 ./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-forth
@@ -1274,7 +1332,10 @@ make clean
 ./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-gauche
 make
 make clean
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --without-guile --without-ruby --without-gauche --without-forth
+./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-s7
+make
+make clean
+./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --without-extension-language
 make
 make clean
 ./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-forth
@@ -1289,10 +1350,13 @@ make clean
 ./configure --quiet --with-gauche --with-gtk
 make
 make clean
+./configure --quiet --with-s7 --with-gtk
+make
+make clean
 ./configure --quiet --with-forth --with-gtk
 make
 make clean
-./configure --quiet --without-guile --without-ruby --without-gauche --without-forth --with-gtk
+./configure --quiet --without-extension-language --with-gtk
 make
 make clean
 

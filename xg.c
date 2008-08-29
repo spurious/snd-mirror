@@ -1,4 +1,4 @@
-/* xg.c: Guile, Gauche, Ruby, and Forth bindings for gdk/gtk/pango/cairo, some of glib
+/* xg.c: S7, Guile, Gauche, Ruby, and Forth bindings for gdk/gtk/pango/cairo, some of glib
  *   this file generated automatically from makexg.scm and xgdata.scm
  *   needs xen.h
  *
@@ -51,6 +51,7 @@
  *     win32-specific functions
  *
  * HISTORY:
+ *     1-Sep:     S7 support.
  *     8-Jul-08:  started removing all struct accessors (for Gtk 3).
  *     --------
  *     9-Mar:     removed all *_get_type functions (nearly 300!).
@@ -48094,7 +48095,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("22-Aug-08"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("29-Aug-08"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

@@ -1954,7 +1954,7 @@
 
 
 ;;; ---------------------------------------- write output files ----------------------------------------
-(hey "/* xg.c: Guile, Gauche, Ruby, and Forth bindings for gdk/gtk/pango/cairo, some of glib~%")
+(hey "/* xg.c: S7, Guile, Gauche, Ruby, and Forth bindings for gdk/gtk/pango/cairo, some of glib~%")
 (hey " *   this file generated automatically from makexg.scm and xgdata.scm~%")
 (hey " *   needs xen.h~%")
 (hey " *~%")
@@ -2023,6 +2023,7 @@
 (hey " *     win32-specific functions~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     1-Sep:     S7 support.~%")
 (hey " *     8-Jul-08:  started removing all struct accessors (for Gtk 3).~%")
 (hey " *     --------~%")
 (hey " *     9-Mar:     removed all *_get_type functions (nearly 300!).~%")

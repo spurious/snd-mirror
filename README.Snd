@@ -31,7 +31,9 @@ The configure program has several Snd-related arguments:
   
      --with-gauche             use Gauche (Scheme) as the extension language.
 
-     To build Snd without any extension language, use --without-guile --without-ruby
+     --with-s7                 use S7 (Scheme) as the extension language.
+
+     To build Snd without any extension language, use --without-extension-language
   
 
    Graphics:
@@ -120,10 +122,11 @@ If the configure/make process fails, please send me
 (bil@ccrma.stanford.edu) the files mus-config.h, config.log, and makefile,
 created (or updated) by configure.
 
-If you don't have Guile, Gauche, Ruby, or Forth, Snd can still be built, but it's
-severely limited in what it can do.  Snd can also be built without
-any graphics toolkit.  Without either the GUI or the extension
-language, however, there's nothing it can do.
+Snd comes with S7, so if you don't have Guile, Gauche, Ruby, or 
+Forth, you can use S7.  But if you insist on building Snd without any extension 
+language, you'll find that it's severely limited in what it can do.  
+Snd can also be built without any graphics toolkit.  Without either the GUI 
+or an extension language, however, there's nothing it can do.
 
 Here at CCRMA, we use this configure invocation:
 
@@ -140,6 +143,7 @@ Version info:
   if Guile, Guile 1.3.4 or later but most *.scm files need 1.5.0 or later
   if Ruby, Ruby 1.6.4 or later, but some *.rb files need 1.8.0 or later
   if Forth, any version
+  if S7, any version
   if GSL, version 0.8 or later
   if gtkglext, version 1.0 or later
   if gamin, version 0.1.0 or later
@@ -149,7 +153,7 @@ Version info:
 
 ----------------------------------------------------------------
 
-The customization/extension languages are either Guile, Gauche, Ruby, or Forth.
+The customization/extension languages are either S7 (included), Guile, Gauche, Ruby, or Forth.
 
 Much of Snd's functionality is loaded as needed from the Scheme, Ruby, or Forth
 files found in the tarball (*.scm, *.rb, and *.fs).  You can run Snd without 

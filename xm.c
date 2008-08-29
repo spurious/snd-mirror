@@ -5,10 +5,12 @@
 
 #include <mus-config.h>
 
-#define XM_DATE "26-Aug-06"
+#define XM_DATE "1-Sep-08"
 
 /* HISTORY: 
- *
+ *  
+ *   1-Sep-08:  S7 support.
+ *   --------
  *   26-Aug:    removed WITH_GTK_AND_X11 switch.
  *   21-Apr:    Gauche additions.
  *   30-Jan:    removed XmMultiList.

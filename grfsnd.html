@@ -253,21 +253,21 @@ To override the local init file, use -noinit.
 <p>
 The initialization files particular to a given extension language have names such as ~/.snd_guile
 and ~/.snd_prefs_ruby.  Currently the possibilities are:
-~/.snd_prefs_guile|ruby|forth|gauche, /etc/snd_guile|ruby|forth|gauche.conf,
-~/.snd_guile|ruby|forth|gauche (the notation "guile|ruby|forth" means either "guile" or "ruby" or "forth", so the file names
+~/.snd_prefs_guile|ruby|forth|gauche|s7, /etc/snd_guile|ruby|forth|gauche|s7.conf,
+~/.snd_guile|ruby|forth|gauche|s7 (the notation "guile|ruby|forth" means either "guile" or "ruby" or "forth", so the file names
 spelled out completely are "/etc/snd_guile.conf", "/etc/snd_ruby.conf", etc; which one is loaded
 obviously depends on which language you chose during configuration).  
 The save-options (preferences dialog) process writes to
-.snd_prefs_* which is loaded first, if it exists; then Snd looks for .snd_* (guile, ruby, forth, or gauche);
+.snd_prefs_* which is loaded first, if it exists; then Snd looks for .snd_* (s7, guile, ruby, forth, or gauche);
 then .snd.  If you're always using just one version of Snd, it's simplest to stick with
 .snd.  The actual load sequence is:
 </p>
 <pre>
-    /etc/snd_guile|ruby|forth|gauche.conf    (these two canceled by -noglob)
+    /etc/snd_guile|ruby|forth|gauche|s7.conf    (these two canceled by -noglob)
     /etc/snd.conf               
-    ~/.snd_prefs_guile|ruby|forth|gauche     (the rest canceled by -noinit)
-    ~/.snd_guile|ruby|forth|gauche
-    ~/.snd                                   (also SND_INIT_FILE_ENVRIONMENT_NAME)
+    ~/.snd_prefs_guile|ruby|forth|gauche|s7     (the rest canceled by -noinit)
+    ~/.snd_guile|ruby|forth|gauche|s7
+    ~/.snd                                      (also SND_INIT_FILE_ENVRIONMENT_NAME)
 </pre>
 
 <p> 
@@ -559,7 +559,7 @@ For more temporary situations, you can use the environment variable SND_PATH.
 It is a colon-separated list of directories that will be added to the load path when Snd starts.
 </p>
 
-<p>In Gauche, before loading any of the Snd *.scm files, you need to load gauche-optargs.scm and
+<p>In S7 and Gauche, before loading any of the Snd *.scm files, you need to load gauche-optargs.scm and
 gauche-format.scm:
 </p>
 <pre>
@@ -807,7 +807,7 @@ latter are (configure --help):
 <tr><td></td><td>--with-static-xm</td><td></td><td>include the xm module at build time; this is easier than trying to dynamically load xm.so</td></tr>
 <tr><td></td><td>--with-static-xg</td><td></td><td>include the xg module at build time; this is easier than trying to dynamically load xg.so</td></tr>
 <tr><td></td><td>--with-gl</td><td></td><td>include OpenGL support (spectrogram, etc)</td></tr>
-<tr><td></td><td>--with-just-gl</td><td></td><td>include OpenGL support, but omit the GL/Guile/Gauche/Ruby/Forth bindings</td></tr>
+<tr><td></td><td>--with-just-gl</td><td></td><td>include OpenGL support, but omit the GL/S7/Guile/Gauche/Ruby/Forth bindings</td></tr>
 <tr><td></td><td>--with-gl2ps</td><td></td><td>include gl2ps (GL to Postscript code)</td></tr>
 <tr><td></td><td>--with-editres</td><td></td><td>include editres in xm (default: no)</td></tr>
 <tr><td></td><td>--with-xpm</td><td></td><td>use xpm, default: yes</td></tr>
@@ -821,6 +821,7 @@ latter are (configure --help):
 <tr><td></td><td>--with-forth</td><td></td><td>try to use Forth as the extension language</td></tr>
 <tr><td></td><td>--with-ruby</td><td></td><td>try to use Ruby as the extension language; version 1.6.4 or later</td></tr>
 <tr><td></td><td>--with-gauche</td><td></td><td>try to use Gauche as the extension language; version 0.8.7 or later</td></tr>
+<tr><td></td><td>--with-s7</td><td></td><td>try to use S7 as the extension language</td></tr>
 <tr><td></td><td>--with-ruby-prefix=PFX</td><td></td><td>where Ruby is installed</td></tr>
 <tr><td></td><td>--with-hobbit</td><td></td><td>include hobbit-style function arity checking (hobbit is a Scheme compiler), default: no</td></tr>
 <tr><td colspan=2></td><td></td><td></td></tr>
@@ -885,7 +886,7 @@ Here at CCRMA, we normally use:
 There are many more examples in tools/compsnd.
 Don't use the --enable-snd-debug switch unless you know what you are asking for!
 Depending on how Snd is configured, any of the following symbols may be "provided"
-(on the *features* list in Guile/Gauche):
+(on the *features* list in S7/Guile/Gauche):
 </p>
 <table hspace=20 border=1>
 <tr><td>
@@ -911,6 +912,7 @@ Depending on how Snd is configured, any of the following symbols may be "provide
 <tr><td>gl2ps</td><td>gl2ps is included (--with-gl2ps)</td></tr>
 <tr><td bgcolor="#f2f4ff">cairo</td><td bgcolor="#f2f4ff">cairo used for graphics (--with-cairo)</td></tr>
 <tr><td>snd-threads</td><td>multithreading support is included (--enable-threads)</td></tr>
+<tr><td bgcolor="#f2f4ff">snd-s7</td><td bgcolor="#f2f4ff">S7 as extension language (--with-s7)</td></tr>
 </table>
 </td></tr>
 </table>

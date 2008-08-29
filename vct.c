@@ -619,7 +619,12 @@ v. " vct_map_example " is the same as " vct_fill_example
     struct ptree *pt = NULL;
     if ((optimization(ss)) > 0)
       {
+#if HAVE_S7
+	pt = form_to_ptree_0_f(XEN_APPEND(XEN_CONS(C_STRING_TO_XEN_SYMBOL("lambda"), XEN_EMPTY_LIST), XEN_CAR(proc)));
+	/* TODO: also snd-find, x|gfind, sig */
+#else
 	pt = form_to_ptree_0_f(proc);
+#endif
 	if (pt)
 	  {
 	    for (i = 0; i < v->length; i++) 
@@ -1294,9 +1299,13 @@ void mus_vct_init(void)
   XEN_DEFINE_PROCEDURE(S_vct_reverse,   g_vct_reverse_w,   1, 1, 0, H_vct_reverse);
 
 #if WITH_RUN && USE_SND
+#if HAVE_S7
+  XEN_DEFINE_PROCEDURE(S_vct_mapB,      g_vct_mapB_w,      2, 0, 0, H_vct_mapB);
+#else
   XEN_DEFINE_PROCEDURE("vct-map-1",     g_vct_mapB_w,      2, 0, 0, H_vct_mapB);
   XEN_EVAL_C_STRING("(defmacro vct-map! (v form) `(vct-map-1 ,v (list ',form ,form)))");
   XEN_SET_DOCUMENTATION(S_vct_mapB, H_vct_mapB);
+#endif
 #else
   XEN_DEFINE_PROCEDURE(S_vct_mapB,      g_vct_mapB_w,      2, 0, 0, H_vct_mapB);
 #endif

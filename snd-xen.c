@@ -3049,8 +3049,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(define (debug-set! . args) #f)");
   XEN_EVAL_C_STRING("(define (make-soft-port . args) #f)");
 
-  XEN_EVAL_C_STRING("(define (symbol->keyword key) (make-keyword (symbol->string key)))");
-  XEN_EVAL_C_STRING("(define (keyword->symbol key) (string->symbol (keyword->string key)))");
   XEN_EVAL_C_STRING("(define load-from-path load)");
 
   XEN_EVAL_C_STRING("(define shell system)");

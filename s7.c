@@ -16,9 +16,9 @@
  *
  */
 
-/* changed to fit into Snd, Bill Schottstaedt, Aug-08
+/* S7, Bill Schottstaedt, Aug-08
  *
- *   major changes: 
+ *   major changes from tinyScheme:
  *        just two files: s7.c and s7.h, source-level embeddable (no library, no run-time init files)
  *        full continuations, call-with-exit for goto or return
  *        ratios and complex numbers (and ints are 64-bit)
@@ -26,25 +26,24 @@
  *        defmacro, keywords, hash tables, block comments
  *        applicable objects
  *        error handling using error and catch
- *        (in Snd, the run macro works giving S7 a byte compiler)
+ *        in Snd, the run macro works giving S7 a (somewhat limited) byte compiler
+ *        no invidious distinction between built-in and "foreign"
  *
  *   many minor changes!
  *
  *   deliberate omissions from r5rs: 
  *        no inexact integer or ratio (so, for example, truncate returns an exact integer), no exact complex or exact real
- *        no cxxxxr built-in (the 1|2|3-way cases are built-in)
  *
  *   deliberate difference from r5rs:
  *        modulo, remainder, and quotient take integer, ratio, or real args
  *
  * still to do:
+ *   built-in define-macro
  *   there's no arg number mismatch check for caller-defined functions!
- *   dynamic-wind tested [this could be an extension of catch -- unwind stack looking for dynamic winds]
- *      similarly for goto and continuation
- *   soft port for Snd (need to trap error reports somehow)
+ *   dynamic-wind and its interaction with continuations
+ *   soft port for Snd
  *   threads: call-with-new-thread[s7?], join-thread
  *   help for vars (objects)
- *   format loads and runs, but has some bizarre problems
  *   figure out how add syntax-rules, for-each, map, do, all the call-with-* stuff
  *     could we piggy-back on the "simple-macro" code?
  *   radix arg for number->string [see itoa ... -- this needs support for each type and radix]
@@ -98,6 +97,8 @@
 
 #define USE_SND 0
 /* this is for memory leak and pointer debugging stuff */
+#define S7_DEBUGGING 1
+/* this is for a bunch of sanity checks */
 
 
 #define _FILE_OFFSET_BITS 64  /* off_t's -- I could use long long, but old habits die hard */
@@ -166,7 +167,7 @@ typedef enum {OP_TOP_LEVEL, OP_T1LVL, OP_READ_INTERNAL, OP_VALUEPRINT, OP_EVAL, 
 	      OP_RDQQUOTE, OP_RDQQUOTEVEC, OP_RDUNQUOTE, OP_RDUQTSP, OP_RDVEC, OP_P0LIST, OP_P1LIST, 
 	      OP_PVECFROM, OP_SAVE_FORCED, OP_READ_RETURN_EXPRESSION, 
 	      OP_READ_POP_AND_RETURN_EXPRESSION, OP_LOAD_RETURN_IF_EOF, OP_LOAD_CLOSE_AND_POP_IF_EOF, 
-	      OP_EVAL_STRING, OP_EVAL_STRING_DONE, OP_QUIT, OP_LONGJMP, OP_MAX_DEFINED
+	      OP_EVAL_STRING, OP_EVAL_STRING_DONE, OP_QUIT, OP_CATCH, OP_DYNAMIC_WIND, OP_MAX_DEFINED
 } opcode_t;
 
 
@@ -181,7 +182,7 @@ static char *opcode_names[OP_MAX_DEFINED] = {
 	      "op_rdqquote", "op_rdqquotevec", "op_rdunquote", "op_rduqtsp", "op_rdvec", "op_p0list", "op_p1list", 
 	      "op_pvecfrom", "op_save_forced", "op_read_return_expression", 
 	      "op_read_pop_and_return_expression", "op_load_return_if_eof", "op_load_close_and_pop_if_eof", 
-	      "op_eval_string", "op_eval_string_done", "op_quit", "op_longjmp"
+	      "op_eval_string", "op_eval_string_done", "op_quit", "op_catch", "op_dynamic_wind"
 };
 
 
@@ -779,6 +780,7 @@ static void finalize_s7_cell(s7_scheme *sc, s7_pointer a)
 	  break;
 
 	case T_CATCH:
+	  /* fprintf(stderr, "free %p\n", a->object.catcher); */
 	  FREE(a->object.catcher);
 	  break;
 
@@ -865,12 +867,15 @@ static void free_s7_cell(s7_scheme *sc, int loc)
 	sc->free_heap[k] = -1;
     }
   
+#if S7_DEBUGGING
   if ((loc < 0) ||
       (sc->free_heap_top < 0))
     {
       fprintf(stderr, "free %d %d\n", loc, sc->free_heap_top);
       abort();
     }
+#endif
+
 #if USE_SND
   if (sc->heap == NULL) fprintf(stderr, "freeing same loc twice?");
   sc->heap[loc] = NULL;
@@ -990,7 +995,10 @@ static s7_pointer new_cell_1(s7_scheme *sc, const char *function, int line)
       p = alloc_s7_cell(sc);
     }
 
-  if (is_immutable(p)) fprintf(stderr, "%d %p: alloc immutable?? %x %s", sc->free_heap_top, p, typeflag(p), describe_type(p));
+#if S7_DEBUGGING
+  if (is_immutable(p)) 
+    fprintf(stderr, "%d %p: alloc immutable?? %x %s", sc->free_heap_top, p, typeflag(p), describe_type(p));
+#endif
 
   return(p);
 }
@@ -1042,6 +1050,7 @@ static void pop_stack(s7_scheme *sc, s7_pointer a)
   sc->value = a; 
   top = sc->stack_top;
 
+#if S7_DEBUGGING
   if (top < 4)
     {
       fprintf(stderr, "attempt to pop off top of stack!");
@@ -1054,6 +1063,7 @@ static void pop_stack(s7_scheme *sc, s7_pointer a)
       search_heap(sc, a);
       abort();
     }
+#endif
 
   sc->op =         (opcode_t)integer(vector_element(sc->stack, top - 1)->object.number);
   sc->args =       vector_element(sc->stack, top - 2);
@@ -1070,6 +1080,7 @@ static void push_stack(s7_scheme *sc, opcode_t op, s7_pointer args, s7_pointer c
   top = sc->stack_top;
   sc->stack_top += 4;
 
+#if S7_DEBUGGING
   if (!is_object(args))
     {
       fprintf(stderr, "stack args pushed: %p\n", args);
@@ -1085,6 +1096,7 @@ static void push_stack(s7_scheme *sc, opcode_t op, s7_pointer args, s7_pointer c
       fprintf(stderr, "push bad op: %d\n", op);
       abort();
     }
+#endif
 
   if (sc->stack_top >= sc->stack_size)
     {
@@ -1484,6 +1496,7 @@ s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e)
 
   set_type(x, T_CLOSURE);
 
+#if S7_DEBUGGING
   if (!is_object(c))
     {
       fprintf(stderr, "closure code is not an object!");
@@ -1494,6 +1507,7 @@ s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e)
       fprintf(stderr, "closure environment is not an object!");
       abort();
     }
+#endif
 
   car(x) = c;
   cdr(x) = e;
@@ -1548,7 +1562,7 @@ void s7_define_variable(s7_scheme *sc, const char *name, s7_pointer value)
   local_unprotect(value);
 }
 
-
+#if 0
 static s7_pointer s7_search_environment(s7_scheme *sc, s7_pointer env, bool (*searcher)(s7_scheme *sc, s7_pointer binding, s7_pointer data), s7_pointer data)
 { 
   int i, len;
@@ -1573,6 +1587,7 @@ static s7_pointer s7_search_environment(s7_scheme *sc, s7_pointer env, bool (*se
     }
   return(sc->F); 
 } 
+#endif
 
 
 
@@ -1685,6 +1700,15 @@ static s7_pointer s7_call_continuation(s7_scheme *sc, s7_pointer p)
   sc->stack = copy_stack(sc, c->cc_stack, c->cc_stack_top);
   sc->stack_size = c->cc_stack_size;
   sc->stack_top = c->cc_stack_top;
+
+#if S7_DEBUGGING
+  if (sc->stack_top > sc->stack_size)
+    {
+      fprintf(stderr, "continuation set top to %d (%d)\n", sc->stack_top, sc->stack_size);
+      abort();
+    }
+#endif
+
   return(sc->value);
 }
 
@@ -3990,6 +4014,7 @@ s7_pointer s7_make_counted_string(s7_scheme *sc, const char *str, int len)
 
   x = new_cell(sc);
 
+#if S7_DEBUGGING
   if (is_immutable(x))
     {
       fprintf(stderr, "oops %s\n", str);
@@ -3999,6 +4024,7 @@ s7_pointer s7_make_counted_string(s7_scheme *sc, const char *str, int len)
     {
       fprintf(stderr, "make_counted_string: %s %d %d\n", str, len, safe_strlen(str));
     }
+#endif
 
   set_type(x, T_STRING | T_ATOM | T_FINALIZABLE);
   local_protect(x);
@@ -5292,6 +5318,13 @@ s7_pointer s7_read(s7_scheme *sc, s7_pointer port)
 {
   if (s7_is_input_port(sc, port))
     {
+      if (sc->stack_top == 0)
+	{
+	  if (setjmp(sc->goto_start) != 0)
+	    {
+	      return(sc->value);
+	    }
+	}
       push_input_port(sc, port);
       push_stack(sc, OP_READ_RETURN_EXPRESSION, port, sc->NIL);
       eval(sc, OP_READ_INTERNAL);
@@ -5332,7 +5365,13 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
 
   push_input_port(sc, port);
   push_stack(sc, OP_LOAD_RETURN_IF_EOF, port, sc->NIL);
-  eval(sc, OP_READ_INTERNAL);
+
+  if (setjmp(sc->goto_start) != 0)
+    {
+      eval(sc, sc->op);
+    }
+  else eval(sc, OP_READ_INTERNAL);
+
   /* TODO: check paren count and below */
   
   pop_input_port(sc);
@@ -5389,7 +5428,13 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
   port = s7_open_input_string(sc, str);
   push_input_port(sc, port);
   push_stack(sc, OP_EVAL_STRING, sc->NIL, sc->NIL);
-  eval(sc, OP_READ_INTERNAL);
+
+  if (setjmp(sc->goto_start) != 0)
+    {
+      eval(sc, sc->op);
+    }
+  else eval(sc, OP_READ_INTERNAL);
+
   pop_input_port(sc);
   s7_close_input_port(sc, port);
   return(sc->value);
@@ -5438,6 +5483,7 @@ static void write_char(s7_scheme *sc, char c, s7_pointer pt)
 
 static void write_string(s7_scheme *sc, const char *s, s7_pointer pt) 
 {
+  if (!s) return;
   if (pt == sc->NIL)
     fputs(s, stderr);
   else
@@ -5541,9 +5587,18 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 
   if (s7_is_string(obj)) 
     {
-      if (!use_write) 
-	return(copy_string(string_value(obj)));
-      return(slashify_string(sc, string_value(obj)));
+      if (string_length(obj) > 0)
+	{
+	  if (!use_write) 
+	    return(copy_string(string_value(obj)));
+	  return(slashify_string(sc, string_value(obj)));
+	}
+      else 
+	{
+	  if (!use_write)
+	    return(NULL);
+	  else return(copy_string("\"\""));
+	}
     }
  
   if (s7_is_character(obj)) 
@@ -5614,8 +5669,9 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
   if (s7_is_object(obj)) 
     return(copy_string(s7_describe_object(obj)));
 
+#if S7_DEBUGGING
   search_heap(sc, obj);
-
+#endif
   return(copy_string("#<unknown object!>"));
 }
 
@@ -5639,7 +5695,8 @@ static char *s7_vector_to_c_string(s7_scheme *sc, s7_pointer vect)
   elements = (char **)MALLOC(len * sizeof(char *));
   for (i = 0; i < len; i++)
     {
-      elements[i] = copy_string(string_value(s7_object_to_string(sc, vector_element(vect, i))));
+
+      elements[i] = s7_object_to_c_string(sc, vector_element(vect, i));
       bufsize += safe_strlen(elements[i]);
     }
   bufsize += 128;
@@ -5647,12 +5704,18 @@ static char *s7_vector_to_c_string(s7_scheme *sc, s7_pointer vect)
   sprintf(buf, "#(");
   for (i = 0; i < len - 1; i++)
     {
-      strcat(buf, elements[i]);
-      FREE(elements[i]);
-      strcat(buf, " ");
+      if (elements[i])
+	{
+	  strcat(buf, elements[i]);
+	  FREE(elements[i]);
+	  strcat(buf, " ");
+	}
     }
-  strcat(buf, elements[len - 1]);
-  FREE(elements[len - 1]);
+  if (elements[len - 1])
+    {
+      strcat(buf, elements[len - 1]);
+      FREE(elements[len - 1]);
+    }
   FREE(elements);
   if (too_long)
     strcat(buf, " ...");
@@ -5693,12 +5756,12 @@ static char *s7_list_to_c_string(s7_scheme *sc, s7_pointer lst)
   elements = (char **)MALLOC(len * sizeof(char *));
   for (x = lst, i = 0; s7_is_pair(x); i++, x = s7_cdr(x))
     {
-      elements[i] = copy_string(string_value(s7_object_to_string(sc, car(x))));
+      elements[i] = s7_object_to_c_string(sc, car(x));
       bufsize += safe_strlen(elements[i]);
     }
   if (dotted)
     {
-      elements[i] = copy_string(string_value(s7_object_to_string(sc, x)));
+      elements[i] = s7_object_to_c_string(sc, x);
       bufsize += safe_strlen(elements[i]);
     }
 
@@ -5707,15 +5770,21 @@ static char *s7_list_to_c_string(s7_scheme *sc, s7_pointer lst)
   sprintf(buf, "(");
   for (i = 0; i < len - 1; i++)
     {
-      strcat(buf, elements[i]);
-      strcat(buf, " ");
+      if (elements[i])
+	{
+	  strcat(buf, elements[i]);
+	  strcat(buf, " ");
+	}
     }
   if (dotted) strcat(buf, ". ");
-  strcat(buf, elements[len - 1]);
-  strcat(buf, ")");
-
+  if (elements[len - 1])
+    {
+      strcat(buf, elements[len - 1]);
+      strcat(buf, ")");
+    }
   for (i = 0; i < len; i++)
-    FREE(elements[i]);
+    if (elements[i])
+      FREE(elements[i]);
   FREE(elements);
   return(buf);
 }
@@ -5831,7 +5900,7 @@ static void write_or_display(s7_scheme *sc, s7_pointer obj, s7_pointer port, boo
   char *val;
   val = s7_object_to_c_string_1(sc, obj, use_write);
   write_string(sc, val, port);
-  FREE(val);
+  if (val) FREE(val);
 }
 
 void s7_write(s7_scheme *sc, s7_pointer obj, s7_pointer port)
@@ -5927,6 +5996,7 @@ static s7_pointer cons_1(s7_scheme *sc, s7_pointer a, s7_pointer b, bool immutab
 {
   s7_pointer x;
 
+#if S7_DEBUGGING
   if (!is_object(a))
     {
       fprintf(stderr, "cons car is bad");
@@ -5937,6 +6007,7 @@ static s7_pointer cons_1(s7_scheme *sc, s7_pointer a, s7_pointer b, bool immutab
       fprintf(stderr, "cons cdr is bad");
       abort();
     }
+#endif
 
   local_protect(a);
   local_protect(b);
@@ -5982,11 +6053,13 @@ s7_pointer s7_cdr(s7_pointer p)
 
 s7_pointer s7_set_car(s7_pointer p, s7_pointer q) 
 { 
+#if S7_DEBUGGING
   if (is_immutable(car(p)))
     {
       fprintf(stderr, "set-car! wants to clobber immutable element");
       abort();
     }
+#endif
 
   car(p) = q;
   return(q);
@@ -5994,11 +6067,13 @@ s7_pointer s7_set_car(s7_pointer p, s7_pointer q)
 
 s7_pointer s7_set_cdr(s7_pointer p, s7_pointer q) 
 { 
+#if S7_DEBUGGING
   if (is_immutable(car(p)))
     {
       fprintf(stderr, "set-cdr! wants to clobber immutable element");
       abort();
     }
+#endif
 
   cdr(p) = q;
   return(q);
@@ -6372,10 +6447,30 @@ static s7_pointer g_reverse(s7_scheme *sc, s7_pointer args)
 {
   #define H_reverse "(reverse lst) returns a list with the elements of lst in reverse order"
   s7_pointer p;
+
   p = car(args);
   if (p == sc->NIL)
     return(sc->NIL);
+
+  if (!s7_is_pair(p))
+    return(s7_wrong_type_arg_error(sc, "reverse", 1, p, "a list"));
+
   return(s7_reverse(sc, p));
+}
+
+static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
+{
+  #define H_reverse_in_place "(reverse! lst) reverses lst in place"
+  s7_pointer p;
+
+  p = car(args);
+  if (p == sc->NIL)
+    return(sc->NIL);
+
+  if (!s7_is_pair(p))
+    return(s7_wrong_type_arg_error(sc, "reverse!", 1, p, "a list"));
+
+  return(s7_reverse_in_place(sc, sc->NIL, p));
 }
 
 /* remv -- produce new list */
@@ -6560,11 +6655,13 @@ s7_pointer s7_vector_ref(s7_pointer vec, int elem)
 
 s7_pointer s7_vector_set(s7_pointer vec, int elem, s7_pointer a) 
 {
+#if S7_DEBUGGING
   if (!is_object(a))
     {
       fprintf(stderr, "vector-set! value is not an object!");
       abort();
     }
+#endif
 
   if (elem >= vector_length(vec))
     fprintf(stderr, "vector-set past end of vector: %d %d\n", elem, vector_length(vec));
@@ -7277,14 +7374,32 @@ s7_pointer s7_make_keyword(s7_scheme *sc, const char *key)
 static s7_pointer g_make_keyword(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_keyword "(make-keyword str) prepends ':' to str and defines that as a keyword"
+  if (!s7_is_string(car(args)))
+    return(s7_wrong_type_arg_error(sc, "make-keyword", 1, car(args), "a string"));
   return(s7_make_keyword(sc, string_value(car(args))));
 }
 
+static s7_pointer g_keyword_to_symbol(s7_scheme *sc, s7_pointer args)
+{
+  #define H_keyword_to_symbol "(keyword->symbol key) returns a symbol with the same name as key but no prepended colon"
+  char *name;
+  if (!s7_is_keyword(car(args)))
+    return(s7_wrong_type_arg_error(sc, "keyword->symbol", 1, car(args), "a keyword"));
+  name = s7_symbol_name(car(args));
+  return(s7_make_symbol(sc, ++name));
+}
+
+static s7_pointer g_symbol_to_keyword(s7_scheme *sc, s7_pointer args)
+{
+  #define H_symbol_to_keyword "(symbol->keyword sym) returns a keyword with the same name as sym, but with a colon prepended"
+  if (!s7_is_symbol(car(args)))
+    return(s7_wrong_type_arg_error(sc, "symbol->keyword", 1, car(args), "a symbol"));
+  return(s7_make_keyword(sc, s7_symbol_name(car(args))));
+}
+
+
 
 /* -------- hash tables -------- */
-
-/* TODO: arg type checking here on ref/set */
-
 
 static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 {
@@ -7338,24 +7453,44 @@ static s7_pointer g_hash_table_ref(s7_scheme *sc, s7_pointer args)
   /* basically the same layout as the global symbol table */
   #define H_hash_table_ref "(hash-table-ref table key) returns the value associated with key (a string or symbol) in the hash table"
   const char *name;
+  s7_pointer table, key;
+  table = car(args);
+  key = cadr(args);
 
-  if (s7_is_string(cadr(args)))
-    name = string_value(cadr(args));
-  else name = s7_symbol_name(cadr(args));
+  if (!s7_is_vector(table))
+    return(s7_wrong_type_arg_error(sc, "hash-table-ref", 1, table, "a hash-table"));
+  if (s7_is_string(key))
+    name = string_value(key);
+  else 
+    {
+      if (s7_is_symbol(key))
+	name = s7_symbol_name(key);
+      else return(s7_wrong_type_arg_error(sc, "hash-table-ref", 2, key, "a string or symbol"));
+    }
   
-  return(s7_hash_table_ref(sc, car(args), name));
+  return(s7_hash_table_ref(sc, table, name));
 }
  
 static s7_pointer g_hash_table_set(s7_scheme *sc, s7_pointer args)
 {
   #define H_hash_table_set "(hash-table-set! table key value) sets the value associated with key (a string or symbol) in the hash table to value"
   const char *name;
+  s7_pointer table, key;
+  table = car(args);
+  key = cadr(args);
   
-  if (s7_is_string(cadr(args)))
-    name = string_value(cadr(args));
-  else name = s7_symbol_name(cadr(args));
+  if (!s7_is_vector(table))
+    return(s7_wrong_type_arg_error(sc, "hash-table-set!", 1, table, "a hash-table"));
+  if (s7_is_string(key))
+    name = string_value(key);
+  else 
+    {
+      if (s7_is_symbol(key))
+	name = s7_symbol_name(key);
+      else return(s7_wrong_type_arg_error(sc, "hash-table-set!", 2, key, "a string or symbol"));
+    }
   
-  return(s7_hash_table_set(sc, car(args), name, caddr(args)));
+  return(s7_hash_table_set(sc, table, name, caddr(args)));
 }
  
 
@@ -7374,7 +7509,7 @@ s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n,
   snprintf(errmsg, len, "%s: argument %d (%s) has wrong type (expecting %s)", caller, arg_n, argstr, descr);
   sc->x = s7_make_string(sc, errmsg);
   FREE(errmsg);
-  FREE(argstr);
+  if (argstr) FREE(argstr);
   return(s7_error(sc, s7_make_symbol(sc, "wrong-type-arg"), sc->x));
 }
 
@@ -7389,7 +7524,7 @@ s7_pointer s7_out_of_range_error(s7_scheme *sc, const char *caller, int arg_n, s
   snprintf(errmsg, len, "%s: argument %d (%s) is out of range (expecting %s)", caller, arg_n, argstr, descr);
   sc->x = s7_make_string(sc, errmsg);
   FREE(errmsg);
-  FREE(argstr);
+  if (argstr) FREE(argstr);
   return(s7_error(sc, s7_make_symbol(sc, "out-of-range"), sc->x));
 }
 
@@ -7433,32 +7568,17 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
   c = (catch *)CALLOC(1, sizeof(catch));
   c->tag = car(args);
   c->goto_loc = sc->stack_top;
+  /* fprintf(stderr, "catch %p loc: %d\n", c, c->goto_loc); */
   c->handler = caddr(args);
 
   p = new_cell(sc);
   set_type(p, T_CATCH | T_FINALIZABLE);
   local_protect(p);
   p->object.catcher = c;
-  /* fprintf(stderr, "p1: %s\n", s7_object_to_c_string(sc, p)); */
 
-  new_frame_in_env(sc, sc->envir);
-  /* fprintf(stderr, "p2: %s\n", s7_object_to_c_string(sc, p)); */
-  new_slot_in_env(sc, sc->x = s7_gensym(sc, "catch"), p);
-  /* fprintf(stderr, "p3: %s\n", s7_object_to_c_string(sc, p)); */
-
+  push_stack(sc, OP_CATCH, sc->NIL, p);
   sc->args = sc->NIL;
-  /* sc->code = cadr(args); */
-  sc->code = s7_make_closure(sc, car(cadr(args)), sc->envir);
-
-  /* can't mess with the procedure environment of the original cadr, and
-   *   it seems too bothersome to recognize catch as a "syntax" and set up
-   *   the current environment then, so make a new closure with the current
-   *   catch prepended.  OP_APPLY in eval gets the procedure local environment
-   *   so we can't just add the catch to the current environment, and if we
-   *   cd(cadr(args)) = new env, all hell breaks loose -- gdb dies with no
-   *   stack, and valgrind says we're executing some unknown instruction!
-   *   cross fingers...
-   */
+  sc->code = cadr(args);
 
   local_unprotect(p);
   push_stack(sc, OP_APPLY, sc->args, sc->code);
@@ -7466,54 +7586,49 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
   return(sc->F);
 }
 
-static bool find_catch(s7_scheme *sc, s7_pointer binding, s7_pointer data)
-{
-  return((is_catch(cdr(binding))) &&
-	 ((data == sc->T) ||
-	  (catch_tag(cdr(binding)) == sc->T) ||
-	  (s7_is_eq(data, catch_tag(cdr(binding))))));
-}
 
 static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bool exit_eval)
 {
-  s7_pointer catcher;
-  /*
-   * search the current environment for a catch that can handle our type
-   *   if found, reset the stack to its location, 
-   *      and call its handler with (list type info)
-   *   if not found, try to report the error and its file/line number (if relevant),
-   *      then quit the evaluation
-   *   if error and exit, call the exiter, rather than simply quitting eval
-   *
-   * except for the type-matching, this is more or less:
-   *
-   *   (define (catch tag body tag-handler)
-   *     (call-with-exit
-   *      (lambda (exiter)
-   *        (let ((error (lambda args
-   *   		           (exiter
-   *   		             (apply tag-handler args)))))
-   *   	      (body)))))
-   */
-  
-  /* fprintf(stderr, "error: %s %s\n", s7_object_to_c_string(sc, type), s7_object_to_c_string(sc, info)); */
-
   /* (catch #t (lambda () (display "hi") (error 'ho "a error") (display "oops")) (lambda args 'error)) */
   /* (catch #t (lambda () (display "a") (catch 'ha (lambda () (display "hi") (error 'ho "a error") (display "oops")) (lambda args 'error)) (display "yow")) (lambda args 'a-error)) */
 
-  catcher = s7_search_environment(sc, sc->envir, find_catch, type);
+  int i;
+  s7_pointer catcher;
+  catcher = sc->F;
+  
+  /* top is 1 past actual top, top - 1 is op, if op = OP_CATCH, top - 4 is the cell containing the catch struct */
 
-  /*
-   * catch has a gensym'd symbol name (car) and a catch struct (cdr)
-   */
+  for (i = sc->stack_top - 1; i >= 3; i -= 4)
+    {
+      if (s7_integer(vector_element(sc->stack, i)) == OP_CATCH)
+	{
+	  s7_pointer x;
+	  x = vector_element(sc->stack, i - 3);
+	  if ((type == sc->T) ||
+	      (catch_tag(x) == sc->T) ||
+	      (s7_is_eq(catch_tag(x), type)))
+	    {
+	      catcher = x;
+	      break;
+	    }
+	}
+    }
+
   if (catcher != sc->F)
     {
-      /* fprintf(stderr, "found one "); */
+      /* fprintf(stderr, "goto: %p %d\n", catcher->object.catcher, catch_goto_loc(catcher)); */
       sc->args = cons(sc, type, sc->x = cons(sc, info, sc->NIL));
-      sc->code = catch_handler(cdr(catcher));
-      sc->stack_top = catch_goto_loc(cdr(catcher));
-      /* fprintf(stderr, "top: %d\n", sc->stack_top); */
-      push_stack(sc, OP_LONGJMP, sc->NIL, sc->NIL);
+      sc->code = catch_handler(catcher);
+      sc->stack_top = catch_goto_loc(catcher);
+
+#if S7_DEBUGGING
+      if (sc->stack_top > sc->stack_size)
+	{
+	  fprintf(stderr, "catch set top to %d (%d)\n", sc->stack_top, sc->stack_size);
+	  abort();
+	}
+#endif
+
       sc->op = OP_APPLY;
     }
   else
@@ -7521,32 +7636,41 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
       char *str1, *str2;
       str1 = s7_object_to_c_string(sc, type);
       str2 = s7_object_to_c_string(sc, info);
-      /* write_string(sc, "error: ", sc->error_port); */
+
       write_string(sc, "\n;", sc->error_port);
       write_string(sc, str1, sc->error_port);
       write_char(sc, ' ', sc->error_port);
       write_string(sc, str2, sc->error_port);
-      FREE(str1);
-      FREE(str2);
+
+      if (str1) FREE(str1);
+      if (str2) FREE(str2);
+
       if ((is_input_port(sc->input_port)) &&
 	  (is_file_port(sc->input_port)))
 	{
 	  char *numstr;
 	  numstr = (char *)CALLOC(64, sizeof(char));
 	  snprintf(numstr, 64, "%d", port_line_number(sc->input_port));
+
 	  write_string(sc, ", ", sc->error_port);
 	  write_string(sc, port_filename(sc->input_port), sc->input_port);
 	  write_string(sc, " line ", sc->error_port);
 	  write_string(sc, numstr, sc->error_port);
+
 	  FREE(numstr);
 	}
       write_char(sc, '\n', sc->error_port);
+
+      if ((exit_eval) &&
+	  (sc->error_exiter))
+	(*(sc->error_exiter))();
 
       sc->value = type;
       stack_reset(sc);
       sc->op = OP_QUIT;
     }
-  longjmp(sc->goto_start, (exit_eval) ? 2 : 1); /* this is trying to clear the C stack back to some clean state */
+
+  longjmp(sc->goto_start, 1); /* this is trying to clear the C stack back to some clean state?? */
 
   return(type);
 }
@@ -7567,7 +7691,7 @@ static s7_pointer eval_error(s7_scheme *sc, const char *errmsg, s7_pointer obj)
   char *str;
   str = s7_object_to_c_string(sc, obj);
   sc->x = s7_string_concatenate(sc, errmsg, str);
-  FREE(str);
+  if (str) FREE(str);
   return(s7_error(sc, s7_make_symbol(sc, "error"), sc->x));
 }
 
@@ -7685,8 +7809,15 @@ s7_pointer s7_call_1(s7_scheme *sc, s7_pointer func, s7_pointer args, const char
    *   of the stack == segfault. 
    */
 
-  /* fprintf(stderr, "%s %s[%d] s7_call %p...(%d, %p %p)\n", file, function, line, func, sc->stack_top, sc->code, sc->args); */
+  fprintf(stderr, "%s %s[%d] s7_call %p...(%d, %p %p)\n", file, function, line, func, sc->stack_top, sc->code, sc->args);
 
+  if (sc->stack_top == 0)
+    {
+      if (setjmp(sc->goto_start) != 0)
+	{
+	  return(sc->value);
+	}
+    }
   push_stack(sc, OP_EVAL_STRING_DONE, sc->args, sc->code); /* this saves the current evaluation and will eventually finish this (possibly) nested call */
   sc->args = args; 
   sc->code = func; 
@@ -7724,17 +7855,11 @@ static s7_pointer g_tracing(s7_scheme *sc, s7_pointer a)
 
 static void eval(s7_scheme *sc, opcode_t first_op) 
 {
-  int exit_eval = 0;
   #define   ok_abbrev(x)   (s7_is_pair(x) && cdr(x) == sc->NIL)
 
   sc->op = first_op;
-  if ((exit_eval = setjmp(sc->goto_start)) != 0)
-    {
-      /* error handler is trying to jump back to a clean state */
-      if ((exit_eval == 2) &&
-	  (sc->error_exiter))
-	(*(sc->error_exiter))();
-    }
+
+  /* this procedure can be entered recursively (via s7_call for example), so it's no place for a setjmp */
 
   START:
   
@@ -7742,7 +7867,6 @@ static void eval(s7_scheme *sc, opcode_t first_op)
   if (sc->tracing)
     g_stacktrace(sc, sc->NIL);
   */
-
 
   switch (sc->op) 
     {
@@ -7779,7 +7903,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
        *   read one expr, return it, let caller deal with input port setup 
        */
     case OP_READ_RETURN_EXPRESSION:
-      fprintf(stderr, "read rtn %s\n", s7_object_to_c_string(sc, sc->value));
+      /* fprintf(stderr, "read rtn %s\n", s7_object_to_c_string(sc, sc->value)); */
       return;
 
 
@@ -7891,6 +8015,12 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_REAL_EVAL:
       
+      if (s7_is_keyword(sc->code))
+	{
+	  pop_stack(sc, sc->code); /* a keyword evaluates to itself */
+	  goto START;
+	}
+
       if (s7_is_symbol(sc->code)) 
 	{
 	  sc->x = s7_find_slot_in_env(sc, sc->envir, sc->code, true);
@@ -8034,11 +8164,13 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 
 	  sc ->x = function_call(sc->code)(sc, sc->args);
 	  
+#if S7_DEBUGGING
 	  if (!is_object(sc->x))
 	    {
 	      fprintf(stderr, "%s returned: %p\n", function_name(sc->code), sc->x);
 	      abort();
 	    }
+#endif
 
 	  pop_stack(sc, sc->x);
 	  goto START;
@@ -8048,15 +8180,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  if (s7_is_closure(sc->code) || is_macro(sc->code) || is_promise(sc->code)) 
 	    { 
-	      /* Should not accept promise */
-	      /* make environment */
-	      /*
-	      fprintf(stderr, "pre proc env: %s\n", s7_object_to_c_string(sc, sc->envir));
-	      */
 	      new_frame_in_env(sc, s7_procedure_environment(sc->code)); 
-	      /*
-	      fprintf(stderr, "proc env: %s\n", s7_object_to_c_string(sc, sc->envir));
-	      */
 
 	      /* load up the current args into the ((args) (lambda)) layout [via the current environment] */
 	      for (sc->x = car(procedure_source(sc->code)), sc->y = sc->args; s7_is_pair(sc->x); sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
@@ -8104,6 +8228,15 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 		  if (is_goto(sc->code))
 		    {
 		      sc->stack_top = (sc->code)->object.goto_loc;
+
+#if S7_DEBUGGING
+		      if (sc->stack_top > sc->stack_size)
+			{
+			  fprintf(stderr, "goto set top to %d (%d)\n", sc->stack_top, sc->stack_size);
+			  abort();
+			}
+#endif
+
 		      pop_stack(sc, sc->args != sc->NIL ? car(sc->args) : sc->NIL);
 		      goto START;
 		    }
@@ -8521,11 +8654,6 @@ static void eval(s7_scheme *sc, opcode_t first_op)
        * where "form" is the thing presented to us in the code, i.e. (when mumble do-this)
        *   and the following code takes that as its argument and transforms it in some way
        */
-      /*
-      fprintf(stderr, "macro def: %s %s\n", 
-	      s7_object_to_c_string(sc, sc->code), 
-	      s7_object_to_c_string(sc, car(sc->value)));
-      */
       set_type(sc->value, T_MACRO);
       
       /* find name in environment, and define it */
@@ -8538,12 +8666,13 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       pop_stack(sc, sc->code);
       goto START;
 
+
     case OP_DEFMACRO:
       
       /* (defmacro name (args) body) ->
        *
        *    (macro (defmacro dform)
-       *      (let ((form (gensym "gensym")))            
+       *      (let ((form (gensym "defmac")))            
        *        `(macro (,(cadr dform) ,form)   
        *          (apply
        *            (lambda ,(caddr dform)      
@@ -8552,13 +8681,6 @@ static void eval(s7_scheme *sc, opcode_t first_op)
        *    
        *    end up with name as sc->x going to OP_MACRO1, ((gensym) (lambda (args) body) going to eval
        */
-      
-      /*
-      fprintf(stderr, "macro start: %s %s\n", 
-	      s7_object_to_c_string(sc, car(sc->code)), 
-	      s7_object_to_c_string(sc, cddr(sc->value)));
-      */
-
       sc->y = s7_gensym(sc, "defmac");
       sc->x = car(sc->code);
 
@@ -8582,9 +8704,18 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       /* what could be simpler? */
 
       /*
-      fprintf(stderr, "macro mid: %s\n", 
-	      s7_object_to_c_string(sc, sc->code));
+; DEFINE-MACRO Contributed by Andy Gaynor
+(macro (define-macro dform)
+  (if (symbol? (cadr dform))
+    `(macro ,@(cdr dform))
+    (let ((form (gensym)))
+      `(macro (,(caadr dform) ,form)
+         (apply 
+	   (lambda ,(cdadr dform) 
+	     ,@(cddr dform)) 
+	   (cdr ,form))))))
       */
+
       push_stack(sc, OP_MACRO1, sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO1 */
       goto EVAL;
       
@@ -8644,9 +8775,9 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       return;
       break;
 
-    case OP_LONGJMP:
+    case OP_CATCH:
       pop_stack(sc, sc->value);
-      longjmp(sc->goto_start, 1);
+      goto START;
       break;
       
       
@@ -9032,7 +9163,7 @@ s7_scheme *s7_init(void)
   set_immutable(sc->symbol_table);
   typeflag(sc->symbol_table) |= T_CONSTANT;
   
-  sc->gc_verbose = false;
+  sc->gc_verbose = true;
   sc->tracing = false;
   
   sc->code = sc->NIL;
@@ -9105,8 +9236,16 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "symbol->string",      g_symbol_to_string,    1, 0, false, H_symbol_to_string);
   s7_define_function(sc, "string->symbol",      g_string_to_symbol,    1, 0, false, H_string_to_symbol);
 
+  s7_define_function(sc, "global-environment",  g_global_environment,  0, 0, false, H_global_environment);
+  s7_define_function(sc, "current-environment", g_current_environment, 0, 0, false, H_current_environment);
+  s7_define_function(sc, "provided?",           g_is_provided,         1, 0, false, H_is_provided);
+  s7_define_function(sc, "provide",             g_provide,             1, 0, false, H_provide);
+  s7_define_function(sc, "defined?",            g_is_defined,          1, 1, false, H_is_defined);
+
   s7_define_function(sc, "keyword?",            g_is_keyword,          1, 0, false, H_is_keyword);
   s7_define_function(sc, "make-keyword",        g_make_keyword,        1, 0, false, H_make_keyword);
+  s7_define_function(sc, "symbol->keyword",     g_symbol_to_keyword,   1, 0, false, H_symbol_to_keyword);
+  s7_define_function(sc, "keyword->symbol",     g_keyword_to_symbol,   1, 0, false, H_keyword_to_symbol);
 
   s7_define_function(sc, "make-hash-table",     g_make_hash_table,     0, 1, false, H_make_hash_table);
   s7_define_function(sc, "hash-table-ref",      g_hash_table_ref,      2, 0, false, H_hash_table_ref);
@@ -9116,10 +9255,12 @@ s7_scheme *s7_init(void)
   /* ports */
   s7_define_function(sc, "port-line-number",    g_port_line_number,    1, 0, false, H_port_line_number);
   s7_define_function(sc, "port-filename",       g_port_filename,       1, 0, false, H_port_filename);
+
   s7_define_function(sc, "input-port?",         g_is_input_port,       1, 0, false, H_is_input_port);
   s7_define_function(sc, "output-port?",        g_is_output_port,      1, 0, false, H_is_output_port);
   s7_define_function(sc, "char-ready?",         g_is_char_ready,       0, 1, false, H_is_char_ready);
   s7_define_function(sc, "eof-object?",         g_is_eof_object,       1, 0, false, H_is_eof_object);
+
   s7_define_function(sc, "current-input-port",  g_current_input_port,  0, 0, false, H_current_input_port);
   s7_define_function(sc, "set-current-input-port", g_set_current_input_port, 1, 0, false, H_set_current_input_port);
   s7_define_function(sc, "current-output-port", g_current_output_port, 0, 0, false, H_current_output_port);
@@ -9133,6 +9274,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "open-input-string",   g_open_input_string,   1, 0, false, H_open_input_string);
   s7_define_function(sc, "open-output-string",  g_open_output_string,  0, 0, false, H_open_output_string);
   s7_define_function(sc, "get-output-string",   g_get_output_string,   1, 0, false, H_get_output_string);
+
   s7_define_function(sc, "read-char",           g_read_char,           0, 1, false, H_read_char);
   s7_define_function(sc, "peek-char",           g_peek_char,           0, 1, false, H_peek_char);
   s7_define_function(sc, "read",                g_read,                0, 1, false, H_read);
@@ -9216,12 +9358,14 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "char-downcase",       g_char_downcase,       1, 0, false, H_char_downcase);
   s7_define_function(sc, "char->integer",       g_char_to_integer,     1, 0, false, H_char_to_integer);
   s7_define_function(sc, "integer->char",       g_integer_to_char,     1, 0, false, H_integer_to_char);
+
   s7_define_function(sc, "char-upper-case?",    g_is_char_upper_case,  1, 0, false, H_is_char_upper_case);
   s7_define_function(sc, "char-lower-case?",    g_is_char_lower_case,  1, 0, false, H_is_char_lower_case);
   s7_define_function(sc, "char-alphabetic?",    g_is_char_alphabetic,  1, 0, false, H_is_char_alphabetic);
   s7_define_function(sc, "char-numeric?",       g_is_char_numeric,     1, 0, false, H_is_char_numeric);
   s7_define_function(sc, "char-whitespace?",    g_is_char_whitespace,  1, 0, false, H_is_char_whitespace);
   s7_define_function(sc, "char?",               g_is_char,             1, 0, false, H_is_char);
+
   s7_define_function(sc, "char=?",              g_chars_are_equal,     1, 0, true,  H_chars_are_equal);
   s7_define_function(sc, "char<?",              g_chars_are_less,      1, 0, true,  H_chars_are_less);
   s7_define_function(sc, "char>?",              g_chars_are_greater,   1, 0, true,  H_chars_are_greater);
@@ -9240,19 +9384,21 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "string-length",       g_string_length,       1, 0, false, H_string_length);
   s7_define_function(sc, "string-ref",          g_string_ref,          2, 0, false, H_string_ref);
   s7_define_function(sc, "string-set!",         g_string_set,          3, 0, false, H_string_set);
+
   s7_define_function(sc, "string=?",            g_strings_are_equal,   1, 0, true,  H_strings_are_equal);
   s7_define_function(sc, "string<?",            g_strings_are_less,    1, 0, true,  H_strings_are_less);
   s7_define_function(sc, "string>?",            g_strings_are_greater, 1, 0, true,  H_strings_are_greater);
   s7_define_function(sc, "string<=?",           g_strings_are_leq,     1, 0, true,  H_strings_are_leq);
   s7_define_function(sc, "string>=?",           g_strings_are_geq,     1, 0, true,  H_strings_are_geq);
-  s7_define_function(sc, "string-ci=?",         g_strings_are_ci_equal, 1, 0, true,  H_strings_are_ci_equal);
+  s7_define_function(sc, "string-ci=?",         g_strings_are_ci_equal, 1, 0, true, H_strings_are_ci_equal);
   s7_define_function(sc, "string-ci<?",         g_strings_are_ci_less, 1, 0, true,  H_strings_are_ci_less);
   s7_define_function(sc, "string-ci>?",         g_strings_are_ci_greater, 1, 0, true,  H_strings_are_ci_greater);
   s7_define_function(sc, "string-ci<=?",        g_strings_are_ci_leq,  1, 0, true,  H_strings_are_ci_leq);
   s7_define_function(sc, "string-ci>=?",        g_strings_are_ci_geq,  1, 0, true,  H_strings_are_ci_geq);
+
   s7_define_function(sc, "string-append",       g_string_append,       0, 0, true,  H_string_append);
-  s7_define_function(sc, "string-fill!",        g_string_fill,         2, 0, false,  H_string_fill);
-  s7_define_function(sc, "string-copy",         g_string_copy,         1, 0, false,  H_string_copy);
+  s7_define_function(sc, "string-fill!",        g_string_fill,         2, 0, false, H_string_fill);
+  s7_define_function(sc, "string-copy",         g_string_copy,         1, 0, false, H_string_copy);
   s7_define_function(sc, "substring",           g_substring,           2, 1, false, H_substring);
   s7_define_function(sc, "string",              g_string,              0, 0, true,  H_string);
   s7_define_function(sc, "list->string",        g_list_to_string,      1, 0, false, H_list_to_string);
@@ -9265,6 +9411,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "list?",               g_is_list,             1, 0, false, H_is_list);
   s7_define_function(sc, "pair?",               g_is_pair,             1, 0, false, H_is_pair);
   s7_define_function(sc, "reverse",             g_reverse,             1, 0, false, H_reverse);
+  s7_define_function(sc, "reverse!",            g_reverse_in_place,    1, 0, false, H_reverse_in_place); /* used by Snd code */
   s7_define_function(sc, "cons",                g_cons,                2, 0, false, H_cons);
   s7_define_function(sc, "car",                 g_car,                 1, 0, false, H_car);
   s7_define_function(sc, "cdr",                 g_cdr,                 1, 0, false, H_cdr);
@@ -9309,6 +9456,13 @@ s7_scheme *s7_init(void)
 
 
 
+  s7_define_function(sc, "call/cc",             g_call_cc,             1, 0, false, H_call_cc);
+  s7_define_function(sc, "call-with-current-continuation", g_call_cc,  1, 0, false, H_call_cc);
+  s7_define_function(sc, "call-with-exit",      g_call_with_exit,      1, 0, false, H_call_with_exit);
+  s7_define_function(sc, "load",                g_load,                1, 0, false, H_display);
+  s7_define_function(sc, "eval",                g_eval,                1, 1, false, H_eval);
+  s7_define_function(sc, "apply",               g_apply,               1, 0, true,  H_apply);
+  
   s7_define_function(sc, "tracing",             g_tracing,             1, 0, false, H_tracing);
   s7_define_function(sc, "gc-verbose",          g_gc_verbose,          1, 0, false, H_gc_verbose);
   s7_define_function(sc, "stacktrace",          g_stacktrace,          0, 0, false, H_stacktrace);
@@ -9317,20 +9471,10 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "catch",               g_catch,               3, 0, false, H_catch);
   s7_define_function(sc, "error",               g_error,               0, 0, true,  H_error);
   s7_define_function(sc, "force",               g_force,               1, 0, false, H_force);
-  s7_define_function(sc, "global-environment",  g_global_environment,  0, 0, false, H_global_environment);
-  s7_define_function(sc, "current-environment", g_current_environment, 0, 0, false, H_current_environment);
-  s7_define_function(sc, "defined?",            g_is_defined,          1, 1, false, H_is_defined);
   s7_define_function(sc, "make-closure",        g_make_closure,        1, 1, false, H_make_closure);
-  s7_define_function(sc, "call/cc",             g_call_cc,             1, 0, false, H_call_cc);
-  s7_define_function(sc, "call-with-current-continuation", g_call_cc,  1, 0, false, H_call_cc);
-  s7_define_function(sc, "call-with-exit",      g_call_with_exit,      1, 0, false, H_call_with_exit);
-  s7_define_function(sc, "provided?",           g_is_provided,         1, 0, false, H_is_provided);
-  s7_define_function(sc, "provide",             g_provide,             1, 0, false, H_provide);
+  s7_define_function(sc, "closure?",            g_is_closure,          1, 0, false, H_is_closure);
   
-  s7_define_function(sc, "load",                g_load,                1, 0, false, H_display);
-  s7_define_function(sc, "eval",                g_eval,                1, 1, false, H_eval);
-  s7_define_function(sc, "apply",               g_apply,               1, 0, true,  H_apply);
-  
+  s7_define_function(sc, "procedure?",          g_is_procedure,        1, 0, false, H_is_procedure);
   s7_define_function(sc, "function-documentation", g_function_documentation, 1, 0, false, H_function_documentation);
   s7_define_function(sc, "help",                g_function_documentation, 1, 0, false, H_function_documentation);
   s7_define_function(sc, "function-arity",      s7_function_arity,     1, 0, false, H_function_arity);
@@ -9339,13 +9483,9 @@ s7_scheme *s7_init(void)
 
   s7_define_function(sc, "not",                 g_not,                 1, 0, false, H_not);
   s7_define_function(sc, "boolean?",            g_is_boolean,          1, 0, false, H_is_boolean);
-  s7_define_function(sc, "closure?",            g_is_closure,          1, 0, false, H_is_closure);
-
   s7_define_function(sc, "eq?",                 g_is_eq,               2, 0, false, H_is_eq);
   s7_define_function(sc, "eqv?",                g_is_eqv,              2, 0, false, H_is_eqv);
   s7_define_function(sc, "equal?",              g_is_equal,            2, 0, false, H_is_equal);
-
-  s7_define_function(sc, "procedure?",          g_is_procedure,        1, 0, false, H_is_procedure);
 
   s7_define_function(sc, set_object_name,       g_set_object,          1, 0, true, "internal setter redirection");
   s7_define_function(sc, "make-procedure-with-setter", g_make_procedure_with_setter, 2, 0, false, "...");
@@ -9368,6 +9508,23 @@ s7_scheme *s7_init(void)
   /* leftovers from s7.scm -- this stuff will mostly go away! */
 
   s7_eval_c_string(sc, "\n\
+(define (caaaar x) (car (caaar x)))\n\
+(define (caaadr x) (car (caadr x)))\n\
+(define (caadar x) (car (cadar x)))\n\
+(define (caaddr x) (car (caddr x)))\n\
+(define (cadaar x) (car (cdaar x)))\n\
+(define (cadadr x) (car (cdadr x)))\n\
+(define (caddar x) (car (cddar x)))\n\
+(define (cadddr x) (car (cdddr x)))\n\
+(define (cdaaar x) (cdr (caaar x)))\n\
+(define (cdaadr x) (cdr (caadr x)))\n\
+(define (cdadar x) (cdr (cadar x)))\n\
+(define (cdaddr x) (cdr (caddr x)))\n\
+(define (cddaar x) (cdr (cdaar x)))\n\
+(define (cddadr x) (cdr (cdadr x)))\n\
+(define (cdddar x) (cdr (cddar x)))\n\
+(define (cddddr x) (cdr (cdddr x)))\n\
+\n\
 (define (unzip1-with-cdr . lists)\n\
   (unzip1-with-cdr-iterative lists '() '()))\n\
 \n\
@@ -9556,6 +9713,16 @@ s7_scheme *s7_init(void)
       (close-output-port string-port)\n\
       (set-current-output-port output-port)\n\
       result)))\n\
+\n\
+(define (dynamic-wind in body out)\n\
+  (in)\n\
+  (catch #t\n\
+	 (lambda ()\n\
+	   (body)\n\
+	   (out))\n\
+	 (lambda args\n\
+	   (out)\n\
+	   (apply error args))))\n\
 \n");
 
   return(sc);
