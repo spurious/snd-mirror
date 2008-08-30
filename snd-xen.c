@@ -1032,7 +1032,7 @@ XEN eval_str_wrapper(void *data)
 }
 
 
-#if (SCM_DEBUG_TYPING_STRICTNESS != 2)
+#if (!HAVE_S7) && (SCM_DEBUG_TYPING_STRICTNESS != 2)
 XEN eval_form_wrapper(void *data)
 {
   return(XEN_EVAL_FORM((XEN)data));
@@ -1043,7 +1043,6 @@ XEN eval_form_wrapper(void *data)
   return(XEN_FALSE);
 }
 #endif
-
 
 static XEN string_to_form_1(void *data)
 {

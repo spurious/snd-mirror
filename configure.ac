@@ -254,10 +254,11 @@ esac
 # standard libraries, header files, functions, OSS special cases
 #--------------------------------------------------------------------------------
 
-# AC_CHECK_LIB(m,main)
-# AC_CHECK_LIB(c,main)
-# AC_CHECK_LIB(dl,main)
 LIBS=""
+AC_CHECK_LIB(m,main)
+AC_CHECK_LIB(c,main)
+# AC_CHECK_LIB(dl,main)
+# I don't think I need libdl in S7, and the other extension languages will call for it if needed
 
 AC_CHECK_HEADERS(fcntl.h limits.h unistd.h string.h sys/soundcard.h machine/soundcard.h sys/mixer.h stdbool.h sys/time.h)
 AC_CHECK_HEADERS(libc.h sys/statvfs.h setjmp.h dlfcn.h sys/param.h byteswap.h pthread.h stdint.h lrdf.h fam.h dirent.h)
@@ -321,6 +322,9 @@ AC_TYPE_SIGNAL
 
 AC_CHECK_FUNCS(getcwd getwd strerror readlink setlocale access opendir sleep signal statvfs statfs clock getline)
 AC_CHECK_FUNCS(vsnprintf snprintf strftime memmove strdup lstat fileno strcasecmp pathconf)
+
+AC_CHECK_FUNCS(cabs conj cacos cacosh carg casin casinh catan catanh) 
+AC_CHECK_FUNCS(ccos ccosh cexp clog cpow csin csinh csqrt ctan ctanh) 
 
 AC_LIB_PROG_LD
 AC_PROG_FGREP
@@ -1410,9 +1414,6 @@ if test "$with_s7" = yes && test "$ac_with_extension_language" != no && test "$a
   AC_DEFINE(WITH_RUN)
   LOCAL_LANGUAGE="s7"
   S7_LIB="s7.o"
-  if test "$ac_cv_header_dlfcn_h" = yes ; then
-    LDFLAGS="$LDFLAGS -ldl"
-  fi
 fi
 
 AC_SUBST(S7_LIB)

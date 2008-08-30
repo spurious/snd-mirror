@@ -171,6 +171,7 @@ never have to think about it again.  In the other languages:
 Ruby:   $LOAD_PATH.push("/home/bil/cl")
 Gauche: (add-to-load-path "/home/bil/cl")
 Forth:  "/home/bil/cl" add-load-path
+S7:     (set! *load-path* (cons "/home/bil/cl" *load-path*))
 
 
 ----------------------------------------------------------------
@@ -247,7 +248,7 @@ Plus many other contributions from
 
 In terms of number of lines, the languages used in Snd/Sndlib are:
 C, Scheme, Ruby, Forth, m4, Common Lisp, Emacs Lisp, javascript,
-Fortran, expect, and postscript (altogether more than 640,000 lines).
+Fortran, expect, and postscript (altogether more than 660,000 lines).
 
 
 To get the German version at run-time, (setlocale LC_ALL "de_DE").

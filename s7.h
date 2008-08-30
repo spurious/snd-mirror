@@ -30,7 +30,7 @@ s7_pointer s7_F(s7_scheme *sc);
 s7_pointer s7_T(s7_scheme *sc);
 s7_pointer s7_NIL(s7_scheme *sc);
 s7_pointer s7_UNDEFINED(s7_scheme *sc);
-s7_pointer s7_EOF_OBJ(s7_scheme *sc);
+s7_pointer s7_EOF_OBJECT(s7_scheme *sc);
 
 s7_pointer s7_global_environment(s7_scheme *sc);
 s7_pointer s7_current_environment(s7_scheme *sc);
@@ -164,9 +164,7 @@ s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym);
 s7_pointer s7_symbol_set_value(s7_scheme *sc, s7_pointer sym, s7_pointer val);
 
 s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str);
-s7_pointer s7_eval_form(s7_scheme *sc, s7_pointer form);
 
-s7_pointer s7_string_to_form(s7_scheme *sc, const char *str);
 s7_pointer s7_object_to_string(s7_scheme *sc, s7_pointer arg);
 char *s7_object_to_c_string(s7_scheme *sc, s7_pointer obj);
 

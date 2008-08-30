@@ -65,6 +65,17 @@
 	    (procedure-info func)))
       ))
 
+(if (provided? 'snd-s7)
+    (begin
+      (define (ash n count) ; slib
+	(if (negative? count)
+	    (let ((k (expt 2 (- count))))
+	      (if (negative? n)
+		  (+ -1 (quotient (+ 1 n) k))
+		  (quotient n k)))
+	    (* (expt 2 count) n)))))
+
+
 (if (not (defined? 'snd-test)) (define snd-test -1))
 (define full-test (< snd-test 0))
 (define total-tests 28)

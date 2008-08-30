@@ -13,7 +13,6 @@
  * (MINISCM)
  * (MINISCM) This is a revised and modified version by Akira KIDA.
  * (MINISCM)	current version is 0.85k4 (15 May 1994)
- *
  */
 
 /* S7, Bill Schottstaedt, Aug-08
@@ -23,7 +22,7 @@
  *        full continuations, call-with-exit for goto or return
  *        ratios and complex numbers (and ints are 64-bit)
  *        generalized set!, procedure-with-setter
- *        defmacro, keywords, hash tables, block comments
+ *        defmacro and define-macro, keywords, hash tables, block comments
  *        applicable objects
  *        error handling using error and catch
  *        in Snd, the run macro works giving S7 a (somewhat limited) byte compiler
@@ -40,25 +39,25 @@
  * still to do:
  *   dynamic-wind and its interaction with continuations
  *   threads: call-with-new-thread[s7?], join-thread
- *   built-in define-macro
  *   there's no arg number mismatch check for caller-defined functions!
- *   soft port for Snd
  *   help for vars (objects)
- *   figure out how add syntax-rules, for-each, map, do, all the call-with-* stuff
- *     could we piggy-back on the "simple-macro" code?
- *   radix arg for number->string [see itoa ... -- this needs support for each type and radix]
- *   string->form and eval-form
+ *   figure out how add syntax-rules, for-each, map, do
+ *   radix arg for number->string
+ *   get rid of define+ in *.scm
+ *   the rest of the call-with funcs (call-with-input-string is done)
  *
  * define-type (make-type in ext)
- (define-type "name"
-              (lambda (obj) (display obj))       ; print
-	      #f                                 ; free
-	      (lambda (obj1 obj2) (= obj1 obj2)) ;equal?
-	      #f                                 ; gc mark
-	      (lambda (obj arg) arg)             ; apply
-	      #f)                                ; set
-  (make-object <tag> value)
-  (object? <tag> obj) or maybe (name? obj) and (make-name value)
+ * (define-type "name"
+ *              (lambda (obj) (display obj))       ; print
+ *	      #f                                 ; free
+ *	      (lambda (obj1 obj2) (= obj1 obj2)) ;equal?
+ *	      #f                                 ; gc mark
+ *	      (lambda (obj arg) arg)             ; apply
+ *	      #f)                                ; set
+ *  (make-object <tag> value)
+ *  (object? <tag> obj) or maybe (name? obj) and (make-name value)
+ *
+ * Mike Scholz provided the FreeBSD support
  */
 
 
@@ -100,6 +99,23 @@
 /* this is for memory leak and pointer debugging stuff */
 #define S7_DEBUGGING 1
 /* this is for a bunch of sanity checks */
+
+
+
+/* -------------------------------------------------------------------------------- */
+
+/* your config file goes here.  Currently we assume we have complex.h and setjmp.h,
+ *   but it would be easy to put those on switches.  The only other compile-time
+ *   flags involve the functions:
+ *
+ *     cabs cacos cacosh carg casin casinh catan catanh ccos ccosh cexp clog conj cpow csin csinh csqrt ctan ctanh
+ *
+ */
+
+#include <mus-config.h>
+
+/* -------------------------------------------------------------------------------- */
+
 
 
 #define _FILE_OFFSET_BITS 64  /* off_t's -- I could use long long, but old habits die hard */
@@ -149,7 +165,7 @@
  */
 
 #define SYMBOL_TABLE_SIZE 9601
-/* names are hashed into the symbol table (a vector) and collisions are chained as lists, was 461, then 4603.
+/* names are hashed into the symbol table (a vector) and collisions are chained as lists; was 461, then 4603.
  */
 
 #define INITIAL_STACK_SIZE 1000            /* each frame takes 4 entries */
@@ -163,7 +179,7 @@ typedef enum {OP_TOP_LEVEL, OP_T1LVL, OP_READ_INTERNAL, OP_VALUEPRINT, OP_EVAL, 
 	      OP_DEF0, OP_DEF1, OP_BEGIN, OP_IF0, OP_IF1, OP_SET0, OP_SET1,
 	      OP_LET0, OP_LET1, OP_LET2, OP_LET0AST, OP_LET1AST, OP_LET2AST, 
 	      OP_LET0REC, OP_LET1REC, OP_LET2REC, OP_COND0, OP_COND1, OP_DELAY, OP_AND0, OP_AND1, 
-	      OP_OR0, OP_OR1, OP_C0STREAM, OP_C1STREAM, OP_DEFMACRO, OP_MACRO0, OP_MACRO1, 
+	      OP_OR0, OP_OR1, OP_C0STREAM, OP_C1STREAM, OP_DEFMACRO, OP_MACRO0, OP_MACRO1, OP_DEFINE_MACRO,
 	      OP_CASE0, OP_CASE1, OP_CASE2, OP_READ_EXPRESSION, OP_RDLIST, OP_RDDOT, OP_RDQUOTE, 
 	      OP_RDQQUOTE, OP_RDQQUOTEVEC, OP_RDUNQUOTE, OP_RDUQTSP, OP_RDVEC, OP_P0LIST, OP_P1LIST, 
 	      OP_PVECFROM, OP_SAVE_FORCED, OP_READ_RETURN_EXPRESSION, 
@@ -178,7 +194,7 @@ static const char *opcode_names[OP_MAX_DEFINED] = {
 	      "op_def0", "op_def1", "op_begin", "op_if0", "op_if1", "op_set0", "op_set1",
 	      "op_let0", "op_let1", "op_let2", "op_let0ast", "op_let1ast", "op_let2ast", 
 	      "op_let0rec", "op_let1rec", "op_let2rec", "op_cond0", "op_cond1", "op_delay", "op_and0", "op_and1", 
-	      "op_or0", "op_or1", "op_c0stream", "op_c1stream", "op_defmacro", "op_macro0", "op_macro1", 
+	      "op_or0", "op_or1", "op_c0stream", "op_c1stream", "op_defmacro", "op_macro0", "op_macro1", "op_define_macro",
 	      "op_case0", "op_case1", "op_case2", "op_read_expression", "op_rdlist", "op_rddot", "op_rdquote", 
 	      "op_rdqquote", "op_rdqquotevec", "op_rdunquote", "op_rduqtsp", "op_rdvec", "op_p0list", "op_p1list", 
 	      "op_pvecfrom", "op_save_forced", "op_read_return_expression", 
@@ -308,7 +324,6 @@ struct s7_scheme {
   s7_cell **heap;
   int heap_size;
   
-  /* We use 4 registers. */
   s7_pointer args;            /* arguments of current function */
   s7_pointer envir;           /* current environment */
   s7_pointer code;            /* current code */
@@ -456,6 +471,7 @@ static const char *type_names[T_LAST_TYPE + 1] = {
 #define cdar(p)                       cdr(car(p))
 #define cddr(p)                       cdr(cdr(p))
 #define cadar(p)                      car(cdr(car(p)))
+#define cdadr(p)                      cdr(car(cdr(p)))
 #define caddr(p)                      car(cdr(cdr(p)))
 #define cadaar(p)                     car(cdr(car(car(p))))
 #define cadddr(p)                     car(cdr(cdr(cdr(p))))
@@ -1309,7 +1325,7 @@ s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
 } 
 
 
-s7_pointer g_gensym(s7_scheme *sc, s7_pointer args) 
+static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args) 
 {
   #define H_gensym "(gensym :optional prefix) creates a new symbol"
   if (s7_is_pair(args))
@@ -1753,6 +1769,169 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
 
 
 /* -------------------------------- numbers -------------------------------- */
+
+/* Trigonometric functions. FreeBSD's math library does not include the complex form of the trig funcs. */ 
+ 
+#if !HAVE_CSIN 
+double complex csin(double complex z) 
+{ 
+  return sin(creal(z)) * cosh(cimag(z)) + (cos(creal(z)) * sinh(cimag(z))) * _Complex_I; 
+} 
+#endif 
+ 
+#if !HAVE_CCOS 
+double complex ccos(double complex z) 
+{ 
+  return cos(creal(z)) * cosh(cimag(z)) + (-sin(creal(z)) * sinh(cimag(z))) * _Complex_I; 
+} 
+#endif 
+ 
+#if !HAVE_CTAN 
+double complex ctan(double complex z) 
+{ 
+  return csin(z) / ccos(z); 
+} 
+#endif 
+ 
+#if !HAVE_CASIN 
+double complex casin(double complex z) 
+{ 
+  return -_Complex_I * clog(_Complex_I * z + csqrt(1.0 - z * z)); 
+} 
+#endif 
+ 
+#if !HAVE_CACOS 
+double complex cacos(double complex z) 
+{ 
+  return -_Complex_I * clog(z + _Complex_I * csqrt(1.0 - z * z)); 
+} 
+#endif 
+ 
+#if !HAVE_CATAN 
+double complex catan(double complex z) 
+{ 
+  return _Complex_I * clog((_Complex_I + z) / (_Complex_I - z)) / 2.0; 
+} 
+#endif 
+ 
+
+/* Hyperbolic functions. */ 
+ 
+#if !HAVE_CSINH 
+double complex csinh(double complex z) 
+{ 
+  return sinh(creal(z)) * cos(cimag(z)) + (cosh(creal(z)) * sin(cimag(z))) * _Complex_I; 
+} 
+#endif 
+ 
+#if !HAVE_CCOSH 
+double complex ccosh(double complex z) 
+{ 
+  return cosh(creal(z)) * cos(cimag(z)) + (sinh(creal(z)) * sin(cimag(z))) * _Complex_I; 
+} 
+#endif 
+ 
+#if !HAVE_CTANH 
+double complex ctanh(double complex z) 
+{ 
+  return csinh(z) / ccosh(z); 
+} 
+#endif 
+ 
+#if !HAVE_CASINH 
+double complex casinh(double complex z) 
+{ 
+  return clog(z + csqrt(1.0 + z * z)); 
+} 
+#endif 
+ 
+#if !HAVE_CACOSH 
+double complex cacosh(double complex z) 
+{ 
+  return clog(z + csqrt(z * z - 1.0)); 
+} 
+#endif 
+ 
+#if !HAVE_CATANH 
+double complex catanh(double complex z) 
+{ 
+  return clog((1.0 + z) / (1.0 - z)) / 2.0; 
+} 
+#endif 
+ 
+/* Exponential and logarithmic functions. */ 
+ 
+#if !HAVE_CEXP 
+double complex cexp(double complex z) 
+{ 
+  return exp(creal(z)) * cos(cimag(z)) + (exp(creal(z)) * sin(cimag(z))) * _Complex_I; 
+} 
+#endif 
+ 
+#if !HAVE_CLOG 
+double complex clog(double complex z) 
+{ 
+  return log(fabs(cabs(z))) + carg(z) * _Complex_I; 
+} 
+#endif 
+ 
+/* Power functions. */ 
+ 
+#if !HAVE_CPOW 
+double complex cpow(double complex x, double complex y) 
+{ 
+  double r = cabs(x); 
+  double theta = carg(x); 
+  double yre = creal(y); 
+  double yim = cimag(y); 
+  double nr = exp(yre * log(r) - yim * theta); 
+  double ntheta = yre * theta + yim * log(r); 
+ 
+  return nr * cos(ntheta) + (nr * sin(ntheta)) * _Complex_I; /* make-polar */ 
+} 
+#endif 
+ 
+#if !HAVE_CSQRT 
+double complex csqrt(double complex z) 
+{ 
+  if (cimag(z) < 0.0) 
+    return conj(csqrt(conj(z))); 
+  else 
+  { 
+    double r = cabs(z); 
+    double x = creal(z); 
+       
+    return sqrt((r + x) / 2.0) + sqrt((r - x) / 2.0) * _Complex_I; 
+  } 
+} 
+#endif 
+ 
+/* Absolute value and conjugates. */ 
+ 
+#if !HAVE_CABS 
+double cabs(double complex z) 
+{ 
+  return hypot(creal(z), cimag(z)); 
+} 
+#endif 
+ 
+#if !HAVE_CARG 
+double carg(double complex z) 
+{ 
+  return atan2(cimag(z), creal(z)); 
+} 
+#endif 
+ 
+#if !HAVE_CONJ 
+double complex conj(double complex z) 
+{ 
+  return ~z; 
+} 
+#endif 
+ 
+/* -------------------------------- */
+
+
 
 bool s7_is_number(s7_pointer p)
 {
@@ -3787,10 +3966,54 @@ s7_pointer s7_make_ulong(s7_scheme *sc, unsigned long num)
   return(s7_make_integer(sc, num));
 }
 
+static s7_pointer g_logior(s7_scheme *sc, s7_pointer args)
+{
+  #define H_logior "(logior i1 ...) returns the bitwise OR of its integer arguments"
+  int result = 0, i;
+  s7_pointer x;
+  for (i = 0, x = args; x != sc->NIL; i++, x = cdr(x))
+    if (!s7_is_integer(car(x)))
+      return(s7_wrong_type_arg_error(sc, "logior", i, car(x), "an integer"));
+    else result |= s7_integer(car(x));
+  return(s7_make_integer(sc, result));
+}
+
+static s7_pointer g_logxor(s7_scheme *sc, s7_pointer args)
+{
+  #define H_logxor "(logxor i1 ...) returns the bitwise XOR of its integer arguments"
+  int result = 0, i;
+  s7_pointer x;
+  for (i = 0, x = args; x != sc->NIL; i++, x = cdr(x))
+    if (!s7_is_integer(car(x)))
+      return(s7_wrong_type_arg_error(sc, "logxor", i, car(x), "an integer"));
+    else result ^= s7_integer(car(x));
+  return(s7_make_integer(sc, result));
+}
+
+static s7_pointer g_logand(s7_scheme *sc, s7_pointer args)
+{
+  #define H_logand "(logand i1 ...) returns the bitwise AND of its integer arguments"
+  int result = -1, i;
+  s7_pointer x;
+  for (i = 0, x = args; x != sc->NIL; i++, x = cdr(x))
+    if (!s7_is_integer(car(x)))
+      return(s7_wrong_type_arg_error(sc, "logand", i, car(x), "an integer"));
+    else result &= s7_integer(car(x));
+  return(s7_make_integer(sc, result));
+}
+
+static s7_pointer g_lognot(s7_scheme *sc, s7_pointer args)
+{
+  #define H_lognot "(lognot i1) returns the bitwise negation of i1"
+  if (!s7_is_integer(car(args)))
+    return(s7_wrong_type_arg_error(sc, "lognot", 1, car(args), "an integer"));
+  return(s7_make_integer(sc, ~s7_integer(car(args))));
+}
 
 
 
-/* -------------------------------- characterss -------------------------------- */
+
+/* -------------------------------- characters -------------------------------- */
 
 static s7_pointer g_char_to_integer(s7_scheme *sc, s7_pointer args)
 {
@@ -5431,9 +5654,11 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
     {
       eval(sc, sc->op);
     }
-  else eval(sc, OP_READ_INTERNAL);
-  sc->longjmp_ok = true;
-
+  else 
+    {
+      sc->longjmp_ok = true;
+      eval(sc, OP_READ_INTERNAL);
+    }
   /* TODO: check paren count and below */
   
   pop_input_port(sc);
@@ -5506,20 +5731,40 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
     {
       eval(sc, sc->op);
     }
-  else eval(sc, OP_READ_INTERNAL);
-  sc->longjmp_ok = true;
+  else 
+    {
+      sc->longjmp_ok = true;
+      eval(sc, OP_READ_INTERNAL);
+    }
+  pop_input_port(sc);
+  s7_close_input_port(sc, port);
+  return(sc->value);
+}
+
+static s7_pointer g_call_with_input_string(s7_scheme *sc, s7_pointer args)
+{
+  #define H_call_with_input_string "(call-with-input-string str thunk) opens a string port for str and applies thunk to it"
+
+  /* (call-with-input-string "44" (lambda (p) (+ 1 (read p)))) -> 45
+   */
+
+  s7_pointer port;
+  if (!s7_is_string(car(args)))
+    return(s7_wrong_type_arg_error(sc, "call-with-input-string", 1, car(args), "a string"));
+
+  port = s7_open_input_string(sc, s7_string(car(args)));
+  push_input_port(sc, port);
+
+  push_stack(sc, OP_EVAL_STRING_DONE, sc->args, sc->code);
+  sc->args = cons(sc, port, sc->NIL);
+  sc->code = cadr(args);
+  eval(sc, OP_APPLY);
 
   pop_input_port(sc);
   s7_close_input_port(sc, port);
   return(sc->value);
 }
 
-
-s7_pointer s7_eval_form(s7_scheme *sc, s7_pointer form)
-{
-  /* TODO: eval form */
-  return(sc->F);
-}
 
 
 
@@ -7763,7 +8008,7 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
     }
 
   if (sc->longjmp_ok)
-    longjmp(sc->goto_start, 1); /* this is trying to clear the C stack back to some clean state?? */
+    longjmp(sc->goto_start, 1); /* this is trying to clear the C stack back to some clean state */
 
   return(type);
 }
@@ -7918,13 +8163,6 @@ s7_pointer s7_call_1(s7_scheme *sc, s7_pointer func, s7_pointer args, const char
   eval(sc, OP_APPLY);
   return(sc->value);
 } 
-
-s7_pointer s7_string_to_form(s7_scheme *sc, const char *str)
-{
-  /* TODO?: string-to-form = read and return, no eval = read! */
-  return(sc->F);
-}
-
 
 static s7_pointer g_tracing(s7_scheme *sc, s7_pointer a)
 {
@@ -8113,18 +8351,18 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_REAL_EVAL:
       
-      if (s7_is_keyword(sc->code))
-	{
-	  pop_stack(sc, sc->code); /* a keyword evaluates to itself */
-	  goto START;
-	}
-
       if (s7_is_symbol(sc->code)) 
 	{
 	  sc->x = s7_find_slot_in_env(sc, sc->envir, sc->code, true);
 	  if (sc->x != sc->NIL) 
 	    {
 	      pop_stack(sc, s7_slot_value_in_env(sc->x));
+	      goto START;
+	    }
+
+	  if (s7_is_keyword(sc->code))
+	    {
+	      pop_stack(sc, sc->code); /* a keyword evaluates to itself */
 	      goto START;
 	    }
 
@@ -8259,7 +8497,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  if ((!function_has_rest_arg(sc->code)) &&
 	      ((function_required_args(sc->code) + function_optional_args(sc->code)) < len))
 	    {
-	      pop_stack(sc, eval_error(sc, "too many arguments", sc->code));
+	      pop_stack(sc, eval_error(sc, "too many arguments", sc->x = cons(sc, sc->code, sc->args)));
 	      goto START;
 	    }
 
@@ -8815,16 +9053,59 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 					  cons(sc, sc->LAMBDA, cddr(sc->value)),
 					  cons(sc, 
 					       cons(sc,
-						    s7_make_symbol(sc, "cdr"), 
+						    s7_make_symbol(sc, "cdr"),
 						    cons(sc, 
 							 sc->y, 
 							 sc->NIL)),
 					       sc->NIL))),
 				sc->NIL)));
-      /* what could be simpler? */
+      
+      /* so, (defmacro hi (a b) `(+ ,a ,b)) becomes:
+       *   sc->x: hi
+       *   sc->code: (lambda (defmac-51) (apply (lambda (a b) (quasiquote (+ (unquote a) (unquote b)))) (cdr defmac-51)))
+       */
+
+      /* fprintf(stderr, "sc->x: %s, sc->code: %s\n", s7_object_to_c_string(sc, sc->x), s7_object_to_c_string(sc, sc->code)); */
+
       push_stack(sc, OP_MACRO1, sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO1 */
       goto EVAL;
-      
+
+
+    case OP_DEFINE_MACRO:
+
+      sc->y = s7_gensym(sc, "defmac");
+      sc->x = caar(sc->code);
+
+      sc->code = cons(sc,
+		      sc->LAMBDA,
+		      cons(sc, 
+			   cons(sc, sc->y, sc->NIL),
+			   cons(sc, 
+				cons(sc, 
+				     s7_make_symbol(sc, "apply"),
+				     cons(sc, 
+					  cons(sc, 
+					       sc->LAMBDA,
+					       cons(sc, cdadr(sc->value), cddr(sc->value))),
+					  cons(sc, 
+					       cons(sc,
+						    s7_make_symbol(sc, "cdr"), 
+						    cons(sc, 
+							 sc->y,
+							 sc->NIL)),
+					       sc->NIL))),
+				sc->NIL)));
+
+      /* fprintf(stderr, "sc->x: %s, sc->code: %s\n", s7_object_to_c_string(sc, sc->x), s7_object_to_c_string(sc, sc->code)); */
+
+      /* (define-macro (hi a b) `(+ ,a ,b)) becomes:
+       *   sc->x: hi
+       *   sc->code: (lambda (defmac-51) (apply (lambda (a b) (quasiquote (+ (unquote a) (unquote b)))) (cdr defmac-51)))
+       */
+
+      push_stack(sc, OP_MACRO1, sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO1 */
+      goto EVAL;
+
 
     case OP_CASE0:      /* case */
       push_stack(sc, OP_CASE1, sc->NIL, cdr(sc->code));
@@ -9068,7 +9349,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       pop_stack(sc, cons(sc, s7_make_symbol(sc, "apply"),
 			 cons(sc, s7_make_symbol(sc, "vector"), 
 			      cons(sc, cons(sc, sc->QQUOTE, 
-					   cons(sc, sc->value, sc->NIL)),
+					    cons(sc, sc->value, sc->NIL)),
 				   sc->NIL))));
       goto START;
       
@@ -9329,6 +9610,7 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "macro",       OP_MACRO0);
   assign_syntax(sc, "case",        OP_CASE0);
   assign_syntax(sc, "defmacro",    OP_DEFMACRO);
+  assign_syntax(sc, "define-macro",OP_DEFINE_MACRO);
 
   
   sc->LAMBDA = s7_make_symbol(sc, "lambda");
@@ -9405,6 +9687,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "write-byte",          g_write_byte,          1, 1, false, H_write_byte);
 
   /* call-with-output|input-file with-output-to-file with-input-from-file */
+  s7_define_function(sc, "call-with-input-string", g_call_with_input_string, 2, 0, false, H_call_with_input_string);
 
 
   /* numbers */
@@ -9470,6 +9753,10 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "exact->inexact",      g_exact_to_inexact,    1, 0, false, H_exact_to_inexact);
   s7_define_function(sc, "exact?",              g_is_exact,            1, 0, false, H_is_exact);
   s7_define_function(sc, "inexact?",            g_is_inexact,          1, 0, false, H_is_inexact);
+  s7_define_function(sc, "logior",              g_logior,              1, 0, true,  H_logior);
+  s7_define_function(sc, "logxor",              g_logxor,              1, 0, true,  H_logxor);
+  s7_define_function(sc, "logand",              g_logand,              1, 0, true,  H_logand);
+  s7_define_function(sc, "lognot",              g_lognot,              1, 0, false, H_lognot);
 
   
   /* chars */
@@ -9818,12 +10105,6 @@ s7_scheme *s7_init(void)
     (close-output-port p)\n\
     s))\n\
 \n\
-(define (call-with-input-string s t)\n\
-  (let* ((p (open-input-string s))\n\
-	 (r (t p)))\n\
-    (close-input-port p)\n\
-    r))\n\
-\n\
 (define (with-output-to-string thunk)\n\
   (let* ((output-port (current-output-port))\n\
 	 (string-port (open-output-string)))\n\
@@ -9843,16 +10124,6 @@ s7_scheme *s7_init(void)
 	 (lambda args\n\
 	   (out)\n\
 	   (apply error args))))\n\
-\n\
-(macro (define-macro dform)\n\
-  (if (symbol? (cadr dform))\n\
-    `(macro ,@(cdr dform))\n\
-    (let ((form (gensym)))\n\
-      `(macro (,(caadr dform) ,form)\n\
-         (apply \n\
-	   (lambda ,(cdadr dform) \n\
-	     ,@(cddr dform)) \n\
-	   (cdr ,form))))))\n\
 \n");
 
   return(sc);
