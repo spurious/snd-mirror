@@ -332,7 +332,7 @@
 	    (for-each
 	     (lambda (s) ; speakers
 	       (let* ((a (if (list? s) (car s) s))
-		      (e (if (list? s) (or (cadr s) 0d0) 0d0))
+		      (e (if (list? s) (or (cadr s) 0.0) 0.0))
 		      (evec (cis (* (/ e dlocsig-one-turn) 2 pi)))
 		      (dxy (real-part evec))
 		      (avec (cis (* (/ a dlocsig-one-turn) 2 pi)))
@@ -531,15 +531,15 @@
 
 (define dlocsig-path '())
 (define dlocsig-scaler 1.0)
-(define dlocsig-direct-power 1.5d0)
-(define dlocsig-inside-direct-power 1.5d0)
-(define dlocsig-reverb-power 0.5d0)
-(define dlocsig-inside-reverb-power 0.5d0)
+(define dlocsig-direct-power 1.5)
+(define dlocsig-inside-direct-power 1.5)
+(define dlocsig-reverb-power 0.5)
+(define dlocsig-inside-reverb-power 0.5)
 (define dlocsig-initial-delay #f)
 (define dlocsig-unity-gain-distance #f)
 (define dlocsig-reverb-amount 0.04)
-(define dlocsig-inside-radius 1.0d0)
-(define dlocsig-minimum-segment-length 1.0d0)
+(define dlocsig-inside-radius 1.0)
+(define dlocsig-minimum-segment-length 1.0)
 
 ;; render using:
 
@@ -1703,7 +1703,7 @@
 ;;;;;;;;;;;
 
 (<define-class> <spiral-path> (<literal-path>)
-  (start-angle :init-value 0d0 :init-keyword :start-angle :accessor spiral-start-angle)                    ; start angle
+  (start-angle :init-value 0.0 :init-keyword :start-angle :accessor spiral-start-angle)                    ; start angle
   (total-angle :init-value #f :init-keyword :total-angle :accessor spiral-total-angle)                     ; total angle for the spiral
   (step-angle :init-value (/ dlocsig-one-turn 100) :init-keyword :step-angle :accessor spiral-step-angle)  ; step angle for rendering
   (turns :init-value '() :init-keyword :turns :accessor spiral-turns)                                      ; fractional number of turns
@@ -1713,7 +1713,7 @@
 
 ;;; Spiral path creation function
 
-(def-optkey-fun (make-spiral-path (start-angle 0.0d0)
+(def-optkey-fun (make-spiral-path (start-angle 0.0)
 				  total-angle
 				  (step-angle (/ dlocsig-one-turn 100))
 				  turns
@@ -1818,7 +1818,7 @@
 			       translation
 			       rotation
 			       rotation-center
-			       (rotation-axis '(0d0 0d0 1.0)))
+			       (rotation-axis '(0.0 0.0 1.0)))
 
   ;; Derive a rotation matrix from an axis vector and an angle
 
@@ -1836,7 +1836,7 @@
 	   (dz (caddr vals))
 	   (rotate (vector (vector 0.0 0.0 0.0) (vector 0.0 0.0 0.0) (vector 0.0 0.0 0.0)))
 	   (I (vector (vector 1.0 0.0 0.0) (vector 0.0 1.0 0.0) (vector 0.0 0.0 1.0)))
-	   (A (vector (vector 0.0d0 dz (- dy)) (vector (- dz) 0.0d0 dx) (vector dy (- dx) 0.0d0)))
+	   (A (vector (vector 0.0 dz (- dy)) (vector (- dz) 0.0 dx) (vector dy (- dx) 0.0)))
 	   (AA (vector (vector 0.0 0.0 0.0) (vector 0.0 0.0 0.0) (vector 0.0 0.0 0.0)))
 	   (sn (sin (- angle)))
 	   (omcs (- 1 (cos (- angle)))))
@@ -1845,7 +1845,7 @@
 	  ((= row 3))
 	(do ((col 0 (1+ col)))
 	    ((= col 3))
-	  (vector-set! (vector-ref AA row) col 0d0)
+	  (vector-set! (vector-ref AA row) col 0.0)
 	  (do ((mid 0 (1+ mid)))
 	      ((= mid 3))
 	    (vector-set! (vector-ref AA row) col
@@ -1967,7 +1967,7 @@
 (define* (rotate-path path rotation
 			:key
 			rotation-center
-			(rotation-axis '(0d0 0d0 1.0)))
+			(rotation-axis '(0.0 0.0 1.0)))
   "rotate-path is a dlocsig function that rotates a dlocsig path"
   (transform-path path 
 		  :rotation rotation 

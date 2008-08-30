@@ -87,7 +87,6 @@
  *   SOMEDAY: add support for ' and list: vct_1 below?
  *   the other such cases are make-polyshape, partials->*
  *   currently make-rand|-interp distribution arg (an env) can't be a vct
- *   TODO: check out guile's (read-enable 'copy) -- would this make define* acceptable?
  */
 
 /* it would be nice to have a compile time check for generator mismatches, but

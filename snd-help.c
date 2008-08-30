@@ -1649,8 +1649,7 @@ void key_binding_help(void)
     #define bind_key_example "\"End\" 0\n       lambda: <{ -- val }> doc\"view full sound\"\n         '( 0.0  #f #f #f frames  #f srate  f/ ) #f #f set-x-bounds ; bind-key"
   #endif
   #if HAVE_CL
-    #define bind_key_example "(bind-key \"End\" 0\n      #'lambda () \"view full sound\"\n        (setf (x-bounds) (list 0.0 (/ (frames) (srate)))))"
-  /* TODO: is this the right syntax for anonymous funcs in CL? */
+    #define bind_key_example "(bind-key \"End\" 0\n      #'(lambda () \"view full sound\"\n        (setf (x-bounds) (list 0.0 (/ (frames) (srate))))))"
   #endif
 
   int i;

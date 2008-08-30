@@ -2198,7 +2198,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 #define XEN_PROCEDURE_SOURCE(Func)                 s7_procedure_source(s7, Func)
 
 #define XEN_LOAD_FILE(File)                        s7_load(s7, File)
-#define XEN_LOAD_FILE_WITH_PATH(File)              s7_load_with_path(s7, File)
+#define XEN_LOAD_FILE_WITH_PATH(File)              s7_load(s7, File)
 #define XEN_LOAD_PATH                              s7_load_path(s7)
 #define XEN_ADD_TO_LOAD_PATH(Path)                 s7_add_to_load_path(s7, Path)
 
@@ -2449,7 +2449,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
   xen_s7_ignore(Set_Func)
 
 
-#define XEN_ARITY(Func)                                               s7_function_arity(s7, Func)
+#define XEN_ARITY(Func)                                               s7_procedure_arity(s7, Func)
 #define XEN_REQUIRED_ARGS(Func)                                       XEN_TO_C_INT(XEN_CAR(XEN_ARITY(Func)))
 #define XEN_REQUIRED_ARGS_OK(Func, Args)                              (XEN_REQUIRED_ARGS(Func) == Args)
 

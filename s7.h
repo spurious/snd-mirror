@@ -119,8 +119,8 @@ bool s7_keyword_eq_p(s7_pointer obj1, s7_pointer obj2);
 bool s7_is_function(s7_pointer p);
 s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
 void s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
-const char *s7_function_documentation(s7_pointer p);
-s7_pointer s7_function_arity(s7_scheme *sc, s7_pointer x);
+const char *s7_procedure_documentation(s7_pointer p);
+s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x);
 
 int s7_new_type(const char *name, 
 		char *(*print)(void *value), 
@@ -172,8 +172,7 @@ char *s7_object_to_c_string(s7_scheme *sc, s7_pointer obj);
 
 s7_pointer s7_load(s7_scheme *sc, const char *file);
 s7_pointer s7_load_path(s7_scheme *sc);
-s7_pointer s7_add_to_load_path(s7_scheme *sc, const char *file);
-s7_pointer s7_load_with_path(s7_scheme *sc, const char *file);
+s7_pointer s7_add_to_load_path(s7_scheme *sc, const char *dir);
 
 void s7_provide(s7_scheme *sc, const char *feature);
 

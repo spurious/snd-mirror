@@ -2501,7 +2501,7 @@ void xen_gc_mark(XEN val)
 
 const char *xen_s7_object_help(XEN sym)
 {
-  return(s7_function_documentation(XEN_VARIABLE_REF(sym)));
+  return(s7_procedure_documentation(XEN_VARIABLE_REF(sym)));
 }
 
 #endif

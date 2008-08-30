@@ -76,7 +76,8 @@
 		 (car args)
 		 (apply format #f args))))
     (newline) 
-    (if (provided? 'snd-guile)
+    (if (or (provided? 'snd-guile)
+	    (provided? 'snd-s7))
 	(display str)
 	(display str (current-error-port))) ;turn off buffering?
     (if (not (provided? 'snd-nogui))
@@ -51925,7 +51926,8 @@ EDITS: 1
 (if (not (provided? 'snd-freeverb.scm)) (load "freeverb.scm"))
 (if (not (provided? 'snd-grani.scm)) (load "grani.scm"))
 (if (not (provided? 'snd-animals.scm)) (load "animals.scm"))
-(if (not (provided? 'snd-dlocsig.scm))
+(if (and (not (provided? 'snd-dlocsig.scm))
+	 (not (provided? 'snd-s7))) ; define-class and so on -- not supported
     (catch #t 
 	   (lambda () (load "dlocsig.scm"))
 	   (lambda args (snd-display ";load dlocsig: ~A" args))))
@@ -52172,7 +52174,7 @@ EDITS: 1
 	   (do ((i beg (1+ i)))
 	       ((= i end))
 	     (dlocsig dloc i (* (env aenv) (oscil osc)))))))))
-  
+
   (definstrument (dlocsig-sinewave-1 start-time duration freq amp 
 			       :key (amp-env '(0 1 1 1))
 			       (path (make-path :path '(-10 10 0 5 10 10)))
@@ -52193,7 +52195,7 @@ EDITS: 1
 	   (do ((i beg (1+ i)))
 	       ((= i end))
 	     (dlocsig dloc i (* (env aenv) (oscil osc)))))))))
-  
+
   (define (mix-move-sound start-time file path)
     (let* ((duration (mus-sound-duration file))
 	   (rd (make-sample-reader 0 file))
@@ -53704,6 +53706,8 @@ EDITS: 1
 	  (snd-display ";rand case mfilter/firmant: ~A ~A" i v1 v2)))))
 
 	
+	(if (not (provided? 'snd-s7))
+	    (begin
 	;; dlocsig tests
 	(if (not (provided? 'snd-dlocsig.scm))
 	    (catch #t 
@@ -54280,7 +54284,7 @@ EDITS: 1
 					.018 .015 .013 .011 .010 .009 .008 .007 .007 .006 .006 
 					.005 .005 .004 .004 .004)
 				ind 3 "dlocsig 15 3")
-		))); end dlocsig tests
+		))))); end dlocsig tests
 	
 	(let ((a4 (->frequency 'a4))
 	      (a440 (->frequency 440.0))
