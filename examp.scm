@@ -560,7 +560,8 @@ read an ASCII sound file"
     (as-one-edit
      (lambda ()
        (let loop ((val (read in-fd)))
-	 (or (eof-object? val)
+	 (if (eof-object? val)
+	     #t
 	     (begin
 	       (vct-set! data loc (* (exact->inexact val) short->float))
 	       (set! loc (1+ loc))

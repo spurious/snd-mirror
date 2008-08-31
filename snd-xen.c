@@ -2638,19 +2638,22 @@ static XEN g_strftime(XEN format, XEN tm)
 }
 
 /* (snd-display ";~A~%" (strftime "%d-%b %H:%M %Z" (localtime (current-time)))) */
+/* these two need to be compatible with g_file_write_date in snd-file.c */
 
 static XEN g_localtime(XEN tm)
 {
   #define H_localtime "(localtime tm) breaks up tm into something suitable for strftime"
-  return(C_TO_XEN_ULONG((unsigned long)localtime((const time_t *)(XEN_TO_C_ULONG(tm)))));
+  time_t rtime;
+  rtime = (time_t)XEN_TO_C_INT(tm);
+  return(C_TO_XEN_ULONG((unsigned long)localtime((time_t *)(&rtime))));
 }
 
 static XEN g_current_time(void)
 {
-  static time_t curtime;
+  time_t curtime;
   #define H_current_time "(current-time) returns the current time (for localtime and strftime)"
   curtime = time(NULL);
-  return(C_TO_XEN_ULONG((unsigned long)(&curtime)));
+  return(C_TO_XEN_INT(curtime));
 }
 
 static XEN g_tmpnam(void)

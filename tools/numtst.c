@@ -356,7 +356,7 @@ static bool continued_fraction_rationalize(double ux, double error, off_t *numer
     }
 
   x = 1.0 / ux;
-  for (ctr = 0; (ctr < 100) && (x != tt); ctr++)
+  for (ctr = 0; ctr < 100; ctr++)
     {
       a = a2 + a1 * tt;
       b = b2 + b1 * tt;

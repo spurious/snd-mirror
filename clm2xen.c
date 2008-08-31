@@ -1086,7 +1086,7 @@ static XEN g_mus_generator_p(XEN obj)
 
   if (MUS_XEN_P(obj)) return(XEN_TRUE);
 
-#if HAVE_GUILE || HAVE_FORTH || HAVE_GAUCHE
+#if HAVE_GUILE || HAVE_FORTH || HAVE_GAUCHE || HAVE_S7
   /* defgenerator defines "mus-name", and I can't see why a non-generator would include it in def-clm-struct, so... */
   if ((XEN_LIST_P(obj)) &&
       (XEN_LIST_LENGTH(obj) > 1) &&
@@ -1354,7 +1354,7 @@ static mus_xen *mus_any_to_mus_xen_with_two_vcts(mus_any *ge, XEN v1, XEN v2)
 
 static XEN call_get_method(XEN gen, const char *method_name)
 {
-#if HAVE_GUILE || HAVE_GAUCHE || HAVE_FORTH
+#if HAVE_GUILE || HAVE_GAUCHE || HAVE_FORTH || HAVE_S7
   XEN pair;
   pair = XEN_ASSOC(C_STRING_TO_XEN_SYMBOL(method_name), 
 		   XEN_LIST_REF(gen, 
@@ -1373,7 +1373,7 @@ static XEN call_get_method(XEN gen, const char *method_name)
 
 static XEN call_get_method_2(XEN gen, XEN arg, const char *method_name)
 {
-#if HAVE_GUILE || HAVE_GAUCHE || HAVE_FORTH
+#if HAVE_GUILE || HAVE_GAUCHE || HAVE_FORTH || HAVE_S7
   XEN pair;
   pair = XEN_ASSOC(C_STRING_TO_XEN_SYMBOL(method_name), 
 		   XEN_LIST_REF(gen, 
@@ -1392,7 +1392,7 @@ static XEN call_get_method_2(XEN gen, XEN arg, const char *method_name)
 
 static XEN call_get_method_3(XEN gen, XEN arg1, XEN arg2, const char *method_name)
 {
-#if HAVE_GUILE || HAVE_GAUCHE || HAVE_FORTH
+#if HAVE_GUILE || HAVE_GAUCHE || HAVE_FORTH || HAVE_S7
   XEN pair;
   pair = XEN_ASSOC(C_STRING_TO_XEN_SYMBOL(method_name), 
 		   XEN_LIST_REF(gen, 
@@ -1411,7 +1411,7 @@ static XEN call_get_method_3(XEN gen, XEN arg1, XEN arg2, const char *method_nam
 
 static XEN call_set_method(XEN gen, XEN value, const char *method_name)
 {
-#if HAVE_GUILE || HAVE_GAUCHE || HAVE_FORTH
+#if HAVE_GUILE || HAVE_GAUCHE || HAVE_FORTH || HAVE_S7
   XEN pair;
   pair = XEN_ASSOC(C_STRING_TO_XEN_SYMBOL(method_name), 
 		   XEN_LIST_REF(gen, 
@@ -1439,7 +1439,7 @@ static XEN call_set_method(XEN gen, XEN value, const char *method_name)
 
 static XEN call_set_method_2(XEN gen, XEN arg, XEN value, const char *method_name)
 {
-#if HAVE_GUILE || HAVE_GAUCHE || HAVE_FORTH
+#if HAVE_GUILE || HAVE_GAUCHE || HAVE_FORTH || HAVE_S7
   XEN pair;
   pair = XEN_ASSOC(C_STRING_TO_XEN_SYMBOL(method_name), 
 		   XEN_LIST_REF(gen, 

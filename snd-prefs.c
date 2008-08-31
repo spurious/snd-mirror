@@ -237,6 +237,9 @@ static void add_local_load_path(FILE *fd, char *path)
 #if HAVE_GAUCHE
   fprintf(fd, "(add-to-load-path \"%s\")\n", path); /* see snd-xen.c */
 #endif
+#if HAVE_S7
+  fprintf(fd, "(if (not (member \"%s\" *load-path*)) (set! *load-path* (cons \"%s\" *load-path*)))\n", path, path);
+#endif
 }
 
 
@@ -419,7 +422,7 @@ static char *no_stars(const char *name)
 
 static void prefs_variable_set(const char *name, XEN val)
 {
-#if HAVE_GUILE
+#if HAVE_GUILE || HAVE_S7
   if (XEN_DEFINED_P(name))
     XEN_VARIABLE_SET(XEN_NAME_AS_C_STRING_TO_VARIABLE(name), val);
 #endif
@@ -4336,7 +4339,7 @@ find elsewhere.  The current load path list is: \n\n%s\n",
 #if HAVE_RUBY
 		   ", $LOAD_PATH",
 #else
-#if HAVE_FORTH || HAVE_GAUCHE
+#if HAVE_FORTH || HAVE_GAUCHE || HAVE_S7
 		   ", *load-path*",
 #else
 		   "",
@@ -4426,6 +4429,8 @@ static char *find_sources(void) /* returns full filename if found else null */
 	}
     }
 #endif
+
+    /* TODO: S7 load path search in prefs */
 
   if (file)
     {

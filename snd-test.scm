@@ -67,6 +67,16 @@
 
 (if (provided? 'snd-s7)
     (begin
+      (define O_RDWR 2)
+      (define O_APPEND 1024)
+      (define O_RDONLY 0)
+      (define (open-pipe . args) #f)
+      (define (close-pipe . args) #f)
+      (define (copy-file src dest) (system (string-append "cp " src " " dest)))
+      (define (procedure-property func prop)
+	(if (eq? prop 'arity)
+	    (procedure-arity func)
+	    (procedure-documentation func)))
       (define (ash n count) ; slib
 	(if (negative? count)
 	    (let ((k (expt 2 (- count))))
@@ -2528,7 +2538,7 @@
 	(let ((index (open-sound "oboe.snd"))
 	      (long-file-name (let ((name "test"))
 				(do ((i 0 (1+ i)))
-				    ((= i 33)) ; 40 is about the limit in Linux (256 char limit here from OS, not Snd)
+				    ((= i 10)) ; 40 is about the limit in Linux (256 char limit here from OS, not Snd)
 				  (set! name (string-append name "-test")))
 				(string-append name ".snd"))))
 	  (if (variable-graph? index) (snd-display ";variable-graph thinks anything is a graph..."))
@@ -16462,16 +16472,17 @@ EDITS: 2
     ;; one (20 1.0) is off by a lot but the val is 1e22 
     
     ;; numerics stuff
-    (let ((ns (vector 1 6 6 6 15 15 15 15 15 15 15 25 25 25 25 25 25 25 25 25))
-	  (ks (vector 0 1 3 5 1 3 5 7 9 11 13 1 3 5 7 9 11 13 15 17))
-	  (vals (vector 1 6 20 6 15 455 3003 6435 5005 1365 105 25 2300 53130 480700 2042975 4457400 5200300 3268760 1081575)))
-      (do ((i 0 (1+ i)))
-	  ((= i 20))
-	(let* ((nval (binomial-direct (vector-ref ns i) (vector-ref ks i)))
-	       (mval (n-choose-k (vector-ref ns i) (vector-ref ks i))))
-	  (if (or (not (= nval (vector-ref vals i)))
-		  (not (= mval (vector-ref vals i))))
-	      (snd-display ";binomial(~A ~A): ~A ~A ~A" (vector-ref ns i) (vector-ref ks i) nval mval (vector-ref vals i))))))
+    (if (not (provided? 'snd-s7)) ; this requires bignums
+	(let ((ns (vector 1 6 6 6 15 15 15 15 15 15 15 25 25 25 25 25 25 25 25 25))
+	      (ks (vector 0 1 3 5 1 3 5 7 9 11 13 1 3 5 7 9 11 13 15 17))
+	      (vals (vector 1 6 20 6 15 455 3003 6435 5005 1365 105 25 2300 53130 480700 2042975 4457400 5200300 3268760 1081575)))
+	  (do ((i 0 (1+ i)))
+	      ((= i 20))
+	    (let* ((nval (binomial-direct (vector-ref ns i) (vector-ref ks i)))
+		   (mval (n-choose-k (vector-ref ns i) (vector-ref ks i))))
+	      (if (or (not (= nval (vector-ref vals i)))
+		      (not (= mval (vector-ref vals i))))
+		  (snd-display ";binomial(~A ~A): ~A ~A ~A" (vector-ref ns i) (vector-ref ks i) nval mval (vector-ref vals i)))))))
 
     (let ((ls (vector 1 1 1 1 1 2 2 2 3 3 3 3 4 5 6 7 8 9 10))
 	  (ms (vector 0 0 0 0 1 0 1 2 0 1 2 3 2 2 3 3 4 4 5))
@@ -16481,7 +16492,9 @@ EDITS: 2
       (do ((i 0 (1+ i)))
 	  ((= i 19))
 	(let ((val (plgndr (vector-ref ls i) (vector-ref ms i) (vector-ref xs i))))
-	  (if (> (abs (- val (vector-ref vals i))) 0.1)
+	  (if (or (not (real? val))
+		  (not (real? (vector-ref vals i)))
+		  (> (abs (- val (vector-ref vals i))) 0.1))
 	      (snd-display ";plgndr(~A ~A ~A) = ~A (~A)" (vector-ref ls i) (vector-ref ms i) (vector-ref xs i) val (vector-ref vals i))))))
 
     (let ((vals (vector  1.0000000000  0.8000000000  0.2800000000  -0.3520000000 -0.8432000000 -0.9971200000 
@@ -23696,6 +23709,7 @@ EDITS: 2
 	(if (< vr 4.0)
 	    (snd-display ";rand not so random? ~A (chi)" vr))))
     
+    (if (defined? 'sort)
     (let ((v2 (lambda (n) ; Kolmogorov-Smirnov
 		(let ((vals (make-vector n 0.0))
 		      (sn (sqrt n)))
@@ -23731,7 +23745,7 @@ EDITS: 2
 	     (k (list-ref vr 3)))
 	(if (or (< kp k)
 		(< km k))
-	    (snd-display ";mus-random not random? ~A (KS)" vr))))
+	    (snd-display ";mus-random not random? ~A (KS)" vr)))))
     
     (let ((data (make-vct 65536)))
       (do ((i 0 (1+ i)))

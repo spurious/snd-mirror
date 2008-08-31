@@ -45,15 +45,18 @@
  *   radix arg for number->string
  *   get rid of define+ in *.scm
  *   the rest of the call-with funcs (call-with-input-string is done)
+ *   can any part of quasiquote be optimized?
+ *   tail recursion
+ *
  *
  * define-type (make-type in ext)
  * (define-type "name"
  *              (lambda (obj) (display obj))       ; print
- *	      #f                                 ; free
- *	      (lambda (obj1 obj2) (= obj1 obj2)) ;equal?
- *	      #f                                 ; gc mark
- *	      (lambda (obj arg) arg)             ; apply
- *	      #f)                                ; set
+ *	        #f                                 ; free
+ *	        (lambda (obj1 obj2) (= obj1 obj2)) ;equal?
+ *	        #f                                 ; gc mark
+ *	        (lambda (obj arg) arg)             ; apply
+ *	        #f)                                ; set
  *  (make-object <tag> value)
  *  (object? <tag> obj) or maybe (name? obj) and (make-name value)
  *
@@ -161,7 +164,8 @@
 /* in Snd, there are about 10000 permanent objects sitting in the heap, so the bigger the size, the less
  *    often we mark these objects -- the GC is more efficient as the heap size increases.  Each object
  *    is about 20 bytes, so even 256K is nothing in modern memory sizes.  The heaps grows as needed,
- *    so almost any number is ok -- I've run with 500.
+ *    so almost any number is ok, but it has to bebig enough to handle the startup allocations
+ *    when the gc is turned off.
  */
 
 #define SYMBOL_TABLE_SIZE 9601
@@ -239,9 +243,8 @@ typedef struct rport {
       char *filename;
     } stdio;
     struct {
-      char *start;
-      char *past_the_end;
-      char *curr;
+      char *value;
+      int size, point;
     } string;
   } rep;
 } rport;
@@ -496,6 +499,9 @@ static const char *type_names[T_LAST_TYPE + 1] = {
 #define port_file(p)                  (p)->object.port->rep.stdio.file
 #define port_is_closed(p)             (p)->object.port->is_closed
 #define port_needs_close(p)           (p)->object.port->needs_close
+#define port_string(p)                (p)->object.port->rep.string.value
+#define port_string_length(p)         (p)->object.port->rep.string.size
+#define port_string_point(p)          (p)->object.port->rep.string.point
 
 #define function_call(f)              (f)->object.ffptr->ff
 #define function_name(f)              (f)->object.ffptr->name
@@ -635,7 +641,8 @@ static s7_pointer s7_division_by_zero_error(s7_scheme *sc, const char *caller, s
 static s7_pointer s7_file_error(s7_scheme *sc, const char *caller, const char *descr, const char *name);
 
 
-static void gp(s7_scheme *sc) {g_stacktrace(sc, sc->args);} /* for gdb */
+static void gsp(s7_scheme *sc) {g_stacktrace(sc, sc->args);} /* for gdb */
+static void gop(s7_scheme *sc, s7_pointer obj) {s7_object_to_c_string(sc, obj);}
 
 
 /* -------------------------------- constants -------------------------------- */
@@ -2070,10 +2077,11 @@ static bool c_rationalize(double ux, double error, off_t *numer, off_t *denom)
     }
 
   x = 1.0 / ux;
-  for (ctr = 0; (ctr < 100) && (x != tt); ctr++)
+  for (ctr = 0; ctr < 100; ctr++)
     {
       a = a2 + a1 * tt;
       b = b2 + b1 * tt;
+
       if (fabs(ux - (double)a / (double)b) < error)
 	{
 	  a += (b * int_part);
@@ -2083,6 +2091,7 @@ static bool c_rationalize(double ux, double error, off_t *numer, off_t *denom)
 	}
       if (x == tt)
 	return(false);
+
       x = 1.0 / (x - tt);
       tt = (off_t)floor(x);
       a2 = a1;
@@ -2134,6 +2143,9 @@ s7_pointer s7_rationalize(s7_scheme *sc, double x, double error)
   s7_Int numer = 0, denom = 1;
   if (c_rationalize(x, error, &numer, &denom))
     return(s7_make_ratio(sc, numer, denom));
+#if S7_DEBUGGING
+  else fprintf(stderr, "rationalize(%lf, %lf) did not converge?\n", x, error);
+#endif
   return(s7_make_real(sc, x));
 }
 
@@ -2184,6 +2196,14 @@ static num make_ratio(s7_scheme *sc, s7_Int numer, s7_Int denom)
 {
   num ret;
   s7_Int divisor;
+
+#if S7_DEBUGGING
+  if (denom == 0)
+    {
+      fprintf(stderr, "make ratio %lld %lld\n", numer, denom);
+      abort();
+    }
+#endif
 
   if (denom < 0)
     {
@@ -2307,12 +2327,16 @@ static s7_pointer make_number(s7_scheme *sc, num n)
 
 s7_Int s7_numerator(s7_pointer x)
 {
-  return(numerator(x->object.number));
+  if (x->object.number.type == NUM_RATIO)
+    return(numerator(x->object.number));
+  return(integer(x->object.number));
 }
 
 s7_Int s7_denominator(s7_pointer x)
 {
-  return(denominator(x->object.number));
+  if (x->object.number.type == NUM_RATIO)
+    return(denominator(x->object.number));
+  return(1);
 }
 
 double s7_real_part(s7_pointer x)
@@ -3091,6 +3115,23 @@ static s7_pointer make_sharp_const(s7_scheme *sc, char *name)
       x = binary_decode(name + 1);
       return(s7_make_integer(sc, x));
     } 
+
+  if (*name == 'i')  /* #i<num> = ->inexact (see token, is_one_of for table of choices here) */
+    {
+      double xf;
+      sscanf(name + 1, "%lf", &xf);
+      return(s7_make_real(sc, xf));
+    }
+
+  if (*name == 'e')  /* #e<num> = ->exact */
+    {
+      double xf;
+      s7_Int numer = 0, denom = 1;
+      sscanf(name + 1, "%lf", &xf);
+      if (c_rationalize(xf, DEFAULT_RATIONALIZE_ERROR, &numer, &denom))
+	return(s7_make_ratio(sc, numer, denom));
+      return(s7_make_integer(sc, (s7_Int)xf));
+    }
 
   if (*name == '\\')  /* #\w (character) */
     { 
@@ -4963,10 +5004,10 @@ void s7_close_output_port(s7_scheme *sc, s7_pointer p)
     }
   else
     {
-      if (p->object.port->rep.string.start)
+      if (port_string(p))
 	{
-	  FREE(p->object.port->rep.string.start);
-	  p->object.port->rep.string.start = NULL;
+	  FREE(port_string(p));
+	  port_string(p) = NULL;
 	}
     }
   port_is_closed(p) = true;
@@ -5087,9 +5128,9 @@ s7_pointer s7_open_input_string(s7_scheme *sc, const char *input_string)
   is_file_port(x) = false;
   port_is_closed(x) = false;
   port_paren_depth(x) = 0;
-  x->object.port->rep.string.start = (char *)input_string;
-  x->object.port->rep.string.curr = (char *)input_string;
-  x->object.port->rep.string.past_the_end = (char *)(input_string + safe_strlen(input_string));
+  port_string(x) = (char *)input_string;
+  port_string_length(x) = safe_strlen(input_string);
+  port_string_point(x) = 0;
   local_unprotect(x);
 
   return(x);
@@ -5108,10 +5149,11 @@ static s7_pointer g_open_input_string(s7_scheme *sc, s7_pointer args)
 
 /* -------- open-output-string -------- */
 
+#define STRING_PORT_INITIAL_LENGTH 128
+
 s7_pointer s7_open_output_string(s7_scheme *sc)
 {
   s7_pointer x;
-  char *temp;
   x = new_cell(sc);
   set_type(x, T_OUTPUT_PORT | T_ATOM | T_FINALIZABLE);
   local_protect(x);
@@ -5120,10 +5162,9 @@ s7_pointer s7_open_output_string(s7_scheme *sc)
   x->object.port = (rport *)MALLOC(sizeof(rport));
   is_file_port(x) = false;
   port_is_closed(x) = false;
-  temp = (char *)CALLOC(128, sizeof(char));
-  x->object.port->rep.string.start = temp;
-  x->object.port->rep.string.curr = temp;
-  x->object.port->rep.string.past_the_end = (char *)(temp + 128);
+  port_string_length(x) = STRING_PORT_INITIAL_LENGTH;
+  port_string(x) = (char *)CALLOC(STRING_PORT_INITIAL_LENGTH, sizeof(char));
+  port_string_point(x) = 0;
   local_unprotect(x);
 
   return(x);
@@ -5140,7 +5181,7 @@ static s7_pointer g_open_output_string(s7_scheme *sc, s7_pointer args)
 
 char *s7_get_output_string(s7_scheme *sc, s7_pointer p)
 {
-  return(p->object.port->rep.string.start);
+  return(port_string(p));
 }
 
 static s7_pointer g_get_output_string(s7_scheme *sc, s7_pointer args)
@@ -5189,10 +5230,10 @@ static int inchar(s7_scheme *sc, s7_pointer pt)
     }
   else 
     {
-      if ((*pt->object.port->rep.string.curr == 0) || 
-	  (pt->object.port->rep.string.curr == pt->object.port->rep.string.past_the_end))
+      if ((!(port_string(pt))) ||
+	  (port_string_length(pt) <= port_string_point(pt)))
 	return(EOF);
-      return(*pt->object.port->rep.string.curr++);
+      return(port_string(pt)[port_string_point(pt)++]);
     }
 }
 
@@ -5211,8 +5252,8 @@ static void backchar(s7_scheme *sc, char c, s7_pointer pt)
     }
   else 
     {
-      if (pt->object.port->rep.string.curr != pt->object.port->rep.string.start) 
-	--pt->object.port->rep.string.curr;
+      if (port_string_point(pt) > 0)
+	port_string_point(pt)--;
     }
 }
 
@@ -5503,7 +5544,7 @@ static int token_1(s7_scheme *sc, s7_pointer pt, const char *func, int line)
 	}
 
       backchar(sc, c, pt);
-      if (is_one_of(" tfodxb\\", c)) 
+      if (is_one_of(" tfodxbie\\", c)) 
 	return TOK_SHARP_CONST;
 
       return(TOK_ATOM);
@@ -5770,17 +5811,21 @@ static s7_pointer g_call_with_input_string(s7_scheme *sc, s7_pointer args)
 
 /* -------- output -------- */
 
-static void char_to_string_port(char c, rport *pt)
+static void char_to_string_port(char c, s7_pointer pt)
 {
-  if (pt->rep.string.curr >= pt->rep.string.past_the_end)
+  if (port_string_point(pt) >= port_string_length(pt))
     {
       int loc;
-      loc = (int)(pt->rep.string.curr - pt->rep.string.start);
-      pt->rep.string.start = (char *)REALLOC(pt->rep.string.start, loc * 2);
-      pt->rep.string.curr = (char *)(pt->rep.string.start + loc);
-      pt->rep.string.past_the_end = (char *)(pt->rep.string.start + (loc * 2));
+      loc = port_string_length(pt);
+      port_string_length(pt) *= 2;
+      port_string(pt) = (char *)REALLOC(port_string(pt), port_string_length(pt) * sizeof(char));
+      memset((void *)(port_string(pt) + loc), 0, loc);
+#if 0
+      for (i = loc; i < port_string_length(pt); i++)
+	port_string(pt)[i] = '\0';
+#endif
     }
-  *pt->rep.string.curr++ = c;
+  port_string(pt)[port_string_point(pt)++] = c;
 }
 
 
@@ -5803,7 +5848,7 @@ static void write_char(s7_scheme *sc, char c, s7_pointer pt)
 
       if (is_file_port(pt))
 	fputc(c, port_file(pt));
-      else char_to_string_port(c, pt->object.port);
+      else char_to_string_port(c, pt);
     }
 }
 
@@ -5827,12 +5872,14 @@ static void write_string(s7_scheme *sc, const char *s, s7_pointer pt)
 	}
 #endif
 
+      /* fprintf(stderr, "%s: output: [%s]\n", describe_port(sc, pt), s); */
+
       if (is_file_port(pt))
 	fputs(s, port_file(pt));
       else 
 	{
 	  for(; *s; s++)
-	    char_to_string_port(*s, pt->object.port);
+	    char_to_string_port(*s, pt);
 	}
     }
 }
@@ -6102,6 +6149,10 @@ static char *s7_list_to_c_string(s7_scheme *sc, s7_pointer lst)
       bufsize += safe_strlen(elements[i]);
     }
 
+#if S7_DEBUGGING
+  if (i != len) fprintf(stderr, "list->string i: %d, len: %d\n", i, len);
+#endif
+
   bufsize += (128 + len); /* len spaces */
   buf = (char *)CALLOC(bufsize, sizeof(char));
   sprintf(buf, "(");
@@ -6123,6 +6174,9 @@ static char *s7_list_to_c_string(s7_scheme *sc, s7_pointer lst)
     if (elements[i])
       FREE(elements[i]);
   FREE(elements);
+
+  /* fprintf(stderr, "list->c_string (%d %d %d): [%s]\n", len, bufsize, safe_strlen(buf), buf); */
+
   return(buf);
 }
 
@@ -6236,6 +6290,9 @@ static void write_or_display(s7_scheme *sc, s7_pointer obj, s7_pointer port, boo
 {
   char *val;
   val = s7_object_to_c_string_1(sc, obj, use_write);
+  
+  /* fprintf(stderr, "%s write: [%s]\n", describe_port(sc, port), val); */
+
   write_string(sc, val, port);
   if (val) FREE(val);
 }
@@ -7932,7 +7989,7 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
   int i;
   s7_pointer catcher;
   catcher = sc->F;
-  
+
   /* top is 1 past actual top, top - 1 is op, if op = OP_CATCH, top - 4 is the cell containing the catch struct */
 
   for (i = sc->stack_top - 1; i >= 3; i -= 4)
@@ -9563,7 +9620,7 @@ s7_scheme *s7_init(void)
   set_immutable(sc->symbol_table);
   typeflag(sc->symbol_table) |= T_CONSTANT;
   
-  sc->gc_verbose = true;
+  sc->gc_verbose = false;
   sc->tracing = false;
   
   sc->code = sc->NIL;
@@ -9909,7 +9966,6 @@ s7_scheme *s7_init(void)
   s7_define_variable(sc, "*load-path*", sc->NIL);
   s7_define_variable(sc, "*vector-print-length*", vector_element(sc->small_ints, 8));
   
-  sc->gc_verbose = false;
   sc->gc_off = false;
 
   /* leftovers from s7.scm -- this stuff will mostly go away! */

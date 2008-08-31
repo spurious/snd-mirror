@@ -3746,7 +3746,8 @@ static void open_sound_error_handler(const char *msg, void *data)
 
 
 static XEN g_open_sound(XEN filename)
-{ /* returns index of new sound if successful */
+{ 
+  /* returns index of new sound if successful */
   #define H_open_sound "(" S_open_sound " filename): \
 open filename (as if opened from File:Open menu option), and return the new sound's index"
   char *fname = NULL;

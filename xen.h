@@ -2119,7 +2119,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 #define XEN_STRING_P(Arg)                          s7_is_string(Arg)
 #define XEN_NAME_AS_C_STRING_TO_VALUE(Arg)         s7_name_to_value(s7, Arg)
 #define XEN_TO_C_STRING(Str)                       s7_string(Str)
-#define C_TO_XEN_STRING(Arg)                       s7_make_string(s7, Arg) /* strlen here so perhaps add 1 to len and use mk_counted_string */
+#define C_TO_XEN_STRING(Arg)                       ((Arg) ? s7_make_string(s7, Arg) : XEN_FALSE)
 #define C_TO_XEN_STRINGN(Str, Len)                 s7_make_counted_string(s7, Str, Len) /* Len + 1?? */
 
 #define XEN_ZERO                                   s7_make_integer(s7, 0)

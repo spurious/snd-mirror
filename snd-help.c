@@ -182,7 +182,7 @@ static char *xm_version(void)
 {
   XEN xm_val = XEN_FALSE;
 
-#if HAVE_GUILE
+#if HAVE_GUILE || HAVE_S7
   #if USE_MOTIF
     xm_val = XEN_EVAL_C_STRING("(and (defined? 'xm-version) xm-version)");
   #else
@@ -236,7 +236,7 @@ static char *gl_version(void)
 #if (!JUST_GL)
   Init_libgl(); /* define the version string, if ./snd --version */
 #endif
-#if HAVE_GUILE
+#if HAVE_GUILE || HAVE_S7
   gl_val = XEN_EVAL_C_STRING("(and (provided? 'gl) gl-version)"); /* this refers to gl.c, not the GL library */
 #endif
 #if HAVE_RUBY
@@ -512,22 +512,22 @@ void about_snd_help(void)
   features = word_wrap(XEN_AS_STRING(XEN_VARIABLE_REF("*features*")), 400);
   files = word_wrap(XEN_AS_STRING(XEN_VARIABLE_REF("*loaded-files*")), 400);
 #endif
+#if HAVE_S7
+  features = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING("*features*")), 400);
+#endif
   info = version_info();
 
   main_snd_help("Snd is a sound editor.",
 		info,
 		"\nRecent changes include:\n\
 \n\
+1-Sep:   S7 as extension language.\n\
 14-Jul:  Snd 9.11.\n\
 7-July:  with-threaded-channels.\n\
 30-Jun:  flatten-partials.\n\
 27-Jun:  axis-color.\n\
 20-Jun:  time-graph-hook.\n\
 6-June:  with-threaded-sound (ws.scm)\n\
-2-June:  Snd 9.10.\n\
-20-May:  rt-various.[ch], rt-coroutines.scm, rt-stalin.scm, rt-DotEmacs, and\n\
-           many other changes thanks to Kjetil.\n\
-         many const char* changes for g++ 4.3.0.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",
@@ -541,6 +541,9 @@ void about_snd_help(void)
             "\n    *loaded-files*:\n", files, "\n\n",
 #endif
 #if HAVE_GAUCHE
+  	    "\n    *features*:\n    '", features, "\n\n",
+#endif
+#if HAVE_S7
   	    "\n    *features*:\n    '", features, "\n\n",
 #endif
 #if (!HAVE_EXTENSION_LANGUAGE)
