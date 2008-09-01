@@ -128,7 +128,7 @@ static int run_safety = RUN_UNSAFE;
 #define Double double
 
 #define DONT_OPTIMIZE 0
-#define COMPLEX_OK 2
+#define COMPLEX_OK 2     /* this currently actually means "complex ignored" */
 #define GLOBAL_OK 3
 #define GLOBAL_SET_OK 5
 #define SOURCE_OK 6
@@ -13079,18 +13079,18 @@ static void init_walkers(void)
   INIT_WALKER("erfc",           make_walker(erfc_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
   INIT_WALKER("lgamma",         make_walker(lgamma_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
 #endif
-  INIT_WALKER("round",     make_walker(round_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
-  INIT_WALKER("truncate",  make_walker(truncate_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
-  INIT_WALKER("floor",     make_walker(floor_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
-  INIT_WALKER("ceiling",   make_walker(ceiling_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
-  INIT_WALKER("odd?",      make_walker(odd_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_NUMBER));
-  INIT_WALKER("even?",     make_walker(even_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_NUMBER));
-  INIT_WALKER("zero?",     make_walker(zero_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_NUMBER));
-  INIT_WALKER("positive?", make_walker(positive_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_NUMBER));
-  INIT_WALKER("negative?", make_walker(negative_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_NUMBER));
-  INIT_WALKER("not",       make_walker(not_p, NULL, NULL, 1, 1, R_BOOL, false, 0)); /* ?? */
+  INIT_WALKER("round",          make_walker(round_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("truncate",       make_walker(truncate_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("floor",          make_walker(floor_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("ceiling",        make_walker(ceiling_1, NULL, NULL, 1, 1, R_FLOAT, false, 1, R_NUMBER));
+  INIT_WALKER("odd?",           make_walker(odd_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_NUMBER));
+  INIT_WALKER("even?",          make_walker(even_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_NUMBER));
+  INIT_WALKER("zero?",          make_walker(zero_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_NUMBER));
+  INIT_WALKER("positive?",      make_walker(positive_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_NUMBER));
+  INIT_WALKER("negative?",      make_walker(negative_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_NUMBER));
+  INIT_WALKER("not",            make_walker(not_p, NULL, NULL, 1, 1, R_BOOL, false, 0)); /* ?? */
 
-  INIT_WALKER("throw",     make_walker(throw_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_SYMBOL));
+  INIT_WALKER("throw",          make_walker(throw_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_SYMBOL));
 
   /* -------- char funcs */
   INIT_WALKER("char-alphabetic?", make_walker(char_alphabetic_p, NULL, NULL, 1, 1, R_BOOL, false, 1, R_CHAR));

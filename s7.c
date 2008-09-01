@@ -42,11 +42,8 @@
  *   there's no arg number mismatch check for caller-defined functions!
  *   help for vars (objects)
  *   figure out how add syntax-rules, for-each, map, do
- *   radix arg for number->string
- *   get rid of define+ in *.scm
  *   the rest of the call-with funcs (call-with-input-string is done)
  *   can any part of quasiquote be optimized?
- *   tail recursion
  *
  *
  * define-type (make-type in ext)
@@ -184,8 +181,8 @@ typedef enum {OP_TOP_LEVEL, OP_T1LVL, OP_READ_INTERNAL, OP_VALUEPRINT, OP_EVAL, 
 	      OP_LET0, OP_LET1, OP_LET2, OP_LET0AST, OP_LET1AST, OP_LET2AST, 
 	      OP_LET0REC, OP_LET1REC, OP_LET2REC, OP_COND0, OP_COND1, OP_DELAY, OP_AND0, OP_AND1, 
 	      OP_OR0, OP_OR1, OP_C0STREAM, OP_C1STREAM, OP_DEFMACRO, OP_MACRO0, OP_MACRO1, OP_DEFINE_MACRO,
-	      OP_CASE0, OP_CASE1, OP_CASE2, OP_READ_EXPRESSION, OP_RDLIST, OP_RDDOT, OP_RDQUOTE, 
-	      OP_RDQQUOTE, OP_RDQQUOTEVEC, OP_RDUNQUOTE, OP_RDUQTSP, OP_RDVEC, OP_P0LIST, OP_P1LIST, 
+	      OP_CASE0, OP_CASE1, OP_CASE2, OP_READ_EXPRESSION, OP_READ_LIST, OP_READ_DOT, OP_READ_QUOTE, 
+	      OP_READ_QUASIQUOTE, OP_READ_QUASIQUOTE_VECTOR, OP_READ_UNQUOTE, OP_READ_UNQUOTE_SPLICING, OP_READ_VEC, OP_P0LIST, OP_P1LIST, 
 	      OP_PVECFROM, OP_SAVE_FORCED, OP_READ_RETURN_EXPRESSION, 
 	      OP_READ_POP_AND_RETURN_EXPRESSION, OP_LOAD_RETURN_IF_EOF, OP_LOAD_CLOSE_AND_POP_IF_EOF, 
 	      OP_EVAL_STRING, OP_EVAL_STRING_DONE, OP_QUIT, OP_CATCH, OP_DYNAMIC_WIND, OP_MAX_DEFINED
@@ -300,6 +297,9 @@ typedef struct s7_cell {
     struct {
       struct s7_cell *car;
       struct s7_cell *cdr;
+      /* num is the biggest entry here = 20 bytes, so there's a lot of unused space in most entries */
+      /*   so even with 64 bit pointers, we have room here for an int */
+      int line;
     } cons;
     
     struct {
@@ -359,10 +359,9 @@ struct s7_scheme {
   /* global s7_pointers to special symbols */
   s7_pointer LAMBDA;          /* syntax lambda */
   s7_pointer QUOTE;           /* syntax quote */
-  
-  s7_pointer QQUOTE;          /* symbol quasiquote */
+  s7_pointer QUASIQUOTE;      /* symbol quasiquote */
   s7_pointer UNQUOTE;         /* symbol unquote */
-  s7_pointer UNQUOTESP;       /* symbol unquote-splicing */
+  s7_pointer UNQUOTE_SPLICING;/* symbol unquote-splicing */
   s7_pointer FEED_TO;         /* => */
   s7_pointer SET_OBJECT;      /* object set method */
   
@@ -479,6 +478,7 @@ static const char *type_names[T_LAST_TYPE + 1] = {
 #define cadaar(p)                     car(cdr(car(car(p))))
 #define cadddr(p)                     car(cdr(cdr(cdr(p))))
 #define cddddr(p)                     cdr(cdr(cdr(cdr(p))))
+#define pair_line_number(p)           (p)->object.cons.line
 
 #define string_value(p)               ((p)->object.string.svalue)
 #define string_length(p)              ((p)->object.string.length)
@@ -2791,6 +2791,29 @@ static bool s7_is_zero(s7_pointer x)
 }
 
 
+static void num2str(char *p, s7_Int n, int radix)
+{
+  static char dignum[] = "0123456789abcdef";
+  int i, sign, len, end = 0;
+  if ((radix < 2) || (radix > 16))
+    return;
+  sign = (n < 0);
+  n = abs(n);
+  len = (int)(floor(log(n) / log(radix)));
+  if (sign)
+    {
+      p[0] = '-';
+      len++;
+      end++;
+    }
+  p[len + 1] = '\0';
+  for (i = len; i >= end; i--)
+    {
+      p[i] = dignum[n % radix];
+      n /= radix;
+    }
+}
+
 char *s7_number_to_string(s7_scheme *sc, s7_pointer obj, int radix)
 {
   char *p;
@@ -2799,19 +2822,26 @@ char *s7_number_to_string(s7_scheme *sc, s7_pointer obj, int radix)
   switch (object_number_type(obj))
     {
     case NUM_INT:
-      if (radix == 10)
-	snprintf(p, 256, s7_Int_d, s7_integer(obj));
-      else
+      switch (radix)
 	{
-	  if (radix == 8)
-	    {
-	      bool sign;
-	      unsigned int x;
-	      sign = s7_is_negative(obj);
-	      x = (unsigned int)abs(s7_integer(obj));
-	      snprintf(p, 256, "%s%o", (sign) ? "-" : "", x);
-	    }
-	  else snprintf(p, 256, "%llx", s7_integer(obj));
+	case 10:
+	  snprintf(p, 256, s7_Int_d, s7_integer(obj));
+	  break;
+	case 8:
+	  {
+	    bool sign;
+	    unsigned int x;
+	    sign = s7_is_negative(obj);
+	    x = (unsigned int)abs(s7_integer(obj));
+	    snprintf(p, 256, "%s%o", (sign) ? "-" : "", x);
+	  }
+	  break;
+	case 16:
+	  snprintf(p, 256, "%llx", s7_integer(obj));
+	  break;
+	default:
+	  num2str(p, s7_integer(obj), radix);
+	  break;
 	}
       break;
 
@@ -2858,10 +2888,8 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
     {
       if (s7_is_integer(cadr(args)))
 	radix = s7_integer(cadr(args));
-      if ((radix != 10) &&
-	  (radix != 8) &&
-	  (radix != 16))
-	return(s7_out_of_range_error(sc, "number->string", 2, cadr(args), "8, 10, or 16"));
+      if ((radix < 2) || (radix > 16))
+	return(s7_out_of_range_error(sc, "number->string", 2, cadr(args), "between 2 and 16"));
     }
   else radix = 10;
   res = s7_number_to_string(sc, car(args), radix);
@@ -2996,7 +3024,11 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix)
 
       if (q[len - 1] != 'i')
 	return(s7_make_symbol(sc, string_downcase(q)));
-      q[len - 1] = '\0'; /* remove 'i' */
+
+      /* look for cases like 1+i */
+      if ((q[len - 2] == '+') || (q[len - 2] == '-'))
+	q[len - 1] = '1';
+      else q[len - 1] = '\0'; /* remove 'i' */
       
       if (has_previous_dec_point)
 	{
@@ -5895,7 +5927,7 @@ static char *slashify_string(s7_scheme *sc, const char *p)
   s[j++] = '"';
   for (i = 0; i < len; i++) 
     {
-      if (p[i] == 0xff || p[i] == '"' || p[i] < ' ' || p[i] == '\\') 
+      if ((p[i] == 0xff) || (p[i] == '"') || (p[i] < ' ') || (p[i] == '\\'))
 	{
 	  s[j++] = '\\';
 	  switch(p[i]) 
@@ -6149,12 +6181,9 @@ static char *s7_list_to_c_string(s7_scheme *sc, s7_pointer lst)
       bufsize += safe_strlen(elements[i]);
     }
 
-#if S7_DEBUGGING
-  if (i != len) fprintf(stderr, "list->string i: %d, len: %d\n", i, len);
-#endif
-
   bufsize += (128 + len); /* len spaces */
   buf = (char *)CALLOC(bufsize, sizeof(char));
+
   sprintf(buf, "(");
   for (i = 0; i < len - 1; i++)
     {
@@ -6420,7 +6449,7 @@ static s7_pointer cons_1(s7_scheme *sc, s7_pointer a, s7_pointer b, bool immutab
 }
 
 
-s7_pointer s7_immutable_cons_1(s7_scheme *sc, s7_pointer a, s7_pointer b, const char *function, int line)
+s7_pointer s7_immutable_cons(s7_scheme *sc, s7_pointer a, s7_pointer b)
 {
   return(cons_1(sc, a, b, true));
 }
@@ -6475,9 +6504,18 @@ s7_pointer s7_set_cdr(s7_pointer p, s7_pointer q)
 
 s7_pointer s7_list_ref(s7_scheme *sc, s7_pointer lst, int num)
 {
+  int i;
+  s7_pointer x;
+
   if (num == 0)
     return(s7_car(lst));
-  return(s7_list_ref(sc, s7_cdr(lst), num - 1));
+  if (num < 0)
+    return(sc->NIL);
+  for (x = lst, i = 0; (i < num) && (s7_is_pair(x)); i++, x = cdr(x)) {}
+  if ((i == num) &&
+      (s7_is_pair(x)))
+    return(car(x));
+  return(sc->NIL);
 }
 
 s7_pointer s7_list_set(s7_scheme *sc, s7_pointer lst, int num, s7_pointer val)
@@ -6626,8 +6664,9 @@ static s7_pointer g_list_ref(s7_scheme *sc, s7_pointer args)
   s7_pointer p;
   if (!is_pair(car(args)))
     return(s7_wrong_type_arg_error(sc, "list-ref", 1, car(args), "a pair"));
-  if (!s7_is_integer(cadr(args)))
-    return(s7_wrong_type_arg_error(sc, "list-ref", 2, cadr(args), "an integer"));
+  if ((!s7_is_integer(cadr(args))) ||
+      (s7_integer(cadr(args)) < 0))
+    return(s7_wrong_type_arg_error(sc, "list-ref", 2, cadr(args), "a non-negative integer"));
 
   index = s7_integer(cadr(args));
   if (index < 0)
@@ -6636,6 +6675,8 @@ static s7_pointer g_list_ref(s7_scheme *sc, s7_pointer args)
   for (i = 0, p = car(args); (i < index) && (p != sc->NIL); i++, p = cdr(p)) {}
   if (p == sc->NIL)
     return(s7_out_of_range_error(sc, "list-ref", 2, cadr(args), "less than list length"));
+  if (!s7_is_pair(p))
+    return(s7_wrong_type_arg_error(sc, "list-ref", i, p, "a proper list"));
 
   return(car(p));
 }
@@ -6648,8 +6689,9 @@ static s7_pointer g_list_set(s7_scheme *sc, s7_pointer args)
   s7_pointer p;
   if (!is_pair(car(args)))
     return(s7_wrong_type_arg_error(sc, "list-set!", 1, car(args), "a pair"));
-  if (!s7_is_integer(cadr(args)))
-    return(s7_wrong_type_arg_error(sc, "list-set!", 2, cadr(args), "an integer"));
+  if ((!s7_is_integer(cadr(args))) ||
+      (s7_integer(cadr(args)) < 0))
+    return(s7_wrong_type_arg_error(sc, "list-set!", 2, cadr(args), "a non-negative integer"));
 
   index = s7_integer(cadr(args));
   if (index < 0)
@@ -6991,6 +7033,18 @@ static s7_pointer g_append(s7_scheme *sc, s7_pointer args)
     }
   return(sc->x);
 }
+
+/* -------- list-line-number -------- */
+
+static s7_pointer g_list_line_number(s7_scheme *sc, s7_pointer args)
+{
+  #define H_list_line_number "(list-line-number lst) returns the line number it thinks lst occurred at"
+  if (s7_is_pair(car(args)))
+    return(s7_make_integer(sc, pair_line_number(car(args))));
+  return(sc->F);
+}
+
+
 
 
 
@@ -8193,7 +8247,7 @@ static void assign_syntax(s7_scheme *sc, const char *name, opcode_t op)
   syntax_opcode(x) = small_int(sc, (int)op);
 }
 
-s7_pointer s7_call_1(s7_scheme *sc, s7_pointer func, s7_pointer args, const char *file, const char *function, int line)
+s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
 { 
   /*
   stack_reset(sc); 
@@ -8203,8 +8257,6 @@ s7_pointer s7_call_1(s7_scheme *sc, s7_pointer func, s7_pointer args, const char
    *   and if we reset the stack, the previously running evaluation steps off the end
    *   of the stack == segfault. 
    */
-
-  /* fprintf(stderr, "%s %s[%d] s7_call %p...(%d, %p %p)\n", file, function, line, func, sc->stack_top, sc->code, sc->args); */
 
   if (sc->stack_top == 0)
     {
@@ -8230,6 +8282,12 @@ static s7_pointer g_tracing(s7_scheme *sc, s7_pointer a)
   return(old_val);
 }
 
+static s7_pointer g_scheme_implementation(s7_scheme *sc, s7_pointer a)
+{
+  #define H_scheme_implementation "(scheme-implementation) returns some string describing the current S7"
+  return(s7_make_string(sc, "s7 " S7_VERSION ", " S7_DATE));
+}
+
 
 
 
@@ -8241,6 +8299,13 @@ static s7_pointer g_tracing(s7_scheme *sc, s7_pointer a)
 /* all explicit write-* in eval assume current-output-port -- tracing, error fallback handling, etc */
 /*   internal reads assume sc->input_port is the input port */
 
+static s7_pointer remember_line(s7_scheme *sc, s7_pointer obj)
+{
+  if ((sc->input_port != sc->NIL) && 
+      (is_file_port(sc->input_port)))
+    obj->object.cons.line = port_line_number(sc->input_port);
+  return(obj);
+}
 
 static void eval(s7_scheme *sc, opcode_t first_op) 
 {
@@ -8966,7 +9031,8 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  pop_stack(sc, sc->value);
 	  goto START;
 	}
-      push_stack(sc, OP_AND1, sc->NIL, cdr(sc->code));
+      if (cdr(sc->code) != sc->NIL)
+	push_stack(sc, OP_AND1, sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
       goto EVAL;
       
@@ -8993,7 +9059,8 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  pop_stack(sc, sc->value);
 	  goto START;
 	}
-      push_stack(sc, OP_OR1, sc->NIL, cdr(sc->code));
+      if (cdr(sc->code) != sc->NIL)
+	push_stack(sc, OP_OR1, sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
       goto EVAL;
 
@@ -9239,7 +9306,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 
 	case TOK_VEC:
-	  push_stack(sc, OP_RDVEC, sc->NIL, sc->NIL);
+	  push_stack(sc, OP_READ_VEC, sc->NIL, sc->NIL);
 	  /* fall through */
 	  
 	case TOK_LPAREN:
@@ -9260,13 +9327,13 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 		{
 		  if (is_input_port(sc->input_port))
 		    port_paren_depth(sc->input_port)++;
-		  push_stack(sc, OP_RDLIST, sc->NIL, sc->NIL);
+		  push_stack(sc, OP_READ_LIST, sc->NIL, sc->NIL);
 		  goto READ_EXPRESSION;
 		}
 	    }
 	  
 	case TOK_QUOTE:
-	  push_stack(sc, OP_RDQUOTE, sc->NIL, sc->NIL);
+	  push_stack(sc, OP_READ_QUOTE, sc->NIL, sc->NIL);
 	  sc->tok = token(sc, sc->input_port);
 	  goto READ_EXPRESSION;
 	  
@@ -9274,20 +9341,20 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  sc->tok = token(sc, sc->input_port);
 	  if (sc->tok== TOK_VEC) 
 	    {
-	      push_stack(sc, OP_RDQQUOTEVEC, sc->NIL, sc->NIL);
+	      push_stack(sc, OP_READ_QUASIQUOTE_VECTOR, sc->NIL, sc->NIL);
 	      sc->tok= TOK_LPAREN;
 	      goto READ_EXPRESSION;
 	    } 
-	  else push_stack(sc, OP_RDQQUOTE, sc->NIL, sc->NIL);
+	  else push_stack(sc, OP_READ_QUASIQUOTE, sc->NIL, sc->NIL);
 	  goto READ_EXPRESSION;
 	  
 	case TOK_COMMA:
-	  push_stack(sc, OP_RDUNQUOTE, sc->NIL, sc->NIL);
+	  push_stack(sc, OP_READ_UNQUOTE, sc->NIL, sc->NIL);
 	  sc->tok = token(sc, sc->input_port);
 	  goto READ_EXPRESSION;
 	  
 	case TOK_ATMARK:
-	  push_stack(sc, OP_RDUQTSP, sc->NIL, sc->NIL);
+	  push_stack(sc, OP_READ_UNQUOTE_SPLICING, sc->NIL, sc->NIL);
 	  sc->tok = token(sc, sc->input_port);
 	  goto READ_EXPRESSION;
 	  
@@ -9336,7 +9403,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       break;
       
 
-    case OP_RDLIST: 
+    case OP_READ_LIST: 
       sc->args = cons(sc, sc->value, sc->args);
       sc->tok = token(sc, sc->input_port);
       if (sc->tok == TOK_RPAREN) 
@@ -9349,14 +9416,14 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  if ((c != '\n') && (c != EOF))
 	    backchar(sc, c, sc->input_port);
 	    
-	  pop_stack(sc, s7_reverse_in_place(sc, sc->NIL, sc->args));
+	  pop_stack(sc, remember_line(sc, s7_reverse_in_place(sc, sc->NIL, sc->args)));
 	  goto START;
 	} 
       else 
 	{
 	  if (sc->tok == TOK_DOT) 
 	    {
-	      push_stack(sc, OP_RDDOT, sc->args, sc->NIL);
+	      push_stack(sc, OP_READ_DOT, sc->args, sc->NIL);
 	      sc->tok = token(sc, sc->input_port);
 	      goto READ_EXPRESSION;
 	    } 
@@ -9364,19 +9431,29 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	    {
 	      if (sc->tok == TOK_EOF)
 		{
+		  /* `(+ 2 3) as a stand-alone expression confuses the close paren check */
+		  if ((sc->stack_top > 4) &&
+		      ((opcode_t)s7_integer(vector_element(sc->stack, sc->stack_top - 1)) == OP_READ_QUASIQUOTE))
+		    {
+		      pop_stack(sc, sc->code);
+		      goto START;
+
+		      /* TODO: fix unlisted quasiquote */
+		    }
+
 		  pop_stack(sc, eval_error(sc, "missing close paren?", sc->NIL));
 		  goto START;
 		}
 	      else
 		{
-		  push_stack(sc, OP_RDLIST, sc->args, sc->NIL);;
+		  push_stack(sc, OP_READ_LIST, sc->args, sc->NIL);;
 		  goto READ_EXPRESSION;
 		}
 	    }
 	}
       
 
-    case OP_RDDOT:
+    case OP_READ_DOT:
       if (token(sc, sc->input_port) != TOK_RPAREN)
 	{
 	  pop_stack(sc, eval_error(sc, "syntax error: illegal dot expression", sc->code));
@@ -9392,36 +9469,38 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	}
       
 
-    case OP_RDQUOTE:
+    case OP_READ_QUOTE:
       pop_stack(sc, cons(sc, sc->QUOTE, cons(sc, sc->value, sc->NIL)));
       goto START;      
       
 
-    case OP_RDQQUOTE:
-      pop_stack(sc, cons(sc, sc->QQUOTE, cons(sc, sc->value, sc->NIL)));
+    case OP_READ_QUASIQUOTE:
+      pop_stack(sc, cons(sc, sc->QUASIQUOTE, cons(sc, sc->value, sc->NIL)));
       goto START;
       
 
-    case OP_RDQQUOTEVEC:
+    case OP_READ_QUASIQUOTE_VECTOR:
       pop_stack(sc, cons(sc, s7_make_symbol(sc, "apply"),
 			 cons(sc, s7_make_symbol(sc, "vector"), 
-			      cons(sc, cons(sc, sc->QQUOTE, 
-					    cons(sc, sc->value, sc->NIL)),
+			      cons(sc, 
+				   cons(sc, 
+					sc->QUASIQUOTE, 
+					cons(sc, sc->value, sc->NIL)),
 				   sc->NIL))));
       goto START;
       
 
-    case OP_RDUNQUOTE:
+    case OP_READ_UNQUOTE:
       pop_stack(sc, cons(sc, sc->UNQUOTE, cons(sc, sc->value, sc->NIL)));
       goto START;
       
 
-    case OP_RDUQTSP:
-      pop_stack(sc, cons(sc, sc->UNQUOTESP, cons(sc, sc->value, sc->NIL)));
+    case OP_READ_UNQUOTE_SPLICING:
+      pop_stack(sc, cons(sc, sc->UNQUOTE_SPLICING, cons(sc, sc->value, sc->NIL)));
       goto START;
       
 
-    case OP_RDVEC:
+    case OP_READ_VEC:
       sc->args = sc->value;
       pop_stack(sc, g_vector(sc, sc->args));
       goto START;
@@ -9447,7 +9526,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  sc->args = cadr(sc->args);
 	  goto P0LIST;
 	} 
-      else if (car(sc->args) == sc->QQUOTE && ok_abbrev(cdr(sc->args))) 
+      else if (car(sc->args) == sc->QUASIQUOTE && ok_abbrev(cdr(sc->args))) 
 	{
 	  write_string(sc, "`", sc->output_port);
 	  sc->args = cadr(sc->args);
@@ -9459,7 +9538,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  sc->args = cadr(sc->args);
 	  goto P0LIST;
 	} 
-      else if (car(sc->args) == sc->UNQUOTESP && ok_abbrev(cdr(sc->args))) 
+      else if (car(sc->args) == sc->UNQUOTE_SPLICING && ok_abbrev(cdr(sc->args))) 
 	{
 	  write_string(sc, ",@", sc->output_port);
 	  sc->args = cadr(sc->args);
@@ -9604,6 +9683,8 @@ s7_scheme *s7_init(void)
 	free_s7_cell(sc, i);
       }
   }
+
+  /* fprintf(stderr, "cell: %d\n", sizeof(s7_cell)); */ /* 24 */
   
   /* this has to precede s7_make_* allocations */
   sc->protected_objects = s7_make_vector(sc, INITIAL_PROTECTED_OBJECTS_SIZE);
@@ -9652,7 +9733,6 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "lambda",      OP_LAMBDA);
   assign_syntax(sc, "quote",       OP_QUOTE);
   assign_syntax(sc, "define",      OP_DEF0);
-  assign_syntax(sc, "define+",     OP_DEF0); /* sigh -- this should be removed somehow */
   assign_syntax(sc, "if",          OP_IF0);
   assign_syntax(sc, "begin",       OP_BEGIN);
   assign_syntax(sc, "set!",        OP_SET0);
@@ -9674,12 +9754,12 @@ s7_scheme *s7_init(void)
   typeflag(sc->LAMBDA) |= (T_IMMUTABLE | T_CONSTANT); 
   sc->QUOTE = s7_make_symbol(sc, "quote");
   typeflag(sc->QUOTE) |= (T_IMMUTABLE | T_CONSTANT); 
-  sc->QQUOTE = s7_make_symbol(sc, "quasiquote");
-  typeflag(sc->QQUOTE) |= (T_IMMUTABLE | T_CONSTANT); 
+  sc->QUASIQUOTE = s7_make_symbol(sc, "quasiquote");
+  typeflag(sc->QUASIQUOTE) |= (T_IMMUTABLE | T_CONSTANT); 
   sc->UNQUOTE = s7_make_symbol(sc, "unquote");
   typeflag(sc->UNQUOTE) |= (T_IMMUTABLE | T_CONSTANT); 
-  sc->UNQUOTESP = s7_make_symbol(sc, "unquote-splicing");
-  typeflag(sc->UNQUOTESP) |= (T_IMMUTABLE | T_CONSTANT); 
+  sc->UNQUOTE_SPLICING = s7_make_symbol(sc, "unquote-splicing");
+  typeflag(sc->UNQUOTE_SPLICING) |= (T_IMMUTABLE | T_CONSTANT); 
   sc->FEED_TO = s7_make_symbol(sc, "=>");
   typeflag(sc->FEED_TO) |= (T_IMMUTABLE | T_CONSTANT); 
   #define set_object_name "(generalized set!)"
@@ -9904,6 +9984,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "list-ref",            g_list_ref,            2, 0, false, H_list_ref);
   s7_define_function(sc, "list-set!",           g_list_set,            3, 0, false, H_list_set);
   s7_define_function(sc, "list-tail",           g_list_tail,           2, 0, false, H_list_tail);
+  s7_define_function(sc, "list-line-number",    g_list_line_number,    1, 0, false, H_list_line_number);
 
 
   /* vectors */
@@ -9950,6 +10031,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "eqv?",                g_is_eqv,              2, 0, false, H_is_eqv);
   s7_define_function(sc, "equal?",              g_is_equal,            2, 0, false, H_is_equal);
 
+  s7_define_function(sc, "scheme-implementation", g_scheme_implementation, 0, 0, false, H_scheme_implementation);
   s7_define_function(sc, set_object_name,       g_set_object,          1, 0, true, "internal setter redirection");
   s7_define_function(sc, "make-procedure-with-setter", g_make_procedure_with_setter, 2, 0, false, "...");
   s7_define_function(sc, "procedure-with-setter?", g_is_procedure_with_setter, 1, 0, false, H_is_procedure_with_setter);

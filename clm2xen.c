@@ -5391,7 +5391,7 @@ static XEN g_env_interp(XEN x, XEN env1) /* "env" causes trouble in Objective-C!
  *   Both versions seem to work ok with recursive env-any calls.
  */
 
-static XEN current_connect_func = XEN_FALSE;
+static XEN current_connect_func;
 
 static Float connect_func(Float val)
 {
@@ -8399,6 +8399,10 @@ void mus_xen_init(void)
 #endif
 {
   mus_initialize();
+
+#if (!HAVE_NESTED_FUNCTIONS)
+  current_connect_func = XEN_FALSE;
+#endif
 
 #if HAVE_S7
   mus_xen_tag = XEN_MAKE_OBJECT_TYPE("<mus>", print_mus_xen, free_mus_xen, s7_equalp_mus_xen, mark_mus_xen, mus_xen_apply, NULL);

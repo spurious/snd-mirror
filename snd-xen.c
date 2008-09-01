@@ -3059,7 +3059,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(define (1+ x) (+ x 1))");
   XEN_EVAL_C_STRING("(define (1- x) (- x 1))");
   XEN_EVAL_C_STRING("(defmacro while (cond . body) `(do () ((not ,cond)) ,@body))");
-
+  XEN_EVAL_C_STRING("(defmacro define+ args `(define ,@args))"); /* for Gauche's benefit */
 #endif
 
 #if HAVE_SCHEME && USE_GTK && (!HAVE_GTK_ADJUSTMENT_GET_UPPER)

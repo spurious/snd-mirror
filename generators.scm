@@ -6145,7 +6145,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	  ((= i 256))
 	(if (fneq (vct-ref (moving-spectrum-amps sv) i) (vct-ref (phase-vocoder-amps pv) i))
 	    (snd-display ";~D amps: ~A ~A" i (vct-ref (moving-spectrum-amps sv) i) (vct-ref (phase-vocoder-amps pv) i)))
-	(if (fneq (vct-ref (moving-spectrum-phases sv) i) (vct-ref (phase-vocoder-phases pv) i))
+	(if (> (abs (- (vct-ref (moving-spectrum-phases sv) i) (vct-ref (phase-vocoder-phases pv) i))) .075)
 	    (snd-display ";~D phases: ~A ~A" i (vct-ref (moving-spectrum-phases sv) i) (vct-ref (phase-vocoder-phases pv) i)))
 	(if (fneq (vct-ref (moving-spectrum-freqs sv) i) (vct-ref (phase-vocoder-phase-increments pv) i))
 	    (snd-display ";~D freqs: ~A ~A" i (vct-ref (moving-spectrum-freqs sv) i) (vct-ref (phase-vocoder-phase-increments pv) i)))))))

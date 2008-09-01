@@ -2545,6 +2545,7 @@ int main(int argc, char **argv)
   }
 
   fprintf(fp, "\n\n\
+(test (rationalize 0.5 0.02) 1/2)\n\
 (test (gcd) 0)\n\
 (test (lcm) 1)\n\
 (test (gcd 1.4 2.3) 'error)\n\
@@ -2620,6 +2621,9 @@ int main(int argc, char **argv)
 (test (real-part 2.0) 2.0)\n\
 (test (imag-part -2.0) 0.0)\n\
 (test (real-part 2/3) 2/3)\n\
+(test (imag-part 1+i) 1)\n\
+(test (imag-part 0+i) 1)\n\
+(test (imag-part 1-i) -1)\n\
 (test (imag-part 2/3) 0)\n");
 
   k = 0;

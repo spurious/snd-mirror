@@ -1403,7 +1403,7 @@ if test "$with_s7" = yes && test "$ac_snd_have_extension_language" = yes ; then
   AC_MSG_WARN([You asked for both s7 and $LOCAL_LANGUAGE -- $LOCAL_LANGUAGE will be used])
 fi
 
-if test "$with_s7" = yes && test "$ac_with_extension_language" != no && test "$ac_snd_have_extension_language" != yes ; then
+if test "$with_s7" = yes && test "$with_extension_language" != no && test "$ac_snd_have_extension_language" != yes ; then
   AC_DEFINE(HAVE_S7)	
   AC_DEFINE(HAVE_SCHEME)	
   ac_snd_have_extension_language=yes
@@ -1430,7 +1430,7 @@ if test "$with_guile" = yes && test "$ac_snd_have_extension_language" = yes ; th
   AC_MSG_WARN([You asked for both Guile and $LOCAL_LANGUAGE -- $LOCAL_LANGUAGE will be used])
 fi
 
-if test "$with_guile" != no && test "$ac_with_extension_language" != no && test "$ac_snd_have_extension_language" != yes ; then
+if test "$with_guile" != no && test "$with_extension_language" != no && test "$ac_snd_have_extension_language" != yes ; then
 
 XEN_LIBS=""
 XEN_CFLAGS=""
@@ -1697,6 +1697,9 @@ case "$host" in
 	AC_DEFINE(MUS_LINUX)
         LDSO_FLAGS="-shared"
         LIBS="$LIBS -lm"
+	if test "$ac_cv_header_dlfcn_h" = yes ; then 
+	  LDFLAGS="$LDFLAGS -ldl" 
+	fi 
 	if test "$GCC" = yes ; then
 	  SO_FLAGS="-fPIC $SO_FLAGS"
         fi

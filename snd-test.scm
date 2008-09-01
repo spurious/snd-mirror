@@ -77,6 +77,7 @@
 	(if (eq? prop 'arity)
 	    (procedure-arity func)
 	    (procedure-documentation func)))
+      (define (throw . args) (apply error args))
       (define (ash n count) ; slib
 	(if (negative? count)
 	    (let ((k (expt 2 (- count))))
@@ -97,10 +98,15 @@
 		 (car args)
 		 (apply format #f args))))
     (newline) 
-    (if (or (provided? 'snd-guile)
-	    (provided? 'snd-s7))
+    (if (provided? 'snd-guile)
 	(display str)
-	(display str (current-error-port))) ;turn off buffering?
+	(if (provided? 'snd-s7)
+	    (begin
+	      (display str)
+	      (if (and (pair? (cadr args))
+		       (not (= (list-line-number (cadr args)) 0)))
+		  (display (string-append " [" (number->string (list-line-number (cadr args))) "]"))))
+	    (display str (current-error-port)))) ;turn off buffering?
     (if (not (provided? 'snd-nogui))
 	(begin
 	  (snd-print #\newline)
@@ -3571,10 +3577,10 @@
 					  (throw 'read-write-error))))))))
 			   (lambda args 
 			     (begin 
-			       (snd-display ";read-write trouble: ~A ~A (~A != ~A)"
+			       (snd-display ";read-write trouble: ~A ~A (~A != ~A): ~A"
 					    (mus-data-format-name (car df-ht))
 					    (mus-header-type-name (cadr df-ht))
-					    v0 v1)
+					    v0 v1 args)
 			       (car args))))))))
 	    (list (list mus-bshort mus-next)
 		  (list mus-bfloat mus-aifc)
@@ -47125,8 +47131,7 @@ EDITS: 1
 	(ftsta '(lambda (y) (if (even? (inexact->exact (* y 2))) (+ y 1) (* y 2))) 3.0 4.0)
 	(itsta '(lambda (y) (if (number? y) 32)) 1.0 32)
 	(itsta '(lambda (y) (if (not (number? y)) 32 31)) 1.0 31)
-	(btsta '(lambda (y) (if (not (number? y)) (set! int-var 456) (set! int-var 654))) 1.0 654)
-	(if (not (= int-var 654)) (snd-display ";if set int-var: ~A" int-var))
+	(itsta '(lambda (y) (if (not (number? y)) (set! int-var 456) (set! int-var 654)) int-var) 1.0 654)
 	
 	(itst '(ash 2 3) 16)
 	(itst '(ash 16 -3) 2)
@@ -52330,98 +52335,98 @@ EDITS: 1
       (if *ws-finish*
 	  (snd-display ";ws error -220 caught interrupt? ~A" *ws-finish*)))
     
-    
-    (let ((current-threads (all-threads)))
-      (if (not (equal? current-threads (list (current-thread))))
-	  (snd-display ";ws error threaded start threads: ~A, current:~A" current-threads (current-thread)))
-      
-      (let ((tag (catch #t
-			(lambda ()
-			  (with-threaded-sound (:output "test.snd")
-					       (fm-violin 0 1 440 .1)
-					       (fm-violin .1 1 660 .1)
-					       (fm-violin .2 1 880 .1)
-					       (fm-violin .3 1 -220 .1)))
-			(lambda args args))))
-	
-	(if (or (not (list? tag))
-		(not (eq? (car tag) 'wrong-type-arg)))
-	    (snd-display ";ws-error threaded -220: ~A" tag))
-	(if (mus-output? *output*)
-	    (begin
-	      (snd-display ";ws-error threaded -220: *output*: ~A" *output*)
-	      (mus-close *output*)
-	      (set! *output* #f)))
-	(let ((prev (find-sound "test.snd")))
-	  (if (sound? prev)
-	      (begin
-		(snd-display ";ws error threaded -220 opened test.snd?")
-		(close-sound prev))))
-	(if *ws-finish*
-	    (snd-display ";ws error threaded -220 caught interrupt? ~A" *ws-finish*))
-	
-	(if (not (equal? current-threads (all-threads)))
-	    (snd-display ";ws error threaded -220 threads: ~A, current:~A, all: ~A" current-threads (current-thread) (all-threads))))
-      
-      (let ((tag (catch #t
-			(lambda ()
-			  (with-threaded-sound (:output "test.snd")
-					       (fm-violin .3 1 44220 .1)))
-			(lambda args args))))
-	
-	(if (or (not (list? tag))
-		(not (eq? (car tag) 'out-of-range)))
-	    (snd-display ";ws-error threaded -220 1: ~A" tag))
-	(if (mus-output? *output*)
-	    (begin
-	      (snd-display ";ws-error threaded -220 1: *output*: ~A" *output*)
-	      (mus-close *output*)
-	      (set! *output* #f)))
-	(let ((prev (find-sound "test.snd")))
-	  (if (sound? prev)
-	      (begin
-		(snd-display ";ws error threaded -220 1 opened test.snd?")
-		(close-sound prev))))
-	(if *ws-finish*
-	    (snd-display ";ws error threaded -220 1 caught interrupt? ~A" *ws-finish*))
-	
-	(if (not (equal? current-threads (all-threads)))
-	    (snd-display ";ws error threaded -220 1 threads: ~A, current:~A, all: ~A" current-threads (current-thread) (all-threads))))
-      
-      (let ((tag (catch #t
-			(lambda ()
-			  (with-threaded-sound (:output "test.snd" :reverb jc-reverb)
-					       (fm-violin 0 1 440 .1)
-					       (fm-violin .1 1 660 .1)
-					       (fm-violin .2 1 880 .1)
-					       (fm-violin .2 1 880 .1)
-					       (fm-violin .3 -1 220 .1)))
-			(lambda args args))))
-	
-	(if (or (not (list? tag))
-		(not (eq? (car tag) 'out-of-range)))
-	    (snd-display ";ws-error threaded -220 2: ~A" tag))
-	(if (mus-output? *output*)
-	    (begin
-	      (snd-display ";ws-error threaded -220 2: *output*: ~A" *output*)
-	      (mus-close *output*)
-	      (set! *output* #f)))
-	(if (mus-output? *reverb*)
-	    (begin
-	      (snd-display ";ws-error threaded -220 2: *reverb*: ~A" *reverb*)
-	      (mus-close *reverb*)
-	      (set! *reverb* #f)))
-	(let ((prev (find-sound "test.snd")))
-	  (if (sound? prev)
-	      (begin
-		(snd-display ";ws error threaded -220 2 opened test.snd?")
-		(close-sound prev))))
-	(if *ws-finish*
-	    (snd-display ";ws error threaded -220 2 caught interrupt? ~A" *ws-finish*))
-	
-	(if (not (equal? current-threads (all-threads)))
-	    (snd-display ";ws error threaded -220 2 threads: ~A, current:~A, all: ~A" current-threads (current-thread) (all-threads))))
-      )
+    (if (defined? 'all-threads)
+	(let ((current-threads (all-threads)))
+	  (if (not (equal? current-threads (list (current-thread))))
+	      (snd-display ";ws error threaded start threads: ~A, current:~A" current-threads (current-thread)))
+	  
+	  (let ((tag (catch #t
+			    (lambda ()
+			      (with-threaded-sound (:output "test.snd")
+						   (fm-violin 0 1 440 .1)
+						   (fm-violin .1 1 660 .1)
+						   (fm-violin .2 1 880 .1)
+						   (fm-violin .3 1 -220 .1)))
+			    (lambda args args))))
+	    
+	    (if (or (not (list? tag))
+		    (not (eq? (car tag) 'wrong-type-arg)))
+		(snd-display ";ws-error threaded -220: ~A" tag))
+	    (if (mus-output? *output*)
+		(begin
+		  (snd-display ";ws-error threaded -220: *output*: ~A" *output*)
+		  (mus-close *output*)
+		  (set! *output* #f)))
+	    (let ((prev (find-sound "test.snd")))
+	      (if (sound? prev)
+		  (begin
+		    (snd-display ";ws error threaded -220 opened test.snd?")
+		    (close-sound prev))))
+	    (if *ws-finish*
+		(snd-display ";ws error threaded -220 caught interrupt? ~A" *ws-finish*))
+	    
+	    (if (not (equal? current-threads (all-threads)))
+		(snd-display ";ws error threaded -220 threads: ~A, current:~A, all: ~A" current-threads (current-thread) (all-threads))))
+	  
+	  (let ((tag (catch #t
+			    (lambda ()
+			      (with-threaded-sound (:output "test.snd")
+						   (fm-violin .3 1 44220 .1)))
+			    (lambda args args))))
+	    
+	    (if (or (not (list? tag))
+		    (not (eq? (car tag) 'out-of-range)))
+		(snd-display ";ws-error threaded -220 1: ~A" tag))
+	    (if (mus-output? *output*)
+		(begin
+		  (snd-display ";ws-error threaded -220 1: *output*: ~A" *output*)
+		  (mus-close *output*)
+		  (set! *output* #f)))
+	    (let ((prev (find-sound "test.snd")))
+	      (if (sound? prev)
+		  (begin
+		    (snd-display ";ws error threaded -220 1 opened test.snd?")
+		    (close-sound prev))))
+	    (if *ws-finish*
+		(snd-display ";ws error threaded -220 1 caught interrupt? ~A" *ws-finish*))
+	    
+	    (if (not (equal? current-threads (all-threads)))
+		(snd-display ";ws error threaded -220 1 threads: ~A, current:~A, all: ~A" current-threads (current-thread) (all-threads))))
+	  
+	  (let ((tag (catch #t
+			    (lambda ()
+			      (with-threaded-sound (:output "test.snd" :reverb jc-reverb)
+						   (fm-violin 0 1 440 .1)
+						   (fm-violin .1 1 660 .1)
+						   (fm-violin .2 1 880 .1)
+						   (fm-violin .2 1 880 .1)
+						   (fm-violin .3 -1 220 .1)))
+			    (lambda args args))))
+	    
+	    (if (or (not (list? tag))
+		    (not (eq? (car tag) 'out-of-range)))
+		(snd-display ";ws-error threaded -220 2: ~A" tag))
+	    (if (mus-output? *output*)
+		(begin
+		  (snd-display ";ws-error threaded -220 2: *output*: ~A" *output*)
+		  (mus-close *output*)
+		  (set! *output* #f)))
+	    (if (mus-output? *reverb*)
+		(begin
+		  (snd-display ";ws-error threaded -220 2: *reverb*: ~A" *reverb*)
+		  (mus-close *reverb*)
+		  (set! *reverb* #f)))
+	    (let ((prev (find-sound "test.snd")))
+	      (if (sound? prev)
+		  (begin
+		    (snd-display ";ws error threaded -220 2 opened test.snd?")
+		    (close-sound prev))))
+	    (if *ws-finish*
+		(snd-display ";ws error threaded -220 2 caught interrupt? ~A" *ws-finish*))
+	    
+	    (if (not (equal? current-threads (all-threads)))
+		(snd-display ";ws error threaded -220 2 threads: ~A, current:~A, all: ~A" current-threads (current-thread) (all-threads))))
+	  ))
     
     
     ;; ---------------- catch 'mus-error (handled by with-sound, but no continuation -- appears to exit after cleaning up) ----------------      
@@ -52452,37 +52457,37 @@ EDITS: 1
       (if *ws-finish*
 	  (snd-display ";ws error bad env caught interrupt? ~A" *ws-finish*)))
     
-    
-    (let ((current-threads (all-threads)))
-      (if (not (equal? current-threads (list (current-thread))))
-	  (snd-display ";ws error threaded start 1 threads: ~A, current:~A" current-threads (current-thread)))
-      
-      (let ((tag (catch #t
-			(lambda ()
-			  (with-threaded-sound (:output "test.snd")
-					       (fm-violin 0 1 440 .1)
-					       (fm-violin .1 1 660 .1)
-					       (fm-violin .2 1 880 .1)
-					       (fm-violin .3 1 220 .1 :amp-env '(0 0 1 1 .5 1 0 0))))
-			(lambda args args))))
-	
-	(if (or (not (string? tag))
-		(not (string=? tag "test.snd")))
-	    (snd-display ";ws-error threaded bad env: ~A" tag))
-	(if (mus-output? *output*)
-	    (begin
-	      (snd-display ";ws-error threaded bad env: *output*: ~A" *output*)
-	      (mus-close *output*)
-	      (set! *output* #f)))
-	(let ((prev (find-sound "test.snd")))
-	  (if (not (sound? prev))
-	      (snd-display ";ws error threaded bad env did not open test.snd?")
-	      (close-sound prev)))
-	(if *ws-finish*
-	    (snd-display ";ws error threaded bad env caught interrupt? ~A" *ws-finish*)))
-      
-      (if (not (equal? current-threads (all-threads)))
-	  (snd-display ";ws error threaded bad env threads: ~A, current:~A, all: ~A" current-threads (current-thread) (all-threads))))
+    (if (defined? 'all-threads)
+	(let ((current-threads (all-threads)))
+	  (if (not (equal? current-threads (list (current-thread))))
+	      (snd-display ";ws error threaded start 1 threads: ~A, current:~A" current-threads (current-thread)))
+	  
+	  (let ((tag (catch #t
+			    (lambda ()
+			      (with-threaded-sound (:output "test.snd")
+						   (fm-violin 0 1 440 .1)
+						   (fm-violin .1 1 660 .1)
+						   (fm-violin .2 1 880 .1)
+						   (fm-violin .3 1 220 .1 :amp-env '(0 0 1 1 .5 1 0 0))))
+			    (lambda args args))))
+	    
+	    (if (or (not (string? tag))
+		    (not (string=? tag "test.snd")))
+		(snd-display ";ws-error threaded bad env: ~A" tag))
+	    (if (mus-output? *output*)
+		(begin
+		  (snd-display ";ws-error threaded bad env: *output*: ~A" *output*)
+		  (mus-close *output*)
+		  (set! *output* #f)))
+	    (let ((prev (find-sound "test.snd")))
+	      (if (not (sound? prev))
+		  (snd-display ";ws error threaded bad env did not open test.snd?")
+		  (close-sound prev)))
+	    (if *ws-finish*
+		(snd-display ";ws error threaded bad env caught interrupt? ~A" *ws-finish*)))
+	  
+	  (if (not (equal? current-threads (all-threads)))
+	      (snd-display ";ws error threaded bad env threads: ~A, current:~A, all: ~A" current-threads (current-thread) (all-threads)))))
     
     
     ;; ---------------- interrupt with-sound ----------------

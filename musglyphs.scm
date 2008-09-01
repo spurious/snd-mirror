@@ -135,7 +135,9 @@
 	    ps-snd ps-chn ps-ax))
 
 (define old-defvar defvar)
-(set! defvar define)
+(if (not (provided? 'snd-s7))
+    (set! defvar define)
+    (defmacro defvar args `(define ,@args)))
 
 (defmacro defun (name ignored-args . body)
   ;; in cmn-glyphs every defun has two args, the "score" and an optional "style"
@@ -174,7 +176,9 @@
 	 (apply (setter sound-comment) (list snd val))))))
 
 ;(load "loop.scm") ; Rick's loop implementation (cm/src/loop.scm)
-(define progn begin)
+(if (not (provided? 'snd-s7))
+    (define progn begin)
+    (defmacro progn args `(begin ,@args)))
 
 (load-from-path "cmn-glyphs.lisp")
 
