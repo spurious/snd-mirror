@@ -1796,103 +1796,74 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
 /* Trigonometric functions. FreeBSD's math library does not include the complex form of the trig funcs. */ 
  
 #if !HAVE_CSIN 
-double complex csin(double complex z) 
+static double complex csin(double complex z) 
 { 
   return sin(creal(z)) * cosh(cimag(z)) + (cos(creal(z)) * sinh(cimag(z))) * _Complex_I; 
 } 
 #endif 
  
 #if !HAVE_CCOS 
-double complex ccos(double complex z) 
+static double complex ccos(double complex z) 
 { 
   return cos(creal(z)) * cosh(cimag(z)) + (-sin(creal(z)) * sinh(cimag(z))) * _Complex_I; 
 } 
 #endif 
  
 #if !HAVE_CTAN 
-double complex ctan(double complex z) 
+static double complex ctan(double complex z) 
 { 
   return csin(z) / ccos(z); 
 } 
 #endif 
  
-#if !HAVE_CASIN 
-double complex casin(double complex z) 
-{ 
-  return -_Complex_I * clog(_Complex_I * z + csqrt(1.0 - z * z)); 
-} 
-#endif 
- 
-#if !HAVE_CACOS 
-double complex cacos(double complex z) 
-{ 
-  return -_Complex_I * clog(z + _Complex_I * csqrt(1.0 - z * z)); 
-} 
-#endif 
- 
-#if !HAVE_CATAN 
-double complex catan(double complex z) 
-{ 
-  return _Complex_I * clog((_Complex_I + z) / (_Complex_I - z)) / 2.0; 
-} 
-#endif 
- 
-
 /* Hyperbolic functions. */ 
  
 #if !HAVE_CSINH 
-double complex csinh(double complex z) 
+static double complex csinh(double complex z) 
 { 
   return sinh(creal(z)) * cos(cimag(z)) + (cosh(creal(z)) * sin(cimag(z))) * _Complex_I; 
 } 
 #endif 
  
 #if !HAVE_CCOSH 
-double complex ccosh(double complex z) 
+static double complex ccosh(double complex z) 
 { 
   return cosh(creal(z)) * cos(cimag(z)) + (sinh(creal(z)) * sin(cimag(z))) * _Complex_I; 
 } 
 #endif 
  
 #if !HAVE_CTANH 
-double complex ctanh(double complex z) 
+static double complex ctanh(double complex z) 
 { 
   return csinh(z) / ccosh(z); 
-} 
-#endif 
- 
-#if !HAVE_CASINH 
-double complex casinh(double complex z) 
-{ 
-  return clog(z + csqrt(1.0 + z * z)); 
-} 
-#endif 
- 
-#if !HAVE_CACOSH 
-double complex cacosh(double complex z) 
-{ 
-  return clog(z + csqrt(z * z - 1.0)); 
-} 
-#endif 
- 
-#if !HAVE_CATANH 
-double complex catanh(double complex z) 
-{ 
-  return clog((1.0 + z) / (1.0 - z)) / 2.0; 
 } 
 #endif 
  
 /* Exponential and logarithmic functions. */ 
  
 #if !HAVE_CEXP 
-double complex cexp(double complex z) 
+static double complex cexp(double complex z) 
 { 
   return exp(creal(z)) * cos(cimag(z)) + (exp(creal(z)) * sin(cimag(z))) * _Complex_I; 
 } 
 #endif 
  
+#if !HAVE_CARG 
+static double carg(double complex z) 
+{ 
+  return atan2(cimag(z), creal(z)); 
+} 
+#endif 
+ 
+#if !HAVE_CABS 
+double cabs(double complex z) 
+{ 
+  return hypot(creal(z), cimag(z)); 
+} 
+#endif 
+ 
 #if !HAVE_CLOG 
-double complex clog(double complex z) 
+static double complex clog(double complex z) 
 { 
   return log(fabs(cabs(z))) + carg(z) * _Complex_I; 
 } 
@@ -1901,7 +1872,7 @@ double complex clog(double complex z)
 /* Power functions. */ 
  
 #if !HAVE_CPOW 
-double complex cpow(double complex x, double complex y) 
+static double complex cpow(double complex x, double complex y) 
 { 
   double r = cabs(x); 
   double theta = carg(x); 
@@ -1914,8 +1885,15 @@ double complex cpow(double complex x, double complex y)
 } 
 #endif 
  
+#if !HAVE_CONJ 
+static double complex conj(double complex z) 
+{ 
+  return ~z; 
+} 
+#endif 
+
 #if !HAVE_CSQRT 
-double complex csqrt(double complex z) 
+static double complex csqrt(double complex z) 
 { 
   if (cimag(z) < 0.0) 
     return conj(csqrt(conj(z))); 
@@ -1928,29 +1906,51 @@ double complex csqrt(double complex z)
   } 
 } 
 #endif 
- 
-/* Absolute value and conjugates. */ 
- 
-#if !HAVE_CABS 
-double cabs(double complex z) 
+
+#if !HAVE_CASIN 
+static double complex casin(double complex z) 
 { 
-  return hypot(creal(z), cimag(z)); 
+  return -_Complex_I * clog(_Complex_I * z + csqrt(1.0 - z * z)); 
 } 
 #endif 
  
-#if !HAVE_CARG 
-double carg(double complex z) 
+#if !HAVE_CACOS 
+static double complex cacos(double complex z) 
 { 
-  return atan2(cimag(z), creal(z)); 
+  return -_Complex_I * clog(z + _Complex_I * csqrt(1.0 - z * z)); 
 } 
 #endif 
  
-#if !HAVE_CONJ 
-double complex conj(double complex z) 
+#if !HAVE_CATAN 
+static double complex catan(double complex z) 
 { 
-  return ~z; 
+  return _Complex_I * clog((_Complex_I + z) / (_Complex_I - z)) / 2.0; 
 } 
 #endif 
+ 
+#if !HAVE_CASINH 
+static double complex casinh(double complex z) 
+{ 
+  return clog(z + csqrt(1.0 + z * z)); 
+} 
+#endif 
+ 
+#if !HAVE_CACOSH 
+static double complex cacosh(double complex z) 
+{ 
+  return clog(z + csqrt(z * z - 1.0)); 
+} 
+#endif 
+ 
+#if !HAVE_CATANH 
+static double complex catanh(double complex z) 
+{ 
+  return clog((1.0 + z) / (1.0 - z)) / 2.0; 
+} 
+#endif 
+ 
+
+ 
  
 /* -------------------------------- */
 
@@ -2919,7 +2919,7 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer make_atom(s7_scheme *sc, char *q, int radix) 
 {
-  char c, *p, *slash = NULL, *plus = NULL;
+  char c, *p, *slash = NULL, *plus = NULL, *ex1 = NULL, *ex2 = NULL;
   bool has_dec_point = false, has_slash = false, has_i = false, has_previous_dec_point = false; 
   int has_plus_or_minus = 0;
   bool has_fp_exp = false;
@@ -2970,8 +2970,13 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix)
 	    }
 	  else 
 	    {
-	      if ((c == 'e') || (c == 'E')) 
+	      if ((c == 'e') || (c == 'E') ||
+		  (c == 'd') || (c == 'f') || (c == 's'))
+		/* sigh -- what's the difference between these endless (e s f d l) exponent chars? */
 		{
+		  if (!ex1)
+		    ex1 = p;
+		  else ex2 = p;
 		  if (!has_fp_exp) 
 		    {
 		      has_dec_point = true; /* decimal point illegal from now on */
@@ -3045,6 +3050,9 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix)
       if ((q[len - 2] == '+') || (q[len - 2] == '-'))
 	q[len - 1] = '1';
       else q[len - 1] = '\0'; /* remove 'i' */
+
+      if (ex1) (*ex1) = 'e';
+      if (ex2) (*ex2) = 'e';
       
       if (has_previous_dec_point)
 	{
@@ -3087,6 +3095,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix)
       if ((has_plus_or_minus != 0) || (has_previous_dec_point))
 	return(s7_make_symbol(sc, string_downcase(q)));
 
+      if (ex1) (*ex1) = 'e';
       return(s7_make_real(sc, atof(q)));
     }
   
@@ -3588,7 +3597,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	  if (s7_integer(sc->y) == 0)
 	    return(s7_make_integer(sc, 1));
 
-	  if (TOP_LOG > abs(s7_integer(sc->y)) * log(abs(s7_integer(sc->x)))) /* else over/underflow */
+	  if (TOP_LOG > abs(s7_integer(sc->y)) * log(abs(s7_integer(sc->x)))) /* else over/underflow; a^b < 2^63 or > 2^-63 */
 	    {
 	      if ((s7_integer(sc->y) > 0) || 
 		  (abs(s7_integer(sc->x)) == 1))
@@ -5138,12 +5147,12 @@ static s7_pointer s7_make_input_file(s7_scheme *sc, const char *name, FILE *fp)
   return(x);
 }
 
-s7_pointer s7_open_input_file(s7_scheme *sc, const char *name)
+s7_pointer s7_open_input_file(s7_scheme *sc, const char *name, const char *mode)
 {
   FILE *fp;
   /* see if we can open this file before allocating a port */
 
-  fp = fopen(name, "r");
+  fp = fopen(name, mode);
   if (!fp)
     return(s7_file_error(sc, "open-input-file", "can't open", name));
   
@@ -5153,24 +5162,30 @@ s7_pointer s7_open_input_file(s7_scheme *sc, const char *name)
 
 static s7_pointer g_open_input_file(s7_scheme *sc, s7_pointer args)
 {
-  #define H_open_input_file "(open-input-file filename) opens filename for reading"
+  #define H_open_input_file "(open-input-file filename :optional mode) opens filename for reading"
   s7_pointer name = car(args);
   if (!s7_is_string(name))
     return(s7_wrong_type_arg_error(sc, "open-input-file", 1, car(args), "a string (a filename)"));
-  
-  return(s7_open_input_file(sc, s7_string(name)));
+
+  if (s7_is_pair(cdr(args)))
+    {
+      if (!s7_is_string(cadr(args)))
+	return(s7_wrong_type_arg_error(sc, "open-input-file", 1, cadr(args), "a string (a mode)"));
+      return(s7_open_input_file(sc, s7_string(name), s7_string(cadr(args))));
+    }
+  return(s7_open_input_file(sc, s7_string(name), "r"));
 }
 
 
 /* -------- open-output-file -------- */
 
-s7_pointer s7_open_output_file(s7_scheme *sc, const char *name)
+s7_pointer s7_open_output_file(s7_scheme *sc, const char *name, const char *mode)
 {
   FILE *fp;
   s7_pointer x;
   /* see if we can open this file before allocating a port */
 
-  fp = fopen(name, "w");
+  fp = fopen(name, mode);
   if (!fp)
     return(s7_file_error(sc, "open-output-file", "can't open", name));
 
@@ -5196,12 +5211,19 @@ s7_pointer s7_open_output_file(s7_scheme *sc, const char *name)
 
 static s7_pointer g_open_output_file(s7_scheme *sc, s7_pointer args)
 {
-  #define H_open_output_file "(open-output-file filename) opens filename for writing"
+  #define H_open_output_file "(open-output-file filename :optional mode) opens filename for writing"
   s7_pointer name = car(args);
   if (!s7_is_string(name))
     return(s7_wrong_type_arg_error(sc, "open-output-file", 1, car(args), "a string (a filename)"));
+
+  if (s7_is_pair(cdr(args)))
+    {
+      if (!s7_is_string(cadr(args)))
+	return(s7_wrong_type_arg_error(sc, "open-output-file", 1, cadr(args), "a string (a mode)"));
+      return(s7_open_output_file(sc, s7_string(name), s7_string(cadr(args))));
+    }
   
-  return(s7_open_output_file(sc, s7_string(name)));
+  return(s7_open_output_file(sc, s7_string(name), "w"));
 }
 
 
@@ -7378,19 +7400,29 @@ static s7_pointer procedure_source(s7_pointer p)
   return(car(p));
 }
 
-/* TODO: how to expand: (let ((i 0)) (lambda () i)) */
-
 s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p)
 {
   /* make it look like a lambda form */
+
+  /* in this context, there's no way to distinguish between:
+   *    (procedure-source (let ((b 1)) (lambda (a) (+ a b))))
+   * and
+   *    (let ((b 1)) (procedure-source (lambda (a) (+ a b))))
+   * both become:
+   * ((a) (+ a b)) (((b . 1)) #(() () () () () ((make-filtered-comb . make-filtered-comb)) () () ...))
+   */
+
   if (s7_is_closure(p) || is_macro(p) || is_promise(p)) 
-    return(s7_append(sc, 
-		     cons(sc, 
-			  sc->LAMBDA, 
-			  cons(sc,
-			       car(car(p)),
-			       sc->NIL)),
-		     cdr(car(p))));
+    {
+      sc->envir = cdr(p); /* else closure-locals are inaccessible to run */
+      return(s7_append(sc, 
+		       cons(sc, 
+			    sc->LAMBDA, 
+			    cons(sc,
+				 car(car(p)),
+				 sc->NIL)),
+		       cdr(car(p))));
+    }
   return(sc->F);
 }
 
@@ -9884,8 +9916,8 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "set-current-error-port", g_set_current_error_port, 1, 0, false, H_set_current_error_port);
   s7_define_function(sc, "close-input-port",    g_close_input_port,    1, 0, false, H_close_input_port);
   s7_define_function(sc, "close-output-port",   g_close_output_port,   1, 0, false, H_close_output_port);
-  s7_define_function(sc, "open-input-file",     g_open_input_file,     1, 0, false, H_open_input_file);
-  s7_define_function(sc, "open-output-file",    g_open_output_file,    1, 0, false, H_open_output_file);
+  s7_define_function(sc, "open-input-file",     g_open_input_file,     1, 1, false, H_open_input_file);
+  s7_define_function(sc, "open-output-file",    g_open_output_file,    1, 1, false, H_open_output_file);
   s7_define_function(sc, "open-input-string",   g_open_input_string,   1, 0, false, H_open_input_string);
   s7_define_function(sc, "open-output-string",  g_open_output_string,  0, 0, false, H_open_output_string);
   s7_define_function(sc, "get-output-string",   g_get_output_string,   1, 0, false, H_get_output_string);
@@ -10334,8 +10366,9 @@ s7_scheme *s7_init(void)
   (in)\n\
   (catch #t\n\
 	 (lambda ()\n\
-	   (body)\n\
-	   (out))\n\
+	   (let ((result (body)))\n\
+	     (out)\n\
+             result))\n\
 	 (lambda args\n\
 	   (out)\n\
 	   (apply error args))))\n\

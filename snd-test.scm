@@ -72,8 +72,6 @@
 
 (if (provided? 'snd-s7)
     (begin
-      (load "sort.scm")
-
       (define O_RDWR 2)
       (define O_APPEND 1024)
       (define O_RDONLY 0)
@@ -103,6 +101,37 @@
 	  (do ((i 0 (1+ i)))
 	      ((= i len))
 	    (string-set! str i (char-downcase (string-ref str i))))))
+
+      (define sort!
+	;; http://www.math.grin.edu/~stone/events/scheme-workshop/quicksort.html
+	(lambda (ls . opt)
+	  (let* ((precedes? (if (null? opt) < (car opt)))
+
+		 (partition
+		  (lambda (ls pivot)
+		    (let loop ((rest ls)
+			       (smalls '())
+			       (larges '()))
+		      (if (null? rest)
+			  (cons smalls larges)
+			  (let ((fore (car rest))
+				(aft (cdr rest)))
+			    (if (precedes? fore pivot)
+				(loop aft (cons fore smalls) larges)
+				(loop aft smalls (cons fore larges)))))))))
+
+	    (let qs ((rest ls))
+	      (if (or (null? rest)
+		      (null? (cdr rest)))
+		  rest
+		  (let* ((pivot (car rest))
+			 (parts (partition (cdr rest) pivot))
+			 (smalls (car parts))
+			 (larges (cdr parts)))
+		    (append (qs smalls)
+			    (cons pivot (qs larges)))))))))
+
+      (define (sort lst . opt) (sort! (append lst '()) (if (null? opt) < (car opt))))
       ))
 
 
@@ -41962,6 +41991,8 @@ EDITS: 1
 	    (snd-display ";(bes-y0 ~A) -> ~A ~A" x (bes-y0 x) (bes-y0-1 x))))))
   
   (define (bes-y1-1 x)				;Bessel function Y1(x)
+    (if (= x 0.0)
+	-inf.0
     (if (< x 8.0)
 	(let* ((y (* x x))
 	       (ans1 (* x (+ -0.4900604943e13
@@ -41990,14 +42021,14 @@ EDITS: 1
 				(* y (+ 0.8449199096e-5
 					(* y (+ -0.88228987e-6
 						(* y 0.105787412e-6))))))))))
-	  (* (sqrt (/ 0.636619772 x)) (+ (* (sin xx) ans1) (* z (cos xx) ans2))))))
+	  (* (sqrt (/ 0.636619772 x)) (+ (* (sin xx) ans1) (* z (cos xx) ans2)))))))
   
   (define (test-y1)
     (for-each 
      (lambda (x)
        (if (fneq (bes-y1 x) (bes-y1-1 x))
 	   (snd-display ";(bes-y1 ~A) -> ~A ~A" x (bes-y1 x) (bes-y1-1 x))))
-     (list 0.0 0.5 1.0 2.0 20.0))
+     (list 0.01 0.5 1.0 2.0 20.0))
     (do ((i 0 (1+ i)))
 	((= i 10))
       (let ((x (random 100.0)))
@@ -42516,7 +42547,6 @@ EDITS: 1
 		 daub4 daub6 daub8 daub10 daub12 daub14 daub16 daub18 daub20
 		 Battle-Lemarie Burt-Adelson Beylkin coif2 coif4 coif6
 		 sym2 sym3 sym4 sym5 sym6))
-    
     
     
     (if (defined? 'bes-j0) ; dependent on mus-config.h HAVE_SPECIAL_FUNCTIONS

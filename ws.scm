@@ -949,7 +949,9 @@ finish-with-sound to complete the process."
     (define (open-appending filename)
       (if (provided? 'snd-guile)
 	  (open filename (logior O_RDWR O_APPEND))
-	  (open-output-file filename :if-exists :append :if-does-not-exist :create))))
+	  (if (provided? 'snd-gauche)
+	      (open-output-file filename :if-exists :append :if-does-not-exist :create)
+	      (open-output-file filename "a")))))
 
 (if (not (defined? 'close-appending))
     (define (close-appending fd)

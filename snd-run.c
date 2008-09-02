@@ -412,6 +412,12 @@ static XEN symbol_to_value(XEN code, XEN sym, bool *local)
 {
   /* local_var here is a check against GLOBAL_SET_OK -- not a big deal! */
   (*local) = false; /* just a guess... */
+
+  /*
+  fprintf(stderr, "%s\n", XEN_AS_STRING(code));
+  fprintf(stderr,"%s -> %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(s7_symbol_value(s7, sym)));
+  */
+
   return(s7_symbol_value(s7, sym));
 }
 

@@ -2,8 +2,6 @@
 #include "sndlib-strings.h"
 #include "clm-strings.h"
 
-/* TODO: snd and s7 doc entry */
-
 static const char **snd_xrefs(const char *topic);
 static const char **snd_xref_urls(const char *topic);
 

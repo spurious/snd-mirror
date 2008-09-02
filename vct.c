@@ -611,10 +611,7 @@ v. " vct_map_example " is the same as " vct_fill_example
   off_t i;
   vct *v;
 
-  /* fprintf(stderr, "vct map %s %s\n", XEN_AS_STRING(obj), XEN_AS_STRING(XEN_PROCEDURE_SOURCE(proc))); */
-#if HAVE_S7
-  proc = XEN_PROCEDURE_SOURCE(proc);
-#endif
+  /*  fprintf(stderr, "vct map %s %s\n", XEN_AS_STRING(obj), XEN_AS_STRING(XEN_PROCEDURE_SOURCE(proc))); */
 
   XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ARG_1, S_vct_mapB, "a vct");
 
@@ -624,7 +621,11 @@ v. " vct_map_example " is the same as " vct_fill_example
     struct ptree *pt = NULL;
     if ((optimization(ss)) > 0)
       {
+#if HAVE_S7
+	pt = form_to_ptree_0_f(XEN_PROCEDURE_SOURCE(proc));
+#else
 	pt = form_to_ptree_0_f(proc);
+#endif
 	if (pt)
 	  {
 	    for (i = 0; i < v->length; i++) 
@@ -633,7 +634,10 @@ v. " vct_map_example " is the same as " vct_fill_example
 	    return(xen_return_first(obj, proc));
 	  }
       }
+#if (!HAVE_S7)
     proc = XEN_CADR(proc);
+#endif
+
     XEN_ASSERT_TYPE(XEN_PROCEDURE_P(proc) && (XEN_REQUIRED_ARGS_OK(proc, 0)), proc, XEN_ARG_2, S_vct_mapB, "a thunk");
     for (i = 0; i < v->length; i++) 
       v->data[i] = XEN_TO_C_DOUBLE(XEN_CALL_0_NO_CATCH(proc));
