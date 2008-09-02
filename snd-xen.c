@@ -3,7 +3,7 @@
 
 /* Snd defines its own exit, delay, and frame? clobbering (presumably) the Guile/Gauche versions, (filter is another such collision)
  *
- *   In Scheme, delay is protected in clm2xen.c as %delay
+ *   In Scheme, delay is protected in clm2xen.c as make-promise
  *              filter is defined in srfi-1 so we need protection against that
  *
  *   In Guile, frame? is %frame?

@@ -2,7 +2,7 @@
 
 # Translator/Author: Michael Scholz <mi-scholz@users.sourceforge.net>
 # Created: Wed Sep 04 18:34:00 CEST 2002
-# Changed: Fri May 02 18:26:10 CEST 2008
+# Changed: Fri Jul 11 15:41:52 CEST 2008
 
 # Commentary:
 #
@@ -1695,7 +1695,7 @@ end
 # base class for generators written in Ruby
 class Musgen
   def initialize
-    @frequency = 440.0
+    @frequency = $clm_default_frequency
     @phase = 0.0
     @scaler = 1.0
     @length = 0
@@ -1735,7 +1735,7 @@ class Musgen
   end
 
   def reset
-    @frequency = 440.0
+    @frequency = $clm_default_frequency
     @phase = 0.0
     @scaler = 1.0
     @increment = 0

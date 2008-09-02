@@ -2196,7 +2196,7 @@ static XEN g_delay(XEN obj, XEN input, XEN pm)
   #define H_delay "(" S_delay " gen :optional (val 0.0) (pm 0.0)): \
 delay val according to the delay line's length and pm ('phase-modulation'). \
 If pm is greater than 0.0, the max-size argument used to create gen should have accommodated its maximum value. (The \
-Scheme function delay is available as %delay)"
+Scheme function delay is available as %delay or make-promise)"
 
   Float in1 = 0.0, pm1 = 0.0;
   XEN_ASSERT_TYPE((MUS_XEN_P(obj)) && (mus_delay_p(XEN_TO_MUS_ANY(obj))), obj, XEN_ARG_1, S_delay, "a delay line");
@@ -8604,9 +8604,13 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_mus_apply,   g_mus_apply_w,   0, 0, 1, H_mus_apply);
 
 
-#if HAVE_SCHEME && (!HAVE_S7)
+#if HAVE_SCHEME
+#if (!HAVE_S7)
   XEN_EVAL_C_STRING("(define %delay delay)"); /* protect the original meaning (a Scheme built-in function) */
-  /* in S7 delay is a "syntax" -- not sure how to protect it */
+  XEN_EVAL_C_STRING("(define make-promise delay)"); /* this is the s7 name */
+#else
+  XEN_EVAL_C_STRING("(defmacro %delay (arg) `(make-promise ,arg))"); 
+#endif
 #endif
   XEN_DEFINE_PROCEDURE(S_make_delay,      g_make_delay_w,      0, 0, 1, H_make_delay);
   XEN_DEFINE_PROCEDURE(S_make_comb,       g_make_comb_w,       0, 0, 1, H_make_comb);

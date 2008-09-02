@@ -409,7 +409,7 @@ __ws_verbose__ = $VERBOSE
 __ws_debug__   = $DEBUG
 # get rid of `undefined variable' messages
 with_silence do
-  $clm_version            = "ruby 17-Nov-2007"
+  $clm_version            = "ruby 11-Jul-2008"
   $output                 = nil
   $reverb                 = nil
   $clm_array_print_length ||= 8
@@ -431,6 +431,7 @@ with_silence do
   $clm_statistics         ||= false
   $clm_table_size         ||= 512
   $clm_verbose            ||= __ws_verbose__
+  $clm_default_frequency  ||= 0.0
 
   if provided? :snd
     $clm_channels      ||= default_output_chans

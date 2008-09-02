@@ -2098,7 +2098,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 #define XEN_CDDDR(Arg)                             XEN_CDR(XEN_CDR(XEN_CDR(Arg)))
 #define XEN_LIST_P(Arg)                            s7_is_list(s7, Arg) /* not pair? because we want '() to return #t here */
 #define XEN_LIST_LENGTH(Arg)                       s7_list_length(s7, Arg)
-#define XEN_LIST_P_WITH_LENGTH(Arg, Len)           ((XEN_PAIR_P(Arg)) && ((Len = XEN_LIST_LENGTH(Arg)) > 0))
+#define XEN_LIST_P_WITH_LENGTH(Arg, Len)           ((s7_is_list(s7, Arg)) && ((Len = XEN_LIST_LENGTH(Arg)) > 0))
 #define XEN_LIST_1(a)                              XEN_CONS(a, xen_nil)
 #define XEN_LIST_2(a, b)                           XEN_CONS(a, XEN_LIST_1(b))
 #define XEN_LIST_3(a, b, c)                        XEN_CONS(a, XEN_LIST_2(b, c))
@@ -2140,7 +2140,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 #define C_TO_XEN_OFF_T(Arg)                        C_TO_XEN_INT(Arg)
 #define XEN_TO_C_OFF_T(Arg)                        XEN_TO_C_INT(Arg)
 
-#define XEN_NUMBER_P(Arg)                          s7_is_number(Arg)
+#define XEN_NUMBER_P(Arg)                          s7_is_real(Arg) /* !! throughout xen, we're assuming no complex number! -- s7_is_number(Arg) */
 #define XEN_EXACT_P(Arg)                           s7_is_exact(Arg)
 
 #define XEN_DOUBLE_P(Arg)                          s7_is_real(Arg)

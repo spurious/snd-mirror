@@ -35,6 +35,7 @@
  *
  *   deliberate difference from r5rs:
  *        modulo, remainder, and quotient take integer, ratio, or real args
+ *        delay is renamed make-promise to avoid collisions in CLM
  *
  * still to do:
  *   dynamic-wind and its interaction with continuations
@@ -58,6 +59,21 @@
  *  (object? <tag> obj) or maybe (name? obj) and (make-name value)
  *
  * Mike Scholz provided the FreeBSD support
+ *
+ * in snd-test: 9, 10, and 14 need sort, 8 gets abs of 0 but complex, 7 has rgb scope problem?
+ *                with sort.scm (slib), 9 needs string-downcase
+ *                                     10 is unhappy about all the key args to open-output-file (:if-does-not-exist)
+ *                                     14 gets "trouble in region or something", then (+ <promise>???)
+ *              5 hits a segfault in src-sound when trying to complain about an env hitting 0 (but there's no env??)
+ *              0..4 are ok, 6 is ok, 12 is ok, 18 is ok
+ *              13 has some problem with "no widgets added" -- 21 hits very similar problem with "add-comment failed" (in a list)
+ *              15 seems to hit (= x (1 0)), 16 says apply last arg should be a list
+ *              17 is still unhappy about progn, I think
+ *              19 hits abort (pop off top of stack), 20 hits division by 0
+ *              22 is unhappy about (lambda () (set! int-var (car pv))) -- car?
+ *              23 find-sound arg1 is procedure-with-setter??
+ *              24..27 run but I'm not sure they actually did anything
+ *              28 hits a bunch of arity errors? segfaults in count-matches
  */
 
 
@@ -3551,9 +3567,12 @@ static s7_pointer g_sqrt(s7_scheme *sc, s7_pointer args)
   return(s7_from_c_complex(sc, csqrt(s7_complex(sc->x))));
 }
 
+
 static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 {
   #define H_expt "(expt z1 z2) returns z1^z2"
+  #define TOP_LOG 43.0 /* approx log(2^63) */
+
   if (!s7_is_number(car(args)))
     return(s7_wrong_type_arg_error(sc, "expt", 1, car(args), "a number"));
   if (!s7_is_number(cadr(args)))
@@ -3562,17 +3581,57 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
   sc->x = car(args);
   sc->y = cadr(args);
 
-  if ((s7_is_integer(sc->x)) &&
-      (s7_is_integer(sc->y)) &&
-      ((s7_integer(sc->y) >= 0) || 
-       (abs(s7_integer(sc->x)) == 1)))
-    return(s7_make_integer(sc, (s7_Int)pow(s7_integer(sc->x), s7_integer(sc->y))));
+  if (object_number_type(sc->y) == NUM_INT)
+    {
+      if (object_number_type(sc->x) == NUM_INT)
+	{
+	  if (s7_integer(sc->y) == 0)
+	    return(s7_make_integer(sc, 1));
+
+	  if (TOP_LOG > abs(s7_integer(sc->y)) * log(abs(s7_integer(sc->x)))) /* else over/underflow */
+	    {
+	      if ((s7_integer(sc->y) > 0) || 
+		  (abs(s7_integer(sc->x)) == 1))
+		return(s7_make_integer(sc, (s7_Int)pow(s7_integer(sc->x), s7_integer(sc->y))));
+	      
+	      return(s7_make_ratio(sc, 1, (s7_Int)pow(s7_integer(sc->x), -s7_integer(sc->y))));
+	    }
+	}
+      else
+	{
+	  if (object_number_type(sc->x) == NUM_RATIO)
+	    {
+	      s7_Int n, d, p;
+	      p = s7_integer(sc->y);
+	      
+	      if (p == 0)
+		return(s7_make_integer(sc, 1));
+      
+	      n = numerator(sc->x->object.number);
+	      d = denominator(sc->x->object.number);
+
+	      if ((TOP_LOG > log(abs(n)) * abs(p)) &&
+		  (TOP_LOG > log(d) * abs(p)))	
+		{
+		  if (p > 0)
+		    return(s7_make_ratio(sc, (s7_Int)pow(n, p), (s7_Int)pow(d, p)));
+		  return(s7_make_ratio(sc, (s7_Int)pow(d, -p), (s7_Int)pow(n, -p)));
+		}
+	    }
+	  /* occasionally int^rat can be int but it happens so infrequently it's not worth checking */
+	}
+    }
 	
   if ((s7_is_real(sc->x)) &&
-      (s7_is_real(sc->y)) &&
-      (num_to_real(sc->x->object.number) > 0.0) &&
-      (num_to_real(sc->y->object.number) >= 0.0))
-    return(s7_make_real(sc, pow(num_to_real(sc->x->object.number), num_to_real(sc->y->object.number))));
+      (s7_is_real(sc->y)))
+    {
+      double x, y;
+      x = num_to_real(sc->x->object.number);
+      y = num_to_real(sc->y->object.number);
+      if (((x > 0.0) && (y >= 0.0)) ||
+	  ((y - floor(y)) == 0.0))
+	return(s7_make_real(sc, pow(x, y)));
+    }
 	
   return(s7_from_c_complex(sc, cpow(s7_complex(sc->x), s7_complex(sc->y))));
 }
@@ -6184,7 +6243,12 @@ static char *s7_list_to_c_string(s7_scheme *sc, s7_pointer lst)
   bufsize += (128 + len); /* len spaces */
   buf = (char *)CALLOC(bufsize, sizeof(char));
 
+#if S7_DEBUGGING
+  sprintf(buf, "[%d](", pair_line_number(car(lst)));
+#else
   sprintf(buf, "(");
+#endif
+
   for (i = 0; i < len - 1; i++)
     {
       if (elements[i])
@@ -7314,18 +7378,31 @@ static s7_pointer procedure_source(s7_pointer p)
   return(car(p));
 }
 
+/* TODO: how to expand: (let ((i 0)) (lambda () i)) */
+
 s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p)
 {
-  return(procedure_source(p)); /* or maybe cadr of this? */
+  /* make it look like a lambda form */
+  if (s7_is_closure(p) || is_macro(p) || is_promise(p)) 
+    return(s7_append(sc, 
+		     cons(sc, 
+			  sc->LAMBDA, 
+			  cons(sc,
+			       car(car(p)),
+			       sc->NIL)),
+		     cdr(car(p))));
+  return(sc->F);
 }
 
 static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
 {
   #define H_procedure_source "(procedure-source func) tries to return the definition of func"
 
-  sc->y = s7_symbol_value(sc, car(args));
+  if (s7_is_symbol(car(args)))
+    sc->y = s7_symbol_value(sc, car(args));
+  else sc->y = car(args);
   if (sc->y != sc->NIL)
-    return(procedure_source(sc->y));
+    return(s7_procedure_source(sc, sc->y));
   return(sc->NIL);
 }
 
@@ -9740,7 +9817,7 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "let*",        OP_LET0AST);
   assign_syntax(sc, "letrec",      OP_LET0REC);
   assign_syntax(sc, "cond",        OP_COND0);
-  assign_syntax(sc, "delay",       OP_DELAY);
+  assign_syntax(sc, "make-promise",OP_DELAY);
   assign_syntax(sc, "and",         OP_AND0);
   assign_syntax(sc, "or",          OP_OR0);
   assign_syntax(sc, "cons-stream", OP_C0STREAM); /* what is this?? -- something to do with "promise"? */

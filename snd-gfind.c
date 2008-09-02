@@ -86,7 +86,11 @@ static void edit_find_find(read_direction_t direction, GtkWidget *w, gpointer co
 	  ss->search_proc_loc = snd_protect(proc);
 #if WITH_RUN
 	  if (optimization(ss) > 0)
+#if HAVE_S7
+	    ss->search_tree = form_to_ptree_1_b(XEN_PROCEDURE_SOURCE(proc));
+#else
 	    ss->search_tree = form_to_ptree_1_b_without_env(C_STRING_TO_XEN_FORM(str));
+#endif
 #endif
 	  buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
 	  mus_snprintf(buf, PRINT_BUFFER_SIZE, _("find: %s"), str);

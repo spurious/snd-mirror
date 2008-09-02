@@ -3271,7 +3271,11 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
       if (optimization(ss) > 0)
 	{
 	  struct ptree *pt = NULL;
+#if HAVE_S7
+	  pt = form_to_ptree_1_f(XEN_PROCEDURE_SOURCE(proc_and_list));
+#else
 	  pt = form_to_ptree_1_f(proc_and_list);
+#endif
 	  if (pt)
 	    {
 	      char *err_str;
@@ -3619,6 +3623,7 @@ the current sample, the vct returned by 'init-func', and the current read direct
 #if WITH_RUN
   if (XEN_LIST_P(proc_and_list))
     proc = XEN_CADR(proc_and_list);
+  else proc = proc_and_list;
 #else
   proc = proc_and_list;
 #endif
@@ -3672,7 +3677,11 @@ the current sample, the vct returned by 'init-func', and the current read direct
 
       if (!too_many_ptrees)
 	{
+#if HAVE_S7
+	  pt = form_to_ptree_3_f(XEN_PROCEDURE_SOURCE(proc_and_list));
+#else
 	  pt = form_to_ptree_3_f(proc_and_list);
+#endif
 	  if (pt)
 	    {
 	      ptree_channel(cp, pt, beg, dur, pos, XEN_TRUE_P(env_too), init_func, caller);
@@ -3695,12 +3704,20 @@ the current sample, the vct returned by 'init-func', and the current read direct
 
   if (XEN_STRING_P(origin)) caller = copy_string(XEN_TO_C_STRING(origin)); else caller = copy_string(S_ptree_channel);
   if (XEN_REQUIRED_ARGS_OK(proc, 1))
+#if HAVE_S7
+    pt = form_to_ptree_1_f(XEN_PROCEDURE_SOURCE(proc_and_list));
+#else
     pt = form_to_ptree_1_f(proc_and_list);
+#endif
   else
     {
       if ((!too_many_ptrees) && (XEN_REQUIRED_ARGS_OK(proc, 3)))
+#if HAVE_S7
+	pt = form_to_ptree_3_f(XEN_PROCEDURE_SOURCE(proc_and_list));
+#else
 	pt = form_to_ptree_3_f(proc_and_list); /* caller forgot init_func, but maybe it's ok anyway */
                                                /* (ptree-channel (lambda (y data dir) (* y 2))) */
+#endif
     }
   if (pt)
     {
@@ -3881,7 +3898,11 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
 
   if (optimization(ss) > 0)
     {
+#if HAVE_S7
+      pt = form_to_ptree_1_b(XEN_PROCEDURE_SOURCE(proc_and_list));
+#else
       pt = form_to_ptree_1_b(proc_and_list);
+#endif
       if (pt)
 	{
 	  for (kp = 0; kp < num; kp++)
@@ -5593,6 +5614,8 @@ void g_init_sig(void)
 #if HAVE_GUILE
   XEN_EVAL_C_STRING("(use-modules (ice-9 optargs))");
 #endif
+
+#if (!HAVE_S7)
   XEN_DEFINE_PROCEDURE(S_scan_channel "-1",       g_scan_channel_w,  1, 5, 0, H_scan_channel);
   XEN_DEFINE_PROCEDURE(S_scan_chan "-1",          g_scan_chan_w,     1, 5, 0, H_scan_chan);
   XEN_DEFINE_PROCEDURE(S_find_channel "-1",       g_find_channel_w,  1, 4, 0, H_find_channel);
@@ -5616,6 +5639,17 @@ void g_init_sig(void)
   XEN_EVAL_C_STRING("(defmacro ptree-channel (form . args) `(apply ptree-channel-1 (list (list ',form ,form) ,@args)))");
   XEN_SET_DOCUMENTATION(S_ptree_channel, H_ptree_channel);
 #else
+  XEN_DEFINE_PROCEDURE(S_scan_channel,            g_scan_channel_w,            1, 5, 0, H_scan_channel);
+  XEN_DEFINE_PROCEDURE(S_scan_chan,               g_scan_chan_w,               1, 5, 0, H_scan_chan);
+  XEN_DEFINE_PROCEDURE(S_find_channel,            g_find_channel_w,            1, 4, 0, H_find_channel);
+  XEN_DEFINE_PROCEDURE(S_count_matches,           g_count_matches_w,           1, 4, 0, H_count_matches);
+  XEN_DEFINE_PROCEDURE(S_map_chan,                g_map_chan_w,                1, 6, 0, H_map_chan);
+  XEN_DEFINE_PROCEDURE(S_map_channel,             g_map_channel_w,             1, 6, 0, H_map_channel);
+  XEN_DEFINE_PROCEDURE(S_ptree_channel,           g_ptree_channel_w,           1, 8, 0, H_ptree_channel);
+#endif
+
+#else
+  /* not with run */
   XEN_DEFINE_PROCEDURE(S_scan_channel,            g_scan_channel_w,            1, 5, 0, H_scan_channel);
   XEN_DEFINE_PROCEDURE(S_scan_chan,               g_scan_chan_w,               1, 5, 0, H_scan_chan);
   XEN_DEFINE_PROCEDURE(S_find_channel,            g_find_channel_w,            1, 4, 0, H_find_channel);

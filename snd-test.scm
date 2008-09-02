@@ -1,36 +1,36 @@
 ;;; Snd tests
 ;;;
-;;;  test 0: constants                          [548]
-;;;  test 1: defaults                           [1131]
-;;;  test 2: headers                            [1333]
-;;;  test 3: variables                          [1649]
-;;;  test 4: sndlib                             [2298]
-;;;  test 5: simple overall checks              [4992]
-;;;  test 6: vcts                               [13957]
-;;;  test 7: colors                             [14279]
-;;;  test 8: clm                                [14769]
-;;;  test 9: mix                                [26584]
-;;;  test 10: marks                             [28805]
-;;;  test 11: dialogs                           [29766]
-;;;  test 12: extensions                        [30011]
-;;;  test 13: menus, edit lists, hooks, etc     [30282]
-;;;  test 14: all together now                  [31992]
-;;;  test 15: chan-local vars                   [33040]
-;;;  test 16: regularized funcs                 [34679]
-;;;  test 17: dialogs and graphics              [39745]
-;;;  test 18: enved                             [39835]
-;;;  test 19: save and restore                  [39854]
-;;;  test 20: transforms                        [41696]
-;;;  test 21: new stuff                         [43679]
-;;;  test 22: run                               [45683]
-;;;  test 23: with-sound                        [51899]
-;;;  test 24: user-interface                    [56135]
-;;;  test 25: X/Xt/Xm                           [59529]
-;;;  test 26: Gtk                               [64137]
-;;;  test 27: GL                                [67989]
-;;;  test 28: errors                            [68113]
-;;;  test all done                              [70419]
-;;;  test the end                               [70660]
+;;;  test 0: constants                          [598]
+;;;  test 1: defaults                           [1181]
+;;;  test 2: headers                            [1383]
+;;;  test 3: variables                          [1699]
+;;;  test 4: sndlib                             [2348]
+;;;  test 5: simple overall checks              [5042]
+;;;  test 6: vcts                               [14009]
+;;;  test 7: colors                             [14333]
+;;;  test 8: clm                                [14823]
+;;;  test 9: mix                                [26650]
+;;;  test 10: marks                             [28871]
+;;;  test 11: dialogs                           [29832]
+;;;  test 12: extensions                        [30077]
+;;;  test 13: menus, edit lists, hooks, etc     [30348]
+;;;  test 14: all together now                  [32058]
+;;;  test 15: chan-local vars                   [33106]
+;;;  test 16: regularized funcs                 [34747]
+;;;  test 17: dialogs and graphics              [39813]
+;;;  test 18: enved                             [39903]
+;;;  test 19: save and restore                  [39922]
+;;;  test 20: transforms                        [41764]
+;;;  test 21: new stuff                         [43747]
+;;;  test 22: run                               [45751]
+;;;  test 23: with-sound                        [51962]
+;;;  test 24: user-interface                    [56216]
+;;;  test 25: X/Xt/Xm                           [59610]
+;;;  test 26: Gtk                               [64218]
+;;;  test 27: GL                                [68070]
+;;;  test 28: errors                            [68194]
+;;;  test all done                              [70500]
+;;;  test the end                               [70741]
 
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
@@ -43,6 +43,7 @@
 
 (if (and (provided? 'snd-guile) (provided? 'snd-gauche)) (display ";both switches are on?"))
 
+
 (if (provided? 'snd-gauche)
     (begin
       (if (not (provided? 'gauche-optargs.scm)) (load "gauche-optargs.scm"))
@@ -50,12 +51,15 @@
       (use srfi-13) ; string-downcase
       
       (define (run thunk) (thunk))
+
       (define O_RDWR 2)
       (define O_APPEND 1024)
       (define O_RDONLY 0)
+
       (define tmpnam sys-tmpnam)
       (define (open-pipe . args) #f)
       (define (close-pipe . args) #f)
+
       (define (copy-file src dest) (system (string-append "cp " src " " dest)))
       
       (define (procedure-property func prop)
@@ -65,26 +69,41 @@
 	    (procedure-info func)))
       ))
 
+
 (if (provided? 'snd-s7)
     (begin
+      (load "sort.scm")
+
       (define O_RDWR 2)
       (define O_APPEND 1024)
       (define O_RDONLY 0)
+
       (define (open-pipe . args) #f)
       (define (close-pipe . args) #f)
+
       (define (copy-file src dest) (system (string-append "cp " src " " dest)))
+
       (define (procedure-property func prop)
 	(if (eq? prop 'arity)
 	    (procedure-arity func)
 	    (procedure-documentation func)))
+
       (define (throw . args) (apply error args))
+
       (define (ash n count) ; slib
 	(if (negative? count)
 	    (let ((k (expt 2 (- count))))
 	      (if (negative? n)
 		  (+ -1 (quotient (+ 1 n) k))
 		  (quotient n k)))
-	    (* (expt 2 count) n)))))
+	    (* (expt 2 count) n)))
+
+      (define (string-downcase str)
+	(let ((len (string-length str)))
+	  (do ((i 0 (1+ i)))
+	      ((= i len))
+	    (string-set! str i (char-downcase (string-ref str i))))))
+      ))
 
 
 (if (not (defined? 'snd-test)) (define snd-test -1))
@@ -14957,7 +14976,7 @@ EDITS: 2
 	  (vct-set! data i (+ (sin (* 2 pi (/ i n)))
 			      (* .25 (sin (* 4 pi (/ i n))))
 			      (* .125 (sin (* 8 pi (/ i n)))))))))
-    
+
     (let ((vals (lpc-predict (vct 0 1 2 3 4 5 6 7) 8 (lpc-coeffs (vct 0 1 2 3 4 5 6 7) 8 4) 4 2)))
       (if (not (vequal vals (vct 7.906 8.557)))
 	  (snd-display ";predict ramp: ~A" vals)))
@@ -16790,8 +16809,8 @@ EDITS: 2
 	  (snd-display ";ccosh cheb 7 1.0: ~A ~A" (polynomial lv7 1.0) (cosh (* 7 (acosh 1.0)))))
       (if (fneq (polynomial lv7 1.0) (cos (* 7 (acos 1.0)))) 
 	  (snd-display ";cos cheb 7 1.0: ~A ~A" (polynomial lv7 1.0) (cos (* 7 (acos 1.0)))))
-      (if (fneq (polynomial lv8 1.0) (/ (sin (* 7 (acos 1.0))) (sin (acos 1.0))))
-	  (snd-display ";acos cheb 7 1.0: ~A ~A" (polynomial lv8 1.0) (/ (sin (* 7 (acos 1.0))) (sin (acos 1.0)))))
+      (if (fneq (polynomial lv8 0.5) (/ (sin (* 7 (acos 0.5))) (sin (acos 0.5))))
+	  (snd-display ";acos cheb 7 1.0: ~A ~A" (polynomial lv8 0.5) (/ (sin (* 7 (acos 0.5))) (sin (acos 0.5)))))
       ;; G&R 8.943 p 984 uses n+1 where we use n in Un? (our numbering keeps harmonics aligned between Tn and Un)
       
       (do ((i 0 (1+ i)))
@@ -70410,7 +70429,7 @@ EDITS: 1
 
 	)))
 
-
+;(tracing #t)
 
 (define test-funcs (make-vector (1+ total-tests)))
 (vector-set! test-funcs 0 snd_test_0)

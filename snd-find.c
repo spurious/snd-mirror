@@ -610,7 +610,11 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
 		  sp->search_proc_loc = snd_protect(proc);
 #if WITH_RUN
 		  if (optimization(ss) > 0)
+#if HAVE_S7
+		    sp->search_tree = form_to_ptree_1_b(XEN_PROCEDURE_SOURCE(proc));
+#else
 		    sp->search_tree = form_to_ptree_1_b(XEN_LIST_2(XEN_PROCEDURE_SOURCE(proc), proc));
+#endif
 #endif
 		}
 	      return(proc);
@@ -638,7 +642,11 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
 	      ss->search_proc_loc = snd_protect(snd);
 #if WITH_RUN
 	      if (optimization(ss) > 0)
+#if HAVE_S7
+		ss->search_tree = form_to_ptree_1_b(XEN_PROCEDURE_SOURCE(snd));
+#else
 		ss->search_tree = form_to_ptree_1_b(XEN_LIST_2(XEN_PROCEDURE_SOURCE(snd), snd));
+#endif
 #endif
 	    }
 	}

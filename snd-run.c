@@ -12559,10 +12559,10 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
       if ((v == NULL) && 
 	  (current_optimization >= SOURCE_OK) &&
 	  (XEN_PROCEDURE_P(rtnval)) &&
-#if HAVE_S7
-	  (XEN_PROCEDURE_WITH_SETTER_P(rtnval))
-#else
+#if (!HAVE_S7)
 	  (XEN_FALSE_P(XEN_PROCEDURE_WITH_SETTER_P(rtnval)))
+#else
+	  (!(XEN_PROCEDURE_WITH_SETTER_P(rtnval)))
 #endif
 	  )
 	{

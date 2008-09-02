@@ -1,7 +1,7 @@
 #ifndef _S7_H
 #define _S7_H
 
-#define S7_VERSION "0.3"
+#define S7_VERSION "0.4"
 #define S7_DATE "1-Sep-08"
 
 #include <stdio.h>
@@ -18,7 +18,7 @@
 #endif
 #endif
 
-#define s7_Int off_t
+#define s7_Int long long int
 #define s7_Int_d "%lld"
 
 typedef struct s7_scheme s7_scheme;

@@ -611,6 +611,11 @@ v. " vct_map_example " is the same as " vct_fill_example
   off_t i;
   vct *v;
 
+  /* fprintf(stderr, "vct map %s %s\n", XEN_AS_STRING(obj), XEN_AS_STRING(XEN_PROCEDURE_SOURCE(proc))); */
+#if HAVE_S7
+  proc = XEN_PROCEDURE_SOURCE(proc);
+#endif
+
   XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ARG_1, S_vct_mapB, "a vct");
 
   v = XEN_TO_VCT(obj);
@@ -619,12 +624,7 @@ v. " vct_map_example " is the same as " vct_fill_example
     struct ptree *pt = NULL;
     if ((optimization(ss)) > 0)
       {
-#if HAVE_S7
-	pt = form_to_ptree_0_f(XEN_APPEND(XEN_CONS(C_STRING_TO_XEN_SYMBOL("lambda"), XEN_EMPTY_LIST), XEN_CAR(proc)));
-	/* TODO: also snd-find, x|gfind, sig */
-#else
 	pt = form_to_ptree_0_f(proc);
-#endif
 	if (pt)
 	  {
 	    for (i = 0; i < v->length; i++) 

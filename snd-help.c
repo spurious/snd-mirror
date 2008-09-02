@@ -2,6 +2,8 @@
 #include "sndlib-strings.h"
 #include "clm-strings.h"
 
+/* TODO: snd and s7 doc entry */
+
 static const char **snd_xrefs(const char *topic);
 static const char **snd_xref_urls(const char *topic);
 
@@ -107,7 +109,7 @@ static const char *main_snd_xrefs[14] = {
   "{CMN}: music notation",
   "{Ruby}: extension language",
   "{Forth}: extension language",
-  "{ECL}: extension language",
+  "{s7}: extension language",
   "{Emacs}: Snd as Emacs subjob",
   "{Libxm}: graphics module",
   "{Sndlib}: underlying sound support library",
@@ -124,7 +126,7 @@ static const char *main_snd_xref_urls[14] = {
   "sndscm.html#musglyphs",
   "grfsnd.html#sndandruby",
   "grfsnd.html#sndandforth",
-  "grfsnd.html#sndandecl",
+  "grfsnd.html#sndands7",
   "grfsnd.html#emacssnd",
   "libxm.html#xm",
   "sndlib.html#introduction",
@@ -521,6 +523,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+3-Sep:   Snd 9.12.\n\
 1-Sep:   S7 as extension language.\n\
 14-Jul:  Snd 9.11.\n\
 7-July:  with-threaded-channels.\n\
@@ -821,7 +824,7 @@ superimposed on each other.",
 
 static const char *debug_xrefs[8] = {
   "C debugging: {gdb}",
-  "Scheme/Ruby/Forth/ECL debugging: {snd-debug}",
+  "Scheme/Ruby/Forth debugging: {snd-debug}",
   "CLM Instrument debugging: {variable-display}",
   "Notelist debugging: {ws-backtrace}",
   "Break and trace points: {snd-break}",
@@ -866,7 +869,7 @@ about it!  If possible, run Snd in gdb and send me the stack trace: \n\n\
   where\n\
 \n\
 See README.Snd for more about C-level troubles.  For CLM-based instruments, " vardpy_reference " might \
-help.  For debugging your own Scheme/Ruby/Forth/ECL \
+help.  For debugging your own Scheme/Ruby/Forth \
 code (or Snd's for that matter), see the \"Errors and Debugging\" section of \
 extsnd.html, or snd-debug.  For notelist debugging, see ws-backtrace.",
 #else
@@ -3096,7 +3099,7 @@ static const char *topic_names[NUM_TOPICS] = {
   "Hook", "Vct", "Sample reader", "Mark", "Mix", "Region", "Edit list", "Transform", "Error",
   "Color", "Font", "Graphic", "Widget", "Emacs",
   "CLM", "Instrument", "CM", "CMN", "Libxm", "Sndlib", 
-  "Motif", "Gtk", "Script", "Ruby", "ECL", "LADSPA", "OpenGL", "Gdb", "Control panel",
+  "Motif", "Gtk", "Script", "Ruby", "s7", "LADSPA", "OpenGL", "Gdb", "Control panel",
   "X resources", "Invocation flags", "Initialization file", "Customization",
   "Noise Reduction", "Window Size", "Color", "Random Number", "Wavogram",
   "Forth"
@@ -3109,7 +3112,7 @@ static const char *topic_urls[NUM_TOPICS] = {
   "extsnd.html#sndwidgets", "grfsnd.html#emacssnd", "grfsnd.html#sndwithclm", 
   "grfsnd.html#sndinstruments", "grfsnd.html#sndwithcm", "sndscm.html#musglyphs", 
   "libxm.html#xm", "sndlib.html#introduction", "grfsnd.html#sndwithmotif", 
-  "grfsnd.html#sndwithgtk", "grfsnd.html#sndwithnogui", "grfsnd.html#sndandruby", "grfsnd.html#sndandecl", 
+  "grfsnd.html#sndwithgtk", "grfsnd.html#sndwithnogui", "grfsnd.html#sndandruby", "grfsnd.html#sndands7", 
   "grfsnd.html#sndandladspa", 
   "grfsnd.html#sndandgl", "grfsnd.html#sndandgdb", "extsnd.html#customcontrols",
   "grfsnd.html#sndresources", "grfsnd.html#sndswitches", "grfsnd.html#sndinitfile", "extsnd.html#extsndcontents",

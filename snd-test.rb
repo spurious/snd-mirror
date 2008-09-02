@@ -16342,7 +16342,6 @@ def test098
       snd_display("polyshaper [1, 1, 2, 0.5] %d: %s %s?", i, val1, val2)
       break
     end
-    a += incr
   end
   gen = make_polyshape(440.0, :partials, [1, 1])
   1100.times do |i|
@@ -37739,7 +37738,11 @@ def test0324
   click_button(open_button)
   force_event
   if Snd.sounds.length != 2
-    snd_display("vf open 0: %s?", Snd.sounds.apply(:short_file_name).inspect)
+    if Snd.sounds.length > 0
+      snd_display("vf open 0: %s?", Snd.sounds.apply(:short_file_name).inspect)
+    else
+      snd_display("vf open 0: nil?")
+    end
   end
   oind = find_sound("1.snd")
   if sound?(oind)
@@ -38295,7 +38298,7 @@ Procs =
   [:add_mark, :add_sound_file_extension, :add_source_file_extension, :sound_file_extensions,
    :sound_file?, :add_to_main_menu, :add_to_menu,
    :add_transform, :amp_control, :as_one_edit, :ask_before_overwrite, :audio_input_device,
-   :audio_output_device, :auto_resize, :auto_update, :autocorrelate, :axis_info,
+   :audio_output_device, :auto_resize, :auto_update, :autocorrelate, :axis_color, :axis_info,
    :axis_label_font, :axis_numbers_font, :basic_color, :bind_key, :bomb, :c_g?, :apply_controls,
    :change_samples_with_origin, :channel_style, :channel_widgets, :channels, :chans, :peaks_font,
    :bold_peaks_font, :close_sound, :color_cutoff, :color_dialog, :colormap_ref, :add_colormap,
@@ -38477,7 +38480,7 @@ Procs =
 Set_procs =
   [:amp_control, :ask_before_overwrite, :audio_input_device, :audio_output_device,
    :auto_resize, :sound_file_extensions,
-   :auto_update, :axis_label_font, :axis_numbers_font, :channel_style, :peaks_font,
+   :auto_update, :axis_color, :axis_label_font, :axis_numbers_font, :channel_style, :peaks_font,
    :bold_peaks_font, :color_cutoff, :color_inverted, :color_scale, :contrast_control,
    :contrast_control_amp, :amp_control_bounds, :speed_control_bounds, :expand_control_bounds,
    :contrast_control_bounds, :reverb_control_length_bounds, :reverb_control_scale_bounds,
@@ -38492,8 +38495,9 @@ Set_procs =
    :expand_control_length, :expand_control_ramp, :expand_control?, :fft_window_beta,
    :fft_window_alpha, :fft_with_phases,
    :fft_log_frequency, :fft_log_magnitude, :transform_size, :transform_graph_type, :fft_window,
-   :transform_graph?, :filter_control_in_dB, :filter_control_envelope, :enved_filter_order,
-   :enved_filter, :filter_control_in_hz, :filter_control_order, :filter_control_waveform_color,
+   :transform_graph?, :filter_control_in_dB, :filter_control_envelope, :axis_color,
+   :enved_filter_order, :enved_filter, :filter_control_in_hz, :filter_control_order,
+   :filter_control_waveform_color,
    :filter_control?, :foreground_color, :graph_color, :graph_cursor, :graph_style, :lisp_graph?,
    :graphs_horizontal, :highlight_color, :just_sounds, :left_sample, :listener_color,
    :listener_font, :listener_prompt, :listener_text_color, :mark_color, :mark_name, :mark_sample,
