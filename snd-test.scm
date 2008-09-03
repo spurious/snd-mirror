@@ -97,10 +97,12 @@
 	    (* (expt 2 count) n)))
 
       (define (string-downcase str)
-	(let ((len (string-length str)))
+	(let* ((len (string-length str))
+	       (newstr (make-string len)))
 	  (do ((i 0 (1+ i)))
 	      ((= i len))
-	    (string-set! str i (char-downcase (string-ref str i))))))
+	    (string-set! newstr i (char-downcase (string-ref str i))))
+	  newstr))
 
       (define sort!
 	;; http://www.math.grin.edu/~stone/events/scheme-workshop/quicksort.html
@@ -149,11 +151,7 @@
     (if (provided? 'snd-guile)
 	(display str)
 	(if (provided? 'snd-s7)
-	    (begin
-	      (display str)
-	      (if (and (pair? (cadr args))
-		       (not (= (list-line-number (cadr args)) 0)))
-		  (display (string-append " [" (number->string (list-line-number (cadr args))) "]"))))
+	    (display str)
 	    (display str (current-error-port)))) ;turn off buffering?
     (if (not (provided? 'snd-nogui))
 	(begin
@@ -11440,7 +11438,7 @@ EDITS: 5
 	      (if (> (vct-ref mn i) -0.5) (begin (snd-display ";1 peak min: ~A ~A" (vct-ref mn i) i) (set! happy #f)))
 	      (if (> (vct-ref mx i) -0.5) (begin (snd-display ";1 peak max: ~A ~A" (vct-ref mx i) i) (set! happy #f)))))
 	  (close-sound ind))
-	
+
 	(let ((index (new-sound "fmv.snd" mus-next mus-bshort 22050 2 "channel tests")))
 	  (define (test-channel-func func val-func init-val)
 	    (let* ((len (frames index))
@@ -11623,6 +11621,7 @@ EDITS: 5
 				   (vct-set! v i (+ 0.5 (* 0.5 (cos (+ pi (/ (* pi i) dur)))))))
 				 v))
 			     1.0)
+
 	  (let ((old-max (maxamp index #t))
 		(regdata (map (lambda (n)
 				(region->vct 0 10 n))
@@ -11672,6 +11671,8 @@ EDITS: 5
 	    (delete-file "s61.scm")
 	    (reset-hook! save-state-hook)
 	    ))
+
+	(snd-display "11681 ")
 	
 	(let ((index (new-sound "fmv.snd" mus-next mus-bshort 22050 2 "channel tests"))
 	      (v (make-vct 10))
@@ -14384,8 +14385,15 @@ EDITS: 2
 			    (snd-display ";set-~A /= beige (~A)?" name (getfnc)))
 			(setfnc initval)
 			(test-color (cdr lst)))))))
-	(if (not (provided? 'snd-rgb.scm)) (catch 'no-such-color (lambda () (load "rgb.scm")) (lambda args args)))
-	
+
+	(if (not (provided? 'snd-rgb.scm)) 
+	    (if (not (provided? 'snd-s7))
+		(catch 'no-such-color 
+		       (lambda () 
+			 (load "rgb.scm")) 
+		       (lambda args args))
+		(load "rgb.scm")))
+
 	(let* ((c1 (catch 'no-such-color
 			  (lambda () (make-color 0 0 1))
 			  (lambda args #f)))

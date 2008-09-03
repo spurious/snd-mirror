@@ -4365,7 +4365,7 @@ static char *find_sources(void) /* returns full filename if found else null */
   }
 #endif
 
-#if HAVE_GAUCHE
+#if HAVE_GAUCHE || HAVE_S7
   /* mimic Forth code below -- get *load-path* value and run through it */
   {
       int i, len, base_len;
@@ -4429,8 +4429,6 @@ static char *find_sources(void) /* returns full filename if found else null */
 	}
     }
 #endif
-
-    /* TODO: S7 load path search in prefs */
 
   if (file)
     {

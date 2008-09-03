@@ -1178,6 +1178,16 @@ static void print_stack_entry(s7_scheme *sc, opcode_t op, s7_pointer code, s7_po
       temp = copy_string(opcode_names[op]);
       str1 = s7_object_to_c_string(sc, args);
       str2 = s7_object_to_c_string(sc, code);
+      if (safe_strlen(str1) > 80)
+	{
+	  str1[72] = '.'; str1[73] = '.'; str1[73] = '.';
+	  str1[74] = '\0';
+	}
+      if (safe_strlen(str2) > 80)
+	{
+	  str2[72] = '.'; str2[73] = '.'; str2[73] = '.';
+	  str2[74] = '\0';
+	}
       fprintf(stderr, "\n%s: args: [%p] %s, code: %s", string_downcase(temp), args, str1, str2);
       FREE(temp);
     }
@@ -6266,7 +6276,9 @@ static char *s7_list_to_c_string(s7_scheme *sc, s7_pointer lst)
   buf = (char *)CALLOC(bufsize, sizeof(char));
 
 #if S7_DEBUGGING
-  sprintf(buf, "[%d](", pair_line_number(car(lst)));
+  if (pair_line_number(car(lst)) != 0)
+    sprintf(buf, "[%d](", pair_line_number(car(lst)));
+  else sprintf(buf, "(");
 #else
   sprintf(buf, "(");
 #endif
@@ -7517,14 +7529,9 @@ static s7_pointer g_procedure_documentation(s7_scheme *sc, s7_pointer args)
 }
 
 
-s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer args)
+s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
 {
-  #define H_procedure_arity "(procedure-arity func) returns a list '(required optional rest)"
   s7_pointer lst = sc->NIL;
-
-  s7_pointer x;
-  x = car(args);
-  /* fprintf(stderr, "arity: %s %d %d %d\n", s7_object_to_c_string(sc, x), s7_is_symbol(x), s7_is_function(x), s7_is_closure(x)); */
 
   if (s7_is_symbol(x))
     x = s7_symbol_value(sc, x);
@@ -7540,7 +7547,7 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer args)
   else
     {
       if ((s7_is_closure(x)) ||
-	  (s7_is_closure(car(args))) ||
+	  (s7_is_closure(x)) ||
 	  (s7_is_pair(x)))
 	{
 	  int len;
@@ -7562,6 +7569,12 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer args)
 	}
     }
   return(lst);
+}
+
+static s7_pointer g_procedure_arity(s7_scheme *sc, s7_pointer args)
+{
+  #define H_procedure_arity "(procedure-arity func) returns a list '(required optional rest)"
+  return(s7_procedure_arity(sc, car(args)));
 }
 
 
@@ -8065,7 +8078,7 @@ s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n,
   len = safe_strlen(argstr) + safe_strlen(descr) + safe_strlen(caller) + 128;
   errmsg = (char *)CALLOC(len, sizeof(char));
   if (arg_n <= 0) arg_n = 1;
-  snprintf(errmsg, len, "%s: argument %d (%s) has wrong type (expecting %s)", caller, arg_n, argstr, descr);
+  snprintf(errmsg, len, "%s: argument %d: %s, has wrong type (expecting %s)", caller, arg_n, argstr, descr);
   sc->x = s7_make_string(sc, errmsg);
   FREE(errmsg);
   if (argstr) FREE(argstr);
@@ -8080,7 +8093,7 @@ s7_pointer s7_out_of_range_error(s7_scheme *sc, const char *caller, int arg_n, s
   len = safe_strlen(argstr) + safe_strlen(descr) + safe_strlen(caller) + 128;
   errmsg = (char *)CALLOC(len, sizeof(char));
   if (arg_n <= 0) arg_n = 1;
-  snprintf(errmsg, len, "%s: argument %d (%s) is out of range (expecting %s)", caller, arg_n, argstr, descr);
+  snprintf(errmsg, len, "%s: argument %d: %s, is out of range (expecting %s)", caller, arg_n, argstr, descr);
   sc->x = s7_make_string(sc, errmsg);
   FREE(errmsg);
   if (argstr) FREE(argstr);
@@ -8152,6 +8165,10 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
   int i;
   s7_pointer catcher;
   catcher = sc->F;
+
+#if S7_DEBUGGING
+  g_stacktrace(sc, sc->NIL);
+#endif
 
   /* top is 1 past actual top, top - 1 is op, if op = OP_CATCH, top - 4 is the cell containing the catch struct */
 
@@ -8302,7 +8319,7 @@ static s7_pointer apply_list_star(s7_scheme *sc, s7_pointer d)
       if (cdr(cdr(p)) != sc->NIL) 
 	p = cdr(d);
     }
-  if (!s7_is_pair(car(cdr(p))))
+  if (!s7_is_list(sc, car(cdr(p))))
     return(s7_error(sc, 
 		    s7_make_symbol(sc, "wrong-type-arg-error"), 
 		    s7_make_string(sc, "apply last argument should be a list")));
@@ -8327,8 +8344,7 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
       /*
       fprintf(stderr, "apply: %s\n", s7_object_to_c_string(sc, sc->args));
       */
-      if ((!s7_is_pair(sc->args)) &&
-	  (sc->args != sc->NIL))
+      if (!s7_is_list(sc, sc->args))
 	return(s7_error(sc, 
 			s7_make_symbol(sc, "wrong-type-arg-error"), 
 			s7_make_string(sc, "apply last argument should be a list")));
@@ -8596,7 +8612,9 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	      pop_stack(sc, sc->code); /* a keyword evaluates to itself */
 	      goto START;
 	    }
-
+#if S7_DEBUGGING
+	  fprintf(stderr, "unbound %s\n", s7_object_to_c_string(sc, sc->code));
+#endif
 	  pop_stack(sc, eval_error(sc, "unbound variable", sc->code));
 	  goto START;
 	} 
@@ -8820,6 +8838,9 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 			}
 		      else 
 			{
+#if S7_DEBUGGING
+			  fprintf(stderr, "apply: %s?\n", s7_object_to_c_string(sc, sc->code));
+#endif
 			  pop_stack(sc, eval_error(sc, "apply of non-function?", sc->code));
 			  goto START;
 			}
@@ -10130,8 +10151,8 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "procedure?",          g_is_procedure,        1, 0, false, H_is_procedure);
   s7_define_function(sc, "procedure-documentation", g_procedure_documentation, 1, 0, false, H_procedure_documentation);
   s7_define_function(sc, "help",                g_procedure_documentation, 1, 0, false, H_procedure_documentation);
-  s7_define_function(sc, "procedure-arity",     s7_procedure_arity,     1, 0, false, H_procedure_arity);
-  s7_define_function(sc, "procedure-source",    g_procedure_source,     1, 0, false, H_procedure_source);
+  s7_define_function(sc, "procedure-arity",     g_procedure_arity,     1, 0, false, H_procedure_arity);
+  s7_define_function(sc, "procedure-source",    g_procedure_source,    1, 0, false, H_procedure_source);
   
 
   s7_define_function(sc, "not",                 g_not,                 1, 0, false, H_not);

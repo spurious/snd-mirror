@@ -82,7 +82,7 @@ typedef struct env_state {
 
   unsigned char *direct_data;
   int format, chans, bytes, fd;
-
+  bool file_open;
 } env_state;
 
 
@@ -133,6 +133,11 @@ void free_peak_env_state(chan_info *cp)
 	    {
 	      if (es->sf)
 		es->sf = free_snd_fd(es->sf);
+	      if (es->file_open)
+		{
+		  close(es->fd);
+		  es->file_open = false;
+		}
 	      if (es->direct_data)
 		{
 		  FREE(es->direct_data);
@@ -158,7 +163,8 @@ static env_state *make_env_state(chan_info *cp, off_t samples)
   if (samples <= 0) return(NULL);
   stop_peak_env(cp);
   pos = cp->edit_ctr;
-  es = (env_state *)CALLOC(1, sizeof(env_state));
+  es = (env_state *)CALLOC(1, sizeof(env_state)); /* only creation point */
+  es->file_open = false;
   es->samples = samples;
   es->slice = 0;
   es->edpos = pos;
@@ -333,6 +339,7 @@ static bool tick_peak_env(chan_info *cp, env_state *es)
 	      (mus_file_prescaler(cp->sounds[0]->io->fd) == 1.0))
 	    {
 	      es->fd = mus_file_open_read(cp->sound->filename);
+	      es->file_open = true;
 	      lseek(es->fd, cp->sound->hdr->data_location, SEEK_SET);
 
 	      es->format = cp->sound->hdr->format;
@@ -5382,6 +5389,11 @@ If 'filename' is a sound index (an integer), 'size' is interpreted as an edit-po
 	    {
 	      FREE(es->direct_data);
 	      es->direct_data = NULL;
+	    }
+	  if (es->file_open)
+	    {
+	      close(es->fd);
+	      es->file_open = false;
 	    }
 	  FREE(es);
 	  peak = g_env_info_to_vcts(cp->edits[0]->peak_env, len);

@@ -900,6 +900,8 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
     {
       arity = XEN_ARITY(proc);
 
+      /* fprintf(stderr,"procedure_ok: %s arity: %s %p\n", XEN_AS_STRING(proc), XEN_AS_STRING(arity), proc); */
+
 #if HAVE_RUBY
       rargs = XEN_TO_C_INT(arity);
       if (!xen_rb_arity_ok(rargs, args))
@@ -3060,6 +3062,8 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(define (1- x) (- x 1))");
   XEN_EVAL_C_STRING("(defmacro while (cond . body) `(do () ((not ,cond)) ,@body))");
   XEN_EVAL_C_STRING("(defmacro define+ args `(define ,@args))"); /* for Gauche's benefit */
+
+  XEN_EVAL_C_STRING("(defmacro declare args `(snd-declare ',args))");
 #endif
 
 #if HAVE_SCHEME && USE_GTK && (!HAVE_GTK_ADJUSTMENT_GET_UPPER)

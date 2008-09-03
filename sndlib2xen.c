@@ -2485,17 +2485,21 @@ XEN_NARGIFY_0(g_mus_alsa_capture_device_w, g_mus_alsa_capture_device)
 XEN_NARGIFY_1(g_mus_alsa_set_capture_device_w, g_mus_alsa_set_capture_device)
 XEN_NARGIFY_0(g_mus_alsa_squelch_warning_w, g_mus_alsa_squelch_warning)
 XEN_NARGIFY_1(g_mus_alsa_set_squelch_warning_w, g_mus_alsa_set_squelch_warning)
+
 #if HAVE_OSS
   XEN_NARGIFY_0(g_mus_audio_reinitialize_w, g_mus_audio_reinitialize)
 #endif
+
 #if MUS_DEBUGGING && HAVE_SCHEME
   XEN_NARGIFY_2(g_mus_header_original_format_name_w, g_mus_header_original_format_name)
 #endif
+
 #if HAVE_GAUCHE
 XEN_NARGIFY_2(g_sound_data_equalp_w, equalp_sound_data)
 #endif
+
 #if MUS_MAC_OSX
-XEN_NARGIFY_1(g_mus_audio_output_properties_mutable_w, g_mus_audio_output_properties_mutable);
+XEN_NARGIFY_1(g_mus_audio_output_properties_mutable_w, g_mus_audio_output_properties_mutable)
 #endif
 
 XEN_NARGIFY_0(g_mus_max_malloc_w, g_mus_max_malloc)
@@ -2606,7 +2610,7 @@ XEN_NARGIFY_1(g_mus_set_max_table_size_w, g_mus_set_max_table_size)
   #define g_mus_audio_reinitialize_w g_mus_audio_reinitialize
 #endif
 #if MUS_MAC_OSX
-  #define g_mus_audio_dac_properties_mutable_w g_mus_audio_dac_properties_mutable
+  #define g_mus_audio_output_properties_mutable_w g_mus_audio_output_properties_mutable
 #endif
 #if MUS_DEBUGGING && HAVE_SCHEME
 #define g_mus_header_original_format_name_w g_mus_header_original_format_name
@@ -2897,11 +2901,11 @@ void mus_sndlib_xen_initialize(void)
 #endif
 
 #if HAVE_FORTH
-  XEN_DEFINE_PROCEDURE(S_sound_data_to_vector, g_sound_data_to_vector, 1, 0, 0, H_sound_data_to_vector);
+  XEN_DEFINE_PROCEDURE(S_sound_data_to_vector, g_sound_data_to_vector /* no _w! */, 1, 0, 0, H_sound_data_to_vector);
 #endif
 
 #if MUS_MAC_OSX
-  XEN_DEFINE_PROCEDURE(S_mus_audio_output_properties_mutable, g_mus_audio_output_properties_mutable, 1, 0, 0, H_mus_audio_output_properties_mutable);
+  XEN_DEFINE_PROCEDURE(S_mus_audio_output_properties_mutable, g_mus_audio_output_properties_mutable_w, 1, 0, 0, H_mus_audio_output_properties_mutable);
 #endif
 
 

@@ -3158,30 +3158,31 @@ The reason for doing this is that call/cc takes _a lot_ of time to compile with 
                       :blockhandler
                       (lambda (expr)
                         (let loop ((expr expr))
-                          (if (null? expr)
-                              '()
-                              (let ()
-                                (define expr0 (car expr))
-                                ;;(c-display "expr0" expr0 (find-stalin-noreturn-funcs das-code))
-                                (if (and (pair? expr0)
-                                         (eq? 'call-with-current-continuation (car expr0)) ;; Check if call-wi. is called inisde expr0.
-                                         (stalin-is-expr-noreturn? `(begin
-                                                                      ,@(cdr expr))
-                                                                   (find-stalin-noreturn-funcs das-code)))
-                                    (let ()
-                                      (define return (car (cadr (nth 1 expr0))))
-                                      ;;(pretty-print `(begin ,@(cdr expr)))
-                                      ;;(pretty-print expr)
-                                      ;;(c-display "found one" (stalin-is-expr-noreturn? `(begin
-                                      ;;                                                    ,@(cdr expr))
-                                      ;;                                                 (find-stalin-noreturn-funcs das-code)))
-                                      (das-loop
-                                       `((let ((,return (lambda (,(rt-gensym "call/cc-return"))
-                                                          ,@(cdr expr)
-                                                          )))
-                                           ,@(cddr (nth 1 expr0))))))
-                                    (cons (das-loop expr0)
-                                          (loop (cdr expr)))))))))))
+                          (define expr0 (and (pair? expr) (car expr)))
+                          (cond  ((null? expr)
+                                  '())
+                                 ((and (pair? expr0)
+                                       (eq? 'call-with-current-continuation (car expr0)) ;; Check if call-wi. is called inisde expr0.
+                                       (stalin-is-expr-noreturn? `(begin
+                                                                    ,@(cdr expr))
+                                                                 (find-stalin-noreturn-funcs das-code)))
+                                  (let ()
+                                    (define return (car (cadr (nth 1 expr0))))
+                                    ;;(pretty-print `(begin ,@(cdr expr)))
+                                    ;;(pretty-print expr)
+                                    ;;(c-display "found one" (stalin-is-expr-noreturn? `(begin
+                                    ;;                                                    ,@(cdr expr))
+                                    ;;                                                 (find-stalin-noreturn-funcs das-code)))
+                                    (das-loop
+                                     `((let ((,return (lambda (,(rt-gensym "call/cc-return"))
+                                                        ,@(cdr expr)
+                                                        )))
+                                         ,@(cddr (nth 1 expr0))
+                                         (,return #f) ;;Line recently added. Weird that it worked before...
+                                         )))))
+                                 (else
+                                  (cons (das-loop expr0)
+                                        (loop (cdr expr))))))))))
 #!
 (pretty-print (stalin-remove-call/cc
                '(lambda ()
@@ -3896,10 +3897,11 @@ had to be put into macroexpand instead.
                       (stalin-fix-internal-defines
                        (generate-stalin-code0 code))))
   (stalin-add-health-checks
-   (stalin-remove-call/cc
-    (stalin-monad-do-ify-call/cc
-     (stalin-remove-dead-code-recursively
-      lotsofcode)))))
+   (stalin-remove-dead-code-recursively ;; Second call. stalin-remove-call/cc might have added dead code
+    (stalin-remove-call/cc
+     (stalin-monad-do-ify-call/cc
+      (stalin-remove-dead-code-recursively
+       lotsofcode))))))
 
    
 
@@ -3921,6 +3923,9 @@ had to be put into macroexpand instead.
 #!
 (schemecode->file (generate-stalin-code0 '((+ 2 3 (add 50 (add 90))))))
 !#
+
+
+;; Add: -copt -freg-struct-return ?
 
 (define (compile-stalin-file basename)
   ;;(define command (<-> "stalin -On -no-clone-size-limit  -split-even-if-no-widening  -Ob -Om -Or -Ot -c " basename ".scm"))

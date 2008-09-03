@@ -2098,7 +2098,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 #define XEN_CDDDR(Arg)                             XEN_CDR(XEN_CDR(XEN_CDR(Arg)))
 #define XEN_LIST_P(Arg)                            s7_is_list(s7, Arg) /* not pair? because we want '() to return #t here */
 #define XEN_LIST_LENGTH(Arg)                       s7_list_length(s7, Arg)
-#define XEN_LIST_P_WITH_LENGTH(Arg, Len)           ((s7_is_list(s7, Arg)) && ((Len = XEN_LIST_LENGTH(Arg)) > 0))
+#define XEN_LIST_P_WITH_LENGTH(Arg, Len)           ((s7_is_list(s7, Arg)) && ((Len = XEN_LIST_LENGTH(Arg)) >= 0))
 #define XEN_LIST_1(a)                              XEN_CONS(a, xen_nil)
 #define XEN_LIST_2(a, b)                           XEN_CONS(a, XEN_LIST_1(b))
 #define XEN_LIST_3(a, b, c)                        XEN_CONS(a, XEN_LIST_2(b, c))
@@ -2428,7 +2428,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
                   (len > 6) ? XEN_LIST_REF(args, 6) : XEN_UNDEFINED, \
                   (len > 7) ? XEN_LIST_REF(args, 7) : XEN_UNDEFINED, \
                   (len > 8) ? XEN_LIST_REF(args, 8) : XEN_UNDEFINED, \
-                  (len > 9) ? XEN_LIST_REF(args, 8) : XEN_UNDEFINED)); \
+                  (len > 9) ? XEN_LIST_REF(args, 9) : XEN_UNDEFINED)); \
   }
 
 #define XEN_VARGIFY(OutName, InName) \

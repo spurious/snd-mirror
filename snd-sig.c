@@ -3203,7 +3203,9 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
   bool temp_file = false, backup = false;
   XEN res = XEN_FALSE;
   XEN proc = XEN_FALSE;
+
 #if WITH_RUN
+#if (!HAVE_S7)
   if (XEN_LIST_P(proc_and_list))
     proc = XEN_CADR(proc_and_list);
   else proc = proc_and_list;
@@ -3212,6 +3214,9 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
    *   which is not considered a procedure
    *     (map-channel (make-fir-filter 3 :xcoeffs (vct .5 1.0 .5)))
    */
+#else
+  proc = proc_and_list;
+#endif
 #else
   proc = proc_and_list;
 #endif
@@ -3247,6 +3252,7 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
       snd_fd *sf = NULL;
       char *errmsg = NULL;
       snd_info *sp;
+
 #if HAVE_GAUCHE
       if (!mus_xen_p(proc))
 #endif
@@ -3621,9 +3627,13 @@ the current sample, the vct returned by 'init-func', and the current read direct
   /*   the cadr proc gives access to the environment, run walks the car */
 
 #if WITH_RUN
+#if (!HAVE_S7)
   if (XEN_LIST_P(proc_and_list))
     proc = XEN_CADR(proc_and_list);
   else proc = proc_and_list;
+#else
+  proc = proc_and_list;
+#endif
 #else
   proc = proc_and_list;
 #endif
@@ -3854,9 +3864,13 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
   struct ptree *pt = NULL;
 
 #if WITH_RUN
+#if (!HAVE_S7)
   if (XEN_LIST_P(proc_and_list))
     proc = XEN_CADR(proc_and_list);
   else proc = proc_and_list;
+#else
+  proc = proc_and_list;
+#endif
 #else
   proc = proc_and_list;
 #endif
