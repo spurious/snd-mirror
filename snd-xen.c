@@ -2589,6 +2589,13 @@ static XEN g_file_exists_p(XEN name)
   return(C_TO_XEN_BOOLEAN(mus_file_probe(XEN_TO_C_STRING(name))));
 }
 
+static XEN g_file_is_directory(XEN name)
+{
+  #define H_file_is_directory "(file-is-directory? filename): #t if filename names a directory"
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, "file-is-directory?", "a string");
+  return(C_TO_XEN_BOOLEAN(directory_p(XEN_TO_C_STRING(name)))); /* snd-file.c l 84 */
+}
+
 static XEN g_system(XEN command)
 {
   #define H_system "(system command): execute command"
@@ -2669,6 +2676,7 @@ static XEN g_tmpnam(void)
 }
 
 XEN_NARGIFY_1(g_file_exists_p_w, g_file_exists_p)
+XEN_NARGIFY_1(g_file_is_directory_w, g_file_is_directory)
 XEN_NARGIFY_1(g_system_w, g_system)
 XEN_NARGIFY_1(g_s7_getenv_w, g_s7_getenv)
 XEN_NARGIFY_1(g_delete_file_w, g_delete_file)
@@ -2784,6 +2792,7 @@ void g_xen_initialize(void)
 
 #if HAVE_S7
   XEN_DEFINE_PROCEDURE("file-exists?",           g_file_exists_p_w,          1, 0, 0, H_file_exists_p);
+  XEN_DEFINE_PROCEDURE("file-is-directory?",     g_file_is_directory_w,      1, 0, 0, H_file_is_directory); /* "directory?" would be a better name, but we follow Guile */
   XEN_DEFINE_PROCEDURE("system",                 g_system_w,                 1, 0, 0, H_system);
   XEN_DEFINE_PROCEDURE("getenv",                 g_s7_getenv_w,              1, 0, 0, H_getenv);
   XEN_DEFINE_PROCEDURE("delete-file",            g_delete_file_w,            1, 0, 0, H_delete_file);
@@ -3064,6 +3073,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(defmacro define+ args `(define ,@args))"); /* for Gauche's benefit */
 
   XEN_EVAL_C_STRING("(defmacro declare args `(snd-declare ',args))");
+  XEN_EVAL_C_STRING("(define (identity x) x)"); /* popup.scm uses this */
 #endif
 
 #if HAVE_SCHEME && USE_GTK && (!HAVE_GTK_ADJUSTMENT_GET_UPPER)

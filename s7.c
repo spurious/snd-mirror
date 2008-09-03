@@ -59,21 +59,6 @@
  *  (object? <tag> obj) or maybe (name? obj) and (make-name value)
  *
  * Mike Scholz provided the FreeBSD support
- *
- * in snd-test: 9, 10, and 14 need sort, 8 gets abs of 0 but complex, 7 has rgb scope problem?
- *                with sort.scm (slib), 9 needs string-downcase
- *                                     10 is unhappy about all the key args to open-output-file (:if-does-not-exist)
- *                                     14 gets "trouble in region or something", then (+ <promise>???)
- *              5 hits a segfault in src-sound when trying to complain about an env hitting 0 (but there's no env??)
- *              0..4 are ok, 6 is ok, 12 is ok, 18 is ok
- *              13 has some problem with "no widgets added" -- 21 hits very similar problem with "add-comment failed" (in a list)
- *              15 seems to hit (= x (1 0)), 16 says apply last arg should be a list
- *              17 is still unhappy about progn, I think
- *              19 hits abort (pop off top of stack), 20 hits division by 0
- *              22 is unhappy about (lambda () (set! int-var (car pv))) -- car?
- *              23 find-sound arg1 is procedure-with-setter??
- *              24..27 run but I'm not sure they actually did anything
- *              28 hits a bunch of arity errors? segfaults in count-matches
  */
 
 
@@ -1180,13 +1165,13 @@ static void print_stack_entry(s7_scheme *sc, opcode_t op, s7_pointer code, s7_po
       str2 = s7_object_to_c_string(sc, code);
       if (safe_strlen(str1) > 80)
 	{
-	  str1[72] = '.'; str1[73] = '.'; str1[73] = '.';
-	  str1[74] = '\0';
+	  str1[72] = '.'; str1[73] = '.'; str1[74] = '.';
+	  str1[75] = '\0';
 	}
       if (safe_strlen(str2) > 80)
 	{
-	  str2[72] = '.'; str2[73] = '.'; str2[73] = '.';
-	  str2[74] = '\0';
+	  str2[72] = '.'; str2[73] = '.'; str2[74] = '.';
+	  str2[75] = '\0';
 	}
       fprintf(stderr, "\n%s: args: [%p] %s, code: %s", string_downcase(temp), args, str1, str2);
       FREE(temp);
@@ -1806,21 +1791,25 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
 /* Trigonometric functions. FreeBSD's math library does not include the complex form of the trig funcs. */ 
  
 #if !HAVE_CSIN 
-static double complex csin(double complex z) 
+double complex csin(double complex z);
+/* each of these is global to allow it to be used elsewhere under the HAVE_COMPLEX_TRIG switch */
+double complex csin(double complex z) 
 { 
   return sin(creal(z)) * cosh(cimag(z)) + (cos(creal(z)) * sinh(cimag(z))) * _Complex_I; 
 } 
 #endif 
  
 #if !HAVE_CCOS 
-static double complex ccos(double complex z) 
+double complex ccos(double complex z);
+double complex ccos(double complex z) 
 { 
   return cos(creal(z)) * cosh(cimag(z)) + (-sin(creal(z)) * sinh(cimag(z))) * _Complex_I; 
 } 
 #endif 
  
 #if !HAVE_CTAN 
-static double complex ctan(double complex z) 
+double complex ctan(double complex z);
+double complex ctan(double complex z) 
 { 
   return csin(z) / ccos(z); 
 } 
@@ -1829,21 +1818,24 @@ static double complex ctan(double complex z)
 /* Hyperbolic functions. */ 
  
 #if !HAVE_CSINH 
-static double complex csinh(double complex z) 
+double complex csinh(double complex z);
+double complex csinh(double complex z) 
 { 
   return sinh(creal(z)) * cos(cimag(z)) + (cosh(creal(z)) * sin(cimag(z))) * _Complex_I; 
 } 
 #endif 
  
 #if !HAVE_CCOSH 
-static double complex ccosh(double complex z) 
+double complex ccosh(double complex z);
+double complex ccosh(double complex z) 
 { 
   return cosh(creal(z)) * cos(cimag(z)) + (sinh(creal(z)) * sin(cimag(z))) * _Complex_I; 
 } 
 #endif 
  
 #if !HAVE_CTANH 
-static double complex ctanh(double complex z) 
+double complex ctanh(double complex z);
+double complex ctanh(double complex z) 
 { 
   return csinh(z) / ccosh(z); 
 } 
@@ -1852,20 +1844,23 @@ static double complex ctanh(double complex z)
 /* Exponential and logarithmic functions. */ 
  
 #if !HAVE_CEXP 
-static double complex cexp(double complex z) 
+double complex cexp(double complex z);
+double complex cexp(double complex z) 
 { 
   return exp(creal(z)) * cos(cimag(z)) + (exp(creal(z)) * sin(cimag(z))) * _Complex_I; 
 } 
 #endif 
  
 #if !HAVE_CARG 
-static double carg(double complex z) 
+double carg(double complex z);
+double carg(double complex z) 
 { 
   return atan2(cimag(z), creal(z)); 
 } 
 #endif 
  
 #if !HAVE_CABS 
+double cabs(double complex z);
 double cabs(double complex z) 
 { 
   return hypot(creal(z), cimag(z)); 
@@ -1873,7 +1868,8 @@ double cabs(double complex z)
 #endif 
  
 #if !HAVE_CLOG 
-static double complex clog(double complex z) 
+double complex clog(double complex z);
+double complex clog(double complex z) 
 { 
   return log(fabs(cabs(z))) + carg(z) * _Complex_I; 
 } 
@@ -1882,7 +1878,8 @@ static double complex clog(double complex z)
 /* Power functions. */ 
  
 #if !HAVE_CPOW 
-static double complex cpow(double complex x, double complex y) 
+double complex cpow(double complex x, double complex y);
+double complex cpow(double complex x, double complex y) 
 { 
   double r = cabs(x); 
   double theta = carg(x); 
@@ -1896,14 +1893,16 @@ static double complex cpow(double complex x, double complex y)
 #endif 
  
 #if !HAVE_CONJ 
-static double complex conj(double complex z) 
+double complex conj(double complex z);
+double complex conj(double complex z) 
 { 
   return ~z; 
 } 
 #endif 
 
 #if !HAVE_CSQRT 
-static double complex csqrt(double complex z) 
+double complex csqrt(double complex z);
+double complex csqrt(double complex z) 
 { 
   if (cimag(z) < 0.0) 
     return conj(csqrt(conj(z))); 
@@ -1918,42 +1917,48 @@ static double complex csqrt(double complex z)
 #endif 
 
 #if !HAVE_CASIN 
-static double complex casin(double complex z) 
+double complex casin(double complex z);
+double complex casin(double complex z) 
 { 
   return -_Complex_I * clog(_Complex_I * z + csqrt(1.0 - z * z)); 
 } 
 #endif 
  
 #if !HAVE_CACOS 
-static double complex cacos(double complex z) 
+double complex cacos(double complex z);
+double complex cacos(double complex z) 
 { 
   return -_Complex_I * clog(z + _Complex_I * csqrt(1.0 - z * z)); 
 } 
 #endif 
  
 #if !HAVE_CATAN 
-static double complex catan(double complex z) 
+double complex catan(double complex z);
+double complex catan(double complex z) 
 { 
   return _Complex_I * clog((_Complex_I + z) / (_Complex_I - z)) / 2.0; 
 } 
 #endif 
  
 #if !HAVE_CASINH 
-static double complex casinh(double complex z) 
+double complex casinh(double complex z);
+double complex casinh(double complex z) 
 { 
   return clog(z + csqrt(1.0 + z * z)); 
 } 
 #endif 
  
 #if !HAVE_CACOSH 
-static double complex cacosh(double complex z) 
+double complex cacosh(double complex z);
+double complex cacosh(double complex z) 
 { 
   return clog(z + csqrt(z * z - 1.0)); 
 } 
 #endif 
  
 #if !HAVE_CATANH 
-static double complex catanh(double complex z) 
+double complex catanh(double complex z);
+double complex catanh(double complex z) 
 { 
   return clog((1.0 + z) / (1.0 - z)) / 2.0; 
 } 
@@ -7398,63 +7403,6 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
   return(x);
 }
 
-static s7_pointer g_is_procedure(s7_scheme *sc, s7_pointer args)
-{
-  #define H_is_procedure "(procedure? obj) returns #t if obj is a procedure"
-  return(to_s7_bool(sc, ((s7_is_closure(car(args))) || 
-			 (is_goto(car(args))) || 
-			 (s7_is_continuation(car(args))) || 
-			 (s7_is_function(car(args))))));
-}
-
-static s7_pointer procedure_source(s7_pointer p)   
-{ 
-  return(car(p));
-}
-
-s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p)
-{
-  /* make it look like a lambda form */
-
-  /* in this context, there's no way to distinguish between:
-   *    (procedure-source (let ((b 1)) (lambda (a) (+ a b))))
-   * and
-   *    (let ((b 1)) (procedure-source (lambda (a) (+ a b))))
-   * both become:
-   * ((a) (+ a b)) (((b . 1)) #(() () () () () ((make-filtered-comb . make-filtered-comb)) () () ...))
-   */
-
-  if (s7_is_closure(p) || is_macro(p) || is_promise(p)) 
-    {
-      sc->envir = cdr(p); /* else closure-locals are inaccessible to run */
-      return(s7_append(sc, 
-		       cons(sc, 
-			    sc->LAMBDA, 
-			    cons(sc,
-				 car(car(p)),
-				 sc->NIL)),
-		       cdr(car(p))));
-    }
-  return(sc->F);
-}
-
-static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
-{
-  #define H_procedure_source "(procedure-source func) tries to return the definition of func"
-
-  if (s7_is_symbol(car(args)))
-    sc->y = s7_symbol_value(sc, car(args));
-  else sc->y = car(args);
-  if (sc->y != sc->NIL)
-    return(s7_procedure_source(sc, sc->y));
-  return(sc->NIL);
-}
-
-s7_pointer s7_procedure_environment(s7_pointer p)    
-{ 
-  return(cdr(p));
-}
-
 bool s7_is_closure(s7_pointer p)  
 { 
   return(type(p) == T_CLOSURE);
@@ -7490,6 +7438,68 @@ static s7_pointer g_make_closure(s7_scheme *sc, s7_pointer args)
   return(s7_make_closure(sc, sc->x, sc->y));
 }
       
+static s7_pointer closure_source(s7_pointer p)   
+{ 
+  return(car(p));
+}
+
+
+static s7_pointer g_is_procedure(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_procedure "(procedure? obj) returns #t if obj is a procedure"
+  return(to_s7_bool(sc, ((s7_is_closure(car(args))) || 
+			 (is_goto(car(args))) || 
+			 (s7_is_continuation(car(args))) || 
+			 (s7_is_function(car(args))) ||
+			 (s7_is_procedure_with_setter(car(args))))));
+}
+
+
+s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p)
+{
+  /* make it look like a lambda form */
+
+  /* in this context, there's no way to distinguish between:
+   *    (procedure-source (let ((b 1)) (lambda (a) (+ a b))))
+   * and
+   *    (let ((b 1)) (procedure-source (lambda (a) (+ a b))))
+   * both become:
+   * ((a) (+ a b)) (((b . 1)) #(() () () () () ((make-filtered-comb . make-filtered-comb)) () () ...))
+   */
+
+  if (s7_is_closure(p) || is_macro(p) || is_promise(p)) 
+    {
+      sc->envir = cdr(p); /* else closure-locals are inaccessible to run */
+      return(s7_append(sc, 
+		       cons(sc, 
+			    sc->LAMBDA, 
+			    cons(sc,
+				 car(car(p)),
+				 sc->NIL)),
+		       cdr(car(p))));
+    }
+
+  /* TODO: what if scheme case of pws?? */
+  return(sc->F);
+}
+
+static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
+{
+  #define H_procedure_source "(procedure-source func) tries to return the definition of func"
+
+  if (s7_is_symbol(car(args)))
+    sc->y = s7_symbol_value(sc, car(args));
+  else sc->y = car(args);
+  if (sc->y != sc->NIL)
+    return(s7_procedure_source(sc, sc->y));
+  return(sc->NIL);
+}
+
+s7_pointer s7_procedure_environment(s7_pointer p)    
+{ 
+  return(cdr(p));
+}
+
 void s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc)
 {
   s7_pointer func, sym;
@@ -7503,10 +7513,17 @@ void s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, int re
   local_unprotect(sym);
 }
 
+static char *pws_documentation(s7_pointer x);
 
 const char *s7_procedure_documentation(s7_pointer x)
 {
-  return(function_documentation(x));
+  if (s7_is_function(x))
+    return(function_documentation(x));
+
+  if (s7_is_procedure_with_setter(x))
+    return(pws_documentation(x));
+
+  return(NULL);
 }
 
 static s7_pointer g_procedure_documentation(s7_scheme *sc, s7_pointer args)
@@ -7524,6 +7541,9 @@ static s7_pointer g_procedure_documentation(s7_scheme *sc, s7_pointer args)
   if ((s7_is_closure(x)) &&
       (s7_is_string(cadar(x))))
     return(cadar(x));
+
+  if (s7_is_procedure_with_setter(x))
+    return(s7_make_string(sc, pws_documentation(x)));
 
   return(sc->F);
 }
@@ -7543,32 +7563,37 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
       lst = s7_cons(sc, s7_make_integer(sc, x->object.ffptr->optional_args), lst);
       lst = s7_cons(sc, s7_make_integer(sc, x->object.ffptr->required_args), lst);
       local_unprotect(lst);
+      return(lst);
     }
-  else
+
+  if ((s7_is_closure(x)) ||
+      (s7_is_closure(x)) ||
+      (s7_is_pair(x)))
     {
-      if ((s7_is_closure(x)) ||
-	  (s7_is_closure(x)) ||
-	  (s7_is_pair(x)))
-	{
-	  int len;
+      int len;
 
-	  if (s7_is_pair(x))
-	    len = s7_list_length(sc, car(x));
-	  else len = s7_list_length(sc, caar(x));
+      if (s7_is_pair(x))
+	len = s7_list_length(sc, car(x));
+      else len = s7_list_length(sc, caar(x));
 
-	  /* fprintf(stderr, "len %d %s\n", len, s7_object_to_c_string(sc, caar(x))); */
+      /* fprintf(stderr, "len %d %s\n", len, s7_object_to_c_string(sc, caar(x))); */
 
-	  if (len >= 0)
-	    lst = s7_cons(sc, s7_make_integer(sc, len),
-			  s7_cons(sc, s7_make_integer(sc, 0),
-				  s7_cons(sc, sc->F, sc->NIL)));
-	  else
-	    lst = s7_cons(sc, s7_make_integer(sc, abs(len)),
-			  s7_cons(sc, s7_make_integer(sc, 0),
-				  s7_cons(sc, sc->T, sc->NIL)));
-	}
+      if (len >= 0)
+	return(s7_cons(sc, s7_make_integer(sc, len),
+		       s7_cons(sc, s7_make_integer(sc, 0),
+			       s7_cons(sc, sc->F, sc->NIL))));
+      return(s7_cons(sc, s7_make_integer(sc, abs(len)),
+		     s7_cons(sc, s7_make_integer(sc, 0),
+			     s7_cons(sc, sc->T, sc->NIL))));
     }
-  return(lst);
+
+  if (s7_is_procedure_with_setter(x))
+    return(s7_cons(sc, s7_make_integer(sc, 0),
+		   s7_cons(sc, s7_make_integer(sc, 0),
+			   s7_cons(sc, sc->T, sc->NIL))));
+  /* TODO: get the true pws arity somehow */
+
+  return(sc->NIL);
 }
 
 static s7_pointer g_procedure_arity(s7_scheme *sc, s7_pointer args)
@@ -7823,6 +7848,12 @@ static s7_pointer g_is_procedure_with_setter(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_procedure_with_setter "(procedure-with-setter? obj) returns #t if obj is a procedure-with-setter"
   return(to_s7_bool(sc, s7_is_procedure_with_setter(car(args))));
+}
+
+static char *pws_documentation(s7_pointer x)
+{
+  pws *f = (pws *)s7_object_value(x);
+  return(f->documentation);
 }
 
 
@@ -8771,7 +8802,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	      new_frame_in_env(sc, s7_procedure_environment(sc->code)); 
 
 	      /* load up the current args into the ((args) (lambda)) layout [via the current environment] */
-	      for (sc->x = car(procedure_source(sc->code)), sc->y = sc->args; s7_is_pair(sc->x); sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
+	      for (sc->x = car(closure_source(sc->code)), sc->y = sc->args; s7_is_pair(sc->x); sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
 		{
 		  if (sc->y == sc->NIL)
 		    {
@@ -8799,7 +8830,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 		      goto START;
 		    }
 		}
-	      sc->code = cdr(procedure_source(sc->code));
+	      sc->code = cdr(closure_source(sc->code));
 	      sc->args = sc->NIL;
 	      goto BEGIN;
 	    }
