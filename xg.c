@@ -30665,15 +30665,6 @@ static XEN gxg_gtk_selection_data_get_format(XEN selection_data)
   return(C_TO_XEN_gint(gtk_selection_data_get_format(XEN_TO_C_GtkSelectionData_(selection_data))));
 }
 
-static XEN gxg_gtk_selection_data_get_data(XEN selection_data, XEN length)
-{
-  #define H_gtk_selection_data_get_data "guchar* gtk_selection_data_get_data(GtkSelectionData* selection_data, \
-guint* length)"
-  XEN_ASSERT_TYPE(XEN_GtkSelectionData__P(selection_data), selection_data, 1, "gtk_selection_data_get_data", "GtkSelectionData*");
-  XEN_ASSERT_TYPE(XEN_guint__P(length), length, 2, "gtk_selection_data_get_data", "guint*");
-  return(C_TO_XEN_guchar_(gtk_selection_data_get_data(XEN_TO_C_GtkSelectionData_(selection_data), XEN_TO_C_guint_(length))));
-}
-
 static XEN gxg_gtk_selection_data_get_display(XEN selection_data)
 {
   #define H_gtk_selection_data_get_display "GdkDisplay* gtk_selection_data_get_display(GtkSelectionData* selection_data)"
@@ -37691,7 +37682,6 @@ XEN_NARGIFY_1(gxg_gtk_scale_button_get_popup_w, gxg_gtk_scale_button_get_popup)
 XEN_NARGIFY_1(gxg_gtk_selection_data_get_target_w, gxg_gtk_selection_data_get_target)
 XEN_NARGIFY_1(gxg_gtk_selection_data_get_data_type_w, gxg_gtk_selection_data_get_data_type)
 XEN_NARGIFY_1(gxg_gtk_selection_data_get_format_w, gxg_gtk_selection_data_get_format)
-XEN_NARGIFY_2(gxg_gtk_selection_data_get_data_w, gxg_gtk_selection_data_get_data)
 XEN_NARGIFY_1(gxg_gtk_selection_data_get_display_w, gxg_gtk_selection_data_get_display)
 XEN_NARGIFY_1(gxg_gtk_socket_get_plug_window_w, gxg_gtk_socket_get_plug_window)
 XEN_NARGIFY_1(gxg_gtk_widget_get_window_w, gxg_gtk_widget_get_window)
@@ -41591,7 +41581,6 @@ XEN_NARGIFY_0(gxg_make_cairo_matrix_t_w, gxg_make_cairo_matrix_t)
 #define gxg_gtk_selection_data_get_target_w gxg_gtk_selection_data_get_target
 #define gxg_gtk_selection_data_get_data_type_w gxg_gtk_selection_data_get_data_type
 #define gxg_gtk_selection_data_get_format_w gxg_gtk_selection_data_get_format
-#define gxg_gtk_selection_data_get_data_w gxg_gtk_selection_data_get_data
 #define gxg_gtk_selection_data_get_display_w gxg_gtk_selection_data_get_display
 #define gxg_gtk_socket_get_plug_window_w gxg_gtk_socket_get_plug_window
 #define gxg_gtk_widget_get_window_w gxg_gtk_widget_get_window
@@ -45498,7 +45487,6 @@ static void define_functions(void)
   XG_DEFINE_PROCEDURE(gtk_selection_data_get_target, gxg_gtk_selection_data_get_target_w, 1, 0, 0, H_gtk_selection_data_get_target);
   XG_DEFINE_PROCEDURE(gtk_selection_data_get_data_type, gxg_gtk_selection_data_get_data_type_w, 1, 0, 0, H_gtk_selection_data_get_data_type);
   XG_DEFINE_PROCEDURE(gtk_selection_data_get_format, gxg_gtk_selection_data_get_format_w, 1, 0, 0, H_gtk_selection_data_get_format);
-  XG_DEFINE_PROCEDURE(gtk_selection_data_get_data, gxg_gtk_selection_data_get_data_w, 2, 0, 0, H_gtk_selection_data_get_data);
   XG_DEFINE_PROCEDURE(gtk_selection_data_get_display, gxg_gtk_selection_data_get_display_w, 1, 0, 0, H_gtk_selection_data_get_display);
   XG_DEFINE_PROCEDURE(gtk_socket_get_plug_window, gxg_gtk_socket_get_plug_window_w, 1, 0, 0, H_gtk_socket_get_plug_window);
   XG_DEFINE_PROCEDURE(gtk_widget_get_window, gxg_gtk_widget_get_window_w, 1, 0, 0, H_gtk_widget_get_window);
@@ -48107,7 +48095,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("29-Aug-08"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("05-Sep-08"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

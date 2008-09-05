@@ -408,17 +408,19 @@ static void xen_symbol_name_set_value(const char *a, XEN b)
     XEN_VARIABLE_SET(var, b);
 }
 
+/* (define ho (let ((b 2)) (lambda (a) (+ a b))))
+ * (run (lambda () (+ (ho 1) 2)))
+ */
+
 static XEN symbol_to_value(XEN code, XEN sym, bool *local)
 {
   /* local_var here is a check against GLOBAL_SET_OK -- not a big deal! */
   (*local) = false; /* just a guess... */
-
   /*
-  fprintf(stderr, "%s\n", XEN_AS_STRING(code));
+  fprintf(stderr, "%s\n", XEN_AS_STRING(s7_cdr(code)));
   fprintf(stderr,"%s -> %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(s7_symbol_value(s7, sym)));
   */
-
-  return(s7_symbol_value(s7, sym));
+  return(s7_symbol_local_value(s7, sym, s7_cdr(code)));
 }
 
 static void symbol_set_value(XEN code, XEN sym, XEN new_val)
@@ -1396,7 +1398,7 @@ static list *xen_to_list(ptree *pt, XEN lst)
 
   len = XEN_LIST_LENGTH(lst);
 
-  /* fprintf(stderr,"got list: %s %d\n", XEN_AS_STRING(lst), len); */
+  /* fprintf(stderr,"got list: %s %d\n", XEN_AS_STRING(lst), len);  */
 
   if (len > 0)
     {
@@ -9236,7 +9238,12 @@ static xen_value *clean_up(xen_value *result, xen_value **args, int args_size);
 static xen_value *splice_in_function_body(ptree *prog, XEN proc, xen_value **args, int num_args, const char *funcname)
 {
   XEN func_form;
+#if HAVE_S7
+  /* TODO: what about the locals? */
+  func_form = XEN_CAR(XEN_PROCEDURE_SOURCE(proc));
+#else
   func_form = XEN_PROCEDURE_SOURCE(proc);
+#endif
   /* fprintf(stderr,"splice in %s\n", XEN_AS_STRING(func_form)); */
 
   if ((XEN_LIST_P(func_form)) &&
@@ -12692,11 +12699,10 @@ static struct ptree *form_to_ptree_1(XEN code, int decls, int *types)
   current_optimization = optimization(ss);
   if (current_optimization == DONT_OPTIMIZE) return(NULL);
 
-#if !HAVE_S7
+  /* fprintf(stderr,"run %s\n", XEN_AS_STRING(code)); */
+
   form = XEN_CAR(code);
-#else
-  form = code;
-#endif
+  /* env is cdr in s7 */
 
   prog = make_ptree(8);
 
@@ -13551,10 +13557,24 @@ static XEN g_run_eval(XEN code, XEN arg, XEN arg1, XEN arg2)
   ptree *pt;
   current_optimization = SOURCE_OK;
 
-  /* fprintf(stderr, "run-eval: %s: %s\n", XEN_AS_STRING(code), XEN_AS_STRING(arg)); */
+
+#if HAVE_S7
+  s7_pointer cl;
+  cl = s7_make_closure(s7, code, xen_nil);
+  XEN_LOCAL_GC_PROTECT(cl);
 
   pt = make_ptree(8);
+  pt->code = cl;
   pt->result = walk(pt, code, NEED_ANY_RESULT);
+
+  XEN_LOCAL_GC_UNPROTECT(cl);
+#else
+  pt = make_ptree(8);
+  pt->result = walk(pt, code, NEED_ANY_RESULT);
+#endif
+
+  /* fprintf(stderr, "run-eval: %s: %s\n", XEN_AS_STRING(code), XEN_AS_STRING(arg)); */
+
   if (pt->result)
     {
       add_triple_to_ptree(pt, make_triple(quit, "quit", NULL, 0));
@@ -13636,9 +13656,10 @@ to Scheme and is equivalent to (thunk)."
 #if (!HAVE_S7)
   code = XEN_CADR(proc_and_code);
 #else
-  code = XEN_APPEND(XEN_CONS(C_STRING_TO_XEN_SYMBOL("lambda"), 
-			     XEN_EMPTY_LIST),
-		    XEN_CAR(proc_and_code));
+  code = XEN_CONS(XEN_APPEND(XEN_CONS(C_STRING_TO_XEN_SYMBOL("lambda"), 
+				      XEN_EMPTY_LIST),
+			     XEN_CAR(proc_and_code)),
+		  XEN_CDR(proc_and_code));
   pt = form_to_ptree(code);
 #endif
 
@@ -13652,7 +13673,13 @@ to Scheme and is equivalent to (thunk)."
 
   if (pt)
     return(eval_ptree_to_xen(pt));
+  
+  /* else fallback on straight scheme... */
+#if HAVE_S7
+  return(XEN_CALL_0(proc_and_code, S_run));
+#else
   return(XEN_CALL_0(code, S_run));
+#endif
 }
 
 #else

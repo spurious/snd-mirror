@@ -1466,17 +1466,17 @@ static void s7_new_slot_spec_in_env(s7_scheme *sc, s7_pointer env, s7_pointer va
 
 static s7_pointer s7_find_slot_in_env(s7_scheme *sc, s7_pointer env, s7_pointer hdl, bool all) 
 { 
-  s7_pointer x, y; 
+  s7_pointer x, y = sc->NIL; 
 
   /* this is a list ending with a vector */
   
-  for (x = env; x != sc->NIL; x = cdr(x)) 
+  for (x = env; s7_is_pair(x); x = cdr(x)) 
     { 
       if (s7_is_vector(car(x))) 
 	y = vector_element(car(x), hash_fn(s7_symbol_name(hdl), vector_length(car(x))));
       else y = car(x); 
 
-      for ( ; y != sc->NIL; y = cdr(y)) 
+      for ( ; s7_is_pair(y); y = cdr(y)) 
 	if (caar(y) == hdl) 
 	  break; 
 
@@ -1487,7 +1487,7 @@ static s7_pointer s7_find_slot_in_env(s7_scheme *sc, s7_pointer env, s7_pointer 
 	return(sc->NIL); 
     } 
 
-  if (x != sc->NIL) 
+  if (s7_is_pair(x))
     return(car(y)); 
 
   return(sc->NIL); 
@@ -1515,7 +1515,16 @@ s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym) /* was searching just 
   x = s7_find_slot_in_env(sc, sc->envir, sym, true);
   if (x != s7_NIL(sc))
     return(s7_slot_value_in_env(x));
-  return(sc->F);
+  return(sc->UNDEFINED);
+}
+
+s7_pointer s7_symbol_local_value(s7_scheme *sc, s7_pointer sym, s7_pointer local_env)
+{
+  s7_pointer x;
+  x = s7_find_slot_in_env(sc, local_env, sym, true);
+  if (x != s7_NIL(sc))
+    return(s7_slot_value_in_env(x));
+  return(s7_symbol_value(sc, sym));
 }
 
 
@@ -7541,7 +7550,6 @@ static s7_pointer g_is_procedure(s7_scheme *sc, s7_pointer args)
   return(to_s7_bool(sc, s7_is_procedure(car(args))));
 }
 
-
 s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p)
 {
   /* make it look like a lambda form */
@@ -7556,14 +7564,14 @@ s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p)
 
   if (s7_is_closure(p) || is_macro(p) || is_promise(p)) 
     {
-      sc->envir = cdr(p); /* else closure-locals are inaccessible to run */
-      return(s7_append(sc, 
-		       cons(sc, 
-			    sc->LAMBDA, 
-			    cons(sc,
-				 car(car(p)),
-				 sc->NIL)),
-		       cdr(car(p))));
+      return(s7_cons(sc, s7_append(sc, 
+				   cons(sc, 
+					sc->LAMBDA, 
+					cons(sc,
+					     car(car(p)),
+					     sc->NIL)),
+				   cdr(car(p))),
+		     cdr(p)));
     }
 
   /* TODO: what if scheme case of pws?? */
@@ -7644,8 +7652,8 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
     {
       lst = s7_cons(sc, (x->object.ffptr->rest_arg) ? sc->T : sc->F, lst);
       local_protect(lst);
-      lst = s7_cons(sc, s7_make_integer(sc, x->object.ffptr->optional_args), lst);
-      lst = s7_cons(sc, s7_make_integer(sc, x->object.ffptr->required_args), lst);
+      lst = s7_cons(sc, sc->x = s7_make_integer(sc, x->object.ffptr->optional_args), lst);
+      lst = s7_cons(sc, sc->x = s7_make_integer(sc, x->object.ffptr->required_args), lst);
       local_unprotect(lst);
       return(lst);
     }
@@ -7661,24 +7669,33 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
 	len = s7_list_length(sc, car(x));
       else len = s7_list_length(sc, caar(x));
 
+      /* these uses of sc->x|y to protect against the GC fix a GC-related problem, but why? */
       if (len >= 0)
-	return(s7_cons(sc, s7_make_integer(sc, len),
-		       s7_cons(sc, s7_make_integer(sc, 0),
-			       s7_cons(sc, sc->F, sc->NIL))));
-      return(s7_cons(sc, s7_make_integer(sc, abs(len)),
-		     s7_cons(sc, s7_make_integer(sc, 0),
-			     s7_cons(sc, sc->T, sc->NIL))));
+	return(s7_cons(sc, 
+		       sc->x = s7_make_integer(sc, len),
+		       sc->y = s7_cons(sc, 
+			       sc->y = s7_make_integer(sc, 0),
+			       sc->x = s7_cons(sc, sc->F, sc->NIL))));
+      return(s7_cons(sc, 
+		     sc->x = s7_make_integer(sc, abs(len)),
+		     sc->y = s7_cons(sc, 
+				     sc->y = s7_make_integer(sc, 0),
+				     sc->x = s7_cons(sc, sc->T, sc->NIL))));
     }
 
   if (s7_is_procedure_with_setter(x))
-    return(s7_cons(sc, s7_make_integer(sc, pws_get_req_args(x)),
-		   s7_cons(sc, s7_make_integer(sc, pws_get_opt_args(x)),
-			   s7_cons(sc, sc->F, sc->NIL))));
+    return(s7_cons(sc, 
+		   sc->x = s7_make_integer(sc, pws_get_req_args(x)),
+		   sc->y = s7_cons(sc, 
+				   sc->x = s7_make_integer(sc, pws_get_opt_args(x)),
+				   sc->y = s7_cons(sc, sc->F, sc->NIL))));
 
   if (s7_is_applicable_object(x))
-    return(s7_cons(sc, s7_make_integer(sc, 0),
-		   s7_cons(sc, s7_make_integer(sc, 0), 
-			   s7_cons(sc, sc->T, sc->NIL))));
+    return(s7_cons(sc, 
+		   sc->x = s7_make_integer(sc, 0),
+		   sc->y = s7_cons(sc, 
+			   sc->x = s7_make_integer(sc, 0), 
+			   sc->y = s7_cons(sc, sc->T, sc->NIL))));
 
   return(sc->NIL);
 }
@@ -8395,9 +8412,6 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	  FREE(numstr);
 	}
       write_char(sc, '\n', sc->error_port);
-
-
-      abort();
 
       if ((exit_eval) &&
 	  (sc->error_exiter))
@@ -10010,7 +10024,7 @@ s7_scheme *s7_init(void)
   set_immutable(sc->symbol_table);
   typeflag(sc->symbol_table) |= T_CONSTANT;
   
-  sc->gc_verbose = false;
+  sc->gc_verbose = true;
   sc->tracing = false;
   
   sc->code = sc->NIL;

@@ -48122,10 +48122,8 @@ EDITS: 1
 	(ststa '(lambda (y) (cond ((> y 0.0) "hi") ((< y 0.0) "ho") (else "ha"))) 0.0 "ha")
 	(ststa '(lambda (y) (cond ((> y 0.0) "hi") ((< y 0.0) "ho") (else "ha"))) -1.0 "ho")
 	
-	(let ((pv (cons 123 321))) (run (lambda () (set! int-var (car pv)))))
+	(let ((pv (list 123 321))) (run (lambda () (set! int-var (car pv)))))
 	(if (not (= int-var 123)) (snd-display ";car local pv: ~A" int-var))
-	(let ((pv (cons 123 321))) (run (lambda () (set! int-var (cdr pv)))))
-	(if (not (= int-var 321)) (snd-display ";cdr local pv: ~A" int-var))
 	
 	(btst '(list? list-var) #t)
 	(btst '(list? int-var) #f)
@@ -48484,6 +48482,7 @@ EDITS: 1
 	  (set! val (run-eval '(lambda (y) (declare (y hiho2)) (set! (hiho2-x y) 3.14) (hiho2-x y)) hi2))
 	  (if (fneq val 3.14) (snd-display ";inner set hiho2-x: ~A" val)))
 	
+	;; this tests the fallback process
 	(let ((lst (list 1 2 (vct-fill! (make-vct 4) 3.14) 3))
 	      (k 123.0))
 	  (run (lambda () (set! k (vct-ref (list-ref lst 2) 1))))
@@ -48615,6 +48614,7 @@ EDITS: 1
 		(if (< (- mx mn) 0.5) (snd-display ";optimized random range: ~A ~A" mn mx))
 		(if (or (< mn 0.0) (> mx 1.0)) (snd-display ";optimized random range odd: ~A ~A" mn mx)))))
 	
+	(if with-gui
 	(let* ((ind (open-sound "oboe.snd"))
 	       (reg (make-region 0 10))
 	       (mx (mix-vct (vct 0 .1 .2) 10))
@@ -48714,7 +48714,7 @@ EDITS: 1
 	    (run (lambda () (set! ok (region-maxamp reg))))
 	    (if (fneq ok .0003) (snd-display ";run region-maxamp ~A ~A?" ok (region-maxamp reg))))
 	  
-	  (close-sound ind))
+	  (close-sound ind)))
 	
 	(let* ((ind (open-sound "oboe.snd"))
 	       (gen (make-snd->sample ind))
@@ -50082,9 +50082,9 @@ EDITS: 1
 	      (t1 0)
 	      (ts '()))
 	  (set! (optimization) 0) 
-	  (set! t0 (time-it (with-temp-sound (:output (make-vct (inexact->exact (round (* 5 (mus-srate)))))) (fm-violin 0 5 440 .1))))
+	  (set! t0 (time-it (with-temp-sound (:srate 44100 :output (make-vct (inexact->exact (round (* 5 (mus-srate)))))) (fm-violin 0 5 440 .1))))
 	  (set! (optimization) max-optimization) 
-	  (set! t1 (time-it (with-temp-sound (:output (make-vct (inexact->exact (round (* 5 (mus-srate)))))) (fm-violin 0 5 440 .1))))
+	  (set! t1 (time-it (with-temp-sound (:srate 44100 :output (make-vct (inexact->exact (round (* 5 (mus-srate)))))) (fm-violin 0 5 440 .1))))
 	  (set! ts (cons (list "fm vln " (hundred t0) (hundred t1) (inexact->exact (round (safe-divide t0 t1)))) ts))
 	  
 	  (let ((ind (open-sound "1.snd"))
@@ -50111,6 +50111,39 @@ EDITS: 1
 	    (set! ts (cons (list "jcrev  " (hundred t0) (hundred t1) (inexact->exact (round (safe-divide t0 t1)))) ts))
 	    (close-sound ind))
 	  (snd-display "~{       ~A~%~}~%" ts))
+
+;Guile timings:
+;       (osc+env 215 20 11)
+;       (vct-ref 162 12 14)
+;       (let if  123 10 12)
+;       (abs sin 157 11 14)
+;       (-1      60 5 12)
+;       (*2      74 5 15)
+;       (jcrev   165 24 7)
+;       (expsnd  65 8 8)
+;       (fm vln  131 17 8)
+;
+;Gauche:
+;       (osc+env 196 177 1)
+;       (vct-ref 155 8 19)
+;       (let if  115 9 13)
+;       (abs sin 153 11 14)
+;       (-1      128 6 21)
+;       (*2      113 5 23)
+;       (jcrev   139 140 1)
+;       (expsnd  93 93 1)
+;       (fm vln  79 98 1)
+;s7:
+;       (osc+env 292 14 21)
+;       (vct-ref 293 8 37)
+;       (let if  276 9 31)
+;       (abs sin 178 12 15)
+;       (-1      134 5 27)
+;       (*2      140 5 28)
+;       (jcrev   283 12 24)
+;       (expsnd  131 7 19)
+;       (fm vln  362 11 33)
+;
 	
 	(if with-gui
 	    (let* ((osc (make-oscil 440))

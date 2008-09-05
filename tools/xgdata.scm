@@ -6699,10 +6699,10 @@
 (CFNC-2134 "GdkAtom gtk_selection_data_get_target GtkSelectionData* selection_data")
 (CFNC-2134 "GdkAtom gtk_selection_data_get_data_type GtkSelectionData* selection_data")
 (CFNC-2134 "gint gtk_selection_data_get_format GtkSelectionData* selection_data")
-(CFNC-2134 "guchar* gtk_selection_data_get_data GtkSelectionData* selection_data guint* length" 'const)
+;;; changed 2.14.1 (CFNC-2134 "guchar* gtk_selection_data_get_data GtkSelectionData* selection_data guint* length" 'const)
 (CFNC-2134 "GdkDisplay* gtk_selection_data_get_display GtkSelectionData* selection_data")
 (CFNC-2134 "GdkWindow* gtk_socket_get_plug_window GtkSocket* socket_")
-;(CFNC-2134 "GtkAllocation gtk_widget_get_allocation GtkWidget* widget")
+;;out 2.14.1 ;(CFNC-2134 "GtkAllocation gtk_widget_get_allocation GtkWidget* widget")
 (CFNC-2134 "GdkWindow* gtk_widget_get_window GtkWidget* widget")
 ;;; (CFNC-2134 "GtkWidget* gtk_window_get_default GtkWindow* window")
 ;(CFNC-2134 "GList* gtk_window_group_list_windows GtkWindowGroup* window_group")
@@ -6837,6 +6837,10 @@
 #!
 2.13.7:
 + gboolean              gtk_link_button_get_visited       (GtkLinkButton *link_button);
-+ void                  gtk_link_button_set_visited       (GtkLinkButton *link_button,
-+                                                          gboolean       visited);
++ void                  gtk_link_button_set_visited       (GtkLinkButton *link_button, bool visited)
++ 
+
+(CFNC-2141 "guchar* gtk_selection_data_get_data GtkSelectionData* selection_data" 'const)
+(CFNC-2141 "gint gtk_selection_data_get_length GtkSelectionData *selection_data")
+
 !#

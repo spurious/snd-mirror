@@ -3260,7 +3260,6 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
       if (errmsg)
 	{
 	  XEN errstr;
-	  fprintf(stderr,"err: %s\n", errmsg);
 	  errstr = C_TO_XEN_STRING(errmsg);
 	  FREE(errmsg);
 	  return(snd_bad_arity_error(caller, errstr, proc));

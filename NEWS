@@ -27,11 +27,12 @@ A new extension language choice: S7, a TinyScheme derivative.
   compatible with Snd's run macro, so the only real bottleneck
   is that macro expansion is slow.  It passes Jaffer's r4rs tests,
   and most of the r6rs number tests mentioned above. I haven't had 
-  time yet to implement threads.
+  time yet to implement threads.  s7 still hasn't made it through
+  snd-test.scm , so there are plenty of bugs...
 
 Mike Scholz helped me with S7 and improved some of the ruby files.
 
-checked: gtk+-2.13.5|6|7, sbcl 1.0.19|20
+checked: gtk+-2.13.5|6|7 and 2.14.1, sbcl 1.0.19|20
 
 Thanks!: Kjetil, Bret Battey, Hayahiko Moro, Mike.
 

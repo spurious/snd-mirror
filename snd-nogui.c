@@ -364,7 +364,6 @@ void snd_doit(int argc, char **argv)
   XEN_EVAL_C_STRING("(define " S_time_graph " 0)");
   XEN_EVAL_C_STRING("(define " S_transform_graph " 1)");
 
-#if (!HAVE_S7)
   XEN_EVAL_C_STRING("(define " S_basic_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
   XEN_EVAL_C_STRING("(define " S_colormap " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
   XEN_EVAL_C_STRING("(define " S_colormap_size " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
@@ -399,42 +398,6 @@ void snd_doit(int argc, char **argv)
   XEN_EVAL_C_STRING("(define " S_zoom_color " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
   XEN_EVAL_C_STRING("(define " S_widget_size " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
   XEN_EVAL_C_STRING("(define " S_widget_position " (make-procedure-with-setter (lambda () #f) (lambda (val) val)))");
-#else
-  XEN_EVAL_C_STRING("(define " S_basic_color " (make-procedure-with-setter \"" S_basic_color "\" (lambda () #f) (lambda (val) val)))");
-  XEN_EVAL_C_STRING("(define " S_colormap " (make-procedure-with-setter \"" S_colormap "\" (lambda () #f) (lambda (val) val)))");
-  XEN_EVAL_C_STRING("(define " S_colormap_size " (make-procedure-with-setter \"" S_colormap_size "\" (lambda () #f) (lambda (val) val)))");
-  XEN_EVAL_C_STRING("(define " S_cursor_color " (make-procedure-with-setter \"" S_cursor_color "\" (lambda () #f) (lambda (val) val)))");
-  XEN_EVAL_C_STRING("(define " S_data_color " (make-procedure-with-setter \"" S_data_color "\" (lambda () #f) (lambda (val) val)))");
-  XEN_EVAL_C_STRING("(define " S_enved_envelope " (make-procedure-with-setter \"" S_enved_envelope "\" (lambda () #f) (lambda (val) val)))");
-  XEN_EVAL_C_STRING("(define " S_enved_filter " (make-procedure-with-setter \"" S_enved_filter "\" (lambda () #f) (lambda (val) val)))");
-  XEN_EVAL_C_STRING("(define " S_enved_waveform_color " (make-procedure-with-setter \"" S_enved_waveform_color "\" (lambda () #f) (lambda (val) val)))");
-  XEN_EVAL_C_STRING("(define " S_filter_control_waveform_color " (make-procedure-with-setter \"" S_filter_control_waveform_color "\" (lambda () #f) (lambda (val) val)))");
-  XEN_EVAL_C_STRING("(define " S_graph_color " (make-procedure-with-setter \"" S_graph_color "\" (lambda () #f) (lambda (val) val)))");
-  XEN_EVAL_C_STRING("(define " S_graph_cursor " (make-procedure-with-setter \"" S_graph_cursor "\" (lambda () #f) (lambda (val) val)))");
-  XEN_EVAL_C_STRING("(define " S_highlight_color " (make-procedure-with-setter \"" S_highlight_color "\" (lambda () #f) (lambda (val) val)))");
-  XEN_EVAL_C_STRING("(define " S_listener_color " (make-procedure-with-setter \"" S_listener_color "\" (lambda () #f) (lambda (val) val)))");
-  XEN_EVAL_C_STRING("(define " S_listener_text_color " (make-procedure-with-setter \"" S_listener_text_color "\" (lambda () #f) (lambda (val) val)))");
-  XEN_EVAL_C_STRING("(define " S_axis_color " (make-procedure-with-setter \"" S_axis_color "\" (lambda () #f) (lambda (val) val)))");
-  XEN_EVAL_C_STRING("(define " S_mark_color " (make-procedure-with-setter \"" S_mark_color "\" (lambda () #f) (lambda (val) val)))");
-  XEN_EVAL_C_STRING("(define " S_position_color " (make-procedure-with-setter \"" S_position_color "\" (lambda () #f) (lambda (val) val)))");
-  XEN_EVAL_C_STRING("(define " S_pushed_button_color " (make-procedure-with-setter \"" S_pushed_button_color "\" (lambda () #f) (lambda (val) val)))");
-  XEN_EVAL_C_STRING("(define " S_reset_button_color " (make-procedure-with-setter \"" S_reset_button_color "\" (lambda () #f) (lambda (val) val)))");
-  XEN_EVAL_C_STRING("(define " S_quit_button_color " (make-procedure-with-setter \"" S_quit_button_color "\" (lambda () #f) (lambda (val) val)))");
-  XEN_EVAL_C_STRING("(define " S_doit_button_color " (make-procedure-with-setter \"" S_doit_button_color "\" (lambda () #f) (lambda (val) val)))");
-  XEN_EVAL_C_STRING("(define " S_doit_again_button_color " (make-procedure-with-setter \"" S_doit_again_button_color "\" (lambda () #f) (lambda (val) val)))");
-  XEN_EVAL_C_STRING("(define " S_help_button_color " (make-procedure-with-setter \"" S_help_button_color "\" (lambda () #f) (lambda (val) val)))");
-  XEN_EVAL_C_STRING("(define " S_foreground_color " (make-procedure-with-setter \"" S_foreground_color "\" (lambda args #f) (lambda args (car args))))");
-  XEN_EVAL_C_STRING("(define " S_sash_color " (make-procedure-with-setter \"" S_sash_color "\" (lambda () #f) (lambda (val) val)))");
-  XEN_EVAL_C_STRING("(define " S_selected_data_color " (make-procedure-with-setter \"" S_selected_data_color "\" (lambda () #f) (lambda (val) val)))");
-  XEN_EVAL_C_STRING("(define " S_selected_graph_color " (make-procedure-with-setter \"" S_selected_graph_color "\" (lambda () #f) (lambda (val) val)))");
-  XEN_EVAL_C_STRING("(define " S_selection_color " (make-procedure-with-setter \"" S_selection_color "\" (lambda () #f) (lambda (val) val)))");
-  XEN_EVAL_C_STRING("(define " S_text_focus_color " (make-procedure-with-setter \"" S_text_focus_color "\" (lambda () #f) (lambda (val) val)))");
-  XEN_EVAL_C_STRING("(define " S_x_axis_label " (make-procedure-with-setter \"" S_x_axis_label "\" (lambda args \"\") (lambda args \"\")))");
-  XEN_EVAL_C_STRING("(define " S_y_axis_label " (make-procedure-with-setter \"" S_y_axis_label "\" (lambda args \"\") (lambda args \"\")))");
-  XEN_EVAL_C_STRING("(define " S_zoom_color " (make-procedure-with-setter \"" S_zoom_color "\" (lambda () #f) (lambda (val) val)))");
-  XEN_EVAL_C_STRING("(define " S_widget_size " (make-procedure-with-setter \"" S_widget_size "\" (lambda () #f) (lambda (val) val)))");
-  XEN_EVAL_C_STRING("(define " S_widget_position " (make-procedure-with-setter \"" S_widget_position "\" (lambda () #f) (lambda (val) val)))");
-#endif
 
   XEN_EVAL_C_STRING("(define (" S_axis_info " . args) #f)");
   XEN_EVAL_C_STRING("(define (" S_channel_widgets " . args) #f)");
