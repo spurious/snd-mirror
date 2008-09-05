@@ -86,6 +86,28 @@ typedef struct env_state {
 } env_state;
 
 
+static env_state *free_env_state(env_state *es)
+{
+  if (es)
+    {
+      if (es->sf)
+	es->sf = free_snd_fd(es->sf);
+      if (es->file_open)
+	{
+	  close(es->fd);
+	  es->file_open = false;
+	}
+      if (es->direct_data)
+	{
+	  FREE(es->direct_data);
+	  es->direct_data = NULL;
+	}
+      FREE(es);
+    }
+  return(NULL);
+}
+
+
 peak_env_info *free_peak_env_info(peak_env_info *ep)
 {
   if (ep)
@@ -127,25 +149,7 @@ void free_peak_env_state(chan_info *cp)
       cgx = cp->cgx;
       if (cgx)
 	{
-	  env_state *es;
-	  es = cgx->peak_env_state;
-	  if (es)
-	    {
-	      if (es->sf)
-		es->sf = free_snd_fd(es->sf);
-	      if (es->file_open)
-		{
-		  close(es->fd);
-		  es->file_open = false;
-		}
-	      if (es->direct_data)
-		{
-		  FREE(es->direct_data);
-		  es->direct_data = NULL;
-		}
-	      FREE(es);
-	    }
-	  cgx->peak_env_state = NULL;
+	  cgx->peak_env_state = free_env_state(cgx->peak_env_state);
 	  cgx->peak_env_in_progress = 0;
 	}
     }
@@ -5186,8 +5190,7 @@ static idle_func_t tick_it(any_pointer_t pet)
   val = tick_peak_env(cp, es);
   if (val)
     {
-      free_snd_fd(es->sf);
-      FREE(es);
+      es = free_env_state(es);
       if (XEN_PROCEDURE_P(et->func))
 	{
 	  int loc;
@@ -5268,7 +5271,7 @@ If 'filename' is a sound index (an integer), 'size' is interpreted as an edit-po
 	  if (es)
 	    {
 	      while (!(tick_peak_env(cp, es))) {};
-	      FREE(es);
+	      es = free_env_state(es);
 	      ep = cp->edits[pos]->peak_env;
 	      if (ep)
 		return(g_env_info_to_vcts(ep, ep->peak_env_size));
@@ -5383,19 +5386,7 @@ If 'filename' is a sound index (an integer), 'size' is interpreted as an edit-po
 	    }
 #endif
 	  while (!(tick_peak_env(cp, es))) {};
-	  if (es->sf)
-	    free_snd_fd(es->sf);
-	  if (es->direct_data)
-	    {
-	      FREE(es->direct_data);
-	      es->direct_data = NULL;
-	    }
-	  if (es->file_open)
-	    {
-	      close(es->fd);
-	      es->file_open = false;
-	    }
-	  FREE(es);
+	  es = free_env_state(es);
 	  peak = g_env_info_to_vcts(cp->edits[0]->peak_env, len);
 	}
       cp->active = CHANNEL_INACTIVE;

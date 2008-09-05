@@ -310,12 +310,15 @@ char *run_save_state_hook(char *file)
   filename = copy_string(file);
   if (XEN_HOOKED(save_state_hook))
     {
+      XEN fname;
       XEN result = XEN_FALSE;
       XEN procs = XEN_HOOK_PROCEDURES(save_state_hook);
+      fname = C_TO_XEN_STRING(filename);
+      XEN_LOCAL_GC_PROTECT(fname);
       while (XEN_NOT_NULL_P(procs))
 	{
 	  result = XEN_CALL_1(XEN_CAR(procs),
-			      C_TO_XEN_STRING(filename),
+			      fname,
 			      "save state hook");
 	  if (XEN_STRING_P(result))
 	    {
@@ -324,6 +327,7 @@ char *run_save_state_hook(char *file)
 	    }
 	  procs = XEN_CDR (procs);
 	}
+      XEN_LOCAL_GC_UNPROTECT(fname);
     }
   return(filename);
 }
@@ -9400,16 +9404,20 @@ static XEN g_insert_samples_with_origin(XEN samp, XEN samps, XEN origin, XEN vec
   chan_info *cp;
   int pos;
   off_t beg, len;
+
   XEN_ASSERT_TYPE(XEN_INTEGER_P(samp), samp, XEN_ARG_1, S_insert_samples_with_origin, "an integer");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(samps), samps, XEN_ARG_2, S_insert_samples_with_origin, "an integer");
   XEN_ASSERT_TYPE(XEN_STRING_P(origin), origin, XEN_ARG_3, S_insert_samples_with_origin, "a string");
   XEN_ASSERT_TYPE(XEN_STRING_P(vect), vect, XEN_ARG_4, S_insert_samples_with_origin, "a filename");
+
   ASSERT_CHANNEL(S_insert_samples_with_origin, snd_n, chn_n, 5);
   cp = get_cp(snd_n, chn_n, S_insert_samples_with_origin);
   if (!cp) return(XEN_FALSE);
+
   beg = beg_to_sample(samp, S_insert_samples_with_origin);
   len = XEN_TO_C_OFF_T_OR_ELSE(samps, 0);
   if (len <= 0) return(samps);
+
   pos = to_c_edit_position(cp, edpos, S_insert_samples_with_origin, 7);
   check_saved_temp_file("sound", vect, date);
   file_insert_samples(beg, len, XEN_TO_C_STRING(vect), cp, 0, DONT_DELETE_ME, XEN_TO_C_STRING(origin), pos);
@@ -9684,21 +9692,28 @@ static XEN g_edit_list_to_function(XEN snd, XEN chn, XEN start, XEN end)
   char *funcstr = NULL;
   XEN func;
   int start_pos = 1, end_pos = -1;
+
   ASSERT_CHANNEL(S_edit_list_to_function, snd, chn, 1);
   cp = get_cp(snd, chn, S_edit_list_to_function);
   if (!cp) return(XEN_FALSE);
+
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(start), start, XEN_ARG_3, S_edit_list_to_function, "an integer");  
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(end), end, XEN_ARG_4, S_edit_list_to_function, "an integer");  
+
   start_pos = XEN_TO_C_INT_OR_ELSE(start, 1);
   end_pos = XEN_TO_C_INT_OR_ELSE(end, -1);
+
   funcstr = edit_list_to_function(cp, start_pos, end_pos);
   func = XEN_EVAL_C_STRING(funcstr);
+
 #if HAVE_RUBY
   rb_set_property(rb_obj_id(func), C_STRING_TO_XEN_SYMBOL("proc_source"), C_TO_XEN_STRING(funcstr));
 #endif
+
 #if HAVE_FORTH
   fth_proc_source_set(func, C_TO_XEN_STRING(funcstr));
 #endif
+
   FREE(funcstr);
   return(func);
 }

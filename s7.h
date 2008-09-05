@@ -1,7 +1,7 @@
 #ifndef _S7_H
 #define _S7_H
 
-#define S7_VERSION "0.4"
+#define S7_VERSION "0.7"
 #define S7_DATE "1-Sep-08"
 
 #include <stdio.h>
@@ -18,8 +18,10 @@
 #endif
 #endif
 
-#define s7_Int long long int
+#define s7_Int off_t
 #define s7_Int_d "%lld"
+
+
 
 typedef struct s7_scheme s7_scheme;
 typedef struct s7_cell *s7_pointer;
@@ -117,7 +119,7 @@ bool s7_keyword_eq_p(s7_pointer obj1, s7_pointer obj2);
 bool s7_is_function(s7_pointer p);
 s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
 void s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, int required_args, int optional_args, bool rest_arg, const char *doc);
-const char *s7_procedure_documentation(s7_pointer p);
+char *s7_procedure_documentation(s7_scheme *sc, s7_pointer p);
 s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x);
 
 int s7_new_type(const char *name, 
@@ -126,7 +128,7 @@ int s7_new_type(const char *name,
 		bool (*equal)(void *val1, void *val2),
 		void (*gc_mark)(void *val),
 		s7_pointer (*apply)(s7_scheme *sc, s7_pointer obj, s7_pointer args),
-		void (*set)(s7_scheme *sc, s7_pointer obj, s7_pointer args));
+		s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_pointer args));
 
 void *s7_object_value(s7_pointer obj);
 int s7_object_type(s7_pointer obj);
@@ -141,6 +143,7 @@ void s7_define_variable(s7_scheme *sc, const char *name, s7_pointer value);
 
 
 bool s7_is_closure(s7_pointer p);
+bool s7_is_procedure(s7_pointer x);
 s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p);
 s7_pointer s7_procedure_environment(s7_pointer p);
 s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e);
@@ -179,6 +182,8 @@ void s7_set_error_exiter(s7_scheme *sc, void (*error_exiter)(void));
 int s7_gc_protect(s7_scheme *sc, s7_pointer x);
 void s7_gc_unprotect(s7_scheme *sc, s7_pointer x);
 void s7_gc_unprotect_at(s7_scheme *sc, int loc);
+s7_pointer s7_local_gc_protect(s7_pointer p);
+s7_pointer s7_local_gc_unprotect(s7_pointer p);
 
 void s7_for_each_symbol_name(s7_scheme *sc, bool (*symbol_func)(const char *symbol_name, void *data), void *data);
 void s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_name, s7_pointer symbol_value, void *data), void *data);
@@ -206,7 +211,9 @@ void s7_display(s7_scheme *sc, s7_pointer obj, s7_pointer port);
 
 s7_pointer s7_make_procedure_with_setter(s7_scheme *sc, 
 					 s7_pointer (*getter)(s7_scheme *sc, s7_pointer args), 
+					 int get_req_args, int get_opt_args,
 					 s7_pointer (*setter)(s7_scheme *sc, s7_pointer args),
+					 int set_req_args, int set_opt_args,
 					 const char *documentation);
 bool s7_is_procedure_with_setter(s7_pointer obj);
 

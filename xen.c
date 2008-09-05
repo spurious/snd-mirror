@@ -2295,7 +2295,7 @@ void xen_repl(int argc, char **argv)
 {
   int size = 512;
   char *buffer = NULL;
-  buffer = (char *)calloc(size, sizeof(char *));
+  buffer = (char *)calloc(size, sizeof(char));
 
   while (true)
     {
@@ -2358,7 +2358,7 @@ static XEN g_add_hook(XEN hook, XEN function, XEN position)
   if (!arity_ok)
     fprintf(stderr, "arity: %s, hook: %d (%s), func: %s\n",
 	    XEN_AS_STRING(arity), ghook_arity(obj), XEN_AS_STRING(hook),
-	    XEN_AS_STRING(XEN_CAR(function)));
+	    XEN_AS_STRING(XEN_PROCEDURE_SOURCE(function)));
 
   s7_gc_unprotect_at(s7, gc_loc);
 
@@ -2497,13 +2497,6 @@ void xen_gc_mark(XEN val)
 {
   s7_mark_object(val);
 }
-
-
-const char *xen_s7_object_help(XEN sym)
-{
-  return(s7_procedure_documentation(XEN_VARIABLE_REF(sym)));
-}
-
 #endif
 
 

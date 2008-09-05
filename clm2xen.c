@@ -1140,13 +1140,14 @@ static XEN_MARK_OBJECT_TYPE mark_mus_xen(XEN obj)
     {
       int i;
       for (i = 0; i < ms->nvcts; i++) 
-	if ((i != MUS_SELF_WRAPPER) && (XEN_BOUND_P(ms->vcts[i])))
+	if ((i != MUS_SELF_WRAPPER) && 
+	    (XEN_BOUND_P(ms->vcts[i])))
 #if HAVE_GAUCHE
 	    /* in Gauche we need to put the internal vcts on the foreign pointer attributes alist */
 	    /*   in this case, the "mark" function will be called at object creation, not during a gc mark-and-sweep pass */
 	  Scm_ForeignPointerAttrSet(SCM_FOREIGN_POINTER(obj), SCM_INTERN(keys[i]), ms->vcts[i]);
 #else
-          xen_gc_mark(ms->vcts[i]);
+      xen_gc_mark(ms->vcts[i]);
 #endif
     }
 #if HAVE_RUBY
@@ -1265,6 +1266,9 @@ XEN mus_xen_to_object(mus_xen *gn) /* global for user-defined gens */
 
 XEN mus_xen_to_object_with_vct(mus_xen *gn, XEN v) /* global for user-defined gens (not used anymore in this file) */
 {
+#if HAVE_S7
+  if (!mus_vct_p(v)) fprintf(stderr, "vct arg clobbered");
+#endif
   gn->vcts[MUS_DATA_WRAPPER] = v;
   XEN_MAKE_AND_RETURN_OBJECT(mus_xen_tag, gn, mark_mus_xen, free_mus_xen);
 }
@@ -2902,6 +2906,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
       table = xen_make_vct(clm_table_size, wave);
     }
   else table = utable;
+  XEN_LOCAL_GC_PROTECT(table);
 
   f = XEN_TO_VCT(table);
 
@@ -2918,6 +2923,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
 
   if (partials_allocated)
     FREE(partial_data);
+  XEN_LOCAL_GC_UNPROTECT(table);
   return(xen_return_first(table, partials, utable));
 }
 
@@ -2982,6 +2988,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
       table = xen_make_vct(clm_table_size, wave);
     }
   else table = utable;
+  XEN_LOCAL_GC_PROTECT(table);
 
   f = XEN_TO_VCT(table);
 
@@ -2998,6 +3005,7 @@ a new one is created.  If normalize is " PROC_TRUE ", the resulting waveform goe
 
   if (partials_allocated)
     FREE(partial_data);
+  XEN_LOCAL_GC_UNPROTECT(table);
   return(xen_return_first(table, partials, utable));
 }
 
@@ -4310,7 +4318,7 @@ static const char* list_to_partials_error_to_string(int code)
 
 static Float *list_to_partials(XEN harms, int *npartials, int *error_code)
 {
-  int listlen, i, maxpartial, curpartial;
+  int listlen, i, maxpartial = 0, curpartial;
   Float *partials = NULL;
   XEN lst;
 
@@ -4335,36 +4343,33 @@ static Float *list_to_partials(XEN harms, int *npartials, int *error_code)
   /* the list is '(partial-number partial-amp ... ) */
   (*error_code) = NO_PROBLEM_IN_LIST;
 
-  maxpartial = XEN_TO_C_INT_OR_ELSE(XEN_CAR(harms), 0);
-  if (maxpartial < 0)
-    (*error_code) = NEGATIVE_NUMBER_IN_LIST;
-  else
+  for (i = 0, lst = XEN_COPY_ARG(harms); i < listlen; i += 2, lst = XEN_CDDR(lst))
     {
-      for (i = 2, lst = XEN_CDDR(XEN_COPY_ARG(harms)); i < listlen; i += 2, lst = XEN_CDDR(lst))
+      if ((!(XEN_NUMBER_P(XEN_CAR(lst)))) ||
+	  (!(XEN_NUMBER_P(XEN_CADR(lst)))))
 	{
-	  curpartial = XEN_TO_C_INT_OR_ELSE(XEN_CAR(lst), 0);
-	  if (curpartial > maxpartial) 
-	    maxpartial = curpartial;
-	  if (curpartial < 0)
-	    {
-	      if (!(XEN_NUMBER_P(XEN_CAR(lst))))
-		(*error_code) = NON_NUMBER_IN_LIST;
-	      else (*error_code) = NEGATIVE_NUMBER_IN_LIST;
-	    }
+	  (*error_code) = NON_NUMBER_IN_LIST;
+	  return(NULL);
 	}
+      curpartial = XEN_TO_C_INT(XEN_CAR(lst));
+      if (curpartial < 0)
+	{
+	  (*error_code) = NEGATIVE_NUMBER_IN_LIST;
+	  return(NULL);
+	}
+      if (curpartial > maxpartial) 
+	maxpartial = curpartial;
     }
-
-  if ((*error_code) != NO_PROBLEM_IN_LIST)
-    return(NULL);
 
   partials = (Float *)CALLOC(maxpartial + 1, sizeof(Float));
   if (partials == NULL)
     mus_error(MUS_MEMORY_ALLOCATION_FAILED, "can't allocate waveshaping partials list");
   (*npartials) = maxpartial + 1;
+
   for (i = 0, lst = XEN_COPY_ARG(harms); i < listlen; i += 2, lst = XEN_CDDR(lst))
     {
       curpartial = XEN_TO_C_INT(XEN_CAR(lst));
-      partials[curpartial] = XEN_TO_C_DOUBLE(XEN_CADR(lst));
+      partials[curpartial] = (Float)XEN_TO_C_DOUBLE(XEN_CADR(lst));
     }
   return(partials);
 }
@@ -4666,7 +4671,8 @@ is the same in effect as " S_make_oscil
     orig_v = xen_make_vct(csize, coeffs);
 
   ge = mus_make_polyshape(freq, phase, coeffs, csize, kind);
-  if (ge) return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, orig_v)));
+  if (ge) 
+    return(mus_xen_to_object(mus_any_to_mus_xen_with_vct(ge, orig_v)));
   return(XEN_FALSE);
 }
 

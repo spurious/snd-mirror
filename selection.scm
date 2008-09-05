@@ -28,18 +28,22 @@
 
 (define+ (swap-selection-channels)
   "(swap-selection-channels) swaps the currently selected data's channels"
+
   (define find-selection-sound 
     (lambda (not-this)
-      (catch 'return ; could also use call-with-current-continuation
-	     (lambda ()
-	       (apply map (lambda (snd chn)
-			    (if (and (selection-member? snd chn)
-				     (or (null? not-this)
-					 (not (= snd (car not-this)))
-					 (not (= chn (cadr not-this)))))
-				(throw 'return (list snd chn))))
-		      (all-chans)))
-	     (lambda (tag val) val))))
+      (let ((scs (all-chans)))
+	(call/cc
+	 (lambda (return)
+	   (map 
+	    (lambda (snd chn)
+	      (if (and (selection-member? snd chn)
+		       (or (null? not-this)
+			   (not (= snd (car not-this)))
+			   (not (= chn (cadr not-this)))))
+		  (return (list snd chn))))
+	    (car scs)
+	    (cadr scs)))))))
+
   (if (selection?)
       (if (= (selection-chans) 2)
 	  (let* ((beg (selection-position))

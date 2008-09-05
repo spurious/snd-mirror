@@ -2193,7 +2193,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 #define XEN_KEYWORD_EQ_P(k1, k2)                   s7_keyword_eq_p(k1, k2)
 #define XEN_MAKE_KEYWORD(Arg)                      s7_make_keyword(s7, Arg)
 
-#define XEN_PROCEDURE_P(Arg)                       (s7_is_closure(Arg) || s7_is_function(Arg))
+#define XEN_PROCEDURE_P(Arg)                       s7_is_procedure(Arg)
 #define XEN_PROCEDURE_SOURCE(Func)                 s7_procedure_source(s7, Func)
 
 #define XEN_LOAD_FILE(File)                        s7_load(s7, File)
@@ -2207,6 +2207,8 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 
 #define XEN_YES_WE_HAVE(Feature)                   s7_provide(s7, Feature)
 #define XEN_PROTECT_FROM_GC(Arg)                   s7_gc_protect(s7, Arg)
+#define XEN_LOCAL_GC_PROTECT(Arg)                  s7_local_gc_protect(Arg)
+#define XEN_LOCAL_GC_UNPROTECT(Arg)                s7_local_gc_unprotect(Arg)
 
 
 #define XEN_WRONG_TYPE_ARG_ERROR(Caller, ArgN, Arg, Descr) \
@@ -2441,10 +2443,10 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
   s7_define_function(s7, Name, Func, ReqArg, OptArg, RstArg, Doc)
 
 #define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
-  s7_define_variable(s7, Get_Name, s7_make_procedure_with_setter(s7, Get_Func, Set_Func, Get_Help))
+  s7_define_variable(s7, Get_Name, s7_make_procedure_with_setter(s7, Get_Func, Get_Req, Get_Opt, Set_Func, Set_Req, Set_Opt, Get_Help))
 
 #define XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
-  s7_define_variable(s7, Get_Name, s7_make_procedure_with_setter(s7, Get_Func, Rev_Func, Get_Help)); \
+  s7_define_variable(s7, Get_Name, s7_make_procedure_with_setter(s7, Get_Func, Get_Req, Get_Opt, Rev_Func, Set_Req, Set_Opt, Get_Help)); \
   xen_s7_ignore(Set_Func)
 
 
@@ -2495,8 +2497,6 @@ typedef XEN (*XEN_CATCH_BODY_TYPE)                                    (void *dat
 #define XEN_OBJECT_REF(Arg)                              s7_object_value(Arg)
 #define XEN_OBJECT_TYPE                                  int /* tag type */
 #define XEN_OBJECT_TYPE_P(Obj, Tag)                      xen_s7_type_p(Obj, Tag)
-#define XEN_OBJECT_HELP(Sym)                             xen_s7_object_help(Sym)
-
 
 #define XEN_HOOK_P(Arg)                                  xen_hook_p(Arg)
 #define XEN_DEFINE_HOOK(Name, Arity, Help)               xen_s7_define_hook(Name, Arity, Help)
@@ -2761,6 +2761,8 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 #define C_TO_XEN_OFF_T(a)             c_to_xen_off_t(a)
 #define XEN_TO_C_OFF_T(a)             xen_to_c_off_t(a)
 #define XEN_AS_STRING(form)           XEN_TO_C_STRING(XEN_TO_STRING(form))
+#define XEN_LOCAL_GC_PROTECT(Arg)     Arg
+#define XEN_LOCAL_GC_UNPROTECT(Arg)   Arg
 #else
 #define XEN_AS_STRING(form)           s7_object_to_c_string(s7, form)
 #endif

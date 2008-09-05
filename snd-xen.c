@@ -1623,11 +1623,24 @@ XEN run_progn_hook(XEN hook, XEN args, const char *caller)
   /* Guile built-in scm_c_run_hook doesn't return the value of the hook procedure(s) and exits on error */
   XEN result = XEN_FALSE;
   XEN procs = XEN_HOOK_PROCEDURES(hook);
+
+  XEN_LOCAL_GC_PROTECT(args);
+  /* this gc protection is needed in s7 because the args are not s7 eval-assembled;
+   *   they are cons'd up in our C code, and applied here via s7_call, so between
+   *   s7_call's, they are not otherwise protected.  In normal function calls, the
+   *   args are on the sc->args list in the evaluator, and therefore protected.
+   *   In Guile (for example), the args are presumably on the C stack, and thus
+   *   protected, but even in that case, we need the "xen_return_first" business
+   *   below to be completely safe -- this tells the C compiler not to optimize
+   *   them off the stack. 
+   */
   while (XEN_NOT_NULL_P(procs))
     {
       result = XEN_APPLY(XEN_CAR(procs), args, caller);
       procs = XEN_CDR(procs);
     }
+  XEN_LOCAL_GC_UNPROTECT(args);
+
   return(xen_return_first(result, args));
 }
 
@@ -1635,6 +1648,8 @@ XEN run_progn_hook(XEN hook, XEN args, const char *caller)
 XEN run_hook(XEN hook, XEN args, const char *caller)
 {
   XEN procs = XEN_HOOK_PROCEDURES(hook);
+
+  XEN_LOCAL_GC_PROTECT(args);
   while (XEN_NOT_NULL_P(procs))
     {
       if (!(XEN_EQ_P(args, XEN_EMPTY_LIST)))
@@ -1642,8 +1657,14 @@ XEN run_hook(XEN hook, XEN args, const char *caller)
       else XEN_CALL_0(XEN_CAR(procs), caller);
       procs = XEN_CDR (procs);
     }
+  XEN_LOCAL_GC_UNPROTECT(args);
+
   return(xen_return_first(XEN_FALSE, args));
 }
+
+/* TODO: s7_local.. should return the pointer
+   check all xen_ret and all hookws
+*/
 
 
 XEN run_or_hook(XEN hook, XEN args, const char *caller)
@@ -1651,6 +1672,8 @@ XEN run_or_hook(XEN hook, XEN args, const char *caller)
   XEN result = XEN_FALSE; /* (or): #f */
   XEN hook_result = XEN_FALSE;
   XEN procs = XEN_HOOK_PROCEDURES (hook);
+
+  XEN_LOCAL_GC_PROTECT(args);
   while (XEN_NOT_NULL_P (procs))
     {
       if (!(XEN_EQ_P(args, XEN_EMPTY_LIST)))
@@ -1667,6 +1690,8 @@ XEN run_or_hook(XEN hook, XEN args, const char *caller)
 #endif
       procs = XEN_CDR (procs);
     }
+  XEN_LOCAL_GC_UNPROTECT(args);
+
   return(xen_return_first(hook_result, args));
 }
 
@@ -3073,7 +3098,9 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(defmacro define+ args `(define ,@args))"); /* for Gauche's benefit */
 
   XEN_EVAL_C_STRING("(defmacro declare args `(snd-declare ',args))");
-  XEN_EVAL_C_STRING("(define (identity x) x)"); /* popup.scm uses this */
+  XEN_EVAL_C_STRING("(define (identity x) x)");                    /* popup.scm uses this */
+  XEN_EVAL_C_STRING("(define (throw . args) (apply error args))"); /* selection.scm uses this */
+
 #endif
 
 #if HAVE_SCHEME && USE_GTK && (!HAVE_GTK_ADJUSTMENT_GET_UPPER)

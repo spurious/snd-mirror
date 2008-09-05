@@ -45,6 +45,8 @@
  *   figure out how add syntax-rules, for-each, map, do
  *   the rest of the call-with funcs (call-with-input-string is done)
  *   can any part of quasiquote be optimized?
+ *   get rid of the config header somehow! -- ideally we'd get rid of all the autohell crap like HAVE_STDBOOL_H
+ *   doc in s7.h
  *
  *
  * define-type (make-type in ext)
@@ -119,7 +121,7 @@
 
 
 
-#define _FILE_OFFSET_BITS 64  /* off_t's -- I could use long long, but old habits die hard */
+#define _FILE_OFFSET_BITS 64  /* off_t's */
 
 #include <unistd.h>
 #include <math.h>
@@ -383,11 +385,11 @@ struct s7_scheme {
   opcode_t op;
   long gensym_cnt;
 #if TIMING
-  off_t gc_mark_time, gc_sweep_time, total_freed, gc_sweeps;
+  s7_Int gc_mark_time, gc_sweep_time, total_freed, gc_sweeps;
 #endif
 
   /* these are locals in eval, but we want that code to be context-free */
-  s7_pointer x, y;
+  s7_pointer x, y, a, b;
   num v;
 
   jmp_buf goto_start;
@@ -430,7 +432,7 @@ static const char *type_names[T_LAST_TYPE + 1] = {
 
 #define typeflag(p)                   ((p)->flag)
 #define type(p)                       (typeflag(p) & T_MASKTYPE)
-#define set_type_1(p, f)              typeflag(p) = ((f) | T_OBJECT)
+#define set_type(p, f)                typeflag(p) = ((f) | T_OBJECT)
 
 #define T_SYNTAX                      (1 << (TYPE_BITS + 1))
 #define is_syntax(p)                  (typeflag(p) & T_SYNTAX)
@@ -473,9 +475,12 @@ static const char *type_names[T_LAST_TYPE + 1] = {
 #define cadr(p)                       car(cdr(p))
 #define cdar(p)                       cdr(car(p))
 #define cddr(p)                       cdr(cdr(p))
+#define caaar(p)                      car(car(car(p)))
 #define cadar(p)                      car(cdr(car(p)))
 #define cdadr(p)                      cdr(car(cdr(p)))
 #define caddr(p)                      car(cdr(cdr(p)))
+#define caadr(p)                      car(car(cdr(p)))
+#define caaadr(p)                     car(car(car(cdr(p))))
 #define cadaar(p)                     car(cdr(car(car(p))))
 #define cadddr(p)                     car(cdr(cdr(cdr(p))))
 #define cddddr(p)                     cdr(cdr(cdr(cdr(p))))
@@ -581,18 +586,6 @@ static char *describe_type(s7_pointer p)
   return(buf);
 }
 
-#define set_type(p, f) set_type_2(sc, p, f, __FUNCTION__, __LINE__)
-static void set_type_2(s7_scheme *sc, s7_pointer p, int f, const char *func, int line)
-{
-  if (is_immutable(p))
-    {
-      fprintf(stderr, "%s[%d]: set type wants to set immutable element: %s type to %s\n", 
-	      func, line, s7_object_to_c_string(sc, p), type_names[f & T_MASKTYPE]);
-      abort();
-    }
-  set_type_1(p, f);
-}
-
 
 #define TOK_EOF     (-1)
 #define TOK_LPAREN  0
@@ -643,7 +636,7 @@ static s7_pointer s7_file_error(s7_scheme *sc, const char *caller, const char *d
 
 
 static void gsp(s7_scheme *sc) {g_stacktrace(sc, sc->args);} /* for gdb */
-static void gop(s7_scheme *sc, s7_pointer obj) {s7_object_to_c_string(sc, obj);}
+static char *gop(s7_scheme *sc, s7_pointer obj) {return(s7_object_to_c_string(sc, obj));}
 
 
 /* -------------------------------- constants -------------------------------- */
@@ -839,6 +832,11 @@ void s7_mark_object(s7_pointer p)
 
   if (is_marked(p)) return; 
 
+#if S7_DEBUGGING
+  if (!is_object(p))
+    fprintf(stderr, "marking a non-object? ");
+#endif
+
   set_mark(p);
 
   if (s7_is_vector(p)) 
@@ -962,6 +960,8 @@ static int gc(s7_scheme *sc, const char *function, int line)
   s7_mark_object(sc->protected_objects);
   s7_mark_object(sc->x);
   s7_mark_object(sc->y);
+  s7_mark_object(sc->a);
+  s7_mark_object(sc->b);
 
   clear_mark(sc->NIL);
 
@@ -1060,6 +1060,18 @@ static void search_heap(s7_scheme *sc, s7_pointer obj)
   else fprintf(stderr, "unknown object %p not in heap", obj);
 }
 
+
+s7_pointer s7_local_gc_protect(s7_pointer p)
+{
+  local_protect(p);
+  return(p);
+}
+
+s7_pointer s7_local_gc_unprotect(s7_pointer p)
+{
+  local_unprotect(p);
+  return(p);
+}
 
 
 /* -------------------------------- stack -------------------------------- */
@@ -1583,7 +1595,7 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
 void s7_define(s7_scheme *sc, s7_pointer envir, s7_pointer symbol, s7_pointer value) 
 {
   s7_pointer x;
-  x = s7_find_slot_in_env(sc, envir, symbol, false);
+  x = s7_find_slot_in_env(sc, envir, symbol, false); /* that is, find its value if any in the current frame */
   if (x != sc->NIL) 
     set_slot_in_env(sc, x, value); 
   else s7_new_slot_spec_in_env(sc, envir, symbol, value); 
@@ -2067,9 +2079,9 @@ static s7_Int c_lcm(s7_Int a, s7_Int b)
   return((a / c_gcd(a, b)) * b);
 }
 
-static bool c_rationalize(double ux, double error, off_t *numer, off_t *denom)
+static bool c_rationalize(double ux, double error, s7_Int *numer, s7_Int *denom)
 {
-  off_t a1 = 0, a2 = 1, b1 = 1, b2 = 0, tt = 1, a = 0, b = 0, ctr, int_part = 0;
+  s7_Int a1 = 0, a2 = 1, b1 = 1, b2 = 0, tt = 1, a = 0, b = 0, ctr, int_part = 0;
   bool neg = false;
   double x;
 
@@ -2134,9 +2146,9 @@ static bool c_rationalize(double ux, double error, off_t *numer, off_t *denom)
 }
 
 #if 0
-static bool c_rationalize(double ux, double error, off_t *n, off_t *d)
+static bool c_rationalize(double ux, double error, s7_Int *n, s7_Int *d)
 {
-  off_t numer, denom, lim, sign = 0;
+  s7_Int numer, denom, lim, sign = 0;
   lim = 1.0 / error;
   if (ux < 0.0)
     {
@@ -5737,17 +5749,20 @@ s7_pointer s7_read(s7_scheme *sc, s7_pointer port)
 {
   if (s7_is_input_port(sc, port))
     {
-      if (sc->stack_top == 0)
+      bool old_longjmp;
+      old_longjmp = sc->longjmp_ok;
+      if (!sc->longjmp_ok)
 	{
-	  if (setjmp(sc->goto_start) != 0)
-	    {
-	      return(sc->value);
-	    }
 	  sc->longjmp_ok = true;
+
+	  /* fprintf(stderr, "setjmp read "); */
+	  if (setjmp(sc->goto_start) != 0)
+	    return(sc->value);
 	}
       push_input_port(sc, port);
       push_stack(sc, OP_READ_RETURN_EXPRESSION, port, sc->NIL);
       eval(sc, OP_READ_INTERNAL);
+      sc->longjmp_ok = old_longjmp;
       pop_input_port(sc);
       return(sc->value);
     }
@@ -5804,6 +5819,7 @@ static FILE *search_load_path(s7_scheme *sc, const char *name)
 
 s7_pointer s7_load(s7_scheme *sc, const char *filename)
 {
+  bool old_longjmp;
   s7_pointer port;
   FILE *fp;
 
@@ -5813,26 +5829,51 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
   if (!fp)
     return(s7_file_error(sc, "open-input-file", "can't open", filename));
 
+#if S7_DEBUGGING
+  fprintf(stderr, "s7_load(\"%s\")\n", filename);
+#endif
+
   port = s7_make_input_file(sc, filename, fp); 
   port_needs_close(port) = true;
 
   push_input_port(sc, port);
-  push_stack(sc, OP_LOAD_RETURN_IF_EOF, port, sc->NIL);
 
-  if (setjmp(sc->goto_start) != 0)
+  /* it's possible to call this recursively (s7_load is XEN_LOAD_FILE which can be invoked via s7_call)
+   *   but in that case, we actually want it to behave like g_load and continue the evaluation upon completion
+   */
+
+  if (!sc->longjmp_ok)
     {
-      eval(sc, sc->op);
+      push_stack(sc, OP_LOAD_RETURN_IF_EOF, port, sc->NIL);
+
+      old_longjmp = sc->longjmp_ok;
+      if (!sc->longjmp_ok)
+	{
+	  sc->longjmp_ok = true;
+	  /* fprintf(stderr, "setjmp load "); */
+	  if (setjmp(sc->goto_start) != 0)
+	    eval(sc, sc->op);
+	  else eval(sc, OP_READ_INTERNAL);
+	}
+      /* TODO: check paren count and below */
+      sc->longjmp_ok = old_longjmp;  
+      pop_input_port(sc);
+      s7_close_input_port(sc, port);
     }
-  else 
+  else
     {
-      sc->longjmp_ok = true;
+      /*
+      push_stack(sc, OP_LOAD_CLOSE_AND_POP_IF_EOF, sc->args, sc->code);
+      push_stack(sc, OP_READ_INTERNAL, sc->NIL, sc->NIL);
+      */
+      /* caller here is assuming the load will be complete before this function returns */
+
+      push_stack(sc, OP_LOAD_RETURN_IF_EOF, sc->args, sc->code);
       eval(sc, OP_READ_INTERNAL);
+      pop_input_port(sc);
+      s7_close_input_port(sc, port);
+      
     }
-  /* TODO: check paren count and below */
-  
-  pop_input_port(sc);
-  s7_close_input_port(sc, port);
-
   return(sc->UNSPECIFIED);
 }
 
@@ -5848,6 +5889,10 @@ static s7_pointer g_load(s7_scheme *sc, s7_pointer args)
 
   fname = s7_string(name);
 
+#if S7_DEBUGGING
+  fprintf(stderr, "(load \"%s\")\n", fname);
+#endif
+
   fp = fopen(fname, "r");
   if (!fp)
     fp = search_load_path(sc, fname);
@@ -5858,7 +5903,7 @@ static s7_pointer g_load(s7_scheme *sc, s7_pointer args)
   port_needs_close(port) = true;
 
   push_input_port(sc, port);
-  push_stack(sc, OP_LOAD_CLOSE_AND_POP_IF_EOF, port, sc->NIL);
+  push_stack(sc, OP_LOAD_CLOSE_AND_POP_IF_EOF, sc->args, sc->code);
   push_stack(sc, OP_READ_INTERNAL, sc->NIL, sc->NIL);
 
   return(sc->UNSPECIFIED);
@@ -5886,29 +5931,57 @@ s7_pointer s7_add_to_load_path(s7_scheme *sc, const char *dir)
 
 /* -------- eval string -------- */
 
+static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
+{
+  #define H_eval_string "(eval-string str) returns the result of evaluating the string str as Scheme code"
+  s7_pointer port;
+  if (!s7_is_string(car(args)))
+    return(s7_wrong_type_arg_error(sc, "eval-string", 1, car(args), "a string"));
+
+  port = s7_open_input_string(sc, s7_string(car(args)));
+  push_input_port(sc, port);
+  push_stack(sc, OP_EVAL_STRING, sc->args, sc->code);
+  eval(sc, OP_READ_INTERNAL);
+  pop_input_port(sc);
+  s7_close_input_port(sc, port);
+  return(sc->value);
+}
+
+
 s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
 {
+  bool old_longjmp;
   s7_pointer port;
+  /* this can be called recursively via s7_call */
+
   /* fprintf(stderr, "eval c string: %s with top: %d\n", str, sc->stack_top); */
+
+  if (sc->longjmp_ok)
+    return(g_eval_string(sc, cons(sc, s7_make_string(sc, str), sc->NIL)));
+
   stack_reset(sc); 
   sc->envir = sc->global_env;
   port = s7_open_input_string(sc, str);
   push_input_port(sc, port);
   push_stack(sc, OP_EVAL_STRING, sc->NIL, sc->NIL);
 
-  if (setjmp(sc->goto_start) != 0)
-    {
-      eval(sc, sc->op);
-    }
-  else 
+  old_longjmp = sc->longjmp_ok;
+  if (!sc->longjmp_ok)
     {
       sc->longjmp_ok = true;
-      eval(sc, OP_READ_INTERNAL);
+      /* fprintf(stderr, "setjmp eval "); */
+      if (setjmp(sc->goto_start) != 0)
+	eval(sc, sc->op);
+      else eval(sc, OP_READ_INTERNAL);
     }
+
+  sc->longjmp_ok = old_longjmp;
   pop_input_port(sc);
   s7_close_input_port(sc, port);
   return(sc->value);
 }
+
+
 
 static s7_pointer g_call_with_input_string(s7_scheme *sc, s7_pointer args)
 {
@@ -6239,8 +6312,6 @@ static s7_pointer s7_vector_to_string(s7_scheme *sc, s7_pointer vect)
 {
   char *buf;
   s7_pointer result;
-  if (sc->tracing)
-    fprintf(stderr, "vector...");
   buf = s7_vector_to_c_string(sc, vect);
   result = s7_make_string(sc, buf);
   FREE(buf);
@@ -6516,7 +6587,7 @@ static s7_pointer g_write_byte(s7_scheme *sc, s7_pointer args)
 
 /* -------------------------------- lists -------------------------------- */
 
-/* static off_t conses = 0; */
+/* static s7_Int conses = 0; */
 
 static s7_pointer cons_1(s7_scheme *sc, s7_pointer a, s7_pointer b, bool immutable) 
 {
@@ -6535,8 +6606,20 @@ static s7_pointer cons_1(s7_scheme *sc, s7_pointer a, s7_pointer b, bool immutab
     }
 #endif
 
-  local_protect(a);
-  local_protect(b);
+  /* local_protect is not enough in this case:
+   *   cons(make-string, cons(a, b))
+   *   outside the evaluator (where sc->code and sc->args protect it),
+   *   calls new-cell to make the string, but meanwhile the (a b) cons is unprotected;
+   *   by using the otherwise unused pointers sc->a and sc->b (protected in gc),
+   *   and leaving them lying around after the call, we can build lists without
+   *   stepping on some dangling portion.  I could probably use sc->x and sc->y,
+   *   but they are used elsewhere, and this seemed cleaner.  This kind of thing
+   *   can only happen either in an external call (where a list is being built
+   *   in C code), or in our local functions, so we don't have to worry that there
+   *   will be a call/cc as one of the list members when this GC protection matters.
+   */
+  sc->a = a;
+  sc->b = b;
   x = new_cell(sc);
 
   if (immutable) 
@@ -6545,9 +6628,6 @@ static s7_pointer cons_1(s7_scheme *sc, s7_pointer a, s7_pointer b, bool immutab
 
   car(x) = a;
   cdr(x) = b;
-
-  local_unprotect(a);
-  local_unprotect(b);
   return(x);
 }
 
@@ -7090,10 +7170,10 @@ static s7_pointer g_is_provided(s7_scheme *sc, s7_pointer args)
   #define H_is_provided "(provided? sym) returns #t if sym is a member of the *features* list"
   if (!s7_is_symbol(car(args)))
     return(s7_wrong_type_arg_error(sc, "provided?", 1, car(args), "a symbol"));
-  return(g_member(sc, 
-		  cons(sc, 
-		       car(args),
-		       cons(sc, s7_name_to_value(sc, "*features*"), sc->NIL))));
+  return(to_s7_bool(sc, s7_is_pair(g_member(sc, 
+					    cons(sc, 
+						 car(args),
+						 cons(sc, s7_name_to_value(sc, "*features*"), sc->NIL))))));
 }
 
 static s7_pointer g_provide(s7_scheme *sc, s7_pointer args)
@@ -7106,7 +7186,7 @@ static s7_pointer g_provide(s7_scheme *sc, s7_pointer args)
 		      cons(sc, 
 			   car(args), 
 			   s7_name_to_value(sc, "*features*")));
-  return(sc->UNSPECIFIED);
+  return(car(args));
 }
 	
 
@@ -7443,15 +7523,22 @@ static s7_pointer closure_source(s7_pointer p)
   return(car(p));
 }
 
+static bool s7_is_applicable_object(s7_pointer x);
+
+bool s7_is_procedure(s7_pointer x)
+{
+  return((s7_is_closure(x)) || 
+	 (is_goto(x)) || 
+	 (s7_is_continuation(x)) || 
+	 (s7_is_function(x)) ||
+	 (s7_is_procedure_with_setter(x)) ||
+	 (s7_is_applicable_object(x)));
+}
 
 static s7_pointer g_is_procedure(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_procedure "(procedure? obj) returns #t if obj is a procedure"
-  return(to_s7_bool(sc, ((s7_is_closure(car(args))) || 
-			 (is_goto(car(args))) || 
-			 (s7_is_continuation(car(args))) || 
-			 (s7_is_function(car(args))) ||
-			 (s7_is_procedure_with_setter(car(args))))));
+  return(to_s7_bool(sc, s7_is_procedure(car(args))));
 }
 
 
@@ -7514,11 +7601,24 @@ void s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, int re
 }
 
 static char *pws_documentation(s7_pointer x);
+static int pws_get_req_args(s7_pointer x);
+static int pws_get_opt_args(s7_pointer x);
 
-const char *s7_procedure_documentation(s7_pointer x)
+
+char *s7_procedure_documentation(s7_scheme *sc, s7_pointer p)
 {
+  s7_pointer x;
+
+  if (s7_is_symbol(p))
+    x = s7_symbol_value(sc, p);
+  else x = p;
+
   if (s7_is_function(x))
-    return(function_documentation(x));
+    return((char *)function_documentation(x));
+
+  if ((s7_is_closure(x)) &&
+      (s7_is_string(cadar(x))))
+    return(s7_string(cadar(x)));
 
   if (s7_is_procedure_with_setter(x))
     return(pws_documentation(x));
@@ -7529,23 +7629,7 @@ const char *s7_procedure_documentation(s7_pointer x)
 static s7_pointer g_procedure_documentation(s7_scheme *sc, s7_pointer args)
 {
   #define H_procedure_documentation "(procedure-documentation func) returns func's documentation string"
-  s7_pointer x;
-
-  x = car(args);
-  if (s7_is_symbol(x))
-    x = s7_symbol_value(sc, x);
-
-  if (s7_is_function(x))
-    return(s7_make_string(sc, s7_procedure_documentation(x)));
-
-  if ((s7_is_closure(x)) &&
-      (s7_is_string(cadar(x))))
-    return(cadar(x));
-
-  if (s7_is_procedure_with_setter(x))
-    return(s7_make_string(sc, pws_documentation(x)));
-
-  return(sc->F);
+  return(s7_make_string(sc, s7_procedure_documentation(sc, car(args))));
 }
 
 
@@ -7567,16 +7651,15 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
     }
 
   if ((s7_is_closure(x)) ||
-      (s7_is_closure(x)) ||
       (s7_is_pair(x)))
     {
       int len;
 
+      /* fprintf(stderr, "len %d %s\n", len, s7_object_to_c_string(sc, x)); */
+
       if (s7_is_pair(x))
 	len = s7_list_length(sc, car(x));
       else len = s7_list_length(sc, caar(x));
-
-      /* fprintf(stderr, "len %d %s\n", len, s7_object_to_c_string(sc, caar(x))); */
 
       if (len >= 0)
 	return(s7_cons(sc, s7_make_integer(sc, len),
@@ -7588,10 +7671,14 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
     }
 
   if (s7_is_procedure_with_setter(x))
+    return(s7_cons(sc, s7_make_integer(sc, pws_get_req_args(x)),
+		   s7_cons(sc, s7_make_integer(sc, pws_get_opt_args(x)),
+			   s7_cons(sc, sc->F, sc->NIL))));
+
+  if (s7_is_applicable_object(x))
     return(s7_cons(sc, s7_make_integer(sc, 0),
-		   s7_cons(sc, s7_make_integer(sc, 0),
+		   s7_cons(sc, s7_make_integer(sc, 0), 
 			   s7_cons(sc, sc->T, sc->NIL))));
-  /* TODO: get the true pws arity somehow */
 
   return(sc->NIL);
 }
@@ -7611,7 +7698,7 @@ typedef struct {
   bool (*equal)(void *val1, void *val2);
   void (*gc_mark)(void *val);
   s7_pointer (*apply)(s7_scheme *sc, s7_pointer obj, s7_pointer args);
-  void (*set)(s7_scheme *sc, s7_pointer obj, s7_pointer args);
+  s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_pointer args);
 } fobject;
 
 static fobject *object_types = NULL;
@@ -7624,7 +7711,7 @@ int s7_new_type(const char *name,
 		bool (*equal)(void *val1, void *val2),
 		void (*gc_mark)(void *val),
                 s7_pointer (*apply)(s7_scheme *sc, s7_pointer obj, s7_pointer args),
-                void (*set)(s7_scheme *sc, s7_pointer obj, s7_pointer args))
+                s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_pointer args))
 {
   int tag;
   tag = num_types++;
@@ -7696,6 +7783,13 @@ static void s7_mark_embedded_objects(s7_pointer a) /* called by gc, calls fobj's
   else fprintf(stderr, "%p, found bad type: %x %d %x\n", a, tag, tag, a->flag);
 }
 
+
+static bool s7_is_applicable_object(s7_pointer x)
+{
+  return((s7_is_object(x)) &&
+	 (object_types[x->object.fobj.type].apply));
+}
+
 static s7_pointer s7_apply_object(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 {
   int tag;
@@ -7707,20 +7801,20 @@ static s7_pointer s7_apply_object(s7_scheme *sc, s7_pointer obj, s7_pointer args
 
 #define object_set_function(Obj) object_types[(Obj)->object.fobj.type].set
 
-static void s7_set_object(s7_scheme *sc, s7_pointer obj, s7_pointer args)
+static s7_pointer s7_set_object(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 {
   int tag;
   tag = obj->object.fobj.type;
   if (object_types[tag].set)
-    (*(object_types[tag].set))(sc, obj, args);
+    return((*(object_types[tag].set))(sc, obj, args));
+  return(sc->UNSPECIFIED);
 }
 
 /* generalized set! calls g_set_object which then calls the object's set function */
 
 static s7_pointer g_set_object(s7_scheme *sc, s7_pointer args)
 {
-  s7_set_object(sc, car(args), cdr(args));
-  return(car(args));
+  return(s7_set_object(sc, car(args), cdr(args)));
 }
 
 
@@ -7734,6 +7828,7 @@ int s7_object_type(s7_pointer obj)
 {
   return(obj->object.fobj.type);
 }
+
 
 s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
 {
@@ -7753,7 +7848,9 @@ static int pws_tag;
 
 typedef struct {
   s7_pointer (*getter)(s7_scheme *sc, s7_pointer args);
+  int get_req_args, get_opt_args;
   s7_pointer (*setter)(s7_scheme *sc, s7_pointer args);
+  int set_req_args, set_opt_args;
   s7_pointer scheme_getter;
   s7_pointer scheme_setter;
   char *documentation;
@@ -7761,13 +7858,19 @@ typedef struct {
   
 s7_pointer s7_make_procedure_with_setter(s7_scheme *sc, 
 					 s7_pointer (*getter)(s7_scheme *sc, s7_pointer args), 
+					 int get_req_args, int get_opt_args,
 					 s7_pointer (*setter)(s7_scheme *sc, s7_pointer args),
+					 int set_req_args, int set_opt_args,
 					 const char *documentation)
 {
   pws *f;
   f = (pws *)CALLOC(1, sizeof(pws));
   f->getter = getter;
+  f->get_req_args = get_req_args;
+  f->get_opt_args = get_opt_args;
   f->setter = setter;
+  f->set_req_args = set_req_args;
+  f->set_opt_args = set_opt_args;
   if (documentation)
     f->documentation = copy_string(documentation);
   else f->documentation = NULL;
@@ -7786,9 +7889,6 @@ static void pws_free(void *obj)
   pws *f = (pws *)obj;
   if (f)
     {
-#if S7_DEBUGGING
-      fprintf(stderr, "freeing pws?");
-#endif
       if (f->documentation)
 	FREE(f->documentation);
       FREE(f);
@@ -7818,23 +7918,32 @@ static s7_pointer pws_apply(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 }
 
 /* this is the pws set method, not the actual setter */
-static void pws_set(s7_scheme *sc, s7_pointer obj, s7_pointer args)
+static s7_pointer pws_set(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 {
   pws *f;
   f = (pws *)s7_object_value(obj);
   if (f->setter != NULL)
-    (*(f->setter))(sc, args);
-  else s7_call(sc, f->scheme_setter, args);
+    return((*(f->setter))(sc, args));
+  return(s7_call(sc, f->scheme_setter, args));
 }
 
 static s7_pointer g_make_procedure_with_setter(s7_scheme *sc, s7_pointer args)
 {
   s7_pointer p;
   pws *f;
-  p = s7_make_procedure_with_setter(sc, NULL, NULL, NULL);
+  p = s7_make_procedure_with_setter(sc, NULL, -1, 0, NULL, -1, 0, NULL);
+
   f = (pws *)s7_object_value(p);
   f->scheme_getter = car(args);
+  if (s7_is_closure(car(args)))
+    f->get_req_args = s7_list_length(sc, caaar(args));
+  else f->get_req_args = s7_list_length(sc, caar(args));
+
   f->scheme_setter = cadr(args);
+  if (s7_is_closure(cadr(args)))
+    f->set_req_args = s7_list_length(sc, caaadr(args));
+  else f->set_req_args = s7_list_length(sc, caadr(args));
+
   return(p);
 }
 
@@ -7856,7 +7965,25 @@ static char *pws_documentation(s7_pointer x)
   return(f->documentation);
 }
 
+static int pws_get_req_args(s7_pointer x)
+{
+  pws *f = (pws *)s7_object_value(x);
+  return(f->get_req_args);
+}
 
+static int pws_get_opt_args(s7_pointer x)
+{
+  pws *f = (pws *)s7_object_value(x);
+  return(f->get_opt_args);
+}
+
+static s7_pointer g_procedure_with_setter_setter_arity(s7_scheme *sc, s7_pointer args)
+{
+  pws *f = (pws *)s7_object_value(car(args));
+  return(s7_cons(sc, s7_make_integer(sc, f->set_req_args),
+		 s7_cons(sc, s7_make_integer(sc, f->set_opt_args),
+			 s7_cons(sc, sc->F, sc->NIL))));
+}
 
 
 /* -------------------------------- eq etc -------------------------------- */
@@ -8120,6 +8247,9 @@ s7_pointer s7_out_of_range_error(s7_scheme *sc, const char *caller, int arg_n, s
 {
   int len;
   char *errmsg, *argstr;
+
+  /* fprintf(stderr,"out of range %s %s\n", caller, descr); */
+
   argstr = s7_object_to_c_string(sc, arg);
   len = safe_strlen(argstr) + safe_strlen(descr) + safe_strlen(caller) + 128;
   errmsg = (char *)CALLOC(len, sizeof(char));
@@ -8197,7 +8327,7 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
   s7_pointer catcher;
   catcher = sc->F;
 
-#if S7_DEBUGGING
+#if S7_DEBUGGING && 0
   g_stacktrace(sc, sc->NIL);
 #endif
 
@@ -8266,6 +8396,9 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	}
       write_char(sc, '\n', sc->error_port);
 
+
+      abort();
+
       if ((exit_eval) &&
 	  (sc->error_exiter))
 	(*(sc->error_exiter))();
@@ -8276,8 +8409,10 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
     }
 
   if (sc->longjmp_ok)
-    longjmp(sc->goto_start, 1); /* this is trying to clear the C stack back to some clean state */
-
+    {
+      /* fprintf(stderr, "longjmp error "); */
+      longjmp(sc->goto_start, 1); /* this is trying to clear the C stack back to some clean state */
+    }
   return(type);
 }
 
@@ -8405,6 +8540,7 @@ static void assign_syntax(s7_scheme *sc, const char *name, opcode_t op)
 
 s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
 { 
+  bool old_longjmp;
   /*
   stack_reset(sc); 
   sc->envir = sc->global_env; 
@@ -8413,19 +8549,20 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
    *   and if we reset the stack, the previously running evaluation steps off the end
    *   of the stack == segfault. 
    */
-
-  if (sc->stack_top == 0)
+  old_longjmp = sc->longjmp_ok;
+  if (!sc->longjmp_ok)
     {
-      if (setjmp(sc->goto_start) != 0)
-	{
-	  return(sc->value);
-	}
       sc->longjmp_ok = true;
+      /* fprintf(stderr, "setjmp call "); */
+      if (setjmp(sc->goto_start) != 0)
+	return(sc->value);
     }
+
   push_stack(sc, OP_EVAL_STRING_DONE, sc->args, sc->code); /* this saves the current evaluation and will eventually finish this (possibly) nested call */
   sc->args = args; 
   sc->code = func; 
   eval(sc, OP_APPLY);
+  sc->longjmp_ok = old_longjmp;
   return(sc->value);
 } 
 
@@ -8516,7 +8653,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
        *   read one expr, return it, let caller deal with input port setup 
        */
     case OP_READ_RETURN_EXPRESSION:
-      /* fprintf(stderr, "read rtn %s\n", s7_object_to_c_string(sc, sc->value)); */
+      /* fprintf(stderr, "read rtn %s\n", s7_object_to_c_string(sc, sc->value));  */
       return;
 
 
@@ -8555,14 +8692,15 @@ static void eval(s7_scheme *sc, opcode_t first_op)
     case OP_LOAD_CLOSE_AND_POP_IF_EOF:
       if (sc->tok != TOK_EOF)
 	{
-	  push_stack(sc, OP_LOAD_CLOSE_AND_POP_IF_EOF, sc->NIL, sc->NIL);
+	  push_stack(sc, OP_LOAD_CLOSE_AND_POP_IF_EOF, sc->args, sc->code);
 	  push_stack(sc, OP_READ_INTERNAL, sc->NIL, sc->NIL);
 	  sc->code = sc->value;
 	  goto EVAL;             /* we read an expression, now evaluate it, and return to read the next */
 	}
+
       s7_close_input_port(sc, sc->input_port);
       pop_input_port(sc);
-      pop_stack(sc, sc->UNSPECIFIED);
+      pop_stack(sc, sc->value);
       goto START;
 
 
@@ -8570,7 +8708,6 @@ static void eval(s7_scheme *sc, opcode_t first_op)
        *    assume caller (C via g_eval_c_string) is dealing with the string port
        */
     case OP_EVAL_STRING:
-      /* fprintf(stderr, "op eval string"); */
       if (sc->tok != TOK_EOF)
 	{
 	  if (s7_peek_char(sc, sc->input_port) != EOF)
@@ -8581,13 +8718,12 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  else push_stack(sc, OP_EVAL_STRING_DONE, sc->NIL, sc->value);
 	}
       else push_stack(sc, OP_EVAL_STRING_DONE, sc->NIL, sc->value);
-      /* fprintf(stderr, "pushed value: %s (%d)\n", s7_object_to_c_string(sc, sc->value), sc->tok == TOK_EOF); */
       sc->code = sc->value;
       goto EVAL;
 
 
     case OP_EVAL_STRING_DONE:
-      /* fprintf(stderr, "value: %s\n", s7_object_to_c_string(sc, sc->value)); */
+      /* fprintf(stderr, "op eval string value: %s\n", s7_object_to_c_string(sc, sc->value)); */
       return;
 
       
@@ -8780,9 +8916,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	      pop_stack(sc, eval_error(sc, "too many arguments", sc->x = cons(sc, sc->code, sc->args)));
 	      goto START;
 	    }
-
 	  sc ->x = function_call(sc->code)(sc, sc->args);
-	  
 #if S7_DEBUGGING
 	  if (!is_object(sc->x))
 	    {
@@ -8809,6 +8943,15 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 		      pop_stack(sc, eval_error(sc, "not enough arguments", sc->code));
 		      goto START;
 		    }
+
+#if S7_DEBUGGING
+		  if (!is_object(car(sc->y)))
+		    {
+		      fprintf(stderr, "arg to closure is bogus: %p\n", car(sc->y));
+		      search_heap(sc, car(sc->y));
+		      abort();
+		    }
+#endif
 		  
 		  new_slot_in_env(sc, car(sc->x), car(sc->y));
 		}
@@ -9447,6 +9590,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       
 
     case OP_QUIT:
+      /* fprintf(stderr, "op quit\n"); */
       return;
       break;
 
@@ -9766,6 +9910,10 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       
 
     default:
+#if S7_DEBUGGING
+      fprintf(stderr, "unknown operator! %d\n", (int)(sc->op));
+      abort();
+#endif
       pop_stack(sc, eval_error(sc, "unknown operator!", s7_make_integer(sc, sc->op)));
       goto START;
     }
@@ -10166,6 +10314,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "call-with-exit",      g_call_with_exit,      1, 0, false, H_call_with_exit);
   s7_define_function(sc, "load",                g_load,                1, 0, false, H_display);
   s7_define_function(sc, "eval",                g_eval,                1, 1, false, H_eval);
+  s7_define_function(sc, "eval-string",         g_eval_string,         1, 0, false, H_eval_string);
   s7_define_function(sc, "apply",               g_apply,               1, 0, true,  H_apply);
   
   s7_define_function(sc, "tracing",             g_tracing,             1, 0, false, H_tracing);
@@ -10196,6 +10345,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, set_object_name,       g_set_object,          1, 0, true, "internal setter redirection");
   s7_define_function(sc, "make-procedure-with-setter", g_make_procedure_with_setter, 2, 0, false, "...");
   s7_define_function(sc, "procedure-with-setter?", g_is_procedure_with_setter, 1, 0, false, H_is_procedure_with_setter);
+  s7_define_function(sc, "procedure-with-setter-setter-arity", g_procedure_with_setter_setter_arity, 1, 0, false, "kludge to get setter's arity");
 
   pws_tag = s7_new_type("<procedure-with-setter>",
 			pws_print,

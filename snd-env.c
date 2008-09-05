@@ -1523,6 +1523,8 @@ static bool check_enved_hook(env *e, int pos, Float x, Float y, enved_point_t re
        */
       procs = XEN_HOOK_PROCEDURES(enved_hook);
       env_list = env_to_xen(e);
+      XEN_LOCAL_GC_PROTECT(env_list);
+
       while (XEN_NOT_NULL_P(procs))
 	{
 	  result = XEN_APPLY(XEN_CAR(procs), 
@@ -1550,10 +1552,15 @@ static bool check_enved_hook(env *e, int pos, Float x, Float y, enved_point_t re
 	      for (i = 0, lst = XEN_COPY_ARG(result); i < len; i++, lst = XEN_CDR(lst))
 		e->data[i] = XEN_TO_C_DOUBLE(XEN_CAR(lst));
 	      if (XEN_NOT_NULL_P(procs))
-		env_list = env_to_xen(e);
+		{
+		  XEN_LOCAL_GC_UNPROTECT(env_list);
+		  env_list = env_to_xen(e);
+		  XEN_LOCAL_GC_PROTECT(env_list);
+		}
 	      env_changed = true;
 	    }
 	}
+      XEN_LOCAL_GC_UNPROTECT(env_list);
     }
   return(env_changed); /* 0 = default action */
 }

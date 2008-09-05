@@ -243,9 +243,9 @@ static XEN s7_mus_vct_apply(s7_scheme *sc, XEN obj, XEN args)
   return(g_vct_ref(obj, XEN_CAR(args)));
 }
 
-static void s7_mus_vct_set(s7_scheme *sc, XEN obj, XEN args)
+static XEN s7_mus_vct_set(s7_scheme *sc, XEN obj, XEN args)
 {
-  g_vct_set(obj, XEN_CAR(args), XEN_CADR(args));
+  return(g_vct_set(obj, XEN_CAR(args), XEN_CADR(args)));
 }
 #endif
 
@@ -347,7 +347,8 @@ initial-element: \n  " vct_make_example
   if (size <= 0) 
     XEN_OUT_OF_RANGE_ERROR(S_make_vct, 1, len, "len ~A <= 0?");
 
-  if (((off_t)(size * sizeof(Float))) > mus_max_malloc())
+  if ((size > mus_max_malloc()) ||
+      (((off_t)(size * sizeof(Float))) > mus_max_malloc()))
     XEN_OUT_OF_RANGE_ERROR(S_make_vct, 1, len, "len ~A too large (see mus-max-malloc)");
 
   if (XEN_NUMBER_P(filler))

@@ -3722,21 +3722,32 @@ static char *run_string_hook(XEN hook, const char *caller, char *initial_string,
   /* no longer concats -- now just passes successive results along */
   if (XEN_HOOKED(hook))
     {
-      XEN result;
+      XEN result, substr;
       XEN procs = XEN_HOOK_PROCEDURES(hook);
+
       result = C_TO_XEN_STRING(initial_string);
+      XEN_LOCAL_GC_PROTECT(result);
+
+      substr = C_TO_XEN_STRING(subject);
+      XEN_LOCAL_GC_PROTECT(substr);
+
       while (XEN_NOT_NULL_P(procs))
 	{
 	  if (subject)
 	    result = XEN_CALL_2(XEN_CAR(procs),
-				C_TO_XEN_STRING(subject),
-				result,
+				substr,
+				XEN_LOCAL_GC_UNPROTECT(result),
 				caller);
 	  else result = XEN_CALL_1(XEN_CAR(procs),
-				   result,
+				   XEN_LOCAL_GC_UNPROTECT(result),
 				   caller);
+	  XEN_LOCAL_GC_PROTECT(result);
 	  procs = XEN_CDR(procs);
 	}
+
+      XEN_LOCAL_GC_UNPROTECT(substr);
+      XEN_LOCAL_GC_UNPROTECT(result);
+
       if (XEN_STRING_P(result))
 	return(copy_string(XEN_TO_C_STRING(result)));
     }
@@ -3911,13 +3922,9 @@ and its value is returned."
     XEN sym = XEN_FALSE;
     if (XEN_STRING_P(text))
       sym = C_STRING_TO_XEN_SYMBOL(XEN_TO_C_STRING(text));
-    else
-      {
-	if (XEN_SYMBOL_P(text))
-	  sym = text;
-      }
-    if (XEN_SYMBOL_P(sym))
-      str = (char *)XEN_OBJECT_HELP(sym);
+    else sym = text;
+
+    str = s7_procedure_documentation(s7, sym);
   }
 #endif
 

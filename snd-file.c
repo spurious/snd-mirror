@@ -1042,7 +1042,7 @@ static file_info *open_raw_sound(const char *fullname, read_only_t read_only, bo
 {
   XEN res = XEN_FALSE;
   int res_loc = NOT_A_GC_LOC;
-  XEN procs, arg1;
+  XEN procs;
   int len, srate, chans, data_format;
   off_t data_location, bytes;
 
@@ -1054,8 +1054,10 @@ static file_info *open_raw_sound(const char *fullname, read_only_t read_only, bo
 
   if (XEN_HOOKED(open_raw_sound_hook))
     {
+      XEN arg1;
       procs = XEN_HOOK_PROCEDURES(open_raw_sound_hook);
       arg1 = C_TO_XEN_STRING(fullname);
+      XEN_LOCAL_GC_PROTECT(arg1);
       while(XEN_NOT_NULL_P(procs))
 	{
 	  res = XEN_CALL_2(XEN_CAR(procs), 
@@ -1066,6 +1068,7 @@ static file_info *open_raw_sound(const char *fullname, read_only_t read_only, bo
 	  res_loc = snd_protect(res);
 	  procs = XEN_CDR(procs);
 	}
+      XEN_LOCAL_GC_UNPROTECT(arg1);
     }
   if (XEN_LIST_P(res)) /* empty list ok here -> accept all current defaults */
     {
@@ -1365,7 +1368,7 @@ static void read_snd_opened_sound_file(snd_info *sp)
   newname = snd_opened_sound_file_name(sp);
   if (file_write_date(newname) >= sp->write_date)
     {
-#if HAVE_GUILE
+#if HAVE_GUILE || HAVE_S7
       /* this file shouldn't be left in the load list -- it will confuse the save-state process 
        *   (*snd-opened-sound* is defined here but not at the saved state file reload point)
        * *snd-loaded-files* is the variable name (snd-xen.c), so we save and restore its value if possible 
@@ -1418,17 +1421,21 @@ char *output_name(const char *current_name)
 {
   if (XEN_HOOKED(output_name_hook))
     {
-      XEN result;
+      XEN result, fname;
       XEN procs = XEN_HOOK_PROCEDURES (output_name_hook);
+
+      fname = C_TO_XEN_STRING(current_name);
+      XEN_LOCAL_GC_PROTECT(fname);
       while (XEN_NOT_NULL_P(procs))
 	{
 	  result = XEN_CALL_1(XEN_CAR(procs),
-			      C_TO_XEN_STRING(current_name),
+			      fname,
 			      S_output_name_hook);
 	  if (XEN_STRING_P(result)) 
 	    return(copy_string(XEN_TO_C_STRING(result)));
 	  procs = XEN_CDR (procs);
 	}
+      XEN_LOCAL_GC_UNPROTECT(fname);
     }
   return(copy_string(current_name));
 }

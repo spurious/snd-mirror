@@ -1484,13 +1484,17 @@ static void g_new_sound_hook(const char *filename)
   if (XEN_HOOKED(new_sound_hook))
     {
       XEN procs = XEN_HOOK_PROCEDURES(new_sound_hook);
+      XEN fname;
+      fname = C_TO_XEN_STRING(filename);
+      XEN_LOCAL_GC_PROTECT(fname);      
       while (XEN_NOT_NULL_P(procs))
 	{
 	  XEN_CALL_1(XEN_CAR(procs), 
-		     C_TO_XEN_STRING(filename),
+		     fname,
 		     S_new_sound_hook);
 	  procs = XEN_CDR (procs);
 	}
+      XEN_LOCAL_GC_UNPROTECT(fname);
     }
 }
 
@@ -1696,7 +1700,8 @@ static XEN g_make_sound_data(XEN chans, XEN frames)
   frms = XEN_TO_C_OFF_T(frames);
   if (frms <= 0)
     XEN_OUT_OF_RANGE_ERROR(S_make_sound_data, 2, frames, "frames ~A <= 0?");
-  if (((off_t)(frms * sizeof(Float))) > mus_max_malloc())
+  if ((frms > mus_max_malloc()) ||
+      (((off_t)(frms * sizeof(Float))) > mus_max_malloc()))
     XEN_OUT_OF_RANGE_ERROR(S_make_sound_data, 2, frames, "frames arg ~A too large (see mus-max-malloc)");
 
   return(make_sound_data(chns, frms));
