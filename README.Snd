@@ -7,11 +7,11 @@ even run on others if the GUI support is omitted.
 
 To build Snd, get the sources from
 
-  ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-9.tar.gz
+  ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-10.tar.gz
 
-  gzip -d snd-9.tar.gz
-  tar xf snd-9.tar
-  cd snd-9
+  gzip -d snd-10.tar.gz
+  tar xf snd-10.tar
+  cd snd-10
   ./configure
   make
   make install
@@ -299,7 +299,7 @@ CCRMA:
   http://ccrma-mail.stanford.edu/mailman/listinfo/planetccrma
 
 Snd:
-  ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-9.tar.gz
+  ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-10.tar.gz
   http://ccrma.stanford.edu/software/snd/
   http://sourceforge.net/projects/snd/
   http://www.notam02.no/arkiv/doc/snd-rt/

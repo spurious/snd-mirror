@@ -367,7 +367,6 @@ extern "C" {
 
 typedef void mus_error_handler_t(int type, char *msg);
 mus_error_handler_t *mus_error_set_handler(mus_error_handler_t *new_error_handler);
-
 int mus_make_error(const char *error_name);
 const char *mus_error_type_to_string(int err);
 

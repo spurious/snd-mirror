@@ -1069,7 +1069,7 @@
 # ==4291==    by 0x80F4DB0: save_edits_without_display (snd-edits.c:6915)
 
 {
-   snd-9
+   snd-10
    Memcheck:Value8
    fun:disk_kspace
    fun:*

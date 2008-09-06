@@ -1402,7 +1402,8 @@ static list *xen_to_list(ptree *pt, XEN lst)
 
   if (len > 0)
     {
-      if (XEN_SYMBOL_P(XEN_CAR(lst)))
+      if ((XEN_SYMBOL_P(XEN_CAR(lst))) &&
+	  (!(XEN_KEYWORD_P(XEN_CAR(lst))))) /* keywords are symbols in s7 */
 	{
 	  type = name_to_type(XEN_SYMBOL_TO_C_STRING(XEN_CAR(lst)));
 
@@ -1413,7 +1414,10 @@ static list *xen_to_list(ptree *pt, XEN lst)
 
       if ((type == R_UNSPECIFIED) ||
 	  (type == R_LIST))
-	return(NULL);
+	{
+	  /* fprintf(stderr, "null because %s\n", type_name(type)); */
+	  return(NULL);
+	}
 
       if (!(CLM_STRUCT_P(type)))
 	{
@@ -2022,9 +2026,11 @@ static int add_clm_to_ptree(ptree *pt, mus_any *value, XEN orig)
 static int add_list_to_ptree(ptree *pt, list *value)
 {
   int cur;
-  /* fprintf(stderr, "add list at %d\n", pt->list_ctr + 1); */
 
   cur = pt->list_ctr++;
+
+  /* fprintf(stderr, "add list %p at %d\n", value, cur); */
+
   if (cur >= pt->lists_size)
     {
       pt->lists_size += 8;
@@ -2540,6 +2546,7 @@ static xen_value *add_value_to_ptree(ptree *prog, XEN val, int type)
       {
 	list *lst;
 	lst = xen_to_list(prog, val);
+	/* fprintf(stderr, "add %p\n", lst); */
 	if (!lst)
 	  {
 	    xen_value *v1;

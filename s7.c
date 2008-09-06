@@ -1159,6 +1159,13 @@ static void push_stack(s7_scheme *sc, opcode_t op, s7_pointer args, s7_pointer c
 
   vector_element(sc->stack, top + 0) = code;
   vector_element(sc->stack, top + 1) = sc->envir;
+#if S7_DEBUGGING
+  if (!is_object(sc->envir))
+    {
+      fprintf(stderr, "pushed env %p\n", sc->envir);
+      abort();
+    }
+#endif
   vector_element(sc->stack, top + 2) = args;
   vector_element(sc->stack, top + 3) = vector_element(sc->small_ints, (int)op);
 } 
@@ -10024,7 +10031,7 @@ s7_scheme *s7_init(void)
   set_immutable(sc->symbol_table);
   typeflag(sc->symbol_table) |= T_CONSTANT;
   
-  sc->gc_verbose = true;
+  sc->gc_verbose = false;
   sc->tracing = false;
   
   sc->code = sc->NIL;

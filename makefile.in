@@ -51,7 +51,7 @@ top_srcdir = @top_srcdir@
 
 datarootdir = ${prefix}/share
 pkgdatadir = ${datarootdir}/snd
-# snd-help.c looks for the documentation in /usr/local/share/doc/snd-9 -- perhaps it should be pkgdatadir? or passed at compile time
+# snd-help.c looks for the documentation in /usr/local/share/doc/snd-10 -- perhaps it should be pkgdatadir? or passed at compile time
 localedir = ${datadir}/locale
 DEFS = -DLOCALE_DIR=\"$(localedir)\" -DSCRIPTS_DIR=\"$(pkgdatadir)\" @DEFS@
 
@@ -126,7 +126,7 @@ snd_widget.o: $(SNDLIB_HEADERS) $(SND_HEADERS) $(GX_HEADERS) $(SNDLIB_FILES) $(M
 external: $(SNDLIB_HEADERS) $(SND_HEADERS) $(GX_HEADERS) $(SNDLIB_FILES) $(MIDI_FILES) $(O_FILES) $(GX_FILES) $(GL_FILES)  snd_pd_external.o
 	$(CC) -shared -o snd.pd_linux $(LDFLAGS) $(SNDLIB_FILES) $(MIDI_FILES) $(O_FILES)  $(GX_FILES) $(SNDLIB_LIB) $(XEN_LIBS) $(JACK_LIBS) $(RT_LIBS) $(AUDIO_LIB) $(FFTW_LIBS) $(GSL_LIBS) $(FAM_LIB) $(LIBS) snd_pd_external.o
 	strip --strip-unneeded snd.pd_linux
-	ln -sf snd-9/snd.pd_linux ..
+	ln -sf snd-10/snd.pd_linux ..
 
 $(SNDLIB_O_FILES): $(SNDLIB_HEADERS) $(SND_HEADERS)
 $(MIDI_O_FILES): $(SNDLIB_HEADERS) $(SND_HEADERS)
