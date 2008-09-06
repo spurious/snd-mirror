@@ -15,7 +15,7 @@ A new extension language choice: S7, a TinyScheme derivative.
   that has full continuations, ratios and complex numbers, 
   generalized set!, applicable objects, hash-tables and keywords
   (the latter for define*), defmacro, define-macro, and procedure-with-setter.
-  My goal is a flexible, multithreadable, simple, possibly even 
+  My goal is a simple, multithreadable, possibly even 
   real-time extension language that I can change to suit myself.
   S7 is not Scheme++ -- I have removed the notion of an "inexact integer",
   so truncate, floor, and ceiling return (exact) integers,
@@ -28,7 +28,7 @@ A new extension language choice: S7, a TinyScheme derivative.
   is that macro expansion is slow.  It passes Jaffer's r4rs tests,
   and most of the r6rs number tests mentioned above. I haven't had 
   time yet to implement threads.  s7 still hasn't made it through
-  snd-test.scm , so there are plenty of bugs...
+  snd-test.scm , so there are still plenty of bugs.
 
 Mike Scholz helped me with S7 and improved some of the ruby files.
 

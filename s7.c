@@ -1,4 +1,5 @@
-/* S7
+/* S7, a Scheme interpreter
+ *
  *    derived from:
  */
 
@@ -45,7 +46,7 @@
  *   figure out how add syntax-rules, for-each, map, do
  *   the rest of the call-with funcs (call-with-input-string is done)
  *   can any part of quasiquote be optimized?
- *   get rid of the config header somehow! -- ideally we'd get rid of all the autohell crap like HAVE_STDBOOL_H
+ *   get rid of the config header somehow! -- ideally we'd get rid of all switches like HAVE_STDBOOL_H
  *   doc in s7.h
  *
  *
@@ -60,7 +61,7 @@
  *  (make-object <tag> value)
  *  (object? <tag> obj) or maybe (name? obj) and (make-name value)
  *
- * Mike Scholz provided the FreeBSD support
+ * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
  */
 
 
@@ -113,6 +114,7 @@
  *
  *     cabs cacos cacosh carg casin casinh catan catanh ccos ccosh cexp clog conj cpow csin csinh csqrt ctan ctanh
  *
+ * and stdbool.h (s7.h)
  */
 
 #include <mus-config.h>
@@ -121,7 +123,7 @@
 
 
 
-#define _FILE_OFFSET_BITS 64  /* off_t's */
+#define _FILE_OFFSET_BITS 64  /* for off_t's */
 
 #include <unistd.h>
 #include <math.h>
@@ -164,7 +166,7 @@
 /* in Snd, there are about 10000 permanent objects sitting in the heap, so the bigger the size, the less
  *    often we mark these objects -- the GC is more efficient as the heap size increases.  Each object
  *    is about 20 bytes, so even 256K is nothing in modern memory sizes.  The heaps grows as needed,
- *    so almost any number is ok, but it has to bebig enough to handle the startup allocations
+ *    so almost any number is ok, but it has to be big enough to handle the startup allocations
  *    when the gc is turned off.
  */
 
@@ -374,6 +376,7 @@ struct s7_scheme {
   s7_pointer error_port;      /* current-error-port (nil = stderr) */
 
   bool gc_verbose;            /* if gc_verbose is true, print gc status */
+  bool load_verbose;          /* if load_verbose is true, print file names as they are loaded */
   
   #define INITIAL_STRBUF_SIZE 1024
   int strbuf_size;
@@ -1037,6 +1040,15 @@ static s7_pointer g_gc_verbose(s7_scheme *sc, s7_pointer a)
   s7_pointer old_val;
   old_val = (sc->gc_verbose) ? sc->T : sc->F;
   sc->gc_verbose = (car(a) != sc->F);
+  return(old_val);
+}
+
+static s7_pointer g_load_verbose(s7_scheme *sc, s7_pointer a)
+{
+  #define H_load_verbose "(load-verbose bool) if #t prints out file names as they are loaded"
+  s7_pointer old_val;
+  old_val = (sc->load_verbose) ? sc->T : sc->F;
+  sc->load_verbose = (car(a) != sc->F);
   return(old_val);
 }
 
@@ -3623,7 +3635,7 @@ static s7_pointer g_sqrt(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 {
   #define H_expt "(expt z1 z2) returns z1^z2"
-  #define TOP_LOG 43.0 /* approx log(2^63) */
+#define TOP_LOG 43.0 /* approx log(2^63) */ /* TODO: if s7_Int is int, this should be 21.0 */
 
   if (!s7_is_number(car(args)))
     return(s7_wrong_type_arg_error(sc, "expt", 1, car(args), "a number"));
@@ -5845,9 +5857,8 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
   if (!fp)
     return(s7_file_error(sc, "open-input-file", "can't open", filename));
 
-#if S7_DEBUGGING
-  fprintf(stderr, "s7_load(\"%s\")\n", filename);
-#endif
+  if (sc->load_verbose)
+    fprintf(stderr, "s7_load(\"%s\")\n", filename);
 
   port = s7_make_input_file(sc, filename, fp); 
   port_needs_close(port) = true;
@@ -5905,9 +5916,8 @@ static s7_pointer g_load(s7_scheme *sc, s7_pointer args)
 
   fname = s7_string(name);
 
-#if S7_DEBUGGING
-  fprintf(stderr, "(load \"%s\")\n", fname);
-#endif
+  if (sc->load_verbose)
+    fprintf(stderr, "(load \"%s\")\n", fname);
 
   fp = fopen(fname, "r");
   if (!fp)
@@ -9488,6 +9498,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
        *    
        *    end up with name as sc->x going to OP_MACRO1, ((gensym) (lambda (args) body) going to eval
        */
+      sc->gc_off = true;
       sc->y = s7_gensym(sc, "defmac");
       sc->x = car(sc->code);
 
@@ -9516,12 +9527,14 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 
       /* fprintf(stderr, "sc->x: %s, sc->code: %s\n", s7_object_to_c_string(sc, sc->x), s7_object_to_c_string(sc, sc->code)); */
 
+      sc->gc_off = false;
       push_stack(sc, OP_MACRO1, sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO1 */
       goto EVAL;
 
 
     case OP_DEFINE_MACRO:
 
+      sc->gc_off = true;
       sc->y = s7_gensym(sc, "defmac");
       sc->x = caar(sc->code);
 
@@ -9552,6 +9565,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
        *   sc->code: (lambda (defmac-51) (apply (lambda (a b) (quasiquote (+ (unquote a) (unquote b)))) (cdr defmac-51)))
        */
 
+      sc->gc_off = false;
       push_stack(sc, OP_MACRO1, sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO1 */
       goto EVAL;
 
@@ -10032,6 +10046,7 @@ s7_scheme *s7_init(void)
   typeflag(sc->symbol_table) |= T_CONSTANT;
   
   sc->gc_verbose = false;
+  sc->load_verbose = false;
   sc->tracing = false;
   
   sc->code = sc->NIL;
@@ -10340,6 +10355,7 @@ s7_scheme *s7_init(void)
   
   s7_define_function(sc, "tracing",             g_tracing,             1, 0, false, H_tracing);
   s7_define_function(sc, "gc-verbose",          g_gc_verbose,          1, 0, false, H_gc_verbose);
+  s7_define_function(sc, "load-verbose",        g_load_verbose,        1, 0, false, H_load_verbose);
   s7_define_function(sc, "stacktrace",          g_stacktrace,          0, 0, false, H_stacktrace);
   s7_define_function(sc, "gc",                  g_gc,                  0, 0, false, H_gc);
   s7_define_function(sc, "quit",                g_quit,                0, 0, false, H_quit);
