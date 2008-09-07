@@ -43,7 +43,7 @@
  *   threads: call-with-new-thread[s7?], join-thread
  *   there's no arg number mismatch check for caller-defined functions!
  *   help for vars (objects)
- *   figure out how add syntax-rules, for-each, map, do
+ *   figure out how add syntax-rules, (C-level) for-each, map, do
  *   the rest of the call-with funcs (call-with-input-string is done)
  *   can any part of quasiquote be optimized?
  *   get rid of the config header somehow! -- ideally we'd get rid of all switches like HAVE_STDBOOL_H
@@ -572,7 +572,7 @@ static const char *type_names[T_LAST_TYPE + 1] = {
 #define loop_counter(p)               ((p)->object.number.value.ivalue)
 
 
-
+#if S7_DEBUGGING
 static char *describe_type(s7_pointer p)
 {
   char *buf;
@@ -588,6 +588,7 @@ static char *describe_type(s7_pointer p)
 	  (typeflag(p) & T_UNUSED_BITS) ? " and other garbage bits!" : "");
   return(buf);
 }
+#endif
 
 
 #define TOK_EOF     (-1)
@@ -637,9 +638,10 @@ static s7_pointer s7_string_concatenate(s7_scheme *sc, const char *s1, const cha
 static s7_pointer s7_division_by_zero_error(s7_scheme *sc, const char *caller, s7_pointer arg);
 static s7_pointer s7_file_error(s7_scheme *sc, const char *caller, const char *descr, const char *name);
 
-
+#if S7_DEBUGGING
 static void gsp(s7_scheme *sc) {g_stacktrace(sc, sc->args);} /* for gdb */
 static char *gop(s7_scheme *sc, s7_pointer obj) {return(s7_object_to_c_string(sc, obj));}
+#endif
 
 
 /* -------------------------------- constants -------------------------------- */
@@ -1043,15 +1045,6 @@ static s7_pointer g_gc_verbose(s7_scheme *sc, s7_pointer a)
   return(old_val);
 }
 
-static s7_pointer g_load_verbose(s7_scheme *sc, s7_pointer a)
-{
-  #define H_load_verbose "(load-verbose bool) if #t prints out file names as they are loaded"
-  s7_pointer old_val;
-  old_val = (sc->load_verbose) ? sc->T : sc->F;
-  sc->load_verbose = (car(a) != sc->F);
-  return(old_val);
-}
-
 
 static s7_pointer g_gc(s7_scheme *sc, s7_pointer a)
 {
@@ -1061,6 +1054,7 @@ static s7_pointer g_gc(s7_scheme *sc, s7_pointer a)
 }
 
 
+#if S7_DEBUGGING
 static void search_heap(s7_scheme *sc, s7_pointer obj)
 {
   int i;
@@ -1071,6 +1065,7 @@ static void search_heap(s7_scheme *sc, s7_pointer obj)
     fprintf(stderr, "unknown object in heap: %d %p\n", i, obj);
   else fprintf(stderr, "unknown object %p not in heap", obj);
 }
+#endif
 
 
 s7_pointer s7_local_gc_protect(s7_pointer p)
@@ -1545,6 +1540,15 @@ s7_pointer s7_symbol_local_value(s7_scheme *sc, s7_pointer sym, s7_pointer local
     return(s7_slot_value_in_env(x));
   return(s7_symbol_value(sc, sym));
 }
+
+static s7_pointer g_symbol_to_value(s7_scheme *sc, s7_pointer args)
+{
+  #define H_symbol_to_value "(symbol->value sym) returns the current binding of (value associated with) the symbol sym"
+  if (!s7_is_symbol(car(args)))
+    return(s7_wrong_type_arg_error(sc, "symbol->value", 1, car(args), "a symbol"));
+  return(s7_symbol_value(sc, car(args)));
+}
+
 
 
 s7_pointer s7_symbol_set_value(s7_scheme *sc, s7_pointer sym, s7_pointer val)
@@ -3635,7 +3639,7 @@ static s7_pointer g_sqrt(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 {
   #define H_expt "(expt z1 z2) returns z1^z2"
-#define TOP_LOG 43.0 /* approx log(2^63) */ /* TODO: if s7_Int is int, this should be 21.0 */
+  #define TOP_LOG 43.0 /* approx log(2^63) */ /* TODO: if s7_Int is int, this should be 21.0 */
 
   if (!s7_is_number(car(args)))
     return(s7_wrong_type_arg_error(sc, "expt", 1, car(args), "a number"));
@@ -5952,6 +5956,15 @@ s7_pointer s7_add_to_load_path(s7_scheme *sc, const char *dir)
   return(s7_load_path(sc));
 }
 
+static s7_pointer g_load_verbose(s7_scheme *sc, s7_pointer a)
+{
+  #define H_load_verbose "(load-verbose bool) if #t prints out file names as they are loaded"
+  s7_pointer old_val;
+  old_val = (sc->load_verbose) ? sc->T : sc->F;
+  sc->load_verbose = (car(a) != sc->F);
+  return(old_val);
+}
+
 
 
 
@@ -6377,7 +6390,7 @@ static char *s7_list_to_c_string(s7_scheme *sc, s7_pointer lst)
   bufsize += (128 + len); /* len spaces */
   buf = (char *)CALLOC(bufsize, sizeof(char));
 
-#if S7_DEBUGGING
+#if S7_DEBUGGING && 0
   if (pair_line_number(car(lst)) != 0)
     sprintf(buf, "[%d](", pair_line_number(car(lst)));
   else sprintf(buf, "(");
@@ -7567,9 +7580,10 @@ static s7_pointer g_is_procedure(s7_scheme *sc, s7_pointer args)
   return(to_s7_bool(sc, s7_is_procedure(car(args))));
 }
 
+
 s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p)
 {
-  /* make it look like a lambda form */
+  /* make it look like an internal lambda form */
 
   /* in this context, there's no way to distinguish between:
    *    (procedure-source (let ((b 1)) (lambda (a) (+ a b))))
@@ -7597,13 +7611,22 @@ s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p)
 
 static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
 {
+  /* make it look like a scheme-level lambda */
+  s7_pointer p;
+
   #define H_procedure_source "(procedure-source func) tries to return the definition of func"
 
   if (s7_is_symbol(car(args)))
-    sc->y = s7_symbol_value(sc, car(args));
-  else sc->y = car(args);
-  if (sc->y != sc->NIL)
-    return(s7_procedure_source(sc, sc->y));
+    p = s7_symbol_value(sc, car(args));
+  else p = car(args);
+  if (s7_is_closure(p) || is_macro(p) || is_promise(p)) 
+    return(s7_append(sc, 
+		     cons(sc, 
+			  sc->LAMBDA, 
+			  cons(sc,
+			       car(car(p)),
+			       sc->NIL)),
+		     cdr(car(p))));
   return(sc->NIL);
 }
 
@@ -8361,7 +8384,7 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
   s7_pointer catcher;
   catcher = sc->F;
 
-#if S7_DEBUGGING && 0
+#if S7_DEBUGGING
   g_stacktrace(sc, sc->NIL);
 #endif
 
@@ -10118,6 +10141,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "symbol?",             g_is_symbol,           1, 0, false, H_is_symbol);
   s7_define_function(sc, "symbol->string",      g_symbol_to_string,    1, 0, false, H_symbol_to_string);
   s7_define_function(sc, "string->symbol",      g_string_to_symbol,    1, 0, false, H_string_to_symbol);
+  s7_define_function(sc, "symbol->value",       g_symbol_to_value,     1, 0, false, H_symbol_to_value);
 
   s7_define_function(sc, "global-environment",  g_global_environment,  0, 0, false, H_global_environment);
   s7_define_function(sc, "current-environment", g_current_environment, 0, 0, false, H_current_environment);

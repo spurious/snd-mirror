@@ -1,8 +1,8 @@
 #ifndef _S7_H
 #define _S7_H
 
-#define S7_VERSION "0.7"
-#define S7_DATE "1-Sep-08"
+#define S7_VERSION "0.8"
+#define S7_DATE "8-Sep-08"
 
 #include <stdio.h>
 
@@ -20,7 +20,6 @@
 
 #define s7_Int off_t
 #define s7_Int_d "%lld"
-
 
 
 typedef struct s7_scheme s7_scheme;
@@ -224,3 +223,63 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, const char *name, 
 
 #endif
 
+
+/* -------------------------------------------------------------------------------- */
+
+#if 0
+/* a "repl" using S7: */
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "s7.h"
+
+static s7_pointer our_exit(s7_scheme *sc, s7_pointer args)
+{                                     /* all added functions have this form */
+  exit(1);                            /*   args is a list */
+  return(s7_NIL(sc));                 /* just to be pedantic */
+}
+
+int main(int argc, char **argv)
+{
+  s7_scheme *s7;
+  char buffer[512];
+  char response[1024];
+
+  s7 = s7_init();                     /* initialize the interpreter */
+  
+  s7_define_function(s7, "exit", our_exit, 0, 0, false, "(exit) exits the program");
+
+                                      /* add the function "exit" to the interpreter.
+                                       *   0, 0, false -> no required args,
+				       *                  no optional args,
+				       *                  no "rest" arg
+				       */
+  while (1)                           /* fire up a "repl" */
+    {
+      fprintf(stdout, "\n> ");        /* prompt for input */
+      fgets(buffer, 512, stdin);
+
+      if ((buffer[0] != '\n') || 
+	  (strlen(buffer) > 1))
+	{                            
+	  sprintf(response, "(write %s)", buffer);
+	  s7_eval_c_string(s7, response); /* evaluate input and write the result */
+	}
+    }
+}
+
+/* make mus-config.h (it can be empty), then
+ *
+ *   gcc -c s7.c -I.
+ *   gcc -o doc7 doc7.c s7.o -lm -I.
+ *
+ * run it:
+ *
+ *    > (+ 1 2)
+ *    3
+ *    > (exit)
+ */
+
+#endif

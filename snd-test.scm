@@ -16772,6 +16772,7 @@ EDITS: 2
     
     (log-mem clmtest)
     (if (odd? clmtest) (set! (run-safety) 1) (set! (run-safety) 0))
+
     (numerical-reality-checks)
     (if (mus-generator? 321) (snd-display ";123 is a gen?"))
     (if (mus-generator? (list 321)) (snd-display ";(123) is a gen?"))
@@ -23113,7 +23114,6 @@ EDITS: 2
       (if (not (vequal outv (vct 0.000 0.100 0.200 0.300 0.400 0.500 0.600 0.700 0.800 0.900)))
 	  (snd-display ";run outa func vct: ~A" outv)))
     
-    
     (let ((outv (make-sound-data 4 10)))
       (with-sound (:channels 4)
 		  (do ((i 0 (1+ i)))
@@ -23736,7 +23736,7 @@ EDITS: 2
       (if (or (< maxp 11.0)
 	      (> minp -11.0))
 	  (snd-display ";mus-random (12): ~A ~A" minp maxp)))
-    
+
     (let ((v (lambda (n) ; chi^2 or mus-random
 	       (let ((hits (make-vector 10 0)))
 		 (do ((i 0 (1+ i )))
@@ -23779,43 +23779,44 @@ EDITS: 2
 	(if (< vr 4.0)
 	    (snd-display ";rand not so random? ~A (chi)" vr))))
     
-    (if (defined? 'sort)
-    (let ((v2 (lambda (n) ; Kolmogorov-Smirnov
-		(let ((vals (make-vector n 0.0))
-		      (sn (sqrt n)))
-		  (do ((i 1 (1+ i)))
-		      ((= i n))
-		    (vector-set! vals i (+ 0.5 (mus-random 0.5))))
-		  (set! vals (sort vals <))
-		  (let ((K+ 0.0)
-			(K- 0.0)
-			(incr (/ 1.0 n))
-			(y 0.0))
-		    (do ((i 1 (1+ i))
-			 (x incr (+ x incr)))
-			((= i n))
-		      (let ((Kp (- x (vector-ref vals i)))
-			    (Km (- (vector-ref vals i) y)))
-			(if (> Kp K+) (set! K+ Kp))
-			(if (> Km K-) (set! K- Km))
-			(set! y x)))
-		    (list (* sn K+) (* sn K-)
-			  (- .07089 (/ 0.15 sn)) 
-			  (- .1601 (/ .014 sn))
-			  (- .3793 (/ 0.15 sn))
-			  (- .5887 (/ 0.15 sn))))))))
-      
-      ;;:(v2 1000)
-      ;;(0.419489806081307 0.536508579184211 0.0661465835097474 0.159657281127576 0.374556583509747 0.583956583509747)
-      ;; if < .2 complain?
-      
-      (let* ((vr (v2 1000))
-	     (kp (car vr))
-	     (km (cadr vr))
-	     (k (list-ref vr 3)))
-	(if (or (< kp k)
-		(< km k))
-	    (snd-display ";mus-random not random? ~A (KS)" vr)))))
+    (if (and (defined? 'sort)
+	     (not (provided? 'snd-s7)))  ; this use of sort assumes it can sort vectors
+	(let ((v2 (lambda (n) ; Kolmogorov-Smirnov
+		    (let ((vals (make-vector n 0.0))
+			  (sn (sqrt n)))
+		      (do ((i 1 (1+ i)))
+			  ((= i n))
+			(vector-set! vals i (+ 0.5 (mus-random 0.5))))
+		      (set! vals (sort vals <))
+		      (let ((K+ 0.0)
+			    (K- 0.0)
+			    (incr (/ 1.0 n))
+			    (y 0.0))
+			(do ((i 1 (1+ i))
+			     (x incr (+ x incr)))
+			    ((= i n))
+			  (let ((Kp (- x (vector-ref vals i)))
+				(Km (- (vector-ref vals i) y)))
+			    (if (> Kp K+) (set! K+ Kp))
+			    (if (> Km K-) (set! K- Km))
+			    (set! y x)))
+			(list (* sn K+) (* sn K-)
+			      (- .07089 (/ 0.15 sn)) 
+			      (- .1601 (/ .014 sn))
+			      (- .3793 (/ 0.15 sn))
+			      (- .5887 (/ 0.15 sn))))))))
+	  
+	  ;;:(v2 1000)
+	  ;;(0.419489806081307 0.536508579184211 0.0661465835097474 0.159657281127576 0.374556583509747 0.583956583509747)
+	  ;; if < .2 complain?
+	  
+	  (let* ((vr (v2 1000))
+		 (kp (car vr))
+		 (km (cadr vr))
+		 (k (list-ref vr 3)))
+	    (if (or (< kp k)
+		    (< km k))
+		(snd-display ";mus-random not random? ~A (KS)" vr)))))
     
     (let ((data (make-vct 65536)))
       (do ((i 0 (1+ i)))

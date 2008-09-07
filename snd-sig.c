@@ -3678,6 +3678,9 @@ the current sample, the vct returned by 'init-func', and the current read direct
 
   if (XEN_PROCEDURE_P(init_func))
     {
+
+      /* fprintf(stderr, "init: %s\n", XEN_AS_STRING(XEN_CAR(XEN_PROCEDURE_SOURCE(init_func)))); */
+
       if ((!(XEN_REQUIRED_ARGS_OK(init_func, 2))) &&
 	  (!(XEN_REQUIRED_ARGS_OK(init_func, 3))))
 	XEN_BAD_ARITY_ERROR(S_ptree_channel, 8, init_func, "init-func must take 2 or 3 args");

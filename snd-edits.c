@@ -2640,6 +2640,11 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool 
 		  if (XEN_PROCEDURE_P(code))
 		    fprintf(outp, ", init: %s", XEN_AS_STRING(XEN_PROCEDURE_SOURCE(code)));
 #endif
+#if HAVE_S7
+		  code = cp->ptree_inits[FRAGMENT_PTREE_INDEX(ed, j, 0)];
+		  if (XEN_PROCEDURE_P(code))
+		    fprintf(outp, ", init: %s", XEN_AS_STRING(XEN_PROCEDURE_SOURCE(code))); /* ptree_code = car */
+#endif
 		}
 	    }
 	  if (is_mix_op(typ))
@@ -3291,14 +3296,18 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 		    fprintf(fd, " #f");
 		}
 #endif
-#if HAVE_GUILE
+#if HAVE_GUILE || HAVE_S7
 	      if (ed->edit_type == PTREE_EDIT)
 		{
 		  XEN code;
 		  fprintf(fd, " %s", (ed->ptree_env_too) ? "#t" : "#f");
 		  code = cp->ptree_inits[ed->ptree_location];
 		  if (XEN_PROCEDURE_P(code))
+#if HAVE_GUILE
 		    fprintf(fd, " %s", XEN_AS_STRING(XEN_PROCEDURE_SOURCE(code)));
+#else
+		    fprintf(fd, " %s", XEN_AS_STRING(XEN_CAR(XEN_PROCEDURE_SOURCE(code))));
+#endif
 		}
 #endif
 	      if (nfile) 

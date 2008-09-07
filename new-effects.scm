@@ -464,8 +464,8 @@
 (define* (effects-zecho-1 scaler secs frq amp input-samps-1 :optional beg dur snd chn)
   "(effects-zecho-1 scaler secs frq amp input-samps-1 :optional beg dur snd chn) is used by the effects dialog to tie into edit-list->function"
   (let* ((os (make-oscil frq))
-	 (len (round (inexact->exact (* secs (srate snd)))))
-	 (del (make-delay len :max-size (+ len amp 1)))
+	 (len (inexact->exact (round (* secs (srate snd)))))
+	 (del (make-delay len :max-size (inexact->exact (round (+ len amp 1)))))
 	 (samp 0)
 	 (input-samps (or input-samps-1 dur (frames snd chn))))
     (map-channel (lambda (inval)
@@ -669,7 +669,7 @@
       (lambda (scaler secs frq amp input-samps)
 	(let* ((os (make-oscil frq))
 	       (len (round (inexact->exact (* secs (srate)))))
-	       (del (make-delay len :max-size (+ len amp 1)))
+	       (del (make-delay len :max-size (inexact->exact (round (+ len amp 1)))))
 	       (samp 0))
 	  (lambda (inval)
 	    (set! samp (1+ samp))
@@ -2330,7 +2330,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
   "(effects-flange amount speed time :optional beg dur snd chn) is used by the effects dialog to tie into edit-list->function"
   (let* ((ri (make-rand-interp :frequency speed :amplitude amount))
 	 (len (inexact->exact (round (* time (srate snd)))))
-	 (del (make-delay len :max-size (+ len amount 1))))
+	 (del (make-delay len :max-size (inexact->exact (round (+ len amount 1))))))
     (map-channel (lambda (inval)
 		   (* .75 (+ inval
 			     (delay del
@@ -2812,7 +2812,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 		      (lambda (ignored)
 			(let* ((ri (make-rand-interp :frequency flange-speed :amplitude flange-amount))
 			       (len (inexact->exact (round (* flange-time (srate)))))
-			       (del (make-delay len :max-size (+ len flange-amount 1))))
+			       (del (make-delay len :max-size (inexact->exact (round (+ len flange-amount 1))))))
 			  (lambda (inval)
 			    (* .75 (+ inval
 				      (delay del

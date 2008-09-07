@@ -9246,7 +9246,6 @@ static xen_value *splice_in_function_body(ptree *prog, XEN proc, xen_value **arg
 {
   XEN func_form;
 #if HAVE_S7
-  /* TODO: what about the locals? */
   func_form = XEN_CAR(XEN_PROCEDURE_SOURCE(proc));
 #else
   func_form = XEN_PROCEDURE_SOURCE(proc);
@@ -10146,7 +10145,12 @@ static xen_value *out_any_2(ptree *prog, xen_value **args, int num_args)
 static xen_value *out_any_function_body(ptree *prog, XEN proc, xen_value **args, int num_args, const char *funcname)
 {
   XEN func_form;
+
+#if HAVE_S7
+  func_form = XEN_CAR(XEN_PROCEDURE_SOURCE(proc));
+#else
   func_form = XEN_PROCEDURE_SOURCE(proc);
+#endif
 
   if ((XEN_LIST_P(func_form)) &&
       (XEN_SYMBOL_P(XEN_CAR(func_form))) &&
