@@ -149,7 +149,8 @@ returning you to the true top-level."
 ;;; this goes anywhere in the instrument (and any number of times), 
 ;;;    but not in the run macro body (run doesn't (yet?) handle code this complex)
 
-(if (provided? 'snd-gauche)
+(if (or (provided? 'snd-gauche)
+	(provided? 'snd-s7))
     (define (make-stack . args) #f))
 
 (defmacro ws-interrupt? ()

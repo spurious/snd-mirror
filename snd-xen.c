@@ -3088,6 +3088,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(define (read-enable . args) #f)");
   XEN_EVAL_C_STRING("(define (debug-set! . args) #f)");
   XEN_EVAL_C_STRING("(define (make-soft-port . args) #f)");
+  XEN_EVAL_C_STRING("(define (current-module) (current-environment))");
 
   XEN_EVAL_C_STRING("(define load-from-path load)");
 

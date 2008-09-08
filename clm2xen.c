@@ -1428,6 +1428,12 @@ static XEN call_set_method(XEN gen, XEN value, const char *method_name)
 			  gen, value,
 			  method_name));
 #endif
+#if HAVE_S7
+      if (s7_is_procedure_with_setter(XEN_CADR(pair)))
+	return(XEN_CALL_2(s7_procedure_with_setter_setter(XEN_CADR(pair)),
+			  gen, value,
+			  method_name));	  
+#endif
       if (XEN_LIST_LENGTH(pair) == 3)
 	return(XEN_CALL_2(XEN_CADDR(pair),
 			  gen, value,
@@ -1455,6 +1461,12 @@ static XEN call_set_method_2(XEN gen, XEN arg, XEN value, const char *method_nam
 	return(XEN_CALL_3(SCM_SETTER(XEN_CADR(pair)),
 			  gen, arg, value,
 			  method_name));
+#endif
+#if HAVE_S7
+      if (s7_is_procedure_with_setter(XEN_CADR(pair)))
+	return(XEN_CALL_3(s7_procedure_with_setter_setter(XEN_CADR(pair)),
+			  gen, arg, value,
+			  method_name));	  
 #endif
       if (XEN_LIST_LENGTH(pair) == 3)
 	return(XEN_CALL_3(XEN_CADDR(pair),

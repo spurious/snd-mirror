@@ -9308,6 +9308,11 @@ static xen_value *splice_in_method(ptree *prog, xen_value **args, int num_args, 
 	      else result = splice_in_function_body(prog, XEN_CADDR(pair), args, num_args, NULL);
 	    }
 #endif
+#if HAVE_s7
+	      if (XEN_TRUE_P(XEN_PROCEDURE_WITH_SETTER_P(XEN_CADR(pair))))
+		result = splice_in_function_body(prog, s7_procedure_with_setter_setter(XEN_CADR(pair)), args, num_args, NULL);
+	      else result = splice_in_function_body(prog, XEN_CADDR(pair), args, num_args, NULL);
+#endif
 	}
     }
   snd_unprotect_at(methods_loc);

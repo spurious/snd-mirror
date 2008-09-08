@@ -216,6 +216,7 @@ s7_pointer s7_make_procedure_with_setter(s7_scheme *sc,
 					 int set_req_args, int set_opt_args,
 					 const char *documentation);
 bool s7_is_procedure_with_setter(s7_pointer obj);
+s7_pointer s7_procedure_with_setter_setter(s7_pointer obj);
 
 #define s7_make_hash_table(Sc, Size) s7_make_vector(Sc, Size)
 s7_pointer s7_hash_table_ref(s7_scheme *sc, s7_pointer table, const char *name);
@@ -224,10 +225,12 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, const char *name, 
 #endif
 
 
-/* -------------------------------------------------------------------------------- */
+/* -------------------------------- examples --------------------------------
+ *
+ * a read-eval-print loop using S7: 
+ */
 
 #if 0
-/* a "repl" using S7: */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -236,8 +239,10 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, const char *name, 
 #include "s7.h"
 
 static s7_pointer our_exit(s7_scheme *sc, s7_pointer args)
-{                                     /* all added functions have this form */
-  exit(1);                            /*   args is a list */
+{                                     /* all added functions have this form, args is a list, 
+				       *   s7_car(args) is the 1st arg, etc 
+				       */
+  exit(1);
   return(s7_NIL(sc));                 /* just to be pedantic */
 }
 
@@ -279,7 +284,13 @@ int main(int argc, char **argv)
  *
  *    > (+ 1 2)
  *    3
+ *    > (define (add1 x) (+ 1 x))
+ *    add1
+ *    > (add1 2)
+ *    3
  *    > (exit)
  */
 
 #endif
+
+
