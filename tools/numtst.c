@@ -29,8 +29,6 @@
  */
 
 /* TODO: finish expt, merge in the r6rs changes (did I finish atan2?)
- * PERHAPS: inexact<->exact
- * PERHAPS: borderline and bizarre stuff
  */
 
 #define _FILE_OFFSET_BITS 64

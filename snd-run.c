@@ -9284,6 +9284,8 @@ static xen_value *splice_in_method(ptree *prog, xen_value **args, int num_args, 
   char *method_str;
   xen_value *result = NULL;
 
+  /* fprintf(stderr, "splice in method %s (%s)\n", method_name, (use_getter == USE_GET_METHOD) ? "getter" : "setter"); */
+  
   method_str = mus_format("(%s-methods)", type_name(args[1]->type));
   methods = XEN_EVAL_C_STRING(method_str);
   methods_loc = snd_protect(methods);
@@ -9295,23 +9297,29 @@ static xen_value *splice_in_method(ptree *prog, xen_value **args, int num_args, 
 		       methods);
       if (XEN_LIST_P(pair))
 	{
+#if HAVE_GUILE
 	  if (use_getter == USE_GET_METHOD)
 	    result = splice_in_function_body(prog, XEN_CADR(pair), args, num_args, NULL);
-
-	  /* TODO: s7 can also splice in here */
-#if HAVE_GUILE
 	  else
 	    {
-	      /* fprintf(stderr,"use setter (%d): %s\n", XEN_FALSE_P(XEN_PROCEDURE_WITH_SETTER_P(XEN_CADR(pair))), XEN_AS_STRING(pair)); */
 	      if (XEN_TRUE_P(XEN_PROCEDURE_WITH_SETTER_P(XEN_CADR(pair))))
 		result = splice_in_function_body(prog, SCM_SETTER(XEN_CADR(pair)), args, num_args, NULL);
 	      else result = splice_in_function_body(prog, XEN_CADDR(pair), args, num_args, NULL);
 	    }
 #endif
-#if HAVE_s7
-	      if (XEN_TRUE_P(XEN_PROCEDURE_WITH_SETTER_P(XEN_CADR(pair))))
+#if HAVE_S7
+	  if (use_getter == USE_GET_METHOD)
+	    {
+	      if (XEN_PROCEDURE_WITH_SETTER_P(XEN_CADR(pair)))
+		result = splice_in_function_body(prog, s7_procedure_with_setter_getter(XEN_CADR(pair)), args, num_args, NULL);
+	      else result = splice_in_function_body(prog, XEN_CADR(pair), args, num_args, NULL);
+	    }
+	  else
+	    {
+	      if (XEN_PROCEDURE_WITH_SETTER_P(XEN_CADR(pair)))
 		result = splice_in_function_body(prog, s7_procedure_with_setter_setter(XEN_CADR(pair)), args, num_args, NULL);
 	      else result = splice_in_function_body(prog, XEN_CADDR(pair), args, num_args, NULL);
+	    }
 #endif
 	}
     }

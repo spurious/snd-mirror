@@ -48,14 +48,10 @@
  *   help for vars (objects)
  *   figure out how add syntax-rules, (C-level) for-each, map, do, also call-with-values and values
  *   the rest of the call-with funcs (call-with-input-string is done)
- *   can any part of quasiquote be optimized?
  *   get rid of the config header somehow! -- ideally we'd get rid of all switches like HAVE_STDBOOL_H
  *   doc in s7.h
  *   gc-verbose and tracing should be variables, not functions [need direct value access -- can this be trusted if global?]
  *   gc-off as variable?
- *   finish snd-test.scm; known bugs:
- *       copy-stack for continuation sometimes encounters a non-S7 pointer
- *       error reporting needs to gives file-name/line-number, and stacktrace needs a lot of work
  *   
  * define-type (make-type in ext)
  * (define-type "name"
@@ -91,6 +87,7 @@
  *    error handlers
  *    sundry leftovers
  *    eval
+ *    quasiquote
  *    s7 init
  */
 
@@ -201,22 +198,6 @@ typedef enum {OP_TOP_LEVEL, OP_T1LVL, OP_READ_INTERNAL, OP_VALUEPRINT, OP_EVAL, 
 } opcode_t;
 
 
-static const char *opcode_names[OP_MAX_DEFINED] = {
-              "op_top_level", "op_t1lvl", "op_read_internal", "op_valueprint", "op_eval", "op_real_eval", 
-	      "op_e0args", "op_e1args", "op_apply", "op_real_apply", "op_domacro", "op_lambda", "op_quote", 
-	      "op_def0", "op_def1", "op_begin", "op_if0", "op_if1", "op_set0", "op_set1",
-	      "op_let0", "op_let1", "op_let2", "op_let0ast", "op_let1ast", "op_let2ast", 
-	      "op_let0rec", "op_let1rec", "op_let2rec", "op_cond0", "op_cond1", "op_delay", "op_and0", "op_and1", 
-	      "op_or0", "op_or1", "op_c0stream", "op_c1stream", "op_defmacro", "op_macro0", "op_macro1", "op_define_macro",
-	      "op_case0", "op_case1", "op_case2", "op_read_expression", "op_rdlist", "op_rddot", "op_rdquote", 
-	      "op_rdqquote", "op_rdqquotevec", "op_rdunquote", "op_rduqtsp", "op_rdvec", "op_p0list", "op_p1list", 
-	      "op_pvecfrom", "op_save_forced", "op_read_return_expression", 
-	      "op_read_pop_and_return_expression", "op_load_return_if_eof", "op_load_close_and_pop_if_eof", 
-	      "op_eval_string", "op_eval_string_done", "op_quit", "op_catch", "op_dynamic_wind"
-};
-
-
-
 /* num, for generic arithmetic */
 typedef struct num {
   char type;
@@ -250,6 +231,7 @@ typedef struct rport {
       FILE *file;
       int line_number;
       char *filename;
+      int file_number;
     } stdio;
     struct {
       char *value;
@@ -375,6 +357,7 @@ struct s7_scheme {
   s7_pointer UNQUOTE_SPLICING;        /* symbol unquote-splicing */
   s7_pointer FEED_TO;                 /* => */
   s7_pointer SET_OBJECT;              /* object set method */
+  s7_pointer APPLY, VECTOR, CONS, APPEND, CDR, VECTOR_FUNCTION;
   
   s7_pointer input_port;              /* current-input-port (nil = stdin) */
   s7_pointer input_port_stack;        /*   input port stack (load and read internally) */
@@ -512,6 +495,7 @@ static const char *type_names[T_LAST_TYPE + 1] = {
 #define is_string_port(p)             (!((p)->object.port->is_file))
 #define is_file_port(p)               (p)->object.port->is_file
 #define port_line_number(p)           (p)->object.port->rep.stdio.line_number
+#define port_file_number(p)           (p)->object.port->rep.stdio.file_number
 #define port_filename(p)              (p)->object.port->rep.stdio.filename
 #define port_file(p)                  (p)->object.port->rep.stdio.file
 #define port_is_closed(p)             (p)->object.port->is_closed
@@ -692,12 +676,6 @@ static s7_pointer g_not(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer s7_not(s7_scheme *sc, s7_pointer x)
-{
-  return((x == sc->F) ? sc->T : sc->F);
-}
-
-
 static s7_pointer g_is_boolean(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_boolean "(boolean? obj) returns #t if obj is #f or #t"
@@ -825,7 +803,6 @@ static void finalize_s7_cell(s7_scheme *sc, s7_pointer a)
 	  break;
 
 	case T_CATCH:
-	  /* fprintf(stderr, "free %p\n", a->object.catcher); */
 	  FREE(a->object.catcher);
 	  break;
 
@@ -1012,7 +989,6 @@ static int gc(s7_scheme *sc, const char *function, int line)
 	    }
 	}
     }
-  
   if ((sc->gc_verbose) &&
       (sc->output_port == sc->NIL))
     fprintf(stderr, "done: %d heap were recovered, total heap: %d\n", freed_heap, sc->heap_size);
@@ -1203,16 +1179,88 @@ static void push_stack(s7_scheme *sc, opcode_t op, s7_pointer args, s7_pointer c
 
 
 /* PERHAPS: scheme output? */
+static char *no_outer_parens(char *str)
+{
+  int i, len, stop = 0;
+  len = safe_strlen(str);
+  if (len > 1)
+    {
+      for (i = 0; i < len; i++)
+	if (str[i] == '(')
+	  {
+	    stop = i;
+	    str[i] = ' ';
+	    break;
+	  }
+    }
+  if (i < len)
+    for (i = len - 1; i > stop; i--)
+      if (str[i] == ')')
+	{
+	  str[i] = ' ';
+	  break;
+	}
+  return(str);
+}
+
+
+/* debugging (error reporting) info */
+
+#define INITIAL_FILE_NAMES_SIZE 8
+static char **file_names = NULL;
+static int file_names_size = 0;
+static int file_names_top = -1;
+
+#define remembered_line_number(Line) (Line & 0xfffff)
+#define remembered_file_name(Line)   file_names[Line >> 20]
+/* this gives room for 4000 files each of 1000000 lines */
+
+static s7_pointer remember_line(s7_scheme *sc, s7_pointer obj)
+{
+  if ((sc->input_port != sc->NIL) && 
+      (is_file_port(sc->input_port)))
+    obj->object.cons.line = port_line_number(sc->input_port) | (port_file_number(sc->input_port) << 20);
+  return(obj);
+}
+
+
+static int remember_file_name(const char *file)
+{
+  file_names_top++;
+  if (file_names_top >= file_names_size)
+    {
+      if (file_names_size == 0)
+	{
+	  file_names_size = INITIAL_FILE_NAMES_SIZE;
+	  file_names = (char **)CALLOC(file_names_size, sizeof(char *));
+	}
+      else
+	{
+	  int i, old_size;
+	  old_size = file_names_size;
+	  file_names_size *= 2;
+	  file_names = (char **)REALLOC(file_names, file_names_size * sizeof(char *));
+	  for (i = old_size; i < file_names_size; i++)
+	    file_names[i] = NULL;
+	}
+    }
+  file_names[file_names_top] = copy_string(file);
+  return(file_names_top);
+}
+
 
 static void print_stack_entry(s7_scheme *sc, opcode_t op, s7_pointer code, s7_pointer args)
 {
   char *str1 = NULL, *str2 = NULL;
+  int line = 0;
   if (op != OP_APPLY)
     {
-      char *temp;
-      temp = copy_string(opcode_names[op]);
-      str1 = s7_object_to_c_string(sc, args);
+      str1 = no_outer_parens(s7_object_to_c_string(sc, args));
       str2 = s7_object_to_c_string(sc, code);
+      line = pair_line_number(code);
+      if ((line == 0) &&
+	  (s7_is_pair(code)))
+	line = pair_line_number(car(code));
       if (safe_strlen(str1) > 80)
 	{
 	  str1[72] = '.'; str1[73] = '.'; str1[74] = '.';
@@ -1223,18 +1271,29 @@ static void print_stack_entry(s7_scheme *sc, opcode_t op, s7_pointer code, s7_po
 	  str2[72] = '.'; str2[73] = '.'; str2[74] = '.';
 	  str2[75] = '\0';
 	}
-      fprintf(stderr, "\n%s: args: [%p] %s, code: %s", string_downcase(temp), args, str1, str2);
-      FREE(temp);
+      if (line != 0)
+	fprintf(stderr, "\n(%s %s) ; %s[%d]", str2, str1, remembered_file_name(line), remembered_line_number(line));
+      else fprintf(stderr, "\n(%s %s)", str2, str1);
     }
   else
     {
       if (s7_is_function(code))
-	fprintf(stderr, "\n(%s %s)", 
-		function_name(code), 
-		str1 = s7_object_to_c_string(sc, args));
-      else fprintf(stderr, "\n(%s %s)", 
-		   str1 = s7_object_to_c_string(sc, code), 
-		   str2 = s7_object_to_c_string(sc, args));
+	{
+	  if (line != 0)
+	    fprintf(stderr, "\n(%s %s) ; %s[%d]", function_name(code), str1 = s7_object_to_c_string(sc, args), remembered_file_name(line), remembered_line_number(line));
+	  else fprintf(stderr, "\n(%s %s)", function_name(code), str1 = s7_object_to_c_string(sc, args));
+	}
+      else 
+	{
+	  if (line != 0)
+	    fprintf(stderr, "\n(%s %s) ; %s[%d]", 
+		    str1 = s7_object_to_c_string(sc, code), 
+		    str2 = s7_object_to_c_string(sc, args),
+		    remembered_file_name(line), remembered_line_number(line));
+	  else fprintf(stderr, "\n(%s %s)", 
+		       str1 = s7_object_to_c_string(sc, code), 
+		       str2 = s7_object_to_c_string(sc, args));
+	}
     }
   if (str1) FREE(str1);
   if (str2) FREE(str2);
@@ -1692,9 +1751,6 @@ static s7_pointer s7_search_environment(s7_scheme *sc, s7_pointer env, bool (*se
 { 
   int i, len;
   s7_pointer x, y, vec; 
-
-  /* fprintf(stderr, "search: %s\n", s7_object_to_c_string(sc, env)); */
-
   for (x = env; (x != sc->NIL) && (!s7_is_vector(car(x))); x = cdr(x)) 
     for (y = car(x); y != sc->NIL; y = cdr(y)) 
       if (searcher(sc, car(y), data))
@@ -2353,14 +2409,6 @@ static num make_ratio(s7_scheme *sc, s7_Int numer, s7_Int denom)
 {
   num ret;
   s7_Int divisor;
-
-#if S7_DEBUGGING
-  if (denom == 0)
-    {
-      fprintf(stderr, "make ratio %lld %lld\n", numer, denom);
-      abort();
-    }
-#endif
 
   if (denom < 0)
     {
@@ -4544,7 +4592,6 @@ static s7_pointer g_char_cmp(s7_scheme *sc, s7_pointer args, int val, const char
 {
   int i;
   s7_pointer x;
-  bool happy = true;
   char last_chr;
 
   if (!s7_is_character(car(args)))
@@ -4555,13 +4602,35 @@ static s7_pointer g_char_cmp(s7_scheme *sc, s7_pointer args, int val, const char
     {
       if (!s7_is_character(car(x)))
 	return(s7_wrong_type_arg_error(sc, name, i, car(x), "a character"));
-      if (happy)
-	{
-	  happy = (charcmp(last_chr, character(car(x)), ci) == val);
-	  last_chr = character(car(x));
-	}
+
+      if (charcmp(last_chr, character(car(x)), ci) != val)
+	return(sc->F);
+      last_chr = character(car(x));
     }
-  return(to_s7_bool(sc, happy));
+  return(sc->T);
+}
+
+
+static s7_pointer g_char_cmp_not(s7_scheme *sc, s7_pointer args, int val, const char *name, bool ci)
+{
+  int i;
+  s7_pointer x;
+  char last_chr;
+
+  if (!s7_is_character(car(args)))
+    return(s7_wrong_type_arg_error(sc, name, 1, car(args), "a character"));
+
+  last_chr = character(car(args));
+  for (i = 2, x = cdr(args); x != sc->NIL; i++, x = cdr(x))
+    {
+      if (!s7_is_character(car(x)))
+	return(s7_wrong_type_arg_error(sc, name, i, car(x), "a character"));
+
+      if (charcmp(last_chr, character(car(x)), ci) == val)
+	return(sc->F);
+      last_chr = character(car(x));
+    }
+  return(sc->T);
 }
 
 
@@ -4589,14 +4658,14 @@ static s7_pointer g_chars_are_greater(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_chars_are_geq(s7_scheme *sc, s7_pointer args)
 {
   #define H_chars_are_geq "(char>=? chr...) returns #t if all the character arguments are equal or decreasing"
-  return(s7_not(sc, g_char_cmp(sc, args, -1, "char>=?", false)));
+  return(g_char_cmp_not(sc, args, -1, "char>=?", false));
 }	
 
 
 static s7_pointer g_chars_are_leq(s7_scheme *sc, s7_pointer args)
 {
   #define H_chars_are_leq "(char<=? chr...) returns #t if all the character arguments are equal or increasing"
-  return(s7_not(sc, g_char_cmp(sc, args, 1, "char<=?", false)));
+  return(g_char_cmp_not(sc, args, 1, "char<=?", false));
 }
 	
 
@@ -4624,14 +4693,14 @@ static s7_pointer g_chars_are_ci_greater(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_chars_are_ci_geq(s7_scheme *sc, s7_pointer args)
 {
   #define H_chars_are_ci_geq "(char-ci>=? chr...) returns #t if all the character arguments are equal or decreasing, ignoring case"
-  return(s7_not(sc, g_char_cmp(sc, args, -1, "char-ci>=?", true)));
+  return(g_char_cmp_not(sc, args, -1, "char-ci>=?", true));
 }
 	
 
 static s7_pointer g_chars_are_ci_leq(s7_scheme *sc, s7_pointer args)
 {
   #define H_chars_are_ci_leq "(char-ci<=? chr...) returns #t if all the character arguments are equal or increasing, ignoring case"
-  return(s7_not(sc, g_char_cmp(sc, args, 1, "char-ci<=?", true)));
+  return(g_char_cmp_not(sc, args, 1, "char-ci<=?", true));
 }
 
 	
@@ -4909,7 +4978,6 @@ static s7_pointer g_string_cmp(s7_scheme *sc, s7_pointer args, int val, const ch
 {
   int i;
   s7_pointer x;
-  bool happy = true;
   const char *last_str = NULL;
 
   if (!s7_is_string(car(args)))
@@ -4920,13 +4988,34 @@ static s7_pointer g_string_cmp(s7_scheme *sc, s7_pointer args, int val, const ch
     {
       if (!s7_is_string(car(x)))
 	return(s7_wrong_type_arg_error(sc, name, i, car(x), "a string"));
-      if (happy)
-	{
-	  happy = (safe_strcmp(last_str, string_value(car(x))) == val);
-	  last_str = string_value(car(x));
-	}
+
+      if (safe_strcmp(last_str, string_value(car(x))) != val)
+	return(sc->F);
+      last_str = string_value(car(x));
     }
-  return(to_s7_bool(sc, happy));
+  return(sc->T);
+}
+
+static s7_pointer g_string_cmp_not(s7_scheme *sc, s7_pointer args, int val, const char *name)
+{
+  int i;
+  s7_pointer x;
+  const char *last_str = NULL;
+
+  if (!s7_is_string(car(args)))
+    return(s7_wrong_type_arg_error(sc, name, 1, car(args), "a string"));
+
+  last_str = string_value(car(args));
+  for (i = 2, x = cdr(args); x != sc->NIL; i++, x = cdr(x))
+    {
+      if (!s7_is_string(car(x)))
+	return(s7_wrong_type_arg_error(sc, name, i, car(x), "a string"));
+
+      if (safe_strcmp(last_str, string_value(car(x))) == val)
+	return(sc->F);
+      last_str = string_value(car(x));
+    }
+  return(sc->T);
 }
 
 
@@ -4954,14 +5043,14 @@ static s7_pointer g_strings_are_greater(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_strings_are_geq(s7_scheme *sc, s7_pointer args)
 {
   #define H_strings_are_geq "(string>=? str...) returns #t if all the string arguments are equal or decreasing"
-  return(s7_not(sc, g_string_cmp(sc, args, -1, "string>=?")));
+  return(g_string_cmp_not(sc, args, -1, "string>=?"));
 }	
 
 
 static s7_pointer g_strings_are_leq(s7_scheme *sc, s7_pointer args)
 {
   #define H_strings_are_leq "(string<=? str...) returns #t if all the string arguments are equal or increasing"
-  return(s7_not(sc, g_string_cmp(sc, args, 1, "string<=?")));
+  return(g_string_cmp_not(sc, args, 1, "string<=?"));
 }	
 
 
@@ -5003,7 +5092,6 @@ static s7_pointer g_string_ci_cmp(s7_scheme *sc, s7_pointer args, int val, const
 {
   int i;
   s7_pointer x;
-  bool happy = true;
   const char *last_str = NULL;
 
   if (!s7_is_string(car(args)))
@@ -5014,13 +5102,33 @@ static s7_pointer g_string_ci_cmp(s7_scheme *sc, s7_pointer args, int val, const
     {
       if (!s7_is_string(car(x)))
 	return(s7_wrong_type_arg_error(sc, name, i, car(x), "a string"));
-      if (happy)
-	{
-	  happy = (safe_strcasecmp(last_str, string_value(car(x))) == val);
-	  last_str = string_value(car(x));
-	}
+      if (safe_strcasecmp(last_str, string_value(car(x))) != val)
+	return(sc->F);
+      last_str = string_value(car(x));
     }
-  return(to_s7_bool(sc, happy));
+  return(sc->T);
+}
+
+
+static s7_pointer g_string_ci_cmp_not(s7_scheme *sc, s7_pointer args, int val, const char *name)
+{
+  int i;
+  s7_pointer x;
+  const char *last_str = NULL;
+
+  if (!s7_is_string(car(args)))
+    return(s7_wrong_type_arg_error(sc, name, 1, car(args), "a string"));
+
+  last_str = string_value(car(args));
+  for (i = 2, x = cdr(args); x != sc->NIL; i++, x = cdr(x))
+    {
+      if (!s7_is_string(car(x)))
+	return(s7_wrong_type_arg_error(sc, name, i, car(x), "a string"));
+      if (safe_strcasecmp(last_str, string_value(car(x))) == val)
+	return(sc->F);
+      last_str = string_value(car(x));
+    }
+  return(sc->T);
 }
 
 
@@ -5048,14 +5156,14 @@ static s7_pointer g_strings_are_ci_greater(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_strings_are_ci_geq(s7_scheme *sc, s7_pointer args)
 {
   #define H_strings_are_ci_geq "(string-ci>=? str...) returns #t if all the string arguments are equal or decreasing, ignoring case"
-  return(s7_not(sc, g_string_ci_cmp(sc, args, -1, "string-ci>=?")));
+  return(g_string_ci_cmp_not(sc, args, -1, "string-ci>=?"));
 }	
 
 
 static s7_pointer g_strings_are_ci_leq(s7_scheme *sc, s7_pointer args)
 {
   #define H_strings_are_ci_leq "(string-ci<=? str...) returns #t if all the string arguments are equal or increasing, ignoring case"
-  return(s7_not(sc, g_string_ci_cmp(sc, args, 1, "string-ci<=?")));
+  return(g_string_ci_cmp_not(sc, args, 1, "string-ci<=?"));
 }	
 
 
@@ -5892,7 +6000,6 @@ static int token_1(s7_scheme *sc, s7_pointer pt, const char *func, int line)
   switch (c = inchar(sc, pt)) 
     {
     case EOF:
-      /* fprintf(stderr, "otk %s %d ", func, line); */
       return(TOK_EOF);
 
     case '(':
@@ -5940,7 +6047,7 @@ static int token_1(s7_scheme *sc, s7_pointer pt, const char *func, int line)
       if (c == '!') 
 	{
 	  char last_char;
-	  last_char = c;
+	  last_char = ' ';
 	  while ((c = inchar(sc, pt)) != EOF)
 	    {
 	      if ((c == '#') &&
@@ -5955,7 +6062,7 @@ static int token_1(s7_scheme *sc, s7_pointer pt, const char *func, int line)
       if (c == '|') 
 	{
 	  char last_char;
-	  last_char = c;
+	  last_char = ' ';
 	  while ((c = inchar(sc, pt)) != EOF)
 	    {
 	      if ((c == '#') &&
@@ -6042,8 +6149,6 @@ s7_pointer s7_read(s7_scheme *sc, s7_pointer port)
       if (!sc->longjmp_ok)
 	{
 	  sc->longjmp_ok = true;
-
-	  /* fprintf(stderr, "setjmp read "); */
 	  if (setjmp(sc->goto_start) != 0)
 	    return(sc->value);
 	}
@@ -6123,6 +6228,7 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
 
   port = s7_make_input_file(sc, filename, fp); 
   port_needs_close(port) = true;
+  port_file_number(port) = remember_file_name(filename);
 
   push_input_port(sc, port);
 
@@ -6138,7 +6244,6 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
       if (!sc->longjmp_ok)
 	{
 	  sc->longjmp_ok = true;
-	  /* fprintf(stderr, "setjmp load "); */
 	  if (setjmp(sc->goto_start) != 0)
 	    eval(sc, sc->op);
 	  else eval(sc, OP_READ_INTERNAL);
@@ -6178,17 +6283,18 @@ static s7_pointer g_load(s7_scheme *sc, s7_pointer args)
 
   fname = s7_string(name);
 
-  if (sc->load_verbose)
-    fprintf(stderr, "(load \"%s\")\n", fname);
-
   fp = fopen(fname, "r");
   if (!fp)
     fp = search_load_path(sc, fname);
   if (!fp)
     return(s7_file_error(sc, "open-input-file", "can't open", fname));
 
+  if (sc->load_verbose)
+    fprintf(stderr, "(load \"%s\")\n", fname);
+
   port = s7_make_input_file(sc, fname, fp);
   port_needs_close(port) = true;
+  port_file_number(port) = remember_file_name(fname);
 
   push_input_port(sc, port);
   push_stack(sc, OP_LOAD_CLOSE_AND_POP_IF_EOF, sc->args, sc->code);
@@ -6245,11 +6351,20 @@ static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
 }
 
 
+#if S7_DEBUGGING && 0
+static s7_Int conses = 0; 
+#endif
+
+
 s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
 {
   bool old_longjmp;
   s7_pointer port;
   /* this can be called recursively via s7_call */
+
+#if S7_DEBUGGING && 0
+  conses = 0;
+#endif
 
   /* fprintf(stderr, "eval c string: %s with top: %d\n", str, sc->stack_top); */
 
@@ -6266,7 +6381,6 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
   if (!sc->longjmp_ok)
     {
       sc->longjmp_ok = true;
-      /* fprintf(stderr, "setjmp eval "); */
       if (setjmp(sc->goto_start) != 0)
 	eval(sc, sc->op);
       else eval(sc, OP_READ_INTERNAL);
@@ -6275,6 +6389,12 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
   sc->longjmp_ok = old_longjmp;
   pop_input_port(sc);
   s7_close_input_port(sc, port);
+
+#if S7_DEBUGGING && 0
+  fprintf(stderr, "%s: %lld conses\n", str, conses);
+  conses = 0;
+#endif
+
   return(sc->value);
 }
 
@@ -6369,8 +6489,6 @@ static void write_string(s7_scheme *sc, const char *s, s7_pointer pt)
 	  abort();
 	}
 #endif
-
-      /* fprintf(stderr, "%s: output: [%s]\n", describe_port(sc, pt), s); */
 
       if (is_file_port(pt))
 	fputs(s, port_file(pt));
@@ -6676,9 +6794,6 @@ static char *s7_list_to_c_string(s7_scheme *sc, s7_pointer lst)
     if (elements[i])
       FREE(elements[i]);
   FREE(elements);
-
-  /* fprintf(stderr, "list->c_string (%d %d %d): [%s]\n", len, bufsize, safe_strlen(buf), buf); */
-
   return(buf);
 }
 
@@ -6798,9 +6913,6 @@ static void write_or_display(s7_scheme *sc, s7_pointer obj, s7_pointer port, boo
 {
   char *val;
   val = s7_object_to_c_string_1(sc, obj, use_write);
-  
-  /* fprintf(stderr, "%s write: [%s]\n", describe_port(sc, port), val); */
-
   write_string(sc, val, port);
   if (val) FREE(val);
 }
@@ -6896,13 +7008,14 @@ static s7_pointer g_write_byte(s7_scheme *sc, s7_pointer args)
 
 /* -------------------------------- lists -------------------------------- */
 
-/* static s7_Int conses = 0; */
-
 static s7_pointer cons_1(s7_scheme *sc, s7_pointer a, s7_pointer b, bool immutable) 
 {
   s7_pointer x;
 
 #if S7_DEBUGGING
+#if 0
+  conses++;
+#endif
   if (!is_object(a))
     {
       fprintf(stderr, "cons car is bad");
@@ -7572,7 +7685,7 @@ static s7_pointer g_append(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_list_line_number(s7_scheme *sc, s7_pointer args)
 {
-  #define H_list_line_number "(list-line-number lst) returns the line number it thinks lst occurred at"
+  #define H_list_line_number "(list-line-number lst) returns the line number where it thinks lst occurred"
   if (s7_is_pair(car(args)))
     return(s7_make_integer(sc, pair_line_number(car(args))));
   return(sc->F);
@@ -8042,8 +8155,6 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
     {
       int len;
 
-      /* fprintf(stderr, "len %d %s\n", len, s7_object_to_c_string(sc, x)); */
-
       if (s7_is_pair(x))
 	len = s7_list_length(sc, car(x));
       else len = s7_list_length(sc, caar(x));
@@ -8364,6 +8475,14 @@ bool s7_is_procedure_with_setter(s7_pointer obj)
 {
   return((s7_is_object(obj)) &&
 	 (s7_object_type(obj) == pws_tag));
+}
+
+
+s7_pointer s7_procedure_with_setter_getter(s7_pointer obj)
+{
+  pws *f;
+  f = (pws *)s7_object_value(obj);
+  return(f->scheme_getter);
 }
 
 
@@ -8694,8 +8813,6 @@ s7_pointer s7_out_of_range_error(s7_scheme *sc, const char *caller, int arg_n, s
   int len;
   char *errmsg, *argstr;
 
-  /* fprintf(stderr,"out of range %s %s\n", caller, descr); */
-
   argstr = s7_object_to_c_string(sc, arg);
   len = safe_strlen(argstr) + safe_strlen(descr) + safe_strlen(caller) + 128;
   errmsg = (char *)CALLOC(len, sizeof(char));
@@ -8749,7 +8866,6 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
   c = (rcatch *)CALLOC(1, sizeof(rcatch));
   c->tag = car(args);
   c->goto_loc = sc->stack_top;
-  /* fprintf(stderr, "catch %p loc: %d\n", c, c->goto_loc); */
   c->handler = caddr(args);
 
   p = new_cell(sc);
@@ -8777,10 +8893,6 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
   s7_pointer catcher;
   catcher = sc->F;
 
-#if S7_DEBUGGING
-  g_stacktrace(sc, sc->NIL);
-#endif
-
   /* top is 1 past actual top, top - 1 is op, if op = OP_CATCH, top - 4 is the cell containing the catch struct */
 
   for (i = sc->stack_top - 1; i >= 3; i -= 4)
@@ -8801,7 +8913,6 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 
   if (catcher != sc->F)
     {
-      /* fprintf(stderr, "goto: %p %d\n", catcher->object.catcher, catch_goto_loc(catcher)); */
       sc->args = cons(sc, type, sc->x = cons(sc, info, sc->NIL));
       sc->code = catch_handler(catcher);
       sc->stack_top = catch_goto_loc(catcher);
@@ -8846,6 +8957,10 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	}
       write_char(sc, '\n', sc->error_port);
 
+#if S7_DEBUGGING
+      g_stacktrace(sc, sc->NIL);
+#endif
+
       if ((exit_eval) &&
 	  (sc->error_exiter))
 	(*(sc->error_exiter))();
@@ -8857,7 +8972,6 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 
   if (sc->longjmp_ok)
     {
-      /* fprintf(stderr, "longjmp error "); */
       longjmp(sc->goto_start, 1); /* this is trying to clear the C stack back to some clean state */
     }
   return(type);
@@ -9009,7 +9123,6 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
   if (!sc->longjmp_ok)
     {
       sc->longjmp_ok = true;
-      /* fprintf(stderr, "setjmp call "); */
       if (setjmp(sc->goto_start) != 0)
 	return(sc->value);
     }
@@ -9047,15 +9160,6 @@ static s7_pointer g_scheme_implementation(s7_scheme *sc, s7_pointer a)
 
 /* all explicit write-* in eval assume current-output-port -- tracing, error fallback handling, etc */
 /*   internal reads assume sc->input_port is the input port */
-
-static s7_pointer remember_line(s7_scheme *sc, s7_pointer obj)
-{
-  if ((sc->input_port != sc->NIL) && 
-      (is_file_port(sc->input_port)))
-    obj->object.cons.line = port_line_number(sc->input_port);
-  return(obj);
-}
-
 
 static void eval(s7_scheme *sc, opcode_t first_op) 
 {
@@ -9110,7 +9214,6 @@ static void eval(s7_scheme *sc, opcode_t first_op)
        *   read one expr, return it, let caller deal with input port setup 
        */
     case OP_READ_RETURN_EXPRESSION:
-      /* fprintf(stderr, "read rtn %s\n", s7_object_to_c_string(sc, sc->value));  */
       return;
 
 
@@ -9296,14 +9399,12 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  
 	}
       
-      /* e1args causes 80 to 90% of the consing in the evaluator! */
-
       
     case OP_E1ARGS:     /* eval arguments */
       /*
       fprintf(stderr, "e1args: [%p]%s [%p]%s\n", sc->value, s7_object_to_c_string(sc, sc->value), sc->args, s7_object_to_c_string(sc, sc->args));
       */
-      sc->args = cons(sc, sc->value, sc->args);  /* this line is the speed killer for the whole program */
+      sc->args = cons(sc, sc->value, sc->args); 
       /*   I've failed twice to find a way to reduce the consing */
       /*  the no cons method:
        * E0ARGS:	    sc->args = sc->code;
@@ -9529,11 +9630,6 @@ static void eval(s7_scheme *sc, opcode_t first_op)
        *   so the doc string if any is (cadr (car value))
        *   and the arg list gives the number of required args up to the dot
        */
-      /*
-      fprintf(stderr, "define %s %s\n", s7_object_to_c_string(sc, sc->code), s7_object_to_c_string(sc, sc->value));
-      if (s7_is_closure(sc->value))
-	fprintf(stderr, "-> %s %s\n", s7_object_to_c_string(sc, car(sc->value)), s7_object_to_c_string(sc, cdr(sc->value)));
-      */
       sc->x = s7_find_slot_in_env(sc, sc->envir, sc->code, false);
       if (sc->x != sc->NIL) 
 	set_slot_in_env(sc, sc->x, sc->value); 
@@ -9871,11 +9967,6 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  pop_stack(sc, eval_error(sc, "variable is not a symbol", sc->x));
 	  goto START;
 	}
-      /*
-      fprintf(stderr, "orig macro mid: %s\n", 
-	      s7_object_to_c_string(sc, sc->code));
-      */
-      
       push_stack(sc, OP_MACRO1, sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO1 */
       goto EVAL;
       
@@ -9934,15 +10025,15 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 			   cons(sc, sc->y, sc->NIL),
 			   cons(sc, 
 				cons(sc, 
-				     s7_make_symbol(sc, "apply"),
+				     sc->APPLY,
 				     cons(sc, 
-					  cons(sc, sc->LAMBDA, cddr(sc->value)),
+					  cons(sc, 
+					       sc->LAMBDA, 
+					       cddr(sc->value)),
 					  cons(sc, 
 					       cons(sc,
-						    s7_make_symbol(sc, "cdr"),
-						    cons(sc, 
-							 sc->y, 
-							 sc->NIL)),
+						    sc->CDR,
+						    cons(sc, sc->y, sc->NIL)),
 					       sc->NIL))),
 				sc->NIL)));
       
@@ -9970,17 +10061,17 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 			   cons(sc, sc->y, sc->NIL),
 			   cons(sc, 
 				cons(sc, 
-				     s7_make_symbol(sc, "apply"),
+				     sc->APPLY,
 				     cons(sc, 
 					  cons(sc, 
 					       sc->LAMBDA,
-					       cons(sc, cdadr(sc->value), cddr(sc->value))),
+					       cons(sc, 
+						    cdadr(sc->value), 
+						    cddr(sc->value))),
 					  cons(sc, 
 					       cons(sc,
-						    s7_make_symbol(sc, "cdr"), 
-						    cons(sc, 
-							 sc->y,
-							 sc->NIL)),
+						    sc->CDR,
+						    cons(sc, sc->y, sc->NIL)),
 					       sc->NIL))),
 				sc->NIL)));
 
@@ -10051,7 +10142,6 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       
 
     case OP_QUIT:
-      /* fprintf(stderr, "op quit\n"); */
       return;
       break;
 
@@ -10246,8 +10336,8 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       
 
     case OP_READ_QUASIQUOTE_VECTOR:
-      pop_stack(sc, cons(sc, s7_make_symbol(sc, "apply"),
-			 cons(sc, s7_make_symbol(sc, "vector"), 
+      pop_stack(sc, cons(sc, sc->APPLY,
+			 cons(sc, sc->VECTOR,
 			      cons(sc, 
 				   cons(sc, 
 					sc->QUASIQUOTE, 
@@ -10381,6 +10471,189 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 }
 
 
+/* -------------------------------- quasiquote -------------------------------- */
+
+static s7_pointer g_mcons(s7_scheme *sc, s7_pointer f, s7_pointer l, s7_pointer r)
+{
+  /*
+    (define (mcons f l r)
+      (if (and (pair? r)
+	       (eq? (car r) 'quote)
+	       (eq? (car (cdr r)) (cdr f))
+	       (pair? l)
+	       (eq? (car l) 'quote)
+	       (eq? (car (cdr l)) (car f)))
+	  (if (or (procedure? f) (number? f) (string? f))
+	      f
+	      (list 'quote f))
+	  (if (eqv? l vector)
+	      (apply l (eval r))
+	      (list 'cons l r))))
+  */
+  if ((is_pair(r)) &&
+      (is_pair(l)) &&
+      (car(r) == sc->QUOTE) &&
+      (car(cdr(r)) == cdr(f)) &&
+      (car(cdr(l)) == car(f)) &&
+      (car(l) == car(r)))
+    {
+      if ((s7_is_number(f)) ||
+	  (s7_is_string(f)) ||
+	  (s7_is_procedure(f)))
+	return(f);
+
+      return(s7_cons(sc, sc->QUOTE, s7_cons(sc, f, sc->NIL)));
+    }
+  else
+    {
+      if (l == sc->VECTOR_FUNCTION)
+	return(g_vector(sc, s7_cons(sc, r, sc->NIL)));
+
+      return(s7_cons(sc, sc->CONS, s7_cons(sc, l, s7_cons(sc, r, sc->NIL))));
+    }
+}
+
+
+static s7_pointer g_mappend(s7_scheme *sc, s7_pointer f, s7_pointer l, s7_pointer r)
+{
+  /*
+    (define (mappend f l r)
+      (if (or (null? (cdr f))
+	      (and (pair? r)
+		   (eq? (car r) 'quote)
+		   (eq? (car (cdr r)) '())))
+	  l
+	  (list 'append l r)))
+  */
+  if ((cdr(f) == sc->NIL) ||
+      ((s7_is_pair(r)) &&
+       (car(r) == sc->QUOTE) &&
+       (car(cdr(r)) == sc->NIL)))
+    return(l);
+
+  return(s7_cons(sc, sc->APPEND, s7_cons(sc, l, s7_cons(sc, r, sc->NIL))));
+}
+
+
+static s7_pointer g_quasiquote_1(s7_scheme *sc, int level, s7_pointer form)
+{
+  /*
+    ;; The following quasiquote macro is due to Eric S. Tiedemann.
+    ;;   Copyright 1988 by Eric S. Tiedemann; all rights reserved.
+    ;; Subsequently modified to handle vectors: D. Souflis
+
+    (define (foo level form)
+      (cond ((not (pair? form))
+	     (if (or (procedure? form) (number? form) (string? form))
+		 form
+		 (list 'quote form)))
+
+	    ((eq? 'quasiquote (car form))
+	     (mcons form ''quasiquote (foo (+ level 1) (cdr form))))
+
+	    (#t (if (zero? level)
+		    (cond ((eq? (car form) 'unquote)
+			   (car (cdr form)))
+
+			  ((eq? (car form) 'unquote-splicing)
+			   form)
+
+			  ((and (pair? (car form))
+				(eq? (car (car form)) 'unquote-splicing))
+
+			   (mappend form 
+				    (car (cdr (car form)))
+				    (foo level (cdr form))))
+
+			  (#t (mcons form (foo level (car form))
+				     (foo level (cdr form)))))
+
+		    (cond ((eq? (car form) 'unquote)
+			   (mcons form ''unquote (foo (- level 1)
+						      (cdr form))))
+			  ((eq? (car form) 'unquote-splicing)
+			   (mcons form ''unquote-splicing
+				  (foo (- level 1) (cdr form))))
+			  (#t (mcons form (foo level (car form))
+				     (foo level (cdr form)))))))))
+  */
+  if (!s7_is_pair(form))
+    {
+      if ((s7_is_number(form)) ||
+	  (s7_is_string(form)) ||
+	  (s7_is_procedure(form)))
+	return(form);
+
+      return(s7_cons(sc, sc->QUOTE, s7_cons(sc, form, sc->NIL)));
+    }
+  else
+    {
+      if (car(form) == sc->QUASIQUOTE)
+	return(g_mcons(sc, 
+		       form, 
+		       s7_cons(sc, sc->QUOTE, s7_cons(sc, sc->QUASIQUOTE, sc->NIL)),
+		       g_quasiquote_1(sc, level + 1, cdr(form))));
+      else
+	{
+	  if (level == 0)
+	    {
+	      if (car(form) == sc->UNQUOTE)
+		return(car(cdr(form)));
+	      
+	      if (car(form) == sc->UNQUOTE_SPLICING)
+		return(form);
+
+	      if ((s7_is_pair(car(form))) &&
+		  (caar(form) == sc->UNQUOTE_SPLICING))
+		return(g_mappend(sc, 
+				 form,
+				 car(cdr(car(form))),
+				 g_quasiquote_1(sc, level, cdr(form))));
+				 
+	      return(g_mcons(sc, 
+			     form, 
+			     g_quasiquote_1(sc, level, car(form)),
+			     g_quasiquote_1(sc, level, cdr(form))));
+	    }
+	  else
+	    {
+	      /* level != 0 */
+	      if (car(form) == sc->UNQUOTE)
+		return(g_mcons(sc, 
+			       form,
+			       s7_cons(sc, sc->QUOTE, s7_cons(sc, sc->UNQUOTE, sc->NIL)),
+			       g_quasiquote_1(sc, level - 1, cdr(form))));
+
+	      if (car(form) == sc->UNQUOTE_SPLICING)
+		return(g_mcons(sc, 
+			       form,
+			       s7_cons(sc, sc->QUOTE, s7_cons(sc, sc->UNQUOTE_SPLICING, sc->NIL)),
+			       g_quasiquote_1(sc, level - 1, cdr(form))));
+
+	      return(g_mcons(sc,
+			     form,
+			     g_quasiquote_1(sc, level, car(form)),
+			     g_quasiquote_1(sc, level, cdr(form))));
+	    }
+	}
+    }
+}
+
+
+/* TODO: worry about GC here */
+
+static s7_pointer g_quasiquote(s7_scheme *sc, s7_pointer args)
+{
+  s7_pointer result;
+  bool old_gc_off;
+  old_gc_off = sc->gc_off;
+  sc->gc_off = true;
+  result = g_quasiquote_1(sc, s7_integer(car(args)), cadr(args));
+  sc->gc_off = old_gc_off;
+  return(result);
+}
+
+
 
 /* -------------------------------- S7 init -------------------------------- */
 
@@ -10422,7 +10695,7 @@ s7_scheme *s7_init(void)
   
   set_type(sc->UNDEFINED, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT);
   car(sc->UNDEFINED) = cdr(sc->UNDEFINED) = sc->UNSPECIFIED;
-  
+
   sc->input_port = sc->NIL;
   sc->input_port_stack = sc->NIL;
   sc->output_port = sc->NIL;
@@ -10542,6 +10815,24 @@ s7_scheme *s7_init(void)
   #define set_object_name "(generalized set!)"
   sc->SET_OBJECT = s7_make_symbol(sc, set_object_name);
   typeflag(sc->SET_OBJECT) |= T_CONSTANT; 
+
+  /* save us the symbol table lookups later */
+
+  sc->APPLY = s7_make_symbol(sc, "apply");
+  typeflag(sc->APPLY) |= T_CONSTANT; 
+
+  sc->CONS = s7_make_symbol(sc, "cons");
+  typeflag(sc->CONS) |= T_CONSTANT; 
+
+  sc->APPEND = s7_make_symbol(sc, "append");
+  typeflag(sc->APPEND) |= T_CONSTANT; 
+
+  sc->CDR = s7_make_symbol(sc, "cdr");
+  typeflag(sc->CDR) |= T_CONSTANT; 
+
+  sc->VECTOR = s7_make_symbol(sc, "vector");
+  typeflag(sc->VECTOR) |= T_CONSTANT; 
+  sc->VECTOR_FUNCTION = s7_name_to_value(sc, "vector");
 
 
   /* symbols */
@@ -10828,7 +11119,9 @@ s7_scheme *s7_init(void)
   s7_define_variable(sc, "*features*", sc->NIL);
   s7_define_variable(sc, "*load-path*", sc->NIL);
   s7_define_variable(sc, "*vector-print-length*", vector_element(sc->small_ints, 8));
-  
+
+  s7_define_function(sc, "_quasiquote_",                    g_quasiquote,                    2, 0, false, "internal quasiquote handler");
+
   sc->gc_off = false;
 
   /* leftovers from s7.scm -- this stuff will mostly go away! */
@@ -10885,73 +11178,7 @@ s7_scheme *s7_init(void)
 		 (cdrs (cdr unz)))\n\
 	    (apply proc cars) (apply map (cons proc cdrs))))))\n\
 \n\
-;; The following quasiquote macro is due to Eric S. Tiedemann.\n\
-;;   Copyright 1988 by Eric S. Tiedemann; all rights reserved.\n\
-;;\n\
-;; Subsequently modified to handle vectors: D. Souflis\n\
-\n\
-(macro\n\
-    quasiquote\n\
-  (lambda (l)\n\
-\n\
-    (define (mcons f l r)\n\
-      (if (and (pair? r)\n\
-	       (eq? (car r) 'quote)\n\
-	       (eq? (car (cdr r)) (cdr f))\n\
-	       (pair? l)\n\
-	       (eq? (car l) 'quote)\n\
-	       (eq? (car (cdr l)) (car f)))\n\
-	  (if (or (procedure? f) (number? f) (string? f))\n\
-	      f\n\
-	      (list 'quote f))\n\
-	  (if (eqv? l vector)\n\
-	      (apply l (eval r))\n\
-	      (list 'cons l r)\n\
-	      )))\n\
-\n\
-    (define (mappend f l r)\n\
-      (if (or (null? (cdr f))\n\
-	      (and (pair? r)\n\
-		   (eq? (car r) 'quote)\n\
-		   (eq? (car (cdr r)) '())))\n\
-	  l\n\
-	  (list 'append l r)))\n\
-\n\
-    (define (foo level form)\n\
-      (cond ((not (pair? form))\n\
-	     (if (or (procedure? form) (number? form) (string? form))\n\
-		 form\n\
-		 (list 'quote form))\n\
-	     )\n\
-	    ((eq? 'quasiquote (car form))\n\
-	     (mcons form ''quasiquote (foo (+ level 1) (cdr form))))\n\
-\n\
-	    (#t (if (zero? level)\n\
-		    (cond ((eq? (car form) 'unquote)\n\
-			   (car (cdr form)))\n\
-\n\
-			  ((eq? (car form) 'unquote-splicing)\n\
-			   form)\n\
-\n\
-			  ((and (pair? (car form))\n\
-				(eq? (car (car form)) 'unquote-splicing))\n\
-\n\
-			   (mappend form \n\
-				    (car (cdr (car form)))\n\
-				    (foo level (cdr form))))\n\
-\n\
-			  (#t (mcons form (foo level (car form))\n\
-				     (foo level (cdr form)))))\n\
-\n\
-		    (cond ((eq? (car form) 'unquote)\n\
-			   (mcons form ''unquote (foo (- level 1)\n\
-						      (cdr form))))\n\
-			  ((eq? (car form) 'unquote-splicing)\n\
-			   (mcons form ''unquote-splicing\n\
-				  (foo (- level 1) (cdr form))))\n\
-			  (#t (mcons form (foo level (car form))\n\
-				     (foo level (cdr form)))))))))\n\
-    (foo 0 (car (cdr l)))))\n\
+(macro quasiquote (lambda (l) (_quasiquote_ 0 (car (cdr l)))))\n\
 \n\
 ;;;; (do ((var init inc) ...) (endtest result ...) body ...)\n\
 ;;\n\

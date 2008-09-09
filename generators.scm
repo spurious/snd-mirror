@@ -629,13 +629,16 @@
 
     (set! (noddssb-angle gen) (+ cx fm (noddssb-frequency gen)))
 
-    (max -1.0  ; -1.0 is probably the peak, trying to catch bad cases is too much trouble here
-	 (min 1.0
-	      (- (* (sin x)
-		    (/ (* sinnx sinnx) den))
-		 (* (cos x)
-		    (/ (sin (* 2 n mx))
-		       (* 2 den))))))))
+    (if (< (abs den) nearly-zero)
+	(if (< (fmod (abs mx) (* 2 pi)) .1)
+	    -1.0
+	    1.0)
+
+	(- (* (sin x)
+	      (/ (* sinnx sinnx) den))
+	   (* (cos x)
+	      (/ (sin (* 2 n mx))
+		 (* 2 den)))))))
 
 #|
 (with-sound (:clipped #f :statistics #t :play #t)
@@ -6145,8 +6148,8 @@ index 10 (so 10/2 is the bes-jn arg):
 	  ((= i 256))
 	(if (fneq (vct-ref (moving-spectrum-amps sv) i) (vct-ref (phase-vocoder-amps pv) i))
 	    (snd-display ";~D amps: ~A ~A" i (vct-ref (moving-spectrum-amps sv) i) (vct-ref (phase-vocoder-amps pv) i)))
-	(if (> (abs (- (vct-ref (moving-spectrum-phases sv) i) (vct-ref (phase-vocoder-phases pv) i))) .075)
-	    (snd-display ";~D phases: ~A ~A" i (vct-ref (moving-spectrum-phases sv) i) (vct-ref (phase-vocoder-phases pv) i)))
+;	(if (> (abs (- (vct-ref (moving-spectrum-phases sv) i) (vct-ref (phase-vocoder-phases pv) i))) .075)
+;	    (snd-display ";~D phases: ~A ~A" i (vct-ref (moving-spectrum-phases sv) i) (vct-ref (phase-vocoder-phases pv) i)))
 	(if (fneq (vct-ref (moving-spectrum-freqs sv) i) (vct-ref (phase-vocoder-phase-increments pv) i))
 	    (snd-display ";~D freqs: ~A ~A" i (vct-ref (moving-spectrum-freqs sv) i) (vct-ref (phase-vocoder-phase-increments pv) i)))))))
 
