@@ -184,6 +184,8 @@ void s7_gc_unprotect(s7_scheme *sc, s7_pointer x);
 void s7_gc_unprotect_at(s7_scheme *sc, int loc);
 s7_pointer s7_local_gc_protect(s7_pointer p);
 s7_pointer s7_local_gc_unprotect(s7_pointer p);
+s7_pointer s7_gc_on(s7_scheme *sc, bool on, s7_pointer p);
+s7_pointer s7_ungc(s7_scheme *sc, s7_pointer p);
 
 void s7_for_each_symbol_name(s7_scheme *sc, bool (*symbol_func)(const char *symbol_name, void *data), void *data);
 void s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_name, s7_pointer symbol_value, void *data), void *data);

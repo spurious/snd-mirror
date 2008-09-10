@@ -5,10 +5,11 @@
 
 #include <mus-config.h>
 
-#define XM_DATE "1-Sep-08"
+#define XM_DATE "10-Sep-08"
 
 /* HISTORY: 
- *  
+ *
+ *   10-Sep:    XtAppAddInput condition arg is an int.
  *   1-Sep-08:  S7 support.
  *   --------
  *   26-Aug:    removed WITH_GTK_AND_X11 switch.
@@ -16478,12 +16479,13 @@ new source of events, which is usually file input but can also be file output."
   XEN descr;
   XEN_ASSERT_TYPE(XEN_XtAppContext_P(arg1), arg1, 1, "XtAppAddInput", "XtAppContext");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XtAppAddInput", "int");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XtAppAddInput", "int");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg4) && (XEN_REQUIRED_ARGS_OK(arg4, 3)), arg4, 4, "XtAppAddInput", "(XtInputCallbackProc data fileno id)");
   descr = C_TO_XEN_XM_Input(arg4, (XEN_BOUND_P(arg5)) ? arg5 : XEN_FALSE);
   gc_loc = xm_protect(descr);
   id = XtAppAddInput(XEN_TO_C_XtAppContext(arg1), 
 		     XEN_TO_C_INT(arg2), 
-		     (XtPointer)arg3, 
+		     (XtPointer)((int)XEN_TO_C_INT(arg3)),
 		     gxm_XtInputCallbackProc, 
 		     (XtPointer)descr);
   XEN_LIST_SET(descr, 3, C_TO_XEN_INT(gc_loc));
@@ -16499,11 +16501,12 @@ static XEN gxm_XtAddInput(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   int gc_loc;
   XEN descr;
   XEN_ASSERT_TYPE(XEN_INTEGER_P(arg1), arg1, 1, "XtAddInput", "int");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XtAddInput", "int");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3) && (XEN_REQUIRED_ARGS_OK(arg3, 3)), arg3, 3, "XtAddInput", "(XtInputCallbackProc data fileno id)");
   descr = C_TO_XEN_XM_Input(arg3, (XEN_BOUND_P(arg4)) ? arg4 : XEN_FALSE);
   gc_loc = xm_protect(descr);
   id = XtAddInput(XEN_TO_C_INT(arg1), 
-		  (XtPointer)arg2, 
+		  (XtPointer)((int)XEN_TO_C_INT(arg2)),
 		  gxm_XtInputCallbackProc, 
 		  (XtPointer)descr);
   XEN_LIST_SET(descr, 3, C_TO_XEN_INT(gc_loc));

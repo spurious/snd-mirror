@@ -818,11 +818,11 @@ latter are (configure --help):
 <tr><td colspan=2></td><td></td><td></td></tr>
 
 <tr><td colspan=2 bgcolor="#EEFDEE">Language choices</td><td></td><td></td></tr>
-<tr><td></td><td>--with-guile</td><td></td><td>use Guile (default: yes), GUILE_CONFIG_path sets Guile location; version 1.3.4 or later</td></tr>
-<tr><td></td><td>--with-forth</td><td></td><td>try to use Forth as the extension language</td></tr>
-<tr><td></td><td>--with-ruby</td><td></td><td>try to use Ruby as the extension language; version 1.6.4 or later</td></tr>
-<tr><td></td><td>--with-gauche</td><td></td><td>try to use Gauche as the extension language; version 0.8.7 or later</td></tr>
-<tr><td></td><td>--with-s7</td><td></td><td>try to use S7 as the extension language</td></tr>
+<tr><td></td><td>--with-guile</td><td></td><td>use Guile as the extension language, GUILE_CONFIG_path sets Guile location</td></tr>
+<tr><td></td><td>--with-forth</td><td></td><td>use Forth as the extension language</td></tr>
+<tr><td></td><td>--with-ruby</td><td></td><td>use Ruby as the extension language; version 1.6.4 or later</td></tr>
+<tr><td></td><td>--with-gauche</td><td></td><td>use Gauche as the extension language; version 0.8.7 or later</td></tr>
+<tr><td></td><td>--with-s7</td><td></td><td>use S7 as the extension language (default = yes</td></tr>
 <tr><td></td><td>--with-ruby-prefix=PFX</td><td></td><td>where Ruby is installed</td></tr>
 <tr><td></td><td>--with-hobbit</td><td></td><td>include hobbit-style function arity checking (hobbit is a Scheme compiler), default: no</td></tr>
 <tr><td colspan=2></td><td></td><td></td></tr>
@@ -2036,8 +2036,7 @@ instrument: src-simp { start dur amp sr sr-env fname -- }
 
 <table width="80%" border=0><tr><td bgcolor="lightsteelblue" valign="middle"><h3><A NAME="sndands7">Snd with s7</a></h3></td></tr></table>
 
-<p>s7 is a tinyScheme derivative included in the Snd tarball.  It is brand-new, so only
-for good sports!  To use it rather than Guile or Gauche, use the --with-s7 configure switch.
+<p>s7 is a tinyScheme derivative included in the Snd tarball.  It is now the Snd default extension language.
 </p>
 
 <br><br>

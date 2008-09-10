@@ -1,6 +1,6 @@
 # Configuration script for Snd
 
-AC_INIT(snd, 10.0, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-10.tar.gz)
+AC_INIT(snd, 10.1, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-10.tar.gz)
 
 AC_CONFIG_SRCDIR(snd.c)
 AC_CANONICAL_HOST
@@ -19,7 +19,7 @@ LOCAL_LANGUAGE="None"
 GRAPHICS_TOOLKIT="None"
 
 PACKAGE=Snd
-VERSION=10.0
+VERSION=10.1
 AC_DEFINE_UNQUOTED(SND_PACKAGE, "$PACKAGE")
 AC_DEFINE_UNQUOTED(SND_VERSION, "$VERSION")
 AC_SUBST(SND_PACKAGE)
@@ -48,13 +48,13 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --with-esd            use Enlightened Sound Daemon
 #   --with-no-gui         make Snd without any graphics support
 #   --with-motif-prefix   set location of Motif
-#   --with-static-gsl     try to statically load GSL
-#   --with-guile          try to use Guile as the extension language (default=yes)
-#   --with-forth          try to use Forth as the extension language
-#   --with-ruby           try to use Ruby as the extension language
+#   --with-static-gsl     statically load GSL
+#   --with-guile          use Guile as the extension language
+#   --with-forth          use Forth as the extension language
+#   --with-ruby           use Ruby as the extension language
 #   --with-ruby-prefix    set location of Ruby
-#   --with-s7             try to use S7 as the extension language
-#   --with-gauche         try to use Gauche as the extension language
+#   --with-s7             use S7 as the extension language (default = yes)
+#   --with-gauche         use Gauche as the extension language
 #   --with-extension-language use some extension language (default=yes)
 #   --with-hobbit         include hobbit-style function arity checking
 #   --with-rt             make Snd capable of running Snd-Rt
@@ -1293,7 +1293,7 @@ if test "$with_ruby" = yes && test "$ac_snd_have_extension_language" = yes ; the
 fi
 
 AC_ARG_WITH(ruby,
-	[  --with-ruby	  	  try to use Ruby as the extension language],
+	[  --with-ruby	  	  use Ruby as the extension language],
   	if test "$with_ruby" = yes ; then
             AC_MSG_CHECKING([for Ruby])
 	    RUBY_VERSION=`$RUBY -e 'puts RUBY_VERSION'`
@@ -1372,7 +1372,7 @@ if test "$with_forth" = yes && test "$ac_snd_have_extension_language" = yes ; th
 fi
 
 AC_ARG_WITH(forth,
-	[  --with-forth	  	  try to use Forth as the extension language],
+	[  --with-forth	  	  use Forth as the extension language],
   	if test "$with_forth" = yes ; then
 	   FTH_CHECK_LIB([AC_DEFINE(HAVE_FORTH)
  	                  AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
@@ -1393,35 +1393,6 @@ AC_ARG_WITH(forth,
 
 
 #--------------------------------------------------------------------------------
-# S7 (the default someday)
-#--------------------------------------------------------------------------------
-
-S7_LIB=""
-
-if test "$with_s7" = yes && test "$ac_snd_have_extension_language" = yes ; then
-  with_s7=no
-  AC_MSG_WARN([You asked for both s7 and $LOCAL_LANGUAGE -- $LOCAL_LANGUAGE will be used])
-fi
-
-if test "$with_s7" = yes && test "$with_extension_language" != no && test "$ac_snd_have_extension_language" != yes ; then
-  AC_DEFINE(HAVE_S7)	
-  AC_DEFINE(HAVE_SCHEME)	
-  ac_snd_have_extension_language=yes
-  AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
-  AC_DEFINE(HAVE_SCM_MAKE_RATIO)
-  AC_DEFINE(HAVE_SCM_C_MAKE_RECTANGULAR)
-  AC_DEFINE(HAVE_COMPLEX_TRIG)
-  AC_DEFINE(WITH_RUN)
-  LOCAL_LANGUAGE="s7"
-  S7_LIB="s7.o"
-fi
-
-AC_SUBST(S7_LIB)
-
-
-
-
-#--------------------------------------------------------------------------------
 # Guile
 #--------------------------------------------------------------------------------
 
@@ -1430,7 +1401,7 @@ if test "$with_guile" = yes && test "$ac_snd_have_extension_language" = yes ; th
   AC_MSG_WARN([You asked for both Guile and $LOCAL_LANGUAGE -- $LOCAL_LANGUAGE will be used])
 fi
 
-if test "$with_guile" != no && test "$with_extension_language" != no && test "$ac_snd_have_extension_language" != yes ; then
+if test "$with_guile" = yes && test "$ac_snd_have_extension_language" != yes ; then
 
 XEN_LIBS=""
 XEN_CFLAGS=""
@@ -1613,6 +1584,35 @@ else
 fi
 fi
 fi
+
+
+
+#--------------------------------------------------------------------------------
+# S7 (the default)
+#--------------------------------------------------------------------------------
+
+S7_LIB=""
+
+if test "$with_s7" = yes && test "$ac_snd_have_extension_language" = yes ; then
+  with_s7=no
+  AC_MSG_WARN([You asked for both s7 and $LOCAL_LANGUAGE -- $LOCAL_LANGUAGE will be used])
+fi
+
+if test "$with_s7" != no && test "$with_extension_language" != no && test "$ac_snd_have_extension_language" != yes ; then
+  AC_DEFINE(HAVE_S7)	
+  AC_DEFINE(HAVE_SCHEME)	
+  ac_snd_have_extension_language=yes
+  AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
+  AC_DEFINE(HAVE_SCM_MAKE_RATIO)
+  AC_DEFINE(HAVE_SCM_C_MAKE_RECTANGULAR)
+  AC_DEFINE(HAVE_COMPLEX_TRIG)
+  AC_DEFINE(WITH_RUN)
+  LOCAL_LANGUAGE="s7"
+  S7_LIB="s7.o"
+fi
+
+AC_SUBST(S7_LIB)
+
 
 
 
