@@ -337,12 +337,18 @@ static bool tick_peak_env(chan_info *cp, env_state *es)
 
 	  if ((cp->edit_ctr == 0) &&
 	      (cp->sound) &&
+	      (cp->sound->inuse == SOUND_NORMAL) &&
 	      (cp->sound->hdr) &&
 	      (cp->sounds) &&
 	      (cp->sounds[0]->io) &&
 	      (mus_file_prescaler(cp->sounds[0]->io->fd) == 1.0))
 	    {
 	      es->fd = mus_file_open_read(cp->sound->filename);
+	      if (es->fd == -1)
+		{
+		  snd_warning(_("%s no longer exists!"), cp->sound->filename);
+		  return(true);
+		}
 	      es->file_open = true;
 	      lseek(es->fd, cp->sound->hdr->data_location, SEEK_SET);
 

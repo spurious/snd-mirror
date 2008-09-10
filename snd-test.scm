@@ -62611,6 +62611,7 @@ EDITS: 1
 		 (XmTextFieldCut txtf current-time)
 		 (let ((val (XmTextFieldGetString txtf)))
 		   (if (not (string=? val "0156789")) (snd-display ";XmTextFieldCut: ~A" val)))
+
 		 (XmTextFieldPaste txtf) 
 		 (let ((val (XmTextFieldGetString txtf)))
 		   (if (not (string=? val "0123456789")) (snd-display ";XmTextFieldPaste: ~A" val)))
@@ -63450,33 +63451,34 @@ EDITS: 1
 			   (list .widget 'Widget '.widget #f) (list .doit 'Boolean '.doit))
 		     )))
 	       
-	       (for-each
-		(lambda (call)
-		  (let ((struct ((car call)))
-			(val #f))
-		    (set! (.event struct) (XEvent))
-		    (for-each
-		     (lambda (field)
-		       (if (not (list-p field)) (snd-display ";~A: ~A" struct field))
-		       (set! val ((car field) struct))
-		       (if (< (length field) 4)
-			   (case (cadr field)
-			     ((int) (set! ((car field) struct) 0))
-			     ((Atom) (set! ((car field) struct) XA_STRING))
-			     ((uchar) (set! ((car field) struct) 0))
-			     ((Position) (set! ((car field) struct) 0))
-			     ((Widget) (set! ((car field) struct) (list 'Widget 0)))
-			     ((XmString) (set! ((car field) struct) (list 'XmString 0)))
-			     ((XtPointer) (set! ((car field) struct) 0))
-			     ((char*) (set! ((car field) struct) "hi"))
-			     ((Boolean) (set! ((car field) struct) #f))
-			     ((XEvent) #f) ; already being set
-			     ((XmString* int* Time Window Widget* Screen) #f) 
-			     ((char) (set! ((car field) struct) 0))
-			     )))
-		     (cdr call))))
-		callbacks))
-	     
+	       (if (not (provided? 'snd-s7))
+		   (for-each
+		    (lambda (call)
+		      (let ((struct ((car call)))
+			    (val #f))
+			(set! (.event struct) (XEvent))
+			(for-each
+			 (lambda (field)
+			   (if (not (list-p field)) (snd-display ";~A: ~A" struct field))
+			   (set! val ((car field) struct))
+			   (if (< (length field) 4)
+			       (case (cadr field)
+				 ((int) (set! ((car field) struct) 0))
+				 ((Atom) (set! ((car field) struct) XA_STRING))
+				 ((uchar) (set! ((car field) struct) 0))
+				 ((Position) (set! ((car field) struct) 0))
+				 ((Widget) (set! ((car field) struct) (list 'Widget 0)))
+				 ((XmString) (set! ((car field) struct) (list 'XmString 0)))
+				 ((XtPointer) (set! ((car field) struct) 0))
+				 ((char*) (set! ((car field) struct) "hi"))
+				 ((Boolean) (set! ((car field) struct) #f))
+				 ((XEvent) #f) ; already being set
+				 ((XmString* int* Time Window Widget* Screen) #f) 
+				 ((char) (set! ((car field) struct) 0))
+				 )))
+			 (cdr call))))
+		    callbacks)))
+
 	     (let ((shell (cadr (main-widgets)))
 		   (resource-list
 		    (list
@@ -63674,7 +63676,7 @@ EDITS: 1
 		     (list XmNvalues XM_STRING_TABLE) (list XmNviewType XM_UCHAR) (list XmNvisualEmphasis XM_UCHAR)
 		     (list XmNwrap XM_BOOLEAN)
 		     )))
-	       
+
 	       (for-each
 		(lambda (n)
 		  (if (not (string? (car n))) (snd-display ";resource ~A is not a string?" (car n)))

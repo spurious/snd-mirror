@@ -46,12 +46,11 @@
  *   threads: call-with-new-thread[s7?], join-thread
  *   there's no arg number mismatch check for caller-defined functions!
  *   help for vars (objects)
- *   figure out how add syntax-rules, (C-level) for-each, map, do, also call-with-values and values
+ *   figure out how add syntax-rules, (C-level) map, do, also call-with-values and values
  *   the rest of the call-with funcs (call-with-input-string is done)
  *   get rid of the config header somehow! -- ideally we'd get rid of all switches like HAVE_STDBOOL_H
  *   doc in s7.h
- *   gc-verbose and tracing should be variables, not functions [need direct value access -- can this be trusted if global?]
- *   gc-off as variable?
+ *   snd-test 28
  *   
  * define-type (make-type in ext)
  * (define-type "name"
@@ -194,7 +193,8 @@ typedef enum {OP_TOP_LEVEL, OP_T1LVL, OP_READ_INTERNAL, OP_VALUEPRINT, OP_EVAL, 
 	      OP_READ_QUASIQUOTE, OP_READ_QUASIQUOTE_VECTOR, OP_READ_UNQUOTE, OP_READ_UNQUOTE_SPLICING, OP_READ_VEC, OP_P0LIST, OP_P1LIST, 
 	      OP_PVECFROM, OP_SAVE_FORCED, OP_READ_RETURN_EXPRESSION, 
 	      OP_READ_POP_AND_RETURN_EXPRESSION, OP_LOAD_RETURN_IF_EOF, OP_LOAD_CLOSE_AND_POP_IF_EOF, 
-	      OP_EVAL_STRING, OP_EVAL_STRING_DONE, OP_QUIT, OP_CATCH, OP_DYNAMIC_WIND, OP_MAX_DEFINED
+	      OP_EVAL_STRING, OP_EVAL_STRING_DONE, OP_QUIT, OP_CATCH, OP_DYNAMIC_WIND, OP_FOR_EACH, OP_MAP, OP_DO,
+	      OP_MAX_DEFINED
 } opcode_t;
 
 
@@ -9176,6 +9176,44 @@ static s7_pointer g_scheme_implementation(s7_scheme *sc, s7_pointer a)
 }
 
 
+static s7_pointer g_for_each(s7_scheme *sc, s7_pointer args)
+{
+  #define H_for_each "(for-each proc lst . lists) applies proc to a list made up of the car of each arg list"
+  s7_pointer lists;
+  sc->code = car(args);
+  lists = cdr(args);
+
+  /* fprintf(stderr, "(for-each %s %s)\n", s7_object_to_c_string(sc, sc->code), s7_object_to_c_string(sc, lists)); */
+
+  if (car(lists) == sc->NIL)
+    return(sc->NIL);
+
+  local_protect(lists);
+
+  /* get car of each arg list making the current proc arglist */
+  sc->args = sc->NIL;
+  for (sc->y = lists; sc->y != sc->NIL; sc->y = cdr(sc->y))
+    {
+      sc->args = cons(sc, caar(sc->y), sc->args);
+      car(sc->y) = cdar(sc->y);
+    }
+  sc->args = s7_reverse_in_place(sc, sc->NIL, sc->args);
+  local_unprotect(lists);
+
+  /* if lists have no cdr (just 1 set of args), apply the proc to them */
+  if (car(lists) == sc->NIL)
+    {
+      push_stack(sc, OP_APPLY, sc->args, sc->code);
+      return(sc->NIL);
+    }
+
+  /* set up for repeated call walking down the lists of args */
+  push_stack(sc, OP_FOR_EACH, lists, sc->code);
+  push_stack(sc, OP_APPLY, sc->args, sc->code);
+  return(sc->NIL);
+}
+
+
 
 
 
@@ -9315,6 +9353,24 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	write_string(sc, "\nGives: ", sc->output_port);
       pop_stack(sc, sc->value);
       goto START;
+
+
+    case OP_FOR_EACH:
+      sc->x = sc->args; /* save lists */
+      sc->args = sc->NIL;
+      for (sc->y = sc->x; sc->y != sc->NIL; sc->y = cdr(sc->y))
+	{
+	  sc->args = cons(sc, caar(sc->y), sc->args);
+	  car(sc->y) = cdar(sc->y);
+	}
+      sc->args = s7_reverse_in_place(sc, sc->NIL, sc->args);
+      if (car(sc->x) == sc->NIL)
+	goto APPLY;
+
+      /* (for-each (lambda (a) (display a)) (list 1 2 3)) */
+
+      push_stack(sc, OP_FOR_EACH, sc->x, sc->code);
+      goto APPLY;
 
       
     BEGIN:
@@ -9675,6 +9731,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       pop_stack(sc, sc->code);
       goto START;
       
+
     case OP_SET2:
       sc->code = cons(sc, cons(sc, sc->x, sc->args), sc->code);
       
@@ -11133,6 +11190,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "eval",                    g_eval,                    1, 1, false, H_eval);
   s7_define_function(sc, "eval-string",             g_eval_string,             1, 0, false, H_eval_string);
   s7_define_function(sc, "apply",                   g_apply,                   1, 0, true,  H_apply);
+  s7_define_function(sc, "for-each",                g_for_each,                2, 0, true,  H_for_each);
   
   s7_define_function(sc, "tracing",                 g_tracing,                 1, 0, false, H_tracing);
   s7_define_function(sc, "gc-verbose",              g_gc_verbose,              1, 0, false, H_gc_verbose);
@@ -11222,18 +11280,8 @@ s7_scheme *s7_init(void)
 	  (let* ((unz (apply unzip1-with-cdr lists))\n\
 		 (cars (car unz))\n\
 		 (cdrs (cdr unz)))\n\
-	    (cons (apply proc cars) (apply map (cons proc cdrs)))))))\n\
-\n\
-\n\
-(define (for-each proc . lists)\n\
-  (if (null? lists)\n\
-      (apply proc)\n\
-      (if (null? (car lists))\n\
-	  #t\n\
-	  (let* ((unz (apply unzip1-with-cdr lists))\n\
-		 (cars (car unz))\n\
-		 (cdrs (cdr unz)))\n\
-	    (apply proc cars) (apply map (cons proc cdrs))))))\n\
+	    (cons (apply proc cars)\n\
+                  (apply map (cons proc cdrs)))))))\n\
 \n\
 (macro quasiquote (lambda (l) (_quasiquote_ 0 (car (cdr l)))))\n\
 \n\

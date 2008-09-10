@@ -1114,7 +1114,7 @@ XM_TYPE_PTR(cairo_rectangle_list_t_, cairo_rectangle_list_t*)
 #endif
 
 #define XLS(a, b) XEN_TO_C_gchar_(XEN_LIST_REF(a, b))
-#define XLI(a, b) XEN_TO_C_INT(XEN_LIST_REF(a, b))
+#define XLI(a, b) ((int)XEN_TO_C_INT(XEN_LIST_REF(a, b)))
 #define XLG(a, b) XEN_TO_C_GType(XEN_LIST_REF(a, b))
 #define XLT(a, b) XEN_TO_C_GtkTextTag_(XEN_LIST_REF(a, b))
 

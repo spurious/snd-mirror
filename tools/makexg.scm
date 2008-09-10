@@ -2323,7 +2323,7 @@
 (if (not (null? cairo-types-164)) (with-cairo-164 hey (lambda () (for-each type-it (reverse cairo-types-164)))))
 
 (hey "#define XLS(a, b) XEN_TO_C_gchar_(XEN_LIST_REF(a, b))~%")
-(hey "#define XLI(a, b) XEN_TO_C_INT(XEN_LIST_REF(a, b))~%")
+(hey "#define XLI(a, b) ((int)XEN_TO_C_INT(XEN_LIST_REF(a, b)))~%")
 (hey "#define XLG(a, b) XEN_TO_C_GType(XEN_LIST_REF(a, b))~%")
 (hey "#define XLT(a, b) XEN_TO_C_GtkTextTag_(XEN_LIST_REF(a, b))~%~%")
 
