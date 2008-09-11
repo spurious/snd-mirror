@@ -46,7 +46,7 @@
  *   threads: call-with-new-thread[s7?], join-thread
  *   there's no arg number mismatch check for caller-defined functions!
  *   help for vars (objects)
- *   figure out how add syntax-rules, (C-level) map, do, also call-with-values and values
+ *   figure out how add syntax-rules, (C-level) do, also call-with-values and values
  *   the rest of the call-with funcs (call-with-input-string is done)
  *   get rid of the config header somehow! -- ideally we'd get rid of all switches like HAVE_STDBOOL_H
  *   doc in s7.h
@@ -476,6 +476,9 @@ static const char *type_names[T_LAST_TYPE + 1] = {
 #define cdadr(p)                      cdr(car(cdr(p)))
 #define caddr(p)                      car(cdr(cdr(p)))
 #define caadr(p)                      car(car(cdr(p)))
+#define cdaar(p)                      cdr(car(car(p)))
+#define cdddr(p)                      cdr(cdr(cdr(p)))
+#define cddar(p)                      cdr(cdr(car(p)))
 #define caaadr(p)                     car(car(car(cdr(p))))
 #define cadaar(p)                     car(cdr(car(car(p))))
 #define cadddr(p)                     car(cdr(cdr(cdr(p))))
@@ -7540,6 +7543,150 @@ static s7_pointer g_cddar(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_pointer g_caaaar(s7_scheme *sc, s7_pointer args)
+{
+  #define H_caaaar "(caaaar lst) returns (car (car (car (car lst))))"
+  s7_pointer lst = car(args);
+  if ((is_pair(lst)) && (is_pair(car(lst))) && (is_pair(caar(lst))) && (is_pair(caaar(lst)))) return(car(car(car(car(lst)))));
+  return(s7_wrong_type_arg_error(sc, "caaaar", 1, car(args), "a pair"));
+}
+
+
+static s7_pointer g_caaadr(s7_scheme *sc, s7_pointer args)
+{
+  #define H_caaadr "(caaadr lst) returns (car (car (car (cdr lst))))"
+  s7_pointer lst = car(args);
+  if ((is_pair(lst)) && (is_pair(cdr(lst))) && (is_pair(cadr(lst))) && (is_pair(caadr(lst)))) return(car(car(car(cdr(lst)))));
+  return(s7_wrong_type_arg_error(sc, "caaadr", 1, car(args), "a pair"));
+}
+
+
+static s7_pointer g_caadar(s7_scheme *sc, s7_pointer args)
+{
+  #define H_caadar "(caadar lst) returns (car (car (cdr (car lst))))"
+  s7_pointer lst = car(args);
+  if ((is_pair(lst)) && (is_pair(car(lst))) && (is_pair(cdar(lst))) && (is_pair(cadar(lst)))) return(car(car(cdr(car(lst)))));
+  return(s7_wrong_type_arg_error(sc, "caadar", 1, car(args), "a pair"));
+}
+
+
+static s7_pointer g_cadaar(s7_scheme *sc, s7_pointer args)
+{
+  #define H_cadaar "(cadaar lst) returns (car (cdr (car (car lst))))"
+  s7_pointer lst = car(args);
+  if ((is_pair(lst)) && (is_pair(car(lst))) && (is_pair(caar(lst))) && (is_pair(cdaar(lst)))) return(car(cdr(car(car(lst)))));
+  return(s7_wrong_type_arg_error(sc, "cadaar", 1, car(args), "a pair"));
+}
+
+
+static s7_pointer g_caaddr(s7_scheme *sc, s7_pointer args)
+{
+  #define H_caaddr "(caaddr lst) returns (car (car (cdr (cdr lst))))"
+  s7_pointer lst = car(args);
+  if ((is_pair(lst)) && (is_pair(cdr(lst))) && (is_pair(cddr(lst))) && (is_pair(caddr(lst)))) return(car(car(cdr(cdr(lst)))));
+  return(s7_wrong_type_arg_error(sc, "caaddr", 1, car(args), "a pair"));
+}
+
+
+static s7_pointer g_cadddr(s7_scheme *sc, s7_pointer args)
+{
+  #define H_cadddr "(cadddr lst) returns (car (cdr (cdr (cdr lst))))"
+  s7_pointer lst = car(args);
+  if ((is_pair(lst)) && (is_pair(cdr(lst))) && (is_pair(cddr(lst))) && (is_pair(cdddr(lst)))) return(car(cdr(cdr(cdr(lst)))));
+  return(s7_wrong_type_arg_error(sc, "cadddr", 1, car(args), "a pair"));
+}
+
+
+static s7_pointer g_cadadr(s7_scheme *sc, s7_pointer args)
+{
+  #define H_cadadr "(cadadr lst) returns (car (cdr (car (cdr lst))))"
+  s7_pointer lst = car(args);
+  if ((is_pair(lst)) && (is_pair(cdr(lst))) && (is_pair(cadr(lst))) && (is_pair(cdadr(lst)))) return(car(cdr(car(cdr(lst)))));
+  return(s7_wrong_type_arg_error(sc, "cadadr", 1, car(args), "a pair"));
+}
+
+
+static s7_pointer g_caddar(s7_scheme *sc, s7_pointer args)
+{
+  #define H_caddar "(caddar lst) returns (car (cdr (cdr (car lst))))"
+  s7_pointer lst = car(args);
+  if ((is_pair(lst)) && (is_pair(car(lst))) && (is_pair(cdar(lst))) && (is_pair(cddar(lst)))) return(car(cdr(cdr(car(lst)))));
+  return(s7_wrong_type_arg_error(sc, "caddar", 1, car(args), "a pair"));
+}
+
+
+static s7_pointer g_cdaaar(s7_scheme *sc, s7_pointer args)
+{
+  #define H_cdaaar "(cdaaar lst) returns (cdr (car (car (car lst))))"
+  s7_pointer lst = car(args);
+  if ((is_pair(lst)) && (is_pair(car(lst))) && (is_pair(caar(lst))) && (is_pair(caaar(lst)))) return(cdr(car(car(car(lst)))));
+  return(s7_wrong_type_arg_error(sc, "cdaaar", 1, car(args), "a pair"));
+}
+
+
+static s7_pointer g_cdaadr(s7_scheme *sc, s7_pointer args)
+{
+  #define H_cdaadr "(cdaadr lst) returns (cdr (car (car (cdr lst))))"
+  s7_pointer lst = car(args);
+  if ((is_pair(lst)) && (is_pair(cdr(lst))) && (is_pair(cadr(lst))) && (is_pair(caadr(lst)))) return(cdr(car(car(cdr(lst)))));
+  return(s7_wrong_type_arg_error(sc, "cdaadr", 1, car(args), "a pair"));
+}
+
+
+static s7_pointer g_cdadar(s7_scheme *sc, s7_pointer args)
+{
+  #define H_cdadar "(cdadar lst) returns (cdr (car (cdr (car lst))))"
+  s7_pointer lst = car(args);
+  if ((is_pair(lst)) && (is_pair(car(lst))) && (is_pair(cdar(lst))) && (is_pair(cadar(lst)))) return(cdr(car(cdr(car(lst)))));
+  return(s7_wrong_type_arg_error(sc, "cdadar", 1, car(args), "a pair"));
+}
+
+
+static s7_pointer g_cddaar(s7_scheme *sc, s7_pointer args)
+{
+  #define H_cddaar "(cddaar lst) returns (cdr (cdr (car (car lst))))"
+  s7_pointer lst = car(args);
+  if ((is_pair(lst)) && (is_pair(car(lst))) && (is_pair(caar(lst))) && (is_pair(cdaar(lst)))) return(cdr(cdr(car(car(lst)))));
+  return(s7_wrong_type_arg_error(sc, "cddaar", 1, car(args), "a pair"));
+}
+
+
+static s7_pointer g_cdaddr(s7_scheme *sc, s7_pointer args)
+{
+  #define H_cdaddr "(cdaddr lst) returns (cdr (car (cdr (cdr lst))))"
+  s7_pointer lst = car(args);
+  if ((is_pair(lst)) && (is_pair(cdr(lst))) && (is_pair(cddr(lst))) && (is_pair(caddr(lst)))) return(cdr(car(cdr(cdr(lst)))));
+  return(s7_wrong_type_arg_error(sc, "cdaddr", 1, car(args), "a pair"));
+}
+
+
+static s7_pointer g_cddddr(s7_scheme *sc, s7_pointer args)
+{
+  #define H_cddddr "(cddddr lst) returns (cdr (cdr (cdr (cdr lst))))"
+  s7_pointer lst = car(args);
+  if ((is_pair(lst)) && (is_pair(cdr(lst))) && (is_pair(cddr(lst))) && (is_pair(cdddr(lst)))) return(cdr(cdr(cdr(cdr(lst)))));
+  return(s7_wrong_type_arg_error(sc, "cddddr", 1, car(args), "a pair"));
+}
+
+
+static s7_pointer g_cddadr(s7_scheme *sc, s7_pointer args)
+{
+  #define H_cddadr "(cddadr lst) returns (cdr (cdr (car (cdr lst))))"
+  s7_pointer lst = car(args);
+  if ((is_pair(lst)) && (is_pair(cdr(lst))) && (is_pair(cadr(lst))) && (is_pair(cdadr(lst)))) return(cdr(cdr(car(cdr(lst)))));
+  return(s7_wrong_type_arg_error(sc, "cddadr", 1, car(args), "a pair"));
+}
+
+
+static s7_pointer g_cdddar(s7_scheme *sc, s7_pointer args)
+{
+  #define H_cdddar "(cdddar lst) returns (cdr (cdr (cdr (car lst))))"
+  s7_pointer lst = car(args);
+  if ((is_pair(lst)) && (is_pair(car(lst))) && (is_pair(cdar(lst))) && (is_pair(cddar(lst)))) return(cdr(cdr(cdr(car(lst)))));
+  return(s7_wrong_type_arg_error(sc, "cdddar", 1, car(args), "a pair"));
+}
+
+
 static s7_pointer g_reverse(s7_scheme *sc, s7_pointer args)
 {
   #define H_reverse "(reverse lst) returns a list with the elements of lst in reverse order"
@@ -8155,20 +8302,15 @@ static s7_pointer g_procedure_documentation(s7_scheme *sc, s7_pointer args)
 
 s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
 {
-  s7_pointer lst = sc->NIL;
-
   if (s7_is_symbol(x))
     x = s7_symbol_value(sc, x);
 
   if (s7_is_function(x))
-    {
-      lst = s7_cons(sc, (x->object.ffptr->rest_arg) ? sc->T : sc->F, lst);
-      local_protect(lst);
-      lst = s7_cons(sc, sc->x = s7_make_integer(sc, x->object.ffptr->optional_args), lst);
-      lst = s7_cons(sc, sc->x = s7_make_integer(sc, x->object.ffptr->required_args), lst);
-      local_unprotect(lst);
-      return(lst);
-    }
+    return(s7_cons(sc, 
+		   s7_ungc(sc, s7_make_integer(sc, x->object.ffptr->required_args)), 
+		   s7_ungc(sc, s7_cons(sc, 
+				       s7_ungc(sc, s7_make_integer(sc, x->object.ffptr->optional_args)),
+				       s7_ungc(sc, s7_cons(sc, (x->object.ffptr->rest_arg) ? sc->T : sc->F, sc->NIL))))));
 
   if ((s7_is_closure(x)) ||
       (s7_is_pair(x)))
@@ -9180,14 +9322,11 @@ static s7_pointer g_for_each(s7_scheme *sc, s7_pointer args)
 {
   #define H_for_each "(for-each proc lst . lists) applies proc to a list made up of the car of each arg list"
   s7_pointer lists;
+
   sc->code = car(args);
   lists = cdr(args);
-
-  /* fprintf(stderr, "(for-each %s %s)\n", s7_object_to_c_string(sc, sc->code), s7_object_to_c_string(sc, lists)); */
-
   if (car(lists) == sc->NIL)
     return(sc->NIL);
-
   local_protect(lists);
 
   /* get car of each arg list making the current proc arglist */
@@ -9209,6 +9348,34 @@ static s7_pointer g_for_each(s7_scheme *sc, s7_pointer args)
 
   /* set up for repeated call walking down the lists of args */
   push_stack(sc, OP_FOR_EACH, lists, sc->code);
+  push_stack(sc, OP_APPLY, sc->args, sc->code);
+  return(sc->NIL);
+}
+
+
+static s7_pointer g_map(s7_scheme *sc, s7_pointer args)
+{
+  #define H_map "(map proc lst . lists) applies proc to a list made up of the car of each arg list, returning a list of the values returned by proc"
+  s7_pointer lists;
+
+  sc->code = car(args);
+  lists = cdr(args);
+  if (car(lists) == sc->NIL)
+    return(sc->NIL);
+  local_protect(lists);
+
+  /* get car of each arg list making the current proc arglist */
+  sc->args = sc->NIL;
+  for (sc->y = lists; sc->y != sc->NIL; sc->y = cdr(sc->y))
+    {
+      sc->args = cons(sc, caar(sc->y), sc->args);
+      car(sc->y) = cdar(sc->y);
+    }
+  sc->args = s7_reverse_in_place(sc, sc->NIL, sc->args);
+  local_unprotect(lists);
+
+  /* set up for repeated call walking down the lists of args, values list is cdr, current args is car */
+  push_stack(sc, OP_MAP, cons(sc, lists, sc->NIL), sc->code);
   push_stack(sc, OP_APPLY, sc->args, sc->code);
   return(sc->NIL);
 }
@@ -9370,6 +9537,33 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       /* (for-each (lambda (a) (display a)) (list 1 2 3)) */
 
       push_stack(sc, OP_FOR_EACH, sc->x, sc->code);
+      goto APPLY;
+
+
+    case OP_MAP:
+      /* car of args incoming is arglist, cdr is values list (nil to start) */
+      /*
+      fprintf(stderr, "op_map args: %s, code: %s, value: %s\n", 
+	      s7_object_to_c_string(sc, sc->args), s7_object_to_c_string(sc, sc->code), s7_object_to_c_string(sc, sc->value));
+      */
+      sc->x = sc->args;
+      cdr(sc->x) = cons(sc, sc->value, cdr(sc->x)); /* add current value to list */
+
+      if (caar(sc->x) == sc->NIL)
+	{
+	  pop_stack(sc, s7_reverse_in_place(sc, sc->NIL, cdr(sc->x)));
+	  goto START;
+	}
+      
+      sc->args = sc->NIL;
+      for (sc->y = car(sc->x); sc->y != sc->NIL; sc->y = cdr(sc->y))
+	{
+	  sc->args = cons(sc, caar(sc->y), sc->args);
+	  car(sc->y) = cdar(sc->y);
+	}
+      sc->args = s7_reverse_in_place(sc, sc->NIL, sc->args);
+
+      push_stack(sc, OP_MAP, sc->x, sc->code);
       goto APPLY;
 
       
@@ -11155,6 +11349,22 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "cdddr",                   g_cdddr,                   1, 0, false, H_cdddr);
   s7_define_function(sc, "cdadr",                   g_cdadr,                   1, 0, false, H_cdadr);
   s7_define_function(sc, "cddar",                   g_cddar,                   1, 0, false, H_cddar);
+  s7_define_function(sc, "caaaar",                  g_caaaar,                  1, 0, false, H_caaaar);
+  s7_define_function(sc, "caaadr",                  g_caaadr,                  1, 0, false, H_caaadr);
+  s7_define_function(sc, "caadar",                  g_caadar,                  1, 0, false, H_caadar);
+  s7_define_function(sc, "cadaar",                  g_cadaar,                  1, 0, false, H_cadaar);
+  s7_define_function(sc, "caaddr",                  g_caaddr,                  1, 0, false, H_caaddr);
+  s7_define_function(sc, "cadddr",                  g_cadddr,                  1, 0, false, H_cadddr);
+  s7_define_function(sc, "cadadr",                  g_cadadr,                  1, 0, false, H_cadadr);
+  s7_define_function(sc, "caddar",                  g_caddar,                  1, 0, false, H_caddar);
+  s7_define_function(sc, "cdaaar",                  g_cdaaar,                  1, 0, false, H_cdaaar);
+  s7_define_function(sc, "cdaadr",                  g_cdaadr,                  1, 0, false, H_cdaadr);
+  s7_define_function(sc, "cdadar",                  g_cdadar,                  1, 0, false, H_cdadar);
+  s7_define_function(sc, "cddaar",                  g_cddaar,                  1, 0, false, H_cddaar);
+  s7_define_function(sc, "cdaddr",                  g_cdaddr,                  1, 0, false, H_cdaddr);
+  s7_define_function(sc, "cddddr",                  g_cddddr,                  1, 0, false, H_cddddr);
+  s7_define_function(sc, "cddadr",                  g_cddadr,                  1, 0, false, H_cddadr);
+  s7_define_function(sc, "cdddar",                  g_cdddar,                  1, 0, false, H_cdddar);
   s7_define_function(sc, "length",                  g_length,                  1, 0, false, H_length);
   s7_define_function(sc, "assq",                    g_assq,                    2, 0, false, H_assq);
   s7_define_function(sc, "assv",                    g_assv,                    2, 0, false, H_assv);
@@ -11191,6 +11401,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "eval-string",             g_eval_string,             1, 0, false, H_eval_string);
   s7_define_function(sc, "apply",                   g_apply,                   1, 0, true,  H_apply);
   s7_define_function(sc, "for-each",                g_for_each,                2, 0, true,  H_for_each);
+  s7_define_function(sc, "map",                     g_map,                     2, 0, true,  H_map);
   
   s7_define_function(sc, "tracing",                 g_tracing,                 1, 0, false, H_tracing);
   s7_define_function(sc, "gc-verbose",              g_gc_verbose,              1, 0, false, H_gc_verbose);
@@ -11242,51 +11453,9 @@ s7_scheme *s7_init(void)
   /* leftovers from s7.scm -- this stuff will mostly go away! */
 
   s7_eval_c_string(sc, "\n\
-(define (caaaar x) (car (caaar x)))\n\
-(define (caaadr x) (car (caadr x)))\n\
-(define (caadar x) (car (cadar x)))\n\
-(define (caaddr x) (car (caddr x)))\n\
-(define (cadaar x) (car (cdaar x)))\n\
-(define (cadadr x) (car (cdadr x)))\n\
-(define (caddar x) (car (cddar x)))\n\
-(define (cadddr x) (car (cdddr x)))\n\
-(define (cdaaar x) (cdr (caaar x)))\n\
-(define (cdaadr x) (cdr (caadr x)))\n\
-(define (cdadar x) (cdr (cadar x)))\n\
-(define (cdaddr x) (cdr (caddr x)))\n\
-(define (cddaar x) (cdr (cdaar x)))\n\
-(define (cddadr x) (cdr (cdadr x)))\n\
-(define (cdddar x) (cdr (cddar x)))\n\
-(define (cddddr x) (cdr (cdddr x)))\n\
-\n\
-(define (unzip1-with-cdr . lists)\n\
-  (unzip1-with-cdr-iterative lists '() '()))\n\
-\n\
-(define (unzip1-with-cdr-iterative lists cars cdrs)\n\
-  (if (null? lists)\n\
-      (cons cars cdrs)\n\
-      (let ((car1 (caar lists))\n\
-	    (cdr1 (cdar lists)))\n\
-	(unzip1-with-cdr-iterative \n\
-	 (cdr lists) \n\
-	 (append cars (list car1))\n\
-	 (append cdrs (list cdr1))))))\n\
-\n\
-(define (map proc . lists)\n\
-  (if (null? lists)\n\
-      (apply proc)\n\
-      (if (null? (car lists))\n\
-	  '()\n\
-	  (let* ((unz (apply unzip1-with-cdr lists))\n\
-		 (cars (car unz))\n\
-		 (cdrs (cdr unz)))\n\
-	    (cons (apply proc cars)\n\
-                  (apply map (cons proc cdrs)))))))\n\
-\n\
 (macro quasiquote (lambda (l) (_quasiquote_ 0 (car (cdr l)))))\n\
 \n\
 ;;;; (do ((var init inc) ...) (endtest result ...) body ...)\n\
-;;\n\
 (macro do\n\
   (lambda (do-macro)\n\
     (apply (lambda (do vars endtest . body)\n\
@@ -11313,7 +11482,20 @@ s7_scheme *s7_init(void)
 				'()))\n\
 			  `,vars)))))\n\
 	   do-macro)))\n\
-\n\
+#|\n\
+(define-macro (do vars final . body)\n\
+  (let ((loop (gensym)))\n\
+    `(letrec\n\
+	 ((,loop\n\
+	   (lambda ,(map car vars)\n\
+	     (if ,(car final)\n\
+		 ,(if (not (null? (cdr final)))\n\
+		      (cadr final))\n\
+		 (begin\n\
+		   ,@body\n\
+		   (,loop ,@(map (lambda (x) (if (pair? (cddr x)) (caddr x) (car x))) vars)))))))\n\
+       (,loop ,@(map cadr vars)))))\n\
+|#\n\
 (define (call-with-input-file filename func)\n\
   (let ((inport (open-input-file filename)))\n\
     (and (input-port? inport)\n\
