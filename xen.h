@@ -2754,7 +2754,7 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 #define XEN_ARG_8    8
 #define XEN_ARG_9    9
 #define XEN_ARG_10   10
-/* 10 is the limit in Guile (SCM_GSUBR_MAX in gsubr.h), 10000 in Gauche (VM_STACK_SIZE in src/gauche/vm.h), not sure about Ruby or Forth */
+/* 10 is the limit in Guile (SCM_GSUBR_MAX in gsubr.h), 10000 in Gauche (VM_STACK_SIZE in src/gauche/vm.h), no limit in S7, not sure about Ruby or Forth */
 
 #if (!HAVE_S7)
 #define XEN_TO_C_OFF_T_OR_ELSE(a, b)  xen_to_c_off_t_or_else(a, b)

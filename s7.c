@@ -47,10 +47,9 @@
  *   there's no arg number mismatch check for caller-defined functions!
  *   help for vars (objects)
  *   figure out how add syntax-rules, (C-level) do, also call-with-values and values
- *   the rest of the call-with funcs (call-with-input-string is done)
  *   get rid of the config header somehow! -- ideally we'd get rid of all switches like HAVE_STDBOOL_H
  *   doc in s7.h
- *   snd-test 28
+ *   snd-test full
  *   
  * define-type (make-type in ext)
  * (define-type "name"
@@ -6422,30 +6421,80 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
 }
 
 
+static s7_pointer call_with_input(s7_scheme *sc, s7_pointer port, s7_pointer args)
+{
+  push_stack(sc, OP_EVAL_STRING_DONE, sc->args, sc->code);
+  sc->code = cadr(args);
+  sc->args = cons(sc, port, sc->NIL);
+  eval(sc, OP_APPLY);
+  s7_close_input_port(sc, port);
+  return(sc->value);
+}
+
 
 static s7_pointer g_call_with_input_string(s7_scheme *sc, s7_pointer args)
 {
-  #define H_call_with_input_string "(call-with-input-string str thunk) opens a string port for str and applies thunk to it"
+  #define H_call_with_input_string "(call-with-input-string str proc) opens a string port for str and applies proc to it"
 
   /* (call-with-input-string "44" (lambda (p) (+ 1 (read p)))) -> 45
    */
 
-  s7_pointer port;
   if (!s7_is_string(car(args)))
     return(s7_wrong_type_arg_error(sc, "call-with-input-string", 1, car(args), "a string"));
 
-  port = s7_open_input_string(sc, s7_string(car(args)));
-  push_input_port(sc, port);
+  return(call_with_input(sc, s7_open_input_string(sc, s7_string(car(args))), args));
+}
+
+
+static s7_pointer g_call_with_input_file(s7_scheme *sc, s7_pointer args)
+{
+  #define H_call_with_input_file "(call-with-input-file filename proc) opens filename and calls proc with the input port as its argument"
+
+  if (!s7_is_string(car(args)))
+    return(s7_wrong_type_arg_error(sc, "call-with-input-file", 1, car(args), "a string (a filename)"));
+
+  return(call_with_input(sc, s7_open_input_file(sc, s7_string(car(args)), "r"), args));
+}
+
+
+static s7_pointer with_input(s7_scheme *sc, s7_pointer port, s7_pointer args)
+{
+  s7_pointer old_input_port;
+  old_input_port = sc->input_port;
+  sc->input_port = port;
 
   push_stack(sc, OP_EVAL_STRING_DONE, sc->args, sc->code);
-  sc->args = cons(sc, port, sc->NIL);
   sc->code = cadr(args);
+  sc->args = sc->NIL;
   eval(sc, OP_APPLY);
 
-  pop_input_port(sc);
-  s7_close_input_port(sc, port);
+  s7_close_input_port(sc, sc->input_port);
+  sc->input_port = old_input_port;
   return(sc->value);
 }
+
+
+static s7_pointer g_with_input_from_string(s7_scheme *sc, s7_pointer args)
+{
+  #define H_with_input_from_string "(with-input-from-string str thunk) opens str as the temporary current-input-port and calls thunk"
+
+  if (!s7_is_string(car(args)))
+    return(s7_wrong_type_arg_error(sc, "with-input-from-string", 1, car(args), "a string"));
+
+  return(with_input(sc, s7_open_input_string(sc, s7_string(car(args))), args));
+}
+
+
+static s7_pointer g_with_input_from_file(s7_scheme *sc, s7_pointer args)
+{
+  #define H_with_input_from_file "(with-input-from-file filename thunk) opens filename as the temporary current-input-port and calls thunk"
+
+  if (!s7_is_string(car(args)))
+    return(s7_wrong_type_arg_error(sc, "with-input-from-file", 1, car(args), "a string (a filename)"));
+
+  return(with_input(sc, s7_open_input_file(sc, s7_string(car(args)), "r"), args));
+}
+
 
 
 
@@ -6461,10 +6510,6 @@ static void char_to_string_port(char c, s7_pointer pt)
       port_string_length(pt) *= 2;
       port_string(pt) = (char *)REALLOC(port_string(pt), port_string_length(pt) * sizeof(char));
       memset((void *)(port_string(pt) + loc), 0, loc);
-#if 0
-      for (i = loc; i < port_string_length(pt); i++)
-	port_string(pt)[i] = '\0';
-#endif
     }
   port_string(pt)[port_string_point(pt)++] = c;
 }
@@ -7026,6 +7071,88 @@ static s7_pointer g_write_byte(s7_scheme *sc, s7_pointer args)
   fputc((unsigned char)s7_integer(car(args)), port_file(port));
   return(car(args));
 }
+
+
+static s7_pointer g_call_with_output_string(s7_scheme *sc, s7_pointer args)
+{
+  #define H_call_with_output_string "(call-with-output-string proc) opens a string port applies proc to it, then returns the collected output"
+  s7_pointer port, result;
+
+  port = s7_open_output_string(sc);
+  local_protect(port);
+  push_stack(sc, OP_EVAL_STRING_DONE, sc->args, sc->code);
+  sc->code = car(args);
+  sc->args = cons(sc, port, sc->NIL);
+  eval(sc, OP_APPLY);
+  result = s7_make_string(sc, s7_get_output_string(sc, port));
+  local_unprotect(port);
+  s7_close_output_port(sc, port);
+  return(result);
+}
+
+
+static s7_pointer g_call_with_output_file(s7_scheme *sc, s7_pointer args)
+{
+  #define H_call_with_output_file "(call-with-output-file filename proc) opens filename and calls proc with the output port as its argument"
+  s7_pointer port;
+
+  if (!s7_is_string(car(args)))
+    return(s7_wrong_type_arg_error(sc, "call-with-output-file", 1, car(args), "a string (a filename)"));
+
+  port = s7_open_output_file(sc, s7_string(car(args)), "w");
+  local_protect(port);
+  push_stack(sc, OP_EVAL_STRING_DONE, sc->args, sc->code);
+  sc->code = cadr(args);
+  sc->args = cons(sc, port, sc->NIL);
+  eval(sc, OP_APPLY);
+  local_unprotect(port);
+  s7_close_output_port(sc, port);
+  return(sc->value);
+}
+
+
+static s7_pointer g_with_output_to_string(s7_scheme *sc, s7_pointer args)
+{
+  #define H_with_output_to_string "(with-output-to-string thunk) opens a string as a temporary current-output-port, calls thunk, then returns the collected output"
+  s7_pointer old_output_port, result;
+  
+  old_output_port = sc->output_port;
+  local_protect(old_output_port);
+  sc->output_port = s7_open_output_string(sc);
+  push_stack(sc, OP_EVAL_STRING_DONE, sc->args, sc->code);
+  sc->code = car(args);
+  sc->args = sc->NIL;
+  eval(sc, OP_APPLY);
+  result = s7_make_string(sc, s7_get_output_string(sc, sc->output_port));
+  local_unprotect(sc->output_port);
+  s7_close_output_port(sc, sc->output_port);
+  sc->output_port = old_output_port;
+  return(result);
+}
+
+
+static s7_pointer g_with_output_to_file(s7_scheme *sc, s7_pointer args)
+{
+  #define H_with_output_to_file "(with-output-to-file filename thunk) opens filename as the temporary current-output-port and calls thunk"
+  s7_pointer old_output_port;
+
+  if (!s7_is_string(car(args)))
+    return(s7_wrong_type_arg_error(sc, "with-output-to-file", 1, car(args), "a string (a filename)"));
+
+  old_output_port = sc->output_port;
+  local_protect(old_output_port);
+  sc->output_port = s7_open_output_file(sc, s7_string(car(args)), "w");
+  push_stack(sc, OP_EVAL_STRING_DONE, sc->args, sc->code);
+  sc->code = cadr(args);
+  sc->args = sc->NIL;
+  eval(sc, OP_APPLY);
+  local_unprotect(sc->output_port);
+  s7_close_output_port(sc, sc->output_port);
+  sc->output_port = old_output_port;
+  return(sc->value);
+}
+
+
 
 
 
@@ -8209,13 +8336,14 @@ s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p)
 
   if (s7_is_closure(p) || is_macro(p) || is_promise(p)) 
     {
-      return(s7_cons(sc, s7_append(sc, 
-				   cons(sc, 
-					sc->LAMBDA, 
-					cons(sc,
-					     car(car(p)),
-					     sc->NIL)),
-				   cdr(car(p))),
+      return(s7_cons(sc, 
+		     s7_ungc(sc, s7_append(sc, 
+					   s7_ungc(sc, cons(sc, 
+							    sc->LAMBDA, 
+							    s7_ungc(sc, cons(sc,
+									     car(car(p)),
+									     sc->NIL)))),
+					   cdr(car(p)))),
 		     cdr(p)));
     }
 
@@ -9323,31 +9451,38 @@ static s7_pointer g_for_each(s7_scheme *sc, s7_pointer args)
   #define H_for_each "(for-each proc lst . lists) applies proc to a list made up of the car of each arg list"
   s7_pointer lists;
 
+  /* fprintf(stderr, "(for-each %s)\n", s7_object_to_c_string(sc, args)); */
+
   sc->code = car(args);
   lists = cdr(args);
   if (car(lists) == sc->NIL)
     return(sc->NIL);
   local_protect(lists);
 
+  sc->x = sc->NIL;
+
   /* get car of each arg list making the current proc arglist */
   sc->args = sc->NIL;
+
   for (sc->y = lists; sc->y != sc->NIL; sc->y = cdr(sc->y))
     {
       sc->args = cons(sc, caar(sc->y), sc->args);
-      car(sc->y) = cdar(sc->y);
+      /* car(sc->y) = cdar(sc->y); */
+      sc->x = cons(sc, cdar(sc->y), sc->x);
     }
   sc->args = s7_reverse_in_place(sc, sc->NIL, sc->args);
+  sc->x = s7_reverse_in_place(sc, sc->NIL, sc->x);
   local_unprotect(lists);
 
   /* if lists have no cdr (just 1 set of args), apply the proc to them */
-  if (car(lists) == sc->NIL)
+  if (car(sc->x) == sc->NIL)
     {
       push_stack(sc, OP_APPLY, sc->args, sc->code);
       return(sc->NIL);
     }
 
   /* set up for repeated call walking down the lists of args */
-  push_stack(sc, OP_FOR_EACH, lists, sc->code);
+  push_stack(sc, OP_FOR_EACH, sc->x, sc->code);
   push_stack(sc, OP_APPLY, sc->args, sc->code);
   return(sc->NIL);
 }
@@ -9364,18 +9499,22 @@ static s7_pointer g_map(s7_scheme *sc, s7_pointer args)
     return(sc->NIL);
   local_protect(lists);
 
+  sc->x = sc->NIL;
+
   /* get car of each arg list making the current proc arglist */
   sc->args = sc->NIL;
   for (sc->y = lists; sc->y != sc->NIL; sc->y = cdr(sc->y))
     {
       sc->args = cons(sc, caar(sc->y), sc->args);
-      car(sc->y) = cdar(sc->y);
+      /* car(sc->y) = cdar(sc->y); */ /* this clobbers the original lists -- we need to copy */
+      sc->x = cons(sc, cdar(sc->y), sc->x);
     }
   sc->args = s7_reverse_in_place(sc, sc->NIL, sc->args);
+  sc->x = s7_reverse_in_place(sc, sc->NIL, sc->x);
   local_unprotect(lists);
 
   /* set up for repeated call walking down the lists of args, values list is cdr, current args is car */
-  push_stack(sc, OP_MAP, cons(sc, lists, sc->NIL), sc->code);
+  push_stack(sc, OP_MAP, cons(sc, sc->x, sc->NIL), sc->code);
   push_stack(sc, OP_APPLY, sc->args, sc->code);
   return(sc->NIL);
 }
@@ -9781,7 +9920,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 		{
 		  if (sc->y == sc->NIL)
 		    {
-		      pop_stack(sc, eval_error(sc, "not enough arguments", sc->code));
+		      pop_stack(sc, eval_error(sc, "not enough arguments", s7_procedure_source(sc, sc->code)));
 		      goto START;
 		    }
 
@@ -10802,14 +10941,14 @@ static s7_pointer g_mcons(s7_scheme *sc, s7_pointer f, s7_pointer l, s7_pointer 
 	  (s7_is_procedure(f)))
 	return(f);
 
-      return(s7_cons(sc, sc->QUOTE, s7_cons(sc, f, sc->NIL)));
+      return(s7_cons(sc, sc->QUOTE, s7_ungc(sc, s7_cons(sc, f, sc->NIL))));
     }
   else
     {
       if (l == sc->VECTOR_FUNCTION)
-	return(g_vector(sc, s7_cons(sc, r, sc->NIL))); /* eval? */
+	return(g_vector(sc, s7_ungc(sc, s7_cons(sc, r, sc->NIL)))); /* eval? */
 
-      return(s7_cons(sc, sc->CONS, s7_cons(sc, l, s7_cons(sc, r, sc->NIL))));
+      return(s7_cons(sc, sc->CONS, s7_ungc(sc, s7_cons(sc, l, s7_ungc(sc, s7_cons(sc, r, sc->NIL))))));
     }
 }
 
@@ -10831,7 +10970,7 @@ static s7_pointer g_mappend(s7_scheme *sc, s7_pointer f, s7_pointer l, s7_pointe
        (car(cdr(r)) == sc->NIL)))
     return(l);
 
-  return(s7_cons(sc, sc->APPEND, s7_cons(sc, l, s7_cons(sc, r, sc->NIL))));
+  return(s7_cons(sc, sc->APPEND, s7_ungc(sc, s7_cons(sc, l, s7_ungc(sc, s7_cons(sc, r, sc->NIL))))));
 }
 
 
@@ -10884,15 +11023,15 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, int level, s7_pointer form)
 	  (s7_is_procedure(form)))
 	return(form);
 
-      return(s7_cons(sc, sc->QUOTE, s7_cons(sc, form, sc->NIL)));
+      return(s7_cons(sc, sc->QUOTE, s7_ungc(sc, s7_cons(sc, form, sc->NIL))));
     }
   else
     {
       if (car(form) == sc->QUASIQUOTE)
 	return(g_mcons(sc, 
 		       form, 
-		       s7_cons(sc, sc->QUOTE, s7_cons(sc, sc->QUASIQUOTE, sc->NIL)),
-		       g_quasiquote_1(sc, level + 1, cdr(form))));
+		       s7_ungc(sc, s7_cons(sc, sc->QUOTE, s7_ungc(sc, s7_cons(sc, sc->QUASIQUOTE, sc->NIL)))),
+		       s7_ungc(sc, g_quasiquote_1(sc, level + 1, cdr(form)))));
       else
 	{
 	  if (level == 0)
@@ -10908,12 +11047,12 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, int level, s7_pointer form)
 		return(g_mappend(sc, 
 				 form,
 				 car(cdr(car(form))),
-				 g_quasiquote_1(sc, level, cdr(form))));
+				 s7_ungc(sc, g_quasiquote_1(sc, level, cdr(form)))));
 				 
 	      return(g_mcons(sc, 
 			     form, 
-			     g_quasiquote_1(sc, level, car(form)),
-			     g_quasiquote_1(sc, level, cdr(form))));
+			     s7_ungc(sc, g_quasiquote_1(sc, level, car(form))),
+			     s7_ungc(sc, g_quasiquote_1(sc, level, cdr(form)))));
 	    }
 	  else
 	    {
@@ -10921,19 +11060,19 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, int level, s7_pointer form)
 	      if (car(form) == sc->UNQUOTE)
 		return(g_mcons(sc, 
 			       form,
-			       s7_cons(sc, sc->QUOTE, s7_cons(sc, sc->UNQUOTE, sc->NIL)),
-			       g_quasiquote_1(sc, level - 1, cdr(form))));
+			       s7_ungc(sc, s7_cons(sc, sc->QUOTE, s7_ungc(sc, s7_cons(sc, sc->UNQUOTE, sc->NIL)))),
+			       s7_ungc(sc, g_quasiquote_1(sc, level - 1, cdr(form)))));
 
 	      if (car(form) == sc->UNQUOTE_SPLICING)
 		return(g_mcons(sc, 
 			       form,
-			       s7_cons(sc, sc->QUOTE, s7_cons(sc, sc->UNQUOTE_SPLICING, sc->NIL)),
-			       g_quasiquote_1(sc, level - 1, cdr(form))));
+			       s7_ungc(sc, s7_cons(sc, sc->QUOTE, s7_ungc(sc, s7_cons(sc, sc->UNQUOTE_SPLICING, sc->NIL)))),
+			       s7_ungc(sc, g_quasiquote_1(sc, level - 1, cdr(form)))));
 
 	      return(g_mcons(sc,
 			     form,
-			     g_quasiquote_1(sc, level, car(form)),
-			     g_quasiquote_1(sc, level, cdr(form))));
+			     s7_ungc(sc, g_quasiquote_1(sc, level, car(form))),
+			     s7_ungc(sc, g_quasiquote_1(sc, level, cdr(form)))));
 	    }
 	}
     }
@@ -10947,7 +11086,7 @@ static s7_pointer g_quasiquote(s7_scheme *sc, s7_pointer args)
   s7_pointer result;
   bool old_gc_off;
   old_gc_off = sc->gc_off;
-  sc->gc_off = true;
+  /* sc->gc_off = true; */
   result = g_quasiquote_1(sc, s7_integer(car(args)), cadr(args));
   sc->gc_off = old_gc_off;
   return(result);
@@ -11054,7 +11193,7 @@ s7_scheme *s7_init(void)
   sc->args = sc->NIL;
   sc->value = sc->NIL;
 
-  sc->temps_size = 32;
+  sc->temps_size = 4096;
   sc->temps_ctr = 0;
   sc->temps = (s7_pointer *)CALLOC(sc->temps_size, sizeof(s7_pointer));
   for (i = 0; i < sc->temps_size; i++)
@@ -11200,8 +11339,15 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "read-byte",               g_read_byte,               0, 1, false, H_read_byte);
   s7_define_function(sc, "write-byte",              g_write_byte,              1, 1, false, H_write_byte);
 
-  /* call-with-output|input-file with-output-to-file with-input-from-file */
   s7_define_function(sc, "call-with-input-string",  g_call_with_input_string,  2, 0, false, H_call_with_input_string);
+  s7_define_function(sc, "call-with-input-file",    g_call_with_input_file,    2, 0, false, H_call_with_input_file);
+  s7_define_function(sc, "with-input-from-string",  g_with_input_from_string,  2, 0, false, H_with_input_from_string);
+  s7_define_function(sc, "with-input-from-file",    g_with_input_from_file,    2, 0, false, H_with_input_from_file);
+
+  s7_define_function(sc, "call-with-output-string", g_call_with_output_string, 1, 0, false, H_call_with_output_string);
+  s7_define_function(sc, "call-with-output-file",   g_call_with_output_file,   2, 0, false, H_call_with_output_file);
+  s7_define_function(sc, "with-output-to-string",   g_with_output_to_string,   1, 0, false, H_with_output_to_string);
+  s7_define_function(sc, "with-output-to-file",     g_with_output_to_file,     2, 0, false, H_with_output_to_file);
 
 
   /* numbers */
@@ -11446,14 +11592,14 @@ s7_scheme *s7_init(void)
   s7_define_variable(sc, "*load-path*", sc->NIL);
   s7_define_variable(sc, "*vector-print-length*", vector_element(sc->small_ints, 8));
 
-  s7_define_function(sc, "_quasiquote_",                    g_quasiquote,                    2, 0, false, "internal quasiquote handler");
+  s7_define_function(sc, "_quasiquote_", g_quasiquote, 2, 0, false, "internal quasiquote handler");
 
   sc->gc_off = false;
 
   /* leftovers from s7.scm -- this stuff will mostly go away! */
 
   s7_eval_c_string(sc, "\n\
-(macro quasiquote (lambda (l) (_quasiquote_ 0 (car (cdr l)))))\n\
+(macro quasiquote (lambda (l) (_quasiquote_ 0 (cadr l))))\n\
 \n\
 ;;;; (do ((var init inc) ...) (endtest result ...) body ...)\n\
 (macro do\n\
@@ -11496,58 +11642,6 @@ s7_scheme *s7_init(void)
 		   (,loop ,@(map (lambda (x) (if (pair? (cddr x)) (caddr x) (car x))) vars)))))))\n\
        (,loop ,@(map cadr vars)))))\n\
 |#\n\
-(define (call-with-input-file filename func)\n\
-  (let ((inport (open-input-file filename)))\n\
-    (and (input-port? inport)\n\
-	 (let ((res (func inport)))\n\
-	   (close-input-port inport)\n\
-	   res))))\n\
-\n\
-(define (call-with-output-file filename func)\n\
-  (let ((outport (open-output-file filename)))\n\
-    (and (output-port? outport)\n\
-	 (let ((res (func outport)))\n\
-	   (close-output-port outport)\n\
-	   res))))\n\
-\n\
-(define (with-input-from-file s p)\n\
-  (let ((inport (open-input-file s)))\n\
-    (and inport\n\
-	(let ((prev-inport (current-input-port)))\n\
-	  (set-current-input-port inport)\n\
-	  (let ((res (p)))\n\
-	    (close-input-port inport)\n\
-	    (set-current-input-port prev-inport)\n\
-	    res)))))\n\
-\n\
-(define (with-output-to-file s p)\n\
-  (let ((outport (open-output-file s)))\n\
-    (if (eq? outport #f)\n\
-	#f\n\
-	(let ((prev-outport (current-output-port)))\n\
-	  (set-current-output-port outport)\n\
-	  (let ((res (p)))\n\
-	    (close-output-port outport)\n\
-	    (set-current-output-port prev-outport)\n\
-	    res)))))\n\
-\n\
-(define (call-with-output-string t)\n\
-  (let* ((p (open-output-string))\n\
-	 (r (t p))\n\
-	 (s (get-output-string p)))\n\
-    (close-output-port p)\n\
-    s))\n\
-\n\
-(define (with-output-to-string thunk)\n\
-  (let* ((output-port (current-output-port))\n\
-	 (string-port (open-output-string)))\n\
-    (set-current-output-port string-port)\n\
-    (thunk)\n\
-    (let ((result (get-output-string string-port)))\n\
-      (close-output-port string-port)\n\
-      (set-current-output-port output-port)\n\
-      result)))\n\
-\n\
 (define (dynamic-wind in body out)\n\
   (in)\n\
   (catch #t\n\

@@ -35,7 +35,7 @@
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
 (define tests 1)
-(define keep-going #f)
+(define keep-going #t)
 (define all-args #f)
 (define test-at-random 0)
 ;(show-ptree 1)
@@ -476,12 +476,14 @@
       (/ a b)))
 
 (define timings (make-vector (+ total-tests 1) 0))
+(define default-srate (mus-srate))
 
 (snd-display ";;~A" (snd-version))
 (if (not (defined? 'before-test-hook)) (define before-test-hook (make-hook 1)))
 (if (not (defined? 'after-test-hook)) (define after-test-hook (make-hook 1)))
 (reset-hook! before-test-hook)
 (add-hook! before-test-hook (lambda (n)
+			      (set! (mus-srate) default-srate)
 			      (dismiss-all-dialogs)
 			      (set! (clipping) #f)
 			      (set! (mus-clipping) #f) ; this cost me a morning of confusion!
@@ -34047,6 +34049,7 @@ EDITS: 2
 		(undo 3))
 	      (close-sound ind))
 	    
+	    (set! (mus-srate) 22050)
 	    (let ((ind (new-sound "test.snd" mus-next mus-bfloat 22050 1 "src-* tests" 10000))
 		  (osc (make-oscil 500)))
 	      
@@ -68427,9 +68430,9 @@ EDITS: 1
 		     fill-rectangle filter-sound filter-control-in-dB filter-control-envelope enved-filter-order enved-filter
 		     filter-control-in-hz filter-control-order filter-selection filter-channel filter-control-waveform-color filter-control? find-channel
 		     find-mark find-sound finish-progress-report foreground-color insert-file-dialog file-write-date
-		     frames free-sample-reader graph transform? delete-transform add-watcher delete-watcher
+		     frames free-sample-reader graph transform? delete-transform delete-watcher
 		     graph-color graph-cursor graph-data graph->ps gl-graph->ps graph-style lisp-graph?  graphs-horizontal header-type
-		     help-dialog info-dialog highlight-color in insert-region insert-sample insert-samples
+		     help-dialog info-dialog highlight-color insert-region insert-sample insert-samples
 		     insert-samples-with-origin insert-selection insert-silence insert-sound just-sounds key key-binding
 		     left-sample listener-color listener-font listener-prompt listener-selection listener-text-color
 		     main-widgets make-color make-graph-data make-mix-sample-reader make-player make-region
@@ -68440,7 +68443,7 @@ EDITS: 1
 		     mix-dialog-mix mix-name mix-sync-max mix-sync mix-properties
 		     mix-region mix-sample-reader?  mix-selection mix-sound mix-home mix-speed mix-tag-height mix-tag-width mark-tag-height mark-tag-width
 		     mix-tag-y mix-vct mix-waveform-height time-graph-style lisp-graph-style transform-graph-style
-					;new-sound 
+					;new-sound in add-watcher
 		     read-mix-sample next-sample read-region-sample
 		     transform-normalization open-file-dialog-directory open-raw-sound open-sound orientation-dialog previous-sample
 		     peak-env-info peaks ;play play-and-wait play-mix play-region play-selection
@@ -69441,21 +69444,22 @@ EDITS: 1
 			  (list mouse-click-hook 'mouse-click-hook)
 			  (list enved-hook 'enved-hook)))
 	  
-	  (for-each (lambda (n)
-		      (let* ((hook (car n))
-			     (hook-name (cadr n))
-			     (tag
-			      (catch #t
-				     (lambda () (add-hook! hook (lambda (a b c) (+ a b c))))
-				     (lambda args (car args)))))
-			(if (not (eq? tag 'wrong-type-arg))
-			    (snd-display ";hooks ~A: ~A" hook-name tag))))
-		    (list (list exit-hook 'exit-hook)
-			  (list stop-dac-hook 'stop-dac-hook)
-			  (list stop-playing-selection-hook 'stop-playing-selection-hook)
-			  (list color-hook 'color-hook)
-			  (list orientation-hook 'orientation-hook)
-			  (list start-playing-selection-hook 'start-playing-selection-hook)))
+	  (if (not (provided? 'snd-s7))
+	      (for-each (lambda (n)
+			  (let* ((hook (car n))
+				 (hook-name (cadr n))
+				 (tag
+				  (catch #t
+					 (lambda () (add-hook! hook (lambda (a b c) (+ a b c))))
+					 (lambda args (car args)))))
+			    (if (not (eq? tag 'wrong-type-arg))
+				(snd-display ";hooks ~A: ~A" hook-name tag))))
+			(list (list exit-hook 'exit-hook)
+			      (list stop-dac-hook 'stop-dac-hook)
+			      (list stop-playing-selection-hook 'stop-playing-selection-hook)
+			      (list color-hook 'color-hook)
+			      (list orientation-hook 'orientation-hook)
+			      (list start-playing-selection-hook 'start-playing-selection-hook))))
 	  
 	  (if (= test-28 0) 
 	      (begin
@@ -70495,12 +70499,13 @@ EDITS: 1
 	  
 	  (if (not (sound? ind)) (snd-display ";edpos bad arity proc clobbers chan?? ~A" ind))
 	  
-	  (let ((tag (catch #t
-			    (lambda () (scale-channel .5 0 100 ind 0 (lambda (snd chn) (close-sound snd) current-edit-position)))
-			    (lambda args (car args)))))
-	    (if (not (eq? tag 'no-such-channel)) (snd-display ";edpos clobbers channel: ~A" tag)))
-	  
-	  (if (sound? ind) (snd-display ";edpos proc clobbers chan?? ~A" ind)))
+	  (if (provided? 'snd-guile)
+	      (let ((tag (catch #t
+				(lambda () (scale-channel .5 0 100 ind 0 (lambda (snd chn) (close-sound snd) current-edit-position)))
+				(lambda args (car args)))))
+		(if (not (eq? tag 'no-such-channel)) (snd-display ";edpos clobbers channel: ~A" tag))
+		(if (sound? ind) (snd-display ";edpos proc clobbers chan?? ~A" ind)))
+	      (close-sound ind)))
 	
 	(set! env3 #f)
 	(set! delay-32 #f)
