@@ -303,7 +303,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 	   (cor-peak (vct-peak data)))
       (if (= cor-peak 0.0)
 	  0.0
-	  (call-with-current-continuation
+	  (call-with-exit
 	   (lambda (return)
 	     (do ((i 1 (1+ i)))
 		 ((= i (- fftlen 2)) 0)

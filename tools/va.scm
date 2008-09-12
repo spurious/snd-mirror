@@ -1,10 +1,7 @@
-#!/usr/bin/guile -s
-!#
-
 ;;; a script to search for allocation mismatches and unterminated XtVa args 
 
-(use-modules (ice-9 format))
-(if (not (defined? 'read-line)) (use-modules (ice-9 rdelim)))
+;(use-modules (ice-9 format))
+;(if (not (defined? 'read-line)) (use-modules (ice-9 rdelim)))
 
 (define xtva-ctr 0)
 
@@ -64,7 +61,7 @@
 		   (count 0)
 		   (flen (string-length func)))
 	       ;; look for * miscounts
-	       (call-with-current-continuation
+	       (call-with-exit
 		(lambda (break)
 		  (do ((i 0 (1+ i)))
 		      ((= i len))
@@ -143,7 +140,7 @@
 (for-each-file 
  (lambda (line file count)
    (let ((len (string-length line)))
-     (call-with-current-continuation
+     (call-with-exit
       (lambda (return)
 	(do ((i 0 (1+ i)))
 	    ((= i len))

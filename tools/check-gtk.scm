@@ -50,7 +50,7 @@
 (define (cadr-str data)
   (let ((sp1 -1)
 	(len (string-length data)))
-    (call-with-current-continuation
+    (call-with-exit
      (lambda (return)
        (do ((i 0 (1+ i)))
 	   ((= i len) (substring data sp1))
@@ -61,7 +61,7 @@
 
 (define (paren-str data)
   (let ((len (string-length data)))
-    (call-with-current-continuation
+    (call-with-exit
      (lambda (return)
        (do ((i 0 (1+ i)))
 	   ((= i len) data)

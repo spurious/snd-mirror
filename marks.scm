@@ -33,7 +33,7 @@
 
 (define (mark-name->id name)
   "(mark-name->id name) is like find-mark but searches all currently accessible channels"
-  (call-with-current-continuation
+  (call-with-exit
    (lambda (return)
      (for-each
       (lambda (snd)
@@ -63,7 +63,7 @@
     (if (not mark-setting)
         ;; not an active mark, so go scrounging for it
         ;;   we're looking at every edit of every channel
-	(set! mark-setting (call-with-current-continuation
+	(set! mark-setting (call-with-exit
 			    (lambda (return)
 			      (for-each
 			       (lambda (snd)

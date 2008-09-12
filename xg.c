@@ -531,6 +531,7 @@ XM_TYPE_PTR(PangoAttribute_, PangoAttribute*)
 #define C_TO_XEN_int(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_int(Arg) (int)(XEN_TO_C_INT(Arg))
 #define XEN_int_P(Arg) XEN_INTEGER_P(Arg)
+XM_TYPE_PTR_1(GdkBitmap__, GdkBitmap**)
 #define C_TO_XEN_GdkNativeWindow(Arg) C_TO_XEN_ULONG(Arg)
 #define XEN_TO_C_GdkNativeWindow(Arg) (GdkNativeWindow)(XEN_TO_C_ULONG(Arg))
 #define XEN_GdkNativeWindow_P(Arg) XEN_ULONG_P(Arg)
@@ -847,6 +848,90 @@ XM_TYPE_PTR(PangoLayoutIter_, PangoLayoutIter*)
 XM_TYPE_PTR_2(PangoLayoutRun_, PangoLayoutRun*)
 #define XEN_TO_C_gssize(Arg) (gssize)(XEN_TO_C_INT(Arg))
 #define XEN_gssize_P(Arg) XEN_INTEGER_P(Arg)
+#define C_TO_XEN_GtkCalendarDisplayOptions(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_GtkCalendarDisplayOptions(Arg) (GtkCalendarDisplayOptions)(XEN_TO_C_INT(Arg))
+#define XEN_GtkCalendarDisplayOptions_P(Arg) XEN_INTEGER_P(Arg)
+XM_TYPE_PTR_1(GtkEventBox_, GtkEventBox*)
+XM_TYPE_PTR(GtkToolItem_, GtkToolItem*)
+#define C_TO_XEN_GtkFileChooserAction(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_GtkFileChooserAction(Arg) (GtkFileChooserAction)(XEN_TO_C_INT(Arg))
+#define XEN_GtkFileChooserAction_P(Arg) XEN_INTEGER_P(Arg)
+XM_TYPE_PTR_1(GtkTreeModelFilter_, GtkTreeModelFilter*)
+XM_TYPE_PTR(GtkAction_, GtkAction*)
+XM_TYPE_PTR_1(GtkActionEntry_, GtkActionEntry*)
+XM_TYPE_PTR_1(GtkToggleActionEntry_, GtkToggleActionEntry*)
+XM_TYPE_PTR_1(GtkComboBox_, GtkComboBox*)
+XM_TYPE_PTR_1(GtkComboBoxEntry_, GtkComboBoxEntry*)
+XM_TYPE_PTR_1(GtkExpander_, GtkExpander*)
+XM_TYPE_PTR_1(GtkFontButton_, GtkFontButton*)
+XM_TYPE_PTR_1(GtkColorButton_, GtkColorButton*)
+#define XEN_TO_C_GtkUIManagerItemType(Arg) (GtkUIManagerItemType)(XEN_TO_C_INT(Arg))
+#define XEN_GtkUIManagerItemType_P(Arg) XEN_INTEGER_P(Arg)
+XM_TYPE_PTR_1(GtkRadioToolButton_, GtkRadioToolButton*)
+XM_TYPE_PTR(GtkRadioAction_, GtkRadioAction*)
+XM_TYPE_PTR_1(GtkSeparatorToolItem_, GtkSeparatorToolItem*)
+XM_TYPE_PTR(GtkToggleAction_, GtkToggleAction*)
+XM_TYPE_PTR_1(GtkToggleToolButton_, GtkToggleToolButton*)
+#define C_TO_XEN_GtkFileFilterFlags(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_GtkFileFilterFlags(Arg) (GtkFileFilterFlags)(XEN_TO_C_INT(Arg))
+#define XEN_GtkFileFilterFlags_P(Arg) XEN_INTEGER_P(Arg)
+XM_TYPE_PTR_1(GtkCellLayout_, GtkCellLayout*)
+XM_TYPE_1(GtkCellLayoutDataFunc, GtkCellLayoutDataFunc)
+XM_TYPE_PTR_1(GtkFileChooser_, GtkFileChooser*)
+#define XEN_TO_C_GtkIconLookupFlags(Arg) (GtkIconLookupFlags)(XEN_TO_C_INT(Arg))
+#define XEN_GtkIconLookupFlags_P(Arg) XEN_INTEGER_P(Arg)
+XM_TYPE_PTR_1(GtkToolButton_, GtkToolButton*)
+XM_TYPE_PTR_1(GtkCellView_, GtkCellView*)
+XM_TYPE_PTR_1(GtkAboutDialog_, GtkAboutDialog*)
+#define C_TO_XEN_PangoEllipsizeMode(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_PangoEllipsizeMode(Arg) (PangoEllipsizeMode)(XEN_TO_C_INT(Arg))
+#define XEN_PangoEllipsizeMode_P(Arg) XEN_INTEGER_P(Arg)
+XM_TYPE_1(PangoAttrFilterFunc, PangoAttrFilterFunc)
+XM_TYPE_PTR_1(GtkFileChooserButton_, GtkFileChooserButton*)
+XM_TYPE_PTR_1(GtkMenuToolButton_, GtkMenuToolButton*)
+XM_TYPE_PTR_1(PangoMatrix_, PangoMatrix*)
+XM_TYPE_PTR_1(GdkTrapezoid_, GdkTrapezoid*)
+XM_TYPE_PTR_1(GdkPangoRenderer_, GdkPangoRenderer*)
+XM_TYPE_1(PangoRenderPart, PangoRenderPart)
+XM_TYPE_PTR_1(GValue_, GValue*)
+#define C_TO_XEN_GtkIconViewDropPosition(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_GtkIconViewDropPosition(Arg) (GtkIconViewDropPosition)(XEN_TO_C_INT(Arg))
+#define XEN_GtkIconViewDropPosition_P(Arg) XEN_INTEGER_P(Arg)
+XM_TYPE_PTR_1(GtkMenuBar_, GtkMenuBar*)
+#define C_TO_XEN_GtkSensitivityType(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_GtkSensitivityType(Arg) (GtkSensitivityType)(XEN_TO_C_INT(Arg))
+#define XEN_GtkSensitivityType_P(Arg) XEN_INTEGER_P(Arg)
+XM_TYPE_1(GDestroyNotify, GDestroyNotify)
+XM_TYPE_PTR_1(GtkAssistant_, GtkAssistant*)
+#define C_TO_XEN_GtkAssistantPageType(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_GtkAssistantPageType(Arg) (GtkAssistantPageType)(XEN_TO_C_INT(Arg))
+#define XEN_GtkAssistantPageType_P(Arg) XEN_INTEGER_P(Arg)
+XM_TYPE_PTR_1(GtkRecentChooser_, GtkRecentChooser*)
+#define C_TO_XEN_GtkRecentSortType(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_GtkRecentSortType(Arg) (GtkRecentSortType)(XEN_TO_C_INT(Arg))
+#define XEN_GtkRecentSortType_P(Arg) XEN_INTEGER_P(Arg)
+XM_TYPE_PTR(GtkRecentFilter_, GtkRecentFilter*)
+XM_TYPE_PTR(GtkRecentManager_, GtkRecentManager*)
+XM_TYPE_PTR_1(GtkRecentChooserMenu_, GtkRecentChooserMenu*)
+#define C_TO_XEN_GtkRecentFilterFlags(Arg) C_TO_XEN_INT(Arg)
+#define XEN_TO_C_GtkRecentFilterFlags(Arg) (GtkRecentFilterFlags)(XEN_TO_C_INT(Arg))
+#define XEN_GtkRecentFilterFlags_P(Arg) XEN_INTEGER_P(Arg)
+XM_TYPE_1(GtkTextBufferSerializeFunc, GtkTextBufferSerializeFunc)
+XM_TYPE_1(GtkTextBufferDeserializeFunc, GtkTextBufferDeserializeFunc)
+XM_TYPE_1(GtkNotebookWindowCreationFunc, GtkNotebookWindowCreationFunc)
+XM_TYPE_PTR_1(GtkRecentData_, GtkRecentData*)
+XM_TYPE_PTR(GtkPrintContext_, GtkPrintContext*)
+XM_TYPE_PTR(GtkPrintSettings_, GtkPrintSettings*)
+XM_TYPE_1(GtkUnit, GtkUnit)
+#define XEN_TO_C_GtkPrintOperationAction(Arg) (GtkPrintOperationAction)(XEN_TO_C_INT(Arg))
+#define XEN_GtkPrintOperationAction_P(Arg) XEN_INTEGER_P(Arg)
+XM_TYPE_1(GtkPageSetupDoneFunc, GtkPageSetupDoneFunc)
+XM_TYPE_PTR_1(GtkPrintOperationPreview_, GtkPrintOperationPreview*)
+XM_TYPE_1(GtkPrintSettingsFunc, GtkPrintSettingsFunc)
+XM_TYPE_PTR_1(GtkTooltip_, GtkTooltip*)
+XM_TYPE_1(GtkCalendarDetailFunc, GtkCalendarDetailFunc)
+XM_TYPE_PTR_1(GtkMessageDialog_, GtkMessageDialog*)
+XM_TYPE_PTR_1(GtkScaleButton_, GtkScaleButton*)
 #define C_TO_XEN_GdkEventType(Arg) C_TO_XEN_INT(Arg)
 #define C_TO_XEN_gint8(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_gint8(Arg) (gint8)(XEN_TO_C_INT(Arg))
@@ -878,148 +963,62 @@ XM_TYPE_PTR_1(GdkEventDND_, GdkEventDND*)
 XM_TYPE_PTR_2(GdkGC__, GdkGC**)
 XM_TYPE_PTR_2(GdkPixmap__, GdkPixmap**)
 XM_TYPE_PTR_2(GArray_, GArray*)
+XM_TYPE_PTR_1(GError__, GError**)
 #if HAVE_GDK_DRAW_PIXBUF
 XM_TYPE_PTR(GdkDisplay_, GdkDisplay*)
 XM_TYPE_PTR(GdkScreen_, GdkScreen*)
 #endif
 
-#if HAVE_GTK_TREE_VIEW_COLUMN_CELL_GET_POSITION
-XM_TYPE_PTR_1(GdkBitmap__, GdkBitmap**)
-#endif
-
 #if HAVE_GTK_FILE_CHOOSER_DIALOG_NEW
 XM_TYPE_PTR(GtkFileFilterInfo_, GtkFileFilterInfo*)
 XM_TYPE_PTR(GtkEntryCompletion_, GtkEntryCompletion*)
-#define C_TO_XEN_GtkCalendarDisplayOptions(Arg) C_TO_XEN_INT(Arg)
-#define XEN_TO_C_GtkCalendarDisplayOptions(Arg) (GtkCalendarDisplayOptions)(XEN_TO_C_INT(Arg))
-#define XEN_GtkCalendarDisplayOptions_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_PTR_1(GtkEventBox_, GtkEventBox*)
-XM_TYPE_PTR(GtkToolItem_, GtkToolItem*)
-#define C_TO_XEN_GtkFileChooserAction(Arg) C_TO_XEN_INT(Arg)
-#define XEN_TO_C_GtkFileChooserAction(Arg) (GtkFileChooserAction)(XEN_TO_C_INT(Arg))
-#define XEN_GtkFileChooserAction_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_PTR_1(GtkTreeModelFilter_, GtkTreeModelFilter*)
-XM_TYPE_PTR(GtkAction_, GtkAction*)
 XM_TYPE_PTR(GtkActionGroup_, GtkActionGroup*)
-XM_TYPE_PTR_1(GtkActionEntry_, GtkActionEntry*)
-XM_TYPE_PTR_1(GtkToggleActionEntry_, GtkToggleActionEntry*)
-XM_TYPE_PTR_1(GtkExpander_, GtkExpander*)
-XM_TYPE_PTR_1(GtkFontButton_, GtkFontButton*)
-XM_TYPE_PTR_1(GtkColorButton_, GtkColorButton*)
 XM_TYPE_PTR(GtkUIManager_, GtkUIManager*)
-#define XEN_TO_C_GtkUIManagerItemType(Arg) (GtkUIManagerItemType)(XEN_TO_C_INT(Arg))
-#define XEN_GtkUIManagerItemType_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_PTR(GtkRadioAction_, GtkRadioAction*)
-XM_TYPE_PTR(GtkToggleAction_, GtkToggleAction*)
-XM_TYPE_PTR_1(GtkToggleToolButton_, GtkToggleToolButton*)
 XM_TYPE_PTR(GtkFileFilter_, GtkFileFilter*)
-#define C_TO_XEN_GtkFileFilterFlags(Arg) C_TO_XEN_INT(Arg)
-#define XEN_TO_C_GtkFileFilterFlags(Arg) (GtkFileFilterFlags)(XEN_TO_C_INT(Arg))
-#define XEN_GtkFileFilterFlags_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_PTR_1(GtkCellLayout_, GtkCellLayout*)
-XM_TYPE_1(GtkCellLayoutDataFunc, GtkCellLayoutDataFunc)
-XM_TYPE_PTR_1(GtkFileChooser_, GtkFileChooser*)
 XM_TYPE_PTR(GtkIconTheme_, GtkIconTheme*)
 XM_TYPE_PTR(GtkIconInfo_, GtkIconInfo*)
-#define XEN_TO_C_GtkIconLookupFlags(Arg) (GtkIconLookupFlags)(XEN_TO_C_INT(Arg))
-#define XEN_GtkIconLookupFlags_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_PTR_1(GtkToolButton_, GtkToolButton*)
 #endif
 
 #if HAVE_GBOOLEAN_GTK_FILE_CHOOSER_SET_FILENAME
-XM_TYPE_PTR_1(GtkComboBox_, GtkComboBox*)
-XM_TYPE_PTR_1(GtkComboBoxEntry_, GtkComboBoxEntry*)
-XM_TYPE_PTR_1(GtkRadioToolButton_, GtkRadioToolButton*)
-XM_TYPE_PTR_1(GtkSeparatorToolItem_, GtkSeparatorToolItem*)
 XM_TYPE_PTR_2(GtkAccelMap_, GtkAccelMap*)
 #endif
 
 #if HAVE_GTK_ABOUT_DIALOG_NEW
 XM_TYPE_PTR(GtkIconView_, GtkIconView*)
-XM_TYPE_PTR_1(GtkCellView_, GtkCellView*)
-XM_TYPE_PTR_1(GtkAboutDialog_, GtkAboutDialog*)
 #endif
 
 #if HAVE_GDK_PANGO_RENDERER_NEW
 #define C_TO_XEN_GLogLevelFlags(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GLogLevelFlags(Arg) (GLogLevelFlags)(XEN_TO_C_INT(Arg))
 #define XEN_GLogLevelFlags_P(Arg) XEN_INTEGER_P(Arg)
-#define C_TO_XEN_PangoEllipsizeMode(Arg) C_TO_XEN_INT(Arg)
-#define XEN_TO_C_PangoEllipsizeMode(Arg) (PangoEllipsizeMode)(XEN_TO_C_INT(Arg))
-#define XEN_PangoEllipsizeMode_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_1(PangoAttrFilterFunc, PangoAttrFilterFunc)
 #define C_TO_XEN_PangoScript(Arg) C_TO_XEN_INT(Arg)
 XM_TYPE_PTR(PangoScriptIter_, PangoScriptIter*)
-XM_TYPE_PTR_1(GtkFileChooserButton_, GtkFileChooserButton*)
-XM_TYPE_PTR_1(GtkMenuToolButton_, GtkMenuToolButton*)
-XM_TYPE_PTR_1(PangoMatrix_, PangoMatrix*)
-XM_TYPE_PTR_1(GdkTrapezoid_, GdkTrapezoid*)
 XM_TYPE_PTR(PangoRenderer_, PangoRenderer*)
-XM_TYPE_PTR_1(GdkPangoRenderer_, GdkPangoRenderer*)
-XM_TYPE_1(PangoRenderPart, PangoRenderPart)
-#endif
-
-#if HAVE_GTK_TEXT_LAYOUT_GET_ITER_AT_POSITION
-XM_TYPE_PTR_1(GValue_, GValue*)
 #endif
 
 #if HAVE_GTK_MENU_BAR_GET_CHILD_PACK_DIRECTION
-#define C_TO_XEN_GtkIconViewDropPosition(Arg) C_TO_XEN_INT(Arg)
-#define XEN_TO_C_GtkIconViewDropPosition(Arg) (GtkIconViewDropPosition)(XEN_TO_C_INT(Arg))
-#define XEN_GtkIconViewDropPosition_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_GtkPackDirection(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkPackDirection(Arg) (GtkPackDirection)(XEN_TO_C_INT(Arg))
 #define XEN_GtkPackDirection_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_PTR_1(GtkMenuBar_, GtkMenuBar*)
 #endif
 
 #if HAVE_GTK_LINK_BUTTON_NEW
 XM_TYPE_PTR(GtkRecentFilterInfo_, GtkRecentFilterInfo*)
 XM_TYPE_PTR(GtkLinkButton_, GtkLinkButton*)
 XM_TYPE_PTR(GtkRecentInfo_, GtkRecentInfo*)
-#define C_TO_XEN_GtkSensitivityType(Arg) C_TO_XEN_INT(Arg)
-#define XEN_TO_C_GtkSensitivityType(Arg) (GtkSensitivityType)(XEN_TO_C_INT(Arg))
-#define XEN_GtkSensitivityType_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_1(GDestroyNotify, GDestroyNotify)
 XM_TYPE_PTR_2(GtkWindowGroup_, GtkWindowGroup*)
-XM_TYPE_PTR_1(GtkAssistant_, GtkAssistant*)
-#define C_TO_XEN_GtkAssistantPageType(Arg) C_TO_XEN_INT(Arg)
-#define XEN_TO_C_GtkAssistantPageType(Arg) (GtkAssistantPageType)(XEN_TO_C_INT(Arg))
-#define XEN_GtkAssistantPageType_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_PTR_1(GtkRecentChooser_, GtkRecentChooser*)
-#define C_TO_XEN_GtkRecentSortType(Arg) C_TO_XEN_INT(Arg)
-#define XEN_TO_C_GtkRecentSortType(Arg) (GtkRecentSortType)(XEN_TO_C_INT(Arg))
-#define XEN_GtkRecentSortType_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_PTR(GtkRecentFilter_, GtkRecentFilter*)
-XM_TYPE_PTR(GtkRecentManager_, GtkRecentManager*)
-XM_TYPE_PTR_1(GtkRecentChooserMenu_, GtkRecentChooserMenu*)
-#define C_TO_XEN_GtkRecentFilterFlags(Arg) C_TO_XEN_INT(Arg)
-#define XEN_TO_C_GtkRecentFilterFlags(Arg) (GtkRecentFilterFlags)(XEN_TO_C_INT(Arg))
-#define XEN_GtkRecentFilterFlags_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_NO_P_2(time_t, time_t)
 XM_TYPE_PTR(GtkStatusIcon_, GtkStatusIcon*)
-XM_TYPE_1(GtkTextBufferSerializeFunc, GtkTextBufferSerializeFunc)
-XM_TYPE_1(GtkTextBufferDeserializeFunc, GtkTextBufferDeserializeFunc)
 #endif
 
 #if HAVE_GTK_LABEL_GET_LINE_WRAP_MODE
-XM_TYPE_1(GtkNotebookWindowCreationFunc, GtkNotebookWindowCreationFunc)
-XM_TYPE_PTR_1(GtkRecentData_, GtkRecentData*)
 #define C_TO_XEN_GtkTreeViewGridLines(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GtkTreeViewGridLines(Arg) (GtkTreeViewGridLines)(XEN_TO_C_INT(Arg))
 #define XEN_GtkTreeViewGridLines_P(Arg) XEN_INTEGER_P(Arg)
-XM_TYPE_PTR(GtkPrintContext_, GtkPrintContext*)
 XM_TYPE_PTR(GtkPageSetup_, GtkPageSetup*)
 XM_TYPE_PTR(GtkPrintOperation_, GtkPrintOperation*)
-XM_TYPE_PTR(GtkPrintSettings_, GtkPrintSettings*)
-XM_TYPE_1(GtkUnit, GtkUnit)
 #define C_TO_XEN_GtkPrintOperationResult(Arg) C_TO_XEN_INT(Arg)
-#define XEN_TO_C_GtkPrintOperationAction(Arg) (GtkPrintOperationAction)(XEN_TO_C_INT(Arg))
-#define XEN_GtkPrintOperationAction_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_GtkPrintStatus(Arg) C_TO_XEN_INT(Arg)
-XM_TYPE_1(GtkPageSetupDoneFunc, GtkPageSetupDoneFunc)
-XM_TYPE_PTR_1(GtkPrintOperationPreview_, GtkPrintOperationPreview*)
-XM_TYPE_1(GtkPrintSettingsFunc, GtkPrintSettingsFunc)
 XM_TYPE(GtkPageOrientation, GtkPageOrientation)
 XM_TYPE_PTR(GtkPaperSize_, GtkPaperSize*)
 XM_TYPE(GtkPrintDuplex, GtkPrintDuplex)
@@ -1030,19 +1029,8 @@ XM_TYPE(GtkPageSet, GtkPageSet)
 XM_TYPE_PTR_2(GtkSettings_, GtkSettings*)
 #endif
 
-#if HAVE_GTK_WIDGET_GET_HAS_TOOLTIP
-XM_TYPE_PTR_1(GtkTooltip_, GtkTooltip*)
-#endif
-
-#if HAVE_GTK_TEST_WIDGET_CLICK
-XM_TYPE_1(GtkCalendarDetailFunc, GtkCalendarDetailFunc)
-#endif
-
 #if HAVE_GTK_ADJUSTMENT_GET_UPPER
-XM_TYPE_PTR_1(GtkMessageDialog_, GtkMessageDialog*)
-XM_TYPE_PTR_1(GtkScaleButton_, GtkScaleButton*)
 XM_TYPE_PTR(GFile_, GFile*)
-XM_TYPE_PTR_1(GError__, GError**)
 #endif
 
 #if HAVE_CAIRO_CREATE
@@ -3466,11 +3454,17 @@ guchar** [data])"
                                                 &ref_actual_property_type, &ref_actual_format, &ref_actual_length, &ref_data));
     {
       XEN data_val = XEN_FALSE;
+
       if (ref_actual_property_type == GDK_TARGET_STRING)
+
 	data_val = C_TO_XEN_STRING((char *)ref_data);
+
       else if (ref_actual_length > 0) data_val = C_TO_XEN_STRINGN((char *)ref_data, ref_actual_length * ref_actual_format / 8);
+
      return(XEN_LIST_5(result, C_TO_XEN_GdkAtom(ref_actual_property_type), C_TO_XEN_gint(ref_actual_format), 
+
                        C_TO_XEN_gint(ref_actual_length), data_val));
+
     }
   }
 }
@@ -33539,6 +33533,12 @@ static XEN c_array_to_xen_list(XEN val_1, XEN clen)
       if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GtkTreeModel_(arr[i]), result);
     }
+  if (strcmp(ctype, "GdkBitmap__") == 0)
+    {
+      GdkBitmap** arr; arr = (GdkBitmap**)XEN_TO_C_ULONG(XEN_CADR(val)); 
+      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
+      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GdkBitmap_(arr[i]), result);
+    }
   if (strcmp(ctype, "GList_") == 0)
     { /* tagging these pointers is currently up to the caller */
       GList* lst;
@@ -33708,6 +33708,12 @@ static XEN xen_list_to_c_array(XEN val, XEN type)
       GtkTreeModel** arr; arr = (GtkTreeModel**)CALLOC(len + 1, sizeof(GtkTreeModel*));
       for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GtkTreeModel_(XEN_CAR(val));
       return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GtkTreeModel__"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
+    }
+  if (strcmp(ctype, "GdkBitmap**") == 0)
+    {
+      GdkBitmap** arr; arr = (GdkBitmap**)CALLOC(len + 1, sizeof(GdkBitmap*));
+      for (i = 0; i < len; i++, val = XEN_CDR(val)) arr[i] = XEN_TO_C_GdkBitmap_(XEN_CAR(val));
+      return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL("GdkBitmap__"), C_TO_XEN_ULONG((unsigned long)arr), make_xm_obj(arr)));
     }
   return(XEN_FALSE);
 }
@@ -48095,17 +48101,14 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("05-Sep-08"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("12-Sep-08"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */
       /*   using awkward dotted list as optional arg for gauche's sake */
-      XEN_EVAL_C_STRING("(define (g_signal_connect obj name func . data) \
-                           (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f 0))");
-      XEN_EVAL_C_STRING("(define (g_signal_connect_after obj name func . data) \
-                           (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f G_CONNECT_AFTER))");
-      XEN_EVAL_C_STRING("(define (g_signal_connect_swapped obj name func . data) \
-                           (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f G_CONNECT_SWAPPED))");
+      XEN_EVAL_C_STRING("(define (g_signal_connect obj name func . data) (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f 0))");
+      XEN_EVAL_C_STRING("(define (g_signal_connect_after obj name func . data) (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f G_CONNECT_AFTER))");
+      XEN_EVAL_C_STRING("(define (g_signal_connect_swapped obj name func . data) (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f G_CONNECT_SWAPPED))");
 #endif
     }
 }

@@ -109,7 +109,7 @@
   "(find-child widget name) returns a widget named 'name', if one can be found in the widget hierarchy beneath 'widget'"
   ;; unfortunately, if the widget's name has been set for some non-English locale, this
   ;;   won't work -- we need to add gettext support (see snd.c for an example)
-  (call-with-current-continuation
+  (call-with-exit
    (lambda (return)
      (for-each-child
       widget
@@ -1265,7 +1265,7 @@ Reverb-feedback sets the scaler on the feedback.
 				     (XtSetValues w (list XmNbackground (basic-color))))))))))
 	(set! (mark-list-length snd chn) (length new-marks))
 	(let* ((lst (mark-list snd chn)))
-	  (call-with-current-continuation
+	  (call-with-exit
 	   (lambda (quit)
 	     (for-each
 	      (lambda (n)
@@ -2434,7 +2434,7 @@ Reverb-feedback sets the scaler on the feedback.
 
 (define (menu-option name)
   "(menu-option name) finds the widget associated with a given menu item name"
-  (call-with-current-continuation
+  (call-with-exit
    (lambda (return)
      (for-each
       (lambda (top-menu)

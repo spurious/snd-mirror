@@ -562,7 +562,7 @@
 			   (set! graph-popup-snd snd)
 			   (set! graph-popup-chn chn)
 			   (if (= (channel-style snd) channels-combined)
-			       (call-with-current-continuation
+			       (call-with-exit
 				(lambda (break)
 				  (do ((i 0 (1+ i)))
 				      ((= i (chans snd)))

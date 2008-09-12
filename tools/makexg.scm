@@ -1,17 +1,14 @@
-#!/usr/bin/guile -s
-!#
-
 ;;; makexg.scm creates the gtk2/gdk/pango/glib/cairo bindings using xgdata.scm, writes xg.c
 
-(use-modules (ice-9 debug))
-(use-modules (ice-9 format))
-(use-modules (ice-9 optargs))
-(use-modules (ice-9 common-list))
+;(use-modules (ice-9 debug))
+;(use-modules (ice-9 format))
+;(use-modules (ice-9 optargs))
+;(use-modules (ice-9 common-list))
 
-(debug-enable 'debug)
-(debug-enable 'backtrace)
-(read-enable 'positions)
-(read-set! keywords 'prefix)
+;(debug-enable 'debug)
+;(debug-enable 'backtrace)
+;(read-enable 'positions)
+;(read-set! keywords 'prefix)
 
 (define xg-file (open-output-file "xg.c"))
 
@@ -261,7 +258,7 @@
 (define (cadr-str data)
   (let ((sp1 -1)
 	(len (string-length data)))
-    (call-with-current-continuation
+    (call-with-exit
      (lambda (return)
        (do ((i 0 (1+ i)))
 	   ((= i len) (substring data sp1))
@@ -274,7 +271,7 @@
   (let ((sp1 -1)
 	(sp2 -1)
 	(len (string-length data)))
-    (call-with-current-continuation
+    (call-with-exit
      (lambda (return)
        (do ((i 0 (1+ i)))
 	   ((= i len) (substring data sp2))
@@ -287,7 +284,7 @@
 
 (define (car-str data)
   (let ((len (string-length data)))
-    (call-with-current-continuation
+    (call-with-exit
      (lambda (return)
        (do ((i 0 (1+ i)))
 	   ((= i len) data)
@@ -296,7 +293,7 @@
 
 (define (cdr-str data)
   (let ((len (string-length data)))
-    (call-with-current-continuation
+    (call-with-exit
      (lambda (return)
        (do ((i 0 (1+ i)))
 	   ((= i len) data)
@@ -359,7 +356,7 @@
 
 (define (derefable type)
   (let ((len (string-length type)))
-    (call-with-current-continuation
+    (call-with-exit
      (lambda (return)
        (do ((i (1- len) (1- i))
 	    (ctr 0 (1+ ctr)))
@@ -369,7 +366,7 @@
 
 (define (has-stars type)
   (let ((len (string-length type)))
-    (call-with-current-continuation
+    (call-with-exit
      (lambda (return)
        (do ((i (1- len) (1- i))
 	    (ctr 0 (1+ ctr)))
@@ -388,7 +385,7 @@
 
 (define (no-arg-or-stars name)
   (let ((len (string-length name)))
-    (call-with-current-continuation
+    (call-with-exit
      (lambda (return)
        (do ((i 0 (1+ i)))
 	   ((= i len) name)
@@ -1009,7 +1006,7 @@
 		   type))))))
 
 (define (func-type strs)
-  (call-with-current-continuation
+  (call-with-exit
    (lambda (return)
      (for-each
       (lambda (arg)
@@ -1823,7 +1820,7 @@
   (set! cairo-make-structs (cons (car-str data) cairo-make-structs)))
 
 (define (find-struct name)
-  (call-with-current-continuation
+  (call-with-exit
    (lambda (return)
      (for-each
       (lambda (struct)
@@ -1833,7 +1830,7 @@
 
 (define (no-arg name)
   (let ((len (string-length name)))
-    (call-with-current-continuation
+    (call-with-exit
      (lambda (return)
        (do ((i 0 (1+ i)))
 	   ((= i len) name)
@@ -1850,6 +1847,8 @@
    (let* ((len (string-length type))
 	  (dereftype (if (and (char=? (string-ref type (1- len)) #\*)
 			      (not (string=? type "char*")) ; these are surely strings (and set would need XEN_TO_C_gchar etc)
+			      (not (string=? type "GError*"))
+			      (not (string=? type "GError**"))
 			      (not (string=? type "gchar*")))
 			 (substring type 0 (1- len)) 
 			 #f)))
@@ -2680,7 +2679,7 @@
 	     (if using-result (hey "    XEN result = XEN_FALSE;~%"))
 	     (if using-loc (hey "    int loc;~%"))
 	     (hey "    XEN gxg_ptr = XEN_LIST_5(~A, func_info, XEN_FALSE, XEN_FALSE, XEN_FALSE);~%"
-		  (call-with-current-continuation
+		  (call-with-exit
 		   (lambda (name-it)
 		     (for-each
 		      (lambda (arg)
@@ -3103,6 +3102,8 @@
  (lambda (type)
    (if (and (derefable type)
 	    (not (member type listable-types))
+	    (not (string=? type "GError*"))
+	    (not (string=? type "GError**"))
 	    (member (deref-type (list type)) types))
        (array->list type)))
  types)
@@ -3139,6 +3140,8 @@
  (lambda (type)
    (if (and (derefable type)
 	    (not (member type listable-types))
+	    (not (string=? type "GError*"))
+	    (not (string=? type "GError**"))
 	    (member (deref-type (list type)) types))
        (list->array type)))
  types)
@@ -3750,12 +3753,9 @@
 (hey "#if HAVE_SCHEME~%")
 (hey "      /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */~%")
 (hey "      /*   using awkward dotted list as optional arg for gauche's sake */~%")
-(hey "      XEN_EVAL_C_STRING(\"(define (g_signal_connect obj name func . data) \\~%\
-                           (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f 0))\");~%")
-(hey "      XEN_EVAL_C_STRING(\"(define (g_signal_connect_after obj name func . data) \\~%\
-                           (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f G_CONNECT_AFTER))\");~%")
-(hey "      XEN_EVAL_C_STRING(\"(define (g_signal_connect_swapped obj name func . data) \\~%\
-                           (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f G_CONNECT_SWAPPED))\");~%")
+(hey "      XEN_EVAL_C_STRING(\"(define (g_signal_connect obj name func . data) (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f 0))\");~%")
+(hey "      XEN_EVAL_C_STRING(\"(define (g_signal_connect_after obj name func . data) (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f G_CONNECT_AFTER))\");~%")
+(hey "      XEN_EVAL_C_STRING(\"(define (g_signal_connect_swapped obj name func . data) (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f G_CONNECT_SWAPPED))\");~%")
 (hey "#endif~%")
 
 (hey "    }~%")

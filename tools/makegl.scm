@@ -1,17 +1,14 @@
-#!/usr/bin/guile -s
-!#
-
 ;;; makegl.scm creates the GL/GLU bindings using gldata.scm, writes gl.c
 
-(use-modules (ice-9 debug))
-(use-modules (ice-9 format))
-(use-modules (ice-9 optargs))
-(use-modules (ice-9 common-list))
+;(use-modules (ice-9 debug))
+;(use-modules (ice-9 format))
+;(use-modules (ice-9 optargs))
+;(use-modules (ice-9 common-list))
 
-(debug-enable 'debug)
-(debug-enable 'backtrace)
-(read-enable 'positions)
-(read-set! keywords 'prefix)
+;(debug-enable 'debug)
+;(debug-enable 'backtrace)
+;(read-enable 'positions)
+;(read-set! keywords 'prefix)
 
 (define gl-file (open-output-file "gl.c"))
 
@@ -57,7 +54,7 @@
 (define (cadr-str data)
   (let ((sp1 -1)
 	(len (string-length data)))
-    (call-with-current-continuation
+    (call-with-exit
      (lambda (return)
        (do ((i 0 (1+ i)))
 	   ((= i len) (substring data sp1))
@@ -70,7 +67,7 @@
   (let ((sp1 -1)
 	(sp2 -1)
 	(len (string-length data)))
-    (call-with-current-continuation
+    (call-with-exit
      (lambda (return)
        (do ((i 0 (1+ i)))
 	   ((= i len) (substring data sp2))
@@ -83,7 +80,7 @@
 
 (define (car-str data)
   (let ((len (string-length data)))
-    (call-with-current-continuation
+    (call-with-exit
      (lambda (return)
        (do ((i 0 (1+ i)))
 	   ((= i len) data)
@@ -92,7 +89,7 @@
 
 (define (cdr-str data)
   (let ((len (string-length data)))
-    (call-with-current-continuation
+    (call-with-exit
      (lambda (return)
        (do ((i 0 (1+ i)))
 	   ((= i len) data)
@@ -147,7 +144,7 @@
 
 (define (derefable type)
   (let ((len (string-length type)))
-    (call-with-current-continuation
+    (call-with-exit
      (lambda (return)
        (do ((i (1- len) (1- i))
 	    (ctr 0 (1+ ctr)))
@@ -157,7 +154,7 @@
 
 (define (has-stars type)
   (let ((len (string-length type)))
-    (call-with-current-continuation
+    (call-with-exit
      (lambda (return)
        (do ((i (1- len) (1- i))
 	    (ctr 0 (1+ ctr)))
@@ -180,7 +177,7 @@
 
 (define (no-arg-or-stars name)
   (let ((len (string-length name)))
-    (call-with-current-continuation
+    (call-with-exit
      (lambda (return)
        (do ((i 0 (1+ i)))
 	   ((= i len) name)
@@ -445,7 +442,7 @@
 
 (define (no-arg name)
   (let ((len (string-length name)))
-    (call-with-current-continuation
+    (call-with-exit
      (lambda (return)
        (do ((i 0 (1+ i)))
 	   ((= i len) name)

@@ -307,7 +307,7 @@
 	   (r1 (expt (+ r sq3r2) (/ 1 3)))
 	   (r2 (expt (- r sq3r2) (/ 1 3)))
 	   (incr (/ (* 2 pi 0+i) 3)))
-      (call-with-current-continuation
+      (call-with-exit
        (lambda (return)
 	 (do ((i 0 (1+ i)))   ; brute force! this can almost certainly be optimized
 	     ((= i 3))
@@ -330,7 +330,7 @@
 
   (define (quartic-roots a b c d e) ; ax^4 + bx^3 + cx^2 + dx + e
     ;; Weisstein, "Encyclopedia of Mathematics"
-    (call-with-current-continuation
+    (call-with-exit
      (lambda (return)
        (let* ((a0 (/ e a))
 	      (a1 (/ d a))

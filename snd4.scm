@@ -50,7 +50,7 @@
 	(if val
 	    (append val (list snd chn))
 	    #f)))
-    (call-with-current-continuation
+    (call-with-exit
      (lambda (return)
        (for-each 
 	(lambda (snd)

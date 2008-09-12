@@ -2890,7 +2890,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 		       (samps-ctr 0)
 		       (diff 1.0)
 		       (len (frames)))
-		   (call-with-current-continuation
+		   (call-with-exit
 		    (lambda (return)
 		      (do ((ctr loc (1+ ctr)))
 			  ((or (c-g?) (= ctr len)) #f)

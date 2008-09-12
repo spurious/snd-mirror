@@ -310,7 +310,7 @@
 	  (let ((vals (XQueryTree dpy top)))
 	    (if (= (car vals) 0)
 		#f
-		(call-with-current-continuation
+		(call-with-exit
 		 (lambda (return)
 		   (for-each 
 		    (lambda (win)

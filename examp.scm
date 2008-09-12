@@ -1418,7 +1418,7 @@ selected sound: (map-channel (cross-synthesis 1 .5 128 6.0))"
     (do ((i 0 (1+ i)))
 	((= i freq-inc))
       (vector-set! formants i (make-formant (* i bin) radius)))
-    (call-with-current-continuation ; setup non-local exit (for C-g interrupt)
+    (call-with-exit                 ; setup non-local exit (for C-g interrupt)
      (lambda (break)                ;   now (break value) will exit the call/cc returning value
        (do ((k 0 (1+ k)))
 	   ((= k outlen))
@@ -1466,7 +1466,7 @@ selected sound: (map-channel (cross-synthesis 1 .5 128 6.0))"
     (do ((i 0 (1+ i)))
 	((= i freq-inc))
       (vector-set! formants i (make-formant (* i bin) radius)))
-    (call-with-current-continuation ; setup non-local exit (for C-g interrupt)
+    (call-with-exit                 ; setup non-local exit (for C-g interrupt)
      (lambda (break)
        (do ((k 0 (1+ k)))
 	   ((= k len))
@@ -1835,7 +1835,7 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
    (lambda (response)
      (let* ((width (car (widget-size (car (sound-widgets (car current-buffer))))))
 	    (height (cadr (widget-size (car (sound-widgets (car current-buffer)))))))
-       (call-with-current-continuation
+       (call-with-exit
 	(lambda (give-up)
 	  (if (or (not (string? response))
 		  (= (string-length response) 0))
@@ -1867,7 +1867,7 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 		(set! current-buffer (list (car (sounds)) 0))
 		(set! current-buffer #f)))
 	(set! last-buffer
-	      (call-with-current-continuation
+	      (call-with-exit
 	       (lambda (return)
 		 (for-each
 		  (lambda (n)
@@ -1905,7 +1905,7 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 	(samps (make-vct 10))
 	(samps-ctr 0)
 	(len (frames)))
-    (call-with-current-continuation
+    (call-with-exit
      (lambda (return)
        (do ((ctr loc (1+ ctr)))
 	   ((or (c-g?) (= ctr len)) #f)
@@ -2147,7 +2147,7 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
       ;; find the next file in the sorted list, with wrap-around
       (let ((choose-next (not (string? last-file-opened)))
 	    (just-filename (file-from-path last-file-opened)))
-	(call-with-current-continuation
+	(call-with-exit
 	 (lambda (return)
 	   (for-each 
 	    (lambda (file)

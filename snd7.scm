@@ -92,7 +92,7 @@
 			(pos (cursor snd chn))
 			(curpos (if (> count 0) -1 0)))
 		    (if (>= pos (mix-position (car sorted-mx)))
-			(call-with-current-continuation
+			(call-with-exit
 			 (lambda (break)
 			   (for-each
 			    (lambda (m)
@@ -132,7 +132,7 @@
 			(pos (cursor snd chn))
 			(curpos (if (> count 0) -1 0)))
 		    (if (>= pos (mark-sample (car sorted-mx)))
-			(call-with-current-continuation
+			(call-with-exit
 			 (lambda (break)
 			   (for-each
 			    (lambda (m)

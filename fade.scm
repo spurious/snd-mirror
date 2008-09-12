@@ -151,7 +151,7 @@
 		 ;; find next randomly chosen resonator to flip
 		 (let ((next (inexact->exact (floor (random freq-inc)))))
 		   (if (not (= (vct-ref spectrum next) 1.0))
-		       (call-with-current-continuation
+		       (call-with-exit
 			(lambda (break)
 			  (do ((j next (1+ j))
 			       (k next (1- k)))

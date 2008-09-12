@@ -55,7 +55,7 @@
 (define* (find-mix sample :optional snd chn)
   "(find-mix sample :optional snd chn) returns the id of the mix at the given sample, or #f"
   (let ((mix-list (mixes (or snd (selected-sound) (car (sounds))) (or chn (selected-channel snd) 0))))
-    (call-with-current-continuation
+    (call-with-exit
      (lambda (found-it)
        (for-each
 	(lambda (n)
@@ -237,7 +237,7 @@ All mixes sync'd to it are also moved the same number of samples. (remove-hook! 
 
 (define (mix-name->id name)
   "(mix-name->id name) returns the mix id associated with 'name'"
-  (call-with-current-continuation
+  (call-with-exit
    (lambda (return)
      (for-each
       (lambda (snd)

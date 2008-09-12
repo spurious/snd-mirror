@@ -2965,6 +2965,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(define redo-edit redo)");        /* consistency with Ruby */
   XEN_EVAL_C_STRING("(define undo-edit undo)");
   XEN_EVAL_C_STRING("(define define+ define)");        /* Gauche can't handle documentation strings */
+  XEN_EVAL_C_STRING("(define call-with-exit call/cc)");
 
   /* from ice-9/r4rs.scm but with output to snd listener */
   XEN_EVAL_C_STRING("(define *snd-loaded-files* '())");
@@ -3015,6 +3016,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(define current-time sys-time)");
   XEN_EVAL_C_STRING("(define strftime sys-strftime)");
   XEN_EVAL_C_STRING("(define shell sys-system)");
+  XEN_EVAL_C_STRING("(define call-with-exit call/cc)");
 
   /* add-load-path in Gauche is a spooky special case that is executed no matter what, and
    *   Shiro says I shouldn't use the underlying function %add-load-path; here is his suggestion:

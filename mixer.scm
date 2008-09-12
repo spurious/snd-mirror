@@ -32,7 +32,7 @@
   "(mixer-diagonal? m) returns #t if 'm' is a diagonal mixer"
   (let ((n (mus-length m)))
     (or (= n 1)
-	(call-with-current-continuation
+	(call-with-exit
 	 (lambda (return)
 	   (do ((i 0 (1+ i)))
 	       ((= i n) #t)
@@ -123,7 +123,7 @@
 (define* (invert-matrix matrix :optional b (zero 1.0e-7))
   "(invert-matrix matrix :optional b (zero 1.0e-7)) inverts 'matrix'"
   ;; translated from Numerical Recipes (gaussj)
-  (call-with-current-continuation
+  (call-with-exit
    (lambda (return)
      (let* ((n (mus-length matrix))
 	    (cols (make-vector n 0))

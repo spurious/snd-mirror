@@ -992,7 +992,7 @@ finish-with-sound to complete the process."
   "(with-mix-find-file-with-extensions file extensions) helps the with-mix macro find checkpoint files"
   (if (file-exists? file)
       file
-      (call-with-current-continuation
+      (call-with-exit
        (lambda (found-one)
 	 (for-each
 	  (lambda (ext)
@@ -1005,7 +1005,7 @@ finish-with-sound to complete the process."
 (define (with-mix-file-extension file default)
   "(with-mix-file-extension file default) is a helper function for the with-mix macro"
   (let ((len (string-length file)))
-    (call-with-current-continuation
+    (call-with-exit
      (lambda (ok)
        (do ((i (1- len) (1- i)))
 	   ((= i 0))
@@ -1126,7 +1126,7 @@ finish-with-sound to complete the process."
 					,(car args) (car passed-args) 
 					,(cadr args) (cadr passed-args) 
 					(cddr passed-args))
-				 (let ((allargs (call-with-current-continuation
+				 (let ((allargs (call-with-exit
 						 (lambda (break)
 						   (let ((arglist '())
 							 (pa passed-args)

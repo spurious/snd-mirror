@@ -1219,7 +1219,7 @@
 (if with-gui
     (if (not (colormap? good-colormap))
 	(set! good-colormap
-	      (call-with-current-continuation
+	      (call-with-exit
 	       (lambda (return)
 		 (do ((i 1 (1+ i)))
 		     ((= i 20))
@@ -1228,7 +1228,7 @@
 (if with-gui
     (if (not (colormap? better-colormap))
 	(set! better-colormap
-	      (call-with-current-continuation
+	      (call-with-exit
 	       (lambda (return)
 		 (do ((i good-colormap (1+ i)))
 		     ((= i 20))
@@ -16770,8 +16770,7 @@ EDITS: 2
 
   ;; ----------------
   ;; start of test
-  
-  
+
   (do ((clmtest 0 (1+ clmtest))) ((= clmtest tests))
     
     (log-mem clmtest)
@@ -29892,7 +29891,7 @@ EDITS: 2
       (define (white-space? str pos)
 	(or (char=? (string-ref str pos) #\space)
 	    (char=? (string-ref str pos) #\newline)))
-      (call-with-current-continuation
+      (call-with-exit
        (lambda (return)
 	 (do ((i 0)
 	      (j 0))
@@ -35221,7 +35220,7 @@ EDITS: 2
 
   (define (check-edit-tree expected-tree expected-vals name)
     (define (vequal-at v0 v1)
-      (call-with-current-continuation
+      (call-with-exit
        (lambda (return)
 	 (let ((len (vct-length v0)))
 	   (do ((i 0 (1+ i)))
@@ -59149,7 +59148,7 @@ EDITS: 1
 						  mus-bdouble mus-lshort mus-lint mus-lfloat mus-ldouble mus-ubshort mus-ulshort
 						  mus-l24int mus-bintn mus-lintn)))
 			   (define (position val lst pos)
-			     (call-with-current-continuation
+			     (call-with-exit
 			      (lambda (return)
 				(if (null? lst)
 				    #f
@@ -63062,7 +63061,7 @@ EDITS: 1
 					(mix file))
 				      (lambda (file chn)
 					(define (without-directories filename)
-					  (call-with-current-continuation
+					  (call-with-exit
 					   (lambda (return)
 					     (do ((i (- (string-length filename) 1) (1- i)))
 						 ((= 0 i) filename)

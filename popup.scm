@@ -787,7 +787,7 @@ all saved edit lists."
 			   (set! graph-popup-chn chn)
 			   (if (= (channel-style snd) channels-combined)
 			       (let ((ye (.y e))) ; y axis location of mouse-down
-				 (call-with-current-continuation
+				 (call-with-exit
 				  (lambda (break)
 				    (do ((i 0 (1+ i)))
 					((= i (chans snd)))
@@ -935,7 +935,7 @@ color name, an xm Pixel, a snd color, or a list of rgb values (as in Snd's make-
 
     (define (edited snds)
       (remove-if (lambda (n) 
-		   (call-with-current-continuation
+		   (call-with-exit
 		    (lambda (return)
 		      (do ((i 0 (1+ i)))
 			  ((= i (chans n)) #t)
