@@ -296,4 +296,61 @@ int main(int argc, char **argv)
 
 #endif
 
+/* -------------------------------------------------------------------------------- */
 
+#if 0
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "s7.h"
+
+static s7_pointer our_exit(s7_scheme *sc, s7_pointer args)
+{
+  exit(1);
+  return(s7_NIL(sc));
+}
+
+static s7_pointer add1(s7_scheme *sc, s7_pointer args)
+{
+  if (s7_is_integer(s7_car(args)))
+    return(s7_make_integer(sc, 1 + s7_integer(s7_car(args))));
+  return(s7_wrong_type_arg_error(sc, "add1", 1, s7_car(args), "an integer"));
+}
+
+int main(int argc, char **argv)
+{
+  s7_scheme *s7;
+  char buffer[512];
+  char response[1024];
+
+  s7 = s7_init();                     /* initialize the interpreter */
+  
+  s7_define_function(s7, "exit", our_exit, 0, 0, false, "(exit) exits the program");
+  s7_define_function(s7, "add1", add1, 1, 0, false, "(add1 int) adds 1 to int");
+
+  s7_define_variable(s7, "pi", s7_make_real(s7, 3.14159265));
+
+  while (1)                           /* fire up a "repl" */
+    {
+      fprintf(stdout, "\n> ");        /* prompt for input */
+      fgets(buffer, 512, stdin);
+
+      if ((buffer[0] != '\n') || 
+	  (strlen(buffer) > 1))
+	{                            
+	  sprintf(response, "(write %s)", buffer);
+	  s7_eval_c_string(s7, response); /* evaluate input and write the result */
+	}
+    }
+}
+
+/home/bil/cl/ doc7
+> pi
+3.14159265
+> (+ 1 (add1 1))
+3
+> (exit)
+
+#endif

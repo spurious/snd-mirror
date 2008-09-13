@@ -29,6 +29,7 @@
  *        error handling using error and catch
  *        in Snd, the run macro works giving S7 a (somewhat limited) byte compiler
  *        no invidious distinction between built-in and "foreign"
+ *        threads
  *
  *   many minor changes!
  *
@@ -43,13 +44,8 @@
  * still to do:
  *
  *   (C-level) dynamic-wind and its interaction with continuations
- *   threads: call-with-new-thread[s7?], join-thread
  *   there's no arg number mismatch check for caller-defined functions!
- *   help for vars (objects)
- *   figure out how add syntax-rules, also call-with-values and values
- *   get rid of the config header somehow! -- ideally we'd get rid of all switches like HAVE_STDBOOL_H
  *   doc in s7.h
- *   snd-test full [8 explodes, 13 hits error]
  *   s7test.scm
  *   
  * define-type (make-type in ext)
@@ -87,6 +83,7 @@
  *    sundry leftovers
  *    eval
  *    quasiquote
+ *    threads
  *    s7 init
  */
 
@@ -96,9 +93,10 @@
  *   but it would be easy to put those on switches.  The only other compile-time
  *   flags involve the functions:
  *
- *     cabs cacos cacosh carg casin casinh catan catanh ccos ccosh cexp clog conj cpow csin csinh csqrt ctan ctanh
+ *     cabs cacos cacosh carg casin casinh catan catanh ccos ccosh 
+ *     cexp clog conj cpow csin csinh csqrt ctan ctanh
  *
- * and stdbool.h (s7.h)
+ * and stdbool.h (s7.h), and pthread.h (below).
  */
 
 #include <mus-config.h>
@@ -121,6 +119,10 @@
 #include <sys/types.h>
 #include <complex.h>
 #include <setjmp.h>
+
+#if HAVE_PTHREADS
+#include <pthread.h>
+#endif
 
 #include "s7.h"
 
@@ -146,15 +148,6 @@
 
 
 #define TIMING 0
-/* 
- * test.scm, with 256k heap: mark: 1.5 secs, sweep: 10.5 secs, of total 65 secs
- *   the problem here is macro expansion -- if I use a function instead, .3 secs:
- *
- *     time guile -l test.scm
- *     0.900u 0.018s 0:00.92 98.9%     0+0k 0+0io 0pf+0w
- *     time snd test.scm
- *     0.362u 0.019s 0:00.40 92.5%     0+0k 0+0io 0pf+0w
- */
 
 #if TIMING
 #include <time.h>
@@ -392,6 +385,10 @@ struct s7_scheme {
   jmp_buf goto_start;
   bool longjmp_ok;
   void (*error_exiter)(void);
+
+#if HAVE_PTHREADS
+  struct s7_scheme *orig_sc;
+#endif
 };
 
 
@@ -1001,14 +998,30 @@ static int gc(s7_scheme *sc, const char *function, int line)
   if ((sc->gc_verbose) &&
       (sc->output_port == sc->NIL))
     fprintf(stderr, "done: %d heap were recovered, total heap: %d\n", freed_heap, sc->heap_size);
+
   return(freed_heap);
 }
 
 
+#if HAVE_PTHREADS
+  static pthread_mutex_t alloc_lock = PTHREAD_MUTEX_INITIALIZER;
+#endif
+
+
+#if S7_DEBUGGING
 #define new_cell(Sc) new_cell_1(Sc, __FUNCTION__, __LINE__)
 static s7_pointer new_cell_1(s7_scheme *sc, const char *function, int line)
+#else
+static s7_pointer new_cell(s7_scheme *sc)
+#endif
 {
   s7_pointer p;
+
+#if HAVE_PTHREADS
+  pthread_mutex_lock(&alloc_lock);
+  sc = sc->orig_sc;
+#endif
+
   p = alloc_s7_cell(sc);
   if (!p)
     {
@@ -1035,7 +1048,14 @@ static s7_pointer new_cell_1(s7_scheme *sc, const char *function, int line)
 
 #if S7_DEBUGGING
   if (is_immutable(p)) 
-    fprintf(stderr, "%d %p: alloc immutable?? %x %s", sc->free_heap_top, p, typeflag(p), describe_type(p));
+    {
+      fprintf(stderr, "%d %p: alloc immutable?? %x %s", sc->free_heap_top, p, typeflag(p), describe_type(p));
+      abort();
+    }
+#endif
+
+#if HAVE_PTHREADS
+  pthread_mutex_unlock(&alloc_lock);
 #endif
 
   return(p);
@@ -1055,7 +1075,17 @@ static s7_pointer g_gc_verbose(s7_scheme *sc, s7_pointer a)
 static s7_pointer g_gc(s7_scheme *sc, s7_pointer a)
 {
   #define H_gc "(gc) runs the garbage collector"
+
+#if HAVE_PTHREADS
+  pthread_mutex_lock(&alloc_lock);
+#endif
+
   gc(sc, __FUNCTION__, __LINE__);
+
+#if HAVE_PTHREADS
+  pthread_mutex_unlock(&alloc_lock);
+#endif
+
   return(sc->UNSPECIFIED);
 }
 
@@ -6020,8 +6050,7 @@ static  void skipspace(s7_scheme *sc, s7_pointer pt)
 
 /* get token */
 
-#define token(Sc, Pt) token_1(Sc, Pt, __FUNCTION__, __LINE__)
-static int token_1(s7_scheme *sc, s7_pointer pt, const char *func, int line)
+static int token(s7_scheme *sc, s7_pointer pt)
 {
   int c;
   skipspace(sc, pt);
@@ -11261,18 +11290,104 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, int level, s7_pointer form)
 }
 
 
-/* TODO: worry about GC here */
-
 static s7_pointer g_quasiquote(s7_scheme *sc, s7_pointer args)
 {
-  s7_pointer result;
-  /* bool old_gc_off; */
-  /* old_gc_off = sc->gc_off; */
-  /* sc->gc_off = true; */
-  result = g_quasiquote_1(sc, s7_integer(car(args)), cadr(args));
-  /* sc->gc_off = old_gc_off; */
-  return(result);
+  return(g_quasiquote_1(sc, s7_integer(car(args)), cadr(args)));
 }
+
+
+#if HAVE_PTHREADS
+/* -------------------------------- threads -------------------------------- */
+
+/* TODO: lock heap (alloc) if gc in progress,
+ *       possibly lock symbol_table if global env is being changed?
+ */
+
+static s7_scheme *clone_s7(s7_scheme *sc);
+static s7_scheme *close_s7(s7_scheme *sc);
+static void mark_s7(s7_scheme *sc);
+
+
+typedef struct {
+  s7_scheme *sc;
+  s7_pointer func;
+  pthread_t *thread;
+} thred;
+
+static int thread_tag = 0;
+
+
+static char *thread_print(void *obj)
+{
+  return((char *)"#<thread>");
+}
+
+
+static void thread_free(void *obj)
+{
+  thred *f = (thred *)obj;
+  if (f)
+    {
+      pthread_detach(*(f->thread));
+      free(f->thread);
+      f->thread = NULL;
+      f->sc = close_s7(f->sc);
+      FREE(f);
+    }
+}
+
+
+static void thread_mark(void *val)
+{
+  thred *f = (thred *)val;
+  if (f)
+    {
+      mark_s7(f->sc);
+      s7_mark_object(f->func);
+    }
+}
+
+
+static bool thread_equal(void *obj1, void *obj2)
+{
+  return(obj1 == obj2);
+}
+
+
+static void *run_thread_func(void *obj)
+{
+  thred *f = (thred *)obj;
+  return((void *)s7_call(f->sc, f->func, f->sc->NIL));
+}
+
+
+/* (define hi (make-thread (lambda () (display "hi")))) */
+
+static s7_pointer g_make_thread(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_thread "(make-thread thunk) creates a new thread running thunk"
+  thred *f;
+
+  f = (thred *)CALLOC(1, sizeof(thred));
+  f->func = car(args);
+  f->sc = clone_s7(sc);
+  f->thread = (pthread_t *)malloc(sizeof(pthread_t));
+  pthread_create(f->thread, NULL, run_thread_func, (void *)f);
+  return(s7_make_object(sc, thread_tag, (void *)f));
+}
+
+
+static s7_pointer g_join_thread(s7_scheme *sc, s7_pointer args)
+{
+  #define H_join_thread "(join-thread thread) causes the current thread to wait for the thread to finish"
+  thred *f;
+
+  f = (thred *)s7_object_value(car(args));
+  pthread_join(*(f->thread), NULL);
+  return(car(args));
+}
+
+#endif
 
 
 
@@ -11285,6 +11400,10 @@ s7_scheme *s7_init(void)
   
   s7_scheme *sc;
   sc = (s7_scheme *)MALLOC(sizeof(s7_scheme));
+
+#if HAVE_PTHREADS
+  sc->orig_sc = sc;
+#endif
   
   sc->gc_off = true; /* sc->args and so on are not set yet, so a gc during init -> segfault */
   sc->longjmp_ok = false;
@@ -11763,13 +11882,13 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "procedure-with-setter?",  g_is_procedure_with_setter, 1, 0, false, H_is_procedure_with_setter);
   s7_define_function(sc, "procedure-with-setter-setter-arity", g_procedure_with_setter_setter_arity, 1, 0, false, "kludge to get setter's arity");
 
-  pws_tag = s7_new_type("<procedure-with-setter>",
-			pws_print,
-			pws_free,
-			pws_equal,
-			pws_mark,
-			pws_apply,
-			pws_set);
+  pws_tag = s7_new_type("<procedure-with-setter>", pws_print, pws_free,	pws_equal, pws_mark, pws_apply,	pws_set);
+
+#if HAVE_PTHREADS
+  thread_tag = s7_new_type("<thread>", thread_print, thread_free, thread_equal, thread_mark, NULL, NULL);
+  s7_define_function(sc, "make-thread",             g_make_thread,             1, 0, false, H_make_thread);
+  s7_define_function(sc, "join-thread",             g_join_thread,             1, 0, false, H_join_thread);
+#endif
 
   s7_define_variable(sc, "*features*", sc->NIL);
   s7_define_variable(sc, "*load-path*", sc->NIL);
@@ -11778,8 +11897,6 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "_quasiquote_", g_quasiquote, 2, 0, false, "internal quasiquote handler");
 
   sc->gc_off = false;
-
-  /* leftovers from s7.scm -- this stuff will go away! */
 
   s7_eval_c_string(sc, "\n\
 (macro quasiquote (lambda (l) (_quasiquote_ 0 (cadr l))))\n\
@@ -11796,7 +11913,9 @@ s7_scheme *s7_init(void)
 	   (apply error args))))\n\
 \n\
 (define (values . args)\n\
-  (append (list 'values) args))\n\
+  (if (= (length args) 1)\n\
+      (car args)\n\
+      (append (list 'values) args)))\n\
 \n\
 (define (call-with-values producer consumer)\n\
   (let ((result (producer)))\n\
@@ -11808,3 +11927,80 @@ s7_scheme *s7_init(void)
 
   return(sc);
 }
+
+#if HAVE_PTHREADS
+
+static s7_scheme *clone_s7(s7_scheme *sc)
+{
+  int i;
+  s7_scheme *new_sc;
+  new_sc = (s7_scheme *)MALLOC(sizeof(s7_scheme));
+  memcpy((void *)new_sc, (void *)sc, sizeof(s7_scheme));
+
+  /* share the heap, symbol table, global environment, all the startup stuff,
+   *   but have separate stacks and eval locals
+   */
+
+  new_sc->orig_sc = sc;
+
+  new_sc->longjmp_ok = false;
+  new_sc->strbuf_size = INITIAL_STRBUF_SIZE;
+  new_sc->strbuf = (char*)CALLOC(new_sc->strbuf_size, sizeof(char));
+
+  new_sc->protected_objects = s7_make_vector(new_sc, INITIAL_PROTECTED_OBJECTS_SIZE);
+  new_sc->protected_objects_size = INITIAL_PROTECTED_OBJECTS_SIZE;
+  set_immutable(new_sc->protected_objects);
+  typeflag(new_sc->protected_objects) |= T_CONSTANT;
+  new_sc->gc_loc = 0;
+  
+  new_sc->stack_top = 0;
+  new_sc->stack = s7_make_vector(new_sc, INITIAL_STACK_SIZE);
+  new_sc->stack_size = INITIAL_STACK_SIZE;
+  
+  new_sc->x = new_sc->NIL;
+  new_sc->y = new_sc->NIL;
+  new_sc->a = new_sc->NIL;
+  new_sc->b = new_sc->NIL;
+  new_sc->code = new_sc->NIL;
+  new_sc->args = new_sc->NIL;
+  new_sc->value = new_sc->NIL;
+
+  new_sc->temps_size = 4096;
+  new_sc->temps_ctr = 0;
+  new_sc->temps = (s7_pointer *)CALLOC(new_sc->temps_size, sizeof(s7_pointer));
+  for (i = 0; i < new_sc->temps_size; i++)
+    new_sc->temps[i] = new_sc->NIL;
+
+  new_frame_in_env(new_sc, sc->envir); 
+  
+  return(new_sc);
+}
+
+
+static s7_scheme *close_s7(s7_scheme *sc)
+{
+  FREE(sc->strbuf);
+  FREE(sc->temps);
+  FREE(sc);
+  return(NULL);
+}
+
+
+static void mark_s7(s7_scheme *sc)
+{
+  int i;
+  s7_mark_object(sc->args);
+  s7_mark_object(sc->envir);
+  s7_mark_object(sc->code);
+  mark_vector(sc->stack, sc->stack_top);
+  s7_mark_object(sc->protected_objects);
+  s7_mark_object(sc->value);
+  s7_mark_object(sc->x);
+  s7_mark_object(sc->y);
+  s7_mark_object(sc->a);
+  s7_mark_object(sc->b);
+  for (i = 0; i < sc->temps_size; i++)
+    s7_mark_object(sc->temps[i]);
+}
+
+#endif

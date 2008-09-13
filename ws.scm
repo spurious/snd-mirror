@@ -544,6 +544,8 @@ returning you to the true top-level."
 	(thread-start! thread)
 	thread)))
 
+(if (or (provided? 'snd-guile) 
+	(provided? 'snd-gauche))
 (defmacro with-threaded-sound (args . body) 
   (if (provided? 'snd-threads)
       `(with-sound-helper 
@@ -596,7 +598,39 @@ returning you to the true top-level."
       `(with-sound-helper
 	(lambda ()
 	  ,@body)
-	,@args)))
+	,@args))))
+
+
+(if (provided? 'snd-s7)
+(defmacro with-threaded-sound (args . body)
+  (if (provided? 'snd-threads)
+      `(with-sound-helper 
+	(lambda ()
+	  (let* ((threads '())
+		 (ws-error #f))
+	    ,@(map 
+	       (lambda (expr)
+		 `(begin 
+		    (set! threads (cons (make-thread (lambda () ,expr)) threads))
+		    (if (>= (length threads) *clm-threads*)
+			(begin
+			  (for-each 
+			   (lambda (thread) 
+			     (join-thread thread))
+			   threads)
+			  (set! threads '())))))
+	       body)
+	    (for-each 
+	     (lambda (thread) 
+	       (join-thread thread))
+	     threads)))
+	,@args)
+
+      `(with-sound-helper
+	(lambda ()
+	  ,@body)
+	,@args))))
+
 
 
 
