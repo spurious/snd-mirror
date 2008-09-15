@@ -230,6 +230,14 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, const char *name, 
 
 /* -------------------------------- examples --------------------------------
  *
+ *  these examples use:
+ *
+ *    #define s7_Int int
+ *    #define s7_Int_d "%d"
+ *
+ *  in s7.h
+ *
+ *
  * a read-eval-print loop using S7: 
  */
 
@@ -298,6 +306,8 @@ int main(int argc, char **argv)
 
 /* -------------------------------------------------------------------------------- */
 
+/* define a function with args/returned value, and a variable */
+
 #if 0
 
 #include <stdlib.h>
@@ -346,11 +356,57 @@ int main(int argc, char **argv)
     }
 }
 
-/home/bil/cl/ doc7
-> pi
-3.14159265
-> (+ 1 (add1 1))
-3
-> (exit)
+/* 
+ *    /home/bil/cl/ doc7
+ *    > pi
+ *    3.14159265
+ *    > (+ 1 (add1 1))
+ *    3
+ *    > (exit)
+ */
 
 #endif
+
+ /* -------------------------------------------------------------------------------- */
+
+#if 0
+
+/* call a scheme-defined function from C, and get/set scheme variable values in C */
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "s7.h"
+
+int main(int argc, char **argv)
+{
+  s7_scheme *s7;
+  s7 = s7_init();
+
+  s7_define_variable(s7, "an-integer", s7_make_integer(s7, 1));
+
+  s7_eval_c_string(s7, "(define (add1 a) (+ a 1))");
+  
+  fprintf(stderr, "an-integer: %d\n", s7_integer(s7_name_to_value(s7, "an-integer")));
+
+  s7_symbol_set_value(s7, s7_make_symbol(s7, "an-integer"), s7_make_integer(s7, 32));
+
+  fprintf(stderr, "now an-integer: %d\n", s7_integer(s7_name_to_value(s7, "an-integer")));
+
+  fprintf(stderr, "(add1 2): %d\n", 
+	  s7_integer(s7_call(s7, 
+			     s7_name_to_value(s7, "add1"), 
+			     s7_cons(s7, s7_make_integer(s7, 2), s7_NIL(s7)))));
+}
+
+/*
+ *    /home/bil/cl/ doc7
+ *    an-integer: 1
+ *    now an-integer: 32
+ *    (add1 2): 3
+ */
+
+#endif
+
+/* -------------------------------------------------------------------------------- */

@@ -28,8 +28,6 @@
  *   I added tanh (and other) tests via maxima.
  */
 
-/* TODO: finish expt, merge in the r6rs changes (did I finish atan2?)
- */
 
 #define _FILE_OFFSET_BITS 64
 
@@ -64,7 +62,7 @@ static const char *scheme_name = "s7"; /* also guile, gauche, stklos, gambit */
 
 static bool ask_maxima = false;
 static bool include_big_fractions_in_expt = true;
-static bool use_continued_fractions_in_rationalize = false;
+static bool use_continued_fractions_in_rationalize = true;
 static bool include_hyperbolic_functions = true;
 static bool relational_functions_require_2_arguments = true;
 
@@ -2280,7 +2278,6 @@ int main(int argc, char **argv)
 		complex_to_file(fp, result);
 		fprintf(fp, ")\n");
 	      }
-	    
 	  }
       }
 
@@ -2472,21 +2469,44 @@ int main(int argc, char **argv)
 	  }
       }
 
-#if 0
-  int ^ rat
-  rat ^ int
-  rat ^ double
-  rat ^ cmp
-    
-    cmp ^ cmp
-    cmp ^ double
-    int ^ cmp
-    cmp ^ int
 
+  /* complex in various ways */
+  for (i = 0; i < DOUBLE_ARGS; i++)
+    for (j = 0; j < DOUBLE_ARGS; j++)
+      {
 	int arg3, arg4;
-	arg3 = c_mod(i + j, INT_ARGS);
-	arg4 = c_mod(i - j, INT_ARGS);
-#endif
+	arg3 = c_mod(i + j, DOUBLE_ARGS);
+	arg4 = c_mod(i - j, DOUBLE_ARGS);
+
+	for (k = 0; k < 4; k++)
+	  {
+	    char *t1, *t2;
+	    int s1 = 1, s2 = 1;
+	    switch (k)
+	      {
+	      case 0: break;
+	      case 1: s1 = -1; break;
+	      case 2: s2 = -1; break;
+	      case 3: s1 = -1; s2 = -1; break;
+	      }
+
+	    result = expt_op(s1 * double_args[i] + s2 * double_args[j] * _Complex_I,
+			     s2 * double_args[arg3] + s1 * double_args[arg4] * _Complex_I);
+
+	    if (creal(result) == 54321.0) 
+	      continue;
+	    if ((isnormal(creal(result))) &&
+		(isnormal(cimag(result))))
+	      {
+		fprintf(fp, "(test (expt ");
+		fprintf(fp, "%s ", complex_arg(i, j, s1, s2));
+		fprintf(fp, "%s) ", complex_arg(arg3, arg4, s2, s1));
+		complex_to_file(fp, result);
+		fprintf(fp, ")\n");
+	      }
+	  }
+      }
+
   
 
   fprintf(fp, "\n;;; --------------------------------------------------------------------------------\n");

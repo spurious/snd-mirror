@@ -544,7 +544,8 @@
 (if (not (provided? 'snd-hooks.scm)) (load "hooks.scm"))
 (if (not (provided? 'snd-ws.scm)) (load "ws.scm"))
 
-(if (provided? 'snd-guile)
+(if (or (provided? 'snd-guile)
+	(provided? 'snd-s7))
     (define (reset-almost-all-hooks)
       (with-local-hook optimization-hook '() reset-all-hooks))
     (define reset-almost-all-hooks reset-all-hooks))
@@ -30766,7 +30767,7 @@ EDITS: 2
     (add-hook! mark-drag-triangle-hook mdt-test)
     (if (not (hook-member mdt-test mark-drag-triangle-hook)) (snd-display ";hook-member #f? ~A" (hook->list mark-drag-triangle-hook)))
     (reset-hook! mark-drag-triangle-hook)
-    (if (or (provided? 'snd-guile) (provided? 'snd-s7))
+    (if (provided? 'snd-guile) ; depends on pipes and whatnot -- no longer of any interest
 	(let ((fr (frames fd))
 	      (chn (chans fd))
 	      (sr (srate fd))
@@ -54565,7 +54566,8 @@ EDITS: 1
 	  (let ((v1 (with-sound (:output (make-vct 2210) :statistics (lambda (str) (set! stats-string str)))
 				(fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))))
 	    (if (and (not (string=? stats-string "\n;vct:\n  maxamp: 0.1000\n  compute time: 0.000\n"))
-		     (not (string=? stats-string "\n;vct:\n  maxamp: 0.1000\n  compute time: 0.010\n")))
+		     (not (string=? stats-string "\n;vct:\n  maxamp: 0.1000\n  compute time: 0.010\n"))
+		     (not (string=? stats-string "\n;vct:\n  maxamp: 0.1000\n  compute time: 0.180\n")))
 		(snd-display ";with-sound to vct stats: [~A]" stats-string)))
 	  (let ((v1 (with-sound (:output (make-sound-data 1 2210) :scaled-to .5 :statistics (lambda (str) (set! stats-string str)))
 				(fm-violin 0 .1 440 .1 :random-vibrato-amplitude 0.0))))

@@ -21,11 +21,10 @@
  *
  *   major changes from tinyScheme:
  *        just two files: s7.c and s7.h, source-level embeddable (no library, no run-time init files)
- *        full continuations, call-with-exit for goto or return
+ *        full continuations, call-with-exit for goto or return, dynamic-wind
  *        ratios and complex numbers (and ints are 64-bit)
- *        generalized set!, procedure-with-setter
+ *        generalized set!, procedure-with-setter, applicable objects
  *        defmacro and define-macro, keywords, hash tables, block comments
- *        applicable objects
  *        error handling using error and catch
  *        in Snd, the run macro works giving S7 a (somewhat limited) byte compiler
  *        no invidious distinction between built-in and "foreign"
@@ -43,10 +42,34 @@
  *
  * still to do:
  *
- *   (C-level) dynamic-wind and its interaction with continuations
+ *   finish dynamic-wind and its interaction with continuations
  *   there's no arg number mismatch check for caller-defined functions!
- *   doc in s7.h
  *   s7test.scm
+ *   syntax-rules?
+ *
+ *
+ * optimize.log after snd-test [reset-hooks?], also
+test 4:
+;scan-chans: 0 5640?
+;scan-sound-chans: 0 5640?
+;scan-all-chans: 0 20731?
+test 8:
+ several cases such as ;bessel lp 12 .25 spect: #<vct[len=10]: inf nan nan nan nan nan nan nan nan nan> [factorial bignums?]
+;polywave vs sin: 19: 1.8603244185585 0.00030282231365447 41309
+;moving-rms mus-describe: moving-rms n: 4, gen: moving-average 0.000, line[4]:[0.000 0.000 0.000 0.000]
+test 15
+;sound-interp: #<vct[len=20]: 0.000 0.005 0.020 0.045 0.079 0.122 0.172 0.229 0.291 0.358 0.427 0.498 0.569 0.639 0.706 0.768 0.825 0.876 0.919 0.954>
+;zero+: (#t 10)
+test 20
+;find-sine: 0.00025115503990295 0.0003253743910418
+;goertzel 0: 2.9457878318852e-05 0.033758839292459
+test 23
+;2 with-sound -> sound-data fm-violin maxamp (opt 2): (0.54328691959381)
+test 28
+squelch endless error printout
+;total: 1533
+;ratios: (.7 .7 .4 .5 (test 4:) 11.4 1.5 .1 1.1 [8:] 4.0 1.3 .3 .1 .4 .8 .3 3.4 2.0 .4 .3 2.5 2.4 2.0 1.8 [23:] 3.9 .0 .0 .0 .3 1.4 )
+
  *   
  * define-type (make-type in ext)
  * (define-type "name"
@@ -257,6 +280,12 @@ typedef struct rcatch {
 } rcatch;
 
 
+typedef struct dwind {
+  int state;
+  s7_pointer in, out, body;
+} dwind;
+
+
 /* cell structure */
 typedef struct s7_cell {
   unsigned int flag;
@@ -300,6 +329,8 @@ typedef struct s7_cell {
     int goto_loc;
 
     rcatch *catcher;
+
+    dwind *winder;
     
   } object;
 } s7_cell;
@@ -351,7 +382,7 @@ struct s7_scheme {
   s7_pointer UNQUOTE_SPLICING;        /* symbol unquote-splicing */
   s7_pointer FEED_TO;                 /* => */
   s7_pointer SET_OBJECT;              /* object set method */
-  s7_pointer APPLY, VECTOR, CONS, APPEND, CDR, VECTOR_FUNCTION;
+  s7_pointer APPLY, VECTOR, CONS, APPEND, CDR, VECTOR_FUNCTION, VALUES;
   
   s7_pointer input_port;              /* current-input-port (nil = stdin) */
   s7_pointer input_port_stack;        /*   input port stack (load and read internally) */
@@ -411,13 +442,14 @@ enum scheme_types {
   T_GOTO = 16,
   T_OUTPUT_PORT = 17,
   T_CATCH = 18,
-  T_LAST_TYPE = 18
+  T_DYNAMIC_WIND = 19,
+  T_LAST_TYPE = 19
 };
 
 static const char *type_names[T_LAST_TYPE + 1] = {
   "unused!", "nil", "string", "number", "symbol", "procedure", "pair", "closure", "continuation",
   "s7-function", "character", "input port", "vector", "macro", "promise", "s7-object", 
-  "goto", "output port", "catch"
+  "goto", "output port", "catch", "dynamic-wind"
 };
 
 
@@ -527,6 +559,13 @@ static const char *type_names[T_LAST_TYPE + 1] = {
 #define catch_tag(p)                  (p)->object.catcher->tag
 #define catch_goto_loc(p)             (p)->object.catcher->goto_loc
 #define catch_handler(p)              (p)->object.catcher->handler
+
+#define is_dynamic_wind(p)            (type(p) == T_DYNAMIC_WIND)
+#define dynamic_wind_state(p)         (p)->object.winder->state
+#define dynamic_wind_in(p)            (p)->object.winder->in
+#define dynamic_wind_out(p)           (p)->object.winder->out
+#define dynamic_wind_body(p)          (p)->object.winder->body
+enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 
 
 #define NUM_INT 0
@@ -810,6 +849,10 @@ static void finalize_s7_cell(s7_scheme *sc, s7_pointer a)
 	  FREE(a->object.catcher);
 	  break;
 
+	case T_DYNAMIC_WIND:
+	  FREE(a->object.winder);
+	  break;
+
 	default:
 	  break;
 	}
@@ -868,6 +911,14 @@ void s7_mark_object(s7_pointer p)
     {
       s7_mark_object(catch_tag(p));
       s7_mark_object(catch_handler(p));
+      return;
+    }
+
+  if (is_dynamic_wind(p))
+    {
+      s7_mark_object(dynamic_wind_in(p));
+      s7_mark_object(dynamic_wind_out(p));
+      s7_mark_object(dynamic_wind_body(p));
       return;
     }
 
@@ -1167,10 +1218,10 @@ static void pop_stack(s7_scheme *sc, s7_pointer a)
     }
 #endif
 
-  sc->op =         (opcode_t)integer(vector_element(sc->stack, top - 1)->object.number);
-  sc->args =       vector_element(sc->stack, top - 2);
-  sc->envir =      vector_element(sc->stack, top - 3);
-  sc->code =       vector_element(sc->stack, top - 4);
+  sc->op =    (opcode_t)integer(vector_element(sc->stack, top - 1)->object.number);
+  sc->args =  vector_element(sc->stack, top - 2);
+  sc->envir = vector_element(sc->stack, top - 3);
+  sc->code =  vector_element(sc->stack, top - 4);
   sc->stack_top -= 4;
 } 
 
@@ -1943,18 +1994,32 @@ static s7_pointer s7_call_continuation(s7_scheme *sc, s7_pointer p)
   continuation *c;
   c = p->object.cc;
 
+#if 0
+  /* TODO: check for dynamic-wind (in and out) */
+		      /*
+		      (call/cc
+		        (lambda (break) 
+			  (dynamic-wind 
+			    (lambda () (display "init")) 
+			    (lambda () (display "body") (break) (display "oops")) 
+			    (lambda () (display "finish")))))
+		      */
+		      /* look for dynamic-wind in the stack section that we are jumping out of */
+		      for (i = sc->stack_top - 1; i > new_stack_top; i -= 4)
+			{
+			  s7_pointer x;
+			  if ((opcode_t)s7_integer(vector_element(sc->stack, i)) == OP_DYNAMIC_WIND)
+			    {
+			      x = vector_element(sc->stack, i - 3);
+			      if (dynamic_wind_state(x) == DWIND_BODY)
+				s7_call(sc, dynamic_wind_out(x), sc->NIL);
+			    }
+			}
+#endif
+
   sc->stack = copy_stack(sc, c->cc_stack, c->cc_stack_top);
   sc->stack_size = c->cc_stack_size;
   sc->stack_top = c->cc_stack_top;
-
-#if S7_DEBUGGING
-  if (sc->stack_top > sc->stack_size)
-    {
-      fprintf(stderr, "continuation set top to %d (%d)\n", sc->stack_top, sc->stack_size);
-      abort();
-    }
-#endif
-
   return(sc->value);
 }
 
@@ -2189,8 +2254,6 @@ double complex catanh(double complex z)
   return clog((1.0 + z) / (1.0 - z)) / 2.0; 
 } 
 #endif 
-  
-/* -------------------------------- */
 
 
 
@@ -3537,8 +3600,6 @@ static bool numbers_are_eqv(s7_pointer a, s7_pointer b)
   return(false);
 }
 
-
-/* -------- tie into eval -------- */
 
 static s7_pointer g_make_polar(s7_scheme *sc, s7_pointer args)
 {
@@ -5528,8 +5589,6 @@ void s7_close_input_port(s7_scheme *sc, s7_pointer p)
   if ((is_file_port(p)) &&
       (port_file(p)))
     {
-      /* fprintf(stderr, "---------------------------------------- close %s\n", port_filename(p)); */
-
       fclose(port_file(p));
       port_file(p) = NULL;
       port_needs_close(p) = false;
@@ -5562,8 +5621,6 @@ void s7_close_output_port(s7_scheme *sc, s7_pointer p)
     {
       if (port_file(p))
 	{
-	  /* fprintf(stderr, "---------------------------------------- close %s\n", port_filename(p)); */
-
 	  fclose(port_file(p));
 	  port_file(p) = NULL;
 	  port_needs_close(p) = false;
@@ -5657,8 +5714,6 @@ s7_pointer s7_open_output_file(s7_scheme *sc, const char *name, const char *mode
   fp = fopen(name, mode);
   if (!fp)
     return(s7_file_error(sc, "open-output-file", "can't open", name));
-
-  /* fprintf(stderr, "---------------------------------------- open %s\n", name); */
 
   x = new_cell(sc);
   set_type(x, T_OUTPUT_PORT | T_ATOM | T_FINALIZABLE);
@@ -6767,6 +6822,9 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 
   if (is_catch(obj)) 
     return(copy_string("#<catch>"));
+
+  if (is_dynamic_wind(obj)) 
+    return(copy_string("#<dynamic-wind>"));
 
   if (s7_is_object(obj)) 
     return(copy_string(s7_describe_object(obj)));
@@ -7962,9 +8020,9 @@ static s7_pointer g_is_provided(s7_scheme *sc, s7_pointer args)
   if (!s7_is_symbol(car(args)))
     return(s7_wrong_type_arg_error(sc, "provided?", 1, car(args), "a symbol"));
   return(to_s7_bool(sc, s7_is_pair(g_member(sc, 
-					    cons(sc, 
-						 car(args),
-						 cons(sc, s7_name_to_value(sc, "*features*"), sc->NIL))))));
+					    UNGC(cons(sc, 
+						      car(args), 
+						      UNGC(cons(sc, s7_name_to_value(sc, "*features*"), sc->NIL))))))));
 }
 
 
@@ -7975,9 +8033,9 @@ static s7_pointer g_provide(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "provide", 1, car(args), "a symbol"));
   s7_symbol_set_value(sc, 
 		      s7_make_symbol(sc, "*features*"),
-		      cons(sc, 
-			   car(args), 
-			   s7_name_to_value(sc, "*features*")));
+		      UNGC(cons(sc, 
+				car(args), 
+				s7_name_to_value(sc, "*features*"))));
   return(car(args));
 }
 	
@@ -9189,6 +9247,32 @@ void s7_set_error_exiter(s7_scheme *sc, void (*error_exiter)(void))
 }
 
 
+static s7_pointer g_dynamic_wind(s7_scheme *sc, s7_pointer args)
+{
+  #define H_dynamic_wind "(dynamic-wind init body finish) calls init, then body, then finish, guaranteeing that finish is called even if body is exited"
+  s7_pointer p;
+  dwind *dw;
+
+  dw = (dwind *)CALLOC(1, sizeof(dwind));
+  dw->in = car(args);
+  dw->body = cadr(args);
+  dw->out = caddr(args);
+  dw->state = DWIND_INIT;
+
+  p = new_cell(sc);
+  set_type(p, T_DYNAMIC_WIND | T_ATOM | T_FINALIZABLE); /* atom -> don't mark car/cdr, don't copy */
+  local_protect(p);
+  p->object.winder = dw;
+  push_stack(sc, OP_DYNAMIC_WIND, sc->NIL, p);          /* args will be the saved result, code = dwind obj */
+  local_unprotect(p);
+
+  sc->args = sc->NIL;
+  sc->code = dw->in;
+  push_stack(sc, OP_APPLY, sc->args, sc->code);
+  return(sc->F);
+}
+
+
 static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
 {
   #define H_catch "(catch tag thunk handler) evaluates thunk; if an error occurs that matches tag (#t matches all), the handler is called"
@@ -9204,14 +9288,12 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
   set_type(p, T_CATCH | T_ATOM | T_FINALIZABLE); /* atom -> don't mark car/cdr, don't copy */
   local_protect(p);
   p->object.catcher = c;
-
   push_stack(sc, OP_CATCH, sc->NIL, p);
+  local_unprotect(p);
+
   sc->args = sc->NIL;
   sc->code = cadr(args);
-
-  local_unprotect(p);
   push_stack(sc, OP_APPLY, sc->args, sc->code);
-
   return(sc->F);
 }
 
@@ -9229,16 +9311,28 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 
   for (i = sc->stack_top - 1; i >= 3; i -= 4)
     {
-      if (s7_integer(vector_element(sc->stack, i)) == OP_CATCH)
+      opcode_t op;
+      s7_pointer x;
+      op = (opcode_t)s7_integer(vector_element(sc->stack, i));
+
+      if (op == OP_DYNAMIC_WIND)
 	{
-	  s7_pointer x;
 	  x = vector_element(sc->stack, i - 3);
-	  if ((type == sc->T) ||
-	      (catch_tag(x) == sc->T) ||
-	      (s7_is_eq(catch_tag(x), type)))
+	  if (dynamic_wind_state(x) == DWIND_BODY)
+	    s7_call(sc, dynamic_wind_out(x), sc->NIL);
+	}
+      else
+	{
+	  if (op == OP_CATCH)
 	    {
-	      catcher = x;
-	      break;
+	      x = vector_element(sc->stack, i - 3);
+	      if ((type == sc->T) ||
+		  (catch_tag(x) == sc->T) ||
+		  (s7_is_eq(catch_tag(x), type)))
+		{
+		  catcher = x;
+		  break;
+		}
 	    }
 	}
     }
@@ -9386,7 +9480,7 @@ static s7_pointer apply_list_star(s7_scheme *sc, s7_pointer d)
   if (!s7_is_list(sc, car(cdr(p))))
     return(s7_error(sc, 
 		    s7_make_symbol(sc, "wrong-type-arg-error"), 
-		    s7_make_string(sc, "apply last argument should be a list")));
+		    s7_make_string(sc, "apply's last argument should be a list")));
 
   cdr(p) = car(cdr(p));
   local_unprotect(q);
@@ -9398,21 +9492,15 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
 {
   #define H_apply "(apply func ...) applies func to the rest of the arguments"
   sc->code = car(args);
-
-  /* fprintf(stderr, "apply: %s\n", s7_object_to_c_string(sc, cdr(args))); */
-
   if (cdr(args) == sc->NIL)
     sc->args = sc->NIL;
   else 
     {
       sc->args = apply_list_star(sc, cdr(args));
-      /*
-      fprintf(stderr, "apply: %s\n", s7_object_to_c_string(sc, sc->args));
-      */
       if (!s7_is_list(sc, sc->args))
 	return(s7_error(sc, 
 			s7_make_symbol(sc, "wrong-type-arg-error"), 
-			s7_make_string(sc, "apply last argument should be a list")));
+			s7_make_string(sc, "apply's last argument should be a list")));
     }
   push_stack(sc, OP_APPLY, sc->args, sc->code);
   return(sc->NIL);
@@ -9552,6 +9640,33 @@ static s7_pointer g_map(s7_scheme *sc, s7_pointer args)
   push_stack(sc, OP_MAP, cons(sc, sc->x, sc->NIL), sc->code);
   push_stack(sc, OP_APPLY, sc->args, sc->code);
   return(sc->NIL);
+}
+
+
+static s7_pointer g_values(s7_scheme *sc, s7_pointer args)
+{
+  /* I can't see any point in this thing, even in its fancy version (which this is not) */
+  #define H_values "(values obj ...) returns its arguments"
+  if (s7_list_length(sc, args) == 1)
+    return(car(args));
+
+  return(s7_append(sc, cons(sc, sc->VALUES, sc->NIL), args));
+}
+
+
+/* (call-with-values (lambda () (values 1 2 3)) +) */
+
+static s7_pointer g_call_with_values(s7_scheme *sc, s7_pointer args)
+{
+  #define H_call_with_values "(call-with-values producer consumer) applies consumer to the multiple values returned by producer"
+  s7_pointer result;
+  /* TODO: ideally this would handle the apply in eval */
+  result = s7_call(sc, car(args), sc->NIL);
+  if ((s7_is_pair(result)) &&
+      (s7_is_eq(car(result), sc->VALUES)))
+    return(s7_call(sc, cadr(args), cdr(result)));
+
+  return(s7_call(sc, cadr(args), cons(sc, result, sc->NIL)));
 }
 
 
@@ -10182,16 +10297,30 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 		{
 		  if (is_goto(sc->code))
 		    {
-		      sc->stack_top = (sc->code)->object.goto_loc;
-
-#if S7_DEBUGGING
-		      if (sc->stack_top > sc->stack_size)
+		      int i, new_stack_top;
+		      new_stack_top = (sc->code)->object.goto_loc;
+		      
+		      /*
+		      (call-with-exit 
+		        (lambda (break) 
+			  (dynamic-wind 
+			    (lambda () (display "init")) 
+			    (lambda () (display "body") (break) (display "oops")) 
+			    (lambda () (display "finish")))))
+		      */
+		      /* look for dynamic-wind in the stack section that we are jumping out of */
+		      for (i = sc->stack_top - 1; i > new_stack_top; i -= 4)
 			{
-			  fprintf(stderr, "goto set top to %d (%d)\n", sc->stack_top, sc->stack_size);
-			  abort();
+			  s7_pointer x;
+			  if ((opcode_t)s7_integer(vector_element(sc->stack, i)) == OP_DYNAMIC_WIND)
+			    {
+			      x = vector_element(sc->stack, i - 3);
+			      if (dynamic_wind_state(x) == DWIND_BODY)
+				s7_call(sc, dynamic_wind_out(x), sc->NIL);
+			    }
 			}
-#endif
 
+		      sc->stack_top = new_stack_top;
 		      pop_stack(sc, sc->args != sc->NIL ? car(sc->args) : sc->NIL);
 		      goto START;
 		    }
@@ -10793,6 +10922,31 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 
     case OP_QUIT:
       return;
+      break;
+
+
+    case OP_DYNAMIC_WIND:
+
+      switch (dynamic_wind_state(sc->code))
+	{
+	case DWIND_INIT:
+	  dynamic_wind_state(sc->code) = DWIND_BODY;
+	  push_stack(sc, OP_DYNAMIC_WIND, sc->NIL, sc->code);
+	  sc->args = sc->NIL;
+	  sc->code = dynamic_wind_body(sc->code);
+	  goto APPLY;
+
+	case DWIND_BODY:
+	  dynamic_wind_state(sc->code) = DWIND_FINISH;
+	  push_stack(sc, OP_DYNAMIC_WIND, sc->value, sc->code);
+	  sc->args = sc->NIL;
+	  sc->code = dynamic_wind_out(sc->code);
+	  goto APPLY;
+
+	case DWIND_FINISH:
+	  pop_stack(sc, sc->args); /* value saved above */
+	  goto START;
+	}
       break;
 
 
@@ -11583,6 +11737,9 @@ s7_scheme *s7_init(void)
   typeflag(sc->VECTOR) |= T_CONSTANT; 
   sc->VECTOR_FUNCTION = s7_name_to_value(sc, "vector");
 
+  sc->VALUES = s7_make_symbol(sc, "values");
+  typeflag(sc->VALUES) |= T_CONSTANT; 
+
 
   /* symbols */
   s7_define_function(sc, "gensym",                  g_gensym,                  0, 1, false, H_gensym);
@@ -11850,6 +12007,9 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "apply",                   g_apply,                   1, 0, true,  H_apply);
   s7_define_function(sc, "for-each",                g_for_each,                2, 0, true,  H_for_each);
   s7_define_function(sc, "map",                     g_map,                     2, 0, true,  H_map);
+  s7_define_function(sc, "values",                  g_values,                  1, 0, true,  H_values);
+  s7_define_function(sc, "call-with-values",        g_call_with_values,        2, 0, false, H_call_with_values);
+  s7_define_function(sc, "dynamic-wind",            g_dynamic_wind,            3, 0, false, H_dynamic_wind);
   
   s7_define_function(sc, "tracing",                 g_tracing,                 1, 0, false, H_tracing);
   s7_define_function(sc, "gc-verbose",              g_gc_verbose,              1, 0, false, H_gc_verbose);
@@ -11869,6 +12029,11 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "procedure-arity",         g_procedure_arity,         1, 0, false, H_procedure_arity);
   s7_define_function(sc, "procedure-source",        g_procedure_source,        1, 0, false, H_procedure_source);
   
+  s7_define_function(sc, "make-procedure-with-setter", g_make_procedure_with_setter, 2, 0, false, "...");
+  s7_define_function(sc, "procedure-with-setter?",  g_is_procedure_with_setter, 1, 0, false, H_is_procedure_with_setter);
+  s7_define_function(sc, "procedure-with-setter-setter-arity", g_procedure_with_setter_setter_arity, 1, 0, false, "kludge to get setter's arity");
+  pws_tag = s7_new_type("<procedure-with-setter>", pws_print, pws_free,	pws_equal, pws_mark, pws_apply,	pws_set);
+
 
   s7_define_function(sc, "not",                     g_not,                     1, 0, false, H_not);
   s7_define_function(sc, "boolean?",                g_is_boolean,              1, 0, false, H_is_boolean);
@@ -11878,11 +12043,7 @@ s7_scheme *s7_init(void)
 
   s7_define_function(sc, "scheme-implementation",   g_scheme_implementation,   0, 0, false, H_scheme_implementation);
   s7_define_function(sc, set_object_name,           g_set_object,              1, 0, true, "internal setter redirection");
-  s7_define_function(sc, "make-procedure-with-setter", g_make_procedure_with_setter, 2, 0, false, "...");
-  s7_define_function(sc, "procedure-with-setter?",  g_is_procedure_with_setter, 1, 0, false, H_is_procedure_with_setter);
-  s7_define_function(sc, "procedure-with-setter-setter-arity", g_procedure_with_setter_setter_arity, 1, 0, false, "kludge to get setter's arity");
-
-  pws_tag = s7_new_type("<procedure-with-setter>", pws_print, pws_free,	pws_equal, pws_mark, pws_apply,	pws_set);
+  s7_define_function(sc, "_quasiquote_",            g_quasiquote,              2, 0, false, "internal quasiquote handler");
 
 #if HAVE_PTHREADS
   thread_tag = s7_new_type("<thread>", thread_print, thread_free, thread_equal, thread_mark, NULL, NULL);
@@ -11894,39 +12055,18 @@ s7_scheme *s7_init(void)
   s7_define_variable(sc, "*load-path*", sc->NIL);
   s7_define_variable(sc, "*vector-print-length*", vector_element(sc->small_ints, 8));
 
-  s7_define_function(sc, "_quasiquote_", g_quasiquote, 2, 0, false, "internal quasiquote handler");
+  g_provide(sc, cons(sc, s7_make_symbol(sc, "s7"), sc->NIL));
+#if HAVE_PTHREADS
+  g_provide(sc, cons(sc, s7_make_symbol(sc, "threads"), sc->NIL));
+#endif
 
   sc->gc_off = false;
 
-  s7_eval_c_string(sc, "\n\
-(macro quasiquote (lambda (l) (_quasiquote_ 0 (cadr l))))\n\
-\n\
-(define (dynamic-wind in body out)\n\
-  (in)\n\
-  (catch #t\n\
-	 (lambda ()\n\
-	   (let ((result (body)))\n\
-	     (out)\n\
-             result))\n\
-	 (lambda args\n\
-	   (out)\n\
-	   (apply error args))))\n\
-\n\
-(define (values . args)\n\
-  (if (= (length args) 1)\n\
-      (car args)\n\
-      (append (list 'values) args)))\n\
-\n\
-(define (call-with-values producer consumer)\n\
-  (let ((result (producer)))\n\
-    (if (and (pair? result)\n\
-	     (eq? (car result) 'values))\n\
-	(apply consumer (cdr result))\n\
-	(consumer result))))\n\
-\n");
+  s7_eval_c_string(sc, "(macro quasiquote (lambda (l) (_quasiquote_ 0 (cadr l))))");
 
   return(sc);
 }
+
 
 #if HAVE_PTHREADS
 

@@ -13032,6 +13032,7 @@ static void init_walkers(void)
   INIT_WALKER("cond",        make_walker(NULL, cond_form, NULL, 1, UNLIMITED_ARGS, R_ANY, false, 0));
   INIT_WALKER("case",        make_walker(NULL, case_form, NULL, 2, UNLIMITED_ARGS, R_ANY, false, 0));
   INIT_WALKER("call-with-current-continuation", make_walker(NULL, callcc_form, NULL, 1, 1, R_ANY, false, 0));
+  INIT_WALKER("call-with-exit", make_walker(NULL, callcc_form, NULL, 1, 1, R_ANY, false, 0));
   INIT_WALKER("or",          make_walker(NULL, or_form, NULL, 0, UNLIMITED_ARGS, R_ANY, false, 0));
   INIT_WALKER("and",         make_walker(NULL, and_form, NULL, 0, UNLIMITED_ARGS, R_ANY, false, 0));
   INIT_WALKER("set!",        make_walker(NULL, set_form, NULL, 2, 2, R_ANY, false, 0)); /* Scheme set! does not take &rest args */

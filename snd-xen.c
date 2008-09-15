@@ -3079,6 +3079,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 #if HAVE_S7
   XEN_EVAL_C_STRING("(define redo-edit redo)");        /* consistency with Ruby */
   XEN_EVAL_C_STRING("(define undo-edit undo)");
+  XEN_EVAL_C_STRING("(define (clm-print . args) (snd-print (apply format #f args)))");
 
   /* from ice-9/r4rs.scm but with output to snd listener */
   XEN_EVAL_C_STRING("(define *snd-loaded-files* '())");
