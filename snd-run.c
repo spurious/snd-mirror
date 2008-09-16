@@ -13678,6 +13678,7 @@ to Scheme and is equivalent to (thunk)."
 
   XEN code;
   ptree *pt = NULL;
+
 #if (!HAVE_S7)
   code = XEN_CADR(proc_and_code);
 #else

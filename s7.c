@@ -42,45 +42,9 @@
  *
  * still to do:
  *
- *   finish dynamic-wind and its interaction with continuations
  *   there's no arg number mismatch check for caller-defined functions!
  *   s7test.scm
- *   syntax-rules?
  *
- *
- * optimize.log after snd-test [reset-hooks?], also
-test 4:
-;scan-chans: 0 5640?
-;scan-sound-chans: 0 5640?
-;scan-all-chans: 0 20731?
-test 8:
- several cases such as ;bessel lp 12 .25 spect: #<vct[len=10]: inf nan nan nan nan nan nan nan nan nan> [factorial bignums?]
-;polywave vs sin: 19: 1.8603244185585 0.00030282231365447 41309
-;moving-rms mus-describe: moving-rms n: 4, gen: moving-average 0.000, line[4]:[0.000 0.000 0.000 0.000]
-test 15
-;sound-interp: #<vct[len=20]: 0.000 0.005 0.020 0.045 0.079 0.122 0.172 0.229 0.291 0.358 0.427 0.498 0.569 0.639 0.706 0.768 0.825 0.876 0.919 0.954>
-;zero+: (#t 10)
-test 20
-;find-sine: 0.00025115503990295 0.0003253743910418
-;goertzel 0: 2.9457878318852e-05 0.033758839292459
-test 23
-;2 with-sound -> sound-data fm-violin maxamp (opt 2): (0.54328691959381)
-test 28
-squelch endless error printout
-;total: 1533
-;ratios: (.7 .7 .4 .5 (test 4:) 11.4 1.5 .1 1.1 [8:] 4.0 1.3 .3 .1 .4 .8 .3 3.4 2.0 .4 .3 2.5 2.4 2.0 1.8 [23:] 3.9 .0 .0 .0 .3 1.4 )
-
- *   
- * define-type (make-type in ext)
- * (define-type "name"
- *              (lambda (obj) (display obj))       ; print
- *	        #f                                 ; free
- *	        (lambda (obj1 obj2) (= obj1 obj2)) ; equal?
- *	        #f                                 ; gc mark
- *	        (lambda (obj arg) arg)             ; apply
- *	        #f)                                ; set
- *  (make-object <tag> value)
- *  (object? <tag> obj) or maybe (name? obj) and (make-name value)
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
  */
@@ -160,6 +124,7 @@ squelch endless error printout
 
 #define SYMBOL_TABLE_SIZE 9601
 /* names are hashed into the symbol table (a vector) and collisions are chained as lists; was 461, then 4603.
+ *   setting it to 100043 did improve performance
  */
 
 #define INITIAL_STACK_SIZE 1000            /* each frame takes 4 entries */
@@ -483,9 +448,11 @@ static const char *type_names[T_LAST_TYPE + 1] = {
 #define local_protect(p)              typeflag(p) |= T_CONSTANT
 #define local_unprotect(p)            typeflag(p) &= (~T_CONSTANT)
 
-#define T_UNUSED_BITS                 0xff000000
+#define T_UNUSED_BITS                 0xfe000000
 #define T_OBJECT                      (1 << (TYPE_BITS + 6))
 #define T_FINALIZABLE                 (1 << (TYPE_BITS + 7))
+#define T_SIMPLE                      (1 << (TYPE_BITS + 8))
+#define is_simple(p)                  (typeflag(p) & T_SIMPLE)
 
 #define is_object(x)                  ((x) && (((typeflag(x) & (T_UNUSED_BITS | T_OBJECT)) == T_OBJECT) && (type(x) != 0) && (type(x) <= T_LAST_TYPE)))
 
@@ -612,7 +579,7 @@ static char *describe_type(s7_pointer p)
 {
   char *buf;
   buf = (char *)CALLOC(1024, sizeof(char));
-  sprintf(buf, "%s%s%s%s%s%s%s%s",
+  sprintf(buf, "%s%s%s%s%s%s%s%s%s",
 	  ((type(p) >= 0) && (type(p) <= T_LAST_TYPE)) ? type_names[type(p)] : "bogus type",
 	  (typeflag(p) & T_SYNTAX) ? " syntax" : "",
 	  (typeflag(p) & T_IMMUTABLE) ? " immutable" : "",
@@ -620,6 +587,7 @@ static char *describe_type(s7_pointer p)
 	  (typeflag(p) & T_GC_MARK) ? " marked" : "",
 	  (typeflag(p) & T_OBJECT) ? " object" : "",
 	  (typeflag(p) & T_FINALIZABLE) ? " gc-freeable" : "",
+	  (typeflag(p) & T_SIMPLE) ? " simple" : "",
 	  (typeflag(p) & T_UNUSED_BITS) ? " and other garbage bits!" : "");
   return(buf);
 }
@@ -642,10 +610,16 @@ static char *describe_type(s7_pointer p)
 
 #define BACKQUOTE '`'
 
+
 #define CASE_SENSITIVE 1
 #if CASE_SENSITIVE
-#define string_downcase(Str) Str
+
+  #define string_downcase(Str) Str
+  #define STRCMP(Str1, Str2) strcmp(Str1, Str2)
+
 #else
+
+#define STRCMP(Str1, Str2) strcasecmp(Str1, Str2)
 static const char *string_downcase(char *s) 
 {
   const char *p = s;
@@ -656,7 +630,9 @@ static const char *string_downcase(char *s)
     }
   return(p);
 }
+
 #endif
+
 
 static int safe_strlen(const char *str)
 {
@@ -889,6 +865,8 @@ void s7_mark_object(s7_pointer p)
 
   set_mark(p);
 
+  if (is_simple(p)) return;
+
   if (s7_is_vector(p)) 
     {
       mark_vector(p, vector_length(p));
@@ -1059,12 +1037,8 @@ static int gc(s7_scheme *sc, const char *function, int line)
 #endif
 
 
-#if S7_DEBUGGING
 #define new_cell(Sc) new_cell_1(Sc, __FUNCTION__, __LINE__)
 static s7_pointer new_cell_1(s7_scheme *sc, const char *function, int line)
-#else
-static s7_pointer new_cell(s7_scheme *sc)
-#endif
 {
   s7_pointer p;
 
@@ -1420,7 +1394,7 @@ static s7_pointer g_stacktrace(s7_scheme *sc, s7_pointer args)
 		      vector_element(sc->stack, i + 0),
 		      vector_element(sc->stack, i + 2));
   print_stack_entry(sc, sc->op, sc->code, sc->args);
-  fprintf(stderr,"\n");
+  fprintf(stderr, "\n");
   sc->gc_off = false;
   return(sc->UNSPECIFIED);
 }
@@ -1472,7 +1446,7 @@ static  s7_pointer symbol_table_find_by_name(s7_scheme *sc, const char *name)
   for (x = vector_element(sc->symbol_table, location); x != sc->NIL; x = cdr(x)) 
     { 
       s = s7_symbol_name(car(x)); 
-      if ((s) && (strcasecmp(name, s) == 0))
+      if ((s) && (STRCMP(name, s) == 0))
 	return(car(x)); 
     } 
   return sc->NIL; 
@@ -1964,7 +1938,7 @@ static s7_pointer s7_make_goto(s7_scheme *sc)
 {
   s7_pointer x;
   x = new_cell(sc);
-  set_type(x, T_ATOM | T_GOTO);
+  set_type(x, T_ATOM | T_GOTO | T_SIMPLE);
   x->object.goto_loc = sc->stack_top;
   return(x);
 }
@@ -1989,34 +1963,66 @@ static s7_pointer s7_make_continuation(s7_scheme *sc)
 }
 
 
+static void check_for_dynamic_winds(s7_scheme *sc, continuation *c)
+{
+  /*
+    (let ((x 32))
+      (dynamic-wind
+          (lambda () (newline) (display "outer init"))
+          (lambda ()
+            (newline) (display "outer body begin")
+	    (call/cc
+	     (lambda (break) 
+	       (dynamic-wind 
+	         (lambda () (newline) (display "inner init")) 
+	         (lambda () (newline) (display "inner body") (break) (display "oops")) 
+	         (lambda () (newline) (display "inner finish")))))
+	    (newline) (display "outer body done"))
+          (lambda () (newline) (display "outer finish")))
+      x)
+  */
+  int i, s_base = 0, c_base = -1;
+
+  for (i = sc->stack_top - 1; i > 0; i -= 4)
+    {
+      s7_pointer x;
+      if ((opcode_t)s7_integer(vector_element(sc->stack, i)) == OP_DYNAMIC_WIND)
+	{
+	  int j;
+	  x = vector_element(sc->stack, i - 3);
+	  for (j = 3; j < c->cc_stack_top; j += 4)
+	    if (((opcode_t)s7_integer(vector_element(c->cc_stack, j)) == OP_DYNAMIC_WIND) &&
+		(x == vector_element(c->cc_stack, j - 3)))
+	      {
+		s_base = i;
+		c_base = j;
+		break;
+	      }
+
+	  if (s_base != 0)
+	    break;	  
+
+	  if (dynamic_wind_state(x) == DWIND_BODY)
+	    s7_call(sc, dynamic_wind_out(x), sc->NIL);
+	}
+    }
+
+  for (i = c_base + 4; i < c->cc_stack_top; i += 4)
+    if ((opcode_t)s7_integer(vector_element(c->cc_stack, i)) == OP_DYNAMIC_WIND)
+      {
+	s7_pointer x;
+	x = vector_element(c->cc_stack, i - 3);
+	s7_call(sc, dynamic_wind_in(x), sc->NIL);
+	dynamic_wind_state(x) = DWIND_BODY;
+      }
+}
+
+
 static s7_pointer s7_call_continuation(s7_scheme *sc, s7_pointer p)
 {
   continuation *c;
   c = p->object.cc;
-
-#if 0
-  /* TODO: check for dynamic-wind (in and out) */
-		      /*
-		      (call/cc
-		        (lambda (break) 
-			  (dynamic-wind 
-			    (lambda () (display "init")) 
-			    (lambda () (display "body") (break) (display "oops")) 
-			    (lambda () (display "finish")))))
-		      */
-		      /* look for dynamic-wind in the stack section that we are jumping out of */
-		      for (i = sc->stack_top - 1; i > new_stack_top; i -= 4)
-			{
-			  s7_pointer x;
-			  if ((opcode_t)s7_integer(vector_element(sc->stack, i)) == OP_DYNAMIC_WIND)
-			    {
-			      x = vector_element(sc->stack, i - 3);
-			      if (dynamic_wind_state(x) == DWIND_BODY)
-				s7_call(sc, dynamic_wind_out(x), sc->NIL);
-			    }
-			}
-#endif
-
+  check_for_dynamic_winds(sc, c);
   sc->stack = copy_stack(sc, c->cc_stack, c->cc_stack_top);
   sc->stack_size = c->cc_stack_size;
   sc->stack_top = c->cc_stack_top;
@@ -2581,7 +2587,7 @@ s7_pointer s7_make_integer(s7_scheme *sc, s7_Int n)
 {
   s7_pointer x;
   x = new_cell(sc);
-  set_type(x, T_NUMBER | T_ATOM);
+  set_type(x, T_NUMBER | T_ATOM | T_SIMPLE);
 
   x->object.number.type = NUM_INT;
   integer(x->object.number) = n;
@@ -2593,7 +2599,7 @@ s7_pointer s7_make_integer(s7_scheme *sc, s7_Int n)
 s7_pointer s7_make_real(s7_scheme *sc, double n) 
 {
   s7_pointer x = new_cell(sc);
-  set_type(x, T_NUMBER | T_ATOM);
+  set_type(x, T_NUMBER | T_ATOM | T_SIMPLE);
 
   x->object.number.type = NUM_REAL;
   real(x->object.number) = n;
@@ -2606,7 +2612,7 @@ s7_pointer s7_make_complex(s7_scheme *sc, double a, double b)
 {
   num ret;
   s7_pointer x = new_cell(sc);
-  set_type(x, T_NUMBER | T_ATOM);
+  set_type(x, T_NUMBER | T_ATOM | T_SIMPLE);
   ret = make_complex(a, b);
 
   x->object.number.type = ret.type;
@@ -2627,7 +2633,7 @@ s7_pointer s7_make_ratio(s7_scheme *sc, s7_Int a, s7_Int b)
 
   num ret;
   s7_pointer x = new_cell(sc);
-  set_type(x, T_NUMBER | T_ATOM);
+  set_type(x, T_NUMBER | T_ATOM | T_SIMPLE);
   ret = make_ratio(sc, a, b);
 
   x->object.number.type = ret.type;
@@ -3529,23 +3535,23 @@ static s7_pointer make_sharp_const(s7_scheme *sc, char *name)
   if (*name == '\\')  /* #\w (character) */
     { 
       int c = 0;
-      if (strcasecmp(name + 1, "space") == 0) 
+      if (STRCMP(name + 1, "space") == 0) 
 	{
 	  c =' ';
 	} 
-      else if (strcasecmp(name + 1, "newline") == 0)
+      else if (STRCMP(name + 1, "newline") == 0)
 	{
 	  c ='\n';
 	} 
-      else if (strcasecmp(name + 1, "return") == 0) 
+      else if (STRCMP(name + 1, "return") == 0) 
 	{
 	  c ='\r';
 	} 
-      else if (strcasecmp(name + 1, "tab") == 0) 
+      else if (STRCMP(name + 1, "tab") == 0) 
 	{
 	  c ='\t';
 	} 
-      else if (strcasecmp(name + 1, "null") == 0) 
+      else if (STRCMP(name + 1, "null") == 0) 
 	{
 	  c ='\0';
 	} 
@@ -4676,7 +4682,7 @@ static s7_pointer g_is_char(s7_scheme *sc, s7_pointer args)
 s7_pointer s7_make_character(s7_scheme *sc, int c) 
 {
   s7_pointer x = new_cell(sc);
-  set_type(x, T_CHARACTER | T_ATOM);
+  set_type(x, T_CHARACTER | T_ATOM | T_SIMPLE);
   character(x) = c;
   return(x);
 }
@@ -4848,7 +4854,7 @@ s7_pointer s7_make_counted_string(s7_scheme *sc, const char *str, int len)
     }
 #endif
 
-  set_type(x, T_STRING | T_ATOM | T_FINALIZABLE);
+  set_type(x, T_STRING | T_ATOM | T_FINALIZABLE | T_SIMPLE);
   local_protect(x);
   if (str)
     string_value(x) = copy_string(str);
@@ -4863,7 +4869,7 @@ static s7_pointer make_empty_string(s7_scheme *sc, int len, char fill)
 {
   s7_pointer x;
   x = new_cell(sc);
-  set_type(x, T_STRING | T_ATOM | T_FINALIZABLE);
+  set_type(x, T_STRING | T_ATOM | T_FINALIZABLE | T_SIMPLE);
   local_protect(x);
   string_value(x) = (char *)CALLOC(len + 1, sizeof(char));
   if (fill != 0)
@@ -5655,7 +5661,7 @@ static s7_pointer s7_make_input_file(s7_scheme *sc, const char *name, FILE *fp)
 {
   s7_pointer x;
   x = new_cell(sc);
-  set_type(x, T_INPUT_PORT | T_ATOM | T_FINALIZABLE);
+  set_type(x, T_INPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE);
   local_protect(x);
 
   /* set up the port struct */
@@ -5716,7 +5722,7 @@ s7_pointer s7_open_output_file(s7_scheme *sc, const char *name, const char *mode
     return(s7_file_error(sc, "open-output-file", "can't open", name));
 
   x = new_cell(sc);
-  set_type(x, T_OUTPUT_PORT | T_ATOM | T_FINALIZABLE);
+  set_type(x, T_OUTPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE);
   local_protect(x);
 
   /* set up the port struct */
@@ -5758,7 +5764,7 @@ s7_pointer s7_open_input_string(s7_scheme *sc, const char *input_string)
 {
   s7_pointer x;
   x = new_cell(sc);
-  set_type(x, T_INPUT_PORT | T_ATOM | T_FINALIZABLE);
+  set_type(x, T_INPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE);
   local_protect(x);
 
   /* set up the port struct */
@@ -5794,7 +5800,7 @@ s7_pointer s7_open_output_string(s7_scheme *sc)
 {
   s7_pointer x;
   x = new_cell(sc);
-  set_type(x, T_OUTPUT_PORT | T_ATOM | T_FINALIZABLE);
+  set_type(x, T_OUTPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE);
   local_protect(x);
 
   /* set up the port struct */
@@ -8320,7 +8326,21 @@ static s7_pointer g_is_vector(s7_scheme *sc, s7_pointer args)
 
       
 
-/* -------------------------------- objects and functions -------------------------------- */
+/* -------------------------------- objects and functions --------------------------------
+ *
+ * this could be made available in Scheme:
+ *
+ * define-type (make-type in ext)
+ * (define-type "name"
+ *              (lambda (obj) (display obj))       ; print
+ *	        #f                                 ; free
+ *	        (lambda (obj1 obj2) (= obj1 obj2)) ; equal?
+ *	        #f                                 ; gc mark
+ *	        (lambda (obj arg) arg)             ; apply
+ *	        #f)                                ; set
+ *  (make-object <tag> value)
+ *  (object? <tag> obj) or maybe (name? obj) and (make-name value)
+ */
 
 bool s7_is_function(s7_pointer p)  
 { 
@@ -8339,7 +8359,7 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
   ffunc *ptr;
   s7_pointer x = new_cell(sc);
   ptr = (ffunc *)CALLOC(1, sizeof(ffunc));
-  set_type(x, T_S7_FUNCTION | T_ATOM | T_CONSTANT);
+  set_type(x, T_S7_FUNCTION | T_ATOM | T_CONSTANT | T_SIMPLE);
   x->object.ffptr = ptr;
   x->object.ffptr->ff = f;
   x->object.ffptr->name = name;
@@ -9102,7 +9122,7 @@ s7_pointer s7_hash_table_ref(s7_scheme *sc, s7_pointer table, const char *name)
   
   location = hash_fn(name, vector_length(table));
   for (x = vector_element(table, location); x != sc->NIL; x = cdr(x)) 
-    if (strcasecmp(name, string_value(caar(x))) == 0) 
+    if (STRCMP(name, string_value(caar(x))) == 0) 
 	return(cdar(x)); 
 
   return(sc->F);
@@ -9117,7 +9137,7 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, const char *name, 
 
   /* if it exists, update value, else add to table */
   for (x = vector_element(table, location); x != sc->NIL; x = cdr(x)) 
-    if (strcasecmp(name, string_value(caar(x))) == 0)
+    if (STRCMP(name, string_value(caar(x))) == 0)
       {
 	cdar(x) = value;
 	return(value);
@@ -9865,12 +9885,6 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 
     case OP_DO: 
       /* setup is very similar to let */
-      /*
-      fprintf(stderr, "op_do: code: %s, args: %s\n", 
-	      s7_object_to_c_string(sc, sc->code), 
-	      s7_object_to_c_string(sc, sc->args));
-      */
-
       if (car(sc->code) == sc->NIL)            /* (do () ...) */
 	{
 	  new_frame_in_env(sc, sc->envir); 
@@ -9887,13 +9901,6 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       
 
     case OP_DO_INIT:
-      /*
-      fprintf(stderr, "op_do_init: code: %s, args: %s, value: %s\n", 
-	      s7_object_to_c_string(sc, sc->code), 
-	      s7_object_to_c_string(sc, sc->args),
-	      s7_object_to_c_string(sc, sc->value));
-      */
-
       sc->args = cons(sc, sc->value, sc->args); /* code will be last element (first after reverse) */
       if (s7_is_pair(sc->code))
 	{
@@ -9932,12 +9939,6 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 
     DO_END0:
     case OP_DO_END0:
-      /*
-      fprintf(stderr, "op_do_end0: code: %s, args: %s\n", 
-	      s7_object_to_c_string(sc, sc->code), 
-	      s7_object_to_c_string(sc, sc->args));
-      */
-
       /* here vars have been init'd or incr'd
        *    args = (cons var-data end-data)
        *    code = body
@@ -9951,12 +9952,6 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 
 
     case OP_DO_END1:
-      /*
-      fprintf(stderr, "op_do_end1: code: %s, args: %s, value: %s\n", 
-	      s7_object_to_c_string(sc, sc->code), 
-	      s7_object_to_c_string(sc, sc->args),
-	      s7_object_to_c_string(sc, sc->value));
-      */
       /* sc->value should be result of endtest evaluation */
       if (is_true(sc->value))
 	{
@@ -9976,19 +9971,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
     case OP_DO_STEP0:
       /* increment all vars, return to endtest 
        *   these are also updated in parallel at the end, so we gather all the incremented values first
-       * from r4rstest:
-       (let ((x '(1 3 5 7 9)))
-         (do ((x x (cdr x))
-              (sum 0 (+ sum (car x))))
-	     ((null? x) sum)))
-	     => 25
       */
-      /*
-      fprintf(stderr, "op_do_step0: code: %s, args: %s\n", 
-	      s7_object_to_c_string(sc, sc->code), 
-	      s7_object_to_c_string(sc, sc->args));
-      */
-
       if (car(sc->args) == sc->NIL)
 	goto DO_END0;
 
@@ -9999,11 +9982,6 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 
     DO_STEP1:
     case OP_DO_STEP1:
-      /*
-      fprintf(stderr, "op_do_step0: code: %s, args: %s\n", 
-	      s7_object_to_c_string(sc, sc->code), 
-	      s7_object_to_c_string(sc, sc->args));
-      */
       if (sc->args == sc->NIL)
 	{
 	  sc->y = cdr(sc->code);
@@ -10021,12 +9999,6 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 
 
     case OP_DO_STEP2:
-      /*
-      fprintf(stderr, "op_do_step2: code: %s, args: %s, value: %s\n", 
-	      s7_object_to_c_string(sc, sc->code), 
-	      s7_object_to_c_string(sc, sc->args),
-	      s7_object_to_c_string(sc, sc->value));
-      */
       car(sc->code) = cons(sc, sc->value, car(sc->code));  /* add this value to our growing list */
       sc->args = cdr(sc->args);                            /* go to next */
       goto DO_STEP1;
@@ -10049,9 +10021,6 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       
     EVAL:
     case OP_EVAL:       /* main part of evaluation */
-
-      /* fprintf(stderr, "op eval %s\n", s7_object_to_c_string(sc, sc->code)); */
-      
       if (sc->tracing) 
 	{
 	  push_stack(sc, OP_REAL_EVAL, sc->args, sc->code);
@@ -10063,9 +10032,6 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_REAL_EVAL:
-
-      /* fprintf(stderr, "op real eval %s\n", s7_object_to_c_string(sc, sc->code)); */
-      
       if (s7_is_symbol(sc->code)) 
 	{
 	  sc->x = s7_find_slot_in_env(sc, sc->envir, sc->code, true);
@@ -10094,18 +10060,11 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	      {     
 		sc->code = cdr(sc->code);
 		sc->op = (opcode_t)integer(syntax_opcode(sc->x)->object.number);
-
-		/* fprintf(stderr, "%s is syntax: %d\n", s7_object_to_c_string(sc, sc->x), sc->op); */
-		/* (defmacro ha (a) `(+ ,a 1)) */
-
 		goto START;
 	      } 
 	    else 
 	      {
 		/* first, eval top element and eval arguments */
-
-		/* fprintf(stderr, "%s is not syntax -- get args\n", s7_object_to_c_string(sc, sc->x)); */
-
 		push_stack(sc, OP_E0ARGS, sc->NIL, sc->code);
 		sc->code = car(sc->code);
 		goto EVAL;
@@ -11453,10 +11412,6 @@ static s7_pointer g_quasiquote(s7_scheme *sc, s7_pointer args)
 #if HAVE_PTHREADS
 /* -------------------------------- threads -------------------------------- */
 
-/* TODO: lock heap (alloc) if gc in progress,
- *       possibly lock symbol_table if global env is being changed?
- */
-
 static s7_scheme *clone_s7(s7_scheme *sc);
 static s7_scheme *close_s7(s7_scheme *sc);
 static void mark_s7(s7_scheme *sc);
@@ -11572,22 +11527,22 @@ s7_scheme *s7_init(void)
   sc->UNDEFINED = &sc->_UNDEFINED;
   sc->UNSPECIFIED = &sc->_UNSPECIFIED;
   
-  set_type(sc->UNSPECIFIED, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT);
+  set_type(sc->UNSPECIFIED, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT | T_SIMPLE);
   car(sc->UNSPECIFIED) = cdr(sc->UNSPECIFIED) = sc->UNSPECIFIED;
   
-  set_type(sc->NIL, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT);
+  set_type(sc->NIL, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT | T_SIMPLE);
   car(sc->NIL) = cdr(sc->NIL) = sc->UNSPECIFIED;
   
-  set_type(sc->T, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT);
+  set_type(sc->T, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT | T_SIMPLE);
   car(sc->T) = cdr(sc->T) = sc->UNSPECIFIED;
   
-  set_type(sc->F, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT);
+  set_type(sc->F, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT | T_SIMPLE);
   car(sc->F) = cdr(sc->F) = sc->UNSPECIFIED;
   
-  set_type(sc->EOF_OBJECT, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT);
+  set_type(sc->EOF_OBJECT, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT | T_SIMPLE);
   car(sc->EOF_OBJECT) = cdr(sc->EOF_OBJECT) = sc->UNSPECIFIED;
   
-  set_type(sc->UNDEFINED, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT);
+  set_type(sc->UNDEFINED, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT | T_SIMPLE);
   car(sc->UNDEFINED) = cdr(sc->UNDEFINED) = sc->UNSPECIFIED;
 
   sc->input_port = sc->NIL;
@@ -11669,7 +11624,7 @@ s7_scheme *s7_init(void)
     {
       s7_pointer p;
       p = (s7_cell *)CALLOC(1, sizeof(s7_cell));
-      p->flag = T_OBJECT | T_IMMUTABLE | T_ATOM | T_NUMBER | T_CONSTANT;
+      p->flag = T_OBJECT | T_IMMUTABLE | T_ATOM | T_NUMBER | T_CONSTANT | T_SIMPLE;
       p->object.number.type = NUM_INT;
       integer(p->object.number) = (off_t)i;
       vector_element(sc->small_ints, i) = p;
@@ -12144,3 +12099,15 @@ static void mark_s7(s7_scheme *sc)
 }
 
 #endif
+
+/*
+;times: #(30 29 39 37 501 3897 46 97 ...)
+;total: 678
+;ratios: (.5 .5 .3 .4 .2 .7 .1 .7 [8] 1.9 .9 .3 .1 .3 .6 .6 [15] 1.6 1.1 .3 .2 [19] 1.3 1.2 1.0 1.0 [23] 2.1 .0 .0 .0 .2 .9 )
+
+simple bit + bigger symbol table:
+;times: #(30 28 39 38 480 3519 45 97 19757 2555 160 44 270 461 308 1930 3076 51 35 3708 755 1778 3843 12668 0 0 0 41 5692)
+;total: 615
+;ratios: (.5 .5 .3 .4 .2 .7 .1 .7 1.7 .9 .3 .1 .3 .5 .4 1.5 1.0 .3 .2 1.3 1.0 .9 .8 1.9 .0 .0 .0 .2 .9 )
+
+*/

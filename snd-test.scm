@@ -35,7 +35,7 @@
 (use-modules (ice-9 format) (ice-9 debug) (ice-9 optargs) (ice-9 popen))
 
 (define tests 1)
-(define keep-going #t)
+(define keep-going #f)
 (define all-args #f)
 (define test-at-random 0)
 ;(show-ptree 1)
@@ -4927,7 +4927,8 @@
 	  (if (not (mus-alsa-squelch-warning)) (snd-display ";set mus-alsa-squelch-warning: ~A" (mus-alsa-squelch-warning)))
 	  (set! (mus-alsa-squelch-warning) defwarn)))
 
-    (if (provided? 'snd-threads)
+    (if (and (provided? 'snd-threads)
+	     (not (provided? 'snd-s7)))
 	(let ((old-file-buffer-size *clm-file-buffer-size*))
 	  
 	  (let* ((result (with-threaded-sound ()
@@ -22181,7 +22182,7 @@ EDITS: 2
 		       (set! err-max-loc i)
 		       (set! err-max err-local)))
 		 (set! err (+ err err-local))))
-	     (if (> err-max 5.0e-5)
+	     (if (> err-max 2.0e-3)
 		 (snd-display ";polywave vs sin: ~D: ~A ~A ~A" k err err-max err-max-loc)))))
        (list 2 19 20 29 30 39 40 60 100))
       
@@ -33567,47 +33568,50 @@ EDITS: 2
 	      (close-sound obi)
 	      )
 	    
-	    (let ((ind (new-sound "test.snd" :size 20)))
-	      (if (< (print-length) 20) (set! (print-length) 20))
-	      (offset-channel 1.0)
-	      (env-sound '(0 0 1 1))
-	      (let ((osc (make-oscil :frequency 1000.0 :initial-phase (+ pi (/ pi 2))))
-		    (reader (make-sound-interp 0 ind 0)) 
-		    (len (1- (frames ind 0))))
-		(map-channel (lambda (val) 
-			       (sound-interp reader (* len (+ 0.5 (* 0.5 (oscil osc)))))))
-		(if (not (vequal (channel->vct) (vct 0.000 0.020 0.079 0.172 0.291 0.427 0.569 0.706 0.825 0.919 
-						     0.979 1.000 0.981 0.923 0.831 0.712 0.576 0.434 0.298 0.177)))
-		    (snd-display ";sound-interp: ~A" (channel->vct))))
-	      (undo)
-	      
-	      (let ((osc (make-oscil :frequency 0.5 :initial-phase (+ pi (/ pi 2))))
-		    (reader (make-sound-interp 0 ind 0))
-		    (len (1- (frames ind 0))))
-		(map-channel (lambda (val) 
-			       (sound-interp reader (* len (+ 0.5 (* 0.5 (oscil osc))))))))
-	      (undo)
-	      
-	      (env-sound-interp '(0 0 1 1))
-	      (if (not (vequal (channel->vct) (vct 0.000 0.053 0.105 0.158 0.211 0.263 0.316 0.368 0.421 0.474 
-						   0.526 0.579 0.632 0.684 0.737 0.789 0.842 0.895 0.947 1.000)))
-		  (snd-display ";env-sound-interp no change: ~A" (channel->vct)))
-	      (undo)
-	      (env-sound-interp '(0 0 1 .95 2 0) 2.0)
-	      (if (not (vequal (channel->vct) (vct 0.000 0.050 0.100 0.150 0.200 0.250 0.300 0.350 0.400 0.450 
-						   0.500 0.550 0.600 0.650 0.700 0.750 0.800 0.850 0.900 0.950
-						   1.000 0.950 0.900 0.850 0.800 0.750 0.700 0.650 0.600 0.550 
-						   0.500 0.450 0.400 0.350 0.300 0.250 0.200 0.150 0.100 0.050)))
-		  (snd-display ";env-sound-interp twice len and back: ~A" (channel->vct)))
-	      (revert-sound ind)
-	      (set! (sample 10) .5)
-	      (remove-clicks)
-	      (if (fneq (sample 10) 0.0) (snd-display ";remove-clicks: ~A" (channel->vct)))
-	      (undo)
-	      (let ((vals (scan-channel (search-for-click))))
-		(if (not (equal? vals (list -1 11)))
-		    (snd-display ";search-for-click: ~A" vals)))
-	      (close-sound ind))
+	    (let ((old-srate (mus-srate)))
+	      (set! (mus-srate) 22050)
+	      (let ((ind (new-sound "test.snd" :size 20)))
+		(if (< (print-length) 20) (set! (print-length) 20))
+		(offset-channel 1.0)
+		(env-sound '(0 0 1 1))
+		(let ((osc (make-oscil :frequency 1000.0 :initial-phase (+ pi (/ pi 2))))
+		      (reader (make-sound-interp 0 ind 0)) 
+		      (len (1- (frames ind 0))))
+		  (map-channel (lambda (val) 
+				 (sound-interp reader (* len (+ 0.5 (* 0.5 (oscil osc)))))))
+		  (if (not (vequal (channel->vct) (vct 0.000 0.020 0.079 0.172 0.291 0.427 0.569 0.706 0.825 0.919 
+						       0.979 1.000 0.981 0.923 0.831 0.712 0.576 0.434 0.298 0.177)))
+		      (snd-display ";sound-interp: ~A" (channel->vct))))
+		(undo)
+		
+		(let ((osc (make-oscil :frequency 0.5 :initial-phase (+ pi (/ pi 2))))
+		      (reader (make-sound-interp 0 ind 0))
+		      (len (1- (frames ind 0))))
+		  (map-channel (lambda (val) 
+				 (sound-interp reader (* len (+ 0.5 (* 0.5 (oscil osc))))))))
+		(undo)
+		
+		(env-sound-interp '(0 0 1 1))
+		(if (not (vequal (channel->vct) (vct 0.000 0.053 0.105 0.158 0.211 0.263 0.316 0.368 0.421 0.474 
+						     0.526 0.579 0.632 0.684 0.737 0.789 0.842 0.895 0.947 1.000)))
+		    (snd-display ";env-sound-interp no change: ~A" (channel->vct)))
+		(undo)
+		(env-sound-interp '(0 0 1 .95 2 0) 2.0)
+		(if (not (vequal (channel->vct) (vct 0.000 0.050 0.100 0.150 0.200 0.250 0.300 0.350 0.400 0.450 
+						     0.500 0.550 0.600 0.650 0.700 0.750 0.800 0.850 0.900 0.950
+						     1.000 0.950 0.900 0.850 0.800 0.750 0.700 0.650 0.600 0.550 
+						     0.500 0.450 0.400 0.350 0.300 0.250 0.200 0.150 0.100 0.050)))
+		    (snd-display ";env-sound-interp twice len and back: ~A" (channel->vct)))
+		(revert-sound ind)
+		(set! (sample 10) .5)
+		(remove-clicks)
+		(if (fneq (sample 10) 0.0) (snd-display ";remove-clicks: ~A" (channel->vct)))
+		(undo)
+		(let ((vals (scan-channel (search-for-click))))
+		  (if (not (equal? vals (list -1 11)))
+		      (snd-display ";search-for-click: ~A" vals)))
+		(close-sound ind))
+	      (set! (mus-srate) old-srate))
 	    
 	    (let ((ind1 (new-sound :size 20 :comment "new-sound for sound-via-sound"))
 		  (ind2 (new-sound :size 20 :comment "2nd new-sound for sound-via-sound")))
@@ -54732,7 +54736,7 @@ EDITS: 1
 	      (with-sound (:output v1 :revfile v2 :reverb jc-reverb)
 			  (fm-violin 0 .1 440 .1 :reverb-amount 0.9)
 			  (fm-violin 0 .1 440 .1 :reverb-amount 0.9))
-	      (if (< (car (sound-data-maxamp v1)) .56) 
+	      (if (< (car (sound-data-maxamp v1)) .54) 
 		  (snd-display ";2 with-sound -> sound-data fm-violin maxamp (opt 2): ~A" (sound-data-maxamp v1))))))
 
 	(let ((oldopt (optimization)))

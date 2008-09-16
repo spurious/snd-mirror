@@ -2354,14 +2354,7 @@ static XEN g_add_hook(XEN hook, XEN function, XEN position)
   arity_ok = ((XEN_TO_C_INT(XEN_CAR(arity)) == ghook_arity(obj)) ||
 	      (XEN_TO_C_INT(XEN_CAR(arity)) + XEN_TO_C_INT(XEN_CADR(arity)) >= ghook_arity(obj)) ||
 	      (XEN_TRUE_P(XEN_CADDR(arity))));
-
-  if (!arity_ok)
-    fprintf(stderr, "arity: %s, hook: %d (%s), func: %s\n",
-	    XEN_AS_STRING(arity), ghook_arity(obj), XEN_AS_STRING(hook),
-	    XEN_AS_STRING(XEN_PROCEDURE_SOURCE(function)));
-
   s7_gc_unprotect_at(s7, gc_loc);
-
 
   XEN_ASSERT_TYPE((XEN_PROCEDURE_P(function)) && (arity_ok), function, XEN_ARG_2, "add-hook!", "a function");
   XEN_ASSERT_TYPE(XEN_BOOLEAN_IF_BOUND_P(position), position, XEN_ARG_3, "add-hook!", "boolean");
