@@ -7573,7 +7573,8 @@ static s7_pointer g_list_ref(s7_scheme *sc, s7_pointer args)
   if (index < 0)
     return(s7_out_of_range_error(sc, "list-ref", 2, cadr(args), "non-negative"));
 
-  for (i = 0, p = car(args); (i < index) && (p != sc->NIL); i++, p = cdr(p)) {}
+  for (i = 0, p = car(args); (i < index) && s7_is_pair(p); i++, p = cdr(p)) {}
+
   if (p == sc->NIL)
     return(s7_out_of_range_error(sc, "list-ref", 2, cadr(args), "less than list length"));
   if (!s7_is_pair(p))
@@ -7589,6 +7590,7 @@ static s7_pointer g_list_set(s7_scheme *sc, s7_pointer args)
 
   int i, index;
   s7_pointer p;
+
   if (!is_pair(car(args)))
     return(s7_wrong_type_arg_error(sc, "list-set!", 1, car(args), "a pair"));
   if ((!s7_is_integer(cadr(args))) ||
@@ -7599,9 +7601,12 @@ static s7_pointer g_list_set(s7_scheme *sc, s7_pointer args)
   if (index < 0)
     return(s7_out_of_range_error(sc, "list-set!", 2, cadr(args), "non-negative"));
 
-  for (i = 0, p = car(args); (i < index) && (p != sc->NIL); i++, p = cdr(p)) {}
+  for (i = 0, p = car(args); (i < index) && s7_is_pair(p); i++, p = cdr(p)) {}
+
   if (p == sc->NIL)
     return(s7_out_of_range_error(sc, "list-set!", 2, cadr(args), "less than list length"));
+  if (!s7_is_pair(p))
+    return(s7_wrong_type_arg_error(sc, "list-set!", i, p, "a proper list"));
 
   car(p) = caddr(args);
   return(caddr(args));
@@ -7623,9 +7628,12 @@ static s7_pointer g_list_tail(s7_scheme *sc, s7_pointer args)
   if (index < 0)
     return(s7_out_of_range_error(sc, "list-tail", 2, cadr(args), "non-negative"));
 
-  for (i = 0, p = car(args); (i < index) && (p != sc->NIL); i++, p = cdr(p)) {}
+  for (i = 0, p = car(args); (i < index) && s7_is_pair(p); i++, p = cdr(p)) {}
+
   if (i < index)
     return(s7_out_of_range_error(sc, "list-tail", 2, cadr(args), "less than list length"));
+  if (!s7_is_pair(p))
+    return(s7_wrong_type_arg_error(sc, "list-tail", i, p, "a proper list"));
 
   return(p);
 }

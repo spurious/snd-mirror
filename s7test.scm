@@ -1,3 +1,7 @@
+;;; sources include clisp test suite, r5rs.html, r4rstest.scm, guile test suite, gauche test suite
+;;;   Kent Dybvig's book on scheme, code floating around the net
+
+
 (define (ok? tst result expected)
   (if (not (equal? result expected))
       (begin
@@ -12,6 +16,121 @@
 (defmacro test (tst expected)
   `(let ((result (catch #t (lambda () ,tst) (lambda args 'error))))
      (ok? ',tst result ,expected)))
+
+
+(test (eq? 'a 3) #f)
+(test (eq? #t 't) #f)
+(test (eq? "abs" 'abc) #f)
+(test (eq? "hi" '(hi)) #f)
+(test (eq? "()" '()) #f)
+(test (eq? #\a #\b) #f)
+(test (eq? #t #t) #t)
+(test (eq? #f #f) #t)
+(test (eq? #f #t) #f)
+(test (eq? (null? '()) #t) #t)
+(test (eq? (null? '(a)) #f) #t)
+(test (eq? (cdr '(a)) '()) #t)
+(test (eq? 'a 'a) #t)
+(test (eq? 'a 'b) #f)
+(test (eq? 'a (string->symbol "a")) #t)
+(test (eq? '(a) '(b)) #f)
+(test (let ((x '(a . b))) (eq? x x)) #t)
+(test (let ((x (cons 'a 'b))) (eq? x x)) #t)
+(test (eq? (cons 'a 'b) (cons 'a 'b)) #f)
+(test (eq? "abc" "cba") #f)
+(test (let ((x "hi")) (eq? x x)) #t)
+(test (eq? (string #\h #\i) (string #\h #\i)) #f)
+(test (eq? '#(a) '#(b)) #f)
+(test (let ((x (vector 'a))) (eq? x x)) #t)
+(test (eq? (vector 'a) (vector 'a)) #f)
+(test (eq? car car) #t)
+(test (eq? car cdr) #f)
+(test (let ((x (lambda () 1))) (eq? x x)) #t)
+(test (eq? 'abc 'abc) #t)
+
+
+
+(test (eqv? 'a 3) #f)
+(test (eqv? #t 't) #f)
+(test (eqv? "abs" 'abc) #f)
+(test (eqv? "hi" '(hi)) #f)
+(test (eqv? "()" '()) #f)
+(test (eqv? #\a #\b) #f)
+(test (eqv? #\a #\a) #t)
+(test (let ((x (string-ref "hi" 0))) (eqv? x x)) #t)
+(test (eqv? #t #t) #t)
+(test (eqv? #f #f) #t)
+(test (eqv? #f #t) #f)
+(test (eqv? (null? '()) #t) #t)
+(test (eqv? (null? '(a)) #f) #t)
+(test (eqv? (cdr '(a)) '()) #t)
+(test (eqv? 'a 'a) #t)
+(test (eqv? 'a 'b) #f)
+(test (eqv? 'a (string->symbol "a")) #t)
+(test (eqv? '(a) '(b)) #f)
+(test (let ((x '(a . b))) (eqv? x x)) #t)
+(test (let ((x (cons 'a 'b))) (eqv? x x)) #t)
+(test (eqv? (cons 'a 'b) (cons 'a 'b)) #f)
+(test (eqv? "abc" "cba") #f)
+(test (let ((x "hi")) (eqv? x x)) #t)
+(test (eqv? (string #\h #\i) (string #\h #\i)) #f)
+(test (eqv? '#(a) '#(b)) #f)
+(test (let ((x (vector 'a))) (eqv? x x)) #t)
+(test (eqv? (vector 'a) (vector 'a)) #f)
+(test (eqv? car car) #t)
+(test (eqv? car cdr) #f)
+(test (let ((x (lambda () 1))) (eqv? x x)) #t)
+(test (eqv? 9/2 9/2) #t)
+(test (eqv? 3.4 (+ 3.0 0.4)) #t)
+(test (let ((x 3.141)) (eqv? x x)) #t)
+(test (eqv? (cons 'a 'b) (cons 'a 'c)) #f)
+
+
+
+(test (equal? 'a 3) #f)
+(test (equal? #t 't) #f)
+(test (equal? "abs" 'abc) #f)
+(test (equal? "hi" '(hi)) #f)
+(test (equal? "()" '()) #f)
+(test (equal? #\a #\b) #f)
+(test (equal? #\a #\a) #t)
+(test (let ((x (string-ref "hi" 0))) (equal? x x)) #t)
+(test (equal? #t #t) #t)
+(test (equal? #f #f) #t)
+(test (equal? #f #t) #f)
+(test (equal? (null? '()) #t) #t)
+(test (equal? (null? '(a)) #f) #t)
+(test (equal? (cdr '(a)) '()) #t)
+(test (equal? 'a 'a) #t)
+(test (equal? 'a 'b) #f)
+(test (equal? 'a (string->symbol "a")) #t)
+(test (equal? '(a) '(b)) #f)
+(test (equal? '(a) '(a)) #t)
+(test (let ((x '(a . b))) (equal? x x)) #t)
+(test (let ((x (cons 'a 'b))) (equal? x x)) #t)
+(test (equal? (cons 'a 'b) (cons 'a 'b)) #t)
+(test (equal? "abc" "cba") #f)
+(test (equal? "abc" "abc") #t)
+(test (let ((x "hi")) (equal? x x)) #t)
+(test (equal? (string #\h #\i) (string #\h #\i)) #t)
+(test (equal? '#(a) '#(b)) #f)
+(test (equal? '#(a) '#(a)) #t)
+(test (let ((x (vector 'a))) (equal? x x)) #t)
+(test (equal? (vector 'a) (vector 'a)) #t)
+(test (equal? car car) #t)
+(test (equal? car cdr) #f)
+(test (let ((x (lambda () 1))) (equal? x x)) #t)
+(test (equal? 9/2 9/2) #t)
+(test (equal? 3.4 (+ 3.0 0.4)) #t)
+(test (let ((x 3.141)) (equal? x x)) #t)
+(test (equal? 3 3) #t)
+(test (equal? 3 3.0) #f)
+(test (equal? 3.0 3.0) #t)
+(test (equal? 3-4i 3-4i) #t)
+(test (equal? (string #\c) "c") #t)
+
+
+
 
 
 (for-each
@@ -36,6 +155,17 @@
 (test (cons '(a b) 'c) '((a b) . c))
 (test (cons '() '()) '(()))
 (test (cons '() 1) '(() . 1))
+(test (cons 1 . 2) 'error)
+(test (equal? (cons 1 2) '(1 . 2)) #t)
+(test (equal? (cons 1 '()) '(1)) #t)
+(test (equal? (cons '() 2) '(() . 2)) #t)
+(test (equal? (cons '() '()) '(())) #t)
+(test (equal? (cons 1 (cons 2 (cons 3 (cons 4 '())))) '(1 2 3 4)) #t)
+(test (equal? (cons 'a 'b) '(a . b)) #t)
+(test (equal? (cons 'a (cons 'b (cons 'c '()))) '(a b c)) #t)
+(test (equal? (cons 'a (list 'b 'c 'd)) '(a b c d)) #t)
+(test (equal? (cons 'a (cons 'b (cons 'c 'd))) '(a b c . d)) #t)
+
 
 
 (test (car (list 1 2 3)) 1)
@@ -95,6 +225,7 @@
  (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (lambda (a) (+ a 1))))
 
 (define (cons-r a b n) (if (= 0 n) (cons a b) (cons (cons-r (1+ a) (1+ b) (- n 1)) (cons-r (1- a) (1- b) (- n 1)))))
+(define (list-r a b n) (if (= 0 n) (list a b) (list (list-r (1+ a) (1+ b) (- n 1)) (list-r (1- a) (1- b) (- n 1)))))
 
 (define lists (list (list 1 2 3)
 		    (cons 1 2)
@@ -122,6 +253,9 @@
 		    (cons-r 0 0 4)
 		    (cons-r 0 0 5)
 		    (cons-r 0 0 10)
+		    (list-r 0 0 3)
+		    (list-r 0 0 7)
+		    (list-r 0 0 11)
 		    ''a
 		    ))
 
@@ -481,7 +615,7 @@
  (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (lambda (a) (+ a 1))))
 
 
-
+(if (defined? 'list?) (begin
 (test (list? 'a) #f)
 (test (list? '()) #t)
 (test (list? '(a b c)) #t)
@@ -515,7 +649,7 @@
        (begin
 	 (display "(list? ") (display arg) (display ") returned #t?") (newline))))
  (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (lambda (a) (+ a 1))))
-
+))
 
 
 (test (null? 'a) '#f)
@@ -553,7 +687,7 @@
  (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (lambda (a) (+ a 1))))
 
 
-
+(if (defined? 'reverse!) (begin
 (test (reverse! '(a b c d)) '(d c b a))
 (test (reverse! '(a b c))  '(c b a))
 (test (reverse! '(a (b c) d (e (f))))  '((e (f)) d (b c) a))
@@ -571,18 +705,159 @@
 (test (reverse! '((a) b c d)) '(d c b (a)))
 (test (reverse! (reverse! (list 1 2 3 4))) (list 1 2 3 4))
 (test (reverse! ''foo) '(foo quote))
+))
+
+
+(test (let ((x (cons 1 2))) (set-car! x 3) x) (cons 3 2))
+(test (let ((x (list 1 2))) (set-car! x 3) x) (list 3 2))
+(test (set-car! '() 32) 'error)
+(test (set-car! 'x 32) 'error)
+(test (set-car! #f 32) 'error)
+(test (let ((x (list (list 1 2) 3))) (set-car! x 22) x) (list 22 3))
+(test (let ((x (cons 1 2))) (set-car! x '()) x) (cons '() 2))
+(test (let ((x (list 1 (list 2 3 4)))) (set-car! x (list 5 (list 6))) x) (list (list 5 (list 6)) (list 2 3 4)))
+(test (let ((x '(((1) 2) (3)))) (set-car! x '((2) 1)) x) '(((2) 1) (3)))
+(test (let ((x ''foo)) (set-car! x "hi") x) (list "hi" 'foo))
+(test (let ((x '((1 . 2) . 3))) (set-car! x 4) x) '(4 . 3))
+(test (let ((x '(1 . 2))) (set-car! x (cdr x)) x) '(2 . 2))
+(test (let ((x '(1 . 2))) (set-car! x x) (list? x)) #f)
+(test (let ((x (list 1))) (set-car! x '()) x) '(()))
+
+
+
+(test (let ((x (cons 1 2))) (set-cdr! x 3) x) (cons 1 3))
+(test (let ((x (list 1 2))) (set-cdr! x 3) x) (cons 1 3))
+(test (set-cdr! '() 32) 'error)
+(test (set-cdr! 'x 32) 'error)
+(test (set-cdr! #f 32) 'error)
+(test (let ((x (list (list 1 2) 3))) (set-cdr! x 22) x) '((1 2) . 22))
+(test (let ((x (cons 1 2))) (set-cdr! x '()) x) (list 1))
+(test (let ((x (list 1 (list 2 3 4)))) (set-cdr! x (list 5 (list 6))) x) '(1 5 (6)))
+(test (let ((x '(((1) 2) (3)))) (set-cdr! x '((2) 1)) x) '(((1) 2) (2) 1))
+(test (let ((x ''foo)) (set-cdr! x "hi") x) (cons 'quote "hi"))
+(test (let ((x '((1 . 2) . 3))) (set-cdr! x 4) x) '((1 . 2) . 4))
+(test (let ((x '(1 . 2))) (set-cdr! x (cdr x)) x) '(1 . 2))
+(test (let ((x '(1 . 2))) (set-cdr! x x) (list? x)) #f)
+(test (let ((x (list 1))) (set-cdr! x '()) x) (list 1))
+
+
+
+(test (list-ref '() 0) 'error)
+(test (list-ref (list 1 2) 2) 'error)
+(test (list-ref (list 1 2) -1) 'error)
+(test (list-ref (list 1 2) 1.3) 'error)
+(test (list-ref (list 1 2) 1/3) 'error)
+(test (list-ref (list 1 2) 1+2.0i) 'error)
+(test (list-ref (list 1 2) 1) 2)
+(test (list-ref '(a b c d) 2) 'c)
+(test (list-ref (cons 1 2) 0) 1) ; !!
+(test (list-ref (cons 1 2) 1) 'error)
+(test (list-ref (cons 1 2) 2) 'error)
+(test (list-ref ''foo 0) 'quote)
+(test (list-ref '((1 2) (3 4)) 1) '(3 4))
+(test (list-ref (list-ref (list (list 1 2) (list 3 4)) 1) 1) 4)
+(test (let ((x (list 1 2 3))) (list-ref x (list-ref x 1))) 3)
+
+(for-each
+ (lambda (name op1 op2)
+   (for-each
+    (lambda (lst)
+      (let ((val1 (catch #t (lambda () (op1 lst)) (lambda args 'error)))
+	    (val2 (catch #t (lambda () (op2 lst)) (lambda args 'error))))
+	(if (not (equal? val1 val2))
+	    (begin
+	      (display "(") (display name) (display " ") (display lst) (display ")) returned ") (display val1) (display " ") (display val2) (newline)))))
+    lists))
+ (list 'list-ref:0 'list-ref:1 'list-ref:2 'list-ref:3)
+ (list car cadr caddr cadddr)
+ (list (lambda (l) (list-ref l 0)) (lambda (l) (list-ref l 1)) (lambda (l) (list-ref l 2)) (lambda (l) (list-ref l 3))))
+
+(for-each
+ (lambda (arg)
+   (test (list-ref (list 1 2) arg) 'error))
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (lambda (a) (+ a 1))))
+
+(for-each
+ (lambda (arg)
+   (test (list-ref (list 1 arg) 1) arg))
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (lambda (a) (+ a 1))))
+
+(test (let ((x '(1 . 2))) (set-cdr! x x) (list-ref x 0)) 1)
+(test (let ((x '(1 . 2))) (set-cdr! x x) (list-ref x 1)) 1)
+(test (let ((x '(1 . 2))) (set-cdr! x x) (list-ref x 100)) 1)
+
+
+
+(if (defined? 'list-set!) (begin
+(test (let ((x (list 1))) (list-set! x 0 2) x) (list 2))
+(test (list-set! '() 0 1) 'error)
+(test (list-set! '(1) 1 2) 'error)
+(test (list-set! '(1 2 3) -1 2) 'error)
+(test (list-set! '(1) 1.5 2) 'error)
+(test (list-set! '(1) 3/2 2) 'error)
+(test (list-set! '(1) 1+3i 2) 'error)
+(test (let ((x (cons 1 2))) (list-set! x 0 3) x) '(3 . 2))
+(test (let ((x (cons 1 2))) (list-set! x 1 3) x) 'error)
+(test (let ((x '((1) 2))) (list-set! x 0 1) x) '(1 2))
+(test (let ((x '(1 2))) (list-set! x 1 (list 3 4)) x) '(1 (3 4)))
+(test (let ((x ''foo)) (list-set! x 0 "hi") x ) '("hi" foo))
+(test (let ((x (list 1 2))) (list-set! x 0 x) (list? x)) #t)
+(test (let ((x (list 1 2))) (list-set! x 1 x) (list? x)) #t)
+
+(for-each
+ (lambda (arg)
+   (test (list-set! (list 1 2) arg arg) 'error))
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (lambda (a) (+ a 1))))
+
+(for-each
+ (lambda (arg)
+   (test (let ((x (list 1 2))) (list-set! x 0 arg) (list-ref x 0)) arg))
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (lambda (a) (+ a 1))))
+))
 
 
 
 ;;; --------------------------------------------------------------------------------
 
-;;; set-car! set-cdr!
+
+(let ((e '((a 1) (b 2) (c 3))))
+  (test (assq 'a e) '(a 1))
+  (test (assq 'b e) '(b 2))
+  (test (assq 'd e) #f))
+(test (assq (list 'a) '(((a)) ((b)) ((c))))  #f)
+
+(test (let ((tree1 (list 1 (list 1 2) (list (list 1 2 3)) (list (list (list 1 2 3 4)))))) tree1) '(1 (1 2) ((1 2 3)) (((1 2 3 4)))))
+(test (let ((tree2 (list "one" (list "one" "two") (list (list "one" "two" "three"))))) tree2) '("one" ("one" "two") (("one" "two" "three"))))
+(test (let ((tree1 (list 1 (list 1 2) (list 1 2 3) (list 1 2 3 4)))) tree1) '(1 (1 2) (1 2 3) (1 2 3 4)))
+(test (let ((tree1 (list 1 (list 1 2))) (tree2 (list 1 (list 1 2)))) tree2) '(1 (1 2)))
+(test (let ((tree1 (list 1 (list 1 2))) (tree2 (list 1 (list 1 2)))) (eqv? tree1 tree2)) #f)
+(test (let ((tree1 (list ''a (list ''b ''c))) (tree2 (list ''a (list ''b ''c)))) tree2) '('a ('b 'c)))
+(test (let ((lst (list 1 (list 2 3)))) lst) '(1 (2 3)))
+(test (let* ((lst (list 1 (list 2 3))) (slst lst)) slst) '(1 (2 3)))
+(test (list 1) '(1))
+(test (let ((a 1)) a) 1)
+(test (let ((a 1)) (list a 2)) '(1 2))
+(test (let ((a 1)) (list 'a '2)) '(a 2))
+(test (let ((a 1)) (list 'a 2)) '(a 2))
+(test (list) '())
+(test (let ((a (list 1 2))) a) '(1 2))
+(test (let ((a (list 1 2))) (list 3 4 'a (car (cons 'b 'c)) (+ 6 -2))) '(3 4 a b 4))
+
+
+
+
+
+;(test (assoc 'a '((b c) (a u) (a i))) '(a u))
+;(test (assoc 'a '((b c) ((a) u) (a i))) '(a i))
+;
+;(test (assoc (list 'a) '(((a)) ((b)) ((c))))  '((a)))
+;(test (assv 5 '((2 3) (5 7) (11 13))) '(5 7))
+
 ;;; assq assv assoc 
 ;;; memq memv member 
-;;; list-ref list-set! list-tail
-;;; append list
+;;; list-tail append list
 
 ;;; (list 1 2 . 3) should be an error, I think
 
 
-;;; quasiquote??
+
