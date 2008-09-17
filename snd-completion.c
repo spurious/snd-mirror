@@ -85,7 +85,6 @@ static int completions(char *text)
       if (e->value) 
 	{
 	  char *sym;
-	  /* fprintf(stderr,"e: %p, value: %s %s\n", e, XEN_AS_STRING(e->value), XEN_AS_STRING(SCM_GLOC(e->value)->name)); */
 #if GAUCHE_API_0_9
 	  sym = XEN_SYMBOL_TO_C_STRING(SCM_GLOC(SCM_DICT_VALUE(e))->name);
 #else

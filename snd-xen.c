@@ -98,7 +98,11 @@ void dump_protection(FILE *Fp)
 	  if (!(XEN_EQ_P(gcdat, DEFAULT_GC_VALUE)))
 	    {
 #if HAVE_SCHEME
-	      fprintf(Fp, "  %s:%d %s", snd_protect_callers[i], i, XEN_AS_STRING(gcdat));
+	      char *temp = NULL;
+	      fprintf(Fp, "  %s:%d %s", snd_protect_callers[i], i, temp = XEN_AS_STRING(gcdat));
+#if HAVE_S7
+	      if (temp) FREE(temp);
+#endif
 #endif
 #if HAVE_GUILE
 	      if (XEN_HOOK_P(gcdat))
@@ -373,6 +377,7 @@ static XEN snd_format_if_needed(XEN args)
 			}
 		      else
 			{
+			  char *temp = NULL;
 #if HAVE_GUILE || HAVE_FORTH
 			  if (XEN_PROCEDURE_P(cur_arg))
 			    {
@@ -385,7 +390,10 @@ static XEN snd_format_if_needed(XEN args)
 			    }
 			  else 
 #endif
-			    errmsg = snd_strcat(errmsg, XEN_AS_STRING(cur_arg), &err_size);
+			    errmsg = snd_strcat(errmsg, temp = XEN_AS_STRING(cur_arg), &err_size);
+#if HAVE_S7
+			    if (temp) FREE(temp);
+#endif
 			}
 		    }
 		  /* else ignore it */
@@ -400,16 +408,24 @@ static XEN snd_format_if_needed(XEN args)
   if (format_info) FREE(format_info);
   if (!was_formatted)
     {
+      char *temp = NULL;
       errmsg = snd_strcat(errmsg, " ", &err_size);
-      errmsg = snd_strcat(errmsg, XEN_AS_STRING(XEN_CADR(args)), &err_size);
+      errmsg = snd_strcat(errmsg, temp = XEN_AS_STRING(XEN_CADR(args)), &err_size);
+#if HAVE_S7
+      if (temp) FREE(temp);
+#endif
     }
   if (num_args > 2)
     {
       if ((!was_formatted) || (!(XEN_FALSE_P(XEN_CADDR(args))))) start = 2; else start = 3;
       for (i = start; i < num_args; i++)
 	{
+	  char *temp = NULL;
 	  errmsg = snd_strcat(errmsg, " ", &err_size);
-	  errmsg = snd_strcat(errmsg, XEN_AS_STRING(XEN_LIST_REF(args, i)), &err_size);
+	  errmsg = snd_strcat(errmsg, temp = XEN_AS_STRING(XEN_LIST_REF(args, i)), &err_size);
+#if HAVE_S7
+	  if (temp) FREE(temp);
+#endif
 	}
     }
   result = C_TO_XEN_STRING(errmsg);
@@ -892,9 +908,16 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
   if (!(XEN_PROCEDURE_P(proc)))
     {
       if (XEN_NOT_FALSE_P(proc)) /* #f as explicit arg to clear */
-	return(mus_format("%s: %s (%s arg %d) is not a procedure!", 
-			  XEN_AS_STRING(proc),
-			  arg_name, caller, argn));
+	{
+	  char *temp = NULL, *str;
+	  str = mus_format("%s: %s (%s arg %d) is not a procedure!", 
+			   temp = XEN_AS_STRING(proc),
+			   arg_name, caller, argn);
+#if HAVE_S7
+	  if (temp) FREE(temp);
+#endif
+	  return(str);
+	}
     }
   else
     {
@@ -1070,7 +1093,10 @@ static XEN eval_file_wrapper(void *data)
 
 char *g_print_1(XEN obj) /* free return val */
 {
-#if HAVE_GAUCHE || HAVE_FORTH || HAVE_RUBY || HAVE_S7
+#if HAVE_S7
+  return(XEN_AS_STRING(obj)); 
+#endif
+#if HAVE_GAUCHE || HAVE_FORTH || HAVE_RUBY
   return(copy_string(XEN_AS_STRING(obj))); 
 #endif
 #if HAVE_GUILE
@@ -1661,10 +1687,6 @@ XEN run_hook(XEN hook, XEN args, const char *caller)
 
   return(xen_return_first(XEN_FALSE, args));
 }
-
-/* TODO: s7_local.. should return the pointer
-   check all xen_ret and all hookws
-*/
 
 
 XEN run_or_hook(XEN hook, XEN args, const char *caller)

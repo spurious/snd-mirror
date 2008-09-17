@@ -1449,7 +1449,7 @@ static  s7_pointer symbol_table_find_by_name(s7_scheme *sc, const char *name)
       if ((s) && (STRCMP(name, s) == 0))
 	return(car(x)); 
     } 
-  return sc->NIL; 
+  return(sc->NIL); 
 } 
 
 
@@ -3107,7 +3107,7 @@ static long binary_decode(const char *s)
       x += *s - '0';
       s++;
     }
-  return x;
+  return(x);
 }
 
 
@@ -3938,10 +3938,11 @@ static s7_pointer g_sqrt(s7_scheme *sc, s7_pointer args)
 }
 
 
+static double top_log = 43.0;  /* approx log(2^63) */
+
 static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 {
   #define H_expt "(expt z1 z2) returns z1^z2"
-  #define TOP_LOG 43.0 /* approx log(2^63) */ /* TODO: if s7_Int is int, this should be 21.0 */
 
   if (!s7_is_number(car(args)))
     return(s7_wrong_type_arg_error(sc, "expt", 1, car(args), "a number"));
@@ -3958,7 +3959,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	  if (s7_integer(sc->y) == 0)
 	    return(s7_make_integer(sc, 1));
 
-	  if (TOP_LOG > abs(s7_integer(sc->y)) * log(abs(s7_integer(sc->x)))) /* else over/underflow; a^b < 2^63 or > 2^-63 */
+	  if (top_log > abs(s7_integer(sc->y)) * log(abs(s7_integer(sc->x)))) /* else over/underflow; a^b < 2^63 or > 2^-63 */
 	    {
 	      if ((s7_integer(sc->y) > 0) || 
 		  (abs(s7_integer(sc->x)) == 1))
@@ -3980,8 +3981,8 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	      n = numerator(sc->x->object.number);
 	      d = denominator(sc->x->object.number);
 
-	      if ((TOP_LOG > log(abs(n)) * abs(p)) &&
-		  (TOP_LOG > log(d) * abs(p)))	
+	      if ((top_log > log(abs(n)) * abs(p)) &&
+		  (top_log > log(d) * abs(p)))	
 		{
 		  if (p > 0)
 		    return(s7_make_ratio(sc, (s7_Int)pow(n, p), (s7_Int)pow(d, p)));
@@ -6193,7 +6194,7 @@ static int token(s7_scheme *sc, s7_pointer pt)
 
       backchar(sc, c, pt);
       if (is_one_of(" tfodxbie\\", c)) 
-	return TOK_SHARP_CONST;
+	return(TOK_SHARP_CONST);
 
       return(TOK_ATOM);
 
@@ -6833,7 +6834,7 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
     return(copy_string("#<dynamic-wind>"));
 
   if (s7_is_object(obj)) 
-    return(copy_string(s7_describe_object(obj)));
+    return(s7_describe_object(obj)); /* this allocates already */
 
 #if S7_DEBUGGING
   search_heap(sc, obj);
@@ -6912,16 +6913,20 @@ static char *s7_list_to_c_string(s7_scheme *sc, s7_pointer lst)
   len = s7_list_length(sc, lst);
   if (len < 0)
     {
-      /* presumably a dotted list -- handle cars, then final cdr */
+      /* presumably a dotted list -- handle cars, then final cdr [it could be circular here -- how to show that?] */
       len = (-len + 1);
       dotted = true;
     }
 
   if (len == 0)
-    return(copy_string("()"));
+    {
+      if (lst != sc->NIL)
+	return(copy_string("[circular list!]"));
+      return(copy_string("()"));
+    }
 
   elements = (char **)MALLOC(len * sizeof(char *));
-  for (x = lst, i = 0; s7_is_pair(x); i++, x = s7_cdr(x))
+  for (x = lst, i = 0; s7_is_pair(x) && (i < len); i++, x = s7_cdr(x))
     {
       elements[i] = s7_object_to_c_string(sc, car(x));
       bufsize += safe_strlen(elements[i]);
@@ -7415,25 +7420,29 @@ s7_pointer s7_assoc(s7_scheme *sc, s7_pointer sym, s7_pointer lst)
 }
 
 
-/* reverse list -- produce new list */
 s7_pointer s7_reverse(s7_scheme *sc, s7_pointer a) 
 {
+  /* reverse list -- produce new list */
   s7_pointer p = sc->NIL;
   local_protect(a);
   for ( ; s7_is_pair(a); a = cdr(a)) 
     p = cons(sc, car(a), p);
   local_unprotect(a);
-  return(p);
+  if (a == sc->NIL)
+    return(p);
+  return(sc->NIL);
 }
 
 
-/* reverse list --- in-place */
 s7_pointer s7_reverse_in_place(s7_scheme *sc, s7_pointer term, s7_pointer list) 
 {
   s7_pointer p = list, result = term, q;
-  while (p != sc->NIL) 
+  while (p != sc->NIL)
     {
       q = cdr(p);
+      if ((!s7_is_pair(q)) &&
+	  (q != sc->NIL))
+	return(sc->NIL); /* improper list? */
       cdr(p) = result;
       result = p;
       p = q;
@@ -7461,19 +7470,41 @@ s7_pointer s7_append(s7_scheme *sc, s7_pointer a, s7_pointer b)
   return(p);
 }
 
-/* TODO: combine or fixup somehow the various list_lengths */
 
 int s7_list_length(s7_scheme *sc, s7_pointer a) 
 {
-  int v = 0;
-  s7_pointer x;
-  for (x = a, v = 0; s7_is_pair(x); x = cdr(x)) 
-    ++v;
-  if (x == sc->NIL) 
-    return(v);
-  return(-v); /* a dotted list? */
-}
+  int i;
+  s7_pointer slow, fast;
+  slow = fast = a;
+  for (i = 0; ; i += 2)
+    {
+      if (!s7_is_pair(fast))
+	{
+	  if (fast == sc->NIL)
+	    return(i);
+	  return(-i);
+	}
 
+      fast = cdr(fast);
+      if (!s7_is_pair(fast)) 
+	{
+	  if (fast == sc->NIL)
+	    return(i + 1);
+	  return(-i - 1);
+	}
+
+      fast = cdr(fast);
+      slow = cdr(slow);
+      if (fast == slow) 
+	{
+	  /* the fast pointer has looped back around and caught up
+	     with the slow pointer, hence the structure is circular,
+	     not of finite length, and therefore not a list */
+	  return(0);
+	}
+    }
+  return(0);
+}
 
 
 static s7_pointer g_is_null(s7_scheme *sc, s7_pointer args)
@@ -7506,7 +7537,7 @@ static s7_pointer g_is_list(s7_scheme *sc, s7_pointer args)
   while (true)
     {
       if (!s7_is_pair(fast)) 
-	return(to_s7_bool(sc, (fast == sc->NIL)));
+	return(to_s7_bool(sc, (fast == sc->NIL))); /* else it's an improper list */
 
       fast = cdr(fast);
       if (!s7_is_pair(fast)) 
@@ -7916,7 +7947,7 @@ static s7_pointer g_cdddar(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_reverse(s7_scheme *sc, s7_pointer args)
 {
   #define H_reverse "(reverse lst) returns a list with the elements of lst in reverse order"
-  s7_pointer p;
+  s7_pointer p, np;
 
   p = car(args);
   if (p == sc->NIL)
@@ -7925,14 +7956,18 @@ static s7_pointer g_reverse(s7_scheme *sc, s7_pointer args)
   if (!s7_is_pair(p))
     return(s7_wrong_type_arg_error(sc, "reverse", 1, p, "a list"));
 
-  return(s7_reverse(sc, p));
+  np = s7_reverse(sc, p);
+  if (np == sc->NIL)
+    return(s7_wrong_type_arg_error(sc, "reverse", 1, p, "a proper list"));
+
+  return(np);
 }
 
 
 static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
 {
   #define H_reverse_in_place "(reverse! lst) reverses lst in place"
-  s7_pointer p;
+  s7_pointer p, np;
 
   p = car(args);
   if (p == sc->NIL)
@@ -7941,13 +7976,17 @@ static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
   if (!s7_is_pair(p))
     return(s7_wrong_type_arg_error(sc, "reverse!", 1, p, "a list"));
 
-  return(s7_reverse_in_place(sc, sc->NIL, p));
+  np = s7_reverse_in_place(sc, sc->NIL, p);
+  if (np == sc->NIL)
+    return(s7_wrong_type_arg_error(sc, "reverse!", 1, p, "a proper list"));
+
+  return(np);
 }
 
 
-/* remv -- produce new list */
 s7_pointer s7_remv(s7_scheme *sc, s7_pointer a, s7_pointer obj) 
 {
+  /* used in xen.c */
   s7_pointer p = sc->NIL;
   for ( ; s7_is_pair(a); a = cdr(a))
     if (car(a) != obj)
@@ -7972,6 +8011,10 @@ static s7_pointer g_length(s7_scheme *sc, s7_pointer args)
 
   if (len < 0) 
     return(s7_wrong_type_arg_error(sc, "length:", 1, car(args), "a proper (not a dotted) list"));
+
+  if (len == 0)
+    return(s7_wrong_type_arg_error(sc, "length:", 1, car(args), "a proper (not a circular) list"));
+
   return(s7_make_integer(sc, len));
 }
       
@@ -8663,7 +8706,7 @@ char *s7_describe_object(s7_pointer a)
   int tag;
   tag = a->object.fobj.type;
   if (object_types[tag].print)
-    return((*(object_types[tag].print))(a->object.fobj.value));
+    return((*(object_types[tag].print))(a->object.fobj.value)); /* assume allocation here (so we'll free the string later) */
   return(copy_string(object_types[tag].name));
 }
 
@@ -8808,7 +8851,7 @@ s7_pointer s7_make_procedure_with_setter(s7_scheme *sc,
 
 static char *pws_print(void *obj)
 {
-  return((char *)"#<procedure-with-setter>");
+  return(copy_string((char *)"#<procedure-with-setter>"));
 }
 
 
@@ -11238,21 +11281,6 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 
 static s7_pointer g_mcons(s7_scheme *sc, s7_pointer f, s7_pointer l, s7_pointer r)
 {
-  /*
-    (define (mcons f l r)
-      (if (and (pair? r)
-	       (eq? (car r) 'quote)
-	       (eq? (car (cdr r)) (cdr f))
-	       (pair? l)
-	       (eq? (car l) 'quote)
-	       (eq? (car (cdr l)) (car f)))
-	  (if (or (procedure? f) (number? f) (string? f))
-	      f
-	      (list 'quote f))
-	  (if (eqv? l vector)
-	      (apply l (eval r))
-	      (list 'cons l r))))
-  */
   if ((is_pair(r)) &&
       (is_pair(l)) &&
       (car(r) == sc->QUOTE) &&
@@ -11279,15 +11307,6 @@ static s7_pointer g_mcons(s7_scheme *sc, s7_pointer f, s7_pointer l, s7_pointer 
 
 static s7_pointer g_mappend(s7_scheme *sc, s7_pointer f, s7_pointer l, s7_pointer r)
 {
-  /*
-    (define (mappend f l r)
-      (if (or (null? (cdr f))
-	      (and (pair? r)
-		   (eq? (car r) 'quote)
-		   (eq? (car (cdr r)) '())))
-	  l
-	  (list 'append l r)))
-  */
   if ((cdr(f) == sc->NIL) ||
       ((s7_is_pair(r)) &&
        (car(r) == sc->QUOTE) &&
@@ -11300,46 +11319,6 @@ static s7_pointer g_mappend(s7_scheme *sc, s7_pointer f, s7_pointer l, s7_pointe
 
 static s7_pointer g_quasiquote_1(s7_scheme *sc, int level, s7_pointer form)
 {
-  /*
-    ;; The following quasiquote macro is due to Eric S. Tiedemann.
-    ;;   Copyright 1988 by Eric S. Tiedemann; all rights reserved.
-    ;; Subsequently modified to handle vectors: D. Souflis
-
-    (define (foo level form)
-      (cond ((not (pair? form))
-	     (if (or (procedure? form) (number? form) (string? form))
-		 form
-		 (list 'quote form)))
-
-	    ((eq? 'quasiquote (car form))
-	     (mcons form ''quasiquote (foo (+ level 1) (cdr form))))
-
-	    (#t (if (zero? level)
-		    (cond ((eq? (car form) 'unquote)
-			   (car (cdr form)))
-
-			  ((eq? (car form) 'unquote-splicing)
-			   form)
-
-			  ((and (pair? (car form))
-				(eq? (car (car form)) 'unquote-splicing))
-
-			   (mappend form 
-				    (car (cdr (car form)))
-				    (foo level (cdr form))))
-
-			  (#t (mcons form (foo level (car form))
-				     (foo level (cdr form)))))
-
-		    (cond ((eq? (car form) 'unquote)
-			   (mcons form ''unquote (foo (- level 1)
-						      (cdr form))))
-			  ((eq? (car form) 'unquote-splicing)
-			   (mcons form ''unquote-splicing
-				  (foo (- level 1) (cdr form))))
-			  (#t (mcons form (foo level (car form))
-				     (foo level (cdr form)))))))))
-  */
   if (!s7_is_pair(form))
     {
       if ((s7_is_number(form)) ||
@@ -11428,7 +11407,7 @@ static int thread_tag = 0;
 
 static char *thread_print(void *obj)
 {
-  return((char *)"#<thread>");
+  return(copy_string((char *)"#<thread>"));
 }
 
 
@@ -11506,8 +11485,8 @@ s7_scheme *s7_init(void)
 {
   int i;
   s7_pointer x;
-  
   s7_scheme *sc;
+
   sc = (s7_scheme *)MALLOC(sizeof(s7_scheme));
 
 #if HAVE_PTHREADS
@@ -12018,6 +11997,9 @@ s7_scheme *s7_init(void)
   sc->gc_off = false;
 
   s7_eval_c_string(sc, "(macro quasiquote (lambda (l) (_quasiquote_ 0 (cadr l))))");
+
+  if (sizeof(s7_Int) == 4)
+    top_log = 21.0;
 
   return(sc);
 }

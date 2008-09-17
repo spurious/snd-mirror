@@ -1529,11 +1529,14 @@ static char *hook_to_string(ghook *hook)
   if (hook)
     {
       int len;
-      char *functions, *str;
+      char *functions = NULL, *str;
       functions = XEN_AS_STRING(hook->functions);
       len = 64 + strlen(functions);
       str = (char *)calloc(len, sizeof(char));
       snprintf(str, len, "<hook arity: %d, hooks: %s>", hook->arity, functions);
+#if HAVE_S7
+      if (functions) free(functions);
+#endif
       return(str);
     }
   return(NULL);

@@ -612,8 +612,6 @@ v. " vct_map_example " is the same as " vct_fill_example
   off_t i;
   vct *v;
 
-  /*  fprintf(stderr, "vct map %s %s\n", XEN_AS_STRING(obj), XEN_AS_STRING(XEN_PROCEDURE_SOURCE(proc))); */
-
   XEN_ASSERT_TYPE(MUS_VCT_P(obj), obj, XEN_ARG_1, S_vct_mapB, "a vct");
 
   v = XEN_TO_VCT(obj);

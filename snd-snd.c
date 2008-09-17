@@ -4795,17 +4795,23 @@ where each inner list entry can also be " PROC_FALSE "."
 				   XEN_AS_STRING(settings), 
 				   apply_beg, apply_dur, S_controls_to_channel);
 #else
-      if (!(XEN_NUMBER_P(dur)))
-	ap->origin = mus_format("%s" PROC_OPEN "%s%s" PROC_SEP OFF_TD PROC_SEP PROC_FALSE, 
-				TO_PROC_NAME(S_controls_to_channel), 
-				PROC_QUOTE,
-				XEN_AS_STRING(settings), 
-				apply_beg);
-      else ap->origin = mus_format("%s" PROC_OPEN "%s%s" PROC_SEP OFF_TD PROC_SEP OFF_TD, 
-				   TO_PROC_NAME(S_controls_to_channel), 
-				   PROC_QUOTE,
-				   XEN_AS_STRING(settings), 
-				   apply_beg, apply_dur);
+      {
+	char *temp = NULL;
+	if (!(XEN_NUMBER_P(dur)))
+	  ap->origin = mus_format("%s" PROC_OPEN "%s%s" PROC_SEP OFF_TD PROC_SEP PROC_FALSE, 
+				  TO_PROC_NAME(S_controls_to_channel), 
+				  PROC_QUOTE,
+				  temp = XEN_AS_STRING(settings), 
+				  apply_beg);
+	else ap->origin = mus_format("%s" PROC_OPEN "%s%s" PROC_SEP OFF_TD PROC_SEP OFF_TD, 
+				     TO_PROC_NAME(S_controls_to_channel), 
+				     PROC_QUOTE,
+				     temp = XEN_AS_STRING(settings), 
+				     apply_beg, apply_dur);
+#if HAVE_S7
+	if (temp) FREE(temp);
+#endif
+      }
 #endif
 #endif
 #if HAVE_GUILE_DYNAMIC_WIND

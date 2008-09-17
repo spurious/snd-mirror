@@ -784,14 +784,18 @@ static void save_property_list(FILE *fd, XEN property_list, int chan, int edpos)
   ignore_list = XEN_ASSOC(C_STRING_TO_XEN_SYMBOL("save-state-ignore"), property_list);
   if (!(XEN_LIST_P(ignore_list)))
     {
+      char *temp = NULL;
       if (chan == -1)
-	fprintf(fd, "%s(set! (%s sfile) \'%s)\n", white_space, S_sound_properties, XEN_AS_STRING(property_list));
+	fprintf(fd, "%s(set! (%s sfile) \'%s)\n", white_space, S_sound_properties, temp = XEN_AS_STRING(property_list));
       else 
 	{
 	  if (edpos == -1)
-	    fprintf(fd, "%s(set! (%s sfile %d) \'%s)\n", white_space, S_channel_properties, chan, XEN_AS_STRING(property_list));
-	  else fprintf(fd, "%s(set! (%s sfile %d %d) \'%s)\n", white_space, S_edit_properties, chan, edpos, XEN_AS_STRING(property_list));
+	    fprintf(fd, "%s(set! (%s sfile %d) \'%s)\n", white_space, S_channel_properties, chan, temp = XEN_AS_STRING(property_list));
+	  else fprintf(fd, "%s(set! (%s sfile %d %d) \'%s)\n", white_space, S_edit_properties, chan, edpos, temp = XEN_AS_STRING(property_list));
 	}
+#if HAVE_S7
+      if (temp) FREE(temp);
+#endif
     }
   else
     {
@@ -808,14 +812,18 @@ static void save_property_list(FILE *fd, XEN property_list, int chan, int edpos)
 	}
       if (!(XEN_NULL_P(new_properties)))
 	{
+	  char *temp = NULL;
 	  if (chan == -1)
-	    fprintf(fd, "%s(set! (%s sfile) \'%s)\n", white_space, S_sound_properties, XEN_AS_STRING(new_properties));
+	    fprintf(fd, "%s(set! (%s sfile) \'%s)\n", white_space, S_sound_properties, temp = XEN_AS_STRING(new_properties));
 	  else 
 	    {
 	      if (edpos == -1)
-		fprintf(fd, "%s(set! (%s sfile %d) \'%s)\n", white_space, S_channel_properties, chan, XEN_AS_STRING(new_properties));
-	      else fprintf(fd, "%s(set! (%s sfile %d %d) \'%s)\n", white_space, S_edit_properties, chan, edpos, XEN_AS_STRING(new_properties));
+		fprintf(fd, "%s(set! (%s sfile %d) \'%s)\n", white_space, S_channel_properties, chan, temp = XEN_AS_STRING(new_properties));
+	      else fprintf(fd, "%s(set! (%s sfile %d %d) \'%s)\n", white_space, S_edit_properties, chan, edpos, temp = XEN_AS_STRING(new_properties));
 	    }
+#if HAVE_S7
+	  if (temp) FREE(temp);
+#endif
 	}
       snd_unprotect_at(gc_loc);
     }

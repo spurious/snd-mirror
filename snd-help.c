@@ -513,7 +513,11 @@ void about_snd_help(void)
   files = word_wrap(XEN_AS_STRING(XEN_VARIABLE_REF("*loaded-files*")), 400);
 #endif
 #if HAVE_S7
-  features = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING("*features*")), 400);
+  {
+    char *temp = NULL;
+    features = word_wrap(temp = XEN_AS_STRING(XEN_EVAL_C_STRING("*features*")), 400);
+    if (temp) FREE(temp);
+  }
 #endif
   info = version_info();
 

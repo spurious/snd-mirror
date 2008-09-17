@@ -1038,9 +1038,21 @@ static char *describe_xen_value_1(int type, int addr, ptree *pt)
 
     case R_SYMBOL:
     case R_KEYWORD: 
+#if (!HAVE_S7)
       if ((pt->xens) && (XEN_BOUND_P(pt->xens[addr])))
 	return(mus_format("%s%d(%s)", (type == R_SYMBOL) ? "sym" : "key", addr, XEN_AS_STRING(pt->xens[addr]))); 
       else return(mus_format("%s%d=0", (type == R_SYMBOL) ? "sym" : "key", addr));
+#else
+      {
+	char *temp = NULL, *str;
+	if ((pt->xens) && 
+	    (XEN_BOUND_P(pt->xens[addr])))
+	  str = mus_format("%s%d(%s)", (type == R_SYMBOL) ? "sym" : "key", addr, temp = XEN_AS_STRING(pt->xens[addr])); 
+	else str = mus_format("%s%d=0", (type == R_SYMBOL) ? "sym" : "key", addr);
+	if (temp) FREE(temp);
+	return(str);
+      }
+#endif
       break;
 
     case R_FLOAT_VECTOR:
@@ -3107,7 +3119,15 @@ static xen_value *walk_sequence(ptree *prog, XEN body, walk_result_t need_result
 		(i == (body_forms - 1))) ? 
 	       NEED_ANY_RESULT : DONT_NEED_RESULT);
       if (v == NULL) 
-	return(run_warn("%s: can't handle %s", name, XEN_AS_STRING(XEN_CAR(lbody))));
+	{
+	  char *temp = NULL;
+	  xen_value *v1;
+	  v1 = run_warn("%s: can't handle %s", name, temp = XEN_AS_STRING(XEN_CAR(lbody)));
+#if HAVE_S7
+	  if (temp) FREE(temp);
+#endif
+	  return(v1);
+	}
     }
 
   return(v);
@@ -3130,17 +3150,41 @@ static char *define_form(ptree *prog, XEN form)
       if (XEN_LIST_P(var))
 	{
 	  v = lambda_form(prog, form, false, NULL, 0, XEN_FALSE);
-	  if (v == NULL) return(mus_format("can't handle this define: %s", XEN_AS_STRING(form)));
+	  if (v == NULL) 
+	    {
+	      char *temp = NULL, *str;
+	      str = mus_format("can't handle this define: %s", temp = XEN_AS_STRING(form));
+#if HAVE_S7
+	      if (temp) FREE(temp);
+#endif
+	      return(str);
+	    }
 	  add_var_to_ptree(prog, XEN_SYMBOL_TO_C_STRING(XEN_CAR(var)), v);
 	  FREE(v);
 	  return(NULL);
 	}
-      else return(mus_format("can't handle this definition: %s", XEN_AS_STRING(var)));
+      else 
+	{
+	  char *temp = NULL, *str;
+	  str = mus_format("can't handle this definition: %s", temp = XEN_AS_STRING(var));
+#if HAVE_S7
+	  if (temp) FREE(temp);
+#endif
+	  return(str);
+	}
     }
 
   val = XEN_CADDR(form);
   v = walk(prog, val, NEED_ANY_RESULT);
-  if (v == NULL) return(mus_format("can't handle this define value: %s", XEN_AS_STRING(val)));
+  if (v == NULL) 
+    {
+      char *temp = NULL, *str;
+      str = mus_format("can't handle this define value: %s", temp = XEN_AS_STRING(val));
+#if HAVE_S7
+      if (temp) FREE(temp);
+#endif
+      return(str);
+    }
   vs = transfer_value(prog, v);
   add_var_to_ptree(prog, XEN_SYMBOL_TO_C_STRING(var), vs);
   set_var(prog, vs, v);
@@ -3157,12 +3201,16 @@ static XEN handle_defines(ptree *prog, XEN forms)
   while (!(XEN_NULL_P(forms)))
     {
       XEN form;
+      char *temp = NULL;
       form = XEN_CAR(forms);
       if ((XEN_LIST_P(form)) && 
 	  (XEN_NOT_NULL_P(form)) &&
-	  (strcmp("define", XEN_AS_STRING(XEN_CAR(form))) == 0))
+	  (strcmp("define", temp = XEN_AS_STRING(XEN_CAR(form))) == 0))
 	{
 	  char *err;
+#if HAVE_S7
+	  if (temp) FREE(temp);
+#endif
 	  err = define_form(prog, form);
 	  if (err != NULL) 
 	    {
@@ -3172,7 +3220,13 @@ static XEN handle_defines(ptree *prog, XEN forms)
 	    }
 	  forms = XEN_CDR(forms);
 	}
-      else return(forms);
+      else 
+	{
+#if HAVE_S7
+	  if (temp) FREE(temp);
+#endif
+	  return(forms);
+	}
     }
   return(forms);
 }
@@ -3202,6 +3256,7 @@ static char *parallel_binds(ptree *prog, XEN old_lets, const char *name)
 	  if (v == NULL)
 	    {
 	      int j;
+	      char *temp = NULL, *str;
 	      for (j = 0; j < i; j++)
 		{
 		  if (old_vs[j]) FREE(old_vs[j]);
@@ -3209,7 +3264,11 @@ static char *parallel_binds(ptree *prog, XEN old_lets, const char *name)
 		}
 	      FREE(vs);
 	      FREE(old_vs);
-	      return(mus_format("can't handle %s var: %s", name, XEN_AS_STRING(lets)));
+	      str = mus_format("can't handle %s var: %s", name, temp = XEN_AS_STRING(lets));
+#if HAVE_S7
+	      if (temp) FREE(temp);
+#endif
+	      return(str);
 	    }
 	  old_vs[i] = v;
 	  vs[i] = transfer_value(prog, v);
@@ -3249,7 +3308,14 @@ static char *sequential_binds(ptree *prog, XEN old_lets, const char *name)
 	  var = XEN_CAR(lets);
 	  v = walk(prog, XEN_CADR(var), NEED_ANY_RESULT);
 	  if (v == NULL)
-	    return(mus_format("can't handle %s var: %s", name, XEN_AS_STRING(lets)));
+	    {
+	      char *temp = NULL, *str;
+	      str = mus_format("can't handle %s var: %s", name, temp = XEN_AS_STRING(lets));
+#if HAVE_S7
+	      if (temp) FREE(temp);
+#endif
+	      return(str);
+	    }
 	  vs = transfer_value(prog, v);
 	  add_var_to_ptree(prog, XEN_SYMBOL_TO_C_STRING(XEN_CAR(var)), vs);
 	  set_var(prog, vs, v);
@@ -3366,8 +3432,14 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool sepa
     }
 
   if (num_args > XEN_LIST_LENGTH(args))
-    return(mus_format("too many args: %s", XEN_AS_STRING(args)));
-
+    {
+      char *temp = NULL, *str;
+      str = mus_format("too many args: %s", temp = XEN_AS_STRING(args));
+#if HAVE_S7
+      if (temp) FREE(temp);
+#endif
+      return(str);
+    }
   if (num_args == 0)
     {
       declarations = XEN_CADDR(form); /* either declare or snd-declare */
@@ -3421,14 +3493,31 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool sepa
 			  if (strcmp(type, "real") == 0) 
 			    arg_type = R_FLOAT; 
 			  else /* arg_type = default_arg_type; */
-			    return(mus_format("unknown type in declare: %s in %s", type, XEN_AS_STRING(XEN_CADDR(form))));
+			    {
+			      char *temp = NULL, *str;
+			      str = mus_format("unknown type in declare: %s in %s", type, temp = XEN_AS_STRING(XEN_CADDR(form)));
+#if HAVE_S7
+			      if (temp) FREE(temp);
+#endif
+			      return(str);
+			    }
 			}
 		    }
 		}
-	      else return(mus_format("unrecognized arg in declare: %s (for %s?) in %s", 
-				     XEN_AS_STRING(XEN_CAR(declaration)), 
-				     XEN_AS_STRING(arg), 
-				     XEN_AS_STRING(XEN_CADDR(form))));
+	      else 
+		{
+		  char *temp1 = NULL, *temp2 = NULL, *temp3 = NULL, *str;
+		  str = mus_format("unrecognized arg in declare: %s (for %s?) in %s", 
+				   temp1 = XEN_AS_STRING(XEN_CAR(declaration)), 
+				   temp2 = XEN_AS_STRING(arg), 
+				   temp3 = XEN_AS_STRING(XEN_CADDR(form)));
+#if HAVE_S7
+		  if (temp1) FREE(temp1);
+		  if (temp2) FREE(temp2);
+		  if (temp3) FREE(temp3);
+#endif
+		  return(str);
+		}
 	    }
 	  else
 	    {
@@ -3521,7 +3610,15 @@ static xen_value *lambda_form(ptree *prog, XEN form, bool separate, xen_value **
       /* we get here if walk failed, so clean up */
       unattach_ptree(new_tree, prog); /* needed in case we realloc'd during failed tree walk */
       free_embedded_ptree(new_tree);
-      return(run_warn("can't handle this embedded lambda: %s", XEN_AS_STRING(form)));
+      {
+	xen_value *rv;
+	char *temp = NULL;
+	rv = run_warn("can't handle this embedded lambda: %s", temp = XEN_AS_STRING(form));
+#if HAVE_S7
+	if (temp) FREE(temp);
+#endif
+	return(rv);
+      }
     }
 
   /* outer level default arg type is float(?) */
@@ -3586,7 +3683,17 @@ static xen_value *if_form(ptree *prog, XEN form, walk_result_t need_result)
 
   has_false = (XEN_LIST_LENGTH(form) == 4);
   if_value = walk(prog, XEN_CADR(form), NEED_ANY_RESULT);                                      /* walk selector */
-  if (if_value == NULL) return(run_warn("if: bad selector? %s", XEN_AS_STRING(XEN_CADR(form))));
+  if (if_value == NULL) 
+    {
+      xen_value *rv;
+      char *temp = NULL;
+      rv = run_warn("if: bad selector? %s", temp = XEN_AS_STRING(XEN_CADR(form)));
+#if HAVE_S7
+      if (temp) FREE(temp);
+#endif
+      return(rv);
+    }
+
   if (if_value->type != R_BOOL) /* all ints are true */
     if_value = coerce_to_boolean(prog, if_value);
   if (if_value->constant == R_CONSTANT)
@@ -3613,8 +3720,14 @@ static xen_value *if_form(ptree *prog, XEN form, walk_result_t need_result)
   true_result = walk(prog, XEN_CADDR(form), need_result);                           /* walk true branch */
   if (true_result == NULL) 
     {
+      xen_value *rv;
+      char *temp = NULL;
       FREE(jump_to_false);
-      return(run_warn("if: can't handle true branch %s", XEN_AS_STRING(XEN_CADDR(form))));
+      rv = run_warn("if: can't handle true branch %s", temp = XEN_AS_STRING(XEN_CADDR(form)));
+#if HAVE_S7
+      if (temp) FREE(temp);
+#endif
+      return(rv);
     }
   if (need_result != DONT_NEED_RESULT)
     {
@@ -3636,7 +3749,11 @@ static xen_value *if_form(ptree *prog, XEN form, walk_result_t need_result)
       /* if false_result is null, that is an error even if need_result is DONT_NEED_RESULT (since the false branch does exist) */
       if (false_result == NULL)
 	{
-	  run_warn("if: can't handle false branch %s", XEN_AS_STRING(XEN_CADDDR(form)));
+	  char *temp = NULL;
+	  run_warn("if: can't handle false branch %s", temp = XEN_AS_STRING(XEN_CADDDR(form)));
+#if HAVE_S7
+	  if (temp) FREE(temp);
+#endif
 	  if (result) FREE(result);
 	  if (jump_to_end) FREE(jump_to_end);
 	  if (true_result) FREE(true_result);
@@ -3712,10 +3829,16 @@ static xen_value *cond_form(ptree *prog, XEN form, walk_result_t need_result)
       else test_value = walk(prog, XEN_CAR(clause), NEED_ANY_RESULT);
       if (test_value == NULL)
 	{
+	  xen_value *rv;
+	  char *temp = NULL;
 	  for (i = 0; i < clause_ctr; i++) 
 	    if (fixups[i]) FREE(fixups[i]);
 	  FREE(fixups);
-	  return(run_warn("cond test: %s", XEN_AS_STRING(XEN_CAR(clause))));
+	  rv = run_warn("cond test: %s", temp = XEN_AS_STRING(XEN_CAR(clause)));
+#if HAVE_S7
+	  if (temp) FREE(temp);
+#endif
+	  return(rv);
 	}
       if (test_value->type != R_BOOL)
 	test_value = coerce_to_boolean(prog, test_value);
@@ -3802,8 +3925,29 @@ static xen_value *case_form(ptree *prog, XEN form, walk_result_t need_result)
 
   selector = XEN_CADR(form);
   selval = walk(prog, selector, NEED_ANY_RESULT);
-  if (selval == NULL) return(run_warn("can't handle case selector: %s", XEN_AS_STRING(selector)));
-  if (selval->type != R_INT) return(run_warn("case only with ints: %s", XEN_AS_STRING(selector)));
+
+  if (selval == NULL) 
+    {
+      xen_value *rv;
+      char *temp = NULL;
+      rv = run_warn("can't handle case selector: %s", temp = XEN_AS_STRING(selector));
+#if HAVE_S7
+      if (temp) FREE(temp);
+#endif
+      return(rv);
+    }
+
+  if (selval->type != R_INT) 
+    {
+      xen_value *rv;
+      char *temp = NULL;
+      rv = run_warn("case only with ints: %s", temp = XEN_AS_STRING(selector));
+#if HAVE_S7
+      if (temp) FREE(temp);
+#endif
+      return(rv);
+    }
+
   jump_to_selection = make_xen_value(R_INT, add_int_to_ptree(prog, 0), R_VARIABLE);
   add_triple_to_ptree(prog, va_make_triple(jump_abs, "jump_abs", 1, jump_to_selection));
   body = XEN_CDDR(form);
@@ -3850,7 +3994,11 @@ static xen_value *case_form(ptree *prog, XEN form, walk_result_t need_result)
 	    elseval = make_xen_value(R_INT, i, R_CONSTANT);
 	  else 
 	    {
-	      run_warn("bad case key: %s", XEN_AS_STRING(keys));
+	      char *temp = NULL;
+	      run_warn("bad case key: %s", temp = XEN_AS_STRING(keys));
+#if HAVE_S7
+	      if (temp) FREE(temp);
+#endif
 	      goto CASE_ERROR;
 	    }
 	}
@@ -3862,7 +4010,11 @@ static xen_value *case_form(ptree *prog, XEN form, walk_result_t need_result)
 	      key = XEN_CAR(keys);
 	      if (!(XEN_OFF_T_P(key)))
 		{
-		  run_warn("case only accepts integer selectors: %s", XEN_AS_STRING(key));
+		  char *temp = NULL;
+		  run_warn("case only accepts integer selectors: %s", temp = XEN_AS_STRING(key));
+#if HAVE_S7
+		  if (temp) FREE(temp);
+#endif
 		  goto CASE_ERROR;
 		}
 	      cur_key = XEN_TO_C_INT(key);
@@ -3954,10 +4106,16 @@ static xen_value *do_warn_of_type_trouble(int var_type, int expr_type, XEN form)
    *       so (do ((i 0 (+ i 0.5)))...) i is always 0
    *          (run (lambda () (do ((i 0 (+ i 0.5)) (j 0 (1+ j))) ((>= j 3)) (display i)))) -> 000
    */
-  return(run_warn("do variable init and step types differ: %s, init = %s, step = %s",
-		  XEN_AS_STRING(form),
-		  type_name(var_type),
-		  type_name(expr_type)));
+  xen_value *rv;
+  char *temp = NULL;
+  rv = run_warn("do variable init and step types differ: %s, init = %s, step = %s",
+		temp = XEN_AS_STRING(form),
+		type_name(var_type),
+		type_name(expr_type));
+#if HAVE_S7
+  if (temp) FREE(temp);
+#endif
+  return(rv);
 }
 
 
@@ -3993,8 +4151,14 @@ static xen_value *do_form(ptree *prog, XEN form, walk_result_t need_result)
   if (test == NULL) return(NULL);
   if (test->type != R_BOOL) 
     {
+      xen_value *rv;
+      char *temp = NULL;
       FREE(test);
-      return(run_warn("do test must be boolean: %s", XEN_AS_STRING(test_form)));
+      rv = run_warn("do test must be boolean: %s", temp = XEN_AS_STRING(test_form));
+#if HAVE_S7
+      if (temp) FREE(temp);
+#endif
+      return(rv);
     }
 
   /* if test true, jump to result section */
@@ -4214,10 +4378,16 @@ static xen_value *or_form(ptree *prog, XEN form, walk_result_t ignored)
       v = walk(prog, XEN_CAR(body), NEED_ANY_RESULT);
       if (v == NULL)
 	{
+	  xen_value *rv;
+	  char *temp = NULL;
 	  for (j = 0; j < i; j++)
 	    if (fixups[j]) FREE(fixups[j]);
 	  FREE(fixups);
-	  return(run_warn("or: can't handle %s", XEN_AS_STRING(XEN_CAR(body))));
+	  rv = run_warn("or: can't handle %s", temp = XEN_AS_STRING(XEN_CAR(body)));
+#if HAVE_S7
+	  if (temp) FREE(temp);
+#endif
+	  return(rv);
 	}
 
       if ((i == 0) &&
@@ -4275,10 +4445,16 @@ static xen_value *and_form(ptree *prog, XEN form, walk_result_t ignored)
       v = walk(prog, XEN_CAR(body), NEED_ANY_RESULT);
       if (v == NULL)
 	{
+	  xen_value *rv;
+	  char *temp = NULL;
 	  for (j = 0; j < i; j++)
 	    if (fixups[j]) FREE(fixups[j]);
 	  FREE(fixups);
-	  return(run_warn("and: can't handle %s", XEN_AS_STRING(XEN_CAR(body))));
+	  rv = run_warn("and: can't handle %s", temp = XEN_AS_STRING(XEN_CAR(body)));
+#if HAVE_S7
+	  if (temp) FREE(temp);
+#endif
+	  return(rv);
 	}
 
       if ((i == 0) &&
@@ -4336,7 +4512,15 @@ static xen_value *generalized_set_form(ptree *prog, XEN form)
     {
       v = walk(prog, setval, NEED_ANY_RESULT);
       if (v == NULL)
-	return(run_warn("set!: can't handle: %s", XEN_AS_STRING(setval)));
+	{
+	  xen_value *rv;
+	  char *temp = NULL;
+	  rv = run_warn("set!: can't handle: %s", temp = XEN_AS_STRING(setval));
+#if HAVE_S7
+	  if (temp) FREE(temp);
+#endif
+	  return(rv);
+	}
 
       in_settee = XEN_CAR(settee);
       if (XEN_NOT_NULL_P(XEN_CDR(settee)))
@@ -4373,7 +4557,15 @@ static xen_value *generalized_set_form(ptree *prog, XEN form)
       if (in_v2) FREE(in_v2);
     }
 
-  return(run_warn("generalized set! for %s not implemented yet", XEN_AS_STRING(settee)));
+  {
+    xen_value *rv;
+    char *temp = NULL;
+    rv = run_warn("generalized set! for %s not implemented yet", temp = XEN_AS_STRING(settee));
+#if HAVE_S7
+    if (temp) FREE(temp);
+#endif
+    return(rv);
+  }
 }
 
 
@@ -4407,7 +4599,16 @@ static xen_value *set_form(ptree *prog, XEN form, walk_result_t ignore)
       int val_type, var_type;
       v = walk(prog, setval, NEED_ANY_RESULT);
       if (v == NULL) 
-	return(run_warn("set!: can't handle: %s", XEN_AS_STRING(setval)));
+	{
+	  xen_value *rv;
+	  char *temp = NULL;
+	  rv = run_warn("set!: can't handle: %s", temp = XEN_AS_STRING(setval));
+#if HAVE_S7
+	  if (temp) FREE(temp);
+#endif
+	  return(rv);
+	}
+
       if ((var->v->addr == v->addr) && 
 	  (var->v->type == v->type))
 	return(v); /* a no-op: (set! a a) */
@@ -4422,7 +4623,7 @@ static xen_value *set_form(ptree *prog, XEN form, walk_result_t ignore)
 	}
       if (val_type != var_type)
 	{
-	  char *str = NULL;
+	  char *str = NULL, *temp = NULL;
 	  /* here #f is ok for pointer val */
  	  if ((val_type == R_GOTO) && 
  	      (var_type == R_BOOL))
@@ -4445,8 +4646,11 @@ static xen_value *set_form(ptree *prog, XEN form, walk_result_t ignore)
 		   type_name(var->v->type), 
 		   str = describe_xen_value(v, prog), 
 		   type_name(v->type), 
-		   XEN_AS_STRING(form));
+		   temp = XEN_AS_STRING(form));
 	  if (str) FREE(str);
+#if HAVE_S7
+	  if (temp) FREE(temp);
+#endif
 	  FREE(v);
 	  return(NULL);
 	  /* this limitation could be removed, but is it worth the bother? */
@@ -4479,9 +4683,18 @@ static xen_value *set_form(ptree *prog, XEN form, walk_result_t ignore)
       return(v);
     }
 
-  if ((var) && (var->unsettable))
-    return(run_warn("set!: can't set: %s", XEN_AS_STRING(settee)));
-  return(run_warn("set! variable problem: %s", XEN_AS_STRING(form)));
+  {
+    xen_value *rv;
+    char *temp = NULL;
+    if ((var) && 
+	(var->unsettable))
+      rv = run_warn("set!: can't set: %s", temp = XEN_AS_STRING(settee));
+    else rv = run_warn("set! variable problem: %s", temp = XEN_AS_STRING(form));
+#if HAVE_S7
+    if (temp) FREE(temp);
+#endif
+    return(rv);
+  }
 }
 
 
@@ -6470,10 +6683,24 @@ static void display_int(int *args, ptree *pt) {fprintf(stdout, INT_STR, INT_ARG_
 static void display_flt(int *args, ptree *pt) {fprintf(stdout, "%.6f", FLOAT_ARG_1);}
 
 
-static void display_symbol(int *args, ptree *pt) {fprintf(stdout, "%s", XEN_AS_STRING(RXEN_ARG_1));}
+static void display_symbol(int *args, ptree *pt) 
+{
+  char *temp = NULL;
+  fprintf(stdout, "%s", temp = XEN_AS_STRING(RXEN_ARG_1));
+#if HAVE_S7
+  if (temp) FREE(temp);
+#endif
+}
 
 
-static void display_key(int *args, ptree *pt) {fprintf(stdout, "%s", XEN_AS_STRING(RXEN_ARG_1));}
+static void display_key(int *args, ptree *pt) 
+{
+  char *temp = NULL;
+  fprintf(stdout, "%s", temp = XEN_AS_STRING(RXEN_ARG_1));
+#if HAVE_S7
+  if (temp) FREE(temp);
+#endif
+}
 
 
 static void display_clm(int *args, ptree *pt) {fprintf(stdout, "%s", mus_describe(CLM_ARG_1));}
@@ -12026,13 +12253,25 @@ static int xen_to_addr(ptree *pt, XEN arg, int type, int addr)
 	    case R_VCT_VECTOR:
 	    case R_CLM_VECTOR:   pt->vects[addr] = NULL;         break;
 	    default: 
-	      run_warn("run: xen_to_addr: %s %s", XEN_AS_STRING(arg), type_name(type)); 
-	      return(XEN_TO_ADDR_ERROR);
+	      {
+		char *temp = NULL;
+		run_warn("run: xen_to_addr: %s %s", temp = XEN_AS_STRING(arg), type_name(type)); 
+#if HAVE_S7
+		if (temp) FREE(temp);
+#endif
+		return(XEN_TO_ADDR_ERROR);
+	      }
 	      break;
 	    }
 	  return(addr);
 	}
-      run_warn("run: xen_to_addr 2: %s %s", XEN_AS_STRING(arg), type_name(type));
+      {
+	char *temp = NULL;
+	run_warn("run: xen_to_addr 2: %s %s", temp = XEN_AS_STRING(arg), type_name(type));
+#if HAVE_S7
+	if (temp) FREE(temp);
+#endif
+      }
       return(XEN_TO_ADDR_ERROR);
     }
   switch (type)
@@ -12294,11 +12533,29 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 	      w = (walk_info *)(XEN_TO_C_ULONG(walker));
 	      if ((w) && (w->special_walker))
 		{
-		  if (num_args < w->required_args) 
-		    return(run_warn("missing expression for %s: %s", XEN_SYMBOL_TO_C_STRING(function), XEN_AS_STRING(form)));
+		  if (num_args < w->required_args)
+		    {
+		      xen_value *rv;
+		      char *temp = NULL;
+		      rv = run_warn("missing expression for %s: %s", XEN_SYMBOL_TO_C_STRING(function), temp = XEN_AS_STRING(form));
+#if HAVE_S7
+		      if (temp) FREE(temp);
+#endif
+		      return(rv);
+		    }
+
 		  if ((w->max_args != UNLIMITED_ARGS) && 
-		      (num_args > w->max_args)) 
-		    return(run_warn("too many expressions for %s: %s", XEN_SYMBOL_TO_C_STRING(function), XEN_AS_STRING(form)));
+		      (num_args > w->max_args))
+		    {
+		      xen_value *rv;
+		      char *temp = NULL;
+		      rv = run_warn("too many expressions for %s: %s", XEN_SYMBOL_TO_C_STRING(function), temp = XEN_AS_STRING(form));
+#if HAVE_S7
+		      if (temp) FREE(temp);
+#endif
+		      return(rv);
+		    }
+
 		  return((*(w->special_walker))(prog, form, walk_result));
 		}
 	    }
@@ -12639,7 +12896,15 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
       /* things like complex numbers fall through here */
     }
   if (!run_warned)
-    return(run_warn("can't handle: %s", XEN_AS_STRING(form)));
+    {
+      xen_value *rv;
+      char *temp = NULL;
+      rv = run_warn("can't handle: %s (%s)", temp = XEN_AS_STRING(form), XEN_AS_STRING(XEN_PROCEDURE_SOURCE(prog->code)));
+#if HAVE_S7
+      if (temp) FREE(temp);
+#endif
+      return(rv);
+    }
   return(NULL);
 }
 
@@ -12739,11 +13004,13 @@ static struct ptree *form_to_ptree_1(XEN code, int decls, int *types)
     prog->code = XEN_CADR(code);                  /* need env before starting to walk the code */
   else prog->code = XEN_FALSE;                    /* many confusing cases here -- we'll just give up */
 #endif
+
 #if HAVE_GAUCHE
   if ((SCM_CLOSUREP(XEN_CADR(code))) || (SCM_PROCEDUREP(XEN_CADR(code))))
     prog->code = XEN_CADR(code);
   else prog->code = XEN_FALSE;
 #endif
+
 #if HAVE_S7
   prog->code = code;
 #endif
@@ -12775,8 +13042,13 @@ static struct ptree *form_to_ptree_1(XEN code, int decls, int *types)
 
   free_ptree(prog);
   if (!run_warned)
-    run_warn("can't optimize: %s\n", XEN_AS_STRING(form));
-
+    {
+      char *temp = NULL;
+      run_warn("can't optimize: %s\n", temp = XEN_AS_STRING(form));
+#if HAVE_S7
+      if (temp) FREE(temp);
+#endif
+    }
   return(NULL);
 }
 

@@ -447,9 +447,13 @@ static void prefs_variable_set(const char *name, XEN val)
 static void prefs_variable_save(FILE *fd, const char *name, const char *file, XEN val)
 {
 #if HAVE_SCHEME
+  char *temp = NULL;
   if (file)
     fprintf(fd, "(if (not (provided? 'snd-%s.scm)) (load-from-path \"%s.scm\"))\n", file, file);
-  fprintf(fd, "(set! %s %s)\n", name, XEN_AS_STRING(val));
+  fprintf(fd, "(set! %s %s)\n", name, temp = XEN_AS_STRING(val));
+#if HAVE_S7
+  if (temp) FREE(temp);
+#endif
 #endif
 #if HAVE_RUBY
   char *str;
@@ -521,7 +525,11 @@ static void prefs_function_call_1(const char *func, XEN arg)
 {
   char *str;
 #if HAVE_SCHEME
-  str = mus_format("(%s %s)\n", func, XEN_AS_STRING(arg));
+  char *temp = NULL;
+  str = mus_format("(%s %s)\n", func, temp = XEN_AS_STRING(arg));
+#if HAVE_S7
+  if (temp) FREE(temp);
+#endif
 #endif
 #if HAVE_RUBY
   str = mus_format("%s(%s)\n", TO_PROC_NAME(func), XEN_AS_STRING(arg));
@@ -560,9 +568,13 @@ static void prefs_function_save_0(FILE *fd, const char *name, const char *file)
 static void prefs_function_save_1(FILE *fd, const char *name, const char *file, XEN val)
 {
 #if HAVE_SCHEME
+  char *temp = NULL;
   if (file)
     fprintf(fd, "(if (not (provided? 'snd-%s.scm)) (load-from-path \"%s.scm\"))\n", file, file);
-  fprintf(fd, "(%s %s)\n", name, XEN_AS_STRING(val));
+  fprintf(fd, "(%s %s)\n", name, temp = XEN_AS_STRING(val));
+#if HAVE_S7
+  if (temp) FREE(temp);
+#endif
 #endif
 #if HAVE_RUBY
   char *str;
@@ -4326,7 +4338,7 @@ static char *rts_load_path = NULL;
 
 static void help_load_path(prefs_info *prf)
 {
-  char *hlp;
+  char *hlp, *temp = NULL;
   hlp = mus_format("Much of Snd's functionality is loaded as needed from the Scheme, Ruby, or Forth \
 files found in the Snd tarball.  You can run Snd without \
 these files, but there's no reason to!  Just add the directory containing \
@@ -4346,8 +4358,11 @@ find elsewhere.  The current load path list is: \n\n%s\n",
 #endif
 #endif
 #endif
-		   XEN_AS_STRING(XEN_LOAD_PATH));
+		   temp = XEN_AS_STRING(XEN_LOAD_PATH));
   snd_help("load paths", hlp, 	   WITH_WORD_WRAP);
+#if HAVE_S7
+  if (temp) FREE(temp);
+#endif
   FREE(hlp);
 }
 

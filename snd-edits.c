@@ -2631,9 +2631,10 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool 
 	      
 	      if (with_source)
 		{
+		  char *temp1 = NULL, *temp2 = NULL;
 		  code = ptree_code(cp->ptrees[FRAGMENT_PTREE_INDEX(ed, j, 0)]);
 		  if (XEN_LIST_P(code))
-		    fprintf(outp, ", code: %s", XEN_AS_STRING(code));
+		    fprintf(outp, ", code: %s", temp1 = XEN_AS_STRING(code));
 #if HAVE_GUILE
 		  /* procedure source unimplemented in gauche */
 		  code = cp->ptree_inits[FRAGMENT_PTREE_INDEX(ed, j, 0)];
@@ -2643,7 +2644,9 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool 
 #if HAVE_S7
 		  code = cp->ptree_inits[FRAGMENT_PTREE_INDEX(ed, j, 0)];
 		  if (XEN_PROCEDURE_P(code))
-		    fprintf(outp, ", init: %s", XEN_AS_STRING(XEN_PROCEDURE_SOURCE(code))); /* ptree_code = car */
+		    fprintf(outp, ", init: %s", temp2 = XEN_AS_STRING(XEN_PROCEDURE_SOURCE(code))); /* ptree_code = car */
+		  if (temp1) FREE(temp1);
+		  if (temp2) FREE(temp2);
 #endif
 		}
 	    }
@@ -3251,17 +3254,23 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 		  break;
 
 		case PTREE_EDIT:
-		  if ((ed->origin) && 
-		      (strcmp(ed->origin, S_ptree_channel) != 0))
-		    fprintf(fd, "%s" PROC_SEP "sfile" PROC_SEP "%d",
-			    ed->origin,
-			    cp->chan);
-		  else fprintf(fd, "%s" PROC_OPEN "%s" PROC_SEP OFF_TD PROC_SEP  OFF_TD PROC_SEP "sfile" PROC_SEP "%d",
-			       TO_PROC_NAME(S_ptree_channel),
-			       XEN_AS_STRING(ptree_code(cp->ptrees[ed->ptree_location])),
-			       ed->beg,
-			       ed->len,
-			       cp->chan);
+		  {
+		    char *temp = NULL;
+		    if ((ed->origin) && 
+			(strcmp(ed->origin, S_ptree_channel) != 0))
+		      fprintf(fd, "%s" PROC_SEP "sfile" PROC_SEP "%d",
+			      ed->origin,
+			      cp->chan);
+		    else fprintf(fd, "%s" PROC_OPEN "%s" PROC_SEP OFF_TD PROC_SEP  OFF_TD PROC_SEP "sfile" PROC_SEP "%d",
+				 TO_PROC_NAME(S_ptree_channel),
+				 temp = XEN_AS_STRING(ptree_code(cp->ptrees[ed->ptree_location])),
+				 ed->beg,
+				 ed->len,
+				 cp->chan);
+#if HAVE_S7
+		    if (temp) FREE(temp);
+#endif
+		  }
 		  break;
 
 		case MIX_EDIT:
@@ -3306,7 +3315,11 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 #if HAVE_GUILE
 		    fprintf(fd, " %s", XEN_AS_STRING(XEN_PROCEDURE_SOURCE(code)));
 #else
-		    fprintf(fd, " %s", XEN_AS_STRING(XEN_CAR(XEN_PROCEDURE_SOURCE(code))));
+		  {
+		    char *temp = NULL;
+		    fprintf(fd, " %s", temp = XEN_AS_STRING(XEN_CAR(XEN_PROCEDURE_SOURCE(code))));
+		    if (temp) FREE(temp);
+		  }
 #endif
 		}
 #endif
@@ -3460,15 +3473,18 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 		    function = mus_format("%s (%s snd chn)", function, ed->origin);
 		  else 
 		    {
-		      char *durstr;
+		      char *durstr, *temp = NULL;
 		      if (ed->len == cp->edits[i]->samples)
 			durstr = copy_string("#f");
 		      else durstr = mus_format(OFF_TD, ed->len);
 		      function = mus_format("%s (%s %s " OFF_TD " %s snd chn)",
 					    function, S_ptree_channel,
-					    XEN_AS_STRING(ptree_code(cp->ptrees[ed->ptree_location])),
+					    temp = XEN_AS_STRING(ptree_code(cp->ptrees[ed->ptree_location])),
 					    ed->beg, durstr);
 		      FREE(durstr);
+#if HAVE_S7
+		      if (temp) FREE(temp);
+#endif
 		    }
 		  break;
 

@@ -51,11 +51,12 @@
 (test (car (list (list) (list 1 2))) '())
 (test (car '(a b c)) 'a)
 (test (car '((a) b c d)) '(a))
-(test (equal? (car (reverse (list 1 2 3 4))) 4) #t)
-(test (equal? (car (list 'a 'b 'c 'd 'e 'f 'g)) 'a) #t)
+(test (car (reverse (list 1 2 3 4))) 4)
+(test (car (list 'a 'b 'c 'd 'e 'f 'g)) 'a)
 (test (car '(a b c d e f g)) 'a)
 (test (car '(((((1 2 3) 4) 5) (6 7)) (((u v w) x) y) ((q w e) r) (a b c) e f g)) '((((1 2 3) 4) 5) (6 7)))
 (test (car '(a)) 'a)
+(test (car ''foo) 'quote)
 
 (for-each
  (lambda (arg)
@@ -84,6 +85,7 @@
 (test (cdr '(a)) '())
 (test (cdr '(a b c d e f g)) '(b c d e f g))
 (test (cdr '(((((1 2 3) 4) 5) (6 7)) (((u v w) x) y) ((q w e) r) (a b c) e f g)) '((((u v w) x) y) ((q w e) r) (a b c) e f g))
+(test (cdr ''foo) '(foo))
 
 (for-each
  (lambda (arg)
@@ -92,6 +94,7 @@
 	 (display "(cdr '(() ") (display arg) (display ")) returned ") (display (cdr (cons '() arg))) (display "?") (newline))))
  (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (lambda (a) (+ a 1))))
 
+(define (cons-r a b n) (if (= 0 n) (cons a b) (cons (cons-r (1+ a) (1+ b) (- n 1)) (cons-r (1- a) (1- b) (- n 1)))))
 
 (define lists (list (list 1 2 3)
 		    (cons 1 2)
@@ -116,6 +119,10 @@
 		    (cons 1 '())
 		    (cons '() '())
 		    (list 1 2 (cons 3 4) 5 (list (list 6) 7))
+		    (cons-r 0 0 4)
+		    (cons-r 0 0 5)
+		    (cons-r 0 0 10)
+		    ''a
 		    ))
 
 (define (caar-1 x) (car (car x)))
@@ -377,8 +384,205 @@
 (test (cddddr '(a c . b)) 'error)
 (test (cddddr '(a c e . b)) 'error)
 
-(test (equal? (car ''foo) 'quote) #t)
+
+
+(test (length (list 'a 'b 'c 'd 'e 'f)) 6)
+(test (length 'x) 'error)
+(test (length (list 'a 'b 'c 'd)) 4)
+(test (length (list 'a (list 'b 'c) 'd)) 3)
+(test (length '()) 0)
+(test (length '(this-that)) 1)
+(test (length '(this - that)) 3)
+(test (length '(a b)) 2)
+(test (length '(a b c)) 3)
+(test (length '(a (b) (c d e))) 3)
+(test (length (cons 1 2)) 'error)
+(let ((x (list 1 2)))
+  (set-cdr! x x)
+  (test (length x) 'error))
+(test (length (list 1 (cons 1 2))) 2)
+(test (length (list 1 (cons 1 '()))) 2)
+
+
+
+(test (reverse '(a b c d)) '(d c b a))
+(test (reverse '(a b c))  '(c b a))
+(test (reverse '(a (b c) d (e (f))))  '((e (f)) d (b c) a))
+(test (reverse '()) '())
+(test (reverse (list 1 2 3)) '(3 2 1))
+(test (reverse (cons 1 2)) 'error)
+(test (reverse (list 1)) '(1))
+(test (reverse (list)) (list))
+(test (reverse '(1 2 3)) (list 3 2 1))
+(test (reverse '(1)) '(1))
+(test (reverse '(1 . 2)) 'error)
+(test (reverse '((1 2) 3)) '(3 (1 2)))
+(test (reverse '(((1 . 2) . 3) 4)) '(4 ((1 . 2) . 3)))
+(test (reverse (list (list) (list 1 2))) '((1 2) ()))
+(test (reverse '((a) b c d)) '(d c b (a)))
+(test (reverse (reverse (list 1 2 3 4))) (list 1 2 3 4))
+(test (reverse ''foo) '(foo quote))
+(test (let ((x (list 1 2 3 4)))
+	(let ((y (reverse x)))
+	  (and (equal? x (list 1 2 3 4))
+	       (equal? y (list 4 3 2 1)))))
+      #t)
+
+(for-each
+ (lambda (lst)
+   (if (list? lst)
+       (if (not (equal? lst (reverse (reverse lst))))
+	   (begin
+	     (display "(reverse (reverse ") (display lst) (display ")) returned ") (display (reverse (reverse lst))) (newline)))))
+ lists)
+
+(for-each
+ (lambda (lst)
+   (if (list? lst)
+       (if (not (equal? lst (reverse (reverse (reverse (reverse lst))))))
+	   (begin
+	     (display "(reverse...(4x) ") (display lst) (display ")) returned ") (display (reverse (reverse (reverse (reverse lst))))) (newline)))))
+ lists)
+
+
+
+(test (pair? 'a) #f)
+(test (pair? '()) #f)
+(test (pair? '(a b c)) #t)
+(test (pair? (cons 1 2)) #t)
+(test (pair? ''()) #t)
+(test (pair? #f) #f)
+(test (pair? (make-vector 6)) #f)
+(test (pair? #t) #f)
+(test (pair? '(a . b)) #t)
+(test (pair? '#(a b))  #f)
+(test (pair? (list 1 2)) #t)
+(test (pair? (list)) #f)
+(test (pair? ''foo) #t)
+(test (pair? (list 'a 'b 'c 'd 'e 'f)) #t)
+(test (pair? '(this-that)) #t)
+(test (pair? '(this - that)) #t)
+(let ((x (list 1 2)))
+  (set-cdr! x x)
+  (test (pair? x) #t))
+(test (pair? (list 1 (cons 1 2))) #t)
+(test (pair? (list 1 (cons 1 '()))) #t)
+(test (pair? (cons 1 '())) #t)
+(test (pair? (cons '() '())) #t)
+(test (pair? (cons '() 1)) #t)
+(test (pair? (list (list))) #t)
+(test (pair? '(())) #t)
+
+(for-each
+ (lambda (arg)
+   (if (pair? arg)
+       (begin
+	 (display "(pair? ") (display arg) (display ") returned #t?") (newline))))
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (lambda (a) (+ a 1))))
+
+
+
+(test (list? 'a) #f)
+(test (list? '()) #t)
+(test (list? '(a b c)) #t)
+(test (list? (cons 1 2)) #f)
+(test (list? ''()) #t)
+(test (list? #f) #f)
+(test (list? (make-vector 6)) #f)
+(test (list? #t) #f)
+(test (list? '(a . b)) #f)
+(test (list? '#(a b))  #f)
+(test (list? (list 1 2)) #t)
+(test (list? (list)) #t)
+(test (list? ''foo) #t)
+(test (list? (list 'a 'b 'c 'd 'e 'f)) #t)
+(test (list? '(this-that)) #t)
+(test (list? '(this - that)) #t)
+(let ((x (list 1 2)))
+  (set-cdr! x x)
+  (test (list? x) #f))
+(test (list? (list 1 (cons 1 2))) #t)
+(test (list? (list 1 (cons 1 '()))) #t)
+(test (list? (cons 1 '())) #t)
+(test (list? (cons '() '())) #t)
+(test (list? (cons '() 1)) #f)
+(test (list? (list (list))) #t)
+(test (list? '(())) #t)
+
+(for-each
+ (lambda (arg)
+   (if (list? arg)
+       (begin
+	 (display "(list? ") (display arg) (display ") returned #t?") (newline))))
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (lambda (a) (+ a 1))))
+
+
+
+(test (null? 'a) '#f)
+(test (null? '()) #t)
+(test (null? '(a b c)) #f)
+(test (null? (cons 1 2)) #f)
+(test (null? ''()) #f)
+(test (null? #f) #f)
+(test (null? (make-vector 6)) #f)
+(test (null? #t) #f)
+(test (null? '(a . b)) #f)
+(test (null? '#(a b))  #f)
+(test (null? (list 1 2)) #f)
+(test (null? (list)) #t)
+(test (null? ''foo) #f)
+(test (null? (list 'a 'b 'c 'd 'e 'f)) #f)
+(test (null? '(this-that)) #f)
+(test (null? '(this - that)) #f)
+(let ((x (list 1 2)))
+  (set-cdr! x x)
+  (test (null? x) #f))
+(test (null? (list 1 (cons 1 2))) #f)
+(test (null? (list 1 (cons 1 '()))) #f)
+(test (null? (cons 1 '())) #f)
+(test (null? (cons '() '())) #f)
+(test (null? (cons '() 1)) #f)
+(test (null? (list (list))) #f)
+(test (null? '(())) #f)
+
+(for-each
+ (lambda (arg)
+   (if (null? arg)
+       (begin
+	 (display "(null? ") (display arg) (display ") returned #t?") (newline))))
+ (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (lambda (a) (+ a 1))))
+
+
+
+(test (reverse! '(a b c d)) '(d c b a))
+(test (reverse! '(a b c))  '(c b a))
+(test (reverse! '(a (b c) d (e (f))))  '((e (f)) d (b c) a))
+(test (reverse! '()) '())
+(test (reverse! (list 1 2 3)) '(3 2 1))
+(test (reverse! (cons 1 2)) 'error)
+(test (reverse! (list 1)) '(1))
+(test (reverse! (list)) (list))
+(test (reverse! '(1 2 3)) (list 3 2 1))
+(test (reverse! '(1)) '(1))
+(test (reverse! '(1 . 2)) 'error)
+(test (reverse! '((1 2) 3)) '(3 (1 2)))
+(test (reverse! '(((1 . 2) . 3) 4)) '(4 ((1 . 2) . 3)))
+(test (reverse! (list (list) (list 1 2))) '((1 2) ()))
+(test (reverse! '((a) b c d)) '(d c b (a)))
+(test (reverse! (reverse! (list 1 2 3 4))) (list 1 2 3 4))
+(test (reverse! ''foo) '(foo quote))
 
 
 
 ;;; --------------------------------------------------------------------------------
+
+;;; set-car! set-cdr!
+;;; assq assv assoc 
+;;; memq memv member 
+;;; list-ref list-set! list-tail
+;;; append list
+
+;;; (list 1 2 . 3) should be an error, I think
+
+
+;;; quasiquote??
