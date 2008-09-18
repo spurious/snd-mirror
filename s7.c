@@ -7619,7 +7619,8 @@ static s7_pointer g_list_tail(s7_scheme *sc, s7_pointer args)
 
   int i, index;
   s7_pointer p;
-  if (!is_pair(car(args)))
+  if ((!is_pair(car(args))) &&
+      (car(args) != sc->NIL))
     return(s7_wrong_type_arg_error(sc, "list-tail", 1, car(args), "a list"));
   if (!s7_is_integer(cadr(args)))
     return(s7_wrong_type_arg_error(sc, "list-tail", 2, cadr(args), "an integer"));
@@ -7632,8 +7633,6 @@ static s7_pointer g_list_tail(s7_scheme *sc, s7_pointer args)
 
   if (i < index)
     return(s7_out_of_range_error(sc, "list-tail", 2, cadr(args), "less than list length"));
-  if (!s7_is_pair(p))
-    return(s7_wrong_type_arg_error(sc, "list-tail", i, p, "a proper list"));
 
   return(p);
 }
@@ -10097,9 +10096,18 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	      pop_stack(sc, sc->code); /* a keyword evaluates to itself */
 	      goto START;
 	    }
+
+	  sc->x = symbol_table_find_by_name(sc, s7_symbol_name(sc->code));
+	  if (is_syntax(sc->x))
+	    {
+	      pop_stack(sc, sc->x);
+	      goto START;
+	    }
+
 #if S7_DEBUGGING
 	  fprintf(stderr, "unbound %s\n", s7_object_to_c_string(sc, sc->code));
 #endif
+	  
 	  pop_stack(sc, eval_error(sc, "unbound variable", sc->code));
 	  goto START;
 	} 
@@ -11049,7 +11057,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	    expr = read_string_upto(sc, "();\t\n\r ", sc->input_port);
 	    if ((sc->x = make_sharp_const(sc, expr)) == sc->NIL)
 	      {
-		pop_stack(sc, eval_error(sc, "undefined sharp expression", sc->code));
+		pop_stack(sc, eval_error(sc, "undefined sharp expression", s7_make_string(sc, expr)));
 		goto START;
 	      }
 	    else 
