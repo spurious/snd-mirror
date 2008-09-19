@@ -5,9 +5,43 @@
 (define with-continued-fraction-rationalize #t)
 (define with-bignums #f)
 (define with-hyperbolic-functions #t)
+(define with-char-ops-with-more-than-2-args #t)
 
 
-;;; TODO: need to define object->string and format if not defined
+(if (not (defined? 'object->string))
+(define (object->string x) ; trigtest.sps by William D Clinger
+  (call-with-values
+   (lambda () (open-string-output-port))
+   (lambda (out get)
+     (write x out)
+     (let ((s (get)))
+       (close-port out)
+       s))))
+)
+
+(if (not (defined? 'format))
+(define (format dest str . args)
+  (let ((len (string-length str))
+	(tilde #f)
+	(result ""))
+    (do ((i 0 (+ i 1)))
+	((= i len))
+      (let ((c (string-ref str i)))
+	(if (char=? c #\~)
+	    (set! tilde #t)
+	    (if (not tilde)
+		(set! result (string-append result (string c)))
+		(begin
+		  (set! tilde #f)
+		  (if (member c (list #\A #\D #\F))
+		      (begin
+			(set! result (string-append result (object->string (car args))))
+			(set! args (cdr args)))
+		      (if (char=? c #\%)
+			  (set! result (string-append result (string #\newline)))
+			  (display (string-append ";unknown format directive: ~" (string c))))))))))
+    result))
+)
 
 
 (define (ok? tst result expected)
@@ -139,7 +173,778 @@
 
 
 
+(test (boolean? #f) #t)
+(test (boolean? #t) #t)
+(test (boolean? 0) #f)
+(test (boolean? 1) #f)
+(test (boolean? '()) #f)
+(test (boolean? 't) #f)
+(test (boolean? (list)) #f)
 
+(for-each
+ (lambda (arg)
+   (if (boolean? arg)
+       (begin
+	 (display "(boolean? ") (display arg) (display ") returned #t?") (newline))))
+ (list "hi" (integer->char 65) 1 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1))))
+
+
+
+(test (not #f) #t)
+(test (not #t) #f)
+(test (not (not #t)) #t)
+(test (not 0) #f)
+(test (not 1) #f)
+(test (not '()) #f)
+(test (not 't) #f)
+(test (not (list)) #f)
+(test (not (list 3)) #f)
+(test (not 'nil) #f)
+
+(for-each
+ (lambda (arg)
+   (if (not arg)
+       (begin
+	 (display "(not ") (display arg) (display ") returned #t?") (newline))))
+ (list "hi" (integer->char 65) 1 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1))))
+
+
+
+(test (symbol? 't) #t)
+(test (symbol? "t") #f)
+(test (symbol? '(t)) #f)
+(test (symbol? #t) #f)
+(test (symbol? 4) #f)
+(test (symbol? 'foo) #t)
+(test (symbol? (car '(a b))) #t)
+(test (symbol? 'nil) #t)
+(test (symbol? '()) #f)
+(test (symbol? #f) #f)
+(test (symbol? 'car) #t)
+(test (symbol? '#f) #f)
+
+(for-each
+ (lambda (arg)
+   (if (symbol? arg)
+       (begin
+	 (display "(symbol? ") (display arg) (display ") returned #t?") (newline))))
+ (list "hi" (integer->char 65) 1 (list 1 2) '#t '3 (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1))))
+
+
+
+(test (procedure? car) #t)
+(test (procedure? 'car) #f)
+(test (procedure? (lambda (x) x)) #t)
+(test (procedure? '(lambda (x) x)) #f)
+(test (call/cc procedure?) #t) ; ??
+(test (let ((a (lambda (x) x)))	(procedure? a)) #t)
+(test (letrec ((a (lambda () (procedure? a)))) (a)) #t)
+(test (let ((a 1)) (let ((a (lambda () (procedure? a)))) (a))) #f)
+
+(for-each
+ (lambda (arg)
+   (if (procedure? arg)
+       (begin
+	 (display "(procedure? ") (display arg) (display ") returned #t?") (newline))))
+ (list "hi" (integer->char 65) 1 (list 1 2) '#t '3 (make-vector 3) 3.14 3/4 1.0+1.0i #\f))
+
+
+
+
+
+
+
+;;; --------------------------------------------------------------------------------
+;;; CHARACTERS
+;;; --------------------------------------------------------------------------------
+
+(test (eqv? '#\  #\space) #t)
+(test (eqv? #\space '#\space) #t)
+
+(test (char? #\a) #t)
+(test (char? #\() #t)
+(test (char? #\space) #t)
+(test (char? '#\newline) #t)
+(test (char? #\1) #t)
+(test (char? #\$) #t)
+(test (char? #\.) #t)
+(test (char? #\\) #t)
+(test (char? #\)) #t)
+(test (char? #\%) #t)
+(test (char? '#\space) #t)
+(test (char? '#\newline) #t)
+(test (char? '#\a) #t)
+(test (char? '#\8) #t)
+(test (char? #\-) #t)
+(test (char? #\n) #t)
+(test (char? #\() #t)
+;(test (char? #e) #f)
+(test (char? #e1) #f)
+;(test (char? ##) #f)
+(test (char? #b101) #f)
+(test (char? #o73) #f)
+(test (char? 'a) #f)
+(test (char? 97) #f)
+(test (char? "a") #f)
+(test (char? (string-ref "hi" 0)) #t)
+(test (char? (string-ref (make-string 1) 0)) #t)
+
+(for-each
+ (lambda (arg)
+   (if (char? arg)
+       (begin
+	 (display "(char? ") (display arg) (display ") returned #t?") (newline))))
+ (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #f #t (lambda (a) (+ a 1))))
+
+(do ((i 0 (1+ i)))
+    ((= i 256))
+   (if (not (char? (integer->char i)))
+       (begin
+	 (display "(char? (integer->char ") (display i) (display ")) returned #f?") (newline))))
+
+
+(let ((a-to-z (list #\a #\b #\c #\d #\e #\f #\g #\h #\i #\j #\k #\l #\m #\n #\o #\p #\q #\r #\s #\t #\u #\v #\x #\y #\z))
+      (cap-a-to-z (list #\A #\B #\C #\D #\E #\F #\G #\H #\I #\J #\K #\L #\M #\N #\O #\P #\Q #\R #\S #\T #\U #\V #\X #\Y #\Z))
+      (mixed-a-to-z (list #\a #\B #\c #\D #\e #\F #\g #\H #\I #\j #\K #\L #\m #\n #\O #\p #\Q #\R #\s #\t #\U #\v #\X #\y #\Z))
+      (digits (list #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9)))
+
+
+  (test (char-upper-case? #\a) #f)
+  (test (char-upper-case? #\A) #t)
+  (test (char-upper-case? 1) 'error)
+
+  (for-each
+   (lambda (arg)
+     (if (not (char-upper-case? arg))
+	 (begin
+	   (display "(char-upper-case? ") (display arg) (display ") returned #f?") (newline))))
+   cap-a-to-z)
+
+  (for-each
+   (lambda (arg)
+     (if (char-upper-case? arg)
+	 (begin
+	   (display "(char-upper-case? ") (display arg) (display ") returned #t?") (newline))))
+   a-to-z)
+
+  ;; non-alpha chars are "unspecified" here
+
+
+  (test (char-lower-case? #\A) #f)
+  (test (char-lower-case? #\a) #t)
+  (test (char-upper-case? 1) 'error)
+
+  (for-each
+   (lambda (arg)
+     (if (not (char-lower-case? arg))
+	 (begin
+	   (display "(char-lower-case? ") (display arg) (display ") returned #f?") (newline))))
+   a-to-z)
+
+  (for-each
+   (lambda (arg)
+     (if (char-lower-case? arg)
+	 (begin
+	   (display "(char-lower-case? ") (display arg) (display ") returned #t?") (newline))))
+   cap-a-to-z)
+
+
+  (test (char-upcase #\A) #\A)
+  (test (char-upcase #\a) #\A)
+  (test (char-upcase #\?) #\?)
+  (test (char-upcase #\$) #\$)
+  (test (char-upcase #\.) #\.)
+  (test (char-upcase #\\) #\\)
+  (test (char-upcase #\5) #\5)
+  (test (char-upcase #\)) #\))
+  (test (char-upcase #\%) #\%)
+  (test (char-upcase #\0) #\0)
+  (test (char-upcase #\space) #\space)
+  (test (char-upcase #\newline) #\newline)
+
+  (for-each
+   (lambda (arg1 arg2)
+     (if (not (char=? (char-upcase arg1) arg2))
+	 (begin
+	   (display "(char-upcase ") (display arg1) (display ") returned ") (display arg2) (display "?") (newline))))
+   a-to-z
+   cap-a-to-z)
+
+
+  (test (char-downcase #\A) #\a)
+  (test (char-downcase #\a) #\a)
+  (test (char-downcase #\?) #\?)
+  (test (char-downcase #\$) #\$)
+  (test (char-downcase #\.) #\.)
+  (test (char-downcase #\\) #\\)
+  (test (char-downcase #\5) #\5)
+  (test (char-downcase #\)) #\))
+  (test (char-downcase #\%) #\%)
+  (test (char-downcase #\0) #\0)
+  (test (char-downcase #\space) #\space)
+
+  (for-each
+   (lambda (arg1 arg2)
+     (if (not (char=? (char-downcase arg1) arg2))
+	 (begin
+	   (display "(char-downcase ") (display arg1) (display ") returned ") (display arg2) (display "?") (newline))))
+   cap-a-to-z
+   a-to-z)
+
+
+  (test (char-numeric? #\a) #f)
+  (test (char-numeric? #\5) #t)
+  (test (char-numeric? #\A) #f)
+  (test (char-numeric? #\z) #f)
+  (test (char-numeric? #\Z) #f)
+  (test (char-numeric? #\0) #t)
+  (test (char-numeric? #\9) #t)
+  (test (char-numeric? #\space) #f)
+  (test (char-numeric? #\;) #f)
+  (test (char-numeric? #\.) #f)
+  (test (char-numeric? #\-) #f)
+
+  (for-each
+   (lambda (arg)
+     (if (char-numeric? arg)
+	 (begin
+	   (display "(char-numeric? ") (display arg) (display ") returned #t?") (newline))))
+   cap-a-to-z)
+
+  (for-each
+   (lambda (arg)
+     (if (char-numeric? arg)
+	 (begin
+	   (display "(char-numeric? ") (display arg) (display ") returned #t?") (newline))))
+   a-to-z)
+
+
+  (test (char-whitespace? #\a) #f)
+  (test (char-whitespace? #\A) #f)
+  (test (char-whitespace? #\z) #f)
+  (test (char-whitespace? #\Z) #f)
+  (test (char-whitespace? #\0) #f)
+  (test (char-whitespace? #\9) #f)
+  (test (char-whitespace? #\space) #t)
+  (test (char-whitespace? #\newline) #t)
+  (test (char-whitespace? #\;) #f)
+
+  (for-each
+   (lambda (arg)
+     (if (char-whitespace? arg)
+	 (begin
+	   (display "(char-whitespace? ") (display arg) (display ") returned #t?") (newline))))
+   mixed-a-to-z)
+
+  (for-each
+   (lambda (arg)
+     (if (char-whitespace? arg)
+	 (begin
+	   (display "(char-whitespace? ") (display arg) (display ") returned #t?") (newline))))
+   digits)
+
+
+  (test (char-alphabetic? #\a) #t)
+  (test (char-alphabetic? #\$) #f)
+  (test (char-alphabetic? #\A) #t)
+  (test (char-alphabetic? #\z) #t)
+  (test (char-alphabetic? #\Z) #t)
+  (test (char-alphabetic? #\0) #f)
+  (test (char-alphabetic? #\9) #f)
+  (test (char-alphabetic? #\space) #f)
+  (test (char-alphabetic? #\;) #f)
+  (test (char-alphabetic? #\.) #f)
+  (test (char-alphabetic? #\-) #f)
+
+  (for-each
+   (lambda (arg)
+     (if (char-alphabetic? arg)
+	 (begin
+	   (display "(char-alphabetic? ") (display arg) (display ") returned #t?") (newline))))
+   digits)
+
+  (for-each
+   (lambda (arg)
+     (if (not (char-alphabetic? arg))
+	 (begin
+	   (display "(char-alphabetic? ") (display arg) (display ") returned #f?") (newline))))
+   mixed-a-to-z)
+
+
+  (for-each
+   (lambda (op)
+     (for-each
+      (lambda (arg)
+	(test (op arg) 'error))
+      (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #f #t (lambda (a) (+ a 1)))))
+   (list char-upper-case? char-lower-case? char-upcase char-downcase char-numeric? char-whitespace? char-alphabetic?))
+
+  (for-each
+   (lambda (op)
+     (for-each
+      (lambda (arg)
+	(test (op #\a arg) 'error))
+      (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #f #t (lambda (a) (+ a 1)))))
+   (list char=? char<? char<=? char>? char>? char-ci=? char-ci<? char-ci<=? char-ci>? char-ci>=?))
+
+  (for-each
+   (lambda (op)
+     (for-each
+      (lambda (arg)
+	(test (op arg #\a) 'error))
+      (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #f #t (lambda (a) (+ a 1)))))
+   (list char=? char<? char<=? char>? char>? char-ci=? char-ci<? char-ci<=? char-ci>? char-ci>=?))
+
+
+  (test (char=? #\d #\d) #t)
+  (test (char=? #\A #\a) #f)
+  (test (char=? #\d #\x) #f)
+  (test (char=? #\d #\D) #f)
+  (test (char=? #\a #\a) #t)
+  (test (char=? #\a) 'error)
+  (test (char=?) 'error)
+  (test (char=? #\A #\B) #f)
+  (test (char=? #\a #\b) #f)
+  (test (char=? #\9 #\0) #f)
+  (test (char=? #\A #\A) #t)
+
+  (if with-char-ops-with-more-than-2-args (begin
+    (test (char=? #\d #\d #\d #\d) #t)
+    (test (char=? #\d #\d #\x #\d) #f)
+    (test (char=? #\d #\y #\x #\c) #f)
+    (test (apply char=? cap-a-to-z) #f)
+    (test (apply char=? mixed-a-to-z) #f)
+    (test (apply char=? digits) #f)
+    (test (char=? #\d #\c #\d) #f)))
+
+
+  (test (char<? #\z #\0) #f)
+  (test (char<? #\d #\x) #t)
+  (test (char<? #\d #\d) #f)
+  (test (char<? #\d #\x) #t)
+  (test (char<?) 'error)
+  (test (char<? #\A #\B) #t)
+  (test (char<? #\a #\b) #t)
+  (test (char<? #\9 #\0) #f)
+  (test (char<? #\A #\A) #f)
+  (test (char<? #\space #\space) #f)
+
+  (if with-char-ops-with-more-than-2-args (begin
+    (test (char<? #\a #\e #\y #\z) #t)
+    (test (char<? #\a #\e #\e #\y) #f)
+    (test (apply char<? a-to-z) #t)
+    (test (apply char<? cap-a-to-z) #t)
+    (test (apply char<? mixed-a-to-z) #f)
+    (test (apply char<? digits) #t)
+    (test (apply char<? (reverse a-to-z)) #f)
+    (test (apply char<? (reverse cap-a-to-z)) #f)
+    (test (apply char<? (reverse mixed-a-to-z)) #f)
+    (test (apply char<? (reverse digits)) #f)
+    (test (char<? #\b #\a "hi") 'error)
+    (test (char<? #\b #\a 0) 'error)
+    (test (char<? #\b #\c #\a) #f)
+    (test (char<? #\b #\c #\e) #t)))
+
+
+  (test (char<=? #\d #\x) #t)
+  (test (char<=? #\d #\d) #t)
+  (test (char<=? #\a #\e #\y #\z) #t)
+  (test (char<=? #\a #\e #\e #\y) #t)
+  (test (char<=?) 'error)
+  (test (char<=? #\A #\B) #t)
+  (test (char<=? #\a #\b) #t)
+  (test (char<=? #\9 #\0) #f)
+  (test (char<=? #\A #\A) #t)
+  (test (char<=? #\space #\space) #t)
+
+  (if with-char-ops-with-more-than-2-args (begin
+    (test (char<=? #\a #\e #\y #\z) #t)
+    (test (char<=? #\a #\e #\e #\y) #t)
+    (test (char<=? #\e #\e #\d #\y) #f)
+    (test (apply char<=? a-to-z) #t)
+    (test (apply char<=? cap-a-to-z) #t)
+    (test (apply char<=? mixed-a-to-z) #f)
+    (test (apply char<=? digits) #t)
+    (test (apply char<=? (reverse a-to-z)) #f)
+    (test (apply char<=? (reverse cap-a-to-z)) #f)
+    (test (apply char<=? (reverse mixed-a-to-z)) #f)
+    (test (apply char<=? (reverse digits)) #f)
+    (test (char<=? #\b #\a "hi") 'error)
+    (test (char<=? #\b #\a 0) 'error)
+    (test (char<=? #\b #\c #\a) #f)
+    (test (char<=? #\b #\c #\e) #t)))
+  
+  
+  (test (char>? #\e #\d) #t)
+  (test (char>? #\z #\a) #t)
+  (test (char>?) 'error)
+  (test (char>? #\A #\B) #f)
+  (test (char>? #\a #\b) #f)
+  (test (char>? #\9 #\0) #t)
+  (test (char>? #\A #\A) #f)
+  (test (char>? #\space #\space) #f)
+
+  (if with-char-ops-with-more-than-2-args (begin
+    (test (char>? #\d #\c #\b #\a) #t)
+    (test (char>? #\d #\d #\c #\a) #f)
+    (test (char>? #\e #\d #\b #\c #\a) #f)
+    (test (apply char>? a-to-z) #f)
+    (test (apply char>? cap-a-to-z) #f)
+    (test (apply char>? mixed-a-to-z) #f)
+    (test (apply char>? digits) #f)
+    (test (apply char>? (reverse a-to-z)) #t)
+    (test (apply char>? (reverse cap-a-to-z)) #t)
+    (test (apply char>? (reverse mixed-a-to-z)) #f)
+    (test (apply char>? (reverse digits)) #t)
+    (test (char>? #\a #\b "hi") 'error)
+    (test (char>? #\a #\b 0) 'error)
+    (test (char>? #\d #\c #\a) #t)
+    (test (char>? #\d #\c #\c) #f)
+    (test (char>? #\b #\c #\e) #f)))
+
+
+  (test (char>=? #\e #\d) #t)
+  (test (char>=?) 'error)
+  (test (char>=? #\A #\B) #f)
+  (test (char>=? #\a #\b) #f)
+  (test (char>=? #\9 #\0) #t)
+  (test (char>=? #\A #\A) #t)
+  (test (char>=? #\space #\space) #t)
+
+  (if with-char-ops-with-more-than-2-args (begin
+    (test (char>=? #\d #\c #\b #\a) #t)
+    (test (char>=? #\d #\d #\c #\a) #t)
+    (test (char>=? #\e #\d #\b #\c #\a) #f)
+    (test (apply char>=? a-to-z) #f)
+    (test (apply char>=? cap-a-to-z) #f)
+    (test (apply char>=? mixed-a-to-z) #f)
+    (test (apply char>=? digits) #f)
+    (test (apply char>=? (reverse a-to-z)) #t)
+    (test (apply char>=? (reverse cap-a-to-z)) #t)
+    (test (apply char>=? (reverse mixed-a-to-z)) #f)
+    (test (apply char>=? (reverse digits)) #t)
+    (test (char>=? #\a #\b "hi") 'error)
+    (test (char>=? #\a #\b 0) 'error)
+    (test (char>=? #\d #\c #\a) #t)
+    (test (char>=? #\d #\c #\c) #t)
+    (test (char>=? #\b #\c #\e) #f)))
+
+
+  (test (char-ci=? #\A #\B) #f)
+  (test (char-ci=? #\a #\B) #f)
+  (test (char-ci=? #\A #\b) #f)
+  (test (char-ci=? #\a #\b) #f)
+  (test (char-ci=? #\9 #\0) #f)
+  (test (char-ci=? #\A #\A) #t)
+  (test (char-ci=? #\A #\a) #t)
+  (test (char-ci=? #\a #\A) #t)
+  (test (char-ci=? #\space #\space) #t)
+  (test (char-ci=?) 'error)
+
+  (if with-char-ops-with-more-than-2-args (begin
+    (test (char-ci=? #\d #\D #\d #\d) #t)
+    (test (char-ci=? #\d #\d #\X #\d) #f)
+    (test (char-ci=? #\d #\Y #\x #\c) #f)
+    (test (apply char-ci=? cap-a-to-z) #f)
+    (test (apply char-ci=? mixed-a-to-z) #f)
+    (test (apply char-ci=? digits) #f)
+    (test (char-ci=? #\d #\c #\d) #f)))
+
+  
+  (test (char-ci<? #\A #\B) #t)
+  (test (char-ci<? #\a #\B) #t)
+  (test (char-ci<? #\A #\b) #t)
+  (test (char-ci<? #\a #\b) #t)
+  (test (char-ci<? #\9 #\0) #f)
+  (test (char-ci<? #\A #\A) #f)
+  (test (char-ci<? #\A #\a) #f)
+
+  (if with-char-ops-with-more-than-2-args (begin
+    (test (char-ci<? #\d #\D #\d #\d) #f)
+    (test (char-ci<? #\d #\d #\X #\d) #f)
+    (test (char-ci<? #\d #\Y #\x #\c) #f)
+    (test (apply char-ci<? cap-a-to-z) #t)
+    (test (apply char-ci<? mixed-a-to-z) #t)
+    (test (apply char-ci<? digits) #t)
+    (test (char-ci<? #\d #\c #\d) #f)
+    (test (char-ci<? #\b #\a "hi") 'error)
+    (test (char-ci<? #\b #\a 0) 'error)
+    (test (char-ci<? #\b #\c #\a) #f)
+    (test (char-ci<? #\b #\C #\e) #t)))
+
+  
+  (test (char-ci>? #\A #\B) #f)
+  (test (char-ci>? #\a #\B) #f)
+  (test (char-ci>? #\A #\b) #f)
+  (test (char-ci>? #\a #\b) #f)
+  (test (char-ci>? #\9 #\0) #t)
+  (test (char-ci>? #\A #\A) #f)
+  (test (char-ci>? #\A #\a) #f)
+
+  (if with-char-ops-with-more-than-2-args (begin
+    (test (char-ci>? #\d #\D #\d #\d) #f)
+    (test (char-ci>? #\d #\d #\X #\d) #f)
+    (test (char-ci>? #\d #\Y #\x #\c) #f)
+    (test (apply char-ci>? cap-a-to-z) #f)
+    (test (apply char-ci>? mixed-a-to-z) #f)
+    (test (apply char-ci>? (reverse mixed-a-to-z)) #t)
+    (test (apply char-ci>? digits) #f)
+    (test (char-ci>? #\d #\c #\d) #f)
+    (test (char-ci>? #\a #\b "hi") 'error)
+    (test (char-ci>? #\a #\b 0) 'error)
+    (test (char-ci>? #\b #\c #\a) #f)
+    (test (char-ci>? #\d #\C #\a) #t)))
+
+  
+  (test (char-ci<=? #\A #\B) #t)
+  (test (char-ci<=? #\a #\B) #t)
+  (test (char-ci<=? #\A #\b) #t)
+  (test (char-ci<=? #\a #\b) #t)
+  (test (char-ci<=? #\9 #\0) #f)
+  (test (char-ci<=? #\A #\A) #t)
+  (test (char-ci<=? #\A #\a) #t)
+
+  (if with-char-ops-with-more-than-2-args (begin
+    (test (char-ci<=? #\d #\D #\d #\d) #t)
+    (test (char-ci<=? #\d #\d #\X #\d) #f)
+    (test (char-ci<=? #\d #\Y #\x #\c) #f)
+    (test (apply char-ci<=? cap-a-to-z) #t)
+    (test (apply char-ci<=? mixed-a-to-z) #t)
+    (test (apply char-ci<=? digits) #t)
+    (test (char-ci<=? #\d #\c #\d) #f)
+    (test (char-ci<=? #\b #\a "hi") 'error)
+    (test (char-ci<=? #\b #\a 0) 'error)
+    (test (char-ci<=? #\b #\c #\a) #f)
+    (test (char-ci<=? #\b #\c #\C) #t)
+    (test (char-ci<=? #\b #\C #\e) #t)))
+
+  
+  (test (char-ci>=? #\A #\B) #f)
+  (test (char-ci>=? #\a #\B) #f)
+  (test (char-ci>=? #\A #\b) #f)
+  (test (char-ci>=? #\a #\b) #f)
+  (test (char-ci>=? #\9 #\0) #t)
+  (test (char-ci>=? #\A #\A) #t)
+  (test (char-ci>=? #\A #\a) #t)
+
+  (if with-char-ops-with-more-than-2-args (begin
+    (test (char-ci>=? #\d #\D #\d #\d) #t)
+    (test (char-ci>=? #\d #\d #\X #\d) #f)
+    (test (char-ci>=? #\d #\Y #\x #\c) #f)
+    (test (apply char-ci>=? cap-a-to-z) #f)
+    (test (apply char-ci>=? mixed-a-to-z) #f)
+    (test (apply char-ci>=? (reverse mixed-a-to-z)) #t)
+    (test (apply char-ci>=? (reverse mixed-a-to-z)) #t)
+    (test (apply char-ci>=? digits) #f)
+    (test (char-ci>=? #\d #\c #\d) #f)
+    (test (char-ci>=? #\a #\b "hi") 'error)
+    (test (char-ci>=? #\a #\b 0) 'error)
+    (test (char-ci>=? #\b #\c #\a) #f)
+    (test (char-ci>=? #\d #\D #\a) #t)))
+
+  ) ; end let with a-to-z
+
+
+(test (char->integer 33) 'error)
+(test (integer->char (char->integer #\.)) #\.)
+(test (integer->char (char->integer #\A)) #\A)
+(test (integer->char (char->integer #\a)) #\a)
+(test (integer->char (char->integer #\space)) #\space)
+
+(for-each
+ (lambda (arg)
+   (test (char->integer arg) 'error))
+ (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+
+(for-each
+ (lambda (arg)
+   (test (integer->char arg) 'error))
+ (list #\a "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+
+
+
+
+
+
+;;; --------------------------------------------------------------------------------
+;;; STRINGS
+;;; --------------------------------------------------------------------------------
+
+;;; TODO: errors, multi-args with the <complex cases
+
+(test (string? "abc") #t)
+(test (string? ':+*/-) #f)
+(test (string? "das ist einer der teststrings") #t)
+(test (string? '(das ist natuerlich falsch)) #f)
+(test (string? "das ist die eine haelfte" "und das die andere") 'error)
+(test (string=? "foo" "foo") #t)
+(test (string=? "foo" "FOO") #f)
+(test (string=? "foo" "bar") #f)
+(test (string<? "aaaa" "aaab") #t)
+(test (string>=? "aaaaa" "aaaa") #t)
+(test (string? "aaaaaa") #t)
+(test (string? #\a) #f)
+(test (equal? (let ((str "a string")) str) "a string") #t)
+(test (string-length "abc") 3)
+(test (equal? (string-ref "abcdef-dg1ndh" 0) #\a) #t)
+(test (equal? (string-ref "abcdef-dg1ndh" 1) #\b) #t)
+(test (equal? (string-ref "abcdef-dg1ndh" 6) #\-) #t)
+(test (string-ref "abcdef-dg1ndh" 20) 'error)
+(test (string-ref "abcdef-dg1ndh") 'error)
+(test (string-ref "abcdef-dg1ndh" -3) 'error)
+(test (string-ref) 'error)
+(test (string-ref 2) 'error)
+(test (string-ref "abcde" 2 4) 'error)
+(test (string-ref 'a 0) 'error)
+(test (string-ref 'anna 0) 'error)
+(test (string=? "foo" "foo") #t)
+(test (string=? "foo" "Foo") #f)
+(test (string=? "foo" "FOO") #f)
+(test (string=? "foo" "bar") #f)
+(test (string<? "" "abcdefgh") #t)
+(test (string<? "a" "abcdefgh") #t)
+(test (string<? "abc" "abcdefgh") #t)
+(test (string<? "cabc" "abcdefgh") #f)
+(test (string<? "abcdefgh" "abcdefgh") #f)
+(test (string<? "xyzabc" "abcdefgh") #f)
+(test (string<? "abc" "xyzabcdefgh") #t)
+(test (string<? "abcdefgh" "") #f)
+(test (string<? "abcdefgh" "a") #f)
+(test (string<? "abcdefgh" "abc") #f)
+(test (string<? "abcdefgh" "cabc") #t)
+(test (string<? "abcdefgh" "xyzabc") #t)
+(test (string<? "xyzabcdefgh" "abc") #f)
+(test (string<? "abcdef" "bcdefgh") #t)
+(test (string>? "" "abcdefgh") #f)
+(test (string>? "a" "abcdefgh") #f)
+(test (string>? "abc" "abcdefgh") #f)
+(test (string>? "cabc" "abcdefgh") #t)
+(test (string>? "abcdefgh" "abcdefgh") #f)
+(test (string>? "xyzabc" "abcdefgh") #t)
+(test (string>? "abc" "xyzabcdefgh") #f)
+(test (string>? "abcdefgh" "") #t)
+(test (string>? "abcdefgh" "a") #t)
+(test (string>? "abcdefgh" "abc") #t)
+(test (string>? "abcdefgh" "cabc") #f)
+(test (string>? "abcdefgh" "xyzabc") #f)
+(test (string>? "xyzabcdefgh" "abc") #t)
+(test (string>? "abcde" "bc") #f)
+(test (string>? "bcdef" "abcde") #t)
+(test (string>? "bcdef" "abcdef") #t)
+(test (string<? "" "abcdefgh") #t)
+(test (string<=? "a" "abcdefgh") #t)
+(test (string<=? "abc" "abcdefgh") #t)
+(test (string<=? "aaabce" "aaabcdefgh") #f)
+(test (string<=? "cabc" "abcdefgh") #f)
+(test (string<=? "abcdefgh" "abcdefgh") #t)
+(test (string<=? "xyzabc" "abcdefgh") #f)
+(test (string<=? "abc" "xyzabcdefgh") #t)
+(test (string<=? "abcdefgh" "") #f)
+(test (string<=? "abcdefgh" "a") #f)
+(test (string<=? "abcdefgh" "abc") #f)
+(test (string<=? "abcdefgh" "cabc") #t)
+(test (string<=? "abcdefgh" "xyzabc") #t)
+(test (string<=? "xyzabcdefgh" "abc") #f)
+(test (string<=? "abcdef" "bcdefgh") #t)
+(test (string>=? "" "abcdefgh") #f)
+(test (string>=? "a" "abcdefgh") #f)
+(test (string>=? "abc" "abcdefgh") #f)
+(test (string>=? "cabc" "abcdefgh") #t)
+(test (string>=? "abcdefgh" "abcdefgh") #t)
+(test (string>=? "xyzabc" "abcdefgh") #t)
+(test (string>=? "abc" "xyzabcdefgh") #f)
+(test (string>=? "abcdefgh" "") #t)
+(test (string>=? "abcdefgh" "a") #t)
+(test (string>=? "abcdefgh" "abc") #t)
+(test (string>=? "abcdefgh" "cabc") #f)
+(test (string>=? "abcdefgh" "xyzabc") #f)
+(test (string>=? "xyzabcdefgh" "abc") #t)
+(test (string>=? "bcdef" "abcdef") #t)
+(test (string=? "K. Harper, M.D." (symbol->string  (string->symbol "K. Harper, M.D.")))  #t)
+
+
+(test (string=? "" "") #t)
+(test (string<? "" "") #f)
+(test (string>? "" "") #f)
+(test (string<=? "" "") #t)
+(test (string>=? "" "") #t)
+
+(test (string-ci=? "" "") #t)
+(test (string-ci<? "" "") #f)
+(test (string-ci>? "" "") #f)
+(test (string-ci<=? "" "") #t)
+(test (string-ci>=? "" "") #t)
+
+(test (string=? "A" "B") #f)
+(test (string=? "a" "b") #f)
+(test (string=? "9" "0") #f)
+(test (string=? "A" "A") #t)
+(test (string<? "A" "B") #t)
+(test (string<? "a" "b") #t)
+(test (string<? "9" "0") #f)
+(test (string<? "A" "A") #f)
+(test (string>? "A" "B") #f)
+(test (string>? "a" "b") #f)
+(test (string>? "9" "0") #t)
+(test (string>? "A" "A") #f)
+(test (string<=? "A" "B") #t)
+(test (string<=? "a" "b") #t)
+(test (string<=? "9" "0") #f)
+(test (string<=? "A" "A") #t)
+(test (string>=? "A" "B") #f)
+(test (string>=? "a" "b") #f)
+(test (string>=? "9" "0") #t)
+(test (string>=? "A" "A") #t)
+
+(test (string-ci=? "A" "B") #f)
+(test (string-ci=? "a" "B") #f)
+(test (string-ci=? "A" "b") #f)
+(test (string-ci=? "a" "b") #f)
+(test (string-ci=? "9" "0") #f)
+(test (string-ci=? "A" "A") #t)
+(test (string-ci=? "A" "a") #t)
+(test (string-ci<? "A" "B") #t)
+(test (string-ci<? "a" "B") #t)
+(test (string-ci<? "A" "b") #t)
+(test (string-ci<? "a" "b") #t)
+(test (string-ci<? "9" "0") #f)
+(test (string-ci<? "A" "A") #f)
+(test (string-ci<? "A" "a") #f)
+(test (string-ci>? "A" "B") #f)
+(test (string-ci>? "a" "B") #f)
+(test (string-ci>? "A" "b") #f)
+(test (string-ci>? "a" "b") #f)
+(test (string-ci>? "9" "0") #t)
+(test (string-ci>? "A" "A") #f)
+(test (string-ci>? "A" "a") #f)
+(test (string-ci<=? "A" "B") #t)
+(test (string-ci<=? "a" "B") #t)
+(test (string-ci<=? "A" "b") #t)
+(test (string-ci<=? "a" "b") #t)
+(test (string-ci<=? "9" "0") #f)
+(test (string-ci<=? "A" "A") #t)
+(test (string-ci<=? "A" "a") #t)
+(test (string-ci>=? "A" "B") #f)
+(test (string-ci>=? "a" "B") #f)
+(test (string-ci>=? "A" "b") #f)
+(test (string-ci>=? "a" "b") #f)
+(test (string-ci>=? "9" "0") #t)
+(test (string-ci>=? "A" "A") #t)
+(test (string-ci>=? "A" "a") #t)
+
+
+
+;;; --------------------------------------------------------------------------------
+;;; VECTORS
+;;; --------------------------------------------------------------------------------
+
+;;; --------------------------------------------------------------------------------
+;;; PORTS
+;;; --------------------------------------------------------------------------------
+
+;;; --------------------------------------------------------------------------------
+;;; LISTS
+;;; --------------------------------------------------------------------------------
 
 (for-each
  (lambda (op)
@@ -173,7 +978,6 @@
 (test (equal? (cons 'a (cons 'b (cons 'c '()))) '(a b c)) #t)
 (test (equal? (cons 'a (list 'b 'c 'd)) '(a b c d)) #t)
 (test (equal? (cons 'a (cons 'b (cons 'c 'd))) '(a b c . d)) #t)
-
 
 
 (test (car (list 1 2 3)) 1)
@@ -953,6 +1757,9 @@
   (test (assv '#(a) e) #f)
   (test (assv (string #\c) e) #f))
 
+(let ((lst '((2 . a) (3 . b))))
+  (set-cdr! (assv 3 lst) 'c)
+  (test lst '((2 . a) (3 . c))))
 
 
 (let ((e '((a 1) (b 2) (c 3))))
@@ -1000,18 +1807,68 @@
 
 
 
+(test (append '(a b c) '()) '(a b c))
+(test (append '() '(a b c)) '(a b c))
+(test (append '(a b) '(c d)) '(a b c d))
+(test (append '(a b) 'c) '(a b . c))
+(test (equal? (append (list 'a 'b 'c) (list 'd 'e 'f) '() '(g)) '(a b c d e f g)) #t)
+(test (append (list 'a 'b 'c) (list 'd 'e 'f) '() (list 'g)) '(a b c d e f g))
+(test (append (list 'a 'b 'c) 'd) '(a b c . d))
+(test (append 'a 'b) 'error)
+(test (append 'a '()) 'error)
+(test (append '() '()) '())
+(test (append '() (list 'a 'b 'c)) '(a b c))
+(test (append) '())
+(test (append 'a) 'a)
+(test (append '(x) '(y))  '(x y))
+(test (append '(a) '(b c d)) '(a b c d))
+(test (append '(a (b)) '((c)))  '(a (b) (c)))
+(test (append '(a b) '(c . d))  '(a b c . d))
+(test (append '() 'a)  'a)
+(test (append '(a b) (append (append '(c)) '(e) 'f)) '(a b c e . f))
+(test (append ''foo 'foo) '(quote foo . foo))
+(test (append (cons 1 2) '()) 'error)
+(test (append '() (cons 1 2)) '(1 . 2))
+(test (append '(1) 2 '(3)) 'error)
+(test (append '(1) 2 3) 'error)
+(test (append '() '() '()) '())
+(test (append (cons 1 2)) '(1 . 2))
+
+
+(test (memq 'a '(a b c)) '(a b c))
+(test (memq 'b '(a b c)) '(b c))
+(test (memq 'a '(b c d)) #f)
+(test (memq (list 'a) '(b (a) c))  #f)
+(test (memq 'a '(b a c a d a)) '(a c a d a))
+;(test (memq 'a (cons a b)) 'error)                  ; there is disagreement about this
+(test (memq 'a (list a b . c)) 'error)
+(let ((v (vector 'a))) (test (memq v (list 'a 1.2 v "hi")) (list v "hi")))
+
+
+(test (memv 101 '(100 101 102)) '(101 102))
+(test (memv 3.4 '(1.2 2.3 3.4 4.5)) '(3.4 4.5))
+(test (memv 3.4 '(1.3 2.5 3.7 4.9)) #f)
+(let ((ls (list 'a 'b 'c)))
+  (set-car! (memv 'b ls) 'z)
+  (test ls '(a z c)))
+;(test (memv 1 (cons 1 2)) 'error)                   ; there is disagreement about this
+(test (memv 'a (list a b . c)) 'error)
+
+
+(test (member (list 'a) '(b (a) c)) '((a) c))
+(test (member "b" '("a" "c" "b")) '("b"))
+(test (member 1 '(3 2 1 4)) '(1 4))
+;(test (member 1 (cons 1 2)) 'error)                 ; there is disagreement about this
+(test (member 'a (list a b . c)) 'error)
+(test (member car (list abs car modulo)) (list car modulo))
+(test (member do (list quote map do)) (list do))
+(test (member 5/2 (list 1/3 2/4 5/2)) '(5/2))
+
+
+
 
 ;;; --------------------------------------------------------------------------------
-
-;;; memq memv member 
-;;; append
-
-
-
-
-
-
-
+;;; NUMBERS
 ;;; --------------------------------------------------------------------------------
 
 (define (number-ok? tst result expected)
@@ -21608,11 +22465,9 @@
 (num-test (/ (factorial 100 1) (factorial 99 1)) 100)
 (num-test (/ (factorial 1000 1) (factorial 999 1)) 1000)
 
+(num-test (modulo (+ 2 (* 3 499127 495037 490459 468803)) (* 499127 495037 490459 468803)) 2)
 
 ))
-
-
-
 
 (num-test (+ 0.79351956 0.07393837) 0.8674579)
 (num-test (+ -0.52145976 -0.14409256) -0.6655523)
@@ -22830,6 +23685,11 @@
 (num-test (= 3 3.0) #t)
 (num-test (= 0.0 0.0) #t)
 (num-test (= 5/2 2.5) #t)
+(num-test (= 2.5 5/2) #t)
+(num-test (= 5/2 2.5+0.0i) #t)
+(num-test (= 2.5+0.0i 5/2) #t)
+(num-test (= 5/2 2.5+1.0i) #f)
+(num-test (= 2.5+1.0i 5/2) #f)
 (num-test (> 0.0 0.0) #f)
 (num-test (= 0 0.0) #t)
 (num-test (max 3) 3)
@@ -23047,18 +23907,18 @@
   (test (exact->inexact 4.0) f4.0 )
   (test (inexact->exact 4) 4 )
   (test (inexact->exact 4.0) 4 )
-  (test (round f0.0) f0.0 )
-  (test (round f.25) f0.0 )
-  (test (round f0.8) f1.0 )
-  (test (round f3.5) f4.0 )
-  (test (round f4.5) f4.0 )
-  (test (expt f0.0 f1.0) f0.0 )
-  (test (expt f0.0 1) f0.0 )
-  (test (expt 0    f1.0) f0.0 )
-  (test (expt -25  f0.0) f1.0 )
-  (test (expt f-3.25 f0.0) f1.0 )
-  (test (expt f-3.25 0) 1 )
-  (test (atan 1 1) (atan 1)))
+  (num-test (round f0.0) f0.0 )
+  (num-test (round f.25) f0.0 )
+  (num-test (round f0.8) f1.0 )
+  (num-test (round f3.5) f4.0 )
+  (num-test (round f4.5) f4.0 )
+  (num-test (expt f0.0 f1.0) f0.0 )
+  (num-test (expt f0.0 1) f0.0 )
+  (num-test (expt 0    f1.0) f0.0 )
+  (num-test (expt -25  f0.0) f1.0 )
+  (num-test (expt f-3.25 f0.0) f1.0 )
+  (num-test (expt f-3.25 0) 1 )
+  (num-test (atan 1 1) (atan 1)))
 
 
 (if with-bignums (begin
@@ -23117,3 +23977,5 @@
 (test (string->number "-") #f )
 (test (string->number "+") #f )
 
+(test (= 1 #e1 1/1 #e1/1 #e1.0 #e1e0 #e1.##) #t)
+(test (= #i3/10 3#/100 0.3 #i0.3 3e-1 3d-1 0.3e0 3e-1) #t)

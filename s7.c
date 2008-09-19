@@ -3008,10 +3008,17 @@ static bool num_eq(num a, num b)
       break;
 
     case NUM_RATIO:  
-      if (num_type(b) != NUM_RATIO)
-	return(false);
-      return((numerator(a) == numerator(b)) &&
-	     (denominator(a) == denominator(b)));
+      switch (num_type(b))
+	{
+	case NUM_RATIO:
+	  return((numerator(a) == numerator(b)) &&
+		 (denominator(a) == denominator(b)));
+	case NUM_REAL:
+	case NUM_REAL2:
+	  return(num_to_real(a) == real(b));
+	default:
+	  return(false);
+	}
       break;
 
     case NUM_REAL2:
@@ -3021,7 +3028,7 @@ static bool num_eq(num a, num b)
 	case NUM_INT:
 	  return(real(a) == integer(b));
 	case NUM_RATIO:
-	  return(false);
+	  return(real(a) == num_to_real(b));
 	case NUM_REAL:
 	case NUM_REAL2:
 	  return(real(a) == real(b));
@@ -3038,7 +3045,8 @@ static bool num_eq(num a, num b)
 	  return((real_part(a) == integer(b)) &&
 		 (imag_part(a) == 0.0));
 	case NUM_RATIO:
-	  return(false);
+	  return((real_part(a) == num_to_real(b)) &&
+		 (imag_part(a) == 0.0));
 	case NUM_REAL:
 	case NUM_REAL2:
 	  return((real_part(a) == real(b)) &&
@@ -3745,6 +3753,9 @@ static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
   if (s7_is_pair(cdr(args)))
     {
       sc->y = cadr(args);
+      if (s7_is_zero(sc->y))
+	return(s7_out_of_range_error(sc, "log", 2, sc->y, "not zero"));
+
       if ((s7_is_real(sc->x)) &&
 	  (s7_is_real(sc->y)) &&
 	  (num_to_real(sc->x->object.number) > 0.0))
@@ -3965,6 +3976,9 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 		  (abs(s7_integer(sc->x)) == 1))
 		return(s7_make_integer(sc, (s7_Int)pow(s7_integer(sc->x), s7_integer(sc->y))));
 	      
+	      if (s7_integer(sc->x) == 0)
+		return(sc->x);
+
 	      return(s7_make_ratio(sc, 1, (s7_Int)pow(s7_integer(sc->x), -s7_integer(sc->y))));
 	    }
 	}
@@ -7451,7 +7465,6 @@ s7_pointer s7_reverse_in_place(s7_scheme *sc, s7_pointer term, s7_pointer list)
 }
 
 
-/* append list -- produce new list */
 s7_pointer s7_append(s7_scheme *sc, s7_pointer a, s7_pointer b) 
 {
   s7_pointer p = b, q;
@@ -8110,14 +8123,20 @@ static s7_pointer g_append(s7_scheme *sc, s7_pointer args)
   int i;
   if (args == sc->NIL) 
     return(sc->NIL);
+
   if (cdr(args) == sc->NIL)
     return(car(args)); 
       
-  sc->x = car(args);
-  for (i = 1, sc->y = cdr(args); sc->y != sc->NIL; i++, sc->y = cdr(sc->y)) 
+  sc->x = sc->NIL;
+
+  for (i = 1, sc->y = args; sc->y != sc->NIL; i++, sc->y = cdr(sc->y)) 
     {
-      if (!s7_is_list(sc, sc->x))
-	return(s7_wrong_type_arg_error(sc, "append", i, sc->x, "a list"));
+      if (cdr(sc->y) == sc->NIL)
+	return(s7_append(sc, sc->x, car(sc->y)));
+
+      if (g_is_list(sc, sc->y) == sc->F)
+	return(s7_wrong_type_arg_error(sc, "append", i, car(sc->y), "a list"));
+
       sc->x = s7_append(sc, sc->x, car(sc->y));
     }
   return(sc->x);
