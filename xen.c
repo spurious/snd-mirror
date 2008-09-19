@@ -2302,17 +2302,19 @@ void xen_repl(int argc, char **argv)
 
   while (true)
     {
-      char *temp;
       fprintf(stdout, "\n%s", xen_s7_repl_prompt);
-      fgets(buffer, size, stdin);
-      if ((buffer[0] != '\n') || (strlen(buffer) > 1))
+      if (fgets(buffer, size, stdin) != NULL)
 	{
-	  temp = (char *)malloc(strlen(buffer) + 128);
-	  sprintf(temp, 
-		  "(write %s)",
-		  buffer);           /* use write, not display so that strings are in double quotes */
-	  XEN_EVAL_C_STRING(temp);
-	  free(temp);
+	  if ((buffer[0] != '\n') || (strlen(buffer) > 1))
+	    {
+	      char *temp;
+	      temp = (char *)malloc(strlen(buffer) + 128);
+	      sprintf(temp, 
+		      "(write %s)",
+		      buffer);           /* use write, not display so that strings are in double quotes */
+	      XEN_EVAL_C_STRING(temp);
+	      free(temp);
+	    }
 	}
     }
   free(buffer);

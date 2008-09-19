@@ -6881,13 +6881,20 @@ static char *s7_vector_to_c_string(s7_scheme *sc, s7_pointer vect)
       elements[i] = s7_object_to_c_string(sc, vector_element(vect, i));
       bufsize += safe_strlen(elements[i]);
     }
-  bufsize += 128;
+  bufsize += (len * 2 + 256);
   buf = (char *)CALLOC(bufsize, sizeof(char));
   sprintf(buf, "#(");
   for (i = 0; i < len - 1; i++)
     {
       if (elements[i])
 	{
+#if S7_DEBUGGING
+	  if ((safe_strlen(buf) + 1 + safe_strlen(elements[i])) >= bufsize)
+	    {
+	      fprintf(stderr, "%s + %s => %d but bufsize: %d\n", buf, elements[i], safe_strlen(buf) + 1 + safe_strlen(elements[i]), bufsize);
+	      abort();
+	    }
+#endif
 	  strcat(buf, elements[i]);
 	  FREE(elements[i]);
 	  strcat(buf, " ");
@@ -6895,6 +6902,13 @@ static char *s7_vector_to_c_string(s7_scheme *sc, s7_pointer vect)
     }
   if (elements[len - 1])
     {
+#if S7_DEBUGGING
+      if ((safe_strlen(buf) + 1 + safe_strlen(elements[len - 1])) >= bufsize)
+	{
+	  fprintf(stderr, "%s + %s => %d but bufsize: %d\n", buf, elements[len - 1], safe_strlen(buf) + 1 + safe_strlen(elements[len - 1]), bufsize);
+	  abort();
+	}
+#endif
       strcat(buf, elements[len - 1]);
       FREE(elements[len - 1]);
     }
@@ -6951,7 +6965,7 @@ static char *s7_list_to_c_string(s7_scheme *sc, s7_pointer lst)
       bufsize += safe_strlen(elements[i]);
     }
 
-  bufsize += (128 + len); /* len spaces */
+  bufsize += (256 + len * 2); /* len spaces */
   buf = (char *)CALLOC(bufsize, sizeof(char));
 
 #if S7_DEBUGGING && 0
@@ -11143,7 +11157,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 		}
 	      else
 		{
-		  push_stack(sc, OP_READ_LIST, sc->args, sc->NIL);;
+		  push_stack(sc, OP_READ_LIST, sc->args, sc->NIL);
 		  goto READ_EXPRESSION;
 		}
 	    }

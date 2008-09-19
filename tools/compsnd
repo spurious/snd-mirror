@@ -271,9 +271,9 @@ make allclean
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
-echo ' ----                 --without-guile --without-ruby                        ----  '
+echo ' ----                 --without-extension-language                        ----  '
 echo ' -------------------------------------------------------------------------------- '
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --without-guile --without-ruby
+./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --without-extension-language
 make
 echo ' '
 echo ' '
@@ -281,9 +281,9 @@ echo ' '
 make allclean
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' -----                --without-guile --without-ruby --with-gtk             ----  '
+echo ' -----                --without-extension-language --with-gtk             ----  '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --without-guile --without-ruby --with-gtk
+./configure --quiet --without-extension-language --with-gtk
 make
 echo ' '
 echo ' '
@@ -294,9 +294,9 @@ make sndinfo
 make allclean
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' ----                 --without-guile --without-ruby --with-gtk --with-cairo ---- '
+echo ' ----                 --without-extension-language --with-gtk --with-cairo ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --without-guile --without-ruby --with-gtk --with-cairo
+./configure --quiet --without-extension-language --with-gtk --with-cairo
 make
 echo ' '
 echo ' '
@@ -304,9 +304,9 @@ echo ' '
 make allclean
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' ----                 --without-guile --without-ruby --with-gtk --with-gl ------  '
+echo ' ----                 --without-extension-language --with-gtk --with-gl ------  '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --without-guile --without-ruby --with-gtk --with-gl
+./configure --quiet --without-extension-language --with-gtk --with-gl
 make
 echo ' '
 echo ' '
@@ -314,18 +314,18 @@ echo ' '
 make allclean
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' ----                 --without-guile --without-ruby --with-just-gl       ------  '
+echo ' ----                 --without-extension-language --with-just-gl       ------  '
 echo ' -------------------------------------------------------------------------------- '
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --without-guile --without-ruby --with-just-gl
+./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --without-extension-language --with-just-gl
 make
 echo ' '
 echo ' '
 ./snd --version
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' -----                --without-guile --without-ruby g++                    ----  '
+echo ' -----                --without-extension-language g++                    ----  '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --without-guile --without-ruby CC=g++ LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include"
+./configure --quiet --without-extension-language CC=g++ LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include"
 make
 echo ' '
 echo ' '
@@ -892,9 +892,9 @@ make
 make allclean
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' -----                g++ --without-guile --without-ruby                     ---- '
+echo ' -----                g++ --without-extension-language                     ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet CC=g++ --without-guile --without-ruby
+./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet CC=g++ --without-extension-language
 make
 ./snd --version
 make allclean
@@ -994,9 +994,9 @@ echo ' '
 echo ' '
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' -----                g++ --without-guile --without-ruby --disable-nls       ---- '
+echo ' -----                g++ --without-extension-language --disable-nls       ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet CC=g++ --without-guile --without-ruby --disable-nls
+./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet CC=g++ --without-extension-language --disable-nls
 make
 ./snd --version
 make allclean
@@ -1050,9 +1050,9 @@ make allclean
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
-echo ' -----                --with-no-gui --without-guile --without-ruby          ----- '
+echo ' -----                --with-no-gui --without-extension-language          ----- '
 echo ' -------------------------------------------------------------------------------- '
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --with-no-gui --without-guile --without-ruby --quiet
+./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --with-no-gui --without-extension-language --quiet
 make
 ./snd --version
 make allclean
@@ -1060,9 +1060,9 @@ echo ' '
 echo ' '
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' ----                 --without-guile --without-ruby --with-static-xm --with-gl - '
+echo ' ----                 --without-extension-language --with-static-xm --with-gl - '
 echo ' -------------------------------------------------------------------------------- '
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --without-guile --without-ruby --with-static-xm --with-gl --quiet
+./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --without-extension-language --with-static-xm --with-gl --quiet
 make
 ./snd --version
 make allclean
@@ -1081,9 +1081,9 @@ echo ' '
 echo ' '
 
 echo ' -------------------------------------------------------------------------------- '
-echo ' -----                --without-guile --without-ruby --with-gtk --with-static-xg --with-gl '
+echo ' -----                --without-extension-language --with-gtk --with-static-xg --with-gl '
 echo ' -------------------------------------------------------------------------------- '
-./configure --without-guile --without-ruby --with-gtk --with-static-xg --with-gl --quiet
+./configure --without-extension-language --with-gtk --with-static-xg --with-gl --quiet
 make
 ./snd --version
 make allclean

@@ -3730,27 +3730,33 @@ static char *run_string_hook(XEN hook, const char *caller, char *initial_string,
       XEN procs = XEN_HOOK_PROCEDURES(hook);
 
       result = C_TO_XEN_STRING(initial_string);
+#if HAVE_S7
       XEN_LOCAL_GC_PROTECT(result);
-
+#endif
       substr = C_TO_XEN_STRING(subject);
+#if HAVE_S7
       XEN_LOCAL_GC_PROTECT(substr);
+#endif
 
       while (XEN_NOT_NULL_P(procs))
 	{
+#if (!HAVE_S7)
 	  if (subject)
-	    result = XEN_CALL_2(XEN_CAR(procs),
-				substr,
-				XEN_LOCAL_GC_UNPROTECT(result),
-				caller);
-	  else result = XEN_CALL_1(XEN_CAR(procs),
-				   XEN_LOCAL_GC_UNPROTECT(result),
-				   caller);
+	    result = XEN_CALL_2(XEN_CAR(procs), substr, result,	caller);
+	  else result = XEN_CALL_1(XEN_CAR(procs), result, caller);
+#else
+	  if (subject)
+	    result = XEN_CALL_2(XEN_CAR(procs),	substr,	XEN_LOCAL_GC_UNPROTECT(result),	caller);
+	  else result = XEN_CALL_1(XEN_CAR(procs), XEN_LOCAL_GC_UNPROTECT(result), caller);
 	  XEN_LOCAL_GC_PROTECT(result);
+#endif
 	  procs = XEN_CDR(procs);
 	}
 
+#if HAVE_S7
       XEN_LOCAL_GC_UNPROTECT(substr);
       XEN_LOCAL_GC_UNPROTECT(result);
+#endif
 
       if (XEN_STRING_P(result))
 	return(copy_string(XEN_TO_C_STRING(result)));

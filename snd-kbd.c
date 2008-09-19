@@ -204,7 +204,7 @@ static void execute_named_macro(chan_info *cp, char *name, off_t count)
     {
 #if HAVE_EXTENSION_LANGUAGE
 #if HAVE_S7
-      XEN result;
+      XEN result = XEN_FALSE;
       int i, loc, one_edit;
       one_edit = cp->edit_ctr + 1;
       for (i = 0; i < count; i++)

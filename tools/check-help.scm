@@ -1,9 +1,10 @@
 ;;; check procedure help strings
 
+(if (not (defined? 'symbol->value))
 (define (symbol->value sym)
   (if (defined? 'module-ref)
       (module-ref (current-module) sym) ; symbol-binding is deprecated
-      (symbol-binding #f sym)))
+      (symbol-binding #f sym))))
 
 
 (let ((names (snd-urls)))

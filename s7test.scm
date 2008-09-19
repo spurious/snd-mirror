@@ -6,6 +6,7 @@
 (define with-bignums #f)
 (define with-hyperbolic-functions #t)
 (define with-char-ops-with-more-than-2-args #t)
+(define with-string-ops-with-more-than-2-args #t)
 
 
 (if (not (defined? 'object->string))
@@ -543,6 +544,7 @@
     (test (char<? #\b #\a "hi") 'error)
     (test (char<? #\b #\a 0) 'error)
     (test (char<? #\b #\c #\a) #f)
+    (test (char<? #\B #\B #\A) #f)
     (test (char<? #\b #\c #\e) #t)))
 
 
@@ -572,6 +574,7 @@
     (test (char<=? #\b #\a "hi") 'error)
     (test (char<=? #\b #\a 0) 'error)
     (test (char<=? #\b #\c #\a) #f)
+    (test (char<=? #\B #\B #\A) #f)
     (test (char<=? #\b #\c #\e) #t)))
   
   
@@ -600,6 +603,7 @@
     (test (char>? #\a #\b 0) 'error)
     (test (char>? #\d #\c #\a) #t)
     (test (char>? #\d #\c #\c) #f)
+    (test (char>? #\B #\B #\C) #f)
     (test (char>? #\b #\c #\e) #f)))
 
 
@@ -627,6 +631,7 @@
     (test (char>=? #\a #\b 0) 'error)
     (test (char>=? #\d #\c #\a) #t)
     (test (char>=? #\d #\c #\c) #t)
+    (test (char>=? #\B #\B #\C) #f)
     (test (char>=? #\b #\c #\e) #f)))
 
 
@@ -776,31 +781,44 @@
 (test (string? ':+*/-) #f)
 (test (string? "das ist einer der teststrings") #t)
 (test (string? '(das ist natuerlich falsch)) #f)
-(test (string? "das ist die eine haelfte" "und das die andere") 'error)
-(test (string=? "foo" "foo") #t)
-(test (string=? "foo" "FOO") #f)
-(test (string=? "foo" "bar") #f)
-(test (string<? "aaaa" "aaab") #t)
-(test (string>=? "aaaaa" "aaaa") #t)
+;(test (string? "das ist die eine haelfte" "und das die andere") 'error)
 (test (string? "aaaaaa") #t)
 (test (string? #\a) #f)
-(test (equal? (let ((str "a string")) str) "a string") #t)
-(test (string-length "abc") 3)
-(test (equal? (string-ref "abcdef-dg1ndh" 0) #\a) #t)
-(test (equal? (string-ref "abcdef-dg1ndh" 1) #\b) #t)
-(test (equal? (string-ref "abcdef-dg1ndh" 6) #\-) #t)
-(test (string-ref "abcdef-dg1ndh" 20) 'error)
-(test (string-ref "abcdef-dg1ndh") 'error)
-(test (string-ref "abcdef-dg1ndh" -3) 'error)
-(test (string-ref) 'error)
-(test (string-ref 2) 'error)
-(test (string-ref "abcde" 2 4) 'error)
-(test (string-ref 'a 0) 'error)
-(test (string-ref 'anna 0) 'error)
+(test (string? "\"\\\"") #t)
+
+(for-each
+ (lambda (arg)
+   (test (string? arg) #f))
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+
+
 (test (string=? "foo" "foo") #t)
-(test (string=? "foo" "Foo") #f)
 (test (string=? "foo" "FOO") #f)
 (test (string=? "foo" "bar") #f)
+(test (string=? "FOO" "FOO") #t)
+(test (string=? "A" "B") #f)
+(test (string=? "a" "b") #f)
+(test (string=? "9" "0") #f)
+(test (string=? "A" "A") #t)
+(test (string=? "" "") #t)
+(test (string=? (string #\newline) (string #\newline)) #t)
+(if with-string-ops-with-more-than-2-args (begin
+  (test (string=? "A" "B" "a") #f)
+  (test (string=? "A" "A" "a") #f)
+  (test (string=? "A" "A" "A") #t)
+  (test (string=? "foo" "foo" "foo") #t)
+  (test (string=? "foo" "foo" "") #f)
+  (test (string=? "foo" "FOO" 1.0) 'error)
+  (test (string=? "foo" "foo" "fOo") #f)))
+
+(for-each
+ (lambda (arg)
+   (test (string=? "hi" arg) 'error))
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+
+
+(test (string<? "aaaa" "aaab") #t)
+(test (string<? "aaaa" "aaaaa") #t)
 (test (string<? "" "abcdefgh") #t)
 (test (string<? "a" "abcdefgh") #t)
 (test (string<? "abc" "abcdefgh") #t)
@@ -815,6 +833,30 @@
 (test (string<? "abcdefgh" "xyzabc") #t)
 (test (string<? "xyzabcdefgh" "abc") #f)
 (test (string<? "abcdef" "bcdefgh") #t)
+(test (string<? "" "abcdefgh") #t)
+(test (string<? "" "") #f)
+(test (string<? "A" "B") #t)
+(test (string<? "a" "b") #t)
+(test (string<? "9" "0") #f)
+(test (string<? "A" "A") #f)
+(if with-string-ops-with-more-than-2-args (begin
+  (test (string<? "A" "B" "A") #f)
+  (test (string<? "A" "A" "B") #f)
+  (test (string<? "A" "A" "A") #f)
+  (test (string<? "B" "B" "C") #f)
+  (test (string<? "foo" "foo" "foo") #f)
+  (test (string<? "foo" "foo" "") #f)
+  (test (string<? "foo" "fo" 1.0) 'error)
+  (test (string<? "foo" "foo" "fOo") #f)))
+
+(for-each
+ (lambda (arg)
+   (test (string<? "hi" arg) 'error))
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+
+
+(test (string>? "aaab" "aaaa") #t)
+(test (string>? "aaaaa" "aaaa") #t)
 (test (string>? "" "abcdefgh") #f)
 (test (string>? "a" "abcdefgh") #f)
 (test (string>? "abc" "abcdefgh") #f)
@@ -831,7 +873,30 @@
 (test (string>? "abcde" "bc") #f)
 (test (string>? "bcdef" "abcde") #t)
 (test (string>? "bcdef" "abcdef") #t)
-(test (string<? "" "abcdefgh") #t)
+(test (string>? "" "") #f)
+(test (string>? "A" "B") #f)
+(test (string>? "a" "b") #f)
+(test (string>? "9" "0") #t)
+(test (string>? "A" "A") #f)
+(if with-string-ops-with-more-than-2-args (begin
+  (test (string>? "A" "B" "a") #f)
+  (test (string>? "C" "B" "A") #t)
+  (test (string>? "A" "A" "A") #f)
+  (test (string>? "B" "B" "A") #f)
+  (test (string>? "foo" "foo" "foo") #f)
+  (test (string>? "foo" "foo" "") #f)
+  (test (string>? "foo" "fooo" 1.0) 'error)
+  (test (string>? "foo" "foo" "fOo") #f)))
+
+(for-each
+ (lambda (arg)
+   (test (string>? "hi" arg) 'error))
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+
+
+
+(test (string<=? "aaa" "aaaa") #t)
+(test (string<=? "aaaaa" "aaaa") #f)
 (test (string<=? "a" "abcdefgh") #t)
 (test (string<=? "abc" "abcdefgh") #t)
 (test (string<=? "aaabce" "aaabcdefgh") #f)
@@ -846,6 +911,32 @@
 (test (string<=? "abcdefgh" "xyzabc") #t)
 (test (string<=? "xyzabcdefgh" "abc") #f)
 (test (string<=? "abcdef" "bcdefgh") #t)
+(test (string<=? "" "") #t)
+(test (string<=? "A" "B") #t)
+(test (string<=? "a" "b") #t)
+(test (string<=? "9" "0") #f)
+(test (string<=? "A" "A") #t)
+(if with-string-ops-with-more-than-2-args (begin
+  (test (string<=? "A" "B" "C") #t)
+  (test (string<=? "C" "B" "A") #f)
+  (test (string<=? "A" "B" "B") #t)
+  (test (string<=? "A" "A" "A") #t)
+  (test (string<=? "B" "B" "A") #f)
+  (test (string<=? "foo" "foo" "foo") #t)
+  (test (string<=? "foo" "foo" "") #f)
+  (test (string<=? "foo" "fo" 1.0) 'error)
+  (test (string<=? "foo" "foo" "fooo") #t)))
+
+(for-each
+ (lambda (arg)
+   (test (string<=? "hi" arg) 'error))
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+
+
+
+(test (string>=? "aaaaa" "aaaa") #t)
+(test (string>=? "aaaa" "aaaa") #t)
+(test (string>=? "aaa" "aaaa") #f)
 (test (string>=? "" "abcdefgh") #f)
 (test (string>=? "a" "abcdefgh") #f)
 (test (string>=? "abc" "abcdefgh") #f)
@@ -860,41 +951,29 @@
 (test (string>=? "abcdefgh" "xyzabc") #f)
 (test (string>=? "xyzabcdefgh" "abc") #t)
 (test (string>=? "bcdef" "abcdef") #t)
-(test (string=? "K. Harper, M.D." (symbol->string  (string->symbol "K. Harper, M.D.")))  #t)
-
-
-(test (string=? "" "") #t)
-(test (string<? "" "") #f)
-(test (string>? "" "") #f)
-(test (string<=? "" "") #t)
-(test (string>=? "" "") #t)
-
-(test (string-ci=? "" "") #t)
-(test (string-ci<? "" "") #f)
-(test (string-ci>? "" "") #f)
-(test (string-ci<=? "" "") #t)
-(test (string-ci>=? "" "") #t)
-
-(test (string=? "A" "B") #f)
-(test (string=? "a" "b") #f)
-(test (string=? "9" "0") #f)
-(test (string=? "A" "A") #t)
-(test (string<? "A" "B") #t)
-(test (string<? "a" "b") #t)
-(test (string<? "9" "0") #f)
-(test (string<? "A" "A") #f)
-(test (string>? "A" "B") #f)
-(test (string>? "a" "b") #f)
-(test (string>? "9" "0") #t)
-(test (string>? "A" "A") #f)
-(test (string<=? "A" "B") #t)
-(test (string<=? "a" "b") #t)
-(test (string<=? "9" "0") #f)
-(test (string<=? "A" "A") #t)
 (test (string>=? "A" "B") #f)
 (test (string>=? "a" "b") #f)
 (test (string>=? "9" "0") #t)
 (test (string>=? "A" "A") #t)
+(test (string>=? "" "") #t)
+(if with-string-ops-with-more-than-2-args (begin
+  (test (string>=? "A" "B" "C") #f)
+  (test (string>=? "C" "B" "A") #t)
+  (test (string>=? "C" "B" "B") #t)
+  (test (string>=? "A" "B" "B") #f)
+  (test (string>=? "A" "A" "A") #t)
+  (test (string>=? "B" "B" "A") #t)
+  (test (string>=? "B" "B" "C") #f)
+  (test (string>=? "foo" "foo" "foo") #t)
+  (test (string>=? "foo" "foo" "") #t)
+  (test (string>=? "fo" "foo" 1.0) 'error)
+  (test (string>=? "foo" "foo" "fo") #t)))
+
+(for-each
+ (lambda (arg)
+   (test (string>=? "hi" arg) 'error))
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+
 
 (test (string-ci=? "A" "B") #f)
 (test (string-ci=? "a" "B") #f)
@@ -903,6 +982,25 @@
 (test (string-ci=? "9" "0") #f)
 (test (string-ci=? "A" "A") #t)
 (test (string-ci=? "A" "a") #t)
+(test (string-ci=? "" "") #t)
+(test (string-ci=? "aaaa" "AAAA") #t)
+(test (string-ci=? "aaaa" "Aaaa") #t)
+(if with-string-ops-with-more-than-2-args (begin
+  (test (string-ci=? "A" "B" "a") #f)
+  (test (string-ci=? "A" "A" "a") #t)
+  (test (string-ci=? "A" "A" "a") #t)
+  (test (string-ci=? "foo" "foo" "foo") #t)
+  (test (string-ci=? "foo" "foo" "") #f)
+  (test (string-ci=? "foo" "GOO" 1.0) 'error)
+  (test (string-ci=? "foo" "Foo" "fOo") #t)))
+
+(for-each
+ (lambda (arg)
+   (test (string-ci=? "hi" arg) 'error))
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+
+
+(test (string-ci<? "a" "Aa") #t)
 (test (string-ci<? "A" "B") #t)
 (test (string-ci<? "a" "B") #t)
 (test (string-ci<? "A" "b") #t)
@@ -910,6 +1008,25 @@
 (test (string-ci<? "9" "0") #f)
 (test (string-ci<? "A" "A") #f)
 (test (string-ci<? "A" "a") #f)
+(test (string-ci<? "" "") #f)
+(if with-string-ops-with-more-than-2-args (begin
+  (test (string-ci<? "A" "B" "A") #f)
+  (test (string-ci<? "A" "A" "B") #f)
+  (test (string-ci<? "A" "A" "A") #f)
+  (test (string-ci<? "B" "B" "C") #f)
+  (test (string-ci<? "B" "b" "C") #f)
+  (test (string-ci<? "foo" "foo" "foo") #f)
+  (test (string-ci<? "foo" "foo" "") #f)
+  (test (string-ci<? "foo" "fo" 1.0) 'error)
+  (test (string-ci<? "foo" "foo" "fOo") #f)))
+
+(for-each
+ (lambda (arg)
+   (test (string-ci<? "hi" arg) 'error))
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+
+
+(test (string-ci>? "Aaa" "AA") #t)
 (test (string-ci>? "A" "B") #f)
 (test (string-ci>? "a" "B") #f)
 (test (string-ci>? "A" "b") #f)
@@ -917,6 +1034,23 @@
 (test (string-ci>? "9" "0") #t)
 (test (string-ci>? "A" "A") #f)
 (test (string-ci>? "A" "a") #f)
+(test (string-ci>? "" "") #f)
+(if with-string-ops-with-more-than-2-args (begin
+  (test (string-ci>? "A" "B" "a") #f)
+  (test (string-ci>? "C" "b" "A") #t)
+  (test (string-ci>? "a" "A" "A") #f)
+  (test (string-ci>? "B" "B" "A") #f)
+  (test (string-ci>? "foo" "foo" "foo") #f)
+  (test (string-ci>? "foo" "foo" "") #f)
+  (test (string-ci>? "foo" "fooo" 1.0) 'error)
+  (test (string-ci>? "foo" "foo" "fOo") #f)))
+
+(for-each
+ (lambda (arg)
+   (test (string-ci>? "hi" arg) 'error))
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+
+
 (test (string-ci<=? "A" "B") #t)
 (test (string-ci<=? "a" "B") #t)
 (test (string-ci<=? "A" "b") #t)
@@ -924,6 +1058,24 @@
 (test (string-ci<=? "9" "0") #f)
 (test (string-ci<=? "A" "A") #t)
 (test (string-ci<=? "A" "a") #t)
+(test (string-ci<=? "" "") #t)
+(if with-string-ops-with-more-than-2-args (begin
+  (test (string-ci<=? "A" "b" "C") #t)
+  (test (string-ci<=? "c" "B" "A") #f)
+  (test (string-ci<=? "A" "B" "B") #t)
+  (test (string-ci<=? "a" "A" "A") #t)
+  (test (string-ci<=? "B" "b" "A") #f)
+  (test (string-ci<=? "foo" "foo" "foo") #t)
+  (test (string-ci<=? "foo" "foo" "") #f)
+  (test (string-ci<=? "fOo" "fo" 1.0) 'error)
+  (test (string-ci<=? "FOO" "fOo" "fooo") #t)))
+
+(for-each
+ (lambda (arg)
+   (test (string-ci<=? "hi" arg) 'error))
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+
+
 (test (string-ci>=? "A" "B") #f)
 (test (string-ci>=? "a" "B") #f)
 (test (string-ci>=? "A" "b") #f)
@@ -931,7 +1083,153 @@
 (test (string-ci>=? "9" "0") #t)
 (test (string-ci>=? "A" "A") #t)
 (test (string-ci>=? "A" "a") #t)
+(test (string-ci>=? "" "") #t)
+(if with-string-ops-with-more-than-2-args (begin
+  (test (string-ci>=? "A" "b" "C") #f)
+  (test (string-ci>=? "C" "B" "A") #t)
+  (test (string-ci>=? "C" "B" "b") #t)
+  (test (string-ci>=? "a" "B" "B") #f)
+  (test (string-ci>=? "A" "A" "A") #t)
+  (test (string-ci>=? "B" "B" "A") #t)
+  (test (string-ci>=? "B" "b" "C") #f)
+  (test (string-ci>=? "foo" "foo" "foo") #t)
+  (test (string-ci>=? "foo" "foo" "") #t)
+  (test (string-ci>=? "fo" "foo" 1.0) 'error)
+  (test (string-ci>=? "foo" "foo" "fo") #t)))
 
+(for-each
+ (lambda (arg)
+   (test (string-ci>=? "hi" arg) 'error))
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+
+
+
+(test (string-length "abc") 3)
+(test (string-length "") 0)
+(test (string-length (string)) 0)
+(test (string-length "\"\\\"") 3)
+(test (string-length (string #\newline)) 1)
+(test (string-length "hi there") 8)
+(test (string-length "\"") 1)
+(test (string-length (make-string 100 #\a)) 100)
+
+(for-each
+ (lambda (arg)
+   (test (string-length arg) 'error))
+ (list #\a '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+
+
+
+(test (string) "")
+(test (string #\a #\b #\c) "abc")
+(test (string #\a) "a")
+
+(for-each
+ (lambda (arg)
+   (test (string #\a arg) 'error))
+ (list '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+
+
+
+(test (make-string 0) "")
+(test (make-string 3 #\a) "aaa")
+(test (make-string 0 #\a) "")
+(test (make-string 3 #\space) "   ")
+(test (make-string -1) 'error)
+
+(for-each
+ (lambda (arg)
+   (test (make-string 3 arg) 'error))
+ (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+
+(for-each
+ (lambda (arg)
+   (test (make-string arg #\a) 'error))
+ (list #\a "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+
+(for-each
+ (lambda (arg)
+   (test (make-string arg) 'error))
+ (list #\a "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+
+
+
+(test (string-ref "abcdef-dg1ndh" 0) #\a)
+(test (string-ref "abcdef-dg1ndh" 1) #\b)
+(test (string-ref "abcdef-dg1ndh" 6) #\-)
+(test (string-ref "abcdef-dg1ndh" 20) 'error)
+(test (string-ref "abcdef-dg1ndh") 'error)
+(test (string-ref "abcdef-dg1ndh" -3) 'error)
+(test (string-ref) 'error)
+(test (string-ref 2) 'error)
+(test (string-ref "\"\\\"" 1) #\\)
+(test (string-ref "\"\\\"" 2) #\")
+(test (string-ref "\"\\\"" 3) 'error)
+(test (string-ref "" 0) 'error)  ; guile returns #\nul here?
+(test (string-ref "" 1) 'error)
+
+(for-each
+ (lambda (arg)
+   (test (string-ref arg 0) 'error))
+ (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+
+(for-each
+ (lambda (arg)
+   (test (string-ref "hiho" arg) 'error))
+ (list #\a -1 123 4 "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+
+
+
+(test (let ((hi "hi")) (string-set! hi 0 #\H) hi) "Hi")
+(test (let ((hi "hi")) (string-set! hi 1 #\H) hi) "hH")
+(test (let ((hi "hi")) (string-set! hi 2 #\H) hi) 'error)
+(test (let ((hi "hi")) (string-set! hi -1 #\H) hi) 'error)
+(test (let ((g (lambda () "***"))) (string-set! (g) 0 #\?)) 'error) ; guile is happy here and below
+(test (string-set! "" 0 #\a) 'error)
+(test (string-set! "" 1 #\a) 'error)
+(test (string-set! (string) 0 #\a) 'error)
+(test (string-set! (symbol->string 'lambda) 0 #\a) 'error)
+
+(for-each
+ (lambda (arg)
+   (test (string-set! arg 0 #\a) 'error))
+ (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+
+(for-each
+ (lambda (arg)
+   (test (string-set! "hiho" arg #\a) 'error))
+ (list #\a -1 123 4 "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+
+(for-each
+ (lambda (arg)
+   (test (string-set! "hiho" 0 arg) 'error))
+ (list 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+
+
+
+
+;;; --------
+
+
+
+;;; string-append
+;;; string-fill! string-copy
+;;; substring string->list list->string string->symbol symbol->string
+
+#!
+(test "" substring "ab" 0 0)
+(test "" substring "ab" 1 1)
+(test "" substring "ab" 2 2)
+(test "a" substring "ab" 0 1)
+(test "b" substring "ab" 1 2)
+(test "ab" substring "ab" 0 2)
+(test "foobar" string-append "foo" "bar")
+(test "foo" string-append "foo")
+(test "foo" string-append "foo" "")
+(test "foo" string-append "" "foo")
+(test "" string-append)
+
+!#
 
 
 ;;; --------------------------------------------------------------------------------

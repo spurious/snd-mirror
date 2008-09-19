@@ -5600,8 +5600,8 @@ static XEN g_out_any_1(const char *caller, XEN frame, XEN chan, XEN val, XEN out
   Float inv;
 
   XEN_ASSERT_TYPE(XEN_NUMBER_P(frame), frame, XEN_ARG_1, caller, "a number");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_2, caller, "an integer");
-  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_3, caller, "a number");
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_3, caller, "an integer"); /* caller's point of view */
+  XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, caller, "a number");
 
   chn = XEN_TO_C_INT(chan);
   if (chn < 0)
@@ -5613,9 +5613,9 @@ static XEN g_out_any_1(const char *caller, XEN frame, XEN chan, XEN val, XEN out
 
 #if HAVE_XEN_NAN_AND_INF_P
   if (XEN_INF_P(val))
-    XEN_OUT_OF_RANGE_ERROR(caller, XEN_ARG_4, val, "is infinite");
+    XEN_OUT_OF_RANGE_ERROR(caller, XEN_ARG_2, val, "is infinite"); /* arg 2 from caller's point of view */
   if (XEN_NAN_P(val))
-    XEN_OUT_OF_RANGE_ERROR(caller, XEN_ARG_4, val, "is not a number");
+    XEN_OUT_OF_RANGE_ERROR(caller, XEN_ARG_2, val, "is not a number");
 #endif
 
   inv = XEN_TO_C_DOUBLE(val);

@@ -15,6 +15,8 @@
 (read-enable 'positions)
 (read-set! keywords 'prefix)
 
+(define call-with-exit call/cc)
+
 (define ignore (list "gdk_pixmap_new" "gdk_pixmap_create_from_xpm" "gdk_pixmap_create_from_xpm_d"
 		     "gtk_notebook_append_page" 
 		     "g_timeout_add_full" "g_timeout_add" "g_idle_add" "g_idle_add_full" "g_source_remove"

@@ -2668,10 +2668,10 @@ static XEN g_getcwd(void)
 {
   #define H_getcwd "(getcwd) returns the name of the current working directory"
   char *buf;
-  XEN result;
+  XEN result = XEN_FALSE;
   buf = (char *)CALLOC(1024, sizeof(char));
-  getcwd(buf, 1024);
-  result = C_TO_XEN_STRING(buf);
+  if (getcwd(buf, 1024) != NULL)
+    result = C_TO_XEN_STRING(buf);
   FREE(buf);
   return(result);
 }

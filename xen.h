@@ -2761,8 +2761,8 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
 #define C_TO_XEN_OFF_T(a)             c_to_xen_off_t(a)
 #define XEN_TO_C_OFF_T(a)             xen_to_c_off_t(a)
 #define XEN_AS_STRING(form)           XEN_TO_C_STRING(XEN_TO_STRING(form))
-#define XEN_LOCAL_GC_PROTECT(Arg)     Arg
-#define XEN_LOCAL_GC_UNPROTECT(Arg)   Arg
+#define XEN_LOCAL_GC_PROTECT(Arg)     
+#define XEN_LOCAL_GC_UNPROTECT(Arg)   
 #else
 #define XEN_AS_STRING(form)           s7_object_to_c_string(s7, form)
 #endif
