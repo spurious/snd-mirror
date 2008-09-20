@@ -37,7 +37,7 @@ s7_pointer s7_global_environment(s7_scheme *sc);
 s7_pointer s7_current_environment(s7_scheme *sc);
 
 bool s7_is_immutable(s7_pointer p);
-void s7_set_immutable(s7_pointer p);
+s7_pointer s7_set_immutable(s7_pointer p);
 s7_pointer s7_immutable_cons(s7_scheme *sc, s7_pointer a, s7_pointer b);
 
 s7_pointer s7_cons(s7_scheme *sc, s7_pointer a, s7_pointer b);

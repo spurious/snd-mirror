@@ -3157,7 +3157,7 @@ AC_DEFUN([FTH_CHECK_LIB],
 
 
 # autoconf 2.62 makes AC_C_BIGENDIAN completely useless, so 
-#   here is the 2.61 version (!$%%@#$%)
+#   here is the 2.61 version (!$%%@#$%) -- 2.63 returned to this I think
 
 # AC_OLD_BIGENDIAN ([ACTION-IF-TRUE], [ACTION-IF-FALSE], [ACTION-IF-UNKNOWN])
 # -------------------------------------------------------------------------

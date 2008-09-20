@@ -708,9 +708,10 @@ bool s7_is_immutable(s7_pointer p)
 }
 
 
-void s7_set_immutable(s7_pointer p) 
+s7_pointer s7_set_immutable(s7_pointer p) 
 { 
   typeflag(p) |= T_IMMUTABLE;
+  return(p);
 }
 
 
@@ -1577,7 +1578,7 @@ static s7_pointer g_symbol_to_string(s7_scheme *sc, s7_pointer args)
   #define H_symbol_to_string "(symbol->string sym) returns sym converted to a string"
   if (!s7_is_symbol(car(args)))
     return(s7_wrong_type_arg_error(sc, "symbol->string", 1, car(args), "a symbol"));
-  return(s7_make_string(sc, s7_symbol_name(car(args))));
+  return(s7_set_immutable(s7_make_string(sc, s7_symbol_name(car(args)))));
 }
 
 
@@ -2532,7 +2533,7 @@ static double num_to_imag_part(num n)
 }
 
 
-static num make_ratio(s7_scheme *sc, s7_Int numer, s7_Int denom)
+static num make_ratio(s7_Int numer, s7_Int denom)
 {
   num ret;
   s7_Int divisor;
@@ -2634,7 +2635,7 @@ s7_pointer s7_make_ratio(s7_scheme *sc, s7_Int a, s7_Int b)
   num ret;
   s7_pointer x = new_cell(sc);
   set_type(x, T_NUMBER | T_ATOM | T_SIMPLE);
-  ret = make_ratio(sc, a, b);
+  ret = make_ratio(a, b);
 
   x->object.number.type = ret.type;
   if (ret.type == NUM_INT)
@@ -2729,8 +2730,8 @@ static num num_max(s7_scheme *sc, num a, num b)
 
     case NUM_RATIO:
       if (num_to_real(a) >= num_to_real(b))
-	ret = make_ratio(sc, num_to_numerator(a), num_to_denominator(a));
-      else ret = make_ratio(sc, num_to_numerator(b), num_to_denominator(b));
+	ret = make_ratio(num_to_numerator(a), num_to_denominator(a));
+      else ret = make_ratio(num_to_numerator(b), num_to_denominator(b));
       break;
 
     default:
@@ -2759,8 +2760,8 @@ static num num_min(s7_scheme *sc, num a, num b)
 
     case NUM_RATIO:
       if (num_to_real(a) < num_to_real(b))
-	ret = make_ratio(sc, num_to_numerator(a), num_to_denominator(a));
-      else ret = make_ratio(sc, num_to_numerator(b), num_to_denominator(b));
+	ret = make_ratio(num_to_numerator(a), num_to_denominator(a));
+      else ret = make_ratio(num_to_numerator(b), num_to_denominator(b));
       break;
 
     default:
@@ -2786,8 +2787,7 @@ static num num_add(s7_scheme *sc, num a, num b)
       break;
 
     case NUM_RATIO:
-      ret = make_ratio(sc,
-		       (num_to_numerator(a) * num_to_denominator(b)) + (num_to_denominator(a) * num_to_numerator(b)),
+      ret = make_ratio((num_to_numerator(a) * num_to_denominator(b)) + (num_to_denominator(a) * num_to_numerator(b)),
 		       (num_to_denominator(a) * num_to_denominator(b)));
       break;
 
@@ -2819,8 +2819,7 @@ static num num_sub(s7_scheme *sc, num a, num b)
       break;
 
     case NUM_RATIO:
-      ret = make_ratio(sc,
-		       (num_to_numerator(a) * num_to_denominator(b)) - (num_to_denominator(a) * num_to_numerator(b)),
+      ret = make_ratio((num_to_numerator(a) * num_to_denominator(b)) - (num_to_denominator(a) * num_to_numerator(b)),
 		       (num_to_denominator(a) * num_to_denominator(b)));
       break;
 
@@ -2851,8 +2850,7 @@ static num num_mul(s7_scheme *sc, num a, num b)
       break;
 
     case NUM_RATIO:
-      ret = make_ratio(sc,
-		       (num_to_numerator(a) * num_to_numerator(b)),
+      ret = make_ratio((num_to_numerator(a) * num_to_numerator(b)),
 		       (num_to_denominator(a) * num_to_denominator(b)));
       break;
 
@@ -2885,12 +2883,11 @@ static num num_div(s7_scheme *sc, num a, num b)
   switch (num_type(ret))
     {
     case NUM_INT: 
-      ret = make_ratio(sc, integer(a), integer(b));
+      ret = make_ratio(integer(a), integer(b));
       break;
 
     case NUM_RATIO:
-      ret = make_ratio(sc,
-		       (num_to_numerator(a) * num_to_denominator(b)),
+      ret = make_ratio((num_to_numerator(a) * num_to_denominator(b)),
 		       (num_to_denominator(a) * num_to_numerator(b)));
       break;
 
@@ -2951,8 +2948,7 @@ static num num_rem(s7_scheme *sc, num a, num b)
       integer(ret) = integer(a) % integer(b);
       break;
     case NUM_RATIO: 
-      ret = make_ratio(sc, 
-		       numerator(a) * denominator(b) - numerator(b) * denominator(a) * integer(num_quotient(a, b)),
+      ret = make_ratio(numerator(a) * denominator(b) - numerator(b) * denominator(a) * integer(num_quotient(a, b)),
 		       denominator(a) * denominator(b));
       break;
     default:
@@ -2974,8 +2970,7 @@ static num num_mod(s7_scheme *sc, num a, num b)
       integer(ret) = c_mod(integer(a), integer(b));
       break;
     case NUM_RATIO:
-      ret = make_ratio(sc, 
-		       numerator(a) * denominator(b) - numerator(b) * denominator(a) * (s7_Int)floor(num_to_real(a) / num_to_real(b)),
+      ret = make_ratio(numerator(a) * denominator(b) - numerator(b) * denominator(a) * (s7_Int)floor(num_to_real(a) / num_to_real(b)),
 		       denominator(a) * denominator(b));
       break;
     default:
@@ -5046,6 +5041,9 @@ static s7_pointer g_string_append(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_string_copy(s7_scheme *sc, s7_pointer args)
 {
   #define H_string_copy "(string-copy str) returns a copy of its string argument"
+  if (car(args) == sc->NIL)
+    return(s7_wrong_type_arg_error(sc, "string-copy", 1, car(args), "a string"));
+
   return(g_string_append_1(sc, args, "string-copy"));
 }
 
@@ -5357,13 +5355,17 @@ static s7_pointer g_string(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_pointer g_is_list(s7_scheme *sc, s7_pointer args);
+
 static s7_pointer g_list_to_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_list_to_string "(list->string lst) appends all the lists characters into one string"
   if (car(args) == sc->NIL)
     return(s7_make_string(sc, ""));
-  if (!s7_is_pair(car(args)))
-    return(s7_wrong_type_arg_error(sc, "list->string", 1, car(args), "a list of characters"));
+
+  if (g_is_list(sc, args) == sc->F)
+    return(s7_wrong_type_arg_error(sc, "list->string", 1, car(args), "a (proper, non-circular) list of characters"));
+
   return(g_string_1(sc, car(args), "list->string"));
 }
 
@@ -6680,7 +6682,7 @@ static void write_string(s7_scheme *sc, const char *s, s7_pointer pt)
 }
 
 
-static char *slashify_string(s7_scheme *sc, const char *p)
+static char *slashify_string(const char *p)
 {
   int i, j = 0, len;
   char *s;
@@ -6769,7 +6771,7 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	{
 	  if (!use_write) 
 	    return(copy_string(string_value(obj)));
-	  return(slashify_string(sc, string_value(obj)));
+	  return(slashify_string(string_value(obj)));
 	}
       else 
 	{
@@ -11080,7 +11082,8 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	      pop_stack(sc, eval_error(sc, "error reading string", sc->code));
 	      goto START;
 	    }
-	  s7_set_immutable(sc->x);
+	  /* s7_set_immutable(sc->x); */
+	  /* this isn't right, I think -- (string-set! "hi" 0 #\a) should be allowed to work */
 	  pop_stack(sc, sc->x);
 	  goto START;
 	  

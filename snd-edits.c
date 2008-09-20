@@ -2631,7 +2631,10 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool 
 	      
 	      if (with_source)
 		{
-		  char *temp1 = NULL, *temp2 = NULL;
+		  char *temp1 = NULL;
+#if HAVE_S7
+		  char *temp2 = NULL;
+#endif
 		  code = ptree_code(cp->ptrees[FRAGMENT_PTREE_INDEX(ed, j, 0)]);
 		  if (XEN_LIST_P(code))
 		    fprintf(outp, ", code: %s", temp1 = XEN_AS_STRING(code));

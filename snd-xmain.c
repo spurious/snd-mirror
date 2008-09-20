@@ -323,7 +323,7 @@ static void who_called(Widget w, XtPointer context, XEvent *event, Boolean *cont
 /* stolen from scwm.c */
 static sigjmp_buf envHandleEventsLoop;
 
-static RETSIGTYPE segv(int ignored)
+static void segv(int ignored)
 {
   siglongjmp(envHandleEventsLoop, 1);
 }
@@ -331,8 +331,8 @@ static RETSIGTYPE segv(int ignored)
 
 static jmp_buf top_level_jump;
 
-RETSIGTYPE top_level_catch(int ignore);
-RETSIGTYPE top_level_catch(int ignore)
+void top_level_catch(int ignore);
+void top_level_catch(int ignore)
 {
   longjmp(top_level_jump, 1);
 }

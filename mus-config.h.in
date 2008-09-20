@@ -1,8 +1,6 @@
 #ifndef MUS_CONFIG_H_LOADED
 #define MUS_CONFIG_H_LOADED
 
-#undef RETSIGTYPE
-
 /* Define to `int' or something if <sys/types.h> doesn't define.  */
 #undef mode_t
 #undef pid_t

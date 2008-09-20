@@ -21,7 +21,7 @@ static bool ignore_mus_error(int type, char *msg)
 }
 
 #if HAVE_SETJMP_H
-  RETSIGTYPE top_level_catch(int ignore);
+  void top_level_catch(int ignore);
 #endif
 
 
@@ -330,7 +330,7 @@ void snd_set_global_defaults(bool need_cleanup)
 #if HAVE_SETJMP_H
 #include <signal.h>
 
-static RETSIGTYPE snd_sigusr1(int ignored)
+static void snd_sigusr1(int ignored)
 {
   /* if Snd is in an infinite loop, it should be possible to break out of it and
    *    return to the listener prompt by getting the Snd process number and
