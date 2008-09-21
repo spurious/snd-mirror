@@ -1,19 +1,19 @@
 ;;; R5RS test suite
 ;;;
 ;;; sources include 
-;;;   clisp test suite, 
-;;;   Paul Dietz's CL test suite,
-;;;   R Kelsey, W Clinger, and J Rees r5rs.html, 
-;;;   A Jaffer's r4rstest.scm (the inspiration for this...), 
-;;;   guile test suite, 
+;;;   clisp test suite
+;;;   Paul Dietz's CL test suite
+;;;   R Kelsey, W Clinger, and J Rees r5rs.html
+;;;   A Jaffer's r4rstest.scm (the inspiration for this...)
+;;;   guile test suite
 ;;;   gauche test suite
-;;;   Kent Dybvig's "The Scheme Programming Language",
-;;;   Brad Lucier, 
+;;;   gambit test suite
+;;;   Kent Dybvig's "The Scheme Programming Language"
+;;;   Brad Lucier
 ;;;   Snd's numtst.c
 
 
 ;;; not covered yet: ports, all control ops, syntax-rules
-;;; if anyone has any tests to donate, I'd be most grateful!
 
 
 
@@ -23,47 +23,10 @@
 (define with-char-ops-with-more-than-2-args #t)                ; char<? et al restricted to 2 args?
 (define with-string-ops-with-more-than-2-args #t)              ; string<? et al restricted to 2 args?
 (define with-relational-ops-that-require-at-least-2-args #t)   ; < et al min args = 2?
+(define with-generic-modulo #t)                                ; #f is the Scheme norm
 
 
 ;;; --------------------------------------------------------------------------------
-;;; these two can be removed -- I just need to rewrite the format calls below
-
-(if (not (defined? 'object->string))
-(define (object->string x) ; trigtest.sps by William D Clinger
-  (call-with-values
-   (lambda () (open-string-output-port))
-   (lambda (out get)
-     (write x out)
-     (let ((s (get)))
-       (close-port out)
-       s))))
-)
-
-(if (not (defined? 'format))
-(define (format dest str . args)
-  (let ((len (string-length str))
-	(tilde #f)
-	(result ""))
-    (do ((i 0 (+ i 1)))
-	((= i len))
-      (let ((c (string-ref str i)))
-	(if (char=? c #\~)
-	    (set! tilde #t)
-	    (if (not tilde)
-		(set! result (string-append result (string c)))
-		(begin
-		  (set! tilde #f)
-		  (if (member c (list #\A #\D #\F))
-		      (begin
-			(set! result (string-append result (object->string (car args))))
-			(set! args (cdr args)))
-		      (if (char=? c #\%)
-			  (set! result (string-append result (string #\newline)))
-			  (display (string-append ";unknown format directive: ~" (string c))))))))))
-    result))
-)
-;;; --------------------------------------------------------------------------------
-
 
 ;;; the basic "test" uses equal?, num-test (below) is much fancier
 
@@ -81,9 +44,6 @@
 (defmacro test (tst expected)
   `(let ((result (catch #t (lambda () ,tst) (lambda args 'error))))
      (ok? ',tst result ,expected)))
-
-;;; --------------------------------------------------------------------------------
-
 
 
 ;;; --------------------------------------------------------------------------------
@@ -1396,16 +1356,16 @@
 (test (cons '() '()) '(()))
 (test (cons '() 1) '(() . 1))
 (test (cons 1 . 2) 'error)
-(test (equal? (cons 1 2) '(1 . 2)) #t)
-(test (equal? (cons 1 '()) '(1)) #t)
-(test (equal? (cons '() 2) '(() . 2)) #t)
-(test (equal? (cons '() '()) '(())) #t)
-(test (equal? (cons 1 (cons 2 (cons 3 (cons 4 '())))) '(1 2 3 4)) #t)
-(test (equal? (cons 'a 'b) '(a . b)) #t)
-(test (equal? (cons 'a (cons 'b (cons 'c '()))) '(a b c)) #t)
-(test (equal? (cons 'a (list 'b 'c 'd)) '(a b c d)) #t)
-(test (equal? (cons 'a (cons 'b (cons 'c 'd))) '(a b c . d)) #t)
-
+(test (cons 1 2) '(1 . 2))
+(test (cons 1 '()) '(1))
+(test (cons '() 2) '(() . 2))
+(test (cons '() '()) '(()))
+(test (cons 1 (cons 2 (cons 3 (cons 4 '())))) '(1 2 3 4))
+(test (cons 'a 'b) '(a . b))
+(test (cons 'a (cons 'b (cons 'c '()))) '(a b c))
+(test (cons 'a (list 'b 'c 'd)) '(a b c d))
+(test (cons 'a (cons 'b (cons 'c 'd))) '(a b c . d))
+(test '(a b c d e) '(a . (b . (c . (d . (e . ()))))))
 
 (test (car (list 1 2 3)) 1)
 (test (car (cons 1 2)) 1)
@@ -1757,6 +1717,34 @@
 (test (cddddr '(a c . b)) 'error)
 (test (cddddr '(a c e . b)) 'error)
 
+(test (caar '((((a . b) c . d) (e . f) g . h) ((i . j) k . l) (m . n) o . p)) '((a . b) c . d))
+(test (caar '(((a . b) c . d) (e . f) g . h)) '(a . b))
+(test (caar '((a . b) c . d)) 'a)
+(test (cadr '((((a . b) c . d) (e . f) g . h) ((i . j) k . l) (m . n) o . p)) '((i . j) k . l))
+(test (cadr '(((a . b) c . d) (e . f) g . h)) '(e . f))
+(test (cadr '((a . b) c . d)) 'c)
+(test (cdar '((((a . b) c . d) (e . f) g . h) ((i . j) k . l) (m . n) o . p)) '((e . f) g . h))
+(test (cdar '(((a . b) c . d) (e . f) g . h)) '(c . d))
+(test (cdar '((a . b) c . d)) 'b)
+(test (cddr '((((a . b) c . d) (e . f) g . h) ((i . j) k . l) (m . n) o . p)) '((m . n) o . p))
+(test (cddr '(((a . b) c . d) (e . f) g . h)) '(g . h))
+(test (cddr '((a . b) c . d)) 'd)
+(test (caaar '((((a . b) c . d) (e . f) g . h) ((i . j) k . l) (m . n) o . p)) '(a . b))
+(test (caaar '(((a . b) c . d) (e . f) g . h)) 'a)
+(test (caadr '((((a . b) c . d) (e . f) g . h) ((i . j) k . l) (m . n) o . p)) '(i . j))
+(test (caadr '(((a . b) c . d) (e . f) g . h)) 'e)
+(test (cddar '((((a . b) c . d) (e . f) g . h) ((i . j) k . l) (m . n) o . p)) '(g . h))
+(test (cddar '(((a . b) c . d) (e . f) g . h)) 'd)
+(test (cdddr '((((a . b) c . d) (e . f) g . h) ((i . j) k . l) (m . n) o . p)) '(o . p))
+(test (cdddr '(((a . b) c . d) (e . f) g . h)) 'h)
+(test (caaaar '((((a . b) c . d) (e . f) g . h) ((i . j) k . l) (m . n) o . p)) 'a)
+(test (caaadr '((((a . b) c . d) (e . f) g . h) ((i . j) k . l) (m . n) o . p)) 'i)
+(test (caddar '((((a . b) c . d) (e . f) g . h) ((i . j) k . l) (m . n) o . p)) 'g)
+(test (cadddr '((((a . b) c . d) (e . f) g . h) ((i . j) k . l) (m . n) o . p)) 'o)
+(test (cdaaar '((((a . b) c . d) (e . f) g . h) ((i . j) k . l) (m . n) o . p)) 'b)
+(test (cdaadr '((((a . b) c . d) (e . f) g . h) ((i . j) k . l) (m . n) o . p)) 'j)
+(test (cdddar '((((a . b) c . d) (e . f) g . h) ((i . j) k . l) (m . n) o . p)) 'h)
+(test (cddddr '((((a . b) c . d) (e . f) g . h) ((i . j) k . l) (m . n) o . p)) 'p)
 
 
 (test (length (list 'a 'b 'c 'd 'e 'f)) 6)
@@ -2261,6 +2249,16 @@
 (test (append '() '() '()) '())
 (test (append (cons 1 2)) '(1 . 2))
 
+(test (append #f) #f)
+(test (append '() #f) #f)
+(test (append '(1 2) #f) '(1 2 . #f))
+(test (append '() '() #f) #f)
+(test (append '() '(1 2) #f) '(1 2 . #f))
+(test (append '(1 2) '() #f) '(1 2 . #f))
+(test (append '(1 2) '(3 4) #f) '(1 2 3 4 . #f))
+(test (append '() '() '() #f) #f)
+(test (append '(1 2) '(3 4) '(5 6) #f) '(1 2 3 4 5 6 . #f))
+
 
 (test (memq 'a '(a b c)) '(a b c))
 (test (memq 'b '(a b c)) '(b c))
@@ -2303,7 +2301,7 @@
 (test (vector? (make-vector 6)) #t)
 (test (vector? (make-vector 6 #\a)) #t)
 (test (vector? (make-vector 0)) #t)
-(test (vector? #*1011) #f)
+;; (test (vector? #*1011) #f)
 (test (vector? '#(0 (2 2 2 2) "Anna")) #t)
 (test (vector? '#()) #t)
 (test (vector? '#("hi")) #t)
@@ -2375,6 +2373,7 @@
 (test (list->vector (list)) '#())
 (test (list->vector (list 1)) '#(1))
 (test (list->vector (list (list))) '#(()))
+(test (list->vector (cons 1 2)) 'error)
 
 (for-each
  (lambda (arg)
@@ -2556,96 +2555,99 @@
 (define complex-6 1234000000.0+3.14159265358979i)
 
 (for-each
- (lambda (op)
+ (lambda (op opname)
    (for-each
     (lambda (arg)
       (if (op arg)
-	  (display (format #f ";(~A ~A) returned #t?~%" op arg))))
+	  (begin (display "(") (display opname) (display " ") (display arg) (display ") returned #t?") (newline))))
     (list "hi" (integer->char 65) #f '(1 2) 'a-symbol (cons 1 2) (make-vector 3) abs)))
- (list number? complex? real? rational? integer?))
+ (list number? complex? real? rational? integer?)
+ (list 'number? 'complex? 'real? 'rational? 'integer?))
 
 (for-each
  (lambda (arg) 
    (if (not (complex? arg))
-       (display (format #f ";~A is not complex?~%" arg))))
+       (begin (display "(complex? ") (display arg) (display ") returned #f?") (newline))))
  (list 1 1.0 1.0+0.5i 1/2))
  
 (if (not (integer? 1234)) (display ";1234 is not an integer?~%"))
 (for-each
  (lambda (arg) 
    (if (integer? arg)
-       (display (format #f ";~A is an integer?~%" arg))))
+       (begin (display "(integer? ") (display arg) (display ") returned #t?") (newline))))
  (list 1.5 1.0+0.5i 1/2))
 
 (if (real? 1.0+1.0i) (display ";1.0+1.0i is real?~%"))
 (for-each
  (lambda (arg) 
    (if (not (real? arg))
-       (display (format #f ";~A is not a real?~%" arg))))
+       (begin (display "(real? ") (display arg) (display ") returned #f?") (newline))))
  (list 1 1.0 1/2))
 
-(if (not (rational? 1/2)) (display (format #f ";1/2 is not rational?~%")))
-(if (not (rational? 2)) (display (format #f ";2 is not rational?~%")))
+(if (not (rational? 1/2))
+    (begin (display "(rational? 1/2) is #f?") (newline)))
 
+(if (not (rational? 2)) 
+    (begin (display "(rational? 2) is #f?") (newline)))
 
 (for-each
  (lambda (n)
    (if (not (even? n))
-       (display (format #f ";~A is not even?" n))))
+       (begin (display "(even? ") (display n) (display ") returned #f?") (newline))))
  (list 0 2 1234 -4 -10000002 1000000006))
 
 (for-each
  (lambda (n)
    (if (odd? n)
-       (display (format #f ";~A is odd?" n))))
+       (begin (display "(odd? ") (display n) (display ") returned #t?") (newline))))
  (list 0 2 1234 -4 -10000002 1000000006))
 
 (for-each
  (lambda (n)
    (if (even? n)
-       (display (format #f ";~A is even?" n))))
+       (begin (display "(even? ") (display n) (display ") returned #t?") (newline))))
  (list 1 -1 31 50001 543321))
 
 (for-each
  (lambda (n)
    (if (not (odd? n))
-       (display (format #f ";~A is not odd?" n))))
+       (begin (display "(odd? ") (display n) (display ") returned #f?") (newline))))
  (list 1 -1 31 50001 543321))
 
 (for-each
  (lambda (n)
    (if (not (positive? n))
-       (display (format #f ";~A is not positive?" n))))
+       (begin (display "(positive? ") (display n) (display ") returned #f?") (newline))))
  (list 1 123 123456123 1.4 0.001 1/2 124124124.2))
 
 (for-each
  (lambda (n)
    (if (negative? n)
-       (display (format #f ";~A is negative?" n))))
+       (begin (display "(negative? ") (display n) (display ") returned #t?") (newline))))
  (list 1 123 123456123 1.4 0.001 1/2 12341243124.2))
 
 (for-each
  (lambda (n)
    (if (positive? n)
-       (display (format #f ";~A is positive?" n))))
+       (begin (display "(positive? ") (display n) (display ") returned #t?") (newline))))
  (list -1 -123 -123456123 -3/2 -0.00001 -1.4 -123124124.1))
 
 (for-each
  (lambda (n)
    (if (not (negative? n))
-       (display (format #f ";~A is not negative?" n))))
+       (begin (display "(negative? ") (display n) (display ") returned #f?") (newline))))
  (list -1 -123 -123456123 -2/3 -0.00001 -1.4 -123124124.1))
 
 (for-each
  (lambda (n)
    (if (not (zero? n))
-       (display (format #f ";~A is not zero?" n))))
+       (begin (display "(zero? ") (display n) (display ") returned #f?") (newline))))
  (list 0 0.0 0+0i 0/1 0.0-0.0i))
 
 (for-each
  (lambda (n)
    (if (zero? n)
-       (display (format #f ";~A is zero?" n))))
+       (begin (display "(zero? ") (display n) (display ") returned #t?") (newline))))
  (list 1 1/100 -0.001 0.0+1.0i))
 
 (let* ((last-good 0)
@@ -2669,7 +2671,13 @@
 				    (search lo mid)))))))
 		   (return (search last-good (* 2 last-good))))))))))
   (if (integer? first-bad)
-      (display (format #f ";string->number ints fail around ~A (2^~A)~%" first-bad (/ (log first-bad) (log 2.0))))))
+      (begin 
+	(display "string->number ints fail around ") 
+	(display first-bad)
+	(display " (2^")
+	(display (/ (log first-bad) (log 2.0)))
+	(display ")")
+	(newline))))
 
 (let* ((last-good 0)
        (first-bad 
@@ -2692,7 +2700,42 @@
 				       (search lo mid)))))))
 		   (return (search last-good (* 2 last-good))))))))))
   (if (number? first-bad)
-      (display (format #f ";string->number floats fail around ~A (2^~A)~%" first-bad (/ (log first-bad) (log 2.0))))))
+      (begin 
+	(display "string->number floats fail around ") 
+	(display first-bad)
+	(display " (2^")
+	(display (/ (log first-bad) (log 2.0)))
+	(display ")")
+	(newline))))
+
+(let* ((last-good 0)
+       (first-bad 
+	(call/cc
+	 (lambda (return)
+	   (do ((i 1 (+ i 1))
+		(k 1.0 (/ k 2.0)))
+	       ((= i 62) #f)
+	     (if (and (eqv? k (string->number (number->string k)))
+		      (eqv? (- k) (string->number (number->string (- k)))))
+		 (set! last-good k)
+		 (letrec ((search 
+			   (lambda (lo hi)
+			     (if (= (inexact->exact (floor (/ 1.0 lo))) (inexact->exact (floor (/ 1.0 hi))))
+				 hi
+				 (let ((mid (/ (+ hi lo) 2)))
+				   (if (and (eqv? mid (string->number (number->string mid)))
+					    (eqv? (- mid) (string->number (number->string (- mid)))))
+				       (search mid hi)
+				       (search lo mid)))))))
+		   (return (search (/ last-good 2.0) last-good)))))))))
+  (if (number? first-bad)
+      (begin 
+	(display "string->number floats fail around ") 
+	(display first-bad)
+	(display " (2^")
+	(display (/ (log first-bad) (log 2.0)))
+	(display ")")
+	(newline))))
 
 (let* ((last-good 0)
        (first-bad 
@@ -2715,282 +2758,426 @@
 				       (search lo mid)))))))
 		   (return (search last-good (* 2 last-good))))))))))
   (if (number? first-bad)
-      (display (format #f ";string->number ratios fail around ~A (2^~A)~%" first-bad (/ (log first-bad) (log 2.0))))))
+      (begin 
+	(display "string->number ratios fail around ") 
+	(display first-bad)
+	(display " (2^")
+	(display (/ (log first-bad) (log 2.0)))
+	(display ")")
+	(newline))))
+
 
 (if (not (eqv? 0 (string->number (number->string 0))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 0 (number->string 0) (string->number (number->string 0)))))
+    (begin (display "(string<->number 0) -> ") (display (number->string 0)) 
+	   (display " -> ") (display (string->number (number->string 0))) (newline)))
 (if (not (eqv? 1 (string->number (number->string 1))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1 (number->string 1) (string->number (number->string 1)))))
+    (begin (display "(string<->number 1) -> ") (display (number->string 1)) 
+	   (display " -> ") (display (string->number (number->string 1))) (newline)))
 (if (not (eqv? 2 (string->number (number->string 2))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 2 (number->string 2) (string->number (number->string 2)))))
+    (begin (display "(string<->number 2) -> ") (display (number->string 2)) 
+	   (display " -> ") (display (string->number (number->string 2))) (newline)))
 (if (not (eqv? 3 (string->number (number->string 3))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 3 (number->string 3) (string->number (number->string 3)))))
+    (begin (display "(string<->number 3) -> ") (display (number->string 3)) 
+	   (display " -> ") (display (string->number (number->string 3))) (newline)))
 (if (not (eqv? 10 (string->number (number->string 10))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 10 (number->string 10) (string->number (number->string 10)))))
+    (begin (display "(string<->number 10) -> ") (display (number->string 10)) 
+	   (display " -> ") (display (string->number (number->string 10))) (newline)))
 (if (not (eqv? 1234 (string->number (number->string 1234))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1234 (number->string 1234) (string->number (number->string 1234)))))
+    (begin (display "(string<->number 1234) -> ") (display (number->string 1234)) 
+	   (display " -> ") (display (string->number (number->string 1234))) (newline)))
 (if (not (eqv? 1234000000 (string->number (number->string 1234000000))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1234000000 (number->string 1234000000) (string->number (number->string 1234000000)))))
+    (begin (display "(string<->number 1234000000) -> ") (display (number->string 1234000000)) 
+	   (display " -> ") (display (string->number (number->string 1234000000))) (newline)))
 (if (not (eqv? 500029 (string->number (number->string 500029))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 500029 (number->string 500029) (string->number (number->string 500029)))))
+    (begin (display "(string<->number 500029) -> ") (display (number->string 500029)) 
+	   (display " -> ") (display (string->number (number->string 500029))) (newline)))
 (if (not (eqv? 362880 (string->number (number->string 362880))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 362880 (number->string 362880) (string->number (number->string 362880)))))
+    (begin (display "(string<->number 362880) -> ") (display (number->string 362880)) 
+	   (display " -> ") (display (string->number (number->string 362880))) (newline)))
 (if (not (eqv? 0/1 (string->number (number->string 0/1))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 0/1 (number->string 0/1) (string->number (number->string 0/1)))))
+        (begin (display "(string<->number 0/1) -> ") (display (number->string 0/1)) 
+	       (display " -> ") (display (string->number (number->string 0/1))) (newline)))
 (if (not (eqv? 0/2 (string->number (number->string 0/2))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 0/2 (number->string 0/2) (string->number (number->string 0/2)))))
+        (begin (display "(string<->number 0/2) -> ") (display (number->string 0/2)) 
+	       (display " -> ") (display (string->number (number->string 0/2))) (newline)))
 (if (not (eqv? 0/3 (string->number (number->string 0/3))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 0/3 (number->string 0/3) (string->number (number->string 0/3)))))
+        (begin (display "(string<->number 0/3) -> ") (display (number->string 0/3)) 
+	       (display " -> ") (display (string->number (number->string 0/3))) (newline)))
 (if (not (eqv? 0/10 (string->number (number->string 0/10))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 0/10 (number->string 0/10) (string->number (number->string 0/10)))))
+        (begin (display "(string<->number 0/10) -> ") (display (number->string 0/10)) 
+	       (display " -> ") (display (string->number (number->string 0/10))) (newline)))
 (if (not (eqv? 0/1234 (string->number (number->string 0/1234))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 0/1234 (number->string 0/1234) (string->number (number->string 0/1234)))))
+        (begin (display "(string<->number 0/1234) -> ") (display (number->string 0/1234)) 
+	       (display " -> ") (display (string->number (number->string 0/1234))) (newline)))
 (if (not (eqv? 0/1234000000 (string->number (number->string 0/1234000000))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 0/1234000000 (number->string 0/1234000000) (string->number (number->string 0/1234000000)))))
+        (begin (display "(string<->number 0/1234000000) -> ") (display (number->string 0/1234000000)) 
+	       (display " -> ") (display (string->number (number->string 0/1234000000))) (newline)))
 (if (not (eqv? 0/500029 (string->number (number->string 0/500029))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 0/500029 (number->string 0/500029) (string->number (number->string 0/500029)))))
+        (begin (display "(string<->number 0/500029) -> ") (display (number->string 0/500029)) 
+	       (display " -> ") (display (string->number (number->string 0/500029))) (newline)))
 (if (not (eqv? 0/362880 (string->number (number->string 0/362880))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 0/362880 (number->string 0/362880) (string->number (number->string 0/362880)))))
+        (begin (display "(string<->number 0/362880) -> ") (display (number->string 0/362880)) 
+	       (display " -> ") (display (string->number (number->string 0/362880))) (newline)))
 (if (not (eqv? 1/1 (string->number (number->string 1/1))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1/1 (number->string 1/1) (string->number (number->string 1/1)))))
+        (begin (display "(string<->number 1/1) -> ") (display (number->string 1/1)) 
+	       (display " -> ") (display (string->number (number->string 1/1))) (newline)))
 (if (not (eqv? 1/2 (string->number (number->string 1/2))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1/2 (number->string 1/2) (string->number (number->string 1/2)))))
+        (begin (display "(string<->number 1/2) -> ") (display (number->string 1/2)) 
+	       (display " -> ") (display (string->number (number->string 1/2))) (newline)))
 (if (not (eqv? 1/3 (string->number (number->string 1/3))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1/3 (number->string 1/3) (string->number (number->string 1/3)))))
+        (begin (display "(string<->number 1/3) -> ") (display (number->string 1/3)) 
+	       (display " -> ") (display (string->number (number->string 1/3))) (newline)))
 (if (not (eqv? 1/10 (string->number (number->string 1/10))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1/10 (number->string 1/10) (string->number (number->string 1/10)))))
+        (begin (display "(string<->number 1/10) -> ") (display (number->string 1/10)) 
+	       (display " -> ") (display (string->number (number->string 1/10))) (newline)))
 (if (not (eqv? 1/1234 (string->number (number->string 1/1234))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1/1234 (number->string 1/1234) (string->number (number->string 1/1234)))))
+        (begin (display "(string<->number 1/1234) -> ") (display (number->string 1/1234)) 
+	       (display " -> ") (display (string->number (number->string 1/1234))) (newline)))
 (if (not (eqv? 1/1234000000 (string->number (number->string 1/1234000000))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1/1234000000 (number->string 1/1234000000) (string->number (number->string 1/1234000000)))))
+        (begin (display "(string<->number 1/1234000000) -> ") (display (number->string 1/1234000000)) 
+	       (display " -> ") (display (string->number (number->string 1/1234000000))) (newline)))
 (if (not (eqv? 1/500029 (string->number (number->string 1/500029))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1/500029 (number->string 1/500029) (string->number (number->string 1/500029)))))
+        (begin (display "(string<->number 1/500029) -> ") (display (number->string 1/500029)) 
+	       (display " -> ") (display (string->number (number->string 1/500029))) (newline)))
 (if (not (eqv? 1/362880 (string->number (number->string 1/362880))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1/362880 (number->string 1/362880) (string->number (number->string 1/362880)))))
+        (begin (display "(string<->number 1/362880) -> ") (display (number->string 1/362880)) 
+	       (display " -> ") (display (string->number (number->string 1/362880))) (newline)))
 (if (not (eqv? 2/1 (string->number (number->string 2/1))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 2/1 (number->string 2/1) (string->number (number->string 2/1)))))
+        (begin (display "(string<->number 2/1) -> ") (display (number->string 2/1)) 
+	       (display " -> ") (display (string->number (number->string 2/1))) (newline)))
 (if (not (eqv? 2/2 (string->number (number->string 2/2))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 2/2 (number->string 2/2) (string->number (number->string 2/2)))))
+        (begin (display "(string<->number 2/2) -> ") (display (number->string 2/2)) 
+	       (display " -> ") (display (string->number (number->string 2/2))) (newline)))
 (if (not (eqv? 2/3 (string->number (number->string 2/3))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 2/3 (number->string 2/3) (string->number (number->string 2/3)))))
+        (begin (display "(string<->number 2/3) -> ") (display (number->string 2/3)) 
+	       (display " -> ") (display (string->number (number->string 2/3))) (newline)))
 (if (not (eqv? 2/10 (string->number (number->string 2/10))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 2/10 (number->string 2/10) (string->number (number->string 2/10)))))
+        (begin (display "(string<->number 2/10) -> ") (display (number->string 2/10)) 
+	       (display " -> ") (display (string->number (number->string 2/10))) (newline)))
 (if (not (eqv? 2/1234 (string->number (number->string 2/1234))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 2/1234 (number->string 2/1234) (string->number (number->string 2/1234)))))
+        (begin (display "(string<->number 2/1234) -> ") (display (number->string 2/1234)) 
+	       (display " -> ") (display (string->number (number->string 2/1234))) (newline)))
 (if (not (eqv? 2/1234000000 (string->number (number->string 2/1234000000))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 2/1234000000 (number->string 2/1234000000) (string->number (number->string 2/1234000000)))))
+        (begin (display "(string<->number 2/1234000000) -> ") (display (number->string 2/1234000000)) 
+	       (display " -> ") (display (string->number (number->string 2/1234000000))) (newline)))
 (if (not (eqv? 2/500029 (string->number (number->string 2/500029))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 2/500029 (number->string 2/500029) (string->number (number->string 2/500029)))))
+        (begin (display "(string<->number 2/500029) -> ") (display (number->string 2/500029)) 
+	       (display " -> ") (display (string->number (number->string 2/500029))) (newline)))
 (if (not (eqv? 2/362880 (string->number (number->string 2/362880))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 2/362880 (number->string 2/362880) (string->number (number->string 2/362880)))))
+        (begin (display "(string<->number 2/362880) -> ") (display (number->string 2/362880)) 
+	       (display " -> ") (display (string->number (number->string 2/362880))) (newline)))
 (if (not (eqv? 3/1 (string->number (number->string 3/1))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 3/1 (number->string 3/1) (string->number (number->string 3/1)))))
+        (begin (display "(string<->number 3/1) -> ") (display (number->string 3/1)) 
+	       (display " -> ") (display (string->number (number->string 3/1))) (newline)))
 (if (not (eqv? 3/2 (string->number (number->string 3/2))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 3/2 (number->string 3/2) (string->number (number->string 3/2)))))
+        (begin (display "(string<->number 3/2) -> ") (display (number->string 3/2)) 
+	       (display " -> ") (display (string->number (number->string 3/2))) (newline)))
 (if (not (eqv? 3/3 (string->number (number->string 3/3))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 3/3 (number->string 3/3) (string->number (number->string 3/3)))))
+        (begin (display "(string<->number 3/3) -> ") (display (number->string 3/3)) 
+	       (display " -> ") (display (string->number (number->string 3/3))) (newline)))
 (if (not (eqv? 3/10 (string->number (number->string 3/10))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 3/10 (number->string 3/10) (string->number (number->string 3/10)))))
+        (begin (display "(string<->number 3/10) -> ") (display (number->string 3/10)) 
+	       (display " -> ") (display (string->number (number->string 3/10))) (newline)))
 (if (not (eqv? 3/1234 (string->number (number->string 3/1234))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 3/1234 (number->string 3/1234) (string->number (number->string 3/1234)))))
+        (begin (display "(string<->number 3/1234) -> ") (display (number->string 3/1234)) 
+	       (display " -> ") (display (string->number (number->string 3/1234))) (newline)))
 (if (not (eqv? 3/1234000000 (string->number (number->string 3/1234000000))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 3/1234000000 (number->string 3/1234000000) (string->number (number->string 3/1234000000)))))
+        (begin (display "(string<->number 3/1234000000) -> ") (display (number->string 3/1234000000)) 
+	       (display " -> ") (display (string->number (number->string 3/1234000000))) (newline)))
 (if (not (eqv? 3/500029 (string->number (number->string 3/500029))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 3/500029 (number->string 3/500029) (string->number (number->string 3/500029)))))
+        (begin (display "(string<->number 3/500029) -> ") (display (number->string 3/500029)) 
+	       (display " -> ") (display (string->number (number->string 3/500029))) (newline)))
 (if (not (eqv? 3/362880 (string->number (number->string 3/362880))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 3/362880 (number->string 3/362880) (string->number (number->string 3/362880)))))
+        (begin (display "(string<->number 3/362880) -> ") (display (number->string 3/362880)) 
+	       (display " -> ") (display (string->number (number->string 3/362880))) (newline)))
 (if (not (eqv? 10/1 (string->number (number->string 10/1))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 10/1 (number->string 10/1) (string->number (number->string 10/1)))))
+        (begin (display "(string<->number 10/1) -> ") (display (number->string 10/1)) 
+	       (display " -> ") (display (string->number (number->string 10/1))) (newline)))
 (if (not (eqv? 10/2 (string->number (number->string 10/2))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 10/2 (number->string 10/2) (string->number (number->string 10/2)))))
+        (begin (display "(string<->number 10/2) -> ") (display (number->string 10/2)) 
+	       (display " -> ") (display (string->number (number->string 10/2))) (newline)))
 (if (not (eqv? 10/3 (string->number (number->string 10/3))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 10/3 (number->string 10/3) (string->number (number->string 10/3)))))
+        (begin (display "(string<->number 10/3) -> ") (display (number->string 10/3)) 
+	       (display " -> ") (display (string->number (number->string 10/3))) (newline)))
 (if (not (eqv? 10/10 (string->number (number->string 10/10))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 10/10 (number->string 10/10) (string->number (number->string 10/10)))))
+        (begin (display "(string<->number 10/10) -> ") (display (number->string 10/10)) 
+	       (display " -> ") (display (string->number (number->string 10/10))) (newline)))
 (if (not (eqv? 10/1234 (string->number (number->string 10/1234))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 10/1234 (number->string 10/1234) (string->number (number->string 10/1234)))))
+        (begin (display "(string<->number 10/1234) -> ") (display (number->string 10/1234)) 
+	       (display " -> ") (display (string->number (number->string 10/1234))) (newline)))
 (if (not (eqv? 10/1234000000 (string->number (number->string 10/1234000000))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 10/1234000000 (number->string 10/1234000000) (string->number (number->string 10/1234000000)))))
+        (begin (display "(string<->number 10/1234000000) -> ") (display (number->string 10/1234000000)) 
+	       (display " -> ") (display (string->number (number->string 10/1234000000))) (newline)))
 (if (not (eqv? 10/500029 (string->number (number->string 10/500029))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 10/500029 (number->string 10/500029) (string->number (number->string 10/500029)))))
+        (begin (display "(string<->number 10/500029) -> ") (display (number->string 10/500029)) 
+	       (display " -> ") (display (string->number (number->string 10/500029))) (newline)))
 (if (not (eqv? 10/362880 (string->number (number->string 10/362880))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 10/362880 (number->string 10/362880) (string->number (number->string 10/362880)))))
+        (begin (display "(string<->number 10/362880) -> ") (display (number->string 10/362880)) 
+	       (display " -> ") (display (string->number (number->string 10/362880))) (newline)))
 (if (not (eqv? 1234/1 (string->number (number->string 1234/1))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1234/1 (number->string 1234/1) (string->number (number->string 1234/1)))))
+        (begin (display "(string<->number 1234/1) -> ") (display (number->string 1234/1)) 
+	       (display " -> ") (display (string->number (number->string 1234/1))) (newline)))
 (if (not (eqv? 1234/2 (string->number (number->string 1234/2))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1234/2 (number->string 1234/2) (string->number (number->string 1234/2)))))
+        (begin (display "(string<->number 1234/2) -> ") (display (number->string 1234/2)) 
+	       (display " -> ") (display (string->number (number->string 1234/2))) (newline)))
 (if (not (eqv? 1234/3 (string->number (number->string 1234/3))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1234/3 (number->string 1234/3) (string->number (number->string 1234/3)))))
+        (begin (display "(string<->number 1234/3) -> ") (display (number->string 1234/3)) 
+	       (display " -> ") (display (string->number (number->string 1234/3))) (newline)))
 (if (not (eqv? 1234/10 (string->number (number->string 1234/10))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1234/10 (number->string 1234/10) (string->number (number->string 1234/10)))))
+        (begin (display "(string<->number 1234/10) -> ") (display (number->string 1234/10)) 
+	       (display " -> ") (display (string->number (number->string 1234/10))) (newline)))
 (if (not (eqv? 1234/1234 (string->number (number->string 1234/1234))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1234/1234 (number->string 1234/1234) (string->number (number->string 1234/1234)))))
+        (begin (display "(string<->number 1234/1234) -> ") (display (number->string 1234/1234)) 
+	       (display " -> ") (display (string->number (number->string 1234/1234))) (newline)))
 (if (not (eqv? 1234/1234000000 (string->number (number->string 1234/1234000000))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1234/1234000000 (number->string 1234/1234000000) (string->number (number->string 1234/1234000000)))))
+        (begin (display "(string<->number 1234/1234000000) -> ") (display (number->string 1234/1234000000)) 
+	       (display " -> ") (display (string->number (number->string 1234/1234000000))) (newline)))
 (if (not (eqv? 1234/500029 (string->number (number->string 1234/500029))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1234/500029 (number->string 1234/500029) (string->number (number->string 1234/500029)))))
+        (begin (display "(string<->number 1234/500029) -> ") (display (number->string 1234/500029)) 
+	       (display " -> ") (display (string->number (number->string 1234/500029))) (newline)))
 (if (not (eqv? 1234/362880 (string->number (number->string 1234/362880))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1234/362880 (number->string 1234/362880) (string->number (number->string 1234/362880)))))
+        (begin (display "(string<->number 1234/362880) -> ") (display (number->string 1234/362880)) 
+	       (display " -> ") (display (string->number (number->string 1234/362880))) (newline)))
 (if (not (eqv? 1234000000/1 (string->number (number->string 1234000000/1))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1234000000/1 (number->string 1234000000/1) (string->number (number->string 1234000000/1)))))
+        (begin (display "(string<->number 1234000000/1) -> ") (display (number->string 1234000000/1)) 
+	       (display " -> ") (display (string->number (number->string 1234000000/1))) (newline)))
 (if (not (eqv? 1234000000/2 (string->number (number->string 1234000000/2))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1234000000/2 (number->string 1234000000/2) (string->number (number->string 1234000000/2)))))
+        (begin (display "(string<->number 1234000000/2) -> ") (display (number->string 1234000000/2)) 
+	       (display " -> ") (display (string->number (number->string 1234000000/2))) (newline)))
 (if (not (eqv? 1234000000/3 (string->number (number->string 1234000000/3))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1234000000/3 (number->string 1234000000/3) (string->number (number->string 1234000000/3)))))
+        (begin (display "(string<->number 1234000000/3) -> ") (display (number->string 1234000000/3)) 
+	       (display " -> ") (display (string->number (number->string 1234000000/3))) (newline)))
 (if (not (eqv? 1234000000/10 (string->number (number->string 1234000000/10))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1234000000/10 (number->string 1234000000/10) (string->number (number->string 1234000000/10)))))
+        (begin (display "(string<->number 1234000000/10) -> ") (display (number->string 1234000000/10)) 
+	       (display " -> ") (display (string->number (number->string 1234000000/10))) (newline)))
 (if (not (eqv? 1234000000/1234 (string->number (number->string 1234000000/1234))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1234000000/1234 (number->string 1234000000/1234) (string->number (number->string 1234000000/1234)))))
+        (begin (display "(string<->number 1234000000/1234) -> ") (display (number->string 1234000000/1234)) 
+	       (display " -> ") (display (string->number (number->string 1234000000/1234))) (newline)))
 (if (not (eqv? 1234000000/1234000000 (string->number (number->string 1234000000/1234000000))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1234000000/1234000000 (number->string 1234000000/1234000000) (string->number (number->string 1234000000/1234000000)))))
+        (begin (display "(string<->number 1234000000/1234000000) -> ") (display (number->string 1234000000/1234000000)) 
+	       (display " -> ") (display (string->number (number->string 1234000000/1234000000))) (newline)))
 (if (not (eqv? 1234000000/500029 (string->number (number->string 1234000000/500029))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1234000000/500029 (number->string 1234000000/500029) (string->number (number->string 1234000000/500029)))))
+        (begin (display "(string<->number 1234000000/500029) -> ") (display (number->string 1234000000/500029)) 
+	       (display " -> ") (display (string->number (number->string 1234000000/500029))) (newline)))
 (if (not (eqv? 1234000000/362880 (string->number (number->string 1234000000/362880))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1234000000/362880 (number->string 1234000000/362880) (string->number (number->string 1234000000/362880)))))
+        (begin (display "(string<->number 1234000000/362880) -> ") (display (number->string 1234000000/362880)) 
+	       (display " -> ") (display (string->number (number->string 1234000000/362880))) (newline)))
 (if (not (eqv? 500029/1 (string->number (number->string 500029/1))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 500029/1 (number->string 500029/1) (string->number (number->string 500029/1)))))
+        (begin (display "(string<->number 500029/1) -> ") (display (number->string 500029/1)) 
+	       (display " -> ") (display (string->number (number->string 500029/1))) (newline)))
 (if (not (eqv? 500029/2 (string->number (number->string 500029/2))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 500029/2 (number->string 500029/2) (string->number (number->string 500029/2)))))
+        (begin (display "(string<->number 500029/2) -> ") (display (number->string 500029/2)) 
+	       (display " -> ") (display (string->number (number->string 500029/2))) (newline)))
 (if (not (eqv? 500029/3 (string->number (number->string 500029/3))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 500029/3 (number->string 500029/3) (string->number (number->string 500029/3)))))
+        (begin (display "(string<->number 500029/3) -> ") (display (number->string 500029/3)) 
+	       (display " -> ") (display (string->number (number->string 500029/3))) (newline)))
 (if (not (eqv? 500029/10 (string->number (number->string 500029/10))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 500029/10 (number->string 500029/10) (string->number (number->string 500029/10)))))
+        (begin (display "(string<->number 500029/10) -> ") (display (number->string 500029/10)) 
+	       (display " -> ") (display (string->number (number->string 500029/10))) (newline)))
 (if (not (eqv? 500029/1234 (string->number (number->string 500029/1234))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 500029/1234 (number->string 500029/1234) (string->number (number->string 500029/1234)))))
+        (begin (display "(string<->number 500029/1234) -> ") (display (number->string 500029/1234)) 
+	       (display " -> ") (display (string->number (number->string 500029/1234))) (newline)))
 (if (not (eqv? 500029/1234000000 (string->number (number->string 500029/1234000000))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 500029/1234000000 (number->string 500029/1234000000) (string->number (number->string 500029/1234000000)))))
+        (begin (display "(string<->number 500029/1234000000) -> ") (display (number->string 500029/1234000000)) 
+	       (display " -> ") (display (string->number (number->string 500029/1234000000))) (newline)))
 (if (not (eqv? 500029/500029 (string->number (number->string 500029/500029))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 500029/500029 (number->string 500029/500029) (string->number (number->string 500029/500029)))))
+        (begin (display "(string<->number 500029/500029) -> ") (display (number->string 500029/500029)) 
+	       (display " -> ") (display (string->number (number->string 500029/500029))) (newline)))
 (if (not (eqv? 500029/362880 (string->number (number->string 500029/362880))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 500029/362880 (number->string 500029/362880) (string->number (number->string 500029/362880)))))
+        (begin (display "(string<->number 500029/362880) -> ") (display (number->string 500029/362880)) 
+	       (display " -> ") (display (string->number (number->string 500029/362880))) (newline)))
 (if (not (eqv? 362880/1 (string->number (number->string 362880/1))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 362880/1 (number->string 362880/1) (string->number (number->string 362880/1)))))
+        (begin (display "(string<->number 362880/1) -> ") (display (number->string 362880/1)) 
+	       (display " -> ") (display (string->number (number->string 362880/1))) (newline)))
 (if (not (eqv? 362880/2 (string->number (number->string 362880/2))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 362880/2 (number->string 362880/2) (string->number (number->string 362880/2)))))
+        (begin (display "(string<->number 362880/2) -> ") (display (number->string 362880/2)) 
+	       (display " -> ") (display (string->number (number->string 362880/2))) (newline)))
 (if (not (eqv? 362880/3 (string->number (number->string 362880/3))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 362880/3 (number->string 362880/3) (string->number (number->string 362880/3)))))
+        (begin (display "(string<->number 362880/3) -> ") (display (number->string 362880/3)) 
+	       (display " -> ") (display (string->number (number->string 362880/3))) (newline)))
 (if (not (eqv? 362880/10 (string->number (number->string 362880/10))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 362880/10 (number->string 362880/10) (string->number (number->string 362880/10)))))
+        (begin (display "(string<->number 362880/10) -> ") (display (number->string 362880/10)) 
+	       (display " -> ") (display (string->number (number->string 362880/10))) (newline)))
 (if (not (eqv? 362880/1234 (string->number (number->string 362880/1234))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 362880/1234 (number->string 362880/1234) (string->number (number->string 362880/1234)))))
+        (begin (display "(string<->number 362880/1234) -> ") (display (number->string 362880/1234)) 
+	       (display " -> ") (display (string->number (number->string 362880/1234))) (newline)))
 (if (not (eqv? 362880/1234000000 (string->number (number->string 362880/1234000000))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 362880/1234000000 (number->string 362880/1234000000) (string->number (number->string 362880/1234000000)))))
+        (begin (display "(string<->number 362880/1234000000) -> ") (display (number->string 362880/1234000000)) 
+	       (display " -> ") (display (string->number (number->string 362880/1234000000))) (newline)))
 (if (not (eqv? 362880/500029 (string->number (number->string 362880/500029))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 362880/500029 (number->string 362880/500029) (string->number (number->string 362880/500029)))))
+        (begin (display "(string<->number 362880/500029) -> ") (display (number->string 362880/500029)) 
+	       (display " -> ") (display (string->number (number->string 362880/500029))) (newline)))
 (if (not (eqv? 362880/362880 (string->number (number->string 362880/362880))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 362880/362880 (number->string 362880/362880) (string->number (number->string 362880/362880)))))
+        (begin (display "(string<->number 362880/362880) -> ") (display (number->string 362880/362880)) 
+	       (display " -> ") (display (string->number (number->string 362880/362880))) (newline)))
 (if (not (eqv? 0.000000 (string->number (number->string 0.000000))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 0.000000 (number->string 0.000000) (string->number (number->string 0.000000)))))
+    (begin (display "(string<->number 0.000000) -> ") (display (number->string 0.000000)) 
+	   (display " -> ") (display (string->number (number->string 0.000000))) (newline)))
 (if (not (eqv? 0.000000 (string->number (number->string 0.000000))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 0.000000 (number->string 0.000000) (string->number (number->string 0.000000)))))
+    (begin (display "(string<->number 0.000000) -> ") (display (number->string 0.000000)) 
+	   (display " -> ") (display (string->number (number->string 0.000000))) (newline)))
 (if (not (eqv? 1.000000 (string->number (number->string 1.000000))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1.000000 (number->string 1.000000) (string->number (number->string 1.000000)))))
+    (begin (display "(string<->number 1.000000) -> ") (display (number->string 1.000000)) 
+	   (display " -> ") (display (string->number (number->string 1.000000))) (newline)))
 (if (not (eqv? 3.141593 (string->number (number->string 3.141593))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 3.141593 (number->string 3.141593) (string->number (number->string 3.141593)))))
+    (begin (display "(string<->number 3.141593) -> ") (display (number->string 3.141593)) 
+	   (display " -> ") (display (string->number (number->string 3.141593))) (newline)))
 (if (not (eqv? 2.718282 (string->number (number->string 2.718282))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 2.718282 (number->string 2.718282) (string->number (number->string 2.718282)))))
+    (begin (display "(string<->number 2.718282) -> ") (display (number->string 2.718282)) 
+	   (display " -> ") (display (string->number (number->string 2.718282))) (newline)))
 (if (not (eqv? 1234.000000 (string->number (number->string 1234.000000))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1234.000000 (number->string 1234.000000) (string->number (number->string 1234.000000)))))
+    (begin (display "(string<->number 1234.000000) -> ") (display (number->string 1234.000000)) 
+	   (display " -> ") (display (string->number (number->string 1234.000000))) (newline)))
 (if (not (eqv? 1234000000.000000 (string->number (number->string 1234000000.000000))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1234000000.000000 (number->string 1234000000.000000) (string->number (number->string 1234000000.000000)))))
+    (begin (display "(string<->number 1234000000.000000) -> ") (display (number->string 1234000000.000000)) 
+	   (display " -> ") (display (string->number (number->string 1234000000.000000))) (newline)))
 (if (not (eqv? 0.000000+0.000000i (string->number (number->string 0.000000+0.000000i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 0.000000+0.000000i (number->string 0.000000+0.000000i) (string->number (number->string 0.000000+0.000000i)))))
+     (begin (display "(string<->number 0.000000+0.000000i) -> ") (display (number->string 0.000000+0.000000i)) 
+	    (display " -> ") (display (string->number (number->string 0.000000+0.000000i))) (newline)))
 (if (not (eqv? 0.000000+0.000000i (string->number (number->string 0.000000+0.000000i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 0.000000+0.000000i (number->string 0.000000+0.000000i) (string->number (number->string 0.000000+0.000000i)))))
+     (begin (display "(string<->number 0.000000+0.000000i) -> ") (display (number->string 0.000000+0.000000i)) 
+	    (display " -> ") (display (string->number (number->string 0.000000+0.000000i))) (newline)))
 (if (not (eqv? 0.000000+1.000000i (string->number (number->string 0.000000+1.000000i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 0.000000+1.000000i (number->string 0.000000+1.000000i) (string->number (number->string 0.000000+1.000000i)))))
+     (begin (display "(string<->number 0.000000+1.000000i) -> ") (display (number->string 0.000000+1.000000i)) 
+	    (display " -> ") (display (string->number (number->string 0.000000+1.000000i))) (newline)))
 (if (not (eqv? 0.000000+3.141593i (string->number (number->string 0.000000+3.141593i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 0.000000+3.141593i (number->string 0.000000+3.141593i) (string->number (number->string 0.000000+3.141593i)))))
+     (begin (display "(string<->number 0.000000+3.141593i) -> ") (display (number->string 0.000000+3.141593i)) 
+	    (display " -> ") (display (string->number (number->string 0.000000+3.141593i))) (newline)))
 (if (not (eqv? 0.000000+2.718282i (string->number (number->string 0.000000+2.718282i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 0.000000+2.718282i (number->string 0.000000+2.718282i) (string->number (number->string 0.000000+2.718282i)))))
+     (begin (display "(string<->number 0.000000+2.718282i) -> ") (display (number->string 0.000000+2.718282i)) 
+	    (display " -> ") (display (string->number (number->string 0.000000+2.718282i))) (newline)))
 (if (not (eqv? 0.000000+1234.000000i (string->number (number->string 0.000000+1234.000000i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 0.000000+1234.000000i (number->string 0.000000+1234.000000i) (string->number (number->string 0.000000+1234.000000i)))))
+     (begin (display "(string<->number 0.000000+1234.000000i) -> ") (display (number->string 0.000000+1234.000000i)) 
+	    (display " -> ") (display (string->number (number->string 0.000000+1234.000000i))) (newline)))
 (if (not (eqv? 0.000000+1234000000.000000i (string->number (number->string 0.000000+1234000000.000000i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 0.000000+1234000000.000000i (number->string 0.000000+1234000000.000000i) (string->number (number->string 0.000000+1234000000.000000i)))))
+     (begin (display "(string<->number 0.000000+1234000000.000000i) -> ") (display (number->string 0.000000+1234000000.000000i)) 
+	    (display " -> ") (display (string->number (number->string 0.000000+1234000000.000000i))) (newline)))
 (if (not (eqv? 0.000000+0.000000i (string->number (number->string 0.000000+0.000000i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 0.000000+0.000000i (number->string 0.000000+0.000000i) (string->number (number->string 0.000000+0.000000i)))))
+     (begin (display "(string<->number 0.000000+0.000000i) -> ") (display (number->string 0.000000+0.000000i)) 
+	    (display " -> ") (display (string->number (number->string 0.000000+0.000000i))) (newline)))
 (if (not (eqv? 0.000000+0.000000i (string->number (number->string 0.000000+0.000000i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 0.000000+0.000000i (number->string 0.000000+0.000000i) (string->number (number->string 0.000000+0.000000i)))))
+     (begin (display "(string<->number 0.000000+0.000000i) -> ") (display (number->string 0.000000+0.000000i)) 
+	    (display " -> ") (display (string->number (number->string 0.000000+0.000000i))) (newline)))
 (if (not (eqv? 0.000000+1.000000i (string->number (number->string 0.000000+1.000000i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 0.000000+1.000000i (number->string 0.000000+1.000000i) (string->number (number->string 0.000000+1.000000i)))))
+     (begin (display "(string<->number 0.000000+1.000000i) -> ") (display (number->string 0.000000+1.000000i)) 
+	    (display " -> ") (display (string->number (number->string 0.000000+1.000000i))) (newline)))
 (if (not (eqv? 0.000000+3.141593i (string->number (number->string 0.000000+3.141593i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 0.000000+3.141593i (number->string 0.000000+3.141593i) (string->number (number->string 0.000000+3.141593i)))))
+     (begin (display "(string<->number 0.000000+3.141593i) -> ") (display (number->string 0.000000+3.141593i)) 
+	    (display " -> ") (display (string->number (number->string 0.000000+3.141593i))) (newline)))
 (if (not (eqv? 0.000000+2.718282i (string->number (number->string 0.000000+2.718282i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 0.000000+2.718282i (number->string 0.000000+2.718282i) (string->number (number->string 0.000000+2.718282i)))))
+     (begin (display "(string<->number 0.000000+2.718282i) -> ") (display (number->string 0.000000+2.718282i)) 
+	    (display " -> ") (display (string->number (number->string 0.000000+2.718282i))) (newline)))
 (if (not (eqv? 0.000000+1234.000000i (string->number (number->string 0.000000+1234.000000i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 0.000000+1234.000000i (number->string 0.000000+1234.000000i) (string->number (number->string 0.000000+1234.000000i)))))
+     (begin (display "(string<->number 0.000000+1234.000000i) -> ") (display (number->string 0.000000+1234.000000i)) 
+	    (display " -> ") (display (string->number (number->string 0.000000+1234.000000i))) (newline)))
 (if (not (eqv? 0.000000+1234000000.000000i (string->number (number->string 0.000000+1234000000.000000i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 0.000000+1234000000.000000i (number->string 0.000000+1234000000.000000i) (string->number (number->string 0.000000+1234000000.000000i)))))
+     (begin (display "(string<->number 0.000000+1234000000.000000i) -> ") (display (number->string 0.000000+1234000000.000000i)) 
+	    (display " -> ") (display (string->number (number->string 0.000000+1234000000.000000i))) (newline)))
 (if (not (eqv? 1.000000+0.000000i (string->number (number->string 1.000000+0.000000i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1.000000+0.000000i (number->string 1.000000+0.000000i) (string->number (number->string 1.000000+0.000000i)))))
+     (begin (display "(string<->number 1.000000+0.000000i) -> ") (display (number->string 1.000000+0.000000i)) 
+	    (display " -> ") (display (string->number (number->string 1.000000+0.000000i))) (newline)))
 (if (not (eqv? 1.000000+0.000000i (string->number (number->string 1.000000+0.000000i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1.000000+0.000000i (number->string 1.000000+0.000000i) (string->number (number->string 1.000000+0.000000i)))))
+     (begin (display "(string<->number 1.000000+0.000000i) -> ") (display (number->string 1.000000+0.000000i)) 
+	    (display " -> ") (display (string->number (number->string 1.000000+0.000000i))) (newline)))
 (if (not (eqv? 1.000000+1.000000i (string->number (number->string 1.000000+1.000000i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1.000000+1.000000i (number->string 1.000000+1.000000i) (string->number (number->string 1.000000+1.000000i)))))
+     (begin (display "(string<->number 1.000000+1.000000i) -> ") (display (number->string 1.000000+1.000000i)) 
+	    (display " -> ") (display (string->number (number->string 1.000000+1.000000i))) (newline)))
 (if (not (eqv? 1.000000+3.141593i (string->number (number->string 1.000000+3.141593i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1.000000+3.141593i (number->string 1.000000+3.141593i) (string->number (number->string 1.000000+3.141593i)))))
+     (begin (display "(string<->number 1.000000+3.141593i) -> ") (display (number->string 1.000000+3.141593i)) 
+	    (display " -> ") (display (string->number (number->string 1.000000+3.141593i))) (newline)))
 (if (not (eqv? 1.000000+2.718282i (string->number (number->string 1.000000+2.718282i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1.000000+2.718282i (number->string 1.000000+2.718282i) (string->number (number->string 1.000000+2.718282i)))))
+     (begin (display "(string<->number 1.000000+2.718282i) -> ") (display (number->string 1.000000+2.718282i)) 
+	    (display " -> ") (display (string->number (number->string 1.000000+2.718282i))) (newline)))
 (if (not (eqv? 1.000000+1234.000000i (string->number (number->string 1.000000+1234.000000i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1.000000+1234.000000i (number->string 1.000000+1234.000000i) (string->number (number->string 1.000000+1234.000000i)))))
+     (begin (display "(string<->number 1.000000+1234.000000i) -> ") (display (number->string 1.000000+1234.000000i)) 
+	    (display " -> ") (display (string->number (number->string 1.000000+1234.000000i))) (newline)))
 (if (not (eqv? 1.000000+1234000000.000000i (string->number (number->string 1.000000+1234000000.000000i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1.000000+1234000000.000000i (number->string 1.000000+1234000000.000000i) (string->number (number->string 1.000000+1234000000.000000i)))))
+     (begin (display "(string<->number 1.000000+1234000000.000000i) -> ") (display (number->string 1.000000+1234000000.000000i)) 
+	    (display " -> ") (display (string->number (number->string 1.000000+1234000000.000000i))) (newline)))
 (if (not (eqv? 3.141593+0.000000i (string->number (number->string 3.141593+0.000000i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 3.141593+0.000000i (number->string 3.141593+0.000000i) (string->number (number->string 3.141593+0.000000i)))))
+     (begin (display "(string<->number 3.141593+0.000000i) -> ") (display (number->string 3.141593+0.000000i)) 
+	    (display " -> ") (display (string->number (number->string 3.141593+0.000000i))) (newline)))
 (if (not (eqv? 3.141593+0.000000i (string->number (number->string 3.141593+0.000000i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 3.141593+0.000000i (number->string 3.141593+0.000000i) (string->number (number->string 3.141593+0.000000i)))))
+     (begin (display "(string<->number 3.141593+0.000000i) -> ") (display (number->string 3.141593+0.000000i)) 
+	    (display " -> ") (display (string->number (number->string 3.141593+0.000000i))) (newline)))
 (if (not (eqv? 3.141593+1.000000i (string->number (number->string 3.141593+1.000000i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 3.141593+1.000000i (number->string 3.141593+1.000000i) (string->number (number->string 3.141593+1.000000i)))))
+     (begin (display "(string<->number 3.141593+1.000000i) -> ") (display (number->string 3.141593+1.000000i)) 
+	    (display " -> ") (display (string->number (number->string 3.141593+1.000000i))) (newline)))
 (if (not (eqv? 3.141593+3.141593i (string->number (number->string 3.141593+3.141593i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 3.141593+3.141593i (number->string 3.141593+3.141593i) (string->number (number->string 3.141593+3.141593i)))))
+     (begin (display "(string<->number 3.141593+3.141593i) -> ") (display (number->string 3.141593+3.141593i)) 
+	    (display " -> ") (display (string->number (number->string 3.141593+3.141593i))) (newline)))
 (if (not (eqv? 3.141593+2.718282i (string->number (number->string 3.141593+2.718282i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 3.141593+2.718282i (number->string 3.141593+2.718282i) (string->number (number->string 3.141593+2.718282i)))))
+     (begin (display "(string<->number 3.141593+2.718282i) -> ") (display (number->string 3.141593+2.718282i)) 
+	    (display " -> ") (display (string->number (number->string 3.141593+2.718282i))) (newline)))
 (if (not (eqv? 3.141593+1234.000000i (string->number (number->string 3.141593+1234.000000i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 3.141593+1234.000000i (number->string 3.141593+1234.000000i) (string->number (number->string 3.141593+1234.000000i)))))
+     (begin (display "(string<->number 3.141593+1234.000000i) -> ") (display (number->string 3.141593+1234.000000i)) 
+	    (display " -> ") (display (string->number (number->string 3.141593+1234.000000i))) (newline)))
 (if (not (eqv? 3.141593+1234000000.000000i (string->number (number->string 3.141593+1234000000.000000i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 3.141593+1234000000.000000i (number->string 3.141593+1234000000.000000i) (string->number (number->string 3.141593+1234000000.000000i)))))
+     (begin (display "(string<->number 3.141593+1234000000.000000i) -> ") (display (number->string 3.141593+1234000000.000000i)) 
+	    (display " -> ") (display (string->number (number->string 3.141593+1234000000.000000i))) (newline)))
 (if (not (eqv? 2.718282+0.000000i (string->number (number->string 2.718282+0.000000i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 2.718282+0.000000i (number->string 2.718282+0.000000i) (string->number (number->string 2.718282+0.000000i)))))
+     (begin (display "(string<->number 2.718282+0.000000i) -> ") (display (number->string 2.718282+0.000000i)) 
+	    (display " -> ") (display (string->number (number->string 2.718282+0.000000i))) (newline)))
 (if (not (eqv? 2.718282+0.000000i (string->number (number->string 2.718282+0.000000i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 2.718282+0.000000i (number->string 2.718282+0.000000i) (string->number (number->string 2.718282+0.000000i)))))
+     (begin (display "(string<->number 2.718282+0.000000i) -> ") (display (number->string 2.718282+0.000000i)) 
+	    (display " -> ") (display (string->number (number->string 2.718282+0.000000i))) (newline)))
 (if (not (eqv? 2.718282+1.000000i (string->number (number->string 2.718282+1.000000i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 2.718282+1.000000i (number->string 2.718282+1.000000i) (string->number (number->string 2.718282+1.000000i)))))
+     (begin (display "(string<->number 2.718282+1.000000i) -> ") (display (number->string 2.718282+1.000000i)) 
+	    (display " -> ") (display (string->number (number->string 2.718282+1.000000i))) (newline)))
 (if (not (eqv? 2.718282+3.141593i (string->number (number->string 2.718282+3.141593i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 2.718282+3.141593i (number->string 2.718282+3.141593i) (string->number (number->string 2.718282+3.141593i)))))
+     (begin (display "(string<->number 2.718282+3.141593i) -> ") (display (number->string 2.718282+3.141593i)) 
+	    (display " -> ") (display (string->number (number->string 2.718282+3.141593i))) (newline)))
 (if (not (eqv? 2.718282+2.718282i (string->number (number->string 2.718282+2.718282i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 2.718282+2.718282i (number->string 2.718282+2.718282i) (string->number (number->string 2.718282+2.718282i)))))
+     (begin (display "(string<->number 2.718282+2.718282i) -> ") (display (number->string 2.718282+2.718282i)) 
+	    (display " -> ") (display (string->number (number->string 2.718282+2.718282i))) (newline)))
 (if (not (eqv? 2.718282+1234.000000i (string->number (number->string 2.718282+1234.000000i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 2.718282+1234.000000i (number->string 2.718282+1234.000000i) (string->number (number->string 2.718282+1234.000000i)))))
+     (begin (display "(string<->number 2.718282+1234.000000i) -> ") (display (number->string 2.718282+1234.000000i)) 
+	    (display " -> ") (display (string->number (number->string 2.718282+1234.000000i))) (newline)))
 (if (not (eqv? 2.718282+1234000000.000000i (string->number (number->string 2.718282+1234000000.000000i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 2.718282+1234000000.000000i (number->string 2.718282+1234000000.000000i) (string->number (number->string 2.718282+1234000000.000000i)))))
+     (begin (display "(string<->number 2.718282+1234000000.000000i) -> ") (display (number->string 2.718282+1234000000.000000i)) 
+	    (display " -> ") (display (string->number (number->string 2.718282+1234000000.000000i))) (newline)))
 (if (not (eqv? 1234.000000+0.000000i (string->number (number->string 1234.000000+0.000000i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1234.000000+0.000000i (number->string 1234.000000+0.000000i) (string->number (number->string 1234.000000+0.000000i)))))
+     (begin (display "(string<->number 1234.000000+0.000000i) -> ") (display (number->string 1234.000000+0.000000i)) 
+	    (display " -> ") (display (string->number (number->string 1234.000000+0.000000i))) (newline)))
 (if (not (eqv? 1234.000000+0.000000i (string->number (number->string 1234.000000+0.000000i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1234.000000+0.000000i (number->string 1234.000000+0.000000i) (string->number (number->string 1234.000000+0.000000i)))))
+     (begin (display "(string<->number 1234.000000+0.000000i) -> ") (display (number->string 1234.000000+0.000000i)) 
+	    (display " -> ") (display (string->number (number->string 1234.000000+0.000000i))) (newline)))
 (if (not (eqv? 1234.000000+1.000000i (string->number (number->string 1234.000000+1.000000i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1234.000000+1.000000i (number->string 1234.000000+1.000000i) (string->number (number->string 1234.000000+1.000000i)))))
+     (begin (display "(string<->number 1234.000000+1.000000i) -> ") (display (number->string 1234.000000+1.000000i)) 
+	    (display " -> ") (display (string->number (number->string 1234.000000+1.000000i))) (newline)))
 (if (not (eqv? 1234.000000+3.141593i (string->number (number->string 1234.000000+3.141593i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1234.000000+3.141593i (number->string 1234.000000+3.141593i) (string->number (number->string 1234.000000+3.141593i)))))
+     (begin (display "(string<->number 1234.000000+3.141593i) -> ") (display (number->string 1234.000000+3.141593i)) 
+	    (display " -> ") (display (string->number (number->string 1234.000000+3.141593i))) (newline)))
 (if (not (eqv? 1234.000000+2.718282i (string->number (number->string 1234.000000+2.718282i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1234.000000+2.718282i (number->string 1234.000000+2.718282i) (string->number (number->string 1234.000000+2.718282i)))))
+     (begin (display "(string<->number 1234.000000+2.718282i) -> ") (display (number->string 1234.000000+2.718282i)) 
+	    (display " -> ") (display (string->number (number->string 1234.000000+2.718282i))) (newline)))
 (if (not (eqv? 1234.000000+1234.000000i (string->number (number->string 1234.000000+1234.000000i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1234.000000+1234.000000i (number->string 1234.000000+1234.000000i) (string->number (number->string 1234.000000+1234.000000i)))))
+     (begin (display "(string<->number 1234.000000+1234.000000i) -> ") (display (number->string 1234.000000+1234.000000i)) 
+	    (display " -> ") (display (string->number (number->string 1234.000000+1234.000000i))) (newline)))
 (if (not (eqv? 1234.000000+1234000000.000000i (string->number (number->string 1234.000000+1234000000.000000i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1234.000000+1234000000.000000i (number->string 1234.000000+1234000000.000000i) (string->number (number->string 1234.000000+1234000000.000000i)))))
+     (begin (display "(string<->number 1234.000000+1234000000.000000i) -> ") (display (number->string 1234.000000+1234000000.000000i)) 
+	    (display " -> ") (display (string->number (number->string 1234.000000+1234000000.000000i))) (newline)))
 (if (not (eqv? 1234000000.000000+0.000000i (string->number (number->string 1234000000.000000+0.000000i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1234000000.000000+0.000000i (number->string 1234000000.000000+0.000000i) (string->number (number->string 1234000000.000000+0.000000i)))))
+     (begin (display "(string<->number 1234000000.000000+0.000000i) -> ") (display (number->string 1234000000.000000+0.000000i)) 
+	    (display " -> ") (display (string->number (number->string 1234000000.000000+0.000000i))) (newline)))
 (if (not (eqv? 1234000000.000000+0.000000i (string->number (number->string 1234000000.000000+0.000000i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1234000000.000000+0.000000i (number->string 1234000000.000000+0.000000i) (string->number (number->string 1234000000.000000+0.000000i)))))
+     (begin (display "(string<->number 1234000000.000000+0.000000i) -> ") (display (number->string 1234000000.000000+0.000000i)) 
+	    (display " -> ") (display (string->number (number->string 1234000000.000000+0.000000i))) (newline)))
 (if (not (eqv? 1234000000.000000+1.000000i (string->number (number->string 1234000000.000000+1.000000i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1234000000.000000+1.000000i (number->string 1234000000.000000+1.000000i) (string->number (number->string 1234000000.000000+1.000000i)))))
+     (begin (display "(string<->number 1234000000.000000+1.000000i) -> ") (display (number->string 1234000000.000000+1.000000i)) 
+	    (display " -> ") (display (string->number (number->string 1234000000.000000+1.000000i))) (newline)))
 (if (not (eqv? 1234000000.000000+3.141593i (string->number (number->string 1234000000.000000+3.141593i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1234000000.000000+3.141593i (number->string 1234000000.000000+3.141593i) (string->number (number->string 1234000000.000000+3.141593i)))))
+     (begin (display "(string<->number 1234000000.000000+3.141593i) -> ") (display (number->string 1234000000.000000+3.141593i)) 
+	    (display " -> ") (display (string->number (number->string 1234000000.000000+3.141593i))) (newline)))
 (if (not (eqv? 1234000000.000000+2.718282i (string->number (number->string 1234000000.000000+2.718282i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1234000000.000000+2.718282i (number->string 1234000000.000000+2.718282i) (string->number (number->string 1234000000.000000+2.718282i)))))
+     (begin (display "(string<->number 1234000000.000000+2.718282i) -> ") (display (number->string 1234000000.000000+2.718282i)) 
+	    (display " -> ") (display (string->number (number->string 1234000000.000000+2.718282i))) (newline)))
 (if (not (eqv? 1234000000.000000+1234.000000i (string->number (number->string 1234000000.000000+1234.000000i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1234000000.000000+1234.000000i (number->string 1234000000.000000+1234.000000i) (string->number (number->string 1234000000.000000+1234.000000i)))))
+     (begin (display "(string<->number 1234000000.000000+1234.000000i) -> ") (display (number->string 1234000000.000000+1234.000000i)) 
+	    (display " -> ") (display (string->number (number->string 1234000000.000000+1234.000000i))) (newline)))
 (if (not (eqv? 1234000000.000000+1234000000.000000i (string->number (number->string 1234000000.000000+1234000000.000000i))))
-    (display (format #f ";string<->number ~A -> ~A -> ~A?~%" 1234000000.000000+1234000000.000000i (number->string 1234000000.000000+1234000000.000000i) (string->number (number->string 1234000000.000000+1234000000.000000i)))))
+     (begin (display "(string<->number 1234000000.000000+1234000000.000000i) -> ") (display (number->string 1234000000.000000+1234000000.000000i)) 
+	    (display " -> ") (display (string->number (number->string 1234000000.000000+1234000000.000000i))) (newline)))
 ;;; --------------------------------------------------------------------------------
 
 (num-test (exact?) 'error)
@@ -3018,19 +3205,23 @@
 (num-test (odd? 123 123) 'error)
 (num-test (quotient) 'error)
 (num-test (quotient 123) 'error)
-(num-test (quotient 1.23 1.23) 'error)
+(if (not with-generic-modulo)
+    (num-test (quotient 1.23 1.23) 'error))
 (num-test (quotient 123 123 123) 'error)
 (num-test (remainder) 'error)
 (num-test (remainder 123) 'error)
-(num-test (remainder 1.23 1.23) 'error)
+(if (not with-generic-modulo)
+    (num-test (remainder 1.23 1.23) 'error))
 (num-test (remainder 123 123 123) 'error)
 (num-test (modulo) 'error)
 (num-test (modulo 123) 'error)
-(num-test (modulo 1.23 1.23) 'error)
+(if (not with-generic-modulo)
+    (num-test (modulo 1.23 1.23) 'error))
 (num-test (modulo 123 123 123) 'error)
 (num-test (truncate) 'error)
 (num-test (truncate 1.23+1.0i) 'error)
-(num-test (truncate 1.23 1.23) 'error)
+(if (not with-generic-modulo)
+    (num-test (truncate 1.23 1.23) 'error))
 (num-test (floor) 'error)
 (num-test (floor 1.23+1.0i) 'error)
 (num-test (floor 1.23 1.23) 'error)
@@ -10073,14 +10264,16 @@
 (num-test (remainder -362880 -362880) 0)
 (num-test (quotient -362880 -362880) 1)
 
-(num-test (modulo 3 2.3) 'error)
-(num-test (modulo 2.3 3) 'error)
-(num-test (modulo 1/3 2.3) 'error)
+(if (not with-generic-modulo) (begin
+				(num-test (modulo 3 2.3) 'error)
+				(num-test (modulo 2.3 3) 'error)
+				(num-test (modulo 1/3 2.3) 'error)))
 (num-test (modulo 2.3 1.0+0.1i) 'error)
 (num-test (modulo 3.0+2.3i 3) 'error)
-(num-test (remainder 3 2.3) 'error)
-(num-test (remainder 2.3 3) 'error)
-(num-test (remainder 1/3 2.3) 'error)
+(if (not with-generic-modulo) (begin
+				(num-test (remainder 3 2.3) 'error)
+				(num-test (remainder 2.3 3) 'error)
+				(num-test (remainder 1/3 2.3) 'error)))
 (num-test (remainder 2.3 1.0+0.1i) 'error)
 (num-test (remainder 3.0+2.3i 3) 'error)
 (num-test (abs 0) 0)
@@ -22484,6 +22677,11 @@
 (num-test (/ 0.0+1.0i 0.0+1.0i 0.0+1.0i) 0.0-1.0i)
 (num-test (= 0.0+1.0i 0.0+1.0i 0.0+1.0i) #t)
 
+(num-test (< 1 1 2) #f)
+(num-test (>= 1 1 2) #f)
+(num-test (> 2 2 1) #f)
+(num-test (<= 2 2 1) #f)
+
 (num-test (< 2 1 1.0+1.0i) 'error)
 (num-test (<= 2 1 1.0+1.0i) 'error)
 (num-test (> 1 2 1.0+1.0i) 'error)
@@ -22494,7 +22692,15 @@
 (num-test (> 1 2 #\a) 'error)
 (num-test (>= 1 2 #\a) 'error)
 
+(num-test (= 0 1 "hi") 'error)
+(num-test (= 0.0 1.0 "hi") 'error)
 (num-test (* 0 1 "hi") 'error)
+(num-test (* 0.0 "hi") 'error)
+(num-test (* 0.0+0.0i "hi") 'error)
+(num-test (* 0/1 "hi") 'error)
+(num-test (/ 0 1 "hi") 'error)
+(num-test (gcd 0 "hi") 'error)
+(num-test (lcm 0 "hi") 'error)
 (num-test (* 1 0.0 #\a) 'error)
 
 
@@ -24422,8 +24628,6 @@
 (num-test (expt 0 0) 1)
 
 
-
-;;; --------------------------------------------------------------------------------
 ;;; from r4rstest.scm:
 
 
@@ -24621,17 +24825,962 @@
 (test (= 1 #e1 1/1 #e1/1 #e1.0 #e1e0 #e1.##) #t)
 (test (= #i3/10 3#/100 0.3 #i0.3 3e-1 3d-1 0.3e0 3e-1) #t)
 
+;;; these 2 are from guile
+(for-each 
+ (lambda (x) 
+   (if (string->number x)
+       (begin
+	 (display "(string->number ") (display x) (display ") returned ") (display (string->number x)) (newline))))
+ '("" "q" "1q" "6+7iq" "8+9q" "10+11" "13+" "18@19q" "20@q" "23@"
+   "+25iq" "26i" "-q" "-iq" "i" "5#.0" "8/" "10#11" ".#" "."
+   "#o.2" "3.4q" "15.16e17q" "18.19e+q" ".q" ".17#18" "10q" "#b2"
+   "#b3" "#b4" "#b5" "#b6" "#b7" "#b8" "#b9" "#ba" "#bb" "#bc"
+   "#bd" "#be" "#bf" "#q" "#b#b1" "#o#o1" "#d#d1" "#x#x1" "#e#e1"
+   "#i#i1" "12@12+0i"))
+
+(for-each 
+ (lambda (couple)
+   (apply
+    (lambda (x y)
+      (let ((xx (string->number x)))
+	(if (or (eq? xx #f)
+		(not (eqv? xx y)))
+	    (begin
+	      (display "(string->number ") (display x) (display ") returned ") (display (string->number x)) (display " but expected ") (display y) (newline)))))
+    couple))
+ `(;; Radix:
+   ("#b0" 0)  ("#b1" 1) ("#o0" 0)
+   ("#o1" 1)  ("#o2" 2) ("#o3" 3)
+   ("#o4" 4)  ("#o5" 5) ("#o6" 6)
+   ("#o7" 7)  ("#d0" 0) ("#d1" 1)
+   ("#d2" 2)  ("#d3" 3) ("#d4" 4)
+   ("#d5" 5)  ("#d6" 6) ("#d7" 7)
+   ("#d8" 8)  ("#d9" 9) 
+   ("#xa" 10) ("#xb" 11) 
+   ("#xc" 12) ("#xd" 13) 
+   ("#xe" 14) ("#xf" 15) 
+   ("#b1010" 10)
+   ("#o12345670" 2739128)
+   ("#d1234567890" 1234567890)
+   ("#x1234567890abcdef" 1311768467294899695)
+   ;; Exactness:
+   ("#e1" 1) ("#e1.2" 12/10)
+   ("#i1.1" 1.1) ("#i1" 1.0)
+   ;; Integers:
+   ("1" ,(1+ 0)) ("23" ,(+ 9 9 5)) ("-1" ,(- 0 1)) 
+   ("-45" ,(- 0 45)) ("2#" 20.0) ("2##" 200.0) ("12##" 1200.0)
+   ("#b#i100" 4.0)
+   ;; Fractions:
+   ("1/1" 1) ("1/2" 1/2) ("-1/2" -1/2) ("1#/1" 10.0)
+   ("10/1#" 1.0) ("1#/1#" 1.0) ("#e9/10" 9/10) ("#e10/1#" 1)
+   ("#i6/8" 0.75) ("#i1/1" 1.0)
+   ;; Decimal numbers:
+   ;; * <uinteger 10> <suffix>
+   ("1e2" 100.0) ("1s2" 100.0)
+   ("1f2" 100.0) ("1d2" 100.0) 
+   ("1l2" 100.0) ("1e+2" 100.0) ("1e-2" 0.01)
+   ;; * . <digit 10>+ #* <suffix>
+   (".1" .1) (".0123456789" 123456789e-10) (".16#" 0.16)
+   (".0123456789e10" 123456789.0) (".16#e3" 160.0) ("#d.3" 0.3)
+   ;; * <digit 10>+ . <digit 10>* #* <suffix>
+   ("3." ,(exact->inexact 3)) ("3.e0" ,(exact->inexact 3))
+   ("3.1" ,(exact->inexact 31/10)) ("3.1e0" 3.1) ("3.1#" 3.1)
+   ("3.1#e0" 3.1)
+   ;; * <digit 10>+ #+ . #* <suffix>
+   ("3#." 30.0) ("3#.e0" 30.0) ("3#.#" 30.0) ("3#.#e0" 30.0)
+   ;; Complex:
+   ;; ("1@0" 1.0) ("1@+0" 1.0) ("1@-0" 1.0)          ; whose dumb idea was this?
+   ("2+3i" ,(+ 2 (* 3 0+i))) ("4-5i" ,(- 4 (* 5 0+i)))
+   ("1+i" 1+1i) ("1-i" 1-1i) 
+   ;; ("+1i" 0+1i) ("-1i" 0-1i) ("+i" +1i) ("-i" -1i) ; I don't like these
+   ))
+
+
 
 
 ;;; --------------------------------------------------------------------------------
 ;;; PORTS
 ;;; --------------------------------------------------------------------------------
 
+(define start-input-port (current-input-port))
+(define start-output-port (current-output-port))
+
+(test (input-port? (current-input-port)) #t)
+
+(for-each
+ (lambda (arg)
+   (if (input-port? arg)
+       (begin
+	 (display "(input-port? ") (display arg) (display ") returned #t?") (newline))))
+ (list "hi" #f (integer->char 65) 1 (list 1 2) '#t '3 (make-vector 3) 3.14 3/4 1.0+1.0i #\f))
+
+(test (call-with-input-file "r5rstest.scm" input-port?) #t)
+(if (not (eq? start-input-port (current-input-port)))
+    (begin (display "call-with-input-file did not restore current-input-port? ") (display start-input-port) (display " ") (display (current-input-port)) (newline)))
+
+(test (let ((this-file (open-input-file "r5rstest.scm"))) (let ((res (input-port? this-file))) (close-input-port this-file) res)) #t)
+(if (not (eq? start-input-port (current-input-port)))
+    (begin (display "open-input-file clobbered current-input-port? ") (display start-input-port) (display " ") (display (current-input-port)) (newline)))
+
+(if (defined? 'call-with-input-string)
+    (test (call-with-input-string "(+ 1 2)" input-port?) #t))
+(if (defined? 'open-input-string)
+    (test (let ((this-file (open-input-string "(+ 1 2)"))) (let ((res (input-port? this-file))) (close-input-port this-file) res)) #t))
 
 
+
+(test (output-port? (current-output-port)) #t)
+
+(for-each
+ (lambda (arg)
+   (if (output-port? arg)
+       (begin
+	 (display "(output-port? ") (display arg) (display ") returned #t?") (newline))))
+ (list "hi" #f (integer->char 65) 1 (list 1 2) '#t '3 (make-vector 3) 3.14 3/4 1.0+1.0i #\f))
+
+(test (call-with-output-file "tmp1.r5rs" output-port?) #t)
+(if (not (eq? start-output-port (current-output-port)))
+    (begin (display "call-with-output-file did not restore current-output-port? ") (display start-output-port) (display " ") (display (current-output-port)) (newline)))
+
+(test (let ((this-file (open-output-file "tmp1.r5rs"))) (let ((res (output-port? this-file))) (close-output-port this-file) res)) #t)
+(if (not (eq? start-output-port (current-output-port)))
+    (begin (display "open-output-file clobbered current-output-port? ") (display start-output-port) (display " ") (display (current-output-port)) (newline)))
+
+(if (defined? 'call-with-output-string)
+    (test (let ((val #f)) (call-with-output-string (lambda (p) (set! val (output-port? p)))) val) #t))
+(if (defined? 'open-output-string)
+    (test (let ((res #f)) (let ((this-file (open-output-string))) (set! res (output-port? this-file)) (close-output-port this-file) res)) #t))
+
+
+
+(for-each
+ (lambda (arg)
+   (if (eof-object? arg)
+       (begin
+	 (display "(eof-object? ") (display arg) (display ") returned #t?") (newline))))
+ (list "hi" -1 #\a 1 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #f #t (lambda (a) (+ a 1))))
+
+(call-with-output-file "tmp1.r5rs" (lambda (p) (display "3.14" p)))
+(test (call-with-input-file "tmp1.r5rs" (lambda (p) (read p) (let ((val (read p))) (eof-object? val)))) #t)
+
+
+
+#!
+char-ready?
+current-input-port
+current-output-port
+close-input-port
+close-output-port
+open-input-file
+open-output-file
+read-char
+peek-char
+read
+newline
+write-char
+write
+display
+call-with-input-file
+with-input-from-file
+call-with-output-file
+with-output-to-file
+!#
+
+#!
+(test #\; peek-char this-file)
+(test #\; read-char this-file)
+(test '(define cur-section '()) read this-file)
+(test #\( peek-char this-file)
+(test '(define errs '()) read this-file)
+(close-input-port this-file)
+;(close-input-port this-file) ;-- s7 considers a closed port is not an input port
+(define (check-test-file name)
+  (define test-file (open-input-file name))
+  (test #t 'input-port?
+	(call-with-input-file
+	    name
+	  (lambda (test-file)
+	    (test load-test-obj read test-file)
+	    (test #t eof-object? (peek-char test-file))
+	    (test #t eof-object? (read-char test-file))
+	    (input-port? test-file))))
+  (test #\; read-char test-file)
+  (test #\; read-char test-file)
+  (test #\; read-char test-file)
+  (test write-test-obj read test-file)
+  (test load-test-obj read test-file)
+  (close-input-port test-file))
+(define write-test-obj
+  '(#t #f a () 9739 -3 . #((test) "te \" \" st" "" test #() b c)))
+(define load-test-obj
+  (list 'define 'foo (list 'quote write-test-obj)))
+(test #t call-with-output-file
+      "tmp1"
+      (lambda (test-file)
+	(write-char #\; test-file)
+	(display #\; test-file)
+	(display ";" test-file)
+	(write write-test-obj test-file)
+	(newline test-file)
+	(write load-test-obj test-file)
+	(output-port? test-file)))
+(check-test-file "tmp1")
+
+(define test-file (open-output-file "tmp2"))
+(write-char #\; test-file)
+(display #\; test-file)
+(display ";" test-file)
+(write write-test-obj test-file)
+(newline test-file)
+(write load-test-obj test-file)
+(test #t output-port? test-file)
+(close-output-port test-file)
+(check-test-file "tmp2")
+(define (test-sc4)
+  (newline)
+  (display ";testing scheme 4 functions; ")
+  (newline)
+
+
+
+(test "call-with-output-file -> port-closed?"
+      #t
+      (lambda ()
+        (let ((p #f))
+          (call-with-output-file
+              "tmp1.o"
+              (lambda (port)
+                (write '(a b c d e) port)
+                (set! p port)))
+          (port-closed? p))))
+
+(test "call-with-input-file -> port-closed?"
+      '(#t a b c d e)
+      (lambda ()
+        (let* ((p #f)
+               (r (call-with-input-file "tmp1.o"
+                    (lambda (port)
+                      (set! p port)
+                      (read port)))))
+          (cons (port-closed? p) r))))
+
+(test "with-output-to-file -> port-closed?"
+      '(#t #f)
+      (lambda ()
+        (let ((p #f))
+          (with-output-to-file "tmp1.o"
+            (lambda ()
+              (set! p (current-output-port))
+              (write '(a b c d e))))
+          (list (port-closed? p)
+                (eq? p (current-output-port))))))
+
+(test "with-input-from-file -> port-closed?"
+      '(#t #f)
+      (lambda ()
+        (let* ((p #f)
+               (r (with-input-from-file "tmp1.o"
+                    (lambda ()
+                      (set! p (current-input-port))
+                      (read)))))
+          (list (port-closed? p)
+                (eq? p (current-input-port))))))
+
+
+!#
 
 
 ;;; --------------------------------------------------------------------------------
 ;;; CONTROL OPS
 ;;; --------------------------------------------------------------------------------
+
+
+
+#!
+'(+ - ... !.. $.+ %.- &.! *.: /:. :+. <-. =. >. ?. ~. _. ^.)
+(test '(quote a) 'quote (quote 'a))
+(test '(quote a) 'quote ''a)
+(test 12 (if #f + *) 3 4)
+(test 8 (lambda (x) (+ x x)) 4)
+(define reverse-subtract
+  (lambda (x y) (- y x)))
+(test 3 reverse-subtract 7 10)
+(define add4
+  (let ((x 4))
+    (lambda (y) (+ x y))))
+(test 10 add4 6)
+(test '(3 4 5 6) (lambda x x) 3 4 5 6)
+(test '(5 6) (lambda (x y . z) z) 3 4 5 6)
+(test 'yes 'if (if (> 3 2) 'yes 'no))
+(test 'no 'if (if (> 2 3) 'yes 'no))
+(test '1 'if (if (> 3 2) (- 3 2) (+ 3 2)))
+(define x 2)
+(test 3 'define (+ x 1))
+(set! x 4)
+(test 5 'set! (+ x 1))
+(test 'greater 'cond (cond ((> 3 2) 'greater)
+			   ((< 3 2) 'less)))
+(test 'equal 'cond (cond ((> 3 3) 'greater)
+			 ((< 3 3) 'less)
+			 (else 'equal)))
+(test 2 'cond (cond ((assv 'b '((a 1) (b 2))) => cadr)
+		     (else #f)))
+(test 'composite 'case (case (* 2 3)
+			 ((2 3 5 7) 'prime)
+			 ((1 4 6 8 9) 'composite)))
+(test 'consonant 'case (case (car '(c d))
+			 ((a e i o u) 'vowel)
+			 ((w y) 'semivowel)
+			 (else 'consonant)))
+(test #t 'and (and (= 2 2) (> 2 1)))
+(test #f 'and (and (= 2 2) (< 2 1)))
+(test '(f g) 'and (and 1 2 'c '(f g)))
+(test #t 'and (and))
+(test #t 'or (or (= 2 2) (> 2 1)))
+(test #t 'or (or (= 2 2) (< 2 1)))
+(test #f 'or (or #f #f #f))
+(test #f 'or (or))
+(test '(b c) 'or (or (memq 'b '(a b c)) (+ 3 0)))
+(test 6 'let (let ((x 2) (y 3)) (* x y)))
+(test 35 'let (let ((x 2) (y 3)) (let ((x 7) (z (+ x y))) (* z x))))
+(test 70 'let* (let ((x 2) (y 3)) (let* ((x 7) (z (+ x y))) (* z x))))
+(test #t 'letrec (letrec ((even?
+			   (lambda (n) (if (zero? n) #t (odd? (- n 1)))))
+			  (odd?
+			   (lambda (n) (if (zero? n) #f (even? (- n 1))))))
+		   (even? 88)))
+(define x 34)
+(test 5 'let (let ((x 3)) (define x 5) x))
+(test 34 'let x)
+(test 6 'let (let () (define x 6) x))
+(test 34 'let x)
+(test 34 'let (let ((x x)) x))
+(test 7 'let* (let* ((x 3)) (define x 7) x))
+(test 34 'let* x)
+(test 8 'let* (let* () (define x 8) x))
+(test 34 'let* x)
+(test 9 'letrec (letrec () (define x 9) x))
+(test 34 'letrec x)
+(test 10 'letrec (letrec ((x 3)) (define x 10) x))
+(test 34 'letrec x)
+(define (s x) (if x (let () (set! s x) (set! x s))))
+(define x 0)
+(test 6 'begin (begin (set! x (begin (begin 5)))
+		      (begin ((begin +) (begin x) (begin (begin 1))))))
+(test '#(0 1 2 3 4) 'do (do ((vec (make-vector 5))
+			    (i 0 (+ i 1)))
+			   ((= i 5) vec)
+			 (vector-set! vec i i)))
+(test 25 'do (let ((x '(1 3 5 7 9)))
+	       (do ((x x (cdr x))
+		    (sum 0 (+ sum (car x))))
+		   ((null? x) sum))))
+(test 1 'let (let foo () 1))
+(test '((6 1 3) (-5 -2)) 'let
+      (let loop ((numbers '(3 -2 1 6 -5))
+		 (nonneg '())
+		 (neg '()))
+	(cond ((null? numbers) (list nonneg neg))
+	      ((negative? (car numbers))
+	       (loop (cdr numbers)
+		     nonneg
+		     (cons (car numbers) neg)))
+	      (else
+	       (loop (cdr numbers)
+		     (cons (car numbers) nonneg)
+		     neg)))))
+;;From: Allegro Petrofsky <Allegro@Petrofsky.Berkeley.CA.US>
+(test -1 'let (let ((f -)) (let f ((n (f 1))) n)))
+(test '(list 3 4) 'quasiquote `(list ,(+ 1 2) 4))
+(test '(list a (quote a)) 'quasiquote (let ((name 'a)) `(list ,name ',name)))
+(test '(a 3 4 5 6 b) 'quasiquote `(a ,(+ 1 2) ,@(map abs '(4 -5 6)) b))
+(test '((foo 7) . cons)
+	'quasiquote
+	`((foo ,(- 10 3)) ,@(cdr '(c)) . ,(car '(cons))))
+
+;;; sqt is defined here because not all implementations are required to
+;;; support it.
+(define (sqt x)
+	(do ((i 0 (+ i 1)))
+	    ((> (* i i) x) (- i 1))))
+
+(test '#(10 5 2 4 3 8) 'quasiquote `#(10 5 ,(sqt 4) ,@(map sqt '(16 9)) 8))
+(test 5 'quasiquote `,(+ 2 3))
+(test '(a `(b ,(+ 1 2) ,(foo 4 d) e) f)
+      'quasiquote `(a `(b ,(+ 1 2) ,(foo ,(+ 1 3) d) e) f))
+(test '(a `(b ,x ,'y d) e) 'quasiquote
+	(let ((name1 'x) (name2 'y)) `(a `(b ,,name1 ,',name2 d) e)))
+(test '(list 3 4) 'quasiquote (quasiquote (list (unquote (+ 1 2)) 4)))
+(test '`(list ,(+ 1 2) 4) 'quasiquote '(quasiquote (list (unquote (+ 1 2)) 4)))
+(define (tprint x) #t)
+(test #t 'tprint (tprint 56))
+(define add3 (lambda (x) (+ x 3)))
+(test 6 'define (add3 3))
+(define first car)
+(test 1 'define (first '(1 2)))
+(define foo (lambda () 9))
+(test 9 'define (foo))
+(define foo foo)
+(test 9 'define (foo))
+(define foo (let ((foo foo)) (lambda () (+ 1 (foo)))))
+(test 10 'define (foo))
+(define old-+ +)
+(begin (begin (begin)
+	      (begin (begin (begin) (define + (lambda (x y) (list y x)))
+			    (begin)))
+	      (begin))
+       (begin)
+       (begin (begin (begin) (test '(3 6) add3 6)
+		     (begin))))
+(set! + old-+)
+(test 9 add3 6)
+(begin)
+(begin (begin))
+(begin (begin (begin (begin))))
+(test 45 'define
+      (let ((x 5))
+	(begin (begin (begin)
+		      (begin (begin (begin) (define foo (lambda (y) (bar x y)))
+				    (begin)))
+		      (begin))
+	       (begin)
+	       (begin)
+	       (begin (define bar (lambda (a b) (+ (* a b) a))))
+	       (begin))
+	(begin)
+	(begin (foo (+ x 3)))))
+(define x 34)
+(define (foo) (define x 5) x)
+(test 5 foo)
+(test 34 'define x)
+(define foo (lambda () (define x 5) x))
+(test 5 foo)
+(test 34 'define x)
+(define (foo x) ((lambda () (define x 5) x)) x)
+(test 88 foo 88)
+(test 4 foo 4)
+(test 34 'define x)
+(test 99 'internal-define (letrec ((foo (lambda (arg)
+					  (or arg (and (procedure? foo)
+						       (foo 99))))))
+			    (define bar (foo #f))
+			    (foo #f)))
+(test 77 'internal-define (letrec ((foo 77)
+				   (bar #f)
+				   (retfoo (lambda () foo)))
+			    (define baz (retfoo))
+			    (retfoo)))
+
+
+
+;(test #t pair? '(a . b))
+;(test #t pair? '(a . 1))
+;(test #t pair? '(a b c))
+;(test #f pair? '())
+;(test #f pair? '#(a b))
+
+(test 7 apply + (list 3 4))
+(test 7 apply (lambda (a b) (+ a b)) (list 3 4))
+(test 17 apply + 10 (list 3 4))
+(test '() apply list '())
+(define compose (lambda (f g) (lambda args (f (apply g args)))))
+(test 30 (compose sqt *) 12 75)
+
+(test '(b e h) map cadr '((a b) (d e) (g h)))
+(test '(5 7 9) map + '(1 2 3) '(4 5 6))
+(test '(1 2 3) map + '(1 2 3))
+(test '(1 2 3) map * '(1 2 3))
+(test '(-1 -2 -3) map - '(1 2 3))
+(test '#(0 1 4 9 16) 'for-each
+      (let ((v (make-vector 5)))
+	(for-each (lambda (i) (vector-set! v i (* i i)))
+		  '(0 1 2 3 4))
+	v))
+(test -3 call-with-current-continuation
+      (lambda (exit)
+	(for-each (lambda (x) (if (negative? x) (exit x)))
+		  '(54 0 37 -3 245 19))
+	#t))
+(define list-length
+ (lambda (obj)
+  (call-with-current-continuation
+   (lambda (return)
+    (letrec ((r (lambda (obj) (cond ((null? obj) 0)
+				((pair? obj) (+ (r (cdr obj)) 1))
+				(else (return #f))))))
+	(r obj))))))
+(test 4 list-length '(1 2 3 4))
+(test #f list-length '(a b . c))
+(test '() map cadr '())
+;;; This tests full conformance of call-with-current-continuation.  It
+;;; is a separate test because some schemes do not support call/cc
+;;; other than escape procedures.  I am indebted to
+;;; raja@copper.ucs.indiana.edu (Raja Sooriamurthi) for fixing this
+;;; code.  The function leaf-eq? compares the leaves of 2 arbitrary
+;;; trees constructed of conses.
+(define (next-leaf-generator obj eot)
+  (letrec ((return #f)
+	   (cont (lambda (x)
+		   (recur obj)
+		   (set! cont (lambda (x) (return eot)))
+		   (cont #f)))
+	   (recur (lambda (obj)
+		      (if (pair? obj)
+			  (for-each recur obj)
+			  (call-with-current-continuation
+			   (lambda (c)
+			     (set! cont c)
+			     (return obj)))))))
+    (lambda () (call-with-current-continuation
+		(lambda (ret) (set! return ret) (cont #f))))))
+(define (leaf-eq? x y)
+  (let* ((eot (list 'eot))
+	 (xf (next-leaf-generator x eot))
+	 (yf (next-leaf-generator y eot)))
+    (letrec ((loop (lambda (x y)
+		     (cond ((not (eq? x y)) #f)
+			   ((eq? eot x) #t)
+			   (else (loop (xf) (yf)))))))
+      (loop (xf) (yf)))))
+  (test #t leaf-eq? '(a (b (c))) '((a) b c))
+  (test #f leaf-eq? '(a (b (c))) '((a) b c d))
+  (test 3 'delay (force (make-promise (+ 1 2))))
+  (test '(3 3) 'delay (let ((p (make-promise (+ 1 2))))
+			(list (force p) (force p))))
+  (test 2 'delay (letrec ((a-stream
+			   (letrec ((next (lambda (n)
+					    (cons n (make-promise (next (+ n 1)))))))
+			     (next 0)))
+			  (head car)
+			  (tail (lambda (stream) (force (cdr stream)))))
+		   (head (tail (tail a-stream)))))
+  (letrec ((count 0)
+	   (p (make-promise (begin (set! count (+ count 1))
+			    (if (> count x)
+				count
+				(force p)))))
+	   (x 5))
+    (test 6 force p)
+    (set! x 10)
+    (test 6 force p))
+  (test 3 'force
+	(letrec ((p (make-promise (if c 3 (begin (set! c #t) (+ (force p) 1)))))
+		 (c #f))
+	  (force p)))
+
+;;; --------
+
+(test (apply + '(1 2)) 3)
+(test (apply - '(1 2)) -1)
+(test (apply max 3 5 '(2 7 3)) 7)
+(test (apply cons '((+ 2 3) 4)) '((+ 2 3) . 4))
+(test (apply + '()) 0)
+(test (cond) 'error)
+(test (cond ('a)) 'a)
+(test (cond (#f 'a) ('b)) 'b)
+(test (cond (#t 'a) (#t 'b)) 'a)
+(test (if #t 1 2) 1)
+(test (if #f 1 2) 2)
+(test ((if #f + *) 3 4) 12)
+(test ((lambda (x) (+ x x)) 4)  8)
+(define reverse-subtract (lambda (x y) (- y x)))
+(test (reverse-subtract 7 10) 3)
+(define add4 (let ((x 4)) (lambda (y) (+ x y))))
+(test (add4 6) 10)
+(test ((lambda x x) 3 4 5 6) '(3 4 5 6))
+(test ((lambda (x y . z) z) 3 4 5 6)  '(5 6))
+(test (if (> 3 2) 'yes 'no)  'yes)
+(test (if (> 2 3) 'yes 'no)  'no)
+(test (if (> 3 2) (- 3 2) (+ 3 2))  1)
+(test (begin (define x 2) (+ x 1)) 3)
+(test (cond ((> 3 2) 'greater)  ((< 3 2) 'less)) 'greater)
+(test (cond ((> 3 3) 'greater)  ((< 3 3) 'less)  (else 'equal)) 'equal)
+(test (cond ((assv 'b '((a 1) (b 2))) => cadr)  (else #f)) 2)
+(test (case (* 2 3) ((2 3 5 7) 'prime) ((1 4 6 8 9) 'composite))  'composite)
+(test (case (car '(c d)) ((a e i o u) 'vowel) ((w y) 'semivowel) (else 'consonant)) 'consonant)
+(test (and (= 2 2) (> 2 1))  #t)
+(test (and (= 2 2) (< 2 1))  #f)
+(test (and 1 2 'c '(f g)) '(f g))
+(test (and) #t)
+(test  (or (= 2 2) (> 2 1)) #t)
+(test  (or (= 2 2) (< 2 1)) #t)
+(test  (or #f #f #f) #f)
+(test  (or (memq 'b '(a b c))  (/ 3 0))  '(b c))
+(test (let ((x 2) (y 3)) (* x y)) 6)
+(test (let ((x 2) (y 3)) (let ((x 7) (z (+ x y))) (* z x))) 35)
+(test (let ((x 2) (y 3)) (let* ((x 7)  (z (+ x y))) (* z x))) 70)
+(test (letrec ((even? (lambda (n)  (if (zero? n) #t (odd? (- n 1)))))  (odd? (lambda (n)  (if (zero? n) #f (even? (- n 1)))))) (even? 88))  #t)
+(test (begin (define x 0) (begin (set! x 5) (+ x 1)))  6)
+(test (do ((vec (make-vector 5)) (i 0 (+ i 1))) ((= i 5) vec) (vector-set! vec i i))  '#(0 1 2 3 4))
+(test (let ((x '(1 3 5 7 9))) (do ((x x (cdr x)) (sum 0 (+ sum (car x))))  ((null? x) sum))) 25)
+(test (let loop ((numbers '(3 -2 1 6 -5)) (nonneg '()) (neg '())) (cond ((null? numbers) (list nonneg neg)) ((>= (car numbers) 0)  (loop (cdr numbers)  (cons (car numbers) nonneg)  neg)) ((< (car numbers) 0)  (loop (cdr numbers)  nonneg  (cons (car numbers) neg))))) '((6 1 3) (-5 -2)))
+(test `(list ,(+ 1 2) 4)  '(list 3 4))
+(test `(a ,(+ 1 2) ,@(map abs '(4 -5 6)) b)  '(a 3 4 5 6 b))
+(test `((`foo' ,(- 10 3)) ,@(cdr '(c)) . ,(car '(cons)))  '((foo 7) . cons))
+(test `#(10 5 ,(sqrt 4) ,@(map sqrt '(16 9)) 8)  '#(10 5 2.0 4.0 3.0 8))
+(test `(a `(b ,(+ 1 2) ,(foo ,(+ 1 3) d) e) f)  '(a `(b ,(+ 1 2) ,(foo 4 d) e) f))
+(test (let ((name1 'x)  (name2 'y)) `(a `(b ,,name1 ,',name2 d) e))  '(a `(b ,x ,'y d) e))
+(test (quasiquote (list (unquote (+ 1 2)) 4))  '(list 3 4))
+(test '(quasiquote (list (unquote (+ 1 2)) 4)) `(list ,(+ 1 2) 4))
+(test (let ((=> #f)) (cond (#t => 'ok)))  'ok)
+(test (begin (define add3 (lambda (x) (+ x 3)))(add3 3)) 6)
+(test (begin (define first car)(first '(1 2))) 1)
+(test (let ((x 5)) (define foo (lambda (y) (bar x y))) (define bar (lambda (a b) (+ (* a b) a))) (foo (+ x 3))) 45)
+(test (let ((x 5)) (letrec ((foo (lambda (y) (bar x y))) (bar (lambda (a b) (+ (* a b) a)))) (foo (+ x 3)))) 45)
+(test (apply + (list 3 4)) 7)
+(test (begin (define compose (lambda (f g) (lambda args (f (apply g args))))) ((compose sqrt *) 12 75))  30.0)
+(test (map cadr '((a b) (d e) (g h))) '(b e h))
+(test (map (lambda (n) (expt n n)) '(1 2 3 4 5)) '(1 4 27 256 3125))
+(test (map + '(1 2 3) '(4 5 6)) '(5 7 9))
+(test (let ((v (make-vector 5))) (for-each (lambda (i) (vector-set! v i (* i i)))  '(0 1 2 3 4)) v) '#(0 1 4 9 16))
+(test (force (make-promise (+ 1 2))) 3)
+(test (let ((p (make-promise (+ 1 2)))) (list (force p) (force p))) '(3 3))
+(test (begin (define a-stream (letrec ((next  (lambda (n) (cons n (make-promise (next (+ n 1))))))) (next 0)))(define head car)(define tail (lambda (stream) (force (cdr stream))))(head (tail (tail a-stream)))) 2)
+(test (call-with-current-continuation (lambda (exit) (for-each (lambda (x) (if (negative? x) (exit x))) '(54 0 37 -3 245 19)) #t)) -3)
+(define list-length (lambda (obj) (call-with-current-continuation  (lambda (return) (letrec ((r  (lambda (obj) (cond ((null? obj) 0) ((pair? obj)  (+ (r (cdr obj)) 1)) (else (return #f)))))) (r obj))))))
+(test (list-length '(1 2 3 4))  4)
+(test (list-length '(a b . c))  #f)
+(test (call-with-values (lambda () (values 4 5))  (lambda (a b) b))  5)
+(test (call-with-values * -) -1)
+(test (let ((path '())  (c #f)) (let ((add (lambda (s)  (set! path (cons s path))))) (dynamic-wind  (lambda () (add 'connect))  (lambda () (add (call-with-current-continuation  (lambda (c0) (set! c c0) 'talk1))))  (lambda () (add 'disconnect))) (if (< (length path) 4) (c 'talk2) (reverse path)))) '(connect talk1 disconnect  connect talk2 disconnect))
+(test (eval '(* 7 3) (global-environment))  21)
+
+
+
+
+
+;; Section 7: First class continuations
+
+;; Scott Miller
+;; No newsgroup posting associated.  The jist of this test and 7.2
+;; is that once captured, a continuation should be unmodified by the 
+;; invocation of other continuations.  This test determines that this is 
+;; the case by capturing a continuation and setting it aside in a temporary
+;; variable while it invokes that and another continuation, trying to 
+;; side effect the first continuation.  This test case was developed when
+;; testing SISC 1.7's lazy CallFrame unzipping code.
+(define r #f)
+(define a #f)
+(define b #f)
+(define c #f)
+(define i 0)
+(should-be 7.1 28
+  (let () 
+    (set! r (+ 1 (+ 2 (+ 3 (call/cc (lambda (k) (set! a k) 4))))
+               (+ 5 (+ 6 (call/cc (lambda (k) (set! b k) 7))))))
+    (if (not c) 
+        (set! c a))
+    (set! i (+ i 1))
+    (case i
+      ((1) (a 5))
+      ((2) (b 8))
+      ((3) (a 6))
+      ((4) (c 4)))
+    r))
+
+;; Same test, but in reverse order
+(define r #f)
+(define a #f)
+(define b #f)
+(define c #f)
+(define i 0)
+(should-be 7.2 28
+  (let () 
+    (set! r (+ 1 (+ 2 (+ 3 (call/cc (lambda (k) (set! a k) 4))))
+               (+ 5 (+ 6 (call/cc (lambda (k) (set! b k) 7))))))
+    (if (not c) 
+        (set! c a))
+    (set! i (+ i 1))
+    (case i
+      ((1) (b 8))
+      ((2) (a 5))
+      ((3) (b 7))
+      ((4) (c 4)))
+    r))
+
+;; Credits to Matthias Radestock
+;; Another test case used to test SISC's lazy CallFrame routines.
+(should-be 7.3 '((-1 4 5 3)
+                 (4 -1 5 3)
+                 (-1 5 4 3)
+                 (5 -1 4 3)
+                 (4 5 -1 3)
+                 (5 4 -1 3))
+  (let ((k1 #f)
+        (k2 #f)
+        (k3 #f)
+        (state 0))
+    (define (identity x) x)
+    (define (fn)
+      ((identity (if (= state 0)
+                     (call/cc (lambda (k) (set! k1 k) +))
+                     +))
+       (identity (if (= state 0)
+                     (call/cc (lambda (k) (set! k2 k) 1))
+                     1))
+       (identity (if (= state 0)
+                     (call/cc (lambda (k) (set! k3 k) 2))
+                     2))))
+    (define (check states)
+      (set! state 0)
+      (let* ((res '())
+             (r (fn)))
+        (set! res (cons r res))
+        (if (null? states)
+            res
+            (begin (set! state (car states))
+                   (set! states (cdr states))
+                   (case state
+                     ((1) (k3 4))
+                     ((2) (k2 2))
+                     ((3) (k1 -)))))))
+    (map check '((1 2 3) (1 3 2) (2 1 3) (2 3 1) (3 1 2) (3 2 1)))))
+
+;; Modification of the yin-yang puzzle so that it terminates and produces
+;; a value as a result. (Scott G. Miller)
+(should-be 7.4 '(10 9 8 7 6 5 4 3 2 1 0)
+  (let ((x '())
+        (y 0))
+    (call/cc 
+     (lambda (escape)
+       (let* ((yin ((lambda (foo) 
+                      (set! x (cons y x))
+                      (if (= y 10)
+                          (escape x)
+                          (begin
+                            (set! y 0)
+                            foo)))
+                    (call/cc (lambda (bar) bar))))
+              (yang ((lambda (foo) 
+                       (set! y (+ y 1))
+                       foo)
+                     (call/cc (lambda (baz) baz)))))
+         (yin yang))))))
+
+;; Miscellaneous 
+
+;;Al Petrofsky
+;; In thread:
+;; R5RS Implementors Pitfalls
+;; http://groups.google.com/groups?selm=871zemtmd4.fsf@app.dial.idiom.com
+(should-be 8.1 -1
+  (let - ((n (- 1))) n))
+
+(should-be 8.2 '(1 2 3 4 1 2 3 4 5)
+  (let ((ls (list 1 2 3 4)))
+    (append ls ls '(5))))
+
+;;Not really an error to fail this (Matthias Radestock)
+;;If this returns (0 1 0), your map isn't call/cc safe, but is probably
+;;tail-recursive.  If its (0 0 0), the opposite is true.
+(should-be 8.3 '(0 1 0)
+  (let ()
+    (define executed-k #f)
+    (define cont #f)
+    (define res1 #f)
+    (define res2 #f)
+    (set! res1 (map (lambda (x)
+		      (if (= x 0)
+			  (call/cc (lambda (k) (set! cont k) 0))
+			  0))
+		    '(1 0 2)))
+    (if (not executed-k)           
+	(begin (set! executed-k #t) 
+	       (set! res2 res1)
+	       (cont 1)))
+    res2))
+
+(define (callcc-test1)
+  (let ((r '()))
+    (let ((w (let ((v 1))
+               (set! v (+ (call-with-current-continuation
+                           (lambda (c0) (set! c c0) v))
+                          v))
+               (set! r (cons v r))
+               v)))
+      (if (<= w 1024) (c w) r))))
+
+(test "call/cc (env)" '(2048 1024 512 256 128 64 32 16 8 4 2)
+      callcc-test1)
+
+;; continuation with multiple values
+
+(test* "call/cc (values)" '(1 2 3)
+       (receive x (call-with-current-continuation
+                   (lambda (c) (c 1 2 3)))
+         x))
+
+(test* "call/cc (values2)" '(1 2 3)
+       (receive (x y z) (call-with-current-continuation
+                         (lambda (c) (c 1 2 3)))
+         (list x y z)))
+
+(test* "call/cc (values3)" '(1 2 (3))
+       (receive (x y . z)
+           (call-with-current-continuation
+            (lambda (c) (c 1 2 3)))
+         (list x y z)))
+
+(test* "call/cc (values4)" *test-error*
+       (receive (x y)
+           (call-with-current-continuation
+            (lambda (c) (c 1 2 3)))
+         (list x y)))
+
+;; continuation invoked while inline procedure is prepared.
+;; a test to see call/cc won't mess up the VM stack.
+
+(define (callcc-test2)
+  (let ((cc #f)
+        (r '()))
+    (let ((s (list 1 2 3 4 (call/cc (lambda (c) (set! cc c) 5)) 6 7 8)))
+      (if (null? r)
+          (begin (set! r s) (cc -1))
+          (list r s)))))
+    
+(test "call/cc (inline)" '((1 2 3 4 5 6 7 8) (1 2 3 4 -1 6 7 8))
+      callcc-test2)
+
+;; continuation created during do frame preparation.
+;; the TAILBIND instruction failed this test.
+
+(test "call/cc (do)" 6
+      (lambda ()
+        (do ((x 0 (+ x 1))
+             (y 0 (call/cc (lambda (c) c))))
+            ((> x 5) x)
+          #f)))
+
+(test "call/cc & dynwind (cstack)" '(a b c)
+      (lambda ()
+        (let ((x '()))
+          (call-with-current-continuation
+           (lambda (c)
+             (dynamic-wind
+              (lambda () (set! x (cons 'c x)))
+              (lambda ()
+                (sort '(1 2 3 4 5 6)
+                      (lambda (a b)
+                        (set! x (cons 'b x))
+                        (c 0)))
+                (set! x (cons 'z x))
+                )
+              (lambda () (set! x (cons 'a x))))))
+          x)))
+(define (dynwind-test1)
+  (let ((path '()))
+    (let ((add (lambda (s) (set! path (cons s path)))))
+      (dynamic-wind
+       (lambda () (add 'connect))
+       (lambda ()
+         (add (call-with-current-continuation
+               (lambda (c0) (set! c c0) 'talk1))))
+       (lambda () (add 'disconnect)))
+      (if (< (length path) 4)
+          (c 'talk2)
+          (reverse path)))))
+
+(test "dynamic-wind"
+      '(connect talk1 disconnect connect talk2 disconnect)
+      dynwind-test1)
+
+;; Test for handler stack.
+(define (dynwind-test2)
+  (let ((path '()))
+    (dynamic-wind
+     (lambda () (set! path (cons 1 path)))
+     (lambda () (set! path (append (dynwind-test1) path)))
+     (lambda () (set! path (cons 3 path))))
+    path))
+
+(test "dynamic-wind"
+      '(3 connect talk1 disconnect connect talk2 disconnect 1)
+      dynwind-test2)
+
+(test "dynamic-wind" '(a b c d e f g b c d e f g h)
+      (lambda ()
+        (let ((x '())
+              (c #f))
+          (dynamic-wind
+           (lambda () (push! x 'a))
+           (lambda ()
+             (dynamic-wind
+              (lambda () (push! x 'b))
+              (lambda ()
+                (dynamic-wind
+                 (lambda () (push! x 'c))
+                 (lambda () (set! c (call/cc identity)))
+                 (lambda () (push! x 'd))))
+              (lambda () (push! x 'e)))
+             (dynamic-wind
+              (lambda () (push! x 'f))
+              (lambda () (when c (c #f)))
+              (lambda () (push! x 'g))))
+           (lambda () (push! x 'h)))
+          (reverse x))))
+
+(test "Al's call/cc test" 1
+      (lambda () (call/cc (lambda (c) (0 (c 1))))))
+
+(prim-test "if" 5 (lambda ()  (if #f 2 5)))
+(prim-test "if" 2 (lambda ()  (if (not #f) 2 5)))
+
+(prim-test "and" #t (lambda ()  (and)))
+(prim-test "and" 5  (lambda ()  (and 5)))
+(prim-test "and" #f (lambda ()  (and 5 #f 2)))
+(prim-test "and" #f (lambda ()  (and 5 #f unbound-var)))
+(prim-test "and" 'a (lambda ()  (and 3 4 'a)))
+
+(prim-test "or"  #f (lambda ()  (or)))
+(prim-test "or"  3  (lambda ()  (or 3 9)))
+(prim-test "or"  3  (lambda ()  (or #f 3 unbound-var)))
+
+(prim-test "when" 4          (lambda ()  (when 3 5 4)))
+(prim-test "when" (undefined)    (lambda ()  (when #f 5 4)))
+(prim-test "unless" (undefined)  (lambda ()  (unless 3 5 4)))
+(prim-test "unless" 4        (lambda ()  (unless #f 5 4)))
+
+(prim-test "cond" (undefined)  (lambda ()  (cond (#f 2))))
+(prim-test "cond" 5        (lambda ()  (cond (#f 2) (else 5))))
+(prim-test "cond" 2        (lambda ()  (cond (1 2) (else 5))))
+(prim-test "cond" 8        (lambda ()  (cond (#f 2) (1 8) (else 5))))
+(prim-test "cond" 3        (lambda ()  (cond (1 => (lambda (x) (+ x 2))) (else 8))))
+(prim-test "cond (srfi-61)" 1 (lambda () (cond (1 number? => values) (else 8))))
+(prim-test "cond (srfi-61)" 8 (lambda () (cond (1 string? => values) (else 8))))
+(prim-test "cond (srfi-61)" '(1 2)
+           (lambda () (cond ((values 1 2)
+                             (lambda (x y) (and (= x 1) (= y 2)))
+                             => list))))
+
+(prim-test "case" #t (lambda ()  (case (+ 2 3) ((1 3 5 7 9) #t) ((0 2 4 6 8) #f))))
+(prim-test "case" #t (lambda () (undefined? (case 1 ((2 3) #t)))))
+(prim-test "case (srfi-87)" 0 (lambda () (case (+ 2 3) ((1 3 5) 0) (else => values))))
+(prim-test "case (srfi-87)" 6 (lambda () (case (+ 2 3) ((1 3 5) => (cut + 1 <>)) (else => values))))
+(prim-test "case (srfi-87)" 5 (lambda () (case (+ 2 3) ((2 4 6) 0) (else => values))))
+
+;;----------------------------------------------------------------
+(test-section "binding")
+
+(prim-test "let" 35
+      (lambda ()
+        (let ((x 2) (y 3))
+          (let ((x 7) (z (+ x y)))
+            (* z x)))))
+(prim-test "let*" 70
+      (lambda ()
+        (let ((x 2) (y 3))
+          (let* ((x 7) (z (+ x y)))
+            (* z x)))))
+(prim-test "let*" 2
+      (lambda ()
+        (let* ((x 1) (x (+ x 1))) x)))
+
+(prim-test "named let" -3
+      (lambda ()
+        (let ((f -))
+          (let f ((a (f 3)))
+            a))))
+
+
+!#
 

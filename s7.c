@@ -3104,12 +3104,20 @@ static double round_per_R5RS(double x)
 static long binary_decode(const char *s) 
 {
   long x = 0;
-  while(*s != 0 && (*s == '1' || *s == '0')) 
+
+  while((*s != 0) && 
+	((*s == '1') || (*s == '0')))
     {
       x <<= 1;
       x += *s - '0';
       s++;
     }
+
+  if ((*s) && 
+      ((isdigit(*s)) ||
+       (isalpha(*s))))
+    return(-1); /* error... */
+
   return(x);
 }
 
@@ -3259,6 +3267,113 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
 }
 
       
+/* make constant */
+static s7_pointer make_sharp_const(s7_scheme *sc, char *name) 
+{
+  long x;
+  char tmp[256];
+
+  if (strcmp(name, "t") == 0)
+    return(sc->T);
+
+  if (strcmp(name, "f") == 0)
+    return(sc->F);
+
+  if (*name == 'o') /* #o (octal) */
+    {
+      snprintf(tmp, sizeof(tmp), "0%s", name + 1);
+      sscanf(tmp, "%lo", &x);
+      return(s7_make_integer(sc, x));
+    }
+
+  if (*name == 'd') /* #d (decimal) */
+    {    
+      sscanf(name + 1, "%ld", &x);
+      return(s7_make_integer(sc, x));
+    } 
+
+  if (*name == 'x') /* #x (hex) */
+    {    
+      snprintf(tmp, sizeof(tmp), "0x%s", name + 1);
+      sscanf(tmp, "%lx", &x);
+      return(s7_make_integer(sc, x));
+    } 
+
+  if (*name == 'b') /* #b (binary) */
+    {    
+      x = binary_decode(name + 1);
+      if (x < 0)
+	return(sc->NIL);
+      return(s7_make_integer(sc, x));
+    } 
+
+  if (*name == 'i')  /* #i<num> = ->inexact (see token, is_one_of for table of choices here) */
+    {
+      double xf;
+      sscanf(name + 1, "%lf", &xf);
+      return(s7_make_real(sc, xf));
+    }
+
+  if (*name == 'e')  /* #e<num> = ->exact */
+    {
+      double xf;
+      s7_Int numer = 0, denom = 1;
+      sscanf(name + 1, "%lf", &xf);
+      if (c_rationalize(xf, DEFAULT_RATIONALIZE_ERROR, &numer, &denom))
+	return(s7_make_ratio(sc, numer, denom));
+      return(s7_make_integer(sc, (s7_Int)xf));
+    }
+
+  if (*name == '\\')  /* #\w (character) */
+    { 
+      int c = 0;
+      if (STRCMP(name + 1, "space") == 0) 
+	{
+	  c =' ';
+	} 
+      else if (STRCMP(name + 1, "newline") == 0)
+	{
+	  c ='\n';
+	} 
+      else if (STRCMP(name + 1, "return") == 0) 
+	{
+	  c ='\r';
+	} 
+      else if (STRCMP(name + 1, "tab") == 0) 
+	{
+	  c ='\t';
+	} 
+      else if (STRCMP(name + 1, "null") == 0) 
+	{
+	  c ='\0';
+	} 
+      else if ((name[1] == 'x') && (name[2] != 0))
+	{
+	  int c1= 0;
+	  if ((sscanf(name + 2, "%x", &c1) == 1) && 
+	      (c1 < 256))
+	    {
+	      c = c1;
+	    } 
+	  else 
+	    {
+	      return(sc->NIL);
+	    }
+	} 
+      else if (name[2] == 0) 
+	{
+	  c = name[1];
+	} 
+      else 
+	{
+	  return(sc->NIL);
+	}
+      return(s7_make_character(sc, c));
+    }
+  return(sc->NIL);
+}
+
+
 /* make symbol or number atom from string */
 
 static s7_pointer make_atom(s7_scheme *sc, char *q, int radix) 
@@ -3272,6 +3387,9 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix)
   c = *p++; 
 
   /* a number starts with + - . or digit, but so does 1+ for example */
+
+  if (c == '#')
+    return(make_sharp_const(sc, p)); /* make_sharp_const expects the '#' to be removed */
 
   if ((c == '+') || (c == '-')) 
     { 
@@ -3477,111 +3595,6 @@ static s7_pointer g_string_to_number(s7_scheme *sc, s7_pointer args)
     }
   else radix = 10;
   return(s7_string_to_number(sc, string_value(car(args)), radix));
-}
-
-
-/* make constant */
-static s7_pointer make_sharp_const(s7_scheme *sc, char *name) 
-{
-  long x;
-  char tmp[256];
-
-  if (strcmp(name, "t") == 0)
-    return(sc->T);
-
-  if (strcmp(name, "f") == 0)
-    return(sc->F);
-
-  if (*name == 'o') /* #o (octal) */
-    {
-      snprintf(tmp, sizeof(tmp), "0%s", name + 1);
-      sscanf(tmp, "%lo", &x);
-      return(s7_make_integer(sc, x));
-    }
-
-  if (*name == 'd') /* #d (decimal) */
-    {    
-      sscanf(name + 1, "%ld", &x);
-      return(s7_make_integer(sc, x));
-    } 
-
-  if (*name == 'x') /* #x (hex) */
-    {    
-      snprintf(tmp, sizeof(tmp), "0x%s", name + 1);
-      sscanf(tmp, "%lx", &x);
-      return(s7_make_integer(sc, x));
-    } 
-
-  if (*name == 'b') /* #b (binary) */
-    {    
-      x = binary_decode(name + 1);
-      return(s7_make_integer(sc, x));
-    } 
-
-  if (*name == 'i')  /* #i<num> = ->inexact (see token, is_one_of for table of choices here) */
-    {
-      double xf;
-      sscanf(name + 1, "%lf", &xf);
-      return(s7_make_real(sc, xf));
-    }
-
-  if (*name == 'e')  /* #e<num> = ->exact */
-    {
-      double xf;
-      s7_Int numer = 0, denom = 1;
-      sscanf(name + 1, "%lf", &xf);
-      if (c_rationalize(xf, DEFAULT_RATIONALIZE_ERROR, &numer, &denom))
-	return(s7_make_ratio(sc, numer, denom));
-      return(s7_make_integer(sc, (s7_Int)xf));
-    }
-
-  if (*name == '\\')  /* #\w (character) */
-    { 
-      int c = 0;
-      if (STRCMP(name + 1, "space") == 0) 
-	{
-	  c =' ';
-	} 
-      else if (STRCMP(name + 1, "newline") == 0)
-	{
-	  c ='\n';
-	} 
-      else if (STRCMP(name + 1, "return") == 0) 
-	{
-	  c ='\r';
-	} 
-      else if (STRCMP(name + 1, "tab") == 0) 
-	{
-	  c ='\t';
-	} 
-      else if (STRCMP(name + 1, "null") == 0) 
-	{
-	  c ='\0';
-	} 
-      else if ((name[1] == 'x') && (name[2] != 0))
-	{
-	  int c1= 0;
-	  if ((sscanf(name + 2, "%x", &c1) == 1) && 
-	      (c1 < 256))
-	    {
-	      c = c1;
-	    } 
-	  else 
-	    {
-	      return(sc->NIL);
-	    }
-	} 
-      else if (name[2] == 0) 
-	{
-	  c = name[1];
-	} 
-      else 
-	{
-	  return(sc->NIL);
-	}
-      return(s7_make_character(sc, c));
-    }
-  return(sc->NIL);
 }
 
 
@@ -4729,15 +4742,13 @@ static s7_pointer g_char_cmp(s7_scheme *sc, s7_pointer args, int val, const char
   s7_pointer x;
   char last_chr;
 
-  if (!s7_is_character(car(args)))
-    return(s7_wrong_type_arg_error(sc, name, 1, car(args), "a character"));
+  for (i = 1, x = args; x != sc->NIL; i++, x = cdr(x))  
+    if (!s7_is_character(car(x)))
+      return(s7_wrong_type_arg_error(sc, name, i, car(x), "a character"));
 
   last_chr = character(car(args));
   for (i = 2, x = cdr(args); x != sc->NIL; i++, x = cdr(x))
     {
-      if (!s7_is_character(car(x)))
-	return(s7_wrong_type_arg_error(sc, name, i, car(x), "a character"));
-
       if (charcmp(last_chr, character(car(x)), ci) != val)
 	return(sc->F);
       last_chr = character(car(x));
@@ -4752,15 +4763,13 @@ static s7_pointer g_char_cmp_not(s7_scheme *sc, s7_pointer args, int val, const 
   s7_pointer x;
   char last_chr;
 
-  if (!s7_is_character(car(args)))
-    return(s7_wrong_type_arg_error(sc, name, 1, car(args), "a character"));
+  for (i = 1, x = args; x != sc->NIL; i++, x = cdr(x))  
+    if (!s7_is_character(car(x)))
+      return(s7_wrong_type_arg_error(sc, name, i, car(x), "a character"));
 
   last_chr = character(car(args));
   for (i = 2, x = cdr(args); x != sc->NIL; i++, x = cdr(x))
     {
-      if (!s7_is_character(car(x)))
-	return(s7_wrong_type_arg_error(sc, name, i, car(x), "a character"));
-
       if (charcmp(last_chr, character(car(x)), ci) == val)
 	return(sc->F);
       last_chr = character(car(x));
@@ -5118,15 +5127,13 @@ static s7_pointer g_string_cmp(s7_scheme *sc, s7_pointer args, int val, const ch
   s7_pointer x;
   const char *last_str = NULL;
 
-  if (!s7_is_string(car(args)))
-    return(s7_wrong_type_arg_error(sc, name, 1, car(args), "a string"));
+  for (i = 1, x = args; x != sc->NIL; i++, x = cdr(x))  
+    if (!s7_is_string(car(x)))
+      return(s7_wrong_type_arg_error(sc, name, i, car(x), "a string"));
 
   last_str = string_value(car(args));
   for (i = 2, x = cdr(args); x != sc->NIL; i++, x = cdr(x))
     {
-      if (!s7_is_string(car(x)))
-	return(s7_wrong_type_arg_error(sc, name, i, car(x), "a string"));
-
       if (safe_strcmp(last_str, string_value(car(x))) != val)
 	return(sc->F);
       last_str = string_value(car(x));
@@ -5140,15 +5147,13 @@ static s7_pointer g_string_cmp_not(s7_scheme *sc, s7_pointer args, int val, cons
   s7_pointer x;
   const char *last_str = NULL;
 
-  if (!s7_is_string(car(args)))
-    return(s7_wrong_type_arg_error(sc, name, 1, car(args), "a string"));
+  for (i = 1, x = args; x != sc->NIL; i++, x = cdr(x))  
+    if (!s7_is_string(car(x)))
+      return(s7_wrong_type_arg_error(sc, name, i, car(x), "a string"));
 
   last_str = string_value(car(args));
   for (i = 2, x = cdr(args); x != sc->NIL; i++, x = cdr(x))
     {
-      if (!s7_is_string(car(x)))
-	return(s7_wrong_type_arg_error(sc, name, i, car(x), "a string"));
-
       if (safe_strcmp(last_str, string_value(car(x))) == val)
 	return(sc->F);
       last_str = string_value(car(x));
@@ -5232,14 +5237,13 @@ static s7_pointer g_string_ci_cmp(s7_scheme *sc, s7_pointer args, int val, const
   s7_pointer x;
   const char *last_str = NULL;
 
-  if (!s7_is_string(car(args)))
-    return(s7_wrong_type_arg_error(sc, name, 1, car(args), "a string"));
+  for (i = 1, x = args; x != sc->NIL; i++, x = cdr(x))  
+    if (!s7_is_string(car(x)))
+      return(s7_wrong_type_arg_error(sc, name, i, car(x), "a string"));
 
   last_str = string_value(car(args));
   for (i = 2, x = cdr(args); x != sc->NIL; i++, x = cdr(x))
     {
-      if (!s7_is_string(car(x)))
-	return(s7_wrong_type_arg_error(sc, name, i, car(x), "a string"));
       if (safe_strcasecmp(last_str, string_value(car(x))) != val)
 	return(sc->F);
       last_str = string_value(car(x));
@@ -5254,14 +5258,13 @@ static s7_pointer g_string_ci_cmp_not(s7_scheme *sc, s7_pointer args, int val, c
   s7_pointer x;
   const char *last_str = NULL;
 
-  if (!s7_is_string(car(args)))
-    return(s7_wrong_type_arg_error(sc, name, 1, car(args), "a string"));
+  for (i = 1, x = args; x != sc->NIL; i++, x = cdr(x))  
+    if (!s7_is_string(car(x)))
+      return(s7_wrong_type_arg_error(sc, name, i, car(x), "a string"));
 
   last_str = string_value(car(args));
   for (i = 2, x = cdr(args); x != sc->NIL; i++, x = cdr(x))
     {
-      if (!s7_is_string(car(x)))
-	return(s7_wrong_type_arg_error(sc, name, i, car(x), "a string"));
       if (safe_strcasecmp(last_str, string_value(car(x))) == val)
 	return(sc->F);
       last_str = string_value(car(x));
@@ -8320,9 +8323,8 @@ static s7_pointer g_list_to_vector(s7_scheme *sc, s7_pointer args)
 
   if (car(args) == sc->NIL)
     return(s7_make_vector(sc, 0));
-
-  if (!s7_is_pair(car(args)))
-    return(s7_wrong_type_arg_error(sc, "list->vector", 1, car(args), "a list"));
+  if (g_is_list(sc, args) == sc->F)
+    return(s7_wrong_type_arg_error(sc, "list->vector", 1, car(args), "a proper list"));
   return(g_vector(sc, car(args)));
 }
 
@@ -11877,16 +11879,16 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "char-whitespace?",        g_is_char_whitespace,      1, 0, false, H_is_char_whitespace);
   s7_define_function(sc, "char?",                   g_is_char,                 1, 0, false, H_is_char);
 
-  s7_define_function(sc, "char=?",                  g_chars_are_equal,         1, 0, true,  H_chars_are_equal);
-  s7_define_function(sc, "char<?",                  g_chars_are_less,          1, 0, true,  H_chars_are_less);
-  s7_define_function(sc, "char>?",                  g_chars_are_greater,       1, 0, true,  H_chars_are_greater);
-  s7_define_function(sc, "char<=?",                 g_chars_are_leq,           1, 0, true,  H_chars_are_leq);
-  s7_define_function(sc, "char>=?",                 g_chars_are_geq,           1, 0, true,  H_chars_are_geq);
-  s7_define_function(sc, "char-ci=?",               g_chars_are_ci_equal,      1, 0, true,  H_chars_are_ci_equal);
-  s7_define_function(sc, "char-ci<?",               g_chars_are_ci_less,       1, 0, true,  H_chars_are_ci_less);
-  s7_define_function(sc, "char-ci>?",               g_chars_are_ci_greater,    1, 0, true,  H_chars_are_ci_greater);
-  s7_define_function(sc, "char-ci<=?",              g_chars_are_ci_leq,        1, 0, true,  H_chars_are_ci_leq);
-  s7_define_function(sc, "char-ci>=?",              g_chars_are_ci_geq,        1, 0, true,  H_chars_are_ci_geq);
+  s7_define_function(sc, "char=?",                  g_chars_are_equal,         2, 0, true,  H_chars_are_equal);
+  s7_define_function(sc, "char<?",                  g_chars_are_less,          2, 0, true,  H_chars_are_less);
+  s7_define_function(sc, "char>?",                  g_chars_are_greater,       2, 0, true,  H_chars_are_greater);
+  s7_define_function(sc, "char<=?",                 g_chars_are_leq,           2, 0, true,  H_chars_are_leq);
+  s7_define_function(sc, "char>=?",                 g_chars_are_geq,           2, 0, true,  H_chars_are_geq);
+  s7_define_function(sc, "char-ci=?",               g_chars_are_ci_equal,      2, 0, true,  H_chars_are_ci_equal);
+  s7_define_function(sc, "char-ci<?",               g_chars_are_ci_less,       2, 0, true,  H_chars_are_ci_less);
+  s7_define_function(sc, "char-ci>?",               g_chars_are_ci_greater,    2, 0, true,  H_chars_are_ci_greater);
+  s7_define_function(sc, "char-ci<=?",              g_chars_are_ci_leq,        2, 0, true,  H_chars_are_ci_leq);
+  s7_define_function(sc, "char-ci>=?",              g_chars_are_ci_geq,        2, 0, true,  H_chars_are_ci_geq);
 
 
   /* strings */
@@ -11896,16 +11898,16 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "string-ref",              g_string_ref,              2, 0, false, H_string_ref);
   s7_define_function(sc, "string-set!",             g_string_set,              3, 0, false, H_string_set);
 
-  s7_define_function(sc, "string=?",                g_strings_are_equal,       1, 0, true,  H_strings_are_equal);
-  s7_define_function(sc, "string<?",                g_strings_are_less,        1, 0, true,  H_strings_are_less);
-  s7_define_function(sc, "string>?",                g_strings_are_greater,     1, 0, true,  H_strings_are_greater);
-  s7_define_function(sc, "string<=?",               g_strings_are_leq,         1, 0, true,  H_strings_are_leq);
-  s7_define_function(sc, "string>=?",               g_strings_are_geq,         1, 0, true,  H_strings_are_geq);
-  s7_define_function(sc, "string-ci=?",             g_strings_are_ci_equal,    1, 0, true,  H_strings_are_ci_equal);
-  s7_define_function(sc, "string-ci<?",             g_strings_are_ci_less,     1, 0, true,  H_strings_are_ci_less);
-  s7_define_function(sc, "string-ci>?",             g_strings_are_ci_greater,  1, 0, true,  H_strings_are_ci_greater);
-  s7_define_function(sc, "string-ci<=?",            g_strings_are_ci_leq,      1, 0, true,  H_strings_are_ci_leq);
-  s7_define_function(sc, "string-ci>=?",            g_strings_are_ci_geq,      1, 0, true,  H_strings_are_ci_geq);
+  s7_define_function(sc, "string=?",                g_strings_are_equal,       2, 0, true,  H_strings_are_equal);
+  s7_define_function(sc, "string<?",                g_strings_are_less,        2, 0, true,  H_strings_are_less);
+  s7_define_function(sc, "string>?",                g_strings_are_greater,     2, 0, true,  H_strings_are_greater);
+  s7_define_function(sc, "string<=?",               g_strings_are_leq,         2, 0, true,  H_strings_are_leq);
+  s7_define_function(sc, "string>=?",               g_strings_are_geq,         2, 0, true,  H_strings_are_geq);
+  s7_define_function(sc, "string-ci=?",             g_strings_are_ci_equal,    2, 0, true,  H_strings_are_ci_equal);
+  s7_define_function(sc, "string-ci<?",             g_strings_are_ci_less,     2, 0, true,  H_strings_are_ci_less);
+  s7_define_function(sc, "string-ci>?",             g_strings_are_ci_greater,  2, 0, true,  H_strings_are_ci_greater);
+  s7_define_function(sc, "string-ci<=?",            g_strings_are_ci_leq,      2, 0, true,  H_strings_are_ci_leq);
+  s7_define_function(sc, "string-ci>=?",            g_strings_are_ci_geq,      2, 0, true,  H_strings_are_ci_geq);
 
   s7_define_function(sc, "string-append",           g_string_append,           0, 0, true,  H_string_append);
   s7_define_function(sc, "string-fill!",            g_string_fill,             2, 0, false, H_string_fill);

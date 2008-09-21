@@ -7026,14 +7026,17 @@ STR_CI_REL_OP(lt, string<?, >=)
 
 /* ---------------- number->string ---------------- */
 
-/* fallback on Guile's number->string */
-static char *f2s_1(Double n) {return(copy_string(DOUBLE_TO_STRING(n)));}
-
-static char *f2s_2(Double n, int rad) {return(copy_string(DOUBLE_TO_STRING_WITH_RADIX(n, rad)));}
-
-static char *i2s_1(Int n) {return(copy_string(INTEGER_TO_STRING(n)));}
-
-static char *i2s_2(Int n, int rad) {return(copy_string(INTEGER_TO_STRING_WITH_RADIX(n, rad)));}
+#if HAVE_S7
+  static char *f2s_1(Double n) {return(DOUBLE_TO_STRING(n));}
+  static char *f2s_2(Double n, int rad) {return(DOUBLE_TO_STRING_WITH_RADIX(n, rad));}
+  static char *i2s_1(Int n) {return(INTEGER_TO_STRING(n));}
+  static char *i2s_2(Int n, int rad) {return(INTEGER_TO_STRING_WITH_RADIX(n, rad));}
+#else
+  static char *f2s_1(Double n) {return(copy_string(DOUBLE_TO_STRING(n)));}
+  static char *f2s_2(Double n, int rad) {return(copy_string(DOUBLE_TO_STRING_WITH_RADIX(n, rad)));}
+  static char *i2s_1(Int n) {return(copy_string(INTEGER_TO_STRING(n)));}
+  static char *i2s_2(Int n, int rad) {return(copy_string(INTEGER_TO_STRING_WITH_RADIX(n, rad)));}
+#endif
 
 static void number2string_f1(int *args, ptree *pt) {if (STRING_RESULT) FREE(STRING_RESULT); STRING_RESULT = f2s_1(FLOAT_ARG_1);}
 
