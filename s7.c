@@ -812,6 +812,12 @@ static void finalize_s7_cell(s7_scheme *sc, s7_pointer a)
 	  s7_free_object(a);
 	  break;
 
+#if S7_DEBUGGING
+	case T_S7_FUNCTION:
+	  fprintf(stderr, "freeing a function? %s", function_name(a));
+	  break;
+#endif
+
 	case T_VECTOR:
 	  if (vector_length(a) > 0)
 	    FREE(a->object.vector.elements);
@@ -1563,6 +1569,9 @@ bool s7_is_symbol(s7_pointer p)
 static s7_pointer g_is_symbol(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_symbol "(symbol? obj) returns #t if obj is a symbol"
+  /*
+  fprintf(stderr, "%s %x %s\n", s7_object_to_c_string(sc, car(args)), typeflag(car(args)), describe_type(car(args)));
+  */
   return(to_s7_bool(sc, s7_is_symbol(car(args))));
 }
 
@@ -8446,7 +8455,11 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
   ffunc *ptr;
   s7_pointer x = new_cell(sc);
   ptr = (ffunc *)CALLOC(1, sizeof(ffunc));
-  set_type(x, T_S7_FUNCTION | T_ATOM | T_CONSTANT | T_SIMPLE);
+#if S7_DEBUGGING
+  set_type(x, T_S7_FUNCTION | T_ATOM | T_SIMPLE | T_FINALIZABLE);
+#else
+  set_type(x, T_S7_FUNCTION | T_ATOM | T_SIMPLE | T_CONSTANT);
+#endif
   x->object.ffptr = ptr;
   x->object.ffptr->ff = f;
   x->object.ffptr->name = name;
@@ -9631,6 +9644,7 @@ static void assign_syntax(s7_scheme *sc, const char *name, opcode_t op)
   s7_pointer x;
   x = symbol_table_add_by_name(sc, name); 
   typeflag(x) |= (T_SYNTAX | T_IMMUTABLE | T_CONSTANT); 
+  typeflag(x) &= (~T_FINALIZABLE);
   syntax_opcode(x) = small_int(sc, (int)op);
 }
 

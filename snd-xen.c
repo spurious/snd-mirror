@@ -2217,7 +2217,10 @@ static XEN g_random(XEN val)
 /* this number is overflowing (gauche int = 29 bits) if left as a bare int */
 static XEN g_get_internal_real_time(void) 
 {
-  return(C_TO_XEN_INT((int)(100.0 * ((double)clock() / (double)CLOCKS_PER_SEC))));
+  /* this returns negative values:
+     return(C_TO_XEN_INT((int)(100.0 * ((double)clock() / (double)CLOCKS_PER_SEC))));
+  */
+  return(C_TO_XEN_INT(100 * (clock() / CLOCKS_PER_SEC)));
 }
 
 static XEN g_ftell(XEN fd)

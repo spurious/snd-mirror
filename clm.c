@@ -244,27 +244,32 @@ static char *float_array_to_string(Float *arr, int len, int loc)
   str = (char *)clm_calloc_atomic(STR_SIZE, sizeof(char), "float_array_to_string");
   MUS_SET_PRINTABLE(PRINT_CHAR);
 
-  sprintf(base, "[");
-  lim = len;
-  if (lim > array_print_length) lim = array_print_length;
-  k = loc;
-  for (i = 0; i < lim - 1; i++)
+  if (len > 0)
     {
-      mus_snprintf(str, STR_SIZE, "%.3f ", arr[k]);
-      strcat(base, str);
-      if ((int)(strlen(base) + MAX_NUM_SIZE) > size)
+      sprintf(base, "[");
+      lim = len;
+      if (lim > array_print_length) lim = array_print_length;
+      k = loc;
+      for (i = 0; i < lim - 1; i++)
 	{
-	  base = (char *)clm_realloc(base, size * 2 * sizeof(char));
-	  MUS_SET_PRINTABLE(PRINT_CHAR);
+	  mus_snprintf(str, STR_SIZE, "%.3f ", arr[i]);
+	  strcat(base, str);
+	  if ((int)(strlen(base) + MAX_NUM_SIZE) > size)
+	    {
+	      base = (char *)clm_realloc(base, size * 2 * sizeof(char));
+	      MUS_SET_PRINTABLE(PRINT_CHAR);
 
-	  base[size] = 0;
-	  size *= 2;
+	      base[size] = 0;
+	      size *= 2;
+	    }
+	  k++;
+	  if (k >= len) k = 0;
 	}
-      k++;
       if (k >= len) k = 0;
+      mus_snprintf(str, STR_SIZE, "%.3f%s", arr[k], (len > lim) ? "..." : "]");
+      strcat(base, str);
     }
-  mus_snprintf(str, STR_SIZE, "%.3f%s", arr[k], (len > lim) ? "..." : "]");
-  strcat(base, str);
+  else sprintf(base, "[]");
   if (len > lim)
     {
       /* print ranges */

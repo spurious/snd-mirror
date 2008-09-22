@@ -13,10 +13,6 @@
 ;;;   Snd's numtst.c
 
 
-;;; not covered yet: ports, all control ops, syntax-rules
-
-
-
 (define with-continued-fraction-rationalize #t)                ; #f follows the Scheme spec
 (define with-bignums #f)                                       ; else (probably) 64-bit ints
 (define with-hyperbolic-functions #t)                          ; sinh et al
@@ -26,9 +22,16 @@
 (define with-generic-modulo #t)                                ; #f is the Scheme norm
 
 
-;;; --------------------------------------------------------------------------------
 
-;;; the basic "test" uses equal?, num-test (below) is much fancier
+(if (not (defined? 'call/cc)) (define call/cc call-with-current-continuation))
+
+;;; --------------------------------------------------------------------------------
+;;;
+;;; to test "eval", I need a way to call it
+
+;;; Guile: (define (test-eval expr) (eval expr (interaction-environment)))
+
+;;; --------------------------------------------------------------------------------
 
 (define (ok? tst result expected)
   (if (not (equal? result expected))
@@ -44,6 +47,45 @@
 (defmacro test (tst expected)
   `(let ((result (catch #t (lambda () ,tst) (lambda args 'error))))
      (ok? ',tst result ,expected)))
+
+
+(define (number-ok? tst result expected)
+  (if (or (and (eq? expected 'error)
+		  (not (eq? result 'error)))
+             (and (eq? result 'error)
+                  (not (eq? expected 'error)))
+	     (and (eq? expected #t)
+		  (not result))
+	     (and (eq? expected #f)
+		  result)
+             (and (integer? expected)
+		  (integer? result)
+		  (not (= result expected))
+		  (or (< (abs expected) 1.0e9)
+		      (> (abs (- (log (abs expected)) (log (abs result)))) 1.0e-2)))
+	     (and (real? expected)
+		  (real? result)
+		  (> (abs (- result expected)) 1.0e-5)
+		  (or (< 1.0e-6 (abs expected) 1.0e6)
+		      (> (abs (- (log (abs expected)) (log (abs result)))) 1.0e-2)))
+	     (and (number? result)
+	          (or (not (real? expected))
+		      (not (real? result)))
+		  (or (and (> (abs (real-part (- result expected))) 1.0e-4)
+			   (> (abs (real-part (+ result expected))) 1.0e-4))
+		      (and (> (abs (imag-part (- result expected))) 1.0e-4)
+			   (> (abs (imag-part (+ result expected))) 1.0e-4)))))
+	 (begin
+           (display (object->string tst))
+           (display " got ")
+           (display (object->string result))
+           (display " but expected ")
+           (display (object->string expected))
+           (newline))))
+
+(defmacro num-test (tst expected)
+  `(let ((result (catch #t (lambda () ,tst) (lambda args 'error))))
+     (number-ok? ',tst result ,expected)))
 
 
 ;;; --------------------------------------------------------------------------------
@@ -286,7 +328,7 @@
 	 (display "(char? ") (display arg) (display ") returned #t?") (newline))))
  (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #f #t (lambda (a) (+ a 1))))
 
-(do ((i 0 (1+ i)))
+(do ((i 0 (+ i 1)))
     ((= i 256))
    (if (not (char? (integer->char i)))
        (begin
@@ -1423,8 +1465,8 @@
 	 (display "(cdr '(() ") (display arg) (display ")) returned ") (display (cdr (cons '() arg))) (display "?") (newline))))
  (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (lambda (a) (+ a 1))))
 
-(define (cons-r a b n) (if (= 0 n) (cons a b) (cons (cons-r (1+ a) (1+ b) (- n 1)) (cons-r (1- a) (1- b) (- n 1)))))
-(define (list-r a b n) (if (= 0 n) (list a b) (list (list-r (1+ a) (1+ b) (- n 1)) (list-r (1- a) (1- b) (- n 1)))))
+(define (cons-r a b n) (if (= 0 n) (cons a b) (cons (cons-r (+ a 1) (+ b 1) (- n 1)) (cons-r (- a 1) (- b 1) (- n 1)))))
+(define (list-r a b n) (if (= 0 n) (list a b) (list (list-r (+ a 1) (+ b 1) (- n 1)) (list-r (- a 1) (- b 1) (- n 1)))))
 
 (define lists (list (list 1 2 3)
 		    (cons 1 2)
@@ -2482,44 +2524,6 @@
 ;;; --------------------------------------------------------------------------------
 ;;; NUMBERS
 ;;; --------------------------------------------------------------------------------
-
-(define (number-ok? tst result expected)
-  (if (or (and (eq? expected 'error)
-		  (not (eq? result 'error)))
-             (and (eq? result 'error)
-                  (not (eq? expected 'error)))
-	     (and (eq? expected #t)
-		  (not result))
-	     (and (eq? expected #f)
-		  result)
-             (and (integer? expected)
-		  (integer? result)
-		  (not (= result expected))
-		  (or (< (abs expected) 1.0e9)
-		      (> (abs (- (log (abs expected)) (log (abs result)))) 1.0e-2)))
-	     (and (real? expected)
-		  (real? result)
-		  (> (abs (- result expected)) 1.0e-5)
-		  (or (< 1.0e-6 (abs expected) 1.0e6)
-		      (> (abs (- (log (abs expected)) (log (abs result)))) 1.0e-2)))
-	     (and (number? result)
-	          (or (not (real? expected))
-		      (not (real? result)))
-		  (or (and (> (abs (real-part (- result expected))) 1.0e-4)
-			   (> (abs (real-part (+ result expected))) 1.0e-4))
-		      (and (> (abs (imag-part (- result expected))) 1.0e-4)
-			   (> (abs (imag-part (+ result expected))) 1.0e-4)))))
-	 (begin
-           (display (object->string tst))
-           (display " got ")
-           (display (object->string result))
-           (display " but expected ")
-           (display (object->string expected))
-           (newline))))
-
-(defmacro num-test (tst expected)
-  `(let ((result (catch #t (lambda () ,tst) (lambda args 'error))))
-     (number-ok? ',tst result ,expected)))
 
 (define int-0 0)
 (define ratio-0 0/3)
@@ -24824,6 +24828,18 @@
 
 (test (= 1 #e1 1/1 #e1/1 #e1.0 #e1e0 #e1.##) #t)
 (test (= #i3/10 3#/100 0.3 #i0.3 3e-1 3d-1 0.3e0 3e-1) #t)
+(test (= 0 -0 +0 0.0 -0.0 +0.0 0/1 -0/1 +0/24 0+0i 0-0i -0-0i +0-0i 0.0-0.0i -0.0+0i) #t)
+
+(for-each
+ (lambda (z)
+   (if (not (zero? z))
+       (begin (display z) (display " is not zero?") (newline)))
+   (if (and (real? z) (positive? z))
+       (begin (display z) (display " is positive?") (newline)))
+   (if (and (real? z) (negative? z))
+       (begin (display z) (display " is negative?") (newline))))
+ '(0 -0 +0 0.0 -0.0 +0.0 0/1 -0/1 +0/24 0+0i 0-0i -0-0i +0-0i 0.0-0.0i -0.0+0i))
+
 
 ;;; these 2 are from guile
 (for-each 
@@ -24867,7 +24883,7 @@
    ("#e1" 1) ("#e1.2" 12/10)
    ("#i1.1" 1.1) ("#i1" 1.0)
    ;; Integers:
-   ("1" ,(1+ 0)) ("23" ,(+ 9 9 5)) ("-1" ,(- 0 1)) 
+   ("1" ,(+ 1 0)) ("23" ,(+ 9 9 5)) ("-1" ,(- 0 1)) 
    ("-45" ,(- 0 45)) ("2#" 20.0) ("2##" 200.0) ("12##" 1200.0)
    ("#b#i100" 4.0)
    ;; Fractions:
@@ -24965,142 +24981,305 @@
 
 
 
-#!
-char-ready?
-current-input-port
-current-output-port
-close-input-port
-close-output-port
-open-input-file
-open-output-file
-read-char
-peek-char
-read
-newline
-write-char
-write
-display
-call-with-input-file
-with-input-from-file
-call-with-output-file
-with-output-to-file
-!#
+(for-each
+ (lambda (arg)
+   (test (char-ready? arg) 'error))
+ (list "hi" -1 #\a 1 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #f #t (lambda (a) (+ a 1))))
 
-#!
-(test #\; peek-char this-file)
-(test #\; read-char this-file)
-(test '(define cur-section '()) read this-file)
-(test #\( peek-char this-file)
-(test '(define errs '()) read this-file)
-(close-input-port this-file)
-;(close-input-port this-file) ;-- s7 considers a closed port is not an input port
-(define (check-test-file name)
-  (define test-file (open-input-file name))
-  (test #t 'input-port?
-	(call-with-input-file
-	    name
+;;; (test (call-with-input-file "tmp1.r5rs" (lambda (p) (read p) (let ((val (read p))) (char-ready? p)))) #f)
+;;; how can I test char-ready? in this context?
+
+
+
+(test (call-with-input-file "tmp1.r5rs" (lambda (p) (read-char p))) #\3)
+(test (call-with-input-file "tmp1.r5rs" (lambda (p) (peek-char p))) #\3)
+(test (call-with-input-file "tmp1.r5rs" (lambda (p) (peek-char p) (read-char p))) #\3)
+(test (call-with-input-file "tmp1.r5rs" (lambda (p) (list->string (list (read-char p) (read-char p) (read-char p) (read-char p))))) "3.14")
+(test (call-with-input-file "tmp1.r5rs" (lambda (p) (list->string (list (read-char p) (peek-char p) (read-char p) (read-char p) (peek-char p) (read-char p))))) "3..144")
+
+(for-each
+ (lambda (arg)
+   (call-with-output-file "tmp1.r5rs" (lambda (p) (write arg p)))
+   (test (call-with-input-file "tmp1.r5rs" (lambda (p) (read p))) arg))
+ (list "hi" -1 #\a 1 'a-symbol (make-vector 3 0) 3.14 3/4 1.0+1.0i #f #t (list 1 2 3) (cons 1 2)))
+
+;;; r4rstest
+(let* ((write-test-obj '(#t #f a () 9739 -3 . #((test) "te \" \" st" "" test #() b c)))
+       (load-test-obj (list 'define 'foo (list 'quote write-test-obj))))
+
+  (define (check-test-file name)
+    (define test-file (open-input-file name))
+    (let ((val (call-with-input-file
+		   name
+		 (lambda (test-file)
+		   (test (read test-file) load-test-obj)
+		   (test (eof-object? (peek-char test-file)) #t)
+		   (test (eof-object? (read-char test-file)) #t)
+		   (input-port? test-file)))))
+      (if (not (eq? val #t))
+	  (begin (display "input-port? in call-with-input-file? returned ") (display val) (newline)))))
+
+  (test (call-with-output-file
+	    "tmp1.r5rs"
 	  (lambda (test-file)
-	    (test load-test-obj read test-file)
-	    (test #t eof-object? (peek-char test-file))
-	    (test #t eof-object? (read-char test-file))
-	    (input-port? test-file))))
-  (test #\; read-char test-file)
-  (test #\; read-char test-file)
-  (test #\; read-char test-file)
-  (test write-test-obj read test-file)
-  (test load-test-obj read test-file)
-  (close-input-port test-file))
-(define write-test-obj
-  '(#t #f a () 9739 -3 . #((test) "te \" \" st" "" test #() b c)))
-(define load-test-obj
-  (list 'define 'foo (list 'quote write-test-obj)))
-(test #t call-with-output-file
-      "tmp1"
-      (lambda (test-file)
-	(write-char #\; test-file)
-	(display #\; test-file)
-	(display ";" test-file)
-	(write write-test-obj test-file)
-	(newline test-file)
-	(write load-test-obj test-file)
-	(output-port? test-file)))
-(check-test-file "tmp1")
+	    (write-char #\; test-file)
+	    (display #\; test-file)
+	    (display ";" test-file)
+	    (write write-test-obj test-file)
+	    (newline test-file)
+	    (write load-test-obj test-file)
+	    (output-port? test-file))) #t)
+  (check-test-file "tmp1.r5rs")
 
-(define test-file (open-output-file "tmp2"))
-(write-char #\; test-file)
-(display #\; test-file)
-(display ";" test-file)
-(write write-test-obj test-file)
-(newline test-file)
-(write load-test-obj test-file)
-(test #t output-port? test-file)
-(close-output-port test-file)
-(check-test-file "tmp2")
-(define (test-sc4)
-  (newline)
-  (display ";testing scheme 4 functions; ")
-  (newline)
+  (let ((test-file (open-output-file "tmp2.r5rs")))
+    (write-char #\; test-file)
+    (display #\; test-file)
+    (display ";" test-file)
+    (write write-test-obj test-file)
+    (newline test-file)
+    (write load-test-obj test-file)
+    (test (output-port? test-file) #t)
+    (close-output-port test-file)
+    (check-test-file "tmp2.r5rs")))
 
 
+(call-with-output-file "tmp1.r5rs" (lambda (p) (display "3.14" p)))
+(test (with-input-from-file "tmp1.r5rs" (lambda () (read))) 3.14)
+(if (not (eq? start-input-port (current-input-port)))
+    (begin (display "with-input-from-file did not restore current-input-port? ") (display start-input-port) (display " ") (display (current-input-port)) (newline)))
 
-(test "call-with-output-file -> port-closed?"
-      #t
-      (lambda ()
-        (let ((p #f))
-          (call-with-output-file
-              "tmp1.o"
-              (lambda (port)
-                (write '(a b c d e) port)
-                (set! p port)))
-          (port-closed? p))))
+(test (with-input-from-file "tmp1.r5rs" (lambda () (eq? (current-input-port) start-input-port))) #f)
 
-(test "call-with-input-file -> port-closed?"
-      '(#t a b c d e)
-      (lambda ()
-        (let* ((p #f)
-               (r (call-with-input-file "tmp1.o"
-                    (lambda (port)
-                      (set! p port)
-                      (read port)))))
-          (cons (port-closed? p) r))))
-
-(test "with-output-to-file -> port-closed?"
-      '(#t #f)
-      (lambda ()
-        (let ((p #f))
-          (with-output-to-file "tmp1.o"
-            (lambda ()
-              (set! p (current-output-port))
-              (write '(a b c d e))))
-          (list (port-closed? p)
-                (eq? p (current-output-port))))))
-
-(test "with-input-from-file -> port-closed?"
-      '(#t #f)
-      (lambda ()
-        (let* ((p #f)
-               (r (with-input-from-file "tmp1.o"
-                    (lambda ()
-                      (set! p (current-input-port))
-                      (read)))))
-          (list (port-closed? p)
-                (eq? p (current-input-port))))))
+(test (with-output-to-file "tmp1.r5rs" (lambda () (eq? (current-output-port) start-output-port))) #f)
+(if (not (eq? start-output-port (current-output-port)))
+    (begin (display "with-output-to-file did not restore current-output-port? ") (display start-output-port) (display " ") (display (current-output-port)) (newline)))
 
 
-!#
+(let ((newly-found-sonnet-probably-by-shakesepeare 
+        "This is the story, a sad tale but true \
+        Of a programmer who had far too little to do.\
+        One day as he sat in his hut swilling stew, \
+        He cried \"CLM takes forever, it's stuck in a slough!,\
+        Its C code is slow, too slow by a few.\
+        Why, with just a small effort, say one line or two,\
+        It could outpace a no-op, you could scarcely say 'boo'\"!\
+        So he sat in his kitchen and worked like a dog.\
+        He typed and he typed 'til his mind was a fog. \
+        Now 6000 lines later, what wonders we see!  \
+        CLM is much faster, and faster still it will be!\
+        In fact, for most cases, C beats the DSP!  \
+        But bummed is our coder; he grumbles at night.  \
+        That DSP code took him a year to write.  \
+        He was paid many dollars, and spent them with glee,\
+        But his employer might mutter, this result were he to see."))
+  (call-with-output-file "tmp1.r5rs"
+    (lambda (p)
+      (write newly-found-sonnet-probably-by-shakesepeare p)))
+  (let ((sonnet (with-input-from-file "tmp1.r5rs"
+		  (lambda ()
+		    (read)))))
+    (if (or (not (string? sonnet))
+	    (not (string=? sonnet newly-found-sonnet-probably-by-shakesepeare)))
+	(begin (display "write/read long string returned: ") (display sonnet) (newline))))
+
+  (let ((file (open-output-file "tmp1.r5rs")))
+    (let ((len (string-length newly-found-sonnet-probably-by-shakesepeare)))
+      (write-char #\" file)
+      (do ((i 0 (+ i 1)))
+	  ((= i len))
+	(let ((chr (string-ref newly-found-sonnet-probably-by-shakesepeare i)))
+	  (if (char=? chr #\")
+	      (write-char #\\ file))
+	  (write-char chr file)))
+      (write-char #\" file)
+      (close-output-port file)))
+  (let ((file (open-input-file "tmp1.r5rs")))
+    (let ((sonnet (read file)))
+      (close-input-port file)
+      (if (or (not (string? sonnet))
+	      (not (string=? sonnet newly-found-sonnet-probably-by-shakesepeare)))
+	  (begin (display "write-char/read long string returned: ") (display sonnet) (newline))))))
+
+(let ((file (open-output-file "tmp1.r5rs")))
+  (for-each
+   (lambda (arg)
+     (write arg file)
+     (write-char #\space file))
+   (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #f #t (list 1 2 3) '(1 . 2)))
+  (close-output-port file))
+(let ((file (open-input-file "tmp1.r5rs")))
+  (for-each
+   (lambda (arg)
+     (let ((val (read file)))
+       (if (not (equal? val arg))
+	   (begin (display "read/write ") (display arg) (display " returned ") (display val) (newline)))))
+   (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #f #t (list 1 2 3) '(1 . 2)))
+  (close-input-port file))
+
+(with-output-to-file "tmp1.r5rs"
+  (lambda ()
+    (write lists)))
+(let ((val (with-input-from-file "tmp1.r5rs"
+	     (lambda ()
+	       (read)))))
+  (if (not (equal? val lists))
+      (begin (display "read/write lists returned ") (display val) (newline))))
+
+
+
+
 
 
 ;;; --------------------------------------------------------------------------------
 ;;; CONTROL OPS
 ;;; --------------------------------------------------------------------------------
 
+(define control-ops (list lambda define quote if begin set! let let* letrec cond case and or do
+			  defined? call/cc eval apply for-each map values call-with-values dynamic-wind
+			  quasiquote))
+(for-each
+ (lambda (op)
+   (if (not (eq? op op))
+       (begin (display op) (display " not eq? to itself?") (newline))))
+ control-ops)
 
+(for-each
+ (lambda (op)
+   (if (not (eqv? op op))
+       (begin (display op) (display " not eqv? to itself?") (newline))))
+ control-ops)
+
+(for-each
+ (lambda (op)
+   (if (not (equal? op op))
+       (begin (display op) (display " not equal? to itself?") (newline))))
+ control-ops)
+
+(define question-ops (list boolean? eof-object? string? 
+		           number? integer? real? rational? complex? char?
+			   list? vector? pair? null?))
+
+(for-each
+ (lambda (ques)
+   (for-each
+    (lambda (op)
+      (if (ques op)
+	  (begin (display ques) (display " ") (display op) (display " returned #t?") (newline))))
+    control-ops))
+ question-ops)
+
+
+(for-each 
+ (lambda (s)
+   (if (not (symbol? s))
+       (begin (display "(symbol? ") (display s) (display " returned #f?") (newline))))
+ '(+ - ... !.. $.+ %.- &.! *.: /:. <-. =. >. ?. ~. _. ^.))
+
+
+(test ((if #f + *) 3 4) 12)
+(test (if (> 3 2) 'yes 'no) 'yes)
+(test (if (> 2 3) 'yes 'no) 'no)
+(test (if (> 3 2) (- 3 2) (+ 3 2)) 1)
+(test (if (> 3 2) 1) 1)
+(test (if '() 1 2) 1)
+(test (if 't 1 2) 1)
+(test (if #t 1 2) 1)
+(test (if '#() 1 2) 1)
+(test (if #f) 'error)
+(test (if (< 2 3)) 'error)
+(test (if #f 1 2 3) 'error)
+(test (if 1 2 3 4) 'error)
+(test (if 1 2 3) 2)
+(test (if 0 2 3) 2)
+(test (if (list) 2 3) 2)
+(test (if "" 2 3) 2)
+
+(test (let ((a #t) (b #f) (c #t) (d #f)) (if (if (if (if d d c) d b) d a) 'a 'd)) 'a)
+(test (let ((a #t) (b #f) (c #t) (d #f)) (if a (if b (if c (if d d c) c) 'b) 'a)) 'b)
+;(test (let ((a #t) (b #f) (c #t) (d #f)) (((if a if 'gad) c if 'gad) (not d) 'a 'gad)) 'a)
+(test (let ((a #t) (b #f) (c #t) (d #f)) (if b (if a (if d 'gad) 'gad) (if d 'gad 'a))) 'a)
+
+(let ((a #t))
+  (for-each
+   (lambda (arg)
+     (test (if a arg 'gad) arg))
+   (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #f #t (list 1 2 3) '(1 . 2))))
+
+(let ((a #t))
+  (for-each
+   (lambda (arg)
+     (test (if (not a) 'gad arg) arg))
+   (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #f #t (list 1 2 3) '(1 . 2))))
+
+(test (let ((ctr 0) (a #t)) (if a (let ((b ctr)) (set! ctr (+ ctr 1)) (list b ctr)) (let ((c ctr)) (set! ctr (+ ctr 100)) (list c ctr)))) (list 0 1))
+
+(test (if if if if) if)
+;(test (((if if if) if if) if if 'gad) if)
+(test (if if (if if if) if) if)
+;(test (let ((car if)) (car #t 0 1)) 0)
+;(test ((car (list if)) #t 0 1) 0)
+(test (symbol->string 'if) "if")
+(test (if #f 1 else 2) 'error)
+(test (if (and if (if if if)) if 'gad) if)
+(test (let ((if #t)) (or if)) #t)
+(test (let ((if +)) (if 1 2 3)) 6)
+(test (let ((ctr 0)) (if (let () (set! ctr (+ ctr 1)) (= ctr 1)) 0 1)) 0)
+(test (let ((ctr 0)) (if (let () (set! ctr (+ ctr 1)) (if (= ctr 1) (> 3 2) (< 3 2))) 0 1)) 0)
+(test (        if (> 3 2) 1 2) 1)
+(test (if) 'error)
+(test (let ((alist (list (list map 1) (list car 2) (list if 3) (list do 4)))) (assoc if alist)) (list if 3))
+(test (let ((alist (list (list map 1) (list car 2) (list if 3) (list do 4)))) (assv if alist)) (list if 3))
+(test (let ((alist (list (list map 1) (list car 2) (list if 3) (list do 4)))) (assq if alist)) (list if 3))
+(test (let ((alist (list map car if do))) (member if alist)) (list if do))
+(test (let ((alist (list map car if do))) (memv if alist)) (list if do))
+(test (let ((alist (list map car if do))) (memq if alist)) (list if do))
+;(test ((vector-ref (vector if) 0) #t 1 2) 1)
+;(test ((vector-ref (make-vector 1 if) 0) #t 1 2) 1)
+(test ((if #t + -) 3 4) 7)
+(test (list (if 0 1 2)) (list 1))
+;(test ((car (list if map)) #f 1 2) 2)
+(test (let ((ctr 0)) (if (= ctr 0) (let () (set! ctr (+ ctr 1)) (if (= ctr 1) 2 3)) (let () (set! ctr (+ ctr 1)) (if (= ctr 1) 4 5)))) 2)
+(test (let ((x (cons 1 2))) (set-cdr! x x) (if x 1 2)) 1)
+(test (let ((ctr 0)) (if (let ((ctr 123)) (set! ctr (+ ctr 1)) (= ctr 124)) (let () (set! ctr (+ ctr 100)) ctr) (let () (set! ctr (+ ctr 1000)) ctr)) ctr) 100)
+(test (if (let ((if 3)) (> 2 if)) 4 5) 5)
+
+(if (defined? 'test-eval)
+    (test (test-eval '(if (> 3 2) 1 2)) 1))
+
+(test (let ((ctr 0)) (call/cc (lambda (exit) (if (> 3 2) (let () (exit ctr) (set! ctr 100) ctr) #f)))) 0)
+(test (let ((ctr 0)) (call/cc (lambda (exit) (if (< 3 2) #f (let () (exit ctr) (set! ctr 100) ctr))))) 0)
+(test (let ((ctr 0)) (call/cc (lambda (exit) (if (let () (exit ctr) (set! ctr 100) ctr) 123 321)))) 0)
+(test (let ((ctr 0)) (if (> 3 2) (call/cc (lambda (exit) (set! ctr (+ ctr 1)) (exit ctr))) #f) ctr) 1)
+
+
+
+
+;;; --------------------------------------------------------------------------------
+;;; lambda define quote begin set! let let* letrec cond case and or do
+;;; defined? [delay and force perhaps] [funny var names]
+;;; call/cc eval apply for-each map values call-with-values dynamic-wind
+;;; quasiquote [also tail-recursion]
 
 #!
-'(+ - ... !.. $.+ %.- &.! *.: /:. :+. <-. =. >. ?. ~. _. ^.)
+
+(let ((samples (vector 0 1 2 3 4 5 6 7 8 9 10)))
+  (let ((make-scaler 
+	 (lambda (start end)
+	   (letrec ((ctr start)
+		    (us (lambda (them)
+			  (vector-set! samples ctr (* 2 (vector-ref samples ctr)))
+			  (set! ctr (+ ctr 2))
+			  (if (<= ctr end)
+			      (them us)))))
+	     us))))
+    ((make-scaler 0 11)
+     (make-scaler 1 11))) 
+  samples)
+
+
 (test '(quote a) 'quote (quote 'a))
 (test '(quote a) 'quote ''a)
-(test 12 (if #f + *) 3 4)
+
 (test 8 (lambda (x) (+ x x)) 4)
 (define reverse-subtract
   (lambda (x y) (- y x)))
@@ -25111,9 +25290,6 @@ with-output-to-file
 (test 10 add4 6)
 (test '(3 4 5 6) (lambda x x) 3 4 5 6)
 (test '(5 6) (lambda (x y . z) z) 3 4 5 6)
-(test 'yes 'if (if (> 3 2) 'yes 'no))
-(test 'no 'if (if (> 2 3) 'yes 'no))
-(test '1 'if (if (> 3 2) (- 3 2) (+ 3 2)))
 (define x 2)
 (test 3 'define (+ x 1))
 (set! x 4)
@@ -25379,9 +25555,6 @@ with-output-to-file
 (test (cond ('a)) 'a)
 (test (cond (#f 'a) ('b)) 'b)
 (test (cond (#t 'a) (#t 'b)) 'a)
-(test (if #t 1 2) 1)
-(test (if #f 1 2) 2)
-(test ((if #f + *) 3 4) 12)
 (test ((lambda (x) (+ x x)) 4)  8)
 (define reverse-subtract (lambda (x y) (- y x)))
 (test (reverse-subtract 7 10) 3)
@@ -25389,9 +25562,6 @@ with-output-to-file
 (test (add4 6) 10)
 (test ((lambda x x) 3 4 5 6) '(3 4 5 6))
 (test ((lambda (x y . z) z) 3 4 5 6)  '(5 6))
-(test (if (> 3 2) 'yes 'no)  'yes)
-(test (if (> 2 3) 'yes 'no)  'no)
-(test (if (> 3 2) (- 3 2) (+ 3 2))  1)
 (test (begin (define x 2) (+ x 1)) 3)
 (test (cond ((> 3 2) 'greater)  ((< 3 2) 'less)) 'greater)
 (test (cond ((> 3 3) 'greater)  ((< 3 3) 'less)  (else 'equal)) 'equal)
@@ -25722,8 +25892,6 @@ with-output-to-file
 (test "Al's call/cc test" 1
       (lambda () (call/cc (lambda (c) (0 (c 1))))))
 
-(prim-test "if" 5 (lambda ()  (if #f 2 5)))
-(prim-test "if" 2 (lambda ()  (if (not #f) 2 5)))
 
 (prim-test "and" #t (lambda ()  (and)))
 (prim-test "and" 5  (lambda ()  (and 5)))

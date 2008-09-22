@@ -68398,8 +68398,8 @@ EDITS: 1
   
   (set! (with-background-processes) #t)
   
-  (if (provided? 'snd-s7)
-      (load "s7test.scm"))
+;  (if (provided? 'snd-s7)
+;      (load "s7test.scm"))
   
   (if with-gui
       
