@@ -2220,7 +2220,7 @@ static XEN g_get_internal_real_time(void)
   /* this returns negative values:
      return(C_TO_XEN_INT((int)(100.0 * ((double)clock() / (double)CLOCKS_PER_SEC))));
   */
-  return(C_TO_XEN_INT(100 * (clock() / CLOCKS_PER_SEC)));
+  return(C_TO_XEN_INT((clock() / (CLOCKS_PER_SEC / 100))));
 }
 
 static XEN g_ftell(XEN fd)

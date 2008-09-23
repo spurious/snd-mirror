@@ -34,6 +34,7 @@
  *
  *   deliberate omission from r5rs: 
  *        no inexact integer or ratio (so, for example, truncate returns an exact integer), no exact complex or exact real
+ *        '#' does not stand for an unknown digit, and the '@' complex number notation is ignored
  *
  *   deliberate difference from r5rs:
  *        modulo, remainder, and quotient take integer, ratio, or real args
@@ -1805,6 +1806,9 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
   if (!s7_is_symbol(car(args)))
     return(s7_wrong_type_arg_error(sc, "defined?", 1, car(args), "a symbol"));
 
+  if (is_syntax(car(args)))
+    return(sc->T);
+
   if (cdr(args) != sc->NIL)
     {
       if (!s7_is_pair(cadr(args)))
@@ -3280,6 +3284,7 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
 static s7_pointer make_sharp_const(s7_scheme *sc, char *name) 
 {
   long x;
+  long long int xx;
   char tmp[256];
 
   if (strcmp(name, "t") == 0)
@@ -3290,26 +3295,35 @@ static s7_pointer make_sharp_const(s7_scheme *sc, char *name)
 
   if (*name == 'o') /* #o (octal) */
     {
+      if (!isdigit(*(name + 1)))
+	return(sc->NIL);
       snprintf(tmp, sizeof(tmp), "0%s", name + 1);
-      sscanf(tmp, "%lo", &x);
+      if (sscanf(tmp, "%lo", &x) < 1)
+	return(sc->NIL);
       return(s7_make_integer(sc, x));
     }
 
   if (*name == 'd') /* #d (decimal) */
     {    
-      sscanf(name + 1, "%ld", &x);
-      return(s7_make_integer(sc, x));
+      if (sscanf(name + 1, "%lld", &xx) < 1)
+	return(sc->NIL);
+      return(s7_make_integer(sc, xx));
     } 
 
   if (*name == 'x') /* #x (hex) */
     {    
+      if (!isalnum(*(name + 1)))
+	return(sc->NIL);
       snprintf(tmp, sizeof(tmp), "0x%s", name + 1);
-      sscanf(tmp, "%lx", &x);
-      return(s7_make_integer(sc, x));
+      if (sscanf(tmp, "%llx", &xx) < 1)
+	return(sc->NIL);
+      return(s7_make_integer(sc, xx));
     } 
 
   if (*name == 'b') /* #b (binary) */
     {    
+      if (!isdigit(*(name + 1)))
+	return(sc->NIL);
       x = binary_decode(name + 1);
       if (x < 0)
 	return(sc->NIL);
@@ -3319,7 +3333,8 @@ static s7_pointer make_sharp_const(s7_scheme *sc, char *name)
   if (*name == 'i')  /* #i<num> = ->inexact (see token, is_one_of for table of choices here) */
     {
       double xf;
-      sscanf(name + 1, "%lf", &xf);
+      if (sscanf(name + 1, "%lf", &xf) < 1)
+	return(sc->NIL);
       return(s7_make_real(sc, xf));
     }
 
@@ -3327,7 +3342,8 @@ static s7_pointer make_sharp_const(s7_scheme *sc, char *name)
     {
       double xf;
       s7_Int numer = 0, denom = 1;
-      sscanf(name + 1, "%lf", &xf);
+      if (sscanf(name + 1, "%lf", &xf) < 1)
+	return(sc->NIL);
       if (c_rationalize(xf, DEFAULT_RATIONALIZE_ERROR, &numer, &denom))
 	return(s7_make_ratio(sc, numer, denom));
       return(s7_make_integer(sc, (s7_Int)xf));
@@ -3383,6 +3399,37 @@ static s7_pointer make_sharp_const(s7_scheme *sc, char *name)
 }
 
 
+static int char_to_num(const char c)
+{
+  if (isdigit(c))
+    return(c - '0');
+  return((tolower(c) - 'a') + 10);
+}
+
+
+static s7_pointer make_int_with_radix(s7_scheme *sc, const char *str,  int radix)
+{
+  s7_Int x = 0, rad;
+  int i, len, lim = 0, sign = 1;
+
+  len = safe_strlen(str);
+  if (str[0] == '+')
+    lim = 1;
+  else
+    {
+      if (str[0] == '-')
+	{
+	  lim = 1;
+	  sign = -1;
+	}
+    }
+  for (i = len - 1, rad = 1; i >= lim; i--, rad *= radix)
+    x += (char_to_num(str[i]) * rad);
+
+  return(s7_make_integer(sc, sign * x));
+}
+
+
 /* make symbol or number atom from string */
 
 static s7_pointer make_atom(s7_scheme *sc, char *q, int radix) 
@@ -3409,7 +3456,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix)
 	  c = *p++; 
 	} 
       if (!isdigit(c)) 
-	return(s7_make_symbol(sc, string_downcase(q))); 
+	return(s7_make_symbol(sc, string_downcase(q)));  /* if CASE_SENSITIVE, string_downcase is a no-op */
     } 
   else 
     {
@@ -3571,9 +3618,15 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix)
     }
   
   if (has_slash)
-    return(s7_make_ratio(sc, atoll(q), atoll(slash)));
+    {
+      if (slash == p) /* 8/ */
+	return(s7_make_symbol(sc, q));
+      return(s7_make_ratio(sc, atoll(q), atoll(slash)));
+    }
 
-  return(s7_make_integer(sc, atoll(q)));
+  if (radix == 10)
+    return(s7_make_integer(sc, atoll(q)));
+  return(make_int_with_radix(sc, q, radix));
 }
 
 
@@ -4308,15 +4361,13 @@ static s7_pointer compare_numbers(s7_scheme *sc, int op, s7_pointer args)
     case N_GREATER_OR_EQUAL: comp_func = num_ge; arg_checker = s7_is_real;   arg_type = "real";   op_name = ">="; break;
     }
   
-  if (!arg_checker(car(args)))
-    s7_wrong_type_arg_error(sc, op_name, 1, car(args), arg_type);
+  for (i = 1, sc->x = args; sc->x != sc->NIL; i++, sc->x = cdr(sc->x))
+    if (!arg_checker(car(sc->x)))
+      s7_wrong_type_arg_error(sc, op_name, i, car(sc->x), arg_type);
 
   sc->v = nvalue(car(args));
-  for (i = 2, sc->x = cdr(args); sc->x != sc->NIL; i++, sc->x = cdr(sc->x)) 
+  for (sc->x = cdr(args); sc->x != sc->NIL; sc->x = cdr(sc->x)) 
     {
-      if (!arg_checker(car(sc->x)))
-	s7_wrong_type_arg_error(sc, op_name, i, car(sc->x), arg_type);
-
       if (!comp_func(sc->v, nvalue(car(sc->x)))) 
 	return(sc->F);
       sc->v = nvalue(car(sc->x));
@@ -9694,6 +9745,7 @@ static s7_pointer g_for_each(s7_scheme *sc, s7_pointer args)
 {
   #define H_for_each "(for-each proc lst . lists) applies proc to a list made up of the car of each arg list"
   s7_pointer lists;
+  int i;
 
   /* fprintf(stderr, "(for-each %s)\n", s7_object_to_c_string(sc, args)); */
 
@@ -9708,8 +9760,11 @@ static s7_pointer g_for_each(s7_scheme *sc, s7_pointer args)
   /* get car of each arg list making the current proc arglist */
   sc->args = sc->NIL;
 
-  for (sc->y = lists; sc->y != sc->NIL; sc->y = cdr(sc->y))
+  for (i = 2, sc->y = lists; sc->y != sc->NIL; i++, sc->y = cdr(sc->y))
     {
+      if (g_is_list(sc, sc->y) != sc->T)
+	return(s7_wrong_type_arg_error(sc, "for-each", i, car(sc->y), "a list"));
+
       sc->args = cons(sc, caar(sc->y), sc->args);
       /* car(sc->y) = cdar(sc->y); */
       sc->x = cons(sc, cdar(sc->y), sc->x);
@@ -9736,6 +9791,7 @@ static s7_pointer g_map(s7_scheme *sc, s7_pointer args)
 {
   #define H_map "(map proc lst . lists) applies proc to a list made up of the car of each arg list, returning a list of the values returned by proc"
   s7_pointer lists;
+  int i;
 
   sc->code = car(args);
   lists = cdr(args);
@@ -9747,8 +9803,11 @@ static s7_pointer g_map(s7_scheme *sc, s7_pointer args)
 
   /* get car of each arg list making the current proc arglist */
   sc->args = sc->NIL;
-  for (sc->y = lists; sc->y != sc->NIL; sc->y = cdr(sc->y))
+  for (i = 2, sc->y = lists; sc->y != sc->NIL; i++, sc->y = cdr(sc->y))
     {
+      if (g_is_list(sc, sc->y) != sc->T)
+	return(s7_wrong_type_arg_error(sc, "map", i, car(sc->y), "a list"));
+
       sc->args = cons(sc, caar(sc->y), sc->args);
       /* car(sc->y) = cdar(sc->y); */ /* this clobbers the original lists -- we need to copy */
       sc->x = cons(sc, cdar(sc->y), sc->x);
@@ -10527,6 +10586,16 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       
 
     case OP_IF0:
+      /* check number of "args" */
+      if ((sc->code == sc->NIL) ||
+	  (cdr(sc->code) == sc->NIL) ||
+	  ((cddr(sc->code) != sc->NIL) && 
+	   (cdddr(sc->code) != sc->NIL)))
+	{
+	  pop_stack(sc, eval_error(sc, "if: syntax error", sc->code));
+	  goto START;
+	}
+
       push_stack(sc, OP_IF1, sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
       goto EVAL;

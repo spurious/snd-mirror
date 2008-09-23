@@ -250,9 +250,10 @@ static char *float_array_to_string(Float *arr, int len, int loc)
       lim = len;
       if (lim > array_print_length) lim = array_print_length;
       k = loc;
+      if (k >= len) k = 0;
       for (i = 0; i < lim - 1; i++)
 	{
-	  mus_snprintf(str, STR_SIZE, "%.3f ", arr[i]);
+	  mus_snprintf(str, STR_SIZE, "%.3f ", arr[k]);
 	  strcat(base, str);
 	  if ((int)(strlen(base) + MAX_NUM_SIZE) > size)
 	    {
@@ -265,7 +266,6 @@ static char *float_array_to_string(Float *arr, int len, int loc)
 	  k++;
 	  if (k >= len) k = 0;
 	}
-      if (k >= len) k = 0;
       mus_snprintf(str, STR_SIZE, "%.3f%s", arr[k], (len > lim) ? "..." : "]");
       strcat(base, str);
     }
