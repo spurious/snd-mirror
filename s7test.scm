@@ -24847,7 +24847,7 @@
 (test (string->number "-") #f )
 (test (string->number "+") #f )
 
-(test (= 1 #e1 1/1 #e1/1 #e1.0 #e1e0) #t)
+(test (= 1 #e1 1/1 #e1/1 #e1.0 #e1e0 #b1 #x1 #o1 #d1 #o001) #t)
 (test (= #i3/10 0.3 #i0.3 3e-1 3d-1 0.3e0 3e-1) #t)
 (test (= 0 -0 +0 0.0 -0.0 +0.0 0/1 -0/1 +0/24 0+0i 0-0i -0-0i +0-0i 0.0-0.0i -0.0+0i) #t)
 
@@ -25287,6 +25287,7 @@
 (test '#\a #\a)
 (test '#f #f)
 (test '#t #t)
+(test '#b1 1)
 (test '() '())
 (test (+ '1 '2) 3)
 (test (+ '1 '2) '3)
@@ -25314,6 +25315,8 @@
 (test ''1 (quote (quote 1)))
 (test ''a (quote (quote a)))
 (test (symbol? '#f) #f)
+
+(test (eq? '() ()) #t) ; not sure about this -- Gauche, SCM, stklos say #t; Guile says error; clisp, cmucl, and sbcl say T
 
 
 
@@ -25525,25 +25528,87 @@
    (test (do () (#t arg)) arg))
  (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #f #t (list 1 2 3) '(1 . 2)))
 
+(for-each
+ (lambda (arg)
+   (test (do ((i arg)) (#t i)) arg))
+ (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #f #t (list 1 2 3) '(1 . 2)))
 
+(test (do ((i 0 (+ i 1))) ((= i 3) #f)) #f)
+(test (do ((i 0 (+ i 1))) ((= i 3) i)) 3)
 (test (do ((vec (make-vector 5)) (i 0 (+ i 1))) ((= i 5) vec) (vector-set! vec i i)) '#(0 1 2 3 4))
 (test (let ((x '(1 3 5 7 9))) (do ((x x (cdr x)) (sum 0 (+ sum (car x))))  ((null? x) sum))) 25)
+(test (do ((i 4 (- i 1)) (a 1 (* a i))) ((zero? i) a)) 24)
+	   
+(test (do () (() ()) ()) '()) ; ?? -- is '() the same as ()?
+(test (do () ('() '())) '())
+;(test (do '() ('() '())) 'error) ; ?? -- isn't this the same as before?
 
+(test (let ((x 0) (y 0)) (set! y (do () (#t (set! x 32) 123))) (list x y)) (list 32 123))
+(test (let ((i 32)) (do ((i 0 (+ i 1)) (j i (+ j 1))) ((> j 33) i))) 2)
+(test (let ((i 0)) (do () ((> i 1)) (set! i (+ i 1))) i) 2)
+(test (let ((i 0) (j 0)) (do ((k #\a)) (#t i) (set! i (char->integer k)) (set! j (+ j i)))) 0)
+(test (let ((i 0) (j 0)) (do ((k #\a)) ((> i 1) j) (set! i (char->integer k)) (set! j (+ j i)))) (char->integer #\a))
+(test (let ((x 0)) (do ((i 0 (+ i 2)) (j 1 (* j 2))) ((= i 4) x) (set! x (+ x i j)))) 5)
+(test (let ((sum 0)) (do ((lst '(1 2 3 4) (cdr lst))) ((null? lst) sum) (set! sum (+ sum (car lst))))) 10)
+(test (do ((i 0 (+ 1 i))) ((= i 4) (do ((i 0 (+ i 2))) ((= i 10) i)))) 10)
+(test (let ((i 0)) (do ((i 1 (+ i 1))) ((= i 3) i))) 3)
+(test (let ((j 0)) (do ((i 0 (+ i 1))) ((= i 3) (+ i j)) (do ((j 0 (+ j i 1))) ((> j 3) j)))) 3)
+(test (let ((add1 (lambda (a) (+ a 1)))) (do ((i 0 (add1 i))) ((= i 10) (add1 i)))) 11)
+(test (do ((i 0 (do ((j 0 (+ j 1))) ((= j i) (+ i 1))))) ((= i 3) i)) 3)
+(test (do ((i 0 (do ((i 0 (+ i 1))) ((= i 3) i)))) ((= i 3) i)) 3)
+(test (let ((i 123)) (do ((i 0 (+ i 1)) (j i (+ j i))) ((> j 200) i))) 13)
+(test (do ((i 0 (+ i 1))) ((> i 3) i) (set! i (* i 10))) 11)
+(test (do ((i 123) (j 0 (+ j i))) ((= j 246) i)) 123)
+(test (do ((i 123 i) (j 0 (+ j i))) ((= j 246) i)) 123)
+(test (do ((i i i)) (i i)) 'error)
+(test (do ((i 0 i)) (i i)) 0)
+(test (do ((i 1 i)) (i i (+ i i) (+ i i i))) 3)
+(test (do ((i)) (#t i)) 'error) ; there's some disagreement about this?
+(test (do ((i 1)) (#t 1) . 1) 'error)
+(test (do ((i 1)) (#t . 1) 1) 'error)
+(test (do ((i 1) . 1) (#t 1) 1) 'error)
+(test (do ((i 0 (+ i j)) (j 0 (+ j 1))) (#t 1)) 1)
+(test (do ((i 0 j) (j 0 (+ j 1))) ((= j 3) i)) 2) ; uh, lessee... lexical scoping...
+(test (do ((i 0 j) (i 0 j) (j 1 (+ j 1))) ((= j 3) i)) 'error) ; ??
+(test (do ((i 1 j) (j 0 k) (k 0 m) (m 0 (+ i j k))) ((> m 10) (list i j k m))) (list 4 5 8 11))
+(test (do ((i 1) ()) (= i 1)) 'error)
+(test (do ((do 1 (+ do do))) ((> do 3) do)) 4)
+(test (do ((do 1 do) (j do do)) (do do)) 1)
+(test (do ((do do do)) (do do)) do)
+(test (do ((do do do)) (do do do)) do) ; ok ok!
+(test (let ((i 10) (j 11) (k 12)) (do ((i i j) (j j k) (k k m) (m (+ i j k) (+ i j k))) ((> m 100) (list i j k m)))) (list 33 56 78 122))
 
+(test (call/cc (lambda (exit) (do ((i 0 (+ i 1))) ((= i 100) i) (if (= i 2) (exit 321))))) 321)
+(test (call/cc (lambda (exit) (do ((i 0 (if (= i 3) (exit 321) (+ i 1)))) ((= i 100) i)))) 321)
+(test (call/cc (lambda (exit) (do ((i 0 (+ i 1))) ((= i 10) (exit 321))))) 321)
+(test (call/cc (lambda (exit) (do ((i 0 (+ i 1))) ((= i 10) i) (if (= i -2) (exit 321))))) 10)
+(test (do ((x 0 (+ x 1)) (y 0 (call/cc (lambda (c) c)))) ((> x 5) x) #f) 6)
 
+(test (+ (do ((i 0 (+ i 1))) ((= i 3) i)) (do ((j 0 (+ j 1))) ((= j 4) j))) 7)
+(test (let ((do 1) (map 2) (for-each 3) (quote 4)) (+ do map for-each quote)) 10)
 
+(test (let ((cont #f)
+	    (j 0)
+	    (k 0))
+	(call/cc (lambda (exit) 
+		   (do ((i 0 (+ i 1))) 
+		       ((= i 100) i) 
+		     (set! j i)
+		     (call/cc (lambda (r) (set! cont r)))
+		     (if (= j 2) (exit))
+		     (set! k i))))
+	(if (= j 2)
+	    (begin
+	      (set! j 3)
+	      (cont))
+	    (list j k)))
+      (list 99 99))
 
-
-(test (do ((x 0 (+ x 1))
-	   (y 0 (call/cc (lambda (c) c))))
-	  ((> x 5) x)
-	#f)
-      6)
 
 
 
 ;;; --------------------------------------------------------------------------------
-;;; lambda define begin set! let let* letrec cond case and or do call/cc eval apply values call-with-values dynamic-wind
+;;; lambda define begin set! let let* letrec cond case and or call/cc eval apply values call-with-values dynamic-wind
 ;;; [delay and force perhaps]
 ;;; quasiquote [also tail-recursion]
 
