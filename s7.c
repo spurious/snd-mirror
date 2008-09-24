@@ -10080,6 +10080,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       sc->value = sc->NIL;
       for (sc->x = car(sc->code), sc->y = sc->args; sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
 	sc->value = cons(sc, new_slot_in_env(sc, caar(sc->x), car(sc->y)), sc->value);
+      /* TODO: check for collisions here or values lacking */
 
       /* now we've set up the environment, next set up for loop */
       
@@ -10543,6 +10544,13 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 	}
       
+      if ((cdr(sc->code) == sc->NIL) ||
+	  (cddr(sc->code) != sc->NIL))
+	{
+	  pop_stack(sc, eval_error(sc, "wrong number of args to set! ", sc->code));
+	  goto START;
+	}
+      
       if (s7_is_pair(car(sc->code))) /* has accessor */
 	{
 	  if (s7_is_pair(caar(sc->code)))
@@ -10564,6 +10572,12 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	}
       else 
 	{
+	  if (!s7_is_symbol(car(sc->code)))
+	    {
+	      pop_stack(sc, eval_error(sc, "trying to set! ", car(sc->code)));
+	      goto START;
+	    }
+
 	  push_stack(sc, OP_SET1, sc->NIL, car(sc->code));
 	  sc->code = cadr(sc->code);
 	}
@@ -10725,7 +10739,8 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       
 
     case OP_COND0:      /* cond */
-      if (!s7_is_pair(sc->code)) 
+      if ((!s7_is_pair(sc->code)) ||
+	  (!s7_is_pair(car (sc->code)))) /* (cond 1) */
 	{
 	  pop_stack(sc, eval_error(sc, "syntax error in cond", sc->code));
 	  goto START;
@@ -10744,6 +10759,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	      pop_stack(sc, sc->value);
 	      goto START;
 	    }
+
 	  if (car(sc->code) == sc->FEED_TO) 
 	    {
 	      if (!s7_is_pair(cdr(sc->code))) 
@@ -10755,6 +10771,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	      sc->code = cons(sc, cadr(sc->code), cons(sc, sc->x, sc->NIL));
 	      goto EVAL;
 	    }
+
 	  goto BEGIN;
 	}
       else 
@@ -11004,7 +11021,15 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL;
 
 
-    case OP_CASE0:      /* case */
+    case OP_CASE0:      /* case, car(sc->code) is the selector */
+      if ((!s7_is_pair(sc->code)) ||
+	  (!s7_is_pair(cdr(sc->code))) ||
+	  (!s7_is_pair(cadr (sc->code)))) 
+	{
+	  pop_stack(sc, eval_error(sc, "syntax error in case", sc->code));
+	  goto START;
+	}
+
       push_stack(sc, OP_CASE1, sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
       goto EVAL;
