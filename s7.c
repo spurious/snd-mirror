@@ -9668,7 +9668,8 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
   else 
     {
       sc->args = apply_list_star(sc, cdr(args));
-      if (!s7_is_list(sc, sc->args))
+
+      if (g_is_list(sc, UNGC(cons(sc, sc->args, sc->NIL))) == sc->F)
 	return(s7_error(sc, 
 			s7_make_symbol(sc, "wrong-type-arg-error"), 
 			s7_make_string(sc, "apply's last argument should be a list")));
@@ -10493,6 +10494,11 @@ static void eval(s7_scheme *sc, opcode_t first_op)
     case OP_DEF0:  /* define */
 
       /* fprintf(stderr, "define %s\n", s7_object_to_c_string(sc, sc->code)); */
+      if (!s7_is_pair(sc->code))
+	{
+	  pop_stack(sc, eval_error(sc, "define syntax error", sc->code));
+	  goto START;
+	}
 
       if (s7_is_immutable(car(sc->code)))
 	{
@@ -10672,12 +10678,28 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       
 
     case OP_LET0AST:    /* let* */
+      /* fprintf(stderr, "let* %s\n", s7_object_to_c_string(sc, sc->code)); */
+
+      if (!s7_is_pair(cdr(sc->code)))
+	{
+	  pop_stack(sc, eval_error(sc, "let* syntax error", sc->code));
+	  goto START;
+	}
+
       if (car(sc->code) == sc->NIL) 
 	{
 	  new_frame_in_env(sc, sc->envir); 
 	  sc->code = cdr(sc->code);
 	  goto BEGIN;
 	}
+
+      if ((!s7_is_pair(car(sc->code))) ||
+	  (!s7_is_pair(caar(sc->code))))
+	{
+	  pop_stack(sc, eval_error(sc, "let* variable list syntax error", sc->code));
+	  goto START;
+	}
+
       push_stack(sc, OP_LET1AST, cdr(sc->code), car(sc->code));
       sc->code = cadaar(sc->code);
       goto EVAL;

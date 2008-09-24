@@ -142,6 +142,7 @@
 (test (let ((x (lambda () 1))) (eq? x x)) #t)
 (test (eq? 'abc 'abc) #t)
 (test (eq? eq? eq?) #t)
+(test (eq? (if #f 1) 1) #f)
 
 
 
@@ -1813,6 +1814,8 @@
 (test (cdaadr '((((a . b) c . d) (e . f) g . h) ((i . j) k . l) (m . n) o . p)) 'j)
 (test (cdddar '((((a . b) c . d) (e . f) g . h) ((i . j) k . l) (m . n) o . p)) 'h)
 (test (cddddr '((((a . b) c . d) (e . f) g . h) ((i . j) k . l) (m . n) o . p)) 'p)
+
+(test (cadr ''foo) 'foo)
 
 
 (test (length (list 'a 'b 'c 'd 'e 'f)) 6)
@@ -25322,6 +25325,7 @@
 (test ''a (quote (quote a)))
 (test (symbol? '#f) #f)
 (test ''quote (quote (quote quote)))
+(test (+ (cadr ''3) (cadadr '''4) (cadr (cadr (cadr ''''5)))) 12)
 
 ;(test (eq? '() ()) #t) ; not sure about this -- Gauche, SCM, stklos say #t; Guile says error; clisp, cmucl, and sbcl say T
 
@@ -25834,7 +25838,7 @@
 (test ((lambda (x y . z) z) 3 4 5 6) (list 5 6))
 (test ((lambda (a b c d e f) (+ a b c d e f)) 1 2 3 4 5 6) 21)
 (test (let ((foo (lambda () 9))) (+ (foo) 1)) 10)
-(test (let ((a 1)) (let ((f (lambda (x) (set! a x) a))) (list (f 123) a))) (list 123 123))
+(test (let ((a 1)) (let ((f (lambda (x) (set! a x) a))) (let ((c (f 123))) (list c a)))) (list 123 123))
 (test (let ((a 1) (b (lambda (a) a))) (b 3)) 3)
 (test (let ((ctr 0)) (letrec ((f (lambda (x) (if (> x 0) (begin (set! ctr (+ ctr 1)) (f (- x 1))) 0)))) (f 10) ctr)) 10)
 (test (let ((f (lambda (x) (car x)))) (f '(4 5 6))) 4)
@@ -25958,6 +25962,7 @@
 
 
 
+
 ;;; -------- apply --------
 
 (test (apply (lambda (a b) (+ a b)) (list 3 4)) 7)
@@ -25986,6 +25991,7 @@
 (test (apply min 1 2 4 3 '(4 0 9)) 0)
 (test (apply vector 1 2 '(3)) '#(1 2 3))
 (test (apply (lambda (x . y) x) (list 1 2 3)) 1)
+(test (apply * (list 2 (apply + 1 2 '(3)))) 12)
 
 (for-each
  (lambda (arg)
@@ -25995,69 +26001,208 @@
 (test (apply) 'error)
 (test (apply 1) 'error)
 (test (apply . 1) 'error)
+(test (apply car ''foo) 'error)
+(test (apply + '(1 . 2)) 'error)
 
 (for-each
  (lambda (arg)
    (test (apply arg '(1)) 'error))
  (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
 
+(test (let ((x (list 1 2))) (set-cdr! x x) (apply + x)) 'error)
+(test (apply cadadr (list '''4)) 4)
+(test (apply string-ref "hi" '(0)) #\h)
+(test (let ((x (string-copy "hi"))) (apply string-set! x 0 '(#\c)) x) "ci")
+
+
+
+
+;;; -------- define --------
+;;;
+;;; trying to avoid top-level definitions here
+
+(let ()
+  (define x 2)
+  (test (+ x 1) 3)
+  (set! x 4)
+  (test (+ x 1) 5)
+  (let ()
+    (define (tprint x) #t)
+    (test (tprint 56) #t)
+    (let ()
+      (define first car)
+      (test (first '(1 2)) 1)
+      (let ()
+	(define foo (lambda () (define x 5) x))
+	(test (foo) 5)
+	(let ()
+	  (define (foo x) ((lambda () (define x 5) x)) x)
+	  (test (foo 88) 88))))))
+
+
+(test (letrec ((foo (lambda (arg) (or arg (and (procedure? foo) (foo 99)))))) (define bar (foo #f)) (foo #f)) 99)
+(test (letrec ((foo 77) (bar #f) (retfoo (lambda () foo))) (define baz (retfoo)) (retfoo)) 77)
+
+(test (define) 'error)
+(test (define x) 'error)
+(test (define . x) 'error)
+(test (define x 1 2) 'error)
+(test (define (x 1)) 'error)
+(test (define 1 2) 'error)
+(test (define "hi" 2) 'error)
+(test (define 'hi 1) 'error)
+(test (let () (define . 1) 1) 'error)
+(test (let () (define .. 1) ..) 1)
+
+(test (let () (define (hi a) (+ a 1)) (hi 2)) 3)
+(test (let () (define (hi a . b) (+ a (cadr b) 1)) (hi 2 3 4)) 7)
+(test (let () (define (hi) 1) (hi)) 1)
+(test (let () (define (hi . a) (apply + a)) (hi 1 2 3)) 6)
+
+(for-each
+ (lambda (arg)
+   (test (let () (define x arg) x) arg))
+ (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
+
+(test ((lambda (x) (define (hi a) (+ a 1)) (hi x)) 1) 2)
+(test (let ((x 2)) (define f (lambda (y) (+ y x))) (f 3)) 5)
+(begin (define r5rstest-plus (lambda (x y) (+ x y))) (define r5rstest-x 32))
+(test (r5rstest-plus r5rstest-x 3) 35)
+
+
+
+
+;;; -------- values, call-with-values --------
+;;;
+;;; this is really old-fashioned... probably seemed like a good idea in 1963
+
+(test (call-with-values (lambda () (values 1 2 3)) +) 6)
+(test (call-with-values (lambda () (values 4 5)) (lambda (a b) b))  5)
+(test (call-with-values (lambda () (values 4 5)) (lambda (a b) (+ a b))) 9)
+(test (call-with-values * -) -1) ; right...
+(test (values 1) 1)
+(test (call-with-values (lambda () (values 1 2 3 4)) list) (list 1 2 3 4))
+(test (+ (values 1) (values 2)) 3)
+(test (+ (values '1) (values '2)) 3)
+(test (if (values #t) 1 2) 1)
+(test (if (values '#t) 1 2) 1)
+(test (values 1 2 3) (values 1 2 3))
+(test (call-with-values (lambda () (values)) list) '())
+(test (call-with-values (lambda () 4) (lambda (x) x)) 4)
+(test (let () (values 1 2 3) 4) 4)
+(test (apply + (values '())) 0)
+
+(for-each
+ (lambda (arg)
+   (test (values arg) arg))
+ (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
+
+(for-each
+ (lambda (arg)
+   (test (call-with-values (lambda () (values arg arg)) (lambda (a b) b)) arg))
+ (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
+
+(test (call-with-values (lambda () (values "hi" 1 3/2 'a)) (lambda (a b c d) (+ b c))) 5/2)
+(test (call-with-values values (lambda arg arg)) '())
+(test (call-with-values (lambda (x) (+ x 1)) (lambda (y) y)) 'error)
+(test (string-ref (values "hi") 1) #\i)
+
+(test (letrec ((split (lambda (ls)
+			(if (or (null? ls) (null? (cdr ls)))
+			    (values ls '())
+			    (call-with-values
+				(lambda () (split (cddr ls)))
+			      (lambda (odds evens)
+				(values (cons (car ls) odds)
+					(cons (cadr ls) evens))))))))
+	(split '(a b c d e f)))
+      (values '(a c e) '(b d f)))
+
+(test (call-with-values (lambda () (call/cc (lambda (k) (k 2 3)))) (lambda (x y) (list x y))) '(2 3))
+
+(test (+ (values . 1)) 'error)
+(test (let ((values 3)) (+ 2 values)) 5)
+(test (apply values (list 1 2)) (values 1 2))
+(test (let ((a (values 1 2))) a) (values 1 2))
+(test (let ((a (values 1))) a) 1)
+
+(for-each
+ (lambda (arg)
+   (test (call-with-values arg arg) 'error))
+ (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
+
+(test (call-with-values (lambda () 2) (lambda (x) x)) 2)
+
+
+
+
+;;; -------- let, let*, letrec --------
+
+
+(test (let ((x 2) (y 3)) (* x y)) 6)
+(test (let ((x 2) (y 3)) (let ((x 7) (z (+ x y))) (* z x))) 35)
+(test (let ((x 2) (y 3)) (let* ((x 7)  (z (+ x y))) (* z x))) 70)
+(test (letrec ((even? (lambda (n)  (if (zero? n) #t (odd? (- n 1)))))  (odd? (lambda (n)  (if (zero? n) #f (even? (- n 1)))))) (even? 88))  #t)
+(test (let loop ((numbers '(3 -2 1 6 -5)) 
+		 (nonneg '()) 
+		 (neg '())) 
+	(cond ((null? numbers) 
+	       (list nonneg neg)) 
+	      ((>= (car numbers) 0)  
+	       (loop (cdr numbers) (cons (car numbers) nonneg)  neg)) 
+	      ((< (car numbers) 0)  
+	       (loop (cdr numbers) nonneg (cons (car numbers) neg))))) 
+      '((6 1 3) (-5 -2)))
+
+(test (let ((x 3)) (define x 5) x) 5)
+(test (let* () (define x 8) x) 8)
+(test (letrec () (define x 9) x) 9)
+(test (letrec ((x 3)) (define x 10) x) 10)
+(test (let foo () 1) 1)
+(test (let ((f -)) (let f ((n (f 1))) n)) -1)
+
+(test (let 1) 'error)
+(test (let . 1) 'error)
+(test (let* (x)) 'error)
+(test (let (x) 1) 'error)
+(test (let ((x)) 3) 'error)
+(test (let ((x 1) y) x) 'error)
+(test (let* x ()) 'error)
+(test (let* ((1 2)) 3) 'error)
+(test (let () ) 'error)
+(test (let* ((x 1))) 'error)
+(test (let ((x 1)) (letrec ((x 1) (y x)) y)) 'error)
+(test (letrec) 'error)
+(test (let ((x 1) (x 2)) x) 'error)
+(test (let* ((x 1) (x 2)) x) 2)
+(test (let* ((x 1) (y x)) y) 1)
+(test (let ((x 1)) (let ((x 32) (y x)) (+ x y))) 33)
+(test (let ((x 1)) (let* ((x 32) (y x)) (+ x y))) 64)
+(test (let ((x 'a) (y '(b c))) (cons x y)) '(a b c))
+(test (let ((x 0) (y 1)) (let ((x y) (y x)) (list x y))) (list 1 0))
+(test (let ((x 0) (y 1)) (let* ((x y) (y x)) (list x y))) (list 1 1))
+(test (letrec ((sum (lambda (x) (if (zero? x) 0 (+ x (sum (- x 1))))))) (sum 5)) 15)
+(test (let ((divisors (lambda (n) (let f ((i 2)) (cond ((>= i n) '()) ((integer? (/ n i)) (cons i (f (+ i 1)))) (else (f (+ i 1)))))))) (divisors 32)) '(2 4 8 16))
+(test (let ((a -1)) (let loop () (if (not (positive? a)) (begin (set! a (+ a 1)) (loop)))) a) 1)
+(test (let* ((let 3) (x let)) (+ x let)) 6)
+(test (let () (let () (let () '()))) '())
+(test (let ((x 1)) (let ((y 0)) (begin (let ((x (* 2 x))) (set! y x))) y)) 2)
+
 
 
 
 ;;; --------------------------------------------------------------------------------
-;;; define let let* letrec call/cc eval values call-with-values dynamic-wind
-;;; [delay and force perhaps]
-;;; quasiquote [also tail-recursion]
+;;; call/cc eval dynamic-wind [delay and force perhaps] quasiquote [also tail-recursion]
 
 #!
+(test `(list ,(+ 1 2) 4)  '(list 3 4))
+(test `(a ,(+ 1 2) ,@(map abs '(4 -5 6)) b)  '(a 3 4 5 6 b))
+(test `((`foo' ,(- 10 3)) ,@(cdr '(c)) . ,(car '(cons)))  '((foo 7) . cons))
+(test `#(10 5 ,(sqrt 4) ,@(map sqrt '(16 9)) 8)  '#(10 5 2.0 4.0 3.0 8))
+(test `(a `(b ,(+ 1 2) ,(foo ,(+ 1 3) d) e) f)  '(a `(b ,(+ 1 2) ,(foo 4 d) e) f))
+(test (let ((name1 'x)  (name2 'y)) `(a `(b ,,name1 ,',name2 d) e))  '(a `(b ,x ,'y d) e))
 
 
-
-
-(define x 2)
-(test 3 'define (+ x 1))
-(set! x 4)
-(test 5 'set! (+ x 1))
-(test 6 'let (let ((x 2) (y 3)) (* x y)))
-(test 35 'let (let ((x 2) (y 3)) (let ((x 7) (z (+ x y))) (* z x))))
-(test 70 'let* (let ((x 2) (y 3)) (let* ((x 7) (z (+ x y))) (* z x))))
-(test #t 'letrec (letrec ((even?
-			   (lambda (n) (if (zero? n) #t (odd? (- n 1)))))
-			  (odd?
-			   (lambda (n) (if (zero? n) #f (even? (- n 1))))))
-		   (even? 88)))
-(define x 34)
-(test 5 'let (let ((x 3)) (define x 5) x))
-(test 34 'let x)
-(test 6 'let (let () (define x 6) x))
-(test 34 'let x)
-(test 34 'let (let ((x x)) x))
-(test 7 'let* (let* ((x 3)) (define x 7) x))
-(test 34 'let* x)
-(test 8 'let* (let* () (define x 8) x))
-(test 34 'let* x)
-(test 9 'letrec (letrec () (define x 9) x))
-(test 34 'letrec x)
-(test 10 'letrec (letrec ((x 3)) (define x 10) x))
-(test 34 'letrec x)
-(define (s x) (if x (let () (set! s x) (set! x s))))
-(define x 0)
-(test 1 'let (let foo () 1))
-(test '((6 1 3) (-5 -2)) 'let
-      (let loop ((numbers '(3 -2 1 6 -5))
-		 (nonneg '())
-		 (neg '()))
-	(cond ((null? numbers) (list nonneg neg))
-	      ((negative? (car numbers))
-	       (loop (cdr numbers)
-		     nonneg
-		     (cons (car numbers) neg)))
-	      (else
-	       (loop (cdr numbers)
-		     (cons (car numbers) nonneg)
-		     neg)))))
-;;From: Allegro Petrofsky <Allegro@Petrofsky.Berkeley.CA.US>
-(test -1 'let (let ((f -)) (let f ((n (f 1))) n)))
 (test '(list 3 4) 'quasiquote `(list ,(+ 1 2) 4))
 (test '(list a (quote a)) 'quasiquote (let ((name 'a)) `(list ,name ',name)))
 (test '(a 3 4 5 6 b) 'quasiquote `(a ,(+ 1 2) ,@(map abs '(4 -5 6)) b))
@@ -26079,47 +26224,7 @@
 	(let ((name1 'x) (name2 'y)) `(a `(b ,,name1 ,',name2 d) e)))
 (test '(list 3 4) 'quasiquote (quasiquote (list (unquote (+ 1 2)) 4)))
 (test '`(list ,(+ 1 2) 4) 'quasiquote '(quasiquote (list (unquote (+ 1 2)) 4)))
-(define (tprint x) #t)
-(test #t 'tprint (tprint 56))
-(define first car)
-(test 1 'define (first '(1 2)))
-(define foo foo)
-(test 9 'define (foo))
-(define foo (let ((foo foo)) (lambda () (+ 1 (foo)))))
-(test 10 'define (foo))
-(define old-+ +)
-(define x 34)
-(define (foo) (define x 5) x)
-(test 5 foo)
-(test 34 'define x)
-(define foo (lambda () (define x 5) x))
-(test 5 foo)
-(test 34 'define x)
-(define (foo x) ((lambda () (define x 5) x)) x)
-(test 88 foo 88)
-(test 4 foo 4)
-(test 34 'define x)
-(test 99 'internal-define (letrec ((foo (lambda (arg)
-					  (or arg (and (procedure? foo)
-						       (foo 99))))))
-			    (define bar (foo #f))
-			    (foo #f)))
-(test 77 'internal-define (letrec ((foo 77)
-				   (bar #f)
-				   (retfoo (lambda () foo)))
-			    (define baz (retfoo))
-			    (retfoo)))
 
-
-
-
-
-(test '(b e h) map cadr '((a b) (d e) (g h)))
-(test '(5 7 9) map + '(1 2 3) '(4 5 6))
-(test '(1 2 3) map + '(1 2 3))
-(test '(1 2 3) map * '(1 2 3))
-(test '(-1 -2 -3) map - '(1 2 3))
-(test '() map cadr '())
 ;;; This tests full conformance of call-with-current-continuation.  It
 ;;; is a separate test because some schemes do not support call/cc
 ;;; other than escape procedures.  I am indebted to
@@ -26180,37 +26285,15 @@
 
 
 
-(test (let ((x 2) (y 3)) (* x y)) 6)
-(test (let ((x 2) (y 3)) (let ((x 7) (z (+ x y))) (* z x))) 35)
-(test (let ((x 2) (y 3)) (let* ((x 7)  (z (+ x y))) (* z x))) 70)
-(test (letrec ((even? (lambda (n)  (if (zero? n) #t (odd? (- n 1)))))  (odd? (lambda (n)  (if (zero? n) #f (even? (- n 1)))))) (even? 88))  #t)
-(test (let loop ((numbers '(3 -2 1 6 -5)) (nonneg '()) (neg '())) (cond ((null? numbers) (list nonneg neg)) ((>= (car numbers) 0)  (loop (cdr numbers)  (cons (car numbers) nonneg)  neg)) ((< (car numbers) 0)  (loop (cdr numbers)  nonneg  (cons (car numbers) neg))))) '((6 1 3) (-5 -2)))
-(test `(list ,(+ 1 2) 4)  '(list 3 4))
-(test `(a ,(+ 1 2) ,@(map abs '(4 -5 6)) b)  '(a 3 4 5 6 b))
-(test `((`foo' ,(- 10 3)) ,@(cdr '(c)) . ,(car '(cons)))  '((foo 7) . cons))
-(test `#(10 5 ,(sqrt 4) ,@(map sqrt '(16 9)) 8)  '#(10 5 2.0 4.0 3.0 8))
-(test `(a `(b ,(+ 1 2) ,(foo ,(+ 1 3) d) e) f)  '(a `(b ,(+ 1 2) ,(foo 4 d) e) f))
-(test (let ((name1 'x)  (name2 'y)) `(a `(b ,,name1 ,',name2 d) e))  '(a `(b ,x ,'y d) e))
 (test (quasiquote (list (unquote (+ 1 2)) 4))  '(list 3 4))
 (test '(quasiquote (list (unquote (+ 1 2)) 4)) `(list ,(+ 1 2) 4))
-(test (let ((=> #f)) (cond (#t => 'ok)))  'ok)
-
 
 (test (force (make-promise (+ 1 2))) 3)
 (test (let ((p (make-promise (+ 1 2)))) (list (force p) (force p))) '(3 3))
 (test (begin (define a-stream (letrec ((next  (lambda (n) (cons n (make-promise (next (+ n 1))))))) (next 0)))(define head car)(define tail (lambda (stream) (force (cdr stream))))(head (tail (tail a-stream)))) 2)
 
-(define list-length (lambda (obj) (call-with-current-continuation  (lambda (return) (letrec ((r  (lambda (obj) (cond ((null? obj) 0) ((pair? obj)  (+ (r (cdr obj)) 1)) (else (return #f)))))) (r obj))))))
-(test (list-length '(1 2 3 4))  4)
-(test (list-length '(a b . c))  #f)
-(test (call-with-values (lambda () (values 4 5))  (lambda (a b) b))  5)
-(test (call-with-values * -) -1)
 (test (let ((path '())  (c #f)) (let ((add (lambda (s)  (set! path (cons s path))))) (dynamic-wind  (lambda () (add 'connect))  (lambda () (add (call-with-current-continuation  (lambda (c0) (set! c c0) 'talk1))))  (lambda () (add 'disconnect))) (if (< (length path) 4) (c 'talk2) (reverse path)))) '(connect talk1 disconnect  connect talk2 disconnect))
 (test (eval '(* 7 3) (global-environment))  21)
-
-
-
-
 
 ;; Section 7: First class continuations
 
@@ -26479,32 +26562,6 @@
       (lambda () (call/cc (lambda (c) (0 (c 1))))))
 
 
-;;----------------------------------------------------------------
-(test-section "binding")
-
-(prim-test "let" 35
-      (lambda ()
-        (let ((x 2) (y 3))
-          (let ((x 7) (z (+ x y)))
-            (* z x)))))
-(prim-test "let*" 70
-      (lambda ()
-        (let ((x 2) (y 3))
-          (let* ((x 7) (z (+ x y)))
-            (* z x)))))
-(prim-test "let*" 2
-      (lambda ()
-        (let* ((x 1) (x (+ x 1))) x)))
-
-(prim-test "named let" -3
-      (lambda ()
-        (let ((f -))
-          (let f ((a (f 3)))
-            a))))
-
-;;; Examples of using Scheme continuations
-;;; jhbrown@alum.mit.edu
-
 
 ;;; The first thing you do when using call-with-current-continuation
 (define call/cc call-with-current-continuation)
@@ -26521,10 +26578,6 @@
 ;;; ==> 5
 
 ;;; ------------------------------------------------------------
-;;; Multiple-value continuations for multiple-value return
-(call-with-values
-    (lambda () (values 4 5))   ; producer
-  (lambda (a b) (+ a b)))      ; continuation
 
 
 ;;; ------------------------------------------------------------
