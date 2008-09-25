@@ -10630,6 +10630,14 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       
 
     case OP_LET0:       /* let */
+      /* fprintf(stderr, "let* %s\n", s7_object_to_c_string(sc, sc->code)); */
+
+      if (!s7_is_pair(sc->code))
+	{
+	  pop_stack(sc, eval_error(sc, "let syntax error", sc->code));
+	  goto START;
+	}
+
       sc->args = sc->NIL;
       sc->value = sc->code;
       sc->code = s7_is_symbol(car(sc->code)) ? cadr(sc->code) : car(sc->code);

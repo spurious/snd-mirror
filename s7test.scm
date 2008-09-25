@@ -23,6 +23,9 @@
 (define with-list-set! #t)
 (define with-reverse! #t)
 (define with-open-input-string-and-friends #t)
+(define with-eval #f)
+(define with-syntax-rules #t)
+(define with-delay #t)
 
 
 ;    (define call/cc call-with-current-continuation)
@@ -55,6 +58,7 @@
 	)))
 
 (defmacro test (tst expected)
+  (display tst)
   `(let ((result (catch #t (lambda () ,tst) (lambda args 'error))))
      (ok? ',tst result ,expected)))
 
@@ -143,6 +147,9 @@
 (test (eq? 'abc 'abc) #t)
 (test (eq? eq? eq?) #t)
 (test (eq? (if #f 1) 1) #f)
+(test (eq? call/cc call-with-current-continuation) #t)
+(test (eq?) 'error)
+(test (eq? #t) 'error)
 
 
 
@@ -181,6 +188,10 @@
 (test (let ((x 3.141)) (eqv? x x)) #t)
 (test (eqv? (cons 'a 'b) (cons 'a 'c)) #f)
 (test (eqv? eqv? eqv?) #t)
+(test (let ((quote -)) (eqv? '1 1)) #f)
+(test (eqv?) 'error)
+(test (eqv? #t) 'error)
+
 
 
 
@@ -226,6 +237,9 @@
 (test (equal? 3-4i 3-4i) #t)
 (test (equal? (string #\c) "c") #t)
 (test (equal? equal? equal?) #t)
+(test (equal?) 'error)
+(test (equal? #t) 'error)
+
 
 
 
@@ -236,6 +250,7 @@
 (test (boolean? '()) #f)
 (test (boolean? 't) #f)
 (test (boolean? (list)) #f)
+(test (boolean?) 'error)
 
 (for-each
  (lambda (arg)
@@ -257,6 +272,7 @@
 (test (not (list 3)) #f)
 (test (not 'nil) #f)
 (test (not not) #f)
+(test (not) 'error)
 
 (for-each
  (lambda (arg)
@@ -279,6 +295,7 @@
 (test (symbol? #f) #f)
 (test (symbol? 'car) #t)
 (test (symbol? '#f) #f)
+(test (symbol?) 'error)
 
 (for-each
  (lambda (arg)
@@ -298,6 +315,7 @@
 (test (let ((a (lambda (x) x)))	(procedure? a)) #t)
 (test (letrec ((a (lambda () (procedure? a)))) (a)) #t)
 (test (let ((a 1)) (let ((a (lambda () (procedure? a)))) (a))) #f)
+(test (procedure?) 'error)
 
 (for-each
  (lambda (arg)
@@ -346,6 +364,7 @@
 (test (char? "a") #f)
 (test (char? (string-ref "hi" 0)) #t)
 (test (char? (string-ref (make-string 1) 0)) #t)
+(test (char?) 'error)
 
 (for-each
  (lambda (arg)
@@ -370,6 +389,7 @@
   (test (char-upper-case? #\a) #f)
   (test (char-upper-case? #\A) #t)
   (test (char-upper-case? 1) 'error)
+  (test (char-upper-case?) 'error)
 
   (for-each
    (lambda (arg)
@@ -391,6 +411,7 @@
   (test (char-lower-case? #\A) #f)
   (test (char-lower-case? #\a) #t)
   (test (char-upper-case? 1) 'error)
+  (test (char-upper-case?) 'error)
 
   (for-each
    (lambda (arg)
@@ -419,6 +440,7 @@
   (test (char-upcase #\0) #\0)
   (test (char-upcase #\space) #\space)
   (test (char-upcase #\newline) #\newline)
+  (test (char-upcase) 'error)
 
   (for-each
    (lambda (arg1 arg2)
@@ -440,6 +462,7 @@
   (test (char-downcase #\%) #\%)
   (test (char-downcase #\0) #\0)
   (test (char-downcase #\space) #\space)
+  (test (char-downcase) 'error)
 
   (for-each
    (lambda (arg1 arg2)
@@ -461,6 +484,7 @@
   (test (char-numeric? #\;) #f)
   (test (char-numeric? #\.) #f)
   (test (char-numeric? #\-) #f)
+  (test (char-numeric?) 'error)
 
   (for-each
    (lambda (arg)
@@ -486,6 +510,7 @@
   (test (char-whitespace? #\space) #t)
   (test (char-whitespace? #\newline) #t)
   (test (char-whitespace? #\;) #f)
+  (test (char-whitespace?) 'error)
 
   (for-each
    (lambda (arg)
@@ -513,6 +538,7 @@
   (test (char-alphabetic? #\;) #f)
   (test (char-alphabetic? #\.) #f)
   (test (char-alphabetic? #\-) #f)
+  (test (char-alphabetic?) 'error)
 
   (for-each
    (lambda (arg)
@@ -809,6 +835,8 @@
 
 
 (test (char->integer 33) 'error)
+(test (char->integer) 'error)
+(test (integer->char) 'error)
 (test (integer->char (char->integer #\.)) #\.)
 (test (integer->char (char->integer #\A)) #\A)
 (test (integer->char (char->integer #\a)) #\a)
@@ -840,6 +868,7 @@
 ;(test (string? "das ist die eine haelfte" "und das die andere") 'error)
 (test (string? "aaaaaa") #t)
 (test (string? #\a) #f)
+(test (string?) 'error)
 (test (string? "\"\\\"") #t)
 
 (for-each
@@ -1412,9 +1441,9 @@
 	      (display "(") (display op) (display " ") (display arg) (display ") returned ") (display result) (display "?") (newline)))))
     (list "hi" (integer->char 65) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f #t (lambda (a) (+ a 1)))))
 
- (list reverse reverse! cons car cdr set-car! set-cdr! caar cadr cdar cddr caaar caadr cadar cdaar caddr cdddr cdadr cddar 
+ (list reverse cons car cdr set-car! set-cdr! caar cadr cdar cddr caaar caadr cadar cdaar caddr cdddr cdadr cddar 
        caaaar caaadr caadar cadaar caaddr cadddr cadadr caddar cdaaar cdaadr cdadar cddaar cdaddr cddddr cddadr cdddar
-       length assq assv assoc memq memv member list-ref list-set! list-tail))
+       length assq assv assoc memq memv member list-ref list-tail))
 
 
 (test (cons 'a '()) '(a))
@@ -23344,6 +23373,10 @@
 (define (factorial n i) (if (positive? n) (factorial (- n 1) (* i n)) i))
 (num-test (/ (factorial 100 1) (factorial 99 1)) 100)
 (num-test (/ (factorial 1000 1) (factorial 999 1)) 1000)
+(num-test (factorial 100 1) 93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000)
+(num-test (factorial 200 1) 788657867364790503552363213932185062295135977687173263294742533244359449963403342920304284011984623904177212138919638830257642790242637105061926624952829931113462857270763317237396988943922445621451664240254033291864131227428294853277524242407573903240321257405579568660226031904170324062351700858796178922222789623703897374720000000000000000000000000000000000000000000000000)
+
+
 
 (num-test (modulo (+ 2 (* 3 499127 495037 490459 468803)) (* 499127 495037 490459 468803)) 2)
 
@@ -25617,6 +25650,9 @@
 	    (list j k)))
       (list 99 99))
 
+(test (call/cc (lambda (r) (do () (#f) (r 1)))) 1)
+
+
 
 
 ;;; -------- set! --------
@@ -25916,6 +25952,9 @@
 (test ((lambda (x) (+ x ((lambda (x) (+ x 1)) 2))) 3) 6)
 (test ((lambda (x) (define y 1) (+ x y)) 2) 3)
 
+(test ((lambda lambda lambda) 'x) '(x))
+(test ((lambda (begin) (begin 1 2 3)) (lambda lambda lambda)) '(1 2 3))
+
 
 
 ;;; -------- begin --------
@@ -26073,8 +26112,6 @@
 
 
 ;;; -------- values, call-with-values --------
-;;;
-;;; this is really old-fashioned... probably seemed like a good idea in 1963
 
 (test (call-with-values (lambda () (values 1 2 3)) +) 6)
 (test (call-with-values (lambda () (values 4 5)) (lambda (a b) b))  5)
@@ -26138,11 +26175,11 @@
 
 ;;; -------- let, let*, letrec --------
 
-
+#|
 (test (let ((x 2) (y 3)) (* x y)) 6)
 (test (let ((x 2) (y 3)) (let ((x 7) (z (+ x y))) (* z x))) 35)
 (test (let ((x 2) (y 3)) (let* ((x 7)  (z (+ x y))) (* z x))) 70)
-(test (letrec ((even? (lambda (n)  (if (zero? n) #t (odd? (- n 1)))))  (odd? (lambda (n)  (if (zero? n) #f (even? (- n 1)))))) (even? 88))  #t)
+(test (letrec ((even? (lambda (n)  (if (zero? n) #t (odd? (- n 1))))) (odd? (lambda (n)  (if (zero? n) #f (even? (- n 1)))))) (even? 88))  #t)
 (test (let loop ((numbers '(3 -2 1 6 -5)) 
 		 (nonneg '()) 
 		 (neg '())) 
@@ -26173,6 +26210,7 @@
 (test (let* ((x 1))) 'error)
 (test (let ((x 1)) (letrec ((x 1) (y x)) y)) 'error)
 (test (letrec) 'error)
+(test (let ((x . 1)) x) 'error)
 (test (let ((x 1) (x 2)) x) 'error)
 (test (let* ((x 1) (x 2)) x) 2)
 (test (let* ((x 1) (y x)) y) 1)
@@ -26187,858 +26225,895 @@
 (test (let* ((let 3) (x let)) (+ x let)) 6)
 (test (let () (let () (let () '()))) '())
 (test (let ((x 1)) (let ((y 0)) (begin (let ((x (* 2 x))) (set! y x))) y)) 2)
+(test (let* ((x 1) (x (+ x 1)) (x (+ x 2))) x) 4)
+(test (let ((.. 2) (.... 4) (..... +)) (..... .. ....)) 6)
+
+(for-each
+ (lambda (arg)
+   (test (let ((x arg)) x) arg))
+ (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
+|#
+
+
+
+;;; -------- call/cc --------
+;;;
+;;; some of these were originally from Al Petrovsky, Scott G Miller, Matthias Radestock, J H Brown, Dorai Sitaram, 
+;;;   and probably others.
+
+(let* ((next-leaf-generator (lambda (obj eot)
+			     (letrec ((return #f)
+				      (cont (lambda (x)
+					      (recur obj)
+					      (set! cont (lambda (x) (return eot)))
+					      (cont #f)))
+				      (recur (lambda (obj)
+					       (if (pair? obj)
+						   (for-each recur obj)
+						   (call-with-current-continuation
+						    (lambda (c)
+						      (set! cont c)
+						      (return obj)))))))
+			       (lambda () (call-with-current-continuation
+					   (lambda (ret) (set! return ret) (cont #f)))))))
+      (leaf-eq? (lambda (x y)
+		  (let* ((eot (list 'eot))
+			 (xf (next-leaf-generator x eot))
+			 (yf (next-leaf-generator y eot)))
+		    (letrec ((loop (lambda (x y)
+				     (cond ((not (eq? x y)) #f)
+					   ((eq? eot x) #t)
+					   (else (loop (xf) (yf)))))))
+		      (loop (xf) (yf)))))))
+
+  (test (leaf-eq? '(a (b (c))) '((a) b c)) #t)
+  (test (leaf-eq? '(a (b (c))) '((a) b c d)) #f))
+
+(test (let ((r #f)
+	    (a #f)
+	    (b #f)
+	    (c #f)
+	    (i 0))
+	(let () 
+	  (set! r (+ 1 (+ 2 (+ 3 (call/cc (lambda (k) (set! a k) 4))))
+		     (+ 5 (+ 6 (call/cc (lambda (k) (set! b k) 7))))))
+	  (if (not c) 
+	      (set! c a))
+	  (set! i (+ i 1))
+	  (case i
+	    ((1) (a 5))
+	    ((2) (b 8))
+	    ((3) (a 6))
+	    ((4) (c 4)))
+	  r))
+      28)
+
+(test (let ((r #f)
+	    (a #f)
+	    (b #f)
+	    (c #f)
+	    (i 0))
+	(let () 
+	  (set! r (+ 1 (+ 2 (+ 3 (call/cc (lambda (k) (set! a k) 4))))
+		     (+ 5 (+ 6 (call/cc (lambda (k) (set! b k) 7))))))
+	  (if (not c) 
+	      (set! c a))
+	  (set! i (+ i 1))
+	  (case i
+	    ((1) (b 8))
+	    ((2) (a 5))
+	    ((3) (b 7))
+	    ((4) (c 4)))
+	  r))
+      28)
+
+ (test (let ((k1 #f)
+	     (k2 #f)
+	     (k3 #f)
+	     (state 0))
+	 (define (identity x) x)
+	 (define (fn)
+	   ((identity (if (= state 0)
+			  (call/cc (lambda (k) (set! k1 k) +))
+			  +))
+	    (identity (if (= state 0)
+			  (call/cc (lambda (k) (set! k2 k) 1))
+			  1))
+	    (identity (if (= state 0)
+			  (call/cc (lambda (k) (set! k3 k) 2))
+			  2))))
+	 (define (check states)
+	   (set! state 0)
+	   (let* ((res '())
+		  (r (fn)))
+	     (set! res (cons r res))
+	     (if (null? states)
+		 res
+		 (begin (set! state (car states))
+			(set! states (cdr states))
+			(case state
+			  ((1) (k3 4))
+			  ((2) (k2 2))
+			  ((3) (k1 -)))))))
+	 (map check '((1 2 3) (1 3 2) (2 1 3) (2 3 1) (3 1 2) (3 2 1))))
+       '((-1 4 5 3) (4 -1 5 3) (-1 5 4 3) (5 -1 4 3) (4 5 -1 3) (5 4 -1 3)))
+
+(test (let ((x '())
+	    (y 0))
+	(call/cc 
+	 (lambda (escape)
+	   (let* ((yin ((lambda (foo) 
+			  (set! x (cons y x))
+			  (if (= y 10)
+			      (escape x)
+			      (begin
+				(set! y 0)
+				foo)))
+			(call/cc (lambda (bar) bar))))
+		  (yang ((lambda (foo) 
+			   (set! y (+ y 1))
+			   foo)
+			 (call/cc (lambda (baz) baz)))))
+	     (yin yang)))))
+      '(10 9 8 7 6 5 4 3 2 1 0))
+
+(test (let ((c #f))
+	(let ((r '()))
+	  (let ((w (let ((v 1))
+		     (set! v (+ (call-with-current-continuation
+				 (lambda (c0) (set! c c0) v))
+				v))
+		     (set! r (cons v r))
+		     v)))
+	    (if (<= w 1024) (c w) r))))
+      '(2048 1024 512 256 128 64 32 16 8 4 2))
+
+(test (let ((cc #f)
+	    (r '()))
+	(let ((s (list 1 2 3 4 (call/cc (lambda (c) (set! cc c) 5)) 6 7 8)))
+	  (if (null? r)
+	      (begin (set! r s) (cc -1))
+	      (list r s))))
+      '((1 2 3 4 5 6 7 8) (1 2 3 4 -1 6 7 8)))
+
+(test (call/cc (lambda (c) (0 (c 1)))) 1)
+(test (call/cc (lambda (k) (k "foo"))) "foo")
+(test (call/cc (lambda (k) "foo")) "foo")
+(test (call/cc (lambda (k) (k "foo") "oops")) "foo")
+
+(test (let ((listindex (lambda (e l)
+			 (call/cc (lambda (not_found)
+				    (letrec ((loop 
+					      (lambda (l)
+						(cond
+						 ((null? l) (not_found #f))
+						 ((equal? e (car l)) 0)
+						 (else (+ 1 (loop (cdr l))))))))
+				      (loop l)))))))
+	(listindex 1 '(0 3 2 4 8)))
+      #f)
+
+(test (let ((product (lambda (li)
+		       (call/cc (lambda (break)
+				  (let loop ((l li))
+				    (cond
+				     ((null? l) 1)
+				     ((= (car l) 0) (break 0))
+				     (else (* (car l) (loop (cdr l)))))))))))
+	(product '(1 2 3 0 4 5 6)))
+      0)
+
+(test (let ((lst '()))
+	((call/cc
+	  (lambda (goto)
+	    (letrec ((start (lambda () (set! lst (cons "start" lst)) (goto next)))
+		     (next  (lambda () (set! lst (cons "next" lst))  (goto last)))
+		     (last  (lambda () (set! lst (cons "last" lst)) (reverse lst))))
+	      start)))))
+      '("start" "next" "last"))
+
+(test (let ((cont #f))
+	(letrec ((x (call-with-current-continuation (lambda (c) (set! cont c) 0)))
+		 (y (call-with-current-continuation (lambda (c) (set! cont c) 0))))
+	  (if cont
+	      (let ((c cont))
+		(set! cont #f)
+		(set! x 1)
+		(set! y 1)
+		(c 0))
+	      (+ x y))))
+      0)
+
+(test (letrec ((x (call/cc list)) 
+	       (y (call/cc list)))
+	(cond ((procedure? x) (x (pair? y)))
+	      ((procedure? y) (y (pair? x))))
+	(let ((x (car x)) (y (car y)))
+	  (and (call/cc x) (call/cc y) (call/cc x))))
+      #t)
+
+(test (letrec ((x (call-with-current-continuation
+		   (lambda (c)
+		     (list #t c)))))
+	(if (car x)
+	    ((cadr x) (list #f (lambda () x)))
+	    (eq? x ((cadr x)))))
+      #t)
+
+(test (call/cc (lambda (c) (0 (c 1)))) 1)
+
+(test (let ((member (lambda (x ls)
+		      (call/cc
+		       (lambda (break)
+			 (do ((ls ls (cdr ls)))
+			     ((null? ls) #f)
+			   (if (equal? x (car ls))
+			       (break ls))))))))
+	(list (member 'd '(a b c))
+	      (member 'b '(a b c))))
+      '(#f (b c)))
+
+(test (+ 2 (call/cc (lambda (k) (* 5 (k 4))))) 6)
+
+(test (let ((x (call/cc (lambda (k) k))))
+	(x (lambda (y) "hi")))
+      "hi")
+
+(test (((call/cc (lambda (k) k)) (lambda (x) x)) "hi") "hi")
+
+(test (let ((return #f)
+	    (lst '()))
+	(let ((val (+ 1 (call/cc 
+			 (lambda (cont) 
+			   (set! return cont) 
+			   1)))))
+	  (set! lst (cons val lst)))
+	(if (= (length lst) 1)
+	    (return 10)
+	    (if (= (length lst) 2)
+		(return 20)))
+	(reverse lst))
+      '(2 11 21))
+
+(test (let ((r1 #f)
+	    (r2 #f)
+	    (lst '()))
+	(define (somefunc x y)
+	  (+ (* 2 (expt x 2)) (* 3 y) 1))
+	(let ((val (somefunc (call/cc
+			      (lambda (c1)
+				(set! r1 c1)
+				(c1 1)))
+			     (call/cc
+			      (lambda (c2)
+				(set! r2 c2)
+				(c2 1))))))
+	  (set! lst (cons val lst)))
+	(if (= (length lst) 1)
+	    (r1 2)
+	    (if (= (length lst) 2)
+		(r2 3)))
+	(reverse lst))
+      '(6 12 18))
+
+(let ((tree->generator
+       (lambda (tree)
+	 (let ((caller '*))
+	   (letrec
+	       ((generate-leaves
+		 (lambda ()
+		   (let loop ((tree tree))
+		     (cond ((null? tree) 'skip)
+			   ((pair? tree)
+			    (loop (car tree))
+			    (loop (cdr tree)))
+			   (else
+			    (call/cc
+			     (lambda (rest-of-tree)
+			       (set! generate-leaves
+				     (lambda ()
+				       (rest-of-tree 'resume)))
+			       (caller tree))))))
+		   (caller '()))))
+	     (lambda ()
+	       (call/cc
+		(lambda (k)
+		  (set! caller k)
+		  (generate-leaves)))))))))
+  (let ((same-fringe? 
+	 (lambda (tree1 tree2)
+	   (let ((gen1 (tree->generator tree1))
+		 (gen2 (tree->generator tree2)))
+	     (let loop ()
+	       (let ((leaf1 (gen1))
+		     (leaf2 (gen2)))
+		 (if (eqv? leaf1 leaf2)
+		     (if (null? leaf1) #t (loop))
+		     #f)))))))
+
+    (test (same-fringe? '(1 (2 3)) '((1 2) 3)) #t)
+    (test (same-fringe? '(1 2 3) '(1 (3 2))) #f)))
+
+
+(for-each
+ (lambda (arg)
+   (test (let ((ctr 0))
+	   (let ((val (call/cc (lambda (exit)
+				 (do ((i 0 (+ i 1)))
+				     ((= i 10) 'gad)
+				   (set! ctr (+ ctr 1))
+				   (if (= i 1)
+				       (exit arg)))))))
+	     (and (equal? val arg)
+		  (= ctr 2))))
+	 #t))
+ (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
+
+(for-each
+ (lambda (arg)
+   (test (let ((ctr 0))
+	   (let ((val (call/cc (lambda (exit)
+				 (do ((i 0 (+ i 1)))
+				     ((= i 10) arg)
+				   (set! ctr (+ ctr 1))
+				   (if (= i 11)
+				       (exit 'gad)))))))
+	     (and (equal? val arg)
+		  (= ctr 10))))
+	 #t))
+ (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
+
+(test (let ((c #f)
+	    (r (string-copy "testing-hiho")))
+	(let ((v (call/cc (lambda (c0) (set! c c0) (list #\a 0)))))
+	  (let ((chr (car v))
+		(index (cadr v)))
+	    (string-set! r index chr)
+	    (set! index (+ index 1))
+	    (if (<= index 8) 
+		(c (list (integer->char (+ 1 (char->integer chr))) index)) 
+		r))))
+      "abcdefghiiho")
+
+(test (let ((x 0)
+	    (again #f))
+	(call/cc (lambda (r) (set! again r)))
+	(set! x (+ x 1))
+	(if (< x 3) (again))
+	x)
+      3)
+
+(test (let* ((x 0)
+	     (again #f)
+	     (func (lambda (r) (set! again r))))
+	(call/cc func)
+	(set! x (+ x 1))
+	(if (< x 3) (again))
+	x)
+      3)
+
+(test (let* ((x 0)
+	     (again #f))
+	(call/cc (let ()
+		   (lambda (r) (set! again r))))
+	(set! x (+ x 1))
+	(if (< x 3) (again))
+	x)
+      3)
+
+(test (call/cc (lambda () 0)) 'error)
+(test (call/cc (lambda (a) 0) 123) 'error)
+(test (call/cc) 'error)
+(test (call/cc abs) 'error)
+(test (call/cc procedure?) #t)
+(test (procedure? (call/cc (lambda (a) a))) #t)
+
+(for-each
+ (lambda (arg)
+   (test (call/cc arg) 'error))
+ (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
+
+(for-each
+ (lambda (arg)
+   (test (call/cc (lambda (a) arg)) arg))
+ (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
+
+(let ((a (call/cc (lambda (a) a))))
+  (test (eq? a a) #t)
+  (test (eqv? a a) #t)
+  (test (equal? a a) #t)
+  (for-each
+   (lambda (ques)
+     (if (ques a)
+	 (begin (display ques) (display " ") (display a) (display " returned #t?") (newline))))
+   question-ops))
+
+(test (let ((conts (make-vector 4 #f)))
+	(let ((lst '()))
+	  (set! lst (cons (+ (call/cc (lambda (a) (vector-set! conts 0 a) 0))
+			     (call/cc (lambda (a) (vector-set! conts 1 a) 0))
+			     (call/cc (lambda (a) (vector-set! conts 2 a) 0))
+			     (call/cc (lambda (a) (vector-set! conts 3 a) 0)))
+			  lst))
+	  (let ((len (length lst)))
+	    (if (< len 4)
+		((vector-ref conts (- len 1)) (+ len 1))
+		(reverse lst)))))
+      '(0 2 5 9))
+
+(test (let ((conts '()))
+	(let ((lst '()))
+	  (set! lst (cons (+ (call/cc (lambda (a) (if (< (length conts) 4) (set! conts (cons a conts))) 1))
+			     (* (call/cc (lambda (a) (if (< (length conts) 4) (set! conts (cons a conts))) 1))
+				(+ (call/cc (lambda (a) (if (< (length conts) 4) (set! conts (cons a conts))) 1))
+				   (* (call/cc (lambda (a) (if (< (length conts) 4) (set! conts (cons a conts))) 1)) 2))))
+			  lst))
+	  (let ((len (length lst)))
+	    (if (<= len 4)
+		((list-ref conts (- len 1)) (+ len 1))
+		(reverse lst)))))
+      ; (+ 1 (* 1 (+ 1 (* 1 2)))) to start
+      ; (+ 1 ...          2     )
+      ; (+ 1 ...     3    [1]   )
+      ; (+ 1 ...4    [1]        )
+      ; (+ 5   [1]              )
+      '(4 6 6 13 8))
+
+(test (let ((conts (make-vector 4 #f)))
+	(let ((lst '()))
+	  (set! lst (cons (+ (call/cc (lambda (a) (if (not (vector-ref conts 0)) (vector-set! conts 0 a)) 0))
+			     (call/cc (lambda (a) (if (not (vector-ref conts 1)) (vector-set! conts 1 a)) 0))
+			     (call/cc (lambda (a) (if (not (vector-ref conts 2)) (vector-set! conts 2 a)) 0))
+			     (call/cc (lambda (a) (if (not (vector-ref conts 3)) (vector-set! conts 3 a)) 0)))
+			  lst))
+	  (let ((len (length lst)))
+	    (if (< len 4)
+		((vector-ref conts (- len 1)) (+ len 1))
+		(reverse lst)))))
+      '(0 2 3 4))
+
+(test (let ((conts '()))
+	(let ((lst '()))
+	  (set! lst (cons (+ (if (call/cc (lambda (a) (if (< (length conts) 4) (set! conts (cons a conts))) #f)) 1 0)
+			     (* (if (call/cc (lambda (a) (if (< (length conts) 4) (set! conts (cons a conts))) #f)) 2 1)
+				(+ (if (call/cc (lambda (a) (if (< (length conts) 4) (set! conts (cons a conts))) #f)) 1 0)
+				   (* (if (call/cc (lambda (a) (if (< (length conts) 4) (set! conts (cons a conts))) #f)) 2 1) 2))))
+			  lst))
+	  (let ((len (length lst)))
+	    (if (<= len 4)
+		((list-ref conts (- len 1)) #t)
+		(reverse lst)))))
+      ; (+ 0 (* 1 (+ 0 (* 1 2)))) to start
+      ; (+ 0 ...          2     )
+      ; (+ 0 ...     1   [1]    )
+      ; (+ 0 ...2   [0]         )
+      ; (+ 1   [1]              )
+      '(2 4 3 4 3))
+
+(test (let ((call/cc 2)) (+ call/cc 1)) 3)
+(test (call/cc . 1) 'error)
+
+
+(let ((r5rs-ratify (lambda (ux err)
+		     (if (= ux 0.0) 
+			 0
+			 (let ((tt 1) 
+			       (a1 0) 
+			       (b2 0) 
+			       (a2 1) 
+			       (b1 1) 
+			       (a 0)  
+			       (b 0)
+			       (ctr 0)
+			       (x (/ 1 ux)))
+			   (call-with-current-continuation
+			    (lambda (return)
+			      (do ()
+				  (#f)
+				(set! a (+ (* a1 tt) a2)) 
+				(set! b (+ (* tt b1) b2))
+					;(display (format #f "~A ~A~%" a (- b a)))
+				(if (or (<= (abs (- ux (/ a b))) err)
+					(> ctr 1000))
+				    (return (/ a b)))
+				(set! ctr (1+ ctr))
+				(if (= x tt) (return))
+				(set! x (/ 1 (- x tt))) 
+				(set! tt (inexact->exact (floor x)))
+				(set! a2 a1) 
+				(set! b2 b1) 
+				(set! a1 a) 
+				(set! b1 b)))))))))
+  
+  (test (r5rs-ratify (/ (log 2.0) (log 3.0)) 1/10000000) 665/1054)
+  (test (r5rs-ratify (/ (log 2.0) (log 3.0)) 1/100000000000) 190537/301994))
 
 
 
 
-;;; --------------------------------------------------------------------------------
-;;; call/cc eval dynamic-wind [delay and force perhaps] quasiquote [also tail-recursion]
 
-#!
-(test `(list ,(+ 1 2) 4)  '(list 3 4))
-(test `(a ,(+ 1 2) ,@(map abs '(4 -5 6)) b)  '(a 3 4 5 6 b))
-(test `((`foo' ,(- 10 3)) ,@(cdr '(c)) . ,(car '(cons)))  '((foo 7) . cons))
-(test `#(10 5 ,(sqrt 4) ,@(map sqrt '(16 9)) 8)  '#(10 5 2.0 4.0 3.0 8))
-(test `(a `(b ,(+ 1 2) ,(foo ,(+ 1 3) d) e) f)  '(a `(b ,(+ 1 2) ,(foo 4 d) e) f))
-(test (let ((name1 'x)  (name2 'y)) `(a `(b ,,name1 ,',name2 d) e))  '(a `(b ,x ,'y d) e))
+;;; -------- dynamic-wind --------
 
+(test (let ((ctr1 0)
+	    (ctr2 0)
+	    (ctr3 0))
+	(let ((ctr4 (dynamic-wind
+			(lambda () (set! ctr1 (+ ctr1 1)))
+			(lambda () (set! ctr2 (+ ctr2 1)) ctr2)
+			(lambda () (set! ctr3 (+ ctr3 1))))))
+	  (= ctr1 ctr2 ctr3 ctr4 1)))
+      #t)
 
-(test '(list 3 4) 'quasiquote `(list ,(+ 1 2) 4))
-(test '(list a (quote a)) 'quasiquote (let ((name 'a)) `(list ,name ',name)))
-(test '(a 3 4 5 6 b) 'quasiquote `(a ,(+ 1 2) ,@(map abs '(4 -5 6)) b))
-(test '((foo 7) . cons)
-	'quasiquote
-	`((foo ,(- 10 3)) ,@(cdr '(c)) . ,(car '(cons))))
+(test (let ((ctr1 0)
+	    (ctr2 0)
+	    (ctr3 0))
+	(let ((ctr4 (call/cc (lambda (exit)
+			       (dynamic-wind
+				   (lambda () (set! ctr1 (+ ctr1 1)))
+				   (lambda () (exit ctr2) (set! ctr2 (+ ctr2 1)) ctr2)
+				   (lambda () (set! ctr3 (+ ctr3 1)) 123))))))
+	  (and (= ctr1 ctr3 1)
+	       (= ctr2 ctr4 0))))
+      #t)
 
-;;; sqt is defined here because not all implementations are required to
-;;; support it.
-(define (sqt x)
-	(do ((i 0 (+ i 1)))
-	    ((> (* i i) x) (- i 1))))
+(test (let ((ctr1 0)
+	    (ctr2 0)
+	    (ctr3 0))
+	(let ((ctr4 (call/cc (lambda (exit)
+			       (dynamic-wind
+				   (lambda () (exit ctr1) (set! ctr1 (+ ctr1 1)))
+				   (lambda () (set! ctr2 (+ ctr2 1)) ctr2)
+				   (lambda () (set! ctr3 (+ ctr3 1))))))))
+	  (= ctr1 ctr2 ctr3 ctr4 0)))
+      #t)
 
-(test '#(10 5 2 4 3 8) 'quasiquote `#(10 5 ,(sqt 4) ,@(map sqt '(16 9)) 8))
-(test 5 'quasiquote `,(+ 2 3))
-(test '(a `(b ,(+ 1 2) ,(foo 4 d) e) f)
-      'quasiquote `(a `(b ,(+ 1 2) ,(foo ,(+ 1 3) d) e) f))
-(test '(a `(b ,x ,'y d) e) 'quasiquote
-	(let ((name1 'x) (name2 'y)) `(a `(b ,,name1 ,',name2 d) e)))
-(test '(list 3 4) 'quasiquote (quasiquote (list (unquote (+ 1 2)) 4)))
-(test '`(list ,(+ 1 2) 4) 'quasiquote '(quasiquote (list (unquote (+ 1 2)) 4)))
+(test (let ((ctr1 0)
+	    (ctr2 0)
+	    (ctr3 0))
+	(let ((ctr4 (call/cc (lambda (exit)
+			       (dynamic-wind
+				   (lambda () (set! ctr1 (+ ctr1 1)))
+				   (lambda () (set! ctr2 (+ ctr2 1)) ctr2)
+				   (lambda () (exit ctr3) (set! ctr3 (+ ctr3 1))))))))
+	  (and (= ctr1 ctr2 1)
+	       (= ctr3 ctr4 0))))
+      #t)
 
-;;; This tests full conformance of call-with-current-continuation.  It
-;;; is a separate test because some schemes do not support call/cc
-;;; other than escape procedures.  I am indebted to
-;;; raja@copper.ucs.indiana.edu (Raja Sooriamurthi) for fixing this
-;;; code.  The function leaf-eq? compares the leaves of 2 arbitrary
-;;; trees constructed of conses.
-(define (next-leaf-generator obj eot)
-  (letrec ((return #f)
-	   (cont (lambda (x)
-		   (recur obj)
-		   (set! cont (lambda (x) (return eot)))
-		   (cont #f)))
-	   (recur (lambda (obj)
-		      (if (pair? obj)
-			  (for-each recur obj)
-			  (call-with-current-continuation
-			   (lambda (c)
-			     (set! cont c)
-			     (return obj)))))))
-    (lambda () (call-with-current-continuation
-		(lambda (ret) (set! return ret) (cont #f))))))
-(define (leaf-eq? x y)
-  (let* ((eot (list 'eot))
-	 (xf (next-leaf-generator x eot))
-	 (yf (next-leaf-generator y eot)))
-    (letrec ((loop (lambda (x y)
-		     (cond ((not (eq? x y)) #f)
-			   ((eq? eot x) #t)
-			   (else (loop (xf) (yf)))))))
-      (loop (xf) (yf)))))
-  (test #t leaf-eq? '(a (b (c))) '((a) b c))
-  (test #f leaf-eq? '(a (b (c))) '((a) b c d))
-  (test 3 'delay (force (make-promise (+ 1 2))))
-  (test '(3 3) 'delay (let ((p (make-promise (+ 1 2))))
-			(list (force p) (force p))))
-  (test 2 'delay (letrec ((a-stream
-			   (letrec ((next (lambda (n)
-					    (cons n (make-promise (next (+ n 1)))))))
-			     (next 0)))
-			  (head car)
-			  (tail (lambda (stream) (force (cdr stream)))))
-		   (head (tail (tail a-stream)))))
-  (letrec ((count 0)
-	   (p (make-promise (begin (set! count (+ count 1))
-			    (if (> count x)
-				count
-				(force p)))))
-	   (x 5))
-    (test 6 force p)
-    (set! x 10)
-    (test 6 force p))
-  (test 3 'force
-	(letrec ((p (make-promise (if c 3 (begin (set! c #t) (+ (force p) 1)))))
-		 (c #f))
-	  (force p)))
-
-;;; --------
+(test (let ((path '())  
+	    (c #f)) 
+	(let ((add (lambda (s)  
+		     (set! path (cons s path))))) 
+	  (dynamic-wind  
+	      (lambda () (add 'connect))  
+	      (lambda () (add (call-with-current-continuation  
+			       (lambda (c0) (set! c c0) 'talk1))))  
+	      (lambda () (add 'disconnect))) 
+	  (if (< (length path) 4) 
+	      (c 'talk2) 
+	      (reverse path)))) 
+      '(connect talk1 disconnect  connect talk2 disconnect))
 
 
+(for-each
+ (lambda (arg)
+   (test (dynamic-wind (lambda () #f) (lambda () arg) (lambda () #f)) arg))
+ (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
 
-(test (quasiquote (list (unquote (+ 1 2)) 4))  '(list 3 4))
-(test '(quasiquote (list (unquote (+ 1 2)) 4)) `(list ,(+ 1 2) 4))
+(test (dynamic-wind) 'error)
+(test (dynamic-wind (lambda () #f)) 'error)
+(test (dynamic-wind (lambda () #f) (lambda () #f)) 'error)
+(test (dynamic-wind (lambda () #f) (lambda () #f) (lambda () #f)) #f)
+(test (dynamic-wind (lambda (a) #f) (lambda () #f) (lambda () #f)) 'error)
+(test (dynamic-wind (lambda () #f) (lambda (a b) #f) (lambda () #f)) 'error)
+(test (dynamic-wind (lambda () #f) (lambda () #f) (lambda (a) #f)) 'error)
+(test (dynamic-wind (lambda () 1) #f (lambda () 2)) 'error)
 
-(test (force (make-promise (+ 1 2))) 3)
-(test (let ((p (make-promise (+ 1 2)))) (list (force p) (force p))) '(3 3))
-(test (begin (define a-stream (letrec ((next  (lambda (n) (cons n (make-promise (next (+ n 1))))))) (next 0)))(define head car)(define tail (lambda (stream) (force (cdr stream))))(head (tail (tail a-stream)))) 2)
-
-(test (let ((path '())  (c #f)) (let ((add (lambda (s)  (set! path (cons s path))))) (dynamic-wind  (lambda () (add 'connect))  (lambda () (add (call-with-current-continuation  (lambda (c0) (set! c c0) 'talk1))))  (lambda () (add 'disconnect))) (if (< (length path) 4) (c 'talk2) (reverse path)))) '(connect talk1 disconnect  connect talk2 disconnect))
-(test (eval '(* 7 3) (global-environment))  21)
-
-;; Section 7: First class continuations
-
-;; Scott Miller
-;; No newsgroup posting associated.  The jist of this test and 7.2
-;; is that once captured, a continuation should be unmodified by the 
-;; invocation of other continuations.  This test determines that this is 
-;; the case by capturing a continuation and setting it aside in a temporary
-;; variable while it invokes that and another continuation, trying to 
-;; side effect the first continuation.  This test case was developed when
-;; testing SISC 1.7's lazy CallFrame unzipping code.
-(define r #f)
-(define a #f)
-(define b #f)
-(define c #f)
-(define i 0)
-(should-be 7.1 28
-  (let () 
-    (set! r (+ 1 (+ 2 (+ 3 (call/cc (lambda (k) (set! a k) 4))))
-               (+ 5 (+ 6 (call/cc (lambda (k) (set! b k) 7))))))
-    (if (not c) 
-        (set! c a))
-    (set! i (+ i 1))
-    (case i
-      ((1) (a 5))
-      ((2) (b 8))
-      ((3) (a 6))
-      ((4) (c 4)))
-    r))
-
-;; Same test, but in reverse order
-(define r #f)
-(define a #f)
-(define b #f)
-(define c #f)
-(define i 0)
-(should-be 7.2 28
-  (let () 
-    (set! r (+ 1 (+ 2 (+ 3 (call/cc (lambda (k) (set! a k) 4))))
-               (+ 5 (+ 6 (call/cc (lambda (k) (set! b k) 7))))))
-    (if (not c) 
-        (set! c a))
-    (set! i (+ i 1))
-    (case i
-      ((1) (b 8))
-      ((2) (a 5))
-      ((3) (b 7))
-      ((4) (c 4)))
-    r))
-
-;; Credits to Matthias Radestock
-;; Another test case used to test SISC's lazy CallFrame routines.
-(should-be 7.3 '((-1 4 5 3)
-                 (4 -1 5 3)
-                 (-1 5 4 3)
-                 (5 -1 4 3)
-                 (4 5 -1 3)
-                 (5 4 -1 3))
-  (let ((k1 #f)
-        (k2 #f)
-        (k3 #f)
-        (state 0))
-    (define (identity x) x)
-    (define (fn)
-      ((identity (if (= state 0)
-                     (call/cc (lambda (k) (set! k1 k) +))
-                     +))
-       (identity (if (= state 0)
-                     (call/cc (lambda (k) (set! k2 k) 1))
-                     1))
-       (identity (if (= state 0)
-                     (call/cc (lambda (k) (set! k3 k) 2))
-                     2))))
-    (define (check states)
-      (set! state 0)
-      (let* ((res '())
-             (r (fn)))
-        (set! res (cons r res))
-        (if (null? states)
-            res
-            (begin (set! state (car states))
-                   (set! states (cdr states))
-                   (case state
-                     ((1) (k3 4))
-                     ((2) (k2 2))
-                     ((3) (k1 -)))))))
-    (map check '((1 2 3) (1 3 2) (2 1 3) (2 3 1) (3 1 2) (3 2 1)))))
-
-;; Modification of the yin-yang puzzle so that it terminates and produces
-;; a value as a result. (Scott G. Miller)
-(should-be 7.4 '(10 9 8 7 6 5 4 3 2 1 0)
-  (let ((x '())
-        (y 0))
-    (call/cc 
-     (lambda (escape)
-       (let* ((yin ((lambda (foo) 
-                      (set! x (cons y x))
-                      (if (= y 10)
-                          (escape x)
-                          (begin
-                            (set! y 0)
-                            foo)))
-                    (call/cc (lambda (bar) bar))))
-              (yang ((lambda (foo) 
-                       (set! y (+ y 1))
-                       foo)
-                     (call/cc (lambda (baz) baz)))))
-         (yin yang))))))
-
-;; Miscellaneous 
-
-;;Al Petrofsky
-;; In thread:
-;; R5RS Implementors Pitfalls
-;; http://groups.google.com/groups?selm=871zemtmd4.fsf@app.dial.idiom.com
-(should-be 8.1 -1
-  (let - ((n (- 1))) n))
-
-(should-be 8.2 '(1 2 3 4 1 2 3 4 5)
-  (let ((ls (list 1 2 3 4)))
-    (append ls ls '(5))))
-
-;;Not really an error to fail this (Matthias Radestock)
-;;If this returns (0 1 0), your map isn't call/cc safe, but is probably
-;;tail-recursive.  If its (0 0 0), the opposite is true.
-(should-be 8.3 '(0 1 0)
-  (let ()
-    (define executed-k #f)
-    (define cont #f)
-    (define res1 #f)
-    (define res2 #f)
-    (set! res1 (map (lambda (x)
-		      (if (= x 0)
-			  (call/cc (lambda (k) (set! cont k) 0))
-			  0))
-		    '(1 0 2)))
-    (if (not executed-k)           
-	(begin (set! executed-k #t) 
-	       (set! res2 res1)
-	       (cont 1)))
-    res2))
-
-(define (callcc-test1)
-  (let ((r '()))
-    (let ((w (let ((v 1))
-               (set! v (+ (call-with-current-continuation
-                           (lambda (c0) (set! c c0) v))
-                          v))
-               (set! r (cons v r))
-               v)))
-      (if (<= w 1024) (c w) r))))
-
-(test "call/cc (env)" '(2048 1024 512 256 128 64 32 16 8 4 2)
-      callcc-test1)
-
-;; continuation with multiple values
-
-(test* "call/cc (values)" '(1 2 3)
-       (receive x (call-with-current-continuation
-                   (lambda (c) (c 1 2 3)))
-         x))
-
-(test* "call/cc (values2)" '(1 2 3)
-       (receive (x y z) (call-with-current-continuation
-                         (lambda (c) (c 1 2 3)))
-         (list x y z)))
-
-(test* "call/cc (values3)" '(1 2 (3))
-       (receive (x y . z)
-           (call-with-current-continuation
-            (lambda (c) (c 1 2 3)))
-         (list x y z)))
-
-(test* "call/cc (values4)" *test-error*
-       (receive (x y)
-           (call-with-current-continuation
-            (lambda (c) (c 1 2 3)))
-         (list x y)))
-
-;; continuation invoked while inline procedure is prepared.
-;; a test to see call/cc won't mess up the VM stack.
-
-(define (callcc-test2)
-  (let ((cc #f)
-        (r '()))
-    (let ((s (list 1 2 3 4 (call/cc (lambda (c) (set! cc c) 5)) 6 7 8)))
-      (if (null? r)
-          (begin (set! r s) (cc -1))
-          (list r s)))))
-    
-(test "call/cc (inline)" '((1 2 3 4 5 6 7 8) (1 2 3 4 -1 6 7 8))
-      callcc-test2)
-
-;; continuation created during do frame preparation.
-;; the TAILBIND instruction failed this test.
-
-(test "call/cc & dynwind (cstack)" '(a b c)
-      (lambda ()
-        (let ((x '()))
-          (call-with-current-continuation
-           (lambda (c)
-             (dynamic-wind
-              (lambda () (set! x (cons 'c x)))
-              (lambda ()
-                (sort '(1 2 3 4 5 6)
-                      (lambda (a b)
-                        (set! x (cons 'b x))
-                        (c 0)))
-                (set! x (cons 'z x))
-                )
-              (lambda () (set! x (cons 'a x))))))
-          x)))
-(define (dynwind-test1)
-  (let ((path '()))
-    (let ((add (lambda (s) (set! path (cons s path)))))
-      (dynamic-wind
-       (lambda () (add 'connect))
-       (lambda ()
-         (add (call-with-current-continuation
-               (lambda (c0) (set! c c0) 'talk1))))
-       (lambda () (add 'disconnect)))
-      (if (< (length path) 4)
-          (c 'talk2)
-          (reverse path)))))
-
-(test "dynamic-wind"
-      '(connect talk1 disconnect connect talk2 disconnect)
-      dynwind-test1)
-
-;; Test for handler stack.
-(define (dynwind-test2)
-  (let ((path '()))
-    (dynamic-wind
-     (lambda () (set! path (cons 1 path)))
-     (lambda () (set! path (append (dynwind-test1) path)))
-     (lambda () (set! path (cons 3 path))))
-    path))
-
-(test "dynamic-wind"
-      '(3 connect talk1 disconnect connect talk2 disconnect 1)
-      dynwind-test2)
-
-(test "dynamic-wind" '(a b c d e f g b c d e f g h)
-      (lambda ()
+(test (let ((identity (lambda (a) a)))
         (let ((x '())
               (c #f))
           (dynamic-wind
-           (lambda () (push! x 'a))
-           (lambda ()
-             (dynamic-wind
-              (lambda () (push! x 'b))
-              (lambda ()
-                (dynamic-wind
-                 (lambda () (push! x 'c))
-                 (lambda () (set! c (call/cc identity)))
-                 (lambda () (push! x 'd))))
-              (lambda () (push! x 'e)))
-             (dynamic-wind
-              (lambda () (push! x 'f))
-              (lambda () (when c (c #f)))
-              (lambda () (push! x 'g))))
-           (lambda () (push! x 'h)))
-          (reverse x))))
-
-(test "Al's call/cc test" 1
-      (lambda () (call/cc (lambda (c) (0 (c 1))))))
-
-
-
-;;; The first thing you do when using call-with-current-continuation
-(define call/cc call-with-current-continuation)
-
-;;; ------------------------------------------------------------
-;;; Early exit using continuations
-(define evencount 0)
-
-(let ((test 17))
-  (call/cc (lambda (return)
-             (if (odd? test) (return 5))
-             (set! evencount (+ evencount 1))
-             7)))
-;;; ==> 5
-
-;;; ------------------------------------------------------------
-
-
-;;; ------------------------------------------------------------
-;;; Simple exceptions using continuations (see SRFI-34 for a more
-;;; complete exception-system)
-
-(define top-exception-handler  (lambda () (error "unhandled exception")))
-(define (throw) (top-exception-handler))
-
-(define-syntax
-  try
-  (syntax-rules ()
-    ((try catch-clause body ...)
-     (let* ((result #f)
-	    (old-handler top-exception-handler)
-	    (success (call/cc (lambda (cont)
-				(set! top-exception-handler (lambda () (cont #f)))
-				(display 'foo) 
-				(set! result (begin body ...))
-				#t))))
-       (set! top-exception-handler old-handler)
-       (if success result (catch-clause))))))
-
-;;; ------------------------------------------------------------
-;;; backtracking using continuations
-;;; Adapted from ``Teach yourself Scheme in Fixnum Days (TYSiFD)'', by Dorai Sitaram
-
-(define amb-fail '())
-(define (initialize-amb-fail)
-  (set! amb-fail (lambda (x) (error "amb tree exhausted"))))
-
-(define-syntax amb
-  (syntax-rules ()
-    ((amb argument ...)
-     (let ((old-amb-fail amb-fail))
-       (call/cc (lambda (return)
-		  (call/cc (lambda (next)
-			     (set! amb-fail next)
-			     (return argument))) ...
-		  (set! amb-fail old-amb-fail)
-		  (amb-fail #f)))))))
-
-
-(define-syntax bag-of
-  (syntax-rules ()
-    ((bag-of expr)
-     (let* ((old-amb-fail amb-fail)
-	    (result '()))
-       (if (call/cc (lambda (ifcondcont)
-		      (set! amb-fail ifcondcont)
-		      (let ((e expr))
-			(set! result (cons e result))
-			(ifcondcont #t))))
-	   (amb-fail #f))
-       (set! amb-fail old-amb-fail)
-       result))))
-		       
-
-(define (assert pred)
-  (if (not pred) (amb)))
-
-;;; demo of basic ambiguity operator 
-(initialize-amb-fail)
-(let ((value (amb 0 1 2 3 4 5 6)))
-  (assert (> value 2))
-  (assert (even? value))
-  value)
-
-(amb)
-;;; (amb) -- if we call it any more, we'll fail when we load this file.
-
-;;; demo of nested ambs, and bag-of
-(define (three-dice sumto)
-  (let ((die1 (amb 1 2 3 4 5 6))
-	(die2 (amb 1 2 3 4 5 6))
-	(die3 (amb 1 2 3 4 5 6)))
-    (assert (= sumto (+ die1 die2 die3)))
-    (list die1 die2 die3)))
-
-(initialize-amb-fail)
-(bag-of (three-dice 4))
-(bag-of
- (let ((sum (amb 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18)))
-   (bag-of (three-dice sum))))
-
-
-;;; Another method of using amb...
-(define (amb-list rest)
-  (let ((old-amb-fail amb-fail))
-    (call/cc (lambda (return)
-	       (for-each (lambda (value)
-			   (call/cc (lambda (next)
-				      (set! amb-fail next)
-				      (return value))))
-			 rest)
-	       (set! amb-fail old-amb-fail)
-	       (amb-fail #f)))))
-
-(define (range low high)
-  (if (> low high) '()
-      (cons low (range (+ 1 low) high))))
-
-(define (numbers-that-divide argument)
-  (let* ((number (amb-list (range 1 argument))))
-    (assert (zero? (modulo argument number)))
-    number))
-
-(bag-of
- (let* ((frob (amb-list (range 1 10)))
-	(bar (amb-list (range 1 10))))
-					;  (display (cons frob bar))
-   (assert (> frob 9))
-   frob))
-
-
-
-;;; ------------------------------------------------------------
-;;; Iterators
-
-;;; code for simple list traversal
-(define (list-traverse list)
-  (if (pair? list)
-      (list-traverse list)))
-
-;;; code for list iterator (no continuations)
-(define (list-iter list)
-  (lambda ()
-    (if list
-	(let ((value (car list)))
-	  (set! list (cdr list))
-	  value)
-	'())))
-
-;;; example iterator
-(define li (list-iter '(1 2 3 4 5)))
-(li)
-(li)
-(li)
-(li)
-(li)
-(li)
-
-
-;;;------------------------------------------------------------
-;;; Tree iterator
-
-;;; Tree traversal: nice and simple
-(define (tree-traverse tree)
-  (if (pair? tree)
-      (begin
-	(tree-traverse (car tree))
-	(tree-traverse (cdr tree)))))
-
-;;; Tree iterator, written to explicitly maintain stack state (no
-;;; continuations) Kind of ugly.
-(define (tree-iter-painful tree)
-  (let ((cell-stack (list tree)))
-    (lambda ()
-      (display cell-stack)
-      (display "\n")
-      (if cell-stack
-	  (let loop ((node (pop! cell-stack)))
-	    (if (pair? node)
-		(begin
-		  (push! (cdr node) cell-stack)
-		  (loop (car node)))
-		node))
-	  '()))))
-
-;;; send macro, used in tree-iter with continuations, below
-(define-syntax send 
-  (syntax-rules ()
-    ((send to from value)
-     (call/cc
-      (lambda (state)
-	(set! from (lambda () (state 0)))
-	(to value))))))
-
-;;; with-caller macro.  I don't like the name or syntax; suggestions?
-;;; used in tree-iter with continuations, below
-(define-syntax with-caller
-  (syntax-rules ()
-    ((with-caller caller localstate body ...) 
-     (let ((caller #f))
-       (letrec ((localstate
-		 (lambda ()
-		   body ...)))
-	 (lambda ()
-	   (call/cc
-	    (lambda (caller-cont)
-	      (set! caller caller-cont)
-	      (localstate)))))))))
-
-;;; Tree traversal with continuations (and macros, defined below).
-;;; Note close structural resemblance to the traversal routine, above.
-(define (tree-iter tree)
-  (with-caller caller loopstate
-   (let loop ((node tree))
-     (if (pair? node)
-	 (begin
-	   (loop (car node))
-	   (loop (cdr node)))
-	 (begin
-	   (send caller loopstate node)
-	   '())))))
-
-
-;;; demo...
-(define ti (tree-iter '((1 . 2) . (3 . 4))))
-(ti)
-(ti)
-(ti)
-(ti)
-(ti)
-
-
-;;; ------------------------------------------------------------
-;;; simple, cooperating multithreading primitives
-;;; Note: using a queue instead of a stack would make
-;;; yield behave more fairly.
-
-;;; simple stack operations
-(define-syntax push!
-  (syntax-rules ()
-    ((push! value stack)
-     (set! stack (cons value stack)))))
-
-(define-syntax pop!
-  (syntax-rules ()
-    ((pop! stack)
-     (let ((top (car stack)))
-       (set! stack (cdr stack))
-       top))))
-
-(define (empty-stack? stack)
-  (not (pair? stack)))
-
-;;; global variables used by the threading scheme
-(define thread-set '())
-(define scheduler-context #f)
-
-;;; Spawn new thread (breadth-first style)
-(define (spawn thunk)
-  (push! (lambda () (thunk) (scheduler-context 0))
-	 thread-set))
-
-;;; Let another runnable thread run
-(define (yield)
-  (call/cc
-   (lambda (this-thread)
-     (if (not (empty-stack? thread-set))
-	 (let ((next-thread (pop! thread-set)))
-	   (push! (lambda () (this-thread 0)) thread-set)
-	   (next-thread))))))
-
-;;; Start multithreading, using this thunk.  This is necessary because
-;;; the one thing we don't want to do while "multithreading" is return
-;;; control to the REPL until all threads are done.
-(define (start-scheduling thunk)
-  (set! thread-set '())
-  (call/cc
-   (lambda (scheduler)
-     (set! scheduler-context scheduler)
-     (spawn thunk)))
-  (if (not (empty-stack? thread-set))
-      (begin
-	 ((pop! thread-set))
-	 (loop)
-	 (display "\n\n**Scheduler exiting**.\n\n"))))
-
-
-;;; Trivial example using two threads
-(start-scheduling
- (lambda ()
-   (spawn (lambda ()
-	    (display "sub-thread\n")
-	    (yield)
-	    (display "more sub-thread\n")
-	    (yield)))
-   (display "first thread\n")
-   (yield)
-   (display "and more first\n")))
-
-
-; -*- scheme -*-
-; if your scheme doesn't have call/cc as a short-name for call-with-current-continuation, use:
-; (define-macro (call/cc f) `(call-with-current-continuation ,f))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; dumb examples
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(call/cc (lambda (k) (k "foo")))	; => "foo"
-
-(call/cc (lambda (k) "foo"))		; => "foo"
-					; same as above since
-					; (call/cc (lambda (k) expr))  <=>  (call/cc (lambda (k) (k expr)))
-
-(call/cc (lambda (k) 
-	   (k "foo")
-	   (error "ignored")))		; => "foo"
-					; everything after the call to "k" is ignored
-
-(string-append
- "foo "
- (call/cc (lambda (k) "bar "))
- "boo")					; => "foo bar boo"
-
-
-(define saved #f)
-(string-append
- "foo "
- (call/cc (lambda (k) 
-	    (set! saved k)
-	    "bar "))
- "boo")					; => "foo bar boo"
-(saved "BAR ")				; => "foo BAR boo"
-
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; imperative constructs
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-; "return"
-(define (inv v)
-  (call/cc (lambda (return)
-    (display "doing things")
-    (if (= v 0) (return 0)) ; special case for v = 0
-    (display "otherwise doing other things")
-    (/ 1 v))))
-
-; "goto"
-(begin
-  (display "doing things")
-  (define label-here #f)
-  ; creating a label here
-  (call/cc (lambda (k) (set! label-here k)))
-  (display "doing other things")
-  (label-here "unused argument") ; the argument is unused since the return value of the call/cc above is dropped
-  (display "this won't be reached")
-  )
-
-; "goto" v.2
-(define (goto continuation) (continuation continuation))
-
-(begin
-  (display "doing things")
-  (define label-here (call/cc (lambda (k) k)))
-  (display "doing other things")
-  (goto label-here)
-  (display "this won't be reached")
-  )
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; returning a special value (dropping the stack of computations)
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-; return the first i where (list-ref l i) = e
-(define (listindex e l)
-  (call/cc (lambda (not_found) ; using not_found for getting out of listindex
-			       ; without computing the +1's
-    (letrec ((loop 
-	      (lambda (l)
-		(cond
-		 ((null? l) (not_found #f))
-		 ((equal? e (car l)) 0)
-		 (else (+ 1 (loop (cdr l))))))))
-      (loop l)))))
-
-; the same written with the special "let" construct
-(define (listindex e l)
-  (call/cc (lambda (not_found) ; using "not_found" for getting out of listindex
-			       ; without computing the +1's
-    (let loop ((l l))
-      (cond
-       ((null? l) (not_found #f))
-       ((equal? e (car l)) 0)
-       (else (+ 1 (loop (cdr l)))))))))
-
-(define (product li)
-  (call/cc (lambda (break)
-     (let loop ((l li))
-       (cond
-	((null? l) 1)
-	((= (car l) 0) (break 0)) ; using "break" as an optimization to drop the computation
-	(else (* (car l) (loop (cdr l)))))))))
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; "delay"ing and coroutines (inspired by http://okmij.org/ftp/Scheme/enumerators-callcc.html)
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-; first here is an imperative generator (a dumb one)
-(define (generate use-it)
-  (let loop ((i 0))
-    (if (< i 10) (begin (use-it i) (loop (+ i 1))))))
-
-; we want to use it functionnally
-; for this, we generate the list out of the generator
-(define (generator->list generator)
-  (let ((l '()))
-    (generator
-     (lambda (e) 
-       (set! l (cons e l))))
-    (reverse l)))
-
-; now, we want to create the list lazily, on demand.
-; the generator->list above can't do this
-
-; here is another version of generator->list that uses a coroutine to create the result
-(define (generator->list generator)
-  (call/cc (lambda (k-main)
-    (generator 
-     (lambda (e)
-       (call/cc (lambda (k-reenter)
-         (k-main (cons e (call/cc (lambda (k-new-main)
-				    (set! k-main k-new-main)
-				    (k-reenter #f)))))))))
-    (k-main '())
-    )))
-
-; the advantage of the call/cc version above is that it's easy to generate the list lazily
-(define (generator->lazy-list generator)
-  (delay
-    (call/cc (lambda (k-main)
-      (generator 
-       (lambda (e)
-         (call/cc (lambda (k-reenter)
-           (k-main (cons e 
-			 (delay 
-			   (call/cc (lambda (k-new-main)
-				      (set! k-main k-new-main)
-				      (k-reenter #f))))))))))
-      (k-main '())
-    ))))
-
-; testing it:
-(define (fnull? x) (null? (force x)))
-(define (fcar x) (car (force x)))
-(define (fcdr x) (cdr (force x)))
-
-(define (lazy-list->list lz)
-  (if (fnull? lz) '()
-      (cons (fcar lz) (lazy-list->list (fcdr lz)))))
-
-(lazy-list->list (generator->lazy-list generate))
-
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; weird examples
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-((call/cc ; <= there is an apply in the saved context
-   (lambda (goto)
-     (letrec ((start (lambda () (display "start ") (goto next)))
-	      (next  (lambda () (display "next ")  (goto last)))
-	      (last  (lambda () (display "last")  "done")))
-       start))))	       ; => returns "done", displays "start next last"
-; to ease understanding, try:
-((lambda () (display "start ")))
-
-!#
-
+	      (lambda () (set! x (cons 'a x)))
+	      (lambda ()
+		(dynamic-wind
+		    (lambda () (set! x (cons 'b x)))
+		    (lambda ()
+		      (dynamic-wind
+			  (lambda () (set! x (cons 'c x)))
+			  (lambda () (set! c (call/cc identity)))
+			  (lambda () (set! x (cons 'd x)))))
+		    (lambda () (set! x (cons 'e x))))
+		(dynamic-wind
+		    (lambda () (set! x (cons 'f x)))
+		    (lambda () (if c (c #f)))
+		    (lambda () (set! x (cons 'g x)))))
+	      (lambda () (set! x (cons 'h x))))
+          (reverse x)))
+      '(a b c d e f g b c d e f g h))
+
+(test (dynamic-wind 
+	  (lambda () #f)
+	  (lambda () (values 'a 'b 'c))
+	  (lambda () #f))
+      (values 'a 'b 'c))
+
+(test (let ((dynamic-wind 1)) (+ dynamic-wind 2)) 3)
+(test (dynamic-wind . 1) 'error)
+
+(test (let ((ctr1 0)
+	    (ctr2 0)
+	    (ctr3 0))
+	(let ((val (dynamic-wind
+		       (lambda () #f)
+		       (lambda ()
+			 (set! ctr1 1)
+			 (call/cc
+			  (lambda (exit)
+			    (exit 123)
+			    (set! ctr2 2)
+			    321)))
+		       (lambda ()
+			 (set! ctr3 3)))))
+	  (and (= ctr1 1) (= ctr2 0) (= ctr3 3) (= val 123))))
+      #t)
+
+(test (let ((ctr1 0))
+	(let ((val (dynamic-wind
+		       (let ((a 1))
+			 (lambda ()
+			   (set! ctr1 a)))
+		       (let ((a 10))
+			 (lambda ()
+			   (set! ctr1 (+ ctr1 a))
+			   ctr1))
+		       (let ((a 100))
+			 (lambda ()
+			   (set! ctr1 (+ ctr1 a)))))))
+	  (and (= ctr1 111) (= val 11))))
+      #t)
+
+(test (let ((ctr1 0))
+	(let ((val (+ 3 (dynamic-wind
+			    (let ((a 1))
+			      (lambda ()
+				(set! ctr1 a)))
+			    (let ((a 10))
+			      (lambda ()
+				(set! ctr1 (+ ctr1 a))
+				ctr1))
+			    (let ((a 100))
+			      (lambda ()
+				(set! ctr1 (+ ctr1 a)))))
+		      1000)))
+	  (and (= ctr1 111) (= val 1014))))
+      #t)
+
+
+
+
+;;; -------- delay and force --------
+
+(if with-delay
+    (begin
+
+      (test (let ((stream-car (lambda (s) (car (force s))))
+		  (stream-cdr (lambda (s) (cdr (force s))))
+		  (counters (let next ((n 1)) (delay (cons n (next (+ n 1)))))))
+	      (let* ((val1 (stream-car counters))
+		     (val2 (stream-car (stream-cdr counters))))
+		(letrec ((stream-add (lambda (s1 s2)
+				       (delay (cons 
+					       (+ (stream-car s1) (stream-car s2))
+					       (stream-add (stream-cdr s1) (stream-cdr s2)))))))
+		  (let ((even-counters (stream-add counters counters)))
+		    (let* ((val3 (stream-car even-counters))
+			   (val4 (stream-car (stream-cdr even-counters))))
+		      (list val1 val2 val3 val4))))))
+	    (list 1 2 2 4))
+
+      (test (force (delay (+ 1 2))) 3)
+      (test (let ((p (delay (+ 1 2)))) (list (force p) (force p))) (list 3 3))
+      (test (letrec ((a-stream (letrec ((next (lambda (n)
+						(cons n (delay (next (+ n 1)))))))
+				 (next 0)))
+		     (head car)
+		     (tail (lambda (stream) (force (cdr stream)))))
+	      (head (tail (tail a-stream))))
+	    2)
+
+      (letrec ((count 0)
+	       (p (delay (begin (set! count (+ count 1))
+				(if (> count x)
+				    count
+				    (force p)))))
+	       (x 5))
+	(test (force p) 6)
+	(set! x 10)
+	(test (force p) 6))
+
+      (test (letrec ((p (delay (if c 3 (begin (set! c #t) (+ (force p) 1))))) (c #f)) (force p)) 3)	    
+
+      (test (let ((generate (lambda (use-it)
+			      (let loop ((i 0))
+				(if (< i 10) (begin (use-it i) (loop (+ i 1)))))))
+		  (generator->lazy-list (lambda (generator)
+					  (delay
+					    (call/cc (lambda (k-main)
+						       (generator 
+							(lambda (e)
+							  (call/cc (lambda (k-reenter)
+								     (k-main (cons e 
+										   (delay 
+										     (call/cc (lambda (k-new-main)
+												(set! k-main k-new-main)
+												(k-reenter #f))))))))))
+						       (k-main '()))))))
+		  (fnull? (lambda (x) (null? (force x))))
+		  (fcar (lambda (x) (car (force x))))
+		  (fcdr (lambda (x) (cdr (force x)))))
+	      (letrec ((lazy-list->list (lambda (lz)
+					  (if (fnull? lz) '()
+					      (cons (fcar lz) (lazy-list->list (fcdr lz)))))))
+		(lazy-list->list (generator->lazy-list generate))))
+	    '(0 1 2 3 4 5 6 7 8 9))
+
+      (test (let* ((x 1)
+		   (p (delay (+ x 1))))
+	      (force p)
+	      (set! x (+ x 1))
+	      (force p))
+	    2)
+
+      (test (let* ((x 1) 
+		   (p #f))
+	      (let* ((x 2))
+		(set! p (delay (+ x 1))))
+	      (force p))
+	    3)
+
+      (test (force) 'error)
+      (test (force 1) 'error)
+      (test (delay) 'error)
+      (test (delay 1 2) 'error)
+      
+      (test (letrec ((count 0)
+		     (x 5)
+		     (p (delay (begin (set! count (+ count 1))
+				      (if (> count x)
+					  count
+					  (force p))))))
+	      (force p)
+	      (set! x 10)
+	      (force p))
+	    6)
+      
+      (test (let ((count 0))
+	      (define s (delay (begin (set! count (+ count 1)) 1)))
+	      (+ (force s) (force s))
+	      count)
+	    1)
+
+      (test (let ()
+	      (define f
+		(let ((first? #t))
+		  (delay
+		    (if first?
+			(begin
+			  (set! first? #f)
+			  (force f))
+			'second))))
+	      (force f))
+	    'second)
+
+      (test (let ()
+	      (define q
+		(let ((count 5))
+		  (define (get-count) count)
+		  (define p (delay (if (<= count 0)
+				       count
+				       (begin (set! count (- count 1))
+					      (force p)
+					      (set! count (+ count 2))
+					      count))))
+		  (list get-count p)))
+	      (let* ((get-count (car q))
+		     (p (cadr q))
+		     (a (get-count))
+		     (b (force p))
+		     (c (get-count)))
+		(list a b c)))
+	    (list 5 0 10))
+
+      ))
+
+
+;;; -------- eval --------
+
+(if with-eval
+    (begin
+      (test (test-eval '(* 7 3)) 21)
+
+      ))
+
+
+
+
+;;; -------- quasiquote --------
+
+(test `(1 2 3) '(1 2 3))
+(test `() '())
+(test `(list ,(+ 1 2) 4)  '(list 3 4))
+(test `(a ,(+ 1 2) ,@(map abs '(4 -5 6)) b) '(a 3 4 5 6 b))
+(test `#(10 5 ,(sqrt 4) ,@(map sqrt '(16 9)) 8) '#(10 5 2.0 4.0 3.0 8))
+(test `(a `(b ,(+ 1 2) ,(foo ,(+ 1 3) d) e) f) '(a `(b ,(+ 1 2) ,(foo 4 d) e) f))
+(test (let ((name1 'x) (name2 'y)) `(a `(b ,,name1 ,',name2 d) e)) '(a `(b ,x ,'y d) e))
+
+;; from gauche
+(let ((quasi0 99)
+      (quasi1 101)
+      (quasi2 '(a b))
+      (quasi3 '(c d)))
+  (test `,quasi0 99)
+  (test `,quasi1 101)
+  (test `(,(cons 1 2)) '((1 . 2)))
+  (test `(,(cons 1 2) 3) '((1 . 2) 3))
+  (test `(,quasi0 3) '(99 3))
+  (test `(3 ,quasi0) '(3 99))
+  (test `(,(+ quasi0 1) 3) '(100 3))
+  (test `(3 ,(+ quasi0 1)) '(3 100))
+  (test `(,quasi1 3) '(101 3))
+  (test `(3 ,quasi1) '(3 101))
+  (test `(,(+ quasi1 1) 3) '(102 3))
+  (test `(3 ,(+ quasi1 1)) '(3 102))
+  (test `(1 ,@(list 2 3) 4) '(1 2 3 4))
+  (test `(1 2 ,@(list 3 4)) '(1 2 3 4))
+  (test `(,@quasi2 ,@quasi3) '(a b c d))
+  (test `(1 2 . ,(list 3 4)) '(1 2 3 4))
+  (test `(,@quasi2 . ,quasi3) '(a b c d))
+  (test `#(,(cons 1 2) 3) '#((1 . 2) 3))
+  (test `#(,quasi0 3) '#(99 3))
+  (test `#(,(+ quasi0 1) 3) '#(100 3))
+  (test `#(3 ,quasi1) '#(3 101))
+  (test `#(3 ,(+ quasi1 1)) '#(3 102))
+  (test `#(1 ,@(list 2 3) 4) '#(1 2 3 4))
+  (test `#(1 2 ,@(list 3 4)) '#(1 2 3 4))
+  (test `#(,@quasi2 ,@quasi3) '#(a b c d))
+  (test `#(,@quasi2 ,quasi3) '#(a b (c d)))
+  (test `#(,quasi2  ,@quasi3) '#((a b) c d))
+  (test `#() '#())
+  (test `#(,@(list)) '#())
+  (test `(,@(list 1 2) ,@(list 1 2)) '(1 2 1 2))
+  (test `(,@(list 1 2) a ,@(list 1 2)) '(1 2 a 1 2))
+  (test `(a ,@(list 1 2) ,@(list 1 2)) '(a 1 2 1 2))
+  (test `(,@(list 1 2) ,@(list 1 2) a) '(1 2 1 2 a))
+  (test `(,@(list 1 2) ,@(list 1 2) a b) '(1 2 1 2 a b))
+  (test `(,@(list 1 2) ,@(list 1 2) . a) '(1 2 1 2 . a))
+  (test `(,@(list 1 2) ,@(list 1 2) . ,(cons 1 2)) '(1 2 1 2 1 . 2))
+  (test `(,@(list 1 2) ,@(list 1 2) . ,quasi2) '(1 2 1 2 a b))
+  (test `(,@(list 1 2) ,@(list 1 2) a . ,(cons 1 2)) '(1 2 1 2 a 1 . 2))
+  (test `(,@(list 1 2) ,@(list 1 2) a . ,quasi3) '(1 2 1 2 a c d))
+  (test `#(,@(list 1 2) ,@(list 1 2)) '#(1 2 1 2))
+  (test `#(,@(list 1 2) a ,@(list 1 2)) '#(1 2 a 1 2))
+  (test `#(a ,@(list 1 2) ,@(list 1 2)) '#(a 1 2 1 2))
+  (test `#(,@(list 1 2) ,@(list 1 2) a) '#(1 2 1 2 a))
+  (test `#(,@(list 1 2) ,@(list 1 2) a b) '#(1 2 1 2 a b))
+  (test `(1 `(1 ,2 ,,(+ 1 2)) 1) '(1 `(1 ,2 ,3) 1))
+  (test `(1 `(1 ,,quasi0 ,,quasi1) 1) '(1 `(1 ,99 ,101) 1))
+  (test `(1 `(1 ,@2 ,@,(list 1 2))) '(1 `(1 ,@2 ,@(1 2))))
+  (test `(1 `(1 ,@,quasi2 ,@,quasi3)) '(1 `(1 ,@(a b) ,@(c d))))
+  (test `(1 `(1 ,(,@quasi2 x) ,(y ,@quasi3))) '(1 `(1 ,(a b x) ,(y c d))))
+  (test `#(1 `(1 ,2 ,,(+ 1 2)) 1) '#(1 `(1 ,2 ,3) 1))
+  (test `#(1 `(1 ,,quasi0 ,,quasi1) 1) '#(1 `(1 ,99 ,101) 1))
+  (test `#(1 `(1 ,@2 ,@,(list 1 2))) '#(1 `(1 ,@2 ,@(1 2))))
+  (test `#(1 `(1 ,@,quasi2 ,@,quasi3)) '#(1 `(1 ,@(a b) ,@(c d))))
+  (test `#(1 `(1 ,(,@quasi2 x) ,(y ,@quasi3))) '#(1 `(1 ,(a b x) ,(y c d))))
+  (test `(1 `#(1 ,(,@quasi2 x) ,(y ,@quasi3))) '(1 `#(1 ,(a b x) ,(y c d)))))
+
+
+
+
+;;; -------- syntax-rules --------
+
+(if with-syntax-rules
+    (begin
+
+      ))
