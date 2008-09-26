@@ -3,7 +3,7 @@
 ;;; sources include 
 ;;;   clisp test suite
 ;;;   Paul Dietz's CL test suite
-;;;   R Kelsey, W Clinger, and J Rees r5rs.html
+;;;   R Kelsey, W Clinger, and J Rees r5rs.html (and r6rs.html)
 ;;;   A Jaffer's r4rstest.scm (the inspiration for this...)
 ;;;   guile test suite
 ;;;   gauche test suite
@@ -13,37 +13,32 @@
 ;;;   Snd's numtst.c
 
 
-(define with-continued-fraction-rationalize #t)                ; #f follows the Scheme spec
-(define with-bignums #f)                                       ; else (probably) 64-bit ints
+(define with-continued-fraction-rationalize #f)                ; #f follows the Scheme spec
+(define with-bignums #f)                                       ; unlimited ints
 (define with-hyperbolic-functions #t)                          ; sinh et al
 (define with-char-ops-with-more-than-2-args #t)                ; char<? et al restricted to 2 args?
 (define with-string-ops-with-more-than-2-args #t)              ; string<? et al restricted to 2 args?
 (define with-relational-ops-that-require-at-least-2-args #t)   ; < et al min args = 2?
-(define with-generic-modulo #t)                                ; #f is the Scheme norm
-(define with-list-set! #t)
-(define with-reverse! #t)
-(define with-open-input-string-and-friends #t)
-(define with-eval #f)
-(define with-syntax-rules #t)
-(define with-delay #t)
+(define with-generic-modulo #f)                                ; #f is the Scheme norm
+(define with-list-set! #t)                                     ; test list-set!
+(define with-reverse! #t)                                      ; test reverse!
+(define with-open-input-string-and-friends #f)                 ; string IO, as well as file
+(define with-eval #f)                                          ;   not tested yet
+(define with-syntax-rules #f)                                  ;   only lightly tested
+(define with-delay #f)                                         ; delay and force (the name "delay" is problematic)
 
 
+;; we're assuming call/cc is defined
 ;    (define call/cc call-with-current-continuation)
-
-;;; --------------------------------------------------------------------------------
-;;;
-;;; to test "eval", I need a way to call it
-
-;;; Gauche and Guile: (define (test-eval expr) (eval expr (interaction-environment)))
-
-;(define test-eval eval)
-
 
 ;;; --------------------------------------------------------------------------------
 
 ;    (define-syntax defmacro
 ;      (syntax-rules ()
 ;	((_ name params . body) (define-macro (name . params) . body))))
+
+
+;;; we also assume there's a "catch" macro trapping all errors
 
 
 (define (ok? tst result expected)
@@ -58,7 +53,6 @@
 	)))
 
 (defmacro test (tst expected)
-  (display tst)
   `(let ((result (catch #t (lambda () ,tst) (lambda args 'error))))
      (ok? ',tst result ,expected)))
 
@@ -24890,7 +24884,8 @@
 
 (test (= 1 #e1 1/1 #e1/1 #e1.0 #e1e0 #b1 #x1 #o1 #d1 #o001) #t)
 (test (= #i3/10 0.3 #i0.3 3e-1 3d-1 0.3e0 3e-1) #t)
-(test (= 0 -0 +0 0.0 -0.0 +0.0 0/1 -0/1 +0/24 0+0i 0-0i -0-0i +0-0i 0.0-0.0i -0.0+0i) #t)
+;(test (= 0 -0 +0 0.0 -0.0 +0.0 0/1 -0/1 +0/24 0+0i 0-0i -0-0i +0-0i 0.0-0.0i -0.0+0i) #t)
+(test (= 0 +0 0.0 +0.0 0/1 +0/24 0+0i #e0) #t)
 
 (for-each
  (lambda (z)
@@ -25071,7 +25066,6 @@
        (load-test-obj (list 'define 'foo (list 'quote write-test-obj))))
 
   (define (check-test-file name)
-    (define test-file (open-input-file name))
     (let ((val (call-with-input-file
 		   name
 		 (lambda (test-file)
@@ -25961,14 +25955,14 @@
 
 (test (let () (begin) #f) #f)
 (test (let () (begin (begin (begin (begin)))) #f) #f)
-(test (begin (define x 2) (+ x 1)) 3)
-(test (begin (define x 0) (begin (set! x 5) (+ x 1)))  6)
-(test (begin (define first car) (first '(1 2))) 1)
-(test (begin (define x 3) (begin (set! x 4) (+ x x))) 8)
+(test (let () (begin (define x 2) (define y 1)) (+ x y)) 3)
+(test (let () (begin (define x 0)) (begin (set! x 5) (+ x 1)))  6)
+(test (let () (begin (define first car)) (first '(1 2))) 1)
+(test (let () (begin (define x 3)) (begin (set! x 4) (+ x x))) 8)
 
 (if (equal? (begin 1) 1)
     (begin
-      (test (begin (define x 0) (set! x (begin (begin 5))) (begin ((begin +) (begin x) (begin (begin 1))))) 6)      
+      (test (let () (begin (define x 0)) (set! x (begin (begin 5))) (begin ((begin +) (begin x) (begin (begin 1))))) 6)      
 
       (test (let ((x 5))
 	      (begin (begin (begin)
@@ -25993,11 +25987,16 @@
 
 (test (let ((begin 3)) (+ begin 1)) 4)
 (test ((lambda (x) (begin (set! x 1) (let ((a x)) (+ a 1)))) 2) 2)
-(test (begin . 1) 'error)
-(test (let () (begin . 1)) 'error)
-(test (begin (define x 0) (+ x 1)) 1)
-(test ((lambda () (begin (define x 0) (+ x 1)))) 1)
-(test (let ((f (lambda () (begin (define x 0) (+ x 1))))) (f)) 1)
+;(test (begin . 1) 'error)
+;(test (let () (begin . 1)) 'error)
+
+;;; apparently these can be considered errors or not (guile says error, stklos and gauche do not)
+;(test (begin (define x 0) (+ x 1)) 1)
+;(test ((lambda () (begin (define x 0) (+ x 1)))) 1)
+;(test (let ((f (lambda () (begin (define x 0) (+ x 1))))) (f)) 1)
+
+(test ((lambda () (begin (define x 0)) (+ x 1))) 1)
+(test (let ((f (lambda () (begin (define x 0)) (+ x 1)))) (f)) 1)
 
 
 
@@ -26175,7 +26174,6 @@
 
 ;;; -------- let, let*, letrec --------
 
-#|
 (test (let ((x 2) (y 3)) (* x y)) 6)
 (test (let ((x 2) (y 3)) (let ((x 7) (z (+ x y))) (* z x))) 35)
 (test (let ((x 2) (y 3)) (let* ((x 7)  (z (+ x y))) (* z x))) 70)
@@ -26232,7 +26230,7 @@
  (lambda (arg)
    (test (let ((x arg)) x) arg))
  (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
-|#
+
 
 
 
@@ -26887,6 +26885,65 @@
 	  (and (= ctr1 111) (= val 1014))))
       #t)
 
+(test (let ((n 0))
+	(call-with-current-continuation
+	 (lambda (k)
+	   (dynamic-wind
+	       (lambda ()
+		 (set! n (+ n 1))
+		 (k))
+	       (lambda ()
+		 (set! n (+ n 2)))
+	       (lambda ()
+		 (set! n (+ n 4))))))
+	n)
+      1)
+
+(test (let ((n 0))
+	(call-with-current-continuation
+	 (lambda (k)
+	   (dynamic-wind
+	       (lambda () #f)
+	       (lambda ()
+		 (dynamic-wind
+		     (lambda () #f)
+		     (lambda ()
+		       (set! n (+ n 1))
+		       (k))
+		     (lambda ()
+		       (set! n (+ n 2))
+		       ;(k)
+		       )))
+	       (lambda ()
+		 (set! n (+ n 4))))))
+	n)
+      7)
+
+(test (let ((n 0))
+	(call-with-current-continuation
+	 (lambda (k)
+	   (dynamic-wind
+	       (lambda () #f)
+	       (lambda ()
+		 (dynamic-wind
+		     (lambda () #f)
+		     (lambda ()
+		       (dynamic-wind
+			   (lambda () #f)
+			   (lambda ()
+			     (set! n (+ n 1))
+			     (k))
+			   (lambda ()
+			     (if (= n 1)
+				 (set! n (+ n 2))))))
+		     (lambda ()
+		       (if (= n 3)
+			   (set! n (+ n 4))))))
+	       (lambda ()
+		 (if (= n 7)
+		     (set! n (+ n 8)))))))
+	n)
+      15)
 
 
 
@@ -27026,16 +27083,6 @@
       ))
 
 
-;;; -------- eval --------
-
-(if with-eval
-    (begin
-      (test (test-eval '(* 7 3)) 21)
-
-      ))
-
-
-
 
 ;;; -------- quasiquote --------
 
@@ -27113,7 +27160,50 @@
 
 ;;; -------- syntax-rules --------
 
+;(use-syntax (ice-9 syncase))
+
 (if with-syntax-rules
     (begin
 
+      (test (let-syntax ((foo
+			  (syntax-rules ()
+			    ((_ expr) (+ expr 1)))))
+	      (let ((+ *))
+		(foo 3)))
+	    4)
+
+      (test (let-syntax ((foo (syntax-rules ()
+				((_ var) (define var 1)))))
+	      (let ((x 2))
+		(begin (define foo +))
+		(cond (else (foo x))) 
+		x))
+	    2)
+
+      (test (let ((x 1))
+	      (let-syntax
+		  ((foo (syntax-rules ()
+			  ((_ y) (let-syntax
+				     ((bar (syntax-rules ()
+					     ((_) (let ((x 2)) y)))))
+				   (bar))))))
+		(foo x)))
+	    1)
       ))
+
+
+;;; -------- eval --------
+
+;;; to test "eval", I need a way to call it [but the tests have not been written]
+;;; Gauche and Guile: (define (test-eval expr) (eval expr (interaction-environment)))
+
+;(define test-eval eval)
+
+(if with-eval
+    (begin
+      (test (test-eval '(* 7 3)) 21)
+
+      ))
+
+
+

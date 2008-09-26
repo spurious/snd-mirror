@@ -10630,7 +10630,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       
 
     case OP_LET0:       /* let */
-      /* fprintf(stderr, "let* %s\n", s7_object_to_c_string(sc, sc->code)); */
+      /* fprintf(stderr, "let %s\n", s7_object_to_c_string(sc, sc->code)); */
 
       if (!s7_is_pair(sc->code))
 	{
@@ -10646,14 +10646,20 @@ static void eval(s7_scheme *sc, opcode_t first_op)
     case OP_LET1:       /* let (calculate parameters) */
       sc->args = cons(sc, sc->value, sc->args);
       if (s7_is_pair(sc->code)) 
-	{ /* continue */
+	{ 
+	  if ((!s7_is_pair(car(sc->code))) ||
+	      (!(s7_is_pair(cdar(sc->code)))))   /* (let ((x . 1))...) */
+	    {
+	      pop_stack(sc, eval_error(sc, "let syntax error (not a proper list?)", car(sc->code)));
+	      goto START;
+	    }
 	  push_stack(sc, OP_LET1, sc->args, cdr(sc->code));
 	  sc->code = cadar(sc->code);
 	  sc->args = sc->NIL;
 	  goto EVAL;
 	} 
       else 
-	{  /* end */
+	{ 
 	  sc->args = s7_reverse_in_place(sc, sc->NIL, sc->args);
 	  sc->code = car(sc->args);
 	  sc->args = cdr(sc->args);
