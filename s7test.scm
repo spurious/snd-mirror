@@ -13,16 +13,16 @@
 ;;;   Snd's numtst.c
 
 
-(define with-continued-fraction-rationalize #f)                ; #f follows the Scheme spec
+(define with-continued-fraction-rationalize #t)                ; #f follows the Scheme spec
 (define with-bignums #f)                                       ; unlimited ints
 (define with-hyperbolic-functions #t)                          ; sinh et al
 (define with-char-ops-with-more-than-2-args #t)                ; char<? et al restricted to 2 args?
 (define with-string-ops-with-more-than-2-args #t)              ; string<? et al restricted to 2 args?
 (define with-relational-ops-that-require-at-least-2-args #t)   ; < et al min args = 2?
-(define with-generic-modulo #f)                                ; #f is the Scheme norm
+(define with-generic-modulo #t)                                ; #f is the Scheme norm
 (define with-list-set! #t)                                     ; test list-set!
 (define with-reverse! #t)                                      ; test reverse!
-(define with-open-input-string-and-friends #f)                 ; string IO, as well as file
+(define with-open-input-string-and-friends #t)                 ; string IO, as well as file
 (define with-eval #f)                                          ;   not tested yet
 (define with-syntax-rules #f)                                  ;   only lightly tested
 (define with-delay #f)                                         ; delay and force (the name "delay" is problematic)

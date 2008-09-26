@@ -44,7 +44,7 @@
  * still to do:
  *
  *   there's no arg number mismatch check for caller-defined functions!
- *   s7test.scm
+ *   syntax-rules and friends
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
@@ -132,7 +132,7 @@
 
 #define INITIAL_PROTECTED_OBJECTS_SIZE 16  /* a vector of objects that are being protected from the GC */
 
-#define S7_DEBUGGING 1
+#define S7_DEBUGGING 0
 /* this is for a bunch of sanity checks */
 
 
@@ -412,11 +412,13 @@ enum scheme_types {
   T_LAST_TYPE = 19
 };
 
+#if S7_DEBUGGING
 static const char *type_names[T_LAST_TYPE + 1] = {
   "unused!", "nil", "string", "number", "symbol", "procedure", "pair", "closure", "continuation",
   "s7-function", "character", "input port", "vector", "macro", "promise", "s7-object", 
   "goto", "output port", "catch", "dynamic-wind"
 };
+#endif
 
 
 #define TYPE_BITS                     16
@@ -9828,6 +9830,10 @@ static s7_pointer g_values(s7_scheme *sc, s7_pointer args)
 {
   /* I can't see any point in this thing, even in its fancy version (which this is not) */
   #define H_values "(values obj ...) returns its arguments"
+
+  if (args == sc->NIL)
+    return(sc->NIL);
+
   if (s7_list_length(sc, args) == 1)
     return(car(args));
 
@@ -9843,6 +9849,7 @@ static s7_pointer g_call_with_values(s7_scheme *sc, s7_pointer args)
   s7_pointer result;
   /* TODO: ideally this would handle the apply in eval */
   result = s7_call(sc, car(args), sc->NIL);
+
   if ((s7_is_pair(result)) &&
       (s7_is_eq(car(result), sc->VALUES)))
     return(s7_call(sc, cadr(args), cdr(result)));
@@ -10482,6 +10489,13 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       
 
     case OP_LAMBDA:     /* lambda */
+      if ((!s7_is_pair(sc->code)) ||
+	  (!s7_is_pair(cdr(sc->code))))
+	{
+	  pop_stack(sc, eval_error(sc, "lambda syntax error", sc->code));
+	  goto START;
+	}
+
       pop_stack(sc, s7_make_closure(sc, sc->code, sc->envir));
       goto START;
       
@@ -10492,9 +10506,9 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       
 
     case OP_DEF0:  /* define */
-
       /* fprintf(stderr, "define %s\n", s7_object_to_c_string(sc, sc->code)); */
-      if (!s7_is_pair(sc->code))
+      if ((!s7_is_pair(sc->code)) ||
+	  (!s7_is_pair(cdr(sc->code))))
 	{
 	  pop_stack(sc, eval_error(sc, "define syntax error", sc->code));
 	  goto START;
@@ -10630,9 +10644,10 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       
 
     case OP_LET0:       /* let */
-      /* fprintf(stderr, "let %s\n", s7_object_to_c_string(sc, sc->code)); */
+      /* fprintf(stderr, "let %s\n", s7_object_to_c_string(sc, cdr(sc->code))); */
 
-      if (!s7_is_pair(sc->code))
+      if ((!s7_is_pair(sc->code)) ||
+	  (!s7_is_pair(cdr(sc->code))))
 	{
 	  pop_stack(sc, eval_error(sc, "let syntax error", sc->code));
 	  goto START;
@@ -10742,6 +10757,12 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_LET0REC:    /* letrec */
+      if (!s7_is_pair(cdr(sc->code)))
+	{
+	  pop_stack(sc, eval_error(sc, "letrec syntax error", sc->code));
+	  goto START;
+	}
+
       new_frame_in_env(sc, sc->envir); 
       sc->args = sc->NIL;
       sc->value = sc->code;
@@ -12139,7 +12160,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "apply",                   g_apply,                   1, 0, true,  H_apply);
   s7_define_function(sc, "for-each",                g_for_each,                2, 0, true,  H_for_each);
   s7_define_function(sc, "map",                     g_map,                     2, 0, true,  H_map);
-  s7_define_function(sc, "values",                  g_values,                  1, 0, true,  H_values);
+  s7_define_function(sc, "values",                  g_values,                  0, 0, true,  H_values);
   s7_define_function(sc, "call-with-values",        g_call_with_values,        2, 0, false, H_call_with_values);
   s7_define_function(sc, "dynamic-wind",            g_dynamic_wind,            3, 0, false, H_dynamic_wind);
   
@@ -12281,13 +12302,59 @@ static void mark_s7(s7_scheme *sc)
 #endif
 
 /*
-;times: #(30 29 39 37 501 3897 46 97 ...)
-;total: 678
-;ratios: (.5 .5 .3 .4 .2 .7 .1 .7 [8] 1.9 .9 .3 .1 .3 .6 .6 [15] 1.6 1.1 .3 .2 [19] 1.3 1.2 1.0 1.0 [23] 2.1 .0 .0 .0 .2 .9 )
+;times: #(30 29 40 37 458 3596 45 93 19877 2542 136 44 180 496 367 1947 3062 50 32 3833 835 1735 4736 13099 0 0 0 42 5636)
+;total: 631
+;ratios: (.5 .5 .4 .4 .2 .7 .1 .7 1.7 .9 .2 .1 .2 .5 .5 1.5 1.0 .3 .2 1.3 1.1 .9 .9 2.0 .0 .0 .0 .2 .8 )
 
-simple bit + bigger symbol table:
-;times: #(30 28 39 38 480 3519 45 97 19757 2555 160 44 270 461 308 1930 3076 51 35 3708 755 1778 3843 12668 0 0 0 41 5692)
-;total: 615
-;ratios: (.5 .5 .3 .4 .2 .7 .1 .7 1.7 .9 .3 .1 .3 .5 .4 1.5 1.0 .3 .2 1.3 1.0 .9 .8 1.9 .0 .0 .0 .2 .9 )
 
+things to fix:
+(eq? call/cc call-with-current-continuation) got #f but expected #t
+(let ((quote -)) (eqv? (quote 1) 1)) got #t but expected #f
+(let ((g (lambda () "?**"))) (string-set! (g) 0 #\?)) got ?** but expected error
+(let ((hi (make-string 8 (integer->char 0)))) (string-fill! hi #\a) hi) got  but expected aaaaaaaa
+(let ((hi (string-copy (make-string 8 (integer->char 0))))) (string-fill! hi #\a) hi) got  but expected aaaaaaaa
+(list 1 2 . 3) got (1 2) but expected error
+(number? 5/3+7.2i) got error but expected #t
+(= 3.0 0.3 0.3 0.3 0.3 0.3 0.3) got #f but expected #t
+(string->number #i6/8) returned 6.0 but expected 0.75
+(let ((if +)) (if 1 2 3)) got 2 but expected 6
+(for-each (lambda () 1) (quote ())) got () but expected error
+(let ((ctr 0)) (for-each (lambda (x y z) (set! ctr (+ ctr x y z))) (quote (0 1)) (quote (2 3)) (quote (4 5 6))) ctr) got 15 but expected error
+(for-each (lambda (a) (+ a 1)) (list 1) (list 2)) got 2 but expected error
+(map (lambda () 1) (quote ())) got () but expected error
+(let ((ctr 0)) (map (lambda (x y z) (set! ctr (+ ctr x y z)) ctr) (quote (0 1)) (quote (2 3)) (quote (4 5 6)))) got (6 15) but expected error
+(map (lambda (a) (+ a 1)) (list 1) (list 2)) got (2) but expected error
+(do ((i)) (#t i)) got #<unspecified> but expected error
+(do ((i 1)) (#t 1) . 1) got 1 but expected error
+(do ((i 1)) (#t . 1) 1) got 1 but expected error
+(do ((i 1) . 1) (#t 1) 1) got 1 but expected error
+(do ((i 0 j) (i 0 j) (j 1 (+ j 1))) ((= j 3) i)) got 2 but expected error
+(do ((i 1) ()) (= i 1)) got 1 but expected error
+(cond ((= 1 2) 3) (else 4) (4 5)) got 4 but expected error
+(cond (else)) got #t but expected error
+(cond (1 . 2) (else 3)) got 2 but expected error
+(cond (#f 2) (else . 4)) got 4 but expected error
+(case 1 ("hi")) got () but expected error
+(case 1 ("a" "b")) got b but expected error
+(case 1 (else #f) ((1) #t)) got #f but expected error
+(case "hi" (("hi" "ho") 123) ("ha" 321)) got 321 but expected error
+(lambda (x 1) x) got #<closure> but expected error
+(lambda "hi" 1) got #<closure> but expected error
+(lambda (x x) x) got #<closure> but expected error
+(lambda (x x x) x) got #<closure> but expected error
+(lambda (x (y)) x) got #<closure> but expected error
+(lambda (x) x . 5) got #<closure> but expected error
+(lambda (1) #f) got #<closure> but expected error
+((lambda () 1) 1) got 1 but expected error
+((lambda (x) x) 1 2) got 1 but expected error
+((lambda (begin) (begin 1 2 3)) (lambda lambda lambda)) got 3 but expected (1 2 3)
+(let* ((x (quote (1 2 3))) (y (apply list x))) (not (eq? x y))) got #f but expected #t
+(define x 1 2) got x but expected error
+(define (quote hi) 1) got quote but expected error
+(call-with-values (lambda () (call/cc (lambda (k) (k 2 3)))) (lambda (x y) (list x y))) got error but expected (2 3)
+(let* ((1 2)) 3) got 3 but expected error
+(let ()) got () but expected error
+(let ((x 1)) (letrec ((x 1) (y x)) y)) got 1 but expected error
+(let ((x 1) (x 2)) x) got 2 but expected error
+(call/cc (lambda () 0)) got 0 but expected error
 */
