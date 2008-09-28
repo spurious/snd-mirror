@@ -4346,31 +4346,6 @@ void save_edit_header_dialog_state(FILE *fd)
 }
 
 
-#if MUS_DEBUGGING && HAVE_SCHEME
-static XEN g_apply_edit_header(void)
-{
-  /* apply one of them anyway... -- we called edit-header-dialog earlier to set things up for this */
-  int i;
-  for (i = 0; i < edhead_info_size; i++)
-    if (edhead_infos[i])
-      {
-	edhead_info *ep;
-	ep = edhead_infos[i];
-	if ((ep->sp) && (ep->sp->active))
-	  {
-	    if ((ep->sp->user_read_only == FILE_READ_WRITE) && 
-		(ep->sp->file_read_only == FILE_READ_WRITE))
-	      edit_header_callback(ep->sp, ep->edat, NULL, NULL);
-	    else snd_error(_("%s is write-protected"), ep->sp->short_filename);
-	  }
-	XtUnmanageChild(ep->dialog);
-	unreflect_file_data_panel_change(ep->edat, (void *)ep, edit_header_set_ok_sensitive);
-	ep->file_ro_watcher = fam_unmonitor_file(ep->sp->filename, ep->file_ro_watcher);
-      }
-  return(XEN_FALSE);
-}
-#endif
-
 
 
 /* -------------------------------- Raw Data Dialog -------------------------------- */
@@ -6571,14 +6546,6 @@ widget_t start_view_files_dialog_1(view_files_info *vdat, bool managed)
 }
 
 
-#if MUS_DEBUGGING && HAVE_SCHEME
-#ifdef XEN_ARGIFY_1
-XEN_NARGIFY_0(g_apply_edit_header_w, g_apply_edit_header)
-#else
-#define g_apply_edit_header_w g_apply_edit_header
-#endif
-#endif
-
 void g_init_gxfile(void)
 {
 #if HAVE_SCHEME
@@ -6601,8 +6568,4 @@ is the scrolled list position of the label. The label itself is 'label'."
 
   mouse_enter_label_hook = XEN_DEFINE_HOOK(S_mouse_enter_label_hook, 3, H_mouse_enter_label_hook);
   mouse_leave_label_hook = XEN_DEFINE_HOOK(S_mouse_leave_label_hook, 3, H_mouse_leave_label_hook);
-
-#if MUS_DEBUGGING && HAVE_SCHEME
-  XEN_DEFINE_PROCEDURE("apply-edit-header", g_apply_edit_header_w, 0, 0, 0, "internal testing function");
-#endif
 }

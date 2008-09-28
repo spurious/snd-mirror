@@ -452,7 +452,7 @@ static void prefs_variable_save(FILE *fd, const char *name, const char *file, XE
     fprintf(fd, "(if (not (provided? 'snd-%s.scm)) (load-from-path \"%s.scm\"))\n", file, file);
   fprintf(fd, "(set! %s %s)\n", name, temp = XEN_AS_STRING(val));
 #if HAVE_S7
-  if (temp) FREE(temp);
+  if (temp) free(temp);
 #endif
 #endif
 #if HAVE_RUBY
@@ -528,7 +528,7 @@ static void prefs_function_call_1(const char *func, XEN arg)
   char *temp = NULL;
   str = mus_format("(%s %s)\n", func, temp = XEN_AS_STRING(arg));
 #if HAVE_S7
-  if (temp) FREE(temp);
+  if (temp) free(temp);
 #endif
 #endif
 #if HAVE_RUBY
@@ -573,7 +573,7 @@ static void prefs_function_save_1(FILE *fd, const char *name, const char *file, 
     fprintf(fd, "(if (not (provided? 'snd-%s.scm)) (load-from-path \"%s.scm\"))\n", file, file);
   fprintf(fd, "(%s %s)\n", name, temp = XEN_AS_STRING(val));
 #if HAVE_S7
-  if (temp) FREE(temp);
+  if (temp) free(temp);
 #endif
 #endif
 #if HAVE_RUBY
@@ -4361,7 +4361,7 @@ find elsewhere.  The current load path list is: \n\n%s\n",
 		   temp = XEN_AS_STRING(XEN_LOAD_PATH));
   snd_help("load paths", hlp, 	   WITH_WORD_WRAP);
 #if HAVE_S7
-  if (temp) FREE(temp);
+  if (temp) free(temp);
 #endif
   FREE(hlp);
 }

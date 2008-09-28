@@ -252,6 +252,9 @@ static int completions(char *text)
 		  }
 	    }
 	}
+#if HAVE_S7
+      if (sym) free(sym);
+#endif
     }
   return(matches);
 }

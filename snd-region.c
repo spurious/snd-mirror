@@ -58,22 +58,6 @@ typedef struct region {
 } region;
 
 
-#if MUS_DEBUGGING
-void describe_region(FILE *fd, void *ur);
-void describe_region(FILE *fd, void *ur)
-{
-  region *r = (region *)ur;
-  fprintf(fd, "region %d %s%s [%s]: %d " OFF_TD " %d %.4f \"%s\" \"%s\" \"%s\"",
-	  r->id,
-	  (r->use_temp_file == REGION_FILE) ? "stored" : "deferred",
-	  (region_ok(r->id)) ? "!" : "?",
-	  r->filename,
-	  r->chans, r->frames, r->srate, r->maxamp, 
-	  r->name, r->start, r->end);
-}
-#endif
-
-
 static void deferred_region_to_temp_file(region *r);
 
 static void free_region(region *r, int complete)
@@ -736,7 +720,6 @@ int define_region(sync_info *si, off_t *ends)
   sp0 = cp0->sound;
 
   r = (region *)CALLOC(1, sizeof(region));
-  MUS_SET_PRINTABLE(PRINT_REGION);
   r->id = region_id_ctr++;
 
   if (regions[0]) 

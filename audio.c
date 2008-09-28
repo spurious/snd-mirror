@@ -4001,9 +4001,6 @@ static void alsa_mus_oss_set_buffers(int num, int size)
 {
   fragments = num; 
   fragment_size = size; 
-#if MUS_DEBUGGING
-  mus_print("set_oss_buffers: %d fragments or size %d", num, size);
-#endif
 }
 
 /* total number of soundcards in our setup, set by initialize_audio */

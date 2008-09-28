@@ -274,21 +274,12 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
 
 /* keep this list in sync with mus_error_names in sound.c and snd-test.scm|rb */
 
-#if MUS_DEBUGGING
-  #define CALLOC(a, b)  mem_calloc((a), (b), c__FUNCTION__, __FILE__, __LINE__)
-  #define MALLOC(a)     mem_malloc((a), c__FUNCTION__, __FILE__, __LINE__)
-#ifndef __cplusplus
-  #define FREE(a)       a = mem_free(a, c__FUNCTION__, __FILE__, __LINE__)
-#else
-  #define FREE(a)       mem_free(a, c__FUNCTION__, __FILE__, __LINE__)
-#endif
-  #define REALLOC(a, b) mem_realloc(a, (b), c__FUNCTION__, __FILE__, __LINE__)
-#else
-  #define CALLOC(a, b)  calloc((size_t)(a), (size_t)(b))
-  #define MALLOC(a)     malloc((size_t)(a))
-  #define FREE(a)       free(a)
-  #define REALLOC(a, b) realloc(a, (size_t)(b))
-#endif
+
+#define CALLOC(a, b)  calloc((size_t)(a), (size_t)(b))
+#define MALLOC(a)     malloc((size_t)(a))
+#define FREE(a)       free(a)
+#define REALLOC(a, b) realloc(a, (size_t)(b))
+
 
 #if MUS_WINDOZE
   #ifdef FOPEN
@@ -660,17 +651,6 @@ char *mus_midi_describe(void);
 #endif
 
 
-#if MUS_DEBUGGING
-  /* snd-utils.c (only used in conjunction with Snd's memory tracking functions) */
-  void *mem_calloc(size_t len, size_t size, const char *func, const char *file, int line);
-  void *mem_malloc(size_t len, const char *func, const char *file, int line);
-  void *mem_free(void *ptr, const char *func, const char *file, int line);
-  void *mem_realloc(void *ptr, size_t size, const char *func, const char *file, int line);
-  #define MUS_SET_PRINTABLE(Type) set_printable(Type)
-#else
-  #define MUS_SET_PRINTABLE(Type) do {} while (0)
-#endif
-
 #if (!HAVE_STRDUP)
 char *strdup(const char *str);
 #endif
@@ -681,6 +661,12 @@ int fileno(FILE *fp);
 
 #if HAVE_PTHREADS
 
+  #if MUS_DEBUGGING
+    #ifndef MUS_THREADS_DEBUGGING
+      #define MUS_THREADS_DEBUGGING 1
+    #endif
+  #endif
+
   void mus_thread_restore_error_handler(void);
   mus_error_handler_t *mus_thread_get_previous_error_handler(void);
 
@@ -688,7 +674,7 @@ int fileno(FILE *fp);
   #define MUS_LOCK_INITIALIZER PTHREAD_MUTEX_INITIALIZER
   #define MUS_ALREADY_LOCKED EBUSY
 
-#if MUS_DEBUGGING
+#if MUS_THREADS_DEBUGGING
   /* sound.c -- check for lock order troubles and so on */
   #define MUS_LOCK(Lock) mus_lock(Lock, __FILE__, __LINE__, __FUNCTION__)
   #define MUS_UNLOCK(Lock) mus_unlock(Lock, __FILE__, __LINE__, __FUNCTION__)

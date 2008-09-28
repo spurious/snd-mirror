@@ -440,9 +440,6 @@ int snd_open_read(const char *arg)
       fd = too_many_files_cleanup();
       if (fd != -1) 
 	fd = OPEN(arg, O_RDONLY, 0);
-#if MUS_DEBUGGING
-      else mem_report();
-#endif
       if (fd == -1) 
 	snd_error("%s: %s", arg, snd_io_strerror());
     }
@@ -729,7 +726,6 @@ snd_data *make_snd_data_buffer(mus_sample_t *data, int len, int ctr)
 {
   snd_data *sf;
   sf = (snd_data *)CALLOC(1, sizeof(snd_data));
-  MUS_SET_PRINTABLE(PRINT_SND_DATA);
   sf->type = SND_DATA_BUFFER;
   sf->buffered_data = (mus_sample_t *)MALLOC((len + 1) * sizeof(mus_sample_t));
   /* sigh... using len + 1 rather than len to protect against access to inserted buffer at end mixups (final fragment uses end + 1) */

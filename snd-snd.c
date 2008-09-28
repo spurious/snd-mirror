@@ -1845,9 +1845,6 @@ static void clear_strings(snd_info *sp, mini_history_t which)
 
 void clear_mini_strings(snd_info *sp) {clear_strings(sp, MINIBUFFER);}
 void clear_filter_strings(snd_info *sp) {clear_strings(sp, FILTER_TEXT);}
-#if MUS_DEBUGGING
-void clear_listener_strings(void) {clear_strings(NULL, LISTENER_TEXT);}
-#endif
 
 
 
@@ -4809,7 +4806,7 @@ where each inner list entry can also be " PROC_FALSE "."
 				     temp = XEN_AS_STRING(settings), 
 				     apply_beg, apply_dur);
 #if HAVE_S7
-	if (temp) FREE(temp);
+	if (temp) free(temp);
 #endif
       }
 #endif

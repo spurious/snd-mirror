@@ -513,7 +513,7 @@ static io_fd **io_fds = NULL;
   static mus_lock_t io_table_lock = MUS_LOCK_INITIALIZER;
 #endif
 
-#if HAVE_PTHREADS && MUS_DEBUGGING
+#if HAVE_PTHREADS && MUS_THREADS_DEBUGGING
 void io_set_table_lock_name(void);
 void io_set_table_lock_name(void)
 {
@@ -562,7 +562,6 @@ int mus_file_open_descriptors(int tfd, const char *name, int format, int size /*
 	  if (name)
 	    {
 	      fd->name = (char *)CALLOC(strlen(name) + 1, sizeof(char));
-	      MUS_SET_PRINTABLE(PRINT_CHAR);
 	      strcpy(fd->name, name);
 	    }
 	}
@@ -1637,8 +1636,6 @@ char *mus_expand_filename(const char *filename)
       if ((tok[0] == '~') && (home = getenv("HOME")))
 	{
 	  file_name_buf = (char *)CALLOC(len + sndlib_strlen(home) + 8, sizeof(char));
-	  MUS_SET_PRINTABLE(PRINT_CHAR);
-
 	  strcpy(file_name_buf, home);
 	  strcat(file_name_buf, ++tok);
 	}
@@ -1647,8 +1644,6 @@ char *mus_expand_filename(const char *filename)
 	  char *pwd;
 	  pwd = mus_getcwd();
 	  file_name_buf = (char *)CALLOC(len + sndlib_strlen(pwd) + 8, sizeof(char));
-	  MUS_SET_PRINTABLE(PRINT_CHAR);
-
 	  strcpy(file_name_buf, pwd);
 	  FREE(pwd);
 	  strcat(file_name_buf, "/");
@@ -1659,8 +1654,6 @@ char *mus_expand_filename(const char *filename)
   else 
     {
       file_name_buf = (char *)CALLOC(len + 8, sizeof(char));
-      MUS_SET_PRINTABLE(PRINT_CHAR);
-
       strcpy(file_name_buf, tok);
     }
   /* get rid of "/../" and "/./" also "/." at end */
@@ -1754,11 +1747,7 @@ char *mus_format(const char *format, ...)
 #endif
       va_end(ap);
     }
-#if MUS_DEBUGGING
-  rtn = copy_string(buf);
-#else
   rtn = strdup(buf);
-#endif
   FREE(buf);
   return(rtn);
 }

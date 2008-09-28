@@ -101,7 +101,7 @@ void dump_protection(FILE *Fp)
 	      char *temp = NULL;
 	      fprintf(Fp, "  %s:%d %s", snd_protect_callers[i], i, temp = XEN_AS_STRING(gcdat));
 #if HAVE_S7
-	      if (temp) FREE(temp);
+	      if (temp) free(temp);
 #endif
 #endif
 #if HAVE_GUILE
@@ -127,7 +127,7 @@ void dump_protection(FILE *Fp)
 #if HAVE_PTHREADS
   static mus_lock_t gc_lock = MUS_LOCK_INITIALIZER;
 #endif
-#if HAVE_PTHREADS && MUS_DEBUGGING
+#if HAVE_PTHREADS && MUS_THREADS_DEBUGGING
 void xen_set_gc_lock_name(void);
 void xen_set_gc_lock_name(void)
 {
@@ -136,21 +136,12 @@ void xen_set_gc_lock_name(void)
 #endif
 
 
-#if MUS_DEBUGGING
-int snd_protect_1(XEN obj, const char *caller)
-#else
 int snd_protect(XEN obj)
-#endif
 {
   int i, old_size;
   XEN tmp;
   
   MUS_LOCK(&gc_lock);
-
-#if MUS_DEBUGGING
-  cur_gc_index++;
-  if (cur_gc_index > max_gc_index) max_gc_index = cur_gc_index;
-#endif
 
   if (gc_protection_size == 0)
     {
@@ -159,10 +150,6 @@ int snd_protect(XEN obj)
       XEN_PROTECT_FROM_GC(gc_protection);
       XEN_VECTOR_SET(gc_protection, 0, obj);
       gc_last_set = 0;
-#if MUS_DEBUGGING
-      snd_protect_callers = (char **)calloc(gc_protection_size, sizeof(char *));
-      snd_protect_callers[0] = (char *)caller;
-#endif
     }
   else
     {
@@ -171,9 +158,6 @@ int snd_protect(XEN obj)
 	{
 	  /* we hit this branch about 2/3 of the time */
 	  XEN_VECTOR_SET(gc_protection, gc_last_cleared, obj);
-#if MUS_DEBUGGING
-	  snd_protect_callers[gc_last_cleared] = (char *)caller;
-#endif
 	  gc_last_set = gc_last_cleared;
 	  gc_last_cleared = NOT_A_GC_LOC;
 
@@ -186,9 +170,6 @@ int snd_protect(XEN obj)
 	if (XEN_EQ_P(XEN_VECTOR_REF(gc_protection, i), DEFAULT_GC_VALUE))
 	  {
 	    XEN_VECTOR_SET(gc_protection, i, obj);
-#if MUS_DEBUGGING
-	    snd_protect_callers[i] = (char *)caller;
-#endif
 	    gc_last_set = i;
 	    
 	    MUS_UNLOCK(&gc_lock);
@@ -201,9 +182,6 @@ int snd_protect(XEN obj)
 	  {
 	    /* here we average 3 checks before a hit, so this isn't as bad as it looks */
 	    XEN_VECTOR_SET(gc_protection, i, obj);
-#if MUS_DEBUGGING
-	    snd_protect_callers[i] = (char *)caller;
-#endif
 	    gc_last_set = i;
 
 	    MUS_UNLOCK(&gc_lock);
@@ -230,11 +208,6 @@ int snd_protect(XEN obj)
 #if HAVE_RUBY || HAVE_FORTH
       XEN_UNPROTECT_FROM_GC(tmp);
 #endif
-
-#if MUS_DEBUGGING
-      snd_protect_callers = (char **)realloc(snd_protect_callers, gc_protection_size * sizeof(char *));
-      snd_protect_callers[old_size] = (char *)caller;
-#endif
       gc_last_set = old_size;
     }
 
@@ -246,10 +219,6 @@ int snd_protect(XEN obj)
 void snd_unprotect_at(int loc)
 {
   MUS_LOCK(&gc_lock);
-
-#if MUS_DEBUGGING
-  cur_gc_index--;
-#endif
 
   if (loc >= 0)
     {
@@ -392,7 +361,7 @@ static XEN snd_format_if_needed(XEN args)
 #endif
 			    errmsg = snd_strcat(errmsg, temp = XEN_AS_STRING(cur_arg), &err_size);
 #if HAVE_S7
-			    if (temp) FREE(temp);
+			    if (temp) free(temp);
 #endif
 			}
 		    }
@@ -412,7 +381,7 @@ static XEN snd_format_if_needed(XEN args)
       errmsg = snd_strcat(errmsg, " ", &err_size);
       errmsg = snd_strcat(errmsg, temp = XEN_AS_STRING(XEN_CADR(args)), &err_size);
 #if HAVE_S7
-      if (temp) FREE(temp);
+      if (temp) free(temp);
 #endif
     }
   if (num_args > 2)
@@ -424,7 +393,7 @@ static XEN snd_format_if_needed(XEN args)
 	  errmsg = snd_strcat(errmsg, " ", &err_size);
 	  errmsg = snd_strcat(errmsg, temp = XEN_AS_STRING(XEN_LIST_REF(args, i)), &err_size);
 #if HAVE_S7
-	  if (temp) FREE(temp);
+	  if (temp) free(temp);
 #endif
 	}
     }
@@ -914,7 +883,7 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
 			   temp = XEN_AS_STRING(proc),
 			   arg_name, caller, argn);
 #if HAVE_S7
-	  if (temp) FREE(temp);
+	  if (temp) free(temp);
 #endif
 	  return(str);
 	}

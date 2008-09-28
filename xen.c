@@ -302,7 +302,7 @@ static int xen_temp_strings_ctr = 0;
 
 #if HAVE_PTHREADS
 static pthread_mutex_t xen_string_lock = PTHREAD_MUTEX_INITIALIZER;
-#if MUS_DEBUGGING
+#if MUS_THREADS_DEBUGGING
 #include "_sndlib.h"
 void xen_set_string_lock_name(void);
 void xen_set_string_lock_name(void)

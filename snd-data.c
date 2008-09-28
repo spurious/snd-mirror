@@ -234,7 +234,7 @@ snd_info *make_basic_snd_info(int chans)
   /* similarly the stop and bomb icons */
   sp->stop_sign_lock = (mus_lock_t *)malloc(sizeof(mus_lock_t));
   pthread_mutex_init(sp->stop_sign_lock, NULL);
-#if MUS_DEBUGGING
+#if MUS_THREADS_DEBUGGING
   mus_lock_set_name(sp->starred_name_lock, "starred-name");
   mus_lock_set_name(sp->stop_sign_lock, "stop-sign");
 #endif

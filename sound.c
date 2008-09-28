@@ -34,7 +34,7 @@
 
 
 /* ---------------------------------------- pthread debugging ---------------------------------------- */
-#if HAVE_PTHREADS && MUS_DEBUGGING
+#if HAVE_PTHREADS && MUS_THREADS_DEBUGGING
 
 typedef struct {
   const char *file;
@@ -487,7 +487,6 @@ int mus_make_error(const char *error_name)
 	}
       len = strlen(error_name);
       mus_error_names[err] = (char *)CALLOC(len + 1, sizeof(char));
-      MUS_SET_PRINTABLE(PRINT_CHAR);
       strcpy(mus_error_names[err], error_name);
     }
   return(new_error);
@@ -613,7 +612,6 @@ static sound_file *add_to_sound_table(const char *name)
   sound_table[pos] = (sound_file *)CALLOC(1, sizeof(sound_file));
   sound_table[pos]->table_pos = pos;
   sound_table[pos]->file_name = (char *)CALLOC(strlen(name) + 1, sizeof(char));
-  MUS_SET_PRINTABLE(PRINT_CHAR);
   strcpy(sound_table[pos]->file_name, name);
 
   return(sound_table[pos]);
@@ -1781,7 +1779,7 @@ int mus_float_array_to_file(const char *filename, Float *ddata, off_t len, int s
 
 
 
-#if HAVE_PTHREADS && MUS_DEBUGGING
+#if HAVE_PTHREADS && MUS_THREADS_DEBUGGING
   void io_set_table_lock_name(void);
   void utils_set_pointer_lock_name(void);
   void xen_set_gc_lock_name(void);
@@ -1804,15 +1802,19 @@ int mus_sound_initialize(void)
       mus_error_handler = default_mus_error;
 #endif
 
-#if HAVE_PTHREADS && MUS_DEBUGGING
+#if HAVE_PTHREADS && MUS_THREADS_DEBUGGING
       pthread_key_create(&mus_thread_locks, (void *)free_locks);
       mus_lock_set_name(&sound_error_lock, "mus_error");
       mus_lock_set_name(&sound_print_lock, "mus_print");
       mus_lock_set_name(&sound_table_lock, "sound_table");
       io_set_table_lock_name();
       xen_set_gc_lock_name();
+#if MUS_DEBUGGING
       utils_set_pointer_lock_name();
+#endif
+#if HAVE_GUILE
       xen_set_string_lock_name();
+#endif
 #endif
 
       err = mus_header_initialize();

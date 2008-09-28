@@ -45,6 +45,7 @@
  *
  *   there's no arg number mismatch check for caller-defined functions!
  *   syntax-rules and friends
+ *   see end of file for various nits from s7test.scm
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
@@ -143,26 +144,11 @@
 #endif
 
 
-#define USE_SND_MEMCHECKS 0
-/* this is for my memory leak and pointer debugging stuff */
-
-#if USE_SND_MEMCHECKS
-
-  #define MUS_DEBUGGING 1
-  #define copy_string(Str) copy_string_1(Str, __FUNCTION__, __FILE__, __LINE__)
-  char *copy_string_1(const char *str, const char *func, const char *file, int line);
-  #include "_sndlib.h"
-
-#else
-
-  #define copy_string(str) strdup(str)
-  #define CALLOC(a, b)  calloc((size_t)(a), (size_t)(b))
-  #define MALLOC(a)     malloc((size_t)(a))
-  #define FREE(a)       free(a)
-  #define REALLOC(a, b) realloc(a, (size_t)(b))
-
-#endif
-
+#define copy_string(str) strdup(str)
+#define CALLOC(a, b)  calloc((size_t)(a), (size_t)(b))
+#define MALLOC(a)     malloc((size_t)(a))
+#define FREE(a)       free(a)
+#define REALLOC(a, b) realloc(a, (size_t)(b))
 
 
 typedef enum {OP_TOP_LEVEL, OP_T1LVL, OP_READ_INTERNAL, OP_VALUEPRINT, OP_EVAL, OP_REAL_EVAL, 
@@ -843,11 +829,7 @@ static void finalize_s7_cell(s7_scheme *sc, s7_pointer a)
 	  break;
 	}
     }
-#if USE_SND_MEMCHECKS
-  FREE(a);
-#else
   memset((void *)a, 0, sizeof(s7_cell));
-#endif
 }
 
   
@@ -862,10 +844,6 @@ static void mark_vector(s7_pointer p, int top)
 
 void s7_mark_object(s7_pointer p)
 {
-#if USE_SND_MEMCHECKS
-  if (!p) return;
-#endif
-
   if (is_marked(p)) return; 
 
 #if S7_DEBUGGING
@@ -947,11 +925,6 @@ static void free_s7_cell(s7_scheme *sc, int loc)
     }
 #endif
 
-#if USE_SND_MEMCHECKS
-  if (sc->heap == NULL) fprintf(stderr, "freeing same loc twice?");
-  sc->heap[loc] = NULL;
-#endif
-
   sc->free_heap[sc->free_heap_top++] = loc;
 }
 
@@ -961,16 +934,7 @@ static s7_pointer alloc_s7_cell(s7_scheme *sc)
   if (sc->free_heap_top <= 0)
     return(NULL);
 
-#if USE_SND_MEMCHECKS
-  {
-    int loc;
-    loc = sc->free_heap[--(sc->free_heap_top)];
-    sc->heap[loc] = (s7_cell *)CALLOC(1, sizeof(s7_cell));
-    return(sc->heap[loc]);
-  }
-#else
   return(sc->heap[sc->free_heap[--(sc->free_heap_top)]]);
-#endif
 }
 
 
@@ -1016,11 +980,8 @@ static int gc(s7_scheme *sc, const char *function, int line)
   for (i = 0; i < sc->heap_size; i++)
     {
       p = sc->heap[i];
-#if USE_SND_MEMCHECKS
-      if (!p) continue;
-#else
       if (typeflag(p) == 0) continue; /* an already-free object */
-#endif
+
       if (is_marked(p)) 
 	clear_mark(p);
       else 
@@ -10683,9 +10644,13 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 
     case OP_LET2:       /* let */
       new_frame_in_env(sc, sc->envir); 
-      for (sc->x = s7_is_symbol(car(sc->code)) ? cadr(sc->code) : car(sc->code), sc->y = sc->args;
-	   sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
+      for (sc->x = s7_is_symbol(car(sc->code)) ? cadr(sc->code) : car(sc->code), sc->y = sc->args; sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
 	{
+	  if (!(s7_is_symbol(caar(sc->x))))
+	    {
+	      pop_stack(sc, eval_error(sc, "bad variable in let bindings", car(sc->code)));
+	      goto START;
+	    }
 	  new_slot_in_env(sc, caar(sc->x), car(sc->y)); 
 	}
       if (s7_is_symbol(car(sc->code))) 
@@ -10739,6 +10704,11 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       
 
     case OP_LET2AST:    /* let* (calculate parameters) */
+      if (!(s7_is_symbol(caar(sc->code))))
+	{
+	  pop_stack(sc, eval_error(sc, "bad variable in let* bindings", car(sc->code)));
+	  goto START;
+	}
       new_slot_in_env(sc, caar(sc->code), sc->value); 
       sc->code = cdr(sc->code);
       if (s7_is_pair(sc->code)) 
@@ -10788,8 +10758,14 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_LET2REC:    /* letrec */
       for (sc->x = car(sc->code), sc->y = sc->args; sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
-	new_slot_in_env(sc, caar(sc->x), car(sc->y)); 
-      
+	{
+	  if (!(s7_is_symbol(caar(sc->x))))
+	    {
+	      pop_stack(sc, eval_error(sc, "bad variable in letrec bindings", car(sc->x)));
+	      goto START;
+	    }
+	  new_slot_in_env(sc, caar(sc->x), car(sc->y)); 
+	}
       sc->code = cdr(sc->code);
       sc->args = sc->NIL;
       goto BEGIN;
@@ -12309,7 +12285,7 @@ static void mark_s7(s7_scheme *sc)
 
 things to fix:
 (eq? call/cc call-with-current-continuation) got #f but expected #t
-(let ((quote -)) (eqv? (quote 1) 1)) got #t but expected #f
+(let ((quote -)) (eqv? (quote 1) 1)) got #t but expected #f                        [other procs (abs) work here, but not "syntaxes"]
 (let ((g (lambda () "?**"))) (string-set! (g) 0 #\?)) got ?** but expected error
 (let ((hi (make-string 8 (integer->char 0)))) (string-fill! hi #\a) hi) got  but expected aaaaaaaa
 (let ((hi (string-copy (make-string 8 (integer->char 0))))) (string-fill! hi #\a) hi) got  but expected aaaaaaaa
@@ -12317,7 +12293,7 @@ things to fix:
 (number? 5/3+7.2i) got error but expected #t
 (= 3.0 0.3 0.3 0.3 0.3 0.3 0.3) got #f but expected #t
 (string->number #i6/8) returned 6.0 but expected 0.75
-(let ((if +)) (if 1 2 3)) got 2 but expected 6
+(let ((if +)) (if 1 2 3)) got 2 but expected 6                                     [see above -- it's a "syntax"]
 (for-each (lambda () 1) (quote ())) got () but expected error
 (let ((ctr 0)) (for-each (lambda (x y z) (set! ctr (+ ctr x y z))) (quote (0 1)) (quote (2 3)) (quote (4 5 6))) ctr) got 15 but expected error
 (for-each (lambda (a) (+ a 1)) (list 1) (list 2)) got 2 but expected error
@@ -12331,7 +12307,7 @@ things to fix:
 (do ((i 0 j) (i 0 j) (j 1 (+ j 1))) ((= j 3) i)) got 2 but expected error
 (do ((i 1) ()) (= i 1)) got 1 but expected error
 (cond ((= 1 2) 3) (else 4) (4 5)) got 4 but expected error
-(cond (else)) got #t but expected error
+(cond (else)) got #t but expected error                                             [else == #t, so it's not immediately distinguishable]
 (cond (1 . 2) (else 3)) got 2 but expected error
 (cond (#f 2) (else . 4)) got 4 but expected error
 (case 1 ("hi")) got () but expected error
@@ -12352,8 +12328,6 @@ things to fix:
 (define x 1 2) got x but expected error
 (define (quote hi) 1) got quote but expected error
 (call-with-values (lambda () (call/cc (lambda (k) (k 2 3)))) (lambda (x y) (list x y))) got error but expected (2 3)
-(let* ((1 2)) 3) got 3 but expected error
-(let ()) got () but expected error
 (let ((x 1)) (letrec ((x 1) (y x)) y)) got 1 but expected error
 (let ((x 1) (x 2)) x) got 2 but expected error
 (call/cc (lambda () 0)) got 0 but expected error

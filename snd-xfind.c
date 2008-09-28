@@ -106,7 +106,7 @@ static void edit_find_ok_callback(read_direction_t direction, Widget w, XtPointe
 	  buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
 	  mus_snprintf(buf, PRINT_BUFFER_SIZE, _("find: %s"), temp = XEN_AS_STRING(ss->search_proc));
 #if HAVE_S7
-	  if (temp) FREE(temp);
+	  if (temp) free(temp);
 #endif
 	  set_label(edit_find_label, buf);
 	  /* XmTextSetString(edit_find_text, NULL); */

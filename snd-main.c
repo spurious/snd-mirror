@@ -45,10 +45,6 @@ bool snd_exit_cleanly(bool force_exit)
   for_each_normal_chan(remove_temp_files);
   cleanup_region_temp_files();
   forget_temps();
-#if MUS_DEBUGGING
-  clear_listener_strings();
-  mem_report();
-#endif
   return(true);
 }
 
@@ -794,7 +790,7 @@ static void save_property_list(FILE *fd, XEN property_list, int chan, int edpos)
 	  else fprintf(fd, "%s(set! (%s sfile %d %d) \'%s)\n", white_space, S_edit_properties, chan, edpos, temp = XEN_AS_STRING(property_list));
 	}
 #if HAVE_S7
-      if (temp) FREE(temp);
+      if (temp) free(temp);
 #endif
     }
   else
@@ -822,7 +818,7 @@ static void save_property_list(FILE *fd, XEN property_list, int chan, int edpos)
 	      else fprintf(fd, "%s(set! (%s sfile %d %d) \'%s)\n", white_space, S_edit_properties, chan, edpos, temp = XEN_AS_STRING(new_properties));
 	    }
 #if HAVE_S7
-	  if (temp) FREE(temp);
+	  if (temp) free(temp);
 #endif
 	}
       snd_unprotect_at(gc_loc);

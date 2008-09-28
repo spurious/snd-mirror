@@ -516,7 +516,7 @@ void about_snd_help(void)
   {
     char *temp = NULL;
     features = word_wrap(temp = XEN_AS_STRING(XEN_EVAL_C_STRING("*features*")), 400);
-    if (temp) FREE(temp);
+    if (temp) free(temp);
   }
 #endif
   info = version_info();

@@ -24,16 +24,6 @@ static void free_sync_state(sync_state *sc)
 }
 
 
-#if MUS_DEBUGGING
-void describe_sync(FILE *fp, void *ptr);
-void describe_sync(FILE *fp, void *ptr)
-{
-  sync_state *sc = (sync_state *)ptr;
-  fprintf(fp, "sync si: %p, dur: " OFF_TD ", sfs: %p", sc->si, sc->dur, sc->sfs);
-}
-#endif
-
-
 int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos)
 {
   int pos;
@@ -59,6 +49,7 @@ int to_c_edit_position(chan_info *cp, XEN edpos, const char *caller, int arg_pos
 	  snd_bad_arity_error(caller, errstr, edpos);
 	  return(cp->edit_ctr);
 	}
+
       pos = XEN_TO_C_INT_OR_ELSE(XEN_CALL_2(edpos, 
 					    C_TO_XEN_INT(cp->sound->index), 
 					    C_TO_XEN_INT(cp->chan),
@@ -246,7 +237,6 @@ static sync_state *get_sync_state_without_snd_fds(snd_info *sp, chan_info *cp, o
   if (si == NULL) 
     si = make_simple_sync(cp, beg);
   sc = (sync_state *)CALLOC(1, sizeof(sync_state));
-  MUS_SET_PRINTABLE(PRINT_SYNC);
   sc->dur = dur;
   sc->si = si;
   sc->sfs = NULL;

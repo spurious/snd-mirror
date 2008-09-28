@@ -238,11 +238,9 @@ static char *float_array_to_string(Float *arr, int len, int loc)
     }
   lim = (array_print_length + 4) * MAX_NUM_SIZE; /* 4 for possible bounds below */
   if (lim > size) size = lim;
-  base = (char *)clm_calloc_atomic(size, sizeof(char), "float_array_to_string");
-  MUS_SET_PRINTABLE(PRINT_CHAR);
 
+  base = (char *)clm_calloc_atomic(size, sizeof(char), "float_array_to_string");
   str = (char *)clm_calloc_atomic(STR_SIZE, sizeof(char), "float_array_to_string");
-  MUS_SET_PRINTABLE(PRINT_CHAR);
 
   if (len > 0)
     {
@@ -258,8 +256,6 @@ static char *float_array_to_string(Float *arr, int len, int loc)
 	  if ((int)(strlen(base) + MAX_NUM_SIZE) > size)
 	    {
 	      base = (char *)clm_realloc(base, size * 2 * sizeof(char));
-	      MUS_SET_PRINTABLE(PRINT_CHAR);
-
 	      base[size] = 0;
 	      size *= 2;
 	    }
@@ -7009,7 +7005,7 @@ static int free_file_to_sample(mus_any *p)
       if (ptr->core->end) ((*ptr->core->end))(p);
       clm_free(ptr->file_name);
 #if HAVE_PTHREADS
-#if MUS_DEBUGGING
+#if MUS_THREADS_DEBUGGING
       mus_lock_unset_name(ptr->reader_lock);
 #endif
       /* MUS_UNLOCK(ptr->reader_lock); */
@@ -7239,7 +7235,7 @@ mus_any *mus_make_file_to_sample_with_buffer_size(const char *filename, off_t bu
 #if HAVE_PTHREADS
       gen->reader_lock = (mus_lock_t *)malloc(sizeof(mus_lock_t));
       pthread_mutex_init(gen->reader_lock, NULL);
-#if MUS_DEBUGGING
+#if MUS_THREADS_DEBUGGING
       mus_lock_set_name(gen->reader_lock, "reader");
 #endif
 #endif
@@ -7521,7 +7517,7 @@ static int free_sample_to_file(mus_any *p)
       if (ptr->core->end) ((*ptr->core->end))(p);
       clm_free(ptr->file_name);
 #if HAVE_PTHREADS
-#if MUS_DEBUGGING
+#if MUS_THREADS_DEBUGGING
       mus_lock_unset_name(ptr->writer_lock);
 #endif
       pthread_mutex_destroy(ptr->writer_lock);
@@ -7755,7 +7751,7 @@ static void flush_buffers(rdout *gen)
 static void writer_lock_error_handler(int type, char *msg)
 {
   rdout *gen;
-#if MUS_DEBUGGING
+#if MUS_THREADS_DEBUGGING
   fprintf(stderr, "hit writer error: %d (%s) %s\n", type, mus_error_type_to_string(type), msg);
 #endif
   gen = (rdout *)pthread_getspecific(mus_thread_generator);
@@ -7918,7 +7914,7 @@ static mus_any *mus_make_sample_to_file_with_comment_1(const char *filename, int
 #if HAVE_PTHREADS
 	  gen->writer_lock = (mus_lock_t *)malloc(sizeof(mus_lock_t));
 	  pthread_mutex_init(gen->writer_lock, NULL);
-#if MUS_DEBUGGING
+#if MUS_THREADS_DEBUGGING
 	  mus_lock_set_name(gen->writer_lock, "writer");
 #endif
 #endif
@@ -11746,7 +11742,7 @@ void mus_initialize(void)
 
 #if HAVE_PTHREADS
   pthread_key_create(&mus_thread_generator, NULL);
-#if MUS_DEBUGGING
+#if MUS_THREADS_DEBUGGING
   mus_lock_set_name(&sinc_lock, "sinc");
   mus_lock_set_name(&fft_lock, "fft");
 #endif

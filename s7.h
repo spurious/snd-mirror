@@ -1,8 +1,8 @@
 #ifndef _S7_H
 #define _S7_H
 
-#define S7_VERSION "0.9"
-#define S7_DATE "25-Sep-08"
+#define S7_VERSION "1.0"
+#define S7_DATE "1-Oct-08"
 
 #include <stdio.h>
 

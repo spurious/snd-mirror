@@ -2537,16 +2537,6 @@ static void choose_accessor(snd_fd *sf)
 
 static const char *edit_names[NUM_EDIT_TYPES] = {"insert", "delete", "set", "init", "scale", "zero", "env", "ptree", "extend", "mix", "change mix"};
 
-#if MUS_DEBUGGING
-const char *ed_list_edit_type_to_string(int type)
-{
-  if ((type >= 0) &&
-      (type < NUM_EDIT_TYPES))
-    return(edit_names[type]);
-  return("unknown edit");
-}
-#endif
-
 
 static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool with_source)
 {
@@ -2648,8 +2638,8 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool 
 		  code = cp->ptree_inits[FRAGMENT_PTREE_INDEX(ed, j, 0)];
 		  if (XEN_PROCEDURE_P(code))
 		    fprintf(outp, ", init: %s", temp2 = XEN_AS_STRING(XEN_PROCEDURE_SOURCE(code))); /* ptree_code = car */
-		  if (temp1) FREE(temp1);
-		  if (temp2) FREE(temp2);
+		  if (temp1) free(temp1);
+		  if (temp2) free(temp2);
 #endif
 		}
 	    }
@@ -3271,7 +3261,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 				 ed->len,
 				 cp->chan);
 #if HAVE_S7
-		    if (temp) FREE(temp);
+		    if (temp) free(temp);
 #endif
 		  }
 		  break;
@@ -3321,7 +3311,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 		  {
 		    char *temp = NULL;
 		    fprintf(fd, " %s", temp = XEN_AS_STRING(XEN_CAR(XEN_PROCEDURE_SOURCE(code))));
-		    if (temp) FREE(temp);
+		    if (temp) free(temp);
 		  }
 #endif
 		}
@@ -3486,7 +3476,7 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 					    ed->beg, durstr);
 		      FREE(durstr);
 #if HAVE_S7
-		      if (temp) FREE(temp);
+		      if (temp) free(temp);
 #endif
 		    }
 		  break;
@@ -3809,30 +3799,8 @@ static ed_ptrees *copy_fragment_ptrees(ed_ptrees *old_ptrees)
 
 static ed_fragment *make_ed_fragment(void)
 {
-#if MUS_DEBUGGING
-  ed_fragment *ed;
-  ed = (ed_fragment *)CALLOC(1, sizeof(ed_fragment));
-  MUS_SET_PRINTABLE(PRINT_ED_FRAGMENT);
-  return(ed);
-#else
   return((ed_fragment *)CALLOC(1, sizeof(ed_fragment)));
-#endif
 }
-
-
-#if MUS_DEBUGGING
-void describe_ed_fragment(FILE *Fp, void *ptr);
-void describe_ed_fragment(FILE *Fp, void *ptr)
-{
-  ed_fragment *ed = (ed_fragment *)ptr;
-  fprintf(Fp, "[%p, type: %s, snd: %d, out: " OFF_TD ", beg: " OFF_TD ", end: " OFF_TD ", scl: %.3f, ramps: %p, ptrees: %p, mixes: %p",
-	  ed, ((ed->typ >= ED_SIMPLE) && (ed->typ < NUM_OPS)) ? type_info[ed->typ].name : "unknown op",
-	  ed->snd, ed->out, ed->beg, ed->end, ed->scl, ed->ramps, ED_PTREES(ed), ED_MIXES(ed));
-  if (ED_MIXES(ed))
-    fprintf(Fp, " (size: %d, sfs: %p)", ED_MIX_LIST_SIZE(ed), ED_MIX_LIST(ed));
-  fprintf(Fp, "]\n    ");
-}
-#endif
 
 
 static ed_mixes *copy_fragment_mixes(ed_mixes *old_mixes)
@@ -3960,7 +3928,6 @@ static ed_list *make_ed_list(int size)
   ed_list *ed;
   int i;
   ed = (ed_list *)CALLOC(1, sizeof(ed_list));
-  MUS_SET_PRINTABLE(PRINT_ED_LIST);
 
   ed->size = size;
   ed->allocated_size = size;
@@ -6182,7 +6149,6 @@ static snd_fd *init_sample_read_any_with_bufsize(off_t samp, chan_info *cp, read
 
   /* snd_fd allocated only here */
   sf = (snd_fd *)CALLOC(1, sizeof(snd_fd)); /* only creation point (... oops -- see below...)*/
-  MUS_SET_PRINTABLE(PRINT_SND_FD);
 
   sf->region = INVALID_REGION;
   sf->type = SAMPLE_READER;
@@ -7398,7 +7364,6 @@ snd_fd *make_virtual_mix_reader(chan_info *cp, off_t beg, off_t len, int index, 
   off_t ind0, ind1, indx;
 
   sf = (snd_fd *)CALLOC(1, sizeof(snd_fd));
-  MUS_SET_PRINTABLE(PRINT_SND_FD);
 
   sf->region = INVALID_MIX_ID;
   sf->type = MIX_READER;
@@ -7776,7 +7741,11 @@ char *sample_reader_to_string(snd_fd *fd)
 {
   char *desc;
   chan_info *cp;
+#if HAVE_S7
+  desc = (char *)calloc(PRINT_BUFFER_SIZE, sizeof(char));
+#else
   desc = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
+#endif
   if (fd == NULL)
     sprintf(desc, "#<sample-reader: null>");
   else

@@ -1187,7 +1187,7 @@ static void print_mus_xen(XEN obj, ScmPort *port, ScmWriteContext *pstate)
 #if HAVE_S7
 static char *print_mus_xen(void *obj)
 {
-  return(copy_string(mus_describe(((mus_xen *)obj)->gen)));
+  return(strdup(mus_describe(((mus_xen *)obj)->gen)));
 }
 
 static bool s7_equalp_mus_xen(void *val1, void *val2)

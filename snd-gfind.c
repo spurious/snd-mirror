@@ -108,7 +108,7 @@ static void edit_find_find(read_direction_t direction, GtkWidget *w, gpointer co
 	  buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
 	  mus_snprintf(buf, PRINT_BUFFER_SIZE, _("find: %s"), temp = XEN_AS_STRING(ss->search_proc));
 #if HAVE_S7
-	  if (temp) FREE(temp);
+	  if (temp) free(temp);
 #endif
 	  set_label(edit_find_label, buf);
 	  /* gtk_entry_set_text(GTK_ENTRY(edit_find_text), ""); */

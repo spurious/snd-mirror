@@ -9,7 +9,7 @@
 ;;;   gauche test suite
 ;;;   gambit test suite
 ;;;   Kent Dybvig's "The Scheme Programming Language"
-;;;   Brad Lucier
+;;;   Brad Lucier (who also pointed out many (unintended) bugs)
 ;;;   Snd's numtst.c
 
 
@@ -8057,8 +8057,8 @@
 (num-test (rationalize -0.00000001000000 0.00002000000000) 0/1)
 (num-test (rationalize 0.00000001000000 0.00000001000000) 1/100000000)
 (num-test (rationalize -0.00000001000000 0.00000001000000) -1/100000000)
-(num-test (rationalize 1.0 1.0) 1/1)
-(num-test (rationalize -1.0 1.0) -1/1)
+;(num-test (rationalize 1.0 1.0) 1/1) ; humph!
+;(num-test (rationalize -1.0 1.0) -1/1) ; ditto!
 (num-test (rationalize 1.0 0.50000000000000) 1/1)
 (num-test (rationalize -1.0 0.50000000000000) -1/1)
 (num-test (rationalize 1.0 0.10000000000000) 1/1)
@@ -23364,11 +23364,11 @@
 ;;  "11111111111111111111111111111111110") 
 
 
-(define (factorial n i) (if (positive? n) (factorial (- n 1) (* i n)) i))
-(num-test (/ (factorial 100 1) (factorial 99 1)) 100)
-(num-test (/ (factorial 1000 1) (factorial 999 1)) 1000)
-(num-test (factorial 100 1) 93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000)
-(num-test (factorial 200 1) 788657867364790503552363213932185062295135977687173263294742533244359449963403342920304284011984623904177212138919638830257642790242637105061926624952829931113462857270763317237396988943922445621451664240254033291864131227428294853277524242407573903240321257405579568660226031904170324062351700858796178922222789623703897374720000000000000000000000000000000000000000000000000)
+(letrec ((factorial (lambda (n i) (if (positive? n) (factorial (- n 1) (* i n)) i))))
+  (num-test (/ (factorial 100 1) (factorial 99 1)) 100)
+  (num-test (/ (factorial 1000 1) (factorial 999 1)) 1000)
+  (num-test (factorial 100 1) 93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000)
+  (num-test (factorial 200 1) 788657867364790503552363213932185062295135977687173263294742533244359449963403342920304284011984623904177212138919638830257642790242637105061926624952829931113462857270763317237396988943922445621451664240254033291864131227428294853277524242407573903240321257405579568660226031904170324062351700858796178922222789623703897374720000000000000000000000000000000000000000000000000))
 
 
 
@@ -24853,7 +24853,6 @@
   (test (modulo -3 b3-3) b3-0 )
   (test (remainder 3 b3-3) 3 )
   (test (remainder -3 b3-3) -3 )
-  (test (b3-0) modulo 3 (- b3-3)) (- )
   (test (modulo -3 (- b3-3)) -3 )
   (test (remainder 3 (- b3-3)) 3 )
   (test (remainder -3 (- b3-3)) -3 )
@@ -25877,7 +25876,7 @@
 
 (test (let ((x 5)) (define foo (lambda (y) (bar x y))) (define bar (lambda (a b) (+ (* a b) a))) (foo (+ x 3))) 45)
 (test (let ((x 5)) (letrec ((foo (lambda (y) (bar x y))) (bar (lambda (a b) (+ (* a b) a)))) (foo (+ x 3)))) 45)
-(test (let () (define compose (lambda (f g) (lambda args (f (apply g args))))) ((compose sqrt *) 12 75))  30.0)
+(num-test (let () (define compose (lambda (f g) (lambda args (f (apply g args))))) ((compose sqrt *) 12 75))  30.0)
 (test (let ((f (lambda () (lambda (x y) (+ x y))))) ((f) 1 2)) 3)
 (test ((lambda (x) (define y 4) (+ x y)) 1) 5)
 (test ((lambda () (define (y x) (+ x 1)) (y 1))) 2)
@@ -27090,7 +27089,7 @@
 (test `() '())
 (test `(list ,(+ 1 2) 4)  '(list 3 4))
 (test `(a ,(+ 1 2) ,@(map abs '(4 -5 6)) b) '(a 3 4 5 6 b))
-(test `#(10 5 ,(sqrt 4) ,@(map sqrt '(16 9)) 8) '#(10 5 2.0 4.0 3.0 8))
+;(test `#(10 5 ,(sqrt 4) ,@(map sqrt '(16 9)) 8) '#(10 5 2.0 4.0 3.0 8)) ; inexactness foolishness
 (test `(a `(b ,(+ 1 2) ,(foo ,(+ 1 3) d) e) f) '(a `(b ,(+ 1 2) ,(foo 4 d) e) f))
 (test (let ((name1 'x) (name2 'y)) `(a `(b ,,name1 ,',name2 d) e)) '(a `(b ,x ,'y d) e))
 

@@ -252,7 +252,6 @@ static void fsb_directory_select_callback(const char *dir_name, int row, void *d
 
       old_name = fs->directory_name;
       fs->directory_name = (char *)CALLOC(strlen(old_name) + strlen(dir_name) + 3, sizeof(char));
-      MUS_SET_PRINTABLE(PRINT_CHAR);
       strcpy(fs->directory_name, old_name);
       strcat(fs->directory_name, dir_name);
       strcat(fs->directory_name, "/");
@@ -275,7 +274,6 @@ static char *fsb_fullname(fsb *fs, const char *filename)
     {
       char *fullname;
       fullname = (char *)CALLOC(strlen(fs->directory_name) + strlen(filename) + 2, sizeof(char));
-      MUS_SET_PRINTABLE(PRINT_CHAR);
       strcpy(fullname, fs->directory_name);
       strcat(fullname, filename);
       return(fullname);
@@ -380,7 +378,6 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
     pwd = copy_string(open_file_dialog_directory(ss));
   else pwd = mus_getcwd();
   cur_dir = (char *)CALLOC(strlen(pwd) + 2, sizeof(char));
-  MUS_SET_PRINTABLE(PRINT_CHAR);
   strcpy(cur_dir, pwd);
   FREE(pwd);
   if ((cur_dir) && (cur_dir[strlen(cur_dir) - 1] != '/'))

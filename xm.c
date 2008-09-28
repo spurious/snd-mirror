@@ -4,11 +4,13 @@
  */
 
 #include <mus-config.h>
+#include <stdlib.h>
 
-#define XM_DATE "10-Sep-08"
+#define XM_DATE "1-Oct-08"
 
 /* HISTORY: 
  *
+ *   1-Oct:     XtAppAddInput condition arg is a mess.
  *   10-Sep:    XtAppAddInput condition arg is an int.
  *   1-Sep-08:  S7 support.
  *   --------
@@ -16485,7 +16487,11 @@ new source of events, which is usually file input but can also be file output."
   gc_loc = xm_protect(descr);
   id = XtAppAddInput(XEN_TO_C_XtAppContext(arg1), 
 		     XEN_TO_C_INT(arg2), 
+#if (HAVE_S7) && (SIZEOF_OFF_T != SIZEOF_VOID_P)
 		     (XtPointer)((int)XEN_TO_C_INT(arg3)),
+#else
+		     (XtPointer)XEN_TO_C_INT(arg3),
+#endif
 		     gxm_XtInputCallbackProc, 
 		     (XtPointer)descr);
   XEN_LIST_SET(descr, 3, C_TO_XEN_INT(gc_loc));
@@ -16506,7 +16512,11 @@ static XEN gxm_XtAddInput(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   descr = C_TO_XEN_XM_Input(arg3, (XEN_BOUND_P(arg4)) ? arg4 : XEN_FALSE);
   gc_loc = xm_protect(descr);
   id = XtAddInput(XEN_TO_C_INT(arg1), 
+#if (HAVE_S7) && (SIZEOF_OFF_T != SIZEOF_VOID_P)
 		  (XtPointer)((int)XEN_TO_C_INT(arg2)),
+#else
+		  (XtPointer)XEN_TO_C_INT(arg2),
+#endif
 		  gxm_XtInputCallbackProc, 
 		  (XtPointer)descr);
   XEN_LIST_SET(descr, 3, C_TO_XEN_INT(gc_loc));
