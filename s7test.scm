@@ -25,7 +25,9 @@
 (define with-open-input-string-and-friends #t)                 ; string IO, as well as file
 (define with-eval #f)                                          ;   not tested yet
 (define with-syntax-rules #f)                                  ;   only lightly tested
-(define with-delay #f)                                         ; delay and force (the name "delay" is problematic)
+(define with-delay #f)                                         ; delay and force 
+(define with-delay-named-make-promise #t)                      ;   same but "delay" -> "make-promise" ("delay" belongs to CLM)
+(define with-bitwise-functions #t)                             ; logand|or|xor|ior, ash
 
 
 ;; we're assuming call/cc is defined
@@ -24882,7 +24884,7 @@
 (test (string->number "+") #f )
 
 (test (= 1 #e1 1/1 #e1/1 #e1.0 #e1e0 #b1 #x1 #o1 #d1 #o001) #t)
-(test (= #i3/10 0.3 #i0.3 3e-1 3d-1 0.3e0 3e-1) #t)
+(test (= 0.3 3e-1 3d-1 0.3e0 3e-1) #t)
 ;(test (= 0 -0 +0 0.0 -0.0 +0.0 0/1 -0/1 +0/24 0+0i 0-0i -0-0i +0-0i 0.0-0.0i -0.0+0i) #t)
 (test (= 0 +0 0.0 +0.0 0/1 +0/24 0+0i #e0) #t)
 
@@ -24945,7 +24947,7 @@
    ;; Fractions:
    ("1/1" 1) ("1/2" 1/2) ("-1/2" -1/2) ;("1#/1" 10.0)
    ;("10/1#" 1.0) ("1#/1#" 1.0) ("#e9/10" 9/10) ("#e10/1#" 1)
-   ("#i6/8" 0.75) ("#i1/1" 1.0)
+   ;("#i6/8" 0.75) ("#i1/1" 1.0)
    ;; Decimal numbers:
    ;; * <uinteger 10> <suffix>
    ("1e2" 100.0) ("1s2" 100.0)
@@ -24968,6 +24970,72 @@
    ;; ("+1i" 0+1i) ("-1i" 0-1i) ("+i" +1i) ("-i" -1i) ; I don't like these
    ))
 
+
+(if with-bitwise-functions
+     (begin
+
+       (test (logior 0 1) 1)
+       (test (logior #b101 #b10001) 21)
+       (test (logior 1 3 6) 7)
+       (test (logior -6 1) -5)
+       (test (logior -6 3) -5)
+       (test (logior #b1 #b11 #b111 #b1111) #b1111)
+
+
+       (test (logand 0 1) 0)
+       (test (logand #b101 #b10001) 1)
+       (test (logand 1 3 6) 0)
+       (test (logand -6 1) 0)
+       (test (logand -6 3) 2)
+       (test (logand #b1 #b11 #b111 #b1111) #b1)
+
+
+       (test (logxor 0 1) 1)
+       (test (logxor #b101 #b10001) 20)
+       (test (logxor 1 3 6) 4)
+       (test (logxor -6 1) -5)
+       (test (logxor -6 3) -7)
+       (test (logxor #b1 #b11 #b111 #b1111) #b1010)
+
+
+       (test (lognot 0) -1)
+       (test (lognot -1) 0)
+       (test (lognot #b101) -6)
+       (test (lognot -6) #b101)
+
+
+
+       (test (ash 0 1) 0)
+       (test (ash 1 10) 1024)
+       (test (ash 1024 -8) 4)
+       (test (ash -1 8) -256)
+       (test (ash -1 30) -1073741824)
+
+
+
+       (for-each
+	(lambda (op)
+	  (for-each
+	   (lambda (arg)
+	     (let ((val (catch #t (lambda () (op arg)) (lambda args 'error))))
+	       (if (not (equal? val 'error))
+		   (begin
+		     (display op) (display " ") (display arg) (display " returned ") (display val) (newline)))))
+	   (list "hi" (integer->char 65) 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1)))))
+	(list logior logand lognot logxor ash))
+
+       (for-each
+	(lambda (op)
+	  (for-each
+	   (lambda (arg)
+	     (let ((val (catch #t (lambda () (op 1 arg)) (lambda args 'error))))
+	       (if (not (equal? val 'error))
+		   (begin
+		     (display op) (display " 1 ") (display arg) (display " returned ") (display val) (newline)))))
+	   (list "hi" (integer->char 65) 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1)))))
+	(list logior logand logxor lognot))
+
+       ))
 
 
 
@@ -27065,6 +27133,140 @@
 		(let ((count 5))
 		  (define (get-count) count)
 		  (define p (delay (if (<= count 0)
+				       count
+				       (begin (set! count (- count 1))
+					      (force p)
+					      (set! count (+ count 2))
+					      count))))
+		  (list get-count p)))
+	      (let* ((get-count (car q))
+		     (p (cadr q))
+		     (a (get-count))
+		     (b (force p))
+		     (c (get-count)))
+		(list a b c)))
+	    (list 5 0 10))
+
+      ))
+
+
+(if with-delay-named-make-promise
+    (begin
+
+      (test (let ((stream-car (lambda (s) (car (force s))))
+		  (stream-cdr (lambda (s) (cdr (force s))))
+		  (counters (let next ((n 1)) (make-promise (cons n (next (+ n 1)))))))
+	      (let* ((val1 (stream-car counters))
+		     (val2 (stream-car (stream-cdr counters))))
+		(letrec ((stream-add (lambda (s1 s2)
+				       (make-promise (cons 
+					       (+ (stream-car s1) (stream-car s2))
+					       (stream-add (stream-cdr s1) (stream-cdr s2)))))))
+		  (let ((even-counters (stream-add counters counters)))
+		    (let* ((val3 (stream-car even-counters))
+			   (val4 (stream-car (stream-cdr even-counters))))
+		      (list val1 val2 val3 val4))))))
+	    (list 1 2 2 4))
+
+      (test (force (make-promise (+ 1 2))) 3)
+      (test (let ((p (make-promise (+ 1 2)))) (list (force p) (force p))) (list 3 3))
+      (test (letrec ((a-stream (letrec ((next (lambda (n)
+						(cons n (make-promise (next (+ n 1)))))))
+				 (next 0)))
+		     (head car)
+		     (tail (lambda (stream) (force (cdr stream)))))
+	      (head (tail (tail a-stream))))
+	    2)
+
+      (letrec ((count 0)
+	       (p (make-promise (begin (set! count (+ count 1))
+				(if (> count x)
+				    count
+				    (force p)))))
+	       (x 5))
+	(test (force p) 6)
+	(set! x 10)
+	(test (force p) 6))
+
+      (test (letrec ((p (make-promise (if c 3 (begin (set! c #t) (+ (force p) 1))))) (c #f)) (force p)) 3)	    
+
+      (test (let ((generate (lambda (use-it)
+			      (let loop ((i 0))
+				(if (< i 10) (begin (use-it i) (loop (+ i 1)))))))
+		  (generator->lazy-list (lambda (generator)
+					  (delay
+					    (call/cc (lambda (k-main)
+						       (generator 
+							(lambda (e)
+							  (call/cc (lambda (k-reenter)
+								     (k-main (cons e 
+										   (make-promise 
+										     (call/cc (lambda (k-new-main)
+												(set! k-main k-new-main)
+												(k-reenter #f))))))))))
+						       (k-main '()))))))
+		  (fnull? (lambda (x) (null? (force x))))
+		  (fcar (lambda (x) (car (force x))))
+		  (fcdr (lambda (x) (cdr (force x)))))
+	      (letrec ((lazy-list->list (lambda (lz)
+					  (if (fnull? lz) '()
+					      (cons (fcar lz) (lazy-list->list (fcdr lz)))))))
+		(lazy-list->list (generator->lazy-list generate))))
+	    '(0 1 2 3 4 5 6 7 8 9))
+
+      (test (let* ((x 1)
+		   (p (make-promise (+ x 1))))
+	      (force p)
+	      (set! x (+ x 1))
+	      (force p))
+	    2)
+
+      (test (let* ((x 1) 
+		   (p #f))
+	      (let* ((x 2))
+		(set! p (make-promise (+ x 1))))
+	      (force p))
+	    3)
+
+      (test (force) 'error)
+      (test (force 1) 'error)
+      (test (delay) 'error)
+      (test (make-promise 1 2) 'error)
+      
+      (test (letrec ((count 0)
+		     (x 5)
+		     (p (make-promise (begin (set! count (+ count 1))
+				      (if (> count x)
+					  count
+					  (force p))))))
+	      (force p)
+	      (set! x 10)
+	      (force p))
+	    6)
+      
+      (test (let ((count 0))
+	      (define s (make-promise (begin (set! count (+ count 1)) 1)))
+	      (+ (force s) (force s))
+	      count)
+	    1)
+
+      (test (let ()
+	      (define f
+		(let ((first? #t))
+		  (delay
+		    (if first?
+			(begin
+			  (set! first? #f)
+			  (force f))
+			'second))))
+	      (force f))
+	    'second)
+
+      (test (let ()
+	      (define q
+		(let ((count 5))
+		  (define (get-count) count)
+		  (define p (make-promise (if (<= count 0)
 				       count
 				       (begin (set! count (- count 1))
 					      (force p)

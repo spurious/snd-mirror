@@ -319,7 +319,7 @@ AC_CHECK_SIZEOF(void *)
 AC_CHECK_SIZEOF(int)
 AC_CHECK_SIZEOF(ssize_t)
 
-AC_CHECK_FUNCS(getcwd getwd strerror readlink setlocale access opendir sleep signal statvfs statfs clock getline)
+AC_CHECK_FUNCS(getcwd getwd strerror readlink setlocale access opendir sleep signal statvfs statfs getline difftime gettimeofday)
 AC_CHECK_FUNCS(vsnprintf snprintf strftime memmove strdup lstat fileno strcasecmp pathconf)
 
 AC_CHECK_FUNCS(cabs conj cacos cacosh carg casin casinh catan catanh) 

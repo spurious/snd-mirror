@@ -82,7 +82,6 @@ static int gc_last_set = NOT_A_GC_LOC;
 
 #if MUS_DEBUGGING
 static char **snd_protect_callers = NULL; /* static char* const *callers? no thanks... */
-static int cur_gc_index = 0, max_gc_index = 0;
 
 void dump_protection(FILE *Fp);
 void dump_protection(FILE *Fp)
@@ -90,7 +89,7 @@ void dump_protection(FILE *Fp)
   if (XEN_VECTOR_P(gc_protection))
     {
       int i;
-      fprintf(Fp, "\n\nsnd_protect (%d table size, most used: %d):\n", gc_protection_size, max_gc_index);
+      fprintf(Fp, "\n\nsnd_protect (%d table size):\n", gc_protection_size);
       for (i = 0; i < gc_protection_size; i++)
 	{
 	  XEN gcdat;
@@ -2178,19 +2177,21 @@ static XEN g_random(XEN val)
   return(C_TO_XEN_DOUBLE(mus_frandom(XEN_TO_C_DOUBLE(val))));
 }
 
+#if HAVE_GETTIMEOFDAY && HAVE_DIFFTIME && HAVE_SYS_TIME_H
 
-#if HAVE_SYS_TIME_H
-  #include <sys/time.h>
-#endif
+#include <sys/time.h>
+static struct timeval overall_start_time;
 
-/* this number is overflowing (gauche int = 29 bits) if left as a bare int */
 static XEN g_get_internal_real_time(void) 
 {
-  /* this returns negative values:
-     return(C_TO_XEN_INT((int)(100.0 * ((double)clock() / (double)CLOCKS_PER_SEC))));
-  */
-  return(C_TO_XEN_INT((clock() / (CLOCKS_PER_SEC / 100))));
+  struct timezone z0;
+  struct timeval t0;
+  double secs;
+  gettimeofday(&t0, &z0);
+  secs = difftime(t0.tv_sec, overall_start_time.tv_sec);
+  return(C_TO_XEN_DOUBLE(secs + 0.000001 * (t0.tv_usec - overall_start_time.tv_usec)));
 }
+#endif
 
 static XEN g_ftell(XEN fd)
 {
@@ -2802,7 +2803,7 @@ void g_xen_initialize(void)
 #endif
 
 #if HAVE_GAUCHE
-  XEN_DEFINE_CONSTANT("internal-time-units-per-second", 100, "clock speed");
+  XEN_DEFINE_CONSTANT("internal-time-units-per-second", 1, "clock speed");
   XEN_DEFINE_PROCEDURE("random",                 g_random_w,                 1, 0, 0, "(random arg): random number between 0 and arg ");
   XEN_DEFINE_PROCEDURE("get-internal-real-time", g_get_internal_real_time_w, 0, 0, 0, "get system time");
   XEN_DEFINE_PROCEDURE("ftell",                  g_ftell_w,                  1, 0, 0, "(ftell fd): lseek");
@@ -2820,7 +2821,7 @@ void g_xen_initialize(void)
   XEN_DEFINE_PROCEDURE("tmpnam",                 g_tmpnam_w,                 0, 0, 0, H_localtime);
   XEN_DEFINE_PROCEDURE("localtime",              g_localtime_w,              1, 0, 0, H_localtime);
   XEN_DEFINE_PROCEDURE("current-time",           g_current_time_w,           0, 0, 0, H_current_time);
-  XEN_DEFINE_CONSTANT("internal-time-units-per-second", 100, "clock speed");
+  XEN_DEFINE_CONSTANT("internal-time-units-per-second", 1, "clock speed");
   XEN_DEFINE_PROCEDURE("random",                 g_random_w,                 1, 0, 0, "(random arg): random number between 0 and arg ");
   XEN_DEFINE_PROCEDURE("get-internal-real-time", g_get_internal_real_time_w, 0, 0, 0, "get system time");
   XEN_DEFINE_PROCEDURE("ftell",                  g_ftell_w,                  1, 0, 0, "(ftell fd): lseek");
@@ -3229,5 +3230,14 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 #if WITH_MODULES
   scm_c_use_module("snd sndlib");
   scm_c_use_module("snd clm");
+#endif
+
+#if HAVE_GETTIMEOFDAY && HAVE_DIFFTIME && HAVE_SYS_TIME_H
+#if HAVE_S7 || HAVE_GAUCHE
+  {
+    struct timezone z0;
+    gettimeofday(&overall_start_time, &z0);
+  }
+#endif
 #endif
 }

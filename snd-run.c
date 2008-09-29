@@ -2320,7 +2320,11 @@ static vect *read_int_vector(XEN vectr)
 	v->data.ints[i] = R_XEN_TO_C_INT(datum);
       else
 	{
-	  run_warn("initial int vector value at %d is %s: will try to abort ptree evaluation...", i, XEN_AS_STRING(datum));
+	  char *temp = NULL;
+	  run_warn("initial int vector value at %d is %s: will try to abort ptree evaluation...", i, temp = XEN_AS_STRING(datum));
+#if HAVE_S7
+	  if (temp) free(temp);
+#endif
 	  FREE(v->data.ints);
 	  FREE(v);
 	  return(NULL);
@@ -2347,7 +2351,11 @@ static vect *read_vct_vector(XEN vectr)
 	v->data.vcts[i] = xen_to_vct(datum);
       else
 	{
-	  run_warn("initial vct vector value at %d is %s: will try to abort ptree evaluation...", i, XEN_AS_STRING(datum));
+	  char *temp = NULL;
+	  run_warn("initial vct vector value at %d is %s: will try to abort ptree evaluation...", i, temp = XEN_AS_STRING(datum));
+#if HAVE_S7
+	  if (temp) free(temp);
+#endif
 	  FREE(v->data.vcts);
 	  FREE(v);
 	  return(NULL);
@@ -2376,7 +2384,11 @@ static vect *read_clm_vector(XEN vectr)
 	{
 	  if (!(XEN_FALSE_P(datum)))
 	    {
-	      run_warn("initial clm vector value at %d is %s: will try to abort ptree evaluation...", i, XEN_AS_STRING(datum));
+	      char *temp = NULL;
+	      run_warn("initial clm vector value at %d is %s: will try to abort ptree evaluation...", i, temp = XEN_AS_STRING(datum));
+#if HAVE_S7
+	      if (temp) free(temp);
+#endif
 	      FREE(v->data.gens);
 	      FREE(v);
 	      return(NULL);
@@ -2407,7 +2419,11 @@ static vect *read_list_vector(ptree *pt, XEN vectr)
 	}
       else
 	{
-	  run_warn("initial list vector value at %d is %s: will try to abort ptree evaluation...", i, XEN_AS_STRING(datum));
+	  char *temp = NULL;
+	  run_warn("initial list vector value at %d is %s: will try to abort ptree evaluation...", i, temp = XEN_AS_STRING(datum));
+#if HAVE_S7
+	  if (temp) free(temp);
+#endif
 	  FREE(v->data.lists);
 	  FREE(v);
 	  return(NULL);

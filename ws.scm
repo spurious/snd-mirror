@@ -533,6 +533,10 @@ returning you to the true top-level."
 
 
 ;;; -------- with-threaded-sound
+;;;
+;;; currently to get any kind of performance from with-threaded-sound, the
+;;;  *clm-file-buffer-size* needs to be big enough to hold the entire output sound,
+;;;  and set *clm-output-safety* to 1.
 
 (if (provided? 'snd-gauche)
     (use gauche.threads))

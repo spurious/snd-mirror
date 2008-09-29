@@ -5,6 +5,9 @@
 # valgrind --error-limit=no -v --gen-suppressions=no --suppressions=/home/bil/cl/snd.supp --leak-check=yes --show-reachable=no --track-fds=yes snd -l snd-test
 
 # valgrind --tool=helgrind snd
+# valgrind --tool=callgrind snd
+#   writes callgrind.out.<pid>
+#   callgrind_annotate --auto=yes callgrind.out.<pid> > hi
 
 #
 # first section copied (unnecessarily) from default: /usr/local/lib/valgrind/default.supp

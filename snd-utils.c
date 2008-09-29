@@ -700,19 +700,6 @@ fam_info *fam_unmonitor_directory(const char *filename, fam_info *fp)
 }
 
 
-#if (MUS_DEBUGGING) && (HAVE_CLOCK)
-
-#if HAVE_SYS_TIME_H
-  #include <sys/time.h>
-#endif
-
-static clock_t start;
-void start_timing(void) {start = clock();}
-void stop_timing(void) {fprintf(stderr, "time: %d ",(int)((clock() - start) * 1000.0 / CLOCKS_PER_SEC));}
-
-#endif
-
-
 #if HAVE_SCHEME
 #define S_file_to_string "file->string"
 

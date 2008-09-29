@@ -219,7 +219,7 @@ typedef struct continuation {
 typedef struct ffunc {
   s7_function ff;
   const char *name;
-  const char *doc;
+  char *doc;
   int required_args, optional_args;
   bool rest_arg;
 } ffunc;
@@ -637,6 +637,7 @@ static s7_pointer cons_1(s7_scheme *sc, s7_pointer a, s7_pointer b, bool immutab
 static s7_pointer s7_string_concatenate(s7_scheme *sc, const char *s1, const char *s2);
 static s7_pointer s7_division_by_zero_error(s7_scheme *sc, const char *caller, s7_pointer arg);
 static s7_pointer s7_file_error(s7_scheme *sc, const char *caller, const char *descr, const char *name);
+static void s7_free_function(s7_pointer a);
 
 #if S7_DEBUGGING
 static void gsp(s7_scheme *sc) {g_stacktrace(sc, sc->args);} /* for gdb */
@@ -801,11 +802,9 @@ static void finalize_s7_cell(s7_scheme *sc, s7_pointer a)
 	  s7_free_object(a);
 	  break;
 
-#if S7_DEBUGGING
 	case T_S7_FUNCTION:
-	  fprintf(stderr, "freeing a function? %s", function_name(a));
+	  s7_free_function(a);
 	  break;
-#endif
 
 	case T_VECTOR:
 	  if (vector_length(a) > 0)
@@ -4600,6 +4599,23 @@ static s7_pointer g_lognot(s7_scheme *sc, s7_pointer args)
   if (!s7_is_integer(car(args)))
     return(s7_wrong_type_arg_error(sc, "lognot", 1, car(args), "an integer"));
   return(s7_make_integer(sc, ~s7_integer(car(args))));
+}
+
+
+static s7_pointer g_ash(s7_scheme *sc, s7_pointer args)
+{
+  #define H_ash "(ash i1 i2) returns i1 shifted right or left i2 times, i1 << i2"
+  s7_Int arg1, arg2;
+  if (!s7_is_integer(car(args)))
+    return(s7_wrong_type_arg_error(sc, "ash", 1, car(args), "an integer"));
+  if (!s7_is_integer(cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "ash", 2, cadr(args), "an integer"));
+
+  arg1 = s7_integer(car(args));
+  arg2 = s7_integer(cadr(args));
+  if (arg2 >= 0)
+    return(s7_make_integer(sc, arg1 << arg2));
+  return(s7_make_integer(sc, arg1 >> -arg2));
 }
 
 
@@ -8469,11 +8485,8 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
   ffunc *ptr;
   s7_pointer x = new_cell(sc);
   ptr = (ffunc *)CALLOC(1, sizeof(ffunc));
-#if S7_DEBUGGING
   set_type(x, T_S7_FUNCTION | T_ATOM | T_SIMPLE | T_FINALIZABLE);
-#else
-  set_type(x, T_S7_FUNCTION | T_ATOM | T_SIMPLE | T_CONSTANT);
-#endif
+  /* was T_CONSTANT, but these guys can be freed -- in Snd, for example, "random" is defined in C, but then later redefined in snd-test.scm */
   x->object.ffptr = ptr;
   x->object.ffptr->ff = f;
   x->object.ffptr->name = name;
@@ -8483,6 +8496,14 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
   x->object.ffptr->optional_args = optional_args;
   x->object.ffptr->rest_arg = rest_arg;
   return(x);
+}
+
+
+static void s7_free_function(s7_pointer a)
+{
+  if (a->object.ffptr->doc)
+    free(a->object.ffptr->doc);
+  free(a->object.ffptr);
 }
 
 
@@ -12005,6 +12026,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "logxor",                  g_logxor,                  1, 0, true,  H_logxor);
   s7_define_function(sc, "logand",                  g_logand,                  1, 0, true,  H_logand);
   s7_define_function(sc, "lognot",                  g_lognot,                  1, 0, false, H_lognot);
+  s7_define_function(sc, "ash",                     g_ash,                     2, 0, false, H_ash);
 
   
   /* chars */
@@ -12158,8 +12180,8 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "procedure-arity",         g_procedure_arity,         1, 0, false, H_procedure_arity);
   s7_define_function(sc, "procedure-source",        g_procedure_source,        1, 0, false, H_procedure_source);
   
-  s7_define_function(sc, "make-procedure-with-setter", g_make_procedure_with_setter, 2, 0, false, "...");
-  s7_define_function(sc, "procedure-with-setter?",  g_is_procedure_with_setter, 1, 0, false, H_is_procedure_with_setter);
+  s7_define_function(sc, "make-procedure-with-setter",         g_make_procedure_with_setter,         2, 0, false, "...");
+  s7_define_function(sc, "procedure-with-setter?",             g_is_procedure_with_setter,           1, 0, false, H_is_procedure_with_setter);
   s7_define_function(sc, "procedure-with-setter-setter-arity", g_procedure_with_setter_setter_arity, 1, 0, false, "kludge to get setter's arity");
   pws_tag = s7_new_type("<procedure-with-setter>", pws_print, pws_free,	pws_equal, pws_mark, pws_apply,	pws_set);
 
@@ -12291,8 +12313,6 @@ things to fix:
 (let ((hi (string-copy (make-string 8 (integer->char 0))))) (string-fill! hi #\a) hi) got  but expected aaaaaaaa
 (list 1 2 . 3) got (1 2) but expected error
 (number? 5/3+7.2i) got error but expected #t
-(= 3.0 0.3 0.3 0.3 0.3 0.3 0.3) got #f but expected #t
-(string->number #i6/8) returned 6.0 but expected 0.75
 (let ((if +)) (if 1 2 3)) got 2 but expected 6                                     [see above -- it's a "syntax"]
 (for-each (lambda () 1) (quote ())) got () but expected error
 (let ((ctr 0)) (for-each (lambda (x y z) (set! ctr (+ ctr x y z))) (quote (0 1)) (quote (2 3)) (quote (4 5 6))) ctr) got 15 but expected error
@@ -12331,4 +12351,14 @@ things to fix:
 (let ((x 1)) (letrec ((x 1) (y x)) y)) got 1 but expected error
 (let ((x 1) (x 2)) x) got 2 but expected error
 (call/cc (lambda () 0)) got 0 but expected error
+(letrec ((p (make-promise (if c 3 (begin (set! c #t) (+ (force p) 1))))) (c #f)) (force p)) got 4 but expected 3
+(let ((generate (lambda (use-it) (let loop ((i 0)) (if (< i 10) (begin (use-it i) (loop (+ i 1))))))) (generator->lazy-list (lambda (generator) (delay (call/cc (lambda (k-main) (generator (lambda (e) (call/cc (lambda (k-reenter) (k-main (cons e (make-promise (call/cc (lambda (k-new-main) (set! k-main k-new-main) (k-reenter #f)))))))))) (k-main (quote ()))))))) (fnull? (lambda (x) (null? (force x)))) (fcar (lambda (x) (car (force x)))) (fcdr (lambda (x) (cdr (force x))))) (letrec ((lazy-list->list (lambda (lz) (if (fnull? lz) (quote ()) (cons (fcar lz) (lazy-list->list (fcdr lz))))))) (lazy-list->list (generator->lazy-list generate)))) got error but expected (0 1 2 3 4 5 6 7 8 9)
+(force 1) got 1 but expected error
+(make-promise 1 2) got #<promise> but expected error
+(let () (define f (let ((first? #t)) (delay (if first? (begin (set! first? #f) (force f)) (quote second))))) (force f)) got error but expected second
+(let () (define q (let ((count 5)) (define (get-count) count) (define p (make-promise (if (<= count 0) count (begin (set! count (- count 1)) (force p) (set! count (+ count 2)) count)))) (list get-count p))) (let* ((get-count (car q)) (p (cadr q)) (a (get-count)) (b (force p)) (c (get-count))) (list a b c))) got (5 10 10) but expected (5 0 10)
+
+
+also run snd-test #t
+it would be nice to have s7test checks for generalized set, applicable objects, hash tables, proc-w-set, keywords, macros, call-with-exit
 */
