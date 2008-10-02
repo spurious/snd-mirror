@@ -673,6 +673,8 @@ int fileno(FILE *fp);
   typedef pthread_mutex_t mus_lock_t;
   #define MUS_LOCK_INITIALIZER PTHREAD_MUTEX_INITIALIZER
   #define MUS_ALREADY_LOCKED EBUSY
+  #define MUS_LOCK_DESTROY(Lock) pthread_mutex_destroy(Lock)
+  #define MUS_LOCK_INIT(Lock) pthread_mutex_init(Lock, NULL)
 
 #if MUS_THREADS_DEBUGGING
   /* sound.c -- check for lock order troubles and so on */

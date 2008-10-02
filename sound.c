@@ -193,7 +193,7 @@ int mus_lock(mus_lock_t *lock, const char *file, int line, const char *func)
   thread_locks *locks;
 
   locks = before_lock(lock, file, line, func);
-  result = pthread_mutex_lock(lock);
+  result = MUS_LOCK(lock);
   after_lock(lock, locks, file, line, func);
 
   return(result);
@@ -206,7 +206,7 @@ int mus_try_lock(mus_lock_t *lock, const char *file, int line, const char *func)
   thread_locks *locks;
 
   locks = before_lock(lock, file, line, func);
-  result = pthread_mutex_trylock(lock);
+  result = MUS_TRY_LOCK(lock);
   if (result == 0)
     after_lock(lock, locks, file, line, func);
 
@@ -219,7 +219,7 @@ int mus_unlock(mus_lock_t *lock, const char *file, int line, const char *func)
   int result;
   thread_locks *locks;
 
-  result = pthread_mutex_unlock(lock);
+  result = MUS_UNLOCK(lock);
 
   locks = (thread_locks *)pthread_getspecific(mus_thread_locks);
   if (!locks)

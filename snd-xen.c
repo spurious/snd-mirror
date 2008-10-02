@@ -2191,6 +2191,8 @@ static XEN g_get_internal_real_time(void)
   secs = difftime(t0.tv_sec, overall_start_time.tv_sec);
   return(C_TO_XEN_DOUBLE(secs + 0.000001 * (t0.tv_usec - overall_start_time.tv_usec)));
 }
+#else
+static XEN g_get_internal_real_time(void) {return(C_TO_XEN_DOUBLE(0.0));}
 #endif
 
 static XEN g_ftell(XEN fd)

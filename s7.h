@@ -4,6 +4,10 @@
 #define S7_VERSION "1.0"
 #define S7_DATE "1-Oct-08"
 
+/*
+ * 1-Oct-08   version 1.0
+ */
+
 #include <stdio.h>
 
 #ifndef __cplusplus
@@ -41,6 +45,7 @@ s7_pointer s7_set_immutable(s7_pointer p);
 s7_pointer s7_immutable_cons(s7_scheme *sc, s7_pointer a, s7_pointer b);
 
 s7_pointer s7_cons(s7_scheme *sc, s7_pointer a, s7_pointer b);
+s7_pointer s7_safe_cons(s7_scheme *sc, s7_pointer a, s7_pointer b);
 s7_pointer s7_car(s7_pointer p);
 s7_pointer s7_cdr(s7_pointer p);
 bool s7_is_pair(s7_pointer p);

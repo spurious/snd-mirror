@@ -3,13 +3,15 @@
 # valgrind --error-limit=no -v --gen-suppressions=yes --suppressions=/home/bil/cl/snd.supp --leak-check=yes --show-reachable=no --num-callers=6 snd
 # valgrind --error-limit=no -v --gen-suppressions=no --suppressions=/home/bil/cl/snd.supp --leak-check=yes --leak-resolution=high --show-reachable=no --num-callers=12 snd
 # valgrind --error-limit=no -v --gen-suppressions=no --suppressions=/home/bil/cl/snd.supp --leak-check=yes --show-reachable=no --track-fds=yes snd -l snd-test
-
+#
 # valgrind --tool=helgrind snd
+#
 # valgrind --tool=callgrind snd
 #   writes callgrind.out.<pid>
 #   callgrind_annotate --auto=yes callgrind.out.<pid> > hi
+#                      --inclusive=yes|no
 
-#
+
 # first section copied (unnecessarily) from default: /usr/local/lib/valgrind/default.supp
 
 # This is a generated file, composed of the following suppression rules:

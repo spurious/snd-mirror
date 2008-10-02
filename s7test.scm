@@ -24980,6 +24980,11 @@
        (test (logior -6 1) -5)
        (test (logior -6 3) -5)
        (test (logior #b1 #b11 #b111 #b1111) #b1111)
+       (test (logior -1 "hi") 'error)
+       (test (logior -1 0 -1 -1) -1)
+       (test (logior 3 3 3 3) 3)
+       (test (logior 1) 1)
+       (test (logior -1) -1)
 
 
        (test (logand 0 1) 0)
@@ -24988,6 +24993,11 @@
        (test (logand -6 1) 0)
        (test (logand -6 3) 2)
        (test (logand #b1 #b11 #b111 #b1111) #b1)
+       (test (logand 0 "hi") 'error)
+       (test (logand -1 0 -1 -1) 0)
+       (test (logand 3 3 3 3) 3)
+       (test (logand 0) 0)
+       (test (logand -1) -1)
 
 
        (test (logxor 0 1) 1)
@@ -25004,13 +25014,11 @@
        (test (lognot -6) #b101)
 
 
-
        (test (ash 0 1) 0)
        (test (ash 1 10) 1024)
        (test (ash 1024 -8) 4)
        (test (ash -1 8) -256)
        (test (ash -1 30) -1073741824)
-
 
 
        (for-each

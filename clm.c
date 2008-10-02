@@ -7009,7 +7009,7 @@ static int free_file_to_sample(mus_any *p)
       mus_lock_unset_name(ptr->reader_lock);
 #endif
       /* MUS_UNLOCK(ptr->reader_lock); */
-      pthread_mutex_destroy(ptr->reader_lock);
+      MUS_LOCK_DESTROY(ptr->reader_lock);
       free(ptr->reader_lock);
       ptr->reader_lock = NULL;
 #endif
@@ -7234,7 +7234,7 @@ mus_any *mus_make_file_to_sample_with_buffer_size(const char *filename, off_t bu
 
 #if HAVE_PTHREADS
       gen->reader_lock = (mus_lock_t *)malloc(sizeof(mus_lock_t));
-      pthread_mutex_init(gen->reader_lock, NULL);
+      MUS_LOCK_INIT(gen->reader_lock);
 #if MUS_THREADS_DEBUGGING
       mus_lock_set_name(gen->reader_lock, "reader");
 #endif
@@ -7520,7 +7520,7 @@ static int free_sample_to_file(mus_any *p)
 #if MUS_THREADS_DEBUGGING
       mus_lock_unset_name(ptr->writer_lock);
 #endif
-      pthread_mutex_destroy(ptr->writer_lock);
+      MUS_LOCK_DESTROY(ptr->writer_lock);
       /* is valgrind confused, or is this not the equivalent of free? */
       free(ptr->writer_lock);
       ptr->writer_lock = NULL;
@@ -7913,7 +7913,7 @@ static mus_any *mus_make_sample_to_file_with_comment_1(const char *filename, int
 
 #if HAVE_PTHREADS
 	  gen->writer_lock = (mus_lock_t *)malloc(sizeof(mus_lock_t));
-	  pthread_mutex_init(gen->writer_lock, NULL);
+	  MUS_LOCK_INIT(gen->writer_lock);
 #if MUS_THREADS_DEBUGGING
 	  mus_lock_set_name(gen->writer_lock, "writer");
 #endif
