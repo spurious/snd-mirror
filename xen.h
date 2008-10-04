@@ -2180,8 +2180,8 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 
 #define XEN_VECTOR_P(Arg)                          s7_is_vector(Arg)
 #define XEN_VECTOR_LENGTH(Arg)                     s7_vector_length(Arg)
-#define XEN_VECTOR_REF(Vect, Num)                  s7_vector_ref(Vect, Num)
-#define XEN_VECTOR_SET(Vect, Num, Val)             s7_vector_set(Vect, Num, Val)
+#define XEN_VECTOR_REF(Vect, Num)                  s7_vector_ref(s7, Vect, Num)
+#define XEN_VECTOR_SET(Vect, Num, Val)             s7_vector_set(s7, Vect, Num, Val)
 #define XEN_MAKE_VECTOR(Num, Fill)                 s7_make_and_fill_vector(s7, Num, Fill)
 #define XEN_VECTOR_TO_LIST(Vect)                   s7_vector_to_list(s7, Vect)
 

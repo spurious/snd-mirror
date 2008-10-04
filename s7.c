@@ -696,24 +696,40 @@ s7_pointer s7_set_immutable(s7_pointer p)
 
 /* -------------------------------- GC -------------------------------- */
 
+#if HAVE_PTHREADS
+static pthread_mutex_t protected_objects_lock = PTHREAD_MUTEX_INITIALIZER;
+#endif
+
 
 int s7_gc_protect(s7_scheme *sc, s7_pointer x)
 {
   int i, loc, new_size;
   
+#if HAVE_PTHREADS
+  pthread_mutex_lock(&protected_objects_lock);
+#endif
+
   if (vector_element(sc->protected_objects, (*(sc->protected_objects_loc))) == sc->NIL)
     {
       vector_element(sc->protected_objects, (*(sc->protected_objects_loc))) = x;
       loc = (*(sc->protected_objects_loc))++;
       if ((*(sc->protected_objects_loc)) >= (*(sc->protected_objects_size)))
 	(*(sc->protected_objects_loc)) = 0;
-      return(loc);
+      {
+#if HAVE_PTHREADS
+	pthread_mutex_unlock(&protected_objects_lock);
+#endif
+	return(loc);
+      }
     }
   
   for (i = 0; i < (*(sc->protected_objects_size)); i++)
     if (vector_element(sc->protected_objects, i) == sc->NIL)
       {
 	vector_element(sc->protected_objects, i) = x;
+#if HAVE_PTHREADS
+	pthread_mutex_unlock(&protected_objects_lock);
+#endif
 	return(i);
       }
   
@@ -726,6 +742,9 @@ int s7_gc_protect(s7_scheme *sc, s7_pointer x)
   (*(sc->protected_objects_size)) = new_size;
   vector_element(sc->protected_objects, loc) = x;
   
+#if HAVE_PTHREADS
+  pthread_mutex_unlock(&protected_objects_lock);
+#endif
   return(loc);
 }
 
@@ -733,20 +752,39 @@ int s7_gc_protect(s7_scheme *sc, s7_pointer x)
 void s7_gc_unprotect(s7_scheme *sc, s7_pointer x)
 {
   int i;
+
+#if HAVE_PTHREADS
+  pthread_mutex_lock(&protected_objects_lock);
+#endif
+
   for (i = 0; i < (*(sc->protected_objects_size)); i++)
     if (vector_element(sc->protected_objects, i) == x)
       {
 	vector_element(sc->protected_objects, i) = sc->NIL;
 	(*(sc->protected_objects_loc)) = i;
+#if HAVE_PTHREADS
+	pthread_mutex_unlock(&protected_objects_lock);
+#endif
 	return;
       }
+#if HAVE_PTHREADS
+  pthread_mutex_unlock(&protected_objects_lock);
+#endif
 }
 
 
 void s7_gc_unprotect_at(s7_scheme *sc, int loc)
 {
+#if HAVE_PTHREADS
+  pthread_mutex_lock(&protected_objects_lock);
+#endif
+
   vector_element(sc->protected_objects, loc) = sc->NIL;
   (*(sc->protected_objects_loc)) = loc;
+
+#if HAVE_PTHREADS
+  pthread_mutex_unlock(&protected_objects_lock);
+#endif
 }
 
 
@@ -757,10 +795,9 @@ static void finalize_s7_cell(s7_scheme *sc, s7_pointer a)
       switch (type(a))
 	{
 	case T_STRING:
-	case T_SYMBOL:
 	  FREE(string_value(a)); /* calloc'd in make-*-string */
 	  break;
-	  
+
 	case T_INPUT_PORT:
 	  if (port_needs_close(a))
 	    s7_close_input_port(sc, a);
@@ -932,7 +969,7 @@ static int gc(s7_scheme *sc, const char *function, int line)
       (sc->output_port == sc->NIL))
     fprintf(stderr, "\n%s[%d] gc...", function, line);
   
-  s7_mark_object(sc->symbol_table);
+  /* s7_mark_object(sc->symbol_table); */
   s7_mark_object(sc->global_env);
   
   s7_mark_object(sc->args);
@@ -952,7 +989,7 @@ static int gc(s7_scheme *sc, const char *function, int line)
   for (i = 0; i < sc->temps_size; i++)
     s7_mark_object(sc->temps[i]);
   
-  clear_mark(sc->NIL);
+  clear_mark(sc->NIL); /* TODO: is this necessary? */
   
   for (i = 0; i < sc->heap_size; i++)
     {
@@ -1155,6 +1192,11 @@ static void push_stack(s7_scheme *sc, opcode_t op, s7_pointer args, s7_pointer c
       fprintf(stderr, "stack code pushed: %p\n", code);
       abort();
     }
+  if (!is_object(sc->envir))
+    {
+      fprintf(stderr, "stack envir pushed: %p\n", sc->envir);
+      abort();
+    }
   if ((op < 0 ) || (op > OP_MAX_DEFINED))
     {
       fprintf(stderr, "push bad op: %d\n", op);
@@ -1355,18 +1397,33 @@ static int hash_fn(const char *key, int table_size)
 } 
 
 
+#if HAVE_PTHREADS
+static pthread_mutex_t symtab_lock = PTHREAD_MUTEX_INITIALIZER;
+#endif
+
+
 static s7_pointer symbol_table_add_by_name(s7_scheme *sc, const char *name) 
 { 
   s7_pointer x, str; 
   int location;
   
   str = s7_make_string(sc, name);
+  set_type(str, T_STRING | T_ATOM | T_SIMPLE | T_CONSTANT | T_IMMUTABLE);
+
   x = s7_cons(sc, str, sc->NIL); 
-  set_type(x, (T_SYMBOL | T_FINALIZABLE));
-  s7_set_immutable(car(x)); 
+  set_type(x, T_SYMBOL | T_ATOM | T_SIMPLE | T_CONSTANT);
   
   location = hash_fn(name, vector_length(sc->symbol_table)); 
-  vector_element(sc->symbol_table, location) = s7_immutable_cons(sc, x, vector_element(sc->symbol_table, location)); 
+
+#if HAVE_PTHREADS
+  pthread_mutex_lock(&symtab_lock);
+#endif
+
+  vector_element(sc->symbol_table, location) = s7_local_gc_protect(s7_immutable_cons(sc, x, vector_element(sc->symbol_table, location))); 
+
+#if HAVE_PTHREADS
+  pthread_mutex_unlock(&symtab_lock);
+#endif
   
   return(x); 
 } 
@@ -1379,12 +1436,26 @@ static  s7_pointer symbol_table_find_by_name(s7_scheme *sc, const char *name)
   char *s; 
   
   location = hash_fn(name, vector_length(sc->symbol_table)); 
+
+#if HAVE_PTHREADS
+  pthread_mutex_lock(&symtab_lock);
+#endif
+
   for (x = vector_element(sc->symbol_table, location); x != sc->NIL; x = cdr(x)) 
     { 
       s = s7_symbol_name(car(x)); 
       if ((s) && (STRCMP(name, s) == 0))
-	return(car(x)); 
+	{
+#if HAVE_PTHREADS
+	  pthread_mutex_unlock(&symtab_lock);
+#endif
+	  return(car(x)); 
+	}
     } 
+#if HAVE_PTHREADS
+  pthread_mutex_unlock(&symtab_lock);
+#endif
+
   return(sc->NIL); 
 } 
 
@@ -1395,12 +1466,20 @@ static s7_pointer symbol_table_all_symbols(s7_scheme *sc)
   s7_pointer x; 
   s7_pointer ob_list = sc->NIL; 
   
+#if HAVE_PTHREADS
+  pthread_mutex_lock(&symtab_lock);
+#endif
+
   (*(sc->gc_off)) = true;
   for (i = 0; i < vector_length(sc->symbol_table); i++) 
     for (x  = vector_element(sc->symbol_table, i); x != sc->NIL; x = cdr(x)) 
       ob_list = s7_cons(sc, x, ob_list); 
   (*(sc->gc_off)) = false;
   
+#if HAVE_PTHREADS
+  pthread_mutex_unlock(&symtab_lock);
+#endif
+
   return(ob_list); 
 } 
 
@@ -1416,10 +1495,24 @@ void s7_for_each_symbol_name(s7_scheme *sc, bool (*symbol_func)(const char *symb
 {
   int i; 
   s7_pointer x; 
+
+#if HAVE_PTHREADS
+  pthread_mutex_lock(&symtab_lock);
+#endif
+
   for (i = 0; i < vector_length(sc->symbol_table); i++) 
     for (x  = vector_element(sc->symbol_table, i); x != sc->NIL; x = cdr(x)) 
       if (symbol_func(s7_symbol_name(car(x)), data))
-	return;
+	{
+#if HAVE_PTHREADS
+	  pthread_mutex_unlock(&symtab_lock);
+#endif
+	  return;
+	}
+
+#if HAVE_PTHREADS
+  pthread_mutex_unlock(&symtab_lock);
+#endif
 }
 
 
@@ -1427,10 +1520,24 @@ void s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_na
 {
   int i; 
   s7_pointer x; 
+
+#if HAVE_PTHREADS
+  pthread_mutex_lock(&symtab_lock);
+#endif
+
   for (i = 0; i < vector_length(sc->symbol_table); i++) 
     for (x  = vector_element(sc->symbol_table, i); x != sc->NIL; x = cdr(x)) 
       if (symbol_func(s7_symbol_name(car(x)), cdr(x), data))
-	return;
+	{
+#if HAVE_PTHREADS
+	  pthread_mutex_unlock(&symtab_lock);
+#endif
+	  return;
+	}
+
+#if HAVE_PTHREADS
+  pthread_mutex_unlock(&symtab_lock);
+#endif
 }
 
 
@@ -1670,9 +1777,22 @@ static s7_pointer g_global_environment(s7_scheme *sc, s7_pointer p)
 }
 
 
-static s7_pointer g_current_environment(s7_scheme *sc, s7_pointer p)
+#if HAVE_PTHREADS
+static s7_pointer g_is_thread(s7_scheme *sc, s7_pointer args);
+static s7_pointer thread_environment(s7_scheme *sc, s7_pointer obj);
+#endif
+
+static s7_pointer g_current_environment(s7_scheme *sc, s7_pointer args)
 {
-  #define H_current_environment "(current-environment) returns the current definitions (symbol bindings)"
+  #define H_current_environment "(current-environment :optional thread) returns the current definitions (symbol bindings)"
+#if HAVE_PTHREADS
+  if (car(args) != sc->NIL)
+    {
+      if (g_is_thread(sc, args) == sc->F)
+	return(s7_wrong_type_arg_error(sc, "current-environment", 1, car(args), "a thread object"));
+      return(thread_environment(sc, car(args)));
+    }
+#endif
   return(sc->envir);
 }
 
@@ -1803,7 +1923,6 @@ static s7_pointer copy_object(s7_scheme *sc, s7_pointer obj)
   s7_pointer nobj;
   
   if ((is_constant(obj)) || 
-      (s7_is_symbol(obj)) ||
       (is_atom(obj)) ||
       (s7_is_object(obj)) ||
       (s7_is_vector(obj)) ||
@@ -8205,6 +8324,7 @@ s7_pointer s7_make_vector(s7_scheme *sc, int len)
       x->object.vector.elements = (s7_pointer *)CALLOC(len, sizeof(s7_pointer));
       s7_vector_fill(x, sc->NIL);
     }
+  else x->object.vector.elements = NULL;
   return(x);
 }
 
@@ -8234,16 +8354,16 @@ static s7_pointer g_vector_fill(s7_scheme *sc, s7_pointer args)
 }
 
 
-s7_pointer s7_vector_ref(s7_pointer vec, int elem) 
+s7_pointer s7_vector_ref(s7_scheme *sc, s7_pointer vec, int index) 
 {
-  /* this is not called internally, so I'm not sure I should call s7_error */
-  if (elem >= vector_length(vec))
-    fprintf(stderr, "vector-ref past end of vector: %d %d\n", elem, vector_length(vec));
-  return(vector_element(vec, elem));
+  if (index >= vector_length(vec))
+    return(s7_out_of_range_error(sc, "vector-ref", 2, s7_make_integer(sc, index), "index is too high"));
+
+  return(vector_element(vec, index));
 }
 
 
-s7_pointer s7_vector_set(s7_pointer vec, int elem, s7_pointer a) 
+s7_pointer s7_vector_set(s7_scheme *sc, s7_pointer vec, int index, s7_pointer a) 
 {
 #if S7_DEBUGGING
   if (!is_object(a))
@@ -8253,10 +8373,10 @@ s7_pointer s7_vector_set(s7_pointer vec, int elem, s7_pointer a)
     }
 #endif
   
-  if (elem >= vector_length(vec))
-    fprintf(stderr, "vector-set past end of vector: %d %d\n", elem, vector_length(vec));
-  
-  vector_element(vec, elem) = a;
+  if (index >= vector_length(vec))
+    return(s7_out_of_range_error(sc, "vector-set!", 2, s7_make_integer(sc, index), "index is too high"));
+
+  vector_element(vec, index) = a;
   return(a);
 }
 
@@ -9428,6 +9548,10 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
   s7_pointer catcher;
   catcher = sc->F;
   
+#if S7_DEBUGGING
+  fprintf(stderr, "%p s7_error: %s %s\n", sc, s7_object_to_c_string(sc, type), s7_object_to_c_string(sc, info));
+#endif
+
   /* top is 1 past actual top, top - 1 is op, if op = OP_CATCH, top - 4 is the cell containing the catch struct */
   
   for (i = sc->stack_top - 1; i >= 3; i -= 4)
@@ -9540,6 +9664,9 @@ s7_pointer s7_error_and_exit(s7_scheme *sc, s7_pointer type, s7_pointer info)
 static s7_pointer eval_error(s7_scheme *sc, const char *errmsg, s7_pointer obj)
 {
   char *str;
+#if S7_DEBUGGING
+  fprintf(stderr, "%p eval_error: %s %s\n", sc, errmsg, s7_object_to_c_string(sc, obj));
+#endif
   str = s7_object_to_c_string(sc, obj);
   sc->x = s7_string_concatenate(sc, errmsg, str);
   if (str) FREE(str);
@@ -11678,6 +11805,24 @@ static s7_pointer g_join_thread(s7_scheme *sc, s7_pointer args)
   return(car(args));
 }
 
+
+static s7_pointer g_is_thread(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_thread "(thread? obj) returns #t if obj is a thread object"
+  return(to_s7_bool(sc, 
+		    (s7_is_object(car(args))) &&
+		    (s7_object_type(car(args)) == thread_tag)));
+}
+
+
+static s7_pointer thread_environment(s7_scheme *sc, s7_pointer obj)
+{
+  thred *f;
+  f = (thred *)s7_object_value(obj);
+  if ((f) && (f->sc) && (f->sc->envir))
+    return(f->sc->envir);
+  return(sc->NIL);
+}
 #endif
 
 
@@ -11885,7 +12030,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "symbol->value",           g_symbol_to_value,         1, 0, false, H_symbol_to_value);
   
   s7_define_function(sc, "global-environment",      g_global_environment,      0, 0, false, H_global_environment);
-  s7_define_function(sc, "current-environment",     g_current_environment,     0, 0, false, H_current_environment);
+  s7_define_function(sc, "current-environment",     g_current_environment,     0, 1, false, H_current_environment);
   s7_define_function(sc, "provided?",               g_is_provided,             1, 0, false, H_is_provided);
   s7_define_function(sc, "provide",                 g_provide,                 1, 0, false, H_provide);
   s7_define_function(sc, "defined?",                g_is_defined,              1, 1, false, H_is_defined);
@@ -12185,6 +12330,7 @@ s7_scheme *s7_init(void)
   thread_tag = s7_new_type("<thread>", thread_print, thread_free, thread_equal, thread_mark, NULL, NULL);
   s7_define_function(sc, "make-thread",             g_make_thread,             1, 0, false, H_make_thread);
   s7_define_function(sc, "join-thread",             g_join_thread,             1, 0, false, H_join_thread);
+  s7_define_function(sc, "thread?",                 g_is_thread,               1, 0, false, H_is_thread);
 #endif
   
   s7_define_variable(sc, "*features*", sc->NIL);
@@ -12330,4 +12476,8 @@ static void mark_s7(s7_scheme *sc)
   check via valgrind in the opt=0 cases [works apparently except with run as unopt'd -- occasional errors still -- appear to be GC's fault]
   need better error reporting than useless "syntax error"!
   gensym over time can glom up the symbol table -- need a way to either reuse them or prune them [experiment in progress...]
+
+  ideally, whenever a thread finishes a note, we'd like it to get a new one, or start a new thread with the next one -- how to do this?
+    a reader function that does the notelist thread handling, called at start n times, then called by each thread when it's done
+    treat body as list of lists -- where is the overall join?  how to access the "main" thread?
 */

@@ -103,8 +103,8 @@ char *s7_number_to_string(s7_scheme *sc, s7_pointer obj, int radix);
 
 bool s7_is_vector(s7_pointer p);
 void s7_vector_fill(s7_pointer vec, s7_pointer obj);
-s7_pointer s7_vector_ref(s7_pointer vec, int ielem);
-s7_pointer s7_vector_set(s7_pointer vec, int ielem, s7_pointer a);
+s7_pointer s7_vector_ref(s7_scheme *sc, s7_pointer vec, int index);
+s7_pointer s7_vector_set(s7_scheme *sc, s7_pointer vec, int index, s7_pointer a);
 s7_pointer s7_make_vector(s7_scheme *sc, int len);
 s7_pointer s7_make_and_fill_vector(s7_scheme *sc, int len, s7_pointer fill);
 int s7_vector_length(s7_pointer vec);
