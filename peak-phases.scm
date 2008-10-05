@@ -468,3 +468,18 @@
 )
 
 ))
+
+
+;;; last 2 vals in particular may be wrong:
+;all peaks... Sat 04-Oct-2008 07:50
+;all 1024: peak-phases value: 63.3480662622618, current: 63.3256838963164, diff: -0.0223823659453686
+;all 2048: peak-phases value: 97.0831939934928, current: 96.9754045633894, diff: -0.107789430103438
+;odd peaks... Sat 04-Oct-2008 08:47
+;odd 1024: peak-phases value: 62.7, current: 62.7188905493201, diff: 0.0188905493200906
+;odd 2048: peak-phases value: 92.9663626249174, current: 92.5779837925156, diff: -0.388378832401813
+;prime peaks... Sat 04-Oct-2008 09:48
+;prime 256: peak-phases value: 30.3302073267761, current: 30.3112910666292, diff: -0.0189162601468986
+;prime 512: peak-phases value: 46.9621967903764, current: 46.853586514917, diff: -0.108610275459412
+;prime 1024: peak-phases value: 70.2318462016272, current: 70.8889605799015, diff: 0.657114378274358
+;prime 2048: peak-phases value: 108.273203403327, current: 106.57145001696, diff: -1.70175338636734
+;all done! Sat 04-Oct-2008 10:51

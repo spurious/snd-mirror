@@ -130,7 +130,8 @@
 
 #define INITIAL_PROTECTED_OBJECTS_SIZE 16  /* a vector of objects that are being protected from the GC */
 
-#define GC_TEMPS_SIZE 4096
+#define GC_TEMPS_SIZE 512
+/* 64 is too small, no trouble at 256 (and 128 I think) but 512 seems safer */
 
 #define S7_DEBUGGING 0
 /* this is for a bunch of sanity checks */
@@ -400,7 +401,7 @@ static const char *type_names[T_LAST_TYPE + 1] = {
 
 #define typeflag(p)                   ((p)->flag)
 #define type(p)                       (typeflag(p) & T_MASKTYPE)
-#define set_type(p, f)                typeflag(p) = ((f) | T_OBJECT)
+/* set_type below -- needs to maintain mark setting */
 
 #define T_SYNTAX                      (1 << (TYPE_BITS + 1))
 #define is_syntax(p)                  (typeflag(p) & T_SYNTAX)
@@ -431,7 +432,10 @@ static const char *type_names[T_LAST_TYPE + 1] = {
 #define T_SIMPLE                      (1 << (TYPE_BITS + 8))
 #define is_simple(p)                  (typeflag(p) & T_SIMPLE)
 
-#define is_object(x)                  ((x) && (((typeflag(x) & (T_UNUSED_BITS | T_OBJECT)) == T_OBJECT) && (type(x) != 0) && (type(x) <= T_LAST_TYPE)))
+#define set_type(p, f)                typeflag(p) = ((typeflag(p) & T_GC_MARK) | (f) | T_OBJECT)
+/* the gc call can be interrupted, leaving mark bits set -- we better not clear those bits */
+
+#define is_object(x)                  ((x) && (((typeflag(x) & (T_UNUSED_BITS | T_OBJECT)) == T_OBJECT) && (type(x) <= T_LAST_TYPE)))
 
 #define is_true(p)                    ((p) != sc->F)
 #define is_false(p)                   ((p) == sc->F)
@@ -555,7 +559,7 @@ static char *describe_type(s7_pointer p)
 {
   char *buf;
   buf = (char *)CALLOC(1024, sizeof(char));
-  sprintf(buf, "%s%s%s%s%s%s%s%s%s",
+  sprintf(buf, "%s%s%s%s%s%s%s%s%s%s",
 	  ((type(p) >= 0) && (type(p) <= T_LAST_TYPE)) ? type_names[type(p)] : "bogus type",
 	  (typeflag(p) & T_SYNTAX) ? " syntax" : "",
 	  (typeflag(p) & T_IMMUTABLE) ? " immutable" : "",
@@ -564,9 +568,15 @@ static char *describe_type(s7_pointer p)
 	  (typeflag(p) & T_OBJECT) ? " object" : "",
 	  (typeflag(p) & T_FINALIZABLE) ? " gc-freeable" : "",
 	  (typeflag(p) & T_SIMPLE) ? " simple" : "",
-	  (typeflag(p) & T_UNUSED_BITS) ? " and other garbage bits!" : "");
+	  (typeflag(p) & T_UNUSED_BITS) ? " and other garbage bits!" : "",
+	  ((typeflag(p) == 0) && (car(p) == 0) && (cdr(p) == 0) && (pair_line_number(p) == 0)) ? " [recently GC'd (all 0)]" : "");
   return(buf);
 }
+
+#define ASSERT_IS_OBJECT(Obj, Name) \
+  if (!(is_object(Obj))) \
+    {fprintf(stderr, "%s[%d]: %s is not an object: %p %s\n", __FUNCTION__, __LINE__, Name, Obj, describe_type(Obj)); abort();}
+
 #endif
 
 
@@ -851,6 +861,10 @@ static void finalize_s7_cell(s7_scheme *sc, s7_pointer a)
 	  break;
 	}
     }
+#if S7_DEBUGGING
+  if ((type(a) == 0))
+    fprintf(stderr, "freeing %p %s\n", a, describe_type(a));
+#endif
   memset((void *)a, 0, sizeof(s7_cell));
 }
 
@@ -869,45 +883,40 @@ void s7_mark_object(s7_pointer p)
   if (is_marked(p)) return; 
   
 #if S7_DEBUGGING
-  if (!is_object(p))
-    fprintf(stderr, "marking a non-object? ");
+  ASSERT_IS_OBJECT(p, "mark");
 #endif
   
   set_mark(p);
   
   if (is_simple(p)) return;
   
-  if (s7_is_vector(p)) 
+  switch (type(p))
     {
+    case T_VECTOR:
       mark_vector(p, vector_length(p));
       return;
-    }
-  
-  if (s7_is_object(p))
-    {
+      
+    case T_S7_OBJECT:
       s7_mark_embedded_objects(p);
       return;
-    }
-  
-  if (s7_is_continuation(p))
-    {
+
+    case T_CONTINUATION:
       s7_mark_object(continuation_cc_stack(p));
       return;
-    }
-  
-  if (is_catch(p))
-    {
+
+    case T_CATCH:
       s7_mark_object(catch_tag(p));
       s7_mark_object(catch_handler(p));
       return;
-    }
-  
-  if (is_dynamic_wind(p))
-    {
+
+    case T_DYNAMIC_WIND:
       s7_mark_object(dynamic_wind_in(p));
       s7_mark_object(dynamic_wind_out(p));
       s7_mark_object(dynamic_wind_body(p));
       return;
+
+    default:
+      break;
     }
   
   /* this should follow s7_is_object -- the latter is an atom, but we have to run the object's internal mark function */
@@ -960,11 +969,20 @@ static s7_pointer alloc_s7_cell(s7_scheme *sc)
 }
 
 
+#if S7_DEBUGGING
+  static int gc_ctr = 0, gc_trigger_ctr = 0;
+  static s7_scheme *gc_trigger;
+#endif
+
 static int gc(s7_scheme *sc, const char *function, int line)
 {
   s7_pointer p;
   int i, freed_heap = 0;
   
+#if S7_DEBUGGING
+  gc_ctr++;
+#endif
+
   if ((*(sc->gc_verbose)) &&
       (sc->output_port == sc->NIL))
     fprintf(stderr, "\n%s[%d] gc...", function, line);
@@ -989,7 +1007,7 @@ static int gc(s7_scheme *sc, const char *function, int line)
   for (i = 0; i < sc->temps_size; i++)
     s7_mark_object(sc->temps[i]);
   
-  clear_mark(sc->NIL); /* TODO: is this necessary? */
+  /* clear_mark(sc->NIL); */ /* TODO: is this necessary? */
   
   for (i = 0; i < sc->heap_size; i++)
     {
@@ -1023,14 +1041,24 @@ static pthread_mutex_t alloc_lock = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
 
+#if HAVE_PTHREADS
+#if S7_DEBUGGING
+#define new_cell(Sc) ({s7_pointer x; x = new_cell_1(Sc, __FUNCTION__, __LINE__); ASSERT_IS_OBJECT(x, "new cell"); x; })
+#else
+#define new_cell(Sc) new_cell_1(Sc, __FUNCTION__, __LINE__)
+#endif
+static s7_pointer new_cell_1(s7_scheme *nsc, const char *function, int line)
+#else
 #define new_cell(Sc) new_cell_1(Sc, __FUNCTION__, __LINE__)
 static s7_pointer new_cell_1(s7_scheme *sc, const char *function, int line)
+#endif
 {
   s7_pointer p;
   
 #if HAVE_PTHREADS
+  s7_scheme *sc;
   pthread_mutex_lock(&alloc_lock);
-  sc = sc->orig_sc;
+  sc = nsc->orig_sc;
 #endif
   
   p = alloc_s7_cell(sc);
@@ -1039,6 +1067,10 @@ static s7_pointer new_cell_1(s7_scheme *sc, const char *function, int line)
       /* no free heap */
       int k, old_size, freed_heap = 0;
       
+#if S7_DEBUGGING && HAVE_PTHREADS
+      gc_trigger = nsc;
+      gc_trigger_ctr = nsc->temps_ctr;
+#endif
       if (!(*(sc->gc_off)))
 	freed_heap = gc(sc, function, line);
       
@@ -1061,16 +1093,35 @@ static s7_pointer new_cell_1(s7_scheme *sc, const char *function, int line)
    *   that way madness lies... By delaying GC of _every_ %$^#%@ pointer, I can dispense
    *   with hundreds of individual protections.
    */
+#if HAVE_PTHREADS
+#if S7_DEBUGGING
+  typeflag(p) = T_OBJECT; /* turn off the is_object bug checks in case we're interrupted and a GC (mark pass) intervenes */
+  /* TODO: do we need T_SIMPLE here as well to turn off mark checks? */
+#endif
+  nsc->temps[nsc->temps_ctr++] = p;
+  if (nsc->temps_ctr >= nsc->temps_size)
+    nsc->temps_ctr = 0;
+
+  pthread_mutex_unlock(&alloc_lock);
+#else
   sc->temps[sc->temps_ctr++] = p;
   if (sc->temps_ctr >= sc->temps_size)
     sc->temps_ctr = 0;
-  
-#if HAVE_PTHREADS
-  pthread_mutex_unlock(&alloc_lock);
 #endif
   
   return(p);
 }
+
+
+#if S7_DEBUGGING
+static void fop(s7_scheme *sc, s7_pointer p)
+{
+  int i;
+  for (i = 0; i < sc->temps_size; i++)
+    if (sc->temps[i] == p)
+      fprintf(stderr, "%p in temps at %d (%d)\n", p, i, sc->temps_ctr);
+}
+#endif
 
 
 static s7_pointer g_gc_verbose(s7_scheme *sc, s7_pointer a)
@@ -1158,12 +1209,7 @@ static void pop_stack(s7_scheme *sc, s7_pointer a)
       abort();
       return;
     }
-  if (!is_object(a))
-    {
-      fprintf(stderr, "stack value popped: %p\n", a);
-      search_heap(sc, a);
-      abort();
-    }
+  ASSERT_IS_OBJECT(a, "pop stack value");
 #endif
   
   sc->op =    (opcode_t)integer(vector_element(sc->stack, top - 1)->object.number);
@@ -1182,21 +1228,9 @@ static void push_stack(s7_scheme *sc, opcode_t op, s7_pointer args, s7_pointer c
   sc->stack_top += 4;
   
 #if S7_DEBUGGING
-  if (!is_object(args))
-    {
-      fprintf(stderr, "stack args pushed: %p\n", args);
-      abort();
-    }
-  if (!is_object(code))
-    {
-      fprintf(stderr, "stack code pushed: %p\n", code);
-      abort();
-    }
-  if (!is_object(sc->envir))
-    {
-      fprintf(stderr, "stack envir pushed: %p\n", sc->envir);
-      abort();
-    }
+  ASSERT_IS_OBJECT(args, "push stack args");
+  ASSERT_IS_OBJECT(code, "push stack code");
+  ASSERT_IS_OBJECT(sc->envir, "push stack env");
   if ((op < 0 ) || (op > OP_MAX_DEFINED))
     {
       fprintf(stderr, "push bad op: %d\n", op);
@@ -1226,13 +1260,6 @@ static void push_stack(s7_scheme *sc, opcode_t op, s7_pointer args, s7_pointer c
   
   vector_element(sc->stack, top + 0) = code;
   vector_element(sc->stack, top + 1) = sc->envir;
-#if S7_DEBUGGING
-  if (!is_object(sc->envir))
-    {
-      fprintf(stderr, "pushed env %p\n", sc->envir);
-      abort();
-    }
-#endif
   vector_element(sc->stack, top + 2) = args;
   vector_element(sc->stack, top + 3) = vector_element(sc->small_ints, (int)op);
 } 
@@ -1402,6 +1429,9 @@ static pthread_mutex_t symtab_lock = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
 
+/* TODO: ideally the symbol table stuff would not be in the heap -- it is currently never GC'd.
+ */
+
 static s7_pointer symbol_table_add_by_name(s7_scheme *sc, const char *name) 
 { 
   s7_pointer x, str; 
@@ -1560,7 +1590,7 @@ s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
   len = safe_strlen(prefix) + 32;
   name = (char *)CALLOC(len, sizeof(char));
   
-  if ((*(sc->gensym_counter)) > 100) (*(sc->gensym_counter)) = 0; /* an experiment */
+  /* if ((*(sc->gensym_counter)) > 100) (*(sc->gensym_counter)) = 0; */ /* an experiment */
   
   for(; (*(sc->gensym_counter)) < LONG_MAX; ) 
     { 
@@ -1583,6 +1613,9 @@ s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
   return(sc->NIL); 
 } 
 
+
+/* TODO: gensym over time can glom up the symbol table -- need a way to either reuse them or prune them
+ */
 
 static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args) 
 {
@@ -1672,6 +1705,12 @@ static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
 static s7_pointer s7_new_slot_spec_in_env(s7_scheme *sc, s7_pointer env, s7_pointer variable, s7_pointer value) 
 { 
   s7_pointer slot;
+#if S7_DEBUGGING
+  ASSERT_IS_OBJECT(variable, "new slot variable");
+  ASSERT_IS_OBJECT(value, "new slot value");
+  ASSERT_IS_OBJECT(env, "new slot env");
+  ASSERT_IS_OBJECT(car(env), "new slot car env");
+#endif
   slot = s7_immutable_cons(sc, variable, value); 
   if (s7_is_vector(car(env))) 
     { 
@@ -1715,6 +1754,9 @@ static s7_pointer s7_find_slot_in_env(s7_scheme *sc, s7_pointer env, s7_pointer 
 
 static s7_pointer new_slot_in_env(s7_scheme *sc, s7_pointer variable, s7_pointer value) 
 { 
+#if S7_DEBUGGING
+  ASSERT_IS_OBJECT(sc->envir, "new slot envir");
+#endif
   return(s7_new_slot_spec_in_env(sc, sc->envir, variable, value)); 
 } 
 
@@ -1805,16 +1847,8 @@ s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e)
   set_type(x, T_CLOSURE);
   
 #if S7_DEBUGGING
-  if (!is_object(c))
-    {
-      fprintf(stderr, "closure code is not an object!");
-      abort();
-    }
-  if (!is_object(e))
-    {
-      fprintf(stderr, "closure environment is not an object!");
-      abort();
-    }
+  ASSERT_IS_OBJECT(c, "closure code");
+  ASSERT_IS_OBJECT(e, "closure env");
 #endif
   
   car(x) = c;
@@ -1922,6 +1956,7 @@ static s7_pointer copy_object(s7_scheme *sc, s7_pointer obj)
 {
   s7_pointer nobj;
   
+  /* PERHAPS: use a type bit here */
   if ((is_constant(obj)) || 
       (is_atom(obj)) ||
       (s7_is_object(obj)) ||
@@ -3312,6 +3347,8 @@ static s7_pointer make_sharp_const(s7_scheme *sc, char *name)
   if (strcmp(name, "f") == 0)
     return(sc->F);
   
+  /* PERHAPS: switch on char 0 */
+
   if (*name == 'o') /* #o (octal) */
     {
       if (!isdigit(*(name + 1)))
@@ -3507,6 +3544,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix)
 	    }
 	  else 
 	    {
+	      /* PERHAPS: ctable here? */
 	      if ((c == 'e') || (c == 'E') ||
 		  (c == 'd') || (c == 'f') || (c == 's'))
 		/* sigh -- what's the difference between these endless (e s f d l) exponent chars? */
@@ -6629,20 +6667,11 @@ static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
 }
 
 
-#if S7_DEBUGGING && 0
-static s7_Int conses = 0; 
-#endif
-
-
 s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
 {
   bool old_longjmp;
   s7_pointer port;
   /* this can be called recursively via s7_call */
-  
-#if S7_DEBUGGING && 0
-  conses = 0;
-#endif
   
   /* fprintf(stderr, "eval c string: %s with top: %d\n", str, sc->stack_top); */
   
@@ -6667,11 +6696,6 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
   sc->longjmp_ok = old_longjmp;
   pop_input_port(sc);
   s7_close_input_port(sc, port);
-  
-#if S7_DEBUGGING && 0
-  fprintf(stderr, "%s: %lld conses\n", str, conses);
-  conses = 0;
-#endif
   
   return(sc->value);
 }
@@ -6835,6 +6859,7 @@ static char *slashify_string(const char *p)
   s[j++] = '"';
   for (i = 0; i < len; i++) 
     {
+      /* PERHAPS: ctable here? */
       if ((p[i] == 0xff) || (p[i] == '"') || (p[i] < ' ') || (p[i] == '\\'))
 	{
 	  s[j++] = '\\';
@@ -7432,19 +7457,8 @@ static s7_pointer cons_untyped(s7_scheme *sc, s7_pointer a, s7_pointer b)
   s7_pointer x;
   
 #if S7_DEBUGGING
-#if 0
-  conses++;
-#endif
-  if (!is_object(a))
-    {
-      fprintf(stderr, "cons car is bad");
-      abort();
-    }
-  if (!is_object(b))
-    {
-      fprintf(stderr, "cons cdr is bad");
-      abort();
-    }
+  ASSERT_IS_OBJECT(a, "cons car");
+  ASSERT_IS_OBJECT(b, "cons cdr");
 #endif
   
   x = new_cell(sc); /* might trigger gc */
@@ -8366,11 +8380,7 @@ s7_pointer s7_vector_ref(s7_scheme *sc, s7_pointer vec, int index)
 s7_pointer s7_vector_set(s7_scheme *sc, s7_pointer vec, int index, s7_pointer a) 
 {
 #if S7_DEBUGGING
-  if (!is_object(a))
-    {
-      fprintf(stderr, "vector-set! value is not an object!");
-      abort();
-    }
+  ASSERT_IS_OBJECT(a, "vector-set! value");
 #endif
   
   if (index >= vector_length(vec))
@@ -8641,6 +8651,7 @@ static bool s7_is_applicable_object(s7_pointer x);
 
 bool s7_is_procedure(s7_pointer x)
 {
+  /* PERHAPS: type bit here */
   return((s7_is_closure(x)) || 
 	 (is_goto(x)) || 
 	 (s7_is_continuation(x)) || 
@@ -9285,9 +9296,14 @@ s7_pointer s7_make_keyword(s7_scheme *sc, const char *key)
   typeflag(sym) |= (T_IMMUTABLE | T_CONSTANT); 
   FREE(name);
   
+#if 0
   x = s7_find_slot_in_env(sc, sc->global_env, sym, false); /* is it already defined? */
   if (x == sc->NIL) 
     s7_new_slot_spec_in_env(sc, sc->global_env, sym, sym); /* its value is itself */
+#endif
+  x = s7_find_slot_in_env(sc, sc->envir, sym, true); /* is it already defined? */
+  if (x == sc->NIL) 
+    s7_new_slot_spec_in_env(sc, sc->envir, sym, sym); /* its value is itself */
   
   return(sym);
 }
@@ -9309,7 +9325,7 @@ static s7_pointer g_keyword_to_symbol(s7_scheme *sc, s7_pointer args)
   if (!s7_is_keyword(car(args)))
     return(s7_wrong_type_arg_error(sc, "keyword->symbol", 1, car(args), "a keyword"));
   name = s7_symbol_name(car(args));
-  return(s7_make_symbol(sc, ++name));
+  return(s7_make_symbol(sc, (char *)(name + 1)));
 }
 
 
@@ -9661,6 +9677,8 @@ s7_pointer s7_error_and_exit(s7_scheme *sc, s7_pointer type, s7_pointer info)
 }
 
 
+/* TODO: either take varargs here, or add more cases for additional args with split line etc
+ */
 static s7_pointer eval_error(s7_scheme *sc, const char *errmsg, s7_pointer obj)
 {
   char *str;
@@ -9949,6 +9967,10 @@ static void eval(s7_scheme *sc, opcode_t first_op)
     if (*(sc->tracing))
     g_stacktrace(sc, sc->NIL);
   */
+
+#if S7_DEBUGGING
+  ASSERT_IS_OBJECT(sc->envir, "env");
+#endif
   
   switch (sc->op) 
     {
@@ -10268,6 +10290,11 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_REAL_EVAL:
+#if S7_DEBUGGING
+      ASSERT_IS_OBJECT(sc->envir, "env");
+      ASSERT_IS_OBJECT(sc->code, "code");
+#endif
+
       if (s7_is_symbol(sc->code)) 
 	{
 	  sc->x = s7_find_slot_in_env(sc, sc->envir, sc->code, true);
@@ -10291,7 +10318,13 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	    }
 	  
 #if S7_DEBUGGING
-	  fprintf(stderr, "unbound %s\n", s7_object_to_c_string(sc, sc->code));
+	  fprintf(stderr, "unbound variable %s %s (%s) not in %p env %p %s\n", 
+		  s7_object_to_c_string(sc, sc->code), 
+		  s7_object_to_c_string(sc, sc->x),
+		  describe_type(sc->x),
+		  sc, sc->envir,
+		  s7_object_to_c_string(sc, sc->envir));
+	  abort();
 #endif
 	  
 	  pop_stack(sc, eval_error(sc, "unbound variable", sc->code));
@@ -10415,6 +10448,11 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  len = safe_list_length(sc, sc->args);
 	  if (len < function_required_args(sc->code))
 	    {
+#if S7_DEBUGGING
+	      fprintf(stderr, "%s: not enough args (got %d, required %d)\n", s7_object_to_c_string(sc, sc->code), len, function_required_args(sc->code));
+	      fprintf(stderr, "    args: %s\n", s7_object_to_c_string(sc, sc->args));
+	      gsp(sc);
+#endif
 	      pop_stack(sc, eval_error(sc, "not enough arguments", sc->code));
 	      goto START;
 	    }
@@ -10427,11 +10465,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	    }
 	  sc ->x = function_call(sc->code)(sc, sc->args);
 #if S7_DEBUGGING
-	  if (!is_object(sc->x))
-	    {
-	      fprintf(stderr, "%s returned: %p\n", function_name(sc->code), sc->x);
-	      abort();
-	    }
+	  ASSERT_IS_OBJECT(sc->x, "function returned value");
 #endif
 	  
 	  pop_stack(sc, sc->x);
@@ -10449,17 +10483,18 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 		{
 		  if (sc->y == sc->NIL)
 		    {
+#if S7_DEBUGGING
+		      fprintf(stderr, "%s: not enough args\n", s7_object_to_c_string(sc, sc->code));
+		      fprintf(stderr, "    args: %s\n", s7_object_to_c_string(sc, sc->args));
+		      gsp(sc);
+#endif
 		      pop_stack(sc, eval_error(sc, "not enough arguments", g_procedure_source(sc, s7_cons(sc, sc->code, sc->NIL))));
 		      goto START;
 		    }
 		  
 #if S7_DEBUGGING
-		  if (!is_object(car(sc->y)))
-		    {
-		      fprintf(stderr, "arg to closure is bogus: %p\n", car(sc->y));
-		      search_heap(sc, car(sc->y));
-		      abort();
-		    }
+		  ASSERT_IS_OBJECT(sc->x, "parameter to closure");
+		  ASSERT_IS_OBJECT(sc->y, "arg to closure");
 #endif
 		  
 		  new_slot_in_env(sc, car(sc->x), car(sc->y));
@@ -10540,6 +10575,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 			{
 #if S7_DEBUGGING
 			  fprintf(stderr, "apply: %s?\n", s7_object_to_c_string(sc, sc->code));
+			  abort();
 #endif
 			  pop_stack(sc, eval_error(sc, "apply of non-function?", sc->code));
 			  goto START;
@@ -10574,16 +10610,25 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_DEF0:  /* define */
       /* fprintf(stderr, "define %s\n", s7_object_to_c_string(sc, sc->code)); */
-      if ((!s7_is_pair(sc->code)) ||
-	  (!s7_is_pair(cdr(sc->code))))
+      if (!s7_is_pair(sc->code))
 	{
-	  pop_stack(sc, eval_error(sc, "define syntax error", sc->code));
+	  pop_stack(sc, eval_error(sc, "define: nothing to define?", sc->code));
 	  goto START;
 	}
-      
+      if (!s7_is_pair(cdr(sc->code)))
+	{
+	  pop_stack(sc, eval_error(sc, "define: no value?", sc->code));
+	  goto START;
+	}
+      if ((!s7_is_pair(car(sc->code))) &&
+	  (s7_is_pair(cddr(sc->code))))
+	{
+	  pop_stack(sc, eval_error(sc, "define: more than 1 value?", sc->code));
+	  goto START;
+	}
       if (s7_is_immutable(car(sc->code)))
 	{
-	  pop_stack(sc, eval_error(sc, "define: unable to alter immutable object", car(sc->code)));
+	  pop_stack(sc, eval_error(sc, "define: can't alter immutable object", car(sc->code)));
 	  goto START;
 	}
       
@@ -11064,6 +11109,9 @@ static void eval(s7_scheme *sc, opcode_t first_op)
        * where "form" is the thing presented to us in the code, i.e. (when mumble do-this)
        *   and the following code takes that as its argument and transforms it in some way
        */
+
+      /* sc->args = sc->NIL; *//* sc->code was sitting here for GC protection */
+
       set_type(sc->value, T_MACRO);
       
       /* find name in environment, and define it */
@@ -11123,7 +11171,8 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       /* fprintf(stderr, "sc->x: %s, sc->code: %s\n", s7_object_to_c_string(sc, sc->x), s7_object_to_c_string(sc, sc->code)); */
       
       /* (*(sc->gc_off)) = false; */
-      push_stack(sc, OP_MACRO1, sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO1 */
+      push_stack(sc, OP_MACRO1, /* sc->code */ sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO1 */
+                                                    /* sc->code is merely being protected */
       goto EVAL;
       
       
@@ -11595,6 +11644,11 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 
 static s7_pointer g_mcons(s7_scheme *sc, s7_pointer f, s7_pointer l, s7_pointer r)
 {
+#if S7_DEBUGGING
+  ASSERT_IS_OBJECT(l, "mcons left");
+  ASSERT_IS_OBJECT(r, "mcons right");
+#endif
+
   if ((is_pair(r)) &&
       (car(r) == sc->QUOTE) &&
       (car(cdr(r)) == cdr(f)) &&
@@ -11621,6 +11675,12 @@ static s7_pointer g_mcons(s7_scheme *sc, s7_pointer f, s7_pointer l, s7_pointer 
 
 static s7_pointer g_mappend(s7_scheme *sc, s7_pointer f, s7_pointer l, s7_pointer r)
 {
+#if S7_DEBUGGING
+  ASSERT_IS_OBJECT(l, "mappend left");
+  ASSERT_IS_OBJECT(r, "mappend right");
+  ASSERT_IS_OBJECT(f, "mappend form");
+#endif
+
   if ((cdr(f) == sc->NIL) ||
       ((s7_is_pair(r)) &&
        (car(r) == sc->QUOTE) &&
@@ -11633,6 +11693,10 @@ static s7_pointer g_mappend(s7_scheme *sc, s7_pointer f, s7_pointer l, s7_pointe
 
 static s7_pointer g_quasiquote_1(s7_scheme *sc, int level, s7_pointer form)
 {
+#if S7_DEBUGGING
+  ASSERT_IS_OBJECT(form, "quasiquote form");
+#endif
+
   if (!s7_is_pair(form))
     {
       if ((s7_is_number(form)) ||
@@ -11714,6 +11778,10 @@ typedef struct {
   s7_scheme *sc;
   s7_pointer func;
   pthread_t *thread;
+#if S7_DEBUGGING
+  int gc_temps_ctr;
+  int gc_ctr;
+#endif
 } thred;
 
 static int thread_tag = 0;
@@ -11734,6 +11802,9 @@ static void thread_free(void *obj)
       free(f->thread);
       f->thread = NULL;
       f->sc = close_s7(f->sc);
+#if S7_DEBUGGING
+      f->gc_temps_ctr = -1;
+#endif
       FREE(f);
     }
 }
@@ -11742,10 +11813,14 @@ static void thread_free(void *obj)
 static void thread_mark(void *val)
 {
   thred *f = (thred *)val;
-  if (f)
+  if ((f) && (f->sc)) /* possibly still in make_thread */
     {
       mark_s7(f->sc);
       s7_mark_object(f->func);
+#if S7_DEBUGGING
+      f->gc_temps_ctr = f->sc->temps_ctr;
+      f->gc_ctr = gc_ctr;
+#endif
     }
 }
 
@@ -11779,13 +11854,18 @@ static s7_pointer g_make_thread(s7_scheme *sc, s7_pointer args)
   
   f = (thred *)CALLOC(1, sizeof(thred));
   f->func = car(args);
+#if S7_DEBUGGING
+  f->gc_temps_ctr = 0;
+#endif
   
   obj = s7_make_object(sc, thread_tag, (void *)f);
   
   pthread_mutex_lock(&alloc_lock);
   f->sc = clone_s7(sc, vect);
   f->sc->envir = frame;
+  /*
   sc->y = obj;
+  */
   f->sc->y = obj;
   f->thread = (pthread_t *)malloc(sizeof(pthread_t));
   pthread_create(f->thread, NULL, run_thread_func, (void *)f);
@@ -12459,7 +12539,6 @@ static void mark_s7(s7_scheme *sc)
   ((lambda (x) x) 1 2) got 1 but expected error
   ((lambda (begin) (begin 1 2 3)) (lambda lambda lambda)) got 3 but expected (1 2 3)
   (let* ((x (quote (1 2 3))) (y (apply list x))) (not (eq? x y))) got #f but expected #t
-  (define x 1 2) got x but expected error
   (define (quote hi) 1) got quote but expected error
   (call-with-values (lambda () (call/cc (lambda (k) (k 2 3)))) (lambda (x y) (list x y))) got error but expected (2 3)
   (let ((x 1)) (letrec ((x 1) (y x)) y)) got 1 but expected error
@@ -12475,7 +12554,6 @@ static void mark_s7(s7_scheme *sc)
   it would be nice to have s7test checks for generalized set, applicable objects, hash tables, proc-w-set, keywords, macros, call-with-exit, threads
   check via valgrind in the opt=0 cases [works apparently except with run as unopt'd -- occasional errors still -- appear to be GC's fault]
   need better error reporting than useless "syntax error"!
-  gensym over time can glom up the symbol table -- need a way to either reuse them or prune them [experiment in progress...]
 
   ideally, whenever a thread finishes a note, we'd like it to get a new one, or start a new thread with the next one -- how to do this?
     a reader function that does the notelist thread handling, called at start n times, then called by each thread when it's done
