@@ -130,8 +130,8 @@
 
 #define INITIAL_PROTECTED_OBJECTS_SIZE 16  /* a vector of objects that are being protected from the GC */
 
-#define GC_TEMPS_SIZE 512
-/* 64 is too small, no trouble at 256 (and 128 I think) but 512 seems safer */
+#define GC_TEMPS_SIZE 4096
+/* 512 is too small in the threads case (generators.scm) */
 
 #define S7_DEBUGGING 0
 /* this is for a bunch of sanity checks */
@@ -432,8 +432,12 @@ static const char *type_names[T_LAST_TYPE + 1] = {
 #define T_SIMPLE                      (1 << (TYPE_BITS + 8))
 #define is_simple(p)                  (typeflag(p) & T_SIMPLE)
 
+#if HAVE_PTHREADS
 #define set_type(p, f)                typeflag(p) = ((typeflag(p) & T_GC_MARK) | (f) | T_OBJECT)
 /* the gc call can be interrupted, leaving mark bits set -- we better not clear those bits */
+#else
+#define set_type(p, f)                typeflag(p) = ((f) | T_OBJECT)
+#endif
 
 #define is_object(x)                  ((x) && (((typeflag(x) & (T_UNUSED_BITS | T_OBJECT)) == T_OBJECT) && (type(x) <= T_LAST_TYPE)))
 
@@ -777,6 +781,7 @@ void s7_gc_unprotect(s7_scheme *sc, s7_pointer x)
 #endif
 	return;
       }
+
 #if HAVE_PTHREADS
   pthread_mutex_unlock(&protected_objects_lock);
 #endif
@@ -861,10 +866,7 @@ static void finalize_s7_cell(s7_scheme *sc, s7_pointer a)
 	  break;
 	}
     }
-#if S7_DEBUGGING
-  if ((type(a) == 0))
-    fprintf(stderr, "freeing %p %s\n", a, describe_type(a));
-#endif
+
   memset((void *)a, 0, sizeof(s7_cell));
 }
 
@@ -947,15 +949,6 @@ static void free_s7_cell(s7_scheme *sc, int loc)
 	sc->free_heap[k] = -1;
     }
   
-#if S7_DEBUGGING
-  if ((loc < 0) ||
-      (sc->free_heap_top < 0))
-    {
-      fprintf(stderr, "free %d %d\n", loc, sc->free_heap_top);
-      abort();
-    }
-#endif
-  
   sc->free_heap[sc->free_heap_top++] = loc;
 }
 
@@ -969,24 +962,16 @@ static s7_pointer alloc_s7_cell(s7_scheme *sc)
 }
 
 
-#if S7_DEBUGGING
-  static int gc_ctr = 0, gc_trigger_ctr = 0;
-  static s7_scheme *gc_trigger;
-#endif
-
 static int gc(s7_scheme *sc, const char *function, int line)
 {
   s7_pointer p;
   int i, freed_heap = 0;
   
-#if S7_DEBUGGING
-  gc_ctr++;
-#endif
-
   if ((*(sc->gc_verbose)) &&
       (sc->output_port == sc->NIL))
     fprintf(stderr, "\n%s[%d] gc...", function, line);
   
+  /* mark all live objects */
   /* s7_mark_object(sc->symbol_table); */
   s7_mark_object(sc->global_env);
   
@@ -1007,8 +992,7 @@ static int gc(s7_scheme *sc, const char *function, int line)
   for (i = 0; i < sc->temps_size; i++)
     s7_mark_object(sc->temps[i]);
   
-  /* clear_mark(sc->NIL); */ /* TODO: is this necessary? */
-  
+  /* free up all other objects */
   for (i = 0; i < sc->heap_size; i++)
     {
       p = sc->heap[i];
@@ -1041,15 +1025,11 @@ static pthread_mutex_t alloc_lock = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
 
-#if HAVE_PTHREADS
-#if S7_DEBUGGING
-#define new_cell(Sc) ({s7_pointer x; x = new_cell_1(Sc, __FUNCTION__, __LINE__); ASSERT_IS_OBJECT(x, "new cell"); x; })
-#else
 #define new_cell(Sc) new_cell_1(Sc, __FUNCTION__, __LINE__)
-#endif
+
+#if HAVE_PTHREADS
 static s7_pointer new_cell_1(s7_scheme *nsc, const char *function, int line)
 #else
-#define new_cell(Sc) new_cell_1(Sc, __FUNCTION__, __LINE__)
 static s7_pointer new_cell_1(s7_scheme *sc, const char *function, int line)
 #endif
 {
@@ -1067,12 +1047,9 @@ static s7_pointer new_cell_1(s7_scheme *sc, const char *function, int line)
       /* no free heap */
       int k, old_size, freed_heap = 0;
       
-#if S7_DEBUGGING && HAVE_PTHREADS
-      gc_trigger = nsc;
-      gc_trigger_ctr = nsc->temps_ctr;
-#endif
       if (!(*(sc->gc_off)))
 	freed_heap = gc(sc, function, line);
+      /* when threads, the gc function can be interrupted at any point and resumed later -- mark bits need to be preserved during this interruption */
       
       if (freed_heap < 1000)
 	{
@@ -1093,17 +1070,20 @@ static s7_pointer new_cell_1(s7_scheme *sc, const char *function, int line)
    *   that way madness lies... By delaying GC of _every_ %$^#%@ pointer, I can dispense
    *   with hundreds of individual protections.
    */
+
 #if HAVE_PTHREADS
 #if S7_DEBUGGING
   typeflag(p) = T_OBJECT; /* turn off the is_object bug checks in case we're interrupted and a GC (mark pass) intervenes */
-  /* TODO: do we need T_SIMPLE here as well to turn off mark checks? */
 #endif
+
   nsc->temps[nsc->temps_ctr++] = p;
   if (nsc->temps_ctr >= nsc->temps_size)
     nsc->temps_ctr = 0;
 
   pthread_mutex_unlock(&alloc_lock);
+
 #else
+
   sc->temps[sc->temps_ctr++] = p;
   if (sc->temps_ctr >= sc->temps_size)
     sc->temps_ctr = 0;
@@ -1120,6 +1100,17 @@ static void fop(s7_scheme *sc, s7_pointer p)
   for (i = 0; i < sc->temps_size; i++)
     if (sc->temps[i] == p)
       fprintf(stderr, "%p in temps at %d (%d)\n", p, i, sc->temps_ctr);
+}
+
+static void search_heap(s7_scheme *sc, s7_pointer obj)
+{
+  int i;
+  for (i = 0; i < sc->heap_size; i++)
+    if (obj == sc->heap[i])
+      break;
+  if (i < sc->heap_size)
+    fprintf(stderr, "unknown object in heap: %d %p\n", i, obj);
+  else fprintf(stderr, "unknown object %p not in heap", obj);
 }
 #endif
 
@@ -1148,20 +1139,6 @@ static s7_pointer g_gc(s7_scheme *sc, s7_pointer a)
   
   return(sc->UNSPECIFIED);
 }
-
-
-#if S7_DEBUGGING
-static void search_heap(s7_scheme *sc, s7_pointer obj)
-{
-  int i;
-  for (i = 0; i < sc->heap_size; i++)
-    if (obj == sc->heap[i])
-      break;
-  if (i < sc->heap_size)
-    fprintf(stderr, "unknown object in heap: %d %p\n", i, obj);
-  else fprintf(stderr, "unknown object %p not in heap", obj);
-}
-#endif
 
 
 s7_pointer s7_local_gc_protect(s7_pointer p)
@@ -1590,7 +1567,7 @@ s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
   len = safe_strlen(prefix) + 32;
   name = (char *)CALLOC(len, sizeof(char));
   
-  /* if ((*(sc->gensym_counter)) > 100) (*(sc->gensym_counter)) = 0; */ /* an experiment */
+  /* if ((*(sc->gensym_counter)) > 100) (*(sc->gensym_counter)) = 0; */ /* an experiment (interrupted by other things...) */
   
   for(; (*(sc->gensym_counter)) < LONG_MAX; ) 
     { 
@@ -3334,7 +3311,74 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
 }
 
 
-/* make constant */
+#define USE_CHARACTER_TABLES 1
+
+#if USE_CHARACTER_TABLES
+
+#define CTABLE_SIZE 128
+static bool *whitespace_table, *atom_delimiter_table, *sharp_const_table, *exponent_table;
+
+
+static bool is_one_of(bool *ctable, int c) 
+{
+  return((c == EOF) || (ctable[c]));
+}
+
+
+static void init_ctables(void)
+{
+  whitespace_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
+  atom_delimiter_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
+  sharp_const_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
+  exponent_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
+  
+  whitespace_table['\n'] = true;
+  whitespace_table['\t'] = true;
+  whitespace_table[' '] = true;
+  
+  sharp_const_table[' '] = true;
+  sharp_const_table['t'] = true;
+  sharp_const_table['f'] = true;
+  sharp_const_table['o'] = true;
+  sharp_const_table['d'] = true;
+  sharp_const_table['x'] = true;
+  sharp_const_table['b'] = true;
+  sharp_const_table['i'] = true;
+  sharp_const_table['e'] = true;
+  sharp_const_table['\\'] = true;
+  
+  atom_delimiter_table['('] = true;
+  atom_delimiter_table[')'] = true;
+  atom_delimiter_table[';'] = true;
+  atom_delimiter_table['\t'] = true;
+  atom_delimiter_table['\n'] = true;
+  atom_delimiter_table['\r'] = true;
+  atom_delimiter_table[' '] = true;
+
+  exponent_table['e'] = true;
+  exponent_table['E'] = true;
+  exponent_table['s'] = true;
+  exponent_table['f'] = true;
+  exponent_table['d'] = true;
+  exponent_table['l'] = true;
+}
+
+#else
+
+static bool is_one_of(const char *s, int c) 
+{
+  if (c == EOF) 
+    return(true);
+  
+  while (*s)
+    if (*s++ == c)
+      return(true);
+  return(false);
+}
+
+#endif
+
+
 static s7_pointer make_sharp_const(s7_scheme *sc, char *name) 
 {
   long x;
@@ -3544,10 +3588,13 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix)
 	    }
 	  else 
 	    {
-	      /* PERHAPS: ctable here? */
+#if USE_CHARACTER_TABLES
+	      if (exponent_table[c])
+#else
 	      if ((c == 'e') || (c == 'E') ||
-		  (c == 'd') || (c == 'f') || (c == 's'))
+		  (c == 'd') || (c == 'f') || (c == 's') || (c == 'l'))
 		/* sigh -- what's the difference between these endless (e s f d l) exponent chars? */
+#endif
 		{
 		  if (!ex1)
 		    ex1 = p;
@@ -6050,63 +6097,6 @@ static void backchar(s7_scheme *sc, char c, s7_pointer pt)
 
 /* -------- read token or expression -------- */
 
-#define USE_CHARACTER_TABLES 1
-
-#if USE_CHARACTER_TABLES
-#define CTABLE_SIZE 128
-static bool *whitespace_table, *atom_delimiter_table, *sharp_const_table;
-
-static bool is_one_of(bool *ctable, int c) 
-{
-  return((c == EOF) || (ctable[c]));
-}
-
-static void init_ctables(void)
-{
-  whitespace_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
-  atom_delimiter_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
-  sharp_const_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
-  
-  whitespace_table['\n'] = true;
-  whitespace_table['\t'] = true;
-  whitespace_table[' '] = true;
-  
-  sharp_const_table[' '] = true;
-  sharp_const_table['t'] = true;
-  sharp_const_table['f'] = true;
-  sharp_const_table['o'] = true;
-  sharp_const_table['d'] = true;
-  sharp_const_table['x'] = true;
-  sharp_const_table['b'] = true;
-  sharp_const_table['i'] = true;
-  sharp_const_table['e'] = true;
-  sharp_const_table['\\'] = true;
-  
-  atom_delimiter_table['('] = true;
-  atom_delimiter_table[')'] = true;
-  atom_delimiter_table[';'] = true;
-  atom_delimiter_table['\t'] = true;
-  atom_delimiter_table['\n'] = true;
-  atom_delimiter_table['\r'] = true;
-  atom_delimiter_table[' '] = true;
-}
-
-#else
-/* check c is in chars */
-
-static bool is_one_of(const char *s, int c) 
-{
-  if (c == EOF) 
-    return(true);
-  
-  while (*s)
-    if (*s++ == c)
-      return(true);
-  return(false);
-}
-#endif
-
-
 /* read characters up to delimiter, but cater to character constants */
 
 static void resize_strbuf(s7_scheme *sc)
@@ -6145,8 +6135,6 @@ static char *read_string_upto(s7_scheme *sc, bool *delim, s7_pointer pt)
   return(sc->strbuf);
 }
 
-
-/* read string expression "xxx...xxx" */
 
 static s7_pointer read_string_expression(s7_scheme *sc, s7_pointer pt) 
 {
@@ -6286,8 +6274,6 @@ static s7_pointer read_string_expression(s7_scheme *sc, s7_pointer pt)
 }
 
 
-/* skip white characters */
-
 static  void skipspace(s7_scheme *sc, s7_pointer pt) 
 {
   int c;
@@ -6297,7 +6283,6 @@ static  void skipspace(s7_scheme *sc, s7_pointer pt)
     backchar(sc, c, pt);
 }
 
-/* get token */
 
 static int token(s7_scheme *sc, s7_pointer pt)
 {
@@ -7058,13 +7043,6 @@ static char *s7_vector_to_c_string(s7_scheme *sc, s7_pointer vect)
     {
       if (elements[i])
 	{
-#if S7_DEBUGGING
-	  if ((safe_strlen(buf) + 1 + safe_strlen(elements[i])) >= bufsize)
-	    {
-	      fprintf(stderr, "%s + %s => %d but bufsize: %d\n", buf, elements[i], safe_strlen(buf) + 1 + safe_strlen(elements[i]), bufsize);
-	      abort();
-	    }
-#endif
 	  strcat(buf, elements[i]);
 	  FREE(elements[i]);
 	  strcat(buf, " ");
@@ -7072,13 +7050,6 @@ static char *s7_vector_to_c_string(s7_scheme *sc, s7_pointer vect)
     }
   if (elements[len - 1])
     {
-#if S7_DEBUGGING
-      if ((safe_strlen(buf) + 1 + safe_strlen(elements[len - 1])) >= bufsize)
-	{
-	  fprintf(stderr, "%s + %s => %d but bufsize: %d\n", buf, elements[len - 1], safe_strlen(buf) + 1 + safe_strlen(elements[len - 1]), bufsize);
-	  abort();
-	}
-#endif
       strcat(buf, elements[len - 1]);
       FREE(elements[len - 1]);
     }
@@ -7138,14 +7109,7 @@ static char *s7_list_to_c_string(s7_scheme *sc, s7_pointer lst)
   bufsize += (256 + len * 2); /* len spaces */
   buf = (char *)CALLOC(bufsize, sizeof(char));
   
-#if S7_DEBUGGING && 0
-  if (pair_line_number(car(lst)) != 0)
-    sprintf(buf, "[%d](", pair_line_number(car(lst)));
-  else sprintf(buf, "(");
-#else
   sprintf(buf, "(");
-#endif
-  
   for (i = 0; i < len - 1; i++)
     {
       if (elements[i])
@@ -7636,11 +7600,13 @@ s7_pointer s7_append(s7_scheme *sc, s7_pointer a, s7_pointer b)
 
 static int safe_list_length(s7_scheme *sc, s7_pointer a)
 {
+  /* assume that "a" is a proper list */
   int i = 0;
   s7_pointer b;
   for (b = a; b != sc->NIL; i++, b = cdr(b));
   return(i);
 }
+
 
 int s7_list_length(s7_scheme *sc, s7_pointer a) 
 {
@@ -8215,6 +8181,7 @@ static s7_pointer g_assq_1(s7_scheme *sc, s7_pointer args, const char *name, boo
   return(sc->F);
 }      
 
+
 static s7_pointer g_assq(s7_scheme *sc, s7_pointer args) {return(g_assq_1(sc, args, "assq", s7_is_eq));}
 static s7_pointer g_assv(s7_scheme *sc, s7_pointer args) {return(g_assq_1(sc, args, "assv", s7_is_eqv));}
 static s7_pointer g_assoc(s7_scheme *sc, s7_pointer args) {return(g_assq_1(sc, args, "assoc", s7_is_equal));}
@@ -8317,7 +8284,6 @@ static s7_pointer g_list_line_number(s7_scheme *sc, s7_pointer args)
 
 
 
-
 /* -------------------------------- vectors -------------------------------- */
 
 
@@ -8379,10 +8345,6 @@ s7_pointer s7_vector_ref(s7_scheme *sc, s7_pointer vec, int index)
 
 s7_pointer s7_vector_set(s7_scheme *sc, s7_pointer vec, int index, s7_pointer a) 
 {
-#if S7_DEBUGGING
-  ASSERT_IS_OBJECT(a, "vector-set! value");
-#endif
-  
   if (index >= vector_length(vec))
     return(s7_out_of_range_error(sc, "vector-set!", 2, s7_make_integer(sc, index), "index is too high"));
 
@@ -8850,9 +8812,11 @@ typedef struct {
   s7_pointer (*set)(s7_scheme *sc, s7_pointer obj, s7_pointer args);
 } fobject;
 
+
 static fobject *object_types = NULL;
 static int object_types_size = 0;
 static int num_types = 0;
+
 
 int s7_new_type(const char *name, 
 		char *(*print)(void *value), 
@@ -9603,15 +9567,6 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
       sc->args = s7_cons(sc, type, sc->x = s7_cons(sc, info, sc->NIL));
       sc->code = catch_handler(catcher);
       sc->stack_top = catch_goto_loc(catcher);
-      
-#if S7_DEBUGGING
-      if (sc->stack_top > sc->stack_size)
-	{
-	  fprintf(stderr, "catch set top to %d (%d)\n", sc->stack_top, sc->stack_size);
-	  abort();
-	}
-#endif
-      
       sc->op = OP_APPLY;
     }
   else
@@ -9952,7 +9907,7 @@ static s7_pointer g_call_with_values(s7_scheme *sc, s7_pointer args)
 
 static void eval(s7_scheme *sc, opcode_t first_op) 
 {
-#define   ok_abbrev(x)   ((s7_is_pair(x)) && (cdr(x) == sc->NIL))
+  #define ok_abbrev(x) ((s7_is_pair(x)) && (cdr(x) == sc->NIL))
   
   sc->op = first_op;
   
@@ -9962,15 +9917,6 @@ static void eval(s7_scheme *sc, opcode_t first_op)
    */
   
  START:
-  
-  /*
-    if (*(sc->tracing))
-    g_stacktrace(sc, sc->NIL);
-  */
-
-#if S7_DEBUGGING
-  ASSERT_IS_OBJECT(sc->envir, "env");
-#endif
   
   switch (sc->op) 
     {
@@ -11139,7 +11085,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
        *    
        *    end up with name as sc->x going to OP_MACRO1, ((gensym) (lambda (args) body) going to eval
        */
-      /* (*(sc->gc_off)) = true; */
+
       sc->y = s7_gensym(sc, "defmac");
       sc->x = car(sc->code);
       
@@ -11170,7 +11116,6 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       
       /* fprintf(stderr, "sc->x: %s, sc->code: %s\n", s7_object_to_c_string(sc, sc->x), s7_object_to_c_string(sc, sc->code)); */
       
-      /* (*(sc->gc_off)) = false; */
       push_stack(sc, OP_MACRO1, /* sc->code */ sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO1 */
                                                     /* sc->code is merely being protected */
       goto EVAL;
@@ -11178,7 +11123,6 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_DEFINE_MACRO:
       
-      /* (*(sc->gc_off)) = true; */
       sc->y = s7_gensym(sc, "defmac");
       sc->x = caar(sc->code);
       
@@ -11209,7 +11153,6 @@ static void eval(s7_scheme *sc, opcode_t first_op)
        *   sc->code: (lambda (defmac-51) (apply (lambda (a b) (quasiquote (+ (unquote a) (unquote b)))) (cdr defmac-51)))
        */
       
-      /* (*(sc->gc_off)) = false; */
       push_stack(sc, OP_MACRO1, sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO1 */
       goto EVAL;
       
@@ -11766,22 +11709,23 @@ static s7_pointer g_quasiquote(s7_scheme *sc, s7_pointer args)
 }
 
 
-#if HAVE_PTHREADS
+
+
 /* -------------------------------- threads -------------------------------- */
+
+#if HAVE_PTHREADS
 
 static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect);
 static s7_scheme *close_s7(s7_scheme *sc);
 static void mark_s7(s7_scheme *sc);
 
 
+/* PERHAPS: mutex detach kill yield */
+
 typedef struct {
   s7_scheme *sc;
   s7_pointer func;
   pthread_t *thread;
-#if S7_DEBUGGING
-  int gc_temps_ctr;
-  int gc_ctr;
-#endif
 } thred;
 
 static int thread_tag = 0;
@@ -11802,9 +11746,6 @@ static void thread_free(void *obj)
       free(f->thread);
       f->thread = NULL;
       f->sc = close_s7(f->sc);
-#if S7_DEBUGGING
-      f->gc_temps_ctr = -1;
-#endif
       FREE(f);
     }
 }
@@ -11817,10 +11758,6 @@ static void thread_mark(void *val)
     {
       mark_s7(f->sc);
       s7_mark_object(f->func);
-#if S7_DEBUGGING
-      f->gc_temps_ctr = f->sc->temps_ctr;
-      f->gc_ctr = gc_ctr;
-#endif
     }
 }
 
@@ -11854,20 +11791,16 @@ static s7_pointer g_make_thread(s7_scheme *sc, s7_pointer args)
   
   f = (thred *)CALLOC(1, sizeof(thred));
   f->func = car(args);
-#if S7_DEBUGGING
-  f->gc_temps_ctr = 0;
-#endif
   
   obj = s7_make_object(sc, thread_tag, (void *)f);
   
   pthread_mutex_lock(&alloc_lock);
+
   f->sc = clone_s7(sc, vect);
   f->sc->envir = frame;
-  /*
-  sc->y = obj;
-  */
   f->sc->y = obj;
   f->thread = (pthread_t *)malloc(sizeof(pthread_t));
+
   pthread_create(f->thread, NULL, run_thread_func, (void *)f);
   pthread_mutex_unlock(&alloc_lock);
   
@@ -11907,7 +11840,7 @@ static s7_pointer thread_environment(s7_scheme *sc, s7_pointer obj)
 
 
 
-/* -------------------------------- S7 init -------------------------------- */
+/* -------------------------------- initialization -------------------------------- */
 
 s7_scheme *s7_init(void) 
 {
@@ -12075,7 +12008,7 @@ s7_scheme *s7_init(void)
   sc->FEED_TO = s7_make_symbol(sc, "=>");
   typeflag(sc->FEED_TO) |= (T_IMMUTABLE | T_CONSTANT); 
   
-#define set_object_name "(generalized set!)"
+  #define set_object_name "(generalized set!)"
   sc->SET_OBJECT = s7_make_symbol(sc, set_object_name);
   typeflag(sc->SET_OBJECT) |= T_CONSTANT; 
   
@@ -12494,6 +12427,8 @@ static void mark_s7(s7_scheme *sc)
 }
 
 #endif
+
+
 
 /*
   ;times: #(30 29 40 37 458 3596 45 93 19877 2542 136 44 180 496 367 1947 3062 50 32 3833 835 1735 4736 13099 0 0 0 42 5636)

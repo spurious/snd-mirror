@@ -50157,6 +50157,17 @@ EDITS: 1
 ;       (expsnd  131 7 19)
 ;       (fm vln  362 11 33)
 ;
+;s7 8-core (6-Oct-08):
+;       ("osc+env" 337 11 30)
+;       ("vct-ref" 354 6 62)
+;       ("let if " 332 5 63)
+;       ("abs sin" 244 7 33)
+;       ("-1     " 163 3 52)
+;       ("*2     " 166 3 59)
+;       ("jcrev  " 311 6 52)
+;       ("expsnd " 173 3 53)
+;       ("fm vln " 346 7 51)
+
 	
 	(if with-gui
 	    (let* ((osc (make-oscil 440))

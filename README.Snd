@@ -21,30 +21,31 @@ The configure program has several Snd-related arguments:
 
    Extension language:
 
+     --with-s7                 use S7 (the default, a version of Scheme).
+
      --with-ruby               use Ruby as the extension language
        --with-ruby-prefix      set location of Ruby
   
-     --with-guile              use Guile, not Ruby (the default); the path to guile-config
+     --with-guile              use Guile; the path to guile-config
                                  can be set via GUILE_CONFIG_path (see examples below).
   
      --with-forth              use Forth (FTH) as the extension language.
   
      --with-gauche             use Gauche (Scheme) as the extension language.
 
-     --with-s7                 use S7 (Scheme) as the extension language.
 
      To build Snd without any extension language, use --without-extension-language
   
 
    Graphics:
 
-     --with-motif              use Motif (the default)
+     --with-motif              use Motif (the default, if it exists)
        --with-static-motif     same, but load Motif statically (for RPM)
        --with-motif-prefix     set Motif location (will append lib and include)
   
      --with-gtk                use Gtk+
        --with-builtin-gtkrc    include built-in gtkrc fallbacks (default=yes)
-       --with-cairo            use cairo graphics rather than gdk
+       --with-cairo            use cairo graphics rather than gdk (cairo is slow)
   
      --with-no-gui             make Snd without any graphics support
   
@@ -288,7 +289,7 @@ where
 
 ----------------------------------------------------------------
 
-URLS:
+URLS
 
 CCRMA:
   http://ccrma.stanford.edu/
@@ -315,8 +316,8 @@ Snd:
   http://www.notam02.no/arkiv/src/snd/ (snd-ls)
   http://www.notam02.no/~kjetism/sandysth/
 
-Guile/Scheme:
-  http://www.gnu.org/software/guile/guile.html
+Scheme:
+  http://www.cs.utexas.edu/~novak/schemevscl.html
   http://www.cs.indiana.edu/scheme-repository
   http://www.schemers.org/
   http://www.ccs.neu.edu/home/dorai/t-y-scheme/t-y-scheme.html
@@ -330,9 +331,6 @@ Forth:
 
 Motif:
   http://www.motifzone.net
-
-Gauche:
-  http://www.shiro.dreamhost.com/scheme/gauche/index.html
 
 Gtk+:
   http://www.gtk.org
