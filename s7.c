@@ -971,24 +971,22 @@ static int gc(s7_scheme *sc, const char *function, int line)
       (sc->output_port == sc->NIL))
     fprintf(stderr, "\n%s[%d] gc...", function, line);
   
-  /* mark all live objects */
-  /* s7_mark_object(sc->symbol_table); */
+  /* mark all live objects (the symbol table is in permanent memory, not the heap) */
   s7_mark_object(sc->global_env);
-  
   s7_mark_object(sc->args);
   s7_mark_object(sc->envir);
   s7_mark_object(sc->code);
   mark_vector(sc->stack, sc->stack_top);
-  
-  s7_mark_object(sc->value);
+  s7_mark_object(sc->x);
+  s7_mark_object(sc->y);
+  s7_mark_object(sc->value);  
+
   s7_mark_object(sc->input_port);
   s7_mark_object(sc->input_port_stack);
   s7_mark_object(sc->output_port);
   s7_mark_object(sc->error_port);
   
   s7_mark_object(sc->protected_objects);
-  s7_mark_object(sc->x);
-  s7_mark_object(sc->y);
   for (i = 0; i < sc->temps_size; i++)
     s7_mark_object(sc->temps[i]);
   
@@ -1125,10 +1123,16 @@ static s7_pointer g_gc_verbose(s7_scheme *sc, s7_pointer a)
 }
 
 
-static s7_pointer g_gc(s7_scheme *sc, s7_pointer a)
+static s7_pointer g_gc(s7_scheme *sc, s7_pointer args)
 {
-  #define H_gc "(gc) runs the garbage collector"
+  #define H_gc "(gc :optional on) runs the garbage collector.  If 'on' is supplied, it turns the GC on or off."
   
+  if (car(args) != sc->NIL)
+    {
+      (*(sc->gc_off)) = (car(args) == sc->F);
+      if (*(sc->gc_off)) return(sc->F);
+    }
+
 #if HAVE_PTHREADS
   pthread_mutex_lock(&alloc_lock);
   gc(sc->orig_sc, __FUNCTION__, __LINE__);
@@ -1406,19 +1410,16 @@ static pthread_mutex_t symtab_lock = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
 
-/* TODO: ideally the symbol table stuff would not be in the heap -- it is currently never GC'd.
- */
+static s7_pointer s7_make_permanent_string(s7_scheme *sc, const char *str);
+static s7_pointer s7_permanent_cons(s7_scheme *sc, s7_pointer a, s7_pointer b, bool immutable);
 
 static s7_pointer symbol_table_add_by_name(s7_scheme *sc, const char *name) 
 { 
   s7_pointer x, str; 
   int location;
   
-  str = s7_make_string(sc, name);
-  set_type(str, T_STRING | T_ATOM | T_SIMPLE | T_CONSTANT | T_IMMUTABLE);
-
-  x = s7_cons(sc, str, sc->NIL); 
-  set_type(x, T_SYMBOL | T_ATOM | T_SIMPLE | T_CONSTANT);
+  str = s7_make_permanent_string(sc, name);
+  x = s7_permanent_cons(sc, str, sc->NIL, false); 
   
   location = hash_fn(name, vector_length(sc->symbol_table)); 
 
@@ -1426,7 +1427,7 @@ static s7_pointer symbol_table_add_by_name(s7_scheme *sc, const char *name)
   pthread_mutex_lock(&symtab_lock);
 #endif
 
-  vector_element(sc->symbol_table, location) = s7_local_gc_protect(s7_immutable_cons(sc, x, vector_element(sc->symbol_table, location))); 
+  vector_element(sc->symbol_table, location) = s7_permanent_cons(sc, x, vector_element(sc->symbol_table, location), true); 
 
 #if HAVE_PTHREADS
   pthread_mutex_unlock(&symtab_lock);
@@ -1933,7 +1934,6 @@ static s7_pointer copy_object(s7_scheme *sc, s7_pointer obj)
 {
   s7_pointer nobj;
   
-  /* PERHAPS: use a type bit here */
   if ((is_constant(obj)) || 
       (is_atom(obj)) ||
       (s7_is_object(obj)) ||
@@ -3391,109 +3391,109 @@ static s7_pointer make_sharp_const(s7_scheme *sc, char *name)
   if (strcmp(name, "f") == 0)
     return(sc->F);
   
-  /* PERHAPS: switch on char 0 */
-
-  if (*name == 'o') /* #o (octal) */
+  switch (name[0])
     {
+    case 'o':
+      /* #o (octal) */
       if (!isdigit(*(name + 1)))
 	return(sc->NIL);
       snprintf(tmp, sizeof(tmp), "0%s", name + 1);
       if (sscanf(tmp, "%lo", &x) < 1)
 	return(sc->NIL);
       return(s7_make_integer(sc, x));
-    }
-  
-  if (*name == 'd') /* #d (decimal) */
-    {    
+
+    case 'd':
+      /* #d (decimal) */
       if (sscanf(name + 1, "%lld", &xx) < 1)
 	return(sc->NIL);
       return(s7_make_integer(sc, xx));
-    } 
-  
-  if (*name == 'x') /* #x (hex) */
-    {    
+
+    case 'x':
+      /* #x (hex) */
       if (!isalnum(*(name + 1)))
 	return(sc->NIL);
       snprintf(tmp, sizeof(tmp), "0x%s", name + 1);
       if (sscanf(tmp, "%llx", &xx) < 1)
 	return(sc->NIL);
       return(s7_make_integer(sc, xx));
-    } 
-  
-  if (*name == 'b') /* #b (binary) */
-    {    
+
+    case 'b':
+      /* #b (binary) */
       if (!isdigit(*(name + 1)))
 	return(sc->NIL);
       x = binary_decode(name + 1);
       if (x < 0)
 	return(sc->NIL);
       return(s7_make_integer(sc, x));
-    } 
-  
-  if (*name == 'i')  /* #i<num> = ->inexact (see token, is_one_of for table of choices here) */
-    {
-      double xf;
-      if (sscanf(name + 1, "%lf", &xf) < 1)
-	return(sc->NIL);
-      return(s7_make_real(sc, xf));
-    }
-  
-  if (*name == 'e')  /* #e<num> = ->exact */
-    {
-      double xf;
-      s7_Int numer = 0, denom = 1;
-      if (sscanf(name + 1, "%lf", &xf) < 1)
-	return(sc->NIL);
-      if (c_rationalize(xf, DEFAULT_RATIONALIZE_ERROR, &numer, &denom))
-	return(s7_make_ratio(sc, numer, denom));
-      return(s7_make_integer(sc, (s7_Int)xf));
-    }
-  
-  if (*name == '\\')  /* #\w (character) */
-    { 
-      int c = 0;
-      if (STRCMP(name + 1, "space") == 0) 
-	{
-	  c =' ';
-	} 
-      else if (STRCMP(name + 1, "newline") == 0)
-	{
-	  c ='\n';
-	} 
-      else if (STRCMP(name + 1, "return") == 0) 
-	{
-	  c ='\r';
-	} 
-      else if (STRCMP(name + 1, "tab") == 0) 
-	{
-	  c ='\t';
-	} 
-      else if (STRCMP(name + 1, "null") == 0) 
-	{
-	  c ='\0';
-	} 
-      else if ((name[1] == 'x') && (name[2] != 0))
-	{
-	  int c1= 0;
-	  if ((sscanf(name + 2, "%x", &c1) == 1) && 
-	      (c1 < 256))
-	    {
-	      c = c1;
-	    } 
-	  else 
-	    {
-	      return(sc->NIL);
-	    }
-	} 
-      else if (name[2] == 0) 
-	{
-	  c = name[1];
-	} 
-      else 
-	{
+
+    case 'i':
+      /* #i<num> = ->inexact (see token, is_one_of for table of choices here) */
+      {
+	double xf;
+	if (sscanf(name + 1, "%lf", &xf) < 1)
 	  return(sc->NIL);
-	}
-      return(s7_make_character(sc, c));
+	return(s7_make_real(sc, xf));
+      }
+  
+    case 'e':
+      /* #e<num> = ->exact */
+      {
+	double xf;
+	s7_Int numer = 0, denom = 1;
+	if (sscanf(name + 1, "%lf", &xf) < 1)
+	  return(sc->NIL);
+	if (c_rationalize(xf, DEFAULT_RATIONALIZE_ERROR, &numer, &denom))
+	  return(s7_make_ratio(sc, numer, denom));
+	return(s7_make_integer(sc, (s7_Int)xf));
+      }
+
+    case '\\':
+      /* #\space or whatever (named character) */
+      { 
+	int c = 0;
+	if (STRCMP(name + 1, "space") == 0) 
+	  {
+	    c =' ';
+	  } 
+	else if (STRCMP(name + 1, "newline") == 0)
+	  {
+	    c ='\n';
+	  } 
+	else if (STRCMP(name + 1, "return") == 0) 
+	  {
+	    c ='\r';
+	  } 
+	else if (STRCMP(name + 1, "tab") == 0) 
+	  {
+	    c ='\t';
+	  } 
+	else if (STRCMP(name + 1, "null") == 0) 
+	  {
+	    c ='\0';
+	  } 
+	else if ((name[1] == 'x') && (name[2] != 0))
+	  {
+	    int c1= 0;
+	    if ((sscanf(name + 2, "%x", &c1) == 1) && 
+		(c1 < 256))
+	      {
+		c = c1;
+	      } 
+	    else 
+	      {
+		return(sc->NIL);
+	      }
+	  } 
+	else if (name[2] == 0) 
+	  {
+	    c = name[1];
+	  } 
+	else 
+	  {
+	    return(sc->NIL);
+	  }
+	return(s7_make_character(sc, c));
+      }
     }
   return(sc->NIL);
 }
@@ -3589,7 +3589,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix)
 	  else 
 	    {
 #if USE_CHARACTER_TABLES
-	      if (exponent_table[c])
+	      if (exponent_table[(int)c])
 #else
 	      if ((c == 'e') || (c == 'E') ||
 		  (c == 'd') || (c == 'f') || (c == 's') || (c == 'l'))
@@ -3736,7 +3736,6 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix)
 
 static s7_pointer s7_string_to_number(s7_scheme *sc, char *str, int radix)
 {
-  /* TODO: this actually isn't right -- in string->number there's no "#x" or whatever */
   s7_pointer x;
   x = make_atom(sc, str, radix);
   if (s7_is_number(x))
@@ -5034,7 +5033,6 @@ static s7_pointer g_chars_are_ci_leq(s7_scheme *sc, s7_pointer args)
 /* -------------------------------- strings -------------------------------- */
 
 
-/* get new string */
 s7_pointer s7_make_counted_string(s7_scheme *sc, const char *str, int len) 
 {
   s7_pointer x;
@@ -5079,6 +5077,26 @@ static s7_pointer make_empty_string(s7_scheme *sc, int len, char fill)
 s7_pointer s7_make_string(s7_scheme *sc, const char *str) 
 {
   return(s7_make_counted_string(sc, str, safe_strlen(str)));
+}
+
+
+static s7_pointer s7_make_permanent_string(s7_scheme *sc, const char *str) 
+{
+  /* for the symbol table which is never GC'd */
+  s7_pointer x;
+  x = (s7_cell *)CALLOC(1, sizeof(s7_cell));
+  set_type(x, T_STRING | T_ATOM | T_SIMPLE | T_CONSTANT | T_IMMUTABLE);
+  if (str)
+    {
+      string_value(x) = copy_string(str);
+      string_length(x) = strlen(str);
+    }
+  else 
+    {
+      string_value(x) = NULL;
+      string_length(x) = 0;
+    }
+  return(x);
 }
 
 
@@ -7446,6 +7464,20 @@ s7_pointer s7_cons(s7_scheme *sc, s7_pointer a, s7_pointer b)
   s7_pointer x;
   x = cons_untyped(sc, a, b);
   set_type(x, T_PAIR);
+  return(x);
+}
+
+
+static s7_pointer s7_permanent_cons(s7_scheme *sc, s7_pointer a, s7_pointer b, bool immutable) 
+{
+  /* for the symbol table which is never GC'd */
+  s7_pointer x;
+  x = (s7_cell *)CALLOC(1, sizeof(s7_cell));
+  car(x) = a;
+  cdr(x) = b;
+  if (immutable)
+    set_type(x, T_SYMBOL | T_ATOM | T_SIMPLE | T_CONSTANT | T_IMMUTABLE);
+  else set_type(x, T_SYMBOL | T_ATOM | T_SIMPLE | T_CONSTANT);
   return(x);
 }
 
@@ -11720,7 +11752,7 @@ static s7_scheme *close_s7(s7_scheme *sc);
 static void mark_s7(s7_scheme *sc);
 
 
-/* PERHAPS: mutex detach kill yield */
+/* PERHAPS: detach kill yield */
 
 typedef struct {
   s7_scheme *sc;
@@ -11836,6 +11868,72 @@ static s7_pointer thread_environment(s7_scheme *sc, s7_pointer obj)
     return(f->sc->envir);
   return(sc->NIL);
 }
+
+
+/* -------- locks -------- */
+
+static int lock_tag = 0;
+
+
+static char *lock_print(void *obj)
+{
+  return(copy_string((char *)"#<lock>"));
+}
+
+
+static void lock_free(void *obj)
+{
+  pthread_mutex_t *lock = (pthread_mutex_t *)obj;
+  if (lock)
+    {
+      pthread_mutex_destroy(lock);
+      FREE(lock);
+    }
+}
+
+
+static bool lock_equal(void *obj1, void *obj2)
+{
+  return(obj1 == obj2);
+}
+
+
+static s7_pointer g_is_lock(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_lock "(lock? obj) returns #t if obj is a lock (mutex) object"
+  return(to_s7_bool(sc, 
+		    (s7_is_object(car(args))) &&
+		    (s7_object_type(car(args)) == lock_tag)));
+}
+
+
+static s7_pointer g_make_lock(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_lock "(make-lock) creates a new lock (mutex variable)"
+  pthread_mutex_t *lock;
+  lock = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
+  pthread_mutex_init(lock, NULL);
+  return(s7_make_object(sc, lock_tag, (void *)lock));  
+}
+
+
+static s7_pointer g_grab_lock(s7_scheme *sc, s7_pointer args)
+{
+  #define H_grab_lock "(grab-lock lock) stops the current thread until it can grab the lock."
+  pthread_mutex_lock((pthread_mutex_t *)s7_object_value(car(args)));
+}
+
+
+static s7_pointer g_release_lock(s7_scheme *sc, s7_pointer args)
+{
+  #define H_release_lock "(release-lock lock) releases the lock"
+  pthread_mutex_unlock((pthread_mutex_t *)s7_object_value(car(args)));
+}
+
+
+/* TODO: join-thread and the lock funcs need arg type checks */
+
+
 #endif
 
 
@@ -12309,7 +12407,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "gc-verbose",              g_gc_verbose,              1, 0, false, H_gc_verbose);
   s7_define_function(sc, "load-verbose",            g_load_verbose,            1, 0, false, H_load_verbose);
   s7_define_function(sc, "stacktrace",              g_stacktrace,              0, 0, false, H_stacktrace);
-  s7_define_function(sc, "gc",                      g_gc,                      0, 0, false, H_gc);
+  s7_define_function(sc, "gc",                      g_gc,                      0, 1, false, H_gc);
   s7_define_function(sc, "quit",                    g_quit,                    0, 0, false, H_quit);
   s7_define_function(sc, "catch",                   g_catch,                   3, 0, false, H_catch);
   s7_define_function(sc, "error",                   g_error,                   0, 0, true,  H_error);
@@ -12341,9 +12439,15 @@ s7_scheme *s7_init(void)
   
 #if HAVE_PTHREADS
   thread_tag = s7_new_type("<thread>", thread_print, thread_free, thread_equal, thread_mark, NULL, NULL);
+  lock_tag = s7_new_type("<lock>", lock_print, lock_free, lock_equal, NULL, NULL, NULL);
+
   s7_define_function(sc, "make-thread",             g_make_thread,             1, 0, false, H_make_thread);
   s7_define_function(sc, "join-thread",             g_join_thread,             1, 0, false, H_join_thread);
   s7_define_function(sc, "thread?",                 g_is_thread,               1, 0, false, H_is_thread);
+  s7_define_function(sc, "make-lock",               g_make_lock,               0, 0, false, H_make_lock); /* "mutex" is ugly (and opaque) jargon */
+  s7_define_function(sc, "grab-lock",               g_grab_lock,               1, 0, false, H_grab_lock);
+  s7_define_function(sc, "release-lock",            g_release_lock,            1, 0, false, H_release_lock);
+  s7_define_function(sc, "lock?",                   g_is_lock,                 1, 0, false, H_is_lock);
 #endif
   
   s7_define_variable(sc, "*features*", sc->NIL);
@@ -12493,4 +12597,10 @@ static void mark_s7(s7_scheme *sc)
   ideally, whenever a thread finishes a note, we'd like it to get a new one, or start a new thread with the next one -- how to do this?
     a reader function that does the notelist thread handling, called at start n times, then called by each thread when it's done
     treat body as list of lists -- where is the overall join?  how to access the "main" thread?
+
+s7test noinit 6-Oct-08
+  0.986u 0.011s 0:01.01 98.0%     0+0k 0+224io 0pf+0w
+  0.997u 0.016s 0:01.03 97.0%     0+0k 0+224io 0pf+0w
+
+  (about twice as fast as guile)
 */

@@ -532,11 +532,13 @@ returning you to the true top-level."
      snd))
 
 
-;;; -------- with-threaded-sound
+#|
+;;; old versions of with-threaded-sound
 ;;;
-;;; currently to get any kind of performance from with-threaded-sound, the
-;;;  *clm-file-buffer-size* needs to be big enough to hold the entire output sound,
-;;;  and set *clm-output-safety* to 1.
+;;;   these are plagued with clicks etc
+;;;   I decided to remove the clm.c reader/writer locks; readin, locsig et al can no longer be shared between threads
+;;;   also, I don't think the Guile and Gauche versions were ever reliable -- one reason I wrote s7 was to be able
+;;;   to ensure that the interpreter was thread-safe.
 
 (if (provided? 'snd-gauche)
     (use gauche.threads))
@@ -607,7 +609,8 @@ returning you to the true top-level."
 
 (if (provided? 'snd-s7)
 (defmacro with-threaded-sound (args . body)
-  (if (provided? 'snd-threads)
+  (if (and (provided? 'snd-threads)
+	   (not (= (optimization) 0)))
       `(with-sound-helper 
 	(lambda ()
 	  (let* ((threads '())
@@ -635,6 +638,50 @@ returning you to the true top-level."
 	  ,@body)
 	,@args))))
 
+
+(if (provided? 'snd-s7)
+(defmacro with-threaded-sound-1 (args . body)
+  (if (and (provided? 'snd-threads)
+	   (not (= (optimization) 0)))
+      `(with-sound-helper 
+	(lambda ()
+	  (let ((notes (list ,@(map (lambda (expr) `(lambda () ,expr)) body)))
+		(lock (make-lock)))
+	    (letrec ((reader 
+		      (lambda ()
+			(let ((note #f))
+			  (grab-lock lock)
+			  (if (not (null? notes))
+			      (begin
+				(set! note (car notes))
+				(set! notes (cdr notes))))
+			  (release-lock lock)
+			  (if note
+			      (let ((thred (make-thread note)))
+				(join-thread thred)
+				(reader)))))))
+	      (let ((readers '()))
+		(do ((i 0 (+ i 1)))
+		    ((= i *clm-threads*))
+		  (set! readers (cons (make-thread (lambda () (reader))) readers)))
+		(for-each (lambda (thred) (join-thread thred)) readers)))))
+	,@args)
+
+      `(with-sound-helper
+	(lambda ()
+	  ,@body)
+	,@args))))
+|#
+
+
+;;; fallback on with-sound ...
+
+(defmacro with-threaded-sound (args . body)
+
+      `(with-sound-helper
+	(lambda ()
+	  ,@body)
+	,@args))
 
 
 

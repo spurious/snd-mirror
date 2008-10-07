@@ -7811,7 +7811,7 @@ static xen_value *make_sample_reader_1(ptree *pt, xen_value **args, int num_args
   true_args[0] = args[0];
   rtn = package(pt, R_READER, make_sample_reader_r, "make_sample_reader_r", true_args, 5);
   add_obj_to_gcs(pt, R_READER, rtn->addr);
-  for (k = num_args + 1; k <= 5; k++) FREE(true_args[k]);
+  for (k = num_args + 1; k <= 5; k++) FREE(true_args[k]); /* TODO: memleak here? if convert_to_dbl for early arg */
   return(rtn);
 }
 
@@ -13930,13 +13930,6 @@ to Scheme and is equivalent to (thunk)."
 
 #if (!HAVE_S7)
   code = XEN_CADR(proc_and_code);
-#else
-  code = XEN_LOCAL_GC_PROTECT(XEN_CONS(XEN_APPEND(XEN_CONS(C_STRING_TO_XEN_SYMBOL("lambda"), 
-							   XEN_EMPTY_LIST),
-						  XEN_CAR(proc_and_code)),
-				       XEN_CDR(proc_and_code)));
-  pt = form_to_ptree(code);
-#endif
 
 #if HAVE_GUILE
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code) && (XEN_REQUIRED_ARGS_OK(code, 0)), code, XEN_ONLY_ARG, S_run, "a thunk");
@@ -13947,21 +13940,30 @@ to Scheme and is equivalent to (thunk)."
   pt = form_to_ptree(XEN_LIST_2(XEN_CAR(proc_and_code), XEN_FALSE));
 #endif
 
-#if (!HAVE_S7)
   if (pt)
     return(eval_ptree_to_xen(pt));
 
   /* else fallback on straight scheme... */
   return(XEN_CALL_0(code, S_run));
+
 #else
+
   {
     XEN result;
+
+    code = XEN_LOCAL_GC_PROTECT(XEN_CONS(XEN_APPEND(XEN_CONS(C_STRING_TO_XEN_SYMBOL("lambda"), 
+							     XEN_EMPTY_LIST),
+						    XEN_CAR(proc_and_code)),
+					 XEN_CDR(proc_and_code)));
+    pt = form_to_ptree(code);
+
     if (pt)
       result = eval_ptree_to_xen(pt);
     else result = XEN_CALL_0(proc_and_code, S_run);
     XEN_LOCAL_GC_UNPROTECT(code);
     return(result);
   }
+
 #endif
 
 }

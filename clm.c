@@ -6964,9 +6964,6 @@ typedef struct {
   mus_sample_t **ibufs;
   off_t data_start, data_end, file_end;
   off_t file_buffer_size;
-#if HAVE_PTHREADS
-  mus_lock_t *reader_lock;
-#endif
   int safety;
 } rdin;
 
@@ -7004,15 +7001,6 @@ static int free_file_to_sample(mus_any *p)
     {
       if (ptr->core->end) ((*ptr->core->end))(p);
       clm_free(ptr->file_name);
-#if HAVE_PTHREADS
-#if MUS_THREADS_DEBUGGING
-      mus_lock_unset_name(ptr->reader_lock);
-#endif
-      /* MUS_UNLOCK(ptr->reader_lock); */
-      MUS_LOCK_DESTROY(ptr->reader_lock);
-      free(ptr->reader_lock);
-      ptr->reader_lock = NULL;
-#endif
       clm_free(ptr);
     }
   return(0);
@@ -7072,21 +7060,6 @@ static mus_any_class FILE_TO_SAMPLE_CLASS = {
 };
 
 
-#if HAVE_PTHREADS
-static pthread_key_t mus_thread_generator;
-
-static void reader_lock_error_handler(int type, char *msg)
-{
-  /* if mus_error is called while in a locked section, first unlock, then signal the error with the outer (original) error handler */
-  rdin *gen;
-  gen = (rdin *)pthread_getspecific(mus_thread_generator);
-  mus_thread_restore_error_handler();
-  MUS_UNLOCK(gen->reader_lock);
-  mus_error(type, msg);
-}
-#endif
-
-
 static Float file_sample(mus_any *ptr, off_t samp, int chan)
 {
   /* check in-core buffer bounds,
@@ -7098,8 +7071,6 @@ static Float file_sample(mus_any *ptr, off_t samp, int chan)
 
   if (chan >= gen->chans)
     return(0.0);
-
-  MUS_LOCK(gen->reader_lock);
 
   if ((samp <= gen->data_end) &&
       (samp >= gen->data_start))
@@ -7115,13 +7086,6 @@ static Float file_sample(mus_any *ptr, off_t samp, int chan)
 	  int fd;
 	  off_t newloc;
 	  /* read in first buffer start either at samp (dir > 0) or samp-bufsize (dir < 0) */
-	  
-#if HAVE_PTHREADS
-	  mus_error_handler_t *old_error_handler;
-	  
-	  pthread_setspecific(mus_thread_generator, (void *)gen);
-	  old_error_handler = mus_error_set_handler(reader_lock_error_handler);
-#endif
 	  
 	  if (gen->dir >= 0) 
 	    newloc = samp; 
@@ -7167,15 +7131,8 @@ static Float file_sample(mus_any *ptr, off_t samp, int chan)
 	    }
 	  
 	  result = (Float)MUS_SAMPLE_TO_FLOAT(gen->ibufs[chan][samp - gen->data_start]);
-	  
-#if HAVE_PTHREADS
-	  mus_error_set_handler(old_error_handler);
-#endif
 	}
     }
-
-  MUS_UNLOCK(gen->reader_lock);
-
   return(result);
 }
 
@@ -7188,13 +7145,11 @@ static int file_to_sample_end(mus_any *ptr)
       if (gen->ibufs)
 	{
 	  int i;
-	  MUS_LOCK(gen->reader_lock);
 	  for (i = 0; i < gen->chans; i++)
 	    if (gen->ibufs[i]) 
 	      clm_free(gen->ibufs[i]);
 	  clm_free(gen->ibufs);
 	  gen->ibufs = NULL;
-	  MUS_UNLOCK(gen->reader_lock);
 	}
     }
   return(0);
@@ -7231,14 +7186,6 @@ mus_any *mus_make_file_to_sample_with_buffer_size(const char *filename, off_t bu
       gen->file_end = mus_sound_frames(gen->file_name);
       if (gen->file_end < 0) 
 	mus_error(MUS_NO_LENGTH, "%s frames: " OFF_TD, filename, gen->file_end);
-
-#if HAVE_PTHREADS
-      gen->reader_lock = (mus_lock_t *)malloc(sizeof(mus_lock_t));
-      MUS_LOCK_INIT(gen->reader_lock);
-#if MUS_THREADS_DEBUGGING
-      mus_lock_set_name(gen->reader_lock, "reader");
-#endif
-#endif
 
       return((mus_any *)gen);
     }
@@ -7489,9 +7436,6 @@ typedef struct {
   off_t out_end;
   int output_data_format;
   int output_header_type;
-#if HAVE_PTHREADS
-  mus_lock_t *writer_lock;
-#endif
   int safety;
 } rdout;
 
@@ -7516,15 +7460,6 @@ static int free_sample_to_file(mus_any *p)
     {
       if (ptr->core->end) ((*ptr->core->end))(p);
       clm_free(ptr->file_name);
-#if HAVE_PTHREADS
-#if MUS_THREADS_DEBUGGING
-      mus_lock_unset_name(ptr->writer_lock);
-#endif
-      MUS_LOCK_DESTROY(ptr->writer_lock);
-      /* is valgrind confused, or is this not the equivalent of free? */
-      free(ptr->writer_lock);
-      ptr->writer_lock = NULL;
-#endif
       clm_free(ptr);
     }
   return(0);
@@ -7747,21 +7682,6 @@ static void flush_buffers(rdout *gen)
 }
 
 
-#if HAVE_PTHREADS
-static void writer_lock_error_handler(int type, char *msg)
-{
-  rdout *gen;
-#if MUS_THREADS_DEBUGGING
-  fprintf(stderr, "hit writer error: %d (%s) %s\n", type, mus_error_type_to_string(type), msg);
-#endif
-  gen = (rdout *)pthread_getspecific(mus_thread_generator);
-  mus_error_set_handler(mus_thread_get_previous_error_handler());
-  MUS_UNLOCK(gen->writer_lock);
-  mus_error(type, msg);
-}
-#endif
-
-
 static Float sample_file(mus_any *ptr, off_t samp, int chan, Float val)
 {
   rdout *gen = (rdout *)ptr;
@@ -7776,40 +7696,12 @@ static Float sample_file(mus_any *ptr, off_t samp, int chan, Float val)
 
   if (chan >= gen->chans)
     return(val);
-
-  /* this can't be completely safe -- what if flush below is interrupted etc */
-  /* so set the lock here but not the error handler -- same in read case */
-
-  /* we set/unset this lock on every sample!  90% of threaded time is spent here --
-   *   if we assume *clm-file-buffer-size* is large enough to never flush, with-sound
-   *   runs 6 times as fast.  Perhaps some kind of check against that buffer?
-   *
-   * if I try to use a condition variable, it requires a lock, so what do I gain?
-   * if I write to a locsig local buffer, first there's the final flush that needs help,
-   *    second there's the close of the output pointer with waiting locsigs
-   * 
-   * so use mus-safety to signal this
-   */
-
-  MUS_LOCK(gen->writer_lock);
-
-  /* try to handle the simple case and get out */
   if ((samp <= gen->data_end) &&
       (samp >= gen->data_start))
-    {
-      gen->obufs[chan][samp - gen->data_start] += MUS_FLOAT_TO_SAMPLE(val);
-    }
+    gen->obufs[chan][samp - gen->data_start] += MUS_FLOAT_TO_SAMPLE(val);
   else
     {
       int j;
-
-#if HAVE_PTHREADS
-      mus_error_handler_t *old_error_handler;
-
-      pthread_setspecific(mus_thread_generator, (void *)gen);
-      old_error_handler = mus_error_set_handler(writer_lock_error_handler);
-#endif
-
       flush_buffers(gen);
       for (j = 0; j < gen->chans; j++)
 	memset((void *)(gen->obufs[j]), 0, clm_file_buffer_size * sizeof(mus_sample_t));
@@ -7817,17 +7709,10 @@ static Float sample_file(mus_any *ptr, off_t samp, int chan, Float val)
       gen->data_end = samp + clm_file_buffer_size - 1;
       gen->obufs[chan][samp - gen->data_start] += MUS_FLOAT_TO_SAMPLE(val);
       gen->out_end = samp; /* this resets the current notion of where in the buffer the new data ends */
-
-#if HAVE_PTHREADS
-      mus_error_set_handler(old_error_handler);
-#endif
     }
 
   if (samp > gen->out_end) 
     gen->out_end = samp;
-
-  MUS_UNLOCK(gen->writer_lock);
-
   return(val);
 }
 
@@ -7835,34 +7720,16 @@ static Float sample_file(mus_any *ptr, off_t samp, int chan, Float val)
 static int sample_to_file_end(mus_any *ptr)
 {
   rdout *gen = (rdout *)ptr;
-
-  MUS_LOCK(gen->writer_lock);
-
   if ((gen) && (gen->obufs))
     {
       int i;
-
-#if HAVE_PTHREADS
-      mus_error_handler_t *old_error_handler;
-
-      pthread_setspecific(mus_thread_generator, (void *)gen);
-      old_error_handler = mus_error_set_handler(writer_lock_error_handler);
-#endif
-
       flush_buffers(gen); /* this forces the error handling stuff, unlike in free reader case */
       for (i = 0; i < gen->chans; i++)
 	if (gen->obufs[i]) 
 	  clm_free(gen->obufs[i]);
       clm_free(gen->obufs);
       gen->obufs = NULL;
-
-#if HAVE_PTHREADS
-      mus_error_set_handler(old_error_handler);
-#endif
     }
-
-  MUS_UNLOCK(gen->writer_lock);
-
   return(0);
 }
 
@@ -7910,14 +7777,6 @@ static mus_any *mus_make_sample_to_file_with_comment_1(const char *filename, int
 	    mus_error(MUS_CANT_CLOSE_FILE, 
 		      "close(%d, %s) -> %s", 
 		      fd, gen->file_name, STRERROR(errno));
-
-#if HAVE_PTHREADS
-	  gen->writer_lock = (mus_lock_t *)malloc(sizeof(mus_lock_t));
-	  MUS_LOCK_INIT(gen->writer_lock);
-#if MUS_THREADS_DEBUGGING
-	  mus_lock_set_name(gen->writer_lock, "writer");
-#endif
-#endif
 	  return((mus_any *)gen);
 	}
     }
@@ -11740,12 +11599,9 @@ void mus_initialize(void)
   data_format_zero[MUS_ULSHORT] = 0x80;
 #endif  
 
-#if HAVE_PTHREADS
-  pthread_key_create(&mus_thread_generator, NULL);
-#if MUS_THREADS_DEBUGGING
+#if HAVE_PTHREADS && MUS_THREADS_DEBUGGING
   mus_lock_set_name(&sinc_lock, "sinc");
   mus_lock_set_name(&fft_lock, "fft");
-#endif
 #endif
 }
 
