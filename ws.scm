@@ -674,15 +674,73 @@ returning you to the true top-level."
 |#
 
 
-;;; fallback on with-sound ...
 
 (defmacro with-threaded-sound (args . body)
+  (if (and (provided? 'snd-threads)
+	   (not (= (optimization) 0)))
+      (let ((split (lambda (l n k)
+		     (define (split-1 s l n i)
+		       (if (null? l)
+			   (reverse s)
+			   (if (= i n)
+			       (split-1 (cons (car l) s) (cdr l) n 1)
+			       (split-1 s (cdr l) n (+ i 1)))))
+		     (split-1 '() l n (- n k))))
+	    (old-to-snd *to-snd*))
+	(set! *to-snd* #f)
+
+	(let ((lists '()))
+	  (do ((i 0 (1+ i)))
+	      ((= i *clm-threads*))
+	    (set! lists (cons (split body *clm-threads* i) lists)))
+
+	  `(with-sound-helper 
+	    (lambda ()
+	      (let ((threads '())
+		    (thread-output (make-thread-local-variable))
+		    (mix-lock (make-lock)))
+		,@(map
+		   (lambda (expr)
+		    `(set! threads (cons (make-thread 
+					  (lambda ()
+					    (let ((tmp (with-sound-helper 
+							 (lambda ()
+							   (set! (thread-output) *output*)
+							   (set! *output* thread-output)
+							   ,@expr)
+							 :output (snd-tempnam) 
+							 ,@args)))
+					      (grab-lock mix-lock)
+					      (mus-mix (thread-output) tmp)
+					      (release-lock mix-lock))))
+					 threads)))
+		   lists)
+
+	       (for-each 
+		(lambda (thread) 
+		  (join-thread thread))
+		threads)))
+
+	    ,@args)))
 
       `(with-sound-helper
 	(lambda ()
 	  ,@body)
-	,@args))
+	,@args)))
 
+
+;;; *output* and *reverb* need to be thread-local
+;;;   mus_clm_output() in clm2xen.c 5470 returns the current scheme-level value of *output*
+;;;   this is also used in snd-run
+;;;   in threads case, they need to be stored in the current thread, and read from there
+;;;   pthread_get|setspecific in s7, used before ,expr above to set, used in mus_clm_output to get?
+;;;   in run, this happens once per note, else on every note, but that's the least of our worries
+;;;   needs pthread_key_t, pthread_key_create
+;;;   make-thread-local: make key obj and create it
+;;;   (key) = get it, (set! (key) val) = set it (both in the current thread)
+;;;   then *output* can be a thread-local function/variable?
+;;;     so mus_clm_output/g_outa if mus_any returns gen else calls (*output*) to get gen
+;;;     this already fits with the *output* as function case except that currently it's treated as a func of 3 args
 
 
 

@@ -8221,7 +8221,7 @@ static mus_any_class LOCSIG_CLASS = {
   0, 0, 
   &locsig_xcoeffs, 0, 0,
   &locsig_reset,
-  &locsig_set_closure, 
+  &locsig_set_closure,  /* the method name is set_environ (clm2xen.c) */
   &locsig_safety, &locsig_set_safety
 };
 

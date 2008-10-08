@@ -581,6 +581,10 @@ static char *describe_type(s7_pointer p)
   if (!(is_object(Obj))) \
     {fprintf(stderr, "%s[%d]: %s is not an object: %p %s\n", __FUNCTION__, __LINE__, Name, Obj, describe_type(Obj)); abort();}
 
+#else
+
+#define ASSERT_IS_OBJECT(Obj, Name)
+
 #endif
 
 
@@ -884,9 +888,7 @@ void s7_mark_object(s7_pointer p)
 {
   if (is_marked(p)) return; 
   
-#if S7_DEBUGGING
   ASSERT_IS_OBJECT(p, "mark");
-#endif
   
   set_mark(p);
   
@@ -1683,12 +1685,12 @@ static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
 static s7_pointer s7_new_slot_spec_in_env(s7_scheme *sc, s7_pointer env, s7_pointer variable, s7_pointer value) 
 { 
   s7_pointer slot;
-#if S7_DEBUGGING
+
   ASSERT_IS_OBJECT(variable, "new slot variable");
   ASSERT_IS_OBJECT(value, "new slot value");
   ASSERT_IS_OBJECT(env, "new slot env");
   ASSERT_IS_OBJECT(car(env), "new slot car env");
-#endif
+
   slot = s7_immutable_cons(sc, variable, value); 
   if (s7_is_vector(car(env))) 
     { 
@@ -1732,9 +1734,9 @@ static s7_pointer s7_find_slot_in_env(s7_scheme *sc, s7_pointer env, s7_pointer 
 
 static s7_pointer new_slot_in_env(s7_scheme *sc, s7_pointer variable, s7_pointer value) 
 { 
-#if S7_DEBUGGING
+
   ASSERT_IS_OBJECT(sc->envir, "new slot envir");
-#endif
+
   return(s7_new_slot_spec_in_env(sc, sc->envir, variable, value)); 
 } 
 
@@ -1824,10 +1826,8 @@ s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e)
   
   set_type(x, T_CLOSURE);
   
-#if S7_DEBUGGING
   ASSERT_IS_OBJECT(c, "closure code");
   ASSERT_IS_OBJECT(e, "closure env");
-#endif
   
   car(x) = c;
   cdr(x) = e;
@@ -6457,6 +6457,49 @@ static s7_pointer g_peek_char(s7_scheme *sc, s7_pointer args)
 }
 
 
+#define WITH_READ_LINE 1
+
+#if WITH_READ_LINE
+static char *read_line_buf = NULL;
+static int read_line_buf_size = 0;
+
+static s7_pointer g_read_line(s7_scheme *sc, s7_pointer args)
+{
+  #define H_read_line "(read-line port) returns the next line from port, or EOF"
+  s7_pointer port;
+  int i;
+  if (args != sc->NIL)
+    port = car(args); /* TODO: check arg type */
+  else port = sc->input_port;
+  if (read_line_buf == NULL)
+    {
+      read_line_buf_size = 256;
+      read_line_buf = (char *)malloc(read_line_buf_size * sizeof(char));
+    }
+  for (i = 0; ; i++)
+    {
+      int c;
+      if (i + 1 >= read_line_buf_size)
+	{
+	  read_line_buf_size *= 2;
+	  read_line_buf = (char *)realloc(read_line_buf, read_line_buf_size * sizeof(char));
+	}
+      c = inchar(sc, port);
+      if (c == EOF)
+	return(sc->EOF_OBJECT);
+      read_line_buf[i] = (char)c;
+      if (c == '\n')
+	{
+	  read_line_buf[i + 1] = 0;
+	  return(s7_make_string(sc, read_line_buf));
+	}
+    }
+  return(sc->EOF_OBJECT);
+}
+#endif
+
+
+
 /* -------- read -------- */
 
 s7_pointer s7_read(s7_scheme *sc, s7_pointer port)
@@ -7438,10 +7481,8 @@ static s7_pointer cons_untyped(s7_scheme *sc, s7_pointer a, s7_pointer b)
 {
   s7_pointer x;
   
-#if S7_DEBUGGING
   ASSERT_IS_OBJECT(a, "cons car");
   ASSERT_IS_OBJECT(b, "cons cdr");
-#endif
   
   x = new_cell(sc); /* might trigger gc */
   car(x) = a;
@@ -9179,7 +9220,6 @@ bool s7_is_eq(s7_pointer obj1, s7_pointer obj2)
 }
 
 
-/* equivalence of atoms */
 bool s7_is_eqv(s7_pointer a, s7_pointer b) 
 {
   if (a == b) 
@@ -9200,8 +9240,6 @@ bool s7_is_eqv(s7_pointer a, s7_pointer b)
   return(false);
 }
 
-
-/* To do: promise should be forced ONCE only */
 
 bool s7_is_equal(s7_pointer x, s7_pointer y)
 {
@@ -10268,10 +10306,9 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_REAL_EVAL:
-#if S7_DEBUGGING
+
       ASSERT_IS_OBJECT(sc->envir, "env");
       ASSERT_IS_OBJECT(sc->code, "code");
-#endif
 
       if (s7_is_symbol(sc->code)) 
 	{
@@ -10442,9 +10479,8 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	      goto START;
 	    }
 	  sc ->x = function_call(sc->code)(sc, sc->args);
-#if S7_DEBUGGING
+
 	  ASSERT_IS_OBJECT(sc->x, "function returned value");
-#endif
 	  
 	  pop_stack(sc, sc->x);
 	  goto START;
@@ -10470,10 +10506,8 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 		      goto START;
 		    }
 		  
-#if S7_DEBUGGING
 		  ASSERT_IS_OBJECT(sc->x, "parameter to closure");
 		  ASSERT_IS_OBJECT(sc->y, "arg to closure");
-#endif
 		  
 		  new_slot_in_env(sc, car(sc->x), car(sc->y));
 		}
@@ -11619,10 +11653,8 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 
 static s7_pointer g_mcons(s7_scheme *sc, s7_pointer f, s7_pointer l, s7_pointer r)
 {
-#if S7_DEBUGGING
   ASSERT_IS_OBJECT(l, "mcons left");
   ASSERT_IS_OBJECT(r, "mcons right");
-#endif
 
   if ((is_pair(r)) &&
       (car(r) == sc->QUOTE) &&
@@ -11650,11 +11682,9 @@ static s7_pointer g_mcons(s7_scheme *sc, s7_pointer f, s7_pointer l, s7_pointer 
 
 static s7_pointer g_mappend(s7_scheme *sc, s7_pointer f, s7_pointer l, s7_pointer r)
 {
-#if S7_DEBUGGING
   ASSERT_IS_OBJECT(l, "mappend left");
   ASSERT_IS_OBJECT(r, "mappend right");
   ASSERT_IS_OBJECT(f, "mappend form");
-#endif
 
   if ((cdr(f) == sc->NIL) ||
       ((s7_is_pair(r)) &&
@@ -11668,9 +11698,7 @@ static s7_pointer g_mappend(s7_scheme *sc, s7_pointer f, s7_pointer l, s7_pointe
 
 static s7_pointer g_quasiquote_1(s7_scheme *sc, int level, s7_pointer form)
 {
-#if S7_DEBUGGING
   ASSERT_IS_OBJECT(form, "quasiquote form");
-#endif
 
   if (!s7_is_pair(form))
     {
@@ -11931,6 +11959,93 @@ static s7_pointer g_release_lock(s7_scheme *sc, s7_pointer args)
 }
 
 
+
+/* -------- thread local variables (pthread keys) -------- */
+
+static int key_tag = 0;
+
+
+static char *key_print(void *obj)
+{
+  return(copy_string((char *)"#<thread-local-variable>"));
+}
+
+
+static void key_free(void *obj)
+{
+  pthread_key_t *key = (pthread_key_t *)obj;
+  if (key)
+    {
+      pthread_key_delete(*key);
+      FREE(key);
+    }
+}
+
+
+static bool key_equal(void *obj1, void *obj2)
+{
+  return(obj1 == obj2);
+}
+
+
+bool s7_is_thread_local_variable(s7_pointer obj)
+{
+  return((s7_is_object(obj)) &&
+	 (s7_object_type(obj) == key_tag));
+}
+
+
+static s7_pointer g_is_thread_local_variable(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_thread_local_variable "(thread-local-variable? obj) returns #t if obj is a thread local variable (a pthread key)"
+  return(to_s7_bool(sc, s7_is_thread_local_variable(car(args))));
+}
+
+
+static s7_pointer g_make_thread_local_variable(s7_scheme *sc, s7_pointer args)
+{
+  #define H_make_thread_local_variable "(make-thread-local-variable) returns a new thread specific variable (a pthread key)"
+  pthread_key_t *key;
+  key = (pthread_key_t *)malloc(sizeof(pthread_key_t));
+  pthread_key_create(key, NULL);
+  return(s7_make_object(sc, key_tag, (void *)key));  
+}
+
+
+s7_pointer s7_thread_local_variable_value(s7_scheme *sc, s7_pointer obj)
+{
+  pthread_key_t *key; 
+  void *val;
+  key = (pthread_key_t *)s7_object_value(obj);
+  val = pthread_getspecific(*key);                  /* returns NULL if never set */
+  if (val)
+    return((s7_pointer)val);
+  return(sc->F);
+}
+
+
+static s7_pointer get_key(s7_scheme *sc, s7_pointer obj, s7_pointer args)
+{
+  /* TODO: check 0 args?? */
+  return(s7_thread_local_variable_value(sc, obj));
+}
+
+
+static s7_pointer set_key(s7_scheme *sc, s7_pointer obj, s7_pointer args)
+{
+  pthread_key_t *key;  
+  key = (pthread_key_t *)s7_object_value(obj);
+  pthread_setspecific(*key, (void *)s7_local_gc_protect(car(args))); 
+
+  /* TODO: how to unprotect? should we be marking? */
+  /*    perhaps keep a list of local vars attached to threads, and unprotect when thread is done */
+  /*    pthread_self gets current thread, and thread_free has f->thread to match */
+  /*    would want to unprotect only if the value is not elsewhere in this list */
+
+  return(car(args));
+}
+
+
 /* TODO: join-thread and the lock funcs need arg type checks */
 
 
@@ -12188,6 +12303,9 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "display",                 g_display,                 1, 1, false, H_display);
   s7_define_function(sc, "read-byte",               g_read_byte,               0, 1, false, H_read_byte);
   s7_define_function(sc, "write-byte",              g_write_byte,              1, 1, false, H_write_byte);
+#if WITH_READ_LINE
+  s7_define_function(sc, "read-line",               g_read_line,               0, 0, true,  H_read_line);
+#endif
   
   s7_define_function(sc, "call-with-input-string",  g_call_with_input_string,  2, 0, false, H_call_with_input_string);
   s7_define_function(sc, "call-with-input-file",    g_call_with_input_file,    2, 0, false, H_call_with_input_file);
@@ -12438,16 +12556,21 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "_quasiquote_",            g_quasiquote,              2, 0, false, "internal quasiquote handler");
   
 #if HAVE_PTHREADS
-  thread_tag = s7_new_type("<thread>", thread_print, thread_free, thread_equal, thread_mark, NULL, NULL);
-  lock_tag = s7_new_type("<lock>", lock_print, lock_free, lock_equal, NULL, NULL, NULL);
+  thread_tag = s7_new_type("<thread>",                thread_print, thread_free, thread_equal, thread_mark, NULL, NULL);
+  lock_tag =   s7_new_type("<lock>",                  lock_print,   lock_free,   lock_equal,   NULL,        NULL, NULL);
+  key_tag =    s7_new_type("<thread-local-variable>", key_print,    key_free,    key_equal,    NULL,        get_key, set_key);
 
   s7_define_function(sc, "make-thread",             g_make_thread,             1, 0, false, H_make_thread);
   s7_define_function(sc, "join-thread",             g_join_thread,             1, 0, false, H_join_thread);
   s7_define_function(sc, "thread?",                 g_is_thread,               1, 0, false, H_is_thread);
+
   s7_define_function(sc, "make-lock",               g_make_lock,               0, 0, false, H_make_lock); /* "mutex" is ugly (and opaque) jargon */
   s7_define_function(sc, "grab-lock",               g_grab_lock,               1, 0, false, H_grab_lock);
   s7_define_function(sc, "release-lock",            g_release_lock,            1, 0, false, H_release_lock);
   s7_define_function(sc, "lock?",                   g_is_lock,                 1, 0, false, H_is_lock);
+
+  s7_define_function(sc, "make-thread-local-variable", g_make_thread_local_variable, 0, 0, false, H_make_thread_local_variable);
+  s7_define_function(sc, "thread-local-variable?",  g_is_thread_local_variable, 1, 0, false, H_is_thread_local_variable);
 #endif
   
   s7_define_variable(sc, "*features*", sc->NIL);
@@ -12593,10 +12716,6 @@ static void mark_s7(s7_scheme *sc)
   it would be nice to have s7test checks for generalized set, applicable objects, hash tables, proc-w-set, keywords, macros, call-with-exit, threads
   check via valgrind in the opt=0 cases [works apparently except with run as unopt'd -- occasional errors still -- appear to be GC's fault]
   need better error reporting than useless "syntax error"!
-
-  ideally, whenever a thread finishes a note, we'd like it to get a new one, or start a new thread with the next one -- how to do this?
-    a reader function that does the notelist thread handling, called at start n times, then called by each thread when it's done
-    treat body as list of lists -- where is the overall join?  how to access the "main" thread?
 
 s7test noinit 6-Oct-08
   0.986u 0.011s 0:01.01 98.0%     0+0k 0+224io 0pf+0w

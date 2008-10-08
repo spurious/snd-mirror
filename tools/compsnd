@@ -21,8 +21,8 @@ fgrep udpate *.html
 fgrep udpate *.scm
 fgrep ";;" *.[ch]
 grep ' \-\-$' *.html
-va.scm
-tools/check-gtk.scm
+./snd va.scm
+# tools/check-gtk.scm
 
 rm -f snd
 rm -f config.cache

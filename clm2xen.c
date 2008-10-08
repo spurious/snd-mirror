@@ -5469,13 +5469,36 @@ static XEN g_env_any(XEN e, XEN func)
 
 static XEN clm_output, clm_reverb; /* *output* and *reverb* at extlang level -- these can be output streams, vct, sound-data objects etc */
 
-#if HAVE_GUILE || HAVE_S7
+#if HAVE_GUILE || (HAVE_S7 && (!HAVE_PTHREADS))
 XEN mus_clm_output(void) {return(XEN_VARIABLE_REF(clm_output));}
 XEN mus_clm_reverb(void) {return(XEN_VARIABLE_REF(clm_reverb));}
-#else
+#endif
+
+#if (!HAVE_GUILE) && (!HAVE_S7)
 XEN mus_clm_output(void) {return(XEN_VARIABLE_REF(S_output));}
 XEN mus_clm_reverb(void) {return(XEN_VARIABLE_REF(S_reverb));}
 #endif
+
+#if HAVE_S7 && HAVE_PTHREADS
+XEN mus_clm_output(void) 
+{
+  XEN obj;
+  obj = XEN_VARIABLE_REF(clm_output);
+  if (s7_is_thread_local_variable(obj))
+    return(s7_thread_local_variable_value(s7, obj));
+  return(obj);
+}
+
+XEN mus_clm_reverb(void) 
+{
+  XEN obj;
+  obj = XEN_VARIABLE_REF(clm_reverb);
+  if (s7_is_thread_local_variable(obj))
+    return(s7_thread_local_variable_value(s7, obj));
+  return(obj);
+}
+#endif
+
 
 static XEN g_input_p(XEN obj) 
 {

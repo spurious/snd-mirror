@@ -228,6 +228,11 @@ s7_pointer s7_procedure_with_setter_getter(s7_pointer obj);
 s7_pointer s7_hash_table_ref(s7_scheme *sc, s7_pointer table, const char *name);
 s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, const char *name, s7_pointer value);
 
+#if HAVE_PTHREADS
+bool s7_is_thread_local_variable(s7_pointer obj);
+s7_pointer s7_thread_local_variable_value(s7_scheme *sc, s7_pointer obj);
+#endif
+
 #endif
 
 
