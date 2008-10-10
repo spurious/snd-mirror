@@ -44,10 +44,13 @@
 		       (if (eq? va-state 'within)
 			   (begin
 			     (display (format #f "~A[~A]: ~A~%" file count line))
-			     (exit)
 			     (set! va-state 'before)))))))))))
- (list 
-"snd-xutils.c" "snd-xhelp.c" "snd-xfind.c" "snd-xmenu.c" "snd-xdraw.c" "snd-xlistener.c" "snd-xchn.c" "snd-xsnd.c" "snd-xregion.c" "snd-xdrop.c" "snd-xmain.c" "snd-xmix.c" "snd-xrec.c" "snd-xenv.c" "snd-gxutils.c" "snd-gxbitmaps.c" "snd-gxcolormaps.c" "snd-xfft.c" "snd-xprint.c" "snd-xfile.c" "snd-xxen.c" "snd-xen.c" "snd-data.c" "snd-draw.c" "snd-xprefs.c" ))
+
+ (list "snd-xutils.c" "snd-xhelp.c" "snd-xfind.c" "snd-xmenu.c" "snd-xdraw.c" "snd-xlistener.c" "snd-xchn.c" 
+       "snd-xsnd.c" "snd-xregion.c" "snd-xdrop.c" "snd-xmain.c" "snd-xmix.c" "snd-xrec.c" "snd-xenv.c" "snd-gxutils.c" 
+       "snd-gxbitmaps.c" "snd-gxcolormaps.c" "snd-xfft.c" "snd-xprint.c" "snd-xfile.c" "snd-xxen.c" "snd-xen.c" 
+       "snd-data.c" "snd-draw.c" "snd-xprefs.c" ))
+
 
 (for-each
  (lambda (func)

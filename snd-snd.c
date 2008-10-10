@@ -1443,12 +1443,12 @@ void add_sound_data(char *filename, snd_info *sp, channel_graph_t graphed)
 
 
 #if HAVE_READLINK
-static char *link_file = NULL;
 static char *linked_file(const char *link_name)
 {
+  char *link_file;
   ssize_t bytes;
   #define READLINK_FILE_SIZE 256
-  if (link_file == NULL) link_file = (char *)CALLOC(READLINK_FILE_SIZE, sizeof(char));
+  link_file = (char *)CALLOC(READLINK_FILE_SIZE, sizeof(char));
   bytes = readlink(link_name, link_file, READLINK_FILE_SIZE);
   link_file[bytes] = 0;
   return(link_file);
@@ -1473,7 +1473,7 @@ void sp_name_click(snd_info *sp)
       if (hdr)
 	{
 	  Float dur;
-	  char *tmp_type = NULL, *tmp_format = NULL;
+	  char *tmp_type = NULL, *tmp_format = NULL, *str = NULL;
 
 	  bool linked = false;
 	  linked = link_p(sp->filename);
@@ -1489,13 +1489,14 @@ void sp_name_click(snd_info *sp)
 			       snd_strftime(STRFTIME_FORMAT, sp->write_date),
 			       (linked) ? ", (link to " : "",
 #if HAVE_READLINK
-			       (linked) ? linked_file(sp->filename) : "",
+			       (linked) ? str = linked_file(sp->filename) : "",
 #else
 			       (linked) ? "?" : "",
 #endif
 			       (linked) ? ")" : "");
 	  if (tmp_type) free(tmp_type);
 	  if (tmp_format) free(tmp_format);
+	  if (str) FREE(str);
 	}
     }
 }
@@ -5235,13 +5236,11 @@ return two vcts of length 'size' containing y vals (min and max) of file's chann
 'work-proc-func' is called when the amp envs are ready if the amp envs are gathered in the background. \
 If 'filename' is a sound index (an integer), 'size' is interpreted as an edit-position, and the current amp envs are returned."
 
-  static char *fullname = NULL;
+  char *fullname = NULL;
   int len, chn;
   snd_info *sp = NULL;
   chan_info *cp = NULL;
   peak_env_error_t err = PEAK_ENV_NO_ERROR;
-
-  if (fullname) {FREE(fullname); fullname = NULL;}
 
   XEN_ASSERT_TYPE(XEN_STRING_P(filename) || XEN_INTEGER_P(filename) || XEN_NOT_BOUND_P(filename), 
 		  filename, XEN_ARG_1, S_channel_amp_envs, "a string or sound index");
@@ -5307,10 +5306,14 @@ If 'filename' is a sound index (an integer), 'size' is interpreted as an edit-po
 	{
 	  cp = sp->chans[chn];
 	  if (cp->edits[0]->peak_env)
-	    return(g_env_info_to_vcts(cp->edits[0]->peak_env, len));
+	    {
+	      if (fullname) FREE(fullname);
+	      return(g_env_info_to_vcts(cp->edits[0]->peak_env, len));
+	    }
 	}
       else
 	{
+	  if (fullname) FREE(fullname);
 	  XEN_ERROR(NO_SUCH_CHANNEL, XEN_LIST_3(C_TO_XEN_STRING(S_channel_amp_envs), filename, chan));
 	  return(XEN_FALSE);
 	}
@@ -5318,11 +5321,13 @@ If 'filename' is a sound index (an integer), 'size' is interpreted as an edit-po
 
   if (!(mus_file_probe(fullname)))
     {
+      if (fullname) FREE(fullname);
       XEN_ERROR(NO_SUCH_FILE, XEN_LIST_2(C_TO_XEN_STRING(S_channel_amp_envs), filename));
       return(XEN_FALSE);
     }
   if (mus_sound_chans(fullname) < chn)
     {
+      if (fullname) FREE(fullname);
       XEN_ERROR(NO_SUCH_CHANNEL, XEN_LIST_3(C_TO_XEN_STRING(S_channel_amp_envs), filename, chan));
       return(XEN_FALSE);
     }
@@ -5348,6 +5353,7 @@ If 'filename' is a sound index (an integer), 'size' is interpreted as an edit-po
 		  vcts = g_env_info_to_vcts(ep, len);
 		  ep = free_peak_env_info(ep);
 		  if (peakname) FREE(peakname);
+		  if (fullname) FREE(fullname);
 		  return(vcts);
 		}
 	    }
@@ -5358,6 +5364,8 @@ If 'filename' is a sound index (an integer), 'size' is interpreted as an edit-po
 
   /* now set up to read direct... */
   sp = make_sound_readable(fullname, false);
+  if (fullname) FREE(fullname);
+  fullname = NULL;
   if (sp)
     {
       env_state *es;

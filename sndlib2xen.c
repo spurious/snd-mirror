@@ -48,15 +48,20 @@
 #endif
 
 
-static char *tmpstr = NULL; /* easier to handle this way than with dynamic winds and so on */
-
-static char *local_mus_expand_filename(char *name)
-{
-  if (tmpstr) {FREE(tmpstr); tmpstr = NULL;}
-  tmpstr = mus_expand_filename(name);
-  return(tmpstr);
-}
-
+/* originally I tried to simplify C GC by using global static strings that were 
+ *   freed whenever the associated function was called again, on the assumption
+ *   that the preceding value was now unused.  In a multithread context, that
+ *   assumption is false, so I can't use code like this:
+ *
+ *  static char *tmpstr = NULL;
+ *
+ *  static char *local_mus_expand_filename(char *name)
+ *  {
+ *    if (tmpstr) {FREE(tmpstr); tmpstr = NULL;}
+ *       tmpstr = mus_expand_filename(name);
+ *    return(tmpstr);
+ *  }
+ */
 
 static XEN g_mus_sound_loop_info(XEN gfilename)
 {
@@ -64,10 +69,12 @@ static XEN g_mus_sound_loop_info(XEN gfilename)
 end1 start2 end2 base-note base-detune mode1 mode2)"
   int *res;
   XEN sres = XEN_EMPTY_LIST;
+  char *str = NULL;
 
   XEN_ASSERT_TYPE(XEN_STRING_P(gfilename), gfilename, XEN_ONLY_ARG, S_mus_sound_loop_info, "a string"); 
 
-  res = mus_sound_loop_info(local_mus_expand_filename(XEN_TO_C_STRING(gfilename)));
+  res = mus_sound_loop_info(str = mus_expand_filename(XEN_TO_C_STRING(gfilename)));
+  if (str) FREE(str);
   if (res)
     {
       sres = XEN_LIST_8(C_TO_XEN_INT(res[0]), C_TO_XEN_INT(res[1]), C_TO_XEN_INT(res[2]),
@@ -85,10 +92,12 @@ static XEN g_mus_sound_mark_info(XEN gfilename)
   int *mark_ids, *mark_positions;
   int marks = 0;
   XEN sres = XEN_EMPTY_LIST;
+  char *str = NULL;
 
   XEN_ASSERT_TYPE(XEN_STRING_P(gfilename), gfilename, XEN_ONLY_ARG, S_mus_sound_mark_info, "a string"); 
 
-  marks = mus_sound_mark_info(local_mus_expand_filename(XEN_TO_C_STRING(gfilename)), &mark_ids, &mark_positions);
+  marks = mus_sound_mark_info(str = mus_expand_filename(XEN_TO_C_STRING(gfilename)), &mark_ids, &mark_positions);
+  if (str) FREE(str);
   if (marks > 0)
     {
       int i;
@@ -103,31 +112,55 @@ static XEN g_mus_sound_mark_info(XEN gfilename)
 
 static XEN gmus_sound(const char *caller, int (*func)(const char *file), XEN gfilename)
 {
+  char *str = NULL;
+  XEN result;
+
   XEN_ASSERT_TYPE(XEN_STRING_P(gfilename), gfilename, XEN_ONLY_ARG, caller, "a string"); 
-  return(C_TO_XEN_INT((*func)(local_mus_expand_filename(XEN_TO_C_STRING(gfilename)))));
+  str = mus_expand_filename(XEN_TO_C_STRING(gfilename));
+  result = C_TO_XEN_INT((*func)(str));
+  if (str) FREE(str);
+  return(result);
 }
 
 
 static XEN gmus_sound_set(const char *caller, int (*func)(const char *file, int newval), XEN gfilename, XEN val)
 {
+  char *str = NULL;
+  XEN result;
+
   XEN_ASSERT_TYPE(XEN_STRING_P(gfilename), gfilename, XEN_ARG_1, caller, "a string"); 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ARG_2, caller, "an integer");
-  return(C_TO_XEN_INT((*func)(local_mus_expand_filename(XEN_TO_C_STRING(gfilename)), XEN_TO_C_INT(val))));
+  str = mus_expand_filename(XEN_TO_C_STRING(gfilename));
+  result = C_TO_XEN_INT((*func)(str, XEN_TO_C_INT(val)));
+  if (str) FREE(str);
+  return(result);
 }
 
 
 static XEN glmus_sound(const char *caller, off_t (*func)(const char *file), XEN gfilename)
 {
+  char *str = NULL;
+  XEN result;
+
   XEN_ASSERT_TYPE(XEN_STRING_P(gfilename), gfilename, XEN_ONLY_ARG, caller, "a string"); 
-  return(C_TO_XEN_OFF_T((*func)(local_mus_expand_filename(XEN_TO_C_STRING(gfilename)))));
+  str = mus_expand_filename(XEN_TO_C_STRING(gfilename));
+  result = C_TO_XEN_OFF_T((*func)(str));
+  if (str) FREE(str);
+  return(result);
 }
 
 
 static XEN glmus_sound_set(const char *caller, int (*func)(const char *file, off_t newval), XEN gfilename, XEN val)
 {
+  char *str = NULL;
+  XEN result;
+
   XEN_ASSERT_TYPE(XEN_STRING_P(gfilename), gfilename, XEN_ARG_1, caller, "a string"); 
   XEN_ASSERT_TYPE(XEN_NUMBER_P(val), val, XEN_ARG_2, caller, "a number");
-  return(C_TO_XEN_OFF_T((*func)(local_mus_expand_filename(XEN_TO_C_STRING(gfilename)), XEN_TO_C_OFF_T(val))));
+  str = mus_expand_filename(XEN_TO_C_STRING(gfilename));
+  result = C_TO_XEN_OFF_T((*func)(str, XEN_TO_C_OFF_T(val)));
+  if (str) FREE(str);
+  return(result);
 }
 
 
@@ -255,10 +288,13 @@ static XEN g_mus_sound_prune(void)
 static XEN g_mus_sound_comment(XEN gfilename) 
 {
   #define H_mus_sound_comment "(" S_mus_sound_comment " filename): comment (a string) found in sound file's header"
-  char *res = NULL; 
+  char *res = NULL, *str = NULL; 
   XEN newstr;
+
   XEN_ASSERT_TYPE(XEN_STRING_P(gfilename), gfilename, XEN_ONLY_ARG, S_mus_sound_comment, "a string"); 
-  res = mus_sound_comment(local_mus_expand_filename(XEN_TO_C_STRING(gfilename)));
+
+  res = mus_sound_comment(str = mus_expand_filename(XEN_TO_C_STRING(gfilename)));
+  if (str) FREE(str);
   newstr = C_TO_XEN_STRING(res);
   if (res) FREE(res);
   return(newstr);
@@ -267,9 +303,15 @@ static XEN g_mus_sound_comment(XEN gfilename)
 
 static XEN g_mus_sound_write_date(XEN filename) 
 {
+  char *str = NULL;
+  XEN result;
+
   #define H_mus_sound_write_date "(" S_mus_sound_write_date " filename): write date of sound file"
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_mus_sound_write_date, "a string"); 
-  return(C_TO_XEN_ULONG((unsigned long)mus_sound_write_date(local_mus_expand_filename(XEN_TO_C_STRING(filename)))));
+  str = mus_expand_filename(XEN_TO_C_STRING(filename));
+  result = C_TO_XEN_ULONG((unsigned long)mus_sound_write_date(str));
+  if (str) FREE(str);
+  return(result);
 }
 
 
@@ -359,8 +401,11 @@ static XEN g_mus_sound_duration(XEN gfilename)
 {
   #define H_mus_sound_duration "(" S_mus_sound_duration " filename): duration (in seconds) of sound file"
   float res;
+  char *str = NULL;
+
   XEN_ASSERT_TYPE(XEN_STRING_P(gfilename), gfilename, XEN_ONLY_ARG, S_mus_sound_duration, "a string"); 
-  res = mus_sound_duration(local_mus_expand_filename(XEN_TO_C_STRING(gfilename)));
+  res = mus_sound_duration(str = mus_expand_filename(XEN_TO_C_STRING(gfilename)));
+  if (str) FREE(str);
   return(C_TO_XEN_DOUBLE(res));
 
 }
@@ -539,8 +584,11 @@ static XEN g_mus_sound_maxamp_exists(XEN file)
   #define H_mus_sound_maxamp_exists "(" S_mus_sound_maxamp_exists " filename): " PROC_TRUE " if sound's maxamp data is available \
 in the sound cache; if it isn't, a call on " S_mus_sound_maxamp " has to open and read the data to get the maxamp."
   bool val;
+  char *str = NULL;
+
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_mus_sound_maxamp_exists, "a string");
-  val = mus_sound_maxamp_exists(local_mus_expand_filename(XEN_TO_C_STRING(file)));
+  val = mus_sound_maxamp_exists(str = mus_expand_filename(XEN_TO_C_STRING(file)));
+  if (str) FREE(str);
   return(C_TO_XEN_BOOLEAN(val));
 }
 
@@ -554,7 +602,7 @@ static XEN g_mus_sound_maxamp(XEN file)
 
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_mus_sound_maxamp, "a string");
 
-  filename = local_mus_expand_filename(XEN_TO_C_STRING(file));
+  filename = mus_expand_filename(XEN_TO_C_STRING(file));
   chans = mus_sound_chans(filename);
   if (chans > 0)
     {
@@ -573,10 +621,15 @@ static XEN g_mus_sound_maxamp(XEN file)
 		  XEN_CONS(C_TO_XEN_DOUBLE(MUS_SAMPLE_TO_FLOAT(vals[i])), res));
       FREE(vals);
       FREE(times);
+      if (filename) FREE(filename);
     }
-  else XEN_ERROR(BAD_HEADER,
-		 XEN_LIST_2(C_TO_XEN_STRING(S_mus_sound_maxamp),
-			    C_TO_XEN_STRING("chans <= 0")));
+  else 
+    {
+      if (filename) FREE(filename);
+      XEN_ERROR(BAD_HEADER,
+		XEN_LIST_2(C_TO_XEN_STRING(S_mus_sound_maxamp),
+			   C_TO_XEN_STRING("chans <= 0")));
+    }
   return(res);
 }
 
@@ -589,7 +642,7 @@ static XEN g_mus_sound_set_maxamp(XEN file, XEN vals)
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ARG_1, S_setB S_mus_sound_maxamp, "a string");
   XEN_ASSERT_TYPE(XEN_LIST_P(vals), vals, XEN_ARG_2, S_setB S_mus_sound_maxamp, "a list");
 
-  filename = local_mus_expand_filename(XEN_TO_C_STRING(file));
+  filename = mus_expand_filename(XEN_TO_C_STRING(file));
   chans = mus_sound_chans(filename);
 
   /* presumably any actual error here will be trapped via mus-error (raised in mus_header_read via read_sound_file_header),
@@ -619,10 +672,15 @@ static XEN g_mus_sound_set_maxamp(XEN file, XEN vals)
       mus_sound_set_maxamps(filename, chans, mvals, times);
       FREE(mvals);
       FREE(times);
+      if (filename) FREE(filename);
     }
-  else XEN_ERROR(BAD_HEADER,
-		 XEN_LIST_2(C_TO_XEN_STRING(S_setB S_mus_sound_maxamp),
-			    C_TO_XEN_STRING("chans <= 0")));
+  else 
+    {
+      if (filename) FREE(filename);
+      XEN_ERROR(BAD_HEADER,
+		XEN_LIST_2(C_TO_XEN_STRING(S_setB S_mus_sound_maxamp),
+			   C_TO_XEN_STRING("chans <= 0")));
+    }
   return(vals);
 }
 
@@ -632,8 +690,11 @@ static XEN g_mus_sound_open_input(XEN file)
   #define H_mus_sound_open_input "(" S_mus_sound_open_input " filename): open filename for (low-level) sound input, \
 return file descriptor (an integer)"
   int fd;
+  char *str = NULL;
+
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_mus_sound_open_input, "a string");
-  fd = mus_sound_open_input(local_mus_expand_filename(XEN_TO_C_STRING(file)));
+  fd = mus_sound_open_input(str = mus_expand_filename(XEN_TO_C_STRING(file)));
+  if (str) FREE(str);
   return(C_TO_XEN_INT(fd));
 }
 
@@ -715,11 +776,12 @@ header-type is a sndlib type indicator such as " S_mus_aiff "; sndlib currently 
 	  chns = XEN_TO_C_INT_OR_ELSE(chans, 1);
 	  if (chns > 0)
 	    {
-	      char *com = NULL;
+	      char *com = NULL, *str = NULL;
 	      if (XEN_STRING_P(comment)) com = XEN_TO_C_STRING(comment);
-	      fd = mus_sound_open_output(local_mus_expand_filename(XEN_TO_C_STRING(file)),
+	      fd = mus_sound_open_output(str = mus_expand_filename(XEN_TO_C_STRING(file)),
 					 XEN_TO_C_INT_OR_ELSE(srate, 44100),  /* not DEFAULT_OUTPUT_SRATE here because that depends on Snd */
 					 chns, df, ht, com);
+	      if (str) FREE(str);
 	    }
 	  else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_open_output, 3, chans, "chans ~A <= 0?");
 	}
@@ -747,7 +809,7 @@ data-location should be retrieved from a previous call to " S_mus_sound_data_loc
   XEN_ASSERT_TYPE(XEN_OFF_T_P(data_loc) || XEN_FALSE_P(data_loc) || XEN_NOT_BOUND_P(data_loc), 
 		  data_loc, XEN_ARG_5, S_mus_sound_reopen_output, "an integer or " PROC_FALSE);
 
-  filename = local_mus_expand_filename(XEN_TO_C_STRING(file));
+  filename = mus_expand_filename(XEN_TO_C_STRING(file));
 
   /* use existing settings if unbound as args */
   if (XEN_INTEGER_P(data_format))
@@ -796,6 +858,7 @@ data-location should be retrieved from a previous call to " S_mus_sound_data_loc
 		    dloc = 0;
 		}
 	      fd = mus_sound_reopen_output(filename, chns, df, ht, dloc);
+	      if (filename) FREE(filename);
 	    }
 	  else XEN_OUT_OF_RANGE_ERROR(S_mus_sound_reopen_output, 2, chans, "chans <= 0?");
 	}
@@ -1345,8 +1408,14 @@ static XEN g_mus_expand_filename(XEN file)
 {
   #define H_mus_expand_filename "(" S_mus_expand_filename " name): expand 'name' into a canonical or absolute filename, that is, \
 one in which all directories in the path are explicit."
+  char *str = NULL;
+  XEN result;
+
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_mus_expand_filename, "a string");
-  return(C_TO_XEN_STRING(local_mus_expand_filename(XEN_TO_C_STRING(file))));
+  str = mus_expand_filename(XEN_TO_C_STRING(file));
+  result = C_TO_XEN_STRING(str);
+  if (str) FREE(str);
+  return(result);
 }
 
 
@@ -1361,9 +1430,10 @@ cache info to the file given or stdout"
   else
     {
       FILE *fd;
-      char *name;
+      char *name, *str = NULL;
       name = XEN_TO_C_STRING(file);
-      fd = FOPEN(local_mus_expand_filename(name), "w");
+      fd = FOPEN(str = mus_expand_filename(name), "w");
+      if (str) FREE(str);
       if (fd)
 	{
 	  mus_sound_report_cache(fd);

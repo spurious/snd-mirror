@@ -5484,8 +5484,8 @@ XEN mus_clm_output(void)
 {
   XEN obj;
   obj = XEN_VARIABLE_REF(clm_output);
-  if (s7_is_thread_local_variable(obj))
-    return(s7_thread_local_variable_value(s7, obj));
+  if (s7_is_thread_variable(obj))
+    return(s7_thread_variable_value(s7, obj));
   return(obj);
 }
 
@@ -5493,8 +5493,8 @@ XEN mus_clm_reverb(void)
 {
   XEN obj;
   obj = XEN_VARIABLE_REF(clm_reverb);
-  if (s7_is_thread_local_variable(obj))
-    return(s7_thread_local_variable_value(s7, obj));
+  if (s7_is_thread_variable(obj))
+    return(s7_thread_variable_value(s7, obj));
   return(obj);
 }
 #endif

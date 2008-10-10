@@ -39,6 +39,7 @@
  *   deliberate difference from r5rs:
  *        modulo, remainder, and quotient take integer, ratio, or real args
  *        delay is renamed make-promise to avoid collisions in CLM
+ *          (perhaps replace "force" with object application)
  *
  *
  * still to do:
@@ -84,7 +85,8 @@
  *     cabs cacos cacosh carg casin casinh catan catanh ccos ccosh 
  *     cexp clog conj cpow csin csinh csqrt ctan ctanh
  *
- * and stdbool.h (s7.h), and pthread.h (below).
+ * and stdbool.h (s7.h), and pthread.h (below).  So if you just comment out the
+ *   include, you get the local cabs (etc) code, and no threads.
  */
 
 #include <mus-config.h>
@@ -136,6 +138,7 @@
 #define S7_DEBUGGING 0
 /* this is for a bunch of sanity checks */
 
+#define WITH_READ_LINE 1
 
 #define copy_string(str) strdup(str)
 #define CALLOC(a, b)  calloc((size_t)(a), (size_t)(b))
@@ -346,6 +349,11 @@ struct s7_scheme {
   int strbuf_size;
   char *strbuf;
   
+#if WITH_READ_LINE
+  char *read_line_buf;
+  int read_line_buf_size;
+#endif
+
   int tok;
   s7_pointer value;
   opcode_t op;
@@ -562,6 +570,9 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 static char *describe_type(s7_pointer p)
 {
   char *buf;
+  if (!p)
+    return(copy_string("null pointer"));
+
   buf = (char *)CALLOC(1024, sizeof(char));
   sprintf(buf, "%s%s%s%s%s%s%s%s%s%s",
 	  ((type(p) >= 0) && (type(p) <= T_LAST_TYPE)) ? type_names[type(p)] : "bogus type",
@@ -1281,6 +1292,10 @@ static char **file_names = NULL;
 static int file_names_size = 0;
 static int file_names_top = -1;
 
+#if HAVE_PTHREADS
+static pthread_mutex_t remember_files_lock = PTHREAD_MUTEX_INITIALIZER;
+#endif
+
 #define remembered_line_number(Line) (Line & 0xfffff)
 #define remembered_file_name(Line)   (((Line >> 20) <= file_names_top) ? file_names[Line >> 20] : "?")
 /* this gives room for 4000 files each of 1000000 lines */
@@ -1296,6 +1311,10 @@ static s7_pointer remember_line(s7_scheme *sc, s7_pointer obj)
 
 static int remember_file_name(const char *file)
 {
+#if HAVE_PTHREADS
+  pthread_mutex_lock(&remember_files_lock);
+#endif
+
   file_names_top++;
   if (file_names_top >= file_names_size)
     {
@@ -1315,6 +1334,11 @@ static int remember_file_name(const char *file)
 	}
     }
   file_names[file_names_top] = copy_string(file);
+
+#if HAVE_PTHREADS
+  pthread_mutex_unlock(&remember_files_lock);
+#endif
+
   return(file_names_top);
 }
 
@@ -1969,10 +1993,10 @@ static s7_pointer copy_stack(s7_scheme *sc, s7_pointer old_v, int top)
   
   for (i = 0; i < top; i += 4)
     {
-      vector_element(new_v, i + 0) = copy_object(sc, vector_element(old_v, i + 0));             /* code */
-      vector_element(new_v, i + 1) = vector_element(old_v, i + 1);                              /* environment pointer */
-      vector_element(new_v, i + 2) = copy_list(sc, vector_element(old_v, i + 2));               /* args (copy is needed -- see s7test.scm) */
-      vector_element(new_v, i + 3) = vector_element(old_v, i + 3);                              /* op (constant int) */
+      vector_element(new_v, i + 0) = copy_object(sc, vector_element(old_v, i + 0)); /* code */
+      vector_element(new_v, i + 1) = vector_element(old_v, i + 1);                  /* environment pointer */
+      vector_element(new_v, i + 2) = copy_list(sc, vector_element(old_v, i + 2));   /* args (copy is needed -- see s7test.scm) */
+      vector_element(new_v, i + 3) = vector_element(old_v, i + 3);                  /* op (constant int) */
     }
   
   (*(sc->gc_off)) = false;
@@ -2010,22 +2034,6 @@ static s7_pointer s7_make_continuation(s7_scheme *sc)
 
 static void check_for_dynamic_winds(s7_scheme *sc, continuation *c)
 {
-  /*
-    (let ((x 32))
-    (dynamic-wind
-    (lambda () (newline) (display "outer init"))
-    (lambda ()
-    (newline) (display "outer body begin")
-    (call/cc
-    (lambda (break) 
-    (dynamic-wind 
-    (lambda () (newline) (display "inner init")) 
-    (lambda () (newline) (display "inner body") (break) (display "oops")) 
-    (lambda () (newline) (display "inner finish")))))
-    (newline) (display "outer body done"))
-    (lambda () (newline) (display "outer finish")))
-    x)
-  */
   int i, s_base = 0, c_base = -1;
   
   for (i = sc->stack_top - 1; i > 0; i -= 4)
@@ -6457,41 +6465,51 @@ static s7_pointer g_peek_char(s7_scheme *sc, s7_pointer args)
 }
 
 
-#define WITH_READ_LINE 1
-
 #if WITH_READ_LINE
-static char *read_line_buf = NULL;
-static int read_line_buf_size = 0;
 
 static s7_pointer g_read_line(s7_scheme *sc, s7_pointer args)
 {
   #define H_read_line "(read-line port) returns the next line from port, or EOF"
   s7_pointer port;
   int i;
+
   if (args != sc->NIL)
-    port = car(args); /* TODO: check arg type */
-  else port = sc->input_port;
-  if (read_line_buf == NULL)
     {
-      read_line_buf_size = 256;
-      read_line_buf = (char *)malloc(read_line_buf_size * sizeof(char));
+      port = car(args);
+      if (!s7_is_input_port(sc, port))
+	return(s7_wrong_type_arg_error(sc, "read-line", 1, port, "an input port"));
     }
+  else port = sc->input_port;
+
+  if (sc->read_line_buf == NULL)
+    {
+      sc->read_line_buf_size = 256;
+      sc->read_line_buf = (char *)malloc(sc->read_line_buf_size * sizeof(char));
+    }
+
   for (i = 0; ; i++)
     {
       int c;
-      if (i + 1 >= read_line_buf_size)
+      if (i + 1 >= sc->read_line_buf_size)
 	{
-	  read_line_buf_size *= 2;
-	  read_line_buf = (char *)realloc(read_line_buf, read_line_buf_size * sizeof(char));
+	  sc->read_line_buf_size *= 2;
+	  sc->read_line_buf = (char *)realloc(sc->read_line_buf, sc->read_line_buf_size * sizeof(char));
 	}
+
       c = inchar(sc, port);
       if (c == EOF)
-	return(sc->EOF_OBJECT);
-      read_line_buf[i] = (char)c;
+	{
+	  if (i == 0)
+	    return(sc->EOF_OBJECT);
+	  sc->read_line_buf[i + 1] = 0;
+	  return(s7_make_string(sc, sc->read_line_buf));
+	}
+
+      sc->read_line_buf[i] = (char)c;
       if (c == '\n')
 	{
-	  read_line_buf[i + 1] = 0;
-	  return(s7_make_string(sc, read_line_buf));
+	  sc->read_line_buf[i + 1] = 0;
+	  return(s7_make_string(sc, sc->read_line_buf));
 	}
     }
   return(sc->EOF_OBJECT);
@@ -8686,7 +8704,6 @@ static bool s7_is_applicable_object(s7_pointer x);
 
 bool s7_is_procedure(s7_pointer x)
 {
-  /* PERHAPS: type bit here */
   return((s7_is_closure(x)) || 
 	 (is_goto(x)) || 
 	 (s7_is_continuation(x)) || 
@@ -11793,7 +11810,10 @@ static int thread_tag = 0;
 
 static char *thread_print(void *obj)
 {
-  return(copy_string((char *)"#<thread>"));
+  char *buf;
+  buf = (char *)calloc(64, sizeof(char));
+  snprintf(buf, 64, "#<thread %p>", obj);
+  return(buf);
 }
 
 
@@ -11868,23 +11888,25 @@ static s7_pointer g_make_thread(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer g_join_thread(s7_scheme *sc, s7_pointer args)
-{
-  #define H_join_thread "(join-thread thread) causes the current thread to wait for the thread to finish"
-  thred *f;
-  
-  f = (thred *)s7_object_value(car(args));
-  pthread_join(*(f->thread), NULL);
-  return(car(args));
-}
-
-
 static s7_pointer g_is_thread(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_thread "(thread? obj) returns #t if obj is a thread object"
   return(to_s7_bool(sc, 
 		    (s7_is_object(car(args))) &&
 		    (s7_object_type(car(args)) == thread_tag)));
+}
+
+
+static s7_pointer g_join_thread(s7_scheme *sc, s7_pointer args)
+{
+  #define H_join_thread "(join-thread thread) causes the current thread to wait for the thread to finish"
+  thred *f;
+  if (g_is_thread(sc, args) == sc->F)
+    return(s7_wrong_type_arg_error(sc, "join-thread", 1, car(args), "a thread"));
+  
+  f = (thred *)s7_object_value(car(args));
+  pthread_join(*(f->thread), NULL);
+  return(car(args));
 }
 
 
@@ -11905,7 +11927,10 @@ static int lock_tag = 0;
 
 static char *lock_print(void *obj)
 {
-  return(copy_string((char *)"#<lock>"));
+  char *buf;
+  buf = (char *)calloc(64, sizeof(char));
+  snprintf(buf, 64, "#<lock %p>", obj);       /* PERHAPS: print who is hold it? */
+  return(buf);
 }
 
 
@@ -11948,26 +11973,35 @@ static s7_pointer g_make_lock(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_grab_lock(s7_scheme *sc, s7_pointer args)
 {
   #define H_grab_lock "(grab-lock lock) stops the current thread until it can grab the lock."
-  pthread_mutex_lock((pthread_mutex_t *)s7_object_value(car(args)));
+  if (g_is_lock(sc, args) == sc->F)
+    return(s7_wrong_type_arg_error(sc, "grab-lock", 1, car(args), "a lock (mutex)"));
+
+  return(s7_make_integer(sc, pthread_mutex_lock((pthread_mutex_t *)s7_object_value(car(args)))));
 }
 
 
 static s7_pointer g_release_lock(s7_scheme *sc, s7_pointer args)
 {
   #define H_release_lock "(release-lock lock) releases the lock"
-  pthread_mutex_unlock((pthread_mutex_t *)s7_object_value(car(args)));
+  if (g_is_lock(sc, args) == sc->F)
+    return(s7_wrong_type_arg_error(sc, "release-lock", 1, car(args), "a lock (mutex)"));
+
+  return(s7_make_integer(sc, pthread_mutex_unlock((pthread_mutex_t *)s7_object_value(car(args)))));
 }
 
 
 
-/* -------- thread local variables (pthread keys) -------- */
+/* -------- thread variables (pthread keys) -------- */
 
 static int key_tag = 0;
 
 
 static char *key_print(void *obj)
 {
-  return(copy_string((char *)"#<thread-local-variable>"));
+  char *buf;
+  buf = (char *)calloc(64, sizeof(char));
+  snprintf(buf, 64, "#<thread-variable %p>", obj); /* TODO: print the current value of this variable */
+  return(buf);
 }
 
 
@@ -11988,23 +12022,23 @@ static bool key_equal(void *obj1, void *obj2)
 }
 
 
-bool s7_is_thread_local_variable(s7_pointer obj)
+bool s7_is_thread_variable(s7_pointer obj)
 {
   return((s7_is_object(obj)) &&
 	 (s7_object_type(obj) == key_tag));
 }
 
 
-static s7_pointer g_is_thread_local_variable(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_is_thread_variable(s7_scheme *sc, s7_pointer args)
 {
-  #define H_is_thread_local_variable "(thread-local-variable? obj) returns #t if obj is a thread local variable (a pthread key)"
-  return(to_s7_bool(sc, s7_is_thread_local_variable(car(args))));
+  #define H_is_thread_variable "(thread-variable? obj) returns #t if obj is a thread variable (a pthread key)"
+  return(to_s7_bool(sc, s7_is_thread_variable(car(args))));
 }
 
 
-static s7_pointer g_make_thread_local_variable(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_make_thread_variable(s7_scheme *sc, s7_pointer args)
 {
-  #define H_make_thread_local_variable "(make-thread-local-variable) returns a new thread specific variable (a pthread key)"
+  #define H_make_thread_variable "(make-thread-variable) returns a new thread specific variable (a pthread key)"
   pthread_key_t *key;
   key = (pthread_key_t *)malloc(sizeof(pthread_key_t));
   pthread_key_create(key, NULL);
@@ -12012,7 +12046,7 @@ static s7_pointer g_make_thread_local_variable(s7_scheme *sc, s7_pointer args)
 }
 
 
-s7_pointer s7_thread_local_variable_value(s7_scheme *sc, s7_pointer obj)
+s7_pointer s7_thread_variable_value(s7_scheme *sc, s7_pointer obj)
 {
   pthread_key_t *key; 
   void *val;
@@ -12026,8 +12060,11 @@ s7_pointer s7_thread_local_variable_value(s7_scheme *sc, s7_pointer obj)
 
 static s7_pointer get_key(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 {
-  /* TODO: check 0 args?? */
-  return(s7_thread_local_variable_value(sc, obj));
+  if (args != sc->NIL)
+    return(s7_error(sc, 
+		    s7_make_symbol(sc, "wrong-number-of-args"), 
+		    s7_make_string(sc, "thread variable is a function of no arguments")));
+  return(s7_thread_variable_value(sc, obj));
 }
 
 
@@ -12037,18 +12074,13 @@ static s7_pointer set_key(s7_scheme *sc, s7_pointer obj, s7_pointer args)
   key = (pthread_key_t *)s7_object_value(obj);
   pthread_setspecific(*key, (void *)s7_local_gc_protect(car(args))); 
 
-  /* TODO: how to unprotect? should we be marking? */
+  /* TODO: how to unprotect? */
   /*    perhaps keep a list of local vars attached to threads, and unprotect when thread is done */
   /*    pthread_self gets current thread, and thread_free has f->thread to match */
   /*    would want to unprotect only if the value is not elsewhere in this list */
 
   return(car(args));
 }
-
-
-/* TODO: join-thread and the lock funcs need arg type checks */
-
-
 #endif
 
 
@@ -12078,6 +12110,11 @@ s7_scheme *s7_init(void)
   sc->strbuf_size = INITIAL_STRBUF_SIZE;
   sc->strbuf = (char*)CALLOC(sc->strbuf_size, sizeof(char));
   
+#if WITH_READ_LINE
+  sc->read_line_buf = NULL;
+  sc->read_line_buf_size = 0;
+#endif
+
   sc->NIL = &sc->_NIL;
   sc->T = &sc->_HASHT;
   sc->F = &sc->_HASHF;
@@ -12195,7 +12232,7 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "make-promise",OP_DELAY);
   assign_syntax(sc, "and",         OP_AND0);
   assign_syntax(sc, "or",          OP_OR0);
-  assign_syntax(sc, "cons-stream", OP_C0STREAM); /* what is this?? -- something to do with "promise"? */
+  assign_syntax(sc, "cons-stream", OP_C0STREAM); 
   assign_syntax(sc, "macro",       OP_MACRO0);
   assign_syntax(sc, "case",        OP_CASE0);
   assign_syntax(sc, "defmacro",    OP_DEFMACRO);
@@ -12556,9 +12593,9 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "_quasiquote_",            g_quasiquote,              2, 0, false, "internal quasiquote handler");
   
 #if HAVE_PTHREADS
-  thread_tag = s7_new_type("<thread>",                thread_print, thread_free, thread_equal, thread_mark, NULL, NULL);
-  lock_tag =   s7_new_type("<lock>",                  lock_print,   lock_free,   lock_equal,   NULL,        NULL, NULL);
-  key_tag =    s7_new_type("<thread-local-variable>", key_print,    key_free,    key_equal,    NULL,        get_key, set_key);
+  thread_tag = s7_new_type("<thread>",          thread_print, thread_free, thread_equal, thread_mark, NULL, NULL);
+  lock_tag =   s7_new_type("<lock>",            lock_print,   lock_free,   lock_equal,   NULL,        NULL, NULL);
+  key_tag =    s7_new_type("<thread-variable>", key_print,    key_free,    key_equal,    NULL,        get_key, set_key);
 
   s7_define_function(sc, "make-thread",             g_make_thread,             1, 0, false, H_make_thread);
   s7_define_function(sc, "join-thread",             g_join_thread,             1, 0, false, H_join_thread);
@@ -12569,8 +12606,8 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "release-lock",            g_release_lock,            1, 0, false, H_release_lock);
   s7_define_function(sc, "lock?",                   g_is_lock,                 1, 0, false, H_is_lock);
 
-  s7_define_function(sc, "make-thread-local-variable", g_make_thread_local_variable, 0, 0, false, H_make_thread_local_variable);
-  s7_define_function(sc, "thread-local-variable?",  g_is_thread_local_variable, 1, 0, false, H_is_thread_local_variable);
+  s7_define_function(sc, "make-thread-variable",    g_make_thread_variable, 0, 0, false, H_make_thread_variable);
+  s7_define_function(sc, "thread-variable?",        g_is_thread_variable, 1, 0, false, H_is_thread_variable);
 #endif
   
   s7_define_variable(sc, "*features*", sc->NIL);
@@ -12609,6 +12646,11 @@ static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
   new_sc->longjmp_ok = false;
   new_sc->strbuf_size = INITIAL_STRBUF_SIZE;
   new_sc->strbuf = (char*)CALLOC(new_sc->strbuf_size, sizeof(char));
+
+#if WITH_READ_LINE
+  new_sc->read_line_buf = NULL;
+  new_sc->read_line_buf_size = 0;
+#endif
   
   new_sc->stack_top = 0;
   new_sc->stack = vect;
@@ -12635,6 +12677,9 @@ static s7_scheme *close_s7(s7_scheme *sc)
   FREE(sc->strbuf);
   FREE(sc->temps);
   FREE(sc);
+#if WITH_READ_LINE
+  if (sc->read_line_buf) FREE(sc->read_line_buf);
+#endif
   return(NULL);
 }
 

@@ -229,8 +229,8 @@ s7_pointer s7_hash_table_ref(s7_scheme *sc, s7_pointer table, const char *name);
 s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, const char *name, s7_pointer value);
 
 #if HAVE_PTHREADS
-bool s7_is_thread_local_variable(s7_pointer obj);
-s7_pointer s7_thread_local_variable_value(s7_scheme *sc, s7_pointer obj);
+bool s7_is_thread_variable(s7_pointer obj);
+s7_pointer s7_thread_variable_value(s7_scheme *sc, s7_pointer obj);
 #endif
 
 #endif
@@ -243,7 +243,7 @@ s7_pointer s7_thread_local_variable_value(s7_scheme *sc, s7_pointer obj);
  *    #define s7_Int int
  *    #define s7_Int_d "%d"
  *
- *  in s7.h
+ *  in s7.h.   See xen.h and the Snd package for extended examples.
  *
  *
  * a read-eval-print loop using S7: 
@@ -312,6 +312,8 @@ int main(int argc, char **argv)
 
 #endif
 
+
+
 /* -------------------------------------------------------------------------------- */
 
 /* define a function with args/returned value, and a variable */
@@ -374,6 +376,8 @@ int main(int argc, char **argv)
  */
 
 #endif
+
+
 
  /* -------------------------------------------------------------------------------- */
 

@@ -102,6 +102,9 @@ returning you to the true top-level."
   (if (not (null? *ws-continues*))
       (ws-stop!)))
 
+(if (provided? 'snd-s7)
+    (define (snd-backtrace . args) #f))
+
 (define* (ws-backtrace :optional all) 
   "(ws-backtrace (all #f)) shows the stack backtrace at the point where with-sound was interrupted."
   (snd-backtrace *ws-stack* all))
@@ -258,6 +261,7 @@ returning you to the true top-level."
 				  (notehook *clm-notehook*)               ; (with-sound (:notehook (lambda args (display args))) (fm-violin 0 1 440 .1))
 				  (scaled-by #f)
 				  (ignore-output #f)
+				  (thread-output #f)
 				  (output-safety *clm-output-safety*))
   "with-sound-helper is the business portion of the with-sound macro"
   (let ((old-srate (mus-srate))
@@ -297,45 +301,53 @@ returning you to the true top-level."
        (set! (mus-srate) srate))
 
      (lambda ()
-       (if output-to-file
+       (if (not thread-output)
 	   (begin
-	     (if continue-old-file
+	     
+	     (if output-to-file
 		 (begin
-		   (set! *output* (continue-sample->file output-1))
-		   (set! (mus-srate) (mus-sound-srate output-1))
-		   (let ((ind (find-sound output-1)))
-		     (if (sound? ind)
-			 (close-sound ind))))
+		   (if continue-old-file
+		       (begin
+			 (set! *output* (continue-sample->file output-1))
+			 (set! (mus-srate) (mus-sound-srate output-1))
+			 (let ((ind (find-sound output-1)))
+			   (if (sound? ind)
+			       (close-sound ind))))
+		       (begin
+			 (if (file-exists? output-1) 
+			     (delete-file output-1))
+			 (set! *output* (make-sample->file output-1 channels data-format header-type comment))))
+		   (set! (mus-safety *output*) output-safety))
 		 (begin
-		   (if (file-exists? output-1) 
-		       (delete-file output-1))
-		   (set! *output* (make-sample->file output-1 channels data-format header-type comment))))
-	     (set! (mus-safety *output*) output-safety))
-	   (begin
-	     (if (not continue-old-file)
-		 (if (vct? output-1)
-		     (vct-fill! output-1 0.0)
-		     (if (sound-data? output-1)
-			 (sound-data-fill! output-1 0.0))))
-	     (set! *output* output-1)))
+		   (if (not continue-old-file)
+		       (if (vct? output-1)
+			   (vct-fill! output-1 0.0)
+			   (if (sound-data? output-1)
+			       (sound-data-fill! output-1 0.0))))
+		   (set! *output* output-1)))
 
-       (if reverb
-	   (if reverb-to-file
-	       (begin
-		 (if continue-old-file
-		     (set! *reverb* (continue-sample->file reverb-1))
+	     (if reverb
+		 (if reverb-to-file
 		     (begin
-		       (if (file-exists? reverb-1) 
-			   (delete-file reverb-1))
-		       (set! *reverb* (make-sample->file reverb-1 reverb-channels data-format header-type))))
-		 (set! (mus-safety *reverb*) output-safety))
-	       (begin
-		 (if (not continue-old-file)
-		     (if (vct? reverb-1)
-			 (vct-fill! reverb-1 0.0)
-			 (if (sound-data? reverb-1)
-			     (sound-data-fill! reverb-1 0.0))))
-		 (set! *reverb* reverb-1))))
+		       (if continue-old-file
+			   (set! *reverb* (continue-sample->file reverb-1))
+			   (begin
+			     (if (file-exists? reverb-1) 
+				 (delete-file reverb-1))
+			     (set! *reverb* (make-sample->file reverb-1 reverb-channels data-format header-type))))
+		       (set! (mus-safety *reverb*) output-safety))
+		     (begin
+		       (if (not continue-old-file)
+			   (if (vct? reverb-1)
+			       (vct-fill! reverb-1 0.0)
+			       (if (sound-data? reverb-1)
+				   (sound-data-fill! reverb-1 0.0))))
+		       (set! *reverb* reverb-1)))))
+
+	   ;; else thread-output
+	   (begin
+	     (set! (thread-output) (make-sample->file output-1 channels data-format header-type comment))
+	     ))
 
        (let ((start (if statistics (get-internal-real-time)))
 	     (flush-reverb #f)
@@ -417,8 +429,10 @@ returning you to the true top-level."
 	       (if (and reverb-to-file *clm-delete-reverb*)
 		   (delete-file reverb-1))))
 
-	 (if output-to-file
-	     (mus-close *output*))
+	 (if thread-output
+	     (mus-close (thread-output))
+	     (if output-to-file
+		 (mus-close *output*)))
 
 	 (let ((snd-output #f)
 	       (cur-sync #f))
@@ -453,9 +467,13 @@ returning you to the true top-level."
 				  " (before scaling)" 
 				  "")
 			      (if output-to-file
-				  (if to-snd 
-				      (maxamp snd-output #t) 
-				      (mus-sound-maxamp output-1))
+				  (let ((lst (if to-snd
+						 (maxamp snd-output #t)
+						 (mus-sound-maxamp output-1))))
+				    (do ((i 0 (+ i 2)))
+					((>= i (length lst)))
+				      (list-set! lst i (/ (list-ref lst i) (mus-srate))))
+				    lst)
 				  (if (vct? output-1)
 				      (list (vct-peak output-1))
 				      (if (sound-data? output-1)
@@ -685,9 +703,7 @@ returning you to the true top-level."
 			   (if (= i n)
 			       (split-1 (cons (car l) s) (cdr l) n 1)
 			       (split-1 s (cdr l) n (+ i 1)))))
-		     (split-1 '() l n (- n k))))
-	    (old-to-snd *to-snd*))
-	(set! *to-snd* #f)
+		     (split-1 '() l n (- n k)))))
 
 	(let ((lists '()))
 	  (do ((i 0 (1+ i)))
@@ -697,30 +713,33 @@ returning you to the true top-level."
 	  `(with-sound-helper 
 	    (lambda ()
 	      (let ((threads '())
-		    (thread-output (make-thread-local-variable))
-		    (mix-lock (make-lock)))
+		    (thread-output (make-thread-variable))
+		    (mix-lock (make-lock))
+		    (main-output *output*))
+		(set! *output* thread-output)
 		,@(map
 		   (lambda (expr)
 		    `(set! threads (cons (make-thread 
 					  (lambda ()
 					    (let ((tmp (with-sound-helper 
 							 (lambda ()
-							   (set! (thread-output) *output*)
-							   (set! *output* thread-output)
 							   ,@expr)
+							 :thread-output thread-output
 							 :output (snd-tempnam) 
+							 :to-snd #f
 							 ,@args)))
 					      (grab-lock mix-lock)
-					      (mus-mix (thread-output) tmp)
-					      (release-lock mix-lock))))
+					      (mus-mix main-output tmp)
+					      (release-lock mix-lock)
+					      (delete-file tmp))))
 					 threads)))
 		   lists)
 
-	       (for-each 
-		(lambda (thread) 
-		  (join-thread thread))
-		threads)))
-
+		(for-each 
+		 (lambda (thread) 
+		   (join-thread thread))
+		 threads)
+		(set! *output* main-output)))
 	    ,@args)))
 
       `(with-sound-helper
@@ -735,12 +754,7 @@ returning you to the true top-level."
 ;;;   in threads case, they need to be stored in the current thread, and read from there
 ;;;   pthread_get|setspecific in s7, used before ,expr above to set, used in mus_clm_output to get?
 ;;;   in run, this happens once per note, else on every note, but that's the least of our worries
-;;;   needs pthread_key_t, pthread_key_create
-;;;   make-thread-local: make key obj and create it
-;;;   (key) = get it, (set! (key) val) = set it (both in the current thread)
-;;;   then *output* can be a thread-local function/variable?
 ;;;     so mus_clm_output/g_outa if mus_any returns gen else calls (*output*) to get gen
-;;;     this already fits with the *output* as function case except that currently it's treated as a func of 3 args
 
 
 
