@@ -262,19 +262,20 @@ returning you to the true top-level."
 				  (scaled-by #f)
 				  (ignore-output #f)
 				  (thread-output #f)
+				  (thread-reverb #f)
 				  (output-safety *clm-output-safety*))
   "with-sound-helper is the business portion of the with-sound macro"
-  (let ((old-srate (mus-srate))
-	(old-*output* *output*)
-	(old-*reverb* *reverb*)
-	(in-debugger #f)
-	(old-notehook *clm-notehook*)
-	(old-verbose *clm-verbose*)
-	(old-auto-update-interval (auto-update-interval))
-	(output-1 output)                    ; protect during nesting
-	(output-to-file (string? output))
-	(reverb-1 revfile)
-	(reverb-to-file (and reverb (string? revfile))))
+  (let* ((old-srate (mus-srate))
+	 (old-*output* *output*)
+	 (old-*reverb* *reverb*)
+	 (in-debugger #f)
+	 (old-notehook *clm-notehook*)
+	 (old-verbose *clm-verbose*)
+	 (old-auto-update-interval (auto-update-interval))
+	 (output-1 output)                    ; protect during nesting
+	 (output-to-file (string? output))
+	 (reverb-1 revfile)
+	 (reverb-to-file (and reverb (string? revfile))))
 
     (if ignore-output
 	(begin
@@ -346,7 +347,15 @@ returning you to the true top-level."
 
 	   ;; else thread-output
 	   (begin
+	     (if (file-exists? output-1) 
+		 (delete-file output-1))
 	     (set! (thread-output) (make-sample->file output-1 channels data-format header-type comment))
+	     (if thread-reverb
+		 (begin
+		   (if (file-exists? reverb-1) 
+		       (delete-file reverb-1))
+		   (set! (thread-reverb) (make-sample->file reverb-1 reverb-channels data-format header-type))))
+	     (set! statistics #f)
 	     ))
 
        (let ((start (if statistics (get-internal-real-time)))
@@ -412,8 +421,10 @@ returning you to the true top-level."
 	 (if (and reverb 
 		  (not flush-reverb)) ; i.e. not interrupted by error and trying to jump out
 	     (begin
-	       (if reverb-to-file
-		   (mus-close *reverb*))
+	       (if thread-reverb
+		   (mus-close (thread-reverb))
+		   (if reverb-to-file
+		       (mus-close *reverb*)))
 	       (if statistics 
 		   (if reverb-to-file
 		       (set! revmax (cadr (mus-sound-maxamp reverb-1)))
@@ -421,13 +432,15 @@ returning you to the true top-level."
 			   (set! revmax (vct-peak reverb-1))
 			   (if (sound-data? reverb-1)
 			       (set! revmax (sound-data-peak reverb-1))))))
-	       (if reverb-to-file
-		   (set! *reverb* (make-file->sample reverb-1)))
-	       (apply reverb reverb-data)
-	       (if reverb-to-file
-		   (mus-close *reverb*))
-	       (if (and reverb-to-file *clm-delete-reverb*)
-		   (delete-file reverb-1))))
+	       (if (not thread-reverb)
+		   (begin
+		     (if reverb-to-file
+			 (set! *reverb* (make-file->sample reverb-1)))
+		     (apply reverb reverb-data)
+		     (if reverb-to-file
+			 (mus-close *reverb*))
+		     (if (and reverb-to-file *clm-delete-reverb*)
+			 (delete-file reverb-1))))))
 
 	 (if thread-output
 	     (mus-close (thread-output))
@@ -467,13 +480,13 @@ returning you to the true top-level."
 				  " (before scaling)" 
 				  "")
 			      (if output-to-file
-				  (let ((lst (if to-snd
-						 (maxamp snd-output #t)
-						 (mus-sound-maxamp output-1))))
-				    (do ((i 0 (+ i 2)))
-					((>= i (length lst)))
-				      (list-set! lst i (/ (list-ref lst i) (mus-srate))))
-				    lst)
+				  (if to-snd
+				      (maxamp snd-output #t) ; this is a list of chan maxs '(.1 .2)
+				      (let ((lst (mus-sound-maxamp output-1)))
+					(do ((i 0 (+ i 2)))
+					    ((>= i (length lst)))
+					  (list-set! lst i (/ (list-ref lst i) (mus-srate))))
+					lst))
 				  (if (vct? output-1)
 				      (list (vct-peak output-1))
 				      (if (sound-data? output-1)
@@ -527,12 +540,16 @@ returning you to the true top-level."
 	   (begin
 	     (if *reverb*
 		 (begin
-		   (mus-close *reverb*)
+		   (if thread-reverb
+		       (mus-close (thread-reverb))
+		       (mus-close *reverb*))
 		   (set! *reverb* old-*reverb*)))
 	     (if *output*
 		 (begin
-		   (if (mus-output? *output*)
-		       (mus-close *output*))
+		   (if thread-output
+		       (mus-close (thread-output))
+		       (if (mus-output? *output*)
+			   (mus-close *output*)))
 		   (set! *output* old-*output*)))
 	     (set! (mus-srate) old-srate)))))))
 
@@ -550,198 +567,89 @@ returning you to the true top-level."
      snd))
 
 
-#|
-;;; old versions of with-threaded-sound
-;;;
-;;;   these are plagued with clicks etc
-;;;   I decided to remove the clm.c reader/writer locks; readin, locsig et al can no longer be shared between threads
-;;;   also, I don't think the Guile and Gauche versions were ever reliable -- one reason I wrote s7 was to be able
-;;;   to ensure that the interpreter was thread-safe.
-
-(if (provided? 'snd-gauche)
-    (use gauche.threads))
-(if (provided? 'snd-gauche)
-    (define join-thread thread-join!))
-(if (provided? 'snd-gauche)
-    (define (call-with-new-thread thunk handler)
-      (let ((thread (make-thread thunk)))
-	(thread-start! thread)
-	thread)))
-
-(if (or (provided? 'snd-guile) 
-	(provided? 'snd-gauche))
-(defmacro with-threaded-sound (args . body) 
-  (if (provided? 'snd-threads)
-      `(with-sound-helper 
-	(lambda ()
-	  (let* ((threads '())
-		 (ws-error #f))
-
-	    (call-with-current-continuation
-	     (lambda (error-exit)
-	       ,@(map 
-		  (lambda (expr)
-		    `(begin 
-		       (set! threads 
-			     (cons (call-with-new-thread 
-				    (lambda () 
-				      ,expr)
-				    ;; call-with-new-thread sets up a "continution barrier" so we can't jump
-				    ;;   out of the thread thunk directly.  But if an error occurs, we need
-				    ;;   to catch it or it falls back on Guile's error handler.
-				    ;;   The error stops this map, and (later) rethrows at the with-sound-helper level.
-				    (lambda args
-				      ;; this is the handler of an implicit catch #t (in Guile)
-				      ;;   I'd like to print the current expr to help the user track down the error,
-				      ;;   but that runs into a series of bugs in format.
-				      (set! ws-error args))) ; can't jump out...
-				   threads))
-		       (if ws-error         ; interrupt the map over the with-sound body (an error has occurred)
-			   (error-exit))
-		       (if (>= (length threads) *clm-threads*)
-			   (begin
-			     (for-each 
-			      (lambda (thread) 
-				(join-thread thread))
-			      threads)
-			     (set! threads '())))))
-		  body)))
-
-	    ;; even if error, we need to join the threads so that there aren't dangling references to *output*
-	    (for-each 
-	     (lambda (thread) 
-	       (join-thread thread))
-	     threads)
-
-	    (if ws-error  ; if error, re-throw it so that outer level error handlers will see it
-		(apply throw (car ws-error) (cdr ws-error))
-		#f)))
-	,@args)
-
-      ;; if no threads, don't use the underlying threads since Snd is assuming various table references will not be interrupted
-      `(with-sound-helper
-	(lambda ()
-	  ,@body)
-	,@args))))
-
-
-(if (provided? 'snd-s7)
-(defmacro with-threaded-sound (args . body)
-  (if (and (provided? 'snd-threads)
-	   (not (= (optimization) 0)))
-      `(with-sound-helper 
-	(lambda ()
-	  (let* ((threads '())
-		 (ws-error #f))
-	    ,@(map 
-	       (lambda (expr)
-		 `(begin 
-		    (set! threads (cons (make-thread (lambda () ,expr)) threads))
-		    (if (>= (length threads) *clm-threads*)
-			(begin
-			  (for-each 
-			   (lambda (thread) 
-			     (join-thread thread))
-			   threads)
-			  (set! threads '())))))
-	       body)
-	    (for-each 
-	     (lambda (thread) 
-	       (join-thread thread))
-	     threads)))
-	,@args)
-
-      `(with-sound-helper
-	(lambda ()
-	  ,@body)
-	,@args))))
-
-
-(if (provided? 'snd-s7)
-(defmacro with-threaded-sound-1 (args . body)
-  (if (and (provided? 'snd-threads)
-	   (not (= (optimization) 0)))
-      `(with-sound-helper 
-	(lambda ()
-	  (let ((notes (list ,@(map (lambda (expr) `(lambda () ,expr)) body)))
-		(lock (make-lock)))
-	    (letrec ((reader 
-		      (lambda ()
-			(let ((note #f))
-			  (grab-lock lock)
-			  (if (not (null? notes))
-			      (begin
-				(set! note (car notes))
-				(set! notes (cdr notes))))
-			  (release-lock lock)
-			  (if note
-			      (let ((thred (make-thread note)))
-				(join-thread thred)
-				(reader)))))))
-	      (let ((readers '()))
-		(do ((i 0 (+ i 1)))
-		    ((= i *clm-threads*))
-		  (set! readers (cons (make-thread (lambda () (reader))) readers)))
-		(for-each (lambda (thred) (join-thread thred)) readers)))))
-	,@args)
-
-      `(with-sound-helper
-	(lambda ()
-	  ,@body)
-	,@args))))
-|#
-
-
+;;; -------- with-threaded-sound --------
 
 (defmacro with-threaded-sound (args . body)
   (if (and (provided? 'snd-threads)
 	   (not (= (optimization) 0)))
-      (let ((split (lambda (l n k)
-		     (define (split-1 s l n i)
-		       (if (null? l)
-			   (reverse s)
-			   (if (= i n)
-			       (split-1 (cons (car l) s) (cdr l) n 1)
-			       (split-1 s (cdr l) n (+ i 1)))))
-		     (split-1 '() l n (- n k)))))
+      (let ((split 
+	     (lambda (l n k)
+	       (define (split-1 s l n i)
+		 (if (null? l)
+		     (reverse s)
+		     (if (= i n)
+			 (split-1 (cons (car l) s) (cdr l) n 1)
+			 (split-1 s (cdr l) n (+ i 1)))))
+	       (split-1 '() l n (- n k))))
+	    (remove-output-and-reverb-args
+	     (lambda (lst)
+	       (let ((badarg #f)
+		     (new-args '()))
+		 (for-each 
+		  (lambda (arg)
+		    (if badarg
+			(set! badarg #f)
+			(if (not (member arg (list :output :reverb :revfile :reverb-data :reverb-channels)))
+			    (set! new-args (cons arg new-args))
+			    (set! badarg #t))))
+		  lst)
+		 (reverse new-args)))))
 
 	(let ((lists '()))
 	  (do ((i 0 (1+ i)))
 	      ((= i *clm-threads*))
 	    (set! lists (cons (split body *clm-threads* i) lists)))
 
-	  `(with-sound-helper 
-	    (lambda ()
-	      (let ((threads '())
-		    (thread-output (make-thread-variable))
-		    (mix-lock (make-lock))
-		    (main-output *output*))
-		(set! *output* thread-output)
-		,@(map
-		   (lambda (expr)
-		    `(set! threads (cons (make-thread 
-					  (lambda ()
-					    (let ((tmp (with-sound-helper 
-							 (lambda ()
-							   ,@expr)
-							 :thread-output thread-output
-							 :output (snd-tempnam) 
-							 :to-snd #f
-							 ,@args)))
-					      (grab-lock mix-lock)
-					      (mus-mix main-output tmp)
-					      (release-lock mix-lock)
-					      (delete-file tmp))))
-					 threads)))
-		   lists)
+	  (let ((new-args (remove-output-and-reverb-args args)))
 
-		(for-each 
-		 (lambda (thread) 
-		   (join-thread thread))
-		 threads)
-		(set! *output* main-output)))
-	    ,@args)))
-
+	    `(with-sound-helper 
+	      (lambda ()
+		(let ((threads '())
+		      (thread-output (make-thread-variable))
+		      (thread-reverb (and *reverb* (make-thread-variable)))
+		      (mix-lock (make-lock))
+		      (main-output *output*)
+		      (main-reverb *reverb*))
+		  
+		  (set! *output* thread-output)
+		  (if thread-reverb (set! *reverb* thread-reverb))
+		  
+		  ,@(map
+		     (lambda (expr)
+		       `(set! threads (cons (make-thread 
+					     (lambda ()
+					       (let* ((reverb-tmp (and *reverb* (snd-tempnam)))
+						      (tmp (with-sound-helper 
+							    (lambda ()
+							      ,@expr
+							      #f)
+							    :thread-output thread-output
+							    :thread-reverb thread-reverb
+							    :output (snd-tempnam)
+							    :revfile reverb-tmp
+							    :to-snd #f
+					;,new-args
+							    )))
+						 (grab-lock mix-lock)
+						 (display "mix ") (display tmp) (newline)
+						 (mus-mix main-output tmp)
+						 (if *reverb*
+						     (mus-mix main-reverb reverb-tmp))
+						 (release-lock mix-lock)
+						 (delete-file tmp))))
+					    threads)))
+		     lists)
+		  
+		  (for-each 
+		   (lambda (thread) 
+		     (join-thread thread))
+		   threads)
+		  
+		  (if main-reverb (set! *reverb* main-reverb))
+		  (set! *output* main-output)))
+	      
+	      ,@args))))
+      
       `(with-sound-helper
 	(lambda ()
 	  ,@body)
@@ -755,6 +663,10 @@ returning you to the true top-level."
 ;;;   pthread_get|setspecific in s7, used before ,expr above to set, used in mus_clm_output to get?
 ;;;   in run, this happens once per note, else on every note, but that's the least of our worries
 ;;;     so mus_clm_output/g_outa if mus_any returns gen else calls (*output*) to get gen
+
+;;; TODO: reverb saw; check the output-safety stuff again, mus-channels and others often take *output* as arg -- need to handle these cases 
+;;;       mus-channels, mus-mix?, frame->file?, make-locsig, mus-close, mus-output?, mus-file-name?, 
+;;; TODO: output filename in with-threaded-sound?  also, don't fire up thread if list is empty
 
 
 
@@ -1486,5 +1398,152 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 	  *clm-clipped* (mus-clipping)
 	  (mus-prescaler)
 	  *clm-threads*))
+
+
+
+
+
+#|
+;;; --------------------------------------------------------------------------------
+;;; old versions of with-threaded-sound
+;;;
+;;;   these are plagued with clicks etc
+;;;   I decided to remove the clm.c reader/writer locks; readin, locsig et al can no longer be shared between threads
+;;;   also, I don't think the Guile and Gauche versions were ever reliable -- one reason I wrote s7 was to be able
+;;;   to ensure that the interpreter was thread-safe.
+
+(if (provided? 'snd-gauche)
+    (use gauche.threads))
+(if (provided? 'snd-gauche)
+    (define join-thread thread-join!))
+(if (provided? 'snd-gauche)
+    (define (call-with-new-thread thunk handler)
+      (let ((thread (make-thread thunk)))
+	(thread-start! thread)
+	thread)))
+
+(if (or (provided? 'snd-guile) 
+	(provided? 'snd-gauche))
+(defmacro with-threaded-sound (args . body) 
+  (if (provided? 'snd-threads)
+      `(with-sound-helper 
+	(lambda ()
+	  (let* ((threads '())
+		 (ws-error #f))
+
+	    (call-with-current-continuation
+	     (lambda (error-exit)
+	       ,@(map 
+		  (lambda (expr)
+		    `(begin 
+		       (set! threads 
+			     (cons (call-with-new-thread 
+				    (lambda () 
+				      ,expr)
+				    ;; call-with-new-thread sets up a "continution barrier" so we can't jump
+				    ;;   out of the thread thunk directly.  But if an error occurs, we need
+				    ;;   to catch it or it falls back on Guile's error handler.
+				    ;;   The error stops this map, and (later) rethrows at the with-sound-helper level.
+				    (lambda args
+				      ;; this is the handler of an implicit catch #t (in Guile)
+				      ;;   I'd like to print the current expr to help the user track down the error,
+				      ;;   but that runs into a series of bugs in format.
+				      (set! ws-error args))) ; can't jump out...
+				   threads))
+		       (if ws-error         ; interrupt the map over the with-sound body (an error has occurred)
+			   (error-exit))
+		       (if (>= (length threads) *clm-threads*)
+			   (begin
+			     (for-each 
+			      (lambda (thread) 
+				(join-thread thread))
+			      threads)
+			     (set! threads '())))))
+		  body)))
+
+	    ;; even if error, we need to join the threads so that there aren't dangling references to *output*
+	    (for-each 
+	     (lambda (thread) 
+	       (join-thread thread))
+	     threads)
+
+	    (if ws-error  ; if error, re-throw it so that outer level error handlers will see it
+		(apply throw (car ws-error) (cdr ws-error))
+		#f)))
+	,@args)
+
+      ;; if no threads, don't use the underlying threads since Snd is assuming various table references will not be interrupted
+      `(with-sound-helper
+	(lambda ()
+	  ,@body)
+	,@args))))
+
+
+(if (provided? 'snd-s7)
+(defmacro with-threaded-sound (args . body)
+  (if (and (provided? 'snd-threads)
+	   (not (= (optimization) 0)))
+      `(with-sound-helper 
+	(lambda ()
+	  (let* ((threads '())
+		 (ws-error #f))
+	    ,@(map 
+	       (lambda (expr)
+		 `(begin 
+		    (set! threads (cons (make-thread (lambda () ,expr)) threads))
+		    (if (>= (length threads) *clm-threads*)
+			(begin
+			  (for-each 
+			   (lambda (thread) 
+			     (join-thread thread))
+			   threads)
+			  (set! threads '())))))
+	       body)
+	    (for-each 
+	     (lambda (thread) 
+	       (join-thread thread))
+	     threads)))
+	,@args)
+
+      `(with-sound-helper
+	(lambda ()
+	  ,@body)
+	,@args))))
+
+
+(if (provided? 'snd-s7)
+(defmacro with-threaded-sound-1 (args . body)
+  (if (and (provided? 'snd-threads)
+	   (not (= (optimization) 0)))
+      `(with-sound-helper 
+	(lambda ()
+	  (let ((notes (list ,@(map (lambda (expr) `(lambda () ,expr)) body)))
+		(lock (make-lock)))
+	    (letrec ((reader 
+		      (lambda ()
+			(let ((note #f))
+			  (grab-lock lock)
+			  (if (not (null? notes))
+			      (begin
+				(set! note (car notes))
+				(set! notes (cdr notes))))
+			  (release-lock lock)
+			  (if note
+			      (let ((thred (make-thread note)))
+				(join-thread thred)
+				(reader)))))))
+	      (let ((readers '()))
+		(do ((i 0 (+ i 1)))
+		    ((= i *clm-threads*))
+		  (set! readers (cons (make-thread (lambda () (reader))) readers)))
+		(for-each (lambda (thred) (join-thread thred)) readers)))))
+	,@args)
+
+      `(with-sound-helper
+	(lambda ()
+	  ,@body)
+	,@args))))
+|#
+;;; --------------------------------------------------------------------------------
 
 

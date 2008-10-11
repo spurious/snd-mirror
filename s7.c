@@ -621,6 +621,7 @@ static char *describe_type(s7_pointer p)
 
 #define string_downcase(Str) Str
 #define STRCMP(Str1, Str2) strcmp(Str1, Str2)
+/* STRCMP currently only used in symbol table (hash) refs, and only checks == 0 */
 
 #else
 
@@ -5309,6 +5310,7 @@ static s7_pointer g_object_to_string(s7_scheme *sc, s7_pointer args)
 
 static int safe_strcmp(const char *s1, const char *s2)
 {
+  int val;
   if (s1 == NULL)
     {
       if (s2 == NULL)
@@ -5320,7 +5322,12 @@ static int safe_strcmp(const char *s1, const char *s2)
       if (s2 == NULL)
 	return(1);
     }
-  return(strcmp(s1, s2));
+  val = strcmp(s1, s2); /* strcmp can return stuff like -97, but we want -1, 0, or 1 */
+  if (val <= -1)
+    return(-1);
+  if (val >= 1)
+    return(1);
+  return(val);
 }
 
 
@@ -7694,7 +7701,7 @@ static int safe_list_length(s7_scheme *sc, s7_pointer a)
   /* assume that "a" is a proper list */
   int i = 0;
   s7_pointer b;
-  for (b = a; b != sc->NIL; i++, b = cdr(b));
+  for (b = a; b != sc->NIL; i++, b = cdr(b)) {};
   return(i);
 }
 

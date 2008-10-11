@@ -8,7 +8,7 @@
  * Forth:     covers 1.0
  * Gauche:    covers 0.8.7 to 0.8.13
  * S7:        all versions
- * None:      covers all known versions of None
+ * None:      all versions
  */
 
 #define XEN_MAJOR_VERSION 2

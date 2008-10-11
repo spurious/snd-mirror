@@ -5643,12 +5643,15 @@ static XEN g_out_any_1(const char *caller, XEN frame, XEN chan, XEN val, XEN out
 
   inv = XEN_TO_C_DOUBLE(val);
 
-#if HAVE_GUILE || HAVE_S7
   if (XEN_NOT_BOUND_P(outp))
-    outp = XEN_VARIABLE_REF(clm_output);
-#else
-  if (XEN_NOT_BOUND_P(outp))
-    outp = XEN_VARIABLE_REF(S_output);
+    outp = mus_clm_output();
+  
+#if HAVE_S7 && HAVE_PTHREADS
+  else
+    {
+      if (s7_is_thread_variable(outp))
+	outp = s7_thread_variable_value(s7, outp);
+    }
 #endif
     
   if (MUS_XEN_P(outp))
