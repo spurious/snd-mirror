@@ -1141,7 +1141,7 @@ static s7_pointer g_gc(s7_scheme *sc, s7_pointer args)
 {
   #define H_gc "(gc :optional on) runs the garbage collector.  If 'on' is supplied, it turns the GC on or off."
   
-  if (car(args) != sc->NIL)
+  if (args != sc->NIL)
     {
       (*(sc->gc_off)) = (car(args) == sc->F);
       if (*(sc->gc_off)) return(sc->F);
@@ -1432,13 +1432,21 @@ static int hash_fn(const char *key, int table_size)
 } 
 
 
+#if S7_DEBUGGING
+static s7_pointer g_builtin_hash(s7_scheme *sc, s7_pointer args)
+{
+  return(s7_make_integer(sc, hash_fn(string_value(car(args)), SYMBOL_TABLE_SIZE)));
+}
+#endif
+
+
 #if HAVE_PTHREADS
 static pthread_mutex_t symtab_lock = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
 
 static s7_pointer s7_make_permanent_string(s7_scheme *sc, const char *str);
-static s7_pointer s7_permanent_cons(s7_scheme *sc, s7_pointer a, s7_pointer b, bool immutable);
+static s7_pointer s7_permanent_cons(s7_scheme *sc, s7_pointer a, s7_pointer b, int type);
 
 static s7_pointer symbol_table_add_by_name(s7_scheme *sc, const char *name) 
 { 
@@ -1446,7 +1454,7 @@ static s7_pointer symbol_table_add_by_name(s7_scheme *sc, const char *name)
   int location;
   
   str = s7_make_permanent_string(sc, name);
-  x = s7_permanent_cons(sc, str, sc->NIL, false); 
+  x = s7_permanent_cons(sc, str, sc->NIL, T_SYMBOL | T_ATOM | T_SIMPLE | T_CONSTANT);
   
   location = hash_fn(name, vector_length(sc->symbol_table)); 
 
@@ -1454,7 +1462,7 @@ static s7_pointer symbol_table_add_by_name(s7_scheme *sc, const char *name)
   pthread_mutex_lock(&symtab_lock);
 #endif
 
-  vector_element(sc->symbol_table, location) = s7_permanent_cons(sc, x, vector_element(sc->symbol_table, location), true); 
+  vector_element(sc->symbol_table, location) = s7_permanent_cons(sc, x, vector_element(sc->symbol_table, location), T_PAIR | T_ATOM | T_SIMPLE | T_CONSTANT | T_IMMUTABLE);
 
 #if HAVE_PTHREADS
   pthread_mutex_unlock(&symtab_lock);
@@ -1495,34 +1503,10 @@ static  s7_pointer symbol_table_find_by_name(s7_scheme *sc, const char *name)
 } 
 
 
-static s7_pointer symbol_table_all_symbols(s7_scheme *sc) 
-{ 
-  int i; 
-  s7_pointer x; 
-  s7_pointer ob_list = sc->NIL; 
-  
-#if HAVE_PTHREADS
-  pthread_mutex_lock(&symtab_lock);
-#endif
-
-  (*(sc->gc_off)) = true;
-  for (i = 0; i < vector_length(sc->symbol_table); i++) 
-    for (x  = vector_element(sc->symbol_table, i); x != sc->NIL; x = cdr(x)) 
-      ob_list = s7_cons(sc, x, ob_list); 
-  (*(sc->gc_off)) = false;
-  
-#if HAVE_PTHREADS
-  pthread_mutex_unlock(&symtab_lock);
-#endif
-
-  return(ob_list); 
-} 
-
-
 static s7_pointer g_symbol_table(s7_scheme *sc, s7_pointer args)
 {
-  #define H_symbol_table "(symbol-table) returns a list of all known symbols"
-  return(symbol_table_all_symbols(sc));
+  #define H_symbol_table "(symbol-table) returns the symbol table (a vector)"
+  return(sc->symbol_table);
 }
 
 
@@ -1696,14 +1680,7 @@ void s7_provide(s7_scheme *sc, const char *feature)
 
 static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env) 
 { 
-  s7_pointer new_frame; 
-  
-  if (old_env == sc->NIL) 
-    new_frame = s7_make_vector(sc, SYMBOL_TABLE_SIZE); 
-  else new_frame = sc->NIL; 
-  
-  sc->envir = s7_immutable_cons(sc, new_frame, old_env); 
-  return(sc->envir);
+  return(s7_immutable_cons(sc, sc->NIL, old_env));
 } 
 
 
@@ -1833,7 +1810,7 @@ static s7_pointer g_current_environment(s7_scheme *sc, s7_pointer args)
 {
   #define H_current_environment "(current-environment :optional thread) returns the current definitions (symbol bindings)"
 #if HAVE_PTHREADS
-  if (car(args) != sc->NIL)
+  if (args != sc->NIL)
     {
       if (g_is_thread(sc, args) == sc->F)
 	return(s7_wrong_type_arg_error(sc, "current-environment", 1, car(args), "a thread object"));
@@ -6707,6 +6684,7 @@ s7_pointer s7_add_to_load_path(s7_scheme *sc, const char *dir)
   return(s7_load_path(sc));
 }
 
+
 static s7_pointer g_load_verbose(s7_scheme *sc, s7_pointer a)
 {
   #define H_load_verbose "(load-verbose bool) if #t prints out file names as they are loaded"
@@ -7534,16 +7512,14 @@ s7_pointer s7_cons(s7_scheme *sc, s7_pointer a, s7_pointer b)
 }
 
 
-static s7_pointer s7_permanent_cons(s7_scheme *sc, s7_pointer a, s7_pointer b, bool immutable) 
+static s7_pointer s7_permanent_cons(s7_scheme *sc, s7_pointer a, s7_pointer b, int type)
 {
   /* for the symbol table which is never GC'd */
   s7_pointer x;
   x = (s7_cell *)CALLOC(1, sizeof(s7_cell));
   car(x) = a;
   cdr(x) = b;
-  if (immutable)
-    set_type(x, T_SYMBOL | T_ATOM | T_SIMPLE | T_CONSTANT | T_IMMUTABLE);
-  else set_type(x, T_SYMBOL | T_ATOM | T_SIMPLE | T_CONSTANT);
+  set_type(x, type);
   return(x);
 }
 
@@ -9404,7 +9380,7 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_hash_table "(make-hash-table :optional size) returns a new hash table"
   int size = 461;
-  if (car(args) != sc->NIL)
+  if (args != sc->NIL)
     {
       if (s7_is_integer(car(args)))
 	size = s7_integer(car(args));
@@ -10184,7 +10160,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       /* setup is very similar to let */
       if (car(sc->code) == sc->NIL)            /* (do () ...) */
 	{
-	  new_frame_in_env(sc, sc->envir); 
+	  sc->envir = new_frame_in_env(sc, sc->envir); 
 	  sc->args = s7_cons(sc, sc->NIL, cadr(sc->code));
 	  sc->code = cddr(sc->code);
 	  goto DO_END0;
@@ -10211,8 +10187,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       sc->args = s7_reverse_in_place(sc, sc->NIL, sc->args);
       sc->code = car(sc->args); /* saved at the start */
       sc->args = cdr(sc->args); /* init values */
-      
-      new_frame_in_env(sc, sc->envir); 
+      sc->envir = new_frame_in_env(sc, sc->envir); 
       
       sc->value = sc->NIL;
       for (sc->x = car(sc->code), sc->y = sc->args; sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
@@ -10514,7 +10489,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  if (s7_is_closure(sc->code) || is_macro(sc->code) || is_promise(sc->code)) 
 	    { 
-	      new_frame_in_env(sc, s7_procedure_environment(sc->code)); 
+	      sc->envir = new_frame_in_env(sc, s7_procedure_environment(sc->code)); 
 	      
 	      /* load up the current args into the ((args) (lambda)) layout [via the current environment] */
 	      for (sc->x = car(closure_source(sc->code)), sc->y = sc->args; s7_is_pair(sc->x); sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
@@ -10830,7 +10805,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_LET2:       /* let */
-      new_frame_in_env(sc, sc->envir); 
+      sc->envir = new_frame_in_env(sc, sc->envir); 
       for (sc->x = s7_is_symbol(car(sc->code)) ? cadr(sc->code) : car(sc->code), sc->y = sc->args; sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
 	{
 	  if (!(s7_is_symbol(caar(sc->x))))
@@ -10869,7 +10844,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       
       if (car(sc->code) == sc->NIL) 
 	{
-	  new_frame_in_env(sc, sc->envir); 
+	  sc->envir = new_frame_in_env(sc, sc->envir); 
 	  sc->code = cdr(sc->code);
 	  goto BEGIN;
 	}
@@ -10887,7 +10862,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_LET1AST:    /* let* (make new frame) */
-      new_frame_in_env(sc, sc->envir); 
+      sc->envir = new_frame_in_env(sc, sc->envir); 
       
       
     case OP_LET2AST:    /* let* (calculate parameters) */
@@ -10920,7 +10895,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  goto START;
 	}
       
-      new_frame_in_env(sc, sc->envir); 
+      sc->envir = new_frame_in_env(sc, sc->envir); 
       sc->args = sc->NIL;
       sc->value = sc->code;
       sc->code = car(sc->code);
@@ -12204,10 +12179,8 @@ s7_scheme *s7_init(void)
   sc->args = sc->NIL;
   sc->value = sc->NIL;
   
-  new_frame_in_env(sc, sc->NIL); 
-  
-  sc->global_env = sc->envir; 
-  set_immutable(sc->global_env);
+  sc->global_env = s7_immutable_cons(sc, s7_make_vector(sc, SYMBOL_TABLE_SIZE), sc->NIL);
+  sc->envir = sc->global_env;
   
   x = s7_make_symbol(sc, "else");
   new_slot_in_env(sc, x, sc->T); 
@@ -12624,6 +12597,10 @@ s7_scheme *s7_init(void)
   g_provide(sc, s7_cons(sc, s7_make_symbol(sc, "s7"), sc->NIL));
 #if HAVE_PTHREADS
   g_provide(sc, s7_cons(sc, s7_make_symbol(sc, "threads"), sc->NIL));
+#endif
+
+#if S7_DEBUGGING
+  s7_define_function(sc, "builtin-hash", g_builtin_hash, 1, 0, false, "built-in hash function");
 #endif
   
   (*(sc->gc_off)) = false;

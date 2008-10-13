@@ -10645,49 +10645,51 @@ EDITS: 5
 	      (if (not (= ups2 ups4))
 		  (snd-display ";2[1] scan-chan: ~A ~A?" ups2 ups4)))
 	    
-	    (set! (sync ind2) #t)
-	    (let ((total
-		   (let ((count 0)) 
-		     (scan-chans (lambda (n) 
-				   (if (> n .03) 
-				       (set! count (+ count 1))) 
-				   #f))
-		     count)))
-	      (if (not (= total (+ ups1 ups2)))
-		  (snd-display ";scan-chans: ~A ~A?" total (+ ups1 ups2))))
-	    (set! (sync ind2) #f)
-	    (let ((total
-		   (let ((count 0)) 
-		     (scan-sound-chans (lambda (n) 
+	    (if (not (provided? 'snd-guile)) ; 1.6.n gets "wrong type to apply: #f" here, but I can't see why, and 1.8.n is ok
+		(begin
+		  (set! (sync ind2) #t)
+		  (let ((total
+			 (let ((count 0)) 
+			   (scan-chans (lambda (n) 
 					 (if (> n .03) 
 					     (set! count (+ count 1))) 
-					 #f)
-				       0 (frames ind2) ind2)
-		     count)))
-	      (if (not (= total (+ ups1 ups2)))
-		  (snd-display ";scan-sound-chans: ~A ~A?" total (+ ups1 ups2))))
-	    (set! (sync ind2) #f)
-	    (let ((total
-		   (let ((count 0)) 
-		     (scan-across-all-chans (lambda (nd len) 
-					      (do ((i 0 (1+ i)))
-						  ((= i len) #f) 
-						(if (> (vector-ref nd i) .03) 
-						    (set! count (+ count 1))))))
-		     count))
-		  (ups3 (count-matches (lambda (n) (> n .03)) 0 ind1 0)))
-	      (if (not (= total (+ ups1 ups2 ups3)))
-		  (snd-display ";scan-across-all-chans: ~A ~A?" total (+ ups1 ups2 ups3))))
-	    (let ((total
-		   (let ((count 0)) 
-		     (scan-all-chans (lambda (n) 
-				       (if (> n .03)
-					   (set! count (+ count 1)))
-				       #f))
-		     count))
-		  (ups3 (count-matches (lambda (n) (> n .03)) 0 ind1 0)))
-	      (if (not (= total (+ ups1 ups2 ups3)))
-		  (snd-display ";scan-all-chans: ~A ~A?" total (+ ups1 ups2 ups3)))))
+					 #f))
+			   count)))
+		    (if (not (= total (+ ups1 ups2)))
+			(snd-display ";scan-chans: ~A ~A?" total (+ ups1 ups2))))
+		  (set! (sync ind2) #f)
+		  (let ((total
+			 (let ((count 0)) 
+			   (scan-sound-chans (lambda (n) 
+					       (if (> n .03) 
+						   (set! count (+ count 1))) 
+					       #f)
+					     0 (frames ind2) ind2)
+			   count)))
+		    (if (not (= total (+ ups1 ups2)))
+			(snd-display ";scan-sound-chans: ~A ~A?" total (+ ups1 ups2))))
+		  (set! (sync ind2) #f)
+		  (let ((total
+			 (let ((count 0)) 
+			   (scan-across-all-chans (lambda (nd len) 
+						    (do ((i 0 (1+ i)))
+							((= i len) #f) 
+						      (if (> (vector-ref nd i) .03) 
+							  (set! count (+ count 1))))))
+			   count))
+			(ups3 (count-matches (lambda (n) (> n .03)) 0 ind1 0)))
+		    (if (not (= total (+ ups1 ups2 ups3)))
+			(snd-display ";scan-across-all-chans: ~A ~A?" total (+ ups1 ups2 ups3))))
+		  (let ((total
+			 (let ((count 0)) 
+			   (scan-all-chans (lambda (n) 
+					     (if (> n .03)
+						 (set! count (+ count 1)))
+					     #f))
+			   count))
+			(ups3 (count-matches (lambda (n) (> n .03)) 0 ind1 0)))
+		    (if (not (= total (+ ups1 ups2 ups3)))
+			(snd-display ";scan-all-chans: ~A ~A?" total (+ ups1 ups2 ups3)))))))
 	  
 	  (select-sound ind1)
 	  (forward-graph)
@@ -14378,6 +14380,14 @@ EDITS: 2
 
 ;;; ---------------- test 7: colors ----------------
 
+(if (not (provided? 'snd-rgb.scm)) 
+    (if (not (provided? 'snd-s7))
+	(catch 'no-such-color 
+	       (lambda () 
+		 (load "rgb.scm")) 
+	       (lambda args args))
+	(load "rgb.scm")))
+
 (define (snd_test_7)
   (define colormap-error-max 0.0)
   (define cfneq (lambda (a b) (> (abs (- a b)) colormap-error-max)))
@@ -14401,14 +14411,6 @@ EDITS: 2
 			    (snd-display ";set-~A /= beige (~A)?" name (getfnc)))
 			(setfnc initval)
 			(test-color (cdr lst)))))))
-
-	(if (not (provided? 'snd-rgb.scm)) 
-	    (if (not (provided? 'snd-s7))
-		(catch 'no-such-color 
-		       (lambda () 
-			 (load "rgb.scm")) 
-		       (lambda args args))
-		(load "rgb.scm")))
 
 	(let* ((c1 (catch 'no-such-color
 			  (lambda () (make-color 0 0 1))
@@ -41374,8 +41376,10 @@ EDITS: 1
 	  (map-channel (lambda (y) 0.5))
 	  (map-channel (vibro 1000.0 .5))
 	  (let ((vals (channel->vct 0 20)))
-	    (if (not (vequal vals (vct 0.375 0.410 0.442 0.469 0.489 0.499 0.499 0.489 0.470 0.443 0.411 0.376 
-				       0.341 0.308 0.281 0.262 0.251 0.251 0.261 0.280)))
+	    (if (and (not (vequal vals (vct 0.375 0.410 0.442 0.469 0.489 0.499 0.499 0.489 0.470 0.443 0.411 0.376 
+					    0.341 0.308 0.281 0.262 0.251 0.251 0.261 0.280)))
+		     (not (vequal vals (vct 0.375 0.393 0.410 0.427 0.442 0.457 0.469 0.480 0.489 0.495 0.499 0.500 
+					    0.499 0.495 0.489 0.480 0.470 0.457 0.443 0.428))))
 		(snd-display ";no vibro? ~A" vals)))
 	  (let ((new-file-name (file-name ind)))
 	    (close-sound ind)

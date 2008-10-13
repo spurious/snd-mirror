@@ -5731,8 +5731,15 @@ static XEN g_outd(XEN frame, XEN val, XEN outp)
 static XEN g_mus_close(XEN ptr)
 {
   #define H_mus_close "(" S_mus_close " gen): close the IO stream managed by 'gen' (a sample->file generator, for example)"
+
   if (MUS_XEN_P(ptr))
     return(C_TO_XEN_INT(mus_close_file((mus_any *)XEN_TO_MUS_ANY(ptr))));
+
+#if HAVE_S7 && HAVE_PTHREADS
+  if (s7_is_thread_variable(ptr))
+    return(C_TO_XEN_INT(mus_close_file((mus_any *)XEN_TO_MUS_ANY(s7_thread_variable_value(s7, ptr)))));
+#endif
+
   XEN_ASSERT_TYPE(MUS_VCT_P(ptr) || XEN_FALSE_P(ptr) || sound_data_p(ptr) || XEN_PROCEDURE_P(ptr), 
 		  ptr, XEN_ONLY_ARG, S_mus_close, "an IO gen or its outa equivalent");
   return(XEN_ZERO);
@@ -6537,6 +6544,10 @@ static XEN g_mus_channels(XEN obj)
     return(C_TO_XEN_INT(1));
   if (sound_data_p(obj))
     return(C_TO_XEN_INT((XEN_TO_SOUND_DATA(obj))->chans));
+#if HAVE_S7 && HAVE_PTHREADS
+  if (s7_is_thread_variable(obj))
+    return(C_TO_XEN_INT(mus_channels(XEN_TO_MUS_ANY(s7_thread_variable_value(s7, obj)))));
+#endif
   XEN_ASSERT_TYPE(false, obj, XEN_ONLY_ARG, S_mus_channels, "an output generator, vct, or sound-data object");
   return(XEN_FALSE); /* make compiler happy */
 }

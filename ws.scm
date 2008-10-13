@@ -656,17 +656,10 @@ returning you to the true top-level."
 	,@args)))
 
 
-;;; *output* and *reverb* need to be thread-local
-;;;   mus_clm_output() in clm2xen.c 5470 returns the current scheme-level value of *output*
-;;;   this is also used in snd-run
-;;;   in threads case, they need to be stored in the current thread, and read from there
-;;;   pthread_get|setspecific in s7, used before ,expr above to set, used in mus_clm_output to get?
-;;;   in run, this happens once per note, else on every note, but that's the least of our worries
-;;;     so mus_clm_output/g_outa if mus_any returns gen else calls (*output*) to get gen
 
-;;; TODO: reverb saw; check the output-safety stuff again, mus-channels and others often take *output* as arg -- need to handle these cases 
-;;;       mus-channels, mus-mix?, frame->file?, make-locsig, mus-close, mus-output?, mus-file-name?, 
-;;; TODO: output filename in with-threaded-sound?  also, don't fire up thread if list is empty
+;;; TODO: reverb saw; check the output-safety stuff again, mus-channels[added] and others often take *output* as arg -- need to handle these cases 
+;;;       mus-channels, mus-mix?, frame->file?, make-locsig [for *output* chans etc], mus-close, mus-output?, mus-file-name?, 
+;;; TODO: don't fire up thread if list is empty
 
 
 
