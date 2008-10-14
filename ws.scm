@@ -571,6 +571,7 @@ returning you to the true top-level."
 
 (defmacro with-threaded-sound (args . body)
   (if (and (provided? 'snd-threads)
+	   (provided? 's7)
 	   (not (= (optimization) 0)))
       (let ((split 
 	     (lambda (l n k)
@@ -628,7 +629,7 @@ returning you to the true top-level."
 							    :output (snd-tempnam)
 							    :revfile reverb-tmp
 							    :to-snd #f
-					;,new-args
+							    ,@new-args
 							    )))
 						 (grab-lock mix-lock)
 						 (display "mix ") (display tmp) (newline)
@@ -658,7 +659,7 @@ returning you to the true top-level."
 
 
 ;;; TODO: reverb saw; check the output-safety stuff again, mus-channels[added] and others often take *output* as arg -- need to handle these cases 
-;;;       mus-channels, mus-mix?, frame->file?, make-locsig [for *output* chans etc], mus-close, mus-output?, mus-file-name?, 
+;;;       mus-channels[ok], mus-mix?, frame->file?[ok], make-locsig [for *output* chans etc], mus-close[ok], mus-output?[ok], mus-file-name?, 
 ;;; TODO: don't fire up thread if list is empty
 
 

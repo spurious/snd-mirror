@@ -442,6 +442,24 @@ AC_SUBST(FFTW_CFLAGS)
 #
 
 LIBS="$LIBS -lm"
+AC_MSG_CHECKING(for complex numbers)
+AC_LINK_IFELSE(
+  	[AC_LANG_PROGRAM(
+        	[#include <complex.h>],
+		[ double complex val; 
+                  double rl, im;
+                  val = 1.0 + 0.5 * _Complex_I;
+                  rl = creal(val);
+                  im = cimag(val);
+                ])],
+        [
+ 	 AC_DEFINE(WITH_COMPLEX)
+	 AC_MSG_RESULT(yes)
+    	],
+	[AC_MSG_RESULT(no)])
+
+
+ac_snd_have_complex_trig=no
 AC_MSG_CHECKING(for complex trig)
 AC_LINK_IFELSE(
   	[AC_LANG_PROGRAM(
@@ -455,6 +473,7 @@ AC_LINK_IFELSE(
                 ])],
         [
  	 AC_DEFINE(HAVE_COMPLEX_TRIG)
+	 ac_snd_have_complex_trig=yes
 	 AC_MSG_RESULT(yes)
     	],
 	[AC_MSG_RESULT(no)])
@@ -1418,7 +1437,6 @@ XM_LIBS=""
 
 if test "$with_guile" = no && test "$with_snd_as_pd_external" = no; then
   AC_DEFINE(HAVE_GUILE,0)
-  AC_DEFINE(HAVE_EXTENSION_LANGUAGE,0)
 else
 
   AC_CHECK_FILE(/usr/lib/snd/bin/${GUILE_CONFIG_name},[
@@ -1579,7 +1597,6 @@ if test $GUILE_CONFIG_works = yes; then
   fi
 else
   AC_DEFINE(HAVE_GUILE,0)
-  AC_DEFINE(HAVE_EXTENSION_LANGUAGE,0)
 fi
 fi
 fi
@@ -1598,16 +1615,16 @@ if test "$with_s7" = yes && test "$ac_snd_have_extension_language" = yes ; then
 fi
 
 if test "$with_s7" != no && test "$with_extension_language" != no && test "$ac_snd_have_extension_language" != yes ; then
-  AC_DEFINE(HAVE_S7)	
-  AC_DEFINE(HAVE_SCHEME)	
-  ac_snd_have_extension_language=yes
-  AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
-  AC_DEFINE(HAVE_SCM_MAKE_RATIO)
-  AC_DEFINE(HAVE_SCM_C_MAKE_RECTANGULAR)
-  AC_DEFINE(HAVE_COMPLEX_TRIG)
-  AC_DEFINE(WITH_RUN)
-  LOCAL_LANGUAGE="s7"
-  S7_LIB="s7.o"
+    AC_DEFINE(HAVE_S7)	
+    AC_DEFINE(HAVE_SCHEME)	
+    ac_snd_have_extension_language=yes
+    AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
+    AC_DEFINE(HAVE_SCM_MAKE_RATIO)
+    AC_DEFINE(HAVE_SCM_C_MAKE_RECTANGULAR)
+    AC_DEFINE(HAVE_COMPLEX_TRIG)
+    AC_DEFINE(WITH_RUN)
+    LOCAL_LANGUAGE="s7"
+    S7_LIB="s7.o"
 fi
 
 AC_SUBST(S7_LIB)

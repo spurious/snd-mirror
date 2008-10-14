@@ -6,7 +6,7 @@
  * Guile:     covers 1.3.4 to present (1.8.0)
  * Ruby:      covers 1.6 to present (1.9)
  * Forth:     covers 1.0
- * Gauche:    covers 0.8.7 to 0.8.13
+ * Gauche:    covers 0.8.7 to 0.8.13, but not 0.8.14
  * S7:        all versions
  * None:      all versions
  */
@@ -2148,11 +2148,16 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 #define XEN_TO_C_DOUBLE_OR_ELSE(Arg, Def)          xen_to_c_double_or_else(Arg, Def)
 #define C_TO_XEN_DOUBLE(Arg)                       s7_make_real(s7, Arg)
 
-#if HAVE_SCM_C_MAKE_RECTANGULAR
+#if WITH_COMPLEX
   #define XEN_HAVE_COMPLEX_NUMBERS                 1
   #define XEN_COMPLEX_P(Arg)                       s7_is_complex(Arg)
   #define XEN_TO_C_COMPLEX(a)                      (s7_real_part(a) + s7_imag_part(a) * _Complex_I)
   #define C_TO_XEN_COMPLEX(a)                      s7_make_complex(s7, creal(a), cimag(a))
+#else
+  #define XEN_HAVE_COMPLEX_NUMBERS                 0
+  #define XEN_COMPLEX_P(Arg)                       Arg
+  #define XEN_TO_C_COMPLEX(a)                      a
+  #define C_TO_XEN_COMPLEX(a)                      a
 #endif
 
 #if HAVE_SCM_MAKE_RATIO

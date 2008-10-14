@@ -13,7 +13,7 @@ make xm
 echo ' '
 echo ' '
 ./snd --version
-./snd -noinit -l snd-test 0
+./snd -l snd-test 0
 make clmclean
 make sndinfo
 ./sndinfo oboe.snd
@@ -52,8 +52,8 @@ echo ' '
 echo ' '
 ./snd --version
 make xm
-./snd -noinit -l snd-test 2
-./snd -noinit -l snd-test 28
+./snd -l snd-test 2
+./snd -l snd-test 28
 
 echo ' -------------------------------- with-no-gui/ladspa -------------------------------- '
 make allclean
@@ -65,7 +65,7 @@ make
 echo ' '
 echo ' '
 ./snd --version
-./snd -noinit -l snd-test 3
+./snd -l snd-test 3
 
 echo ' -------------------------------- gtk -------------------------------- '
 make allclean
@@ -91,7 +91,7 @@ echo ' CC=g++ --with-gtk CFLAGS="-Wall" '
 make
 make xg
 ./snd --version
-./snd -noinit -l snd-test 9
+./snd -l snd-test 9
 
 echo ' -------------------------------- no-guile -------------------------------- '
 make allclean
@@ -295,7 +295,7 @@ make xm
 echo ' '
 echo ' '
 ./snd --version
-./snd -noinit -l snd-test 2
+./snd -l snd-test 2
 make allclean
 echo ' CFLAGS="-Wall -I/usr/X11R6/include" --with-static-xm '
 ./configure --quiet CFLAGS="-Wall -I/usr/X11R6/include" --with-static-xm LDFLAGS="-L/usr/X11R6/lib"
@@ -362,7 +362,7 @@ make xm
 echo ' '
 echo ' '
 ./snd --version
-# ./snd -noinit -l snd-test.rb -- libxm problem here stops entire sequence
+# ./snd -l snd-test.rb -- libxm problem here stops entire sequence
 make allclean
 echo ' CC=g++ CFLAGS="-Wall -I/usr/X11R6/include" --with-ruby '
 ./configure --quiet CC=g++ CFLAGS="-Wall -I/usr/X11R6/include" --with-ruby LDFLAGS="-L/usr/X11R6/lib"
@@ -467,7 +467,7 @@ echo ' CC=g++ --with-no-gui '
 ./configure --quiet CC=g++ --with-no-gui
 make
 ./snd --version
-./snd -noinit -l snd-test 6
+./snd -l snd-test 6
 make allclean
 echo ' CC=g++ --without-guile --without-ruby '
 ./configure --quiet CC=g++ --without-guile --without-ruby CFLAGS="-I/usr/X11R6/include" LDFLAGS="-L/usr/X11R6/lib"

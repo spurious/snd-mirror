@@ -87,6 +87,9 @@
  *
  * and stdbool.h (s7.h), and pthread.h (below).  So if you just comment out the
  *   include, you get the local cabs (etc) code, and no threads.
+ *
+ * complex number support (which is problematic in C++, Solaris, and netBSD)
+ *   is now on the WITH_COMPLEX switch.
  */
 
 #include <mus-config.h>
@@ -107,7 +110,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#if WITH_COMPLEX
 #include <complex.h>
+#endif
 #include <setjmp.h>
 
 #if HAVE_PTHREADS
@@ -2099,12 +2104,21 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
 
 /* -------------------------------- numbers -------------------------------- */
 
+#if WITH_COMPLEX
+typedef double complex double_complex;
+#else
+typedef double double_complex;
+#define _Complex_I 1
+#define creal(x) x
+#define cimag(x) x
+#endif
+
 /* Trigonometric functions. FreeBSD's math library does not include the complex form of the trig funcs. */ 
 
 #if !HAVE_CSIN 
-double complex csin(double complex z);
+double_complex csin(double_complex z);
 /* each of these is global to allow it to be used elsewhere under the HAVE_COMPLEX_TRIG switch */
-double complex csin(double complex z) 
+double_complex csin(double_complex z) 
 { 
   return sin(creal(z)) * cosh(cimag(z)) + (cos(creal(z)) * sinh(cimag(z))) * _Complex_I; 
 } 
@@ -2112,16 +2126,16 @@ double complex csin(double complex z)
 
 
 #if !HAVE_CCOS 
-double complex ccos(double complex z);
-double complex ccos(double complex z) 
+double_complex ccos(double_complex z);
+double_complex ccos(double_complex z) 
 { 
   return cos(creal(z)) * cosh(cimag(z)) + (-sin(creal(z)) * sinh(cimag(z))) * _Complex_I; 
 } 
 #endif 
 
 #if !HAVE_CTAN 
-double complex ctan(double complex z);
-double complex ctan(double complex z) 
+double_complex ctan(double_complex z);
+double_complex ctan(double_complex z) 
 { 
   return csin(z) / ccos(z); 
 } 
@@ -2131,8 +2145,8 @@ double complex ctan(double complex z)
 /* Hyperbolic functions. */ 
 
 #if !HAVE_CSINH 
-double complex csinh(double complex z);
-double complex csinh(double complex z) 
+double_complex csinh(double_complex z);
+double_complex csinh(double_complex z) 
 { 
   return sinh(creal(z)) * cos(cimag(z)) + (cosh(creal(z)) * sin(cimag(z))) * _Complex_I; 
 } 
@@ -2140,8 +2154,8 @@ double complex csinh(double complex z)
 
 
 #if !HAVE_CCOSH 
-double complex ccosh(double complex z);
-double complex ccosh(double complex z) 
+double_complex ccosh(double_complex z);
+double_complex ccosh(double_complex z) 
 { 
   return cosh(creal(z)) * cos(cimag(z)) + (sinh(creal(z)) * sin(cimag(z))) * _Complex_I; 
 } 
@@ -2149,8 +2163,8 @@ double complex ccosh(double complex z)
 
 
 #if !HAVE_CTANH 
-double complex ctanh(double complex z);
-double complex ctanh(double complex z) 
+double_complex ctanh(double_complex z);
+double_complex ctanh(double_complex z) 
 { 
   return csinh(z) / ccosh(z); 
 } 
@@ -2160,8 +2174,8 @@ double complex ctanh(double complex z)
 /* Exponential and logarithmic functions. */ 
 
 #if !HAVE_CEXP 
-double complex cexp(double complex z);
-double complex cexp(double complex z) 
+double_complex cexp(double_complex z);
+double_complex cexp(double_complex z) 
 { 
   return exp(creal(z)) * cos(cimag(z)) + (exp(creal(z)) * sin(cimag(z))) * _Complex_I; 
 } 
@@ -2169,8 +2183,8 @@ double complex cexp(double complex z)
 
 
 #if !HAVE_CARG 
-double carg(double complex z);
-double carg(double complex z) 
+double carg(double_complex z);
+double carg(double_complex z) 
 { 
   return atan2(cimag(z), creal(z)); 
 } 
@@ -2178,8 +2192,8 @@ double carg(double complex z)
 
 
 #if !HAVE_CABS 
-double cabs(double complex z);
-double cabs(double complex z) 
+double cabs(double_complex z);
+double cabs(double_complex z) 
 { 
   return hypot(creal(z), cimag(z)); 
 } 
@@ -2187,8 +2201,8 @@ double cabs(double complex z)
 
 
 #if !HAVE_CLOG 
-double complex clog(double complex z);
-double complex clog(double complex z) 
+double_complex clog(double_complex z);
+double_complex clog(double_complex z) 
 { 
   return log(fabs(cabs(z))) + carg(z) * _Complex_I; 
 } 
@@ -2198,8 +2212,8 @@ double complex clog(double complex z)
 /* Power functions. */ 
 
 #if !HAVE_CPOW 
-double complex cpow(double complex x, double complex y);
-double complex cpow(double complex x, double complex y) 
+double_complex cpow(double_complex x, double_complex y);
+double_complex cpow(double_complex x, double_complex y) 
 { 
   double r = cabs(x); 
   double theta = carg(x); 
@@ -2214,8 +2228,8 @@ double complex cpow(double complex x, double complex y)
 
 
 #if !HAVE_CONJ 
-double complex conj(double complex z);
-double complex conj(double complex z) 
+double_complex conj(double_complex z);
+double_complex conj(double_complex z) 
 { 
   return ~z; 
 } 
@@ -2223,8 +2237,8 @@ double complex conj(double complex z)
 
 
 #if !HAVE_CSQRT 
-double complex csqrt(double complex z);
-double complex csqrt(double complex z) 
+double_complex csqrt(double_complex z);
+double_complex csqrt(double_complex z) 
 { 
   if (cimag(z) < 0.0) 
     return conj(csqrt(conj(z))); 
@@ -2240,8 +2254,8 @@ double complex csqrt(double complex z)
 
 
 #if !HAVE_CASIN 
-double complex casin(double complex z);
-double complex casin(double complex z) 
+double_complex casin(double_complex z);
+double_complex casin(double_complex z) 
 { 
   return -_Complex_I * clog(_Complex_I * z + csqrt(1.0 - z * z)); 
 } 
@@ -2249,8 +2263,8 @@ double complex casin(double complex z)
 
 
 #if !HAVE_CACOS 
-double complex cacos(double complex z);
-double complex cacos(double complex z) 
+double_complex cacos(double_complex z);
+double_complex cacos(double_complex z) 
 { 
   return -_Complex_I * clog(z + _Complex_I * csqrt(1.0 - z * z)); 
 } 
@@ -2258,8 +2272,8 @@ double complex cacos(double complex z)
 
 
 #if !HAVE_CATAN 
-double complex catan(double complex z);
-double complex catan(double complex z) 
+double_complex catan(double_complex z);
+double_complex catan(double_complex z) 
 { 
   return _Complex_I * clog((_Complex_I + z) / (_Complex_I - z)) / 2.0; 
 } 
@@ -2267,8 +2281,8 @@ double complex catan(double complex z)
 
 
 #if !HAVE_CASINH 
-double complex casinh(double complex z);
-double complex casinh(double complex z) 
+double_complex casinh(double_complex z);
+double_complex casinh(double_complex z) 
 { 
   return clog(z + csqrt(1.0 + z * z)); 
 } 
@@ -2276,8 +2290,8 @@ double complex casinh(double complex z)
 
 
 #if !HAVE_CACOSH 
-double complex cacosh(double complex z);
-double complex cacosh(double complex z) 
+double_complex cacosh(double_complex z);
+double_complex cacosh(double_complex z) 
 { 
   return clog(z + csqrt(z * z - 1.0)); 
 } 
@@ -2285,8 +2299,8 @@ double complex cacosh(double complex z)
 
 
 #if !HAVE_CATANH 
-double complex catanh(double complex z);
-double complex catanh(double complex z) 
+double_complex catanh(double_complex z);
+double_complex catanh(double_complex z) 
 { 
   return clog((1.0 + z) / (1.0 - z)) / 2.0; 
 } 
@@ -2733,13 +2747,13 @@ double s7_real(s7_pointer p)
 }
 
 
-static double complex s7_complex(s7_pointer p)
+static double_complex s7_complex(s7_pointer p)
 {
   return(num_to_real_part(p->object.number) + num_to_imag_part(p->object.number) * _Complex_I);
 }
 
 
-static s7_pointer s7_from_c_complex(s7_scheme *sc, double complex z)
+static s7_pointer s7_from_c_complex(s7_scheme *sc, double_complex z)
 {
   return(s7_make_complex(sc, creal(z), cimag(z)));
 }
