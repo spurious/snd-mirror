@@ -238,6 +238,7 @@ static char *float_array_to_string(Float *arr, int len, int loc)
     }
   lim = (array_print_length + 4) * MAX_NUM_SIZE; /* 4 for possible bounds below */
   if (lim > size) size = lim;
+  if (loc < 0) loc = 0;
 
   base = (char *)clm_calloc_atomic(size, sizeof(char), "float_array_to_string");
   str = (char *)clm_calloc_atomic(STR_SIZE, sizeof(char), "float_array_to_string");

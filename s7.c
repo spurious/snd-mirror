@@ -12759,6 +12759,8 @@ static void mark_s7(s7_scheme *sc)
   it would be nice to have s7test checks for generalized set, applicable objects, hash tables, proc-w-set, keywords, macros, call-with-exit, threads
   check via valgrind in the opt=0 cases [works apparently except with run as unopt'd -- occasional errors still -- appear to be GC's fault]
   need better error reporting than useless "syntax error"!
+  s7+Motif+C++ -> segfault?
+  call-with-exit confuses guile 1.6.n
 
 s7test noinit 6-Oct-08
   0.986u 0.011s 0:01.01 98.0%     0+0k 0+224io 0pf+0w

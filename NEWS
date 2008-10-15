@@ -1,38 +1,25 @@
-Snd 10.0
+Snd 10.1
 
-more rt/faust/stalin improvements from Kjetil.
+S7 is now the default extension language.
 
-moved sine-bank to snd9.scm 
+added rhypars.cms by Juan Reyes
 
-2 more generators in generators.scm (tanhsin, moving-spectrum)
+in clm.c, I removed the reader/writer locks (rdin and rdout gens);
+  these were not working the way I had hoped they would.  Much work
+  on threads -- with-threaded-sound has been rewritten 3 or 4 times.
 
-tools/numtst.c which generates a Scheme numerics test suite
-  also tools/clisp-number|other-tests.scm (taken from Clisp)
+gtkglext (openGL support in gtk) has been unmaintained for a long time,
+  and by this point use of --with-gl with --with-gtk can somehow cause
+  Snd to log you out!  So, it's not highly recommended.  I wish gtk had
+  gone to OpenGL, not cairo.  I'll probably remove the gtkglext support
+  soon.
 
-A new extension language choice: S7, a TinyScheme derivative.
-  This is a small (ca. 10000 lines), source-level embedded 
-  interpreter (like gnulib -- no libraries, no run-time init files)
-  that has full continuations, ratios and complex numbers, 
-  generalized set!, applicable objects, hash-tables and keywords
-  (the latter for define*), defmacro, define-macro, and procedure-with-setter.
-  My goal is a simple, multithreadable, possibly even 
-  real-time extension language that I can change to suit myself.
-  S7 is not Scheme++ -- I have removed the notion of an "inexact integer",
-  so truncate, floor, and ceiling return (exact) integers,
-  and rationalize (which uses continued fractions) returns
-  (exact) ratios.  I've added call-with-exit for light-weight
-  continuations (equivalent to a goto, or return in C).
-  S7 is reasonably fast (it can outperform both Guile
-  and Gauche if I get to choose the benchmark), and is 
-  compatible with Snd's run macro, so the only real bottleneck
-  is that macro expansion is slow.  It passes Jaffer's r4rs tests,
-  and most of the r6rs number tests mentioned above. I haven't had 
-  time yet to implement threads.  s7 still hasn't made it through
-  snd-test.scm , so there are still plenty of bugs.
+I'm about to remove Gauche support.  
+  Gauche 0.8.14 segfaults immediately in Snd; Shiro says he didn't change 
+  anything, but argument handling has clearly changed. I poked around in 
+  Gauche, but didn't find anything.
 
-Mike Scholz helped me with S7 and improved some of the ruby files.
 
-checked: gtk+-2.13.5|6|7 and 2.14.1, sbcl 1.0.19|20
+checked: gtk 2.14.2|3, cairo 1.8.0, autoconf 2.63, sbcl 1.0.21, Gauche 0.8.14
 
-Thanks!: Kjetil, Bret Battey, Hayahiko Moro, Mike.
-
+Thanks!: Benjamin Um, Juan Reyes
