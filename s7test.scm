@@ -28,6 +28,8 @@
 (define with-delay #f)                                         ; delay and force 
 (define with-delay-named-make-promise #t)                      ;   same but "delay" -> "make-promise" ("delay" belongs to CLM)
 (define with-bitwise-functions #t)                             ; logand|or|xor|ior, ash
+(define with-hash-tables #t)                                   ; make-hash-table and friends
+(define with-keywords #t)                                      ; make-keyword, keyword->symbol etc
 
 
 ;; we're assuming call/cc is defined
@@ -27416,3 +27418,119 @@
 
 
 
+
+(if with-hash-tables
+    (begin
+
+      (let ((ht (make-hash-table)))
+	(test (hash-table? ht) #t)
+	(test (let () (hash-table-set! ht 'key 3.14) (hash-table-ref ht 'key)) 3.14)
+	(test (let () (hash-table-set! ht "ky" 3.14) (hash-table-ref ht "ky")) 3.14)
+	(for-each
+	 (lambda (arg)
+	   (test (let () (hash-table-set! ht 'key arg) (hash-table-ref ht 'key)) arg))
+	 (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2))))
+      
+      (let ((ht (make-hash-table 277)))
+	(test (hash-table? ht) #t)
+	(test (let () (hash-table-set! ht 'key 3.14) (hash-table-ref ht 'key)) 3.14)
+	(test (let () (hash-table-set! ht "ky" 3.14) (hash-table-ref ht "ky")) 3.14)
+	(for-each
+	 (lambda (arg)
+	   (test (let () (hash-table-set! ht 'key arg) (hash-table-ref ht 'key)) arg))
+	 (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2))))
+      
+      (for-each
+       (lambda (arg)
+	 (test (hash-table? arg) #f))
+       (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t #f '() '#(()) (list 1 2 3) '(1 . 2)))
+      
+      (test (hash-table? (make-vector 3 '())) #f)
+      (test (hash-table?) 'error)
+      (test (hash-table? 1 2) 'error)
+      
+      (let ((ht (make-hash-table)))
+	(test (hash-table-set! ht 3.14 'key) 'error)
+	(for-each
+	 (lambda (arg)
+	   (test (hash-table-set! ht arg 3.14) 'error))
+	 (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
+	(for-each
+	 (lambda (arg)
+	   (test (hash-table-ref ht arg) 'error))
+	 (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
+	
+	(test (hash-table-ref ht 'not-a-key) #f)
+	(test (hash-table-ref ht "not-a-key") #f)
+	
+	(hash-table-set! ht 'key 3/4)
+	(hash-table-set! ht "key" "hi")
+	(test (hash-table-ref ht "key") "hi")
+	(test (hash-table-ref ht 'key) "hi")
+	
+	(hash-table-set! ht 'asd 'hiho)
+	(test (hash-table-ref ht 'asd) 'hiho))
+      
+      (for-each
+       (lambda (arg)
+	 (test (make-hash-table arg) 'error))
+       (list "hi" -1 0 #\a 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
+      
+      (let ((ht1 (make-hash-table 653))
+	    (ht2 (make-hash-table 277)))
+	(hash-table-set! ht1 'key 'hiho)
+	(hash-table-set! ht2 (hash-table-ref ht1 'key) 3.14)
+	(test (hash-table-ref ht2 'hiho) 3.14)
+	(test (hash-table-ref ht2 (hash-table-ref ht1 'key)) 3.14))
+      
+      ))
+
+
+(if with-keywords
+    (begin
+
+      (for-each
+       (lambda (arg)
+	 (test (keyword? arg) #f))
+       (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t #f '() '#(()) (list 1 2 3) '(1 . 2)))
+      
+      (for-each
+       (lambda (arg)
+	 (test (make-keyword arg) 'error))
+       (list -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t #f '() '#(()) (list 1 2 3) '(1 . 2)))
+      
+      (for-each
+       (lambda (arg)
+	 (test (keyword->symbol arg) 'error))
+       (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t #f '() '#(()) (list 1 2 3) '(1 . 2)))
+      
+      (for-each
+       (lambda (arg)
+	 (test (symbol->keyword arg) 'error))
+       (list "hi" -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i #t #f '() '#(()) (list 1 2 3) '(1 . 2)))
+      
+      (let ((kw (make-keyword "hiho")))
+	(test (keyword? kw) #t)
+	(test (keyword->symbol kw) 'hiho)
+	(test (symbol->keyword 'hiho) kw)
+	(test (keyword->symbol (symbol->keyword 'key)) 'key)
+	(test (symbol->keyword (keyword->symbol (make-keyword "hi"))) :hi)
+	(test (keyword? :a-key) #t)
+	(test (keyword? ':a-key) #t)
+	(test (keyword? ':a-key:) #t)
+	(test (keyword? 'a-key:) #f)
+	(test (symbol? (keyword->symbol :hi)) #t)
+	(test (keyword? (keyword->symbol :hi)) #f)
+	(test (symbol? (symbol->keyword 'hi)) #t)
+	(test (equal? kw :hiho) #t)
+	(test ((lambda (arg) (keyword? arg)) :hiho) #t)
+	(test ((lambda (arg) (keyword? arg)) 'hiho) #f)
+	(test ((lambda (arg) (keyword? arg)) kw) #t)
+	(test ((lambda (arg) (keyword? arg)) (symbol->keyword 'hiho)) #t)
+	(test (make-keyword "3") :3)
+	(test (keyword? :3) #t)
+	(test (keyword? ':3) #t)
+	(test (keyword? '3) #f)
+	(test (make-keyword ":") ::))
+      
+      ))

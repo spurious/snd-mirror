@@ -397,14 +397,15 @@ enum scheme_types {
   T_OUTPUT_PORT = 17,
   T_CATCH = 18,
   T_DYNAMIC_WIND = 19,
-  T_LAST_TYPE = 19
+  T_HASH_TABLE = 20,
+  T_LAST_TYPE = 20
 };
 
 #if S7_DEBUGGING
 static const char *type_names[T_LAST_TYPE + 1] = {
   "unused!", "nil", "string", "number", "symbol", "procedure", "pair", "closure", "continuation",
   "s7-function", "character", "input port", "vector", "macro", "promise", "s7-object", 
-  "goto", "output port", "catch", "dynamic-wind"
+  "goto", "output port", "catch", "dynamic-wind", "hash-table"
 };
 #endif
 
@@ -439,11 +440,15 @@ static const char *type_names[T_LAST_TYPE + 1] = {
 #define local_protect(p)              typeflag(p) |= T_CONSTANT
 #define local_unprotect(p)            typeflag(p) &= (~T_CONSTANT)
 
-#define T_UNUSED_BITS                 0xfe000000
 #define T_OBJECT                      (1 << (TYPE_BITS + 6))
 #define T_FINALIZABLE                 (1 << (TYPE_BITS + 7))
 #define T_SIMPLE                      (1 << (TYPE_BITS + 8))
 #define is_simple(p)                  (typeflag(p) & T_SIMPLE)
+
+#define T_DONT_COPY                   (1 << (TYPE_BITS + 9))
+#define dont_copy(p)                  (typeflag(p) & T_DONT_COPY)
+
+#define T_UNUSED_BITS                 0xfc000000
 
 #if HAVE_PTHREADS
 #define set_type(p, f)                typeflag(p) = ((typeflag(p) & T_GC_MARK) | (f) | T_OBJECT)
@@ -866,6 +871,7 @@ static void finalize_s7_cell(s7_scheme *sc, s7_pointer a)
 	  break;
 	  
 	case T_VECTOR:
+	case T_HASH_TABLE:
 	  if (vector_length(a) > 0)
 	    FREE(a->object.vector.elements);
 	  break;
@@ -914,6 +920,7 @@ void s7_mark_object(s7_pointer p)
   switch (type(p))
     {
     case T_VECTOR:
+    case T_HASH_TABLE:
       mark_vector(p, vector_length(p));
       return;
       
@@ -1459,7 +1466,7 @@ static s7_pointer symbol_table_add_by_name(s7_scheme *sc, const char *name)
   int location;
   
   str = s7_make_permanent_string(sc, name);
-  x = s7_permanent_cons(sc, str, sc->NIL, T_SYMBOL | T_ATOM | T_SIMPLE | T_CONSTANT);
+  x = s7_permanent_cons(sc, str, sc->NIL, T_SYMBOL | T_ATOM | T_SIMPLE | T_CONSTANT | T_DONT_COPY);
   
   location = hash_fn(name, vector_length(sc->symbol_table)); 
 
@@ -1467,7 +1474,9 @@ static s7_pointer symbol_table_add_by_name(s7_scheme *sc, const char *name)
   pthread_mutex_lock(&symtab_lock);
 #endif
 
-  vector_element(sc->symbol_table, location) = s7_permanent_cons(sc, x, vector_element(sc->symbol_table, location), T_PAIR | T_ATOM | T_SIMPLE | T_CONSTANT | T_IMMUTABLE);
+  vector_element(sc->symbol_table, location) = s7_permanent_cons(sc, x, 
+								 vector_element(sc->symbol_table, location), 
+								 T_PAIR | T_ATOM | T_SIMPLE | T_CONSTANT | T_IMMUTABLE | T_DONT_COPY);
 
 #if HAVE_PTHREADS
   pthread_mutex_unlock(&symtab_lock);
@@ -1940,14 +1949,8 @@ static s7_pointer copy_list(s7_scheme *sc, s7_pointer lst)
 static s7_pointer copy_object(s7_scheme *sc, s7_pointer obj)
 {
   s7_pointer nobj;
-  
-  if ((is_constant(obj)) || 
-      (is_atom(obj)) ||
-      (s7_is_object(obj)) ||
-      (s7_is_vector(obj)) ||
-      (s7_is_continuation(obj)) ||
-      (is_input_port(obj)) ||
-      (is_output_port(obj)))
+
+  if (dont_copy(obj))
     return(obj);
   
   nobj = new_cell(sc);
@@ -1992,7 +1995,7 @@ static s7_pointer s7_make_goto(s7_scheme *sc)
 {
   s7_pointer x;
   x = new_cell(sc);
-  set_type(x, T_ATOM | T_GOTO | T_SIMPLE);
+  set_type(x, T_ATOM | T_GOTO | T_SIMPLE | T_DONT_COPY);
   x->object.goto_loc = sc->stack_top;
   return(x);
 }
@@ -2002,7 +2005,7 @@ static s7_pointer s7_make_continuation(s7_scheme *sc)
 {
   continuation *c;
   s7_pointer x = new_cell(sc);
-  set_type(x, T_CONTINUATION | T_FINALIZABLE);
+  set_type(x, T_CONTINUATION | T_FINALIZABLE | T_DONT_COPY);
   c = (continuation *)CALLOC(1, sizeof(continuation));
   
   /* save current state */
@@ -2632,7 +2635,7 @@ s7_pointer s7_make_integer(s7_scheme *sc, s7_Int n)
 {
   s7_pointer x;
   x = new_cell(sc);
-  set_type(x, T_NUMBER | T_ATOM | T_SIMPLE);
+  set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
   
   x->object.number.type = NUM_INT;
   integer(x->object.number) = n;
@@ -2644,7 +2647,7 @@ s7_pointer s7_make_integer(s7_scheme *sc, s7_Int n)
 s7_pointer s7_make_real(s7_scheme *sc, double n) 
 {
   s7_pointer x = new_cell(sc);
-  set_type(x, T_NUMBER | T_ATOM | T_SIMPLE);
+  set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
   
   x->object.number.type = NUM_REAL;
   real(x->object.number) = n;
@@ -2657,7 +2660,7 @@ s7_pointer s7_make_complex(s7_scheme *sc, double a, double b)
 {
   num ret;
   s7_pointer x = new_cell(sc);
-  set_type(x, T_NUMBER | T_ATOM | T_SIMPLE);
+  set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
   ret = make_complex(a, b);
   
   x->object.number.type = ret.type;
@@ -2678,7 +2681,7 @@ s7_pointer s7_make_ratio(s7_scheme *sc, s7_Int a, s7_Int b)
   
   num ret;
   s7_pointer x = new_cell(sc);
-  set_type(x, T_NUMBER | T_ATOM | T_SIMPLE);
+  set_type(x, T_NUMBER | T_ATOM | T_SIMPLE | T_DONT_COPY);
   ret = make_ratio(a, b);
   
   x->object.number.type = ret.type;
@@ -4885,7 +4888,7 @@ static s7_pointer g_is_char(s7_scheme *sc, s7_pointer args)
 s7_pointer s7_make_character(s7_scheme *sc, int c) 
 {
   s7_pointer x = new_cell(sc);
-  set_type(x, T_CHARACTER | T_ATOM | T_SIMPLE);
+  set_type(x, T_CHARACTER | T_ATOM | T_SIMPLE | T_DONT_COPY);
   character(x) = c;
   return(x);
 }
@@ -5052,7 +5055,7 @@ s7_pointer s7_make_counted_string(s7_scheme *sc, const char *str, int len)
     }
 #endif
   
-  set_type(x, T_STRING | T_ATOM | T_FINALIZABLE | T_SIMPLE);
+  set_type(x, T_STRING | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   if (str)
     string_value(x) = copy_string(str);
   else string_value(x) = NULL;
@@ -5065,7 +5068,7 @@ static s7_pointer make_empty_string(s7_scheme *sc, int len, char fill)
 {
   s7_pointer x;
   x = new_cell(sc);
-  set_type(x, T_STRING | T_ATOM | T_FINALIZABLE | T_SIMPLE);
+  set_type(x, T_STRING | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   string_value(x) = (char *)CALLOC(len + 1, sizeof(char));
   if (fill != 0)
     memset((void *)(string_value(x)), fill, len);
@@ -5085,7 +5088,7 @@ static s7_pointer s7_make_permanent_string(s7_scheme *sc, const char *str)
   /* for the symbol table which is never GC'd */
   s7_pointer x;
   x = (s7_cell *)CALLOC(1, sizeof(s7_cell));
-  set_type(x, T_STRING | T_ATOM | T_SIMPLE | T_CONSTANT | T_IMMUTABLE);
+  set_type(x, T_STRING | T_ATOM | T_SIMPLE | T_CONSTANT | T_IMMUTABLE | T_DONT_COPY);
   if (str)
     {
       string_value(x) = copy_string(str);
@@ -5882,7 +5885,7 @@ static s7_pointer s7_make_input_file(s7_scheme *sc, const char *name, FILE *fp)
 {
   s7_pointer x;
   x = new_cell(sc);
-  set_type(x, T_INPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE);
+  set_type(x, T_INPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   
   /* set up the port struct */
   x->object.port = (rport *)MALLOC(sizeof(rport));
@@ -5941,7 +5944,7 @@ s7_pointer s7_open_output_file(s7_scheme *sc, const char *name, const char *mode
     return(s7_file_error(sc, "open-output-file", "can't open", name));
   
   x = new_cell(sc);
-  set_type(x, T_OUTPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE);
+  set_type(x, T_OUTPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   
   /* set up the port struct */
   x->object.port = (rport *)MALLOC(sizeof(rport));
@@ -5981,7 +5984,7 @@ s7_pointer s7_open_input_string(s7_scheme *sc, const char *input_string)
 {
   s7_pointer x;
   x = new_cell(sc);
-  set_type(x, T_INPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE);
+  set_type(x, T_INPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   
   /* set up the port struct */
   x->object.port = (rport *)MALLOC(sizeof(rport));
@@ -6015,7 +6018,7 @@ s7_pointer s7_open_output_string(s7_scheme *sc)
 {
   s7_pointer x;
   x = new_cell(sc);
-  set_type(x, T_OUTPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE);
+  set_type(x, T_OUTPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   
   /* set up the port struct */
   x->object.port = (rport *)MALLOC(sizeof(rport));
@@ -6923,7 +6926,8 @@ static char *slashify_string(const char *p)
   for (i = 0; i < len; i++) 
     {
       /* PERHAPS: ctable here? */
-      if ((p[i] == 0xff) || (p[i] == '"') || (p[i] < ' ') || (p[i] == '\\'))
+      if (((p[i] == 0xff) || (p[i] == '"') || (p[i] < ' ') || (p[i] == '\\')) && 
+	  (p[i] != '\n'))
 	{
 	  s[j++] = '\\';
 	  switch(p[i]) 
@@ -6932,9 +6936,11 @@ static char *slashify_string(const char *p)
 	      s[j++] = '"';
 	      break;
 	      
+#if 0
 	    case '\n':
 	      s[j++] = 'n';
 	      break;
+#endif
 	      
 	    case '\t':
 	      s[j++] = 't';
@@ -7223,7 +7229,8 @@ static s7_pointer s7_list_to_string(s7_scheme *sc, s7_pointer lst)
 
 static char *s7_object_to_c_string_1(s7_scheme *sc, s7_pointer obj, bool use_write)
 {
-  if (s7_is_vector(obj))
+  if ((s7_is_vector(obj)) ||
+      (s7_is_hash_table(obj)))
     return(s7_vector_to_c_string(sc, obj));
   if (s7_is_pair(obj))
     return(s7_list_to_c_string(sc, obj));
@@ -7241,7 +7248,8 @@ s7_pointer s7_object_to_string(s7_scheme *sc, s7_pointer obj)
 {
   char *str = NULL;
   s7_pointer x;
-  if (s7_is_vector(obj))
+  if ((s7_is_vector(obj)) ||
+      (s7_is_hash_table(obj)))
     return(s7_vector_to_string(sc, obj));
   if (s7_is_pair(obj))
     return(s7_list_to_string(sc, obj));
@@ -8385,7 +8393,7 @@ s7_pointer s7_make_vector(s7_scheme *sc, int len)
 {
   s7_pointer x;
   x = new_cell(sc);
-  set_type(x, T_VECTOR | T_FINALIZABLE);
+  set_type(x, T_VECTOR | T_FINALIZABLE | T_DONT_COPY);
   vector_length(x) = len;
   if (len > 0)
     {
@@ -8632,7 +8640,7 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
   ffunc *ptr;
   s7_pointer x = new_cell(sc);
   ptr = (ffunc *)CALLOC(1, sizeof(ffunc));
-  set_type(x, T_S7_FUNCTION | T_ATOM | T_SIMPLE | T_FINALIZABLE);
+  set_type(x, T_S7_FUNCTION | T_ATOM | T_SIMPLE | T_FINALIZABLE | T_DONT_COPY);
   /* was T_CONSTANT, but these guys can be freed -- in Snd, for example, "random" is defined in C, but then later redefined in snd-test.scm */
   x->object.ffptr = ptr;
   x->object.ffptr->ff = f;
@@ -9041,7 +9049,7 @@ s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
 {
   s7_pointer x;
   x = new_cell(sc);
-  set_type(x, T_S7_OBJECT | T_ATOM | T_FINALIZABLE);
+  set_type(x, T_S7_OBJECT | T_ATOM | T_FINALIZABLE | T_DONT_COPY);
   x->object.fobj.type = type;
   x->object.fobj.value = value;
   return(x);
@@ -9275,7 +9283,8 @@ bool s7_is_equal(s7_pointer x, s7_pointer y)
   if (s7_is_object(x))
     return(s7_equalp_objects(x, y));
   
-  if (s7_is_vector(x))
+  if ((s7_is_vector(x)) ||
+      (s7_is_hash_table(x)))
     return(vectors_equal(x, y));
   
   if (s7_is_character(x)) 
@@ -9341,7 +9350,7 @@ s7_pointer s7_make_keyword(s7_scheme *sc, const char *key)
   name = (char *)CALLOC(safe_strlen(key) + 2, sizeof(char));
   sprintf(name, ":%s", key);                     /* prepend ":" */
   sym = s7_make_symbol(sc, name);
-  typeflag(sym) |= (T_IMMUTABLE | T_CONSTANT); 
+  typeflag(sym) |= (T_IMMUTABLE | T_CONSTANT | T_DONT_COPY); 
   FREE(name);
   
 #if 0
@@ -9390,17 +9399,44 @@ static s7_pointer g_symbol_to_keyword(s7_scheme *sc, s7_pointer args)
 
 /* -------- hash tables -------- */
 
+bool s7_is_hash_table(s7_pointer p)
+{
+  return(type(p) == T_HASH_TABLE);
+}
+
+
+static s7_pointer g_is_hash_table(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_hash_table "(hash_table? obj) returns #t if obj is a hash-table"
+  return(to_s7_bool(sc, s7_is_hash_table(car(args))));
+}
+
+
+s7_pointer s7_make_hash_table(s7_scheme *sc, int size)
+{
+  s7_pointer table;
+  table = s7_make_vector(sc, size);
+  set_type(table, T_HASH_TABLE | T_FINALIZABLE | T_DONT_COPY);
+  return(table);
+}
+
+
 static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_hash_table "(make-hash-table :optional size) returns a new hash table"
   int size = 461;
+
   if (args != sc->NIL)
     {
       if (s7_is_integer(car(args)))
-	size = s7_integer(car(args));
+	{
+	  size = s7_integer(car(args));
+	  if (size <= 0)
+	    return(s7_out_of_range_error(sc, "make-hash-table", 1, car(args), "a positive integer"));
+	}
       else return(s7_wrong_type_arg_error(sc, "make-hash-table", 1, car(args), "an integer"));
     }
-  return(s7_make_vector(sc, size));
+  return(s7_make_hash_table(sc, size));
 }
 
 
@@ -9449,7 +9485,7 @@ static s7_pointer g_hash_table_ref(s7_scheme *sc, s7_pointer args)
   table = car(args);
   key = cadr(args);
   
-  if (!s7_is_vector(table))
+  if (!s7_is_hash_table(table))
     return(s7_wrong_type_arg_error(sc, "hash-table-ref", 1, table, "a hash-table"));
   if (s7_is_string(key))
     name = string_value(key);
@@ -9472,7 +9508,7 @@ static s7_pointer g_hash_table_set(s7_scheme *sc, s7_pointer args)
   table = car(args);
   key = cadr(args);
   
-  if (!s7_is_vector(table))
+  if (!s7_is_hash_table(table))
     return(s7_wrong_type_arg_error(sc, "hash-table-set!", 1, table, "a hash-table"));
   if (s7_is_string(key))
     name = string_value(key);
@@ -9569,7 +9605,7 @@ static s7_pointer g_dynamic_wind(s7_scheme *sc, s7_pointer args)
   dw->state = DWIND_INIT;
   
   p = new_cell(sc);
-  set_type(p, T_DYNAMIC_WIND | T_ATOM | T_FINALIZABLE); /* atom -> don't mark car/cdr, don't copy */
+  set_type(p, T_DYNAMIC_WIND | T_ATOM | T_FINALIZABLE | T_DONT_COPY); /* atom -> don't mark car/cdr, don't copy */
   p->object.winder = dw;
   push_stack(sc, OP_DYNAMIC_WIND, sc->NIL, p);          /* args will be the saved result, code = dwind obj */
   
@@ -9592,7 +9628,7 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
   c->handler = caddr(args);
   
   p = new_cell(sc);
-  set_type(p, T_CATCH | T_ATOM | T_FINALIZABLE); /* atom -> don't mark car/cdr, don't copy */
+  set_type(p, T_CATCH | T_ATOM | T_FINALIZABLE | T_DONT_COPY); /* atom -> don't mark car/cdr, don't copy */
   p->object.catcher = c;
   push_stack(sc, OP_CATCH, sc->NIL, p);
   
@@ -9827,7 +9863,7 @@ static void assign_syntax(s7_scheme *sc, const char *name, opcode_t op)
 {
   s7_pointer x;
   x = symbol_table_add_by_name(sc, name); 
-  typeflag(x) |= (T_SYNTAX | T_IMMUTABLE | T_CONSTANT); 
+  typeflag(x) |= (T_SYNTAX | T_IMMUTABLE | T_CONSTANT | T_DONT_COPY); 
   typeflag(x) &= (~T_FINALIZABLE);
   syntax_opcode(x) = small_int(sc, (int)op);
 }
@@ -10616,11 +10652,20 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL;
       
       
-    case OP_LAMBDA:     /* lambda */
+    case OP_LAMBDA: 
       if ((!s7_is_pair(sc->code)) ||
 	  (!s7_is_pair(cdr(sc->code))))
 	{
-	  pop_stack(sc, eval_error(sc, "lambda syntax error", sc->code));
+	  /* (lambda) or (lambda #f) */
+	  pop_stack(sc, eval_error(sc, "lambda syntax error: no args?", sc->code));
+	  goto START;
+	}
+
+      if ((!s7_is_list(sc, car(sc->code))) &&
+	  (!s7_is_symbol(car(sc->code))))
+	{
+	  /* (lambda "hi" ...) */
+	  pop_stack(sc, eval_error(sc, "lambda args syntax error", sc->code));
 	  goto START;
 	}
       
@@ -11555,7 +11600,8 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       
     P0LIST:
     case OP_P0LIST:
-      if (s7_is_vector(sc->args)) 
+      if ((s7_is_vector(sc->args)) ||
+	  (s7_is_hash_table(sc->args)))
 	{
 	  write_string(sc, "#(", sc->output_port);
 	  sc->args = s7_cons(sc, sc->args, s7_make_integer(sc, 0)); /* loop_counter? */
@@ -11608,7 +11654,8 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  sc->args = car(sc->args);
 	  goto P0LIST;
 	} 
-      else if (s7_is_vector(sc->args)) 
+      else if ((s7_is_vector(sc->args)) ||
+	       (s7_is_hash_table(sc->args)))
 	{
 	  push_stack(sc, OP_P1LIST, sc->NIL, sc->NIL);
 	  write_string(sc, " . ", sc->output_port);
@@ -11992,11 +12039,27 @@ static s7_pointer g_release_lock(s7_scheme *sc, s7_pointer args)
 static int key_tag = 0;
 
 
+static s7_pointer thread_variable_value(s7_scheme *sc, pthread_key_t *key)
+{
+  void *val;
+  val = pthread_getspecific(*key);                  /* returns NULL if never set */
+  if (val)
+    return((s7_pointer)val);
+  return(sc->F);
+}
+
+
+s7_pointer s7_thread_variable_value(s7_scheme *sc, s7_pointer obj)
+{
+  return((pthread_key_t *)s7_object_value(obj));
+}
+
+
 static char *key_print(void *obj)
 {
   char *buf;
   buf = (char *)calloc(64, sizeof(char));
-  snprintf(buf, 64, "#<thread-variable %p>", obj); /* TODO: print the current value of this variable */
+  snprintf(buf, 64, "#<thread-variable %p: %s>", obj, s7_object_to_c_string(sc, thread_variable_value(sc, (pthread_key_t *)obj)));
   return(buf);
 }
 
@@ -12039,18 +12102,6 @@ static s7_pointer g_make_thread_variable(s7_scheme *sc, s7_pointer args)
   key = (pthread_key_t *)malloc(sizeof(pthread_key_t));
   pthread_key_create(key, NULL);
   return(s7_make_object(sc, key_tag, (void *)key));  
-}
-
-
-s7_pointer s7_thread_variable_value(s7_scheme *sc, s7_pointer obj)
-{
-  pthread_key_t *key; 
-  void *val;
-  key = (pthread_key_t *)s7_object_value(obj);
-  val = pthread_getspecific(*key);                  /* returns NULL if never set */
-  if (val)
-    return((s7_pointer)val);
-  return(sc->F);
 }
 
 
@@ -12118,22 +12169,22 @@ s7_scheme *s7_init(void)
   sc->UNDEFINED = &sc->_UNDEFINED;
   sc->UNSPECIFIED = &sc->_UNSPECIFIED;
   
-  set_type(sc->UNSPECIFIED, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT | T_SIMPLE);
+  set_type(sc->UNSPECIFIED, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT | T_SIMPLE | T_DONT_COPY);
   car(sc->UNSPECIFIED) = cdr(sc->UNSPECIFIED) = sc->UNSPECIFIED;
   
-  set_type(sc->NIL, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT | T_SIMPLE);
+  set_type(sc->NIL, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT | T_SIMPLE | T_DONT_COPY);
   car(sc->NIL) = cdr(sc->NIL) = sc->UNSPECIFIED;
   
-  set_type(sc->T, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT | T_SIMPLE);
+  set_type(sc->T, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT | T_SIMPLE | T_DONT_COPY);
   car(sc->T) = cdr(sc->T) = sc->UNSPECIFIED;
   
-  set_type(sc->F, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT | T_SIMPLE);
+  set_type(sc->F, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT | T_SIMPLE | T_DONT_COPY);
   car(sc->F) = cdr(sc->F) = sc->UNSPECIFIED;
   
-  set_type(sc->EOF_OBJECT, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT | T_SIMPLE);
+  set_type(sc->EOF_OBJECT, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT | T_SIMPLE | T_DONT_COPY);
   car(sc->EOF_OBJECT) = cdr(sc->EOF_OBJECT) = sc->UNSPECIFIED;
   
-  set_type(sc->UNDEFINED, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT | T_SIMPLE);
+  set_type(sc->UNDEFINED, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT | T_SIMPLE | T_DONT_COPY);
   car(sc->UNDEFINED) = cdr(sc->UNDEFINED) = sc->UNSPECIFIED;
   
   sc->input_port = sc->NIL;
@@ -12174,7 +12225,7 @@ s7_scheme *s7_init(void)
   (*(sc->protected_objects_loc)) = 0;
   sc->protected_objects = s7_make_vector(sc, INITIAL_PROTECTED_OBJECTS_SIZE); /* realloc happens to the embedded array, so this pointer is global */
   set_immutable(sc->protected_objects);
-  typeflag(sc->protected_objects) |= T_CONSTANT;
+  typeflag(sc->protected_objects) |= (T_CONSTANT | T_DONT_COPY);
   
   sc->stack_top = 0;
   sc->stack = s7_make_vector(sc, INITIAL_STACK_SIZE);
@@ -12182,7 +12233,7 @@ s7_scheme *s7_init(void)
   
   sc->symbol_table = s7_make_vector(sc, SYMBOL_TABLE_SIZE);
   set_immutable(sc->symbol_table);
-  typeflag(sc->symbol_table) |= T_CONSTANT;
+  typeflag(sc->symbol_table) |= (T_CONSTANT | T_DONT_COPY);
   
   sc->gc_verbose = (bool *)calloc(1, sizeof(bool));
   sc->load_verbose = (bool *)calloc(1, sizeof(bool));
@@ -12200,13 +12251,13 @@ s7_scheme *s7_init(void)
   new_slot_in_env(sc, x, sc->T); 
   
   sc->small_ints = s7_make_vector(sc, OP_MAX_DEFINED + 1);
-  typeflag(sc->small_ints) |= T_CONSTANT;
+  typeflag(sc->small_ints) |= (T_CONSTANT | T_DONT_COPY);
   
   for(i = 0; i < OP_MAX_DEFINED; i++) 
     {
       s7_pointer p;
       p = (s7_cell *)CALLOC(1, sizeof(s7_cell));
-      p->flag = T_OBJECT | T_IMMUTABLE | T_ATOM | T_NUMBER | T_CONSTANT | T_SIMPLE;
+      p->flag = T_OBJECT | T_IMMUTABLE | T_ATOM | T_NUMBER | T_CONSTANT | T_SIMPLE | T_DONT_COPY;
       p->object.number.type = NUM_INT;
       integer(p->object.number) = (off_t)i;
       vector_element(sc->small_ints, i) = p;
@@ -12235,47 +12286,47 @@ s7_scheme *s7_init(void)
   
   
   sc->LAMBDA = s7_make_symbol(sc, "lambda");
-  typeflag(sc->LAMBDA) |= (T_IMMUTABLE | T_CONSTANT); 
+  typeflag(sc->LAMBDA) |= (T_IMMUTABLE | T_CONSTANT | T_DONT_COPY); 
   
   sc->QUOTE = s7_make_symbol(sc, "quote");
-  typeflag(sc->QUOTE) |= (T_IMMUTABLE | T_CONSTANT); 
+  typeflag(sc->QUOTE) |= (T_IMMUTABLE | T_CONSTANT | T_DONT_COPY); 
   
   sc->QUASIQUOTE = s7_make_symbol(sc, "quasiquote");
-  typeflag(sc->QUASIQUOTE) |= (T_IMMUTABLE | T_CONSTANT); 
+  typeflag(sc->QUASIQUOTE) |= (T_IMMUTABLE | T_CONSTANT | T_DONT_COPY); 
   
   sc->UNQUOTE = s7_make_symbol(sc, "unquote");
-  typeflag(sc->UNQUOTE) |= (T_IMMUTABLE | T_CONSTANT); 
+  typeflag(sc->UNQUOTE) |= (T_IMMUTABLE | T_CONSTANT | T_DONT_COPY); 
   
   sc->UNQUOTE_SPLICING = s7_make_symbol(sc, "unquote-splicing");
-  typeflag(sc->UNQUOTE_SPLICING) |= (T_IMMUTABLE | T_CONSTANT); 
+  typeflag(sc->UNQUOTE_SPLICING) |= (T_IMMUTABLE | T_CONSTANT | T_DONT_COPY); 
   
   sc->FEED_TO = s7_make_symbol(sc, "=>");
-  typeflag(sc->FEED_TO) |= (T_IMMUTABLE | T_CONSTANT); 
+  typeflag(sc->FEED_TO) |= (T_IMMUTABLE | T_CONSTANT | T_DONT_COPY); 
   
   #define set_object_name "(generalized set!)"
   sc->SET_OBJECT = s7_make_symbol(sc, set_object_name);
-  typeflag(sc->SET_OBJECT) |= T_CONSTANT; 
+  typeflag(sc->SET_OBJECT) |= (T_CONSTANT | T_DONT_COPY); 
   
   /* save us the symbol table lookups later */
   
   sc->APPLY = s7_make_symbol(sc, "apply");
-  typeflag(sc->APPLY) |= T_CONSTANT; 
+  typeflag(sc->APPLY) |= (T_CONSTANT | T_DONT_COPY); 
   
   sc->CONS = s7_make_symbol(sc, "cons");
-  typeflag(sc->CONS) |= T_CONSTANT; 
+  typeflag(sc->CONS) |= (T_CONSTANT | T_DONT_COPY); 
   
   sc->APPEND = s7_make_symbol(sc, "append");
-  typeflag(sc->APPEND) |= T_CONSTANT; 
+  typeflag(sc->APPEND) |= (T_CONSTANT | T_DONT_COPY); 
   
   sc->CDR = s7_make_symbol(sc, "cdr");
-  typeflag(sc->CDR) |= T_CONSTANT; 
+  typeflag(sc->CDR) |= (T_CONSTANT | T_DONT_COPY); 
   
   sc->VECTOR = s7_make_symbol(sc, "vector");
-  typeflag(sc->VECTOR) |= T_CONSTANT; 
+  typeflag(sc->VECTOR) |= (T_CONSTANT | T_DONT_COPY); 
   sc->VECTOR_FUNCTION = s7_name_to_value(sc, "vector");
   
   sc->VALUES = s7_make_symbol(sc, "values");
-  typeflag(sc->VALUES) |= T_CONSTANT; 
+  typeflag(sc->VALUES) |= (T_CONSTANT | T_DONT_COPY); 
   
   
   /* symbols */
@@ -12297,6 +12348,9 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "symbol->keyword",         g_symbol_to_keyword,       1, 0, false, H_symbol_to_keyword);
   s7_define_function(sc, "keyword->symbol",         g_keyword_to_symbol,       1, 0, false, H_keyword_to_symbol);
   
+
+  /* hash-tables */
+  s7_define_function(sc, "hash-table?",             g_is_hash_table,           1, 0, false, H_is_hash_table);
   s7_define_function(sc, "make-hash-table",         g_make_hash_table,         0, 1, false, H_make_hash_table);
   s7_define_function(sc, "hash-table-ref",          g_hash_table_ref,          2, 0, false, H_hash_table_ref);
   s7_define_function(sc, "hash-table-set!",         g_hash_table_set,          3, 0, false, H_hash_table_set);
@@ -12706,7 +12760,7 @@ static void mark_s7(s7_scheme *sc)
   ;ratios: (.5 .5 .4 .4 .2 .7 .1 .7 1.7 .9 .2 .1 .2 .5 .5 1.5 1.0 .3 .2 1.3 1.1 .9 .9 2.0 .0 .0 .0 .2 .8 )
   
   
-  things to fix:
+  TODO: things to fix:
   (eq? call/cc call-with-current-continuation) got #f but expected #t
   (let ((quote -)) (eqv? (quote 1) 1)) got #t but expected #f                        [other procs (abs) work here, but not "syntaxes"]
   (let ((g (lambda () "?**"))) (string-set! (g) 0 #\?)) got ?** but expected error
@@ -12734,14 +12788,11 @@ static void mark_s7(s7_scheme *sc)
   (case 1 (else #f) ((1) #t)) got #f but expected error
   (case "hi" (("hi" "ho") 123) ("ha" 321)) got 321 but expected error
   (lambda (x 1) x) got #<closure> but expected error
-  (lambda "hi" 1) got #<closure> but expected error
   (lambda (x x) x) got #<closure> but expected error
   (lambda (x x x) x) got #<closure> but expected error
   (lambda (x (y)) x) got #<closure> but expected error
   (lambda (x) x . 5) got #<closure> but expected error
   (lambda (1) #f) got #<closure> but expected error
-  ((lambda () 1) 1) got 1 but expected error
-  ((lambda (x) x) 1 2) got 1 but expected error
   ((lambda (begin) (begin 1 2 3)) (lambda lambda lambda)) got 3 but expected (1 2 3)
   (let* ((x (quote (1 2 3))) (y (apply list x))) (not (eq? x y))) got #f but expected #t
   (define (quote hi) 1) got quote but expected error
@@ -12756,15 +12807,12 @@ static void mark_s7(s7_scheme *sc)
   (let () (define f (let ((first? #t)) (delay (if first? (begin (set! first? #f) (force f)) (quote second))))) (force f)) got error but expected second
   (let () (define q (let ((count 5)) (define (get-count) count) (define p (make-promise (if (<= count 0) count (begin (set! count (- count 1)) (force p) (set! count (+ count 2)) count)))) (list get-count p))) (let* ((get-count (car q)) (p (cadr q)) (a (get-count)) (b (force p)) (c (get-count))) (list a b c))) got (5 10 10) but expected (5 0 10)
   
-  it would be nice to have s7test checks for generalized set, applicable objects, hash tables, proc-w-set, keywords, macros, call-with-exit, threads
-  check via valgrind in the opt=0 cases [works apparently except with run as unopt'd -- occasional errors still -- appear to be GC's fault]
-  need better error reporting than useless "syntax error"!
-  s7+Motif+C++ -> segfault?
-  call-with-exit confuses guile 1.6.n
+  TODO: check via valgrind in the opt=0 cases [works apparently except with run as unopt'd -- occasional errors still -- appear to be GC's fault]
+  TODO: need better error reporting than useless "syntax error"!
+  TODO: s7+Motif+C++ -> segfault?
+  TODO: call-with-exit confuses guile 1.6.n
 
 s7test noinit 6-Oct-08
   0.986u 0.011s 0:01.01 98.0%     0+0k 0+224io 0pf+0w
   0.997u 0.016s 0:01.03 97.0%     0+0k 0+224io 0pf+0w
-
-  (about twice as fast as guile)
 */

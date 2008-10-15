@@ -1,6 +1,6 @@
 # Configuration script for Snd
 
-AC_INIT(snd, 10.1, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-10.tar.gz)
+AC_INIT(snd, 10.2, bil@ccrma.stanford.edu, ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-10.tar.gz)
 
 AC_CONFIG_SRCDIR(snd.c)
 AC_CANONICAL_HOST
@@ -19,7 +19,7 @@ LOCAL_LANGUAGE="None"
 GRAPHICS_TOOLKIT="None"
 
 PACKAGE=Snd
-VERSION=10.1
+VERSION=10.2
 AC_DEFINE_UNQUOTED(SND_PACKAGE, "$PACKAGE")
 AC_DEFINE_UNQUOTED(SND_VERSION, "$VERSION")
 AC_SUBST(SND_PACKAGE)
@@ -1620,8 +1620,13 @@ if test "$with_s7" != no && test "$with_extension_language" != no && test "$ac_s
     ac_snd_have_extension_language=yes
     AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
     AC_DEFINE(HAVE_SCM_MAKE_RATIO)
-    AC_DEFINE(HAVE_SCM_C_MAKE_RECTANGULAR)
-    AC_DEFINE(HAVE_COMPLEX_TRIG)
+    
+    AC_CHECK_HEADER(complex.h, 
+        [
+         AC_DEFINE(HAVE_SCM_C_MAKE_RECTANGULAR)
+         AC_DEFINE(HAVE_COMPLEX_TRIG)
+	])
+
     AC_DEFINE(WITH_RUN)
     LOCAL_LANGUAGE="s7"
     S7_LIB="s7.o"

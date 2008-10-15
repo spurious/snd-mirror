@@ -525,7 +525,8 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
-3-Sep:   Snd 9.12.\n\
+15-Oct:  Snd 10.1.\n\
+3-Sep:   Snd 10.0.\n\
 1-Sep:   S7 as extension language.\n\
 14-Jul:  Snd 9.11.\n\
 7-July:  with-threaded-channels.\n\

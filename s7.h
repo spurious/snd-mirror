@@ -224,7 +224,8 @@ bool s7_is_procedure_with_setter(s7_pointer obj);
 s7_pointer s7_procedure_with_setter_setter(s7_pointer obj);
 s7_pointer s7_procedure_with_setter_getter(s7_pointer obj);
 
-#define s7_make_hash_table(Sc, Size) s7_make_vector(Sc, Size)
+bool s7_is_hash_table(s7_pointer p);
+s7_pointer s7_make_hash_table(s7_scheme *sc, int size);
 s7_pointer s7_hash_table_ref(s7_scheme *sc, s7_pointer table, const char *name);
 s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, const char *name, s7_pointer value);
 
