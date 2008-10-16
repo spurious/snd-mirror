@@ -157,42 +157,6 @@ static int run_safety = RUN_UNSAFE;
 #endif
 
 
-#if HAVE_GAUCHE
-#define XEN_APPLICABLE_SMOB_P(a)            true
-#define INTEGER_TO_STRING(a)                XEN_TO_C_STRING(Scm_NumberToString(R_C_TO_XEN_INT(a), 10, false))
-#define INTEGER_TO_STRING_WITH_RADIX(a, b)  XEN_TO_C_STRING(Scm_NumberToString(R_C_TO_XEN_INT(a), b, false))
-#define DOUBLE_TO_STRING(a)                 XEN_TO_C_STRING(Scm_NumberToString(C_TO_XEN_DOUBLE(a), 10, false))
-#define DOUBLE_TO_STRING_WITH_RADIX(a, b)   XEN_TO_C_STRING(Scm_NumberToString(C_TO_XEN_DOUBLE(a), b, false))
-
-/* obj is a symbol, I think */
-
-#define XEN_WALKER(Obj)                     gauche_walker(Obj)
-#define XEN_SET_WALKER(Obj, Val)            gauche_set_walker(Obj, Val)
-
-/* Proc is always walk_sym, Val is always ulong result of make_walker */
-
-#define XEN_PROCEDURE_WITH_SETTER_P(Proc)   C_TO_XEN_BOOLEAN(Scm_HasSetter(Proc))
-
-
-static XEN walker_hash_table = XEN_FALSE;
-
-static XEN gauche_walker(XEN func)
-{
-  ScmHashEntry *e = NULL;
-  e = Scm_HashTableGet(SCM_HASH_TABLE(walker_hash_table), func);
-  if (e) return((XEN)(e->value));
-  return(XEN_FALSE);
-}
-
-
-static XEN gauche_set_walker(XEN func, XEN walker)
-{
-  Scm_HashTableAdd(SCM_HASH_TABLE(walker_hash_table), func, walker);
-  return(walker);
-}
-#endif
-
-
 #if HAVE_S7
 
 #define XEN_APPLICABLE_SMOB_P(a)            true
@@ -344,57 +308,6 @@ static void symbol_set_value(XEN code, XEN sym, XEN new_val)
   var = XEN_SYMBOL_TO_VARIABLE(sym);
   if (!(XEN_FALSE_P(var)))
     XEN_VARIABLE_SET(var, new_val);
-}
-#endif
-
-
-#if HAVE_GAUCHE
-static void xen_symbol_name_set_value(const char *a, XEN b)
-{
-  /* global var set */
-  ScmGloc *obj;
-  obj = Scm_FindBinding(SCM_MODULE(Scm_UserModule()), SCM_SYMBOL(SCM_INTERN(a)), 0);
-  if (obj)
-    {
-      SCM_GLOC_SET(obj, b);
-      return;
-    }
-  /* fprintf(stderr, "can't find %s", a); */
-}
-
-
-static XEN symbol_to_value(XEN code, XEN sym, bool *local)
-{
-  ScmGloc *obj;
-
-  /* and here we stopped: I can't see how to get at local variables such as "a" in:
-   *   (let ((a 32)) (run (lambda () (+ a 1))))
-   *   and this code isn't much use if only global variables are allowed
-   */
-
-  /* look for global var */
-  obj = Scm_FindBinding(SCM_MODULE(Scm_UserModule()), SCM_SYMBOL(sym), 0);
-  if (obj)
-    {
-      return(SCM_GLOC_GET(obj));
-    }
-  /* fprintf(stderr, "can't find %s", XEN_AS_STRING(sym)); */
-  return(XEN_UNDEFINED);
-}
-
-
-static void symbol_set_value(XEN code, XEN sym, XEN new_val)
-{
-  ScmGloc *obj;
-
-  /* look for global var */
-  obj = Scm_FindBinding(SCM_MODULE(Scm_UserModule()), SCM_SYMBOL(sym), 0);
-  if (obj)
-    {
-      SCM_GLOC_SET(obj, new_val);
-      return;
-    }
-  /* fprintf(stderr, "can't find %s", XEN_AS_STRING(sym)); */
 }
 #endif
 
@@ -12982,12 +12895,6 @@ static struct ptree *form_to_ptree_1(XEN code, int decls, int *types)
   else prog->code = XEN_FALSE;                    /* many confusing cases here -- we'll just give up */
 #endif
 
-#if HAVE_GAUCHE
-  if ((SCM_CLOSUREP(XEN_CADR(code))) || (SCM_PROCEDUREP(XEN_CADR(code))))
-    prog->code = XEN_CADR(code);
-  else prog->code = XEN_FALSE;
-#endif
-
 #if HAVE_S7
   prog->code = code;
 #endif
@@ -13936,10 +13843,6 @@ to Scheme and is equivalent to (thunk)."
   pt = form_to_ptree(proc_and_code);
 #endif
 
-#if HAVE_GAUCHE
-  pt = form_to_ptree(XEN_LIST_2(XEN_CAR(proc_and_code), XEN_FALSE));
-#endif
-
   if (pt)
     return(eval_ptree_to_xen(pt));
 
@@ -14076,11 +13979,6 @@ void g_init_run(void)
   XEN_DEFINE_PROCEDURE(S_show_ptree,    g_show_ptree_w,    1, 0, 0, H_show_ptree);
 		       
   XEN_YES_WE_HAVE("run");
-
-#if HAVE_GAUCHE
-  walker_hash_table = Scm_MakeHashTableSimple(SCM_HASH_EQ, 1031);
-  xen_gauche_permanent_object(walker_hash_table);
-#endif
 
 #if HAVE_S7
   walker_hash_table = s7_make_hash_table(s7, 1031);

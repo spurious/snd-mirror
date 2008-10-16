@@ -31,8 +31,6 @@ The configure program has several Snd-related arguments:
   
      --with-forth              use Forth (FTH) as the extension language.
   
-     --with-gauche             use Gauche (Scheme) as the extension language.
-
 
      To build Snd without any extension language, use --without-extension-language
   
@@ -123,7 +121,7 @@ If the configure/make process fails, please send me
 (bil@ccrma.stanford.edu) the files mus-config.h, config.log, and makefile,
 created (or updated) by configure.
 
-Snd comes with S7, so if you don't have Guile, Gauche, Ruby, or 
+Snd comes with S7, so if you don't have Guile, Ruby, or 
 Forth, you can use S7.  But if you insist on building Snd without any extension 
 language, you'll find that it's severely limited in what it can do.  
 Snd can also be built without any graphics toolkit.  Without either the GUI 
@@ -148,13 +146,12 @@ Version info:
   if GSL, version 0.8 or later
   if gtkglext, version 1.0 or later
   if gamin, version 0.1.0 or later
-  if Gauche, version 0.8.7 or later
   if Cairo and the xg module, version 1.2.6 or later
 
 
 ----------------------------------------------------------------
 
-The customization/extension languages are either S7 (included), Guile, Gauche, Ruby, or Forth.
+The customization/extension languages are either S7 (included), Guile, Ruby, or Forth.
 
 Much of Snd's functionality is loaded as needed from the Scheme, Ruby, or Forth
 files found in the tarball (*.scm, *.rb, and *.fs).  You can run Snd without 
@@ -170,7 +167,6 @@ create a file named ~/.snd_guile and put such a line in it, you'll
 never have to think about it again.  In the other languages:
 
 Ruby:   $LOAD_PATH.push("/home/bil/cl")
-Gauche: (add-to-load-path "/home/bil/cl")
 Forth:  "/home/bil/cl" add-load-path
 S7:     (set! *load-path* (cons "/home/bil/cl" *load-path*))
 

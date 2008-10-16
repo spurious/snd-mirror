@@ -3045,7 +3045,6 @@ physical modeling of noisy instruments: <a href="#maracadoc">maraca.scm, maraca.
 arbitrary distribution via rejection method: <a href="#anyrandom">any-random</a><br>
 CL: random, *random-state*, make-random-state*: random number between 0 and arg, arg can't be 0!<br>
 Guile: random, *random-state*, seed-&gt;random-state: random number between 0 and arg, arg can't be 0!<br>
-Gauche: random (based on CLM random functions)<br>
 Ruby: kernel_rand (alias for Ruby's rand), srand: random integer between 0 and arg, or float between 0 and 1<br>
 <a href="sndclm.html#mus-random">mus-random, mus_random</a>: random float between -arg and arg<br>
 mus-rand-seed (settable)<br>
@@ -6124,7 +6123,6 @@ These variables may need to be customized to fit your system:
 </p>
 <pre>
 inf-snd-ruby-program-name   "snd-ruby"    Snd-Ruby program name
-inf-snd-scheme-program-name "snd-gauche"  Snd-Scheme program name using Gauche
 inf-snd-scheme-program-name "snd-guile"   Snd-Scheme program name using Guile
 inf-snd-forth-program-name  "snd-forth"   Snd-Forth program name
 inf-snd-working-directory   "~/"          where Ruby or Scheme scripts reside
@@ -7590,7 +7588,7 @@ determines whether these envelopes are being saved (its default is #t).  The pro
 <p>determines the saved peak env file name; in the default
 case, it looks for the directory ~/peaks, but this
 could be changed to suit your situation.
-For Guile and Gauche, you can load the code in your initialization file:
+You can load the code in your initialization file:
 </p>
 <pre>
     (load-from-path "peak-env.scm")

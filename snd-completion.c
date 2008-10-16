@@ -6,7 +6,7 @@
 static char *current_match = NULL;
 
 /* TAB completion requires knowing what is currently defined, which requires scrounging
- *   around in the symbol tables (an "obarray" in Guile, hash table in Gauche, vector in Ruby, "oblist" in S7)
+ *   around in the symbol tables (an "obarray" in Guile, vector in Ruby, hash-table in S7)
  */
 
 #if HAVE_S7
@@ -56,63 +56,6 @@ static int completions(char *text)
 
 #endif
 
-
-
-#if HAVE_GAUCHE
-static int completions(char *text)
-{
-  ScmHashTable *tab;
-  int len, matches = 0;
-  ScmHashIter iter;
-
-#if GAUCHE_API_0_9
-  ScmDictEntry *e;
-#else
-  ScmHashEntry *e;
-#endif
-
-  ScmModule *m = Scm_UserModule();
-  tab = m->table;
-#if GAUCHE_API_0_9
-  Scm_HashIterInit(&iter, SCM_HASH_TABLE_CORE(tab));
-#else
-  Scm_HashIterInit(tab, &iter);
-#endif
-  len = strlen(text);
-
-  while ((e = Scm_HashIterNext(&iter)) != NULL)
-    {
-      if (e->value) 
-	{
-	  char *sym;
-#if GAUCHE_API_0_9
-	  sym = XEN_SYMBOL_TO_C_STRING(SCM_GLOC(SCM_DICT_VALUE(e))->name);
-#else
-	  sym = XEN_SYMBOL_TO_C_STRING(SCM_GLOC(e->value)->name);
-#endif
-	  if (strncmp(text, sym, len) == 0)
-	    {
-	      matches++;
-	      add_possible_completion(sym);
-	      if (current_match == NULL)
-		current_match = copy_string(sym);
-	      else 
-		{
-		  int j, curlen;
-		  curlen = snd_strlen(current_match);
-		  for (j = 0; j < curlen; j++)
-		    if (current_match[j] != sym[j])
-		      {
-			current_match[j] = '\0';
-			break;
-		      }
-		}
-	    }
-	}
-    }
-  return(matches);
-}
-#endif
 
 
 #if HAVE_GUILE

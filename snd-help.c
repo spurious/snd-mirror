@@ -192,7 +192,7 @@ static char *xm_version(void)
   #endif
 #endif
 
-#if HAVE_GAUCHE || HAVE_FORTH
+#if HAVE_FORTH
       xm_val = XEN_VARIABLE_REF(XM_VERSION_NAME);
 #endif
 
@@ -245,10 +245,6 @@ static char *gl_version(void)
 #endif
 #if HAVE_FORTH
   if (fth_provided_p("gl"))
-    gl_val = XEN_VARIABLE_REF("gl-version");
-#endif
-#if HAVE_GAUCHE
-  if (Scm_ProvidedP(C_TO_XEN_STRING("gl")))
     gl_val = XEN_VARIABLE_REF("gl-version");
 #endif
   if (XEN_STRING_P(gl_val))
@@ -498,9 +494,6 @@ void about_snd_help(void)
   char *files = NULL;
 #endif
 
-#if HAVE_GAUCHE
-  features = word_wrap(xen_gauche_features(), 400);
-#endif
 #if HAVE_GUILE
   features = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING("*features*")), 400);
   files = word_wrap(XEN_AS_STRING(XEN_EVAL_C_STRING("*snd-loaded-files*")), 400);
@@ -525,15 +518,11 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+16-Oct:  removed Gauche support.\n\
 15-Oct:  Snd 10.1.\n\
 3-Sep:   Snd 10.0.\n\
 1-Sep:   S7 as extension language.\n\
 14-Jul:  Snd 9.11.\n\
-7-July:  with-threaded-channels.\n\
-30-Jun:  flatten-partials.\n\
-27-Jun:  axis-color.\n\
-20-Jun:  time-graph-hook.\n\
-6-June:  with-threaded-sound (ws.scm)\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",
@@ -545,9 +534,6 @@ void about_snd_help(void)
 #if HAVE_FORTH    
 	    "\n    *features*:\n", features, "\n\n",
             "\n    *loaded-files*:\n", files, "\n\n",
-#endif
-#if HAVE_GAUCHE
-  	    "\n    *features*:\n    '", features, "\n\n",
 #endif
 #if HAVE_S7
   	    "\n    *features*:\n    '", features, "\n\n",
@@ -3936,75 +3922,6 @@ and its value is returned."
     else sym = text;
 
     str = s7_procedure_documentation(s7, sym);
-  }
-#endif
-
-#if HAVE_GAUCHE
-  {
-    XEN sym = XEN_FALSE;
-    if (XEN_STRING_P(text))
-      {
-	subject = XEN_TO_C_STRING(text);
-	sym = C_STRING_TO_XEN_SYMBOL(subject);
-      }
-    else
-      {
-	if (XEN_SYMBOL_P(text))
-	  {
-	    subject = XEN_SYMBOL_TO_C_STRING(text);
-	    sym = text;
-	  }
-	else 
-	  {
-	    if (XEN_PROCEDURE_P(text))
-	      {
-		XEN name;
-		name = SCM_PROCEDURE_INFO(text);
-		if (XEN_STRING_P(name))
-		  {
-		    subject = XEN_TO_C_STRING(name);
-		    sym = C_STRING_TO_XEN_SYMBOL(subject);
-		  }
-	      }
-	    else
-	      {
-		subject = (char *)S_snd_help;
-		str = (char *)H_snd_help;
-	      }
-	  }
-      }
-    if (!str)
-      {
-	XEN hlp;
-	hlp = XEN_OBJECT_HELP(sym);
-	if (XEN_STRING_P(hlp))
-	  str = XEN_TO_C_STRING(hlp);
-	else
-	  {
-	    if (search)
-	      {
-		int i, min_loc = 0, this_diff, topic_min = 0;
-		topic_min = snd_int_log2(snd_strlen(subject));
-		for (i = 0; i < HELP_NAMES_SIZE; i++)
-		  {
-		    this_diff = levenstein(subject, help_names[i]);
-		    if (this_diff < min_diff)
-		      {
-			min_diff = this_diff;
-			min_loc = i;
-		      }
-		  }
-		if (min_diff < topic_min)
-		  {
-		    subject = (char *)help_names[min_loc];
-		    sym = C_STRING_TO_XEN_SYMBOL(subject);
-		    hlp = XEN_OBJECT_HELP(sym);
-		    if (XEN_STRING_P(hlp))
-		      str = XEN_TO_C_STRING(hlp);
-		  }
-	      }
-	  }
-      }
   }
 #endif
 

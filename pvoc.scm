@@ -49,7 +49,7 @@
 ;;     editing func with fallback 
 ;;     resynthesis func with fallback
 
-(define+ (pvocoder pv input)
+(define (pvocoder pv input)
   "(pvocoder pv input) is the phase-vocoder generator associated with make-pvocoder"
 
   ;; pvocoder list accessors
@@ -93,7 +93,7 @@
 		(if (not (pvoc-in-data pv))
 		    (begin
 		      (set-pvoc-in-data pv (make-vct N))
-		      (vct-map! (pvoc-in-data pv) (lambda () (input)))) ; extra thunk wrapper is for Gauche
+		      (vct-map! (pvoc-in-data pv) input))
 		    (let ((indat (pvoc-in-data pv)))
 		      ;; extra loop here since I find the optimized case confusing (we could dispense with the data move)
 		      (vct-move! indat 0 D)

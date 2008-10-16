@@ -1,4 +1,4 @@
-/* xg.c: S7, Guile, Gauche, Ruby, and Forth bindings for gdk/gtk/pango/cairo, some of glib
+/* xg.c: S7, Guile, Ruby, and Forth bindings for gdk/gtk/pango/cairo, some of glib
  *   this file generated automatically from makexg.scm and xgdata.scm
  *   needs xen.h
  *
@@ -51,6 +51,7 @@
  *     win32-specific functions
  *
  * HISTORY:
+ *     16-Oct:    removed Gauche support.
  *     1-Sep:     S7 support.
  *     8-Jul-08:  started removing all struct accessors (for Gtk 3).
  *     --------
@@ -148,14 +149,6 @@ static size_t xm_obj_free(XEN obj)
   return(0);
 }
 #endif
-#if HAVE_GAUCHE
-static void xm_obj_free(XEN obj)
-{
-  void *val;
-  val = (void *)XEN_OBJECT_REF(obj);
-  FREE(val);
-}
-#endif
 #if HAVE_RUBY
 static void *xm_obj_free(XEN obj)
 {
@@ -192,11 +185,7 @@ static void define_xm_obj(void)
 #if HAVE_S7
  xm_obj_tag = XEN_MAKE_OBJECT_TYPE("<XmObj>", NULL, xm_obj_free, s7_equalp_xm, NULL, NULL, NULL);
 #else
-#if (!HAVE_GAUCHE)
   xm_obj_tag = XEN_MAKE_OBJECT_TYPE("XmObj", sizeof(void *));
-#else
-  xm_obj_tag = XEN_MAKE_OBJECT_TYPE("<XmObj>", sizeof(void *), NULL, xm_obj_free);
-#endif
 #endif
 #if HAVE_GUILE
   scm_set_smob_free(xm_obj_tag, xm_obj_free);
@@ -48101,11 +48090,10 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("30-Sep-08"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("16-Oct-08"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */
-      /*   using awkward dotted list as optional arg for gauche's sake */
       XEN_EVAL_C_STRING("(define (g_signal_connect obj name func . data) (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f 0))");
       XEN_EVAL_C_STRING("(define (g_signal_connect_after obj name func . data) (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f G_CONNECT_AFTER))");
       XEN_EVAL_C_STRING("(define (g_signal_connect_swapped obj name func . data) (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f G_CONNECT_SWAPPED))");

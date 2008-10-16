@@ -13,7 +13,7 @@
 ;;
 ;; Version 3.0
 
-(provide 'gauche-format.scm)
+(provide 's7-format.scm)
 
 ;(define-module (ice-9 format)
 ;  :use-module (ice-9 and-let-star)

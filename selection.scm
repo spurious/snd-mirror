@@ -26,7 +26,7 @@
 ;;;
 ;;; (originally in examp.scm)
 
-(define+ (swap-selection-channels)
+(define (swap-selection-channels)
   "(swap-selection-channels) swaps the currently selected data's channels"
 
   (define find-selection-sound 

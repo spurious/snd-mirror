@@ -117,7 +117,7 @@
 
 ;;; -------- play sound until c-g
 
-(define+ (play-until-c-g)
+(define (play-until-c-g)
   "(play-until-c-g) plays the selected sound until you interrupt it via C-g"
   (define (play-once reason)
     (if (and (not (c-g?))
@@ -128,7 +128,7 @@
 
 ;;; -------- play region over and over until C-g typed
 
-(define+ (play-region-forever reg)
+(define (play-region-forever reg)
   "(play-region-forever reg) plays region 'reg' until you interrupt it via C-g"
   (define (play-region-again reason)
     (if (and (not (c-g?))  ; be extra careful (probably superfluous)

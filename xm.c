@@ -1,4 +1,4 @@
-/* xm.c: Guile/Gauche/Ruby/Forth bindings for X/Xt/Xpm/Xm/Xp/Xext
+/* xm.c: Guile/Ruby/Forth bindings for X/Xt/Xpm/Xm/Xp/Xext
  *   needs xen.h
  *   for tests and examples see snd-motif.scm, bess.scm|rb, and snd-test.scm
  */
@@ -6,10 +6,11 @@
 #include <mus-config.h>
 #include <stdlib.h>
 
-#define XM_DATE "1-Oct-08"
+#define XM_DATE "16-Oct-08"
 
 /* HISTORY: 
  *
+ *   16-Oct:    removed Gauche additions.
  *   1-Oct:     XtAppAddInput condition arg is a mess.
  *   10-Sep:    XtAppAddInput condition arg is an int.
  *   1-Sep-08:  S7 support.
@@ -364,15 +365,6 @@ static size_t xm_obj_free(XEN obj)
 }
 #endif
 
-#if HAVE_GAUCHE
-static void xm_obj_free(XEN obj)
-{
-  void *val;
-  val = (void *)XEN_OBJECT_REF(obj);
-  FREE(val);
-}
-#endif
-
 #if HAVE_RUBY
 static void *xm_obj_free(XEN obj)
 {
@@ -414,11 +406,7 @@ static void define_xm_obj(void)
 #if HAVE_S7
   xm_obj_tag = XEN_MAKE_OBJECT_TYPE("<XmObj>", NULL, xm_obj_free, s7_equalp_xm, NULL, NULL, NULL);
 #else
-#if (!HAVE_GAUCHE)
   xm_obj_tag = XEN_MAKE_OBJECT_TYPE("XmObj", sizeof(void *));
-#else
-  xm_obj_tag = XEN_MAKE_OBJECT_TYPE("<XmObj>", sizeof(void *), NULL, xm_obj_free);
-#endif
 #endif
 
 #if HAVE_GUILE

@@ -1,7 +1,7 @@
 #include "snd.h"
 #include "clm2xen.h"
 
-/* Snd defines its own exit, delay, and frame? clobbering (presumably) the Guile/Gauche versions, (filter is another such collision)
+/* Snd defines its own exit, delay, and frame? clobbering (presumably) the Guile version, (filter is another such collision)
  *
  *   In Scheme, delay is protected in clm2xen.c as make-promise
  *              filter is defined in srfi-1 so we need protection against that
@@ -9,15 +9,6 @@
  *   In Guile, frame? is %frame?
  *   In Ruby, rand is kernel_rand.
  *   In Forth, Snd's exit is named snd-exit.
- *
- *   In Gauche, apropos is defined in lib/gauche/interactive.scm
- *              optimizer needs local variable access [this is not currently possible -- perhaps in 1.0 says Shiro]
- *              random is implemented via mus-i|frandom (clm.c).
- *              error handling is pessimal, but I've wasted enough time on it.
- *      to load interactive:
- *              (use gauche.interactive)
- *      also perhaps we should always (use gauche.threads)
- *      gdb: handle SIGPWR SIGXCPU nostop noprint
  */
 
 
@@ -291,7 +282,7 @@ void redirect_errors_to(void (*handler)(const char *msg, void *ufd), void *data)
 
 static char *gl_print(XEN result);
 
-#if (!HAVE_GAUCHE) && (!HAVE_S7)
+#if (!HAVE_S7)
 static XEN snd_format_if_needed(XEN args)
 {
   /* if car has formatting info, use next arg as arg list for it */
@@ -785,21 +776,6 @@ XEN g_call3(XEN proc, XEN arg1, XEN arg2, XEN arg3, const char *caller)
 #endif
 
 
-#if HAVE_GAUCHE
-XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
-{
-  XEN result = XEN_FALSE;
-  SCM_UNWIND_PROTECT {
-    result = (*body)(body_data);
-  }
-  SCM_WHEN_ERROR {
-  }
-  SCM_END_PROTECT;
-  return(result);
-}
-#endif
-
-
 #if HAVE_RUBY || HAVE_FORTH || HAVE_S7
 XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
 {
@@ -847,18 +823,6 @@ bool procedure_arity_ok(XEN proc, int args)
     snd_unprotect_at(loc);
     if (rargs > args) return(false);
     if ((restargs == 0) && ((rargs + oargs) < args)) return(false);
-  }
-#endif
-
-#if HAVE_GAUCHE
-  {
-    int oargs, loc;
-    loc = snd_protect(arity);
-    rargs = XEN_TO_C_INT(XEN_CAR(arity));
-    oargs = XEN_TO_C_INT(XEN_CDR(arity));
-    snd_unprotect_at(loc);
-    if (rargs > args) return(false);
-    if ((rargs + oargs) < args) return(false);
   }
 #endif
 
@@ -927,26 +891,6 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
 	    ((rargs != 0) || (oargs != 0) || (restargs != 0)))
 	  return(mus_format(_("%s function (%s arg %d) should take no args, not %d"), 
 			    arg_name, caller, argn, rargs + oargs + restargs));
-      }
-#endif
-
-#if HAVE_GAUCHE
-      {
-	int oargs, loc;
-	loc = snd_protect(arity);
-	rargs = XEN_TO_C_INT(XEN_CAR(arity));
-	oargs = XEN_TO_C_INT(XEN_CDR(arity));
-	snd_unprotect_at(loc);
-	if (rargs > args)
-	  return(mus_format(_("%s function (%s arg %d) should take %d argument%s, but instead requires %d"),
-			    arg_name, caller, argn, args, (args != 1) ? "s" : "", rargs));
-	if ((rargs + oargs) < args)
-	  return(mus_format(_("%s function (%s arg %d) should accept at least %d argument%s, but instead accepts only %d"),
-			    arg_name, caller, argn, args, (args != 1) ? "s" : "", rargs + oargs));
-	if ((args == 0) &&
-	    ((rargs != 0) || (oargs != 0)))
-	  return(mus_format(_("%s function (%s arg %d) should take no args, not %d"), 
-			    arg_name, caller, argn, rargs + oargs));
       }
 #endif
 
@@ -1064,7 +1008,7 @@ char *g_print_1(XEN obj) /* free return val */
 #if HAVE_S7
   return(XEN_AS_STRING(obj)); 
 #endif
-#if HAVE_GAUCHE || HAVE_FORTH || HAVE_RUBY
+#if HAVE_FORTH || HAVE_RUBY
   return(copy_string(XEN_AS_STRING(obj))); 
 #endif
 #if HAVE_GUILE
@@ -1173,7 +1117,7 @@ void snd_report_listener_result(XEN form)
 #if HAVE_RUBY || HAVE_FORTH || HAVE_S7
   snd_report_result(form, "\n");
 #endif
-#if (HAVE_GUILE && (SCM_DEBUG_TYPING_STRICTNESS != 2)) || HAVE_GAUCHE
+#if (HAVE_GUILE && (SCM_DEBUG_TYPING_STRICTNESS != 2))
   snd_report_result(snd_catch_any(eval_form_wrapper, (void *)form, NULL), "\n");
 #endif
 }
@@ -1333,12 +1277,6 @@ void snd_load_init_file(bool no_global, bool no_init)
   #define SND_INIT "~/.snd_guile"
 #endif
 
-#if HAVE_GAUCHE
-  #define SND_EXT_CONF "/etc/snd_gauche.conf"
-  #define SND_PREFS "~/.snd_prefs_gauche"
-  #define SND_INIT "~/.snd_gauche"
-#endif
-
 #if HAVE_RUBY
   #define SND_EXT_CONF "/etc/snd_ruby.conf"
   #define SND_PREFS "~/.snd_prefs_ruby"
@@ -1492,14 +1430,6 @@ void check_features_list(char *features)
                                     $stderr.printf(\"~\\nno %%s!\\n\\n\", f.id2name)\n\
                                   end\n\
                                 end\n", features));
-#endif
-
-#if HAVE_GAUCHE
-  XEN_EVAL_C_STRING(mus_format("(for-each \
-                                  (lambda (f)	\
-                                    (if (not (provided? (symbol->string f))) \
-                                        (display (string-append (string #\\newline) \"no \" (symbol->string f) \"!\" (string #\\newline))))) \
-                                  (list %s))", features));
 #endif
 
 #if HAVE_FORTH
@@ -1809,9 +1739,6 @@ static XEN g_gc_off(void)
   fth_gc_off();
 #endif
 
-#if HAVE_GAUCHE
-  GC_disable();
-#endif
   return(XEN_FALSE);
 }
 
@@ -1832,9 +1759,6 @@ static XEN g_gc_on(void)
   fth_gc_on();
 #endif
 
-#if HAVE_GAUCHE
-  GC_enable();
-#endif
   return(XEN_FALSE);
 }
 
@@ -1850,13 +1774,7 @@ static XEN g_continuation_p(XEN obj)
 #endif
 }
 #endif
-/* in Gauche there's SCM_CCONTP(obj), but it doesn't appear to be used or declared publically */
-#if HAVE_GAUCHE
-static XEN g_continuation_p(XEN obj)
-{
-  return(XEN_FALSE);
-}
-#endif
+
 #if HAVE_S7
 static XEN g_continuation_p(XEN obj)
 {
@@ -1866,15 +1784,12 @@ static XEN g_continuation_p(XEN obj)
 #endif
 
 
-#if (!HAVE_GAUCHE)
-/* Gauche already implements fmod */
 static XEN g_fmod(XEN a, XEN b)
 {
   XEN_ASSERT_TYPE(XEN_NUMBER_P(a), a, XEN_ARG_1, "fmod", " a number");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(b), b, XEN_ARG_2, "fmod", " a number");
   return(C_TO_XEN_DOUBLE(fmod(XEN_TO_C_DOUBLE(a), XEN_TO_C_DOUBLE(b))));
 }
-#endif
 
 
 #if HAVE_SPECIAL_FUNCTIONS
@@ -2169,7 +2084,7 @@ static XEN g_gsl_roots(XEN poly)
 #endif
 
 
-#if HAVE_GAUCHE || HAVE_S7
+#if HAVE_S7
 static XEN g_random(XEN val)
 {
   if (XEN_INTEGER_P(val))
@@ -2217,8 +2132,7 @@ static XEN g_ftell(XEN fd)
  *      |#
  *          ))
  * 
- *   which returns #f, not b.  I can't see how to fix this.  (This style of comment
- *   does work in Gauche).
+ *   which returns #f, not b.  I can't see how to fix this.
  */
 
 static XEN g_skip_block_comment(XEN ch, XEN port)
@@ -2441,10 +2355,8 @@ XEN_NARGIFY_1(g_add_source_file_extension_w, g_add_source_file_extension)
 #if MUS_DEBUGGING
   XEN_NARGIFY_1(g_snd_sound_pointer_w, g_snd_sound_pointer)
 #endif
-#if (!HAVE_GAUCHE)
-  XEN_NARGIFY_2(g_fmod_w, g_fmod)
-#endif
 
+XEN_NARGIFY_2(g_fmod_w, g_fmod)
 XEN_NARGIFY_0(g_gc_off_w, g_gc_off)
 XEN_NARGIFY_0(g_gc_on_w, g_gc_on)
 
@@ -2475,7 +2387,7 @@ XEN_NARGIFY_1(g_i0_w, g_i0)
   #endif
 #endif
 
-#if HAVE_GAUCHE || HAVE_S7
+#if HAVE_S7
   XEN_NARGIFY_1(g_random_w, g_random)
   XEN_NARGIFY_0(g_get_internal_real_time_w, g_get_internal_real_time)
   XEN_NARGIFY_1(g_ftell_w, g_ftell)
@@ -2504,9 +2416,7 @@ XEN_NARGIFY_1(g_add_watcher_w, g_add_watcher)
 #if MUS_DEBUGGING
   #define g_snd_sound_pointer_w g_snd_sound_pointer
 #endif
-#if (!HAVE_GAUCHE)
-  #define g_fmod_w g_fmod
-#endif
+#define g_fmod_w g_fmod
 #define g_gc_off_w g_gc_off
 #define g_gc_on_w g_gc_on
 #if HAVE_SPECIAL_FUNCTIONS
@@ -2566,21 +2476,6 @@ static XEN g_write_byte(XEN byte) /* this collides with CM */
   return(byte);
 }
 
-#endif
-
-
-#if HAVE_GAUCHE
-
-static XEN g_eval_string(XEN str)
-{
-  char *cstr;
-  cstr = XEN_TO_C_STRING(str);
-  if (cstr)
-    return(XEN_EVAL_C_STRING(cstr));
-  return(XEN_FALSE);
-}
-
-XEN_NARGIFY_1(g_eval_string_w, g_eval_string)
 #endif
 
 
@@ -2747,13 +2642,6 @@ void g_xen_initialize(void)
   XEN_DEFINE_PROCEDURE("continuation?", g_continuation_p_w, 1, 0, 0, "#t if arg is a continuation");
 #endif
 
-#if HAVE_GAUCHE
-  /* defmacro used in vct init called from sndlib init if with-run */
-  XEN_EVAL_C_STRING("(define-syntax defmacro\
-                       (syntax-rules ()\
-                         ((_ name params . body) (define-macro (name . params) . body))))");
-#endif
-
   Init_sndlib();
 
 #if HAVE_FORTH
@@ -2768,10 +2656,7 @@ void g_xen_initialize(void)
 
   XEN_DEFINE_PROCEDURE(S_snd_print,      g_snd_print_w,     1, 0, 0, H_snd_print);
   XEN_DEFINE_PROCEDURE("little-endian?", g_little_endian_w, 0, 0, 0, "return " PROC_TRUE " if host is little endian");
-
-#if (!HAVE_GAUCHE)
-  XEN_DEFINE_PROCEDURE("fmod",   g_fmod_w,   2, 0, 0, "C's fmod");
-#endif
+  XEN_DEFINE_PROCEDURE("fmod",           g_fmod_w,          2, 0, 0, "C's fmod");
 
 #if HAVE_SPECIAL_FUNCTIONS
   XEN_DEFINE_PROCEDURE(S_bes_j0, g_j0_w,     1, 0, 0, H_j0);
@@ -2802,14 +2687,6 @@ void g_xen_initialize(void)
   XEN_DEFINE_PROCEDURE("gsl-roots",  g_gsl_roots_w,  1, 0, 0, H_gsl_roots);
 #endif
 
-#endif
-
-#if HAVE_GAUCHE
-  XEN_DEFINE_CONSTANT("internal-time-units-per-second", 1, "clock speed");
-  XEN_DEFINE_PROCEDURE("random",                 g_random_w,                 1, 0, 0, "(random arg): random number between 0 and arg ");
-  XEN_DEFINE_PROCEDURE("get-internal-real-time", g_get_internal_real_time_w, 0, 0, 0, "get system time");
-  XEN_DEFINE_PROCEDURE("ftell",                  g_ftell_w,                  1, 0, 0, "(ftell fd): lseek");
-  XEN_DEFINE_PROCEDURE("eval-string",            g_eval_string_w,            1, 0, 0, "eval a string");
 #endif
 
 #if HAVE_S7
@@ -2931,7 +2808,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
     FREE(legal_pwd); 
   } 
 
-#if HAVE_GUILE || HAVE_GAUCHE || HAVE_S7
+#if HAVE_GUILE || HAVE_S7
   #if(!defined(M_PI))
     #define M_PI 3.14159265358979323846264338327
   #endif
@@ -2940,7 +2817,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 
 #if HAVE_GUILE
   {
-    /* Gauche and CL use '#| |#' for block comments, so implement them in Guile */
+    /* CL uses '#| |#' for block comments, so implement them in Guile */
     /*   this is in R6RS, so presumably Guile will eventually implement them itself */
     XEN proc;
     proc = XEN_NEW_PROCEDURE("%skip-comment%", g_skip_block_comment, 2, 0, 0);
@@ -2961,7 +2838,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 
   XEN_EVAL_C_STRING("(define redo-edit redo)");        /* consistency with Ruby */
   XEN_EVAL_C_STRING("(define undo-edit undo)");
-  XEN_EVAL_C_STRING("(define define+ define)");        /* Gauche can't handle documentation strings */
   XEN_EVAL_C_STRING("(define call-with-exit call/cc)");
 
   /* from ice-9/r4rs.scm but with output to snd listener */
@@ -2995,84 +2871,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
    */
 #endif
 
-#if HAVE_GAUCHE
-  XEN_EVAL_C_STRING("(define redo-edit redo)");        /* consistency with Ruby */
-  XEN_EVAL_C_STRING("(define undo-edit undo)");
-  XEN_EVAL_C_STRING("(define *snd-loaded-files* '())");
-  XEN_EVAL_C_STRING("(define *snd-remember-paths* #t)");
-  XEN_EVAL_C_STRING("(define (clm-print . args) (snd-print (apply format #f args)))"); /* assumes we've loaded format */
-
-  XEN_EVAL_C_STRING("(define load-from-path load)");
-  XEN_EVAL_C_STRING("(define system sys-system)");
-  XEN_EVAL_C_STRING("(define getenv sys-getenv)");
-  XEN_EVAL_C_STRING("(define getcwd sys-getcwd)");
-  XEN_EVAL_C_STRING("(define rename-file sys-rename)");
-  XEN_EVAL_C_STRING("(define delete-file sys-unlink)");
-  XEN_EVAL_C_STRING("(define version gauche-version)");
-  XEN_EVAL_C_STRING("(define localtime sys-localtime)");
-  XEN_EVAL_C_STRING("(define current-time sys-time)");
-  XEN_EVAL_C_STRING("(define strftime sys-strftime)");
-  XEN_EVAL_C_STRING("(define shell sys-system)");
-  XEN_EVAL_C_STRING("(define call-with-exit call/cc)");
-
-  /* add-load-path in Gauche is a spooky special case that is executed no matter what, and
-   *   Shiro says I shouldn't use the underlying function %add-load-path; here is his suggestion:
-   */
-  XEN_EVAL_C_STRING("(define-macro (add-to-load-path path) (when (not (member path *load-path*)) `(add-load-path ,path)))");
-
-  XEN_EVAL_C_STRING("(define (list-set! lis pos val)\
-                       (set-car! (list-tail lis pos) val)\
-                       val)");
-
-  XEN_EVAL_C_STRING("(define (make-procedure-with-setter get set)\
-                       (let ((proc (lambda x (apply get x))))\
-                         (set! (setter proc) set)\
-                         proc))");
-
-  XEN_EVAL_C_STRING("(define (throw . args) (raise args))");
-
-  XEN_EVAL_C_STRING("(define (catch tag body error-handler)                                                         \
-                       (guard (err                                                                                  \
- 	                        ((and (condition-has-type? err <error>)                                             \
-		                      (or (equal? tag #t)                                                           \
-		                          (member tag (list 'wrong-number-of-args 'wrong-type-arg 'out-of-range)))) \
-	                         (let ((msg (slot-ref err 'message))                                                \
-		                       (translated-error (list err)))                                               \
-	                           (if (string? msg)                                                                \
-		                       (let ((len (string-length msg)))                                             \
-		                         (if (and (> len 26)                                                        \
-			                          (string=? (substring msg 0 25) \"wrong number of arguments\"))    \
-		                             (set! translated-error (list 'wrong-number-of-args msg))               \
-		                             (if (and (> len 21)                                                    \
-				                      (string=? (substring msg 0 21) \"argument out of range\"))    \
-			                         (set! translated-error (list 'out-of-range msg))))))               \
-	                           (apply error-handler translated-error)))                                         \
-	                         ((or (equal? tag #t)                                                               \
-	                              (and (list? err)                                                              \
-		                           (eq? tag (car err))))                                                    \
-	                          (apply error-handler (if (list? err) err (list err)))))                           \
-	                 (body)))");
-
-  XEN_EVAL_C_STRING("(define (symbol->keyword key) (make-keyword (symbol->string key)))");
-  XEN_EVAL_C_STRING("(define (keyword->symbol key) (string->symbol (keyword->string key)))");
-  XEN_EVAL_C_STRING("(define (1- val) (- val 1))");
-  XEN_EVAL_C_STRING("(define (1+ val) (+ val 1))");
-  
-  /* these are for compatibility with Guile (rather than add hundreds of "if provided?" checks) */
-  XEN_EVAL_C_STRING("(defmacro use-modules (arg . args) #f)");
-  XEN_EVAL_C_STRING("(define (debug-enable . args) #f)");
-  XEN_EVAL_C_STRING("(define (read-enable . args) #f)");
-  XEN_EVAL_C_STRING("(define (debug-set! . args) #f)");
-  XEN_EVAL_C_STRING("(define (make-soft-port . args) #f)");
-  XEN_EVAL_C_STRING("(defmacro declare args #f)");     /* for optimizer */
-  XEN_EVAL_C_STRING("(define procedure-source procedure-info)");
-  XEN_EVAL_C_STRING("(define procedure-with-setter? has-setter?)");
-  XEN_EVAL_C_STRING("(define (set-procedure-property! . args) #f)");
-
-  /* Gauche doesn't handle documentation strings correctly */
-  XEN_EVAL_C_STRING("(defmacro define+ (args . body) `(define ,args ,@(cdr body)))"); /* strip out documentation string if embedded defines */
-#endif
-
 #if HAVE_S7
   XEN_EVAL_C_STRING("(define redo-edit redo)");        /* consistency with Ruby */
   XEN_EVAL_C_STRING("(define undo-edit undo)");
@@ -3096,7 +2894,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_EVAL_C_STRING("(define (1+ x) (+ x 1))");
   XEN_EVAL_C_STRING("(define (1- x) (- x 1))");
   XEN_EVAL_C_STRING("(defmacro while (cond . body) `(do () ((not ,cond)) ,@body))");
-  XEN_EVAL_C_STRING("(defmacro define+ args `(define ,@args))"); /* for Gauche's benefit */
 
   XEN_EVAL_C_STRING("(defmacro declare args `(snd-declare ',args))");
   XEN_EVAL_C_STRING("(define (identity x) x)");                    /* popup.scm uses this */
@@ -3178,10 +2975,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   XEN_YES_WE_HAVE("snd-guile");
 #endif
 
-#if HAVE_GAUCHE
-  XEN_YES_WE_HAVE("snd-gauche");
-#endif
-
 #if HAVE_FORTH
   XEN_YES_WE_HAVE("snd-forth");
 #endif
@@ -3235,7 +3028,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 #endif
 
 #if HAVE_GETTIMEOFDAY && HAVE_DIFFTIME && HAVE_SYS_TIME_H
-#if HAVE_S7 || HAVE_GAUCHE
+#if HAVE_S7
   {
     struct timezone z0;
     gettimeofday(&overall_start_time, &z0);

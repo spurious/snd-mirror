@@ -1,7 +1,7 @@
 (use-modules (ice-9 debug) (ice-9 optargs) (ice-9 format))
 (provide 'snd-debug.scm)
 
-(if (provided? 'snd-gauche)
+(if (provided? 'snd-s7)
     (snd-warning ";debug.scm depends on functions specific to Guile."))
 
 

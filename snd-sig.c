@@ -3199,11 +3199,6 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
   if (XEN_LIST_P(proc_and_list))
     proc = XEN_CADR(proc_and_list);
   else proc = proc_and_list;
-  /* in Gauche this is something like #<closure (%internal-eval #f)> or #<subr abs>
-   *   but if a generator is passed (as "applicable smob") it's #<fir-filter: order: 3, xs: [0.500 1.000 0.500]>
-   *   which is not considered a procedure
-   *     (map-channel (make-fir-filter 3 :xcoeffs (vct .5 1.0 .5)))
-   */
 #else
   proc = proc_and_list;
 #endif
@@ -3243,9 +3238,6 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
       char *errmsg = NULL;
       snd_info *sp;
 
-#if HAVE_GAUCHE
-      if (!mus_xen_p(proc))
-#endif
       errmsg = procedure_ok(proc, 1, caller, "", 1);
       if (errmsg)
 	{

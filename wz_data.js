@@ -1608,7 +1608,6 @@ var scheme_format_tip = "<code>(format destination control-string :rest args)</c
                         "<code>\"A: #&lt;vct[len=2]: 3.140 3.140&gt;, D: 32, F: 1.5<br>" +
                         "\"</code><br>" +
                         "format is not defined by Scheme, so in Guile you need to <code>(use-modules (ice-9 format))</code><br>" +
-                        "and in Gauche, <code>(load \"gauche-format.scm\")</code><br>" +
                         "For full details, see the Common Lisp documentation, or possibly srfi-29";
 
 var scheme_reset_hook_tip = "<code>(reset-hook! hook)</code>: removes all functions from 'hook'.";

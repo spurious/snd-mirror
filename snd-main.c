@@ -1412,9 +1412,6 @@ const char *save_options_in_prefs(void)
 #if HAVE_GUILE
   #define SND_PREFS "~/.snd_prefs_guile"
 #endif
-#if HAVE_GAUCHE
-  #define SND_PREFS "~/.snd_prefs_gauche"
-#endif
 #if HAVE_RUBY
   #define SND_PREFS "~/.snd_prefs_ruby"
 #endif

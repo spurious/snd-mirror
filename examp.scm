@@ -57,7 +57,6 @@
 ;;; sync-all
 
 (use-modules (ice-9 debug) (ice-9 format) (ice-9 optargs) (ice-9 common-list))
-(if (provided? 'snd-gauche) (use srfi-13)) ; string-downcase
 
 (provide 'snd-examp.scm)
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
@@ -1084,7 +1083,7 @@ in a hurry use: (clm-channel (make-comb .8 32)) instead"
 
 ;;; or change the comb length via an envelope:
 
-(define+ (zcomb scaler size pm)
+(define (zcomb scaler size pm)
   "(zcomb scaler size pm) returns a comb filter whose length varies according to an 
 envelope: (map-channel (zcomb .8 32 '(0 0 1 10)))"
   (define (max-envelope-1 e mx)
@@ -1923,7 +1922,7 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 	       (return (1- ctr)))))))))
 
 
-(define+ (remove-clicks)
+(define (remove-clicks)
   "(remove-clicks) tries to find and smooth-over clicks"
   ;; this is very conservative -- the click detection limits above could be set much tighter in many cases
   (define (remove-click loc)
@@ -1986,7 +1985,7 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 	rtn))))
 
 
-(define+ (find-pitch pitch)
+(define (find-pitch pitch)
   "(find-pitch pitch) finds the point in the current sound where 'pitch' (in Hz) predominates -- C-s (find-pitch 300) 
 In most cases, this will be slightly offset from the true beginning of the note"
   (define (interpolated-peak-offset la ca ra)
@@ -2514,19 +2513,17 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 	    (string-set! new-name i #\-)))))
 
   (define (directory->list dir)
-    (if (provided? 'snd-gauche)
-	(sys-readdir dir)
-	(let ((dport (opendir dir)) 
-	      (ctr 0)) ; try to avoid infinite loop in the broken cases
-	  (let loop ((entry (readdir dport))
-		     (files '()))
-	    (set! ctr (1+ ctr))
-	    (if (and (< ctr 2000)
-		     (not (eof-object? entry)))
-		(loop (readdir dport) (cons entry files))
-		(begin
-		  (closedir dport)
-		  (reverse! files)))))))
+    (let ((dport (opendir dir)) 
+	  (ctr 0)) ; try to avoid infinite loop in the broken cases
+      (let loop ((entry (readdir dport))
+		 (files '()))
+	(set! ctr (1+ ctr))
+	(if (and (< ctr 2000)
+		 (not (eof-object? entry)))
+	    (loop (readdir dport) (cons entry files))
+	    (begin
+	      (closedir dport)
+	      (reverse! files))))))
 
   (define (segment-maxamp name beg dur)
     (let ((mx 0.0)

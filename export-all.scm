@@ -1182,7 +1182,6 @@ little-endian?
 fmod
 bes-i0
 declare
-define+
 *snd-loaded-files*
 *snd-remember-paths*
 )

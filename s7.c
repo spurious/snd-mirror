@@ -76,23 +76,54 @@
  *    s7 init
  */
 
-/* -------------------------------------------------------------------------------- */
 
-/* your config file goes here.  Currently we assume we have complex.h and setjmp.h,
- *   but it would be easy to put those on switches.  The only other compile-time
- *   flags involve the functions:
+/* ---------------- compile time switches ---------------- */
+
+#include <mus-config.h>
+
+/*
+ * your config file goes here, or just replace that #include line with the defines you need.
+ * Currently we assume we have setjmp.h.
+ *   The only compile-time switches involve booleans, threads and complex numbers.
+ *   These complex functions are on compile-time switches:
  *
  *     cabs cacos cacosh carg casin casinh catan catanh ccos ccosh 
  *     cexp clog conj cpow csin csinh csqrt ctan ctanh
  *
- * and stdbool.h (s7.h), and pthread.h (below).  So if you just comment out the
- *   include, you get the local cabs (etc) code, and no threads.
- *
  * complex number support (which is problematic in C++, Solaris, and netBSD)
- *   is now on the WITH_COMPLEX switch.
+ *   is on the WITH_COMPLEX switch. On a Mac, or in Linux, you can use:
+ *
+ *   #define WITH_COMPLEX 1
+ *
+ * To use the builtin complex trig funcs (as opposed to those defined below):
+ *
+ *   #define HAVE_CABS 1
+ *   #define HAVE_CACOS 1
+ *   #define HAVE_CACOSH 1
+ *   #define HAVE_CARG 1
+ *   #define HAVE_CASIN 1
+ *   #define HAVE_CASINH 1
+ *   #define HAVE_CATAN 1
+ *   #define HAVE_CATANH 1
+ *   #define HAVE_CCOS 1
+ *   #define HAVE_CCOSH 1
+ *   #define HAVE_CEXP 1
+ *   #define HAVE_CLOG 1
+ *   #define HAVE_CONJ 1
+ *   #define HAVE_CPOW 1
+ *   #define HAVE_CSIN 1
+ *   #define HAVE_CSINH 1
+ *   #define HAVE_CSQRT 1
+ *   #define HAVE_CTAN 1
+ *   #define HAVE_CTANH 1
+ *
+ * If pthreads are available:
+ *
+ *   #define HAVE_PTHREADS 1
+ *
+ * s7.h includes stdbool.h if HAVE_STDBOOL_H is 1
+ *
  */
-
-#include <mus-config.h>
 
 /* -------------------------------------------------------------------------------- */
 

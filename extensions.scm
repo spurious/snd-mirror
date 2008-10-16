@@ -21,11 +21,6 @@
 (provide 'snd-extensions.scm)
 
 
-(if (and (provided? 'snd-gauche)
-	 (not (provided? 'gauche-optargs.scm)))
-    (load-from-path "gauche-optargs.scm"))
-
-
 (if (not (defined? 'remove-if))
     (define (remove-if pred l) ; from guile/ice-9/common-list.scm
       "(remove-if func lst) removes any element from 'lst' that 'func' likes"
@@ -395,7 +390,7 @@ If 'check' is #f, the hooks are removed."
 					   (not (null? val))
 					   (eq? (car val) 'lambda))
 				      (set! (f snd chn) (eval val (interaction-environment)))
-				      ;; this works in Guile and Gauche -- in the latter it returns the current module
+				      ;; this works in Guile
 				      (set! (f snd chn) val)))
 				channel-funcs
 				(list-ref (cadddr state) chn)))

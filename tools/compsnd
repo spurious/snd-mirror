@@ -357,61 +357,6 @@ make allclean
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
-echo ' ----                 --with-gauche                                          ---- '
-echo ' -------------------------------------------------------------------------------- '
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-gauche
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-gauche 'snd-motif"
-make allclean
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
-echo ' ----                --with-gauche --enable-snd-debug --with-static-xm --with-editres --with-gl '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-gauche --enable-snd-debug --with-static-xm --with-editres --with-gl LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --with-midi
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-gauche 'xm 'gl"
-make allclean
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
-echo ' ----                --with-gauche --with-gtk --with-static-xg --with-gl      --- '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-gauche --with-gtk --with-static-xg --with-gl LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-gtk 'xg 'gl"
-make allclean
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
-echo ' -----                --with-gauche --with-no-gui                             --- '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-gauche --with-no-gui LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-gauche 'snd-nogui"
-make allclean
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
-echo ' -----                --with-gauche g++ --disable-deprecated                  --- '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-gauche CC=g++ --disable-deprecated LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-gauche"
-make allclean
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
 echo ' ----                 --with-s7                                          ---- '
 echo ' -------------------------------------------------------------------------------- '
 ./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-s7
@@ -1305,9 +1250,6 @@ make clean
 ./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-ruby
 make
 make clean
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-gauche
-make
-make clean
 ./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-s7
 make
 make clean
@@ -1329,9 +1271,6 @@ make clean
 ./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-ruby
 make
 make clean
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-gauche
-make
-make clean
 ./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-s7
 make
 make clean
@@ -1345,9 +1284,6 @@ make clean
 make
 make clean
 ./configure --quiet --with-ruby --with-gtk
-make
-make clean
-./configure --quiet --with-gauche --with-gtk
 make
 make clean
 ./configure --quiet --with-s7 --with-gtk

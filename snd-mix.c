@@ -3356,12 +3356,7 @@ void g_init_mix(void)
 #if HAVE_S7
   mf_tag = XEN_MAKE_OBJECT_TYPE("<mix-sample-reader>", print_mf, free_mf, s7_equalp_mf, NULL, s7_read_mix_sample, NULL);
 #else
-#if (!HAVE_GAUCHE)
   mf_tag = XEN_MAKE_OBJECT_TYPE("MixSampleReader", sizeof(mix_fd));
-#else
-  mf_tag = XEN_MAKE_OBJECT_TYPE("<mix-sample-reader>", sizeof(mix_fd), print_mf, free_mf);
-  XEN_EVAL_C_STRING("(define-method object-apply ((rd <mix-sample-reader>)) (read-mix-sample rd))");
-#endif
 #endif
 
 #if HAVE_GUILE

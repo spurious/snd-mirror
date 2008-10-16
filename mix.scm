@@ -21,7 +21,7 @@
 	(else (tree-for-each func (car tree))
 	      (tree-for-each func (cdr tree)))))
 
-(define+ (tree-for-each-reversed func tree)
+(define (tree-for-each-reversed func tree)
   "(tree-for-each-reversed func tree) applies func to every leaf of 'tree' moving in reverse through all the lists"
   (define (flatten lst)
     ;; there's probably a more elegant way to do this

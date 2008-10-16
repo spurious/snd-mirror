@@ -19,7 +19,7 @@
 ;;;; Contributed by Maciej Stachowiak <mstachow@alum.mit.edu>
 
 
-(provide 'gauche-optargs.scm)
+(provide 's7-optargs.scm)
 (if (not (provided? 'snd))
 (define-syntax defmacro
   (syntax-rules ()

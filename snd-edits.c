@@ -2629,7 +2629,6 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool 
 		  if (XEN_LIST_P(code))
 		    fprintf(outp, ", code: %s", temp1 = XEN_AS_STRING(code));
 #if HAVE_GUILE
-		  /* procedure source unimplemented in gauche */
 		  code = cp->ptree_inits[FRAGMENT_PTREE_INDEX(ed, j, 0)];
 		  if (XEN_PROCEDURE_P(code))
 		    fprintf(outp, ", init: %s", XEN_AS_STRING(XEN_PROCEDURE_SOURCE(code)));
@@ -8746,33 +8745,6 @@ static XEN g_set_sample_reversed(s7_scheme *sc, s7_pointer args)
 }
 #endif
 
-#if HAVE_GAUCHE
-static XEN g_set_sample_reversed(XEN *argv, int argc, void *self)
-{
-  XEN args[5];
-  xen_gauche_load_args(args, argc, 5, argv);
-  if (XEN_NOT_BOUND_P(args[1]))
-    return(g_set_sample(XEN_UNDEFINED, args[0], XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
-  else
-    {
-      if (XEN_NOT_BOUND_P(args[2]))
-	return(g_set_sample(args[0], args[1], XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
-      else 
-	{
-	  if (XEN_NOT_BOUND_P(args[3])) 
-	    return(g_set_sample(args[0], args[2], args[1], XEN_UNDEFINED, XEN_UNDEFINED)); 
-	  else 
-	    {
-	      if (XEN_NOT_BOUND_P(args[4])) 
-		return(g_set_sample(args[0], args[3], args[1], args[2], XEN_UNDEFINED)); 
-	      else return(g_set_sample(args[0], args[4], args[1], args[2], args[3]));
-	    }
-	}
-    }
-}
-#endif
-
-
 file_delete_t xen_to_file_delete_t(XEN auto_delete, const char *caller)
 {
   if (XEN_BOOLEAN_P(auto_delete))
@@ -9106,54 +9078,6 @@ static XEN g_set_samples_reversed(s7_scheme *sc, s7_pointer args)
 			   XEN_LIST_REF(args, 5), XEN_LIST_REF(args, 6), XEN_LIST_REF(args, 7),
 			   XEN_LIST_REF(args, 8)));
     }
-}
-#endif
-
-#if HAVE_GAUCHE
-static XEN g_set_samples_reversed(XEN *argv, int argc, void *self)
-{
-  XEN args[10];
-  xen_gauche_load_args(args, argc, 10, argv);
-  if (XEN_NOT_BOUND_P(args[3]))
-    return(g_set_samples(args[0], args[1], args[2], 
-			 XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
-  else
-    {
-      if (XEN_NOT_BOUND_P(args[4]))
-	return(g_set_samples(args[0], args[1], args[3], args[2], 
-			     XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
-      else 
-	{
-	  if (XEN_NOT_BOUND_P(args[5])) 
-	    return(g_set_samples(args[0], args[1], args[4], args[2], args[3], 
-				 XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
-	  else
-	    {
-	      if (XEN_NOT_BOUND_P(args[6])) 
-		return(g_set_samples(args[0], args[1], args[5], args[2], args[3], args[4], 
-				     XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
-	      else
-		{
-		  if (XEN_NOT_BOUND_P(args[7])) 
-		    return(g_set_samples(args[0], args[1], args[6], args[2], args[3], args[4], args[5], 
-					 XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));
-		  else
-		    {
-		      if (XEN_NOT_BOUND_P(args[8])) 
-			return(g_set_samples(args[0], args[1], args[7], args[2], args[3], args[4], args[5], args[6],
-					     XEN_UNDEFINED, XEN_UNDEFINED));
-		      else 
-			{
-			  if (XEN_NOT_BOUND_P(args[9]))
-			    return(g_set_samples(args[0], args[1], args[8], args[2], args[3], args[4], args[5], args[6], args[7], XEN_UNDEFINED));
-			  else return(g_set_samples(args[0], args[1], args[9], args[2], args[3], args[4], args[5], args[6], args[7], args[8]));
-			}
-		    }
-		}
-	    }
-	}
-    }
-
 }
 #endif
 
@@ -9824,12 +9748,7 @@ void g_init_edits(void)
 #if HAVE_S7
   sf_tag = XEN_MAKE_OBJECT_TYPE("<sample-reader>", print_sf, free_sf, s7_equalp_sf, NULL, s7_read_sample, NULL);
 #else
-#if (!HAVE_GAUCHE)
   sf_tag = XEN_MAKE_OBJECT_TYPE("SampleReader", sizeof(snd_fd));
-#else
-  sf_tag = XEN_MAKE_OBJECT_TYPE("<sample-reader>", sizeof(snd_fd), print_sf, free_sf);
-  XEN_EVAL_C_STRING("(define-method object-apply ((rd <sample-reader>)) (read-sample rd))");
-#endif
 #endif
 
 #if HAVE_GUILE

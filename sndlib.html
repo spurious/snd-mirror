@@ -91,7 +91,7 @@ SGI, and Sun.  It could conceivably work elsewhere.
 <li>audio.c (read and write sound hardware ports)
 <li>sound.c (provide slightly higher level access to the preceding files)
 <li>sndlib.h (header for the preceding files)
-<li>sndlib2xen.c and sndlib-strings.h (tie preceding into Guile, Gauche, Ruby, or Forth)
+<li>sndlib2xen.c and sndlib-strings.h (tie preceding into s7, Guile, Ruby, or Forth)
 <li>clm.c and clm.h (Music V implementation)
 <li>clm2xen.c, vct.c and vct.h (tie clm.c into Guile, Ruby, or Forth)
 <li>xen.h, xen.c, xen.html (the embedded language support)
@@ -443,7 +443,7 @@ went wrong.
 
 <p>clm.c and friends implement all the generators found in CLM, a
 music V implementation, and clm2xen.c ties these into the languages supported by the
-xen package (currently Guile, Gauche, Ruby, and Forth).  The
+xen package (currently Guile, s7, Ruby, and Forth).  The
 primary clm documentation (which describes both the Scheme and Common Lisp implementations)
 is clm.html found in clm-4.tar.gz or sndclm.html in snd-10.tar.gz alongside sndlib at ccrma-ftp.
 The simplest way to try these out is to load them into Snd; see extsnd.html,
@@ -996,7 +996,7 @@ of Snd and CLM, both of which are freely available.
 </td></tr></table>
 
 <p>Much of sndlib is accessible at run time in any program that has one of
-the languages supported by the xen package (Guile, Gauche, Ruby, Forth);
+the languages supported by the xen package (Guile, s7, Ruby, Forth);
 the modules sndlib2xen and clm2xen tie most of the library into that language
 making it possible to call the library functions from its interpreter.  The documentation
 is scattered around, unfortunately: the clm side is in sndclm.html and extsnd.html with many

@@ -1,5 +1,6 @@
 Snd change log
 
+ 16-Oct:     removed Gauche support.
  15-Oct:     Snd 10.1.
  3-Sep:      Snd 10.0.
  1-Sep:      S7 extension language.

@@ -3,7 +3,6 @@
 (use-modules (ice-9 optargs) (ice-9 format))
 
 (provide 'snd-ws.scm)
-(if (and (provided? 'snd-gauche) (not (provided? 'gauche-optargs.scm))) (load-from-path "gauche-optargs.scm"))
 (if (and (provided? 'snd-guile) (not (provided? 'snd-debug.scm))) (load-from-path "debug.scm"))
 (if (not (provided? 'snd-extensions.scm)) (load-from-path "extensions.scm")) ; we need sound-property in with-mixed-sound
 
@@ -152,8 +151,7 @@ returning you to the true top-level."
 ;;; this goes anywhere in the instrument (and any number of times), 
 ;;;    but not in the run macro body (run doesn't (yet?) handle code this complex)
 
-(if (or (provided? 'snd-gauche)
-	(provided? 'snd-s7))
+(if (provided? 'snd-s7)
     (define (make-stack . args) #f))
 
 (defmacro ws-interrupt? ()
@@ -231,9 +229,6 @@ returning you to the true top-level."
      ,@(if *definstrument-hook*
            (list (*definstrument-hook* name targs))
            (list)))))
-
-(defmacro definstrument+ (args . body) ; for Gauche -- throw away the documentation string
-  `(definstrument ,args ,@(cdr body)))
 
 ;;; definstrument help string is currently lost
 
@@ -370,9 +365,6 @@ returning you to the true top-level."
 			 (lambda args 
 			   ;; if from ws-interrupt? we have (continue stack message) as args
 			   (begin
-
-			     (if (provided? 'snd-gauche)
-				 (snd-print (object->string args)))
 
 			     (if (and (not (null? (cdr args)))
 				      (continuation? (cadr args)))
@@ -749,7 +741,6 @@ returning you to the true top-level."
 		  (lambda (note)
 		    (let* ((snd (with-temp-sound (list ,@args :ignore-output #t) (eval (append (list (car note) 0.0) (cddr note)) (current-module))))
 			   ;; I can't immediately find a way around the "eval" 
-			   ;;   current-module is a synonym for interaction-environment in Gauche
 			   (beg (inexact->exact (floor (* (srate outsnd) (cadr note)))))
 			   ;; can't use seconds->samples here because the global mus-srate value might not match the local one
 			   (mx (mix snd beg #t outsnd #f #t #t))     ; all chans mixed, current output sound, with mixes, with auto-delete
@@ -1013,9 +1004,7 @@ finish-with-sound to complete the process."
     (define (open-appending filename)
       (if (provided? 'snd-guile)
 	  (open filename (logior O_RDWR O_APPEND))
-	  (if (provided? 'snd-gauche)
-	      (open-output-file filename :if-exists :append :if-does-not-exist :create)
-	      (open-output-file filename "a")))))
+	  (open-output-file filename "a"))))
 
 (if (not (defined? 'close-appending))
     (define (close-appending fd)
@@ -1403,21 +1392,8 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 ;;;
 ;;;   these are plagued with clicks etc
 ;;;   I decided to remove the clm.c reader/writer locks; readin, locsig et al can no longer be shared between threads
-;;;   also, I don't think the Guile and Gauche versions were ever reliable -- one reason I wrote s7 was to be able
-;;;   to ensure that the interpreter was thread-safe.
 
-(if (provided? 'snd-gauche)
-    (use gauche.threads))
-(if (provided? 'snd-gauche)
-    (define join-thread thread-join!))
-(if (provided? 'snd-gauche)
-    (define (call-with-new-thread thunk handler)
-      (let ((thread (make-thread thunk)))
-	(thread-start! thread)
-	thread)))
-
-(if (or (provided? 'snd-guile) 
-	(provided? 'snd-gauche))
+(if (provided? 'snd-guile) 
 (defmacro with-threaded-sound (args . body) 
   (if (provided? 'snd-threads)
       `(with-sound-helper 

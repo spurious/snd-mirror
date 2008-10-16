@@ -330,7 +330,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 (define chorus-amount 20.0)
 (define chorus-speed 10.0)
 
-(define+ (chorus)
+(define (chorus)
   "(chorus) tries to produce the chorus sound effect"
   (define (make-flanger)
     (let* ((ri (make-rand-interp :frequency chorus-speed :amplitude chorus-amount))
@@ -885,7 +885,7 @@ can be used directly: (filter-sound (make-butter-low-pass 500.0)), or via the 'b
     (lambda (x) (+ x (* (- m 1.0) (filter flt x))))))
 
 
-(define+ (cascade->canonical A)
+(define (cascade->canonical A)
   "(cascade->canonical A) converts a list of cascade coeffs (vcts with 3 entries) to canonical form"
   ;; from Orfanidis "Introduction to Signal Processing"
 

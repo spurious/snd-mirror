@@ -136,7 +136,7 @@ envelope: (multiply-envelopes '(0 0 2 .5) '(0 0 1 2 2 1)) -> '(0 0 0.5 0.5 1.0 0
 
 ;;; -------- max-envelope
 
-(define+ (max-envelope env)
+(define (max-envelope env)
   "(max-envelope env) -> max y value in env"
   (define (max-envelope-1 e mx)
     (if (null? e)
@@ -147,7 +147,7 @@ envelope: (multiply-envelopes '(0 0 2 .5) '(0 0 1 2 2 1)) -> '(0 0 0.5 0.5 1.0 0
 
 ;;; -------- min-envelope
 
-(define+ (min-envelope env)
+(define (min-envelope env)
   "(min-envelope env) -> min y value in env"
   (define (min-envelope-1 e mx)
     (if (null? e)
@@ -158,7 +158,7 @@ envelope: (multiply-envelopes '(0 0 2 .5) '(0 0 1 2 2 1)) -> '(0 0 0.5 0.5 1.0 0
 
 ;;; -------- integrate-envelope
 
-(define+ (integrate-envelope env)
+(define (integrate-envelope env)
   "(integrate-envelope env) -> area under env"
   (define (integrate-envelope-1 e sum)
     (if (or (null? e) (null? (cddr e)))
@@ -268,7 +268,7 @@ divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).
 
 ;;; -------- reverse-envelope
 
-(define+ (reverse-envelope e)
+(define (reverse-envelope e)
   "(reverse-envelope env) reverses the breakpoints in 'env'"
   (define (reverse-env-1 e newe xd)
     (if (null? e)
@@ -287,7 +287,7 @@ divseg in early versions of CLM and its antecedents in Sambox and Mus10 (linen).
 
 ;;; -------- concatenate-envelopes
 
-(define+ (concatenate-envelopes . envs)
+(define (concatenate-envelopes . envs)
   "(concatenate-envelopes :rest envs) concatenates its arguments into a new envelope"
   (define (cat-1 e newe xoff x0)
     (if (null? e)

@@ -243,16 +243,6 @@ static bool local_arity_ok(XEN proc, int args) /* from snd-xen.c minus (inconven
   }
 #endif
 
-#if HAVE_GAUCHE
-  {
-    int oargs;
-    rargs = XEN_TO_C_INT(XEN_CAR(arity));
-    oargs = XEN_TO_C_INT(XEN_CDR(arity));
-    if (rargs > args) return(false);
-    if ((rargs + oargs) < args) return(false);
-  }
-#endif
-
   return(true);
 }
 
@@ -261,9 +251,6 @@ XEN mus_optkey_to_procedure(XEN key, const char *caller, int n, XEN def, int req
 {
   if ((!(XEN_KEYWORD_P(key))) && (!(XEN_FALSE_P(key))))
     {
-      /* in Gauche, applicable objects (CLM generators like make-readin in this context) are not considered to be "procedures".
-       *   see xen.h ca line 1704 for a long complaint.
-       */
       XEN_ASSERT_TYPE(XEN_PROCEDURE_P(key), key, n, caller, "a procedure");
       if (!(local_arity_ok(key, required_args)))
 	XEN_BAD_ARITY_ERROR(caller, n, key, err);
@@ -616,15 +603,7 @@ static XEN g_edot_product(XEN val1, XEN val2)
   XEN_ASSERT_TYPE(XEN_COMPLEX_P(val1), val1, XEN_ARG_1, S_edot_product, "complex");
   XEN_ASSERT_TYPE((MUS_VCT_P(val2)) || (XEN_VECTOR_P(val2)), val2, XEN_ARG_2, S_edot_product, "a vct");
 
-#if (!HAVE_GAUCHE)
   freq = XEN_TO_C_COMPLEX(val1);
-#else
-  /* see note below -- we can't mix real and complex in Gauche */
-  if (SCM_COMPNUMP(val1))
-    freq = XEN_TO_C_COMPLEX(val1);
-  else freq = XEN_TO_C_DOUBLE(val1) + 0.0 * _Complex_I;
-#endif
-
   if (MUS_VCT_P(val2))
     {
       v = XEN_TO_VCT(val2);
@@ -642,24 +621,8 @@ static XEN g_edot_product(XEN val1, XEN val2)
     }
   else
     {
-#if (!HAVE_GAUCHE)
       for (i = 0; i < len; i++)
 	vals[i] = XEN_TO_C_COMPLEX(XEN_VECTOR_REF(val2, i));
-#else
-      for (i = 0; i < len; i++)
-	{
-	  XEN val;
-	  val = XEN_VECTOR_REF(val2, i);
-	  if (SCM_COMPNUMP(val))
-	    vals[i] = XEN_TO_C_COMPLEX(val);
-	  else vals[i] = XEN_TO_C_DOUBLE(val) + 0.0 * _Complex_I;
-	  /* if we treat a real as a complex here (as in the Guile code above), the Gauche
-	   *   macros expand into obj->imag for the imaginary part, but a real has no such
-	   *   field, so we end up interpreting some random piece of memory as the imaginary
-	   *   part!  
-	   */
-	}
-#endif
     }
   result = C_TO_XEN_COMPLEX(mus_edot_product(freq, vals, len));
   FREE(vals);
@@ -1078,7 +1041,7 @@ static XEN g_mus_generator_p(XEN obj)
 
   if (MUS_XEN_P(obj)) return(XEN_TRUE);
 
-#if HAVE_GUILE || HAVE_FORTH || HAVE_GAUCHE || HAVE_S7
+#if HAVE_GUILE || HAVE_FORTH || HAVE_S7
   /* defgenerator defines "mus-name", and I can't see why a non-generator would include it in def-clm-struct, so... */
   if ((XEN_LIST_P(obj)) &&
       (XEN_LIST_LENGTH(obj) > 1) &&
@@ -1117,15 +1080,12 @@ static XEN_MARK_OBJECT_TYPE mark_mus_xen(void *obj)
 static XEN_MARK_OBJECT_TYPE mark_mus_xen(XEN obj) 
 #endif
 {
-#if HAVE_GAUCHE
-  static const char *keys[6] = {"mus-data", "mus-input", "mus-analyze", "mus-edit", "mus-synthesize", "mus-self"};
-#endif
   mus_xen *ms;
 #if HAVE_RUBY || HAVE_S7
   /* rb_gc_mark and scheme_mark_object pass us the actual value, not the XEN wrapper */
   ms = (mus_xen *)obj;
 #endif
-#if HAVE_GAUCHE || HAVE_GUILE || HAVE_FORTH
+#if HAVE_GUILE || HAVE_FORTH
   ms = XEN_TO_MUS_XEN(obj);
 #endif
   if (ms->vcts) 
@@ -1134,18 +1094,12 @@ static XEN_MARK_OBJECT_TYPE mark_mus_xen(XEN obj)
       for (i = 0; i < ms->nvcts; i++) 
 	if ((i != MUS_SELF_WRAPPER) && 
 	    (XEN_BOUND_P(ms->vcts[i])))
-#if HAVE_GAUCHE
-	    /* in Gauche we need to put the internal vcts on the foreign pointer attributes alist */
-	    /*   in this case, the "mark" function will be called at object creation, not during a gc mark-and-sweep pass */
-	  Scm_ForeignPointerAttrSet(SCM_FOREIGN_POINTER(obj), SCM_INTERN(keys[i]), ms->vcts[i]);
-#else
       xen_gc_mark(ms->vcts[i]);
-#endif
     }
 #if HAVE_RUBY
   return(NULL);
 #endif
-#if HAVE_GUILE || HAVE_GAUCHE
+#if HAVE_GUILE
   return(XEN_FALSE);
 #endif
 }
@@ -1170,16 +1124,6 @@ static int print_mus_xen(XEN obj, XEN port, scm_print_state *pstate)
   XEN_PUTS(mus_describe(XEN_TO_MUS_ANY(obj)), port);
   XEN_PUTS(">", port);
   return(1);
-}
-#endif
-
-
-#if HAVE_GAUCHE
-static void print_mus_xen(XEN obj, ScmPort *port, ScmWriteContext *pstate)
-{
-  XEN_PUTS("#<", port);
-  XEN_PUTS(mus_describe(XEN_TO_MUS_ANY(obj)), port);
-  XEN_PUTS(">", port);
 }
 #endif
 
@@ -1284,7 +1228,6 @@ static XEN mus_optkey_to_input_procedure(XEN key, const char *caller, int n, XEN
       (!(XEN_FALSE_P(key))))
     {
       XEN_ASSERT_TYPE(XEN_PROCEDURE_P(key) || MUS_XEN_P(key), key, n, caller, "a procedure or input generator");
-      /* MUS_XEN_P check is redundant except in Gauche */
       
       if ((XEN_PROCEDURE_P(key)) &&
 	  (!(local_arity_ok(key, required_args))))
@@ -1350,7 +1293,7 @@ static mus_xen *mus_any_to_mus_xen_with_two_vcts(mus_any *ge, XEN v1, XEN v2)
 
 static XEN call_get_method(XEN gen, const char *method_name)
 {
-#if HAVE_GUILE || HAVE_GAUCHE || HAVE_FORTH || HAVE_S7
+#if HAVE_GUILE || HAVE_FORTH || HAVE_S7
   XEN pair;
   pair = XEN_ASSOC(C_STRING_TO_XEN_SYMBOL(method_name), 
 		   XEN_LIST_REF(gen, 
@@ -1369,7 +1312,7 @@ static XEN call_get_method(XEN gen, const char *method_name)
 
 static XEN call_get_method_2(XEN gen, XEN arg, const char *method_name)
 {
-#if HAVE_GUILE || HAVE_GAUCHE || HAVE_FORTH || HAVE_S7
+#if HAVE_GUILE || HAVE_FORTH || HAVE_S7
   XEN pair;
   pair = XEN_ASSOC(C_STRING_TO_XEN_SYMBOL(method_name), 
 		   XEN_LIST_REF(gen, 
@@ -1388,7 +1331,7 @@ static XEN call_get_method_2(XEN gen, XEN arg, const char *method_name)
 
 static XEN call_get_method_3(XEN gen, XEN arg1, XEN arg2, const char *method_name)
 {
-#if HAVE_GUILE || HAVE_GAUCHE || HAVE_FORTH || HAVE_S7
+#if HAVE_GUILE || HAVE_FORTH || HAVE_S7
   XEN pair;
   pair = XEN_ASSOC(C_STRING_TO_XEN_SYMBOL(method_name), 
 		   XEN_LIST_REF(gen, 
@@ -1407,7 +1350,7 @@ static XEN call_get_method_3(XEN gen, XEN arg1, XEN arg2, const char *method_nam
 
 static XEN call_set_method(XEN gen, XEN value, const char *method_name)
 {
-#if HAVE_GUILE || HAVE_GAUCHE || HAVE_FORTH || HAVE_S7
+#if HAVE_GUILE || HAVE_FORTH || HAVE_S7
   XEN pair;
   pair = XEN_ASSOC(C_STRING_TO_XEN_SYMBOL(method_name), 
 		   XEN_LIST_REF(gen, 
@@ -1441,7 +1384,7 @@ static XEN call_set_method(XEN gen, XEN value, const char *method_name)
 
 static XEN call_set_method_2(XEN gen, XEN arg, XEN value, const char *method_name)
 {
-#if HAVE_GUILE || HAVE_GAUCHE || HAVE_FORTH || HAVE_S7
+#if HAVE_GUILE || HAVE_FORTH || HAVE_S7
   XEN pair;
   pair = XEN_ASSOC(C_STRING_TO_XEN_SYMBOL(method_name), 
 		   XEN_LIST_REF(gen, 
@@ -8180,9 +8123,6 @@ XEN_NARGIFY_1(g_set_clm_default_frequency_w, g_set_clm_default_frequency)
 XEN_NARGIFY_1(g_mus_generator_p_w, g_mus_generator_p)
 XEN_NARGIFY_1(g_mus_frandom_w, g_mus_frandom)
 XEN_NARGIFY_1(g_mus_irandom_w, g_mus_irandom)
-#if HAVE_GAUCHE
-XEN_NARGIFY_2(g_mus_equalp_w, equalp_mus_xen)
-#endif
 #else
 #define g_mus_srate_w g_mus_srate
 #define g_mus_set_srate_w g_mus_set_srate
@@ -8507,16 +8447,7 @@ void mus_xen_init(void)
 #if HAVE_S7
   mus_xen_tag = XEN_MAKE_OBJECT_TYPE("<mus>", print_mus_xen, free_mus_xen, s7_equalp_mus_xen, mark_mus_xen, mus_xen_apply, NULL);
 #else
-#if (!HAVE_GAUCHE)
   mus_xen_tag = XEN_MAKE_OBJECT_TYPE("Mus", sizeof(mus_xen));
-#else
-  mus_xen_tag = XEN_MAKE_OBJECT_TYPE("<mus>", sizeof(mus_xen), print_mus_xen, free_mus_xen);
-  XEN_EVAL_C_STRING("(define-method object-apply ((g <mus>)) (mus-apply g))");
-  XEN_EVAL_C_STRING("(define-method object-apply ((g <mus>) (val <number>)) (mus-apply g val))");
-  XEN_EVAL_C_STRING("(define-method object-apply ((g <mus>) (val1 <number>) (val2 <number>)) (mus-apply g val1 val2))");
-  XEN_EVAL_C_STRING("(define-method equal? ((g1 <mus>) (g2 <mus>)) (mus-equal? g1 g2))");
-  XEN_DEFINE_PROCEDURE("mus-equal?", g_mus_equalp_w, 2, 0, 0, "internal function for generator equal?");
-#endif
 #endif
 
 #if HAVE_GUILE
@@ -8883,7 +8814,7 @@ void mus_xen_init(void)
 
 
 #if HAVE_SCHEME
-  XEN_EVAL_C_STRING("(if (defined? 'filter) (define %filter filter))"); /* defined in Guile 1.7 and Gauche in srfi-1 */
+  XEN_EVAL_C_STRING("(if (defined? 'filter) (define %filter filter))"); /* defined in Guile 1.7 */
 #endif
   XEN_DEFINE_PROCEDURE(S_make_filter,     g_make_filter_w,     0, 6, 0, H_make_filter);
   XEN_DEFINE_PROCEDURE(S_filter,          g_filter_w,          2, 0, 0, H_filter);

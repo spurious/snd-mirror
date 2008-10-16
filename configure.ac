@@ -54,7 +54,6 @@ AC_DEFINE_UNQUOTED(SND_HOST, "$host")
 #   --with-ruby           use Ruby as the extension language
 #   --with-ruby-prefix    set location of Ruby
 #   --with-s7             use S7 as the extension language (default = yes)
-#   --with-gauche         use Gauche as the extension language
 #   --with-extension-language use some extension language (default=yes)
 #   --with-hobbit         include hobbit-style function arity checking
 #   --with-rt             make Snd capable of running Snd-Rt
@@ -94,7 +93,6 @@ AC_ARG_WITH(static-gsl,  [  --with-static-gsl	  use libgsl.a to build Snd (for o
 AC_ARG_WITH(static-xm,   [  --with-static-xm	  include the xm module])
 AC_ARG_WITH(static-xg,   [  --with-static-xg	  include the xg module])
 AC_ARG_WITH(guile,       [  --with-guile	  	  use Guile])
-AC_ARG_WITH(gauche,      [  --with-gauche           use Gauche])
 AC_ARG_WITH(gl,          [  --with-gl		  include OpenGL support])
 AC_ARG_WITH(just-gl,     [  --with-just-gl	  include OpenGL support, but omit the GL/Guile bindings])
 AC_ARG_WITH(gl2ps,       [  --with-gl2ps		  include gl2ps])
@@ -1232,66 +1230,6 @@ AC_SUBST(FAM_LIB)
 ac_snd_have_extension_language=no
 
 #--------------------------------------------------------------------------------
-# Gauche
-#--------------------------------------------------------------------------------
-
-if test "$with_gauche" = yes ; then
-  AC_PATH_PROG(GAUCHE_CONFIG, gauche-config, no)
-  AC_MSG_CHECKING([for Gauche])
-  if test "$GAUCHE_CONFIG" = "no" ; then
-    AC_MSG_WARN([can't find Gauche!])
-    AC_DEFINE(HAVE_EXTENSION_LANGUAGE,0)
-  else
-    # check for version >= 0.8.7
-    gauche_version="`$GAUCHE_CONFIG -V`"
-    AC_MSG_RESULT($gauche_version)
-
-    OLD_CFLAGS="CFLAGS"
-    # gauche-config inserts single-quotes in the -I and -L results thereby rendering them useless,
-    #   so the following sed command tries to remove them.  You apparently can't quote a single-quote
-    #   in this context, so I use \x27 = ASCII for single quote.
-#   XEN_CFLAGS=`$GAUCHE_CONFIG -I | sed 's/\x27//g'`
-    XEN_CFLAGS=`$GAUCHE_CONFIG -I | tr -d "'"` 
-# apparently the sed line depends on the version of sed -- mine works (4.1.5) but others say it doesn't
-#   thanks to Kjetil for the replacement using "tr"
-    CFLAGS="$CFLAGS $XEN_CFLAGS"
-
-    AC_COMPILE_IFELSE(
-     [AC_LANG_PROGRAM([#include <gauche.h>],
-                      [#if (GAUCHE_MAJOR_VERSION == 0)
-                         #if (GAUCHE_MINOR_VERSION < 8)
-			    #error too old
-			 #else
-			   #if (GAUCHE_MINOR_VERSION == 8) && (GAUCHE_MICRO_VERSION < 7)
-			     #error too old
-                           #endif
-			 #endif
-		       #endif                                  
-                  ])], 
-                [
-                 AC_DEFINE(HAVE_GAUCHE)
-                 AC_DEFINE(HAVE_SCHEME)
-                 ac_snd_have_extension_language=yes
-                 AC_DEFINE(HAVE_EXTENSION_LANGUAGE)
-                 XEN_LIBS=`$GAUCHE_CONFIG -L  | sed 's/\x27//g'`
-                 XEN_LIBS="$XEN_LIBS -lgauche"
-                 LOCAL_LANGUAGE="Gauche"
-        	 AC_DEFINE(WITH_RUN)
-
-	         # 0.8.8
-                 AC_CHECK_LIB(gauche, Scm_EvalRec, [AC_DEFINE(HAVE_SCM_EVALREC)])
-                ],
-		[
-             	 AC_MSG_WARN([We need Gauche 0.8.7 or later])
-                 with_gauche=no
-                 CFLAGS="$OLD_CFLAGS"
-                 XEN_CFLAGS=""
-		])
-  fi
-fi
-
-
-#--------------------------------------------------------------------------------
 # Ruby
 #--------------------------------------------------------------------------------
 
@@ -2306,7 +2244,7 @@ if test "$ac_snd_have_extension_language" = no ; then
     if test "$ac_cv_header_dlfcn_h" = yes ; then
       LDFLAGS="$LDFLAGS -ldl"
     fi
-    AC_MSG_WARN([Snd needs either an extension language (Guile, Gauche, Fth, or Ruby), or a graphics toolkit (Gtk or Motif), or preferably both.  As currently configured, this version of Snd is useless.])
+    AC_MSG_WARN([Snd needs either an extension language (Guile, s7, Fth, or Ruby), or a graphics toolkit (Gtk or Motif), or preferably both.  As currently configured, this version of Snd is useless.])
     if test "$with_snd_as_pd_external" = yes ; then	
        AC_MSG_ERROR(Guile is needed when making snd as a pd external.)
     fi

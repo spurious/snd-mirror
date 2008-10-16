@@ -157,7 +157,7 @@ embedded in a keyboard macro, or typed in the
 listener.
 </p>
 <p>
-The syntax used throughout this documentation is Scheme (a form of lisp) as implemented by S7, Guile, or Gauche.
+The syntax used throughout this documentation is Scheme (a form of lisp) as implemented by S7, or Guile.
 You can also use Ruby or Forth, but need to make various minor <a href="grfsnd.html#sndandruby">changes</a>.
 I'm slowly adding parallel Forth and Ruby examples.
 </p>
@@ -1006,7 +1006,7 @@ open-file-dialog-directory is the name of the initial open file dialog directory
 optimization affects optimization levels in Scheme.
 If non-zero, it causes Snd to try to optimize simple lambda forms passed to the searches and so forth.
 This depends partly on the optargs module, and 
-applies only to S7, Guile, or Gauche.
+applies only to S7 and Guile.
 The actual values of the optimization switch are:
 <pre>
     0:  no optimization (use the standard Scheme parser/evaluator)
@@ -1121,7 +1121,7 @@ a sine wave at (say) 55 Hz, then <code>(<a class=quiet href="#srcsound" onmouseo
 <!-- snd-version -->
 <tr><td colspan=2 bgcolor="#f2f4ff"><code><a class=def name="sndversion">snd-version</a></code></td>
 <td bgcolor="#f2f4ff"><code>"1-Jun-06" etc</code></td></tr><tr><td></td><td colspan=2>
-This is a string giving the current Snd version, normally a date. <b>version</b> is a Guile function; in Gauche it's <b>gauche-version</b>.
+This is a string giving the current Snd version, normally a date. <b>version</b> is a Guile function.
 </td></tr><tr><td colspan=3 height=16></td></tr>
 
 
@@ -3378,7 +3378,6 @@ vct+ combines <a class=quiet href="#vctadd" onmouseout="UnTip()" onmouseover="Ti
 depending on the type of its arguments.
 <code>(vct+ v 1.0)</code> or <code>(vct+ 1.0 v)</code> is the same as 
 <code>(vct-offset! v 1.0)</code>, and <code>(vct+ v1 v2)</code> is the same as <code>(vct-add! v1 v2)</code>.
-In Gauche this could be a specialization of "+" &mdash; much nicer!
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -3516,7 +3515,7 @@ function to get the values to assign into the vct.  For example</p>
 assigning the result to each successive member of the out-data vct.
 </p>
 
-<p>In some cases (S7, Gauche, Ruby, Guile 1.4.1 or later) it's possible to access a vct's
+<p>In some cases (S7, Ruby, Guile 1.4.1 or later) it's possible to access a vct's
 elements with the syntax <code>(v index)</code>, equivalent to <code>(<a class=quiet href="#vctref" onmouseout="UnTip()" onmouseover="Tip(extsnd_vctref_tip)">vct-ref</a> v index)</code>.
 In Ruby, vcts partake in the Enumerable and Comparable classes, and have a variety of
 additional methods: map, each, &lt;=&gt;, etc.  See vct.c and the Ruby documentation for a complete list.
@@ -8319,7 +8318,7 @@ This returns the position (in samples) of right edge of the time domain waveform
 run is the Snd equivalent of the CL/CLM run macro.  You can wrap it around any numerically-intensive
 block of code, and the result will usually run 10 to 20 times faster.  In the context of <a href="sndscm.html#wsdoc">with-sound</a>, run is used
 to speed up instrument bodies.  My timing tests indicate that Snd+Run instruments are within a factor of two to four
-of the speed of CL+run+C in CLM.  Currently, only S7, Guile, and Gauche support this optimization.
+of the speed of CL+run+C in CLM.  Currently, only S7 and Guile support this optimization.
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
 (define (ws-sine freq)
@@ -12759,14 +12758,6 @@ load process by setting <b>%load-verbosely</b> to #t.
 <p>
 <code>$DEBUG = true</code> turns on the Ruby debugger.
 </p>
-
-<br>
-<table width="50%" border=0><tr><td bgcolor="EEFDEE" valign="middle"><h4>Gauche debugging</h4></td></tr></table>
-<p>
-This part of Gauche is still a bit rudimentary.
-</p>
-
-
 
 <br>
 <table width="50%" border=0><tr><td bgcolor="EEFDEE" valign="middle"><h4><A NAME="cdebugging">C debugging</a></h4></td></tr></table>

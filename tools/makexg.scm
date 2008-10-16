@@ -1953,7 +1953,7 @@
 
 
 ;;; ---------------------------------------- write output files ----------------------------------------
-(hey "/* xg.c: S7, Guile, Gauche, Ruby, and Forth bindings for gdk/gtk/pango/cairo, some of glib~%")
+(hey "/* xg.c: S7, Guile, Ruby, and Forth bindings for gdk/gtk/pango/cairo, some of glib~%")
 (hey " *   this file generated automatically from makexg.scm and xgdata.scm~%")
 (hey " *   needs xen.h~%")
 (hey " *~%")
@@ -2022,6 +2022,7 @@
 (hey " *     win32-specific functions~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     16-Oct:    removed Gauche support.~%")
 (hey " *     1-Sep:     S7 support.~%")
 (hey " *     8-Jul-08:  started removing all struct accessors (for Gtk 3).~%")
 (hey " *     --------~%")
@@ -2114,14 +2115,6 @@
 (hey "  return(0);~%")
 (hey "}~%")
 (hey "#endif~%")
-(hey "#if HAVE_GAUCHE~%")
-(hey "static void xm_obj_free(XEN obj)~%")
-(hey "{~%")
-(hey "  void *val;~%")
-(hey "  val = (void *)XEN_OBJECT_REF(obj);~%")
-(hey "  FREE(val);~%")
-(hey "}~%")
-(hey "#endif~%")
 (hey "#if HAVE_RUBY~%")
 (hey "static void *xm_obj_free(XEN obj)~%")
 (hey "{~%")
@@ -2158,11 +2151,7 @@
 (hey "#if HAVE_S7~%")
 (hey " xm_obj_tag = XEN_MAKE_OBJECT_TYPE(\"<XmObj>\", NULL, xm_obj_free, s7_equalp_xm, NULL, NULL, NULL);~%")
 (hey "#else~%")
-(hey "#if (!HAVE_GAUCHE)~%")
 (hey "  xm_obj_tag = XEN_MAKE_OBJECT_TYPE(\"XmObj\", sizeof(void *));~%")
-(hey "#else~%")
-(hey "  xm_obj_tag = XEN_MAKE_OBJECT_TYPE(\"<XmObj>\", sizeof(void *), NULL, xm_obj_free);~%")
-(hey "#endif~%")
 (hey "#endif~%")
 (hey "#if HAVE_GUILE~%")
 (hey "  scm_set_smob_free(xm_obj_tag, xm_obj_free);~%")
@@ -3752,7 +3741,6 @@
 
 (hey "#if HAVE_SCHEME~%")
 (hey "      /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */~%")
-(hey "      /*   using awkward dotted list as optional arg for gauche's sake */~%")
 (hey "      XEN_EVAL_C_STRING(\"(define (g_signal_connect obj name func . data) (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f 0))\");~%")
 (hey "      XEN_EVAL_C_STRING(\"(define (g_signal_connect_after obj name func . data) (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f G_CONNECT_AFTER))\");~%")
 (hey "      XEN_EVAL_C_STRING(\"(define (g_signal_connect_swapped obj name func . data) (g_signal_connect_data (GPOINTER obj) name func (and (not (null? data)) (car data)) #f G_CONNECT_SWAPPED))\");~%")
@@ -3783,3 +3771,4 @@
  direct-types)
 !#
 
+(exit)

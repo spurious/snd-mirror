@@ -93,7 +93,6 @@
 ;;
 ;; ;; These variables should be set to your needs!
 ;; (setq inf-snd-ruby-program-name "snd-ruby -notebook")
-;; (setq inf-snd-scheme-program-name "snd-gauche -separate")
 ;; (setq inf-snd-scheme-program-name "snd-guile -notehook")
 ;; (setq inf-snd-forth-program-name "snd-forth")
 ;; (setq inf-snd-working-directory "~/Snd/")

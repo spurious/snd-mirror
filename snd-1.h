@@ -51,49 +51,6 @@ static XEN name_reversed(XEN arg1, XEN arg2, XEN arg3, XEN arg4)	\
 
 #else
 
-#if HAVE_GAUCHE
-
-#define WITH_TWO_SETTER_ARGS(name_reversed, name)	  \
-static XEN name_reversed(XEN *argv, int argc, void *self) \
-{							  \
-  XEN args[2];						  \
-  xen_gauche_load_args(args, argc, 2, argv);		  \
-  if (XEN_NOT_BOUND_P(args[1]))				   \
-    return(name(args[0], XEN_UNDEFINED));		   \
-  return(name(args[1], args[0]));			   \
-}
-
-#define WITH_THREE_SETTER_ARGS(name_reversed, name) \
-static XEN name_reversed(XEN *argv, int argc, void *self) \
-{							  \
-  XEN args[3];						  \
-  xen_gauche_load_args(args, argc, 3, argv);		  \
-  if (XEN_NOT_BOUND_P(args[1]))				   \
-    return(name(args[0], XEN_UNDEFINED, XEN_UNDEFINED));   \
-  else {						   \
-    if (XEN_NOT_BOUND_P(args[2]))			   \
-      return(name(args[1], args[0], XEN_UNDEFINED));	   \
-    else return(name(args[2], args[0], args[1]));	   \
-}}
-
-#define WITH_FOUR_SETTER_ARGS(name_reversed, name) \
-static XEN name_reversed(XEN *argv, int argc, void *self) \
-{							  \
-  XEN args[4];						  \
-  xen_gauche_load_args(args, argc, 4, argv);		  \
-  if (XEN_NOT_BOUND_P(args[1]))				   \
-    return(name(args[0], XEN_UNDEFINED, XEN_UNDEFINED, XEN_UNDEFINED));	\
-  else {								\
-    if (XEN_NOT_BOUND_P(args[2]))					\
-      return(name(args[1], args[0], XEN_UNDEFINED, XEN_UNDEFINED));	\
-    else {								\
-      if (XEN_NOT_BOUND_P(args[3]))					\
-	return(name(args[2], args[0], args[1], XEN_UNDEFINED));		\
-      else return(name(args[3], args[0], args[1], args[2]));		\
-}}}
-
-#else
-
 #if HAVE_S7
 
 #define WITH_TWO_SETTER_ARGS(name_reversed, name)	   \
@@ -136,7 +93,6 @@ static XEN name_reversed(XEN *argv, int argc, void *self) \
 #define WITH_THREE_SETTER_ARGS(name_reversed, name)
 #define WITH_FOUR_SETTER_ARGS(name_reversed, name)
 
-#endif
 #endif
 #endif
 

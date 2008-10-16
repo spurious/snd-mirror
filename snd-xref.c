@@ -4823,7 +4823,6 @@ static const char *Random_Numbers_xrefs[] = {
   "arbitrary distribution via rejection method: {any-random}",
   "CL: random, *random-state*, make-random-state*: random number between 0 and arg, arg can't be 0!",
   "Guile: random, *random-state*, seed->random-state: random number between 0 and arg, arg can't be 0!",
-  "Gauche: random (based on CLM random functions)",
   "Ruby: kernel_rand (alias for Ruby's rand), srand: random integer between 0 and arg, or float between 0 and 1",
   "{mus-random, mus_random}: random float between -arg and arg",
   "mus-rand-seed (settable)",

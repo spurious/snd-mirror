@@ -230,7 +230,7 @@
 
 ;;; -------- sound-data->list
 
-(define+ (sound-data->list sd)
+(define (sound-data->list sd)
   "(sound-data->list sd chan) turns a sound-data object's data into a list of lists (one for each channel)"
 
   (define (sound-data-channel->list sd chan)

@@ -1,4 +1,4 @@
-/* gl.c: Guile, Gauche, Ruby, and Forth bindings for GL, GLU
+/* gl.c: Guile, Ruby, and Forth bindings for GL, GLU
  *   generated automatically from makegl.scm and gldata.scm
  *   needs xen.h
  *

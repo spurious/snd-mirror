@@ -895,9 +895,6 @@ XEN_ARGIFY_2(g_vct_reverse_w, g_vct_reverse)
 XEN_NARGIFY_1(g_vct_to_readable_string_w, g_vct_to_readable_string)
 XEN_NARGIFY_2(g_vct_times_w, g_vct_times)
 XEN_NARGIFY_2(g_vct_plus_w, g_vct_plus)
-#if HAVE_GAUCHE
-XEN_NARGIFY_2(equalp_vct_w, equalp_vct)
-#endif
 #else
 #define g_make_vct_w g_make_vct
 #define g_vct_copy_w g_vct_copy
@@ -1185,33 +1182,7 @@ void mus_vct_init(void)
 #if HAVE_S7
   vct_tag = XEN_MAKE_OBJECT_TYPE("<vct>", print_vct, free_vct, s7_mus_vct_equalp, NULL, s7_mus_vct_apply, s7_mus_vct_set);
 #else
-#if (!HAVE_GAUCHE)
   vct_tag = XEN_MAKE_OBJECT_TYPE("Vct", sizeof(vct));
-#else
-  vct_tag = XEN_MAKE_OBJECT_TYPE("<vct>", sizeof(vct), print_vct, free_vct);
-  XEN_EVAL_C_STRING("(define-method object-apply ((v <vct>) (i <integer>)) (vct-ref v i))");
-  XEN_EVAL_C_STRING("(define-method (setter object-apply) ((v <vct>) (i <integer>) (val <number>)) (vct-set! v i val))");
-  XEN_EVAL_C_STRING("(define-method equal? ((v1 <vct>) (v2 <vct>)) (vct-equal? v1 v2))");
-  XEN_DEFINE_PROCEDURE("vct-equal?", equalp_vct_w, 2, 0, 0, "internal function for 'equal? method");
-
-  /* are these useful?
-   *
-   * (define-method length ((v <vct>)) (vct-length v))
-   * (define-method reverse ((v <vct>)) (vct-reverse! (vct-copy v)))
-   * (define-method + ((v1 <vct>) (v2 <vct>)) (vct-add! (vct-copy v1) v2))
-   * (define-method + ((v1 <vct>) (off <number>)) (vct-offset! (vct-copy v1) off))
-   * (define-method + ((off <number>) (v1 <vct>)) (vct-offset! (vct-copy v1) off))
-   * (define-method - ((v1 <vct>) (v2 <vct>)) (vct-subtract! (vct-copy v1) v2))
-   * (define-method - ((v1 <vct>) (off <number>)) (vct-offset! (vct-copy v1) (- off)))
-   * (define-method - ((off <number>) (v1 <vct>)) (vct-offset! (vct-copy v1) (- off)))
-   * (define-method * ((v1 <vct>) (v2 <vct>)) (vct-multiply! (vct-copy v1) v2))
-   * (define-method * ((v1 <vct>) (scl <number>)) (vct-scale! (vct-copy v1) scl))
-   * (define-method * ((scl <number>) (v1 <vct>)) (vct-scale! (vct-copy v1) scl))
-   * (define-method / ((v1 <vct>) (scl <number>)) (vct-scale! (vct-copy v1) (/ 1.0 scl)))
-   *
-   * see gauche.collection and gauche.sequence: call-with-iterator, and inherit <collection> and probably <sequence>
-   */
-#endif
 #endif
 
 #if HAVE_GUILE

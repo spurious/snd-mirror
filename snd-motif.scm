@@ -96,7 +96,7 @@
 
 ;;; -------- apply func to every widget belonging to w (and w) --------
 
-(define+ (for-each-child w func)
+(define (for-each-child w func)
   "(for-each-child w func) applies func to w and its descendents"
   (func w)
   (if (XtIsComposite w)
@@ -105,7 +105,7 @@
 	 (for-each-child n func))
        (cadr (XtGetValues w (list XmNchildren 0) 1)))))
 
-(define+ (find-child widget name)
+(define (find-child widget name)
   "(find-child widget name) returns a widget named 'name', if one can be found in the widget hierarchy beneath 'widget'"
   ;; unfortunately, if the widget's name has been set for some non-English locale, this
   ;;   won't work -- we need to add gettext support (see snd.c for an example)
@@ -118,7 +118,7 @@
 	    (return child))))
      (throw 'no-such-widget (list "find-child" name)))))
 
-(define+ (display-widget-tree widget)
+(define (display-widget-tree widget)
   "(display-widget-tree widget) displays the hierarchy of widgets beneath 'widget'"
   (define (display-widget w spaces)
     (let ((name (XtName w)))
@@ -160,7 +160,7 @@
 ;;;
 ;;; this is obsolete -- use the file-filter mechanism instead
 
-(define+ (install-searcher proc)
+(define (install-searcher proc)
   "(install-searcher proc) replaces the current file search procedure in the File Selection 
 Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
   (define match-sound-files
@@ -1994,7 +1994,7 @@ Reverb-feedback sets the scaler on the feedback.
 ;;;
 ;;; the max scrollbar value can change (it's now 10000), so ideally this code should notice it
 
-(define+ (add-amp-controls)
+(define (add-amp-controls)
   "(add-amp-controls) adds amplitude sliders to the control panel for each channel in multi-channel sounds"
 
   (define (label-name chan) (if (= chan 0) "amp-label" (format #f "amp-label-~D" chan)))
@@ -2323,7 +2323,7 @@ Reverb-feedback sets the scaler on the feedback.
 ;;;
 ;;; (mark-sync-color "blue")
 
-(define+ (mark-sync-color new-color)
+(define (mark-sync-color new-color)
   "(mark-sync-color new-color) sets the color for sync'd marks"
 
   (define get-color
@@ -2474,7 +2474,7 @@ Reverb-feedback sets the scaler on the feedback.
     (XSetErrorHandler #f)))
 
 
-(define+ (show-font-name font)
+(define (show-font-name font)
   "(show-font-name font-list) shows the Snd-related name and the X-related name of each font in a font list"
   (define (show-next-font context)
     (let ((next-font (XmFontListGetNextFont context)))

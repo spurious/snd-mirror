@@ -562,32 +562,11 @@
 
 ;;; Generic path class
 
-;;; Guile and Gauche have differing syntax for define-class and define-method
-;;;
-;;; order matters here!  Guile version must come first because Gauche evalutes
-;;;   the defmacros even if not (provided? 'snd-gauche)!  Guile handles it correctly,
-;;;   so this way Guile ignores the trailing Gauche code, and Gauche defines 
-;;;   define-class twice. 
+(defmacro <define-class> (name classes . fields)
+  `(define-class ,name ,classes ,@fields))
 
-(if (provided? 'snd-gauche) (define make-instance make))
-
-(if (provided? 'snd-guile)
-    (defmacro <define-class> (name classes . fields)
-      `(define-class ,name ,classes ,@fields)))
-
-(if (provided? 'snd-guile)
-    (defmacro <define-method> (name args . body)
-      `(define-method (,name ,@args) ,@body)))
-
-
-(if (provided? 'snd-gauche)
-    (defmacro <define-class> (name classes . fields)
-      `(define-class ,name ,classes ,fields)))
-
-(if (provided? 'snd-gauche)
-    (defmacro <define-method> (name . args)
-      `(define-method ,name ,@args)))
-
+(defmacro <define-method> (name args . body)
+  `(define-method (,name ,@args) ,@body))
 
 (<define-class> <path> ()
   ;; rendered coordinates

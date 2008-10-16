@@ -2568,10 +2568,6 @@ XEN_NARGIFY_1(g_mus_alsa_set_squelch_warning_w, g_mus_alsa_set_squelch_warning)
   XEN_NARGIFY_2(g_mus_header_original_format_name_w, g_mus_header_original_format_name)
 #endif
 
-#if HAVE_GAUCHE
-XEN_NARGIFY_2(g_sound_data_equalp_w, equalp_sound_data)
-#endif
-
 #if MUS_MAC_OSX
 XEN_NARGIFY_1(g_mus_audio_output_properties_mutable_w, g_mus_audio_output_properties_mutable)
 #endif
@@ -2709,15 +2705,7 @@ void mus_sndlib_xen_initialize(void)
 #if HAVE_S7
   sound_data_tag = XEN_MAKE_OBJECT_TYPE("<sound-data>", print_sound_data, free_sound_data, s7_equalp_sound_data, NULL, sound_data_apply, NULL);
 #else
-#if (!HAVE_GAUCHE)
   sound_data_tag = XEN_MAKE_OBJECT_TYPE("SoundData", sizeof(sound_data));
-#else
-  sound_data_tag = XEN_MAKE_OBJECT_TYPE("<sound-data>", sizeof(sound_data), print_sound_data, free_sound_data);
-  XEN_EVAL_C_STRING("(define-method object-apply ((sd <sound-data>) (c <integer>) (i <integer>)) (sound-data-ref sd c i))");
-  XEN_EVAL_C_STRING("(define-method (setter object-apply) ((sd <sound-data>) (c <integer>) (i <integer>) (val <number>)) (sound-data-set! sd c i val))");
-  XEN_EVAL_C_STRING("(define-method equal? ((sd1 <sound-data>) (sd2 <sound-data>)) (sound-data-equal? sd1 sd2))");
-  XEN_DEFINE_PROCEDURE("sound-data-equal?", g_sound_data_equalp_w, 2, 0, 0, "internal function for aound-data equal?");
-#endif
 #endif
 
 #if HAVE_GUILE

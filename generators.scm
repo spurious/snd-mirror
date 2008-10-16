@@ -20,10 +20,6 @@
 	  (module-ref (current-module) sym) ; symbol-binding is deprecated
 	  (symbol-binding #f sym))))
 
-(if (provided? 'snd-gauche)
-    (define (symbol->value sym)
-      (global-variable-ref (current-module) sym)))
-
 ;;; this is provided directly in s7
 
 

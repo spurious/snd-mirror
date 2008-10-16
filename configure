@@ -688,7 +688,6 @@ FTH_CFLAGS
 FTH_VERSION
 XEN_CFLAGS
 XEN_LIBS
-GAUCHE_CONFIG
 FAM_LIB
 GL_FLAGS
 GL_FILES
@@ -788,7 +787,6 @@ with_static_gsl
 with_static_xm
 with_static_xg
 with_guile
-with_gauche
 with_gl
 with_just_gl
 with_gl2ps
@@ -1496,7 +1494,6 @@ Optional Packages:
   --with-static-xm	  include the xm module
   --with-static-xg	  include the xg module
   --with-guile	  	  use Guile
-  --with-gauche           use Gauche
   --with-gl		  include OpenGL support
   --with-just-gl	  include OpenGL support, but omit the GL/Guile bindings
   --with-gl2ps		  include gl2ps
@@ -3746,7 +3743,6 @@ _ACEOF
 #   --with-ruby           use Ruby as the extension language
 #   --with-ruby-prefix    set location of Ruby
 #   --with-s7             use S7 as the extension language (default = yes)
-#   --with-gauche         use Gauche as the extension language
 #   --with-extension-language use some extension language (default=yes)
 #   --with-hobbit         include hobbit-style function arity checking
 #   --with-rt             make Snd capable of running Snd-Rt
@@ -3839,12 +3835,6 @@ fi
 # Check whether --with-guile was given.
 if test "${with_guile+set}" = set; then
   withval=$with_guile;
-fi
-
-
-# Check whether --with-gauche was given.
-if test "${with_gauche+set}" = set; then
-  withval=$with_gauche;
 fi
 
 
@@ -17962,233 +17952,6 @@ fi
 ac_snd_have_extension_language=no
 
 #--------------------------------------------------------------------------------
-# Gauche
-#--------------------------------------------------------------------------------
-
-if test "$with_gauche" = yes ; then
-  # Extract the first word of "gauche-config", so it can be a program name with args.
-set dummy gauche-config; ac_word=$2
-{ $as_echo "$as_me:$LINENO: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if test "${ac_cv_path_GAUCHE_CONFIG+set}" = set; then
-  $as_echo_n "(cached) " >&6
-else
-  case $GAUCHE_CONFIG in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_GAUCHE_CONFIG="$GAUCHE_CONFIG" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
-    ac_cv_path_GAUCHE_CONFIG="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-IFS=$as_save_IFS
-
-  test -z "$ac_cv_path_GAUCHE_CONFIG" && ac_cv_path_GAUCHE_CONFIG="no"
-  ;;
-esac
-fi
-GAUCHE_CONFIG=$ac_cv_path_GAUCHE_CONFIG
-if test -n "$GAUCHE_CONFIG"; then
-  { $as_echo "$as_me:$LINENO: result: $GAUCHE_CONFIG" >&5
-$as_echo "$GAUCHE_CONFIG" >&6; }
-else
-  { $as_echo "$as_me:$LINENO: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-  { $as_echo "$as_me:$LINENO: checking for Gauche" >&5
-$as_echo_n "checking for Gauche... " >&6; }
-  if test "$GAUCHE_CONFIG" = "no" ; then
-    { $as_echo "$as_me:$LINENO: WARNING: can't find Gauche!" >&5
-$as_echo "$as_me: WARNING: can't find Gauche!" >&2;}
-    cat >>confdefs.h <<\_ACEOF
-#define HAVE_EXTENSION_LANGUAGE 0
-_ACEOF
-
-  else
-    # check for version >= 0.8.7
-    gauche_version="`$GAUCHE_CONFIG -V`"
-    { $as_echo "$as_me:$LINENO: result: $gauche_version" >&5
-$as_echo "$gauche_version" >&6; }
-
-    OLD_CFLAGS="CFLAGS"
-    # gauche-config inserts single-quotes in the -I and -L results thereby rendering them useless,
-    #   so the following sed command tries to remove them.  You apparently can't quote a single-quote
-    #   in this context, so I use \x27 = ASCII for single quote.
-#   XEN_CFLAGS=`$GAUCHE_CONFIG -I | sed 's/\x27//g'`
-    XEN_CFLAGS=`$GAUCHE_CONFIG -I | tr -d "'"`
-# apparently the sed line depends on the version of sed -- mine works (4.1.5) but others say it doesn't
-#   thanks to Kjetil for the replacement using "tr"
-    CFLAGS="$CFLAGS $XEN_CFLAGS"
-
-    cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <gauche.h>
-int
-main ()
-{
-#if (GAUCHE_MAJOR_VERSION == 0)
-                         #if (GAUCHE_MINOR_VERSION < 8)
-			    #error too old
-			 #else
-			   #if (GAUCHE_MINOR_VERSION == 8) && (GAUCHE_MICRO_VERSION < 7)
-			     #error too old
-                           #endif
-			 #endif
-		       #endif
-
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext
-if { (ac_try="$ac_compile"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
-$as_echo "$ac_try_echo") >&5
-  (eval "$ac_compile") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest.$ac_objext; then
-
-                 cat >>confdefs.h <<\_ACEOF
-#define HAVE_GAUCHE 1
-_ACEOF
-
-                 cat >>confdefs.h <<\_ACEOF
-#define HAVE_SCHEME 1
-_ACEOF
-
-                 ac_snd_have_extension_language=yes
-                 cat >>confdefs.h <<\_ACEOF
-#define HAVE_EXTENSION_LANGUAGE 1
-_ACEOF
-
-                 XEN_LIBS=`$GAUCHE_CONFIG -L  | sed 's/\x27//g'`
-                 XEN_LIBS="$XEN_LIBS -lgauche"
-                 LOCAL_LANGUAGE="Gauche"
-        	 cat >>confdefs.h <<\_ACEOF
-#define WITH_RUN 1
-_ACEOF
-
-
-	         # 0.8.8
-                 { $as_echo "$as_me:$LINENO: checking for Scm_EvalRec in -lgauche" >&5
-$as_echo_n "checking for Scm_EvalRec in -lgauche... " >&6; }
-if test "${ac_cv_lib_gauche_Scm_EvalRec+set}" = set; then
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lgauche  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char Scm_EvalRec ();
-int
-main ()
-{
-return Scm_EvalRec ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
-$as_echo "$ac_try_echo") >&5
-  (eval "$ac_link") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext && {
-	 test "$cross_compiling" = yes ||
-	 $as_test_x conftest$ac_exeext
-       }; then
-  ac_cv_lib_gauche_Scm_EvalRec=yes
-else
-  $as_echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_cv_lib_gauche_Scm_EvalRec=no
-fi
-
-rm -rf conftest.dSYM
-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:$LINENO: result: $ac_cv_lib_gauche_Scm_EvalRec" >&5
-$as_echo "$ac_cv_lib_gauche_Scm_EvalRec" >&6; }
-if test "x$ac_cv_lib_gauche_Scm_EvalRec" = x""yes; then
-  cat >>confdefs.h <<\_ACEOF
-#define HAVE_SCM_EVALREC 1
-_ACEOF
-
-fi
-
-
-else
-  $as_echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-
-             	 { $as_echo "$as_me:$LINENO: WARNING: We need Gauche 0.8.7 or later" >&5
-$as_echo "$as_me: WARNING: We need Gauche 0.8.7 or later" >&2;}
-                 with_gauche=no
-                 CFLAGS="$OLD_CFLAGS"
-                 XEN_CFLAGS=""
-
-fi
-
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-  fi
-fi
-
-
-#--------------------------------------------------------------------------------
 # Ruby
 #--------------------------------------------------------------------------------
 
@@ -26206,8 +25969,8 @@ if test "$ac_snd_have_extension_language" = no ; then
     if test "$ac_cv_header_dlfcn_h" = yes ; then
       LDFLAGS="$LDFLAGS -ldl"
     fi
-    { $as_echo "$as_me:$LINENO: WARNING: Snd needs either an extension language (Guile, Gauche, Fth, or Ruby), or a graphics toolkit (Gtk or Motif), or preferably both.  As currently configured, this version of Snd is useless." >&5
-$as_echo "$as_me: WARNING: Snd needs either an extension language (Guile, Gauche, Fth, or Ruby), or a graphics toolkit (Gtk or Motif), or preferably both.  As currently configured, this version of Snd is useless." >&2;}
+    { $as_echo "$as_me:$LINENO: WARNING: Snd needs either an extension language (Guile, s7, Fth, or Ruby), or a graphics toolkit (Gtk or Motif), or preferably both.  As currently configured, this version of Snd is useless." >&5
+$as_echo "$as_me: WARNING: Snd needs either an extension language (Guile, s7, Fth, or Ruby), or a graphics toolkit (Gtk or Motif), or preferably both.  As currently configured, this version of Snd is useless." >&2;}
     if test "$with_snd_as_pd_external" = yes ; then
        { { $as_echo "$as_me:$LINENO: error: Guile is needed when making snd as a pd external." >&5
 $as_echo "$as_me: error: Guile is needed when making snd as a pd external." >&2;}

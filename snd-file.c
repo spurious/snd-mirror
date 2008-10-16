@@ -1469,7 +1469,7 @@ snd_info *finish_opening_sound(snd_info *sp, bool selected)
 {
   if (sp)
     {
-#if HAVE_RUBY || HAVE_FORTH || HAVE_GAUCHE
+#if HAVE_RUBY || HAVE_FORTH
       XEN_VARIABLE_SET(S_snd_opened_sound, C_TO_XEN_INT(sp->index));
 #endif
 #if HAVE_GUILE || HAVE_S7
@@ -4901,9 +4901,6 @@ static XEN g_file_write_date(XEN file)
 {
   #if HAVE_GUILE
     #define write_date_equivalent "Equivalent to Guile's (stat:mtime (stat file))"
-  #endif
-  #if HAVE_GAUCHE
-    #define write_date_equivalent "Equivalent to Gauche's file-mtime"
   #endif
   #if HAVE_RUBY
     #define write_date_equivalent "Equivalent to Ruby's File.mtime(file)"

@@ -263,7 +263,7 @@
 
 ;;; -------- eval-between-marks
 
-(define+ (eval-between-marks func)
+(define (eval-between-marks func)
   "(eval-between-marks func) evaluates func between the leftmost marks; func takes one arg, the original sample"
   (define (find-if pred l) ; this is from guile/ice-9/common-list.scm but returns l not car l
     (cond ((null? l) #f)
@@ -424,9 +424,7 @@
     (define (open-appending filename)
       (if (provided? 'snd-guile)
 	  (open filename (logior O_RDWR O_APPEND))
-	  (if (provided? 'snd-gauche)
-	      (open-output-file filename :if-exists :append :if-does-not-exist :create)
-	      (open-output-file filename "a")))))
+	  (open-output-file filename "a"))))
 
 (if (not (defined? 'close-appending))
     (define (close-appending fd)

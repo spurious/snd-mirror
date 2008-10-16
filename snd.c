@@ -413,7 +413,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
 
   mus_sound_initialize(); /* has to precede version check (mus_audio_moniker needs to be setup in Alsa/Oss) */
 
-#if HAVE_FORTH || HAVE_GAUCHE || HAVE_RUBY || HAVE_S7
+#if HAVE_FORTH || HAVE_RUBY || HAVE_S7
   xen_initialize();
 #if HAVE_S7 && HAVE_SETJMP_H
   s7_set_error_exiter(s7, jump_to_top_level);
@@ -476,7 +476,7 @@ static void snd_gsl_error(const char *reason, const char *file, int line, int gs
   ss->xen_error_handler = NULL;
   ss->update_sound_channel_style = NOT_A_CHANNEL_STYLE;
 
-#if USE_NO_GUI || HAVE_RUBY || HAVE_FORTH || HAVE_GAUCHE || HAVE_S7
+#if USE_NO_GUI || HAVE_RUBY || HAVE_FORTH || HAVE_S7
   ss->catch_exists = 1; /* scm_shell for USE_NO_GUI case */
 #else
   ss->catch_exists = 0;

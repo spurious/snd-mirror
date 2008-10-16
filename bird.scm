@@ -14,7 +14,7 @@
 
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 
-(definstrument+ (bigbird start dur frequency freqskew amplitude freq-envelope amp-envelope partials)
+(definstrument (bigbird start dur frequency freqskew amplitude freq-envelope amp-envelope partials)
   "(bigbird start dur frequency freqskew amplitude freq-envelope amp-envelope partials)"
 
   (let* ((gls-env (make-env freq-envelope (hz->radians freqskew) dur))
