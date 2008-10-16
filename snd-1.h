@@ -872,9 +872,6 @@ void g_init_data(void);
 /* -------- snd-edits.c -------- */
 
 ed_list *initial_ed_list(off_t beg, off_t end);
-#if MUS_DEBUGGING
-  const char *ed_list_edit_type_to_string(int type);
-#endif
 snd_info *sound_is_silence(snd_info *sp);
 off_t edit_changes_begin_at(chan_info *cp, int edpos);
 off_t edit_changes_end_at(chan_info *cp, int edpos);

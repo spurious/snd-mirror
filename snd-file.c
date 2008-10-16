@@ -3796,7 +3796,7 @@ static void view_files_monitor_directory(view_files_info *vdat, const char *dirn
 }
 
 
-void dialog_set_title(widget_t dialog, const char *titlestr)
+static void dialog_set_title(widget_t dialog, const char *titlestr)
 {
 #if USE_MOTIF
   XmString title;

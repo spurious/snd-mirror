@@ -2620,7 +2620,7 @@
     (lambda (arg)
       (if (op arg)
 	  (begin (display "(") (display opname) (display " ") (display arg) (display ") returned #t?") (newline))))
-    (list "hi" (integer->char 65) #f '(1 2) 'a-symbol (cons 1 2) (make-vector 3) abs)))
+    (list "hi" (integer->char 65) #f #t '(1 2) 'a-symbol (cons 1 2) (make-vector 3) abs)))
  (list number? complex? real? rational? integer?)
  (list 'number? 'complex? 'real? 'rational? 'integer?))
 
@@ -24890,6 +24890,9 @@
 ;(test (= 0 -0 +0 0.0 -0.0 +0.0 0/1 -0/1 +0/24 0+0i 0-0i -0-0i +0-0i 0.0-0.0i -0.0+0i) #t)
 (test (= 0 +0 0.0 +0.0 0/1 +0/24 0+0i #e0) #t)
 
+(test (+ 1 #t) 'error)
+(test (+ 1 #f) 'error)
+
 (for-each
  (lambda (z)
    (if (not (zero? z))
@@ -27105,7 +27108,6 @@
 	    3)
 
       (test (force) 'error)
-      (test (force 1) 'error)
       (test (delay) 'error)
       (test (delay 1 2) 'error)
       
@@ -27157,6 +27159,11 @@
 		(list a b c)))
 	    (list 5 0 10))
 
+      (for-each
+       (lambda (arg)
+	 (test (force (delay arg)) arg))
+       (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
+
       ))
 
 
@@ -27204,7 +27211,7 @@
 			      (let loop ((i 0))
 				(if (< i 10) (begin (use-it i) (loop (+ i 1)))))))
 		  (generator->lazy-list (lambda (generator)
-					  (delay
+					  (make-promise
 					    (call/cc (lambda (k-main)
 						       (generator 
 							(lambda (e)
@@ -27239,8 +27246,7 @@
 	    3)
 
       (test (force) 'error)
-      (test (force 1) 'error)
-      (test (delay) 'error)
+      (test (make-promise) 'error)
       (test (make-promise 1 2) 'error)
       
       (test (letrec ((count 0)
@@ -27263,7 +27269,7 @@
       (test (let ()
 	      (define f
 		(let ((first? #t))
-		  (delay
+		  (make-promise
 		    (if first?
 			(begin
 			  (set! first? #f)
@@ -27290,6 +27296,11 @@
 		     (c (get-count)))
 		(list a b c)))
 	    (list 5 0 10))
+
+      (for-each
+       (lambda (arg)
+	 (test (force (make-promise arg)) arg))
+       (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
 
       ))
 

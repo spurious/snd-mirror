@@ -39,7 +39,6 @@
  *   deliberate difference from r5rs:
  *        modulo, remainder, and quotient take integer, ratio, or real args
  *        delay is renamed make-promise to avoid collisions in CLM
- *          (perhaps replace "force" with object application)
  *
  *
  * still to do:
@@ -85,7 +84,7 @@
  * your config file goes here, or just replace that #include line with the defines you need.
  * Currently we assume we have setjmp.h.
  *   The only compile-time switches involve booleans, threads and complex numbers.
- *   These complex functions are on compile-time switches:
+ *   These functions are on compile-time switches:
  *
  *     cabs cacos cacosh carg casin casinh catan catanh ccos ccosh 
  *     cexp clog conj cpow csin csinh csqrt ctan ctanh
@@ -124,16 +123,11 @@
  *
  * s7.h includes stdbool.h if HAVE_STDBOOL_H is 1.
  *
- * In C++, leave all the complex stuff turned off.
+ * In C++, leave all the complex stuff turned off. (It might be ok in Linux).
  *
  */
 
 /* -------------------------------------------------------------------------------- */
-
-
-#ifndef _FILE_OFFSET_BITS
-#define _FILE_OFFSET_BITS 64  /* for off_t's in case config header forgets */
-#endif
 
 #include <unistd.h>
 #include <math.h>
@@ -1876,9 +1870,9 @@ static s7_pointer g_current_environment(s7_scheme *sc, s7_pointer args)
 }
 
 
-/* make closure. c is code. e is environment */
 s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e) 
 {
+  /* c is code. e is environment */
   s7_pointer x = new_cell(sc);
   
   set_type(x, T_CLOSURE);
@@ -2491,7 +2485,7 @@ static bool c_rationalize(double ux, double error, s7_Int *numer, s7_Int *denom)
   
   if (ux > 1.0)
     {
-      int_part = (off_t)floor(ux);
+      int_part = (s7_Int)floor(ux);
       ux -= int_part;
     }
   
@@ -2520,7 +2514,7 @@ static bool c_rationalize(double ux, double error, s7_Int *numer, s7_Int *denom)
 	return(false);
       
       x = 1.0 / (x - tt);
-      tt = (off_t)floor(x);
+      tt = (s7_Int)floor(x);
       a2 = a1;
       b2 = b1;
       a1 = a;
@@ -2543,7 +2537,7 @@ static bool c_rationalize(double ux, double error, s7_Int *n, s7_Int *d)
   
   for (denom = 1; denom <= lim; denom++)
     {
-      numer = (off_t)floor(ux * denom);
+      numer = (s7_Int)floor(ux * denom);
       if ((((double)numer / (double)denom) + error) >= ux)
 	{
 	  if (sign)
@@ -3364,7 +3358,7 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
 #if USE_CHARACTER_TABLES
 
 #define CTABLE_SIZE 128
-static bool *whitespace_table, *atom_delimiter_table, *sharp_const_table, *exponent_table;
+static bool *whitespace_table, *atom_delimiter_table, *sharp_const_table, *exponent_table, *slashify_table;
 
 
 static bool is_one_of(bool *ctable, int c) 
@@ -3379,6 +3373,7 @@ static void init_ctables(void)
   atom_delimiter_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
   sharp_const_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
   exponent_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
+  slashify_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
   
   whitespace_table['\n'] = true;
   whitespace_table['\t'] = true;
@@ -3409,6 +3404,15 @@ static void init_ctables(void)
   exponent_table['f'] = true;
   exponent_table['d'] = true;
   exponent_table['l'] = true;
+
+  {
+    int i;
+    for (i = 0; i < ' '; i++)
+      slashify_table[i] = true;
+    slashify_table['\n'] = false;
+    slashify_table['\\'] = true;
+    slashify_table['"'] = true;
+  }
 }
 
 #else
@@ -6962,9 +6966,12 @@ static char *slashify_string(const char *p)
   s[j++] = '"';
   for (i = 0; i < len; i++) 
     {
-      /* PERHAPS: ctable here? */
-      if (((p[i] == 0xff) || (p[i] == '"') || (p[i] < ' ') || (p[i] == '\\')) && 
+#if USE_CHARACTER_TABLES
+      if (slashify_table[(int)p[i]])
+#else
+      if (((p[i] == '"') || (p[i] < ' ') || (p[i] == '\\')) && 
 	  (p[i] != '\n'))
+#endif
 	{
 	  s[j++] = '\\';
 	  switch(p[i]) 
@@ -9822,16 +9829,16 @@ static s7_pointer g_quit(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_force(s7_scheme *sc, s7_pointer args)
 {
   #define H_force "(force obj) lazily evaluates obj"
-  sc->code = car(args);
-  if (is_promise(sc->code)) 
+  if (is_promise(car(args)))
     {
-      /* Should change type to closure here */
+      sc->code = car(args);
       push_stack(sc, OP_SAVE_FORCED, sc->NIL, sc->code);
       sc->args = sc->NIL;
       push_stack(sc, OP_APPLY, sc->args, sc->code);
       return(sc->NIL);
-    } 
-  return(sc->code);
+    }
+  /* already forced, presumably */
+  return(car(args));
 }
 
 
@@ -11082,11 +11089,48 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	}
       
       
-    case OP_DELAY:      /* delay */
+    case OP_DELAY: 
+      if (sc->code == sc->NIL)  /* (make-promise) */
+	{
+	  pop_stack(sc, eval_error(sc, "make-promise needs an argument", sc->code));
+	  goto START;
+	}
+
       sc->x = s7_make_closure(sc, s7_cons(sc, sc->NIL, sc->code), sc->envir);
       set_type(sc->x, T_PROMISE);
       pop_stack(sc, sc->x);
       goto START;
+      
+      
+    case OP_SAVE_FORCED:     /* Save forced value replacing promise */
+
+      memcpy(sc->code, sc->value, sizeof(s7_cell));
+
+      /* memcpy is trouble:
+       * if, for example, sc->value is a string, after memcpy we have two (string) objects in the heap
+       *   pointing to the same string.  When they are GC'd, we try to free the same pointer twice.
+       *   But we can't clear sc->value and reset its type -- it might be #t for example!
+       *   We can't just say sc->code = sc->value because we're playing funny games with
+       *   self-modifying code here.  So...
+       */
+      typeflag(sc->value)  &= (~T_FINALIZABLE); /* make sure GC calls free once */
+	
+      pop_stack(sc, sc->value);
+      goto START;
+      
+      
+    case OP_C0STREAM:   /* cons-stream */
+      push_stack(sc, OP_C1STREAM, sc->NIL, cdr(sc->code));
+      sc->code = car(sc->code);
+      goto EVAL;
+      
+      
+    case OP_C1STREAM:   /* cons-stream */
+      sc->args = sc->value;  /* save sc->value to register sc->args for gc */
+      sc->x = s7_make_closure(sc, s7_cons(sc, sc->NIL, sc->code), sc->envir);
+      set_type(sc->x, T_PROMISE);
+      pop_stack(sc, s7_cons(sc, sc->args, sc->x));
+      goto START;      
       
       
     case OP_AND0:       /* and */
@@ -11143,20 +11187,6 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	push_stack(sc, OP_OR1, sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
       goto EVAL;
-      
-      
-    case OP_C0STREAM:   /* cons-stream */
-      push_stack(sc, OP_C1STREAM, sc->NIL, cdr(sc->code));
-      sc->code = car(sc->code);
-      goto EVAL;
-      
-      
-    case OP_C1STREAM:   /* cons-stream */
-      sc->args = sc->value;  /* save sc->value to register sc->args for gc */
-      sc->x = s7_make_closure(sc, s7_cons(sc, sc->NIL, sc->code), sc->envir);
-      set_type(sc->x, T_PROMISE);
-      pop_stack(sc, s7_cons(sc, sc->args, sc->x));
-      goto START;      
       
       
     case OP_MACRO0:     /* macro */
@@ -11360,12 +11390,6 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       if (is_true(sc->value)) 
 	goto BEGIN;
       pop_stack(sc, sc->NIL);
-      goto START;
-      
-      
-    case OP_SAVE_FORCED:     /* Save forced value replacing promise */
-      memcpy(sc->code, sc->value, sizeof(struct s7_cell));
-      pop_stack(sc, sc->value);
       goto START;
       
       
@@ -12279,7 +12303,7 @@ s7_scheme *s7_init(void)
       p = (s7_cell *)CALLOC(1, sizeof(s7_cell));
       p->flag = T_OBJECT | T_IMMUTABLE | T_ATOM | T_NUMBER | T_CONSTANT | T_SIMPLE | T_DONT_COPY;
       p->object.number.type = NUM_INT;
-      integer(p->object.number) = (off_t)i;
+      integer(p->object.number) = (s7_Int)i;
       vector_element(sc->small_ints, i) = p;
     }
   
@@ -12821,10 +12845,7 @@ static void mark_s7(s7_scheme *sc)
   (let ((x 1) (x 2)) x) got 2 but expected error
   (call/cc (lambda () 0)) got 0 but expected error
   (letrec ((p (make-promise (if c 3 (begin (set! c #t) (+ (force p) 1))))) (c #f)) (force p)) got 4 but expected 3
-  (let ((generate (lambda (use-it) (let loop ((i 0)) (if (< i 10) (begin (use-it i) (loop (+ i 1))))))) (generator->lazy-list (lambda (generator) (delay (call/cc (lambda (k-main) (generator (lambda (e) (call/cc (lambda (k-reenter) (k-main (cons e (make-promise (call/cc (lambda (k-new-main) (set! k-main k-new-main) (k-reenter #f)))))))))) (k-main (quote ()))))))) (fnull? (lambda (x) (null? (force x)))) (fcar (lambda (x) (car (force x)))) (fcdr (lambda (x) (cdr (force x))))) (letrec ((lazy-list->list (lambda (lz) (if (fnull? lz) (quote ()) (cons (fcar lz) (lazy-list->list (fcdr lz))))))) (lazy-list->list (generator->lazy-list generate)))) got error but expected (0 1 2 3 4 5 6 7 8 9)
-  (force 1) got 1 but expected error
   (make-promise 1 2) got #<promise> but expected error
-  (let () (define f (let ((first? #t)) (delay (if first? (begin (set! first? #f) (force f)) (quote second))))) (force f)) got error but expected second
   (let () (define q (let ((count 5)) (define (get-count) count) (define p (make-promise (if (<= count 0) count (begin (set! count (- count 1)) (force p) (set! count (+ count 2)) count)))) (list get-count p))) (let* ((get-count (car q)) (p (cadr q)) (a (get-count)) (b (force p)) (c (get-count))) (list a b c))) got (5 10 10) but expected (5 0 10)
   
   TODO: check via valgrind in the opt=0 cases [works apparently except with run as unopt'd -- occasional errors still -- appear to be GC's fault]

@@ -430,3 +430,37 @@ int main(int argc, char **argv)
 #endif
 
 /* -------------------------------------------------------------------------------- */
+
+#if 0
+
+/* here's an example using C++ and Juce that Rick sent me: */
+
+int main(int argc, const char* argv[]) 
+{ 
+  initialiseJuce_NonGUI(); 
+
+  s7_scheme *s7=s7_init(); 
+  if (!s7) 
+    { 
+      std::cout <<  "Can't start S7!\n"; 
+      return -1; 
+    } 
+
+  s7_pointer val; 
+  std::string str; 
+  while (true) 
+    { 
+      std::cout << "\ns7> "; 
+      std::getline(std::cin, str); 
+      val=s7_eval_c_string(s7, str.c_str()); 
+      std::cout << s7_object_to_c_string(s7, val); 
+    } 
+
+  free(s7); 
+  std::cout << "Bye!\n"; 
+  return 0; 
+} 
+
+#endif
+
+/* -------------------------------------------------------------------------------- */

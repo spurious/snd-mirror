@@ -133,8 +133,6 @@ void vf_open_remove_buttons_set_sensitive(view_files_info *vdat, bool sensitive)
 void view_files_reflect_sort_items(void);
 int vf_mix(view_files_info *vdat);
 bool vf_insert(view_files_info *vdat);
-
-void dialog_set_title(widget_t dialog, const char *titlestr);
 char *dialog_get_title(widget_t dialog);
 
 const char **type_and_format_to_position(file_data *fdat, int type, int format);
