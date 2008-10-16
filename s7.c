@@ -175,6 +175,11 @@
 /* this is for a bunch of sanity checks */
 
 #define WITH_READ_LINE 1
+/* this includes the (non-standard) read-line function */
+
+
+/* ---------------- end of setup stuff ---------------- */
+
 
 #define copy_string(str) strdup(str)
 #define CALLOC(a, b)  calloc((size_t)(a), (size_t)(b))
@@ -12070,27 +12075,11 @@ static s7_pointer g_release_lock(s7_scheme *sc, s7_pointer args)
 static int key_tag = 0;
 
 
-static s7_pointer thread_variable_value(s7_scheme *sc, pthread_key_t *key)
-{
-  void *val;
-  val = pthread_getspecific(*key);                  /* returns NULL if never set */
-  if (val)
-    return((s7_pointer)val);
-  return(sc->F);
-}
-
-
-s7_pointer s7_thread_variable_value(s7_scheme *sc, s7_pointer obj)
-{
-  return((pthread_key_t *)s7_object_value(obj));
-}
-
-
 static char *key_print(void *obj)
 {
   char *buf;
   buf = (char *)calloc(64, sizeof(char));
-  snprintf(buf, 64, "#<thread-variable %p: %s>", obj, s7_object_to_c_string(sc, thread_variable_value(sc, (pthread_key_t *)obj)));
+  snprintf(buf, 64, "#<thread-variable %p>", obj);
   return(buf);
 }
 
@@ -12116,6 +12105,18 @@ bool s7_is_thread_variable(s7_pointer obj)
 {
   return((s7_is_object(obj)) &&
 	 (s7_object_type(obj) == key_tag));
+}
+
+
+s7_pointer s7_thread_variable_value(s7_scheme *sc, s7_pointer obj)
+{
+  pthread_key_t *key; 
+  void *val;
+  key = (pthread_key_t *)s7_object_value(obj);
+  val = pthread_getspecific(*key);                  /* returns NULL if never set */
+  if (val)
+    return((s7_pointer)val);
+  return(sc->F);
 }
 
 
@@ -12842,6 +12843,7 @@ static void mark_s7(s7_scheme *sc)
   TODO: need better error reporting than useless "syntax error"!
   TODO: s7+Motif+C++ -> segfault?
   TODO: call-with-exit confuses guile 1.6.n
+  TODO: check thread-variable printout
 
 s7test noinit 6-Oct-08
   0.986u 0.011s 0:01.01 98.0%     0+0k 0+224io 0pf+0w
