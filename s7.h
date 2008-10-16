@@ -25,6 +25,9 @@
 #define s7_Int off_t
 #define s7_Int_d "%lld"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct s7_scheme s7_scheme;
 typedef struct s7_cell *s7_pointer;
@@ -232,6 +235,10 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, const char *name, 
 #if HAVE_PTHREADS
 bool s7_is_thread_variable(s7_pointer obj);
 s7_pointer s7_thread_variable_value(s7_scheme *sc, s7_pointer obj);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif

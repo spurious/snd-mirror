@@ -91,7 +91,8 @@
  *     cexp clog conj cpow csin csinh csqrt ctan ctanh
  *
  * complex number support (which is problematic in C++, Solaris, and netBSD)
- *   is on the WITH_COMPLEX switch. On a Mac, or in Linux, you can use:
+ *   is on the WITH_COMPLEX switch. On a Mac, or in Linux, if you're not using C++,
+ *   you can use:
  *
  *   #define WITH_COMPLEX 1
  *
@@ -121,7 +122,9 @@
  *
  *   #define HAVE_PTHREADS 1
  *
- * s7.h includes stdbool.h if HAVE_STDBOOL_H is 1
+ * s7.h includes stdbool.h if HAVE_STDBOOL_H is 1.
+ *
+ * In C++, leave all the complex stuff turned off.
  *
  */
 
@@ -176,6 +179,8 @@
 
 #define WITH_READ_LINE 1
 /* this includes the (non-standard) read-line function */
+
+/* there's also CASE_SENSITIVE below (default: 1) which determines whether names are case sensitive */
 
 
 /* ---------------- end of setup stuff ---------------- */
@@ -2270,7 +2275,11 @@ double_complex cpow(double_complex x, double_complex y)
 double_complex conj(double_complex z);
 double_complex conj(double_complex z) 
 { 
+#if WITH_COMPLEX
   return ~z; 
+#else
+  return(0.0);
+#endif
 } 
 #endif 
 
@@ -6932,14 +6941,6 @@ static void write_string(s7_scheme *sc, const char *s, s7_pointer pt)
       if (port_is_closed(pt))
 	return;
       
-#if S7_DEBUGGING
-      if (!is_output_port(pt))
-	{
-	  fprintf(stderr, "write_string port not an output port");
-	  abort();
-	}
-#endif
-      
       if (is_file_port(pt))
 	fputs(s, port_file(pt));
       else 
@@ -7816,12 +7817,7 @@ static s7_pointer g_is_list(s7_scheme *sc, s7_pointer args)
       fast = cdr(fast);
       slow = cdr(slow);
       if (fast == slow) 
-	{
-	  /* the fast pointer has looped back around and caught up
-	     with the slow pointer, hence the structure is circular,
-	     not of finite length, and therefore not a list */
-	  return(sc->F);
-	}
+	return(sc->F);
     }
   return(sc->T);
 }
@@ -11248,9 +11244,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 
       sc->y = s7_gensym(sc, "defmac");
       sc->x = car(sc->code);
-      
-      /* fprintf(stderr, "defmacro sc->code: %s, value: %s\n", s7_object_to_c_string(sc, sc->code), s7_object_to_c_string(sc, sc->value)); */
-      
+
       sc->code = s7_cons(sc,
 			 sc->LAMBDA,
 			 s7_cons(sc, 
@@ -11273,8 +11267,6 @@ static void eval(s7_scheme *sc, opcode_t first_op)
        *   sc->x: hi
        *   sc->code: (lambda (defmac-51) (apply (lambda (a b) (quasiquote (+ (unquote a) (unquote b)))) (cdr defmac-51)))
        */
-      
-      /* fprintf(stderr, "sc->x: %s, sc->code: %s\n", s7_object_to_c_string(sc, sc->x), s7_object_to_c_string(sc, sc->code)); */
       
       push_stack(sc, OP_MACRO1, /* sc->code */ sc->NIL, sc->x);   /* sc->x (the name symbol) will be sc->code when we pop to OP_MACRO1 */
                                                     /* sc->code is merely being protected */
@@ -11305,8 +11297,6 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 									 s7_cons(sc, sc->y, sc->NIL)),
 								 sc->NIL))),
 					 sc->NIL)));
-      
-      /* fprintf(stderr, "sc->x: %s, sc->code: %s\n", s7_object_to_c_string(sc, sc->x), s7_object_to_c_string(sc, sc->code)); */
       
       /* (define-macro (hi a b) `(+ ,a ,b)) becomes:
        *   sc->x: hi
@@ -11353,7 +11343,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	      goto BEGIN;
 	    } 
 	  else 
-	    {/* else */
+	    { /* else */
 	      push_stack(sc, OP_CASE2, sc->NIL, cdar(sc->x));
 	      sc->code = caar(sc->x);
 	      goto EVAL;
@@ -11876,8 +11866,6 @@ static s7_scheme *close_s7(s7_scheme *sc);
 static void mark_s7(s7_scheme *sc);
 
 
-/* PERHAPS: detach kill yield */
-
 typedef struct {
   s7_scheme *sc;
   s7_pointer func;
@@ -12008,7 +11996,7 @@ static char *lock_print(void *obj)
 {
   char *buf;
   buf = (char *)calloc(64, sizeof(char));
-  snprintf(buf, 64, "#<lock %p>", obj);       /* PERHAPS: print who is hold it? */
+  snprintf(buf, 64, "#<lock %p>", obj);
   return(buf);
 }
 
@@ -12079,7 +12067,7 @@ static char *key_print(void *obj)
 {
   char *buf;
   buf = (char *)calloc(64, sizeof(char));
-  snprintf(buf, 64, "#<thread-variable %p>", obj);
+  snprintf(buf, 64, "#<thread-variable %p>", obj); /* can't (easily) print the current value because that requires access to sc */
   return(buf);
 }
 
@@ -12843,7 +12831,6 @@ static void mark_s7(s7_scheme *sc)
   TODO: need better error reporting than useless "syntax error"!
   TODO: s7+Motif+C++ -> segfault?
   TODO: call-with-exit confuses guile 1.6.n
-  TODO: check thread-variable printout
 
 s7test noinit 6-Oct-08
   0.986u 0.011s 0:01.01 98.0%     0+0k 0+224io 0pf+0w
