@@ -83,9 +83,7 @@
  * (add-hook! optimization-hook (lambda (n) (snd-display "opt: ~A~%" n)))
  */
 
-/* make-env needs vct args because '(...) and (list...) return #f (') or a parser complaint (list), so...
- *   SOMEDAY: add support for ' and list: vct_1 below?
- *   the other such cases are make-polyshape, partials->*
+/* make-env needs vct args because '(...) and (list...) return #f (') or a parser complaint (list).
  *   currently make-rand|-interp distribution arg (an env) can't be a vct
  */
 

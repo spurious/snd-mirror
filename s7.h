@@ -40,6 +40,10 @@ s7_pointer s7_NIL(s7_scheme *sc);
 s7_pointer s7_UNDEFINED(s7_scheme *sc);
 s7_pointer s7_EOF_OBJECT(s7_scheme *sc);
 
+bool s7_boolean(s7_scheme *sc, s7_pointer x);
+bool s7_is_boolean(s7_scheme *sc, s7_pointer x);
+s7_pointer s7_make_boolean(s7_scheme *sc, bool x);
+
 s7_pointer s7_global_environment(s7_scheme *sc);
 s7_pointer s7_current_environment(s7_scheme *sc);
 

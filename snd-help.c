@@ -3922,7 +3922,7 @@ and its value is returned."
     else sym = text;
 
     if (XEN_HOOK_P(sym))
-      str = xen_s7_hook_documentation(sym);
+      str = (char *)xen_s7_hook_documentation(sym);
     else str = s7_procedure_documentation(s7, sym);
   }
 #endif

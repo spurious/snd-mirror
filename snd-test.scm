@@ -4890,7 +4890,7 @@
 	  (set! (mus-alsa-squelch-warning) defwarn)))
 
     (if (and (provided? 'snd-threads)
-	     (not (provided? 'snd-s7))) ; TODO: with-threaded-sound tests currently disabled
+	     (provided? 'snd-s7))
 	(let ((old-file-buffer-size *clm-file-buffer-size*))
 	  
 	  (let* ((result (with-threaded-sound ()

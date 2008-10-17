@@ -1086,7 +1086,6 @@ connects them with 'func', and applies the result as an amplitude envelope to th
 ;;; (with-threaded-channels (lambda (chn) (src-channel 2.0 0 #f #f chn)))
 
 
-;;; TODO: snd-test with-threaded-channels, also gtk/no-gui/motif valgrind/helgrind, get stats -- humph not good!  need to figure out why
-;;;         also snd-test with threads
+;;; TODO: snd-test with-threaded-channels
 
 

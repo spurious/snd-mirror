@@ -747,10 +747,28 @@ static s7_pointer g_not(s7_scheme *sc, s7_pointer args)
 }
 
 
+bool s7_boolean(s7_scheme *sc, s7_pointer x)
+{
+  return(x != sc->F);
+}
+
+
+bool s7_is_boolean(s7_scheme *sc, s7_pointer x)
+{
+  return((x == sc->F) || (x == sc->T));
+}
+
+
+s7_pointer s7_make_boolean(s7_scheme *sc, bool x)
+{
+  return((x) ? sc->T : sc->F);
+}
+
+
 static s7_pointer g_is_boolean(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_boolean "(boolean? obj) returns #t if obj is #f or #t"
-  return(to_s7_bool(sc, ((car(args) == sc->F) || (car(args) == sc->T))));
+  return(s7_make_boolean(sc, s7_is_boolean(sc, car(args))));
 }
 
 
@@ -6931,15 +6949,6 @@ static void write_char(s7_scheme *sc, char c, s7_pointer pt)
     {
       if (port_is_closed(pt))
 	return;
-      
-#if S7_DEBUGGING
-      if (!is_output_port(pt))
-	{
-	  fprintf(stderr, "write_char port not an output port");
-	  abort();
-	}
-#endif
-      
       if (is_file_port(pt))
 	fputc(c, port_file(pt));
       else char_to_string_port(c, pt);
@@ -11364,12 +11373,21 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       goto EVAL;
       
       
-    case OP_CASE1:      /* case */
+    case OP_CASE1: 
       for (sc->x = sc->code; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
 	{
-	  if (!s7_is_pair(sc->y = caar(sc->x))) 
-	    break;
-	  
+	  if (!s7_is_pair(sc->y = caar(sc->x)))
+	    {
+	      if ((sc->y != sc->T) &&
+		  ((!s7_is_symbol(sc->y)) ||
+		   (strcmp(s7_symbol_name(sc->y), "else") != 0)))
+		{
+		  pop_stack(sc, eval_error(sc, "case clause key list is not a list or else", sc->y));
+		  goto START;
+		}
+	      break;
+	    }
+
 	  for ( ; sc->y != sc->NIL; sc->y = cdr(sc->y)) 
 	    if (s7_is_eqv(car(sc->y), sc->value)) 
 	      break;
@@ -11386,7 +11404,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	      goto BEGIN;
 	    } 
 	  else 
-	    { /* else */
+	    { 
 	      push_stack(sc, OP_CASE2, sc->NIL, cdar(sc->x));
 	      sc->code = caar(sc->x);
 	      goto EVAL;
@@ -11399,7 +11417,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	}
       
       
-    case OP_CASE2:      /* case */
+    case OP_CASE2: 
       if (is_true(sc->value)) 
 	goto BEGIN;
       pop_stack(sc, sc->NIL);
@@ -12815,7 +12833,11 @@ static void mark_s7(s7_scheme *sc)
   ;times: #(30 29 40 37 458 3596 45 93 19877 2542 136 44 180 496 367 1947 3062 50 32 3833 835 1735 4736 13099 0 0 0 42 5636)
   ;total: 631
   ;ratios: (.5 .5 .4 .4 .2 .7 .1 .7 1.7 .9 .2 .1 .2 .5 .5 1.5 1.0 .3 .2 1.3 1.1 .9 .9 2.0 .0 .0 .0 .2 .8 )
-  
+  ; 17-Oct:
+  ;times: #(41 27 29 34 679 5856 508 34 8405 34 76 34 35 1621 2627 34 3481 34 34 1714 578 1199 0 15854 0 0 0 35 386)
+  ;total: 435
+  ;ratios: (.7 .5 .3 .4 .3 1.1 .8 .3 .7 .0 .1 .0 .0 1.7 3.2 .0 1.2 .2 .2 .6 .8 .6 .0 2.4 .0 .0 .0 .1 .1 )
+
   
   TODO: things to fix:
   (eq? call/cc call-with-current-continuation) got #f but expected #t
@@ -12840,10 +12862,7 @@ static void mark_s7(s7_scheme *sc)
   (do ((i 1) ()) (= i 1)) got 1 but expected error
   (cond ((= 1 2) 3) (else 4) (4 5)) got 4 but expected error
   (cond (else)) got #t but expected error                                             [else == #t, so it's not immediately distinguishable]
-  (case 1 ("hi")) got () but expected error
-  (case 1 ("a" "b")) got b but expected error
   (case 1 (else #f) ((1) #t)) got #f but expected error
-  (case "hi" (("hi" "ho") 123) ("ha" 321)) got 321 but expected error
   (lambda (x 1) x) got #<closure> but expected error
   (lambda (x x) x) got #<closure> but expected error
   (lambda (x x x) x) got #<closure> but expected error
