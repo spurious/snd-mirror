@@ -1600,6 +1600,8 @@
 ;(CINT "GLU_TESS_MAX_COORD")
 
 
+;;; gtkglext removed 17-Oct-08
+#|
 (CINT-G5 "GDKGLEXT_MAJOR_VERSION")
 (CINT-G5 "GDKGLEXT_MINOR_VERSION")
 (CINT-G5 "GDKGLEXT_MICRO_VERSION")
@@ -1759,3 +1761,4 @@
 (CFNC-G "GdkGLConfig* gtk_widget_get_gl_config GtkWidget* widget")
 (CFNC-G "GdkGLContext* gtk_widget_get_gl_context GtkWidget* widget")
 (CFNC-G "GdkGLWindow* gtk_widget_get_gl_window GtkWidget* widget")
+|#

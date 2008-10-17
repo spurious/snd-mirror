@@ -85,6 +85,7 @@ s7_pointer s7_make_integer(s7_scheme *sc, s7_Int num);
 bool s7_is_real(s7_pointer p);
 double s7_real(s7_pointer p);
 s7_pointer s7_make_real(s7_scheme *sc, double num);
+double s7_number_to_real(s7_pointer x); /* x can be any kind of number */
 
 bool s7_is_ulong(s7_pointer arg);
 unsigned long s7_ulong(s7_pointer num);

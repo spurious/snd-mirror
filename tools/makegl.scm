@@ -26,11 +26,11 @@
 (define x-types '())
 (define x-funcs '())
 (define x-ints '())
-(define g-types '())
-(define g-funcs '())
-(define g-ints '())
-(define g5-funcs '())
-(define g5-ints '())
+;(define g-types '())
+;(define g-funcs '())
+;(define g-ints '())
+;(define g5-funcs '())
+;(define g5-ints '())
 
 (define in-glu #f)
 
@@ -398,6 +398,10 @@
 	(set! x-ints (cons name x-ints))
 	(set! names (cons (cons name 'int) names)))))
 
+
+
+;;; gtkglext bindings removed 17-Oct-08
+#|
 (define* (CFNC-G data :optional spec spec-name)
   (let ((name (cadr-str data))
 	(args (caddr-str data)))
@@ -439,6 +443,8 @@
       (begin
 	(set! g5-ints (cons name g5-ints))
 	(set! names (cons (cons name 'int) names)))))
+|#
+
 
 (define (no-arg name)
   (let ((len (string-length name)))
@@ -454,7 +460,7 @@
 (load "gldata.scm")
 
 ;;; ---------------------------------------- write output file ----------------------------------------
-(hey "/* gl.c: Guile, Ruby, and Forth bindings for GL, GLU~%")
+(hey "/* gl.c: s7, Guile, Ruby, and Forth bindings for GL, GLU~%")
 (hey " *   generated automatically from makegl.scm and gldata.scm~%")
 (hey " *   needs xen.h~%")
 (hey " *~%")
@@ -463,6 +469,8 @@
 (hey " * 'gl is added to *features*~%")
 (hey " *~%")
 (hey " * HISTORY:~%")
+(hey " *     17-Oct-08: removed gtkglext bindings.~%")
+(hey " *     --------~%")
 (hey " *     30-Mar-06: check for glu.h, omit GLU_* if necessary.  Add Forth support.~%")
 (hey " *     --------~%")
 (hey " *     13-Jun-05: merged gl-ruby.c into gl.c.~%")
@@ -481,9 +489,11 @@
 (hey "#include <mus-config.h>~%~%")
 
 (hey "#if HAVE_EXTENSION_LANGUAGE~%")
-(hey "#if USE_GTK~%")
-(hey "  #include <gtk/gtkgl.h>~%")
-(hey "#endif~%")
+
+;(hey "#if USE_GTK~%")
+;(hey "  #include <gtk/gtkgl.h>~%")
+;(hey "#endif~%")
+
 (hey "#include <GL/gl.h>~%")
 (hey "#if HAVE_GLU~%")
 (hey "  #include <GL/glu.h>~%")
@@ -555,9 +565,9 @@
 (for-each type-it (reverse x-types))
 (hey "#endif~%")
 
-(hey "#if USE_GTK~%")
-(for-each type-it (reverse g-types))
-(hey "#endif~%")
+;(hey "#if USE_GTK~%")
+;(for-each type-it (reverse g-types))
+;(hey "#endif~%")
 
 (for-each type-it (reverse types))
 
@@ -807,12 +817,12 @@
 (for-each handle-func (reverse x-funcs))
 (hey "#endif~%")
 
-(hey "#if USE_GTK~%")
-(for-each handle-func (reverse g-funcs))
-(hey "#ifdef GTKGLEXT_MAJOR_VERSION~%")
-(for-each handle-func (reverse g5-funcs))
-(hey "#endif~%")
-(hey "#endif~%~%")
+;(hey "#if USE_GTK~%")
+;(for-each handle-func (reverse g-funcs))
+;(hey "#ifdef GTKGLEXT_MAJOR_VERSION~%")
+;(for-each handle-func (reverse g5-funcs))
+;(hey "#endif~%")
+;(hey "#endif~%~%")
 
 (for-each handle-func (reverse funcs))
 (uncheck-glu)
@@ -846,12 +856,12 @@
 (for-each argify-func (reverse x-funcs))
 (hey "#endif~%")
 
-(hey "#if USE_GTK~%")
-(for-each argify-func (reverse g-funcs))
-(hey "#ifdef GTKGLEXT_MAJOR_VERSION~%")
-(for-each argify-func (reverse g5-funcs))
-(hey "#endif~%")
-(hey "#endif~%~%")
+;(hey "#if USE_GTK~%")
+;(for-each argify-func (reverse g-funcs))
+;(hey "#ifdef GTKGLEXT_MAJOR_VERSION~%")
+;(for-each argify-func (reverse g5-funcs))
+;(hey "#endif~%")
+;(hey "#endif~%~%")
 
 (for-each argify-func (reverse funcs))
 (uncheck-glu)
@@ -881,12 +891,12 @@
 (for-each unargify-func (reverse x-funcs))
 (hey "#endif~%")
 
-(hey "#if USE_GTK~%")
-(for-each unargify-func (reverse g-funcs))
-(hey "#ifdef GTKGLEXT_MAJOR_VERSION~%")
-(for-each unargify-func (reverse g5-funcs))
-(hey "#endif~%")
-(hey "#endif~%~%")
+;(hey "#if USE_GTK~%")
+;(for-each unargify-func (reverse g-funcs))
+;(hey "#ifdef GTKGLEXT_MAJOR_VERSION~%")
+;(for-each unargify-func (reverse g5-funcs))
+;(hey "#endif~%")
+;(hey "#endif~%~%")
 
 (for-each unargify-func (reverse funcs))
 (uncheck-glu)
@@ -920,12 +930,12 @@
 (for-each defun (reverse x-funcs))
 (hey "#endif~%")
 
-(hey "#if USE_GTK~%")
-(for-each defun (reverse g-funcs))
-(hey "#ifdef GTKGLEXT_MAJOR_VERSION~%")
-(for-each defun (reverse g5-funcs))
-(hey "#endif~%")
-(hey "#endif~%")
+;(hey "#if USE_GTK~%")
+;(for-each defun (reverse g-funcs))
+;(hey "#ifdef GTKGLEXT_MAJOR_VERSION~%")
+;(for-each defun (reverse g5-funcs))
+;(hey "#endif~%")
+;(hey "#endif~%")
 
 (for-each defun (reverse funcs))
 (uncheck-glu)
@@ -946,18 +956,18 @@
  (reverse x-ints))
 (hey "#endif~%")
 
-(hey "#if USE_GTK~%")
-(for-each 
- (lambda (val) 
-   (hey "  DEFINE_INTEGER(~A);~%" val)) 
- (reverse g-ints))
-(hey "#ifdef GTKGLEXT_MAJOR_VERSION~%")
-(for-each 
- (lambda (val) 
-   (hey "  DEFINE_INTEGER(~A);~%" val)) 
- (reverse g5-ints))
-(hey "#endif~%")
-(hey "#endif~%")
+;(hey "#if USE_GTK~%")
+;(for-each 
+; (lambda (val) 
+;   (hey "  DEFINE_INTEGER(~A);~%" val)) 
+; (reverse g-ints))
+;(hey "#ifdef GTKGLEXT_MAJOR_VERSION~%")
+;(for-each 
+; (lambda (val) 
+;   (hey "  DEFINE_INTEGER(~A);~%" val)) 
+; (reverse g5-ints))
+;(hey "#endif~%")
+;(hey "#endif~%")
 
 (for-each 
  (lambda (val) 

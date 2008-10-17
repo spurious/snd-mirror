@@ -2583,6 +2583,19 @@ static double num_to_real(num n)
 }
 
 
+double s7_number_to_real(s7_pointer x)
+{
+  switch (object_number_type(x))
+    {
+    case NUM_INT:   return((double)s7_integer(x));
+    case NUM_RATIO: return((double)s7_numerator(x) / (double)s7_denominator(x));
+    case NUM_REAL:
+    case NUM_REAL2: return(s7_real(x));
+    default:        return(s7_real_part(x));
+    }
+}
+
+
 static s7_Int num_to_numerator(num n)
 {
   if (n.type == NUM_RATIO)

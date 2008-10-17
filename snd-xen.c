@@ -34,8 +34,6 @@
  * lush:        (CL)     compilation problem, serious name-space problems (not really an extension language)
  * maxima       (CL)     This would be cool...  but there is no embeddable common lisp.
  * mzscheme:    (Scheme) support semi-exists (I have the xen.h macros for it), but I refuse to touch it
- *                         (I sent mzscheme a very polite question about foreign functions, and their response
- *                         was to denigrate my work -- I called them assholes and there it ended).
  * ocaml:       (ML)     not an extension language, as far as I can tell
  * octave:      (Matlab) c++, probably do-able; standard linkage is through octave_value_list arg list.
  *                       Sigh... I'll have to learn C++ to go very far with this.
