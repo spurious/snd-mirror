@@ -26,6 +26,7 @@
  * elk:         (Scheme) looks ok except for GC stuff (is it still maintained? -- last change 2006)
  * Gambit:      (Scheme) not an extension language, complicated connection to C
  * GameMonkey:  ()       c++, windows oriented (no linux I think)
+ * Gauche:      (Scheme) this was usable (and supported in Snd) until Gauche 0.8.14 -- see tools/gauche.txt.
  * haskell               This looks do-able -- it has an FFI to C and can be embedded -- see GHC.
  * Larceny      (Scheme) appears to be call-out only
  * librep:      (CL)     see tools/librep.txt.
@@ -33,6 +34,8 @@
  * lush:        (CL)     compilation problem, serious name-space problems (not really an extension language)
  * maxima       (CL)     This would be cool...  but there is no embeddable common lisp.
  * mzscheme:    (Scheme) support semi-exists (I have the xen.h macros for it), but I refuse to touch it
+ *                         (I sent mzscheme a very polite question about foreign functions, and their response
+ *                         was to denigrate my work -- I called them assholes and there it ended).
  * ocaml:       (ML)     not an extension language, as far as I can tell
  * octave:      (Matlab) c++, probably do-able; standard linkage is through octave_value_list arg list.
  *                       Sigh... I'll have to learn C++ to go very far with this.
@@ -52,7 +55,7 @@
  *                         stklos.h includes the stklos config file, so we collide with PACKAGE, VERSION (easy to hack around).
  *                         As with others, it looks like the boot process assumes stklos is the main program.
  *                         Other than that, this looks complete and not too hard.
- * tinyscheme   (Scheme) now this is very interesting...
+ * tinyscheme   (Scheme) now this is very interesting... (this has become s7, Snd's default extension language).
  *
  * there are a number of "extension languages" which are "call-out only"; that is, they allow you to extend
  *   their current set of names with calls on foreign functions, but this is not what I mean by an extension language.
@@ -2838,8 +2841,8 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
 
   XEN_EVAL_C_STRING("(define redo-edit redo)");        /* consistency with Ruby */
   XEN_EVAL_C_STRING("(define undo-edit undo)");
-  XEN_EVAL_C_STRING("(define call-with-exit call/cc)");
-
+  XEN_EVAL_C_STRING("(define call-with-exit call-with-current-continuation)"); /* call/cc here doesn't work in Guile 1.6.n */
+ 
   /* from ice-9/r4rs.scm but with output to snd listener */
   XEN_EVAL_C_STRING("(define *snd-loaded-files* '())");
   XEN_EVAL_C_STRING("(define *snd-remember-paths* #t)");

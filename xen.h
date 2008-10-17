@@ -2010,6 +2010,7 @@ XEN xen_s7_reset_hook(XEN hook);
 XEN xen_hook_to_list(XEN hook);
 bool xen_hook_empty_p(XEN hook);
 bool xen_hook_p(XEN val);
+const char *xen_s7_hook_documentation(XEN hook);
 XEN xen_define_variable(const char *name, XEN value);
 void xen_s7_ignore(s7_function func); /* squelch compiler warnings */
 const char *xen_s7_object_help(XEN sym);

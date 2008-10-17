@@ -1133,46 +1133,6 @@ make external
 ./snd -noinit --features "'clm 'snd-nogui 'snd-pd-external 'snd-guile"
 make allclean
 
-setenv PKG_CONFIG_PATH /home/bil/test/old-gtk/lib/pkgconfig
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
-echo ' ------                OLD-GTK: --with-gtk -I/home/bil/test/old-gtk          ---- '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-gtk CFLAGS="-Wall -I/home/bil/test/old-gtk"
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-gtk"
-make allclean
-
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
-echo ' ------                OLD-GTK: --with-gtk -I/home/bil/test/old-gtk xg       ---- '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-gtk --with-static-xg CFLAGS="-Wall -I/home/bil/test/old-gtk"
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-gtk 'xg"
-make allclean
-
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
-echo ' ------                OLD-GTK: --with-gtk -I/home/bil/test/old-gtk  xg gl   ---- '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-gtk --with-static-xg --with-gl CFLAGS="-Wall -I/home/bil/test/old-gtk" CC=g++
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-gtk 'xg 'gl"
-make allclean
-
-setenv PKG_CONFIG_PATH /usr/local/lib/pkgconfig
-
-
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '

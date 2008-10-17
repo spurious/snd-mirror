@@ -3921,7 +3921,9 @@ and its value is returned."
       sym = C_STRING_TO_XEN_SYMBOL(XEN_TO_C_STRING(text));
     else sym = text;
 
-    str = s7_procedure_documentation(s7, sym);
+    if (XEN_HOOK_P(sym))
+      str = xen_s7_hook_documentation(sym);
+    else str = s7_procedure_documentation(s7, sym);
   }
 #endif
 

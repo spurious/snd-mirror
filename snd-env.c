@@ -107,7 +107,8 @@ env *make_envelope_with_offset_and_scaler(Float *env_buffer, int len, Float offs
 {
   env *e;
   int i, flen;
-  if (len == 2) flen = 4; else flen = len;
+  if (len < 4) flen = 4; else flen = len;
+  if (flen & 1) flen++;
   e = (env *)CALLOC(1, sizeof(env));
   e->data = (Float *)CALLOC(flen, sizeof(Float));
   e->data_size = flen;

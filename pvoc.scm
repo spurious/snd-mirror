@@ -279,7 +279,6 @@
        (lambda (break)
 	 (do ((i 0 (1+ i)))
 	     ((>= i outlen))
-	   ;; begin the master run loop
 	   (if (>= output interp) ;; if all the samples have been output then do the next frame
 	       (let ((buffix (modulo filptr N)))
 					; buffix is the index into the input buffer

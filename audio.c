@@ -1856,6 +1856,9 @@ static int linux_audio_open_with_error(const char *pathname, int flags, mode_t m
 {
   int fd;
   static bool already_warned = false;
+  if ((system < 0) ||
+      (system >= MAX_SOUNDCARDS))
+    return(-1);
 
   fd = linux_audio_open(pathname, flags, mode, system);
   if ((fd == -1) &&

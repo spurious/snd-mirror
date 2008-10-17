@@ -12852,6 +12852,7 @@ static void mark_s7(s7_scheme *sc)
   TODO: need better error reporting than useless "syntax error"!
   TODO: s7+Motif+C++ -> segfault?
   TODO: call-with-exit confuses guile 1.6.n
+  TODO: call/cc tests with arbitrary stuff in the stack
 
 s7test noinit 6-Oct-08
   0.986u 0.011s 0:01.01 98.0%     0+0k 0+224io 0pf+0w
