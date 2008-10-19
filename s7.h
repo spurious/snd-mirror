@@ -413,11 +413,13 @@ int main(int argc, char **argv)
 
   s7_eval_c_string(s7, "(define (add1 a) (+ a 1))");
   
-  fprintf(stderr, "an-integer: %d\n", s7_integer(s7_name_to_value(s7, "an-integer")));
+  fprintf(stderr, "an-integer: %d\n", 
+	  s7_integer(s7_name_to_value(s7, "an-integer")));
 
   s7_symbol_set_value(s7, s7_make_symbol(s7, "an-integer"), s7_make_integer(s7, 32));
 
-  fprintf(stderr, "now an-integer: %d\n", s7_integer(s7_name_to_value(s7, "an-integer")));
+  fprintf(stderr, "now an-integer: %d\n", 
+	  s7_integer(s7_name_to_value(s7, "an-integer")));
 
   fprintf(stderr, "(add1 2): %d\n", 
 	  s7_integer(s7_call(s7, 

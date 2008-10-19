@@ -24894,6 +24894,128 @@
 (test (+ 1 #f) 'error)
 
 (for-each
+  (lambda (n)
+    (if (not (number? n))
+	(begin
+	  (display "(number? ") (display n) (display ") returned #f?") (newline))))
+  (list 1 -1 +1 +.1 -.1 .1 .0 0. 0.0 -0 +0 -0. +0.
+	+1.1 -1.1 1.1
+	'1.0e2 '-1.0e2 '+1.0e2
+	'1.1e-2 '-1.1e-2 '+1.1e-2
+	'1.1e+2 '-1.1e+2 '+1.1e+2
+	'1/2 '-1/2 '+1/2
+	'1.0s2 '-1.0s2 '+1.0s2
+	'1.0d2 '-1.0d2 '+1.0d2
+	'1.0f2 '-1.0f2 '+1.0f2
+	'1.0l2 '-1.0l2 '+1.0l2
+	'1.0+1.0i '1.0-1.0i '-1.0-1.0i '-1.0+1.0i
+	'1+i '1-i '-1-i '-1+i
+	'2/3+i '2/3-i '-2/3+i
+	'1+2/3i '1-2/3i '2/3+2/3i '2.3-2/3i '2/3-2.3i
+	'2e2+1e3i '2e2-2e2i '2.0e2+i '1+2.0e2i '2.0e+2-2.0e-1i '2/3-2.0e3i '2e-3-2/3i
+	'-2.0e-2-2.0e-2i '+2.0e+2+2.0e+2i '+2/3-2/3i '2e2-2/3i
+	'1e1-i '1.-i '.0+i '-.0-1e-1i '1.+.1i '0.-.1i
+	'.1+.0i '1.+.0i '.1+.1i '1.-.1i '.0+.00i '.10+.0i '-1.+.0i '.1-.01i '1.0+.1i 
+	'1e1+.1i '-1.-.10i '1e01+.0i '0e11+.0i '1.e1+.0i '1.00-.0i '-1e1-.0i '1.-.1e0i 
+	'1.+.001i '1e10-.1i '1e+0-.1i '-0e0-.1i
+	'-1.0e-1-1.0e-1i '-111e1-.1i '1.1-.1e11i '-1e-1-.11i '-1.1-.1e1i
+	))
+
+;;; TODO: also check the real/imag parts here
+
+
+(for-each
+ (lambda (n name)
+    (if (number? n)
+	(begin
+	  (display "(number? ") (display name) (display ") returned #t?") (newline))))
+ (list '1e '--1 '++1 '+. '+.+ '.. '.- '1e- '+ '-
+       '1/2/3 '1/2+/2 '/2 '2/ '1+2 '1/+i '1/2e1 '1/2.
+       '1..0 '1.+0 '1--1 '1+- '1.0++i '1.0-ie++2 '1+1
+       '1ee2 '1.0e2e2 '1es2 '1e1.0 '1.0.0 '1/2.0 '1+i2 '1+1.0i0
+       '+.i 'i 'e 'e1 '1e.1 '1+.i '1.0e.1
+       '-.1ei '-1.0+1.0 '1.0+1.0i+1.0 '1.1/2 '1/2.0
+       '1/e '1/i 'e/i '1e2/3 '2/1e2 '1e2+1e2ii '1i-1.0 '1.0-i/2
+       '1/2i '2i/3 '2+/i '2+2/i '2+2/-i '2/- '2/+ '2/+3
+       '1e1.0 '1e1e2 '1+ie2 '1ei1 '1e/2 '0-- '1+ '1- '.1. '.1+
+       '1//2 '1/-/2 '1/2/ '1// 
+       '+0ei '0e++i '+0e+i '0e+-i '+0e-i '+00ei '+.0ei '0+0ei '-01ei '+.1ei 
+       '1-1ei '-1.ei '0+.i '0-.i '1+e0i '1+/0i '1-/0i '1+e1i '1+/1i '10+.i 
+       '.0+.i '-0+.i '.1+.i '0.+.i '00-.i '.1-.i '1.-.i '1e++0i '1e--1i '.1e++i 
+       '+10e+i '1+0e+i '+01e+i '+0e+-i '.1e+-i '1-10ei '0e++00i '1e--.1i '1.e-+1i 
+       '1-0.e+i '1.+1e+i '-1.e--i '1.e+-.0i '1-e+01i '1-/101i '1+/10i '1-e10i 
+       '-1+e+1i '.1-e-1i '1-/0e1i '1e10+.i '1/1.1+i '1/11.+i 
+       '1/2e1-i '-1.0e-1-1-1.0e-1i '-1.0e-1-1.0e-1-1i
+       '1.0e2/3 '-1e--1.e1i '-11e--1e1i '1e--1.1e1i '1.e-1-1.ei '-1.e--1.ei 
+       '-1.1e1-e1i '-1.e1-e-1i '.1e1-e-11i 
+       )
+ (list "1e" "--1" "++1" "+." "+.+" ".." ".-" "1e-" "+" "-" 
+       "1/2/3" "1/2+/2" "/2" "2/" "1+2" "1/+i" "1/2e1" "1/2."
+       "1..0" "1.+0" "1--1" "1+-" "1.0++i" "1.0-ie++2" "1+1"
+       "1ee2" "1.0e2e2" "1es2" "1e1.0" "1.0.0" "1/2.0" "1+i2" "1+1.0i0" 
+       "+.i" "i" "e" "e1" "1e.1" "1+.i" "1.0e.1" 
+       "-.1ei" "-1.0+1.0" "1.0+1.0i+1.0" "1.1/2" "1/2.0" 
+       "1/e" "1/i" "e/i" "1e2/3" "2/1e2" "1e2+1e2ii" "1i-1.0" "1.0-i/2" 
+       "1/2i" "2i/3" "2+/i" "2+2/i" "2+2/-i" "2/-" "2/+" "2/+3" 
+       "1e1.0" "1e1e2" "1+ie2" "1ei1" "1e/2" "0--" "1+" "1-" ".1." ".1+" 
+       "1//2" "1/-/2" "1/2/" "1//" 
+       "+0ei" "0e++i" "+0e+i" "0e+-i" "+0e-i" "+00ei" "+.0ei" "0+0ei" "-01ei" "+.1ei" 
+       "1-1ei" "-1.ei" "0+.i" "0-.i" "1+e0i" "1+/0i" "1-/0i" "1+e1i" "1+/1i" "10+.i" 
+       ".0+.i" "-0+.i" ".1+.i" "0.+.i" "00-.i" ".1-.i" "1.-.i" "1e++0i" "1e--1i" ".1e++i" 
+       "+10e+i" "1+0e+i" "+01e+i" "+0e+-i" ".1e+-i" "1-10ei" "0e++00i" "1e--.1i" "1.e-+1i" 
+       "1-0.e+i" "1.+1e+i" "-1.e--i" "1.e+-.0i" "1-e+01i" "1-/101i" "1+/10i" "1-e10i" 
+       "-1+e+1i" ".1-e-1i" "1-/0e1i" "1e10+.i" "1/1.1+i" "1/11.+i" 
+       "1/2e1-i" "-1.0e-1-1-1.0e-1i" "-1.0e-1-1.0e-1-1i" 
+       "1.0e2/3" "-1e--1.e1i" "-11e--1e1i" "1e--1.1e1i" "1.e-1-1.ei" "-1.e--1.ei" 
+       "-1.1e1-e1i" "-1.e1-e-1i" ".1e1-e-11i" 
+       ))
+
+
+;;; here's code to generate all possible numbers (using just 1 digit) of a given length
+;(define file (open-output-file "ntest.scm"))
+;(define chars (list #\1 #\. #\+ #\- #\e #\i #\/))
+;(define (all-syms f len)
+;  (let ((sym (make-string len))
+;	(ctrs (make-vector len 0)))
+;    (do ((i 0 (+ i 1)))
+;	((= i (expt 7 len)))
+;      (let ((carry #t))
+;	(do ((k 0 (+ k 1)))
+;	    ((or (= k len)
+;		 (not carry)))
+;	  (vector-set! ctrs k (+ 1 (vector-ref ctrs k)))
+;	  (if (= (vector-ref ctrs k) 7)
+;	      (vector-set! ctrs k 0)
+;	      (set! carry #f)))
+;	(do ((k 0 (+ k 1)))
+;	    ((= k len))
+;	  (string-set! sym k (list-ref chars (vector-ref ctrs k)))))
+;      (let ((tag (catch #t (lambda () (string->number sym)) (lambda args (car args)))))
+;	(if (not (symbol? tag))
+;	    (begin
+;	      (if (number? tag)
+;		  (display "(if (not (number? " file)
+;		  (display "(if (number? " file))
+;	      (display "'" file)
+;	      (display sym file)
+;	      (display ")" file)
+;	      (if (number? tag)
+;		  (display ")" file))
+;	      (display " (begin (display \"" file)
+;	      (display sym file)
+;	      (if (number? tag)
+;		  (display " is not a number?\") (newline)))" file)
+;		  (display " is a number?\") (newline)))" file))
+;	      (newline file)))))))
+;(do ((len 1 (+ len 1)))
+;    ((= len 10))
+;  (all-syms file len))
+;(close-output-port file)
+
+
+
+
+(for-each
  (lambda (z)
    (if (not (zero? z))
        (begin (display z) (display " is not zero?") (newline)))
@@ -26203,7 +26325,7 @@
 (test (if (values #t) 1 2) 1)
 (test (if (values '#t) 1 2) 1)
 (test (values 1 2 3) (values 1 2 3))
-(test (call-with-values (lambda () (values)) list) '())
+;(test (call-with-values (lambda () (values)) list) '())
 (test (call-with-values (lambda () 4) (lambda (x) x)) 4)
 (test (let () (values 1 2 3) 4) 4)
 (test (apply + (values '())) 0)
@@ -26219,7 +26341,7 @@
  (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
 
 (test (call-with-values (lambda () (values "hi" 1 3/2 'a)) (lambda (a b c d) (+ b c))) 5/2)
-(test (call-with-values values (lambda arg arg)) '())
+;(test (call-with-values values (lambda arg arg)) '())
 (test (call-with-values (lambda (x) (+ x 1)) (lambda (y) y)) 'error)
 (test (string-ref (values "hi") 1) #\i)
 
@@ -26806,7 +26928,18 @@
   (test (r5rs-ratify (/ (log 2.0) (log 3.0)) 1/10000000) 665/1054)
   (test (r5rs-ratify (/ (log 2.0) (log 3.0)) 1/100000000000) 190537/301994))
 
-
+(for-each
+ (lambda (arg)
+   (test (let ((ctr 0)) 
+	   (let ((val (call/cc 
+		       (lambda (exit) 
+			 (for-each (lambda (a) 
+				     (if (equal? a arg) (exit arg))
+				     (set! ctr (+ ctr 1))) 
+				   (list 0 1 2 3 arg 5)))))) 
+	     (list ctr val)))
+	 (list 4 arg)))
+ (list "hi" -1 #\a 11 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #f #t '(1 . 2)))
 
 
 
