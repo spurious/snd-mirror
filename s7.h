@@ -436,6 +436,7 @@ int main(int argc, char **argv)
 
 #endif
 
+
 /* -------------------------------------------------------------------------------- */
 
 #if 0
@@ -467,6 +468,122 @@ int main(int argc, const char* argv[])
   std::cout << "Bye!\n"; 
   return 0; 
 } 
+
+#endif
+
+
+/* -------------------------------------------------------------------------------- */
+
+#if 0
+
+/* here's an example that loads sndlib into an s7 repl */
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+/* assume we've configured and built sndlib, so it has created a mus-config.h file */
+
+#include "mus-config.h"
+#include "s7.h"
+#include "xen.h"
+#include "clm.h"
+#include "clm2xen.h"
+
+static s7_pointer our_exit(s7_scheme *sc, s7_pointer args)
+{
+  exit(1);
+  return(s7_NIL(sc));
+}
+
+/* the next functions are needed for either with-sound or many standard instruments, like fm-violin */
+
+static XEN g_file_exists_p(XEN name)
+{
+  #define H_file_exists_p "(file-exists? filename): #t if the file exists"
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, "file-exists?", "a string");
+  return(C_TO_XEN_BOOLEAN(mus_file_probe(XEN_TO_C_STRING(name))));
+}
+
+XEN_NARGIFY_1(g_file_exists_p_w, g_file_exists_p)
+
+static XEN g_delete_file(XEN name)
+{
+  #define H_delete_file "(delete-file filename): deletes the file"
+  XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, "delete-file", "a string");
+  return(C_TO_XEN_BOOLEAN(unlink(XEN_TO_C_STRING(name))));
+}
+
+XEN_NARGIFY_1(g_delete_file_w, g_delete_file)
+
+static XEN g_random(XEN val)
+{
+  if (XEN_INTEGER_P(val))
+    return(C_TO_XEN_INT(mus_irandom(XEN_TO_C_INT(val))));
+  return(C_TO_XEN_DOUBLE(mus_frandom(XEN_TO_C_DOUBLE(val))));
+}
+
+XEN_NARGIFY_1(g_random_w, g_random)
+
+
+
+int main(int argc, char **argv)
+{
+  char buffer[512];
+  char response[1024];
+
+
+  s7 = s7_init();                     /* initialize the interpreter; s7 is declared in xen.h */
+  xen_initialize();                   /* initialize the xen stuff (hooks and the xen s7 FFI) */
+  Init_sndlib();                      /* initialize sndlib with all the functions linked into s7 */  
+
+  /* these next lines are for compatibility with Guile (ws.scm has Guile-specific junk) */
+  XEN_EVAL_C_STRING("(defmacro use-modules (arg . args) #f)");
+  XEN_EVAL_C_STRING("(define (debug-enable . args) #f)");
+  XEN_EVAL_C_STRING("(define (read-enable . args) #f)");
+  XEN_EVAL_C_STRING("(define (debug-set! . args) #f)");
+  XEN_EVAL_C_STRING("(define (make-soft-port . args) #f)");
+  XEN_EVAL_C_STRING("(define (current-module) (current-environment))");
+  XEN_EVAL_C_STRING("(define load-from-path load)");
+  
+  XEN_DEFINE_PROCEDURE("file-exists?",           g_file_exists_p_w,          1, 0, 0, H_file_exists_p);
+  XEN_DEFINE_PROCEDURE("delete-file",            g_delete_file_w,            1, 0, 0, H_delete_file);
+  XEN_DEFINE_PROCEDURE("random",                 g_random_w,                 1, 0, 0, "(random arg): random number between 0 and arg ");
+
+  /* deal with the ubiquitous run macro */
+  XEN_EVAL_C_STRING("(define (run-safety) 0)");
+  XEN_EVAL_C_STRING("(defmacro run (thunk) `(,thunk))");
+  XEN_EVAL_C_STRING("(define (1+ x) (+ x 1))");
+
+  s7_define_function(s7, "exit", our_exit, 0, 0, false, "(exit) exits the program");
+  s7_define_variable(s7, "pi", s7_make_real(s7, 3.14159265));
+
+  while (1)                           /* fire up a "repl" */
+    {
+      fprintf(stdout, "\n> ");        /* prompt for input */
+      fgets(buffer, 512, stdin);
+
+      if ((buffer[0] != '\n') || 
+	  (strlen(buffer) > 1))
+	{                            
+	  sprintf(response, "(write %s)", buffer);
+	  s7_eval_c_string(s7, response); /* evaluate input and write the result */
+	}
+    }
+}
+
+/* /home/bil/test/sndlib/ gcc -o doc7 doc7.c s7.o -lm -I. /home/bil/test/sndlib/sndlib.a -lgsl -lgslcblas 
+ *
+ *   gsl and gslcblas are the Gnu Scientific Library that the configure script found -- those 
+ *   may not be necessary on other systems
+ *
+ * to load ws.scm
+ *   (load "s7-optargs.scm")
+ *   (load "ws.scm")
+ *   (with-sound () (outa 10 .1))
+ *   (load "v.scm")
+ *   (with-sound () (fm-violin 0 .1 440 .1))
+ */
 
 #endif
 

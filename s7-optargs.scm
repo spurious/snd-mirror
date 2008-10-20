@@ -20,7 +20,8 @@
 
 
 (provide 's7-optargs.scm)
-(if (not (provided? 'snd))
+(if (and (not (provided? 's7))
+	 (not (provided? 'snd-guile)))
 (define-syntax defmacro
   (syntax-rules ()
     ((_ name params . body) (define-macro (name . params) . body)))))
