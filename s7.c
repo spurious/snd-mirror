@@ -183,7 +183,7 @@ typedef enum {OP_TOP_LEVEL, OP_T1LVL, OP_READ_INTERNAL, OP_VALUEPRINT, OP_EVAL, 
 	      OP_E0ARGS, OP_E1ARGS, OP_APPLY, OP_REAL_APPLY, OP_DOMACRO, OP_LAMBDA, OP_QUOTE, 
 	      OP_DEF0, OP_DEF1, OP_BEGIN, OP_IF0, OP_IF1, OP_SET0, OP_SET1, OP_SET2,
 	      OP_LET0, OP_LET1, OP_LET2, OP_LET0AST, OP_LET1AST, OP_LET2AST, 
-	      OP_LET0REC, OP_LET1REC, OP_LET2REC, OP_COND0, OP_COND1, OP_DELAY, OP_AND0, OP_AND1, 
+	      OP_LET0REC, OP_LET1REC, OP_LET2REC, OP_COND0, OP_COND1, OP_MAKE_PROMISE, OP_AND0, OP_AND1, 
 	      OP_OR0, OP_OR1, OP_C0STREAM, OP_C1STREAM, OP_DEFMACRO, OP_MACRO0, OP_MACRO1, OP_DEFINE_MACRO,
 	      OP_CASE0, OP_CASE1, OP_CASE2, OP_READ_EXPRESSION, OP_READ_LIST, OP_READ_DOT, OP_READ_QUOTE, 
 	      OP_READ_QUASIQUOTE, OP_READ_QUASIQUOTE_VECTOR, OP_READ_UNQUOTE, OP_READ_UNQUOTE_SPLICING, OP_READ_VEC, OP_P0LIST, OP_P1LIST, 
@@ -400,6 +400,7 @@ struct s7_scheme {
   
 #if HAVE_PTHREADS
   struct s7_scheme *orig_sc;
+  s7_pointer key_values;
 #endif
 };
 
@@ -1595,7 +1596,7 @@ void s7_for_each_symbol_name(s7_scheme *sc, bool (*symbol_func)(const char *symb
 }
 
 
-void s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_name, s7_pointer symbol_value, void *data), void *data)
+void s7_for_each_symbol(s7_scheme *sc, bool (*symbol_func)(const char *symbol_name, s7_pointer value, void *data), void *data)
 {
   int i; 
   s7_pointer x; 
@@ -1630,6 +1631,8 @@ s7_pointer s7_make_symbol(s7_scheme *sc, const char *name)
 } 
 
 
+/* TODO: need a way to prune the symbol table of unused symbols */
+
 s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
 { 
   char *name;
@@ -1639,15 +1642,13 @@ s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
   len = safe_strlen(prefix) + 32;
   name = (char *)calloc(len, sizeof(char));
   
-  /* if ((*(sc->gensym_counter)) > 100) (*(sc->gensym_counter)) = 0; */ /* an experiment (interrupted by other things...) */
-  
   for(; (*(sc->gensym_counter)) < LONG_MAX; ) 
     { 
       snprintf(name, len, "%s-%ld", prefix, (*(sc->gensym_counter))++); 
       x = symbol_table_find_by_name(sc, name); 
       if (x != sc->NIL)
 	{
-	  if (s7_symbol_value(sc, sc->x) != sc->UNDEFINED)
+	  if (s7_symbol_value(sc, x) != sc->UNDEFINED)
 	    continue; 
 	  free(name);
 	  return(x); 
@@ -1662,9 +1663,6 @@ s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
   return(sc->NIL); 
 } 
 
-
-/* TODO: gensym over time can glom up the symbol table -- need a way to either reuse them or prune them
- */
 
 static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args) 
 {
@@ -1744,7 +1742,7 @@ static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
 } 
 
 
-static s7_pointer s7_new_slot_spec_in_env(s7_scheme *sc, s7_pointer env, s7_pointer variable, s7_pointer value) 
+static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer variable, s7_pointer value) 
 { 
   s7_pointer slot;
 
@@ -1764,7 +1762,7 @@ static s7_pointer s7_new_slot_spec_in_env(s7_scheme *sc, s7_pointer env, s7_poin
 } 
 
 
-static s7_pointer s7_find_slot_in_env(s7_scheme *sc, s7_pointer env, s7_pointer hdl, bool all) 
+static s7_pointer s7_find_symbol_in_environment(s7_scheme *sc, s7_pointer env, s7_pointer hdl, bool all) 
 { 
   s7_pointer x, y = sc->NIL; 
   
@@ -1794,33 +1792,24 @@ static s7_pointer s7_find_slot_in_env(s7_scheme *sc, s7_pointer env, s7_pointer 
 } 
 
 
-static s7_pointer new_slot_in_env(s7_scheme *sc, s7_pointer variable, s7_pointer value) 
+static s7_pointer add_to_current_environment(s7_scheme *sc, s7_pointer variable, s7_pointer value) 
 { 
-
   ASSERT_IS_OBJECT(sc->envir, "new slot envir");
 
-  return(s7_new_slot_spec_in_env(sc, sc->envir, variable, value)); 
+  return(add_to_environment(sc, sc->envir, variable, value)); 
 } 
 
 
-static void set_slot_in_env(s7_scheme *sc, s7_pointer slot, s7_pointer value) 
-{ 
-  cdr(slot) = value; 
-} 
-
-
-static s7_pointer s7_slot_value_in_env(s7_pointer slot) 
-{ 
-  return(cdr(slot)); 
-} 
+#define symbol_value(Sym) cdr(Sym)
+#define set_symbol_value(Sym, Val) cdr(Sym) = (Val)
 
 
 s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym) /* was searching just the global environment? */
 {
   s7_pointer x;
-  x = s7_find_slot_in_env(sc, sc->envir, sym, true);
-  if (x != s7_NIL(sc))
-    return(s7_slot_value_in_env(x));
+  x = s7_find_symbol_in_environment(sc, sc->envir, sym, true);
+  if (x != sc->NIL)
+    return(symbol_value(x));
   return(sc->UNDEFINED);
 }
 
@@ -1828,10 +1817,10 @@ s7_pointer s7_symbol_value(s7_scheme *sc, s7_pointer sym) /* was searching just 
 s7_pointer s7_symbol_local_value(s7_scheme *sc, s7_pointer sym, s7_pointer local_env)
 {
   s7_pointer x;
-  x = s7_find_slot_in_env(sc, local_env, sym, true);
-  if (x != s7_NIL(sc))
-    return(s7_slot_value_in_env(x));
-  return(s7_symbol_value(sc, sym));
+  x = s7_find_symbol_in_environment(sc, local_env, sym, true);
+  if (x != sc->NIL)
+    return(symbol_value(x));
+  return(s7_symbol_value(sc, sym)); /* try sc->envir */
 }
 
 
@@ -1847,9 +1836,9 @@ static s7_pointer g_symbol_to_value(s7_scheme *sc, s7_pointer args)
 s7_pointer s7_symbol_set_value(s7_scheme *sc, s7_pointer sym, s7_pointer val)
 {
   s7_pointer x;
-  x = s7_find_slot_in_env(sc, sc->envir, sym, true);
-  if (x != s7_NIL(sc))
-    set_slot_in_env(sc, x, val);
+  x = s7_find_symbol_in_environment(sc, sc->envir, sym, true);
+  if (x != sc->NIL)
+    set_symbol_value(x, val);
   return(val);
 }
 
@@ -1926,17 +1915,17 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
       sc->x = cadr(args);
     }
   else sc->x = sc->envir;
-  return(make_boolean(sc, s7_find_slot_in_env(sc, sc->x, car(args), true) != sc->NIL));
+  return(make_boolean(sc, s7_find_symbol_in_environment(sc, sc->x, car(args), true) != sc->NIL));
 }
 
 
 void s7_define(s7_scheme *sc, s7_pointer envir, s7_pointer symbol, s7_pointer value) 
 {
   s7_pointer x;
-  x = s7_find_slot_in_env(sc, envir, symbol, false); /* that is, find its value if any in the current frame */
+  x = s7_find_symbol_in_environment(sc, envir, symbol, false);
   if (x != sc->NIL) 
-    set_slot_in_env(sc, x, value); 
-  else s7_new_slot_spec_in_env(sc, envir, symbol, value); 
+    set_symbol_value(x, value); 
+  else add_to_environment(sc, envir, symbol, value); 
 }
 
 
@@ -9441,13 +9430,13 @@ s7_pointer s7_make_keyword(s7_scheme *sc, const char *key)
   free(name);
   
 #if 0
-  x = s7_find_slot_in_env(sc, sc->global_env, sym, false); /* is it already defined? */
+  x = s7_find_symbol_in_environment(sc, sc->global_env, sym, false); /* is it already defined? */
   if (x == sc->NIL) 
-    s7_new_slot_spec_in_env(sc, sc->global_env, sym, sym); /* its value is itself */
+    add_to_environment(sc, sc->global_env, sym, sym); /* its value is itself */
 #endif
-  x = s7_find_slot_in_env(sc, sc->envir, sym, true); /* is it already defined? */
+  x = s7_find_symbol_in_environment(sc, sc->envir, sym, true); /* is it already defined? */
   if (x == sc->NIL) 
-    s7_new_slot_spec_in_env(sc, sc->envir, sym, sym); /* its value is itself */
+    add_to_current_environment(sc, sym, sym); /* its value is itself */
   
   return(sym);
 }
@@ -10325,7 +10314,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       
       sc->value = sc->NIL;
       for (sc->x = car(sc->code), sc->y = sc->args; sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
-	sc->value = s7_cons(sc, new_slot_in_env(sc, caar(sc->x), car(sc->y)), sc->value);
+	sc->value = s7_cons(sc, add_to_current_environment(sc, caar(sc->x), car(sc->y)), sc->value);
       /* TODO: check for collisions here or values lacking */
       
       /* now we've set up the environment, next set up for loop */
@@ -10394,7 +10383,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  sc->y = cdr(sc->code);
 	  sc->code = s7_reverse_in_place(sc, sc->NIL, car(sc->code));
 	  for (sc->x = sc->code; sc->y != sc->NIL && sc->x != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y))
-	    set_slot_in_env(sc, caar(sc->y), car(sc->x));
+	    set_symbol_value(caar(sc->y), car(sc->x));
 	  
 	  pop_stack(sc, sc->NIL);
 	  goto DO_END0;
@@ -10445,10 +10434,10 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 
       if (s7_is_symbol(sc->code)) 
 	{
-	  sc->x = s7_find_slot_in_env(sc, sc->envir, sc->code, true);
+	  sc->x = s7_find_symbol_in_environment(sc, sc->envir, sc->code, true);
 	  if (sc->x != sc->NIL) 
 	    {
-	      pop_stack(sc, s7_slot_value_in_env(sc->x));
+	      pop_stack(sc, symbol_value(sc->x));
 	      goto START;
 	    }
 	  
@@ -10642,7 +10631,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 		  ASSERT_IS_OBJECT(sc->x, "parameter to closure");
 		  ASSERT_IS_OBJECT(sc->y, "arg to closure");
 		  
-		  new_slot_in_env(sc, car(sc->x), car(sc->y));
+		  add_to_current_environment(sc, car(sc->x), car(sc->y));
 		}
 	      
 	      if (sc->x == sc->NIL) 
@@ -10656,7 +10645,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	      else 
 		{
 		  if (s7_is_symbol(sc->x))
-		    new_slot_in_env(sc, sc->x, sc->y); 
+		    add_to_current_environment(sc, sc->x, sc->y); 
 		  else 
 		    {
 		      if (is_macro(sc->code))
@@ -10825,10 +10814,10 @@ static void eval(s7_scheme *sc, opcode_t first_op)
        *   so the doc string if any is (cadr (car value))
        *   and the arg list gives the number of required args up to the dot
        */
-      sc->x = s7_find_slot_in_env(sc, sc->envir, sc->code, false);
+      sc->x = s7_find_symbol_in_environment(sc, sc->envir, sc->code, false);
       if (sc->x != sc->NIL) 
-	set_slot_in_env(sc, sc->x, sc->value); 
-      else new_slot_in_env(sc, sc->code, sc->value); 
+	set_symbol_value(sc->x, sc->value); 
+      else add_to_current_environment(sc, sc->code, sc->value); 
       pop_stack(sc, sc->code);
       goto START;
       
@@ -10884,10 +10873,10 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_SET1:      
-      sc->y = s7_find_slot_in_env(sc, sc->envir, sc->code, true);
+      sc->y = s7_find_symbol_in_environment(sc, sc->envir, sc->code, true);
       if (sc->y != sc->NIL) 
 	{
-	  set_slot_in_env(sc, sc->y, sc->value); 
+	  set_symbol_value(sc->y, sc->value); 
 	  pop_stack(sc, sc->value);
 	  goto START;
 	}
@@ -10969,7 +10958,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	      pop_stack(sc, eval_error(sc, "bad variable in let bindings", car(sc->code)));
 	      goto START;
 	    }
-	  new_slot_in_env(sc, caar(sc->x), car(sc->y)); 
+	  add_to_current_environment(sc, caar(sc->x), car(sc->y)); 
 	}
       if (s7_is_symbol(car(sc->code))) 
 	{    /* named let */
@@ -10977,7 +10966,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	    sc->args = s7_cons(sc, caar(sc->x), sc->args);
 	  
 	  sc->x = s7_make_closure(sc, s7_cons(sc, s7_reverse_in_place(sc, sc->NIL, sc->args), cddr(sc->code)), sc->envir); 
-	  new_slot_in_env(sc, car(sc->code), sc->x); 
+	  add_to_current_environment(sc, car(sc->code), sc->x); 
 	  sc->code = cddr(sc->code);
 	  sc->args = sc->NIL;
 	} 
@@ -11027,7 +11016,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  pop_stack(sc, eval_error(sc, "bad variable in let* bindings", car(sc->code)));
 	  goto START;
 	}
-      new_slot_in_env(sc, caar(sc->code), sc->value); 
+      add_to_current_environment(sc, caar(sc->code), sc->value); 
       sc->code = cdr(sc->code);
       if (s7_is_pair(sc->code)) 
 	{ /* continue */
@@ -11082,7 +11071,7 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	      pop_stack(sc, eval_error(sc, "bad variable in letrec bindings", car(sc->x)));
 	      goto START;
 	    }
-	  new_slot_in_env(sc, caar(sc->x), car(sc->y)); 
+	  add_to_current_environment(sc, caar(sc->x), car(sc->y)); 
 	}
       sc->code = cdr(sc->code);
       sc->args = sc->NIL;
@@ -11147,10 +11136,15 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	}
       
       
-    case OP_DELAY: 
+    case OP_MAKE_PROMISE: 
       if (sc->code == sc->NIL)  /* (make-promise) */
 	{
 	  pop_stack(sc, eval_error(sc, "make-promise needs an argument", sc->code));
+	  goto START;
+	}
+      if (cdr(sc->code) != sc->NIL)
+	{
+	  pop_stack(sc, eval_error(sc, "make-promise takes one argument", sc->code));
 	  goto START;
 	}
 
@@ -11305,10 +11299,10 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       set_type(sc->value, T_MACRO);
       
       /* find name in environment, and define it */
-      sc->x = s7_find_slot_in_env(sc, sc->envir, sc->code, false); 
+      sc->x = s7_find_symbol_in_environment(sc, sc->envir, sc->code, false); 
       if (sc->x != sc->NIL) 
-	set_slot_in_env(sc, sc->x, sc->value); 
-      else new_slot_in_env(sc, sc->code, sc->value); 
+	set_symbol_value(sc->x, sc->value); 
+      else add_to_current_environment(sc, sc->code, sc->value); 
       
       /* pop back to wherever the macro call was */
       pop_stack(sc, sc->code);
@@ -12230,13 +12224,22 @@ static s7_pointer set_key(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 {
   pthread_key_t *key;  
   key = (pthread_key_t *)s7_object_value(obj);
-  pthread_setspecific(*key, (void *)s7_local_gc_protect(car(args))); 
+  pthread_setspecific(*key, (void *)car(args)); 
 
-  /* TODO: how to unprotect? */
-  /*    perhaps keep a list of local vars attached to threads, and unprotect when thread is done */
-  /*    pthread_self gets current thread, and thread_free has f->thread to match */
-  /*    would want to unprotect only if the value is not elsewhere in this list */
+#if S7_DEBUGGING
+  fprintf(stderr, "sc: %p, key: %p, value: %s\n", sc, key, s7_object_to_c_string(sc, car(args)));
+#endif
 
+  /* to protect from the GC until either the local key value is set again, or the thread is done,
+   *   we store the key's local value in an alist '(obj value)
+   */
+  {
+    s7_pointer curval;
+    curval = g_assq(sc, s7_cons(sc, obj, s7_cons(sc, sc->key_values, sc->NIL)));
+    if (curval == sc->F)
+      sc->key_values = s7_cons(sc, s7_cons(sc, obj, car(args)), sc->key_values);
+    else cdr(curval) = car(args);
+  }
   return(car(args));
 }
 #endif
@@ -12359,7 +12362,7 @@ s7_scheme *s7_init(void)
   sc->envir = sc->global_env;
   
   x = s7_make_symbol(sc, "else");
-  new_slot_in_env(sc, x, sc->T); 
+  add_to_current_environment(sc, x, sc->T); 
   
   sc->small_ints = s7_make_vector(sc, OP_MAX_DEFINED + 1);
   typeflag(sc->small_ints) |= (T_CONSTANT | T_DONT_COPY);
@@ -12385,7 +12388,7 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "let*",        OP_LET0AST);
   assign_syntax(sc, "letrec",      OP_LET0REC);
   assign_syntax(sc, "cond",        OP_COND0);
-  assign_syntax(sc, "make-promise",OP_DELAY);
+  assign_syntax(sc, "make-promise",OP_MAKE_PROMISE);
   assign_syntax(sc, "and",         OP_AND0);
   assign_syntax(sc, "or",          OP_OR0);
   assign_syntax(sc, "cons-stream", OP_C0STREAM); 
@@ -12830,6 +12833,8 @@ static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
   new_sc->temps = (s7_pointer *)calloc(new_sc->temps_size, sizeof(s7_pointer));
   for (i = 0; i < new_sc->temps_size; i++)
     new_sc->temps[i] = new_sc->NIL;
+
+  new_sc->key_values = sc->NIL;
   
   return(new_sc);
 }
@@ -12859,6 +12864,7 @@ static void mark_s7(s7_scheme *sc)
   s7_mark_object(sc->y);
   for (i = 0; i < sc->temps_size; i++)
     s7_mark_object(sc->temps[i]);
+  s7_mark_object(sc->key_values);
 }
 
 #endif
@@ -12869,10 +12875,6 @@ static void mark_s7(s7_scheme *sc)
   ;times: #(30 29 40 37 458 3596 45 93 19877 2542 136 44 180 496 367 1947 3062 50 32 3833 835 1735 4736 13099 0 0 0 42 5636)
   ;total: 631
   ;ratios: (.5 .5 .4 .4 .2 .7 .1 .7 1.7 .9 .2 .1 .2 .5 .5 1.5 1.0 .3 .2 1.3 1.1 .9 .9 2.0 .0 .0 .0 .2 .8 )
-  ; 17-Oct:
-  ;times: #(41 27 29 34 679 5856 508 34 8405 34 76 34 35 1621 2627 34 3481 34 34 1714 578 1199 0 15854 0 0 0 35 386)
-  ;total: 435
-  ;ratios: (.7 .5 .3 .4 .3 1.1 .8 .3 .7 .0 .1 .0 .0 1.7 3.2 .0 1.2 .2 .2 .6 .8 .6 .0 2.4 .0 .0 .0 .1 .1 )
 
   
   TODO: things to fix:
@@ -12909,7 +12911,6 @@ static void mark_s7(s7_scheme *sc)
   (let ((x 1)) (letrec ((x 1) (y x)) y)) got 1 but expected error
   (let ((x 1) (x 2)) x) got 2 but expected error
   (letrec ((p (make-promise (if c 3 (begin (set! c #t) (+ (force p) 1))))) (c #f)) (force p)) got 4 but expected 3
-  (make-promise 1 2) got #<promise> but expected error
   (let () (define q (let ((count 5)) (define (get-count) count) (define p (make-promise (if (<= count 0) count (begin (set! count (- count 1)) (force p) (set! count (+ count 2)) count)))) (list get-count p))) (let* ((get-count (car q)) (p (cadr q)) (a (get-count)) (b (force p)) (c (get-count))) (list a b c))) got (5 10 10) but expected (5 0 10)
   
   TODO: check via valgrind in the opt=0 cases [works apparently except with run as unopt'd -- occasional errors still -- appear to be GC's fault]
