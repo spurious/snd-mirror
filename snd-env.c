@@ -1634,11 +1634,11 @@ choices are " S_enved_amplitude ", " S_enved_srate "(apply to speed), and " S_en
 
   XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_enved_target, "an integer"); 
   in_n = XEN_TO_C_INT(val);
-  if (in_n < 0) /* weird -- C++ needs this extra layer */
+  if (in_n < 0)
+    XEN_OUT_OF_RANGE_ERROR(S_setB S_enved_target, 1, val, "~A, but must be " S_enved_amplitude ", " S_enved_srate ", or " S_enved_spectrum);
+  if (in_n > (int)ENVED_SRATE)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_enved_target, 1, val, "~A, but must be " S_enved_amplitude ", " S_enved_srate ", or " S_enved_spectrum);
   n = (enved_target_t)in_n;
-  if (n > ENVED_SRATE)
-    XEN_OUT_OF_RANGE_ERROR(S_setB S_enved_target, 1, val, "~A, but must be " S_enved_amplitude ", " S_enved_srate ", or " S_enved_spectrum);
   set_enved_target(n); 
   return(C_TO_XEN_INT((int)enved_target(ss)));
 }

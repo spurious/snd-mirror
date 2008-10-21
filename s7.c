@@ -1519,16 +1519,16 @@ static pthread_mutex_t symtab_lock = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
 
-static s7_pointer s7_make_permanent_string(s7_scheme *sc, const char *str);
-static s7_pointer s7_permanent_cons(s7_scheme *sc, s7_pointer a, s7_pointer b, int type);
+static s7_pointer s7_make_permanent_string(const char *str);
+static s7_pointer s7_permanent_cons(s7_pointer a, s7_pointer b, int type);
 
 static s7_pointer symbol_table_add_by_name(s7_scheme *sc, const char *name) 
 { 
   s7_pointer x, str; 
   int location;
   
-  str = s7_make_permanent_string(sc, name);
-  x = s7_permanent_cons(sc, str, sc->NIL, T_SYMBOL | T_ATOM | T_SIMPLE | T_CONSTANT | T_DONT_COPY);
+  str = s7_make_permanent_string(name);
+  x = s7_permanent_cons(str, sc->NIL, T_SYMBOL | T_ATOM | T_SIMPLE | T_CONSTANT | T_DONT_COPY);
   
   location = hash_fn(name, vector_length(sc->symbol_table)); 
 
@@ -1536,7 +1536,7 @@ static s7_pointer symbol_table_add_by_name(s7_scheme *sc, const char *name)
   pthread_mutex_lock(&symtab_lock);
 #endif
 
-  vector_element(sc->symbol_table, location) = s7_permanent_cons(sc, x, 
+  vector_element(sc->symbol_table, location) = s7_permanent_cons(x, 
 								 vector_element(sc->symbol_table, location), 
 								 T_PAIR | T_ATOM | T_SIMPLE | T_CONSTANT | T_IMMUTABLE | T_DONT_COPY);
 
@@ -2848,7 +2848,7 @@ static s7_pointer s7_from_c_complex(s7_scheme *sc, double_complex z)
 }
 
 
-static num num_max(s7_scheme *sc, num a, num b) 
+static num num_max(num a, num b) 
 {
   num ret;
   ret.type = a.type | b.type;
@@ -2878,7 +2878,7 @@ static num num_max(s7_scheme *sc, num a, num b)
 }
 
 
-static num num_min(s7_scheme *sc, num a, num b) 
+static num num_min(num a, num b) 
 {
   num ret;
   ret.type = a.type | b.type;
@@ -2908,7 +2908,7 @@ static num num_min(s7_scheme *sc, num a, num b)
 }
 
 
-static num num_add(s7_scheme *sc, num a, num b) 
+static num num_add(num a, num b) 
 {
   num ret;
   ret.type = a.type | b.type;
@@ -2940,7 +2940,7 @@ static num num_add(s7_scheme *sc, num a, num b)
 }
 
 
-static num num_sub(s7_scheme *sc, num a, num b) 
+static num num_sub(num a, num b) 
 {
   num ret;
   ret.type = a.type | b.type;
@@ -2971,7 +2971,7 @@ static num num_sub(s7_scheme *sc, num a, num b)
 }
 
 
-static num num_mul(s7_scheme *sc, num a, num b) 
+static num num_mul(num a, num b) 
 {
   num ret;
   ret.type = a.type | b.type;
@@ -3008,7 +3008,7 @@ static num num_mul(s7_scheme *sc, num a, num b)
 }
 
 
-static num num_div(s7_scheme *sc, num a, num b) 
+static num num_div(num a, num b) 
 {
   num ret;
   ret.type = a.type | b.type;
@@ -3070,7 +3070,7 @@ static num num_quotient(num a, num b)
 }
 
 
-static num num_rem(s7_scheme *sc, num a, num b) 
+static num num_rem(num a, num b) 
 {
   /* (define (rem x1 x2) (- x1 (* x2 (quo x1 x2)))) ; slib */
   num ret;
@@ -3092,7 +3092,7 @@ static num num_rem(s7_scheme *sc, num a, num b)
 }
 
 
-static num num_mod(s7_scheme *sc, num a, num b) 
+static num num_mod(num a, num b) 
 {
   /* (define (mod x1 x2) (- x1 (* x2 (floor (/ x1 x2))))) ; slib */
   num ret;
@@ -3191,19 +3191,39 @@ static bool num_eq(num a, num b)
 
 static bool num_gt(num a, num b) 
 {
+  /* the ">" operator here is a problem.
+   *   we get different results depending on the gcc optimization level for cases like (< 1234/11 1234/11)
+   *   so, to keep ratios honest, we'll use num_sub and compare against 0
+   */
+  num val;
+  val = num_sub(a, b);
+  switch (num_type(val))
+    {
+    case NUM_INT:   return(integer(val) > 0);
+    case NUM_RATIO: return(numerator(val) > 0);
+    default:        return(real(val) > 0.0);
+    }
+
+#if 0  
+  /* this is the flakey version */
   if ((num_type(a) == NUM_INT) &&
       (num_type(b) == NUM_INT))
     return(integer(a) > integer(b));
   return(num_to_real(a) > num_to_real(b));
+#endif
 }
 
 
 static bool num_lt(num a, num b) 
 {
-  if ((num_type(a) == NUM_INT) &&
-      (num_type(b) == NUM_INT))
-    return(integer(a) < integer(b));
-  return(num_to_real(a) < num_to_real(b));
+  num val;
+  val = num_sub(a, b);
+  switch (num_type(val))
+    {
+    case NUM_INT:   return(integer(val) < 0);
+    case NUM_RATIO: return(numerator(val) < 0);
+    default:        return(real(val) < 0.0);
+    }
 }
 
 
@@ -4404,7 +4424,7 @@ static s7_pointer g_add(s7_scheme *sc, s7_pointer args)
     {
       if (!s7_is_number(car(sc->x)))
 	return(s7_wrong_type_arg_error(sc, "+", i, car(sc->x), "a number"));
-      sc->v = num_add(sc, sc->v, nvalue(car(sc->x)));
+      sc->v = num_add(sc->v, nvalue(car(sc->x)));
     }
   return(make_number(sc, sc->v));
 }
@@ -4431,7 +4451,7 @@ static s7_pointer g_subtract(s7_scheme *sc, s7_pointer args)
     {
       if (!s7_is_number(car(sc->x)))
 	return(s7_wrong_type_arg_error(sc, "-", i, car(sc->x), "a number"));
-      sc->v = num_sub(sc, sc->v, nvalue(car(sc->x)));
+      sc->v = num_sub(sc->v, nvalue(car(sc->x)));
     }
   return(make_number(sc, sc->v));
 }
@@ -4446,7 +4466,7 @@ static s7_pointer g_multiply(s7_scheme *sc, s7_pointer args)
     {
       if (!s7_is_number(car(sc->x)))
 	return(s7_wrong_type_arg_error(sc, "*", i, car(sc->x), "a number"));
-      sc->v = num_mul(sc, sc->v, nvalue(car(sc->x)));
+      sc->v = num_mul(sc->v, nvalue(car(sc->x)));
     }
   return(make_number(sc, sc->v));
 }
@@ -4477,7 +4497,7 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
       if (s7_is_zero(car(sc->x)))
 	return(s7_division_by_zero_error(sc, "/", car(sc->x)));
       
-      sc->v = num_div(sc, sc->v, nvalue(car(sc->x)));
+      sc->v = num_div(sc->v, nvalue(car(sc->x)));
     }
   return(make_number(sc, sc->v));
 }
@@ -4494,7 +4514,7 @@ static s7_pointer g_max(s7_scheme *sc, s7_pointer args)
     {
       if (!s7_is_real(car(sc->x)))
 	return(s7_wrong_type_arg_error(sc, "max", i, car(sc->x), "a real"));
-      sc->v = num_max(sc, sc->v, nvalue(car(sc->x)));
+      sc->v = num_max(sc->v, nvalue(car(sc->x)));
     }
   return(make_number(sc, sc->v));
 }
@@ -4511,7 +4531,7 @@ static s7_pointer g_min(s7_scheme *sc, s7_pointer args)
     {
       if (!s7_is_real(car(sc->x)))
 	return(s7_wrong_type_arg_error(sc, "min", i, car(sc->x), "a real"));
-      sc->v = num_min(sc, sc->v, nvalue(car(sc->x)));
+      sc->v = num_min(sc->v, nvalue(car(sc->x)));
     }
   return(make_number(sc, sc->v));
 }
@@ -4545,7 +4565,7 @@ static s7_pointer g_remainder(s7_scheme *sc, s7_pointer args)
   
   sc->v = nvalue(car(args));
   if (!s7_is_zero(cadr(args)))
-    sc->v = num_rem(sc, sc->v, nvalue(cadr(args)));
+    sc->v = num_rem(sc->v, nvalue(cadr(args)));
   else return(s7_division_by_zero_error(sc, "remainder", cadr(args)));
   return(make_number(sc, sc->v));
 }
@@ -4562,7 +4582,7 @@ static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
   
   sc->v = nvalue(car(args));
   if (!s7_is_zero(cadr(args)))
-    sc->v = num_mod(sc, sc->v, nvalue(cadr(args)));
+    sc->v = num_mod(sc->v, nvalue(cadr(args)));
   else return(s7_division_by_zero_error(sc, "modulo", cadr(args)));
   return(make_number(sc, sc->v));
 }
@@ -5201,7 +5221,7 @@ s7_pointer s7_make_string(s7_scheme *sc, const char *str)
 }
 
 
-static s7_pointer s7_make_permanent_string(s7_scheme *sc, const char *str) 
+static s7_pointer s7_make_permanent_string(const char *str) 
 {
   /* for the symbol table which is never GC'd */
   s7_pointer x;
@@ -7638,7 +7658,7 @@ s7_pointer s7_cons(s7_scheme *sc, s7_pointer a, s7_pointer b)
 }
 
 
-static s7_pointer s7_permanent_cons(s7_scheme *sc, s7_pointer a, s7_pointer b, int type)
+static s7_pointer s7_permanent_cons(s7_pointer a, s7_pointer b, int type)
 {
   /* for the symbol table which is never GC'd */
   s7_pointer x;
@@ -9999,7 +10019,7 @@ static s7_pointer g_tracing(s7_scheme *sc, s7_pointer a)
 }
 
 
-static s7_pointer g_scheme_implementation(s7_scheme *sc, s7_pointer a)
+static s7_pointer g_scheme_implementation(s7_scheme *sc, s7_pointer args)
 {
   #define H_scheme_implementation "(scheme-implementation) returns some string describing the current S7"
   return(s7_make_string(sc, "s7 " S7_VERSION ", " S7_DATE));
@@ -10304,6 +10324,18 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_DO: 
       /* setup is very similar to let */
+      if (!s7_is_list(sc, car(sc->code)))
+	{
+	  /* (do 123) */
+	  pop_stack(sc, eval_error(sc, "do var list is not a list", sc->code));
+	  goto START;
+	}
+      if (!s7_is_list(sc, cadr(sc->code)))
+	{
+	  /* (do ((i 0)) 123) */
+	  pop_stack(sc, eval_error(sc, "do end-test and end-value list is not a list", sc->code));
+	  goto START;
+	}
       if (car(sc->code) == sc->NIL)            /* (do () ...) */
 	{
 	  sc->envir = new_frame_in_env(sc, sc->envir); 
@@ -10324,6 +10356,23 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       if (s7_is_pair(sc->code))
 	{
 	  push_stack(sc, OP_DO_INIT, sc->args, cdr(sc->code));
+	  /* here sc->code is a list like: ((i 0 (+ i 1)) ...)
+	   *   so cadar gets the init value
+	   */
+	  if (!(s7_is_pair(car(sc->code))))
+	    {
+	      pop_stack(sc, eval_error(sc, "do var slot is empty?", sc->code));
+	      goto START;
+	    }
+	  if ((s7_is_pair(cdar(sc->code))) &&
+	      (s7_is_pair(cddar(sc->code))) && 
+	      (cdr(cddar(sc->code)) != sc->NIL))
+	    {
+	      /* (do ((i 0 1 (+ i 1))) ...) */
+	      pop_stack(sc, eval_error(sc, "do var has extra stuff after the increment expression", sc->code));
+	      goto START;
+	    }
+
 	  sc->code = cadar(sc->code);
 	  sc->args = sc->NIL;
 	  goto EVAL;
@@ -10338,7 +10387,6 @@ static void eval(s7_scheme *sc, opcode_t first_op)
       sc->value = sc->NIL;
       for (sc->x = car(sc->code), sc->y = sc->args; sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
 	sc->value = s7_cons(sc, add_to_current_environment(sc, caar(sc->x), car(sc->y)), sc->value);
-      /* TODO: check for collisions here or values lacking */
       
       /* now we've set up the environment, next set up for loop */
       
@@ -10412,6 +10460,9 @@ static void eval(s7_scheme *sc, opcode_t first_op)
 	  goto DO_END0;
 	}
       push_stack(sc, OP_DO_STEP2, sc->args, sc->code);
+      /* here sc->args is a list like (((i . 0) (1+ i)) ...)
+       *   so sc->code becomes (1+ i) in this case 
+       */
       sc->code = cadar(sc->args);
       sc->args = sc->NIL;
       goto EVAL;
@@ -12921,12 +12972,10 @@ static void mark_s7(s7_scheme *sc)
   (map (lambda () 1) (quote ())) got () but expected error
   (let ((ctr 0)) (map (lambda (x y z) (set! ctr (+ ctr x y z)) ctr) (quote (0 1)) (quote (2 3)) (quote (4 5 6)))) got (6 15) but expected error
   (map (lambda (a) (+ a 1)) (list 1) (list 2)) got (2) but expected error
-  (do ((i)) (#t i)) got #<unspecified> but expected error
   (do ((i 1)) (#t 1) . 1) got 1 but expected error
   (do ((i 1)) (#t . 1) 1) got 1 but expected error
   (do ((i 1) . 1) (#t 1) 1) got 1 but expected error
   (do ((i 0 j) (i 0 j) (j 1 (+ j 1))) ((= j 3) i)) got 2 but expected error
-  (do ((i 1) ()) (= i 1)) got 1 but expected error
   (cond ((= 1 2) 3) (else 4) (4 5)) got 4 but expected error
   (cond (else)) got #t but expected error                                             [else == #t, so it's not immediately distinguishable]
   (case 1 (else #f) ((1) #t)) got #f but expected error
@@ -12945,8 +12994,9 @@ static void mark_s7(s7_scheme *sc)
   
   TODO: check via valgrind in the opt=0 cases [works apparently except with run as unopt'd -- occasional errors still -- appear to be GC's fault]
   TODO: need better error reporting than useless "syntax error"!
-  TODO: s7+Motif+C++ -> segfault?
   TODO: call-with-exit confuses guile 1.6.n
+
+  PERHAPS: procedure-documentation or help as pws
 
 s7test noinit 6-Oct-08
   0.986u 0.011s 0:01.01 98.0%     0+0k 0+224io 0pf+0w

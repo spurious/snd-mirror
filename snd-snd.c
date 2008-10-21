@@ -3369,9 +3369,9 @@ As a global (if the 'snd' arg is omitted), it is the default setting for each so
   in_style = XEN_TO_C_INT(style);
   if (in_style < 0)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_channel_style, 1, style, "~A, but must be >= 0");
-  new_style = (channel_style_t)in_style;
-  if (new_style >= NUM_CHANNEL_STYLES)
+  if (in_style >= NUM_CHANNEL_STYLES)
     XEN_OUT_OF_RANGE_ERROR(S_setB S_channel_style, 1, style, "~A, but must be " S_channels_separate ", " S_channels_combined ", or " S_channels_superimposed);
+  new_style = (channel_style_t)in_style;
   if (XEN_NOT_BOUND_P(snd))
     {
       set_channel_style(new_style);

@@ -25853,8 +25853,11 @@
 (test (do ((i 123 i) (j 0 (+ j i))) ((= j 246) i)) 123)
 (test (do ((i i i)) (i i)) 'error)
 (test (do ((i 0 i)) (i i)) 0)
+(test (do ((i 0 i (+ i 1))) (i i)) 'error)
 (test (do ((i 1 i)) (i i (+ i i) (+ i i i))) 3)
-(test (do ((i)) (#t i)) 'error) ; there's some disagreement about this?
+;(test (do ((i)) (#t i)) 'error) ; there's some disagreement about this?
+(test (do ((i 0 (+ i 1))) #t) 'error)
+(test (do 123 (#t 1)) 'error)
 (test (do ((i 1)) (#t 1) . 1) 'error)
 (test (do ((i 1)) (#t . 1) 1) 'error)
 (test (do ((i 1) . 1) (#t 1) 1) 'error)

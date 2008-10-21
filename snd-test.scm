@@ -25681,7 +25681,7 @@ EDITS: 2
 					;(play-and-wait 0 nind)
       (revert-sound nind)
       (enveloped-mix "oboe.snd" 0 '(0 0 1 1 2 0)) 
-					;(pvoc :pitch 0.5 :time 1.0 :snd nind) 
+      (if all-args (pvoc :pitch 0.5 :time 1.0 :snd nind))
 					;(play-and-wait 0 nind)
       (revert-sound nind)
       (close-sound nind))

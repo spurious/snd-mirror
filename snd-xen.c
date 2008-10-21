@@ -1761,8 +1761,7 @@ static XEN g_gc_on(void)
 }
 
 
-#if (!HAVE_SCM_CONTINUATION_P)
-#if HAVE_GUILE
+#if HAVE_GUILE && (!HAVE_SCM_CONTINUATION_P)
 static XEN g_continuation_p(XEN obj)
 {
 #ifdef SCM_CONTINUATIONP
@@ -1771,14 +1770,6 @@ static XEN g_continuation_p(XEN obj)
   return(C_TO_XEN_BOOLEAN(XEN_PROCEDURE_P(obj)));
 #endif
 }
-#endif
-
-#if HAVE_S7
-static XEN g_continuation_p(XEN obj)
-{
-  return(C_TO_XEN_BOOLEAN(s7_is_continuation(obj)));
-}
-#endif
 #endif
 
 
@@ -1911,7 +1902,7 @@ static XEN g_gsl_ellipj(XEN u, XEN m)
 }
 
 
-#if MUS_DEBUGGING && HAVE_GUILE
+#if MUS_DEBUGGING && HAVE_SCHEME
 /* use gsl gegenbauer to check our function */
 
 #include <gsl/gsl_sf_gegenbauer.h>
@@ -2341,7 +2332,7 @@ static char *find_source_file(char *orig)
   XEN_NARGIFY_0(g_dlerror_w, g_dlerror)
   XEN_NARGIFY_2(g_dlinit_w, g_dlinit)
 #endif
-#if HAVE_SCHEME && (!HAVE_SCM_CONTINUATION_P)
+#if HAVE_GUILE && (!HAVE_SCM_CONTINUATION_P)
   XEN_NARGIFY_1(g_continuation_p_w, g_continuation_p)
 #endif
 XEN_NARGIFY_1(g_snd_print_w, g_snd_print)
@@ -2403,7 +2394,7 @@ XEN_NARGIFY_1(g_add_watcher_w, g_add_watcher)
   #define g_dlerror_w g_dlerror
   #define g_dlinit_w g_dlinit
 #endif
-#if HAVE_SCHEME && (!HAVE_SCM_CONTINUATION_P)
+#if HAVE_GUILE && (!HAVE_SCM_CONTINUATION_P)
   #define g_continuation_p_w g_continuation_p
 #endif
 #define g_snd_print_w g_snd_print
@@ -2623,21 +2614,17 @@ void g_xen_initialize(void)
 
 #if MUS_DEBUGGING
   XEN_DEFINE_PROCEDURE("snd-sound-pointer", g_snd_sound_pointer_w, 1, 0, 0, "internal testing function");
-
-#if HAVE_GUILE
-  XEN_DEFINE_PROCEDURE("snd-stdin-test", g_snd_stdin_test, 1, 0, 0, "internal testing function");
-#endif
 #endif
 
   XEN_DEFINE_PROCEDURE(S_gc_off, g_gc_off_w, 0, 0, 0, H_gc_off);
   XEN_DEFINE_PROCEDURE(S_gc_on,  g_gc_on_w,  0, 0, 0, H_gc_on);
 
 #if HAVE_GUILE
+  XEN_DEFINE_PROCEDURE("snd-stdin-test", g_snd_stdin_test, 1, 0, 0, "internal testing function");
   XEN_DEFINE_PROCEDURE(S_write_byte, g_write_byte, 1, 0, 0, H_write_byte);
-#endif
-
-#if HAVE_SCHEME && (!HAVE_SCM_CONTINUATION_P)
+#if (!HAVE_SCM_CONTINUATION_P)
   XEN_DEFINE_PROCEDURE("continuation?", g_continuation_p_w, 1, 0, 0, "#t if arg is a continuation");
+#endif
 #endif
 
   Init_sndlib();
@@ -2677,7 +2664,7 @@ void g_xen_initialize(void)
   XEN_DEFINE_PROCEDURE("gsl-eigenvectors", g_gsl_eigenvectors_w, 1, 0, 0, "returns eigenvalues and eigenvectors");
 #endif
 
-#if MUS_DEBUGGING && HAVE_GUILE
+#if MUS_DEBUGGING && HAVE_SCHEME
   XEN_DEFINE_PROCEDURE("gsl-gegenbauer",  g_gsl_gegenbauer,  3, 0, 0, "internal test func");
 #endif
 

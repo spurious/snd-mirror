@@ -6172,7 +6172,6 @@ index 10 (so 10/2 is the bes-jn arg):
 
 
 ;;; TODO:   how to change time arbitrarily? via env?
-;;; TODO: also sawtoothize and other such substitutions
 ;;; TODO: amp>n sin^2
 ;;; TODO: narrow band noise on some or on loud ones
 ;;; TODO: change vib (no vib)
