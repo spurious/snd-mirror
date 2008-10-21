@@ -497,6 +497,7 @@ static s7_pointer our_exit(s7_scheme *sc, s7_pointer args)
 }
 
 /* the next functions are needed for either with-sound or many standard instruments, like fm-violin */
+/*   (these are in the xen-style FFI) */
 
 static XEN g_file_exists_p(XEN name)
 {
@@ -539,16 +540,13 @@ int main(int argc, char **argv)
 
   /* these next lines are for compatibility with Guile (ws.scm has Guile-specific junk) */
   XEN_EVAL_C_STRING("(defmacro use-modules (arg . args) #f)");
-  XEN_EVAL_C_STRING("(define (debug-enable . args) #f)");
-  XEN_EVAL_C_STRING("(define (read-enable . args) #f)");
-  XEN_EVAL_C_STRING("(define (debug-set! . args) #f)");
   XEN_EVAL_C_STRING("(define (make-soft-port . args) #f)");
   XEN_EVAL_C_STRING("(define (current-module) (current-environment))");
   XEN_EVAL_C_STRING("(define load-from-path load)");
   
-  XEN_DEFINE_PROCEDURE("file-exists?",           g_file_exists_p_w,          1, 0, 0, H_file_exists_p);
-  XEN_DEFINE_PROCEDURE("delete-file",            g_delete_file_w,            1, 0, 0, H_delete_file);
-  XEN_DEFINE_PROCEDURE("random",                 g_random_w,                 1, 0, 0, "(random arg): random number between 0 and arg ");
+  XEN_DEFINE_PROCEDURE("file-exists?", g_file_exists_p_w, 1, 0, 0, H_file_exists_p);
+  XEN_DEFINE_PROCEDURE("delete-file",  g_delete_file_w,   1, 0, 0, H_delete_file);
+  XEN_DEFINE_PROCEDURE("random",       g_random_w,        1, 0, 0, "(random arg): random number between 0 and arg ");
 
   /* deal with the ubiquitous run macro */
   XEN_EVAL_C_STRING("(define (run-safety) 0)");

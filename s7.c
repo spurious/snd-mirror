@@ -39,6 +39,21 @@
  *   deliberate difference from r5rs:
  *        modulo, remainder, and quotient take integer, ratio, or real args
  *        delay is renamed make-promise to avoid collisions in CLM
+ *        continuation? function to distinguish a continuation from a procedure
+ *
+ *   other additions: 
+ *     procedure-source, procedure-arity, procedure-documentation, help
+ *     symbol-table, symbol->value, global-environment, current-environment
+ *     provided, provided?, defined?
+ *     port-line-number, port-filename
+ *     read-line, read-byte, write-byte
+ *     logior, logxor, logand, lognot, ash
+ *     object->string, eval-string
+ *     reverse!, list-set!
+ *     gc, gc-verbose, load-verbose
+ *     stacktrace, tracing
+ *     quit
+ *     *features*, *load-path*, *vector-print-length*
  *
  *
  * still to do:
@@ -1970,6 +1985,14 @@ static s7_pointer s7_search_environment(s7_scheme *sc, s7_pointer env, bool (*se
 bool s7_is_continuation(s7_pointer p)    
 { 
   return(type(p) == T_CONTINUATION);
+}
+
+
+static s7_pointer g_is_continuation(s7_scheme *sc, s7_pointer args)
+{
+  #define H_is_continuation "(continuation? obj) returns #t if obj is a continuation"
+  return(make_boolean(sc, (s7_is_continuation(car(args))) ||
+		          (is_goto(car(args)))));
 }
 
 
@@ -12710,25 +12733,32 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "call/cc",                 g_call_cc,                 1, 0, false, H_call_cc);
   s7_define_function(sc, "call-with-current-continuation", g_call_cc,          1, 0, false, H_call_cc);
   s7_define_function(sc, "call-with-exit",          g_call_with_exit,          1, 0, false, H_call_with_exit);
+  s7_define_function(sc, "continuation?",           g_is_continuation,         1, 0, false, H_is_continuation);
+
   s7_define_function(sc, "load",                    g_load,                    1, 0, false, H_display);
   s7_define_function(sc, "eval",                    g_eval,                    1, 1, false, H_eval);
   s7_define_function(sc, "eval-string",             g_eval_string,             1, 0, false, H_eval_string);
   s7_define_function(sc, "apply",                   g_apply,                   1, 0, true,  H_apply);
+  s7_define_function(sc, "force",                   g_force,                   1, 0, false, H_force);
+
   s7_define_function(sc, "for-each",                g_for_each,                2, 0, true,  H_for_each);
   s7_define_function(sc, "map",                     g_map,                     2, 0, true,  H_map);
+
   s7_define_function(sc, "values",                  g_values,                  0, 0, true,  H_values);
   s7_define_function(sc, "call-with-values",        g_call_with_values,        2, 0, false, H_call_with_values);
+
   s7_define_function(sc, "dynamic-wind",            g_dynamic_wind,            3, 0, false, H_dynamic_wind);
+  s7_define_function(sc, "catch",                   g_catch,                   3, 0, false, H_catch);
+  s7_define_function(sc, "error",                   g_error,                   0, 0, true,  H_error);
   
   s7_define_function(sc, "tracing",                 g_tracing,                 1, 0, false, H_tracing);
   s7_define_function(sc, "gc-verbose",              g_gc_verbose,              1, 0, false, H_gc_verbose);
   s7_define_function(sc, "load-verbose",            g_load_verbose,            1, 0, false, H_load_verbose);
   s7_define_function(sc, "stacktrace",              g_stacktrace,              0, 0, false, H_stacktrace);
+
   s7_define_function(sc, "gc",                      g_gc,                      0, 1, false, H_gc);
   s7_define_function(sc, "quit",                    g_quit,                    0, 0, false, H_quit);
-  s7_define_function(sc, "catch",                   g_catch,                   3, 0, false, H_catch);
-  s7_define_function(sc, "error",                   g_error,                   0, 0, true,  H_error);
-  s7_define_function(sc, "force",                   g_force,                   1, 0, false, H_force);
+
   s7_define_function(sc, "make-closure",            g_make_closure,            1, 1, false, H_make_closure);
   s7_define_function(sc, "closure?",                g_is_closure,              1, 0, false, H_is_closure);
   

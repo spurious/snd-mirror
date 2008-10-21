@@ -697,7 +697,6 @@ XEN snd_catch_any(XEN_CATCH_BODY_TYPE body, void *body_data, const char *caller)
 }
 
 
-#if (SCM_DEBUG_TYPING_STRICTNESS != 2)
 static XEN g_call0_1(void *arg)
 {
   return(XEN_CALL_0_NO_CATCH((XEN)arg));
@@ -708,9 +707,6 @@ XEN g_call0(XEN proc, const char *caller) /* replacement for gh_call0 -- protect
 {
   return(snd_catch_any(g_call0_1, (void *)proc, caller));
 }
-#else
-XEN g_call0(XEN proc, const char *caller) {return(XEN_FALSE);}
-#endif
 
 
 static XEN g_call1_1(void *arg)
@@ -970,7 +966,7 @@ XEN eval_str_wrapper(void *data)
 }
 
 
-#if (!HAVE_S7) && (SCM_DEBUG_TYPING_STRICTNESS != 2)
+#if (!HAVE_S7)
 XEN eval_form_wrapper(void *data)
 {
   return(XEN_EVAL_FORM((XEN)data));
@@ -981,6 +977,7 @@ XEN eval_form_wrapper(void *data)
   return(XEN_FALSE);
 }
 #endif
+
 
 static XEN string_to_form_1(void *data)
 {
@@ -1118,7 +1115,7 @@ void snd_report_listener_result(XEN form)
 #if HAVE_RUBY || HAVE_FORTH || HAVE_S7
   snd_report_result(form, "\n");
 #endif
-#if (HAVE_GUILE && (SCM_DEBUG_TYPING_STRICTNESS != 2))
+#if HAVE_GUILE
   snd_report_result(snd_catch_any(eval_form_wrapper, (void *)form, NULL), "\n");
 #endif
 }

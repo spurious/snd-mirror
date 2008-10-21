@@ -176,15 +176,7 @@ static XEN walker_hash_table;
 
 
 #define UNLIMITED_ARGS -1
-
-#if ((SCM_DEBUG_TYPING_STRICTNESS != 2) && (!HAVE_S7))
-  static XEN walk_sym = XEN_FALSE;
-#else
-  static XEN walk_sym;
-#endif
-
-
-/* -------------------------------------------------------------------------------- */
+static XEN walk_sym;
 
 /* find and set (Scheme) variable values */
 
@@ -11780,11 +11772,7 @@ static XEN xen_values_to_list(ptree *pt, int *args)
 }
 
 
-#if ((SCM_DEBUG_TYPING_STRICTNESS != 2) && (!HAVE_S7))
-  static XEN format_func = XEN_FALSE;
-#else
-  static XEN format_func;
-#endif
+static XEN format_func;
 
 static void format_s(int *args, ptree *pt) 
 {

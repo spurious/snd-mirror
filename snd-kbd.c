@@ -217,10 +217,8 @@ static void execute_named_macro(chan_info *cp, char *name, off_t count)
       form = string_to_form(name);
       redirect_errors_to(NULL, NULL);
       form_loc = snd_protect(form);
-#if (SCM_DEBUG_TYPING_STRICTNESS != 2)
       for (i = 0; i < count; i++)
 	result = snd_catch_any(eval_form_wrapper, (void *)form, name);
-#endif
       snd_unprotect_at(form_loc);
 #endif
       loc = snd_protect(result);
@@ -279,7 +277,6 @@ int in_user_keymap(int key, int state, bool cx_extended)
 
 #define NUM_BUILT_IN_KEY_BINDINGS 76
 
-#if (SCM_DEBUG_TYPING_STRICTNESS != 2)
 static key_entry built_in_key_bindings[NUM_BUILT_IN_KEY_BINDINGS] = {
   {snd_K_Down,    0, 0, kbd_false, false, "zoom out",                                                    NULL, -1},
   {snd_K_Up,      0, 0, kbd_false, false, "zoom in",                                                     NULL, -1},
@@ -361,10 +358,6 @@ static key_entry built_in_key_bindings[NUM_BUILT_IN_KEY_BINDINGS] = {
   {snd_K_w, snd_ControlMask, 0, kbd_false, true, "save current channel in file",                         NULL, -1},
   {snd_K_z, snd_ControlMask, 0, kbd_false, true, "smooth using cosine",                                  NULL, -1},
 };
-
-#else
-static key_entry built_in_key_bindings[NUM_BUILT_IN_KEY_BINDINGS];
-#endif
 
 
 void map_over_key_bindings(bool (*func)(int key, int state, bool cx, XEN xf))

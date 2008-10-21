@@ -3,8 +3,7 @@
 
 static void timed_eval(XtPointer in_code, XtIntervalId *id)
 {
-#if HAVE_EXTENSION_LANGUAGE && (SCM_DEBUG_TYPING_STRICTNESS != 2)
-  /* #if probably needed on 64-bit machines */
+#if HAVE_EXTENSION_LANGUAGE
   XEN lst = (XEN)in_code;
   XEN_CALL_0(XEN_CADR(lst), "timed callback func");
   snd_unprotect_at(XEN_TO_C_INT(XEN_CAR(lst)));
@@ -16,7 +15,7 @@ static XEN g_in(XEN ms, XEN code)
 {
   #define H_in "(" S_in " msecs thunk): invoke thunk in msecs milliseconds (named call_in in Ruby)"
 
-#if HAVE_EXTENSION_LANGUAGE && (SCM_DEBUG_TYPING_STRICTNESS != 2)
+#if HAVE_EXTENSION_LANGUAGE
   XEN_ASSERT_TYPE(XEN_NUMBER_P(ms), ms, XEN_ARG_1, S_in, "a number");
   XEN_ASSERT_TYPE(XEN_PROCEDURE_P(code), code, XEN_ARG_2, S_in, "a procedure");
 

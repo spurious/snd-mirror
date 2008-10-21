@@ -8373,7 +8373,7 @@ static void finish_as_one_edit(chan_info *cp)
 }
 
 
-#if HAVE_GUILE_DYNAMIC_WIND && (SCM_DEBUG_TYPING_STRICTNESS != 2)
+#if HAVE_GUILE_DYNAMIC_WIND
 static void before_as_one_edit(void *context)
 {
   for_each_normal_chan(init_as_one_edit);
@@ -8411,7 +8411,7 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
   if (XEN_STRING_P(origin))
 	as_one_edit_origin = copy_string(XEN_TO_C_STRING(origin));
       else as_one_edit_origin = NULL;
-#if HAVE_GUILE_DYNAMIC_WIND && (SCM_DEBUG_TYPING_STRICTNESS != 2)
+#if HAVE_GUILE_DYNAMIC_WIND
   result = scm_internal_dynamic_wind((scm_t_guard)before_as_one_edit, 
 				     (scm_t_inner)as_one_edit_body, 
 				     (scm_t_guard)after_as_one_edit, 
