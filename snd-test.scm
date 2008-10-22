@@ -68352,6 +68352,7 @@ EDITS: 1
 						  (lambda args (car args)))))
 				      (if (and (not (eq? tag 'wrong-type-arg))
 					       (not (eq? tag 'no-data))
+					       (not (eq? tag 'no-such-method))
 					       (not (eq? tag 'error))
 					       (not (eq? tag 'arg-error)))
 					  (snd-display ";clm ~A: tag: ~A arg: ~A [~A]" n tag arg ctr))
@@ -70056,6 +70057,15 @@ EDITS: 1
 	(display (format #f "(test ~D:) ~1,1F " i (vector-ref best-times i)))))
   (display (format #f ")~%~%")))
 
+
+;;; s7:
+  ;times: #(30 29 40 37 458 3596 45 93 19877 2542 136 44 180 496 367 1947 3062 50 32 3833 835 1735 4736 13099 0 0 0 42 5636)
+  ;total: 631
+  ;ratios: (.5 .5 .4 .4 .2 .7 .1 .7 1.7 .9 .2 .1 .2 .5 .5 1.5 1.0 .3 .2 1.3 1.1 .9 .9 2.0 .0 .0 .0 .2 .8 )
+
+;  s7test noinit 6-Oct-08
+;  0.986u 0.011s 0:01.01 98.0%     0+0k 0+224io 0pf+0w
+;  0.997u 0.016s 0:01.03 97.0%     0+0k 0+224io 0pf+0w
 
 
 ;;; -------- cleanup temp files
