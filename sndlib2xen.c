@@ -31,6 +31,7 @@
 #include "sndlib-strings.h"
 #include "sndlib2xen.h"
 #include "vct.h"
+#include "clm.h"
 
 #ifndef S_setB
   #if HAVE_RUBY
@@ -2451,11 +2452,11 @@ static XEN g_mus_set_max_table_size(XEN val)
 
 #if MUS_MAC_OSX
 #define S_mus_audio_output_properties_mutable "mus-audio-output-properties-mutable"
-static XEN g_mus_audio_output_properties_mutable(XEN mutable)
+static XEN g_mus_audio_output_properties_mutable(XEN mut)
 {
   #define H_mus_audio_output_properties_mutable "(" S_mus_audio_output_properties_mutable " val): can DAC settings be changed to match the current sound"
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(mutable), mutable, XEN_ONLY_ARG, S_mus_audio_output_properties_mutable, "a boolean");
-  return(C_TO_XEN_BOOLEAN(mus_audio_output_properties_mutable(XEN_TO_C_BOOLEAN(mutable))));
+  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(mut), mut, XEN_ONLY_ARG, S_mus_audio_output_properties_mutable, "a boolean");
+  return(C_TO_XEN_BOOLEAN(mus_audio_output_properties_mutable(XEN_TO_C_BOOLEAN(mut))));
 }
 #endif
 

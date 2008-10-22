@@ -59,6 +59,8 @@
 #endif
 
 #include "_sndlib.h"
+#include "xen.h"
+#include "clm.h"
 #include "sndlib2xen.h"
 #include "vct.h"
 

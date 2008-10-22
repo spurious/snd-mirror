@@ -19,6 +19,10 @@ typedef struct mus_xen {
 #define MUS_CLM_DEFAULT_TABLE_SIZE 512
 #define MUS_CLM_DEFAULT_FREQUENCY 0.0
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 off_t clm_default_table_size_c(void);
 double clm_default_frequency_c(void);
 
@@ -42,5 +46,9 @@ XEN mus_clm_output(void);
 XEN mus_clm_reverb(void);
 
 void Init_sndlib(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

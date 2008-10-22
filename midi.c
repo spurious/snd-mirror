@@ -60,7 +60,7 @@
 
 #ifdef SND_RAWMIDI_NONBLOCK
 
-#define MIDI_OK
+#define MIDI_OK 1
 #define DEV_BUFSIZE 1024  /* what is this for? */
 #define MIDI_READ 0     /* do we need MIDI_READ_WRITE? */
 #define MIDI_WRITE 1
@@ -257,7 +257,7 @@ char *mus_midi_describe(void)
 
 #include <dmedia/midi.h>
 
-#define MIDI_OK
+#define MIDI_OK 1
 #define MIDI_READ 0
 #define MIDI_WRITE 1
 
@@ -444,7 +444,7 @@ char *mus_midi_describe(void)
 /* ---------------- OSS ---------------- */
 
 #if HAVE_OSS && (!HAVE_ALSA)
-#define MIDI_OK
+#define MIDI_OK 1
 
 #include <sys/ioctl.h>
 
@@ -534,7 +534,7 @@ char *mus_midi_describe(void)
 /* ---------------- Mac OSX ---------------- */
 
 #ifdef MUS_MAC_OSX
-#define MIDI_OK
+#define MIDI_OK 1
 #include <CoreMIDI/MIDIServices.h>
 
 /* for now, just one in and one out */
@@ -683,7 +683,7 @@ int mus_midi_open_write(const char *name) {return(-1);}
 int mus_midi_close(int line) {return(-1);}
 int mus_midi_read(int line, unsigned char *buffer, int bytes) {return(-1);}
 int mus_midi_write(int line, unsigned char *buffer, int bytes) {return(-1);}
-char *mus_midi_device_name(int sysdev) {return("none");} /* result should not be freed by caller */
+char *mus_midi_device_name(int sysdev) {return((char *)"none");} /* result should not be freed by caller */
 char *mus_midi_describe(void) {return(NULL);}            /* result should be freed by caller (if not NULL) */
 #endif
 

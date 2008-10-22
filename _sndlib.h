@@ -488,7 +488,7 @@ int mus_audio_compatible_format(int dev);
 #endif
 
 #if USE_MAC_OSX
-  bool mus_audio_output_properties_mutable(bool mutable);
+  bool mus_audio_output_properties_mutable(bool mut);
 #endif
 
 

@@ -34,8 +34,10 @@
 #undef HAVE_DECL_HYPOT
 #undef HAVE_DECL_ISNAN
 #undef HAVE_DECL_ISINF
+#ifndef __cplusplus
 #undef HAVE_COMPLEX_TRIG
 #undef WITH_COMPLEX
+#endif
 #undef HAVE_SPECIAL_FUNCTIONS
 #undef WORDS_BIGENDIAN
 #undef _FILE_OFFSET_BITS
@@ -55,26 +57,6 @@
 #undef HAVE_LANGINFO_RADIXCHAR
 #undef NL_TYPES_H_DEFINES_MALLOC
 #undef HAVE_NESTED_FUNCTIONS
-
-#undef HAVE_CABS 
-#undef HAVE_CACOS 
-#undef HAVE_CACOSH 
-#undef HAVE_CARG 
-#undef HAVE_CASIN 
-#undef HAVE_CASINH 
-#undef HAVE_CATAN 
-#undef HAVE_CATANH 
-#undef HAVE_CCOS 
-#undef HAVE_CCOSH 
-#undef HAVE_CEXP 
-#undef HAVE_CLOG 
-#undef HAVE_CONJ 
-#undef HAVE_CPOW 
-#undef HAVE_CSIN 
-#undef HAVE_CSINH 
-#undef HAVE_CSQRT 
-#undef HAVE_CTAN 
-#undef HAVE_CTANH 
 
 #undef HAVE_FCNTL_H
 #undef HAVE_LIMITS_H

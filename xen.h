@@ -2003,6 +2003,9 @@ typedef XEN (*XEN_CATCH_BODY_TYPE)                                    (void *dat
 #define XEN_CLEAR_HOOK(Arg)                              xen_s7_reset_hook(Arg)
 #define XEN_HOOK_PROCEDURES(Arg)                         xen_hook_to_list(Arg)
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 bool xen_s7_type_p(XEN obj, XEN_OBJECT_TYPE type);
 XEN xen_s7_define_hook(const char *name, int arity, const char *help);
@@ -2017,6 +2020,10 @@ const char *xen_s7_object_help(XEN sym);
 double xen_to_c_double(XEN a);
 double xen_to_c_double_or_else(XEN a, double b);
 void xen_s7_set_repl_prompt(const char *new_prompt);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 /* end S7 */
@@ -2283,6 +2290,10 @@ void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int op
   #define XEN_DEFINED_P(Name) false
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 XEN xen_return_first(XEN a, ...);
 #if (!HAVE_S7)
 int xen_to_c_int_or_else(XEN obj, int fallback);
@@ -2294,5 +2305,9 @@ char *xen_version(void);
 void xen_repl(int argc, char **argv);
 void xen_initialize(void);
 void xen_gc_mark(XEN val);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -42,6 +42,10 @@ typedef struct {
   bool dont_free;
 } vct;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void mus_vct_init(void);
 bool mus_vct_p(XEN obj);
 int mus_vct_print_length(void);
@@ -61,4 +65,10 @@ XEN xen_make_vct_wrapper(off_t len, Float *data);
 
 #define XEN_TO_VCT(arg) ((vct *)XEN_OBJECT_REF(arg))
 #define MUS_VCT_P(arg) mus_vct_p(arg)
+
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

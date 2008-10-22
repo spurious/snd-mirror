@@ -1,5 +1,7 @@
 #!/bin/csh -f
 
+# TODO add sndlib/libxm C++ cases
+
 # cp ~/dist/snd/snd.tar .
 # tar xf snd.tar
 

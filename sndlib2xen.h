@@ -18,6 +18,10 @@ typedef struct {
   bool wrapped;
 } sound_data;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 bool sound_data_p(XEN obj);
 char *sound_data_to_string(sound_data *v);
 void sound_data_free(sound_data *v);
@@ -36,4 +40,9 @@ sound_data *sound_data_multiply(sound_data *sd1, sound_data *sd2);
 sound_data *sound_data_offset(sound_data *sd, Float off);
 
 #define XEN_TO_SOUND_DATA(Obj) (sound_data *)XEN_OBJECT_REF(Obj)
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

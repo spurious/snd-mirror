@@ -227,7 +227,7 @@ int device_gains(int ur_dev)
 /* ------------------------------- SGI ----------------------------------------- */
 
 #ifdef MUS_SGI
-#define AUDIO_OK
+#define AUDIO_OK 1
 
 #include <audio.h>
 
@@ -1319,7 +1319,7 @@ static void describe_audio_state_1(void)
 
 #if (HAVE_OSS || HAVE_ALSA || HAVE_JACK_IN_LINUX)
 /* actually it's not impossible that someday we'll have ALSA but not OSS... */
-#define AUDIO_OK
+#define AUDIO_OK 1
 
 #include <sys/ioctl.h>
 
@@ -3511,7 +3511,7 @@ static int probe_api(void)
 #if HAVE_ALSA
 
 #if (!HAVE_OSS)
-#define AUDIO_OK
+#define AUDIO_OK 1
 #endif
 
 #include <sys/ioctl.h>
@@ -5103,7 +5103,7 @@ static void alsa_describe_audio_state_1(void)
 /* apparently input other than 8000 is 16-bit, 8000 is (?) mulaw */
 
 #if (defined(MUS_SUN) || defined(MUS_OPENBSD)) && (!(defined(AUDIO_OK)))
-#define AUDIO_OK
+#define AUDIO_OK 1
 
 #include <sys/types.h>
 #include <stropts.h>
@@ -6033,7 +6033,7 @@ static void describe_audio_state_1(void)
 /* ------------------------------- WINDOZE ----------------------------------------- */
 
 #if defined(MUS_WINDOZE) && (!(defined(__CYGWIN__)))
-#define AUDIO_OK
+#define AUDIO_OK 1
 
 #include <windows.h>
 #include <mmsystem.h>
@@ -7296,10 +7296,10 @@ static unsigned int bufsize = 0, current_bufsize = 0;
 static bool match_dac_to_sound = true;
 
 
-bool mus_audio_output_properties_mutable(bool mutable)
+bool mus_audio_output_properties_mutable(bool mut)
 {
-  match_dac_to_sound = mutable;
-  return(mutable);
+  match_dac_to_sound = mut;
+  return(mut);
 }
 
 
@@ -7860,7 +7860,7 @@ char *mus_audio_moniker(void) {return("Mac OSX audio");}
  *                                                                     */
 
 #ifdef MUS_ESD
-#define AUDIO_OK
+#define AUDIO_OK 1
 
 #include <esd.h>
 
@@ -8128,7 +8128,7 @@ void describe_audio_state_1(void)
 /* Based on code from ceres. */
 
 #if MUS_JACK
-#define AUDIO_OK
+#define AUDIO_OK 1
 #include <jack/jack.h>
 #include <samplerate.h>
 #include <sys/mman.h>
@@ -9093,7 +9093,7 @@ char *jack_mus_audio_moniker(void) {return("jack");}
  */
 
 #if defined(MUS_HPUX) && (!(defined(AUDIO_OK)))
-#define AUDIO_OK
+#define AUDIO_OK 1
 #include <sys/audio.h>
 
 #define RETURN_ERROR_EXIT(Error_Type, Audio_Line, Ur_Error_Message) \
@@ -9458,7 +9458,7 @@ int mus_audio_read(int line, char *buf, int bytes)
 /* ------------------------------- NETBSD ----------------------------------------- */
 
 #if defined(MUS_NETBSD) && (!(defined(AUDIO_OK)))
-#define AUDIO_OK
+#define AUDIO_OK 1
 
 /* started from Xanim a long time ago..., bugfixes from Thomas Klausner 30-Jul-05, worked into better shape Aug-05 */
 #include <fcntl.h>
@@ -10034,8 +10034,8 @@ int mus_audio_mixer_read(int dev, int field, int chan, float *val) {return(MUS_E
 int mus_audio_mixer_write(int dev, int field, int chan, float *val) {return(MUS_ERROR);}
 int mus_audio_initialize(void) {return(MUS_ERROR);}
 int mus_audio_systems(void) {return(0);}
-char *mus_audio_system_name(int system) {return("none");}
-char *mus_audio_moniker(void) {return("no audio support");}
+char *mus_audio_system_name(int system) {return((char *)"none");}
+char *mus_audio_moniker(void) {return((char *)"no audio support");}
 #endif
 
 

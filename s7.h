@@ -481,6 +481,7 @@ int main(int argc, const char* argv[])
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 /* assume we've configured and built sndlib, so it has created a mus-config.h file */
 
@@ -570,7 +571,7 @@ int main(int argc, char **argv)
     }
 }
 
-/* /home/bil/test/sndlib/ gcc -o doc7 doc7.c s7.o -lm -I. /home/bil/test/sndlib/sndlib.a -lgsl -lgslcblas 
+/* gcc -o doc7 doc7.c s7.o -lm -I. /home/bil/test/sndlib/sndlib.a -lgsl -lgslcblas 
  *
  *   gsl and gslcblas are the Gnu Scientific Library that the configure script found -- those 
  *   may not be necessary on other systems

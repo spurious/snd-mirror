@@ -320,9 +320,6 @@ AC_CHECK_SIZEOF(ssize_t)
 AC_CHECK_FUNCS(getcwd getwd strerror readlink setlocale access opendir sleep signal statvfs statfs getline difftime gettimeofday)
 AC_CHECK_FUNCS(vsnprintf snprintf strftime memmove strdup lstat fileno strcasecmp pathconf)
 
-AC_CHECK_FUNCS(cabs conj cacos cacosh carg casin casinh catan catanh) 
-AC_CHECK_FUNCS(ccos ccosh cexp clog cpow csin csinh csqrt ctan ctanh) 
-
 AC_LIB_PROG_LD
 AC_PROG_FGREP
 AC_DEFINE_UNQUOTED(FGREP_PROG, "$FGREP")
@@ -1563,6 +1560,7 @@ if test "$with_s7" != no && test "$with_extension_language" != no && test "$ac_s
         [
          AC_DEFINE(HAVE_SCM_C_MAKE_RECTANGULAR)
          AC_DEFINE(HAVE_COMPLEX_TRIG)
+# TODO: here if C++ we need to leave HAVE_COMPLEX_TRIG undefined -- how to catch this case? [also in sndlib's configure]
 	])
 
     AC_DEFINE(WITH_RUN)
