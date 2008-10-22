@@ -108,7 +108,9 @@
  *
  *   #define WITH_COMPLEX 1
  *   #define HAVE_COMPLEX_TRIG 1
- *   (the latter if functions like cexp are defined in the math library)
+ *
+ *   (define the first if your compiler has any support for complex numbers)
+ *   (define the latter if functions like csin are defined in the math library)
  *   In C++, leave all the complex stuff turned off.
  *
  * If pthreads are available:
@@ -677,16 +679,9 @@ static int safe_strlen(const char *str)
 
 static void s7_mark_embedded_objects(s7_pointer a); /* called by gc, calls fobj's mark func */
 static s7_pointer eval(s7_scheme *sc, opcode_t first_op);
-static s7_pointer g_stacktrace(s7_scheme *sc, s7_pointer args);
-static s7_pointer s7_string_concatenate(s7_scheme *sc, const char *s1, const char *s2);
 static s7_pointer s7_division_by_zero_error(s7_scheme *sc, const char *caller, s7_pointer arg);
 static s7_pointer s7_file_error(s7_scheme *sc, const char *caller, const char *descr, const char *name);
 static void s7_free_function(s7_pointer a);
-
-#if S7_DEBUGGING
-/* these are for gdb */
-static void gsp(s7_scheme *sc) {g_stacktrace(sc, sc->args);} 
-#endif
 
 
 
@@ -1307,7 +1302,6 @@ static void push_stack(s7_scheme *sc, opcode_t op, s7_pointer args, s7_pointer c
 } 
 
 
-/* PERHAPS: scheme output? */
 static char *no_outer_parens(char *str)
 {
   int i, len, stop = 0;
@@ -1391,7 +1385,8 @@ static int remember_file_name(const char *file)
 }
 
 
-static void print_stack_entry(s7_scheme *sc, opcode_t op, s7_pointer code, s7_pointer args)
+#if S7_DEBUGGING
+static void print_internal_stack_entry(s7_scheme *sc, opcode_t op, s7_pointer code, s7_pointer args)
 {
   char *str1 = NULL, *str2 = NULL;
   int line = 0;
@@ -1443,26 +1438,29 @@ static void print_stack_entry(s7_scheme *sc, opcode_t op, s7_pointer code, s7_po
 }
 
 
-static s7_pointer g_stacktrace(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_internal_stacktrace(s7_scheme *sc, s7_pointer args)
 {
-  #define H_stacktrace "(stacktrace) prints out the current stack contents"
-  
-  /* TODO: this is not very useful at the scheme level -- it prints out the write sequence! */
-  
   int i;
-  
   (*(sc->gc_off)) = true;
   for (i = 0; i < sc->stack_top; i +=4)
-    print_stack_entry(sc, 
-		      (opcode_t)s7_integer(vector_element(sc->stack, i + 3)),
-		      vector_element(sc->stack, i + 0),
-		      vector_element(sc->stack, i + 2));
-  print_stack_entry(sc, sc->op, sc->code, sc->args);
+    print_internal_stack_entry(sc, 
+			       (opcode_t)s7_integer(vector_element(sc->stack, i + 3)),
+			       vector_element(sc->stack, i + 0),
+			       vector_element(sc->stack, i + 2));
+  print_internal_stack_entry(sc, sc->op, sc->code, sc->args);
   fprintf(stderr, "\n");
   (*(sc->gc_off)) = false;
   return(sc->UNSPECIFIED);
 }
+#endif
 
+
+static s7_pointer g_stacktrace(s7_scheme *sc, s7_pointer args)
+{
+  /* under construction... */
+  #define H_stacktrace "(stacktrace) prints out the current stack contents"
+  return(sc->F);
+}
 
 
 
@@ -2138,6 +2136,8 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
 
 /* -------------------------------- numbers -------------------------------- */
 
+/* TODO: figure out how to do complex numbers in C++ */
+
 #if WITH_COMPLEX
   typedef double complex double_complex;
 
@@ -2163,7 +2163,6 @@ static double_complex ctan(double_complex z)
 } 
 
 
-/* Hyperbolic functions. */ 
 static double_complex csinh(double_complex z) 
 { 
   return sinh(creal(z)) * cos(cimag(z)) + (cosh(creal(z)) * sin(cimag(z))) * _Complex_I; 
@@ -2182,7 +2181,6 @@ static double_complex ctanh(double_complex z)
 } 
 
 
-/* Exponential and logarithmic functions. */ 
 static double_complex cexp(double_complex z) 
 { 
   return exp(creal(z)) * cos(cimag(z)) + (exp(creal(z)) * sin(cimag(z))) * _Complex_I; 
@@ -2207,7 +2205,6 @@ static double_complex clog(double_complex z)
 } 
 
 
-/* Power functions. */ 
 static double_complex cpow(double_complex x, double_complex y) 
 { 
   double r = cabs(x); 
@@ -9799,7 +9796,7 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
       write_char(sc, '\n', sc->error_port);
       
 #if S7_DEBUGGING
-      g_stacktrace(sc, sc->NIL);
+      g_internal_stacktrace(sc, sc->NIL);
 #endif
       
       if ((exit_eval) &&
@@ -10705,6 +10702,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			   *   current result <- expr
 			   *   previous ...
 			   * s7_error could save stack at point of error, then stacktrace uses it, not the current stack
+			   * for threads, if sc != sc->orig_sc we're in an s7 thread
+			   * use current tracing flag to decide whether to save this info?
 			   */
 #if S7_DEBUGGING
 			  fprintf(stderr, "apply: %s?\n", s7_object_to_c_string(sc, sc->code));

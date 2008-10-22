@@ -244,37 +244,74 @@ void resize_sx_and_zx(chan_info *cp)
 static void sy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
 {
   /* see note above -- context may be garbage!! -- this is a huge bug in gtk */
+  static bool ignore_sy_valuechanged_callback = false;
   chan_info *cp;
+
   cp = (chan_info *)get_user_data(G_OBJECT(adj));
-  if (cp->active == CHANNEL_HAS_AXES)
-    sy_changed(1.0 - ADJUSTMENT_VALUE(adj), cp);
+  if ((cp->active == CHANNEL_HAS_AXES) &&
+      (!ignore_sy_valuechanged_callback))
+    {
+      ignore_sy_valuechanged_callback = true;
+      sy_changed(1.0 - ADJUSTMENT_VALUE(adj), cp);
+      ignore_sy_valuechanged_callback = false;
+    }
 }
 
 
 static void sx_valuechanged_callback(GtkAdjustment *adj, gpointer context)
 {
+  static bool ignore_sx_valuechanged_callback = false;
   chan_info *cp;
+
   cp = (chan_info *)get_user_data(G_OBJECT(adj));
-  if (cp->active == CHANNEL_HAS_AXES)
-    sx_changed(ADJUSTMENT_VALUE(adj), cp);
+  if ((cp->active == CHANNEL_HAS_AXES) &&
+      (!ignore_sx_valuechanged_callback))
+    {
+      ignore_sx_valuechanged_callback = true;
+      sx_changed(ADJUSTMENT_VALUE(adj), cp);
+      ignore_sx_valuechanged_callback = false;
+    }
 }
 
 
 static void zy_valuechanged_callback(GtkAdjustment *adj, gpointer context)
 {
+  static bool ignore_zy_valuechanged_callback = false;
   chan_info *cp;
-  cp = (chan_info *)get_user_data(G_OBJECT(adj));
-  if (cp->active == CHANNEL_HAS_AXES)
-    zy_changed(1.0 - ADJUSTMENT_VALUE(adj), cp);
-}
 
+  cp = (chan_info *)get_user_data(G_OBJECT(adj));
+  if ((cp->active == CHANNEL_HAS_AXES) &&
+      (!ignore_zy_valuechanged_callback))
+    {
+      ignore_zy_valuechanged_callback = true;
+      zy_changed(1.0 - ADJUSTMENT_VALUE(adj), cp);
+      ignore_zy_valuechanged_callback = false;
+    }
+}
 
 static void zx_valuechanged_callback(GtkAdjustment *adj, gpointer context)
 {
   chan_info *cp;
+  static bool ignore_zx_valuechanged_callback = false; /*see below */
+  
   cp = (chan_info *)get_user_data(G_OBJECT(adj));
-  if (cp->active == CHANNEL_HAS_AXES)
-    zx_changed(ADJUSTMENT_VALUE(adj), cp);
+  if ((cp->active == CHANNEL_HAS_AXES) &&
+      (!ignore_zx_valuechanged_callback))
+    {
+      ignore_zx_valuechanged_callback = true;
+      zx_changed(ADJUSTMENT_VALUE(adj), cp);
+      ignore_zx_valuechanged_callback = false;
+    }
+
+  /* it's easy to get infinite recursion here: 
+   *    zx_changed -> focus_x_axis_change -> apply_x_axis_change -> update_xs -> reset_x_display -> resize_sx -> set_scrollbar ->
+   *    sx_valuechanged_callback -> apply_x_axis_change -> update_xs -> reset_x_display -> resize_sx_and_zx -> resize_sx
+   *    and we're looping!  This loop happens now because the gtk 3 changes (hiding the adjustment struct) mean that
+   *    we're using gtk_adjustment_set_value which triggers the valuechanged callback, whereas earlier we were
+   *    simply setting the field, and not triggering the callback.  Good Grief!
+   *
+   * I added the guards, but now the sliders seem glitchy -- certainly not smooth!
+   */
 }
 
 
