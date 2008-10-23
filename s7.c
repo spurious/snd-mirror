@@ -52,7 +52,7 @@
  *     object->string, eval-string
  *     reverse!, list-set!
  *     gc, gc-verbose, load-verbose
- *     stacktrace, tracing
+ *     stacktrace, tracing [these are changing...]
  *     quit
  *     *features*, *load-path*, *vector-print-length*
  *
@@ -395,6 +395,20 @@ struct s7_scheme {
   struct s7_scheme *orig_sc;
   s7_pointer key_values;
 #endif
+
+  /* the internal stack does not help the s7 user find a bug.
+   *   It is primarily controlling eval-internal loops, and has
+   *   little information for tracking call sequences.
+   * So, I think I'll try to conjure up a sort of fake stack
+   *   that tracks high-level eval/apply sequences.  The main
+   *   thing to avoid here is the clisp-style flood of useless
+   *   printout.  So the next fields are for our "call stack".
+   */
+
+  int call_stack_size, call_stack_top;
+  s7_pointer *call_stack_ops, *call_stack_args;
+
+  /* does it make sense to add an entry only when a new frame is created (counting function evaluation)? */
 };
 
 
@@ -9741,6 +9755,7 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	  x = vector_element(sc->stack, i - 3);
 	  if (dynamic_wind_state(x) == DWIND_BODY)
 	    s7_call(sc, dynamic_wind_out(x), sc->NIL);
+	  /* TODO: if an error happens in this call, we can get an infinite loop -- need to just get back to top-level */
 	}
       else
 	{

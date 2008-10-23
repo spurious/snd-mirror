@@ -783,9 +783,13 @@ all saved edit lists."
 			 (begin
 			   ;; xe is where the mouse-click occurred in the graph window's (local) coordinates
 			   ;;   not the same as (.x e), which appears to be in the outer shell's coordinates
+			   (if (>= chn (chans snd))
+			       (set! chn 0))
+			   ;; TODO: fix the channel number here -- it is (chans snd) in s7 
 			   (set! graph-popup-snd snd)
 			   (set! graph-popup-chn chn)
-			   (if (= (channel-style snd) channels-combined)
+			   (if (and (= (channel-style snd) channels-combined)
+				    (> (chans snd) 1))
 			       (let ((ye (.y e))) ; y axis location of mouse-down
 				 (call-with-exit
 				  (lambda (break)

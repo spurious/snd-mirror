@@ -2620,7 +2620,9 @@ void g_xen_initialize(void)
   XEN_DEFINE_PROCEDURE(S_gc_on,  g_gc_on_w,  0, 0, 0, H_gc_on);
 
 #if HAVE_GUILE
+#if MUS_DEBUGGING
   XEN_DEFINE_PROCEDURE("snd-stdin-test", g_snd_stdin_test, 1, 0, 0, "internal testing function");
+#endif
   XEN_DEFINE_PROCEDURE(S_write_byte, g_write_byte, 1, 0, 0, H_write_byte);
 #if (!HAVE_SCM_CONTINUATION_P)
   XEN_DEFINE_PROCEDURE("continuation?", g_continuation_p_w, 1, 0, 0, "#t if arg is a continuation");

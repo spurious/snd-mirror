@@ -561,7 +561,8 @@
 			 (begin
 			   (set! graph-popup-snd snd)
 			   (set! graph-popup-chn chn)
-			   (if (= (channel-style snd) channels-combined)
+			   (if (and (= (channel-style snd) channels-combined)
+				    (> (chans snd) 1))
 			       (call-with-exit
 				(lambda (break)
 				  (do ((i 0 (1+ i)))

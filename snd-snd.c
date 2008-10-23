@@ -308,11 +308,11 @@ static bool tick_peak_env(chan_info *cp, env_state *es)
       else lm = (ep->peak_env_size - ep->bin);
       if (lm <= 0) lm = 1;
 
-      samps_to_read = (off_t)(lm * ep->samps_per_bin);
+      samps_to_read = (off_t)lm * (off_t)(ep->samps_per_bin);
       if (samps_to_read > 1000000)
 	{
 	  lm = 1000000 / ep->samps_per_bin;
-	  samps_to_read = (off_t)(lm * ep->samps_per_bin);
+	  samps_to_read = (off_t)lm * (off_t)(ep->samps_per_bin);
 	}
 
       sb = ep->bin;
@@ -334,7 +334,6 @@ static bool tick_peak_env(chan_info *cp, env_state *es)
       if ((es->sf == NULL) &&
 	  (es->direct_data == NULL))
 	{
-
 	  if ((cp->edit_ctr == 0) &&
 	      (cp->sound) &&
 	      (cp->sound->inuse == SOUND_NORMAL) &&
@@ -403,7 +402,7 @@ static bool tick_peak_env(chan_info *cp, env_state *es)
 		memset((void *)(es->direct_data + bytes_read), zero_byte, lm * es->bytes - bytes_read);
 	      else /* MUS_UB|LSHORT 32768 or 128(as a short)=>0 */
 		{
-		  int i, start, len;
+		  off_t i, start, len;
 		  unsigned short *buf;
 
 		  /* (with-sound (:data-format mus-ubshort) (fm-violin 0 2 440 .1)) */
@@ -444,7 +443,6 @@ static bool tick_peak_env(chan_info *cp, env_state *es)
 	      FREE(es->direct_data);
 	      es->direct_data = NULL;
 	    }
-
 	  ep->completed = true;
 	  return(true);
 	}

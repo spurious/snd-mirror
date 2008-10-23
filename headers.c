@@ -1900,6 +1900,8 @@ static int write_riff_fmt_chunk(int fd, unsigned char *hdrbuf, int format, int w
 }
 
 
+static const unsigned char I_JUNK[4] = {'J','U','N','K'};
+
 static int read_riff_header(const char *filename, int fd)
 {
   /* we know we have checked for RIFF xxxx WAVE when we arrive here */
@@ -1927,6 +1929,8 @@ static int read_riff_header(const char *filename, int fd)
       chunksize = big_or_little_endian_int((unsigned char *)(hdrbuf + 4), little);
       if ((chunksize == 0) && /* can be empty data chunk */
 	  (hdrbuf[0] == 0) && (hdrbuf[1] == 0) && (hdrbuf[2] == 0) && (hdrbuf[3] == 0))
+	break;
+      if (chunksize < 0)
 	break;
       if (match_four_chars((unsigned char *)hdrbuf, I_fmt_))
 	{
@@ -1972,6 +1976,11 @@ static int read_riff_header(const char *filename, int fd)
 			    {
 			      aux_comment_start[0] = offset + 8;
 			      aux_comment_end[0] = offset + 8 + chunksize - 1;
+			    }
+			  else
+			    {
+			      if (match_four_chars((unsigned char *)hdrbuf, I_JUNK))
+				update_rf64_location = offset;
 			    }
 			}
 		    }
@@ -2029,7 +2038,6 @@ static void write_riff_clm_comment(int fd, const char *comment, int len, int ext
 
 static int write_riff_header(int fd, int wsrate, int wchans, int siz, int format, const char *comment, int len)
 {
-  const unsigned char I_JUNK[4] = {'J','U','N','K'};
   int j, extra = 0, err = MUS_NO_ERROR;
 
   data_location = 36 + 36 + 8;
@@ -2346,12 +2354,14 @@ static int write_rf64_header(int fd, int wsrate, int wchans, off_t size, int for
 static int mus_header_convert_riff_to_rf64(const char *filename, off_t size)
 {
   int err = MUS_NO_ERROR, fd;
+
   update_rf64_location = -1;
   update_ssnd_location = 0;
   /* mus_header_change_type copies the entire file, which is probably a bad idea in this case */
 
   err = mus_header_read(filename);
   if (err != MUS_NO_ERROR) return(err);
+
   if ((update_ssnd_location == 0) ||
       (update_rf64_location <= 0))  /* "JUNK" chunk has to be there already for this to work */
     return(MUS_CANT_CONVERT);
@@ -2370,6 +2380,7 @@ static int mus_header_convert_riff_to_rf64(const char *filename, off_t size)
   header_write(fd, hdrbuf, 4);
 
   /* convert the "JUNK" chunk to be a "ds64" chunk */
+  lseek(fd, update_rf64_location, SEEK_SET);
   write_four_chars((unsigned char *)hdrbuf, I_ds64);
   mus_lint_to_char((unsigned char *)(hdrbuf + 4), 28);
   mus_loff_t_to_char((unsigned char *)(hdrbuf + 8), data_location + size - 8);
@@ -5888,7 +5899,11 @@ int mus_header_change_data_size(const char *filename, int type, off_t size) /* i
   fd = mus_file_reopen_write(filename);
   if (fd == -1) return(mus_error(MUS_HEADER_WRITE_FAILED, "%s: %s", filename, STRERROR(errno)));
 
-  if (size < 0) return(mus_error(MUS_BAD_SIZE, "%s: change size to " OFF_TD "?", filename, size));
+  if (size < 0) 
+    {
+      CLOSE(fd, filename);
+      return(mus_error(MUS_BAD_SIZE, "%s: change size to " OFF_TD "?", filename, size));
+    }
 
   switch (type)
     {
@@ -5934,7 +5949,10 @@ int mus_header_change_data_size(const char *filename, int type, off_t size) /* i
     case MUS_RIFF: 
       /* read sets current update_form_size, data_format, data_size, update_ssnd_location */
       if (size > BIGGEST_4_BYTE_SIGNED_INT)
-	return(mus_header_convert_riff_to_rf64(filename, size));
+	{
+	  CLOSE(fd, filename);
+	  return(mus_header_convert_riff_to_rf64(filename, size));
+	}
       lseek(fd, 4L, SEEK_SET);
       mus_lint_to_char((unsigned char *)hdrbuf, (int)size + update_form_size - mus_samples_to_bytes(data_format, data_size)); 
       header_write(fd, hdrbuf, 4);
