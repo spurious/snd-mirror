@@ -52,8 +52,7 @@
  *     object->string, eval-string
  *     reverse!, list-set!
  *     gc, gc-verbose, load-verbose
- *     stacktrace, tracing [these are changing...]
- *     quit
+ *     stacktrace, quit
  *     *features*, *load-path*, *vector-print-length*
  *
  *
@@ -176,15 +175,15 @@
 
 /* ---------------- end of setup stuff ---------------- */
 
-typedef enum {OP_TOP_LEVEL0, OP_TOP_LEVEL1, OP_READ_INTERNAL, OP_PRINT, OP_EVAL, OP_REAL_EVAL, 
-	      OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY, OP_REAL_APPLY, OP_DOMACRO, OP_LAMBDA, OP_QUOTE, 
+typedef enum {OP_TOP_LEVEL0, OP_TOP_LEVEL1, OP_READ_INTERNAL, OP_EVAL,
+	      OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY, OP_DOMACRO, OP_LAMBDA, OP_QUOTE, 
 	      OP_DEFINE0, OP_DEFINE1, OP_BEGIN, OP_IF0, OP_IF1, OP_SET0, OP_SET1, OP_SET2,
 	      OP_LET0, OP_LET1, OP_LET2, OP_LET_STAR0, OP_LET_STAR1, OP_LET_STAR2, 
 	      OP_LETREC0, OP_LETREC1, OP_LETREC2, OP_COND0, OP_COND1, OP_MAKE_PROMISE, OP_AND0, OP_AND1, 
 	      OP_OR0, OP_OR1, OP_CONS_STREAM0, OP_CONS_STREAM1, OP_DEFMACRO, OP_MACRO0, OP_MACRO1, OP_DEFINE_MACRO,
 	      OP_CASE0, OP_CASE1, OP_CASE2, OP_READ_EXPRESSION, OP_READ_LIST, OP_READ_DOT, OP_READ_QUOTE, 
 	      OP_READ_QUASIQUOTE, OP_READ_QUASIQUOTE_VECTOR, OP_READ_UNQUOTE, OP_READ_UNQUOTE_SPLICING, 
-	      OP_READ_VECTOR, OP_PRINT_LIST0, OP_PRINT_LIST1, OP_PRINT_VECTOR, OP_FORCE, OP_READ_RETURN_EXPRESSION, 
+	      OP_READ_VECTOR, OP_FORCE, OP_READ_RETURN_EXPRESSION, OP_PRINT,
 	      OP_READ_POP_AND_RETURN_EXPRESSION, OP_LOAD_RETURN_IF_EOF, OP_LOAD_CLOSE_AND_POP_IF_EOF, 
 	      OP_EVAL_STRING, OP_EVAL_STRING_DONE, OP_QUIT, OP_CATCH, OP_DYNAMIC_WIND, OP_FOR_EACH, OP_MAP, 
 	      OP_DO, OP_DO_END0, OP_DO_END1, OP_DO_STEP0, OP_DO_STEP1, OP_DO_STEP2, OP_DO_INIT,
@@ -368,7 +367,6 @@ struct s7_scheme {
   
   /* these 5 are pointers so that all thread refs are to the same thing */
   bool *gc_off;                       /* if true, the GC won't run */
-  bool *tracing;
   bool *gc_verbose;                   /* if gc_verbose is true, print gc status */
   bool *load_verbose;                 /* if load_verbose is true, print file names as they are loaded */
   long *gensym_counter;
@@ -409,6 +407,7 @@ struct s7_scheme {
    *   printout.  So the next fields are for our "call stack".
    */
 
+  int saved_line_number;
   int eval_history_size, eval_history_top;
   s7_pointer *eval_history_ops, *eval_history_args;
 #if HAVE_PTHREADS
@@ -465,11 +464,9 @@ static const char *type_names[T_LAST_TYPE + 1] = {
 #define T_IMMUTABLE                   (1 << (TYPE_BITS + 2))
 #define is_immutable(p)               (typeflag(p) & T_IMMUTABLE)
 #define set_immutable(p)              typeflag(p) |= T_IMMUTABLE
-#define set_mutable(p)                typeflag(p) &= (~T_IMMUTABLE)
 
 #define T_ATOM                        (1 << (TYPE_BITS + 3))
 #define is_atom(p)                    (typeflag(p) & T_ATOM)
-#define set_atom(p)                   typeflag(p) |= T_ATOM
 
 #define T_GC_MARK                     (1 << (TYPE_BITS + 4))
 #define is_marked(p)                  (typeflag(p) &  T_GC_MARK)
@@ -525,6 +522,7 @@ static const char *type_names[T_LAST_TYPE + 1] = {
 #define cddddr(p)                     cdr(cdr(cdr(cdr(p))))
 #define caddar(p)                     car(cdr(cdr(car(p))))
 #define pair_line_number(p)           (p)->object.cons.line
+#define set_pair_line_number(p, n)    (p)->object.cons.line = (n)
 
 #define string_value(p)               ((p)->object.string.svalue)
 #define string_length(p)              ((p)->object.string.length)
@@ -557,8 +555,6 @@ static const char *type_names[T_LAST_TYPE + 1] = {
 #define function_optional_args(f)     (f)->object.ffptr->optional_args
 #define function_has_rest_arg(f)      (f)->object.ffptr->rest_arg
 
-#define continuation_cc_stack_size(p) (p)->object.cc->cc_stack_size
-#define continuation_cc_stack_top(p)  (p)->object.cc->cc_stack_top
 #define continuation_cc_stack(p)      (p)->object.cc->cc_stack
 
 #define is_goto(p)                    (type(p) == T_GOTO)
@@ -588,18 +584,6 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
  *   (I'm not going to support exact complex or inexact ratio etc)
  */
 
-#define num_is_fixnum(n)              (n.type == NUM_INT)
-#define object_is_fixnum(p)           (p->object.number.type == NUM_INT)
-
-#define num_is_ratio(n)               (n.type == NUM_RATIO)
-#define object_is_ratio(p)            (p->object.number.type == NUM_RATIO)
-
-#define num_is_real(n)                ((n.type & (NUM_REAL | NUM_COMPLEX)) == NUM_REAL)
-#define object_is_real(p)             ((p->object.number.type & (NUM_REAL | NUM_COMPLEX)) == NUM_REAL
-
-#define num_is_complex(n)             (n.type & NUM_COMPLEX)
-#define object_is_complex(p)          (p->object.number.type & NUM_COMPLEX)
-
 #define num_type(n)                   (n.type)
 #define object_number_type(p)         (p->object.number.type)
 
@@ -614,7 +598,6 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 #define integer(n)                    n.value.ivalue
 #define real(n)                       n.value.rvalue
 
-#define loop_counter(p)               ((p)->object.number.value.ivalue)
 
 
 #if S7_DEBUGGING
@@ -656,7 +639,6 @@ static char *describe_type(s7_pointer p)
 #define TOK_DOT     2
 #define TOK_ATOM    3
 #define TOK_QUOTE   4
-#define TOK_COMMENT 5
 #define TOK_DQUOTE  6
 #define TOK_BQUOTE  7
 #define TOK_COMMA   8
@@ -1067,6 +1049,12 @@ static int gc(s7_scheme *sc, const char *function, int line)
   for (i = 0; i < sc->temps_size; i++)
     s7_mark_object(sc->temps[i]);
   
+  for (i = 0; i < sc->eval_history_size; i++)
+    {
+      s7_mark_object(sc->eval_history_ops[i]);
+      s7_mark_object(sc->eval_history_args[i]);
+    }
+  
   /* free up all other objects */
   for (i = 0; i < sc->heap_size; i++)
     {
@@ -1367,7 +1355,7 @@ static s7_pointer remember_line(s7_scheme *sc, s7_pointer obj)
 {
   if ((sc->input_port != sc->NIL) && 
       (is_file_port(sc->input_port)))
-    obj->object.cons.line = port_line_number(sc->input_port) | (port_file_number(sc->input_port) << 20);
+    set_pair_line_number(obj, port_line_number(sc->input_port) | (port_file_number(sc->input_port) << 20));
   return(obj);
 }
 
@@ -1459,7 +1447,7 @@ static void print_eval_history_entry(s7_scheme *sc, int n)
     {
       if ((remembered_line_number(line) != 0) &&
 	  (remembered_file_name(line)))
-	fprintf(stderr, "; %s[%d]", remembered_file_name(line), remembered_line_number(line));
+	fprintf(stderr, "        ; %s[%d]", remembered_file_name(line), remembered_line_number(line));
     }
 
   /* TODO: truncate long strings of args */
@@ -1478,7 +1466,6 @@ static s7_pointer g_stacktrace(s7_scheme *sc, s7_pointer args)
   pthread_mutex_lock(&eval_history_lock);
 #endif
 
-  /* TODO: current? or is this handled by s7_error? */
   fprintf(stderr, "\neval history:\n");
   for (i = 0; i < sc->eval_history_size; i++)
     print_eval_history_entry(sc, (sc->eval_history_size + sc->eval_history_top - i - 1) % sc->eval_history_size);
@@ -7396,19 +7383,6 @@ s7_pointer s7_object_to_string(s7_scheme *sc, s7_pointer obj)
 }
 
 
-static void print_atom(s7_scheme *sc, s7_pointer obj)
-{
-  /* this is used in the eval loop, always assuming current-output-port (eval|error output, etc) */
-  char *p;
-  p = s7_atom_to_c_string(sc, obj, true);
-  if (p)
-    {
-      write_string(sc, p, sc->output_port);
-      free(p);
-    }
-}
-
-
 
 /* -------- newline -------- */
 
@@ -9237,14 +9211,7 @@ static char *pws_print(void *obj)
 {
   pws *f = (pws *)obj;
   if (f->name)
-    {
-      char *str;
-      int len;
-      len = 32 + safe_strlen(f->name);
-      str = (char *)malloc(len);
-      snprintf(str, len, "#<procedure-with-setter: %s>", f->name);
-      return(str);
-    }
+    return(strdup(f->name));
   return(strdup((char *)"#<procedure-with-setter>"));
 }
 
@@ -9301,7 +9268,7 @@ static s7_pointer pws_set(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 
 static s7_pointer g_make_procedure_with_setter(s7_scheme *sc, s7_pointer args)
 {
-  /* TODO: figure out how to add pws name and doc here */
+  /* TODO: figure out how to add pws name and doc here (guile compatibility in scheme code is the catch) */
 
   s7_pointer p;
   pws *f;
@@ -9875,9 +9842,7 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	}
       write_char(sc, '\n', sc->error_port);
       
-#if 1
       g_stacktrace(sc, sc->NIL);
-#endif
       
       if ((exit_eval) &&
 	  (sc->error_exiter))
@@ -10049,16 +10014,6 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
 } 
 
 
-static s7_pointer g_tracing(s7_scheme *sc, s7_pointer a)
-{
-  #define H_tracing "(tracing bool) turns tracing on or off"
-  s7_pointer old_val;
-  old_val = (*(sc->tracing)) ? sc->T : sc->F;
-  (*(sc->tracing)) = (car(a) != sc->F);
-  return(old_val);
-}
-
-
 static s7_pointer g_scheme_implementation(s7_scheme *sc, s7_pointer args)
 {
   #define H_scheme_implementation "(scheme-implementation) returns some string describing the current S7"
@@ -10178,7 +10133,7 @@ static s7_pointer g_call_with_values(s7_scheme *sc, s7_pointer args)
 
 /* -------------------------------- eval -------------------------------- */
 
-/* all explicit write-* in eval assume current-output-port -- tracing, error fallback handling, etc */
+/* all explicit write-* in eval assume current-output-port -- error fallback handling, etc */
 /*   internal reads assume sc->input_port is the input port */
 
 static s7_pointer eval(s7_scheme *sc, opcode_t first_op) 
@@ -10301,8 +10256,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_PRINT: /* print evaluation result */
-      if (*(sc->tracing))
-	write_string(sc, "\nGives: ", sc->output_port);
       pop_stack(sc, sc->value);
       goto START;
       
@@ -10518,18 +10471,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     EVAL:
     case OP_EVAL:       /* main part of evaluation */
-      if (*(sc->tracing))
-	{
-	  push_stack(sc, OP_REAL_EVAL, sc->args, sc->code);
-	  sc->args = sc->code;
-	  write_string(sc, "\nEval: ", sc->output_port);
-	  goto P0LIST;
-	}
-      /* fall through */
-      
-      
-    case OP_REAL_EVAL:
-
       ASSERT_IS_OBJECT(sc->envir, "env");
       ASSERT_IS_OBJECT(sc->code, "code");
 
@@ -10580,13 +10521,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    goto START;
 	  }
       
-    case OP_EVAL_ARGS0:     /* eval arguments */
+    case OP_EVAL_ARGS0:
+      sc->saved_line_number = pair_line_number(sc->code);
+
       if (is_macro(sc->value)) 
 	{    
 	  /* macro expansion */
 	  push_stack(sc, OP_DOMACRO, sc->NIL, sc->NIL);
 	  sc->args = s7_cons(sc, sc->code, sc->NIL);
 	  sc->code = sc->value;
+	  set_pair_line_number(sc->code, sc->saved_line_number);
 	  goto APPLY;
 	} 
       else 
@@ -10610,7 +10554,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       
       
-    case OP_EVAL_ARGS1:     /* eval arguments */
+    case OP_EVAL_ARGS1:
       /*
 	fprintf(stderr, "e1args: [%p]%s [%p]%s\n", sc->value, s7_object_to_c_string(sc, sc->value), sc->args, s7_object_to_c_string(sc, sc->args));
       */
@@ -10649,6 +10593,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{  /* end */
 	  sc->args = s7_reverse_in_place(sc, sc->NIL, sc->args); 
 	  sc->code = car(sc->args);
+	  set_pair_line_number(sc->code, sc->saved_line_number);
 	  sc->args = cdr(sc->args);
 	  /* goto APPLY;  */
 	}
@@ -10656,19 +10601,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     APPLY:
     case OP_APPLY:      /* apply 'code' to 'args' */
-      
-      if (*(sc->tracing))
-	{
-	  push_stack(sc, OP_REAL_APPLY, sc->args, sc->code);
-	  write_string(sc, "\nApply to: ", sc->output_port);
-	  goto P0LIST;
-	}
       add_eval_history_entry(sc, sc->code, sc->args);
-
-      /* fall through */
-      
-      
-    case OP_REAL_APPLY:
       
       if (s7_is_function(sc->code))
 	{
@@ -10775,28 +10708,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 			  pop_stack(sc, sc->x);
 			  goto START;
 			}
-		      else 
-			{
-			  /* TODO: this can be a very hard bug to track down -- we need to
-			   *   keep the path to this "function" somewhere -- save the last
-			   *   evaled expression, and include it here
-			   */
-			  /* sc->eval_stack as circular list of last n evalled expressions
-			   * sc->result_stack as parallel list of the results
-			   * *trace-length* to set this list's length
-			   * stacktrace then shows the stack (largely useless) and these lists:
-			   *   current result <- expr
-			   *   previous ...
-			   * s7_error could save stack at point of error, then stacktrace uses it, not the current stack
-			   * for threads, if sc != sc->orig_sc we're in an s7 thread
-			   * use current tracing flag to decide whether to save this info?
-			   */
-#if S7_DEBUGGING
-			  fprintf(stderr, "apply: %s?\n", s7_object_to_c_string(sc, sc->code));
-			  abort();
-#endif
-			  return(eval_error(sc, "apply of non-function?", sc->code));
-			}
+		      else return(eval_error(sc, "apply of non-function?", sc->code));
 		    }
 		}
 	    }
@@ -11536,9 +11448,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	case TOK_ATOM:
 #if USE_CHARACTER_TABLES
-	  pop_stack(sc, make_atom(sc, read_string_upto(sc, atom_delimiter_table, sc->input_port), 10)); /* if reading list (from lparen), this will finally get us to rdlist */
+	  pop_stack(sc, make_atom(sc, read_string_upto(sc, atom_delimiter_table, sc->input_port), 10)); 
+	  /* if reading list (from lparen), this will finally get us to op_read_list */
 #else
-	  pop_stack(sc, make_atom(sc, read_string_upto(sc, "();\t\n\r ", sc->input_port), 10)); /* if reading list (from lparen), this will finally get us to rdlist */
+	  pop_stack(sc, make_atom(sc, read_string_upto(sc, "();\t\n\r ", sc->input_port), 10)); 
+	  /* if reading list (from lparen), this will finally get us to op_read_list */
 #endif
 	  goto START;
 	  
@@ -11672,107 +11586,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->args = sc->value;
       pop_stack(sc, g_vector(sc, sc->args));
       goto START;
-      
-      
-    P0LIST:
-    case OP_PRINT_LIST0:
-      if ((s7_is_vector(sc->args)) ||
-	  (s7_is_hash_table(sc->args)))
-	{
-	  write_string(sc, "#(", sc->output_port);
-	  sc->args = s7_cons(sc, sc->args, s7_make_integer(sc, 0)); /* loop_counter (see print vector) */
-	  goto PRINT_VECTOR;
-	} 
-      else if (!s7_is_pair(sc->args)) 
-	{
-	  print_atom(sc, sc->args);
-	  pop_stack(sc, sc->T);
-	  goto START;
-	} 
-      else if ((car(sc->args) == sc->QUOTE) && (s7_is_pair(cdr(sc->args))) && (cddr(sc->args) == sc->NIL))
-	{
-	  write_string(sc, "'", sc->output_port);
-	  sc->args = cadr(sc->args);
-	  goto P0LIST;
-	} 
-      else if ((car(sc->args) == sc->QUASIQUOTE) && (s7_is_pair(cdr(sc->args))) && (cddr(sc->args) == sc->NIL))
-	{
-	  write_string(sc, "`", sc->output_port);
-	  sc->args = cadr(sc->args);
-	  goto P0LIST;
-	} 
-      else if ((car(sc->args) == sc->UNQUOTE) && (s7_is_pair(cdr(sc->args))) && (cddr(sc->args) == sc->NIL))
-	{
-	  write_string(sc, ", ", sc->output_port);
-	  sc->args = cadr(sc->args);
-	  goto P0LIST;
-	} 
-      else if ((car(sc->args) == sc->UNQUOTE_SPLICING) && (s7_is_pair(cdr(sc->args))) && (cddr(sc->args) == sc->NIL))
-	{
-	  write_string(sc, ",@", sc->output_port);
-	  sc->args = cadr(sc->args);
-	  goto P0LIST;
-	} 
-      else 
-	{
-	  write_string(sc, "(", sc->output_port);
-	  push_stack(sc, OP_PRINT_LIST1, cdr(sc->args), sc->NIL);
-	  sc->args = car(sc->args);
-	  goto P0LIST;
-	}
-      
-      
-    case OP_PRINT_LIST1:
-      if (s7_is_pair(sc->args)) 
-	{
-	  push_stack(sc, OP_PRINT_LIST1, cdr(sc->args), sc->NIL);
-	  write_string(sc, " ", sc->output_port);
-	  sc->args = car(sc->args);
-	  goto P0LIST;
-	} 
-      else if ((s7_is_vector(sc->args)) ||
-	       (s7_is_hash_table(sc->args)))
-	{
-	  push_stack(sc, OP_PRINT_LIST1, sc->NIL, sc->NIL);
-	  write_string(sc, " . ", sc->output_port);
-	  goto P0LIST;
-	} 
-      else 
-	{
-	  if (sc->args != sc->NIL) 
-	    {
-	      write_string(sc, " . ", sc->output_port);
-	      print_atom(sc, sc->args);
-	    }
-	  write_string(sc, ")", sc->output_port);
-	  pop_stack(sc, sc->T);
-	  goto START;
-	}
-      
-      
-    PRINT_VECTOR:
-    case OP_PRINT_VECTOR: 
-      {
-	int i = loop_counter(cdr(sc->args));
-	s7_pointer vec = car(sc->args);
-	int len = vector_length(vec);
-	if (i == len) 
-	  {
-	    write_string(sc, ")", sc->output_port);
-	    pop_stack(sc, sc->T);
-	    goto START;
-	  } 
-	else 
-	  {
-	    s7_pointer elem = vector_element(vec, i);
-	    loop_counter(cdr(sc->args)) = i + 1;
-	    push_stack(sc, OP_PRINT_VECTOR, sc->args, sc->NIL);
-	    sc->args = elem;
-	    write_string(sc, " ", sc->output_port);
-	    goto P0LIST;
-	  }
-      }
-      
+
       
     default:
 #if S7_DEBUGGING
@@ -12311,7 +12125,6 @@ s7_scheme *s7_init(void)
   
   sc->gc_verbose = (bool *)calloc(1, sizeof(bool));
   sc->load_verbose = (bool *)calloc(1, sizeof(bool));
-  sc->tracing = (bool *)calloc(1, sizeof(bool));
   sc->gensym_counter = (long *)calloc(1, sizeof(long));
 
   sc->eval_history_top = 0;
@@ -12703,7 +12516,6 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "catch",                   g_catch,                   3, 0, false, H_catch);
   s7_define_function(sc, "error",                   g_error,                   0, 0, true,  H_error);
   
-  s7_define_function(sc, "tracing",                 g_tracing,                 1, 0, false, H_tracing);
   s7_define_function(sc, "gc-verbose",              g_gc_verbose,              1, 0, false, H_gc_verbose);
   s7_define_function(sc, "load-verbose",            g_load_verbose,            1, 0, false, H_load_verbose);
   s7_define_function(sc, "stacktrace",              g_stacktrace,              0, 0, false, H_stacktrace);

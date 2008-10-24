@@ -254,6 +254,9 @@ int main(int argc, char **argv)
   add_header("snd-menu.h");
   add_header("snd-file.h");
 
+  add_header("s7.h");
+  add_file("s7.c");
+
   /* add_file("xen.h"); */
   /* add_file("snd.h"); */
 
