@@ -487,7 +487,7 @@ int mus_audio_compatible_format(int dev);
   char *strerror(int errnum);
 #endif
 
-#if USE_MAC_OSX
+#if MUS_MAC_OSX
   bool mus_audio_output_properties_mutable(bool mut);
 #endif
 

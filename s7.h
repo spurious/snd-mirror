@@ -1,10 +1,11 @@
 #ifndef _S7_H
 #define _S7_H
 
-#define S7_VERSION "1.0"
-#define S7_DATE "1-Oct-08"
+#define S7_VERSION "1.1"
+#define S7_DATE "25-Oct-08"
 
 /*
+ * 25-Oct:    added name arg to s7_make_procedure_with_setter.
  * 1-Oct-08   version 1.0
  */
 
@@ -223,6 +224,7 @@ void s7_write(s7_scheme *sc, s7_pointer obj, s7_pointer port);
 void s7_display(s7_scheme *sc, s7_pointer obj, s7_pointer port);
 
 s7_pointer s7_make_procedure_with_setter(s7_scheme *sc, 
+					 const char *name,
 					 s7_pointer (*getter)(s7_scheme *sc, s7_pointer args), 
 					 int get_req_args, int get_opt_args,
 					 s7_pointer (*setter)(s7_scheme *sc, s7_pointer args),

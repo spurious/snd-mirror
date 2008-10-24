@@ -1260,13 +1260,13 @@ void snd_load_init_file(bool no_global, bool no_init)
   /* called only in snd-g|xmain.c at initialization time */
 
   /* changed Oct-05 because the Scheme/Ruby/Forth choices are becoming a hassle --
-   *   now save-options has its own file ~/.snd_prefs_guile|ruby|forth which is loaded first, if present
-   *     then ~/.snd_guile|ruby|forth, if present
+   *   now save-options has its own file ~/.snd_prefs_guile|ruby|forth|s7 which is loaded first, if present
+   *     then ~/.snd_guile|ruby|forth|s7, if present
    *     then ~/.snd for backwards compatibility
    * snd_options does not write ~/.snd anymore, but overwrites the .snd_prefs_* file
    * use set init files only change the ~/.snd choice
    *
-   * there are parallel choices for the global configuration file: /etc/snd_guile|ruby|forth.conf
+   * there are parallel choices for the global configuration file: /etc/snd_guile|ruby|forth|s7.conf
    */
 #if HAVE_EXTENSION_LANGUAGE
 #if HAVE_GUILE

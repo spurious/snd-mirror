@@ -45,6 +45,9 @@
 
 (if (provided? 'snd-s7)
     (begin
+      (if (not (provided? 's7-optargs.scm)) (load "s7-optargs.scm"))
+      (if (not (provided? 's7-format.scm)) (load "s7-format.scm"))
+	  
       (define O_RDWR 2)
       (define O_APPEND 1024)
       (define O_RDONLY 0)

@@ -435,15 +435,16 @@ whenever they're in the current view."
 
   (add-hook! after-open-hook 
 	     (lambda (s)
-	       (do ((i 0 (1+ i)))
-		   ((= i (chans s)))
-		 (set! (channel-property 'save-state-ignore s i)
-		       (cons 'inset-envelope 
-			     (or (channel-property 'save-state-ignore s i) 
-				 (list 'save-state-ignore))))
-		 (add-hook! (undo-hook s i) 
-			    (lambda () 
-			      (set! (channel-property 'inset-envelope s i) #f))))))
+	       (do ((ii 0 (1+ ii)))
+		   ((= ii (chans s)))
+		 (let ((i ii)) ; for s7
+		   (set! (channel-property 'save-state-ignore s i)
+			 (cons 'inset-envelope 
+			       (or (channel-property 'save-state-ignore s i) 
+				   (list 'save-state-ignore))))
+		   (add-hook! (undo-hook s i) 
+			      (lambda () 
+				(set! (channel-property 'inset-envelope s i) #f)))))))
   (add-hook! peak-env-hook 
 	     (lambda (s c) 
 	       (set! (channel-property 'inset-envelope s c) #f)

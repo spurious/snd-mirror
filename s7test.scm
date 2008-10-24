@@ -26206,6 +26206,66 @@
 (test ((lambda lambda lambda) 'x) '(x))
 (test ((lambda (begin) (begin 1 2 3)) (lambda lambda lambda)) '(1 2 3))
 
+(test (let ((funcs (make-vector 3 #f)))
+	(do ((i 0 (+ i 1)))
+	    ((= i 3))
+	  (vector-set! funcs i (lambda () (+ i 1))))
+	(+ ((vector-ref funcs 0))
+	   ((vector-ref funcs 1))
+	   ((vector-ref funcs 2))))
+      6)
+
+(test (let ((i 1))
+	(let ((func1 (lambda () i)))
+	  (let ((i 2))
+	    (let ((func2 (lambda () i)))
+	      (+ (func1) (func2))))))
+      3)
+
+(test (let ((funcs (make-vector 3 #f)))
+	(map
+	 (lambda (i)
+	   (vector-set! funcs i (lambda () (+ i 1))))
+	 (list 0 1 2))
+	(+ ((vector-ref funcs 0))
+	   ((vector-ref funcs 1))
+	   ((vector-ref funcs 2))))
+      6)
+
+(test (let ((func #f))
+	(define (func1 x)
+	  (set! func (lambda () (+ x 1))))
+	(func1 1)
+	(+ (func)
+	   (let ()
+	     (func1 2)
+	     (func))))
+      5)
+
+(test (((lambda (x) (lambda () (+ x 1))) 32)) 33)
+
+(test (let ((func #f))
+	(define (func1 x)
+	  (set! func (lambda () (string-append x "-"))))
+	(func1 "hi")
+	(string-append (func)
+		       (let ()
+			 (func1 "ho")
+			 (func))))
+      "hi-ho-")
+
+(test (let ((func1 #f)
+	    (func2 #f))
+	(let ((x 1))
+	  (set! func1 (lambda () x))
+	  (set! func2 (lambda (y) (set! x y) y)))
+	(+ (func1)
+	   (let ()
+	     (func2 32)
+	     (func1))))
+      33)
+
+
 
 
 ;;; -------- begin --------

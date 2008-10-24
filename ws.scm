@@ -1,10 +1,18 @@
 ;;; with-sound and friends
 
-(use-modules (ice-9 optargs) (ice-9 format))
-
 (provide 'snd-ws.scm)
+
+;;; this file split into several pieces 24-Oct-08 to make it possible to use it in a sndlib-only context
+
+(if (and (provided? 'snd)
+	 (not (provided? 'snd-snd-ws.scm)))
+    (load "snd-ws.scm"))
+
 (if (and (provided? 'snd-guile) (not (provided? 'snd-debug.scm))) (load-from-path "debug.scm"))
-(if (not (provided? 'snd-extensions.scm)) (load-from-path "extensions.scm")) ; we need sound-property in with-mixed-sound
+(if (and (provided? 'snd) (not (provided? 'snd-extensions.scm))) (load-from-path "extensions.scm")) ; we need sound-property in with-mixed-sound
+
+
+;;; TODO: split out the Snd/Guile stuff so that ws.scm can be used in sndlib-only contexts
 
 
 ;;; -------- with-sound debugger --------
@@ -171,11 +179,18 @@ returning you to the true top-level."
 
 ;;; -------- with-sound defaults --------
 
-(define *clm-srate* (if (defined? 'default-output-srate) (default-output-srate) 44100))
+(if (not (defined? 'default-output-srate)) (define (default-output-srate) 44100))
+(if (not (defined? 'default-output-chans)) (define (default-output-chans) 1))
+(if (not (defined? 'default-output-data-format)) (define (default-output-data-format) mus-lfloat))
+(if (not (defined? 'default-output-header-type)) (define (default-output-header-type) mus-next))
+(if (not (defined? 'print-length)) (define (print-length) 12))
+
+
+(define *clm-srate* (default-output-srate))
 (define *clm-file-name* "test.snd")
-(define *clm-channels* (if (defined? 'default-output-chans) (default-output-chans) 1))
-(define *clm-data-format* (if (defined? 'default-output-data-format) (default-output-data-format) mus-lfloat))
-(define *clm-header-type* (if (defined? 'default-output-header-type) (default-output-header-type) mus-next))
+(define *clm-channels* (default-output-chans))
+(define *clm-data-format* (default-output-data-format))
+(define *clm-header-type* (default-output-header-type))
 (define *clm-verbose* #f)
 (define *clm-play* #f)
 (define *clm-statistics* #f)
@@ -186,7 +201,7 @@ returning you to the true top-level."
 (define *clm-file-buffer-size* 65536)
 (define *clm-locsig-type* mus-interp-linear)
 (define *clm-clipped* #t)
-(define *clm-array-print-length* (if (defined? 'print-length) (print-length) 12))
+(define *clm-array-print-length* (print-length))
 (define *clm-player* #f)          ; default is play-and-wait (takes index of newly created sound, not the sound's file name)
 (define *clm-notehook* #f)
 (define *clm-with-sound-depth* 0) ; for CM, not otherwise used

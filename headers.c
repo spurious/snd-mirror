@@ -1025,6 +1025,8 @@ static int read_aiff_header(const char *filename, int fd, int overall_offset)
       if ((chunksize == 0) && /* can be empty data chunk */
 	  (hdrbuf[0] == 0) && (hdrbuf[1] == 0) && (hdrbuf[2] == 0) && (hdrbuf[3] == 0))
 	break;
+      if (chunksize < 0)
+	break;
 
       /* fprintf(stderr, "chunk: %c%c%c%c for %d\n", hdrbuf[0], hdrbuf[1], hdrbuf[2], hdrbuf[3], chunksize); */
 
@@ -1493,6 +1495,8 @@ static int read_caff_header(int fd)
       if (offset >= true_file_length) break;
       if (seek_and_read(fd, (unsigned char *)hdrbuf, offset, 64) <= 0) break;
       chunksize = mus_char_to_boff_t((unsigned char *)(hdrbuf + 4));
+      if (chunksize < 0)
+	break;
 
       /* 'desc' is always the first chunk, but easier to handle in the loop */
       if (match_four_chars((unsigned char *)hdrbuf, I_desc))
@@ -1930,7 +1934,7 @@ static int read_riff_header(const char *filename, int fd)
       if ((chunksize == 0) && /* can be empty data chunk */
 	  (hdrbuf[0] == 0) && (hdrbuf[1] == 0) && (hdrbuf[2] == 0) && (hdrbuf[3] == 0))
 	break;
-      if (chunksize < 0)
+      if (chunksize < -1)
 	break;
       if (match_four_chars((unsigned char *)hdrbuf, I_fmt_))
 	{
@@ -2152,6 +2156,8 @@ static int read_soundforge_header(const char *filename, int fd)
       if ((chunksize == 0) && /* can be empty data chunk? */
 	  (hdrbuf[0] == 0) && (hdrbuf[1] == 0) && (hdrbuf[2] == 0) && (hdrbuf[3] == 0))
 	break;
+      if (chunksize < 0)
+	break;
       if (match_four_chars((unsigned char *)hdrbuf, I_fmt_))
 	{
 	  off = 16;
@@ -2245,6 +2251,8 @@ static int read_rf64_header(const char *filename, int fd)
       chunksize = mus_char_to_lint((unsigned char *)(hdrbuf + 4));
       if ((chunksize == 0) &&                                                      /* can be empty data chunk */
 	  (hdrbuf[0] == 0) && (hdrbuf[1] == 0) && (hdrbuf[2] == 0) && (hdrbuf[3] == 0))
+	break;
+      if (chunksize < -1)
 	break;
 
       if (match_four_chars((unsigned char *)hdrbuf, I_ds64))
@@ -2432,6 +2440,8 @@ static int read_avi_header(const char *filename, int fd)
       if ((chunksize == 0) && /* can be empty data chunk? */
 	  (hdrbuf[0] == 0) && (hdrbuf[1] == 0) && (hdrbuf[2] == 0) && (hdrbuf[3] == 0))
 	break;
+      if (chunksize < 0)
+	break;
       if (match_four_chars((unsigned char *)hdrbuf, I_LIST))
 	{
 	  ckoff = offset + 12;
@@ -2600,6 +2610,8 @@ static int read_soundfont_header(const char *filename, int fd)
       chunksize = mus_char_to_lint((unsigned char *)(hdrbuf + 4));
       if ((chunksize == 0) && /* can be empty data chunk? */
 	  (hdrbuf[0] == 0) && (hdrbuf[1] == 0) && (hdrbuf[2] == 0) && (hdrbuf[3] == 0))
+	break;
+      if (chunksize < 0)
 	break;
       if (match_four_chars((unsigned char *)hdrbuf, I_LIST))
 	{
@@ -2941,6 +2953,8 @@ static int read_bicsf_header(const char *filename, int fd)
 	    return(mus_error(MUS_HEADER_READ_FAILED, "%s bicsf header: chunks confused at %d", filename, offset));
 	  chunkname = mus_char_to_uninterpreted_int((unsigned char *)hdrbuf);
 	  chunksize = mus_char_to_bint((unsigned char *)(hdrbuf + 4));
+	  if (chunksize < 0)
+	    break;
 	  if (match_four_chars((unsigned char *)hdrbuf, I_COMM))
 	    {
 	      comment_start = 8 + offset;
@@ -3149,6 +3163,8 @@ static int read_8svx_header(const char *filename, int fd, bool bytewise)
       chunksize = mus_char_to_bint((unsigned char *)(hdrbuf + 4));
       if ((chunksize == 0) && /* can be empty data chunk? */
 	  (hdrbuf[0] == 0) && (hdrbuf[1] == 0) && (hdrbuf[2] == 0) && (hdrbuf[3] == 0))
+	break;
+      if (chunksize < 0)
 	break;
       if (match_four_chars((unsigned char *)hdrbuf, I_CHAN))
 	{
@@ -3926,6 +3942,8 @@ static int read_maud_header(const char *filename, int fd)
       if ((chunksize == 0) && /* can be empty data chunk? */
 	  (hdrbuf[0] == 0) && (hdrbuf[1] == 0) && (hdrbuf[2] == 0) && (hdrbuf[3] == 0))
 	break;
+      if (chunksize < 0)
+	break;
       if (match_four_chars((unsigned char *)hdrbuf, I_MHDR))
 	{
 	  int num, den;
@@ -4026,6 +4044,8 @@ static int read_csl_header(const char *filename, int fd)
       chunksize = mus_char_to_lint((unsigned char *)(hdrbuf + 4));
       if ((chunksize == 0) && /* can be empty data chunk? */
 	  (hdrbuf[0] == 0) && (hdrbuf[1] == 0) && (hdrbuf[2] == 0) && (hdrbuf[3] == 0))
+	break;
+      if (chunksize < 0)
 	break;
       if ((match_four_chars((unsigned char *)hdrbuf, I_HEDR)) || 
 	  (match_four_chars((unsigned char *)hdrbuf, I_HDR8)))

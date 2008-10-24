@@ -748,91 +748,88 @@ all saved edit lists."
 	  #f))
 
     (define (add-popup snd)
-      (do ((chn 0 (1+ chn)))
-	  ((= chn (chans snd)))
-	(if (not (find-popup snd chn popups))
-	    (let ((chn-grf (car (channel-widgets snd chn))))
-	      (set! popups (cons (list snd chn) popups))
-
-	      ;; edit history list spreadsheet support
-	      (XtAddCallback  (list-ref (channel-widgets snd chn) 7) XmNpopupHandlerCallback 
-		 (lambda (w data info)
-		   (let ((e (.event info)))
-		     (if (= ButtonPress (.type e))
-			 (begin
-			   (if edit-history-menu
-			       (for-each-child
-				edit-history-menu
-				(lambda (w)
-				  (let ((name (XtName w)))
-				    (if (string=? name "Clear")
-					(XtSetSensitive w (not (null? edhist-funcs)))
-					(if (string=? name "Save")
-					    (XtSetSensitive w (> (apply + (edits snd chn)) 0))
-					    (if (string=? name "Apply")
-						(XtSetSensitive w (not (null? edhist-funcs)))
-						(if (string=? name "Reapply")
-						    (XtSetSensitive w (not (eq? #f (assoc (cons snd chn) edhist-funcs))))))))))))
-			   (set! (.menuToPost info) (edit-history-popup-menu snd chn)))))))
-
-	      (XtAddCallback chn-grf XmNpopupHandlerCallback 
-		 (lambda (w data info)
-		   (let* ((e (.event info))
-			  (xe (- (.x_root e) (car (XtTranslateCoords w 0 0)))))
-		     (if (= ButtonPress (.type e))
-			 (begin
-			   ;; xe is where the mouse-click occurred in the graph window's (local) coordinates
-			   ;;   not the same as (.x e), which appears to be in the outer shell's coordinates
-			   (if (>= chn (chans snd))
-			       (set! chn 0))
-			   ;; TODO: fix the channel number here -- it is (chans snd) in s7 
-			   (set! graph-popup-snd snd)
-			   (set! graph-popup-chn chn)
-			   (if (and (= (channel-style snd) channels-combined)
-				    (> (chans snd) 1))
-			       (let ((ye (.y e))) ; y axis location of mouse-down
-				 (call-with-exit
-				  (lambda (break)
-				    (do ((i 0 (1+ i)))
-					((= i (chans snd)))
-				      (let ((off (list-ref (axis-info snd i) 14)))
-					(if (< ye off)
-					    (begin
-					      (set! graph-popup-chn (- i 1))
-					      (break)))))
-				    (set! graph-popup-chn (- (chans snd) 1))))))
-			   
-			   (let ((fax (if (transform-graph? snd chn) (axis-info snd chn transform-graph) #f))
-				 (lax (if (lisp-graph? snd chn) (axis-info snd chn lisp-graph) #f)))
-			     (if (and fax
-				      (>= xe (list-ref fax 10))
-				      (<= xe (list-ref fax 12)))
-				 ;; in fft
-				 (begin
-				   (edit-fft-popup-menu snd chn)
-				   (set! (.menuToPost info) fft-popup-menu))
-				 
-				 (if (and lax
-					  (>= xe (list-ref lax 10))
-					  (<= xe (list-ref lax 12)))
-				     ;; in lisp
-				     ;;   nothing special implemented yet
-				     ;; (set! (.menuToPost info) graph-popup-menu)
-				     #f ; just a place-holder
-				     
-				     (if (and (selection?)
-					      (let* ((beg (/ (selection-position snd graph-popup-chn) (srate snd)))
-						     (end (/ (+ (selection-position snd graph-popup-chn) 
-								(selection-frames snd graph-popup-chn)) 
-							     (srate snd))))
-						(and (>= xe (x->position beg snd chn))
-						     (<= xe (x->position end snd chn)))))
-					 (set! (.menuToPost info) selection-popup-menu)
-					 
-					 (begin
-					   (edit-graph-popup-menu graph-popup-snd graph-popup-chn)
-					   (set! (.menuToPost info) graph-popup-menu)))))))))))))))
-
+      (do ((uchn 0 (1+ uchn)))
+	  ((= uchn (chans snd)))
+	(let ((chn uchn)) ; this is for s7
+	  (if (not (find-popup snd chn popups))
+	      (let ((chn-grf (car (channel-widgets snd chn))))
+		(set! popups (cons (list snd chn) popups))
+		
+		;; edit history list spreadsheet support
+		(XtAddCallback  (list-ref (channel-widgets snd chn) 7) XmNpopupHandlerCallback 
+		  (lambda (w data info)
+		    (let ((e (.event info)))
+		      (if (= ButtonPress (.type e))
+			  (begin
+			    (if edit-history-menu
+				(for-each-child
+				 edit-history-menu
+				 (lambda (w)
+				   (let ((name (XtName w)))
+				     (if (string=? name "Clear")
+					 (XtSetSensitive w (not (null? edhist-funcs)))
+					 (if (string=? name "Save")
+					     (XtSetSensitive w (> (apply + (edits snd chn)) 0))
+					     (if (string=? name "Apply")
+						 (XtSetSensitive w (not (null? edhist-funcs)))
+						 (if (string=? name "Reapply")
+						     (XtSetSensitive w (not (eq? #f (assoc (cons snd chn) edhist-funcs))))))))))))
+			    (set! (.menuToPost info) (edit-history-popup-menu snd chn)))))))
+		
+		(XtAddCallback chn-grf XmNpopupHandlerCallback 
+		  (lambda (w data info)
+		    (let* ((e (.event info))
+			   (xe (- (.x_root e) (car (XtTranslateCoords w 0 0)))))
+		      (if (= ButtonPress (.type e))
+			  (begin
+			    ;; xe is where the mouse-click occurred in the graph window's (local) coordinates
+			    ;;   not the same as (.x e), which appears to be in the outer shell's coordinates
+			    (set! graph-popup-snd snd)
+			    (set! graph-popup-chn chn)
+			    (if (and (= (channel-style snd) channels-combined)
+				     (> (chans snd) 1))
+				(let ((ye (.y e))) ; y axis location of mouse-down
+				  (call-with-exit
+				   (lambda (break)
+				     (do ((i 0 (1+ i)))
+					 ((= i (chans snd)))
+				       (let ((off (list-ref (axis-info snd i) 14)))
+					 (if (< ye off)
+					     (begin
+					       (set! graph-popup-chn (- i 1))
+					       (break)))))
+				     (set! graph-popup-chn (- (chans snd) 1))))))
+			    
+			    (let ((fax (if (transform-graph? snd chn) (axis-info snd chn transform-graph) #f))
+				  (lax (if (lisp-graph? snd chn) (axis-info snd chn lisp-graph) #f)))
+			      (if (and fax
+				       (>= xe (list-ref fax 10))
+				       (<= xe (list-ref fax 12)))
+				  ;; in fft
+				  (begin
+				    (edit-fft-popup-menu snd chn)
+				    (set! (.menuToPost info) fft-popup-menu))
+				  
+				  (if (and lax
+					   (>= xe (list-ref lax 10))
+					   (<= xe (list-ref lax 12)))
+				      ;; in lisp
+				      ;;   nothing special implemented yet
+				      ;; (set! (.menuToPost info) graph-popup-menu)
+				      #f ; just a place-holder
+				      
+				      (if (and (selection?)
+					       (let* ((beg (/ (selection-position snd graph-popup-chn) (srate snd)))
+						      (end (/ (+ (selection-position snd graph-popup-chn) 
+								 (selection-frames snd graph-popup-chn)) 
+							      (srate snd))))
+						 (and (>= xe (x->position beg snd chn))
+						      (<= xe (x->position end snd chn)))))
+					  (set! (.menuToPost info) selection-popup-menu)
+					  
+					  (begin
+					    (edit-graph-popup-menu graph-popup-snd graph-popup-chn)
+					    (set! (.menuToPost info) graph-popup-menu))))))))))))))))
     (add-hook! after-open-hook add-popup)
     (for-each add-popup (sounds))))
 

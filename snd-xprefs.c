@@ -1630,7 +1630,7 @@ static void preferences_help_callback(Widget w, XtPointer context, XtPointer inf
   prefs_helping = true;
   snd_help("preferences",
 	   "This dialog sets various global variables. 'Save' then writes the new values \
-to ~/.snd_prefs_guile|ruby|forth so that they take effect the next time you start Snd.  'Revert' resets each variable either to \
+to ~/.snd_prefs_guile|ruby|forth|s7 so that they take effect the next time you start Snd.  'Revert' resets each variable either to \
 its value when the Preferences dialog was started, or to the last saved value.  'Clear' resets each variable to its default value (its \
 value when Snd starts, before loading initialization files). 'Help' starts this dialog, and as long as it's active, it will post helpful \
 information if the mouse lingers over some variable -- sort of a tooltip that stays out of your way. \

@@ -167,6 +167,10 @@
 #define WITH_READ_LINE 1
 /* this includes the (non-standard) read-line function */
 
+#define DEFAULT_EVAL_HISTORY_SIZE 16
+/* this is the number of entries in the debugger's printout of previous evaluations (a stacktrace of sorts) */
+
+
 /* there's also CASE_SENSITIVE below (default: 1) which determines whether names are case sensitive */
 
 
@@ -405,10 +409,13 @@ struct s7_scheme {
    *   printout.  So the next fields are for our "call stack".
    */
 
-  int call_stack_size, call_stack_top;
-  s7_pointer *call_stack_ops, *call_stack_args;
-
-  /* does it make sense to add an entry only when a new frame is created (counting function evaluation)? */
+  int eval_history_size, eval_history_top;
+  s7_pointer *eval_history_ops, *eval_history_args;
+#if HAVE_PTHREADS
+  int *eval_history_thread_ids;
+  int thread_id;
+  int *thread_ids; /* global current top thread_id */
+#endif
 };
 
 
@@ -1399,81 +1406,113 @@ static int remember_file_name(const char *file)
 }
 
 
-#if S7_DEBUGGING
-static void print_internal_stack_entry(s7_scheme *sc, opcode_t op, s7_pointer code, s7_pointer args)
+/* -------- eval history ("stacktrace") -------- */
+
+#if HAVE_PTHREADS
+static pthread_mutex_t eval_history_lock = PTHREAD_MUTEX_INITIALIZER;
+#endif
+
+static char *pws_name(s7_pointer x);
+
+
+static void print_eval_history_entry(s7_scheme *sc, int n)
 {
-  char *str1 = NULL, *str2 = NULL;
+  char *str = NULL;
   int line = 0;
-  if (op != OP_APPLY)
-    {
-      str1 = no_outer_parens(s7_object_to_c_string(sc, args));
-      str2 = s7_object_to_c_string(sc, code);
-      line = pair_line_number(code);
-      if ((line == 0) &&
-	  (s7_is_pair(code)))
-	line = pair_line_number(car(code));
-      if (safe_strlen(str1) > 80)
-	{
-	  str1[72] = '.'; str1[73] = '.'; str1[74] = '.';
-	  str1[75] = '\0';
-	}
-      if (safe_strlen(str2) > 80)
-	{
-	  str2[72] = '.'; str2[73] = '.'; str2[74] = '.';
-	  str2[75] = '\0';
-	}
-      if ((remembered_line_number(line) != 0) &&
-	  (remembered_file_name(line)))
-	fprintf(stderr, "\n(%s %s) ; %s[%d]", str2, str1, remembered_file_name(line), remembered_line_number(line));
-      else fprintf(stderr, "\n(%s %s)", str2, str1);
-    }
+  s7_pointer code, args;
+
+#if HAVE_PTHREADS
+  sc = sc->orig_sc;
+#endif
+
+  code = sc->eval_history_ops[n];
+  args = sc->eval_history_args[n];
+
+  if ((code == sc->NIL) && (args == sc->NIL))
+    return;
+
+#if HAVE_PTHREADS
+  if (sc->eval_history_thread_ids[n] != 0)
+    fprintf(stderr, "[%d]: ", sc->eval_history_thread_ids[n]);
+#endif
+
+  /* we have eval_history_ops|args equivalent to earlier code|args */
+
+  if (s7_is_function(code))
+    fprintf(stderr, "(%s ", function_name(code));
   else
     {
-      if (s7_is_function(code))
-	{
-	  if (line != 0)
-	    fprintf(stderr, "\n(%s %s) ; %s[%d]", function_name(code), str1 = s7_object_to_c_string(sc, args), remembered_file_name(line), remembered_line_number(line));
-	  else fprintf(stderr, "\n(%s %s)", function_name(code), str1 = s7_object_to_c_string(sc, args));
-	}
+      if (s7_is_procedure_with_setter(code))
+	fprintf(stderr, "(%s ", pws_name(code));
       else 
 	{
-	  if (line != 0)
-	    fprintf(stderr, "\n(%s %s) ; %s[%d]", 
-		    str1 = s7_object_to_c_string(sc, code), 
-		    str2 = s7_object_to_c_string(sc, args),
-		    remembered_file_name(line), remembered_line_number(line));
-	  else fprintf(stderr, "\n(%s %s)", 
-		       str1 = s7_object_to_c_string(sc, code), 
-		       str2 = s7_object_to_c_string(sc, args));
+	  fprintf(stderr, "(%s ", str = s7_object_to_c_string(sc, code)); /* do we need the thread-local env here? */
+	  if (str) free(str);
 	}
     }
-  if (str1) free(str1);
-  if (str2) free(str2);
-}
 
+  fprintf(stderr, "%s)", str = no_outer_parens(s7_object_to_c_string(sc, args)));
+  if (str) free(str);
 
-static s7_pointer g_internal_stacktrace(s7_scheme *sc, s7_pointer args)
-{
-  int i;
-  (*(sc->gc_off)) = true;
-  for (i = 0; i < sc->stack_top; i +=4)
-    print_internal_stack_entry(sc, 
-			       (opcode_t)s7_integer(vector_element(sc->stack, i + 3)),
-			       vector_element(sc->stack, i + 0),
-			       vector_element(sc->stack, i + 2));
-  print_internal_stack_entry(sc, sc->op, sc->code, sc->args);
+  line = pair_line_number(code);
+  if (line != 0)
+    {
+      if ((remembered_line_number(line) != 0) &&
+	  (remembered_file_name(line)))
+	fprintf(stderr, "; %s[%d]", remembered_file_name(line), remembered_line_number(line));
+    }
+
+  /* TODO: truncate long strings of args */
+  /* TODO: all this output should be to error-port or whatever, using scheme funcs */
+
   fprintf(stderr, "\n");
-  (*(sc->gc_off)) = false;
-  return(sc->UNSPECIFIED);
 }
-#endif
 
 
 static s7_pointer g_stacktrace(s7_scheme *sc, s7_pointer args)
 {
-  /* under construction... */
-  #define H_stacktrace "(stacktrace) prints out the current stack contents"
+  #define H_stacktrace "(stacktrace) prints out the last few evaluated expressions, somewhat like a C stacktrace."
+  int i;
+
+#if HAVE_PTHREADS
+  pthread_mutex_lock(&eval_history_lock);
+#endif
+
+  /* TODO: current? or is this handled by s7_error? */
+  fprintf(stderr, "\neval history:\n");
+  for (i = 0; i < sc->eval_history_size; i++)
+    print_eval_history_entry(sc, (sc->eval_history_size + sc->eval_history_top - i - 1) % sc->eval_history_size);
+
+#if HAVE_PTHREADS
+  pthread_mutex_unlock(&eval_history_lock);
+#endif
+
   return(sc->F);
+}
+
+
+static void add_eval_history_entry(s7_scheme *sc, s7_pointer code, s7_pointer args)
+{
+  int n;
+
+#if HAVE_PTHREADS
+  int id;
+  pthread_mutex_lock(&eval_history_lock);
+  id = sc->thread_id;
+  sc = sc->orig_sc;
+#endif
+
+  n = sc->eval_history_top++;
+  if (sc->eval_history_top >= sc->eval_history_size)
+    sc->eval_history_top = 0;
+
+  sc->eval_history_ops[n] = code;
+  sc->eval_history_args[n] = args;
+
+#if HAVE_PTHREADS
+  sc->eval_history_thread_ids[n] = id;
+  pthread_mutex_unlock(&eval_history_lock);
+#endif
 }
 
 
@@ -9162,10 +9201,12 @@ typedef struct {
   s7_pointer scheme_getter;
   s7_pointer scheme_setter;
   char *documentation;
+  char *name;
 } pws;
 
 
 s7_pointer s7_make_procedure_with_setter(s7_scheme *sc, 
+					 const char *name,
 					 s7_pointer (*getter)(s7_scheme *sc, s7_pointer args), 
 					 int get_req_args, int get_opt_args,
 					 s7_pointer (*setter)(s7_scheme *sc, s7_pointer args),
@@ -9183,6 +9224,9 @@ s7_pointer s7_make_procedure_with_setter(s7_scheme *sc,
   if (documentation)
     f->documentation = strdup(documentation);
   else f->documentation = NULL;
+  if (name)
+    f->name = strdup(name);
+  else f->name = NULL;
   f->scheme_getter = sc->NIL;
   f->scheme_setter = sc->NIL;
   return(s7_make_object(sc, pws_tag, (void *)f));
@@ -9191,6 +9235,16 @@ s7_pointer s7_make_procedure_with_setter(s7_scheme *sc,
 
 static char *pws_print(void *obj)
 {
+  pws *f = (pws *)obj;
+  if (f->name)
+    {
+      char *str;
+      int len;
+      len = 32 + safe_strlen(f->name);
+      str = (char *)malloc(len);
+      snprintf(str, len, "#<procedure-with-setter: %s>", f->name);
+      return(str);
+    }
   return(strdup((char *)"#<procedure-with-setter>"));
 }
 
@@ -9202,6 +9256,8 @@ static void pws_free(void *obj)
     {
       if (f->documentation)
 	free(f->documentation);
+      if (f->name)
+	free(f->name);
       free(f);
     }
 }
@@ -9245,9 +9301,11 @@ static s7_pointer pws_set(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 
 static s7_pointer g_make_procedure_with_setter(s7_scheme *sc, s7_pointer args)
 {
+  /* TODO: figure out how to add pws name and doc here */
+
   s7_pointer p;
   pws *f;
-  p = s7_make_procedure_with_setter(sc, NULL, -1, 0, NULL, -1, 0, NULL);
+  p = s7_make_procedure_with_setter(sc, NULL, NULL, -1, 0, NULL, -1, 0, NULL);
   
   f = (pws *)s7_object_value(p);
   f->scheme_getter = car(args);
@@ -9298,6 +9356,13 @@ static char *pws_documentation(s7_pointer x)
 {
   pws *f = (pws *)s7_object_value(x);
   return(f->documentation);
+}
+
+
+static char *pws_name(s7_pointer x)
+{
+  pws *f = (pws *)s7_object_value(x);
+  return(f->name);
 }
 
 
@@ -9810,8 +9875,8 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	}
       write_char(sc, '\n', sc->error_port);
       
-#if S7_DEBUGGING
-      g_internal_stacktrace(sc, sc->NIL);
+#if 1
+      g_stacktrace(sc, sc->NIL);
 #endif
       
       if ((exit_eval) &&
@@ -10411,7 +10476,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->code = s7_reverse_in_place(sc, sc->NIL, car(sc->code));
 	  for (sc->x = sc->code; sc->y != sc->NIL && sc->x != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y))
 	    set_symbol_value(caar(sc->y), car(sc->x));
-	  
+
+	  /* "real" schemes rebind here, rather than reset, but that is expensive,
+	   *    and only matters once in a blue moon (closure over enclosed lambda referring to a do var)
+	   *    and the caller can easily mimic the correct behavior in that case by adding a let,
+	   *    making the rebinding explicit.
+	   */
+
 	  pop_stack(sc, sc->NIL);
 	  goto DO_END0;
 	}
@@ -10592,6 +10663,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  write_string(sc, "\nApply to: ", sc->output_port);
 	  goto P0LIST;
 	}
+      add_eval_history_entry(sc, sc->code, sc->args);
+
       /* fall through */
       
       
@@ -10606,7 +10679,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 #if S7_DEBUGGING
 	      fprintf(stderr, "%s: not enough args (got %d, required %d)\n", s7_object_to_c_string(sc, sc->code), len, function_required_args(sc->code));
 	      fprintf(stderr, "    args: %s\n", s7_object_to_c_string(sc, sc->args));
-	      gsp(sc);
 #endif
 	      return(eval_error(sc, "not enough arguments", sc->code));
 	    }
@@ -10635,7 +10707,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 #if S7_DEBUGGING
 		      fprintf(stderr, "%s: not enough args\n", s7_object_to_c_string(sc, sc->code));
 		      fprintf(stderr, "    args: %s\n", s7_object_to_c_string(sc, sc->args));
-		      gsp(sc);
 #endif
 		      return(eval_error(sc, "not enough arguments", g_procedure_source(sc, s7_cons(sc, sc->code, sc->NIL))));
 		    }
@@ -12242,6 +12313,22 @@ s7_scheme *s7_init(void)
   sc->load_verbose = (bool *)calloc(1, sizeof(bool));
   sc->tracing = (bool *)calloc(1, sizeof(bool));
   sc->gensym_counter = (long *)calloc(1, sizeof(long));
+
+  sc->eval_history_top = 0;
+  sc->eval_history_size = DEFAULT_EVAL_HISTORY_SIZE;
+  sc->eval_history_ops = (s7_pointer *)malloc(sc->eval_history_size * sizeof(s7_pointer));
+  sc->eval_history_args = (s7_pointer *)malloc(sc->eval_history_size * sizeof(s7_pointer));
+  for (i = 0; i < sc->eval_history_size; i++)
+    {
+      sc->eval_history_ops[i] = sc->NIL;
+      sc->eval_history_args[i] = sc->NIL;
+    }
+
+#if HAVE_PTHREADS
+  sc->thread_ids = (int *)calloc(1, sizeof(int));
+  sc->thread_id = 0;
+  sc->eval_history_thread_ids = (int *)calloc(sc->eval_history_size, sizeof(int));
+#endif
   
   sc->code = sc->NIL;
   sc->args = sc->NIL;
@@ -12649,6 +12736,13 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, set_object_name,           g_set_object,              1, 0, true, "internal setter redirection");
   s7_define_function(sc, "_quasiquote_",            g_quasiquote,              2, 0, false, "internal quasiquote handler");
   
+  s7_define_variable(sc, "*features*", sc->NIL);
+  s7_define_variable(sc, "*load-path*", sc->NIL);
+  s7_define_variable(sc, "*vector-print-length*", vector_element(sc->small_ints, 8));
+  
+  g_provide(sc, s7_cons(sc, s7_make_symbol(sc, "s7"), sc->NIL));
+
+
 #if HAVE_PTHREADS
   thread_tag = s7_new_type("<thread>",          thread_print, thread_free, thread_equal, thread_mark, NULL, NULL);
   lock_tag =   s7_new_type("<lock>",            lock_print,   lock_free,   lock_equal,   NULL,        NULL, NULL);
@@ -12665,14 +12759,7 @@ s7_scheme *s7_init(void)
 
   s7_define_function(sc, "make-thread-variable",    g_make_thread_variable,    0, 0, false, H_make_thread_variable);
   s7_define_function(sc, "thread-variable?",        g_is_thread_variable,      1, 0, false, H_is_thread_variable);
-#endif
-  
-  s7_define_variable(sc, "*features*", sc->NIL);
-  s7_define_variable(sc, "*load-path*", sc->NIL);
-  s7_define_variable(sc, "*vector-print-length*", vector_element(sc->small_ints, 8));
-  
-  g_provide(sc, s7_cons(sc, s7_make_symbol(sc, "s7"), sc->NIL));
-#if HAVE_PTHREADS
+
   g_provide(sc, s7_cons(sc, s7_make_symbol(sc, "threads"), sc->NIL));
 #endif
 
@@ -12730,7 +12817,18 @@ static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
     new_sc->temps[i] = new_sc->NIL;
 
   new_sc->key_values = sc->NIL;
-  
+
+  pthread_mutex_lock(&eval_history_lock);  /* probably unnecessary... */
+  (*(sc->thread_ids))++;                   /* in case a spawned thread spawns another, we need this variable to be global to all */
+  new_sc->thread_id = (*(sc->thread_ids)); /* for more readable debugging printout -- main thread is thread 0 */
+  pthread_mutex_unlock(&eval_history_lock);
+
+  /* use the main interpreter for these */
+  new_sc->eval_history_size = 0;
+  new_sc->eval_history_ops = NULL;
+  new_sc->eval_history_args = NULL;
+  new_sc->eval_history_thread_ids = NULL;
+
   return(new_sc);
 }
 

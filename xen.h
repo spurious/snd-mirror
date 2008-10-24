@@ -1940,10 +1940,10 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
   s7_define_function(s7, Name, Func, ReqArg, OptArg, RstArg, Doc)
 
 #define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
-  s7_define_variable(s7, Get_Name, s7_make_procedure_with_setter(s7, Get_Func, Get_Req, Get_Opt, Set_Func, Set_Req, Set_Opt, Get_Help))
+  s7_define_variable(s7, Get_Name, s7_make_procedure_with_setter(s7, Get_Name, Get_Func, Get_Req, Get_Opt, Set_Func, Set_Req, Set_Opt, Get_Help))
 
 #define XEN_DEFINE_PROCEDURE_WITH_REVERSED_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Rev_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
-  s7_define_variable(s7, Get_Name, s7_make_procedure_with_setter(s7, Get_Func, Get_Req, Get_Opt, Rev_Func, Set_Req, Set_Opt, Get_Help)); \
+  s7_define_variable(s7, Get_Name, s7_make_procedure_with_setter(s7, Get_Name, Get_Func, Get_Req, Get_Opt, Rev_Func, Set_Req, Set_Opt, Get_Help)); \
   xen_s7_ignore(Set_Func)
 
 
