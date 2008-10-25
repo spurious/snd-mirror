@@ -1129,7 +1129,7 @@ static int print_mus_xen(XEN obj, XEN port, scm_print_state *pstate)
 
 
 #if HAVE_S7
-static char *print_mus_xen(void *obj)
+static char *print_mus_xen(s7_scheme *sc, void *obj)
 {
   return(strdup(mus_describe(((mus_xen *)obj)->gen)));
 }

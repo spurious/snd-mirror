@@ -1985,9 +1985,9 @@ typedef XEN (*XEN_CATCH_BODY_TYPE)                                    (void *dat
   }
 
 #define XEN_MAKE_OBJECT_PRINT_PROCEDURE(Type, Wrapped_Print, Original_Print) \
-  static char *Wrapped_Print(void *obj) \
+  static char *Wrapped_Print(s7_scheme *sc, void *obj)			\
   { \
-    return(Original_Print((Type *)obj)); \
+    return(Original_Print((Type *)obj));	\
   }
 
 #define XEN_MAKE_AND_RETURN_OBJECT(Tag, Val, ig1, ig2)   return(s7_make_object(s7, Tag, Val))

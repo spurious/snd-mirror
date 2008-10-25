@@ -56174,6 +56174,30 @@ EDITS: 1
 	
 	(if (provided? 'snd-guile) ; make-stack
 	    (test-ws-errors))
+	
+	(if all-args
+	    (let ((outfile "/home/bil/test/sound/big3.snd"))
+	      (for-each
+	       (lambda (ht)
+		 (with-sound (:output outfile :srate 44100 :channels 2 :header-type ht)
+			     (do ((i 0 (+ i 1)))
+				 ((= i 30000))
+			       (fm-violin i .1 440 (+ .1 (* (/ i 30000.0) .9)))))
+		 (if (not (file-exists? outfile))
+		     (snd-display ";big3 ~A not written?" (mus-header-type-to-string ht))
+		     (let ((snd (find-sound outfile)))
+		       (if (> (abs (- (frames snd 0) (* 30000 44100))) 44100)
+			   (snd-display ";big3 frames: ~A, should be ~A (~A)" (frames snd 0) (* 30000 44100) (- (frames snd 0) (* 30000 44100))))
+		       (if (< (maxamp snd ) .97)
+			   (snd-display ";big3 max: ~A" (maxamp snd)))
+		       (if (and (= ht mus-riff)
+				(not (= (header-type snd) mus-rf64)))
+			   (snd-display ";big3 auto convert? ~A -> ~A" (mus-header-type-to-string ht) (mus-header-type-to-string (header-type snd))))
+		       (close-sound snd))))
+	       (list mus-next mus-riff mus-caff))
+	      
+	      (if (file-exists? outfile)
+		  (delete-file outfile))))
 
 	)))
 

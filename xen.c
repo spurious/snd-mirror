@@ -1805,7 +1805,7 @@ static void free_hook(void *v)
 }
 
 
-static char *print_hook(void *v)
+static char *print_hook(s7_scheme *sc, void *v)
 {
   return(hook_to_string((ghook *)v));
 }

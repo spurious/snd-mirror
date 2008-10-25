@@ -685,7 +685,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op);
 static s7_pointer s7_division_by_zero_error(s7_scheme *sc, const char *caller, s7_pointer arg);
 static s7_pointer s7_file_error(s7_scheme *sc, const char *caller, const char *descr, const char *name);
 static void s7_free_function(s7_pointer a);
-
+static int remember_file_name(const char *file);
 
 
 /* -------------------------------- constants -------------------------------- */
@@ -1311,196 +1311,6 @@ static void push_stack(s7_scheme *sc, opcode_t op, s7_pointer args, s7_pointer c
 } 
 
 
-static char *no_outer_parens(char *str)
-{
-  int i, len, stop = 0;
-  len = safe_strlen(str);
-  if (len > 1)
-    {
-      for (i = 0; i < len; i++)
-	if (str[i] == '(')
-	  {
-	    stop = i;
-	    str[i] = ' ';
-	    break;
-	  }
-    }
-  if (i < len)
-    for (i = len - 1; i > stop; i--)
-      if (str[i] == ')')
-	{
-	  str[i] = ' ';
-	  break;
-	}
-  return(str);
-}
-
-
-/* debugging (error reporting) info */
-
-#define INITIAL_FILE_NAMES_SIZE 8
-static char **file_names = NULL;
-static int file_names_size = 0;
-static int file_names_top = -1;
-
-#if HAVE_PTHREADS
-static pthread_mutex_t remember_files_lock = PTHREAD_MUTEX_INITIALIZER;
-#endif
-
-#define remembered_line_number(Line) (Line & 0xfffff)
-#define remembered_file_name(Line)   (((Line >> 20) <= file_names_top) ? file_names[Line >> 20] : "?")
-/* this gives room for 4000 files each of 1000000 lines */
-
-static s7_pointer remember_line(s7_scheme *sc, s7_pointer obj)
-{
-  if ((sc->input_port != sc->NIL) && 
-      (is_file_port(sc->input_port)))
-    set_pair_line_number(obj, port_line_number(sc->input_port) | (port_file_number(sc->input_port) << 20));
-  return(obj);
-}
-
-
-static int remember_file_name(const char *file)
-{
-#if HAVE_PTHREADS
-  pthread_mutex_lock(&remember_files_lock);
-#endif
-
-  file_names_top++;
-  if (file_names_top >= file_names_size)
-    {
-      if (file_names_size == 0)
-	{
-	  file_names_size = INITIAL_FILE_NAMES_SIZE;
-	  file_names = (char **)calloc(file_names_size, sizeof(char *));
-	}
-      else
-	{
-	  int i, old_size;
-	  old_size = file_names_size;
-	  file_names_size *= 2;
-	  file_names = (char **)realloc(file_names, file_names_size * sizeof(char *));
-	  for (i = old_size; i < file_names_size; i++)
-	    file_names[i] = NULL;
-	}
-    }
-  file_names[file_names_top] = strdup(file);
-
-#if HAVE_PTHREADS
-  pthread_mutex_unlock(&remember_files_lock);
-#endif
-
-  return(file_names_top);
-}
-
-
-/* -------- eval history ("stacktrace") -------- */
-
-#if HAVE_PTHREADS
-static pthread_mutex_t eval_history_lock = PTHREAD_MUTEX_INITIALIZER;
-#endif
-
-static char *pws_name(s7_pointer x);
-
-
-static void print_eval_history_entry(s7_scheme *sc, int n)
-{
-  char *str = NULL;
-  int line = 0;
-  s7_pointer code, args;
-
-#if HAVE_PTHREADS
-  sc = sc->orig_sc;
-#endif
-
-  code = sc->eval_history_ops[n];
-  args = sc->eval_history_args[n];
-
-  if ((code == sc->NIL) && (args == sc->NIL))
-    return;
-
-#if HAVE_PTHREADS
-  if (sc->eval_history_thread_ids[n] != 0)
-    fprintf(stderr, "[%d]: ", sc->eval_history_thread_ids[n]);
-#endif
-
-  /* we have eval_history_ops|args equivalent to earlier code|args */
-
-  if (s7_is_function(code))
-    fprintf(stderr, "(%s ", function_name(code));
-  else
-    {
-      if (s7_is_procedure_with_setter(code))
-	fprintf(stderr, "(%s ", pws_name(code));
-      else 
-	{
-	  fprintf(stderr, "(%s ", str = s7_object_to_c_string(sc, code)); /* do we need the thread-local env here? */
-	  if (str) free(str);
-	}
-    }
-
-  fprintf(stderr, "%s)", str = no_outer_parens(s7_object_to_c_string(sc, args)));
-  if (str) free(str);
-
-  line = pair_line_number(code);
-  if (line != 0)
-    {
-      if ((remembered_line_number(line) != 0) &&
-	  (remembered_file_name(line)))
-	fprintf(stderr, "        ; %s[%d]", remembered_file_name(line), remembered_line_number(line));
-    }
-
-  /* TODO: truncate long strings of args */
-  /* TODO: all this output should be to error-port or whatever, using scheme funcs */
-
-  fprintf(stderr, "\n");
-}
-
-
-static s7_pointer g_stacktrace(s7_scheme *sc, s7_pointer args)
-{
-  #define H_stacktrace "(stacktrace) prints out the last few evaluated expressions, somewhat like a C stacktrace."
-  int i;
-
-#if HAVE_PTHREADS
-  pthread_mutex_lock(&eval_history_lock);
-#endif
-
-  fprintf(stderr, "\neval history:\n");
-  for (i = 0; i < sc->eval_history_size; i++)
-    print_eval_history_entry(sc, (sc->eval_history_size + sc->eval_history_top - i - 1) % sc->eval_history_size);
-
-#if HAVE_PTHREADS
-  pthread_mutex_unlock(&eval_history_lock);
-#endif
-
-  return(sc->F);
-}
-
-
-static void add_eval_history_entry(s7_scheme *sc, s7_pointer code, s7_pointer args)
-{
-  int n;
-
-#if HAVE_PTHREADS
-  int id;
-  pthread_mutex_lock(&eval_history_lock);
-  id = sc->thread_id;
-  sc = sc->orig_sc;
-#endif
-
-  n = sc->eval_history_top++;
-  if (sc->eval_history_top >= sc->eval_history_size)
-    sc->eval_history_top = 0;
-
-  sc->eval_history_ops[n] = code;
-  sc->eval_history_args[n] = args;
-
-#if HAVE_PTHREADS
-  sc->eval_history_thread_ids[n] = id;
-  pthread_mutex_unlock(&eval_history_lock);
-#endif
-}
 
 
 
@@ -7211,7 +7021,7 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
     return(strdup("#<dynamic-wind>"));
   
   if (s7_is_object(obj)) 
-    return(s7_describe_object(obj)); /* this allocates already */
+    return(s7_describe_object(sc, obj)); /* this allocates already */
   
 #if S7_DEBUGGING
   search_heap(sc, obj);
@@ -9005,7 +8815,7 @@ static s7_pointer g_procedure_arity(s7_scheme *sc, s7_pointer args)
 typedef struct {
   int type;
   const char *name;
-  char *(*print)(void *value);
+  char *(*print)(s7_scheme *sc, void *value);
   void (*free)(void *value);
   bool (*equal)(void *val1, void *val2);
   void (*gc_mark)(void *val);
@@ -9020,7 +8830,7 @@ static int num_types = 0;
 
 
 int s7_new_type(const char *name, 
-		char *(*print)(void *value), 
+		char *(*print)(s7_scheme *sc, void *value), 
 		void (*free)(void *value), 
 		bool (*equal)(void *val1, void *val2),
 		void (*gc_mark)(void *val),
@@ -9054,12 +8864,12 @@ int s7_new_type(const char *name,
 }
 
 
-char *s7_describe_object(s7_pointer a)
+char *s7_describe_object(s7_scheme *sc, s7_pointer a)
 {
   int tag;
   tag = a->object.fobj.type;
   if (object_types[tag].print)
-    return((*(object_types[tag].print))(a->object.fobj.value)); /* assume allocation here (so we'll free the string later) */
+    return((*(object_types[tag].print))(sc, a->object.fobj.value)); /* assume allocation here (so we'll free the string later) */
   return(strdup(object_types[tag].name));
 }
 
@@ -9207,7 +9017,7 @@ s7_pointer s7_make_procedure_with_setter(s7_scheme *sc,
 }
 
 
-static char *pws_print(void *obj)
+static char *pws_print(s7_scheme *sc, void *obj)
 {
   pws *f = (pws *)obj;
   if (f->name)
@@ -9651,6 +9461,196 @@ static s7_pointer g_hash_table_set(s7_scheme *sc, s7_pointer args)
 
 
 /* -------------------------------- errors -------------------------------- */
+
+static char *no_outer_parens(char *str)
+{
+  int i, len, stop = 0;
+  len = safe_strlen(str);
+  if (len > 1)
+    {
+      for (i = 0; i < len; i++)
+	if (str[i] == '(')
+	  {
+	    stop = i;
+	    str[i] = ' ';
+	    break;
+	  }
+    }
+  if (i < len)
+    for (i = len - 1; i > stop; i--)
+      if (str[i] == ')')
+	{
+	  str[i] = ' ';
+	  break;
+	}
+  return(str);
+}
+
+
+/* debugging (error reporting) info */
+
+#define INITIAL_FILE_NAMES_SIZE 8
+static char **file_names = NULL;
+static int file_names_size = 0;
+static int file_names_top = -1;
+
+#if HAVE_PTHREADS
+static pthread_mutex_t remember_files_lock = PTHREAD_MUTEX_INITIALIZER;
+#endif
+
+#define remembered_line_number(Line) (Line & 0xfffff)
+#define remembered_file_name(Line)   (((Line >> 20) <= file_names_top) ? file_names[Line >> 20] : "?")
+/* this gives room for 4000 files each of 1000000 lines */
+
+static s7_pointer remember_line(s7_scheme *sc, s7_pointer obj)
+{
+  if ((sc->input_port != sc->NIL) && 
+      (is_file_port(sc->input_port)))
+    set_pair_line_number(obj, port_line_number(sc->input_port) | (port_file_number(sc->input_port) << 20));
+  return(obj);
+}
+
+
+static int remember_file_name(const char *file)
+{
+#if HAVE_PTHREADS
+  pthread_mutex_lock(&remember_files_lock);
+#endif
+
+  file_names_top++;
+  if (file_names_top >= file_names_size)
+    {
+      if (file_names_size == 0)
+	{
+	  file_names_size = INITIAL_FILE_NAMES_SIZE;
+	  file_names = (char **)calloc(file_names_size, sizeof(char *));
+	}
+      else
+	{
+	  int i, old_size;
+	  old_size = file_names_size;
+	  file_names_size *= 2;
+	  file_names = (char **)realloc(file_names, file_names_size * sizeof(char *));
+	  for (i = old_size; i < file_names_size; i++)
+	    file_names[i] = NULL;
+	}
+    }
+  file_names[file_names_top] = strdup(file);
+
+#if HAVE_PTHREADS
+  pthread_mutex_unlock(&remember_files_lock);
+#endif
+
+  return(file_names_top);
+}
+
+
+/* -------- eval history ("stacktrace") -------- */
+
+#if HAVE_PTHREADS
+static pthread_mutex_t eval_history_lock = PTHREAD_MUTEX_INITIALIZER;
+#endif
+
+
+static void print_eval_history_entry(s7_scheme *sc, int n)
+{
+  char *str = NULL;
+  int line = 0;
+  s7_pointer code, args;
+
+#if HAVE_PTHREADS
+  sc = sc->orig_sc;
+#endif
+
+  code = sc->eval_history_ops[n];
+  args = sc->eval_history_args[n];
+
+  if ((code == sc->NIL) && (args == sc->NIL))
+    return;
+
+#if HAVE_PTHREADS
+  if (sc->eval_history_thread_ids[n] != 0)
+    fprintf(stderr, "[%d]: ", sc->eval_history_thread_ids[n]);
+#endif
+
+  /* we have eval_history_ops|args equivalent to earlier code|args */
+
+  if (s7_is_function(code))
+    fprintf(stderr, "(%s ", function_name(code));
+  else
+    {
+      if (s7_is_procedure_with_setter(code))
+	fprintf(stderr, "(%s ", pws_name(code));
+      else 
+	{
+	  fprintf(stderr, "(%s ", str = s7_object_to_c_string(sc, code)); /* do we need the thread-local env here? */
+	  if (str) free(str);
+	}
+    }
+
+  fprintf(stderr, "%s)", str = no_outer_parens(s7_object_to_c_string(sc, args)));
+  if (str) free(str);
+
+  line = pair_line_number(code);
+  if (line != 0)
+    {
+      if ((remembered_line_number(line) != 0) &&
+	  (remembered_file_name(line)))
+	fprintf(stderr, "        ; %s[%d]", remembered_file_name(line), remembered_line_number(line));
+    }
+
+  /* TODO: truncate long strings of args */
+  /* TODO: all this output should be to error-port or whatever, using scheme funcs */
+
+  fprintf(stderr, "\n");
+}
+
+
+static s7_pointer g_stacktrace(s7_scheme *sc, s7_pointer args)
+{
+  #define H_stacktrace "(stacktrace) prints out the last few evaluated expressions, somewhat like a C stacktrace."
+  int i;
+
+#if HAVE_PTHREADS
+  pthread_mutex_lock(&eval_history_lock);
+#endif
+
+  fprintf(stderr, "\neval history:\n");
+  for (i = 0; i < sc->eval_history_size; i++)
+    print_eval_history_entry(sc, (sc->eval_history_size + sc->eval_history_top - i - 1) % sc->eval_history_size);
+
+#if HAVE_PTHREADS
+  pthread_mutex_unlock(&eval_history_lock);
+#endif
+
+  return(sc->F);
+}
+
+
+static void add_eval_history_entry(s7_scheme *sc, s7_pointer code, s7_pointer args)
+{
+  int n;
+
+#if HAVE_PTHREADS
+  int id;
+  pthread_mutex_lock(&eval_history_lock);
+  id = sc->thread_id;
+  sc = sc->orig_sc;
+#endif
+
+  n = sc->eval_history_top++;
+  if (sc->eval_history_top >= sc->eval_history_size)
+    sc->eval_history_top = 0;
+
+  sc->eval_history_ops[n] = code;
+  sc->eval_history_args[n] = args;
+
+#if HAVE_PTHREADS
+  sc->eval_history_thread_ids[n] = id;
+  pthread_mutex_unlock(&eval_history_lock);
+#endif
+}
+
 
 s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n, s7_pointer arg, const char *descr)
 {
@@ -11589,10 +11589,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       
     default:
-#if S7_DEBUGGING
-      fprintf(stderr, "unknown operator! %d\n", (int)(sc->op));
-      abort();
-#endif
       return(eval_error(sc, "unknown operator!", s7_make_integer(sc, sc->op)));
     }
   return(sc->F);
@@ -11738,8 +11734,9 @@ typedef struct {
 
 static int thread_tag = 0;
 
+/* TODO include thread id */
 
-static char *thread_print(void *obj)
+static char *thread_print(s7_scheme *sc, void *obj)
 {
   char *buf;
   buf = (char *)calloc(64, sizeof(char));
@@ -11856,7 +11853,7 @@ static s7_pointer thread_environment(s7_scheme *sc, s7_pointer obj)
 static int lock_tag = 0;
 
 
-static char *lock_print(void *obj)
+static char *lock_print(s7_scheme *sc, void *obj)
 {
   char *buf;
   buf = (char *)calloc(64, sizeof(char));
@@ -11926,8 +11923,9 @@ static s7_pointer g_release_lock(s7_scheme *sc, s7_pointer args)
 
 static int key_tag = 0;
 
+/* TODO: give local key value */
 
-static char *key_print(void *obj)
+static char *key_print(s7_scheme *sc, void *obj)
 {
   char *buf;
   buf = (char *)calloc(64, sizeof(char));
@@ -12649,10 +12647,10 @@ static s7_scheme *close_s7(s7_scheme *sc)
 {
   free(sc->strbuf);
   free(sc->temps);
-  free(sc);
 #if WITH_READ_LINE
   if (sc->read_line_buf) free(sc->read_line_buf);
 #endif
+  free(sc);
   return(NULL);
 }
 
