@@ -1,6 +1,9 @@
 (use-modules (ice-9 optargs))
 (provide 'snd-v.scm)
-(if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
+
+(if (and (not (provided? 'snd-ws.scm)) 
+	 (not (provided? 'sndlib-ws.scm)))
+    (load-from-path "ws.scm"))
 
 ;;; this version of the fm-violin assumes it is running within with-sound (where *output* and *reverb* are defined)
 

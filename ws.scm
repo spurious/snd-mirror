@@ -1,18 +1,13 @@
 ;;; with-sound and friends
 
+(use-modules (ice-9 optargs) (ice-9 format))
+
+;;; this file assumes it is run in the context of the Snd editor
+
 (provide 'snd-ws.scm)
 
-;;; this file split into several pieces 24-Oct-08 to make it possible to use it in a sndlib-only context
-
-(if (and (provided? 'snd)
-	 (not (provided? 'snd-snd-ws.scm)))
-    (load "snd-ws.scm"))
-
 (if (and (provided? 'snd-guile) (not (provided? 'snd-debug.scm))) (load-from-path "debug.scm"))
-(if (and (provided? 'snd) (not (provided? 'snd-extensions.scm))) (load-from-path "extensions.scm")) ; we need sound-property in with-mixed-sound
-
-
-;;; TODO: split out the Snd/Guile stuff so that ws.scm can be used in sndlib-only contexts
+(if (not (provided? 'snd-extensions.scm)) (load-from-path "extensions.scm")) ; we need sound-property in with-mixed-sound
 
 
 ;;; -------- with-sound debugger --------
@@ -26,7 +21,7 @@
 (define *ws-continue* #f)
 (define *ws-finishes* '())
 (define *ws-finish* #f)
-(define *ws-top-level-prompt* (if (defined? 'listener-prompt) (listener-prompt) ":"))
+(define *ws-top-level-prompt* (listener-prompt))
 
 (define (ws-prompt)
   "(ws-prompt) returns the current with-sound debugger prompt, set partially by the variable *ws-top-level-prompt*"
@@ -162,7 +157,6 @@ returning you to the true top-level."
 (if (provided? 'snd-s7)
     (define (make-stack . args) #f))
 
-(if (provided? 'snd)
 (defmacro ws-interrupt? ()
   ;; using defmacro, not define, so that we can more easily find the instrument (as a procedure)
   ;;   for ws-locals above -- some sort of procedure property is probably better
@@ -171,20 +165,11 @@ returning you to the true top-level."
 	 (call-with-current-continuation
 	  (lambda (continue)
 	    (throw 'with-sound-interrupt continue stack))))
-       #f))) ; there is a possible return value from the continuation, so I guess this will make it easier to use?
+       #f)) ; there is a possible return value from the continuation, so I guess this will make it easier to use?
 
-(if (not (provided? 'snd))
-    (defmacro ws-interrupt? () #f))
 
 
 ;;; -------- with-sound defaults --------
-
-(if (not (defined? 'default-output-srate)) (define (default-output-srate) 44100))
-(if (not (defined? 'default-output-chans)) (define (default-output-chans) 1))
-(if (not (defined? 'default-output-data-format)) (define (default-output-data-format) mus-lfloat))
-(if (not (defined? 'default-output-header-type)) (define (default-output-header-type) mus-next))
-(if (not (defined? 'print-length)) (define (print-length) 12))
-
 
 (define *clm-srate* (default-output-srate))
 (define *clm-file-name* "test.snd")
@@ -211,7 +196,7 @@ returning you to the true top-level."
 (define *clm-threads* 4)
 (define *clm-output-safety* 0)    ; if 1, assume output buffers will not need to be flushed except at the very end
 
-(define *to-snd* (provided? 'snd))
+(define *to-snd* #t)
 
 
 (define (times->samples beg dur) 
@@ -285,7 +270,7 @@ returning you to the true top-level."
 	 (in-debugger #f)
 	 (old-notehook *clm-notehook*)
 	 (old-verbose *clm-verbose*)
-	 (old-auto-update-interval (if (defined? 'auto-update-interval) (auto-update-interval) 60.0))
+	 (old-auto-update-interval (auto-update-interval))
 	 (output-1 output)                    ; protect during nesting
 	 (output-to-file (string? output))
 	 (reverb-1 revfile)
@@ -306,8 +291,7 @@ returning you to the true top-level."
        (set! (mus-file-buffer-size) *clm-file-buffer-size*)
        (set! (locsig-type) *clm-locsig-type*)
        (set! (mus-array-print-length) *clm-array-print-length*)
-       (if (defined? 'auto-update-interval)
-	   (set! (auto-update-interval) 0.0)) ; turn it off
+       (set! (auto-update-interval) 0.0) ; turn it off
        (if (equal? clipped 'unset)
 	   (if (and (or scaled-by scaled-to)
 		    (member data-format (list mus-bfloat mus-lfloat mus-bdouble mus-ldouble)))
@@ -547,8 +531,7 @@ returning you to the true top-level."
      (lambda () 
        (set! *clm-verbose* old-verbose)
        (set! *clm-notehook* old-notehook)
-       (if (defined? 'auto-update-interval)
-	   (set! (auto-update-interval) old-auto-update-interval))
+       (set! (auto-update-interval) old-auto-update-interval)
        (if (not in-debugger)
 	   (begin
 	     (if *reverb*
@@ -1049,8 +1032,7 @@ finish-with-sound to complete the process."
     (format fd "      (set! *clm-header-type* ~A)))~%" (mus-header-type->string *clm-header-type*))
     (close-appending fd)))
 
-(if (defined? 'after-save-state-hook)
-    (add-hook! after-save-state-hook ws-save-state))
+(add-hook! after-save-state-hook ws-save-state)
 
 
 ;;; -------- with-mix --------

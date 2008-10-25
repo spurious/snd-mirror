@@ -87,6 +87,8 @@
  *    s7 init
  */
 
+/* TODO: figure out how to print s7_Int */
+
 
 /* ---------------- compile time switches ---------------- */
 
@@ -11734,13 +11736,13 @@ typedef struct {
 
 static int thread_tag = 0;
 
-/* TODO include thread id */
 
 static char *thread_print(s7_scheme *sc, void *obj)
 {
   char *buf;
-  buf = (char *)calloc(64, sizeof(char));
-  snprintf(buf, 64, "#<thread %p>", obj);
+  thred *p = (thred *)obj;
+  buf = (char *)calloc(32, sizeof(char));
+  snprintf(buf, 32, "#<thread %d>", p->sc->thread_id);
   return(buf);
 }
 
@@ -11923,13 +11925,29 @@ static s7_pointer g_release_lock(s7_scheme *sc, s7_pointer args)
 
 static int key_tag = 0;
 
-/* TODO: give local key value */
+static void *key_value(s7_pointer obj)
+{
+  pthread_key_t *key; 
+  key = (pthread_key_t *)s7_object_value(obj);
+  return(pthread_getspecific(*key));                  /* returns NULL if never set */
+}
+
 
 static char *key_print(s7_scheme *sc, void *obj)
 {
-  char *buf;
-  buf = (char *)calloc(64, sizeof(char));
-  snprintf(buf, 64, "#<thread-variable %p>", obj); /* can't (easily) print the current value because that requires access to sc */
+  char *buf, *val_str;
+  s7_pointer val;
+  void *kval;
+  int len;
+  kval = key_value(obj);
+  if (kval)
+    val = (s7_pointer)kval;
+  else val = sc->F;
+  val_str = s7_object_to_c_string(sc, val);
+  len = 64 + safe_strlen(val_str);
+  buf = (char *)calloc(len, sizeof(char));
+  snprintf(buf, len, "#<[thread %d] key: %s>", sc->thread_id, val_str);
+  if (val_str) free(val_str);
   return(buf);
 }
 
@@ -11960,10 +11978,8 @@ bool s7_is_thread_variable(s7_pointer obj)
 
 s7_pointer s7_thread_variable_value(s7_scheme *sc, s7_pointer obj)
 {
-  pthread_key_t *key; 
   void *val;
-  key = (pthread_key_t *)s7_object_value(obj);
-  val = pthread_getspecific(*key);                  /* returns NULL if never set */
+  val = key_value(obj);
   if (val)
     return((s7_pointer)val);
   return(sc->F);
