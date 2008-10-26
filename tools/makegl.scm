@@ -556,8 +556,11 @@
 (hey "#define XL_TYPE_PTR_1(Name, XType) \\~%")
 (hey "  static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \\~%")
 (hey "  static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));} /* if NULL ok, should be explicit */~%")
-(hey "#define XL_TYPE_PTR_2(Name, XType) \\~%")
-(hey "  static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(XEN_FALSE);}~%")
+
+;XL_TYPE_PTR_2 was for "GdkVisual*" "PangoFont*" "GdkColormap*"
+;(hey "#define XL_TYPE_PTR_2(Name, XType) \\~%")
+;(hey "  static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(XEN_FALSE);}~%")
+
 
 (hey "~%~%/* ---------------------------------------- types ---------------------------------------- */~%~%")
 

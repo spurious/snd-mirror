@@ -88,8 +88,6 @@
 #define XL_TYPE_PTR_1(Name, XType) \
   static XType XEN_TO_C_ ## Name (XEN val) {if (XEN_FALSE_P(val)) return(NULL); return((XType)XEN_TO_C_ULONG(XEN_CADR(val)));} \
   static int XEN_ ## Name ## _P(XEN val) {return(WRAP_P(#Name, val));} /* if NULL ok, should be explicit */
-#define XL_TYPE_PTR_2(Name, XType) \
-  static XEN C_TO_XEN_ ## Name (XType val) {if (val) return(WRAP_FOR_XEN(#Name, val)); return(XEN_FALSE);}
 
 
 /* ---------------------------------------- types ---------------------------------------- */
@@ -5287,7 +5285,7 @@ void Init_libgl(void)
       define_integers();
       define_functions();
       XEN_YES_WE_HAVE("gl");
-      XEN_DEFINE("gl-version", C_TO_XEN_STRING("17-Oct-08"));
+      XEN_DEFINE("gl-version", C_TO_XEN_STRING("26-Oct-08"));
       gl_already_inited = true;
     }
 }

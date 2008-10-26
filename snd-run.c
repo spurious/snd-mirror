@@ -2711,6 +2711,7 @@ static triple *va_make_triple(void (*function)(int *arg_addrs, ptree *pt),
 #define BOOL_ARG_1 ((bool)(pt->ints[args[1]]))
 #define BOOL_ARG_3 ((bool)(pt->ints[args[3]]))
 #define BOOL_ARG_OK(Arg) ((pt->ints) && ((pt->outer_tree) || ((args[Arg] >= 0) && (args[Arg] <= pt->int_ctr) && (args[Arg] < pt->ints_size))))
+/* these *_ARG_OK macros were intended for internal arg error checking */
 /* an embedded ptree is evalled by simply copying the outer data pointers, but not their ctr/size vars, so we need to accept those */
 
 #define INT_RESULT pt->ints[args[0]]
@@ -9899,7 +9900,7 @@ static xen_value *env_interp_1(ptree *prog, xen_value **args, int num_args)
 
 /* ---------------- env-any ---------------- */
 
-#if (!HAVE_NESTED_FUNCTIONS)
+#if (!HAVE_NESTED_FUNCTIONS) || __cplusplus
 static ptree *env_any_outer_pt, *env_any_connect_pt;
 
 static Float env_any_connect(Float y)

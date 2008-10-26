@@ -11571,7 +11571,6 @@ void mus_initialize(void)
   #define MULAW_ZERO 255
   #define ALAW_ZERO 213
   #define UBYTE_ZERO 128
-  #define USHORT_ZERO 32768
 
   mus_class_tag = MUS_INITIAL_GEN_TAG;
   sampling_rate = MUS_DEFAULT_SAMPLING_RATE;

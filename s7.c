@@ -48,7 +48,7 @@
  *     port-line-number, port-filename
  *     read-line, read-byte, write-byte
  *     logior, logxor, logand, lognot, ash
- *     sinh cosh tanh asinh acosh atanh
+ *     sinh, cosh, tanh, asinh, acosh, atanh
  *     object->string, eval-string
  *     reverse!, list-set!
  *     gc, gc-verbose, load-verbose
@@ -59,49 +59,22 @@
  * still to do:
  *   syntax-rules and friends
  *
+ *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
+ *
+ *
+ * Documentation is in s7.h.
+ *
+ *
+ * ---------------- compile time switches ---------------- 
  */
-
-
-/* this file is organized as follows:
- *    structs and type flags
- *    constants
- *    GC
- *    stacks
- *    symbols
- *    environments
- *    continuations
- *    numbers
- *    characters
- *    strings
- *    ports
- *    lists
- *    vectors
- *    objects and functions
- *    eq and such
- *    error handlers
- *    sundry leftovers
- *    eval
- *    quasiquote
- *    threads
- *    s7 init
- */
-
-/* TODO: figure out how to print s7_Int */
-
-
-/* ---------------- compile time switches ---------------- */
 
 #include <mus-config.h>
 
-/*
+/* 
  * your config file goes here, or just replace that #include line with the defines you need.
+ * The only compile-time switches involve booleans, threads and complex numbers.
  * Currently we assume we have setjmp.h.
- *   The only compile-time switches involve booleans, threads and complex numbers.
- *   These functions are on compile-time switches:
- *
- *     cabs cacos cacosh carg casin casinh catan catanh ccos ccosh 
- *     cexp clog conj cpow csin csinh csqrt ctan ctanh
  *
  * complex number support (which is problematic in C++, Solaris, and netBSD)
  *   is on the WITH_COMPLEX switch. On a Mac, or in Linux, if you're not using C++,
@@ -111,8 +84,17 @@
  *   #define HAVE_COMPLEX_TRIG 1
  *
  *   (define the first if your compiler has any support for complex numbers)
- *   (define the latter if functions like csin are defined in the math library)
+ *   (define the second if functions like csin are defined in the math library)
  *   In C++, leave all the complex stuff turned off.
+ *
+ *   Some systems (freeBSD) have complex.h, but not the trig funcs, so
+ *   WITH_COMPLEX assumes it can find cimag and creal and maybe cabs, csqrt, carg, and conj,
+ *   and HAVE_COMPLEX_TRIG means we already have
+ *
+ *     cacos cacosh casin casinh catan catanh ccos ccosh cexp clog cpow csin csinh ctan ctanh
+ *
+ * When WITH_COMPLEX is 0 or undefined, the complex functions are stubs that simply return their
+ *   argument.
  *
  * If pthreads are available:
  *
@@ -121,10 +103,7 @@
  * s7.h includes stdbool.h if HAVE_STDBOOL_H is 1.
  */
 
-/* -------------------------------------------------------------------------------- */
-
 #include <unistd.h>
-#include <math.h>
 #include <limits.h>
 #include <float.h>
 #include <ctype.h>
@@ -132,9 +111,12 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#include <math.h>
+
 #if WITH_COMPLEX
 #include <complex.h>
 #endif
+
 #include <setjmp.h>
 
 #if HAVE_PTHREADS
@@ -142,6 +124,9 @@
 #endif
 
 #include "s7.h"
+
+
+/* ---------------- initial sizes ---------------- */
 
 #define INITIAL_HEAP_SIZE 128000
 /* in Snd, there are about 10000 permanent objects sitting in the heap, so the bigger the size, the less
@@ -171,11 +156,37 @@
 #define DEFAULT_EVAL_HISTORY_SIZE 16
 /* this is the number of entries in the debugger's printout of previous evaluations (a stacktrace of sorts) */
 
-
 /* there's also CASE_SENSITIVE below (default: 1) which determines whether names are case sensitive */
 
 
-/* ---------------- end of setup stuff ---------------- */
+/* -------------------------------------------------------------------------------- */
+
+/* this file is organized as follows:
+ *    structs and type flags
+ *    constants
+ *    GC
+ *    stacks
+ *    symbols
+ *    environments
+ *    continuations
+ *    numbers
+ *    characters
+ *    strings
+ *    ports
+ *    lists
+ *    vectors
+ *    objects and functions
+ *    eq and such
+ *    error handlers
+ *    sundry leftovers
+ *    eval
+ *    quasiquote
+ *    threads
+ *    s7 init
+ */
+
+/* TODO: figure out how to print s7_Int */
+
 
 typedef enum {OP_TOP_LEVEL0, OP_TOP_LEVEL1, OP_READ_INTERNAL, OP_EVAL,
 	      OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY, OP_DOMACRO, OP_LAMBDA, OP_QUOTE, 
@@ -1988,14 +1999,54 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
 
 /* -------------------------------- numbers -------------------------------- */
 
-/* TODO: figure out how to do complex numbers in C++ */
+/* TODO: figure out how to do complex numbers in C++ in some way that is compatible with the current C code
+ */
+
 
 #if WITH_COMPLEX
-  typedef double complex double_complex;
+
+/* typedef complex<double> double_complex; C++ */
+typedef double complex double_complex;
 
 /* Trigonometric functions. FreeBSD's math library does not include the complex form of the trig funcs. */ 
 
 #if (!HAVE_COMPLEX_TRIG)
+
+/* FreeBSD supplies cabs carg cimag creal conj csqrt, so can we assume those exist if complex.h exists?
+ */
+#if 0
+static double carg(double_complex z)
+{ 
+  return atan2(cimag(z), creal(z)); 
+} 
+
+
+static double cabs(double_complex z) 
+{ 
+  return hypot(creal(z), cimag(z)); 
+} 
+
+
+static double_complex conj(double_complex z) 
+{ 
+  return ~z; 
+} 
+
+
+static double_complex csqrt(double_complex z) 
+{ 
+  if (cimag(z) < 0.0) 
+    return conj(csqrt(conj(z))); 
+  else 
+    { 
+      double r = cabs(z); 
+      double x = creal(z); 
+      
+      return sqrt((r + x) / 2.0) + sqrt((r - x) / 2.0) * _Complex_I; 
+    } 
+} 
+#endif
+
 
 static double_complex csin(double_complex z) 
 { 
@@ -2039,18 +2090,6 @@ static double_complex cexp(double_complex z)
 } 
 
 
-static double carg(double_complex z)
-{ 
-  return atan2(cimag(z), creal(z)); 
-} 
-
-
-static double cabs(double_complex z) 
-{ 
-  return hypot(creal(z), cimag(z)); 
-} 
-
-
 static double_complex clog(double_complex z) 
 { 
   return log(fabs(cabs(z))) + carg(z) * _Complex_I; 
@@ -2067,26 +2106,6 @@ static double_complex cpow(double_complex x, double_complex y)
   double ntheta = yre * theta + yim * log(r); 
   
   return nr * cos(ntheta) + (nr * sin(ntheta)) * _Complex_I; /* make-polar */ 
-} 
-
-
-static double_complex conj(double_complex z) 
-{ 
-  return ~z; 
-} 
-
-
-static double_complex csqrt(double_complex z) 
-{ 
-  if (cimag(z) < 0.0) 
-    return conj(csqrt(conj(z))); 
-  else 
-    { 
-      double r = cabs(z); 
-      double x = creal(z); 
-      
-      return sqrt((r + x) / 2.0) + sqrt((r - x) / 2.0) * _Complex_I; 
-    } 
 } 
 
 
@@ -10557,9 +10576,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_EVAL_ARGS1:
-      /*
-	fprintf(stderr, "e1args: [%p]%s [%p]%s\n", sc->value, s7_object_to_c_string(sc, sc->value), sc->args, s7_object_to_c_string(sc, sc->args));
-      */
       sc->args = s7_cons(sc, sc->value, sc->args); 
       /*   I've failed twice to find a way to reduce the consing */
       /*  the no cons method:

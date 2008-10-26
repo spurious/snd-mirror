@@ -5336,7 +5336,7 @@ static XEN g_env_interp(XEN x, XEN env1) /* "env" causes trouble in Objective-C!
 }
 
 
-#if (!HAVE_NESTED_FUNCTIONS)
+#if (!HAVE_NESTED_FUNCTIONS) || __cplusplus
 
 /* mus_env_any calls the C function itself, so we pass it connect_func,
  *   connect_func uses the function passed as an argument to g_env_any.
@@ -8440,7 +8440,7 @@ void mus_xen_init(void)
 {
   mus_initialize();
 
-#if (!HAVE_NESTED_FUNCTIONS)
+#if (!HAVE_NESTED_FUNCTIONS) || __cplusplus
   current_connect_func = XEN_FALSE;
 #endif
 
