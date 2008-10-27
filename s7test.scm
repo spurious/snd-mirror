@@ -27685,6 +27685,8 @@
 	(test (hash-table? ht) #t)
 	(test (let () (hash-table-set! ht 'key 3.14) (hash-table-ref ht 'key)) 3.14)
 	(test (let () (hash-table-set! ht "ky" 3.14) (hash-table-ref ht "ky")) 3.14)
+	(test (let () (hash-table-set! ht 123 "hiho") (hash-table-ref ht 123)) "hiho")
+	(test (hash-table-ref ht "123") #f)
 	(for-each
 	 (lambda (arg)
 	   (test (let () (hash-table-set! ht 'key arg) (hash-table-ref ht 'key)) arg))
@@ -27714,11 +27716,11 @@
 	(for-each
 	 (lambda (arg)
 	   (test (hash-table-set! ht arg 3.14) 'error))
-	 (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
+	 (list #\a '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
 	(for-each
 	 (lambda (arg)
 	   (test (hash-table-ref ht arg) 'error))
-	 (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
+	 (list #\a '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
 	
 	(test (hash-table-ref ht 'not-a-key) #f)
 	(test (hash-table-ref ht "not-a-key") #f)

@@ -9524,17 +9524,22 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, const char *name, 
   return(value);
 }
 
-/* for ints as keys, 
- *    hash loc = mod int size
- *    name = int & 0 as a string
- *    this way there's no chance of collisions with strings like "123" as keys
- *    and all the keys are strings still internally, and it's easy to get the int->string conversion
- */
+
+#define HASHED_INTEGER_BUFFER_SIZE 32
+
+static char *s7_hashed_integer_name(s7_Int key, char *intbuf)
+{
+  snprintf(intbuf, HASHED_INTEGER_BUFFER_SIZE, "\b" s7_Int_d "\b", key);
+  return(intbuf);
+}
+
+
 static s7_pointer g_hash_table_ref(s7_scheme *sc, s7_pointer args)
 {
   /* basically the same layout as the global symbol table */
   #define H_hash_table_ref "(hash-table-ref table key) returns the value associated with key (a string or symbol) in the hash table"
   const char *name;
+  char intbuf[HASHED_INTEGER_BUFFER_SIZE];
   s7_pointer table, key;
   table = car(args);
   key = cadr(args);
@@ -9548,7 +9553,12 @@ static s7_pointer g_hash_table_ref(s7_scheme *sc, s7_pointer args)
     {
       if (s7_is_symbol(key))
 	name = s7_symbol_name(key);
-      else return(s7_wrong_type_arg_error(sc, "hash-table-ref", 2, key, "a string or symbol"));
+      else
+	{
+	  if (s7_is_integer(key))
+	    name = s7_hashed_integer_name(s7_integer(key), intbuf);
+	  else return(s7_wrong_type_arg_error(sc, "hash-table-ref", 2, key, "a string, symbol, or integer"));
+	}
     }
   
   return(s7_hash_table_ref(sc, table, name));
@@ -9559,6 +9569,7 @@ static s7_pointer g_hash_table_set(s7_scheme *sc, s7_pointer args)
 {
   #define H_hash_table_set "(hash-table-set! table key value) sets the value associated with key (a string or symbol) in the hash table to value"
   const char *name;
+  char intbuf[HASHED_INTEGER_BUFFER_SIZE];
   s7_pointer table, key;
   table = car(args);
   key = cadr(args);
@@ -9572,7 +9583,12 @@ static s7_pointer g_hash_table_set(s7_scheme *sc, s7_pointer args)
     {
       if (s7_is_symbol(key))
 	name = s7_symbol_name(key);
-      else return(s7_wrong_type_arg_error(sc, "hash-table-set!", 2, key, "a string or symbol"));
+      else
+	{
+	  if (s7_is_integer(key))
+	    name = s7_hashed_integer_name(s7_integer(key), intbuf);
+	  else return(s7_wrong_type_arg_error(sc, "hash-table-set!", 2, key, "a string, symbol, or integer"));
+	}
     }
   
   return(s7_hash_table_set(sc, table, name, caddr(args)));
