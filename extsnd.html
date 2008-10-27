@@ -12711,7 +12711,14 @@ process number ("PID" in the 'ps au' printout), then: kill -10 6141.  SIGUSR1 is
 signal 10, and we're using the kill program to send that signal to Snd (process 6141 in our example).
 </p>
 
-<!-- TODO: s7 debugging -->
+<br>
+<table width="50%" border=0><tr><td bgcolor="EEFDEE" valign="middle"><h4>s7 debugging</h4></td></tr></table>
+
+<p>When s7 hits an error, it prints out an "eval history" as well as the error message.  This history
+shows the last few evaluations with file names and line numbers if appropriate.  The current
+environment is also accessible.
+</p>
+
 
 <br>
 <table width="50%" border=0><tr><td bgcolor="EEFDEE" valign="middle"><h4>Guile debugging</h4></td></tr></table>

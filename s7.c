@@ -73,8 +73,15 @@
 
 /* 
  * your config file goes here, or just replace that #include line with the defines you need.
- * The only compile-time switches involve booleans, threads and complex numbers.
- * Currently we assume we have setjmp.h.
+ * The only compile-time switches involve booleans, threads, and complex numbers.
+ * Currently we assume we have setjmp.h (used by the error handlers).
+ *
+ * If pthreads are available:
+ *
+ *   #define HAVE_PTHREADS 1
+ *
+ * s7.h includes stdbool.h if HAVE_STDBOOL_H is 1 and we're not in C++.
+ *
  *
  * complex number support (which is problematic in C++, Solaris, and netBSD)
  *   is on the WITH_COMPLEX switch. On a Mac, or in Linux, if you're not using C++,
@@ -91,19 +98,16 @@
  *   #define HAVE_COMPLEX_TRIG 0
  *
  *   Some systems (freeBSD) have complex.h, but not the trig funcs, so
- *   WITH_COMPLEX assumes it can find cimag and creal and maybe cabs, csqrt, carg, and conj,
- *   and HAVE_COMPLEX_TRIG means we already have
+ *   WITH_COMPLEX means we can find cimag and creal, cabs, csqrt, carg, and conj,
+ *   and HAVE_COMPLEX_TRIG means we have
  *
  *     cacos cacosh casin casinh catan catanh ccos ccosh cexp clog cpow csin csinh ctan ctanh
  *
  * When WITH_COMPLEX is 0 or undefined, the complex functions are stubs that simply return their
- *   argument.
+ *   argument -- this will be very confusing for the s7 user because, for example, (sqrt -2)
+ *   will return something bogus (it will not signal an error).
  *
- * If pthreads are available:
- *
- *   #define HAVE_PTHREADS 1
- *
- * s7.h includes stdbool.h if HAVE_STDBOOL_H is 1.
+ * Snd's configure.ac has m4 code to handle WITH_COMPLEX and HAVE_COMPLEX_TRIG.
  */
 
 #include <unistd.h>
@@ -196,8 +200,6 @@
  *    threads
  *    s7 init
  */
-
-/* TODO: figure out how to print s7_Int */
 
 
 typedef enum {OP_TOP_LEVEL0, OP_TOP_LEVEL1, OP_READ_INTERNAL, OP_EVAL,
@@ -1807,7 +1809,6 @@ void s7_define_variable(s7_scheme *sc, const char *name, s7_pointer value)
 }
 
 
-#if 0
 static s7_pointer s7_search_environment(s7_scheme *sc, s7_pointer env, bool (*searcher)(s7_scheme *sc, s7_pointer binding, s7_pointer data), s7_pointer data)
 { 
   int i, len;
@@ -1829,8 +1830,18 @@ static s7_pointer s7_search_environment(s7_scheme *sc, s7_pointer env, bool (*se
     }
   return(sc->F); 
 } 
-#endif
 
+
+static bool find_value(s7_scheme *sc, s7_pointer binding, s7_pointer val)
+{
+  return(cdr(binding) == val);
+}
+
+
+static s7_pointer s7_find_value_in_environment(s7_scheme *sc, s7_pointer val)
+{
+  return(s7_search_environment(sc, sc->envir, find_value, val));
+}
 
 
 
@@ -2026,7 +2037,13 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
   #define creal(x) Real(x)
   #define cimag(x) Imag(x)
   #define carg(x) arg(x)
+
   inline long long abs(long long x) { return x >= 0 ? x : -x;}
+  /* this is taken from http://gcc.gnu.org/ml/gcc-bugs/1998-09/msg00736.html
+   *   where they also recommend:
+   *   #if __GNUC__ >= 2 && defined(__USE_GNU) && !defined(__STRICT_ANSI__)
+   */
+
   #define cabs(x) abs(x)
   #define csqrt(x) sqrt(x)
   #define cpow(x, y) pow(x, y)
@@ -7055,7 +7072,14 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
     return(strdup("#<macro>"));
   
   if (s7_is_closure(obj)) 
-    return(strdup("#<closure>"));
+    {
+      /* try to find obj in the current environment and return its name */
+      s7_pointer binding;
+      binding = s7_find_value_in_environment(sc, obj);
+      if (s7_is_pair(binding))
+	return(strdup(s7_symbol_name(car(binding))));
+      return(strdup("#<closure>"));
+    }
   
   if (is_promise(obj)) 
     return(strdup("#<promise>"));
@@ -8701,6 +8725,12 @@ static s7_pointer g_is_procedure(s7_scheme *sc, s7_pointer args)
 }
 
 
+static char *pws_documentation(s7_pointer x);
+static s7_pointer pws_source(s7_scheme *sc, s7_pointer x);
+static int pws_get_req_args(s7_pointer x);
+static int pws_get_opt_args(s7_pointer x);
+
+
 s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p)
 {
   /* make it look like an internal lambda form */
@@ -8726,8 +8756,9 @@ s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p)
 		     cdr(p)));
     }
   
-  /* TODO: what if scheme case of pws?? */
-  return(sc->F);
+  if (s7_is_procedure_with_setter(p))
+    return(pws_source(sc, p));
+  return(sc->NIL);
 }
 
 
@@ -8741,6 +8772,7 @@ static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
   if (s7_is_symbol(car(args)))
     p = s7_symbol_value(sc, car(args));
   else p = car(args);
+
   if (s7_is_closure(p) || is_macro(p) || is_promise(p)) 
     return(s7_append(sc, 
 		     s7_cons(sc, 
@@ -8749,6 +8781,9 @@ static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
 				     car(car(p)),
 				     sc->NIL)),
 		     cdr(car(p))));
+
+  if (s7_is_procedure_with_setter(p))
+    return(pws_source(sc, p));
   return(sc->NIL);
 }
 
@@ -8767,11 +8802,6 @@ void s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, int re
   sym = s7_make_symbol(sc, name);
   s7_define(sc, s7_global_environment(sc), sym, func);
 }
-
-
-static char *pws_documentation(s7_pointer x);
-static int pws_get_req_args(s7_pointer x);
-static int pws_get_opt_args(s7_pointer x);
 
 
 char *s7_procedure_documentation(s7_scheme *sc, s7_pointer p)
@@ -9228,6 +9258,21 @@ static s7_pointer g_procedure_with_setter_setter_arity(s7_scheme *sc, s7_pointer
 }
 
 
+static s7_pointer pws_source(s7_scheme *sc, s7_pointer x)
+{
+  pws *f = (pws *)s7_object_value(x);
+  if (s7_is_closure(f->scheme_getter))
+    return(s7_append(sc, 
+		     s7_cons(sc, 
+			     sc->LAMBDA, 
+			     s7_cons(sc,
+				     car(car(f->scheme_getter)),
+				     sc->NIL)),
+		     cdr(car(f->scheme_getter))));
+  return(sc->NIL);
+}
+
+
 
 /* -------------------------------- eq etc -------------------------------- */
 
@@ -9402,8 +9447,17 @@ bool s7_is_hash_table(s7_pointer p)
 
 static s7_pointer g_is_hash_table(s7_scheme *sc, s7_pointer args)
 {
-  #define H_is_hash_table "(hash_table? obj) returns #t if obj is a hash-table"
+  #define H_is_hash_table "(hash-table? obj) returns #t if obj is a hash-table"
   return(make_boolean(sc, s7_is_hash_table(car(args))));
+}
+
+
+static s7_pointer g_hash_table_size(s7_scheme *sc, s7_pointer args)
+{
+  #define H_hash_table_size "(hash-table-size obj) returnsthe size of the hash-table obj"
+  if (!s7_is_hash_table(car(args)))
+    return(s7_wrong_type_arg_error(sc, "hash-table-size", 1, car(args), "a hash-table"));
+  return(s7_make_integer(sc, vector_length(car(args))));
 }
 
 
@@ -9470,7 +9524,12 @@ s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, const char *name, 
   return(value);
 }
 
-
+/* for ints as keys, 
+ *    hash loc = mod int size
+ *    name = int & 0 as a string
+ *    this way there's no chance of collisions with strings like "123" as keys
+ *    and all the keys are strings still internally, and it's easy to get the int->string conversion
+ */
 static s7_pointer g_hash_table_ref(s7_scheme *sc, s7_pointer args)
 {
   /* basically the same layout as the global symbol table */
@@ -9482,6 +9541,7 @@ static s7_pointer g_hash_table_ref(s7_scheme *sc, s7_pointer args)
   
   if (!s7_is_hash_table(table))
     return(s7_wrong_type_arg_error(sc, "hash-table-ref", 1, table, "a hash-table"));
+
   if (s7_is_string(key))
     name = string_value(key);
   else 
@@ -9505,6 +9565,7 @@ static s7_pointer g_hash_table_set(s7_scheme *sc, s7_pointer args)
   
   if (!s7_is_hash_table(table))
     return(s7_wrong_type_arg_error(sc, "hash-table-set!", 1, table, "a hash-table"));
+
   if (s7_is_string(key))
     name = string_value(key);
   else 
@@ -9615,6 +9676,7 @@ static pthread_mutex_t eval_history_lock = PTHREAD_MUTEX_INITIALIZER;
 static void print_eval_history_entry(s7_scheme *sc, int n)
 {
   char *str = NULL;
+  char numbuf[64];
   int line = 0;
   s7_pointer code, args;
 
@@ -9630,39 +9692,50 @@ static void print_eval_history_entry(s7_scheme *sc, int n)
 
 #if HAVE_PTHREADS
   if (sc->eval_history_thread_ids[n] != 0)
-    fprintf(stderr, "[%d]: ", sc->eval_history_thread_ids[n]);
+    {
+      snprintf(numbuf, 64, "[%d]", sc->eval_history_thread_ids[n]);
+      write_string(sc, numbuf, sc->error_port);
+    }
 #endif
 
   /* we have eval_history_ops|args equivalent to earlier code|args */
 
+  write_string(sc, "(", sc->error_port);
   if (s7_is_function(code))
-    fprintf(stderr, "(%s ", function_name(code));
+    write_string(sc, function_name(code), sc->error_port);
   else
     {
       if (s7_is_procedure_with_setter(code))
-	fprintf(stderr, "(%s ", pws_name(code));
+	write_string(sc, pws_name(code), sc->error_port);
       else 
 	{
-	  fprintf(stderr, "(%s ", str = s7_object_to_c_string(sc, code)); /* do we need the thread-local env here? */
+	  str = s7_object_to_c_string(sc, code); /* do we need the thread-local env here? */
+	  write_string(sc, str, sc->error_port);
 	  if (str) free(str);
 	}
     }
 
-  fprintf(stderr, "%s)", str = no_outer_parens(s7_object_to_c_string(sc, args)));
+  write_string(sc, " ", sc->error_port);
+  str = no_outer_parens(s7_object_to_c_string(sc, args));
+  write_string(sc, str, sc->error_port);
   if (str) free(str);
+  write_string(sc, ")", sc->error_port);
 
   line = pair_line_number(code);
   if (line != 0)
     {
       if ((remembered_line_number(line) != 0) &&
 	  (remembered_file_name(line)))
-	fprintf(stderr, "        ; %s[%d]", remembered_file_name(line), remembered_line_number(line));
+	{
+	  write_string(sc, "        ; ", sc->error_port);
+	  write_string(sc, remembered_file_name(line), sc->error_port);
+	  snprintf(numbuf, 64, "[%d]", remembered_line_number(line));
+	  write_string(sc, numbuf, sc->error_port);
+	}
     }
 
   /* TODO: truncate long strings of args */
-  /* TODO: all this output should be to error-port or whatever, using scheme funcs */
-
-  fprintf(stderr, "\n");
+  write_string(sc, "\n", sc->error_port);
 }
 
 
@@ -9675,7 +9748,7 @@ static s7_pointer g_stacktrace(s7_scheme *sc, s7_pointer args)
   pthread_mutex_lock(&eval_history_lock);
 #endif
 
-  fprintf(stderr, "\neval history:\n");
+  write_string(sc, "\neval history:\n", sc->error_port);
   for (i = 0; i < sc->eval_history_size; i++)
     print_eval_history_entry(sc, (sc->eval_history_size + sc->eval_history_top - i - 1) % sc->eval_history_size);
 
@@ -10178,7 +10251,6 @@ static s7_pointer g_call_with_values(s7_scheme *sc, s7_pointer args)
 {
   #define H_call_with_values "(call-with-values producer consumer) applies consumer to the multiple values returned by producer"
   s7_pointer result;
-  /* TODO: ideally this would handle the apply in eval */
   result = s7_call(sc, car(args), sc->NIL);
   
   if ((s7_is_pair(result)) &&
@@ -10838,7 +10910,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_DEFINE1:
       /* sc->code is the symbol being defined, sc->value is its value
-       *   if sc->value is a closure, car is or the form ((args...) body...)
+       *   if sc->value is a closure, car is of the form ((args...) body...)
        *   so the doc string if any is (cadr (car value))
        *   and the arg list gives the number of required args up to the dot
        */
@@ -11446,7 +11518,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     READ_EXPRESSION:
     case OP_READ_EXPRESSION:
-      
+
       switch (sc->tok) 
 	{
 	case TOK_EOF:
@@ -11550,6 +11622,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_READ_LIST: 
       sc->args = s7_cons(sc, sc->value, sc->args);
       sc->tok = token(sc, sc->input_port);
+
       if (sc->tok == TOK_RPAREN) 
 	{
 	  int c;
@@ -11574,18 +11647,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  else 
 	    {
 	      if (sc->tok == TOK_EOF)
-		{
-		  /* `(+ 2 3) as a stand-alone expression confuses the close paren check */
-		  if ((sc->stack_top > 4) &&
-		      ((opcode_t)s7_integer(vector_element(sc->stack, sc->stack_top - 1)) == OP_READ_QUASIQUOTE))
-		    {
-		      pop_stack(sc, sc->code);
-		      goto START;
-		      
-		      /* TODO: fix unlisted quasiquote */
-		    }
-		  return(eval_error(sc, "missing close paren?", sc->NIL));
-		}
+		return(eval_error(sc, "missing close paren?", sc->NIL));
 	      else
 		{
 		  push_stack(sc, OP_READ_LIST, sc->args, sc->NIL);
@@ -12326,6 +12388,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "make-hash-table",         g_make_hash_table,         0, 1, false, H_make_hash_table);
   s7_define_function(sc, "hash-table-ref",          g_hash_table_ref,          2, 0, false, H_hash_table_ref);
   s7_define_function(sc, "hash-table-set!",         g_hash_table_set,          3, 0, false, H_hash_table_set);
+  s7_define_function(sc, "hash-table-size",         g_hash_table_size,         1, 0, false, H_hash_table_size);
   
   
   /* ports */

@@ -27692,6 +27692,7 @@
       
       (let ((ht (make-hash-table 277)))
 	(test (hash-table? ht) #t)
+	(test (hash-table-size ht) 277)
 	(test (let () (hash-table-set! ht 'key 3.14) (hash-table-ref ht 'key)) 3.14)
 	(test (let () (hash-table-set! ht "ky" 3.14) (hash-table-ref ht "ky")) 3.14)
 	(for-each
@@ -27732,6 +27733,11 @@
       
       (for-each
        (lambda (arg)
+	 (test (hash-table-size arg) 'error))
+       (list "hi" -1 0 #\a 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
+      
+      (for-each
+       (lambda (arg)
 	 (test (make-hash-table arg) 'error))
        (list "hi" -1 0 #\a 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
       
@@ -27739,6 +27745,7 @@
 	    (ht2 (make-hash-table 277)))
 	(hash-table-set! ht1 'key 'hiho)
 	(hash-table-set! ht2 (hash-table-ref ht1 'key) 3.14)
+	(test (hash-table-size ht1) 653)
 	(test (hash-table-ref ht2 'hiho) 3.14)
 	(test (hash-table-ref ht2 (hash-table-ref ht1 'key)) 3.14))
       
