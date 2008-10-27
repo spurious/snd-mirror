@@ -1913,6 +1913,12 @@ static XEN g_gsl_gegenbauer(XEN n, XEN lambda, XEN x)
   gsl_sf_gegenpoly_n_e(XEN_TO_C_INT(n), XEN_TO_C_DOUBLE(lambda), XEN_TO_C_DOUBLE(x), &val);
   return(C_TO_XEN_DOUBLE(val.val));
 }
+
+#ifdef XEN_ARGIFY_1
+  XEN_NARGIFY_3(g_gegenbaur_w, g_gegenbaur)
+#else
+  #define g_gegenbaur_w g_gegenbaur
+#endif
 #endif
 
 
@@ -2667,7 +2673,7 @@ void g_xen_initialize(void)
 #endif
 
 #if MUS_DEBUGGING && HAVE_SCHEME
-  XEN_DEFINE_PROCEDURE("gsl-gegenbauer",  g_gsl_gegenbauer,  3, 0, 0, "internal test func");
+  XEN_DEFINE_PROCEDURE("gsl-gegenbauer",  g_gsl_gegenbauer_w,  3, 0, 0, "internal test func");
 #endif
 
 #if HAVE_COMPLEX_TRIG && XEN_HAVE_COMPLEX_NUMBERS

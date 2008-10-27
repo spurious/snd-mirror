@@ -1560,7 +1560,7 @@ if test "$with_s7" != no && test "$with_extension_language" != no && test "$ac_s
         [
          AC_DEFINE(HAVE_SCM_C_MAKE_RECTANGULAR)
          AC_DEFINE(HAVE_COMPLEX_TRIG)
-# TODO: here if C++ we need to leave HAVE_COMPLEX_TRIG undefined -- how to catch this case? [also in sndlib's configure]
+# in C++ the complex macros are commented out in mus-config.h.in, so this is a no-op in that case
 	])
 
     AC_DEFINE(WITH_RUN)

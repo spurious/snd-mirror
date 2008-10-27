@@ -34,10 +34,15 @@
 #undef HAVE_DECL_HYPOT
 #undef HAVE_DECL_ISNAN
 #undef HAVE_DECL_ISINF
+
 #ifndef __cplusplus
 #undef HAVE_COMPLEX_TRIG
 #undef WITH_COMPLEX
+#else
+#define WITH_COMPLEX 1
+#define HAVE_COMPLEX_TRIG 0
 #endif
+
 #undef HAVE_SPECIAL_FUNCTIONS
 #undef WORDS_BIGENDIAN
 #undef _FILE_OFFSET_BITS

@@ -20,8 +20,9 @@
 (let* ((hpsum 0) ; for average readings
        (lpsum 0)
        (average (make-moving-average 14)) ; 2-week average
+       (average1 (make-moving-average 90)) ; 3-month average
        (ind (find-sound
-	     (with-sound (:channels 5 :data-format mus-lfloat) ; float output to be sure it can handle the full range
+	     (with-sound (:channels 6 :data-format mus-lfloat) ; float output to be sure it can handle the full range
 	      (let ((samp 0))	    
 		(call-with-input-file 
 		    (list-ref (script-args) 1) ; invocation arg = text file of data ("snd heart.scm data.txt")
@@ -44,6 +45,7 @@
 				    (out-any samp 120 2)
 				    (out-any samp 80 3)
 				    (out-any samp (max 90 (moving-average average (* 0.5 (+ lp hp)))) 4)
+				    (out-any samp (max 90 (moving-average average1 (* 0.5 (+ lp hp)))) 5)
 				    (set! samp (1+ samp)))))
 			    (loop (read-line file 'concat))))))))))))
 

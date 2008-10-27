@@ -1221,6 +1221,9 @@ make clean
 ./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-forth
 make
 make clean
+./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet CC=g++
+make
+make clean
 
 
 cp ~/libxm/* .
@@ -1243,6 +1246,9 @@ make clean
 make
 make clean
 ./configure --quiet --with-gtk
+make
+make clean
+./configure --quiet --with-gtk CC=g++
 make
 make clean
 ./configure --quiet --with-ruby --with-gtk

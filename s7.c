@@ -85,7 +85,10 @@
  *
  *   (define the first if your compiler has any support for complex numbers)
  *   (define the second if functions like csin are defined in the math library)
- *   In C++, leave all the complex stuff turned off.
+ *   In C++ use:
+ *
+ *   #define WITH_COMPLEX 1
+ *   #define HAVE_COMPLEX_TRIG 0
  *
  *   Some systems (freeBSD) have complex.h, but not the trig funcs, so
  *   WITH_COMPLEX assumes it can find cimag and creal and maybe cabs, csqrt, carg, and conj,
@@ -111,10 +114,19 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#include <math.h>
+
+#if __cplusplus
+  #include <cmath>
+#else
+  #include <math.h>
+#endif
 
 #if WITH_COMPLEX
-#include <complex.h>
+  #if __cplusplus
+    #include <complex>
+  #else
+    #include <complex.h>
+  #endif
 #endif
 
 #include <setjmp.h>
@@ -609,6 +621,14 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 #define fraction(n)                   (((double)numerator(n)) / ((double)denominator(n)))
 
 #define integer(n)                    n.value.ivalue
+
+#if __cplusplus
+  using namespace std;
+  typedef complex<double> double_complex;
+  static double Real(complex<double> x) {return(real(x));} /* protect the C++ name */
+  static double Imag(complex<double> x) {return(imag(x));}
+#endif
+
 #define real(n)                       n.value.rvalue
 
 
@@ -1999,21 +2019,32 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
 
 /* -------------------------------- numbers -------------------------------- */
 
-/* TODO: figure out how to do complex numbers in C++ in some way that is compatible with the current C code
- */
-
-
 #if WITH_COMPLEX
 
-/* typedef complex<double> double_complex; C++ */
-typedef double complex double_complex;
+#if __cplusplus
+  #define _Complex_I (complex<double>(0, 1))
+  #define creal(x) Real(x)
+  #define cimag(x) Imag(x)
+  #define carg(x) arg(x)
+  inline long long abs(long long x) { return x >= 0 ? x : -x;}
+  #define cabs(x) abs(x)
+  #define csqrt(x) sqrt(x)
+  #define cpow(x, y) pow(x, y)
+  #define clog(x) log(x)
+  #define cexp(x) exp(x)
+  #define csin(x) sin(x)
+  #define ccos(x) cos(x)
+  #define csinh(x) sinh(x)
+  #define ccosh(x) cosh(x)
+#else
+  typedef double complex double_complex;
+#endif
 
 /* Trigonometric functions. FreeBSD's math library does not include the complex form of the trig funcs. */ 
 
-#if (!HAVE_COMPLEX_TRIG)
-
 /* FreeBSD supplies cabs carg cimag creal conj csqrt, so can we assume those exist if complex.h exists?
  */
+
 #if 0
 static double carg(double_complex z)
 { 
@@ -2048,6 +2079,9 @@ static double_complex csqrt(double_complex z)
 #endif
 
 
+#if (!HAVE_COMPLEX_TRIG)
+
+#if (!__cplusplus)
 static double_complex csin(double_complex z) 
 { 
   return sin(creal(z)) * cosh(cimag(z)) + (cos(creal(z)) * sinh(cimag(z))) * _Complex_I; 
@@ -2057,12 +2091,6 @@ static double_complex csin(double_complex z)
 static double_complex ccos(double_complex z) 
 { 
   return cos(creal(z)) * cosh(cimag(z)) + (-sin(creal(z)) * sinh(cimag(z))) * _Complex_I; 
-} 
-
-
-static double_complex ctan(double_complex z) 
-{ 
-  return csin(z) / ccos(z); 
 } 
 
 
@@ -2076,6 +2104,13 @@ static double_complex ccosh(double_complex z)
 { 
   return cosh(creal(z)) * cos(cimag(z)) + (sinh(creal(z)) * sin(cimag(z))) * _Complex_I; 
 } 
+#endif
+
+
+static double_complex ctan(double_complex z) 
+{ 
+  return csin(z) / ccos(z); 
+} 
 
 
 static double_complex ctanh(double_complex z) 
@@ -2084,6 +2119,7 @@ static double_complex ctanh(double_complex z)
 } 
 
 
+#if (!__cplusplus)
 static double_complex cexp(double_complex z) 
 { 
   return exp(creal(z)) * cos(cimag(z)) + (exp(creal(z)) * sin(cimag(z))) * _Complex_I; 
@@ -2107,6 +2143,7 @@ static double_complex cpow(double_complex x, double_complex y)
   
   return nr * cos(ntheta) + (nr * sin(ntheta)) * _Complex_I; /* make-polar */ 
 } 
+#endif
 
 
 static double_complex casin(double_complex z) 
@@ -2144,15 +2181,16 @@ static double_complex catanh(double_complex z)
   return clog((1.0 + z) / (1.0 - z)) / 2.0; 
 } 
 #endif
+
 #else
 /* not WITH_COMPLEX */
   typedef double double_complex;
   #define _Complex_I 1
   #define creal(x) x
   #define cimag(x) x
-  #define csin(x) x
+  #define csin(x) sin(x)
   #define casin(x) x
-  #define ccos(x) x
+  #define ccos(x) cos(x)
   #define cacos(x) x
   #define ctan(x) x
   #define catan(x) x
@@ -2162,10 +2200,10 @@ static double_complex catanh(double_complex z)
   #define cacosh(x) x
   #define ctanh(x) x
   #define catanh(x) x
-  #define cexp(x) x
-  #define cpow(x, y) x
-  #define clog(x) x
-  #define csqrt(x) x
+  #define cexp(x) exp(x)
+  #define cpow(x, y) pow(x, y)
+  #define clog(x) log(x)
+  #define csqrt(x) sqrt(x)
 #endif
 
 
@@ -2345,6 +2383,7 @@ static bool c_rationalize(double ux, double error, s7_Int *numer, s7_Int *denom)
 
 
 #if 0
+/* this version follows the (silly) Scheme spec, but it's ugly */
 static bool c_rationalize(double ux, double error, s7_Int *n, s7_Int *d)
 {
   s7_Int numer, denom, lim, sign = 0;
@@ -11955,7 +11994,7 @@ static char *key_print(s7_scheme *sc, void *obj)
   s7_pointer val;
   void *kval;
   int len;
-  kval = key_value(obj);
+  kval = key_value((s7_pointer)obj);
   if (kval)
     val = (s7_pointer)kval;
   else val = sc->F;
