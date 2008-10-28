@@ -435,10 +435,17 @@ AC_SUBST(FFTW_CFLAGS)
 #  I'm currently using the data type "complex double" though the header seems to prefer "double complex" and
 #  the gcc documentation mentions _Complex double.
 #
-
+# in C++, we want to set these to WITH_COMPLEX 1 and HAVE_COMPLEX_TRIG 0 no matter what
+#
 LIBS="$LIBS -lm"
-AC_MSG_CHECKING(for complex numbers)
-AC_LINK_IFELSE(
+
+if test "$CC" = "g++" ; then
+  AC_DEFINE(WITH_COMPLEX)
+  ac_snd_have_complex_trig=no
+else
+
+  AC_MSG_CHECKING(for complex numbers)
+  AC_LINK_IFELSE(
   	[AC_LANG_PROGRAM(
         	[#include <complex.h>],
 		[ double complex val; 
@@ -454,9 +461,9 @@ AC_LINK_IFELSE(
 	[AC_MSG_RESULT(no)])
 
 
-ac_snd_have_complex_trig=no
-AC_MSG_CHECKING(for complex trig)
-AC_LINK_IFELSE(
+  ac_snd_have_complex_trig=no
+  AC_MSG_CHECKING(for complex trig)
+  AC_LINK_IFELSE(
   	[AC_LANG_PROGRAM(
         	[#include <complex.h>],
 		[ _Complex double val; 
@@ -472,6 +479,7 @@ AC_LINK_IFELSE(
 	 AC_MSG_RESULT(yes)
     	],
 	[AC_MSG_RESULT(no)])
+fi
 
 
 #--------------------------------------------------------------------------------
@@ -1559,8 +1567,6 @@ if test "$with_s7" != no && test "$with_extension_language" != no && test "$ac_s
     AC_CHECK_HEADER(complex.h, 
         [
          AC_DEFINE(HAVE_SCM_C_MAKE_RECTANGULAR)
-         AC_DEFINE(HAVE_COMPLEX_TRIG)
-# in C++ the complex macros are commented out in mus-config.h.in, so this is a no-op in that case
 	])
 
     AC_DEFINE(WITH_RUN)

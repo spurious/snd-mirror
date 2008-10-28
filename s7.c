@@ -110,6 +110,16 @@
  * Snd's configure.ac has m4 code to handle WITH_COMPLEX and HAVE_COMPLEX_TRIG.
  */
 
+#if __cplusplus
+  #ifndef WITH_COMPLEX
+    #define WITH_COMPLEX 1
+  #endif
+  #ifndef HAVE_COMPLEX_TRIG
+    #define HAVE_COMPLEX_TRIG 0
+  #endif
+#endif
+
+
 #include <unistd.h>
 #include <limits.h>
 #include <float.h>
@@ -245,7 +255,6 @@ typedef struct rport {
   bool is_closed;
   bool is_file;
   bool needs_close;
-  int paren_depth;
   union {
     struct {
       FILE *file;
@@ -562,7 +571,6 @@ static const char *type_names[T_LAST_TYPE + 1] = {
 
 #define is_input_port(p)              (type(p) == T_INPUT_PORT) 
 #define is_output_port(p)             (type(p) == T_OUTPUT_PORT)
-#define port_paren_depth(p)           (p)->object.port->paren_depth
 #define is_string_port(p)             (!((p)->object.port->is_file))
 #define is_file_port(p)               (p)->object.port->is_file
 #define port_line_number(p)           (p)->object.port->rep.stdio.line_number
@@ -1503,6 +1511,7 @@ s7_pointer s7_make_symbol(s7_scheme *sc, const char *name)
 
 
 /* TODO: need a way to prune the symbol table of unused symbols */
+/*   perhaps clear all symbol table mark bits, run gc, check for unmarked symbols (esp. gensym-style) */
 
 s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
 { 
@@ -2037,16 +2046,11 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
   #define creal(x) Real(x)
   #define cimag(x) Imag(x)
   #define carg(x) arg(x)
-
-  inline long long abs(long long x) { return x >= 0 ? x : -x;}
-  /* this is taken from http://gcc.gnu.org/ml/gcc-bugs/1998-09/msg00736.html
-   *   where they also recommend:
-   *   #if __GNUC__ >= 2 && defined(__USE_GNU) && !defined(__STRICT_ANSI__)
-   */
-
+  #define s7_Int_abs(x) (x >= 0 ? x : -x)
   #define cabs(x) abs(x)
   #define csqrt(x) sqrt(x)
   #define cpow(x, y) pow(x, y)
+  #define s7_Int_pow(x, y) (s7_Int)pow((double)(x), (double)(y))
   #define clog(x) log(x)
   #define cexp(x) exp(x)
   #define csin(x) sin(x)
@@ -2055,6 +2059,8 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
   #define ccosh(x) cosh(x)
 #else
   typedef double complex double_complex;
+  #define s7_Int_pow(x, y) (s7_Int)pow(x, y)
+  #define s7_Int_abs(x) abs(x)
 #endif
 
 /* Trigonometric functions. FreeBSD's math library does not include the complex form of the trig funcs. */ 
@@ -2202,6 +2208,8 @@ static double_complex catanh(double_complex z)
 #else
 /* not WITH_COMPLEX */
   typedef double double_complex;
+  #define s7_Int_pow(x, y) (s7_Int)pow(x, y)
+  #define s7_Int_abs(x) abs(x)
   #define _Complex_I 1
   #define creal(x) x
   #define cimag(x) x
@@ -2309,8 +2317,8 @@ static s7_Int c_gcd(s7_Int u, s7_Int v)
 {
   s7_Int a, b, temp;
   
-  a = abs(u);
-  b = abs(v);
+  a = s7_Int_abs(u);
+  b = s7_Int_abs(v);
   while (b != 0)
     {
       temp = a % b;
@@ -3171,7 +3179,7 @@ static void num2str(char *p, s7_Int n, int radix)
   if ((radix < 2) || (radix > 16))
     return;
   sign = (n < 0);
-  n = abs(n);
+  n = s7_Int_abs(n);
   len = (int)(floor(log(n) / log(radix)));
   if (sign)
     {
@@ -3206,7 +3214,7 @@ char *s7_number_to_string(s7_scheme *sc, s7_pointer obj, int radix)
 	    bool sign;
 	    unsigned int x;
 	    sign = s7_is_negative(obj);
-	    x = (unsigned int)abs(s7_integer(obj));
+	    x = (unsigned int)s7_Int_abs(s7_integer(obj));
 	    snprintf(p, 256, "%s%o", (sign) ? "-" : "", x);
 	  }
 	  break;
@@ -3828,10 +3836,10 @@ static s7_pointer g_magnitude(s7_scheme *sc, s7_pointer args)
       real(sc->v) = fabs(real(sc->v)); 
       break;
     case NUM_INT:
-      integer(sc->v) = abs(integer(sc->v));
+      integer(sc->v) = s7_Int_abs(integer(sc->v));
       break;
     case NUM_RATIO:
-      numerator(sc->v) = abs(numerator(sc->v));
+      numerator(sc->v) = s7_Int_abs(numerator(sc->v));
       break;
     default:
       {
@@ -3889,8 +3897,8 @@ static s7_pointer g_abs(s7_scheme *sc, s7_pointer args)
   else
     {
       if (num_type(sc->v) == NUM_INT)
-	integer(sc->v) = abs(integer(sc->v));
-      else numerator(sc->v) = abs(numerator(sc->v));
+	integer(sc->v) = s7_Int_abs(integer(sc->v));
+      else numerator(sc->v) = s7_Int_abs(numerator(sc->v));
     }
   return(make_number(sc, sc->v));      
 }
@@ -4171,16 +4179,16 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	  if (s7_integer(sc->y) == 0)
 	    return(s7_make_integer(sc, 1));
 	  
-	  if (top_log > abs(s7_integer(sc->y)) * log(abs(s7_integer(sc->x)))) /* else over/underflow; a^b < 2^63 or > 2^-63 */
+	  if (top_log > s7_Int_abs(s7_integer(sc->y)) * log(s7_Int_abs(s7_integer(sc->x)))) /* else over/underflow; a^b < 2^63 or > 2^-63 */
 	    {
 	      if ((s7_integer(sc->y) > 0) || 
-		  (abs(s7_integer(sc->x)) == 1))
-		return(s7_make_integer(sc, (s7_Int)pow(s7_integer(sc->x), s7_integer(sc->y))));
+		  (s7_Int_abs(s7_integer(sc->x)) == 1))
+		return(s7_make_integer(sc, s7_Int_pow(s7_integer(sc->x), s7_integer(sc->y))));
 	      
 	      if (s7_integer(sc->x) == 0)
 		return(sc->x);
 	      
-	      return(s7_make_ratio(sc, 1, (s7_Int)pow(s7_integer(sc->x), -s7_integer(sc->y))));
+	      return(s7_make_ratio(sc, 1, s7_Int_pow(s7_integer(sc->x), -s7_integer(sc->y))));
 	    }
 	}
       else
@@ -4196,12 +4204,12 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	      n = numerator(sc->x->object.number);
 	      d = denominator(sc->x->object.number);
 	      
-	      if ((top_log > log(abs(n)) * abs(p)) &&
-		  (top_log > log(d) * abs(p)))	
+	      if ((top_log > log(s7_Int_abs(n)) * s7_Int_abs(p)) &&
+		  (top_log > log(d) * s7_Int_abs(p)))	
 		{
 		  if (p > 0)
-		    return(s7_make_ratio(sc, (s7_Int)pow(n, p), (s7_Int)pow(d, p)));
-		  return(s7_make_ratio(sc, (s7_Int)pow(d, -p), (s7_Int)pow(n, -p)));
+		    return(s7_make_ratio(sc, s7_Int_pow(n, p), s7_Int_pow(d, p)));
+		  return(s7_make_ratio(sc, s7_Int_pow(d, -p), s7_Int_pow(n, -p)));
 		}
 	    }
 	  /* occasionally int^rat can be int but it happens so infrequently it's not worth checking */
@@ -5820,7 +5828,7 @@ static s7_pointer g_is_char_ready(s7_scheme *sc, s7_pointer args)
       
       return(make_boolean(sc, is_string_port(pt)));
     }
-  return(make_boolean(sc, (is_input_port(sc->input_port)) && (is_string_port(sc->input_port))));  /* TODO: need to check for waiting input on files */
+  return(make_boolean(sc, (is_input_port(sc->input_port)) && (is_string_port(sc->input_port))));
 }      
 
 
@@ -5919,7 +5927,6 @@ static s7_pointer s7_make_input_file(s7_scheme *sc, const char *name, FILE *fp)
   port_is_closed(x) = false;
   port_filename(x) = strdup(name);
   port_line_number(x) = 0;
-  port_paren_depth(x) = 0;
   port_needs_close(x) = false;
   
   return(x);
@@ -5977,7 +5984,6 @@ s7_pointer s7_open_output_file(s7_scheme *sc, const char *name, const char *mode
   port_is_closed(x) = false;
   port_filename(x) = strdup(name);
   port_line_number(x) = 0;
-  port_paren_depth(x) = 0;
   port_needs_close(x) = false;
   port_file(x) = fp;
   
@@ -6015,7 +6021,6 @@ s7_pointer s7_open_input_string(s7_scheme *sc, const char *input_string)
   x->object.port = (rport *)malloc(sizeof(rport));
   is_file_port(x) = false;
   port_is_closed(x) = false;
-  port_paren_depth(x) = 0;
   port_string(x) = (char *)input_string;
   port_string_length(x) = safe_strlen(input_string);
   port_string_point(x) = 0;
@@ -6654,24 +6659,17 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
 	    eval(sc, sc->op);
 	  else eval(sc, OP_READ_INTERNAL);
 	}
-      /* TODO: check paren count and below */
       sc->longjmp_ok = old_longjmp;  
       pop_input_port(sc);
       s7_close_input_port(sc, port);
     }
   else
     {
-      /*
-	push_stack(sc, OP_LOAD_CLOSE_AND_POP_IF_EOF, sc->args, sc->code);
-	push_stack(sc, OP_READ_INTERNAL, sc->NIL, sc->NIL);
-      */
       /* caller here is assuming the load will be complete before this function returns */
-      
       push_stack(sc, OP_LOAD_RETURN_IF_EOF, sc->args, sc->code);
       eval(sc, OP_READ_INTERNAL);
       pop_input_port(sc);
       s7_close_input_port(sc, port);
-      
     }
   return(sc->UNSPECIFIED);
 }
@@ -10299,9 +10297,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     {
       
     case OP_TOP_LEVEL0:
-      if (is_input_port(sc->input_port))
-	port_paren_depth(sc->input_port) = 0;
-      
       stack_reset(sc); 
       sc->envir = sc->global_env;
       push_stack(sc, OP_TOP_LEVEL0, sc->NIL, sc->NIL);
@@ -11558,8 +11553,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		return(eval_error(sc, "syntax error: illegal dot expression", sc->code)); /* just a guess -- maybe sc->args */
 	      else 
 		{
-		  if (is_input_port(sc->input_port))
-		    port_paren_depth(sc->input_port)++;
 		  push_stack(sc, OP_READ_LIST, sc->NIL, sc->NIL);
 		  goto READ_EXPRESSION;
 		}
@@ -11642,9 +11635,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (sc->tok == TOK_RPAREN) 
 	{
 	  int c;
-	  if (is_input_port(sc->input_port))
-	    port_paren_depth(sc->input_port)--;
-	  
 	  c = inchar(sc, sc->input_port);
 	  if ((c != '\n') && (c != EOF))
 	    backchar(sc, c, sc->input_port);
@@ -11678,9 +11668,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	return(eval_error(sc, "syntax error: illegal dot expression", sc->code));
       else 
 	{
-	  if (is_input_port(sc->input_port))
-	    port_paren_depth(sc->input_port)--;
-	  
 	  pop_stack(sc, s7_reverse_in_place(sc, sc->value, sc->args));
 	  goto START;
 	}

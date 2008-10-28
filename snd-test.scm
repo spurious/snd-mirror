@@ -69900,8 +69900,8 @@ EDITS: 1
 	  (revert-sound ind)
 	  
 	  (set! (sample 100 ind 0) .5)
-	  (let ((tag (catch #t (lambda () (set! (frames ind 0 1) 1)) (lambda args (car args)))))
-	    (if (not (eq? tag 'wrong-number-of-args)) (snd-display ";set frames + edpos: ~A" tag)))
+	  ;(let ((tag (catch #t (lambda () (set! (frames ind 0 1) 1)) (lambda args (car args)))))
+	  ;  (if (not (eq? tag 'wrong-number-of-args)) (snd-display ";set frames + edpos: ~A" tag)))
 	  (revert-sound ind)
 	  
 	  (let ((tag (catch #t (lambda () (map-channel (lambda (y) (* y 0.0+1.0i)))) (lambda args (car args)))))
@@ -70219,6 +70219,7 @@ EDITS: 1
       (system "rm ../peaks/_home_bil_no-gui*")
       (system "rm ../peaks/_home_bil_cl_*")))
 
+(for-each close-sound (sounds))
 (mus-sound-prune)
 (if (dialog-widgets)
     (let ((vfs (list-ref (dialog-widgets) 8))) ; view-files (possible list)

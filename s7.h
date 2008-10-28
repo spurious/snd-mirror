@@ -25,9 +25,9 @@
 #endif
 
 
-#define s7_Int off_t
+#define s7_Int long long int
 #define s7_Int_d "%lld"
-/* s7_Int can be any (signed) integer type: "int" is ok, in which case S7_SIZEOF_S7_INT would be 4 and s7_Int_d "%d" */
+/* s7_Int can be any (signed) integer type: "int" is ok */
 
 
 #ifdef __cplusplus

@@ -12775,10 +12775,11 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
   if (!run_warned)
     {
       xen_value *rv;
-      char *temp = NULL;
-      rv = run_warn("can't handle: %s (%s)", temp = XEN_AS_STRING(form), XEN_AS_STRING(XEN_PROCEDURE_SOURCE(prog->code)));
+      char *temp1 = NULL, *temp2 = NULL;
+      rv = run_warn("can't handle: %s (%s)", temp1 = XEN_AS_STRING(form), temp2 = XEN_AS_STRING(XEN_PROCEDURE_SOURCE(prog->code)));
 #if HAVE_S7
-      if (temp) free(temp);
+      if (temp1) free(temp1);
+      if (temp2) free(temp2);
 #endif
       return(rv);
     }
