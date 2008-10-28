@@ -533,11 +533,11 @@ static void call_user_keymap(int hashedsym, int count)
       if (user_keymap[hashedsym].args == 0)
 	res = (kbd_cursor_t)XEN_TO_C_INT_OR_ELSE(XEN_CALL_0(user_keymap[hashedsym].func, 
 							    user_keymap[hashedsym].origin), 
-						 KEYBOARD_NO_ACTION);
+						 (int)KEYBOARD_NO_ACTION);
       else res = (kbd_cursor_t)XEN_TO_C_INT_OR_ELSE(XEN_CALL_1(user_keymap[hashedsym].func, 
 							       C_TO_XEN_INT(count), 
 							       user_keymap[hashedsym].origin),
-						    KEYBOARD_NO_ACTION);
+						    (int)KEYBOARD_NO_ACTION);
     }
   handle_cursor(selected_channel(), res);
 }

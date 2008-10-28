@@ -218,6 +218,7 @@
 
 	"GtkPrintOperationAction"
 	"GtkTooltip*" "GtkCalendarDetailFunc" "GtkScaleButton*" 
+	"GdkDragAction" "GdkImageType"
 	))
 
 (define no-xen-p 
@@ -2232,7 +2233,7 @@
 (with-256 hey (lambda () (for-each callback-p callbacks-256)))
 (with-290 hey (lambda () (for-each callback-p callbacks-290)))
 
-(hey "#define XEN_lambda_P(Arg) XEN_PROCEDURE_P(Arg)~%")
+;(hey "#define XEN_lambda_P(Arg) XEN_PROCEDURE_P(Arg)~%")
 (hey "#define XEN_GCallback_P(Arg) (XEN_PROCEDURE_P(Arg) && ((XEN_REQUIRED_ARGS_OK(Arg, 2)) || (XEN_REQUIRED_ARGS_OK(Arg, 3)) || (XEN_REQUIRED_ARGS_OK(Arg, 4))))~%")
 
 (define (xen-callback func)
@@ -3062,7 +3063,7 @@
   (hey "  if (strcmp(ctype, ~S) == 0)~%" (no-stars type))
   (hey "    {~%")
   (hey "      ~A arr; arr = (~A)XEN_TO_C_ULONG(XEN_CADR(val)); ~%" type type)
-  (hey "      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}~%")
+  (hey "      if (len == -1) {for (i = 0; arr[i]; i++) {}; len = i;}~%")
   (hey "      for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_~A(arr[i]), result);~%" (no-stars (deref-type (list type))))
   (hey "    }~%"))
 

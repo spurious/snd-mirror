@@ -158,7 +158,6 @@ void s7_mark_object(s7_pointer a);
 void s7_define_variable(s7_scheme *sc, const char *name, s7_pointer value);
 
 
-bool s7_is_closure(s7_pointer p);
 bool s7_is_procedure(s7_pointer x);
 s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p);
 s7_pointer s7_procedure_environment(s7_pointer p);
@@ -584,7 +583,7 @@ int main(int argc, char **argv)
  *
  * to load ws.scm
  *   (load "s7-optargs.scm")
- *   (load "ws.scm")
+ *   (load "sndlib-ws.scm")
  *   (with-sound () (outa 10 .1))
  *   (load "v.scm")
  *   (with-sound () (fm-violin 0 .1 440 .1))

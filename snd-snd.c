@@ -4863,7 +4863,7 @@ The 'choices' are 0 (apply to sound), 1 (apply to channel), and 2 (apply to sele
 	}
       if (XEN_OFF_T_P(beg)) apply_beg = XEN_TO_C_OFF_T(beg); else apply_beg = 0;
       if (XEN_OFF_T_P(dur)) apply_dur = XEN_TO_C_OFF_T(dur); else apply_dur = 0;
-      cur_choice = (snd_apply_t)XEN_TO_C_INT_OR_ELSE(choice, APPLY_TO_SOUND);
+      cur_choice = (snd_apply_t)XEN_TO_C_INT_OR_ELSE(choice, (int)APPLY_TO_SOUND);
       if (cur_choice > APPLY_TO_SELECTION)
 	XEN_OUT_OF_RANGE_ERROR(S_apply_controls, 2, choice, "~A, but must be 0=sound, 1=channel, or 2=selection");
       ss->apply_choice = cur_choice;

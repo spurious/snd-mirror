@@ -1027,7 +1027,7 @@ XEN xen_rb_hook_c_new(char *name, int arity, char *help)
 
 #define RUBY_NEW_ARITY_DATE   "2004-03-18"
 #define OLD_RUBY_ARITY()      (strcmp(XEN_RUBY_RELEASE_DATE, RUBY_NEW_ARITY_DATE) < 0)
-#define NEW_RUBY_ARITY()      (strcmp(XEN_RUBY_RELEASE_DATE, RUBY_NEW_ARITY_DATE) >= 0)
+/* #define NEW_RUBY_ARITY()      (strcmp(XEN_RUBY_RELEASE_DATE, RUBY_NEW_ARITY_DATE) >= 0) */
 
 bool xen_rb_arity_ok(int rargs, int args)
 {

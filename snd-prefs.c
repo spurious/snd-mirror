@@ -4464,7 +4464,10 @@ static void clear_load_path(prefs_info *prf)
       black_text(prf);
       FREE(str);
     }
-  else red_text(prf);
+  else 
+    {
+      red_text(prf);
+    }
 }
 
 static void revert_load_path(prefs_info *prf)
@@ -4472,7 +4475,10 @@ static void revert_load_path(prefs_info *prf)
   SET_TEXT(prf->text, rts_load_path);
   if (rts_load_path) 
     black_text(prf);
-  else red_text(prf);
+  else 
+    {
+      red_text(prf);
+    }
 }
 
 static void reflect_load_path(prefs_info *prf) {}

@@ -717,14 +717,14 @@ header-type is a sndlib type indicator such as " S_mus_aiff "; sndlib currently 
   XEN_ASSERT_TYPE(XEN_INTEGER_OR_BOOLEAN_IF_BOUND_P(header_type), header_type, XEN_ARG_5, S_mus_sound_open_output, "a header-type or " PROC_FALSE);
   XEN_ASSERT_TYPE((XEN_STRING_P(comment) || (XEN_NOT_BOUND_P(comment))), comment, XEN_ARG_6, S_mus_sound_open_output, "a string");
 
-  df = XEN_TO_C_INT_OR_ELSE(data_format, MUS_OUT_FORMAT);
+  df = XEN_TO_C_INT_OR_ELSE(data_format, (int)MUS_OUT_FORMAT);
   if (mus_data_format_p(df))
     {
       int ht;
 #if MUS_LITTLE_ENDIAN
-      ht = XEN_TO_C_INT_OR_ELSE(header_type, MUS_RIFF);
+      ht = XEN_TO_C_INT_OR_ELSE(header_type, (int)MUS_RIFF);
 #else
-      ht = XEN_TO_C_INT_OR_ELSE(header_type, MUS_NEXT);
+      ht = XEN_TO_C_INT_OR_ELSE(header_type, (int)MUS_NEXT);
 #endif
       /* now check that data format and header type are ok together */
       if (mus_header_type_p(ht))

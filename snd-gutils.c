@@ -859,7 +859,7 @@ idle_t add_work_proc(GtkFunction func, gpointer data)
     return(g_idle_add_full(G_PRIORITY_DEFAULT_IDLE, func, data, NULL));
   else
     {
-      while (((*func)(data)) == BACKGROUND_CONTINUE);
+      while (((*func)(data)) == BACKGROUND_CONTINUE) {};
       return((idle_t)0);
     }
 }

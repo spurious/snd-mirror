@@ -1915,9 +1915,9 @@ static XEN g_gsl_gegenbauer(XEN n, XEN lambda, XEN x)
 }
 
 #ifdef XEN_ARGIFY_1
-  XEN_NARGIFY_3(g_gegenbaur_w, g_gegenbaur)
+  XEN_NARGIFY_3(g_gsl_gegenbauer_w, g_gsl_gegenbauer)
 #else
-  #define g_gegenbaur_w g_gegenbaur
+  #define g_gsl_gegenbauer_w g_gsl_gegenbauer
 #endif
 #endif
 

@@ -7339,6 +7339,15 @@
 (num-test (exp 2.71828182845905+1234.0i) -12.1014455629425+9.121769530669065i) 
 (num-test (exp 2.71828182845905+1234000000.0i) 2.408150642075881-14.96170025660763i)
 
+
+(num-test (tan 1234.0+1234.0i) 2.7e-20+1.0i)
+(num-test (tan 1234.0-1234.0i) 2.7e-20-1.0i)
+(num-test (sin 1234.0+12.0i) 48983.30495194942-64983.97008730317i)
+(num-test (asin 48983.30495194942-64983.97008730317i) 0.645912860788605+12.0i)
+(num-test (cos 1234.0+12.0i) -64983.97009220963-48983.30494825104i)
+(num-test (acos -64983.97009220963-48983.30494825104i) 2.495679792792491+12.0i)
+
+
 (if with-hyperbolic-functions (begin
 (num-test (sinh 1234/3) 2.18155865313939E+178) 
 (num-test (sinh 1234/10) 1.953930316004457E+53) 
@@ -25258,6 +25267,10 @@
 
 
 (test (output-port? (current-output-port)) #t)
+(write-char #\space (current-output-port))
+(write " " (current-output-port))
+(newline (current-output-port))
+
 
 (for-each
  (lambda (arg)

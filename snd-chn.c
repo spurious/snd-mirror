@@ -5812,19 +5812,19 @@ static XEN channel_set(XEN snd_n, XEN chn_n, XEN on, cp_field_t fld, const char 
       break;
 
     case CP_TIME_GRAPH_STYLE:
-      cp->time_graph_style = (graph_style_t)XEN_TO_C_INT_OR_ELSE(on, DEFAULT_GRAPH_STYLE);
+      cp->time_graph_style = (graph_style_t)XEN_TO_C_INT_OR_ELSE(on, (int)DEFAULT_GRAPH_STYLE);
       if (call_update_graph) update_graph(cp);
       return(C_TO_XEN_INT((int)(cp->time_graph_style)));
       break;
 
     case CP_LISP_GRAPH_STYLE:
-      cp->lisp_graph_style = (graph_style_t)XEN_TO_C_INT_OR_ELSE(on, DEFAULT_GRAPH_STYLE);
+      cp->lisp_graph_style = (graph_style_t)XEN_TO_C_INT_OR_ELSE(on, (int)DEFAULT_GRAPH_STYLE);
       if (call_update_graph) update_graph(cp);
       return(C_TO_XEN_INT((int)(cp->lisp_graph_style)));
       break;
 
     case CP_TRANSFORM_GRAPH_STYLE:
-      cp->transform_graph_style = (graph_style_t)XEN_TO_C_INT_OR_ELSE(on, DEFAULT_GRAPH_STYLE);
+      cp->transform_graph_style = (graph_style_t)XEN_TO_C_INT_OR_ELSE(on, (int)DEFAULT_GRAPH_STYLE);
       if (call_update_graph) update_graph(cp);
       return(C_TO_XEN_INT((int)(cp->transform_graph_style)));
       break;

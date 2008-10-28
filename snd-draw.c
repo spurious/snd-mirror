@@ -373,7 +373,7 @@ static axis_context *get_ax(chan_info *cp, int ax_id, const char *caller)
 
 #define TO_C_AXIS_CONTEXT(Snd, Chn, Ax, Caller) \
   get_ax(get_cp(Snd, Chn, Caller), \
-         XEN_TO_C_INT_OR_ELSE(Ax, CHAN_GC), \
+	   XEN_TO_C_INT_OR_ELSE(Ax, (int)CHAN_GC),	\
          Caller)
 
 axis_info *get_ap(chan_info *cp, axis_info_t ap_id, const char *caller)
@@ -646,7 +646,7 @@ static XEN g_foreground_color(XEN snd, XEN chn, XEN xax)
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(xax), xax, XEN_ARG_3, S_foreground_color, "an integer");
   cp = get_cp(snd, chn, S_foreground_color);
   if (!cp) return(XEN_FALSE);
-  ax = get_ax(cp, XEN_TO_C_INT_OR_ELSE(xax, CHAN_GC), S_foreground_color);
+  ax = get_ax(cp, XEN_TO_C_INT_OR_ELSE(xax, (int)CHAN_GC), S_foreground_color);
   return(XEN_WRAP_PIXEL(get_foreground_color(ax)));
 }
 
@@ -660,7 +660,7 @@ static XEN g_set_foreground_color(XEN color, XEN snd, XEN chn, XEN ax)
   cp = get_cp(snd, chn, S_setB S_foreground_color);
   if (!cp) return(XEN_FALSE);
   set_foreground_color(get_ax(cp, 
-			      XEN_TO_C_INT_OR_ELSE(ax, CHAN_GC),
+			      XEN_TO_C_INT_OR_ELSE(ax, (int)CHAN_GC),
 			      S_setB S_foreground_color),
 		       XEN_UNWRAP_PIXEL(color));
   return(color);
@@ -697,7 +697,7 @@ static XEN g_current_font(XEN snd, XEN chn, XEN ax_id)
   cp = get_cp(snd, chn, S_current_font);
   if (!cp) return(XEN_FALSE);
   ax = get_ax(cp,
-	      XEN_TO_C_INT_OR_ELSE(ax_id, CHAN_GC),
+	      XEN_TO_C_INT_OR_ELSE(ax_id, (int)CHAN_GC),
 	      S_current_font);
   if (ax->current_font == 0)
     {
@@ -799,8 +799,8 @@ data in the recipient's graph between points low and high in the drawing mode gr
 		  v0->length,
 		  v0->data,
 		  (v1) ? (v1->data) : NULL,
-		  get_ax(cp, XEN_TO_C_INT_OR_ELSE(ax, CHAN_GC), S_graph_data),
-		  (graph_style_t)XEN_TO_C_INT_OR_ELSE(style, cp->time_graph_style));
+		  get_ax(cp, XEN_TO_C_INT_OR_ELSE(ax, (int)CHAN_GC), S_graph_data),
+		  (graph_style_t)XEN_TO_C_INT_OR_ELSE(style, (int)(cp->time_graph_style)));
   return(data);
 }
 

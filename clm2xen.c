@@ -5785,11 +5785,11 @@ should be sndlib identifiers:\n  " make_sample_to_file_example
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(out_format), out_format, XEN_ARG_3, S_make_sample_to_file, "an integer (data format id)");
   XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(out_type), out_type, XEN_ARG_4, S_make_sample_to_file, "an integer (header type id)");
 
-  df = XEN_TO_C_INT_OR_ELSE(out_format, MUS_OUT_FORMAT);
+  df = XEN_TO_C_INT_OR_ELSE(out_format, (int)MUS_OUT_FORMAT);
   if (mus_data_format_p(df))
     {
       int ht;
-      ht = XEN_TO_C_INT_OR_ELSE(out_type, MUS_NEXT);
+      ht = XEN_TO_C_INT_OR_ELSE(out_type, (int)MUS_NEXT);
       if (mus_header_type_p(ht))
 	{
 	  int chns;
@@ -5919,8 +5919,8 @@ should be sndlib identifiers:\n  " make_frame_to_file_example
 
   fgen = mus_make_frame_to_file_with_comment(XEN_TO_C_STRING(name),
 					     XEN_TO_C_INT_OR_ELSE(chans, 1),
-					     XEN_TO_C_INT_OR_ELSE(out_format, MUS_OUT_FORMAT),
-					     XEN_TO_C_INT_OR_ELSE(out_type, MUS_NEXT),
+					     XEN_TO_C_INT_OR_ELSE(out_format, (int)MUS_OUT_FORMAT),
+					     XEN_TO_C_INT_OR_ELSE(out_type, (int)MUS_NEXT),
 					     (XEN_STRING_P(comment)) ? XEN_TO_C_STRING(comment) : NULL);
   if (fgen) return(xen_return_first(mus_xen_to_object(mus_any_to_mus_xen(fgen)), name));
   return(XEN_FALSE);

@@ -518,6 +518,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+29-Oct:  osc.scm thanks to Kjetil.\n\
 16-Oct:  removed Gauche support.\n\
 15-Oct:  Snd 10.1.\n\
 3-Sep:   Snd 10.0.\n\

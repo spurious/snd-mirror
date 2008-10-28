@@ -294,7 +294,6 @@ static void define_xm_obj(void)
 #define XEN_GtkRecentSortFunc_P(Arg)  XEN_FALSE_P(Arg) || (XEN_PROCEDURE_P(Arg) && (XEN_REQUIRED_ARGS_OK(Arg, 3)))
 #endif
 
-#define XEN_lambda_P(Arg) XEN_PROCEDURE_P(Arg)
 #define XEN_GCallback_P(Arg) (XEN_PROCEDURE_P(Arg) && ((XEN_REQUIRED_ARGS_OK(Arg, 2)) || (XEN_REQUIRED_ARGS_OK(Arg, 3)) || (XEN_REQUIRED_ARGS_OK(Arg, 4))))
 #define XEN_TO_C_lambda2(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_child_func
 #define XEN_TO_C_lambda3(Arg) XEN_FALSE_P(Arg) ? NULL : gxg_find_func
@@ -452,7 +451,6 @@ XM_TYPE_PTR(GdkCursor_, GdkCursor*)
 #define XEN_GdkCursorType_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR(GdkPixmap_, GdkPixmap*)
 XM_TYPE_PTR(GdkDragContext_, GdkDragContext*)
-#define C_TO_XEN_GdkDragAction(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkDragAction(Arg) (GdkDragAction)(XEN_TO_C_INT(Arg))
 #define XEN_GdkDragAction_P(Arg) XEN_INTEGER_P(Arg)
 #define C_TO_XEN_guint32(Arg) C_TO_XEN_ULONG(Arg)
@@ -507,7 +505,6 @@ XM_TYPE_PTR(gchar__, gchar**)
 #define C_TO_XEN_GdkEventMask(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkEventMask(Arg) (GdkEventMask)(XEN_TO_C_INT(Arg))
 #define XEN_GdkEventMask_P(Arg) XEN_INTEGER_P(Arg)
-#define C_TO_XEN_GdkImageType(Arg) C_TO_XEN_INT(Arg)
 #define XEN_TO_C_GdkImageType(Arg) (GdkImageType)(XEN_TO_C_INT(Arg))
 #define XEN_GdkImageType_P(Arg) XEN_INTEGER_P(Arg)
 XM_TYPE_PTR(GdkKeymap_, GdkKeymap*)
@@ -33393,145 +33390,145 @@ static XEN c_array_to_xen_list(XEN val_1, XEN clen)
   if (strcmp(ctype, "gdouble_") == 0)
     {
       gdouble* arr; arr = (gdouble*)XEN_TO_C_ULONG(XEN_CADR(val)); 
-      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
+      if (len == -1) {for (i = 0; arr[i]; i++) {}; len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gdouble(arr[i]), result);
     }
   if (strcmp(ctype, "gint_") == 0)
     {
       gint* arr; arr = (gint*)XEN_TO_C_ULONG(XEN_CADR(val)); 
-      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
+      if (len == -1) {for (i = 0; arr[i]; i++) {}; len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gint(arr[i]), result);
     }
   if (strcmp(ctype, "gboolean_") == 0)
     {
       gboolean* arr; arr = (gboolean*)XEN_TO_C_ULONG(XEN_CADR(val)); 
-      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
+      if (len == -1) {for (i = 0; arr[i]; i++) {}; len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gboolean(arr[i]), result);
     }
   if (strcmp(ctype, "guint8_") == 0)
     {
       guint8* arr; arr = (guint8*)XEN_TO_C_ULONG(XEN_CADR(val)); 
-      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
+      if (len == -1) {for (i = 0; arr[i]; i++) {}; len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_guint8(arr[i]), result);
     }
   if (strcmp(ctype, "GType_") == 0)
     {
       GType* arr; arr = (GType*)XEN_TO_C_ULONG(XEN_CADR(val)); 
-      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
+      if (len == -1) {for (i = 0; arr[i]; i++) {}; len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GType(arr[i]), result);
     }
   if (strcmp(ctype, "guint_") == 0)
     {
       guint* arr; arr = (guint*)XEN_TO_C_ULONG(XEN_CADR(val)); 
-      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
+      if (len == -1) {for (i = 0; arr[i]; i++) {}; len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_guint(arr[i]), result);
     }
   if (strcmp(ctype, "gint8_") == 0)
     {
       gint8* arr; arr = (gint8*)XEN_TO_C_ULONG(XEN_CADR(val)); 
-      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
+      if (len == -1) {for (i = 0; arr[i]; i++) {}; len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gint8(arr[i]), result);
     }
   if (strcmp(ctype, "gchar__") == 0)
     {
       gchar** arr; arr = (gchar**)XEN_TO_C_ULONG(XEN_CADR(val)); 
-      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
+      if (len == -1) {for (i = 0; arr[i]; i++) {}; len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gchar_(arr[i]), result);
     }
   if (strcmp(ctype, "guchar_") == 0)
     {
       guchar* arr; arr = (guchar*)XEN_TO_C_ULONG(XEN_CADR(val)); 
-      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
+      if (len == -1) {for (i = 0; arr[i]; i++) {}; len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_guchar(arr[i]), result);
     }
   if (strcmp(ctype, "guint32_") == 0)
     {
       guint32* arr; arr = (guint32*)XEN_TO_C_ULONG(XEN_CADR(val)); 
-      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
+      if (len == -1) {for (i = 0; arr[i]; i++) {}; len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_guint32(arr[i]), result);
     }
   if (strcmp(ctype, "GdkVisualType_") == 0)
     {
       GdkVisualType* arr; arr = (GdkVisualType*)XEN_TO_C_ULONG(XEN_CADR(val)); 
-      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
+      if (len == -1) {for (i = 0; arr[i]; i++) {}; len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GdkVisualType(arr[i]), result);
     }
   if (strcmp(ctype, "char__") == 0)
     {
       char** arr; arr = (char**)XEN_TO_C_ULONG(XEN_CADR(val)); 
-      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
+      if (len == -1) {for (i = 0; arr[i]; i++) {}; len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_char_(arr[i]), result);
     }
   if (strcmp(ctype, "gfloat_") == 0)
     {
       gfloat* arr; arr = (gfloat*)XEN_TO_C_ULONG(XEN_CADR(val)); 
-      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
+      if (len == -1) {for (i = 0; arr[i]; i++) {}; len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gfloat(arr[i]), result);
     }
   if (strcmp(ctype, "GtkIconSize_") == 0)
     {
       GtkIconSize* arr; arr = (GtkIconSize*)XEN_TO_C_ULONG(XEN_CADR(val)); 
-      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
+      if (len == -1) {for (i = 0; arr[i]; i++) {}; len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GtkIconSize(arr[i]), result);
     }
   if (strcmp(ctype, "guint16_") == 0)
     {
       guint16* arr; arr = (guint16*)XEN_TO_C_ULONG(XEN_CADR(val)); 
-      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
+      if (len == -1) {for (i = 0; arr[i]; i++) {}; len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_guint16(arr[i]), result);
     }
   if (strcmp(ctype, "gunichar_") == 0)
     {
       gunichar* arr; arr = (gunichar*)XEN_TO_C_ULONG(XEN_CADR(val)); 
-      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
+      if (len == -1) {for (i = 0; arr[i]; i++) {}; len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_gunichar(arr[i]), result);
     }
   if (strcmp(ctype, "int_") == 0)
     {
       int* arr; arr = (int*)XEN_TO_C_ULONG(XEN_CADR(val)); 
-      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
+      if (len == -1) {for (i = 0; arr[i]; i++) {}; len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_int(arr[i]), result);
     }
   if (strcmp(ctype, "GdkPixmap__") == 0)
     {
       GdkPixmap** arr; arr = (GdkPixmap**)XEN_TO_C_ULONG(XEN_CADR(val)); 
-      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
+      if (len == -1) {for (i = 0; arr[i]; i++) {}; len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GdkPixmap_(arr[i]), result);
     }
   if (strcmp(ctype, "GdkGC__") == 0)
     {
       GdkGC** arr; arr = (GdkGC**)XEN_TO_C_ULONG(XEN_CADR(val)); 
-      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
+      if (len == -1) {for (i = 0; arr[i]; i++) {}; len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GdkGC_(arr[i]), result);
     }
   if (strcmp(ctype, "PangoFontFace__") == 0)
     {
       PangoFontFace** arr; arr = (PangoFontFace**)XEN_TO_C_ULONG(XEN_CADR(val)); 
-      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
+      if (len == -1) {for (i = 0; arr[i]; i++) {}; len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_PangoFontFace_(arr[i]), result);
     }
   if (strcmp(ctype, "PangoFontDescription__") == 0)
     {
       PangoFontDescription** arr; arr = (PangoFontDescription**)XEN_TO_C_ULONG(XEN_CADR(val)); 
-      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
+      if (len == -1) {for (i = 0; arr[i]; i++) {}; len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_PangoFontDescription_(arr[i]), result);
     }
   if (strcmp(ctype, "PangoFontFamily__") == 0)
     {
       PangoFontFamily** arr; arr = (PangoFontFamily**)XEN_TO_C_ULONG(XEN_CADR(val)); 
-      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
+      if (len == -1) {for (i = 0; arr[i]; i++) {}; len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_PangoFontFamily_(arr[i]), result);
     }
   if (strcmp(ctype, "PangoAttrList__") == 0)
     {
       PangoAttrList** arr; arr = (PangoAttrList**)XEN_TO_C_ULONG(XEN_CADR(val)); 
-      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
+      if (len == -1) {for (i = 0; arr[i]; i++) {}; len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_PangoAttrList_(arr[i]), result);
     }
   if (strcmp(ctype, "GtkTreeModel__") == 0)
     {
       GtkTreeModel** arr; arr = (GtkTreeModel**)XEN_TO_C_ULONG(XEN_CADR(val)); 
-      if (len == -1) {for (i = 0; arr[i]; i++); len = i;}
+      if (len == -1) {for (i = 0; arr[i]; i++) {}; len = i;}
       for (i = len - 1; i >= 0; i--) result = XEN_CONS(C_TO_XEN_GtkTreeModel_(arr[i]), result);
     }
   if (strcmp(ctype, "GList_") == 0)
@@ -48090,7 +48087,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("16-Oct-08"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("28-Oct-08"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

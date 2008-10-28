@@ -72,7 +72,7 @@
 #include <mus-config.h>
 
 /* 
- * your config file goes here, or just replace that #include line with the defines you need.
+ * Your config file goes here, or just replace that #include line with the defines you need.
  * The only compile-time switches involve booleans, threads, and complex numbers.
  * Currently we assume we have setjmp.h (used by the error handlers).
  *
@@ -90,18 +90,22 @@
  *   #define WITH_COMPLEX 1
  *   #define HAVE_COMPLEX_TRIG 1
  *
- *   (define the first if your compiler has any support for complex numbers)
- *   (define the second if functions like csin are defined in the math library)
+ *   Define the first if your compiler has any support for complex numbers.
+ *   Define the second if functions like csin are defined in the math library.
+ *
  *   In C++ use:
  *
  *   #define WITH_COMPLEX 1
  *   #define HAVE_COMPLEX_TRIG 0
  *
  *   Some systems (freeBSD) have complex.h, but not the trig funcs, so
- *   WITH_COMPLEX means we can find cimag and creal, cabs, csqrt, carg, and conj,
+ *   WITH_COMPLEX means we can find
+ *
+ *      cimag creal cabs csqrt carg conj
+ *
  *   and HAVE_COMPLEX_TRIG means we have
  *
- *     cacos cacosh casin casinh catan catanh ccos ccosh cexp clog cpow csin csinh ctan ctanh
+ *      cacos cacosh casin casinh catan catanh ccos ccosh cexp clog cpow csin csinh ctan ctanh
  *
  * When WITH_COMPLEX is 0 or undefined, the complex functions are stubs that simply return their
  *   argument -- this will be very confusing for the s7 user because, for example, (sqrt -2)
@@ -595,6 +599,7 @@ static const char *type_names[T_LAST_TYPE + 1] = {
 #define is_goto(p)                    (type(p) == T_GOTO)
 #define is_macro(p)                   (type(p) == T_MACRO)
 #define is_promise(p)                 (type(p) == T_PROMISE)
+#define is_closure(p)                 (type(p) == T_CLOSURE)
 
 #define is_catch(p)                   (type(p) == T_CATCH)
 #define catch_tag(p)                  (p)->object.catcher->tag
@@ -624,11 +629,10 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 
 #define numerator(n)                  n.value.fvalue.numerator
 #define denominator(n)                n.value.fvalue.denominator
+#define fraction(n)                   (((double)numerator(n)) / ((double)denominator(n)))
 
 #define real_part(n)                  n.value.cvalue.real
 #define imag_part(n)                  n.value.cvalue.imag
-
-#define fraction(n)                   (((double)numerator(n)) / ((double)denominator(n)))
 
 #define integer(n)                    n.value.ivalue
 
@@ -1889,7 +1893,7 @@ static s7_pointer copy_object(s7_scheme *sc, s7_pointer obj)
   memcpy((void *)nobj, (void *)obj, sizeof(s7_cell));
   
   car(nobj) = copy_object(sc, car(obj));
-  if ((s7_is_closure(obj)) ||
+  if ((is_closure(obj)) ||
       (is_macro(obj)) || 
       (is_promise(obj)) ||
       (s7_is_function(obj)))
@@ -3983,6 +3987,12 @@ static s7_pointer g_tan(s7_scheme *sc, s7_pointer args)
   sc->x = car(args);
   if (s7_is_real(sc->x))
     return(s7_make_real(sc, tan(num_to_real(sc->x->object.number))));
+
+  if (s7_imag_part(sc->x) > 350.0)
+    return(s7_make_complex(sc, 0.0, 1.0));
+  if (s7_imag_part(sc->x) < -350.0)
+    return(s7_make_complex(sc, 0.0, -1.0));
+
   return(s7_from_c_complex(sc, ctan(s7_complex(sc->x))));
 }
 
@@ -5769,8 +5779,7 @@ static s7_pointer g_set_current_output_port(s7_scheme *sc, s7_pointer args)
   s7_pointer old_port, port;
   old_port = sc->output_port;
   port = car(args);
-  if ((port == sc->NIL) ||
-      (is_output_port(port)))
+  if (s7_is_output_port(sc, port))
     sc->output_port = port;
   else return(s7_wrong_type_arg_error(sc, "set-current-output-port", 1, car(args), "an output port or nil"));
   return(old_port);
@@ -5807,8 +5816,7 @@ static s7_pointer g_set_current_error_port(s7_scheme *sc, s7_pointer args)
   s7_pointer old_port, port;
   old_port = sc->error_port;
   port = car(args);
-  if ((port == sc->NIL) ||
-      (is_output_port(port)))
+  if (s7_is_output_port(sc, port))
     sc->error_port = port;
   else return(s7_wrong_type_arg_error(sc, "set-current-error-port", 1, car(args), "an output port or nil"));
   return(old_port);
@@ -5905,7 +5913,7 @@ static s7_pointer g_close_output_port(s7_scheme *sc, s7_pointer args)
 {
   #define H_close_output_port "(close-output-port port) closes the port"
   s7_pointer pt = car(args);
-  if (!is_output_port(pt))
+  if (!s7_is_output_port(sc, pt))
     return(s7_wrong_type_arg_error(sc, "close-output-port", 1, pt, "an output port"));
   s7_close_output_port(sc, pt);
   return(sc->UNSPECIFIED);
@@ -7069,7 +7077,7 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
   if (is_macro(obj)) 
     return(strdup("#<macro>"));
   
-  if (s7_is_closure(obj)) 
+  if (is_closure(obj)) 
     {
       /* try to find obj in the current environment and return its name */
       s7_pointer binding;
@@ -7292,7 +7300,7 @@ static s7_pointer g_newline(s7_scheme *sc, s7_pointer args)
   if (s7_is_pair(args))
     {
       port = car(args);
-      if (!is_output_port(port))
+      if (!s7_is_output_port(sc, port))
 	return(s7_wrong_type_arg_error(sc, "newline", 1, car(args), "an output port"));
     }
   else port = sc->output_port;
@@ -7321,7 +7329,7 @@ static s7_pointer g_write_char(s7_scheme *sc, s7_pointer args)
   if (s7_is_pair(cdr(args)))
     {
       port = cadr(args);
-      if (!is_output_port(port))
+      if (!s7_is_output_port(sc, port))
 	return(s7_wrong_type_arg_error(sc, "write-char", 2, port, "an output port"));
     }
   else port = sc->output_port;
@@ -7355,7 +7363,7 @@ static s7_pointer g_write(s7_scheme *sc, s7_pointer args)
   if (s7_is_pair(cdr(args)))
     {
       port = cadr(args);
-      if (!is_output_port(port))
+      if (!s7_is_output_port(sc, port))
 	return(s7_wrong_type_arg_error(sc, "write", 2, port, "an output port"));
     }
   else port = sc->output_port;
@@ -7378,7 +7386,7 @@ static s7_pointer g_display(s7_scheme *sc, s7_pointer args)
   if (s7_is_pair(cdr(args)))
     {
       port = cadr(args);
-      if (!is_output_port(port))
+      if (!s7_is_output_port(sc, port))
 	return(s7_wrong_type_arg_error(sc, "display", 2, port, "an output port"));
     }
   else port = sc->output_port;
@@ -7417,7 +7425,7 @@ static s7_pointer g_write_byte(s7_scheme *sc, s7_pointer args)
   if (s7_is_pair(cdr(args)))
     {
       port = cadr(args);
-      if ((!is_output_port(port)) ||
+      if ((!s7_is_output_port(sc, port)) ||
 	  (!is_file_port(port)))
 	return(s7_wrong_type_arg_error(sc, "write-byte", 2, port, "an output file port"));
     }
@@ -8660,16 +8668,10 @@ static void s7_free_function(s7_pointer a)
 }
 
 
-bool s7_is_closure(s7_pointer p)  
-{ 
-  return(type(p) == T_CLOSURE);
-}
-
-
 static s7_pointer g_is_closure(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_closure "(closure? obj) returns #t if obj is a closure"
-  return(make_boolean(sc, s7_is_closure(car(args))));
+  return(make_boolean(sc, is_closure(car(args))));
 }
 
 
@@ -8707,7 +8709,7 @@ static bool s7_is_applicable_object(s7_pointer x);
 
 bool s7_is_procedure(s7_pointer x)
 {
-  return((s7_is_closure(x)) || 
+  return((is_closure(x)) || 
 	 (is_goto(x)) || 
 	 (s7_is_continuation(x)) || 
 	 (s7_is_function(x)) ||
@@ -8741,7 +8743,7 @@ s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p)
    * ((a) (+ a b)) (((b . 1)) #(() () () () () ((make-filtered-comb . make-filtered-comb)) () () ...))
    */
   
-  if (s7_is_closure(p) || is_macro(p) || is_promise(p)) 
+  if (is_closure(p) || is_macro(p) || is_promise(p)) 
     {
       return(s7_cons(sc, 
 		     s7_append(sc, 
@@ -8771,7 +8773,7 @@ static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
     p = s7_symbol_value(sc, car(args));
   else p = car(args);
 
-  if (s7_is_closure(p) || is_macro(p) || is_promise(p)) 
+  if (is_closure(p) || is_macro(p) || is_promise(p)) 
     return(s7_append(sc, 
 		     s7_cons(sc, 
 			     sc->LAMBDA, 
@@ -8813,7 +8815,7 @@ char *s7_procedure_documentation(s7_scheme *sc, s7_pointer p)
   if (s7_is_function(x))
     return((char *)function_documentation(x));
   
-  if ((s7_is_closure(x)) &&
+  if ((is_closure(x)) &&
       (s7_is_string(cadar(x))))
     return(s7_string(cadar(x)));
   
@@ -8845,7 +8847,7 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
 				   (x->object.ffptr->rest_arg) ? sc->T : sc->F, 
 				   sc->NIL))));
   
-  if ((s7_is_closure(x)) ||
+  if ((is_closure(x)) ||
       (s7_is_pair(x)))
     {
       int len;
@@ -9174,12 +9176,12 @@ static s7_pointer g_make_procedure_with_setter(s7_scheme *sc, s7_pointer args)
   
   f = (pws *)s7_object_value(p);
   f->scheme_getter = car(args);
-  if (s7_is_closure(car(args)))
+  if (is_closure(car(args)))
     f->get_req_args = s7_list_length(sc, caaar(args));
   else f->get_req_args = s7_list_length(sc, caar(args));
   
   f->scheme_setter = cadr(args);
-  if (s7_is_closure(cadr(args)))
+  if (is_closure(cadr(args)))
     f->set_req_args = s7_list_length(sc, caaadr(args));
   else f->set_req_args = s7_list_length(sc, caadr(args));
   
@@ -9259,7 +9261,7 @@ static s7_pointer g_procedure_with_setter_setter_arity(s7_scheme *sc, s7_pointer
 static s7_pointer pws_source(s7_scheme *sc, s7_pointer x)
 {
   pws *f = (pws *)s7_object_value(x);
-  if (s7_is_closure(f->scheme_getter))
+  if (is_closure(f->scheme_getter))
     return(s7_append(sc, 
 		     s7_cons(sc, 
 			     sc->LAMBDA, 
@@ -10768,7 +10770,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       else 
 	{
-	  if (s7_is_closure(sc->code) || is_macro(sc->code) || is_promise(sc->code)) 
+	  if (is_closure(sc->code) || is_macro(sc->code) || is_promise(sc->code)) 
 	    { 
 	      sc->envir = new_frame_in_env(sc, s7_procedure_environment(sc->code)); 
 	      
@@ -12151,6 +12153,88 @@ static s7_pointer set_key(s7_scheme *sc, s7_pointer obj, s7_pointer args)
   }
   return(car(args));
 }
+
+
+static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
+{
+  int i;
+  s7_scheme *new_sc;
+  new_sc = (s7_scheme *)malloc(sizeof(s7_scheme));
+  memcpy((void *)new_sc, (void *)sc, sizeof(s7_scheme));
+  
+  /* share the heap, symbol table and global environment, all the startup stuff,
+   *   but have separate stacks and eval locals
+   */
+  
+  new_sc->longjmp_ok = false;
+  new_sc->strbuf_size = INITIAL_STRBUF_SIZE;
+  new_sc->strbuf = (char*)calloc(new_sc->strbuf_size, sizeof(char));
+
+#if WITH_READ_LINE
+  new_sc->read_line_buf = NULL;
+  new_sc->read_line_buf_size = 0;
+#endif
+  
+  new_sc->stack_top = 0;
+  new_sc->stack = vect;
+  new_sc->stack_size = INITIAL_STACK_SIZE;
+  
+  new_sc->x = new_sc->NIL;
+  new_sc->y = new_sc->NIL;
+  new_sc->code = new_sc->NIL;
+  new_sc->args = new_sc->NIL;
+  new_sc->value = new_sc->NIL;
+  
+  new_sc->temps_size = GC_TEMPS_SIZE;
+  new_sc->temps_ctr = 0;
+  new_sc->temps = (s7_pointer *)calloc(new_sc->temps_size, sizeof(s7_pointer));
+  for (i = 0; i < new_sc->temps_size; i++)
+    new_sc->temps[i] = new_sc->NIL;
+
+  new_sc->key_values = sc->NIL;
+
+  pthread_mutex_lock(&eval_history_lock);  /* probably unnecessary... */
+  (*(sc->thread_ids))++;                   /* in case a spawned thread spawns another, we need this variable to be global to all */
+  new_sc->thread_id = (*(sc->thread_ids)); /* for more readable debugging printout -- main thread is thread 0 */
+  pthread_mutex_unlock(&eval_history_lock);
+
+  /* use the main interpreter for these */
+  new_sc->eval_history_size = 0;
+  new_sc->eval_history_ops = NULL;
+  new_sc->eval_history_args = NULL;
+  new_sc->eval_history_thread_ids = NULL;
+
+  return(new_sc);
+}
+
+
+static s7_scheme *close_s7(s7_scheme *sc)
+{
+  free(sc->strbuf);
+  free(sc->temps);
+#if WITH_READ_LINE
+  if (sc->read_line_buf) free(sc->read_line_buf);
+#endif
+  free(sc);
+  return(NULL);
+}
+
+
+static void mark_s7(s7_scheme *sc)
+{
+  int i;
+  s7_mark_object(sc->args);
+  s7_mark_object(sc->envir);
+  s7_mark_object(sc->code);
+  mark_vector(sc->stack, sc->stack_top);
+  s7_mark_object(sc->value);
+  s7_mark_object(sc->x);
+  s7_mark_object(sc->y);
+  for (i = 0; i < sc->temps_size; i++)
+    s7_mark_object(sc->temps[i]);
+  s7_mark_object(sc->key_values);
+}
+
 #endif
 
 
@@ -12723,88 +12807,3 @@ s7_scheme *s7_init(void)
   
   return(sc);
 }
-
-
-#if HAVE_PTHREADS
-
-static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
-{
-  int i;
-  s7_scheme *new_sc;
-  new_sc = (s7_scheme *)malloc(sizeof(s7_scheme));
-  memcpy((void *)new_sc, (void *)sc, sizeof(s7_scheme));
-  
-  /* share the heap, symbol table and global environment, all the startup stuff,
-   *   but have separate stacks and eval locals
-   */
-  
-  new_sc->longjmp_ok = false;
-  new_sc->strbuf_size = INITIAL_STRBUF_SIZE;
-  new_sc->strbuf = (char*)calloc(new_sc->strbuf_size, sizeof(char));
-
-#if WITH_READ_LINE
-  new_sc->read_line_buf = NULL;
-  new_sc->read_line_buf_size = 0;
-#endif
-  
-  new_sc->stack_top = 0;
-  new_sc->stack = vect;
-  new_sc->stack_size = INITIAL_STACK_SIZE;
-  
-  new_sc->x = new_sc->NIL;
-  new_sc->y = new_sc->NIL;
-  new_sc->code = new_sc->NIL;
-  new_sc->args = new_sc->NIL;
-  new_sc->value = new_sc->NIL;
-  
-  new_sc->temps_size = GC_TEMPS_SIZE;
-  new_sc->temps_ctr = 0;
-  new_sc->temps = (s7_pointer *)calloc(new_sc->temps_size, sizeof(s7_pointer));
-  for (i = 0; i < new_sc->temps_size; i++)
-    new_sc->temps[i] = new_sc->NIL;
-
-  new_sc->key_values = sc->NIL;
-
-  pthread_mutex_lock(&eval_history_lock);  /* probably unnecessary... */
-  (*(sc->thread_ids))++;                   /* in case a spawned thread spawns another, we need this variable to be global to all */
-  new_sc->thread_id = (*(sc->thread_ids)); /* for more readable debugging printout -- main thread is thread 0 */
-  pthread_mutex_unlock(&eval_history_lock);
-
-  /* use the main interpreter for these */
-  new_sc->eval_history_size = 0;
-  new_sc->eval_history_ops = NULL;
-  new_sc->eval_history_args = NULL;
-  new_sc->eval_history_thread_ids = NULL;
-
-  return(new_sc);
-}
-
-
-static s7_scheme *close_s7(s7_scheme *sc)
-{
-  free(sc->strbuf);
-  free(sc->temps);
-#if WITH_READ_LINE
-  if (sc->read_line_buf) free(sc->read_line_buf);
-#endif
-  free(sc);
-  return(NULL);
-}
-
-
-static void mark_s7(s7_scheme *sc)
-{
-  int i;
-  s7_mark_object(sc->args);
-  s7_mark_object(sc->envir);
-  s7_mark_object(sc->code);
-  mark_vector(sc->stack, sc->stack_top);
-  s7_mark_object(sc->value);
-  s7_mark_object(sc->x);
-  s7_mark_object(sc->y);
-  for (i = 0; i < sc->temps_size; i++)
-    s7_mark_object(sc->temps[i]);
-  s7_mark_object(sc->key_values);
-}
-
-#endif
