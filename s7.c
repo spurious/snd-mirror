@@ -42,18 +42,18 @@
  *        continuation? function to distinguish a continuation from a procedure
  *
  *   other additions: 
- *     procedure-source, procedure-arity, procedure-documentation, help
- *     symbol-table, symbol->value, global-environment, current-environment
- *     provide, provided?, defined?
- *     port-line-number, port-filename
- *     read-line, read-byte, write-byte
- *     logior, logxor, logand, lognot, ash
- *     sinh, cosh, tanh, asinh, acosh, atanh
- *     object->string, eval-string
- *     reverse!, list-set!
- *     gc, gc-verbose, load-verbose
- *     stacktrace, quit
- *     *features*, *load-path*, *vector-print-length*
+ *        procedure-source, procedure-arity, procedure-documentation, help
+ *        symbol-table, symbol->value, global-environment, current-environment
+ *        provide, provided?, defined?
+ *        port-line-number, port-filename
+ *        read-line, read-byte, write-byte
+ *        logior, logxor, logand, lognot, ash
+ *        sinh, cosh, tanh, asinh, acosh, atanh
+ *        object->string, eval-string
+ *        reverse!, list-set!
+ *        gc, gc-verbose, load-verbose
+ *        stacktrace, quit
+ *        *features*, *load-path*, *vector-print-length*
  *
  *
  * still to do:
@@ -83,7 +83,7 @@
  * s7.h includes stdbool.h if HAVE_STDBOOL_H is 1 and we're not in C++.
  *
  *
- * complex number support (which is problematic in C++, Solaris, and netBSD)
+ * Complex number support (which is problematic in C++, Solaris, and netBSD)
  *   is on the WITH_COMPLEX switch. On a Mac, or in Linux, if you're not using C++,
  *   you can use:
  *
@@ -481,14 +481,6 @@ enum scheme_types {
   T_LAST_TYPE = 20
 };
 
-#if S7_DEBUGGING
-static const char *type_names[T_LAST_TYPE + 1] = {
-  "unused!", "nil", "string", "number", "symbol", "procedure", "pair", "closure", "continuation",
-  "s7-function", "character", "input port", "vector", "macro", "promise", "s7-object", 
-  "goto", "output port", "catch", "dynamic-wind", "hash-table"
-};
-#endif
-
 
 #define TYPE_BITS                     16
 #define T_MASKTYPE                    0xffff
@@ -648,6 +640,12 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 
 
 #if S7_DEBUGGING
+static const char *type_names[T_LAST_TYPE + 1] = {
+  "unused!", "nil", "string", "number", "symbol", "procedure", "pair", "closure", "continuation",
+  "s7-function", "character", "input port", "vector", "macro", "promise", "s7-object", 
+  "goto", "output port", "catch", "dynamic-wind", "hash-table"
+};
+
 static char *describe_type(s7_pointer p)
 {
   char *buf;
@@ -1203,28 +1201,6 @@ static s7_pointer new_cell_1(s7_scheme *sc, const char *function, int line)
 }
 
 
-#if S7_DEBUGGING
-static void fop(s7_scheme *sc, s7_pointer p)
-{
-  int i;
-  for (i = 0; i < sc->temps_size; i++)
-    if (sc->temps[i] == p)
-      fprintf(stderr, "%p in temps at %d (%d)\n", p, i, sc->temps_ctr);
-}
-
-static void search_heap(s7_scheme *sc, s7_pointer obj)
-{
-  int i;
-  for (i = 0; i < sc->heap_size; i++)
-    if (obj == sc->heap[i])
-      break;
-  if (i < sc->heap_size)
-    fprintf(stderr, "unknown object in heap: %d %p\n", i, obj);
-  else fprintf(stderr, "unknown object %p not in heap", obj);
-}
-#endif
-
-
 static s7_pointer g_gc_verbose(s7_scheme *sc, s7_pointer a)
 {
   #define H_gc_verbose "(gc-verbose bool) turns GC reportage on or off"
@@ -1356,7 +1332,6 @@ static void push_stack(s7_scheme *sc, opcode_t op, s7_pointer args, s7_pointer c
   vector_element(sc->stack, top + 2) = args;
   vector_element(sc->stack, top + 3) = vector_element(sc->small_ints, (int)op);
 } 
-
 
 
 
@@ -1571,6 +1546,7 @@ bool s7_is_symbol(s7_pointer p)
 { 
   return(type(p) == T_SYMBOL);
 }
+
 
 static s7_pointer g_is_symbol(s7_scheme *sc, s7_pointer args)
 {
@@ -7112,9 +7088,6 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
   if (s7_is_object(obj)) 
     return(s7_describe_object(sc, obj)); /* this allocates already */
   
-#if S7_DEBUGGING
-  search_heap(sc, obj);
-#endif
   return(strdup("#<unknown object!>"));
 }
 
@@ -9533,6 +9506,14 @@ static char *s7_hashed_integer_name(s7_Int key, char *intbuf)
 }
 
 
+static char *s7_hashed_real_name(double key, char *intbuf)
+{
+  /* this is actually not safe due to the challenges faced by %f */
+  snprintf(intbuf, HASHED_INTEGER_BUFFER_SIZE, "\b%f\b", key);
+  return(intbuf);
+}
+
+
 static s7_pointer g_hash_table_ref(s7_scheme *sc, s7_pointer args)
 {
   /* basically the same layout as the global symbol table */
@@ -9556,10 +9537,14 @@ static s7_pointer g_hash_table_ref(s7_scheme *sc, s7_pointer args)
 	{
 	  if (s7_is_integer(key))
 	    name = s7_hashed_integer_name(s7_integer(key), intbuf);
-	  else return(s7_wrong_type_arg_error(sc, "hash-table-ref", 2, key, "a string, symbol, or integer"));
+	  else
+	    {
+	      if ((s7_is_real(key)) && (!s7_is_ratio(key)))
+		name = s7_hashed_real_name(s7_real(key), intbuf);
+	      else return(s7_wrong_type_arg_error(sc, "hash-table-ref", 2, key, "a string, symbol, integer, or (non-ratio) real"));
+	    }
 	}
     }
-  
   return(s7_hash_table_ref(sc, table, name));
 }
 
@@ -9586,7 +9571,12 @@ static s7_pointer g_hash_table_set(s7_scheme *sc, s7_pointer args)
 	{
 	  if (s7_is_integer(key))
 	    name = s7_hashed_integer_name(s7_integer(key), intbuf);
-	  else return(s7_wrong_type_arg_error(sc, "hash-table-set!", 2, key, "a string, symbol, or integer"));
+	  else
+	    {
+	      if ((s7_is_real(key)) && (!s7_is_ratio(key)))
+		name = s7_hashed_real_name(s7_real(key), intbuf);
+	      else return(s7_wrong_type_arg_error(sc, "hash-table-set!", 2, key, "a string, symbol, integer, or (non-ratio) real"));
+	    }
 	}
     }
   
@@ -9732,6 +9722,13 @@ static void print_eval_history_entry(s7_scheme *sc, int n)
 
   write_string(sc, " ", sc->error_port);
   str = no_outer_parens(s7_object_to_c_string(sc, args));
+  if (safe_strlen(str) > 128)
+    {
+      str[124] = '.';
+      str[125] = '.';
+      str[126] = '.';
+      str[127] = '\0';
+    }
   write_string(sc, str, sc->error_port);
   if (str) free(str);
   write_string(sc, ")", sc->error_port);
@@ -9748,8 +9745,6 @@ static void print_eval_history_entry(s7_scheme *sc, int n)
 	  write_string(sc, numbuf, sc->error_port);
 	}
     }
-
-  /* TODO: truncate long strings of args */
   write_string(sc, "\n", sc->error_port);
 }
 
@@ -9804,6 +9799,7 @@ s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n,
 {
   int len;
   char *errmsg, *argstr;
+
   argstr = s7_object_to_c_string(sc, arg);
   len = safe_strlen(argstr) + safe_strlen(descr) + safe_strlen(caller) + 128;
   errmsg = (char *)calloc(len, sizeof(char));
@@ -9812,6 +9808,7 @@ s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n,
   sc->x = s7_make_string(sc, errmsg);
   free(errmsg);
   if (argstr) free(argstr);
+
   return(s7_error(sc, s7_make_symbol(sc, "wrong-type-arg"), sc->x));
 }
 
@@ -9829,6 +9826,7 @@ s7_pointer s7_out_of_range_error(s7_scheme *sc, const char *caller, int arg_n, s
   sc->x = s7_make_string(sc, errmsg);
   free(errmsg);
   if (argstr) free(argstr);
+
   return(s7_error(sc, s7_make_symbol(sc, "out-of-range"), sc->x));
 }
 
@@ -9837,11 +9835,13 @@ static s7_pointer s7_division_by_zero_error(s7_scheme *sc, const char *caller, s
 {
   int len;
   char *errmsg;
+
   len = safe_strlen(caller) + 128;
   errmsg = (char *)calloc(len, sizeof(char));
   snprintf(errmsg, len, "%s: division by zero", caller);
   sc->x = s7_make_string(sc, errmsg);
   free(errmsg);
+
   return(s7_error(sc, s7_make_symbol(sc, "division-by-zero"), sc->x));
 }
 
@@ -9850,11 +9850,13 @@ static s7_pointer s7_file_error(s7_scheme *sc, const char *caller, const char *d
 {
   int len;
   char *errmsg;
+
   len = safe_strlen(descr) + safe_strlen(name) + safe_strlen(caller) + 128;
   errmsg = (char *)calloc(len, sizeof(char));
   snprintf(errmsg, len, "%s: %s %s", caller, descr, name);
   sc->x = s7_make_string(sc, errmsg);
   free(errmsg);
+
   return(s7_error(sc, s7_make_symbol(sc, "io-error"), sc->x));
 }
 
@@ -10021,8 +10023,6 @@ s7_pointer s7_error_and_exit(s7_scheme *sc, s7_pointer type, s7_pointer info)
 }
 
 
-/* TODO: either take varargs here, or add more cases for additional args with split line etc
- */
 static s7_pointer eval_error(s7_scheme *sc, const char *errmsg, s7_pointer obj)
 {
   char *str;
@@ -10749,13 +10749,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  int len;
 	  len = safe_list_length(sc, sc->args);
 	  if (len < function_required_args(sc->code))
-	    {
-#if S7_DEBUGGING
-	      fprintf(stderr, "%s: not enough args (got %d, required %d)\n", s7_object_to_c_string(sc, sc->code), len, function_required_args(sc->code));
-	      fprintf(stderr, "    args: %s\n", s7_object_to_c_string(sc, sc->args));
-#endif
-	      return(eval_error(sc, "not enough arguments", sc->code));
-	    }
+	    return(eval_error(sc, "not enough arguments", sc->code));
 	  
 	  if ((!function_has_rest_arg(sc->code)) &&
 	      ((function_required_args(sc->code) + function_optional_args(sc->code)) < len))
@@ -10777,13 +10771,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      for (sc->x = car(closure_source(sc->code)), sc->y = sc->args; s7_is_pair(sc->x); sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
 		{
 		  if (sc->y == sc->NIL)
-		    {
-#if S7_DEBUGGING
-		      fprintf(stderr, "%s: not enough args\n", s7_object_to_c_string(sc, sc->code));
-		      fprintf(stderr, "    args: %s\n", s7_object_to_c_string(sc, sc->args));
-#endif
-		      return(eval_error(sc, "not enough arguments", g_procedure_source(sc, s7_cons(sc, sc->code, sc->NIL))));
-		    }
+		    return(eval_error(sc, "not enough arguments", g_procedure_source(sc, s7_cons(sc, sc->code, sc->NIL))));
 		  
 		  ASSERT_IS_OBJECT(sc->x, "parameter to closure");
 		  ASSERT_IS_OBJECT(sc->y, "arg to closure");
@@ -10936,6 +10924,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_SET2:
       sc->code = s7_cons(sc, s7_cons(sc, sc->x, sc->args), sc->code);
+
       
     case OP_SET0:
       if (s7_is_immutable(car(sc->code)))

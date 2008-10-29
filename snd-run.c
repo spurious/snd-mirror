@@ -7696,6 +7696,8 @@ static xen_value *make_sample_reader_1(ptree *pt, xen_value **args, int num_args
   xen_value *true_args[6];
   int k;
   xen_value *rtn;
+  bool free_true_args_1 = false;
+
   if (num_args < 5) 
     true_args[5] = make_xen_value(R_INT, add_int_to_ptree(pt, AT_CURRENT_EDIT_POSITION), R_CONSTANT);
   else true_args[5] = args[5];
@@ -7709,13 +7711,17 @@ static xen_value *make_sample_reader_1(ptree *pt, xen_value **args, int num_args
   else
     {
       if (args[1]->type == R_FLOAT)
-	true_args[1] = convert_dbl_to_int(pt, args[1], true);
+	{
+	  free_true_args_1 = true;
+	  true_args[1] = convert_dbl_to_int(pt, args[1], true);
+	}
       else true_args[1] = args[1];
     }
   true_args[0] = args[0];
   rtn = package(pt, R_READER, make_sample_reader_r, "make_sample_reader_r", true_args, 5);
   add_obj_to_gcs(pt, R_READER, rtn->addr);
-  for (k = num_args + 1; k <= 5; k++) FREE(true_args[k]); /* TODO: memleak here? if convert_to_dbl for early arg */
+  for (k = num_args + 1; k <= 5; k++) FREE(true_args[k]);
+  if (free_true_args_1) FREE(true_args[1]);
   return(rtn);
 }
 

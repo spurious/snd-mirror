@@ -49805,6 +49805,9 @@ EDITS: 1
       (close-sound ind))
     
     (let ((ind (open-sound "oboe.snd")))
+      (let ((val (run (lambda () (let ((ho (make-sample-reader 12345.0))) (read-sample ho))))))
+	(if (fneq val 0.0549)
+	    (snd-display ";run make-sample-reader with float sample arg: ~A" val)))
       (let ((v (make-vct 2)))
 	(ftst '(let ((r (make-sample-reader 1200.0))) (next-sample r)) 0.04898)
 	(vct-map! v (let ((r (make-sample-reader 2000)))
