@@ -5750,8 +5750,7 @@ static s7_pointer g_set_current_input_port(s7_scheme *sc, s7_pointer args)
   s7_pointer old_port, port;
   old_port = sc->input_port;
   port = car(args);
-  if ((port == sc->NIL) ||
-      (is_input_port(port)))
+  if (s7_is_input_port(sc, port))
     sc->input_port = port;
   else return(s7_wrong_type_arg_error(sc, "set-current-input-port", 1, car(args), "an input port or nil"));
   return(old_port);
@@ -5873,7 +5872,7 @@ static s7_pointer g_close_input_port(s7_scheme *sc, s7_pointer args)
 {
   #define H_close_input_port "(close-input-port port) closes the port"
   s7_pointer pt = car(args);
-  if (!is_input_port(pt))
+  if (!s7_is_input_port(sc, pt))
     return(s7_wrong_type_arg_error(sc, "close-input-port", 1, pt, "an input port"));
   s7_close_input_port(sc, pt);
   return(sc->UNSPECIFIED);
@@ -7405,7 +7404,7 @@ static s7_pointer g_read_byte(s7_scheme *sc, s7_pointer args)
   if (s7_is_pair(args))
     {
       port = car(args);
-      if ((!is_input_port(port)) ||
+      if ((!s7_is_input_port(sc, port)) ||
 	  (!is_file_port(port)))
 	return(s7_wrong_type_arg_error(sc, "read-byte", 1, car(args), "an input file port"));
     }
@@ -11133,7 +11132,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->args = cdr(sc->args);
 	}
       
-      
+
+      /* TODO: check for undefined references here */
     case OP_LETREC2:
       for (sc->x = car(sc->code), sc->y = sc->args; sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
 	{

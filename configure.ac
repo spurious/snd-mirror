@@ -2082,7 +2082,7 @@ fi
 #
 # look for sndlib-config, check mus_sample_bits against current choice [with-float-sample, with-sample-width]
 #   also language (Guile, Ruby) needs to match (what about versions!) and audio choice
-# check against needed version (17.2 for now -- need c_vct_copy in vct.c)
+# check against needed version (17.2 for now -- need mus_vct_copy in vct.c)
 # set SNDLIB_FILES and SNDLIB_LIB
 
 MIDI_FILES=""
@@ -2116,7 +2116,7 @@ if test "$with_shared_sndlib" = yes; then
     SNDLIB_PREFIX=`$SNDLIB_CONFIG --prefix`
     OLD_CFLAGS="$CFLAGS"
     CFLAGS="$CFLAGS -L$SNDLIB_PREFIX/lib"
-    AC_CHECK_LIB(sndlib, c_vct_copy,
+    AC_CHECK_LIB(sndlib, mus_vct_copy,
       [
 	SNDLIB_AUDIO_CHOICE=`$SNDLIB_CONFIG --audio`
         if test "$SNDLIB_AUDIO_CHOICE" != "$AUDIO_SYSTEM" ; then
