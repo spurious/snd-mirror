@@ -428,6 +428,9 @@ int mus_free(mus_any *gen)
 }
 
 
+/* TODO: mus_describe should return a new string each time, freed by caller
+ *         affects clm.c clm2xen.c snd-run.c 
+ */
 char *mus_describe(mus_any *gen)
 {
   if (gen == NULL)
@@ -7680,6 +7683,35 @@ static void flush_buffers(rdout *gen)
 	free(addbufs[i]);  /* used calloc above to make sure we can check for unsuccessful allocation */
       clm_free(addbufs);
     }
+}
+
+
+mus_any *mus_sample_to_file_add(mus_any *out1, mus_any *out2)
+{
+  off_t min_frames;
+  rdout *dest = (rdout *)out1;
+  rdout *in_coming = (rdout *)out2;
+  int chn, min_chans;
+
+  min_chans = dest->chans;
+  if (in_coming->chans < min_chans) min_chans = in_coming->chans;
+  min_frames = in_coming->out_end;
+
+  for (chn = 0; chn < min_chans; chn++)
+    {
+      off_t i;
+      for (i = 0; i < min_frames; i++)
+	dest->obufs[chn][i] += in_coming->obufs[chn][i];
+      memset((void *)(in_coming->obufs[chn]), 0, min_frames * sizeof(mus_sample_t));
+    }
+
+  if (min_frames > dest->out_end)
+    dest->out_end = min_frames;
+
+  in_coming->out_end = 0;
+  in_coming->data_start = 0;
+
+  return((mus_any*)dest);
 }
 
 

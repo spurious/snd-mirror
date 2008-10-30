@@ -5456,7 +5456,7 @@ static XEN g_output_p(XEN obj)
 
 #if HAVE_S7 && HAVE_PTHREADS
   if (s7_is_thread_variable(obj))
-    return(C_TO_XEN_BOOLEAN(mus_output_p((mus_any *)XEN_TO_MUS_ANY(s7_thread_variable_value(s7, obj)))));
+    obj = s7_thread_variable_value(s7, obj);
 #endif
 
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_output_p(XEN_TO_MUS_ANY(obj)))));
@@ -5483,7 +5483,7 @@ static XEN g_sample_to_file_p(XEN obj)
 
 #if HAVE_S7 && HAVE_PTHREADS
   if (s7_is_thread_variable(obj))
-    return(C_TO_XEN_BOOLEAN(mus_sample_to_file_p(XEN_TO_MUS_ANY(s7_thread_variable_value(s7, obj)))));
+    obj = s7_thread_variable_value(s7, obj);
 #endif
 
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_sample_to_file_p(XEN_TO_MUS_ANY(obj)))));
@@ -5496,7 +5496,7 @@ static XEN g_frame_to_file_p(XEN obj)
 
 #if HAVE_S7 && HAVE_PTHREADS
   if (s7_is_thread_variable(obj))
-    return(C_TO_XEN_BOOLEAN(mus_frame_to_file_p(XEN_TO_MUS_ANY(s7_thread_variable_value(s7, obj)))));
+    obj = s7_thread_variable_value(s7, obj);
 #endif
 
   return(C_TO_XEN_BOOLEAN((MUS_XEN_P(obj)) && (mus_frame_to_file_p(XEN_TO_MUS_ANY(obj)))));
@@ -5698,7 +5698,11 @@ static XEN g_mus_close(XEN ptr)
 
 #if HAVE_S7 && HAVE_PTHREADS
   if (s7_is_thread_variable(ptr))
-    return(C_TO_XEN_INT(mus_close_file((mus_any *)XEN_TO_MUS_ANY(s7_thread_variable_value(s7, ptr)))));
+    {
+      if (MUS_XEN_P(s7_thread_variable_value(s7, ptr)))
+	return(C_TO_XEN_INT(mus_close_file((mus_any *)XEN_TO_MUS_ANY(s7_thread_variable_value(s7, ptr)))));
+      return(XEN_ZERO);
+    }
 #endif
 
   XEN_ASSERT_TYPE(MUS_VCT_P(ptr) || XEN_FALSE_P(ptr) || sound_data_p(ptr) || XEN_PROCEDURE_P(ptr), 
@@ -5843,6 +5847,23 @@ handled by the output generator 'obj', in channel 'chan' at frame 'samp'"
 					    XEN_TO_C_OFF_T_OR_ELSE(samp, 0),
 					    XEN_TO_C_INT(chan),
 					    XEN_TO_C_DOUBLE(val))));
+}
+
+
+static XEN g_sample_to_file_add(XEN obj1, XEN obj2)
+{
+  #define H_sample_to_file_add "(" S_sample_to_file_add " obj1 obj2): mixes obj2 into obj1"
+
+#if HAVE_S7 && HAVE_PTHREADS
+  if (s7_is_thread_variable(obj2))
+    obj2 = s7_thread_variable_value(s7, obj2);
+#endif
+
+  XEN_ASSERT_TYPE((MUS_XEN_P(obj1)) && (mus_output_p(XEN_TO_MUS_ANY(obj1))), obj1, XEN_ARG_1, S_sample_to_file_add, "an output generator");
+  XEN_ASSERT_TYPE((MUS_XEN_P(obj2)) && (mus_output_p(XEN_TO_MUS_ANY(obj2))), obj2, XEN_ARG_2, S_sample_to_file_add, "an output generator");
+
+  mus_sample_to_file_add(XEN_TO_MUS_ANY(obj1), XEN_TO_MUS_ANY(obj2));
+  return(obj1);
 }
 
 
@@ -6404,23 +6425,22 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
 
   if (XEN_NOT_BOUND_P(keys3))
     keys3 = mus_clm_output();
+#if HAVE_S7 && HAVE_PTHREADS
+  else
+    if (s7_is_thread_variable(keys3))
+      keys3 = s7_thread_variable_value(s7, keys3);
+#endif
 
   if (XEN_NOT_BOUND_P(keys4))
     keys4 = mus_clm_reverb();
-
+#if HAVE_S7 && HAVE_PTHREADS
+  else
+    if (s7_is_thread_variable(keys4))
+      keys4 = s7_thread_variable_value(s7, keys4);
+#endif
 
   /* try to default output to *output* and reverb to *reverb*, if they're currently set and not closed */
   /*   mus_close is actually mus_close_file = sample_to_file_end = free and nullify obufs so we're hoping dynamic-wind works... */
-
-#if HAVE_S7 && HAVE_PTHREADS
-  if (s7_is_thread_variable(keys3))
-    {
-      outp = (mus_any *)XEN_TO_MUS_ANY(s7_thread_variable_value(s7, keys3));
-      if (out_chans < 0)
-	out_chans = mus_channels((mus_any *)outp);
-    }
-  else
-#endif
 
   if ((MUS_XEN_P(keys3)) && 
       (mus_output_p(XEN_TO_MUS_ANY(keys3))))
@@ -6449,16 +6469,6 @@ return a new generator for signal placement in n channels.  Channel 0 correspond
 	    }
 	}
     }
-
-#if HAVE_S7 && HAVE_PTHREADS
-  if (s7_is_thread_variable(keys4))
-    {
-      revp = (mus_any *)XEN_TO_MUS_ANY(s7_thread_variable_value(s7, keys4));
-      if (rev_chans < 0)
-	rev_chans = mus_channels((mus_any *)revp);
-    }
-  else
-#endif
 
   if ((MUS_XEN_P(keys4)) && 
       (mus_output_p(XEN_TO_MUS_ANY(keys4))))
@@ -8047,6 +8057,7 @@ XEN_ARGIFY_5(g_make_sample_to_file_w, g_make_sample_to_file)
 XEN_NARGIFY_1(g_continue_sample_to_file_w, g_continue_sample_to_file)
 XEN_NARGIFY_1(g_continue_frame_to_file_w, g_continue_frame_to_file)
 XEN_NARGIFY_4(g_sample_to_file_w, g_sample_to_file)
+XEN_NARGIFY_2(g_sample_to_file_add_w, g_sample_to_file_add)
 XEN_NARGIFY_1(g_frame_to_file_p_w, g_frame_to_file_p)
 XEN_NARGIFY_3(g_frame_to_file_w, g_frame_to_file)
 XEN_ARGIFY_5(g_make_frame_to_file_w, g_make_frame_to_file)
@@ -8353,6 +8364,7 @@ XEN_NARGIFY_1(g_mus_irandom_w, g_mus_irandom)
 #define g_continue_sample_to_file_w g_continue_sample_to_file
 #define g_continue_frame_to_file_w g_continue_frame_to_file
 #define g_sample_to_file_w g_sample_to_file
+#define g_sample_to_file_add_w g_sample_to_file_add
 #define g_frame_to_file_p_w g_frame_to_file_p
 #define g_frame_to_file_w g_frame_to_file
 #define g_make_frame_to_file_w g_make_frame_to_file
@@ -8876,6 +8888,7 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_continue_sample_to_file, g_continue_sample_to_file_w, 1, 0, 0, H_continue_sample_to_file);
   XEN_DEFINE_PROCEDURE(S_continue_frame_to_file,  g_continue_frame_to_file_w,  1, 0, 0, H_continue_frame_to_file);
   XEN_DEFINE_PROCEDURE(S_sample_to_file,          g_sample_to_file_w,          4, 0, 0, H_sample_to_file);
+  XEN_DEFINE_PROCEDURE(S_sample_to_file_add,      g_sample_to_file_add_w,      2, 0, 0, H_sample_to_file_add);
   XEN_DEFINE_PROCEDURE(S_frame_to_file_p,         g_frame_to_file_p_w,         1, 0, 0, H_frame_to_file_p);
   XEN_DEFINE_PROCEDURE(S_frame_to_file,           g_frame_to_file_w,           3, 0, 0, H_frame_to_file);
   XEN_DEFINE_PROCEDURE(S_make_frame_to_file,      g_make_frame_to_file_w,      1, 4, 0, H_make_frame_to_file);
@@ -9242,6 +9255,7 @@ void mus_xen_init(void)
 	       S_rv4_window,
 	       S_samaraki_window,
 	       S_sample_to_file,
+	       S_sample_to_file_add,
 	       S_sample_to_file_p,
 	       S_sample_to_frame,
 	       S_samples_to_seconds,

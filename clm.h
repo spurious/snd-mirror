@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 4
-#define MUS_REVISION 18
-#define MUS_DATE "9-Oct-08"
+#define MUS_REVISION 19
+#define MUS_DATE "30-Oct-08"
 
 /*
+ * 30-Oct:     mus_sample_to_file_add.
  * 9-Oct:      various thread-related internal changes.
  * 29-Jul:     mark mus_sine_bank for eventual removal.
  * 14-Jul:     mus_data_format_zero.
@@ -693,6 +694,7 @@ mus_any *mus_make_sample_to_file_with_comment(const char *filename, int out_chan
 Float mus_sample_to_file(mus_any *ptr, off_t samp, int chan, Float val);
 mus_any *mus_continue_sample_to_file(const char *filename);
 int mus_close_file(mus_any *ptr);
+mus_any *mus_sample_to_file_add(mus_any *out1, mus_any *out2);
 
 Float mus_out_any(off_t frame, Float val, int chan, mus_any *IO);
 bool mus_frame_to_file_p(mus_any *ptr);

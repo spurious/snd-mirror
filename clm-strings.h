@@ -285,6 +285,7 @@
 #define S_rv4_window                 "rv4-window"
 #define S_samaraki_window            "samaraki-window"
 #define S_sample_to_file             "sample->file"
+#define S_sample_to_file_add         "sample->file+"
 #define S_sample_to_file_p           "sample->file?"
 #define S_sample_to_frame            "sample->frame"
 #define S_samples_to_seconds         "samples->seconds"

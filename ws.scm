@@ -349,11 +349,13 @@ returning you to the true top-level."
 	     (if (file-exists? output-1) 
 		 (delete-file output-1))
 	     (set! (thread-output) (make-sample->file output-1 channels data-format header-type comment))
+	     (set! (mus-safety (thread-output)) output-safety)
 	     (if thread-reverb
 		 (begin
 		   (if (file-exists? reverb-1) 
 		       (delete-file reverb-1))
-		   (set! (thread-reverb) (make-sample->file reverb-1 reverb-channels data-format header-type))))
+		   (set! (thread-reverb) (make-sample->file reverb-1 reverb-channels data-format header-type))
+		   (set! (mus-safety (thread-reverb)) output-safety)))
 	     (set! statistics #f)
 	     ))
 
@@ -418,7 +420,7 @@ returning you to the true top-level."
 		  (not flush-reverb)) ; i.e. not interrupted by error and trying to jump out
 	     (begin
 	       (if thread-reverb
-		   (mus-close (thread-reverb))
+		   (if (not (= (mus-safety (thread-output)) 1)) (mus-close (thread-reverb)))
 		   (if reverb-to-file
 		       (mus-close *reverb*)))
 	       (if statistics 
@@ -439,7 +441,7 @@ returning you to the true top-level."
 			 (delete-file reverb-1))))))
 
 	 (if thread-output
-	     (mus-close (thread-output))
+	     (if (not (= (mus-safety (thread-output)) 1)) (mus-close (thread-output)))
 	     (if output-to-file
 		 (mus-close *output*)))
 
@@ -537,13 +539,13 @@ returning you to the true top-level."
 	     (if *reverb*
 		 (begin
 		   (if thread-reverb
-		       (mus-close (thread-reverb))
+		       (if (not (= (mus-safety (thread-reverb)) 1)) (mus-close (thread-reverb)))
 		       (mus-close *reverb*))
 		   (set! *reverb* old-*reverb*)))
 	     (if *output*
 		 (begin
 		   (if thread-output
-		       (mus-close (thread-output))
+		       (if (not (= (mus-safety (thread-output)) 1)) (mus-close (thread-output)))
 		       (if (mus-output? *output*)
 			   (mus-close *output*)))
 		   (set! *output* old-*output*)))
@@ -607,6 +609,8 @@ returning you to the true top-level."
 		      (mix-lock (make-lock))
 		      (main-output *output*)
 		      (main-reverb *reverb*))
+
+		  (display (format #f ";main-output safety: ~A~%" (mus-safety *output*)))
 		  
 		  (set! *output* thread-output)
 		  (if thread-reverb (set! *reverb* thread-reverb))
@@ -628,10 +632,18 @@ returning you to the true top-level."
 							    ,@new-args
 							    )))
 						 (grab-lock mix-lock)
-						 (display "mix ") (display tmp) (newline)
-						 (mus-mix main-output tmp)
+						 (display (format #f "mix ~S [~D]~%" tmp (mus-safety main-output)))
+						 (if (= (mus-safety main-output) 1)
+						     (begin
+						       (sample->file+ main-output (thread-output))
+						       (mus-close (thread-output)))
+						     (mus-mix main-output tmp))
 						 (if *reverb*
-						     (mus-mix main-reverb reverb-tmp))
+						     (if (= (mus-safety main-output) 1)
+							 (begin
+							   (sample->file+ main-reverb (thread-reverb))
+							   (mus-close (thread-reverb)))
+							 (mus-mix main-reverb reverb-tmp)))
 						 (release-lock mix-lock)
 						 (delete-file tmp))))
 					    threads)))

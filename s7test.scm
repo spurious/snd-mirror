@@ -24999,7 +24999,7 @@
        '1/e '1/i 'e/i '1e2/3 '2/1e2 '1e2+1e2ii '1i-1.0 '1.0-i/2
        '1/2i '2i/3 '2+/i '2+2/i '2+2/-i '2/- '2/+ '2/+3
        '1e1.0 '1e1e2 '1+ie2 '1ei1 '1e/2 '0-- '1+ '1- '.1. '.1+
-       '1//2 '1/-/2 '1/2/ '1// 
+       '1//2 '1/-/2 '1/2/ '1// '+/1 '.0.
        '+0ei '0e++i '+0e+i '0e+-i '+0e-i '+00ei '+.0ei '0+0ei '-01ei '+.1ei 
        '1-1ei '-1.ei '0+.i '0-.i '1+e0i '1+/0i '1-/0i '1+e1i '1+/1i '10+.i 
        '.0+.i '-0+.i '.1+.i '0.+.i '00-.i '.1-.i '1.-.i '1e++0i '1e--1i '.1e++i 
@@ -25019,7 +25019,7 @@
        "1/e" "1/i" "e/i" "1e2/3" "2/1e2" "1e2+1e2ii" "1i-1.0" "1.0-i/2" 
        "1/2i" "2i/3" "2+/i" "2+2/i" "2+2/-i" "2/-" "2/+" "2/+3" 
        "1e1.0" "1e1e2" "1+ie2" "1ei1" "1e/2" "0--" "1+" "1-" ".1." ".1+" 
-       "1//2" "1/-/2" "1/2/" "1//" 
+       "1//2" "1/-/2" "1/2/" "1//" "+/1" ".0."
        "+0ei" "0e++i" "+0e+i" "0e+-i" "+0e-i" "+00ei" "+.0ei" "0+0ei" "-01ei" "+.1ei" 
        "1-1ei" "-1.ei" "0+.i" "0-.i" "1+e0i" "1+/0i" "1-/0i" "1+e1i" "1+/1i" "10+.i" 
        ".0+.i" "-0+.i" ".1+.i" "0.+.i" "00-.i" ".1-.i" "1.-.i" "1e++0i" "1e--1i" ".1e++i" 
@@ -25032,7 +25032,7 @@
        ))
 
 
-;;; here's code to generate all possible numbers (using just 1 digit) of a given length
+;;; here's code to generate all (im)possible numbers (using just 1 digit) of a given length
 ;(define file (open-output-file "ntest.scm"))
 ;(define chars (list #\1 #\. #\+ #\- #\e #\i #\/))
 ;(define (all-syms f len)
@@ -27701,6 +27701,7 @@
 	(test (let () (hash-table-set! ht 'key 3.14) (hash-table-ref ht 'key)) 3.14)
 	(test (let () (hash-table-set! ht "ky" 3.14) (hash-table-ref ht "ky")) 3.14)
 	(test (let () (hash-table-set! ht 123 "hiho") (hash-table-ref ht 123)) "hiho")
+	(test (let () (hash-table-set! ht 3.14 "hi") (hash-table-ref ht 3.14)) "hi")
 	(test (hash-table-ref ht "123") #f)
 	(for-each
 	 (lambda (arg)
@@ -27727,15 +27728,15 @@
       (test (hash-table? 1 2) 'error)
       
       (let ((ht (make-hash-table)))
-	(test (hash-table-set! ht 3.14 'key) 'error)
+	(test (hash-table-set! ht #\a 'key) 'error)
 	(for-each
 	 (lambda (arg)
 	   (test (hash-table-set! ht arg 3.14) 'error))
-	 (list #\a '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
+	 (list #\a '#(1 2 3) 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
 	(for-each
 	 (lambda (arg)
 	   (test (hash-table-ref ht arg) 'error))
-	 (list #\a '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
+	 (list #\a '#(1 2 3) 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
 	
 	(test (hash-table-ref ht 'not-a-key) #f)
 	(test (hash-table-ref ht "not-a-key") #f)
