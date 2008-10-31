@@ -981,7 +981,13 @@ static char *describe_xen_value_1(int type, int addr, ptree *pt)
 
     case R_CLM:
       if ((pt->clms) && (pt->clms[addr]))
-	return(mus_format("clm%d(%s)", addr, mus_describe(pt->clms[addr])));  
+	{
+	  char *str1, *str2;
+	  str1 = mus_describe(pt->clms[addr]);
+	  str2 = mus_format("clm%d(%s)", addr, str1);
+	  if (str1) free(str1);
+	  return(str2);
+	}
       else return(mus_format("clm%d(null)", addr));
       break;
 
@@ -6582,7 +6588,12 @@ static void display_key(int *args, ptree *pt)
 }
 
 
-static void display_clm(int *args, ptree *pt) {fprintf(stdout, "%s", mus_describe(CLM_ARG_1));}
+static void display_clm(int *args, ptree *pt) 
+{
+  char *str;
+  fprintf(stdout, "%s", str = mus_describe(CLM_ARG_1));
+  if (str) free(str);
+}
 
 
 static void display_vct(int *args, ptree *pt) 
@@ -10640,9 +10651,6 @@ static xen_value * CName ## _1(ptree *prog, xen_value **args, int num_args)  \
   else return(package(prog, R_FLOAT, CName ## _3f, #CName "_3f", args, 3)); \
 }
 
-#ifndef CLM_DISABLE_DEPRECATED
-  VCT_2_F(sine_bank, sine-bank)
-#endif
 VCT_2_F(dot_product, dot-product)
 
 
@@ -11599,10 +11607,7 @@ static XEN wrap_generator(ptree *pt, int addr)
       val = snd_protected_at(pt->clm_locs[addr]);  /* try to use the original XEN value holding this generator */
       if ((mus_xen_p(val)) &&
 	  (gen == XEN_TO_MUS_ANY(val)))
-	{
-	  /* fprintf(stderr, "found internal gen: %s\n", mus_describe(gen)); */
-	  return(val);
-	}
+	return(val);
     }
 
   /* desperate fallback */
@@ -13523,9 +13528,6 @@ static void init_walkers(void)
   INIT_WALKER(S_amplitude_modulate,   make_walker(amplitude_modulate_1, NULL, NULL, 3, 3, R_FLOAT, false, 3, R_NUMBER, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_contrast_enhancement, make_walker(contrast_enhancement_1, NULL, NULL, 2, 2, R_FLOAT, false, 2, R_NUMBER, R_NUMBER));
   INIT_WALKER(S_dot_product,          make_walker(dot_product_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_VCT, R_VCT, R_INT));
-#ifndef CLM_DISABLE_DEPRECATED
-  INIT_WALKER(S_sine_bank,            make_walker(sine_bank_1, NULL, NULL, 2, 3, R_FLOAT, false, 3, R_VCT, R_VCT, R_INT));
-#endif
   INIT_WALKER(S_polar_to_rectangular, make_walker(polar_to_rectangular_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_VCT, R_VCT));
   INIT_WALKER(S_rectangular_to_polar, make_walker(rectangular_to_polar_1, NULL, NULL, 2, 2, R_VCT, false, 2, R_VCT, R_VCT));
   INIT_WALKER(S_multiply_arrays,      make_walker(multiply_arrays_1, NULL, NULL, 2, 3, R_VCT, false, 3, R_VCT, R_VCT, R_INT));

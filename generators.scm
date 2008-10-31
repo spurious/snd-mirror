@@ -6162,7 +6162,7 @@ index 10 (so 10/2 is the bes-jn arg):
        (do ((i 0 (1+ i)))
 	   ((= i samps))
 	 (moving-spectrum gen)
-	 (outa i (sine-bank (moving-spectrum-amps gen) (moving-spectrum-phases gen) 256)) ; size = n/2 as in pv
+	 (outa i (sine-bank (moving-spectrum-amps gen) (moving-spectrum-phases gen) 256)) ; size = n/2 as in pv, sine-bank is in snd9.scm
 	 (outb i (phase-vocoder pv)))))))
 
 ; :(channel-distance 0 0 0 1)

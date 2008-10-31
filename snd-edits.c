@@ -9443,18 +9443,12 @@ static int snd_to_sample_free(mus_any *ptr)
 }
 
 
-static char *snd_to_sample_buf = NULL;
-
 static char *snd_to_sample_describe(mus_any *ptr)
 {
+  char *snd_to_sample_buf = NULL;
   int i, len = PRINT_BUFFER_SIZE;
   snd_to_sample *spl = (snd_to_sample *)ptr;
   char *temp;
-  if (snd_to_sample_buf)
-    {
-      FREE(snd_to_sample_buf);
-      snd_to_sample_buf = NULL;
-    }
   if (spl->sfs)
     {
       len += spl->chans * 8;

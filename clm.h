@@ -7,6 +7,8 @@
 
 /*
  * 30-Oct:     mus_sample_to_file_add.
+ *             mus_describe once again allocates a fresh output string.
+ *             finally removed sine-bank (snd9.scm has replacement).
  * 9-Oct:      various thread-related internal changes.
  * 29-Jul:     mark mus_sine_bank for eventual removal.
  * 14-Jul:     mus_data_format_zero.
@@ -253,7 +255,7 @@ typedef struct mus_any_class {
   int type;
   char *name;
   int (*release)(mus_any *ptr);
-  char *(*describe)(mus_any *ptr);
+  char *(*describe)(mus_any *ptr);                            /* caller should free the string */
   bool (*equalp)(mus_any *gen1, mus_any *gen2);
   Float *(*data)(mus_any *ptr);
   Float *(*set_data)(mus_any *ptr, Float *new_data);
@@ -303,17 +305,6 @@ typedef struct mus_any_class {
 typedef enum {MUS_INTERP_NONE, MUS_INTERP_LINEAR, MUS_INTERP_SINUSOIDAL, MUS_INTERP_ALL_PASS, 
 	      MUS_INTERP_LAGRANGE, MUS_INTERP_BEZIER, MUS_INTERP_HERMITE, MUS_NUM_INTERPS} mus_interp_t;
 
-#ifndef CLM_DISABLE_DEPRECATED
-  #define MUS_INTERP_TYPE_OK(Interp) mus_interp_type_p(Interp)
-#endif
-
-/* I used to have 
- *    #define MUS_INTERP_TYPE_OK(Interp) (((Interp) >= MUS_INTERP_NONE) && ((Interp) < MUS_NUM_INTERPS))
- * but this does not work in C++ -- it is a random boolean generator that depends on the surrounding code.
- * I can't find any built-in way to test for enum membership.
- */
-
-
 typedef enum {MUS_RECTANGULAR_WINDOW, MUS_HANN_WINDOW, MUS_WELCH_WINDOW, MUS_PARZEN_WINDOW, MUS_BARTLETT_WINDOW,
 	      MUS_HAMMING_WINDOW, MUS_BLACKMAN2_WINDOW, MUS_BLACKMAN3_WINDOW, MUS_BLACKMAN4_WINDOW,
 	      MUS_EXPONENTIAL_WINDOW, MUS_RIEMANN_WINDOW, MUS_KAISER_WINDOW, MUS_CAUCHY_WINDOW, MUS_POISSON_WINDOW,
@@ -323,10 +314,6 @@ typedef enum {MUS_RECTANGULAR_WINDOW, MUS_HANN_WINDOW, MUS_WELCH_WINDOW, MUS_PAR
 	      MUS_BLACKMAN5_WINDOW, MUS_BLACKMAN6_WINDOW, MUS_BLACKMAN7_WINDOW, MUS_BLACKMAN8_WINDOW, MUS_BLACKMAN9_WINDOW, MUS_BLACKMAN10_WINDOW,
 	      MUS_RV2_WINDOW, MUS_RV3_WINDOW, MUS_RV4_WINDOW, MUS_MLT_SINE_WINDOW,
 	      MUS_NUM_FFT_WINDOWS} mus_fft_window_t;
-
-#ifndef CLM_DISABLE_DEPRECATED
-  #define MUS_FFT_WINDOW_OK(Window) mus_fft_window_p(Window)
-#endif
 
 typedef enum {MUS_SPECTRUM_IN_DB, MUS_SPECTRUM_NORMALIZED, MUS_SPECTRUM_RAW} mus_spectrum_t;
 typedef enum {MUS_CHEBYSHEV_EITHER_KIND, MUS_CHEBYSHEV_FIRST_KIND, MUS_CHEBYSHEV_SECOND_KIND} mus_polynomial_t;
@@ -363,10 +350,6 @@ int mus_array_print_length(void);
 int mus_set_array_print_length(int val);
 Float mus_float_equal_fudge_factor(void);
 Float mus_set_float_equal_fudge_factor(Float val);
-
-#ifndef CLM_DISABLE_DEPRECATED
-  Float mus_sine_bank(Float *amps, Float *phases, int size);
-#endif
 
 Float mus_ring_modulate(Float s1, Float s2);
 Float mus_amplitude_modulate(Float s1, Float s2, Float s3);

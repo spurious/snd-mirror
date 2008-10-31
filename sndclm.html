@@ -7011,7 +7011,7 @@ In the next example we use all these special functions to resynthesize down an o
 	       (vct-add! (phase-vocoder-amps gen) (phase-vocoder-amp-increments gen))
 	       (vct-add! (phase-vocoder-phase-increments gen) (phase-vocoder-freqs gen))
 	       (vct-add! (phase-vocoder-phases gen) (phase-vocoder-phase-increments gen))
-	       (let ((sum 0.0) ; normally we'd call sine-bank here with amps and phases
+	       (let ((sum 0.0)
 		     (n (vct-length (phase-vocoder-amps gen))))
 		 (do ((k 0 (1+ k)))
 		     ((= k n))
