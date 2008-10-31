@@ -611,8 +611,6 @@ returning you to the true top-level."
 		      (main-output *output*)
 		      (main-reverb *reverb*))
 
-		  (display (format #f ";main-output safety: ~A~%" (mus-safety *output*)))
-		  
 		  (set! *output* thread-output)
 		  (if thread-reverb (set! *reverb* thread-reverb))
 		  
