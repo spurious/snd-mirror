@@ -7715,7 +7715,7 @@ n=5:
 899171, 40000 2000
 -->
 
-<p>Durn thing looks like a warped, upside-down bed of nails.
+<p>The thing looks like a warped, upside-down bed of nails.
 The upshot of all this is that there are apparently lots of
 equivalent minima; we're happy to find one that's reasonably close
 to the actual minimum.  On the other two questions: I see no pattern
@@ -7731,6 +7731,10 @@ as well.
 
 
 <!--
+TODO: add the even cases
+
+(if (not (provided? 'snd-rgb.scm)) (load "rgb.scm"))
+
 (define (draw-sqrt-label xg yg) ; 20 3
   (let* ((snd 0)
 	 (chn 0)
@@ -7741,12 +7745,13 @@ as well.
 	 (grf-height (- (list-ref axinf 11) y))
 
 	 (width 278)
-	 (height 95)
+	 (height 115)
 
 	 (red (make-color 1 0 0))
 	 (blue (make-color 0 0 1))
 	 (green (make-color 0 1 0))
 	 (black (make-color 0 0 0))
+	 (chocolate (make-color 0.82 0.41 0.12))
 	 )
 
     (set! (foreground-color snd chn) black)
@@ -7771,16 +7776,22 @@ as well.
       (set! (foreground-color snd chn) black)
       (draw-string "odd-numbered harmonics" (+ x1 50) (+ y1 yinit yoff ytext) snd chn)
 
-      (set! (foreground-color snd chn) blue)
+      (set! (foreground-color snd chn) chocolate)
       (fill-rectangle (+ x1 10) (+ y1 yinit (* 2 yoff)) 30 3 snd chn)
       (set! (foreground-color snd chn) black)
-      (draw-string "prime-numbered harmonics" (+ x1 50) (+ y1 yinit (* 2 yoff) ytext) snd chn)
+      (draw-string "even-numbered harmonics" (+ x1 50) (+ y1 yinit (* 2 yoff) ytext) snd chn)
 
-      (set! (foreground-color snd chn) green)
+      (set! (foreground-color snd chn) blue)
       (fill-rectangle (+ x1 10) (+ y1 yinit (* 3 yoff)) 30 3 snd chn)
       (set! (foreground-color snd chn) black)
-      (draw-string "n^.6" (+ x1 50) (+ y1 yinit (* 3 yoff) ytext) snd chn)
+      (draw-string "prime-numbered harmonics" (+ x1 50) (+ y1 yinit (* 3 yoff) ytext) snd chn)
+
+      (set! (foreground-color snd chn) green)
+      (fill-rectangle (+ x1 10) (+ y1 yinit (* 4 yoff)) 30 3 snd chn)
+      (set! (foreground-color snd chn) black)
+      (draw-string "n^.6" (+ x1 50) (+ y1 yinit (* 4 yoff) ytext) snd chn)
       )))
+
 
 (define (make-sqrt-png)
   (set! current-window-display-is-running #f)
@@ -7793,9 +7804,11 @@ as well.
 		       red
 		       (if (= chn 2)
 			   blue
-			   green)))))
+			   (if (= chn 3)
+			       green
+			       chocolate))))))
 
-  (with-sound (:channels 4 :clipped #f)
+  (with-sound (:channels 5 :clipped #f)
 
     (do ((i 1 (1+ i)))
 	((> i 128))
@@ -7841,19 +7854,38 @@ as well.
 							a-val)))
 					       primoid-min-peak-phases)))
 
+	    (let ((even-min-val (vector-find-if (lambda (val)
+						  (and val
+						       (vector? val)
+						       (= (vector-ref val 0) i)
+						       (let ((a-val (vector-ref val 1))
+							     (a-len (vector-length val)))
+							 (do ((k 2 (1+ k)))
+							     ((= k a-len))
+							   (if (and (number? (vector-ref val k))
+								    (< (vector-ref val k) a-val))
+							       (set! a-val (vector-ref val k))))
+							 a-val)))
+						neven-min-peak-phases)))
+	  
 	      (outa i (or n-min-val 0.0))
 	      (outb i (or odd-min-val 0.0))
 	      (outc i (or prime-min-val 0.0))
-	      (outd i (expt (exact->inexact i) .6)))))))
+	      (outd i (* 1.0 (expt (exact->inexact i) .6)))
+	      (out-any i (or even-min-val 0.0) 4)
+	      ))))))
 
   (set! (y-bounds) (list 0 21))
   (set! (channel-style) channels-superimposed)
   (set! (axis-color) (make-color 0 0 0))
   (set! (x-axis-style) x-axis-in-samples)
-  (do ((i 0 (1+ i))) ((= i 4)) (set! (x-axis-label 0 i) "n"))
+  (do ((i 0 (1+ i))) 
+      ((= i 5)) 
+    (set! (x-axis-label 0 i) "n")) ;(set! (x-axis-label 0 i) "n, black: all, red: odd, blue: prime, green: n^.6"))
   (set! (selected-graph-color) (make-color 1 1 1))
   (set! (axis-label-font) "9x15")
   )
+
 -->
 
 
@@ -7864,8 +7896,9 @@ as well.
 
 <p>
 And on a really random note, if the component amplitudes are scaled by (say) 0.5^k,
-you get a similar overall shape, but with the minimum points placed differently.  So, we can't
-simply re-use the equal amplitude phases.
+or if we substitute triangle waves for the sinusoids,
+the minima are different and fall at different locations.
+So the "obvious" simplifications fail.
 </p>
 
 <br><br>
@@ -7878,9 +7911,9 @@ simply re-use the equal amplitude phases.
 
 <!-- main-index |pianodoc:piano model -->
 
-<p>These files are translations of CLM's piano.ins, a <A HREF="http://ccrma.stanford.edu/overview/pastmodeling.html#SECTION000922600000000000000">piano physical model</A> by Scott van Duyne.  There is also a paper:
+<p>This instrument is a translation of CLM's piano.ins, a piano physical model by Scott van Duyne;
 Julius O. Smith and Scott A. Van Duyne, "Commuted piano synthesis," in Proc. Int. Computer Music Conf., Banff, Canada, September 1995, pp. 335 - 342.
-To paraphrase these sources, the model includes multiple coupled strings, a nonlinear hammer, and an arbitrarily large soundboard and enclosure.
+To paraphrase, the model includes multiple coupled strings, a nonlinear hammer, and an arbitrarily large soundboard and enclosure.
 The actual instrument name is 'p':
 </p>
 <pre>
@@ -7894,7 +7927,7 @@ The actual instrument name is 'p':
 					            ; 1.0 is about full resonance of dampers raised
 					            ; can be greater than 1.0
 </pre>
-<p>This instrument has lots of parameters, and I really don't know what they do.  The interested reader should
+<p>"p" has lots of parameters, and I really don't know what they do.  The interested reader should
 goof around with them.
 </p>
 <pre>
@@ -10675,6 +10708,7 @@ with-sound returns its :output argument.
 	  (scaled-to #f)                         ; if a number, scale the output to peak at that amp
 	  (play *clm-play*)                      ; if #t, play the sound automatically
 	  (to-snd *to-snd*)                      ; if #t, open the output file in Snd
+	  (output-safety *clm-output-safety*)    ; see with-threaded-sound below
 </pre>
 
 <p>The with-sound syntax may look sightly odd; we include the arguments in the first list, then
@@ -10776,6 +10810,7 @@ everything after that is evaluated as a note list.
     (define *output*                 #f)
     (define *clm-delete-reverb*      #f)
     (define *clm-threads*            4)
+    (define *clm-output-safety*      0)
 </pre>
 
 <p>You can set any of these to permanently change with-sound's defaults
@@ -11027,8 +11062,9 @@ end
 <table width=100% border=0><tr><td bgcolor="#EEFDEE" valign="middle"><h4>with-threaded-sound</h4></td></tr></table>
 </td></tr></table>
 
-<p><a name="withthreadedsound">with-threaded-sound</a> looks exactly like with-sound, but
-each note (each separate expression in the with-sound body) is handled by a separate thread.
+<p><a name="withthreadedsound">with-threaded-sound</a> looks (and, I hope, behaves) exactly like with-sound, but
+the notes in the with-sound body are handled by separate threads.  It is currently restricted to versions of Snd
+running s7.
 </p>
 
 <pre>
@@ -11037,14 +11073,38 @@ each note (each separate expression in the with-sound body) is handled by a sepa
       (fm-violin 0 1 660 .1))
 </pre>
 
-<p>If start a thread for each note, then join them all at once, the computation slows down a lot due to
-all the thread overhead, so *clm-threads* sets the number of threads running
+<p>If you start a thread for each note, then join them all at once, the computation slows down a lot due to
+the fact that all the threads are jostling each other trying to write output to the output file,
+so *clm-threads* sets the number of threads running
 through the note list at any one time.  It defaults to 4.  You can speed up
 with-threaded-sound if you set *clm-file-buffer-size* large enough to accommodate
 the entire output, then pass :output-safety 1 to with-threaded-sound.
 You may also have to set <a href="extsnd.html#musmaxmalloc">mus-max-malloc</a> to tell Snd that the huge allocation is intentional.
-Even so, my tests indicate that 
-it is sometimes faster to use with-sound; I need to figure out why...
+</p>
+
+<pre>
+(set! *clm-threads* 8)                     ; we're running on a machine with 8 "cores"
+(set! *clm-file-buffer-size* (* 30 65536)) ; big enough to hold all our output in RAM
+(set! *clm-output-safety* 1)               ; assure CLM that output buffers never get flushed
+(set! (optimization) 6)                    ; make sure "run" is turned on
+
+(with-threaded-sound (:statistics #t :output "thread.snd")
+  (pins 0 20 "oboe.snd" 1.0 1.5 10.0)      ; from clm-ins.scm
+  (pins 1 20 "oboe.snd" 1.0 1.5 10.0)
+  (pins 2 20 "oboe.snd" 1.0 1.5 10.0)
+  (pins 3 20 "oboe.snd" 1.0 1.5 10.0)
+  (pins 4 20 "oboe.snd" 1.0 1.5 10.0)
+  (pins 5 20 "oboe.snd" 1.0 1.5 10.0)
+  (pins 6 20 "oboe.snd" 1.0 1.5 10.0)
+  (pins 7 20 "oboe.snd" 1.0 1.5 10.0))
+</pre>
+
+<p>
+If the notelist is made up of very short notes (so that most the time is in the instrument setup, and
+not in the run macro), there's little gained by using threads; since the threads share one heap, 
+cell allocations become a bottleneck.  I have used with-threaded-sound on 2, 8, and 16 core machines.
+In the best cases, I see speed up factors of more or less n - 1 (14.8 times faster in the 16-core case, for example,
+where the process monitor program shows all 16 cores running at better than 95%).  Now for 32...
 </p>
 
 

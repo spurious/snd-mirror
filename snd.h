@@ -71,7 +71,7 @@
 
 #include "snd-strings.h"
 
-#define SND_DATE "31-Oct-08"
+#define SND_DATE "3-Nov-08"
 #ifndef SND_VERSION
 #define SND_VERSION "10.2"
 #endif

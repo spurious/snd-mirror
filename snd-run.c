@@ -93,15 +93,16 @@
  *    the __builtin_expect stuff?  Currently run-safety=1 adds about 25% to the
  *    compute time -- (calling-all-animals): 4.1 to 5.2.
  *
- * complex number support for run -- can't see any good reason for this but...
+ * complex number support for run
  *            3+4i real-part imag-part make-rectangular make-polar angle magnitude complex? real? declare case
  *            complex.h: ccos csin ctan cacos casin catan ccosh csinh ctanh cacosh casinh catanh cexp clog cabs cpow csqrt
  *                       carg[angle] creal cimag, complex double _Complex_I
  *            all arithmetic needs extra complex checks etc
- *            also each function needs a check in configure (see fth)
  *            would be nice to have gens accept/return complex values, but outa? Jn? [as arg=>In]
  *
  * would it simplify variable handling to store everything as xen_value?
+ *
+ * TODO: split this away from Snd and move to sndlib or possibly s7?
  */
 
 
