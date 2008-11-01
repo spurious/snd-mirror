@@ -2725,20 +2725,23 @@
 	 (lambda (return)
 	   (do ((i 1 (+ i 1))
 		(k 1 (* k 2)))
-	       ((= i 62) #f)
+	       ((= i 200) #f)
 	     (if (and (eqv? k (string->number (number->string k)))
-		      (eqv? (- k) (string->number (number->string (- k)))))
+		      (eqv? (- k) (string->number (number->string (- k))))
+		      (not (negative? k))) ; might hit sign bit
 		 (set! last-good k)
-		 (letrec ((search 
-			(lambda (lo hi)
-			  (if (= lo hi)
-			      hi
-			      (let ((mid (inexact->exact (floor (/ (+ hi lo) 2)))))
-				(if (and (eqv? mid (string->number (number->string mid)))
-					 (eqv? (- mid) (string->number (number->string (- mid)))))
-				    (search mid hi)
-				    (search lo mid)))))))
-		   (return (search last-good (* 2 last-good))))))))))
+		 (if (negative? k)
+		     (return (- (* 2 last-good) 1))
+		     (letrec ((search 
+			       (lambda (lo hi)
+				 (if (= lo hi)
+				     hi
+				     (let ((mid (inexact->exact (floor (/ (+ hi lo) 2)))))
+				       (if (and (eqv? mid (string->number (number->string mid)))
+						(eqv? (- mid) (string->number (number->string (- mid)))))
+					   (search mid hi)
+					   (search lo mid)))))))
+		       (return (search last-good (- (* 2 last-good) 1)))))))))))
   (if (integer? first-bad)
       (begin 
 	(display "string->number ints fail around ") 
@@ -2746,6 +2749,9 @@
 	(display " (2^")
 	(display (/ (log first-bad) (log 2.0)))
 	(display ")")
+	(newline))
+      (begin
+	(display "(string->number ints are good out to at least 2^200)")
 	(newline))))
 
 (let* ((last-good 0)
@@ -3247,6 +3253,13 @@
 (if (not (eqv? 1234000000.000000+1234000000.000000i (string->number (number->string 1234000000.000000+1234000000.000000i))))
      (begin (display "(string<->number 1234000000.000000+1234000000.000000i) -> ") (display (number->string 1234000000.000000+1234000000.000000i)) 
 	    (display " -> ") (display (string->number (number->string 1234000000.000000+1234000000.000000i))) (newline)))
+(if (not (eqv? 0.0000001 (string->number (number->string 0.0000001))))
+    (begin (display "(string<->number 0.0000001) -> ") (display (number->string 0.0000001)) 
+	   (display " -> ") (display (string->number (number->string 0.0000001))) (newline)))
+(if (not (eqv? 0.0000001001 (string->number (number->string 0.0000001001))))
+    (begin (display "(string<->number 0.0000001001) -> ") (display (number->string 0.0000001001)) 
+	   (display " -> ") (display (string->number (number->string 0.0000001001))) (newline)))
+
 ;;; --------------------------------------------------------------------------------
 
 (num-test (exact?) 'error)
@@ -27452,7 +27465,37 @@
 ))
 )
 
+(let ((bes-i0 (lambda (x)			;I0(x)
+		(if (< (abs x) 3.75)
+		    (let* ((y (expt (/ x 3.75) 2)))
+		      (+ 1.0
+			 (* y (+ 3.5156229
+				 (* y (+ 3.0899424
+					 (* y (+ 1.2067492
+						 (* y (+ 0.2659732
+							 (* y (+ 0.360768e-1
+								 (* y 0.45813e-2)))))))))))))
+		    (let* ((ax (abs x))
+			   (y (/ 3.75 ax)))
+		      (* (/ (exp ax) (sqrt ax)) 
+			 (+ 0.39894228
+			    (* y (+ 0.1328592e-1
+				    (* y (+ 0.225319e-2
+					    (* y (+ -0.157565e-2
+						    (* y (+ 0.916281e-2
+							    (* y (+ -0.2057706e-1
+								    (* y (+ 0.2635537e-1
+									    (* y (+ -0.1647633e-1
+										    (* y 0.392377e-2))))))))))))))))))))))
+  (num-test (bes-i0 1.0) 1.266065878)
+  (num-test (bes-i0 2.0) 2.279585303)
+  (num-test (bes-i0 5.0) 27.23987182)
+  (num-test (bes-i0 10.0) 2815.716628)
+  (num-test (bes-i0 50.0) 2.93255378e+20)
+  (num-test (bes-i0 100.0) 1.07375171e+42))
 
+(num-test (< 1/123400000000 .000000000001) #f)
+(num-test (> 1/123400000000 .000000000001) #t)
 
 (num-test (+ 1/2 0.5) 1.0)
 (num-test (- 1/2 0.5d0) 0.0d0)
@@ -27778,10 +27821,16 @@
 (test (string->number "-") #f )
 (test (string->number "+") #f )
 
-(test (= 1 #e1 1/1 #e1/1 #e1.0 #e1e0 #b1 #x1 #o1 #d1 #o001) #t)
+(test (string->number "#i1-1ei") #f)
+(test (string->number "#i-2e+i") #f)
+(test (string->number "#i1+i1i") #f)
+(test (string->number "#i1+1") #f)
+(test (string->number "#i2i.") #f)
+
+(test (= 1 #e1 1/1 #e1/1 #e1.0 #e1e0 #b1 #x1 #o1 #d1 #o001 #o+1 #o#e1 #e#x1) #t)
 (test (= 0.3 3e-1 3d-1 0.3e0 3e-1) #t)
 ;(test (= 0 -0 +0 0.0 -0.0 +0.0 0/1 -0/1 +0/24 0+0i 0-0i -0-0i +0-0i 0.0-0.0i -0.0+0i) #t)
-(test (= 0 +0 0.0 +0.0 0/1 +0/24 0+0i #e0) #t)
+(test (= 0 +0 0.0 +0.0 0/1 +0/24 0+0i #e0 #e#b0) #t)
 
 (test (+ 1 #t) 'error)
 (test (+ 1 #f) 'error)
@@ -27812,6 +27861,7 @@
 	'1e1+.1i '-1.-.10i '1e01+.0i '0e11+.0i '1.e1+.0i '1.00-.0i '-1e1-.0i '1.-.1e0i 
 	'1.+.001i '1e10-.1i '1e+0-.1i '-0e0-.1i
 	'-1.0e-1-1.0e-1i '-111e1-.1i '1.1-.1e11i '-1e-1-.11i '-1.1-.1e1i
+	'1e311 '1e-311 '2.1e40000
 	))
 
 (for-each
@@ -27891,6 +27941,7 @@
        '1/2e1-i '-1.0e-1-1-1.0e-1i '-1.0e-1-1.0e-1-1i
        '1.0e2/3 '-1e--1.e1i '-11e--1e1i '1e--1.1e1i '1.e-1-1.ei '-1.e--1.ei 
        '-1.1e1-e1i '-1.e1-e-1i '.1e1-e-11i 
+       '3.-3.
        )
  (list "1e" "--1" "++1" "+." "+.+" ".." ".-" "1e-" "+" "-" "-e1"
        "1/2/3" "1/2+/2" "/2" "2/" "1+2" "1/+i" "1/2e1" "1/2."
@@ -27911,6 +27962,7 @@
        "1/2e1-i" "-1.0e-1-1-1.0e-1i" "-1.0e-1-1.0e-1-1i" 
        "1.0e2/3" "-1e--1.e1i" "-11e--1e1i" "1e--1.1e1i" "1.e-1-1.ei" "-1.e--1.ei" 
        "-1.1e1-e1i" "-1.e1-e-1i" ".1e1-e-11i" 
+       "3.-3."
        ))
 
 
@@ -27966,10 +28018,10 @@
        (begin (display z) (display " is positive?") (newline)))
    (if (and (real? z) (negative? z))
        (begin (display z) (display " is negative?") (newline))))
- '(0 -0 +0 0.0 -0.0 +0.0 0/1 -0/1 +0/24 0+0i 0-0i -0-0i +0-0i 0.0-0.0i -0.0+0i))
+ '(0 -0 +0 0.0 -0.0 +0.0 0/1 -0/1 +0/24 0+0i 0-0i -0-0i +0-0i 0.0-0.0i -0.0+0i #b0 #o-0 #x000 #e0 #e0.0 #e#b0 #b#e0 #e0/1 #b+0))
 
 
-;;; these 2 are from guile
+;;; these 2 are (mostly) from guile
 (for-each 
  (lambda (x) 
    (if (string->number x)
@@ -27977,9 +28029,10 @@
 	 (display "(string->number ") (display x) (display ") returned ") (display (string->number x)) (newline))))
  '("" "q" "1q" "6+7iq" "8+9q" "10+11" "13+" "18@19q" "20@q" "23@"
    "+25iq" "26i" "-q" "-iq" "i" "5#.0" "8/" "10#11" ".#" "."
-   "3.4q" "15.16e17q" "18.19e+q" ".q" ".17#18" "10q" "#b2"
+   "3.4q" "15.16e17q" "18.19e+q" ".q" ".17#18" "10q" "#b2" "#b12" "#b-12"
    "#b3" "#b4" "#b5" "#b6" "#b7" "#b8" "#b9" "#ba" "#bb" "#bc"
-   "#bd" "#be" "#bf" "#q" "#b#b1" "#o#o1" "#d#d1" "#x#x1" "#e#e1"
+   "#bd" "#be" "#bf" "#q" "#b#b1" "#o#o1" "#d#d1" "#x#x1" "#e#e1" "#xag" "#x1x"
+   "#o8" "#o9" "1/#e1" "#o#" "#e#i1"
    "#i#i1" "12@12+0i"))
 
 (for-each 
@@ -27993,16 +28046,16 @@
 	      (display "(string->number ") (display x) (display ") returned ") (display (string->number x)) (display " but expected ") (display y) (newline)))))
     couple))
  `(;; Radix:
-   ("#b0" 0)  ("#b1" 1) ("#o0" 0)
-   ("#o1" 1)  ("#o2" 2) ("#o3" 3)
+   ("#b0" 0)  ("#b1" 1) ("#o0" 0) ("#b-1" -1) ("#b+1" 1)
+   ("#o1" 1)  ("#o2" 2) ("#o3" 3) ("#o-1" -1)
    ("#o4" 4)  ("#o5" 5) ("#o6" 6)
    ("#o7" 7)  ("#d0" 0) ("#d1" 1)
    ("#d2" 2)  ("#d3" 3) ("#d4" 4)
-   ("#d5" 5)  ("#d6" 6) ("#d7" 7)
+   ("#d5" 5)  ("#d6" 6) ("#d7" 7) ("#d-123" -123) ("#d+123" 123)
    ("#d8" 8)  ("#d9" 9) 
-   ("#xa" 10) ("#xb" 11) 
+   ("#xa" 10) ("#xb" 11) ("#x-1" -1) ("#x-a" -10)
    ("#xc" 12) ("#xd" 13) 
-   ("#xe" 14) ("#xf" 15) 
+   ("#xe" 14) ("#xf" 15) ("#x-abc" -2748)
    ("#b1010" 10)
    ("#o12345670" 2739128)
    ("#d1234567890" 1234567890)
@@ -28038,6 +28091,7 @@
    ("2+3i" ,(+ 2 (* 3 0+i))) ("4-5i" ,(- 4 (* 5 0+i)))
    ("1+i" 1+1i) ("1-i" 1-1i) 
    ;; ("+1i" 0+1i) ("-1i" 0-1i) ("+i" +1i) ("-i" -1i) ; I don't like these
+   ("#e1e1" 10) ("#i1e1+i" 10.0+1.0i)
    ))
 
 

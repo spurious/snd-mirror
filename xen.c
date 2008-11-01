@@ -344,6 +344,10 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str)
 }
 #endif
 
+#if !(defined(__GNUC__) && (!(defined(__cplusplus))))
+  XEN xen_guile_c_to_xen_string(const char *a) {return((a) ? scm_from_locale_string(a) : XEN_FALSE);}
+#endif
+
 #endif
 
 
@@ -1583,6 +1587,14 @@ void xen_gc_mark(XEN val)
 {
   s7_mark_object(val);
 }
+
+
+#if !(defined(__GNUC__) && (!(defined(__cplusplus))))
+XEN xen_s7_c_to_xen_string(const char *str)
+{
+  return((str) ? s7_make_string(s7, str) : XEN_FALSE);
+}
+#endif
 
 
 /* hooks */

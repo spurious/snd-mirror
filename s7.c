@@ -3214,16 +3214,25 @@ char *s7_number_to_string(s7_scheme *sc, s7_pointer obj, int radix)
     case NUM_REAL2:
     case NUM_REAL:
       {
-	int i, len;
+	int i, loc = -1, len;
 	snprintf(p, 256, "%.14g", s7_real(obj));
 	len = safe_strlen(p);
-	for (i = 0; i < len; i++)  /* make it explicitly a float! */
-	  if (p[i] == '.') break;
-	if (i == len)
+	for (i = 0; i < len; i++) /* does it have an exponent (if so, it's already a float) */
+	  if (p[i] == 'e')
+	    {
+	      loc = i;
+	      break;
+	    }
+	if (loc == -1)            /* no, so make it explicitly a float! */
 	  {
-	    p[i]='.';
-	    p[i+1]='0';
-	    p[i+2]='\0';
+	    for (i = 0; i < len; i++)  
+	      if (p[i] == '.') break;
+	    if (i == len)
+	      {
+		p[i]='.';
+		p[i+1]='0';
+		p[i+2]='\0';
+	      }
 	  }
       }
       break;
@@ -3339,11 +3348,22 @@ static bool is_one_of(const char *s, int c)
 #endif
 
 
-static s7_pointer make_sharp_const(s7_scheme *sc, char *name) 
+static bool is_radix_prefix(char prefix)
+{
+  return((prefix == 'b') ||
+	 (prefix == 'd') ||
+	 (prefix == 'x') ||
+	 (prefix == 'o'));
+}
+
+
+static s7_pointer make_sharp_constant(s7_scheme *sc, char *name) 
 {
   long x;
   long long int xx;
+  bool has_sign = false, to_inexact = false;
   char tmp[256];
+  int len;
   
   if (strcmp(name, "t") == 0)
     return(sc->T);
@@ -3351,61 +3371,131 @@ static s7_pointer make_sharp_const(s7_scheme *sc, char *name)
   if (strcmp(name, "f") == 0)
     return(sc->F);
   
+  len = safe_strlen(name);
+  if (len == 0)
+    return(sc->NIL);
+
+  if ((len < 2) &&
+      (is_radix_prefix(name[0])))
+    return(sc->NIL);
+      
   switch (name[0])
     {
-    case 'o':
-      /* #o (octal) */
-      if (!isdigit(*(name + 1)))
+    case 'o':    /* #o (octal) */
+      if ((name[1] == '#') &&
+	  ((len > 2) && ((name[2] == 'e') || (name[2] == 'i'))))
+	{
+	  to_inexact = (name[2] == 'i');
+	  name += 2;
+	}
+      has_sign = ((name[1] == '-') || (name[1] == '+'));
+
+      if (!isdigit(name[1 + ((has_sign) ? 1 : 0)]))
 	return(sc->NIL);
-      snprintf(tmp, sizeof(tmp), "0%s", name + 1);
+      snprintf(tmp, sizeof(tmp), "0%s", name + 1 + ((has_sign) ? 1 : 0));
+
       if (sscanf(tmp, "%lo", &x) < 1)
 	return(sc->NIL);
-      return(s7_make_integer(sc, x));
+      if (to_inexact)
+	return(s7_make_real(sc, (double)((name[1] == '-') ? (-x) : x)));
+      return(s7_make_integer(sc, ((name[1] == '-') ? (-x) : x)));
 
-    case 'd':
-      /* #d (decimal) */
-      if (sscanf(name + 1, "%lld", &xx) < 1)
-	return(sc->NIL);
-      return(s7_make_integer(sc, xx));
 
-    case 'x':
-      /* #x (hex) */
-      if (!isalnum(*(name + 1)))
+    case 'd':   /* #d (decimal) */
+      if ((name[1] == '#') &&
+	  ((name[2] == 'e') || (name[2] == 'i')))
+	{
+	  to_inexact = (name[2] == 'i');
+	  name += 2;
+	}
+      has_sign = ((name[1] == '-') || (name[1] == '+'));
+
+      if (sscanf(name + 1 + ((has_sign) ? 1 : 0), "%lld", &xx) < 1)
 	return(sc->NIL);
-      snprintf(tmp, sizeof(tmp), "0x%s", name + 1);
+      if (to_inexact)
+	return(s7_make_real(sc, (double)((name[1] == '-') ? (-xx) : xx)));
+      return(s7_make_integer(sc, (name[1] == '-') ? (-xx) : xx));
+
+
+    case 'x':   /* #x (hex) */
+      if ((name[1] == '#') &&
+	  ((name[2] == 'e') || (name[2] == 'i')))
+	{
+	  to_inexact = (name[2] == 'i');
+	  name += 2;
+	}
+      has_sign = ((name[1] == '-') || (name[1] == '+'));
+
+      if (!isalnum(name[1 + ((has_sign) ? 1 : 0)]))
+	return(sc->NIL);
+      snprintf(tmp, sizeof(tmp), "0x%s", name + 1 + ((has_sign) ? 1 : 0));
+
       if (sscanf(tmp, "%llx", &xx) < 1)
 	return(sc->NIL);
-      return(s7_make_integer(sc, xx));
+      if (to_inexact)
+	return(s7_make_real(sc, (double)((name[1] == '-') ? (-xx) : xx)));
+      return(s7_make_integer(sc, (name[1] == '-') ? (-xx) : xx));
 
-    case 'b':
-      /* #b (binary) */
-      if (!isdigit(*(name + 1)))
+
+    case 'b':   /* #b (binary) */
+      if ((name[1] == '#') &&
+	  ((name[2] == 'e') || (name[2] == 'i')))
+	{
+	  to_inexact = (name[2] == 'i');
+	  name += 2;
+	}
+      has_sign = ((name[1] == '-') || (name[1] == '+'));
+
+      if (!isdigit(name[1 + ((has_sign) ? 1 : 0)]))
 	return(sc->NIL);
-      x = binary_decode(name + 1);
+
+      x = binary_decode(name + 1 + ((has_sign) ? 1 : 0));
       if (x < 0)
 	return(sc->NIL);
-      return(s7_make_integer(sc, x));
+      if (to_inexact)
+	return(s7_make_real(sc, (double)((name[1] == '-') ? (-x) : x)));
+      return(s7_make_integer(sc, (name[1] == '-') ? (-x) : x));
 
-    case 'i':
-      /* #i<num> = ->inexact (see token, is_one_of for table of choices here) */
+
+    case 'i':   /* #i<num> = ->inexact (see token, is_one_of for table of choices here) */
       {
 	double xf;
+	if (name[1] == '#')
+	  {
+	    if (is_radix_prefix(name[2]))
+	      {
+		s7_pointer i_arg;
+		i_arg = make_sharp_constant(sc, (char *)(name + 2));
+		if (i_arg == sc->NIL)
+		  return(sc->NIL);
+		/* must be an integer (?) */
+		return(s7_make_real(sc, (double)s7_integer(i_arg)));
+	      }
+	    else return(sc->NIL);
+	  }
 	if (sscanf(name + 1, "%lf", &xf) < 1)
 	  return(sc->NIL);
 	return(s7_make_real(sc, xf));
       }
   
-    case 'e':
-      /* #e<num> = ->exact */
+
+    case 'e':   /* #e<num> = ->exact */
       {
 	double xf;
 	s7_Int numer = 0, denom = 1;
+	if (name[1] == '#')
+	  {
+	    if (is_radix_prefix(name[2]))
+	      return(make_sharp_constant(sc, (char *)(name + 2)));
+	    else return(sc->NIL);
+	  }
 	if (sscanf(name + 1, "%lf", &xf) < 1)
 	  return(sc->NIL);
 	if (c_rationalize(xf, DEFAULT_RATIONALIZE_ERROR, &numer, &denom))
 	  return(s7_make_ratio(sc, numer, denom));
 	return(s7_make_integer(sc, (s7_Int)xf));
       }
+
 
     case '\\':
       /* #\space or whatever (named character) */
@@ -3504,7 +3594,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix)
   /* a number starts with + - . or digit, but so does 1+ for example */
   
   if (c == '#')
-    return(make_sharp_const(sc, p)); /* make_sharp_const expects the '#' to be removed */
+    return(make_sharp_constant(sc, p)); /* make_sharp_constant expects the '#' to be removed */
   
   if ((c == '+') || (c == '-')) 
     { 
@@ -11603,7 +11693,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 #else
 	    expr = read_string_upto(sc, "();\t\n\r ", sc->input_port);
 #endif
-	    if ((sc->x = make_sharp_const(sc, expr)) == sc->NIL)
+	    if ((sc->x = make_sharp_constant(sc, expr)) == sc->NIL)
 	      return(eval_error(sc, "undefined sharp expression", s7_make_string(sc, expr)));
 	    else 
 	      {

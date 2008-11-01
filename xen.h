@@ -11,11 +11,12 @@
  */
 
 #define XEN_MAJOR_VERSION 2
-#define XEN_MINOR_VERSION 20
-#define XEN_VERSION "2.20"
+#define XEN_MINOR_VERSION 21
+#define XEN_VERSION "2.21"
 
 /* HISTORY:
  *
+ *  1-Nov-08:  changed s7 and Guile C_TO_XEN_STRING slightly.
  *  16-Oct-08: removed Gauche support.
  *  10-Aug-08: S7, a TinyScheme derivative.
  *             changed XEN_NUMERATOR and XEN_DENOMINATOR to return off_t not XEN.
@@ -393,7 +394,13 @@
 #if HAVE_SCM_C_MAKE_RECTANGULAR
   #define XEN_STRING_P(Arg)           scm_is_string(Arg)
   #define XEN_TO_C_STRING(Str)        xen_guile_to_c_string_with_eventual_free(Str)
-  #define C_TO_XEN_STRING(a)          ((a) ? scm_from_locale_string(a) : XEN_FALSE)
+
+  #if defined(__GNUC__) && (!(defined(__cplusplus)))
+    #define C_TO_XEN_STRING(Str)      ({ const char *a = Str; (a) ? scm_from_locale_string(a) : XEN_FALSE; })
+  #else
+    #define C_TO_XEN_STRING(a)          xen_guile_c_to_xen_string(a)
+  #endif
+
   #define C_TO_XEN_STRINGN(Str, Len)  scm_from_locale_stringn(Str, Len)
 #else
   #define XEN_STRING_P(Arg)           (SCM_STRINGP(Arg))
@@ -734,8 +741,12 @@ int xen_to_c_int(XEN a);
 bool xen_integer_p(XEN a);
 XEN xen_guile_add_to_load_path(char *path);
 #if XEN_DEBUGGING && HAVE_SCM_C_DEFINE_GSUBR
-XEN xen_guile_dbg_new_procedure(const char *name, XEN (*func)(), int req, int opt, int rst);
+  XEN xen_guile_dbg_new_procedure(const char *name, XEN (*func)(), int req, int opt, int rst);
 #endif
+#if !(defined(__GNUC__) && (!(defined(__cplusplus))))
+  XEN xen_guile_c_to_xen_string(const char *a);
+#endif
+  
 
 
 #if HAVE_SCM_C_MAKE_RECTANGULAR
@@ -1611,8 +1622,12 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 #define XEN_STRING_P(Arg)                          s7_is_string(Arg)
 #define XEN_NAME_AS_C_STRING_TO_VALUE(Arg)         s7_name_to_value(s7, Arg)
 #define XEN_TO_C_STRING(Str)                       s7_string(Str)
-#define C_TO_XEN_STRING(Arg)                       ((Arg) ? s7_make_string(s7, Arg) : XEN_FALSE)
-#define C_TO_XEN_STRINGN(Str, Len)                 s7_make_counted_string(s7, Str, Len) /* Len + 1?? */
+#if defined(__GNUC__) && (!(defined(__cplusplus)))
+  #define C_TO_XEN_STRING(Str)                     ({ const char *a = Str; (a) ? s7_make_string(s7, a) : XEN_FALSE; })
+#else
+  #define C_TO_XEN_STRING(Arg)                     xen_s7_c_to_xen_string(Arg)
+#endif
+#define C_TO_XEN_STRINGN(Str, Len)                 s7_make_counted_string(s7, Str, Len)
 
 #define XEN_ZERO                                   s7_make_integer(s7, 0)
 #define XEN_INTEGER_P(Arg)                         s7_is_integer(Arg)
@@ -2020,6 +2035,9 @@ const char *xen_s7_object_help(XEN sym);
 double xen_to_c_double(XEN a);
 double xen_to_c_double_or_else(XEN a, double b);
 void xen_s7_set_repl_prompt(const char *new_prompt);
+#if !(defined(__GNUC__) && (!(defined(__cplusplus))))
+  XEN xen_s7_c_to_xen_string(const char *str);
+#endif
 
 #ifdef __cplusplus
 }
