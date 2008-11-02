@@ -354,7 +354,7 @@ typedef struct s7_cell {
 
 struct s7_scheme {  
   int *free_heap;
-  int free_heap_top, free_heap_size;
+  int free_heap_top;
   
   s7_cell **heap;
   int heap_size;
@@ -909,70 +909,65 @@ void s7_gc_unprotect_at(s7_scheme *sc, int loc)
 
 static void finalize_s7_cell(s7_scheme *sc, s7_pointer a) 
 {
-  if (typeflag(a) & T_FINALIZABLE)
+  switch (type(a))
     {
-      switch (type(a))
+    case T_STRING:
+      free(string_value(a)); /* calloc'd in make-*-string */
+      break;
+      
+    case T_INPUT_PORT:
+      if (port_needs_close(a))
+	s7_close_input_port(sc, a);
+      if ((is_file_port(a)) && 
+	  (port_filename(a)))
 	{
-	case T_STRING:
-	  free(string_value(a)); /* calloc'd in make-*-string */
-	  break;
-
-	case T_INPUT_PORT:
-	  if (port_needs_close(a))
-	    s7_close_input_port(sc, a);
-	  if ((is_file_port(a)) && 
-	      (port_filename(a)))
-	    {
-	      free(port_filename(a));
-	      port_filename(a) = NULL;
-	    }
-	  free(a->object.port);
-	  break;
-	  
-	case T_OUTPUT_PORT:
-	  s7_close_output_port(sc, a);
-	  if ((is_file_port(a)) && 
-	      (port_filename(a)))
-	    {
-	      free(port_filename(a));
-	      port_filename(a) = NULL;
-	    }
-	  free(a->object.port);
-	  break;
-	  
-	case T_S7_OBJECT:
-	  s7_free_object(a);
-	  break;
-	  
-	case T_S7_FUNCTION:
-	  s7_free_function(a);
-	  break;
-	  
-	case T_VECTOR:
-	case T_HASH_TABLE:
-	  if (vector_length(a) > 0)
-	    free(a->object.vector.elements);
-	  break;
-	  
-	case T_CONTINUATION:
-	  if (a->object.cc)
-	    free(a->object.cc);
-	  break;
-	  
-	case T_CATCH:
-	  free(a->object.catcher);
-	  break;
-	  
-	case T_DYNAMIC_WIND:
-	  free(a->object.winder);
-	  break;
-	  
-	default:
-	  break;
+	  free(port_filename(a));
+	  port_filename(a) = NULL;
 	}
+      free(a->object.port);
+      break;
+      
+    case T_OUTPUT_PORT:
+      s7_close_output_port(sc, a);
+      if ((is_file_port(a)) && 
+	  (port_filename(a)))
+	{
+	  free(port_filename(a));
+	  port_filename(a) = NULL;
+	}
+      free(a->object.port);
+      break;
+      
+    case T_S7_OBJECT:
+      s7_free_object(a);
+      break;
+      
+    case T_S7_FUNCTION:
+      s7_free_function(a);
+      break;
+      
+    case T_VECTOR:
+    case T_HASH_TABLE:
+      if (vector_length(a) > 0)
+	free(a->object.vector.elements);
+      break;
+      
+    case T_CONTINUATION:
+      if (a->object.cc)
+	free(a->object.cc);
+      break;
+      
+    case T_CATCH:
+      free(a->object.catcher);
+      break;
+      
+    case T_DYNAMIC_WIND:
+      free(a->object.winder);
+      break;
+      
+    default:
+      break;
     }
-
-  memset((void *)a, 0, sizeof(s7_cell));
 }
 
 
@@ -1036,27 +1031,6 @@ void s7_mark_object(s7_pointer p)
     s7_mark_object(cdr(p));
 }
 
-
-static void free_s7_cell(s7_scheme *sc, int loc)
-{
-  /* free_heap_top points past end 
-   *   free -> top++
-   *   alloc <- --top
-   */
-  if (sc->free_heap_top >= sc->free_heap_size)
-    {
-      int k, old_size;
-      old_size = sc->free_heap_size;
-      sc->free_heap_size *= 2;
-      sc->free_heap = (int *)realloc(sc->free_heap, sc->free_heap_size * sizeof(int));
-      for (k = old_size; k < sc->free_heap_size; k++)
-	sc->free_heap[k] = -1;
-    }
-  
-  sc->free_heap[sc->free_heap_top++] = loc;
-}
-
-
 static s7_pointer alloc_s7_cell(s7_scheme *sc)
 {
   if (sc->free_heap_top <= 0)
@@ -1069,7 +1043,7 @@ static s7_pointer alloc_s7_cell(s7_scheme *sc)
 static int gc(s7_scheme *sc, const char *function, int line)
 {
   s7_pointer p;
-  int i, freed_heap = 0;
+  int i, old_free_heap_top;
   
   if ((*(sc->gc_verbose)) &&
       (sc->output_port == sc->NIL))
@@ -1101,30 +1075,33 @@ static int gc(s7_scheme *sc, const char *function, int line)
     }
   
   /* free up all other objects */
+  old_free_heap_top = sc->free_heap_top;
+
   for (i = 0; i < sc->heap_size; i++)
     {
       p = sc->heap[i];
-      if (typeflag(p) == 0) continue; /* an already-free object */
-      
-      if (is_marked(p)) 
-	clear_mark(p);
-      else 
+      if (typeflag(p) != 0) /* an already-free object? */
 	{
-	  if (!is_constant(p))
+	  if (is_marked(p)) 
+	    clear_mark(p);
+	  else 
 	    {
-	      /* reclaim s7_cell */
-	      finalize_s7_cell(sc, p); 
-	      free_s7_cell(sc, i);
-	      freed_heap++;
+	      if (!is_constant(p))
+		{
+		  if (typeflag(p) & T_FINALIZABLE)
+		    finalize_s7_cell(sc, p); 
+		  memset((void *)p, 0, sizeof(s7_cell));
+		  sc->free_heap[sc->free_heap_top++] = i;
+		}
 	    }
 	}
     }
   
   if ((*(sc->gc_verbose)) &&
       (sc->output_port == sc->NIL))
-    fprintf(stderr, "done: %d heap were recovered, total heap: %d\n", freed_heap, sc->heap_size);
+    fprintf(stderr, "done: %d heap were recovered, total heap: %d\n", sc->free_heap_top - old_free_heap_top, sc->heap_size);
   
-  return(freed_heap);
+  return(sc->free_heap_top - old_free_heap_top); /* needed by cell allocator to decide when to increase heap size */
 }
 
 
@@ -1165,10 +1142,12 @@ static s7_pointer new_cell_1(s7_scheme *sc, const char *function, int line)
 	  old_size = sc->heap_size;
 	  sc->heap_size *= 2;
 	  sc->heap = (s7_cell **)realloc(sc->heap, sc->heap_size * sizeof(s7_cell *));
+	  sc->free_heap = (int *)realloc(sc->free_heap, sc->heap_size * sizeof(int));
+
 	  for (k = old_size; k < sc->heap_size; k++)
 	    {
 	      sc->heap[k] = (s7_cell *)calloc(1, sizeof(s7_cell));
-	      free_s7_cell(sc, k);
+	      sc->free_heap[sc->free_heap_top++] = k;
 	    }
 	}
       p = alloc_s7_cell(sc);
@@ -3357,6 +3336,41 @@ static bool is_radix_prefix(char prefix)
 }
 
 
+static int char_to_num(const char c)
+{
+  if (isdigit(c))
+    return(c - '0');
+  return((tolower(c) - 'a') + 10);
+}
+
+
+static bool is_digit_in_base(const char c, int radix)
+{
+  switch (c)
+    {
+    case '0': case '1': return(true);
+    case '2': return(radix > 2);
+    case '3': return(radix > 3);
+    case '4': return(radix > 4);
+    case '5': return(radix > 5);
+    case '6': return(radix > 6);
+    case '7': return(radix > 7);
+    case '8': return(radix > 8);
+    case '9': return(radix > 9);
+    case 'a': case 'A': return(radix > 10);
+    case 'b': case 'B': return(radix > 11);
+    case 'c': case 'C': return(radix > 12);
+    case 'd': case 'D': return(radix > 13);
+    case 'e': case 'E': return(radix > 14);
+    case 'f': case 'F': return(radix > 15);
+    }
+  return(false);
+}
+
+
+#define ISDIGIT(Chr, Rad) ((Rad == 10) ? isdigit(Chr) : is_digit_in_base(Chr, Rad))
+
+
 static s7_pointer make_sharp_constant(s7_scheme *sc, char *name) 
 {
   long x;
@@ -3390,7 +3404,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name)
 	}
       has_sign = ((name[1] == '-') || (name[1] == '+'));
 
-      if (!isdigit(name[1 + ((has_sign) ? 1 : 0)]))
+      if (!ISDIGIT(name[1 + ((has_sign) ? 1 : 0)], 8))
 	return(sc->NIL);
       snprintf(tmp, sizeof(tmp), "0%s", name + 1 + ((has_sign) ? 1 : 0));
 
@@ -3426,7 +3440,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name)
 	}
       has_sign = ((name[1] == '-') || (name[1] == '+'));
 
-      if (!isalnum(name[1 + ((has_sign) ? 1 : 0)]))
+      if (!ISDIGIT(name[1 + ((has_sign) ? 1 : 0)], 16))
 	return(sc->NIL);
       snprintf(tmp, sizeof(tmp), "0x%s", name + 1 + ((has_sign) ? 1 : 0));
 
@@ -3446,7 +3460,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name)
 	}
       has_sign = ((name[1] == '-') || (name[1] == '+'));
 
-      if (!isdigit(name[1 + ((has_sign) ? 1 : 0)]))
+      if (!ISDIGIT(name[1 + ((has_sign) ? 1 : 0)], 2))
 	return(sc->NIL);
 
       x = binary_decode(name + 1 + ((has_sign) ? 1 : 0));
@@ -3549,34 +3563,67 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name)
 }
 
 
-static int char_to_num(const char c)
-{
-  if (isdigit(c))
-    return(c - '0');
-  return((tolower(c) - 'a') + 10);
-}
-
-
-static s7_pointer make_int_with_radix(s7_scheme *sc, const char *str,  int radix)
+static s7_Int string_to_int_with_radix(const char *str,  int radix)
 {
   s7_Int x = 0, rad;
-  int i, len, lim = 0, sign = 1;
-  
+  int i, lim = 0, len, sign = 1;
+
   len = safe_strlen(str);
-  if (str[0] == '+')
-    lim = 1;
-  else
+  for (i = 0; i < len; i++)
+    if ((str[i] == '/') ||
+	(str[i] == '.') ||
+	((str[i] == 'e') && (radix < 15)))    /* '.' and 'e' for ATOF */
+      {
+	len = i;
+	break;
+      }
+
+  if ((str[0] == '+') || (str[0] == '-'))
     {
-      if (str[0] == '-')
-	{
-	  lim = 1;
-	  sign = -1;
-	}
+      lim = 1;
+      if (str[0] == '-') sign = -1;
     }
+  
   for (i = len - 1, rad = 1; i >= lim; i--, rad *= radix)
     x += (char_to_num(str[i]) * rad);
   
-  return(s7_make_integer(sc, sign * x));
+  return(sign * x);
+}
+
+
+static double string_to_double_with_radix(const char *str, int radix)
+{
+  int i, len, iloc = 0, int_part = 0, floc = -1, frac_part = 0, eloc = -1, exponent = 0, sign = 1;
+
+  /* there's an ambiguity in number notation here if we allow "1e1" or "1.e1" in base 16 (or 15) -- is e a digit or an exponent marker? */
+  /*   but 1e+1, for example disambiguates it -- kind of messy! */
+
+  if ((str[0] == '+') || (str[0] == '-'))
+    {
+      iloc = 1;
+      if (str[0] == '-') sign = -1;
+    }
+
+  len = safe_strlen(str);
+  for (i = iloc; i < len; i++)
+    if (str[i] == '.')
+      floc = i;
+    else
+      if ((str[i] == 'e') && 
+	  ((radix < 15) ||
+	   (!isdigit(str[i + 1]))))
+	eloc = i;
+
+  if ((floc == -1) || (floc > iloc))
+    int_part = string_to_int_with_radix((char *)(str + iloc), radix);
+  if ((floc != -1) &&          /* has a "." */
+      (floc < len - 1) &&      /* doesn't end in "." */
+      (floc != eloc - 1))      /* "1.e1" for example */
+    frac_part = string_to_int_with_radix((char *)(str + floc + 1), radix);
+  if (eloc != -1)
+    exponent = string_to_int_with_radix((char *)(str + eloc + 1), radix);
+
+  return(sign * (int_part + ((double)frac_part / pow(radix, (eloc == -1) ? (len - floc - 1) : (eloc - floc - 1)))) * pow(radix, exponent));
 }
 
 
@@ -3588,6 +3635,9 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix)
   bool has_dec_point1 = false, has_i = false, has_dec_point2 = false; 
   int has_plus_or_minus = 0;
   
+  #define ATOLL(x) ((radix == 10) ? atoll(x) : string_to_int_with_radix(x, radix))
+  #define ATOF(x) ((radix == 10) ? atof(x) : string_to_double_with_radix(x, radix))
+
   p = q;
   c = *p++; 
   
@@ -3604,7 +3654,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix)
 	  has_dec_point1 = true; 
 	  c = *p++; 
 	} 
-      if (!isdigit(c))   /* +a */
+      if (!ISDIGIT(c, radix))
 	return(s7_make_symbol(sc, string_downcase(q)));  /* if CASE_SENSITIVE, string_downcase is a no-op */
     } 
   else 
@@ -3613,19 +3663,19 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix)
 	{ 
 	  has_dec_point1 = true; 
 	  c = *p++; 
-	  if (!isdigit(c))  /* .a */
+	  if (!ISDIGIT(c, radix))
 	    return(s7_make_symbol(sc, string_downcase(q))); 
 	} 
       else 
 	{
-	  if (!isdigit(c)) /* a */
+	  if (!ISDIGIT(c, radix))
 	    return(s7_make_symbol(sc, string_downcase(q))); 
 	}
     }
   
   for ( ; (c = *p) != 0; ++p) 
     {
-      if (!isdigit(c)) 
+      if (!ISDIGIT(c, radix)) 
 	{
 	  if (c =='.') 
 	    {
@@ -3639,8 +3689,8 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix)
 		  (has_plus_or_minus != 0)) /* 1+1.. or 1+1/2. */
 		return(s7_make_symbol(sc, string_downcase(q))); 
 
-	      if ((!isdigit(p[1])) &&
-		  (!isdigit(p[-1]))) 
+	      if ((!ISDIGIT(p[1], radix)) &&
+		  (!ISDIGIT(p[-1], radix))) 
 		return(s7_make_symbol(sc, string_downcase(q))); 
 	      
 	      if (has_plus_or_minus == 0)
@@ -3668,7 +3718,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix)
 		      (has_plus_or_minus != 0)) /* 1+1.0ee */
 		    return(s7_make_symbol(sc, string_downcase(q))); 
 
-		  if ((!isdigit(p[-1])) &&
+		  if ((!ISDIGIT(p[-1], radix)) &&
 		      (p[-1] != '.'))
 		    return(s7_make_symbol(sc, string_downcase(q))); 
 
@@ -3684,7 +3734,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix)
 		    }
 		  p++;
 		  if ((*p == '-') || (*p == '+')) p++;
-		  if (isdigit(*p))
+		  if (ISDIGIT(*p, radix))
 		    continue;
 		}
 	      else
@@ -3718,8 +3768,8 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix)
 			    slash1 = (char *)(p + 1);
 			  else slash2 = (char *)(p + 1);
 
-			  if ((!isdigit(p[1])) ||
-			      (!isdigit(p[-1])))
+			  if ((!ISDIGIT(p[1], radix)) ||
+			      (!ISDIGIT(p[-1], radix)))
 			    return(s7_make_symbol(sc, string_downcase(q)));
 
 			  continue;
@@ -3764,23 +3814,23 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix)
       
       if ((has_dec_point1) ||
 	  (ex1))
-	rl = atof(q);
+	rl = ATOF(q);
       else
 	{
 	  if (slash1)
-	    rl = (double)atoll(q) / (double)atoll(slash1);
-	  else rl = (double)atoll(q);
+	    rl = (double)ATOLL(q) / (double)ATOLL(slash1);
+	  else rl = (double)ATOLL(q);
 	}
       if (rl == -0.0) rl = 0.0;
 
       if ((has_dec_point2) ||
 	  (ex2))
-	im = atof(plus);
+	im = ATOF(plus);
       else
 	{
 	  if (slash2)
-	    im = (double)atoll(plus) / (double)atoll(slash2);
-	  else im = (double)atoll(plus);
+	    im = (double)ATOLL(plus) / (double)ATOLL(slash2);
+	  else im = (double)ATOLL(plus);
 	}
       if ((has_plus_or_minus == -1) && 
 	  (im != 0.0))
@@ -3796,15 +3846,13 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix)
 	return(s7_make_symbol(sc, string_downcase(q)));
 
       if (ex1) (*ex1) = 'e';
-      return(s7_make_real(sc, atof(q)));
+      return(s7_make_real(sc, ATOF(q)));
     }
   
   if (slash1)
-    return(s7_make_ratio(sc, atoll(q), atoll(slash1)));
+    return(s7_make_ratio(sc, ATOLL(q), ATOLL(slash1)));
   
-  if (radix == 10)
-    return(s7_make_integer(sc, atoll(q)));
-  return(make_int_with_radix(sc, q, radix));
+  return(s7_make_integer(sc, ATOLL(q)));
 }
 
 
@@ -4912,24 +4960,12 @@ static s7_pointer g_char_downcase(s7_scheme *sc, s7_pointer args)
 }
 
 
-static int c_is_alpha(int c) 
-{ 
-  return(isascii(c) && isalpha(c));
-}
-
-
 static s7_pointer g_is_char_alphabetic(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_char_alphabetic "(char-alphabetic? c) returns #t if the character c is alphabetic"
   if (!s7_is_character(car(args)))
     return(s7_wrong_type_arg_error(sc, "char-alphabetic?", 1, car(args), "a character"));
-  return(make_boolean(sc, c_is_alpha(character(car(args)))));
-}
-
-
-static int c_is_digit(int c) 
-{ 
-  return(isascii(c) && isdigit(c));
+  return(make_boolean(sc, isalpha(character(car(args)))));
 }
 
 
@@ -4938,13 +4974,7 @@ static s7_pointer g_is_char_numeric(s7_scheme *sc, s7_pointer args)
   #define H_is_char_numeric "(char-numeric? c) returns #t if the character c is a digit"
   if (!s7_is_character(car(args)))
     return(s7_wrong_type_arg_error(sc, "char-numeric?", 1, car(args), "a character"));
-  return(make_boolean(sc, c_is_digit(character(car(args)))));
-}
-
-
-static int c_is_space(int c) 
-{ 
-  return(isascii(c) && isspace(c));
+  return(make_boolean(sc, isdigit(character(car(args)))));
 }
 
 
@@ -4953,13 +4983,7 @@ static s7_pointer g_is_char_whitespace(s7_scheme *sc, s7_pointer args)
   #define H_is_char_whitespace "(char-whitespace? c) returns #t if the character c is non-printing character"
   if (!s7_is_character(car(args)))
     return(s7_wrong_type_arg_error(sc, "char-whitespace?", 1, car(args), "a character"));
-  return(make_boolean(sc, c_is_space(character(car(args)))));
-}
-
-
-static int c_is_upper(int c) 
-{ 
-  return(isascii(c) && isupper(c));
+  return(make_boolean(sc, isspace(character(car(args)))));
 }
 
 
@@ -4968,13 +4992,7 @@ static s7_pointer g_is_char_upper_case(s7_scheme *sc, s7_pointer args)
   #define H_is_char_upper_case "(char-upper-case? c) returns #t if the character c is in upper case"
   if (!s7_is_character(car(args)))
     return(s7_wrong_type_arg_error(sc, "char-upper-case?", 1, car(args), "a character"));
-  return(make_boolean(sc, c_is_upper(character(car(args)))));
-}
-
-
-static int c_is_lower(int c) 
-{ 
-  return(isascii(c) && islower(c));
+  return(make_boolean(sc, isupper(character(car(args)))));
 }
 
 
@@ -4983,7 +5001,7 @@ static s7_pointer g_is_char_lower_case(s7_scheme *sc, s7_pointer args)
   #define H_is_char_lower_case "(char-lower-case? c) returns #t if the character c is in lower case"
   if (!s7_is_character(car(args)))
     return(s7_wrong_type_arg_error(sc, "char-lower-case?", 1, car(args), "a character"));
-  return(make_boolean(sc, c_is_lower(character(car(args)))));
+  return(make_boolean(sc, islower(character(car(args)))));
 }
 
 
@@ -12385,14 +12403,13 @@ s7_scheme *s7_init(void)
   sc->heap_size = INITIAL_HEAP_SIZE;
   sc->heap = (s7_pointer *)calloc(sc->heap_size, sizeof(s7_pointer));
   
-  sc->free_heap_size = INITIAL_HEAP_SIZE;
-  sc->free_heap = (int *)calloc(sc->free_heap_size, sizeof(int));
-  sc->free_heap_top = 0;
+  sc->free_heap = (int *)calloc(sc->heap_size, sizeof(int));
+  sc->free_heap_top = INITIAL_HEAP_SIZE;
   {
     for (i = 0; i < INITIAL_HEAP_SIZE; i++)
       {
 	sc->heap[i] = (s7_cell *)calloc(1, sizeof(s7_cell));
-	free_s7_cell(sc, i);
+	sc->free_heap[i] = i;
       }
   }
   /* fprintf(stderr, "cell: %d\n", sizeof(s7_cell)); */ /* 24 */

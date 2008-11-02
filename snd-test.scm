@@ -2287,7 +2287,7 @@
 		       'show-axes 'show-backtrace 'show-controls 'show-grid 'show-indices
 		       'show-listener 'show-marks 'show-mix-waveforms 'show-no-axes 'show-selection-transform
 		       'show-sonogram-cursor 'show-transform-peaks 'show-widget 'show-x-axis 'show-x-axis-unlabelled
-		       'show-y-zero 'sinc-width 'sine-bank 'sine-summation 'sine-summation? 'nrxysin 'nrxysin? 'nrxycos 'nrxycos?
+		       'show-y-zero 'sinc-width 'sine-summation 'sine-summation? 'nrxysin 'nrxysin? 'nrxycos 'nrxycos?
 		       'smooth-channel 'smooth-selection 'smooth-sound 'snd->sample 'snd->sample?
 		       'snd-error 'snd-error-hook 'snd-gcs 'snd-help 'snd-font 'snd-color
 		       'snd-print 'snd-simulate-keystroke 'snd-spectrum 'snd-tempnam 'snd-url
@@ -49525,17 +49525,18 @@ EDITS: 1
 	      (not (vequal v1 (vct 0.0 0.0 0.0 0.0))))
 	  (snd-display ";run vct-convolve!: ~A ~A" v0 v1)))
     
-    (let ((v (make-vct 1))
-	  (amps (list->vct '(0.5 0.25 1.0)))
-	  (phases (list->vct '(1.0 0.5 2.0))))
-      (vct-map! v (lambda () (sine-bank amps phases)))
-      (if (fneq (vct-ref v 0) 1.44989) (snd-display ";run sine-bank: ~A?" (vct-ref v 0))))
-    
-    (let ((v (make-vct 1))
-	  (amps (list->vct '(0.5 0.25 1.0)))
-	  (phases (list->vct '(1.0 0.5 2.0))))
-      (vct-map! v (lambda () (sine-bank amps phases 3)))
-      (if (fneq (vct-ref v 0) 1.44989) (snd-display ";run sine-bank (1): ~A?" (vct-ref v 0))))
+    (if all-args
+	(let ((v (make-vct 1))
+	      (amps (list->vct '(0.5 0.25 1.0)))
+	      (phases (list->vct '(1.0 0.5 2.0))))
+	  (vct-map! v (lambda () (sine-bank amps phases)))
+	  (if (fneq (vct-ref v 0) 1.44989) (snd-display ";run sine-bank: ~A?" (vct-ref v 0)))))
+    (if all-args
+	(let ((v (make-vct 1))
+	      (amps (list->vct '(0.5 0.25 1.0)))
+	      (phases (list->vct '(1.0 0.5 2.0))))
+	  (vct-map! v (lambda () (sine-bank amps phases 3)))
+	  (if (fneq (vct-ref v 0) 1.44989) (snd-display ";run sine-bank (1): ~A?" (vct-ref v 0)))))
     
     (let ((fr0 (make-frame 2 1.0 1.0))
 	  (fr1 (make-frame 2 0.0 0.0))
@@ -53481,7 +53482,7 @@ EDITS: 1
 		    (simple-tri 1.75 .2 .1)
 		    (simple-pul 2.0 .2 .1)
 		    (simple-sqr 2.25 .2 .1)
-		    (simple-sib 2.5 .2 440.0 .1)
+		    (if all-args (simple-sib 2.5 .2 440.0 .1))
 		    (simple-oz 2.75 .2 440.0 .1)
 		    (simple-op 3.0 .2 440.0 .1)
 		    (simple-tz 3.25 .2 440.0 .1)
@@ -53566,10 +53567,10 @@ EDITS: 1
 		    (sample-cnv1 3.0 .45 1 1 "oboe.snd")
 		    (sample-pvoc1 3.5 .45 1 512 "oboe.snd")
 		    (sample-pvoc2 4.0 .45 1 512 "oboe.snd")
-		    (sample-pvoc3 4.5 .001 1 512 "oboe.snd")
+		    (if all-args (sample-pvoc3 4.5 .001 1 512 "oboe.snd"))
 		    (sample-mxf 5 .2 440 .1)
 		    (sample-osc 5.25 .2 440 .1)
-		    (sample-ardcl 5.5 .2 440 .1)
+		    (if all-args (sample-ardcl 5.5 .2 440 .1))
 		    (sample-strs 5.75 .2 440 .1)
 		    (sample-flt 6 .2 440 .1)
 		    (sample-arrintp 6.25 .2 440 .1)
@@ -53580,10 +53581,11 @@ EDITS: 1
 		    )
 	(set! (run-safety) 0)
   
-	(let* ((outfile (with-sound () (pvoc-a 0 2.3 1 256 "oboe.snd") (pvoc-e 0 2.3 -1 256 "oboe.snd")))
-	       (mx (mus-sound-maxamp outfile)))
-	  (if (fneq (cadr mx) 0.0)
-	      (snd-display ";pvoc a-e: ~A" mx)))
+	(if all-args
+	    (let* ((outfile (with-sound () (pvoc-a 0 2.3 1 256 "oboe.snd") (pvoc-e 0 2.3 -1 256 "oboe.snd")))
+		   (mx (mus-sound-maxamp outfile)))
+	      (if (fneq (cadr mx) 0.0)
+		  (snd-display ";pvoc a-e: ~A" mx))))
 	
 	(let* ((file (with-sound (:clipped #f :data-format mus-bfloat :header-type mus-next)
 				 (fm-violin 0 .1 440 pi)))
@@ -67973,7 +67975,7 @@ EDITS: 1
 		     phase-vocoder-phase-increments phase-vocoder-phases mus-generator?
 		     
 		     read-sample reset-listener-cursor goto-listener-end sample-reader-home selection-chans selection-srate snd-gcs snd-font snd-color
-		     snd-warning sine-bank channel-data x-axis-label variable-graph? y-axis-label
+		     snd-warning channel-data x-axis-label variable-graph? y-axis-label
 		     snd-url snd-urls free-player
 		     quit-button-color help-button-color reset-button-color doit-button-color doit-again-button-color
 		     
@@ -68433,7 +68435,7 @@ EDITS: 1
 			  notch one-pole one-zero oscil partials->polynomial partials->wave make-polyshape make-polywave
 			  phase-partials->wave phase-vocoder polynomial pulse-train rand rand-interp rectangular->polar
 			  ring-modulate sample->frame sawtooth-wave sine-summation nrxysin nrxycos square-wave src sum-of-cosines ncos sum-of-sines nsin
-			  sine-bank table-lookup tap triangle-wave two-pole two-zero wave-train ssb-am make-ssb-am))
+			  table-lookup tap triangle-wave two-pole two-zero wave-train ssb-am make-ssb-am))
 	  
 	  (for-each (lambda (n)
 		      (let ((tag
