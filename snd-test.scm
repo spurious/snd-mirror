@@ -16886,7 +16886,7 @@ EDITS: 2
       (let ((val (oscil-bank amps oscs #f)))
 	(if (fneq val 0.0) (snd-display ";oscil-bank: ~A 0.0?" val))
 	(set! (mus-phase (vector-ref oscs 0)) (/ pi 2))
-	(set! val (oscil-bank amps oscs))
+	(set! val (oscil-bank amps oscs #f))
 	(if (fneq val 1.0) (snd-display ";oscil-bank: ~A 1.0?" val))))
     
     (let ((rdat (make-vct 16))
@@ -52072,7 +52072,7 @@ EDITS: 1
       (list amps oscs)))
   
   (define (cndf gen)
-    (oscil-bank (car gen) (cadr gen)))
+    (oscil-bank (car gen) (cadr gen) #f))
   
   (define (cndf-ins beg dur amp freq n)
     (let* ((start (inexact->exact (floor (* beg (mus-srate)))))
@@ -53460,14 +53460,19 @@ EDITS: 1
 	(zip-sound 1 1 "fyow.snd" "now.snd" '(0 0 1 1) .05)
 	(zip-sound 2 3 "mb.snd" "fyow.snd" '(0 0 1.0 0 1.5 1.0 3.0 1.0) .025)
 	
-	(let* ((ind (open-sound "oboe.snd"))
-	       (pv (make-pvocoder 256 4 64))
-	       (rd (make-sample-reader 0)))
-	  (map-channel (lambda (y) (pvocoder pv rd)))
-	  (clm-reverb-sound .1 jc-reverb)
-	  (close-sound ind))
+	(if all-args
+	    (let* ((ind (open-sound "oboe.snd"))
+		   (pv (make-pvocoder 256 4 64))
+		   (rd (make-sample-reader 0)))
+	      (map-channel (lambda (y) (pvocoder pv rd)))
+	      (clm-reverb-sound .1 jc-reverb)
+	      (close-sound ind)))
 	
-;	(make-birds)
+	(let ((old-play *clm-play*))
+	  (set! *clm-play* #f)
+	  (make-birds)
+	  (set! *clm-play* old-play))
+
 	(for-each close-sound (sounds))
 	
 	(set! (run-safety) 1)

@@ -285,19 +285,15 @@
 				   (if inp2 (vct-ref inp2 i) 0.0))))))
     sum))
 
-(define* (oscil-bank amps1 gens :optional in1 in2)
-  "(oscil-bank amps1 gens :optional in1 in2) sums a vector of oscils"
-  (let ((len (vector-length gens))
-	(sum 0.0)
-	(amps (if (vector? amps1) (vector->vct amps1) amps1))
-	(inp1 (if (vector? in1) (vector->vct in1) (or in1 #f)))
-	(inp2 (if (vector? in2) (vector->vct in2) (or in2 #f))))
+(define (oscil-bank amps1 gens fms)
+  "(oscil-bank amps1 gens fms) sums a vector of oscils"
+  (let* ((len (vector-length gens))
+	 (sum 0.0)
+	 (amps (if (vector? amps1) (vector->vct amps1) amps1))
+	 (inp1 (if (vector? fms) (vector->vct fms) (or fms (make-vct len 0.0)))))
     (do ((i 0 (1+ i)))
 	((= i len))
-      (set! sum (+ sum (* (vct-ref amps i)
-			  (oscil (vector-ref gens i) 
-				 (if inp1 (vct-ref inp1 i) 0.0)
-				 (if inp2 (vct-ref inp2 i) 0.0))))))
+      (set! sum (+ sum (* (vct-ref amps i) (oscil (vector-ref gens i) (vct-ref inp1 i))))))
     sum))
 
 (define* (old-formant-bank amps gens :optional (in1 0.0))

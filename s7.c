@@ -353,11 +353,8 @@ typedef struct s7_cell {
 
 
 struct s7_scheme {  
-  int *free_heap;
-  int free_heap_top;
-  
-  s7_cell **heap;
-  int heap_size;
+  s7_cell **heap, **free_heap;
+  int heap_size, free_heap_top;
   
   s7_pointer args;                    /* arguments of current function */
   s7_pointer envir;                   /* current environment */
@@ -731,7 +728,7 @@ static s7_pointer s7_division_by_zero_error(s7_scheme *sc, const char *caller, s
 static s7_pointer s7_file_error(s7_scheme *sc, const char *caller, const char *descr, const char *name);
 static void s7_free_function(s7_pointer a);
 static int remember_file_name(const char *file);
-
+static s7_pointer safe_reverse_in_place(s7_scheme *sc, s7_pointer list);
 
 /* -------------------------------- constants -------------------------------- */
 
@@ -1031,12 +1028,13 @@ void s7_mark_object(s7_pointer p)
     s7_mark_object(cdr(p));
 }
 
+
 static s7_pointer alloc_s7_cell(s7_scheme *sc)
 {
-  if (sc->free_heap_top <= 0)
+  if (sc->free_heap_top <= 0) /* TODO: can this be folded into the return via a guard null? */
     return(NULL);
   
-  return(sc->heap[sc->free_heap[--(sc->free_heap_top)]]);
+  return(sc->free_heap[--(sc->free_heap_top)]);
 }
 
 
@@ -1091,7 +1089,7 @@ static int gc(s7_scheme *sc, const char *function, int line)
 		  if (typeflag(p) & T_FINALIZABLE)
 		    finalize_s7_cell(sc, p); 
 		  memset((void *)p, 0, sizeof(s7_cell));
-		  sc->free_heap[sc->free_heap_top++] = i;
+		  sc->free_heap[sc->free_heap_top++] = p;
 		}
 	    }
 	}
@@ -1136,18 +1134,18 @@ static s7_pointer new_cell_1(s7_scheme *sc, const char *function, int line)
 	freed_heap = gc(sc, function, line);
       /* when threads, the gc function can be interrupted at any point and resumed later -- mark bits need to be preserved during this interruption */
       
-      if (freed_heap < 1000)
+      if (freed_heap < sc->heap_size / 10) /* was 1000 */
 	{
 	  /* alloc more heap */
 	  old_size = sc->heap_size;
 	  sc->heap_size *= 2;
 	  sc->heap = (s7_cell **)realloc(sc->heap, sc->heap_size * sizeof(s7_cell *));
-	  sc->free_heap = (int *)realloc(sc->free_heap, sc->heap_size * sizeof(int));
+	  sc->free_heap = (s7_cell **)realloc(sc->free_heap, sc->heap_size * sizeof(s7_cell *));
 
 	  for (k = old_size; k < sc->heap_size; k++)
 	    {
 	      sc->heap[k] = (s7_cell *)calloc(1, sizeof(s7_cell));
-	      sc->free_heap[sc->free_heap_top++] = k;
+	      sc->free_heap[sc->free_heap_top++] = sc->heap[k];
 	    }
 	}
       p = alloc_s7_cell(sc);
@@ -5725,7 +5723,7 @@ static s7_pointer g_string_to_list(s7_scheme *sc, s7_pointer args)
   for (i = 0; i < len; i++)
     lst = s7_cons(sc, s7_make_character(sc, str[i]), lst);
   (*(sc->gc_off)) = false;
-  return(s7_reverse_in_place(sc, sc->NIL, lst));
+  return(safe_reverse_in_place(sc, lst));
 }
 
 
@@ -7758,6 +7756,23 @@ s7_pointer s7_reverse_in_place(s7_scheme *sc, s7_pointer term, s7_pointer list)
       if ((!s7_is_pair(q)) &&
 	  (q != sc->NIL))
 	return(sc->NIL); /* improper list? */
+      cdr(p) = result;
+      result = p;
+      p = q;
+    }
+  return(result);
+}
+
+
+static s7_pointer safe_reverse_in_place(s7_scheme *sc, s7_pointer list) 
+{
+  s7_pointer p = list, result, q;
+  result = sc->NIL;
+
+  while (p != sc->NIL)
+    {
+      q = cdr(p);
+      /*   also if (list == sc->NIL) || (cdr(list) == sc->NIL) return(list) */
       cdr(p) = result;
       result = p;
       p = q;
@@ -10021,6 +10036,14 @@ static s7_pointer g_catch(s7_scheme *sc, s7_pointer args)
   return(sc->F);
 }
 
+#if 0
+s7_pointer s7_catch(s7_scheme *sc, s7_pointer tag, s7_pointer thunk, s7_pointer error_handler)
+{
+  /* turn args -> list, call g_catch, and wait for return? (see s7_call perhaps or eval_c_string)
+   */
+}
+#endif
+
 
 static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bool exit_eval)
 {
@@ -10302,8 +10325,8 @@ static s7_pointer g_for_each(s7_scheme *sc, s7_pointer args)
       /* car(sc->y) = cdar(sc->y); */
       sc->x = s7_cons(sc, cdar(sc->y), sc->x);
     }
-  sc->args = s7_reverse_in_place(sc, sc->NIL, sc->args);
-  sc->x = s7_reverse_in_place(sc, sc->NIL, sc->x);
+  sc->args = safe_reverse_in_place(sc, sc->args);
+  sc->x = safe_reverse_in_place(sc, sc->x);
   
   /* if lists have no cdr (just 1 set of args), apply the proc to them */
   if (car(sc->x) == sc->NIL)
@@ -10343,8 +10366,8 @@ static s7_pointer g_map(s7_scheme *sc, s7_pointer args)
       /* car(sc->y) = cdar(sc->y); */ /* this clobbers the original lists -- we need to copy */
       sc->x = s7_cons(sc, cdar(sc->y), sc->x);
     }
-  sc->args = s7_reverse_in_place(sc, sc->NIL, sc->args);
-  sc->x = s7_reverse_in_place(sc, sc->NIL, sc->x);
+  sc->args = safe_reverse_in_place(sc, sc->args);
+  sc->x = safe_reverse_in_place(sc, sc->x);
   
   /* set up for repeated call walking down the lists of args, values list is cdr, current args is car */
   push_stack(sc, OP_MAP, s7_cons(sc, sc->x, sc->NIL), sc->code);
@@ -10520,7 +10543,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->args = s7_cons(sc, caar(sc->y), sc->args);
 	  car(sc->y) = cdar(sc->y);
 	}
-      sc->args = s7_reverse_in_place(sc, sc->NIL, sc->args);
+      sc->args = safe_reverse_in_place(sc, sc->args);
       if (car(sc->x) == sc->NIL)
 	goto APPLY;
       
@@ -10539,7 +10562,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       if (caar(sc->x) == sc->NIL)
 	{
-	  pop_stack(sc, s7_reverse_in_place(sc, sc->NIL, cdr(sc->x)));
+	  pop_stack(sc, safe_reverse_in_place(sc, cdr(sc->x)));
 	  goto START;
 	}
       
@@ -10549,7 +10572,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->args = s7_cons(sc, caar(sc->y), sc->args);
 	  car(sc->y) = cdar(sc->y);
 	}
-      sc->args = s7_reverse_in_place(sc, sc->NIL, sc->args);
+      sc->args = safe_reverse_in_place(sc, sc->args);
       
       push_stack(sc, OP_MAP, sc->x, sc->code);
       goto APPLY;
@@ -10605,7 +10628,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       
       /* all done */
-      sc->args = s7_reverse_in_place(sc, sc->NIL, sc->args);
+      sc->args = safe_reverse_in_place(sc, sc->args);
       sc->code = car(sc->args); /* saved at the start */
       sc->args = cdr(sc->args); /* init values */
       sc->envir = new_frame_in_env(sc, sc->envir); 
@@ -10616,7 +10639,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       /* now we've set up the environment, next set up for loop */
       
-      sc->y = s7_reverse_in_place(sc, sc->NIL, sc->value);
+      sc->y = safe_reverse_in_place(sc, sc->value);
       sc->args = sc->NIL;
       for (sc->x = car(sc->code); sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y))       
 	if (cddar(sc->x) != sc->NIL) /* no incr expr, so ignore it henceforth */
@@ -10625,7 +10648,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    sc->value = s7_cons(sc, car(sc->y), sc->value);
 	    sc->args = s7_cons(sc, sc->value, sc->args);
 	  }
-      sc->value = s7_reverse_in_place(sc, sc->NIL, sc->args);
+      sc->value = safe_reverse_in_place(sc, sc->args);
       sc->args = s7_cons(sc, sc->value, cadr(sc->code));
       sc->code = cddr(sc->code);
       
@@ -10678,7 +10701,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (sc->args == sc->NIL)
 	{
 	  sc->y = cdr(sc->code);
-	  sc->code = s7_reverse_in_place(sc, sc->NIL, car(sc->code));
+	  sc->code = safe_reverse_in_place(sc, car(sc->code));
 	  for (sc->x = sc->code; sc->y != sc->NIL && sc->x != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y))
 	    set_symbol_value(caar(sc->y), car(sc->x));
 
@@ -10761,7 +10784,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      } 
 	    else 
 	      {
-		/* first, eval top element and eval arguments */
 		push_stack(sc, OP_EVAL_ARGS0, sc->NIL, sc->code);
 		sc->code = car(sc->code);
 		goto EVAL;
@@ -10788,50 +10810,35 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       else 
 	{
 	  sc->code = cdr(sc->code);
-	  
+
 	  /* here args is nil, value is the operator (car of list), code is the rest -- the args.
 	   *   e0args can be called within e1args loop if it's a nested expression:
 	   * (+ 1 2 (* 2 3)):
-	   e0args: (), value: +, code: (1 2 (* 2 3))
-	   e1args: (+), value: +, code: (1 2 (* 2 3))
-	   e1args: (1 +), value: +, code: (2 (* 2 3))
-	   e1args: (2 1 +), value: +, code: ((* 2 3))
-	   e0args: (), value: *, code: (2 3)
-	   e1args: (*), value: *, code: (2 3)
-	   e1args: (2 *), value: *, code: (3)
-	   e1args: (3 2 *), value: *, code: ()
-	   <end -> apply the * op>
-	   e1args: (6 2 1 +), value: +, code: ()
-	  */
+	   *   e0args: (), value: +, code: (1 2 (* 2 3))
+	   *   e1args: (+), value: +, code: (1 2 (* 2 3))
+	   *   e1args: (1 +), value: +, code: (2 (* 2 3))
+	   *   e1args: (2 1 +), value: +, code: ((* 2 3))
+	   *   e0args: (), value: *, code: (2 3)
+	   *   e1args: (*), value: *, code: (2 3)
+	   *   e1args: (2 *), value: *, code: (3)
+	   *   e1args: (3 2 *), value: *, code: ()
+	   *   <end -> apply the * op>
+	   *   e1args: (6 2 1 +), value: +, code: ()
+	   */
 	}
       
       
     case OP_EVAL_ARGS1:
-      sc->args = s7_cons(sc, sc->value, sc->args); 
-      /*   I've failed twice to find a way to reduce the consing */
-      /*  the no cons method:
-       * E0ARGS:	    sc->args = sc->code;
-       * E1ARGS:          car(sc->code) = sc->value;
-       *                  sc->code = cdr(sc->code);
-       *                  if (s7_is_pair(sc->code))
-       *                    {
-       *                      push_stack(sc, OP_EVAL_ARGS1, sc->args, sc->code);
-       *                      sc->code = car(sc->code);
-       *                      sc->args = sc->NIL;
-       *                      goto EVAL;
-       *                    }
-       *                  else
-       *                    {
-       *                      sc->code = car(sc->args);
-       *                      sc->args = cdr(sc->args);
-       *                      -- drop into apply --
-       *                    }
-       * but even with copy-tree of the procedure-source (below), this fails in odd cases --
-       * somehow the current arg list infects the original procedure-source.
+      sc->args = s7_cons(sc, sc->value, sc->args); /* 1st time, value = op, args=nil (only e0 entry is from op_eval above), code is full list (at e0) */
+
+      /* TODO: would a list constant (as new_type) help here? 
+       *    or x = s7_cons(sc, sc->value, sc->NIL)
+       *       cdr(last-arg) = x (if last-arg nil, last-arg = x)
+       *       new stack op OP_EVAL_ARGS2 to recover the start of the args list
        */
       
       if (s7_is_pair(sc->code)) 
-	{ /* continue */
+	{ /* evaluate current arg */
 	  push_stack(sc, OP_EVAL_ARGS1, sc->args, cdr(sc->code));
 	  
 	  sc->code = car(sc->code);
@@ -10839,8 +10846,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto EVAL;
 	} 
       else 
-	{  /* end */
-	  sc->args = s7_reverse_in_place(sc, sc->NIL, sc->args); 
+	{
+	  sc->args = safe_reverse_in_place(sc, sc->args); 
 	  sc->code = car(sc->args);
 	  set_pair_line_number(sc->code, sc->saved_line_number);
 	  sc->args = cdr(sc->args);
@@ -11125,7 +11132,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	} 
       else 
 	{ 
-	  sc->args = s7_reverse_in_place(sc, sc->NIL, sc->args);
+	  sc->args = safe_reverse_in_place(sc, sc->args);
 	  sc->code = car(sc->args);
 	  sc->args = cdr(sc->args);
 	}
@@ -11145,7 +11152,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  for (sc->x = cadr(sc->code), sc->args = sc->NIL; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
 	    sc->args = s7_cons(sc, caar(sc->x), sc->args);
 	  
-	  sc->x = s7_make_closure(sc, s7_cons(sc, s7_reverse_in_place(sc, sc->NIL, sc->args), cddr(sc->code)), sc->envir); 
+	  sc->x = s7_make_closure(sc, s7_cons(sc, safe_reverse_in_place(sc, sc->args), cddr(sc->code)), sc->envir); 
 	  add_to_current_environment(sc, car(sc->code), sc->x); 
 	  sc->code = cddr(sc->code);
 	  sc->args = sc->NIL;
@@ -11224,7 +11231,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	} 
       else 
 	{  /* end */
-	  sc->args = s7_reverse_in_place(sc, sc->NIL, sc->args); 
+	  sc->args = safe_reverse_in_place(sc, sc->args); 
 	  sc->code = car(sc->args);
 	  sc->args = cdr(sc->args);
 	}
@@ -11738,7 +11745,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if ((c != '\n') && (c != EOF))
 	    backchar(sc, c, sc->input_port);
 	  
-	  pop_stack(sc, remember_line(sc, s7_reverse_in_place(sc, sc->NIL, sc->args)));
+	  pop_stack(sc, remember_line(sc, safe_reverse_in_place(sc, sc->args)));
 	  goto START;
 	} 
       else 
@@ -12403,13 +12410,13 @@ s7_scheme *s7_init(void)
   sc->heap_size = INITIAL_HEAP_SIZE;
   sc->heap = (s7_pointer *)calloc(sc->heap_size, sizeof(s7_pointer));
   
-  sc->free_heap = (int *)calloc(sc->heap_size, sizeof(int));
+  sc->free_heap = (s7_cell **)calloc(sc->heap_size, sizeof(s7_cell *));
   sc->free_heap_top = INITIAL_HEAP_SIZE;
   {
     for (i = 0; i < INITIAL_HEAP_SIZE; i++)
       {
 	sc->heap[i] = (s7_cell *)calloc(1, sizeof(s7_cell));
-	sc->free_heap[i] = i;
+	sc->free_heap[i] = sc->heap[i];
       }
   }
   /* fprintf(stderr, "cell: %d\n", sizeof(s7_cell)); */ /* 24 */
@@ -12903,3 +12910,19 @@ s7_scheme *s7_init(void)
   
   return(sc);
 }
+
+/* TODO: find out where the extra < can't handle: #<unspecified> (()) or #f's are coming from and why test 23 is so slow */
+/* TODO: can any part of the error handling be delayed? */
+/* TODO: help hook change str lost change? (also these from test22:
+ *    ;(let* ((file "oboe.snd") (str (string-append file ": chans: " (number->string (mus-sound-chans file)) ", srate: " (number->string (mus-sound-srate file)) ", " (mus-header-type-name (mus-sound-header-type file)) ", " (mus-data-format-name (mus-sound-data-format file)) ", len: " (number->string (/ (mus-sound-samples file) (* (mus-sound-chans file) (mus-sound-srate file))))))) (or (string=? str "oboe.snd: chans: 1, srate: 22050, Sun/Next, big endian short (16 bits), len: 2.30512475967407") (string=? str "oboe.snd: chans: 1, srate: 22050, Sun/Next, big endian short (16 bits), len: 2.30512471655329"))) -> #f (#t)
+ *    ;(radians->hz 0.0002849517040886) -> 1.9999999261438 (1.0)
+ *    ;(lambda (y) (radians->hz y)) -> 1.9999999261438 (1.0)
+ *    ;(seconds->samples 1.0) -> 44100 (22050)
+ *    ;(seconds->samples 1) -> 44100 (22050)
+ *    ;(mus-phase g-gen) -> 0.06268937721449 (0.125)
+ *    ;(g-gen) -> 0.062648324178744 (0.125)
+ *    ;(g-gen 1.0) -> 0.076861083293317 (0.153)
+ *    ;(g-gen 0.0 0.0) -> 0.88717412871253 (0.925)
+ *    ;(g-gen 0.0 1.0) -> 0.86045425244533 (0.802)
+ *    ;(mus-srate) -> 44100.0 (22050.0)
+ */

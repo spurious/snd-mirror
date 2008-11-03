@@ -6826,7 +6826,7 @@ static io_error_t save_edits_1(snd_info *sp, bool ask)
   if (err == IO_NO_ERROR)
     {
       if (sp->edited_region) 
-	save_region_backpointer(sp);
+	save_region_backpointer(sp); /* TODO: why isn't region edit save reflected in other sounds? */
     }
   return(err);
 }
