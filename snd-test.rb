@@ -3603,6 +3603,7 @@ def test104
    "no audio read permission",
    "can't close file",
    "arg out of range",
+   "wrong type arg",
    "midi open error",
    "midi read error",
    "midi write error",

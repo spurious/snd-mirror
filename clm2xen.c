@@ -7812,6 +7812,31 @@ static XEN g_mus_frandom(XEN val) {return(C_TO_XEN_DOUBLE(mus_frandom(XEN_TO_C_D
 static XEN g_mus_irandom(XEN val) {return(C_TO_XEN_INT(mus_irandom(XEN_TO_C_INT(val))));}
 
 
+
+#if HAVE_S7
+#if HAVE_GETTIMEOFDAY && HAVE_DIFFTIME && HAVE_SYS_TIME_H
+
+#include <sys/time.h>
+static struct timeval overall_start_time;
+
+static XEN g_get_internal_real_time(void) 
+{
+  struct timezone z0;
+  struct timeval t0;
+  double secs;
+  gettimeofday(&t0, &z0);
+  secs = difftime(t0.tv_sec, overall_start_time.tv_sec);
+  return(C_TO_XEN_DOUBLE(secs + 0.000001 * (t0.tv_usec - overall_start_time.tv_usec)));
+}
+#else
+static XEN g_get_internal_real_time(void) {return(C_TO_XEN_DOUBLE(0.0));}
+#endif
+
+XEN_NARGIFY_0(g_get_internal_real_time_w, g_get_internal_real_time)
+#endif
+
+
+
 /* ---------------- export ---------------- */
 
 #ifdef XEN_ARGIFY_1
@@ -8937,6 +8962,13 @@ void mus_xen_init(void)
   XEN_DEFINE_VARIABLE(S_output, clm_output, XEN_FALSE);
   XEN_DEFINE_VARIABLE(S_reverb, clm_reverb, XEN_FALSE);
 
+#if HAVE_S7
+#if HAVE_GETTIMEOFDAY && HAVE_DIFFTIME && HAVE_SYS_TIME_H
+  XEN_DEFINE_PROCEDURE("get-internal-real-time", g_get_internal_real_time_w, 0, 0, 0, "get system time");
+  XEN_DEFINE_CONSTANT("internal-time-units-per-second", 1, "clock speed");
+#endif
+#endif
+
   XEN_YES_WE_HAVE("clm");
   {
     char *clm_version;
@@ -8944,6 +8976,15 @@ void mus_xen_init(void)
     XEN_YES_WE_HAVE(clm_version);
     FREE(clm_version);
   }
+
+#if HAVE_S7
+#if HAVE_GETTIMEOFDAY && HAVE_DIFFTIME && HAVE_SYS_TIME_H
+  {
+    struct timezone z0;
+    gettimeofday(&overall_start_time, &z0);
+  }
+#endif
+#endif
 
   /* is this a good idea?  I think it means these names are automatically imported into
    *   subsequently defined modules, which seems like a bad idea.  Perhaps we should

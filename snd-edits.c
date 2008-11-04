@@ -3159,7 +3159,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 		  else
 		    {
 		      fprintf(fd, "%s " OFF_TD " " OFF_TD " sfile %d",
-			      XEN_AS_STRING(ptree_code(cp->ptrees[ed->ptree_location])),
+			      XEN_AS_STRING(mus_run_ptree_code(cp->ptrees[ed->ptree_location])),
 			      ed->beg,
 			      ed->len,
 			      cp->chan);

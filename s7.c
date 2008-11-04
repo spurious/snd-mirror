@@ -903,6 +903,24 @@ void s7_gc_unprotect_at(s7_scheme *sc, int loc)
 }
 
 
+s7_pointer s7_gc_protected_at(s7_scheme *sc, int loc)
+{
+  s7_pointer obj;
+
+#if HAVE_PTHREADS
+  pthread_mutex_lock(&protected_objects_lock);
+#endif
+
+  obj = vector_element(sc->protected_objects, loc);
+
+#if HAVE_PTHREADS
+  pthread_mutex_unlock(&protected_objects_lock);
+#endif
+
+  return(obj);
+}
+
+
 static void finalize_s7_cell(s7_scheme *sc, s7_pointer a) 
 {
   switch (type(a))

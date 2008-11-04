@@ -101,8 +101,6 @@
  *            would be nice to have gens accept/return complex values, but outa? Jn? [as arg=>In]
  *
  * would it simplify variable handling to store everything as xen_value?
- *
- * TODO: split this away from Snd and move to sndlib or possibly s7?
  */
 
 
@@ -11764,8 +11762,18 @@ static XEN wrap_generator(ptree *pt, int addr)
 	  (gen == XEN_TO_MUS_ANY(val)))
 	return(val);
     }
+#else
+#if HAVE_S7
+  if (pt->clm_locs[addr] >= 0)
+    {
+      XEN val;
+      val = s7_gc_protected_at(s7, pt->clm_locs[addr]);
+      if ((mus_xen_p(val)) &&
+	  (gen == XEN_TO_MUS_ANY(val)))
+	return(val);
+    }
 #endif
-  /* TODO: snd_protected_at replacement */
+#endif
 
   /* desperate fallback */
   {
@@ -13248,8 +13256,7 @@ Float mus_run_evaluate_ptreec(struct ptree *pt, Float arg, XEN object, bool dir,
 #if USE_SND
 	  snd_error("ptree-channel init-func returned a %s which we can't handle", type_name(type));
 #else
-	  /* TODO: better tag here */
-	  mus_error(MUS_ARG_OUT_OF_RANGE, "ptree-channel init-func returned a %s which we can't handle", type_name(type));
+	  mus_error(MUS_WRONG_TYPE_ARG, "ptree-channel init-func returned a %s which we can't handle", type_name(type));
 #endif
 	  return(0.0);
 	  break;
@@ -14041,6 +14048,19 @@ static XEN g_set_optimization(XEN val)
   set_optimization(mus_iclamp(0, XEN_TO_C_INT(val), MAX_OPTIMIZATION));
   return(C_TO_XEN_INT(optimization(ss)));
 }
+
+#else
+
+static XEN g_optimization(void) {return(C_TO_XEN_INT(current_optimization));}
+
+static XEN g_set_optimization(XEN val) 
+{
+  #define H_optimization "(" S_optimization "): the current 'run' optimization level (default 0 = off, max is 6)"
+  XEN_ASSERT_TYPE(XEN_INTEGER_P(val), val, XEN_ONLY_ARG, S_setB S_optimization, "an integer");
+  current_optimization = mus_iclamp(0, XEN_TO_C_INT(val), MAX_OPTIMIZATION);
+  return(C_TO_XEN_INT(current_optimization));
+}
+
 #endif
 
 
@@ -14067,10 +14087,8 @@ static XEN g_snd_declare(XEN args)
 
 
 #ifdef XEN_ARGIFY_1
-#if USE_SND
 XEN_NARGIFY_0(g_optimization_w, g_optimization)
 XEN_NARGIFY_1(g_set_optimization_w, g_set_optimization)
-#endif
 XEN_NARGIFY_0(g_run_safety_w, g_run_safety)
 XEN_NARGIFY_1(g_set_run_safety_w, g_set_run_safety)
 XEN_NARGIFY_1(g_snd_declare_w, g_snd_declare)
@@ -14081,10 +14099,8 @@ XEN_NARGIFY_4(g_add_clm_field_w, g_add_clm_field)
 XEN_ARGIFY_4(g_run_eval_w, g_run_eval)
 #endif
 #else
-#if USE_SND
 #define g_optimization_w g_optimization
 #define g_set_optimization_w g_set_optimization
-#endif
 #define g_run_safety_w g_run_safety
 #define g_set_run_safety_w g_set_run_safety
 #define g_snd_declare_w g_snd_declare
@@ -14130,11 +14146,8 @@ void mus_init_run(void)
 #endif
 #endif
 
-#if USE_SND
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_optimization, g_optimization_w, H_optimization, S_setB S_optimization, g_set_optimization_w,  0, 0, 1, 0);
-#endif
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_run_safety, g_run_safety_w, H_run_safety, S_setB S_run_safety, g_set_run_safety_w,  0, 0, 1, 0);
-
   XEN_DEFINE_PROCEDURE(S_snd_declare, g_snd_declare_w, 1, 0, 0, H_snd_declare);
 
 #if USE_SND
@@ -14151,9 +14164,8 @@ You can often slightly rewrite the form to make run happy."
   optimization_hook = XEN_DEFINE_HOOK(S_optimization_hook, 1, H_optimization_hook);      /* arg = message */
 #endif
 
-  current_optimization = 6;
-
 #if WITH_RUN
+  current_optimization = 6;
   init_walkers();
   init_type_names();
 #endif

@@ -198,6 +198,7 @@ void s7_set_error_exiter(s7_scheme *sc, void (*error_exiter)(void));
 int s7_gc_protect(s7_scheme *sc, s7_pointer x);
 void s7_gc_unprotect(s7_scheme *sc, s7_pointer x);
 void s7_gc_unprotect_at(s7_scheme *sc, int loc);
+s7_pointer s7_gc_protected_at(s7_scheme *sc, int loc);
 s7_pointer s7_local_gc_protect(s7_pointer p);
 s7_pointer s7_local_gc_unprotect(s7_pointer p);
 s7_pointer s7_gc_on(s7_scheme *sc, bool on, s7_pointer p);
@@ -556,7 +557,6 @@ int main(int argc, char **argv)
 
   /* deal with the ubiquitous run macro */
   XEN_EVAL_C_STRING("(define (run-safety) 0)");
-  XEN_EVAL_C_STRING("(defmacro run (thunk) `(,thunk))");
   XEN_EVAL_C_STRING("(define (1+ x) (+ x 1))");
 
   s7_define_function(s7, "exit", our_exit, 0, 0, false, "(exit) exits the program");

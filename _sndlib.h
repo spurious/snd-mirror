@@ -263,7 +263,7 @@ enum {MUS_NO_ERROR, MUS_NO_FREQUENCY, MUS_NO_PHASE, MUS_NO_GEN, MUS_NO_LENGTH,
       MUS_AUDIO_CANT_CLOSE, MUS_AUDIO_CANT_OPEN, MUS_AUDIO_READ_ERROR, MUS_AUDIO_AMP_NOT_AVAILABLE,
       MUS_AUDIO_CANT_WRITE, MUS_AUDIO_CANT_READ, MUS_AUDIO_NO_READ_PERMISSION,
 
-      MUS_CANT_CLOSE_FILE, MUS_ARG_OUT_OF_RANGE,
+      MUS_CANT_CLOSE_FILE, MUS_ARG_OUT_OF_RANGE, MUS_WRONG_TYPE_ARG,
       MUS_MIDI_OPEN_ERROR, MUS_MIDI_READ_ERROR, MUS_MIDI_WRITE_ERROR, MUS_MIDI_CLOSE_ERROR, MUS_MIDI_INIT_ERROR, MUS_MIDI_MISC_ERROR,
 
       MUS_NO_CHANNELS, MUS_NO_HOP, MUS_NO_WIDTH, MUS_NO_FILE_NAME, MUS_NO_RAMP, MUS_NO_RUN, 
@@ -581,12 +581,10 @@ bool mus_strcmp(const char *str1, const char *str2);
 char *mus_strcat(char *errmsg, const char *str, int *err_size);
 
 
-#if HAVE_EXTENSION_LANGUAGE
+/* -------- run.c -------- */
 
 #include "xen.h"
 #include "vct.h"
-
-/* -------- run.c -------- */
 
 struct ptree *mus_run_form_to_ptree_1_b(XEN code);
 struct ptree *mus_run_form_to_ptree_1_b_without_env(XEN code);
@@ -602,8 +600,6 @@ Float mus_run_evaluate_ptree_1f1v1b2f(struct ptree *pt, Float arg, vct *v, bool 
 struct ptree *mus_run_form_to_ptree_3_f(XEN code);
 Float mus_run_evaluate_ptreec(struct ptree *pt, Float arg, XEN object, bool dir, int type);
 int mus_run_xen_to_run_type(XEN val);
-
-#endif
 
 
 
