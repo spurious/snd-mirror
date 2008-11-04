@@ -1775,7 +1775,7 @@ static char *direct_filter(chan_info *cp, int order, env *e, snd_fd *sf, off_t b
     }
   if (reporting) finish_progress_report(cp);
   if (origin)
-    new_origin = copy_string(origin);
+    new_origin = mus_strdup(origin);
   else
     {
       if (precalculated_coeffs)
@@ -2956,7 +2956,7 @@ static char *run_channel(chan_info *cp, struct ptree *pt, off_t beg, off_t dur, 
       ss->stopped_explicitly = false;
       for (k = 0; k < dur; k++)
 	{
-	  idata[j++] = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(pt, read_sample(sf)));
+	  idata[j++] = MUS_FLOAT_TO_SAMPLE(mus_run_evaluate_ptree_1f2f(pt, read_sample(sf)));
 	  if (j == MAX_BUFFER_SIZE)
 	    {
 	      err = mus_file_write(ofd, 0, j - 1, 1, data);
@@ -2982,7 +2982,7 @@ static char *run_channel(chan_info *cp, struct ptree *pt, off_t beg, off_t dur, 
       if (dur > 0) 
 	{
 	  for (k = 0; k < dur; k++)
-	    idata[k] = MUS_FLOAT_TO_SAMPLE(evaluate_ptree_1f2f(pt, read_sample(sf)));
+	    idata[k] = MUS_FLOAT_TO_SAMPLE(mus_run_evaluate_ptree_1f2f(pt, read_sample(sf)));
 	  change_samples(beg, dur, idata, cp, origin, edpos);
 	}
     }
@@ -3260,15 +3260,15 @@ static XEN g_map_chan_1(XEN proc_and_list, XEN s_beg, XEN s_end, XEN org, XEN sn
 	{
 	  struct ptree *pt = NULL;
 #if HAVE_S7
-	  pt = form_to_ptree_1_f(XEN_PROCEDURE_SOURCE(proc_and_list));
+	  pt = mus_run_form_to_ptree_1_f(XEN_PROCEDURE_SOURCE(proc_and_list));
 #else
-	  pt = form_to_ptree_1_f(proc_and_list);
+	  pt = mus_run_form_to_ptree_1_f(proc_and_list);
 #endif
 	  if (pt)
 	    {
 	      char *err_str;
 	      err_str = run_channel(cp, pt, beg, num, pos, caller, S_map_channel);
-	      free_ptree(pt);
+	      mus_run_free_ptree(pt);
 	      if (err_str == NULL)
 		return(XEN_ZERO);
 	      else FREE(err_str); /* and fallback on normal evaluator */
@@ -3651,7 +3651,7 @@ the current sample, the vct returned by 'init-func', and the current read direct
     }
 
 #if (!WITH_RUN)
-  if (XEN_STRING_P(origin)) caller = copy_string(XEN_TO_C_STRING(origin)); else caller = copy_string(S_ptree_channel);
+  if (XEN_STRING_P(origin)) caller = mus_strdup(XEN_TO_C_STRING(origin)); else caller = mus_strdup(S_ptree_channel);
   g_map_chan_ptree_fallback(proc, init_func, cp, beg, dur, pos, caller);
   if (caller) {FREE(caller); caller = NULL;}
 #else
@@ -3668,14 +3668,14 @@ the current sample, the vct returned by 'init-func', and the current read direct
 	XEN_BAD_ARITY_ERROR(S_ptree_channel, 8, init_func, "init-func must take 2 or 3 args");
       if (!(XEN_REQUIRED_ARGS_OK(proc, 3)))
 	XEN_BAD_ARITY_ERROR(S_ptree_channel, 1, proc, "main func must take 3 args if the init-func is present");
-      if (XEN_STRING_P(origin)) caller = copy_string(XEN_TO_C_STRING(origin)); else caller = copy_string(S_ptree_channel);
+      if (XEN_STRING_P(origin)) caller = mus_strdup(XEN_TO_C_STRING(origin)); else caller = mus_strdup(S_ptree_channel);
 
       if (!too_many_ptrees)
 	{
 #if HAVE_S7
-	  pt = form_to_ptree_3_f(XEN_PROCEDURE_SOURCE(proc_and_list));
+	  pt = mus_run_form_to_ptree_3_f(XEN_PROCEDURE_SOURCE(proc_and_list));
 #else
-	  pt = form_to_ptree_3_f(proc_and_list);
+	  pt = mus_run_form_to_ptree_3_f(proc_and_list);
 #endif
 	  if (pt)
 	    {
@@ -3697,20 +3697,20 @@ the current sample, the vct returned by 'init-func', and the current read direct
 
   /* no init-func from here on */
 
-  if (XEN_STRING_P(origin)) caller = copy_string(XEN_TO_C_STRING(origin)); else caller = copy_string(S_ptree_channel);
+  if (XEN_STRING_P(origin)) caller = mus_strdup(XEN_TO_C_STRING(origin)); else caller = mus_strdup(S_ptree_channel);
   if (XEN_REQUIRED_ARGS_OK(proc, 1))
 #if HAVE_S7
-    pt = form_to_ptree_1_f(XEN_PROCEDURE_SOURCE(proc_and_list));
+    pt = mus_run_form_to_ptree_1_f(XEN_PROCEDURE_SOURCE(proc_and_list));
 #else
-    pt = form_to_ptree_1_f(proc_and_list);
+    pt = mus_run_form_to_ptree_1_f(proc_and_list);
 #endif
   else
     {
       if ((!too_many_ptrees) && (XEN_REQUIRED_ARGS_OK(proc, 3)))
 #if HAVE_S7
-	pt = form_to_ptree_3_f(XEN_PROCEDURE_SOURCE(proc_and_list));
+	pt = mus_run_form_to_ptree_3_f(XEN_PROCEDURE_SOURCE(proc_and_list));
 #else
-	pt = form_to_ptree_3_f(proc_and_list); /* caller forgot init_func, but maybe it's ok anyway */
+	pt = mus_run_form_to_ptree_3_f(proc_and_list); /* caller forgot init_func, but maybe it's ok anyway */
                                                /* (ptree-channel (lambda (y data dir) (* y 2))) */
 #endif
     }
@@ -3719,7 +3719,7 @@ the current sample, the vct returned by 'init-func', and the current read direct
       if (too_many_ptrees)
 	{
 	  run_channel(cp, pt, beg, dur, pos, caller, S_ptree_channel);
-	  free_ptree(pt);
+	  mus_run_free_ptree(pt);
 	  pt = NULL;
 	}
       else ptree_channel(cp, pt, beg, dur, pos, XEN_TRUE_P(env_too), init_func, caller);
@@ -3898,27 +3898,27 @@ static XEN g_sp_scan(XEN proc_and_list, XEN s_beg, XEN s_end, XEN snd, XEN chn,
   if (optimization(ss) > 0)
     {
 #if HAVE_S7
-      pt = form_to_ptree_1_b(XEN_PROCEDURE_SOURCE(proc_and_list));
+      pt = mus_run_form_to_ptree_1_b(XEN_PROCEDURE_SOURCE(proc_and_list));
 #else
-      pt = form_to_ptree_1_b(proc_and_list);
+      pt = mus_run_form_to_ptree_1_b(proc_and_list);
 #endif
       if (pt)
 	{
 	  for (kp = 0; kp < num; kp++)
-	    if (evaluate_ptree_1f2b(pt, read_sample(sf)))
+	    if (mus_run_evaluate_ptree_1f2b(pt, read_sample(sf)))
 	      {
 		if (counting)
 		  counts++;
 		else
 		  {
 		    sf = free_snd_fd(sf);
-		    free_ptree(pt);
+		    mus_run_free_ptree(pt);
 		    return(XEN_LIST_2(XEN_TRUE,
 				      C_TO_XEN_OFF_T(kp + beg)));
 		  }
 	      }
 	  sf = free_snd_fd(sf);
-	  free_ptree(pt);
+	  mus_run_free_ptree(pt);
 	  if (counting)
 	    return(C_TO_XEN_INT(counts));
 	  return(XEN_FALSE);
@@ -4554,7 +4554,7 @@ apply gen to snd's channel chn starting at beg for dur samples. overlap is the '
   if (dur == 0) return(XEN_FALSE);
   XEN_ASSERT_TYPE(mus_xen_p(gen), gen, XEN_ARG_1, S_clm_channel, "a clm generator");
   egen = XEN_TO_MUS_ANY(gen);
-  if (XEN_STRING_P(origin)) caller = copy_string(XEN_TO_C_STRING(origin)); else caller = copy_string(S_clm_channel);
+  if (XEN_STRING_P(origin)) caller = mus_strdup(XEN_TO_C_STRING(origin)); else caller = mus_strdup(S_clm_channel);
 
   errmsg = clm_channel(cp, egen, beg, dur, pos, XEN_TO_C_OFF_T_OR_ELSE(overlap, 0), caller);
 
@@ -5444,7 +5444,7 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos, const c
 				      (over_selection) ? "" : PROC_SEP "0" PROC_SEP PROC_FALSE);
 #endif
 	    }
-	  else new_origin = copy_string(origin);
+	  else new_origin = mus_strdup(origin);
 	  apply_filter(cp, len, NULL, caller, new_origin, over_selection, v->data, NULL, edpos, 5, truncate);
 	  if (estr) FREE(estr);
 	  if (new_origin) FREE(new_origin);
@@ -5468,7 +5468,7 @@ static XEN g_filter_1(XEN e, XEN order, XEN snd_n, XEN chn_n, XEN edpos, const c
 				      TO_PROC_NAME(caller), estr, len, (over_selection) ? "" : PROC_SEP "0" PROC_SEP PROC_FALSE);
 #endif
 	    }
-	  else new_origin = copy_string(origin);
+	  else new_origin = mus_strdup(origin);
 	  if (len == 0) len = ne->pts * 4;
 	  apply_filter(cp, len, ne, caller, new_origin, over_selection, NULL, NULL, edpos, 5, truncate);
 	  if (ne) free_env(ne); 

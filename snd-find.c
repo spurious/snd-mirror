@@ -57,7 +57,7 @@ static bool run_global_search(gfd *g)
 	      samp = read_sample(sf);
 	      if (ss->search_tree)
 		{
-		  if (evaluate_ptree_1f2b(ss->search_tree, samp))
+		  if (mus_run_evaluate_ptree_1f2b(ss->search_tree, samp))
 		    {
 		      g->n = i;
 		      return(STOP_SEARCHING);
@@ -271,7 +271,7 @@ static off_t cursor_find_forward(snd_info *sp, chan_info *cp, int count)
 
       for (i = start; i < end; i++, tick++)
 	{
-	  if (evaluate_ptree_1f2b(sp->search_tree, read_sample(sf)))
+	  if (mus_run_evaluate_ptree_1f2b(sp->search_tree, read_sample(sf)))
 	    {
 	      count--; 
 	      if (count == 0) break;
@@ -364,7 +364,7 @@ static off_t cursor_find_backward(snd_info *sp, chan_info *cp, int count)
     {
       for (i = start; i >= 0; i--, tick++)
 	{
-	  if (evaluate_ptree_1f2b(sp->search_tree, read_sample(sf)))
+	  if (mus_run_evaluate_ptree_1f2b(sp->search_tree, read_sample(sf)))
 	    {
 	      count--; 
 	      if (count == 0) break;
@@ -474,7 +474,7 @@ void cursor_search(chan_info *cp, int count)
 	      clear_sound_search_procedure(sp, false);
 #if WITH_RUN
 	      if (optimization(ss) > 0)
-		sp->search_tree = form_to_ptree_1_b_without_env(C_STRING_TO_XEN_FORM(sp->search_expr));
+		sp->search_tree = mus_run_form_to_ptree_1_b_without_env(C_STRING_TO_XEN_FORM(sp->search_expr));
 #endif
 	      if (sp->search_tree == NULL)
 		{
@@ -542,7 +542,7 @@ void clear_sound_search_procedure(snd_info *sp, bool clear_expr_too)
     }
   if (sp->search_tree)
     {
-      free_ptree(sp->search_tree);
+      mus_run_free_ptree(sp->search_tree);
       sp->search_tree = NULL;
     }
 }
@@ -563,7 +563,7 @@ void clear_global_search_procedure(bool clear_expr_too)
     }
   if (ss->search_tree) 
     {
-      free_ptree(ss->search_tree);
+      mus_run_free_ptree(ss->search_tree);
       ss->search_tree = NULL;
     }
 }
@@ -611,9 +611,9 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
 #if WITH_RUN
 		  if (optimization(ss) > 0)
 #if HAVE_S7
-		    sp->search_tree = form_to_ptree_1_b(XEN_PROCEDURE_SOURCE(proc));
+		    sp->search_tree = mus_run_form_to_ptree_1_b(XEN_PROCEDURE_SOURCE(proc));
 #else
-		    sp->search_tree = form_to_ptree_1_b(XEN_LIST_2(XEN_PROCEDURE_SOURCE(proc), proc));
+		    sp->search_tree = mus_run_form_to_ptree_1_b(XEN_LIST_2(XEN_PROCEDURE_SOURCE(proc), proc));
 #endif
 #endif
 		}
@@ -643,9 +643,9 @@ static XEN g_set_search_procedure(XEN snd, XEN proc)
 #if WITH_RUN
 	      if (optimization(ss) > 0)
 #if HAVE_S7
-		ss->search_tree = form_to_ptree_1_b(XEN_PROCEDURE_SOURCE(snd));
+		ss->search_tree = mus_run_form_to_ptree_1_b(XEN_PROCEDURE_SOURCE(snd));
 #else
-		ss->search_tree = form_to_ptree_1_b(XEN_LIST_2(XEN_PROCEDURE_SOURCE(snd), snd));
+		ss->search_tree = mus_run_form_to_ptree_1_b(XEN_LIST_2(XEN_PROCEDURE_SOURCE(snd), snd));
 #endif
 #endif
 	    }

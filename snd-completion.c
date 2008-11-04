@@ -24,11 +24,11 @@ static bool compare_names(const char *symbol_name, void *data)
       m->matches++;
       add_possible_completion(symbol_name);
       if (current_match == NULL)
-	current_match = copy_string(symbol_name);
+	current_match = mus_strdup(symbol_name);
       else 
 	{
 	  int j, curlen;
-	  curlen = snd_strlen(current_match);
+	  curlen = mus_strlen(current_match);
 	  for (j = 0; j < curlen; j++)
 	    if (current_match[j] != symbol_name[j])
 	      {
@@ -104,11 +104,11 @@ static int scan_tab(XEN tab, char *text, int len, int matches)
 		      matches++;
 		      add_possible_completion(sym);
 		      if (current_match == NULL)
-			current_match = copy_string(sym);
+			current_match = mus_strdup(sym);
 		      else 
 			{
 			  int j, curlen;
-			  curlen = snd_strlen(current_match);
+			  curlen = mus_strlen(current_match);
 			  for (j = 0; j < curlen; j++)
 			    if (current_match[j] != sym[j])
 			      {
@@ -182,11 +182,11 @@ static int completions(char *text)
 	  matches++;
 	  add_possible_completion(sym);
 	  if (current_match == NULL)
-	    current_match = copy_string(sym);
+	    current_match = mus_strdup(sym);
 	  else 
 	    {
 	      int j, curlen;
-	      curlen = snd_strlen(current_match);
+	      curlen = mus_strlen(current_match);
 	      for (j = 0; j < curlen; j++)
 		if (current_match[j] != sym[j])
 		  {
@@ -214,11 +214,11 @@ static int completions(char *text)
       char *sym = XEN_TO_C_STRING(XEN_VECTOR_REF(tab, i));
       add_possible_completion(sym);
       if (current_match == NULL)
-	current_match = copy_string(sym);
+	current_match = mus_strdup(sym);
       else 
 	{
 	  int j, curlen;
-	  curlen = snd_strlen(current_match);
+	  curlen = mus_strlen(current_match);
 	  for (j = 0; j < curlen; j++)
 	    if (current_match[j] != sym[j])
 	      {
@@ -294,14 +294,14 @@ char *command_completer(widget_t w, char *original_text, void *data)
 	   *   this way, I think it's easy to clear the suggested completion (cursor at end, so backspace deletes all).
 	   * or scan back through full text (assuming listener or history available) and find match?
 	   */
-	  return(copy_string(original_text));
+	  return(mus_strdup(original_text));
 	}
       if (beg > 0) 
 	text = (char *)(original_text + beg);
       else text = original_text;
       matches = completions(text);
     }
-  else return(copy_string(original_text));
+  else return(mus_strdup(original_text));
   set_completion_matches(matches);
   if ((current_match) && 
       (*current_match))
@@ -310,7 +310,7 @@ char *command_completer(widget_t w, char *original_text, void *data)
 	return(current_match);
       else
 	{
-	  len = snd_strlen(current_match) + beg + 2;
+	  len = mus_strlen(current_match) + beg + 2;
 	  text = (char *)CALLOC(len, sizeof(char));
 	  strncpy(text, original_text, beg);
 	  strcat(text, current_match);
@@ -318,7 +318,7 @@ char *command_completer(widget_t w, char *original_text, void *data)
 	  return(text);
 	}
     }
-  return(copy_string(original_text));
+  return(mus_strdup(original_text));
 }
 
 
@@ -332,27 +332,27 @@ void preload_best_completions(void)
 {
   /* set up the array with some reasonable first choices */
   int n = 0;
-  best_completions[n++] = copy_string(S_open_sound);
-  best_completions[n++] = copy_string(S_auto_resize);
-  best_completions[n++] = copy_string(S_channels);
-  best_completions[n++] = copy_string(S_close_sound);
-  best_completions[n++] = copy_string(S_cursor);
-  best_completions[n++] = copy_string(S_env_channel);
-  best_completions[n++] = copy_string(S_file_name);
-  best_completions[n++] = copy_string(S_frames);
-  best_completions[n++] = copy_string(S_map_channel);
-  best_completions[n++] = copy_string(S_maxamp);
-  best_completions[n++] = copy_string(S_optimization);
-  best_completions[n++] = copy_string(S_play);
-  best_completions[n++] = copy_string(S_save_sound);
-  best_completions[n++] = copy_string(S_scale_channel);
-  best_completions[n++] = copy_string(S_srate);
-  best_completions[n++] = copy_string("with-sound");
-  best_completions[n++] = copy_string(S_outa);
-  best_completions[n++] = copy_string("*output*");
-  best_completions[n++] = copy_string("lambda");
-  best_completions[n++] = copy_string("define");
-  best_completions[n++] = copy_string(S_vct_length);
+  best_completions[n++] = mus_strdup(S_open_sound);
+  best_completions[n++] = mus_strdup(S_auto_resize);
+  best_completions[n++] = mus_strdup(S_channels);
+  best_completions[n++] = mus_strdup(S_close_sound);
+  best_completions[n++] = mus_strdup(S_cursor);
+  best_completions[n++] = mus_strdup(S_env_channel);
+  best_completions[n++] = mus_strdup(S_file_name);
+  best_completions[n++] = mus_strdup(S_frames);
+  best_completions[n++] = mus_strdup(S_map_channel);
+  best_completions[n++] = mus_strdup(S_maxamp);
+  best_completions[n++] = mus_strdup(S_optimization);
+  best_completions[n++] = mus_strdup(S_play);
+  best_completions[n++] = mus_strdup(S_save_sound);
+  best_completions[n++] = mus_strdup(S_scale_channel);
+  best_completions[n++] = mus_strdup(S_srate);
+  best_completions[n++] = mus_strdup("with-sound");
+  best_completions[n++] = mus_strdup(S_outa);
+  best_completions[n++] = mus_strdup("*output*");
+  best_completions[n++] = mus_strdup("lambda");
+  best_completions[n++] = mus_strdup("define");
+  best_completions[n++] = mus_strdup(S_vct_length);
 }
 
 
@@ -360,13 +360,13 @@ void save_completion_choice(const char *selection)
 {
   int i;
   char *cur = NULL, *old = NULL;
-  cur = copy_string(selection);
+  cur = mus_strdup(selection);
   for (i = 0; i < BEST_COMPLETIONS; i++)
     {
       old = best_completions[i];
       best_completions[i] = cur;
       if ((!old) ||
-	  (snd_strcmp(old, cur)))
+	  (mus_strcmp(old, cur)))
 	break;
       cur = old;
     }
@@ -379,7 +379,7 @@ int find_best_completion(char **choices, int num_choices)
   int i, k;
   for (i = 0; (i < BEST_COMPLETIONS) && (best_completions[i]); i++)
     for (k = 0; k < num_choices; k++)
-      if (snd_strcmp(choices[k], best_completions[i]))
+      if (mus_strcmp(choices[k], best_completions[i]))
 	return(k + 1); /* row numbering is 1-based */
   return(1);
 }
@@ -464,7 +464,7 @@ void add_possible_completion(const char *text)
 	    }
 	}
       if (possible_completions[possible_completions_ctr]) FREE(possible_completions[possible_completions_ctr]);
-      possible_completions[possible_completions_ctr] = copy_string(text);
+      possible_completions[possible_completions_ctr] = mus_strdup(text);
       possible_completions_ctr++;
     }
 }
@@ -499,7 +499,7 @@ char *complete_text(widget_t w, char *text, int func)
   if ((func >= 0) && 
       (func < completer_funcs_end))
     return((*completer_funcs[func])(w, text, completer_data[func]));
-  else return(copy_string(text));
+  else return(mus_strdup(text));
 }
 
 
@@ -527,10 +527,10 @@ static void init_srate_list(void)
       srate_info->exact_match = true;
       srate_info->values_size = 16;
       srate_info->values = (char **)CALLOC(srate_info->values_size, sizeof(char *));
-      srate_info->values[loc++] = copy_string("44100");
-      srate_info->values[loc++] = copy_string("22050");
-      srate_info->values[loc++] = copy_string("8000");
-      srate_info->values[loc++] = copy_string("48000");
+      srate_info->values[loc++] = mus_strdup("44100");
+      srate_info->values[loc++] = mus_strdup("22050");
+      srate_info->values[loc++] = mus_strdup("8000");
+      srate_info->values[loc++] = mus_strdup("48000");
       srate_info->num_values = loc;
     }
 }
@@ -560,7 +560,7 @@ void add_srate_to_completion_list(int srate)
   str = (char *)CALLOC(16, sizeof(char));
   mus_snprintf(str, 16, "%d", srate);
   for (i = 0; i < srate_info->num_values; i++)
-    if (snd_strcmp(srate_info->values[i], str))
+    if (mus_strcmp(srate_info->values[i], str))
       {
 	FREE(str);
 	return;
@@ -601,9 +601,9 @@ static char *filename_completer_1(widget_t w, char *text, int file_type)
   int i, j, k, len, curlen, matches = 0;
   struct dirent *dirp;
   DIR *dpos;
-  if (snd_strlen(text) == 0) return(NULL);
+  if (mus_strlen(text) == 0) return(NULL);
   full_name = mus_expand_filename(text);
-  len = snd_strlen(full_name);
+  len = mus_strlen(full_name);
   for (i = len - 1; i > 0; i--)
     if (full_name[i] == '/')
       break;
@@ -617,7 +617,7 @@ static char *filename_completer_1(widget_t w, char *text, int file_type)
       FREE(full_name); 
       full_name = NULL;
     }
-  len = snd_strlen(file_name);
+  len = mus_strlen(file_name);
   if ((dpos = opendir(dir_name)) != NULL)
     {
       while ((dirp = readdir(dpos)) != NULL)
@@ -630,7 +630,7 @@ static char *filename_completer_1(widget_t w, char *text, int file_type)
 		matches++;
 		add_possible_completion(dirp->d_name);
 		if (current_match == NULL)
-		  current_match = copy_string(dirp->d_name);
+		  current_match = mus_strdup(dirp->d_name);
 		else 
 		  {
 		    curlen = strlen(current_match);
@@ -654,7 +654,7 @@ static char *filename_completer_1(widget_t w, char *text, int file_type)
       (*current_match))
     {
       /* attach matched portion to user's indication of dir */
-      len = snd_strlen(text);
+      len = mus_strlen(text);
       for (i = len - 1; i >= 0; i--)
 	if (text[i] == '/')
 	  break;
@@ -669,7 +669,7 @@ static char *filename_completer_1(widget_t w, char *text, int file_type)
       return(file_name);
     }
 #endif
-  return(copy_string(text));
+  return(mus_strdup(text));
 }
 
 
@@ -699,9 +699,9 @@ char *info_completer(widget_t w, char *text, void *data)
   if (sp)
     {
       char *new_text = NULL;
-      if (sp->search_count != 0) return(copy_string(text));      /* C-s or C-r so as above */
-      if ((sp->marking) || (sp->finding_mark)) return(copy_string(text)); /* C-x C-m etc */
-      if (sp->printing) return(copy_string(text));               /* C-x C-d so anything is possible */
+      if (sp->search_count != 0) return(mus_strdup(text));      /* C-s or C-r so as above */
+      if ((sp->marking) || (sp->finding_mark)) return(mus_strdup(text)); /* C-x C-m etc */
+      if (sp->printing) return(mus_strdup(text));               /* C-x C-d so anything is possible */
       if (sp->amp_count != 0) return(env_name_completer(w, text, NULL));
       if (use_sound_filename_completer(sp->filing)) return(sound_filename_completer(w, text, NULL));
       if (sp->loading) return(filename_completer(w, text, NULL));   /* C-x C-l */
@@ -712,7 +712,7 @@ char *info_completer(widget_t w, char *text, void *data)
 	  int i, beg, parens, len;
 	  beg = 0;
 	  parens = 0;  	                                 /* filename would have to be a string in this context */
-	  len = snd_strlen(text);
+	  len = mus_strlen(text);
 	  for (i = 0; i < len; i++)
 	    if (text[i] == '\"')
 	      {
@@ -725,7 +725,7 @@ char *info_completer(widget_t w, char *text, void *data)
 	      char *new_file;
 	      if (new_text) FREE(new_text);
 	      new_file = filename_completer(w, (char *)(text + beg), NULL);
-	      len = beg + 2 + snd_strlen(new_file);
+	      len = beg + 2 + mus_strlen(new_file);
 	      new_text = (char *)CALLOC(len, sizeof(char));
 	      strncpy(new_text, text, beg);
 	      strcat(new_text, new_file);
@@ -823,9 +823,9 @@ char *complete_listener_text(char *old_text, int end, bool *try_completion, char
 	}
       if (old_text[i] == '\"')
 	{
-	  file_text = copy_string((char *)(old_text + i + 1));
+	  file_text = mus_strdup((char *)(old_text + i + 1));
 	  new_file = filename_completer(NULL_WIDGET, file_text, NULL);
-	  len = snd_strlen(new_file);
+	  len = mus_strlen(new_file);
 	  if (len > 0)
 	    {
 	      len += i + 2;
@@ -852,8 +852,8 @@ char *list_completer(widget_t w, char *text, void *data)
   char *trimmed_text;
   set_completion_matches(0);
   /* check for null text */
-  len = snd_strlen(text);
-  if (len == 0) return(copy_string(text));
+  len = mus_strlen(text);
+  if (len == 0) return(mus_strdup(text));
   /* strip away leading and trailing white space */
   trimmed_text = (char *)CALLOC(len + 1, sizeof(char));
   for (i = 0; i < len; i++)
@@ -862,7 +862,7 @@ char *list_completer(widget_t w, char *text, void *data)
   if (j == 0)
     {
       FREE(trimmed_text);
-      return(copy_string(text));
+      return(mus_strdup(text));
     }
   /* check for match(es) against values */
   if (info->exact_match)
@@ -887,7 +887,7 @@ char *list_completer(widget_t w, char *text, void *data)
     }
   FREE(trimmed_text);
   if (matches != 1)
-    return(copy_string(text));
+    return(mus_strdup(text));
   set_completion_matches(1);
-  return(copy_string(info->values[current_match]));
+  return(mus_strdup(info->values[current_match]));
 }

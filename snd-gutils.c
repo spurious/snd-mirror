@@ -10,7 +10,7 @@ bool set_tiny_font(const char *font)
   if (fs)
     {
       if (tiny_font(ss)) FREE(tiny_font(ss));
-      in_set_tiny_font(copy_string(font));
+      in_set_tiny_font(mus_strdup(font));
       if (TINY_FONT(ss)) pango_font_description_free(TINY_FONT(ss));
       TINY_FONT(ss) = fs;
       return(true);
@@ -27,7 +27,7 @@ bool set_listener_font(const char *font)
   if (fs)
     {
       if (listener_font(ss)) FREE(listener_font(ss));
-      in_set_listener_font(copy_string(font));
+      in_set_listener_font(mus_strdup(font));
       if (LISTENER_FONT(ss)) pango_font_description_free(LISTENER_FONT(ss));
       LISTENER_FONT(ss) = fs;
       set_listener_text_font();
@@ -45,7 +45,7 @@ bool set_peaks_font(const char *font)
   if (fs)
     {
       if (peaks_font(ss)) FREE(peaks_font(ss));
-      in_set_peaks_font(copy_string(font));
+      in_set_peaks_font(mus_strdup(font));
       if (PEAKS_FONT(ss)) pango_font_description_free(PEAKS_FONT(ss));
       PEAKS_FONT(ss) = fs;
       return(true);
@@ -62,7 +62,7 @@ bool set_bold_peaks_font(const char *font)
   if (fs)
     {
       if (bold_peaks_font(ss)) FREE(bold_peaks_font(ss));
-      in_set_bold_peaks_font(copy_string(font));
+      in_set_bold_peaks_font(mus_strdup(font));
       if (BOLD_PEAKS_FONT(ss)) pango_font_description_free(BOLD_PEAKS_FONT(ss));
       BOLD_PEAKS_FONT(ss) = fs;
       return(true);
@@ -79,7 +79,7 @@ bool set_axis_label_font(const char *font)
   if (fs)
     {
       if (axis_label_font(ss)) FREE(axis_label_font(ss));
-      in_set_axis_label_font(copy_string(font));
+      in_set_axis_label_font(mus_strdup(font));
       if (AXIS_LABEL_FONT(ss)) pango_font_description_free(AXIS_LABEL_FONT(ss));
       AXIS_LABEL_FONT(ss) = fs;
 #if HAVE_GL
@@ -99,7 +99,7 @@ bool set_axis_numbers_font(const char *font)
   if (fs)
     {
       if (axis_numbers_font(ss)) FREE(axis_numbers_font(ss));
-      in_set_axis_numbers_font(copy_string(font));
+      in_set_axis_numbers_font(mus_strdup(font));
       if (AXIS_NUMBERS_FONT(ss)) pango_font_description_free(AXIS_NUMBERS_FONT(ss));
       AXIS_NUMBERS_FONT(ss) = fs;
 #if HAVE_GL
@@ -117,7 +117,7 @@ int sg_text_width(const char *txt, PangoFontDescription *font)
   PangoLayout *layout = NULL;
   PangoContext *ctx;
   if (txt == NULL) return(0);
-  if (snd_strlen(txt) == 0) return(0);
+  if (mus_strlen(txt) == 0) return(0);
   if (!(g_utf8_validate(txt, -1, NULL)))
     {
 #if MUS_DEBUGGING

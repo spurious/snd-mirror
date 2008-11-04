@@ -61,7 +61,7 @@ bool send_mozilla(const char *html_viewer, const char *url)
   Display *dpy;
   char *command;
   dpy = MAIN_DISPLAY(ss);
-  command = (char *)CALLOC(snd_strlen(url) + snd_strlen(html_viewer) + 32, sizeof(char));
+  command = (char *)CALLOC(mus_strlen(url) + mus_strlen(html_viewer) + 32, sizeof(char));
   window = find_window(dpy, DefaultRootWindow(dpy), NS_VERSION, compare_window);
   if (window)
     {
@@ -161,7 +161,7 @@ static XEN g_set_window_property(XEN winat, XEN name, XEN command)
   XEN_ASSERT_TYPE(XEN_STRING_P(winat), name, XEN_ARG_1, S_setB S_window_property, "a string");
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ARG_2, S_setB S_window_property, "a string");
   if (XEN_STRING_P(command))
-    c = copy_string(XEN_TO_C_STRING(command));
+    c = mus_strdup(XEN_TO_C_STRING(command));
   else c = g_print_1(command);
   change_window_property(XEN_TO_C_STRING(winat), XEN_TO_C_STRING(name), c);
   if (c) FREE(c);

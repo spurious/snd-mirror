@@ -154,10 +154,10 @@ static void start_recording(void)
   if (recorder_filename) FREE(recorder_filename);
   str = XmTextGetString(recorder_output);
   if (!str)
-    recorder_filename = copy_string("test.snd");
+    recorder_filename = mus_strdup("test.snd");
   else 
     {
-      recorder_filename = copy_string(str);
+      recorder_filename = mus_strdup(str);
       XtFree(str);
     }
   redirect_snd_error_to(report_in_error_info, NULL);
@@ -374,7 +374,7 @@ widget_t record_file(void)
       XtVaSetValues(XmMessageBoxGetChild(recorder, XmDIALOG_HELP_BUTTON),   XmNbackground, ss->sgx->help_button_color, NULL);
       XtVaSetValues(XmMessageBoxGetChild(recorder, XmDIALOG_OK_BUTTON),     XmNbackground, ss->sgx->doit_button_color, NULL);
 
-      recorder_filename = copy_string("test.snd");
+      recorder_filename = mus_strdup("test.snd");
 
       {
 	Widget sep, sep1, form, db_button, error_info_box, error_info_frame;

@@ -1462,11 +1462,7 @@ bool snd_feq(Float val1, Float val2);
   Float in_dB(Float min_dB, Float lin_dB, Float val);
 #endif
 
-char *copy_string(const char *str);
 int snd_mkdir(const char *filename);
-int snd_strlen(const char *str);
-bool snd_strcmp(const char *str1, const char *str2);
-char *snd_strcat(char *errmsg, const char *str, int *err_size);
 char *snd_local_time(void);
 char *snd_io_strerror(void);
 char *snd_open_strerror(void);
@@ -1673,24 +1669,6 @@ off_t to_c_edit_samples(chan_info *cp, XEN edpos, const char *caller, int arg_po
 off_t beg_to_sample(XEN beg, const char *caller);
 off_t dur_to_samples(XEN dur, off_t beg, chan_info *cp, int edpos, int argn, const char *caller);
 char *scale_and_src(char **files, int len, int max_chans, Float amp, Float speed, env *amp_env, bool *err);
-
-
-/* -------- snd-run.c -------- */
-
-struct ptree *form_to_ptree_1_b(XEN code);
-struct ptree *form_to_ptree_1_b_without_env(XEN code);
-struct ptree *form_to_ptree_1_f(XEN code);
-Float evaluate_ptree_0f2f(struct ptree *pt);
-struct ptree *form_to_ptree_0_f(XEN code);
-Float evaluate_ptree_1f2f(struct ptree *pt, Float arg);
-int evaluate_ptree_1f2b(struct ptree *pt, Float arg);
-void free_ptree(struct ptree *pt);
-void g_init_run(void);
-XEN ptree_code(struct ptree *pt);
-Float evaluate_ptree_1f1v1b2f(struct ptree *pt, Float arg, vct *v, bool dir);
-struct ptree *form_to_ptree_3_f(XEN code);
-Float evaluate_ptreec(struct ptree *pt, Float arg, XEN object, bool dir, int type);
-int xen_to_run_type(XEN val);
 
 
 /* -------- snd-draw.c -------- */

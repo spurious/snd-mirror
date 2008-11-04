@@ -111,7 +111,7 @@ void free_ptree_list(chan_info *cp)
  	{
 	  if (cp->ptrees[i])
 	    {
-	      free_ptree(cp->ptrees[i]);
+	      mus_run_free_ptree(cp->ptrees[i]);
 	      cp->ptrees[i] = NULL;
 	    }
 	  if (XEN_PROCEDURE_P(cp->ptree_inits[i]))
@@ -257,12 +257,12 @@ static void reflect_sample_change_in_axis(chan_info *cp)
 	  ap->no_data = (samps == 0);
 	  if (ap->xlabel) FREE(ap->xlabel);
 	  if (samps == 0) 
-	    ap->xlabel = copy_string(_("(no data)")); 
+	    ap->xlabel = mus_strdup(_("(no data)")); 
 	  else 
 	    {
 	      if (ap->default_xlabel)
-		ap->xlabel = copy_string(ap->default_xlabel);
-	      else ap->xlabel = copy_string(_("time"));
+		ap->xlabel = mus_strdup(ap->default_xlabel);
+	      else ap->xlabel = mus_strdup(_("time"));
 	    }
 	}
       set_x_bounds(ap);
@@ -307,7 +307,7 @@ static XEN save_state_hook;
 char *run_save_state_hook(char *file)
 {
   char *filename;
-  filename = copy_string(file);
+  filename = mus_strdup(file);
   if (XEN_HOOKED(save_state_hook))
     {
       XEN fname;
@@ -323,7 +323,7 @@ char *run_save_state_hook(char *file)
 	  if (XEN_STRING_P(result))
 	    {
 	      FREE(filename);
-	      filename = copy_string(XEN_TO_C_STRING(result));
+	      filename = mus_strdup(XEN_TO_C_STRING(result));
 	    }
 	  procs = XEN_CDR (procs);
 	}
@@ -1056,9 +1056,9 @@ static Float next_ptree_value(snd_fd *sf)
     val1 = sf->data[sf->loc];
   sf->loc++;
   for (i = 0; (i < READER_PTREE_LIST_SIZE(sf)) && (READER_PTREE(sf, i)); i++)
-    val1 = evaluate_ptreec(READER_PTREE(sf, i), 
-			   READER_PTREE_SCALER(sf, i) * val1, 
-			   READER_PTREE_CLOSURE(sf, i), true, READER_PTREE_TYPE(sf, i));
+    val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, i), 
+				   READER_PTREE_SCALER(sf, i) * val1, 
+				   READER_PTREE_CLOSURE(sf, i), true, READER_PTREE_TYPE(sf, i));
   return(val1);
 }
 
@@ -1070,9 +1070,9 @@ static Float previous_ptree_value(snd_fd *sf)
     val1 = sf->data[sf->loc];
   sf->loc--;
   for (i = 0; (i < READER_PTREE_LIST_SIZE(sf)) && (READER_PTREE(sf, i)); i++)
-    val1 = evaluate_ptreec(READER_PTREE(sf, i), 
-			   READER_PTREE_SCALER(sf, i) * val1, 
-			   READER_PTREE_CLOSURE(sf, i), false, READER_PTREE_TYPE(sf, i));
+    val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, i), 
+				   READER_PTREE_SCALER(sf, i) * val1, 
+				   READER_PTREE_CLOSURE(sf, i), false, READER_PTREE_TYPE(sf, i));
   return(val1);
 }
 
@@ -1111,13 +1111,13 @@ static Float next_ptree_ramp_f_value(snd_fd *sf)
 {
   Float val1;
   int i;
-  val1 = evaluate_ptreec(READER_PTREE(sf, 0), 
-			 (*(READER_RAMPF(sf)))(sf) * sf->data[sf->loc++], 
-			 READER_PTREE_CLOSURE(sf, 0), true, READER_PTREE_TYPE(sf, 0));
+  val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, 0), 
+				 (*(READER_RAMPF(sf)))(sf) * sf->data[sf->loc++], 
+				 READER_PTREE_CLOSURE(sf, 0), true, READER_PTREE_TYPE(sf, 0));
   for (i = 1; (i < READER_PTREE_LIST_SIZE(sf)) && (READER_PTREE(sf, i)); i++)
-    val1 = evaluate_ptreec(READER_PTREE(sf, i), 
-			   READER_PTREE_SCALER(sf, i) * val1, 
-			   READER_PTREE_CLOSURE(sf, i), true, READER_PTREE_TYPE(sf, i));
+    val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, i), 
+				   READER_PTREE_SCALER(sf, i) * val1, 
+				   READER_PTREE_CLOSURE(sf, i), true, READER_PTREE_TYPE(sf, i));
   return(val1);
 }
 
@@ -1125,13 +1125,13 @@ static Float previous_ptree_ramp_f_value(snd_fd *sf)
 {
   Float val1;
   int i;
-  val1 = evaluate_ptreec(READER_PTREE(sf, 0), 
-			 (*(READER_REV_RAMPF(sf)))(sf) * sf->data[sf->loc--], 
-			 READER_PTREE_CLOSURE(sf, 0), false, READER_PTREE_TYPE(sf, 0));
+  val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, 0), 
+				 (*(READER_REV_RAMPF(sf)))(sf) * sf->data[sf->loc--], 
+				 READER_PTREE_CLOSURE(sf, 0), false, READER_PTREE_TYPE(sf, 0));
   for (i = 1; (i < READER_PTREE_LIST_SIZE(sf)) && (READER_PTREE(sf, i)); i++)
-    val1 = evaluate_ptreec(READER_PTREE(sf, i), 
-			   READER_PTREE_SCALER(sf, i) * val1, 
-			   READER_PTREE_CLOSURE(sf, i), false, READER_PTREE_TYPE(sf, i));
+    val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, i), 
+				   READER_PTREE_SCALER(sf, i) * val1, 
+				   READER_PTREE_CLOSURE(sf, i), false, READER_PTREE_TYPE(sf, i));
   return(val1);
 }
 
@@ -1170,13 +1170,13 @@ static Float next_ptree_xramp_value(snd_fd *sf)
 {
   Float val1;
   int i;
-  val1 = evaluate_ptreec(READER_PTREE(sf, 0), 
-			 sf->data[sf->loc++] * READER_PTREE_SCALER(sf, 0) * next_xramp_value(sf), 
-			 READER_PTREE_CLOSURE(sf, 0), true, READER_PTREE_TYPE(sf, 0));
+  val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, 0), 
+				 sf->data[sf->loc++] * READER_PTREE_SCALER(sf, 0) * next_xramp_value(sf), 
+				 READER_PTREE_CLOSURE(sf, 0), true, READER_PTREE_TYPE(sf, 0));
   for (i = 1; (i < READER_PTREE_LIST_SIZE(sf)) && (READER_PTREE(sf, i)); i++)
-    val1 = evaluate_ptreec(READER_PTREE(sf, i), 
-			   READER_PTREE_SCALER(sf, i) * val1, 
-			   READER_PTREE_CLOSURE(sf, i), true, READER_PTREE_TYPE(sf, i));
+    val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, i), 
+				   READER_PTREE_SCALER(sf, i) * val1, 
+				   READER_PTREE_CLOSURE(sf, i), true, READER_PTREE_TYPE(sf, i));
   return(val1);
 }
 
@@ -1184,13 +1184,13 @@ static Float previous_ptree_xramp_value(snd_fd *sf)
 {
   Float val1;
   int i;
-  val1 = evaluate_ptreec(READER_PTREE(sf, 0), 
-			 sf->data[sf->loc--] * READER_PTREE_SCALER(sf, 0) * previous_xramp_value(sf), 
-			 READER_PTREE_CLOSURE(sf, 0), false, READER_PTREE_TYPE(sf, 0));
+  val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, 0), 
+				 sf->data[sf->loc--] * READER_PTREE_SCALER(sf, 0) * previous_xramp_value(sf), 
+				 READER_PTREE_CLOSURE(sf, 0), false, READER_PTREE_TYPE(sf, 0));
   for (i = 1; (i < READER_PTREE_LIST_SIZE(sf)) && (READER_PTREE(sf, i)); i++)
-    val1 = evaluate_ptreec(READER_PTREE(sf, i), 
-			   READER_PTREE_SCALER(sf, i) * val1, 
-			   READER_PTREE_CLOSURE(sf, i), false, READER_PTREE_TYPE(sf, i));
+    val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, i), 
+				   READER_PTREE_SCALER(sf, i) * val1, 
+				   READER_PTREE_CLOSURE(sf, i), false, READER_PTREE_TYPE(sf, i));
   return(val1);
 }
 
@@ -1500,9 +1500,9 @@ static Float next_ptree_to_split_value(snd_fd *sf)
     val1 = sf->data[sf->loc];
   sf->loc++;
   for (i = 0; (i < READER_PSPLIT(sf)) && (READER_PTREE(sf, i)); i++)
-    val1 = evaluate_ptreec(READER_PTREE(sf, i), 
-			   READER_PTREE_SCALER(sf, i) * val1, 
-			   READER_PTREE_CLOSURE(sf, i), true, READER_PTREE_TYPE(sf, i));
+    val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, i), 
+				   READER_PTREE_SCALER(sf, i) * val1, 
+				   READER_PTREE_CLOSURE(sf, i), true, READER_PTREE_TYPE(sf, i));
   return(val1);
 }
 
@@ -1514,9 +1514,9 @@ static Float previous_ptree_to_split_value(snd_fd *sf)
     val1 = sf->data[sf->loc];
   sf->loc--;
   for (i = 0; (i < READER_PSPLIT(sf)) && (READER_PTREE(sf, i)); i++)
-    val1 = evaluate_ptreec(READER_PTREE(sf, i), 
-			   READER_PTREE_SCALER(sf, i) * val1, 
-			   READER_PTREE_CLOSURE(sf, i), false, READER_PTREE_TYPE(sf, i));
+    val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, i), 
+				   READER_PTREE_SCALER(sf, i) * val1, 
+				   READER_PTREE_CLOSURE(sf, i), false, READER_PTREE_TYPE(sf, i));
   return(val1);
 }
 
@@ -1525,9 +1525,9 @@ static Float next_ptree_from_split_value(snd_fd *sf, Float val1)
 {
   int i;
   for (i = READER_PSPLIT(sf); (i < READER_PTREE_LIST_SIZE(sf)) && (READER_PTREE(sf, i)); i++)
-    val1 = evaluate_ptreec(READER_PTREE(sf, i), 
-			   READER_PTREE_SCALER(sf, i) * val1, 
-			   READER_PTREE_CLOSURE(sf, i), true, READER_PTREE_TYPE(sf, i));
+    val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, i), 
+				   READER_PTREE_SCALER(sf, i) * val1, 
+				   READER_PTREE_CLOSURE(sf, i), true, READER_PTREE_TYPE(sf, i));
   return(val1);
 }
 
@@ -1535,9 +1535,9 @@ static Float previous_ptree_from_split_value(snd_fd *sf, Float val1)
 {
   int i;
   for (i = READER_PSPLIT(sf); (i < READER_PTREE_LIST_SIZE(sf)) && (READER_PTREE(sf, i)); i++)
-    val1 = evaluate_ptreec(READER_PTREE(sf, i), 
-			   READER_PTREE_SCALER(sf, i) * val1, 
-			   READER_PTREE_CLOSURE(sf, i), false, READER_PTREE_TYPE(sf, i));
+    val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, i), 
+				   READER_PTREE_SCALER(sf, i) * val1, 
+				   READER_PTREE_CLOSURE(sf, i), false, READER_PTREE_TYPE(sf, i));
   return(val1);
 }
 
@@ -1564,13 +1564,13 @@ static Float next_ptree_to_split_ramp_f_value(snd_fd *sf)
 {
   Float val1;
   int i;
-  val1 = evaluate_ptreec(READER_PTREE(sf, 0), 
-			 (*(READER_RAMPF(sf)))(sf) * READER_PTREE_SCALER(sf, 0) * sf->data[sf->loc++], 
-			 READER_PTREE_CLOSURE(sf, 0), true, READER_PTREE_TYPE(sf, 0));
+  val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, 0), 
+				 (*(READER_RAMPF(sf)))(sf) * READER_PTREE_SCALER(sf, 0) * sf->data[sf->loc++], 
+				 READER_PTREE_CLOSURE(sf, 0), true, READER_PTREE_TYPE(sf, 0));
   for (i = 1; (i < READER_PSPLIT(sf)) && (READER_PTREE(sf, i)); i++)
-    val1 = evaluate_ptreec(READER_PTREE(sf, i), 
-			   READER_PTREE_SCALER(sf, i) * val1, 
-			   READER_PTREE_CLOSURE(sf, i), true, READER_PTREE_TYPE(sf, i));
+    val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, i), 
+				   READER_PTREE_SCALER(sf, i) * val1, 
+				   READER_PTREE_CLOSURE(sf, i), true, READER_PTREE_TYPE(sf, i));
   return(val1);
 }
 
@@ -1578,13 +1578,13 @@ static Float previous_ptree_to_split_ramp_f_value(snd_fd *sf)
 {
   Float val1;
   int i;
-  val1 = evaluate_ptreec(READER_PTREE(sf, 0), 
-			 (*(READER_REV_RAMPF(sf)))(sf) * READER_PTREE_SCALER(sf, 0) * sf->data[sf->loc--], 
-			 READER_PTREE_CLOSURE(sf, 0), false, READER_PTREE_TYPE(sf, 0));
+  val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, 0), 
+				 (*(READER_REV_RAMPF(sf)))(sf) * READER_PTREE_SCALER(sf, 0) * sf->data[sf->loc--], 
+				 READER_PTREE_CLOSURE(sf, 0), false, READER_PTREE_TYPE(sf, 0));
   for (i = 1; (i < READER_PSPLIT(sf)) && (READER_PTREE(sf, i)); i++)
-    val1 = evaluate_ptreec(READER_PTREE(sf, i), 
-			   READER_PTREE_SCALER(sf, i) * val1, 
-			   READER_PTREE_CLOSURE(sf, i), false, READER_PTREE_TYPE(sf, i));
+    val1 = mus_run_evaluate_ptreec(READER_PTREE(sf, i), 
+				   READER_PTREE_SCALER(sf, i) * val1, 
+				   READER_PTREE_CLOSURE(sf, i), false, READER_PTREE_TYPE(sf, i));
   return(val1);
 }
 
@@ -2290,7 +2290,7 @@ static void get_sf_closure(snd_fd *sf, int pt)
       if (XEN_BOUND_P(READER_PTREE_CLOSURE(sf, pt)))
 	{
 	  READER_PTREE_GC_LOC(sf, pt) = snd_protect(READER_PTREE_CLOSURE(sf, pt));
-	  READER_PTREE_TYPE(sf, pt) = xen_to_run_type(READER_PTREE_CLOSURE(sf, pt));
+	  READER_PTREE_TYPE(sf, pt) = mus_run_xen_to_run_type(READER_PTREE_CLOSURE(sf, pt));
 	}
     }
 }
@@ -2625,7 +2625,7 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool 
 #if HAVE_S7
 		  char *temp2 = NULL;
 #endif
-		  code = ptree_code(cp->ptrees[FRAGMENT_PTREE_INDEX(ed, j, 0)]);
+		  code = mus_run_ptree_code(cp->ptrees[FRAGMENT_PTREE_INDEX(ed, j, 0)]);
 		  if (XEN_LIST_P(code))
 		    fprintf(outp, ", code: %s", temp1 = XEN_AS_STRING(code));
 #if HAVE_GUILE
@@ -2898,14 +2898,14 @@ io_error_t channel_to_file_with_settings(chan_info *cp, const char *new_name, in
   hdr->srate = srate;
   hdr->type = type;
   if (comment) 
-    hdr->comment = copy_string(comment); 
+    hdr->comment = mus_strdup(comment); 
   else hdr->comment = NULL;
   hdr->data_location = 0; /* in case comment changes it */
 
   if (pos == AT_CURRENT_EDIT_POSITION)
     pos = cp->edit_ctr;
 
-  if ((snd_strcmp(new_name, sp->filename)) &&      /* overwriting current file with one of its channels */
+  if ((mus_strcmp(new_name, sp->filename)) &&      /* overwriting current file with one of its channels */
       ((sp->user_read_only == FILE_READ_ONLY) || 
        (sp->file_read_only == FILE_READ_ONLY)))
     {
@@ -2930,7 +2930,7 @@ io_error_t channel_to_file_with_settings(chan_info *cp, const char *new_name, in
 static void fprintf_with_possible_embedded_string(FILE *fd, const char *str)
 {
   int i, len;
-  len = snd_strlen(str);
+  len = mus_strlen(str);
   fputc('"', fd);
   for (i = 0; i < len; i++)
     {
@@ -3255,7 +3255,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 			      cp->chan);
 		    else fprintf(fd, "%s" PROC_OPEN "%s" PROC_SEP OFF_TD PROC_SEP  OFF_TD PROC_SEP "sfile" PROC_SEP "%d",
 				 TO_PROC_NAME(S_ptree_channel),
-				 temp = XEN_AS_STRING(ptree_code(cp->ptrees[ed->ptree_location])),
+				 temp = XEN_AS_STRING(mus_run_ptree_code(cp->ptrees[ed->ptree_location])),
 				 ed->beg,
 				 ed->len,
 				 cp->chan);
@@ -3377,7 +3377,7 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
     edits++;
   if ((end_pos > 0) && (end_pos < edits)) edits = end_pos;
   if (start_pos > edits)
-    return(copy_string("(lambda (snd chn) #f)"));
+    return(mus_strdup("(lambda (snd chn) #f)"));
   if (channel_has_mixes(cp))
     {
       char *mix_list;
@@ -3388,9 +3388,9 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 	  function = mus_format("(lambda (snd chn) (let (%s)", mix_list);
 	  FREE(mix_list);
 	}
-      else function = copy_string("(lambda (snd chn)");
+      else function = mus_strdup("(lambda (snd chn)");
     }
-  else function = copy_string("(lambda (snd chn)");
+  else function = mus_strdup("(lambda (snd chn)");
   for (i = start_pos; i <= edits; i++)
     {
       ed = cp->edits[i];
@@ -3467,11 +3467,11 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 		    {
 		      char *durstr, *temp = NULL;
 		      if (ed->len == cp->edits[i]->samples)
-			durstr = copy_string("#f");
+			durstr = mus_strdup("#f");
 		      else durstr = mus_format(OFF_TD, ed->len);
 		      function = mus_format("%s (%s %s " OFF_TD " %s snd chn)",
 					    function, S_ptree_channel,
-					    temp = XEN_AS_STRING(ptree_code(cp->ptrees[ed->ptree_location])),
+					    temp = XEN_AS_STRING(mus_run_ptree_code(cp->ptrees[ed->ptree_location])),
 					    ed->beg, durstr);
 		      FREE(durstr);
 #if HAVE_S7
@@ -3522,7 +3522,7 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
     edits++;
   if ((end_pos > 0) && (end_pos < edits)) edits = end_pos;
   if (start_pos > edits)
-    return(copy_string("Proc.new {|snd, chn| false }"));
+    return(mus_strdup("Proc.new {|snd, chn| false }"));
   if (channel_has_mixes(cp))
     {
       char *mix_list;
@@ -3533,9 +3533,9 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 	  function = mus_format("Proc.new {|snd, chn| %s; ", mix_list);
 	  FREE(mix_list);
 	}
-      else function = copy_string("Proc.new {|snd, chn| ");
+      else function = mus_strdup("Proc.new {|snd, chn| ");
     }
-  else function = copy_string("Proc.new {|snd, chn| ");
+  else function = mus_strdup("Proc.new {|snd, chn| ");
   for (i = start_pos; i <= edits; i++)
     {
       ed = cp->edits[i];
@@ -3553,7 +3553,7 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
  					 function,
  					 (first) ? "" : ";",
  					 ed->origin,
- 					 (ed->origin[snd_strlen(ed->origin) - 1] == '(') ? "" : ", ");
+ 					 (ed->origin[mus_strlen(ed->origin) - 1] == '(') ? "" : ", ");
   	    }
 	  else
 	    {
@@ -3593,7 +3593,7 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
  					     function,
  					     (first) ? "" : ";",
  					     ed->origin,
- 					     (ed->origin[snd_strlen(ed->origin) - 1] == '(') ? "" : ", ");
+ 					     (ed->origin[mus_strlen(ed->origin) - 1] == '(') ? "" : ", ");
 		  break;
 
 		case DELETION_EDIT:
@@ -3653,7 +3653,7 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
     edits++;
   if ((end_pos > 0) && (end_pos < edits)) edits = end_pos;
   if (start_pos > edits)
-    return(copy_string("lambda: <{ snd chn -- val }> #f ;"));
+    return(mus_strdup("lambda: <{ snd chn -- val }> #f ;"));
   if (channel_has_mixes(cp))
     {
       char *mix_list;
@@ -3664,9 +3664,9 @@ static char *edit_list_to_function(chan_info *cp, int start_pos, int end_pos)
 	  function = mus_format("lambda: <{ snd chn -- val }> %s", mix_list);
 	  FREE(mix_list);
 	}
-      else function = copy_string("lambda: <{ snd chn -- val }>");
+      else function = mus_strdup("lambda: <{ snd chn -- val }>");
     }
-  else function = copy_string("lambda: <{ snd chn -- val }>");
+  else function = mus_strdup("lambda: <{ snd chn -- val }>");
   for (i = start_pos; i <= edits; i++)
     {
       ed = cp->edits[i];
@@ -4036,7 +4036,7 @@ static ed_list *free_ed_list(ed_list *ed, chan_info *cp)
 	  loc = ed->ptree_location;
 	  if (cp->ptrees[loc])
 	    {
-	      free_ptree(cp->ptrees[loc]);
+	      mus_run_free_ptree(cp->ptrees[loc]);
 	      cp->ptrees[loc] = NULL;
 	    }
 	  if (XEN_PROCEDURE_P(cp->ptree_inits[loc]))
@@ -4391,7 +4391,7 @@ static bool lock_affected_mixes(chan_info *cp, int edpos, off_t beg, off_t end)
 	      if (full_file)
 		{
 		  new_ed = initial_ed_list(0, change_end);
-		  new_ed->origin = copy_string("lock mixes");
+		  new_ed->origin = mus_strdup("lock mixes");
 		  new_ed->edpos = edpos;
 		  cb = FRAGMENT(new_ed, 0);
 		}
@@ -4493,7 +4493,7 @@ static ed_list *insert_section_into_list(off_t samp, off_t num, ed_list *current
   new_state->size = new_i;
   new_state->beg = samp;
   new_state->len = num;
-  if (origin) new_state->origin = copy_string(origin);
+  if (origin) new_state->origin = mus_strdup(origin);
   return(new_state);
 }
 
@@ -4592,7 +4592,7 @@ bool extend_with_zeros(chan_info *cp, off_t beg, off_t num, int edpos, const cha
   new_ed->len = num;
   new_ed->samples = new_len;
   new_ed->cursor = old_ed->cursor;
-  new_ed->origin = copy_string(origin);
+  new_ed->origin = mus_strdup(origin);
   new_ed->edpos = edpos;
   new_ed->selection_beg = old_ed->selection_beg;
   new_ed->selection_end = old_ed->selection_end;
@@ -5087,8 +5087,8 @@ bool file_override_samples(off_t num, const char *tempfile, chan_info *cp, int c
       during_open(fd, tempfile, SND_OVERRIDE_FILE);
       e = initial_ed_list(0, num - 1);
       if (origin) 
-	e->origin = copy_string(origin);
-      else e->origin = copy_string("file change samples");
+	e->origin = mus_strdup(origin);
+      else e->origin = mus_strdup("file change samples");
       e->edit_type = CHANGE_EDIT;
       e->edpos = cp->edit_ctr - 1;
       e->samples = num;
@@ -5563,7 +5563,7 @@ bool scale_channel_with_origin(chan_info *cp, Float scl, off_t beg, off_t num, i
   new_ed->edit_type = SCALED_EDIT;
   new_ed->sound_location = 0;
   if (origin)
-    new_ed->origin = copy_string(origin);
+    new_ed->origin = mus_strdup(origin);
   else
     {
       if (num == len)
@@ -5878,7 +5878,7 @@ void ptree_channel(chan_info *cp, struct ptree *tree, off_t beg, off_t num, int 
     {
       if (tree) 
 	{
-	  free_ptree(tree);
+	  mus_run_free_ptree(tree);
 	  tree = NULL;
 	}
       return; 
@@ -5888,7 +5888,7 @@ void ptree_channel(chan_info *cp, struct ptree *tree, off_t beg, off_t num, int 
   if (pos > cp->edit_ctr)
     {
       /* prepare_edit_list will throw 'no-such-edit, but we need to clean up the ptree first */
-      free_ptree(tree);
+      mus_run_free_ptree(tree);
       tree = NULL;
     }
 
@@ -5897,7 +5897,7 @@ void ptree_channel(chan_info *cp, struct ptree *tree, off_t beg, off_t num, int 
       /* perhaps edit-hook blocked the edit */
       if (tree) 
 	{
-	  free_ptree(tree);
+	  mus_run_free_ptree(tree);
 	  tree = NULL;
 	}
       return;
@@ -5981,7 +5981,7 @@ void ptree_channel(chan_info *cp, struct ptree *tree, off_t beg, off_t num, int 
   new_ed->edit_type = PTREE_EDIT;
   new_ed->sound_location = 0;
   new_ed->ptree_location = ptree_loc;
-  new_ed->origin = copy_string(origin);
+  new_ed->origin = mus_strdup(origin);
   new_ed->edpos = pos;
   new_ed->ptree_env_too = env_it;
   new_ed->selection_beg = old_ed->selection_beg;
@@ -6516,7 +6516,7 @@ void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
   new_ed->cursor = old_ed->cursor;
   new_ed->beg = 0;
   new_ed->len = old_ed->len;
-  new_ed->origin = copy_string(TO_PROC_NAME(S_swap_channels));
+  new_ed->origin = mus_strdup(TO_PROC_NAME(S_swap_channels));
   cp0->edits[cp0->edit_ctr] = new_ed;
   if (new_ed->len > 0)
     for (i = 0; i < new_ed->size; i++) 
@@ -6535,7 +6535,7 @@ void copy_then_swap_channels(chan_info *cp0, chan_info *cp1, int pos0, int pos1)
   new_ed->len = old_ed->len;
   new_ed->samples = old_ed->samples;
   new_ed->cursor = old_ed->cursor;
-  new_ed->origin = copy_string(TO_PROC_NAME(S_swap_channels)); /* swap = stored change-edit at restore time, so no redundancy here */
+  new_ed->origin = mus_strdup(TO_PROC_NAME(S_swap_channels)); /* swap = stored change-edit at restore time, so no redundancy here */
   cp1->edits[cp1->edit_ctr] = new_ed;
   if (new_ed->len > 0)
     for (i = 0; i < new_ed->size; i++) 
@@ -6705,7 +6705,7 @@ io_error_t save_edits_without_display(snd_info *sp, const char *new_name, int ty
   hdr->srate = srate;
   hdr->type = type;
   if (comment) 
-    hdr->comment = copy_string(comment); 
+    hdr->comment = mus_strdup(comment); 
   else hdr->comment = NULL;
   hdr->data_location = 0; /* in case comment changes it */
 
@@ -6750,7 +6750,7 @@ io_error_t save_channel_edits(chan_info *cp, const char *ofile, int pos)
   sp = cp->sound;
   if (pos == AT_CURRENT_EDIT_POSITION) 
     pos = cp->edit_ctr;
-  if (snd_strcmp(ofile, sp->filename))        /* overwriting current file with one of its channels */
+  if (mus_strcmp(ofile, sp->filename))        /* overwriting current file with one of its channels */
     {
       char *nfile = NULL;
       if ((sp->user_read_only == FILE_READ_ONLY) || 
@@ -7141,7 +7141,7 @@ int mix_file_with_tag(chan_info *cp, const char *filename, int chan, off_t beg, 
   ms = prepare_mix_state_for_channel(cp, mix_loc, beg, file_len);
   new_ed = make_mix_edit(old_ed, beg, file_len, ms, ((beg == 0) && (file_len >= old_len)));
   new_ed->samples = new_len;
-  new_ed->origin = copy_string(origin);
+  new_ed->origin = mus_strdup(origin);
   new_ed->edpos = edpos;
   cp->edits[cp->edit_ctr] = new_ed;
   add_ed_mix(cp->edits[cp->edit_ctr], ms);
@@ -7194,7 +7194,7 @@ int mix_buffer_with_tag(chan_info *cp, mus_sample_t *data, off_t beg, off_t buf_
   ms = prepare_mix_state_for_channel(cp, mix_loc, beg, buf_len);
   new_ed = make_mix_edit(old_ed, beg, buf_len, ms, ((beg == 0) && (buf_len >= old_len)));
   new_ed->samples = new_len;
-  new_ed->origin = copy_string(origin);
+  new_ed->origin = mus_strdup(origin);
   new_ed->edpos = edpos;
   cp->edits[cp->edit_ctr] = new_ed;
   add_ed_mix(cp->edits[cp->edit_ctr], ms);
@@ -7509,7 +7509,7 @@ bool begin_mix_op(chan_info *cp, off_t old_beg, off_t old_len, off_t new_beg, of
   new_ed->cursor = old_ed->cursor;
   new_ed->edit_type = CHANGE_MIX_EDIT;
   new_ed->sound_location = old_ed->sound_location;
-  new_ed->origin = copy_string(caller);
+  new_ed->origin = mus_strdup(caller);
   new_ed->edpos = edpos;
   new_ed->selection_beg = old_ed->selection_beg;
   new_ed->selection_end = old_ed->selection_end;
@@ -8345,7 +8345,7 @@ static void as_one_edit_set_origin(chan_info *cp, void *origin)
 	  if (ed)
 	    {
 	      if (ed->origin) FREE(ed->origin);
-	      ed->origin = copy_string((char *)origin);
+	      ed->origin = mus_strdup((char *)origin);
 	    }
 	}
     }
@@ -8409,7 +8409,7 @@ static XEN g_as_one_edit(XEN proc, XEN origin)
     }
 
   if (XEN_STRING_P(origin))
-	as_one_edit_origin = copy_string(XEN_TO_C_STRING(origin));
+	as_one_edit_origin = mus_strdup(XEN_TO_C_STRING(origin));
       else as_one_edit_origin = NULL;
 #if HAVE_GUILE_DYNAMIC_WIND
   result = scm_internal_dynamic_wind((scm_t_guard)before_as_one_edit, 
@@ -9269,7 +9269,7 @@ insert data (either a vct, a list of samples, or a filename) into snd's channel 
   delete_file = xen_to_file_delete_t(auto_delete, S_insert_samples);
 
   if (XEN_STRING_P(caller))
-    origin = copy_string(XEN_TO_C_STRING(caller));
+    origin = mus_strdup(XEN_TO_C_STRING(caller));
   if (XEN_STRING_P(vect))
     {
       char *filename;
@@ -9296,7 +9296,7 @@ insert data (either a vct, a list of samples, or a filename) into snd's channel 
 	  vct *v;
 	  v = XEN_TO_VCT(vect);
 	  if (len > v->length) len = v->length;
-	  if (!origin) origin = copy_string(TO_PROC_NAME(S_insert_samples));
+	  if (!origin) origin = mus_strdup(TO_PROC_NAME(S_insert_samples));
 	  insert_samples(beg, len, v->data, cp, origin, pos);
 	}
       else
@@ -9308,7 +9308,7 @@ insert data (either a vct, a list of samples, or a filename) into snd's channel 
 	  ivals = g_floats_to_samples(vect, &ilen, S_insert_samples, 3);
 	  if (ivals)
 	    {
-	      if (!origin) origin = copy_string(TO_PROC_NAME(S_insert_samples));
+	      if (!origin) origin = mus_strdup(TO_PROC_NAME(S_insert_samples));
 	      insert_samples(beg, (off_t)ilen, ivals, cp, origin, pos);
 	      FREE(ivals);
 	    }
@@ -9458,7 +9458,7 @@ static char *snd_to_sample_describe(mus_any *ptr)
 	    temp = sample_reader_to_string(spl->sfs[i]);
 	    if (temp)
 	      {
-		len += snd_strlen(temp);
+		len += mus_strlen(temp);
 		FREE(temp);
 	      }
 	  }

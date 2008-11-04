@@ -731,7 +731,7 @@ int define_region(sync_info *si, off_t *ends)
   r->maxamp = -1.0;
   r->maxamp_position = -1;
   r->editor_copy = NULL;
-  r->name = copy_string(sp0->short_filename);
+  r->name = mus_strdup(sp0->short_filename);
   r->chans = si->chans;
   r->frames = len;
   r->start = prettyf((double)(si->begs[0]) / (double)(r->srate), 2);
@@ -1127,7 +1127,7 @@ void region_edit(int pos)
 	      if (sp)
 		{
 		  r->editor_copy = sp;
-		  r->editor_name = copy_string(temp_region_name);
+		  r->editor_name = mus_strdup(temp_region_name);
 		  sp->edited_region = r;
 		  /* save backpointer so subsequent save affects region if still legit */
 		  /* also, since it's a temp file, if closed, delete temp */
@@ -1345,11 +1345,11 @@ static XEN g_restore_region(XEN pos, XEN chans, XEN len, XEN srate, XEN maxamp, 
   r->editor_name = NULL;
   r->frames = XEN_TO_C_OFF_T(len);
   r->srate = XEN_TO_C_INT(srate);
-  r->name = copy_string(XEN_TO_C_STRING(name));
-  r->start = copy_string(XEN_TO_C_STRING(start));
-  r->end = copy_string(XEN_TO_C_STRING(end));
+  r->name = mus_strdup(XEN_TO_C_STRING(name));
+  r->start = mus_strdup(XEN_TO_C_STRING(start));
+  r->end = mus_strdup(XEN_TO_C_STRING(end));
   r->use_temp_file = REGION_FILE;
-  r->filename = copy_string(XEN_TO_C_STRING(filename));
+  r->filename = mus_strdup(XEN_TO_C_STRING(filename));
 
   reflect_regions_in_region_browser();
   return(C_TO_XEN_INT(r->id));

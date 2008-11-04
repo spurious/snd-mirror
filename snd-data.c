@@ -333,7 +333,7 @@ snd_info *make_snd_info(snd_info *sip, const char *filename, file_info *hdr, int
   sp->nchans = chans;
   sp->hdr = hdr;
   sp->inuse = SOUND_NORMAL;
-  sp->filename = copy_string(filename);
+  sp->filename = mus_strdup(filename);
   sp->short_filename = filename_without_directory(sp->filename); /* a pointer into filename, not a new string */
   sp->sync = DEFAULT_SYNC;
   sp->previous_sync = sp->sync;
@@ -1028,9 +1028,9 @@ snd_info *find_sound(const char *name, int nth)
       snd_info *sp;
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse == SOUND_NORMAL))
-	if ((snd_strcmp(name, sp->short_filename)) || 
-	    (snd_strcmp(name, sp->filename)) ||
-	    (snd_strcmp(sname, sp->short_filename)))
+	if ((mus_strcmp(name, sp->short_filename)) || 
+	    (mus_strcmp(name, sp->filename)) ||
+	    (mus_strcmp(sname, sp->short_filename)))
 	  {
 	    if (which == nth) return(sp);
 	    which++;
@@ -1054,8 +1054,8 @@ static char *display_maxamps(const char *filename, int chans)
   mus_sound_maxamps(filename, chans, vals, times);
   for (i = 0; i < chans; i++)
     {
-      ampstr = snd_strcat(ampstr, prettyf(MUS_SAMPLE_TO_DOUBLE(vals[i]), 3), &len);
-      ampstr = snd_strcat(ampstr, " ", &len);
+      ampstr = mus_strcat(ampstr, prettyf(MUS_SAMPLE_TO_DOUBLE(vals[i]), 3), &len);
+      ampstr = mus_strcat(ampstr, " ", &len);
     }
   FREE(vals);
   FREE(times);

@@ -212,8 +212,8 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->Show_Indices = DEFAULT_SHOW_INDICES;
   ss->Show_Backtrace = DEFAULT_SHOW_BACKTRACE;
 
-  ss->Listener_Prompt = copy_string(DEFAULT_LISTENER_PROMPT);
-  ss->listener_prompt_length = snd_strlen(ss->Listener_Prompt);
+  ss->Listener_Prompt = mus_strdup(DEFAULT_LISTENER_PROMPT);
+  ss->listener_prompt_length = mus_strlen(ss->Listener_Prompt);
   ss->Minibuffer_History_Length = DEFAULT_MINIBUFFER_HISTORY_LENGTH;
 
   ss->Clipping = DEFAULT_CLIPPING;
@@ -224,8 +224,8 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->Just_Sounds = DEFAULT_JUST_SOUNDS;
   ss->Open_File_Dialog_Directory = NULL;
 
-  ss->HTML_Dir = copy_string(DEFAULT_HTML_DIR);
-  ss->HTML_Program = copy_string(DEFAULT_HTML_PROGRAM);
+  ss->HTML_Dir = mus_strdup(DEFAULT_HTML_DIR);
+  ss->HTML_Program = mus_strdup(DEFAULT_HTML_PROGRAM);
 
   ss->Cursor_Size = DEFAULT_CURSOR_SIZE;
   ss->Cursor_Style = DEFAULT_CURSOR_STYLE;
@@ -268,19 +268,19 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->Spectro_Start = DEFAULT_SPECTRO_START;
 
   if (MUS_DEFAULT_TEMP_DIR != (char *)NULL) 
-    ss->Temp_Dir = copy_string(MUS_DEFAULT_TEMP_DIR); 
+    ss->Temp_Dir = mus_strdup(MUS_DEFAULT_TEMP_DIR); 
   else ss->Temp_Dir = NULL;
   
   if (MUS_DEFAULT_SAVE_DIR != (char *)NULL) 
-    ss->Save_Dir = copy_string(MUS_DEFAULT_SAVE_DIR); 
+    ss->Save_Dir = mus_strdup(MUS_DEFAULT_SAVE_DIR); 
   else ss->Save_Dir = NULL;
 
   if (DEFAULT_LADSPA_DIR != (char *)NULL) 
-    ss->Ladspa_Dir = copy_string(DEFAULT_LADSPA_DIR); 
+    ss->Ladspa_Dir = mus_strdup(DEFAULT_LADSPA_DIR); 
   else ss->Ladspa_Dir = NULL;
 
   if (DEFAULT_SAVE_STATE_FILE != (char *)NULL) 
-    ss->Save_State_File = copy_string(DEFAULT_SAVE_STATE_FILE); 
+    ss->Save_State_File = mus_strdup(DEFAULT_SAVE_STATE_FILE); 
   else ss->Save_State_File = NULL;
 
   ss->Enved_Base = DEFAULT_ENVED_BASE;
@@ -295,7 +295,7 @@ void snd_set_global_defaults(bool need_cleanup)
   ss->Eps_Size = DEFAULT_EPS_SIZE;
 
   if (DEFAULT_EPS_FILE != (char *)NULL) 
-    ss->Eps_File = copy_string(DEFAULT_EPS_FILE);
+    ss->Eps_File = mus_strdup(DEFAULT_EPS_FILE);
   else ss->Eps_File = NULL;
 
   ss->Expand_Control_Min = DEFAULT_EXPAND_CONTROL_MIN;

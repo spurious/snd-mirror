@@ -689,7 +689,7 @@ static void watch_edit_history_sash(Widget w, XtPointer closure, XtPointer info)
   SashCallData call_data = (SashCallData)info;
   /* call_data->params[0]: Commit, Move, Key, Start (as strings) */
   if ((call_data->params) && 
-      (snd_strcmp(call_data->params[0], "Start")))
+      (mus_strcmp(call_data->params[0], "Start")))
     {
       chan_info *cp = (chan_info *)closure;
       Widget edhist;

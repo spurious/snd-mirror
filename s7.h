@@ -576,7 +576,7 @@ int main(int argc, char **argv)
     }
 }
 
-/* gcc -o doc7 doc7.c s7.o -lm -I. /home/bil/test/sndlib/sndlib.a -lgsl -lgslcblas 
+/* gcc -o doc7 doc7.c -lm -I. /home/bil/test/sndlib/sndlib.a -lgsl -lgslcblas 
  *
  *   gsl and gslcblas are the Gnu Scientific Library that the configure script found -- those 
  *   may not be necessary on other systems

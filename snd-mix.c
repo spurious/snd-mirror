@@ -357,7 +357,7 @@ int mix_file(off_t beg, off_t num, int chans, chan_info **cps, const char *mixin
 	  /* not a virtual mix */
 	  if (!origin)
 	    new_origin = untagged_mix_to_string(mixinfile, beg, start_chan + i, temp != DONT_DELETE_ME);
-	  else new_origin = copy_string(origin);
+	  else new_origin = mus_strdup(origin);
 	  mix_file_untagged(mixinfile, i + start_chan, cp, beg, num, temp, new_origin);
 	}
       else 
@@ -366,7 +366,7 @@ int mix_file(off_t beg, off_t num, int chans, chan_info **cps, const char *mixin
 	  int cur_id;
 	  if (!origin)
 	    new_origin = tagged_mix_to_string(mixinfile, beg, start_chan + i, temp != DONT_DELETE_ME);
-	  else new_origin = copy_string(origin);
+	  else new_origin = mus_strdup(origin);
 	  cur_id = mix_file_with_tag(cp, mixinfile, i + start_chan, beg, temp, new_origin);
 	  if (id == MIX_FILE_NO_MIX) id = cur_id;
 	}
@@ -729,7 +729,7 @@ int mix_name_to_id(const char *name)
   selected_cp = selected_channel();
   for (i = 0; i < mix_infos_size; i++)
     if ((mix_infos[i]) &&
-	(snd_strcmp(mix_infos[i]->name, name)))
+	(mus_strcmp(mix_infos[i]->name, name)))
       {
 	if ((!selected_cp) ||
 	    (mix_infos[i]->cp == selected_cp))  /* try to find mix in the currently selected channel (possible name collisions) */
@@ -1035,7 +1035,7 @@ static char *mix_set_name_from_id(int id, const char *new_name)
   if (md)
     {
       if (md->name) FREE(md->name);
-      md->name = copy_string(new_name);
+      md->name = mus_strdup(new_name);
     }
   return(0);
 }
@@ -1573,7 +1573,7 @@ static void draw_mix_tag(mix_info *md, int x, int y)
   if (cp->printing) ps_set_tiny_numbers_font();
 
   if (md->name)
-    lab = copy_string(md->name);
+    lab = mus_strdup(md->name);
   else
     {
       lab = (char *)CALLOC(16, sizeof(char));
@@ -2936,7 +2936,7 @@ auto-delete is " PROC_TRUE ", the input file is deleted when it is no longer nee
 	      {
 		md = md_from_id(id);
 		if (!md->in_filename)
-		  md->in_filename = copy_string(name);
+		  md->in_filename = mus_strdup(name);
 	      }
 	  }
 	FREE(origin);

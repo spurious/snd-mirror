@@ -190,7 +190,7 @@ static void view_files_item_callback(Widget w, XtPointer context, XtPointer info
 {
   char *dirname;
   dirname = get_label(w);
-  if (snd_strcmp(dirname, _("new viewer")))
+  if (mus_strcmp(dirname, _("new viewer")))
     start_view_files_dialog(true, true); /* managed and empty (brand-new) */
   else view_files_start_dialog_with_title(dirname);
 }
@@ -215,7 +215,7 @@ static void view_files_callback(Widget w, XtPointer info, XtPointer context)
 	return;
 
       view_files_names = view_files_dialog_titles();
-      view_files_names[size++] = copy_string(_("new viewer"));
+      view_files_names[size++] = mus_strdup(_("new viewer"));
 
       if (size > view_files_items_size)
 	{
@@ -1108,7 +1108,7 @@ static bool clobber_menu(Widget w, const char *name)
   char *wname;
   wname = XtName(w);
   if ((wname) && 
-      (snd_strcmp(name, wname)) &&
+      (mus_strcmp(name, wname)) &&
       (XtIsManaged(w)))
     {
       int slot;
@@ -1189,7 +1189,7 @@ Widget g_add_to_menu(int which_menu, const char *label, int callb, int position)
 	      (m != file_open_recent_menu) &&
 	      (m != file_open_recent_cascade_menu))
 	    {
-	      if (!(snd_strcmp(XtName(m), label)))
+	      if (!(mus_strcmp(XtName(m), label)))
 		{
 		  set_widget_name(m, label);
 		  set_button_label(m, label);

@@ -575,6 +575,38 @@ off_t mus_set_max_malloc(off_t new_max);
 off_t mus_max_table_size(void);
 off_t mus_set_max_table_size(off_t new_max);
 
+char *mus_strdup(const char *str);
+int mus_strlen(const char *str);
+bool mus_strcmp(const char *str1, const char *str2);
+char *mus_strcat(char *errmsg, const char *str, int *err_size);
+
+
+#if HAVE_EXTENSION_LANGUAGE
+
+#include "xen.h"
+#include "vct.h"
+
+/* -------- run.c -------- */
+
+struct ptree *mus_run_form_to_ptree_1_b(XEN code);
+struct ptree *mus_run_form_to_ptree_1_b_without_env(XEN code);
+struct ptree *mus_run_form_to_ptree_1_f(XEN code);
+Float mus_run_evaluate_ptree_0f2f(struct ptree *pt);
+struct ptree *mus_run_form_to_ptree_0_f(XEN code);
+Float mus_run_evaluate_ptree_1f2f(struct ptree *pt, Float arg);
+int mus_run_evaluate_ptree_1f2b(struct ptree *pt, Float arg);
+void mus_run_free_ptree(struct ptree *pt);
+void mus_init_run(void);
+XEN mus_run_ptree_code(struct ptree *pt);
+Float mus_run_evaluate_ptree_1f1v1b2f(struct ptree *pt, Float arg, vct *v, bool dir);
+struct ptree *mus_run_form_to_ptree_3_f(XEN code);
+Float mus_run_evaluate_ptreec(struct ptree *pt, Float arg, XEN object, bool dir, int type);
+int mus_run_xen_to_run_type(XEN val);
+
+#endif
+
+
+
 
 /* -------- headers.c -------- */
 

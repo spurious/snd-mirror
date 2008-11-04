@@ -114,7 +114,7 @@ static cmap *new_cmap(const char *name, int size, Float **rgb)
 {
   cmap *c = NULL;
   c = (cmap *)CALLOC(1, sizeof(cmap));
-  c->name = copy_string(name);
+  c->name = mus_strdup(name);
   c->size = size;
   if (rgb)
     {
@@ -165,7 +165,7 @@ static bool add_colormap_func_hit_error = false;
 static void add_colormap_func_error(const char *msg, void *data)
 {
   add_colormap_func_hit_error = true;
-  add_colormap_func_error_msg = copy_string(msg); /* msg itself is freed by the error handler in snd-xen.c */
+  add_colormap_func_error_msg = mus_strdup(msg); /* msg itself is freed by the error handler in snd-xen.c */
 }
 
 

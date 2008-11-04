@@ -470,7 +470,7 @@ static void local_mus_error_to_snd(int type, char *msg)
 {
   local_mus_error = type;
   if (ss->io_error_info) FREE(ss->io_error_info);
-  ss->io_error_info = copy_string(msg);
+  ss->io_error_info = mus_strdup(msg);
 }
 
 
@@ -581,7 +581,7 @@ void remember_temp(const char *filename, int chans)
     {
       for (i = 0; i < tempfiles_size; i++)
 	if ((tempfiles[i]) &&
-	    (snd_strcmp(filename, tempfiles[i]->name)))
+	    (mus_strcmp(filename, tempfiles[i]->name)))
 	  {
 	    MUS_UNLOCK(&temp_file_lock);
 	    return;
@@ -603,7 +603,7 @@ void remember_temp(const char *filename, int chans)
 
   tmp = (tempfile_ctr *)CALLOC(1, sizeof(tempfile_ctr));
   tempfiles[i] = tmp;
-  tmp->name = copy_string(filename);
+  tmp->name = mus_strdup(filename);
   tmp->chans = chans;
   tmp->ticks = (int *)CALLOC(chans, sizeof(int));
 
@@ -619,7 +619,7 @@ void forget_temp(const char *filename, int chan)
       tempfile_ctr *tmp;
       tmp = tempfiles[i];
       if ((tmp) && 
-	  (snd_strcmp(filename, tmp->name)))
+	  (mus_strcmp(filename, tmp->name)))
 	{
 	  tmp->ticks[chan]--;
 	  for (j = 0; j < tmp->chans; j++)
@@ -647,7 +647,7 @@ static void tick_temp(const char *filename, int chan)
       tempfile_ctr *tmp;
       tmp = tempfiles[i];
       if ((tmp) && 
-	  (snd_strcmp(filename, tmp->name)))
+	  (mus_strcmp(filename, tmp->name)))
 	{
 	  tmp->ticks[chan]++;
 	  return;
@@ -675,7 +675,7 @@ snd_data *make_snd_data_file(const char *name, snd_io *io, file_info *hdr, file_
   sd->type = SND_DATA_FILE;
   sd->buffered_data = io->arrays[temp_chan];
   sd->io = io;
-  sd->filename = copy_string(name);
+  sd->filename = mus_strdup(name);
   sd->hdr = hdr;
   sd->temporary = temp;
   if ((temp == MULTICHANNEL_DELETION) || (temp == MULTICHANNEL_DELETION_IF_FILE)) tick_temp(name, temp_chan);
@@ -711,7 +711,7 @@ snd_data *copy_snd_data(snd_data *sd, off_t beg, int bufsize)
   sf->type = sd->type;
   sf->buffered_data = io->arrays[sd->chan];
   sf->io = io;
-  sf->filename = copy_string(sd->filename);
+  sf->filename = mus_strdup(sd->filename);
   sf->hdr = hdr;
   sf->temporary = DONT_DELETE_ME;
   sf->edit_ctr = sd->edit_ctr;

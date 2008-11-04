@@ -92,12 +92,12 @@ void reflect_play_region_stop(int n) {}
 bool region_dialog_is_active(void) {return(false);}
 void allocate_region_rows(int n) {}
 void reflect_region_graph_style(void) {}
-bool set_tiny_font(const char *font) {if (ss->Tiny_Font) FREE(ss->Tiny_Font); ss->Tiny_Font = copy_string(font); return(false);}
-bool set_listener_font(const char *font) {if (ss->Listener_Font) FREE(ss->Listener_Font); ss->Listener_Font = copy_string(font); return(false);}
-bool set_peaks_font(const char *font) {if (ss->Peaks_Font) FREE(ss->Peaks_Font); ss->Peaks_Font = copy_string(font); return(false);}
-bool set_bold_peaks_font(const char *font) {if (ss->Bold_Peaks_Font) FREE(ss->Bold_Peaks_Font); ss->Bold_Peaks_Font = copy_string(font); return(false);}
-bool set_axis_label_font(const char *font) {if (ss->Axis_Label_Font) FREE(ss->Axis_Label_Font); ss->Axis_Label_Font = copy_string(font); return(false);}
-bool set_axis_numbers_font(const char *font) {if (ss->Axis_Numbers_Font) FREE(ss->Axis_Numbers_Font); ss->Axis_Numbers_Font = copy_string(font); return(false);}
+bool set_tiny_font(const char *font) {if (ss->Tiny_Font) FREE(ss->Tiny_Font); ss->Tiny_Font = mus_strdup(font); return(false);}
+bool set_listener_font(const char *font) {if (ss->Listener_Font) FREE(ss->Listener_Font); ss->Listener_Font = mus_strdup(font); return(false);}
+bool set_peaks_font(const char *font) {if (ss->Peaks_Font) FREE(ss->Peaks_Font); ss->Peaks_Font = mus_strdup(font); return(false);}
+bool set_bold_peaks_font(const char *font) {if (ss->Bold_Peaks_Font) FREE(ss->Bold_Peaks_Font); ss->Bold_Peaks_Font = mus_strdup(font); return(false);}
+bool set_axis_label_font(const char *font) {if (ss->Axis_Label_Font) FREE(ss->Axis_Label_Font); ss->Axis_Label_Font = mus_strdup(font); return(false);}
+bool set_axis_numbers_font(const char *font) {if (ss->Axis_Numbers_Font) FREE(ss->Axis_Numbers_Font); ss->Axis_Numbers_Font = mus_strdup(font); return(false);}
 int label_width(const char *txt, bool use_tiny_font) {return(0);}
 int number_width(const char *num, bool use_tiny_font) {return(0);}
 int number_height(int fnt) {return(0);}
@@ -686,7 +686,7 @@ void snd_doit(int argc, char **argv)
   set_axis_label_font(FALLBACK_FONT);
   set_axis_numbers_font(FALLBACK_FONT);
   set_listener_font(FALLBACK_FONT);
-  ss->startup_title = copy_string("snd");
+  ss->startup_title = mus_strdup("snd");
 
   for (i = 1; i < argc; i++)
     {

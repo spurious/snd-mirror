@@ -100,7 +100,7 @@ static char *find_highlighted_text(XmString xs)
       switch (type)
 	{
 	case XmSTRING_COMPONENT_RENDITION_BEGIN: 
-	  in_red_text = snd_strcmp((char *)text, "url_text");
+	  in_red_text = mus_strcmp((char *)text, "url_text");
 	  break;
 	case XmSTRING_COMPONENT_RENDITION_END:
 	  in_red_text = false;
@@ -108,7 +108,7 @@ static char *find_highlighted_text(XmString xs)
 	case XmSTRING_COMPONENT_TEXT:
 	  if (in_red_text) 
 	    {
-	      result = copy_string((char *)text);
+	      result = mus_strdup((char *)text);
 	      XtFree((char *)text);
 	      XmStringFreeContext(ctx);
 	      return(result);
@@ -198,7 +198,7 @@ static void add_pattern_to_help_history(const char *pattern)
 	}
     }
   if (help_history[help_history_pos]) FREE(help_history[help_history_pos]);
-  help_history[help_history_pos++] = copy_string(pattern);
+  help_history[help_history_pos++] = mus_strdup(pattern);
 }
 
 
@@ -305,7 +305,7 @@ static void text_release_callback(Widget w, XtPointer context, XEvent *event, Bo
     {
       int i, len;
       bool one_word = true;
-      len = snd_strlen(help_str);
+      len = mus_strlen(help_str);
       for (i = 0; i < len; i++)
 	if (isspace(help_str[i]))
 	  {

@@ -87,48 +87,6 @@ Float in_dB(Float min_dB, Float lin_dB, Float val)
 #endif
 
 
-char *copy_string(const char *str)
-{
-  if (str)
-    return(strdup(str));
-  return(NULL);
-}
-
-
-int snd_strlen(const char *str)
-{
-  /* strlen(NULL) -> seg fault! */
-  if ((str) && (*str)) return(strlen(str));
-  return(0);
-}
-
-
-bool snd_strcmp(const char *str1, const char *str2)
-{
-  return((str1 == str2) ||
-	 ((str1) && (str2) &&
-	  (strcmp(str1, str2) == 0)));
-}
-
-
-char *snd_strcat(char *errmsg, const char *str, int *size)
-{
-  int new_len, err_size;
-  new_len = (snd_strlen(str) + snd_strlen(errmsg));
-  err_size = size[0];
-  if (new_len >= err_size)
-    {
-      if ((err_size * 2) > new_len)
-	err_size = err_size * 2;
-      else err_size = new_len * 2;
-      errmsg = (char *)REALLOC(errmsg, err_size * sizeof(char));
-      size[0] = err_size;
-    }
-  strcat(errmsg, str);
-  return(errmsg);
-}
-
-
 #if HAVE_STRFTIME
 #define TIME_STR_SIZE 64
 static char time_buf[TIME_STR_SIZE];
@@ -223,7 +181,7 @@ char *just_filename(char *name)
 {
   char *nodir;
   int i, len;
-  nodir = copy_string(filename_without_directory(name));
+  nodir = mus_strdup(filename_without_directory(name));
   len = strlen(nodir);
   for (i = 0; i < len; i++) 
     if (nodir[i] == '.') 
@@ -277,7 +235,7 @@ char *vstr(const char *format, va_list ap)
 {
   char *buf;
   int len;
-  len = snd_strlen(format) + PRINT_BUFFER_SIZE;
+  len = mus_strlen(format) + PRINT_BUFFER_SIZE;
   buf = (char *)CALLOC(len, sizeof(char));
  #if HAVE_VSNPRINTF
   vsnprintf(buf, len, format, ap);
@@ -349,7 +307,7 @@ char *prettyf(double num, int tens)
       for (i = len - 1; (i > 0) && (prtbuf[i] == '0') && (prtbuf[i - 1] != '.'); i--)
 	prtbuf[i] = '\0';
     }
-  return(copy_string(prtbuf));
+  return(mus_strdup(prtbuf));
 }
 
 
@@ -357,14 +315,14 @@ static char *get_tmpdir(void)
 {
   char *tmpdir = NULL;
   int len;
-  tmpdir = copy_string(getenv("TMPDIR"));
-  if ((tmpdir == NULL) && (MUS_DEFAULT_TEMP_DIR)) tmpdir = copy_string(MUS_DEFAULT_TEMP_DIR);
+  tmpdir = mus_strdup(getenv("TMPDIR"));
+  if ((tmpdir == NULL) && (MUS_DEFAULT_TEMP_DIR)) tmpdir = mus_strdup(MUS_DEFAULT_TEMP_DIR);
 #ifdef P_tmpdir
-  if (tmpdir == NULL) tmpdir = copy_string(P_tmpdir); /* /usr/include/stdio.h */
+  if (tmpdir == NULL) tmpdir = mus_strdup(P_tmpdir); /* /usr/include/stdio.h */
 #else
-  if (tmpdir == NULL) return(copy_string("/tmp"));
+  if (tmpdir == NULL) return(mus_strdup("/tmp"));
 #endif
-  if (tmpdir == NULL) return(copy_string("."));
+  if (tmpdir == NULL) return(mus_strdup("."));
   len = strlen(tmpdir);
   if (tmpdir[len - 1] == '/') tmpdir[len - 1] = 0; /* this is what forces us to copy the string above (Sun segfaults otherwise) */
   return(tmpdir);
@@ -378,12 +336,12 @@ char *shorter_tempnam(const char *udir, const char *prefix)
   /* tempnam turns out names that are inconveniently long (in this case the filename is user-visible) */
   char *str, *tmpdir = NULL;
   str = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-  if ((udir == NULL) || (snd_strlen(udir) == 0)) 
+  if ((udir == NULL) || (mus_strlen(udir) == 0)) 
     tmpdir = get_tmpdir(); /* incoming dir could be "" */
-  else tmpdir = copy_string(udir);
+  else tmpdir = mus_strdup(udir);
   mus_snprintf(str, PRINT_BUFFER_SIZE, "%s/%s%d_%d.snd", tmpdir, (prefix) ? prefix : "snd_", (int)getpid(), sect_ctr++);
   if (tmpdir) FREE(tmpdir);
-  tmpdir = copy_string(str);
+  tmpdir = mus_strdup(str);
   FREE(str);
   return(tmpdir);
 }
@@ -579,7 +537,7 @@ fam_info *fam_monitor_file(const char *filename, void *data, void (*action)(stru
 #endif
       fp = make_fam_info(rp, data, action);
 #if MUS_DEBUGGING
-      fp->filename = copy_string(filename);
+      fp->filename = mus_strdup(filename);
 #endif
       err = FAMMonitorFile(ss->fam_connection, filename, rp, (void *)fp);
       if (err < 0)
@@ -612,7 +570,7 @@ fam_info *fam_monitor_directory(const char *dir_name, void *data, void (*action)
     {
       fp = make_fam_info(rp, data, action);
 #if MUS_DEBUGGING
-      fp->filename = copy_string(dir_name);
+      fp->filename = mus_strdup(dir_name);
 #endif
       err = FAMMonitorDirectory(ss->fam_connection, dir_name, rp, (void *)fp);
       if (err < 0)

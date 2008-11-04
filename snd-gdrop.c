@@ -112,7 +112,7 @@ static void drag_data_received(GtkWidget *caller, GdkDragContext *context, gint 
 	      /* loop through possible list of filenames, calling watcher on each */
 	      char *filename;
 	      int len = 0, i, j = 0;
-	      len = snd_strlen(str);
+	      len = mus_strlen(str);
 	      filename = (char *)CALLOC(len, sizeof(char));
 	      for (i = 0; i < len; i++)
 		{

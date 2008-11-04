@@ -21,16 +21,16 @@ static void Tab_completion(Widget w, XEvent *event, char **str, Cardinal *num)
       char *old_text, *new_text;
 
       old_text = XmTextGetString(w);
-      if (snd_strlen(old_text) == 0) return; /* C-x C-f TAB in minibuffer, for example */
+      if (mus_strlen(old_text) == 0) return; /* C-x C-f TAB in minibuffer, for example */
 
       new_text = complete_text(w, old_text, completer);
-      if (snd_strlen(new_text) == 0) return; /* can this happen? */
+      if (mus_strlen(new_text) == 0) return; /* can this happen? */
       XmTextSetString(w, new_text);
       XmTextSetCursorPosition(w, XmTextGetLastPosition(w));
 
       matches = get_completion_matches();
 
-      if ((snd_strcmp(old_text, new_text)) && 
+      if ((mus_strcmp(old_text, new_text)) && 
 	  (matches != -1))
 	{
 	  Pixel old_color;
@@ -78,8 +78,8 @@ static void perform_completion(XmString selection)
   save_completion_choice(text);
 
   old_text = XmTextGetString(listener_text);
-  old_len = snd_strlen(old_text);
-  new_len = snd_strlen(text);
+  old_len = mus_strlen(old_text);
+  new_len = mus_strlen(text);
   for (i = old_len - 1, j = new_len - 1; j >= 0; j--)
     {
       if (old_text[i] != text[j])
@@ -122,7 +122,7 @@ static int find_prompt(Widget w, XmTextPosition start)
   found_prompt = XmTextFindString(w, start, listener_prompt(ss), XmTEXT_BACKWARD, &loc);
   if (!found_prompt) 
     return(0);
-  else return((int)loc + snd_strlen(listener_prompt(ss)));
+  else return((int)loc + mus_strlen(listener_prompt(ss)));
 }
 
 
@@ -176,7 +176,7 @@ static void Listener_completion(Widget w, XEvent *event, char **str, Cardinal *n
 	  return;
 	}
 
-      if (snd_strcmp(old_text, new_text))
+      if (mus_strcmp(old_text, new_text))
 	matches = get_completion_matches();
       else XmTextReplace(w, beg, replace_end, new_text);
 
@@ -469,7 +469,7 @@ static void Complain(Widget w, XEvent *event, char **str, Cardinal *num)
   XmTextPosition curpos;
   curpos = XmTextGetCursorPosition(w);
   old_text = XmTextGetString(w);
-  new_text = (char *)CALLOC(snd_strlen(old_text) + 5, sizeof(char));
+  new_text = (char *)CALLOC(mus_strlen(old_text) + 5, sizeof(char));
   sprintf(new_text, "%s C-%c", (old_text) ? old_text : "", str[0][0]);
   XmTextSetString(w, new_text);
   XmTextSetCursorPosition(w, curpos);
@@ -580,7 +580,7 @@ int save_listener_text(FILE *fp)
       if (str)
 	{
 	  size_t bytes;
-	  bytes = fwrite((void *)str, sizeof(char), snd_strlen(str), fp);
+	  bytes = fwrite((void *)str, sizeof(char), mus_strlen(str), fp);
 	  XtFree(str);
 	  if (bytes == 0) return(-1);
 	}

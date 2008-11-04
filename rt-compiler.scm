@@ -3817,7 +3817,7 @@ and run simple lisp[4] functions.
 
 
   
-;; modulo-logic picked up from snd-run.c
+;; modulo-logic picked up from run.c
 (define-rt-macro (modulo a b)
   (let ((x (rt-gensym))
 	(y (rt-gensym))
@@ -3879,7 +3879,7 @@ and run simple lisp[4] functions.
 
 
 	 
-;; truncate-logic picked up from snd-run.c
+;; truncate-logic picked up from run.c
 (define-rt-macro (truncate expand/a)
   (if (rt-immediate? a)
       `(if (negative? ,a)
@@ -3891,7 +3891,7 @@ and run simple lisp[4] functions.
 	       (- (floor (- ,x)))
 	       (floor ,x))))))
 
-;; round-logic picked up from snd-run.c (I'm not sure this one works correctly, because of the "/"-casting)
+;; round-logic picked up from run.c (I'm not sure this one works correctly, because of the "/"-casting)
 (define-rt-macro (round a)
   (let ((plus_half (rt-gensym))
 	(result (rt-gensym)))
@@ -3903,7 +3903,7 @@ and run simple lisp[4] functions.
 	   ,result))))
        
 
-;;logxor-logic picked up from snd-run.c
+;;logxor-logic picked up from run.c
 (define-rt-macro (logxor expand/x expand/y)
   (if (and (number? x)
 	   (number? y))
@@ -3919,7 +3919,7 @@ and run simple lisp[4] functions.
 		       (logior ,a ,b)))))))
 
 
-;;ash-logic picked up from snd-run.c
+;;ash-logic picked up from run.c
 (define-rt-macro (ash expand/a expand/b)
   (if (and (number? a)
 	   (number? b))

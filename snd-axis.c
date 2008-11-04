@@ -477,7 +477,7 @@ static void draw_x_number(const char *label, int x, int y, int hgt, axis_info *a
 #else
   y = y + 4;
 #endif
-  draw_string(ax, x, y, label, snd_strlen(label));
+  draw_string(ax, x, y, label, mus_strlen(label));
   if (printing) 
     ps_draw_string(ap, x, y, label);
 }
@@ -491,7 +491,7 @@ static void draw_y_number(const char *label, int x, int y, int hgt, axis_info *a
 #else
   y = y - (int)(hgt / 2);
 #endif
-  draw_string(ax, x, y, label, snd_strlen(label));
+  draw_string(ax, x, y, label, mus_strlen(label));
   if (printing) 
     ps_draw_string(ap, x, y, label);
 }
@@ -503,7 +503,7 @@ static void draw_label(const char *label, int x, int y, int yoff, axis_info *ap,
 #if USE_GTK
   y -= yoff;
 #endif
-  draw_string(ax, x, y, label, snd_strlen(label));
+  draw_string(ax, x, y, label, mus_strlen(label));
   if (printing) 
     ps_draw_string(ap, x, y, label);
 }
@@ -939,7 +939,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
   #if MUS_WITH_GL2PS
 	  if (ss->gl_printing) gl2ps_text(ap->xlabel);
   #endif
-	  glCallLists(snd_strlen(ap->xlabel), GL_UNSIGNED_BYTE, (GLubyte *)(ap->xlabel));
+	  glCallLists(mus_strlen(ap->xlabel), GL_UNSIGNED_BYTE, (GLubyte *)(ap->xlabel));
 	}
       else
 #endif
@@ -1034,7 +1034,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
   #if MUS_WITH_GL2PS
 	  if (ss->gl_printing) gl2ps_text(tdy->min_label);
   #endif
-	  glCallLists(snd_strlen(tdy->min_label), GL_UNSIGNED_BYTE, (GLubyte *)(tdy->min_label));
+	  glCallLists(mus_strlen(tdy->min_label), GL_UNSIGNED_BYTE, (GLubyte *)(tdy->min_label));
 	  
 	  xl = -0.5 - ythick - ((Float)(3 * tdy->maj_tick_len + tdy->max_label_width + inner_border_width) / (Float)width);
 	  glRasterPos3f(xl, 0.0, (tdy->mhi - ap->y0) / (ap->y1 - ap->y0) - 0.51);
@@ -1042,7 +1042,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
   #if MUS_WITH_GL2PS
 	  if (ss->gl_printing) gl2ps_text(tdy->max_label);
   #endif
-	  glCallLists(snd_strlen(tdy->max_label), GL_UNSIGNED_BYTE, (GLubyte *)(tdy->max_label));
+	  glCallLists(mus_strlen(tdy->max_label), GL_UNSIGNED_BYTE, (GLubyte *)(tdy->max_label));
 	}
       else
 #endif
@@ -1081,7 +1081,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
   #if MUS_WITH_GL2PS
 	      if (ss->gl_printing) gl2ps_text(tdx->min_label);
   #endif
-	      glCallLists(snd_strlen(tdx->min_label), GL_UNSIGNED_BYTE, (GLubyte *)(tdx->min_label));
+	      glCallLists(mus_strlen(tdx->min_label), GL_UNSIGNED_BYTE, (GLubyte *)(tdx->min_label));
 	    }
 	  else
 #endif
@@ -1106,7 +1106,7 @@ void make_axes_1(axis_info *ap, x_axis_style_t x_style, int srate, show_axes_t a
   #if MUS_WITH_GL2PS
 	      if (ss->gl_printing) gl2ps_text(tdx->max_label);
   #endif
-	      glCallLists(snd_strlen(tdx->max_label), GL_UNSIGNED_BYTE, (GLubyte *)(tdx->max_label));
+	      glCallLists(mus_strlen(tdx->max_label), GL_UNSIGNED_BYTE, (GLubyte *)(tdx->max_label));
 	    }
 	  else
 #endif
@@ -1459,11 +1459,11 @@ axis_info *make_axis_info (chan_info *cp, double xmin, double xmax, Float ymin, 
   ap->ymin = ymin;
   ap->ymax = ymax;
   if ((xlabel) && 
-      (!(snd_strcmp(xlabel, ap->xlabel))))
+      (!(mus_strcmp(xlabel, ap->xlabel))))
     {
       /* this apparently should leave the default_xlabel and ylabels alone */
       if (ap->xlabel) FREE(ap->xlabel);
-      ap->xlabel = copy_string(xlabel);
+      ap->xlabel = mus_strdup(xlabel);
     }
   ap->x0 = x0;
   ap->x1 = x1;
@@ -1695,7 +1695,7 @@ Returns actual (pixel) axis bounds -- a list (x0 y0 x1 y1)."
   ap->y_ambit = y1 - y0;
   ap->x_ambit = x1 - x0;
   if (XEN_STRING_P(label_ref))
-    ap->xlabel = copy_string(XEN_TO_C_STRING(label_ref));
+    ap->xlabel = mus_strdup(XEN_TO_C_STRING(label_ref));
   ap->x0 = x0;
   ap->x1 = x1;
   ap->y0 = y0;
@@ -1751,10 +1751,10 @@ static XEN g_set_x_axis_label(XEN label, XEN snd, XEN chn, XEN ax)
     }
   else
     {
-      ap->xlabel = copy_string(XEN_TO_C_STRING(label));
+      ap->xlabel = mus_strdup(XEN_TO_C_STRING(label));
       if ((XEN_INTEGER_P(ax)) && (XEN_TO_C_INT(ax) == (int)TRANSFORM_AXIS_INFO))
 	set_fft_info_xlabel(ap->cp, ap->xlabel);
-      ap->default_xlabel = copy_string(ap->xlabel);
+      ap->default_xlabel = mus_strdup(ap->xlabel);
     }
   update_graph(ap->cp);
   return(label);
@@ -1783,7 +1783,7 @@ static XEN g_set_y_axis_label(XEN label, XEN snd, XEN chn, XEN ax)
   if (ap->ylabel) FREE(ap->ylabel);
   if (XEN_FALSE_P(label))
     ap->ylabel = NULL;
-  else ap->ylabel = copy_string(XEN_TO_C_STRING(label));
+  else ap->ylabel = mus_strdup(XEN_TO_C_STRING(label));
   update_graph(ap->cp);
   return(label);
 }

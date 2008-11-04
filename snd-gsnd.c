@@ -136,10 +136,10 @@ void display_minibuffer_error(snd_info *sp, const char *str)
 {
   char *s1 = NULL; /* change cr to space (cr is printed as a funny box in gtk) */
   int len, i;
-  len = snd_strlen(str);
+  len = mus_strlen(str);
   if (len > 0)
     {
-      s1 = copy_string(str);
+      s1 = mus_strdup(str);
       for (i = 0; i < len; i++)
 	if (s1[i] == '\n')
 	  s1[i] = ' ';
@@ -470,7 +470,7 @@ void set_minibuffer_cursor_position(snd_info *sp, int pos)
 char *get_minibuffer_string(snd_info *sp) 
 {
   if ((sp->inuse != SOUND_NORMAL) || (!(sp->sgx))) return(NULL);
-  return(copy_string((char *)gtk_entry_get_text(GTK_ENTRY(MINIBUFFER_TEXT(sp)))));
+  return(mus_strdup((char *)gtk_entry_get_text(GTK_ENTRY(MINIBUFFER_TEXT(sp)))));
 } 
 
 
@@ -524,7 +524,7 @@ static gboolean minibuffer_key_callback(GtkWidget *w, GdkEventKey *event, gpoint
   if (event->keyval == GDK_Tab)
     {
       gtk_entry_set_text(GTK_ENTRY(w), info_completer(w, (char *)gtk_entry_get_text(GTK_ENTRY(w)), data));
-      gtk_editable_set_position(GTK_EDITABLE(w), snd_strlen((char *)gtk_entry_get_text(GTK_ENTRY(w))));
+      gtk_editable_set_position(GTK_EDITABLE(w), mus_strlen((char *)gtk_entry_get_text(GTK_ENTRY(w))));
       return(true);
     }
   return(false);
@@ -2109,7 +2109,7 @@ void set_sound_pane_file_label(snd_info *sp, char *str)
 	  (strcmp(sp->name_string, str) != 0))
 	{
 	  if (sp->name_string) FREE(sp->name_string);
-	  sp->name_string = copy_string(str);
+	  sp->name_string = mus_strdup(str);
 	  set_label(NAME_BUTTON(sp), str);
 	}
       MUS_UNLOCK(sp->starred_name_lock);

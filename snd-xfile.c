@@ -81,7 +81,7 @@ static void force_directory_reread(Widget dialog)
   XmTextSetString(name_field, filename);
   if (filename) 
     {
-      XmTextSetCursorPosition(name_field, snd_strlen(filename));
+      XmTextSetCursorPosition(name_field, mus_strlen(filename));
       XtFree(filename);
     }
 }
@@ -191,7 +191,7 @@ static void file_text_popup_callback(Widget w, XtPointer context, XtPointer info
       for (i = 0; i < FILENAME_LIST_SIZE; i++)
 	if ((fd->file_text_names[i]) &&
 	    (mus_file_probe(fd->file_text_names[i])) &&
-	    (!(snd_strcmp(fd->file_text_names[i], current_filename))))
+	    (!(mus_strcmp(fd->file_text_names[i], current_filename))))
 	  {
 	    set_label(fd->file_text_items[filenames_to_display], fd->file_text_names[i]);
 	    XtManageChild(fd->file_text_items[filenames_to_display]);
@@ -272,7 +272,7 @@ static void file_filter_popup_callback(Widget w, XtPointer context, XtPointer in
 
       for (i = 0; i < FILENAME_LIST_SIZE; i++)
 	if ((fd->file_filter_names[i]) &&
-	    (!(snd_strcmp(fd->file_filter_names[i], current_filtername))))
+	    (!(mus_strcmp(fd->file_filter_names[i], current_filtername))))
 	  {
 	    set_label(fd->file_filter_items[filternames_to_display], fd->file_filter_names[i]);
 	    XtManageChild(fd->file_filter_items[filternames_to_display]);
@@ -668,7 +668,7 @@ static void file_change_directory_callback(Widget w, XtPointer context, XtPointe
       }
   }
 
-  leaving_dir = copy_string(fp->last_dir);
+  leaving_dir = mus_strdup(fp->last_dir);
   if ((leaving_dir) &&
       (leaving_dir[strlen(leaving_dir) - 1] == '/'))
     leaving_dir[strlen(leaving_dir) - 1] = 0;
@@ -758,7 +758,7 @@ static void sort_files_and_redisplay(file_pattern_info *fp)
 	{
 	  names[i] = XmStringCreateLocalized(cur_dir->files[i]->full_filename);
 	  if ((new_selected_position == -1) &&
-	      (snd_strcmp(selected_filename, cur_dir->files[i]->full_filename)))
+	      (mus_strcmp(selected_filename, cur_dir->files[i]->full_filename)))
 	    new_selected_position = i;
 	}
 
@@ -840,7 +840,7 @@ static void snd_directory_reader(Widget dialog, XmFileSelectionBoxCallbackStruct
       fp->directory_watcher = fam_monitor_directory(our_dir, (void *)fp, watch_current_directory_contents);
 
       if (fp->last_dir) FREE(fp->last_dir);
-      fp->last_dir = copy_string(our_dir);
+      fp->last_dir = mus_strdup(our_dir);
       fp->reread_directory = false;
     }
 #endif
@@ -1054,7 +1054,7 @@ static void post_file_info(file_dialog_info *fd, const char *filename)
       fd->info_filename_watcher = fam_unmonitor_file(fd->info_filename, fd->info_filename_watcher);
       if (fd->info_filename) {FREE(fd->info_filename); fd->info_filename = NULL;}
     }
-  fd->info_filename = copy_string(filename);
+  fd->info_filename = mus_strdup(filename);
   fd->info_filename_watcher = fam_monitor_file(fd->info_filename, (void *)fd, watch_info_file);
 #endif
 }
@@ -1123,7 +1123,7 @@ static void watch_filename_change(Widget w, XtPointer context, XtPointer info)
       int num_files = 0, i, pos = -1, l, u, text_len;
       char *file_list_file = NULL;
 
-      text_len = snd_strlen(filename);
+      text_len = mus_strlen(filename);
 
       file_list = FSB_BOX(fd->dialog, XmDIALOG_LIST);
       XtVaGetValues(fd->dialog,
@@ -1450,7 +1450,7 @@ static void unpost_unsound_error(struct fam_info *fp, FAMEvent *fe)
       fd = (file_dialog_info *)(fp->data);
       if ((fd) &&
 	  (fe->filename) &&
-	  (snd_strcmp(fe->filename, fd->unsound_filename)))
+	  (mus_strcmp(fe->filename, fd->unsound_filename)))
 	unpost_open_modify_error(fd);
       break;
     default:
@@ -1977,7 +1977,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat,
       comment = XmTextGetString(fdat->comment_text);
       if (comment)
 	{
-	  str = copy_string(comment);
+	  str = mus_strdup(comment);
 	  XtFree(comment);
 	  return(str);
 	}
@@ -2905,7 +2905,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 
   file_exists = mus_file_probe(fullname);
   if ((sd->type == SOUND_SAVE_AS) &&
-      (snd_strcmp(fullname, sp->filename)))
+      (mus_strcmp(fullname, sp->filename)))
     {
       /* save-as here is the same as save */
       if ((sp->user_read_only == FILE_READ_ONLY) || 
@@ -2986,7 +2986,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	char *ofile;
 	if (file_exists) /* file won't exist if we're encoding, so this isn't as wasteful as it looks */
 	  ofile = snd_tempnam();
-	else ofile = copy_string(tmpfile);
+	else ofile = mus_strdup(tmpfile);
 	io_err = save_selection(ofile, type, format, srate, comment, (saving) ? SAVE_ALL_CHANS : chan);
 	if (io_err == IO_NO_ERROR)
 	  io_err = move_file(ofile, fullname);
@@ -3000,7 +3000,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	  {
 	    if (file_exists)
 	      ofile = snd_tempnam();
-	    else ofile = copy_string(tmpfile);
+	    else ofile = mus_strdup(tmpfile);
 	    io_err = save_region(region_dialog_region(), ofile, type, format, comment);
 	    if (io_err == IO_NO_ERROR)
 	      io_err = move_file(ofile, fullname);
@@ -4196,7 +4196,7 @@ Widget edit_header(snd_info *sp)
 	    ((edhead_infos[i]->sp == sp) ||
 	     ((edhead_infos[i]->sp) && /* maybe same sound open twice -- only one edit header dialog for it */
 	      (edhead_infos[i]->sp->inuse == SOUND_NORMAL) &&
-	      (snd_strcmp(sp->filename, edhead_infos[i]->sp->filename)))))
+	      (mus_strcmp(sp->filename, edhead_infos[i]->sp->filename)))))
 	  {
 	    ep = edhead_infos[i];
 	    break;
@@ -4480,7 +4480,7 @@ static void raw_data_ok_callback(Widget w, XtPointer context, XtPointer info)
 	   */
 	  file_info *hdr;
 	  hdr = (file_info *)CALLOC(1, sizeof(file_info));
-	  hdr->name = copy_string(rp->filename);
+	  hdr->name = mus_strdup(rp->filename);
 	  hdr->type = MUS_RAW;
 	  hdr->srate = raw_srate;
 	  hdr->chans = raw_chans;
@@ -4632,7 +4632,7 @@ void raw_data_dialog_to_file_info(const char *filename, char *title, char *info,
   rp->read_only = read_only;
   rp->selected = selected;
   if (rp->filename) FREE(rp->filename);
-  rp->filename = copy_string(filename);
+  rp->filename = mus_strdup(filename);
   rp->requestor = ss->open_requestor;
   rp->requestor_data = ss->open_requestor_data;
   rp->requestor_dialog = ss->sgx->requestor_dialog;
@@ -4663,7 +4663,7 @@ void raw_data_dialog_to_file_info(const char *filename, char *title, char *info,
       XtVaSetValues(MSG_BOX(rp->dialog, XmDIALOG_HELP_BUTTON), 
 		    XmNbackground, ss->sgx->green, 
 		    NULL);
-      rp->help = copy_string(info);
+      rp->help = mus_strdup(info);
       FREE(info);
     }
   else
@@ -4971,7 +4971,7 @@ void vf_post_selected_files_list(view_files_info *vdat)
   XmString s1, s2, s3;
   len = vdat->currently_selected_files;
 
-  title = copy_string("selected files:");
+  title = mus_strdup("selected files:");
   s3 = XmStringCreateLocalized(title);
   XtVaSetValues(vdat->left_title,
 		XmNlabelString, s3,
@@ -4981,15 +4981,15 @@ void vf_post_selected_files_list(view_files_info *vdat)
 
   if (len == 2)
     {
-      msg1 = copy_string(vdat->names[vdat->selected_files[0]]);
-      msg2 = copy_string(vdat->names[vdat->selected_files[1]]);
+      msg1 = mus_strdup(vdat->names[vdat->selected_files[0]]);
+      msg2 = mus_strdup(vdat->names[vdat->selected_files[1]]);
     }
   else
     {
       if (len == 3)
 	{
 	  msg1 = mus_format("%s, %s", vdat->names[vdat->selected_files[0]], vdat->names[vdat->selected_files[1]]);
-	  msg2 = copy_string(vdat->names[vdat->selected_files[2]]);
+	  msg2 = mus_strdup(vdat->names[vdat->selected_files[2]]);
 	}
       else
 	{
@@ -5015,7 +5015,7 @@ void vf_unpost_info(view_files_info *vdat)
   XmString s1, s2, s3;
   char *title;
 
-  title = copy_string("(no files selected)");
+  title = mus_strdup("(no files selected)");
   s3 = XmStringCreateLocalized(title);
   XtVaSetValues(vdat->left_title,
 		XmNlabelString, s3,

@@ -8,7 +8,7 @@ typedef struct mus_xen {
   XEN *vcts; /* one for each accessible Float array (wrapped up here in a vct) */
   int nvcts;
   bool dont_free_gen;
-  struct ptree *input_ptree; /* added 24-Apr-02 for snd-run.c optimizer */
+  struct ptree *input_ptree; /* added 24-Apr-02 for run optimizer */
   struct ptree *edit_ptree;  /* ditto 26-Jul-04 */
   struct ptree *analyze_ptree;
   struct ptree *synthesize_ptree;

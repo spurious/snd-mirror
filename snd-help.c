@@ -49,9 +49,9 @@ static void free_snd_itoa(void)
 static char *format_to_name(int bits)
 {
   if (bits == 4)
-    return(copy_string("float"));
+    return(mus_strdup("float"));
   if (bits == 8)
-    return(copy_string("double"));
+    return(mus_strdup("double"));
   return(mus_format("int%d", bits));
 }
 
@@ -222,7 +222,7 @@ static char *xm_version(void)
       if (snd_itoa_ctr < snd_itoa_size) snd_itoa_strs[snd_itoa_ctr++] = version;
       return(version);
     }
-  return(copy_string(""));
+  return(mus_strdup(""));
 }
 
 
@@ -255,7 +255,7 @@ static char *gl_version(void)
       if (snd_itoa_ctr < snd_itoa_size) snd_itoa_strs[snd_itoa_ctr++] = version;
       return(version);
     }
-  return(copy_string(""));
+  return(mus_strdup(""));
 }
 
 
@@ -288,18 +288,18 @@ static char *glx_version(void)
       Window win;
       GLXContext glCtx;
       dpy = XOpenDisplay(NULL);
-      if (!dpy) return(copy_string(""));
+      if (!dpy) return(mus_strdup(""));
       scrn = DefaultScreen(dpy);
       visInfo = glXChooseVisual(dpy, scrn, glAttribs);
-      if (!visInfo) return(copy_string(""));
+      if (!visInfo) return(mus_strdup(""));
       glCtx = glXCreateContext(dpy, visInfo, 0, True);
-      if (!glCtx) return(copy_string(""));
+      if (!glCtx) return(mus_strdup(""));
       win = XCreateSimpleWindow(dpy, RootWindow(dpy, scrn), 0, 0, 1, 1, 0, 0, 0);
       glXMakeCurrent(dpy, win, glCtx);
       mus_snprintf(version, VERSION_SIZE, " %s", glGetString(GL_VERSION));
       return(version);
 #else
-      return(copy_string(""));
+      return(mus_strdup(""));
 #endif
     }
 
@@ -3195,8 +3195,8 @@ static int levenstein(const char *s1, const char *s2)
   /* taken with bug fixes from "The Ruby Way" by Hal Fulton, SAMS Pubs */
   int l1, l2, i, j, val, insert_cost = 2, delete_cost = 2, substitute_cost = 1;
   int **distance;
-  l1 = snd_strlen(s1);
-  l2 = snd_strlen(s2);
+  l1 = mus_strlen(s1);
+  l2 = mus_strlen(s2);
   if ((l1 == 0) || (l2 == 0)) return(1000);
   distance = (int **)CALLOC(l2 + 1, sizeof(int *));
   for (i = 0; i <= l2; i++) distance[i] = (int *)CALLOC(l1 + 1, sizeof(int));
@@ -3300,7 +3300,7 @@ static char *snd_finder(const char *name, bool got_help)
   const char *defines[NUM_DEFINES] = {"(defun (", "(defmacro ", "(definstrument ("};
 #endif
 
-  if (snd_strlen(FGREP_PROG) == 0) return(NULL); /* configure didn't find a plausible fgrep */
+  if (mus_strlen(FGREP_PROG) == 0) return(NULL); /* configure didn't find a plausible fgrep */
 
   is_defined = XEN_DEFINED_P(name);
   url = snd_url(name);
@@ -3369,7 +3369,7 @@ bool snd_topic_help(const char *topic)
 	    return(true);
 	  }
       }
-  topic_len = snd_strlen(topic);
+  topic_len = mus_strlen(topic);
   for (i = 0; i < NUM_XREFS; i++)
     {
       int xref_len, j, diff, min_len;
@@ -3493,7 +3493,7 @@ char* word_wrap(const char *text, int widget_len)
   bool move_paren = false;
   int in_paren = 0;
 #endif
-  old_len = snd_strlen(text);
+  old_len = mus_strlen(text);
   new_len = old_len + 64;
   desired_len = (int)(widget_len * .8);
   new_text = (char *)CALLOC(new_len, sizeof(char));
@@ -3642,20 +3642,20 @@ static char *html_directory(void)
     {
       bool happy;
       char *hd = NULL;
-      hd = (char *)CALLOC(snd_strlen(html_dir(ss)) + 16, sizeof(char));
+      hd = (char *)CALLOC(mus_strlen(html_dir(ss)) + 16, sizeof(char));
       sprintf(hd, "%s/snd.html", html_dir(ss));
       happy = mus_file_probe(hd);
       FREE(hd);
-      if (happy) return(copy_string(html_dir(ss)));
+      if (happy) return(mus_strdup(html_dir(ss)));
     }
 
 #ifdef MUS_DEFAULT_DOC_DIR
   if (mus_file_probe(MUS_DEFAULT_DOC_DIR "/snd.html"))
-    return(copy_string(MUS_DEFAULT_DOC_DIR));
+    return(mus_strdup(MUS_DEFAULT_DOC_DIR));
 #endif
 
   for (i = 0; i < DOC_DIRECTORIES; i++)
-    if (mus_file_probe(doc_files[i])) return(copy_string(doc_directories[i]));
+    if (mus_file_probe(doc_files[i])) return(mus_strdup(doc_directories[i]));
 
   return(NULL);
 }
@@ -3747,9 +3747,9 @@ static char *run_string_hook(XEN hook, const char *caller, char *initial_string,
 #endif
 
       if (XEN_STRING_P(result))
-	return(copy_string(XEN_TO_C_STRING(result)));
+	return(mus_strdup(XEN_TO_C_STRING(result)));
     }
-  return(copy_string(initial_string));
+  return(mus_strdup(initial_string));
 }
 
 
@@ -3827,7 +3827,7 @@ and its value is returned."
 	      }
 	  }
 	if (search)
-	  topic_min = snd_int_log2(snd_strlen(subject));
+	  topic_min = snd_int_log2(mus_strlen(subject));
 	
       HELP_LOOP:
 	if (XEN_FALSE_P(help_text))
@@ -3933,7 +3933,7 @@ and its value is returned."
       bool need_free = false;
       
       if ((str == NULL) || 
-	  (snd_strlen(str) == 0) ||
+	  (mus_strlen(str) == 0) ||
 	  (strcmp(str, PROC_FALSE) == 0)) /* Ruby returns "false" here */
 	{
 	  if (!subject) return(XEN_FALSE);
@@ -3960,7 +3960,7 @@ and its value is returned."
 	  char *new_str = NULL;
 	  if (subject)
 	    new_str = run_string_hook(help_hook, S_help_hook, str, subject);
-	  else new_str = copy_string(str);
+	  else new_str = mus_strdup(str);
 	  if (need_free)
 	    {
 	      FREE(str);
@@ -4016,7 +4016,7 @@ static XEN g_html_dir(void)
 static XEN g_set_html_dir(XEN val) 
 {
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_html_dir, "a string");
-  set_html_dir(copy_string(XEN_TO_C_STRING(val))); 
+  set_html_dir(mus_strdup(XEN_TO_C_STRING(val))); 
   return(val);
 }
 
@@ -4032,7 +4032,7 @@ static XEN g_set_html_program(XEN val)
 {
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_html_program, "a string");
   if (html_program(ss)) FREE(html_program(ss));
-  set_html_program(copy_string(XEN_TO_C_STRING(val))); 
+  set_html_program(mus_strdup(XEN_TO_C_STRING(val))); 
   return(val);
 }
 

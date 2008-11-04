@@ -216,15 +216,14 @@
  */
 
 
-typedef enum {OP_TOP_LEVEL0, OP_TOP_LEVEL1, OP_READ_INTERNAL, OP_EVAL,
-	      OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY, OP_DOMACRO, OP_LAMBDA, OP_QUOTE, 
+typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY, OP_DOMACRO, OP_LAMBDA, OP_QUOTE, 
 	      OP_DEFINE0, OP_DEFINE1, OP_BEGIN, OP_IF0, OP_IF1, OP_SET0, OP_SET1, OP_SET2,
 	      OP_LET0, OP_LET1, OP_LET2, OP_LET_STAR0, OP_LET_STAR1, OP_LET_STAR2, 
 	      OP_LETREC0, OP_LETREC1, OP_LETREC2, OP_COND0, OP_COND1, OP_MAKE_PROMISE, OP_AND0, OP_AND1, 
 	      OP_OR0, OP_OR1, OP_CONS_STREAM0, OP_CONS_STREAM1, OP_DEFMACRO, OP_MACRO0, OP_MACRO1, OP_DEFINE_MACRO,
 	      OP_CASE0, OP_CASE1, OP_CASE2, OP_READ_EXPRESSION, OP_READ_LIST, OP_READ_DOT, OP_READ_QUOTE, 
 	      OP_READ_QUASIQUOTE, OP_READ_QUASIQUOTE_VECTOR, OP_READ_UNQUOTE, OP_READ_UNQUOTE_SPLICING, 
-	      OP_READ_VECTOR, OP_FORCE, OP_READ_RETURN_EXPRESSION, OP_PRINT,
+	      OP_READ_VECTOR, OP_FORCE, OP_READ_RETURN_EXPRESSION,
 	      OP_READ_POP_AND_RETURN_EXPRESSION, OP_LOAD_RETURN_IF_EOF, OP_LOAD_CLOSE_AND_POP_IF_EOF, 
 	      OP_EVAL_STRING, OP_EVAL_STRING_DONE, OP_QUIT, OP_CATCH, OP_DYNAMIC_WIND, OP_FOR_EACH, OP_MAP, 
 	      OP_DO, OP_DO_END0, OP_DO_END1, OP_DO_STEP0, OP_DO_STEP1, OP_DO_STEP2, OP_DO_INIT,
@@ -1088,7 +1087,8 @@ static int gc(s7_scheme *sc, const char *function, int line)
 		{
 		  if (typeflag(p) & T_FINALIZABLE)
 		    finalize_s7_cell(sc, p); 
-		  memset((void *)p, 0, sizeof(s7_cell));
+		  /* memset((void *)p, 0, sizeof(s7_cell)); */
+		  typeflag(p) = 0;
 		  sc->free_heap[sc->free_heap_top++] = p;
 		}
 	    }
@@ -1605,13 +1605,13 @@ static s7_pointer s7_find_symbol_in_environment(s7_scheme *sc, s7_pointer env, s
   
   /* this is a list (of alists, each representing a frame) ending with a vector (the global environment) */
   
-  for (x = env; s7_is_pair(x); x = cdr(x)) 
+  for (x = env; is_pair(x); x = cdr(x)) 
     { 
       if (s7_is_vector(car(x))) 
 	y = vector_element(car(x), hash_fn(s7_symbol_name(hdl), vector_length(car(x))));
       else y = car(x); 
       
-      for ( ; s7_is_pair(y); y = cdr(y)) 
+      for ( ; is_pair(y); y = cdr(y)) 
 	if (caar(y) == hdl) 
 	  break; 
       
@@ -1622,7 +1622,7 @@ static s7_pointer s7_find_symbol_in_environment(s7_scheme *sc, s7_pointer env, s
 	return(sc->NIL); 
     } 
   
-  if (s7_is_pair(x))
+  if (is_pair(x))
     return(car(y)); 
   
   return(sc->NIL); 
@@ -2455,13 +2455,14 @@ static s7_Int num_to_denominator(num n)
 
 static double num_to_real_part(num n)
 {
-  if (n.type >= NUM_COMPLEX)
-    return(real_part(n));
-  if (n.type >= NUM_REAL)
-    return(real(n));
-  if (n.type == NUM_RATIO)
-    return(fraction(n));
-  return((double)integer(n));
+  switch (n.type)
+    {
+    case NUM_INT:   return((double)integer(n));
+    case NUM_RATIO: return(fraction(n));
+    case NUM_REAL:
+    case NUM_REAL2: return(real(n));
+    default:        return(real_part(n));
+    }
 }
 
 
@@ -2817,7 +2818,8 @@ static num num_mul(num a, num b)
 	r2 = num_to_real_part(b);
 	i1 = num_to_imag_part(a);
 	i2 = num_to_imag_part(b);
-	ret = make_complex(r1 * r2 - i1 * i2, r1 * i2 + r2 * i1);
+	ret = make_complex(r1 * r2 - i1 * i2, 
+			   r1 * i2 + r2 * i1);
       }
       break;
     }
@@ -2859,7 +2861,8 @@ static num num_div(num a, num b)
 	i1 = num_to_imag_part(a);
 	i2 = num_to_imag_part(b);
 	den = (r2 * r2 + i2 * i2);
-	ret = make_complex((r1 * r2 + i1 * i2) / den, (r2 * i1 - r1 * i2) / den);
+	ret = make_complex((r1 * r2 + i1 * i2) / den, 
+			   (r2 * i1 - r1 * i2) / den);
       }
       break;
     }
@@ -7281,7 +7284,7 @@ static char *s7_list_to_c_string(s7_scheme *sc, s7_pointer lst)
     }
   
   elements = (char **)malloc(len * sizeof(char *));
-  for (x = lst, i = 0; s7_is_pair(x) && (i < len); i++, x = s7_cdr(x))
+  for (x = lst, i = 0; s7_is_pair(x) && (i < len); i++, x = cdr(x))
     {
       elements[i] = s7_object_to_c_string(sc, car(x));
       bufsize += safe_strlen(elements[i]);
@@ -7716,7 +7719,7 @@ s7_pointer s7_member(s7_scheme *sc, s7_pointer sym, s7_pointer lst)
 {
   s7_pointer x;
   int v;
-  for (x = lst, v = 0; s7_is_pair(x); x = s7_cdr(x))
+  for (x = lst, v = 0; s7_is_pair(x); x = cdr(x))
     if (s7_is_equal(sym, car(x)))
       return(x);
   return(sc->F);
@@ -7727,7 +7730,7 @@ s7_pointer s7_assoc(s7_scheme *sc, s7_pointer sym, s7_pointer lst)
 {
   s7_pointer x;
   int v;
-  for (x = lst, v = 0; s7_is_pair(x); x = s7_cdr(x))
+  for (x = lst, v = 0; s7_is_pair(x); x = cdr(x))
     if ((s7_is_pair(s7_car(x))) &&
 	(s7_is_equal(sym, car(car(x)))))
       return(car(x));
@@ -10427,22 +10430,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
   
   switch (sc->op) 
     {
-      
-    case OP_TOP_LEVEL0:
-      stack_reset(sc); 
-      sc->envir = sc->global_env;
-      push_stack(sc, OP_TOP_LEVEL0, sc->NIL, sc->NIL);
-      push_stack(sc, OP_PRINT, sc->NIL, sc->NIL);
-      push_stack(sc, OP_TOP_LEVEL1, sc->NIL, sc->NIL);
-      goto READ_INTERNAL;
-      
-      
-    case OP_TOP_LEVEL1:
-      sc->code = sc->value;
-      goto EVAL;
-      
-      
-    READ_INTERNAL:
     case OP_READ_INTERNAL:
       sc->tok = token(sc, sc->input_port);
       if (sc->tok == TOK_EOF) 
@@ -10529,12 +10516,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* fprintf(stderr, "op eval string value: %s\n", s7_object_to_c_string(sc, sc->value)); */
      return(sc->F);
       
-      
-    case OP_PRINT: /* print evaluation result */
-      pop_stack(sc, sc->value);
-      goto START;
-      
-      
+
     case OP_FOR_EACH:
       sc->x = sc->args; /* save lists */
       sc->args = sc->NIL;

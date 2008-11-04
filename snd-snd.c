@@ -1114,13 +1114,13 @@ void peak_env_ptree(chan_info *cp, struct ptree *pt, int pos, XEN init_func)
 	{
 	  if (vlo)
 	    {
-	      dmin = evaluate_ptree_1f1v1b2f(pt, old_ep->data_min[i], vlo, true);
-	      dmax = evaluate_ptree_1f1v1b2f(pt, old_ep->data_max[i], vhi, true);
+	      dmin = mus_run_evaluate_ptree_1f1v1b2f(pt, old_ep->data_min[i], vlo, true);
+	      dmax = mus_run_evaluate_ptree_1f1v1b2f(pt, old_ep->data_max[i], vhi, true);
 	    }
 	  else
 	    {
-	      dmin = evaluate_ptree_1f2f(pt, old_ep->data_min[i]);
-	      dmax = evaluate_ptree_1f2f(pt, old_ep->data_max[i]);
+	      dmin = mus_run_evaluate_ptree_1f2f(pt, old_ep->data_min[i]);
+	      dmax = mus_run_evaluate_ptree_1f2f(pt, old_ep->data_max[i]);
 	    }
 	  if (dmin <= dmax)
 	    {
@@ -1201,13 +1201,13 @@ void peak_env_ptree_selection(chan_info *cp, struct ptree *pt, off_t beg, off_t 
 			  vhi = mus_vct_copy(vlo);
 			  inited = true;
 			}
-		      dmin = evaluate_ptree_1f1v1b2f(pt, old_ep->data_min[i], vlo, true);
-		      dmax = evaluate_ptree_1f1v1b2f(pt, old_ep->data_max[i], vhi, true);
+		      dmin = mus_run_evaluate_ptree_1f1v1b2f(pt, old_ep->data_min[i], vlo, true);
+		      dmax = mus_run_evaluate_ptree_1f1v1b2f(pt, old_ep->data_max[i], vhi, true);
 		    }
 		  else
 		    {
-		      dmin = evaluate_ptree_1f2f(pt, old_ep->data_min[i]);
-		      dmax = evaluate_ptree_1f2f(pt, old_ep->data_max[i]);
+		      dmin = mus_run_evaluate_ptree_1f2f(pt, old_ep->data_min[i]);
+		      dmax = mus_run_evaluate_ptree_1f2f(pt, old_ep->data_max[i]);
 		    }
 		  if (dmin <= dmax)
 		    {
@@ -1749,7 +1749,7 @@ static void remember_string(snd_info *sp, const char *str, mini_history_t which)
   if (mh->strings[top]) FREE(mh->strings[top]);
   for (i = top; i > 0; i--) mh->strings[i] = mh->strings[i - 1];
 
-  mh->strings[0] = copy_string(str);
+  mh->strings[0] = mus_strdup(str);
 }
 
 
@@ -2014,26 +2014,26 @@ static bool apply_controls(apply_state *ap)
 	      if (sp->amp_control != DEFAULT_AMP_CONTROL)
 		ampstr = mus_format("%.4f", 
 				    sp->amp_control);
-	      else ampstr = copy_string(PROC_FALSE);
+	      else ampstr = mus_strdup(PROC_FALSE);
 	      if ((!(snd_feq(sp->speed_control, DEFAULT_SPEED_CONTROL))) || 
 		  (sp->speed_control_direction == -1))
 		speedstr = mus_format("%.4f", 
 				      sp->speed_control * sp->speed_control_direction);
-	      else speedstr = copy_string(PROC_FALSE);
+	      else speedstr = mus_strdup(PROC_FALSE);
 	      if (sp->contrast_control_p)
 		contraststr = mus_format(LIST_OPEN "%.4f" PROC_SEP "%.4f" LIST_CLOSE, 
 					 sp->contrast_control, sp->contrast_control_amp);
-	      else contraststr = copy_string(PROC_FALSE);
+	      else contraststr = mus_strdup(PROC_FALSE);
 	      if (sp->expand_control_p)
 		expandstr = mus_format(LIST_OPEN "%.4f" PROC_SEP "%.4f" PROC_SEP "%.4f" PROC_SEP "%.4f" PROC_SEP "%.4f" LIST_CLOSE,
 				       sp->expand_control, sp->expand_control_length, sp->expand_control_ramp, 
 				       sp->expand_control_hop, sp->expand_control_jitter);
-	      else expandstr = copy_string(PROC_FALSE);
+	      else expandstr = mus_strdup(PROC_FALSE);
 	      if (sp->reverb_control_p)
 		reverbstr = mus_format(LIST_OPEN "%.4f" PROC_SEP "%.4f" PROC_SEP "%.4f" PROC_SEP "%.4f" PROC_SEP "%.4f" LIST_CLOSE,
 				       sp->reverb_control_scale, sp->reverb_control_length, sp->reverb_control_feedback, 
 				       sp->reverb_control_lowpass, sp->reverb_control_decay);
-	      else reverbstr = copy_string(PROC_FALSE);
+	      else reverbstr = mus_strdup(PROC_FALSE);
 	      if (sp->filter_control_p)
 		{
 		  char *envstr;
@@ -2042,7 +2042,7 @@ static bool apply_controls(apply_state *ap)
 					 sp->filter_control_order, envstr);
 		  FREE(envstr);
 		}
-	      else filterstr = copy_string(PROC_FALSE);
+	      else filterstr = mus_strdup(PROC_FALSE);
 #if HAVE_FORTH
 	      if (orig_apply_dur == 0)
 	      ap->origin = mus_format(" '( %s %s %s %s %s %s ) " OFF_TD PROC_SEP PROC_FALSE " %s", 
@@ -2819,7 +2819,7 @@ static XEN sound_set(XEN snd_n, XEN val, sp_field_t fld, const char *caller)
 	  if (sp->hdr->comment) FREE(sp->hdr->comment);
 	  if (XEN_FALSE_P(val))
 	    sp->hdr->comment = NULL;
-	  else sp->hdr->comment = copy_string(XEN_TO_C_STRING(val));
+	  else sp->hdr->comment = mus_strdup(XEN_TO_C_STRING(val));
 	}
       break;
 

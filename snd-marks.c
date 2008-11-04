@@ -20,7 +20,7 @@ static mark *make_mark_1(off_t samp, const char *name, int id, int sc)
 {
   mark *mp;
   mp = (mark *)CALLOC(1, sizeof(mark));
-  if (name) mp->name = copy_string(name); else mp->name = NULL;
+  if (name) mp->name = mus_strdup(name); else mp->name = NULL;
   mp->samp = samp;
   mp->id = id;
   set_mark_sync(mp, sc);
@@ -179,7 +179,7 @@ off_t mark_id_to_sample(int id)
 static mark *find_named_mark_1(chan_info *cp, mark *mp, void *uname)
 {
   char *name = (char *)uname;
-  if ((mp->name) && (snd_strcmp(mp->name, name))) return(mp);
+  if ((mp->name) && (mus_strcmp(mp->name, name))) return(mp);
   else return(NULL);
 }
 
@@ -1906,7 +1906,7 @@ static XEN mark_set(XEN mark_n, XEN val, mark_field_t fld, const char *caller)
       if (m->name) FREE(m->name);
       if (XEN_FALSE_P(val))
 	m->name = NULL;
-      else m->name = copy_string(XEN_TO_C_STRING(val));
+      else m->name = mus_strdup(XEN_TO_C_STRING(val));
       update_graph(cp[0]);
       break;
     default:
@@ -2048,7 +2048,7 @@ find the mark in snd's channel chn at samp (if a number) or with the given name 
 	{
 	  for (i = 0; i <= cp->edits[pos]->mark_ctr; i++) 
 	    if ((mps[i]) && 
-		(snd_strcmp(name, mps[i]->name)))
+		(mus_strcmp(name, mps[i]->name)))
 	      return(C_TO_XEN_INT(mps[i]->id));
 	}
       else
@@ -2353,7 +2353,7 @@ static char *map_mark_sync(chan_info *cp, mark *m, save_mark_info *sv)
   int i, cur_sync;
   cur_sync = m->sync;
   if (cur_sync == 0)
-    return(copy_string("0"));
+    return(mus_strdup("0"));
 
   if (sv->size > 0)
     for (i = 0; i < sv->size; i++)
@@ -2489,7 +2489,7 @@ The saved file is " XEN_LANGUAGE_NAME " code, so to restore the marks, load that
       int i, len;
       FILE *fd;
       if (XEN_STRING_P(filename))
-	newname = copy_string(XEN_TO_C_STRING(filename));
+	newname = mus_strdup(XEN_TO_C_STRING(filename));
       else
 	{
 	  len = strlen(sp->filename);

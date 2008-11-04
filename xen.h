@@ -180,7 +180,7 @@
 #define XEN_CONS(Arg1, Arg2)         scm_cons(Arg1, Arg2)
 #define XEN_CONS_2(Arg1, Arg2, Arg3) scm_cons2(Arg1, Arg2, Arg3)
 
-/* should SCM_CAR -> scm_car? (snd-run also) -- this appears to be a pointless change */
+/* should SCM_CAR -> scm_car? (run also) -- this appears to be a pointless change */
 #define XEN_CAR(a)                   SCM_CAR(a)
 #define XEN_CADR(a)                  SCM_CADR(a)
 #define XEN_CADDR(a)                 SCM_CADDR(a)

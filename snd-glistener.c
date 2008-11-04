@@ -23,8 +23,8 @@ static void list_completions_callback(const char *name, int row, void *data)
   beg = printout_end + 1;
   end = gtk_text_buffer_get_char_count(LISTENER_BUFFER);
   old_text = sg_get_text(listener_text, beg, end);
-  old_len = snd_strlen(old_text);
-  new_len = snd_strlen(name);
+  old_len = mus_strlen(old_text);
+  new_len = mus_strlen(name);
   for (i = old_len - 1, j = new_len - 1; j >= 0; j--)
     {
       if (old_text[i] != name[j])
@@ -96,7 +96,7 @@ int save_listener_text(FILE *fp)
       if (str)
 	{
 	  size_t bytes;
-	  bytes = fwrite((void *)str, sizeof(char), snd_strlen(str), fp);
+	  bytes = fwrite((void *)str, sizeof(char), mus_strlen(str), fp);
 	  g_free(str);
 	  if (bytes == 0) return(-1);
 	}
@@ -155,7 +155,7 @@ static void listener_completion(int end)
 	  g_free(old_text);
 	  return;
 	}
-      if (snd_strcmp(old_text, new_text))
+      if (mus_strcmp(old_text, new_text))
 	matches = get_completion_matches();
       sg_text_delete(listener_text, beg, end);
       append_listener_text(0, new_text);
@@ -563,7 +563,7 @@ static gboolean listener_key_press(GtkWidget *w, GdkEventKey *event, gpointer da
 		    {
 		      fstr = sg_get_text(listener_text, current_position - 2, current_position);
 		      if ((current_position != (printout_end - 2)) && 
-			  (!(snd_strcmp(fstr, listener_prompt_with_cr()))))
+			  (!(mus_strcmp(fstr, listener_prompt_with_cr()))))
 			{
 			  g_free(fstr);
 			  return(false);

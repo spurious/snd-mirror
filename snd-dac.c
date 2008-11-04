@@ -1793,7 +1793,7 @@ static char *last_print = NULL;
 static void dac_mus_print(char *msg)
 {
   if (last_print) FREE(last_print);
-  last_print = copy_string(msg);
+  last_print = mus_strdup(msg);
   (*old_dac_printer)(msg);
 }
 

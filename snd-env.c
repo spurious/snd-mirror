@@ -84,21 +84,21 @@ char *env_to_string(env *e)
 #if HAVE_SCHEME || HAVE_FORTH
 	  mus_snprintf(expr_buf, PRINT_BUFFER_SIZE, "%s%.3f %.3f", (first) ? "" : " ", e->data[j], e->data[j + 1]);
 #endif
-	  news = snd_strcat(news, expr_buf, &len);
+	  news = mus_strcat(news, expr_buf, &len);
 	  first = false;
 	}
       FREE(expr_buf);
 #if HAVE_RUBY
-      news = snd_strcat(news, "]", &len);
+      news = mus_strcat(news, "]", &len);
 #endif
 #if HAVE_SCHEME
-      news = snd_strcat(news, ")", &len);
+      news = mus_strcat(news, ")", &len);
 #endif
 #if HAVE_FORTH
-      news = snd_strcat(news, " )", &len);
+      news = mus_strcat(news, " )", &len);
 #endif
     }
-  else news = copy_string(PROC_FALSE);
+  else news = mus_strdup(PROC_FALSE);
   return(news);
 }
 
@@ -660,7 +660,7 @@ void init_env_axes(axis_info *ap, const char *name, int x_offset, int ey0, int w
   ap->ymax = ymax;
   ap->y_ambit = ap->ymax - ap->ymin;
   ap->x_ambit = ap->xmax - ap->xmin;
-  ap->xlabel = copy_string(name);
+  ap->xlabel = mus_strdup(name);
   ap->x0 = xmin;
   ap->x1 = xmax;
   ap->y0 = ymin;
@@ -819,7 +819,7 @@ static int find_env(const char *name)
   if ((all_envs) && 
       (name))
     for (i = 0; i < all_envs_top; i++)
-      if (snd_strcmp(name, all_names[i]))
+      if (mus_strcmp(name, all_names[i]))
 	return(i);
   return(-1);
 }
@@ -851,7 +851,7 @@ static void add_envelope(const char *name, env *val)
     }
   all_envs[all_envs_top] = val;
   if (all_names[all_envs_top]) FREE(all_names[all_envs_top]);
-  all_names[all_envs_top] = copy_string(name);
+  all_names[all_envs_top] = mus_strdup(name);
   all_envs_top++;
   if (enved_dialog_is_active())
     {
@@ -1143,7 +1143,7 @@ char *env_name_completer(widget_t w, char *text, void *data)
 	    matches++;
 	    add_possible_completion(all_names[i]);
 	    if (current_match == NULL)
-	      current_match = copy_string(all_names[i]);
+	      current_match = mus_strdup(all_names[i]);
 	    else 
 	      {
 		curlen = strlen(current_match);
@@ -1159,7 +1159,7 @@ char *env_name_completer(widget_t w, char *text, void *data)
   set_completion_matches(matches);
   if ((current_match) && (*current_match))
     return(current_match);
-  return(copy_string(text));
+  return(mus_strdup(text));
 }
 
 
@@ -1288,7 +1288,7 @@ env *string_to_env(const char *str)
   if ((str) && (*str))
     {
       char *old_tmp;
-      tmp = copy_string(str);
+      tmp = mus_strdup(str);
       old_tmp = tmp;
       i = 0;
       if (env_buffer_size == 0)
@@ -1414,7 +1414,7 @@ void add_or_edit_symbol(const char *name, env *val)
 
   if (!val) return;
   tmpstr = env_to_string(val);
-  len = snd_strlen(tmpstr) + snd_strlen(name) + 32;
+  len = mus_strlen(tmpstr) + mus_strlen(name) + 32;
   buf = (char *)CALLOC(len, sizeof(char));
   mus_snprintf(buf, len, "%s = %s", name, tmpstr);
   if (tmpstr) FREE(tmpstr);
@@ -1488,7 +1488,7 @@ static XEN g_save_envelopes(XEN filename)
 		  filename, XEN_ONLY_ARG, S_save_envelopes, "a string or " PROC_FALSE);
   if (XEN_STRING_P(filename)) 
     name = mus_expand_filename(XEN_TO_C_STRING(filename));
-  else name = copy_string("envs.save");
+  else name = mus_strdup("envs.save");
 
   fd = FOPEN(name, "w");
   if (fd) 

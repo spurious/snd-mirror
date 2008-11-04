@@ -144,7 +144,7 @@ static char *atom_to_string(Atom type, XtPointer value, unsigned long length)
 
 	  XmParseTableFree(parser, 1);
 	  XmStringFree(cvt);
-	  str = copy_string(temp);
+	  str = mus_strdup(temp);
 	  XtFree(temp);
 	}
     }
@@ -175,7 +175,7 @@ static void massage_selection(Widget w, XtPointer context, Atom *selection, Atom
 	      /* loop through possible list of filenames, calling watcher on each */
 	      char *filename;
 	      int len = 0, i, j = 0;
-	      len = snd_strlen(str);
+	      len = mus_strlen(str);
 	      filename = (char *)CALLOC(len, sizeof(char));
 	      for (i = 0; i < len; i++)
 		{

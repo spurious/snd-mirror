@@ -1382,7 +1382,7 @@ Float mus_ncos(mus_any *ptr, Float fm)
  *    }
  *
  * fm could also be handled here so the 4 cases become gen, mus_run_with_fm|pm|fm_and_pm(gen)
- * but... this could just as well happen at the extension language level, except that snd-run doesn't expend macros?
+ * but... this could just as well happen at the extension language level, except that run doesn't expand macros?
  * The problem with differentiating the pm and using the fm arg is that we'd need a closure.
  */
 
@@ -7772,7 +7772,7 @@ static Float sample_file(mus_any *ptr, off_t samp, int chan, Float val)
       return(val);
     }
 
-  if (chan >= gen->chans)
+  if ((chan >= gen->chans) || (!(gen->obufs)))
     return(val);
   if ((samp <= gen->data_end) &&
       (samp >= gen->data_start))
@@ -8146,7 +8146,7 @@ static Float *locsig_xcoeffs(mus_any *ptr) {return(((locs *)ptr)->revn);}
 mus_any *mus_locsig_outf(mus_any *ptr) {return((mus_any *)(((locs *)ptr)->outf));}  /* clm2xen.c */
 mus_any *mus_locsig_revf(mus_any *ptr) {return((mus_any *)(((locs *)ptr)->revf));}
 
-void *mus_locsig_closure(mus_any *ptr) {return(((locs *)ptr)->closure);}            /* snd-run.c */
+void *mus_locsig_closure(mus_any *ptr) {return(((locs *)ptr)->closure);}            /* run.c */
 static void *locsig_set_closure(mus_any *ptr, void *e) {((locs *)ptr)->closure = e; return(e);}
 
 

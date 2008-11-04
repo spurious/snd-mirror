@@ -147,10 +147,10 @@ static void save_loaded_files_list(FILE *fd, const char *current_filename)
 	{
 	  char *curfile;
 	  curfile = XEN_TO_C_STRING(XEN_LIST_REF(old_list, i));
-	  if ((!(snd_strcmp(curfile, current_filename))) &&
-	      (!(snd_strcmp(curfile, full_name))) &&
+	  if ((!(mus_strcmp(curfile, current_filename))) &&
+	      (!(mus_strcmp(curfile, full_name))) &&
 	      (mus_file_probe(curfile)))
-	    files[new_files++] = copy_string(curfile);
+	    files[new_files++] = mus_strdup(curfile);
 	}
       snd_unprotect_at(gc_loc);
       FREE(full_name);
@@ -476,7 +476,7 @@ static void save_options(FILE *fd)
   char *locale = NULL;
 
 #if HAVE_SETLOCALE
-  locale = copy_string(setlocale(LC_NUMERIC, "C")); /* must use decimal point in floats since Scheme assumes that format */
+  locale = mus_strdup(setlocale(LC_NUMERIC, "C")); /* must use decimal point in floats since Scheme assumes that format */
 #endif
 
   fprintf(fd, "\n%s Snd %s (%s) options saved %s\n", XEN_COMMENT_STRING, SND_VERSION, SND_DATE, snd_local_time());
@@ -567,11 +567,11 @@ static void save_options(FILE *fd)
   if (enved_clip_p(ss) != DEFAULT_ENVED_CLIP_P) pss_ss(fd, S_enved_clip_p, b2s(enved_clip_p(ss)));
   if (enved_style(ss) == ENVELOPE_EXPONENTIAL) pss_ss(fd, S_enved_style, TO_VAR_NAME(S_envelope_exponential));
 
-  if ((!tiny_font(ss)) || (!(snd_strcmp(tiny_font(ss), DEFAULT_TINY_FONT)))) pss_sq(fd, S_tiny_font, tiny_font(ss));
-  if ((!peaks_font(ss)) || (!(snd_strcmp(peaks_font(ss), DEFAULT_PEAKS_FONT)))) pss_sq(fd, S_peaks_font, peaks_font(ss));
-  if ((!bold_peaks_font(ss)) || (!(snd_strcmp(bold_peaks_font(ss), DEFAULT_BOLD_PEAKS_FONT)))) pss_sq(fd, S_bold_peaks_font, bold_peaks_font(ss));
-  if ((!axis_label_font(ss)) || (!(snd_strcmp(axis_label_font(ss), DEFAULT_AXIS_LABEL_FONT)))) pss_sq(fd, S_axis_label_font, axis_label_font(ss));
-  if ((!axis_numbers_font(ss)) || (!(snd_strcmp(axis_numbers_font(ss), DEFAULT_AXIS_NUMBERS_FONT)))) pss_sq(fd, S_axis_numbers_font, axis_numbers_font(ss));
+  if ((!tiny_font(ss)) || (!(mus_strcmp(tiny_font(ss), DEFAULT_TINY_FONT)))) pss_sq(fd, S_tiny_font, tiny_font(ss));
+  if ((!peaks_font(ss)) || (!(mus_strcmp(peaks_font(ss), DEFAULT_PEAKS_FONT)))) pss_sq(fd, S_peaks_font, peaks_font(ss));
+  if ((!bold_peaks_font(ss)) || (!(mus_strcmp(bold_peaks_font(ss), DEFAULT_BOLD_PEAKS_FONT)))) pss_sq(fd, S_bold_peaks_font, bold_peaks_font(ss));
+  if ((!axis_label_font(ss)) || (!(mus_strcmp(axis_label_font(ss), DEFAULT_AXIS_LABEL_FONT)))) pss_sq(fd, S_axis_label_font, axis_label_font(ss));
+  if ((!axis_numbers_font(ss)) || (!(mus_strcmp(axis_numbers_font(ss), DEFAULT_AXIS_NUMBERS_FONT)))) pss_sq(fd, S_axis_numbers_font, axis_numbers_font(ss));
   if (listener_font(ss))
     pss_sq(fd, S_listener_font, listener_font(ss));
 #if USE_MOTIF || USE_GTK
@@ -588,9 +588,9 @@ static void save_options(FILE *fd)
   if (save_dir(ss)) pss_sq(fd, S_save_dir, save_dir(ss));
   if (open_file_dialog_directory(ss)) pss_sq(fd, S_open_file_dialog_directory, open_file_dialog_directory(ss));
   if (ladspa_dir(ss)) pss_sq(fd, S_ladspa_dir, ladspa_dir(ss));
-  if ((eps_file(ss)) && (!(snd_strcmp(eps_file(ss), DEFAULT_EPS_FILE)))) pss_sq(fd, S_eps_file, eps_file(ss));
-  if ((listener_prompt(ss)) && (!(snd_strcmp(listener_prompt(ss), DEFAULT_LISTENER_PROMPT)))) pss_sq(fd, S_listener_prompt, listener_prompt(ss));
-  if ((html_program(ss)) && (!(snd_strcmp(html_program(ss), DEFAULT_HTML_PROGRAM)))) pss_sq(fd, S_html_program, html_program(ss));
+  if ((eps_file(ss)) && (!(mus_strcmp(eps_file(ss), DEFAULT_EPS_FILE)))) pss_sq(fd, S_eps_file, eps_file(ss));
+  if ((listener_prompt(ss)) && (!(mus_strcmp(listener_prompt(ss), DEFAULT_LISTENER_PROMPT)))) pss_sq(fd, S_listener_prompt, listener_prompt(ss));
+  if ((html_program(ss)) && (!(mus_strcmp(html_program(ss), DEFAULT_HTML_PROGRAM)))) pss_sq(fd, S_html_program, html_program(ss));
   if (html_dir(ss)) pss_sq(fd, S_html_dir, html_dir(ss));
   if (audio_input_device(ss) != DEFAULT_AUDIO_INPUT_DEVICE) pss_sd(fd, S_audio_input_device, audio_input_device(ss));
   if (audio_output_device(ss) != DEFAULT_AUDIO_OUTPUT_DEVICE) pss_sd(fd, S_audio_output_device, audio_output_device(ss));
@@ -955,8 +955,8 @@ static int find_sound_nth(snd_info *nsp)
       snd_info *sp;
       sp = ss->sounds[i];
       if ((sp) && (sp->inuse == SOUND_NORMAL))
-	if ((snd_strcmp(nsp->short_filename, sp->short_filename)) || 
-	    (snd_strcmp(nsp->filename, sp->filename)))
+	if ((mus_strcmp(nsp->short_filename, sp->short_filename)) || 
+	    (mus_strcmp(nsp->filename, sp->filename)))
 	  which++;
     }
   return(which);
@@ -1276,7 +1276,7 @@ void save_state(const char *save_state_name)
   save_loaded_files_list(save_fd, save_state_name);
 #endif
 #if HAVE_SETLOCALE
-  locale = copy_string(setlocale(LC_NUMERIC, "C")); /* must use decimal point in floats since Scheme assumes that format */
+  locale = mus_strdup(setlocale(LC_NUMERIC, "C")); /* must use decimal point in floats since Scheme assumes that format */
 #endif
   save_options(save_fd);                            /* options = user-settable global state variables */
   /* the global settings need to precede possible local settings */
@@ -1599,7 +1599,7 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 			      if ((auto_open_ctr >= args) ||
 				  (auto_open_file_names[auto_open_ctr] == NULL))
 				snd_error_without_format(_("-title but no title?")); /* for gtk -- Xt handles the Motif case */
-			      else ss->startup_title = copy_string(auto_open_file_names[auto_open_ctr]);
+			      else ss->startup_title = mus_strdup(auto_open_file_names[auto_open_ctr]);
 			    }
 			  else
 			    {
@@ -1619,7 +1619,7 @@ int handle_next_startup_arg(int auto_open_ctr, char **auto_open_file_names, bool
 				{
 				  if (startup_filename == NULL)
 				    {
-				      startup_filename = copy_string(argname);
+				      startup_filename = mus_strdup(argname);
 				      if (dont_start(startup_filename)) snd_exit(1);
 				    }
 				  ss->open_requestor = FROM_STARTUP;
@@ -1663,8 +1663,8 @@ default " S_save_state " filename is " DEFAULT_SAVE_STATE_FILE ". It can be chan
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(filename), filename, XEN_ONLY_ARG, S_save_state, "a string");
 
   if (XEN_BOUND_P(filename))
-    name = copy_string(XEN_TO_C_STRING(filename));
-  else name = copy_string(save_state_file(ss));
+    name = mus_strdup(XEN_TO_C_STRING(filename));
+  else name = mus_strdup(save_state_file(ss));
 
   redirect_snd_error_to(save_state_error_handler, (void *)name);
   save_state(name);
@@ -1719,7 +1719,7 @@ static XEN g_set_temp_dir(XEN val)
   if (snd_access(dir, S_temp_dir))
     {
       if (temp_dir(ss)) FREE(temp_dir(ss));
-      set_temp_dir(copy_string(dir));
+      set_temp_dir(mus_strdup(dir));
     }
   return(C_TO_XEN_STRING(temp_dir(ss)));
 }
@@ -1733,8 +1733,8 @@ static XEN g_set_ladspa_dir(XEN val)
   XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ONLY_ARG, S_setB S_ladspa_dir, "a string or " PROC_FALSE "=default (null)"); 
   if (ladspa_dir(ss)) FREE(ladspa_dir(ss));
   if (XEN_FALSE_P(val))
-    set_ladspa_dir(copy_string(DEFAULT_LADSPA_DIR));
-  else set_ladspa_dir(copy_string(XEN_TO_C_STRING(val)));
+    set_ladspa_dir(mus_strdup(DEFAULT_LADSPA_DIR));
+  else set_ladspa_dir(mus_strdup(XEN_TO_C_STRING(val)));
   return(C_TO_XEN_STRING(ladspa_dir(ss)));
 }
 
@@ -1748,7 +1748,7 @@ static XEN g_set_save_state_file(XEN val)
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_save_state_file, "a string"); 
   filename = XEN_TO_C_STRING(val);
   if (save_state_file(ss)) FREE(save_state_file(ss));
-  in_set_save_state_file(copy_string(filename));
+  in_set_save_state_file(mus_strdup(filename));
   return(C_TO_XEN_STRING(save_state_file(ss)));
 }
 
@@ -1764,7 +1764,7 @@ static XEN g_set_save_dir(XEN val)
   if (snd_access(dir, S_save_dir))
     {
       if (save_dir(ss)) FREE(save_dir(ss));
-      set_save_dir(copy_string(dir));
+      set_save_dir(mus_strdup(dir));
     }
   return(C_TO_XEN_STRING(save_dir(ss)));
 }
@@ -1781,7 +1781,7 @@ static XEN g_set_open_file_dialog_directory(XEN val)
   if (snd_access(dir, S_open_file_dialog_directory))
     {
       if (open_file_dialog_directory(ss)) FREE(open_file_dialog_directory(ss));
-      set_open_file_dialog_directory(copy_string(dir));
+      set_open_file_dialog_directory(mus_strdup(dir));
     }
   return(C_TO_XEN_STRING(open_file_dialog_directory(ss)));
 }

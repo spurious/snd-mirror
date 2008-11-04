@@ -299,8 +299,8 @@ static void who_called(Widget w, XtPointer context, XEvent *event, Boolean *cont
 	  {
 	    char *buf;
 	    buf = (char *)(version[0]);
-	    if ((snd_strlen(buf) > 1) ||
-		((snd_strlen(buf) == 1) && (buf[0] != '\n')))
+	    if ((mus_strlen(buf) > 1) ||
+		((mus_strlen(buf) == 1) && (buf[0] != '\n')))
 	      {
 		if ((!(XEN_HOOKED(window_property_changed_hook))) ||
 		    (!(XEN_TRUE_P(run_or_hook(window_property_changed_hook,
@@ -787,8 +787,8 @@ void snd_doit(int argc, char **argv)
   XtGetApplicationResources(shell, &snd_rs, resources, XtNumber(resources), NULL, 0);
   XtVaGetValues(shell, XmNtitle, &app_title, NULL);  /* perhaps caller included -title arg */
   if (app_title) 
-    ss->startup_title = copy_string(app_title); 
-  else ss->startup_title = copy_string("snd");
+    ss->startup_title = mus_strdup(app_title); 
+  else ss->startup_title = mus_strdup("snd");
 
   if ((snd_rs.horizontal_panes >= (int)SOUNDS_VERTICAL) &&
       (snd_rs.horizontal_panes <= (int)SOUNDS_IN_SEPARATE_WINDOWS))
@@ -976,12 +976,12 @@ void snd_doit(int argc, char **argv)
       (!(set_listener_font(snd_rs.listener_font))))
     fprintf(stderr, _("can't find listener font %s"), snd_rs.listener_font);
 
-  ss->orig_axis_label_font = copy_string(axis_label_font(ss));
-  ss->orig_axis_numbers_font = copy_string(axis_numbers_font(ss));
-  ss->orig_peaks_font = copy_string(peaks_font(ss));
-  ss->orig_bold_peaks_font = copy_string(bold_peaks_font(ss));
-  ss->orig_listener_font = copy_string(listener_font(ss));
-  ss->orig_tiny_font = copy_string(tiny_font(ss));
+  ss->orig_axis_label_font = mus_strdup(axis_label_font(ss));
+  ss->orig_axis_numbers_font = mus_strdup(axis_numbers_font(ss));
+  ss->orig_peaks_font = mus_strdup(peaks_font(ss));
+  ss->orig_bold_peaks_font = mus_strdup(bold_peaks_font(ss));
+  ss->orig_listener_font = mus_strdup(listener_font(ss));
+  ss->orig_tiny_font = mus_strdup(tiny_font(ss));
 
   XtVaSetValues(shell, XmNbackground, sx->basic_color, NULL);
 

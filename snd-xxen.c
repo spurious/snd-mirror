@@ -35,7 +35,7 @@ static XEN g_in(XEN ms, XEN code)
 			  (XtTimerCallbackProc)timed_eval, 
 			  (XtPointer)lst);
 	  /* the "code" arg can still be something misleading like an applicable smob */
-	  /*   there's a way to catch that in snd-run.c line 129, but I'm not sure it's the "right thing" here */
+	  /*   there's a way to catch that in run.c line 129, but I'm not sure it's the "right thing" here */
 	}
     }
   else XEN_BAD_ARITY_ERROR(S_in, 2, code, "should take no args");

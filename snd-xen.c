@@ -295,8 +295,8 @@ static XEN snd_format_if_needed(XEN args)
   num_args = XEN_LIST_LENGTH(args);
   if (num_args == 1) return(XEN_CAR(args));
 
-  format_info = copy_string(XEN_TO_C_STRING(XEN_CAR(args)));
-  format_info_len = snd_strlen(format_info);
+  format_info = mus_strdup(XEN_TO_C_STRING(XEN_CAR(args)));
+  format_info_len = mus_strlen(format_info);
 
   if (XEN_LIST_P(XEN_CADR(args)))
     format_args = XEN_COPY_ARG(XEN_CADR(args)); /* protect Ruby case, a no-op in Guile */
@@ -320,8 +320,8 @@ static XEN snd_format_if_needed(XEN args)
 	      got_tilde = false;
 	      switch (format_info[i])
 		{
-		case '~': errmsg = snd_strcat(errmsg, "~", &err_size); break;
-		case '%': errmsg = snd_strcat(errmsg, "\n", &err_size); break;
+		case '~': errmsg = mus_strcat(errmsg, "~", &err_size); break;
+		case '%': errmsg = mus_strcat(errmsg, "\n", &err_size); break;
 		case 'S': 
 		case 'A':
 		  if (XEN_NOT_NULL_P(format_args))
@@ -332,7 +332,7 @@ static XEN snd_format_if_needed(XEN args)
 			{
 			  char *vstr;
 			  vstr = gl_print(cur_arg);
-			  errmsg = snd_strcat(errmsg, vstr, &err_size);
+			  errmsg = mus_strcat(errmsg, vstr, &err_size);
 			  FREE(vstr);
 			}
 		      else
@@ -345,12 +345,12 @@ static XEN snd_format_if_needed(XEN args)
 			      XEN str;
 			      str = XEN_PROCEDURE_NAME(cur_arg);
 			      if (!(XEN_FALSE_P(str)))
-				errmsg = snd_strcat(errmsg, XEN_AS_STRING(str), &err_size);
-			      else errmsg = snd_strcat(errmsg, XEN_AS_STRING(cur_arg), &err_size);
+				errmsg = mus_strcat(errmsg, XEN_AS_STRING(str), &err_size);
+			      else errmsg = mus_strcat(errmsg, XEN_AS_STRING(cur_arg), &err_size);
 			    }
 			  else 
 #endif
-			    errmsg = snd_strcat(errmsg, temp = XEN_AS_STRING(cur_arg), &err_size);
+			    errmsg = mus_strcat(errmsg, temp = XEN_AS_STRING(cur_arg), &err_size);
 #if HAVE_S7
 			    if (temp) free(temp);
 #endif
@@ -369,8 +369,8 @@ static XEN snd_format_if_needed(XEN args)
   if (!was_formatted)
     {
       char *temp = NULL;
-      errmsg = snd_strcat(errmsg, " ", &err_size);
-      errmsg = snd_strcat(errmsg, temp = XEN_AS_STRING(XEN_CADR(args)), &err_size);
+      errmsg = mus_strcat(errmsg, " ", &err_size);
+      errmsg = mus_strcat(errmsg, temp = XEN_AS_STRING(XEN_CADR(args)), &err_size);
 #if HAVE_S7
       if (temp) free(temp);
 #endif
@@ -381,8 +381,8 @@ static XEN snd_format_if_needed(XEN args)
       for (i = start; i < num_args; i++)
 	{
 	  char *temp = NULL;
-	  errmsg = snd_strcat(errmsg, " ", &err_size);
-	  errmsg = snd_strcat(errmsg, temp = XEN_AS_STRING(XEN_LIST_REF(args, i)), &err_size);
+	  errmsg = mus_strcat(errmsg, " ", &err_size);
+	  errmsg = mus_strcat(errmsg, temp = XEN_AS_STRING(XEN_LIST_REF(args, i)), &err_size);
 #if HAVE_S7
 	  if (temp) free(temp);
 #endif
@@ -412,7 +412,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
   bool need_comma = false;
 
   if (XEN_SYMBOL_P(tag)) tag_name = XEN_SYMBOL_TO_C_STRING(tag);
-  if (snd_strcmp(tag_name, "snd-top-level"))
+  if (mus_strcmp(tag_name, "snd-top-level"))
     return(throw_args); /* not an error -- just a way to exit the current context */
 
   port = scm_mkstrport(XEN_ZERO, 
@@ -475,11 +475,11 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
 	  if (XEN_STRING_P(str))
 	    {
 	      char *help;
-	      help = copy_string(XEN_TO_C_STRING(str));
+	      help = mus_strdup(XEN_TO_C_STRING(str));
 	      if (help)
 		{
 		  int i, len;
-		  len = snd_strlen(help);
+		  len = mus_strlen(help);
 		  for (i = 1; i < len; i++)
 		    if ((help[i] == '\n') ||                        /* try to print just the calling sequence */
 			((help[i] == ':') && (help[i - 1] == ')'))) /* :optional can occur in the arg list */
@@ -549,7 +549,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
     }
   possible_code = (char *)data; /* or is this the caller's name? */
   if ((possible_code) && 
-      (snd_strlen(possible_code) < PRINT_BUFFER_SIZE))
+      (mus_strlen(possible_code) < PRINT_BUFFER_SIZE))
     {
       /* not actually sure if this is always safe */
       XEN_PUTS("\n; ", port);
@@ -558,7 +558,7 @@ static XEN snd_catch_scm_error(void *data, XEN tag, XEN throw_args) /* error han
   XEN_FLUSH_PORT(port); /* needed to get rid of trailing garbage chars?? -- might be pointless now */
   {
     char *name_buf;
-    name_buf = copy_string(XEN_TO_C_STRING(XEN_PORT_TO_STRING(port)));
+    name_buf = mus_strdup(XEN_TO_C_STRING(XEN_PORT_TO_STRING(port)));
     if (name_buf)
       {
 	bool show_error = true;
@@ -614,10 +614,10 @@ void snd_rb_raise(XEN tag, XEN throw_args)
 	{
 	  /* here XEN_CADR can contain formatting info and XEN_CADDR is a list of args to fit in */
 	  /* or it may be a list of info vars etc */
-	  if (need_comma) msg = snd_strcat(msg, ": ", &size);
+	  if (need_comma) msg = mus_strcat(msg, ": ", &size);
 	  if (XEN_STRING_P(XEN_CADR(throw_args)))
-	    msg = snd_strcat(msg, XEN_TO_C_STRING(snd_format_if_needed(XEN_CDR(throw_args))), &size);
-	  else msg = snd_strcat(msg, XEN_AS_STRING(XEN_CDR(throw_args)), &size);
+	    msg = mus_strcat(msg, XEN_TO_C_STRING(snd_format_if_needed(XEN_CDR(throw_args))), &size);
+	  else msg = mus_strcat(msg, XEN_AS_STRING(XEN_CDR(throw_args)), &size);
 	}
     }
 
@@ -627,11 +627,11 @@ void snd_rb_raise(XEN tag, XEN throw_args)
       if (XEN_VECTOR_P(bt) && XEN_VECTOR_LENGTH(bt) > 0) 
 	{
 	  long i; 
-	  msg = snd_strcat(msg, "\n", &size); 
+	  msg = mus_strcat(msg, "\n", &size); 
 	  for (i = 0; i < XEN_VECTOR_LENGTH(bt); i++) 
 	    { 
-	      msg = snd_strcat(msg, XEN_TO_C_STRING(XEN_VECTOR_REF(bt, i)), &size); 
-	      msg = snd_strcat(msg, "\n", &size); 
+	      msg = mus_strcat(msg, XEN_TO_C_STRING(XEN_VECTOR_REF(bt, i)), &size); 
+	      msg = mus_strcat(msg, "\n", &size); 
 	    } 
 	} 
     }
@@ -1007,11 +1007,11 @@ char *g_print_1(XEN obj) /* free return val */
   return(XEN_AS_STRING(obj)); 
 #endif
 #if HAVE_FORTH || HAVE_RUBY
-  return(copy_string(XEN_AS_STRING(obj))); 
+  return(mus_strdup(XEN_AS_STRING(obj))); 
 #endif
 #if HAVE_GUILE
 #if HAVE_SCM_OBJECT_TO_STRING
-  return(copy_string(XEN_AS_STRING(obj))); 
+  return(mus_strdup(XEN_AS_STRING(obj))); 
 #else
   XEN str, val;
   XEN port;
@@ -1020,7 +1020,7 @@ char *g_print_1(XEN obj) /* free return val */
   scm_prin1(obj, port, 1);
   val = XEN_PORT_TO_STRING(port);
   XEN_CLOSE_PORT(port);
-  return(copy_string(XEN_TO_C_STRING(val)));
+  return(mus_strdup(XEN_TO_C_STRING(val)));
 #endif
 #endif
 #if (!HAVE_EXTENSION_LANGUAGE)
@@ -1058,20 +1058,20 @@ static char *gl_print(XEN result)
 	  if (i != 0) 
 	    {
 #if HAVE_RUBY
-	      newbuf = snd_strcat(newbuf, ",", &savelen);
+	      newbuf = mus_strcat(newbuf, ",", &savelen);
 #endif
-	      newbuf = snd_strcat(newbuf, " ", &savelen); 
+	      newbuf = mus_strcat(newbuf, " ", &savelen); 
 	    }
-	  newbuf = snd_strcat(newbuf, str, &savelen);
+	  newbuf = mus_strcat(newbuf, str, &savelen);
 	  FREE(str);
 	}
     }
 
 #if HAVE_SCHEME || HAVE_FORTH
-  newbuf = snd_strcat(newbuf, " ...)", &savelen);
+  newbuf = mus_strcat(newbuf, " ...)", &savelen);
 #endif
 #if HAVE_RUBY
-  newbuf = snd_strcat(newbuf, " ...]", &savelen);
+  newbuf = mus_strcat(newbuf, " ...]", &savelen);
 #endif
 
   return(newbuf);
@@ -1139,17 +1139,17 @@ static char *stdin_check_for_full_expression(char *newstr)
     {
       char *str;
       str = stdin_str;
-      stdin_str = (char *)CALLOC(snd_strlen(str) + snd_strlen(newstr) + 2, sizeof(char));
+      stdin_str = (char *)CALLOC(mus_strlen(str) + mus_strlen(newstr) + 2, sizeof(char));
       strcat(stdin_str, str);
       strcat(stdin_str, newstr);
       FREE(str);
     }
-  else stdin_str = copy_string(newstr);
+  else stdin_str = mus_strdup(newstr);
 #if HAVE_SCHEME
-  end_of_text = check_balance(stdin_str, 0, snd_strlen(stdin_str), false); /* last-arg->not in listener */
+  end_of_text = check_balance(stdin_str, 0, mus_strlen(stdin_str), false); /* last-arg->not in listener */
   if (end_of_text > 0)
     {
-      if (end_of_text + 1 < snd_strlen(stdin_str))
+      if (end_of_text + 1 < mus_strlen(stdin_str))
 	stdin_str[end_of_text + 1] = 0;
       return(stdin_str);
     }
@@ -1170,7 +1170,7 @@ void snd_eval_stdin_str(char *buf)
   /* we may get incomplete expressions here */
   /*   (Ilisp always sends a complete expression, but it may be broken into two or more pieces from read's point of view) */
   char *str = NULL;
-  if (snd_strlen(buf) == 0) return;
+  if (mus_strlen(buf) == 0) return;
   str = stdin_check_for_full_expression(buf);
   if (str)
     {
@@ -1208,7 +1208,7 @@ static void string_to_stderr_and_listener(const char *msg, void *ignore)
 	  ss->startup_errors = mus_format("%s\n%s %s\n", ss->startup_errors, listener_prompt(ss), msg);
 	  FREE(temp);
 	}
-      else ss->startup_errors = copy_string(msg); /* initial prompt is already there */
+      else ss->startup_errors = mus_strdup(msg); /* initial prompt is already there */
     }
 }
 
@@ -1371,7 +1371,7 @@ static XEN g_snd_print(XEN msg)
   #define H_snd_print "(" S_snd_print " str): display str in the listener window"
   char *str = NULL;
   if (XEN_STRING_P(msg))
-    str = copy_string(XEN_TO_C_STRING(msg));
+    str = mus_strdup(XEN_TO_C_STRING(msg));
   else
     {
       if (XEN_CHAR_P(msg))
@@ -1395,7 +1395,7 @@ bool listener_print_p(const char *msg)
 {
   static int print_depth = 0;
   XEN res = XEN_FALSE;
-  if ((msg) && (print_depth == 0) && (snd_strlen(msg) > 0) && (XEN_HOOKED(print_hook)))
+  if ((msg) && (print_depth == 0) && (mus_strlen(msg) > 0) && (XEN_HOOKED(print_hook)))
     {
       print_depth++;
       res = run_or_hook(print_hook, 
@@ -2245,7 +2245,7 @@ static void add_source_file_extension(const char *ext)
 {
   int i;
   for (i = 0; i < source_file_extensions_end; i++)
-    if (snd_strcmp(ext, source_file_extensions[i]))
+    if (mus_strcmp(ext, source_file_extensions[i]))
       return;
   if (source_file_extensions_end == source_file_extensions_size)
     {
@@ -2254,7 +2254,7 @@ static void add_source_file_extension(const char *ext)
 	source_file_extensions = (char **)CALLOC(source_file_extensions_size, sizeof(char *));
       else source_file_extensions = (char **)REALLOC(source_file_extensions, source_file_extensions_size * sizeof(char *));
     }
-  source_file_extensions[source_file_extensions_end] = copy_string(ext);
+  source_file_extensions[source_file_extensions_end] = mus_strdup(ext);
   source_file_extensions_end++;
 }
 
@@ -2276,7 +2276,7 @@ bool source_file_p(const char *name)
 	  const char *ext;
 	  ext = (const char *)(name + dot_loc + 1);
 	  for (i = 0; i < source_file_extensions_end; i++)
-	    if (snd_strcmp(ext, source_file_extensions[i]))
+	    if (mus_strcmp(ext, source_file_extensions[i]))
 	      return(true);
 	}
     }
@@ -2480,7 +2480,7 @@ static char* legalize_path(const char *in_str)
   char *out_str;
   int inpos, outpos = 0; 
 
-  inlen = snd_strlen(in_str); 
+  inlen = mus_strlen(in_str); 
   out_str = (char *)CALLOC(inlen * 2, sizeof(char)); 
 
   for (inpos = 0; inpos < inlen; inpos++)
@@ -2775,7 +2775,6 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   g_init_gxsnd();
   g_init_gxfind();
 #endif
-  g_init_run();
 
 #if HAVE_SCHEME && HAVE_DLFCN_H
   XEN_DEFINE_PROCEDURE("dlopen",  g_dlopen_w,  1, 0 ,0, "");
@@ -2989,7 +2988,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
       char *str, *buf;
       int i, j = 0, len;
       str = (char *)(RUBY_SEARCH_PATH);
-      len = snd_strlen(str);
+      len = mus_strlen(str);
       buf = (char *)CALLOC(len + 1, sizeof(char));
       for (i = 0; i < len; i++)
 	if (str[i] == ':')

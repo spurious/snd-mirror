@@ -148,7 +148,7 @@ static void add_pattern_to_help_history(const char *pattern)
 	}
     }
   if (help_history[help_history_pos]) FREE(help_history[help_history_pos]);
-  help_history[help_history_pos++] = copy_string(pattern);
+  help_history[help_history_pos++] = mus_strdup(pattern);
 }
 
 
@@ -181,7 +181,7 @@ static void help_previous_callback(GtkWidget *w, gpointer context)
 static char *find_highlighted_text(const char *value)
 {
   int i, len, start = -1;
-  len = snd_strlen(value);
+  len = mus_strlen(value);
   for (i = 0; i < len; i++)
     if (value[i] == '{')
       start = i + 1;
@@ -242,7 +242,7 @@ static gboolean text_release_callback(GtkTreeSelection *selection, gpointer *gp)
 	{
 	  int i, len;
 	  bool one_word = true;
-	  len = snd_strlen(txt);
+	  len = mus_strlen(txt);
 	  for (i = 0; i < len; i++)
 	    if (isspace(txt[i]))
 	      {

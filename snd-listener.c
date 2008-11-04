@@ -267,7 +267,7 @@ void provide_listener_help(char *source)
     {
       int i, len;
       char *prompt;
-      len = snd_strlen(source);
+      len = mus_strlen(source);
       /* look for "(name...)" or "\n>name" */
       prompt = listener_prompt(ss);
       for (i = len - 1; i >= 0; i--)
@@ -514,7 +514,7 @@ void command_return(widget_t w, int last_prompt)
 		parens++;
 	    }
 	  str[end_of_text - start_of_text + 1] = 0;
-	  end_of_text = snd_strlen(str);
+	  end_of_text = mus_strlen(str);
 	  if (parens)
 	    {
 	      end_of_text = check_balance(str, 0, (int)end_of_text, true); /* last-arg->we are in the listener */
@@ -547,7 +547,7 @@ void command_return(widget_t w, int last_prompt)
 	      for (i = loc; i >= 0; i--)
 		if ((str[i] == '\n') || (i == 0))
 		  {
-		    len = snd_strlen(str);
+		    len = mus_strlen(str);
 		    tmp = (char *)CALLOC(len + 1, sizeof(char));
 		    if (i != 0) i++;
 		    for (k = 0; i < len; i++, k++) 
@@ -571,7 +571,7 @@ void command_return(widget_t w, int last_prompt)
 	GUI_LISTENER_TEXT_INSERT(w, GUI_TEXT_END(w), str);
       GUI_SET_CURSOR(w, ss->sgx->wait_cursor);
       GUI_UPDATE(w); /* not sure about this... */
-      if ((snd_strlen(str) > 1) || (str[0] != '\n'))
+      if ((mus_strlen(str) > 1) || (str[0] != '\n'))
 	remember_listener_string(str);
       /* 
        * the division into a read, a free, then an eval is needed to handle continuations correctly:
@@ -590,7 +590,7 @@ void command_return(widget_t w, int last_prompt)
        */
 
 #if HAVE_GUILE
-      if ((snd_strlen(str) > 1) || (str[0] != '\n'))
+      if ((mus_strlen(str) > 1) || (str[0] != '\n'))
 	form = string_to_form(str);
 #endif
 
@@ -599,7 +599,7 @@ void command_return(widget_t w, int last_prompt)
 #endif
 
 #if HAVE_S7
-      if ((snd_strlen(str) > 1) || (str[0] != '\n'))
+      if ((mus_strlen(str) > 1) || (str[0] != '\n'))
 	{
 	  char *errmsg;
 	  int gc_loc = -1;
@@ -611,7 +611,7 @@ void command_return(widget_t w, int last_prompt)
 
 	  form = XEN_EVAL_C_STRING(str);
 
-	  errmsg = copy_string(s7_get_output_string(s7, s7_current_error_port(s7)));
+	  errmsg = mus_strdup(s7_get_output_string(s7, s7_current_error_port(s7)));
 	  s7_close_output_port(s7, s7_current_error_port(s7));
 	  s7_set_current_error_port(s7, old_port);
 	  if (gc_loc != -1)
@@ -698,7 +698,7 @@ static XEN g_set_show_listener(XEN val)
 void set_listener_prompt(const char *new_prompt)
 {
   in_set_listener_prompt((char *)new_prompt);
-  ss->listener_prompt_length = snd_strlen(new_prompt);
+  ss->listener_prompt_length = mus_strlen(new_prompt);
 
 #if USE_NO_GUI
   {
@@ -747,7 +747,7 @@ static XEN g_set_listener_prompt(XEN val)
   #define H_listener_prompt "(" S_listener_prompt "): the current lisp listener prompt character ('>') "
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_listener_prompt, "a string"); 
   if (listener_prompt(ss)) FREE(listener_prompt(ss));
-  set_listener_prompt(copy_string(XEN_TO_C_STRING(val)));
+  set_listener_prompt(mus_strdup(XEN_TO_C_STRING(val)));
   return(C_TO_XEN_STRING(listener_prompt(ss)));
 }
 
@@ -757,7 +757,7 @@ static XEN g_snd_completion(XEN text)
   /* perhaps callable from emacs? */
   char *str, *temp;
   XEN res;
-  temp = copy_string(XEN_TO_C_STRING(text));
+  temp = mus_strdup(XEN_TO_C_STRING(text));
   str = command_completer(NULL_WIDGET, temp, NULL);
   res = C_TO_XEN_STRING(str);
   FREE(str);

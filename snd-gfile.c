@@ -68,7 +68,7 @@ static void fsb_filter_set_text_with_directory(fsb *fs, const char *filter)
 {
   char *name;
   int cur_dir_len;
-  cur_dir_len = snd_strlen(fs->directory_name);
+  cur_dir_len = mus_strlen(fs->directory_name);
   name = (char *)CALLOC(cur_dir_len + 3, sizeof(char));
   mus_snprintf(name, cur_dir_len + 3, "%s%s", fs->directory_name, filter);
   gtk_entry_set_text(GTK_ENTRY(fs->filter_text), name);
@@ -85,7 +85,7 @@ static char *fsb_file_text(fsb *fs)
 static void fsb_file_set_text(fsb *fs, const char *file)
 {
   if (fs->file_name) FREE(fs->file_name);
-  fs->file_name = copy_string(file);
+  fs->file_name = mus_strdup(file);
   gtk_entry_set_text(GTK_ENTRY(fs->file_text), fs->file_name);
 }
 
@@ -215,7 +215,7 @@ static void fsb_update_lists(fsb *fs)
       fs->directory_watcher = fam_monitor_directory(fs->directory_name, (void *)fs, watch_current_directory_contents);
 
       if (fs->last_dir) FREE(fs->last_dir);
-      fs->last_dir = copy_string(fs->directory_name);
+      fs->last_dir = mus_strdup(fs->directory_name);
       fs->reread_directory = false;
     }
 #endif
@@ -375,7 +375,7 @@ static fsb *make_fsb(const char *title, const char *file_lab, const char *ok_lab
 
   /* -------- current working directory -------- */
   if (open_file_dialog_directory(ss))
-    pwd = copy_string(open_file_dialog_directory(ss));
+    pwd = mus_strdup(open_file_dialog_directory(ss));
   else pwd = mus_getcwd();
   cur_dir = (char *)CALLOC(strlen(pwd) + 2, sizeof(char));
   strcpy(cur_dir, pwd);
@@ -552,15 +552,15 @@ static void force_directory_reread(fsb *fs)
   char *filename = NULL, *selected;
   gdouble scroller_position;
   int i;
-  selected = copy_string(slist_selection(fs->file_list));
-  filename = copy_string(fsb_file_text(fs));
+  selected = mus_strdup(slist_selection(fs->file_list));
+  filename = mus_strdup(fsb_file_text(fs));
   scroller_position = ADJUSTMENT_VALUE(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->file_list->scroller)));
   fsb_update_lists(fs);
   fsb_file_set_text(fs, filename);
   if (selected)
     {
       for (i = 0; i < fs->current_files->len; i++)
-	if (snd_strcmp(selected, fs->current_files->files[i]->filename))
+	if (mus_strcmp(selected, fs->current_files->files[i]->filename))
 	  {
 	    slist_select(fs->file_list, i); /* doesn't call select callback */
 	    break;
@@ -581,7 +581,7 @@ static void file_text_item_activate_callback(GtkWidget *w, gpointer context)
   fsb *fs = (fsb *)context;
   char *current_directory, *current_filename;
 
-  current_filename = copy_string((char *)(fs->file_text_names[get_user_int_data(G_OBJECT(w))]));
+  current_filename = mus_strdup((char *)(fs->file_text_names[get_user_int_data(G_OBJECT(w))]));
   current_directory = just_directory(current_filename);
 
   if ((!(fs->directory_name)) || 
@@ -594,7 +594,7 @@ static void file_text_item_activate_callback(GtkWidget *w, gpointer context)
     }
 
   for (i = 0; i < fs->current_files->len; i++)
-    if (snd_strcmp(current_filename, fs->current_files->files[i]->full_filename))
+    if (mus_strcmp(current_filename, fs->current_files->files[i]->full_filename))
       {
 	snd_info *sp;
 	slist_select(fs->file_list, i);        /* doesn't call select callback, but I think we want it in this case */
@@ -686,7 +686,7 @@ static void reflect_filter_in_popup(fsb *fs)
 
   for (i = 0; i < FILENAME_LIST_SIZE; i++)
     if ((fs->file_filter_names[i]) &&
-	(!(snd_strcmp(fs->file_filter_names[i], current_filtername))))
+	(!(mus_strcmp(fs->file_filter_names[i], current_filtername))))
       {
 	gtk_label_set_text(GTK_LABEL(gtk_bin_get_child(GTK_BIN(fs->file_filter_items[filternames_to_display]))), 
 			   fs->file_filter_names[i]);
@@ -928,7 +928,7 @@ static void sort_files_and_redisplay(fsb *fs)
   gdouble scroller_position;
   cur_dir = fs->current_files;
   scroller_position = ADJUSTMENT_VALUE(gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(fs->file_list->scroller)));
-  selected = copy_string(slist_selection(fs->file_list));
+  selected = mus_strdup(slist_selection(fs->file_list));
   slist_clear(fs->file_list);
   if (cur_dir->len == 0)
     slist_append(fs->file_list, NO_MATCHING_FILES);
@@ -943,7 +943,7 @@ static void sort_files_and_redisplay(fsb *fs)
     {
       int i;
       for (i = 0; i < cur_dir->len; i++)
-	if (snd_strcmp(selected, cur_dir->files[i]->filename))
+	if (mus_strcmp(selected, cur_dir->files[i]->filename))
 	  {
 	    slist_select(fs->file_list, i); /* doesn't call select callback */
 	    scroller_position = i * 16;
@@ -1028,7 +1028,7 @@ static bool file_is_directory(fsb *fs)
 static bool file_is_nonexistent_directory(fsb *fs)
 {
   char *filename = NULL;
-  filename = copy_string(fsb_file_text(fs));
+  filename = mus_strdup(fsb_file_text(fs));
   if (filename)
     {
       int i, len;
@@ -1142,7 +1142,7 @@ static gboolean filer_key_press(GtkWidget *w, GdkEventKey *event, gpointer data)
   if (event->keyval == GDK_Tab)
     {
       gtk_entry_set_text(GTK_ENTRY(w), sound_filename_completer(w, (char *)gtk_entry_get_text(GTK_ENTRY(w)), NULL));
-      gtk_editable_set_position(GTK_EDITABLE(w), snd_strlen((char *)gtk_entry_get_text(GTK_ENTRY(w))));
+      gtk_editable_set_position(GTK_EDITABLE(w), mus_strlen((char *)gtk_entry_get_text(GTK_ENTRY(w))));
       return(true);
     }
   return(false);
@@ -1223,7 +1223,7 @@ static void dialog_select_callback(const char *filename, void *context)
       gtk_widget_show(fd->info2);
       gtk_widget_show(fd->dp->play_button);
 #if HAVE_FAM
-      fd->info_filename = copy_string(filename);
+      fd->info_filename = mus_strdup(filename);
       fd->info_filename_watcher = fam_monitor_file(fd->info_filename, (void *)fd, watch_info_file);
 #endif
     }
@@ -1466,7 +1466,7 @@ static void unpost_unsound_error(struct fam_info *fp, FAMEvent *fe)
       fd = (file_dialog_info *)(fp->data);
       if ((fd) &&
 	  (fe->filename) &&
-	  (snd_strcmp(fe->filename, fd->unsound_filename)))
+	  (mus_strcmp(fe->filename, fd->unsound_filename)))
 	clear_file_error_label(fd);
       break;
     default:
@@ -1588,7 +1588,7 @@ static void file_open_dialog_mkdir(GtkWidget *w, gpointer context)
     {
       /* set FSB to new dir and force update */
       if (fs->directory_name) FREE(fs->directory_name);
-      fs->directory_name = copy_string(filename);
+      fs->directory_name = mus_strdup(filename);
       fsb_filter_set_text_with_directory(fs, "*");
       fsb_update_lists(fs);
       set_sensitive(w, false);
@@ -1918,7 +1918,7 @@ char *get_file_dialog_sound_attributes(file_data *fdat, int *srate, int *chans, 
       if (GTK_IS_TEXT_VIEW(fdat->comment_text))
 	comment = sg_get_text(fdat->comment_text, 0, -1);
       else comment = (char *)gtk_entry_get_text(GTK_ENTRY(fdat->comment_text)); 
-      str = copy_string(comment);
+      str = mus_strdup(comment);
       return(str);
     }
   return(NULL);
@@ -1993,7 +1993,7 @@ static gboolean data_panel_srate_key_press(GtkWidget *w, GdkEventKey *event, gpo
   if (event->keyval == GDK_Tab)
     {
       gtk_entry_set_text(GTK_ENTRY(w), srate_completer(w, (char *)gtk_entry_get_text(GTK_ENTRY(w)), NULL));
-      gtk_editable_set_position(GTK_EDITABLE(w), snd_strlen((char *)gtk_entry_get_text(GTK_ENTRY(w))));
+      gtk_editable_set_position(GTK_EDITABLE(w), mus_strlen((char *)gtk_entry_get_text(GTK_ENTRY(w))));
       return(true);
     }
   return(false);
@@ -2687,7 +2687,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 
   file_exists = mus_file_probe(fullname);
   if ((sd->type == SOUND_SAVE_AS) &&
-      (snd_strcmp(fullname, sp->filename)))
+      (mus_strcmp(fullname, sp->filename)))
     {
       /* save-as here is the same as save */
       if ((sp->user_read_only == FILE_READ_ONLY) || 
@@ -2762,7 +2762,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	char *ofile;
 	if (file_exists) /* file won't exist if we're encoding, so this isn't as wasteful as it looks */
 	  ofile = snd_tempnam();
-	else ofile = copy_string(tmpfile);
+	else ofile = mus_strdup(tmpfile);
 	io_err = save_selection(ofile, type, format, srate, comment, (saving) ? SAVE_ALL_CHANS : chan);
 	if (io_err == IO_NO_ERROR)
 	  io_err = move_file(ofile, fullname);
@@ -2776,7 +2776,7 @@ static void save_or_extract(save_as_dialog_info *sd, bool saving)
 	  {
 	    if (file_exists)
 	      ofile = snd_tempnam();
-	    else ofile = copy_string(tmpfile);
+	    else ofile = mus_strdup(tmpfile);
 	    io_err = save_region(region_dialog_region(), ofile, type, format, comment);
 	    if (io_err == IO_NO_ERROR)
 	      io_err = move_file(ofile, fullname);
@@ -2889,7 +2889,7 @@ static void save_as_mkdir_callback(GtkWidget *w, gpointer context)
   else
     {
       if (fs->directory_name) FREE(fs->directory_name);
-      fs->directory_name = copy_string(filename);
+      fs->directory_name = mus_strdup(filename);
       fsb_filter_set_text_with_directory(fs, "*");
       fsb_update_lists(fs);
       set_sensitive(w, false);
@@ -3318,7 +3318,7 @@ static void raw_data_ok_callback(GtkWidget *w, gpointer context)
 	{
 	  file_info *hdr;
 	  hdr = (file_info *)CALLOC(1, sizeof(file_info));
-	  hdr->name = copy_string(rp->filename);
+	  hdr->name = mus_strdup(rp->filename);
 	  hdr->type = MUS_RAW;
 	  hdr->srate = raw_srate;
 	  hdr->chans = raw_chans;
@@ -3453,7 +3453,7 @@ void raw_data_dialog_to_file_info(const char *filename, char *title, char *info,
   rp->read_only = read_only;
   rp->selected = selected;
   if (rp->filename) FREE(rp->filename);
-  rp->filename = copy_string(filename);
+  rp->filename = mus_strdup(filename);
   rp->requestor = ss->open_requestor;
   rp->requestor_dialog = ss->sgx->requestor_dialog;
   ss->open_requestor = NO_REQUESTOR;
@@ -3471,7 +3471,7 @@ void raw_data_dialog_to_file_info(const char *filename, char *title, char *info,
   if (rp->help) FREE(rp->help);
   if (info)
     {
-      rp->help = copy_string(info);
+      rp->help = mus_strdup(info);
       FREE(info);
     }
   else rp->help = NULL;
@@ -4054,7 +4054,7 @@ GtkWidget *edit_header(snd_info *sp)
 	    ((edhead_infos[i]->sp == sp) ||
 	     ((edhead_infos[i]->sp) && /* maybe same sound open twice -- only one edit header dialog for it */
 	      (edhead_infos[i]->sp->inuse == SOUND_NORMAL) &&
-	      (snd_strcmp(sp->filename, edhead_infos[i]->sp->filename)))))
+	      (mus_strcmp(sp->filename, edhead_infos[i]->sp->filename)))))
 	  {
 	    ep = edhead_infos[i];
 	    break;
@@ -4408,21 +4408,21 @@ void vf_post_selected_files_list(view_files_info *vdat)
   char *msg1 = NULL, *msg2 = NULL, *title;
   len = vdat->currently_selected_files;
 
-  title = copy_string("selected files:");
+  title = mus_strdup("selected files:");
   info_widget_display(vdat->left_title, title);
   FREE(title);
 
   if (len == 2)
     {
-      msg1 = copy_string(vdat->names[vdat->selected_files[0]]);
-      msg2 = copy_string(vdat->names[vdat->selected_files[1]]);
+      msg1 = mus_strdup(vdat->names[vdat->selected_files[0]]);
+      msg2 = mus_strdup(vdat->names[vdat->selected_files[1]]);
     }
   else
     {
       if (len == 3)
 	{
 	  msg1 = mus_format("%s, %s", vdat->names[vdat->selected_files[0]], vdat->names[vdat->selected_files[1]]);
-	  msg2 = copy_string(vdat->names[vdat->selected_files[2]]);
+	  msg2 = mus_strdup(vdat->names[vdat->selected_files[2]]);
 	}
       else
 	{
@@ -4449,7 +4449,7 @@ void vf_unpost_info(view_files_info *vdat)
 {
   char *title;
 
-  title = copy_string("(no files selected)");
+  title = mus_strdup("(no files selected)");
   info_widget_display(vdat->left_title, title);
   FREE(title);
 

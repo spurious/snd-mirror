@@ -2397,3 +2397,47 @@ int mus_samples_peak(unsigned char *data, int bytes, int chans, int format, Floa
 }
 
 
+
+
+char *mus_strdup(const char *str)
+{
+  if (str)
+    return(strdup(str));
+  return(NULL);
+}
+
+
+int mus_strlen(const char *str)
+{
+  /* strlen(NULL) -> seg fault! */
+  if ((str) && (*str)) return(strlen(str));
+  return(0);
+}
+
+
+bool mus_strcmp(const char *str1, const char *str2)
+{
+  return((str1 == str2) ||
+	 ((str1) && (str2) &&
+	  (strcmp(str1, str2) == 0)));
+}
+
+
+char *mus_strcat(char *errmsg, const char *str, int *size)
+{
+  int new_len, err_size;
+  new_len = (mus_strlen(str) + mus_strlen(errmsg));
+  err_size = size[0];
+  if (new_len >= err_size)
+    {
+      if ((err_size * 2) > new_len)
+	err_size = err_size * 2;
+      else err_size = new_len * 2;
+      errmsg = (char *)REALLOC(errmsg, err_size * sizeof(char));
+      size[0] = err_size;
+    }
+  strcat(errmsg, str);
+  return(errmsg);
+}
+
+

@@ -1348,7 +1348,7 @@ static void watch_sash(Widget w, XtPointer closure, XtPointer info)
     {
       int i, k;
       snd_info *sp;
-      if (snd_strcmp(call_data->params[0], "Start"))
+      if (mus_strcmp(call_data->params[0], "Start"))
 	{
 	  int outer_ctr = 0;
 	  for (i = 0; i < ss->max_sounds; i++)
@@ -1395,7 +1395,7 @@ static void watch_sash(Widget w, XtPointer closure, XtPointer info)
 	}
       else
 	{
-	  if (snd_strcmp(call_data->params[0], "Commit")) /* release sash */
+	  if (mus_strcmp(call_data->params[0], "Commit")) /* release sash */
 	    {
 	      if (outer_panes > 0)
 		{
@@ -2936,10 +2936,10 @@ void set_sound_pane_file_label(snd_info *sp, char *str)
 {
   if (MUS_TRY_LOCK(sp->starred_name_lock) != MUS_ALREADY_LOCKED)
     {
-      if (!(snd_strcmp(sp->name_string, str)))
+      if (!(mus_strcmp(sp->name_string, str)))
 	{
 	  if (sp->name_string) FREE(sp->name_string);
-	  sp->name_string = copy_string(str);
+	  sp->name_string = mus_strdup(str);
 	  set_button_label(SND_NAME(sp), str); /* this causes an expose event, so it's worth minimizing */
 	}
       MUS_UNLOCK(sp->starred_name_lock);

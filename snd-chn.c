@@ -701,7 +701,7 @@ void add_channel_data_1(chan_info *cp, int srate, off_t frames, channel_graph_t 
 	  if (len > 3) y1 = XEN_TO_C_DOUBLE(XEN_CADDDR(res));
 	  if ((len > 4) && 
 	      (XEN_STRING_P(XEN_LIST_REF(res, 4))))
-	    hook_label = copy_string(XEN_TO_C_STRING(XEN_LIST_REF(res, 4)));
+	    hook_label = mus_strdup(XEN_TO_C_STRING(XEN_LIST_REF(res, 4)));
 	  if (len > 5)
 	    {
 	      ymin = XEN_TO_C_DOUBLE(XEN_LIST_REF(res, 5));
@@ -4287,7 +4287,7 @@ void show_cursor_info(chan_info *cp)
 	  for (i = 1; i < sp->nchans; i++)
 	    {
 	      chan_info *ncp;
-	      expr_str = snd_strcat(expr_str, ", ", &len);
+	      expr_str = mus_strcat(expr_str, ", ", &len);
 	      FREE(s2);
 	      ncp = sp->chans[i];
 	      y = chn_sample(samp, ncp, ncp->edit_ctr);
@@ -4301,7 +4301,7 @@ void show_cursor_info(chan_info *cp)
 		  else digits = 2;
 		}
 	      s2 = prettyf(y, digits);
-	      expr_str = snd_strcat(expr_str, s2, &len);
+	      expr_str = mus_strcat(expr_str, s2, &len);
 	    }
 	}
     }
@@ -4407,7 +4407,7 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
   ap = fp->axis;
 
   if ((ap->x_axis_x1 == ap->x_axis_x0) || (ap->y_axis_y1 == ap->y_axis_y0))
-    return(copy_string("?"));
+    return(mus_strdup("?"));
 
   x = mus_iclamp(ap->x_axis_x0, x, ap->x_axis_x1);
   xf = ap->x0 + (ap->x1 - ap->x0) * (Float)(x - ap->x_axis_x0) / (Float)(ap->x_axis_x1 - ap->x_axis_x0);
@@ -4485,7 +4485,7 @@ static char *describe_fft_point(chan_info *cp, int x, int y)
 			    si->data[time][ind]));
 	}
     }
-  return(copy_string("?"));
+  return(mus_strdup("?"));
 }
 
 
@@ -7471,16 +7471,16 @@ static void chans_x_axis_style(chan_info *cp, int value)
       if (ap->xlabel) FREE(ap->xlabel);
       /* if user set x-axis-label (snd-axis.c) ap->default_xlabel is not null, so use it rather than normal choices */
       if (ap->default_xlabel)
-	ap->xlabel = copy_string(ap->default_xlabel);
+	ap->xlabel = mus_strdup(ap->default_xlabel);
       else
 	{
 	  switch (new_style)
 	    {
-	    case X_AXIS_IN_BEATS:      ap->xlabel = copy_string(_("time (beats)"));    break;
-	    case X_AXIS_IN_MEASURES:   ap->xlabel = copy_string(_("time (measures)")); break;
-	    case X_AXIS_IN_SAMPLES:    ap->xlabel = copy_string(_("time (samples)"));  break;
-	    case X_AXIS_AS_PERCENTAGE: ap->xlabel = copy_string(_("time (percent)"));  break;
-	    default:                   ap->xlabel = copy_string(_("time"));            break;
+	    case X_AXIS_IN_BEATS:      ap->xlabel = mus_strdup(_("time (beats)"));    break;
+	    case X_AXIS_IN_MEASURES:   ap->xlabel = mus_strdup(_("time (measures)")); break;
+	    case X_AXIS_IN_SAMPLES:    ap->xlabel = mus_strdup(_("time (samples)"));  break;
+	    case X_AXIS_AS_PERCENTAGE: ap->xlabel = mus_strdup(_("time (percent)"));  break;
+	    default:                   ap->xlabel = mus_strdup(_("time"));            break;
 	    }
 	}
       update_graph(cp);
@@ -7726,7 +7726,7 @@ to the info dialog if filename is omitted"
   if (XEN_STRING_P(filename))
     {
       name = mus_expand_filename(XEN_TO_C_STRING(filename));
-      if ((name) && (snd_strlen(name) > 0))
+      if ((name) && (mus_strlen(name) > 0))
 	{
 	  fd = FOPEN(name, "w");
 	  post_to_dialog = false;
@@ -8043,7 +8043,7 @@ If 'data' is a list of numbers, it is treated as an envelope."
       (cp->axis == NULL))
     return(XEN_FALSE);
 
-  if (XEN_STRING_P(xlabel)) label = copy_string(XEN_TO_C_STRING(xlabel)); 
+  if (XEN_STRING_P(xlabel)) label = mus_strdup(XEN_TO_C_STRING(xlabel)); 
   if (XEN_NUMBER_P(x0)) nominal_x0 = XEN_TO_C_DOUBLE(x0); else nominal_x0 = 0.0;
   if (XEN_NUMBER_P(x1)) nominal_x1 = XEN_TO_C_DOUBLE(x1); else nominal_x1 = 1.0;
   if (XEN_NUMBER_P(y0)) ymin = XEN_TO_C_DOUBLE(y0);
@@ -8312,11 +8312,11 @@ to a standard Snd channel graph placed in the widget 'container'."
   if (XEN_STRING_P(name))
     {
       axis_info *ap;
-      sp->filename = copy_string(XEN_TO_C_STRING(name));
-      sp->short_filename = copy_string(sp->filename);
+      sp->filename = mus_strdup(XEN_TO_C_STRING(name));
+      sp->short_filename = mus_strdup(sp->filename);
       ap = cp->axis;
       if (ap->xlabel) FREE(ap->xlabel);
-      ap->xlabel = copy_string(sp->filename);
+      ap->xlabel = mus_strdup(sp->filename);
       if (ap->default_xlabel) FREE(ap->default_xlabel); 
       ap->default_xlabel = NULL;
       if (ap->ylabel) FREE(ap->ylabel);
@@ -8324,13 +8324,13 @@ to a standard Snd channel graph placed in the widget 'container'."
     }
   else
     {
-      sp->filename = copy_string("variable");
-      sp->short_filename = copy_string("var");
+      sp->filename = mus_strdup("variable");
+      sp->short_filename = mus_strdup("var");
     }
 
   cp->sounds[0] = make_snd_data_buffer_for_simple_channel(initial_length);
   cp->edits[0] = initial_ed_list(0, initial_length - 1);
-  cp->edits[0]->origin = copy_string(S_make_variable_graph);
+  cp->edits[0]->origin = mus_strdup(S_make_variable_graph);
   return(C_TO_XEN_INT(sp->index));
 }
 

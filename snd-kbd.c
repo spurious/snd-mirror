@@ -92,7 +92,7 @@ static named_macro *name_macro(char *name)
   if (!(named_macros[named_macro_ctr])) 
     named_macros[named_macro_ctr] = (named_macro *)CALLOC(1, sizeof(named_macro));
   nm = named_macros[named_macro_ctr];
-  nm->name = copy_string(name);
+  nm->name = mus_strdup(name);
   named_macro_ctr++;
   return(nm);
 }
@@ -172,7 +172,7 @@ static bool execute_named_macro_1(chan_info *cp, const char *name, off_t count)
   int k;
   for (k = 0; k < named_macro_ctr; k++)
     {
-      if (snd_strcmp(name, named_macros[k]->name))
+      if (mus_strcmp(name, named_macros[k]->name))
 	{
 	  int i;
 	  off_t j;
@@ -397,11 +397,11 @@ key_info *find_prefs_key_binding(const char *prefs_name)
   key_info *ki;
   for (i = 0; i < keymap_top; i++)
     if ((XEN_BOUND_P(user_keymap[i].func)) &&
-	(snd_strcmp(user_keymap[i].prefs_info, prefs_name)))
+	(mus_strcmp(user_keymap[i].prefs_info, prefs_name)))
       return(make_key_info(user_keymap[i]));
 
   for (i = 0; i < NUM_BUILT_IN_KEY_BINDINGS; i++)
-    if (snd_strcmp(built_in_key_bindings[i].prefs_info, prefs_name))
+    if (mus_strcmp(built_in_key_bindings[i].prefs_info, prefs_name))
       return(make_key_info(built_in_key_bindings[i]));
 
   ki = (key_info *)CALLOC(1, sizeof(key_info));
@@ -436,19 +436,19 @@ char *key_binding_description(int key, int state, bool cx_extended)
       if (!(XEN_FALSE_P(help_text))) 
 	{
 	  if (XEN_STRING_P(help_text))
-	    return(copy_string(XEN_TO_C_STRING(help_text)));
-	  return(copy_string(XEN_AS_STRING(help_text)));
+	    return(mus_strdup(XEN_TO_C_STRING(help_text)));
+	  return(mus_strdup(XEN_AS_STRING(help_text)));
 	}
 #endif
       if (user_keymap[pos].origin)
-	return(copy_string(user_keymap[pos].origin));
-      return(copy_string("something indescribable")); /* NULL would mean "no binding" */
+	return(mus_strdup(user_keymap[pos].origin));
+      return(mus_strdup("something indescribable")); /* NULL would mean "no binding" */
     }
   for (pos = 0; pos < NUM_BUILT_IN_KEY_BINDINGS; pos++)
     if ((built_in_key_bindings[pos].key == key) && 
 	(built_in_key_bindings[pos].state == state) && 
 	(built_in_key_bindings[pos].cx_extended == cx_extended))
-      return(copy_string(built_in_key_bindings[pos].origin));
+      return(mus_strdup(built_in_key_bindings[pos].origin));
   return(NULL);
 }
 
@@ -514,8 +514,8 @@ void set_keymap_entry(int key, int state, int args, XEN func, bool cx_extended, 
 	  FREE(tmp);
 	}
     }
-  user_keymap[i].origin = copy_string(origin);
-  user_keymap[i].prefs_info = copy_string(prefs_info);
+  user_keymap[i].origin = mus_strdup(origin);
+  user_keymap[i].prefs_info = mus_strdup(prefs_info);
   user_keymap[i].args = args;
   user_keymap[i].func = func;
   if (XEN_PROCEDURE_P(func)) 
@@ -600,7 +600,7 @@ static void prompt(snd_info *sp, char *msg, char *preload)
   if (preload)
     {
       set_minibuffer_string(sp, preload, true);
-      set_minibuffer_cursor_position(sp, snd_strlen(preload));
+      set_minibuffer_cursor_position(sp, mus_strlen(preload));
     }
   else
     set_minibuffer_string(sp, NULL, true);
@@ -702,7 +702,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	       * if error in scheme, don't go ahead with the search!
 	       */
 	      clear_sound_search_procedure(sp, true);
-	      sp->search_expr = copy_string(str);
+	      sp->search_expr = mus_strdup(str);
 	      redirect_errors_to(errors_to_minibuffer, (void *)sp);
 	      proc = snd_catch_any(eval_str_wrapper, str, str);
 	      if (XEN_PROCEDURE_P(proc)) /* redundant but avoids unwanted error message via snd_error */
@@ -753,7 +753,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	}
       return;
     }
-  if (snd_strlen(str) != 0)
+  if (mus_strlen(str) != 0)
     {
       if (sp->printing)
 	{
@@ -936,7 +936,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
 	      {
 		DIR *dp;
 		char *newdir;
-		newdir = copy_string(str);
+		newdir = mus_strdup(str);
 		clear_minibuffer(sp);
 		dp = opendir(newdir);
 		if (dp) 
@@ -1052,7 +1052,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
   if (sp->prompting)
     {
       int loc;
-      if (snd_strlen(str) > 0)
+      if (mus_strlen(str) > 0)
 	{
 	  XEN proc;
 	  redirect_snd_print_to(printout_to_minibuffer, (void *)sp);
@@ -1074,7 +1074,7 @@ void snd_minibuffer_activate(snd_info *sp, int keysym, bool with_meta)
       return;
     }
 #endif
-  if (snd_strlen(str) > 0)
+  if (mus_strlen(str) > 0)
     {
       redirect_snd_print_to(printout_to_minibuffer, (void *)sp);
       redirect_errors_to(errors_to_minibuffer, (void *)sp);

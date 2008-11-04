@@ -550,8 +550,8 @@ static int add_transform(const char *name, const char *xlabel, Float lo, Float h
 {
   added_transform *af;
   af = new_transform();
-  af->name = copy_string(name);
-  af->xlabel = copy_string(xlabel);
+  af->name = mus_strdup(name);
+  af->xlabel = mus_strdup(xlabel);
   af->lo = lo;
   af->hi = hi;
   af->proc = proc;
@@ -767,7 +767,7 @@ static void make_sonogram_axes(chan_info *cp)
       else 
 	{
 	  if (fp->xlabel == NULL)
-	    fp->xlabel = copy_string(_("time"));
+	    fp->xlabel = mus_strdup(_("time"));
 	  fp->axis = make_axis_info(cp,
 				    ap->x0, ap->x1,
 				    min_freq, max_freq,
@@ -1310,7 +1310,7 @@ void set_fft_info_xlabel(chan_info *cp, const char *new_label)
     {
       if (cp->fft->xlabel) FREE(cp->fft->xlabel);
       if (new_label) 
-	cp->fft->xlabel = copy_string(new_label); 
+	cp->fft->xlabel = mus_strdup(new_label); 
       else cp->fft->xlabel = NULL;
     }
 }

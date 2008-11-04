@@ -49,7 +49,7 @@ static void report_in_error_info(const char *msg, void *ignore)
   info_widget_display(info, msg);
   widget_modify_base(info, GTK_STATE_NORMAL, ss->sgx->highlight_color);
   widget_modify_base(info, GTK_STATE_ACTIVE, ss->sgx->highlight_color);
-  /*   info_widget_set_size(info, 1 + snd_strlen(msg)); */
+  /*   info_widget_set_size(info, 1 + mus_strlen(msg)); */
   recorder_watching = true;
   recorder_text_id = SG_SIGNAL_CONNECT(recorder_output, "changed", watch_info, NULL);
 }
@@ -183,7 +183,7 @@ static void start_recording(void)
 {
   clear_error();
   recorder_filename = (char *)gtk_entry_get_text(GTK_ENTRY(recorder_output));
-  if (recorder_filename == NULL) recorder_filename = copy_string("test.snd");
+  if (recorder_filename == NULL) recorder_filename = mus_strdup("test.snd");
   redirect_snd_error_to(report_in_error_info, NULL);
   recorder_fd = mus_sound_open_output(recorder_filename, recorder_srate, recorder_chans, recorder_format, 
 				      (recorder_format == MUS_LFLOAT) ? MUS_RIFF : MUS_NEXT, 

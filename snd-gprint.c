@@ -170,7 +170,7 @@ static void watch_print(GtkWidget *w, gpointer context)
 static void report_in_error_info(const char *msg, void *ignore)
 {
   info_widget_display(print_error_text, msg);
-  info_widget_set_size(print_error_text, 1 + snd_strlen(msg));
+  info_widget_set_size(print_error_text, 1 + mus_strlen(msg));
   print_error = true;
   if (!(GTK_WIDGET_VISIBLE(print_error_text)))
     {

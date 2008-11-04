@@ -271,7 +271,7 @@ static void env_redisplay_1(printing_t printing)
 	{
 	  char *name = NULL;
 	  name = XmTextGetString(textL);
-	  if (!name) name = copy_string(_("noname"));
+	  if (!name) name = mus_strdup(_("noname"));
 	  /* active_env can be null here if just showing axes (empty initial graph) */
 
 	  if (enved_wave_p(ss))
@@ -447,7 +447,7 @@ static void save_button_pressed(Widget w, XtPointer context, XtPointer info)
   if (active_env == NULL) return;
   name = XmTextGetString(textL);
   if ((!name) || (!(*name))) 
-    name = copy_string(_("unnamed"));
+    name = mus_strdup(_("unnamed"));
   alert_envelope_editor(name, copy_env(active_env));
   add_or_edit_symbol(name, active_env);
   set_sensitive(saveB, false);

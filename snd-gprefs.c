@@ -582,7 +582,7 @@ static GtkWidget *make_row_text(prefs_info *prf, const char *text_value, int col
   GtkWidget *w;
   GtkSettings *settings;
   ASSERT_WIDGET_TYPE(GTK_IS_HBOX(box), box);
-  len = snd_strlen(text_value);
+  len = mus_strlen(text_value);
   w = gtk_entry_new();
   gtk_entry_set_has_frame(GTK_ENTRY(w), true);
   if (text_value) sg_entry_set_text(GTK_ENTRY(w), text_value);
@@ -1518,7 +1518,7 @@ static void prefs_set_dialog_title(const char *filename)
   if (filename)
     {
       if (prefs_saved_filename) FREE(prefs_saved_filename);
-      prefs_saved_filename = copy_string(filename);
+      prefs_saved_filename = mus_strdup(filename);
     }
   if (prefs_saved_filename)
     str = mus_format("Preferences%s (saved in %s)\n",
@@ -1752,8 +1752,8 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_show_controls, save_show_controls, NULL, NULL, revert_show_controls);
 
     current_sep = make_inter_variable_separator(dpy_box);
-    include_peak_env_directory = copy_string(peak_env_directory());
-    rts_peak_env_directory = copy_string(include_peak_env_directory);
+    include_peak_env_directory = mus_strdup(peak_env_directory());
+    rts_peak_env_directory = mus_strdup(include_peak_env_directory);
     include_peak_envs = find_peak_envs();
     rts_peak_envs = include_peak_envs;
     prf = prefs_row_with_toggle_with_text("save peak envs to speed up initial display", "save-peak-env-info",
@@ -1795,7 +1795,7 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, prefs_reflect_just_sounds, save_just_sounds, NULL, NULL, revert_just_sounds);
 
     current_sep = make_inter_variable_separator(dpy_box);
-    rts_temp_dir = copy_string(temp_dir(ss));
+    rts_temp_dir = mus_strdup(temp_dir(ss));
     prf = prefs_row_with_text("directory for temporary files", S_temp_dir, 
 			      temp_dir(ss), 
 			      dpy_box,
@@ -1803,7 +1803,7 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_temp_dir, save_temp_dir, NULL, NULL, revert_temp_dir);
 
     current_sep = make_inter_variable_separator(dpy_box);
-    rts_save_dir = copy_string(save_dir(ss));
+    rts_save_dir = mus_strdup(save_dir(ss));
     prf = prefs_row_with_text("directory for save-state files", S_save_dir, 
 			      save_dir(ss), 
 			      dpy_box,
@@ -1811,7 +1811,7 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_save_dir, save_save_dir, NULL, NULL, revert_save_dir);
 
     current_sep = make_inter_variable_separator(dpy_box);
-    rts_save_state_file = copy_string(save_state_file(ss));
+    rts_save_state_file = mus_strdup(save_state_file(ss));
     prf = prefs_row_with_text("default save-state filename", S_save_state_file, 
 			      save_state_file(ss), 
 			      dpy_box,
@@ -1820,7 +1820,7 @@ widget_t start_preferences_dialog(void)
 
 #if HAVE_LADSPA
     current_sep = make_inter_variable_separator(dpy_box);
-    rts_ladspa_dir = copy_string(ladspa_dir(ss));
+    rts_ladspa_dir = mus_strdup(ladspa_dir(ss));
     prf = prefs_row_with_text("directory for ladspa plugins", S_ladspa_dir, 
 			      ladspa_dir(ss), 
 			      dpy_box,
@@ -1829,7 +1829,7 @@ widget_t start_preferences_dialog(void)
 #endif
 
     current_sep = make_inter_variable_separator(dpy_box);
-    rts_vf_directory = copy_string(view_files_find_any_directory());
+    rts_vf_directory = mus_strdup(view_files_find_any_directory());
     prf = prefs_row_with_text("directory for view-files dialog", S_add_directory_to_view_files_list,
 			      rts_vf_directory,
 			      dpy_box,
@@ -1838,7 +1838,7 @@ widget_t start_preferences_dialog(void)
     /* in this case clear_vf doesn't make much sense */
 
     current_sep = make_inter_variable_separator(dpy_box);
-    rts_html_program = copy_string(html_program(ss));
+    rts_html_program = mus_strdup(html_program(ss));
     prf = prefs_row_with_text("external program to read HTML files via snd-help", S_html_program,
 			      html_program(ss),
 			      dpy_box,
@@ -2297,7 +2297,7 @@ widget_t start_preferences_dialog(void)
     current_sep = make_inter_variable_separator(grf_box);
     colgrf_label = make_inner_label("  fonts", grf_box);
 
-    rts_axis_label_font = copy_string(axis_label_font(ss));
+    rts_axis_label_font = mus_strdup(axis_label_font(ss));
     prf = prefs_row_with_text("axis label font", S_axis_label_font, 
 			      axis_label_font(ss), 
 			      grf_box, 
@@ -2305,7 +2305,7 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_axis_label_font, save_axis_label_font, NULL, clear_axis_label_font, revert_axis_label_font);
 
     current_sep = make_inter_variable_separator(grf_box);    
-    rts_axis_numbers_font = copy_string(axis_numbers_font(ss)); 
+    rts_axis_numbers_font = mus_strdup(axis_numbers_font(ss)); 
     prf = prefs_row_with_text("axis number font", S_axis_numbers_font, 
 			      axis_numbers_font(ss), 
 			      grf_box,
@@ -2313,7 +2313,7 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_axis_numbers_font, save_axis_numbers_font, NULL, clear_axis_numbers_font, revert_axis_numbers_font);
 
     current_sep = make_inter_variable_separator(grf_box);  
-    rts_peaks_font = copy_string(peaks_font(ss));    
+    rts_peaks_font = mus_strdup(peaks_font(ss));    
     prf = prefs_row_with_text("fft peaks font", S_peaks_font, 
 			      peaks_font(ss), 
 			      grf_box,
@@ -2321,7 +2321,7 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_peaks_font, save_peaks_font, NULL, clear_peaks_font, revert_peaks_font);
 
     current_sep = make_inter_variable_separator(grf_box);    
-    rts_bold_peaks_font = copy_string(bold_peaks_font(ss));     
+    rts_bold_peaks_font = mus_strdup(bold_peaks_font(ss));     
     prf = prefs_row_with_text("fft peaks bold font (for main peaks)", S_bold_peaks_font, 
 			      bold_peaks_font(ss), 
 			      grf_box,
@@ -2329,7 +2329,7 @@ widget_t start_preferences_dialog(void)
     remember_pref(prf, reflect_bold_peaks_font, save_bold_peaks_font, NULL, clear_bold_peaks_font, revert_bold_peaks_font);
 
     current_sep = make_inter_variable_separator(grf_box);  
-    rts_tiny_font = copy_string(tiny_font(ss));        
+    rts_tiny_font = mus_strdup(tiny_font(ss));        
     prf = prefs_row_with_text("tiny font (for various annotations)", S_peaks_font, 
 			      tiny_font(ss), 
 			      grf_box,
@@ -2561,7 +2561,7 @@ widget_t start_preferences_dialog(void)
     FREE(str);
 
     current_sep = make_inter_variable_separator(clm_box);
-    rts_clm_file_name = copy_string(find_clm_file_name());
+    rts_clm_file_name = mus_strdup(find_clm_file_name());
     prf = prefs_row_with_text("with-sound default output file name", "*clm-file-name*", rts_clm_file_name,
 			      clm_box,
 			      clm_file_name_text);
@@ -2609,7 +2609,7 @@ widget_t start_preferences_dialog(void)
 #endif
 
     current_sep = make_inter_variable_separator(prg_box);
-    rts_listener_prompt = copy_string(listener_prompt(ss));
+    rts_listener_prompt = mus_strdup(listener_prompt(ss));
     prf = prefs_row_with_text("prompt", S_listener_prompt, 
 			      listener_prompt(ss), 
 			      prg_box,
@@ -2642,7 +2642,7 @@ widget_t start_preferences_dialog(void)
     FREE(str);
 
     current_sep = make_inter_variable_separator(prg_box);
-    rts_listener_font = copy_string(listener_font(ss));
+    rts_listener_font = mus_strdup(listener_font(ss));
     prf = prefs_row_with_text("font", S_listener_font, 
 			      listener_font(ss), 
 			      prg_box,

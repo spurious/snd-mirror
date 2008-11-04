@@ -193,7 +193,7 @@ static bool string_member_p(char *val, char **lst, int len)
   int i;
   if ((len == 0) || (!lst) || (!val)) return(false);
   for (i = 0; i < len; i++)
-    if (snd_strcmp(val, lst[i]))
+    if (mus_strcmp(val, lst[i]))
       return(true);
   return(false);
 }
@@ -214,7 +214,7 @@ static char **load_path_to_string_array(int *len)
 	  char *path;
 	  path = XEN_TO_C_STRING(XEN_LIST_REF(dirs, i));
 	  if ((path) && (!(string_member_p(path, cdirs, j))))   /* try to remove duplicates */
-	    cdirs[j++] = copy_string(path);
+	    cdirs[j++] = mus_strdup(path);
 	}
     }
   (*len) = j;
@@ -285,7 +285,7 @@ static void save_prefs(const char *filename)
 	  if ((unchecked_load_path) &&                                                          /* text widget has an entry */
 	      (local_access(unchecked_load_path)) &&                                            /* it's a legit path */
 	      (!(string_member_p(unchecked_load_path, current_dirs, current_dirs_len))) &&      /* it's not in LOAD_PATH */
-	      (!(snd_strcmp(unchecked_load_path, include_load_path))))                          /* it's not already included above */
+	      (!(mus_strcmp(unchecked_load_path, include_load_path))))                          /* it's not already included above */
 	    add_local_load_path(fd, unchecked_load_path);
 	  if (unchecked_load_path) {FREE_TEXT(unchecked_load_path);} /* a no-op in gtk */
 	}
@@ -336,7 +336,7 @@ static char key_buf[16];
 static char *possibly_quote(char *key)
 {
   int i, j, len;
-  len = snd_strlen(key);
+  len = mus_strlen(key);
   if (len > 12) len = 12;
   for (i = 0, j = 0; i < len; i++)
     if (!(isspace(key[i])))
@@ -412,7 +412,7 @@ static char *no_stars(const char *name)
       strncpy(val, (char *)(name + 1), strlen(name) - 2);
       return(val);
     }
-  else return(copy_string(name));
+  else return(mus_strdup(name));
 }
 #endif
 
@@ -1043,7 +1043,7 @@ static TIMEOUT_TYPE axis_label_font_error_erase_func(TIMEOUT_ARGS)
 static void save_axis_label_font(prefs_info *prf, FILE *ignore)
 {
   if (rts_axis_label_font) FREE(rts_axis_label_font);
-  rts_axis_label_font = copy_string(axis_label_font(ss));
+  rts_axis_label_font = mus_strdup(axis_label_font(ss));
 }
 
 static void reflect_axis_label_font(prefs_info *prf) {SET_TEXT(prf->text, axis_label_font(ss));}
@@ -1082,7 +1082,7 @@ static TIMEOUT_TYPE axis_numbers_font_error_erase_func(TIMEOUT_ARGS)
 static void save_axis_numbers_font(prefs_info *prf, FILE *ignore)
 {
   if (rts_axis_numbers_font) FREE(rts_axis_numbers_font);
-  rts_axis_numbers_font = copy_string(axis_numbers_font(ss));
+  rts_axis_numbers_font = mus_strdup(axis_numbers_font(ss));
 }
 
 static void reflect_axis_numbers_font(prefs_info *prf) {SET_TEXT(prf->text, axis_numbers_font(ss));}
@@ -1121,7 +1121,7 @@ static TIMEOUT_TYPE peaks_font_error_erase_func(TIMEOUT_ARGS)
 static void save_peaks_font(prefs_info *prf, FILE *ignore)
 {
   if (rts_peaks_font) FREE(rts_peaks_font);
-  rts_peaks_font = copy_string(peaks_font(ss));
+  rts_peaks_font = mus_strdup(peaks_font(ss));
 }
 
 static void reflect_peaks_font(prefs_info *prf) {SET_TEXT(prf->text, peaks_font(ss));}
@@ -1160,7 +1160,7 @@ static TIMEOUT_TYPE bold_peaks_font_error_erase_func(TIMEOUT_ARGS)
 static void save_bold_peaks_font(prefs_info *prf, FILE *ignore)
 {
   if (rts_bold_peaks_font) FREE(rts_bold_peaks_font);
-  rts_bold_peaks_font = copy_string(bold_peaks_font(ss));
+  rts_bold_peaks_font = mus_strdup(bold_peaks_font(ss));
 }
 
 static void reflect_bold_peaks_font(prefs_info *prf) {SET_TEXT(prf->text, bold_peaks_font(ss));}
@@ -1199,7 +1199,7 @@ static TIMEOUT_TYPE tiny_font_error_erase_func(TIMEOUT_ARGS)
 static void save_tiny_font(prefs_info *prf, FILE *ignore)
 {
   if (rts_tiny_font) FREE(rts_tiny_font);
-  rts_tiny_font = copy_string(tiny_font(ss));
+  rts_tiny_font = mus_strdup(tiny_font(ss));
 }
 
 static void reflect_tiny_font(prefs_info *prf) {SET_TEXT(prf->text, tiny_font(ss));}
@@ -1238,7 +1238,7 @@ static TIMEOUT_TYPE listener_font_error_erase_func(TIMEOUT_ARGS)
 static void save_listener_font(prefs_info *prf, FILE *ignore)
 {
   if (rts_listener_font) FREE(rts_listener_font);
-  rts_listener_font = copy_string(listener_font(ss));
+  rts_listener_font = mus_strdup(listener_font(ss));
 }
 
 static void reflect_listener_font(prefs_info *prf) {SET_TEXT(prf->text, listener_font(ss));}
@@ -1275,13 +1275,13 @@ static void reflect_save_state_file(prefs_info *prf)
 static void revert_save_state_file(prefs_info *prf) 
 {
   if (save_state_file(ss)) FREE(save_state_file(ss));
-  in_set_save_state_file(copy_string(rts_save_state_file));
+  in_set_save_state_file(mus_strdup(rts_save_state_file));
 }
 
 static void save_save_state_file(prefs_info *prf, FILE *ignore) 
 {
   if (rts_save_state_file) FREE(rts_save_state_file);
-  rts_save_state_file = copy_string(save_state_file(ss));
+  rts_save_state_file = mus_strdup(save_state_file(ss));
 }
 
 static void save_state_file_text(prefs_info *prf)
@@ -1289,8 +1289,8 @@ static void save_state_file_text(prefs_info *prf)
   char *str, *file = NULL;
   str = GET_TEXT(prf->text);
   if ((!str) || (!(*str))) 
-    file = copy_string(DEFAULT_SAVE_STATE_FILE);
-  else file = copy_string(str);
+    file = mus_strdup(DEFAULT_SAVE_STATE_FILE);
+  else file = mus_strdup(str);
   if (save_state_file(ss)) FREE(save_state_file(ss));
   in_set_save_state_file(file);
   if (str) {FREE_TEXT(str);}
@@ -1309,13 +1309,13 @@ static void reflect_temp_dir(prefs_info *prf)
 static void revert_temp_dir(prefs_info *prf) 
 {
   if (temp_dir(ss)) FREE(temp_dir(ss));
-  set_temp_dir(copy_string(rts_temp_dir));
+  set_temp_dir(mus_strdup(rts_temp_dir));
 }
 
 static void save_temp_dir(prefs_info *prf, FILE *ignore) 
 {
   if (rts_temp_dir) FREE(rts_temp_dir);
-  rts_temp_dir = copy_string(temp_dir(ss));
+  rts_temp_dir = mus_strdup(temp_dir(ss));
 }
 
 static TIMEOUT_TYPE temp_dir_error_erase_func(TIMEOUT_ARGS)
@@ -1335,7 +1335,7 @@ static void temp_dir_text(prefs_info *prf)
   if (local_access(dir))
     {
       if (temp_dir(ss)) FREE(temp_dir(ss));
-      set_temp_dir(copy_string(dir));
+      set_temp_dir(mus_strdup(dir));
     }
   else
     {
@@ -1360,13 +1360,13 @@ static void reflect_save_dir(prefs_info *prf)
 static void revert_save_dir(prefs_info *prf) 
 {
   if (save_dir(ss)) FREE(save_dir(ss));
-  set_save_dir(copy_string(rts_save_dir));
+  set_save_dir(mus_strdup(rts_save_dir));
 }
 
 static void save_save_dir(prefs_info *prf, FILE *ignore) 
 {
   if (rts_save_dir) FREE(rts_save_dir);
-  rts_save_dir = copy_string(save_dir(ss));
+  rts_save_dir = mus_strdup(save_dir(ss));
 }
 
 static TIMEOUT_TYPE save_dir_error_erase_func(TIMEOUT_ARGS)
@@ -1386,7 +1386,7 @@ static void save_dir_text(prefs_info *prf)
   if (local_access(dir))
     {
       if (save_dir(ss)) FREE(save_dir(ss));
-      set_save_dir(copy_string(dir));
+      set_save_dir(mus_strdup(dir));
     }
   else
     {
@@ -1412,13 +1412,13 @@ static void reflect_ladspa_dir(prefs_info *prf)
 static void revert_ladspa_dir(prefs_info *prf)
 {
   if (ladspa_dir(ss)) FREE(ladspa_dir(ss));
-  set_ladspa_dir(copy_string(rts_ladspa_dir));
+  set_ladspa_dir(mus_strdup(rts_ladspa_dir));
 }
 
 static void save_ladspa_dir(prefs_info *prf, FILE *ignore)
 {
   if (rts_ladspa_dir) FREE(rts_ladspa_dir);
-  rts_ladspa_dir = copy_string(ladspa_dir(ss));
+  rts_ladspa_dir = mus_strdup(ladspa_dir(ss));
 }
 
 static void ladspa_dir_text(prefs_info *prf)
@@ -1428,10 +1428,10 @@ static void ladspa_dir_text(prefs_info *prf)
   if (ladspa_dir(ss)) FREE(ladspa_dir(ss));
   if (str)
     {
-      set_ladspa_dir(copy_string(str));
+      set_ladspa_dir(mus_strdup(str));
       FREE_TEXT(str);
     }
-  else set_ladspa_dir(copy_string(DEFAULT_LADSPA_DIR));
+  else set_ladspa_dir(mus_strdup(DEFAULT_LADSPA_DIR));
 }
 #endif
 
@@ -1454,7 +1454,7 @@ static void revert_view_files_directory(prefs_info *prf)
 static void save_view_files_directory(prefs_info *prf, FILE *fd)
 {
   if (rts_vf_directory) FREE(rts_vf_directory);
-  rts_vf_directory = copy_string(view_files_find_any_directory());
+  rts_vf_directory = mus_strdup(view_files_find_any_directory());
   if (rts_vf_directory) 
     {
 #if HAVE_SCHEME
@@ -1493,13 +1493,13 @@ static void reflect_html_program(prefs_info *prf)
 static void revert_html_program(prefs_info *prf)
 {
   if (html_program(ss)) FREE(html_program(ss));
-  set_html_program(copy_string(rts_html_program));
+  set_html_program(mus_strdup(rts_html_program));
 }
 
 static void save_html_program(prefs_info *prf, FILE *ignore)
 {
   if (rts_html_program) FREE(rts_html_program);
-  rts_html_program = copy_string(html_program(ss));
+  rts_html_program = mus_strdup(html_program(ss));
 }
 
 static void html_program_text(prefs_info *prf)
@@ -1509,10 +1509,10 @@ static void html_program_text(prefs_info *prf)
   if (html_program(ss)) FREE(html_program(ss));
   if (str)
     {
-      set_html_program(copy_string(str));
+      set_html_program(mus_strdup(str));
       FREE_TEXT(str);
     }
-  else set_html_program(copy_string(DEFAULT_HTML_PROGRAM));
+  else set_html_program(mus_strdup(DEFAULT_HTML_PROGRAM));
 }
 
 
@@ -1530,14 +1530,14 @@ static void revert_listener_prompt(prefs_info *prf)
   if (rts_listener_prompt)
     {
       if (listener_prompt(ss)) FREE(listener_prompt(ss));
-      set_listener_prompt(copy_string(rts_listener_prompt));
+      set_listener_prompt(mus_strdup(rts_listener_prompt));
     }
 }
 
 static void save_listener_prompt(prefs_info *prf, FILE *ignore)
 {
   if (rts_listener_prompt) FREE(rts_listener_prompt);
-  rts_listener_prompt = copy_string(listener_prompt(ss));
+  rts_listener_prompt = mus_strdup(listener_prompt(ss));
 }
 
 static void listener_prompt_text(prefs_info *prf)
@@ -1547,7 +1547,7 @@ static void listener_prompt_text(prefs_info *prf)
   if (str)
     {
       if (listener_prompt(ss)) FREE(listener_prompt(ss));
-      set_listener_prompt(copy_string(str));
+      set_listener_prompt(mus_strdup(str));
       FREE_TEXT(str);
     }
 }
@@ -3139,7 +3139,7 @@ static char *raw_data_format_to_string(int format)
       free(name);
       return(rtn);
     }
-  return(copy_string("unknown"));
+  return(mus_strdup("unknown"));
 }
 
 static void revert_raw_data_format(prefs_info *prf)
@@ -3291,7 +3291,7 @@ static void clm_file_name_text(prefs_info *prf)
     {
       rts_with_sound = true;
       if (rts_clm_file_name) FREE(rts_clm_file_name); /* save is done after we're sure with-sound is loaded */
-      rts_clm_file_name = copy_string(str);
+      rts_clm_file_name = mus_strdup(str);
       set_clm_file_name(str);
       FREE_TEXT(str);
     }
@@ -3315,7 +3315,7 @@ static void help_clm_file_name(prefs_info *prf)
 static void save_clm_file_name(prefs_info *prf, FILE *ignore)
 {
   if (rts_clm_file_name) FREE(rts_clm_file_name);
-  rts_clm_file_name = copy_string(find_clm_file_name());
+  rts_clm_file_name = mus_strdup(find_clm_file_name());
 }
 
 
@@ -3924,7 +3924,7 @@ static void show_axes_from_menu(prefs_info *prf, char *value)
 {
   int i;
   for (i = 0; i < NUM_SHOW_AXES; i++)
-    if (snd_strcmp(value, show_axes_choices[i]))
+    if (mus_strcmp(value, show_axes_choices[i]))
       {
 	in_set_show_axes((show_axes_t)i);
 	SET_TEXT(prf->text, value);
@@ -3943,7 +3943,7 @@ static void show_axes_from_text(prefs_info *prf)
       char *trimmed_str;
       trimmed_str = trim_string(str);
       FREE_TEXT(str);
-      if (snd_strlen(trimmed_str) > 0)
+      if (mus_strlen(trimmed_str) > 0)
 	{
 	  int curpos = -1;
 	  for (i = 0; i < NUM_SHOW_AXES; i++)
@@ -3978,7 +3978,7 @@ static void x_axis_style_from_menu(prefs_info *prf, char *value)
 {
   int i;
   for (i = 0; i < NUM_X_AXIS_STYLES; i++)
-    if (snd_strcmp(value, x_axis_styles[i]))
+    if (mus_strcmp(value, x_axis_styles[i]))
       {
 	in_set_x_axis_style((x_axis_style_t)i);
 	SET_TEXT(prf->text, value);
@@ -3997,7 +3997,7 @@ static void x_axis_style_from_text(prefs_info *prf)
       char *trimmed_str;
       trimmed_str = trim_string(str);
       FREE_TEXT(str);
-      if (snd_strlen(trimmed_str) > 0)
+      if (mus_strlen(trimmed_str) > 0)
 	{
 	  int curpos = -1;
 	  for (i = 0; i < NUM_X_AXIS_STYLES; i++)
@@ -4052,7 +4052,7 @@ static void transform_type_from_menu(prefs_info *prf, char *value)
 {
   int i;
   for (i = 0; i < NUM_BUILTIN_TRANSFORM_TYPES; i++)
-    if (snd_strcmp(value, transform_types[i]))
+    if (mus_strcmp(value, transform_types[i]))
       {
 	in_set_transform_type(i);
 	SET_TEXT(prf->text, value);
@@ -4071,7 +4071,7 @@ static void transform_type_from_text(prefs_info *prf)
       char *trimmed_str;
       trimmed_str = trim_string(str);
       FREE_TEXT(str);
-      if (snd_strlen(trimmed_str) > 0)
+      if (mus_strlen(trimmed_str) > 0)
 	{
 	  int curpos = -1;
 	  for (i = 0; i < NUM_BUILTIN_TRANSFORM_TYPES; i++)
@@ -4120,7 +4120,7 @@ static void fft_window_from_menu(prefs_info *prf, char *value)
 {
   int i;
   for (i = 0; i < MUS_NUM_FFT_WINDOWS; i++)
-    if (snd_strcmp(value, mus_fft_window_name((mus_fft_window_t)i)))
+    if (mus_strcmp(value, mus_fft_window_name((mus_fft_window_t)i)))
       {
 	in_set_fft_window((mus_fft_window_t)i);
 	SET_TEXT(prf->text, value);
@@ -4139,7 +4139,7 @@ static void fft_window_from_text(prefs_info *prf)
       char *trimmed_str;
       trimmed_str = trim_string(str);
       FREE_TEXT(str);
-      if (snd_strlen(trimmed_str) > 0)
+      if (mus_strlen(trimmed_str) > 0)
 	{
 	  int curpos = -1;
 	  for (i = 0; i < MUS_NUM_FFT_WINDOWS; i++)
@@ -4203,7 +4203,7 @@ static void colormap_from_text(prefs_info *prf)
       char *trimmed_str;
       trimmed_str = trim_string(str);
       FREE_TEXT(str);
-      if (snd_strlen(trimmed_str) > 0)
+      if (mus_strlen(trimmed_str) > 0)
 	{
 	  int len, curpos = -1;
 	  len = num_colormaps();
@@ -4230,7 +4230,7 @@ static void colormap_from_menu(prefs_info *prf, char *value)
   int i, len;
   len = num_colormaps();
   for (i = 0; i < len; i++)
-    if (snd_strcmp(value, colormap_name(i)))
+    if (mus_strcmp(value, colormap_name(i)))
       {
 	in_set_color_map(i);
 	SET_TEXT(prf->text, value);
@@ -4267,7 +4267,7 @@ static void clear_peak_envs(prefs_info *prf)
 static void revert_peak_envs(prefs_info *prf)
 {
   if (include_peak_env_directory) FREE(include_peak_env_directory); 
-  include_peak_env_directory = copy_string(rts_peak_env_directory);
+  include_peak_env_directory = mus_strdup(rts_peak_env_directory);
   include_peak_envs = rts_peak_envs;
 }
 
@@ -4275,7 +4275,7 @@ static void save_peak_envs(prefs_info *prf, FILE *fd)
 {
   rts_peak_envs = GET_TOGGLE(prf->toggle);
   if (rts_peak_env_directory) FREE(rts_peak_env_directory);
-  rts_peak_env_directory = copy_string(include_peak_env_directory);
+  rts_peak_env_directory = mus_strdup(include_peak_env_directory);
   if (rts_peak_envs)
     {
 #if HAVE_SCHEME
@@ -4323,7 +4323,7 @@ static void peak_envs_text(prefs_info *prf)
   if ((str) && (*str))
     {
       if (include_peak_env_directory) {FREE(include_peak_env_directory); include_peak_env_directory = NULL;}
-      include_peak_env_directory = copy_string(str);
+      include_peak_env_directory = mus_strdup(str);
       FREE_TEXT(str);
     }
 }
@@ -4373,7 +4373,7 @@ static char *find_sources(void) /* returns full filename if found else null */
     XEN xfile;
     xfile = scm_sys_search_load_path(C_TO_XEN_STRING(BASE_FILE));
     if (XEN_STRING_P(xfile))
-      file = copy_string(XEN_TO_C_STRING(xfile));
+      file = mus_strdup(XEN_TO_C_STRING(xfile));
   }
 #endif
 
@@ -4445,7 +4445,7 @@ static char *find_sources(void) /* returns full filename if found else null */
   if (file)
     {
       int len, exts_len;
-      len = snd_strlen(file);
+      len = mus_strlen(file);
       exts_len = strlen(BASE_FILE);
       if (len > exts_len)
 	file[len - exts_len - 1] = '\0';
@@ -4493,7 +4493,7 @@ static void load_path_text(prefs_info *prf)
     {
       black_text(prf);
       if (include_load_path) FREE(include_load_path);
-      include_load_path = copy_string(str);
+      include_load_path = mus_strdup(str);
       XEN_ADD_TO_LOAD_PATH(include_load_path);
     }
   if (str) {FREE_TEXT(str);}

@@ -623,15 +623,15 @@ v. " vct_map_example " is the same as " vct_fill_example
     if ((optimization(ss)) > 0)
       {
 #if HAVE_S7
-	pt = form_to_ptree_0_f(XEN_PROCEDURE_SOURCE(proc));
+	pt = mus_run_form_to_ptree_0_f(XEN_PROCEDURE_SOURCE(proc));
 #else
-	pt = form_to_ptree_0_f(proc);
+	pt = mus_run_form_to_ptree_0_f(proc);
 #endif
 	if (pt)
 	  {
 	    for (i = 0; i < v->length; i++) 
-	      v->data[i] = evaluate_ptree_0f2f(pt);
-	    free_ptree(pt);
+	      v->data[i] = mus_run_evaluate_ptree_0f2f(pt);
+	    mus_run_free_ptree(pt);
 	    return(xen_return_first(obj, proc));
 	  }
       }

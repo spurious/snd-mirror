@@ -500,7 +500,7 @@ static XEN g_draw_string(XEN text, XEN x0, XEN y0, XEN snd, XEN chn, XEN ax)
 	      XEN_TO_C_INT(x0),
 	      XEN_TO_C_INT(y0),
 	      tmp,
-	      snd_strlen(tmp));
+	      mus_strlen(tmp));
   return(text);
 }
 

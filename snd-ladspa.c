@@ -79,8 +79,8 @@ static const LADSPA_Descriptor *findLADSPADescriptor(const char *pcPackedFilenam
   LADSPAPluginInfo *psInfo;
   for (lIndex = 0; lIndex < g_lLADSPARepositoryCount; lIndex++) {
     psInfo = g_psLADSPARepository[lIndex];
-    if ((snd_strcmp(pcLabel, psInfo->m_pcLabel)) &&
-	(snd_strcmp(pcPackedFilename, psInfo->m_pcPackedFilename)))
+    if ((mus_strcmp(pcLabel, psInfo->m_pcLabel)) &&
+	(mus_strcmp(pcPackedFilename, psInfo->m_pcPackedFilename)))
       return psInfo->m_psDescriptor;
   }
 
@@ -329,13 +329,13 @@ static void ladspa_help_callback(GtkWidget *w, gpointer info)
   for (lIndex = g_lLADSPARepositoryCount - 1; lIndex >= 0; lIndex--) 
     {
       psInfo = g_psLADSPARepository[lIndex];
-      len += snd_strlen(psInfo->m_pcPackedFilename);
+      len += mus_strlen(psInfo->m_pcPackedFilename);
       len += 32;
-      len += snd_strlen((char *)(psInfo->m_pcLabel));
+      len += mus_strlen((char *)(psInfo->m_pcLabel));
       pcFilename = packLADSPAFilename(psInfo->m_pcPackedFilename);
       psDescriptor = findLADSPADescriptor(pcFilename, (char *)(psInfo->m_pcLabel));
       FREE(pcFilename);
-      len += snd_strlen(psDescriptor->Name);
+      len += mus_strlen(psDescriptor->Name);
     }
   if (len > 0)
     {

@@ -1091,7 +1091,8 @@ static int print_mus_xen(XEN obj, XEN port, scm_print_state *pstate)
 {
   char *str;
   XEN_PUTS("#<", port);
-  XEN_PUTS(str = mus_describe(XEN_TO_MUS_ANY(obj)), port);
+  str = mus_describe(XEN_TO_MUS_ANY(obj));
+  XEN_PUTS(str, port);
   if (str) free(str);
   XEN_PUTS(">", port);
   return(1);
@@ -1117,7 +1118,8 @@ static XEN mus_xen_to_s(XEN obj)
 {
   char *str;
   XEN result;
-  result = C_TO_XEN_STRING(str = mus_describe(XEN_TO_MUS_ANY(obj)));
+  str = mus_describe(XEN_TO_MUS_ANY(obj));
+  result = C_TO_XEN_STRING(str);
   if (str) free(str);
   return(result);
 }
@@ -1129,7 +1131,8 @@ static XEN print_mus_xen(XEN obj)
 {
   char *str;
   XEN result;
-  result = fth_make_string_format("#<%s>", str = mus_describe(XEN_TO_MUS_ANY(obj))); 
+  str = mus_describe(XEN_TO_MUS_ANY(obj));
+  result = fth_make_string_format("#<%s>", str);
   if (str) free(str);
   return(result);
 }
@@ -1402,7 +1405,8 @@ static XEN g_mus_describe(XEN gen)
   XEN result;
   if (XEN_LIST_P(gen)) return(call_get_method(gen, S_mus_describe));
   XEN_ASSERT_TYPE(MUS_XEN_P(gen), gen, XEN_ONLY_ARG, S_mus_describe, "a generator");
-  result = C_TO_XEN_STRING(str = mus_describe(XEN_TO_MUS_ANY(gen)));
+  str = mus_describe(XEN_TO_MUS_ANY(gen));
+  result = C_TO_XEN_STRING(str);
   if (str) free(str);
   return(result);
 }
@@ -9281,4 +9285,5 @@ void Init_sndlib(void)
   mus_sndlib_xen_initialize();
   mus_vct_init();
   mus_xen_init();
+  mus_init_run();
 }

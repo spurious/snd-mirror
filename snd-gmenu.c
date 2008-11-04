@@ -171,7 +171,7 @@ static void view_files_item_callback(GtkWidget *w, gpointer info)
 {
   char *dirname;
   dirname = get_item_label(w);
-  if (snd_strcmp(dirname, _("new viewer")))
+  if (mus_strcmp(dirname, _("new viewer")))
     start_view_files_dialog(true, true); /* managed and empty (brand-new) */
   else view_files_start_dialog_with_title(dirname);
 }
@@ -192,7 +192,7 @@ static void view_files_callback(GtkWidget *w, gpointer info)
       char **view_files_names;
 
       view_files_names = view_files_dialog_titles();
-      view_files_names[size++] = copy_string(_("new viewer"));
+      view_files_names[size++] = mus_strdup(_("new viewer"));
 
       if (size > view_files_items_size)
 	{
@@ -1413,7 +1413,7 @@ static void add_option(GtkWidget *w, int which_menu, const char *label, int call
     }
   added_options[added_options_pos] = w;
   added_options_menus[added_options_pos] = which_menu;
-  added_options_names[added_options_pos] = copy_string(label);
+  added_options_names[added_options_pos] = mus_strdup(label);
   added_options_callb[added_options_pos] = callb;
   added_options_pos++;
 }
@@ -1424,7 +1424,7 @@ static int remove_option(int which_menu, const char *label)
   int i;
   for (i = 0; i < added_options_pos; i++)
     if ((added_options_menus[i] == which_menu) && 
-	(snd_strcmp(label, added_options_names[i])) && 
+	(mus_strcmp(label, added_options_names[i])) && 
 	(added_options[i]))
       {
 	unprotect_callback(added_options_callb[i]);

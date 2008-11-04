@@ -74,7 +74,7 @@ static void edit_find_ok_callback(read_direction_t direction, Widget w, XtPointe
   if ((str) && (*str))
     { 
       clear_global_search_procedure(true);
-      ss->search_expr = copy_string(str);
+      ss->search_expr = mus_strdup(str);
       redirect_errors_to(errors_to_find_text, NULL);
       proc = snd_catch_any(eval_str_wrapper, str, str);
       redirect_errors_to(NULL, NULL);
@@ -85,9 +85,9 @@ static void edit_find_ok_callback(read_direction_t direction, Widget w, XtPointe
 #if WITH_RUN
 	  if (optimization(ss) > 0)
 #if HAVE_S7
-	    ss->search_tree = form_to_ptree_1_b(XEN_PROCEDURE_SOURCE(proc));
+	    ss->search_tree = mus_run_form_to_ptree_1_b(XEN_PROCEDURE_SOURCE(proc));
 #else
-	    ss->search_tree = form_to_ptree_1_b_without_env(C_STRING_TO_XEN_FORM(str));
+	    ss->search_tree = mus_run_form_to_ptree_1_b_without_env(C_STRING_TO_XEN_FORM(str));
 #endif
 #endif
 	  buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));

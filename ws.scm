@@ -1273,7 +1273,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 
 ;;; -------- def-clm-struct --------
 
-(if (not (defined? 'add-clm-type)) (define (add-clm-type . args) #f)) ; these are in snd-run
+(if (not (defined? 'add-clm-type)) (define (add-clm-type . args) #f)) ; these are in run
 (if (not (defined? 'add-clm-field)) (define (add-clm-field . args) #f))
 
 

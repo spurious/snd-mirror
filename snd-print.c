@@ -34,7 +34,7 @@ static void ps_write(const char *buf)
       nbuf = (char *)CALLOC(NBUF_SIZE, sizeof(char));
       nbuf_ctr = 0;
     }
-  len = snd_strlen(buf);
+  len = mus_strlen(buf);
   for (i = 0; i < len; i++)
     {
       nbuf[nbuf_ctr++] = buf[i];
@@ -55,7 +55,7 @@ static int start_ps_graph(const char *output, const char *title)
   bby = 0;
 
 #if HAVE_SETLOCALE
-  previous_locale = copy_string(setlocale(LC_NUMERIC, "C")); /* must use decimal point in floats since PostScript assumes that format */
+  previous_locale = mus_strdup(setlocale(LC_NUMERIC, "C")); /* must use decimal point in floats since PostScript assumes that format */
 #endif
 
   mus_snprintf(pbuf, PRINT_BUFFER_SIZE, 
@@ -537,7 +537,7 @@ static char *snd_print_or_error(const char *output)
       char *errstr = NULL;
       ccp = current_channel();
       if (ccp == NULL) 
-	return(copy_string(_("nothing to print?")));
+	return(mus_strdup(_("nothing to print?")));
       si = sync_to_chan(ccp);
       offsets = (int *)CALLOC(si->chans, sizeof(int));
       for (j = 0, i = (si->chans - 1); i >= 0; i--)
@@ -571,7 +571,7 @@ static char *snd_print_or_error(const char *output)
       if (offsets) FREE(offsets);
       return(errstr);
     }
-  else return(copy_string(_("print sound: eps file name needed")));
+  else return(mus_strdup(_("print sound: eps file name needed")));
 }
 
 
@@ -692,7 +692,7 @@ OpenGL graphics. type can be 0: eps, 1: ps, 2: pdf, 3: tex, 4: svg, 5: pgf."
     XEN_OUT_OF_RANGE_ERROR(S_gl_graph_to_ps, XEN_ARG_2, output_type, "must be between 0 and 5");
 
 #if HAVE_SETLOCALE
-  old_locale = copy_string(setlocale(LC_NUMERIC, "C"));
+  old_locale = mus_strdup(setlocale(LC_NUMERIC, "C"));
 #endif
   
   fp = fopen(file, "wb");
@@ -765,7 +765,7 @@ static XEN g_set_eps_file(XEN val)
   #define H_eps_file "(" S_eps_file "): File:Print and " S_graph_to_ps " file name (snd.eps)"
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_eps_file, "a string"); 
   if (eps_file(ss)) FREE(eps_file(ss));
-  set_eps_file(copy_string(XEN_TO_C_STRING(val))); 
+  set_eps_file(mus_strdup(XEN_TO_C_STRING(val))); 
   return(C_TO_XEN_STRING(eps_file(ss)));
 }
 

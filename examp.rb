@@ -2692,7 +2692,7 @@ Snd_error_tags = [# clm2xen.c
                   :cannot_print,
                   # snd-region.c
                   :io_error,
-                  # snd-run.c
+                  # run.c
                   :wrong_number_of_args,
                   :cannot_parse,
                   # snd-snd.c

@@ -10975,7 +10975,7 @@ tries to optimize its argument using a sort of byte compiler.  When successful, 
 can speed up computation by about a factor of 10.  When unsuccessful, it falls back
 on Scheme, so you always get a sound.  The body of the lambda can be anything; in this
 document, primarily for historical reasons, all the bodies seem to be do loops, but
-just about any other choice is ok.  See snd-run.c for a list of what's optimizable:
+just about any other choice is ok.  See run.c for a list of what's optimizable:
 avoid lists, if possible, and fancy stuff like map or apply, and you should be fine.
 </p>
 

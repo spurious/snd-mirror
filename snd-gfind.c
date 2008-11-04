@@ -76,7 +76,7 @@ static void edit_find_find(read_direction_t direction, GtkWidget *w, gpointer co
     {
       XEN proc;
       clear_global_search_procedure(true);
-      ss->search_expr = copy_string(str);
+      ss->search_expr = mus_strdup(str);
       redirect_errors_to(errors_to_find_text, NULL);
       proc = snd_catch_any(eval_str_wrapper, str, str);
       redirect_errors_to(NULL, NULL);

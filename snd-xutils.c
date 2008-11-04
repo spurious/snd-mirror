@@ -39,7 +39,7 @@ bool set_tiny_font(const char *font)
       /* it's not clear to me whether this is safe -- what if two fontstructs are pointing to the same font? */
       if (TINY_FONT(ss)) XFreeFont(MAIN_DISPLAY(ss), TINY_FONT(ss));
       if (tiny_font(ss)) FREE(tiny_font(ss));
-      in_set_tiny_font(copy_string(font));
+      in_set_tiny_font(mus_strdup(font));
       TINY_FONT(ss) = fs;
       if (ss->sgx->tiny_fontlist) XM_FONT_FREE(ss->sgx->tiny_fontlist);
       ss->sgx->tiny_fontlist = get_xm_font(TINY_FONT(ss), font, "tiny_font");
@@ -57,7 +57,7 @@ bool set_listener_font(const char *font)
     {
       if (LISTENER_FONT(ss)) XFreeFont(MAIN_DISPLAY(ss), LISTENER_FONT(ss));
       if (listener_font(ss)) FREE(listener_font(ss));
-      in_set_listener_font(copy_string(font));
+      in_set_listener_font(mus_strdup(font));
       LISTENER_FONT(ss) = fs;
       if (ss->sgx->listener_fontlist) XM_FONT_FREE(ss->sgx->listener_fontlist);
       ss->sgx->listener_fontlist = get_xm_font(LISTENER_FONT(ss), font, "listener_font");
@@ -76,7 +76,7 @@ bool set_peaks_font(const char *font)
     {
       if (PEAKS_FONT(ss)) XFreeFont(MAIN_DISPLAY(ss), PEAKS_FONT(ss));
       if (peaks_font(ss)) FREE(peaks_font(ss));
-      in_set_peaks_font(copy_string(font));
+      in_set_peaks_font(mus_strdup(font));
       PEAKS_FONT(ss) = fs;
       if (ss->sgx->peaks_fontlist) XM_FONT_FREE(ss->sgx->peaks_fontlist);
       ss->sgx->peaks_fontlist = get_xm_font(PEAKS_FONT(ss), font, "peaks_font");
@@ -94,7 +94,7 @@ bool set_bold_peaks_font(const char *font)
     {
       if (BOLD_PEAKS_FONT(ss)) XFreeFont(MAIN_DISPLAY(ss), BOLD_PEAKS_FONT(ss));
       if (bold_peaks_font(ss)) FREE(bold_peaks_font(ss));
-      in_set_bold_peaks_font(copy_string(font));
+      in_set_bold_peaks_font(mus_strdup(font));
       BOLD_PEAKS_FONT(ss) = fs;
       if (ss->sgx->bold_peaks_fontlist) XM_FONT_FREE(ss->sgx->bold_peaks_fontlist);
       ss->sgx->bold_peaks_fontlist = get_xm_font(BOLD_PEAKS_FONT(ss), font, "bold_peaks_font");
@@ -112,7 +112,7 @@ bool set_axis_label_font(const char *font)
     {
       if (AXIS_LABEL_FONT(ss)) XFreeFont(MAIN_DISPLAY(ss), AXIS_LABEL_FONT(ss));
       if (axis_label_font(ss)) FREE(axis_label_font(ss));
-      in_set_axis_label_font(copy_string(font));
+      in_set_axis_label_font(mus_strdup(font));
       AXIS_LABEL_FONT(ss) = fs;
 #if HAVE_GL
       reload_label_font();
@@ -131,7 +131,7 @@ bool set_axis_numbers_font(const char *font)
     {
       if (AXIS_NUMBERS_FONT(ss)) XFreeFont(MAIN_DISPLAY(ss), AXIS_NUMBERS_FONT(ss));
       if (axis_numbers_font(ss)) FREE(axis_numbers_font(ss));
-      in_set_axis_numbers_font(copy_string(font));
+      in_set_axis_numbers_font(mus_strdup(font));
       AXIS_NUMBERS_FONT(ss) = fs;
 #if HAVE_GL
       reload_number_font();
@@ -798,7 +798,7 @@ XmString multi_line_label(const char *s, int *lines)
   XmString xms1, xms2, line, separator;
   char *p, *tmp;
   (*lines) = 1;
-  tmp = copy_string(s);
+  tmp = mus_strdup(s);
   separator = XmStringSeparatorCreate();
   p = strtok(tmp, "\n");
   xms1 = XmStringCreateLocalized(p);
