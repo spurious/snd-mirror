@@ -3642,7 +3642,9 @@ static double string_to_double_with_radix(const char *str, int radix)
   if (eloc != -1)
     exponent = string_to_int_with_radix((char *)(str + eloc + 1), radix);
 
-  return(sign * (int_part + ((double)frac_part / pow(radix, (eloc == -1) ? (len - floc - 1) : (eloc - floc - 1)))) * pow(radix, exponent));
+  return(sign * 
+	 (int_part + ((double)frac_part / pow((double)radix, (double)((eloc == -1) ? (len - floc - 1) : (eloc - floc - 1))))) * 
+	 pow((double)radix, (double)exponent));
 }
 
 

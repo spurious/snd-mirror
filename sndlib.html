@@ -1219,6 +1219,23 @@ to make it independent of Snd:
 Now, load this code into guile+sndlib, and <code>(play-sine 440 .1)</code>.
 </p>
 
+<p>In Ruby, the sndlib shared library can be loaded via
+</p>
+<pre>
+    require 'sndlib'
+</pre>
+<p>and all the initialization takes place automatically.  On the Mac (OSX),
+this library is named sndlib.bundle, but elsewhere it is sndlib.so.
+</p>
+<pre>
+    Users/bil/test/sndlib/ irb
+    irb(main):001:0&gt; require 'sndlib'
+    => true
+    irb(main):002:0&gt; Welch_window
+    => 2
+    irb(main):003:0&gt; quit
+</pre>
+
 
 <center>
 <table bgcolor="aliceblue" border=0 cellspacing=8><tr>

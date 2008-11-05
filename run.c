@@ -114,6 +114,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 #if (defined(HAVE_LIBC_H) && (!defined(HAVE_UNISTD_H)))
   #include <libc.h>
