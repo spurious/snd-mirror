@@ -41,10 +41,6 @@
 
 #if USE_SND
   #include "snd.h"
-#else
-  #if HAVE_RUBY && (!CLM)
-    #include "xen.h"
-  #endif
 #endif
 
 #include <math.h>

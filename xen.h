@@ -729,6 +729,10 @@
 #define XEN_CLOSE_PORT(Port)          scm_close_port(Port)
 #define XEN_PORT_TO_STRING(Port)      scm_strport_to_string(Port)
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 XEN xen_guile_create_hook(const char *name, int args, const char *help, XEN local_doc);
 void xen_guile_define_procedure_with_setter(const char *get_name, XEN (*get_func)(), const char *get_help, XEN (*set_func)(), 
 					    XEN local_doc, int get_req, int get_opt, int set_req, int set_opt);
@@ -747,10 +751,12 @@ XEN xen_guile_add_to_load_path(char *path);
   XEN xen_guile_c_to_xen_string(const char *a);
 #endif
   
-
-
 #if HAVE_SCM_C_MAKE_RECTANGULAR
 char *xen_guile_to_c_string_with_eventual_free(XEN str);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 /* these are only needed in 1.3.4, but it's hard to find a good way to distinguish that particular version */
@@ -1218,6 +1224,10 @@ static XEN OutName(XEN self, XEN Arg1, XEN Arg2, XEN Arg3, XEN Arg4, XEN Arg5) {
 #define XEN_VARGIFY(OutName, InName) \
   static XEN OutName(XEN self, XEN Args) {return(InName(Args));}
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 XEN xen_rb_cdr(XEN val);
 XEN xen_rb_cons(XEN arg1, XEN arg2);
 XEN xen_rb_cons2(XEN arg1, XEN arg2, XEN arg3);
@@ -1263,6 +1273,11 @@ XEN rb_set_documentation(XEN name, XEN help);
 bool xen_rb_arity_ok(int rargs, int args);
 void xen_rb_repl_set_prompt(const char *prompt);
 XEN xen_rb_add_to_load_path(char *path);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif
 /* end HAVE_RUBY */
 

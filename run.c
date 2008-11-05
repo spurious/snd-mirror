@@ -175,6 +175,7 @@ static int run_safety = RUN_UNSAFE;
 
 
 #define MAX_OPTIMIZATION 6
+static int current_optimization = 0;
 
 
 #if WITH_RUN
@@ -477,7 +478,6 @@ static int name_to_type(const char *name)
 typedef enum {R_VARIABLE, R_CONSTANT} xen_value_constant_t;
 typedef enum {DONT_NEED_RESULT, NEED_ANY_RESULT, NEED_INT_RESULT} walk_result_t;
 
-static int current_optimization = DONT_OPTIMIZE;
 static bool run_warned = false;
 
 typedef struct {
@@ -13005,8 +13005,6 @@ static struct ptree *form_to_ptree_1(XEN code, int decls, int *types)
 
 #if USE_SND
   current_optimization = optimization(ss);
-#else
-  current_optimization = MAX_OPTIMIZATION;
 #endif
   if (current_optimization == DONT_OPTIMIZE) return(NULL);
 
@@ -13885,8 +13883,9 @@ static void init_walkers(void)
 static XEN g_run_eval(XEN code, XEN arg, XEN arg1, XEN arg2)
 {
   ptree *pt;
+#if USE_SND
   current_optimization = SOURCE_OK;
-
+#endif
 
 #if HAVE_S7
   s7_pointer cl;
@@ -14051,6 +14050,8 @@ static XEN g_set_optimization(XEN val)
 
 #else
 
+#define S_optimization "optimization"
+
 static XEN g_optimization(void) {return(C_TO_XEN_INT(current_optimization));}
 
 static XEN g_set_optimization(XEN val) 
@@ -14165,7 +14166,9 @@ You can often slightly rewrite the form to make run happy."
 #endif
 
 #if WITH_RUN
-  current_optimization = 6;
+#if (!USE_SND)
+  current_optimization = MAX_OPTIMIZATION;
+#endif
   init_walkers();
   init_type_names();
 #endif
