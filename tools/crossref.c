@@ -31,7 +31,7 @@ int snd_xen_c = -1;
 int snd_noxen_c = -1;
 int snd_nogui_c = -1;
 
-char *copy_string(char *str)
+char *mus_strdup(char *str)
 {
   char *newstr = NULL;
   if (str)
@@ -44,7 +44,7 @@ char *copy_string(char *str)
 
 void add_header(char *name)
 {
-  headers[headers_ctr++] = copy_string(name);
+  headers[headers_ctr++] = mus_strdup(name);
   if (headers_ctr == headers_size) fprintf(stderr,"oops headers");
 }
 
@@ -55,7 +55,7 @@ int add_name(char *name, char *hdr)
   if ((isdigit(name[0])) || (strlen(name) == 1)) return(-1);
 
   if (isupper(name[0])) return(-1);
-
+#if 0
   if ((strlen(name) > 2) && ((strncmp(name, "SCM", 3) == 0) ||
 			     (strncmp(name, "scm", 3) == 0) ||
 			     (strncmp(name, "clm_", 4) == 0) ||
@@ -68,6 +68,7 @@ int add_name(char *name, char *hdr)
 			     (strncmp(name, "xen", 3) == 0)))
 
     return(-1);
+#endif
   if ((strcmp(hdr, "snd-nogui0.h") == 0) ||
       (strcmp(hdr, "snd-nogui1.h") == 0))
     nnames[nname_ctr++] = name;
@@ -92,7 +93,7 @@ void add_file(char *name)
 {
   if (strcmp(name,"snd-xen.c") == 0) snd_xen_c = files_ctr;
   if (strcmp(name,"snd-nogui.c") == 0) snd_nogui_c = files_ctr;
-  files[files_ctr++] = copy_string(name);
+  files[files_ctr++] = mus_strdup(name);
   if (files_ctr == files_size) fprintf(stderr,"oops files");
 }
 
@@ -266,7 +267,6 @@ int main(int argc, char **argv)
   add_file("sound.c");
   add_file("clm.c");
   add_file("vct.c");
-  add_file("cmus.c");
   add_file("sndlib2xen.c");
   add_file("clm2xen.c");
   add_file("midi.c");
@@ -299,7 +299,7 @@ int main(int argc, char **argv)
   add_file("snd-env.c");
   add_file("snd-xen.c");
   add_file("snd-ladspa.c");
-  add_file("snd-run.c");
+  add_file("run.c");
   add_file("snd-xutils.c");
   add_file("snd-xhelp.c");
   add_file("snd-xfind.c");
@@ -391,7 +391,7 @@ int main(int argc, char **argv)
 			  if ((k > 0) && (in_parens == 0) && (in_quotes == 0))
 			    {
 			      int loc;
-			      loc = add_name(copy_string(curname), headers[i]);
+			      loc = add_name(mus_strdup(curname), headers[i]);
 			      if (loc >= 0)
 				{
 				  int start, n, maybe_proc = 1;

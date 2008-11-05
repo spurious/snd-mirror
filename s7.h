@@ -542,10 +542,10 @@ int main(int argc, char **argv)
 
 
   s7 = s7_init();                     /* initialize the interpreter; s7 is declared in xen.h */
-  xen_initialize();                   /* initialize the xen stuff (hooks and the xen s7 FFI) */
+  xen_initialize();                   /* initialize the xen stuff (hooks and the xen s7 FFI used by sndlib) */
   Init_sndlib();                      /* initialize sndlib with all the functions linked into s7 */  
 
-  /* these next lines are for compatibility with Guile (ws.scm has Guile-specific junk) */
+  /* these next lines are for compatibility with Guile */
   XEN_EVAL_C_STRING("(defmacro use-modules (arg . args) #f)");
   XEN_EVAL_C_STRING("(define (make-soft-port . args) #f)");
   XEN_EVAL_C_STRING("(define (current-module) (current-environment))");
@@ -554,10 +554,8 @@ int main(int argc, char **argv)
   XEN_DEFINE_PROCEDURE("file-exists?", g_file_exists_p_w, 1, 0, 0, H_file_exists_p);
   XEN_DEFINE_PROCEDURE("delete-file",  g_delete_file_w,   1, 0, 0, H_delete_file);
   XEN_DEFINE_PROCEDURE("random",       g_random_w,        1, 0, 0, "(random arg): random number between 0 and arg ");
-
-  /* deal with the ubiquitous run macro */
-  XEN_EVAL_C_STRING("(define (run-safety) 0)");
-  XEN_EVAL_C_STRING("(define (1+ x) (+ x 1))");
+  XEN_EVAL_C_STRING("(define (run-safety) 0)");        /* for the run macro and CLM */
+  XEN_EVAL_C_STRING("(define (1+ x) (+ x 1))");        /* lots of the CLM instruments use this macro */
 
   s7_define_function(s7, "exit", our_exit, 0, 0, false, "(exit) exits the program");
   s7_define_variable(s7, "pi", s7_make_real(s7, 3.14159265));
@@ -581,8 +579,8 @@ int main(int argc, char **argv)
  *   gsl and gslcblas are the Gnu Scientific Library that the configure script found -- those 
  *   may not be necessary on other systems
  *
- * to load ws.scm
- *   (load "s7-optargs.scm")
+ * run a CLM instrument:
+ *
  *   (load "sndlib-ws.scm")
  *   (with-sound () (outa 10 .1))
  *   (load "v.scm")

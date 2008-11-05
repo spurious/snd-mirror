@@ -56185,7 +56185,7 @@ EDITS: 1
 	(if (provided? 'snd-guile) ; make-stack
 	    (test-ws-errors))
 	
-	(if all-args
+	(if #f
 	    (let ((outfile "/home/bil/test/sound/big3.snd"))
 	      (if (file-exists? outfile)
 		  (delete-file outfile))
@@ -56206,7 +56206,7 @@ EDITS: 1
 				(not (= (header-type snd) mus-rf64)))
 			   (snd-display ";big3 auto convert? ~A -> ~A" (mus-header-type-to-string ht) (mus-header-type-to-string (header-type snd))))
 		       (close-sound snd))))
-	       (list mus-riff mus-next mus-caff))
+	       (list mus-next mus-caff))
 	      
 	      (if (file-exists? outfile)
 		  (delete-file outfile))))

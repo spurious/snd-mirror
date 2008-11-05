@@ -51,8 +51,8 @@
  *        sinh, cosh, tanh, asinh, acosh, atanh
  *        object->string, eval-string
  *        reverse!, list-set!
- *        gc, gc-verbose, load-verbose
- *        stacktrace, quit
+ *        gc, gc-verbose, load-verbose, quit
+ *        backtrace, backtrace-length, clear-backtrace
  *        *features*, *load-path*, *vector-print-length*
  *
  *
@@ -183,8 +183,8 @@
 #define WITH_READ_LINE 1
 /* this includes the (non-standard) read-line function */
 
-#define DEFAULT_EVAL_HISTORY_SIZE 16
-/* this is the number of entries in the debugger's printout of previous evaluations (a stacktrace of sorts) */
+#define INITIAL_BACKTRACE_SIZE 16
+/* this is the number of entries in the debugger's printout of previous evaluations */
 
 /* there's also CASE_SENSITIVE below (default: 1) which determines whether names are case sensitive */
 
@@ -444,10 +444,10 @@ struct s7_scheme {
    */
 
   int saved_line_number;
-  int eval_history_size, eval_history_top;
-  s7_pointer *eval_history_ops, *eval_history_args;
+  int backtrace_size, backtrace_top;
+  s7_pointer *backtrace_ops, *backtrace_args;
 #if HAVE_PTHREADS
-  int *eval_history_thread_ids;
+  int *backtrace_thread_ids;
   int thread_id;
   int *thread_ids; /* global current top thread_id */
 #endif
@@ -1083,10 +1083,10 @@ static int gc(s7_scheme *sc, const char *function, int line)
   for (i = 0; i < sc->temps_size; i++)
     s7_mark_object(sc->temps[i]);
   
-  for (i = 0; i < sc->eval_history_size; i++)
+  for (i = 0; i < sc->backtrace_size; i++)
     {
-      s7_mark_object(sc->eval_history_ops[i]);
-      s7_mark_object(sc->eval_history_args[i]);
+      s7_mark_object(sc->backtrace_ops[i]);
+      s7_mark_object(sc->backtrace_args[i]);
     }
   
   /* free up all other objects */
@@ -9815,17 +9815,18 @@ static int remember_file_name(const char *file)
 }
 
 
-/* -------- eval history ("stacktrace") -------- */
+/* -------- backtrace -------- */
 
 #if HAVE_PTHREADS
-static pthread_mutex_t eval_history_lock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t backtrace_lock = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
 
-static void print_eval_history_entry(s7_scheme *sc, int n)
+static void print_backtrace_entry(s7_scheme *sc, int n)
 {
   char *str = NULL;
-  char numbuf[64];
+  #define NUMBUF_SIZE 64
+  char numbuf[NUMBUF_SIZE];
   int line = 0;
   s7_pointer code, args;
 
@@ -9833,21 +9834,21 @@ static void print_eval_history_entry(s7_scheme *sc, int n)
   sc = sc->orig_sc;
 #endif
 
-  code = sc->eval_history_ops[n];
-  args = sc->eval_history_args[n];
+  code = sc->backtrace_ops[n];
+  args = sc->backtrace_args[n];
 
   if ((code == sc->NIL) && (args == sc->NIL))
     return;
 
 #if HAVE_PTHREADS
-  if (sc->eval_history_thread_ids[n] != 0)
+  if (sc->backtrace_thread_ids[n] != 0)
     {
-      snprintf(numbuf, 64, "[%d]", sc->eval_history_thread_ids[n]);
+      snprintf(numbuf, NUMBUF_SIZE, "[%d] ", sc->backtrace_thread_ids[n]);
       write_string(sc, numbuf, sc->error_port);
     }
 #endif
 
-  /* we have eval_history_ops|args equivalent to earlier code|args */
+  /* we have backtrace_ops|args equivalent to earlier code|args */
 
   write_string(sc, "(", sc->error_port);
   if (s7_is_function(code))
@@ -9858,7 +9859,7 @@ static void print_eval_history_entry(s7_scheme *sc, int n)
 	write_string(sc, pws_name(code), sc->error_port);
       else 
 	{
-	  str = s7_object_to_c_string(sc, code); /* do we need the thread-local env here? */
+	  str = s7_object_to_c_string(sc, code); /* do we need the thread-local env here? unfortunately, yes... */
 	  write_string(sc, str, sc->error_port);
 	  if (str) free(str);
 	}
@@ -9885,7 +9886,7 @@ static void print_eval_history_entry(s7_scheme *sc, int n)
 	{
 	  write_string(sc, "        ; ", sc->error_port);
 	  write_string(sc, remembered_file_name(line), sc->error_port);
-	  snprintf(numbuf, 64, "[%d]", remembered_line_number(line));
+	  snprintf(numbuf, NUMBUF_SIZE, "[%d]", remembered_line_number(line));
 	  write_string(sc, numbuf, sc->error_port);
 	}
     }
@@ -9893,49 +9894,117 @@ static void print_eval_history_entry(s7_scheme *sc, int n)
 }
 
 
-static s7_pointer g_stacktrace(s7_scheme *sc, s7_pointer args)
+static s7_pointer g_backtrace(s7_scheme *sc, s7_pointer args)
 {
-  #define H_stacktrace "(stacktrace) prints out the last few evaluated expressions, somewhat like a C stacktrace."
+  #define H_backtrace "(backtrace) prints out the last few evaluated expressions, somewhat like a C stacktrace."
   int i;
 
 #if HAVE_PTHREADS
-  pthread_mutex_lock(&eval_history_lock);
+  pthread_mutex_lock(&backtrace_lock);
 #endif
 
   write_string(sc, "\neval history:\n", sc->error_port);
-  for (i = 0; i < sc->eval_history_size; i++)
-    print_eval_history_entry(sc, (sc->eval_history_size + sc->eval_history_top - i - 1) % sc->eval_history_size);
+  for (i = 0; i < sc->backtrace_size; i++)
+    print_backtrace_entry(sc, (sc->backtrace_size + sc->backtrace_top - i - 1) % sc->backtrace_size);
 
 #if HAVE_PTHREADS
-  pthread_mutex_unlock(&eval_history_lock);
+  pthread_mutex_unlock(&backtrace_lock);
 #endif
 
   return(sc->F);
 }
 
 
-static void add_eval_history_entry(s7_scheme *sc, s7_pointer code, s7_pointer args)
+static void add_backtrace_entry(s7_scheme *sc, s7_pointer code, s7_pointer args)
 {
   int n;
 
 #if HAVE_PTHREADS
   int id;
-  pthread_mutex_lock(&eval_history_lock);
+  pthread_mutex_lock(&backtrace_lock);
   id = sc->thread_id;
   sc = sc->orig_sc;
 #endif
 
-  n = sc->eval_history_top++;
-  if (sc->eval_history_top >= sc->eval_history_size)
-    sc->eval_history_top = 0;
+  n = sc->backtrace_top++;
+  if (sc->backtrace_top >= sc->backtrace_size)
+    sc->backtrace_top = 0;
 
-  sc->eval_history_ops[n] = code;
-  sc->eval_history_args[n] = args;
+  sc->backtrace_ops[n] = code;
+  sc->backtrace_args[n] = args;
 
 #if HAVE_PTHREADS
-  sc->eval_history_thread_ids[n] = id;
-  pthread_mutex_unlock(&eval_history_lock);
+  sc->backtrace_thread_ids[n] = id;
+  pthread_mutex_unlock(&backtrace_lock);
 #endif
+}
+
+
+static s7_pointer g_clear_backtrace(s7_scheme *sc, s7_pointer args)
+{
+  int i;
+  #define H_clear_backtrace "(clear-backtrace) erases any current backtrace info."
+
+#if HAVE_PTHREADS
+  pthread_mutex_lock(&backtrace_lock);
+  sc = sc->orig_sc;
+#endif
+
+  sc->backtrace_top = 0;
+  for (i = 0; i < sc->backtrace_size; i++)
+    {
+      sc->backtrace_ops[i] = sc->NIL;
+      sc->backtrace_args[i] = sc->NIL;
+    }
+
+#if HAVE_PTHREADS
+  pthread_mutex_unlock(&backtrace_lock);
+#endif
+
+  return(sc->F);
+}
+
+
+static void make_backtrace_buffer(s7_scheme *sc, int size)
+{
+  int i;
+
+#if HAVE_PTHREADS
+  pthread_mutex_lock(&backtrace_lock);
+  sc = sc->orig_sc;
+  if (sc->backtrace_thread_ids) free(sc->backtrace_thread_ids);
+#endif
+
+  if (sc->backtrace_ops) free(sc->backtrace_ops);
+  if (sc->backtrace_args) free(sc->backtrace_args);
+
+  sc->backtrace_top = 0;
+  sc->backtrace_size = size;
+  sc->backtrace_ops = (s7_pointer *)malloc(sc->backtrace_size * sizeof(s7_pointer));
+  sc->backtrace_args = (s7_pointer *)malloc(sc->backtrace_size * sizeof(s7_pointer));
+  for (i = 0; i < sc->backtrace_size; i++)
+    {
+      sc->backtrace_ops[i] = sc->NIL;
+      sc->backtrace_args[i] = sc->NIL;
+    }
+
+#if HAVE_PTHREADS
+  sc->backtrace_thread_ids = (int *)calloc(sc->backtrace_size, sizeof(int));
+  pthread_mutex_unlock(&backtrace_lock);
+#endif
+}
+
+
+static s7_pointer g_set_backtrace_length(s7_scheme *sc, s7_pointer args)
+{
+  #define H_set_backtrace_length "(set-backtrace-length length) sets the number of entries displayed in a backtrace"
+  int len;
+  if (!s7_is_integer(car(args)))
+    return(s7_wrong_type_arg_error(sc, "set-backtrace-length", 1, car(args), "an integer"));
+  len = s7_integer(car(args));
+  if (len > 0)
+    make_backtrace_buffer(sc, len);
+  return(s7_make_integer(sc, sc->backtrace_size));
 }
 
 
@@ -10144,7 +10213,7 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	}
       write_char(sc, '\n', sc->error_port);
       
-      g_stacktrace(sc, sc->NIL);
+      g_backtrace(sc, sc->NIL);
       
       if ((exit_eval) &&
 	  (sc->error_exiter))
@@ -10857,7 +10926,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     APPLY:
     case OP_APPLY:      /* apply 'code' to 'args' */
-      add_eval_history_entry(sc, sc->code, sc->args);
+      add_backtrace_entry(sc, sc->code, sc->args);
       
       if (s7_is_function(sc->code))
 	{
@@ -12297,16 +12366,16 @@ static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
 
   new_sc->key_values = sc->NIL;
 
-  pthread_mutex_lock(&eval_history_lock);  /* probably unnecessary... */
+  pthread_mutex_lock(&backtrace_lock);  /* probably unnecessary... */
   (*(sc->thread_ids))++;                   /* in case a spawned thread spawns another, we need this variable to be global to all */
   new_sc->thread_id = (*(sc->thread_ids)); /* for more readable debugging printout -- main thread is thread 0 */
-  pthread_mutex_unlock(&eval_history_lock);
+  pthread_mutex_unlock(&backtrace_lock);
 
   /* use the main interpreter for these */
-  new_sc->eval_history_size = 0;
-  new_sc->eval_history_ops = NULL;
-  new_sc->eval_history_args = NULL;
-  new_sc->eval_history_thread_ids = NULL;
+  new_sc->backtrace_size = 0;
+  new_sc->backtrace_ops = NULL;
+  new_sc->backtrace_args = NULL;
+  new_sc->backtrace_thread_ids = NULL;
 
   return(new_sc);
 }
@@ -12448,20 +12517,10 @@ s7_scheme *s7_init(void)
   sc->load_verbose = (bool *)calloc(1, sizeof(bool));
   sc->gensym_counter = (long *)calloc(1, sizeof(long));
 
-  sc->eval_history_top = 0;
-  sc->eval_history_size = DEFAULT_EVAL_HISTORY_SIZE;
-  sc->eval_history_ops = (s7_pointer *)malloc(sc->eval_history_size * sizeof(s7_pointer));
-  sc->eval_history_args = (s7_pointer *)malloc(sc->eval_history_size * sizeof(s7_pointer));
-  for (i = 0; i < sc->eval_history_size; i++)
-    {
-      sc->eval_history_ops[i] = sc->NIL;
-      sc->eval_history_args[i] = sc->NIL;
-    }
-
+  make_backtrace_buffer(sc, INITIAL_BACKTRACE_SIZE);
 #if HAVE_PTHREADS
   sc->thread_ids = (int *)calloc(1, sizeof(int));
   sc->thread_id = 0;
-  sc->eval_history_thread_ids = (int *)calloc(sc->eval_history_size, sizeof(int));
 #endif
   
   sc->code = sc->NIL;
@@ -12840,7 +12899,9 @@ s7_scheme *s7_init(void)
   
   s7_define_function(sc, "gc-verbose",              g_gc_verbose,              1, 0, false, H_gc_verbose);
   s7_define_function(sc, "load-verbose",            g_load_verbose,            1, 0, false, H_load_verbose);
-  s7_define_function(sc, "stacktrace",              g_stacktrace,              0, 0, false, H_stacktrace);
+  s7_define_function(sc, "backtrace",               g_backtrace,               0, 0, false, H_backtrace);
+  s7_define_function(sc, "clear-backtrace",         g_clear_backtrace,         0, 0, false, H_clear_backtrace);
+  s7_define_function(sc, "set-backtrace-length",    g_set_backtrace_length,    1, 0, false, H_set_backtrace_length);
 
   s7_define_function(sc, "gc",                      g_gc,                      0, 1, false, H_gc);
   s7_define_function(sc, "quit",                    g_quit,                    0, 0, false, H_quit);
