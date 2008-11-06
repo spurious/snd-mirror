@@ -359,9 +359,9 @@ make allclean
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
-echo ' ----                 --with-s7                                          ---- '
+echo ' ----                 --with-guile                                          ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-s7
+./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-guile
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-s7 'snd-motif"
@@ -370,9 +370,9 @@ make allclean
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
-echo ' ----                --with-s7 --enable-snd-debug --with-static-xm --with-editres --with-gl '
+echo ' ----                --with-guile --enable-snd-debug --with-static-xm --with-editres --with-gl '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-s7 --enable-snd-debug --with-static-xm --with-editres --with-gl LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --with-midi
+./configure --quiet --with-guile --enable-snd-debug --with-static-xm --with-editres --with-gl LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --with-midi
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-s7 'xm 'gl"
@@ -381,9 +381,9 @@ make allclean
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
-echo ' ----                --with-s7 --with-gtk --with-static-xg --with-gl      --- '
+echo ' ----                --with-guile --with-gtk --with-static-xg --with-gl      --- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-s7 --with-gtk --with-static-xg --with-gl LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
+./configure --quiet --with-guile --with-gtk --with-static-xg --with-gl LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-gtk 'xg 'gl"
@@ -392,9 +392,9 @@ make allclean
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
-echo ' -----                --with-s7 --with-no-gui                             --- '
+echo ' -----                --with-guile --with-no-gui                             --- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-s7 --with-no-gui LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
+./configure --quiet --with-guile --with-no-gui LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-s7 'snd-nogui"
@@ -403,9 +403,9 @@ make allclean
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
-echo ' -----                --with-s7 g++ --disable-deprecated                  --- '
+echo ' -----                --with-guile g++ --disable-deprecated                  --- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-s7 CC=g++ --disable-deprecated LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
+./configure --quiet --with-guile CC=g++ --disable-deprecated LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include"
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-s7"
@@ -1118,7 +1118,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                --with-gtk --with-static-xg --with-jack GUILE_CONFIG_path=/home/bil/test/bin '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-gtk --with-static-xg --with-jack CFLAGS="-I/home/bil/test/include -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/lib -L/usr/X11R6/lib" GUILE_CONFIG_path=/home/bil/test/bin
+./configure --quiet --with-guile --with-gtk --with-static-xg --with-jack CFLAGS="-I/home/bil/test/include -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/lib -L/usr/X11R6/lib" GUILE_CONFIG_path=/home/bil/test/bin
 make
 ./snd --version
 ./snd -noinit --features "'clm 'xg 'snd-gtk 'snd-guile"
@@ -1129,7 +1129,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' ------                --with-snd-as-pd-external --with-no-gui GUILE_CONFIG_path=/home/bil/test/bin '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet --with-snd-as-pd-external --with-no-gui CFLAGS="-I/home/bil/test/include -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/lib" GUILE_CONFIG_path=/home/bil/test/bin
+./configure --quiet --with-guile --with-snd-as-pd-external --with-no-gui CFLAGS="-I/home/bil/test/include -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/lib" GUILE_CONFIG_path=/home/bil/test/bin
 make external
 ./snd --version
 ./snd -noinit --features "'clm 'snd-nogui 'snd-pd-external 'snd-guile"
@@ -1140,7 +1140,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                GUILE_CONFIG_path=/home/bil/test/g13/bin               ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet CFLAGS="-I/home/bil/test/g13/include -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/g13/lib -L/usr/X11R6/lib" GUILE_CONFIG_path=/home/bil/test/g13/bin
+./configure --quiet --with-guile CFLAGS="-I/home/bil/test/g13/include -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/g13/lib -L/usr/X11R6/lib" GUILE_CONFIG_path=/home/bil/test/g13/bin
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-guile"
@@ -1151,7 +1151,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                GUILE_CONFIG_path=/home/bil/test/g14/bin               ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet CFLAGS="-I/home/bil/test/g14/include -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/g14/lib -L/usr/X11R6/lib" GUILE_CONFIG_path=/home/bil/test/g14/bin
+./configure --quiet --with-guile CFLAGS="-I/home/bil/test/g14/include -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/g14/lib -L/usr/X11R6/lib" GUILE_CONFIG_path=/home/bil/test/g14/bin
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-guile"
@@ -1162,7 +1162,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' ----                GUILE_CONFIG_path=/home/bil/test/g13/bin --with-static-xm -- '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet CFLAGS="-I/home/bil/test/g13/include -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/g13/lib -L/usr/X11R6/lib" GUILE_CONFIG_path=/home/bil/test/g13/bin --with-static-xm
+./configure --quiet --with-guile CFLAGS="-I/home/bil/test/g13/include -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/g13/lib -L/usr/X11R6/lib" GUILE_CONFIG_path=/home/bil/test/g13/bin --with-static-xm
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-guile"
@@ -1173,29 +1173,7 @@ echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' ------                GUILE_CONFIG_path=/home/bil/test/g14/bin --with-static-xm  '
 echo ' -------------------------------------------------------------------------------- '
-./configure --quiet CFLAGS="-I/home/bil/test/g14/include -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/g14/lib -L/usr/X11R6/lib" GUILE_CONFIG_path=/home/bil/test/g14/bin --with-static-xm
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-guile"
-make allclean
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
-echo ' ----                GUILE_CONFIG_path=/home/bil/test/g13/bin --with-static-xg --with-gtk '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet CFLAGS="-I/home/bil/test/g13/include -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/g13/lib -L/usr/X11R6/lib" GUILE_CONFIG_path=/home/bil/test/g13/bin --with-static-xg --with-gtk
-make
-./snd --version
-./snd -noinit --features "'clm 'snd-guile"
-make allclean
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
-echo ' -----                GUILE_CONFIG_path=/home/bil/test/g14/bin --with-static-xg --with-gtk '
-echo ' -------------------------------------------------------------------------------- '
-./configure --quiet CFLAGS="-I/home/bil/test/g14/include -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/g14/lib -L/usr/X11R6/lib" GUILE_CONFIG_path=/home/bil/test/g14/bin --with-static-xg --with-gtk
+./configure --quiet --with-guile CFLAGS="-I/home/bil/test/g14/include -I/usr/X11R6/include" LDFLAGS="-L/home/bil/test/g14/lib -L/usr/X11R6/lib" GUILE_CONFIG_path=/home/bil/test/g14/bin --with-static-xm
 make
 ./snd --version
 ./snd -noinit --features "'clm 'snd-guile"
@@ -1206,22 +1184,34 @@ cp ~/sndlib/* .
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                sndlib tests                                           ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet
+./configure --quiet CFLAGS="-Wall"
 make
 make clean
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-ruby
+./configure --quiet --enable-threads
 make
 make clean
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-s7
+./configure --quiet --with-ruby
 make
 make clean
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --without-extension-language
+./configure --quiet --with-ruby CC=g++
 make
 make clean
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-forth
+./configure --quiet --with-guile
 make
 make clean
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet CC=g++
+./configure --quiet --with-guile CC=g++
+make
+make clean
+./configure --quiet --without-extension-language
+make
+make clean
+./configure --quiet --without-extension-language CC=g++
+make
+make clean
+./configure --quiet --with-forth
+make
+make clean
+./configure --quiet CC=g++
 make
 make clean
 
@@ -1230,13 +1220,22 @@ cp ~/libxm/* .
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                libxm tests                                            ---- '
 echo ' -------------------------------------------------------------------------------- '
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet
+./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include -Wall" --quiet
+make
+make clean
+./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include -Wall" --quiet CC=g++
+make
+make clean
+./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include -Wall" --quiet --enable-threads
+make
+make clean
+./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include -Wall" --quiet CC=g++
 make
 make clean
 ./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-ruby
 make
 make clean
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-s7
+./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-guile
 make
 make clean
 ./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --without-extension-language
@@ -1254,13 +1253,22 @@ make clean
 ./configure --quiet --with-ruby --with-gtk
 make
 make clean
-./configure --quiet --with-s7 --with-gtk
+./configure --quiet --with-ruby --with-gtk CC=g++
+make
+make clean
+./configure --quiet --with-guile --with-gtk
+make
+make clean
+./configure --quiet --with-guile --with-gtk CC=g++
 make
 make clean
 ./configure --quiet --with-forth --with-gtk
 make
 make clean
 ./configure --quiet --without-extension-language --with-gtk
+make
+make clean
+./configure --quiet --without-extension-language --with-gtk CC=g++
 make
 make clean
 

@@ -159,7 +159,8 @@
 /* ---------------- initial sizes ---------------- */
 
 #define INITIAL_HEAP_SIZE 128000
-/* in Snd, there are about 10000 permanent objects sitting in the heap, so the bigger the size, the less
+/* the heap grows as needed, this is its initial size.
+ * in Snd, there are about 10000 permanent objects sitting in the heap, so the bigger the size, the less
  *    often we mark these objects -- the GC is more efficient as the heap size increases.  Each object
  *    is about 20 bytes, so even 256K is nothing in modern memory sizes.  The heaps grows as needed,
  *    so any number > 0 is ok.  The smaller the heap, the smaller the initial run-time memory footprint.
@@ -170,12 +171,14 @@
  *   setting it to 100043 did improve performance.  Max list size (at 9601) in snd-test.scm is 6.
  */
 
-#define INITIAL_STACK_SIZE 1000            /* each frame takes 4 entries */
+#define INITIAL_STACK_SIZE 1000            
+/* the stack grows as needed, each frame takes 4 entries, this is its initial size */
 
-#define INITIAL_PROTECTED_OBJECTS_SIZE 16  /* a vector of objects that are being protected from the GC */
+#define INITIAL_PROTECTED_OBJECTS_SIZE 16  
+/* a vector of objects that are (semi-permanently) protected from the GC, grows as needed */
 
 #define GC_TEMPS_SIZE 4096
-/* 512 is too small in the threads case (generators.scm) */
+/* the number of recent objects that are temporarily gc-protected; 512 is too small in the threads case (generators.scm) */
 
 #define S7_DEBUGGING 0
 /* this is for a bunch of sanity checks */
@@ -184,9 +187,10 @@
 /* this includes the (non-standard) read-line function */
 
 #define INITIAL_BACKTRACE_SIZE 16
-/* this is the number of entries in the debugger's printout of previous evaluations */
+/* this is the number of entries in the backtrace printout of previous evaluations */
 
-/* there's also CASE_SENSITIVE below (default: 1) which determines whether names are case sensitive */
+#define CASE_SENSITIVE 1
+/* this determines whether names are case sensitive */
 
 
 /* -------------------------------------------------------------------------------- */
@@ -690,7 +694,6 @@ static char *describe_type(s7_pointer p)
 #define BACKQUOTE '`'
 
 
-#define CASE_SENSITIVE 1
 #if CASE_SENSITIVE
 
 #define string_downcase(Str) Str
@@ -728,6 +731,8 @@ static s7_pointer s7_file_error(s7_scheme *sc, const char *caller, const char *d
 static void s7_free_function(s7_pointer a);
 static int remember_file_name(const char *file);
 static s7_pointer safe_reverse_in_place(s7_scheme *sc, s7_pointer list);
+static s7_pointer s7_immutable_cons(s7_scheme *sc, s7_pointer a, s7_pointer b);
+
 
 /* -------------------------------- constants -------------------------------- */
 
@@ -752,6 +757,18 @@ s7_pointer s7_NIL(s7_scheme *sc)
 s7_pointer s7_UNDEFINED(s7_scheme *sc) 
 {
   return(sc->UNDEFINED);
+}
+
+
+s7_pointer s7_UNSPECIFIED(s7_scheme *sc) 
+{
+  return(sc->UNSPECIFIED);
+}
+
+
+bool s7_is_unspecified(s7_scheme *sc, s7_pointer val)
+{
+  return(val == sc->UNSPECIFIED);
 }
 
 
@@ -793,13 +810,13 @@ static s7_pointer g_is_boolean(s7_scheme *sc, s7_pointer args)
 }
 
 
-bool s7_is_immutable(s7_pointer p) 
+static bool s7_is_immutable(s7_pointer p) 
 { 
   return(typeflag(p) & T_IMMUTABLE);
 }
 
 
-s7_pointer s7_set_immutable(s7_pointer p) 
+static s7_pointer s7_set_immutable(s7_pointer p) 
 { 
   typeflag(p) |= T_IMMUTABLE;
   return(p);
@@ -1046,23 +1063,22 @@ void s7_mark_object(s7_pointer p)
 }
 
 
-static s7_pointer alloc_s7_cell(s7_scheme *sc)
-{
-  if (sc->free_heap_top <= 0) /* TODO: can this be folded into the return via a guard null? */
-    return(NULL);
-  
-  return(sc->free_heap[--(sc->free_heap_top)]);
-}
-
-
+#if S7_DEBUGGING
 static int gc(s7_scheme *sc, const char *function, int line)
+#else
+static int gc(s7_scheme *sc)
+#endif
 {
   s7_pointer p;
   int i, old_free_heap_top;
   
   if ((*(sc->gc_verbose)) &&
       (sc->output_port == sc->NIL))
+#if S7_DEBUGGING
     fprintf(stderr, "\n%s[%d] gc...", function, line);
+#else
+    fprintf(stderr, "gc...");
+#endif
   
   /* mark all live objects (the symbol table is in permanent memory, not the heap) */
   s7_mark_object(sc->global_env);
@@ -1125,13 +1141,19 @@ static int gc(s7_scheme *sc, const char *function, int line)
 static pthread_mutex_t alloc_lock = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
-
+#if S7_DEBUGGING
 #define new_cell(Sc) new_cell_1(Sc, __FUNCTION__, __LINE__)
-
 #if HAVE_PTHREADS
 static s7_pointer new_cell_1(s7_scheme *nsc, const char *function, int line)
 #else
 static s7_pointer new_cell_1(s7_scheme *sc, const char *function, int line)
+#endif
+#else
+#if HAVE_PTHREADS
+static s7_pointer new_cell(s7_scheme *nsc)
+#else
+static s7_pointer new_cell(s7_scheme *sc)
+#endif
 #endif
 {
   s7_pointer p;
@@ -1141,15 +1163,18 @@ static s7_pointer new_cell_1(s7_scheme *sc, const char *function, int line)
   pthread_mutex_lock(&alloc_lock);
   sc = nsc->orig_sc;
 #endif
-  
-  p = alloc_s7_cell(sc);
-  if (!p)
+
+  if (sc->free_heap_top <= 0)
     {
       /* no free heap */
       int k, old_size, freed_heap = 0;
       
       if (!(*(sc->gc_off)))
+#if S7_DEBUGGING
 	freed_heap = gc(sc, function, line);
+#else
+        freed_heap = gc(sc);
+#endif
       /* when threads, the gc function can be interrupted at any point and resumed later -- mark bits need to be preserved during this interruption */
       
       if (freed_heap < sc->heap_size / 10) /* was 1000 */
@@ -1166,8 +1191,9 @@ static s7_pointer new_cell_1(s7_scheme *sc, const char *function, int line)
 	      sc->free_heap[sc->free_heap_top++] = sc->heap[k];
 	    }
 	}
-      p = alloc_s7_cell(sc);
     }
+
+  p = sc->free_heap[--(sc->free_heap_top)];
   
   /* originally I tried to mark each temporary value until I was done with it, but
    *   that way madness lies... By delaying GC of _every_ %$^#%@ pointer, I can dispense
@@ -1216,12 +1242,22 @@ static s7_pointer g_gc(s7_scheme *sc, s7_pointer args)
       if (*(sc->gc_off)) return(sc->F);
     }
 
+#if S7_DEBUGGING
 #if HAVE_PTHREADS
   pthread_mutex_lock(&alloc_lock);
   gc(sc->orig_sc, __FUNCTION__, __LINE__);
   pthread_mutex_unlock(&alloc_lock);
 #else
   gc(sc, __FUNCTION__, __LINE__);
+#endif
+#else
+#if HAVE_PTHREADS
+  pthread_mutex_lock(&alloc_lock);
+  gc(sc->orig_sc);
+  pthread_mutex_unlock(&alloc_lock);
+#else
+  gc(sc);
+#endif
 #endif
   
   return(sc->UNSPECIFIED);
@@ -1242,10 +1278,10 @@ s7_pointer s7_local_gc_unprotect(s7_pointer p)
 }
 
 
-s7_pointer s7_gc_on(s7_scheme *sc, bool on, s7_pointer p)
+s7_pointer s7_gc_on(s7_scheme *sc, bool on)
 {
   (*(sc->gc_off)) = !on;
-  return(p);
+  return(s7_make_boolean(sc, on));
 }
 
 
@@ -7628,7 +7664,7 @@ static s7_pointer cons_untyped(s7_scheme *sc, s7_pointer a, s7_pointer b)
 }
 
 
-s7_pointer s7_immutable_cons(s7_scheme *sc, s7_pointer a, s7_pointer b)
+static s7_pointer s7_immutable_cons(s7_scheme *sc, s7_pointer a, s7_pointer b)
 {
   s7_pointer x;
   x = cons_untyped(sc, a, b);
@@ -7770,7 +7806,7 @@ s7_pointer s7_reverse(s7_scheme *sc, s7_pointer a)
 }
 
 
-s7_pointer s7_reverse_in_place(s7_scheme *sc, s7_pointer term, s7_pointer list) 
+static s7_pointer s7_reverse_in_place(s7_scheme *sc, s7_pointer term, s7_pointer list) 
 {
   s7_pointer p = list, result = term, q;
   while (p != sc->NIL)
