@@ -33381,7 +33381,7 @@ static XEN c_array_to_xen_list(XEN val_1, XEN clen)
   XEN result = XEN_EMPTY_LIST;
   XEN val;
   int i, len = -1;
-  char *ctype;
+  const char *ctype;
   if (XEN_INTEGER_P(clen))
     len = XEN_TO_C_INT(clen);
   if (!(XEN_LIST_P(val_1))) return(XEN_FALSE); /* type:location cons */
@@ -33554,7 +33554,7 @@ static XEN xg_object_get(XEN val, XEN name, XEN string_type)
 static XEN xen_list_to_c_array(XEN val, XEN type)
 {
   int i, len;
-  char *ctype;
+  const char *ctype;
   len = XEN_LIST_LENGTH(val);
   ctype = XEN_TO_C_STRING(type);
   if (strcmp(ctype, "gdouble*") == 0)
@@ -48087,7 +48087,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("28-Oct-08"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("06-Nov-08"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

@@ -2117,7 +2117,7 @@ void xen_s7_set_repl_prompt(const char *new_prompt);
 #define XEN_APPEND(X, Y) 0
 #define XEN_STRING_P(Arg) 0
 #define XEN_NAME_AS_C_STRING_TO_VALUE(a) 0
-#define XEN_TO_C_STRING(STR) ((char *)"(not a string)")
+#define XEN_TO_C_STRING(STR) "(not a string)"
 #define C_TO_XEN_STRING(a) 0
 #define C_TO_XEN_STRINGN(Str, Len) 0
 #define C_STRING_TO_XEN_SYMBOL(a) 0

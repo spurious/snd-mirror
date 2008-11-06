@@ -476,7 +476,7 @@ char *get_minibuffer_string(snd_info *sp)
 
 static char stupid[1] = {'\0'};
 
-void set_minibuffer_string(snd_info *sp, char *str, bool update) 
+void set_minibuffer_string(snd_info *sp, const char *str, bool update) 
 {
   if ((sp->inuse != SOUND_NORMAL) || (!(sp->sgx))) return;
   if (str)
@@ -485,7 +485,7 @@ void set_minibuffer_string(snd_info *sp, char *str, bool update)
 }
 
 
-void make_minibuffer_label(snd_info *sp, char *str)
+void make_minibuffer_label(snd_info *sp, const char *str)
 {
   if (sp->inuse != SOUND_NORMAL) return;
   gtk_label_set_text(GTK_LABEL(MINIBUFFER_LABEL(sp)), str);

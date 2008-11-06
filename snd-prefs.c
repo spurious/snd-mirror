@@ -188,7 +188,7 @@ static bool local_access(char *dir)
 }
 
 
-static bool string_member_p(char *val, char **lst, int len)
+static bool string_member_p(const char *val, char **lst, int len)
 {
   int i;
   if ((len == 0) || (!lst) || (!val)) return(false);
@@ -211,7 +211,7 @@ static char **load_path_to_string_array(int *len)
       cdirs = (char **)CALLOC(dir_len, sizeof(char *));
       for (i = 0; i < dir_len; i++)
 	{
-	  char *path;
+	  const char *path;
 	  path = XEN_TO_C_STRING(XEN_LIST_REF(dirs, i));
 	  if ((path) && (!(string_member_p(path, cdirs, j))))   /* try to remove duplicates */
 	    cdirs[j++] = mus_strdup(path);
@@ -503,6 +503,7 @@ static void xen_load_file_with_path_and_extension(const char *file)
 
 static void prefs_function_call_0(const char *func)
 {
+#if HAVE_EXTENSION_LANGUAGE
   char *str;
 #if HAVE_SCHEME
   str = mus_format("(%s)\n", func);
@@ -515,11 +516,13 @@ static void prefs_function_call_0(const char *func)
 #endif
   XEN_EVAL_C_STRING(str);
   FREE(str);
+#endif
 }
 
 
 static void prefs_function_call_1(const char *func, XEN arg)
 {
+#if HAVE_EXTENSION_LANGUAGE
   char *str;
 #if HAVE_SCHEME
   char *temp = NULL;
@@ -536,6 +539,7 @@ static void prefs_function_call_1(const char *func, XEN arg)
 #endif
   XEN_EVAL_C_STRING(str);
   FREE(str);
+#endif
 }
 
 
@@ -3274,7 +3278,7 @@ new sounds, then edit them in Snd, include with-sound.",
 
 static void set_clm_file_name(const char *str) {prefs_variable_set(CLM_FILE_NAME, C_TO_XEN_STRING(str));}
 
-static char *find_clm_file_name(void)
+static const char *find_clm_file_name(void)
 {
   XEN val;
   val = prefs_variable_get(CLM_FILE_NAME);
@@ -4296,7 +4300,7 @@ static void save_peak_envs(prefs_info *prf, FILE *fd)
     }
 }
 
-static char *peak_env_directory(void)
+static const char *peak_env_directory(void)
 {
   if (include_peak_env_directory)
     return(include_peak_env_directory);
@@ -4387,7 +4391,8 @@ static char *find_sources(void) /* returns full filename if found else null */
       base_len = strlen(BASE_FILE);
       for (i = 0; i < len; i++)
 	{
-	  char *fname, *path;
+	  char *fname;
+	  const char *path;
 	  int flen;
 	  path = XEN_TO_C_STRING(XEN_LIST_REF(load_path, i));
 	  flen = base_len + 32 + strlen(path);

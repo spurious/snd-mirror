@@ -194,7 +194,7 @@ off_t mus_optkey_to_off_t(XEN key, const char *caller, int n, off_t def)
 }
 
 
-char *mus_optkey_to_string(XEN key, const char *caller, int n, char *def)
+const char *mus_optkey_to_string(XEN key, const char *caller, int n, char *def)
 {
   if ((!(XEN_KEYWORD_P(key))) && (!(XEN_FALSE_P(key))))
     {
@@ -6013,7 +6013,7 @@ return a new readin (file input) generator reading the sound file 'file' startin
 
   /* optkey file channel start direction size */
   mus_any *ge;
-  char *file = NULL;
+  const char *file = NULL;
   XEN args[MAX_ARGLIST_LEN]; 
   XEN keys[5];
   int orig_arg[5] = {0, 0, 0, 0, 0};
@@ -7195,8 +7195,7 @@ static XEN g_convolve_files(XEN file1, XEN file2, XEN maxamp, XEN outfile)
   #define H_convolve_files "(" S_convolve_files " file1 file2 :optional maxamp output-file): convolve \
 file1 and file2 writing outfile after scaling the convolution result to maxamp."
 
-  char *f1, *f2;
-  const char *f3;
+  const char *f1, *f2, *f3;
   Float maxval = 1.0;
 
   XEN_ASSERT_TYPE(XEN_STRING_P(file1), file1, XEN_ARG_1, S_convolve_files, "a string");
@@ -7578,7 +7577,7 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
   if ((XEN_BOUND_P(mx)) && (MUS_XEN_P(mx))) mx1 = (mus_any *)XEN_TO_MUS_ANY(mx);
   if (XEN_STRING_P(out)) 
     {
-      char *tmp_outf = NULL;
+      const char *tmp_outf = NULL;
       tmp_outf = XEN_TO_C_STRING(out);
       if (!mus_file_probe(tmp_outf)) 
 	XEN_ERROR(NO_SUCH_FILE,
@@ -7600,7 +7599,7 @@ it in conjunction with mixer to scale/envelope all the various ins and outs. \
 
   if (XEN_STRING_P(in)) 
     {
-      char *tmp_inf = NULL;
+      const char *tmp_inf = NULL;
       tmp_inf = XEN_TO_C_STRING(in); 
       if (!mus_file_probe(tmp_inf)) 
 	XEN_ERROR(NO_SUCH_FILE,

@@ -7978,7 +7978,7 @@ snd can be a filename, or a sound index number."
   snd_fd *fd = NULL;
   int chan, edpos, direction = 1; /* in Scheme 1=forward, -1=backward */
   chan_info *cp;
-  char *filename;
+  const char *filename;
   snd_info *loc_sp = NULL;
   off_t beg;
   XEN_ASSERT_TYPE(XEN_NUMBER_IF_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_make_sample_reader, "a number");
@@ -8187,7 +8187,7 @@ static XEN g_save_edit_history(XEN filename, XEN snd, XEN chn)
 {
   #define H_save_edit_history "(" S_save_edit_history " filename :optional snd chn): save snd channel's chn edit history in filename"
   FILE *fd;
-  char *name;
+  const char *name;
   char *mcf = NULL;
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ARG_1, S_save_edit_history, "a string");
   ASSERT_CHANNEL(S_save_edit_history, snd, chn, 2);
@@ -8809,7 +8809,7 @@ the new data's end."
       int inchan = 0;
       file_delete_t delete_file = DONT_DELETE_ME;
       off_t curlen;
-      char *fname;
+      const char *fname;
 
       curlen = cp->edits[pos]->samples;
 
@@ -8871,7 +8871,7 @@ static XEN g_set_samples(XEN samp_0, XEN samps, XEN vect, XEN snd_n, XEN chn_n, 
 
 void check_saved_temp_file(const char *type, XEN filename, XEN date_and_length)
 {
-  char *file;
+  const char *file;
   time_t old_time, new_time;
   off_t old_bytes, new_bytes;
 

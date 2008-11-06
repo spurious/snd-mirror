@@ -650,7 +650,7 @@ static XEN g_save_listener(XEN filename)
 {
   #define H_save_listener "(" S_save_listener " filename): saves the current listener text in filename"
   FILE *fp = NULL;
-  char *name;
+  const char *name;
   int err = 0;
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_save_listener, "a string");
   name = XEN_TO_C_STRING(filename);

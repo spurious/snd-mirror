@@ -1357,7 +1357,7 @@ static int env_index = -1;
 static XEN g_define_envelope(XEN name, XEN data, XEN base)
 {
   env *e;
-  char *ename;
+  const char *ename;
 
   #define H_define_envelope "(" S_define_envelope " name data :optional base): load 'name' with associated 'data', a list of breakpoints \
 into the envelope editor."

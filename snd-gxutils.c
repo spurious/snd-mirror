@@ -101,7 +101,7 @@ string 'cmd'.  cmd should be a URL."
 }
 
 
-static void change_window_property(char *winat, char *name, char *command)
+static void change_window_property(const char *winat, const char *name, const char *command)
 {
   Window window;
   Display *dpy;

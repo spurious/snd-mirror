@@ -483,7 +483,7 @@ static XEN g_draw_string(XEN text, XEN x0, XEN y0, XEN snd, XEN chn, XEN ax)
 {
   #define H_draw_string "(" S_draw_string " text x0 y0 :optional snd chn (ax " S_time_graph ")): draw a string"
   
-  char *tmp = NULL;
+  const char *tmp = NULL;
   ASSERT_CHANNEL(S_draw_string, snd, chn, 4);
   XEN_ASSERT_TYPE(XEN_STRING_P(text), text, XEN_ARG_1, S_draw_string, "a string");
   XEN_ASSERT_TYPE(XEN_NUMBER_P(x0), x0, XEN_ARG_2, S_draw_string, "a number");
@@ -1039,7 +1039,7 @@ static XEN g_widget_text(XEN wid)
 static XEN g_set_widget_text(XEN wid, XEN text)
 {
   widget_t w;
-  char *str = NULL;
+  const char *str = NULL;
   XEN_ASSERT_TYPE(XEN_WIDGET_P(wid), wid, XEN_ARG_1, S_setB S_widget_text, "a Widget");
   XEN_ASSERT_TYPE(XEN_STRING_P(text) || XEN_FALSE_P(text), text, XEN_ARG_2, S_setB S_widget_text, "a string");
   w = (widget_t)(XEN_UNWRAP_WIDGET(wid));
@@ -1048,7 +1048,7 @@ static XEN g_set_widget_text(XEN wid, XEN text)
       if (XEN_STRING_P(text)) str = XEN_TO_C_STRING(text);
 #if USE_MOTIF
       if ((XmIsText(w)) || (XmIsTextField(w)))
-	XmTextSetString(w, str);
+	XmTextSetString(w, (char *)str);
       else set_button_label(w, str);
 #else
       if (GTK_IS_ENTRY(w))

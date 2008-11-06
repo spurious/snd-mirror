@@ -5337,7 +5337,8 @@ static XEN g_filter_channel(XEN e, XEN order, XEN beg, XEN dur, XEN snd_n, XEN c
 applies an FIR filter to snd's channel chn. 'env' is the frequency response envelope, or a vct with the coefficients."
 
   chan_info *cp;
-  char *errstr = NULL, *caller = NULL;
+  char *errstr = NULL;
+  const char *caller = NULL;
   bool truncate_1 = true;
   int order_1 = 0, edpos_1 = AT_CURRENT_EDIT_POSITION;
   off_t beg_1 = 0, dur_1 = 0;

@@ -316,6 +316,9 @@ static char *tagged_mix_to_string(const char *mixinfile, off_t beg, int file_cha
 #if HAVE_RUBY
   return(mus_format("_mix_%d = %s(\"%s\", " OFF_TD ", %d, snd, chn, %s, %s)", mix_infos_ctr, TO_PROC_NAME(S_mix), mixinfile, beg, file_channel, b2s(true), b2s(delete_file)));
 #endif
+#if (!HAVE_EXTENSION_LANGUAGE)
+  return(NULL);
+#endif
 }
 
 
@@ -329,6 +332,9 @@ static char *untagged_mix_to_string(const char *mixinfile, off_t beg, int file_c
 #endif
 #if HAVE_RUBY
   return(mus_format("%s(\"%s\", " OFF_TD ", %d, snd, chn, %s, %s)", TO_PROC_NAME(S_mix), mixinfile, beg, file_channel, b2s(false), b2s(delete_file)));
+#endif
+#if (!HAVE_EXTENSION_LANGUAGE)
+  return(NULL);
 #endif
 }
 
@@ -1094,7 +1100,7 @@ bool mix_set_amp_edit(int id, Float amp)
       if (old_ms->scaler != amp)
 	{
 	  mix_state *ms;
-	  char *origin;
+	  char *origin = NULL;
 #if HAVE_FORTH
 	  origin = mus_format("-mix-%d %.4f set-mix-amp", id, amp);
 #endif
@@ -1274,7 +1280,7 @@ bool mix_set_amp_env_edit(int id, env *e)
 	{
 	  chan_info *cp;
 	  mix_state *ms;
-	  char *origin, *envstr;
+	  char *origin = NULL, *envstr;
 	  
 	  envstr = env_to_string(e);
 #if HAVE_FORTH
@@ -1323,7 +1329,7 @@ bool mix_set_position_edit(int id, off_t pos)
       if (old_ms->beg != pos)
 	{
 	  mix_state *ms;
-	  char *origin;
+	  char *origin = NULL;
 #if HAVE_FORTH
 	  origin = mus_format("-mix-%d " OFF_TD " set-mix-position", id, pos);
 #endif
@@ -1364,7 +1370,7 @@ bool mix_set_speed_edit(int id, Float spd)
 	  chan_info *cp;
 	  mix_state *ms;
 	  off_t len;
-	  char *origin;
+	  char *origin = NULL;
 #if HAVE_FORTH
 	  origin = mus_format("-mix-%d %.4f set-mix-speed", id, spd);
 #endif

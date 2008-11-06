@@ -1240,7 +1240,8 @@ save the current selection in file using the indicated file attributes.  If chan
 
   int type = MUS_NEXT, format = MUS_OUT_FORMAT, sr = 0, chn = 0;
   io_error_t io_err = IO_NO_ERROR;
-  char *com = NULL, *fname = NULL, *file = NULL;
+  const char *com = NULL, *file = NULL;
+  char *fname = NULL;
   XEN args[12]; 
   XEN keys[6];
   int orig_arg[6] = {0, 0, 0, 0, 0, 0};

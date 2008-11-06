@@ -119,7 +119,7 @@ s7_pointer s7_local_gc_protect(s7_pointer p);
 s7_pointer s7_local_gc_unprotect(s7_pointer p);
 
 s7_pointer s7_gc_on(s7_scheme *sc, bool on);
-  
+
   /* any s7_pointer object held in C (as a local variable for example) needs to be
    *   protected from garbage collection if there is any chance the GC may run without
    *   an existing scheme-level reference to that object.  s7_gc_protect is intended
@@ -139,7 +139,9 @@ s7_pointer s7_gc_on(s7_scheme *sc, bool on);
    *    (lag time set indirectly by GC_TEMPS_SIZE in s7.c), so you don't need to worry about
    *    very short term temps such as the arguments to s7_cons in:
    *
-   *    s7_cons(s7, s7_cons(s7, s7_make_integer(s7, 123), s7_NIL(s7)));
+   *    s7_cons(s7, s7_make_real(s7, 3.14), 
+   *                s7_cons(s7, s7_make_integer(s7, 123), 
+   *                            s7_NIL(s7)));
    */
 
 
@@ -181,7 +183,7 @@ s7_pointer s7_remv(s7_scheme *sc, s7_pointer a, s7_pointer obj);     /* (remv a 
 
 
 bool s7_is_string(s7_pointer p);                                     /* (string? p) */
-char *s7_string(s7_pointer p);                                       /* scheme string -> C string (do not free the string) */
+const char *s7_string(s7_pointer p);                                 /* scheme string -> C string (do not free the string) */
 s7_pointer s7_make_string(s7_scheme *sc, const char *str);           /* C string -> scheme string (str is copied) */
 s7_pointer s7_make_counted_string(s7_scheme *sc, const char *str, int len); /* same as s7_make_string, but provides strlen */
 
@@ -256,7 +258,7 @@ s7_pointer s7_open_output_file(s7_scheme *sc, const char *name, const char *mode
 s7_pointer s7_open_input_string(s7_scheme *sc, const char *input_string);  
                                                                     /* (open-input-string str) */
 s7_pointer s7_open_output_string(s7_scheme *sc);                    /* (open-output-string) */
-char *s7_get_output_string(s7_scheme *sc, s7_pointer out_port);     /* (get-output-string port) -- current contents of output string */
+const char *s7_get_output_string(s7_scheme *sc, s7_pointer out_port);  /* (get-output-string port) -- current contents of output string */
                                                                     /*    don't free the string */
 char s7_read_char(s7_scheme *sc, s7_pointer port);                  /* (read-char port) */
 char s7_peek_char(s7_scheme *sc, s7_pointer port);                  /* (peek-char port) */
@@ -270,13 +272,13 @@ void s7_display(s7_scheme *sc, s7_pointer obj, s7_pointer port);    /* (display 
 bool s7_is_procedure(s7_pointer x);                                 /* (procedure? x) */
 s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p);        /* (procedure-source x) if it can be found */
 s7_pointer s7_procedure_environment(s7_pointer p);
-char *s7_procedure_documentation(s7_scheme *sc, s7_pointer p);      /* (procedure-documentation x) if any (don't free the string) */
+const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer p);/* (procedure-documentation x) if any (don't free the string) */
 s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x);         /* (procedure-arity x) -- returns a list (required optional rest?) */
 bool s7_is_continuation(s7_pointer p);                              /* (continuation? p) */
 
 
 bool s7_is_symbol(s7_pointer p);                                    /* (symbol? p) */
-char *s7_symbol_name(s7_pointer p);                                 /* (symbol->string p) -- don't free the string */
+const char *s7_symbol_name(s7_pointer p);                           /* (symbol->string p) -- don't free the string */
 s7_pointer s7_make_symbol(s7_scheme *sc, const char *name);         /* (string->symbol name) */
 s7_pointer s7_gensym(s7_scheme *sc, const char *prefix);            /* (gensym prefix) */
 
@@ -396,8 +398,6 @@ s7_pointer s7_procedure_with_setter_getter(s7_pointer obj);
    */
 
 
-  /* stopped here with doc */
-
 int s7_new_type(const char *name, 
 		char *(*print)(s7_scheme *sc, void *value), 
 		void (*free)(void *value), 
@@ -410,12 +410,31 @@ bool s7_is_object(s7_pointer p);
 int s7_object_type(s7_pointer obj);
 void *s7_object_value(s7_pointer obj);
 s7_pointer s7_make_object(s7_scheme *sc, int type, void *value);
-char *s7_describe_object(s7_scheme *sc, s7_pointer a);  /* caller should free the string */
-void s7_free_object(s7_pointer a);
-bool s7_equalp_objects(s7_pointer a, s7_pointer b);
-void s7_mark_object(s7_pointer a);
-
+void s7_mark_object(s7_pointer p);
+  
   /* These functions create a new scheme object type.  There is a simple example below.
+   *
+   * s7_new_type describes the type for scheme:
+   *   name:    the name used by describe-object
+   *   print:   the function called whenever s7 is asked to display a value with this type
+   *   free:    the function called when an object of this type is about to be garbage collected
+   *   equal:   compare two objects of this type; (equal? obj1 obj2)
+   *   gc_mark: called during the GC mark pass -- you should call s7_mark_object
+   *            on any embedded s7_pointer associated with the object.
+   *   apply:   a function that is called whenever an object of this type
+   *            occurs in the function position (at the car of a list; the rest of the list
+   *            is passed to the apply function as the arguments).
+   *   set:     a function that is called whenever an object of this type occurs as
+   *            the target of a generalized set!
+   *
+   *   s7_new_type returns an integer that identifies the new type for the other functions.
+   *
+   * s7_is_object returns true if 'p' holds a value of a type created by s7_new_type.
+   * s7_object_type returns the object's type
+   * s7_object_value returns the value bound to that object (the void *value of s7_make_object)
+   * s7_make_object creates a new scheme entity of the given type with the given (uninterpreted) value
+   * s7_mark_object marks any scheme object as in-use (use this in the gc_mark function to mark
+   *    any embedded s7_pointer variables).
    */
 
 

@@ -1687,7 +1687,8 @@ static XEN g_save_region(XEN n, XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5
   #define H_save_region "(" S_save_region " region :file :header-type :data-format :comment): save region in file \
 using data format (default depends on machine byte order), header type (" S_mus_next "), and comment"
 
-  char *name = NULL, *com = NULL, *file = NULL;
+  char *name = NULL;
+    const char *file = NULL, *com = NULL;
   int rg, data_format = MUS_OUT_FORMAT, header_type = MUS_NEXT;
   XEN args[8]; 
   XEN keys[4];

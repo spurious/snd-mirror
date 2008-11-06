@@ -732,6 +732,9 @@ static void s7_free_function(s7_pointer a);
 static int remember_file_name(const char *file);
 static s7_pointer safe_reverse_in_place(s7_scheme *sc, s7_pointer list);
 static s7_pointer s7_immutable_cons(s7_scheme *sc, s7_pointer a, s7_pointer b);
+static void s7_free_object(s7_pointer a);
+static char *s7_describe_object(s7_scheme *sc, s7_pointer a);
+
 
 
 /* -------------------------------- constants -------------------------------- */
@@ -1426,7 +1429,6 @@ static  s7_pointer symbol_table_find_by_name(s7_scheme *sc, const char *name)
 { 
   int location; 
   s7_pointer x; 
-  char *s; 
   
   location = hash_fn(name, vector_length(sc->symbol_table)); 
 
@@ -1436,6 +1438,7 @@ static  s7_pointer symbol_table_find_by_name(s7_scheme *sc, const char *name)
 
   for (x = vector_element(sc->symbol_table, location); x != sc->NIL; x = cdr(x)) 
     { 
+      const char *s; 
       s = s7_symbol_name(car(x)); 
       if ((s) && (STRCMP(name, s) == 0))
 	{
@@ -1586,7 +1589,7 @@ static s7_pointer g_is_symbol(s7_scheme *sc, s7_pointer args)
 }
 
 
-char *s7_symbol_name(s7_pointer p)   
+const char *s7_symbol_name(s7_pointer p)   
 { 
   return(string_value(car(p)));
 }
@@ -5293,7 +5296,7 @@ bool s7_is_string(s7_pointer p)
 }
 
 
-char *s7_string(s7_pointer p) 
+const char *s7_string(s7_pointer p) 
 { 
   return(string_value(p));
 }
@@ -6219,7 +6222,7 @@ static s7_pointer g_open_output_string(s7_scheme *sc, s7_pointer args)
 
 /* -------- get-output-string -------- */
 
-char *s7_get_output_string(s7_scheme *sc, s7_pointer p)
+const char *s7_get_output_string(s7_scheme *sc, s7_pointer p)
 {
   return(port_string(p));
 }
@@ -6752,11 +6755,12 @@ static FILE *search_load_path(s7_scheme *sc, const char *name)
   name_len = strlen(name);
   for (i = 0; i < len; i++)
     {
-      char *new_name, *new_dir;
+      const char *new_dir;
       int size;
       new_dir = s7_string(s7_list_ref(sc, lst, i));
       if (new_dir)
 	{
+	  char *new_name;
 	  FILE *fp;
 	  size = name_len + strlen(new_dir) + 2;
 	  new_name = (char *)calloc(size, sizeof(char));
@@ -6827,7 +6831,7 @@ static s7_pointer g_load(s7_scheme *sc, s7_pointer args)
 {
   FILE *fp = NULL;
   s7_pointer name, port;
-  char *fname;
+  const char *fname;
   
   name = car(args);
   if (!s7_is_string(name))
@@ -8958,7 +8962,7 @@ void s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, int re
 }
 
 
-char *s7_procedure_documentation(s7_scheme *sc, s7_pointer p)
+const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer p)
 {
   s7_pointer x;
   
@@ -9108,7 +9112,7 @@ int s7_new_type(const char *name,
 }
 
 
-char *s7_describe_object(s7_scheme *sc, s7_pointer a)
+static char *s7_describe_object(s7_scheme *sc, s7_pointer a)
 {
   int tag;
   tag = a->object.fobj.type;
@@ -9118,7 +9122,7 @@ char *s7_describe_object(s7_scheme *sc, s7_pointer a)
 }
 
 
-void s7_free_object(s7_pointer a)
+static void s7_free_object(s7_pointer a)
 {
   int tag;
   tag = a->object.fobj.type;
@@ -9127,7 +9131,7 @@ void s7_free_object(s7_pointer a)
 }
 
 
-bool s7_equalp_objects(s7_pointer a, s7_pointer b)
+static bool s7_equalp_objects(s7_pointer a, s7_pointer b)
 {
   if ((s7_is_object(a)) &&
       (s7_is_object(b)) &&
@@ -9572,11 +9576,11 @@ static s7_pointer g_make_keyword(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_keyword_to_symbol(s7_scheme *sc, s7_pointer args)
 {
   #define H_keyword_to_symbol "(keyword->symbol key) returns a symbol with the same name as key but no prepended colon"
-  char *name;
+  const char *name;
   if (!s7_is_keyword(car(args)))
     return(s7_wrong_type_arg_error(sc, "keyword->symbol", 1, car(args), "a keyword"));
   name = s7_symbol_name(car(args));
-  return(s7_make_symbol(sc, (char *)(name + 1)));
+  return(s7_make_symbol(sc, (const char *)(name + 1)));
 }
 
 

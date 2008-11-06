@@ -230,7 +230,7 @@ static Float **make_xen_colormap(int size, XEN lambda)
 }
 
 
-static int add_colormap(char *name, XEN func)
+static int add_colormap(const char *name, XEN func)
 {
   cmap *c;
   Float **rgb;

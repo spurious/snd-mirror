@@ -371,7 +371,7 @@ static XEN gl_add_to_main_menu(XEN label, XEN callback)
 	}
     }
   else menu_functions[slot] = XEN_UNDEFINED;
-  return(C_TO_XEN_INT(g_add_to_main_menu(XEN_TO_C_STRING(label), slot)));
+  return(C_TO_XEN_INT(g_add_to_main_menu((char *)XEN_TO_C_STRING(label), slot)));
 }
 
 

@@ -169,10 +169,10 @@ void goto_minibuffer(snd_info *sp)
 }
 
 
-void set_minibuffer_string(snd_info *sp, char *str, bool update) 
+void set_minibuffer_string(snd_info *sp, const char *str, bool update) 
 {
   if ((sp->inuse != SOUND_NORMAL) || (!(sp->sgx))) return;
-  XmTextSetString(MINIBUFFER_TEXT(sp), str);
+  XmTextSetString(MINIBUFFER_TEXT(sp), (char *)str);
   /* updating clears the entire graph widget and triggers an expose event -- this is evil if we're currently displaying! */
   /* there's also a bug in libxcb (fixed, but not propagated yet) that causes a segfault here if more than
    *   one thread is affected by this global X queue flush.
@@ -197,7 +197,7 @@ char *get_minibuffer_string(snd_info *sp)
 }
 
 
-void make_minibuffer_label(snd_info *sp , char *str)
+void make_minibuffer_label(snd_info *sp , const char *str)
 {
   if ((sp->sgx) && (MINIBUFFER_LABEL(sp)))
     {
@@ -205,7 +205,7 @@ void make_minibuffer_label(snd_info *sp , char *str)
       /* there seems to be no way to get this label to reflect its string width -- 
        *    I have tried everything imaginable with no luck
        */
-      s1 = XmStringCreateLocalized(str);
+      s1 = XmStringCreateLocalized((char *)str);
       XtVaSetValues(MINIBUFFER_LABEL(sp), 
 		    XmNlabelString, s1, 
 		    NULL);

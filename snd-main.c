@@ -1685,7 +1685,7 @@ static XEN g_exit(XEN val)
 }
 
 
-static int snd_access(char *dir, const char *caller)
+static int snd_access(const char *dir, const char *caller)
 {
   int err;
   char *temp;
@@ -1713,7 +1713,7 @@ static XEN g_temp_dir(void) {return(C_TO_XEN_STRING(temp_dir(ss)));}
 static XEN g_set_temp_dir(XEN val) 
 {
   #define H_temp_dir "(" S_temp_dir "): name of directory for temp files (or " PROC_FALSE "=null)"
-  char *dir = MUS_DEFAULT_TEMP_DIR;
+  const char *dir = MUS_DEFAULT_TEMP_DIR;
   XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ONLY_ARG, S_setB S_temp_dir, "a string or " PROC_FALSE "=default (null)"); 
   if (XEN_STRING_P(val)) dir = XEN_TO_C_STRING(val);
   if (snd_access(dir, S_temp_dir))
@@ -1743,7 +1743,7 @@ static XEN g_save_state_file(void) {return(C_TO_XEN_STRING(save_state_file(ss)))
 
 static XEN g_set_save_state_file(XEN val) 
 {
-  char *filename;
+  const char *filename;
   #define H_save_state_file "(" S_save_state_file "): the name of the saved state file (\"saved-snd." XEN_FILE_EXTENSION "\")"
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_save_state_file, "a string"); 
   filename = XEN_TO_C_STRING(val);
@@ -1758,7 +1758,7 @@ static XEN g_save_dir(void) {return(C_TO_XEN_STRING(save_dir(ss)));}
 static XEN g_set_save_dir(XEN val) 
 {
   #define H_save_dir "(" S_save_dir "): name of directory for saved state data (or " PROC_FALSE "=null)"
-  char *dir = MUS_DEFAULT_SAVE_DIR;
+  const char *dir = MUS_DEFAULT_SAVE_DIR;
   XEN_ASSERT_TYPE(XEN_STRING_P(val) || XEN_FALSE_P(val), val, XEN_ONLY_ARG, S_setB S_save_dir, "a string or " PROC_FALSE "=default (null)"); 
   if (XEN_STRING_P(val)) dir = XEN_TO_C_STRING(val);
   if (snd_access(dir, S_save_dir))
@@ -1775,7 +1775,7 @@ static XEN g_open_file_dialog_directory(void) {return(C_TO_XEN_STRING(open_file_
 static XEN g_set_open_file_dialog_directory(XEN val) 
 {
   #define H_open_file_dialog_directory "(" S_open_file_dialog_directory "): name of directory for initial open file dialog search"
-  char *dir;
+  const char *dir;
   XEN_ASSERT_TYPE(XEN_STRING_P(val), val, XEN_ONLY_ARG, S_setB S_open_file_dialog_directory, "a string"); 
   dir = XEN_TO_C_STRING(val);
   if (snd_access(dir, S_open_file_dialog_directory))

@@ -554,7 +554,7 @@ void string_to_minibuffer(snd_info *sp, const char *buf)
   else
     {
       clear_minibuffer_prompt(sp);
-      set_minibuffer_string(sp, (char *)buf, false); /* was true, but that causes bogus expose events of entire graph widget -- perhaps pass this as parameter? */
+      set_minibuffer_string(sp, buf, false); /* was true, but that causes bogus expose events of entire graph widget -- perhaps pass this as parameter? */
       sp->minibuffer_on = MINI_REPORT;
     }
 }
@@ -591,11 +591,11 @@ void clear_minibuffer(snd_info *sp)
 
 void clear_minibuffer_prompt(snd_info *sp)
 {
-  make_minibuffer_label(sp, (char *)"     ");
+  make_minibuffer_label(sp, "     ");
 }
 
 
-static void prompt(snd_info *sp, char *msg, char *preload)
+static void prompt(snd_info *sp, const char *msg, const char *preload)
 {
   if (preload)
     {
@@ -2406,7 +2406,7 @@ static XEN g_bind_key_1(XEN key, XEN state, XEN code, XEN cx_extended, XEN origi
   else 
     {
       char buf[256];
-      char *comment = NULL, *prefs = NULL;
+      const char *comment = NULL, *prefs = NULL;
       args = XEN_REQUIRED_ARGS(code);
       if (args > 1)
 	{
@@ -2471,7 +2471,7 @@ static XEN g_save_macros(XEN file)
 {
   #define H_save_macros "(" S_save_macros " :optional (file \"~/.snd\")): save keyboard macros file"
   FILE *fd = NULL;
-  char *name;
+  const char *name;
   XEN_ASSERT_TYPE(XEN_STRING_P(file), file, XEN_ONLY_ARG, S_save_macros, "a string");
   name = XEN_TO_C_STRING(file);
   fd = FOPEN(name, "a");

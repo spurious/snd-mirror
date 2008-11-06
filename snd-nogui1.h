@@ -191,9 +191,9 @@ int add_channel_window(snd_info *sound, int channel, int chan_y, int insertion, 
 
 /* -------- snd-xsnd.c -------- */
 
-void make_minibuffer_label(snd_info *sp, char *str);
+void make_minibuffer_label(snd_info *sp, const char *str);
 void goto_minibuffer(snd_info *sp);
-void set_minibuffer_string(snd_info *sp, char *str, bool update);
+void set_minibuffer_string(snd_info *sp, const char *str, bool update);
 void set_minibuffer_cursor_position(snd_info *sp, int pos);
 char *get_minibuffer_string(snd_info *sp);
 void snd_info_cleanup(snd_info *sp);

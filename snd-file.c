@@ -3505,7 +3505,7 @@ void view_files_reflect_sort_items(void)
 	{
 #if USE_MOTIF
 	  XmString s1;
-	  s1 = XmStringCreateLocalized(XEN_TO_C_STRING(XEN_CAR(ref)));
+	  s1 = XmStringCreateLocalized((char *)XEN_TO_C_STRING(XEN_CAR(ref)));
 	  for (k = 0; k < view_files_info_size; k++)
 	    if ((view_files_infos[k]) &&
 		(view_files_infos[k]->dialog))
@@ -4790,7 +4790,7 @@ static XEN g_view_files_set_selected_files(XEN dialog, XEN files)
 	  }
       cfiles = (char **)CALLOC(len, sizeof(char *));
       for (i = 0; i < len; i++)
-	cfiles[i] = XEN_TO_C_STRING(XEN_LIST_REF(files, i));
+	cfiles[i] = (char *)XEN_TO_C_STRING(XEN_LIST_REF(files, i));
       view_files_set_selected_files((widget_t)(XEN_UNWRAP_WIDGET(dialog)), cfiles, len);
       FREE(cfiles);
     }
@@ -4830,7 +4830,7 @@ static XEN g_view_files_set_files(XEN dialog, XEN files)
 	  }
       cfiles = (char **)CALLOC(len, sizeof(char *));
       for (i = 0; i < len; i++)
-	cfiles[i] = XEN_TO_C_STRING(XEN_LIST_REF(files, i));
+	cfiles[i] = (char *)XEN_TO_C_STRING(XEN_LIST_REF(files, i));
     }
   view_files_set_files((widget_t)(XEN_UNWRAP_WIDGET(dialog)), cfiles, len);
   if (cfiles) FREE(cfiles);

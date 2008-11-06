@@ -146,9 +146,9 @@ void save_fft_pix(chan_info *cp, axis_context *ax, int fwidth, int fheight, int 
 void cleanup_cw(chan_info *cp) {}
 void clear_deleted_snd_info(struct dialog_play_info *dp) {}
 bool fixup_cp_cgx_ax_wn(chan_info *cp) {return(false);}
-void make_minibuffer_label(snd_info *sp, char *str) {}
+void make_minibuffer_label(snd_info *sp, const char *str) {}
 void goto_minibuffer(snd_info *sp) {}
-void set_minibuffer_string(snd_info *sp, char *str, bool update) {if ((str) && (*str)) fprintf(stderr, "%s", str);}
+void set_minibuffer_string(snd_info *sp, const char *str, bool update) {if ((str) && (*str)) fprintf(stderr, "%s", str);}
 void set_minibuffer_cursor_position(snd_info *sp, int pos) {}
 char *get_minibuffer_string(snd_info *sp) {return(NULL);}
 void snd_info_cleanup(snd_info *sp) {}

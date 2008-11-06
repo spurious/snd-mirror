@@ -2040,7 +2040,7 @@ find the mark in snd's channel chn at samp (if a number) or with the given name 
     {
       int i;
       off_t samp = 0;
-      char *name = NULL;
+      const char *name = NULL;
       if (XEN_STRING_P(samp_n))
 	name = XEN_TO_C_STRING(samp_n);
       else samp = XEN_TO_C_OFF_T_OR_ELSE(samp_n, 0);
@@ -2070,7 +2070,7 @@ static XEN g_add_mark_1(XEN samp_n, XEN snd_n, XEN chn_n, XEN name, XEN sync, bo
   chan_info *cp;
   off_t loc;
   int msync = 0;
-  char *mname = NULL;
+  const char *mname = NULL;
 
   XEN_ASSERT_TYPE(XEN_OFF_T_P(samp_n) || XEN_NOT_BOUND_P(samp_n), samp_n, XEN_ARG_1, S_add_mark, "an integer");
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(name) || XEN_FALSE_P(name), name, XEN_ARG_4, S_add_mark, "a string");

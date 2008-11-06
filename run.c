@@ -2609,7 +2609,7 @@ static xen_value *add_global_var_to_ptree(ptree *prog, XEN form, XEN *rtn)
   int type;
   bool local_var = false;
   xen_value *v = NULL;
-  char *varname;
+  const char *varname;
 
   varname = XEN_SYMBOL_TO_C_STRING(form);
   var = find_var_in_ptree(prog, varname);
@@ -3333,7 +3333,6 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool sepa
   XEN arg, args, declarations = XEN_FALSE, declaration;
   xen_value *v = NULL;
   int i, arg_num, arg_type;
-  char *type;
 
   /* this can be (declare (arg1 type1)...) or (snd-declare (quote ((arg1 type1...)))) -- see snd-xen.c for an explanation of snd-declare */
   /*
@@ -3480,6 +3479,7 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool sepa
 	      if ((XEN_EQ_P(XEN_CAR(declaration), arg)) &&
 		  (XEN_SYMBOL_P(XEN_CADR(declaration))))
 		{
+		  const char *type;
 		  type = XEN_SYMBOL_TO_C_STRING(XEN_CADR(declaration));
 		  arg_type = name_to_type(type);
 		  
@@ -4582,7 +4582,7 @@ static xen_value *generalized_set_form(ptree *prog, XEN form)
 
 static xen_value *set_form(ptree *prog, XEN form, walk_result_t ignore)
 {
-  char *varname = NULL;
+  const char *varname = NULL;
   xen_var *var;
   xen_value *v;
   XEN settee, setval, rtnval;
@@ -12398,7 +12398,7 @@ static int def_clm_structs_size = 0;
 static XEN g_add_clm_field(XEN struct_name, XEN name, XEN offset, XEN type)
 {
   #define H_add_clm_field "def-clm-struct tie-in to run optimizer"
-  char *field_name;
+  const char *field_name;
   int field_offset, clm_struct_type, field_type;
   dcs *d;
   walk_info *w;
@@ -12530,7 +12530,7 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
   if (XEN_LIST_P(form))
     {
       XEN function, all_args;
-      char *funcname = (char *)"not-a-function";
+      const char *funcname = "not-a-function";
       xen_value **args = NULL;
       int i, num_args, constants = 0;
       bool float_result = false;
@@ -12582,7 +12582,7 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
       if (XEN_LIST_P(function))
 	{
 	  XEN caar;
-	  char *caar_name;
+	  const char *caar_name;
 	  caar = XEN_CAR(function);
 	  if (XEN_SYMBOL_P(caar))
 	    {

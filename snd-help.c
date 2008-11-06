@@ -3250,7 +3250,7 @@ const char *snd_url(const char *name)
 }
 
 
-static char *call_grep(const char *defstr, const char *name, const char *endstr, char *path, char *tempfile)
+static char *call_grep(const char *defstr, const char *name, const char *endstr, const char *path, char *tempfile)
 {
   int err;
   char *command;
@@ -3310,7 +3310,7 @@ static char *snd_finder(const char *name, bool got_help)
 
   for (i = 0; (!fgrep) && (i < dir_len); i++)
     {
-      char *path;
+      const char *path;
       path = XEN_TO_C_STRING(XEN_LIST_REF(dirs, i));
       if (!path) continue;
 
@@ -3924,7 +3924,7 @@ and its value is returned."
 
     if (XEN_HOOK_P(sym))
       str = (char *)xen_s7_hook_documentation(sym);
-    else str = s7_procedure_documentation(s7, sym);
+    else str = (char *)s7_procedure_documentation(s7, sym);
   }
 #endif
 

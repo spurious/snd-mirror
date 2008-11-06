@@ -777,7 +777,8 @@ header-type is a sndlib type indicator such as " S_mus_aiff "; sndlib currently 
 	  chns = XEN_TO_C_INT_OR_ELSE(chans, 1);
 	  if (chns > 0)
 	    {
-	      char *com = NULL, *str = NULL;
+	      const char *com = NULL;
+	      char *str = NULL;
 	      if (XEN_STRING_P(comment)) com = XEN_TO_C_STRING(comment);
 	      fd = mus_sound_open_output(str = mus_expand_filename(XEN_TO_C_STRING(file)),
 					 XEN_TO_C_INT_OR_ELSE(srate, 44100),  /* not DEFAULT_OUTPUT_SRATE here because that depends on Snd */
@@ -1431,7 +1432,8 @@ cache info to the file given or stdout"
   else
     {
       FILE *fd;
-      char *name, *str = NULL;
+      const char *name;
+      char *str = NULL;
       name = XEN_TO_C_STRING(file);
       fd = FOPEN(str = mus_expand_filename(name), "w");
       if (str) FREE(str);
@@ -1506,7 +1508,7 @@ at frame 'start' and reading 'samples' samples altogether."
   int chn;
   off_t samps;
   vct *v;
-  char *name = NULL;
+  const char *name = NULL;
 
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ARG_1, S_file_to_array, "a string");
   XEN_ASSERT_TYPE(XEN_INTEGER_P(chan), chan, XEN_ARG_2, S_file_to_array, "an integer");

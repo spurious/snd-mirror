@@ -3763,7 +3763,7 @@ static XEN g_open_sound(XEN filename)
   /* returns index of new sound if successful */
   #define H_open_sound "(" S_open_sound " filename): \
 open filename (as if opened from File:Open menu option), and return the new sound's index"
-  char *fname = NULL;
+  const char *fname = NULL;
   snd_info *sp;
   bool file_exists;
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_open_sound, "a string");
@@ -3813,7 +3813,7 @@ static XEN g_open_raw_sound(XEN arglist)
 {
   #define H_open_raw_sound "(" S_open_raw_sound " :file :channels :srate :data-format): \
 open file assuming the data matches the attributes indicated unless the file actually has a header"
-  char *file = NULL;
+  const char *file = NULL;
   snd_info *sp;
   bool file_exists;
   int os = 1, oc = 1, ofr = MUS_BSHORT;
@@ -3881,7 +3881,7 @@ open file assuming the data matches the attributes indicated unless the file act
 static XEN g_view_sound(XEN filename)
 {
   #define H_view_sound "(" S_view_sound " filename): open a file in read-only mode. " read_only_example " at any time."
-  char *fname = NULL;
+  const char *fname = NULL;
   snd_info *sp = NULL;
   bool file_exists;
   XEN_ASSERT_TYPE(XEN_STRING_P(filename), filename, XEN_ONLY_ARG, S_view_sound, "a string");
@@ -3922,7 +3922,8 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
   file_info *hdr;
   int ht = -1, df = -1, sr = -1, chan = -1, edit_position = AT_CURRENT_EDIT_POSITION;
   io_error_t io_err = IO_NO_ERROR;
-  char *fname = NULL, *file = NULL, *outcom = NULL;
+  char *fname = NULL;
+  const char *file = NULL, *outcom = NULL;
   XEN args[16]; 
   XEN keys[8];
   int orig_arg[8] = {0, 0, 0, 0, 0, 0, 0, 0};
@@ -4054,7 +4055,7 @@ Omitted arguments take their value from the sound being saved.\n  " save_as_exam
     }
   if (free_outcom) 
     {
-      FREE(outcom); 
+      FREE((char *)outcom); 
       outcom = NULL;
     }
   if (io_err == IO_NO_ERROR) 
@@ -4098,7 +4099,8 @@ The 'size' argument sets the number of samples (zeros) in the newly created soun
   int ht, df, sr, ch, err;
   int chan;
   off_t size, len = 1;
-  char *str = NULL, *com = NULL, *file = NULL;
+  char *str = NULL;
+  const char *com = NULL, *file = NULL;
   XEN args[14]; 
   XEN keys[7];
   int orig_arg[7] = {0, 0, 0, 0, 0, 0, 0};

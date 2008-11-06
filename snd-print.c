@@ -628,7 +628,8 @@ void print_enved(const char *output, int y0)
 static XEN g_graph_to_ps(XEN filename)
 {
   #define H_graph_to_ps "(" S_graph_to_ps " :optional (filename eps-file)): write the current Snd displays to an EPS file"
-  char *error, *file;
+  char *error;
+  const char *file;
 
   XEN_ASSERT_TYPE(XEN_STRING_IF_BOUND_P(filename), filename, XEN_ONLY_ARG, S_graph_to_ps, "a string (filename)");
 

@@ -1631,7 +1631,7 @@ static XEN g_mus_audio_describe(void)
 static XEN g_dlopen(XEN name)
 {
   void *handle;
-  char *cname;
+  const char *cname;
   XEN_ASSERT_TYPE(XEN_STRING_P(name), name, XEN_ONLY_ARG, "dlopen", "a string (filename)");
   cname = XEN_TO_C_STRING(name);
   if (cname)

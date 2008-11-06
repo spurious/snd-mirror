@@ -458,7 +458,8 @@ a user interface edit the parameter in a useful way."
   long lIndex;
   int inchans, outchans;
   const LADSPA_Descriptor *psDescriptor;
-  char *pcFilename, *pcLabel, *pcTmp;
+  char *pcFilename;
+  const char *pcLabel, *pcTmp;
   XEN xenList, xenPortData;
   LADSPA_PortRangeHintDescriptor iHint;
 
@@ -555,7 +556,8 @@ by any arguments. The reader argument can also be a list of readers. \
 Information about parameters can be acquired using " S_analyse_ladspa "."
 
   const LADSPA_Descriptor *psDescriptor;
-  char *pcFilename, *pcLabel, *pcTmp;
+  char *pcFilename;
+  const char *pcLabel, *pcTmp;
   LADSPA_Handle *psHandle;
   unsigned long lSampleRate, lPortIndex, lBlockSize, lSampleIndex;
   off_t lAt;
@@ -941,7 +943,8 @@ static XEN g_ladspa_descriptor(XEN ladspa_plugin_filename, XEN ladspa_plugin_lab
   #define H_ladspa_descriptor "(" S_ladspa_descriptor " library plugin): return the descriptor \
 associated with the given plugin."
   const LADSPA_Descriptor *psDescriptor;
-  char *pcFilename, *pcLabel, *pcTmp;
+  char *pcFilename;
+  const char *pcLabel, *pcTmp;
   if (!g_bLADSPAInitialised) loadLADSPA();
   XEN_ASSERT_TYPE(XEN_STRING_P(ladspa_plugin_filename), ladspa_plugin_filename, XEN_ARG_1, S_ladspa_descriptor, "a string");
   XEN_ASSERT_TYPE(XEN_STRING_P(ladspa_plugin_label), ladspa_plugin_label, XEN_ARG_2, S_ladspa_descriptor, "a string");
