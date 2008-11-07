@@ -660,7 +660,6 @@ static void save_options(FILE *fd)
 
   {
     int srate = 0, chans = 0, format = 0;
-    char *tmp_format = NULL;
     mus_header_raw_defaults(&srate, &chans, &format);
     if ((chans != 2) ||
 	(srate != 44100) ||
@@ -670,27 +669,26 @@ static void save_options(FILE *fd)
 	fprintf(fd, "(set! (mus-header-raw-defaults) (list %d %d %s))\n",
 		srate,
 		chans,
-		tmp_format = mus_data_format_to_string(format));
+		mus_data_format_to_string(format));
 #endif
 #if HAVE_CL
 	fprintf(fd, "(setf (mus-header-raw-defaults) (list %d %d %s))\n",
 		srate,
 		chans,
-		tmp_format = mus_data_format_to_string(format));
+		mus_data_format_to_string(format));
 #endif
 #if HAVE_RUBY
 	fprintf(fd, "set_mus_header_raw_defaults([%d, %d, %s])\n",
 		srate,
 		chans,
-		tmp_format = mus_data_format_to_string(format));
+		mus_data_format_to_string(format));
 #endif
 #if HAVE_FORTH
 	fprintf(fd, "'( %d %d %s ) set-mus-header-raw-defaults drop\n",
 		srate,
 		chans,
-		tmp_format = mus_data_format_to_string(format));
+		mus_data_format_to_string(format));
 #endif
-	if (tmp_format) free(tmp_format);
       }
   }
   

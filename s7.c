@@ -10942,12 +10942,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_EVAL_ARGS1:
       sc->args = s7_cons(sc, sc->value, sc->args); /* 1st time, value = op, args=nil (only e0 entry is from op_eval above), code is full list (at e0) */
 
-      /* TODO: would a list constant (as new_type) help here? 
-       *    or x = s7_cons(sc, sc->value, sc->NIL)
-       *       cdr(last-arg) = x (if last-arg nil, last-arg = x)
-       *       new stack op OP_EVAL_ARGS2 to recover the start of the args list
-       */
-      
       if (s7_is_pair(sc->code)) 
 	{ /* evaluate current arg */
 	  push_stack(sc, OP_EVAL_ARGS1, sc->args, cdr(sc->code));
@@ -12055,7 +12049,6 @@ static s7_pointer g_quasiquote(s7_scheme *sc, s7_pointer args)
 
 
 
-
 /* -------------------------------- threads -------------------------------- */
 
 #if HAVE_PTHREADS
@@ -12408,7 +12401,7 @@ static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
 
   new_sc->key_values = sc->NIL;
 
-  pthread_mutex_lock(&backtrace_lock);  /* probably unnecessary... */
+  pthread_mutex_lock(&backtrace_lock);     /* probably unnecessary... */
   (*(sc->thread_ids))++;                   /* in case a spawned thread spawns another, we need this variable to be global to all */
   new_sc->thread_id = (*(sc->thread_ids)); /* for more readable debugging printout -- main thread is thread 0 */
   pthread_mutex_unlock(&backtrace_lock);

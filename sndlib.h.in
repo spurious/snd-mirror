@@ -279,8 +279,8 @@ int mus_sound_set_samples(const char *arg, off_t val);
 
 const char *mus_header_type_name(int type);
 const char *mus_data_format_name(int format);
-char *mus_header_type_to_string(int type);
-char *mus_data_format_to_string(int format);
+const char *mus_header_type_to_string(int type);
+const char *mus_data_format_to_string(int format);
 const char *mus_data_format_short_name(int format);
 char *mus_sound_comment(const char *name);
 int mus_bytes_per_sample(int format);

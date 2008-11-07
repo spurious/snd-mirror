@@ -176,7 +176,10 @@ static int run_safety = RUN_UNSAFE;
 
 
 #define MAX_OPTIMIZATION 6
+
+#if WITH_RUN || (!USE_SND)
 static int current_optimization = 0;
+#endif
 
 
 #if WITH_RUN
@@ -11450,11 +11453,8 @@ static xen_value *mus_data_format_name_1(ptree *prog, xen_value **args, int num_
 
 static void mus_header_type_to_string_f(int *args, ptree *pt) 
 {
-  char *tmp;
   if (STRING_RESULT) FREE(STRING_RESULT);
-  tmp = mus_header_type_to_string(INT_ARG_1);
-  STRING_RESULT = mus_strdup(tmp);
-  free(tmp);
+  STRING_RESULT = mus_strdup(mus_header_type_to_string(INT_ARG_1));
 }
 
 
@@ -11466,11 +11466,8 @@ static xen_value *mus_header_type_to_string_1(ptree *prog, xen_value **args, int
 
 static void mus_data_format_to_string_f(int *args, ptree *pt) 
 {
-  char *tmp;
   if (STRING_RESULT) FREE(STRING_RESULT);
-  tmp = mus_data_format_to_string(INT_ARG_1);
-  STRING_RESULT = mus_strdup(tmp);
-  free(tmp);
+  STRING_RESULT = mus_strdup(mus_data_format_to_string(INT_ARG_1));
 }
 
 
@@ -13976,6 +13973,9 @@ static XEN g_run_eval(XEN code, XEN arg, XEN arg1, XEN arg2)
   return(XEN_FALSE);
 }
 
+#ifndef S_run
+  #define S_run "run"
+#endif
 
 static XEN g_run(XEN proc_and_code)
 {

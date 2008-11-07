@@ -667,7 +667,7 @@ static XEN g_gl_graph_to_ps(XEN filename, XEN output_type, XEN snd, XEN chn)
   #define H_gl_graph_to_ps "(" S_gl_graph_to_ps " :optional filename (type 0) snd chn) produces a postscript output file from \
 OpenGL graphics. type can be 0: eps, 1: ps, 2: pdf, 3: tex, 4: svg, 5: pgf."
 
-  char *file;
+  const char *file;
   FILE *fp;
   chan_info *cp;
   int state = GL2PS_OVERFLOW, buffsize = 1024 * 1024, type = 0;

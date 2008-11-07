@@ -1,5 +1,5 @@
-#ifndef _S7_H
-#define _S7_H
+#ifndef S7_H
+#define S7_H
 
 #define S7_VERSION "1.2"
 #define S7_DATE "7-Nov-08"
@@ -135,8 +135,8 @@ s7_pointer s7_gc_on(s7_scheme *sc, bool on);
    * 
    * You can turn the GC on and off via s7_gc_on.
    *
-   * There is a built-in lag between the creation of a new object and it's first possible GC
-   *    (lag time set indirectly by GC_TEMPS_SIZE in s7.c), so you don't need to worry about
+   * There is a built-in lag between the creation of a new object and its first possible GC
+   *    (lag time is set indirectly by GC_TEMPS_SIZE in s7.c), so you don't need to worry about
    *    very short term temps such as the arguments to s7_cons in:
    *
    *    s7_cons(s7, s7_make_real(s7, 3.14), 
@@ -967,3 +967,4 @@ int main(int argc, char **argv)
 
 
 /* -------------------------------------------------------------------------------- */
+

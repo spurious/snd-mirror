@@ -1471,7 +1471,7 @@ void sp_name_click(snd_info *sp)
       if (hdr)
 	{
 	  Float dur;
-	  char *tmp_type = NULL, *tmp_format = NULL, *str = NULL;
+	  char *str = NULL;
 
 	  bool linked = false;
 	  linked = link_p(sp->filename);
@@ -1482,8 +1482,8 @@ void sp_name_click(snd_info *sp)
 			       ((hdr->chans > 1) ? "s" : ""),
 			       dur,
 			       ((dur == 1.0) ? "" : "s"),
-			       tmp_type = mus_header_type_to_string(hdr->type),
-			       tmp_format = mus_data_format_to_string(hdr->format),
+			       mus_header_type_to_string(hdr->type),
+			       mus_data_format_to_string(hdr->format),
 			       snd_strftime(STRFTIME_FORMAT, sp->write_date),
 			       (linked) ? ", (link to " : "",
 #if HAVE_READLINK
@@ -1492,8 +1492,6 @@ void sp_name_click(snd_info *sp)
 			       (linked) ? "?" : "",
 #endif
 			       (linked) ? ")" : "");
-	  if (tmp_type) free(tmp_type);
-	  if (tmp_format) free(tmp_format);
 	  if (str) FREE(str);
 	}
     }

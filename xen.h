@@ -912,7 +912,7 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 #define XEN_TO_C_CHAR(Arg)              XEN_TO_C_STRING(Arg)[0] 
 #define C_TO_XEN_CHAR(Arg)              rb_str_new((char *)(&(Arg)), 1)
 
-#define XEN_NAME_AS_C_STRING_TO_VALUE(a) rb_gv_get(xen_scheme_global_variable_to_ruby(a))
+#define XEN_NAME_AS_C_STRING_TO_VALUE(a) xen_rb_gv_get(a)
 #define C_STRING_TO_XEN_FORM(Str)       XEN_EVAL_C_STRING(Str)
 #define XEN_EVAL_FORM(Form)             ((XEN)Form)
 #define XEN_EVAL_C_STRING(Arg)          xen_rb_eval_string_with_error(Arg)
@@ -949,20 +949,26 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 #define XEN_SET_OBJECT_HELP(Name, Help) rb_set_documentation(Name, Help)
 #define C_SET_OBJECT_HELP(name, help)   XEN_SET_OBJECT_HELP(C_TO_XEN_STRING(name), C_TO_XEN_STRING(help))
 
-#define XEN_VARIABLE_SET(a, b)          rb_gv_set(xen_scheme_global_variable_to_ruby(a), b)
-#define XEN_VARIABLE_REF(a)             rb_gv_get(xen_scheme_global_variable_to_ruby(a))
+#define XEN_VARIABLE_SET(a, b)          xen_rb_gv_set(a, b)
+#define XEN_VARIABLE_REF(a)             xen_rb_gv_get(a)
 #define XEN_DEFINE_CONSTANT(Name, Value, Help) \
   do { \
-      rb_define_global_const(xen_scheme_constant_to_ruby(Name), C_TO_XEN_INT(Value)); \
-      if ((Name) && (Help)) C_SET_OBJECT_HELP(xen_scheme_constant_to_ruby(Name), Help); \
+      char *temp; \
+      temp = xen_scheme_constant_to_ruby(Name); \
+      rb_define_global_const(temp, C_TO_XEN_INT(Value)); \
+      if ((Name) && (Help)) C_SET_OBJECT_HELP(temp, Help); \
+      if (temp) free(temp); \
     } while (0)
 
 #define XEN_DEFINE_VARIABLE(Name, Var, Value) \
   { \
+    char *temp; \
     Var = Value; \
-    rb_define_variable(xen_scheme_global_variable_to_ruby(Name), (VALUE *)(&Var)); \
+    temp = xen_scheme_global_variable_to_ruby(Name); \
+    rb_define_variable(temp, (VALUE *)(&Var)); \
+    if (temp) free(temp); \
   }
-#define XEN_DEFINE(Name, Value) rb_define_global_const(xen_scheme_constant_to_ruby(Name), Value)
+#define XEN_DEFINE(Name, Value)         xen_rb_define(Name, Value)
 #define XEN_DEFINED_P(Name)             xen_rb_defined_p(Name)
 
 #define XEN_WRAP_C_POINTER(a)           Data_Wrap_Struct(rb_cData, 0, 0, (void *)a)
@@ -975,7 +981,7 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 #define XEN_OBJECT_REF(a)               DATA_PTR(a)
 #define XEN_OBJECT_TYPE                 VALUE
 #define XEN_OBJECT_TYPE_P(OBJ, TAG)     (XEN_BOUND_P(OBJ) && (rb_obj_is_instance_of(OBJ, TAG)))
-#define XEN_MAKE_OBJECT_TYPE(Typ, Siz)  rb_define_class(xen_scheme_constant_to_ruby(Typ), rb_cObject)
+#define XEN_MAKE_OBJECT_TYPE(Typ, Siz)  xen_rb_define_class(Typ)
 
 #define XEN_MAKE_OBJECT_FREE_PROCEDURE(Type, Wrapped_Free, Original_Free) \
   static void *Wrapped_Free(XEN obj) \
@@ -1016,8 +1022,11 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 
 #define XEN_DEFINE_PROCEDURE(Name, Func, ReqArg, OptArg, RstArg, Doc) \
   do { \
-      rb_define_global_function(xen_scheme_procedure_to_ruby(Name), XEN_PROCEDURE_CAST Func, ((RstArg > 0) ? -2 : (OptArg > 0) ? -1 : ReqArg)); \
-      if ((Name) && (Doc)) C_SET_OBJECT_HELP(xen_scheme_procedure_to_ruby(Name), Doc); \
+      char *temp; \
+      temp = xen_scheme_procedure_to_ruby(Name); \
+      rb_define_global_function(temp, XEN_PROCEDURE_CAST Func, ((RstArg > 0) ? -2 : (OptArg > 0) ? -1 : ReqArg)); \
+      if ((Name) && (Doc)) C_SET_OBJECT_HELP(temp, Doc); \
+      if (temp) free(temp); \
     } while (0)
 
 #define XEN_DEFINE_PROCEDURE_WITH_SETTER(Get_Name, Get_Func, Get_Help, Set_Name, Set_Func, Get_Req, Get_Opt, Set_Req, Set_Opt) \
@@ -1049,13 +1058,13 @@ char *xen_guile_to_c_string_with_eventual_free(XEN str);
 
 /* ---- keywords, etc ---- */
 #define XEN_KEYWORD_EQ_P(k1, k2)        ((k1) == (k2))
-#define XEN_MAKE_KEYWORD(Arg)           C_STRING_TO_XEN_SYMBOL(xen_scheme_procedure_to_ruby(Arg))
+#define XEN_MAKE_KEYWORD(Arg)           xen_rb_make_keyword(Arg)
 #define XEN_YES_WE_HAVE(a)              rb_provide(a)
 #define XEN_PROTECT_FROM_GC(Var)        rb_gc_register_address(&(Var))
 #define XEN_UNPROTECT_FROM_GC(Var)      rb_gc_unregister_address(&(Var))
 
 /* ---- errors ---- */
-#define XEN_ERROR_TYPE(Name)            rb_intern(xen_scheme_constant_to_ruby(Name))
+#define XEN_ERROR_TYPE(Name)            xen_rb_intern(Name)
 
 #define XEN_ASSERT_TYPE(Assertion, Arg, Position, Caller, Correct_Type) \
   do { \
@@ -1228,6 +1237,11 @@ static XEN OutName(XEN self, XEN Arg1, XEN Arg2, XEN Arg3, XEN Arg4, XEN Arg5) {
 extern "C" {
 #endif
 
+XEN xen_rb_gv_get(const char *name);
+XEN xen_rb_gv_set(const char *name, XEN new_val);
+XEN xen_rb_intern(const char *name);
+XEN xen_rb_make_keyword(const char *name);
+void xen_rb_define(const char *name, XEN value);
 XEN xen_rb_cdr(XEN val);
 XEN xen_rb_cons(XEN arg1, XEN arg2);
 XEN xen_rb_cons2(XEN arg1, XEN arg2, XEN arg3);
@@ -1235,6 +1249,7 @@ char *xen_scheme_constant_to_ruby(const char *name);
 char *xen_scheme_procedure_to_ruby(const char *name);
 char *xen_scheme_global_variable_to_ruby(const char *name);
 bool xen_rb_defined_p(const char *name);
+XEN xen_rb_define_class(const char *name);
 int xen_rb_list_length(XEN obj); 
 XEN xen_rb_list_ref(XEN obj, int index);
 XEN xen_rb_list_set(XEN obj, int index, XEN value);
@@ -2141,8 +2156,8 @@ void xen_s7_set_repl_prompt(const char *new_prompt);
 #define C_STRING_TO_XEN_FORM(Str) 0
 #define XEN_EVAL_FORM(Form) 0
 #define XEN_EVAL_C_STRING(Arg) 0
-#define XEN_SYMBOL_TO_C_STRING(a) ((char *)"(not a symbol)")
-#define XEN_TO_STRING(Obj) ((char *)"(unknown)")
+#define XEN_SYMBOL_TO_C_STRING(a) "(not a symbol)"
+#define XEN_TO_STRING(Obj) "(unknown)"
 #define XEN_WRAP_C_POINTER(a) 0
 #define XEN_UNWRAP_C_POINTER(a) 0
 #define XEN_WRAPPED_C_POINTER_P(a) 0
@@ -2248,7 +2263,15 @@ void xen_s7_set_repl_prompt(const char *new_prompt);
 #define XEN_OUT_OF_RANGE_ERROR(Caller, ArgN, Arg, Descr)
 typedef XEN (*XEN_CATCH_BODY_TYPE) (void *data);
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void xen_no_ext_lang_check_args(const char *name, int args, int req_args, int opt_args, int rst_args);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 /* end NO EXTENSION LANGUAGE */

@@ -3123,7 +3123,7 @@ static void raw_srate_choice(prefs_info *prf)
 static char *raw_data_format_to_string(int format)
 {
   /* the "mus-" prefix carries no information in this context, so strip it off */
-  char *name;
+  const char *name;
   name = mus_data_format_to_string(format);
   if (name)
     {
@@ -3140,7 +3140,6 @@ static char *raw_data_format_to_string(int format)
 	    }
 	  else rtn[i] = name[j];
 	}
-      free(name);
       return(rtn);
     }
   return(mus_strdup("unknown"));
@@ -4359,7 +4358,7 @@ find elsewhere.  The current load path list is: \n\n%s\n",
 #endif
 #endif
 #endif
-		   temp = XEN_AS_STRING(XEN_LOAD_PATH));
+		   temp = (char *)XEN_AS_STRING(XEN_LOAD_PATH));
   snd_help("load paths", hlp, 	   WITH_WORD_WRAP);
 #if HAVE_S7
   if (temp) free(temp);

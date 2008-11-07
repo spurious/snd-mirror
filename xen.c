@@ -501,8 +501,6 @@ XEN xen_rb_ary_new_with_initial_element(long num, XEN element)
 }
 
 
-static char *last_name1 = NULL, *last_name2 = NULL, *last_name3; /* too much of a bother to free the return values over and over */
-
 static char *scheme_to_ruby(const char *name)
 {
   /* replace any non-alphanumeric except "?" with "_". "?" -> "_p". '->" -> "2" drop "!" */
@@ -536,10 +534,6 @@ static char *scheme_to_ruby(const char *name)
 	    }
 	}
     }
-  if (last_name3) free(last_name3);
-  last_name3 = last_name2;
-  last_name2 = last_name1;
-  last_name1 = new_name;
   return(new_name);
 }
 
@@ -556,7 +550,6 @@ char *xen_scheme_constant_to_ruby(const char *name)
 
 char *xen_scheme_procedure_to_ruby(const char *name)
 {
-  /* return(scheme_to_ruby(name)); */
   char *new_name = NULL;
   int len, i, j;
   len = strlen(name);
@@ -579,10 +572,6 @@ char *xen_scheme_procedure_to_ruby(const char *name)
 	    }
 	}
     }
-  if (last_name3) free(last_name3);
-  last_name3 = last_name2;
-  last_name2 = last_name1;
-  last_name1 = new_name;
   return(new_name);
 }
 
@@ -618,13 +607,86 @@ bool xen_rb_defined_p(const char *name)
   else sprintf(buf, "defined? $%s", var_name);
 
   if (XEN_EVAL_C_STRING(buf) != Qnil)
-    return(true);
+    {
+      free(var_name);
+      return(true);
+    }
   else
     {
+      bool val;
       var_name[0] = toupper(var_name[0]);
-      return(rb_const_defined(rb_cObject, rb_intern(var_name)));
+      val = rb_const_defined(rb_cObject, rb_intern(var_name));
+      free(var_name);
+      return(val);
     }
 }
+
+
+XEN xen_rb_gv_get(const char *name)
+{
+  char *temp;
+  XEN val;
+  temp = xen_scheme_global_variable_to_ruby(name);
+  val = rb_gv_get(temp);
+  if (temp) free(temp);
+  return(val);
+}
+
+
+XEN xen_rb_gv_set(const char *name, XEN new_val)
+{
+  char *temp;
+  XEN val;
+  temp = xen_scheme_global_variable_to_ruby(name);
+  val = rb_gv_set(temp, new_val);
+  if (temp) free(temp);
+  return(val);
+}
+
+
+XEN xen_rb_intern(const char *name)
+{
+  char *temp;
+  XEN val;
+  temp = xen_scheme_constant_to_ruby(name);
+  val = rb_intern(temp);
+  if (temp) free(temp);
+  return(val);
+}
+
+
+XEN xen_rb_make_keyword(const char *name)
+{
+  char *temp;
+  XEN val;
+  temp = xen_scheme_procedure_to_ruby(name);
+  val = C_STRING_TO_XEN_SYMBOL(temp);
+  if (temp) free(temp);
+  return(val);
+}
+
+
+void xen_rb_define(const char *name, XEN value)
+{
+  char *temp;
+  XEN val;
+  temp = xen_scheme_constant_to_ruby(name);
+  rb_define_global_const(temp, value);
+  if (temp) free(temp);
+}
+
+
+XEN xen_rb_define_class(const char *name)
+{
+  char *temp;
+  XEN val;
+  temp = xen_scheme_constant_to_ruby(name);
+  val = rb_define_class(temp, rb_cObject);
+  if (temp) free(temp);
+  return(val);
+}
+
+
 
 
 #ifndef RARRAY_PTR 
@@ -1200,9 +1262,11 @@ static XEN xen_rb_hook_inspect(XEN hook)
 XEN xen_rb_create_hook(char *name, int arity, char *help)
 {
   XEN var, hook_name;
-  var = xen_rb_hook_c_new(xen_scheme_global_variable_to_ruby(name), arity, help);
+  char *temp;
+  var = xen_rb_hook_c_new(temp = xen_scheme_global_variable_to_ruby(name), arity, help);
   hook_name = xen_rb_hook_name(var);
-  rb_gv_set(XEN_TO_C_STRING(hook_name), var);   
+  rb_gv_set(XEN_TO_C_STRING(hook_name), var);
+  if (temp) free(temp);
   return(var);
 }
 
@@ -1255,7 +1319,12 @@ static XEN xen_rb_make_hook(int argc, XEN *argv, XEN klass)
 		 XEN_LIST_1(C_TO_XEN_STRING("make_hook(name, arity=0, help=\"\", hook_name=\"\", &func)")));
   name = xen_rb_hook_name(hook);
   if (XEN_TO_C_CHAR(name) != '$') 
-    name = C_TO_XEN_STRING(xen_scheme_global_variable_to_ruby(XEN_TO_C_STRING(name))); 
+    {
+      char *temp;
+      temp = xen_scheme_global_variable_to_ruby(XEN_TO_C_STRING(name)); 
+      name = C_TO_XEN_STRING(temp);
+      if (temp) free(temp);
+    }
   XEN_ASSERT_TYPE(RB_STR_LEN(name) >= 2, name, XEN_ARG_1, c__FUNCTION__, "a char*, len >= 2"); 
   return(rb_gv_set(XEN_TO_C_STRING(name), hook)); 
 }

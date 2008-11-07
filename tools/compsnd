@@ -23,7 +23,7 @@ fgrep udpate *.html
 fgrep udpate *.scm
 fgrep ";;" *.[ch]
 grep ' \-\-$' *.html
-./snd va.scm
+/home/bil/cl/snd tools/va.scm
 # tools/check-gtk.scm
 
 rm -f snd
@@ -1089,17 +1089,6 @@ echo ' -------------------------------------------------------------------------
 make
 ./snd --version
 ./snd -noinit --features ":clm, :snd-gtk, :snd_ruby"
-make allclean
-
-echo ' '
-echo ' '
-echo ' -------------------------------------------------------------------------------- '
-echo ' ----                --with-ruby --with-ruby-prefix=/home/bil/test/tmp-ruby ----- '
-echo ' -------------------------------------------------------------------------------- '
-./configure LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-I/usr/X11R6/include" --quiet --with-ruby --with-ruby-prefix=/home/bil/test/tmp-ruby
-make
-./snd --version
-./snd -noinit --features ":clm, :snd_ruby"
 make allclean
 
 echo ' '

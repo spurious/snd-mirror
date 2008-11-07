@@ -350,7 +350,7 @@ static XEN snd_format_if_needed(XEN args)
 			    }
 			  else 
 #endif
-			    errmsg = mus_strcat(errmsg, temp = XEN_AS_STRING(cur_arg), &err_size);
+			    errmsg = mus_strcat(errmsg, temp = (char *)XEN_AS_STRING(cur_arg), &err_size);
 #if HAVE_S7
 			    if (temp) free(temp);
 #endif
@@ -370,7 +370,7 @@ static XEN snd_format_if_needed(XEN args)
     {
       char *temp = NULL;
       errmsg = mus_strcat(errmsg, " ", &err_size);
-      errmsg = mus_strcat(errmsg, temp = XEN_AS_STRING(XEN_CADR(args)), &err_size);
+      errmsg = mus_strcat(errmsg, temp = (char *)XEN_AS_STRING(XEN_CADR(args)), &err_size);
 #if HAVE_S7
       if (temp) free(temp);
 #endif
@@ -382,7 +382,7 @@ static XEN snd_format_if_needed(XEN args)
 	{
 	  char *temp = NULL;
 	  errmsg = mus_strcat(errmsg, " ", &err_size);
-	  errmsg = mus_strcat(errmsg, temp = XEN_AS_STRING(XEN_LIST_REF(args, i)), &err_size);
+	  errmsg = mus_strcat(errmsg, temp = (char *)XEN_AS_STRING(XEN_LIST_REF(args, i)), &err_size);
 #if HAVE_S7
 	  if (temp) free(temp);
 #endif
@@ -840,7 +840,7 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
 	{
 	  char *temp = NULL, *str;
 	  str = mus_format("%s: %s (%s arg %d) is not a procedure!", 
-			   temp = XEN_AS_STRING(proc),
+			   temp = (char *)XEN_AS_STRING(proc),
 			   arg_name, caller, argn);
 #if HAVE_S7
 	  if (temp) free(temp);

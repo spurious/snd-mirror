@@ -464,14 +464,13 @@ const char *mus_data_format_short_name(int format)
 
 
 #if HAVE_RUBY
-  #define TO_LANG(Str) strdup(xen_scheme_constant_to_ruby(Str))
+#define TO_LANG(Str) (const char *)xen_scheme_constant_to_ruby(Str)
 #else
-  #define TO_LANG(Str) strdup(Str)
-  /* the strdup is to silence a ridiculous g++ warning -- valgrind grumbles, but that's easy to ignore */
+  #define TO_LANG(Str) Str
 #endif
 
 
-char *mus_header_type_to_string(int type)
+const char *mus_header_type_to_string(int type)
 {
   switch (type)
     {
@@ -493,7 +492,7 @@ char *mus_header_type_to_string(int type)
 }
 
 
-char *mus_data_format_to_string(int format)
+const char *mus_data_format_to_string(int format)
 {
   switch (format)
     {

@@ -2627,7 +2627,7 @@ static void display_ed_list(chan_info *cp, FILE *outp, int i, ed_list *ed, bool 
 #endif
 		  code = mus_run_ptree_code(cp->ptrees[FRAGMENT_PTREE_INDEX(ed, j, 0)]);
 		  if (XEN_LIST_P(code))
-		    fprintf(outp, ", code: %s", temp1 = XEN_AS_STRING(code));
+		    fprintf(outp, ", code: %s", temp1 = (char *)XEN_AS_STRING(code));
 #if HAVE_GUILE
 		  code = cp->ptree_inits[FRAGMENT_PTREE_INDEX(ed, j, 0)];
 		  if (XEN_PROCEDURE_P(code))
@@ -3255,7 +3255,7 @@ void edit_history_to_file(FILE *fd, chan_info *cp, bool with_save_state_hook)
 			      cp->chan);
 		    else fprintf(fd, "%s" PROC_OPEN "%s" PROC_SEP OFF_TD PROC_SEP  OFF_TD PROC_SEP "sfile" PROC_SEP "%d",
 				 TO_PROC_NAME(S_ptree_channel),
-				 temp = XEN_AS_STRING(mus_run_ptree_code(cp->ptrees[ed->ptree_location])),
+				 temp = (char *)XEN_AS_STRING(mus_run_ptree_code(cp->ptrees[ed->ptree_location])),
 				 ed->beg,
 				 ed->len,
 				 cp->chan);

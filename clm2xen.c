@@ -30,7 +30,6 @@
   #endif
 #endif
 
-
 #include "_sndlib.h"
 #include "xen.h"
 #include "clm.h"
@@ -7815,7 +7814,9 @@ static XEN g_mus_irandom(XEN val) {return(C_TO_XEN_INT(mus_irandom(XEN_TO_C_INT(
 #if HAVE_S7
 #if HAVE_GETTIMEOFDAY && HAVE_DIFFTIME && HAVE_SYS_TIME_H
 
+#include <time.h>
 #include <sys/time.h>
+
 static struct timeval overall_start_time;
 
 static XEN g_get_internal_real_time(void) 

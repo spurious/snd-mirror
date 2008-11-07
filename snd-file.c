@@ -984,7 +984,7 @@ static file_info *translate_file(const char *filename, int type)
   int err, len, fd;
 
   len = strlen(filename);
-  loops = mus_sound_loop_info(filename);
+  loops = mus_sound_loop_info(filename); /* allocated anew */
   newname = (char *)CALLOC(len + 5, sizeof(char));
   mus_snprintf(newname, len + 5, "%s.snd", filename);
 
@@ -1020,7 +1020,10 @@ static file_info *translate_file(const char *filename, int type)
       if (err == MUS_NO_ERROR)
 	{
 	  hdr = make_file_info_1(newname);
-	  if (hdr->loops == NULL) hdr->loops = loops;
+	  if (hdr->loops == NULL) 
+	    hdr->loops = loops;
+	  else 
+	    if (loops) FREE(loops);
 	  loops = NULL;
 	  ss->translated_filename = mus_strdup(newname);
 	}

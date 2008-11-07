@@ -3895,7 +3895,13 @@ and its value is returned."
 	text = XEN_SYMBOL_TO_STRING(text);
 	subject = XEN_TO_C_STRING(text);
       }
-    else text = C_TO_XEN_STRING(xen_scheme_procedure_to_ruby(S_snd_help));
+    else 
+      {
+	char *temp;
+	temp = xen_scheme_procedure_to_ruby(S_snd_help);
+	text = C_TO_XEN_STRING(temp);
+	if (temp) free(temp);
+      }
   str = XEN_AS_STRING(XEN_OBJECT_HELP(text));
 #endif
 

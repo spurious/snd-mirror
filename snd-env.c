@@ -1176,7 +1176,12 @@ void save_envelope_editor_state(FILE *fd)
 	  fprintf(fd, "(%s %s %s %.4f)\n", S_define_envelope, all_names[i], estr, all_envs[i]->base);
 #endif
 #if HAVE_RUBY
-	  fprintf(fd, "%s(\"%s\", %s, %.4f)\n", xen_scheme_procedure_to_ruby(S_define_envelope), all_names[i], estr, all_envs[i]->base);
+	  {
+	    char *name;
+	    name = xen_scheme_procedure_to_ruby(S_define_envelope);
+	    fprintf(fd, "%s(\"%s\", %s, %.4f)\n", name, all_names[i], estr, all_envs[i]->base);
+	    free(name);
+	  }
 #endif
 #if HAVE_FORTH
 	  fprintf(fd, "\"%s\" %s %.4f %s drop\n", all_names[i], estr, all_envs[i]->base, S_define_envelope);
@@ -1377,13 +1382,17 @@ into the envelope editor."
     e->base = XEN_TO_C_DOUBLE(base);
 
 #if HAVE_RUBY
-  alert_envelope_editor(xen_scheme_global_variable_to_ruby(ename), e);
-  if (env_index >= SND_ENV_MAX_VARS)
-    env_index = 0;
-  else
-    env_index++;
-  XEN_DEFINE_VARIABLE(ename, snd_env_array[env_index], data); /* need global C variable */
-  return(snd_env_array[env_index]);
+  {
+    char *name;
+    alert_envelope_editor(name = xen_scheme_global_variable_to_ruby(ename), e);
+    if (env_index >= SND_ENV_MAX_VARS)
+      env_index = 0;
+    else
+      env_index++;
+    XEN_DEFINE_VARIABLE(ename, snd_env_array[env_index], data); /* need global C variable */
+    free(name);
+    return(snd_env_array[env_index]);
+  }
 #endif
 
 #if HAVE_SCHEME || HAVE_FORTH
