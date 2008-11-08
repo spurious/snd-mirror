@@ -125,7 +125,7 @@ static char *find_highlighted_text(XmString xs)
 
 static Widget related_items = NULL;
 
-static char *help_completer(widget_t w, char *text, void *data) 
+static char *help_completer(widget_t w, const char *text, void *data) 
 {
   return(command_completer(w, text, data));
   /* might want to look at help topics too */

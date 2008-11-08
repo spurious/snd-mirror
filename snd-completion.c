@@ -40,7 +40,7 @@ static bool compare_names(const char *symbol_name, void *data)
   return(false);
 }
 
-static int completions(char *text)
+static int completions(const char *text)
 {
   match_info *m;
   int matches;
@@ -67,7 +67,7 @@ static int xen_return_first_int(int a, ...)
 }
 
 
-static int scan_tab(XEN tab, char *text, int len, int matches)
+static int scan_tab(XEN tab, const char *text, int len, int matches)
 {
   int i, n;
   XEN ls = XEN_FALSE, handle = XEN_FALSE;
@@ -126,14 +126,13 @@ static int scan_tab(XEN tab, char *text, int len, int matches)
 }
 
 
-static int completions(char *text)
+static int completions(const char *text)
 {
   int len, matches = 0;
   XEN curmod = XEN_FALSE, uses = XEN_FALSE;
   len = strlen(text);
   curmod = scm_current_module();
-  matches = scan_tab(SCM_MODULE_OBARRAY(curmod), 
-		     text, len, 0);
+  matches = scan_tab(SCM_MODULE_OBARRAY(curmod), text, len, 0);
   uses = SCM_MODULE_USES(curmod);
   while (XEN_CONS_P(uses))
     {
@@ -146,7 +145,7 @@ static int completions(char *text)
 
 #else
 
-static int completions(char *text) {return(0);}
+static int completions(const char *text) {return(0);}
 
 #endif
 #endif
@@ -164,7 +163,7 @@ static XEN snd_rb_methods(void)
 }
 
 
-static int completions(char *text)
+static int completions(const char *text)
 {
   XEN tab;
   int i, n, len, matches = 0;
@@ -205,7 +204,7 @@ static int completions(char *text)
 
 
 #if HAVE_FORTH
-static int completions(char *text)
+static int completions(const char *text)
 {
   XEN tab = fth_find_in_wordlist(text);
   int i, matches = XEN_VECTOR_LENGTH(tab);
@@ -233,7 +232,7 @@ static int completions(char *text)
 
 
 #if (!HAVE_EXTENSION_LANGUAGE)
-static int completions(char *text) {return(0);}
+static int completions(const char *text) {return(0);}
 #endif
 
 
@@ -271,16 +270,16 @@ bool separator_char_p(char c)
 #endif
 
 
-char *command_completer(widget_t w, char *original_text, void *data)
+char *command_completer(widget_t w, const char *original_text, void *data)
 {
   int i, len, beg, matches = 0;
-  char *text;
   /* first back up to some delimiter to get the current command */
 
   current_match = NULL;
   set_completion_matches(0);
   if ((original_text) && (*original_text))
     {
+      const char *text;
       len = strlen(original_text);
       for (i = len - 1; i >= 0; i--)
 	if (separator_char_p(original_text[i]))
@@ -297,11 +296,12 @@ char *command_completer(widget_t w, char *original_text, void *data)
 	  return(mus_strdup(original_text));
 	}
       if (beg > 0) 
-	text = (char *)(original_text + beg);
+	text = (const char *)(original_text + beg);
       else text = original_text;
       matches = completions(text);
     }
   else return(mus_strdup(original_text));
+
   set_completion_matches(matches);
   if ((current_match) && 
       (*current_match))
@@ -310,6 +310,7 @@ char *command_completer(widget_t w, char *original_text, void *data)
 	return(current_match);
       else
 	{
+	  char *text;
 	  len = mus_strlen(current_match) + beg + 2;
 	  text = (char *)CALLOC(len, sizeof(char));
 	  strncpy(text, original_text, beg);
@@ -390,7 +391,7 @@ int find_best_completion(char **choices, int num_choices)
 
 /* ---------------- COMMAND/FILENAME COMPLETIONS ---------------- */
 
-typedef char *(*completer_func)(widget_t w, char *text, void *data);
+typedef char *(*completer_func)(widget_t w, const char *text, void *data);
 static completer_func *completer_funcs = NULL;
 typedef void (*multicompleter_func)(widget_t w, void *data);
 static multicompleter_func *multicompleter_funcs = NULL;
@@ -399,7 +400,7 @@ static int completer_funcs_size = 0;
 static int completer_funcs_end = 0;
 
 
-int add_completer_func(char *(*func)(widget_t w, char *text, void *context), void *data)
+int add_completer_func(char *(*func)(widget_t w, const char *text, void *context), void *data)
 {
   if (completer_funcs_size == completer_funcs_end)
     {
@@ -425,7 +426,7 @@ int add_completer_func(char *(*func)(widget_t w, char *text, void *context), voi
   return(completer_funcs_end - 1);
 }
 
-int add_completer_func_with_multicompleter(char *(*func)(widget_t w, char *text, void *context), void *data, void (*multi_func)(widget_t w, void *data))
+int add_completer_func_with_multicompleter(char *(*func)(widget_t w, const char *text, void *context), void *data, void (*multi_func)(widget_t w, void *data))
 {
   int row;
   row = add_completer_func(func, data);
@@ -491,7 +492,7 @@ void handle_completions(widget_t w, int completer)
 }
 
 
-char *complete_text(widget_t w, char *text, int func)
+char *complete_text(widget_t w, const char *text, int func)
 {
   /* given text, call proc table entry func, return new text (not text!) */
   completion_matches = -1; /* i.e. no completer */
@@ -575,7 +576,7 @@ void add_srate_to_completion_list(int srate)
 }
 
 
-char *srate_completer(widget_t w, char *text, void * data)
+char *srate_completer(widget_t w, const char *text, void * data)
 {
   init_srate_list();
   return(list_completer(w, text, (void *)srate_info));
@@ -589,7 +590,7 @@ char *srate_completer(widget_t w, char *text, void * data)
 enum {ANY_FILE_TYPE, SOUND_FILE_TYPE};
 
 
-static char *filename_completer_1(widget_t w, char *text, int file_type)
+static char *filename_completer_1(widget_t w, const char *text, int file_type)
 {
 #if HAVE_OPENDIR
   /* assume text is a partial filename */
@@ -673,13 +674,13 @@ static char *filename_completer_1(widget_t w, char *text, int file_type)
 }
 
 
-char *filename_completer(widget_t w, char *text, void *data)
+char *filename_completer(widget_t w, const char *text, void *data)
 {
   return(filename_completer_1(w, text, ANY_FILE_TYPE));
 }
 
 
-char *sound_filename_completer(widget_t w, char *text, void *data)
+char *sound_filename_completer(widget_t w, const char *text, void *data)
 {
   return(filename_completer_1(w, text, SOUND_FILE_TYPE));
 }
@@ -693,7 +694,7 @@ static bool use_sound_filename_completer(sp_filing_t filing)
 }
 
 
-char *info_completer(widget_t w, char *text, void *data)
+char *info_completer(widget_t w, const char *text, void *data)
 {
   snd_info *sp = (snd_info *)data;
   if (sp)
@@ -845,7 +846,7 @@ char *complete_listener_text(char *old_text, int end, bool *try_completion, char
 }
 
 
-char *list_completer(widget_t w, char *text, void *data)
+char *list_completer(widget_t w, const char *text, void *data)
 {
   list_completer_info *info = (list_completer_info *)data;
   int i, j = 0, len, matches = 0, current_match = -1;

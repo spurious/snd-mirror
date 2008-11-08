@@ -10,7 +10,7 @@
 
 /* HISTORY: 
  *
- *   16-Oct:    removed Gauche additions.
+ *   16-Oct:    removed Gauche support.
  *   1-Oct:     XtAppAddInput condition arg is a mess.
  *   10-Sep:    XtAppAddInput condition arg is an int.
  *   1-Sep-08:  S7 support.
@@ -29917,15 +29917,17 @@ void Init_libxm(void)
   /* perhaps nicer here to check the features list for 'xm */
   if (!xm_already_inited)
     {
+#if HAVE_MOTIF
       xm_XmColorAllocationProc = XEN_FALSE;
       xm_XmColorCalculationProc = XEN_FALSE;
       xm_XmColorProc = XEN_FALSE;
+      xm_XmCutPasteProc = XEN_FALSE;
+      xm_XmVoidProc = XEN_FALSE;
+#endif
       xm_XtSelectionCallback_Descr = XEN_FALSE;
       xm_XtConvertSelectionIncr_Descr = XEN_FALSE;
       xm_protected = XEN_FALSE;
       xm_gc_table = XEN_FALSE;
-      xm_XmCutPasteProc = XEN_FALSE;
-      xm_XmVoidProc = XEN_FALSE;
       xm_XPeekIfEventProc = XEN_FALSE;
       xm_XIOErrorHandler = XEN_FALSE;
       xm_XErrorHandler = XEN_FALSE;

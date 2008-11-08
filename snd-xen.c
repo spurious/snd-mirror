@@ -2779,7 +2779,7 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
     FREE(legal_pwd); 
   } 
 
-#if HAVE_GUILE || HAVE_S7
+#if HAVE_GUILE
   #if(!defined(M_PI))
     #define M_PI 3.14159265358979323846264338327
   #endif

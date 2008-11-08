@@ -1306,7 +1306,73 @@ if you go on anyway, you'll get some complaint that there is no class named "sim
 </pre></td></tr></table>
 
 <p>and the result ("test.snd") is opened in Snd.
+It's also possible to load sndlib into cm.  Here's a note from Rick:
 </p>
+<pre>
+    a tarball of clm+cm in s7 scheme is available at 
+    
+        http://camil.music.uiuc.edu/Software/grace/downloads/cm3.tar.gz 
+    
+    the clm+cm app is fully relocatable and requires no runtime sources.   
+    to use the app in emacs do 
+    
+    (setq scheme-program-name "/path/to/cm3/bin/cm") 
+    M-x run-scheme 
+    
+    building is a snap: 
+    
+    wget ftp://ccrma-ftp.stanford.edu/pub/Lisp/sndlib.tar.gz 
+    tar -zxf sndlib.tar.gz 
+    cd sndlib 
+    ./configure CC=g++ 
+    make 
+    cd .. 
+    
+    wget http://camil.music.uiuc.edu/Software/grace/downloads/cm3.tar.gz 
+    tar -zxf cm3.tar.gz 
+    cd cm3 
+    premake --verbose --target gnu --juce /path/to/juce --sndlib ../sndlib 
+    make 
+    bin/cm 
+    
+    S7 Scheme 1.2, (c) 2008 William Schottstaedt 
+    SNDLIB 20.10, (c) 2008 William Schottstaedt 
+     /\\\ 
+    ---\\\--------- 
+    ----\\\-------- 
+    ----/\\\------- Common Music 3.2.0 
+    ---/--\\\------ 
+    --/----\\\----- 
+     /      \\\/ 
+    Type 'q' to quit. 
+    cm&gt; (list 1 2 3) 
+    (1 2 3) 
+    cm&gt; (load "/Users/hkt/Software/snd-10/v.scm") 
+    fm-violin 
+    cm&gt; (with-sound () (fm-violin 0 1 440 .1)) 
+    "test.aiff" 
+    cm&gt; (define (foo n ) 
+      (process for i below n 
+           do (display (list i (elapsed))) 
+           (newline) 
+           (wait .5))) 
+    
+    foo 
+    cm&gt; (sprout (foo 10)) 
+    (0 0.0) 
+    (1 0.5000870000124) 
+    (2 1.0009470000267) 
+    (3 1.5018830000162) 
+    (4 2.0025049999952) 
+    (5 2.5038330000043) 
+    (6 3.0042760000229) 
+    (7 3.5051180000305) 
+    (8 4.006182000041) 
+    (9 4.5074370000362) 
+    cm&gt; q 
+    Killing scheme thread...quitting Scheme 
+    Bye! 
+</pre>
 
 
 <br><br>

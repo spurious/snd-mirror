@@ -616,14 +616,15 @@ echo ' -----                --with-static-xm  editres                           
 echo ' -------------------------------------------------------------------------------- '
 ./configure --quiet LDFLAGS="-L/usr/X11R6/lib" CFLAGS="-Wall -I/usr/X11R6/include" --with-static-xm --with-editres --disable-deprecated
 make
-rm xm.o
+make allclean
+
 echo ' '
 echo ' '
 echo ' -------------------------------------------------------------------------------- '
 echo ' -----                g++ --with-static-xm                                   ---- '
 echo ' -------------------------------------------------------------------------------- '
 ./configure LDFLAGS="-L/usr/X11R6/lib" --quiet CC=g++ --with-static-xm CFLAGS="-I/usr/X11R6/include"
-make xm
+make
 
 make allclean
 echo ' '

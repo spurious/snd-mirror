@@ -1101,7 +1101,7 @@ static prefs_info *prefs_row_with_list(const char *label, const char *varname, c
 				       const char **values, int num_values,
 				       GtkWidget *box,
 				       void (*text_func)(prefs_info *prf),
-				       char *(*completion_func)(widget_t w, char *text, void *context), void *completion_context)
+				       char *(*completion_func)(widget_t w, const char *text, void *context), void *completion_context)
 {
   int i;
   prefs_info *prf = NULL;

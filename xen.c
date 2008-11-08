@@ -669,7 +669,6 @@ XEN xen_rb_make_keyword(const char *name)
 void xen_rb_define(const char *name, XEN value)
 {
   char *temp;
-  XEN val;
   temp = xen_scheme_constant_to_ruby(name);
   rb_define_global_const(temp, value);
   if (temp) free(temp);

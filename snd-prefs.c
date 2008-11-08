@@ -4037,7 +4037,7 @@ static void revert_transform_type(prefs_info *prf) {in_set_transform_type(rts_tr
 static void clear_transform_type(prefs_info *prf) {in_set_transform_type(DEFAULT_TRANSFORM_TYPE);}
 static void save_transform_type(prefs_info *prf, FILE *ignore) {rts_transform_type = transform_type(ss);}
 
-static char *transform_type_completer(widget_t w, char *text, void *data)
+static char *transform_type_completer(widget_t w, const char *text, void *data)
 {
   if (!transform_type_completer_info)
     {
@@ -4105,7 +4105,7 @@ static void save_fft_window(prefs_info *prf, FILE *ignore) {rts_fft_window = fft
 
 static list_completer_info *fft_window_completer_info = NULL;
 
-static char *fft_window_completer(widget_t w, char *text, void *data)
+static char *fft_window_completer(widget_t w, const char *text, void *data)
 {
   if (!fft_window_completer_info)
     {
@@ -4166,7 +4166,7 @@ static void fft_window_from_text(prefs_info *prf)
 
 static int rts_colormap = DEFAULT_COLOR_MAP;
 
-static char *colormap_completer(widget_t w, char *text, void *data)
+static char *colormap_completer(widget_t w, const char *text, void *data)
 {
   list_completer_info *compinfo;
   char **cmaps;

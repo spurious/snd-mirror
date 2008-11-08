@@ -29,7 +29,7 @@
   int mus_midi_close(int line);
   int mus_midi_read(int line, unsigned char *buffer, int bytes);
   int mus_midi_write(int line, unsigned char *buffer, int bytes);
-  char *mus_midi_device_name(int sysdev);
+  const char *mus_midi_device_name(int sysdev);
   char *mus_midi_describe(void);
   #define MUS_AUDIO_SYSTEM(n) (((n) >> 16) & 0xffff)
   #define MUS_AUDIO_DEVICE(n) ((n) & 0xffff)
@@ -207,10 +207,10 @@ int mus_midi_write(int line, unsigned char *buffer, int bytes)
 
 static char devname[64];
 
-char *mus_midi_device_name(int sysdev)
+const char *mus_midi_device_name(int sysdev)
 {
   sprintf(devname, "hw:%d,%d", MUS_AUDIO_SYSTEM(sysdev), MUS_AUDIO_DEVICE(sysdev));
-  return(devname);
+  return((const char *)devname);
 }
 
 
@@ -409,11 +409,11 @@ int mus_midi_write(int line, unsigned char *buffer, int bytes)
 }
 
 
-char *mus_midi_device_name(int sysdev)
+const char *mus_midi_device_name(int sysdev)
 {
   mus_midi_initialize();
   if (midi_ports > 0)
-    return(mdGetName(MUS_AUDIO_DEVICE(sysdev)));
+    return((const char *)mdGetName(MUS_AUDIO_DEVICE(sysdev)));
   return(NULL);
 }
 
@@ -484,7 +484,7 @@ int mus_midi_read(int line, unsigned char *buffer, int bytes) {return(read(line,
 
 int mus_midi_write(int line, unsigned char *buffer, int bytes) {return(write(line, buffer, bytes));}
 
-char *mus_midi_device_name(int sysdev) {return(strdup("/dev/sequencer"));}
+const char *mus_midi_device_name(int sysdev) {return("/dev/sequencer");}
 
 
 char *mus_midi_describe(void)
@@ -669,7 +669,7 @@ int mus_midi_close(int line)
 }
 
 
-char *mus_midi_device_name(int sysdev) {return("none");}
+const char *mus_midi_device_name(int sysdev) {return("none");}
 
 #endif
 
@@ -683,7 +683,7 @@ int mus_midi_open_write(const char *name) {return(-1);}
 int mus_midi_close(int line) {return(-1);}
 int mus_midi_read(int line, unsigned char *buffer, int bytes) {return(-1);}
 int mus_midi_write(int line, unsigned char *buffer, int bytes) {return(-1);}
-char *mus_midi_device_name(int sysdev) {return((char *)"none");} /* result should not be freed by caller */
+const char *mus_midi_device_name(int sysdev) {return("none");}
 char *mus_midi_describe(void) {return(NULL);}            /* result should be freed by caller (if not NULL) */
 #endif
 

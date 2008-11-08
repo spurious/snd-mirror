@@ -735,12 +735,12 @@ void redirect_snd_warning_to(void (*handler)(const char *warning_msg, void *ufd)
 
 /* -------- snd-completion.c -------- */
 
-char *command_completer(widget_t w, char *text, void *data);
+char *command_completer(widget_t w, const char *text, void *data);
 void preload_best_completions(void);
 void save_completion_choice(const char *selection);
 int find_best_completion(char **choices, int num_choices);
-int add_completer_func(char *(*func)(widget_t w, char *text, void *context), void *data);
-int add_completer_func_with_multicompleter(char *(*func)(widget_t w, char *text, void *context), void *data, void (*multi_func)(widget_t w, void *data));
+int add_completer_func(char *(*func)(widget_t w, const char *text, void *context), void *data);
+int add_completer_func_with_multicompleter(char *(*func)(widget_t w, const char *text, void *context), void *data, void (*multi_func)(widget_t w, void *data));
 int get_completion_matches(void);
 void set_completion_matches(int matches);
 void set_save_completions(bool save);
@@ -749,12 +749,12 @@ int get_possible_completions_size(void);
 char **get_possible_completions(void);
 void clear_possible_completions(void);
 void handle_completions(widget_t w, int completer);
-char *complete_text(widget_t w, char *text, int func);
-char *filename_completer(widget_t w, char *text, void *data);
-char *sound_filename_completer(widget_t w, char *text, void *data);
-char *srate_completer(widget_t w, char *text, void *data);
-char *list_completer(widget_t w, char *text, void *data);
-char *info_completer(widget_t w, char *text, void *data);
+char *complete_text(widget_t w, const char *text, int func);
+char *filename_completer(widget_t w, const char *text, void *data);
+char *sound_filename_completer(widget_t w, const char *text, void *data);
+char *srate_completer(widget_t w, const char *text, void *data);
+char *list_completer(widget_t w, const char *text, void *data);
+char *info_completer(widget_t w, const char *text, void *data);
 char *complete_listener_text(char *old_text, int end, bool *try_completion, char **to_file_text);
 bool separator_char_p(char c);
 void add_srate_to_completion_list(int srate);
@@ -1165,7 +1165,7 @@ env *enved_all_envs(int pos);
 void alert_envelope_editor(const char *name, env *val);
 void enved_show_background_waveform(axis_info *ap, axis_info *gray_ap, bool apply_to_selection, bool show_fft, printing_t printing);
 void save_envelope_editor_state(FILE *fd);
-char *env_name_completer(widget_t w, char *text, void *data);
+char *env_name_completer(widget_t w, const char *text, void *data);
 env *enved_next_env(void);
 env *string_to_env(const char *str);
 void add_or_edit_symbol(const char *name, env *val);

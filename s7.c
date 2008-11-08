@@ -54,6 +54,8 @@
  *        gc, gc-verbose, load-verbose, quit
  *        backtrace, backtrace-length, clear-backtrace
  *        *features*, *load-path*, *vector-print-length*
+ *        pi, most-positive-fixnum, most-negative-fixnum
+ *        define-constant
  *
  *
  * still to do:
@@ -221,10 +223,12 @@
 
 
 typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY, OP_DOMACRO, OP_LAMBDA, OP_QUOTE, 
-	      OP_DEFINE0, OP_DEFINE1, OP_BEGIN, OP_IF0, OP_IF1, OP_SET0, OP_SET1, OP_SET2,
+	      OP_DEFINE0, OP_DEFINE1, OP_BEGIN, OP_IF0, OP_IF1, 
+	      OP_SET0, OP_SET1, OP_SET2, OP_DEFINE_CONSTANT0, OP_DEFINE_CONSTANT1, 
 	      OP_LET0, OP_LET1, OP_LET2, OP_LET_STAR0, OP_LET_STAR1, OP_LET_STAR2, 
 	      OP_LETREC0, OP_LETREC1, OP_LETREC2, OP_COND0, OP_COND1, OP_MAKE_PROMISE, OP_AND0, OP_AND1, 
-	      OP_OR0, OP_OR1, OP_CONS_STREAM0, OP_CONS_STREAM1, OP_DEFMACRO, OP_MACRO0, OP_MACRO1, OP_DEFINE_MACRO,
+	      OP_OR0, OP_OR1, OP_CONS_STREAM0, OP_CONS_STREAM1, 
+	      OP_DEFMACRO, OP_MACRO0, OP_MACRO1, OP_DEFINE_MACRO,
 	      OP_CASE0, OP_CASE1, OP_CASE2, OP_READ_EXPRESSION, OP_READ_LIST, OP_READ_DOT, OP_READ_QUOTE, 
 	      OP_READ_QUASIQUOTE, OP_READ_QUASIQUOTE_VECTOR, OP_READ_UNQUOTE, OP_READ_UNQUOTE_SPLICING, 
 	      OP_READ_VECTOR, OP_FORCE, OP_READ_RETURN_EXPRESSION,
@@ -1829,6 +1833,18 @@ void s7_define_variable(s7_scheme *sc, const char *name, s7_pointer value)
   
   sym = s7_make_symbol(sc, name);
   s7_define(sc, s7_global_environment(sc), sym, value);
+}
+
+
+void s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value)
+{
+  s7_pointer x, sym;
+  
+  sym = s7_make_symbol(sc, name);
+  s7_define(sc, s7_global_environment(sc), sym, value);
+
+  x = s7_find_symbol_in_environment(sc, s7_global_environment(sc), sym, false);
+  s7_set_immutable(car(x));
 }
 
 
@@ -11096,6 +11112,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       pop_stack(sc, car(sc->code));
       goto START;
       
+
+    case OP_DEFINE_CONSTANT1:
+      /* define-constant -> OP_DEFINE_CONSTANT0 -> OP_DEFINE0..1, then back to here */
+      /*   at this point, sc->value is the symbol that we want to be immutable, sc->code is the original pair */
+      sc->x = s7_find_symbol_in_environment(sc, sc->envir, sc->value, false);
+      s7_set_immutable(car(sc->x));
+      pop_stack(sc, sc->value);
+      goto START;
+
+
+    case OP_DEFINE_CONSTANT0:
+      push_stack(sc, OP_DEFINE_CONSTANT1, sc->NIL, sc->code);
+
       
     case OP_DEFINE0:
       if (!s7_is_pair(sc->code))
@@ -12582,25 +12611,26 @@ s7_scheme *s7_init(void)
     }
   
   /* initialization of global pointers to special symbols */
-  assign_syntax(sc, "lambda",      OP_LAMBDA);
-  assign_syntax(sc, "quote",       OP_QUOTE);
-  assign_syntax(sc, "define",      OP_DEFINE0);
-  assign_syntax(sc, "if",          OP_IF0);
-  assign_syntax(sc, "begin",       OP_BEGIN);
-  assign_syntax(sc, "set!",        OP_SET0);
-  assign_syntax(sc, "let",         OP_LET0);
-  assign_syntax(sc, "let*",        OP_LET_STAR0);
-  assign_syntax(sc, "letrec",      OP_LETREC0);
-  assign_syntax(sc, "cond",        OP_COND0);
-  assign_syntax(sc, "make-promise",OP_MAKE_PROMISE);
-  assign_syntax(sc, "and",         OP_AND0);
-  assign_syntax(sc, "or",          OP_OR0);
-  assign_syntax(sc, "cons-stream", OP_CONS_STREAM0); 
-  assign_syntax(sc, "macro",       OP_MACRO0);
-  assign_syntax(sc, "case",        OP_CASE0);
-  assign_syntax(sc, "defmacro",    OP_DEFMACRO);
-  assign_syntax(sc, "define-macro",OP_DEFINE_MACRO);
-  assign_syntax(sc, "do",          OP_DO);
+  assign_syntax(sc, "lambda",          OP_LAMBDA);
+  assign_syntax(sc, "quote",           OP_QUOTE);
+  assign_syntax(sc, "define",          OP_DEFINE0);
+  assign_syntax(sc, "define-constant", OP_DEFINE_CONSTANT0);
+  assign_syntax(sc, "if",              OP_IF0);
+  assign_syntax(sc, "begin",           OP_BEGIN);
+  assign_syntax(sc, "set!",            OP_SET0);
+  assign_syntax(sc, "let",             OP_LET0);
+  assign_syntax(sc, "let*",            OP_LET_STAR0);
+  assign_syntax(sc, "letrec",          OP_LETREC0);
+  assign_syntax(sc, "cond",            OP_COND0);
+  assign_syntax(sc, "make-promise",    OP_MAKE_PROMISE);
+  assign_syntax(sc, "and",             OP_AND0);
+  assign_syntax(sc, "or",              OP_OR0);
+  assign_syntax(sc, "cons-stream",     OP_CONS_STREAM0); 
+  assign_syntax(sc, "macro",           OP_MACRO0);
+  assign_syntax(sc, "case",            OP_CASE0);
+  assign_syntax(sc, "defmacro",        OP_DEFMACRO);
+  assign_syntax(sc, "define-macro",    OP_DEFINE_MACRO);
+  assign_syntax(sc, "do",              OP_DO);
   
   
   sc->LAMBDA = s7_make_symbol(sc, "lambda");
@@ -13001,8 +13031,18 @@ s7_scheme *s7_init(void)
   
   s7_eval_c_string(sc, "(macro quasiquote (lambda (l) (_quasiquote_ 0 (cadr l))))");
   
-  if (sizeof(s7_Int) == 4)
-    top_log = 21.0;
+  {
+    int top;
+#ifndef LLONG_MAX
+    #define LLONG_MAX 9223372036854775807LL
+    #define LLONG_MIN (-LLONG_MAX - 1LL)
+#endif
+    top = sizeof(s7_Int);
+    s7_define_constant(sc, "most-positive-fixnum", s7_make_integer(sc, (top == 8) ? LLONG_MAX : ((top == 4) ? LONG_MAX : SHRT_MAX)));
+    s7_define_constant(sc, "most-negative-fixnum", s7_make_integer(sc, (top == 8) ? LLONG_MIN : ((top == 4) ? LONG_MIN : SHRT_MIN)));
+    s7_define_constant(sc, "pi", s7_make_real(sc, 3.1415926535897932384626433832795029L)); /* M_PI is not good enough for (possible?) long double */
+    top_log = floor(log(pow(2.0, (double)((top * 8) - 1))));
+  }
   
   return(sc);
 }

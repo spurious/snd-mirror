@@ -4878,7 +4878,16 @@ static ed_list *delete_section_from_list(off_t beg, off_t num, ed_list *current_
 #if HAVE_FORTH
   new_state->origin = mus_format(OFF_TD " " OFF_TD " %s drop", beg, num, S_delete_samples);
 #else
+#if HAVE_RUBY
+  {
+    char *temp;
+    temp = TO_PROC_NAME(S_delete_samples);
+    new_state->origin = mus_format("%s" PROC_OPEN OFF_TD PROC_SEP OFF_TD, temp, beg, num);
+    if (temp) free(temp);
+  }
+#else
   new_state->origin = mus_format("%s" PROC_OPEN OFF_TD PROC_SEP OFF_TD, TO_PROC_NAME(S_delete_samples), beg, num);
+#endif
 #endif
   new_state->edit_type = DELETION_EDIT;
   new_state->sound_location = 0;
