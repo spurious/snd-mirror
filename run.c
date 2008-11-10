@@ -11948,6 +11948,7 @@ static XEN xen_values_to_list(ptree *pt, int *args)
 }
 
 
+#if (!HAVE_S7)
 static XEN format_func;
 
 static void format_s(int *args, ptree *pt) 
@@ -11957,11 +11958,22 @@ static void format_s(int *args, ptree *pt)
   STRING_RESULT = mus_strdup(XEN_TO_C_STRING(XEN_APPLY(format_func, xen_values_to_list(pt, args), "format")));
 }
 
+#else
+
+static void format_s(int *args, ptree *pt) 
+{
+  if (STRING_RESULT) FREE(STRING_RESULT);
+  /* TODO: s7_format here */
+}
+
+#endif
+
 
 static xen_value *format_1(ptree *prog, xen_value **args, int num_args)
 {
   return(package_n_xen_args(prog, R_STRING, format_s, "format_s", args, num_args));
 }
+
 
 
 static int saw_mus_error = 0;
@@ -12075,6 +12087,8 @@ static walk_info *walker_with_declare(walk_info *w, int arg, int args, ...)
 }
 
 
+#if (!HAVE_S7)
+
 static void clm_print_s(int *args, ptree *pt) 
 {
   if (STRING_RESULT) FREE(STRING_RESULT);
@@ -12114,15 +12128,6 @@ static xen_value *set_up_format(ptree *prog, xen_value **args, int num_args, boo
       /* define a walker for format */
       if (!format_walk_property_set)
 	{
-	  format_walk_property_set = true; 
-	  /* odd -- why is this being called more than once? -- profiling says it gets hit once,
-	   *   but valgrind says 
-	   *       29,064 (26,656 direct, 2,408 indirect) bytes in 476 blocks are definitely lost in loss record 521 of 547"
-	   *       ==22922==    at 0x4905859: malloc (vg_replace_malloc.c:149)
-	   *       ==22922==    by 0x56BDC9: make_walker (snd-run.c:10035)
-	   *       ==22922==    by 0x5A2195: set_up_format (snd-run.c:10102)
-	   *   surely valgrind is confused?
-	   */
 	  XEN_SET_WALKER(format_var, 
 			 C_TO_XEN_ULONG(make_walker(format_1, NULL, NULL, 1, UNLIMITED_ARGS, R_STRING, false, 1, -R_XEN)));
 	}
@@ -12144,6 +12149,8 @@ static xen_value *set_up_format(ptree *prog, xen_value **args, int num_args, boo
     }
   return(run_warn("format not defined"));
 }
+#endif
+
 
 
 /* -------- CLM make functions -------- */
@@ -12859,10 +12866,12 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 	    }
 	}
 
+#if (!HAVE_S7)
       if (mus_strcmp(funcname, "format"))
 	return(clean_up(set_up_format(prog, args, num_args, true), args, num_args));
       if (mus_strcmp(funcname, S_clm_print))
 	return(clean_up(set_up_format(prog, args, num_args, false), args, num_args));
+#endif
 
       /* check for function defined elsewhere, get source, splice in if possible */
       if ((v == NULL) && 
@@ -13489,6 +13498,12 @@ static void init_walkers(void)
   INIT_WALKER("length",    make_walker(length_1, NULL, NULL, 1, 1, R_INT, false, 1, R_LIST));
   INIT_WALKER("null?",     make_walker(null_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_LIST));
   INIT_WALKER("quote",     make_walker(NULL, quote_form, NULL, 1, 1, R_ANY, false, 0));
+
+#if HAVE_S7
+  INIT_WALKER("format",    make_walker(format_1, NULL, NULL, 0, UNLIMITED_ARGS, R_STRING, false, 1, -R_XEN));
+  INIT_WALKER("clm-print", make_walker(format_1, NULL, NULL, 0, UNLIMITED_ARGS, R_STRING, false, 1, -R_XEN));
+#endif
+
 
   /* -------- clm funcs */
   INIT_WALKER(S_mus_generator_p,  make_walker(mus_generator_p_1, NULL, NULL, 1, 1, R_BOOL, false, 1, R_ANY));

@@ -560,12 +560,10 @@ For more temporary situations, you can use the environment variable SND_PATH.
 It is a colon-separated list of directories that will be added to the load path when Snd starts.
 </p>
 
-<p>In S7, before loading any of the Snd *.scm files, you need to load s7-optargs.scm and
-s7-format.scm:
+<p>In S7, before loading any of the Snd *.scm files, you need to load s7-optargs.scm.
 </p>
 <pre>
     (if (not (provided? 's7-optargs.scm)) (load "s7-optargs.scm"))
-    (if (not (provided? 's7-format.scm)) (load "s7-format.scm"))
 </pre>
 
 

@@ -355,7 +355,7 @@
 			      (format #f "  loop: ~A~%" loops)
 			      ""))
 			(if (= (header-type snd) mus-soundfont)
-			    (format #f "  sounds: ~:{~%     ~S start: ~A, loop: ~A ~A~}" (soundfont-info))
+			    (format #f "  sounds: ~{~{~%     ~S start: ~A, loop: ~A ~A~}~}" (soundfont-info))
 			    "")
 			(if (not (null? (sound-properties snd)))
 			    (format #f "  properties: ~A"

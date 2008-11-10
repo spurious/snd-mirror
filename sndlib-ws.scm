@@ -3,7 +3,6 @@
 (provide 'sndlib-ws.scm)
 
 (if (not (defined? 'define*)) (load "s7-optargs.scm"))
-(if (not (defined? 'format)) (load "s7-format.scm"))
 
 
 (define *clm-srate* 44100)

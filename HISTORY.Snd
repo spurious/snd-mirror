@@ -1,5 +1,6 @@
 Snd change log
 
+ 11-Nov:     removed s7-format.scm -- format is now built-in in s7.
  4-Nov:      moved snd-run.c to run.c (for sndlib).
  29-Oct:     osc.scm thanks to Kjetil.
  16-Oct:     removed Gauche support.

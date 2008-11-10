@@ -26,7 +26,7 @@
  *        generalized set!, procedure-with-setter, applicable objects
  *        defmacro and define-macro, keywords, hash tables, block comments
  *        error handling using error and catch
- *        in Snd, the run macro works giving S7 a (somewhat limited) byte compiler
+ *        in sndlib, the run macro works giving S7 a (somewhat limited) byte compiler
  *        no invidious distinction between built-in and "foreign"
  *        threads
  *
@@ -56,6 +56,7 @@
  *        *features*, *load-path*, *vector-print-length*
  *        pi, most-positive-fixnum, most-negative-fixnum
  *        define-constant
+ *        format (under construction) -- simple cases only
  *
  *
  * still to do:
@@ -193,6 +194,9 @@
 
 #define CASE_SENSITIVE 1
 /* this determines whether names are case sensitive */
+
+#define WITH_FORMAT 1
+/* this includes a simple (no Roman numerals!) version of format */
 
 
 /* -------------------------------------------------------------------------------- */
@@ -2069,6 +2073,9 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
 
 /* -------------------------------- numbers -------------------------------- */
 
+#define s7_Int_abs(x) (x >= 0 ? x : -x)
+/* can't use abs even in gcc -- it doesn't work with long long ints! */
+
 #if WITH_COMPLEX
 
 #if __cplusplus
@@ -2076,7 +2083,6 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
   #define creal(x) Real(x)
   #define cimag(x) Imag(x)
   #define carg(x) arg(x)
-  #define s7_Int_abs(x) (x >= 0 ? x : -x)
   #define cabs(x) abs(x)
   #define csqrt(x) sqrt(x)
   #define cpow(x, y) pow(x, y)
@@ -2090,7 +2096,6 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
 #else
   typedef double complex double_complex;
   #define s7_Int_pow(x, y) (s7_Int)pow(x, y)
-  #define s7_Int_abs(x) abs(x)
 #endif
 
 /* Trigonometric functions. FreeBSD's math library does not include the complex form of the trig funcs. */ 
@@ -2239,7 +2244,6 @@ static double_complex catanh(double_complex z)
 /* not WITH_COMPLEX */
   typedef double double_complex;
   #define s7_Int_pow(x, y) (s7_Int)pow(x, y)
-  #define s7_Int_abs(x) abs(x)
   #define _Complex_I 1
   #define creal(x) x
   #define cimag(x) x
@@ -3205,59 +3209,72 @@ static bool s7_is_zero(s7_pointer x)
 }
 
 
-static void num2str(char *p, s7_Int n, int radix)
+static void num2str(char *p, s7_Int n, int radix, int width)
 {
   static char dignum[] = "0123456789abcdef";
-  int i, sign, len, end = 0;
+  int i = 2, len, start = 0, end = 0;
+  s7_Int pown = (s7_Int)1;
+  bool sign;
+
   if ((radix < 2) || (radix > 16))
     return;
+  if (n == 0)
+    {
+      p[0] = '0';
+      p[1] = '\0';
+      return;
+    }
+
   sign = (n < 0);
-  n = s7_Int_abs(n);
-  len = (int)(floor(log(n) / log(radix)));
+  n = s7_Int_abs(n); /* most-negative-fixnum loses... */
+
+  for (i = 1; i < 100; i++)
+    {
+      if ((pown > n) || (pown <= (s7_Int)0))
+	break;
+      pown *= (s7_Int)radix;
+    }
+
+  len = i - 2;
+  /* len = (int)(floor(log((double)n) / log((double)radix))); */
+
+  if (sign) len++;
+
+  if (width > len) /* (format #f "~10B" 123) */
+    {
+      start = width - len - 1;
+      end += start;
+      for (i = 0; i < start; i++) 
+	p[i] = ' ';
+    }
+
   if (sign)
     {
-      p[0] = '-';
-      len++;
+      p[start] = '-';
       end++;
     }
-  p[len + 1] = '\0';
-  for (i = len; i >= end; i--)
+
+  for (i = start + len; i >= end; i--)
     {
-      p[i] = dignum[n % radix];
-      n /= radix;
+      p[i] = dignum[n % (s7_Int)radix];
+      n /= (s7_Int)radix;
     }
+  p[len + start + 1] = '\0';
 }
 
 
-char *s7_number_to_string(s7_scheme *sc, s7_pointer obj, int radix)
+static char *s7_number_to_string_1(s7_scheme *sc, s7_pointer obj, int radix, int width, int precision)
 {
+  /* lisp-style here is to pad width with spaces, not #f or 0 (as in C for negative args to X or O) */
   char *p;
   p = (char *)calloc(256, sizeof(char));
-  
+
   switch (object_number_type(obj))
     {
     case NUM_INT:
-      switch (radix)
-	{
-	case 10:
-	  snprintf(p, 256, s7_Int_d, s7_integer(obj));
-	  break;
-	case 8:
-	  {
-	    bool sign;
-	    unsigned int x;
-	    sign = s7_is_negative(obj);
-	    x = (unsigned int)s7_Int_abs(s7_integer(obj));
-	    snprintf(p, 256, "%s%o", (sign) ? "-" : "", x);
-	  }
-	  break;
-	case 16:
-	  snprintf(p, 256, "%llx", s7_integer(obj));
-	  break;
-	default:
-	  num2str(p, s7_integer(obj), radix);
-	  break;
-	}
+      if (radix == 10)
+	snprintf(p, 256, "%*lld", width, s7_integer(obj));
+      else num2str(p, s7_integer(obj), radix, width);
       break;
       
     case NUM_RATIO:
@@ -3268,7 +3285,7 @@ char *s7_number_to_string(s7_scheme *sc, s7_pointer obj, int radix)
     case NUM_REAL:
       {
 	int i, loc = -1, len;
-	snprintf(p, 256, "%.14g", s7_real(obj));
+	snprintf(p, 256, "%*.*g", width, precision, s7_real(obj));
 	len = safe_strlen(p);
 	for (i = 0; i < len; i++) /* does it have an exponent (if so, it's already a float) */
 	  if (p[i] == 'e')
@@ -3292,12 +3309,18 @@ char *s7_number_to_string(s7_scheme *sc, s7_pointer obj, int radix)
       
     default:
       if (s7_imag_part(obj) >= 0.0)
-	snprintf(p, 256, "%.14g+%.14gi", s7_real_part(obj), s7_imag_part(obj));
-      else snprintf(p, 256, "%.14g-%.14gi", s7_real_part(obj), fabs(s7_imag_part(obj)));
+	snprintf(p, 256, "%.*g+%.*gi", precision, s7_real_part(obj), precision, s7_imag_part(obj));
+      else snprintf(p, 256, "%.*g-%.*gi", precision, s7_real_part(obj), precision, fabs(s7_imag_part(obj)));
       break;
       
     }
   return(p);
+}
+
+
+char *s7_number_to_string(s7_scheme *sc, s7_pointer obj, int radix)
+{
+  return(s7_number_to_string_1(sc, obj, radix, 0, 14));
 }
 
 
@@ -9792,10 +9815,11 @@ static s7_pointer g_hash_table_set(s7_scheme *sc, s7_pointer args)
 
 static char *no_outer_parens(char *str)
 {
-  int i, len, stop = 0;
+  int len;
   len = safe_strlen(str);
   if (len > 1)
     {
+      int i, stop = 0;
       for (i = 0; i < len; i++)
 	if (str[i] == '(')
 	  {
@@ -9803,14 +9827,14 @@ static char *no_outer_parens(char *str)
 	    str[i] = ' ';
 	    break;
 	  }
+      if (i < len)
+	for (i = len - 1; i > stop; i--)
+	  if (str[i] == ')')
+	    {
+	      str[i] = ' ';
+	      break;
+	    }
     }
-  if (i < len)
-    for (i = len - 1; i > stop; i--)
-      if (str[i] == ')')
-	{
-	  str[i] = ' ';
-	  break;
-	}
   return(str);
 }
 
@@ -12078,6 +12102,389 @@ static s7_pointer g_quasiquote(s7_scheme *sc, s7_pointer args)
 
 
 
+/* -------------------------------- format -------------------------------- */
+
+#if WITH_FORMAT
+
+typedef struct {
+  char *str;
+  int len, loc;
+  s7_pointer args;
+} format_data;
+
+
+static char *s7_format_error(s7_scheme *sc, const char *msg, const char *str, s7_pointer args, format_data *dat)
+{
+  int len;
+  char *errmsg, *argstr;
+
+  argstr = no_outer_parens(s7_object_to_c_string(sc, args));
+  len = safe_strlen(argstr) + safe_strlen(msg) + (2 * safe_strlen(str)) + 32;
+  errmsg = (char *)calloc(len, sizeof(char));
+  if (dat->loc == 0)
+    snprintf(errmsg, len, "format \"%s\" %s: %s", str, argstr, msg);
+  else 
+    {
+      char *filler;
+      int i;
+      filler = (char *)calloc(dat->loc + 12, sizeof(char));
+      for (i = 0; i < dat->loc + 11; i++)
+	filler[i] = ' ';
+      snprintf(errmsg, len, "\nformat: \"%s\" %s\n%s^: %s", str, argstr, filler, msg);
+      free(filler);
+    }
+
+  sc->x = s7_make_string(sc, errmsg);
+
+  free(errmsg);
+  if (argstr) free(argstr);
+  if (dat->str) free(dat->str);
+  free(dat);
+
+  s7_error(sc, s7_make_symbol(sc, "format-error"), sc->x);
+  return(NULL);
+}
+
+
+static void format_append_char(format_data *dat, char c)
+{
+  if (dat->len <= dat->loc + 2)
+    {
+      dat->len *= 2;
+      dat->str = (char *)realloc(dat->str, dat->len);
+    }
+  dat->str[dat->loc++] = c;
+}
+
+
+static void format_append_string(format_data *dat, char *str)
+{
+  int i, len;
+  len = safe_strlen(str);
+  for (i = 0; i < len; i++)
+    format_append_char(dat, str[i]);
+}
+
+
+static int format_read_integer(s7_scheme *sc, int *cur_i, int str_len, const char *str, s7_pointer args, format_data *fdat)
+{
+  int i, arg1 = -1;
+  char *tmp;
+  i = *cur_i;
+  if (isdigit(str[i]))
+    {
+      tmp = (char *)(str + i);
+      if (sscanf(tmp, "%d", &arg1) < 1)
+	s7_format_error(sc, "bad number?", str, args, fdat);
+
+      for (i = i + 1; i < str_len - 1; i++)
+	if (!isdigit(str[i]))
+	  break;
+      if (i >= str_len)
+	s7_format_error(sc, "numeric argument, but no directive!", str, args, fdat);
+    }
+  *cur_i = i;
+  return(arg1);
+}
+
+
+static void format_number(s7_scheme *sc, format_data *fdat, int radix, int width, int precision)
+{
+  char *tmp;
+  if (width < 0) width = 0;
+  tmp = s7_number_to_string_1(sc, car(fdat->args), radix, width, precision);
+  format_append_string(fdat, tmp);
+  free(tmp);
+  fdat->args = cdr(fdat->args);
+}
+
+
+static char *format_to_c_string(s7_scheme *sc, const char* str, s7_pointer args, s7_pointer *next_arg)
+{
+  #define INITIAL_FORMAT_LENGTH 128
+  int i = 0, str_len = 0;
+  format_data *fdat = NULL;
+  char *result, *tmp = NULL;
+
+  str_len = strlen(str);
+
+  fdat = (format_data *)malloc(sizeof(format_data));
+  fdat->loc = 0;
+  fdat->len = INITIAL_FORMAT_LENGTH;
+  fdat->str = (char *)calloc(fdat->len, sizeof(char)); /* ~nT col checks need true current string length, so malloc here is messy */
+  fdat->str[0] = '\0';
+  fdat->args = args;
+
+  if (str_len == 0)
+    {
+      if ((args != sc->NIL) &&
+	  (next_arg == NULL))
+	return(s7_format_error(sc, "too many arguments", str, args, fdat));
+    }
+  else
+    {
+      for (i = 0; i < str_len - 1; i++)
+	{
+	  if (str[i] == '~')
+	    {
+	      switch (str[i + 1])
+		{
+		  /* -------- newline -------- */
+		case '%': 
+		  format_append_char(fdat, '\n');
+		  i++;
+		  break;
+
+		  /* -------- tilde -------- */
+		case '~':
+		  format_append_char(fdat, '~');
+		  i++;
+		  break;
+
+		  /* -------- trim white-space -------- */
+		case '\n':
+		  for (i = i + 2; i <str_len - 1; i++)
+		    if (!(isspace(str[i])))
+		      {
+			i--;
+			break;
+		      }
+		  break;
+
+		  /* -------- ignore arg -------- */
+		case '*':
+		  i++;
+		  fdat->args = cdr(fdat->args);
+		  break;
+
+		  /* -------- exit -------- */
+		case '^':
+		  if (fdat->args == sc->NIL)
+		    {
+		      i = str_len;
+		      goto ALL_DONE;
+		    }
+		  i++;
+		  break;
+
+		  /* -------- object->string -------- */
+		case 'A': case 'a':
+		case 'S': case 's':
+		  if (fdat->args == sc->NIL)
+		    return(s7_format_error(sc, "missing argument", str, args, fdat));
+		  i++;
+		  tmp = s7_object_to_c_string_1(sc, car(fdat->args), (str[i] == 'S') || (str[i] == 's'));
+		  format_append_string(fdat, tmp);
+		  if (tmp) free(tmp);
+		  fdat->args = cdr(fdat->args);
+		  break;
+
+		  /* -------- iteration -------- */
+		case '{':
+		  {
+		    s7_pointer curly_arg;
+		    char *curly_str = NULL;
+		    int k, curly_len = -1, curly_nesting = 1;
+		    if (!s7_is_list(sc, car(fdat->args)))
+		      return(s7_format_error(sc, "'{' directive argument should be a list", str, args, fdat));
+
+		    for (k = i + 2; k < str_len - 1; k++)
+		      if (str[k] == '~')
+			{
+			  if (str[k + 1] == '}')
+			    {
+			      curly_nesting--;
+			      if (curly_nesting == 0)
+				{
+				  curly_len = k - i - 1;
+				  break;
+				}
+			    }
+			  else
+			    {
+			      if (str[k + 1] == '{')
+				curly_nesting++;
+			    }
+			}
+		    if (curly_len == -1)
+		      return(s7_format_error(sc, "'{' directive, but no matching '}'", str, args, fdat));
+
+		    if (curly_len <= 1)
+		      return(s7_format_error(sc, "~{...~} doesn't consume any arguments!", str, args, fdat));
+
+		    curly_str = (char *)malloc(curly_len);
+		    for (k = 0; k < curly_len - 1; k++)
+		      curly_str[k] = str[i + 2 + k];
+		    curly_str[curly_len - 1] = '\0';
+
+		    curly_arg = car(fdat->args); 
+		    while (curly_arg != sc->NIL)
+		      {
+			s7_pointer new_arg = sc->NIL;
+			tmp = format_to_c_string(sc, curly_str, curly_arg, &new_arg);
+			format_append_string(fdat, tmp);
+			if (tmp) free(tmp);
+			if (curly_arg == new_arg)
+			  return(s7_format_error(sc, "~{...~} doesn't consume any arguments!", str, args, fdat));
+			curly_arg = new_arg;
+		      }
+
+		    i += (curly_len + 2); /* jump past the ending '}' too */
+		    fdat->args = cdr(fdat->args);
+		    free(curly_str);
+		  }
+		  break;
+		  
+		case '}':
+		  return(s7_format_error(sc, "unmatched '}'", str, args, fdat));
+		  
+		  /* -------- numeric args -------- */
+		case '0': case '1': case '2': case '3': case '4': case '5':
+		case '6': case '7': case '8': case '9': case ',':
+		case 'B': case 'b':
+		case 'D': case 'd':
+		case 'E': case 'e':
+		case 'F': case 'f':
+		case 'G': case 'g':
+		case 'O': case 'o':
+		case 'T': case 't':
+		case 'X': case 'x':
+		  {
+		    int width = -1, precision = -1;
+		    i++;
+		    if (isdigit(str[i]))
+		      width = format_read_integer(sc, &i, str_len, str, args, fdat);
+		    if (str[i] == ',')
+		      {
+			i++;
+			if (isdigit(str[i]))
+			  precision = format_read_integer(sc, &i, str_len, str, args, fdat);
+		      }
+
+		    switch (str[i])
+		      {
+			/* -------- pad to column -------- */
+			/*   are columns numbered from 1 or 0?  there seems to be disagreement about this directive */
+			/*   does "space over to" mean including? */
+		      case 'T': case 't':
+			if (width == -1) width = 0;
+			if (precision == -1) precision = 0;
+			if ((width > 0) || (precision > 0))         /* (format #f "a~8Tb") */
+			  {
+			    int j, k, outstr_len;
+			    outstr_len = safe_strlen(fdat->str);
+			    for (k = outstr_len - 1; k > 0; k--)
+			      if (fdat->str[k] == '\n')
+				break;
+			    
+			    if (precision > 0)
+			      {
+				int mult;
+				mult = (int)(ceil((double)(outstr_len - k - width) / (double)precision)); /* CLtL2 ("least positive int") */
+				if (mult < 1) mult = 1;
+				width += (precision * mult);
+			      }
+
+			    for (j = outstr_len - k; j < width; j++)
+			      format_append_char(fdat, ' ');
+			  }
+			break;
+
+			/* -------- numbers -------- */
+		      case 'F': case 'f':
+		      case 'G': case 'g':
+		      case 'E': case 'e':
+			format_number(sc, fdat, 10, width, (precision < 0) ? 14 : precision);
+			break;
+
+		      case 'D': case 'd':
+			format_number(sc, fdat, 10, width, (precision < 0) ? 0 : precision);
+			break;
+
+		      case 'O': case 'o':
+			format_number(sc, fdat, 8, width, (precision < 0) ? 0 : precision);
+			break;
+
+		      case 'X': case 'x':
+			format_number(sc, fdat, 16, width, (precision < 0) ? 0 : precision);
+			break;
+
+		      case 'B': case 'b':
+			format_number(sc, fdat, 2, width, (precision < 0) ? 0 : precision);
+			break;
+		      
+		      default:
+			return(s7_format_error(sc, "unimplemented format directive", str, args, fdat));
+		      }
+		  }
+		  break;
+
+		default:
+		  return(s7_format_error(sc, "unimplemented format directive", str, args, fdat));
+		}
+	    }
+	  else format_append_char(fdat, str[i]);
+	}
+    }
+
+ ALL_DONE:
+  if (next_arg)
+    (*next_arg) = fdat->args;
+  else
+    {
+      if (fdat->args != sc->NIL)
+	return(s7_format_error(sc, "too many arguments", str, args, fdat));
+    }
+  if (i < str_len)
+    format_append_char(fdat, str[i]);    /* possible trailing ~ is sent out */
+  format_append_char(fdat, '\0');
+  result = fdat->str;
+  free(fdat);
+  return(result);
+}
+
+
+static s7_pointer format_to_output(s7_scheme *sc, s7_pointer out_loc, const char *in_str, s7_pointer args)
+{
+  char *out_str;
+  s7_pointer result;
+
+  out_str = format_to_c_string(sc, in_str, args, NULL);
+  result = s7_make_string(sc, out_str);
+  if (out_str) free(out_str);
+
+  if (out_loc == sc->F)
+    return(result);
+
+  s7_write(sc, result, out_loc);
+  return(sc->F);
+}
+
+/* TODO: test output ports */
+
+static s7_pointer g_format(s7_scheme *sc, s7_pointer args)
+{
+  #define H_format "(format out str . args) substitutes args into str sending the result to out."
+
+  if (s7_is_string(car(args)))
+    return(format_to_output(sc, sc->F, s7_string(car(args)), cdr(args)));
+
+  if (!s7_is_string(cadr(args)))
+    return(s7_wrong_type_arg_error(sc, "format", 2, cadr(args), "a string"));
+    
+  if (!((s7_is_boolean(sc, car(args))) ||
+	((car(args) != sc->NIL) &&
+	 (s7_is_output_port(sc, car(args))))))
+    return(s7_wrong_type_arg_error(sc, "format", 1, car(args), "#f, #t, or an output port"));
+
+  return(format_to_output(sc, (car(args) == sc->T) ? sc->output_port : car(args), s7_string(cadr(args)), cddr(args)));
+}
+
+#endif
+
+
+
+
 /* -------------------------------- threads -------------------------------- */
 
 #if HAVE_PTHREADS
@@ -12873,7 +13280,9 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "list->string",            g_list_to_string,          1, 0, false, H_list_to_string);
   s7_define_function(sc, "string->list",            g_string_to_list,          1, 0, false, H_string_to_list);
   s7_define_function(sc, "object->string",          g_object_to_string,        1, 0, false, H_object_to_string);
-  
+#if WITH_FORMAT
+  s7_define_function(sc, "format",                  g_format,                  1, 0, true, H_format);
+#endif  
   
   /* lists */
   s7_define_function(sc, "null?",                   g_is_null,                 1, 0, false, H_is_null);

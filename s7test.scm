@@ -32,6 +32,7 @@
 (define with-hash-tables #t)                                   ; make-hash-table and friends
 (define with-keywords #t)                                      ; make-keyword, keyword->symbol etc
 (define with-gensym #t)                                        ; gensym with optional string arg (prefix)
+(define with-format #t)                                        ; simple format tests
 
 
 ;; we're assuming call/cc is defined
@@ -2622,6 +2623,7 @@
 (define complex-5 1234.0+3.14159265358979i)
 (define double-6 1234000000.0)
 (define complex-6 1234000000.0+3.14159265358979i)
+(define number-to-string-top 0)
 
 (for-each
  (lambda (op opname)
@@ -2742,6 +2744,7 @@
 					   (search mid hi)
 					   (search lo mid)))))))
 		       (return (search last-good (- (* 2 last-good) 1)))))))))))
+  (set! number-to-string-top first-bad)
   (if (integer? first-bad)
       (begin 
 	(display "string->number ints fail around ") 
@@ -3260,6 +3263,86 @@
     (begin (display "(string<->number 0.0000001001) -> ") (display (number->string 0.0000001001)) 
 	   (display " -> ") (display (string->number (number->string 0.0000001001))) (newline)))
 
+(test (number->string 123 8) "173")
+(test (number->string 123 16) "7b")
+(test (number->string 123 2) "1111011")
+(test (number->string -123 8) "-173")
+(test (number->string -123 16) "-7b")
+(test (number->string -123 2) "-1111011")
+
+(test (number->string 0 8) "0")
+(test (number->string 0 2) "0")
+(test (number->string 0 16) "0")
+(test (number->string 1 8) "1")
+(test (number->string 1 2) "1")
+(test (number->string 1 16) "1")
+(test (number->string -1 8) "-1")
+(test (number->string -1 2) "-1")
+(test (number->string -1 16) "-1")
+
+(let ((happy #t))
+  (do ((i 2 (+ i 1)))
+      ((or (not happy)
+	   (= i 17)))
+    (if (not (eqv? 0 (string->number (number->string 0 i) i)))
+	(begin 
+	  (set! happy #f) 
+	  (display "(string<->number 0 ") (display i) (display " -> ") (display (number->string 0 i)) 
+	  (display " -> ") (display (string->number (number->string 0 i) i)) (newline)))
+    (if (not (eqv? 1234 (string->number (number->string 1234 i) i)))
+	(begin 
+	  (set! happy #f) 
+	  (display "(string<->number 1234 ") (display i) (display " -> ") (display (number->string 1234 i)) 
+	  (display " -> ") (display (string->number (number->string 1234 i) i)) (newline)))
+    (if (not (eqv? -1234 (string->number (number->string -1234 i) i)))
+	(begin 
+	  (set! happy #f) 
+	  (display "(string<->number -1234 ") (display i) (display " -> ") (display (number->string -1234 i)) 
+	  (display " -> ") (display (string->number (number->string -1234 i) i)) (newline)))))
+
+(for-each
+ (lambda (radix)
+   (let* ((last-good 0)
+	  (first-bad 
+	   (call/cc
+	    (lambda (return)
+	      (do ((i 1 (+ i 1))
+		   (k 1 (* k 2)))
+		  ((= i 200) #f)
+		(if (and (eqv? k (string->number (number->string k radix) radix))
+			 (eqv? (- k) (string->number (number->string (- k) radix) radix))
+			 (not (negative? k))) ; might hit sign bit
+		    (set! last-good k)
+		    (if (negative? k)
+			(return (- (* 2 last-good) 1))
+			(letrec ((search 
+				  (lambda (lo hi)
+				    (if (= lo hi)
+					hi
+					(let ((mid (inexact->exact (floor (/ (+ hi lo) 2)))))
+					  (if (and (eqv? mid (string->number (number->string mid radix) radix))
+						   (eqv? (- mid) (string->number (number->string (- mid) radix) radix)))
+					      (search mid hi)
+					      (search lo mid)))))))
+			  (return (search last-good (- (* 2 last-good) 1)))))))))))
+     (if (not (= first-bad number-to-string-top))
+	 (if (integer? first-bad)
+	     (begin 
+	       (display "string->number ints (radix ") (display radix) (display ") fail around ") 
+	       (display first-bad)
+	       (display " (2^")
+	       (display (/ (log first-bad) (log 2.0)))
+	       (display ")")
+	       (newline))
+	     (begin
+	       (display "(string->number ints (radix ") (display radix) (display ") are good out to at least 2^200)")
+	       (newline))))))
+ (list 2 8 16 7 12))
+
+;;  (do ((i 0 (+ i 1)) (n 1 (* n 2))) ((= i 63)) (display n) (display " ") (display (number->string n 16)) (newline))
+ 
+
+
 ;;; --------------------------------------------------------------------------------
 
 (num-test (exact?) 'error)
@@ -3412,9 +3495,10 @@
 (num-test (string->number) 'error)
 (num-test (string->number 'symbol) 'error)
 (num-test (string->number "1.0" "1.0") 'error)
-(num-test (number->string) 'error)
-(num-test (number->string "hi") 'error)
-(num-test (number->string 1.0+23.0i 1.0+23.0i 1.0+23.0i) 'error)
+(test (number->string) 'error)
+(test (number->string "hi") 'error)
+(test (number->string 1.0+23.0i 1.0+23.0i 1.0+23.0i) 'error)
+
 
 ;;; --------------------------------------------------------------------------------
 
@@ -27701,38 +27785,38 @@
 (test (even? 2) #t )
 (test (even? -4) #t )
 (test (even? -1) #f )
-(test (max 34 5 7 38 6) 38 )
-(test (min 3  5 5 330 4 -24) -24 )
-(test (+ 3 4) 7 )
-(test (+ 3) '3 )
-(test (+) 0 )
-(test (* 4) 4 )
-(test (*) 1 )
-(test (- 3 4) -1 )
-(test (- 3) -3 )
-(test (abs -7) 7 )
-(test (abs 7) 7 )
-(test (abs 0) 0 )
-(test (quotient 35 7) 5 )
-(test (quotient -35 7) -5 )
-(test (quotient 35 -7) -5 )
-(test (quotient -35 -7) 5 )
-(test (modulo 13 4) 1 )
-(test (remainder 13 4) 1 )
-(test (modulo -13 4) 3 )
-(test (remainder -13 4) -1 )
-(test (modulo 13 -4) -3 )
-(test (remainder 13 -4) 1 )
-(test (modulo -13 -4) -1 )
-(test (remainder -13 -4) -1 )
-(test (modulo 0 86400) 0 )
-(test (modulo 0 -86400) 0 )
-(test (gcd 0 4) 4 )
-(test (gcd -4 0) 4 )
-(test (gcd 32 -36) 4 )
-(test (gcd) 0 )
-(test (lcm 32 -36) 288 )
-(test (lcm) 1 )
+(num-test (max 34 5 7 38 6) 38 )
+(num-test (min 3  5 5 330 4 -24) -24 )
+(num-test (+ 3 4) 7 )
+(num-test (+ 3) '3 )
+(num-test (+) 0 )
+(num-test (* 4) 4 )
+(num-test (*) 1 )
+(num-test (- 3 4) -1 )
+(num-test (- 3) -3 )
+(num-test (abs -7) 7 )
+(num-test (abs 7) 7 )
+(num-test (abs 0) 0 )
+(num-test (quotient 35 7) 5 )
+(num-test (quotient -35 7) -5 )
+(num-test (quotient 35 -7) -5 )
+(num-test (quotient -35 -7) 5 )
+(num-test (modulo 13 4) 1 )
+(num-test (remainder 13 4) 1 )
+(num-test (modulo -13 4) 3 )
+(num-test (remainder -13 4) -1 )
+(num-test (modulo 13 -4) -3 )
+(num-test (remainder 13 -4) 1 )
+(num-test (modulo -13 -4) -1 )
+(num-test (remainder -13 -4) -1 )
+(num-test (modulo 0 86400) 0 )
+(num-test (modulo 0 -86400) 0 )
+(num-test (gcd 0 4) 4 )
+(num-test (gcd -4 0) 4 )
+(num-test (gcd 32 -36) 4 )
+(num-test (gcd) 0 )
+(num-test (lcm 32 -36) 288 )
+(num-test (lcm) 1 )
 
 (test (string->number "+#.#") #f)
 (test (string->number "-#.#") #f)
@@ -27818,15 +27902,15 @@
   (test (modulo  0 (- b2-0)) 0 )
   ))
 
-(test (string->number "100") 100)
-(test (string->number "100" 16) 256)
-(test (string->number "100" 2) 4)
-(test (string->number "100" 8) 64)
-(test (string->number "100" 10) 100)
-(test (string->number "11" 16) 17)
-(test (string->number "-11" 16) -17)
-(test (string->number "aa" 16) 170)
-(test (string->number "-aa" 16) -170)
+(num-test (string->number "100") 100)
+(num-test (string->number "100" 16) 256)
+(num-test (string->number "100" 2) 4)
+(num-test (string->number "100" 8) 64)
+(num-test (string->number "100" 10) 100)
+(num-test (string->number "11" 16) 17)
+(num-test (string->number "-11" 16) -17)
+(num-test (string->number "aa" 16) 170)
+(num-test (string->number "-aa" 16) -170)
 
 (for-each
  (lambda (str rval fval)
@@ -27859,10 +27943,10 @@
        (lambda (a b radix) (< (abs (- a b)) (/ 1.0 (* radix radix radix))))
        ))
 
-(test (string->number "34" 2) #f)
-(test (string->number "19" 8) #f)
-(test (string->number "1c" 10) #f)
-(test (string->number "1c" 16) 28)
+(num-test (string->number "34" 2) #f)
+(num-test (string->number "19" 8) #f)
+(num-test (string->number "1c" 10) #f)
+(num-test (string->number "1c" 16) 28)
 
 (test (string->number "") #f )
 (test (string->number ".") #f )
@@ -30856,5 +30940,223 @@
 	(test (eval `(let ((,sym1 32) (,sym2 1)) (+ ,sym1 ,sym2))) 33))
 
       (test (let ((hi (gensym))) (eq? hi (string->symbol (symbol->string hi)))) #t)
+
+      ))
+
+
+(if with-format
+    (begin 
+
+      (test (format #f "hiho") "hiho")
+      (test (format #f "") "")
+      (test (format #f "a") "a")
+      (test (format #f "" 1) 'error)
+      (test (format #f "hiho" 1) 'error)
+      (test (format #f "a~%" 1) 'error)
+      
+      (test (format #f "~~") "~")
+      (test (format #f "~~~~") "~~")
+      (test (format #f "a~~") "a~")
+      (test (format #f "~~a") "~a")
+      
+      (test (format #f "hiho~%ha") (string-append "hiho" (string #\newline) "ha"))
+      (test (format #f "~%") (string #\newline))
+      (test (format #f "~%ha") (string-append (string #\newline) "ha"))
+      (test (format #f "hiho~%") (string-append "hiho" (string #\newline)))
+      
+      (for-each
+       (lambda (arg)
+	 (let ((result (catch #t (lambda () (format arg "hiho")) (lambda args 'error))))
+	   (if (not (eq? result 'error))
+	       (begin (display "(format ") (display arg) (display " \"hiho\")")
+		      (display " returned ") (display result) 
+		      (display " but expected 'error")
+		      (newline)))))
+       (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi abs (lambda () 1) '#(()) (list 1 2 3) '(1 . 2)))
+      
+      (for-each
+       (lambda (arg)
+	 (let ((result (catch #t (lambda () (format #f arg)) (lambda args 'error))))
+	   (if (not (eq? result 'error))
+	       (begin (display "(format #f ") (display arg) (display ")")
+		      (display " returned ") (display result) 
+		      (display " but expected 'error")
+		      (newline)))))
+       (list -1 #\a 1 #f #t '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi abs (lambda () 1) '#(()) (list 1 2 3) '(1 . 2)))
+      
+      (for-each
+       (lambda (arg res)
+	 (let ((val (catch #t (lambda () (format #f "~A" arg)) (lambda args 'error))))
+	   (if (or (not (string? val))
+		   (not (string=? val res)))
+	       (begin (display "(format #f \"~A\" ") (display arg) 
+		      (display " returned \"") (display val) 
+		      (display "\" but expected \"") (display res) (display "\"") 
+		      (newline)))))
+       (list "hiho"  -1  #\a  1   #f   #t  '#(1 2 3)   3.14   3/4  1.0+1.0i '()  '#(())  (list 1 2 3) '(1 . 2) 'hi ':hi abs)
+       (list "hiho" "-1" "a" "1" "#f" "#t" "#(1 2 3)" "3.14" "3/4" "1+1i"   "()" "#(())" "(1 2 3)"    "(1 . 2)" "hi" ":hi" "abs"))
+      
+      (test (format #f "hi ~A ho" 1) "hi 1 ho")
+      (test (format #f "hi ~a ho" 1) "hi 1 ho")
+      (test (format #f "hi ~A ho" 1 2) 'error)
+      (test (format #f "hi ~A ho") 'error)
+      (test (format #f "~a~A~a" 1 2 3) "123")
+      (test (format #f "~a~~~a" 1 3) "1~3")
+      (test (format #f "~a~%~a" 1 3) (string-append "1" (string #\newline) "3"))
+      
+      (for-each
+       (lambda (arg res)
+	 (let ((val (catch #t (lambda () (format #f "~S" arg)) (lambda args 'error))))
+	   (if (or (not (string? val))
+		   (not (string=? val res)))
+	       (begin (display "(format #f \"~S\" ") (display arg) 
+		      (display " returned \"") (display val) 
+		      (display "\" but expected \"") (display res) (display "\"") 
+		      (newline)))))
+       (list "hiho"  -1  #\a  1   #f   #t  '#(1 2 3)   3.14   3/4  1.5+1.5i '()  '#(())  (list 1 2 3) '(1 . 2) 'hi ':hi abs)
+       (list "\"hiho\"" "-1" "#\\a" "1" "#f" "#t" "#(1 2 3)" "3.14" "3/4" "1.5+1.5i"   "()" "#(())" "(1 2 3)"    "(1 . 2)" "hi" ":hi" "abs"))
+      
+      (test (format #f "hi ~S ho" 1) "hi 1 ho")
+      (test (format #f "hi ~S ho" "abc") "hi \"abc\" ho")
+      (test (format #f "~s~a" #\a #\b) "#\\ab")
+      (test (format #f "hi ~S ho") 'error)
+      (test (format #f "hi ~S ho" 1 2) 'error)
+      
+      
+      (test (format #f "hi ~Z ho") 'error)
+      (test (format #f "hi ~+ ho") 'error)
+      (test (format #f "hi ~# ho") 'error)
+      
+      (test (format #f "hi ~} ho") 'error)
+      (test (format #f "hi {ho~}") 'error)
+      
+      (test (format #f "~{~A~}" '(1 2 3)) "123")
+      (test (format #f "asb~{~A ~}asb" '(1 2 3 4)) "asb1 2 3 4 asb")
+      (test (format #f "asb~{~A ~A.~}asb" '(1 2 3 4)) "asb1 2.3 4.asb")
+      (test (format #f "asb~{~A asd" '(1 2 3)) 'error)
+      (test (format #f "~{~A~}" 1 2 3) 'error)
+      (test (format #f ".~{~A~}." '()) "..")
+      
+      (test (format #f "asb~{~}asd" '(1 2 3)) 'error) ; this apparently makes the format.scm in Guile hang?
+      (test (format #f "asb~{ ~}asd" '(1 2 3)) 'error)
+      (test (format #f "asb~{ hiho~~~}asd" '(1 2 3)) 'error)
+      
+      (test (format #f "~{~A ~A ~}" '(1 "hi" 2 "ho")) "1 hi 2 ho ")
+      (test (format #f "~{.~{+~A+~}.~}" (list (list 1 2 3) (list 4 5 6))) ".+1++2++3+..+4++5++6+.")
+      (test (format #f "~{~s ~}" '(fred jerry jill)) "fred jerry jill ")
+      (test (format #f "~{~s~^ ~}" '(fred jerry jill)) "fred jerry jill")
+      (test (format #f "~{~s~^~^ ~}" '(fred jerry jill)) "fred jerry jill")
+      (test (format #f "~{~A ~A ~}" '(1 "hi" 2)) 'error)
+      (test (format #f "~{.~{~A~}+~{~A~}~}" '((1 2) (3 4 5) (6 7 8) (9))) ".12+345.678+9")
+      (test (format #f "~{.~{+~{-~A~}~}~}" '(((1 2) (3 4 5)))) ".+-1-2+-3-4-5")
+      (test (format #f "~{.~{+~{-~A~}~}~}" '(((1 2) (3 4 5)) ((6) (7 8 9)))) ".+-1-2+-3-4-5.+-6+-7-8-9")
+      
+      (test (format #f "~A ~* ~A" 1 2 3) "1  3")
+      (test (format #f "~*" 1) "")
+      (test (format #f "~{~* ~}" '(1 2 3)) "   ")
+      
+      (test (format #f "this is a ~
+             sentence") "this is a sentence")
+      
+      ;; ~nT handling is a mess -- what are the defaults?  which is column 1? do we space up to or up to and including?
+      
+      (test (format #f "asdh~20Thiho") "asdh                hiho")
+      (test (format #f "asdh~2Thiho") "asdhhiho")
+      (test (format #f "a~Tb") "ab")
+      (test (format #f "0123456~4,8Tb") "0123456     b")
+      (test (format #f "XXX~%0123456~4,8Tb") (string-append "XXX" (string #\newline) "0123456    b")) ; clearly wrong...
+      (test (format #f "0123456~0,8Tb") "0123456 b")
+      (test (format #f "0123456~10,8Tb") "0123456           b")
+      (test (format #f "0123456~1,0Tb") "0123456b")
+      (test (format #f "0123456~1,Tb") "0123456b")
+      (test (format #f "0123456~1,Tb") "0123456b")
+      (test (format #f "0123456~,Tb") "0123456b")
+      (test (format #f "0123456~7,10Tb") "0123456          b") 
+      (test (format #f "0123456~8,10tb") "0123456           b")
+      (test (format #f "0123456~3,12tb") "0123456        b")
+      
+      (test (format #f "~40TX") "                                       X")
+      (test (format #f "X~,8TX~,8TX") "X       X       X")
+      (test (format #f "X~8,TX~8,TX") "X       XX")
+      (test (format #f "X~8,10TX~8,10TX") "X                 X         X")
+      (test (format #f "X~8,0TX~8,0TX") "X       XX")
+      (test (format #f "X~0,8TX~0,8TX") "X       X       X")
+      (test (format #f "X~1,8TX~1,8TX") "X        X       X")
+      (test (format #f "X~,8TX~,8TX") "X       X       X")
+      (test (format #f "X~TX~TX") "XXX") ; clisp and sbcl say "X X X" here and similar differences elsewhere
+      (test (format #f "X~0,0TX~0,0TX") "XXX")
+      (test (format #f "X~0,TX~0,TX") "XXX")
+      (test (format #f "X~,0TX~,0TX") "XXX")
+      
+      (test (format #f "~D" 123) "123")
+      (test (format #f "~X" 123) "7b")
+      (test (format #f "~B" 123) "1111011")
+      (test (format #f "~O" 123) "173")
+      
+      (test (format #f "~10D" 123) "       123")
+      (test (format #f "~10X" 123) "        7b")
+      (test (format #f "~10B" 123) "   1111011")
+      (test (format #f "~10O" 123) "       173")
+      
+      (test (format #f "~D" -123) "-123")
+      (test (format #f "~X" -123) "-7b")
+      (test (format #f "~B" -123) "-1111011")
+      (test (format #f "~O" -123) "-173")
+      
+      (test (format #f "~10D" -123) "      -123")
+      (test (format #f "~10X" -123) "       -7b")
+      (test (format #f "~10B" -123) "  -1111011")
+      (test (format #f "~10O" -123) "      -173")
+      
+      (test (format #f "~d" 123) "123")
+      (test (format #f "~x" 123) "7b")
+      (test (format #f "~b" 123) "1111011")
+      (test (format #f "~o" 123) "173")
+      
+      (test (format #f "~10d" 123) "       123")
+      (test (format #f "~10x" 123) "        7b")
+      (test (format #f "~10b" 123) "   1111011")
+      (test (format #f "~10o" 123) "       173")
+      
+      (test (format #f "~d" -123) "-123")
+      (test (format #f "~x" -123) "-7b")
+      (test (format #f "~b" -123) "-1111011")
+      (test (format #f "~o" -123) "-173")
+      
+      (test (format #f "~10d" -123) "      -123")
+      (test (format #f "~10x" -123) "       -7b")
+      (test (format #f "~10b" -123) "  -1111011")
+      (test (format #f "~10o" -123) "      -173")
+      
+      (if (defined? 'most-positive-fixnum)
+	  (begin
+	    
+	    (test (format #f "~D" most-positive-fixnum) "9223372036854775807")
+	    (test (format #f "~D" (+ 1 most-negative-fixnum)) "-9223372036854775807")
+	    
+	    (test (format #f "~X" most-positive-fixnum) "7fffffffffffffff")
+	    (test (format #f "~X" (+ 1 most-negative-fixnum)) "-7fffffffffffffff")
+	    
+	    (test (format #f "~O" most-positive-fixnum) "777777777777777777777")
+	    (test (format #f "~O" (+ 1 most-negative-fixnum)) "-777777777777777777777")
+	    
+	    (test (format #f "~B" most-positive-fixnum) "111111111111111111111111111111111111111111111111111111111111111")
+	    (test (format #f "~B" (+ 1 most-negative-fixnum)) "-111111111111111111111111111111111111111111111111111111111111111")
+	    
+	    ))
+      
+      (test (format #f "~0D" 123) "123")
+      (test (format #f "~0X" 123) "7b")
+      (test (format #f "~0B" 123) "1111011")
+      (test (format #f "~0O" 123) "173")
+      
+      (test (format #f "~F" 3.0) "3.0")
+      (test (format #f "~E" 3.0) "3.0")
+      (test (format #f "~G" 3.0) "3.0")
+      (test (format #f "~f" 3.0) "3.0")
+      (test (format #f "~e" 3.0) "3.0")
+      (test (format #f "~g" 3.0) "3.0")
+      
+      ;; "precision" is different in C and in Lisp, so I'll ignore it...
 
       ))

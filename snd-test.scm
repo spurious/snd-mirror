@@ -46,7 +46,6 @@
 (if (provided? 'snd-s7)
     (begin
       (if (not (provided? 's7-optargs.scm)) (load "s7-optargs.scm"))
-      (if (not (provided? 's7-format.scm)) (load "s7-format.scm"))
 	  
       (define O_RDWR 2)
       (define O_APPEND 1024)
@@ -110,6 +109,9 @@
       (define (sort lst . opt) (sort! (append lst '()) (if (null? opt) < (car opt))))
       ))
 
+(if (and (provided? 'snd-guile)
+	 (not (provided? 'snd-debug.scm)))
+    (load "debug.scm"))
 
 (if (not (defined? 'snd-test)) (define snd-test -1))
 (define full-test (< snd-test 0))
@@ -2510,7 +2512,8 @@
 		  (snd-display ";mus-sound-report-cache->hiho.tmp failed?")
 		  (let ((line (read-line p)))
 		    (if (or (not (string? line))
-			    (not (string=? line "sound table:")))
+			    (and (not (string=? line "sound table:"))
+				 (not (string=? line (string-append "sound table:" (string #\newline))))))
 			(snd-display ";print-cache 1: ~A?" line))
 		    (close-input-port p)
 		    (delete-file "hiho.tmp")))))
@@ -9303,13 +9306,15 @@ EDITS: 5
 		    (set! line (read-line p))
 		    (set! line (read-line p))
 		    (if (or (not (string? line))
-			    (not (string=? "oboe.snd, fft 512 points beginning at sample 0 (0.000 secs), blackman2-window" line)))
+			    (and (not (string=? "oboe.snd, fft 512 points beginning at sample 0 (0.000 secs), blackman2-window" line))
+				 (not (string=? (string-append "oboe.snd, fft 512 points beginning at sample 0 (0.000 secs), blackman2-window" (string #\newline)) line))))
 			(snd-display ";peaks 2: ~A?" line))
 		    (set! line (read-line p))
 		    (set! line (read-line p))
 		    (if (or (not (string? line))
 			    (and (not (string=? "  86.132812  1.00000" line))
-				 (not (string=? "  0.000000  1.00000" line)))) ; fht/fft disagreement about 0/1 (groan)
+				 (not (string=? "  0.000000  1.00000" line)) ; fht/fft disagreement about 0/1 (groan)
+				 (not (string=? (string-append "  0.000000  1.00000" (string #\newline)) line))))
 			(snd-display ";peaks 3: ~A?" line))
 		    (close-input-port p)))))
 	(delete-file "tmp.peaks")
@@ -37817,11 +37822,11 @@ EDITS: 3
 			   (list "1a.snd" "oboe.snd" "storm.snd" "lola.snd"))))))
 	  
 	  (snd-display ";         scl   rev   env   map   ptree  scn  pad   wrt   clm   mix   src   del")
-	  (snd-display ";1a:   ~{~A~}" (map (lambda (a) (format #f "~6,2F" a)) (car data)))
-	  (snd-display ";oboe: ~{~A~}" (map (lambda (a) (format #f "~6,2F" a)) (cadr data)))
-	  (snd-display ";storm:~{~A~}" (map (lambda (a) (format #f "~6,2F" a)) (caddr data)))
+	  (snd-display ";1a:      ~{~A   ~}" (map (lambda (a) (format #f "~1,2F" (if (< a .005) 0.0 a))) (car data)))
+	  (snd-display ";oboe:    ~{~A   ~}" (map (lambda (a) (format #f "~1,2F" (if (< a .005) 0.0 a))) (cadr data)))
+	  (snd-display ";storm:   ~{~A   ~}" (map (lambda (a) (format #f "~1,2F" (if (< a .005) 0.0 a))) (caddr data)))
 	  (if (list-p (cadddr data))
-	      (snd-display ";away: ~{~A~}" (map (lambda (a) (format #f "~6,2F" a)) (cadddr data))))
+	      (snd-display ";away:    ~{~A   ~}" (map (lambda (a) (format #f "~1,2F" (if (< a .005) 0.0 a))) (cadddr data))))
 	  )
 	
 	(if (and all-args with-big-file)
@@ -67726,9 +67731,6 @@ EDITS: 1
 ;;; ---------------- test 28: errors ----------------
 
 (defvar env3 '(0 0 1 1))
-
-(if (not (provided? 'snd-debug.scm))
-    (load "debug.scm"))
 
 (defmacro simple-time (a) 
   `(let ((start (get-internal-real-time))) 
