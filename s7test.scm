@@ -120,6 +120,9 @@
      (number-ok? ',tst result ,expected)))
 
 
+(define our-pi 3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930382)
+
+
 ;;; --------------------------------------------------------------------------------
 ;;; GENERIC STUFF
 ;;; --------------------------------------------------------------------------------
@@ -2732,7 +2735,7 @@
 		      (eqv? (- k) (string->number (number->string (- k))))
 		      (not (negative? k))) ; might hit sign bit
 		 (set! last-good k)
-		 (if (negative? k)
+		 (if (not (positive? k))
 		     (return (- (* 2 last-good) 1))
 		     (letrec ((search 
 			       (lambda (lo hi)
@@ -3325,7 +3328,11 @@
 					      (search mid hi)
 					      (search lo mid)))))))
 			  (return (search last-good (- (* 2 last-good) 1)))))))))))
-     (if (not (= first-bad number-to-string-top))
+     (if (or (and (number? number-to-string-top) ; might have bignums
+		  (number? first-bad)
+		  (not (= first-bad number-to-string-top)))
+	     (and (not (number? number-to-string-top))
+		  (number? first-bad)))
 	 (if (integer? first-bad)
 	     (begin 
 	       (display "string->number ints (radix ") (display radix) (display ") fail around ") 
@@ -3341,6 +3348,44 @@
 
 ;;  (do ((i 0 (+ i 1)) (n 1 (* n 2))) ((= i 63)) (display n) (display " ") (display (number->string n 16)) (newline))
  
+(test (number->string 3/4 2) "11/100")
+(test (number->string 3/4 8) "3/4")
+(test (number->string 3/4 16) "3/4")
+(test (number->string -3/4 2) "-11/100")
+(test (number->string -3/4 8) "-3/4")
+(test (number->string -3/4 16) "-3/4")
+
+(test (number->string 23/34 2) "10111/100010")
+(test (number->string 23/34 8) "27/42")
+(test (number->string 23/34 16) "17/22")
+(test (number->string -23/34 2) "-10111/100010")
+(test (number->string -23/34 8) "-27/42")
+(test (number->string -23/34 16) "-17/22")
+
+(num-test (string->number "11/100" 2) 3/4)
+(num-test (string->number "10111/100010" 2) 23/34)
+(num-test (string->number "27/42" 8) 23/34)
+(num-test (string->number "17/22" 16) 23/34)
+
+(let ((happy #t))
+  (do ((i 2 (+ i 1)))
+      ((or (not happy)
+	   (= i 17)))
+    (if (not (eqv? 3/4 (string->number (number->string 3/4 i) i)))
+	(begin 
+	  (set! happy #f) 
+	  (display "(string<->number 3/4 ") (display i) (display " -> ") (display (number->string 3/4 i)) 
+	  (display " -> ") (display (string->number (number->string 3/4 i) i)) (newline)))
+    (if (not (eqv? 1234/11 (string->number (number->string 1234/11 i) i)))
+	(begin 
+	  (set! happy #f) 
+	  (display "(string<->number 1234/11 ") (display i) (display " -> ") (display (number->string 1234/11 i)) 
+	  (display " -> ") (display (string->number (number->string 1234/11 i) i)) (newline)))
+    (if (not (eqv? -1234/11 (string->number (number->string -1234/11 i) i)))
+	(begin 
+	  (set! happy #f) 
+	  (display "(string<->number -1234/11 ") (display i) (display " -> ") (display (number->string -1234/11 i)) 
+	  (display " -> ") (display (string->number (number->string -1234/11 i) i)) (newline)))))
 
 
 ;;; --------------------------------------------------------------------------------
@@ -10450,6 +10495,138 @@
 				(num-test (remainder 3 2.3) 'error)
 				(num-test (remainder 2.3 3) 'error)
 				(num-test (remainder 1/3 2.3) 'error)))
+
+(if (integer? (sqrt 4))
+    (begin
+      (for-each
+       (lambda (n sqn)
+	 (let ((val (sqrt n)))
+	   (if (or (not (integer? val))
+		   (not (= sqn val)))
+	       (begin
+		 (display "(sqrt ") (display n) (display ") expected ") (display sqn) (display " but got ") (display val) (newline)))))
+       (list 9 491401 19439281 1248844921 235565593201)
+       (list 3 701 4409 35339 485351))
+
+      (for-each
+       (lambda (n)
+	 (let ((val (sqrt n)))
+	   (if (or (integer? val)
+		   (> (abs (- (* val val) n)) .001))
+	       (begin
+		 (display "(sqrt ") (display n) (display ") expected ") (display (sqrt (exact->inexact n))) (display " but got ") (display val) (newline)))))
+       (list 10 491400 19439282 1248844920 235565593200))
+      ))
+
+(num-test (mod 2 0) 'error)
+
+(if with-generic-modulo
+    (begin
+
+      (num-test (modulo 3.1 2.0) 1.1)
+      (num-test (modulo 3.1 2) 1.1)
+      (num-test (modulo -3.1 2.0) 0.9) ; parallels (modulo -3 2) -> 1
+      (num-test (modulo -3.1 2.5) 1.9)
+      (num-test (modulo 3.1 -2.0) -0.9)
+      (num-test (modulo -3.1 -2.0) -1.1)
+      (num-test (modulo 3 2.5) 0.5)
+      (num-test (modulo 19439282 4409.5) 2206.0)
+      (num-test (modulo 3/2 1/4) 0)
+      (num-test (modulo 3/2 1/3) 1/6)
+      (num-test (modulo 3/2 0.3) 0.0)
+      (num-test (modulo 1.5 1/4) 0)
+      (num-test (modulo 1.5 1/3) 1/6)
+      (num-test (modulo 1.5 0.3) 0.0)
+      (num-test (modulo 1/2 2) 1/2)
+      (num-test (modulo 0.5 2.0) 0.5)
+      (num-test (modulo 1/2 -2) -3/2)
+      (num-test (modulo 0.5 -2.0) -1.5)
+      (num-test (modulo 0.5 -2) -1.5)
+      (num-test (modulo 1 -4) -3)
+      (num-test (modulo -1/2 -1) -1/2)
+      (num-test (modulo -0.5 -1) -0.5)
+      (num-test (modulo -1/2 -1.0) -0.5)
+      (num-test (modulo -3/2 2) 1/2)
+      (num-test (modulo -1.5 2) 0.5)
+      (num-test (modulo -3/2 -2) -3/2)
+      (num-test (modulo -1.5 -2) -1.5)
+
+      (num-test (remainder 3.1 2.0) 1.1)
+      (num-test (remainder 3.1 2) 1.1)
+      (num-test (remainder -3.1 2.0) -1.1)
+      (num-test (remainder -3.1 2.5) -0.6)
+      (num-test (remainder 3.1 -2.0) 1.1)
+      (num-test (remainder -3.1 -2.0) -1.1)
+      (num-test (remainder 3 2.5) 0.5)
+      (num-test (remainder 19439282 4409.5) 2206.0)
+      (num-test (remainder 3/2 1/4) 0)
+      (num-test (remainder 3/2 1/3) 1/6)
+      (num-test (remainder 3/2 0.3) 0.0)
+      (num-test (remainder 1.5 1/4) 0)
+      (num-test (remainder 1.5 1/3) 1/6)
+      (num-test (remainder 1.5 0.3) 0.0)
+      (num-test (remainder 1/2 2) 1/2)
+      (num-test (remainder 0.5 2.0) 0.5)
+      (num-test (remainder 1/2 -2) 1/2)
+      (num-test (remainder 0.5 -2.0) 0.5)
+      (num-test (remainder 0.5 -2) 0.5)
+      (num-test (remainder 1 -4) 1)
+      (num-test (remainder -1/2 -1) -1/2)
+      (num-test (remainder -0.5 -1) -0.5)
+      (num-test (remainder -1/2 -1.0) -0.5)
+      (num-test (remainder -3/2 2) -3/2)
+      (num-test (remainder -1.5 2) -1.5)
+      (num-test (remainder -3/2 -2) -3/2)
+      (num-test (remainder -1.5 -2) -1.5)
+
+      (num-test (quotient 3.1 2.0) 1)
+      (num-test (quotient 3.1 2) 1)
+      (num-test (quotient -3.1 2.0) -1)
+      (num-test (quotient -3.1 2.5) -1)
+      (num-test (quotient 3.1 -2.0) -1)
+      (num-test (quotient -3.1 -2.0) 1)
+      (num-test (quotient 3 2.5) 1)
+      (num-test (quotient 19439282 4409.5) 4408)
+      (num-test (quotient 3/2 1/4) 6)
+      (num-test (quotient 3/2 1/3) 4)
+      (num-test (quotient 3/2 0.3) 5)
+      (num-test (quotient 1.5 1/4) 6)
+      (num-test (quotient 1.5 1/3) 4)
+      (num-test (quotient 1.5 0.3) 5)
+      (num-test (quotient 1/2 2) 0)
+      (num-test (quotient 0.5 2.0) 0)
+      (num-test (quotient 1/2 -2) 0)
+      (num-test (quotient 0.5 -2.0) 0)
+      (num-test (quotient 0.5 -2) 0)
+      (num-test (quotient 1 -4) 0)
+      (num-test (quotient -1/2 -1) 0)
+      (num-test (quotient -0.5 -1) 0)
+      (num-test (quotient -1/2 -1.0) 0)
+      (num-test (quotient -3/2 2) 0)
+      (num-test (quotient -1.5 2) 0)
+      (num-test (quotient -3/2 -2) 0)
+      (num-test (quotient -1.5 -2) 0)
+
+      (num-test (lcm 1/2 2) 2)
+      (num-test (lcm 1/3 3/4) 3)
+      (num-test (lcm 2 3/4) 6)
+      (num-test (lcm 3/4 2) 6)
+      (num-test (lcm 1/3 3/4 5/8) 15)
+      (num-test (lcm 1/3 2/3) 2/3)
+      (num-test (lcm 1/3 1/6 5/12) 5/3)
+      (num-test (lcm 1/3 1/6 5/12 2) 10)
+
+      (num-test (gcd 1/2 1/3) 1/6)
+      (num-test (gcd 1/2 2) 1/2)
+      (num-test (gcd 1/3 3/4) 1/12)
+      (num-test (gcd 2 3/4) 1/4)
+      (num-test (gcd 3/4 2) 1/4)
+      (num-test (gcd 1/3 3/4 5/8) 1/24)
+      (num-test (gcd 1/3 2/3) 1/3)
+      (num-test (gcd 1/3 1/6 5/12) 1/12)
+      (num-test (gcd 1/3 1/6 5/12 2) 1/12)
+      ))
+
 (num-test (remainder 2.3 1.0+0.1i) 'error)
 (num-test (remainder 3.0+2.3i 3) 'error)
 (num-test (abs 0) 0)
@@ -12215,6 +12392,11 @@
 (num-test (make-rectangular 1.0 1.0+0.1i) 'error)
 (num-test (make-rectangular 1.0+0.1i 1.0) 'error)
 ;;; --------------------------------------------------------------------------------
+
+(test (>=- 1 2) 'error)
+(test (>= - 1 2) 'error)
+(test (number? -) #f)
+(test (number? +) #f)
 
 (num-test (min 0) 0)
 (num-test (max 0) 0)
@@ -27693,6 +27875,37 @@
 (num-test (acos 1.00001) 0.0+0.004472132228240686i)
 (num-test (atan 1) 0.7853981633974483)
 
+(let ((tag (catch #t (lambda () (log 10.0 10.0)) (lambda args 'error))))
+  (if (and (number? tag)
+	   (equal? tag 1.0))
+      ;; we apparently have 2nd arg to log, so add a few tests of that
+      (begin
+
+	(num-test (log 8.0 2) 3.0)
+	(num-test (log 9.0 3.0) 2.0)
+	(num-test (log 12/8 3/2) 1.0)
+	(num-test (log (expt 3/2 10) 3/2) 10.0)
+
+	(num-test (log 8.0 -2.0) 0.13926097063622-0.63118087262379i)
+	(num-test (expt -2.0 0.13926097063622-0.63118087262379i) 8.0)
+
+	(num-test (log 8.0 1.0+i) 0.97790391649038-2.2161063668189i)
+	(num-test (expt 1.0+i 0.97790391649038-2.2161063668189i) 8.0)
+
+	(num-test (log 1.0+i -2.0) 0.26160508088635-0.052598406051983i)
+	(num-test (expt -2.0 0.26160508088635-0.052598406051983i) 1.0+i)
+
+	(num-test (log 10.0 0.001) -0.33333333)
+	(num-test (log 10.0 -0.001) -0.27620436338394-0.12561556740966i)
+	(num-test (log 10.0 100.0) 0.5)
+
+	(for-each
+	 (lambda (arg)
+	   (test (log 10.0 arg) 'error))
+	 (list "hi" #\a 0 '#(1 2 3) #t #f '() abs 'hi (list 1 2 3) '(1 . 2)))
+
+	)))
+
 (if with-hyperbolic-functions (begin
 (num-test (sinh 0) 0.0)
 (num-test (cosh 0) 1.0)
@@ -28218,7 +28431,7 @@
    ("#i1.1" 1.1) ("#i1" 1.0)
    ;; Integers:
    ("1" ,(+ 1 0)) ("23" ,(+ 9 9 5)) ("-1" ,(- 0 1)) 
-   ("-45" ,(- 0 45)) ;("2#" 20.0) ("2##" 200.0) ("12##" 1200.0) ; this # = radix is about the stupidest thing I've ever seen
+   ("-45" ,(- 0 45)) ;("2#" 20.0) ("2##" 200.0) ("12##" 1200.0) ; this # = 0 is about the stupidest thing I've ever seen
    ;("#b#i100" 4.0)
    ;; Fractions:
    ("1/1" 1) ("1/2" 1/2) ("-1/2" -1/2) ;("1#/1" 10.0)
@@ -30952,7 +31165,7 @@
       (test (format #f "a") "a")
       (test (format #f "" 1) 'error)
       (test (format #f "hiho" 1) 'error)
-      (test (format #f "a~%" 1) 'error)
+      (test (format #f "a~%" 1) 'error) ; some just ignore extra args
       
       (test (format #f "~~") "~")
       (test (format #f "~~~~") "~~")
@@ -30993,8 +31206,8 @@
 		      (display " returned \"") (display val) 
 		      (display "\" but expected \"") (display res) (display "\"") 
 		      (newline)))))
-       (list "hiho"  -1  #\a  1   #f   #t  '#(1 2 3)   3.14   3/4  1.0+1.0i '()  '#(())  (list 1 2 3) '(1 . 2) 'hi ':hi abs)
-       (list "hiho" "-1" "a" "1" "#f" "#t" "#(1 2 3)" "3.14" "3/4" "1+1i"   "()" "#(())" "(1 2 3)"    "(1 . 2)" "hi" ":hi" "abs"))
+       (list "hiho"  -1  #\a  1   #f   #t  '#(1 2 3)   3.14   3/4  1.5+1.5i '()  '#(())  (list 1 2 3) '(1 . 2) 'hi)
+       (list "hiho" "-1" "a" "1" "#f" "#t" "#(1 2 3)" "3.14" "3/4" "1.5+1.5i"   "()" "#(())" "(1 2 3)"    "(1 . 2)" "hi"))
       
       (test (format #f "hi ~A ho" 1) "hi 1 ho")
       (test (format #f "hi ~a ho" 1) "hi 1 ho")
@@ -31013,8 +31226,8 @@
 		      (display " returned \"") (display val) 
 		      (display "\" but expected \"") (display res) (display "\"") 
 		      (newline)))))
-       (list "hiho"  -1  #\a  1   #f   #t  '#(1 2 3)   3.14   3/4  1.5+1.5i '()  '#(())  (list 1 2 3) '(1 . 2) 'hi ':hi abs)
-       (list "\"hiho\"" "-1" "#\\a" "1" "#f" "#t" "#(1 2 3)" "3.14" "3/4" "1.5+1.5i"   "()" "#(())" "(1 2 3)"    "(1 . 2)" "hi" ":hi" "abs"))
+       (list "hiho"  -1  #\a  1   #f   #t  '#(1 2 3)   3.14   3/4  1.5+1.5i '()  '#(())  (list 1 2 3) '(1 . 2) 'hi)
+       (list "\"hiho\"" "-1" "#\\a" "1" "#f" "#t" "#(1 2 3)" "3.14" "3/4" "1.5+1.5i"   "()" "#(())" "(1 2 3)"    "(1 . 2)" "hi"))
       
       (test (format #f "hi ~S ho" 1) "hi 1 ho")
       (test (format #f "hi ~S ho" "abc") "hi \"abc\" ho")
@@ -31064,25 +31277,25 @@
       (test (format #f "asdh~2Thiho") "asdhhiho")
       (test (format #f "a~Tb") "ab")
       (test (format #f "0123456~4,8Tb") "0123456     b")
-      (test (format #f "XXX~%0123456~4,8Tb") (string-append "XXX" (string #\newline) "0123456    b")) ; clearly wrong...
+;      (test (format #f "XXX~%0123456~4,8Tb") (string-append "XXX" (string #\newline) "0123456    b")) ; clearly wrong...
       (test (format #f "0123456~0,8Tb") "0123456 b")
-      (test (format #f "0123456~10,8Tb") "0123456           b")
+;      (test (format #f "0123456~10,8Tb") "0123456           b")
       (test (format #f "0123456~1,0Tb") "0123456b")
       (test (format #f "0123456~1,Tb") "0123456b")
       (test (format #f "0123456~1,Tb") "0123456b")
       (test (format #f "0123456~,Tb") "0123456b")
-      (test (format #f "0123456~7,10Tb") "0123456          b") 
-      (test (format #f "0123456~8,10tb") "0123456           b")
+;      (test (format #f "0123456~7,10Tb") "0123456          b") 
+;      (test (format #f "0123456~8,10tb") "0123456           b")
       (test (format #f "0123456~3,12tb") "0123456        b")
       
-      (test (format #f "~40TX") "                                       X")
-      (test (format #f "X~,8TX~,8TX") "X       X       X")
+;      (test (format #f "~40TX") "                                       X")
+;      (test (format #f "X~,8TX~,8TX") "X       X       X")
       (test (format #f "X~8,TX~8,TX") "X       XX")
-      (test (format #f "X~8,10TX~8,10TX") "X                 X         X")
+;      (test (format #f "X~8,10TX~8,10TX") "X                 X         X")
       (test (format #f "X~8,0TX~8,0TX") "X       XX")
       (test (format #f "X~0,8TX~0,8TX") "X       X       X")
-      (test (format #f "X~1,8TX~1,8TX") "X        X       X")
-      (test (format #f "X~,8TX~,8TX") "X       X       X")
+;      (test (format #f "X~1,8TX~1,8TX") "X        X       X")
+;      (test (format #f "X~,8TX~,8TX") "X       X       X")
       (test (format #f "X~TX~TX") "XXX") ; clisp and sbcl say "X X X" here and similar differences elsewhere
       (test (format #f "X~0,0TX~0,0TX") "XXX")
       (test (format #f "X~0,TX~0,TX") "XXX")
@@ -31128,7 +31341,8 @@
       (test (format #f "~10b" -123) "  -1111011")
       (test (format #f "~10o" -123) "      -173")
       
-      (if (defined? 'most-positive-fixnum)
+      (if (and (defined? 'most-positive-fixnum)
+	       (= most-positive-fixnum 9223372036854775807))
 	  (begin
 	    
 	    (test (format #f "~D" most-positive-fixnum) "9223372036854775807")
@@ -31142,6 +31356,8 @@
 	    
 	    (test (format #f "~B" most-positive-fixnum) "111111111111111111111111111111111111111111111111111111111111111")
 	    (test (format #f "~B" (+ 1 most-negative-fixnum)) "-111111111111111111111111111111111111111111111111111111111111111")
+
+	    (num-test (inexact->exact most-positive-fixnum) most-positive-fixnum)
 	    
 	    ))
       
@@ -31151,11 +31367,11 @@
       (test (format #f "~0O" 123) "173")
       
       (test (format #f "~F" 3.0) "3.0")
-      (test (format #f "~E" 3.0) "3.0")
-      (test (format #f "~G" 3.0) "3.0")
+;      (test (format #f "~E" 3.0) "3.0") ; could also be 3.0E+0
+;      (test (format #f "~G" 3.0) "3.0") ; apparently could also have trailing spaces
       (test (format #f "~f" 3.0) "3.0")
-      (test (format #f "~e" 3.0) "3.0")
-      (test (format #f "~g" 3.0) "3.0")
+;      (test (format #f "~e" 3.0) "3.0")
+;      (test (format #f "~g" 3.0) "3.0")
       
       ;; "precision" is different in C and in Lisp, so I'll ignore it...
 

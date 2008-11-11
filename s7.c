@@ -41,6 +41,7 @@
  *        lcm and gcd can take integer or ratio args
  *        delay is renamed make-promise to avoid collisions in CLM
  *        continuation? function to distinguish a continuation from a procedure
+ *        log takes an optional 2nd arg (base)
  *
  *   other additions: 
  *        procedure-source, procedure-arity, procedure-documentation, help
@@ -221,6 +222,7 @@
  *    sundry leftovers
  *    eval
  *    quasiquote
+ *    format
  *    threads
  *    s7 init
  */
@@ -2979,8 +2981,8 @@ static num num_rem(num a, num b)
       integer(ret) = integer(a) % integer(b);
       break;
     case NUM_RATIO: 
-      ret = make_ratio(numerator(a) * denominator(b) - numerator(b) * denominator(a) * integer(num_quotient(a, b)),
-		       denominator(a) * denominator(b));
+      ret = make_ratio(num_to_numerator(a) * num_to_denominator(b) - num_to_numerator(b) * num_to_denominator(a) * integer(num_quotient(a, b)),
+		       num_to_denominator(a) * num_to_denominator(b));
       break;
     default:
       real(ret) = num_to_real(a) - num_to_real(b) * integer(num_quotient(a, b));
@@ -3001,8 +3003,8 @@ static num num_mod(num a, num b)
       integer(ret) = c_mod(integer(a), integer(b));
       break;
     case NUM_RATIO:
-      ret = make_ratio(numerator(a) * denominator(b) - numerator(b) * denominator(a) * (s7_Int)floor(num_to_real(a) / num_to_real(b)),
-		       denominator(a) * denominator(b));
+      ret = make_ratio(num_to_numerator(a) * num_to_denominator(b) - num_to_numerator(b) * num_to_denominator(a) * (s7_Int)floor(num_to_real(a) / num_to_real(b)),
+		       num_to_denominator(a) * num_to_denominator(b));
       break;
     default:
       real(ret) = num_to_real(a) - num_to_real(b) * (s7_Int)floor(num_to_real(a) / num_to_real(b));
@@ -3137,7 +3139,6 @@ static bool num_le(num a, num b)
 }
 
 
-/* Round to nearest. Round to even if midway */
 static double round_per_R5RS(double x) 
 {
   double fl = floor(x);
@@ -3278,13 +3279,24 @@ static char *s7_number_to_string_1(s7_scheme *sc, s7_pointer obj, int radix, int
     {
     case NUM_INT:
       if (radix == 10)
-	snprintf(p, 256, "%*lld", width, s7_integer(obj)); /* TODO: is this ok if s7_Int is just int? */
+	snprintf(p, 256, "%*lld", width, (long long int)s7_integer(obj)); /* TODO: is this ok if s7_Int is just int? */
       else s7_Int_to_string(p, s7_integer(obj), radix, width);
       break;
       
     case NUM_RATIO:
-      /* PERHAPS: should ratios be printable in any radix? also reals/complex? */
-      snprintf(p, 256, s7_Int_d "/" s7_Int_d, s7_numerator(obj), s7_denominator(obj));
+      if (radix == 10)
+	snprintf(p, 256, s7_Int_d "/" s7_Int_d, s7_numerator(obj), s7_denominator(obj));
+      else
+	{
+	  char *n, *d;
+	  n = (char *)calloc(256, sizeof(char));
+	  d = (char *)calloc(256, sizeof(char));
+	  s7_Int_to_string(n, s7_numerator(obj), radix, 0);
+	  s7_Int_to_string(d, s7_denominator(obj), radix, 0);
+	  snprintf(p, 256, "%s/%s", n, d);
+	  free(n);
+	  free(d);
+	}
       break;
       
     case NUM_REAL2:
@@ -4141,7 +4153,7 @@ static s7_pointer g_exp(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
 {
-  #define H_log "(log z1 z2) returns log(z1) / log(z2) where z2 defaults to e"
+  #define H_log "(log z1 :optional z2) returns log(z1) / log(z2) where z2 defaults to e"
   
   if (!s7_is_number(car(args)))
     return(s7_wrong_type_arg_error(sc, "log", 1, car(args), "a number"));
@@ -4158,7 +4170,8 @@ static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
       
       if ((s7_is_real(sc->x)) &&
 	  (s7_is_real(sc->y)) &&
-	  (num_to_real(sc->x->object.number) > 0.0))
+	  (s7_is_positive(sc->x)) &&
+	  (s7_is_positive(sc->y)))
 	return(s7_make_real(sc, log(num_to_real(sc->x->object.number)) / log(num_to_real(sc->y->object.number))));
       /* if < 0 use log(-x) + pi*i */
       return(s7_from_c_complex(sc, clog(s7_complex(sc->x)) / clog(s7_complex(sc->y))));
@@ -4166,7 +4179,7 @@ static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
   else
     {
       if ((s7_is_real(sc->x)) &&
-	  (num_to_real(sc->x->object.number) > 0.0))
+	  (s7_is_positive(sc->x)))
 	return(s7_make_real(sc, log(num_to_real(sc->x->object.number))));
       /* if < 0 use log(-x) + pi*i */
       return(s7_from_c_complex(sc, clog(s7_complex(sc->x))));
@@ -4215,7 +4228,7 @@ static s7_pointer g_tan(s7_scheme *sc, s7_pointer args)
   return(s7_from_c_complex(sc, ctan(s7_complex(sc->x))));
 }
 
-/* perhaps use the code in sbcl's src/code/irrat.lisp -- C's casin is less than perfect... */
+/* PERHAPS: use the code in sbcl's src/code/irrat.lisp -- C's casin is less than perfect... */
 
 static s7_pointer g_asin(s7_scheme *sc, s7_pointer args)
 {
@@ -4455,7 +4468,6 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 		}
 	    }
 	  /* occasionally int^rat can be int but it happens so infrequently it's not worth checking */
-	  /* then again... it can be done quickly, I think; TODO: check out int^rat exact */
 	}
     }
   
@@ -10007,7 +10019,7 @@ static void print_backtrace_entry(s7_scheme *sc, int n)
   write_string(sc, ")", sc->error_port);
 
   line = pair_line_number(code);
-  if (line != 0)
+  if (line > 0)
     {
       if ((remembered_line_number(line) != 0) &&
 	  (remembered_file_name(line)))
@@ -12509,7 +12521,6 @@ static s7_pointer format_to_output(s7_scheme *sc, s7_pointer out_loc, const char
 }
 
 /* TODO: test output ports */
-/* TODO: comment out the T test cases that everyone disagrees about */
 
 
 static s7_pointer g_format(s7_scheme *sc, s7_pointer args)
@@ -13015,7 +13026,6 @@ s7_scheme *s7_init(void)
 	sc->free_heap[i] = sc->heap[i];
       }
   }
-  /* fprintf(stderr, "cell: %d\n", sizeof(s7_cell)); */ /* 24 */
   
   /* this has to precede s7_make_* allocations */
   sc->temps_size = GC_TEMPS_SIZE;
@@ -13337,7 +13347,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "string->list",            g_string_to_list,          1, 0, false, H_string_to_list);
   s7_define_function(sc, "object->string",          g_object_to_string,        1, 0, false, H_object_to_string);
 #if WITH_FORMAT
-  s7_define_function(sc, "format",                  g_format,                  1, 0, true, H_format);
+  s7_define_function(sc, "format",                  g_format,                  1, 0, true,  H_format);
 #endif  
   
   /* lists */
