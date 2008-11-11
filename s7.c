@@ -38,6 +38,7 @@
  *
  *   deliberate difference from r5rs:
  *        modulo, remainder, and quotient take integer, ratio, or real args
+ *        lcm and gcd can take integer or ratio args
  *        delay is renamed make-promise to avoid collisions in CLM
  *        continuation? function to distinguish a continuation from a procedure
  *
@@ -54,9 +55,8 @@
  *        gc, gc-verbose, load-verbose, quit
  *        backtrace, backtrace-length, clear-backtrace
  *        *features*, *load-path*, *vector-print-length*
- *        pi, most-positive-fixnum, most-negative-fixnum
- *        define-constant
- *        format (under construction) -- simple cases only
+ *        define-constant, pi, most-positive-fixnum, most-negative-fixnum
+ *        format (the simple directives)
  *
  *
  * still to do:
@@ -452,7 +452,7 @@ struct s7_scheme {
    * So, I think I'll try to conjure up a sort of fake stack
    *   that tracks high-level eval/apply sequences.  The main
    *   thing to avoid here is the clisp-style flood of useless
-   *   printout.  So the next fields are for our "call stack".
+   *   printout.  So the next fields are for our backtrace.
    */
 
   int saved_line_number;
@@ -3209,7 +3209,7 @@ static bool s7_is_zero(s7_pointer x)
 }
 
 
-static void num2str(char *p, s7_Int n, int radix, int width)
+static void s7_Int_to_string(char *p, s7_Int n, int radix, int width)
 {
   static char dignum[] = "0123456789abcdef";
   int i = 2, len, start = 0, end = 0;
@@ -3265,7 +3265,12 @@ static void num2str(char *p, s7_Int n, int radix, int width)
 
 static char *s7_number_to_string_1(s7_scheme *sc, s7_pointer obj, int radix, int width, int precision)
 {
-  /* lisp-style here is to pad width with spaces, not #f or 0 (as in C for negative args to X or O) */
+
+  /* lisp-style here is to pad width with spaces, not 'f' or '0' (as in C for negative args to X or O) */
+  /*   also C treats "precision" as number-of-non-zero-digits, whereas lisp thinks it is number-of-digits-after-decimal-point */
+  /*   this code uses the C convention, which is confusing! */
+  /*   SOMEDAY: fix the numeric "precision" format arg to be like CL */
+
   char *p;
   p = (char *)calloc(256, sizeof(char));
 
@@ -3273,11 +3278,12 @@ static char *s7_number_to_string_1(s7_scheme *sc, s7_pointer obj, int radix, int
     {
     case NUM_INT:
       if (radix == 10)
-	snprintf(p, 256, "%*lld", width, s7_integer(obj));
-      else num2str(p, s7_integer(obj), radix, width);
+	snprintf(p, 256, "%*lld", width, s7_integer(obj)); /* TODO: is this ok if s7_Int is just int? */
+      else s7_Int_to_string(p, s7_integer(obj), radix, width);
       break;
       
     case NUM_RATIO:
+      /* PERHAPS: should ratios be printable in any radix? also reals/complex? */
       snprintf(p, 256, s7_Int_d "/" s7_Int_d, s7_numerator(obj), s7_denominator(obj));
       break;
       
@@ -4373,10 +4379,23 @@ static s7_pointer g_sqrt(s7_scheme *sc, s7_pointer args)
   if (!s7_is_number(car(args)))
     return(s7_wrong_type_arg_error(sc, "sqrt", 1, car(args), "a number"));
   sc->x = car(args);
-  if ((s7_is_real(sc->x)) &&
-      (num_to_real(sc->x->object.number) >= 0.0))
-    return(s7_make_real(sc, sqrt(num_to_real(sc->x->object.number))));
-  /* if < 0 use sqrt(-num)*i */
+  if (s7_is_real(sc->x))
+    {
+      double x, sqx;
+      x = num_to_real(sc->x->object.number);
+      if (x >= 0.0)
+	{
+	  sqx = sqrt(x);
+	  if (s7_is_integer(sc->x))
+	    {
+	      s7_Int ix;
+	      ix = (s7_Int)sqx;
+	      if ((ix * ix) == integer(sc->x->object.number))
+		return(s7_make_integer(sc, ix));
+	    }
+	  return(s7_make_real(sc, sqx));
+	}
+    }
   return(s7_from_c_complex(sc, csqrt(s7_complex(sc->x))));
 }
 
@@ -4436,6 +4455,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 		}
 	    }
 	  /* occasionally int^rat can be int but it happens so infrequently it's not worth checking */
+	  /* then again... it can be done quickly, I think; TODO: check out int^rat exact */
 	}
     }
   
@@ -4496,40 +4516,66 @@ static s7_pointer g_round(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_lcm(s7_scheme *sc, s7_pointer args)
 {
   int i;
-  s7_Int val = 1;
-  #define H_lcm "(lcm ...) returns the least common multiple of its arguments"
+  s7_Int n = 1, d = 0;
+  bool rats = false;
+  #define H_lcm "(lcm ...) returns the least common multiple of its rational arguments"
   
   for (i = 1, sc->x = args; sc->x != sc->NIL; i++, sc->x = cdr(sc->x)) 
-    if (!s7_is_integer(car(sc->x)))
-      return(s7_wrong_type_arg_error(sc, "lcm", i, car(sc->x), "an integer"));
-  
+    if (!s7_is_rational(car(sc->x)))
+      return(s7_wrong_type_arg_error(sc, "lcm", i, car(sc->x), "an integer or ratio"));
+    else rats = ((rats) || (object_number_type(car(sc->x)) == NUM_RATIO));
+
+  if (!rats)
+    {
+      for (sc->x = args; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+	{
+	  n = c_lcm(n, s7_integer(car(sc->x)));
+	  if (n == 0)
+	    return(s7_make_integer(sc, 0));
+	}
+      return(s7_make_integer(sc, n));
+    }
+  /* from A Jaffer */
   for (sc->x = args; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
     {
-      val = c_lcm(val, s7_integer(car(sc->x)));
-      if (val == 0)
+      n = c_lcm(n, s7_numerator(car(sc->x)));
+      if (n == 0)
 	return(s7_make_integer(sc, 0));
+      d = c_gcd(d, s7_denominator(car(sc->x)));
     }
-  return(s7_make_integer(sc, val));
+  return(s7_make_ratio(sc, n, d));
 }
 
 
 static s7_pointer g_gcd(s7_scheme *sc, s7_pointer args)
 {
   int i;
-  s7_Int val = 0;
-  #define H_gcd "(gcd ...) returns the greatest common divisor of its arguments"
+  bool rats = false;
+  s7_Int n = 0, d = 1;
+  #define H_gcd "(gcd ...) returns the greatest common divisor of its rational arguments"
   
   for (i = 1, sc->x = args; sc->x != sc->NIL; i++, sc->x = cdr(sc->x)) 
-    if (!s7_is_integer(car(sc->x)))
+    if (!s7_is_rational(car(sc->x)))
       return(s7_wrong_type_arg_error(sc, "gcd", i, car(sc->x), "an integer"));
+    else rats = ((rats) || (object_number_type(car(sc->x)) == NUM_RATIO));
   
+  if (!rats)
+    {
+      for (sc->x = args; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
+	{
+	  n = c_gcd(n, s7_integer(car(sc->x)));
+	  if (n == 1)
+	    return(s7_make_integer(sc, 1));
+	}
+      return(s7_make_integer(sc, n));
+    }
+  /* from A Jaffer */
   for (sc->x = args; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
     {
-      val = c_gcd(val, s7_integer(car(sc->x)));
-      if (val == 1)
-	return(s7_make_integer(sc, 1));
+      n = c_gcd(n, s7_numerator(car(sc->x)));
+      d = c_lcm(d, s7_denominator(car(sc->x)));
     }
-  return(s7_make_integer(sc, val));
+  return(s7_make_ratio(sc, n, d));
 }
 
 
@@ -12267,6 +12313,8 @@ static char *format_to_c_string(s7_scheme *sc, const char* str, s7_pointer args,
 		  i++;
 		  break;
 
+		  /* PERHAPS: ~C */
+
 		  /* -------- object->string -------- */
 		case 'A': case 'a':
 		case 'S': case 's':
@@ -12461,6 +12509,8 @@ static s7_pointer format_to_output(s7_scheme *sc, s7_pointer out_loc, const char
 }
 
 /* TODO: test output ports */
+/* TODO: comment out the T test cases that everyone disagrees about */
+
 
 static s7_pointer g_format(s7_scheme *sc, s7_pointer args)
 {
@@ -12480,6 +12530,12 @@ static s7_pointer g_format(s7_scheme *sc, s7_pointer args)
   return(format_to_output(sc, (car(args) == sc->T) ? sc->output_port : car(args), s7_string(cadr(args)), cddr(args)));
 }
 
+
+const char *s7_format(s7_scheme *sc, s7_pointer args);
+const char *s7_format(s7_scheme *sc, s7_pointer args)
+{
+  return(s7_string(g_format(sc, args))); /* for the run macro in run.c */
+}
 #endif
 
 
@@ -13471,3 +13527,5 @@ s7_scheme *s7_init(void)
  *    ;(g-gen 0.0 1.0) -> 0.86045425244533 (0.802)
  *    ;(mus-srate) -> 44100.0 (22050.0)
  */
+
+/* TODO: add the doc exs to compsnd, and sed the various switches, or add -Ds */

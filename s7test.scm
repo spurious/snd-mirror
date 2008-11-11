@@ -8522,8 +8522,8 @@
 (num-test (lcm) 1)
 (num-test (gcd 1.4 2.3) 'error)
 (num-test (lcm 1.4 2.3) 'error)
-(num-test (gcd 2/3 1) 'error)
-(num-test (lcm 2/3 1) 'error)
+;(num-test (gcd 2/3 1) 'error) ; these are ok in s7
+;(num-test (lcm 2/3 1) 'error)
 (num-test (gcd 2 1.0+0.5i) 'error)
 (num-test (lcm 2 1.0+0.5i) 'error)
 (num-test (gcd 0) 0)

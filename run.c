@@ -11960,10 +11960,12 @@ static void format_s(int *args, ptree *pt)
 
 #else
 
+const char *s7_format(s7_scheme *sc, s7_pointer args);
+
 static void format_s(int *args, ptree *pt) 
 {
   if (STRING_RESULT) FREE(STRING_RESULT);
-  /* TODO: s7_format here */
+  STRING_RESULT = mus_strdup(s7_format(s7, xen_values_to_list(pt, args)));
 }
 
 #endif
