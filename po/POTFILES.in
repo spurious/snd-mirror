@@ -50,7 +50,7 @@ snd-mix.c
 snd-nogui.c
 snd-print.c
 snd-region.c
-snd-run.c
+run.c
 snd-select.c
 snd-sig.c
 snd-snd.c
