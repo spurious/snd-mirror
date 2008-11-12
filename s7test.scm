@@ -2748,16 +2748,15 @@
 					   (search lo mid)))))))
 		       (return (search last-good (- (* 2 last-good) 1)))))))))))
   (set! number-to-string-top first-bad)
-  (if (integer? first-bad)
+  (if (and (integer? first-bad)
+	   (or (not (defined? 'most-positive-fixnum))
+	       (< first-bad most-positive-fixnum)))
       (begin 
 	(display "string->number ints fail around ") 
 	(display first-bad)
 	(display " (2^")
 	(display (/ (log first-bad) (log 2.0)))
 	(display ")")
-	(newline))
-      (begin
-	(display "(string->number ints are good out to at least 2^200)")
 	(newline))))
 
 (let* ((last-good 0)
@@ -10500,21 +10499,25 @@
     (begin
       (for-each
        (lambda (n sqn)
-	 (let ((val (sqrt n)))
-	   (if (or (not (integer? val))
-		   (not (= sqn val)))
-	       (begin
-		 (display "(sqrt ") (display n) (display ") expected ") (display sqn) (display " but got ") (display val) (newline)))))
+	 (if (positive? n) ; in case 32 bit int
+	     (let ((val (sqrt n)))
+	       (if (or (not (integer? val))
+		       (not (= sqn val)))
+		   (begin
+		     (display "(sqrt ") (display n) (display ") expected ") 
+		     (display sqn) (display " but got ") (display val) (newline))))))
        (list 9 491401 19439281 1248844921 235565593201)
        (list 3 701 4409 35339 485351))
 
       (for-each
        (lambda (n)
-	 (let ((val (sqrt n)))
-	   (if (or (integer? val)
-		   (> (abs (- (* val val) n)) .001))
-	       (begin
-		 (display "(sqrt ") (display n) (display ") expected ") (display (sqrt (exact->inexact n))) (display " but got ") (display val) (newline)))))
+	 (if (positive? n)
+	     (let ((val (sqrt n)))
+	       (if (or (integer? val)
+		       (> (abs (- (* val val) n)) .001))
+		   (begin
+		     (display "(sqrt ") (display n) (display ") expected ") 
+		     (display (sqrt (exact->inexact n))) (display " but got ") (display val) (newline))))))
        (list 10 491400 19439282 1248844920 235565593200))
       ))
 
@@ -27875,6 +27878,22 @@
 (num-test (acos 1.00001) 0.0+0.004472132228240686i)
 (num-test (atan 1) 0.7853981633974483)
 
+(num-test (log 1.0e-8) -18.42068074395237)
+(num-test (log 1.0e-12) -27.63102111592855)
+(num-test (acos -2.0) 3.141592653589793-1.316957896924817i)
+(num-test (exp (make-rectangular 0.0 pi)) -1.0)
+(num-test (atanh 2.8147497671066e+14) 3.552713678800501e-15-1.570796326794897i)
+
+(num-test (acos 3.0+70000000i) 1.570796283937754-18.7571529895002i) ; C breaks near here
+(num-test (acos 70000000+3i) 4.725807101202406E-8-18.75715298057358i)
+(num-test (acos 3.0-70000000i) 1.570796283937754+18.7571529895002i)
+(num-test (acos -70000000+3i) 3.141592606331722-18.75715298057358i)
+
+(num-test (asin 3.0+70000000i) 4.2857142400327436E-8+18.7571529895002i)
+(num-test (asin 70000000+3i) 1.570796279536826+18.75715298057358i)
+(num-test (asin 3.0-70000000i) 4.2857142400327436E-8-18.7571529895002i)
+(num-test (asin -70000000+3i) -1.570796279536826+18.75715298057358i)
+
 (let ((tag (catch #t (lambda () (log 10.0 10.0)) (lambda args 'error))))
   (if (and (number? tag)
 	   (equal? tag 1.0))
@@ -31185,7 +31204,7 @@
 		      (display " returned ") (display result) 
 		      (display " but expected 'error")
 		      (newline)))))
-       (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi abs (lambda () 1) '#(()) (list 1 2 3) '(1 . 2)))
+       (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i 'hi abs (lambda () 1) '#(()) (list 1 2 3) '(1 . 2)))
       
       (for-each
        (lambda (arg)
@@ -31234,7 +31253,8 @@
       (test (format #f "~s~a" #\a #\b) "#\\ab")
       (test (format #f "hi ~S ho") 'error)
       (test (format #f "hi ~S ho" 1 2) 'error)
-      
+      (test (format #f "~C~c~C" #\a #\b #\c) "abc")
+      (test (format #f "~C" 1) 'error)
       
       (test (format #f "hi ~Z ho") 'error)
       (test (format #f "hi ~+ ho") 'error)
@@ -31360,6 +31380,26 @@
 	    (num-test (inexact->exact most-positive-fixnum) most-positive-fixnum)
 	    
 	    ))
+
+      (if (and (defined? 'most-positive-fixnum)
+	       (= most-positive-fixnum 2147483647))
+	  (begin
+	    
+	    (test (format #f "~D" most-positive-fixnum) "2147483647")
+	    (test (format #f "~D" (+ 1 most-negative-fixnum)) "-2147483647")
+	    
+	    (test (format #f "~X" most-positive-fixnum) "7fffffff")
+	    (test (format #f "~X" (+ 1 most-negative-fixnum)) "-7fffffff")
+	    
+	    (test (format #f "~O" most-positive-fixnum) "17777777777")
+	    (test (format #f "~O" (+ 1 most-negative-fixnum)) "-17777777777")
+	    
+	    (test (format #f "~B" most-positive-fixnum) "1111111111111111111111111111111")
+	    (test (format #f "~B" (+ 1 most-negative-fixnum)) "-1111111111111111111111111111111")
+
+	    (num-test (inexact->exact most-positive-fixnum) most-positive-fixnum)
+	    
+	    ))
       
       (test (format #f "~0D" 123) "123")
       (test (format #f "~0X" 123) "7b")
@@ -31374,5 +31414,32 @@
 ;      (test (format #f "~g" 3.0) "3.0")
       
       ;; "precision" is different in C and in Lisp, so I'll ignore it...
+
+      (for-each
+       (lambda (arg)
+	 (let ((result (catch #t (lambda () (format #f "~F" arg)) (lambda args 'error))))
+	   (if (not (eq? result 'error))
+	       (begin (display "(format #f \"~F\" ") (display arg)
+		      (display ") returned ") (display result) 
+		      (display " but expected 'error")
+		      (newline)))))
+       (list #\a '#(1 2 3) "hi" :hi '() 'hi abs (lambda () 1) '#(()) (list 1 2 3) '(1 . 2)))
+
+      (test (format #f "~D") 'error)
+
+      (call-with-output-file "tmp1.r5rs" (lambda (p) (format p "this ~A ~C test ~D" "is" #\a 3)))
+      (test (call-with-input-file "tmp1.r5rs" (lambda (p) (read-line p))) "this is a test 3")
+      
+      (if with-open-input-string-and-friends
+	  (test (let ((res #f)) 
+		  (let ((this-file (open-output-string))) 
+		    (format this-file "this ~A ~C test ~D" "is" #\a 3)
+		    (set! res (get-output-string this-file))
+		    (close-output-port this-file)
+		    res))
+		"this is a test 3"))
+
+      (format #t "format #t: ~D" 1)
+      (format (current-output-port) " output-port: ~D! (this is testing output ports)~%" 2)
 
       ))

@@ -1205,6 +1205,32 @@ make clean
 make
 make clean
 
+echo ' -------------------------------- no format -------------------------------- '
+sed s7.c -e 's/#define WITH_FORMAT 1/#define WITH_FORMAT 0/' > tmp
+mv tmp s7.c
+make
+make clean
+
+echo ' -------------------------------- no read-line -------------------------------- '
+sed s7.c -e 's/#define WITH_READ_LINE 1/#define WITH_READ_LINE 0/' > tmp
+mv tmp s7.c
+make
+make clean
+
+echo ' -------------------------------- with debugging -------------------------------- '
+sed s7.c -e 's/#define S7_DEBUGGING 0/#define S7_DEBUGGING 1/' > tmp
+mv tmp s7.c
+make
+make clean
+
+echo ' -------------------------------- with int s7_Int -------------------------------- '
+sed s7.h -e 's/#define s7_Int long long int/#define s7_Int int/' > tmp
+mv tmp s7.c
+sed s7.h -e 's/#define s7_Int_d "%lld"/#define s7_Int_d "%d"/' > tmp
+mv tmp s7.c
+make
+make clean
+
 
 cp ~/libxm/* .
 echo ' -------------------------------------------------------------------------------- '
@@ -1253,12 +1279,6 @@ make clean
 make
 make clean
 ./configure --quiet --with-forth --with-gtk
-make
-make clean
-./configure --quiet --without-extension-language --with-gtk
-make
-make clean
-./configure --quiet --without-extension-language --with-gtk CC=g++
 make
 make clean
 

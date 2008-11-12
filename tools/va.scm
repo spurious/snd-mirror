@@ -120,7 +120,7 @@
 			      (if (not (char=? (string-ref line (+ i flen)) #\;))
 				  (display (format #f "~A: ~A~%" line-ctr line))))))))
 	      (loop (read-line file 'concat))))))))
-
+#!
 (define (directory->list dir)
   (let ((dport (opendir dir)))
     (let loop ((entry (readdir dport))
@@ -158,7 +158,6 @@
 	(directory->list "."))
        string<?))
 
-#!
 ;;; look for out-of-place S_* strings -- lots of false positives!
 (for-each-file 
  (let ((gs-state 'before)

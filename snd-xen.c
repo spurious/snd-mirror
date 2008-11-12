@@ -240,7 +240,7 @@ void redirect_xen_error_to(void (*handler)(const char *msg, void *ufd), void *da
 }
 
 
-#if (!HAVE_S7)
+#if (!HAVE_S7) && (!HAVE_FORTH)
 static void call_xen_error_handler(const char *msg)
 {
   /* make sure it doesn't call itself recursively */
@@ -283,7 +283,7 @@ void redirect_errors_to(void (*handler)(const char *msg, void *ufd), void *data)
 
 static char *gl_print(XEN result);
 
-#if (!HAVE_S7)
+#if (!HAVE_S7) && (!HAVE_FORTH)
 static XEN snd_format_if_needed(XEN args)
 {
   /* if car has formatting info, use next arg as arg list for it */

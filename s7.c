@@ -57,11 +57,12 @@
  *        backtrace, backtrace-length, clear-backtrace
  *        *features*, *load-path*, *vector-print-length*
  *        define-constant, pi, most-positive-fixnum, most-negative-fixnum
- *        format (the simple directives)
+ *        format (only the simple directives)
  *
  *
  * still to do:
  *   syntax-rules and friends
+ *   define* and friends built-in (def-optkey-fun also)
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
@@ -2981,7 +2982,8 @@ static num num_rem(num a, num b)
       integer(ret) = integer(a) % integer(b);
       break;
     case NUM_RATIO: 
-      ret = make_ratio(num_to_numerator(a) * num_to_denominator(b) - num_to_numerator(b) * num_to_denominator(a) * integer(num_quotient(a, b)),
+      ret = make_ratio(num_to_numerator(a) * num_to_denominator(b) - 
+		       num_to_numerator(b) * num_to_denominator(a) * integer(num_quotient(a, b)),
 		       num_to_denominator(a) * num_to_denominator(b));
       break;
     default:
@@ -3003,7 +3005,8 @@ static num num_mod(num a, num b)
       integer(ret) = c_mod(integer(a), integer(b));
       break;
     case NUM_RATIO:
-      ret = make_ratio(num_to_numerator(a) * num_to_denominator(b) - num_to_numerator(b) * num_to_denominator(a) * (s7_Int)floor(num_to_real(a) / num_to_real(b)),
+      ret = make_ratio(num_to_numerator(a) * num_to_denominator(b) - 
+		       num_to_numerator(b) * num_to_denominator(a) * (s7_Int)floor(num_to_real(a) / num_to_real(b)),
 		       num_to_denominator(a) * num_to_denominator(b));
       break;
     default:
@@ -3279,7 +3282,7 @@ static char *s7_number_to_string_1(s7_scheme *sc, s7_pointer obj, int radix, int
     {
     case NUM_INT:
       if (radix == 10)
-	snprintf(p, 256, "%*lld", width, (long long int)s7_integer(obj)); /* TODO: is this ok if s7_Int is just int? */
+	snprintf(p, 256, "%*lld", width, (long long int)s7_integer(obj));
       else s7_Int_to_string(p, s7_integer(obj), radix, width);
       break;
       
@@ -3338,7 +3341,7 @@ static char *s7_number_to_string_1(s7_scheme *sc, s7_pointer obj, int radix, int
 
 char *s7_number_to_string(s7_scheme *sc, s7_pointer obj, int radix)
 {
-  return(s7_number_to_string_1(sc, obj, radix, 0, 14));
+  return(s7_number_to_string_1(sc, obj, radix, 0, 20)); /* (log top 10) so we get all the digits */
 }
 
 
@@ -4013,7 +4016,7 @@ static bool numbers_are_eqv(s7_pointer a, s7_pointer b)
     return((s7_is_ratio(b)) &&
 	   (numerator(a->object.number) == numerator(b->object.number)) &&
 	   (denominator(a->object.number) == denominator(b->object.number)));
-  
+
   if (s7_is_real(a))
     return((s7_is_real(b)) &&
 	   (real(a->object.number) == real(b->object.number)));
@@ -4228,7 +4231,6 @@ static s7_pointer g_tan(s7_scheme *sc, s7_pointer args)
   return(s7_from_c_complex(sc, ctan(s7_complex(sc->x))));
 }
 
-/* PERHAPS: use the code in sbcl's src/code/irrat.lisp -- C's casin is less than perfect... */
 
 static s7_pointer g_asin(s7_scheme *sc, s7_pointer args)
 {
@@ -4253,6 +4255,25 @@ static s7_pointer g_asin(s7_scheme *sc, s7_pointer args)
 	return(s7_from_c_complex(sc, -result));
       return(s7_from_c_complex(sc, result));
     }
+
+#if WITH_COMPLEX
+  /* if either real or imag part is very large, use explicit formula, not casin */
+  /*   this code taken from sbcl's src/code/irrat.lisp */
+  /* break is around x+70000000i */
+  if ((fabs(s7_real_part(sc->x)) > 1.0e7) ||
+      (fabs(s7_imag_part(sc->x)) > 1.0e7))
+    {
+      double_complex sq1mz, sq1pz, z;
+
+      z = s7_complex(sc->x);
+      sq1mz = csqrt(1.0 - z);
+      sq1pz = csqrt(1.0 + z);
+      return(s7_make_complex(sc, 
+			     atan(s7_real_part(sc->x) / creal(sq1mz * sq1pz)),
+			     asinh(cimag(sq1pz * ~sq1mz))));
+    }
+#endif
+
   return(s7_from_c_complex(sc, casin(s7_complex(sc->x))));
 }
 
@@ -4279,6 +4300,25 @@ static s7_pointer g_acos(s7_scheme *sc, s7_pointer args)
       else result = M_PI - _Complex_I * clog(absx * (1.0 + (sqrt(1.0 + recip) * csqrt(1.0 - recip))));
       return(s7_from_c_complex(sc, result));
     }
+
+#if WITH_COMPLEX
+  /* if either real or imag part is very large, use explicit formula, not cacos */
+  /*   this code taken from sbcl's src/code/irrat.lisp */
+
+  if ((fabs(s7_real_part(sc->x)) > 1.0e7) ||
+      (fabs(s7_imag_part(sc->x)) > 1.0e7))
+    {
+      double_complex sq1mz, sq1pz, z;
+
+      z = s7_complex(sc->x);
+      sq1mz = csqrt(1.0 - z);
+      sq1pz = csqrt(1.0 + z);
+      return(s7_make_complex(sc, 
+			     2.0 * atan(creal(sq1mz) / creal(sq1pz)),
+			     asinh(cimag(sq1mz * ~sq1pz))));
+    }
+#endif
+
   return(s7_from_c_complex(sc, cacos(s7_complex(sc->x))));
 }
 
@@ -7258,7 +7298,7 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
     return(describe_port(sc, obj));
   
   if (s7_is_number(obj))
-    return(s7_number_to_string(sc, obj, 10));
+    return(s7_number_to_string_1(sc, obj, 10, 0, 14)); /* 20 digits is excessive in this context */
   
   if (s7_is_string(obj)) 
     {
@@ -12325,14 +12365,17 @@ static char *format_to_c_string(s7_scheme *sc, const char* str, s7_pointer args,
 		  i++;
 		  break;
 
-		  /* PERHAPS: ~C */
-
 		  /* -------- object->string -------- */
-		case 'A': case 'a':
+		case 'A': case 'a': 
+		case 'C': case 'c':
 		case 'S': case 's':
 		  if (fdat->args == sc->NIL)
 		    return(s7_format_error(sc, "missing argument", str, args, fdat));
 		  i++;
+		  if (((str[i] == 'C') || (str[i] == 'c')) &&
+		      (!s7_is_character(car(fdat->args))))
+		    return(s7_format_error(sc, "~C directive requires a character argument", str, args, fdat));
+
 		  tmp = s7_object_to_c_string_1(sc, car(fdat->args), (str[i] == 'S') || (str[i] == 's'));
 		  format_append_string(fdat, tmp);
 		  if (tmp) free(tmp);
@@ -12419,6 +12462,14 @@ static char *format_to_c_string(s7_scheme *sc, const char* str, s7_pointer args,
 			i++;
 			if (isdigit(str[i]))
 			  precision = format_read_integer(sc, &i, str_len, str, args, fdat);
+		      }
+		    
+		    if ((str[i] != 'T') && (str[i] != 't'))
+		      {
+			if (fdat->args == sc->NIL)
+			  return(s7_format_error(sc, "missing argument", str, args, fdat));
+			if (!(s7_is_number(car(fdat->args))))
+			  return(s7_format_error(sc, "numeric argument required", str, args, fdat));
 		      }
 
 		    switch (str[i])
@@ -12516,11 +12567,9 @@ static s7_pointer format_to_output(s7_scheme *sc, s7_pointer out_loc, const char
   if (out_loc == sc->F)
     return(result);
 
-  s7_write(sc, result, out_loc);
+  s7_display(sc, result, out_loc);
   return(sc->F);
 }
-
-/* TODO: test output ports */
 
 
 static s7_pointer g_format(s7_scheme *sc, s7_pointer args)
@@ -12533,9 +12582,9 @@ static s7_pointer g_format(s7_scheme *sc, s7_pointer args)
   if (!s7_is_string(cadr(args)))
     return(s7_wrong_type_arg_error(sc, "format", 2, cadr(args), "a string"));
     
-  if (!((s7_is_boolean(sc, car(args))) ||
-	((car(args) != sc->NIL) &&
-	 (s7_is_output_port(sc, car(args))))))
+  if (!((s7_is_boolean(sc, car(args))) ||    /* #f or #t */
+	(car(args) == sc->NIL) ||            /* default current-output-port = stdout -> nil */
+	(s7_is_output_port(sc, car(args))))) /* (current-output-port) or call-with-open-file arg, etc */
     return(s7_wrong_type_arg_error(sc, "format", 1, car(args), "#f, #t, or an output port"));
 
   return(format_to_output(sc, (car(args) == sc->T) ? sc->output_port : car(args), s7_string(cadr(args)), cddr(args)));
@@ -13523,19 +13572,6 @@ s7_scheme *s7_init(void)
 }
 
 /* TODO: find out where the extra < can't handle: #<unspecified> (()) or #f's are coming from and why test 23 is so slow */
-/* TODO: can any part of the error handling be delayed? */
 /* TODO: help hook change str lost change? (also these from test22:
  *    ;(let* ((file "oboe.snd") (str (string-append file ": chans: " (number->string (mus-sound-chans file)) ", srate: " (number->string (mus-sound-srate file)) ", " (mus-header-type-name (mus-sound-header-type file)) ", " (mus-data-format-name (mus-sound-data-format file)) ", len: " (number->string (/ (mus-sound-samples file) (* (mus-sound-chans file) (mus-sound-srate file))))))) (or (string=? str "oboe.snd: chans: 1, srate: 22050, Sun/Next, big endian short (16 bits), len: 2.30512475967407") (string=? str "oboe.snd: chans: 1, srate: 22050, Sun/Next, big endian short (16 bits), len: 2.30512471655329"))) -> #f (#t)
- *    ;(radians->hz 0.0002849517040886) -> 1.9999999261438 (1.0)
- *    ;(lambda (y) (radians->hz y)) -> 1.9999999261438 (1.0)
- *    ;(seconds->samples 1.0) -> 44100 (22050)
- *    ;(seconds->samples 1) -> 44100 (22050)
- *    ;(mus-phase g-gen) -> 0.06268937721449 (0.125)
- *    ;(g-gen) -> 0.062648324178744 (0.125)
- *    ;(g-gen 1.0) -> 0.076861083293317 (0.153)
- *    ;(g-gen 0.0 0.0) -> 0.88717412871253 (0.925)
- *    ;(g-gen 0.0 1.0) -> 0.86045425244533 (0.802)
- *    ;(mus-srate) -> 44100.0 (22050.0)
  */
-
-/* TODO: add the doc exs to compsnd, and sed the various switches, or add -Ds */
