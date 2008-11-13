@@ -3924,6 +3924,7 @@ and its value is returned."
 #if HAVE_S7
   {
     XEN sym = XEN_FALSE;
+    subject = (char *)XEN_TO_C_STRING(text);
     if (XEN_STRING_P(text))
       sym = C_STRING_TO_XEN_SYMBOL(XEN_TO_C_STRING(text));
     else sym = text;
@@ -4140,7 +4141,7 @@ void g_init_help(void)
   XEN_DEFINE_PROCEDURE(S_help_dialog, g_help_dialog_w,    2, 2, 0, H_help_dialog);
 
   #define H_help_hook S_help_hook "(subject help-string): called from " S_snd_help ".  If \
-if returns a string, it replaces 'help-string' (the default help)"
+it returns a string, it replaces 'help-string' (the default help)"
 
   help_hook = XEN_DEFINE_HOOK(S_help_hook, 2, H_help_hook);    /* args = subject help-string */
 

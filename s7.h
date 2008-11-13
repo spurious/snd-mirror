@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.3"
-#define S7_DATE "10-Nov-08"
+#define S7_VERSION "1.4"
+#define S7_DATE "14-Nov-08"
 
 #include <stdio.h>
 #ifndef __cplusplus
@@ -18,9 +18,11 @@
 #endif
 
 
-#define s7_Int long long int
-#define s7_Int_d "%lld"
+typedef long long int s7_Int;
 /* This sets the size of integers in scheme and s7.c; s7_Int can be any (signed) integer type: "int" is ok */
+
+typedef double s7_Double;
+/* similarly for doubles (reals in scheme) -- only "double" works in C++ */
 
 
 #ifdef __cplusplus
@@ -204,9 +206,9 @@ s7_Int s7_integer(s7_pointer p);                                             /* 
 s7_pointer s7_make_integer(s7_scheme *sc, s7_Int num);                       /* C long long int -> scheme integer */
 
 bool s7_is_real(s7_pointer p);                                               /* (real? p) */
-double s7_real(s7_pointer p);                                                /* scheme real -> C double */
-s7_pointer s7_make_real(s7_scheme *sc, double num);                          /* C double -> scheme real */
-double s7_number_to_real(s7_pointer x);                                      /* x can be any kind of number */
+s7_Double s7_real(s7_pointer p);                                             /* scheme real -> C double */
+s7_pointer s7_make_real(s7_scheme *sc, s7_Double num);                       /* C double -> scheme real */
+s7_Double s7_number_to_real(s7_pointer x);                                   /* x can be any kind of number */
 
 bool s7_is_ulong(s7_pointer arg);                                            /* returns true if arg is an unsigned long */
 unsigned long s7_ulong(s7_pointer num);                                      /* scheme unsigned long -> C */
@@ -216,14 +218,14 @@ s7_pointer s7_make_ulong(s7_scheme *sc, unsigned long num);                  /* 
 bool s7_is_rational(s7_pointer arg);                                        /* (rational? arg) -- integer or ratio */
 bool s7_is_ratio(s7_pointer arg);                                           /* true if arg is a ratio, not an integer */
 s7_pointer s7_make_ratio(s7_scheme *sc, s7_Int a, s7_Int b);                /* returns the scheme object a/b */
-s7_pointer s7_rationalize(s7_scheme *sc, double x, double error);           /* (rationalize x error) */
+s7_pointer s7_rationalize(s7_scheme *sc, s7_Double x, s7_Double error);     /* (rationalize x error) */
 s7_Int s7_numerator(s7_pointer x);                                          /* (numerator x) */
 s7_Int s7_denominator(s7_pointer x);                                        /* (denominator x) */
 
 bool s7_is_complex(s7_pointer arg);                                         /* (complex? arg) */
-s7_pointer s7_make_complex(s7_scheme *sc, double a, double b);              /* returns the scheme object a+bi */
-double s7_real_part(s7_pointer z);                                          /* (real-part z) */
-double s7_imag_part(s7_pointer z);                                          /* (imag-part z) */
+s7_pointer s7_make_complex(s7_scheme *sc, s7_Double a, s7_Double b);        /* returns the scheme object a+bi */
+s7_Double s7_real_part(s7_pointer z);                                       /* (real-part z) */
+s7_Double s7_imag_part(s7_pointer z);                                       /* (imag-part z) */
 char *s7_number_to_string(s7_scheme *sc, s7_pointer obj, int radix);        /* (number->string obj radix) */
 
 
@@ -847,7 +849,7 @@ static void set_listener_prompt(s7_scheme *sc, const char *new_prompt)
 /*   since the data field is an s7 object, we'll need to mark it to protect it from the GC */
 
 typedef struct {
-  double x;
+  s7_Double x;
   s7_pointer data;
 } dax;
 
@@ -996,7 +998,6 @@ int main(int argc, char **argv)
 /* --------------------------------------------------------------------------------
  * 
  *        s7 changes
- *
  *
  * 10-Nov:    added s7_define_constant,
  *              built-in (scheme-side) pi, most-positive-fixnum, most-negative-fixnum

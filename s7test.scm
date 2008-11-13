@@ -120,7 +120,6 @@
      (number-ok? ',tst result ,expected)))
 
 
-(define our-pi 3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930382)
 
 
 ;;; --------------------------------------------------------------------------------
@@ -195,7 +194,7 @@
 (test (eqv? car cdr) #f)
 (test (let ((x (lambda () 1))) (eqv? x x)) #t)
 (test (eqv? 9/2 9/2) #t)
-(test (eqv? 3.4 (+ 3.0 0.4)) #t)
+;(test (eqv? 3.4 (+ 3.0 0.4)) #t) ; can be fooled
 (test (let ((x 3.141)) (eqv? x x)) #t)
 (test (eqv? (cons 'a 'b) (cons 'a 'c)) #f)
 (test (eqv? eqv? eqv?) #t)
@@ -240,7 +239,7 @@
 (test (equal? car cdr) #f)
 (test (let ((x (lambda () 1))) (equal? x x)) #t)
 (test (equal? 9/2 9/2) #t)
-(test (equal? 3.4 (+ 3.0 0.4)) #t)
+;(test (equal? 3.4 (+ 3.0 0.4)) #t)
 (test (let ((x 3.141)) (equal? x x)) #t)
 (test (equal? 3 3) #t)
 (test (equal? 3 3.0) #f)
@@ -2628,6 +2627,8 @@
 (define complex-6 1234000000.0+3.14159265358979i)
 (define number-to-string-top 0)
 
+(define our-pi 3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930382)
+
 (for-each
  (lambda (op opname)
    (for-each
@@ -3366,6 +3367,7 @@
 (num-test (string->number "27/42" 8) 23/34)
 (num-test (string->number "17/22" 16) 23/34)
 
+
 (let ((happy #t))
   (do ((i 2 (+ i 1)))
       ((or (not happy)
@@ -3373,19 +3375,108 @@
     (if (not (eqv? 3/4 (string->number (number->string 3/4 i) i)))
 	(begin 
 	  (set! happy #f) 
-	  (display "(string<->number 3/4 ") (display i) (display " -> ") (display (number->string 3/4 i)) 
+	  (display "(string<->number 3/4 ") (display i) (display ") -> ") (display (number->string 3/4 i)) 
 	  (display " -> ") (display (string->number (number->string 3/4 i) i)) (newline)))
     (if (not (eqv? 1234/11 (string->number (number->string 1234/11 i) i)))
 	(begin 
 	  (set! happy #f) 
-	  (display "(string<->number 1234/11 ") (display i) (display " -> ") (display (number->string 1234/11 i)) 
+	  (display "(string<->number 1234/11 ") (display i) (display ") -> ") (display (number->string 1234/11 i)) 
 	  (display " -> ") (display (string->number (number->string 1234/11 i) i)) (newline)))
     (if (not (eqv? -1234/11 (string->number (number->string -1234/11 i) i)))
 	(begin 
 	  (set! happy #f) 
-	  (display "(string<->number -1234/11 ") (display i) (display " -> ") (display (number->string -1234/11 i)) 
+	  (display "(string<->number -1234/11 ") (display i) (display ") -> ") (display (number->string -1234/11 i)) 
 	  (display " -> ") (display (string->number (number->string -1234/11 i) i)) (newline)))))
 
+(test (< (abs (- (string->number "3.1415926535897932384626433832795029") 3.1415926535897932384626433832795029)) 1e-7) #t)
+
+(let ((val (catch #t (lambda () (string->number "111.01" 2)) (lambda args 'error))))
+  (if (number? val)
+      (begin
+	(num-test (string->number "111.01" 2) 7.25)
+	(num-test (string->number "-111.01" 2) -7.25)
+	(num-test (string->number "0.001" 2) 0.125)
+	(num-test (string->number "1000000.001" 2) 64.125)
+
+	(num-test (string->number "111.01" 8) 73.015625)
+	(num-test (string->number "-111.01" 8) -73.015625)
+	(num-test (string->number "0.001" 8) 0.001953125)
+	(num-test (string->number "1000000.001" 8) 262144.001953125)
+
+	(num-test (string->number "111.01" 16) 273.00390625)
+	(num-test (string->number "-111.01" 16) -273.00390625)
+	(num-test (string->number "0.001" 16) 0.000244140625)
+	(num-test (string->number "1000000.001" 16) 16777216.000244)
+
+	(test (< (abs (- (string->number "3.1415926535897932384626433832795029" 10) 3.1415926535897932384626433832795029)) 1e-7) #t)
+
+	(let ((happy #t))
+	  (do ((i 2 (+ i 1)))
+	      ((or (not happy)
+		   (= i 17)))
+	    (let ((val (+ 1.0 i)))
+	      (do ((k 1 (+ k 1))
+		   (incr (/ 1.0 i) (/ incr i)))
+		  ((< incr 1e-14))
+		(set! val (+ val incr)))
+	      (if (> (abs (- val (string->number "11.111111111111111111111111111111111111111111111111111111111111111111111111111111111111" i))) 1e-7)
+		  (begin
+		    (set! happy #f) 
+		    (display "(string->number 11.111... ") (display i) (display ") -> ") 
+		    (display (string->number "11.111111111111111111111111111111111111111111111111111111111111111111111111111111111111" i))
+		    (display " but expected ") (display val) (newline))))
+
+	    (let* ((digits "00123456789abcdef")
+		   (str (make-string 80 (string-ref digits i))))
+	      (string-set! str 2 #\.)
+	      (let ((val (exact->inexact (* i i))))
+		(if (> (abs (- val (string->number str i))) 1e-7)
+		    (begin
+		      (set! happy #f) 
+		      (display "(string->number ")
+		      (display (string-ref digits i)) (display (string-ref digits i)) (display ".")
+		      (display (string-ref digits i)) (display (string-ref digits i)) (display (string-ref digits i)) (display "... ")
+		      (display i) (display ") -> ")
+		      (display (string->number str i))
+		      (display " but expected ") (display val) (newline)))))
+
+	    (let* ((radlim (list 0 0 62 39 31 26 23 22 20 19 18 17 17 16 16 15 15))
+		   (digits "00123456789abcdef"))
+	      (do ((k (- (list-ref radlim i) 3) (+ k 1)))
+		  ((= k (+ (list-ref radlim i) 4)))
+		(let ((str (make-string (+ k 3) (string-ref digits i))))
+		  (string-set! str 2 #\.)
+		  (let ((val (exact->inexact (* i i))))
+		    (if (> (abs (- val (string->number str i))) 1e-7)
+			(begin
+			  (set! happy #f) 
+			  (display "(string->number ")
+			  (display str) (display " ")
+			  (display i) (display ") -> ")
+			  (display (string->number str i))
+			  (display " but expected ") (display val) (newline)))))))))
+
+	(let ((happy #t))
+	  (do ((i 2 (+ i 1)))
+	      ((or (not happy)
+		   (= i 17)))
+	    (if (not (eqv? 0.75 (string->number (number->string 0.75 i) i)))
+		(begin 
+		  (set! happy #f) 
+		  (display "(string<->number 0.75 ") (display i) (display ") -> ") (display (number->string 0.75 i)) 
+		  (display " -> ") (display (string->number (number->string 0.75 i) i)) (newline)))
+	    (if (not (eqv? 1234.5 (string->number (number->string 1234.5 i) i)))
+		(begin 
+		  (set! happy #f) 
+		  (display "(string<->number 1234.5 ") (display i) (display ") -> ") (display (number->string 1234.5 i)) 
+		  (display " -> ") (display (string->number (number->string 1234.5 i) i)) (newline)))
+	    (if (not (eqv? -1234.5 (string->number (number->string -1234.5 i) i)))
+		(begin 
+		  (set! happy #f) 
+		  (display "(string<->number -1234.5 ") (display i) (display ") -> ") (display (number->string -1234.5 i)) 
+		  (display " -> ") (display (string->number (number->string -1234.5 i) i)) (newline))))))))
+	
+	
 
 ;;; --------------------------------------------------------------------------------
 
@@ -10495,14 +10586,15 @@
 				(num-test (remainder 2.3 3) 'error)
 				(num-test (remainder 1/3 2.3) 'error)))
 
-(if (integer? (sqrt 4))
+(if (and (integer? (sqrt 4))
+	 (exact? (sqrt 4)))
     (begin
       (for-each
        (lambda (n sqn)
 	 (if (positive? n) ; in case 32 bit int
 	     (let ((val (sqrt n)))
 	       (if (or (not (integer? val))
-		       (not (= sqn val)))
+		       (not (eqv? sqn val)))
 		   (begin
 		     (display "(sqrt ") (display n) (display ") expected ") 
 		     (display sqn) (display " but got ") (display val) (newline))))))
@@ -10519,6 +10611,12 @@
 		     (display "(sqrt ") (display n) (display ") expected ") 
 		     (display (sqrt (exact->inexact n))) (display " but got ") (display val) (newline))))))
        (list 10 491400 19439282 1248844920 235565593200))
+
+      (test (eqv? (expt 2 3) 8) #t)
+      (test (eqv? (log 8 2) 3) #t)
+      (test (eqv? (expt 701 2) 491401) #t)
+      (test (eqv? (log 491401 701) 2) #t)
+
       ))
 
 (num-test (mod 2 0) 'error)
@@ -27894,6 +27992,8 @@
 (num-test (asin 3.0-70000000i) 4.2857142400327436E-8-18.7571529895002i)
 (num-test (asin -70000000+3i) -1.570796279536826+18.75715298057358i)
 
+(num-test (/ 12341234/111 123456789 12341234/111) 1/123456789)
+
 (let ((tag (catch #t (lambda () (log 10.0 10.0)) (lambda args 'error))))
   (if (and (number? tag)
 	   (equal? tag 1.0))
@@ -31405,15 +31505,6 @@
       (test (format #f "~0X" 123) "7b")
       (test (format #f "~0B" 123) "1111011")
       (test (format #f "~0O" 123) "173")
-      
-      (test (format #f "~F" 3.0) "3.0")
-;      (test (format #f "~E" 3.0) "3.0") ; could also be 3.0E+0
-;      (test (format #f "~G" 3.0) "3.0") ; apparently could also have trailing spaces
-      (test (format #f "~f" 3.0) "3.0")
-;      (test (format #f "~e" 3.0) "3.0")
-;      (test (format #f "~g" 3.0) "3.0")
-      
-      ;; "precision" is different in C and in Lisp, so I'll ignore it...
 
       (for-each
        (lambda (arg)
@@ -31441,5 +31532,44 @@
 
       (format #t "format #t: ~D" 1)
       (format (current-output-port) " output-port: ~D! (this is testing output ports)~%" 2)
+
+
+      ;; for float formats, assume s7 for now -- use pi and most-positive-fixnum
+      
+      (if (and (defined? 'most-positive-fixnum)
+	       (defined? 'pi))
+	  (begin
+
+	    ;;clisp:
+	    ;;[10]> (format nil "~F ~G ~E ~,6F ~,6G ~,6E ~6F~%~6G ~6E ~6,10F ~6,10G ~6,10E" pi pi pi pi pi pi pi pi pi pi pi pi)
+	    ;;"3.1415926535897932385 3.1415926535897932385     3.1415926535897932385L+0 3.141593 3.14159     3.141593L+0 3.1416
+	    ;;3.1415926535897932385     3.1L+0 3.1415926536 3.141592654     3.1415926536L+0"
+	    ;;[14]> (defvar tpi (* 1000.0 pi))
+	    ;;[15]> (format nil "~F ~G ~E ~,6F ~,6G ~,6E ~6F~%~6G ~6E ~6,10F ~6,10G ~6,10E" tpi tpi tpi tpi tpi tpi tpi tpi tpi tpi tpi tpi)
+	    ;;"3141.5928 3141.5928     3.1415927E+3 3141.592800 3141.59     3.141593E+3 3141.6
+	    ;;3141.5928     3.1E+3 3141.5928000000 3141.592800     3.1415927000E+3"
+	    ;;[16]> (setf tpi (* 0.0001 pi))
+	    ;;3.1415926E-4
+	    ;;[17]> (format nil "~F ~G ~E ~,6F ~,6G ~,6E ~6F~%~6G ~6E ~6,10F ~6,10G ~6,10E" tpi tpi tpi tpi tpi tpi tpi tpi tpi tpi tpi tpi)
+	    ;;"0.00031415926 3.14159240000E-4 3.1415924E-4 0.000314 3.141592E-4 3.141592E-4 .00031
+	    ;;3.14159240000E-4 3.1E-4 .0003141593 3.1415924000E-4 3.1415924000E-4"
+	    ;;
+	    ;;sbcl has a different default precision, but otherwise agrees
+	    ;;
+	    ;;format.scm from guile:
+	    ;;:(format #f "~F ~G ~E ~,6F ~,6G ~,6E ~6F~% ~6G ~6E ~6,10F ~6,10G ~6,10E" pi pi pi pi pi pi pi pi pi pi pi pi)
+	    ;;"3.14159265358979 3.14159265358979     3.14159265358979E+0 3.141593 3.14159     3.141593E+0 3.1416
+	    ;;3.14159265358979     3.1E+0 3.1415926536 3.141592654     3.1415926536E+0"
+	    ;;(format #f "~F ~G ~E ~,6F ~,6G ~,6E ~6F~%~6G ~6E ~6,10F ~6,10G ~6,10E" tpi tpi tpi tpi tpi tpi tpi tpi tpi tpi tpi tpi)
+	    ;;"3141.59265358979 3141.59265358979     3.14159265358979E+3 3141.592654 3141.59     3.141593E+3 3141.6
+	    ;;3141.59265358979     3.1E+3 3141.5926535898 3141.592654     3.1415926536E+3"
+	    ;;:(format #f"~F ~G ~E ~,6F ~,6G ~,6E ~6F~%~6G ~6E ~6,10F ~6,10G ~6,10E" tpi tpi tpi tpi tpi tpi tpi tpi tpi tpi tpi tpi)
+	    ;;"0.000314159265358979 3.14159265358979E-4 3.14159265358979E-4 0.000314 3.141593E-4 3.141593E-4 0.0003
+	    ;;3.1E-4 3.1E-4 .0003141593 3.1415926536E-4 3.1415926536E-4"
+	    ;;
+
+	    ))
+
+      ;; (format with 18 digits is enough to tell what s7_Double is via built-in pi)
 
       ))

@@ -234,10 +234,6 @@ snd_info *make_basic_snd_info(int chans)
   /* similarly the stop and bomb icons */
   sp->stop_sign_lock = (mus_lock_t *)malloc(sizeof(mus_lock_t));
   MUS_LOCK_INIT(sp->stop_sign_lock);
-#if MUS_THREADS_DEBUGGING
-  mus_lock_set_name(sp->starred_name_lock, "starred-name");
-  mus_lock_set_name(sp->stop_sign_lock, "stop-sign");
-#endif
 #endif
   return(sp);
 }

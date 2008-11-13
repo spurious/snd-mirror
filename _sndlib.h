@@ -688,13 +688,6 @@ int fileno(FILE *fp);
 
 
 #if HAVE_PTHREADS
-
-  #if MUS_DEBUGGING
-    #ifndef MUS_THREADS_DEBUGGING
-      #define MUS_THREADS_DEBUGGING 1
-    #endif
-  #endif
-
   void mus_thread_restore_error_handler(void);
   mus_error_handler_t *mus_thread_get_previous_error_handler(void);
 
@@ -703,22 +696,9 @@ int fileno(FILE *fp);
   #define MUS_ALREADY_LOCKED EBUSY
   #define MUS_LOCK_DESTROY(Lock) pthread_mutex_destroy(Lock)
   #define MUS_LOCK_INIT(Lock) pthread_mutex_init(Lock, NULL)
-
-#if MUS_THREADS_DEBUGGING
-  /* sound.c -- check for lock order troubles and so on */
-  #define MUS_LOCK(Lock) mus_lock(Lock, __FILE__, __LINE__, __FUNCTION__)
-  #define MUS_UNLOCK(Lock) mus_unlock(Lock, __FILE__, __LINE__, __FUNCTION__)
-  #define MUS_TRY_LOCK(Lock) mus_try_lock(Lock, __FILE__, __LINE__, __FUNCTION__)
-  int mus_lock(mus_lock_t *lock, const char *file, int line, const char *func);
-  int mus_try_lock(mus_lock_t *lock, const char *file, int line, const char *func);
-  int mus_unlock(mus_lock_t *lock, const char *file, int line, const char *func);
-  void mus_lock_set_name(mus_lock_t *lock, const char *name);
-  void mus_lock_unset_name(mus_lock_t *lock);
-#else
   #define MUS_LOCK(Lock) pthread_mutex_lock(Lock)
   #define MUS_TRY_LOCK(Lock) pthread_mutex_trylock(Lock)
   #define MUS_UNLOCK(Lock) pthread_mutex_unlock(Lock)
-#endif
 
 #else
   #define MUS_LOCK(Lock) do {} while(0)

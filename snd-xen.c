@@ -118,14 +118,6 @@ void dump_protection(FILE *Fp)
 #if HAVE_PTHREADS
   static mus_lock_t gc_lock = MUS_LOCK_INITIALIZER;
 #endif
-#if HAVE_PTHREADS && MUS_THREADS_DEBUGGING
-void xen_set_gc_lock_name(void);
-void xen_set_gc_lock_name(void)
-{
-  mus_lock_set_name(&gc_lock, "gc-protect");
-}
-#endif
-
 
 int snd_protect(XEN obj)
 {

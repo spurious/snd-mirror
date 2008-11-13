@@ -513,14 +513,6 @@ static io_fd **io_fds = NULL;
   static mus_lock_t io_table_lock = MUS_LOCK_INITIALIZER;
 #endif
 
-#if HAVE_PTHREADS && MUS_THREADS_DEBUGGING
-void io_set_table_lock_name(void);
-void io_set_table_lock_name(void)
-{
-  mus_lock_set_name(&io_table_lock, "io_table");
-}
-#endif
-
 
 int mus_file_open_descriptors(int tfd, const char *name, int format, int size /* datum size */, off_t location, int chans, int type)
 {

@@ -1154,17 +1154,20 @@
     (if (not (= (view-files-sort) 0))
 	(snd-display ";view-files-sort def: ~A" (view-files-sort)))
 
-    (let ((old-max-malloc (mus-max-malloc)))
-      (set! (mus-max-malloc) (expt 2 36))
-      (if (not (= (mus-max-malloc) (expt 2 36)))
-	  (snd-display ";mus-max-malloc as bignum: ~A" (mus-max-malloc)))
-      (set! (mus-max-malloc) old-max-malloc))
+    (if (and (defined? 'most-positive-fixnum)
+	     (> most-positive-fixnum (expt 2 36)))
+	(begin
+	  (let ((old-max-malloc (mus-max-malloc)))
+	    (set! (mus-max-malloc) (expt 2 36))
+	    (if (not (= (mus-max-malloc) (expt 2 36)))
+		(snd-display ";mus-max-malloc as bignum: ~A" (mus-max-malloc)))
+	    (set! (mus-max-malloc) old-max-malloc))
     
-    (let ((old-max-table-size (mus-max-table-size)))
-      (set! (mus-max-table-size) (expt 2 36))
-      (if (not (= (mus-max-table-size) (expt 2 36)))
-	  (snd-display ";mus-max-table-size as bignum: ~A" (mus-max-table-size)))
-      (set! (mus-max-table-size) old-max-table-size))
+	  (let ((old-max-table-size (mus-max-table-size)))
+	    (set! (mus-max-table-size) (expt 2 36))
+	    (if (not (= (mus-max-table-size) (expt 2 36)))
+		(snd-display ";mus-max-table-size as bignum: ~A" (mus-max-table-size)))
+	    (set! (mus-max-table-size) old-max-table-size))))
     
     (if (not (provided? 'snd-gtk))
 	(for-each
@@ -48471,8 +48474,8 @@ EDITS: 1
       (etst '(mus-srate 0.0))
       (etst '(set! (mus-srate) "hi"))
       (btst '(< (mus-random 1.0) 2.0) #t)
-      (btst '(>= (mus-random 1.0) -1.0) #t))
-    (set! (mus-srate) old-srate)
+      (btst '(>= (mus-random 1.0) -1.0) #t)
+      (set! (mus-srate) old-srate))
     
     (let ((mx 0.0)
 	  (mn 0.0))

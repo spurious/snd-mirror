@@ -1603,7 +1603,6 @@ bool mus_nsin_p(mus_any *ptr)
      (smax (make-vct n 1.0)
   
   * but that's too much effort for an initialization function.
-  *   A sum of (enough) sines is a spike even when the coeffs are random, the spikes being close to 0 and pi.
   */
 #endif
 
@@ -11691,9 +11690,4 @@ void mus_initialize(void)
   data_format_zero[MUS_UBSHORT] = 0x8000;
   data_format_zero[MUS_ULSHORT] = 0x80;
 #endif  
-
-#if HAVE_PTHREADS && MUS_THREADS_DEBUGGING
-  mus_lock_set_name(&sinc_lock, "sinc");
-  mus_lock_set_name(&fft_lock, "fft");
-#endif
 }
