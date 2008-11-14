@@ -48456,6 +48456,7 @@ EDITS: 1
       (etst '(make-vct 2 3 4))
       (etst '(make-vct 2 1))
       
+      (set! g-gen (make-oscil 440.0))
       (ftst '(mus-frequency g-gen) 440.0)
       (ftst '(mus-phase g-gen) 0.0)
       (ftst '(oscil g-gen) 0.0)

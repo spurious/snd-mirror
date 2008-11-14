@@ -272,19 +272,13 @@ typedef struct num {
 typedef struct rport {
   bool is_closed;
   bool is_file;
-  bool needs_close;
-  union {
-    struct {
-      FILE *file;
-      int line_number;
-      char *filename;
-      int file_number;
-    } stdio;
-    struct {
-      char *value;
-      int size, point;
-    } string;
-  } rep;
+  bool needs_free;
+  FILE *file;
+  int line_number;
+  char *filename;
+  int file_number;
+  char *value;
+  int size, point;
 } rport;
 
 
@@ -529,7 +523,10 @@ enum scheme_types {
 #define T_DONT_COPY                   (1 << (TYPE_BITS + 9))
 #define dont_copy(p)                  (typeflag(p) & T_DONT_COPY)
 
-#define T_UNUSED_BITS                 0xfc000000
+#define T_PROCEDURE                   (1 << (TYPE_BITS + 10))
+#define is_procedure(p)               (typeflag(p) & T_PROCEDURE)
+
+#define T_UNUSED_BITS                 0xf8000000
 
 #if HAVE_PTHREADS
 #define set_type(p, f)                typeflag(p) = ((typeflag(p) & T_GC_MARK) | (f) | T_OBJECT)
@@ -580,15 +577,15 @@ enum scheme_types {
 #define is_output_port(p)             (type(p) == T_OUTPUT_PORT)
 #define is_string_port(p)             (!((p)->object.port->is_file))
 #define is_file_port(p)               (p)->object.port->is_file
-#define port_line_number(p)           (p)->object.port->rep.stdio.line_number
-#define port_file_number(p)           (p)->object.port->rep.stdio.file_number
-#define port_filename(p)              (p)->object.port->rep.stdio.filename
-#define port_file(p)                  (p)->object.port->rep.stdio.file
+#define port_line_number(p)           (p)->object.port->line_number
+#define port_file_number(p)           (p)->object.port->file_number
+#define port_filename(p)              (p)->object.port->filename
+#define port_file(p)                  (p)->object.port->file
 #define port_is_closed(p)             (p)->object.port->is_closed
-#define port_needs_close(p)           (p)->object.port->needs_close
-#define port_string(p)                (p)->object.port->rep.string.value
-#define port_string_length(p)         (p)->object.port->rep.string.size
-#define port_string_point(p)          (p)->object.port->rep.string.point
+#define port_string(p)                (p)->object.port->value
+#define port_string_length(p)         (p)->object.port->size
+#define port_string_point(p)          (p)->object.port->point
+#define port_needs_free(p)            (p)->object.port->needs_free
 
 #define function_call(f)              (f)->object.ffptr->ff
 #define function_name(f)              (f)->object.ffptr->name
@@ -747,6 +744,7 @@ static s7_pointer s7_immutable_cons(s7_scheme *sc, s7_pointer a, s7_pointer b);
 static void s7_free_object(s7_pointer a);
 static char *s7_describe_object(s7_scheme *sc, s7_pointer a);
 static s7_pointer make_atom(s7_scheme *sc, char *q, int radix);
+static bool s7_is_applicable_object(s7_pointer x);
 
 
 
@@ -963,10 +961,17 @@ static void finalize_s7_cell(s7_scheme *sc, s7_pointer a)
       break;
       
     case T_INPUT_PORT:
-      if (port_needs_close(a))
-	s7_close_input_port(sc, a);
-      if ((is_file_port(a)) && 
-	  (port_filename(a)))
+      if (port_needs_free(a))
+	{
+	  if (port_string(a))
+	    {
+	      /* fprintf(stderr, "GC free %d bytes\n", port_string_length(a)); */
+	      free(port_string(a));
+	      port_string(a) = NULL;
+	    }
+	  port_needs_free(a) = false;
+	}
+      if (port_filename(a))
 	{
 	  free(port_filename(a));
 	  port_filename(a) = NULL;
@@ -1792,7 +1797,7 @@ s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e)
   /* c is code. e is environment */
   s7_pointer x = new_cell(sc);
   
-  set_type(x, T_CLOSURE);
+  set_type(x, T_CLOSURE | T_PROCEDURE);
   
   ASSERT_IS_OBJECT(c, "closure code");
   ASSERT_IS_OBJECT(e, "closure env");
@@ -1976,7 +1981,7 @@ static s7_pointer s7_make_goto(s7_scheme *sc)
 {
   s7_pointer x;
   x = new_cell(sc);
-  set_type(x, T_ATOM | T_GOTO | T_SIMPLE | T_DONT_COPY);
+  set_type(x, T_ATOM | T_GOTO | T_SIMPLE | T_DONT_COPY | T_PROCEDURE);
   x->object.goto_loc = sc->stack_top;
   return(x);
 }
@@ -1986,7 +1991,7 @@ static s7_pointer s7_make_continuation(s7_scheme *sc)
 {
   continuation *c;
   s7_pointer x = new_cell(sc);
-  set_type(x, T_CONTINUATION | T_FINALIZABLE | T_DONT_COPY);
+  set_type(x, T_CONTINUATION | T_FINALIZABLE | T_DONT_COPY | T_PROCEDURE);
   c = (continuation *)calloc(1, sizeof(continuation));
   
   /* save current state */
@@ -3292,6 +3297,7 @@ static char *s7_number_to_string_1(s7_scheme *sc, s7_pointer obj, int radix, int
 	}
       break;
       
+      /* SOMEDAY: need radix in number->string float/complex: (number->string 0.75 2) -> "0.75" */
     case NUM_REAL2:
     case NUM_REAL:
       {
@@ -3376,12 +3382,8 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
 }
 
 
-#define USE_CHARACTER_TABLES 1
-
-#if USE_CHARACTER_TABLES
-
 #define CTABLE_SIZE 128
-static bool *whitespace_table, *atom_delimiter_table, *sharp_const_table, *exponent_table, *slashify_table;
+static bool *whitespace_table, *atom_delimiter_table, *sharp_const_table, *exponent_table, *slashify_table, *string_delimiter_table;
 
 
 static bool is_one_of(bool *ctable, int c) 
@@ -3397,6 +3399,7 @@ static void init_ctables(void)
   sharp_const_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
   exponent_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
   slashify_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
+  string_delimiter_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
   
   whitespace_table['\n'] = true;
   whitespace_table['\t'] = true;
@@ -3435,23 +3438,19 @@ static void init_ctables(void)
     slashify_table['\n'] = false;
     slashify_table['\\'] = true;
     slashify_table['"'] = true;
+
+    for (i = 1; i < 128; i++)
+      string_delimiter_table[i] = true;
+    string_delimiter_table[0] = false;
+    string_delimiter_table['('] = false;
+    string_delimiter_table[')'] = false;
+    string_delimiter_table[';'] = false;
+    string_delimiter_table['\t'] = false;
+    string_delimiter_table['\n'] = false;
+    string_delimiter_table['\r'] = false;
+    string_delimiter_table[' '] = false;
   }
 }
-
-#else
-
-static bool is_one_of(const char *s, int c) 
-{
-  if (c == EOF) 
-    return(true);
-  
-  while (*s)
-    if (*s++ == c)
-      return(true);
-  return(false);
-}
-
-#endif
 
 
 static bool is_radix_prefix(char prefix)
@@ -3789,13 +3788,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix)
 	    }
 	  else 
 	    {
-#if USE_CHARACTER_TABLES
-	      if (exponent_table[(int)c])
-#else
-	      if ((c == 'e') || (c == 'E') ||
-		  (c == 'd') || (c == 'f') || (c == 's') || (c == 'l'))
-		/* sigh -- what's the difference between these endless (e s f d l) exponent chars? */
-#endif
+	      if (exponent_table[(int)c]) /* sigh -- what's the difference between these endless (e s f d l) exponent chars? */
 		{
 		  if (((ex1) ||
 		       (slash1)) &&
@@ -5940,8 +5933,7 @@ static s7_pointer g_port_filename(s7_scheme *sc, s7_pointer args)
 {
   #define H_port_filename "(port-filename file-port) returns the filename associated with port"
   s7_pointer x = car(args);
-  if ((is_input_port(x)) &&
-      (is_file_port(x)))
+  if (is_input_port(x))
     return(s7_make_string(sc, port_filename(x)));
   return(sc->F); /* not an error! */
 }
@@ -6111,7 +6103,16 @@ void s7_close_input_port(s7_scheme *sc, s7_pointer p)
     {
       fclose(port_file(p));
       port_file(p) = NULL;
-      port_needs_close(p) = false;
+    }
+  if (port_needs_free(p))
+    {
+      if (port_string(p))
+	{
+	  /* fprintf(stderr, "close free %d bytes\n", port_string_length(p)); */
+	  free(port_string(p));
+	  port_string(p) = NULL;
+	}
+      port_needs_free(p) = false;
     }
   /* if input string, someone else is dealing with GC */
   port_is_closed(p) = true;
@@ -6143,7 +6144,6 @@ void s7_close_output_port(s7_scheme *sc, s7_pointer p)
 	{
 	  fclose(port_file(p));
 	  port_file(p) = NULL;
-	  port_needs_close(p) = false;
 	}
     }
   else
@@ -6152,6 +6152,7 @@ void s7_close_output_port(s7_scheme *sc, s7_pointer p)
 	{
 	  free(port_string(p));
 	  port_string(p) = NULL;
+	  port_needs_free(p) = false;
 	}
     }
   port_is_closed(p) = true;
@@ -6178,13 +6179,13 @@ static s7_pointer s7_make_input_file(s7_scheme *sc, const char *name, FILE *fp)
   set_type(x, T_INPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   
   /* set up the port struct */
-  x->object.port = (rport *)malloc(sizeof(rport));
+  x->object.port = (rport *)calloc(1, sizeof(rport));
   port_file(x) = fp;
   is_file_port(x) = true;
   port_is_closed(x) = false;
   port_filename(x) = strdup(name);
   port_line_number(x) = 0;
-  port_needs_close(x) = false;
+  port_needs_free(x) = false;
   
   return(x);
 }
@@ -6236,13 +6237,13 @@ s7_pointer s7_open_output_file(s7_scheme *sc, const char *name, const char *mode
   set_type(x, T_OUTPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   
   /* set up the port struct */
-  x->object.port = (rport *)malloc(sizeof(rport));
+  x->object.port = (rport *)calloc(1, sizeof(rport));
   is_file_port(x) = true;
   port_is_closed(x) = false;
   port_filename(x) = strdup(name);
   port_line_number(x) = 0;
-  port_needs_close(x) = false;
   port_file(x) = fp;
+  port_needs_free(x) = false;
   
   return(x);
 }
@@ -6275,12 +6276,15 @@ s7_pointer s7_open_input_string(s7_scheme *sc, const char *input_string)
   set_type(x, T_INPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   
   /* set up the port struct */
-  x->object.port = (rport *)malloc(sizeof(rport));
+  x->object.port = (rport *)calloc(1, sizeof(rport));
   is_file_port(x) = false;
   port_is_closed(x) = false;
   port_string(x) = (char *)input_string;
   port_string_length(x) = safe_strlen(input_string);
   port_string_point(x) = 0;
+  port_filename(x) = NULL;
+  port_file_number(x) = -1;
+  port_needs_free(x) = false;
   
   return(x);
 }
@@ -6308,12 +6312,14 @@ s7_pointer s7_open_output_string(s7_scheme *sc)
   set_type(x, T_OUTPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   
   /* set up the port struct */
-  x->object.port = (rport *)malloc(sizeof(rport));
+  x->object.port = (rport *)calloc(1, sizeof(rport));
   is_file_port(x) = false;
   port_is_closed(x) = false;
   port_string_length(x) = STRING_PORT_INITIAL_LENGTH;
   port_string(x) = (char *)calloc(STRING_PORT_INITIAL_LENGTH, sizeof(char));
+  /* fprintf(stderr, "open get %d bytes\n", port_string_length(x)); */
   port_string_point(x) = 0;
+  port_needs_free(x) = true;
   
   return(x);
 }
@@ -6369,23 +6375,21 @@ static s7_pointer pop_input_port(s7_scheme *sc)
 
 static int inchar(s7_scheme *sc, s7_pointer pt)
 {
+  int c;
   if (pt == sc->NIL) return(EOF);
   
   if (is_file_port(pt))
-    {
-      int c;
-      c = fgetc(port_file(pt));
-      if (c == '\n')
-	port_line_number(pt)++;
-      return(c);
-    }
+    c = fgetc(port_file(pt));
   else 
     {
       if ((!(port_string(pt))) ||
 	  (port_string_length(pt) <= port_string_point(pt)))
 	return(EOF);
-      return(port_string(pt)[port_string_point(pt)++]);
+      c = port_string(pt)[port_string_point(pt)++];
     }
+  if (c == '\n')
+    port_line_number(pt)++;
+  return(c);
 }
 
 
@@ -6395,12 +6399,11 @@ static void backchar(s7_scheme *sc, char c, s7_pointer pt)
 {
   if (pt == sc->NIL) return;
   
+  if (c == '\n')
+    port_line_number(pt)--;
+
   if (is_file_port(pt))
-    {
-      ungetc(c, port_file(pt));
-      if (c == '\n')
-	port_line_number(pt)--;
-    }
+    ungetc(c, port_file(pt));
   else 
     {
       if (port_string_point(pt) > 0)
@@ -6422,30 +6425,71 @@ static void resize_strbuf(s7_scheme *sc)
   for (i = old_size; i < sc->strbuf_size; i++) sc->strbuf[i] = '\0';
 }
 
-#if USE_CHARACTER_TABLES
-static char *read_string_upto(s7_scheme *sc, bool *delim, s7_pointer pt) 
-#else
-  static char *read_string_upto(s7_scheme *sc, const char *delim, s7_pointer pt) 
-#endif
+static char *read_string_upto(s7_scheme *sc) 
 {
-  int i = 0;
-  
-  while (!is_one_of(delim, (sc->strbuf[i++] = inchar(sc, pt))))
+  int i = 0, c;
+  s7_pointer pt;
+  pt = sc->input_port;
+
+  if (is_file_port(pt))
     {
-      if (i >= sc->strbuf_size)
-	resize_strbuf(sc);
+      do
+	{
+	  c = fgetc(port_file(pt)); /* might return EOF */
+	  if (c == '\n')
+	    port_line_number(pt)++;
+
+	  sc->strbuf[i++] = c;
+	  if (i >= sc->strbuf_size)
+	    resize_strbuf(sc);
+	}
+      while (!((c == EOF) || (atom_delimiter_table[c])));
+
+      if ((i == 2) && 
+	  (sc->strbuf[0] == '\\'))
+	sc->strbuf[i] = 0;
+      else 
+	{
+	  if (c != EOF)
+	    {
+	      if (c == '\n')
+		port_line_number(pt)--;
+	      ungetc(c, port_file(pt));
+	    }
+	  sc->strbuf[i - 1] = '\0';
+	}
     }
-  
-  if ((i == 2) && 
-      (sc->strbuf[0] == '\\'))
-    sc->strbuf[i] = 0;
-  else 
+  else
     {
-      if (sc->strbuf[i - 1] != EOF)
-	backchar(sc, sc->strbuf[i - 1], pt);
-      sc->strbuf[i - 1] = '\0';
+      if (port_string(pt))
+	{
+	  do
+	    {
+	      c = port_string(pt)[port_string_point(pt)++];
+	      sc->strbuf[i++] = c;
+	      if (i >= sc->strbuf_size)
+		resize_strbuf(sc);
+	    }
+	  while (string_delimiter_table[c]);
+
+	  if ((i == 2) && 
+	      (sc->strbuf[0] == '\\'))
+	    sc->strbuf[i] = 0;
+	  else 
+	    {
+	      if (c != 0)
+		{
+		  port_string_point(pt)--;
+		  sc->strbuf[i - 1] = '\0';
+		}
+	    }
+	}
+      else
+	{
+	  sc->strbuf[0] = '\0';
+	}
     }
-  
+
   return(sc->strbuf);
 }
 
@@ -6615,14 +6659,8 @@ static int token(s7_scheme *sc, s7_pointer pt)
       
     case '.':
       c = inchar(sc, pt);
-#if USE_CHARACTER_TABLES
       if (is_one_of(whitespace_table, c)) 
 	return(TOK_DOT);
-#else
-      if (is_one_of(" \n\t", c)) 
-	return(TOK_DOT);
-#endif
-      
       backchar(sc, c, pt);
       backchar(sc, '.', pt);
       return(TOK_ATOM);
@@ -6684,14 +6722,8 @@ static int token(s7_scheme *sc, s7_pointer pt)
 	}
       
       backchar(sc, c, pt);
-#if USE_CHARACTER_TABLES
       if (is_one_of(sharp_const_table, c)) 
 	return(TOK_SHARP_CONST);
-#else
-      if (is_one_of(" tfodxbie\\", c)) 
-	return(TOK_SHARP_CONST);
-#endif
-      
       return(TOK_ATOM);
       
     default:
@@ -6880,6 +6912,42 @@ static FILE *search_load_path(s7_scheme *sc, const char *name)
 }
 
 
+static s7_pointer load_file(s7_scheme *sc, FILE *fp)
+{
+  s7_pointer port;
+  long size;
+  char *content = NULL;
+
+  port = new_cell(sc);
+  set_type(port, T_INPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
+  port->object.port = (rport *)calloc(1, sizeof(rport));
+  is_file_port(port) = false;
+  port_is_closed(port) = false;
+
+  fseek(fp, 0, SEEK_END);
+  size = ftell(fp);
+  if (size > 0)
+    {
+      size_t bytes;
+      rewind(fp);
+      content = (char *)malloc(size + 1);
+      bytes = fread(content, sizeof(char), size, fp);
+      content[size] = '\0';
+    }
+  fclose(fp);
+
+  port_string(port) = content;
+  port_string_length(port) = size;
+  /* fprintf(stderr, "load get %d bytes\n", port_string_length(port)); */
+  port_string_point(port) = 0;
+  port_line_number(port) = 0;
+  port_filename(port) = NULL;
+  port_needs_free(port) = true;
+
+  return(port);
+}
+
+
 s7_pointer s7_load(s7_scheme *sc, const char *filename)
 {
   bool old_longjmp;
@@ -6894,11 +6962,9 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
   
   if (*(sc->load_verbose))
     fprintf(stderr, "s7_load(\"%s\")\n", filename);
-  
-  port = s7_make_input_file(sc, filename, fp); 
-  port_needs_close(port) = true;
+
+  port = load_file(sc, fp);
   port_file_number(port) = remember_file_name(filename);
-  
   push_input_port(sc, port);
   
   /* it's possible to call this recursively (s7_load is XEN_LOAD_FILE which can be invoked via s7_call)
@@ -6954,11 +7020,10 @@ static s7_pointer g_load(s7_scheme *sc, s7_pointer args)
   if (*(sc->load_verbose))
     fprintf(stderr, "(load \"%s\")\n", fname);
   
-  port = s7_make_input_file(sc, fname, fp);
-  port_needs_close(port) = true;
+  port = load_file(sc, fp);
   port_file_number(port) = remember_file_name(fname);
-  
   push_input_port(sc, port);
+
   push_stack(sc, OP_LOAD_CLOSE_AND_POP_IF_EOF, sc->args, sc->code);
   push_stack(sc, OP_READ_INTERNAL, sc->NIL, sc->NIL);
   
@@ -7189,12 +7254,7 @@ static char *slashify_string(const char *p)
   s[j++] = '"';
   for (i = 0; i < len; i++) 
     {
-#if USE_CHARACTER_TABLES
       if (slashify_table[(int)p[i]])
-#else
-      if (((p[i] == '"') || (p[i] < ' ') || (p[i] == '\\')) && 
-	  (p[i] != '\n'))
-#endif
 	{
 	  s[j++] = '\\';
 	  switch(p[i]) 
@@ -8910,7 +8970,7 @@ s7_pointer s7_make_function(s7_scheme *sc, const char *name, s7_function f, int 
   ffunc *ptr;
   s7_pointer x = new_cell(sc);
   ptr = (ffunc *)calloc(1, sizeof(ffunc));
-  set_type(x, T_S7_FUNCTION | T_ATOM | T_SIMPLE | T_FINALIZABLE | T_DONT_COPY);
+  set_type(x, T_S7_FUNCTION | T_ATOM | T_SIMPLE | T_FINALIZABLE | T_DONT_COPY | T_PROCEDURE);
   /* was T_CONSTANT, but these guys can be freed -- in Snd, for example, "random" is defined in C, but then later redefined in snd-test.scm */
   x->object.ffptr = ptr;
   x->object.ffptr->ff = f;
@@ -8969,16 +9029,9 @@ static s7_pointer closure_source(s7_pointer p)
 }
 
 
-static bool s7_is_applicable_object(s7_pointer x);
-
 bool s7_is_procedure(s7_pointer x)
 {
-  return((is_closure(x)) || 
-	 (is_goto(x)) || 
-	 (s7_is_continuation(x)) || 
-	 (s7_is_function(x)) ||
-	 (s7_is_procedure_with_setter(x)) ||
-	 (s7_is_applicable_object(x)));
+  return(is_procedure(x));
 }
 
 
@@ -9322,6 +9375,8 @@ s7_pointer s7_make_object(s7_scheme *sc, int type, void *value)
   set_type(x, T_S7_OBJECT | T_ATOM | T_FINALIZABLE | T_DONT_COPY);
   x->object.fobj.type = type;
   x->object.fobj.value = value;
+  if (object_types[type].apply)
+    typeflag(x) |= T_PROCEDURE;
   return(x);
 }
 
@@ -9352,6 +9407,7 @@ s7_pointer s7_make_procedure_with_setter(s7_scheme *sc,
 					 const char *documentation)
 {
   pws *f;
+  s7_pointer obj;
   f = (pws *)calloc(1, sizeof(pws));
   f->getter = getter;
   f->get_req_args = get_req_args;
@@ -9367,7 +9423,9 @@ s7_pointer s7_make_procedure_with_setter(s7_scheme *sc,
   else f->name = NULL;
   f->scheme_getter = sc->NIL;
   f->scheme_setter = sc->NIL;
-  return(s7_make_object(sc, pws_tag, (void *)f));
+  obj = s7_make_object(sc, pws_tag, (void *)f);
+  typeflag(obj) |= T_PROCEDURE;
+  return(obj);
 }
 
 
@@ -9923,8 +9981,7 @@ static pthread_mutex_t remember_files_lock = PTHREAD_MUTEX_INITIALIZER;
 
 static s7_pointer remember_line(s7_scheme *sc, s7_pointer obj)
 {
-  if ((sc->input_port != sc->NIL) && 
-      (is_file_port(sc->input_port)))
+  if (sc->input_port != sc->NIL)
     set_pair_line_number(obj, port_line_number(sc->input_port) | (port_file_number(sc->input_port) << 20));
   return(obj);
 }
@@ -10346,15 +10403,26 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
       if (str1) free(str1);
       if (str2) free(str2);
       
-      if ((is_input_port(sc->input_port)) &&
-	  (is_file_port(sc->input_port)))
+      if (is_input_port(sc->input_port))
 	{
 	  char *numstr;
 	  numstr = (char *)calloc(64, sizeof(char));
 	  snprintf(numstr, 64, "%d", port_line_number(sc->input_port));
 	  
-	  write_string(sc, ", ", sc->error_port);
-	  write_string(sc, port_filename(sc->input_port), sc->error_port);
+	  if (port_filename(sc->input_port))
+	    {
+	      write_string(sc, ", ", sc->error_port);
+	      write_string(sc, port_filename(sc->input_port), sc->error_port);
+	    }
+	  else
+	    {
+	      if ((port_file_number(sc->input_port) >= 0) &&
+		  (file_names[port_file_number(sc->input_port)]))
+		{
+		  write_string(sc, ", ", sc->error_port);
+		  write_string(sc, file_names[port_file_number(sc->input_port)], sc->error_port);
+		}
+	    }
 	  write_string(sc, " line ", sc->error_port);
 	  write_string(sc, numstr, sc->error_port);
 	  
@@ -11916,13 +11984,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  goto READ_EXPRESSION;
 	  
 	case TOK_ATOM:
-#if USE_CHARACTER_TABLES
-	  pop_stack(sc, make_atom(sc, read_string_upto(sc, atom_delimiter_table, sc->input_port), 10)); 
+	  pop_stack(sc, make_atom(sc, read_string_upto(sc), 10)); 
 	  /* if reading list (from lparen), this will finally get us to op_read_list */
-#else
-	  pop_stack(sc, make_atom(sc, read_string_upto(sc, "();\t\n\r ", sc->input_port), 10)); 
-	  /* if reading list (from lparen), this will finally get us to op_read_list */
-#endif
 	  goto START;
 	  
 	case TOK_DQUOTE:
@@ -11938,11 +12001,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case TOK_SHARP_CONST:
 	  {
 	    char *expr;
-#if USE_CHARACTER_TABLES
-	    expr = read_string_upto(sc, atom_delimiter_table, sc->input_port);
-#else
-	    expr = read_string_upto(sc, "();\t\n\r ", sc->input_port);
-#endif
+	    expr = read_string_upto(sc);
 	    if ((sc->x = make_sharp_constant(sc, expr)) == sc->NIL)
 	      return(eval_error(sc, "undefined sharp expression", s7_make_string(sc, expr)));
 	    else 
@@ -12397,7 +12456,10 @@ static char *format_to_c_string(s7_scheme *sc, const char* str, s7_pointer args,
 			format_append_string(fdat, tmp);
 			if (tmp) free(tmp);
 			if (curly_arg == new_arg)
-			  return(s7_format_error(sc, "~{...~} doesn't consume any arguments!", str, args, fdat));
+			  {
+			    if (curly_str) free(curly_str);
+			    return(s7_format_error(sc, "~{...~} doesn't consume any arguments!", str, args, fdat));
+			  }
 			curly_arg = new_arg;
 		      }
 
@@ -12982,9 +13044,7 @@ s7_scheme *s7_init(void)
   s7_pointer x;
   s7_scheme *sc;
   
-#if USE_CHARACTER_TABLES
   init_ctables();
-#endif
   
   sc = (s7_scheme *)malloc(sizeof(s7_scheme));
 #if HAVE_PTHREADS
@@ -13544,19 +13604,6 @@ s7_scheme *s7_init(void)
 
     /* for s7_Double, float gives about 9 digits, double 18, long Double claims 28 but I don't see more than about 22? */
   }
-  /*
-  fprintf(stderr, "pi: %d (%d): %.30f\n    %d (%d): %.30lf\n    %d (%d): %.30Lf\n", 
-	  sizeof(float),
-	  (int)(log(pow(2, sizeof(float)*8-2))/log(10.0)),
-	  (float)3.1415926535897932384626433832795029L,
-	  sizeof(double),
-	  (int)(log(pow(2, sizeof(double)*8-2))/log(10.0)),
-	  (double)3.1415926535897932384626433832795029L,
-	  sizeof(long double),
-	  (int)(log(pow(2, sizeof(long double)*8-2))/log(10.0)),
-	  (long double)3.1415926535897932384626433832795029L);
-  */
-  
   return(sc);
 }
 

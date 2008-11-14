@@ -3637,7 +3637,6 @@
 
 ;;; --------------------------------------------------------------------------------
 
-
 (num-test (sin 0) 0.0)
 (num-test (sin 1) 0.84147098480790)
 (num-test (sin -1) -0.84147098480790)
@@ -27976,10 +27975,34 @@
 (num-test (acos 1.00001) 0.0+0.004472132228240686i)
 (num-test (atan 1) 0.7853981633974483)
 
+(num-test (/ 1.0 (/ 1.0 our-pi)) our-pi)
+(num-test (/ 1 (/ 1 1234)) 1234)
+(num-test (* pi (+ 1.0 (atan (tan (acos (cos (asin (sin (/ 1.0 (/ 1.0 pi)))))))))) pi)
+(num-test (/ 1.0 (/ 1.0 1.0+1.0i)) 1.0+1.0i)
+
+(let* ((angle 0.0) 
+       (z 1.18)
+       (result (* z (cos angle))))
+  (do ((k 0 (1+ k)))
+      ((= k 1000))
+    (set! result (* z (cos result))))
+  ;;result: 0.81194462369499
+  ;;(let ((x 0.0))
+  ;;  (do ((i 0 (1+ i)))
+  ;;      ((= i 10000))
+  ;;    (set! x (+ x (* (expt -1 i)
+  ;;		        (/ (bes-jn (+ 1 (* 2 i)) (* z (+ 1 (* 2 i))))
+  ;;		        (+ 1 (* 2 i)))))))
+  ;;  (* 2 x))
+  ;; 0.81194498071946
+  (let ((x (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos (* z (cos 0.0))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))))
+    ;; 47? calls here so we're at around .812 (oscillating around .8119)
+    (test (< (abs (- x result)) .001) #t)))
+
 (num-test (log 1.0e-8) -18.42068074395237)
 (num-test (log 1.0e-12) -27.63102111592855)
 (num-test (acos -2.0) 3.141592653589793-1.316957896924817i)
-(num-test (exp (make-rectangular 0.0 pi)) -1.0)
+(num-test (exp (make-rectangular 0.0 our-pi)) -1.0)
 (num-test (atanh 2.8147497671066e+14) 3.552713678800501e-15-1.570796326794897i)
 
 (num-test (acos 3.0+70000000i) 1.570796283937754-18.7571529895002i) ; C breaks near here
@@ -28322,9 +28345,15 @@
 
 (for-each
   (lambda (n)
-    (if (not (number? n))
-	(begin
-	  (display "(number? ") (display n) (display ") returned #f?") (newline))))
+    (let ((nb 
+	   (catch #t
+		  (lambda ()
+		    (number? n))
+		  (lambda args
+		    'error))))
+      (if (not nb)
+	  (begin
+	    (display "(number? ") (display n) (display ") returned #f?") (newline)))))
   (list 1 -1 +1 +.1 -.1 .1 .0 0. 0.0 -0 +0 -0. +0.
 	+1.1 -1.1 1.1
 	'1.0e2 '-1.0e2 '+1.0e2

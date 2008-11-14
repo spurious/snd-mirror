@@ -1588,12 +1588,14 @@ double xen_to_c_double_or_else(XEN a, double b)
 }
 
 
-static char *xen_s7_repl_prompt = (char *)">";
+static char *xen_s7_repl_prompt = NULL;
 
 void xen_s7_set_repl_prompt(const char *new_prompt)
 {
+  if (xen_s7_repl_prompt) free(xen_s7_repl_prompt);
   xen_s7_repl_prompt = strdup(new_prompt);
 }
+
 
 void xen_repl(int argc, char **argv)
 {
@@ -1895,6 +1897,7 @@ XEN_ARGIFY_3(g_add_hook_w, g_add_hook)
 
 void xen_initialize(void)
 {
+  xen_s7_repl_prompt = strdup(">");
   s7 = s7_init();
   if (!s7) 
     {
