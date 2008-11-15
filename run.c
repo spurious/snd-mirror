@@ -63,7 +63,7 @@
  *
  * LIMITATIONS: <insert anxious lucubration here about DSP context and so on>
  *      variables can have only one type, the type has to be ascertainable somehow (similarly for vector elements)
- *      some variables (imported from outside our context) cannot be set, in some cases they can't even be found (args to define* for example)
+ *      some variables (imported from outside our context) cannot be set, in some cases they can't even be found (args to define* in Guile for example)
  *      no recursion (could be added with some pain)
  *      no macro expansion (not sure how to handle this in Guile)
  *      no complex, ratio, bignum (but we use 64-bit ints)
@@ -102,6 +102,8 @@
  *
  * would it simplify variable handling to store everything as xen_value?
  */
+
+/* TODO: check all constants for s7_define_constant */
 
 
 #include <mus-config.h>
@@ -384,6 +386,7 @@ static XEN symbol_to_value(XEN code, XEN sym, bool *local)
   /* local_var here is a check against GLOBAL_SET_OK -- not a big deal! */
   (*local) = false; /* just a guess... */
 
+  /* fprintf(stderr, "symbol->value: %s %s\n", XEN_AS_STRING(sym), XEN_AS_STRING(XEN_CDR(code))); */
   return(s7_symbol_local_value(s7, sym, s7_cdr(code)));
 }
 
@@ -3335,104 +3338,20 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool sepa
 {
   XEN arg, args, declarations = XEN_FALSE, declaration;
   xen_value *v = NULL;
-  int i, arg_num, arg_type;
+  int i, arg_num = 0, arg_type, args_len = 0;
 
   /* this can be (declare (arg1 type1)...) or (snd-declare (quote ((arg1 type1...)))) -- see snd-xen.c for an explanation of snd-declare */
-  /*
-  fprintf(stderr, "declare: %s, %d %d\n", XEN_AS_STRING(form), separate, num_args); 
-  */
+
+  /* fprintf(stderr, "declare: %s, %d %d\n", XEN_AS_STRING(form), separate, num_args); */
+
   if (separate)
     args = XEN_CADR(form);
   else args = XEN_CDADR(form);
-  /*
-  fprintf(stderr, "args: %s %d\n", XEN_AS_STRING(args), XEN_LIST_P(args));
-  */
+
+  /* fprintf(stderr, "args: %s %d\n", XEN_AS_STRING(args), XEN_LIST_P(args)); */
+
   if (!(XEN_LIST_P(args))) 
-    {
-#if 0
-      /* the problem with define* trailing args is that the arglist is implicit in the function:
-
-        :(define* (hiho :optional (a 1)) a)
-        #<unspecified>
-        :(procedure-source hiho)
-        (lambda lambda*:G151 
-          (let-optional* lambda*:G151 ((a 1)) 
-            (let-keywords* lambda*:G151 #f () 
-              (if (not (null? lambda*:G151)) 
-                  (error "Too many arguments.")) 
-              (let () 
-                a)))) ; actual function body is (list-ref (cadddr (caddr source)) 5) or 6? -- 5 to get a complete form
-		      ;   or (cddadr (cddddr (cadddr (caddr (procedure-source hiho))))) !!  I ought to use this just for its hack value.
-
-       but...
-
-        :(procedure-properties hiho)
-        ((arity 0 0 #t) (name . hiho) (arglist () ((a 1)) () #f #f))
-
-        :(define* (hiho a :optional (b 2) (c "hiho")) (+ a b))
-        :(procedure-property hiho 'arglist)
-        ((a) ((b 2) (c "hiho")) () #f #f)
-        :(procedure-property hiho 'arity)
-        (1 0 #t)
-        :(list-ref (cadddr (caddr (procedure-source hiho))) 5)
-        (let () (+ a b))
-        :(define* (hiho a :optional (b 2) (c "hiho")) (snd-print c) (+ a b))
-        :(list-ref (cadddr (caddr (procedure-source hiho))) 5)
-        (let () (snd-print c) (+ a b))
-
-        :(define* (hiho a :optional (b 2) (c "hiho")) (declare (a float)) (snd-print c) (+ a b))
-        :(list-ref (cadddr (caddr (procedure-source hiho))) 5)
-        (let () (declare (a float)) (snd-print c) (+ a b)) ; the "declare" is still caddr!
-
-       so we should be able to use local_proc (which can be #f if we were passed a lambda*) to find its arglist,
-         but then we need to append the trailing args to the current actual arglist?
-         and even then, the procedure source we are passed is a mess (see above).
-         If the initial junk is always the same, we could search for the last form -- apparently a let or a let*?
-
-	 but even with all that (and using LIST_TAIL for the let form), we still have arg number confusion if
-	   the define* calls itself in its arg list -- finally decided this was too tricky and too dependent
-	   on Guile internals.
-
-       the-environment doesn't help -- it reworks slightly the info we already have.
-       :(define* (hiho a :optional (b 2) (c "hiho")) (the-environment))
-       :(hiho 1)
-       ((c . "hiho") (b . 2) ((a . lambda*:G411) 1) #<eval-closure 40444d40>)
-      */
-
-      /* local_proc was trailing arg */
-
-      if ((!(XEN_FALSE_P(local_proc))) && 
-	  (XEN_PROCEDURE_P(local_proc)) &&
-	  (XEN_LIST_LENGTH(form) == 3) &&                           /* lambda lambda*:Gxxx (let-optional*...) */
-	  (XEN_LIST_P(XEN_CADDR(form))) &&
-	  (XEN_LIST_LENGTH(XEN_CADDR(form)) == 4) &&                /* let-optional* lambda*:Gxxx (args) (let-keywords*...) */
-	  (XEN_LIST_P(XEN_CADDDR(XEN_CADDR(form)))) &&
-	  (XEN_SYMBOL_P(XEN_CAR(XEN_CADDDR(XEN_CADDR(form))))) &&
-	  (strcmp(XEN_SYMBOL_TO_C_STRING(XEN_CAR(XEN_CADDDR(XEN_CADDR(form)))), "let-keywords*") == 0))
-	{
-	  XEN arglist;
-	  arglist = scm_procedure_property(local_proc, scm_string_to_symbol(C_TO_XEN_STRING("arglist"))); /* do I need to gc protect this? */
-
-	  (*walk_cddr_ref) = false;
-	  walk_cddr = false; /* by ref syntax is so ugly in C that I'll use a separate variable */
-
-	  form = XEN_LIST_REF(XEN_CADDDR(XEN_CADDR(form)), 5);     /* let-keywords* lambda*:Gxxx #f () (if...) (let...) -- get the let form */
-	  if (XEN_NOT_NULL_P(XEN_CAR(arglist)))                    /* ((a) ((b 2) (c "hiho")) () #f #f) */
-	    args = XEN_APPEND(XEN_CAR(arglist), XEN_CADR(arglist));
-	  else args = XEN_CADR(arglist);                           /* (() ((a 1)) () #f #f) */
-
-	  fprintf(stderr,"found %s arglist: %s -> %s, args: %s, form: %s\n", 
-		  XEN_AS_STRING(XEN_PROCEDURE_NAME(local_proc)),
-		  XEN_AS_STRING(arglist),
-		  XEN_AS_STRING(XEN_LIST_REF(XEN_CADDDR(XEN_CADDR(XEN_PROCEDURE_SOURCE(local_proc))), 5)),
-		  XEN_AS_STRING(args),
-		  XEN_AS_STRING(form));
-	}
-      else
-#endif
-
     return(mus_format("can't handle these optional args: %s", XEN_AS_STRING(args)));
-    }
 
   if (num_args > XEN_LIST_LENGTH(args))
     {
@@ -3443,9 +3362,28 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool sepa
 #endif
       return(str);
     }
-  if (num_args == 0)
+
+  args_len = XEN_LIST_LENGTH(args);
+  if (num_args < args_len)
+    {
+      arg_num = args_len;
+      for (i = 0; i < args_len; i++)
+	if ((XEN_SYMBOL_P(XEN_LIST_REF(args, i))) &&
+	    ((strcmp(XEN_SYMBOL_TO_C_STRING(XEN_LIST_REF(args, i)), ":optional") == 0) ||
+	     (strcmp(XEN_SYMBOL_TO_C_STRING(XEN_LIST_REF(args, i)), ":key") == 0) ||
+	     (strcmp(XEN_SYMBOL_TO_C_STRING(XEN_LIST_REF(args, i)), ":rest") == 0)))
+	  arg_num--;
+    }
+  else arg_num = num_args;
+
+  if (num_args < arg_num)
     {
       declarations = XEN_CADDR(form); /* either declare or snd-declare */
+      if (XEN_STRING_P(declarations))
+	declarations = XEN_CADDDR(form);
+
+      /* fprintf(stderr, "declaration: %s\n", XEN_AS_STRING(declarations)); */
+
       if ((XEN_LIST_P(declarations)) && 
 	  (XEN_NOT_NULL_P(declarations)) &&
 	  (XEN_SYMBOL_P(XEN_CAR(declarations))) &&
@@ -3457,18 +3395,25 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool sepa
 	  else declarations = XEN_CADR(XEN_CADR(declarations));
 	}
       else declarations = XEN_FALSE;
-      arg_num = XEN_LIST_LENGTH(args);
     }
   else arg_num = num_args;
+
+  /* fprintf(stderr, "num_args: %d, args: %s, declarations: %s\n", arg_num, XEN_AS_STRING(args), XEN_AS_STRING(declarations)); */
 
   prog->arity = arg_num;
   if (arg_num > 0)
     {
       prog->args = (int *)CALLOC(arg_num, sizeof(int));
       prog->arg_types = (int *)CALLOC(arg_num, sizeof(int));
-      for (i = 0; i < arg_num; i++, args = XEN_CDR(args))
+      for (i = 0; i < args_len; i++, args = XEN_CDR(args))
 	{
 	  arg = XEN_CAR(args);
+	  if ((XEN_SYMBOL_P(arg)) &&
+	      ((strcmp(XEN_SYMBOL_TO_C_STRING(arg), ":optional") == 0) ||
+	       (strcmp(XEN_SYMBOL_TO_C_STRING(arg), ":key") == 0) ||
+	       (strcmp(XEN_SYMBOL_TO_C_STRING(arg), ":rest") == 0)))
+	    continue;
+
 	  arg_type = default_arg_type;
 	  /* (declare (x real) (a integer) (b string) ... */
 
@@ -3479,8 +3424,12 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool sepa
 	    {
 	      declaration = XEN_CAR(declarations);
 	      declarations = XEN_CDR(declarations);
-	      if ((XEN_EQ_P(XEN_CAR(declaration), arg)) &&
-		  (XEN_SYMBOL_P(XEN_CADR(declaration))))
+
+	      if (((XEN_LIST_P(arg)) &&
+		   (XEN_EQ_P(XEN_CAR(declaration), XEN_CAR(arg))) &&
+		   (XEN_SYMBOL_P(XEN_CADR(declaration)))) ||
+		  ((XEN_EQ_P(XEN_CAR(declaration), arg)) &&
+		   (XEN_SYMBOL_P(XEN_CADR(declaration)))))
 		{
 		  const char *type;
 		  type = XEN_SYMBOL_TO_C_STRING(XEN_CADR(declaration));
@@ -3534,14 +3483,36 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool sepa
 		}
 	    }
 	  
-	  /* fprintf(stderr, "add arg %s (%s)\n", XEN_SYMBOL_TO_C_STRING(arg), type_name(arg_type)); */
+	  /* fprintf(stderr, "add arg %s (%s)\n", XEN_AS_STRING(arg), type_name(arg_type)); */
+	  
+	  /* TODO: check other default arg types */
+	  if (XEN_LIST_P(arg))
+	    {
+	      XEN form;
+	      form = XEN_CADR(arg);
 
-	  add_var_to_ptree(prog, 
-			   XEN_SYMBOL_TO_C_STRING(arg), 
-			   v = add_empty_var_to_ptree(prog, arg_type));
+	      switch (arg_type)
+		{
+		case R_INT:     v = make_xen_value(arg_type, add_int_to_ptree(prog, R_XEN_TO_C_INT(form)), R_CONSTANT);                 break;
+		case R_FLOAT:   v = make_xen_value(arg_type, add_dbl_to_ptree(prog, XEN_TO_C_DOUBLE(form)), R_CONSTANT);                break;
+		case R_STRING:  v = make_xen_value(arg_type, add_string_to_ptree(prog, mus_strdup(XEN_TO_C_STRING(form))), R_CONSTANT); break;
+		case R_CHAR:    v = make_xen_value(arg_type, add_int_to_ptree(prog, (Int)(XEN_TO_C_CHAR(form))), R_CONSTANT);           break;
+		case R_BOOL:    v = make_xen_value(arg_type, add_int_to_ptree(prog, (XEN_FALSE_P(form)) ? 0 : 1), R_CONSTANT);          break;
+		case R_KEYWORD: v = make_xen_value(arg_type, add_xen_to_ptree(prog, form), R_CONSTANT);                                 break;
+		default: fprintf(stderr, "unimplemented default: %s\n", XEN_AS_STRING(form));
+		}
+
+	      add_var_to_ptree(prog, XEN_SYMBOL_TO_C_STRING(XEN_CAR(arg)), v);
+	    }
+	  else
+	    {
+	      add_var_to_ptree(prog, 
+			       XEN_SYMBOL_TO_C_STRING(arg), 
+			       v = add_empty_var_to_ptree(prog, arg_type));
+	    }
+
 	  prog->args[i] = v->addr;
 	  prog->arg_types[i] = v->type;
-
 	  /* fprintf(stderr, "added %s at %d\n", type_name(v->type), v->addr); */
 
 	  FREE(v);
@@ -7274,8 +7245,8 @@ static xen_value *funcall_n(ptree *prog, xen_value **args, int num_args, xen_val
   if (!func) 
     return(run_warn("inner lambda lost!"));
 
-  if (func->arity != num_args) 
-    return(run_warn("wrong number of args (%d) for func", num_args));
+  if (func->arity < num_args) 
+    return(run_warn("wrong number of args (%d) for func (wants %d)", num_args, func->arity));
 
   fres = func->result;
   new_args = (xen_value **)CALLOC(num_args + 2, sizeof(xen_value *));
@@ -9528,11 +9499,11 @@ static xen_value *splice_in_function_body(ptree *prog, XEN proc, xen_value **arg
 #else
   func_form = XEN_PROCEDURE_SOURCE(proc);
 #endif
-  /* fprintf(stderr,"splice in %s\n", XEN_AS_STRING(func_form)); */
+  /* fprintf(stderr,"splice in %s\n", XEN_AS_STRING(func_form));  */
 
   if ((XEN_LIST_P(func_form)) &&
       (XEN_SYMBOL_P(XEN_CAR(func_form))) &&
-      (strcmp("lambda", XEN_SYMBOL_TO_C_STRING(XEN_CAR(func_form))) == 0))
+      (strncmp("lambda", XEN_SYMBOL_TO_C_STRING(XEN_CAR(func_form)), 6) == 0)) /* might be lambda* */
     {
       /* look for procedure source, use current arg types as auto-declaration */
       bool old_got_lambda;
@@ -10447,7 +10418,7 @@ static xen_value *out_any_function_body(ptree *prog, XEN proc, xen_value **args,
 
   if ((XEN_LIST_P(func_form)) &&
       (XEN_SYMBOL_P(XEN_CAR(func_form))) &&
-      (strcmp("lambda", XEN_SYMBOL_TO_C_STRING(XEN_CAR(func_form))) == 0))
+      (strncmp("lambda", XEN_SYMBOL_TO_C_STRING(XEN_CAR(func_form)), 6) == 0))
     {
       bool old_got_lambda;
       xen_value *v;
@@ -12529,7 +12500,7 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
   /* walk form, storing vars, making program entries for operators etc */
   XEN rtnval = XEN_FALSE;
 
-  /* fprintf(stderr, "walk %s (needed: %d)\n", XEN_AS_STRING(form), (int)walk_result); */
+  /* fprintf(stderr, "walk %s\n", XEN_AS_STRING(form)); */
 
   if (current_optimization == DONT_OPTIMIZE) return(NULL);
 
@@ -12875,6 +12846,8 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 	return(clean_up(set_up_format(prog, args, num_args, false), args, num_args));
 #endif
 
+      /* fprintf(stderr, "still looking for %s\n", funcname); */
+
       /* check for function defined elsewhere, get source, splice in if possible */
       if ((v == NULL) && 
 	  (current_optimization >= SOURCE_OK) &&
@@ -12887,6 +12860,7 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
 	  )
 	{
 	  v = splice_in_function_body(prog, rtnval, args, num_args, funcname);
+	  /* fprintf(stderr, "spliced: %p\n", v); */
 	  if (v) 
 	    return(clean_up(v, args, num_args));
 	}

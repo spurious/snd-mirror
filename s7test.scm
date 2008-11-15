@@ -14,7 +14,7 @@
 ;;;   GSL tests
 
 
-(define with-continued-fraction-rationalize #t)                ; #f follows the Scheme spec
+(define with-continued-fraction-rationalize #t)                ; #f follows the (silly) Scheme spec
 (define with-bignums #f)                                       ; unlimited ints
 (define with-hyperbolic-functions #t)                          ; sinh et al
 (define with-char-ops-with-more-than-2-args #t)                ; char<? et al restricted to 2 args?
@@ -33,6 +33,7 @@
 (define with-keywords #t)                                      ; make-keyword, keyword->symbol etc
 (define with-gensym #t)                                        ; gensym with optional string arg (prefix)
 (define with-format #t)                                        ; simple format tests
+(define with-define* #t)                                       ; this tests s7's version of define*
 
 
 ;; we're assuming call/cc is defined
@@ -27983,12 +27984,12 @@
 (let* ((angle 0.0) 
        (z 1.18)
        (result (* z (cos angle))))
-  (do ((k 0 (1+ k)))
+  (do ((k 0 (+ 1 k)))
       ((= k 1000))
     (set! result (* z (cos result))))
   ;;result: 0.81194462369499
   ;;(let ((x 0.0))
-  ;;  (do ((i 0 (1+ i)))
+  ;;  (do ((i 0 (+ 1 i)))
   ;;      ((= i 10000))
   ;;    (set! x (+ x (* (expt -1 i)
   ;;		        (/ (bes-jn (+ 1 (* 2 i)) (* z (+ 1 (* 2 i))))
@@ -29338,6 +29339,23 @@
 (test (do ((i 0 (let () (set! j 3) (+ i 1))) (j 0 (+ j 1))) ((= i 3) j)) 4)
 (test (let ((i 0)) (do () ((= i 3) (* i 2)) (set! i (+ i 1)))) 6)
 
+(test (let ((x 0)) 
+	(do ((i 0 (+ i 1)))
+	    ((= i (do ((j 0 (+ j 1))) ((= j 2) (+ j 1)))))
+	  (set! x (+ x i)))
+	x)
+      3)
+(test (let ((x 0)) 
+	(do ((i 0 (+ i (do ((j 0 (+ j 1))) ((= j 2) 1)))))
+	    ((= i 3) x)
+	  (set! x (+ x i))))
+      3)
+(test (let ((x 0)) 
+	(do ((i 0 (+ i (do ((j 0 (+ j 1))) ((= j 2) 1)))))
+	    ((= i 3) (do ((j 0 (+ j 1))) ((= j 5) x) (set! x j)))
+	  (set! x (+ x i))))
+      4)
+
 (test (call/cc (lambda (exit) (do ((i 0 (+ i 1))) ((= i 100) i) (if (= i 2) (exit 321))))) 321)
 (test (call/cc (lambda (exit) (do ((i 0 (if (= i 3) (exit 321) (+ i 1)))) ((= i 100) i)))) 321)
 (test (call/cc (lambda (exit) (do ((i 0 (+ i 1))) ((= i 10) (exit 321))))) 321)
@@ -29419,7 +29437,7 @@
 	    (let loop ((val (read p)))
 	      (or (eof-object? val)
 		  (begin
-		    (set! loc (1+ loc))
+		    (set! loc (+ 1 loc))
 		    (loop (read p)))))
 	    (> loc 20000))))
       #t)
@@ -29462,7 +29480,7 @@
 	    (let loop ((val (read p)))
 	      (and (not (eof-object? val))
 		   (begin
-		     (set! loc (1+ loc))
+		     (set! loc (+ 1 loc))
 		     (loop (read p)))))
 	    (> loc 20000))))
       #t)
@@ -30023,6 +30041,53 @@
  (list "hi" -1 #\a "" '() '#() (current-output-port) 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t abs (list 1 2 3) '(1 . 2)))
 
 
+;(let ((initial-chars "aA!$%&*/:<=>?^_~")
+;      (subsequent-chars "9aA!$%&*+-./:<=>?@^_~")
+;      (ctr 0))
+;  (display (format #f "(let ("))
+;  (do ((i 0 (+ i 1)))
+;      ((= i (string-length initial-chars)))
+;    (display (format #f "(~A ~D) " (string (string-ref initial-chars i)) ctr))
+;    (set! ctr (+ ctr 1)))
+;
+;  (do ((i 0 (+ i 1)))
+;      ((= i (string-length initial-chars)))
+;    (do ((k 0 (+ k 1)))
+;	((= k (string-length subsequent-chars)))
+;      (display (format #f "(~A ~D) " (string (string-ref initial-chars i) (string-ref subsequent-chars k)) ctr))
+;      (set! ctr (+ ctr 1))))
+;
+;  (display (format #f ")~%  (+ "))
+;  (do ((i 0 (+ i 1)))
+;      ((= i (string-length initial-chars)))
+;    (display (format #f "~A " (string (string-ref initial-chars i)))))
+;
+;  (do ((i 0 (+ i 1)))
+;      ((= i (string-length initial-chars)))
+;    (do ((k 0 (+ k 1)))
+;	((= k (string-length subsequent-chars)))
+;      (display (format #f "~A " (string (string-ref initial-chars i) (string-ref subsequent-chars k))))))
+;
+;  (display (format #f "))~%")))
+
+(num-test (let ((a 0) (A 1) (! 2) ($ 3) (% 4) (& 5) (* 6) (/ 7) (: 8) (< 9) (= 10) (> 11) (? 12) (^ 13) (_ 14) (~ 15) (a9 16) (aa 17) (aA 18) (a! 19) (a$ 20) (a% 21) (a& 22) (a* 23) (a+ 24) (a- 25) (a. 26) (a/ 27) (a: 28) (a< 29) (a= 30) (a> 31) (a? 32) (a@ 33) (a^ 34) (a_ 35) (a~ 36) (A9 37) (Aa 38) (AA 39) (A! 40) (A$ 41) (A% 42) (A& 43) (A* 44) (A+ 45) (A- 46) (A. 47) (A/ 48) (A: 49) (A< 50) (A= 51) (A> 52) (A? 53) (A@ 54) (A^ 55) (A_ 56) (A~ 57) (!9 58) (!a 59) (!A 60) (!! 61) (!$ 62) (!% 63) (!& 64) (!* 65) (!+ 66) (!- 67) (!. 68) (!/ 69) (!: 70) (!< 71) (!= 72) (!> 73) (!? 74) (!@ 75) (!^ 76) (!_ 77) (!~ 78) ($9 79) ($a 80) ($A 81) ($! 82) ($$ 83) ($% 84) ($& 85) ($* 86) ($+ 87) ($- 88) ($. 89) ($/ 90) ($: 91) ($< 92) ($= 93) ($> 94) ($? 95) ($@ 96) ($^ 97) ($_ 98) ($~ 99) (%9 100) (%a 101) (%A 102) (%! 103) (%$ 104) (%% 105) (%& 106) (%* 107) (%+ 108) (%- 109) (%. 110) (%/ 111) (%: 112) (%< 113) (%= 114) (%> 115) (%? 116) (%@ 117) (%^ 118) (%_ 119) (%~ 120) (&9 121) (&a 122) (&A 123) (&! 124) (&$ 125) (&% 126) (&& 127) (&* 128) (&+ 129) (&- 130) (&. 131) (&/ 132) (&: 133) (&< 134) (&= 135) (&> 136) (&? 137) (&@ 138) (&^ 139) (&_ 140) (&~ 141) (*9 142) (*a 143) (*A 144) (*! 145) (*$ 146) (*% 147) (*& 148) (** 149) (*+ 150) (*- 151) (*. 152) (*/ 153) (*: 154) (*< 155) (*= 156) (*> 157) (*? 158) (*@ 159) (*^ 160) (*_ 161) (*~ 162) (/9 163) (/a 164) (/A 165) (/! 166) (/$ 167) (/% 168) (/& 169) (/* 170) (/+ 171) (/- 172) (/. 173) (// 174) (/: 175) (/< 176) (/= 177) (/> 178) (/? 179) (/@ 180) (/^ 181) (/_ 182) (/~ 183) (:9 184) (:a 185) (:A 186) (:! 187) (:$ 188) (:% 189) (:& 190) (:* 191) (:+ 192) (:- 193) (:. 194) (:/ 195) (:: 196) (:< 197) (:= 198) (:> 199) (:? 200) (:@ 201) (:^ 202) (:_ 203) (:~ 204) (<9 205) (<a 206) (<A 207) (<! 208) (<$ 209) (<% 210) (<& 211) (<* 212) (<+ 213) (<- 214) (<. 215) (</ 216) (<: 217) (<< 218) (<= 219) (<> 220) (<? 221) (<@ 222) (<^ 223) (<_ 224) (<~ 225) (=9 226) (=a 227) (=A 228) (=! 229) (=$ 230) (=% 231) (=& 232) (=* 233) (=+ 234) (=- 235) (=. 236) (=/ 237) (=: 238) (=< 239) (== 240) (=> 241) (=? 242) (=@ 243) (=^ 244) (=_ 245) (=~ 246) (>9 247) (>a 248) (>A 249) (>! 250) (>$ 251) (>% 252) (>& 253) (>* 254) (>+ 255) (>- 256) (>. 257) (>/ 258) (>: 259) (>< 260) (>= 261) (>> 262) (>? 263) (>@ 264) (>^ 265) (>_ 266) (>~ 267) (?9 268) (?a 269) (?A 270) (?! 271) (?$ 272) (?% 273) (?& 274) (?* 275) (?+ 276) (?- 277) (?. 278) (?/ 279) (?: 280) (?< 281) (?= 282) (?> 283) (?? 284) (?@ 285) (?^ 286) (?_ 287) (?~ 288) (^9 289) (^a 290) (^A 291) (^! 292) (^$ 293) (^% 294) (^& 295) (^* 296) (^+ 297) (^- 298) (^. 299) (^/ 300) (^: 301) (^< 302) (^= 303) (^> 304) (^? 305) (^@ 306) (^^ 307) (^_ 308) (^~ 309) (_9 310) (_a 311) (_A 312) (_! 313) (_$ 314) (_% 315) (_& 316) (_* 317) (_+ 318) (_- 319) (_. 320) (_/ 321) (_: 322) (_< 323) (_= 324) (_> 325) (_? 326) (_@ 327) (_^ 328) (__ 329) (_~ 330) (~9 331) (~a 332) (~A 333) (~! 334) (~$ 335) (~% 336) (~& 337) (~* 338) (~+ 339) (~- 340) (~. 341) (~/ 342) (~: 343) (~< 344) (~= 345) (~> 346) (~? 347) (~@ 348) (~^ 349) (~_ 350) (~~ 351) )
+  (+ a A ! $ % & * / : < = > ? ^ _ ~ a9 aa aA a! a$ a% a& a* a+ a- a. a/ a: a< a= a> a? a@ a^ a_ a~ A9 Aa AA A! A$ A% A& A* A+ A- A. A/ A: A< A= A> A? A@ A^ A_ A~ !9 !a !A !! !$ !% !& !* !+ !- !. !/ !: !< != !> !? !@ !^ !_ !~ $9 $a $A $! $$ $% $& $* $+ $- $. $/ $: $< $= $> $? $@ $^ $_ $~ %9 %a %A %! %$ %% %& %* %+ %- %. %/ %: %< %= %> %? %@ %^ %_ %~ &9 &a &A &! &$ &% && &* &+ &- &. &/ &: &< &= &> &? &@ &^ &_ &~ *9 *a *A *! *$ *% *& ** *+ *- *. */ *: *< *= *> *? *@ *^ *_ *~ /9 /a /A /! /$ /% /& /* /+ /- /. // /: /< /= /> /? /@ /^ /_ /~ :9 :a :A :! :$ :% :& :* :+ :- :. :/ :: :< := :> :? :@ :^ :_ :~ <9 <a <A <! <$ <% <& <* <+ <- <. </ <: << <= <> <? <@ <^ <_ <~ =9 =a =A =! =$ =% =& =* =+ =- =. =/ =: =< == => =? =@ =^ =_ =~ >9 >a >A >! >$ >% >& >* >+ >- >. >/ >: >< >= >> >? >@ >^ >_ >~ ?9 ?a ?A ?! ?$ ?% ?& ?* ?+ ?- ?. ?/ ?: ?< ?= ?> ?? ?@ ?^ ?_ ?~ ^9 ^a ^A ^! ^$ ^% ^& ^* ^+ ^- ^. ^/ ^: ^< ^= ^> ^? ^@ ^^ ^_ ^~ _9 _a _A _! _$ _% _& _* _+ _- _. _/ _: _< _= _> _? _@ _^ __ _~ ~9 ~a ~A ~! ~$ ~% ~& ~* ~+ ~- ~. ~/ ~: ~< ~= ~> ~? ~@ ~^ ~_ ~~ ))
+	  61776)
+
+(test (let ()(+ (let ((x 0) (y 1) (z 2) )(+ x y (let ((x 3) )(+ x (let ()(+ (let ()
+        (+ (let ((x 0) (y 1) (z 2) )(+ x y z (let ((x 3) )(+ x (let ((x 4) (y 5) (z 6) )
+        (+ x y z (let ()(+ (let ((x 7) )(+ x (let ()(+ (let ((x 8) (y 9) )
+        (+ x (let ((x 10) (y 11) (z 12) )(+ x  ))))))))))))))))))))))))))
+      50)
+(test  (let* ((x 0) (y x) )(+ x y (let ()(+ (let ((x 2) )(+ x (let ()(+ (let ((x 4) )
+          (+ x (let ((x 5) )(+ x (let ((x 6) (y x) (z y) )(+ x (let ((x 7) (y x) )
+          (+ x (let ((x 8) (y x) )(+ x y (let ((x 9) (y x) (z y) )(+ x ))))))))))))))))))))
+       48)
+(test (let* ((x 0) (y x) )(+ x y (let* ()(+ (let* ((x 2) )(+ x (let* ()(+ (let* ((x 4) )
+        (+ x (let* ((x 5) )(+ x (let* ((x 6) (y x) (z y) )(+ x (let* ((x 7) (y x) )
+        (+ x (let* ((x 8) (y x) )(+ x y (let* ((x 9) (y x) (z y) )(+ x ))))))))))))))))))))
+      49)
+
 
 
 ;;; -------- call/cc --------
@@ -30505,7 +30570,7 @@
 				(if (or (<= (abs (- ux (/ a b))) err)
 					(> ctr 1000))
 				    (return (/ a b)))
-				(set! ctr (1+ ctr))
+				(set! ctr (+ 1 ctr))
 				(if (= x tt) (return))
 				(set! x (/ 1 (- x tt))) 
 				(set! tt (inexact->exact (floor x)))
@@ -31600,5 +31665,90 @@
 	    ))
 
       ;; (format with 18 digits is enough to tell what s7_Double is via built-in pi)
+
+      ))
+
+(if with-define*
+    (begin
+
+      (let ((hi (lambda* (a) a)))
+	(test (hi 1) 1)
+	(test (hi) #f)          ; all args are optional
+	(test (hi :a 32) 32)    ; all args are keywords
+	(test (hi 1 2) 1)       ; extra args are ignored
+	
+	(for-each
+	 (lambda (arg)
+	   (test (hi arg) arg)
+	   (test (hi :a arg) arg))
+	 (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi abs '#(()) (list 1 2 3) '(1 . 2)))
+
+	(test (hi :b 1) 'error))
+
+      (let ((hi (lambda* ((a 1)) a)))
+	(test (hi 2) 2)
+	(test (hi) 1)
+	(test (hi :a 2) 2)
+
+	(for-each
+	 (lambda (arg)
+	   (test (hi arg) arg)
+	   (test (hi :a arg) arg))
+	 (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi abs '#(()) (list 1 2 3) '(1 . 2))))
+
+      (let ((hi (lambda* (a (b "hi")) (list a b))))
+	(test (hi) (list #f "hi"))
+	(test (hi 1) (list 1 "hi"))
+	(test (hi 1 2) (list 1 2))
+	(test (hi :b 1) (list #f 1))
+	(test (hi :a 1) (list 1 "hi"))
+	(test (hi 1 :b 2) (list 1 2))
+	(test (hi :b 3 :a 1) (list 1 3))
+	(test (hi :a 3 :b 1) (list 3 1))
+	(test (hi 1 :a 3) (list 3 "hi"))
+	(test (hi 1 2 :a 3) (list 1 2)) ; trailing (extra) args are ignored
+	(test (hi :a 2 :c 1) 'error)
+	(test (hi 1 :c 2) 'error)
+
+	(for-each
+	 (lambda (arg)
+	   (test (hi :a 1 :b arg) (list 1 arg))
+	   (test (hi :a arg) (list arg "hi"))
+	   (test (hi :b arg) (list #f arg))
+	   (test (hi arg arg) (list arg arg)))
+	 (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi abs '#(()) (list 1 2 3) '(1 . 2))))
+
+      (let ((hi (lambda* (a :key (b 3) :optional c) (list a b c))))
+	(test (hi) (list #f 3 #f))
+	(test (hi 1) (list 1 3 #f))
+	(test (hi :c 32) (list #f 3 32))
+	(test (hi :c 32 :b 43 :a 54) (list 54 43 32))
+	(test (hi 1 2 3) (list 1 2 3))
+	(test (hi :b 32) (list #f 32 #f))
+	(test (hi 1 2 :c 32) (list 1 2 32)))
+
+      (let ((hi (lambda* (a :rest b) (list a b))))
+	(test (hi 1 2 3) (list 1 (list 2 3)))
+	(test (hi) (list #f #f))
+	(test (hi :a 2) (list 2 #f))
+	(test (hi :b 3) (list #f 3)))
+
+      (let ((hi (lambda* (a :rest b :rest c) (list a b c))))
+	(test (hi 1 2 3 4 5) (list 1 (list 2 3 4 5) (list 3 4 5))))
+
+      (let ((hi (lambda* ((a 3) :key (b #t) :optional (c pi) :rest d) (list a b c d))))
+	(test (hi) (list 3 #t pi #f))
+	(test (hi 1 2 3 4) (list 1 2 3 (list 4))))
+
+      (let ((hi (lambda* ((a 'hi)) (equal? a 'hi))))
+	(test (hi) #t)
+	(test (hi 1) #f)
+	(test (hi 'hi) #t)
+	(test (hi :a 1) #f))
+
+      (let* ((x 32)
+	     (hi (lambda* (a (b x)) (list a b))))
+	(test (hi) (list #f 32))
+	(test (hi :a 1) (list 1 32)))
 
       ))

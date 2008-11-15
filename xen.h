@@ -11,11 +11,12 @@
  */
 
 #define XEN_MAJOR_VERSION 2
-#define XEN_MINOR_VERSION 21
-#define XEN_VERSION "2.21"
+#define XEN_MINOR_VERSION 22
+#define XEN_VERSION "2.22"
 
 /* HISTORY:
  *
+ *  17-Nov-08: use s7_define_constant in XEN_DEFINE_CONSTANT.
  *  1-Nov-08:  changed s7 and Guile C_TO_XEN_STRING slightly.
  *  16-Oct-08: removed Gauche support.
  *  10-Aug-08: S7, a TinyScheme derivative.
@@ -2012,7 +2013,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 #define XEN_APPLY_NO_CATCH(Func, Args)                                s7_call(s7, Func, Args)
 typedef XEN (*XEN_CATCH_BODY_TYPE)                                    (void *data);
 
-#define XEN_DEFINE_CONSTANT(Name, Value, Help)                        s7_define_variable(s7, Name, s7_make_integer(s7, Value))
+#define XEN_DEFINE_CONSTANT(Name, Value, Help)                        s7_define_constant(s7, Name, s7_make_integer(s7, Value))
 #define XEN_DEFINE(Name, Value)                                       s7_define_variable(s7, Name, Value)
 
 #define XEN_DEFINE_VARIABLE(Name, Var, Value)                         Var = xen_define_variable(Name, Value)

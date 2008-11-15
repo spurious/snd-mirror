@@ -518,12 +518,10 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+14-Nov:  removed s7-optargs.scm -- define* is now built-in in s7.\n\
 11-Nov:  removed s7-format.scm -- format is now built-in in s7.\n\
 29-Oct:  osc.scm thanks to Kjetil.\n\
 16-Oct:  removed Gauche support.\n\
-15-Oct:  Snd 10.1.\n\
-3-Sep:   Snd 10.0.\n\
-1-Sep:   S7 as extension language.\n\
 ",
 #if HAVE_GUILE
 	    "\n    *features*:\n    '", features, "\n\n",

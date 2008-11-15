@@ -34,7 +34,7 @@ extern "C" {
    *   is s7.c.  There are also a few variations on a REPL at the end of this file.  s7test.scm (in the
    *   Snd tarball) or r5rstest.scm (at the ccrma ftp site) are regression tests for s7 -- they still
    *   turn up around 50 problems.  More tests are certainly welcome!  Extended examples of s7 usage
-   *   are
+   *   are:
    *
    *   Snd: ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-10.tar.gz (a sound editor)
    *     which includes:
@@ -373,9 +373,36 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args);
    */
 
 s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e);
+s7_pointer s7_make_closure_star(s7_scheme *sc, s7_pointer c, s7_pointer e);
 
-  /* this creates a closure with 'c' as the function, and 'e' as the environment
-   *    it's used by Snd, but it's a bit esoteric.
+  /* these create closures with 'c' as the function, and 'e' as the environment (arglist)
+   *   closure_star corresponds to define* and lambda*
+   *
+   * In s7, (define* (name . args) body) or (define name (lambda* args body))
+   *   define a function that takes optional (keyword) named arguments.
+   *   The keywords :key, :optional, and :rest are ok, but they are ignored --
+   *   they exist to be compatible with other define* implementations.  
+   *   The "args" is a list that can contain either names (normal arguments),
+   *   or lists of the form (name default-value), in any order.  When called,
+   *   the names are bound to their default values (or #f), then the function's
+   *   current arglist is scanned.  Any name that occurs as a keyword (":name")
+   *   precedes that argument's new value.  Otherwise, as values occur, they
+   *   are plugged into the environment based on their position in the arglist
+   *   (as normal for a function).  So,
+   *   
+   *   (define* (hi a (b 32) (c "hi")) (list a b c))
+   *
+   *   is equivalent to other implementations (define* (hi a :key (b 32) ...))
+   *   or (define* (hi a :optional (b 32) ...)) -- these args are all
+   *   "optional-key" args in CLM jargon.
+   *
+   *   (hi 1) -> '(1 32 "hi")
+   *   (hi :b 2 :a 3) -> '(3 2 "hi")
+   *   (hi 3 2 1) -> '(3 2 1)
+   *
+   *   and so on.  The point of s7_make_closure_star is that you can create
+   *   your own define* funcs in C -- I'll make a simpler way to do this
+   *   eventually.
    */
 
 bool s7_is_procedure_with_setter(s7_pointer obj);
@@ -449,7 +476,7 @@ bool s7_is_thread_variable(s7_pointer obj);
 s7_pointer s7_thread_variable_value(s7_scheme *sc, s7_pointer obj);
 #endif
 
-/* Threads in s7 share the heap and symbol table, but have their own environment, stack,
+/* Threads in s7 share the heap and symbol table, but have their own local environment, stack,
  *   and evaluator locals.  The two functions above refer to thread-local variables
  *   known as "keys" in pthreads.  s7_is_thread_variable returns true if its argument
  *   is associated with a key, and s7_thread_variable_value returns the current thread's

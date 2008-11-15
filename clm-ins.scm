@@ -1318,7 +1318,7 @@ is a physical model of a flute:
 				  (table-lookup s-2 vib)))))))))))
 
 
-(definstrument (lbj-piano begin-time duration frequency amplitude :key (pfreq frequency)
+(definstrument (lbj-piano begin-time duration frequency amplitude :key pfreq
 			  (degree 45) (reverb-amount 0) (distance 1))
   (let ((piano-spectra (list
 
@@ -1739,9 +1739,7 @@ is a physical model of a flute:
 	(list 0 0 (/ attackTime 4) 1.0 attackTime 1.0 100 releaseAmp)))
     
     ;; This thing sounds pretty good down low, below middle c or so.  
-    ;; Unfortunately, there are some tens of partials down there and we're using 
-    ;; exponential envelopes.  You're going to wait for a long long time just to 
-    ;; hear a single low note.  The high notes sound pretty rotten--they just don't
+    ;; The high notes sound pretty rotten--they just don't
     ;; sparkle;  I have a feeling that this is due to the low amplitude of the 
     ;; original data, and the lack of mechanical noise.
     ;;
@@ -1752,6 +1750,8 @@ is a physical model of a flute:
     ;; a high freq with a low pfreq, will give you fold over (hmmm...maybe 
     ;; I can get those high notes to sparkle after all).
 
+    (if (not (number? pfreq))
+	(set! pfreq frequency))
     (let* ((partials (normalize-partials (get-piano-partials pfreq)))
 	   (beg (seconds->samples begin-time))
 	   (newdur (+ duration *piano-attack-duration* *piano-release-duration*))
@@ -2501,11 +2501,12 @@ nil doesnt print anything, which will speed up a bit the process.
 	   (outa i (* (env ampenv) outval))))))))
 
 
-(definstrument (anoi infile start dur :optional (fftsize 128) (amp-scaler 1.0) (r (* 2.0 pi)))
+(definstrument (anoi infile start dur :optional (fftsize 128) (amp-scaler 1.0) rr)
   ;; a kind of noise reduction -- on-going average spectrum is squelched to some extent
   ;; obviously aimed at intermittent signal in background noise
   ;; this is based on Perry Cook's Scrubber.m
-  (let* ((freq-inc (inexact->exact (floor (/ fftsize 2))))
+  (let* ((r (or rr (* 2.0 pi)))
+	 (freq-inc (inexact->exact (floor (/ fftsize 2))))
 	 (fdi (make-vct fftsize))
 	 (fdr (make-vct fftsize))
 	 (spectr (make-vct freq-inc 1.0))

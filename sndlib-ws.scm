@@ -2,9 +2,6 @@
 
 (provide 'sndlib-ws.scm)
 
-(if (not (defined? 'define*)) (load "s7-optargs.scm"))
-
-
 (define *clm-srate* 44100)
 (define *clm-file-name* "test.snd")
 (define *clm-channels* 1)

@@ -29,8 +29,10 @@
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 (if (not (provided? 'snd-env.scm)) (load-from-path "env.scm"))
 
+(define grani-default-base (expt 2 (/ 12)))
+
 (define* (exp-envelope env :key
-		       (base (expt 2 (/ 12)))
+		       (base grani-default-base)
 		       (error 0.01)
 		       (scaler 1)
 		       (offset 0)
@@ -326,7 +328,7 @@
 		      (srate 0.0)
 		      (srate-spread 0.0)
 		      (srate-linear #f)
-		      (srate-base (expt 2 (/ 12)))
+		      (srate-base grani-default-base)
 		      (srate-error 0.01)
 		      (grain-start '(0 0 1 1)) 
 		      (grain-start-spread 0.0)

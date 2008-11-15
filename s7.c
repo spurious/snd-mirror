@@ -24,7 +24,7 @@
  *        full continuations, call-with-exit for goto or return, dynamic-wind
  *        ratios and complex numbers (and ints are 64-bit)
  *        generalized set!, procedure-with-setter, applicable objects
- *        defmacro and define-macro, keywords, hash tables, block comments
+ *        defmacro and define-macro, keywords, hash tables, block comments, define*
  *        error handling using error and catch
  *        in sndlib, the run macro works giving S7 a (somewhat limited) byte compiler
  *        no invidious distinction between built-in and "foreign"
@@ -62,7 +62,6 @@
  *
  * still to do:
  *   syntax-rules and friends
- *   define* and friends built-in (def-optkey-fun also)
  *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
@@ -242,6 +241,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY,
 	      OP_READ_POP_AND_RETURN_EXPRESSION, OP_LOAD_RETURN_IF_EOF, OP_LOAD_CLOSE_AND_POP_IF_EOF, 
 	      OP_EVAL_STRING, OP_EVAL_STRING_DONE, OP_QUIT, OP_CATCH, OP_DYNAMIC_WIND, OP_FOR_EACH, OP_MAP, 
 	      OP_DO, OP_DO_END0, OP_DO_END1, OP_DO_STEP0, OP_DO_STEP1, OP_DO_STEP2, OP_DO_INIT,
+	      OP_DEFINE_STAR, OP_LAMBDA_STAR,
 	      OP_MAX_DEFINED
 } opcode_t;
 
@@ -397,6 +397,7 @@ struct s7_scheme {
   s7_pointer global_env;              /* global environment */
   
   s7_pointer LAMBDA;                  /* syntax lambda */
+  s7_pointer LAMBDA_STAR;             /* syntax lambda* (for define*) */
   s7_pointer QUOTE;                   /* syntax quote */
   s7_pointer QUASIQUOTE;              /* symbol quasiquote */
   s7_pointer UNQUOTE;                 /* symbol unquote */
@@ -404,6 +405,8 @@ struct s7_scheme {
   s7_pointer FEED_TO;                 /* => */
   s7_pointer SET_OBJECT;              /* object set method */
   s7_pointer APPLY, VECTOR, CONS, APPEND, CDR, VECTOR_FUNCTION, VALUES;
+  s7_pointer ERROR, WRONG_TYPE_ARG, OUT_OF_RANGE, FORMAT_ERROR;
+  s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST;
   
   s7_pointer input_port;              /* current-input-port (nil = stdin) */
   s7_pointer input_port_stack;        /*   input port stack (load and read internally) */
@@ -483,7 +486,8 @@ enum scheme_types {
   T_CATCH = 18,
   T_DYNAMIC_WIND = 19,
   T_HASH_TABLE = 20,
-  T_LAST_TYPE = 20
+  T_CLOSURE_STAR = 21,
+  T_LAST_TYPE = 21
 };
 
 
@@ -600,6 +604,7 @@ enum scheme_types {
 #define is_macro(p)                   (type(p) == T_MACRO)
 #define is_promise(p)                 (type(p) == T_PROMISE)
 #define is_closure(p)                 (type(p) == T_CLOSURE)
+#define is_closure_star(p)            (type(p) == T_CLOSURE_STAR)
 
 #define is_catch(p)                   (type(p) == T_CATCH)
 #define catch_tag(p)                  (p)->object.catcher->tag
@@ -651,7 +656,7 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 static const char *type_names[T_LAST_TYPE + 1] = {
   "unused!", "nil", "string", "number", "symbol", "procedure", "pair", "closure", "continuation",
   "s7-function", "character", "input port", "vector", "macro", "promise", "s7-object", 
-  "goto", "output port", "catch", "dynamic-wind", "hash-table"
+  "goto", "output port", "catch", "dynamic-wind", "hash-table", "closure*"
 };
 
 static char *describe_type(s7_pointer p)
@@ -1551,9 +1556,6 @@ s7_pointer s7_make_symbol(s7_scheme *sc, const char *name)
 } 
 
 
-/* TODO: need a way to prune the symbol table of unused symbols */
-/*   perhaps clear all symbol table mark bits, run gc, check for unmarked symbols (esp. gensym-style) */
-
 s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
 { 
   char *name;
@@ -1686,8 +1688,7 @@ static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer v
 
 static s7_pointer s7_find_symbol_in_environment(s7_scheme *sc, s7_pointer env, s7_pointer hdl, bool all) 
 { 
-  s7_pointer x, y = sc->NIL; 
-  
+  s7_pointer x, y;
   /* this is a list (of alists, each representing a frame) ending with a vector (the global environment) */
   
   for (x = env; is_pair(x); x = cdr(x)) 
@@ -1697,19 +1698,12 @@ static s7_pointer s7_find_symbol_in_environment(s7_scheme *sc, s7_pointer env, s
       else y = car(x); 
       
       for ( ; is_pair(y); y = cdr(y)) 
-	if (caar(y) == hdl) 
-	  break; 
-      
-      if (y != sc->NIL) 
-	break; 
-      
+	if (caar(y) == hdl)
+	  return(car(y));
+
       if (!all) 
 	return(sc->NIL); 
     } 
-  
-  if (is_pair(x))
-    return(car(y)); 
-  
   return(sc->NIL); 
 } 
 
@@ -1765,6 +1759,38 @@ s7_pointer s7_symbol_set_value(s7_scheme *sc, s7_pointer sym, s7_pointer val)
 }
 
 
+static bool lambda_star_argument_set_value(s7_scheme *sc, s7_pointer sym, s7_pointer val)
+{
+  s7_pointer x;
+
+  for (x = car(sc->envir) /* presumably the arglist */; is_pair(x); x = cdr(x))
+    if (caar(x) == sym)
+      {
+	/* car(x) is our binding (symbol value) */
+	cdar(x) = val;
+	return(true);
+      }
+  return(false);
+}
+
+
+static s7_pointer lambda_star_argument_default_value(s7_scheme *sc, s7_pointer val)
+{
+  s7_pointer x;
+
+  if (s7_is_symbol(val))
+    {
+      x = s7_find_symbol_in_environment(sc, sc->envir, val, true);
+      if (x != sc->NIL) 
+	return(symbol_value(x));
+    }
+  if ((s7_is_pair(val)) &&
+      (car(val) == sc->QUOTE))
+    return(cadr(val));
+  return(val);
+}
+
+
 static s7_pointer g_global_environment(s7_scheme *sc, s7_pointer p)
 {
   #define H_global_environment "(global-environment) returns the top-level definitions (symbol bindings)"
@@ -1792,12 +1818,12 @@ static s7_pointer g_current_environment(s7_scheme *sc, s7_pointer args)
 }
 
 
-s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e) 
+static s7_pointer make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e, int type) 
 {
   /* c is code. e is environment */
   s7_pointer x = new_cell(sc);
   
-  set_type(x, T_CLOSURE | T_PROCEDURE);
+  set_type(x, type | T_PROCEDURE);
   
   ASSERT_IS_OBJECT(c, "closure code");
   ASSERT_IS_OBJECT(e, "closure env");
@@ -1805,6 +1831,18 @@ s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e)
   car(x) = c;
   cdr(x) = e;
   return(x);
+}
+
+
+s7_pointer s7_make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e)
+{
+  return(make_closure(sc, c, e, T_CLOSURE));
+}
+
+
+s7_pointer s7_make_closure_star(s7_scheme *sc, s7_pointer c, s7_pointer e) 
+{
+  return(make_closure(sc, c, e, T_CLOSURE_STAR));
 }
 
 
@@ -1944,6 +1982,7 @@ static s7_pointer copy_object(s7_scheme *sc, s7_pointer obj)
   
   car(nobj) = copy_object(sc, car(obj));
   if ((is_closure(obj)) ||
+      (is_closure_star(obj)) ||
       (is_macro(obj)) || 
       (is_promise(obj)) ||
       (s7_is_function(obj)))
@@ -3717,7 +3756,7 @@ static s7_Double string_to_double_with_radix(char *str, int radix)
 
 static s7_pointer make_atom(s7_scheme *sc, char *q, int radix) 
 {
-  #define ISDIGIT(Chr, Rad) ((Rad == 10) ? isdigit(Chr) : is_digit_in_base(Chr, Rad))
+  #define ISDIGIT(Chr, Rad) (((Rad == 10) && (isdigit(Chr))) || (is_digit_in_base(Chr, Rad)))
 
   char c, *p, *slash1 = NULL, *slash2 = NULL, *plus = NULL, *ex1 = NULL, *ex2 = NULL;
   bool has_dec_point1 = false, has_i = false, has_dec_point2 = false; 
@@ -6414,8 +6453,6 @@ static void backchar(s7_scheme *sc, char c, s7_pointer pt)
 
 /* -------- read token or expression -------- */
 
-/* read characters up to delimiter, but cater to character constants */
-
 static void resize_strbuf(s7_scheme *sc)
 {
   int i, old_size;
@@ -6424,6 +6461,7 @@ static void resize_strbuf(s7_scheme *sc)
   sc->strbuf = (char *)realloc(sc->strbuf, sc->strbuf_size * sizeof(char));
   for (i = old_size; i < sc->strbuf_size; i++) sc->strbuf[i] = '\0';
 }
+
 
 static char *read_string_upto(s7_scheme *sc) 
 {
@@ -7387,7 +7425,8 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
   if (is_macro(obj)) 
     return(strdup("#<macro>"));
   
-  if (is_closure(obj)) 
+  if ((is_closure(obj)) ||
+      (is_closure_star(obj)))
     {
       /* try to find obj in the current environment and return its name */
       s7_pointer binding;
@@ -7893,7 +7932,7 @@ s7_pointer s7_set_car(s7_pointer p, s7_pointer q)
 #endif
   
   car(p) = q;
-  return(q);
+  return(p);
 }
 
 
@@ -7908,7 +7947,7 @@ s7_pointer s7_set_cdr(s7_pointer p, s7_pointer q)
 #endif
   
   cdr(p) = q;
-  return(q);
+  return(p);
 }
 
 
@@ -8995,7 +9034,7 @@ static void s7_free_function(s7_pointer a)
 static s7_pointer g_is_closure(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_closure "(closure? obj) returns #t if obj is a closure"
-  return(make_boolean(sc, is_closure(car(args))));
+  return(make_boolean(sc, (is_closure(car(args))) || (is_closure_star(car(args)))));
 }
 
 
@@ -9023,10 +9062,7 @@ static s7_pointer g_make_closure(s7_scheme *sc, s7_pointer args)
 }
 
 
-static s7_pointer closure_source(s7_pointer p)   
-{ 
-  return(car(p));
-}
+#define closure_source(Obj) car(Obj)
 
 
 bool s7_is_procedure(s7_pointer x)
@@ -9060,12 +9096,12 @@ s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p)
    * ((a) (+ a b)) (((b . 1)) #(() () () () () ((make-filtered-comb . make-filtered-comb)) () () ...))
    */
   
-  if (is_closure(p) || is_macro(p) || is_promise(p)) 
+  if (is_closure(p) || is_closure_star(p) || is_macro(p) || is_promise(p)) 
     {
       return(s7_cons(sc, 
 		     s7_append(sc, 
 			       s7_cons(sc, 
-				       sc->LAMBDA, 
+				       (is_closure_star(p)) ? sc->LAMBDA_STAR : sc->LAMBDA, 
 				       s7_cons(sc,
 					       car(car(p)),
 					       sc->NIL)),
@@ -9090,10 +9126,10 @@ static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
     p = s7_symbol_value(sc, car(args));
   else p = car(args);
 
-  if (is_closure(p) || is_macro(p) || is_promise(p)) 
+  if (is_closure(p) || is_closure_star(p) || is_macro(p) || is_promise(p)) 
     return(s7_append(sc, 
 		     s7_cons(sc, 
-			     sc->LAMBDA, 
+			     (is_closure_star(p)) ? sc->LAMBDA_STAR : sc->LAMBDA, 
 			     s7_cons(sc,
 				     car(car(p)),
 				     sc->NIL)),
@@ -9132,7 +9168,7 @@ const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer p)
   if (s7_is_function(x))
     return((char *)function_documentation(x));
   
-  if ((is_closure(x)) &&
+  if (((is_closure(x)) || (is_closure_star(p))) &&
       (s7_is_string(cadar(x))))
     return(s7_string(cadar(x)));
   
@@ -9165,6 +9201,7 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
 				   sc->NIL))));
   
   if ((is_closure(x)) ||
+      (is_closure_star(x)) ||
       (s7_is_pair(x)))
     {
       int len;
@@ -9498,12 +9535,14 @@ static s7_pointer g_make_procedure_with_setter(s7_scheme *sc, s7_pointer args)
   
   f = (pws *)s7_object_value(p);
   f->scheme_getter = car(args);
-  if (is_closure(car(args)))
+  if ((is_closure(car(args))) ||
+      (is_closure_star(car(args))))
     f->get_req_args = s7_list_length(sc, caaar(args));
   else f->get_req_args = s7_list_length(sc, caar(args));
   
   f->scheme_setter = cadr(args);
-  if (is_closure(cadr(args)))
+  if ((is_closure(cadr(args))) ||
+      (is_closure_star(cadr(args))))
     f->set_req_args = s7_list_length(sc, caaadr(args));
   else f->set_req_args = s7_list_length(sc, caadr(args));
   
@@ -9583,10 +9622,11 @@ static s7_pointer g_procedure_with_setter_setter_arity(s7_scheme *sc, s7_pointer
 static s7_pointer pws_source(s7_scheme *sc, s7_pointer x)
 {
   pws *f = (pws *)s7_object_value(x);
-  if (is_closure(f->scheme_getter))
+  if ((is_closure(f->scheme_getter)) ||
+      (is_closure_star(f->scheme_getter)))
     return(s7_append(sc, 
 		     s7_cons(sc, 
-			     sc->LAMBDA, 
+			     (is_closure(f->scheme_getter)) ? sc->LAMBDA : sc->LAMBDA_STAR,
 			     s7_cons(sc,
 				     car(car(f->scheme_getter)),
 				     sc->NIL)),
@@ -10228,7 +10268,7 @@ s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n,
   free(errmsg);
   if (argstr) free(argstr);
 
-  return(s7_error(sc, s7_make_symbol(sc, "wrong-type-arg"), sc->x));
+  return(s7_error(sc, sc->WRONG_TYPE_ARG, sc->x));
 }
 
 
@@ -10246,7 +10286,7 @@ s7_pointer s7_out_of_range_error(s7_scheme *sc, const char *caller, int arg_n, s
   free(errmsg);
   if (argstr) free(argstr);
 
-  return(s7_error(sc, s7_make_symbol(sc, "out-of-range"), sc->x));
+  return(s7_error(sc, sc->OUT_OF_RANGE, sc->x));
 }
 
 
@@ -10470,7 +10510,7 @@ static s7_pointer eval_error(s7_scheme *sc, const char *errmsg, s7_pointer obj)
   str = s7_object_to_c_string(sc, obj);
   sc->x = s7_string_concatenate(sc, errmsg, str);
   if (str) free(str);
-  return(s7_error(sc, s7_make_symbol(sc, "error"), sc->x));
+  return(s7_error(sc, sc->ERROR, sc->x));
 }
 
 
@@ -10525,9 +10565,7 @@ static s7_pointer apply_list_star(s7_scheme *sc, s7_pointer d)
 	p = cdr(d);
     }
   if (!s7_is_list(sc, car(cdr(p))))
-    return(s7_error(sc, 
-		    s7_make_symbol(sc, "wrong-type-arg-error"), 
-		    s7_make_string(sc, "apply's last argument should be a list")));
+    return(s7_error(sc, sc->WRONG_TYPE_ARG, s7_make_string(sc, "apply's last argument should be a list")));
   
   cdr(p) = car(cdr(p));
   return(q);
@@ -10545,9 +10583,7 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
       sc->args = apply_list_star(sc, cdr(args));
       
       if (g_is_list(sc, s7_cons(sc, sc->args, sc->NIL)) == sc->F)
-	return(s7_error(sc, 
-			s7_make_symbol(sc, "wrong-type-arg-error"), 
-			s7_make_string(sc, "apply's last argument should be a list")));
+	return(s7_error(sc, sc->WRONG_TYPE_ARG, s7_make_string(sc, "apply's last argument should be a list")));
     }
   push_stack(sc, OP_APPLY, sc->args, sc->code);
   return(sc->NIL);
@@ -11081,6 +11117,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    goto START;
 	  }
       
+      
     case OP_EVAL_ARGS0:
       sc->saved_line_number = pair_line_number(sc->code);
 
@@ -11097,8 +11134,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  sc->code = cdr(sc->code);
 
-	  /* here args is nil, value is the operator (car of list), code is the rest -- the args.
-	   *   e0args can be called within e1args loop if it's a nested expression:
+	  /* here sc->args is nil, sc->value is the operator (car of list), sc->code is the rest -- the args.
+	   *   EVAL_ARGS0 can be called within the EVAL_ARGS1 loop if it's a nested expression:
 	   * (+ 1 2 (* 2 3)):
 	   *   e0args: (), value: +, code: (1 2 (* 2 3))
 	   *   e1args: (+), value: +, code: (1 2 (* 2 3))
@@ -11115,17 +11152,18 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_EVAL_ARGS1:
-      sc->args = s7_cons(sc, sc->value, sc->args); /* 1st time, value = op, args=nil (only e0 entry is from op_eval above), code is full list (at e0) */
+      sc->args = s7_cons(sc, sc->value, sc->args); 
+      /* 1st time, value = op, args=nil (only e0 entry is from op_eval above), code is full list (at e0) */
 
-      if (s7_is_pair(sc->code)) 
-	{ /* evaluate current arg */
+      if (s7_is_pair(sc->code))  /* evaluate current arg */
+	{ 
 	  push_stack(sc, OP_EVAL_ARGS1, sc->args, cdr(sc->code));
 	  
 	  sc->code = car(sc->code);
 	  sc->args = sc->NIL;
 	  goto EVAL;
 	} 
-      else 
+      else                       /* got all args -- go to apply */
 	{
 	  sc->args = safe_reverse_in_place(sc, sc->args); 
 	  sc->code = car(sc->args);
@@ -11135,109 +11173,199 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       
       
+      /* ---------------- OP_APPLY ---------------- */
     APPLY:
     case OP_APPLY:      /* apply 'code' to 'args' */
       add_backtrace_entry(sc, sc->code, sc->args);
       
-      if (s7_is_function(sc->code))
+      switch (type(sc->code))
 	{
-	  int len;
-	  len = safe_list_length(sc, sc->args);
-	  if (len < function_required_args(sc->code))
-	    return(eval_error(sc, "not enough arguments", sc->code));
+	case T_S7_FUNCTION: 	                  /* -------- C-based function -------- */
+	  {
+	    int len;
+	    len = safe_list_length(sc, sc->args);
+	    if (len < function_required_args(sc->code))
+	      return(eval_error(sc, "not enough arguments", sc->code));
+	    
+	    if ((!function_has_rest_arg(sc->code)) &&
+		((function_required_args(sc->code) + function_optional_args(sc->code)) < len))
+	      return(eval_error(sc, "too many arguments", sc->x = s7_cons(sc, sc->code, sc->args)));
+	    
+	    sc ->x = function_call(sc->code)(sc, sc->args);
+	    ASSERT_IS_OBJECT(sc->x, "function returned value");
+	    pop_stack(sc, sc->x);
+	    goto START;
+	  }
 	  
-	  if ((!function_has_rest_arg(sc->code)) &&
-	      ((function_required_args(sc->code) + function_optional_args(sc->code)) < len))
-	    return(eval_error(sc, "too many arguments", sc->x = s7_cons(sc, sc->code, sc->args)));
+	case T_CLOSURE:
+	case T_MACRO:
+	case T_PROMISE:             	          /* -------- normal function (lambda), macro, or delay -------- */
 
-	  sc ->x = function_call(sc->code)(sc, sc->args);
-	  ASSERT_IS_OBJECT(sc->x, "function returned value");
-	  pop_stack(sc, sc->x);
-	  goto START;
-	}
-      
-      else 
-	{
-	  if (is_closure(sc->code) || is_macro(sc->code) || is_promise(sc->code)) 
-	    { 
-	      sc->envir = new_frame_in_env(sc, s7_procedure_environment(sc->code)); 
+	  sc->envir = new_frame_in_env(sc, s7_procedure_environment(sc->code)); 
+	  
+	  /* load up the current args into the ((args) (lambda)) layout [via the current environment] */
+	  for (sc->x = car(closure_source(sc->code)), sc->y = sc->args; s7_is_pair(sc->x); sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
+	    {
+	      if (sc->y == sc->NIL)
+		return(eval_error(sc, "not enough arguments", g_procedure_source(sc, s7_cons(sc, sc->code, sc->NIL))));
 	      
-	      /* load up the current args into the ((args) (lambda)) layout [via the current environment] */
-	      for (sc->x = car(closure_source(sc->code)), sc->y = sc->args; s7_is_pair(sc->x); sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
-		{
-		  if (sc->y == sc->NIL)
-		    return(eval_error(sc, "not enough arguments", g_procedure_source(sc, s7_cons(sc, sc->code, sc->NIL))));
-		  
-		  ASSERT_IS_OBJECT(sc->x, "parameter to closure");
-		  ASSERT_IS_OBJECT(sc->y, "arg to closure");
-		  
-		  add_to_current_environment(sc, car(sc->x), car(sc->y));
-		}
+	      ASSERT_IS_OBJECT(sc->x, "parameter to closure");
+	      ASSERT_IS_OBJECT(sc->y, "arg to closure");
 	      
-	      if (sc->x == sc->NIL) 
-		{
-		  if (sc->y != sc->NIL)
-		    return(eval_error(sc, "too many arguments", sc->args));
-		} 
-	      else 
-		{
-		  if (s7_is_symbol(sc->x))
-		    add_to_current_environment(sc, sc->x, sc->y); 
-		  else 
-		    {
-		      if (is_macro(sc->code))
-			return(eval_error(sc, "undefined argument to macro?", sc->x));
-		      else return(eval_error(sc, "undefined argument to function?", sc->x));
-		    }
-		}
-	      sc->code = cdr(closure_source(sc->code));
-	      sc->args = sc->NIL;
-	      goto BEGIN;
+	      add_to_current_environment(sc, car(sc->x), car(sc->y));
 	    }
+	  
+	  if (sc->x == sc->NIL) 
+	    {
+	      if (sc->y != sc->NIL)
+		return(eval_error(sc, "too many arguments", sc->args));
+	    } 
 	  else 
 	    {
-	      if (s7_is_continuation(sc->code)) 
-		{ 
-		  s7_call_continuation(sc, sc->code);
-		  pop_stack(sc, sc->args != sc->NIL ? car(sc->args) : sc->NIL);
-		  goto START;
-		} 
+	      if (s7_is_symbol(sc->x))
+		add_to_current_environment(sc, sc->x, sc->y); 
 	      else 
 		{
-		  if (is_goto(sc->code))
-		    {
-		      int i, new_stack_top;
-		      new_stack_top = (sc->code)->object.goto_loc;
-		      /* look for dynamic-wind in the stack section that we are jumping out of */
-		      for (i = sc->stack_top - 1; i > new_stack_top; i -= 4)
-			{
-			  s7_pointer x;
-			  if ((opcode_t)s7_integer(vector_element(sc->stack, i)) == OP_DYNAMIC_WIND)
-			    {
-			      x = vector_element(sc->stack, i - 3);
-			      if (dynamic_wind_state(x) == DWIND_BODY)
-				s7_call(sc, dynamic_wind_out(x), sc->NIL);
-			    }
-			}
-		      
-		      sc->stack_top = new_stack_top;
-		      pop_stack(sc, sc->args != sc->NIL ? car(sc->args) : sc->NIL);
-		      goto START;
-		    }
-		  else
-		    {
-		      if (s7_is_object(sc->code))
-			{
-			  sc ->x = s7_apply_object(sc, sc->code, sc->args);
-			  pop_stack(sc, sc->x);
-			  goto START;
-			}
-		      else return(eval_error(sc, "apply of non-function?", sc->code));
-		    }
+		  if (is_macro(sc->code))
+		    return(eval_error(sc, "undefined argument to macro?", sc->x));
+		  else return(eval_error(sc, "undefined argument to function?", sc->x));
 		}
 	    }
+	  sc->code = cdr(closure_source(sc->code));
+	  sc->args = sc->NIL;
+	  goto BEGIN;
+	  
+	case T_CLOSURE_STAR:	                  /* -------- define* (lambda*) -------- */
+	  { 
+	    s7_pointer x;
+	    sc->envir = new_frame_in_env(sc, s7_procedure_environment(sc->code)); 
+	    
+	    /* here the car(closure_source) is the uninterpreted argument list:
+	     * (define* (hi a (b 1)) (+ a b))
+	     * (procedure-source hi) -> (lambda* (a (b 1)) (+ a b))
+	     *
+	     * so rather than spinning through the args binding names to values in the
+	     *   procedure's new environment (as in the usual closure case above),
+	     *   we scan the current args, and match against the
+	     *   template in the car of the closure, binding as we go.
+	     *
+	     * for each actual arg, if it's not a keyword that matches a member of the 
+	     *   template, bind it to its current (place-wise) arg, else bind it to
+	     *   that arg.  If it's the symbol :key or :optional, just go on.
+	     *   If it's :rest bind the next arg to the trailing args at this point.
+	     *   All args can be accessed by their name as a keyword.
+	     *   In other words (define* (hi (a 1)) ...) is the same as (define* (hi :key (a 1)) ...) etc.
+	     *
+	     * all args are optional, any arg with no default value defaults to #f.
+	     */
+	    
+	    /* TODO: :rest arg not done yet */
+	    /* TODO: run can be fixed now, and everything that has guile-kludges */
+	    
+	    /* set all default values */
+	    for (x = car(closure_source(sc->code)); s7_is_pair(x); x = cdr(x))
+	      {
+		/* bind all the args to something (default value or #f or maybe #undefined) */
+		if (!((car(x) == sc->KEY_KEY) ||
+		      (car(x) == sc->KEY_OPTIONAL) ||
+		      (car(x) == sc->KEY_REST)))                  /* :optional and :key always ignored, :rest dealt with later */
+		  {
+		    if (s7_is_pair(car(x)))                       /* (define* (hi (a mus-next)) a) */
+		      add_to_current_environment(sc,              /* or (define* (hi (a 'hi)) (list a (eq? a 'hi))) */
+						 caar(x), 
+						 lambda_star_argument_default_value(sc, cadar(x)));
+		                                                  /* mus-next, for example, needs to be evaluated before binding */
+		    else add_to_current_environment(sc, car(x), sc->F);
+		  }
+	      }
+	    
+	    /* now get the current args, re-setting args that have explicit values */
+	    sc->x = car(closure_source(sc->code));
+	    sc->y = sc->args; 
+	    while ((s7_is_pair(sc->x)) &&
+		   (s7_is_pair(sc->y)))
+	      {
+		if ((car(sc->x) == sc->KEY_KEY) ||
+		    (car(sc->x) == sc->KEY_OPTIONAL))
+		  sc->x = cdr(sc->x);
+		else
+		  {
+		    if (car(sc->x) == sc->KEY_REST)
+		      {
+			/* next arg is bound to trailing args from this point as a list */
+			sc->x = cdr(sc->x);
+			if (s7_is_pair(car(sc->x)))
+			  lambda_star_argument_set_value(sc, caar(sc->x), sc->y);
+			else lambda_star_argument_set_value(sc, car(sc->x), sc->y);
+			sc->y = cdr(sc->y);
+			sc->x = cdr(sc->x);
+		      }
+		    else
+		      {
+			if (s7_is_keyword(car(sc->y)))
+			  {
+			    const char *name;
+			    name = s7_symbol_name(car(sc->y));
+			    if (!(lambda_star_argument_set_value(sc, 
+								 s7_make_symbol(sc, (const char *)(name + 1)), 
+								 car(cdr(sc->y)))))
+			      return(eval_error(sc, "unknown argument name", sc->y));
+			    sc->y = cddr(sc->y);
+			  }
+			else 
+			  {
+			    if (s7_is_pair(car(sc->x)))
+			      lambda_star_argument_set_value(sc, caar(sc->x), car(sc->y));
+			    else lambda_star_argument_set_value(sc, car(sc->x), car(sc->y));
+			    sc->y = cdr(sc->y);
+			  }
+			sc->x = cdr(sc->x);
+		      }
+		  }
+	      }
+
+	    /* evaluate the function body */
+	    sc->code = cdr(closure_source(sc->code));
+	    sc->args = sc->NIL;
+	    goto BEGIN;
+	  }
+		
+	case T_CONTINUATION:	                  /* -------- continuation ("call-with-continuation") -------- */
+	  s7_call_continuation(sc, sc->code);
+	  pop_stack(sc, sc->args != sc->NIL ? car(sc->args) : sc->NIL);
+	  goto START;
+
+	case T_GOTO:	                          /* -------- goto ("call-with-exit") -------- */
+	  {
+	    int i, new_stack_top;
+	    new_stack_top = (sc->code)->object.goto_loc;
+	    /* look for dynamic-wind in the stack section that we are jumping out of */
+	    for (i = sc->stack_top - 1; i > new_stack_top; i -= 4)
+	      {
+		s7_pointer x;
+		if ((opcode_t)s7_integer(vector_element(sc->stack, i)) == OP_DYNAMIC_WIND)
+		  {
+		    x = vector_element(sc->stack, i - 3);
+		    if (dynamic_wind_state(x) == DWIND_BODY)
+		      s7_call(sc, dynamic_wind_out(x), sc->NIL);
+		  }
+	      }
+	    
+	    sc->stack_top = new_stack_top;
+	    pop_stack(sc, sc->args != sc->NIL ? car(sc->args) : sc->NIL);
+	    goto START;
+	  }
+
+	case T_S7_OBJECT:	                  /* -------- applicable object -------- */
+	  sc ->x = s7_apply_object(sc, sc->code, sc->args);
+	  pop_stack(sc, sc->x);
+	  goto START;
+
+	default:
+	  return(eval_error(sc, "apply of non-function?", sc->code));
 	}
-      
+      /* ---------------- end OP_APPLY ---------------- */
+
       
     case OP_DOMACRO:    /* macro after args are gathered */
       sc->code = sc->value;
@@ -11263,7 +11391,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      return(eval_error(sc, "lambda parameter is not a symbol", sc->code));
 	}
       
-      pop_stack(sc, s7_make_closure(sc, sc->code, sc->envir));
+      pop_stack(sc, make_closure(sc, sc->code, sc->envir, T_CLOSURE));
+      goto START;
+
+
+    case OP_LAMBDA_STAR:
+      pop_stack(sc, make_closure(sc, sc->code, sc->envir, T_CLOSURE_STAR));
       goto START;
       
       
@@ -11285,6 +11418,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       push_stack(sc, OP_DEFINE_CONSTANT1, sc->NIL, sc->code);
 
       
+    case OP_DEFINE_STAR:
     case OP_DEFINE0:
       if (!s7_is_pair(sc->code))
 	return(eval_error(sc, "define: nothing to define?", sc->code));
@@ -11302,7 +11436,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (s7_is_pair(car(sc->code))) 
 	{
 	  sc->x = caar(sc->code);
-	  sc->code = s7_cons(sc, sc->LAMBDA, s7_cons(sc, cdar(sc->code), cdr(sc->code)));
+	  if (sc->op == OP_DEFINE_STAR)
+	    sc->code = s7_cons(sc, sc->LAMBDA_STAR, s7_cons(sc, cdar(sc->code), cdr(sc->code)));
+	  else sc->code = s7_cons(sc, sc->LAMBDA, s7_cons(sc, cdar(sc->code), cdr(sc->code)));
 	} 
       else 
 	{
@@ -11756,6 +11892,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
       
       
+      /* defmacro* via lambda* ? */
     case OP_DEFMACRO:
       
       /* (defmacro name (args) body) ->
@@ -12267,7 +12404,7 @@ static char *s7_format_error(s7_scheme *sc, const char *msg, const char *str, s7
   if (dat->str) free(dat->str);
   free(dat);
 
-  s7_error(sc, s7_make_symbol(sc, "format-error"), sc->x);
+  s7_error(sc, sc->FORMAT_ERROR, sc->x);
   return(NULL);
 }
 
@@ -13169,8 +13306,11 @@ s7_scheme *s7_init(void)
   
   /* initialization of global pointers to special symbols */
   assign_syntax(sc, "lambda",          OP_LAMBDA);
+  assign_syntax(sc, "lambda*",         OP_LAMBDA_STAR);
   assign_syntax(sc, "quote",           OP_QUOTE);
   assign_syntax(sc, "define",          OP_DEFINE0);
+  assign_syntax(sc, "define*",         OP_DEFINE_STAR);
+  assign_syntax(sc, "def-optkey-fun",  OP_DEFINE_STAR); /* for CLM */
   assign_syntax(sc, "define-constant", OP_DEFINE_CONSTANT0);
   assign_syntax(sc, "if",              OP_IF0);
   assign_syntax(sc, "begin",           OP_BEGIN);
@@ -13192,6 +13332,9 @@ s7_scheme *s7_init(void)
   
   sc->LAMBDA = s7_make_symbol(sc, "lambda");
   typeflag(sc->LAMBDA) |= (T_IMMUTABLE | T_CONSTANT | T_DONT_COPY); 
+  
+  sc->LAMBDA_STAR = s7_make_symbol(sc, "lambda*");
+  typeflag(sc->LAMBDA_STAR) |= (T_IMMUTABLE | T_CONSTANT | T_DONT_COPY); 
   
   sc->QUOTE = s7_make_symbol(sc, "quote");
   typeflag(sc->QUOTE) |= (T_IMMUTABLE | T_CONSTANT | T_DONT_COPY); 
@@ -13232,7 +13375,27 @@ s7_scheme *s7_init(void)
   
   sc->VALUES = s7_make_symbol(sc, "values");
   typeflag(sc->VALUES) |= (T_CONSTANT | T_DONT_COPY); 
+
+  sc->ERROR = s7_make_symbol(sc, "error");
+  typeflag(sc->ERROR) |= (T_CONSTANT | T_DONT_COPY); 
+
+  sc->WRONG_TYPE_ARG = s7_make_symbol(sc, "wrong-type-arg");
+  typeflag(sc->WRONG_TYPE_ARG) |= (T_CONSTANT | T_DONT_COPY); 
+
+  sc->FORMAT_ERROR = s7_make_symbol(sc, "format-error");
+  typeflag(sc->FORMAT_ERROR) |= (T_CONSTANT | T_DONT_COPY); 
+
+  sc->OUT_OF_RANGE = s7_make_symbol(sc, "out-of-range");
+  typeflag(sc->OUT_OF_RANGE) |= (T_CONSTANT | T_DONT_COPY); 
+
+  sc->KEY_KEY = s7_make_keyword(sc, "key");
+  typeflag(sc->KEY_KEY) |= (T_CONSTANT | T_DONT_COPY); 
   
+  sc->KEY_OPTIONAL = s7_make_keyword(sc, "optional");
+  typeflag(sc->KEY_OPTIONAL) |= (T_CONSTANT | T_DONT_COPY); 
+  
+  sc->KEY_REST = s7_make_keyword(sc, "rest");
+  typeflag(sc->KEY_REST) |= (T_CONSTANT | T_DONT_COPY); 
   
   /* symbols */
   s7_define_function(sc, "gensym",                  g_gensym,                  0, 1, false, H_gensym);

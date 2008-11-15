@@ -1158,6 +1158,7 @@ finish-with-sound to complete the process."
 ;;;
 ;;; this is a translation of CLM's def-optkey-fun
 
+(if (provided? 'snd-guile)
 (defmacro def-optkey-fun (decls . body)
   (let ((func-name (car decls))
 	(func-args (cdr decls)))
@@ -1206,7 +1207,8 @@ finish-with-sound to complete the process."
 							     (set! arglist (append arglist (list (car na) (car pa))))
 							     (set! pa (cdr pa))
 							     (set! na (cdr na))))))))))
-				   (apply ,key-name allargs)))))))))))))
+				   (apply ,key-name allargs))))))))))))))
+
 
 (defmacro def-optkey-instrument (args . body)
   (let* ((name (car args))

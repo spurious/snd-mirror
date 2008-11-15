@@ -7479,7 +7479,7 @@ To insert a block of arbitrary-valued samples:
 
 <table border=0 cellpadding=5 vspace=10><tr><td><pre>
 (define* (<A NAME="blockchannel">block-channel</a> value :optional beg dur snd chn edpos)
-  (let ((val value))                    ; this for the run macro's benefit
+  (let ((val value))                    ; this for the run macro's benefit (in Guile)
     (<em class=red>pad-channel</em> beg dur snd chn edpos) ; insert 'dur' samples, ptree-channel sets their values
     (<a class=quiet href="#ptreechannel" onmouseout="UnTip()" onmouseover="Tip(extsnd_ptreechannel_tip)">ptree-channel</a> (lambda (y) val) beg dur snd chn)))
 </pre></td></tr></table>

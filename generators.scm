@@ -2,6 +2,8 @@
 (if (not (provided? 'snd-ws.scm)) (load-from-path "ws.scm"))
 
 
+;;; TODO: define* all the gens (check run), fix all the examples/docs/tests [also doc warnings]
+
 ;;; these try to mimic existing gens (mainly oscil), so "frequency" is placed first.
 ;;;   Where a factor is involved, I'll use "r".
 ;;;   Where the number of terms in the sum is settable, I'll use "n".
@@ -293,7 +295,7 @@
 
 (define (nssb gen fm)
   "  (make-nssb frequency (ratio 1.0) (n 1)) creates an nssb generator, similar to nxysin.\n\
-   (nssb gen fm) returns n sinusoids from frequency spaced by frequency * ratio."
+   (nssb gen :optional (fm 0.0)) returns n sinusoids from frequency spaced by frequency * ratio."
   (declare (gen nssb) (fm float))
   (let* ((n (nssb-n gen))
 	 (cx (nssb-angle gen))
