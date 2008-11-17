@@ -1176,14 +1176,20 @@ echo ' -----                sndlib tests                                        
 echo ' -------------------------------------------------------------------------------- '
 ./configure --quiet CFLAGS="-Wall"
 make
+
+cp tools/exs7.c .
+gcc -o exs7 exs7.c s7.o -lm -DEX1
+gcc -o exs7 exs7.c s7.o -lm -DEX2
+gcc -o exs7 exs7.c s7.o -lm -DEX3
+gcc -o exs7 exs7.c s7.o -lm -DEX4
+gcc -o exs7 exs7.c s7.o -lm -DEX5
+gcc -o exs7 exs7.c s7.o -lm -DEX6
+
 make clean
 ./configure --quiet --enable-threads
 make
 make clean
 ./configure --quiet --with-ruby
-make
-make clean
-./configure --quiet --with-ruby CC=g++
 make
 make clean
 ./configure --quiet --with-guile
@@ -1203,6 +1209,14 @@ make
 make clean
 ./configure --quiet CC=g++
 make
+g++ -o exs7 exs7.c s7.o -lm -DEX1
+g++ -o exs7 exs7.c s7.o -lm -DEX2
+g++ -o exs7 exs7.c s7.o -lm -DEX3
+g++ -o exs7 exs7.c s7.o -lm -DEX4
+g++ -o exs7 exs7.c s7.o -lm -DEX5
+g++ -o exs7 exs7.c s7.o -lm -DEX6
+rm exs7
+rm exs7.o
 make clean
 
 echo ' -------------------------------- no format -------------------------------- '
@@ -1267,9 +1281,6 @@ make clean
 make
 make clean
 ./configure --quiet --with-ruby --with-gtk
-make
-make clean
-./configure --quiet --with-ruby --with-gtk CC=g++
 make
 make clean
 ./configure --quiet --with-guile --with-gtk

@@ -3666,7 +3666,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name)
 }
 
 
-static s7_Int string_to_int_with_radix(char *str,  int radix)
+static s7_Int string_to_int_with_radix(const char *str,  int radix)
 {
   s7_Int x = 0, rad;
   int i, lim = 0, len, sign = 1;
@@ -3738,7 +3738,7 @@ static s7_Double string_to_double_with_radix(char *str, int radix)
 	  old_c = str[floc + flen + 1];
 	  str[floc + flen + 1] = '\0';
 	  frac_part = string_to_int_with_radix((char *)(str + floc + 1), radix);
-	  old_c = str[floc + flen + 1] = old_c;
+	  str[floc + flen + 1] = old_c;
 	}
     }
 
@@ -3921,10 +3921,13 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix)
     {
       s7_Double rl = 0.0, im = 0.0;
       int len;
+      char *saved_q;
       len = safe_strlen(q);
       
       if (q[len - 1] != 'i')
 	return(s7_make_symbol(sc, string_downcase(q)));
+
+      saved_q = strdup(q);
 
       /* look for cases like 1+i */
       if ((q[len - 2] == '+') || (q[len - 2] == '-'))
@@ -3958,17 +3961,35 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix)
 	  (im != 0.0))
 	im = -im;
 
+      {
+	int i;
+	for (i = 0; i < len; i++)
+	  q[i] = saved_q[i];
+	free(saved_q);
+      }
+
       return(s7_make_complex(sc, rl, im));
     }
   
   if ((has_dec_point1) ||
       (ex1))
     {
+      double x;
+
       if (slash1)  /* not complex, so slash and "." is not a number */
 	return(s7_make_symbol(sc, string_downcase(q)));
 
-      if (ex1) (*ex1) = 'e';
-      return(s7_make_real(sc, ATOF(q)));
+      if (ex1)
+	{
+	  char old_e;
+	  old_e = (*ex1);
+	  (*ex1) = 'e';
+	  x = ATOF(q);
+	  (*ex1) = old_e;
+	}
+      else x = ATOF(q);
+
+      return(s7_make_real(sc, x));
     }
   
   if (slash1)
