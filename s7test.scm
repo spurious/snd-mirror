@@ -376,6 +376,7 @@
 (test (char? (string-ref "hi" 0)) #t)
 (test (char? (string-ref (make-string 1) 0)) #t)
 (test (char?) 'error)
+(test (char? '1e311) #f)
 
 (for-each
  (lambda (arg)
@@ -389,6 +390,14 @@
    (if (not (char? (integer->char i)))
        (begin
 	 (display "(char? (integer->char ") (display i) (display ")) returned #f?") (newline))))
+
+(num-test (let ((str (make-string 258 #\space)))
+	    (do ((i 1 (+ i 1)))
+		((= i 256))
+	      (string-set! str i (integer->char i)))
+	    (string-set! str 257 (integer->char 0))
+	    (string-length str))
+	  258)
 
 
 (let ((a-to-z (list #\a #\b #\c #\d #\e #\f #\g #\h #\i #\j #\k #\l #\m #\n #\o #\p #\q #\r #\s #\t #\u #\v #\x #\y #\z))
@@ -1352,6 +1361,15 @@
 (test (let ((hi "hi")) (let ((ho (string-append hi))) (eq? hi ho))) #f)
 (test (let ((hi "hi")) (let ((ho (string-append hi))) (string-set! ho 0 #\a) hi)) "hi")
 
+(num-test (letrec ((hi (lambda (str n)
+			 (if (= n 0)
+			     str
+			     (hi (string-append str "a") (- n 1))))))
+	    (string-length (hi "" 100)))
+	  100)
+;;; TODO: if string-append 1000000 big trouble?
+
+
 (for-each
  (lambda (arg)
    (test (string-append "hiho" arg) 'error))
@@ -1468,7 +1486,6 @@
 (test (cons 1 2) '(1 . 2))
 (test (cons 1 '()) '(1))
 (test (cons '() 2) '(() . 2))
-(test (cons '() '()) '(()))
 (test (cons 1 (cons 2 (cons 3 (cons 4 '())))) '(1 2 3 4))
 (test (cons 'a 'b) '(a . b))
 (test (cons 'a (cons 'b (cons 'c '()))) '(a b c))
@@ -1899,6 +1916,18 @@
 	  (and (equal? x (list 1 2 3 4))
 	       (equal? y (list 4 3 2 1)))))
       #t)
+(test (letrec ((hi (lambda (lst n)
+	       (if (= n 0)
+		   lst
+		   (hi (reverse lst) (- n 1))))))
+	(hi (list 1 2 3) 100))
+      (list 1 2 3))
+(test (let ((var (list 1 2 3))) (reverse (cdr var)) var) (list 1 2 3))
+(test (let ((var '(1 2 3))) (reverse (cdr var)) var) '(1 2 3))
+(test (let ((var (list 1 (list 2 3)))) (reverse (cdr var)) var) (list 1 (list 2 3)))
+(test (let ((var '(1 (2 3)))) (reverse (cdr var)) var) '(1 (2 3)))
+(test (let ((var (list (list 1 2) (list 3 4 5)))) (reverse (car var)) var) '((1 2) (3 4 5)))
+
 
 (for-each
  (lambda (lst)
@@ -2044,6 +2073,8 @@
 (test (reverse! '((a) b c d)) '(d c b (a)))
 (test (reverse! (reverse! (list 1 2 3 4))) (list 1 2 3 4))
 (test (reverse! ''foo) '(foo quote))
+(test (reverse (reverse! (list 1 2 3))) (list 1 2 3))
+(test (reverse (reverse! (reverse! (reverse (list 1 2 3))))) (list 1 2 3))
 ))
 
 
@@ -27976,6 +28007,23 @@
 (num-test (acos 1.00001) 0.0+0.004472132228240686i)
 (num-test (atan 1) 0.7853981633974483)
 
+(num-test (+ 1e100 -1e100) 0.0)
+(num-test (+ 1e200 -1e200) 0.0)
+(num-test (+ 1e300 -1e300) 0.0)
+(num-test (* 1e100 1e-100) 1.0)
+(num-test (* 1e200 1e-200) 1.0)
+(num-test (* 1e300 1e-300) 1.0)
+(num-test (* 1e100 0.001) 1e97)
+(test (= 1e100 1e+100) #t)
+(num-test (+ 1e100 1e100) 2e100)
+(num-test (let ((x 1) (y 2)) (set! x (* 0 (let () (set! y 32) 1))) y) 32)
+(num-test (* 11/1234 1234/11 11/1234 1234/11 11/1234 1234/11) 1)
+(num-test (exp 100.0) 2.688117141816135e43)
+(num-test (exp 500.0) 1.40359221785284E+217)
+(num-test (exp -100.0) 3.720075976020836E-44)
+(num-test (exp -500.0) 7.12457640674129E-218)
+
+
 (num-test (/ 1.0 (/ 1.0 our-pi)) our-pi)
 (num-test (/ 1 (/ 1 1234)) 1234)
 (num-test (* pi (+ 1.0 (atan (tan (acos (cos (asin (sin (/ 1.0 (/ 1.0 pi)))))))))) pi)
@@ -28017,6 +28065,11 @@
 (num-test (asin -70000000+3i) -1.570796279536826+18.75715298057358i)
 
 (num-test (/ 12341234/111 123456789 12341234/111) 1/123456789)
+(num-test (+ 123456789/3 3/123456789 -123456789/3 -3/123456789) 0)
+(num-test (abs -123456789) 123456789)
+(num-test (abs -1234567890) 1234567890)
+(num-test (abs -922337203685477580) 922337203685477580)
+
 
 (let ((tag (catch #t (lambda () (log 10.0 10.0)) (lambda args 'error))))
   (if (and (number? tag)
@@ -28456,7 +28509,7 @@
        '1/2e1-i '-1.0e-1-1-1.0e-1i '-1.0e-1-1.0e-1-1i
        '1.0e2/3 '-1e--1.e1i '-11e--1e1i '1e--1.1e1i '1.e-1-1.ei '-1.e--1.ei 
        '-1.1e1-e1i '-1.e1-e-1i '.1e1-e-11i 
-       '3.-3.
+       '3.-3. ''1 '1'2 '+-2 '1?
        )
  (list "1e" "--1" "++1" "+." "+.+" ".." ".-" "1e-" "+" "-" "-e1"
        "1/2/3" "1/2+/2" "/2" "2/" "1+2" "1/+i" "1/2e1" "1/2."
@@ -28477,7 +28530,7 @@
        "1/2e1-i" "-1.0e-1-1-1.0e-1i" "-1.0e-1-1.0e-1-1i" 
        "1.0e2/3" "-1e--1.e1i" "-11e--1e1i" "1e--1.1e1i" "1.e-1-1.ei" "-1.e--1.ei" 
        "-1.1e1-e1i" "-1.e1-e-1i" ".1e1-e-11i" 
-       "3.-3."
+       "3.-3." "''1" "'1'2" "'+-2" "'1?"
        ))
 
 
@@ -28523,6 +28576,24 @@
 ;(close-output-port file)
 
 
+(for-each
+ (lambda (n name)
+    (if (number? n)
+	(begin
+	  (display "(number? ") (display name) (display ") returned #t?") (newline))))
+(list
+'a9 'aa 'aA 'a! 'a$ 'a% 'a& 'a* 'a+ 'a- 'a. 'a/ 'a: 'a< 'a= 'a> 'a? 'a@ 'a^ 'a_ 'a~ 'A9 'Aa 'AA 'A! 'A$ 'A% 'A& 'A* 'A+ 'A- 'A. 'A/ 'A: 'A< 'A= 'A> 'A? 'A@ 'A^ 'A_ 'A~ '!9 '!a '!A '!! '!$ '!% '!& '!* '!+ '!- '!. '!/ '!: '!< '!= '!> '!? '!@ '!^ '!_ '!~ '$9 '$a '$A '$! '$$ '$% '$& '$* '$+ '$- '$. '$/ '$: '$< '$= '$> '$? '$@ '$^ '$_ '$~ '%9 '%a '%A '%! '%$ '%% '%& '%* '%+ '%- '%. '%/ '%: '%< '%= '%> '%? '%@ '%^ '%_ '%~ '&9 '&a '&A '&! '&$ '&% '&& '&* '&+ '&- '&. '&/ '&: '&< '&= '&> '&? '&@ '&^ '&_ '&~ '*9 '*a '*A '*! '*$ '*% '*& '** '*+ '*- '*. '*/ '*: '*< '*= '*> '*? '*@ '*^ '*_ '*~ '/9 '/a '/A '/! '/$ '/% '/& '/* '/+ '/- '/. '// '/: '/< '/= '/> '/? '/@ '/^ '/_ '/~ ':9 ':a ':A ':! ':$ ':% ':& ':* ':+ ':- ':. ':/ ':: ':< ':= ':> ':? ':@ ':^ ':_ ':~ '<9 '<a '<A '<! '<$ '<% '<& '<* '<+ '<- '<. '</ '<: '<< '<= '<> '<? '<@ '<^ '<_ '<~ '=9 '=a '=A '=! '=$ '=% '=& '=* '=+ '=- '=. '=/ '=: '=< '== '=> '=? '=@ '=^ '=_ '=~ '>9 '>a '>A '>! '>$ '>% '>& '>* '>+ '>- '>. '>/ '>: '>< '>= '>> '>? '>@ '>^ '>_ '>~ '?9 '?a '?A '?! '?$ '?% '?& '?* '?+ '?- '?. '?/ '?: '?< '?= '?> '?? '?@ '?^ '?_ '?~ '^9 '^a '^A '^! '^$ '^% '^& '^* '^+ '^- '^. '^/ '^: '^< '^= '^> '^? '^@ '^^ '^_ '^~ '_9 '_a '_A '_! '_$ '_% '_& '_* '_+ '_- '_. '_/ '_: '_< '_= '_> '_? '_@ '_^ '__ '_~ '~9 '~a '~A '~! '~$ '~% '~& '~* '~+ '~- '~. '~/ '~: '~< '~= '~> '~? '~@ '~^ '~_ '~~)
+
+(list
+"'a9" "'aa" "'aA" "'a!" "'a$" "'a%" "'a&" "'a*" "'a+" "'a-" "'a." "'a/" "'a:" "'a<" "'a=" "'a>" "'a?" "'a@" "'a^" "'a_" "'a~" "'A9" "'Aa" "'AA" "'A!" "'A$" "'A%" "'A&" "'A*" "'A+" "'A-" "'A." "'A/" "'A:" "'A<" "'A=" "'A>" "'A?" "'A@" "'A^" "'A_" "'A~" "'!9" "'!a" "'!A" "'!!" "'!$" "'!%" "'!&" "'!*" "'!+" "'!-" "'!." "'!/" "'!:" "'!<" "'!=" "'!>" "'!?" "'!@" "'!^" "'!_" "'!~" "'$9" "'$a" "'$A" "'$!" "'$$" "'$%" "'$&" "'$*" "'$+" "'$-" "'$." "'$/" "'$:" "'$<" "'$=" "'$>" "'$?" "'$@" "'$^" "'$_" "'$~" "'%9" "'%a" "'%A" "'%!" "'%$" "'%%" "'%&" "'%*" "'%+" "'%-" "'%." "'%/" "'%:" "'%<" "'%=" "'%>" "'%?" "'%@" "'%^" "'%_" "'%~" "'&9" "'&a" "'&A" "'&!" "'&$" "'&%" "'&&" "'&*" "'&+" "'&-" "'&." "'&/" "'&:" "'&<" "'&=" "'&>" "'&?" "'&@" "'&^" "'&_" "'&~" "'*9" "'*a" "'*A" "'*!" "'*$" "'*%" "'*&" "'**" "'*+" "'*-" "'*." "'*/" "'*:" "'*<" "'*=" "'*>" "'*?" "'*@" "'*^" "'*_" "'*~" "'/9" "'/a" "'/A" "'/!" "'/$" "'/%" "'/&" "'/*" "'/+" "'/-" "'/." "'//" "'/:" "'/<" "'/=" "'/>" "'/?" "'/@" "'/^" "'/_" "'/~" "':9" "':a" "':A" "':!" "':$" "':%" "':&" "':*" "':+" "':-" "':." "':/" "'::" "':<" "':=" "':>" "':?" "':@" "':^" "':_" "':~" "'<9" "'<a" "'<A" "'<!" "'<$" "'<%" "'<&" "'<*" "'<+" "'<-" "'<." "'</" "'<:" "'<<" "'<=" "'<>" "'<?" "'<@" "'<^" "'<_" "'<~" "'=9" "'=a" "'=A" "'=!" "'=$" "'=%" "'=&" "'=*" "'=+" "'=-" "'=." "'=/" "'=:" "'=<" "'==" "'=>" "'=?" "'=@" "'=^" "'=_" "'=~" "'>9" "'>a" "'>A" "'>!" "'>$" "'>%" "'>&" "'>*" "'>+" "'>-" "'>." "'>/" "'>:" "'><" "'>=" "'>>" "'>?" "'>@" "'>^" "'>_" "'>~" "'?9" "'?a" "'?A" "'?!" "'?$" "'?%" "'?&" "'?*" "'?+" "'?-" "'?." "'?/" "'?:" "'?<" "'?=" "'?>" "'??" "'?@" "'?^" "'?_" "'?~" "'^9" "'^a" "'^A" "'^!" "'^$" "'^%" "'^&" "'^*" "'^+" "'^-" "'^." "'^/" "'^:" "'^<" "'^=" "'^>" "'^?" "'^@" "'^^" "'^_" "'^~" "'_9" "'_a" "'_A" "'_!" "'_$" "'_%" "'_&" "'_*" "'_+" "'_-" "'_." "'_/" "'_:" "'_<" "'_=" "'_>" "'_?" "'_@" "'_^" "'__" "'_~" "'~9" "'~a" "'~A" "'~!" "'~$" "'~%" "'~&" "'~*" "'~+" "'~-" "'~." "'~/" "'~:" "'~<" "'~=" "'~>" "'~?" "'~@" "'~^" "'~_" "'~~"))
+
+;(let ((initial-chars "aA!$%&*/:<=>?^_~")
+;      (subsequent-chars "9aA!$%&*+-./:<=>?@^_~"))
+;  (do ((i 0 (+ i 1)))
+;      ((= i (string-length initial-chars)))
+;    (do ((k 0 (+ k 1)))
+;	((= k (string-length subsequent-chars)))
+;      (display (format #f "'~A " (string (string-ref initial-chars i) (string-ref subsequent-chars k)))))))
 
 
 (for-each
@@ -29573,6 +29644,10 @@
 (test (case 1 ((1 2) 1) ((#\a) 2) ((car cdr) 3) ((#f #t) 4)) 1)
 (test (case #f ((1 2) 1) ((#\a) 2) ((car cdr) 3) ((#f #t) 4)) 4)
 (test (case 1 ((#t) 2) ((#f) 1) (else 0)) 0)
+(test (let ((x 1)) (case x ((x) "hi") (else "ho"))) "ho")
+(test (let ((x 1)) (case x ((1) "hi") (else "ho"))) "hi")
+(test (let ((x 1)) (case x (('x) "hi") (else "ho"))) "ho")
+(test (let ((x 1)) (case 'x ((x) "hi") (else "ho"))) "hi")
 
 (test (case 1) 'error)
 (test (case 1 . "hi") 'error)
@@ -30011,7 +30086,7 @@
 (test (let ((x 1)) (letrec ((y (if #f x 1)) (x 32)) 1)) 1)
 (test (let ((x 1)) (letrec ((y (let () (+ x 1))) (x 32)) (+ 1 y))) 'error)
 (test (let ((x 1)) (letrec ((y (let ((xx (+ x 1))) xx)) (x 32)) (+ 1 y))) 'error)
-(test (let ((x 1)) (letrec ((y (lambda () (+ 1 x))) (x 32)) (y))) 33) ; good grief!
+(test (let ((x 1)) (letrec ((y (lambda () (+ 1 x))) (x 32)) (y))) 33) ; good grief! -- (let ((x 1)) (letrec ((y (* 0 x)) (x 32)) y))
 (test (let* ((x 1) (f (letrec ((y (lambda () (+ 1 x))) (x 32)) y))) (f)) 33)
 (test (letrec ((x 1) (y (let ((x 2)) x))) (+ x y)) 3)
 (test (let ((x 32)) (letrec ((y (apply list `(* ,x 2))) (x 1)) y)) 'error)
@@ -30087,6 +30162,8 @@
         (+ x (let* ((x 5) )(+ x (let* ((x 6) (y x) (z y) )(+ x (let* ((x 7) (y x) )
         (+ x (let* ((x 8) (y x) )(+ x y (let* ((x 9) (y x) (z y) )(+ x ))))))))))))))))))))
       49)
+
+(test (let ((#f 1)) #f) 'error)
 
 
 
@@ -31675,7 +31752,7 @@
 	(test (hi 1) 1)
 	(test (hi) #f)          ; all args are optional
 	(test (hi :a 32) 32)    ; all args are keywords
-	(test (hi 1 2) 1)       ; extra args are ignored
+	(test (hi 1 2) 'error)  ; extra args
 	
 	(for-each
 	 (lambda (arg)
@@ -31706,7 +31783,7 @@
 	(test (hi :b 3 :a 1) (list 1 3))
 	(test (hi :a 3 :b 1) (list 3 1))
 	(test (hi 1 :a 3) (list 3 "hi"))
-	(test (hi 1 2 :a 3) (list 1 2)) ; trailing (extra) args are ignored
+	(test (hi 1 2 :a 3) 'error) ; trailing (extra) args
 	(test (hi :a 2 :c 1) 'error)
 	(test (hi 1 :c 2) 'error)
 
@@ -31751,4 +31828,21 @@
 	(test (hi) (list #f 32))
 	(test (hi :a 1) (list 1 32)))
 
+      (let ((hi (lambda* (a . b) (list a b))))
+	(test (hi 1 2 3) (list 1 (list 2 3)))
+	(test (hi) (list #f #f))
+	(test (hi :a 2) (list 2 #f))
+	(test (hi :b 3) (list #f 3)))
+	
+      (let ((hi (lambda* ((a 0.0) :optional (b 0.0)) (+ a b))))
+	(num-test (hi 1.0) 1.0)
+	(num-test (hi 1.0 2.0) 3.0)
+	(num-test (hi) 0.0)
+	(num-test (+ (hi) (hi 1.0) (hi 1.0 2.0)) 4.0)
+	(num-test (+ (hi 1.0) (hi) (hi 1.0 2.0)) 4.0)
+	(num-test (+ (hi 1.0) (hi 1.0 2.0) (hi)) 4.0)
+	(num-test (+ (hi 1.0 2.0) (hi) (hi 1.0)) 4.0))
+
       ))
+
+(display ";all done!") (newline)

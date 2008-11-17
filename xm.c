@@ -27133,10 +27133,17 @@ static xm_resource_t resource_type(const char *name)
 
 static void define_strings(void)
 {
+#if HAVE_S7
+  #define DEFINE_STRING(Name) s7_define_constant(s7, XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_STRING(Name))
+  #define DEFINE_RESOURCE(Name, Type) \
+            s7_define_constant(s7, XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_STRING(Name)); \
+            hash_resource(Name, Type)
+#else
   #define DEFINE_STRING(Name) XEN_DEFINE(XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_STRING(Name))
   #define DEFINE_RESOURCE(Name, Type) \
             XEN_DEFINE(XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_STRING(Name)); \
             hash_resource(Name, Type)
+#endif
 
   xm_hash = (hdata **)calloc(XM_HASH_SIZE, sizeof(hdata *));
 
@@ -28040,8 +28047,13 @@ The types are defined in xm.c around line 679.  To add XmNhiho as an integer: \n
 
 static void define_integers(void)
 {
+#if HAVE_S7
+  #define DEFINE_INTEGER(Name) s7_define_constant(s7, XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_INT(Name))
+  #define DEFINE_ULONG(Name) s7_define_constant(s7, XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_ULONG(Name))
+#else
   #define DEFINE_INTEGER(Name) XEN_DEFINE(XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_INT(Name))
   #define DEFINE_ULONG(Name) XEN_DEFINE(XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_ULONG(Name))
+#endif
   
   DEFINE_ULONG(AllPlanes);
   DEFINE_INTEGER(XC_num_glyphs);
@@ -29735,7 +29747,11 @@ static void define_pointers(void)
 {
 #if HAVE_MOTIF
 
+#if HAVE_S7
+  #define DEFINE_POINTER(Name) s7_define_constant(s7, XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_WidgetClass(Name))
+#else
   #define DEFINE_POINTER(Name) XEN_DEFINE(XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_WidgetClass(Name))
+#endif
 
   DEFINE_POINTER(compositeWidgetClass);
   DEFINE_POINTER(constraintWidgetClass);
@@ -29834,7 +29850,11 @@ static void define_pointers(void)
 
 static void define_Atoms(void)
 {
+#if HAVE_S7
+  #define DEFINE_ATOM(Name) s7_define_constant(s7, XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_Atom(Name))
+#else
   #define DEFINE_ATOM(Name) XEN_DEFINE(XM_PREFIX #Name XM_POSTFIX, C_TO_XEN_Atom(Name))
+#endif
 
   DEFINE_ATOM(XA_PRIMARY);
   DEFINE_ATOM(XA_SECONDARY);

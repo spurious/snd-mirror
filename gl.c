@@ -4540,7 +4540,11 @@ static void define_functions(void)
 static void define_integers(void)
 {
 
+#if HAVE_S7
+#define DEFINE_INTEGER(Name) s7_define_constant(s7, XL_PRE #Name XL_POST, C_TO_XEN_INT(Name))
+#else
 #define DEFINE_INTEGER(Name) XEN_DEFINE(XL_PRE #Name XL_POST, C_TO_XEN_INT(Name))
+#endif
 
 #if USE_MOTIF
   DEFINE_INTEGER(GLX_USE_GL);
@@ -5285,7 +5289,7 @@ void Init_libgl(void)
       define_integers();
       define_functions();
       XEN_YES_WE_HAVE("gl");
-      XEN_DEFINE("gl-version", C_TO_XEN_STRING("26-Oct-08"));
+      XEN_DEFINE("gl-version", C_TO_XEN_STRING("15-Nov-08"));
       gl_already_inited = true;
     }
 }

@@ -918,8 +918,11 @@ Information about parameters can be acquired using " S_analyse_ladspa "."
   #define FIELD_PREFIX "F"
 #endif
 
-
-#define DEFINE_INTEGER(Name) XEN_DEFINE(#Name, C_TO_XEN_INT(Name))
+#if HAVE_S7
+  #define DEFINE_INTEGER(Name) s7_define_constant(s7, #Name, C_TO_XEN_INT(Name))
+#else
+  #define DEFINE_INTEGER(Name) XEN_DEFINE(#Name, C_TO_XEN_INT(Name))
+#endif
 #define DEFINE_READER(Name, Value, Doc) XEN_DEFINE_PROCEDURE(FIELD_PREFIX #Name, Value, 1, 0, 0, Doc)
 
 

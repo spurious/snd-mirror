@@ -103,9 +103,6 @@
  * would it simplify variable handling to store everything as xen_value?
  */
 
-/* TODO: check all constants for s7_define_constant */
-
-
 #include <mus-config.h>
 
 #if USE_SND
@@ -533,6 +530,7 @@ typedef struct ptree {
   int global_vars_size, global_var_ctr;
   xen_value *result;
   int *args; 
+  int *default_args; 
   int *arg_types;
   int arity;
   continuation **gotos;
@@ -1151,6 +1149,7 @@ static ptree *attach_to_ptree(ptree *pt)
   new_tree->program = NULL;
   new_tree->constants = 0;
   new_tree->args = NULL;
+  new_tree->default_args = NULL;
   new_tree->arg_types = NULL;
   new_tree->initial_pc = 0;
   return(new_tree);
@@ -1587,6 +1586,7 @@ static ptree *free_embedded_ptree(ptree *pt)
 	  FREE(pt->program);
 	}
       if (pt->args) FREE(pt->args);
+      if (pt->default_args) FREE(pt->default_args);
       if (pt->arg_types) FREE(pt->arg_types);
       if (pt->result) FREE(pt->result);
       FREE(pt);
@@ -1868,6 +1868,7 @@ void mus_run_free_ptree(struct ptree *pt)
 	}
       if (pt->gcs) FREE(pt->gcs);
       if (pt->args) FREE(pt->args);
+      if (pt->default_args) FREE(pt->default_args);
       if (pt->arg_types) FREE(pt->arg_types);
       if (pt->gotos) 
 	{
@@ -3334,55 +3335,68 @@ static char *sequential_binds(ptree *prog, XEN old_lets, const char *name)
 }
 
 
-static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool separate, xen_value **cur_args, int num_args)
+static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool separate, xen_value **cur_args, int num_passed_args)
 {
-  XEN arg, args, declarations = XEN_FALSE, declaration;
-  xen_value *v = NULL;
-  int i, arg_num = 0, arg_type, args_len = 0;
+  /* need function arg types for funcall.  We have 3 sources of info:
+   *   the passed args, the possible "(declare ...)" form, and
+   *   the default values in the closure's arg list (if optional args)
+   *   The latter is called the "template" here, "passed" = what we 
+   *   see in the current call, "declared" = what declare tells us.
+   *   All this needs to be merged, and default values set.
+   * The declare form can be (declare (arg1 type1)...) or (snd-declare (quote ((arg1 type1...))))
+   *   -- see snd-xen.c for an explanation of snd-declare.
+   * The template might contain noise entries like ":optional, so
+   *   its length is not the same as the number of template arguments.
+   *
+   * num_passed_args can also be off -- it includes the argument keywords if any
+   */
 
-  /* this can be (declare (arg1 type1)...) or (snd-declare (quote ((arg1 type1...)))) -- see snd-xen.c for an explanation of snd-declare */
+  XEN template_args, declarations = XEN_FALSE;
+  int i, num_template_args = 0, template_args_len = 0;
 
-  /* fprintf(stderr, "declare: %s, %d %d\n", XEN_AS_STRING(form), separate, num_args); */
-
+  /* !separate apparently means an embedded define: (lambda (y) (define (a) 3) (+ y (a))) */
   if (separate)
-    args = XEN_CADR(form);
-  else args = XEN_CDADR(form);
+    template_args = XEN_CADR(form);
+  else template_args = XEN_CDADR(form);
+  /* template_args is the arglist as found in the function's closure */
 
-  /* fprintf(stderr, "args: %s %d\n", XEN_AS_STRING(args), XEN_LIST_P(args)); */
+  /* fprintf(stderr, "template_args: %s, list?: %s\n", XEN_AS_STRING(template_args), (XEN_LIST_P(template_args)) ? "#t" : "#f"); */
 
-  if (!(XEN_LIST_P(args))) 
-    return(mus_format("can't handle these optional args: %s", XEN_AS_STRING(args)));
+  if (!(XEN_LIST_P(template_args))) 
+    return(mus_format("can't handle this argument declaration: %s", XEN_AS_STRING(template_args)));
 
-  if (num_args > XEN_LIST_LENGTH(args))
+
+  /* get number of actual template args (ignoring :key and so on) */
+  template_args_len = XEN_LIST_LENGTH(template_args);
+  num_template_args = template_args_len;
+  for (i = 0; i < template_args_len; i++)
+    if ((XEN_SYMBOL_P(XEN_LIST_REF(template_args, i))) &&
+	((strcmp(XEN_SYMBOL_TO_C_STRING(XEN_LIST_REF(template_args, i)), ":optional") == 0) ||
+	 (strcmp(XEN_SYMBOL_TO_C_STRING(XEN_LIST_REF(template_args, i)), ":key") == 0) ||
+	 (strcmp(XEN_SYMBOL_TO_C_STRING(XEN_LIST_REF(template_args, i)), ":rest") == 0)))
+      num_template_args--;
+
+
+  if (num_passed_args > num_template_args)
     {
+      /* in this context, we're not trying to handle :rest args */
       char *temp = NULL, *str;
-      str = mus_format("too many args: %s", temp = XEN_AS_STRING(args));
+      str = mus_format("got too many args: %d passed, but %s declared", num_passed_args, temp = XEN_AS_STRING(template_args));
 #if HAVE_S7
       if (temp) free(temp);
 #endif
       return(str);
     }
 
-  args_len = XEN_LIST_LENGTH(args);
-  if (num_args < args_len)
-    {
-      arg_num = args_len;
-      for (i = 0; i < args_len; i++)
-	if ((XEN_SYMBOL_P(XEN_LIST_REF(args, i))) &&
-	    ((strcmp(XEN_SYMBOL_TO_C_STRING(XEN_LIST_REF(args, i)), ":optional") == 0) ||
-	     (strcmp(XEN_SYMBOL_TO_C_STRING(XEN_LIST_REF(args, i)), ":key") == 0) ||
-	     (strcmp(XEN_SYMBOL_TO_C_STRING(XEN_LIST_REF(args, i)), ":rest") == 0)))
-	  arg_num--;
-    }
-  else arg_num = num_args;
+  prog->arity = num_template_args;
+  if (num_template_args == 0)
+    return(NULL);                                         /* no args expected, none passed, nothing to check */
 
-  if (num_args < arg_num)
+  if (num_passed_args < num_template_args)
     {
-      declarations = XEN_CADDR(form); /* either declare or snd-declare */
-      if (XEN_STRING_P(declarations))
+      declarations = XEN_CADDR(form);                     /* either declare or snd-declare */
+      if (XEN_STRING_P(declarations))                     /* possible doc string */
 	declarations = XEN_CADDDR(form);
-
-      /* fprintf(stderr, "declaration: %s\n", XEN_AS_STRING(declarations)); */
 
       if ((XEN_LIST_P(declarations)) && 
 	  (XEN_NOT_NULL_P(declarations)) &&
@@ -3394,130 +3408,173 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool sepa
 	    declarations = XEN_CDR(declarations);
 	  else declarations = XEN_CADR(XEN_CADR(declarations));
 	}
-      else declarations = XEN_FALSE;
+      else declarations = XEN_FALSE;                      /* not a "declare" form after all */
     }
-  else arg_num = num_args;
 
-  /* fprintf(stderr, "num_args: %d, args: %s, declarations: %s\n", arg_num, XEN_AS_STRING(args), XEN_AS_STRING(declarations)); */
+  /* TODO: (lambda* (a 0.0) (b 1.0) (+ a b)) -> segfault */
+  /* TODO: defaults should be #f, and only allocated if lambda* */
+  /* TODO: got too many args wrong if keys used */
+  /* TODO: gad55 exs use lists as rtn vals -- need revision */
 
-  prog->arity = arg_num;
-  if (arg_num > 0)
+  /* fprintf(stderr, "num_args: %d, template_args: %s, declarations: %s\n", num_template_args, XEN_AS_STRING(template_args), XEN_AS_STRING(declarations)); */
+
+  /* prepare the prog's local arg list */
+
+
+  prog->args = (int *)CALLOC(num_template_args, sizeof(int));             /* value address */
+  prog->default_args = (int *)CALLOC(num_template_args, sizeof(int));     /* default value address */
+  prog->arg_types = (int *)CALLOC(num_template_args, sizeof(int));        /* value type */
+
+  for (i = 0; i < num_template_args; i++, template_args = XEN_CDR(template_args))
     {
-      prog->args = (int *)CALLOC(arg_num, sizeof(int));
-      prog->arg_types = (int *)CALLOC(arg_num, sizeof(int));
-      for (i = 0; i < args_len; i++, args = XEN_CDR(args))
+      XEN template_arg, template_arg_symbol;
+      int arg_type;
+      xen_value *v = NULL;
+
+      template_arg = XEN_CAR(template_args);
+      if ((XEN_KEYWORD_P(template_arg)) &&
+	  ((strcmp(XEN_SYMBOL_TO_C_STRING(template_arg), ":optional") == 0) ||
+	   (strcmp(XEN_SYMBOL_TO_C_STRING(template_arg), ":key") == 0) ||
+	   (strcmp(XEN_SYMBOL_TO_C_STRING(template_arg), ":rest") == 0)))
 	{
-	  arg = XEN_CAR(args);
-	  if ((XEN_SYMBOL_P(arg)) &&
-	      ((strcmp(XEN_SYMBOL_TO_C_STRING(arg), ":optional") == 0) ||
-	       (strcmp(XEN_SYMBOL_TO_C_STRING(arg), ":key") == 0) ||
-	       (strcmp(XEN_SYMBOL_TO_C_STRING(arg), ":rest") == 0)))
-	    continue;
-
-	  arg_type = default_arg_type;
+	  template_args = XEN_CDR(template_args);                        /* skip this one */
+	  template_arg = XEN_CAR(template_args);
+	}
+	  
+      /* fprintf(stderr, "template arg: %s\n", XEN_AS_STRING(template_arg)); */
+      if (XEN_LIST_P(template_arg))
+	template_arg_symbol = XEN_CAR(template_arg);
+      else template_arg_symbol = template_arg;
+      
+      arg_type = default_arg_type;
+      /* first look for a declared type */
+      
+      if ((XEN_LIST_P(declarations)) &&
+	  (XEN_NOT_NULL_P(declarations)))
+	{
+	  XEN declaration;
 	  /* (declare (x real) (a integer) (b string) ... */
-
-	  /* fprintf(stderr, "arg: %s, decls: %s\n", XEN_AS_STRING(arg), XEN_AS_STRING(declarations)); */
-
-	  if ((XEN_LIST_P(declarations)) &&
-	      (XEN_NOT_NULL_P(declarations)))
+	  
+	  declaration = XEN_CAR(declarations);
+	  declarations = XEN_CDR(declarations);
+	  
+	  if ((XEN_LIST_P(declaration)) &&
+	      (XEN_EQ_P(XEN_CAR(declaration), template_arg_symbol)) &&
+	      (XEN_SYMBOL_P(XEN_CADR(declaration))))
 	    {
-	      declaration = XEN_CAR(declarations);
-	      declarations = XEN_CDR(declarations);
-
-	      if (((XEN_LIST_P(arg)) &&
-		   (XEN_EQ_P(XEN_CAR(declaration), XEN_CAR(arg))) &&
-		   (XEN_SYMBOL_P(XEN_CADR(declaration)))) ||
-		  ((XEN_EQ_P(XEN_CAR(declaration), arg)) &&
-		   (XEN_SYMBOL_P(XEN_CADR(declaration)))))
+	      const char *type;
+	      type = XEN_SYMBOL_TO_C_STRING(XEN_CADR(declaration));
+	      arg_type = name_to_type(type);
+	      
+	      if (arg_type == R_UNSPECIFIED)                 /* not a predefined type name like "float" */
 		{
-		  const char *type;
-		  type = XEN_SYMBOL_TO_C_STRING(XEN_CADR(declaration));
-		  arg_type = name_to_type(type);
-		  
-		  /* fprintf(stderr, "arg %d: %s %s (%s)\n", i, XEN_AS_STRING(arg), type_name(arg_type), type); */
-
-		  if (arg_type == R_UNSPECIFIED) /* not a predefined type name like "float" */
+		  if (strcmp(type, "integer") == 0) 
+		    arg_type = R_INT; 
+		  else
 		    {
-		      if (strcmp(type, "integer") == 0) 
-			arg_type = R_INT; 
-		      else
+		      if (strcmp(type, "real") == 0) 
+			arg_type = R_FLOAT; 
+		      else 
 			{
-			  if (strcmp(type, "real") == 0) 
-			    arg_type = R_FLOAT; 
-			  else /* arg_type = default_arg_type; */
-			    {
-			      char *temp = NULL, *str;
-			      str = mus_format("unknown type in declare: %s in %s", type, temp = XEN_AS_STRING(XEN_CADDR(form)));
+			  char *temp = NULL, *str;
+			  str = mus_format("unknown type in declare: %s in %s", type, temp = XEN_AS_STRING(form));
 #if HAVE_S7
-			      if (temp) free(temp);
+			  if (temp) free(temp);
 #endif
-			      return(str);
-			    }
+			  return(str);
 			}
 		    }
 		}
-	      else 
-		{
-		  char *temp1 = NULL, *temp2 = NULL, *temp3 = NULL, *str;
-		  str = mus_format("unrecognized arg in declare: %s (for %s?) in %s", 
-				   temp1 = XEN_AS_STRING(XEN_CAR(declaration)), 
-				   temp2 = XEN_AS_STRING(arg), 
-				   temp3 = XEN_AS_STRING(XEN_CADDR(form)));
-#if HAVE_S7
-		  if (temp1) free(temp1);
-		  if (temp2) free(temp2);
-		  if (temp3) free(temp3);
-#endif
-		  return(str);
-		}
 	    }
+	  else 
+	    {
+	      /* declaration doesn't match template? */
+	      char *temp1 = NULL, *temp2 = NULL, *temp3 = NULL, *str;
+	      str = mus_format("unrecognized arg in declare: %s (for %s?) in %s", 
+			       temp1 = XEN_AS_STRING(declaration), 
+			       temp2 = XEN_AS_STRING(template_arg), 
+			       temp3 = XEN_AS_STRING(form));
+#if HAVE_S7
+	      if (temp1) free(temp1);
+	      if (temp2) free(temp2);
+	      if (temp3) free(temp3);
+#endif
+	      return(str);
+	    }
+	}
+      else
+	{
+	  /* no applicable declaration -- look at passed arg (if any) first */
+	  
+	  if ((i < num_passed_args) && 
+	      (cur_args) && 
+	      (cur_args[i + 1]))
+	    arg_type = cur_args[i + 1]->type;
 	  else
 	    {
-	      if ((cur_args) && (cur_args[i + 1]))
-		arg_type = cur_args[i + 1]->type;
+	      if (prog->lambda_args > i)
+		arg_type = prog->lambda_arg_types[i];
 	      else
 		{
-		  if (prog->lambda_args > i)
-		    arg_type = prog->lambda_arg_types[i];
+		  /* look at template default, if any */
+		  if (XEN_LIST_P(template_arg))
+		    {
+		      XEN template_default;
+		      template_default = XEN_CADR(template_arg);
+		      arg_type = mus_run_xen_to_run_type(template_default);
+		    }
 		}
 	    }
-	  
-	  /* fprintf(stderr, "add arg %s (%s)\n", XEN_AS_STRING(arg), type_name(arg_type)); */
-	  
-	  /* TODO: check other default arg types */
-	  if (XEN_LIST_P(arg))
-	    {
-	      XEN form;
-	      form = XEN_CADR(arg);
-
-	      switch (arg_type)
-		{
-		case R_INT:     v = make_xen_value(arg_type, add_int_to_ptree(prog, R_XEN_TO_C_INT(form)), R_CONSTANT);                 break;
-		case R_FLOAT:   v = make_xen_value(arg_type, add_dbl_to_ptree(prog, XEN_TO_C_DOUBLE(form)), R_CONSTANT);                break;
-		case R_STRING:  v = make_xen_value(arg_type, add_string_to_ptree(prog, mus_strdup(XEN_TO_C_STRING(form))), R_CONSTANT); break;
-		case R_CHAR:    v = make_xen_value(arg_type, add_int_to_ptree(prog, (Int)(XEN_TO_C_CHAR(form))), R_CONSTANT);           break;
-		case R_BOOL:    v = make_xen_value(arg_type, add_int_to_ptree(prog, (XEN_FALSE_P(form)) ? 0 : 1), R_CONSTANT);          break;
-		case R_KEYWORD: v = make_xen_value(arg_type, add_xen_to_ptree(prog, form), R_CONSTANT);                                 break;
-		default: fprintf(stderr, "unimplemented default: %s\n", XEN_AS_STRING(form));
-		}
-
-	      add_var_to_ptree(prog, XEN_SYMBOL_TO_C_STRING(XEN_CAR(arg)), v);
-	    }
-	  else
-	    {
-	      add_var_to_ptree(prog, 
-			       XEN_SYMBOL_TO_C_STRING(arg), 
-			       v = add_empty_var_to_ptree(prog, arg_type));
-	    }
-
-	  prog->args[i] = v->addr;
-	  prog->arg_types[i] = v->type;
-	  /* fprintf(stderr, "added %s at %d\n", type_name(v->type), v->addr); */
-
-	  FREE(v);
 	}
+
+      /* make a ptree slot for default arg value (copied later if needed) */
+      if (XEN_LIST_P(template_arg))
+	{
+	  XEN template_default;
+	  template_default = XEN_CADR(template_arg);
+	  
+	  switch (arg_type)
+	    {
+	    case R_INT:     
+	      v = make_xen_value(arg_type, add_int_to_ptree(prog, R_XEN_TO_C_INT(template_default)), R_CONSTANT);                 
+	      break;
+			  
+	    case R_FLOAT:   
+	      v = make_xen_value(arg_type, add_dbl_to_ptree(prog, XEN_TO_C_DOUBLE(template_default)), R_CONSTANT);                
+	      break;
+	      
+	    case R_STRING:  
+	      v = make_xen_value(arg_type, add_string_to_ptree(prog, mus_strdup(XEN_TO_C_STRING(template_default))), R_CONSTANT); 
+	      break;
+			  
+	    case R_CHAR:    
+	      v = make_xen_value(arg_type, add_int_to_ptree(prog, (Int)(XEN_TO_C_CHAR(template_default))), R_CONSTANT);           
+	      break;
+			  
+	    case R_BOOL:    
+	      v = make_xen_value(arg_type, add_int_to_ptree(prog, (XEN_FALSE_P(template_default)) ? 0 : 1), R_CONSTANT);          
+	      break;
+			  
+	    default:        
+	      return(mus_format("unimplemented argument default value: %s\n", XEN_AS_STRING(template_default)));
+	    }
+
+	  /* fprintf(stderr, "add default arg %d: %s\n", i, describe_xen_value(v, prog)); */
+	  prog->default_args[i] = v->addr;
+	  FREE(v);
+	  v = NULL;
+	}
+      
+      /* fprintf(stderr, "add arg %s\n", XEN_AS_STRING(template_arg_symbol)); */
+
+      add_var_to_ptree(prog, 
+		       XEN_SYMBOL_TO_C_STRING(template_arg_symbol), 
+		       v = add_empty_var_to_ptree(prog, arg_type));
+      prog->args[i] = v->addr;
+      prog->arg_types[i] = v->type;
+      FREE(v);
     }
+
   return(NULL);
 }
 
@@ -7089,6 +7146,10 @@ static void funcall_nf(int *args, ptree *pt)
   func = ((ptree **)(pt->fncs))[args[1]];
   fres = func->result;
 
+  /* we might be passed fewer args than func->arity has room for, but we'll fix up in funcall_n */
+
+  /* fprintf(stderr, "funcall %d args\n", func->arity); */
+
   for (i = 0; i < func->arity; i++)
     switch (func->arg_types[i])
       {
@@ -7099,6 +7160,7 @@ static void funcall_nf(int *args, ptree *pt)
 	break;
 
       case R_FLOAT: 
+	/* fprintf(stderr, "float arg %d from %d at %d: %f\n", i, args[i + 2], func->args[1 + 2], pt->dbls[args[i + 2]]); */
 	pt->dbls[func->args[i]] = pt->dbls[args[i + 2]]; 
 	break;
 
@@ -7237,7 +7299,7 @@ static void funcall_nf(int *args, ptree *pt)
 static xen_value *funcall_n(ptree *prog, xen_value **args, int num_args, xen_value *sf)
 {
   ptree *func;
-  int i;
+  int i, total_args;
   xen_value **new_args;
   xen_value *fres;
 
@@ -7246,16 +7308,52 @@ static xen_value *funcall_n(ptree *prog, xen_value **args, int num_args, xen_val
     return(run_warn("inner lambda lost!"));
 
   if (func->arity < num_args) 
-    return(run_warn("wrong number of args (%d) for func (wants %d)", num_args, func->arity));
+    return(run_warn("not enough args for func (got %d, wants %d)", num_args, func->arity));
+
+  /* if func_arity > num_args, pass in the extras explicitly */
+
+  if (func->arity > num_args)
+    total_args = func->arity;
+  else total_args = num_args;
 
   fres = func->result;
-  new_args = (xen_value **)CALLOC(num_args + 2, sizeof(xen_value *));
+  new_args = (xen_value **)CALLOC(total_args + 2, sizeof(xen_value *));
   for (i = 1; i <= num_args; i++)
     new_args[i + 1] = args[i];
+
+  if (total_args > num_args)
+    {
+      for (i = num_args + 1; i <= total_args; i++)
+	{
+	  /* pick up (copy) default values */
+	  xen_value *v = NULL;
+
+	  switch (func->arg_types[i - 1])
+	    {
+	    case R_INT:
+	    case R_CHAR:    
+	    case R_BOOL:
+	      v = make_xen_value(func->arg_types[i - 1], add_int_to_ptree(prog, prog->ints[func->default_args[i - 1]]), R_CONSTANT);                 
+	      break;
+	      
+	    case R_FLOAT:   
+	      v = make_xen_value(func->arg_types[i - 1], add_dbl_to_ptree(prog, prog->dbls[func->default_args[i - 1]]), R_CONSTANT);                
+	      break;
+	      
+	    case R_STRING:  
+	      v = make_xen_value(func->arg_types[i - 1], add_string_to_ptree(prog, mus_strdup(prog->strs[func->default_args[i - 1]])), R_CONSTANT); 
+	      break;
+	    }
+
+	  /* fprintf(stderr, "default arg %d from %d: %s\n", i - 1, func->default_args[i - 1], describe_xen_value(v, prog)); */
+	  new_args[i + 1] = v;
+	}
+    }
+
   new_args[1] = sf;
   new_args[0] = add_empty_var_to_ptree(prog, fres->type);
   args[0] = new_args[0];
-  add_triple_to_ptree(prog, make_triple(funcall_nf, "funcall_nf", new_args, num_args + 2));
+  add_triple_to_ptree(prog, make_triple(funcall_nf, "funcall_nf", new_args, total_args + 2));
 
   FREE(new_args);
   return(args[0]);

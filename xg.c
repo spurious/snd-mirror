@@ -46291,8 +46291,13 @@ static void define_structs(void)
 
 static void define_integers(void)
 {
+#if HAVE_S7
+  #define DEFINE_INTEGER(Name) s7_define_constant(s7, XG_PRE #Name XG_POST, C_TO_XEN_INT(Name))
+  #define DEFINE_ULONG(Name) s7_define_constant(s7, XG_PRE #Name XG_POST, C_TO_XEN_ULONG(Name))
+#else
   #define DEFINE_INTEGER(Name) XEN_DEFINE(XG_PRE #Name XG_POST, C_TO_XEN_INT(Name))
   #define DEFINE_ULONG(Name) XEN_DEFINE(XG_PRE #Name XG_POST, C_TO_XEN_ULONG(Name))
+#endif
 
   g_type_init();
   DEFINE_INTEGER(G_SIGNAL_RUN_FIRST);
@@ -47886,7 +47891,11 @@ static void define_integers(void)
 
 static void define_doubles(void)
 {
+#if HAVE_S7
+  #define DEFINE_DOUBLE(Name) s7_define_constant(s7, XG_PRE #Name XG_POST, C_TO_XEN_DOUBLE(Name))
+#else
   #define DEFINE_DOUBLE(Name) XEN_DEFINE(XG_PRE #Name XG_POST, C_TO_XEN_DOUBLE(Name))
+#endif
 
   DEFINE_DOUBLE(PANGO_SCALE_XX_SMALL);
   DEFINE_DOUBLE(PANGO_SCALE_X_SMALL);
@@ -47901,7 +47910,11 @@ static void define_doubles(void)
 
 static void define_atoms(void)
 {
+#if HAVE_S7
+  #define DEFINE_ATOM(Name) s7_define_constant(s7, XG_PRE #Name XG_POST, C_TO_XEN_GdkAtom(Name))
+#else
   #define DEFINE_ATOM(Name) XEN_DEFINE(XG_PRE #Name XG_POST, C_TO_XEN_GdkAtom(Name))
+#endif
 
   DEFINE_ATOM(GDK_SELECTION_PRIMARY);
   DEFINE_ATOM(GDK_SELECTION_SECONDARY);
@@ -47927,7 +47940,11 @@ static void define_atoms(void)
 static void define_strings(void)
 {
   
+#if HAVE_S7
+  #define DEFINE_STRING(Name) s7_define_constant(s7, XG_PRE #Name XG_POST, C_TO_XEN_STRING(Name))
+#else
   #define DEFINE_STRING(Name) XEN_DEFINE(XG_PRE #Name XG_POST, C_TO_XEN_STRING(Name))
+#endif
   DEFINE_STRING(GTK_STOCK_DIALOG_INFO);
   DEFINE_STRING(GTK_STOCK_DIALOG_WARNING);
   DEFINE_STRING(GTK_STOCK_DIALOG_ERROR);
@@ -48087,7 +48104,7 @@ void Init_libxg(void)
       define_atoms();
       define_strings();
       XEN_YES_WE_HAVE("xg");
-      XEN_DEFINE("xg-version", C_TO_XEN_STRING("06-Nov-08"));
+      XEN_DEFINE("xg-version", C_TO_XEN_STRING("15-Nov-08"));
       xg_already_inited = true;
 #if HAVE_SCHEME
       /* these are macros in glib/gobject/gsignal.h, but we want the types handled in some convenient way in the extension language */

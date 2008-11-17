@@ -432,7 +432,7 @@ struct s7_scheme {
   int tok;
   s7_pointer value;
   opcode_t op;
-  s7_pointer x, y;
+  s7_pointer x, y, z; /* evaluator local vars */
   s7_pointer *temps;
   int temps_ctr, temps_size;
   num v;
@@ -1124,6 +1124,7 @@ static int gc(s7_scheme *sc)
   mark_vector(sc->stack, sc->stack_top);
   S7_MARK(sc->x);
   S7_MARK(sc->y);
+  S7_MARK(sc->z);
   S7_MARK(sc->value);  
 
   S7_MARK(sc->input_port);
@@ -10427,7 +10428,8 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
       sc->args = s7_cons(sc, type, sc->x = s7_cons(sc, info, sc->NIL));
       sc->code = catch_handler(catcher);
       sc->stack_top = catch_goto_loc(catcher);
-      sc->op = OP_APPLY;
+      eval(sc, OP_APPLY);
+      /* explicit eval needed here if s7_call called into scheme where a caught error occurred (ex6 in exs7.c) */
     }
   else
     {
@@ -10485,6 +10487,7 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
     {
       longjmp(sc->goto_start, 1); /* this is trying to clear the C stack back to some clean state */
     }
+
   return(type);
 }
 
@@ -10665,7 +10668,6 @@ static s7_pointer g_for_each(s7_scheme *sc, s7_pointer args)
 	return(s7_wrong_type_arg_error(sc, "for-each", i, car(sc->y), "a list"));
       
       sc->args = s7_cons(sc, caar(sc->y), sc->args);
-      /* car(sc->y) = cdar(sc->y); */
       sc->x = s7_cons(sc, cdar(sc->y), sc->x);
     }
   sc->args = safe_reverse_in_place(sc, sc->args);
@@ -11237,7 +11239,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	case T_CLOSURE_STAR:	                  /* -------- define* (lambda*) -------- */
 	  { 
-	    s7_pointer x;
 	    sc->envir = new_frame_in_env(sc, s7_procedure_environment(sc->code)); 
 	    
 	    /* here the car(closure_source) is the uninterpreted argument list:
@@ -11259,29 +11260,31 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	     * all args are optional, any arg with no default value defaults to #f.
 	     */
 	    
-	    /* TODO: :rest arg not done yet */
 	    /* TODO: run can be fixed now, and everything that has guile-kludges */
 	    
 	    /* set all default values */
-	    for (x = car(closure_source(sc->code)); s7_is_pair(x); x = cdr(x))
+	    for (sc->z = car(closure_source(sc->code)); s7_is_pair(sc->z); sc->z = cdr(sc->z))
 	      {
 		/* bind all the args to something (default value or #f or maybe #undefined) */
-		if (!((car(x) == sc->KEY_KEY) ||
-		      (car(x) == sc->KEY_OPTIONAL) ||
-		      (car(x) == sc->KEY_REST)))                  /* :optional and :key always ignored, :rest dealt with later */
+		if (!((car(sc->z) == sc->KEY_KEY) ||
+		      (car(sc->z) == sc->KEY_OPTIONAL) ||
+		      (car(sc->z) == sc->KEY_REST)))                  /* :optional and :key always ignored, :rest dealt with later */
 		  {
-		    if (s7_is_pair(car(x)))                       /* (define* (hi (a mus-next)) a) */
-		      add_to_current_environment(sc,              /* or (define* (hi (a 'hi)) (list a (eq? a 'hi))) */
-						 caar(x), 
-						 lambda_star_argument_default_value(sc, cadar(x)));
+		    if (s7_is_pair(car(sc->z)))                       /* (define* (hi (a mus-next)) a) */
+		      add_to_current_environment(sc,                  /* or (define* (hi (a 'hi)) (list a (eq? a 'hi))) */
+						 caar(sc->z), 
+						 lambda_star_argument_default_value(sc, cadar(sc->z)));
 		                                                  /* mus-next, for example, needs to be evaluated before binding */
-		    else add_to_current_environment(sc, car(x), sc->F);
+		    else add_to_current_environment(sc, car(sc->z), sc->F);
 		  }
 	      }
+	    if (s7_is_symbol(sc->z)) /* dotted arg? -- make sure its name exists in the current environment */
+	      add_to_current_environment(sc, sc->z, sc->F);
 	    
 	    /* now get the current args, re-setting args that have explicit values */
 	    sc->x = car(closure_source(sc->code));
 	    sc->y = sc->args; 
+	    sc->z = sc->NIL;
 	    while ((s7_is_pair(sc->x)) &&
 		   (s7_is_pair(sc->y)))
 	      {
@@ -11293,6 +11296,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    if (car(sc->x) == sc->KEY_REST)
 		      {
 			/* next arg is bound to trailing args from this point as a list */
+			sc->z = sc->KEY_REST;
 			sc->x = cdr(sc->x);
 			if (s7_is_pair(car(sc->x)))
 			  lambda_star_argument_set_value(sc, caar(sc->x), sc->y);
@@ -11324,11 +11328,39 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		  }
 	      }
 
+	    /* check for trailing args with no :rest arg */
+	    if (sc->y != sc->NIL)
+	      {
+		if ((sc->x == sc->NIL) &&
+		    (is_pair(sc->y)))
+		  {
+		    if (sc->z != sc->KEY_REST)
+		      return(eval_error(sc, "too many arguments", sc->args));
+		  } 
+		else 
+		  {
+		    /* final arg was dotted? */
+		    if (s7_is_symbol(sc->x))
+		      add_to_current_environment(sc, sc->x, sc->y); 
+		  }
+	      }
+
 	    /* evaluate the function body */
 	    sc->code = cdr(closure_source(sc->code));
 	    sc->args = sc->NIL;
 	    goto BEGIN;
 	  }
+
+	  /* for C level define*, we need to make the arg list from the current values in the
+	   *   environment, then 
+	   *     sc ->x = function_call(sc->code)(sc, sc->args);
+	   *     pop_stack(sc, sc->x);
+	   *     goto START;
+	   * (assuming sc->code was saved across the arg setup stuff)
+	   * the c-define* object would need to have the arg template somewhere accessible
+	   *   then somehow share the merging code.
+	   *   T_S7_FUNCTION_STAR?
+	   */
 		
 	case T_CONTINUATION:	                  /* -------- continuation ("call-with-continuation") -------- */
 	  s7_call_continuation(sc, sc->code);
@@ -11342,12 +11374,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    /* look for dynamic-wind in the stack section that we are jumping out of */
 	    for (i = sc->stack_top - 1; i > new_stack_top; i -= 4)
 	      {
-		s7_pointer x;
 		if ((opcode_t)s7_integer(vector_element(sc->stack, i)) == OP_DYNAMIC_WIND)
 		  {
-		    x = vector_element(sc->stack, i - 3);
-		    if (dynamic_wind_state(x) == DWIND_BODY)
-		      s7_call(sc, dynamic_wind_out(x), sc->NIL);
+		    sc->z = vector_element(sc->stack, i - 3);
+		    if (dynamic_wind_state(sc->z) == DWIND_BODY)
+		      s7_call(sc, dynamic_wind_out(sc->z), sc->NIL);
 		  }
 	      }
 	    
@@ -13115,6 +13146,7 @@ static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
   
   new_sc->x = new_sc->NIL;
   new_sc->y = new_sc->NIL;
+  new_sc->z = new_sc->NIL;
   new_sc->code = new_sc->NIL;
   new_sc->args = new_sc->NIL;
   new_sc->value = new_sc->NIL;
@@ -13164,6 +13196,7 @@ static void mark_s7(s7_scheme *sc)
   S7_MARK(sc->value);
   S7_MARK(sc->x);
   S7_MARK(sc->y);
+  S7_MARK(sc->z);
   for (i = 0; i < sc->temps_size; i++)
     S7_MARK(sc->temps[i]);
   S7_MARK(sc->key_values);
@@ -13233,6 +13266,7 @@ s7_scheme *s7_init(void)
   
   sc->x = sc->NIL;
   sc->y = sc->NIL;
+  sc->z = sc->NIL;
   sc->error_exiter = NULL;
   
   sc->heap_size = INITIAL_HEAP_SIZE;

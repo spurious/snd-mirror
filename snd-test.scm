@@ -47245,7 +47245,6 @@ EDITS: 1
     (itsta '(lambda (y) (declare (y integer)) (+ y 1)) 1 2)
     (itsta '(lambda (y) (declare (y string)) (string-length y)) "hi" 2)
     (ftsta '(lambda (y) (define (a) 3) (+ y (a))) 1.0 4.0)
-    (ftsta '(lambda (y) (define (a) 3) (+ y (a))) 1.0 4.0)
     (ftsta '(lambda (y) (define (a b) (+ b 3)) (+ y (a 1))) 1.0 5.0)
     (ftsta '(lambda (y) (define (a b c) (+ b c)) (+ y (a 1 3))) 1.0 5.0)
     (ftsta '(lambda (y) (define (a b c) (declare (b real)) (+ b c)) (+ y (a 1.5 3))) 1.0 5.5)
@@ -52771,7 +52770,6 @@ EDITS: 1
 	  (let ((ind (find-sound "test.snd")))
 	    (let ((i -1))
 	      (scan-channel (lambda (y)
-			      (display i) (display " ")
 			      (set! i (1+ i))
 			      (if (fneq y (sin (* 2 pi i (/ 1000.0 44100.0))))
 				  (begin

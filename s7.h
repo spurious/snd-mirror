@@ -380,7 +380,7 @@ s7_pointer s7_make_closure_star(s7_scheme *sc, s7_pointer c, s7_pointer e);
    *
    * In s7, (define* (name . args) body) or (define name (lambda* args body))
    *   define a function that takes optional (keyword) named arguments.
-   *   The keywords :key, :optional, and :rest are ok, but they are ignored --
+   *   The keywords :key and :optional are ok, but they are ignored --
    *   they exist to be compatible with other define* implementations.  
    *   The "args" is a list that can contain either names (normal arguments),
    *   or lists of the form (name default-value), in any order.  When called,
@@ -400,7 +400,10 @@ s7_pointer s7_make_closure_star(s7_scheme *sc, s7_pointer c, s7_pointer e);
    *   (hi :b 2 :a 3) -> '(3 2 "hi")
    *   (hi 3 2 1) -> '(3 2 1)
    *
-   *   and so on.  The point of s7_make_closure_star is that you can create
+   *   and so on.  :rest causes its argument to be bound to the rest
+   *   of the arguments at that point.
+   *
+   *   The point of s7_make_closure_star is that you can create
    *   your own define* funcs in C -- I'll make a simpler way to do this
    *   eventually.
    */

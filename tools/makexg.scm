@@ -3599,8 +3599,13 @@
 (hey "/* ---------------------------------------- constants ---------------------------------------- */~%~%")
 (hey "static void define_integers(void)~%")
 (hey "{~%")
+(hey "#if HAVE_S7~%")
+(hey "  #define DEFINE_INTEGER(Name) s7_define_constant(s7, XG_PRE #Name XG_POST, C_TO_XEN_INT(Name))~%")
+(hey "  #define DEFINE_ULONG(Name) s7_define_constant(s7, XG_PRE #Name XG_POST, C_TO_XEN_ULONG(Name))~%")
+(hey "#else~%")
 (hey "  #define DEFINE_INTEGER(Name) XEN_DEFINE(XG_PRE #Name XG_POST, C_TO_XEN_INT(Name))~%")
 (hey "  #define DEFINE_ULONG(Name) XEN_DEFINE(XG_PRE #Name XG_POST, C_TO_XEN_ULONG(Name))~%")
+(hey "#endif~%")
 (hey "~%")
 (hey "  g_type_init();~%")
 
@@ -3671,7 +3676,11 @@
 
 (hey "static void define_doubles(void)~%")
 (hey "{~%")
+(hey "#if HAVE_S7~%")
+(hey "  #define DEFINE_DOUBLE(Name) s7_define_constant(s7, XG_PRE #Name XG_POST, C_TO_XEN_DOUBLE(Name))~%")
+(hey "#else~%")
 (hey "  #define DEFINE_DOUBLE(Name) XEN_DEFINE(XG_PRE #Name XG_POST, C_TO_XEN_DOUBLE(Name))~%")
+(hey "#endif~%")
 (hey "~%")
 
 (for-each
@@ -3685,7 +3694,11 @@
 (hey "~%")
 (hey "static void define_atoms(void)~%")
 (hey "{~%")
+(hey "#if HAVE_S7~%")
+(hey "  #define DEFINE_ATOM(Name) s7_define_constant(s7, XG_PRE #Name XG_POST, C_TO_XEN_GdkAtom(Name))~%")
+(hey "#else~%")
 (hey "  #define DEFINE_ATOM(Name) XEN_DEFINE(XG_PRE #Name XG_POST, C_TO_XEN_GdkAtom(Name))~%")
+(hey "#endif~%")
 (hey "~%")
 
 (for-each
@@ -3700,7 +3713,11 @@
 (hey "static void define_strings(void)~%")
 (hey "{~%")
 (hey "  ~%")
+(hey "#if HAVE_S7~%")
+(hey "  #define DEFINE_STRING(Name) s7_define_constant(s7, XG_PRE #Name XG_POST, C_TO_XEN_STRING(Name))~%")
+(hey "#else~%")
 (hey "  #define DEFINE_STRING(Name) XEN_DEFINE(XG_PRE #Name XG_POST, C_TO_XEN_STRING(Name))~%")
+(hey "#endif~%")
 
 (for-each (lambda (str) (hey "  DEFINE_STRING(~A);~%" str)) (reverse strings))
 (if (not (null? strings-236))
