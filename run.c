@@ -12597,8 +12597,6 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
   /* walk form, storing vars, making program entries for operators etc */
   XEN rtnval = XEN_FALSE;
 
-  /* fprintf(stderr, "walk %s\n", XEN_AS_STRING(form)); */
-
   if (current_optimization == DONT_OPTIMIZE) return(NULL);
 
   if (XEN_LIST_P(form))
@@ -12996,6 +12994,7 @@ static xen_value *walk(ptree *prog, XEN form, walk_result_t walk_result)
     {
       xen_value *rv;
       char *temp1 = NULL, *temp2 = NULL;
+      /* fprintf(stderr, "can't handle %s\n", XEN_AS_STRING(form)); */
       rv = run_warn("can't handle: %s (%s)", temp1 = XEN_AS_STRING(form), temp2 = XEN_AS_STRING(XEN_PROCEDURE_SOURCE(prog->code)));
 #if HAVE_S7
       if (temp1) free(temp1);
@@ -13087,8 +13086,7 @@ static struct ptree *form_to_ptree_1(XEN code, int decls, int *types)
   current_optimization = optimization(ss);
 #endif
   if (current_optimization == DONT_OPTIMIZE) return(NULL);
-
-  /* fprintf(stderr,"run %s\n", XEN_AS_STRING(code)); */
+  if (XEN_NULL_P(code)) return(NULL);
 
   form = XEN_CAR(code);
   /* env is cdr in s7 */
@@ -13114,6 +13112,8 @@ static struct ptree *form_to_ptree_1(XEN code, int decls, int *types)
       mus_run_free_ptree(prog);
       return(NULL);
     }
+
+  /* fprintf(stderr, "form->ptree: %s\n", XEN_AS_STRING(form)); */
 
   prog->result = walk(prog, form, NEED_ANY_RESULT);
   if (prog->result)

@@ -10458,8 +10458,10 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
       sc->args = s7_cons(sc, type, sc->x = s7_cons(sc, info, sc->NIL));
       sc->code = catch_handler(catcher);
       sc->stack_top = catch_goto_loc(catcher);
-      eval(sc, OP_APPLY);
-      /* explicit eval needed here if s7_call called into scheme where a caught error occurred (ex6 in exs7.c) */
+      /* eval(sc, OP_APPLY); */
+      sc->op = OP_APPLY;
+      /* explicit eval needed if s7_call called into scheme where a caught error occurred (ex6 in exs7.c) */
+      /*  but putting it here means the C stack is not cleared correctly in non-s7-call cases, so defer it until s7_call */
     }
   else
     {
@@ -10657,7 +10659,10 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
     {
       sc->longjmp_ok = true;
       if (setjmp(sc->goto_start) != 0)
-	return(sc->value);
+	{
+	  eval(sc, sc->op);
+	  return(sc->value);
+	}
     }
   
   push_stack(sc, OP_EVAL_STRING_DONE, sc->args, sc->code); /* this saves the current evaluation and will eventually finish this (possibly) nested call */

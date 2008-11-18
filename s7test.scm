@@ -1372,7 +1372,6 @@
 			     (hi (string-append str "a") (- n 1))))))
 	    (string-length (hi "" 100)))
 	  100)
-;;; TODO: if string-append 1000000 big trouble?
 
 (test (let* ((str "hiho")
 	     (str1 "ha")
