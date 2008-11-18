@@ -1331,6 +1331,11 @@
 (test (substring "" 0 0) "")
 (test (substring "" -1 0) 'error)
 (test (substring "abc" -1 0) 'error)
+(test (let ((str "012345"))
+	(let ((str1 (substring str 2 4)))
+	  (string-set! str1 1 #\x))
+	(string=? str "012345"))
+      #t)
 
 (for-each
  (lambda (arg)
@@ -1368,6 +1373,25 @@
 	    (string-length (hi "" 100)))
 	  100)
 ;;; TODO: if string-append 1000000 big trouble?
+
+(test (let* ((str "hiho")
+	     (str1 "ha")
+	     (str2 (string-append str1 str)))
+	(string-set! str2 1 #\x)
+	(string-set! str2 4 #\x)
+	(and (string=? str "hiho")
+	     (string=? str1 "ha")
+	     (string=? str2 "hxhixo")))
+      #t)
+(test (let* ((str "hiho")
+	     (str1 "ha")
+	     (str2 (string-append str1 str)))
+	(string-set! str1 1 #\x)
+	(string-set! str 2 #\x)
+	(and (string=? str "hixo")
+	     (string=? str1 "hx")
+	     (string=? str2 "hahiho")))
+      #t)
 
 
 (for-each
@@ -1417,6 +1441,11 @@
 (test (list->string (string->list "hi there")) "hi there")
 (test (list->string (string->list "&*#%^@%$)~@")) "&*#%^@%$)~@")
 (test (list->string (string->list "")) "")
+(test (let* ((str "abc")
+	     (lst (string->list str)))
+	(and (string=? str "abc")
+	     (equal? lst (list #\a #\b #\c))))
+      #t)
 
 (for-each
  (lambda (arg)
@@ -1452,7 +1481,10 @@
    (test (string->symbol arg) 'error))
  (list #\a 1 '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
 
-
+(test (let ((str (symbol->string 'hi)))
+	(catch #t (lambda () (string-set! str 1 #\x)) (lambda args 'error)) ; can be disallowed
+	(symbol->string 'hi))
+      "hi")
 
 
 
@@ -2046,6 +2078,7 @@
 (test (null? (cons '() 1)) #f)
 (test (null? (list (list))) #f)
 (test (null? '(())) #f)
+(test (null? '#()) #f)
 
 (for-each
  (lambda (arg)
@@ -3398,6 +3431,9 @@
 (num-test (string->number "10111/100010" 2) 23/34)
 (num-test (string->number "27/42" 8) 23/34)
 (num-test (string->number "17/22" 16) 23/34)
+(num-test (string->number "1234567890123456789012345678901234567890.123456789e-30") 1234567890.1235)
+(num-test (string->number "123456789012345678901234567890123456789012345678901234567890.123456789e-50") 1234567890.1235)
+(num-test (- 1234567890123456789012345678901234567890123456789012345678901234567890.123456789e-60 12345678901234567890123456789012345678901234567890.123456789e-40) 0.0)
 
 
 (let ((happy #t))
@@ -3508,6 +3544,13 @@
 		  (display "(string<->number -1234.5 ") (display i) (display ") -> ") (display (number->string -1234.5 i)) 
 		  (display " -> ") (display (string->number (number->string -1234.5 i) i)) (newline))))))))
 	
+(let ((val (number->string 1.0-1.0i)))
+  (if (and (not (string=? val "1-1i"))
+	   (not (string=? val "1.0-1.0i"))
+	   (not (string=? val "1-i"))
+	   (not (string=? val "1.0-i")))
+      (begin
+	(display "(number->string 1.0-1.0i) returned ") (display val) (display "?") (newline))))
 	
 
 ;;; --------------------------------------------------------------------------------
@@ -28026,7 +28069,7 @@
 
 (num-test (/ 1.0 (/ 1.0 our-pi)) our-pi)
 (num-test (/ 1 (/ 1 1234)) 1234)
-(num-test (* pi (+ 1.0 (atan (tan (acos (cos (asin (sin (/ 1.0 (/ 1.0 pi)))))))))) pi)
+(num-test (* our-pi (+ 1.0 (atan (tan (acos (cos (asin (sin (/ 1.0 (/ 1.0 our-pi)))))))))) our-pi)
 (num-test (/ 1.0 (/ 1.0 1.0+1.0i)) 1.0+1.0i)
 
 (let* ((angle 0.0) 
@@ -28311,76 +28354,90 @@
   (test (modulo  0 (- b2-0)) 0 )
   ))
 
-(num-test (string->number "100") 100)
-(num-test (string->number "100" 16) 256)
-(num-test (string->number "100" 2) 4)
-(num-test (string->number "100" 8) 64)
-(num-test (string->number "100" 10) 100)
-(num-test (string->number "11" 16) 17)
-(num-test (string->number "-11" 16) -17)
-(num-test (string->number "aa" 16) 170)
-(num-test (string->number "-aa" 16) -170)
+(let ((string->number-2 (lambda (str radix)
+			  (let ((old-str (if (string? str) (string-copy str) str)))
+			    (let ((val (string->number str radix)))
+			      (if (not (string=? str old-str))
+				  (error 'string->number-messed-up)
+				  val)))))
+      (string->number-1 (lambda (str)
+			  (let ((old-str (if (string? str) (string-copy str) str)))
+			    (let ((val (string->number str)))
+			      (if (not (string=? str old-str))
+				  (error 'string->number-messed-up)
+				  val))))))
 
-(for-each
- (lambda (str rval fval)
-   (let ((happy #t))
-     (do ((radix 3 (+ radix 1)))
-	 ((or (not happy)
-	      (= radix 16)))
-       (let ((val (string->number str radix)))
-	 (if (and (number? val)
-		  (not (fval val (rval radix) radix)))
-	  (begin
-	    (display "(string->number \"") (display str) (display "\" ") (display radix) (display ") = ") (display val) (display "?") (newline)
-	    (set! happy #f)))))))
- (list "101"
-       "201.02"
-       "1/21"
-       "2e1"
-       "10.1e-1"
-       )
- (list (lambda (radix) (+ 1 (* radix radix)))
-       (lambda (radix) (+ 1.0 (* 2 radix radix) (/ 2.0 (* radix radix))))
-       (lambda (radix) (/ 1 (+ 1 (* 2 radix))))
-       (lambda (radix) (if (< radix 15) (* 2 radix) (+ 1 (* 14 radix) (* 2 radix radix))))
-       (lambda (radix) (+ 1 (/ 1.0 (* radix radix))))
-       )
- (list (lambda (a b radix) (= a b))
-       (lambda (a b radix) (< (abs (- a b)) (/ 1.0 (* radix radix))))
-       (lambda (a b radix) (= a b))
-       (lambda (a b radix) (= a b))
-       (lambda (a b radix) (< (abs (- a b)) (/ 1.0 (* radix radix radix))))
-       ))
-
-(num-test (string->number "34" 2) #f)
-(num-test (string->number "19" 8) #f)
-(num-test (string->number "1c" 10) #f)
-(num-test (string->number "1c" 16) 28)
-
-(test (string->number "") #f )
-(test (string->number ".") #f )
-(test (string->number "d") #f )
-(test (string->number "D") #f )
-(test (string->number "i") #f )
-(test (string->number "I") #f )
-(test (string->number "3i") #f )
-(test (string->number "3I") #f )
-(test (string->number "33i") #f )
-(test (string->number "33I") #f )
-(test (string->number "3.3i") #f )
-(test (string->number "3.3I") #f )
-(test (string->number "-") #f )
-(test (string->number "+") #f )
-
-(test (string->number "#i1-1ei") #f)
-(test (string->number "#i-2e+i") #f)
-(test (string->number "#i1+i1i") #f)
-(test (string->number "#i1+1") #f)
-(test (string->number "#i2i.") #f)
-
-(num-test (string->number "3.4e3") 3400.0)
-(num-test (string->number "0") 0)
-(num-test (string->number "#x#e-2e2") -738)
+  (num-test (string->number-1 "100") 100)
+  (num-test (string->number-2 "100" 16) 256)
+  (num-test (string->number-2 "100" 2) 4)
+  (num-test (string->number-2 "100" 8) 64)
+  (num-test (string->number-2 "100" 10) 100)
+  (num-test (string->number-2 "11" 16) 17)
+  (num-test (string->number-2 "-11" 16) -17)
+  (num-test (string->number-2 "aa" 16) 170)
+  (num-test (string->number-2 "-aa" 16) -170)
+  
+  (for-each
+   (lambda (str rval fval)
+     (let ((happy #t))
+       (do ((radix 3 (+ radix 1)))
+	   ((or (not happy)
+		(= radix 16)))
+	 (let ((val (string->number-2 str radix)))
+	   (if (and (number? val)
+		    (not (fval val (rval radix) radix)))
+	       (begin
+		 (display "(string->number \"") (display str) (display "\" ") (display radix) (display ") = ") (display val) (display "?") (newline)
+		 (set! happy #f)))))))
+   (list "101"
+	 "201.02"
+	 "1/21"
+	 "2e1"
+	 "10.1e-1"
+	 )
+   (list (lambda (radix) (+ 1 (* radix radix)))
+	 (lambda (radix) (+ 1.0 (* 2 radix radix) (/ 2.0 (* radix radix))))
+	 (lambda (radix) (/ 1 (+ 1 (* 2 radix))))
+	 (lambda (radix) (if (< radix 15) (* 2 radix) (+ 1 (* 14 radix) (* 2 radix radix))))
+	 (lambda (radix) (+ 1 (/ 1.0 (* radix radix))))
+	 )
+   (list (lambda (a b radix) (= a b))
+	 (lambda (a b radix) (< (abs (- a b)) (/ 1.0 (* radix radix))))
+	 (lambda (a b radix) (= a b))
+	 (lambda (a b radix) (= a b))
+	 (lambda (a b radix) (< (abs (- a b)) (/ 1.0 (* radix radix radix))))
+	 ))
+  
+  (num-test (string->number-2 "34" 2) #f)
+  (num-test (string->number-2 "19" 8) #f)
+  (num-test (string->number-2 "1c" 10) #f)
+  (num-test (string->number-2 "1c" 16) 28)
+  
+  (test (string->number-1 "") #f )
+  (test (string->number-1 ".") #f )
+  (test (string->number-1 "d") #f )
+  (test (string->number-1 "D") #f )
+  (test (string->number-1 "i") #f )
+  (test (string->number-1 "I") #f )
+  (test (string->number-1 "3i") #f )
+  (test (string->number-1 "3I") #f )
+  (test (string->number-1 "33i") #f )
+  (test (string->number-1 "33I") #f )
+  (test (string->number-1 "3.3i") #f )
+  (test (string->number-1 "3.3I") #f )
+  (test (string->number-1 "-") #f )
+  (test (string->number-1 "+") #f )
+  
+  (test (string->number-1 "#i1-1ei") #f)
+  (test (string->number-1 "#i-2e+i") #f)
+  (test (string->number-1 "#i1+i1i") #f)
+  (test (string->number-1 "#i1+1") #f)
+  (test (string->number-1 "#i2i.") #f)
+  
+  (num-test (string->number-1 "3.4e3") 3400.0)
+  (num-test (string->number-1 "0") 0)
+  (num-test (string->number-1 "#x#e-2e2") -738)
+  )
 
 (test (let* ((str "1+0i") (x (string->number str))) (and (number? x) (string=? str "1+0i"))) #t)
 
@@ -28390,13 +28447,13 @@
 
 (test (let ((val (catch #t (lambda ()
 			     (= 1 
-01 +1 1. 
-001 +01 1/1 1.0 1e0 01. +1. 
-0001 +001 1/01 .1e1 01/1 +1/1 1.00 1e00 01.0 +1.0 1e+0 1e-0 01e0 +1e0 1.e0 001. +01. 1+0i 1-0i 
-11/11 00001 +0001 1/001 .1e01 01/01 +1/01 .1e+1 10e-1 0.1e1 +.1e1 .10e1 001/1 +01/1 10/10 1.000 1e000 01.00 +1.00 1e+00 1e-00 01e00 +1e00 1.e00 001.0 +01.0 01e+0 +1e+0 1.e+0 01e-0 +1e-0 1.e-0 001e0 +01e0 1.0e0 01.e0 +1.e0 0001. +001. 1+00i 1-00i 1+.0i 1-.0i 01+0i +1+0i 1.+0i 01-0i +1-0i 1.-0i 1+0.i 1-0.i 
-11/011 011/11 +11/11 000001 +00001 1/0001 .1e001 01/001 +1/001 .1e+01 10e-01 0.1e01 +.1e01 .10e01 001/01 +01/01 0.1e+1 +.1e+1 .10e+1 010e-1 +10e-1 10.e-1 00.1e1 +0.1e1 0.10e1 +.10e1 .100e1 0001/1 +001/1 10/010 010/10 +10/10 1.0000 1e0000 01.000 +1.000 1e+000 1e-000 01e000 +1e000 1.e000 001.00 +01.00 01e+00 +1e+00 1.e+00 01e-00 +1e-00 1.e-00 001e00 +01e00 1.0e00 01.e00 +1.e00 0001.0 +001.0 001e+0 +01e+0 1.0e+0 01.e+0 +1.e+0 001e-0 +01e-0 1.0e-0 01.e-0 +1.e-0 0001e0 +001e0 1.00e0 01.0e0 +1.0e0 001.e0 +01.e0 00001. +0001. 1+0e1i 1-0e1i 1+0/1i 1-0/1i 1+000i 1-000i 1+.00i 1-.00i 01+00i +1+00i 1.+00i 01-00i +1-00i 1.-00i 1+0.0i 1-0.0i 01+.0i +1+.0i 1.+.0i 01-.0i +1-.0i 1.-.0i 001+0i +01+0i 1/1+0i 1.0+0i 1e0+0i 01.+0i +1.+0i 001-0i +01-0i 1/1-0i 1.0-0i 1e0-0i 01.-0i +1.-0i 1+0e0i 1-0e0i 1+00.i 1-00.i 01+0.i +1+0.i 1.+0.i 01-0.i +1-0.i 1.-0.i 
-111/111 11/0011 011/011 +11/011 0011/11 +011/11 101/101 0000001 +000001 1/00001 .1e0001 01/0001 +1/0001 .1e+001 10e-001 0.1e001 +.1e001 .10e001 001/001 +01/001 0.1e+01 +.1e+01 .10e+01 010e-01 +10e-01 10.e-01 00.1e01 +0.1e01 0.10e01 +.10e01 .100e01 0001/01 +001/01 00.1e+1 +0.1e+1 0.10e+1 +.10e+1 .100e+1 0010e-1 +010e-1 10.0e-1 010.e-1 +10.e-1 000.1e1 +00.1e1 00.10e1 +0.10e1 0.100e1 +.100e1 .1000e1 00001/1 +0001/1 110/110 10/0010 010/010 +10/010 0010/10 +010/10 100/100 1.00000 1e00000 01.0000 +1.0000 1e+0000 1e-0000 01e0000 +1e0000 1.e0000 001.000 +01.000 01e+000 +1e+000 1.e+000 01e-000 +1e-000 1.e-000 001e000 +01e000 1.0e000 01.e000 +1.e000 0001.00 +001.00 001e+00 +01e+00 1.0e+00 01.e+00 +1.e+00 001e-00 +01e-00 1.0e-00 01.e-00 +1.e-00 0001e00 +001e00 1.00e00 01.0e00 +1.0e00 001.e00 +01.e00 00001.0 +0001.0 0001e+0 +001e+0 1.00e+0 01.0e+0 +1.0e+0 001.e+0 +01.e+0 0001e-0 +001e-0 1.00e-0 01.0e-0 +1.0e-0 001.e-0 +01.e-0 00001e0 +0001e0 1.000e0 01.00e0 +1.00e0 001.0e0 +01.0e0 0001.e0 +001.e0 000001. +00001. 1+0e11i 1-0e11i 1+0/11i 1-0/11i 1+0e01i 1-0e01i 1+0/01i 1-0/01i 1+0e+1i 1-0e+1i 1+0e-1i 1-0e-1i 1+00e1i 1-00e1i 1+.0e1i 1-.0e1i 01+0e1i +1+0e1i 1.+0e1i 01-0e1i +1-0e1i 1.-0e1i 1+0.e1i 1-0.e1i 1+00/1i 1-00/1i 01+0/1i +1+0/1i 1.+0/1i 01-0/1i +1-0/1i 1.-0/1i 1+0e10i 1-0e10i 1+0/10i 1-0/10i 1+0000i 1-0000i 1+.000i 1-.000i 01+000i +1+000i 1.+000i 01-000i +1-000i 1.-000i 1+0.00i 1-0.00i 01+.00i +1+.00i 1.+.00i 01-.00i +1-.00i 1.-.00i 001+00i +01+00i 1/1+00i 1.0+00i 1e0+00i 01.+00i +1.+00i 001-00i +01-00i 1/1-00i 1.0-00i 1e0-00i 01.-00i +1.-00i 1+0e00i 1-0e00i 1+00.0i 1-00.0i 01+0.0i +1+0.0i 1.+0.0i 01-0.0i +1-0.0i 1.-0.0i 001+.0i +01+.0i 1/1+.0i 1.0+.0i 1e0+.0i 01.+.0i +1.+.0i 001-.0i +01-.0i 1/1-.0i 1.0-.0i 1e0-.0i 01.-.0i +1.-.0i 0001+0i +001+0i 1/01+0i .1e1+0i 01/1+0i +1/1+0i 1.00+0i 1e00+0i 01.0+0i +1.0+0i 1e+0+0i 1e-0+0i 01e0+0i +1e0+0i 1.e0+0i 001.+0i +01.+0i 1+0e+0i 1-0e+0i 0001-0i +001-0i 1/01-0i .1e1-0i 01/1-0i +1/1-0i 1.00-0i 1e00-0i 01.0-0i +1.0-0i 1e+0-0i 1e-0-0i 01e0-0i +1e0-0i 1.e0-0i 001.-0i +01.-0i 1+0e-0i 1-0e-0i 1+00e0i 1-00e0i 1+.0e0i 1-.0e0i 01+0e0i +1+0e0i 1.+0e0i 01-0e0i +1-0e0i 1.-0e0i 1+0.e0i 1-0.e0i 1+000.i 1-000.i 01+00.i +1+00.i 1.+00.i 01-00.i +1-00.i 1.-00.i 001+0.i +01+0.i 1/1+0.i 1.0+0.i 1e0+0.i 01.+0.i +1.+0.i 001-0.i +01-0.i 1/1-0.i 1.0-0.i 1e0-0.i 01.-0.i +1.-0.i 
-111/0111 0111/111 +111/111 11/00011 011/0011 +11/0011 0011/011 +011/011 00011/11 +0011/11 101/0101 0101/101 +101/101 00000001 +0000001 1/000001 .1e00001 01/00001 +1/00001 .1e+0001 10e-0001 0.1e0001 +.1e0001 .10e0001 001/0001 +01/0001 0.1e+001 +.1e+001 .10e+001 010e-001 +10e-001 10.e-001 00.1e001 +0.1e001 0.10e001 +.10e001 .100e001 0001/001 +001/001 00.1e+01 +0.1e+01 0.10e+01 +.10e+01 .100e+01 0010e-01 +010e-01 10.0e-01 010.e-01 +10.e-01 000.1e01 +00.1e01 00.10e01 +0.10e01 0.100e01 +.100e01 .1000e01 00001/01 +0001/01 000.1e+1 +00.1e+1 00.10e+1 +0.10e+1 0.100e+1 +.100e+1 .1000e+1 00010e-1 +0010e-1 10.00e-1 010.0e-1 +10.0e-1 0010.e-1 +010.e-1 0000.1e1 +000.1e1 000.10e1 +00.10e1 00.100e1 +0.100e1 0.1000e1 +.1000e1 .10000e1 000001/1 +00001/1 110/0110 0110/110 +110/110 10/00010 010/0010 +10/0010 0010/010 +010/010 00010/10 +0010/10 100/0100 0100/100 +100/100 1.000000 1e000000 01.00000 +1.00000 1e+00000 1e-00000 01e00000 +1e00000 1.e00000 001.0000 +01.0000 01e+0000 +1e+0000 1.e+0000 01e-0000 +1e-0000 1.e-0000 001e0000 +01e0000 1.0e0000 01.e0000 +1.e0000 0001.000 +001.000 001e+000 +01e+000 1.0e+000 01.e+000 +1.e+000 001e-000 +01e-000 1.0e-000 01.e-000 +1.e-000 0001e000 +001e000 1.00e000 01.0e000 +1.0e000 001.e000 +01.e000 00001.00 +0001.00 0001e+00 +001e+00 1.00e+00 01.0e+00 +1.0e+00 001.e+00 +01.e+00 0001e-00 +001e-00 1.00e-00 01.0e-00 +1.0e-00 001.e-00 +01.e-00 00001e00 +0001e00 1.000e00 01.00e00 +1.00e00 001.0e00 +01.0e00 0001.e00 +001.e00 000001.0 +00001.0 00001e+0 +0001e+0 1.000e+0 01.00e+0 +1.00e+0 001.0e+0 +01.0e+0 0001.e+0 +001.e+0 00001e-0 +0001e-0 1.000e-0 01.00e-0 +1.00e-0 001.0e-0 +01.0e-0 0001.e-0 +001.e-0 000001e0 +00001e0 1.0000e0 01.000e0 +1.000e0 001.00e0 +01.00e0 0001.0e0 +001.0e0 00001.e0 +0001.e0 0000001. +000001.))
+				01 +1 1. 
+				001 +01 1/1 1.0 1e0 01. +1. 
+				0001 +001 1/01 .1e1 01/1 +1/1 1.00 1e00 01.0 +1.0 1e+0 1e-0 01e0 +1e0 1.e0 001. +01. 1+0i 1-0i 
+				11/11 00001 +0001 1/001 .1e01 01/01 +1/01 .1e+1 10e-1 0.1e1 +.1e1 .10e1 001/1 +01/1 10/10 1.000 1e000 01.00 +1.00 1e+00 1e-00 01e00 +1e00 1.e00 001.0 +01.0 01e+0 +1e+0 1.e+0 01e-0 +1e-0 1.e-0 001e0 +01e0 1.0e0 01.e0 +1.e0 0001. +001. 1+00i 1-00i 1+.0i 1-.0i 01+0i +1+0i 1.+0i 01-0i +1-0i 1.-0i 1+0.i 1-0.i 
+				11/011 011/11 +11/11 000001 +00001 1/0001 .1e001 01/001 +1/001 .1e+01 10e-01 0.1e01 +.1e01 .10e01 001/01 +01/01 0.1e+1 +.1e+1 .10e+1 010e-1 +10e-1 10.e-1 00.1e1 +0.1e1 0.10e1 +.10e1 .100e1 0001/1 +001/1 10/010 010/10 +10/10 1.0000 1e0000 01.000 +1.000 1e+000 1e-000 01e000 +1e000 1.e000 001.00 +01.00 01e+00 +1e+00 1.e+00 01e-00 +1e-00 1.e-00 001e00 +01e00 1.0e00 01.e00 +1.e00 0001.0 +001.0 001e+0 +01e+0 1.0e+0 01.e+0 +1.e+0 001e-0 +01e-0 1.0e-0 01.e-0 +1.e-0 0001e0 +001e0 1.00e0 01.0e0 +1.0e0 001.e0 +01.e0 00001. +0001. 1+0e1i 1-0e1i 1+0/1i 1-0/1i 1+000i 1-000i 1+.00i 1-.00i 01+00i +1+00i 1.+00i 01-00i +1-00i 1.-00i 1+0.0i 1-0.0i 01+.0i +1+.0i 1.+.0i 01-.0i +1-.0i 1.-.0i 001+0i +01+0i 1/1+0i 1.0+0i 1e0+0i 01.+0i +1.+0i 001-0i +01-0i 1/1-0i 1.0-0i 1e0-0i 01.-0i +1.-0i 1+0e0i 1-0e0i 1+00.i 1-00.i 01+0.i +1+0.i 1.+0.i 01-0.i +1-0.i 1.-0.i 
+				111/111 11/0011 011/011 +11/011 0011/11 +011/11 101/101 0000001 +000001 1/00001 .1e0001 01/0001 +1/0001 .1e+001 10e-001 0.1e001 +.1e001 .10e001 001/001 +01/001 0.1e+01 +.1e+01 .10e+01 010e-01 +10e-01 10.e-01 00.1e01 +0.1e01 0.10e01 +.10e01 .100e01 0001/01 +001/01 00.1e+1 +0.1e+1 0.10e+1 +.10e+1 .100e+1 0010e-1 +010e-1 10.0e-1 010.e-1 +10.e-1 000.1e1 +00.1e1 00.10e1 +0.10e1 0.100e1 +.100e1 .1000e1 00001/1 +0001/1 110/110 10/0010 010/010 +10/010 0010/10 +010/10 100/100 1.00000 1e00000 01.0000 +1.0000 1e+0000 1e-0000 01e0000 +1e0000 1.e0000 001.000 +01.000 01e+000 +1e+000 1.e+000 01e-000 +1e-000 1.e-000 001e000 +01e000 1.0e000 01.e000 +1.e000 0001.00 +001.00 001e+00 +01e+00 1.0e+00 01.e+00 +1.e+00 001e-00 +01e-00 1.0e-00 01.e-00 +1.e-00 0001e00 +001e00 1.00e00 01.0e00 +1.0e00 001.e00 +01.e00 00001.0 +0001.0 0001e+0 +001e+0 1.00e+0 01.0e+0 +1.0e+0 001.e+0 +01.e+0 0001e-0 +001e-0 1.00e-0 01.0e-0 +1.0e-0 001.e-0 +01.e-0 00001e0 +0001e0 1.000e0 01.00e0 +1.00e0 001.0e0 +01.0e0 0001.e0 +001.e0 000001. +00001. 1+0e11i 1-0e11i 1+0/11i 1-0/11i 1+0e01i 1-0e01i 1+0/01i 1-0/01i 1+0e+1i 1-0e+1i 1+0e-1i 1-0e-1i 1+00e1i 1-00e1i 1+.0e1i 1-.0e1i 01+0e1i +1+0e1i 1.+0e1i 01-0e1i +1-0e1i 1.-0e1i 1+0.e1i 1-0.e1i 1+00/1i 1-00/1i 01+0/1i +1+0/1i 1.+0/1i 01-0/1i +1-0/1i 1.-0/1i 1+0e10i 1-0e10i 1+0/10i 1-0/10i 1+0000i 1-0000i 1+.000i 1-.000i 01+000i +1+000i 1.+000i 01-000i +1-000i 1.-000i 1+0.00i 1-0.00i 01+.00i +1+.00i 1.+.00i 01-.00i +1-.00i 1.-.00i 001+00i +01+00i 1/1+00i 1.0+00i 1e0+00i 01.+00i +1.+00i 001-00i +01-00i 1/1-00i 1.0-00i 1e0-00i 01.-00i +1.-00i 1+0e00i 1-0e00i 1+00.0i 1-00.0i 01+0.0i +1+0.0i 1.+0.0i 01-0.0i +1-0.0i 1.-0.0i 001+.0i +01+.0i 1/1+.0i 1.0+.0i 1e0+.0i 01.+.0i +1.+.0i 001-.0i +01-.0i 1/1-.0i 1.0-.0i 1e0-.0i 01.-.0i +1.-.0i 0001+0i +001+0i 1/01+0i .1e1+0i 01/1+0i +1/1+0i 1.00+0i 1e00+0i 01.0+0i +1.0+0i 1e+0+0i 1e-0+0i 01e0+0i +1e0+0i 1.e0+0i 001.+0i +01.+0i 1+0e+0i 1-0e+0i 0001-0i +001-0i 1/01-0i .1e1-0i 01/1-0i +1/1-0i 1.00-0i 1e00-0i 01.0-0i +1.0-0i 1e+0-0i 1e-0-0i 01e0-0i +1e0-0i 1.e0-0i 001.-0i +01.-0i 1+0e-0i 1-0e-0i 1+00e0i 1-00e0i 1+.0e0i 1-.0e0i 01+0e0i +1+0e0i 1.+0e0i 01-0e0i +1-0e0i 1.-0e0i 1+0.e0i 1-0.e0i 1+000.i 1-000.i 01+00.i +1+00.i 1.+00.i 01-00.i +1-00.i 1.-00.i 001+0.i +01+0.i 1/1+0.i 1.0+0.i 1e0+0.i 01.+0.i +1.+0.i 001-0.i +01-0.i 1/1-0.i 1.0-0.i 1e0-0.i 01.-0.i +1.-0.i 
+				111/0111 0111/111 +111/111 11/00011 011/0011 +11/0011 0011/011 +011/011 00011/11 +0011/11 101/0101 0101/101 +101/101 00000001 +0000001 1/000001 .1e00001 01/00001 +1/00001 .1e+0001 10e-0001 0.1e0001 +.1e0001 .10e0001 001/0001 +01/0001 0.1e+001 +.1e+001 .10e+001 010e-001 +10e-001 10.e-001 00.1e001 +0.1e001 0.10e001 +.10e001 .100e001 0001/001 +001/001 00.1e+01 +0.1e+01 0.10e+01 +.10e+01 .100e+01 0010e-01 +010e-01 10.0e-01 010.e-01 +10.e-01 000.1e01 +00.1e01 00.10e01 +0.10e01 0.100e01 +.100e01 .1000e01 00001/01 +0001/01 000.1e+1 +00.1e+1 00.10e+1 +0.10e+1 0.100e+1 +.100e+1 .1000e+1 00010e-1 +0010e-1 10.00e-1 010.0e-1 +10.0e-1 0010.e-1 +010.e-1 0000.1e1 +000.1e1 000.10e1 +00.10e1 00.100e1 +0.100e1 0.1000e1 +.1000e1 .10000e1 000001/1 +00001/1 110/0110 0110/110 +110/110 10/00010 010/0010 +10/0010 0010/010 +010/010 00010/10 +0010/10 100/0100 0100/100 +100/100 1.000000 1e000000 01.00000 +1.00000 1e+00000 1e-00000 01e00000 +1e00000 1.e00000 001.0000 +01.0000 01e+0000 +1e+0000 1.e+0000 01e-0000 +1e-0000 1.e-0000 001e0000 +01e0000 1.0e0000 01.e0000 +1.e0000 0001.000 +001.000 001e+000 +01e+000 1.0e+000 01.e+000 +1.e+000 001e-000 +01e-000 1.0e-000 01.e-000 +1.e-000 0001e000 +001e000 1.00e000 01.0e000 +1.0e000 001.e000 +01.e000 00001.00 +0001.00 0001e+00 +001e+00 1.00e+00 01.0e+00 +1.0e+00 001.e+00 +01.e+00 0001e-00 +001e-00 1.00e-00 01.0e-00 +1.0e-00 001.e-00 +01.e-00 00001e00 +0001e00 1.000e00 01.00e00 +1.00e00 001.0e00 +01.0e00 0001.e00 +001.e00 000001.0 +00001.0 00001e+0 +0001e+0 1.000e+0 01.00e+0 +1.00e+0 001.0e+0 +01.0e+0 0001.e+0 +001.e+0 00001e-0 +0001e-0 1.000e-0 01.00e-0 +1.00e-0 001.0e-0 +01.0e-0 0001.e-0 +001.e-0 000001e0 +00001e0 1.0000e0 01.000e0 +1.000e0 001.00e0 +01.00e0 0001.0e0 +001.0e0 00001.e0 +0001.e0 0000001. +000001.))
 			(lambda args 'error))))
 	val)
       #t)
@@ -28549,7 +28606,7 @@
        ))
 
 
-;;; here's code to generate all (im)possible numbers (using just 1 digit) of a given length
+;;; here's code to generate all (im)possible numbers (using just 1 digit) of a given length [leaving aside @ and # and so on]
 ;(define file (open-output-file "ntest.scm"))
 ;(define chars (list #\1 #\. #\+ #\- #\e #\i #\/))
 ;(define (all-syms f len)
@@ -31713,7 +31770,7 @@
 		      (display ") returned ") (display result) 
 		      (display " but expected 'error")
 		      (newline)))))
-       (list #\a '#(1 2 3) "hi" :hi '() 'hi abs (lambda () 1) '#(()) (list 1 2 3) '(1 . 2)))
+       (list #\a '#(1 2 3) "hi" '() 'hi abs (lambda () 1) '#(()) (list 1 2 3) '(1 . 2)))
 
       (test (format #f "~D") 'error)
 
@@ -31842,7 +31899,7 @@
 	(test (hi 1 2 3 4 5) (list 1 (list 2 3 4 5) (list 3 4 5))))
 
       (let ((hi (lambda* ((a 3) :key (b #t) :optional (c pi) :rest d) (list a b c d))))
-	(test (hi) (list 3 #t pi #f))
+	(test (hi) (list 3 #t our-pi #f))
 	(test (hi 1 2 3 4) (list 1 2 3 (list 4))))
 
       (let ((hi (lambda* ((a 'hi)) (equal? a 'hi))))

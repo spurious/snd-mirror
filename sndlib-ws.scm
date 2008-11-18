@@ -18,7 +18,7 @@
 (define *clm-locsig-type* mus-interp-linear)
 (define *clm-clipped* #t)
 (define *clm-array-print-length* 12)
-(define *clm-player* #f)          ; default is play-and-wait (takes index of newly created sound, not the sound's file name)
+(define *clm-player* #f) 
 (define *clm-notehook* #f)
 (define *clm-with-sound-depth* 0) ; for CM, not otherwise used
 (define *clm-default-frequency* 0.0)
@@ -50,9 +50,15 @@
 			      (set! arg-names (cons a arg-names))
 			      (set! arg-names (cons (car a) arg-names)))))
 		    targs)
-		   (reverse arg-names))))
+		   (reverse arg-names)))
+	 (doc (if (string? (car body))
+		  (let ((val (car body)))
+		    (set! body (cdr body))
+		    val)
+		  "no help")))
   `(begin 
      (define* (,name ,@targs)
+       ,doc
        (if *clm-notehook*
 	   (*clm-notehook* (symbol->string ',name) ,@utargs))
        ((lambda () ; for inner defines, if any
@@ -60,6 +66,7 @@
      ,@(if *definstrument-hook*
            (list (*definstrument-hook* name targs))
            (list)))))
+
 
 
 ;;; -------- with-sound --------
@@ -262,8 +269,8 @@
 				     (sound-data-scale! output-1 (/ scaled-to pk))))
 			       (sound-data-scale! output-1 scaled-by))))))
 
-	   (if (and play output-to-file)
-	       (play output-1)))
+	   (if (and *clm-player* play output-to-file)
+	       (*clm-player* output-1)))
 
 	 output-1))
 

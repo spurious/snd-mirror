@@ -221,9 +221,15 @@ returning you to the true top-level."
 			      (set! arg-names (cons a arg-names))
 			      (set! arg-names (cons (car a) arg-names)))))
 		    targs)
-		   (reverse arg-names))))
+		   (reverse arg-names)))
+	 (doc (if (string? (car body))
+		  (let ((val (car body)))
+		    (set! body (cdr body))
+		    val)
+		  "no help")))
   `(begin 
      (define* (,name ,@targs)
+       ,doc
        (if *clm-notehook*
 	   (*clm-notehook* (symbol->string ',name) ,@utargs))
        (if (not (zero? (run-safety))) 
@@ -234,7 +240,6 @@ returning you to the true top-level."
            (list (*definstrument-hook* name targs))
            (list)))))
 
-;;; definstrument help string is currently lost
 
 
 ;;; -------- with-sound --------

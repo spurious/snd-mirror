@@ -2133,8 +2133,11 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
 
 /* -------------------------------- numbers -------------------------------- */
 
+
 #define s7_Int_abs(x) (x >= 0 ? x : -x)
 /* can't use abs even in gcc -- it doesn't work with long long ints! */
+#define s7_Double_abs(x) fabs(x)
+
 
 #if WITH_COMPLEX
 
@@ -2246,7 +2249,7 @@ static s7_Complex cexp(s7_Complex z)
 
 static s7_Complex clog(s7_Complex z) 
 { 
-  return(log(fabs(cabs(z))) + carg(z) * _Complex_I); 
+  return(log(s7_Double_abs(cabs(z))) + carg(z) * _Complex_I); 
 } 
 
 
@@ -2394,7 +2397,7 @@ static num nvalue(s7_pointer p)
 }
 
 
-#define DEFAULT_RATIONALIZE_ERROR 1.0e-12
+static double default_rationalize_error = 1.0e-12;
 
 static s7_Int c_mod(s7_Int x, s7_Int y)
 {
@@ -2481,7 +2484,7 @@ static bool c_rationalize(s7_Double ux, s7_Double error, s7_Int *numer, s7_Int *
       a = a2 + a1 * tt;
       b = b2 + b1 * tt;
       
-      if (fabs(ux - (s7_Double)a / (s7_Double)b) < error)
+      if (s7_Double_abs(ux - (s7_Double)a / (s7_Double)b) < error)
 	{
 	  a += (b * int_part);
 	  (*numer) = (neg) ? -a : a;
@@ -2617,13 +2620,19 @@ static num make_ratio(s7_Int numer, s7_Int denom)
   num ret;
   s7_Int divisor;
 
-  if ((numer == 0) || (denom == 0))
+  if (denom == 0)
+    {
+      fprintf(stderr, "%lld/%lld currently just returns %lld in s7", (long long int)numer, (long long int)denom, (long long int)numer);
+      /* I can't decide how to handle this */
+      ret.type = NUM_INT;
+      integer(ret) = numer;
+      return(ret);
+    }
+
+  if (numer == 0)
     {
       ret.type = NUM_INT;
-      if (denom != 0)
-	integer(ret) = 0;
-      else integer(ret) = numer;
-      /* need divide by 0 check here */
+      integer(ret) = 0;
       return(ret);
     }
   
@@ -3376,13 +3385,13 @@ static char *s7_number_to_string_1(s7_scheme *sc, s7_pointer obj, int radix, int
 	  {
 	    if (s7_imag_part(obj) >= 0.0)
 	      frmt = (float_choice == 'g') ? "%.*g+%.*gi" : ((float_choice == 'f') ? "%.*f+%.*fi" : "%.*e+%.*ei"); 
-	    else frmt = (float_choice == 'g') ? "%.*g-%.*gi" : ((float_choice == 'f') ? "%.*f-%.*fi" :"%.*e-%.*ei");
+	    else frmt = (float_choice == 'g') ? "%.*g%.*gi" : ((float_choice == 'f') ? "%.*f-%.*fi" :"%.*e-%.*ei");
 	  }
 	else 
 	  {
 	    if (s7_imag_part(obj) >= 0.0)
 	      frmt = (float_choice == 'g') ? "%.*Lg+%.*Lgi" : ((float_choice == 'f') ? "%.*Lf+%.*Lfi" : "%.*Le+%.*Lei");
-	    else frmt = (float_choice == 'g') ? "%.*Lg-%.*Lgi" : ((float_choice == 'f') ? "%.*Lf-%.*Lfi" : "%.*Le-%.*Lei");
+	    else frmt = (float_choice == 'g') ? "%.*Lg%.*Lgi" : ((float_choice == 'f') ? "%.*Lf-%.*Lfi" : "%.*Le-%.*Lei");
 	  }
 
 	snprintf(p, 256, frmt, precision, s7_real_part(obj), precision, s7_imag_part(obj));
@@ -3609,7 +3618,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name)
 	  (!(s7_is_rational(x))))
 	{
 	  s7_Int numer = 0, denom = 1;
-	  if (c_rationalize(s7_real_part(x), DEFAULT_RATIONALIZE_ERROR, &numer, &denom))
+	  if (c_rationalize(s7_real_part(x), default_rationalize_error, &numer, &denom))
 	    return(s7_make_ratio(sc, numer, denom));
 	}
       return(x);
@@ -4094,7 +4103,7 @@ static s7_pointer g_magnitude(s7_scheme *sc, s7_pointer args)
     {
     case NUM_REAL2: 
     case NUM_REAL: 
-      real(sc->v) = fabs(real(sc->v)); 
+      real(sc->v) = s7_Double_abs(real(sc->v)); 
       break;
     case NUM_INT:
       integer(sc->v) = s7_Int_abs(integer(sc->v));
@@ -4154,7 +4163,7 @@ static s7_pointer g_abs(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "abs", 1, car(args), "a real"));
   sc->v = nvalue(car(args));
   if (num_type(sc->v) >= NUM_REAL)
-    real(sc->v) = fabs(real(sc->v));
+    real(sc->v) = s7_Double_abs(real(sc->v));
   else
     {
       if (num_type(sc->v) == NUM_INT)
@@ -4267,7 +4276,7 @@ static s7_pointer g_asin(s7_scheme *sc, s7_pointer args)
       s7_Double x, absx, recip;
       s7_Complex result;
       x = num_to_real(sc->x->object.number);
-      absx = fabs(x);
+      absx = s7_Double_abs(x);
       if (absx <= 1.0)
 	return(s7_make_real(sc, asin(x)));
       
@@ -4283,8 +4292,8 @@ static s7_pointer g_asin(s7_scheme *sc, s7_pointer args)
   /* if either real or imag part is very large, use explicit formula, not casin */
   /*   this code taken from sbcl's src/code/irrat.lisp */
   /* break is around x+70000000i */
-  if ((fabs(s7_real_part(sc->x)) > 1.0e7) ||
-      (fabs(s7_imag_part(sc->x)) > 1.0e7))
+  if ((s7_Double_abs(s7_real_part(sc->x)) > 1.0e7) ||
+      (s7_Double_abs(s7_imag_part(sc->x)) > 1.0e7))
     {
       s7_Complex sq1mz, sq1pz, z;
 
@@ -4312,7 +4321,7 @@ static s7_pointer g_acos(s7_scheme *sc, s7_pointer args)
       s7_Double x, absx, recip;
       s7_Complex result;
       x = num_to_real(sc->x->object.number);
-      absx = fabs(x);
+      absx = s7_Double_abs(x);
       if (absx <= 1.0)
 	return(s7_make_real(sc, acos(x)));
       
@@ -4328,8 +4337,8 @@ static s7_pointer g_acos(s7_scheme *sc, s7_pointer args)
   /* if either real or imag part is very large, use explicit formula, not cacos */
   /*   this code taken from sbcl's src/code/irrat.lisp */
 
-  if ((fabs(s7_real_part(sc->x)) > 1.0e7) ||
-      (fabs(s7_imag_part(sc->x)) > 1.0e7))
+  if ((s7_Double_abs(s7_real_part(sc->x)) > 1.0e7) ||
+      (s7_Double_abs(s7_imag_part(sc->x)) > 1.0e7))
     {
       s7_Complex sq1mz, sq1pz, z;
 
@@ -4443,7 +4452,7 @@ static s7_pointer g_atanh(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "atanh", 1, car(args), "a number"));
   sc->x = car(args);
   if ((s7_is_real(sc->x)) &&
-      (fabs(num_to_real(sc->x->object.number)) < 1.0))
+      (s7_Double_abs(num_to_real(sc->x->object.number)) < 1.0))
     return(s7_make_real(sc, atanh(num_to_real(sc->x->object.number))));
   return(s7_from_c_complex(sc, catanh(s7_complex(sc->x))));
 }
@@ -5019,7 +5028,7 @@ static s7_pointer g_inexact_to_exact(s7_scheme *sc, s7_pointer args)
   sc->x = car(args);
   if (s7_is_exact(sc->x)) 
     return(sc->x);
-  if (c_rationalize(s7_real(sc->x), DEFAULT_RATIONALIZE_ERROR, &numer, &denom))
+  if (c_rationalize(s7_real(sc->x), default_rationalize_error, &numer, &denom))
     return(s7_make_ratio(sc, numer, denom));
   return(s7_make_integer(sc, (s7_Int)s7_real(sc->x)));
 }
@@ -11281,8 +11290,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	     * all args are optional, any arg with no default value defaults to #f.
 	     */
 	    
-	    /* TODO: run can be fixed now, and everything that has guile-kludges */
-	    
 	    /* set all default values */
 	    for (sc->z = car(closure_source(sc->code)); s7_is_pair(sc->z); sc->z = cdr(sc->z))
 	      {
@@ -13817,6 +13824,7 @@ s7_scheme *s7_init(void)
     top = sizeof(s7_Int);
     s7_define_constant(sc, "most-positive-fixnum", s7_make_integer(sc, (top == 8) ? LLONG_MAX : ((top == 4) ? LONG_MAX : SHRT_MAX)));
     s7_define_constant(sc, "most-negative-fixnum", s7_make_integer(sc, (top == 8) ? LLONG_MIN : ((top == 4) ? LONG_MIN : SHRT_MIN)));
+    if (top == 4) default_rationalize_error = 1.0e-6;
     s7_define_constant(sc, "pi", s7_make_real(sc, 3.1415926535897932384626433832795029L)); /* M_PI is not good enough for s7_Double = long double */
     top_log = floor(log(pow(2.0, (s7_Double)((top * 8) - 1))));
 
@@ -13826,3 +13834,4 @@ s7_scheme *s7_init(void)
 }
 
 /* TODO: find out where the extra < can't handle: #<unspecified> (()) or #f's are coming from and why test 23 is so slow */
+/* TODO: check the opt logs, new 8 errs */

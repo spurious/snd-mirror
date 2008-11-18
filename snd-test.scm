@@ -51957,6 +51957,7 @@ EDITS: 1
 	  (close-sound ind)))
     
 #|
+    ;; TODO: default args still not bugfree
     (if (provided? 'snd-s7)
 	(let ((hi (lambda* ((a 0.0) :optional (b 0.0)) (declare (a float) (b float)) (+ a b))))
 	  (run-test (hi 1.0) 1.0)
