@@ -2289,7 +2289,7 @@ FM(e^x) = PM(e^x).  FM(square-wave) is <img src="pix/fmeq58.png" alt="fm(noise)"
        (do ((i start (1+ i)))
 	   ((= i end))
 	 (let ((vol (env ampf))
-	       (pulse (* index (nxy1sin fm-modulator 0.0)))
+	       (pulse (* index (nxy1sin fm-modulator)))
                (sq (* index (square-wave pm-modulator))))
 	   (outa i (* vol (oscil fm-carrier pulse)))
 	   (outb i (* vol (oscil pm-carrier 0.0 sq)))

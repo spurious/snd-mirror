@@ -2,6 +2,7 @@
 #include "clm2xen.h"
 #include "sndlib2xen.h"
 
+/* SOMEDAY: eventually add support for 64-bit fftw sizes */
 
 #if WITH_SHARED_SNDLIB
 #if HAVE_FFTW3

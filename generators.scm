@@ -3449,7 +3449,7 @@
   (frequency *clm-default-frequency*) (ratio 1.0) (r 1.0) (index 1.0) (phase 0.0))
 
 
-(define (asyfm-J gen input)
+(define* (asyfm-J gen :optional (input 0.0))
   "(asyfm-J gen input) is the same as the CLM asymmetric-fm generator (index=1.0), set r != 1.0 to get the asymmetric spectra"
   (declare (gen asyfm) (input float))
   (let* ((phase (asyfm-phase gen))
@@ -3510,7 +3510,7 @@
  (list 1.0 3.0 10.0))
 |#
 
-(define (asyfm-I gen input)
+(define* (asyfm-I gen :optional (input 0.0))
   "(dsp-asyfm-I gen input) is the I0 case of the asymmetric-fm generator (dsp.scm)"
   (declare (gen asyfm) (input float))
   (let* ((phase (asyfm-phase gen))

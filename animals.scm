@@ -415,7 +415,7 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (pulsed-env pulse 0.0)
+		    (pulsed-env pulse)
 		    (oscil base (+ (if frqf (env frqf) 0.0) 
 				   (if modm (* index (oscil modm)) 0.0))))))))))
 
@@ -459,9 +459,9 @@
        (do ((i start (1+ i)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
-		    (pulsed-env pulse 0.0)
-		    (+ (* .8 (oscil base 0.0))
-		       (* .2 (oscil base1 0.0))))))))))
+		    (pulsed-env pulse)
+		    (+ (* .8 (oscil base))
+		       (* .2 (oscil base1))))))))))
 
 ;(with-sound (:play #t) (a-cricket 0 .12 4500 5400 .5 '(0 0 1 1 3 1 4 0) (/ .11 3) '(0 0 1 .8 5 1 6 0 15 0)))
 
@@ -520,7 +520,7 @@
 	   ((= i stop))
 	 (let ((fm (* index (oscil fm))))
 	   (outa i (* (env ampf)
-		      (pulsed-env pulse 0.0)
+		      (pulsed-env pulse)
 		      (+ (* (env f1) (oscil gen1 fm))
 			 (* (env f2) (oscil gen2 (* 2 fm))))))))))))
 
@@ -784,7 +784,7 @@
 		(intrp (env indf)))
 	   (outa i (* (env ampf)
 		      (env pulsef)
-		      (blackman gen1 0.0)
+		      (blackman gen1)
 		      (+ (* intrp (oscil gen2 (* 10 ind)))
 			 (* (- 1.0 intrp) (oscil gen3 (* 24 ind)))
 			 (* .1 (oscil gen5 (* 14 ind)))
@@ -940,7 +940,7 @@
 			(* index (oscil fm))))
 		(intrp (env interpf)))
 	   (outa i (* (env ampf)
-		      (pulsed-env pulsef 0.0)
+		      (pulsed-env pulsef)
 		      (+ (* (- 1.0 intrp)
 			    (polywave poly1 frq))
 			 (* intrp 
@@ -1025,7 +1025,7 @@
 		 (mus-reset pulse2)))
 	   (outa i (* (env ampf)
 		      (env pulsef)
-		      (blackman pulse2 0.0)
+		      (blackman pulse2)
 		      (polywave gen (rand-interp rnd)))))))))
 
   (let ((last-dur 0.0)
@@ -1895,7 +1895,7 @@
 		      (* .5 (+ (oscil gen1 (+ frq
 					      (* (env rndf) (rand-interp rnd))
 					      (* .15 (oscil gen2))))
-			       (rxyk!cos rx 0.0)))))))))))
+			       (rxyk!cos rx)))))))))))
 		     
 ;(with-sound () (dog-day-cicada 0 2 .5))
 
@@ -5547,7 +5547,7 @@
 			 (+ .85 (abs (rand-interp rnd1)))
 			 (nrcos gen (+ (env frqf)
 				       (rand-interp rnd)
-				       (* vib-index (blackman vib 0.0)))))))
+				       (* vib-index (blackman vib)))))))
 	     (outa i (+ (* fr1 (formant frm1 inp))
 			(* fr2 (formant frm2 inp))
 			(* fr3 (formant frm3 inp))))))))))
@@ -7249,7 +7249,7 @@
        (lambda ()
 	 (do ((i start (1+ i)))
 	     ((= i stop))
-	   (let ((vb (blackman vib 0.0)))
+	   (let ((vb (blackman vib)))
 	     (outa i (* (env ampf)
 			(+ .4 (* .6 vb))
 			(polywave gen1 (+ (env frqf)

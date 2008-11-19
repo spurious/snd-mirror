@@ -865,12 +865,12 @@
 (for-each
  (lambda (arg)
    (test (char->integer arg) 'error))
- (list "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list -1 1 0 123456789 "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
 
 (for-each
  (lambda (arg)
    (test (integer->char arg) 'error))
- (list #\a "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
+ (list -1 123456789 -123456789 #\a "hi" '() (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #t (lambda (a) (+ a 1))))
 
 
 
@@ -27950,6 +27950,8 @@
 
 (num-test (< 1/123400000000 .000000000001) #f)
 (num-test (> 1/123400000000 .000000000001) #t)
+
+(num-test (exp (* our-pi (sqrt 163))) 262537412640768743.999999999999)
 
 (num-test (+ 1/2 0.5) 1.0)
 (num-test (- 1/2 0.5d0) 0.0d0)
