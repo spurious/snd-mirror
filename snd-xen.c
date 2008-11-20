@@ -2747,6 +2747,10 @@ If it returns some non-#f result, Snd assumes you've sent the text out yourself,
   g_init_gxfind();
 #endif
 
+#if HAVE_GUILE
+  mus_init_run();
+#endif
+
 #if HAVE_SCHEME && HAVE_DLFCN_H
   XEN_DEFINE_PROCEDURE("dlopen",  g_dlopen_w,  1, 0 ,0, "");
   XEN_DEFINE_PROCEDURE("dlclose", g_dlclose_w, 1, 0 ,0, "");

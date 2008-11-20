@@ -762,6 +762,7 @@ static void s7_free_object(s7_pointer a);
 static char *s7_describe_object(s7_scheme *sc, s7_pointer a);
 static s7_pointer make_atom(s7_scheme *sc, char *q, int radix);
 static bool s7_is_applicable_object(s7_pointer x);
+static s7_pointer make_list_1(s7_scheme *sc, s7_pointer a);
 
 
 
@@ -2118,7 +2119,7 @@ static s7_pointer g_call_cc(s7_scheme *sc, s7_pointer args)
 {
   #define H_call_cc "(call-with-current-continuation ...) needs more than a one sentence explanation"
   sc->code = car(args);
-  sc->args = s7_cons(sc, s7_make_continuation(sc), sc->NIL);
+  sc->args = make_list_1(sc, s7_make_continuation(sc));
   push_stack(sc, OP_APPLY, sc->args, sc->code);
   return(sc->NIL);
 }
@@ -2131,7 +2132,7 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
   /* (call-with-exit (lambda (return) ...)) */
   
   sc->code = car(args);                              /* the lambda form */
-  sc->args = s7_cons(sc, s7_make_goto(sc), sc->NIL); /*   the argument to the lambda (the goto = "return" above) */
+  sc->args = make_list_1(sc, s7_make_goto(sc));      /*   the argument to the lambda (the goto = "return" above) */
   push_stack(sc, OP_APPLY, sc->args, sc->code);      /* apply looks at sc->code to decide what to do (it will see the lambda) */
   
   /* if the lambda body calls the argument as a function, 
@@ -3340,14 +3341,15 @@ static void s7_Int_to_string(char *p, s7_Int n, int radix, int width)
 
 static char *s7_number_to_string_1(s7_scheme *sc, s7_pointer obj, int radix, int width, int precision, char float_choice)
 {
+  #define NUM_SIZE 256
   char *p;
-  p = (char *)calloc(256, sizeof(char));
+  p = (char *)calloc(NUM_SIZE, sizeof(char));
 
   switch (object_number_type(obj))
     {
     case NUM_INT:
       if (radix == 10)
-	snprintf(p, 256, 
+	snprintf(p, NUM_SIZE, 
 		 (sizeof(int) >= sizeof(s7_Int)) ? "%*d" : "%*lld",
 		 width, s7_integer(obj));
       else s7_Int_to_string(p, s7_integer(obj), radix, width);
@@ -3355,17 +3357,17 @@ static char *s7_number_to_string_1(s7_scheme *sc, s7_pointer obj, int radix, int
       
     case NUM_RATIO:
       if (radix == 10)
-	snprintf(p, 256, 
+	snprintf(p, NUM_SIZE, 
 		 (sizeof(int) >= sizeof(s7_Int)) ? "%d/%d" : "%lld/%lld", 
 		 s7_numerator(obj), s7_denominator(obj));
       else
 	{
 	  char *n, *d;
-	  n = (char *)calloc(256, sizeof(char));
-	  d = (char *)calloc(256, sizeof(char));
+	  n = (char *)calloc(NUM_SIZE, sizeof(char));
+	  d = (char *)calloc(NUM_SIZE, sizeof(char));
 	  s7_Int_to_string(n, s7_numerator(obj), radix, 0);
 	  s7_Int_to_string(d, s7_denominator(obj), radix, 0);
-	  snprintf(p, 256, "%s/%s", n, d);
+	  snprintf(p, NUM_SIZE, "%s/%s", n, d);
 	  free(n);
 	  free(d);
 	}
@@ -3381,7 +3383,7 @@ static char *s7_number_to_string_1(s7_scheme *sc, s7_pointer obj, int radix, int
 	  frmt = (float_choice == 'g') ? "%*.*g" : ((float_choice == 'f') ? "%*.*f" : "%*.*e");
 	else frmt = (float_choice == 'g') ? "%*.*Lg" : ((float_choice == 'f') ? "%*.*Lf" : "%*.*Le");
 
-	snprintf(p, 256, frmt, width, precision, s7_real(obj));
+	snprintf(p, NUM_SIZE, frmt, width, precision, s7_real(obj));
 	len = safe_strlen(p);
 	for (i = 0; i < len; i++) /* does it have an exponent (if so, it's already a float) */
 	  if (p[i] == 'e')
@@ -3419,7 +3421,7 @@ static char *s7_number_to_string_1(s7_scheme *sc, s7_pointer obj, int radix, int
 	    else frmt = (float_choice == 'g') ? "%.*Lg%.*Lgi" : ((float_choice == 'f') ? "%.*Lf-%.*Lfi" : "%.*Le-%.*Lei");
 	  }
 
-	snprintf(p, 256, frmt, precision, s7_real_part(obj), precision, s7_imag_part(obj));
+	snprintf(p, NUM_SIZE, frmt, precision, s7_real_part(obj), precision, s7_imag_part(obj));
       }
       break;
       
@@ -3579,7 +3581,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name)
   if (strcmp(name, "f") == 0)
     return(sc->F);
   
-  len = safe_strlen(name);
+  len = strlen(name);
   if (len == 0)
     return(sc->NIL);
 
@@ -3956,7 +3958,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix)
       s7_Double rl = 0.0, im = 0.0;
       int len;
       char *saved_q;
-      len = safe_strlen(q);
+      len = strlen(q);
       
       if (q[len - 1] != 'i')
 	return(s7_make_symbol(sc, string_downcase(q)));
@@ -4210,7 +4212,7 @@ static s7_pointer g_exp(s7_scheme *sc, s7_pointer args)
   return(s7_from_c_complex(sc, cexp(s7_complex(sc->x))));
 }
 
-/* PERHAPS: if both int and res int -> int */
+
 static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
 {
   #define H_log "(log z1 :optional z2) returns log(z1) / log(z2) where z2 defaults to e"
@@ -4232,8 +4234,20 @@ static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
 	  (s7_is_real(sc->y)) &&
 	  (s7_is_positive(sc->x)) &&
 	  (s7_is_positive(sc->y)))
-	return(s7_make_real(sc, log(num_to_real(sc->x->object.number)) / log(num_to_real(sc->y->object.number))));
-      /* if < 0 use log(-x) + pi*i */
+	{
+	  if ((s7_is_integer(sc->x)) &&
+	      (s7_is_integer(sc->y)))
+	    {
+	      s7_Double res;
+	      s7_Int ires;
+	      res = log(num_to_real(sc->x->object.number)) / log(num_to_real(sc->y->object.number));
+	      ires = (s7_Int)res;
+	      if (res - ires == 0.0)
+		return(s7_make_integer(sc, ires));
+	      return(s7_make_real(sc, res));
+	    }
+	  return(s7_make_real(sc, log(num_to_real(sc->x->object.number)) / log(num_to_real(sc->y->object.number))));
+	}
       return(s7_from_c_complex(sc, clog(s7_complex(sc->x)) / clog(s7_complex(sc->y))));
     }
   else
@@ -5424,20 +5438,6 @@ s7_pointer s7_make_counted_string(s7_scheme *sc, const char *str, int len)
   s7_pointer x;
   
   x = new_cell(sc);
-  
-#if S7_DEBUGGING
-  if (is_immutable(x))
-    {
-      fprintf(stderr, "oops %s\n", str);
-      abort();
-    }
-  if (len != safe_strlen(str))
-    {
-      fprintf(stderr, "make_counted_string: %s len passed in %d is not true len %d\n", str, len, safe_strlen(str));
-      abort();
-    }
-#endif
-  
   set_type(x, T_STRING | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   if (str)
     string_value(x) = strdup(str);
@@ -6281,7 +6281,7 @@ static s7_pointer s7_make_input_file(s7_scheme *sc, const char *name, FILE *fp)
   is_file_port(x) = true;
   port_is_closed(x) = false;
   port_filename(x) = strdup(name);
-  port_line_number(x) = 0;
+  port_line_number(x) = 1;  /* 1st line is numbered 1 */
   port_needs_free(x) = false;
   
   return(x);
@@ -6338,7 +6338,7 @@ s7_pointer s7_open_output_file(s7_scheme *sc, const char *name, const char *mode
   is_file_port(x) = true;
   port_is_closed(x) = false;
   port_filename(x) = strdup(name);
-  port_line_number(x) = 0;
+  port_line_number(x) = 1;
   port_file(x) = fp;
   port_needs_free(x) = false;
   
@@ -6484,8 +6484,10 @@ static int inchar(s7_scheme *sc, s7_pointer pt)
 	return(EOF);
       c = port_string(pt)[port_string_point(pt)++];
     }
+
   if (c == '\n')
     port_line_number(pt)++;
+
   return(c);
 }
 
@@ -6562,6 +6564,7 @@ static char *read_string_upto(s7_scheme *sc)
 	  do
 	    {
 	      c = port_string(pt)[port_string_point(pt)++];
+
 	      sc->strbuf[i++] = c;
 	      if (i >= sc->strbuf_size)
 		resize_strbuf(sc);
@@ -6728,23 +6731,33 @@ static s7_pointer read_string_expression(s7_scheme *sc, s7_pointer pt)
 }
 
 
-static  void skipspace(s7_scheme *sc, s7_pointer pt) 
+static char skip_space(s7_scheme *sc, s7_pointer pt) 
 {
   int c;
-  while (isspace(c = inchar(sc, pt)))
-    ;
-  if (c != EOF) 
-    backchar(sc, c, pt);
+  if (is_file_port(pt))
+    {
+      while (isspace(c = fgetc(port_file(pt))))
+	if (c == '\n')
+	  port_line_number(pt)++;
+    }
+  else 
+    {
+      while (isspace(c = port_string(pt)[port_string_point(pt)++]))
+	if (c == '\n')
+	  port_line_number(pt)++;
+    }
+  return(c);
 }
 
 
 static int token(s7_scheme *sc, s7_pointer pt)
 {
   int c;
-  skipspace(sc, pt);
-  switch (c = inchar(sc, pt)) 
+  c = skip_space(sc, pt);
+  switch (c) 
     {
     case EOF:
+    case 0:
       return(TOK_EOF);
       
     case '(':
@@ -7184,7 +7197,7 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
   /* fprintf(stderr, "eval c string: %s with top: %d\n", str, sc->stack_top); */
   
   if (sc->longjmp_ok)
-    return(g_eval_string(sc, s7_cons(sc, s7_make_string(sc, str), sc->NIL)));
+    return(g_eval_string(sc, make_list_1(sc, s7_make_string(sc, str))));
   
   stack_reset(sc); 
   sc->envir = sc->global_env;
@@ -7213,7 +7226,7 @@ static s7_pointer call_with_input(s7_scheme *sc, s7_pointer port, s7_pointer arg
 {
   push_stack(sc, OP_EVAL_STRING_DONE, sc->args, sc->code);
   sc->code = cadr(args);
-  sc->args = s7_cons(sc, port, sc->NIL);
+  sc->args = make_list_1(sc, port);
   eval(sc, OP_APPLY);
   s7_close_input_port(sc, port);
   return(sc->value);
@@ -7497,13 +7510,8 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
   if (is_promise(obj)) 
     return(strdup("#<promise>"));
   
-  if (s7_is_function(obj)) 
-    {
-      char *p;
-      p = (char *)calloc(32 + safe_strlen(function_name(obj)), sizeof(char));
-      sprintf(p, "%s", function_name(obj));
-      return(p);
-    } 
+  if (s7_is_function(obj))
+    return(strdup(function_name(obj)));
   
   if (s7_is_continuation(obj)) 
     return(strdup("#<continuation>"));
@@ -7847,7 +7855,7 @@ static s7_pointer g_call_with_output_string(s7_scheme *sc, s7_pointer args)
   port = s7_open_output_string(sc);
   push_stack(sc, OP_EVAL_STRING_DONE, sc->args, sc->code);
   sc->code = car(args);
-  sc->args = s7_cons(sc, port, sc->NIL);
+  sc->args = make_list_1(sc, port);
   eval(sc, OP_APPLY);
   result = s7_make_string(sc, s7_get_output_string(sc, port));
   s7_close_output_port(sc, port);
@@ -7866,7 +7874,7 @@ static s7_pointer g_call_with_output_file(s7_scheme *sc, s7_pointer args)
   port = s7_open_output_file(sc, s7_string(car(args)), "w");
   push_stack(sc, OP_EVAL_STRING_DONE, sc->args, sc->code);
   sc->code = cadr(args);
-  sc->args = s7_cons(sc, port, sc->NIL);
+  sc->args = make_list_1(sc, port);
   eval(sc, OP_APPLY);
   s7_close_output_port(sc, port);
   return(sc->value);
@@ -8005,6 +8013,51 @@ s7_pointer s7_set_cdr(s7_pointer p, s7_pointer q)
   
   cdr(p) = q;
   return(p);
+}
+
+
+static s7_pointer make_list_1(s7_scheme *sc, s7_pointer a) 
+{
+  s7_pointer x;
+  x = new_cell(sc);
+  set_type(x, T_PAIR);
+  car(x) = a;
+  cdr(x) = sc->NIL;
+  return(x);
+}
+
+
+static s7_pointer make_list_2(s7_scheme *sc, s7_pointer a, s7_pointer b) 
+{
+  s7_pointer x, y;
+  y = new_cell(sc);
+  set_type(y, T_PAIR);
+  car(y) = b;
+  cdr(y) = sc->NIL;
+  x = new_cell(sc); /* order matters because the GC will see "y" and expect it to have legit car/cdr */
+  set_type(x, T_PAIR);
+  car(x) = a;
+  cdr(x) = y;
+  return(x);
+}
+
+
+static s7_pointer make_list_3(s7_scheme *sc, s7_pointer a, s7_pointer b, s7_pointer c) 
+{
+  s7_pointer x, y, z;
+  z = new_cell(sc);
+  set_type(z, T_PAIR);
+  car(z) = c;
+  cdr(z) = sc->NIL;
+  y = new_cell(sc);
+  set_type(y, T_PAIR);
+  car(y) = b;
+  cdr(y) = z;
+  x = new_cell(sc);
+  set_type(x, T_PAIR);
+  car(x) = a;
+  cdr(x) = y;
+  return(x);
 }
 
 
@@ -8736,12 +8789,7 @@ static s7_pointer g_is_provided(s7_scheme *sc, s7_pointer args)
   #define H_is_provided "(provided? sym) returns #t if sym is a member of the *features* list"
   if (!s7_is_symbol(car(args)))
     return(s7_wrong_type_arg_error(sc, "provided?", 1, car(args), "a symbol"));
-  return(make_boolean(sc, is_pair(g_member(sc, 
-					    s7_cons(sc, 
-						    car(args), 
-						    s7_cons(sc, 
-							    s7_name_to_value(sc, "*features*"), 
-							    sc->NIL))))));
+  return(make_boolean(sc, is_pair(g_member(sc, make_list_2(sc, car(args), s7_name_to_value(sc, "*features*"))))));
 }
 
 
@@ -9157,11 +9205,9 @@ s7_pointer s7_procedure_source(s7_scheme *sc, s7_pointer p)
     {
       return(s7_cons(sc, 
 		     s7_append(sc, 
-			       s7_cons(sc, 
-				       (is_closure_star(p)) ? sc->LAMBDA_STAR : sc->LAMBDA, 
-				       s7_cons(sc,
-					       car(car(p)),
-					       sc->NIL)),
+			       make_list_2(sc, 
+					   (is_closure_star(p)) ? sc->LAMBDA_STAR : sc->LAMBDA, 
+					   car(car(p))),
 			       cdr(car(p))),
 		     cdr(p)));
     }
@@ -9185,11 +9231,9 @@ static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
 
   if (is_closure(p) || is_closure_star(p) || is_macro(p) || is_promise(p)) 
     return(s7_append(sc, 
-		     s7_cons(sc, 
-			     (is_closure_star(p)) ? sc->LAMBDA_STAR : sc->LAMBDA, 
-			     s7_cons(sc,
-				     car(car(p)),
-				     sc->NIL)),
+		     make_list_2(sc, 
+				 (is_closure_star(p)) ? sc->LAMBDA_STAR : sc->LAMBDA, 
+				 car(car(p))),
 		     cdr(car(p))));
 
   if (s7_is_procedure_with_setter(p))
@@ -9249,13 +9293,10 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
     x = s7_symbol_value(sc, x);
   
   if (s7_is_function(x))
-    return(s7_cons(sc, 
-		   s7_make_integer(sc, x->object.ffptr->required_args), 
-		   s7_cons(sc, 
-			   s7_make_integer(sc, x->object.ffptr->optional_args),
-			   s7_cons(sc, 
-				   (x->object.ffptr->rest_arg) ? sc->T : sc->F, 
-				   sc->NIL))));
+    return(make_list_3(sc, 
+		       s7_make_integer(sc, x->object.ffptr->required_args), 
+		       s7_make_integer(sc, x->object.ffptr->optional_args),
+		       (x->object.ffptr->rest_arg) ? sc->T : sc->F));
   
   if ((is_closure(x)) ||
       (is_closure_star(x)) ||
@@ -9268,40 +9309,23 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
       else 
 	{
 	  if (s7_is_symbol(caar(x)))
-	    return(s7_cons(sc, 
-			   s7_make_integer(sc, 0),
-			   s7_cons(sc, 
-				   s7_make_integer(sc, 0),
-				   s7_cons(sc, sc->T, sc->NIL))));
+	    return(make_list_3(sc, s7_make_integer(sc, 0), s7_make_integer(sc, 0), sc->T));
 	  len = s7_list_length(sc, caar(x));
 	}
       
       if (len >= 0)
-	return(s7_cons(sc, 
-		       s7_make_integer(sc, len),
-		       s7_cons(sc, 
-			       s7_make_integer(sc, 0),
-			       s7_cons(sc, sc->F, sc->NIL))));
-      return(s7_cons(sc, 
-		     s7_make_integer(sc, abs(len)),
-		     s7_cons(sc, 
-			     s7_make_integer(sc, 0),
-			     s7_cons(sc, sc->T, sc->NIL))));
+	return(make_list_3(sc, s7_make_integer(sc, len), s7_make_integer(sc, 0), sc->F));
+      return(make_list_3(sc, s7_make_integer(sc, abs(len)), s7_make_integer(sc, 0), sc->T));
     }
   
   if (s7_is_procedure_with_setter(x))
-    return(s7_cons(sc, 
-		   s7_make_integer(sc, pws_get_req_args(x)),
-		   s7_cons(sc, 
-			   s7_make_integer(sc, pws_get_opt_args(x)),
-			   s7_cons(sc, sc->F, sc->NIL))));
+    return(make_list_3(sc, 
+		       s7_make_integer(sc, pws_get_req_args(x)),
+		       s7_make_integer(sc, pws_get_opt_args(x)),
+		       sc->F));
   
   if (s7_is_applicable_object(x))
-    return(s7_cons(sc, 
-		   s7_make_integer(sc, 0),
-		   s7_cons(sc, 
-			   s7_make_integer(sc, 0), 
-			   s7_cons(sc, sc->T, sc->NIL))));
+    return(make_list_3(sc, s7_make_integer(sc, 0), s7_make_integer(sc, 0), sc->T));
   return(sc->NIL);
 }
 
@@ -9668,11 +9692,10 @@ static int pws_get_opt_args(s7_pointer x)
 static s7_pointer g_procedure_with_setter_setter_arity(s7_scheme *sc, s7_pointer args)
 {
   pws *f = (pws *)s7_object_value(car(args));
-  return(s7_cons(sc, 
-		 s7_make_integer(sc, f->set_req_args),
-		 s7_cons(sc, 
-			 s7_make_integer(sc, f->set_opt_args),
-			 s7_cons(sc, sc->F, sc->NIL))));
+  return(make_list_3(sc,
+		     s7_make_integer(sc, f->set_req_args),
+		     s7_make_integer(sc, f->set_opt_args),
+		     sc->F));
 }
 
 
@@ -9682,11 +9705,9 @@ static s7_pointer pws_source(s7_scheme *sc, s7_pointer x)
   if ((is_closure(f->scheme_getter)) ||
       (is_closure_star(f->scheme_getter)))
     return(s7_append(sc, 
-		     s7_cons(sc, 
-			     (is_closure(f->scheme_getter)) ? sc->LAMBDA : sc->LAMBDA_STAR,
-			     s7_cons(sc,
-				     car(car(f->scheme_getter)),
-				     sc->NIL)),
+		     make_list_2(sc,
+				 (is_closure(f->scheme_getter)) ? sc->LAMBDA : sc->LAMBDA_STAR,
+				 car(car(f->scheme_getter))),
 		     cdr(car(f->scheme_getter))));
   return(sc->NIL);
 }
@@ -10481,7 +10502,7 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
   
   if (catcher != sc->F)
     {
-      sc->args = s7_cons(sc, type, sc->x = s7_cons(sc, info, sc->NIL));
+      sc->args = make_list_2(sc, type, info);
       sc->code = catch_handler(catcher);
       sc->stack_top = catch_goto_loc(catcher);
       /* eval(sc, OP_APPLY); */
@@ -10643,7 +10664,7 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
     {
       sc->args = apply_list_star(sc, cdr(args));
       
-      if (g_is_list(sc, s7_cons(sc, sc->args, sc->NIL)) == sc->F)
+      if (g_is_list(sc, make_list_1(sc, sc->args)) == sc->F)
 	return(s7_error(sc, sc->WRONG_TYPE_ARG, s7_make_string(sc, "apply's last argument should be a list")));
     }
   push_stack(sc, OP_APPLY, sc->args, sc->code);
@@ -10776,7 +10797,7 @@ static s7_pointer g_map(s7_scheme *sc, s7_pointer args)
   sc->x = safe_reverse_in_place(sc, sc->x);
   
   /* set up for repeated call walking down the lists of args, values list is cdr, current args is car */
-  push_stack(sc, OP_MAP, s7_cons(sc, sc->x, sc->NIL), sc->code);
+  push_stack(sc, OP_MAP, make_list_1(sc, sc->x), sc->code);
   push_stack(sc, OP_APPLY, sc->args, sc->code);
   return(sc->NIL);
 }
@@ -10793,7 +10814,7 @@ static s7_pointer g_values(s7_scheme *sc, s7_pointer args)
   if (s7_list_length(sc, args) == 1)
     return(car(args));
   
-  return(s7_append(sc, s7_cons(sc, sc->VALUES, sc->NIL), args));
+  return(s7_append(sc, make_list_1(sc, sc->VALUES), args));
 }
 
 
@@ -10809,7 +10830,7 @@ static s7_pointer g_call_with_values(s7_scheme *sc, s7_pointer args)
       (s7_is_eq(car(result), sc->VALUES)))
     return(s7_call(sc, cadr(args), cdr(result)));
   
-  return(s7_call(sc, cadr(args), s7_cons(sc, result, sc->NIL)));
+  return(s7_call(sc, cadr(args), make_list_1(sc, result)));
 }
 
 
@@ -11188,7 +11209,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{    
 	  /* macro expansion */
 	  push_stack(sc, OP_DOMACRO, sc->NIL, sc->NIL);
-	  sc->args = s7_cons(sc, sc->code, sc->NIL);
+	  sc->args = make_list_1(sc, sc->code);
 	  sc->code = sc->value;
 	  set_pair_line_number(sc->code, sc->saved_line_number);
 	  goto APPLY;
@@ -11197,7 +11218,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  sc->code = cdr(sc->code);
 
-	  /* here sc->args is nil, sc->value is the operator (car of list), sc->code is the rest -- the args.
+	  /* here [after the cdr] sc->args is nil, sc->value is the operator (car of list), sc->code is the rest -- the args.
 	   *   EVAL_ARGS0 can be called within the EVAL_ARGS1 loop if it's a nested expression:
 	   * (+ 1 2 (* 2 3)):
 	   *   e0args: (), value: +, code: (1 2 (* 2 3))
@@ -11211,19 +11232,11 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   *   <end -> apply the * op>
 	   *   e1args: (6 2 1 +), value: +, code: ()
 	   */
-
-	  /* if sc->value is a function, and all members of sc->code are constants,
-	   *   can't we go straight to apply?
-	   * even if we need to eval args, can we put the values directly in the
-	   *   function arg env?  (does each evaluation make a new frame here?)
-	   */
 	}
       
       
+    EVAL_ARGS:
     case OP_EVAL_ARGS1:
-      /*
-      sc->args = s7_cons(sc, sc->value, sc->args);
-      */
       sc->args = cons_untyped(sc, sc->value, sc->args);
       set_type(sc->args, T_PAIR);
 
@@ -11231,18 +11244,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       if (is_pair(sc->code))  /* evaluate current arg */
 	{ 
-	  /* if it's not a symbol or pair, op_eval simply returns it, so we
-	   *   can forego the push/pop by checking that, car(code)->value, cdr code, goto eval_args1,
-	   *   which did save a bit of time in s7test.scm, but that's the best possible case, and
-	   *   normal code would probably just be slowed down by the extra type checks.
-	   * If all the args are not symbol/pair, we could simply use the current args (in eval_args0), but
-	   *   is that worth the check? [this is not as simple as it looks -- there are also problems
-	   *   with circular lists, etc]
-	   */
-	  push_stack(sc, OP_EVAL_ARGS1, sc->args, cdr(sc->code));
-	  sc->code = car(sc->code);
-	  sc->args = sc->NIL;
-	  goto EVAL;
+	  int typ;
+	  typ = type(car(sc->code));
+	  if ((typ == T_PAIR) ||
+	      (typ == T_SYMBOL))
+	    {
+	      push_stack(sc, OP_EVAL_ARGS1, sc->args, cdr(sc->code));
+	      sc->code = car(sc->code);
+	      sc->args = sc->NIL;
+	      goto EVAL;
+	    }
+	  sc->value = car(sc->code);
+	  sc->code = cdr(sc->code);
+	  goto EVAL_ARGS;
 	}
       else                       /* got all args -- go to apply */
 	{
@@ -11273,6 +11287,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      return(eval_error(sc, "too many arguments", sc->x = s7_cons(sc, sc->code, sc->args)));
 	    
 	    sc ->x = function_call(sc->code)(sc, sc->args);
+
 	    ASSERT_IS_OBJECT(sc->x, "function returned value");
 	    pop_stack(sc, sc->x);
 	    goto START;
@@ -11288,7 +11303,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  for (sc->x = car(closure_source(sc->code)), sc->y = sc->args; is_pair(sc->x); sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
 	    {
 	      if (sc->y == sc->NIL)
-		return(eval_error(sc, "not enough arguments", g_procedure_source(sc, s7_cons(sc, sc->code, sc->NIL))));
+		return(eval_error(sc, "not enough arguments", g_procedure_source(sc, make_list_1(sc, sc->code))));
 	      
 	      ASSERT_IS_OBJECT(sc->x, "parameter to closure");
 	      ASSERT_IS_OBJECT(sc->y, "arg to closure");
@@ -11815,8 +11830,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      if (!is_pair(cdr(sc->code))) 
 		return(eval_error(sc, "syntax error in cond", cdr(sc->code)));
 
-	      sc->x = s7_cons(sc, sc->QUOTE, s7_cons(sc, sc->value, sc->NIL));
-	      sc->code = s7_cons(sc, cadr(sc->code), s7_cons(sc, sc->x, sc->NIL));
+	      sc->x = make_list_2(sc, sc->QUOTE, sc->value); 
+	      sc->code = make_list_2(sc, cadr(sc->code), sc->x);
 	      goto EVAL;
 	    }
 	  
@@ -12020,21 +12035,15 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->code = s7_cons(sc,
 			 sc->LAMBDA,
 			 s7_cons(sc, 
-				 s7_cons(sc, sc->y, sc->NIL),
-				 s7_cons(sc, 
-					 s7_cons(sc, 
-						 sc->APPLY,
-						 s7_cons(sc, 
-							 s7_cons(sc, 
-								 sc->LAMBDA, 
-								 cdr(sc->code)), /* sc->value is a temp */
-							 s7_cons(sc, 
-								 s7_cons(sc,
-									 sc->CDR,
-									 s7_cons(sc, sc->y, sc->NIL)),
-								 sc->NIL))),
-					 sc->NIL)));
-      
+				 make_list_1(sc, sc->y),
+				 make_list_1(sc, 
+					     s7_cons(sc, 
+						     sc->APPLY,
+						     s7_cons(sc, 
+							     s7_cons(sc, 
+								     sc->LAMBDA, 
+								     cdr(sc->code)), /* sc->value is a temp */
+							     make_list_1(sc, make_list_2(sc, sc->CDR, sc->y)))))));
       /* so, (defmacro hi (a b) `(+ ,a ,b)) becomes:
        *   sc->x: hi
        *   sc->code: (lambda (defmac-51) (apply (lambda (a b) (quasiquote (+ (unquote a) (unquote b)))) (cdr defmac-51)))
@@ -12051,23 +12060,17 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->code = s7_cons(sc,
 			 sc->LAMBDA,
 			 s7_cons(sc, 
-				 s7_cons(sc, sc->y, sc->NIL),
-				 s7_cons(sc, 
-					 s7_cons(sc, 
-						 sc->APPLY,
-						 s7_cons(sc, 
-							 s7_cons(sc, 
-								 sc->LAMBDA,
-								 s7_cons(sc, 
-									 cdar(sc->code),  /* cdadr value */
-									 cdr(sc->code))), /* cddr value */
-							 s7_cons(sc, 
-								 s7_cons(sc,
-									 sc->CDR,
-									 s7_cons(sc, sc->y, sc->NIL)),
-								 sc->NIL))),
-					 sc->NIL)));
-      
+				 make_list_1(sc, sc->y),
+				 make_list_1(sc, 
+					     s7_cons(sc, 
+						     sc->APPLY,
+						     s7_cons(sc, 
+							     s7_cons(sc, 
+								     sc->LAMBDA,
+								     s7_cons(sc, 
+									     cdar(sc->code),  /* cdadr value */
+									     cdr(sc->code))), /* cddr value */
+							     make_list_1(sc, make_list_2(sc, sc->CDR, sc->y)))))));
       /* (define-macro (hi a b) `(+ ,a ,b)) becomes:
        *   sc->x: hi
        *   sc->code: (lambda (defmac-51) (apply (lambda (a b) (quasiquote (+ (unquote a) (unquote b)))) (cdr defmac-51)))
@@ -12309,33 +12312,30 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_READ_QUOTE:
-      pop_stack(sc, s7_cons(sc, sc->QUOTE, s7_cons(sc, sc->value, sc->NIL)));
+      pop_stack(sc, make_list_2(sc, sc->QUOTE, sc->value));
       goto START;      
       
       
     case OP_READ_QUASIQUOTE:
-      pop_stack(sc, s7_cons(sc, sc->QUASIQUOTE, s7_cons(sc, sc->value, sc->NIL)));
+      pop_stack(sc, make_list_2(sc, sc->QUASIQUOTE, sc->value));
       goto START;
       
       
     case OP_READ_QUASIQUOTE_VECTOR:
-      pop_stack(sc, s7_cons(sc, sc->APPLY,
-			    s7_cons(sc, sc->VECTOR,
-				    s7_cons(sc, 
-					    s7_cons(sc, 
-						    sc->QUASIQUOTE, 
-						    s7_cons(sc, sc->value, sc->NIL)),
-					    sc->NIL))));
+      pop_stack(sc, make_list_3(sc,
+				sc->APPLY,
+				sc->VECTOR,
+				make_list_2(sc, sc->QUASIQUOTE, sc->value)));
       goto START;
       
       
     case OP_READ_UNQUOTE:
-      pop_stack(sc, s7_cons(sc, sc->UNQUOTE, s7_cons(sc, sc->value, sc->NIL)));
+      pop_stack(sc, make_list_2(sc, sc->UNQUOTE, sc->value));
       goto START;
       
       
     case OP_READ_UNQUOTE_SPLICING:
-      pop_stack(sc, s7_cons(sc, sc->UNQUOTE_SPLICING, s7_cons(sc, sc->value, sc->NIL)));
+      pop_stack(sc, make_list_2(sc, sc->UNQUOTE_SPLICING, sc->value));
       goto START;
       
       
@@ -12370,15 +12370,13 @@ static s7_pointer g_mcons(s7_scheme *sc, s7_pointer f, s7_pointer l, s7_pointer 
 	  (s7_is_string(f)) ||
 	  (s7_is_procedure(f)))
 	return(f);
-      
-      return(s7_cons(sc, sc->QUOTE, s7_cons(sc, f, sc->NIL)));
+      return(make_list_2(sc, sc->QUOTE, f));
     }
   else
     {
       if (l == sc->VECTOR_FUNCTION)
-	return(g_vector(sc, s7_cons(sc, r, sc->NIL))); /* eval? */
-      
-      return(s7_cons(sc, sc->CONS, s7_cons(sc, l, s7_cons(sc, r, sc->NIL))));
+	return(g_vector(sc, make_list_1(sc, r))); /* eval? */
+      return(make_list_3(sc, sc->CONS, l, r));
     }
 }
 
@@ -12394,8 +12392,7 @@ static s7_pointer g_mappend(s7_scheme *sc, s7_pointer f, s7_pointer l, s7_pointe
        (car(r) == sc->QUOTE) &&
        (car(cdr(r)) == sc->NIL)))
     return(l);
-  
-  return(s7_cons(sc, sc->APPEND, s7_cons(sc, l, s7_cons(sc, r, sc->NIL))));
+  return(make_list_3(sc, sc->APPEND, l, r));
 }
 
 
@@ -12409,15 +12406,14 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, int level, s7_pointer form)
 	  (s7_is_string(form)) ||
 	  (s7_is_procedure(form)))
 	return(form);
-      
-      return(s7_cons(sc, sc->QUOTE, s7_cons(sc, form, sc->NIL)));
+      return(make_list_2(sc, sc->QUOTE, form));
     }
   else
     {
       if (car(form) == sc->QUASIQUOTE)
 	return(g_mcons(sc, 
 		       form, 
-		       s7_cons(sc, sc->QUOTE, s7_cons(sc, sc->QUASIQUOTE, sc->NIL)),
+		       make_list_2(sc, sc->QUOTE, sc->QUASIQUOTE),
 		       g_quasiquote_1(sc, level + 1, cdr(form))));
       else
 	{
@@ -12447,13 +12443,13 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, int level, s7_pointer form)
 	      if (car(form) == sc->UNQUOTE)
 		return(g_mcons(sc, 
 			       form,
-			       s7_cons(sc, sc->QUOTE, s7_cons(sc, sc->UNQUOTE, sc->NIL)),
+			       make_list_2(sc, sc->QUOTE, sc->UNQUOTE),
 			       g_quasiquote_1(sc, level - 1, cdr(form))));
 	      
 	      if (car(form) == sc->UNQUOTE_SPLICING)
 		return(g_mcons(sc, 
 			       form,
-			       s7_cons(sc, sc->QUOTE, s7_cons(sc, sc->UNQUOTE_SPLICING, sc->NIL)),
+			       make_list_2(sc, sc->QUOTE, sc->UNQUOTE_SPLICING),
 			       g_quasiquote_1(sc, level - 1, cdr(form))));
 	      
 	      return(g_mcons(sc,
@@ -13188,7 +13184,7 @@ static s7_pointer set_key(s7_scheme *sc, s7_pointer obj, s7_pointer args)
    */
   {
     s7_pointer curval;
-    curval = g_assq(sc, s7_cons(sc, obj, s7_cons(sc, sc->key_values, sc->NIL)));
+    curval = g_assq(sc, make_list_2( obj, sc->key_values));
     if (curval == sc->F)
       sc->key_values = s7_cons(sc, s7_cons(sc, obj, car(args)), sc->key_values);
     else cdr(curval) = car(args);
@@ -13833,7 +13829,7 @@ s7_scheme *s7_init(void)
   s7_define_variable(sc, "*load-path*", sc->NIL);
   s7_define_variable(sc, "*vector-print-length*", vector_element(sc->small_ints, 8));
   
-  g_provide(sc, s7_cons(sc, s7_make_symbol(sc, "s7"), sc->NIL));
+  g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "s7")));
 
 
 #if HAVE_PTHREADS
@@ -13853,7 +13849,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "make-thread-variable",    g_make_thread_variable,    0, 0, false, H_make_thread_variable);
   s7_define_function(sc, "thread-variable?",        g_is_thread_variable,      1, 0, false, H_is_thread_variable);
 
-  g_provide(sc, s7_cons(sc, s7_make_symbol(sc, "threads"), sc->NIL));
+  g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "threads")));
 #endif
 
 #if S7_DEBUGGING

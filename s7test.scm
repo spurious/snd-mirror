@@ -34,6 +34,7 @@
 (define with-gensym #t)                                        ; gensym with optional string arg (prefix)
 (define with-format #t)                                        ; simple format tests
 (define with-define* #t)                                       ; this tests s7's version of define*
+(define with-procedure-arity #t)                               ; procedure-arity and other s7-specific stuff
 
 
 ;; we're assuming call/cc is defined
@@ -334,9 +335,6 @@
        (begin
 	 (display "(procedure? ") (display arg) (display ") returned #t?") (newline))))
  (list "hi" (integer->char 65) 1 (list 1 2) '#t '3 (make-vector 3) 3.14 3/4 1.0+1.0i #\f))
-
-
-
 
 
 
@@ -31930,6 +31928,27 @@
 	(num-test (+ (hi 1.0 2.0) (hi) (hi 1.0)) 4.0))
 
       (test (let ((hi (lambda* (a 0.0) (b 0.0) (+ a b)))) (hi)) 'error)
+      ))
+
+(if with-procedure-arity
+    (begin
+
+      (test (procedure-arity car) '(1 0 #f))
+      (test (procedure-arity 'car) '(1 0 #f))
+      (test (procedure-arity +) '(0 0 #t))
+      (test (procedure-arity '+) '(0 0 #t))
+      (test (procedure-arity log) '(1 1 #f))
+      (test (procedure-arity '/) '(1 0 #t))
+      (test (procedure-arity vector-set!) '(3 0 #f))
+      (test (let ((hi (lambda () 1))) (procedure-arity hi)) '(0 0 #f))
+      (test (let ((hi (lambda (a) 1))) (procedure-arity hi)) '(1 0 #f))
+      (test (let ((hi (lambda (a b) 1))) (procedure-arity hi)) '(2 0 #f))
+      (test (let ((hi (lambda (a . b) 1))) (procedure-arity hi)) '(1 0 #t))
+      (test (let ((hi (lambda a 1))) (procedure-arity hi)) '(0 0 #t))
+
+      ;; TODO: tests for read/write-byte procedure-source 
+      ;; TODO if 'snd tests for procedure-arity of objects/pws
+
       ))
 
 (display ";all done!") (newline)

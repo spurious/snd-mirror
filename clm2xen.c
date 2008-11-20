@@ -9326,5 +9326,7 @@ void Init_sndlib(void)
   mus_sndlib_xen_initialize();
   mus_vct_init();
   mus_xen_init();
+#if (!HAVE_GUILE) || (!USE_SND)
   mus_init_run();
+#endif
 }

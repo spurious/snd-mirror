@@ -2548,7 +2548,7 @@ static xen_value *add_value_to_ptree(ptree *prog, XEN val, int type)
     case R_MIX_READER: v = make_xen_value(R_MIX_READER, add_mix_reader_to_ptree(prog, (struct mix_fd *)xen_to_mix_sample_reader(val)), R_VARIABLE); break;
 #endif
     case R_CHAR:       v = make_xen_value(R_CHAR, add_int_to_ptree(prog, (Int)(XEN_TO_C_CHAR(val))), R_VARIABLE);                      break;
-    case R_STRING:     v = make_xen_value(R_STRING, add_string_to_ptree(prog, mus_strdup(XEN_TO_C_STRING(val))), R_VARIABLE);         break;
+    case R_STRING:     v = make_xen_value(R_STRING, add_string_to_ptree(prog, mus_strdup(XEN_TO_C_STRING(val))), R_VARIABLE);          break; /* TODO: memleak here */
     case R_SYMBOL:     v = make_xen_value(R_SYMBOL, add_xen_to_ptree(prog, val), R_VARIABLE);                                          break;
     case R_KEYWORD:    v = make_xen_value(R_KEYWORD, add_xen_to_ptree(prog, val), R_VARIABLE);                                         break;
     case R_CLM:        v = make_xen_value(R_CLM, add_clm_to_ptree(prog, XEN_TO_MUS_ANY(val), val), R_VARIABLE);                        break;
@@ -3395,7 +3395,8 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool sepa
   if (num_passed_args < num_template_args)
     {
       declarations = XEN_CADDR(form);                     /* either declare or snd-declare */
-      if (XEN_STRING_P(declarations))                     /* possible doc string */
+      if ((XEN_STRING_P(declarations)) &&                 /* possible doc string */
+	  (XEN_NOT_NULL_P(XEN_CDDDR(form))))
 	declarations = XEN_CADDDR(form);
 
       if ((XEN_LIST_P(declarations)) && 
@@ -13989,7 +13990,7 @@ static XEN g_run_eval(XEN code, XEN arg, XEN arg1, XEN arg2)
   pt->result = walk(pt, code, NEED_ANY_RESULT);
 #endif
 
-  /* fprintf(stderr, "run-eval: %s: %s\n", XEN_AS_STRING(code), XEN_AS_STRING(arg)); */
+  /* fprintf(stderr, "run-eval: %s: %s -> %s\n", XEN_AS_STRING(code), XEN_AS_STRING(arg), (pt->result) ? describe_xen_value(pt->result, pt) : "no result"); */
 
   if (pt->result)
     {
