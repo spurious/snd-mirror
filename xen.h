@@ -1658,7 +1658,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
 #else
   #define C_TO_XEN_STRING(Arg)                     xen_s7_c_to_xen_string(Arg)
 #endif
-#define C_TO_XEN_STRINGN(Str, Len)                 s7_make_counted_string(s7, Str, Len)
+#define C_TO_XEN_STRINGN(Str, Len)                 s7_make_string_with_length(s7, Str, Len)
 
 #define XEN_ZERO                                   s7_make_integer(s7, 0)
 #define XEN_INTEGER_P(Arg)                         s7_is_integer(Arg)

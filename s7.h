@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.4"
-#define S7_DATE "14-Nov-08"
+#define S7_VERSION "1.5"
+#define S7_DATE "24-Nov-08"
 
 #include <stdio.h>
 #ifndef __cplusplus
@@ -192,7 +192,7 @@ s7_pointer s7_remv(s7_scheme *sc, s7_pointer a, s7_pointer obj);             /* 
 bool s7_is_string(s7_pointer p);                                             /* (string? p) */
 const char *s7_string(s7_pointer p);                                         /* scheme string -> C string (do not free the string) */
 s7_pointer s7_make_string(s7_scheme *sc, const char *str);                   /* C string -> scheme string (str is copied) */
-s7_pointer s7_make_counted_string(s7_scheme *sc, const char *str, int len);  /* same as s7_make_string, but provides strlen */
+s7_pointer s7_make_string_with_length(s7_scheme *sc, const char *str, int len);  /* same as s7_make_string, but provides strlen */
 
 
 bool s7_is_character(s7_pointer p);                                          /* (character? p) */
@@ -1032,6 +1032,8 @@ int main(int argc, char **argv)
  * 
  *        s7 changes
  *
+ * 24-Nov:    changed s7_make_counted_string to s7_make_string_with_length.
+ *              also added built-in format and define*
  * 10-Nov:    added s7_define_constant,
  *              built-in (scheme-side) pi, most-positive-fixnum, most-negative-fixnum
  * 7-Nov:     removed s7_is_immutable and friends, s7_reverse_in_place.

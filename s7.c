@@ -677,7 +677,7 @@ static char *describe_type(s7_pointer p)
     return(strdup("null pointer"));
 
   buf = (char *)calloc(1024, sizeof(char));
-  sprintf(buf, "%s%s%s%s%s%s%s%s%s%s%s",
+  snprintf(buf, 1024, "%s%s%s%s%s%s%s%s%s%s%s",
 	  ((type(p) >= 0) && (type(p) <= T_LAST_TYPE)) ? type_names[type(p)] : "bogus type",
 	  (typeflag(p) & T_SYNTAX) ? " syntax" : "",
 	  (typeflag(p) & T_IMMUTABLE) ? " immutable" : "",
@@ -3445,7 +3445,7 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
 
 #define CTABLE_SIZE 128
 static bool *whitespace_table, *atom_delimiter_table, *sharp_const_table, *exponent_table, *slashify_table, *string_delimiter_table;
-
+static int *digits;
 
 static bool is_one_of(bool *ctable, int c) 
 {
@@ -3455,6 +3455,8 @@ static bool is_one_of(bool *ctable, int c)
 
 static void init_ctables(void)
 {
+  int i;
+
   whitespace_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
   atom_delimiter_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
   sharp_const_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
@@ -3492,25 +3494,49 @@ static void init_ctables(void)
   exponent_table['d'] = true;
   exponent_table['l'] = true;
 
-  {
-    int i;
-    for (i = 0; i < ' '; i++)
-      slashify_table[i] = true;
-    slashify_table['\n'] = false;
-    slashify_table['\\'] = true;
-    slashify_table['"'] = true;
+  for (i = 0; i < ' '; i++)
+    slashify_table[i] = true;
+  slashify_table['\n'] = false;
+  slashify_table['\\'] = true;
+  slashify_table['"'] = true;
 
-    for (i = 1; i < 128; i++)
-      string_delimiter_table[i] = true;
-    string_delimiter_table[0] = false;
-    string_delimiter_table['('] = false;
-    string_delimiter_table[')'] = false;
-    string_delimiter_table[';'] = false;
-    string_delimiter_table['\t'] = false;
-    string_delimiter_table['\n'] = false;
-    string_delimiter_table['\r'] = false;
-    string_delimiter_table[' '] = false;
-  }
+  for (i = 1; i < CTABLE_SIZE; i++)
+    string_delimiter_table[i] = true;
+  string_delimiter_table[0] = false;
+  string_delimiter_table['('] = false;
+  string_delimiter_table[')'] = false;
+  string_delimiter_table[';'] = false;
+  string_delimiter_table['\t'] = false;
+  string_delimiter_table['\n'] = false;
+  string_delimiter_table['\r'] = false;
+  string_delimiter_table[' '] = false;
+
+  digits = (int *)malloc(CTABLE_SIZE * sizeof(int));
+  for (i = 0; i < CTABLE_SIZE; i++)
+    digits[i] = 256;
+
+  digits['0'] = 1;
+  digits['1'] = 1;
+  digits['2'] = 2;
+  digits['3'] = 3;
+  digits['4'] = 4;
+  digits['5'] = 5;  
+  digits['6'] = 6;
+  digits['7'] = 7;
+  digits['8'] = 8;
+  digits['9'] = 9;
+  digits['a'] = 10;
+  digits['A'] = 10;
+  digits['b'] = 11;
+  digits['B'] = 11;
+  digits['c'] = 12;
+  digits['C'] = 12;
+  digits['d'] = 13;
+  digits['D'] = 13;
+  digits['e'] = 14;
+  digits['E'] = 14;
+  digits['f'] = 15;
+  digits['F'] = 15;
 }
 
 
@@ -3528,30 +3554,6 @@ static int char_to_num(const char c)
   if (isdigit(c))
     return(c - '0');
   return((tolower(c) - 'a') + 10);
-}
-
-
-static bool is_digit_in_base(const char c, int radix)
-{
-  switch (c)
-    {
-    case '0': case '1': return(true);
-    case '2': return(radix > 2);
-    case '3': return(radix > 3);
-    case '4': return(radix > 4);
-    case '5': return(radix > 5);
-    case '6': return(radix > 6);
-    case '7': return(radix > 7);
-    case '8': return(radix > 8);
-    case '9': return(radix > 9);
-    case 'a': case 'A': return(radix > 10);
-    case 'b': case 'B': return(radix > 11);
-    case 'c': case 'C': return(radix > 12);
-    case 'd': case 'D': return(radix > 13);
-    case 'e': case 'E': return(radix > 14);
-    case 'f': case 'F': return(radix > 15);
-    }
-  return(false);
 }
 
 
@@ -3611,7 +3613,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name)
 		return(sc->NIL);
 	      return(s7_make_real(sc, (s7_Double)s7_integer(i_arg)));
 	    }
-	  else return(sc->NIL);
+	  return(sc->NIL);
 	}
       x = make_atom(sc, (char *)(name + 1), 10);
       if (s7_is_rational(x))
@@ -3623,7 +3625,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name)
 	{
 	  if (is_radix_prefix(name[2]))
 	    return(make_sharp_constant(sc, (char *)(name + 2)));
-	  else return(sc->NIL);
+	  return(sc->NIL);
 	}
       x = make_atom(sc, (char *)(name + 1), 10);
       if ((s7_is_number(x)) &&
@@ -3640,46 +3642,40 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name)
       { 
 	int c = 0;
 	if (STRCMP(name + 1, "space") == 0) 
-	  {
-	    c =' ';
-	  } 
-	else if (STRCMP(name + 1, "newline") == 0)
-	  {
-	    c ='\n';
-	  } 
-	else if (STRCMP(name + 1, "return") == 0) 
-	  {
-	    c ='\r';
-	  } 
-	else if (STRCMP(name + 1, "tab") == 0) 
-	  {
-	    c ='\t';
-	  } 
-	else if (STRCMP(name + 1, "null") == 0) 
-	  {
-	    c ='\0';
-	  } 
-	else if ((name[1] == 'x') && (name[2] != 0)) /* hunh?? -- #\x12?? */
-	  {
-	    int c1= 0;
-	    if ((sscanf(name + 2, "%x", &c1) == 1) && 
-		(c1 < 256))
-	      {
-		c = c1;
-	      } 
-	    else 
-	      {
-		return(sc->NIL);
-	      }
-	  } 
-	else if (name[2] == 0) 
-	  {
-	    c = name[1];
-	  } 
+	  c =' ';
 	else 
 	  {
-	    return(sc->NIL);
-	  }
+	    if (STRCMP(name + 1, "newline") == 0)
+	      c ='\n';
+	    else 
+	      {
+		if (STRCMP(name + 1, "return") == 0) 
+		  c ='\r';
+		else 
+		  {
+		    if (STRCMP(name + 1, "tab") == 0) 
+		      c ='\t';
+		    else 
+		      {
+			if (STRCMP(name + 1, "null") == 0) 
+			  c ='\0';
+			else 
+			  {
+			    if ((name[1] == 'x') && 
+				(name[2] != 0))          /* hunh?? -- #\x12?? */
+			      {
+				int c1= 0;
+				if ((sscanf(name + 2, "%x", &c1) == 1) && 
+				    (c1 < 256))
+				  c = c1;
+				else return(sc->NIL);
+			      }
+			    else 
+			      {
+				if (name[2] == 0) 
+				  c = name[1];
+				else return(sc->NIL);
+			      }}}}}}
 	return(s7_make_character(sc, c));
       }
     }
@@ -3778,10 +3774,7 @@ static s7_Double string_to_double_with_radix(char *str, int radix)
 
 static s7_pointer make_atom(s7_scheme *sc, char *q, int radix) 
 {
-  /*
-  #define ISDIGIT(Chr, Rad) (((Rad >= 10) && (isdigit(Chr))) || (is_digit_in_base(Chr, Rad)))
-  */
-  #define ISDIGIT(Chr, Rad) is_digit_in_base(Chr, Rad)
+  #define ISDIGIT(Chr, Rad) (digits[(int)Chr] < Rad)
 
   char c, *p, *slash1 = NULL, *slash2 = NULL, *plus = NULL, *ex1 = NULL, *ex2 = NULL;
   bool has_dec_point1 = false, has_i = false, has_dec_point2 = false; 
@@ -4238,14 +4231,12 @@ static s7_pointer g_log(s7_scheme *sc, s7_pointer args)
 	}
       return(s7_from_c_complex(sc, clog(s7_complex(sc->x)) / clog(s7_complex(sc->y))));
     }
-  else
-    {
-      if ((s7_is_real(sc->x)) &&
-	  (s7_is_positive(sc->x)))
-	return(s7_make_real(sc, log(num_to_real(sc->x->object.number))));
-      /* if < 0 use log(-x) + pi*i */
-      return(s7_from_c_complex(sc, clog(s7_complex(sc->x))));
-    }
+
+  if ((s7_is_real(sc->x)) &&
+      (s7_is_positive(sc->x)))
+    return(s7_make_real(sc, log(num_to_real(sc->x->object.number))));
+  /* if < 0 use log(-x) + pi*i */
+  return(s7_from_c_complex(sc, clog(s7_complex(sc->x))));
 }
 
 
@@ -4394,16 +4385,14 @@ static s7_pointer g_atan(s7_scheme *sc, s7_pointer args)
 	return(s7_make_real(sc, atan(num_to_real(sc->x->object.number))));
       return(s7_from_c_complex(sc, catan(s7_complex(sc->x))));
     } 
-  else 
-    {
-      sc->y = cadr(args);
-      if (!s7_is_real(sc->x))
-	return(s7_wrong_type_arg_error(sc, "atan", 1, sc->x, "a real"));
-      if (!s7_is_real(sc->y))
-	return(s7_wrong_type_arg_error(sc, "atan", 2, sc->y, "a real"));
-      return(s7_make_real(sc, atan2(num_to_real(sc->x->object.number), 
-				    num_to_real(sc->y->object.number))));
-    }
+
+  sc->y = cadr(args);
+  if (!s7_is_real(sc->x))
+    return(s7_wrong_type_arg_error(sc, "atan", 1, sc->x, "a real"));
+  if (!s7_is_real(sc->y))
+    return(s7_wrong_type_arg_error(sc, "atan", 2, sc->y, "a real"));
+  return(s7_make_real(sc, atan2(num_to_real(sc->x->object.number), 
+				num_to_real(sc->y->object.number))));
 }  
 
 
@@ -5421,7 +5410,7 @@ static s7_pointer g_chars_are_ci_leq(s7_scheme *sc, s7_pointer args)
 /* -------------------------------- strings -------------------------------- */
 
 
-s7_pointer s7_make_counted_string(s7_scheme *sc, const char *str, int len) 
+s7_pointer s7_make_string_with_length(s7_scheme *sc, const char *str, int len) 
 {
   s7_pointer x;
   
@@ -5450,7 +5439,7 @@ static s7_pointer make_empty_string(s7_scheme *sc, int len, char fill)
 
 s7_pointer s7_make_string(s7_scheme *sc, const char *str) 
 {
-  return(s7_make_counted_string(sc, str, safe_strlen(str)));
+  return(s7_make_string_with_length(sc, str, safe_strlen(str)));
 }
 
 
@@ -5577,7 +5566,7 @@ static s7_pointer g_string_append_1(s7_scheme *sc, s7_pointer args, const char *
   char *pos;
   
   if (car(args) == sc->NIL)
-    return(s7_make_counted_string(sc, "", 0));
+    return(s7_make_string_with_length(sc, "", 0));
   
   /* get length for new string */
   for (i = 1, sc->x = args; sc->x != sc->NIL; i++, sc->x = cdr(sc->x)) 
@@ -5667,13 +5656,12 @@ static int safe_strcmp(const char *s1, const char *s2)
     {
       if (s2 == NULL)
 	return(0);
-      else return(-1);
+      return(-1);
     }
-  else
-    {
-      if (s2 == NULL)
-	return(1);
-    }
+
+  if (s2 == NULL)
+    return(1);
+
   val = strcmp(s1, s2); /* strcmp can return stuff like -97, but we want -1, 0, or 1 */
   if (val <= -1)
     return(-1);
@@ -5767,13 +5755,12 @@ static int safe_strcasecmp(const char *s1, const char *s2)
     {
       if (s2 == NULL)
 	return(0);
-      else return(-1);
+      return(-1);
     }
-  else
-    {
-      if (s2 == NULL)
-	return(1);
-    }
+
+  if (s2 == NULL)
+    return(1);
+
   len1 = strlen(s1);
   len2 = strlen(s2);
   if (len1 < len2) 
@@ -5915,7 +5902,7 @@ static s7_pointer g_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_string "(string chr...) appends all its character arguments into one string"
   if (car(args) == sc->NIL)
-    return(s7_make_counted_string(sc, "", 0));
+    return(s7_make_string_with_length(sc, "", 0));
   return(g_string_1(sc, args, "string"));
 }
 
@@ -5926,7 +5913,7 @@ static s7_pointer g_list_to_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_list_to_string "(list->string lst) appends all the lists characters into one string"
   if (car(args) == sc->NIL)
-    return(s7_make_counted_string(sc, "", 0));
+    return(s7_make_string_with_length(sc, "", 0));
   
   if (g_is_list(sc, args) == sc->F)
     return(s7_wrong_type_arg_error(sc, "list->string", 1, car(args), "a (proper, non-circular) list of characters"));
@@ -6580,7 +6567,7 @@ static s7_pointer read_string_expression(s7_scheme *sc, s7_pointer pt)
 	      
 	    case '"':
 	      sc->strbuf[i] = '\0';
-	      return(s7_make_counted_string(sc, sc->strbuf, i));
+	      return(s7_make_string_with_length(sc, sc->strbuf, i));
 	      
 	    default:
 	      sc->strbuf[i++] = c;
@@ -6896,14 +6883,14 @@ static s7_pointer g_read_line(s7_scheme *sc, s7_pointer args)
 	  if (i == 0)
 	    return(sc->EOF_OBJECT);
 	  sc->read_line_buf[i + 1] = 0;
-	  return(s7_make_counted_string(sc, sc->read_line_buf, i + 1));
+	  return(s7_make_string_with_length(sc, sc->read_line_buf, i + 1));
 	}
 
       sc->read_line_buf[i] = (char)c;
       if (c == '\n')
 	{
 	  sc->read_line_buf[i + 1] = 0;
-	  return(s7_make_counted_string(sc, sc->read_line_buf, i + 1));
+	  return(s7_make_string_with_length(sc, sc->read_line_buf, i + 1));
 	}
     }
   return(sc->EOF_OBJECT);
@@ -7416,17 +7403,15 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	    return(strdup(string_value(obj)));
 	  return(slashify_string(string_value(obj)));
 	}
-      else 
-	{
-	  if (!use_write)
-	    return(NULL);
-	  else return(strdup("\"\""));
-	}
+      if (!use_write)
+	return(NULL);
+      else return(strdup("\"\""));
 
     case T_CHARACTER:
       {
+	#define P_SIZE 16
 	char *p;
-	p = (char *)malloc(32 * sizeof(char));
+	p = (char *)malloc(P_SIZE * sizeof(char));
 	char c = s7_character(obj);
 	if (!use_write) 
 	  {
@@ -7438,21 +7423,29 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
 	    switch(c) 
 	      {
 	      case ' ':
-		sprintf(p, "#\\space"); 
+		snprintf(p, P_SIZE, "#\\space"); 
 		break;
+
 	      case '\n':
-		sprintf(p, "#\\newline"); 
+		snprintf(p, P_SIZE, "#\\newline"); 
 		break;
+
 	      case '\r':
-		sprintf(p, "#\\return"); 
+		snprintf(p, P_SIZE, "#\\return"); 
 		break;
+
 	      case '\t':
-		sprintf(p, "#\\tab"); 
+		snprintf(p, P_SIZE, "#\\tab"); 
 		break;
+
+	      case '\0':
+		snprintf(p, P_SIZE, "#\\null");
+		break;
+
 	      default:
 		if (c < 32) 
-		  sprintf(p, "#\\x%x", c);
-		else sprintf(p, "#\\%c", c); 
+		  snprintf(p, P_SIZE, "#\\x%x", c);
+		else snprintf(p, P_SIZE, "#\\%c", c); 
 		break;
 	      }
 	  }
@@ -9579,8 +9572,6 @@ static s7_pointer pws_set(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 
 static s7_pointer g_make_procedure_with_setter(s7_scheme *sc, s7_pointer args)
 {
-  /* TODO: figure out how to add pws name and doc here (guile compatibility in scheme code is the catch) */
-
   s7_pointer p;
   pws *f;
   p = s7_make_procedure_with_setter(sc, NULL, NULL, -1, 0, NULL, -1, 0, NULL);
@@ -10056,7 +10047,7 @@ static char *s7_format_error(s7_scheme *sc, const char *msg, const char *str, s7
       free(filler);
     }
 
-  sc->x = make_list_3(sc, s7_make_counted_string(sc, errmsg, slen), s7_make_string(sc, str), args);
+  sc->x = make_list_3(sc, s7_make_string_with_length(sc, errmsg, slen), s7_make_string(sc, str), args);
 
   free(errmsg);
   if (dat->str) free(dat->str);
@@ -10720,7 +10711,7 @@ s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n,
   errmsg = (char *)malloc(len * sizeof(char));
   if (arg_n <= 0) arg_n = 1;
   slen = snprintf(errmsg, len, "%s: argument %d (~A) has wrong type (expecting %s)", caller, arg_n, descr);
-  sc->x = make_list_2(sc, s7_make_counted_string(sc, errmsg, slen), arg);
+  sc->x = make_list_2(sc, s7_make_string_with_length(sc, errmsg, slen), arg);
   free(errmsg);
 
   return(s7_error(sc, sc->WRONG_TYPE_ARG, sc->x));
@@ -10736,7 +10727,7 @@ s7_pointer s7_out_of_range_error(s7_scheme *sc, const char *caller, int arg_n, s
   errmsg = (char *)malloc(len * sizeof(char));
   if (arg_n <= 0) arg_n = 1;
   slen = snprintf(errmsg, len, "%s: argument %d (~A) is out of range (expecting %s)", caller, arg_n, descr);
-  sc->x = make_list_2(sc, s7_make_counted_string(sc, errmsg, slen), arg);
+  sc->x = make_list_2(sc, s7_make_string_with_length(sc, errmsg, slen), arg);
   free(errmsg);
 
   return(s7_error(sc, sc->OUT_OF_RANGE, sc->x));
@@ -10751,7 +10742,7 @@ static s7_pointer s7_division_by_zero_error(s7_scheme *sc, const char *caller, s
   len = safe_strlen(caller) + 128;
   errmsg = (char *)malloc(len * sizeof(char));
   slen = snprintf(errmsg, len, "%s: division by zero in ~A", caller);
-  sc->x = make_list_2(sc, s7_make_counted_string(sc, errmsg, slen), arg);
+  sc->x = make_list_2(sc, s7_make_string_with_length(sc, errmsg, slen), arg);
   free(errmsg);
 
   return(s7_error(sc, s7_make_symbol(sc, "division-by-zero"), sc->x));
@@ -10766,7 +10757,7 @@ static s7_pointer s7_file_error(s7_scheme *sc, const char *caller, const char *d
   len = safe_strlen(descr) + safe_strlen(name) + safe_strlen(caller) + 8;
   errmsg = (char *)malloc(len * sizeof(char));
   slen = snprintf(errmsg, len, "%s: %s %s", caller, descr, name);
-  sc->x = s7_make_counted_string(sc, errmsg, slen);
+  sc->x = s7_make_string_with_length(sc, errmsg, slen);
   free(errmsg);
 
   return(s7_error(sc, s7_make_symbol(sc, "io-error"), sc->x));
@@ -11438,11 +11429,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->args = sc->NIL;
 	  goto EVAL;
 	}
-      else
-	{
-	  if (sc->code != sc->NIL)
-	    return(eval_error(sc, "do var list is improper: ~A", sc->code));
-	}
+
+      if (sc->code != sc->NIL)
+	return(eval_error(sc, "do var list is improper: ~A", sc->code));
       
       /* all done */
       sc->args = safe_reverse_in_place(sc, sc->args);
@@ -11577,12 +11566,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->op = (opcode_t)integer(syntax_opcode(sc->x)->object.number);
 	      goto START;
 	    } 
-	  else 
-	    {
-	      push_stack(sc, OP_EVAL_ARGS0, sc->NIL, sc->code);
-	      sc->code = car(sc->code);
-	      goto EVAL;
-	    }
+	  push_stack(sc, OP_EVAL_ARGS0, sc->NIL, sc->code);
+	  sc->code = car(sc->code);
+	  goto EVAL;
 	} 
 
       if (s7_is_symbol(sc->code))
@@ -12040,7 +12026,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  pop_stack(sc);
 	  goto START;
 	}
-      else return(eval_error(sc, "set! ~A: unbound variable", sc->code));
+      return(eval_error(sc, "set! ~A: unbound variable", sc->code));
       
       
     case OP_IF0:
@@ -12087,12 +12073,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->args = sc->NIL;
 	  goto EVAL;
 	} 
-      else 
-	{ 
-	  sc->args = safe_reverse_in_place(sc, sc->args);
-	  sc->code = car(sc->args);
-	  sc->args = cdr(sc->args);
-	}
+
+      sc->args = safe_reverse_in_place(sc, sc->args);
+      sc->code = car(sc->args);
+      sc->args = cdr(sc->args);
       
       
     case OP_LET2:
@@ -12153,18 +12137,16 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       add_to_current_environment(sc, caar(sc->code), sc->value); 
       sc->code = cdr(sc->code);
       if (is_pair(sc->code)) 
-	{ /* continue */
+	{ 
 	  push_stack(sc, OP_LET_STAR2, sc->args, sc->code);
 	  sc->code = cadar(sc->code);
 	  sc->args = sc->NIL;
 	  goto EVAL;
 	} 
-      else 
-	{  /* end */
-	  sc->code = sc->args;
-	  sc->args = sc->NIL;
-	  goto BEGIN;
-	}
+
+      sc->code = sc->args;
+      sc->args = sc->NIL;
+      goto BEGIN;
       
       
     case OP_LETREC0:
@@ -12180,21 +12162,18 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_LETREC1:    /* letrec -- calculate parameters */
       sc->args = s7_cons(sc, sc->value, sc->args);
       if (is_pair(sc->code)) 
-	{ /* continue */
+	{ 
 	  push_stack(sc, OP_LETREC1, sc->args, cdr(sc->code));
 	  sc->code = cadar(sc->code);
 	  sc->args = sc->NIL;
 	  goto EVAL;
 	} 
-      else 
-	{  /* end */
-	  sc->args = safe_reverse_in_place(sc, sc->args); 
-	  sc->code = car(sc->args);
-	  sc->args = cdr(sc->args);
-	}
+
+      sc->args = safe_reverse_in_place(sc, sc->args); 
+      sc->code = car(sc->args);
+      sc->args = cdr(sc->args);
       
 
-      /* TODO: check for undefined references here */
     case OP_LETREC2:
       for (sc->x = car(sc->code), sc->y = sc->args; sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
 	{
@@ -12242,22 +12221,18 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	  goto BEGIN;
 	}
-      else 
+
+      sc->code = cdr(sc->code);
+      if (sc->code == sc->NIL)
 	{
-	  sc->code = cdr(sc->code);
-	  if (sc->code == sc->NIL)
-	    {
-	      sc->value = sc->NIL;
-	      pop_stack(sc);
-	      goto START;
-	    } 
-	  else 
-	    {
-	      push_stack(sc, OP_COND1, sc->NIL, sc->code);
-	      sc->code = caar(sc->code);
-	      goto EVAL;
-	    }
-	}
+	  sc->value = sc->NIL;
+	  pop_stack(sc);
+	  goto START;
+	} 
+	  
+      push_stack(sc, OP_COND1, sc->NIL, sc->code);
+      sc->code = caar(sc->code);
+      goto EVAL;
       
       
     case OP_MAKE_PROMISE: 
@@ -12317,12 +12292,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_AND1:
-      if (is_false(sc->value)) 
-	{
-	  pop_stack(sc);
-	  goto START;
-	}
-      if (sc->code == sc->NIL) 
+      if ((is_false(sc->value)) ||
+	  (sc->code == sc->NIL))
 	{
 	  pop_stack(sc);
 	  goto START;
@@ -12346,12 +12317,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_OR1:
-      if (is_true(sc->value)) 
-	{
-	  pop_stack(sc);
-	  goto START;
-	}
-      if (sc->code == sc->NIL) 
+      if ((is_true(sc->value)) ||
+	  (sc->code == sc->NIL))
 	{
 	  pop_stack(sc);
 	  goto START;
@@ -12527,19 +12494,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      sc->code = cdar(sc->x);
 	      goto BEGIN;
 	    } 
-	  else 
-	    { 
-	      push_stack(sc, OP_CASE2, sc->NIL, cdar(sc->x));
-	      sc->code = caar(sc->x);
-	      goto EVAL;
-	    }
+	  push_stack(sc, OP_CASE2, sc->NIL, cdar(sc->x));
+	  sc->code = caar(sc->x);
+	  goto EVAL;
 	} 
-      else 
-	{
-	  sc->value = sc->NIL;
-	  pop_stack(sc);
-	  goto START;
-	}
+
+      sc->value = sc->NIL;
+      pop_stack(sc);
+      goto START;
       
       
     case OP_CASE2: 
@@ -12609,16 +12571,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	      pop_stack(sc);
 	      goto START;
 	    }
-	  else 
-	    {
-	      if (sc->tok == TOK_DOT) 
-		return(eval_error(sc, "syntax error: illegal dot expression: ~A", sc->code)); /* just a guess -- maybe sc->args */
-	      else 
-		{
-		  push_stack(sc, OP_READ_LIST, sc->NIL, sc->NIL);
-		  goto READ_EXPRESSION;
-		}
-	    }
+
+	  if (sc->tok == TOK_DOT) 
+	    return(eval_error(sc, "syntax error: illegal dot expression: ~A", sc->code)); /* just a guess -- maybe sc->args */
+
+	  push_stack(sc, OP_READ_LIST, sc->NIL, sc->NIL);
+	  goto READ_EXPRESSION;
 	  
 	case TOK_QUOTE:
 	  push_stack(sc, OP_READ_QUOTE, sc->NIL, sc->NIL);
@@ -12627,13 +12585,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  
 	case TOK_BQUOTE:
 	  sc->tok = token(sc, sc->input_port);
-	  if (sc->tok== TOK_VEC) 
+	  if (sc->tok == TOK_VEC) 
 	    {
 	      push_stack(sc, OP_READ_QUASIQUOTE_VECTOR, sc->NIL, sc->NIL);
 	      sc->tok= TOK_LPAREN;
 	      goto READ_EXPRESSION;
 	    } 
-	  else push_stack(sc, OP_READ_QUASIQUOTE, sc->NIL, sc->NIL);
+	  push_stack(sc, OP_READ_QUASIQUOTE, sc->NIL, sc->NIL);
 	  goto READ_EXPRESSION;
 	  
 	case TOK_COMMA:
@@ -12668,16 +12626,14 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    expr = read_string_upto(sc);
 	    if ((sc->value = make_sharp_constant(sc, expr)) == sc->NIL)
 	      return(eval_error(sc, "undefined sharp expression: ~A", s7_make_string(sc, expr)));
-	    else 
-	      {
-		pop_stack(sc);
-		goto START;
-	      }
+	    pop_stack(sc);
+	    goto START;
 	  }
+
 	default:
 	  if (sc->tok == TOK_RPAREN)
 	    return(eval_error(sc, "too many close parens: ~A", sc->code));
-	  else return(eval_error(sc, "syntax error: illegal token: ~A", sc->code));
+	  return(eval_error(sc, "syntax error: illegal token: ~A", sc->code));
 	}
       break;
       
@@ -12697,36 +12653,28 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  pop_stack(sc);
 	  goto START;
 	} 
-      else 
+
+      if (sc->tok == TOK_DOT) 
 	{
-	  if (sc->tok == TOK_DOT) 
-	    {
-	      push_stack(sc, OP_READ_DOT, sc->args, sc->NIL);
-	      sc->tok = token(sc, sc->input_port);
-	      goto READ_EXPRESSION;
-	    } 
-	  else 
-	    {
-	      if (sc->tok == TOK_EOF)
-		return(eval_error(sc, "~A: missing close paren?", sc->NIL));
-	      else
-		{
-		  push_stack(sc, OP_READ_LIST, sc->args, sc->NIL);
-		  goto READ_EXPRESSION;
-		}
-	    }
-	}
+	  push_stack(sc, OP_READ_DOT, sc->args, sc->NIL);
+	  sc->tok = token(sc, sc->input_port);
+	  goto READ_EXPRESSION;
+	} 
+
+      if (sc->tok == TOK_EOF)
+	return(eval_error(sc, "~A: missing close paren?", sc->NIL));
+
+      push_stack(sc, OP_READ_LIST, sc->args, sc->NIL);
+      goto READ_EXPRESSION;
       
       
     case OP_READ_DOT:
       if (token(sc, sc->input_port) != TOK_RPAREN)
 	return(eval_error(sc, "syntax error: illegal dot expression: ~A", sc->code));
-      else 
-	{
-	  sc->value = s7_reverse_in_place(sc, sc->value, sc->args);
-	  pop_stack(sc);
-	  goto START;
-	}
+
+      sc->value = s7_reverse_in_place(sc, sc->value, sc->args);
+      pop_stack(sc);
+      goto START;
       
       
     case OP_READ_QUOTE:
@@ -12779,9 +12727,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
 static s7_pointer g_mcons(s7_scheme *sc, s7_pointer f, s7_pointer l, s7_pointer r)
 {
-  ASSERT_IS_OBJECT(l, "mcons left");
-  ASSERT_IS_OBJECT(r, "mcons right");
-
   if ((is_pair(r)) &&
       (car(r) == sc->QUOTE) &&
       (car(cdr(r)) == cdr(f)) &&
@@ -12795,21 +12740,15 @@ static s7_pointer g_mcons(s7_scheme *sc, s7_pointer f, s7_pointer l, s7_pointer 
 	return(f);
       return(make_list_2(sc, sc->QUOTE, f));
     }
-  else
-    {
-      if (l == sc->VECTOR_FUNCTION)
-	return(g_vector(sc, make_list_1(sc, r))); /* eval? */
-      return(make_list_3(sc, sc->CONS, l, r));
-    }
+
+  if (l == sc->VECTOR_FUNCTION)
+    return(g_vector(sc, make_list_1(sc, r))); /* eval? */
+  return(make_list_3(sc, sc->CONS, l, r));
 }
 
 
 static s7_pointer g_mappend(s7_scheme *sc, s7_pointer f, s7_pointer l, s7_pointer r)
 {
-  ASSERT_IS_OBJECT(l, "mappend left");
-  ASSERT_IS_OBJECT(r, "mappend right");
-  ASSERT_IS_OBJECT(f, "mappend form");
-
   if ((cdr(f) == sc->NIL) ||
       ((is_pair(r)) &&
        (car(r) == sc->QUOTE) &&
@@ -12821,8 +12760,6 @@ static s7_pointer g_mappend(s7_scheme *sc, s7_pointer f, s7_pointer l, s7_pointe
 
 static s7_pointer g_quasiquote_1(s7_scheme *sc, int level, s7_pointer form)
 {
-  ASSERT_IS_OBJECT(form, "quasiquote form");
-
   if (!is_pair(form))
     {
       if ((s7_is_number(form)) ||
@@ -12831,57 +12768,51 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, int level, s7_pointer form)
 	return(form);
       return(make_list_2(sc, sc->QUOTE, form));
     }
-  else
+
+  if (car(form) == sc->QUASIQUOTE)
+    return(g_mcons(sc, 
+		   form, 
+		   make_list_2(sc, sc->QUOTE, sc->QUASIQUOTE),
+		   g_quasiquote_1(sc, level + 1, cdr(form))));
+
+  if (level == 0)
     {
-      if (car(form) == sc->QUASIQUOTE)
-	return(g_mcons(sc, 
-		       form, 
-		       make_list_2(sc, sc->QUOTE, sc->QUASIQUOTE),
-		       g_quasiquote_1(sc, level + 1, cdr(form))));
-      else
-	{
-	  if (level == 0)
-	    {
-	      if (car(form) == sc->UNQUOTE)
-		return(car(cdr(form)));
+      if (car(form) == sc->UNQUOTE)
+	return(car(cdr(form)));
 	      
-	      if (car(form) == sc->UNQUOTE_SPLICING)
-		return(form);
+      if (car(form) == sc->UNQUOTE_SPLICING)
+	return(form);
 	      
-	      if ((is_pair(car(form))) &&
-		  (caar(form) == sc->UNQUOTE_SPLICING))
-		return(g_mappend(sc, 
-				 form,
-				 car(cdr(car(form))),
-				 g_quasiquote_1(sc, level, cdr(form))));
+      if ((is_pair(car(form))) &&
+	  (caar(form) == sc->UNQUOTE_SPLICING))
+	return(g_mappend(sc, 
+			 form,
+			 car(cdr(car(form))),
+			 g_quasiquote_1(sc, level, cdr(form))));
 	      
-	      return(g_mcons(sc, 
-			     form, 
-			     g_quasiquote_1(sc, level, car(form)),
-			     g_quasiquote_1(sc, level, cdr(form))));
-	    }
-	  else
-	    {
-	      /* level != 0 */
-	      if (car(form) == sc->UNQUOTE)
-		return(g_mcons(sc, 
-			       form,
-			       make_list_2(sc, sc->QUOTE, sc->UNQUOTE),
-			       g_quasiquote_1(sc, level - 1, cdr(form))));
-	      
-	      if (car(form) == sc->UNQUOTE_SPLICING)
-		return(g_mcons(sc, 
-			       form,
-			       make_list_2(sc, sc->QUOTE, sc->UNQUOTE_SPLICING),
-			       g_quasiquote_1(sc, level - 1, cdr(form))));
-	      
-	      return(g_mcons(sc,
-			     form,
-			     g_quasiquote_1(sc, level, car(form)),
-			     g_quasiquote_1(sc, level, cdr(form))));
-	    }
-	}
+      return(g_mcons(sc, 
+		     form, 
+		     g_quasiquote_1(sc, level, car(form)),
+		     g_quasiquote_1(sc, level, cdr(form))));
     }
+
+  /* level != 0 */
+  if (car(form) == sc->UNQUOTE)
+    return(g_mcons(sc, 
+		   form,
+		   make_list_2(sc, sc->QUOTE, sc->UNQUOTE),
+		   g_quasiquote_1(sc, level - 1, cdr(form))));
+  
+  if (car(form) == sc->UNQUOTE_SPLICING)
+    return(g_mcons(sc, 
+		   form,
+		   make_list_2(sc, sc->QUOTE, sc->UNQUOTE_SPLICING),
+		   g_quasiquote_1(sc, level - 1, cdr(form))));
+	      
+  return(g_mcons(sc,
+		 form,
+		 g_quasiquote_1(sc, level, car(form)),
+		 g_quasiquote_1(sc, level, cdr(form))));
 }
 
 
