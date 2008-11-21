@@ -31948,6 +31948,7 @@
 
       ;; TODO: tests for read/write-byte procedure-source 
       ;; TODO if 'snd tests for procedure-arity of objects/pws
+      ;; TODO: (set! (expr->pws ...) ...) can cause a segfault?
 
       ))
 

@@ -47842,13 +47842,10 @@ EDITS: 1
     (etst '(string-set! #f 1 #\c))
     
     (stst '(format #f "hiho: ~D" 43) "hiho: 43")
-;    (stst '(format #f "~,4F ~,3F" 3.14 (sqrt 3.0)) "3.1400 1.732")
     (stst '(format #f "~A: ~A" "hiho" '(3 4)) "hiho: (3 4)")
     (stst '(format #f "~A: ~A" (> 2 3) (make-vct 2 .1)) "#f: #<vct[len=2]: 0.100 0.100>")
-;    (stst '(format #f "~,3E" pi) "3.142E+0")
     (stst '(format #f "hi~16Tho") "hi              ho")
     (stst '(format #f "~{~D ~}" '(1 2 3)) "1 2 3 ")
-					;(stst '(format #f "~A ~A" 'hi :hi) "hi :hi")
     (stst '(clm-print "hiho: ~D" 43) "hiho: 43")
     
     (btst '(sample-reader? "hi") #f)
@@ -50018,16 +50015,15 @@ EDITS: 1
       (snd-display "~{       ~A~%~}~%" ts))
     
 					;Guile timings:
-					;       (osc+env 215 20 11)
-					;       (vct-ref 162 12 14)
-					;       (let if  123 10 12)
-					;       (abs sin 157 11 14)
-					;       (-1      60 5 12)
-					;       (*2      74 5 15)
-					;       (jcrev   165 24 7)
+					;       (osc+env 144 25 6)
+					;       (vct-ref 204 18 11)
+					;       (let if  134 15 9)
+					;       (abs sin 121 17 7)
+					;       (-1      82 11 7)
+					;       (*2      71 12 6)
+					;       (jcrev   165 22 8)
 					;       (expsnd  65 8 8)
-					;       (fm vln  131 17 8)
-					;
+					;       (fm vln  131 18 7)
 					;Gauche:
 					;       (osc+env 196 177 1)
 					;       (vct-ref 155 8 19)
@@ -50038,28 +50034,17 @@ EDITS: 1
 					;       (jcrev   139 140 1)
 					;       (expsnd  93 93 1)
 					;       (fm vln  79 98 1)
-					;s7:
-					;       (osc+env 292 14 21)
-					;       (vct-ref 293 8 37)
-					;       (let if  276 9 31)
-					;       (abs sin 178 12 15)
-					;       (-1      134 5 27)
-					;       (*2      140 5 28)
-					;       (jcrev   283 12 24)
-					;       (expsnd  131 7 19)
-					;       (fm vln  362 11 33)
-					;
-					;s7 8-core (6-Oct-08):
-					;       ("osc+env" 337 11 30)
-					;       ("vct-ref" 354 6 62)
-					;       ("let if " 332 5 63)
-					;       ("abs sin" 244 7 33)
-					;       ("-1     " 163 3 52)
-					;       ("*2     " 166 3 59)
-					;       ("jcrev  " 311 6 52)
-					;       ("expsnd " 173 3 53)
-					;       ("fm vln " 346 7 51)
-    
+					;s7 20-Nov-08:
+					;       ("osc+env" 261 16 16)
+					;       ("vct-ref" 259 9 27)
+					;       ("let if " 252 10 24)
+					;       ("abs sin" 161 13 12)
+					;       ("-1     " 122 8 16)
+					;       ("*2     " 129 6 20)
+					;       ("jcrev  " 233 13 18)
+					;       ("expsnd " 101 7 15)
+					;       ("fm vln " 274 13 22)
+
     
     (if with-gui
 	(let* ((osc (make-oscil 440))

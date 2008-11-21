@@ -97,7 +97,10 @@ void s7_set_error_exiter(s7_scheme *sc, void (*error_exiter)(void));
   /* these are equivalent to (error ...) in scheme
    *   the first argument to s7_error is a symbol that can be caught (via (catch tag ...))
    *   the rest of the arguments are passed to the error handler (if in catch) 
-   *   or printed out (in the default case).
+   *   or printed out (in the default case).  If the first element of the list
+   *   of args ("info") is a string, the default error handler treats it as
+   *   a format control string, and passes it to format with the rest of the
+   *   info list as the format function arguments.
    *
    *   s7_error_and_exit jumps to some arbitrary place provided by s7_set_error_exiter
    *   s7_wrong_type_arg_error is equivalent to s7_error with a type of 'wrong-type-arg
