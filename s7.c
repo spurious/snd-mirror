@@ -242,7 +242,7 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY,
 	      OP_LETREC0, OP_LETREC1, OP_LETREC2, OP_COND0, OP_COND1, OP_MAKE_PROMISE, OP_AND0, OP_AND1, 
 	      OP_OR0, OP_OR1, OP_CONS_STREAM0, OP_CONS_STREAM1, 
 	      OP_DEFMACRO, OP_MACRO0, OP_MACRO1, OP_DEFINE_MACRO,
-	      OP_CASE0, OP_CASE1, OP_CASE2, OP_READ_EXPRESSION, OP_READ_LIST, OP_READ_DOT, OP_READ_QUOTE, 
+	      OP_CASE0, OP_CASE1, OP_CASE2, OP_READ_LIST, OP_READ_DOT, OP_READ_QUOTE, 
 	      OP_READ_QUASIQUOTE, OP_READ_QUASIQUOTE_VECTOR, OP_READ_UNQUOTE, OP_READ_UNQUOTE_SPLICING, 
 	      OP_READ_VECTOR, OP_FORCE, OP_READ_RETURN_EXPRESSION,
 	      OP_READ_POP_AND_RETURN_EXPRESSION, OP_LOAD_RETURN_IF_EOF, OP_LOAD_CLOSE_AND_POP_IF_EOF, 
@@ -520,6 +520,10 @@ enum scheme_types {
 #define is_marked(p)                  (typeflag(p) &  T_GC_MARK)
 #define set_mark(p)                   typeflag(p)  |= T_GC_MARK
 #define clear_mark(p)                 typeflag(p)  &= (~T_GC_MARK)
+/* making this a separate bool field in the cell struct slightly speeds up the mark function,
+ *   but at the cost of 4 bytes per object. Since the speedup was about 2% overall, I think
+ *   the size increase is more important.
+ */
 
 #define T_CONSTANT                    (1 << (TYPE_BITS + 5))
 #define is_constant(p)                (typeflag(p) & T_CONSTANT)
@@ -760,7 +764,7 @@ static s7_pointer safe_reverse_in_place(s7_scheme *sc, s7_pointer list);
 static s7_pointer s7_immutable_cons(s7_scheme *sc, s7_pointer a, s7_pointer b);
 static void s7_free_object(s7_pointer a);
 static char *s7_describe_object(s7_scheme *sc, s7_pointer a);
-static s7_pointer make_atom(s7_scheme *sc, char *q, int radix);
+static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol);
 static bool s7_is_applicable_object(s7_pointer x);
 static s7_pointer make_list_1(s7_scheme *sc, s7_pointer a);
 
@@ -1820,9 +1824,12 @@ static s7_pointer g_current_environment(s7_scheme *sc, s7_pointer args)
 }
 
 
+#define closure_source(Obj) car(Obj)
+
 static s7_pointer make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e, int type) 
 {
   /* c is code. e is environment */
+     
   s7_pointer x = new_cell(sc);
   
   set_type(x, type | T_PROCEDURE);
@@ -3559,6 +3566,7 @@ static int char_to_num(const char c)
 
 static s7_pointer make_sharp_constant(s7_scheme *sc, char *name) 
 {
+  /* name is the stuff after the '#', return sc->NIL if not a recognized #... entity */
   int len;
   s7_pointer x;
   
@@ -3584,22 +3592,23 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name)
     case 'b':   /* #b (binary) */
       {
 	bool to_inexact = false;
+	int num_at = 1;
   
 	if (name[1] == '#')
 	  {
 	    if ((len > 2) && ((name[2] == 'e') || (name[2] == 'i')))
 	      {
 		to_inexact = (name[2] == 'i');
-		name += 2;
+		num_at = 3;
 	      }
 	    else return(sc->NIL);
 	  }
-	x = make_atom(sc, (char *)(name + 1), (name[0] == 'o') ? 8 : ((name[0] == 'x') ? 16 : ((name[0] == 'b') ? 2 : 10)));
+	x = make_atom(sc, (char *)(name + num_at), (name[0] == 'o') ? 8 : ((name[0] == 'x') ? 16 : ((name[0] == 'b') ? 2 : 10)), false);
 	if (!s7_is_integer(x))
 	  return(sc->NIL);
 	if (to_inexact)
 	  return(s7_make_real(sc, s7_number_to_real(x)));
-	return(x);
+	return(x);  /* we already checked that it is a number */
       }
 
     case 'i':   /* #i<num> = ->inexact (see token, is_one_of for table of choices here) */
@@ -3609,16 +3618,20 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name)
 	    {
 	      s7_pointer i_arg;
 	      i_arg = make_sharp_constant(sc, (char *)(name + 2));
-	      if (i_arg == sc->NIL)
+	      if (!s7_is_integer(i_arg))
 		return(sc->NIL);
 	      return(s7_make_real(sc, (s7_Double)s7_integer(i_arg)));
 	    }
 	  return(sc->NIL);
 	}
-      x = make_atom(sc, (char *)(name + 1), 10);
-      if (s7_is_rational(x))
-	return(s7_make_real(sc, s7_number_to_real(x)));
-      return(x);
+      x = make_atom(sc, (char *)(name + 1), 10, false);
+      if (s7_is_number(x))
+	{
+	  if (s7_is_rational(x))
+	    return(s7_make_real(sc, s7_number_to_real(x)));
+	  return(x);  /* already an inexact number */
+	}
+      return(sc->NIL);
   
     case 'e':   /* #e<num> = ->exact */
       if (name[1] == '#')
@@ -3627,15 +3640,18 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name)
 	    return(make_sharp_constant(sc, (char *)(name + 2)));
 	  return(sc->NIL);
 	}
-      x = make_atom(sc, (char *)(name + 1), 10);
-      if ((s7_is_number(x)) &&
-	  (!(s7_is_rational(x))))
+      x = make_atom(sc, (char *)(name + 1), 10, false);
+      if (s7_is_number(x))
 	{
-	  s7_Int numer = 0, denom = 1;
-	  if (c_rationalize(s7_real_part(x), default_rationalize_error, &numer, &denom))
-	    return(s7_make_ratio(sc, numer, denom));
+	  if (!(s7_is_rational(x)))
+	    {
+	      s7_Int numer = 0, denom = 1;
+	      if (c_rationalize(s7_real_part(x), default_rationalize_error, &numer, &denom))
+		return(s7_make_ratio(sc, numer, denom));
+	    }
+	  return(x); /* already an exact number */
 	}
-      return(x);
+      return(sc->NIL);
 
     case '\\':
       /* #\space or whatever (named character) */
@@ -3772,7 +3788,7 @@ static s7_Double string_to_double_with_radix(char *str, int radix)
 
 /* make symbol or number atom from string */
 
-static s7_pointer make_atom(s7_scheme *sc, char *q, int radix) 
+static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol) 
 {
   #define ISDIGIT(Chr, Rad) (digits[(int)Chr] < Rad)
 
@@ -3800,7 +3816,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix)
 	  c = *p++; 
 	} 
       if (!ISDIGIT(c, radix))
-	return(s7_make_symbol(sc, string_downcase(q)));  /* if CASE_SENSITIVE, string_downcase is a no-op */
+	return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F);  /* if CASE_SENSITIVE, string_downcase is a no-op */
     } 
   else 
     {
@@ -3809,12 +3825,12 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix)
 	  has_dec_point1 = true; 
 	  c = *p++; 
 	  if (!ISDIGIT(c, radix))
-	    return(s7_make_symbol(sc, string_downcase(q))); 
+	    return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F); 
 	} 
       else 
 	{
 	  if (!ISDIGIT(c, radix))
-	    return(s7_make_symbol(sc, string_downcase(q))); 
+	    return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F); 
 	}
     }
   
@@ -3827,16 +3843,16 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix)
 	      if (((has_dec_point1) ||
 		   (slash1)) &&
 		  (has_plus_or_minus == 0)) /* 1.. or 1/2. */
-		return(s7_make_symbol(sc, string_downcase(q))); 
+		return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F); 
 
 	      if (((has_dec_point2) ||
 		   (slash2)) &&
 		  (has_plus_or_minus != 0)) /* 1+1.. or 1+1/2. */
-		return(s7_make_symbol(sc, string_downcase(q))); 
+		return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F); 
 
 	      if ((!ISDIGIT(p[1], radix)) &&
 		  (!ISDIGIT(p[-1], radix))) 
-		return(s7_make_symbol(sc, string_downcase(q))); 
+		return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F); 
 	      
 	      if (has_plus_or_minus == 0)
 		has_dec_point1 = true;
@@ -3850,16 +3866,16 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix)
 		  if (((ex1) ||
 		       (slash1)) &&
 		      (has_plus_or_minus == 0)) /* ee */
-		    return(s7_make_symbol(sc, string_downcase(q))); 
+		    return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F); 
 
 		  if (((ex2) ||
 		       (slash2)) &&
 		      (has_plus_or_minus != 0)) /* 1+1.0ee */
-		    return(s7_make_symbol(sc, string_downcase(q))); 
+		    return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F); 
 
 		  if ((!ISDIGIT(p[-1], radix)) &&
 		      (p[-1] != '.'))
-		    return(s7_make_symbol(sc, string_downcase(q))); 
+		    return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F); 
 
 		  if (has_plus_or_minus == 0)
 		    {
@@ -3881,7 +3897,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix)
 		  if ((c == '+') || (c == '-'))
 		    {
 		      if (has_plus_or_minus != 0) /* already have the separator */
-			return(s7_make_symbol(sc, string_downcase(q)));
+			return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F);
 		      
 		      if (c == '+') has_plus_or_minus = 1; else has_plus_or_minus = -1;
 		      plus = (char *)(p + 1);
@@ -3895,13 +3911,13 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix)
 			      ((ex1) ||
 			       (slash1) ||
 			       (has_dec_point1)))
-			    return(s7_make_symbol(sc, string_downcase(q)));
+			    return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F);
 
 			  if ((has_plus_or_minus != 0) &&
 			      ((ex2) ||
 			       (slash2) ||
 			       (has_dec_point2)))
-			    return(s7_make_symbol(sc, string_downcase(q)));
+			    return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F);
 			  
 			  if (has_plus_or_minus == 0)
 			    slash1 = (char *)(p + 1);
@@ -3909,7 +3925,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix)
 
 			  if ((!ISDIGIT(p[1], radix)) ||
 			      (!ISDIGIT(p[-1], radix)))
-			    return(s7_make_symbol(sc, string_downcase(q)));
+			    return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F);
 
 			  continue;
 			}
@@ -3926,13 +3942,13 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix)
 		    }
 		}
 	    }
-	  return(s7_make_symbol(sc, string_downcase(q)));
+	  return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F);
 	}
     }
   
   if ((has_plus_or_minus != 0) &&
       (!has_i))
-    return(s7_make_symbol(sc, string_downcase(q)));
+    return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F);
   
   if (has_i)
     {
@@ -3942,7 +3958,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix)
       len = strlen(q);
       
       if (q[len - 1] != 'i')
-	return(s7_make_symbol(sc, string_downcase(q)));
+	return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F);
 
       saved_q = strdup(q);
 
@@ -3994,7 +4010,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix)
       double x;
 
       if (slash1)  /* not complex, so slash and "." is not a number */
-	return(s7_make_symbol(sc, string_downcase(q)));
+	return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F);
 
       if (ex1)
 	{
@@ -4019,7 +4035,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix)
 static s7_pointer s7_string_to_number(s7_scheme *sc, char *str, int radix)
 {
   s7_pointer x;
-  x = make_atom(sc, str, radix);
+  x = make_atom(sc, str, radix, true);
   if (s7_is_number(x))
     return(x);
   return(sc->F);
@@ -9100,40 +9116,6 @@ static void s7_free_function(s7_pointer a)
 }
 
 
-static s7_pointer g_is_closure(s7_scheme *sc, s7_pointer args)
-{
-  #define H_is_closure "(closure? obj) returns #t if obj is a closure"
-  return(make_boolean(sc, (is_closure(car(args))) || (is_closure_star(car(args)))));
-}
-
-
-static s7_pointer g_make_closure(s7_scheme *sc, s7_pointer args)
-{
-  #define H_make_closure "(make_closure obj :optional env) returns a closure of obj within env"
-  
-  if (!is_pair(car(args)))
-    return(s7_wrong_type_arg_error(sc, "make-closure", 1, car(args), "a lambda form"));
-  
-  sc->x = car(args);
-  if (car(sc->x) == sc->LAMBDA) 
-    sc->x = cdr(sc->x);
-  
-  if (cdr(args) == sc->NIL)
-    sc->y = sc->envir;
-  else 
-    {
-      if (!is_pair(cadr(args)))
-	return(s7_wrong_type_arg_error(sc, "make-closure", 2, cadr(args), "an environment"));
-      sc->y = cadr(args);
-    }
-  
-  return(s7_make_closure(sc, sc->x, sc->y));
-}
-
-
-#define closure_source(Obj) car(Obj)
-
-
 bool s7_is_procedure(s7_pointer x)
 {
   return(is_procedure(x));
@@ -11229,6 +11211,86 @@ static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym)
 }
 
 
+static s7_pointer read_expression(s7_scheme *sc)
+{
+  while (true) 
+    {
+      switch (sc->tok) 
+	{
+	case TOK_EOF:
+	  return(sc->EOF_OBJECT);
+	  
+	case TOK_VEC:
+	  push_stack(sc, OP_READ_VECTOR, sc->NIL, sc->NIL);
+	  /* fall through */
+	  
+	case TOK_LPAREN:
+	  sc->tok = token(sc, sc->input_port);
+	  if (sc->tok == TOK_RPAREN)
+	    return(sc->NIL);
+
+	  if (sc->tok == TOK_DOT) 
+	    return(eval_error(sc, "syntax error: illegal dot expression: ~A", sc->code)); /* just a guess -- maybe sc->args */
+
+	  push_stack(sc, OP_READ_LIST, sc->NIL, sc->NIL);
+	  break;
+	  
+	case TOK_QUOTE:
+	  push_stack(sc, OP_READ_QUOTE, sc->NIL, sc->NIL);
+	  sc->tok = token(sc, sc->input_port);
+	  break;
+	  
+	case TOK_BQUOTE:
+	  sc->tok = token(sc, sc->input_port);
+	  if (sc->tok == TOK_VEC) 
+	    {
+	      push_stack(sc, OP_READ_QUASIQUOTE_VECTOR, sc->NIL, sc->NIL);
+	      sc->tok= TOK_LPAREN;
+	    } 
+	  else push_stack(sc, OP_READ_QUASIQUOTE, sc->NIL, sc->NIL);
+	  break;
+	  
+	case TOK_COMMA:
+	  push_stack(sc, OP_READ_UNQUOTE, sc->NIL, sc->NIL);
+	  sc->tok = token(sc, sc->input_port);
+	  break;
+	  
+	case TOK_ATMARK:
+	  push_stack(sc, OP_READ_UNQUOTE_SPLICING, sc->NIL, sc->NIL);
+	  sc->tok = token(sc, sc->input_port);
+	  break;
+	  
+	case TOK_ATOM:
+	  return(make_atom(sc, read_string_upto(sc), 10, true)); /* true = not just string->number */
+	  /* if reading list (from lparen), this will finally get us to op_read_list */
+	  
+	case TOK_DQUOTE:
+	  sc->value = read_string_expression(sc, sc->input_port);
+	  if (sc->value == sc->F) 
+	    return(eval_error(sc, "error reading string: ~A", sc->code));
+	  return(sc->value);
+	  
+	case TOK_SHARP_CONST:
+	  {
+	    char *expr;
+	    expr = read_string_upto(sc);
+	    sc->value = make_sharp_constant(sc, expr);
+	    if (sc->value == sc->NIL)
+	      return(eval_error(sc, "undefined sharp expression: #~A", s7_make_string(sc, expr)));
+	    return(sc->value);
+	  }
+
+	default:
+	  if (sc->tok == TOK_RPAREN)
+	    return(eval_error(sc, "too many close parens: ~A", sc->code));
+	  return(eval_error(sc, "syntax error: illegal token: ~A", sc->code));
+	}
+    }
+  return(sc->NIL);
+}
+      
+      
+
 
 /* -------------------------------- eval -------------------------------- */
 
@@ -11261,7 +11323,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  pop_stack(sc);
 	  goto START;
 	}
-      goto READ_EXPRESSION;
+      sc->value = read_expression(sc);
+      pop_stack(sc);
+      goto START;
       
       
       /* g_read(p) from C 
@@ -12549,95 +12613,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       break;
       
       
-    READ_EXPRESSION:
-    case OP_READ_EXPRESSION:
-
-      switch (sc->tok) 
-	{
-	case TOK_EOF:
-	  sc->value = sc->EOF_OBJECT;
-	  pop_stack(sc);
-	  goto START;
-	  
-	case TOK_VEC:
-	  push_stack(sc, OP_READ_VECTOR, sc->NIL, sc->NIL);
-	  /* fall through */
-	  
-	case TOK_LPAREN:
-	  sc->tok = token(sc, sc->input_port);
-	  if (sc->tok == TOK_RPAREN) 
-	    {
-	      sc->value = sc->NIL;
-	      pop_stack(sc);
-	      goto START;
-	    }
-
-	  if (sc->tok == TOK_DOT) 
-	    return(eval_error(sc, "syntax error: illegal dot expression: ~A", sc->code)); /* just a guess -- maybe sc->args */
-
-	  push_stack(sc, OP_READ_LIST, sc->NIL, sc->NIL);
-	  goto READ_EXPRESSION;
-	  
-	case TOK_QUOTE:
-	  push_stack(sc, OP_READ_QUOTE, sc->NIL, sc->NIL);
-	  sc->tok = token(sc, sc->input_port);
-	  goto READ_EXPRESSION;
-	  
-	case TOK_BQUOTE:
-	  sc->tok = token(sc, sc->input_port);
-	  if (sc->tok == TOK_VEC) 
-	    {
-	      push_stack(sc, OP_READ_QUASIQUOTE_VECTOR, sc->NIL, sc->NIL);
-	      sc->tok= TOK_LPAREN;
-	      goto READ_EXPRESSION;
-	    } 
-	  push_stack(sc, OP_READ_QUASIQUOTE, sc->NIL, sc->NIL);
-	  goto READ_EXPRESSION;
-	  
-	case TOK_COMMA:
-	  push_stack(sc, OP_READ_UNQUOTE, sc->NIL, sc->NIL);
-	  sc->tok = token(sc, sc->input_port);
-	  goto READ_EXPRESSION;
-	  
-	case TOK_ATMARK:
-	  push_stack(sc, OP_READ_UNQUOTE_SPLICING, sc->NIL, sc->NIL);
-	  sc->tok = token(sc, sc->input_port);
-	  goto READ_EXPRESSION;
-	  
-	case TOK_ATOM:
-	  sc->value = make_atom(sc, read_string_upto(sc), 10);
-	  pop_stack(sc);
-	  /* if reading list (from lparen), this will finally get us to op_read_list */
-	  goto START;
-	  
-	case TOK_DQUOTE:
-	  sc->value = read_string_expression(sc, sc->input_port);
-	  if (sc->value == sc->F) 
-	    return(eval_error(sc, "error reading string: ~A", sc->code));
-
-	  /* s7_set_immutable(sc->value); */
-	  /* this isn't right, I think -- (string-set! "hi" 0 #\a) should be allowed to work */
-	  pop_stack(sc);
-	  goto START;
-	  
-	case TOK_SHARP_CONST:
-	  {
-	    char *expr;
-	    expr = read_string_upto(sc);
-	    if ((sc->value = make_sharp_constant(sc, expr)) == sc->NIL)
-	      return(eval_error(sc, "undefined sharp expression: ~A", s7_make_string(sc, expr)));
-	    pop_stack(sc);
-	    goto START;
-	  }
-
-	default:
-	  if (sc->tok == TOK_RPAREN)
-	    return(eval_error(sc, "too many close parens: ~A", sc->code));
-	  return(eval_error(sc, "syntax error: illegal token: ~A", sc->code));
-	}
-      break;
-      
-      
     case OP_READ_LIST: 
       sc->args = s7_cons(sc, sc->value, sc->args);
       sc->tok = token(sc, sc->input_port);
@@ -12658,15 +12633,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	{
 	  push_stack(sc, OP_READ_DOT, sc->args, sc->NIL);
 	  sc->tok = token(sc, sc->input_port);
-	  goto READ_EXPRESSION;
+	  sc->value = read_expression(sc);
+	  pop_stack(sc);
+	  goto START;
 	} 
 
       if (sc->tok == TOK_EOF)
 	return(eval_error(sc, "~A: missing close paren?", sc->NIL));
 
       push_stack(sc, OP_READ_LIST, sc->args, sc->NIL);
-      goto READ_EXPRESSION;
-      
+      sc->value = read_expression(sc);
+      pop_stack(sc);
+      goto START;
+
       
     case OP_READ_DOT:
       if (token(sc, sc->input_port) != TOK_RPAREN)
@@ -12723,40 +12702,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 }
 
 
+/* TODO: check vector equal and '#("hi" x etc) */
+
 /* -------------------------------- quasiquote -------------------------------- */
-
-static s7_pointer g_mcons(s7_scheme *sc, s7_pointer f, s7_pointer l, s7_pointer r)
-{
-  if ((is_pair(r)) &&
-      (car(r) == sc->QUOTE) &&
-      (car(cdr(r)) == cdr(f)) &&
-      (is_pair(l)) &&
-      (car(cdr(l)) == car(f)) &&
-      (car(l) == car(r)))
-    {
-      if ((s7_is_number(f)) ||
-	  (s7_is_string(f)) ||
-	  (s7_is_procedure(f)))
-	return(f);
-      return(make_list_2(sc, sc->QUOTE, f));
-    }
-
-  if (l == sc->VECTOR_FUNCTION)
-    return(g_vector(sc, make_list_1(sc, r))); /* eval? */
-  return(make_list_3(sc, sc->CONS, l, r));
-}
-
-
-static s7_pointer g_mappend(s7_scheme *sc, s7_pointer f, s7_pointer l, s7_pointer r)
-{
-  if ((cdr(f) == sc->NIL) ||
-      ((is_pair(r)) &&
-       (car(r) == sc->QUOTE) &&
-       (car(cdr(r)) == sc->NIL)))
-    return(l);
-  return(make_list_3(sc, sc->APPEND, l, r));
-}
-
 
 static s7_pointer g_quasiquote_1(s7_scheme *sc, int level, s7_pointer form)
 {
@@ -12768,12 +12716,18 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, int level, s7_pointer form)
 	return(form);
       return(make_list_2(sc, sc->QUOTE, form));
     }
+  /* from here, form is a pair */
 
   if (car(form) == sc->QUASIQUOTE)
-    return(g_mcons(sc, 
-		   form, 
-		   make_list_2(sc, sc->QUOTE, sc->QUASIQUOTE),
-		   g_quasiquote_1(sc, level + 1, cdr(form))));
+    {
+      s7_pointer r;
+      r = g_quasiquote_1(sc, level + 1, cdr(form));
+      if ((is_pair(r)) &&
+	  (car(r) == sc->QUOTE) &&
+	  (car(cdr(r)) == cdr(form)))
+	return(make_list_2(sc, sc->QUOTE, form));
+      return(make_list_3(sc, sc->CONS, make_list_2(sc, sc->QUOTE, sc->QUASIQUOTE), r));
+    }
 
   if (level == 0)
     {
@@ -12785,34 +12739,70 @@ static s7_pointer g_quasiquote_1(s7_scheme *sc, int level, s7_pointer form)
 	      
       if ((is_pair(car(form))) &&
 	  (caar(form) == sc->UNQUOTE_SPLICING))
-	return(g_mappend(sc, 
-			 form,
-			 car(cdr(car(form))),
-			 g_quasiquote_1(sc, level, cdr(form))));
-	      
-      return(g_mcons(sc, 
-		     form, 
-		     g_quasiquote_1(sc, level, car(form)),
-		     g_quasiquote_1(sc, level, cdr(form))));
+	{
+	  s7_pointer l, r;
+	  l = car(cdr(car(form)));
+	  if (cdr(form) == sc->NIL)
+	    return(l);
+
+	  r = g_quasiquote_1(sc, level, cdr(form));
+
+	  if ((is_pair(r)) &&
+	      (car(r) == sc->QUOTE) &&
+	      (car(cdr(r)) == sc->NIL))
+	    return(l);
+	  return(make_list_3(sc, sc->APPEND, l, r));
+	}
+      
+      goto MCONS;
     }
 
   /* level != 0 */
   if (car(form) == sc->UNQUOTE)
-    return(g_mcons(sc, 
-		   form,
-		   make_list_2(sc, sc->QUOTE, sc->UNQUOTE),
-		   g_quasiquote_1(sc, level - 1, cdr(form))));
+    {
+      s7_pointer r;
+      r = g_quasiquote_1(sc, level - 1, cdr(form));
+
+      if ((is_pair(r)) &&
+	  (car(r) == sc->QUOTE) &&
+	  (car(cdr(r)) == cdr(form)))
+	return(make_list_2(sc, sc->QUOTE, form));
+
+      return(make_list_3(sc, sc->CONS, make_list_2(sc, sc->QUOTE, sc->UNQUOTE), r));
+    }
   
   if (car(form) == sc->UNQUOTE_SPLICING)
-    return(g_mcons(sc, 
-		   form,
-		   make_list_2(sc, sc->QUOTE, sc->UNQUOTE_SPLICING),
-		   g_quasiquote_1(sc, level - 1, cdr(form))));
+    {
+      s7_pointer r;
+      r = g_quasiquote_1(sc, level - 1, cdr(form));
+
+      if ((is_pair(r)) &&
+	  (car(r) == sc->QUOTE) &&
+	  (car(cdr(r)) == cdr(form)))
+	return(make_list_2(sc, sc->QUOTE, form));
+
+      return(make_list_3(sc, sc->CONS, make_list_2(sc, sc->QUOTE, sc->UNQUOTE_SPLICING), r));
+    }
 	      
-  return(g_mcons(sc,
-		 form,
-		 g_quasiquote_1(sc, level, car(form)),
-		 g_quasiquote_1(sc, level, cdr(form))));
+ MCONS:
+  {
+    s7_pointer l, r;
+    l = g_quasiquote_1(sc, level, car(form));
+    r = g_quasiquote_1(sc, level, cdr(form));
+
+    if ((is_pair(r)) &&
+	(is_pair(l)) &&
+	(car(r) == sc->QUOTE) &&
+	(car(l) == car(r)) &&
+	(car(cdr(r)) == cdr(form)) &&
+	(car(cdr(l)) == car(form)))
+      return(make_list_2(sc, sc->QUOTE, form));
+
+    if (l == sc->VECTOR_FUNCTION)
+      return(g_vector(sc, make_list_1(sc, r))); /* eval? */
+
+    return(make_list_3(sc, sc->CONS, l, r));
+  }
 }
 
 
@@ -13742,13 +13732,9 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "backtrace",               g_backtrace,               0, 0, false, H_backtrace);
   s7_define_function(sc, "clear-backtrace",         g_clear_backtrace,         0, 0, false, H_clear_backtrace);
   s7_define_function(sc, "set-backtrace-length",    g_set_backtrace_length,    1, 0, false, H_set_backtrace_length);
-
   s7_define_function(sc, "gc",                      g_gc,                      0, 1, false, H_gc);
   s7_define_function(sc, "quit",                    g_quit,                    0, 0, false, H_quit);
 
-  s7_define_function(sc, "make-closure",            g_make_closure,            1, 1, false, H_make_closure);
-  s7_define_function(sc, "closure?",                g_is_closure,              1, 0, false, H_is_closure);
-  
   s7_define_function(sc, "procedure?",              g_is_procedure,            1, 0, false, H_is_procedure);
   s7_define_function(sc, "procedure-documentation", g_procedure_documentation, 1, 0, false, H_procedure_documentation);
   s7_define_function(sc, "help",                    g_procedure_documentation, 1, 0, false, H_procedure_documentation);

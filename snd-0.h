@@ -203,7 +203,6 @@ typedef enum {FILE_READ_WRITE, FILE_READ_ONLY} read_only_t;
   #define TO_PROC_NAME(Str) xen_scheme_procedure_to_ruby(Str)
   #define TO_VAR_NAME(Str) xen_scheme_constant_to_ruby(Str)
   #define PROC_OPEN "("
-  #define PROC_CLOSE ")"
   #define PROC_SEP ", "
   #define LIST_OPEN "["
   #define LIST_CLOSE "]"
@@ -217,7 +216,6 @@ typedef enum {FILE_READ_WRITE, FILE_READ_ONLY} read_only_t;
   #define TO_PROC_NAME(Str) Str
   #define TO_VAR_NAME(Str) Str
   #define PROC_OPEN " "
-  #define PROC_CLOSE " "
   #define PROC_SEP " "
   #define LIST_OPEN " '( "
   #define LIST_CLOSE " ) "
@@ -231,7 +229,6 @@ typedef enum {FILE_READ_WRITE, FILE_READ_ONLY} read_only_t;
   #define TO_PROC_NAME(Str) Str
   #define TO_VAR_NAME(Str) Str
   #define PROC_OPEN " "
-  #define PROC_CLOSE ""
   #define PROC_SEP " "
   #define LIST_OPEN "(list "
   #define LIST_CLOSE ")"
@@ -245,7 +242,6 @@ typedef enum {FILE_READ_WRITE, FILE_READ_ONLY} read_only_t;
   #define TO_PROC_NAME(Str) Str
   #define TO_VAR_NAME(Str) Str
   #define PROC_OPEN " "
-  #define PROC_CLOSE ""
   #define PROC_SEP " "
   #define LIST_OPEN "(list "
   #define LIST_CLOSE ")"

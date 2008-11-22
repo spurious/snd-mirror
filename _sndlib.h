@@ -188,10 +188,6 @@ enum {MUS_UNSUPPORTED, MUS_NEXT, MUS_AIFC, MUS_RIFF, MUS_RF64, MUS_BICSF, MUS_NI
       MUS_SHORTEN, MUS_TTA, MUS_WAVPACK, 
       MUS_NUM_HEADER_TYPES};
 
-#ifndef SNDLIB_DISABLE_DEPRECATED
-  #define MUS_HEADER_TYPE_OK(n) mus_header_type_p(n)
-#endif
-
 
 enum {MUS_UNKNOWN, MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BFLOAT, MUS_BINT, MUS_ALAW, MUS_UBYTE, MUS_B24INT,
       MUS_BDOUBLE, MUS_LSHORT, MUS_LINT, MUS_LFLOAT, MUS_LDOUBLE, MUS_UBSHORT, MUS_ULSHORT, MUS_L24INT,
@@ -200,10 +196,6 @@ enum {MUS_UNKNOWN, MUS_BSHORT, MUS_MULAW, MUS_BYTE, MUS_BFLOAT, MUS_BINT, MUS_AL
 
 /* MUS_LINTN and MUS_BINTN refer to 32 bit ints with 31 bits of "fraction" -- the data is "left justified" */
 /* "unscaled" means the float value is used directly (i.e. not as -1.0 to 1.0, but (probably) -32768.0 to 32768.0) */
-
-#ifndef SNDLIB_DISABLE_DEPRECATED
-  #define MUS_DATA_FORMAT_OK(n) mus_data_format_p(n)
-#endif
 
 
 #if MUS_MAC_OSX
@@ -239,10 +231,6 @@ enum {MUS_AUDIO_DEFAULT, MUS_AUDIO_DUPLEX_DEFAULT, MUS_AUDIO_ADAT_IN, MUS_AUDIO_
       MUS_AUDIO_DIRECTION
 };
 /* Snd's recorder uses MUS_AUDIO_DIRECTION to find the size of this list */
-
-#ifndef SNDLIB_DISABLE_DEPRECATED
-  #define MUS_AUDIO_DEVICE_OK(a) mus_audio_device_p(a)
-#endif
 
 
 #define MUS_ERROR -1
