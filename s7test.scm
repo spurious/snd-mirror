@@ -35,6 +35,7 @@
 (define with-format #t)                                        ; simple format tests
 (define with-define* #t)                                       ; this tests s7's version of define*
 (define with-procedure-arity #t)                               ; procedure-arity and other s7-specific stuff
+(define with-r4rs-macro #t)                                    ; test ancient weird "macro"
 
 
 ;; we're assuming call/cc is defined
@@ -364,9 +365,8 @@
 (test (char? #\-) #t)
 (test (char? #\n) #t)
 (test (char? #\() #t)
-;(test (char? #e) #f)
 (test (char? #e1) #f)
-;(test (char? ##) #f)
+(test (char? #\#) #t)
 (test (char? #b101) #f)
 (test (char? #o73) #f)
 (test (char? 'a) #f)
@@ -376,6 +376,11 @@
 (test (char? (string-ref (make-string 1) 0)) #t)
 (test (char?) 'error)
 (test (char? '1e311) #f)
+(test (char? #\") #t)
+(test (char? #\') #t)
+(test (char? #\`) #t)
+(test (char? #\@) #t)
+;#; (test (char? #\spaces) 'error)
 
 (for-each
  (lambda (arg)
@@ -1523,6 +1528,9 @@
 (test (cons 'a (list 'b 'c 'd)) '(a b c d))
 (test (cons 'a (cons 'b (cons 'c 'd))) '(a b c . d))
 (test '(a b c d e) '(a . (b . (c . (d . (e . ()))))))
+(test (cons (cons 1 2) (cons 3 4)) '((1 . 2) (3 . 4)))
+(test (cons (cons 1 (cons 2 3)) 4) '((1 . (2 . 3)) . 4))
+(test (cons (cons 1 (cons 2 '())) (cons 1 2)) '((1 2) . (1 . 2)))
 
 (test (car (list 1 2 3)) 1)
 (test (car (cons 1 2)) 1)
@@ -1542,7 +1550,20 @@
 (test (car '(a b c d e f g)) 'a)
 (test (car '(((((1 2 3) 4) 5) (6 7)) (((u v w) x) y) ((q w e) r) (a b c) e f g)) '((((1 2 3) 4) 5) (6 7)))
 (test (car '(a)) 'a)
+(test (car '(1 ^ 2)) 1)
+(test (car '(1 .. 2)) 1)
 (test (car ''foo) 'quote)
+
+;#; (test (car '( . 1)) 'error)                 ; (catch #t (lambda () (car '( . 1))) (lambda arg 'error))
+;#; (test (car '(1 . )) 'error)
+;#; (test (car '(.)) 'error)
+;#; (test (car '(. )) 'error)
+;#; (test (car '( .)) 'error)
+;#; (test (car '(1 . . 2)) 'error)
+;#; (test (car '(. . . )) 'error)
+;#; (test (car '@.#`'"(" 2) 'error)
+;#; (test (car '@#`') 'error)
+
 
 (for-each
  (lambda (arg)
@@ -2124,6 +2145,7 @@
 (test (let ((x '(1 . 2))) (set-car! x (cdr x)) x) '(2 . 2))
 (test (let ((x '(1 . 2))) (set-car! x x) (list? x)) #f)
 (test (let ((x (list 1))) (set-car! x '()) x) '(()))
+(test (let ((x '(((1 2) . 3) 4))) (set-car! x 1) x) '(1 4))
 
 
 
@@ -2141,6 +2163,7 @@
 (test (let ((x '(1 . 2))) (set-cdr! x (cdr x)) x) '(1 . 2))
 (test (let ((x '(1 . 2))) (set-cdr! x x) (list? x)) #f)
 (test (let ((x (list 1))) (set-cdr! x '()) x) (list 1))
+(test (let ((x '(1 . (2 . (3 (4 5)))))) (set-cdr! x 4) x) '(1 . 4))
 
 
 
@@ -28557,6 +28580,10 @@
     (if (number? n)
 	(begin
 	  (display "(number? ") (display name) (display ") returned #t?") (newline)))
+    (if (or (not (symbol? n))
+	    (boolean? n))
+	(begin
+	  (display "(symbol? ") (display n) (display ") returned #t?") (newline)))
     (if (number? (string->number name))
 	(begin
 	  (display "(string->number ") (display name) (display ") returned ") (display (string->number name)) (display "?") (newline))))
@@ -28582,6 +28609,7 @@
        '-1.1e1-e1i '-1.e1-e-1i '.1e1-e-11i 
        '3.-3. ''1 '1'2 '+-2 '1?
        '1a '1.a '-a '+a '1.. '..1 '-..1 '1ee1 '1ef2 '1+ief2 '1.+ '1.0- '1/2+/3
+;#;       '1'2 1'2
        )
  (list "1e" "--1" "++1" "+." "+.+" ".." ".-" "1e-" "+" "-" "-e1"
        "1/2/3" "1/2+/2" "/2" "2/" "1+2" "1/+i" "1/2e1" "1/2."
@@ -28604,6 +28632,7 @@
        "-1.1e1-e1i" "-1.e1-e-1i" ".1e1-e-11i" 
        "3.-3." "''1" "'1'2" "'+-2" "'1?"
        "1a" "1.a" "-a" "+a" "1.." "..1" "-..1" "1ee1" "1ef2" "1+ief2" "1.+" "1.0-" "1/2+/3"
+;#;       "'1'2" "1'2"
        ))
 
 (test (let ((val (catch #t (lambda ()
@@ -28705,7 +28734,7 @@
    "#b3" "#b4" "#b5" "#b6" "#b7" "#b8" "#b9" "#ba" "#bb" "#bc"
    "#bd" "#be" "#bf" "#q" "#b#b1" "#o#o1" "#d#d1" "#x#x1" "#e#e1" "#xag" "#x1x"
    "#o8" "#o9" "1/#e1" "#o#" "#e#i1" "#d--2" "#b#x1" "#i#x#b1" "#e#e#b1" "#e#b#b1" 
-   "-#b1" "+#b1" "#b1/#b2" "#b1+#b1i" "#b1+i" "1+#bi" "1+#b1i" "1#be1" "#b" "#o" "#" 
+   "-#b1" "+#b1" "#b1/#b2" "#b1+#b1i" "#b1+i" "1+#bi" "1+#b1i" "1#be1" "#b" "#o" "#" "#ea" "#e1a"
    "#i#i1" "12@12+0i"))
 
 (for-each 
@@ -28744,6 +28773,7 @@
    ("#o#i100" 64.0) ("#o#e100" 64) ("#i#o100" 64.0) ("#e#o100" 64)
    ("#d#i100" 100.0) ("#d#e100" 100) ("#i#d100" 100.0) ("#e#d100" 100)
    ("#x#i100" 256.0) ("#x#e100" 256) ("#i#x100" 256.0) ("#e#x100" 256)
+   ("#e#xee" 238) ("#e#x1e1" 481)
 
    ;; Fractions:
    ("1/1" 1) ("1/2" 1/2) ("-1/2" -1/2) ;("1#/1" 10.0)
@@ -30214,6 +30244,7 @@
 (test (let ((x 1)) (let ((y 0)) (begin (let ((x (* 2 x))) (set! y x))) y)) 2)
 (test (let* ((x 1) (x (+ x 1)) (x (+ x 2))) x) 4)
 (test (let ((.. 2) (.... 4) (..... +)) (..... .. ....)) 6)
+(test (let (((x 1)) 2) 3) 'error)
 
 (for-each
  (lambda (arg)
@@ -31280,10 +31311,16 @@
 (test `(1 2 3) '(1 2 3))
 (test `() '())
 (test `(list ,(+ 1 2) 4)  '(list 3 4))
+(test `(1 ,@(list 1 2) 4) '(1 1 2 4))
+(test `#(1 ,@(list 1 2) 4) '#(1 1 2 4))
 (test `(a ,(+ 1 2) ,@(map abs '(4 -5 6)) b) '(a 3 4 5 6 b))
-;(test `#(10 5 ,(sqrt 4) ,@(map sqrt '(16 9)) 8) '#(10 5 2.0 4.0 3.0 8)) ; inexactness foolishness
+(test `#(10 5 ,(sqrt 4) ,@(map sqrt '(16 9)) 8) '#(10 5 2 4 3 8)) ; inexactness foolishness
 (test `(a `(b ,(+ 1 2) ,(foo ,(+ 1 3) d) e) f) '(a `(b ,(+ 1 2) ,(foo 4 d) e) f))
 (test (let ((name1 'x) (name2 'y)) `(a `(b ,,name1 ,',name2 d) e)) '(a `(b ,x ,'y d) e))
+(test `(,@'() . foo) 'foo)
+(test `(1 2 ,(* 9 9) 3 4) '(1 2 81 3 4))
+(test `(1 ,(+ 1 1) 3) '(1 2 3))                     ; TODO: `(,(+ 1 2)) -> infinite loop?
+(test `(,'a . ,'b) (cons 'a 'b))
 
 ;; from gauche
 (let ((quasi0 99)
@@ -31346,6 +31383,59 @@
   (test `#(1 `(1 ,(,@quasi2 x) ,(y ,@quasi3))) '#(1 `(1 ,(a b x) ,(y c d))))
   (test `(1 `#(1 ,(,@quasi2 x) ,(y ,@quasi3))) '(1 `#(1 ,(a b x) ,(y c d)))))
 
+(test (let ((hi (lambda (a) `(+ 1 ,a))))
+	(hi 2))
+      '(+ 1 2))
+
+(test (let ((hi (lambda (a) `(+ 1 ,@a))))
+	(hi (list 2 3)))
+      '(+ 1 2 3))
+
+(test (let ((hi (lambda (a) `(let ((b ,a)) ,(+ 1 a)))))
+	(hi 3))
+      '(let ((b 3)) 4))
+
+(test (let ((x '(a b c)))
+	`(x ,x ,@x foo ,(cadr x) bar ,(cdr x) baz ,@(cdr x)))
+      '(x (a b c) a b c foo b bar (b c) baz b c))
+
+(test (let ((x '(a b c)))
+	`(,(car `(,x))))
+      '((a b c)))
+
+(test (let ((x '(a b c)))
+	`(,@(car `(,x))))
+      '(a b c))
+
+(test (let ((x '(a b c)))
+	`(,(car `(,@x))))
+      '(a))
+
+(test (let ((x '(a b c)))
+	(cadadr ``,,x))
+      '(a b c))
+
+(test (let ((x '(a b c)))
+	`,(car `,x))
+      'a)
+
+(test (let ((x '(2 3)))
+	`(1 ,@x 4))
+      '(1 2 3 4))
+
+(test (let ((x '(2 3)))
+	`#(9 ,@x 9))
+      '#(9 2 3 9))
+
+(test `#(1 ,(/ 12 2)) '#(1 6))
+(test ((lambda () `#(1 ,(/ 12 2)))) '#(1 6))
+
+(test (let ((x '(2 3)))
+	`(1 ,@(map (lambda (a) (+ a 1)) x)))
+      '(1 3 4))
+
+
+;;; TODO: errors in quasiquote
 
 
 
@@ -31631,6 +31721,9 @@
       (test (format #f "hi ~S ho" 1 2) 'error)
       (test (format #f "~C~c~C" #\a #\b #\c) "abc")
       (test (format #f "~C" 1) 'error)
+      (test (format #f "123 ~R 321" 1) 'error)
+      (test (format #f "123 ~,3R 321" 1) 'error)
+      (test (format #f "~,2,3,4D" 123) 'error)
       
       (test (format #f "hi ~Z ho") 'error)
       (test (format #f "hi ~+ ho") 'error)
@@ -31972,5 +32065,11 @@
       ;; TODO: (set! (expr->pws ...) ...) can cause a segfault?
 
       ))
+
+(if with-r4rs-macro
+    (begin
+      
+      ))
+
 
 (display ";all done!") (newline)

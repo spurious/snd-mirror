@@ -993,7 +993,6 @@ static void finalize_s7_cell(s7_scheme *sc, s7_pointer a)
 	{
 	  if (port_string(a))
 	    {
-	      /* fprintf(stderr, "GC free %d bytes\n", port_string_length(a)); */
 	      free(port_string(a));
 	      port_string(a) = NULL;
 	    }
@@ -6173,7 +6172,6 @@ void s7_close_input_port(s7_scheme *sc, s7_pointer p)
     {
       if (port_string(p))
 	{
-	  /* fprintf(stderr, "close free %d bytes\n", port_string_length(p)); */
 	  free(port_string(p));
 	  port_string(p) = NULL;
 	}
@@ -6382,7 +6380,6 @@ s7_pointer s7_open_output_string(s7_scheme *sc)
   port_is_closed(x) = false;
   port_string_length(x) = STRING_PORT_INITIAL_LENGTH;
   port_string(x) = (char *)calloc(STRING_PORT_INITIAL_LENGTH, sizeof(char));
-  /* fprintf(stderr, "open get %d bytes\n", port_string_length(x)); */
   port_string_point(x) = 0;
   port_needs_free(x) = true;
   
@@ -7015,7 +7012,6 @@ static s7_pointer load_file(s7_scheme *sc, FILE *fp)
 
   port_string(port) = content;
   port_string_length(port) = size;
-  /* fprintf(stderr, "load get %d bytes\n", port_string_length(port)); */
   port_string_point(port) = 0;
   port_line_number(port) = 1;
   port_filename(port) = NULL;
@@ -7096,6 +7092,7 @@ static s7_pointer g_load(s7_scheme *sc, s7_pointer args)
   
   if (*(sc->load_verbose))
     fprintf(stderr, "(load \"%s\")\n", fname);
+  /* TODO: shouldn't the load-verbose and gc-verbose stuff go to output or error port? */
   
   port = load_file(sc, fp);
   port_file_number(port) = remember_file_name(fname);
@@ -7161,8 +7158,6 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
   bool old_longjmp;
   s7_pointer port;
   /* this can be called recursively via s7_call */
-  
-  /* fprintf(stderr, "eval c string: %s with top: %d\n", str, sc->stack_top); */
   
   if (sc->longjmp_ok)
     return(g_eval_string(sc, make_list_1(sc, s7_make_string(sc, str))));
@@ -7966,14 +7961,6 @@ s7_pointer s7_cdr(s7_pointer p)
 
 s7_pointer s7_set_car(s7_pointer p, s7_pointer q) 
 { 
-#if S7_DEBUGGING
-  if (is_immutable(car(p)))
-    {
-      fprintf(stderr, "set-car! wants to clobber immutable element");
-      abort();
-    }
-#endif
-  
   car(p) = q;
   return(p);
 }
@@ -7981,14 +7968,6 @@ s7_pointer s7_set_car(s7_pointer p, s7_pointer q)
 
 s7_pointer s7_set_cdr(s7_pointer p, s7_pointer q) 
 { 
-#if S7_DEBUGGING
-  if (is_immutable(car(p)))
-    {
-      fprintf(stderr, "set-cdr! wants to clobber immutable element");
-      abort();
-    }
-#endif
-  
   cdr(p) = q;
   return(p);
 }
@@ -9379,7 +9358,7 @@ static void s7_mark_embedded_objects(s7_pointer a) /* called by gc, calls fobj's
       if (object_types[tag].gc_mark)
 	(*(object_types[tag].gc_mark))(a->object.fobj.value);
     }
-  else fprintf(stderr, "%p, found bad type: %x %d %x\n", a, tag, tag, a->flag);
+  else fprintf(stderr, "%p, found bad type: %x %d %x\n", a, tag, tag, a->flag); /* TODO: real error here */
 }
 
 
@@ -10805,18 +10784,24 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
   s7_pointer catcher;
   catcher = sc->F;
   
-#if S7_DEBUGGING
+#if 0
   fprintf(stderr, "%p s7_error: %s %s\n", sc, s7_object_to_c_string(sc, type), s7_object_to_c_string(sc, info));
 #endif
 
   /* top is 1 past actual top, top - 1 is op, if op = OP_CATCH, top - 4 is the cell containing the catch struct */
-  
+  /*
+  fprintf(stderr, "check stack %d\n", sc->stack_top);
+  */
   for (i = sc->stack_top - 1; i >= 3; i -= 4)
     {
       opcode_t op;
       s7_pointer x;
       op = (opcode_t)s7_integer(vector_element(sc->stack, i));
       
+      /*
+      fprintf(stderr, "op: %lld\n", s7_integer(vector_element(sc->stack, i)));
+      */
+
       if (op == OP_DYNAMIC_WIND)
 	{
 	  x = vector_element(sc->stack, i - 3);
@@ -10829,10 +10814,18 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	  if (op == OP_CATCH)
 	    {
 	      x = vector_element(sc->stack, i - 3);
+
+	      /*
+	      fprintf(stderr, "found catch %s\n", s7_object_to_c_string(sc, catch_tag(x)));
+	      */
+
 	      if ((type == sc->T) ||
 		  (catch_tag(x) == sc->T) ||
 		  (s7_is_eq(catch_tag(x), type)))
 		{
+		  /*
+		  fprintf(stderr, "got one\n");
+		  */
 		  catcher = x;
 		  break;
 		}
@@ -10842,6 +10835,9 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
   
   if (catcher != sc->F)
     {
+      /*
+      fprintf(stderr, "we have a catcher ");
+      */
       sc->args = make_list_2(sc, type, info);
       sc->code = catch_handler(catcher);
       sc->stack_top = catch_goto_loc(catcher);
@@ -10941,6 +10937,12 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info)
 s7_pointer s7_error_and_exit(s7_scheme *sc, s7_pointer type, s7_pointer info)
 {
   return(s7_error_1(sc, type, info, true));
+}
+
+
+static s7_pointer eval_error_0(s7_scheme *sc, const char *errmsg)
+{
+  return(s7_error(sc, sc->ERROR, make_list_1(sc, s7_make_string(sc, errmsg))));
 }
 
 
@@ -11215,6 +11217,9 @@ static s7_pointer read_expression(s7_scheme *sc)
 {
   while (true) 
     {
+      /*
+      fprintf(stderr, "tok: %d ", sc->tok);
+      */
       switch (sc->tok) 
 	{
 	case TOK_EOF:
@@ -11230,7 +11235,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 	    return(sc->NIL);
 
 	  if (sc->tok == TOK_DOT) 
-	    return(eval_error(sc, "syntax error: illegal dot expression: ~A", sc->code)); /* just a guess -- maybe sc->args */
+	    return(eval_error_0(sc, "syntax error: illegal dot expression: '( . ...)"));
 
 	  push_stack(sc, OP_READ_LIST, sc->NIL, sc->NIL);
 	  break;
@@ -11280,9 +11285,12 @@ static s7_pointer read_expression(s7_scheme *sc)
 	    return(sc->value);
 	  }
 
+	case TOK_DOT:
+	  return(eval_error(sc, "stray dot?", sc->code));
+
 	default:
 	  if (sc->tok == TOK_RPAREN)
-	    return(eval_error(sc, "too many close parens: ~A", sc->code));
+	    return(eval_error(sc, "unexpected close paren: ~A", sc->code));
 	  return(eval_error(sc, "syntax error: illegal token: ~A", sc->code));
 	}
     }
@@ -11402,7 +11410,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_EVAL_STRING_DONE:
-      /* fprintf(stderr, "op eval string value: %s\n", s7_object_to_c_string(sc, sc->value)); */
      return(sc->F);
       
 
@@ -11424,10 +11431,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_MAP:
       /* car of args incoming is arglist, cdr is values list (nil to start) */
-      /*
-	fprintf(stderr, "op_map args: %s, code: %s, value: %s\n", 
-	s7_object_to_c_string(sc, sc->args), s7_object_to_c_string(sc, sc->code), s7_object_to_c_string(sc, sc->value));
-      */
       sc->x = sc->args;
       cdr(sc->x) = s7_cons(sc, sc->value, cdr(sc->x)); /* add current value to list */
       
@@ -12649,7 +12652,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_READ_DOT:
       if (token(sc, sc->input_port) != TOK_RPAREN)
-	return(eval_error(sc, "syntax error: illegal dot expression: ~A", sc->code));
+	return(eval_error(sc, "syntax error: illegal dot expression: '(~{~A~^ ~} . )", sc->args));
+
+      /* TODO: (catch #t (lambda () (car '( . ))) (lambda args 'error))
+       *   should not try to deal with the bad list outside the catch
+       * TODO: all the token errors need better error messages -- give the actual expression, not sc->code!
+       * TODO: who pops off the catch op above??
+       */
 
       sc->value = s7_reverse_in_place(sc, sc->value, sc->args);
       pop_stack(sc);
@@ -12702,7 +12711,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 }
 
 
-/* TODO: check vector equal and '#("hi" x etc) */
+
 
 /* -------------------------------- quasiquote -------------------------------- */
 
@@ -13118,7 +13127,7 @@ static s7_pointer set_key(s7_scheme *sc, s7_pointer obj, s7_pointer args)
    */
   {
     s7_pointer curval;
-    curval = g_assq(sc, make_list_2( obj, sc->key_values));
+    curval = g_assq(sc, make_list_2(sc, obj, sc->key_values));
     if (curval == sc->F)
       sc->key_values = s7_cons(sc, s7_cons(sc, obj, car(args)), sc->key_values);
     else cdr(curval) = car(args);
