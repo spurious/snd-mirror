@@ -191,20 +191,24 @@
 #define GC_TEMPS_SIZE 4096
 /* the number of recent objects that are temporarily gc-protected; 512 is too small in the threads case (generators.scm) */
 
-#define S7_DEBUGGING 0
-/* this is for a bunch of sanity checks */
-
-#define WITH_READ_LINE 1
-/* this includes the (non-standard) read-line function */
-
 #define INITIAL_BACKTRACE_SIZE 16
 /* this is the number of entries in the backtrace printout of previous evaluations */
 
 #define CASE_SENSITIVE 1
 /* this determines whether names are case sensitive */
 
+#define WITH_READ_LINE 1
+/* this includes the (non-standard) read-line function */
+
 #define WITH_FORMAT 1
 /* this includes a simple (no Roman numerals!) version of format */
+
+#define WITH_CONS_STREAM 0
+/* this includes the "cons-stream" form */
+
+#define S7_DEBUGGING 0
+/* this is for a internal debugging */
+
 
 
 /* -------------------------------------------------------------------------------- */
@@ -240,15 +244,14 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY,
 	      OP_SET0, OP_SET1, OP_SET2, OP_DEFINE_CONSTANT0, OP_DEFINE_CONSTANT1, 
 	      OP_LET0, OP_LET1, OP_LET2, OP_LET_STAR0, OP_LET_STAR1, OP_LET_STAR2, 
 	      OP_LETREC0, OP_LETREC1, OP_LETREC2, OP_COND0, OP_COND1, OP_MAKE_PROMISE, OP_AND0, OP_AND1, 
-	      OP_OR0, OP_OR1, OP_CONS_STREAM0, OP_CONS_STREAM1, 
-	      OP_DEFMACRO, OP_MACRO0, OP_MACRO1, OP_DEFINE_MACRO,
+	      OP_OR0, OP_OR1, OP_DEFMACRO, OP_MACRO0, OP_MACRO1, OP_DEFINE_MACRO,
 	      OP_CASE0, OP_CASE1, OP_CASE2, OP_READ_LIST, OP_READ_DOT, OP_READ_QUOTE, 
 	      OP_READ_QUASIQUOTE, OP_READ_QUASIQUOTE_VECTOR, OP_READ_UNQUOTE, OP_READ_UNQUOTE_SPLICING, 
 	      OP_READ_VECTOR, OP_FORCE, OP_READ_RETURN_EXPRESSION,
 	      OP_READ_POP_AND_RETURN_EXPRESSION, OP_LOAD_RETURN_IF_EOF, OP_LOAD_CLOSE_AND_POP_IF_EOF, 
 	      OP_EVAL_STRING, OP_EVAL_STRING_DONE, OP_QUIT, OP_CATCH, OP_DYNAMIC_WIND, OP_FOR_EACH, OP_MAP, 
 	      OP_DO, OP_DO_END0, OP_DO_END1, OP_DO_STEP0, OP_DO_STEP1, OP_DO_STEP2, OP_DO_INIT,
-	      OP_DEFINE_STAR, OP_LAMBDA_STAR,
+	      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_CONS_STREAM0, OP_CONS_STREAM1, 
 	      OP_MAX_DEFINED
 } opcode_t;
 
@@ -707,18 +710,18 @@ static char *describe_type(s7_pointer p)
 #endif
 
 
-#define TOK_EOF     (-1)
-#define TOK_LPAREN  0
-#define TOK_RPAREN  1
-#define TOK_DOT     2
-#define TOK_ATOM    3
-#define TOK_QUOTE   4
-#define TOK_DQUOTE  6
-#define TOK_BQUOTE  7
-#define TOK_COMMA   8
-#define TOK_ATMARK  9
-#define TOK_SHARP_CONST 10
-#define TOK_VEC     11
+#define TOKEN_EOF     (-1)
+#define TOKEN_LPAREN  0
+#define TOKEN_RPAREN  1
+#define TOKEN_DOT     2
+#define TOKEN_ATOM    3
+#define TOKEN_QUOTE   4
+#define TOKEN_DQUOTE  6
+#define TOKEN_BQUOTE  7
+#define TOKEN_COMMA   8
+#define TOKEN_ATMARK  9
+#define TOKEN_SHARP_CONST 10
+#define TOKEN_VEC     11
 
 #define BACKQUOTE '`'
 
@@ -767,6 +770,7 @@ static char *s7_describe_object(s7_scheme *sc, s7_pointer a);
 static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol);
 static bool s7_is_applicable_object(s7_pointer x);
 static s7_pointer make_list_1(s7_scheme *sc, s7_pointer a);
+static void write_string(s7_scheme *sc, const char *s, s7_pointer pt);
 
 
 
@@ -1128,21 +1132,12 @@ void s7_mark_object(s7_pointer p)
 }
 
 
-#if S7_DEBUGGING
-static int gc(s7_scheme *sc, const char *function, int line)
-#else
 static int gc(s7_scheme *sc)
-#endif
 {
   int i, old_free_heap_top;
   
-  if ((*(sc->gc_verbose)) &&
-      (sc->output_port == sc->NIL))
-#if S7_DEBUGGING
-    fprintf(stderr, "\n%s[%d] gc...", function, line);
-#else
-    fprintf(stderr, "gc...");
-#endif
+  if (*(sc->gc_verbose))
+    write_string(sc, "gc...", s7_current_output_port(sc));
   
   /* mark all live objects (the symbol table is in permanent memory, not the heap) */
   S7_MARK(sc->global_env);
@@ -1202,9 +1197,14 @@ static int gc(s7_scheme *sc)
       }
   }
   
-  if ((*(sc->gc_verbose)) &&
-      (sc->output_port == sc->NIL))
-    fprintf(stderr, "done: %d heap were recovered, total heap: %d\n", sc->free_heap_top - old_free_heap_top, sc->heap_size);
+  if (*(sc->gc_verbose))
+    {
+      char *msg;
+      msg = (char *)malloc(128 * sizeof(char));
+      snprintf(msg, 128, "done: %d heap were recovered, total heap: %d\n", sc->free_heap_top - old_free_heap_top, sc->heap_size);
+      write_string(sc, msg, s7_current_output_port(sc));
+      free(msg);
+    }
   
   return(sc->free_heap_top - old_free_heap_top); /* needed by cell allocator to decide when to increase heap size */
 }
@@ -1243,11 +1243,7 @@ static s7_pointer new_cell(s7_scheme *sc)
       int k, old_size, freed_heap = 0;
       
       if (!(*(sc->gc_off)))
-#if S7_DEBUGGING
-	freed_heap = gc(sc, function, line);
-#else
         freed_heap = gc(sc);
-#endif
       /* when threads, the gc function can be interrupted at any point and resumed later -- mark bits need to be preserved during this interruption */
       
       if (freed_heap < sc->heap_size / 4) /* was 1000, setting it to 2 made no difference in run time */
@@ -1316,22 +1312,12 @@ static s7_pointer g_gc(s7_scheme *sc, s7_pointer args)
       if (*(sc->gc_off)) return(sc->F);
     }
 
-#if S7_DEBUGGING
-#if HAVE_PTHREADS
-  pthread_mutex_lock(&alloc_lock);
-  gc(sc->orig_sc, __FUNCTION__, __LINE__);
-  pthread_mutex_unlock(&alloc_lock);
-#else
-  gc(sc, __FUNCTION__, __LINE__);
-#endif
-#else
 #if HAVE_PTHREADS
   pthread_mutex_lock(&alloc_lock);
   gc(sc->orig_sc);
   pthread_mutex_unlock(&alloc_lock);
 #else
   gc(sc);
-#endif
 #endif
   
   return(sc->UNSPECIFIED);
@@ -1381,11 +1367,11 @@ static void pop_stack(s7_scheme *sc)
 } 
 
 
-static void push_stack(s7_scheme *sc, opcode_t op, s7_pointer args, s7_pointer code) 
+static void push_stack(s7_scheme *sc, opcode_t op, s7_pointer args, s7_pointer code)
 { 
   s7_pointer *vel;
   sc->stack_top += 4;
-  
+
   if (sc->stack_top >= sc->stack_size)
     {
       int i, new_size;
@@ -3450,7 +3436,7 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
 
 
 #define CTABLE_SIZE 128
-static bool *whitespace_table, *atom_delimiter_table, *sharp_const_table, *exponent_table, *slashify_table, *string_delimiter_table;
+static bool *whitespace_table, *atom_delimiter_table, *exponent_table, *slashify_table, *string_delimiter_table;
 static int *digits;
 
 static bool is_one_of(bool *ctable, int c) 
@@ -3465,7 +3451,6 @@ static void init_ctables(void)
 
   whitespace_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
   atom_delimiter_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
-  sharp_const_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
   exponent_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
   slashify_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
   string_delimiter_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
@@ -3473,17 +3458,6 @@ static void init_ctables(void)
   whitespace_table['\n'] = true;
   whitespace_table['\t'] = true;
   whitespace_table[' '] = true;
-  
-  sharp_const_table[' '] = true;
-  sharp_const_table['t'] = true;
-  sharp_const_table['f'] = true;
-  sharp_const_table['o'] = true;
-  sharp_const_table['d'] = true;
-  sharp_const_table['x'] = true;
-  sharp_const_table['b'] = true;
-  sharp_const_table['i'] = true;
-  sharp_const_table['e'] = true;
-  sharp_const_table['\\'] = true;
   
   atom_delimiter_table['('] = true;
   atom_delimiter_table[')'] = true;
@@ -3579,8 +3553,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name)
   if (len == 0)
     return(sc->NIL);
 
-  if ((len < 2) &&
-      (is_radix_prefix(name[0])))
+  if (len < 2)          /* #<any other char> is an error in this scheme */
     return(sc->NIL);
       
   switch (name[0])
@@ -6719,51 +6692,58 @@ static int token(s7_scheme *sc, s7_pointer pt)
 {
   int c;
   c = skip_space(sc, pt);
+  /* TODO: can token and skip_space be merged? */
+
   switch (c) 
     {
     case EOF:
     case 0:
-      return(TOK_EOF);
+      return(TOKEN_EOF);
       
     case '(':
-      return(TOK_LPAREN);
+      return(TOKEN_LPAREN);
       
     case ')':
-      return(TOK_RPAREN);
+      return(TOKEN_RPAREN);
       
     case '.':
       c = inchar(sc, pt);
       if (is_one_of(whitespace_table, c)) 
-	return(TOK_DOT);
+	return(TOKEN_DOT);
       backchar(sc, c, pt);
       backchar(sc, '.', pt);
-      return(TOK_ATOM);
+      return(TOKEN_ATOM);
       
     case '\'':
-      return(TOK_QUOTE);
+      return(TOKEN_QUOTE);
       
     case ';':
-      while ((c = inchar(sc, pt)) != '\n' && (c != EOF))
-	;
-      return(token(sc, pt));
-      
+      {
+	int c;
+	if (is_file_port(pt))
+	  do (c = fgetc(port_file(pt))); while ((c != '\n') && (c != EOF));
+	else do (c = port_string(pt)[port_string_point(pt)++]); while ((c != '\n') && (c != EOF));
+	port_line_number(pt)++;
+	return(token(sc, pt));
+      }
+
     case '"':
-      return(TOK_DQUOTE);
+      return(TOKEN_DQUOTE);
       
     case BACKQUOTE:
-      return(TOK_BQUOTE);
+      return(TOKEN_BQUOTE);
       
     case ',':
       if ((c = inchar(sc, pt)) == '@') 
-	return(TOK_ATMARK);
+	return(TOKEN_ATMARK);
       
       backchar(sc, c, pt);
-      return(TOK_COMMA);
+      return(TOKEN_COMMA);
       
     case '#':
       c = inchar(sc, pt);
       if (c == '(') 
-	return(TOK_VEC);
+	return(TOKEN_VEC);
       
       /* block comments in either #! ... !# */
       if (c == '!') 
@@ -6796,13 +6776,11 @@ static int token(s7_scheme *sc, s7_pointer pt)
 	}
       
       backchar(sc, c, pt);
-      if (is_one_of(sharp_const_table, c)) 
-	return(TOK_SHARP_CONST);
-      return(TOK_ATOM);
+      return(TOKEN_SHARP_CONST); /* next stage notices any errors */
       
     default:
       backchar(sc, c, pt);
-      return(TOK_ATOM);
+      return(TOKEN_ATOM);
     }
 }
 
@@ -7034,7 +7012,15 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
     return(s7_file_error(sc, "open-input-file", "can't open", filename));
   
   if (*(sc->load_verbose))
-    fprintf(stderr, "s7_load(\"%s\")\n", filename);
+    {
+      char *msg;
+      int len;
+      len = safe_strlen(filename) + 32;
+      msg = (char *)malloc(len * sizeof(char));
+      snprintf(msg, len, "s7_load(\"%s\")\n", filename);
+      write_string(sc, msg, s7_current_output_port(sc));
+      free(msg);
+    }
 
   port = load_file(sc, fp);
   port_file_number(port) = remember_file_name(filename);
@@ -7091,8 +7077,15 @@ static s7_pointer g_load(s7_scheme *sc, s7_pointer args)
     return(s7_file_error(sc, "open-input-file", "can't open", fname));
   
   if (*(sc->load_verbose))
-    fprintf(stderr, "(load \"%s\")\n", fname);
-  /* TODO: shouldn't the load-verbose and gc-verbose stuff go to output or error port? */
+    {
+      char *msg;
+      int len;
+      len = safe_strlen(fname) + 32;
+      msg = (char *)malloc(len * sizeof(char));
+      snprintf(msg, len, "(load \"%s\")\n", fname);
+      write_string(sc, msg, s7_current_output_port(sc));
+      free(msg);
+    }
   
   port = load_file(sc, fp);
   port_file_number(port) = remember_file_name(fname);
@@ -8767,6 +8760,7 @@ static s7_pointer g_provide(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_list(s7_scheme *sc, s7_pointer args)
 {
   #define H_list "(list ...) returns its arguments in a list"
+
   return(args);
 }
 
@@ -10479,11 +10473,10 @@ static pthread_mutex_t backtrace_lock = PTHREAD_MUTEX_INITIALIZER;
 
 static void print_backtrace_entry(s7_scheme *sc, int n)
 {
-  char *str = NULL;
-  #define NUMBUF_SIZE 64
-  char numbuf[NUMBUF_SIZE];
+  char *str = NULL, *func_name, *str1 = NULL, *str2;
   int line = 0;
   s7_pointer code, args;
+  bool need_free = false;
 
 #if HAVE_PTHREADS
   sc = sc->orig_sc;
@@ -10498,29 +10491,28 @@ static void print_backtrace_entry(s7_scheme *sc, int n)
 #if HAVE_PTHREADS
   if (sc->backtrace_thread_ids[n] != 0)
     {
-      snprintf(numbuf, NUMBUF_SIZE, "[%d] ", sc->backtrace_thread_ids[n]);
-      write_string(sc, numbuf, sc->error_port);
+      str = (char *)malloc(64 * sizeof(char));
+      snprintf(str, 64, "[%d] ", sc->backtrace_thread_ids[n]);
+      write_string(sc, str, sc->error_port);
+      free(str);
     }
 #endif
 
   /* we have backtrace_ops|args equivalent to earlier code|args */
-
-  write_string(sc, "(", sc->error_port);
+  
   if (s7_is_function(code))
-    write_string(sc, function_name(code), sc->error_port);
+    func_name = (char *)function_name(code);
   else
     {
       if (s7_is_procedure_with_setter(code))
-	write_string(sc, pws_name(code), sc->error_port);
+	func_name = (char *)pws_name(code);
       else 
 	{
-	  str = s7_object_to_c_string(sc, code); /* do we need the thread-local env here? unfortunately, yes... */
-	  write_string(sc, str, sc->error_port);
-	  if (str) free(str);
+	  func_name = s7_object_to_c_string(sc, code);
+	  need_free = true;
 	}
     }
 
-  write_string(sc, " ", sc->error_port);
   str = no_outer_parens(s7_object_to_c_string(sc, args));
   if (safe_strlen(str) > 128)
     {
@@ -10529,9 +10521,6 @@ static void print_backtrace_entry(s7_scheme *sc, int n)
       str[126] = '.';
       str[127] = '\0';
     }
-  write_string(sc, str, sc->error_port);
-  if (str) free(str);
-  write_string(sc, ")", sc->error_port);
 
   line = pair_line_number(code);
   if (line > 0)
@@ -10539,13 +10528,20 @@ static void print_backtrace_entry(s7_scheme *sc, int n)
       if ((remembered_line_number(line) != 0) &&
 	  (remembered_file_name(line)))
 	{
-	  write_string(sc, "        ; ", sc->error_port);
-	  write_string(sc, remembered_file_name(line), sc->error_port);
-	  snprintf(numbuf, NUMBUF_SIZE, "[%d]", remembered_line_number(line));
-	  write_string(sc, numbuf, sc->error_port);
+	  str1 = (char *)malloc((64 + safe_strlen(remembered_file_name(line))) * sizeof(char));
+	  sprintf(str1, "        ; %s[%d]", remembered_file_name(line), remembered_line_number(line));
 	}
     }
-  write_string(sc, "\n", sc->error_port);
+
+  str2 = (char *)malloc((160 + safe_strlen(func_name)) * sizeof(char));
+  sprintf(str2, "(%s %s)%s\n", func_name, str, str1);
+
+  write_string(sc, str2, s7_current_error_port(sc));
+  
+  if (str) free(str);
+  if (str1) free(str1);
+  if (str2) free(str2);
+  if (need_free) free(func_name);
 }
 
 
@@ -10789,19 +10785,11 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 #endif
 
   /* top is 1 past actual top, top - 1 is op, if op = OP_CATCH, top - 4 is the cell containing the catch struct */
-  /*
-  fprintf(stderr, "check stack %d\n", sc->stack_top);
-  */
   for (i = sc->stack_top - 1; i >= 3; i -= 4)
     {
       opcode_t op;
       s7_pointer x;
       op = (opcode_t)s7_integer(vector_element(sc->stack, i));
-      
-      /*
-      fprintf(stderr, "op: %lld\n", s7_integer(vector_element(sc->stack, i)));
-      */
-
       if (op == OP_DYNAMIC_WIND)
 	{
 	  x = vector_element(sc->stack, i - 3);
@@ -10814,18 +10802,10 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	  if (op == OP_CATCH)
 	    {
 	      x = vector_element(sc->stack, i - 3);
-
-	      /*
-	      fprintf(stderr, "found catch %s\n", s7_object_to_c_string(sc, catch_tag(x)));
-	      */
-
 	      if ((type == sc->T) ||
 		  (catch_tag(x) == sc->T) ||
 		  (s7_is_eq(catch_tag(x), type)))
 		{
-		  /*
-		  fprintf(stderr, "got one\n");
-		  */
 		  catcher = x;
 		  break;
 		}
@@ -10835,9 +10815,6 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
   
   if (catcher != sc->F)
     {
-      /*
-      fprintf(stderr, "we have a catcher ");
-      */
       sc->args = make_list_2(sc, type, info);
       sc->code = catch_handler(catcher);
       sc->stack_top = catch_goto_loc(catcher);
@@ -10853,7 +10830,6 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
       /* if info is not a list, send object->string to current error port,
        *   else assume car(info) is a format control string, and cdr(info) are its args
        */
-
       if ((!s7_is_list(sc, info)) ||
 	  (!s7_is_string(car(info))))
 	format_to_output(sc, 
@@ -10940,12 +10916,6 @@ s7_pointer s7_error_and_exit(s7_scheme *sc, s7_pointer type, s7_pointer info)
 }
 
 
-static s7_pointer eval_error_0(s7_scheme *sc, const char *errmsg)
-{
-  return(s7_error(sc, sc->ERROR, make_list_1(sc, s7_make_string(sc, errmsg))));
-}
-
-
 static s7_pointer eval_error(s7_scheme *sc, const char *errmsg, s7_pointer obj)
 {
   return(s7_error(sc, sc->ERROR, make_list_2(sc, s7_make_string(sc, errmsg), obj)));
@@ -10955,6 +10925,74 @@ static s7_pointer eval_error(s7_scheme *sc, const char *errmsg, s7_pointer obj)
 static s7_pointer eval_error_2(s7_scheme *sc, const char *errmsg, s7_pointer obj1, s7_pointer obj2)
 {
   return(s7_error(sc, sc->ERROR, make_list_3(sc, s7_make_string(sc, errmsg), obj1, obj2)));
+}
+
+
+static s7_pointer read_error(s7_scheme *sc, const char *errmsg)
+{
+  /* reader errors happen before the evaluator gets involved, so forms such as:
+   *   (catch #t (lambda () (car '( . ))) (lambda arg 'error))
+   * do not catch the error if we simply signal an error when we encounter it.
+   * We try to encapsulate the bad input in a call on "error" --
+   * some cases are working...
+   */
+  
+  char *msg;
+  int len;
+  s7_pointer pt, result;
+  pt = sc->input_port;
+
+  if (is_string_port(sc->input_port))
+    {
+      #define QUOTE_SIZE 12
+      int i, start, end, slen;
+      char *recent_input;
+      
+      start = port_string_point(pt) - QUOTE_SIZE;
+      if (start < 0) start = 0;
+      end = port_string_point(pt) + QUOTE_SIZE;
+      if (end > port_string_length(pt))
+	end = port_string_length(pt);
+      slen = end - start;
+
+      recent_input = (char *)malloc((slen + 8) * sizeof(char));
+      for (i = 0; i < 3; i++) recent_input[i] = '.';
+      recent_input[3] = ' ';
+      for (i = 0; i < slen; i++) recent_input[i + 4] = port_string(pt)[start + i];
+      recent_input[i + 4] = ' ';
+      for (i = 0; i < 3; i++) recent_input[i + slen + 5] = '.';
+      recent_input[7 + slen] = '\0';
+      if (port_line_number(pt) > 0)
+	{
+	  len = slen + safe_strlen(errmsg) + safe_strlen(port_filename(pt)) + 32;
+	  msg = (char *)malloc(len * sizeof(char));
+	  len = snprintf(msg, len, "%s: %s %s[%d]", errmsg, recent_input, port_filename(pt), port_line_number(pt));
+	}
+      else
+	{
+	  len = slen + safe_strlen(errmsg) + 32;
+	  msg = (char *)malloc(len * sizeof(char));
+	  len = snprintf(msg, len, "%s: %s", errmsg, recent_input);
+	}
+      free(recent_input);
+    }
+  else
+    {
+      len = safe_strlen(errmsg) + safe_strlen(port_filename(pt)) + 32;
+      msg = (char *)malloc(len * sizeof(char));
+      len = snprintf(msg, len, "%s %s[%d]", errmsg, port_filename(pt), port_line_number(pt));
+    }
+  
+  s7_newline(sc, s7_current_error_port(sc));
+  write_string(sc, msg, s7_current_error_port(sc)); /* make sure we complain ... */
+  s7_newline(sc, s7_current_error_port(sc));
+
+  result = make_list_2(sc, 
+		       s7_symbol_value(sc, sc->ERROR), 
+		       s7_make_string_with_length(sc, msg, len));
+
+  free(msg);
+  return(result);
 }
 
 
@@ -11213,85 +11251,107 @@ static s7_pointer eval_symbol(s7_scheme *sc, s7_pointer sym)
 }
 
 
+static void back_up_stack(s7_scheme *sc)
+{
+  opcode_t top_op;
+  top_op =(opcode_t)s7_integer(vector_element(sc->stack, sc->stack_top - 1));
+  if (top_op == OP_READ_DOT)
+    {
+      pop_stack(sc);
+      top_op =(opcode_t)s7_integer(vector_element(sc->stack, sc->stack_top - 1));
+    }
+  if (top_op == OP_READ_VECTOR)
+    {
+      pop_stack(sc);
+      top_op =(opcode_t)s7_integer(vector_element(sc->stack, sc->stack_top - 1));
+    }
+  if (top_op == OP_READ_QUOTE)
+    pop_stack(sc);
+}
+
+
 static s7_pointer read_expression(s7_scheme *sc)
 {
   while (true) 
     {
-      /*
-      fprintf(stderr, "tok: %d ", sc->tok);
-      */
+      int c;
       switch (sc->tok) 
 	{
-	case TOK_EOF:
+	case TOKEN_EOF:
 	  return(sc->EOF_OBJECT);
 	  
-	case TOK_VEC:
+	case TOKEN_VEC:  /* already read #( */
 	  push_stack(sc, OP_READ_VECTOR, sc->NIL, sc->NIL);
 	  /* fall through */
 	  
-	case TOK_LPAREN:
+	case TOKEN_LPAREN:
 	  sc->tok = token(sc, sc->input_port);
-	  if (sc->tok == TOK_RPAREN)
+	  if (sc->tok == TOKEN_RPAREN)
 	    return(sc->NIL);
 
-	  if (sc->tok == TOK_DOT) 
-	    return(eval_error_0(sc, "syntax error: illegal dot expression: '( . ...)"));
-
+	  if (sc->tok == TOKEN_DOT) 
+	    {
+	      back_up_stack(sc);
+	      do {c = inchar(sc, sc->input_port);} while ((c != ')') && (c != EOF));
+	      return(read_error(sc, "stray dot after '('?"));         /* (car '( . )) */
+	    }
 	  push_stack(sc, OP_READ_LIST, sc->NIL, sc->NIL);
 	  break;
 	  
-	case TOK_QUOTE:
+	case TOKEN_QUOTE:
 	  push_stack(sc, OP_READ_QUOTE, sc->NIL, sc->NIL);
 	  sc->tok = token(sc, sc->input_port);
 	  break;
 	  
-	case TOK_BQUOTE:
+	case TOKEN_BQUOTE:
 	  sc->tok = token(sc, sc->input_port);
-	  if (sc->tok == TOK_VEC) 
+	  if (sc->tok == TOKEN_VEC) 
 	    {
 	      push_stack(sc, OP_READ_QUASIQUOTE_VECTOR, sc->NIL, sc->NIL);
-	      sc->tok= TOK_LPAREN;
+	      sc->tok= TOKEN_LPAREN;
 	    } 
 	  else push_stack(sc, OP_READ_QUASIQUOTE, sc->NIL, sc->NIL);
 	  break;
 	  
-	case TOK_COMMA:
+	case TOKEN_COMMA:
 	  push_stack(sc, OP_READ_UNQUOTE, sc->NIL, sc->NIL);
 	  sc->tok = token(sc, sc->input_port);
 	  break;
 	  
-	case TOK_ATMARK:
+	case TOKEN_ATMARK:
 	  push_stack(sc, OP_READ_UNQUOTE_SPLICING, sc->NIL, sc->NIL);
 	  sc->tok = token(sc, sc->input_port);
 	  break;
 	  
-	case TOK_ATOM:
+	case TOKEN_ATOM:
 	  return(make_atom(sc, read_string_upto(sc), 10, true)); /* true = not just string->number */
-	  /* if reading list (from lparen), this will finally get us to op_read_list */
+	  /* If reading list (from lparen), this will finally get us to op_read_list */
 	  
-	case TOK_DQUOTE:
+	case TOKEN_DQUOTE:
 	  sc->value = read_string_expression(sc, sc->input_port);
-	  if (sc->value == sc->F) 
-	    return(eval_error(sc, "error reading string: ~A", sc->code));
+	  if (sc->value == sc->F)                                /* can happen if input code ends in the middle of a string */
+	    return(read_error(sc, "end of input encountered while in a string"));
 	  return(sc->value);
 	  
-	case TOK_SHARP_CONST:
+	case TOKEN_SHARP_CONST:
 	  {
 	    char *expr;
 	    expr = read_string_upto(sc);
 	    sc->value = make_sharp_constant(sc, expr);
 	    if (sc->value == sc->NIL)
-	      return(eval_error(sc, "undefined sharp expression: #~A", s7_make_string(sc, expr)));
+	      return(read_error(sc, "undefined sharp expression")); /* (list #b) */
 	    return(sc->value);
 	  }
 
-	case TOK_DOT:
-	  return(eval_error(sc, "stray dot?", sc->code));
+	case TOKEN_DOT: /* (catch #t (lambda () (+ 1 . . )) (lambda args 'hiho)) */
+	  back_up_stack(sc);
+	  do {c = inchar(sc, sc->input_port);} while ((c != ')') && (c != EOF));
+	  return(read_error(sc, "stray dot in list?"));             /* (+ 1 . . ) */
 
-	default:
-	  if (sc->tok == TOK_RPAREN)
-	    return(eval_error(sc, "unexpected close paren: ~A", sc->code));
-	  return(eval_error(sc, "syntax error: illegal token: ~A", sc->code));
+	case TOKEN_RPAREN: /* (catch #t (lambda () '(1 2 . )) (lambda args 'hiho)) */
+	  back_up_stack(sc);
+	  return(read_error(sc, "unexpected close paren"));         /* (+ 1 2)) or (+ 1 . ) */
+
 	}
     }
   return(sc->NIL);
@@ -11326,7 +11386,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     {
     case OP_READ_INTERNAL:
       sc->tok = token(sc, sc->input_port);
-      if (sc->tok == TOK_EOF) 
+      if (sc->tok == TOKEN_EOF) 
 	{
 	  pop_stack(sc);
 	  goto START;
@@ -11349,7 +11409,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_READ_POP_AND_RETURN_EXPRESSION:
       pop_input_port(sc);
       
-      if (sc->tok == TOK_EOF)
+      if (sc->tok == TOKEN_EOF)
 	{
 	  sc->value = sc->EOF_OBJECT;
 	  pop_stack(sc);
@@ -11363,7 +11423,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   read and evaluate exprs until EOF that matches (stack reflects nesting)
        */
     case OP_LOAD_RETURN_IF_EOF:  /* loop here until eof (via push stack below) */
-      if (sc->tok != TOK_EOF)
+      if (sc->tok != TOKEN_EOF)
 	{
 	  push_stack(sc, OP_LOAD_RETURN_IF_EOF, sc->NIL, sc->NIL);
 	  push_stack(sc, OP_READ_INTERNAL, sc->NIL, sc->NIL);
@@ -11377,7 +11437,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *    read and evaluate all exprs, then upon EOF, close current and pop input port stack
        */
     case OP_LOAD_CLOSE_AND_POP_IF_EOF:
-      if (sc->tok != TOK_EOF)
+      if (sc->tok != TOKEN_EOF)
 	{
 	  push_stack(sc, OP_LOAD_CLOSE_AND_POP_IF_EOF, sc->args, sc->code);
 	  push_stack(sc, OP_READ_INTERNAL, sc->NIL, sc->NIL);
@@ -11395,7 +11455,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *    assume caller (C via g_eval_c_string) is dealing with the string port
        */
     case OP_EVAL_STRING:
-      if (sc->tok != TOK_EOF)
+      if (sc->tok != TOKEN_EOF)
 	{
 	  if (s7_peek_char(sc, sc->input_port) != EOF)
 	    {
@@ -11652,7 +11712,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_EVAL_ARGS0:
       sc->saved_line_number = pair_line_number(sc->code);
-
       if (is_macro(sc->value)) 
 	{    
 	  /* macro expansion */
@@ -11713,6 +11772,21 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	}
       else                       /* got all args -- go to apply */
 	{
+	  if (sc->code != sc->NIL)
+	    {
+	      int len;
+	      char *msg, *argstr;
+	      s7_pointer result;
+	      argstr = s7_object_to_c_string(sc, s7_append(sc, s7_reverse(sc, cdr(sc->args)), s7_cons(sc, car(sc->args), sc->code)));
+	      len = strlen(argstr) + 32;
+	      msg = (char *)malloc(len * sizeof(char));
+	      len = snprintf(msg, len, "improper list of arguments: %s?", argstr);
+	      free(argstr);
+	      result = s7_make_string_with_length(sc, msg, len);
+	      free(msg);
+	      s7_error(sc, sc->ERROR, result);
+	    }
+
 	  sc->args = safe_reverse_in_place(sc, sc->args); 
 	  sc->code = car(sc->args);
 	  set_pair_line_number(sc->code, sc->saved_line_number);
@@ -11725,7 +11799,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     APPLY:
     case OP_APPLY:      /* apply 'code' to 'args' */
       add_backtrace_entry(sc, sc->code, sc->args);
-      
       switch (type(sc->code))
 	{
 	case T_S7_FUNCTION: 	                  /* -------- C-based function -------- */
@@ -12331,6 +12404,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
       
       
+#if WITH_CONS_STREAM
     case OP_CONS_STREAM0:
       push_stack(sc, OP_CONS_STREAM1, sc->NIL, cdr(sc->code));
       sc->code = car(sc->code);
@@ -12344,7 +12418,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->value = s7_cons(sc, sc->args, sc->x);
       pop_stack(sc);
       goto START;      
-      
+#endif
+
       
     case OP_AND0:
       if (sc->code == sc->NIL) 
@@ -12620,44 +12695,54 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->args = s7_cons(sc, sc->value, sc->args);
       sc->tok = token(sc, sc->input_port);
 
-      if (sc->tok == TOK_RPAREN) 
+      switch (sc->tok)
 	{
-	  int c;
-	  c = inchar(sc, sc->input_port);
-	  if ((c != '\n') && (c != EOF))
-	    backchar(sc, c, sc->input_port);
-	  
-	  sc->value = remember_line(sc, safe_reverse_in_place(sc, sc->args));
-	  pop_stack(sc);
-	  goto START;
-	} 
+	case TOKEN_RPAREN:
+	  {
+	    int c;
+	    c = inchar(sc, sc->input_port);
+	    if ((c != '\n') && (c != EOF))
+	      backchar(sc, c, sc->input_port);
+	    sc->value = remember_line(sc, safe_reverse_in_place(sc, sc->args));
+	  }
+	  break;
 
-      if (sc->tok == TOK_DOT) 
-	{
+	case TOKEN_DOT:
 	  push_stack(sc, OP_READ_DOT, sc->args, sc->NIL);
 	  sc->tok = token(sc, sc->input_port);
 	  sc->value = read_expression(sc);
-	  pop_stack(sc);
-	  goto START;
-	} 
+	  break;
 
-      if (sc->tok == TOK_EOF)
-	return(eval_error(sc, "~A: missing close paren?", sc->NIL));
+	case TOKEN_EOF:
+	  return(read_error(sc, "missing close paren?"));   /* end of input with missing paren */
 
-      push_stack(sc, OP_READ_LIST, sc->args, sc->NIL);
-      sc->value = read_expression(sc);
+	default:
+	  push_stack(sc, OP_READ_LIST, sc->args, sc->NIL);
+	  sc->value = read_expression(sc);
+	  break;
+	}
       pop_stack(sc);
       goto START;
 
       
     case OP_READ_DOT:
-      if (token(sc, sc->input_port) != TOK_RPAREN)
-	return(eval_error(sc, "syntax error: illegal dot expression: '(~{~A~^ ~} . )", sc->args));
-
-      /* TODO: (catch #t (lambda () (car '( . ))) (lambda args 'error))
-       *   should not try to deal with the bad list outside the catch
-       * TODO: all the token errors need better error messages -- give the actual expression, not sc->code!
-       * TODO: who pops off the catch op above??
+      if (token(sc, sc->input_port) != TOKEN_RPAREN)
+	{
+	  back_up_stack(sc);
+	  return(read_error(sc, "stray dot?"));            /* (+ 1 . 2 3) or (list . ) */
+	}
+      /* args = previously read stuff, value = thing just after the dot and before the ')':
+       *   (list 1 2 . 3)
+       *   value: 3, args: (2 1 list) 
+       *   '(1 . 2)
+       *   value: 2, args: (1)
+       * but we also get here in a lambda arg list:
+       *   (lambda (a b . c) #f)
+       *   value: c, args: (b a)
+       *
+       * so we have to leave any error checks until later, I guess
+       *   -- in eval_args1, if we end with non-pair-not-nil then
+       *      something is fishy
        */
 
       sc->value = s7_reverse_in_place(sc, sc->value, sc->args);
@@ -13374,7 +13459,9 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "make-promise",    OP_MAKE_PROMISE);
   assign_syntax(sc, "and",             OP_AND0);
   assign_syntax(sc, "or",              OP_OR0);
+#if WITH_CONS_STREAM
   assign_syntax(sc, "cons-stream",     OP_CONS_STREAM0); 
+#endif
   assign_syntax(sc, "macro",           OP_MACRO0);
   assign_syntax(sc, "case",            OP_CASE0);
   assign_syntax(sc, "defmacro",        OP_DEFMACRO);
