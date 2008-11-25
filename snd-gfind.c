@@ -106,7 +106,7 @@ static void edit_find_find(read_direction_t direction, GtkWidget *w, gpointer co
 	  char *temp = NULL;
 	  /* using global search_proc set by user */
 	  buf = (char *)CALLOC(PRINT_BUFFER_SIZE, sizeof(char));
-	  mus_snprintf(buf, PRINT_BUFFER_SIZE, _("find: %s"), temp = XEN_AS_STRING(ss->search_proc));
+	  mus_snprintf(buf, PRINT_BUFFER_SIZE, _("find: %s"), temp = (char *)XEN_AS_STRING(ss->search_proc));
 #if HAVE_S7
 	  if (temp) free(temp);
 #endif

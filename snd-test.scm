@@ -39810,6 +39810,8 @@ EDITS: 1
 ;;; ---------------- test 17: dialogs and graphics ----------------
 
 (if (not (provided? 'snd-draw.scm)) (load "draw.scm")) ; needed also in test_21 (color-samples)
+(if with-gui
+    (if (not (provided? 'snd-musglyphs.scm)) (load "musglyphs.scm")))
 
 (define (snd_test_17)
   

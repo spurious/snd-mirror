@@ -22,7 +22,7 @@
   (if (music-font score)
       (g-mustext score #o46 0 -.25)
     (progn
-      (comment score "treble clef")
+      ;(comment score "treble clef")
       (moveto score 0.490 -0.258)
       (curveto score 0.516 -0.430 0.546 -0.672 0.298 -0.590)
       (curveto score 0.404 -0.580 0.432 -0.436 0.320 -0.398)
@@ -58,7 +58,7 @@
 
 
 (defun draw-percussion-clef (score &optional style)
-  (comment score "percussion clef")
+  ;(comment score "percussion clef")
   (moveto score 0 0)
   (lineto score 0 .5)
   (rlineto score .045 0)
@@ -78,7 +78,7 @@
   (if (music-font score)
       (g-mustext score #o102 0 -0.5)
     (progn
-      (comment score "c clef")
+      ;(comment score "c clef")
       (moveto score 0.465 0.442)
       (lineto score 0.465 0.475)
       (curveto score 0.765 0.503 0.643 0.012 0.515 0.080)
@@ -116,7 +116,7 @@
   (if (music-font score)
       (g-mustext score #o77 0 -0.75)
     (progn
-      (comment score "bass clef")
+      ;(comment score "bass clef")
       (moveto score 0.058 0.075)
       (curveto score 0.115 0.053 0.108 0.145 0.223 0.098)
       (curveto score 0.292 0.052 0.278 -0.057 0.173 -0.072)
@@ -142,7 +142,7 @@
   (if (music-font score)
       (g-mustext score #o124 0 0.0)
     (progn
-      (comment score "turn")
+      ;(comment score "turn")
       (moveto score -0.096 0.062)
       (curveto score -0.130 0.104 -0.124 0.208 -0.048 0.214)
       (curveto score 0.060 0.204 0.154 0.040 0.258 0.010)
@@ -163,7 +163,7 @@
   (if (music-font score)
       (g-mustext score #o155 0 0.0)
     (progn
-      (comment score "mordent")
+      ;(comment score "mordent")
       (moveto score 0.310 0.103)
       (curveto score 0.335 0.129 0.334 0.129 0.359 0.104)
       (lineto score 0.425 0.031)
@@ -194,7 +194,7 @@
   (if (music-font score)
       (g-mustext score #o265 0 0.0)
     (progn
-      (comment score "double mordent")
+      ;(comment score "double mordent")
       (moveto score 0.560 0.106)
       (curveto score 0.586 0.132 0.583 0.132 0.620 0.092)
       (lineto score 0.681 0.031)
@@ -230,7 +230,7 @@
 
 
 (defun draw-trill-section (score &optional style)
-  (comment score "trill")
+  ;(comment score "trill")
   (moveto score -0.045 0.053)
   (lineto score -0.045 0.075)
   (curveto score -0.028 0.099 0.058 0.171 0.113 0.158)
@@ -245,7 +245,7 @@
 (defvar trill-section-bounds '(-0.045 0.000 0.383 0.159))
 
 (defun draw-trill-sections (score count &optional style)
-  (comment score (format nil "~D trill sections" count))
+  ;(comment score (format nil "~D trill sections" count))
   (do ((i 0 (1+ i))
        (x0 0.0 (+ x0 0.385)))
       ((>= i count)) ; count might be negative
@@ -263,7 +263,7 @@
 
 
 (defun draw-arpeggio (score &optional style)
-  (comment score "arpeggio")
+  ;(comment score "arpeggio")
   (moveto score 0.005 0.147)
   (curveto score -0.004 0.115 0.042 0.046 0.047 0.039)
   (curveto score 0.049 0.034 0.068 0.005 0.071 0.005)
@@ -284,7 +284,7 @@
 (defvar arpeggio-bounds '(0.000 0.000 0.141 0.574))
 
 (defun draw-arpeggios (score count &optional style)
-  (comment score (format nil "~D arpeggios" count))
+  ;(comment score (format nil "~D arpeggios" count))
   (do ((i 0 (1+ i))
        (y0 0.0 (+ y0 0.52)))
       ((>= i count))
@@ -311,7 +311,7 @@
   (if (music-font score)
       (g-mustext score #o331 0 0.0)
     (progn
-      (comment score "tr")
+      ;(comment score "tr")
       (moveto score 0.162 0.252)
       (lineto score 0.198 0.380)
       (lineto score 0.183 0.380)
@@ -342,7 +342,7 @@
 
 
 (defun draw-accent (score &optional style)
-  (comment score "accent")
+  ;(comment score "accent")
   (moveto score 0 0)
   (lineto score .4 .124)
   (lineto score 0 .248)
@@ -356,7 +356,7 @@
 
 
 (defun draw-tnecca (score &optional style) ;accent backwards
-  (comment score "accent reversed")
+  ;(comment score "accent reversed")
   (moveto score 0 .124)
   (lineto score .4 .248)
   (lineto score .4 .216)
@@ -374,7 +374,7 @@
 ;;; -------------------------------- PAUSES --------------------------------
 
 (defun draw-breath-mark (score &optional style)
-  (comment score "breath mark")
+  ;(comment score "breath mark")
   (moveto score 0.027 -0.005)
   (curveto score 0.047 0.093 0.192 0.085 0.186 -0.055)
   (curveto score 0.183 -0.144 0.104 -0.198 0.049 -0.224)
@@ -387,7 +387,7 @@
 
 
 (defun draw-caesura (score &optional style)
-  (comment score "caesura")
+  ;(comment score "caesura")
   (moveto score 0 0)
   (lineto score .05 0)
   (lineto score .33 .5)
@@ -408,7 +408,7 @@
   (if (music-font score)
       (g-mustext score #o125 0 0.0)
     (progn
-      (comment score "fermata")
+      ;(comment score "fermata")
       (moveto score 0.0 0.0)
       (curveto score -0.023 0.197 0.14 0.38 0.338 0.38)
       (curveto score 0.535 0.38 0.698 0.197 0.675 0.0)
@@ -426,7 +426,7 @@
   (if (music-font score)
       (g-mustext score #o165 0 0.0)
     (progn
-      (comment score "fermata reversed")
+      ;(comment score "fermata reversed")
       (moveto score 0.0000 -0.003)
       (curveto score -0.023 -0.199 0.14 -0.383 0.338 -0.383)
       (curveto score 0.535 -0.383 0.698 -0.199 0.675 -0.003)
@@ -444,7 +444,7 @@
 ;;; -------------------------------- MISCELLANEOUS --------------------------------
 
 (defun draw-repeat-sign (score &optional style)
-  (comment score "repeat")
+  ;(comment score "repeat")
   (moveto score 0 0)
   (lineto score .425 .5)
   (rlineto score .173 0)
@@ -457,7 +457,7 @@
 
 
 (defun draw-upper-bracket (score &optional style)
-  (comment score "upper bracket")
+  ;(comment score "upper bracket")
   (moveto score 0.100 0.365)
   (rlineto score 0.000 -0.145)
   (rlineto score 0.075 0.000)
@@ -471,7 +471,7 @@
 
 
 (defun draw-lower-bracket (score &optional style)
-  (comment score "lower bracket")
+  ;(comment score "lower bracket")
   (moveto score 0.100 -0.365)
   (rlineto score 0.000 0.145)
   (rlineto score 0.075 0.000)
@@ -488,7 +488,7 @@
   (if (music-font score)
       (g-mustext score #o45 0 0.0)
     (progn
-      (comment score "segno")
+      ;(comment score "segno")
       (moveto score 0.533 0.688)
       (lineto score 0.479 0.688)
       (lineto score 0.278 0.396)
@@ -517,7 +517,7 @@
   (if (music-font score)
       (g-mustext score #o336 0 0.0)
     (progn
-      (comment score "coda")
+      ;(comment score "coda")
       (moveto score 0.241 0.379)
       (lineto score 0.241 0.429)
       (lineto score 0.216 0.429)
@@ -560,7 +560,7 @@
   (if (music-font score)
       (g-mustext score #o52 0 0.0)
     (progn
-      (comment score "pedal off")
+      ;(comment score "pedal off")
       (moveto score 0.219 0.198)
       (curveto score 0.231 0.172 0.195 0.138 0.162 0.173)
       (curveto score 0.149 0.219 0.206 0.231 0.219 0.198)
@@ -606,7 +606,7 @@
   (if (music-font score)
       (g-mustext score #o241 0 0.0)
     (progn
-      (comment score "ped")
+      ;(comment score "ped")
       (moveto score 0.368 0.074)
       (curveto score 0.341 0.121 0.335 0.147 0.371 0.203)
       (curveto score 0.435 0.289 0.531 0.243 0.488 0.155)
@@ -645,7 +645,7 @@
 
 
 (defun draw-left-paren (score &optional style)
-  (comment score "left paren")
+  ;(comment score "left paren")
   (moveto score 0.157 0.580)
   (curveto score 0.090 0.540 -0.015 0.442 -0.012 0.287)
   (curveto score -0.007 0.145 0.082 0.040 0.147 -0.005)
@@ -659,7 +659,7 @@
 
 
 (defun draw-right-paren (score &optional style)
-  (comment score "right paren")
+  ;(comment score "right paren")
   (moveto score 0.005 0.580)
   (curveto score 0.072 0.540 0.177 0.442 0.174 0.287)
   (curveto score 0.169 0.145 0.080 0.040 0.015 -0.005)
@@ -673,7 +673,7 @@
 
 
 (defun draw-wedge (score &optional style)
-  (comment score "wedge")  
+  ;(comment score "wedge")  
   (moveto score 0 0)
   (lineto score -.075 .25)
   (lineto score .075 .25)
@@ -684,7 +684,7 @@
 
 
 (defun draw-down-bow (score &optional style)
-  (comment score "down bow")
+  ;(comment score "down bow")
   (moveto score 0 0)
   (lineto score 0 .15)
   (lineto score .3 .15)
@@ -700,7 +700,7 @@
 
 
 (defun draw-up-bow (score &optional style)
-  (comment score "up bow")
+  ;(comment score "up bow")
   (moveto score 0.075 0.000)
   (lineto score 0.000 0.250)
   (lineto score 0.010 0.250)
@@ -719,7 +719,7 @@
   (if (music-font score)
       (g-mustext score #o60 0 0.0)
     (progn
-      (comment score "zero")
+      ;(comment score "zero")
       (moveto score 0.159 0.233)
       (curveto score 0.272 0.233 0.333 0.117 0.333 0.000)
       (curveto score 0.333 -0.130 0.270 -0.235 0.159 -0.233)
@@ -739,7 +739,7 @@
   (if (music-font score)
       (g-mustext score #o61 0 0.0)
     (progn
-      (comment score "one")
+      ;(comment score "one")
       (moveto score 0.070 -0.182)
       (curveto score 0.068 -0.199 0.042 -0.203 0.026 -0.203)
       (lineto score 0.026 -0.233)
@@ -761,7 +761,7 @@
   (if (music-font score)
       (g-mustext score #o62 0 0.0)
     (progn
-      (comment score "two")
+      ;(comment score "two")
       (moveto score 0.068 0.170)
       (curveto score 0.093 0.168 0.130 0.167 0.130 0.113)
       (curveto score 0.123 0.042 0.007 0.044 0.006 0.131)
@@ -790,7 +790,7 @@
   (if (music-font score)
       (g-mustext score #o63 0 0.0)
     (progn
-      (comment score "three")
+      ;(comment score "three")
       (moveto score 0.094 0.007)
       (curveto score 0.163 0.028 0.204 0.039 0.203 0.102)
       (curveto score 0.212 0.180 0.159 0.209 0.117 0.207)
@@ -816,7 +816,7 @@
   (if (music-font score)
       (g-mustext score #o64 0 0.0)
     (progn
-      (comment score "four")
+      ;(comment score "four")
       (moveto score 0.252 0.233)
       (lineto score 0.113 0.233)
       (curveto score 0.107 0.128 0.108 0.003 -0.002 -0.097)
@@ -846,7 +846,7 @@
   (if (music-font score)
       (g-mustext score #o65 0 0.0)
     (progn
-      (comment score "five")
+      ;(comment score "five")
       (moveto score 0.022 0.233)
       (lineto score 0.022 -0.002)
       (lineto score 0.050 -0.002)
@@ -872,7 +872,7 @@
   (if (music-font score)
       (g-mustext score #o66 0 0.0)
     (progn
-      (comment score "six")
+      ;(comment score "six")
       (moveto score 0.168 -0.238)
       (curveto score 0.244 -0.235 0.303 -0.182 0.305 -0.096)
       (curveto score 0.305 -0.043 0.274 0.030 0.205 0.030)
@@ -898,7 +898,7 @@
   (if (music-font score)
       (g-mustext score #o67 0 0.0)
     (progn
-      (comment score "seven")
+      ;(comment score "seven")
       (moveto score 0.068 -0.233)
       (lineto score 0.202 -0.233)
       (curveto score 0.202 -0.228 0.185 -0.117 0.229 -0.048)
@@ -922,7 +922,7 @@
   (if (music-font score)
       (g-mustext score #o70 0 0.0)
     (progn
-      (comment score "eight")
+      ;(comment score "eight")
       (moveto score 0.146 0.235)
       (curveto score 0.068 0.233 0.015 0.198 -0.004 0.125)
       (curveto score -0.011 0.048 0.055 0.024 0.068 0.009)
@@ -951,7 +951,7 @@
   (if (music-font score)
       (g-mustext score #o71 0 0.0)
     (progn
-      (comment score "nine")
+      ;(comment score "nine")
       (moveto score 0.129 0.235)
       (curveto score -0.113 0.212 -0.049 -0.123 0.189 -0.003)
       (curveto score 0.211 0.006 0.216 -0.176 0.157 -0.198)
@@ -974,7 +974,7 @@
   (if (music-font score)
       (g-mustext score #o143 0 0.0)
     (progn
-      (comment score "common time")
+      ;(comment score "common time")
       (moveto score 0.004 0.000)
       (moveto score 0.004 0.000)
       (curveto score 0.004 -0.128 0.096 -0.247 0.228 -0.247)
@@ -998,7 +998,7 @@
   (if (music-font score)
       (g-mustext score #o103 0 0.0)
     (progn
-      (comment score "cut time")
+      ;(comment score "cut time")
       (draw-common-time score style)
       (moveto score 0.194 0.374)
       (lineto score 0.194 -0.414)
@@ -1010,7 +1010,7 @@
 
 
 (defun draw-plus (score &optional style)
-  (comment score "plus")
+  ;(comment score "plus")
   (moveto score 0.000 -0.020)
   (lineto score 0.100 -0.020)
   (lineto score 0.100 -0.140)
@@ -1035,7 +1035,7 @@
   (if (music-font score)
       (g-mustext score #o43 0 0.0)
     (progn
-      (comment score "sharp")
+      ;(comment score "sharp")
       (moveto score 0.168 0.098)
       (lineto score 0.168 -0.050)
       (lineto score 0.210 -0.032)
@@ -1079,7 +1079,7 @@
   (if (music-font score)
       (g-mustext score #o142 0 0.0)
     (progn
-      (comment score "flat")
+      ;(comment score "flat")
       (moveto score 0.027 0.086)
       (lineto score 0.027 0.483)
       (lineto score 0.000 0.483)
@@ -1100,7 +1100,7 @@
   (if (music-font score)
       (g-mustext score #o334 0 0.0)
     (progn
-      (comment score "double sharp")
+      ;(comment score "double sharp")
       (moveto score 0.000 0.130)
       (lineto score 0.090 0.130)
       (curveto score 0.091 -0.002 0.174 -0.001 0.170 0.130)
@@ -1123,7 +1123,7 @@
   (if (music-font score)
       (g-mustext score #o156 0 0.0)
     (progn
-      (comment score "natural")
+      ;(comment score "natural")
       (moveto score 0.000 -0.180)
       (lineto score 0.144 -0.142)
       (lineto score 0.144 -0.348)
@@ -1147,7 +1147,7 @@
   (if (music-font score)
       (g-mustext score #o272 0 0.0)
     (progn
-      (comment score "double flat")
+      ;(comment score "double flat")
       (draw-flat score style)
       (matrix-front score (list 1 0 0 1 (* .2 (scr-size score)) 0))
       (draw-flat score style)
@@ -1163,7 +1163,7 @@
   (if (music-font score)
       (g-mustext score #o146 0 0.0)
     (progn
-      (comment score "f")
+      ;(comment score "f")
       (moveto score 0.420 0.238)
       (lineto score 0.330 0.238)
       (curveto score 0.330 0.230 0.334 0.348 0.418 0.386)
@@ -1194,7 +1194,7 @@
   (if (music-font score)
       (g-mustext score #o160 0 0.0)
     (progn
-      (comment score "p")
+      ;(comment score "p")
       (moveto score 0.184 0.047)
       (curveto score 0.203 0.016 0.218 0.006 0.248 0.004)
       (curveto score 0.379 0.002 0.464 0.230 0.336 0.290)
@@ -1218,7 +1218,7 @@
 
 (defun draw-lig-p (score &optional style)
   ;; p without the pronounced upstroke (to connect to f in fp)
-  (comment score "P")
+  ;(comment score "P")
   (moveto score 0.184 0.047)
   (curveto score 0.203 0.016 0.218 0.006 0.248 0.004)
   (curveto score 0.379 0.002 0.464 0.230 0.336 0.290)
@@ -1242,7 +1242,7 @@
 
 
 (defun draw-m (score &optional style)
-  (comment score "m")
+  ;(comment score "m")
   (moveto score 0.188 0.000)
   (lineto score 0.271 0.226)
   (curveto score 0.287 0.270 0.252 0.303 0.207 0.225)
@@ -1269,7 +1269,7 @@
 
 
 (defun draw-n (score &optional style)
-  (comment score "n")
+  ;(comment score "n")
   (moveto score 0.210 0.019)
   (lineto score 0.280 0.226)
   (curveto score 0.287 0.270 0.253 0.302 0.207 0.225)
@@ -1293,7 +1293,7 @@
 (defun draw-niente (score &optional style)
   (if *use-circle-as-niente*
       (progn
-        (comment score "n.")
+        ;(comment score "n.")
         (setf (line-width score) 0.02)
         (circle score 0.1 0.125 .05 0 360 nil)
         (setf (line-width score) 0.0))
@@ -1306,7 +1306,7 @@
 
 (defun draw-subito (score &optional style)
   (declare (ignore style))
-  (comment score "I")
+  ;(comment score "I")
   (setf (line-width score) 0.02)
   (moveto score 0.3 -0.2)
   (rlineto score 0 0.7)
@@ -1317,7 +1317,7 @@
 
 
 (defun draw-z (score &optional style)
-  (comment score "z")
+  ;(comment score "z")
   (moveto score 0.082 0.287)
   (lineto score 0.052 0.222)
   (lineto score 0.069 0.222)
@@ -1339,7 +1339,7 @@
 
 
 (defun draw-s (score &optional style)
-  (comment score "s")
+  ;(comment score "s")
   (moveto score 0.148 0.066)
   (curveto score 0.161 0.028 0.130 0.002 0.083 0.009)
   (curveto score 0.032 0.038 0.107 0.045 0.077 0.088)
@@ -1357,7 +1357,7 @@
 
 
 (defun draw-r (score &optional style)
-  (comment score "r")
+  ;(comment score "r")
   (moveto score 0.210 0.010)
   (curveto score 0.243 0.184 0.262 0.219 0.295 0.246)
   (curveto score 0.350 0.261 0.311 0.213 0.349 0.198)
@@ -1380,7 +1380,7 @@
   (if (music-font score)
       (g-mustext score #o127 0 0.0)
     (progn
-      (comment score "double whole note")
+      ;(comment score "double whole note")
       (moveto score .298 .127)
       (curveto score 0.393 0.127 0.501 0.087 0.505 0.000)
       (curveto score 0.508 -0.095 0.393 -0.128 0.298 -0.127)
@@ -1424,7 +1424,7 @@
   (if (music-font score)
       (g-mustext score #o167 0 0.0)
     (progn
-      (comment score "whole note")
+      ;(comment score "whole note")
       (moveto score 0.198 0.127)
       (curveto score 0.293 0.127 0.402 0.087 0.405 0.000)
       (curveto score 0.408 -0.095 0.293 -0.128 0.198 -0.127)
@@ -1444,7 +1444,7 @@
   (if (music-font score)
       (g-mustext score #o372 0 0.0)
     (let ((xoff -.006))
-      (comment score "half note")
+      ;(comment score "half note")
       (moveto score (+ xoff 0.020) -0.101)
       (curveto score (+ xoff -0.063) 0.037 (+ xoff 0.185) 0.197 (+ xoff 0.268) 0.107)
       (curveto score (+ xoff 0.379) -0.010 (+ xoff 0.137) -0.193 (+ xoff 0.021) -0.101)
@@ -1460,7 +1460,7 @@
   (if (music-font score)
       (g-mustext score #o317 0 0.0)
     (progn
-      (comment score "quarter note")
+      ;(comment score "quarter note")
       (moveto score 0.014 -0.088)
       (curveto score -0.014 -0.030 0.026 0.056 0.090 0.096)
       (curveto score 0.144 0.128 0.230 0.142 0.270 0.092)
@@ -1472,7 +1472,7 @@
 
 
 (defun draw-diamond (score &optional style)
-  (comment score "diamond")
+  ;(comment score "diamond")
   (setf (line-width score) .03)
   (moveto score 0 0)
   (rlineto score .14 .14)
@@ -1486,7 +1486,7 @@
 
 
 (defun draw-diamond-1 (score &optional style)
-  (comment score "diamond-1") ;Anders Vinjar
+  ;(comment score "diamond-1") ;Anders Vinjar
   (setf (line-width score) .03)
   (moveto score 0 0)
   (curveto score 0.04 0.03 0.10 .07 .14 .14)
@@ -1509,7 +1509,7 @@
   (setf (line-width score) 0))
   
 (defun draw-filled-diamond-1 (score &optional style)
-  (comment score "filled diamond-1")
+  ;(comment score "filled diamond-1")
   (setf (line-width score) .03)
   (moveto score 0 0)
   (curveto score 0.04 0.03 0.10 .07 .14 .14)
@@ -1524,7 +1524,7 @@
 
 
 (defun draw-rhythmX (score &optional style)
-  (comment score "X")
+  ;(comment score "X")
   (moveto score 0.128 0.000)
   (lineto score 0.002 0.102)
   (lineto score 0.020 0.124)
@@ -1546,7 +1546,7 @@
 (defun draw-circled-x (score &optional style)
   (let ((off .06)
 	(size .75))
-    (comment score "circled-X")
+    ;(comment score "circled-X")
     (moveto score (* size (+ off 0.020)) (* size 0.124))
     (lineto score (* size (+ off 0.150)) (* size 0.020))
     (lineto score (* size (+ off 0.278)) (* size 0.124))
@@ -1573,7 +1573,7 @@
 
 
 (defun draw-slash (score &optional style)
-  (comment score "slash")
+  ;(comment score "slash")
   (setf (line-width score) .1) 
   (moveto score 0 -.15) 
   (rlineto score .275 .275) 
@@ -1584,7 +1584,7 @@
 
 
 (defun draw-mslash (score &optional style)
-  (comment score "slash")
+  ;(comment score "slash")
   (setf (line-width score) .05) 
   (moveto score .05 -.225) 
   (rlineto score .2 .45) 
@@ -1599,7 +1599,7 @@
 ;;; ensuring 'sharp corners
 
 (defun draw-triangle (score &optional style)
-  (comment score "triangle")
+  ;(comment score "triangle")
   (setf (line-width score) .03)
   (moveto score  .14 -.11)
   (rlineto score -.14 0)
@@ -1613,7 +1613,7 @@
 
 
 (defun draw-square (score &optional style)
-  (comment score "square")
+  ;(comment score "square")
   (setf (line-width score) .04)
   (moveto score .13 -.13)
   (rlineto score -.13 0)
@@ -1631,7 +1631,7 @@
   (if (music-font score)
       (g-mustext score #o152 -.265 -0.45)
     (progn
-      (comment score "8th flag up")
+      ;(comment score "8th flag up")
       (moveto score 0.000 0.296)
       (lineto score 0.019 0.296)
       (curveto score 0.022 0.239 0.031 0.146 0.101 0.092)
@@ -1652,7 +1652,7 @@
   (if (music-font score)
       (g-mustext score #o373 -.265 0.2)
     (progn
-      (comment score "extend flag up")
+      ;(comment score "extend flag up")
       (moveto score 0.000 0.296)
       (lineto score 0.021 0.296)
       (curveto score 0.025 0.196 0.065 0.158 0.122 0.094)
@@ -1672,7 +1672,7 @@
   (if (music-font score)
       (g-mustext score #o112 0 0.5)
     (progn
-      (comment score "8th flag down")
+      ;(comment score "8th flag down")
       (moveto score 0.000 -0.296)
       (lineto score 0.019 -0.296)
       (curveto score 0.022 -0.239 0.031 -0.146 0.101 -0.092)
@@ -1693,7 +1693,7 @@
   (if (music-font score)
       (g-mustext score #o360 0 -0.2)
     (progn
-      (comment score "extend flag down")
+      ;(comment score "extend flag down")
       (moveto score 0.000 -0.296)
       (lineto score 0.021 -0.296)
       (curveto score 0.025 -0.196 0.065 -0.158 0.122 -0.094)
@@ -1713,7 +1713,7 @@
 ;;; -------------------------------- RESTS --------------------------------
 
 (defun draw-whole-rest (score &optional style)
-  (comment score "whole rest")
+  ;(comment score "whole rest")
   (moveto score 0.063 0.253)
   (lineto score 0.063 0.127)
   (lineto score 0.359 0.127)
@@ -1729,7 +1729,7 @@
 
 
 (defun draw-half-rest (score &optional style)
-  (comment score "half rest")
+  ;(comment score "half rest")
   (moveto score 0.063 0.127)
   (lineto score 0.063 0.000)
   (lineto score 0.000 0.000)
@@ -1748,7 +1748,7 @@
   (if (music-font score)
       (g-mustext score #o316 0 0.0)
     (progn
-      (comment score "quarter rest")
+      ;(comment score "quarter rest")
       (moveto score 0.072 0.358)
       (curveto score 0.120 0.253 0.160 0.158 0.038 0.058)
       (lineto score 0.182 -0.103)
@@ -1769,7 +1769,7 @@
   (if (music-font score)
       (g-mustext score #o344 0 0.125)
     (progn
-      (comment score "8th rest")
+      ;(comment score "8th rest")
       (moveto score 0.164 0.131)
       (curveto score 0.171 0.222 0.046 0.236 0.028 0.136)
       (curveto score 0.032 0.030 0.159 0.033 0.224 0.086)
@@ -1788,7 +1788,7 @@
   (if (music-font score)
       (g-mustext score #o305 0 0.125)
     (progn
-      (comment score "16th rest")
+      ;(comment score "16th rest")
       (moveto score 0.102 -0.170)
       (curveto score 0.128 -0.152 0.141 -0.128 0.136 -0.113)
       (curveto score 0.144 -0.032 0.017 -0.020 0.000 -0.113)
@@ -1813,7 +1813,7 @@
   (if (music-font score)
       (g-mustext score #o250 0 -0.125)
     (progn
-      (comment score "32nd rest")
+      ;(comment score "32nd rest")
       (moveto score 0.164 0.077)
       (curveto score 0.182 0.099 0.194 0.114 0.199 0.136)
       (curveto score 0.201 0.228 0.070 0.241 0.058 0.136)
@@ -1843,7 +1843,7 @@
   (if (music-font score)
       (g-mustext score #o364 0 -0.125)
     (progn
-      (comment score "64th rest")
+      ;(comment score "64th rest")
       (moveto score 0.161 0.081)
       (curveto score 0.188 0.096 0.196 0.117 0.194 0.136)
       (curveto score 0.205 0.210 0.076 0.231 0.058 0.136)
@@ -1877,7 +1877,7 @@
   (if (music-font score)
       (g-mustext score #o345 0 -0.125)
     (progn
-      (comment score "128th rest")
+      ;(comment score "128th rest")
       (moveto score 0.277 0.586)
       (curveto score 0.306 0.604 0.314 0.623 0.314 0.641)
       (curveto score 0.320 0.727 0.189 0.733 0.176 0.641)
@@ -1913,7 +1913,7 @@
 
 
 (defun draw-measure-rest (score &optional style)
-  (comment score "measure rest")
+  ;(comment score "measure rest")
   (moveto score 0 .25)
   (rlineto score 0 -.5)
   (moveto score .5 .25)
@@ -1928,7 +1928,7 @@
 (defvar measure-rest-bounds '(0 -.25 .5 .25))
 
 (defun draw-double-whole-rest (score &optional style)
-  (comment score "double whole rest")
+  ;(comment score "double whole rest")
   (moveto score 0 .5)
   (rlineto score 0 .25)
   (rlineto score .15 0)

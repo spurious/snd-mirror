@@ -721,7 +721,7 @@ static char *describe_type(s7_pointer p)
 #define TOKEN_COMMA   8
 #define TOKEN_ATMARK  9
 #define TOKEN_SHARP_CONST 10
-#define TOKEN_VEC     11
+#define TOKEN_VECTOR     11
 
 #define BACKQUOTE '`'
 
@@ -771,6 +771,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 static bool s7_is_applicable_object(s7_pointer x);
 static s7_pointer make_list_1(s7_scheme *sc, s7_pointer a);
 static void write_string(s7_scheme *sc, const char *s, s7_pointer pt);
+static s7_pointer read_error(s7_scheme *sc, const char *errmsg);
 
 
 
@@ -1814,14 +1815,8 @@ static s7_pointer g_current_environment(s7_scheme *sc, s7_pointer args)
 static s7_pointer make_closure(s7_scheme *sc, s7_pointer c, s7_pointer e, int type) 
 {
   /* c is code. e is environment */
-     
   s7_pointer x = new_cell(sc);
-  
   set_type(x, type | T_PROCEDURE);
-  
-  ASSERT_IS_OBJECT(c, "closure code");
-  ASSERT_IS_OBJECT(e, "closure env");
-  
   car(x) = c;
   cdr(x) = e;
   return(x);
@@ -3316,52 +3311,38 @@ static void s7_Int_to_string(char *p, s7_Int n, int radix, int width)
 }
 
 
-static char *s7_number_to_string_1(s7_scheme *sc, s7_pointer obj, int radix, int width, int precision, char float_choice)
+static char *s7_number_to_string_base_10(s7_scheme *sc, s7_pointer obj, int width, int precision, char float_choice)
 {
-  #define NUM_SIZE 256
   char *p;
-  p = (char *)malloc(NUM_SIZE * sizeof(char));
 
   switch (object_number_type(obj))
     {
     case NUM_INT:
-      if (radix == 10)
-	snprintf(p, NUM_SIZE, 
-		 (sizeof(int) >= sizeof(s7_Int)) ? "%*d" : "%*lld",
-		 width, s7_integer(obj));
-      else s7_Int_to_string(p, s7_integer(obj), radix, width);
+      p = (char *)malloc(64 * sizeof(char));
+      snprintf(p, 64, 
+	       (sizeof(int) >= sizeof(s7_Int)) ? "%*d" : "%*lld",
+	       width, s7_integer(obj));
       break;
       
     case NUM_RATIO:
-      if (radix == 10)
-	snprintf(p, NUM_SIZE, 
-		 (sizeof(int) >= sizeof(s7_Int)) ? "%d/%d" : "%lld/%lld", 
-		 s7_numerator(obj), s7_denominator(obj));
-      else
-	{
-	  char *n, *d;
-	  n = (char *)calloc(NUM_SIZE, sizeof(char));
-	  d = (char *)calloc(NUM_SIZE, sizeof(char));
-	  s7_Int_to_string(n, s7_numerator(obj), radix, 0);
-	  s7_Int_to_string(d, s7_denominator(obj), radix, 0);
-	  snprintf(p, NUM_SIZE, "%s/%s", n, d);
-	  free(n);
-	  free(d);
-	}
+      p = (char *)malloc(128 * sizeof(char));
+      snprintf(p, 128,
+	       (sizeof(int) >= sizeof(s7_Int)) ? "%d/%d" : "%lld/%lld", 
+	       s7_numerator(obj), s7_denominator(obj));
       break;
       
-      /* SOMEDAY: need radix in number->string float/complex: (number->string 0.75 2) -> "0.75" */
     case NUM_REAL2:
     case NUM_REAL:
       {
 	int i, loc = -1, len;
 	const char *frmt;
+	p = (char *)malloc(256 * sizeof(char));
+
 	if (sizeof(double) >= sizeof(s7_Double))
 	  frmt = (float_choice == 'g') ? "%*.*g" : ((float_choice == 'f') ? "%*.*f" : "%*.*e");
 	else frmt = (float_choice == 'g') ? "%*.*Lg" : ((float_choice == 'f') ? "%*.*Lf" : "%*.*Le");
 
-	len = snprintf(p, NUM_SIZE, frmt, width, precision, s7_real(obj));
-	/* len = safe_strlen(p); */
+	len = snprintf(p, 256, frmt, width, precision, s7_real(obj));
 	for (i = 0; i < len; i++) /* does it have an exponent (if so, it's already a float) */
 	  if (p[i] == 'e')
 	    {
@@ -3385,6 +3366,8 @@ static char *s7_number_to_string_1(s7_scheme *sc, s7_pointer obj, int radix, int
     default:
       {
 	const char *frmt;
+	p = (char *)malloc(256 * sizeof(char));
+
 	if (sizeof(double) >= sizeof(s7_Double))
 	  {
 	    if (s7_imag_part(obj) >= 0.0)
@@ -3398,8 +3381,87 @@ static char *s7_number_to_string_1(s7_scheme *sc, s7_pointer obj, int radix, int
 	    else frmt = (float_choice == 'g') ? "%.*Lg%.*Lgi" : ((float_choice == 'f') ? "%.*Lf-%.*Lfi" : "%.*Le-%.*Lei");
 	  }
 
-	snprintf(p, NUM_SIZE, frmt, precision, s7_real_part(obj), precision, s7_imag_part(obj));
+	snprintf(p, 256, frmt, precision, s7_real_part(obj), precision, s7_imag_part(obj));
       }
+      break;
+    }
+  return(p);
+}
+
+
+static char *s7_number_to_string_with_radix(s7_scheme *sc, s7_pointer obj, int radix, int width, int precision, char float_choice)
+{
+  char *p, *n, *d;
+
+  if (radix == 10)
+    return(s7_number_to_string_base_10(sc, obj, width, precision, float_choice));
+
+  switch (object_number_type(obj))
+    {
+    case NUM_INT:
+      p = (char *)malloc(128 * sizeof(char));
+      s7_Int_to_string(p, s7_integer(obj), radix, width);
+      break;
+      
+    case NUM_RATIO:
+      {
+	n = (char *)malloc(128 * sizeof(char));
+	d = (char *)malloc(128 * sizeof(char));
+	s7_Int_to_string(n, s7_numerator(obj), radix, 0);
+	s7_Int_to_string(d, s7_denominator(obj), radix, 0);
+	p = (char *)malloc(256 * sizeof(char));
+	snprintf(p, 256, "%s/%s", n, d);
+	free(n);
+	free(d);
+      }
+      break;
+      
+    case NUM_REAL2:
+    case NUM_REAL:
+      {
+	char *n, *d;
+	int i;
+	s7_Int int_part;
+	s7_Double x, frac_part, min_frac, base;
+	bool sign = false;
+	x = s7_real(obj);
+	if (x < 0.0)
+	  {
+	    sign = true;
+	    x = -x;
+	  }
+	int_part = (s7_Int)floor(x);
+	frac_part = x - int_part;
+	n = (char *)malloc(128 * sizeof(char));
+	s7_Int_to_string(n, int_part, radix, 0);
+	d = (char *)malloc((precision + 1) * sizeof(char));
+
+	min_frac = (s7_Double)pow((s7_Double)radix, (s7_Double)(-precision));
+	for (i = 0, base = radix; (i < precision) && (frac_part > min_frac); i++, base *= radix)
+	  {
+	    int_part = (int)(frac_part * base);
+	    frac_part -= (int_part / base);
+	    if (int_part < 10)
+	      d[i] = (char)('0' + int_part);
+	    else d[i] = (char)('a' + int_part -  10);
+	  }
+	if (i == 0)
+	  d[i++] = '0';
+	d[i] = '\0';
+	p = (char *)malloc(256 * sizeof(char));
+	snprintf(p, 256, "%s%s.%s", (sign) ? "-" : "", n, d);
+	free(n);
+	free(d);
+      }
+      break;
+
+    default:
+      p = (char *)malloc(512 * sizeof(char));
+      n = s7_number_to_string_with_radix(sc, s7_make_real(sc, s7_real_part(obj)), radix, width, precision, float_choice);
+      d = s7_number_to_string_with_radix(sc, s7_make_real(sc, s7_imag_part(obj)), radix, width, precision, float_choice);
+      snprintf(p, 512, "%s%s%si", n, (s7_imag_part(obj) < 0.0) ? "" : "+", d);
+      free(n);
+      free(d);
       break;
       
     }
@@ -3409,7 +3471,7 @@ static char *s7_number_to_string_1(s7_scheme *sc, s7_pointer obj, int radix, int
 
 char *s7_number_to_string(s7_scheme *sc, s7_pointer obj, int radix)
 {
-  return(s7_number_to_string_1(sc, obj, radix, 0, 20, 'g')); /* (log top 10) so we get all the digits */
+  return(s7_number_to_string_with_radix(sc, obj, radix, 0, 20, 'g')); /* (log top 10) so we get all the digits */
 }
 
 
@@ -3426,9 +3488,11 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
 	radix = s7_integer(cadr(args));
       if ((radix < 2) || (radix > 16))
 	return(s7_out_of_range_error(sc, "number->string", 2, cadr(args), "between 2 and 16"));
+
+      res = s7_number_to_string_with_radix(sc, car(args), radix, 0, 20, 'g');
     }
-  else radix = 10;
-  res = s7_number_to_string(sc, car(args), radix);
+  else res = s7_number_to_string_base_10(sc, car(args), 0, 20, 'g');
+  
   sc->y = s7_make_string(sc, res);
   free(res);
   return(sc->y);
@@ -3436,28 +3500,27 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
 
 
 #define CTABLE_SIZE 128
-static bool *whitespace_table, *atom_delimiter_table, *exponent_table, *slashify_table, *string_delimiter_table;
+static bool *dot_table, *atom_delimiter_table, *exponent_table, *slashify_table, *string_delimiter_table;
 static int *digits;
-
-static bool is_one_of(bool *ctable, int c) 
-{
-  return((c == EOF) || (ctable[c]));
-}
-
 
 static void init_ctables(void)
 {
   int i;
 
-  whitespace_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
+  dot_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
   atom_delimiter_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
   exponent_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
   slashify_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
   string_delimiter_table = (bool *)calloc(CTABLE_SIZE, sizeof(bool));
   
-  whitespace_table['\n'] = true;
-  whitespace_table['\t'] = true;
-  whitespace_table[' '] = true;
+  dot_table['\n'] = true;
+  dot_table['\t'] = true;
+  dot_table[' '] = true;
+  dot_table[')'] = true; /* see note under TOKEN_DOT in the token function */
+  dot_table['('] = true;
+  dot_table['#'] = true;
+  dot_table['\\'] = true;
+  dot_table['\''] = true;
   
   atom_delimiter_table['('] = true;
   atom_delimiter_table[')'] = true;
@@ -3495,28 +3558,14 @@ static void init_ctables(void)
   for (i = 0; i < CTABLE_SIZE; i++)
     digits[i] = 256;
 
-  digits['0'] = 1;
-  digits['1'] = 1;
-  digits['2'] = 2;
-  digits['3'] = 3;
-  digits['4'] = 4;
-  digits['5'] = 5;  
-  digits['6'] = 6;
-  digits['7'] = 7;
-  digits['8'] = 8;
-  digits['9'] = 9;
-  digits['a'] = 10;
-  digits['A'] = 10;
-  digits['b'] = 11;
-  digits['B'] = 11;
-  digits['c'] = 12;
-  digits['C'] = 12;
-  digits['d'] = 13;
-  digits['D'] = 13;
-  digits['e'] = 14;
-  digits['E'] = 14;
-  digits['f'] = 15;
-  digits['F'] = 15;
+  digits['0'] = 1; digits['1'] = 1; digits['2'] = 2; digits['3'] = 3; digits['4'] = 4;
+  digits['5'] = 5; digits['6'] = 6; digits['7'] = 7; digits['8'] = 8; digits['9'] = 9;
+  digits['a'] = 10; digits['A'] = 10;
+  digits['b'] = 11; digits['B'] = 11;
+  digits['c'] = 12; digits['C'] = 12;
+  digits['d'] = 13; digits['D'] = 13;
+  digits['e'] = 14; digits['E'] = 14;
+  digits['f'] = 15; digits['F'] = 15;
 }
 
 
@@ -3583,7 +3632,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name)
 	return(x);  /* we already checked that it is a number */
       }
 
-    case 'i':   /* #i<num> = ->inexact (see token, is_one_of for table of choices here) */
+    case 'i':   /* #i<num> = ->inexact (see token for table of choices here) */
       if (name[1] == '#')
 	{
 	  if (is_radix_prefix(name[2]))
@@ -3694,7 +3743,7 @@ static s7_Int string_to_int_with_radix(const char *str,  int radix)
   
   for (i = len - 1, rad = 1; i >= lim; i--, rad *= radix)
     x += (char_to_num(str[i]) * rad);
-  
+
   return(sign * x);
 }
 
@@ -3707,8 +3756,9 @@ static s7_Double string_to_double_with_radix(char *str, int radix)
   int i, len, iloc = 0, floc = -1, eloc = -1, sign = 1, flen = 0;
   s7_Int int_part = 0, frac_part = 0, exponent = 0;
 
-  /* there's an ambiguity in number notation here if we allow "1e1" or "1.e1" in base 16 (or 15) -- is e a digit or an exponent marker? */
-  /*   but 1e+1, for example disambiguates it -- kind of messy! */
+  /* there's an ambiguity in number notation here if we allow "1e1" or "1.e1" in base 16 (or 15) -- is e a digit or an exponent marker?
+   *   but 1e+1, for example disambiguates it -- kind of messy! -- the scheme spec says "e" can only occur in base 10. 
+   */
 
   if ((str[0] == '+') || (str[0] == '-'))
     {
@@ -3721,7 +3771,7 @@ static s7_Double string_to_double_with_radix(char *str, int radix)
     if (str[i] == '.')
       floc = i;
     else
-      if ((str[i] == 'e') && (radix < 15))
+      if ((str[i] == 'e') && (radix == 10))
 	eloc = i;
 
   if ((floc == -1) || (floc > iloc))
@@ -3749,7 +3799,6 @@ static s7_Double string_to_double_with_radix(char *str, int radix)
 
   if (eloc != -1)
     exponent = string_to_int_with_radix((char *)(str + eloc + 1), radix);
-
   if (frac_part > 0)
     return(sign * (int_part + ((s7_Double)frac_part / pow((s7_Double)radix, (s7_Double)flen))) * pow((s7_Double)radix, (s7_Double)exponent));
   if (exponent != 0)
@@ -3833,8 +3882,13 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 	    }
 	  else 
 	    {
-	      if (exponent_table[(int)c]) /* sigh -- what's the difference between these endless (e s f d l) exponent chars? */
+	      if (exponent_table[(int)c]) /* sigh -- what's the difference between these endless (e s f d l) exponent chars? 
+					   *   also spec says these things occur only in base 10
+					   */
 		{
+		  if (radix != 10)
+		    return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F); 
+		  
 		  if (((ex1) ||
 		       (slash1)) &&
 		      (has_plus_or_minus == 0)) /* ee */
@@ -3921,7 +3975,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
   if ((has_plus_or_minus != 0) &&
       (!has_i))
     return((want_symbol) ? s7_make_symbol(sc, string_downcase(q)) : sc->F);
-  
+
   if (has_i)
     {
       s7_Double rl = 0.0, im = 0.0;
@@ -3941,10 +3995,14 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
       
       if (ex1) (*ex1) = 'e';
       if (ex2) (*ex2) = 'e';
-      
+      (*((char *)(plus - 1))) = '\0';
+
       if ((has_dec_point1) ||
 	  (ex1))
-	rl = ATOF(q);
+	{
+	  /* (string->number "1100.1+0.11i" 2) -- need to split into 2 honest reals before passing to non-base-10 ATOF */
+	  rl = ATOF(q);
+	}
       else
 	{
 	  if (slash1)
@@ -3972,9 +4030,10 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 	  q[i] = saved_q[i];
 	free(saved_q);
       }
-
+      
       return(s7_make_complex(sc, rl, im));
     }
+
   
   if ((has_dec_point1) ||
       (ex1))
@@ -6669,9 +6728,11 @@ static s7_pointer read_string_expression(s7_scheme *sc, s7_pointer pt)
 }
 
 
-static char skip_space(s7_scheme *sc, s7_pointer pt) 
+static int token(s7_scheme *sc, s7_pointer pt)
 {
-  int c;
+  int c = 0;
+
+  /* skip white space */
   if (is_file_port(pt))
     {
       while (isspace(c = fgetc(port_file(pt))))
@@ -6684,15 +6745,6 @@ static char skip_space(s7_scheme *sc, s7_pointer pt)
 	if (c == '\n')
 	  port_line_number(pt)++;
     }
-  return(c);
-}
-
-
-static int token(s7_scheme *sc, s7_pointer pt)
-{
-  int c;
-  c = skip_space(sc, pt);
-  /* TODO: can token and skip_space be merged? */
 
   switch (c) 
     {
@@ -6708,11 +6760,20 @@ static int token(s7_scheme *sc, s7_pointer pt)
       
     case '.':
       c = inchar(sc, pt);
-      if (is_one_of(whitespace_table, c)) 
+      if (dot_table[c])
 	return(TOKEN_DOT);
+
       backchar(sc, c, pt);
       backchar(sc, '.', pt);
-      return(TOKEN_ATOM);
+      return(TOKEN_ATOM); /* assuming a number eventually? or can symbol names start with "."?
+			   * in either case, we'd want alphanumeric here -- " .(" for example
+			   * is probably an error in this scheme since we don't support the
+			   * quasiquote dot business.  I think I'll flag (){}[]#'\.  I can't
+			   * leave this for make_atom to detect because by then the delimiter
+			   * has been lost (i.e. ".)" gets to make_atom as "." which is still
+			   * a bad symbol name, but make_atom is also called by number->string
+			   * which wants to return #f silently in such a case.
+			   */
       
     case '\'':
       return(TOKEN_QUOTE);
@@ -6743,7 +6804,7 @@ static int token(s7_scheme *sc, s7_pointer pt)
     case '#':
       c = inchar(sc, pt);
       if (c == '(') 
-	return(TOKEN_VEC);
+	return(TOKEN_VECTOR);
       
       /* block comments in either #! ... !# */
       if (c == '!') 
@@ -7398,7 +7459,7 @@ static char *s7_atom_to_c_string(s7_scheme *sc, s7_pointer obj, bool use_write)
       return(describe_port(sc, obj));
 
     case T_NUMBER:
-      return(s7_number_to_string_1(sc, obj, 10, 0, 14, 'g')); /* 20 digits is excessive in this context */
+      return(s7_number_to_string_base_10(sc, obj, 0, 14, 'g')); /* 20 digits is excessive in this context */
   
     case T_STRING:
       if (string_length(obj) > 0)
@@ -9352,7 +9413,16 @@ static void s7_mark_embedded_objects(s7_pointer a) /* called by gc, calls fobj's
       if (object_types[tag].gc_mark)
 	(*(object_types[tag].gc_mark))(a->object.fobj.value);
     }
-  else fprintf(stderr, "%p, found bad type: %x %d %x\n", a, tag, tag, a->flag); /* TODO: real error here */
+#if S7_DEBUGGING
+  else 
+    {
+      /* sc would need to be passed through the call chain to get a real error here,
+       *   and I believe this can only happen if the user passes a non-s7 object to
+       *   be marked, which we would want to ignore anyway.
+       */
+      fprintf(stderr, "%p, found bad type: %x %d %x\n", a, tag, tag, a->flag);
+    }
+#endif
 }
 
 
@@ -10059,7 +10129,7 @@ static void format_number(s7_scheme *sc, format_data *fdat, int radix, int width
 {
   char *tmp;
   if (width < 0) width = 0;
-  tmp = s7_number_to_string_1(sc, car(fdat->args), radix, width, precision, float_choice);
+  tmp = s7_number_to_string_with_radix(sc, car(fdat->args), radix, width, precision, float_choice);
   format_append_string(fdat, tmp);
   free(tmp);
   fdat->args = cdr(fdat->args);
@@ -11280,7 +11350,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 	case TOKEN_EOF:
 	  return(sc->EOF_OBJECT);
 	  
-	case TOKEN_VEC:  /* already read #( */
+	case TOKEN_VECTOR:  /* already read #( */
 	  push_stack(sc, OP_READ_VECTOR, sc->NIL, sc->NIL);
 	  /* fall through */
 	  
@@ -11305,7 +11375,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  
 	case TOKEN_BQUOTE:
 	  sc->tok = token(sc, sc->input_port);
-	  if (sc->tok == TOKEN_VEC) 
+	  if (sc->tok == TOKEN_VECTOR) 
 	    {
 	      push_stack(sc, OP_READ_QUASIQUOTE_VECTOR, sc->NIL, sc->NIL);
 	      sc->tok= TOKEN_LPAREN;
@@ -12293,11 +12363,24 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       if (!is_pair(cdr(sc->code)))
 	return(eval_error(sc, "letrec syntax error: ~A", sc->code));
       
+      /* get all local vars and set to #undefined
+       * get parallel list of values
+       * eval each member of values list with env still full of #undefined's
+       * assign each value to its variable
+       * eval body
+       */
       sc->envir = new_frame_in_env(sc, sc->envir); 
       sc->args = sc->NIL;
       sc->value = sc->code;
       sc->code = car(sc->code);
-      
+
+      for (sc->x = sc->code; sc->x != sc->NIL; sc->x = cdr(sc->x))
+	{
+	  if (!(s7_is_symbol(caar(sc->x))))
+	    return(eval_error(sc, "bad variable ~A in letrec bindings", car(sc->x)));
+	  add_to_current_environment(sc, caar(sc->x), sc->UNDEFINED);
+	}
+
       
     case OP_LETREC1:    /* letrec -- calculate parameters */
       sc->args = s7_cons(sc, sc->value, sc->args);
@@ -12315,13 +12398,8 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
 
     case OP_LETREC2:
-      for (sc->x = car(sc->code), sc->y = sc->args; sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
-	{
-	  if (!(s7_is_symbol(caar(sc->x))))
-	    return(eval_error(sc, "bad variable ~A in letrec bindings", car(sc->x)));
-
-	  add_to_current_environment(sc, caar(sc->x), car(sc->y)); 
-	}
+      for (sc->x = car(sc->code), sc->y = sc->args; sc->y != sc->NIL; sc->x = cdr(sc->x), sc->y = cdr(sc->y))
+	s7_symbol_set_value(sc, caar(sc->x), car(sc->y));
       sc->code = cdr(sc->code);
       sc->args = sc->NIL;
       goto BEGIN;

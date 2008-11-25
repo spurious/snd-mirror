@@ -4786,7 +4786,7 @@ static int alsa_mus_audio_write(int id, char *buf, int bytes)
   if ((frames <= 0) || (frames > bytes))
     {
       /* pcm->frame_bits not correct? */
-      mus_print("audio write " SSIZE_TD " frames (%d bytes)?", bytes, frames);
+      mus_print("audio write " SSIZE_TD " frames (%d bytes)?", frames, bytes);
       abort();
       return(MUS_ERROR);
     }

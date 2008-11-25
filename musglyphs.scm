@@ -137,7 +137,7 @@
 (define old-defvar defvar)
 (if (not (provided? 'snd-s7))
     (set! defvar define)
-    (defmacro defvar args `(define ,@args)))
+    (defmacro defvar (name value) `(define ,name ,value)))
 
 (defmacro defun (name ignored-args . body)
   ;; in cmn-glyphs every defun has two args, the "score" and an optional "style"
@@ -163,17 +163,18 @@
 (if (defined? 'declare) (define old-declare declare) (define old-declare #f))
 (define (declare args) #f)
 (define sound-comment comment)
-(define comment
-  (make-procedure-with-setter
-   (lambda* (:optional (scr #f) (msg 0))
-     "(comment :optional (scr #f) (msg 0)) tries to make musglyph.scm safe for comments"
-     (if (or (number? msg)
-	     (not scr))
-	 (sound-comment scr)))
-   (lambda* (snd :optional (val #f))
-     (if (not val)
-	 (apply (setter sound-comment) (list #f snd))
-	 (apply (setter sound-comment) (list snd val))))))
+
+;(define comment
+;  (make-procedure-with-setter
+;   (lambda* (:optional (scr #f) (msg 0))
+;     "(comment :optional (scr #f) (msg 0)) tries to make musglyph.scm safe for comments"
+;     (if (or (number? msg)
+;	     (not scr))
+;	 (sound-comment scr)))
+;   (lambda* (snd :optional (val #f))
+;     (if (not val)
+;	 (apply (setter sound-comment) (list #f snd))
+;	 (apply (setter sound-comment) (list snd val))))))
 
 ;(load "loop.scm") ; Rick's loop implementation (cm/src/loop.scm)
 (if (not (provided? 'snd-s7))
