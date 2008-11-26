@@ -415,7 +415,7 @@ struct s7_scheme {
   s7_pointer FEED_TO;                 /* => */
   s7_pointer SET_OBJECT;              /* object set method */
   s7_pointer APPLY, VECTOR, CONS, APPEND, CDR, VECTOR_FUNCTION, VALUES;
-  s7_pointer ERROR, WRONG_TYPE_ARG, OUT_OF_RANGE, FORMAT_ERROR;
+  s7_pointer ERROR, WRONG_TYPE_ARG, OUT_OF_RANGE, FORMAT_ERROR, WRONG_NUMBER_OF_ARGS;
   s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST;
   
   s7_pointer input_port;              /* current-input-port (nil = stdin) */
@@ -6010,8 +6010,6 @@ static char *describe_port(s7_scheme *sc, s7_pointer p)
 }
 
 
-/* -------- port-line-number -------- */
-
 static s7_pointer g_port_line_number(s7_scheme *sc, s7_pointer args)
 {
   #define H_port_line_number "(port-line-number input-file-port) returns the current read line number of port"
@@ -6023,8 +6021,6 @@ static s7_pointer g_port_line_number(s7_scheme *sc, s7_pointer args)
 }
 
 
-/* -------- port-filename -------- */
-
 static s7_pointer g_port_filename(s7_scheme *sc, s7_pointer args)
 {
   #define H_port_filename "(port-filename file-port) returns the filename associated with port"
@@ -6034,8 +6030,6 @@ static s7_pointer g_port_filename(s7_scheme *sc, s7_pointer args)
   return(sc->F); /* not an error! */
 }
 
-
-/* -------- input-port? -------- */
 
 bool s7_is_input_port(s7_scheme *sc, s7_pointer p)   
 { 
@@ -6051,8 +6045,6 @@ static s7_pointer g_is_input_port(s7_scheme *sc, s7_pointer args)
 }
 
 
-/* -------- output-port? -------- */
-
 bool s7_is_output_port(s7_scheme *sc, s7_pointer p)     
 { 
   return((p == sc->NIL) ||  /* stderr? */
@@ -6066,8 +6058,6 @@ static s7_pointer g_is_output_port(s7_scheme *sc, s7_pointer args)
   return(make_boolean(sc, s7_is_output_port(sc, car(args))));
 }
 
-
-/* -------- current-input-port -------- */
 
 s7_pointer s7_current_input_port(s7_scheme *sc)
 {
@@ -6095,8 +6085,6 @@ static s7_pointer g_set_current_input_port(s7_scheme *sc, s7_pointer args)
 }
 
 
-/* -------- current-output-port -------- */
-
 s7_pointer s7_current_output_port(s7_scheme *sc)
 {
   return(sc->output_port);
@@ -6122,8 +6110,6 @@ static s7_pointer g_set_current_output_port(s7_scheme *sc, s7_pointer args)
   return(old_port);
 }
 
-
-/* -------- current-error-port -------- */
 
 s7_pointer s7_current_error_port(s7_scheme *sc)
 {
@@ -6160,8 +6146,6 @@ static s7_pointer g_set_current_error_port(s7_scheme *sc, s7_pointer args)
 }
 
 
-/* -------- char-ready? -------- */
-
 static s7_pointer g_is_char_ready(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_char_ready "(char-ready? :optional port) returns #t if a character is ready for input on the given port"
@@ -6177,16 +6161,12 @@ static s7_pointer g_is_char_ready(s7_scheme *sc, s7_pointer args)
 }      
 
 
-/* -------- eof-object? -------- */
-
 static s7_pointer g_is_eof_object(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_eof_object "(eof-object? val) returns #t is val is the end-of-file object"
   return(make_boolean(sc, car(args) == sc->EOF_OBJECT));
 }
 
-
-/* -------- close-input-port -------- */
 
 void s7_close_input_port(s7_scheme *sc, s7_pointer p)
 {
@@ -6225,8 +6205,6 @@ static s7_pointer g_close_input_port(s7_scheme *sc, s7_pointer args)
 }
 
 
-/* -------- close-output-port -------- */
-
 void s7_close_output_port(s7_scheme *sc, s7_pointer p)
 {
   if ((p == sc->NIL) ||
@@ -6264,8 +6242,6 @@ static s7_pointer g_close_output_port(s7_scheme *sc, s7_pointer args)
   return(sc->UNSPECIFIED);
 }
 
-
-/* -------- open-input-file -------- */
 
 static s7_pointer s7_make_input_file(s7_scheme *sc, const char *name, FILE *fp)
 {
@@ -6316,8 +6292,6 @@ static s7_pointer g_open_input_file(s7_scheme *sc, s7_pointer args)
 }
 
 
-/* -------- open-output-file -------- */
-
 s7_pointer s7_open_output_file(s7_scheme *sc, const char *name, const char *mode)
 {
   FILE *fp;
@@ -6362,8 +6336,6 @@ static s7_pointer g_open_output_file(s7_scheme *sc, s7_pointer args)
 }
 
 
-/* -------- open-input-string -------- */
-
 s7_pointer s7_open_input_string(s7_scheme *sc, const char *input_string)
 {
   s7_pointer x;
@@ -6396,8 +6368,6 @@ static s7_pointer g_open_input_string(s7_scheme *sc, s7_pointer args)
 }
 
 
-/* -------- open-output-string -------- */
-
 #define STRING_PORT_INITIAL_LENGTH 128
 
 s7_pointer s7_open_output_string(s7_scheme *sc)
@@ -6425,8 +6395,6 @@ static s7_pointer g_open_output_string(s7_scheme *sc, s7_pointer args)
   return(s7_open_output_string(sc));
 }
 
-
-/* -------- get-output-string -------- */
 
 const char *s7_get_output_string(s7_scheme *sc, s7_pointer p)
 {
@@ -6561,7 +6529,6 @@ static char *read_string_upto(s7_scheme *sc)
 	  do
 	    {
 	      c = port_string(pt)[port_string_point(pt)++];
-
 	      sc->strbuf[i++] = c;
 	      if (i >= sc->strbuf_size)
 		resize_strbuf(sc);
@@ -6623,20 +6590,12 @@ static s7_pointer read_string_expression(s7_scheme *sc, s7_pointer pt)
 	case ST_BSL:
 	  switch(c) 
 	    {
-	    case '0':
-	    case '1':
-	    case '2':
-	    case '3':
-	    case '4':
-	    case '5':
-	    case '6':
-	    case '7':
+	    case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7':
 	      state = ST_OCT1;
 	      c1 = c - '0';
 	      break;
 	      
-	    case 'x':
-	    case 'X':
+	    case 'x': case 'X':
 	      state = ST_X1;
 	      c1 = 0;
 	      break;
@@ -6774,7 +6733,6 @@ static int token(s7_scheme *sc, s7_pointer pt)
 			   * a bad symbol name, but make_atom is also called by number->string
 			   * which wants to return #f silently in such a case.
 			   */
-      
     case '\'':
       return(TOKEN_QUOTE);
       
@@ -6783,8 +6741,10 @@ static int token(s7_scheme *sc, s7_pointer pt)
 	int c;
 	if (is_file_port(pt))
 	  do (c = fgetc(port_file(pt))); while ((c != '\n') && (c != EOF));
-	else do (c = port_string(pt)[port_string_point(pt)++]); while ((c != '\n') && (c != EOF));
+	else do (c = port_string(pt)[port_string_point(pt)++]); while ((c != '\n') && (c != 0));
 	port_line_number(pt)++;
+	if (c == 0)
+	  return(TOKEN_EOF);
 	return(token(sc, pt));
       }
 
@@ -6845,9 +6805,6 @@ static int token(s7_scheme *sc, s7_pointer pt)
     }
 }
 
-
-
-/* -------- read|peek-char -------- */
 
 static char s7_read_char_1(s7_scheme *sc, s7_pointer port, bool peek)
 {
@@ -6950,8 +6907,6 @@ static s7_pointer g_read_line(s7_scheme *sc, s7_pointer args)
 #endif
 
 
-
-/* -------- read -------- */
 
 s7_pointer s7_read(s7_scheme *sc, s7_pointer port)
 {
@@ -7187,7 +7142,6 @@ static s7_pointer g_load_verbose(s7_scheme *sc, s7_pointer a)
 
 
 
-
 /* -------- eval string -------- */
 
 static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
@@ -7312,8 +7266,6 @@ static s7_pointer g_with_input_from_file(s7_scheme *sc, s7_pointer args)
   
   return(with_input(sc, s7_open_input_file(sc, s7_string(car(args)), "r"), args));
 }
-
-
 
 
 
@@ -7721,9 +7673,6 @@ s7_pointer s7_object_to_string(s7_scheme *sc, s7_pointer obj)
 }
 
 
-
-/* -------- newline -------- */
-
 void s7_newline(s7_scheme *sc, s7_pointer port)
 {
   write_char(sc, '\n', port);
@@ -7747,8 +7696,6 @@ static s7_pointer g_newline(s7_scheme *sc, s7_pointer args)
   return(sc->UNSPECIFIED);
 }
 
-
-/* -------- write-char -------- */
 
 void s7_write_char(s7_scheme *sc, char c, s7_pointer port)
 {
@@ -7775,8 +7722,6 @@ static s7_pointer g_write_char(s7_scheme *sc, s7_pointer args)
   return(sc->UNSPECIFIED);
 }
 
-
-/* -------- write/display -------- */
 
 static void write_or_display(s7_scheme *sc, s7_pointer obj, s7_pointer port, bool use_write)
 {
@@ -7944,7 +7889,6 @@ static s7_pointer g_with_output_to_file(s7_scheme *sc, s7_pointer args)
   sc->output_port = old_output_port;
   return(sc->value);
 }
-
 
 
 
@@ -8756,8 +8700,14 @@ static s7_pointer g_assq_1(s7_scheme *sc, s7_pointer args, const char *name, boo
   #define H_assv "(assv obj alist) returns the key-value pair associated (via eqv?) with the key obj in the association list alist"
   #define H_assoc "(assoc obj alist) returns the key-value pair associated (via equal?) with the key obj in the association list alist"
   
-  if ((!is_pair(cadr(args))) && (cadr(args) != sc->NIL))
+  if (!s7_is_list(sc, cadr(args)))
     return(s7_wrong_type_arg_error(sc, name, 2, cadr(args), "a list"));
+
+  if (cadr(args) == sc->NIL)
+    return(sc->F);
+
+  if (s7_list_length(sc, cadr(args)) <= 0)
+    return(s7_wrong_type_arg_error(sc, name, 2, cadr(args), "a proper list"));
   
   sc->x = car(args);
   for (sc->y = cadr(args); is_pair(sc->y); sc->y = cdr(sc->y)) 
@@ -8779,8 +8729,14 @@ static s7_pointer g_memq_1(s7_scheme *sc, s7_pointer args, const char *name, boo
   #define H_memv "(memv obj list) looks for obj in list and returns the list from that point if it is found, otherwise #f. memv uses eqv?"
   #define H_member "(member obj list) looks for obj in list and returns the list from that point if it is found, otherwise #f. member uses equal?"
   
-  if ((!is_pair(cadr(args))) && (cadr(args) != sc->NIL))
+  if (!s7_is_list(sc, cadr(args)))
     return(s7_wrong_type_arg_error(sc, name, 2, cadr(args), "a list"));
+
+  if (cadr(args) == sc->NIL)
+    return(sc->F);
+
+  if (s7_list_length(sc, cadr(args)) <= 0)
+    return(s7_wrong_type_arg_error(sc, name, 2, cadr(args), "a proper list"));
   
   for (sc->x = cadr(args); is_pair(sc->x); sc->x = cdr(sc->x)) 
     if (eq_func(car(args), car(sc->x)))
@@ -8852,8 +8808,6 @@ static s7_pointer g_append(s7_scheme *sc, s7_pointer args)
   return(sc->x);
 }
 
-
-/* -------- list-line-number -------- */
 
 static s7_pointer g_list_line_number(s7_scheme *sc, s7_pointer args)
 {
@@ -10125,11 +10079,17 @@ static int format_read_integer(s7_scheme *sc, int *cur_i, int str_len, const cha
 }
 
 
-static void format_number(s7_scheme *sc, format_data *fdat, int radix, int width, int precision, char float_choice)
+static void format_number(s7_scheme *sc, format_data *fdat, int radix, int width, int precision, char float_choice, char pad)
 {
   char *tmp;
   if (width < 0) width = 0;
   tmp = s7_number_to_string_with_radix(sc, car(fdat->args), radix, width, precision, float_choice);
+  if (pad != ' ')
+    {
+      char *padtmp;
+      padtmp = tmp;
+      while (*padtmp == ' ') (*(padtmp++)) = pad;
+    }
   format_append_string(fdat, tmp);
   free(tmp);
   fdat->args = cdr(fdat->args);
@@ -10296,6 +10256,7 @@ static char *format_to_c_string(s7_scheme *sc, const char* str, s7_pointer args,
 		case 'X': case 'x':
 		  {
 		    int width = -1, precision = -1;
+		    char pad = ' ';
 		    i++;
 		    if (isdigit(str[i]))
 		      width = format_read_integer(sc, &i, str_len, str, args, fdat);
@@ -10304,8 +10265,15 @@ static char *format_to_c_string(s7_scheme *sc, const char* str, s7_pointer args,
 			i++;
 			if (isdigit(str[i]))
 			  precision = format_read_integer(sc, &i, str_len, str, args, fdat);
+			else
+			  {
+			    if (str[i] == '\'')       /* (format #f "~12,'xD" 1) -> "xxxxxxxxxxx1" */
+			      {
+				pad = str[i + 1];
+				i += 2;
+			      }
+			  }
 		      }
-		    
 		    if ((str[i] != 'T') && (str[i] != 't'))
 		      {
 			if (fdat->args == sc->NIL)
@@ -10339,37 +10307,37 @@ static char *format_to_c_string(s7_scheme *sc, const char* str, s7_pointer args,
 			      }
 
 			    for (j = outstr_len - k; j < width; j++)
-			      format_append_char(fdat, ' ');
+			      format_append_char(fdat, pad);
 			  }
 			break;
 
 			/* -------- numbers -------- */
 		      case 'F': case 'f':
-			format_number(sc, fdat, 10, width, (precision < 0) ? 6 : precision, 'f');
+			format_number(sc, fdat, 10, width, (precision < 0) ? 6 : precision, 'f', pad);
 			break;
 
 		      case 'G': case 'g':
-			format_number(sc, fdat, 10, width, (precision < 0) ? 6 : precision, 'g');
+			format_number(sc, fdat, 10, width, (precision < 0) ? 6 : precision, 'g', pad);
 			break;
 
 		      case 'E': case 'e':
-			format_number(sc, fdat, 10, width, (precision < 0) ? 6 : precision, 'e');
+			format_number(sc, fdat, 10, width, (precision < 0) ? 6 : precision, 'e', pad);
 			break;
 
 		      case 'D': case 'd':
-			format_number(sc, fdat, 10, width, (precision < 0) ? 0 : precision, 'd');
+			format_number(sc, fdat, 10, width, (precision < 0) ? 0 : precision, 'd', pad);
 			break;
 
 		      case 'O': case 'o':
-			format_number(sc, fdat, 8, width, (precision < 0) ? 0 : precision, 'o');
+			format_number(sc, fdat, 8, width, (precision < 0) ? 0 : precision, 'o', pad);
 			break;
 
 		      case 'X': case 'x':
-			format_number(sc, fdat, 16, width, (precision < 0) ? 0 : precision, 'x');
+			format_number(sc, fdat, 16, width, (precision < 0) ? 0 : precision, 'x', pad);
 			break;
 
 		      case 'B': case 'b':
-			format_number(sc, fdat, 2, width, (precision < 0) ? 0 : precision, 'b');
+			format_number(sc, fdat, 2, width, (precision < 0) ? 0 : precision, 'b', pad);
 			break;
 		      
 		      default:
@@ -10849,10 +10817,7 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
   int i;
   s7_pointer catcher;
   catcher = sc->F;
-  
-#if 0
-  fprintf(stderr, "%p s7_error: %s %s\n", sc, s7_object_to_c_string(sc, type), s7_object_to_c_string(sc, info));
-#endif
+  /* fprintf(stderr, "%p s7_error: %s %s\n", sc, s7_object_to_c_string(sc, type), s7_object_to_c_string(sc, info)); */
 
   /* top is 1 past actual top, top - 1 is op, if op = OP_CATCH, top - 4 is the cell containing the catch struct */
   for (i = sc->stack_top - 1; i >= 3; i -= 4)
@@ -10992,12 +10957,6 @@ static s7_pointer eval_error(s7_scheme *sc, const char *errmsg, s7_pointer obj)
 }
 
 
-static s7_pointer eval_error_2(s7_scheme *sc, const char *errmsg, s7_pointer obj1, s7_pointer obj2)
-{
-  return(s7_error(sc, sc->ERROR, make_list_3(sc, s7_make_string(sc, errmsg), obj1, obj2)));
-}
-
-
 static s7_pointer read_error(s7_scheme *sc, const char *errmsg)
 {
   /* reader errors happen before the evaluator gets involved, so forms such as:
@@ -11024,7 +10983,11 @@ static s7_pointer read_error(s7_scheme *sc, const char *errmsg)
       if (end > port_string_length(pt))
 	end = port_string_length(pt);
       slen = end - start;
-
+#if S7_DEBUGGING
+      if (slen < 0)
+	fprintf(stderr, "slen: %d, end: %d, start: %d, port loc: %d, port len: %d, str len: %d\n",
+		slen, end, start, port_string_point(pt), port_string_length(pt), safe_strlen(pt->object.port->value));
+#endif
       recent_input = (char *)malloc((slen + 8) * sizeof(char));
       for (i = 0; i < 3; i++) recent_input[i] = '.';
       recent_input[3] = ' ';
@@ -11876,11 +11839,19 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    int len;
 	    len = safe_list_length(sc, sc->args);
 	    if (len < function_required_args(sc->code))
-	      return(eval_error_2(sc, "~A: not enough arguments: ~A", sc->code, sc->args));
+	      return(s7_error(sc, 
+			      sc->WRONG_NUMBER_OF_ARGS, 
+			      make_list_3(sc, 
+					  s7_make_string_with_length(sc, "~A: not enough arguments: ~A", 28), 
+					  sc->code, sc->args)));
 	    
 	    if ((!function_has_rest_arg(sc->code)) &&
 		((function_required_args(sc->code) + function_optional_args(sc->code)) < len))
-	      return(eval_error_2(sc, "~A: too many arguments: ~A", sc->code, sc->args));
+	      return(s7_error(sc, 
+			      sc->WRONG_NUMBER_OF_ARGS, 
+			      make_list_3(sc, 
+					  s7_make_string_with_length(sc, "~A: too many arguments: ~A", 26),
+					  sc->code, sc->args)));
 	    
 	    sc ->value = function_call(sc->code)(sc, sc->args);
 	    ASSERT_IS_OBJECT(sc->value, "function returned value");
@@ -11898,18 +11869,21 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  for (sc->x = car(closure_source(sc->code)), sc->y = sc->args; is_pair(sc->x); sc->x = cdr(sc->x), sc->y = cdr(sc->y)) 
 	    {
 	      if (sc->y == sc->NIL)
-		return(eval_error_2(sc, "~A: not enough arguments: ~A", g_procedure_source(sc, make_list_1(sc, sc->code)), sc->args));
-	      
-	      ASSERT_IS_OBJECT(sc->x, "parameter to closure");
-	      ASSERT_IS_OBJECT(sc->y, "arg to closure");
-	      
+		return(s7_error(sc, 
+				sc->WRONG_NUMBER_OF_ARGS, 
+				make_list_3(sc, 
+					    s7_make_string_with_length(sc, "~A: not enough arguments: ~A", 28),
+					    g_procedure_source(sc, make_list_1(sc, sc->code)), 
+					    sc->args)));
 	      add_to_current_environment(sc, car(sc->x), car(sc->y));
 	    }
 	  
 	  if (sc->x == sc->NIL) 
 	    {
 	      if (sc->y != sc->NIL)
-		return(eval_error(sc, "too many arguments: ~A", sc->args));
+		return(s7_error(sc, 
+				sc->WRONG_NUMBER_OF_ARGS, 
+				make_list_2(sc, s7_make_string_with_length(sc, "too many arguments: ~A", 22), sc->args)));
 	    } 
 	  else 
 	    {
@@ -12022,7 +11996,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 		    (is_pair(sc->y)))
 		  {
 		    if (sc->z != sc->KEY_REST)
-		      return(eval_error(sc, "too many arguments: ~A", sc->args));
+		      return(s7_error(sc, 
+				      sc->WRONG_NUMBER_OF_ARGS, 
+				      make_list_2(sc, s7_make_string_with_length(sc, "too many arguments: ~A", 22), sc->args)));
 		  } 
 		else 
 		  {
@@ -13272,8 +13248,7 @@ static s7_pointer g_make_thread_variable(s7_scheme *sc, s7_pointer args)
 static s7_pointer get_key(s7_scheme *sc, s7_pointer obj, s7_pointer args)
 {
   if (args != sc->NIL)
-    return(s7_error(sc, 
-		    s7_make_symbol(sc, "wrong-number-of-args"), 
+    return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS,
 		    make_list_3(sc, s7_make_string(sc, "thread variable is a function of no arguments: ~A ~A"),	obj, args)));
   return(s7_thread_variable_value(sc, obj));
 }
@@ -13598,6 +13573,9 @@ s7_scheme *s7_init(void)
 
   sc->WRONG_TYPE_ARG = s7_make_symbol(sc, "wrong-type-arg");
   typeflag(sc->WRONG_TYPE_ARG) |= (T_CONSTANT | T_DONT_COPY); 
+
+  sc->WRONG_NUMBER_OF_ARGS = s7_make_symbol(sc, "wrong-number-of-args");
+  typeflag(sc->WRONG_NUMBER_OF_ARGS) |= (T_CONSTANT | T_DONT_COPY); 
 
   sc->FORMAT_ERROR = s7_make_symbol(sc, "format-error");
   typeflag(sc->FORMAT_ERROR) |= (T_CONSTANT | T_DONT_COPY); 

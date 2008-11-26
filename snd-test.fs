@@ -1881,7 +1881,7 @@ include bird.fsm
      <'> phase-vocoder-phases
      <'> mus-generator? <'> read-sample <'> reset-listener-cursor <'> goto-listener-end
      <'> sample-reader-home <'> selection-chans <'> selection-srate <'> snd-gcs
-     <'> snd-font <'> snd-color <'> snd-warning <'> sine-bank
+     <'> snd-font <'> snd-color <'> snd-warning
      <'> channel-data <'> x-axis-label <'> variable-graph? <'> y-axis-label
      <'> snd-url <'> snd-urls <'> free-player
      <'> quit-button-color <'> help-button-color <'> reset-button-color <'> doit-button-color
@@ -2966,7 +2966,6 @@ include bird.fsm
     0.0                        <'> set-mus-srate           'out-of-range    check-error-tag
     -1000                      <'> set-mus-srate           'out-of-range    check-error-tag
     3 0 make-vct 3 0 make-vct -1 <'> dot-product           'out-of-range    check-error-tag
-    3 0 make-vct 3 0 make-vct -1 <'> sine-bank             'out-of-range    check-error-tag
     3 0 make-vct 3 0 make-vct -1 <'> multiply-arrays       'out-of-range    check-error-tag
     3 :initial-element 0.0 :initial-contents vct( 0.1 0.2 0.3 )
     <'> make-delay 'out-of-range check-error-tag

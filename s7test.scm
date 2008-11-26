@@ -2388,6 +2388,9 @@
   (test (assq 3.0 e) #f)
   (test (assq 5/3 e) #f))
 
+(test (assq #f '(#f 2 . 3)) 'error)
+(test (assq #f '((#f 2) . 3)) 'error) ; an a-list is a proper list sez kd
+
 
 
 (let ((e '((a 1) (b 2) (c 3))))
@@ -2425,6 +2428,9 @@
 (let ((lst '((2 . a) (3 . b))))
   (set-cdr! (assv 3 lst) 'c)
   (test lst '((2 . a) (3 . c))))
+
+(test (assv 1 '(1 2 . 3)) 'error)
+(test (assv 1 '((1 2) . 3)) 'error) ; an a-list is a proper list sez kd
 
 
 (let ((e '((a 1) (b 2) (c 3))))
@@ -2469,7 +2475,8 @@
 (test (assoc (let ((x (cons 1 2))) (set-cdr! x x)) 1) 'error)
 (test (assoc '((1 2) .3) 1) 'error)
 (test (assoc ''foo quote) 'error)
-
+(test (assoc 1 '(1 2 . 3)) 'error)
+(test (assoc 1 '((1 2) . 3)) 'error) ; an a-list is a proper list sez kd
 
 
 (test (append '(a b c) '()) '(a b c))
@@ -3580,26 +3587,62 @@
 	(test (number->string 12.0+0.75i 16) "c.0+0.ci")
 	(test (number->string -12.5-3.75i 16) "-c.8-3.ci")
 
-	(do ((base 2 (+ base 1)))
-	    ((= base 15))
-	  (if (not (= base 10))
-	      (test (string->number "1e1" base) #f)))
-
-	(do ((base 2 (+ base 1)))
-	    ((= base 15))
-	  (if (not (= base 10))
-	      (test (string->number "1.1e1" base) #f)))
-
-	(do ((base 2 (+ base 1)))
-	    ((= base 17))
-	  (if (not (= base 10))
-	      (test (string->number "1e+2" base) #f))) 
+	(for-each
+	 (lambda (expchar)
+	   (let ((exponent (string expchar)))
+	     (do ((base 2 (+ base 1)))
+		 ((= base 14))
+	       (if (not (= base 10))
+		   (if (string->number (string-append "1" exponent "1") base)
+		       (begin
+			 (display "(string->number ") (display (string-append "1" exponent "1")) (display " ") (display base)
+			 (display ") returned ") (display (string->number (string-append "1" exponent "1") base)) 
+			 (display "?") (newline)))))
+	     
+	     (do ((base 2 (+ base 1)))
+		 ((= base 14))
+	       (if (not (= base 10))
+		   (if (string->number (string-append "1.1" exponent "1") base)
+		       (begin
+			 (display "(string->number ") (display (string-append "1.1" exponent "1")) (display " ") (display base)
+			 (display ") returned ") (display (string->number (string-append "1.1" exponent "1") base)) 
+			 (display "?") (newline)))))
+	     
+	     (do ((base 2 (+ base 1)))
+		 ((= base 17))
+	       (if (not (= base 10))
+		   (if (string->number (string-append "1" exponent "+1") base)
+		       (begin
+			 (display "(string->number ") (display (string-append "1" exponent "+1")) (display " ") (display base)
+			 (display ") returned ") (display (string->number (string-append "1" exponent "+1") base)) 
+			 (display "?") (newline)))))
 					; in base 16 this is still not a number because of the + (or -)
 					; but "1e+1i" is a number -- gad!
-	(do ((base 2 (+ base 1)))
-	    ((= base 17))
-	  (if (not (= base 10))
-	      (test (number? (string->number "1e+1i" base)) (> base 14))))
+	     (do ((base 2 (+ base 1)))
+		 ((= base 17))
+	       (if (not (= base 10))
+		   (if (not (eq? (number? (string->number (string-append "1" exponent "+1i") base)) 
+				 (or (and (> base 13)
+					  (char=? expchar #\d))
+				     (and (> base 14)
+					  (char=? expchar #\e))
+				     (and (= base 16)
+					  (char=? expchar #\f)))))
+		       (begin
+			 (display "(string->number ") (display (string-append "1" exponent "+1i")) (display " ") (display base)
+			 (display ") returned ") (display (string->number (string-append "1" exponent "+1i") base)) 
+			 (display "?") (newline)))))
+	     
+	     (do ((base 2 (+ base 1)))
+		 ((= base 17))
+	       (if (not (= base 10))
+		   (if (string->number (string-append "1" exponent "-1+1i") base)
+		       (begin
+			 (display "(string->number ") (display (string-append "1" exponent "-1+1i")) (display " ") (display base)
+			 (display ") returned ") (display (string->number (string-append "1" exponent "-1+1i") base)) 
+			 (display "?") (newline)))))))
+
+	 (list #\e #\d #\f #\s #\l))
 
 	(test (< (abs (- (string->number "3.1415926535897932384626433832795029" 10) 3.1415926535897932384626433832795029)) 1e-7) #t)
 
@@ -28910,7 +28953,7 @@
    "#b3" "#b4" "#b5" "#b6" "#b7" "#b8" "#b9" "#ba" "#bb" "#bc"
    "#bd" "#be" "#bf" "#q" "#b#b1" "#o#o1" "#d#d1" "#x#x1" "#e#e1" "#xag" "#x1x"
    "#o8" "#o9" "1/#e1" "#o#" "#e#i1" "#d--2" "#b#x1" "#i#x#b1" "#e#e#b1" "#e#b#b1" 
-   "-#b1" "+#b1" "#b1/#b2" "#b1+#b1i" "#b1+i" "1+#bi" "1+#b1i" "1#be1" "#b" "#o" "#" "#ea" "#e1a"
+   "-#b1" "+#b1" "#b1/#b2" "#b1+#b1i" "1+#bi" "1+#b1i" "1#be1" "#b" "#o" "#" "#ea" "#e1a"
    "#i#i1" "12@12+0i"))
 
 (for-each 
@@ -30423,7 +30466,7 @@
 (test (letrec ((f (lambda () (+ x 3))) (x 2)) (f)) 5)
 (test (letrec) 'error)
 (test (let ((x . 1)) x) 'error)
-(test (let ((x 1) (x 2)) x) 'error)
+;(test (let ((x 1) (x 2)) x) 'error)
 (test (let* ((x 1) (x 2)) x) 2)
 (test (let* ((x 1) (y x)) y) 1)
 (test (let ((x 1)) (let ((x 32) (y x)) (+ x y))) 33)
@@ -32082,16 +32125,22 @@
       (test (format #f "~D") 'error)
 
       (call-with-output-file "tmp1.r5rs" (lambda (p) (format p "this ~A ~C test ~D" "is" #\a 3)))
-      (test (call-with-input-file "tmp1.r5rs" (lambda (p) (read-line p))) "this is a test 3")
+      (let ((res (call-with-input-file "tmp1.r5rs" (lambda (p) (read-line p)))))
+	(if (not (string=? res "this is a test 3"))
+	    (begin 
+	      (display "call-with-input-file + format to \"tmp1.r5rs\" ... expected \"this is a test 3\", but got \"")
+	      (display res) (display "\"?") (newline))))
       
       (if with-open-input-string-and-friends
-	  (test (let ((res #f)) 
-		  (let ((this-file (open-output-string))) 
-		    (format this-file "this ~A ~C test ~D" "is" #\a 3)
-		    (set! res (get-output-string this-file))
-		    (close-output-port this-file)
-		    res))
-		"this is a test 3"))
+	  (let ((res #f)) 
+	    (let ((this-file (open-output-string))) 
+	      (format this-file "this ~A ~C test ~D" "is" #\a 3)
+	      (set! res (get-output-string this-file))
+	      (close-output-port this-file))
+	    (if (not (string=? res "this is a test 3"))
+		(begin 
+		  (display "open-output-string + format ... expected \"this is a test 3\", but got \"")
+		  (display res) (display "\"?") (newline)))))
 
       (format #t "format #t: ~D" 1)
       (format (current-output-port) " output-port: ~D! (this is testing output ports)~%" 2)

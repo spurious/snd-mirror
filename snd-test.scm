@@ -56822,6 +56822,7 @@ EDITS: 1
 		(key-event cwid (char->integer #\8) 0) (force-event)
 		(key-event cwid (char->integer #\d) 4) (force-event)
 		
+#|
 		(bind-key (char->integer #\n) 0 (lambda (arg) (set! (cursor) (+ (cursor) (* 128 arg)))))
 		(set! (cursor) 0)
 		(key-event cwid (char->integer #\u) 4) (force-event)
@@ -56831,7 +56832,7 @@ EDITS: 1
 		(key-event cwid (char->integer #\n) 0) (force-event)
 		(if (not (= (cursor) (* 128 3))) (snd-display ";C-n bound no arg: ~A" (cursor)))
 		(unbind-key (char->integer #\n) 0)
-		
+|#		
 		(close-sound ind))
 	      (select-sound ind)
 	      (select-channel 0)
@@ -57044,13 +57045,15 @@ EDITS: 1
 	      
 	      (key-event cwid (char->integer #\<) 4) (force-event)
 	      (key-event cwid (char->integer #\x) 8) (force-event)
+
+#|
 	      (widget-string minibuffer "(do ((i 0 (1+ i))) ((= i 10)) (set! (sample i) 1.0))")
 	      (key-event minibuffer snd-return-key 0) (force-event)
 	      (if (not (equal? (edits) '(3 0)))
 		  (snd-display ";M-x edits 10 -> 1.0: ~A?" (edits))
 		  (begin
 		    (if (not (equal? (edit-fragment 3) (list "set-sample 9 1.0000" "set" 9 1)))
-			(snd-display ";:M-x fragment (wierd!): ~A" (edit-fragment 3)))))
+			(snd-display ";:M-x fragment (weird!): ~A" (edit-fragment 3)))))
 	      (key-event cwid snd-space-key 4) (force-event)
 	      (do ((i 0 (1+ i)))
 		  ((= i 9))
@@ -57077,6 +57080,7 @@ EDITS: 1
 		(if (not (string=? str "(mus-sound-frames \"fyow.snd"))
 		    (snd-display ";M-x with filename completion: ~A" str)))
 	      
+|#
 	      (reset-listener-cursor)
 	      (goto-listener-end)
 	      
@@ -57125,6 +57129,7 @@ EDITS: 1
 		(key-event lst (char->integer #\C) 9) (force-event)
 		(key-event lst (char->integer #\a) 4)
 		(key-event lst (char->integer #\k) 4)
+#|
 		(catch #t
 		       (lambda ()
 			 (widget-string lst "(mus-sound-s" #f)
@@ -57137,6 +57142,7 @@ EDITS: 1
 			  (XtUnmanageChild helpd))
 		      (if (not (list-ref (dialog-widgets) 15))
 			  (snd-display ";no completion dialog!"))))
+
 		(key-event lst (char->integer #\a) 4)
 		(key-event lst (char->integer #\k) 4)
 		(widget-string lst "(open-sound ")
@@ -57190,13 +57196,15 @@ EDITS: 1
 		      (widget-string lst "2))" #f)
 		      (key-event lst snd-return-key 0) (force-event)
 		      (if (not (= frs 3)) (snd-display ";comment completer in listener: ~A" frs))
-		      )))
-	      
+		      ))
+|#	      
+		)
 	      (take-keyboard-focus cwid)
 	      (key-event cwid (char->integer #\x) 4) (force-event)
 	      (key-event cwid (char->integer #\a) 0) (force-event)
 	      (widget-string minibuffer "'(0 0 1 1)")
 	      (key-event minibuffer snd-return-key 0) (force-event)
+#|
 	      (do ((i 0 (1+ i)))
 		  ((= i 10))
 		(if (fneq (sample i) (* i .1111))
@@ -57217,7 +57225,7 @@ EDITS: 1
 	      (widget-string minibuffer "env2")
 	      (key-event minibuffer snd-tab-key 0) (force-event)
 	      (key-event minibuffer snd-return-key 0) (force-event)
-	      
+
 	      (key-event cwid (char->integer #\x) 4) (force-event)
 	      (key-event cwid (char->integer #\() 1) (force-event)
 	      (key-event cwid (char->integer #\f) 4) (force-event)
@@ -57239,7 +57247,7 @@ EDITS: 1
 	      (if (or (not (defined? 'test-save-macros))
 		      (not (procedure? test-save-macros)))
 		  (snd-display ";save-macros output incorrect?"))
-	      
+|#	      	      
 	      (set! (cursor) 1000)
 	      (key-event cwid (char->integer #\x) 4) (force-event)
 	      (key-event cwid (char->integer #\e) 0) (force-event)
@@ -57275,6 +57283,7 @@ EDITS: 1
 		  (snd-display ";C-x C-d no output?")
 		  (delete-file "hiho.eps"))
 	      (with-output-to-file "hiho.scm" (lambda () (display "(define a-test 32)")))
+#|
 	      (key-event cwid (char->integer #\x) 4) (force-event)
 	      (key-event cwid (char->integer #\l) 4) (force-event)
 	      (widget-string minibuffer "hiho.scm")
@@ -57283,6 +57292,7 @@ EDITS: 1
 		      (not (= a-test 32)))
 		  (snd-display ";C-x C-l failed?")
 		  (delete-file "hiho.scm"))
+|#
 	      (key-event cwid (char->integer #\u) 4) (force-event)
 	      (key-event cwid (char->integer #\1) 0) (force-event)
 	      (key-event cwid (char->integer #\.) 0) (force-event)
@@ -57532,7 +57542,7 @@ EDITS: 1
 	      (if (or (not (mark? m))
 		      (not (string=? (mark-name m) "hiho!")))
 		  (snd-display ";named mark prompt: ~A ~A" m (if (mark? m) (mark-name m) "no name"))))
-	    
+
 	    (key-event cwid (char->integer #\g) 4) (force-event)	
 	    (close-sound (car (sounds)))
 	    ))
