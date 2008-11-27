@@ -25,11 +25,6 @@ typedef double s7_Double;
 /* similarly for doubles (reals in scheme) -- only "double" works in C++ */
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
   /* s7 itself is based on the following types and functions, so the first place to look for examples
    *   is s7.c.  There are also a few variations on a REPL at the end of this file.  s7test.scm (in the
    *   Snd tarball) or r5rstest.scm (at the ccrma ftp site) are regression tests for s7 -- they still
@@ -43,7 +38,48 @@ extern "C" {
    *
    *   Common Music by Rick Taube: http://camil.music.uiuc.edu/Software/grace/downloads/cm3.tar.gz (composition)
    *     which can use sndlib -- see Snd's grfsnd.html or the cmdist archives for details
+   *
+   *
+   * s7 variables:
+   *
+   *    *load-path*             a list of directory names that "load" searches for scheme input files (initially '())
+   *    *vector-print-length*   how many elements of a vector are printed (initially 8)
+   *    *features*              a list of symbols describing what is current available (initially '(s7))
+   *
+   * s7 constants:
+   *
+   *    most-positive-fixnum
+   *    most-negative-fixnum    integer limits (the names come from Common Lisp)
+   *    pi                      3.1415...
+   *
+   * s7 non-standard functions:
+   *
+   *    load-verbose            if argument is #t, "load" prints out the name of the file it is loading
+   *    gc-verbose              if argument is #t, the garbage collector reports on its activities
+   *    provided?               checks the *features* list for a symbol
+   *    provided                adds a symbol to the *features* list
+   *    port-line-number        current line during loading
+   *    port-filename           current file name during loading
+   *    gc                      calls the GC, if it's argument is #f, the GC is turned off
+   *    quit                    exits s7
+   *    call-with-exit          just like call/cc but no jump back into a context
+   *    continuation?           #t if it's argument is a continuation (as opposed to an ordinary procedure)
+   *    backtrace               prints the "evaluation history"
+   *    clear-backtrace         clears the evaluation history
+   *    set-backtrace-length    sets how many entries are saved in the evaluation history
+   *    procedure-documentation doc string if any associated with a procedure
+   *    procedure-arity         a list describing the arglist of a function: '(required-args optional-args rest-arg)
+   *    procedure-source        returns the source (a list) of a procedure
+   *    help                    tries to find a help string associated with its argument
+   *
+   * and various others mentioned at the start of s7.c -- nearly every Scheme implementation includes
+   * stuff like logior, sinh, read-line, format, define*, etc.
    */
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 
 typedef struct s7_scheme s7_scheme;
@@ -248,6 +284,9 @@ s7_pointer s7_hash_table_ref(s7_scheme *sc, s7_pointer table, const char *name);
                                                                             /* (hash-table-ref table name) */
 s7_pointer s7_hash_table_set(s7_scheme *sc, s7_pointer table, const char *name, s7_pointer value);  
                                                                             /* (hash-table-set! table name value) */
+  /* a hash-table is a vector of alists '((symbol value)), so to iterate over a hash-table
+   *   use vector-ref and cdr down the lists.  An entry defaults to '() -- see "apropos" below
+   */
 
 bool s7_is_input_port(s7_scheme *sc, s7_pointer p);                         /* (input-port? p) */
 bool s7_is_output_port(s7_scheme *sc, s7_pointer p);                        /* (output-port? p) */
@@ -298,7 +337,7 @@ s7_pointer s7_global_environment(s7_scheme *sc);                            /* (
 s7_pointer s7_current_environment(s7_scheme *sc);                           /* (current-environment) */
 
   /* each environment is a list of the current frames (alists of symbols and values)
-   *   and the global (top-level) definitions, a vector (hash-table) of alists.
+   *   and the global (top-level) definitions, a vector of alists (a hash-table).
    * Here is an example of "apropos" that accesses both kinds of environment:
    *
         (define (apropos name)
@@ -376,7 +415,7 @@ void s7_define_constant(s7_scheme *sc, const char *name, s7_pointer value);
    *    (define *features* '())
    *
    * s7_define_variable is simply s7_define with string->symbol and the global environment.
-   * s7_define_constant is s7_define_variable but makes its value immutable.
+   * s7_define_constant is s7_define_variable but makes its "definee" immutable.
    */
 
 

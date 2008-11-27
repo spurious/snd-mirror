@@ -73,7 +73,8 @@
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
  *
  *
- * Documentation is in s7.h.
+ * Documentation is in s7.h.  A "regression test" is s7test.scm in the Snd tarball,
+ *   or r5rstest.scm (same as s7test.scm) at ccrma-ftp.
  *
  *
  * ---------------- compile time switches ---------------- 
@@ -3501,7 +3502,7 @@ static s7_pointer g_number_to_string(s7_scheme *sc, s7_pointer args)
 
 #define CTABLE_SIZE 128
 static bool *dot_table, *atom_delimiter_table, *exponent_table, *slashify_table, *string_delimiter_table;
-static int *digits;
+static int *digits, *char_nums;
 
 static void init_ctables(void)
 {
@@ -3555,6 +3556,7 @@ static void init_ctables(void)
   string_delimiter_table[' '] = false;
 
   digits = (int *)malloc(CTABLE_SIZE * sizeof(int));
+  char_nums = (int *)calloc(CTABLE_SIZE, sizeof(int));
   for (i = 0; i < CTABLE_SIZE; i++)
     digits[i] = 256;
 
@@ -3566,6 +3568,15 @@ static void init_ctables(void)
   digits['d'] = 13; digits['D'] = 13;
   digits['e'] = 14; digits['E'] = 14;
   digits['f'] = 15; digits['F'] = 15;
+
+  char_nums['0'] = 0; char_nums['1'] = 1; char_nums['2'] = 2; char_nums['3'] = 3; char_nums['4'] = 4;
+  char_nums['5'] = 5; char_nums['6'] = 6; char_nums['7'] = 7; char_nums['8'] = 8; char_nums['9'] = 9;
+  char_nums['a'] = 10; char_nums['A'] = 10;
+  char_nums['b'] = 11; char_nums['B'] = 11;
+  char_nums['c'] = 12; char_nums['C'] = 12;
+  char_nums['d'] = 13; char_nums['D'] = 13;
+  char_nums['e'] = 14; char_nums['E'] = 14;
+  char_nums['f'] = 15; char_nums['F'] = 15;
 }
 
 
@@ -3575,14 +3586,6 @@ static bool is_radix_prefix(char prefix)
 	 (prefix == 'd') ||
 	 (prefix == 'x') ||
 	 (prefix == 'o'));
-}
-
-
-static int char_to_num(const char c)
-{
-  if (isdigit(c))
-    return(c - '0');
-  return((tolower(c) - 'a') + 10);
 }
 
 
@@ -3742,7 +3745,7 @@ static s7_Int string_to_int_with_radix(const char *str,  int radix)
     }
   
   for (i = len - 1, rad = 1; i >= lim; i--, rad *= radix)
-    x += (char_to_num(str[i]) * rad);
+    x += (char_nums[(int)(str[i])] * rad);
 
   return(sign * x);
 }
@@ -4569,7 +4572,7 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	  if (s7_integer(sc->y) == 0)
 	    return(s7_make_integer(sc, 1));
 	  
-	  if (top_log > s7_Int_abs(s7_integer(sc->y)) * log(s7_Int_abs(s7_integer(sc->x)))) /* else over/underflow; a^b < 2^63 or > 2^-63 */
+	  if (top_log > s7_Int_abs(s7_integer(sc->y)) * log((s7_Double)(s7_Int_abs(s7_integer(sc->x))))) /* else over/underflow; a^b < 2^63 or > 2^-63 */
 	    {
 	      if ((s7_integer(sc->y) > 0) || 
 		  (s7_Int_abs(s7_integer(sc->x)) == 1))
@@ -4594,8 +4597,8 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 	      n = numerator(sc->x->object.number);
 	      d = denominator(sc->x->object.number);
 	      
-	      if ((top_log > log(s7_Int_abs(n)) * s7_Int_abs(p)) &&
-		  (top_log > log(d) * s7_Int_abs(p)))	
+	      if ((top_log > log((s7_Double)(s7_Int_abs(n))) * s7_Int_abs(p)) &&
+		  (top_log > log((s7_Double)d) * s7_Int_abs(p)))	
 		{
 		  if (p > 0)
 		    return(s7_make_ratio(sc, s7_Int_pow(n, p), s7_Int_pow(d, p)));
@@ -7076,6 +7079,7 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
 
 static s7_pointer g_load(s7_scheme *sc, s7_pointer args)
 {
+  #define H_load "(load file :optional env) loads the scheme file 'file'"
   FILE *fp = NULL;
   s7_pointer name, port;
   const char *fname;
@@ -7106,6 +7110,9 @@ static s7_pointer g_load(s7_scheme *sc, s7_pointer args)
   port = load_file(sc, fp);
   port_file_number(port) = remember_file_name(fname);
   push_input_port(sc, port);
+
+  if (cdr(args) != sc->NIL) 
+    sc->envir = cadr(args);
 
   push_stack(sc, OP_LOAD_CLOSE_AND_POP_IF_EOF, sc->args, sc->code);
   push_stack(sc, OP_READ_INTERNAL, sc->NIL, sc->NIL);
@@ -11109,8 +11116,8 @@ static s7_pointer g_eval(s7_scheme *sc, s7_pointer args)
 {
   #define H_eval "(eval code :optional env) evaluates code in the environment env"
   
-  if (cdr(args)!= sc->NIL) 
-    sc->envir= cadr(args);
+  if (cdr(args) != sc->NIL) 
+    sc->envir = cadr(args);
   sc->code = car(args);
   push_stack(sc, OP_EVAL, sc->args, sc->code);
   return(sc->NIL);
@@ -13863,7 +13870,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "call-with-exit",          g_call_with_exit,          1, 0, false, H_call_with_exit);
   s7_define_function(sc, "continuation?",           g_is_continuation,         1, 0, false, H_is_continuation);
 
-  s7_define_function(sc, "load",                    g_load,                    1, 0, false, H_display);
+  s7_define_function(sc, "load",                    g_load,                    1, 1, false, H_load);
   s7_define_function(sc, "eval",                    g_eval,                    1, 1, false, H_eval);
   s7_define_function(sc, "eval-string",             g_eval_string,             1, 0, false, H_eval_string);
   s7_define_function(sc, "apply",                   g_apply,                   1, 0, true,  H_apply);

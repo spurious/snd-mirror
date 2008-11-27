@@ -341,9 +341,10 @@ static bool watching_mouse = false; /* this is tracking axis moves */
 static int last_mouse_x = 0;
 static mark *moving_mark = NULL; /* used only while "off-screen" during axis moves */
 
-static void move_axis_to_track_mark(chan_info *cp);
-
 static timeout_result_t watch_mouse_button = 0;
+
+#if (!USE_NO_GUI)
+static void move_axis_to_track_mark(chan_info *cp);
 
 static TIMEOUT_TYPE watch_mouse(TIMEOUT_ARGS)
 {
@@ -355,7 +356,7 @@ static TIMEOUT_TYPE watch_mouse(TIMEOUT_ARGS)
     }
   TIMEOUT_RESULT
 }
-
+#endif
 
 static void start_mark_watching(chan_info *cp, mark *mp)
 {
@@ -1489,7 +1490,7 @@ static bool move_syncd_mark(chan_info *cp, mark *m, int x)
   return(redraw);
 }
 
-
+#if (!USE_NO_GUI)
 static void move_axis_to_track_mark(chan_info *cp)
 {
   if (moving_mark)
@@ -1501,7 +1502,7 @@ static void move_axis_to_track_mark(chan_info *cp)
       if (redraw) draw_mark(cp, cp->axis, moving_mark);
     }
 }
-
+#endif
 
 void move_mark(chan_info *cp, mark *mp, int x) /* from mouse drag callback in snd-chn.c, called whenever mark is visible */
 {

@@ -36,7 +36,7 @@
   #endif
 #endif
 
-#if (SIZEOF_SSIZE_T == SIZEOF_INT)
+#if (SIZEOF_SSIZE_T == SIZEOF_INT) && (!MUS_MAC_OSX)
   #define SSIZE_TD "%d"
 #else
   #define SSIZE_TD "%ld"

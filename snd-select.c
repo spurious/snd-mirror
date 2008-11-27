@@ -756,7 +756,7 @@ void cancel_selection_watch(void)
 
 static void move_selection_1(chan_info *cp, int x);
 
-
+#if (!USE_NO_GUI)
 static TIMEOUT_TYPE watch_selection(TIMEOUT_ARGS)
 {
   chan_info *cp = (chan_info *)context;
@@ -767,7 +767,7 @@ static TIMEOUT_TYPE watch_selection(TIMEOUT_ARGS)
     }
   TIMEOUT_RESULT
 }
-
+#endif
 
 static void move_selection_1(chan_info *cp, int x)
 {

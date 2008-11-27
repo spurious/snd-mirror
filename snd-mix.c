@@ -1066,7 +1066,7 @@ static int mix_tag_y_from_id(int id)
   return(0);
 }
 
-
+#if (!USE_NO_GUI)
 static color_t mix_color_from_id(int mix_id)
 {
   mix_info *md;
@@ -1075,6 +1075,7 @@ static color_t mix_color_from_id(int mix_id)
     return(md->color);
   return(ss->sgx->mix_color);
 }
+#endif
 
 
 static color_t mix_set_color_from_id(int id, color_t new_color)
@@ -2037,6 +2038,7 @@ static void stop_watch_mix_proc(void)
 
 static float watch_mix_x_incr = 1.0;
 
+#if (!USE_NO_GUI)
 static TIMEOUT_TYPE watch_mix(TIMEOUT_ARGS)
 {
   mix_info *md = (mix_info *)context;
@@ -2048,7 +2050,7 @@ static TIMEOUT_TYPE watch_mix(TIMEOUT_ARGS)
     }
   TIMEOUT_RESULT
 }
-
+#endif
 
 static int edpos_before_drag = 0;
 static with_hook_t hookable_before_drag;

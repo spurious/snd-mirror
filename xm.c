@@ -2721,7 +2721,7 @@ static XEN gxm_XmRenderTableAddRenditions(XEN arg1, XEN arg2, XEN arg3, XEN arg4
 XmRendition *renditions, Cardinal rendition_count, XmMergeMode merge_mode) adds renditions to a render table"
   /* DIFF: XmRenderTableAddRenditions arg2 is list of Renditions, arg1 can be #f = NULL
    */
-  int len, listlen;
+  int len, listlen = 0;
   XmRendition *rs;
   XmRenderTable res;
   XEN_ASSERT_TYPE(XEN_XmRenderTable_P(arg1) || XEN_FALSE_P(arg1), arg1, 1, "XmRenderTableAddRenditions", "XmRenderTable");
@@ -2989,7 +2989,7 @@ static XEN gxm_XmTabListInsertTabs(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 inserts tabs into a tab list"
   /* DIFF: XmTabListInsertTabs arg2 is list of XmTabs (can be #f = NULL)
    */
-  int len, listlen;
+  int len, listlen = 0;
   XmTab *tabs;
   XmTabList tl;
   XEN_ASSERT_TYPE(XEN_XmTabList_P(arg1) || XEN_FALSE_P(arg1), arg1, 1, "XmTabListInsertTabs", "XmTabList");
