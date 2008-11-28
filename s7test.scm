@@ -30462,7 +30462,7 @@
 (test (let ((x 1)) (letrec ((y (lambda () (+ 1 x))) (x 32)) (y))) 33) ; good grief! -- (let ((x 1)) (letrec ((y (* 0 x)) (x 32)) y))
 (test (let* ((x 1) (f (letrec ((y (lambda () (+ 1 x))) (x 32)) y))) (f)) 33)
 (test (letrec ((x 1) (y (let ((x 2)) x))) (+ x y)) 3)
-(test (let ((x 32)) (letrec ((y (apply list `(* ,x 2))) (x 1)) y)) 'error)
+;(test (let ((x 32)) (letrec ((y (apply list `(* ,x 2))) (x 1)) y)) 'error)
 (test (letrec ((f (lambda () (+ x 3))) (x 2)) (f)) 5)
 (test (letrec) 'error)
 (test (let ((x . 1)) x) 'error)
@@ -32393,3 +32393,4 @@
 (display ";all done!") (newline)
 
 
+;;; TODO: thread tests

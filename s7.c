@@ -48,6 +48,7 @@
  *        delay is renamed make-promise to avoid collisions in CLM
  *        continuation? function to distinguish a continuation from a procedure
  *        log takes an optional 2nd arg (base)
+ *        no syntax-rules or any of its friends
  *
  *   other additions: 
  *        procedure-source, procedure-arity, procedure-documentation, help
@@ -64,11 +65,6 @@
  *        *features*, *load-path*, *vector-print-length*
  *        define-constant, pi, most-positive-fixnum, most-negative-fixnum
  *        format (only the simple directives)
- *
- *
- * still to do:
- *   syntax-rules and friends
- *
  *
  * Mike Scholz provided the FreeBSD support (complex trig funcs, etc)
  *
@@ -200,9 +196,6 @@
 
 #define WITH_READ_LINE 1
 /* this includes the (non-standard) read-line function */
-
-#define WITH_FORMAT 1
-/* this includes a simple (no Roman numerals!) version of format */
 
 #define WITH_CONS_STREAM 0
 /* this includes the "cons-stream" form */
@@ -7079,7 +7072,9 @@ s7_pointer s7_load(s7_scheme *sc, const char *filename)
 
 static s7_pointer g_load(s7_scheme *sc, s7_pointer args)
 {
-  #define H_load "(load file :optional env) loads the scheme file 'file'"
+  #define H_load "(load file :optional env) loads the scheme file 'file'. The 'env' argument \
+defaults to the global environment; to load into the current environment instead, pass (current-environment)."
+
   FILE *fp = NULL;
   s7_pointer name, port;
   const char *fname;
@@ -7112,7 +7107,12 @@ static s7_pointer g_load(s7_scheme *sc, s7_pointer args)
   push_input_port(sc, port);
 
   if (cdr(args) != sc->NIL) 
-    sc->envir = cadr(args);
+    {
+      if (!is_pair(cadr(args)))
+	return(s7_wrong_type_arg_error(sc, "load", 2, cadr(args), "an environment"));
+      sc->envir = cadr(args);
+    }
+  else sc->envir = s7_global_environment(sc);
 
   push_stack(sc, OP_LOAD_CLOSE_AND_POP_IF_EOF, sc->args, sc->code);
   push_stack(sc, OP_READ_INTERNAL, sc->NIL, sc->NIL);
@@ -10004,8 +10004,6 @@ static s7_pointer g_hash_table_set(s7_scheme *sc, s7_pointer args)
 
 /* -------------------------------- format -------------------------------- */
 
-#if WITH_FORMAT
-
 typedef struct {
   char *str;
   int len, loc;
@@ -10419,7 +10417,6 @@ const char *s7_format(s7_scheme *sc, s7_pointer args)
 {
   return(s7_string(g_format(sc, args))); /* for the run macro in run.c */
 }
-#endif
 
 
 
@@ -10871,6 +10868,9 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
     {
       /* if info is not a list, send object->string to current error port,
        *   else assume car(info) is a format control string, and cdr(info) are its args
+       *
+       * TODO: check for format directives before making this assumption!  Old (Snd) cases
+       *       sometimes simply pass a string + list of args -- they now get "too many args"
        */
       if ((!s7_is_list(sc, info)) ||
 	  (!s7_is_string(car(info))))
@@ -10880,16 +10880,36 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 			 make_list_2(sc, type, info));
       else
 	{
-	  char *errstr;
-	  int len;
-	  len = 8 + string_length(car(info));
-	  errstr = (char *)malloc(len * sizeof(char));
-	  snprintf(errstr, len, "\n;%s", s7_string(car(info)));
-	  format_to_output(sc,
-			   s7_current_error_port(sc), 
-			   errstr,
-			   cdr(info));
-	  free(errstr);
+	  const char *carstr;
+	  int i, len;
+	  bool use_format = false;
+
+	  /* it's possible that the error string is just a string -- not intended for format */
+	  carstr = s7_string(car(info));
+	  len = string_length(car(info));
+	  for (i = 0; i < len; i++)
+	    if (carstr[i] == '~')
+	      {
+		use_format = true;
+		break;
+	      }
+
+	  if (use_format)
+	    {
+	      char *errstr;
+	      len += 8;
+	      errstr = (char *)malloc(len * sizeof(char));
+	      snprintf(errstr, len, "\n;%s", s7_string(car(info)));
+	      format_to_output(sc,
+			       s7_current_error_port(sc), 
+			       errstr,
+			       cdr(info));
+	      free(errstr);
+	    }
+	  else format_to_output(sc, 
+				s7_current_error_port(sc), 
+				"\n;~A ~A",
+				make_list_2(sc, type, info));
 	}
 
       /* now display location and \n at end */
@@ -11114,10 +11134,15 @@ static s7_pointer g_apply(s7_scheme *sc, s7_pointer args)
 
 static s7_pointer g_eval(s7_scheme *sc, s7_pointer args)
 {
-  #define H_eval "(eval code :optional env) evaluates code in the environment env"
+  #define H_eval "(eval code :optional env) evaluates code in the environment env. 'env' \
+defaults to the current environment; to load into the top-level environment instead, pass (global-environment)."
   
-  if (cdr(args) != sc->NIL) 
-    sc->envir = cadr(args);
+  if (cdr(args) != sc->NIL)
+    {
+      if (!is_pair(cadr(args)))
+	return(s7_wrong_type_arg_error(sc, "eval", 2, cadr(args), "an environment"));
+      sc->envir = cadr(args);
+    }
   sc->code = car(args);
   push_stack(sc, OP_EVAL, sc->args, sc->code);
   return(sc->NIL);
@@ -13070,9 +13095,7 @@ static s7_pointer g_make_thread(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_is_thread(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_thread "(thread? obj) returns #t if obj is a thread object"
-  return(make_boolean(sc, 
-		    (s7_is_object(car(args))) &&
-		    (s7_object_type(car(args)) == thread_tag)));
+  return(make_boolean(sc, (s7_is_object(car(args))) && (s7_object_type(car(args)) == thread_tag)));
 }
 
 
@@ -13133,9 +13156,7 @@ static bool lock_equal(void *obj1, void *obj2)
 static s7_pointer g_is_lock(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_lock "(lock? obj) returns #t if obj is a lock (mutex) object"
-  return(make_boolean(sc, 
-		    (s7_is_object(car(args))) &&
-		    (s7_object_type(car(args)) == lock_tag)));
+  return(make_boolean(sc, (s7_is_object(car(args))) && (s7_object_type(car(args)) == lock_tag)));
 }
 
 
@@ -13795,9 +13816,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "list->string",            g_list_to_string,          1, 0, false, H_list_to_string);
   s7_define_function(sc, "string->list",            g_string_to_list,          1, 0, false, H_string_to_list);
   s7_define_function(sc, "object->string",          g_object_to_string,        1, 0, false, H_object_to_string);
-#if WITH_FORMAT
   s7_define_function(sc, "format",                  g_format,                  1, 0, true,  H_format);
-#endif  
   
   /* lists */
   s7_define_function(sc, "null?",                   g_is_null,                 1, 0, false, H_is_null);

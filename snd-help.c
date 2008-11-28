@@ -518,6 +518,7 @@ void about_snd_help(void)
 		info,
 		"\nRecent changes include:\n\
 \n\
+28-Nov:  Snd 10.2.\n\
 14-Nov:  removed s7-optargs.scm -- define* is now built-in in s7.\n\
 11-Nov:  removed s7-format.scm -- format is now built-in in s7.\n\
 29-Oct:  osc.scm thanks to Kjetil.\n\

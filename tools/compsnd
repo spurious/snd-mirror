@@ -1208,12 +1208,6 @@ rm exs7
 rm exs7.o
 make clean
 
-echo ' -------------------------------- no format -------------------------------- '
-sed s7.c -e 's/#define WITH_FORMAT 1/#define WITH_FORMAT 0/' > tmp
-mv tmp s7.c
-make
-make clean
-
 echo ' -------------------------------- no read-line -------------------------------- '
 sed s7.c -e 's/#define WITH_READ_LINE 1/#define WITH_READ_LINE 0/' > tmp
 mv tmp s7.c
