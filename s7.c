@@ -704,21 +704,18 @@ static char *describe_type(s7_pointer p)
 #endif
 
 
-#define TOKEN_EOF     (-1)
-#define TOKEN_LPAREN  0
-#define TOKEN_RPAREN  1
-#define TOKEN_DOT     2
-#define TOKEN_ATOM    3
-#define TOKEN_QUOTE   4
-#define TOKEN_DQUOTE  6
-#define TOKEN_BQUOTE  7
-#define TOKEN_COMMA   8
-#define TOKEN_ATMARK  9
+#define TOKEN_EOF         (-1)
+#define TOKEN_LEFT_PAREN   0
+#define TOKEN_RIGHT_PAREN  1
+#define TOKEN_DOT          2
+#define TOKEN_ATOM         3
+#define TOKEN_QUOTE        4
+#define TOKEN_DOUBLE_QUOTE 6
+#define TOKEN_BACK_QUOTE   7
+#define TOKEN_COMMA        8
+#define TOKEN_AT_MARK      9
 #define TOKEN_SHARP_CONST 10
-#define TOKEN_VECTOR     11
-
-#define BACKQUOTE '`'
-
+#define TOKEN_VECTOR      11
 
 #if CASE_SENSITIVE
 
@@ -3598,7 +3595,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name)
   if (len == 0)
     return(sc->NIL);
 
-  if (len < 2)          /* #<any other char> is an error in this scheme */
+  if (len < 2)          /* #<any other char> (except ':', sigh) is an error in this scheme */
     return(sc->NIL);
       
   switch (name[0])
@@ -6708,10 +6705,10 @@ static int token(s7_scheme *sc, s7_pointer pt)
       return(TOKEN_EOF);
       
     case '(':
-      return(TOKEN_LPAREN);
+      return(TOKEN_LEFT_PAREN);
       
     case ')':
-      return(TOKEN_RPAREN);
+      return(TOKEN_RIGHT_PAREN);
       
     case '.':
       c = inchar(sc, pt);
@@ -6745,14 +6742,14 @@ static int token(s7_scheme *sc, s7_pointer pt)
       }
 
     case '"':
-      return(TOKEN_DQUOTE);
+      return(TOKEN_DOUBLE_QUOTE);
       
-    case BACKQUOTE:
-      return(TOKEN_BQUOTE);
+    case '`':
+      return(TOKEN_BACK_QUOTE);
       
     case ',':
       if ((c = inchar(sc, pt)) == '@') 
-	return(TOKEN_ATMARK);
+	return(TOKEN_AT_MARK);
       
       backchar(sc, c, pt);
       return(TOKEN_COMMA);
@@ -6761,6 +6758,12 @@ static int token(s7_scheme *sc, s7_pointer pt)
       c = inchar(sc, pt);
       if (c == '(') 
 	return(TOKEN_VECTOR);
+
+      if (c == ':')  /* turn #: into : */
+	{
+	  backchar(sc, c, pt);
+	  return(TOKEN_ATOM);
+	}
       
       /* block comments in either #! ... !# */
       if (c == '!') 
@@ -11349,9 +11352,9 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  push_stack(sc, OP_READ_VECTOR, sc->NIL, sc->NIL);
 	  /* fall through */
 	  
-	case TOKEN_LPAREN:
+	case TOKEN_LEFT_PAREN:
 	  sc->tok = token(sc, sc->input_port);
-	  if (sc->tok == TOKEN_RPAREN)
+	  if (sc->tok == TOKEN_RIGHT_PAREN)
 	    return(sc->NIL);
 
 	  if (sc->tok == TOKEN_DOT) 
@@ -11368,12 +11371,12 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  sc->tok = token(sc, sc->input_port);
 	  break;
 	  
-	case TOKEN_BQUOTE:
+	case TOKEN_BACK_QUOTE:
 	  sc->tok = token(sc, sc->input_port);
 	  if (sc->tok == TOKEN_VECTOR) 
 	    {
 	      push_stack(sc, OP_READ_QUASIQUOTE_VECTOR, sc->NIL, sc->NIL);
-	      sc->tok= TOKEN_LPAREN;
+	      sc->tok= TOKEN_LEFT_PAREN;
 	    } 
 	  else push_stack(sc, OP_READ_QUASIQUOTE, sc->NIL, sc->NIL);
 	  break;
@@ -11383,7 +11386,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  sc->tok = token(sc, sc->input_port);
 	  break;
 	  
-	case TOKEN_ATMARK:
+	case TOKEN_AT_MARK:
 	  push_stack(sc, OP_READ_UNQUOTE_SPLICING, sc->NIL, sc->NIL);
 	  sc->tok = token(sc, sc->input_port);
 	  break;
@@ -11392,7 +11395,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  return(make_atom(sc, read_string_upto(sc), 10, true)); /* true = not just string->number */
 	  /* If reading list (from lparen), this will finally get us to op_read_list */
 	  
-	case TOKEN_DQUOTE:
+	case TOKEN_DOUBLE_QUOTE:
 	  sc->value = read_string_expression(sc, sc->input_port);
 	  if (sc->value == sc->F)                                /* can happen if input code ends in the middle of a string */
 	    return(read_error(sc, "end of input encountered while in a string"));
@@ -11413,7 +11416,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  do {c = inchar(sc, sc->input_port);} while ((c != ')') && (c != EOF));
 	  return(read_error(sc, "stray dot in list?"));             /* (+ 1 . . ) */
 
-	case TOKEN_RPAREN: /* (catch #t (lambda () '(1 2 . )) (lambda args 'hiho)) */
+	case TOKEN_RIGHT_PAREN: /* (catch #t (lambda () '(1 2 . )) (lambda args 'hiho)) */
 	  back_up_stack(sc);
 	  return(read_error(sc, "unexpected close paren"));         /* (+ 1 2)) or (+ 1 . ) */
 
@@ -12783,7 +12786,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       switch (sc->tok)
 	{
-	case TOKEN_RPAREN:
+	case TOKEN_RIGHT_PAREN:
 	  {
 	    int c;
 	    c = inchar(sc, sc->input_port);
@@ -12812,7 +12815,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 
       
     case OP_READ_DOT:
-      if (token(sc, sc->input_port) != TOKEN_RPAREN)
+      if (token(sc, sc->input_port) != TOKEN_RIGHT_PAREN)
 	{
 	  back_up_stack(sc);
 	  return(read_error(sc, "stray dot?"));            /* (+ 1 . 2 3) or (list . ) */

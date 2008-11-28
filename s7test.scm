@@ -32285,6 +32285,14 @@
 	(num-test (+ (hi 1.0 2.0) (hi) (hi 1.0)) 4.0))
 
       (test (let ((hi (lambda* (a 0.0) (b 0.0) (+ a b)))) (hi)) 'error)
+
+      ;; make sure #: also works
+      (let ((hi (lambda* (a #:optional (b 1)) (+ a b))))
+	(num-test (hi 1 2) 3)
+	(num-test (hi 1 :b 2) 3)
+	(num-test (hi 1) 2)
+	(num-test (hi #:b 2) 3))
+
       ))
 
 (if with-procedure-arity

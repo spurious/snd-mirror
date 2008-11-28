@@ -1,25 +1,22 @@
-Snd 10.1
+Snd 10.2
 
-S7 is now the default extension language.
+added osc.scm thanks to Kjetil.
 
-added rhypars.cms by Juan Reyes
+many improvements thanks to Mike and Rick.
 
-in clm.c, I removed the reader/writer locks (rdin and rdout gens);
-  these were not working the way I had hoped they would.  Much work
-  on threads -- with-threaded-sound has been rewritten 3 or 4 times.
+removed Gauche support.
 
-gtkglext (openGL support in gtk) has been unmaintained for a long time,
-  and by this point use of --with-gl with --with-gtk can somehow cause
-  Snd to log you out!  So, it's not highly recommended.  I wish gtk had
-  gone to OpenGL, not cairo.  I'll probably remove the gtkglext support
-  soon.
+moved the run macro from snd-run.c to run.c and put it in sndlib.
 
-I'm about to remove Gauche support.  
-  Gauche 0.8.14 segfaults immediately in Snd; Shiro says he didn't change 
-  anything, but argument handling has clearly changed. I poked around in 
-  Gauche, but didn't find anything.
+removed s7-format.scm -- format is now built-in.
 
+removed s7-optargs.scm -- define* is also built-in.  The main 
+  difference between the two versions of define* is that the
+  s7 version does not (currently anyway) accept expressions
+  as default values.
 
-checked: gtk 2.14.2|3, cairo 1.8.0, autoconf 2.63, sbcl 1.0.21, Gauche 0.8.14
+checked: gtk 2.14.4|5, clisp 2.47, sbcl 1.0.22, fftw 3.2
 
-Thanks!: Benjamin Um, Juan Reyes
+Thanks!: Rick, Kjetil, Meino Cramer, Mike Scholz, David Lowenfels,
+	 Hayahiko Moro.
+
