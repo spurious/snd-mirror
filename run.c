@@ -3415,7 +3415,6 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool sepa
   /* TODO: (lambda* (a 0.0) (b 1.0) (+ a b)) -> segfault */
   /* TODO: defaults should be #f, and only allocated if lambda* */
   /* TODO: got too many args wrong if keys used */
-  /* TODO: test 8 has some outa troubles */
 
   /* fprintf(stderr, "num_args: %d, template_args: %s, declarations: %s\n", num_template_args, XEN_AS_STRING(template_args), XEN_AS_STRING(declarations)); */
 

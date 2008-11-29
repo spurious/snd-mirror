@@ -10689,7 +10689,11 @@ s7_pointer s7_out_of_range_error(s7_scheme *sc, const char *caller, int arg_n, s
   return(s7_error(sc, sc->OUT_OF_RANGE, sc->x));
 }
 
-/* PERHAPS: s7_wrong_number_of_args_error (for xen.h) */
+
+s7_pointer s7_wrong_number_of_args_error(s7_scheme *sc, const char *caller, s7_pointer args)
+{
+  return(s7_error(sc, sc->WRONG_NUMBER_OF_ARGS, make_list_2(sc, s7_make_string(sc, caller), args)));
+}
 
 
 static s7_pointer s7_division_by_zero_error(s7_scheme *sc, const char *caller, s7_pointer arg)
@@ -11128,12 +11132,14 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
   old_longjmp = sc->longjmp_ok;
   memcpy((void *)old_goto_start, (void *)(sc->goto_start), sizeof(jmp_buf));
 
-  /* if an error occurs during s7_call, and it is caught, catch (above wants to longjmp
+  /* if an error occurs during s7_call, and it is caught, catch (above) wants to longjmp
    *   to its caller to complete the error handler evaluation so that the C stack is
    *   cleaned up -- this means we have to have the longjmp location set here, but
    *   we could get here from anywhere, so we need to save and restore the incoming
    *   longjmp location.
    */
+
+  /* PERHAPS: save/restore jmp_buf in all other cases? */
 
   sc->longjmp_ok = true;
   if (setjmp(sc->goto_start) != 0) /* returning from s7_error catch handler */
@@ -13384,7 +13390,7 @@ s7_scheme *s7_init(void)
   
   init_ctables();
   
-  sc = (s7_scheme *)malloc(sizeof(s7_scheme));
+  sc = (s7_scheme *)calloc(1, sizeof(s7_scheme));
 #if HAVE_PTHREADS
   sc->orig_sc = sc;
 #endif
@@ -13478,6 +13484,8 @@ s7_scheme *s7_init(void)
   sc->load_verbose = (bool *)calloc(1, sizeof(bool));
   sc->gensym_counter = (long *)calloc(1, sizeof(long));
 
+  sc->backtrace_ops = NULL;
+  sc->backtrace_args = NULL;
   make_backtrace_buffer(sc, INITIAL_BACKTRACE_SIZE);
 #if HAVE_PTHREADS
   sc->thread_ids = (int *)calloc(1, sizeof(int));

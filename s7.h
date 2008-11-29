@@ -1,8 +1,8 @@
 #ifndef S7_H
 #define S7_H
 
-#define S7_VERSION "1.5"
-#define S7_DATE "24-Nov-08"
+#define S7_VERSION "1.6"
+#define S7_DATE "30-Nov-08"
 
 #include <stdio.h>
 #ifndef __cplusplus
@@ -28,7 +28,7 @@ typedef double s7_Double;
   /* s7 itself is based on the following types and functions, so the first place to look for examples
    *   is s7.c.  There are also a few variations on a REPL at the end of this file.  s7test.scm (in the
    *   Snd tarball) or r5rstest.scm (at the ccrma ftp site) are regression tests for s7 -- they still
-   *   turn up around 50 problems.  More tests are certainly welcome!  Extended examples of s7 usage
+   *   turn up around 30 problems.  More tests are certainly welcome!  Extended examples of s7 usage
    *   are:
    *
    *   Snd: ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-10.tar.gz (a sound editor)
@@ -128,6 +128,7 @@ s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info);
 s7_pointer s7_error_and_exit(s7_scheme *sc, s7_pointer type, s7_pointer info);
 s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n, s7_pointer arg, const char *descr);
 s7_pointer s7_out_of_range_error(s7_scheme *sc, const char *caller, int arg_n, s7_pointer arg, const char *descr);
+s7_pointer s7_wrong_number_of_args_error(s7_scheme *sc, const char *caller, s7_pointer args);
 void s7_set_error_exiter(s7_scheme *sc, void (*error_exiter)(void));
 
   /* these are equivalent to (error ...) in scheme
@@ -1111,6 +1112,7 @@ int main(int argc, char **argv)
  * 
  *        s7 changes
  *
+ * 30-Nov:    added s7_wrong_number_of_args_error.
  * 24-Nov:    changed s7_make_counted_string to s7_make_string_with_length.
  *              also added built-in format and define*
  * 10-Nov:    added s7_define_constant,

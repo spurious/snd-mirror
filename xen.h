@@ -11,11 +11,12 @@
  */
 
 #define XEN_MAJOR_VERSION 2
-#define XEN_MINOR_VERSION 22
-#define XEN_VERSION "2.22"
+#define XEN_MINOR_VERSION 23
+#define XEN_VERSION "2.23"
 
 /* HISTORY:
  *
+ *  30-Nov-08: use s7_wrong_number_of_args_error.
  *  17-Nov-08: use s7_define_constant in XEN_DEFINE_CONSTANT.
  *  1-Nov-08:  changed s7 and Guile C_TO_XEN_STRING slightly.
  *  16-Oct-08: removed Gauche support.
@@ -1764,8 +1765,7 @@ extern XEN xen_false, xen_true, xen_nil, xen_undefined;
   if (!(Assertion)) XEN_WRONG_TYPE_ARG_ERROR(Caller, Position, Arg, Correct_Type)
 
 #define XEN_WRONG_NUMBER_OF_ARGS_ERROR(Caller, Args) \
-  XEN_ERROR(XEN_ERROR_TYPE("wrong-number-of-args"), XEN_LIST_2(C_TO_XEN_STRING(Caller), Args))
-
+  s7_wrong_number_of_args_error(s7, Caller, Args)
 
 #define XEN_NARGIFY_0(OutName, InName) \
   static s7_pointer OutName(s7_scheme *sc, s7_pointer args) \

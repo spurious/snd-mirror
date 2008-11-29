@@ -23052,6 +23052,7 @@ EDITS: 2
     (let ((avg 0.0)
 	  (samps 0))
       (with-sound (:output (lambda (frame val chan)
+			     (declare (frame integer) (val real) (chan integer))
 			     (set! avg (+ avg val))
 			     (set! samps (1+ samps))
 			     val))
@@ -23190,6 +23191,7 @@ EDITS: 2
     
     (let ((outv (make-vct 10)))
       (with-sound (:output (lambda (loc val chan)
+			     (declare (loc integer) (val real) (chan integer))
 			     (vct-set! outv loc val)))
 		  (run (lambda ()
 			 (do ((i 0 (1+ i)))
@@ -23218,6 +23220,7 @@ EDITS: 2
     
     (let ((outv (make-sound-data 4 10)))
       (with-sound (:channels 4 :output (lambda (loc val chan)
+					 (declare (loc integer) (val real) (chan integer))
 					 (sound-data-set! outv chan loc val)))
 		  (run (lambda ()
 			 (do ((i 0 (1+ i)))
@@ -23254,6 +23257,7 @@ EDITS: 2
     
     (let ((outv (make-sound-data 4 10)))
       (with-sound (:channels 4 :output (lambda (loc val chan)
+					 (declare (loc integer) (val real) (chan integer))
 					 (sound-data-set! outv chan loc val)))
 		  (run (lambda ()
 			 (do ((i 0 (1+ i)))
