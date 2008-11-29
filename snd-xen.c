@@ -1584,7 +1584,7 @@ XEN run_or_hook(XEN hook, XEN args, const char *caller)
   XEN procs = XEN_HOOK_PROCEDURES (hook);
 
   XEN_LOCAL_GC_PROTECT(args);
-  while (XEN_NOT_NULL_P (procs))
+  while (XEN_NOT_NULL_P(procs))
     {
       if (!(XEN_EQ_P(args, XEN_EMPTY_LIST)))
 	result = XEN_APPLY(XEN_CAR(procs), args, caller);
@@ -1601,7 +1601,6 @@ XEN run_or_hook(XEN hook, XEN args, const char *caller)
       procs = XEN_CDR (procs);
     }
   XEN_LOCAL_GC_UNPROTECT(args);
-
   return(xen_return_first(hook_result, args));
 }
 

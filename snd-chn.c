@@ -676,7 +676,6 @@ void add_channel_data_1(chan_info *cp, int srate, off_t frames, channel_graph_t 
     default:                   label = _("time");            break;
     }
   dur = (double)frames / (double)(srate);
-
   if ((cp->hookable == WITH_HOOK) && 
       (graphed == WITH_GRAPH) &&    
       /* can also be WITHOUT_GRAPH and WITHOUT_INITIAL_GRAPH_HOOK
@@ -693,6 +692,7 @@ void add_channel_data_1(chan_info *cp, int srate, off_t frames, channel_graph_t 
 				   C_TO_XEN_INT(cp->chan),
 				   C_TO_XEN_DOUBLE(dur)),
 			S_initial_graph_hook);
+
       if (XEN_LIST_P_WITH_LENGTH(res, len))
 	{
 	  if (len > 0) x0 = XEN_TO_C_DOUBLE(XEN_CAR(res));

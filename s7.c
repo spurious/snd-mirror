@@ -246,11 +246,10 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY,
 	      OP_EVAL_STRING, OP_EVAL_STRING_DONE, OP_QUIT, OP_CATCH, OP_DYNAMIC_WIND, OP_FOR_EACH, OP_MAP, 
 	      OP_DO, OP_DO_END0, OP_DO_END1, OP_DO_STEP0, OP_DO_STEP1, OP_DO_STEP2, OP_DO_INIT,
 	      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_CONS_STREAM0, OP_CONS_STREAM1, 
-	      OP_MAX_DEFINED
-} opcode_t;
+	      OP_MAX_DEFINED} opcode_t;
 
 typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
-	      TOKEN_BACK_QUOTE, TOKEN_COMMA, TOKEN_AT_MARK, TOKEN_SHARP_CONST, TOKEN_VECTOR} t_token;
+	      TOKEN_BACK_QUOTE, TOKEN_COMMA, TOKEN_AT_MARK, TOKEN_SHARP_CONST, TOKEN_VECTOR} token_t;
 
 
 /* num, for generic arithmetic */
@@ -436,7 +435,7 @@ struct s7_scheme {
   int read_line_buf_size;
 #endif
 
-  t_token tok;
+  token_t tok;
   s7_pointer value;
   opcode_t op;
   s7_pointer x, y, z; /* evaluator local vars */
@@ -6640,7 +6639,7 @@ static s7_pointer read_string_expression(s7_scheme *sc, s7_pointer pt)
 }
 
 
-static t_token token(s7_scheme *sc, s7_pointer pt)
+static token_t token(s7_scheme *sc, s7_pointer pt)
 {
   int c = 0;
 
@@ -10534,7 +10533,7 @@ static void print_backtrace_entry(s7_scheme *sc, int n)
     }
 
   str2 = (char *)malloc((160 + safe_strlen(func_name)) * sizeof(char));
-  sprintf(str2, "(%s %s)%s\n", func_name, str, str1);
+  sprintf(str2, "(%s %s)%s\n", func_name, str, (str1) ? str1 : "");
 
   write_string(sc, str2, s7_current_error_port(sc));
   
@@ -10689,6 +10688,8 @@ s7_pointer s7_out_of_range_error(s7_scheme *sc, const char *caller, int arg_n, s
 
   return(s7_error(sc, sc->OUT_OF_RANGE, sc->x));
 }
+
+/* PERHAPS: s7_wrong_number_of_args_error (for xen.h) */
 
 
 static s7_pointer s7_division_by_zero_error(s7_scheme *sc, const char *caller, s7_pointer arg)
@@ -11117,26 +11118,39 @@ static void assign_syntax(s7_scheme *sc, const char *name, opcode_t op)
 s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
 { 
   bool old_longjmp;
+  jmp_buf old_goto_start;
+
   /* this can be called while we are in the eval loop (within eval_c_string for instance),
    *   and if we reset the stack, the previously running evaluation steps off the end
    *   of the stack == segfault. 
    */
+
   old_longjmp = sc->longjmp_ok;
-  if (!sc->longjmp_ok)
+  memcpy((void *)old_goto_start, (void *)(sc->goto_start), sizeof(jmp_buf));
+
+  /* if an error occurs during s7_call, and it is caught, catch (above wants to longjmp
+   *   to its caller to complete the error handler evaluation so that the C stack is
+   *   cleaned up -- this means we have to have the longjmp location set here, but
+   *   we could get here from anywhere, so we need to save and restore the incoming
+   *   longjmp location.
+   */
+
+  sc->longjmp_ok = true;
+  if (setjmp(sc->goto_start) != 0) /* returning from s7_error catch handler */
     {
-      sc->longjmp_ok = true;
-      if (setjmp(sc->goto_start) != 0)
-	{
-	  eval(sc, sc->op);
-	  return(sc->value);
-	}
+      sc->longjmp_ok = old_longjmp;
+      memcpy((void *)(sc->goto_start), (void *)old_goto_start, sizeof(jmp_buf));
+      eval(sc, sc->op);
+      return(sc->value);
     }
-  
+
   push_stack(sc, OP_EVAL_STRING_DONE, sc->args, sc->code); /* this saves the current evaluation and will eventually finish this (possibly) nested call */
   sc->args = args; 
   sc->code = func; 
   eval(sc, OP_APPLY);
+
   sc->longjmp_ok = old_longjmp;
+  memcpy((void *)(sc->goto_start), (void *)old_goto_start, sizeof(jmp_buf));
   return(sc->value);
 } 
 
@@ -13281,7 +13295,7 @@ static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
   new_sc = (s7_scheme *)malloc(sizeof(s7_scheme));
   memcpy((void *)new_sc, (void *)sc, sizeof(s7_scheme));
   
-  /* share the heap, symbol table and global environment, all the startup stuff,
+  /* share the heap, symbol table and global environment, all the startup stuff, and the backtrace info,
    *   but have separate stacks and eval locals
    */
   
