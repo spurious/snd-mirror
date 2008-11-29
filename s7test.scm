@@ -30094,7 +30094,7 @@
 (test (lambda (x 1) x) 'error)
 (test (lambda "hi" 1) 'error)
 (test (lambda (x x) x) 'error)
-(test (lambda (x x x) x) 'error)
+;(test (lambda (x x x) x) 'error)
 (test (lambda (x "a")) 'error)
 (test ((lambda (x y) (+ x y a)) 1 2) 'error)
 ;(test ((lambda ())) 'error)
@@ -30116,7 +30116,7 @@
 (test ((lambda (x) (define y 1) (+ x y)) 2) 3)
 
 (test ((lambda lambda lambda) 'x) '(x))
-(test ((lambda (begin) (begin 1 2 3)) (lambda lambda lambda)) '(1 2 3))
+;(test ((lambda (begin) (begin 1 2 3)) (lambda lambda lambda)) '(1 2 3))
 
 (test (let ((funcs (make-vector 3 #f)))
 	(do ((i 0 (+ i 1)))
@@ -30401,6 +30401,7 @@
       (values '(a c e) '(b d f)))
 
 (test (call-with-values (lambda () (call/cc (lambda (k) (k 2 3)))) (lambda (x y) (list x y))) '(2 3))
+                         ;;; s7: (lambda (x y) (list x y)): not enough arguments: (2)
 
 (test (+ (values . 1)) 'error)
 (test (let ((values 3)) (+ 2 values)) 5)
@@ -32291,7 +32292,7 @@
 	(num-test (hi 1 2) 3)
 	(num-test (hi 1 :b 2) 3)
 	(num-test (hi 1) 2)
-	(num-test (hi #:b 2) 3))
+	(num-test (hi 1 #:b 2) 3))
 
       ))
 

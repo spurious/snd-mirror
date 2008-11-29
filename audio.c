@@ -8347,9 +8347,9 @@ static int sndjack_read(void *buf,int bytes,int chs){
     sndjack_read_format==MUS_COMP_FLOAT ? sizeof(float) :
     sndjack_read_format==MUS_COMP_SHORT ? sizeof(short) :
     1;
-  float *buf_f=buf;
-  short *buf_s=buf;
-  char *buf_c=buf;
+  float *buf_f=(float *)buf;
+  short *buf_s=(short *)buf;
+  char *buf_c=(char *)buf;
 
   for(i=0;i<nframes;i++){
     while(sj_r_unread==0){
@@ -8494,14 +8494,14 @@ static int sndjack_init(void){
   sndjack_num_channels_allocated = numch = sndjack_getnumoutchannels();
   sndjack_num_read_channels_allocated    = sndjack_getnuminchannels();
      
-  sndjack_channels=calloc(sizeof(struct SndjackChannel),numch);
-  sndjack_read_channels=calloc(sizeof(struct SndjackChannel),sndjack_num_read_channels_allocated);
+  sndjack_channels=(SndjackChannel *)calloc(sizeof(struct SndjackChannel),numch);
+  sndjack_read_channels=(SndjackChannel *)calloc(sizeof(struct SndjackChannel),sndjack_num_read_channels_allocated);
 
   for(ch=0;ch<numch;ch++){
-    sndjack_channels[ch].buffer=calloc(sizeof(sample_t),SNDJACK_BUFFERSIZE);
+    sndjack_channels[ch].buffer=(sample_t *)calloc(sizeof(sample_t),SNDJACK_BUFFERSIZE);
   }
   for(ch=0;ch<sndjack_num_read_channels_allocated;ch++){
-    sndjack_read_channels[ch].buffer=calloc(sizeof(sample_t),SNDJACK_BUFFERSIZE);
+    sndjack_read_channels[ch].buffer=(sample_t *)calloc(sizeof(sample_t),SNDJACK_BUFFERSIZE);
   }
   sj_buffersize=SNDJACK_BUFFERSIZE;
 
@@ -8700,12 +8700,12 @@ static int jack_mus_audio_initialize(void) {
   if(sndjack_init()!=0)
     return MUS_ERROR;
 
-  sndjack_buffer=calloc(sizeof(sample_t*),sndjack_num_channels_allocated);
+  sndjack_buffer=(sample_t **)calloc(sizeof(sample_t*),sndjack_num_channels_allocated);
   for(ch=0;ch<sndjack_num_channels_allocated;ch++)
-    sndjack_buffer[ch]=calloc(sizeof(sample_t),SNDJACK_BUFFERSIZE);
-  sndjack_srcbuffer=calloc(sizeof(sample_t),SNDJACK_BUFFERSIZE);
+    sndjack_buffer[ch]=(sample_t *)calloc(sizeof(sample_t),SNDJACK_BUFFERSIZE);
+  sndjack_srcbuffer=(sample_t *)calloc(sizeof(sample_t),SNDJACK_BUFFERSIZE);
 
-  sndjack_srcstates=calloc(sizeof(SRC_STATE*),sndjack_num_channels_allocated);
+  sndjack_srcstates=(SRC_STATE **)calloc(sizeof(SRC_STATE*),sndjack_num_channels_allocated);
   for(ch=0;ch<sndjack_num_channels_allocated;ch++){
     sndjack_srcstates[ch]=src_new(SRC_QUALITY,1,NULL);
   }
@@ -9079,8 +9079,8 @@ int jack_mus_audio_systems(void) {
   return(2);
 }
 
-char *jack_mus_audio_system_name(int system) {return("linux jack");}
-char *jack_mus_audio_moniker(void) {return("jack");}
+char *jack_mus_audio_system_name(int system) {return((char *)"linux jack");}
+char *jack_mus_audio_moniker(void) {return((char *)"jack");}
 #endif
  
 

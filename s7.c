@@ -249,6 +249,9 @@ typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY,
 	      OP_MAX_DEFINED
 } opcode_t;
 
+typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_ATOM, TOKEN_QUOTE, TOKEN_DOUBLE_QUOTE, 
+	      TOKEN_BACK_QUOTE, TOKEN_COMMA, TOKEN_AT_MARK, TOKEN_SHARP_CONST, TOKEN_VECTOR} t_token;
+
 
 /* num, for generic arithmetic */
 typedef struct num {
@@ -433,7 +436,7 @@ struct s7_scheme {
   int read_line_buf_size;
 #endif
 
-  int tok;
+  t_token tok;
   s7_pointer value;
   opcode_t op;
   s7_pointer x, y, z; /* evaluator local vars */
@@ -703,20 +706,6 @@ static char *describe_type(s7_pointer p)
 
 #endif
 
-
-#define TOKEN_EOF         (-1)
-#define TOKEN_LEFT_PAREN   0
-#define TOKEN_RIGHT_PAREN  1
-#define TOKEN_DOT          2
-#define TOKEN_ATOM         3
-#define TOKEN_QUOTE        4
-#define TOKEN_DOUBLE_QUOTE 6
-#define TOKEN_BACK_QUOTE   7
-#define TOKEN_COMMA        8
-#define TOKEN_AT_MARK      9
-#define TOKEN_SHARP_CONST 10
-#define TOKEN_VECTOR      11
-
 #if CASE_SENSITIVE
 
 #define string_downcase(Str) Str
@@ -763,6 +752,7 @@ static bool s7_is_applicable_object(s7_pointer x);
 static s7_pointer make_list_1(s7_scheme *sc, s7_pointer a);
 static void write_string(s7_scheme *sc, const char *s, s7_pointer pt);
 static s7_pointer read_error(s7_scheme *sc, const char *errmsg);
+static s7_pointer s7_make_permanent_string(const char *str);
 
 
 
@@ -1398,20 +1388,10 @@ static int hash_fn(const char *key, int table_size)
 } 
 
 
-#if S7_DEBUGGING
-static s7_pointer g_builtin_hash(s7_scheme *sc, s7_pointer args)
-{
-  return(s7_make_integer(sc, hash_fn(string_value(car(args)), SYMBOL_TABLE_SIZE)));
-}
-#endif
-
-
 #if HAVE_PTHREADS
 static pthread_mutex_t symtab_lock = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
-
-static s7_pointer s7_make_permanent_string(const char *str);
 static s7_pointer s7_permanent_cons(s7_pointer a, s7_pointer b, int type);
 
 static s7_pointer symbol_table_add_by_name_at_location(s7_scheme *sc, const char *name, int location) 
@@ -1655,12 +1635,6 @@ static s7_pointer new_frame_in_env(s7_scheme *sc, s7_pointer old_env)
 static s7_pointer add_to_environment(s7_scheme *sc, s7_pointer env, s7_pointer variable, s7_pointer value) 
 { 
   s7_pointer slot;
-
-  ASSERT_IS_OBJECT(variable, "new slot variable");
-  ASSERT_IS_OBJECT(value, "new slot value");
-  ASSERT_IS_OBJECT(env, "new slot env");
-  ASSERT_IS_OBJECT(car(env), "new slot car env");
-
   slot = s7_immutable_cons(sc, variable, value); 
   if (s7_is_vector(car(env))) 
     vector_element(car(env), symbol_location(variable)) = s7_immutable_cons(sc, slot, vector_element(car(env), symbol_location(variable))); 
@@ -1693,8 +1667,6 @@ static s7_pointer s7_find_symbol_in_environment(s7_scheme *sc, s7_pointer env, s
 
 static s7_pointer add_to_current_environment(s7_scheme *sc, s7_pointer variable, s7_pointer value) 
 { 
-  ASSERT_IS_OBJECT(sc->envir, "new slot envir");
-
   return(add_to_environment(sc, sc->envir, variable, value)); 
 } 
 
@@ -2063,18 +2035,6 @@ static void check_for_dynamic_winds(s7_scheme *sc, continuation *c)
 	s7_call(sc, dynamic_wind_in(x), sc->NIL);
 	dynamic_wind_state(x) = DWIND_BODY;
       }
-}
-
-
-static s7_pointer s7_call_continuation(s7_scheme *sc, s7_pointer p)
-{
-  continuation *c;
-  c = p->object.cc;
-  check_for_dynamic_winds(sc, c);
-  sc->stack = copy_stack(sc, c->cc_stack, c->cc_stack_top);
-  sc->stack_size = c->cc_stack_size;
-  sc->stack_top = c->cc_stack_top;
-  return(sc->value);
 }
 
 
@@ -6680,7 +6640,7 @@ static s7_pointer read_string_expression(s7_scheme *sc, s7_pointer pt)
 }
 
 
-static int token(s7_scheme *sc, s7_pointer pt)
+static t_token token(s7_scheme *sc, s7_pointer pt)
 {
   int c = 0;
 
@@ -9784,11 +9744,6 @@ s7_pointer s7_make_keyword(s7_scheme *sc, const char *key)
   typeflag(sym) |= (T_IMMUTABLE | T_CONSTANT | T_DONT_COPY); 
   free(name);
   
-#if 0
-  x = s7_find_symbol_in_environment(sc, sc->global_env, sym, false); /* is it already defined? */
-  if (x == sc->NIL) 
-    add_to_environment(sc, sc->global_env, sym, sym); /* its value is itself */
-#endif
   x = s7_find_symbol_in_environment(sc, sc->envir, sym, true); /* is it already defined? */
   if (x == sc->NIL) 
     add_to_current_environment(sc, sym, sym); /* its value is itself */
@@ -10871,9 +10826,6 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
     {
       /* if info is not a list, send object->string to current error port,
        *   else assume car(info) is a format control string, and cdr(info) are its args
-       *
-       * TODO: check for format directives before making this assumption!  Old (Snd) cases
-       *       sometimes simply pass a string + list of args -- they now get "too many args"
        */
       if ((!s7_is_list(sc, info)) ||
 	  (!s7_is_string(car(info))))
@@ -11735,6 +11687,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_BEGIN:
       if (!is_pair(sc->code)) 
 	{
+	  if (sc->code != sc->NIL)
+	    return(eval_error(sc, "unexpected dot at end of body?", sc->code));
+
 	  sc->value = sc->code;
 	  pop_stack(sc);
 	  goto START;
@@ -12061,10 +12016,24 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	   */
 		
 	case T_CONTINUATION:	                  /* -------- continuation ("call-with-continuation") -------- */
-	  s7_call_continuation(sc, sc->code);
-	  sc->value = (sc->args != sc->NIL) ? car(sc->args) : sc->NIL;
-	  pop_stack(sc);
-	  goto START;
+	  {
+	    continuation *c;
+	    c = sc->code->object.cc;
+	    check_for_dynamic_winds(sc, c);
+	    sc->stack = copy_stack(sc, c->cc_stack, c->cc_stack_top);
+	    sc->stack_size = c->cc_stack_size;
+	    sc->stack_top = c->cc_stack_top;
+	    if (sc->args == sc->NIL)
+	      sc->value = sc->NIL;
+	    else
+	      {
+		if (cdr(sc->args) == sc->NIL)
+		  sc->value = car(sc->args);
+		else sc->value = s7_cons(sc, sc->VALUES, sc->args);
+	      }
+	    pop_stack(sc);
+	    goto START;
+	  }
 
 	case T_GOTO:	                          /* -------- goto ("call-with-exit") -------- */
 	  {
@@ -13965,14 +13934,9 @@ s7_scheme *s7_init(void)
   g_provide(sc, make_list_1(sc, s7_make_symbol(sc, "threads")));
 #endif
 
-#if S7_DEBUGGING
-  s7_define_function(sc, "builtin-hash", g_builtin_hash, 1, 0, false, "built-in hash function");
-#endif
-  
   (*(sc->gc_off)) = false;
-  
   s7_eval_c_string(sc, "(macro quasiquote (lambda (l) (_quasiquote_ 0 (cadr l))))");
-  
+
   {
     int top;
 #ifndef LLONG_MAX
