@@ -22,7 +22,7 @@
  *   major changes from tinyScheme:
  *        just two files: s7.c and s7.h, source-level embeddable (no library, no run-time init files)
  *        full continuations, call-with-exit for goto or return, dynamic-wind
- *        ratios and complex numbers (and ints are 64-bit)
+ *        ratios and complex numbers (and ints are 64-bit by default)
  *        generalized set!, procedure-with-setter, applicable objects
  *        defmacro and define-macro, keywords, hash tables, block comments, define*
  *        error handling using error and catch
@@ -191,6 +191,9 @@
 #define INITIAL_BACKTRACE_SIZE 16
 /* this is the number of entries in the backtrace printout of previous evaluations */
 
+
+/* ---------------- scheme choices ---------------- */
+
 #define CASE_SENSITIVE 1
 /* this determines whether names are case sensitive */
 
@@ -207,7 +210,7 @@
 
 /* -------------------------------------------------------------------------------- */
 
-/* this file is organized as follows:
+/* s7.c is organized as follows:
  *    structs and type flags
  *    constants
  *    GC
@@ -402,17 +405,12 @@ struct s7_scheme {
   s7_pointer symbol_table;            /* symbol table */
   s7_pointer global_env;              /* global environment */
   
-  s7_pointer LAMBDA;                  /* syntax lambda */
-  s7_pointer LAMBDA_STAR;             /* syntax lambda* (for define*) */
-  s7_pointer QUOTE;                   /* syntax quote */
-  s7_pointer QUASIQUOTE;              /* symbol quasiquote */
-  s7_pointer UNQUOTE;                 /* symbol unquote */
-  s7_pointer UNQUOTE_SPLICING;        /* symbol unquote-splicing */
-  s7_pointer FEED_TO;                 /* => */
-  s7_pointer SET_OBJECT;              /* object set method */
+  s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, QUASIQUOTE, UNQUOTE, UNQUOTE_SPLICING;        
   s7_pointer APPLY, VECTOR, CONS, APPEND, CDR, VECTOR_FUNCTION, VALUES;
   s7_pointer ERROR, WRONG_TYPE_ARG, OUT_OF_RANGE, FORMAT_ERROR, WRONG_NUMBER_OF_ARGS;
   s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST;
+  s7_pointer FEED_TO;                 /* => */
+  s7_pointer SET_OBJECT;              /* object set method */
   
   s7_pointer input_port;              /* current-input-port (nil = stdin) */
   s7_pointer input_port_stack;        /*   input port stack (load and read internally) */
@@ -2072,7 +2070,6 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
 
 
 
-
 /* -------------------------------- numbers -------------------------------- */
 
 
@@ -2692,7 +2689,6 @@ s7_pointer s7_make_ratio(s7_scheme *sc, s7_Int a, s7_Int b)
       numerator(x->object.number) = numerator(ret);
       denominator(x->object.number) = denominator(ret);
     }
-  
   return(x);
 }
 
@@ -2787,7 +2783,6 @@ static num num_max(num a, num b)
       else real(ret) = num_to_real(b);
       break;
     }
-  
   return(ret);
 }
 
@@ -2817,7 +2812,6 @@ static num num_min(num a, num b)
       else real(ret) = num_to_real(b);
       break;
     }
-  
   return(ret);
 }
 
@@ -2849,7 +2843,6 @@ static num num_add(num a, num b)
 			 num_to_imag_part(a) + num_to_imag_part(b));
       break;
     }
-  
   return(ret);
 }
 
@@ -2880,7 +2873,6 @@ static num num_sub(num a, num b)
 			 num_to_imag_part(a) - num_to_imag_part(b));
       break;
     }
-  
   return(ret);
 }
 
@@ -2918,7 +2910,6 @@ static num num_mul(num a, num b)
       }
       break;
     }
-  
   return(ret);
 }
 
@@ -3028,7 +3019,6 @@ static num num_mod(num a, num b)
       real(ret) = num_to_real(a) - num_to_real(b) * (s7_Int)floor(num_to_real(a) / num_to_real(b));
       break;
     }
-  
   return(ret);
 }
 
@@ -5648,6 +5638,7 @@ static s7_pointer g_object_to_string(s7_scheme *sc, s7_pointer args)
   return(s7_object_to_string(sc, car(args)));
 }
 
+
 static int safe_strcmp(const char *s1, const char *s2)
 {
   int val;
@@ -5657,11 +5648,11 @@ static int safe_strcmp(const char *s1, const char *s2)
 	return(0);
       return(-1);
     }
-
   if (s2 == NULL)
     return(1);
 
   val = strcmp(s1, s2); /* strcmp can return stuff like -97, but we want -1, 0, or 1 */
+
   if (val <= -1)
     return(-1);
   if (val >= 1)
@@ -5689,6 +5680,7 @@ static s7_pointer g_string_cmp(s7_scheme *sc, s7_pointer args, int val, const ch
     }
   return(sc->T);
 }
+
 
 static s7_pointer g_string_cmp_not(s7_scheme *sc, s7_pointer args, int val, const char *name)
 {
@@ -5859,22 +5851,19 @@ static s7_pointer g_strings_are_ci_leq(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_string_fill(s7_scheme *sc, s7_pointer args)
 {
   #define H_string_fill "(string-fill! str chr) fills the string str with the character chr"
-  int i, len = 0;
-  char *str;
-  char c;
   
   if (!s7_is_string(car(args)))
     return(s7_wrong_type_arg_error(sc, "string-fill", 1, car(args), "a string"));
   if (!s7_is_character(cadr(args)))
     return(s7_wrong_type_arg_error(sc, "string-fill", 2, cadr(args), "a character"));
-  
-  str = string_value(car(args));
-  c = character(cadr(args));
-  
-  if (str) len = strlen(str);
-  if (len > 0)
-    for (i = 0; i < len; i++)
-      str[i] = c;
+
+  /* strlen and so on here is probably not right -- a scheme string has a length
+   *   set when it is created, and (apparently) can contain an embedded 0, so its
+   *   print length is not its length.
+   *         char *str; char c; str = string_value(car(args)); c = character(cadr(args));
+   *         int i, len = 0; if (str) len = strlen(str); if (len > 0) for (i = 0; i < len; i++) str[i] = c; 
+   */
+  memset((void *)(string_value(car(args))), (int)character(cadr(args)), string_length(car(args))); /* presumably memset can fill 0 bytes if empty string */
   return(car(args)); /* or perhaps sc->UNSPECIFIED */
 }
 
@@ -6531,7 +6520,7 @@ static s7_pointer read_string_expression(s7_scheme *sc, s7_pointer pt)
 	      
 	    case '"':
 	      sc->strbuf[i] = '\0';
-	      return(s7_make_string_with_length(sc, sc->strbuf, i));
+	      return(s7_set_immutable(s7_make_string_with_length(sc, sc->strbuf, i))); /* string constant can't be target of string-set! */
 	      
 	    default:
 	      sc->strbuf[i++] = c;
@@ -6849,8 +6838,8 @@ static s7_pointer g_read_line(s7_scheme *sc, s7_pointer args)
 	{
 	  if (i == 0)
 	    return(sc->EOF_OBJECT);
-	  sc->read_line_buf[i + 1] = 0;
-	  return(s7_make_string_with_length(sc, sc->read_line_buf, i + 1));
+	  sc->read_line_buf[i] = 0;
+	  return(s7_make_string_with_length(sc, sc->read_line_buf, i));
 	}
 
       sc->read_line_buf[i] = (char)c;
@@ -11173,11 +11162,14 @@ static s7_pointer g_for_each(s7_scheme *sc, s7_pointer args)
   #define H_for_each "(for-each proc lst . lists) applies proc to a list made up of the car of each arg list"
   s7_pointer lists;
   int i;
-  
+
+  if (!is_procedure(car(args)))
+    return(s7_wrong_type_arg_error(sc, "for-each", 1, car(args), "a procedure"));
+
   sc->code = car(args);
   lists = cdr(args);
   if (car(lists) == sc->NIL)
-    return(sc->NIL);
+    return(sc->NIL); /* not a bug -- (for-each (lambda (x) x) '()) -> no-op */
   
   sc->x = sc->NIL;
   
@@ -11198,6 +11190,9 @@ static s7_pointer g_for_each(s7_scheme *sc, s7_pointer args)
   /* if lists have no cdr (just 1 set of args), apply the proc to them */
   if (car(sc->x) == sc->NIL)
     {
+      for (sc->y = cdr(sc->x); sc->y != sc->NIL; sc->y = cdr(sc->y))
+	if (car(sc->y) != sc->NIL)
+	  return(eval_error(sc, "for-each args are not the same length", sc->x));
       push_stack(sc, OP_APPLY, sc->args, sc->code);
       return(sc->NIL);
     }
@@ -11215,6 +11210,9 @@ static s7_pointer g_map(s7_scheme *sc, s7_pointer args)
   s7_pointer lists;
   int i;
   
+  if (!is_procedure(car(args)))
+    return(s7_wrong_type_arg_error(sc, "map", 1, car(args), "a procedure"));
+
   sc->code = car(args);
   lists = cdr(args);
   if (car(lists) == sc->NIL)
@@ -11518,13 +11516,20 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       sc->args = sc->NIL;
       for (sc->y = sc->x; sc->y != sc->NIL; sc->y = cdr(sc->y))
 	{
+	  if (car(sc->y) == sc->NIL)
+	    return(eval_error(sc, "for-each args are not the same length", sc->x));
+
 	  sc->args = s7_cons(sc, caar(sc->y), sc->args);
-	  car(sc->y) = cdar(sc->y);
+	  car(sc->y) = cdar(sc->y);                           /* cdr this arg list */
 	}
       sc->args = safe_reverse_in_place(sc, sc->args);
-      if (car(sc->x) == sc->NIL)
-	goto APPLY;
-      
+      if (car(sc->x) == sc->NIL)                              /* reached the end of the 1st arg list, so don't loop back via push_stack */
+	{
+	  for (sc->y = cdr(sc->x); sc->y != sc->NIL; sc->y = cdr(sc->y))
+	    if (car(sc->y) != sc->NIL)
+	      return(eval_error(sc, "for-each args are not the same length", sc->x));
+	  goto APPLY;
+	}
       push_stack(sc, OP_FOR_EACH, sc->x, sc->code);
       goto APPLY;
       
@@ -11532,23 +11537,28 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_MAP:
       /* car of args incoming is arglist, cdr is values list (nil to start) */
       sc->x = sc->args;
-      cdr(sc->x) = s7_cons(sc, sc->value, cdr(sc->x)); /* add current value to list */
+      cdr(sc->x) = s7_cons(sc, sc->value, cdr(sc->x));       /* add current value to list */
       
       if (caar(sc->x) == sc->NIL)
 	{
+	  for (sc->y = cdar(sc->x); sc->y != sc->NIL; sc->y = cdr(sc->y))
+	    if (car(sc->y) != sc->NIL)
+	      return(eval_error(sc, "map args are not the same length", sc->x));
+
 	  sc->value = safe_reverse_in_place(sc, cdr(sc->x));
 	  pop_stack(sc);
 	  goto START;
 	}
-      
       sc->args = sc->NIL;
       for (sc->y = car(sc->x); sc->y != sc->NIL; sc->y = cdr(sc->y))
 	{
+	  if (car(sc->y) == sc->NIL)
+	    return(eval_error(sc, "map args are not the same length", sc->x));
+
 	  sc->args = s7_cons(sc, caar(sc->y), sc->args);
 	  car(sc->y) = cdar(sc->y);
 	}
       sc->args = safe_reverse_in_place(sc, sc->args);
-      
       push_stack(sc, OP_MAP, sc->x, sc->code);
       goto APPLY;
       
@@ -12421,7 +12431,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  sc->code = cdar(sc->code);
 	  if (sc->code == sc->NIL)
 	    {
-	      pop_stack(sc);
+	      pop_stack(sc);      /* no result clause, so return test, (cond (#t)) -> #t, (cond ((+ 1 2))) -> 3 */
 	      goto START;
 	    }
 	  if (!is_pair(sc->code)) /* (cond (1 . 2)...) */
@@ -12583,7 +12593,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_MACRO1:
       /* here sc->code is the name (a symbol), sc->value is a closure object, its car is the form as called
-       *   
        *     (macro (when form)
        *       `(if ,(cadr form) (begin ,@(cddr form))))
        * has become:
@@ -12612,7 +12621,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       goto START;
       
       
-      /* defmacro* via lambda* ? */
     case OP_DEFMACRO:
       
       /* (defmacro name (args) body) ->
@@ -12706,7 +12714,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  if (sc->y != sc->NIL) 
 	    break;
 	}
-      
+
       if (sc->x != sc->NIL) 
 	{
 	  if (is_pair(caar(sc->x))) 
@@ -12822,7 +12830,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
        *   -- in eval_args1, if we end with non-pair-not-nil then
        *      something is fishy
        */
-
       sc->value = s7_reverse_in_place(sc, sc->value, sc->args);
       pop_stack(sc);
       goto START;
@@ -13390,14 +13397,13 @@ s7_scheme *s7_init(void)
   
   init_ctables();
   
-  sc = (s7_scheme *)calloc(1, sizeof(s7_scheme));
+  sc = (s7_scheme *)calloc(1, sizeof(s7_scheme)); /* malloc is not recommended here */
 #if HAVE_PTHREADS
   sc->orig_sc = sc;
 #endif
   
   sc->gc_off = (bool *)calloc(1, sizeof(bool));
-  (*(sc->gc_off)) = true; /* sc->args and so on are not set yet, so a gc during init -> segfault */
-  
+  (*(sc->gc_off)) = true;                         /* sc->args and so on are not set yet, so a gc during init -> segfault */
   sc->longjmp_ok = false;
   
   sc->strbuf_size = INITIAL_STRBUF_SIZE;
@@ -13487,6 +13493,7 @@ s7_scheme *s7_init(void)
   sc->backtrace_ops = NULL;
   sc->backtrace_args = NULL;
   make_backtrace_buffer(sc, INITIAL_BACKTRACE_SIZE);
+
 #if HAVE_PTHREADS
   sc->thread_ids = (int *)calloc(1, sizeof(int));
   sc->thread_id = 0;
@@ -13534,15 +13541,17 @@ s7_scheme *s7_init(void)
   assign_syntax(sc, "make-promise",    OP_MAKE_PROMISE);
   assign_syntax(sc, "and",             OP_AND0);
   assign_syntax(sc, "or",              OP_OR0);
-#if WITH_CONS_STREAM
-  assign_syntax(sc, "cons-stream",     OP_CONS_STREAM0); 
-#endif
   assign_syntax(sc, "macro",           OP_MACRO0);
   assign_syntax(sc, "case",            OP_CASE0);
   assign_syntax(sc, "defmacro",        OP_DEFMACRO);
   assign_syntax(sc, "define-macro",    OP_DEFINE_MACRO);
   assign_syntax(sc, "do",              OP_DO);
+#if WITH_CONS_STREAM
+  assign_syntax(sc, "cons-stream",     OP_CONS_STREAM0); 
+#endif
   
+
+  /* these save us the symbol table lookups later */
   
   sc->LAMBDA = s7_make_symbol(sc, "lambda");
   typeflag(sc->LAMBDA) |= (T_IMMUTABLE | T_CONSTANT | T_DONT_COPY); 
@@ -13568,9 +13577,7 @@ s7_scheme *s7_init(void)
   #define set_object_name "(generalized set!)"
   sc->SET_OBJECT = s7_make_symbol(sc, set_object_name);
   typeflag(sc->SET_OBJECT) |= (T_CONSTANT | T_DONT_COPY); 
-  
-  /* save us the symbol table lookups later */
-  
+
   sc->APPLY = s7_make_symbol(sc, "apply");
   typeflag(sc->APPLY) |= (T_CONSTANT | T_DONT_COPY); 
   
@@ -13614,7 +13621,7 @@ s7_scheme *s7_init(void)
   sc->KEY_REST = s7_make_keyword(sc, "rest");
   typeflag(sc->KEY_REST) |= (T_CONSTANT | T_DONT_COPY); 
   
-  /* symbols */
+
   s7_define_function(sc, "gensym",                  g_gensym,                  0, 1, false, H_gensym);
   s7_define_function(sc, "symbol-table",            g_symbol_table,            0, 0, false, H_symbol_table);
   s7_define_function(sc, "symbol?",                 g_is_symbol,               1, 0, false, H_is_symbol);
@@ -13634,7 +13641,6 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "keyword->symbol",         g_keyword_to_symbol,       1, 0, false, H_keyword_to_symbol);
   
 
-  /* hash-tables */
   s7_define_function(sc, "hash-table?",             g_is_hash_table,           1, 0, false, H_is_hash_table);
   s7_define_function(sc, "make-hash-table",         g_make_hash_table,         0, 1, false, H_make_hash_table);
   s7_define_function(sc, "hash-table-ref",          g_hash_table_ref,          2, 0, false, H_hash_table_ref);
@@ -13642,7 +13648,6 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "hash-table-size",         g_hash_table_size,         1, 0, false, H_hash_table_size);
   
   
-  /* ports */
   s7_define_function(sc, "port-line-number",        g_port_line_number,        1, 0, false, H_port_line_number);
   s7_define_function(sc, "port-filename",           g_port_filename,           1, 0, false, H_port_filename);
   
@@ -13689,7 +13694,6 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "with-output-to-file",     g_with_output_to_file,     2, 0, false, H_with_output_to_file);
   
   
-  /* numbers */
   s7_define_function(sc, "number->string",          g_number_to_string,        1, 2, false, H_number_to_string);
   s7_define_function(sc, "string->number",          g_string_to_number,        1, 2, false, H_string_to_number);
   s7_define_function(sc, "make-polar",              g_make_polar,              2, 0, false, H_make_polar);
@@ -13759,7 +13763,6 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "ash",                     g_ash,                     2, 0, false, H_ash);
   
   
-  /* chars */
   s7_define_function(sc, "char-upcase",             g_char_upcase,             1, 0, false, H_char_upcase);
   s7_define_function(sc, "char-downcase",           g_char_downcase,           1, 0, false, H_char_downcase);
   s7_define_function(sc, "char->integer",           g_char_to_integer,         1, 0, false, H_char_to_integer);
@@ -13784,7 +13787,6 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "char-ci>=?",              g_chars_are_ci_geq,        2, 0, true,  H_chars_are_ci_geq);
   
   
-  /* strings */
   s7_define_function(sc, "string?",                 g_is_string,               1, 0, false, H_is_string);
   s7_define_function(sc, "make-string",             g_make_string,             1, 1, false, H_make_string);
   s7_define_function(sc, "string-length",           g_string_length,           1, 0, false, H_string_length);
@@ -13812,7 +13814,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "object->string",          g_object_to_string,        1, 0, false, H_object_to_string);
   s7_define_function(sc, "format",                  g_format,                  1, 0, true,  H_format);
   
-  /* lists */
+
   s7_define_function(sc, "null?",                   g_is_null,                 1, 0, false, H_is_null);
   s7_define_function(sc, "list?",                   g_is_list,                 1, 0, false, H_is_list);
   s7_define_function(sc, "pair?",                   g_is_pair,                 1, 0, false, H_is_pair);
@@ -13866,7 +13868,6 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "list-line-number",        g_list_line_number,        1, 0, false, H_list_line_number);
   
   
-  /* vectors */
   s7_define_function(sc, "vector?",                 g_is_vector,               1, 0, false, H_is_vector);
   s7_define_function(sc, "vector->list",            g_vector_to_list,          1, 0, false, H_vector_to_list);
   s7_define_function(sc, "list->vector",            g_list_to_vector,          1, 0, false, H_list_to_vector);

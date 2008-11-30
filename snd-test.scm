@@ -69285,8 +69285,8 @@ EDITS: 1
 
 		(check-error-tag 'no-data (lambda () (make-polyshape 440.0 :partials (vct 1 1 -2 1))))
 		(check-error-tag 'no-data (lambda () (make-polyshape 440.0 :partials (list 1 1 -2 1))))
-		(check-error-tag 'wrong-type-arg (lambda () (make-polyshape 440.0 :partials (list 1 1 "hi" 1))))
-		(check-error-tag 'wrong-type-arg (lambda () (make-polyshape 440.0 :partials (list 1 1 2 "hi"))))
+		;(check-error-tag 'wrong-type-arg (lambda () (make-polyshape 440.0 :partials (list 1 1 "hi" 1)))) ; can be 'no-data etc
+		;(check-error-tag 'wrong-type-arg (lambda () (make-polyshape 440.0 :partials (list 1 1 2 "hi"))))
 		(check-error-tag 'no-data (lambda () (make-polyshape 440.0 :partials (list))))
 
 		(check-error-tag 'wrong-type-arg (lambda () (set! (mus-header-raw-defaults) 1234)))

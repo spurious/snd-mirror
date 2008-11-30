@@ -816,6 +816,7 @@ with_doc_dir
 with_snd_as_widget
 with_snd_as_pd_external
 with_rt
+with_threads
 enable_threads
 enable_largefile
 with_gnu_ld
@@ -1472,7 +1473,7 @@ Optional Features:
   --disable-option-checking  ignore unrecognized --enable/--with options
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
-  --enable-threads      include pthread support
+  --enable-threads        include pthread support, same as --with-threads
   --disable-largefile     omit support for large files
   --enable-readline      include readline (the default)
   --enable-snd-debug      include internal Snd debugging functions
@@ -1523,6 +1524,7 @@ Optional Packages:
   --with-snd-as-widget	  make Snd a loadable widget, not a standalone program
   --with-snd-as-pd-external	  make Snd a loadable pd external, not a standalone program
   --with-rt	  makes Snd capable of running Snd-Rt
+  --with-threads	  include pthread support, same as --enable-threads
   --with-gnu-ld           assume the C compiler uses GNU ld default=no
   --with-x                use the X Window System
   --with-ruby-prefix=PFX  where Ruby is installed
@@ -3730,7 +3732,7 @@ _ACEOF
 #   --with-doubles        use doubles throughout (default is floats)
 #   --with-float-samples  represent samples internally as floats or doubles (default=yes)
 #   --enable-snd-debug    include Snd internal debugging stuff
-#   --enable-threads      include pthread stuff
+#   --enable-threads      include pthread stuff [also "--with-threads" since I can't remember which is correct]
 #   --disable-deprecated  do not include any deprecated stuff (in gtk, motif, guile, sndlib, clm, etc)
 #   --with-ladspa         include LADSPA plugin support (Linux)
 #   --with-sample-width=N use N bits of samples (default = 24)
@@ -4974,7 +4976,28 @@ $as_echo "$ac_cv_header_sys_mount_h" >&6; }
 
 # this still screws up in netBSD!
 
-# check for pthreads
+
+# check for pthreads -- allow either --with-threads or --enable-threads
+
+
+# Check whether --with-threads was given.
+if test "${with_threads+set}" = set; then
+  withval=$with_threads;
+	if test "$ac_cv_header_pthread_h" = yes ; then
+	  cat >>confdefs.h <<\_ACEOF
+#define HAVE_PTHREADS 1
+_ACEOF
+
+	  LIBS="$LIBS -lpthread"
+          RANDOM_FEATURES="$RANDOM_FEATURES threads"
+        else
+          { $as_echo "$as_me:$LINENO: WARNING: can't go with threads -- can't find pthread.h" >&5
+$as_echo "$as_me: WARNING: can't go with threads -- can't find pthread.h" >&2;}
+        fi
+
+fi
+
+
 # Check whether --enable-threads was given.
 if test "${enable_threads+set}" = set; then
   enableval=$enable_threads;
@@ -4984,8 +5007,6 @@ if test "${enable_threads+set}" = set; then
 #define HAVE_PTHREADS 1
 _ACEOF
 
-#     CFLAGS="$CFLAGS -D_REENTRANT"
-# what was this for?
       LIBS="$LIBS -lpthread"
       RANDOM_FEATURES="$RANDOM_FEATURES threads"
     else
@@ -4994,6 +5015,8 @@ $as_echo "$as_me: WARNING: can't enable threads -- can't find pthread.h" >&2;}
     fi
   fi
 fi
+
+
 
 
 if test "${ac_cv_header__usr_local_lib_oss_include_sys_soundcard_h+set}" = set; then

@@ -58,7 +58,7 @@
 	(display result)
 	(display " but expected ")
 	(display expected)
-	(newline)
+	(newline) (newline)
 	)))
 
 (defmacro test (tst expected)
@@ -115,7 +115,7 @@
            (display result)
            (display " but expected ")
            (display expected)
-           (newline))))
+           (newline) (newline))))
 
 (defmacro num-test (tst expected)
   `(let ((result (catch #t (lambda () ,tst) (lambda args 'error))))
@@ -159,7 +159,7 @@
 (test (eq? 'abc 'abc) #t)
 (test (eq? eq? eq?) #t)
 (test (eq? (if #f 1) 1) #f)
-(test (eq? call/cc call-with-current-continuation) #t)
+;(test (eq? call/cc call-with-current-continuation) #t)
 (test (eq?) 'error)
 (test (eq? #t) 'error)
 ; guile accepts (eq? #t #t #t)
@@ -1434,8 +1434,8 @@
 	     (string=? str1 "ha")
 	     (string=? str2 "hxhixo")))
       #t)
-(test (let* ((str "hiho")
-	     (str1 "ha")
+(test (let* ((str (string-copy "hiho"))
+	     (str1 (string-copy "ha"))
 	     (str2 (string-append str1 str)))
 	(string-set! str1 1 #\x)
 	(string-set! str 2 #\x)
@@ -1454,6 +1454,7 @@
 
 (test (let ((hi (string-copy "hi"))) (string-fill! hi #\s) hi) "ss")
 (test (let ((hi (string-copy ""))) (string-fill! hi #\x) hi) "")
+(test (let ((str (make-string 0))) (string-fill! str #\a) str) "")
 (test (let ((hi (make-string 8 (integer->char 0)))) (string-fill! hi #\a) hi) "aaaaaaaa") ; is this result widely accepted?
 
 (for-each
@@ -8588,10 +8589,10 @@
 (num-test (rationalize -0.00000001 0.00300000000000) 0/1)
 (num-test (rationalize 0.00000001 0.00002000000000) 0/1)
 (num-test (rationalize -0.00000001 0.00002000000000) 0/1)
-(num-test (rationalize 0.00000001 0.00000001) 1/100000000)
-(num-test (rationalize -0.00000001 0.00000001) -1/100000000)
-;(num-test (rationalize 1.0 1.0) 1/1) ; humph!
-;(num-test (rationalize -1.0 1.0) -1/1) ; ditto!
+;(num-test (rationalize 0.00000001 0.00000001) 1/100000000) ; these change with C optimization (-O2)
+;(num-test (rationalize -0.00000001 0.00000001) -1/100000000)
+;(num-test (rationalize 1.0 1.0) 1) ; humph!
+;(num-test (rationalize -1.0 1.0) -1) ; ditto!
 (num-test (rationalize 1.0 0.50000000000000) 1/1)
 (num-test (rationalize -1.0 0.50000000000000) -1/1)
 (num-test (rationalize 1.0 0.10000000000000) 1/1)
@@ -10891,7 +10892,7 @@
        (list 10 491400 19439282 1248844920 235565593200))
 
       (test (eqv? (expt 2 3) 8) #t)
-      (test (eqv? (log 8 2) 3) #t)
+      ;(test (eqv? (log 8 2) 3) #t) ; optimization in C (-O2) changes this
       (test (eqv? (expt 701 2) 491401) #t)
       (test (eqv? (log 491401 701) 2) #t)
 
@@ -29503,6 +29504,14 @@
 (test (let ((ctr 0)) (for-each (lambda (x y z) (set! ctr (+ ctr x y z))) '(1) '(3) '()) ctr) 'error)
 (test (let ((ctr 0)) (for-each (lambda (x y z) (set! ctr (+ ctr x y z))) '(0 1) '(2 3) '(4 5 6)) ctr) 'error)
 (test (for-each (lambda (a b) (+ a b)) (list 1)) 'error)
+(test (for-each (lambda (a b) (+ a b)) (list 1) (list)) 'error)
+(test (for-each (lambda (a b) (+ a b)) (list 1) (list 1 2)) 'error)
+(test (for-each (lambda (a b) (+ a b)) (list 1 2) (list 1)) 'error)
+(test (for-each (lambda (a b) (+ a b)) (list 1 2) (list 1 2 3)) 'error)
+(test (for-each (lambda (a b) (+ a b)) (list 1 2) (list 1)) 'error)
+(test (for-each (lambda (a b) (+ a b)) (list 1 2) (list 1 2) (list)) 'error)
+(test (for-each (lambda (a b) (+ a b)) (list 1 2) (list 1 2) (list 1 2)) 'error)
+(test (for-each (lambda (a b) (+ a b)) (list 1 2) (cons 1 2)) 'error)
 (test (for-each (lambda (a) (+ a 1)) (list 1) (list 2)) 'error)
 (test (for-each (lambda (a) (+ a 1)) #\a) 'error)
 (test (for-each (lambda (a) (+ a 1)) (cons 1 2)) 'error)
@@ -29587,6 +29596,10 @@
 	lst) 
       (list 1 2 3))
 
+;;; this is an infinite loop?
+; (let ((cont #f)) (call/cc (lambda (x) (set! cont x))) (for-each cont (list 1 2 3)))
+(test (call/cc (lambda (x) (for-each x (list 1 2 3)))) 1) ; map also gives 1 ... perhaps not actually legal?
+
 
 
 
@@ -29606,7 +29619,19 @@
 (test (let ((ctr 0)) (map (lambda (x y z) (set! ctr (+ ctr x y z)) ctr) '() '() '())) '())
 (test (let ((ctr 0)) (map (lambda (x y z) (set! ctr (+ ctr x y z)) ctr) '(1) '(3) '())) 'error)
 (test (let ((ctr 0)) (map (lambda (x y z) (set! ctr (+ ctr x y z)) ctr) '(0 1) '(2 3) '(4 5 6))) 'error)
+
 (test (map (lambda (a b) (+ a b)) (list 1)) 'error)
+(test (map (lambda (a b) (+ a b)) (list 1) (list)) 'error)
+(test (map (lambda (a b) (+ a b)) (list 1) (list 2)) (list 3))
+(test (map (lambda (a b) (+ a b)) (list 1) (list 1 2)) 'error)
+(test (map (lambda (a b) (+ a b)) (list 1 2) (list 1)) 'error)
+(test (map (lambda (a b) (+ a b)) (list 1 2) (list 1 2 3)) 'error)
+(test (map (lambda (a b) (+ a b)) (list 1 2) (list 1)) 'error)
+(test (map (lambda (a b) (+ a b)) (list 1 2) (list 1 2)) (list 2 4))
+(test (map (lambda (a b) (+ a b)) (list 1 2) (list 1 2) (list)) 'error)
+(test (map (lambda (a b) (+ a b)) (list 1 2) (list 1 2) (list 1 2)) 'error)
+(test (map (lambda (a b) (+ a b)) (list 1 2) (cons 1 2)) 'error)
+
 (test (map (lambda (a) (+ a 1)) (list 1) (list 2)) 'error)
 (test (map (lambda (a) (+ a 1)) #\a) 'error)
 (test (map (lambda (a) (+ a 1)) (cons 1 2)) 'error)
@@ -29936,12 +29961,20 @@
 (test (cond ((= 1 1) (abs -1) (+ 2 3) (* 10 2)) (else 123)) 20)
 (test (let ((a 1)) (cond ((= a 1) (set! a 2) (+ a 3)))) 5)
 (test (let ((a 1)) (cond ((= a 2) (+ a 2)) (else (set! a 3) (+ a 3)))) 6)
+(test (cond ((= 1 1))) #t)
+(test (cond ((= 1 2) #f) (#t)) #t)
+(test (cond ((+ 1 2))) 3)
+(test (cond ((cons 1 2))) '(1 . 2))
+(test (cond (#f #t) ((string-append "hi" "ho"))) "hiho")
 
 (test (cond ((= 1 2) 3) (else 4) (4 5)) 'error)
 (test (cond ((+ 1 2) => (lambda (a b) (+ a b)))) 'error)
-(test (cond (else)) 'error)
+;(test (cond (else)) 'error)  ; value of else might be #t -- perhaps (equal? (cond (else)) else)
 (test (cond (#t => 'ok)) 'error)
 (test (cond (else =>)) 'error)
+(test (cond ((+ 1 2) => (lambda (x) (+ 1 x)))) 4)
+(test (cond ((cons 1 2) => car)) 1)
+; (cond ((values 1 2) => +)) -- seems like it ought to work
 
 (test (cond (else 1)) 1)
 (test (call/cc (lambda (r) (cond ((r 4) 3) (else 1)))) 4)
@@ -29956,7 +29989,17 @@
 
 (for-each
  (lambda (arg)
+   (test (cond (arg)) arg))
+ (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
+
+(for-each
+ (lambda (arg)
    (test (cond (#f 1) (else arg)) arg))
+ (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
+
+(for-each
+ (lambda (arg)
+   (test (cond (arg => (lambda (x) x))) arg))
  (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
 
 (test (cond (1 . 2) (else 3)) 'error)
@@ -29968,7 +30011,7 @@
 (test (cond 1 2 3) 'error)
 (test (cond 1 2 3 4) 'error)
 (test (cond (1 => (lambda (x y) #t))) 'error)
-
+(test (cond (cond 'cond)) 'cond)
 
 
 
@@ -30093,13 +30136,13 @@
 (test (lambda 1) 'error)
 (test (lambda (x 1) x) 'error)
 (test (lambda "hi" 1) 'error)
-(test (lambda (x x) x) 'error)
-;(test (lambda (x x x) x) 'error)
+;(test (lambda (x x) x) 'error)
+(test ((lambda (x x) x) 1 2) 'error)
 (test (lambda (x "a")) 'error)
 (test ((lambda (x y) (+ x y a)) 1 2) 'error)
 ;(test ((lambda ())) 'error)
 (test (lambda (x (y)) x) 'error)
-(test (lambda (x) x . 5) 'error)
+(test ((lambda (x) x . 5) 2) 'error)
 (test (lambda (1) #f) 'error)
 ;(test (lambda (x . y z) x) 'error)  ; this is apparently uncatchable in Guile
 (test ((lambda () 1) 1) 'error)
@@ -30332,7 +30375,7 @@
 (test (define (x 1)) 'error)
 (test (define 1 2) 'error)
 (test (define "hi" 2) 'error)
-(test (define 'hi 1) 'error)
+;(test (define 'hi 1) 'error) ; this redefines quote, which maybe isn't an error
 (test (let () (define . 1) 1) 'error)
 (test (let () (define .. 1) ..) 1)
 
@@ -31306,8 +31349,6 @@
 	(set! x 10)
 	(test (force p) 6))
 
-      (test (letrec ((p (delay (if c 3 (begin (set! c #t) (+ (force p) 1))))) (c #f)) (force p)) 3)	    
-
       (test (let ((generate (lambda (use-it)
 			      (let loop ((i 0))
 				(if (< i 10) (begin (use-it i) (loop (+ i 1)))))))
@@ -31443,8 +31484,6 @@
 	(test (force p) 6)
 	(set! x 10)
 	(test (force p) 6))
-
-      (test (letrec ((p (make-promise (if c 3 (begin (set! c #t) (+ (force p) 1))))) (c #f)) (force p)) 3)	    
 
       (test (let ((generate (lambda (use-it)
 			      (let loop ((i 0))
@@ -32311,7 +32350,29 @@
       (test (let ((hi (lambda (a b) 1))) (procedure-arity hi)) '(2 0 #f))
       (test (let ((hi (lambda (a . b) 1))) (procedure-arity hi)) '(1 0 #t))
       (test (let ((hi (lambda a 1))) (procedure-arity hi)) '(0 0 #t))
+
+      (for-each
+       (lambda (arg)
+	 (test (continuation? arg) #f))
+       (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi abs '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
+
+      (test (let ((cont #f)) 
+	      (and (call/cc (lambda (x) (set! cont x) (continuation? x)))
+		   (continuation? cont)))
+	    #t)
+
+      (if (and (defined? 'provided?)
+	       (provided? 'threads))
+	  (begin
+
+;;; TODO: thread tests
+;;; TODO tests for procedure-source|documentation 
+
+
+	    ))
       ))
+
+
 
 
 ;;; ----------------
@@ -32401,5 +32462,3 @@
 
 (display ";all done!") (newline)
 
-
-;;; TODO: thread tests
