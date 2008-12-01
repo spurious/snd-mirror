@@ -7088,28 +7088,12 @@ static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
 
 s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
 {
-  /* this can be called recursively via s7_call */
-  s7_pointer port;
   bool old_longjmp;
-  jmp_buf old_goto_start;
-
-  old_longjmp = sc->longjmp_ok;
+  s7_pointer port;
+  /* this can be called recursively via s7_call */
+  
   if (sc->longjmp_ok)
-    {
-      s7_pointer result;
-      sc->longjmp_ok = true;
-      if (setjmp(sc->goto_start) != 0)              /* returning from s7_error catch handler */
-	{
-	  sc->longjmp_ok = old_longjmp;
-	  memcpy((void *)(sc->goto_start), (void *)old_goto_start, sizeof(jmp_buf));
-	  return(sc->value);
-	}
-      memcpy((void *)old_goto_start, (void *)(sc->goto_start), sizeof(jmp_buf));
-      result = g_eval_string(sc, make_list_1(sc, s7_make_string(sc, str)));
-      sc->longjmp_ok = old_longjmp;
-      memcpy((void *)(sc->goto_start), (void *)old_goto_start, sizeof(jmp_buf));
-      return(result);
-    }
+    return(g_eval_string(sc, make_list_1(sc, s7_make_string(sc, str))));
   
   stack_reset(sc); 
   sc->envir = sc->global_env;
@@ -7117,6 +7101,7 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
   push_input_port(sc, port);
   push_stack(sc, OP_EVAL_STRING, sc->NIL, sc->NIL);
   
+  old_longjmp = sc->longjmp_ok;
   if (!sc->longjmp_ok)
     {
       sc->longjmp_ok = true;
