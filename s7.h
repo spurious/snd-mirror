@@ -28,7 +28,7 @@ typedef double s7_Double;
   /* s7 itself is based on the following types and functions, so the first place to look for examples
    *   is s7.c.  There are also a few variations on a REPL at the end of this file.  s7test.scm (in the
    *   Snd tarball) or r5rstest.scm (at the ccrma ftp site) are regression tests for s7 -- they still
-   *   turn up around 10 problems.  More tests are certainly welcome!  Extended examples of s7 usage
+   *   turn up a few problems.  More tests are certainly welcome!  Extended examples of s7 usage
    *   are:
    *
    *   Snd: ftp://ccrma-ftp.stanford.edu/pub/Lisp/snd-10.tar.gz (a sound editor)
@@ -67,6 +67,7 @@ typedef double s7_Double;
    *    backtrace               prints the "evaluation history"
    *    clear-backtrace         clears the evaluation history
    *    set-backtrace-length    sets how many entries are saved in the evaluation history
+   *    backtracing             if argument is #t, errors printout a backtrace
    *    procedure-documentation doc string if any associated with a procedure
    *    procedure-arity         a list describing the arglist of a function: '(required-args optional-args rest-arg)
    *    procedure-source        returns the source (a list) of a procedure

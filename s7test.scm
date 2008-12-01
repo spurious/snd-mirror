@@ -1444,7 +1444,6 @@
 	     (string=? str2 "hahiho")))
       #t)
 
-
 (for-each
  (lambda (arg)
    (test (string-append "hiho" arg) 'error))
@@ -29512,6 +29511,7 @@
 (test (for-each (lambda (a b) (+ a b)) (list 1 2) (list 1 2) (list)) 'error)
 (test (for-each (lambda (a b) (+ a b)) (list 1 2) (list 1 2) (list 1 2)) 'error)
 (test (for-each (lambda (a b) (+ a b)) (list 1 2) (cons 1 2)) 'error)
+(test (for-each (lambda (a b) (+ a b)) (cons 1 2) (list 1 2)) 'error)
 (test (for-each (lambda (a) (+ a 1)) (list 1) (list 2)) 'error)
 (test (for-each (lambda (a) (+ a 1)) #\a) 'error)
 (test (for-each (lambda (a) (+ a 1)) (cons 1 2)) 'error)
@@ -29767,7 +29767,7 @@
 (test (do ((i 1) . 1) (#t 1) 1) 'error)
 (test (do ((i 0 (+ i j)) (j 0 (+ j 1))) (#t 1)) 1)
 (test (do ((i 0 j) (j 0 (+ j 1))) ((= j 3) i)) 2) ; uh, lessee... lexical scoping...
-(test (do ((i 0 j) (i 0 j) (j 1 (+ j 1))) ((= j 3) i)) 'error) ; ??
+;(test (do ((i 0 j) (i 0 j) (j 1 (+ j 1))) ((= j 3) i)) 'error) ; ??
 (test (do ((i 1 j) (j 0 k) (k 0 m) (m 0 (+ i j k))) ((> m 10) (list i j k m))) (list 4 5 8 11))
 (test (do ((i 1) ()) (= i 1)) 'error)
 (test (do ((do 1 (+ do do))) ((> do 3) do)) 4)
@@ -30051,6 +30051,8 @@
 (test (case 1 (else #f) ((1) #t)) 'error)
 (test (case "hi" (("hi" "ho") 123) ("ha" 321)) 'error)
 (test (case) 'error)
+(test (case 1 (#t #f) ((1) #t)) 'error)
+(test (case 1 (#t #f)) 'error)
 
 (test (case 1 ((1 2) (let ((case 3)) (+ case 1))) ((3 4) 0)) 4)
 
@@ -30137,7 +30139,7 @@
 (test (lambda (x 1) x) 'error)
 (test (lambda "hi" 1) 'error)
 ;(test (lambda (x x) x) 'error)
-(test ((lambda (x x) x) 1 2) 'error)
+;(test ((lambda (x x) x) 1 2) 'error)
 (test (lambda (x "a")) 'error)
 (test ((lambda (x y) (+ x y a)) 1 2) 'error)
 ;(test ((lambda ())) 'error)

@@ -61,7 +61,7 @@
  *        object->string, eval-string
  *        reverse!, list-set!
  *        gc, gc-verbose, load-verbose, quit
- *        backtrace, backtrace-length, clear-backtrace
+ *        backtrace, backtrace-length, clear-backtrace, backtracing
  *        *features*, *load-path*, *vector-print-length*
  *        define-constant, pi, most-positive-fixnum, most-negative-fixnum
  *        format (only the simple directives)
@@ -207,7 +207,6 @@
 /* this is for a internal debugging */
 
 
-
 /* -------------------------------------------------------------------------------- */
 
 /* s7.c is organized as follows:
@@ -234,7 +233,6 @@
  *    threads
  *    s7 init
  */
-
 
 typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY, OP_DOMACRO, OP_LAMBDA, OP_QUOTE, 
 	      OP_DEFINE0, OP_DEFINE1, OP_BEGIN, OP_IF0, OP_IF1, 
@@ -406,7 +404,7 @@ struct s7_scheme {
   s7_pointer global_env;              /* global environment */
   
   s7_pointer LAMBDA, LAMBDA_STAR, QUOTE, QUASIQUOTE, UNQUOTE, UNQUOTE_SPLICING;        
-  s7_pointer APPLY, VECTOR, CONS, APPEND, CDR, VECTOR_FUNCTION, VALUES;
+  s7_pointer APPLY, VECTOR, CONS, APPEND, CDR, VECTOR_FUNCTION, VALUES, ELSE;
   s7_pointer ERROR, WRONG_TYPE_ARG, OUT_OF_RANGE, FORMAT_ERROR, WRONG_NUMBER_OF_ARGS;
   s7_pointer KEY_KEY, KEY_OPTIONAL, KEY_REST;
   s7_pointer FEED_TO;                 /* => */
@@ -421,6 +419,7 @@ struct s7_scheme {
   bool *gc_off;                       /* if true, the GC won't run */
   bool *gc_verbose;                   /* if gc_verbose is true, print gc status */
   bool *load_verbose;                 /* if load_verbose is true, print file names as they are loaded */
+  bool *backtracing;                  /* if backtracing, errors print a backtrace */
   long *gensym_counter;
   
   /* these are locals in eval, but we want that code to be context-free */
@@ -1054,11 +1053,6 @@ static void mark_vector(s7_pointer p, int top)
 
 static void s7_mark_object_1(s7_pointer p)
 {
-  /*
-  if (is_marked(p)) return; 
-  */
-  ASSERT_IS_OBJECT(p, "mark");
-  
   set_mark(p);
   
   if (is_simple(p)) return;
@@ -1325,7 +1319,6 @@ s7_pointer s7_gc_on(s7_scheme *sc, bool on)
 
 
 
-
 /* -------------------------------- stack -------------------------------- */
 
 static void stack_reset(s7_scheme *sc) 
@@ -1368,7 +1361,6 @@ static void push_stack(s7_scheme *sc, opcode_t op, s7_pointer args, s7_pointer c
   vel[2] = args;
   vel[3] = sc->small_ints[(int)op];
 } 
-
 
 
 
@@ -1616,8 +1608,6 @@ void s7_provide(s7_scheme *sc, const char *feature)
   s7_eval_c_string(sc, expr);
   free(expr);
 }
-
-
 
 
 
@@ -2066,7 +2056,6 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
   
   return(sc->NIL);
 }
-
 
 
 
@@ -5155,7 +5144,6 @@ static s7_pointer g_ash(s7_scheme *sc, s7_pointer args)
 
 
 
-
 /* -------------------------------- characters -------------------------------- */
 
 static s7_pointer g_char_to_integer(s7_scheme *sc, s7_pointer args)
@@ -5392,7 +5380,6 @@ static s7_pointer g_chars_are_ci_leq(s7_scheme *sc, s7_pointer args)
   #define H_chars_are_ci_leq "(char-ci<=? chr...) returns #t if all the character arguments are equal or increasing, ignoring case"
   return(g_char_cmp_not(sc, args, 1, "char-ci<=?", true));
 }
-
 
 
 
@@ -5936,7 +5923,6 @@ static s7_pointer g_string_to_list(s7_scheme *sc, s7_pointer args)
 
 
 
-
 /* -------------------------------- ports -------------------------------- */
 
 static char *describe_port(s7_scheme *sc, s7_pointer p)
@@ -6198,7 +6184,6 @@ static s7_pointer s7_make_input_file(s7_scheme *sc, const char *name, FILE *fp)
   port_filename(x) = strdup(name);
   port_line_number(x) = 1;  /* 1st line is numbered 1 */
   port_needs_free(x) = false;
-  
   return(x);
 }
 
@@ -6254,7 +6239,6 @@ s7_pointer s7_open_output_file(s7_scheme *sc, const char *name, const char *mode
   port_line_number(x) = 1;
   port_file(x) = fp;
   port_needs_free(x) = false;
-  
   return(x);
 }
 
@@ -6272,7 +6256,6 @@ static s7_pointer g_open_output_file(s7_scheme *sc, s7_pointer args)
 	return(s7_wrong_type_arg_error(sc, "open-output-file", 1, cadr(args), "a string (a mode)"));
       return(s7_open_output_file(sc, s7_string(name), s7_string(cadr(args))));
     }
-  
   return(s7_open_output_file(sc, s7_string(name), "w"));
 }
 
@@ -6293,7 +6276,6 @@ s7_pointer s7_open_input_string(s7_scheme *sc, const char *input_string)
   port_filename(x) = NULL;
   port_file_number(x) = -1;
   port_needs_free(x) = false;
-  
   return(x);
 }
 
@@ -6325,7 +6307,6 @@ s7_pointer s7_open_output_string(s7_scheme *sc)
   port_string(x) = (char *)calloc(STRING_PORT_INITIAL_LENGTH, sizeof(char));
   port_string_point(x) = 0;
   port_needs_free(x) = true;
-  
   return(x);
 }
 
@@ -6374,8 +6355,6 @@ static s7_pointer pop_input_port(s7_scheme *sc)
 }
 
 
-/* -------- get new character from input file -------- */
-
 static int inchar(s7_scheme *sc, s7_pointer pt)
 {
   int c;
@@ -6398,8 +6377,6 @@ static int inchar(s7_scheme *sc, s7_pointer pt)
 }
 
 
-/* -------- put character back into input buffer -------- */
-
 static void backchar(s7_scheme *sc, char c, s7_pointer pt) 
 {
   if (pt == sc->NIL) return;
@@ -6416,8 +6393,6 @@ static void backchar(s7_scheme *sc, char c, s7_pointer pt)
     }
 }
 
-
-/* -------- read token or expression -------- */
 
 static void resize_strbuf(s7_scheme *sc)
 {
@@ -6488,12 +6463,8 @@ static char *read_string_upto(s7_scheme *sc)
 		}
 	    }
 	}
-      else
-	{
-	  sc->strbuf[0] = '\0';
-	}
+      else sc->strbuf[0] = '\0';
     }
-
   return(sc->strbuf);
 }
 
@@ -6897,8 +6868,6 @@ static s7_pointer g_read(s7_scheme *sc, s7_pointer args)
 }
 
 
-/* -------- load -------- */
-
 static FILE *search_load_path(s7_scheme *sc, const char *name)
 {
   int i, len, name_len;
@@ -7100,8 +7069,6 @@ static s7_pointer g_load_verbose(s7_scheme *sc, s7_pointer a)
 
 
 
-/* -------- eval string -------- */
-
 static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_eval_string "(eval-string str) returns the result of evaluating the string str as Scheme code"
@@ -7121,12 +7088,28 @@ static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
 
 s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
 {
-  bool old_longjmp;
-  s7_pointer port;
   /* this can be called recursively via s7_call */
-  
+  s7_pointer port;
+  bool old_longjmp;
+  jmp_buf old_goto_start;
+
+  old_longjmp = sc->longjmp_ok;
   if (sc->longjmp_ok)
-    return(g_eval_string(sc, make_list_1(sc, s7_make_string(sc, str))));
+    {
+      s7_pointer result;
+      sc->longjmp_ok = true;
+      if (setjmp(sc->goto_start) != 0)              /* returning from s7_error catch handler */
+	{
+	  sc->longjmp_ok = old_longjmp;
+	  memcpy((void *)(sc->goto_start), (void *)old_goto_start, sizeof(jmp_buf));
+	  return(sc->value);
+	}
+      memcpy((void *)old_goto_start, (void *)(sc->goto_start), sizeof(jmp_buf));
+      result = g_eval_string(sc, make_list_1(sc, s7_make_string(sc, str)));
+      sc->longjmp_ok = old_longjmp;
+      memcpy((void *)(sc->goto_start), (void *)old_goto_start, sizeof(jmp_buf));
+      return(result);
+    }
   
   stack_reset(sc); 
   sc->envir = sc->global_env;
@@ -7134,7 +7117,6 @@ s7_pointer s7_eval_c_string(s7_scheme *sc, const char *str)
   push_input_port(sc, port);
   push_stack(sc, OP_EVAL_STRING, sc->NIL, sc->NIL);
   
-  old_longjmp = sc->longjmp_ok;
   if (!sc->longjmp_ok)
     {
       sc->longjmp_ok = true;
@@ -7226,8 +7208,6 @@ static s7_pointer g_with_input_from_file(s7_scheme *sc, s7_pointer args)
 }
 
 
-
-/* -------- output -------- */
 
 static void char_to_string_port(char c, s7_pointer pt)
 {
@@ -7736,8 +7716,6 @@ static s7_pointer g_display(s7_scheme *sc, s7_pointer args)
 }
 
 
-/* -------- read|write-byte -------- */
-
 static s7_pointer g_read_byte(s7_scheme *sc, s7_pointer args)
 {
   #define H_read_byte "(read-byte :optional port): reads a byte from the input port"
@@ -7847,7 +7825,6 @@ static s7_pointer g_with_output_to_file(s7_scheme *sc, s7_pointer args)
   sc->output_port = old_output_port;
   return(sc->value);
 }
-
 
 
 
@@ -8777,7 +8754,6 @@ static s7_pointer g_list_line_number(s7_scheme *sc, s7_pointer args)
 
 
 
-
 /* -------------------------------- vectors -------------------------------- */
 
 
@@ -9219,6 +9195,23 @@ s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
   if (s7_is_applicable_object(x))
     return(make_list_3(sc, s7_make_integer(sc, 0), s7_make_integer(sc, 0), sc->T));
   return(sc->NIL);
+}
+
+
+static bool is_thunk(s7_scheme *sc, s7_pointer x)
+{
+  switch (type(x))
+    {
+    case T_S7_FUNCTION:
+      return((x->object.ffptr->required_args == 0) &&
+	     (x->object.ffptr->optional_args == 0) &&
+	     (!(x->object.ffptr->rest_arg)));
+
+    case T_CLOSURE:
+    case T_CLOSURE_STAR:
+      return(caar(x) == sc->NIL);
+    }
+  return(false);
 }
 
 
@@ -9698,7 +9691,6 @@ static s7_pointer g_is_equal(s7_scheme *sc, s7_pointer args)
 
 
 
-
 /* -------- keywords -------- */
 
 bool s7_keyword_eq_p(s7_pointer obj1, s7_pointer obj2)
@@ -9767,7 +9759,6 @@ static s7_pointer g_symbol_to_keyword(s7_scheme *sc, s7_pointer args)
     return(s7_wrong_type_arg_error(sc, "symbol->keyword", 1, car(args), "a symbol"));
   return(s7_make_keyword(sc, s7_symbol_name(car(args))));
 }
-
 
 
 
@@ -9947,7 +9938,6 @@ static s7_pointer g_hash_table_set(s7_scheme *sc, s7_pointer args)
 
 
 
-
 /* -------------------------------- format -------------------------------- */
 
 typedef struct {
@@ -10077,20 +10067,17 @@ static char *format_to_c_string(s7_scheme *sc, const char* str, s7_pointer args,
 	    {
 	      switch (str[i + 1])
 		{
-		  /* -------- newline -------- */
-		case '%': 
+		case '%':                           /* -------- newline -------- */
 		  format_append_char(fdat, '\n');
 		  i++;
 		  break;
-
-		  /* -------- tilde -------- */
-		case '~':
+		  
+		case '~':                           /* -------- tilde -------- */
 		  format_append_char(fdat, '~');
 		  i++;
 		  break;
 
-		  /* -------- trim white-space -------- */
-		case '\n':
+		case '\n':                          /* -------- trim white-space -------- */
 		  for (i = i + 2; i <str_len - 1; i++)
 		    if (!(isspace(str[i])))
 		      {
@@ -10098,15 +10085,13 @@ static char *format_to_c_string(s7_scheme *sc, const char* str, s7_pointer args,
 			break;
 		      }
 		  break;
-
-		  /* -------- ignore arg -------- */
-		case '*':
+		  
+		case '*':                           /* -------- ignore arg -------- */
 		  i++;
 		  fdat->args = cdr(fdat->args);
 		  break;
 
-		  /* -------- exit -------- */
-		case '^':
+		case '^':                           /* -------- exit -------- */
 		  if (fdat->args == sc->NIL)
 		    {
 		      i = str_len;
@@ -10114,9 +10099,8 @@ static char *format_to_c_string(s7_scheme *sc, const char* str, s7_pointer args,
 		    }
 		  i++;
 		  break;
-
-		  /* -------- object->string -------- */
-		case 'A': case 'a': 
+		  
+		case 'A': case 'a':                 /* -------- object->string -------- */
 		case 'C': case 'c':
 		case 'S': case 's':
 		  if (fdat->args == sc->NIL)
@@ -10131,9 +10115,8 @@ static char *format_to_c_string(s7_scheme *sc, const char* str, s7_pointer args,
 		  if (tmp) free(tmp);
 		  fdat->args = cdr(fdat->args);
 		  break;
-
-		  /* -------- iteration -------- */
-		case '{':
+		  
+		case '{':                           /* -------- iteration -------- */
 		  {
 		    s7_pointer curly_arg;
 		    char *curly_str = NULL;
@@ -10366,7 +10349,6 @@ const char *s7_format(s7_scheme *sc, s7_pointer args)
 
 
 
-
 /* -------------------------------- errors -------------------------------- */
 
 static char *no_outer_parens(char *str)
@@ -10461,8 +10443,8 @@ static pthread_mutex_t backtrace_lock = PTHREAD_MUTEX_INITIALIZER;
 
 static void print_backtrace_entry(s7_scheme *sc, int n)
 {
-  char *str = NULL, *func_name, *str1 = NULL, *str2;
-  int line = 0;
+  char *str = NULL, *func_name = NULL, *str1 = NULL, *str2 = NULL;
+  int line = 0, len;
   s7_pointer code, args;
   bool need_free = false;
 
@@ -10500,7 +10482,6 @@ static void print_backtrace_entry(s7_scheme *sc, int n)
 	  need_free = true;
 	}
     }
-
   str = no_outer_parens(s7_object_to_c_string(sc, args));
   if (safe_strlen(str) > 128)
     {
@@ -10516,14 +10497,15 @@ static void print_backtrace_entry(s7_scheme *sc, int n)
       if ((remembered_line_number(line) != 0) &&
 	  (remembered_file_name(line)))
 	{
-	  str1 = (char *)malloc((64 + safe_strlen(remembered_file_name(line))) * sizeof(char));
-	  sprintf(str1, "        ; %s[%d]", remembered_file_name(line), remembered_line_number(line));
+	  len = 64 + safe_strlen(remembered_file_name(line));
+	  str1 = (char *)malloc(len * sizeof(char));
+	  snprintf(str1, len, "        ; %s[%d]", remembered_file_name(line), remembered_line_number(line));
 	}
     }
 
-  str2 = (char *)malloc((160 + safe_strlen(func_name)) * sizeof(char));
-  sprintf(str2, "(%s %s)%s\n", func_name, str, (str1) ? str1 : "");
-
+  len = 32 + safe_strlen(str) + safe_strlen(str1) + safe_strlen(func_name);
+  str2 = (char *)malloc(len * sizeof(char));
+  snprintf(str2, len, "(%s %s)%s\n", func_name, str, (str1) ? str1 : "");
   write_string(sc, str2, s7_current_error_port(sc));
   
   if (str) free(str);
@@ -10537,6 +10519,7 @@ static s7_pointer g_backtrace(s7_scheme *sc, s7_pointer args)
 {
   #define H_backtrace "(backtrace) prints out the last few evaluated expressions, somewhat like a C stacktrace."
   int i;
+  if (sc->backtrace_size <= 0) return(sc->F);
 
 #if HAVE_PTHREADS
   pthread_mutex_lock(&backtrace_lock);
@@ -10554,9 +10537,20 @@ static s7_pointer g_backtrace(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_pointer g_backtracing(s7_scheme *sc, s7_pointer a)
+{
+  #define H_backtracing "(backtracing bool) turns error backtrace printout on or off"
+  s7_pointer old_val;
+  old_val = (*(sc->backtracing)) ? sc->T : sc->F;
+  (*(sc->backtracing)) = (car(a) != sc->F);
+  return(old_val);
+}
+
+
 static void add_backtrace_entry(s7_scheme *sc, s7_pointer code, s7_pointer args)
 {
   int n;
+  if (sc->backtrace_size <= 0) return;
 
 #if HAVE_PTHREADS
   int id;
@@ -10619,12 +10613,21 @@ static void make_backtrace_buffer(s7_scheme *sc, int size)
 
   sc->backtrace_top = 0;
   sc->backtrace_size = size;
-  sc->backtrace_ops = (s7_pointer *)malloc(sc->backtrace_size * sizeof(s7_pointer));
-  sc->backtrace_args = (s7_pointer *)malloc(sc->backtrace_size * sizeof(s7_pointer));
-  for (i = 0; i < sc->backtrace_size; i++)
+
+  if (size > 0)
     {
-      sc->backtrace_ops[i] = sc->NIL;
-      sc->backtrace_args[i] = sc->NIL;
+      sc->backtrace_ops = (s7_pointer *)malloc(sc->backtrace_size * sizeof(s7_pointer));
+      sc->backtrace_args = (s7_pointer *)malloc(sc->backtrace_size * sizeof(s7_pointer));
+      for (i = 0; i < sc->backtrace_size; i++)
+	{
+	  sc->backtrace_ops[i] = sc->NIL;
+	  sc->backtrace_args[i] = sc->NIL;
+	}
+    }
+  else
+    {
+      sc->backtrace_ops = NULL;
+      sc->backtrace_args = NULL;
     }
 
 #if HAVE_PTHREADS
@@ -10641,8 +10644,7 @@ static s7_pointer g_set_backtrace_length(s7_scheme *sc, s7_pointer args)
   if (!s7_is_integer(car(args)))
     return(s7_wrong_type_arg_error(sc, "set-backtrace-length", 1, car(args), "an integer"));
   len = s7_integer(car(args));
-  if (len > 0)
-    make_backtrace_buffer(sc, len);
+  make_backtrace_buffer(sc, len);
   return(s7_make_integer(sc, sc->backtrace_size));
 }
 
@@ -10895,7 +10897,7 @@ static s7_pointer s7_error_1(s7_scheme *sc, s7_pointer type, s7_pointer info, bo
 	}
 
       s7_newline(sc, s7_current_error_port(sc));
-      g_backtrace(sc, sc->NIL);
+      if (*(sc->backtracing)) g_backtrace(sc, sc->NIL);
       
       if ((exit_eval) &&
 	  (sc->error_exiter))
@@ -11163,7 +11165,8 @@ static s7_pointer g_for_each(s7_scheme *sc, s7_pointer args)
   s7_pointer lists;
   int i;
 
-  if (!is_procedure(car(args)))
+  if ((!is_procedure(car(args))) ||
+      (is_thunk(sc, car(args))))
     return(s7_wrong_type_arg_error(sc, "for-each", 1, car(args), "a procedure"));
 
   sc->code = car(args);
@@ -11210,7 +11213,8 @@ static s7_pointer g_map(s7_scheme *sc, s7_pointer args)
   s7_pointer lists;
   int i;
   
-  if (!is_procedure(car(args)))
+  if ((!is_procedure(car(args))) ||
+      (is_thunk(sc, car(args))))
     return(s7_wrong_type_arg_error(sc, "map", 1, car(args), "a procedure"));
 
   sc->code = car(args);
@@ -11394,7 +11398,6 @@ static s7_pointer read_expression(s7_scheme *sc)
     }
   return(sc->NIL);
 }
-      
       
 
 
@@ -12698,12 +12701,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_CASE1: 
       for (sc->x = sc->code; sc->x != sc->NIL; sc->x = cdr(sc->x)) 
 	{
-	  if (!is_pair(sc->y = caar(sc->x)))
+	  sc->y = caar(sc->x);
+	  if (!is_pair(sc->y))
 	    {
-	      if ((sc->y != sc->T) &&
-		  ((!s7_is_symbol(sc->y)) ||
-		   (strcmp(s7_symbol_name(sc->y), "else") != 0)))
+	      if (sc->y != sc->ELSE)
 		return(eval_error(sc, "case clause key list ~A is not a list or 'else'", sc->y));
+	      if (cdr(sc->x) != sc->NIL)
+		return(eval_error(sc, "case 'else' clause is not the last", sc->x));
 	      break;
 	    }
 
@@ -12879,7 +12883,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     }
   return(sc->F);
 }
-
 
 
 
@@ -13444,6 +13447,9 @@ s7_scheme *s7_init(void)
   sc->output_port = sc->NIL;
   sc->error_port = sc->NIL;
   
+  sc->code = sc->NIL;
+  sc->args = sc->NIL;
+  sc->value = sc->NIL;
   sc->x = sc->NIL;
   sc->y = sc->NIL;
   sc->z = sc->NIL;
@@ -13489,6 +13495,7 @@ s7_scheme *s7_init(void)
   sc->gc_verbose = (bool *)calloc(1, sizeof(bool));
   sc->load_verbose = (bool *)calloc(1, sizeof(bool));
   sc->gensym_counter = (long *)calloc(1, sizeof(long));
+  sc->backtracing = (bool *)calloc(1, sizeof(bool));
 
   sc->backtrace_ops = NULL;
   sc->backtrace_args = NULL;
@@ -13499,15 +13506,8 @@ s7_scheme *s7_init(void)
   sc->thread_id = 0;
 #endif
   
-  sc->code = sc->NIL;
-  sc->args = sc->NIL;
-  sc->value = sc->NIL;
-  
   sc->global_env = s7_immutable_cons(sc, s7_make_vector(sc, SYMBOL_TABLE_SIZE), sc->NIL);
   sc->envir = sc->global_env;
-  
-  x = s7_make_symbol(sc, "else");
-  add_to_current_environment(sc, x, sc->T); 
   
   x = s7_make_vector(sc, OP_MAX_DEFINED + 1);
   typeflag(x) |= (T_CONSTANT | T_DONT_COPY);
@@ -13590,6 +13590,10 @@ s7_scheme *s7_init(void)
   sc->CDR = s7_make_symbol(sc, "cdr");
   typeflag(sc->CDR) |= (T_CONSTANT | T_DONT_COPY); 
   
+  sc->ELSE = s7_make_symbol(sc, "else");
+  typeflag(sc->ELSE) |= (T_CONSTANT | T_DONT_COPY); 
+  add_to_current_environment(sc, sc->ELSE, sc->T); 
+
   sc->VECTOR = s7_make_symbol(sc, "vector");
   typeflag(sc->VECTOR) |= (T_CONSTANT | T_DONT_COPY); 
   sc->VECTOR_FUNCTION = s7_name_to_value(sc, "vector");
@@ -13905,6 +13909,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "backtrace",               g_backtrace,               0, 0, false, H_backtrace);
   s7_define_function(sc, "clear-backtrace",         g_clear_backtrace,         0, 0, false, H_clear_backtrace);
   s7_define_function(sc, "set-backtrace-length",    g_set_backtrace_length,    1, 0, false, H_set_backtrace_length);
+  s7_define_function(sc, "backtracing",             g_backtracing,             1, 0, false, H_backtracing);
   s7_define_function(sc, "gc",                      g_gc,                      0, 1, false, H_gc);
   s7_define_function(sc, "quit",                    g_quit,                    0, 0, false, H_quit);
 
