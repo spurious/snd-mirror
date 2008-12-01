@@ -8494,8 +8494,8 @@ static int sndjack_init(void){
   sndjack_num_channels_allocated = numch = sndjack_getnumoutchannels();
   sndjack_num_read_channels_allocated    = sndjack_getnuminchannels();
      
-  sndjack_channels=(SndjackChannel *)calloc(sizeof(struct SndjackChannel),numch);
-  sndjack_read_channels=(SndjackChannel *)calloc(sizeof(struct SndjackChannel),sndjack_num_read_channels_allocated);
+  sndjack_channels=(struct SndjackChannel *)calloc(sizeof(struct SndjackChannel),numch);
+  sndjack_read_channels=(struct SndjackChannel *)calloc(sizeof(struct SndjackChannel),sndjack_num_read_channels_allocated);
 
   for(ch=0;ch<numch;ch++){
     sndjack_channels[ch].buffer=(sample_t *)calloc(sizeof(sample_t),SNDJACK_BUFFERSIZE);

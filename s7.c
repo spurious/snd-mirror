@@ -3517,12 +3517,32 @@ static bool is_radix_prefix(char prefix)
 }
 
 
-static s7_pointer make_sharp_constant(s7_scheme *sc, char *name) 
+static s7_pointer exact_to_inexact(s7_scheme *sc, s7_pointer x)
+{
+  if (s7_is_rational(x))
+    return(s7_make_real(sc, s7_number_to_real(x)));
+  return(x);
+}
+
+
+static s7_pointer inexact_to_exact(s7_scheme *sc, s7_pointer x)
+{
+  if ((s7_is_real(x)) && (!s7_is_rational(x)))
+    {
+      s7_Int numer = 0, denom = 1;
+      if (c_rationalize(s7_real_part(x), default_rationalize_error, &numer, &denom))
+	return(s7_make_ratio(sc, numer, denom));
+    }
+  return(x);
+}
+
+
+static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top) 
 {
   /* name is the stuff after the '#', return sc->NIL if not a recognized #... entity */
   int len;
   s7_pointer x;
-  
+
   if (strcmp(name, "t") == 0)
     return(sc->T);
   
@@ -3543,24 +3563,33 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name)
     case 'x':   /* #x (hex) */
     case 'b':   /* #b (binary) */
       {
-	bool to_inexact = false;
+	bool to_inexact = false, to_exact = false;
 	int num_at = 1;
   
 	if (name[1] == '#')
 	  {
+	    if (!at_top)
+	      return(sc->NIL);
 	    if ((len > 2) && ((name[2] == 'e') || (name[2] == 'i')))
 	      {
+		if ((len > 3) && (name[3] == '#'))
+		  return(sc->NIL);
 		to_inexact = (name[2] == 'i');
+		to_exact = (name[2] == 'e');
 		num_at = 3;
 	      }
 	    else return(sc->NIL);
 	  }
 	x = make_atom(sc, (char *)(name + num_at), (name[0] == 'o') ? 8 : ((name[0] == 'x') ? 16 : ((name[0] == 'b') ? 2 : 10)), false);
-	if (!s7_is_integer(x))
+	/* #x#i1 apparently makes sense, so #x1.0 should also be accepted */
+	if (!s7_is_number(x))
 	  return(sc->NIL);
-	if (to_inexact)
-	  return(s7_make_real(sc, s7_number_to_real(x)));
-	return(x);  /* we already checked that it is a number */
+	if ((s7_imag_part(x) != 0.0) ||
+	    ((!to_exact) && (!to_inexact)))
+	  return(x);
+	if (to_exact)
+	  return(inexact_to_exact(sc, x));
+	return(exact_to_inexact(sc, x));
       }
 
     case 'i':   /* #i<num> = ->inexact (see token for table of choices here) */
@@ -3569,40 +3598,34 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name)
 	  if (is_radix_prefix(name[2]))
 	    {
 	      s7_pointer i_arg;
-	      i_arg = make_sharp_constant(sc, (char *)(name + 2));
-	      if (!s7_is_integer(i_arg))
+	      i_arg = make_sharp_constant(sc, (char *)(name + 2), false);
+	      if (!s7_is_number(i_arg))
 		return(sc->NIL);
-	      return(s7_make_real(sc, (s7_Double)s7_integer(i_arg)));
+	      return(exact_to_inexact(sc, i_arg));
 	    }
 	  return(sc->NIL);
 	}
       x = make_atom(sc, (char *)(name + 1), 10, false);
       if (s7_is_number(x))
-	{
-	  if (s7_is_rational(x))
-	    return(s7_make_real(sc, s7_number_to_real(x)));
-	  return(x);  /* already an inexact number */
-	}
+	return(exact_to_inexact(sc, x));
       return(sc->NIL);
   
     case 'e':   /* #e<num> = ->exact */
       if (name[1] == '#')
 	{
 	  if (is_radix_prefix(name[2]))
-	    return(make_sharp_constant(sc, (char *)(name + 2)));
+	    {
+	      s7_pointer i_arg;
+	      i_arg = make_sharp_constant(sc, (char *)(name + 2), false);
+	      if (!s7_is_number(i_arg))
+		return(sc->NIL);
+	      return(inexact_to_exact(sc, i_arg));
+	    }
 	  return(sc->NIL);
 	}
       x = make_atom(sc, (char *)(name + 1), 10, false);
       if (s7_is_number(x))
-	{
-	  if (!(s7_is_rational(x)))
-	    {
-	      s7_Int numer = 0, denom = 1;
-	      if (c_rationalize(s7_real_part(x), default_rationalize_error, &numer, &denom))
-		return(s7_make_ratio(sc, numer, denom));
-	    }
-	  return(x); /* already an exact number */
-	}
+	return(inexact_to_exact(sc, x));
       return(sc->NIL);
 
     case '\\':
@@ -3757,7 +3780,7 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
   /* a number starts with + - . or digit, but so does 1+ for example */
   
   if (c == '#')
-    return(make_sharp_constant(sc, p)); /* make_sharp_constant expects the '#' to be removed */
+    return(make_sharp_constant(sc, p, true)); /* make_sharp_constant expects the '#' to be removed */
   
   if ((c == '+') || (c == '-')) 
     { 
@@ -11115,8 +11138,6 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
    *   longjmp location.
    */
 
-  /* PERHAPS: save/restore jmp_buf in all other cases? */
-
   sc->longjmp_ok = true;
   if (setjmp(sc->goto_start) != 0) /* returning from s7_error catch handler */
     {
@@ -11364,7 +11385,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  {
 	    char *expr;
 	    expr = read_string_upto(sc);
-	    sc->value = make_sharp_constant(sc, expr);
+	    sc->value = make_sharp_constant(sc, expr, true);
 	    if (sc->value == sc->NIL)
 	      return(read_error(sc, "undefined sharp expression")); /* (list #b) */
 	    return(sc->value);
