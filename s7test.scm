@@ -32549,6 +32549,36 @@
 		    (and (= ctr 2)
 			 (= (+ ctr1 ctr2) 3)))
 		  #t)
+
+	    (for-each
+	     (lambda (arg)
+	       (test (thread? arg) #f))
+	     (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi abs '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
+	    
+	    (for-each
+	     (lambda (arg)
+	       (test (lock? arg) #f))
+	     (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi abs '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
+	    
+	    (for-each
+	     (lambda (arg)
+	       (test (thread-variable? arg) #f))
+	     (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi abs '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
+	    
+	    (for-each
+	     (lambda (arg)
+	       (test (make-thread arg) 'error))
+	     (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2)))
+	    
+	    (for-each
+	     (lambda (arg)
+	       (test (grab-lock arg) 'error))
+	     (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2)))
+	    
+	    (for-each
+	     (lambda (arg)
+	       (test (release-lock arg) 'error))
+	     (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2)))
 	    
 	    ))
       ))

@@ -51,11 +51,6 @@
  *        log takes an optional 2nd arg (base)
  *        no syntax-rules or any of its friends
  *
- *          [PERHAPS: vector/scalar ops and vector/vector ops (* = convolution) or allow s7_obj anywhere -> look for parallel func]
- *          [         obj could have local env for lookup = method, we already check types so this just short-circuits that check]
- *          [         obj would need type-based env, define/define_* would need to take optional env arg, object-environment]
- *          [         also type def in Scheme; also assign-syntax to extend eval's table]
- *
  *   other additions: 
  *        procedure-source, procedure-arity, procedure-documentation, help
  *        symbol-table, symbol->value, global-environment, current-environment
@@ -11020,7 +11015,7 @@ static token_t token(s7_scheme *sc, s7_pointer pt)
 	return(TOKEN_DOT);
 
       backchar(sc, c, pt);
-      backchar(sc, '.', pt);
+      sc->strbuf[0] = '.'; /* see below */
       return(TOKEN_ATOM); /* assuming a number eventually? or can symbol names start with "."?
 			   * in either case, we'd want alphanumeric here -- " .(" for example
 			   * is probably an error in this scheme since we don't support the
@@ -11065,7 +11060,7 @@ static token_t token(s7_scheme *sc, s7_pointer pt)
 
       if (c == ':')  /* turn #: into : */
 	{
-	  backchar(sc, c, pt);
+	  sc->strbuf[0] = ':';
 	  return(TOKEN_ATOM);
 	}
       
@@ -11102,8 +11097,8 @@ static token_t token(s7_scheme *sc, s7_pointer pt)
       backchar(sc, c, pt);
       return(TOKEN_SHARP_CONST); /* next stage notices any errors */
       
-    default: /* this is by far the commonest case -- seems too bad to waste it with this inchar/backchar shuffle */
-      backchar(sc, c, pt);
+    default: 
+      sc->strbuf[0] = c; /* every TOKEN_ATOM return goes to read_string_upto, so we save a backchar/inchar shuffle by starting the read here */
       return(TOKEN_ATOM);
     }
 }
@@ -11119,11 +11114,12 @@ static void resize_strbuf(s7_scheme *sc)
 }
 
 
-static char *read_string_upto(s7_scheme *sc) 
+static char *read_string_upto(s7_scheme *sc, int start) 
 {
-  int i = 0, c;
+  int i, c;
   s7_pointer pt;
   pt = sc->input_port;
+  i = start;
 
   if (is_file_port(pt))
     {
@@ -11284,7 +11280,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  break;
 	  
 	case TOKEN_ATOM:
-	  return(make_atom(sc, read_string_upto(sc), 10, true)); /* true = not just string->number */
+	  return(make_atom(sc, read_string_upto(sc, 1), 10, true)); /* true = not just string->number */
 	  /* If reading list (from lparen), this will finally get us to op_read_list */
 	  
 	case TOKEN_DOUBLE_QUOTE:
@@ -11296,7 +11292,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 	case TOKEN_SHARP_CONST:
 	  {
 	    char *expr;
-	    expr = read_string_upto(sc);
+	    expr = read_string_upto(sc, 0);
 	    sc->value = make_sharp_constant(sc, expr, true);
 	    if (sc->value == sc->NIL)
 	      return(read_error(sc, "undefined sharp expression")); /* (list #b) */
@@ -11772,7 +11768,9 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       /* ---------------- OP_APPLY ---------------- */
     APPLY:
     case OP_APPLY:      /* apply 'code' to 'args' */
-      add_backtrace_entry(sc, sc->code, sc->args);
+      if (*(sc->backtracing)) 
+	add_backtrace_entry(sc, sc->code, sc->args);
+
       switch (type(sc->code))
 	{
 	case T_S7_FUNCTION: 	                  /* -------- C-based function -------- */
@@ -12983,6 +12981,9 @@ static s7_pointer g_make_thread(s7_scheme *sc, s7_pointer args)
   #define H_make_thread "(make-thread thunk) creates a new thread running thunk"
   thred *f;
   s7_pointer obj, vect, frame;
+
+  if (!is_procedure(car(args)))
+    return(s7_wrong_type_arg_error(sc, "make-thread", 1, car(args), "a thunk"));
   
   pthread_mutex_lock(&alloc_lock); /* if currently in GC in some thread, wait for it */
   pthread_mutex_unlock(&alloc_lock);
