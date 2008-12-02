@@ -43,12 +43,18 @@
  *           I also choose not to include numbers such as +i (= 0+i) -- include the real part!
  *
  *   deliberate difference from r5rs:
- *        modulo, remainder, and quotient take integer, ratio, or real args
+ *        modulo, remainder, and quotient take integer, ratio, or real args 
+ *          [PERHAPS: this could be extended to Gaussian ints]
  *        lcm and gcd can take integer or ratio args
  *        delay is renamed make-promise to avoid collisions in CLM
  *        continuation? function to distinguish a continuation from a procedure
  *        log takes an optional 2nd arg (base)
  *        no syntax-rules or any of its friends
+ *
+ *          [PERHAPS: vector/scalar ops and vector/vector ops (* = convolution) or allow s7_obj anywhere -> look for parallel func]
+ *          [         obj could have local env for lookup = method, we already check types so this just short-circuits that check]
+ *          [         obj would need type-based env, define/define_* would need to take optional env arg, object-environment]
+ *          [         also type def in Scheme; also assign-syntax to extend eval's table]
  *
  *   other additions: 
  *        procedure-source, procedure-arity, procedure-documentation, help
@@ -732,6 +738,7 @@ static int safe_strlen(const char *str)
   return(0);
 }
 
+
 static void s7_mark_object_1(s7_pointer p);
 static void s7_mark_embedded_objects(s7_pointer a); /* called by gc, calls fobj's mark func */
 static s7_pointer eval(s7_scheme *sc, opcode_t first_op);
@@ -747,7 +754,6 @@ static s7_pointer make_atom(s7_scheme *sc, char *q, int radix, bool want_symbol)
 static bool s7_is_applicable_object(s7_pointer x);
 static s7_pointer make_list_1(s7_scheme *sc, s7_pointer a);
 static void write_string(s7_scheme *sc, const char *s, s7_pointer pt);
-static s7_pointer read_error(s7_scheme *sc, const char *errmsg);
 static s7_pointer s7_make_permanent_string(const char *str);
 
 
@@ -3459,12 +3465,11 @@ static void init_ctables(void)
   atom_delimiter_table['\r'] = true;
   atom_delimiter_table[' '] = true;
 
-  exponent_table['e'] = true;
-  exponent_table['E'] = true;
-  exponent_table['s'] = true;
-  exponent_table['f'] = true;
-  exponent_table['d'] = true;
-  exponent_table['l'] = true;
+  exponent_table['e'] = true; exponent_table['E'] = true;
+  exponent_table['s'] = true; exponent_table['S'] = true; 
+  exponent_table['f'] = true; exponent_table['F'] = true;
+  exponent_table['d'] = true; exponent_table['D'] = true;
+  exponent_table['l'] = true; exponent_table['L'] = true;
 
   for (i = 0; i < ' '; i++)
     slashify_table[i] = true;
@@ -3509,7 +3514,7 @@ static void init_ctables(void)
 
 
 static bool is_radix_prefix(char prefix)
-{
+{ /* perhaps include caps here */
   return((prefix == 'b') ||
 	 (prefix == 'd') ||
 	 (prefix == 'x') ||
@@ -3570,7 +3575,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
 	  {
 	    if (!at_top)
 	      return(sc->NIL);
-	    if ((len > 2) && ((name[2] == 'e') || (name[2] == 'i')))
+	    if ((len > 2) && ((name[2] == 'e') || (name[2] == 'i'))) /* r6rs includes caps here */
 	      {
 		if ((len > 3) && (name[3] == '#'))
 		  return(sc->NIL);
@@ -5039,15 +5044,9 @@ static s7_pointer g_is_negative(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_inexact_to_exact(s7_scheme *sc, s7_pointer args)
 {
   #define H_inexact_to_exact "(inexact->exact num) converts num to an exact number"
-  s7_Int numer = 0, denom = 1;
   if (!s7_is_number(car(args)))
     return(s7_wrong_type_arg_error(sc, "inexact->exact", 1, car(args), "a number"));
-  sc->x = car(args);
-  if (s7_is_exact(sc->x)) 
-    return(sc->x);
-  if (c_rationalize(s7_real(sc->x), default_rationalize_error, &numer, &denom))
-    return(s7_make_ratio(sc, numer, denom));
-  return(s7_make_integer(sc, (s7_Int)s7_real(sc->x)));
+  return(inexact_to_exact(sc, car(args)));
 }
 
 
@@ -5056,12 +5055,7 @@ static s7_pointer g_exact_to_inexact(s7_scheme *sc, s7_pointer args)
   #define H_exact_to_inexact "(exact->inexact num) converts num to an inexact number"
   if (!s7_is_number(car(args)))
     return(s7_wrong_type_arg_error(sc, "exact->inexact", 1, car(args), "a number"));
-  sc->x = car(args);
-  if (s7_is_inexact(sc->x)) 
-    return(sc->x);
-  if (s7_is_integer(sc->x))
-    return(s7_make_real(sc, (s7_Double)s7_integer(sc->x)));
-  return(s7_make_real(sc, fraction(sc->x->object.number)));
+  return(exact_to_inexact(sc, car(args)));
 }
 
 
@@ -6413,336 +6407,6 @@ static void backchar(s7_scheme *sc, char c, s7_pointer pt)
     {
       if (port_string_point(pt) > 0)
 	port_string_point(pt)--;
-    }
-}
-
-
-static void resize_strbuf(s7_scheme *sc)
-{
-  int i, old_size;
-  old_size = sc->strbuf_size;
-  sc->strbuf_size *= 2;
-  sc->strbuf = (char *)realloc(sc->strbuf, sc->strbuf_size * sizeof(char));
-  for (i = old_size; i < sc->strbuf_size; i++) sc->strbuf[i] = '\0';
-}
-
-
-static char *read_string_upto(s7_scheme *sc) 
-{
-  int i = 0, c;
-  s7_pointer pt;
-  pt = sc->input_port;
-
-  if (is_file_port(pt))
-    {
-      do
-	{
-	  c = fgetc(port_file(pt)); /* might return EOF */
-	  if (c == '\n')
-	    port_line_number(pt)++;
-
-	  sc->strbuf[i++] = c;
-	  if (i >= sc->strbuf_size)
-	    resize_strbuf(sc);
-	}
-      while (!((c == EOF) || (atom_delimiter_table[c])));
-
-      if ((i == 2) && 
-	  (sc->strbuf[0] == '\\'))
-	sc->strbuf[i] = 0;
-      else 
-	{
-	  if (c != EOF)
-	    {
-	      if (c == '\n')
-		port_line_number(pt)--;
-	      ungetc(c, port_file(pt));
-	    }
-	  sc->strbuf[i - 1] = '\0';
-	}
-    }
-  else
-    {
-      if (port_string(pt))
-	{
-	  do
-	    {
-	      c = port_string(pt)[port_string_point(pt)++];
-	      sc->strbuf[i++] = c;
-	      if (i >= sc->strbuf_size)
-		resize_strbuf(sc);
-	    }
-	  while (string_delimiter_table[c]);
-
-	  if ((i == 2) && 
-	      (sc->strbuf[0] == '\\'))
-	    sc->strbuf[i] = 0;
-	  else 
-	    {
-	      if (c != 0)
-		{
-		  port_string_point(pt)--;
-		  sc->strbuf[i - 1] = '\0';
-		}
-	    }
-	}
-      else sc->strbuf[0] = '\0';
-    }
-  return(sc->strbuf);
-}
-
-
-static s7_pointer read_string_expression(s7_scheme *sc, s7_pointer pt) 
-{
-  int c, c1 = 0, i = 0;
-  enum {ST_OK, ST_BSL, ST_X1, ST_X2, ST_OCT1, ST_OCT2, ST_OCT3} state = ST_OK; /* BSL=backslash? X1 or X2 = hex (ctrs) as in oct case */
-  
-  for (;;) 
-    {
-      c = inchar(sc, pt);
-      if (c == EOF)
-	return(sc->F);
-      
-      switch(state) 
-	{
-	case ST_OK:
-	  switch(c) 
-	    {
-	    case '\\':
-	      state = ST_BSL;
-	      break;
-	      
-	    case '"':
-	      sc->strbuf[i] = '\0';
-	      return(s7_set_immutable(s7_make_string_with_length(sc, sc->strbuf, i))); /* string constant can't be target of string-set! */
-	      
-	    default:
-	      sc->strbuf[i++] = c;
-	      break;
-	    }
-	  break;
-	  
-	case ST_BSL:
-	  switch(c) 
-	    {
-	    case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7':
-	      state = ST_OCT1;
-	      c1 = c - '0';
-	      break;
-	      
-	    case 'x': case 'X':
-	      state = ST_X1;
-	      c1 = 0;
-	      break;
-	      
-	    case 'n':
-	      sc->strbuf[i++] = '\n';
-	      state = ST_OK;
-	      break;
-	      
-	    case 't':
-	      sc->strbuf[i++] = '\t';
-	      state = ST_OK;
-	      break;
-	      
-	    case 'r':
-	      sc->strbuf[i++] = '\r';
-	      state = ST_OK;
-	      break;
-	      
-	    case '"':
-	      sc->strbuf[i++] = '"';
-	      state = ST_OK;
-	      break;
-	      
-	    default:
-	      sc->strbuf[i++] = c;
-	      state = ST_OK;
-	      break;
-	    }
-	  break;
-	  
-	case ST_X1:
-	case ST_X2:
-	  c = toupper(c);
-	  if ((c >= '0') && (c <= 'F'))
-	    {
-	      if (c <= '9') 
-		c1 = (c1 << 4 ) + c - '0';
-	      else c1 = (c1 << 4) + c - 'A' + 10;
-	      
-	      if (state == ST_X1) 
-		state = ST_X2;
-	      else 
-		{
-		  sc->strbuf[i++] = c1;
-		  state = ST_OK;
-		}
-	    } 
-	  else return(sc->F);
-	  break;
-	  
-	case ST_OCT1:
-	case ST_OCT2:
-	case ST_OCT3:
-	  if (c < '0' || c > '7')
-	    {
-	      if (state == ST_OCT1)
-		return(sc->F);
-	      
-	      sc->strbuf[i++] = c1;
-	      backchar(sc, c, pt);
-	      state = ST_OK;
-	    }
-	  else
-	    {
-	      c1 = (c1 << 3) + (c - '0');
-	      switch (state)
-		{
-		case ST_OCT1:
-		  state = ST_OCT2;
-		  break;
-		  
-		case ST_OCT2:
-		  state = ST_OCT3;
-		  break;
-		  
-		default:
-		  sc->strbuf[i++] = c1;
-		  state = ST_OK;
-		  break;
-		}
-	    }
-	  break;
-	}
-      
-      if (i >= sc->strbuf_size)
-	resize_strbuf(sc);
-    }
-}
-
-
-static token_t token(s7_scheme *sc, s7_pointer pt)
-{
-  int c = 0;
-
-  /* skip white space */
-  if (is_file_port(pt))
-    {
-      while (isspace(c = fgetc(port_file(pt))))
-	if (c == '\n')
-	  port_line_number(pt)++;
-    }
-  else 
-    {
-      while (isspace(c = port_string(pt)[port_string_point(pt)++]))
-	if (c == '\n')
-	  port_line_number(pt)++;
-    }
-
-  switch (c) 
-    {
-    case EOF:
-    case 0:
-      return(TOKEN_EOF);
-      
-    case '(':
-      return(TOKEN_LEFT_PAREN);
-      
-    case ')':
-      return(TOKEN_RIGHT_PAREN);
-      
-    case '.':
-      c = inchar(sc, pt);
-      if (dot_table[c])
-	return(TOKEN_DOT);
-
-      backchar(sc, c, pt);
-      backchar(sc, '.', pt);
-      return(TOKEN_ATOM); /* assuming a number eventually? or can symbol names start with "."?
-			   * in either case, we'd want alphanumeric here -- " .(" for example
-			   * is probably an error in this scheme since we don't support the
-			   * quasiquote dot business.  I think I'll flag (){}[]#'\.  I can't
-			   * leave this for make_atom to detect because by then the delimiter
-			   * has been lost (i.e. ".)" gets to make_atom as "." which is still
-			   * a bad symbol name, but make_atom is also called by number->string
-			   * which wants to return #f silently in such a case.
-			   */
-    case '\'':
-      return(TOKEN_QUOTE);
-      
-    case ';':
-      {
-	int c;
-	if (is_file_port(pt))
-	  do (c = fgetc(port_file(pt))); while ((c != '\n') && (c != EOF));
-	else do (c = port_string(pt)[port_string_point(pt)++]); while ((c != '\n') && (c != 0));
-	port_line_number(pt)++;
-	if (c == 0)
-	  return(TOKEN_EOF);
-	return(token(sc, pt));
-      }
-
-    case '"':
-      return(TOKEN_DOUBLE_QUOTE);
-      
-    case '`':
-      return(TOKEN_BACK_QUOTE);
-      
-    case ',':
-      if ((c = inchar(sc, pt)) == '@') 
-	return(TOKEN_AT_MARK);
-      
-      backchar(sc, c, pt);
-      return(TOKEN_COMMA);
-      
-    case '#':
-      c = inchar(sc, pt);
-      if (c == '(') 
-	return(TOKEN_VECTOR);
-
-      if (c == ':')  /* turn #: into : */
-	{
-	  backchar(sc, c, pt);
-	  return(TOKEN_ATOM);
-	}
-      
-      /* block comments in either #! ... !# */
-      if (c == '!') 
-	{
-	  char last_char;
-	  last_char = ' ';
-	  while ((c = inchar(sc, pt)) != EOF)
-	    {
-	      if ((c == '#') &&
-		  (last_char == '!'))
-		break;
-	      last_char = c;
-	    }
-	  return(token(sc, pt));
-	}
-      
-      /*   or #| ... |# */
-      if (c == '|') 
-	{
-	  char last_char;
-	  last_char = ' ';
-	  while ((c = inchar(sc, pt)) != EOF)
-	    {
-	      if ((c == '#') &&
-		  (last_char == '|'))
-		break;
-	      last_char = c;
-	    }
-	  return(token(sc, pt));
-	}
-      
-      backchar(sc, c, pt);
-      return(TOKEN_SHARP_CONST); /* next stage notices any errors */
-      
-    default:
-      backchar(sc, c, pt);
-      return(TOKEN_ATOM);
     }
 }
 
@@ -11318,6 +10982,254 @@ static void back_up_stack(s7_scheme *sc)
 }
 
 
+/* ---------------- reader funcs for eval ---------------- */
+
+static token_t token(s7_scheme *sc, s7_pointer pt)
+{
+  int c = 0;
+
+  /* skip white space */
+  if (is_file_port(pt))
+    {
+      while (isspace(c = fgetc(port_file(pt))))
+	if (c == '\n')
+	  port_line_number(pt)++;
+    }
+  else 
+    {
+      while (isspace(c = port_string(pt)[port_string_point(pt)++]))
+	if (c == '\n')
+	  port_line_number(pt)++;
+    }
+
+  switch (c) 
+    {
+    case EOF:
+    case 0:
+      return(TOKEN_EOF);
+      
+    case '(':
+      return(TOKEN_LEFT_PAREN);
+      
+    case ')':
+      return(TOKEN_RIGHT_PAREN);
+      
+    case '.':
+      c = inchar(sc, pt);
+      if (dot_table[c])
+	return(TOKEN_DOT);
+
+      backchar(sc, c, pt);
+      backchar(sc, '.', pt);
+      return(TOKEN_ATOM); /* assuming a number eventually? or can symbol names start with "."?
+			   * in either case, we'd want alphanumeric here -- " .(" for example
+			   * is probably an error in this scheme since we don't support the
+			   * quasiquote dot business.  I think I'll flag (){}[]#'\.  I can't
+			   * leave this for make_atom to detect because by then the delimiter
+			   * has been lost (i.e. ".)" gets to make_atom as "." which is still
+			   * a bad symbol name, but make_atom is also called by number->string
+			   * which wants to return #f silently in such a case.
+			   */
+    case '\'':
+      return(TOKEN_QUOTE);
+      
+    case ';':
+      {
+	int c;
+	if (is_file_port(pt))
+	  do (c = fgetc(port_file(pt))); while ((c != '\n') && (c != EOF));
+	else do (c = port_string(pt)[port_string_point(pt)++]); while ((c != '\n') && (c != 0));
+	port_line_number(pt)++;
+	if (c == 0)
+	  return(TOKEN_EOF);
+	return(token(sc, pt));
+      }
+
+    case '"':
+      return(TOKEN_DOUBLE_QUOTE);
+      
+    case '`':
+      return(TOKEN_BACK_QUOTE);
+      
+    case ',':
+      if ((c = inchar(sc, pt)) == '@') 
+	return(TOKEN_AT_MARK);
+      
+      backchar(sc, c, pt);
+      return(TOKEN_COMMA);
+      
+    case '#':
+      c = inchar(sc, pt);
+      if (c == '(') 
+	return(TOKEN_VECTOR);
+
+      if (c == ':')  /* turn #: into : */
+	{
+	  backchar(sc, c, pt);
+	  return(TOKEN_ATOM);
+	}
+      
+      /* block comments in either #! ... !# */
+      if (c == '!') 
+	{
+	  char last_char;
+	  last_char = ' ';
+	  while ((c = inchar(sc, pt)) != EOF)
+	    {
+	      if ((c == '#') &&
+		  (last_char == '!'))
+		break;
+	      last_char = c;
+	    }
+	  return(token(sc, pt));
+	}
+      
+      /*   or #| ... |# */
+      if (c == '|') 
+	{
+	  char last_char;
+	  last_char = ' ';
+	  while ((c = inchar(sc, pt)) != EOF)
+	    {
+	      if ((c == '#') &&
+		  (last_char == '|'))
+		break;
+	      last_char = c;
+	    }
+	  return(token(sc, pt));
+	}
+      
+      backchar(sc, c, pt);
+      return(TOKEN_SHARP_CONST); /* next stage notices any errors */
+      
+    default: /* this is by far the commonest case -- seems too bad to waste it with this inchar/backchar shuffle */
+      backchar(sc, c, pt);
+      return(TOKEN_ATOM);
+    }
+}
+
+
+static void resize_strbuf(s7_scheme *sc)
+{
+  int i, old_size;
+  old_size = sc->strbuf_size;
+  sc->strbuf_size *= 2;
+  sc->strbuf = (char *)realloc(sc->strbuf, sc->strbuf_size * sizeof(char));
+  for (i = old_size; i < sc->strbuf_size; i++) sc->strbuf[i] = '\0';
+}
+
+
+static char *read_string_upto(s7_scheme *sc) 
+{
+  int i = 0, c;
+  s7_pointer pt;
+  pt = sc->input_port;
+
+  if (is_file_port(pt))
+    {
+      do
+	{
+	  c = fgetc(port_file(pt)); /* might return EOF */
+	  if (c == '\n')
+	    port_line_number(pt)++;
+
+	  sc->strbuf[i++] = c;
+	  if (i >= sc->strbuf_size)
+	    resize_strbuf(sc);
+	}
+      while (!((c == EOF) || (atom_delimiter_table[c])));
+
+      if ((i == 2) && 
+	  (sc->strbuf[0] == '\\'))
+	sc->strbuf[i] = 0;
+      else 
+	{
+	  if (c != EOF)
+	    {
+	      if (c == '\n')
+		port_line_number(pt)--;
+	      ungetc(c, port_file(pt));
+	    }
+	  sc->strbuf[i - 1] = '\0';
+	}
+    }
+  else
+    {
+      if (port_string(pt))
+	{
+	  do
+	    {
+	      c = port_string(pt)[port_string_point(pt)++];
+	      sc->strbuf[i++] = c;
+	      if (i >= sc->strbuf_size)
+		resize_strbuf(sc);
+	    }
+	  while (string_delimiter_table[c]);
+
+	  if ((i == 2) && 
+	      (sc->strbuf[0] == '\\'))
+	    sc->strbuf[i] = 0;
+	  else 
+	    {
+	      if (c != 0)
+		{
+		  port_string_point(pt)--;
+		  sc->strbuf[i - 1] = '\0';
+		}
+	    }
+	}
+      else sc->strbuf[0] = '\0';
+    }
+  return(sc->strbuf);
+}
+
+
+static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
+{
+  /* sc->F => error */
+  int i, c;
+  for (i = 0; ; ) 
+    {
+      c = inchar(sc, pt);
+      if (c == EOF)
+	return(sc->F);
+
+      if (c == '"')
+	{
+	  sc->strbuf[i] = '\0';
+	  return(s7_set_immutable(s7_make_string_with_length(sc, sc->strbuf, i))); /* string constant can't be target of string-set! */
+	}
+      else
+	{
+	  if (c == '\\')
+	    {
+	      c = inchar(sc, pt);
+	      if (c == '\\')
+		sc->strbuf[i++] = '\\';
+	      else
+		{
+		  if (c == '"')
+		    sc->strbuf[i++] = '"';
+		  else
+		    {
+		      if (c == 'n')
+			sc->strbuf[i++] = '\n';
+		      else 
+			{
+			  if (c != '\n')
+			    return(sc->F);
+			}
+		    }
+		}
+	    }
+	  else sc->strbuf[i++] = c;
+	}
+      if (i >= sc->strbuf_size)
+	resize_strbuf(sc);
+    }
+}
+
+
 static s7_pointer read_expression(s7_scheme *sc)
 {
   while (true) 
@@ -11376,7 +11288,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  /* If reading list (from lparen), this will finally get us to op_read_list */
 	  
 	case TOKEN_DOUBLE_QUOTE:
-	  sc->value = read_string_expression(sc, sc->input_port);
+	  sc->value = read_string_constant(sc, sc->input_port);
 	  if (sc->value == sc->F)                                /* can happen if input code ends in the middle of a string */
 	    return(read_error(sc, "end of input encountered while in a string"));
 	  return(sc->value);
@@ -12858,10 +12770,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_READ_QUASIQUOTE_VECTOR:
-      sc->value = make_list_3(sc,
-			      sc->APPLY,
-			      sc->VECTOR,
-			      make_list_2(sc, sc->QUASIQUOTE, sc->value));
+      sc->value = make_list_3(sc, sc->APPLY, sc->VECTOR, make_list_2(sc, sc->QUASIQUOTE, sc->value));
       pop_stack(sc);
       goto START;
       
@@ -13510,6 +13419,7 @@ s7_scheme *s7_init(void)
 #if HAVE_PTHREADS
   sc->thread_ids = (int *)calloc(1, sizeof(int));
   sc->thread_id = 0;
+  sc->key_values = sc->NIL;
 #endif
   
   sc->global_env = s7_immutable_cons(sc, s7_make_vector(sc, SYMBOL_TABLE_SIZE), sc->NIL);

@@ -51617,7 +51617,7 @@ EDITS: 1
     
     (let ((val (list #\f #\t #\c)))
       (if (not (char=? (run (lambda () (list-ref val 1))) #\t))
-	  (snd-display ";list-ref chars #\t): ~A" (run (lambda () (list-ref val 1))))))
+	  (snd-display ";list-ref chars #\\t): ~A" (run (lambda () (list-ref val 1))))))
     
     (let ((val (list #\f #\t #\c)))
       (run (lambda () (list-set! val 2 #\d)))
