@@ -1179,12 +1179,12 @@ static void lock_all_panes_1(bool lock)
   switch (sound_style(ss))
     {
     case SOUNDS_HORIZONTAL:
-      XtVaSetValues(ss->sgx->soundpane, XmNallowResize, false, NULL);
-      XtVaSetValues(ss->sgx->soundpanebox, XmNallowResize, false, NULL);
+      XtVaSetValues(ss->sgx->soundpane, XmNallowResize, lock, NULL);
+      XtVaSetValues(ss->sgx->soundpanebox, XmNallowResize, lock, NULL);
       break;
 
     case SOUNDS_VERTICAL:
-      XtVaSetValues(ss->sgx->soundpane, XmNallowResize, false, NULL);
+      XtVaSetValues(ss->sgx->soundpane, XmNallowResize, lock, NULL);
       break;
 
     case SOUNDS_IN_SEPARATE_WINDOWS:

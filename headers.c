@@ -21,7 +21,7 @@
  * for a few of these I'm still trying to get documentation -- best sources of info are:
  *     ftp.cwi.nl:pub/audio (info files) 
  *     the AFsp sources http://www.TSP.ECE.McGill.CA/MMSP/Documents/AudioFormats/index.html
- *     the SOX sources (sox is a sourceforge project)
+ *     the SOX sources
  *     svr-ftp.eng.cam.ac.uk:/comp.speech/tools
  *     http://www.wotsit.org
  *     CAFF: http://developer.apple.com/documentation/MusicAudio/Reference/CAFSpec/
@@ -139,6 +139,8 @@ static const unsigned char I_ds64[4] = {'d','s','6','4'};  /* EBU RF64 */
 static const unsigned char I_caff[4] = {'c','a','f','f'};  /* Apple CAFF */
 static const unsigned char I_desc[4] = {'d','e','s','c'};  /* Apple CAFF */
 static const unsigned char I_lpcm[4] = {'l','p','c','m'};  /* Apple CAFF */
+
+/* TODO: sox now has its own format which I suppose we should be able to read */
 
 
 #define HDRBUFSIZ 256

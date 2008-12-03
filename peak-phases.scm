@@ -643,3 +643,5 @@
 
 ;;; triangle waves in place of sinusoids have different mimima at different places, so
 ;;;   we can't simplify in that direction
+
+;;; the waveforms for a given number of peaks are surprisingly similar -- odd and even in particular

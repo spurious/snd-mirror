@@ -2,7 +2,7 @@
 #define S7_H
 
 #define S7_VERSION "1.7"
-#define S7_DATE "2-Dec-08"
+#define S7_DATE "3-Dec-08"
 
 #include <stdio.h>
 #ifndef __cplusplus
@@ -294,6 +294,7 @@ bool s7_is_input_port(s7_scheme *sc, s7_pointer p);                         /* (
 bool s7_is_output_port(s7_scheme *sc, s7_pointer p);                        /* (output-port? p) */
 s7_pointer s7_current_input_port(s7_scheme *sc);                            /* (current-input-port) */
 s7_pointer s7_current_output_port(s7_scheme *sc);                           /* (current-output-port) */
+  s7_pointer s7_set_current_output_port(s7_scheme *sc, s7_pointer p);       /* (set-current-output-port) */
 s7_pointer s7_current_error_port(s7_scheme *sc);                            /* (current-error-port) */
 s7_pointer s7_set_current_error_port(s7_scheme *sc, s7_pointer port);       /* (set-current-error-port port) */
 void s7_close_input_port(s7_scheme *sc, s7_pointer p);                      /* (close-input-port p) */
@@ -307,7 +308,8 @@ s7_pointer s7_open_input_string(s7_scheme *sc, const char *input_string);
                                                                             /* (open-input-string str) */
 s7_pointer s7_open_output_string(s7_scheme *sc);                            /* (open-output-string) */
 const char *s7_get_output_string(s7_scheme *sc, s7_pointer out_port);       /* (get-output-string port) -- current contents of output string */
-                                                                            /*    don't free the string */
+  /*    don't free the string */
+s7_pointer s7_open_output_function(s7_scheme *sc, void (*function)(s7_scheme *sc, char c, s7_pointer port));                                                                            
 char s7_read_char(s7_scheme *sc, s7_pointer port);                          /* (read-char port) */
 char s7_peek_char(s7_scheme *sc, s7_pointer port);                          /* (peek-char port) */
 s7_pointer s7_read(s7_scheme *sc, s7_pointer port);                         /* (read port) */
@@ -1108,11 +1110,71 @@ int main(int argc, char **argv)
 #endif
 
 
+/* --------------------------------------------------------------------------------
+ *
+ * an example of redirecting output to a C procedure:
+ */
+
+#if 0
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "s7.h"
+
+static void my_print(s7_scheme *sc, char c, s7_pointer port)
+{
+  fprintf(stderr, "[%c] ", c);
+}
+
+int main(int argc, char **argv)
+{
+  s7_scheme *s7;
+  char buffer[512];
+  char response[1024];
+
+  s7 = s7_init();  
+
+  s7_set_current_output_port(s7, s7_open_output_function(s7, my_print));
+
+  while (1) 
+    {
+      fprintf(stdout, "\n> ");
+      fgets(buffer, 512, stdin);
+
+      if ((buffer[0] != '\n') || 
+	  (strlen(buffer) > 1))
+	{                            
+	  sprintf(response, "(write %s)", buffer);
+	  s7_eval_c_string(s7, response);
+	}
+    }
+}
+
+/* 
+ *   gcc -c s7.c -I.
+ *   gcc -o doc7 doc7.c s7.o -lm -I.
+ *
+ *    doc7
+ *    > (+ 1 2)
+ *    [3]
+ *    > (display "hiho")
+ *    [h] [i] [h] [o] [#] [<] [u] [n] [s] [p] [e] [c] [i] [f] [i] [e] [d] [>] 
+ *    > (define (add1 x) (+ 1 x))
+ *    [a] [d] [d] [1] 
+ *    > (add1 123)
+ *    [1] [2] [4] 
+ */
+
+#endif
+
+
 
 /* --------------------------------------------------------------------------------
  * 
  *        s7 changes
  *
+ * 3-Dec:     added s7_open_output_function.
  * 30-Nov:    added s7_wrong_number_of_args_error.
  * 24-Nov:    changed s7_make_counted_string to s7_make_string_with_length.
  *              also added built-in format and define*

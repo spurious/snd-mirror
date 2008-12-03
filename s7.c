@@ -277,9 +277,11 @@ typedef struct num {
 } num;
 
 
+typedef enum {FILE_PORT, STRING_PORT, FUNCTION_PORT} port_type_t;
+
 typedef struct rport {
   bool is_closed;
-  bool is_file;
+  port_type_t type;
   bool needs_free;
   FILE *file;
   int line_number;
@@ -287,6 +289,7 @@ typedef struct rport {
   int file_number;
   char *value;
   int size, point;
+  void (*function)(s7_scheme *sc, char c, s7_pointer port);
 } rport;
 
 
@@ -312,8 +315,10 @@ typedef struct rcatch {
 } rcatch;
 
 
+typedef enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH} dwind_t;
+
 typedef struct dwind {
-  int state;
+  dwind_t state;
   s7_pointer in, out, body;
 } dwind;
 
@@ -470,30 +475,27 @@ struct s7_scheme {
 };
 
 
-enum scheme_types {
-  T_NIL_TYPE = 1,
-  T_STRING = 2,
-  T_NUMBER = 3,
-  T_SYMBOL = 4,
-  T_PAIR = 6,
-  T_CLOSURE = 7,
-  T_CONTINUATION = 8,
-  T_S7_FUNCTION = 9,
-  T_CHARACTER = 10,
-  T_INPUT_PORT = 11,
-  T_VECTOR = 12,
-  T_MACRO = 13,
-  T_PROMISE = 14,
-  T_S7_OBJECT = 15,
-  T_GOTO = 16,
-  T_OUTPUT_PORT = 17,
-  T_CATCH = 18,
-  T_DYNAMIC_WIND = 19,
-  T_HASH_TABLE = 20,
-  T_CLOSURE_STAR = 21,
-  T_LAST_TYPE = 21
-};
-
+#define T_NIL_TYPE      1
+#define T_STRING        2
+#define T_NUMBER        3
+#define T_SYMBOL        4
+#define T_PAIR          5
+#define T_CLOSURE       6
+#define T_CLOSURE_STAR  7
+#define T_CONTINUATION  8
+#define T_S7_FUNCTION   9
+#define T_CHARACTER    10
+#define T_INPUT_PORT   11
+#define T_VECTOR       12
+#define T_MACRO        13
+#define T_PROMISE      14
+#define T_S7_OBJECT    15
+#define T_GOTO         16
+#define T_OUTPUT_PORT  17
+#define T_CATCH        18
+#define T_DYNAMIC_WIND 19
+#define T_HASH_TABLE   20
+#define T_LAST_TYPE    20
 
 #define TYPE_BITS                     16
 #define T_MASKTYPE                    0xffff
@@ -550,8 +552,6 @@ enum scheme_types {
 #define set_type(p, f)                typeflag(p) = ((f) | T_OBJECT)
 #endif
 
-#define is_object(x)                  ((x) && (((typeflag(x) & (T_UNUSED_BITS | T_OBJECT)) == T_OBJECT) && (type(x) <= T_LAST_TYPE)))
-
 #define is_true(p)                    ((p) != sc->F)
 #define is_false(p)                   ((p) == sc->F)
 #define make_boolean(sc, Val)         ((Val) ? sc->T : sc->F)
@@ -591,8 +591,10 @@ enum scheme_types {
 
 #define is_input_port(p)              (type(p) == T_INPUT_PORT) 
 #define is_output_port(p)             (type(p) == T_OUTPUT_PORT)
-#define is_string_port(p)             (!((p)->object.port->is_file))
-#define is_file_port(p)               (p)->object.port->is_file
+#define is_string_port(p)             ((p)->object.port->type == STRING_PORT)
+#define is_file_port(p)               ((p)->object.port->type == FILE_PORT)
+#define is_function_port(p)           ((p)->object.port->type == FUNCTION_PORT)
+#define port_type(p)                  (p)->object.port->type
 #define port_line_number(p)           (p)->object.port->line_number
 #define port_file_number(p)           (p)->object.port->file_number
 #define port_filename(p)              (p)->object.port->filename
@@ -602,6 +604,7 @@ enum scheme_types {
 #define port_string_length(p)         (p)->object.port->size
 #define port_string_point(p)          (p)->object.port->point
 #define port_needs_free(p)            (p)->object.port->needs_free
+#define port_function(p)              (p)->object.port->function
 
 #define function_call(f)              (f)->object.ffptr->ff
 #define function_name(f)              (f)->object.ffptr->name
@@ -628,7 +631,6 @@ enum scheme_types {
 #define dynamic_wind_in(p)            (p)->object.winder->in
 #define dynamic_wind_out(p)           (p)->object.winder->out
 #define dynamic_wind_body(p)          (p)->object.winder->body
-enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 
 
 #define NUM_INT 0
@@ -666,9 +668,9 @@ enum {DWIND_INIT, DWIND_BODY, DWIND_FINISH};
 
 #if S7_DEBUGGING
 static const char *type_names[T_LAST_TYPE + 1] = {
-  "unused!", "nil", "string", "number", "symbol", "procedure", "pair", "closure", "continuation",
+  "unused!", "nil", "string", "number", "symbol", "pair", "closure", "closure*", "continuation",
   "s7-function", "character", "input port", "vector", "macro", "promise", "s7-object", 
-  "goto", "output port", "catch", "dynamic-wind", "hash-table", "closure*"
+  "goto", "output port", "catch", "dynamic-wind", "hash-table",
 };
 
 static char *describe_type(s7_pointer p)
@@ -692,6 +694,8 @@ static char *describe_type(s7_pointer p)
 	  ((typeflag(p) == 0) && (car(p) == 0) && (cdr(p) == 0) && (pair_line_number(p) == 0)) ? " [recently GC'd (all 0)]" : "");
   return(buf);
 }
+
+#define is_object(x) ((x) && (((typeflag(x) & (T_UNUSED_BITS | T_OBJECT)) == T_OBJECT) && (type(x) <= T_LAST_TYPE)))
 
 #define ASSERT_IS_OBJECT(Obj, Name) \
   if (!(is_object(Obj))) \
@@ -4853,9 +4857,9 @@ static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
 }
 
 
-enum {N_EQUAL, N_LESS, N_GREATER, N_LESS_OR_EQUAL, N_GREATER_OR_EQUAL};
+typedef enum {N_EQUAL, N_LESS, N_GREATER, N_LESS_OR_EQUAL, N_GREATER_OR_EQUAL} compare_t;
 
-static s7_pointer compare_numbers(s7_scheme *sc, int op, s7_pointer args)
+static s7_pointer compare_numbers(s7_scheme *sc, compare_t op, s7_pointer args)
 {
   int i;
   bool (*comp_func)(num a, num b) = NULL;
@@ -5942,7 +5946,7 @@ static char *describe_port(s7_scheme *sc, s7_pointer p)
   char *desc;
   desc = (char *)malloc(64 * sizeof(char));
   snprintf(desc, 64, "<port%s%s%s>",
-  	   (is_file_port(p)) ? " file" : " string",
+  	   (is_file_port(p)) ? " file" : ((is_string_port(p)) ? " string" : "function"),
 	   (is_input_port(p)) ? " input" : " output",
 	   (port_is_closed(p)) ? " (closed)" : "");
   return(desc);
@@ -6027,6 +6031,15 @@ static s7_pointer g_set_current_input_port(s7_scheme *sc, s7_pointer args)
 s7_pointer s7_current_output_port(s7_scheme *sc)
 {
   return(sc->output_port);
+}
+
+
+s7_pointer s7_set_current_output_port(s7_scheme *sc, s7_pointer port)
+{
+  s7_pointer old_port;
+  old_port = sc->output_port;
+  sc->output_port = port;
+  return(old_port);
 }
 
 
@@ -6160,7 +6173,7 @@ void s7_close_output_port(s7_scheme *sc, s7_pointer p)
     }
   else
     {
-      if (port_string(p))
+      if ((is_string_port(p)) && (port_string(p)))
 	{
 	  free(port_string(p));
 	  port_string(p) = NULL;
@@ -6191,7 +6204,7 @@ static s7_pointer s7_make_input_file(s7_scheme *sc, const char *name, FILE *fp)
   /* set up the port struct */
   x->object.port = (rport *)calloc(1, sizeof(rport));
   port_file(x) = fp;
-  is_file_port(x) = true;
+  port_type(x) = FILE_PORT;
   port_is_closed(x) = false;
   port_filename(x) = strdup(name);
   port_line_number(x) = 1;  /* 1st line is numbered 1 */
@@ -6245,7 +6258,7 @@ s7_pointer s7_open_output_file(s7_scheme *sc, const char *name, const char *mode
   
   /* set up the port struct */
   x->object.port = (rport *)calloc(1, sizeof(rport));
-  is_file_port(x) = true;
+  port_type(x) = FILE_PORT;
   port_is_closed(x) = false;
   port_filename(x) = strdup(name);
   port_line_number(x) = 1;
@@ -6280,7 +6293,7 @@ s7_pointer s7_open_input_string(s7_scheme *sc, const char *input_string)
   
   /* set up the port struct */
   x->object.port = (rport *)calloc(1, sizeof(rport));
-  is_file_port(x) = false;
+  port_type(x) = STRING_PORT;
   port_is_closed(x) = false;
   port_string(x) = (char *)input_string;
   port_string_length(x) = safe_strlen(input_string);
@@ -6313,7 +6326,7 @@ s7_pointer s7_open_output_string(s7_scheme *sc)
   
   /* set up the port struct */
   x->object.port = (rport *)calloc(1, sizeof(rport));
-  is_file_port(x) = false;
+  port_type(x) = STRING_PORT;
   port_is_closed(x) = false;
   port_string_length(x) = STRING_PORT_INITIAL_LENGTH;
   port_string(x) = (char *)calloc(STRING_PORT_INITIAL_LENGTH, sizeof(char));
@@ -6344,6 +6357,22 @@ static s7_pointer g_get_output_string(s7_scheme *sc, s7_pointer args)
       (!is_string_port(p)))
     return(s7_wrong_type_arg_error(sc, "get-output-string", 1, car(args), "an output string port"));
   return(s7_make_string(sc, s7_get_output_string(sc, p)));
+}
+
+
+s7_pointer s7_open_output_function(s7_scheme *sc, void (*function)(s7_scheme *sc, char c, s7_pointer port))
+{
+  s7_pointer x;
+  x = new_cell(sc);
+  set_type(x, T_OUTPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
+  
+  /* set up the port struct */
+  x->object.port = (rport *)calloc(1, sizeof(rport));
+  port_type(x) = FUNCTION_PORT;
+  port_is_closed(x) = false;
+  port_needs_free(x) = false;
+  port_function(x) = function;
+  return(x);
 }
 
 
@@ -6587,7 +6616,7 @@ static s7_pointer load_file(s7_scheme *sc, FILE *fp)
   port = new_cell(sc);
   set_type(port, T_INPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   port->object.port = (rport *)calloc(1, sizeof(rport));
-  is_file_port(port) = false;
+  port_type(port) = STRING_PORT;
   port_is_closed(port) = false;
 
   fseek(fp, 0, SEEK_END);
@@ -6920,8 +6949,16 @@ static void write_string(s7_scheme *sc, const char *s, s7_pointer pt)
 	fputs(s, port_file(pt));
       else 
 	{
-	  for(; *s; s++)
-	    char_to_string_port(*s, pt);
+	  if (is_string_port(pt))
+	    {
+	      for(; *s; s++)
+		char_to_string_port(*s, pt);
+	    }
+	  else 
+	    {
+	      for(; *s; s++)
+		(*(port_function(pt)))(sc, *s, pt);
+	    }
 	}
     }
 }
@@ -7412,12 +7449,14 @@ static s7_pointer g_write_byte(s7_scheme *sc, s7_pointer args)
     {
       port = cadr(args);
       if ((!s7_is_output_port(sc, port)) ||
-	  (!is_file_port(port)))
-	return(s7_wrong_type_arg_error(sc, "write-byte", 2, port, "an output file port"));
+	  (is_string_port(port)))
+	return(s7_wrong_type_arg_error(sc, "write-byte", 2, port, "an output file or function port"));
     }
   else port = sc->output_port;
   
-  fputc((unsigned char)s7_integer(car(args)), port_file(port));
+  if (is_file_port(port))
+    fputc((unsigned char)s7_integer(car(args)), port_file(port));
+  else (*(port_function(port)))(sc, (char)s7_integer(car(args)), port);
   return(car(args));
 }
 
@@ -8763,6 +8802,8 @@ static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
   if (s7_is_symbol(car(args)))
     p = s7_symbol_value(sc, car(args));
   else p = car(args);
+  if (!is_procedure(p))
+    return(s7_wrong_type_arg_error(sc, "procedure-source", 1, p, "a procedure"));
 
   if (is_closure(p) || is_closure_star(p) || is_macro(p) || is_promise(p)) 
     return(s7_append(sc, 
@@ -8793,18 +8834,15 @@ void s7_define_function(s7_scheme *sc, const char *name, s7_function fnc, int re
 }
 
 
-const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer p)
+const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer x)
 {
-  s7_pointer x;
-  
-  if (s7_is_symbol(p))
-    x = s7_symbol_value(sc, p);
-  else x = p;
-  
+  if (s7_is_symbol(x))
+    x = s7_symbol_value(sc, x); /* this is needed by Snd */
+
   if (s7_is_function(x))
     return((char *)function_documentation(x));
   
-  if (((is_closure(x)) || (is_closure_star(p))) &&
+  if (((is_closure(x)) || (is_closure_star(x))) &&
       (s7_is_string(cadar(x))))
     return(s7_string(cadar(x)));
   
@@ -8818,15 +8856,19 @@ const char *s7_procedure_documentation(s7_scheme *sc, s7_pointer p)
 static s7_pointer g_procedure_documentation(s7_scheme *sc, s7_pointer args)
 {
   #define H_procedure_documentation "(procedure-documentation func) returns func's documentation string"
-  return(s7_make_string(sc, s7_procedure_documentation(sc, car(args))));
+  s7_pointer x;
+  if (s7_is_symbol(car(args)))
+    x = s7_symbol_value(sc, car(args));
+  else x = car(args);
+
+  if (!is_procedure(x))
+    return(s7_wrong_type_arg_error(sc, "procedure-documentation", 1, x, "a procedure"));
+  return(s7_make_string(sc, s7_procedure_documentation(sc, x)));
 }
 
 
 s7_pointer s7_procedure_arity(s7_scheme *sc, s7_pointer x)
 {
-  if (s7_is_symbol(x))
-    x = s7_symbol_value(sc, x);
-  
   if (s7_is_function(x))
     return(make_list_3(sc, 
 		       s7_make_integer(sc, x->object.ffptr->required_args), 
@@ -8885,7 +8927,14 @@ static bool is_thunk(s7_scheme *sc, s7_pointer x)
 static s7_pointer g_procedure_arity(s7_scheme *sc, s7_pointer args)
 {
   #define H_procedure_arity "(procedure-arity func) returns a list '(required optional rest)"
-  return(s7_procedure_arity(sc, car(args)));
+  s7_pointer x;
+  if (s7_is_symbol(car(args)))
+    x = s7_symbol_value(sc, car(args));
+  else x = car(args);
+
+  if (!is_procedure(x))
+    return(s7_wrong_type_arg_error(sc, "procedure-arity", 1, x, "a procedure"));
+  return(s7_procedure_arity(sc, x));
 }
 
 
@@ -12023,29 +12072,49 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
     case OP_LAMBDA: 
       if ((!is_pair(sc->code)) ||
-	  (!is_pair(cdr(sc->code)))) /* (lambda) or (lambda #f) */
+	  (!is_pair(cdr(sc->code))))                               /* (lambda) or (lambda #f) */
 	return(eval_error(sc, "lambda: no args? ~A", sc->code));
 
       if (!s7_is_list(sc, car(sc->code)))
 	{
-	  if (!s7_is_symbol(car(sc->code))) /* (lambda "hi" ...) */
-	    return(eval_error(sc, "lambda parameter ~A is not a symbol", sc->code));
+	  if (!s7_is_symbol(car(sc->code)))                        /* (lambda "hi" ...) */
+	    return(eval_error(sc, "lambda parameter ~A is not a symbol", car(sc->code)));
 	}
       else
 	{
-	  /* look for (lambda (1) ...) etc */
 	  for (sc->x = car(sc->code); sc->x != sc->NIL; sc->x = cdr(sc->x))
-	    if ((!s7_is_symbol(sc->x)) && /* dotted list */
-		(!s7_is_symbol(car(sc->x))))
-	      return(eval_error(sc, "lambda parameter ~A is not a symbol", sc->code));
+	    if ((!s7_is_symbol(sc->x)) &&                          /* (lambda (a . b) 0) */
+		((!is_pair(sc->x)) ||                              /* (lambda (a . 0.0) a) */
+		 (!s7_is_symbol(car(sc->x)))))                     /* (lambda ("a") a) or (lambda (a "a") a) */
+	      return(eval_error(sc, "lambda parameter ~A is not a symbol", sc->x));
 	}
-      
       sc->value = make_closure(sc, sc->code, sc->envir, T_CLOSURE);
       pop_stack(sc);
       goto START;
 
 
     case OP_LAMBDA_STAR:
+      if ((!is_pair(sc->code)) ||
+	  (!is_pair(cdr(sc->code))))                                /* (lambda*) or (lambda* #f) */
+	return(eval_error(sc, "lambda*: no args? ~A", sc->code));
+
+      if (!s7_is_list(sc, car(sc->code)))
+	{
+	  if (!s7_is_symbol(car(sc->code)))                        /* (lambda* "hi" ...) */
+	    return(eval_error(sc, "lambda parameter ~A is not a symbol", car(sc->code)));
+	}
+      else
+	{ 
+	  for (sc->x = car(sc->code); sc->x != sc->NIL; sc->x = cdr(sc->x))
+	    if ((!s7_is_symbol(sc->x)) &&                          
+		((!is_pair(sc->x)) ||
+		 ((!s7_is_symbol(car(sc->x))) &&
+		  ((!is_pair(car(sc->x))) ||                       /* check for stuff like (lambda* (()) 1) (lambda* ((a . 0)) 1) etc */
+		   (!s7_is_symbol(caar(sc->x))) ||
+		   (cdar(sc->x) == sc->NIL) ||
+		   (cddar(sc->x) != sc->NIL)))))
+	      return(eval_error(sc, "lambda* parameter ~A is confused", sc->x));
+	}
       sc->value = make_closure(sc, sc->code, sc->envir, T_CLOSURE_STAR);
       pop_stack(sc);
       goto START;

@@ -29941,6 +29941,8 @@ EDITS: 2
 	      (str2 (snd-help 'open-sound))
 	      (str3 (snd-help "open-sound")))
 	  (if (or (not (string? str1)) ; can happen if we're running -DTIMING
+		  (not (string? str2))
+		  (not (string? str3))
 		  (not (string-equal-ignoring-white-space str2 str3)))
 	      (snd-display ";snd-help open-sound: ~A ~A ~A" str1 str2 str3)))
 	(if (not (string? (snd-help 'open-soud)))

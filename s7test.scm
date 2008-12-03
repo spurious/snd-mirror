@@ -28897,7 +28897,7 @@
 
   (list "01" "+1" "1.")
 
-  (list "001" "+01" "#e1" "#i1" "1/1" "#b1" "#x1" "#d1" "#o1" "1.0" "1e0" "1d0" "1l0" "1s0" "1f0" "9/9" "01." "+1.")
+  (list "001" "+01" "#e1" "#i1" "1/1" "#b1" "#x1" "#d1" "#o1" "1.0" "1e0" "1d0" "1l0" "1s0" "1f0" "9/9" "01." "+1." "1E0" "1D0" "1L0" "1S0" "1F0")
 
   (list "0001" "+001" "#e01" "#i01" "1/01" "#b01" "#x01" "#d01" "#o01" "#e+1" "#i+1" "#b+1" "#x+1" "#d+1" "#o+1" ".1e1" "01/1" "+1/1" ".1d1" ".1l1" ".1s1" ".1f1" "1.00" "1e00" "1d00" "1l00" "1s00" "1f00" "01.0" "+1.0" "1e+0" "1d+0" "1l+0" "1s+0" "1f+0" "1e-0" "1d-0" "1l-0" "1s-0" "1f-0" "01e0" "+1e0" "1.e0" "01d0" "+1d0" "1.d0" "01l0" "+1l0" "1.l0" "01s0" "+1s0" "1.s0" "01f0" "+1f0" "1.f0" "9/09" "09/9" "+9/9" "001." "+01." "#e1." "#i1." "1+0i" "1-0i" "#d1.")
 
@@ -30244,8 +30244,12 @@
 (test (lambda (1) #f) 'error)
 ;(test (lambda (x . y z) x) 'error)  ; this is apparently uncatchable in Guile
 (test ((lambda () 1) 1) 'error)
+(test ((lambda (()) 1) 1) 'error)
 (test ((lambda (x) x) 1 2) 'error)
 (test ((lambda (x) x)) 'error)
+(test ((lambda ("x") x)) 'error)
+(test ((lambda "x" x)) 'error)
+(test ((lambda (x . "hi") x)) 'error)
 
 (test ((lambda (x . y) y) 1 2 '(3 . 4)) '(2 (3 . 4)))
 (test ((lambda (x . y) y) 1) '())
@@ -32422,6 +32426,16 @@
 	(num-test (+ (hi 1.0) (hi 1.0 2.0) (hi)) 4.0)
 	(num-test (+ (hi 1.0 2.0) (hi) (hi 1.0)) 4.0))
 
+      (test (let ((hi (lambda*))) (hi)) 'error)
+      (test (let ((hi (lambda* #f))) (hi)) 'error)
+      (test (let ((hi (lambda* "hi" #f))) (hi)) 'error)
+      (test (let ((hi (lambda* ("hi") #f))) (hi)) 'error)
+      (test (let ((hi (lambda* (a 0.0) a))) (hi)) 'error)
+      (test (let ((hi (lambda* (a . 0.0) a))) (hi)) 'error)
+      (test (let ((hi (lambda* ((a . 0.0)) a))) (hi)) 'error)
+      (test (let ((hi (lambda* ((a 0.0 "hi")) a))) (hi)) 'error)
+      (test (let ((hi (lambda* ((a 0.0 . "hi")) a))) (hi)) 'error)
+      (test (let ((hi (lambda* ((a)) a))) (hi)) 'error)
       (test (let ((hi (lambda* (a 0.0) (b 0.0) (+ a b)))) (hi)) 'error)
 
       ;; make sure #: also works
@@ -32451,8 +32465,13 @@
 
       (for-each
        (lambda (arg)
+	 (test (procedure-arity arg) 'error))
+       (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
+
+      (for-each
+       (lambda (arg)
 	 (test (continuation? arg) #f))
-       (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi abs '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
+       (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi abs '#(()) (list 1 2 3) '(1 . 2) "hi" (lambda () 1)))
 
       (test (let ((cont #f)) 
 	      (and (call/cc (lambda (x) (set! cont x) (continuation? x)))
@@ -32468,7 +32487,17 @@
 	      (list (hi 1) (procedure-documentation hi)))
 	    (list 2 "this is a test"))
       
+      (for-each
+       (lambda (arg)
+	 (test (procedure-documentation arg) 'error))
+       (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
+
       (test (let ((hi (lambda (x) (+ x 1)))) (procedure-source hi)) '(lambda (x) (+ x 1)))
+
+      (for-each
+       (lambda (arg)
+	 (test (procedure-source arg) 'error))
+       (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2) "hi"))
 
       (if (and (defined? 'provided?)
 	       (provided? 'threads))
@@ -32553,32 +32582,32 @@
 	    (for-each
 	     (lambda (arg)
 	       (test (thread? arg) #f))
-	     (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi abs '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
+	     (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi "hi" abs '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
 	    
 	    (for-each
 	     (lambda (arg)
 	       (test (lock? arg) #f))
-	     (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi abs '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
+	     (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi "hi" abs '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
 	    
 	    (for-each
 	     (lambda (arg)
 	       (test (thread-variable? arg) #f))
-	     (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi abs '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
+	     (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi "hi" abs '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
 	    
 	    (for-each
 	     (lambda (arg)
 	       (test (make-thread arg) 'error))
-	     (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2)))
+	     (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi "hi" '#(()) (list 1 2 3) '(1 . 2)))
 	    
 	    (for-each
 	     (lambda (arg)
 	       (test (grab-lock arg) 'error))
-	     (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2)))
+	     (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi "hi" '#(()) (list 1 2 3) '(1 . 2)))
 	    
 	    (for-each
 	     (lambda (arg)
 	       (test (release-lock arg) 'error))
-	     (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi '#(()) (list 1 2 3) '(1 . 2)))
+	     (list -1 #\a 1 '#(1 2 3) 3.14 3/4 1.0+1.0i '() 'hi "hi" '#(()) (list 1 2 3) '(1 . 2)))
 	    
 	    ))
       ))
