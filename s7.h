@@ -294,7 +294,7 @@ bool s7_is_input_port(s7_scheme *sc, s7_pointer p);                         /* (
 bool s7_is_output_port(s7_scheme *sc, s7_pointer p);                        /* (output-port? p) */
 s7_pointer s7_current_input_port(s7_scheme *sc);                            /* (current-input-port) */
 s7_pointer s7_current_output_port(s7_scheme *sc);                           /* (current-output-port) */
-  s7_pointer s7_set_current_output_port(s7_scheme *sc, s7_pointer p);       /* (set-current-output-port) */
+s7_pointer s7_set_current_output_port(s7_scheme *sc, s7_pointer p);         /* (set-current-output-port) */
 s7_pointer s7_current_error_port(s7_scheme *sc);                            /* (current-error-port) */
 s7_pointer s7_set_current_error_port(s7_scheme *sc, s7_pointer port);       /* (set-current-error-port port) */
 void s7_close_input_port(s7_scheme *sc, s7_pointer p);                      /* (close-input-port p) */

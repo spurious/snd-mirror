@@ -44,7 +44,7 @@
  *
  *   deliberate difference from r5rs:
  *        modulo, remainder, and quotient take integer, ratio, or real args 
- *          [PERHAPS: this could be extended to Gaussian ints]
+ *          [PERHAPS: this could be extended to Gaussian ints -- see gaussian.scm]
  *        lcm and gcd can take integer or ratio args
  *        delay is renamed make-promise to avoid collisions in CLM
  *        continuation? function to distinguish a continuation from a procedure
@@ -6929,7 +6929,12 @@ static void write_char(s7_scheme *sc, char c, s7_pointer pt)
 	return;
       if (is_file_port(pt))
 	fputc(c, port_file(pt));
-      else char_to_string_port(c, pt);
+      else 
+	{
+	  if (is_string_port(pt))
+	    char_to_string_port(c, pt);
+	  else (*(port_function(pt)))(sc, c, pt);
+	}
     }
 }
 
@@ -7539,10 +7544,6 @@ static s7_pointer g_with_output_to_file(s7_scheme *sc, s7_pointer args)
 static s7_pointer cons_untyped(s7_scheme *sc, s7_pointer a, s7_pointer b) 
 {
   s7_pointer x;
-  
-  ASSERT_IS_OBJECT(a, "cons car");
-  ASSERT_IS_OBJECT(b, "cons cdr");
-  
   x = new_cell(sc); /* might trigger gc */
   car(x) = a;
   cdr(x) = b;
@@ -11261,7 +11262,7 @@ static s7_pointer read_string_constant(s7_scheme *sc, s7_pointer pt)
 			sc->strbuf[i++] = '\n';
 		      else 
 			{
-			  if (c != '\n')
+			  if (!isspace(c))
 			    return(sc->F);
 			}
 		    }
