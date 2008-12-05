@@ -514,10 +514,12 @@ void about_snd_help(void)
 #endif
   info = version_info();
 
+  /* -------------------------------------------------------------------------------- */
   main_snd_help("Snd is a sound editor.",
 		info,
 		"\nRecent changes include:\n\
 \n\
+5-Dec:   mus-sox headers.\n\
 28-Nov:  Snd 10.2.\n\
 14-Nov:  removed s7-optargs.scm -- define* is now built-in in s7.\n\
 11-Nov:  removed s7-format.scm -- format is now built-in in s7.\n\
@@ -1499,7 +1501,7 @@ void sound_files_help(void)
   read-only (in selected data formats):\n\
     8SVX (IFF), EBICSF, INRS, ESPS, SPPACK, ADC (OGI), AVR, VOC, PVF,\n\
     Sound Tools, Turtle Beach SMP, SoundFont 2.0, Sound Designer I, PSION, MAUD, Kurzweil 2000,\n\
-    Gravis Ultrasound, ASF, PAF, CSL, Comdisco SPW, Goldwave sample, omf, quicktime\n\
+    Gravis Ultrasound, ASF, PAF, CSL, Comdisco SPW, Goldwave sample, omf, quicktime, sox,\n\
     Sonic Foundry (w64), SBStudio II, Delusion digital, Digiplayer ST3, Farandole Composer WaveSample,\n\
     Ultratracker WaveSample, Sample Dump exchange, Yamaha SY85, SY99, and TX16, Covox v8, AVI, \n\
     Impulse tracker, Korg, Akai, Turtle Beach\n\

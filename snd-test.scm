@@ -1594,6 +1594,7 @@
 	  (list "oboe-ulaw.voc" 1 22050 2.305669 "VOC" "mulaw (8 bits)")
 	  (list "oboe-lf32.sf" 1 22050 2.305669 "IRCAM" "little endian float (32 bits)")
 	  (list "oboe.wfp" 1 22050 2.305125 "Turtle Beach" "little endian short (16 bits)")
+	  (list "oboe.sox" 1 22050 2.305125 "Sox" "normalized little endian int (32 bits)")
 	  (list "oki.snd" 2 44100 0.0041950112208724 "raw (no header)" "big endian short (16 bits)")
 	  (list "oki.wav" 1 44100 0.016780 "RIFF" "unknown")
 	  (list "orv-dvi-adpcm.wav" 1 44100 1.92725622653961 "RIFF" "unknown")

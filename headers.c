@@ -13,7 +13,7 @@
  * Currently supported read-only (in selected data formats):
  *      8SVX (IFF), EBICSF, INRS, ESPS, SPPACK, ADC (OGI), AVR, VOC, CSL, snack "SMP", PVF,
  *      Sound Tools, Turtle Beach SMP, SoundFont 2.0, Sound Designer I, PSION alaw, MAUD, 
- *      Gravis Ultrasound, Comdisco SPW, Goldwave sample, OMF, NVF,
+ *      Gravis Ultrasound, Comdisco SPW, Goldwave sample, OMF, NVF, quicktime, sox,
  *      Sonic Foundry (w64), SBStudio II, Delusion digital, Digiplayer ST3, Farandole Composer WaveSample,
  *      Ultratracker WaveSample, Sample Dump exchange, Yamaha SY85 and SY99 (buggy), Yamaha TX16W, 
  *      Covox v8, AVI, Kurzweil 2000, Paris Ensoniq, Impulse tracker, Korg, Akai type 4, Maui,
@@ -139,9 +139,8 @@ static const unsigned char I_ds64[4] = {'d','s','6','4'};  /* EBU RF64 */
 static const unsigned char I_caff[4] = {'c','a','f','f'};  /* Apple CAFF */
 static const unsigned char I_desc[4] = {'d','e','s','c'};  /* Apple CAFF */
 static const unsigned char I_lpcm[4] = {'l','p','c','m'};  /* Apple CAFF */
-
-/* TODO: sox now has its own format which I suppose we should be able to read */
-
+static const unsigned char I_dSoX[4] = {'.','S','o','X'};  /* Sox intermediate (little-endian?) */
+static const unsigned char I_XoSd[4] = {'X','o','S','.'};  /* Sox intermediate */
 
 #define HDRBUFSIZ 256
 static unsigned char *hdrbuf;
@@ -339,6 +338,7 @@ const char *mus_header_type_name(int type)
     case MUS_SVX:              return("SVX8");                    break;
     case MUS_VOC:              return("VOC");                     break;
     case MUS_SNDT:             return("SNDT");                    break;
+    case MUS_SOX:              return("Sox");                     break;
     case MUS_RAW:              return("raw (no header)");         break;
     case MUS_SMP:              return("SMP");                     break;
     case MUS_AVR:              return("AVR");                     break;
@@ -5248,6 +5248,55 @@ static int read_asf_header(const char *filename, int fd)
 }
 
 
+/* ------------------------------------ Sox -------------------------------------
+ *  sox now has its own format (intended as an intermediate file)
+ *    0: .SoX or .XoS
+ *    4: header_bytes (int)
+ *    8: num_samples (long long int)
+ *    16: srate (double)
+ *    24: chans (int)
+ *    28: comment bytes (int)
+ *    32: comment... [if any]
+ *    header_bytes: data (always 32-bit int in native format)
+ */
+
+static int read_sox_header(const char *filename, int fd)
+{
+  int comment_len;
+  off_t samps;
+  if (match_four_chars((unsigned char *)(hdrbuf + 0), I_dSoX))
+    {
+      data_format = MUS_LINTN;
+      samps = mus_char_to_loff_t((unsigned char *)(hdrbuf + 8));
+      srate = (int)mus_char_to_ldouble((unsigned char *)(hdrbuf + 16));
+      little_endian = true;
+    }
+  else 
+    { /* untested: TODO: test big endian sox header */
+      data_format = MUS_BINTN;
+      samps = mus_char_to_boff_t((unsigned char *)(hdrbuf + 8));
+      srate = (int)mus_char_to_bdouble((unsigned char *)(hdrbuf + 16));
+      little_endian = false;
+    }
+
+  data_location = 4 + big_or_little_endian_int((unsigned char *)(hdrbuf + 4), little_endian);
+  chans = big_or_little_endian_int((unsigned char *)(hdrbuf + 24), little_endian);
+  comment_len = big_or_little_endian_int((unsigned char *)(hdrbuf + 28), little_endian);
+  if (comment_len > 0)
+    {
+      comment_start = 32;
+      comment_end = comment_start + comment_len;
+    }
+  true_file_length = SEEK_FILE_LENGTH(fd);
+  data_size = (true_file_length - data_location);
+  if (data_size < 0) return(mus_error(MUS_HEADER_READ_FAILED, "%s: data_size = " OFF_TD "?", filename, data_size));
+  data_size = mus_bytes_to_samples(data_format, data_size);
+  if (samps < data_size) data_size = samps;
+  return(MUS_NO_ERROR);
+}
+
+
+
 
 /* ------------------------------------ no header ------------------------------------- */
 
@@ -5470,6 +5519,12 @@ static int mus_header_read_1(const char *filename, int fd)
 	  header_type = MUS_SNDT;
 	  return(read_sndt_header(filename, fd));
 	}
+    }
+  if ((match_four_chars((unsigned char *)hdrbuf, I_dSoX)) ||
+      (match_four_chars((unsigned char *)hdrbuf, I_XoSd)))
+    {
+      header_type = MUS_SOX;
+      return(read_sox_header(filename, fd));
     }
   if ((match_four_chars((unsigned char *)hdrbuf, I_VOC0)) && 
       (match_four_chars((unsigned char *)(hdrbuf + 4), I_VOC1)))
@@ -6648,7 +6703,7 @@ bool mus_header_type_p(int n)
   switch (n)
     {
     case MUS_NEXT: case MUS_AIFC: case MUS_RIFF: case MUS_RF64: case MUS_BICSF: case MUS_NIST: 
-    case MUS_INRS: case MUS_ESPS: case MUS_SVX: case MUS_VOC: case MUS_SNDT: case MUS_RAW: 
+    case MUS_INRS: case MUS_ESPS: case MUS_SVX: case MUS_VOC: case MUS_SNDT: case MUS_RAW: case MUS_SOX:
     case MUS_SMP: case MUS_AVR: case MUS_IRCAM: case MUS_SD1: case MUS_SPPACK: case MUS_MUS10: 
     case MUS_HCOM: case MUS_PSION: case MUS_MAUD: case MUS_IEEE: case MUS_MATLAB: case MUS_ADC:
     case MUS_MIDI: case MUS_SOUNDFONT: case MUS_GRAVIS: case MUS_COMDISCO: case MUS_GOLDWAVE: 

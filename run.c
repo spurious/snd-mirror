@@ -13244,7 +13244,11 @@ struct ptree *mus_run_form_to_ptree_1_b(XEN code)
 struct ptree *mus_run_form_to_ptree_1_b_without_env(XEN code)
 {
   /* find */
+#if HAVE_S7
+  return(mus_run_form_to_ptree_1_b(XEN_PROCEDURE_SOURCE(code)));
+#else
   return(mus_run_form_to_ptree_1_b(XEN_LIST_2(code, XEN_FALSE)));
+#endif
 }
 
 
