@@ -5272,7 +5272,7 @@ static int read_sox_header(const char *filename, int fd)
       little_endian = true;
     }
   else 
-    { /* untested: TODO: test big endian sox header */
+    { /* untested */
       data_format = MUS_BINTN;
       samps = mus_char_to_boff_t((unsigned char *)(hdrbuf + 8));
       srate = (int)mus_char_to_bdouble((unsigned char *)(hdrbuf + 16));

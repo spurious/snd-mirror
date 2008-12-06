@@ -44,7 +44,7 @@
  *
  *   deliberate difference from r5rs:
  *        modulo, remainder, and quotient take integer, ratio, or real args 
- *          [PERHAPS: this could be extended to Gaussian ints -- see gaussian.scm]
+ *          [this could be extended to Gaussian ints -- see gaussian.scm]
  *        lcm and gcd can take integer or ratio args
  *        delay is renamed make-promise to avoid collisions in CLM
  *        continuation? function to distinguish a continuation from a procedure
@@ -4569,9 +4569,13 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
     {
       s7_Double x, y;
       x = num_to_real(sc->x->object.number);
+      if (x == 0.0)
+	return(s7_make_real(sc, 0.0));
       y = num_to_real(sc->y->object.number);
+      if (y == 0.0)
+	return(s7_make_real(sc, 1.0));
       if (((x > 0.0) && (y >= 0.0)) ||
-	  ((y - floor(y)) == 0.0))
+	  ((y - floor(y)) < 1.0e-16))
 	return(s7_make_real(sc, pow(x, y)));
     }
   
