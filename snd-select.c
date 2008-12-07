@@ -809,12 +809,35 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
   snd_fd **sfs;
   snd_info *sp = NULL;
   mus_sample_t **data;
+
   si = selection_sync();
   if ((si) && (si->cps) && (si->cps[0])) sp = si->cps[0]->sound;
+
+  if (type == -1)
+    {
+      if ((sp) && (mus_header_writable(sp->hdr->type, -2))) /* -2 = ignore data format for the moment */
+	type = sp->hdr->type;
+      else type = MUS_NEXT;
+    }
+  if (format == -1)
+    {
+      if ((sp) && (mus_header_writable(type, sp->hdr->format)))
+	format = sp->hdr->format;
+      else format = MUS_OUT_FORMAT;
+    }
+  if (!mus_header_writable(type, format))
+    {
+      type = MUS_NEXT;
+      format = MUS_OUT_FORMAT;
+    }
+  if (srate == -1)
+    srate = selection_srate();
+
   dur = selection_len();
   if (chan == SAVE_ALL_CHANS)
     chans = si->chans;
   else chans = 1;
+
   io_err = snd_write_header(ofile, type, srate, chans, chans * dur, format, comment, NULL);
   ASSERT_IO_ERROR(io_err, "snd_write_header in save_selection");
   if (io_err != IO_NO_ERROR)
@@ -822,14 +845,18 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
       si = free_sync_info(si);
       return(io_err);
     }
+
   oloc = mus_header_data_location();
   ofd = snd_reopen_write(ofile);
+
   if (sp)
     {
       disk_space_t no_space;
       bool copy_ok = false;
+
       bps = mus_bytes_per_sample(format);
       num = dur * bps * chans;
+
       no_space = disk_space_p(num, ofile);
       if (no_space != DISK_SPACE_OK)
 	{
@@ -837,6 +864,7 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
 	  si = free_sync_info(si);
 	  return(IO_DISK_FULL);
 	}
+
       copy_ok = ((format == sp->hdr->format) && 
 		 (chans == sp->nchans) &&
 		 (chan == SAVE_ALL_CHANS));
@@ -859,6 +887,7 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
 	  off_t bytes, iloc;
 	  int fdi;
 	  char *buffer;
+
 	  lseek(ofd, oloc, SEEK_SET);
 	  fdi = mus_file_open_read(sp->filename); /* this does not read the header */
 	  if (fdi == -1)
@@ -894,6 +923,7 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
 	  return(IO_NO_ERROR);
 	}
     }
+
   ends = (off_t *)CALLOC(chans, sizeof(off_t));
   sfs = (snd_fd **)CALLOC(chans, sizeof(snd_fd *));
   if (chan == SAVE_ALL_CHANS)
@@ -907,12 +937,14 @@ io_error_t save_selection(const char *ofile, int type, int format, int srate, co
       ends[0] = selection_end(si->cps[chan]);
       sfs[0] = init_sample_read(selection_beg(si->cps[chan]), si->cps[chan], READ_FORWARD);
     }
+
   snd_file_open_descriptors(ofd, ofile, format, oloc, chans, type);
   mus_file_set_clipping(ofd, clipping(ss));
   lseek(ofd, oloc, SEEK_SET);
   data = (mus_sample_t **)CALLOC(chans, sizeof(mus_sample_t *));
   for (i = 0; i < chans; i++) 
     data[i] = (mus_sample_t *)CALLOC(FILE_BUFFER_SIZE, sizeof(mus_sample_t)); 
+
   j = 0;
   ss->stopped_explicitly = false;
   for (ioff = 0; ioff < dur; ioff++)
@@ -1238,7 +1270,7 @@ static XEN g_save_selection(XEN arglist)
   #define H_save_selection "(" S_save_selection " :file :header-type :data-format :srate :comment :channel): \
 save the current selection in file using the indicated file attributes.  If channel is given, save only that channel."
 
-  int type = MUS_NEXT, format = MUS_OUT_FORMAT, sr = 0, chn = 0;
+  int type = -1, format = -1, sr = -1, chn = 0;
   io_error_t io_err = IO_NO_ERROR;
   const char *com = NULL, *file = NULL;
   char *fname = NULL;
@@ -1248,6 +1280,12 @@ save the current selection in file using the indicated file attributes.  If chan
   int vals, i, arglist_len;
   if (!(selection_is_active()))
     return(snd_no_active_selection_error(S_save_selection));
+
+  /* changed 7-Dec-08 to be more like save-sound-as in default values -- if just one
+   *   sound involved, or all sounds same, use current choices rather than MUS_NEXT etc:
+   *   hdr->type|srate|format
+   */
+
   keys[0] = kw_file;
   keys[1] = kw_header_type;
   keys[2] = kw_data_format;
@@ -1271,18 +1309,18 @@ save the current selection in file using the indicated file attributes.  If chan
     XEN_ERROR(XEN_ERROR_TYPE("IO-error"),
 	      XEN_LIST_2(C_TO_XEN_STRING(S_save_selection),
 			 C_TO_XEN_STRING("no output file?")));
-  if (!(mus_header_writable(type, -2)))
+  if ((type != -1) && (!(mus_header_writable(type, -2))))
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_save_selection),
 			 C_TO_XEN_STRING(_("can't write this header type:")),
 			 C_TO_XEN_STRING(mus_header_type_name(type))));
-  if (!(mus_header_writable(type, format)))
+  if ((type != -1) && (format != -1) && (!(mus_header_writable(type, format))))
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_4(C_TO_XEN_STRING(S_save_selection),
 			 C_TO_XEN_STRING(_("can't write this combination of header type and data format:")),
 			 C_TO_XEN_STRING(mus_header_type_name(type)),
 			 C_TO_XEN_STRING(mus_data_format_name(format))));
-  if (sr <= 0)
+  if ((sr != -1) && (sr <= 0))
     XEN_ERROR(CANNOT_SAVE,
 	      XEN_LIST_3(C_TO_XEN_STRING(S_save_selection),
 			 C_TO_XEN_STRING(_("srate can't be <= 0")),

@@ -35,8 +35,7 @@
 (define with-format #t)                                        ; simple format tests
 (define with-define* #t)                                       ; this tests s7's version of define*
 (define with-procedure-arity #t)                               ; procedure-arity and other s7-specific stuff
-(define with-error-data #t)                                    ; collect numerical error info and report at end
-(define with-special-functions #t)                             ; bessel funcs etc (included here for my convenience)
+(define with-error-data #f)                                    ; collect numerical error info and report at end
 
 
 ;; we're assuming call/cc is defined
@@ -74,10 +73,7 @@
 
 ;;; the error limits below are pretty expansive in some cases, so with-error-data
 ;;;   tries to keep a record of the worst case error for each operator.  error-data
-;;;   is a list: '(#(op worst-error worst-error-case) ...).  Don't fret over
-;;;   "errors" less than 1e-7 -- some of the expected values are only that accurate,
-;;;   though I'm slowly going through and repairing most such cases.  See the end
-;;;   of the file for one case, based on doubles and long long ints.
+;;;   is a list: '(#(op worst-error worst-error-case) ...). 
 
 (define error-data '())
 
@@ -87,7 +83,7 @@
 	   (real? expected))
       (/ (abs (- result expected)) (max 1.0 (abs expected)))
       (case op
-	((asin acos)
+	((asin acos acosh)
 	 (/ (min (magnitude (- result expected))
 		 (magnitude (- result (conjugate expected))))
 	    (max 0.001 (magnitude expected))))
@@ -100,11 +96,14 @@
 		 (magnitude (- result expected (make-rectangular 0 our-pi)))
 		 (magnitude (- result expected (make-rectangular 0 (- our-pi)))))
 	    (max 0.001 (magnitude expected))))
-	 
 	((atan)
 	 (/ (min (magnitude (- result expected))
 		 (magnitude (- result our-pi expected))
 		 (magnitude (+ our-pi (- result expected))))
+	    (max 0.001 (magnitude expected))))
+	((cosh)
+	 (/ (min (magnitude (- result expected))
+		 (magnitude (- result (- expected))))
 	    (max 0.001 (magnitude expected))))
 	(else (/ (magnitude (- result expected)) (max 0.001 (magnitude expected)))))))
 
@@ -2080,6 +2079,7 @@
 (test (let ((var '(1 (2 3)))) (reverse (cdr var)) var) '(1 (2 3)))
 (test (let ((var (list (list 1 2) (list 3 4 5)))) (reverse (car var)) var) '((1 2) (3 4 5)))
 (test (reverse '(1 2 . 3)) 'error)
+(test (let ((x '(1 2 3))) (list (reverse x) x)) '((3 2 1) (1 2 3)))
 
 (for-each
  (lambda (lst)
@@ -2935,7 +2935,7 @@
 (for-each
  (lambda (arg)
    (test (string->number "123" arg) 'error))
- (list -1 0 1 512 #\a '#(1 2 3) 3.14 3/4 1.5+0.3i '() 'hi abs '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
+ (list -1 0 1 #\a '#(1 2 3) 3.14 3/4 1.5+0.3i '() 'hi abs '#(()) (list 1 2 3) '(1 . 2) (lambda () 1)))
 
 (for-each
  (lambda (arg)
@@ -28010,6 +28010,9 @@
 (num-test (lcm 32 -36) 288 )
 (num-test (lcm) 1 )
 
+(test (+ 1 + 2) 'error)
+(test (+ 1 - 2) 'error)
+
 (test (string->number "+#.#") #f)
 (test (string->number "-#.#") #f)
 (test (string->number "#.#") #f)
@@ -28536,8 +28539,9 @@
    "#b3" "#b4" "#b5" "#b6" "#b7" "#b8" "#b9" "#ba" "#bb" "#bc"
    "#bd" "#be" "#bf" "#q" "#b#b1" "#o#o1" "#d#d1" "#x#x1" "#e#e1" "#xag" "#x1x"
    "#o8" "#o9" "1/#e1" "#o#" "#e#i1" "#d--2" "#b#x1" "#i#x#b1" "#e#e#b1" "#e#b#b1" 
-   "-#b1" "+#b1" "#b1/#b2" "#b1+#b1i" "1+#bi" "1+#b1i" "1#be1" "#b" "#o" "#" "#ea" "#e1a"
-   "#e#b" "#b#b" "#b#b1" "1e3e4" "1.0e-3e+4" "1e3s" "1e3s3" "#o#x1" "#i#i1" 
+   "-#b1" "+#b1" "#b1/#b2" "#b1+#b1i" "1+#bi" "1+#b1i" "1#be1" "#b" "#o" "#" "#ea" "#e1a" "1+ie1" "1+i1" "1e+1i"
+   "#e#b" "#b#b" "#b#b1" "1e3e4" "1.0e-3e+4" "1e3s" "1e3s3" "#o#x1" "#i#i1" "1e-i" "#be1" "1/i" "1/e1" "1+e1"
+   "1e+" "1e1+" "1e1e1" "1e-+1" "1e0x1" "1e-"
    "#i#i1" "12@12+0i"))
 
 (for-each 
@@ -29824,6 +29828,22 @@
 	   (ho hi)))
       37)
 
+(test ((if (> 3 2) + -) 3 2) 5)
+(test (let ((op +)) (op 3 2)) 5)
+(test (((lambda () +)) 3 2) 5)
+(test ((car (cons + -)) 3 2) 5)
+(test ((do ((i 0 (+ i 1))) ((= i 3) +) ) 3 2) 5)
+(test (((lambda (x) x) (lambda (x) x)) 3) 3)
+(test ((((lambda (x) x) (lambda (x) x)) (lambda (x) x)) 3) 3)
+(test (((lambda (x) (lambda (y) x)) 3) 4) 3)
+(test (((lambda (x) (lambda (x) x)) 3) 4) 4)
+(test (let ((x 32)) (((lambda (x) (lambda (y) x)) 3) x)) 3)
+(test ((call/cc (lambda (return) (return +))) 3 2) 5)
+(test ((call-with-values (lambda () (values +)) (lambda (x) x)) 3 2) 5)
+(test ((case '+ ((+) +)) 3 2) 5)
+(test ((case '+ ((-) -) (else +)) 3 2) 5)
+(test ((call/cc (lambda (return) (dynamic-wind (lambda () #f) (lambda () (return +)) (lambda () #f)))) 3 2) 5)
+(test (+ 1 ((call/cc (lambda (return) (dynamic-wind (lambda () #f) (lambda () (return +)) (lambda () #f)))) 3 2) 2) 8)
 
 
 
@@ -29873,6 +29893,9 @@
 
 (test ((lambda () (begin (define x 0)) (+ x 1))) 1)
 (test (let ((f (lambda () (begin (define x 0)) (+ x 1)))) (f)) 1)
+(test (let ((x 32)) (begin (define x 3)) x) 3)
+(test ((lambda (x) (begin (define x 3)) x) 32) 3)
+(test (let* ((x 32) (y x)) (define x 3) y) 32)
 
 
 
@@ -29906,6 +29929,7 @@
 (test (apply vector 1 2 '(3)) '#(1 2 3))
 (test (apply (lambda (x . y) x) (list 1 2 3)) 1)
 (test (apply * (list 2 (apply + 1 2 '(3)))) 12)
+(test (apply (if (> 3 2) + -) '(3 2)) 5)
 
 (for-each
  (lambda (arg)
@@ -29928,6 +29952,8 @@
 (test (apply string-ref "hi" '(0)) #\h)
 (test (let ((x (string-copy "hi"))) (apply string-set! x 0 '(#\c)) x) "ci")
 (test (apply + '(1 2 . 3)) 'error)
+(test (apply apply (list + '(3  2))) 5)
+(test (apply apply apply apply (list (list (list + '(3  2))))) 5)
 
 
 
@@ -30055,6 +30081,8 @@
 ;;; -------- let, let*, letrec --------
 
 (test (let ((x 2) (y 3)) (* x y)) 6)
+(test (let ((x 32)) (let ((x 3) (y x)) y)) 32)
+(test (let ((x 32)) (let* ((x 3) (y x)) y)) 3)
 (test (let ((x 2) (y 3)) (let ((x 7) (z (+ x y))) (* z x))) 35)
 (test (let ((x 2) (y 3)) (let* ((x 7)  (z (+ x y))) (* z x))) 70)
 (test (letrec ((even? (lambda (n)  (if (zero? n) #t (odd? (- n 1))))) (odd? (lambda (n)  (if (zero? n) #f (even? (- n 1)))))) (even? 88))  #t)
@@ -32214,7 +32242,7 @@
 	       (display op) (newline))))
        error-data)))
 
-#|
+'(
 ;;; this is the current s7 output from loading this file:
 
  " "
@@ -32224,7 +32252,7 @@
 
 (let () (define q (let ((count 5)) (define (get-count) count) (define p (make-promise (if (<= count 0) count (begin (set! count (- count 1)) (force p) (set! count (+ count 2)) count)))) (list get-count p))) (let* ((get-count (car q)) (p (cadr q)) (a (get-count)) (b (force p)) (c (get-count))) (list a b c))) got (5 10 10) but expected (5 0 10)
 
-format #t: 1 output-port: 2! (this is testing output ports)
+format #t 1 output-port: 2! (this is testing output ports)
 ;all done!
 op              error                      test                            result                                 expected
 bes-i0:         4.728274528735e-07      (bes-i0 100.0)                1.0737511994318e+42                     1.0737517071311e+42
@@ -32255,200 +32283,6 @@ tan:            4.2096697956986e-07     (tan 1234000000/3)            -18.780955
 cos:            2.2319583216357e-08     (cos 1234000000/3)            -0.053170110875237                      -0.05317013319482
 sin:            1.1884160322495e-09     (sin 1234000000/3)            0.99858546920607                        0.99858546801766
 string->number: 3.514766724748e-14      (string->number "1234567890123456789012345678901234567890.123456789e-30") 1234567890.1235 1234567890.1235
-|#
+)
 
 
-(if with-special-functions
-    (begin
-
-;;; from GSL
-      (num-test (bes-j0 0.1) 0.99750156206604003230) 
-      (num-test (bes-j0 2.0) 0.22389077914123566805) 
-      (num-test (bes-j0 100.0) 0.019985850304223122424) 
-      (num-test (bes-j0 1.0e+10) 2.1755917502468917269e-06) 
-      (num-test (bes-j1 0.1) 0.04993752603624199756) 
-      (num-test (bes-j1 2.0) 0.57672480775687338720) 
-      (num-test (bes-j1 100.0) -0.07714535201411215803) 
-      (num-test (bes-j1 1.0e+10) -7.676508175684157103e-06) 
-      (num-test (bes-jn 4 0.1) 2.6028648545684032338e-07) 
-      (num-test (bes-jn 5 2.0) 0.007039629755871685484) 
-      (num-test (bes-jn 10 20.0) 0.18648255802394508321) 
-      (num-test (bes-jn 100 100.0) 0.09636667329586155967) 
-      (num-test (bes-jn 2 900.0) -0.019974345269680646400) 
-      (num-test (bes-jn 2 15000.0) -0.0020455820181216382666) 
-      (num-test (bes-jn 0 1.0e+10) 2.1755917502468917269e-06) 
-      (num-test (bes-jn 1 1.0e+10) -7.676508175684157103e-06) 
-      (num-test (bes-jn 0 20000) 0.00556597490495494615709982972) 
-      
-      (num-test (bes-y0 0.1) -1.5342386513503668441) 
-      (num-test (bes-y0 2)  0.5103756726497451196) 
-      (num-test (bes-y0 256.0) -0.03381290171792454909) 
-      (num-test (bes-y0 4294967296.0) 3.657903190017678681e-06) 
-      (num-test (bes-y1 0.1) -6.45895109470202698800) 
-      (num-test (bes-y1 2) -0.10703243154093754689) 
-      (num-test (bes-y1 100.0) -0.020372312002759793305) 
-      (num-test (bes-y1 4294967296.0) 0.000011612249378370766284) 
-      (num-test (bes-yn 4 0.1)  -305832.29793353160319) 
-      (num-test (bes-yn 5 2)  -9.935989128481974981) 
-      (num-test (bes-yn 100 100.0) -0.16692141141757650654) 
-      (num-test (bes-yn 100 4294967296.0) 3.657889671577715808e-06) 
-      (num-test (bes-yn 1000 4294967296.0) 3.656551321485397501e-06) 
-      (num-test (bes-yn 2 15000.0) -0.006185217273358617849) 
-      
-      (num-test (bes-i0 0.1) 1.0025015629340956014) 
-      (num-test (bes-i0 2.0) 2.2795853023360672674) 
-      (num-test (bes-i0 100.0) 1.0737517071310738235e+42) 
-      (num-test (bes-i1 0.1) 0.05006252604709269211 ) 
-      (num-test (bes-i1 2.0) 1.59063685463732906340 ) 
-      (num-test (bes-i1 100.0) 1.0683693903381624812e+42) 
-      (num-test (bes-in 4 0.1) 2.6054690212996573677e-07) 
-      (num-test (bes-in 5 2.0) 0.009825679323131702321) 
-      (num-test (bes-in 100 100.0) 4.641534941616199114e+21) 
-      
-      (num-test (bes-k0 0.1) 2.4270690247020166125) 
-      (num-test (bes-k0 2.0) 0.11389387274953343565) 
-      (num-test (bes-k0 100.0) 4.656628229175902019e-45) 
-      (num-test (bes-k1 0.1) 9.853844780870606135 ) 
-      (num-test (bes-k1 2.0) 0.13986588181652242728) 
-      (num-test (bes-k1 100.0) 4.679853735636909287e-45) 
-      (num-test (bes-kn 4 0.1) 479600.2497925682849) 
-      (num-test (bes-kn 5 2.0) 9.431049100596467443) 
-      (num-test (bes-kn 100 100.0) 7.617129630494085416e-25) 
-      
-      
-;;; from maxima
-      
-      (num-test (bes-j0 0.0) 1.0)
-      (num-test (bes-j0 0.001) .9999997500000155)
-      (num-test (bes-j0 0.01) .9999750001562496)
-      (num-test (bes-j0 0.1) .9975015620660401)
-      (num-test (bes-j0 1.0) .7651976865579666)
-      (num-test (bes-j0 10.0) -.24593576445134830)
-      (num-test (bes-j0 100.0) .01998585030422355)
-      (num-test (bes-j0 1000.0) .02478668615241997)
-      (num-test (bes-j0 10000.0)  -.007096160353384438)
-      
-      (num-test (bes-j1 0.0) 0.0)
-      (num-test (bes-j1 0.001) 4.9999993750000266E-4)
-      (num-test (bes-j1 0.01) .004999937500260417)
-      (num-test (bes-j1 0.1) 0.049937526036242)
-      (num-test (bes-j1 1.0) .4400505857449335)
-      (num-test (bes-j1 10.0) .04347274616886149)
-      (num-test (bes-j1 100.0) -0.0771453520141124)
-      (num-test (bes-j1 1000.0) .004728311907088393)
-      (num-test (bes-j1 10000.0) .003647450755527218)
-      
-      (num-test (bes-jn 10 0.0) 0.0)
-      (num-test (bes-jn 10 0.001) 2.691144394304978E-40)
-      (num-test (bes-jn 10 0.01) 2.691138339236334E-30)
-      (num-test (bes-jn 10 0.1) 2.690532895434216E-20)
-      (num-test (bes-jn 10 1.0) 2.630615123687444E-10)
-      (num-test (bes-jn 10 10.0) .2074861066333596)
-      (num-test (bes-jn 10 100.0) -.05473217693547214)
-      (num-test (bes-jn 10 1000.0) -.02452062230603636)
-      (num-test (bes-jn 10 10000.0) .007114312383352328)
-      
-      (num-test (bes-jn 100 0.0) 0.0)
-      (num-test (bes-jn 100 0.1) 8.45251653512169E-289)
-      (num-test (bes-jn 100 1.0) 8.43182878962675E-189)
-      (num-test (bes-jn 100 10.0) 6.597316064155484E-89)
-      (num-test (bes-jn 100 100.0) 0.0963666732958616)
-      (num-test (bes-jn 100 1000.0) .01167613500780332)
-      (num-test (bes-jn 100 10000.0) -0.00797651631139348)
-      
-      (num-test (bes-jn 1000 1000.0) .04473067294796409)
-      (num-test (bes-jn 10000 10000.0) .02076216527720082)
-      
-      
-      (num-test (bes-i0 0.0) 1.0)
-      (num-test (bes-i0 0.001) 1.000000250000016)
-      (num-test (bes-i0 0.01) 1.00002500015625)
-      (num-test (bes-i0 0.1) 1.002501562934096)
-      (num-test (bes-i0 1.0) 1.266065877752009)
-      (num-test (bes-i0 10.0) 2815.716628466254)
-      (num-test (bes-i0 100.0) 1.073751707131074E+42)
-      
-      (num-test (bes-i1 0.0) 0.0)
-      (num-test (bes-i1 0.001) 5.000000625000026E-4)
-      (num-test (bes-i1 0.01) .005000062500260419)
-      (num-test (bes-i1 0.1) .05006252604709269)
-      (num-test (bes-i1 1.0) 0.565159103992485)
-      (num-test (bes-i1 10.0) 2670.988303701255)
-      (num-test (bes-i1 100.0) 1.068369390338162E+42)
-      
-      (num-test (bes-in 10 0.0) 0.0)
-      (num-test (bes-in 10 0.001) 2.691144516629725E-40)
-      (num-test (bes-in 10 0.01) 2.691150571711132E-30)
-      (num-test (bes-in 10 0.1) 2.691756142922141E-20)
-      (num-test (bes-in 10 1.0) 2.752948039836866E-10)
-      (num-test (bes-in 10 10.0) 21.89170616372356)
-      (num-test (bes-in 10 100.0) 6.498975524720151E+41)
-      
-      (num-test (bes-in 100 0.0) 0.0)
-      (num-test (bes-in 100 0.1) 8.45293498689195E-289)
-      (num-test (bes-in 100 1.0) 8.47367400813812E-189)
-      (num-test (bes-in 100 10.0) 1.082344201749218E-88)
-      (num-test (bes-in 100 100.0) 4.641534941616278E+21)
-      
-      
-      
-      (num-test (bes-y0 0.001) -4.471416611375923)
-      (num-test (bes-y0 0.01) -3.005455637083646)
-      (num-test (bes-y0 0.1) -1.534238651350367)
-      (num-test (bes-y0 1.0) .08825696421567691)
-      (num-test (bes-y0 10.0) .05567116728359947)
-      (num-test (bes-y0 100.0) -.07724431336508303)
-      (num-test (bes-y0 1000.0) .004715917977623911)
-      
-      (num-test (bes-y1 0.001) -636.6221672311393)
-      (num-test (bes-y1 0.01) -63.67859628206064)
-      (num-test (bes-y1 0.1) -6.458951094702027)
-      (num-test (bes-y1 1.0) -.7812128213002888)
-      (num-test (bes-y1 10.0) .2490154242069539)
-      (num-test (bes-y1 100.0) -.02037231200275883)
-      (num-test (bes-y1 1000.0) -0.024784331292352)
-      
-      (num-test (bes-yn 10 0.001) -1.182804937799041E+38)
-      (num-test (bes-yn 10 0.01) -1.182808190517663E+28)
-      (num-test (bes-yn 10 0.1) -1.18313351320452E+18)
-      (num-test (bes-yn 10 1.0) -1.2161801427868918E+8)
-      (num-test (bes-yn 10 10.0) -.3598141521834028)
-      (num-test (bes-yn 10 100.0) .05833157423641527)
-      (num-test (bes-yn 10 1000.0) -.005949000574163774)
-      
-      (num-test (bes-yn 100 0.1) -3.76586125601925E+285)
-      (num-test (bes-yn 100 1.0) -3.77528781011053E+185)
-      (num-test (bes-yn 100 10.0) -4.849148271180334E+85)
-      (num-test (bes-yn 100 100.0) -.1669214114175733)
-      (num-test (bes-yn 100 1000.0) -.02243868825772313)
-      
-      (num-test (bes-yn 1000 1000.0) -.07747600152069181)
-      
-      
-      (num-test (bes-k0 0.001) 7.023688800562383)
-      (num-test (bes-k0 0.01) 4.721244730161095)
-      (num-test (bes-k0 0.1) 2.427069024702016)
-      (num-test (bes-k0 1.0) .4210244382407085)
-      (num-test (bes-k0 10.0) 1.7780062316167652E-5)
-      (num-test (bes-k0 100.0) 4.656628229175902E-45)
-      
-      (num-test (bes-k1 0.001) 999.9962381560855)
-      (num-test (bes-k1 0.01) 99.97389411829626)
-      (num-test (bes-k1 0.1) 9.853844780870606)
-      (num-test (bes-k1 1.0) .6019072301972346)
-      (num-test (bes-k1 10.0) 1.8648773453825582E-5)
-      (num-test (bes-k1 100.0) 4.67985373563691E-45)
-      
-      (num-test (bes-kn 10 0.001) 1.857945548390401E+38)
-      (num-test (bes-kn 10 0.01) 1.857940439048065E+28)
-      (num-test (bes-kn 10 0.1) 1.857429584630401E+18)
-      (num-test (bes-kn 10 1.0) 1.807132899010295E+8)
-      (num-test (bes-kn 10 10.0) 0.00161425530039067)
-      (num-test (bes-kn 10 100.0) 7.655427977388101E-45)
-      
-      (num-test (bes-kn 100 0.1) 5.91510227809082E+285)
-      (num-test (bes-kn 100 1.0) 5.90033318363862E+185)
-      (num-test (bes-kn 100 10.0) 4.596674084269265E+85)
-      (num-test (bes-kn 100 100.0) 7.617129630494247E-25)
-      (num-test (bes-kn 100 1000.0) 0.0)
-      ))
