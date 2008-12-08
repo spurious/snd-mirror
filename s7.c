@@ -3678,9 +3678,9 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
 }
 
 
-static s7_Int string_to_int_with_radix(const char *str,  int radix)
+static long long int string_to_int_with_radix(const char *str,  int radix)          /* not s7_Int here because it might be "int" */
 {
-  s7_Int x = 0, rad;
+  long long int x = 0, rad;
   int i, lim = 0, len, sign = 1;
 
   len = safe_strlen(str);
@@ -3712,7 +3712,7 @@ static s7_Double string_to_double_with_radix(char *str, int radix)
   static int digits[] = {0, 0, 62, 39, 31, 26, 23, 22, 20, 19, 18, 17, 17, 16, 16, 15, 15};
 
   int i, len, iloc = 0, floc = -1, eloc = -1, sign = 1, flen = 0;
-  s7_Int int_part = 0, frac_part = 0, exponent = 0;
+  long long int int_part = 0, frac_part = 0, exponent = 0;
 
   /* there's an ambiguity in number notation here if we allow "1e1" or "1.e1" in base 16 (or 15) -- is e a digit or an exponent marker?
    *   but 1e+1, for example disambiguates it -- kind of messy! -- the scheme spec says "e" can only occur in base 10. 

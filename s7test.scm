@@ -704,6 +704,9 @@
   (test (char=? #\9 #\0) #f)
   (test (char=? #\A #\A) #t)
   (test (char=? #\  #\space) #t)
+  (let ((i (char->integer #\space)))
+    (test (char=? (integer->char i) #\space) #t))
+  (test (char=? (integer->char (char->integer #\")) #\") #t)
 
   (if with-char-ops-with-more-than-2-args (begin
     (test (char=? #\d #\d #\d #\d) #t)
@@ -1399,6 +1402,16 @@
 (test (let ((hi (string-copy "\"\\\""))) (string-set! hi 0 #\a) hi) "a\\\"")
 (test (let ((hi (string-copy "\"\\\""))) (string-set! hi 1 #\a) hi) "\"a\"")
 (test (let ((hi (string #\a #\newline #\b))) (string-set! hi 1 #\c) hi) "acb")
+
+(let ((str (make-string 10 #\x)))
+  (string-set! str 3 (integer->char 0))
+  (test (string=? str "xxx") #t)
+  (test (char=? (string-ref str 4) #\x) #t)
+  (string-set! str 4 #\a)
+  (test (string=? str "xxx") #t)
+  (test (char=? (string-ref str 4) #\a) #t)
+  (string-set! str 3 #\x)
+  (test (string=? str "xxxxaxxxxx") #t))
 
 (for-each
  (lambda (arg)
@@ -2988,7 +3001,7 @@
 	 (lambda (return)
 	   (do ((i 1 (+ i 1))
 		(k 1.0 (* k 2.0)))
-	       ((= i 62) #f)
+	       ((= i 1200) #f)
 	     (if (and (eqv? k (string->number (number->string k)))
 		      (eqv? (- k) (string->number (number->string (- k)))))
 		 (set! last-good k)
@@ -3002,7 +3015,8 @@
 				       (search mid hi)
 				       (search lo mid)))))))
 		   (return (search last-good (* 2 last-good))))))))))
-  (if (number? first-bad)
+  (if (and (number? first-bad)
+	   (< first-bad (+ 1.0 first-bad))) ; else infinite I guess
       (begin 
 	(display "string->number floats fail around ") 
 	(display first-bad)
@@ -3017,7 +3031,7 @@
 	 (lambda (return)
 	   (do ((i 1 (+ i 1))
 		(k 1.0 (/ k 2.0)))
-	       ((= i 62) #f)
+	       ((= i 100) #f)
 	     (if (and (eqv? k (string->number (number->string k)))
 		      (eqv? (- k) (string->number (number->string (- k)))))
 		 (set! last-good k)
@@ -3046,7 +3060,7 @@
 	 (lambda (return)
 	   (do ((i 1 (+ i 1))
 		(k 1/3 (* k 2)))
-	       ((= i 62) #f)
+	       ((= i 100) #f)
 	     (if (and (eqv? k (string->number (number->string k)))
 		      (eqv? (- k) (string->number (number->string (- k)))))
 		 (set! last-good k)
@@ -3713,6 +3727,8 @@
 	 (list #\e #\d #\f #\s #\l))
 
 	(test (< (abs (- (string->number "3.1415926535897932384626433832795029" 10) 3.1415926535897932384626433832795029)) 1e-7) #t)
+	(num-test (string->number "2.718281828459045235360287471352662497757247093699959574966967627724076630353547594571382178525166427" 16) 2.4433976119657)
+	(num-test (string->number "2.718281828459045235360287471352662497757247093699959574966967627724076630353547594571382178525166427" 11) 2.6508258818757)
 
 	(let ((happy #t))
 	  (do ((i 2 (+ i 1)))
@@ -3805,7 +3821,7 @@
 			      (> (abs (- (imag-part nval) (imag-part val))) 1e-3))
 			  (begin
 			    (set! happy #f)
-			    (display ";number<->string ")
+			    (display "number<->string ")
 			    (display val)
 			    (display " ")
 			    (display base)
@@ -27653,8 +27669,10 @@
   (num-test (bes-i0 50.0) 2.932553783849336E+20)
   (num-test (bes-i0 100.0) 1.073751707131074E+42))
 
-(num-test (< 1/123400000000 .000000000001) #f)
-(num-test (> 1/123400000000 .000000000001) #t)
+(if (positive? 2147483648) ; check for int=32 bits
+    (begin
+      (num-test (< 1/123400000000 .000000000001) #f)
+      (num-test (> 1/123400000000 .000000000001) #t)))
 
 (num-test (exp (* our-pi (sqrt 163))) 262537412640768743.999999999999)
 
@@ -27815,11 +27833,14 @@
 (num-test (asin 3.0-70000000i) 4.2857142400327436E-8-18.7571529895002i)
 (num-test (asin -70000000+3i) -1.570796279536826+18.75715298057358i)
 
-(num-test (/ 12341234/111 123456789 12341234/111) 1/123456789)
+(if (positive? 2147483648)
+    (begin
+      (num-test (/ 12341234/111 123456789 12341234/111) 1/123456789)
+      (num-test (abs -922337203685477580) 922337203685477580)))
+
 (num-test (+ 123456789/3 3/123456789 -123456789/3 -3/123456789) 0)
 (num-test (abs -123456789) 123456789)
 (num-test (abs -1234567890) 1234567890)
-(num-test (abs -922337203685477580) 922337203685477580)
 
 
 (let ((tag (catch #t (lambda () (log 10.0 10.0)) (lambda args 'error))))
@@ -28418,8 +28439,11 @@
 	     (= val 1))
 	 (begin
 	   (display "(string->number \"") (display str) (display "\") = ") (display val) (display "?") (newline)))))
- (list "#e1+i" "#e1-i" "#e01+i" "#e+1+i" "#e1.+i" "#e01-i" "#e+1-i" "#e1.-i" "#e1+1i" "#e1-1i" 
-))
+ (list "#e1+i" "#e1-i" "#e01+i" "#e+1+i" "#e1.+i" "#e01-i" "#e+1-i" "#e1.-i" "#e1+1i" "#e1-1i" "011e0" "11e-00"
+       "00.e01-i" "+10e10+i" "+1.110+i" "10011-0i" "-000.111" "0.100111" "-11.1111" "10.00011" "110e00+i" 
+       "1e-011+i" "101001+i" "+11e-0-0i" "11+00e+0i" "-11101.-i" "1110e-0-i" 
+       ))
+
 
 (for-each
  (lambda (str)
@@ -28427,9 +28451,22 @@
      (if (number? val)
 	 (begin
 	   (display "(string->number \"") (display str) (display "\") = ") (display val) (display "?") (newline)))))
- (list "#b#e#e1" "#x#e#e1" "#d#e#e1" "#o#e#e1" "#b#i#e1" "#x#i#e1" "#d#i#e1" "#o#i#e1" "#e#b#e1" "#i#b#e1" "#e#x#e1" "#i#x#e1" "#e#d#e1" "#i#d#e1" "#e#o#e1" "#i#o#e1" "#e#b#i1" "#e#x#i1" "#e#d#i1" "#e#o#i1" "#b#e#b1" "#x#e#b1" "#d#e#b1" "#o#e#b1" "#b#i#b1" "#x#i#b1" "#d#i#b1" "#o#i#b1" "#b#e#x1" "#x#e#x1" "#d#e#x1" "#o#e#x1" "#b#i#x1" "#x#i#x1" "#d#i#x1" "#o#i#x1" "#b#e#d1" "#x#e#d1" "#d#e#d1" "#o#e#d1" "#b#i#d1" "#x#i#d1" "#d#i#d1" "#o#i#d1" "#b#e#o1" "#x#e#o1" "#d#e#o1" "#o#e#o1" "#b#i#o1" "#x#i#o1" "#d#i#o1" "#o#i#o1"  
+ (list "#b#e#e1" "#x#e#e1" "#d#e#e1" "#o#e#e1" "#b#i#e1" "#x#i#e1" "#d#i#e1" "#o#i#e1" "#e#b#e1" "#i#b#e1" "#e#x#e1" "#i#x#e1" 
+       "#e#d#e1" "#i#d#e1" "#e#o#e1" "#i#o#e1" "#e#b#i1" "#e#x#i1" "#e#d#i1" "#e#o#i1" "#b#e#b1" "#x#e#b1" "#d#e#b1" "#o#e#b1" 
+       "#b#i#b1" "#x#i#b1" "#d#i#b1" "#o#i#b1" "#b#e#x1" "#x#e#x1" "#d#e#x1" "#o#e#x1" "#b#i#x1" "#x#i#x1" "#d#i#x1" "#o#i#x1" 
+       "#b#e#d1" "#x#e#d1" "#d#e#d1" "#o#e#d1" "#b#i#d1" "#x#i#d1" "#d#i#d1" "#o#i#d1" "#b#e#o1" "#x#e#o1" "#d#e#o1" "#o#e#o1" 
+       "#b#i#o1" "#x#i#o1" "#d#i#o1" "#o#i#o1"  
+
+       "+1ei" "-1ei" "+0ei" "-0ei" "+1di" "-1di" "+0di" "-0di" "+1fi" "-1fi" "+0fi" "-0fi" "0e-+i" "1d-+i" 
+       "0d-+i" "1f-+i" "0f-+i" "1e++i" "0e++i" "1d++i" ".10-10." "-1.e++i" "0e--01i" "1-00." "0-00." "#xf+b" 
+       "#x1+d" "0f++1i" "1+0d-i" ".0f--i" "1-0d-i" "#xe-ff" 
+
 ))
 
+(num-test (string->number "2.718281828459045235360287471352662497757247093699959574966967627724076630353547594571382178525166427") 2.718281828459045235360287471352662497757247093699959574966967627724076630353547594571382178525166427)
+
+
+;;; every scheme disagrees about stuff like #b.1 or #b+i etc -- I'll just omit them
  
 (for-each
  (lambda (p)
@@ -28448,10 +28485,10 @@
 (test (equal? #e-.1 -1/10) #t)
 (test (equal? #e1 1) #t)
 (test (equal? #e3/2 3/2) #t)
-(test (equal? #i3/2 1.5) #t)
-(test (equal? #i1 1.0) #t)
-(test (equal? #i-1/10 -0.1) #t)
-(test (equal? #i1.5 1.5) #t)
+(test (< (abs (- #i3/2 1.5)) 1e-12) #t)
+(test (< (abs (- #i1 1.0)) 1e-12) #t)
+(test (< (abs (- #i-1/10 -0.1)) 1e-12) #t)
+(test (< (abs (- #i1.5 1.5)) 1e-12) #t)
 
 
 ;;; here's code to generate all (im)possible numbers (using just a few digits) of a given length [leaving aside @ and # and so on]
@@ -28550,7 +28587,9 @@
     (lambda (x y)
       (let ((xx (string->number x)))
 	(if (or (eq? xx #f)
-		(not (eqv? xx y)))
+		(and (exact? y)
+		     (not (eqv? xx y)))
+		(> (abs (- xx y)) 1e-12))
 	    (begin
 	      (display "(string->number ") (display x) (display ") returned ") (display (string->number x)) (display " but expected ") (display y) (newline)))))
     couple))
@@ -29325,6 +29364,7 @@
 ;(test (do () (() ()) ()) '()) ; ?? -- is '() the same as ()? -- scheme bboard sez not necessarily
 (test (do () ('() '())) '())
 ;(test (do '() ('() '())) 'error) ; ?? -- isn't this the same as before?
+(test (do '() (#t 1)) 'error)
 
 (test (let ((x 0) (y 0)) (set! y (do () (#t (set! x 32) 123))) (list x y)) (list 32 123))
 (test (let ((i 32)) (do ((i 0 (+ i 1)) (j i (+ j 1))) ((> j 33) i))) 2)
@@ -29410,6 +29450,7 @@
       (list 99 99))
 
 (test (call/cc (lambda (r) (do () (#f) (r 1)))) 1)
+(test (let ((hi (lambda (x) (+ x 1)))) (do ((i 0 (hi i))) ((= i 3) i))) 3)
 
 
 
@@ -29430,6 +29471,7 @@
 (test (set! (list 1 2) 1) 'error)
 (test (set! (let () 'a) 1) 'error)
 (test (set!) 'error)
+(test (set! #t #f) 'error)
 
 (test (let ((a 1)) (call/cc (lambda (r) (set! a (let () (if (= a 1) (r 123)) 321)))) a) 1)
 (test (let ((a (lambda (b) (+ b 1)))) (set! a (lambda (b) (+ b 2))) (a 3)) 5)
@@ -29555,6 +29597,12 @@
 (test (cond ((cons 1 2))) '(1 . 2))
 (test (cond (#f #t) ((string-append "hi" "ho"))) "hiho")
 
+(for-each
+ (lambda (arg)
+   (test (cond ((or arg) => (lambda (x) x))) arg))
+ (list "hi" -1 #\a 1 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #t (list 1 2 3) '(1 . 2)))
+
+
 ;(test (cond ((= 1 2) 3) (else 4) (4 5)) 'error)
 (test (cond ((+ 1 2) => (lambda (a b) (+ a b)))) 'error)
 ;(test (cond (else)) 'error)  ; value of else might be #t -- perhaps (equal? (cond (else)) else)
@@ -29563,6 +29611,9 @@
 (test (cond ((+ 1 2) => (lambda (x) (+ 1 x)))) 4)
 (test (cond ((cons 1 2) => car)) 1)
 ; (cond ((values 1 2) => +)) -- seems like it ought to work
+(test (cond ((values -1) => abs)) 1)
+(test (cond ((values -1) => => abs)) 'error)
+(test (cond ((values -1) =>)) 'error)
 
 (test (cond (else 1)) 1)
 (test (call/cc (lambda (r) (cond ((r 4) 3) (else 1)))) 4)
@@ -29641,6 +29692,7 @@
 (test (case) 'error)
 (test (case 1 (#t #f) ((1) #t)) 'error)
 (test (case 1 (#t #f)) 'error)
+(test (case -1 ((-1) => abs)) 'error)
 
 (test (case 1 ((1 2) (let ((case 3)) (+ case 1))) ((3 4) 0)) 4)
 
@@ -29886,6 +29938,8 @@
 ;(test (begin . 1) 'error)
 ;(test (let () (begin . 1)) 'error)
 
+;(test (let ((x 0)) (set! x (+ x 1)) (begin (define y 1)) (+ x y)) 'error) ; is this correct?
+
 ;;; apparently these can be considered errors or not (guile says error, stklos and gauche do not)
 ;(test (begin (define x 0) (+ x 1)) 1)
 ;(test ((lambda () (begin (define x 0) (+ x 1)))) 1)
@@ -29896,6 +29950,10 @@
 (test (let ((x 32)) (begin (define x 3)) x) 3)
 (test ((lambda (x) (begin (define x 3)) x) 32) 3)
 (test (let* ((x 32) (y x)) (define x 3) y) 32)
+
+;(test (let ((z 0)) (begin (define x 32)) (begin (define y x)) (set! z y) z) 32) ; so begin is like let*? -- guile uses letrec here = error
+;(test (let ((z 0)) (begin (define x 32) (define y x)) (set! z y) z) 32)         ; similarly here
+;;; I can't find anything in r5rs.html that mandates letrec here, or that says it's in error
 
 
 
@@ -29954,7 +30012,8 @@
 (test (apply + '(1 2 . 3)) 'error)
 (test (apply apply (list + '(3  2))) 5)
 (test (apply apply apply apply (list (list (list + '(3  2))))) 5)
-
+(test (apply + 1 2 (list 3 4)) 10)
+(test (apply + '(1 2) (list 3 4)) 'error)
 
 
 
@@ -30113,6 +30172,7 @@
 (test (let* x ()) 'error)
 (test (let* ((1 2)) 3) 'error)
 (test (let () ) 'error)
+(test (let '() 3) 'error)
 (test (let* ((x 1))) 'error)
 (test (let ((x 1)) (let ((x 32) (y x)) y)) 1)
 (test (let ((x 1)) (letrec ((x 32) (y x)) (+ 1 y))) 'error) ; #<unspecified> seems reasonable if not the 1+ 
@@ -30693,7 +30753,8 @@
 				(set! b1 b)))))))))
   
   (test (r5rs-ratify (/ (log 2.0) (log 3.0)) 1/10000000) 665/1054)
-  (test (r5rs-ratify (/ (log 2.0) (log 3.0)) 1/100000000000) 190537/301994))
+  (if (positive? 2147483648)
+      (test (r5rs-ratify (/ (log 2.0) (log 3.0)) 1/100000000000) 190537/301994)))
 
 (for-each
  (lambda (arg)
@@ -30707,6 +30768,9 @@
 	     (list ctr val)))
 	 (list 4 arg)))
  (list "hi" -1 #\a 11 'a-symbol '#(1 2 3) 3.14 3/4 1.0+1.0i #f #t '(1 . 2)))
+
+(test (+ 2 (call/cc (lambda (rtn) (+ 1 (let () (begin (define x (+ 1 (rtn 3)))) x))))) 5)
+
 
 
 
@@ -32147,6 +32211,7 @@
     (let ((nb (catch #t (lambda () (number? n)) (lambda args 'error))))
       (if (not nb) (begin (display "(number? ") (display n) (display ") returned #f?") (newline)))))
   (list '1e311 '1e-311 '2.1e40000))
+;;; also (string->number "#e+i") throws an error in Guile, also "1e1111."
 
 
 
