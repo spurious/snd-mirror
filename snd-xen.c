@@ -2591,7 +2591,7 @@ static XEN g_write_byte(XEN byte) /* this collides with CM */
 #endif
 
 
-static char* legalize_path(const char *in_str)
+static char *legalize_path(const char *in_str)
 { 
   int inlen;
   char *out_str;

@@ -5528,7 +5528,7 @@ static s7_pointer g_string_ref(s7_scheme *sc, s7_pointer args)
     return(s7_out_of_range_error(sc, "string-ref", 2, index, "less than string length"));
   
   str = string_value(car(args));
-  return(s7_make_character(sc, ((unsigned char*)str)[s7_integer(index)]));
+  return(s7_make_character(sc, ((unsigned char *)str)[s7_integer(index)]));
 }
 
 
@@ -9762,7 +9762,7 @@ static void format_number(s7_scheme *sc, format_data *fdat, int radix, int width
 }
 
 
-static char *format_to_c_string(s7_scheme *sc, const char* str, s7_pointer args, s7_pointer *next_arg)
+static char *format_to_c_string(s7_scheme *sc, const char * str, s7_pointer args, s7_pointer *next_arg)
 {
   #define INITIAL_FORMAT_LENGTH 128
   int i = 0, str_len = 0;
@@ -13311,7 +13311,7 @@ static s7_scheme *clone_s7(s7_scheme *sc, s7_pointer vect)
   
   new_sc->longjmp_ok = false;
   new_sc->strbuf_size = INITIAL_STRBUF_SIZE;
-  new_sc->strbuf = (char*)calloc(new_sc->strbuf_size, sizeof(char));
+  new_sc->strbuf = (char *)calloc(new_sc->strbuf_size, sizeof(char));
 
 #if WITH_READ_LINE
   new_sc->read_line_buf = NULL;
@@ -13404,7 +13404,7 @@ s7_scheme *s7_init(void)
   sc->longjmp_ok = false;
   
   sc->strbuf_size = INITIAL_STRBUF_SIZE;
-  sc->strbuf = (char*)calloc(sc->strbuf_size, sizeof(char));
+  sc->strbuf = (char *)calloc(sc->strbuf_size, sizeof(char));
   
 #if WITH_READ_LINE
   sc->read_line_buf = NULL;

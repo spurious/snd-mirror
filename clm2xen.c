@@ -4235,7 +4235,7 @@ static XEN g_wave_train_p(XEN obj)
 
 enum {NO_PROBLEM_IN_LIST, NULL_LIST, ODD_LENGTH_LIST, NON_NUMBER_IN_LIST, NEGATIVE_NUMBER_IN_LIST};
 
-static const char* list_to_partials_error_to_string(int code)
+static const char *list_to_partials_error_to_string(int code)
 {
   switch (code)
     {

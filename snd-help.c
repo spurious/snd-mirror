@@ -3486,7 +3486,7 @@ const char **help_name_to_xrefs(const char *name)
 }
 
 
-char* word_wrap(const char *text, int widget_len)
+char *word_wrap(const char *text, int widget_len)
 {
   char *new_text;
   int new_len, old_len, i, j, desired_len, line_start = 0;

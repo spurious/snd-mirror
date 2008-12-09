@@ -308,7 +308,7 @@ void set_button_label(Widget label, const char *str)
 
 void set_title(const char *title)
 {
-  XtVaSetValues(MAIN_SHELL(ss), XmNtitle, (char*)title, NULL);
+  XtVaSetValues(MAIN_SHELL(ss), XmNtitle, (char *)title, NULL);
 }
 
 
