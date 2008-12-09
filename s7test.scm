@@ -9,7 +9,7 @@
 ;;;   gauche test suite
 ;;;   gambit test suite
 ;;;   Kent Dybvig's "The Scheme Programming Language"
-;;;   Brad Lucier (who also pointed out many (unintended) bugs)
+;;;   Brad Lucier (who also pointed out many bugs)
 ;;;   Snd's numtst.c
 ;;;   GSL tests
 
@@ -204,6 +204,7 @@
 (test (eq?) 'error)
 (test (eq? #t) 'error)
 ; guile accepts (eq? #t #t #t)
+(test (eq? 3/4 3) #f)
 
 (let ((things (vector #t #f #\space '() "" 0 1 3/4 1+i 1.5 '(1 .2) '#() (vector) (vector 1) (list 1) 'f 't #\t)))
   (do ((i 0 (+ i 1)))
@@ -7409,6 +7410,10 @@
 (num-test (exp -1234000000.0-3.14159265358979i) -0.0)
 (num-test (exp -1234000000.0+2.71828182845905i) -0.0)
 (num-test (exp -1234000000.0-2.71828182845905i) -0.0)
+(num-test (exp 10.0) 22026.46579480672)
+(num-test (exp 100.0) 2.688117141816135E+43)
+(num-test (exp -10.0) 4.5399929762484853E-5)
+(num-test (exp -100.0) 3.720075976020836E-44)
 (num-test (log 1) 0.0)
 (num-test (log -1) 0.0+3.14159265358979i)
 (num-test (log 2) 0.69314718055995)
@@ -7757,6 +7762,11 @@
 (num-test (log -1234000000.0+1234000000.0i) 21.28010035270958+2.35619449019234i)
 (num-test (log 1234000000.0-1234000000.0i) 21.28010035270958-0.78539816339745i)
 (num-test (log -1234000000.0-1234000000.0i) 21.28010035270958-2.35619449019234i)
+(num-test (log .3678794411714423) -1.0)
+(num-test (log 22026.46579480672) 10.0)
+(num-test (log 2.688117141816135E+43) 100.0)
+(num-test (log 4.5399929762484853E-5) -10.0)
+(num-test (log 3.720075976020836E-44) -100.0)
 (num-test (atan 0.0 0.0) 0.0)
 (num-test (atan 0.0 0.00000001) 0.0)
 (num-test (atan 0.0 1.0) 0.0)
@@ -9023,6 +9033,10 @@
 ;(num-test (lcm 2/3 1) 'error)
 (num-test (gcd 2 1.0+0.5i) 'error)
 (num-test (lcm 2 1.0+0.5i) 'error)
+(num-test (gcd 1 0) 1)
+(test (gcd 1 "hi") 'error)
+(test (lcm 0 "hi") 'error)
+(num-test (lcm 1 0) 0)
 (num-test (gcd 0) 0)
 (num-test (lcm 0) 0)
 (num-test (gcd 0) 0)
@@ -10072,6 +10086,10 @@
 (num-test (denominator -362880/500029) 500029)
 (num-test (numerator 362880/362880) 1)
 (num-test (denominator 362880/362880) 1)
+
+;;; (modulo x 0) -> x?  I seem to be getting errors instead; maxima returns x and refers to Section 3.4, of "Concrete Mathematics," by Graham, Knuth, and Patashnik
+;;; (mod x 1.0) = sawtooth
+
 (num-test (modulo 0 1) 0)
 (num-test (remainder 0 1) 0)
 (num-test (quotient 0 1) 0)
@@ -28031,6 +28049,11 @@
 (num-test (lcm 32 -36) 288 )
 (num-test (lcm) 1 )
 
+(test (quotient 3 0) 'error)
+(test (remainder 3 0) 'error)
+(num-test (gcd 2 0) 2)
+(num-test (lcm 2 0) 0)
+
 (test (+ 1 + 2) 'error)
 (test (+ 1 - 2) 'error)
 
@@ -28090,32 +28113,61 @@
   (define b3-0 (string->number "33333333333333333330"))
   (define b2-0 (string->number "2177452800"))
   
-  (test (modulo b3-3 3) 0 )
-  (test (modulo b3-3 -3) 0 )
-  (test (remainder b3-3 3) 0 )
-  (test (remainder b3-3 -3) 0 )
-  (test (modulo b3-2 3) 2 )
-  (test (modulo b3-2 -3) -1 )
-  (test (remainder b3-2 3) 2 )
-  (test (remainder b3-2 -3) 2 )
-  (test (modulo (- b3-2) 3) 1 )
-  (test (modulo (- b3-2) -3) -2 )
-  (test (remainder (- b3-2) 3) -2 )
-  (test (remainder (- b3-2) -3) -2 )
+  (num-test (modulo b3-3 3) 0 )
+  (num-test (modulo b3-3 -3) 0 )
+  (num-test (remainder b3-3 3) 0 )
+  (num-test (remainder b3-3 -3) 0 )
+  (num-test (modulo b3-2 3) 2 )
+  (num-test (modulo b3-2 -3) -1 )
+  (num-test (remainder b3-2 3) 2 )
+  (num-test (remainder b3-2 -3) 2 )
+  (num-test (modulo (- b3-2) 3) 1 )
+  (num-test (modulo (- b3-2) -3) -2 )
+  (num-test (remainder (- b3-2) 3) -2 )
+  (num-test (remainder (- b3-2) -3) -2 )
 
-  (test (modulo 3 b3-3) 3 )
-  (test (modulo -3 b3-3) b3-0 )
-  (test (remainder 3 b3-3) 3 )
-  (test (remainder -3 b3-3) -3 )
-  (test (modulo -3 (- b3-3)) -3 )
-  (test (remainder 3 (- b3-3)) 3 )
-  (test (remainder -3 (- b3-3)) -3 )
+  (num-test (modulo 3 b3-3) 3 )
+  (num-test (modulo -3 b3-3) b3-0 )
+  (num-test (remainder 3 b3-3) 3 )
+  (num-test (remainder -3 b3-3) -3 )
+  (num-test (modulo -3 (- b3-3)) -3 )
+  (num-test (remainder 3 (- b3-3)) 3 )
+  (num-test (remainder -3 (- b3-3)) -3 )
 
-  (test (modulo (- b2-0) 86400) 0 )
-  (test (modulo b2-0 -86400) 0 )
-  (test (modulo b2-0 86400) 0 )
-  (test (modulo (- b2-0) -86400) 0 )
-  (test (modulo  0 (- b2-0)) 0 )
+  (num-test (modulo (- b2-0) 86400) 0 )
+  (num-test (modulo b2-0 -86400) 0 )
+  (num-test (modulo b2-0 86400) 0 )
+  (num-test (modulo (- b2-0) -86400) 0 )
+  (num-test (modulo  0 (- b2-0)) 0 )
+
+  (num-test (abs -12345678901234567890) 12345678901234567890)
+  (num-test (abs 12345678901234567890) 12345678901234567890)
+  (num-test (modulo 12345678901234567890 3123) 1071)
+  (num-test (modulo 12345678901234567890 12345678901234567) 890)
+
+  (test (even? 12345678901234567890) #t)
+  (test (even? 12345678901234567891) #f)
+  (test (odd? 12345678901234567891) #t)
+  (test (odd? 12345678901234567890) #f)
+  (test (positive? 12345678901234567890) #t)
+  (test (positive? -12345678901234567890) #f)
+  (test (negative? 12345678901234567890) #f)
+  (test (negative? -12345678901234567890) #t)
+  (test (zero? 12345678901234567890) #f)
+  (test (exact? 12345678901234567890) #t)
+  (test (inexact? 12345678901234567890) #f)
+  (test (> 12345678901234567890 12345678901234567891) #f)
+  (test (< 12345678901234567890 12345678901234567891) #t)
+  (test (>= 12345678901234567890 12345678901234567891) #f)
+  (test (<= 12345678901234567890 12345678901234567891) #t)
+  (test (= 12345678901234567890 12345678901234567891) #f)
+  
+  (num-test (max 12345678901234567890 12345678901234567891) 12345678901234567891)
+  (num-test (min 12345678901234567890 12345678901234567891) 12345678901234567890)
+  (num-test (gcd 12345678901234567890 12345) 15)
+
+;;;  (test (not (= (sin 12345678901234567890) (cos 12345678901234567890))) #t) ; and so on
+
   ))
 
 (let ((string->number-2 (lambda (str radix)
@@ -28707,7 +28759,7 @@
 	       (if (not (equal? val 'error))
 		   (begin
 		     (display op) (display " ") (display arg) (display " returned ") (display val) (newline)))))
-	   (list "hi" (integer->char 65) 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1)))))
+	   (list "hi" (integer->char 65) 'a-symbol (make-vector 3) abs #\f (lambda (a) (+ a 1)))))
 	(list logior logand lognot logxor ash))
 
        (for-each
@@ -28718,7 +28770,7 @@
 	       (if (not (equal? val 'error))
 		   (begin
 		     (display op) (display " 1 ") (display arg) (display " returned ") (display val) (newline)))))
-	   (list "hi" (integer->char 65) 'a-symbol (make-vector 3) abs 3.14 3/4 1.0+1.0i #\f (lambda (a) (+ a 1)))))
+	   (list "hi" (integer->char 65) 'a-symbol (make-vector 3) abs #\f (lambda (a) (+ a 1)))))
 	(list logior logand logxor lognot))
 
        ))
@@ -32065,6 +32117,7 @@
 		   (continuation? cont)))
 	    #t)
 
+      (test (string? (scheme-implementation)) #t)
       (test (eval-string "(+ 1 2)") 3)
       (test (eval '(+ 1 2)) 3)
 
@@ -32305,14 +32358,84 @@
 		     (vector-ref op 0) (vector-ref op 1) (vector-ref op 2) (vector-ref op 3) (vector-ref op 4))
 	     (begin
 	       (display op) (newline))))
-       error-data)))
+       error-data)
+
+      (let ((data '((3.0 0.14159265358979323846 0.1411200080598672)
+		    (31.0 0.41592653589793238462 0.404037645323065)
+		    (314.0 0.15926535897932384626 0.1585929060285728)
+		    (3141.0 0.59265358979323846264 0.5585640372121817)
+		    (31415.0 0.92653589793238462643 0.7995441773754675)
+		    (314159.0 0.26535897932384626433 0.262255699519879)
+		    (3141592.0 0.65358979323846264338 0.6080402764374114)
+		    (31415926.0 0.53589793238462643383 0.5106132968486387)
+		    (314159265.0 0.35897932384626433832 0.3513188023745885)
+		    (3141592653.0 0.58979323846264338327 0.5561892044494355)
+		    (31415926535.0 0.89793238462643383279 0.7820399858427447)
+		    (314159265358.0 0.97932384626433832795 0.8301205477998297)
+		    (3141592653589.0 0.79323846264338327950 0.7126289202333107)
+		    (31415926535897.0 0.93238462643383279502 0.8030432710678118)
+		    (314159265358979.0 0.32384626433832795028 0.3182152351447919)
+		    (3141592653589793.0 0.23846264338327950288 0.2362090532517409)
+		    (31415926535897932.0 0.38462643383279502884 0.3752128900123344)
+		    (314159265358979323.0 0.84626433832795028841 0.7488096950162713)
+		    (3141592653589793238.0 0.46264338327950288419 0.4463151633593201)
+		    (31415926535897932384.0 0.62643383279502884197 0.5862594566145847)
+		    (314159265358979323846.0 0.26433832795028841971 0.2612706361296674)
+		    (3141592653589793238462.0 0.64338327950288419716 0.5999057324027754)
+		    (31415926535897932384626.0 0.43383279502884197169 0.4203516113275538)
+		    (314159265358979323846264.0 0.33832795028841971693 0.3319102940355321)
+		    (3141592653589793238462643.0 0.38327950288419716939 .3739640276557301))) 
+	    (vals '())
+	    (init-vals '())
+	    (mx-sin-err 0.0))
+	
+	(for-each
+	 (lambda (p)
+	   (let ((arg1 (car p))
+		 (arg2 (cadr p))
+		 (mxerr 0.0))
+	     (do ((i 0 (+ i 1))
+		  (x 0.0 (+ x .1)))
+		 ((= i 10))
+	       (let ((err (abs (- (abs (sin (- arg1 x))) (abs (sin (+ arg2 x)))))))
+		 (if (= i 0)
+		     (set! init-vals (cons err init-vals)))
+		 (if (> err mxerr)
+		     (set! mxerr err))))
+	     (set! vals (cons mxerr vals))
+	     (set! mx-sin-err (max mx-sin-err (abs (- (sin arg2) (caddr p)))))))
+	 data)
+	
+	(if (> mx-sin-err 1e-8)
+	    (begin
+	      (display "base sine seems inaccurate!  error: ") 
+	      (display mx-sin-err) 
+	      (newline)))
+	
+	(set! init-vals (reverse init-vals))
+	(set! vals (reverse vals))
+	
+	(let ((stop #f))
+	  (do ((i 0 (+ i 1)))
+	      ((or (number? stop)
+		   (= i (length vals))))
+	    (if (> (list-ref vals i) 1e-6)
+		(set! stop i)))
+	  (if (number? stop)
+	      (begin
+		(display ";sin error > 1e-6 after 2^")
+		(display (/ (log (car (list-ref data stop))) (log 2.0)))
+		(display " or thereabouts")
+		(newline)))))
+      
+      ))
 
 '(
 ;;; this is the current s7 output from loading this file:
-
- " "
-(let ((funcs (make-vector 3 #f))) (do ((i 0 (+ i 1))) ((= i 3)) (vector-set! funcs i (lambda () (+ i 1)))) (+ ((vector-ref funcs 0)) ((vector-ref funcs 1)) ((vector-ref funcs 2)))) got 12 but expected 6
-
+  
+  " "
+  (let ((funcs (make-vector 3 #f))) (do ((i 0 (+ i 1))) ((= i 3)) (vector-set! funcs i (lambda () (+ i 1)))) (+ ((vector-ref funcs 0)) ((vector-ref funcs 1)) ((vector-ref funcs 2)))) got 12 but expected 6
+  
 (let* ((x (quote (1 2 3))) (y (apply list x))) (not (eq? x y))) got #f but expected #t
 
 (let () (define q (let ((count 5)) (define (get-count) count) (define p (make-promise (if (<= count 0) count (begin (set! count (- count 1)) (force p) (set! count (+ count 2)) count)))) (list get-count p))) (let* ((get-count (car q)) (p (cadr q)) (a (get-count)) (b (force p)) (c (get-count))) (list a b c))) got (5 10 10) but expected (5 0 10)
@@ -32348,6 +32471,7 @@ tan:            4.2096697956986e-07     (tan 1234000000/3)            -18.780955
 cos:            2.2319583216357e-08     (cos 1234000000/3)            -0.053170110875237                      -0.05317013319482
 sin:            1.1884160322495e-09     (sin 1234000000/3)            0.99858546920607                        0.99858546801766
 string->number: 3.514766724748e-14      (string->number "1234567890123456789012345678901234567890.123456789e-30") 1234567890.1235 1234567890.1235
+sin error > 1e-6 after 2^38.192705173229 or thereabouts
 )
 
 

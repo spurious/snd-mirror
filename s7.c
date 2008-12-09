@@ -122,47 +122,6 @@
  * Snd's configure.ac has m4 code to handle WITH_COMPLEX and HAVE_COMPLEX_TRIG.
  */
 
-#if __cplusplus
-  #ifndef WITH_COMPLEX
-    #define WITH_COMPLEX 1
-  #endif
-  #ifndef HAVE_COMPLEX_TRIG
-    #define HAVE_COMPLEX_TRIG 0
-  #endif
-#endif
-
-
-#include <unistd.h>
-#include <limits.h>
-#include <float.h>
-#include <ctype.h>
-#include <strings.h>
-#include <string.h>
-#include <stdlib.h>
-#include <sys/types.h>
-
-#if __cplusplus
-  #include <cmath>
-#else
-  #include <math.h>
-#endif
-
-#if WITH_COMPLEX
-  #if __cplusplus
-    #include <complex>
-  #else
-    #include <complex.h>
-  #endif
-#endif
-
-#include <setjmp.h>
-
-#if HAVE_PTHREADS
-#include <pthread.h>
-#endif
-
-#include "s7.h"
-
 
 /* ---------------- initial sizes ---------------- */
 
@@ -234,6 +193,48 @@
  *    threads
  *    s7 init
  */
+
+#if __cplusplus
+  #ifndef WITH_COMPLEX
+    #define WITH_COMPLEX 1
+  #endif
+  #ifndef HAVE_COMPLEX_TRIG
+    #define HAVE_COMPLEX_TRIG 0
+  #endif
+#endif
+
+
+#include <unistd.h>
+#include <limits.h>
+#include <float.h>
+#include <ctype.h>
+#include <strings.h>
+#include <string.h>
+#include <stdlib.h>
+#include <sys/types.h>
+
+#if __cplusplus
+  #include <cmath>
+#else
+  #include <math.h>
+#endif
+
+#if WITH_COMPLEX
+  #if __cplusplus
+    #include <complex>
+  #else
+    #include <complex.h>
+  #endif
+#endif
+
+#include <setjmp.h>
+
+#if HAVE_PTHREADS
+#include <pthread.h>
+#endif
+
+#include "s7.h"
+
 
 typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY, OP_DOMACRO, OP_LAMBDA, OP_QUOTE, 
 	      OP_DEFINE0, OP_DEFINE1, OP_BEGIN, OP_IF0, OP_IF1, 
@@ -3640,7 +3641,8 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
 	  c =' ';
 	else 
 	  {
-	    if (STRCMP(name + 1, "newline") == 0)
+	    if ((STRCMP(name + 1, "newline") == 0) ||
+		(STRCMP(name + 1, "linefeed") == 0))
 	      c ='\n';
 	    else 
 	      {
@@ -4853,11 +4855,13 @@ static s7_pointer g_modulo(s7_scheme *sc, s7_pointer args)
   if (!s7_is_real(cadr(args)))
     return(s7_wrong_type_arg_error(sc, "modulo", 2, cadr(args), "a real"));
   
-  sc->v = nvalue(car(args));
   if (!s7_is_zero(cadr(args)))
-    sc->v = num_mod(sc->v, nvalue(cadr(args)));
-  else return(s7_division_by_zero_error(sc, "modulo", args));
-  return(make_number(sc, sc->v));
+    {
+      sc->v = nvalue(car(args));
+      sc->v = num_mod(sc->v, nvalue(cadr(args)));
+      return(make_number(sc, sc->v));
+    }
+  return(car(args)); /* (mod x 0) = x according to "Concrete Mathematics" */
 }
 
 

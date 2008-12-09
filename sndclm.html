@@ -2652,6 +2652,12 @@ One popular kind of vibrato is:
 is useful; the others are silly).
 sawtooth-wave ramps from -1 to 1, then goes immediately back to -1.
 Use a negative frequency to turn the "teeth" the other way.
+To get a sawtooth from 0 to 1, you can simply use modulo:
+</p>
+<pre>
+    (with-sound () (do ((i 0 (+ i 1)) (x 0.0 (+ x .01))) ((= i 22050)) (outa i (modulo x 1.0))))
+</pre>
+<p>
 triangle-wave ramps from -1 to 1, then ramps from 1 to -1.
 pulse-train produces a single sample of 1.0, then zeros.
 square-wave produces 1 for half a period, then 0.  All have a period

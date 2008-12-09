@@ -2548,7 +2548,7 @@ static xen_value *add_value_to_ptree(ptree *prog, XEN val, int type)
     case R_MIX_READER: v = make_xen_value(R_MIX_READER, add_mix_reader_to_ptree(prog, (struct mix_fd *)xen_to_mix_sample_reader(val)), R_VARIABLE); break;
 #endif
     case R_CHAR:       v = make_xen_value(R_CHAR, add_int_to_ptree(prog, (Int)(XEN_TO_C_CHAR(val))), R_VARIABLE);                      break;
-    case R_STRING:     v = make_xen_value(R_STRING, add_string_to_ptree(prog, mus_strdup(XEN_TO_C_STRING(val))), R_VARIABLE);          break; /* TODO: memleak here */
+    case R_STRING:     v = make_xen_value(R_STRING, add_string_to_ptree(prog, mus_strdup(XEN_TO_C_STRING(val))), R_VARIABLE);          break;
     case R_SYMBOL:     v = make_xen_value(R_SYMBOL, add_xen_to_ptree(prog, val), R_VARIABLE);                                          break;
     case R_KEYWORD:    v = make_xen_value(R_KEYWORD, add_xen_to_ptree(prog, val), R_VARIABLE);                                         break;
     case R_CLM:        v = make_xen_value(R_CLM, add_clm_to_ptree(prog, XEN_TO_MUS_ANY(val), val), R_VARIABLE);                        break;
@@ -3376,7 +3376,6 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool sepa
 	 (strcmp(XEN_SYMBOL_TO_C_STRING(XEN_LIST_REF(template_args, i)), ":rest") == 0)))
       num_template_args--;
 
-
   if (num_passed_args > num_template_args)
     {
       /* in this context, we're not trying to handle :rest args */
@@ -3412,7 +3411,6 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool sepa
       else declarations = XEN_FALSE;                      /* not a "declare" form after all */
     }
 
-  /* TODO: defaults should be #f, and only allocated if lambda* */
   /* TODO: got too many args wrong if keys used */
 
   /* fprintf(stderr, "num_args: %d, template_args: %s, declarations: %s\n", num_template_args, XEN_AS_STRING(template_args), XEN_AS_STRING(declarations)); */
@@ -3562,8 +3560,6 @@ static char *declare_args(ptree *prog, XEN form, int default_arg_type, bool sepa
 	  v = NULL;
 	}
       
-      /* fprintf(stderr, "add arg %s\n", XEN_AS_STRING(template_arg_symbol)); */
-
       add_var_to_ptree(prog, 
 		       XEN_SYMBOL_TO_C_STRING(template_arg_symbol), 
 		       v = add_empty_var_to_ptree(prog, arg_type));

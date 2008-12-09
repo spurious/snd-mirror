@@ -51952,18 +51952,22 @@ EDITS: 1
       (if (sound? ind)
 	  (close-sound ind)))
     
-#|
-    ;; TODO: default args still not bugfree
+    (if (provided? 'snd-s7)
+	(let ((hie (lambda* ((a 0.0)) (declare (a float)) (+ a 1.0))))
+	  (if (fneq (run (lambda () (hie 1.0))) 2.0) (snd-display ";run opt args 0"))
+	  (if (fneq (run (lambda () (hie))) 1.0) (snd-display ";run opt args 1"))
+	  (if (fneq (run (lambda () (+ (hie) (hie 1.0)))) 3.0) (snd-display ";run opt args 2"))))
+
     (if (provided? 'snd-s7)
 	(let ((hi (lambda* ((a 0.0) :optional (b 0.0)) (declare (a float) (b float)) (+ a b))))
-	  (run-test (hi 1.0) 1.0)
-	  (run-test (hi 1.0 2.0) 3.0)
-	  (run-test (hi) 0.0)
-	  (run-test (+ (hi) (hi 1.0) (hi 1.0 2.0)) 4.0)
-	  (run-test (+ (hi 1.0) (hi) (hi 1.0 2.0)) 4.0)
-	  (run-test (+ (hi 1.0) (hi 1.0 2.0) (hi)) 4.0)
-	  (run-test (+ (hi 1.0 2.0) (hi) (hi 1.0)) 4.0)))
-|#
+	  (if (fneq (run (lambda () (hi 1.0))) 1.0) (snd-display ";run opt args 3"))
+	  (if (fneq (run (lambda () (hi 1.0 2.0))) 3.0) (snd-display ";run opt args 4"))
+	  (if (fneq (run (lambda () (hi))) 0.0) (snd-display ";run opt args 5"))
+	  (if (fneq (run (lambda () (+ (hi) (hi 1.0) (hi 1.0 2.0)))) 4.0) (snd-display ";run opt args 6"))
+	  (if (fneq (run (lambda () (+ (hi 1.0) (hi) (hi 1.0 2.0)))) 4.0) (snd-display ";run opt args 7"))
+	  (if (fneq (run (lambda () (+ (hi 1.0) (hi 1.0 2.0) (hi)))) 4.0) (snd-display ";run opt args 8"))
+	  (if (fneq (run (lambda () (+ (hi 1.0 2.0) (hi) (hi 1.0)))) 4.0) (snd-display ";run opt args 9"))))
+
     
     ))
 
