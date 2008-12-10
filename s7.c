@@ -6633,7 +6633,7 @@ static s7_pointer load_file(s7_scheme *sc, FILE *fp)
     {
       size_t bytes;
       rewind(fp);
-      content = (char *)malloc(size + 1);
+      content = (char *)malloc((size + 1) * sizeof(char));
       bytes = fread(content, sizeof(char), size, fp);
       content[size] = '\0';
     }
@@ -9708,7 +9708,7 @@ static void format_append_char(format_data *dat, char c)
   if (dat->len <= dat->loc + 2)
     {
       dat->len *= 2;
-      dat->str = (char *)realloc(dat->str, dat->len);
+      dat->str = (char *)realloc(dat->str, dat->len * sizeof(char));
     }
   dat->str[dat->loc++] = c;
 }
@@ -9762,7 +9762,7 @@ static void format_number(s7_scheme *sc, format_data *fdat, int radix, int width
 }
 
 
-static char *format_to_c_string(s7_scheme *sc, const char * str, s7_pointer args, s7_pointer *next_arg)
+static char *format_to_c_string(s7_scheme *sc, const char *str, s7_pointer args, s7_pointer *next_arg)
 {
   #define INITIAL_FORMAT_LENGTH 128
   int i = 0, str_len = 0;
@@ -9873,7 +9873,7 @@ static char *format_to_c_string(s7_scheme *sc, const char * str, s7_pointer args
 		    if (curly_len <= 1)
 		      return(s7_format_error(sc, "~{...~} doesn't consume any arguments!", str, args, fdat));
 
-		    curly_str = (char *)malloc(curly_len);
+		    curly_str = (char *)malloc(curly_len * sizeof(char));
 		    for (k = 0; k < curly_len - 1; k++)
 		      curly_str[k] = str[i + 2 + k];
 		    curly_str[curly_len - 1] = '\0';
@@ -13977,3 +13977,8 @@ s7_scheme *s7_init(void)
   }
   return(sc);
 }
+
+/* I made a version with s7_Char and whatnot for unicode support, but it
+ *   was too ugly.  If someone is interested, let me know.
+ * Another possibility is multiprecision math.
+ */

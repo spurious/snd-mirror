@@ -143,16 +143,6 @@
        (do ((i start (1+ i))) ((= i end))
 	 (out-any i (* amp (sum-of-sines os)) 0))))))
 
-(define (simple-soc beg dur freq amp)
-  "(simple-soc beg dur freq amp) test instrument for sum-of-cosines"
-  (let* ((os (make-sum-of-cosines 10 freq 0.0))
-	 (start (seconds->samples beg))
-	 (end (+ start (seconds->samples dur))))
-    (run
-     (lambda ()
-       (do ((i start (1+ i))) ((= i end))
-	 (out-any i (* amp (sum-of-cosines os)) 0))))))
-
 (define (simple-nsin beg dur amp)
   "(simple-nsin beg dur amp) test instrument for nsin"
   (let* ((os (make-nsin 440 10))
@@ -210,16 +200,6 @@
 	     (if (oscil? (vector-ref arr i))
 		 (set! sum (+ sum (oscil (vector-ref arr i))))))
 	   (out-any i (* amp .05 sum) 0)))))))
-
-(define (simple-sss beg dur amp)
-  "(simple-sss beg dur amp) test instrument for sine-summation"
-  (let* ((os (make-sine-summation 440 0.0 7 .5 1.0))
-	 (start (seconds->samples beg))
-	 (end (+ start (seconds->samples dur))))
-    (run
-     (lambda ()
-       (do ((i start (1+ i))) ((= i end))
-	 (out-any i (* amp (sine-summation os)) 0))))))
 
 (define (simple-asy beg dur amp)
   "(simple-asy beg dur amp) test instrument for asymmetric-fm"
@@ -1580,13 +1560,11 @@
 (with-sound (:statistics #t)
 	    (simple-ssb 0 .2 440 .1)
 	    (simple-sos .25 .2 .1)
-	    (simple-soc 0.5 .2 440 .1)
 	    (simple-nsin .6 .2 .1)
 	    (simple-ncos 0.7 .2 440 .1)
 	    (simple-nrxysin .6 .2 .1)
 	    (simple-nrxycos 0.7 .2 440 .1)
 	    (simple-osc 0.75 .2 440 .1)
-	    (simple-sss 1.0 .2 .1)
 	    (simple-asy 1.25 .2 .1)
 	    (simple-saw 1.5 .2 .1)
 	    (simple-tri 1.75 .2 .1)
@@ -2472,15 +2450,6 @@
 	 (outa i (* amp (triangle-wave carrier 
                           (* index (triangle-wave modulator))))))))))
 
-(define (sndclmdoc-simple-soc beg dur freq amp)
-  (let* ((os (make-sum-of-cosines 10 freq 0.0))
-	 (start (seconds->samples beg))
-	 (end (+ start (seconds->samples dur))))
-    (run
-     (lambda ()
-       (do ((i start (1+ i))) ((= i end))
-	 (outa i (* amp (sum-of-cosines os))))))))
-
 (define* (sndclmdoc-make-sinc-train :optional (frequency 440.0) (width #f))
   (let ((range (or width (* pi (- (* 2 (inexact->exact (floor (/ (mus-srate) (* 2.2 frequency))))) 1)))))
     ;; 2.2 leaves a bit of space before srate/2, (* 3 pi) is the minimum width, normally
@@ -2499,22 +2468,6 @@
 	(list-set! gen 0 (- new-ang range))
 	(list-set! gen 0 new-ang))
     val))
-
-(definstrument (sndclmdoc-ss beg dur freq amp :optional (N 1) (a .5) (B-ratio 1.0) (frqf #f))
-  (let* ((st (seconds->samples beg))
-         (nd (+ st (seconds->samples dur)))
-         (sgen (make-sine-summation :n N :a a :ratio B-ratio :frequency freq))
-	 (frq-env (if frqf (make-env frqf :scaler (hz->radians freq) :duration dur) #f))
-	 (spectr-env (if frqf (make-env frqf :duration dur) #f))
-	 (amp-env (make-env '(0 0 1 1 2 1 3 0) :scaler amp :duration dur)))
-    (run
-     (lambda ()
-       (do ((i st (1+ i))) 
-	   ((= i nd))
-	 (if spectr-env
-	     (set! (mus-scaler sgen) (* a (exp (- (env spectr-env))))))
-         (outa i (* (env amp-env)
-		    (sine-summation sgen (if frq-env (env frq-env) 0.0)))))))))
 
 (define (sndclmdoc-make-sum-of-odd-sines frequency n)
   (vct 0.0 (hz->radians frequency) (exact->inexact n)))
@@ -3043,7 +2996,6 @@
     (set! (dsp-asyfm-phase gen) (+ phase input (dsp-asyfm-freq gen)))
     result))
 
-;;; sum-of-cosines example
 
 (def-clm-struct (sndclm-expcs 
 		 :make-wrapper (lambda (g)
@@ -3125,8 +3077,6 @@
   (with-sound () (sndclmdoc-pqw 0 1 200.0 1000.0 '(2 .2  3 .3  6 .5)))
   (with-sound (:srate 44100) (sndclmdoc-tritri 0 1 1000.0 0.5 0.1 0.01)) ; sci-fi laser gun
   (with-sound (:srate 44100) (sndclmdoc-tritri 0 1 4000.0 0.7 0.1 0.01)) ; a sparrow?
-  (with-sound () (sndclmdoc-simple-soc 0 1 100 1.0))
-  (with-sound () (sndclmdoc-ss 0 1 400.0 1.0 5 0.5 1.0 '(0 0 1 2)))
   (with-sound () (sndclmdoc-shift-pitch 0 3 "oboe.snd" 1108.0))
   (let* ((sound "oboe.snd")
 	 (mx (cadr (mus-sound-maxamp sound)))

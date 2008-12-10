@@ -18438,12 +18438,10 @@ EDITS: 2
 	  (snd-display ";cosil +-: ~A" mx)))
     
     (fm-test (make-oscil))
-    (fm-test (make-sine-summation))
     (fm-test (make-nrxysin))
     (fm-test (make-nrxycos))
     (fm-test (make-square-wave))
     (fm-test (make-triangle-wave))
-    (fm-test (make-sum-of-cosines))
     (fm-test (make-sum-of-sines))
     (fm-test (make-ncos))
     (fm-test (make-nsin))
@@ -26125,7 +26123,7 @@ EDITS: 2
 		       (lambda () (make-iir-filter :xcoeffs (vct 0 1 2))) make-locsig (lambda () (make-mixer 3 3)) 
 		       make-notch make-one-pole make-one-zero make-oscil make-ppolar
 		       make-pulse-train make-rand make-rand-interp make-sawtooth-wave
-		       make-sine-summation make-square-wave make-src make-sum-of-cosines make-sum-of-sines make-table-lookup make-triangle-wave
+		       make-square-wave make-src make-sum-of-sines make-table-lookup make-triangle-wave
 		       make-two-pole make-two-zero make-wave-train make-polyshape make-zpolar make-phase-vocoder make-ssb-am
 		       (lambda () (make-filter :ycoeffs (vct 0 1 2)))
 		       (lambda () (make-filter :xcoeffs (vct 1 2 3) :ycoeffs (vct 0 1 2)))))
@@ -26134,7 +26132,7 @@ EDITS: 2
 			   filter fir-filter filtered-comb formant (lambda (gen ind) (frame-ref gen ind)) granulate
 			   iir-filter (lambda (gen a) (locsig gen 0 a)) (lambda (gen a) (mixer-ref gen a 0)) notch one-pole one-zero oscil two-pole
 			   pulse-train rand rand-interp sawtooth-wave
-			   sine-summation square-wave (lambda (gen a) (src gen 0.0 a)) sum-of-cosines sum-of-sines table-lookup triangle-wave
+			   square-wave (lambda (gen a) (src gen 0.0 a)) sum-of-sines table-lookup triangle-wave
 			   two-pole two-zero wave-train polyshape two-zero phase-vocoder ssb-am
 			   filter filter))
 	  (ques-procs (list all-pass? asymmetric-fm? moving-average?
@@ -26142,7 +26140,7 @@ EDITS: 2
 			    filter? fir-filter? filtered-comb? formant? frame? granulate?
 			    iir-filter? locsig? mixer? notch? one-pole? one-zero? oscil? two-pole?
 			    pulse-train? rand? rand-interp? sawtooth-wave?
-			    sine-summation? square-wave? src? sum-of-cosines? sum-of-sines? table-lookup? triangle-wave?
+			    square-wave? src? sum-of-sines? table-lookup? triangle-wave?
 			    two-pole? two-zero? wave-train? polyshape? two-zero? phase-vocoder? ssb-am?
 			    filter? filter?))
 	  (func-names (list 'all-pass 'asymmetric-fm 'moving-average
@@ -26150,7 +26148,7 @@ EDITS: 2
 			    'filter-x 'fir-filter 'filtered-comb 'formant 'frame 'granulate
 			    'iir-filter 'locsig 'mixer 'notch 'one-pole 'one-zero 'oscil 'two-pole
 			    'pulse-train 'rand 'rand-interp 'sawtooth-wave
-			    'sine-summation 'square-wave 'src 'sum-of-cosines 'sum-of-sines 'table-lookup 'triangle-wave
+			    'square-wave 'src 'sum-of-sines 'table-lookup 'triangle-wave
 			    'two-pole 'two-zero 'wave-train 'polyshape 'two-zero 'phase-vocoder 'ssb-am
 			    'filter-y 'filter-xy))
 	  (gen-args (list 0.0 0.0 1.0
@@ -26158,7 +26156,7 @@ EDITS: 2
 			  0.0 0.0 0.0 0.0 0 (lambda (dir) 0.0)
 			  0.0 0.0 0 0.0 0.0 0.0 0.0 0.0
 			  0.0 0.0 0.0 0.0
-			  0.0 0.0 (lambda (dir) 0.0) 0.0 0.0 0.0 0.0
+			  0.0 (lambda (dir) 0.0) 0.0 0.0 0.0
 			  0.0 0.0 0.0 0.0 0.0 (lambda (dir) 0.0) 0.0
 			  0.0 0.0))
 	  (generic-procs (list mus-a0 mus-a1 mus-a2 mus-b1 mus-b2 mus-channel mus-channels mus-data
@@ -26225,7 +26223,7 @@ EDITS: 2
 			 make-oscil 
 			 make-pulse-train make-sawtooth-wave
 			 make-sine-summation make-square-wave 
-			 make-sum-of-cosines make-sum-of-sines 
+			 make-sum-of-sines 
 			 (lambda () (make-table-lookup :wave (make-vct 128 .1))) 
 			 make-triangle-wave
 			 (lambda () (make-two-pole .1 .3 .6)) 
@@ -26244,7 +26242,7 @@ EDITS: 2
 			     (lambda (gen a) (locsig gen 0 1.0))
 			     notch one-pole one-zero oscil 
 			     pulse-train sawtooth-wave
-			     sine-summation square-wave sum-of-cosines sum-of-sines table-lookup triangle-wave
+			     sine-summation square-wave sum-of-sines table-lookup triangle-wave
 			     two-pole two-zero polyshape phase-vocoder ssb-am
 			     filter filter))
 	    (func-names (list 'all-pass 'asymmetric-fm 'moving-average
@@ -26252,7 +26250,7 @@ EDITS: 2
 			      'filter-x 'fir-filter 'formant 'granulate
 			      'iir-filter 'locsig 'notch 'one-pole 'one-zero 'oscil 
 			      'pulse-train 'sawtooth-wave
-			      'sine-summation 'square-wave 'sum-of-cosines 'sum-of-sines 'table-lookup 'triangle-wave
+			      'sine-summation 'square-wave 'sum-of-sines 'table-lookup 'triangle-wave
 			      'two-pole 'two-zero 'polyshape 'phase-vocoder 'ssb-am
 			      'filter-y 'filter-xy)))
 	(for-each
@@ -26352,10 +26350,10 @@ EDITS: 2
 		    (let ((tag (catch #t (lambda () (g :frequency 440.0)) (lambda args (car args)))))
 		      (if (not (eq? tag 'out-of-range))
 			  (snd-display ";srate ~A: ~A -> ~A" n name tag))))
-		  (list make-oscil make-asymmetric-fm make-sine-summation make-sum-of-cosines make-sum-of-sines
+		  (list make-oscil make-asymmetric-fm make-sum-of-sines
 			make-triangle-wave make-square-wave make-pulse-train make-sawtooth-wave
 			make-rand make-rand-interp)
-		  (list 'oscil 'asymmetric-fm 'sine-summation 'sum-of-cosines 'sum-of-sines
+		  (list 'oscil 'asymmetric-fm 'sum-of-sines
 			'triangle-wave 'square-wave 'pusle-train 'sawtooth-wave
 			'rand 'rand-interp)))
 	       (list 100 1))
@@ -26373,7 +26371,7 @@ EDITS: 2
 					make-filter make-filtered-comb make-fir-filter make-formant make-frame make-granulate
 					make-iir-filter make-locsig make-mixer make-notch make-one-pole make-one-zero make-oscil make-ppolar
 					make-pulse-train make-rand make-rand-interp make-sawtooth-wave make-polyshape make-polywave
-					make-sine-summation make-square-wave make-src make-sum-of-cosines make-sum-of-sines 
+					make-square-wave make-src
 					make-two-pole make-two-zero make-wave-train make-zpolar make-phase-vocoder make-ssb-am)))
 	      
 	      (define (random-gen args)
@@ -26552,10 +26550,10 @@ EDITS: 2
 	   (if (not (eq? tag 'mus-error))
 	       (snd-display ";long arglist to ~A: ~A" name tag))))
        (list make-wave-train make-polyshape make-delay make-moving-average make-comb make-filtered-comb make-notch
-	     make-rand make-rand-interp make-table-lookup make-sine-summation make-env
+	     make-rand make-rand-interp make-table-lookup make-env
 	     make-readin make-locsig make-granulate make-convolve make-phase-vocoder)
        (list 'make-wave-train 'make-polyshape 'make-delay 'make-moving-average 'make-comb 'make-filtered-comb 'make-notch
-	     'make-rand 'make-rand-interp 'make-table-lookup 'make-sine-summation 'make-env
+	     'make-rand 'make-rand-interp 'make-table-lookup 'make-env
 	     'make-readin 'make-locsig 'make-granulate 'make-convolve 'make-phase-vocoder)))
     
     (let ((v1 (make-vct 10 .1)))
@@ -48168,13 +48166,10 @@ EDITS: 1
     (btst '(let ((gen (make-readin "oboe.snd"))) (readin? gen)) #t)
     ;;(btst '(let ((gen (make-sample->file))) (sample->file? gen)) #t)
     (btst '(let ((gen (make-sawtooth-wave))) (sawtooth-wave? gen)) #t)
-    (btst '(let ((gen (make-sine-summation))) (sine-summation? gen)) #t)
     (btst '(let ((gen (make-nrxysin))) (nrxysin? gen)) #t)
     (btst '(let ((gen (make-nrxycos))) (nrxycos? gen)) #t)
     (btst '(let ((gen (make-square-wave))) (square-wave? gen)) #t)
     (btst '(let ((gen (make-src))) (src? gen)) #t)
-    (btst '(let ((gen (make-sum-of-cosines))) (sum-of-cosines? gen)) #t)
-    (btst '(let ((gen (make-sum-of-sines))) (sum-of-sines? gen)) #t)
     (btst '(let ((gen (make-ncos))) (ncos? gen)) #t)
     (btst '(let ((gen (make-nsin))) (nsin? gen)) #t)
     (btst '(let ((gen (make-ssb-am))) (ssb-am? gen)) #t)
@@ -48253,8 +48248,6 @@ EDITS: 1
     ;;(ftst '(let ((gen (make-sample->file))) (sample->file gen)) 0.0)
     (ftst '(let ((gen (make-sawtooth-wave))) (sawtooth-wave gen)) 0.0)
     (ftst '(let ((gen (make-sawtooth-wave))) (gen)) 0.0)
-    (ftst '(let ((gen (make-sine-summation))) (sine-summation gen)) 0.0)
-    (ftst '(let ((gen (make-sine-summation))) (gen)) 0.0)
     (ftst '(let ((gen (make-nrxysin))) (nrxysin gen)) 0.0)
     (ftst '(let ((gen (make-nrxysin))) (gen)) 0.0)
     (ftst '(let ((gen (make-nrxycos))) (nrxycos gen)) 1.0)
@@ -48263,10 +48256,6 @@ EDITS: 1
     (ftst '(let ((gen (make-square-wave))) (gen)) 1.0)
     (ftst '(let ((gen (make-src))) (src gen)) 0.0)
     (ftst '(let ((gen (make-src))) (gen)) 0.0)
-    (ftst '(let ((gen (make-sum-of-cosines))) (sum-of-cosines gen)) 1.0)
-    (ftst '(let ((gen (make-sum-of-cosines))) (gen)) 1.0)
-    (ftst '(let ((gen (make-sum-of-sines))) (sum-of-sines gen)) 0.0)
-    (ftst '(let ((gen (make-sum-of-sines))) (gen)) 0.0)
     (ftst '(let ((gen (make-ncos))) (ncos gen)) 1.0)
     (ftst '(let ((gen (make-ncos))) (gen)) 1.0)
     (ftst '(let ((gen (make-nsin))) (nsin gen)) 0.0)
@@ -49102,8 +49091,8 @@ EDITS: 1
 	       (snd-display ";~A ~A" n tag))))
        (list make-all-pass make-asymmetric-fm make-snd->sample make-moving-average make-comb make-filtered-comb make-delay make-frame make-granulate
 	     make-locsig make-mixer make-notch make-oscil make-pulse-train make-rand make-rand-interp make-sawtooth-wave
-	     make-sine-summation make-nrxysin make-nrxycos make-square-wave make-src make-sum-of-cosines make-ncos 
-	     make-sum-of-sines make-nsin make-table-lookup make-triangle-wave
+	     make-nrxysin make-nrxycos make-square-wave make-src make-ncos 
+	     make-nsin make-table-lookup make-triangle-wave
 	     make-wave-train make-phase-vocoder make-ssb-am make-polyshape make-polywave))
       (close-sound ind))
     
@@ -50530,8 +50519,8 @@ EDITS: 1
 		       (lambda () (make-iir-filter :xcoeffs (vct 0.0 .1 .2))) make-locsig (lambda () (make-mixer 3 3)) 
 		       make-notch make-one-pole make-one-zero make-oscil
 		       make-pulse-train make-rand make-rand-interp make-sawtooth-wave
-		       make-sine-summation make-nrxysin make-nrxycos make-square-wave make-src make-sum-of-cosines make-ncos 
-		       make-sum-of-sines make-nsin make-table-lookup make-triangle-wave
+		       make-nrxysin make-nrxycos make-square-wave make-src make-ncos 
+		       make-nsin make-table-lookup make-triangle-wave
 		       make-two-pole make-two-zero make-wave-train make-phase-vocoder make-ssb-am make-polyshape make-polywave
 		       (lambda () (make-filter :ycoeffs (vct 0.0 .1 .2)))
 		       (lambda () (make-filter :xcoeffs (vct 1.0 2.0 3.0) :ycoeffs (vct 0.0 1.0 2.0))))))
@@ -50667,13 +50656,6 @@ EDITS: 1
 	      (not (string=? val2 val3)))
 	  (snd-display ";run-eval format: ~A ~A ~A" val1 val2 val3)))
     
-    (let ((val1 (run-eval '(format #f "~A" (make-sine-summation ))))
-	  (val2 (run (lambda () (let ((gen (make-sine-summation ))) (format #f "~A" gen)))))
-	  (val3 (format #f "~A" (make-sine-summation ))))
-      (if (or (not (string=? val1 val2))
-	      (not (string=? val2 val3)))
-	  (snd-display ";run-eval format: ~A ~A ~A" val1 val2 val3)))
-    
     (let ((val1 (run-eval '(format #f "~A" (make-nrxysin ))))
 	  (val2 (run (lambda () (let ((gen (make-nrxysin ))) (format #f "~A" gen)))))
 	  (val3 (format #f "~A" (make-nrxysin ))))
@@ -50698,20 +50680,6 @@ EDITS: 1
     (let ((val1 (run-eval '(format #f "~A" (make-src ))))
 	  (val2 (run (lambda () (let ((gen (make-src ))) (format #f "~A" gen)))))
 	  (val3 (format #f "~A" (make-src ))))
-      (if (or (not (string=? val1 val2))
-	      (not (string=? val2 val3)))
-	  (snd-display ";run-eval format: ~A ~A ~A" val1 val2 val3)))
-    
-    (let ((val1 (run-eval '(format #f "~A" (make-sum-of-cosines ))))
-	  (val2 (run (lambda () (let ((gen (make-sum-of-cosines ))) (format #f "~A" gen)))))
-	  (val3 (format #f "~A" (make-sum-of-cosines ))))
-      (if (or (not (string=? val1 val2))
-	      (not (string=? val2 val3)))
-	  (snd-display ";run-eval format: ~A ~A ~A" val1 val2 val3)))
-    
-    (let ((val1 (run-eval '(format #f "~A" (make-sum-of-sines ))))
-	  (val2 (run (lambda () (let ((gen (make-sum-of-sines ))) (format #f "~A" gen)))))
-	  (val3 (format #f "~A" (make-sum-of-sines ))))
       (if (or (not (string=? val1 val2))
 	      (not (string=? val2 val3)))
 	  (snd-display ";run-eval format: ~A ~A ~A" val1 val2 val3)))
@@ -53520,9 +53488,7 @@ EDITS: 1
 	(with-sound ()
 		    (simple-ssb 0 .2 440 .1)
 		    (simple-sos .25 .2 .1)
-		    (simple-soc 0.5 .2 440 .1)
 		    (simple-osc 0.75 .2 440 .1)
-		    (simple-sss 1.0 .2 .1)
 		    (simple-asy 1.25 .2 .1)
 		    (simple-saw 1.5 .2 .1)
 		    (simple-tri 1.75 .2 .1)
@@ -55961,11 +55927,8 @@ EDITS: 1
 	     
 	     (for-each
 	      (lambda (n)
-		(test-zero-stability (lambda () (make-sum-of-sines n 0.0)) sum-of-sines zero)
-		(test-zero-stability (lambda () (make-sum-of-cosines n 0.0)) sum-of-cosines zero)
 		(test-zero-stability (lambda () (make-nsin 0.0 n)) nsin zero)
 		(test-zero-stability (lambda () (make-ncos 0.0 n)) ncos zero)
-		(test-zero-stability (lambda () (make-sine-summation 0.0 :n n)) sine-summation zero)
 		
 		(test-zero-stability (lambda () (make-nrxysin :n n)) nrxysin zero)
 		(test-zero-stability (lambda () (make-nrxycos :n n)) nrxycos zero)
@@ -68195,7 +68158,7 @@ EDITS: 1
 		     make-file->sample make-filter make-fir-filter make-formant make-firmant make-frame make-frame->file make-granulate
 		     make-iir-filter make-locsig move-locsig make-mixer make-notch make-one-pole make-one-zero make-oscil
 		     make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
-		     make-sine-summation make-nrxysin make-nrxycos make-square-wave make-src make-sum-of-cosines make-ncos 
+		     make-nrxysin make-nrxycos make-square-wave make-src make-sum-of-cosines make-ncos 
 		     make-sum-of-sines make-nsin make-ssb-am make-table-lookup make-triangle-wave
 		     make-two-pole make-two-zero make-wave-train mixer* mixer-ref mixer-set! mixer? mixer+
 		     move-sound make-move-sound move-sound? mus-float-equal-fudge-factor
@@ -68207,7 +68170,7 @@ EDITS: 1
 		     partials->wave phase-partials->wave polynomial pulse-train pulse-train?
 		     radians->degrees radians->hz rand rand-interp rand-interp?  rand? readin readin?  rectangular->polar
 		     ring-modulate sample->file sample->file? sample->frame sawtooth-wave
-		     sawtooth-wave? sine-summation sine-summation? nrxysin nrxysin? nrxycos nrxycos?
+		     sawtooth-wave? nrxysin nrxysin? nrxycos nrxycos?
 		     spectrum square-wave square-wave? src src? sum-of-cosines ncos sum-of-sines nsin ssb-am
 		     sum-of-cosines? ncos? sum-of-sines? nsin? ssb-am? table-lookup table-lookup? tap triangle-wave triangle-wave? two-pole two-pole? two-zero
 		     two-zero? wave-train wave-train?  make-vct vct-add! vct-subtract!  vct-copy
@@ -68297,8 +68260,8 @@ EDITS: 1
 			  make-file->sample make-filter make-fir-filter make-formant make-firmant make-frame make-frame->file make-granulate
 			  make-iir-filter make-locsig make-mixer make-notch make-one-pole make-one-zero make-oscil
 			  make-pulse-train make-rand make-rand-interp make-readin make-sample->file make-sawtooth-wave
-			  make-sine-summation make-nrxysin make-nrxycos make-square-wave 
-			  make-src make-sum-of-cosines make-ncos make-sum-of-sines make-nsin make-table-lookup make-triangle-wave
+			  make-nrxysin make-nrxycos make-square-wave 
+			  make-src make-ncos make-nsin make-table-lookup make-triangle-wave
 			  make-two-pole make-two-zero make-wave-train make-phase-vocoder make-ssb-am make-polyshape make-polywave
 			  make-color make-player make-region make-scalar-mixer
 			  ))
@@ -68392,7 +68355,6 @@ EDITS: 1
 		    (set! vector-0 (make-rand 100))
 		    (set! vct-3 (make-rand-interp 100))
 		    (set! car-main (make-asymmetric-fm 100))
-		    (set! cadr-main (make-sine-summation 100 0 7))
 		    (set! sound-data-23 (make-one-zero .1 .1))
 		    (set! a-hook (make-one-pole .1 .1)))
 		  (if (= test-28 3)
@@ -68582,8 +68544,8 @@ EDITS: 1
 				(list all-pass? asymmetric-fm? comb? filtered-comb? convolve? delay? env? file->frame? file->sample? snd->sample?
 				      filter? fir-filter? formant? firmant? frame->file? frame? granulate? iir-filter? locsig? mixer? move-sound? mus-input? 
 				      mus-output? notch? one-pole? one-zero? oscil? phase-vocoder? pulse-train? rand-interp? rand? readin? 
-				      sample->file? sawtooth-wave? sine-summation? nrxysin? nrxycos?
-				      square-wave? src? sum-of-cosines? ncos? sum-of-sines? nsin? table-lookup? 
+				      sample->file? sawtooth-wave? nrxysin? nrxycos?
+				      square-wave? src? ncos? sum-of-sines? nsin? table-lookup? 
 				      triangle-wave? two-pole? two-zero? wave-train? color? mix-sample-reader? moving-average? ssb-am?
 				      sample-reader? region-sample-reader? vct? )))
 		    (list (make-vector 1) "hiho" (sqrt -1.0) 1.5 (list 1 0) '#(0 1)))
@@ -68600,8 +68562,8 @@ EDITS: 1
 		    (list all-pass? asymmetric-fm? comb? filtered-comb? convolve? delay? env? file->frame? file->sample? snd->sample?
 			  filter? fir-filter? formant? firmant? frame->file? frame? granulate? iir-filter? locsig? mixer? move-sound? mus-input? 
 			  mus-output? notch? one-pole? one-zero? phase-vocoder? pulse-train? rand-interp? rand? readin? 
-			  sample->file? sawtooth-wave? sine-summation? nrxysin? nrxycos?
-			  square-wave? src? sum-of-cosines? ncos? sum-of-sines? nsin? table-lookup? 
+			  sample->file? sawtooth-wave? nrxysin? nrxycos?
+			  square-wave? src? ncos? sum-of-sines? nsin? table-lookup? 
 			  triangle-wave? two-pole? two-zero? wave-train? sound? color? mix-sample-reader? moving-average? ssb-am?
 			  sample-reader? region-sample-reader? vct?))
 	  
@@ -68647,8 +68609,8 @@ EDITS: 1
 					make-file->frame make-file->sample make-filter make-fir-filter make-formant make-firmant make-frame
 					make-granulate make-iir-filter make-locsig make-notch make-one-pole make-one-zero
 					make-oscil make-pulse-train make-rand make-rand-interp make-readin
-					make-sawtooth-wave make-sine-summation make-nrxysin make-nrxycos make-square-wave make-src 
-					make-sum-of-cosines make-ncos make-sum-of-sines make-nsin
+					make-sawtooth-wave make-nrxysin make-nrxycos make-square-wave make-src 
+					make-ncos make-sum-of-sines make-nsin
 					make-table-lookup make-triangle-wave make-two-pole make-two-zero make-wave-train make-ssb-am
 					mus-channel mus-channels make-polyshape make-polywave
 					mus-data mus-feedback mus-feedforward mus-frequency mus-hop
@@ -68656,8 +68618,8 @@ EDITS: 1
 					mus-scaler mus-xcoeffs mus-ycoeffs notch one-pole one-zero make-moving-average seconds->samples samples->seconds
 					oscil partials->polynomial partials->wave phase-partials->wave
 					phase-vocoder pulse-train radians->degrees radians->hz rand rand-interp readin
-					sawtooth-wave sine-summation nrxysin nrxycos square-wave src 
-					sum-of-cosines ncos sum-of-sines nsin table-lookup tap triangle-wave
+					sawtooth-wave nrxysin nrxycos square-wave src 
+					ncos sum-of-sines nsin table-lookup tap triangle-wave
 					two-pole two-zero wave-train ssb-am))))
 		    (list (make-vector 1) color-95 (sqrt -1.0)))
 	  (gc)(gc)
@@ -68681,12 +68643,12 @@ EDITS: 1
 			  make-delay make-env make-fft-window make-filter make-fir-filter make-formant make-firmant make-frame make-granulate
 			  make-iir-filter make-locsig make-notch make-one-pole make-one-zero make-oscil make-phase-vocoder
 			  make-pulse-train make-rand make-rand-interp make-readin make-sawtooth-wave make-moving-average
-			  make-sine-summation make-nrxysin make-nrxycos make-square-wave make-src make-sum-of-cosines make-ncos 
+			  make-nrxysin make-nrxycos make-square-wave make-src make-ncos 
 			  make-sum-of-sines make-nsin make-table-lookup make-triangle-wave
 			  make-two-pole make-two-zero make-wave-train mixer* mixer+ multiply-arrays
 			  notch one-pole one-zero oscil partials->polynomial partials->wave make-polyshape make-polywave
 			  phase-partials->wave phase-vocoder polynomial pulse-train rand rand-interp rectangular->polar
-			  ring-modulate sample->frame sawtooth-wave sine-summation nrxysin nrxycos square-wave src sum-of-cosines ncos sum-of-sines nsin
+			  ring-modulate sample->frame sawtooth-wave nrxysin nrxycos square-wave src ncos sum-of-sines nsin
 			  table-lookup tap triangle-wave two-pole two-zero wave-train ssb-am make-ssb-am))
 	  
 	  (for-each (lambda (n)

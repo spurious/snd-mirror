@@ -915,22 +915,10 @@
 
 
 (define* (nrsin gen :optional (fm 0.0))
-  "  (make-nrsin frequency (n 1) (r 0.5)) creates an nrsin generator (similar to nrxysin or sine-summation).\n\
+  "  (make-nrsin frequency (n 1) (r 0.5)) creates an nrsin generator.\n\
    (nrsin gen (fm 0.0)) returns n sines spaced by frequency with amplitudes scaled by r^k."
   (declare (gen nrsin) (fm float))
   (nrxysin (nrsin-gen gen) fm))
-
-#|
-(with-sound (:clipped #f :statistics #t :play #t)
-  (let ((gen1 (make-nrsin 830.0 :n 5 :r 0.5))
-	(gen2 (make-sine-summation (* 8 830.0) :n 5 :a 0.5 :ratio (/ 1.0 8.0))))
-    (run 
-     (lambda ()
-       (do ((i 0 (1+ i)))
-	   ((= i 10000))
-	 (outa i (* .125 (+ (nrsin gen1 0.0)
-			    (* .3 (sine-summation gen2 0.0))))))))))
-|#
 
 (defgenerator (nrcos
 	       :make-wrapper (lambda (g)
@@ -6261,9 +6249,7 @@ index 10 (so 10/2 is the bes-jn arg):
 
 ;;; TODO:   how to change time arbitrarily? via env?
 ;;; TODO: amp>n sin^2
-;;; TODO: narrow band noise on some or on loud ones
-;;; TODO: change vib (no vib)
-;;;           moving-spectrum could replace all the formant bank stuff eventually
+;;; PERHAPS:  moving-spectrum could replace all the formant bank stuff eventually
 ;;; TODO:   moving-window (delay data) (two delays + pulse = gran), would need an open-ended delay [outa?], window-ref, array of frames?
 ;;; TODO:   moving-lpc? (dsp.scm has lpc-coeffs which is optimizable) [moving-poly?] [cheb approx?]
 
