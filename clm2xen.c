@@ -2262,7 +2262,7 @@ static XEN g_moving_average_p(XEN obj)
 }
 
 
-
+#ifndef CLM_DISABLE_DEPRECATED
 /* -------- sum-of-cosines -------- */
 
 #define MUS_MAX_SINUSOIDS 65536
@@ -2385,7 +2385,7 @@ static XEN g_sum_of_sines(XEN obj, XEN fm)
   if (XEN_NUMBER_P(fm)) fm1 = XEN_TO_C_DOUBLE(fm); else XEN_ASSERT_TYPE(XEN_NOT_BOUND_P(fm), fm, XEN_ARG_2, S_sum_of_sines, "a number");
   return(C_TO_XEN_DOUBLE(mus_sum_of_sines(XEN_TO_MUS_ANY(obj), fm1)));
 }
-
+#endif
 
 /* these are the new forms of sum-of-cosines and sum-of sines, but we can't just replace them
  *   at this level because def-optkey-fun (for make-*) is defined in ws.scm, so a replacement
@@ -4718,7 +4718,7 @@ return a new polynomial-based waveshaping generator.  (" S_make_polywave " :part
 }
 
 
-
+#ifndef CLM_DISABLE_DEPRECATED
 /* ---------------- sine-summation ---------------- */
 
 static XEN g_sine_summation_p(XEN obj) 
@@ -4793,6 +4793,7 @@ return a new sine summation synthesis generator."
   if (ge) return(mus_xen_to_object(mus_any_to_mus_xen(ge)));
   return(XEN_FALSE);
 }
+#endif
 
 
 /* ---------------- nrxysin and nrxycos ---------------- */
@@ -7924,12 +7925,14 @@ XEN_NARGIFY_1(g_filtered_comb_p_w, g_filtered_comb_p)
 XEN_NARGIFY_1(g_all_pass_p_w, g_all_pass_p)
 XEN_NARGIFY_1(g_moving_average_p_w, g_moving_average_p)
 
+#ifndef CLM_DISABLE_DEPRECATED
 XEN_ARGIFY_6(g_make_sum_of_cosines_w, g_make_sum_of_cosines)
 XEN_ARGIFY_2(g_sum_of_cosines_w, g_sum_of_cosines)
 XEN_NARGIFY_1(g_sum_of_cosines_p_w, g_sum_of_cosines_p)
 XEN_ARGIFY_6(g_make_sum_of_sines_w, g_make_sum_of_sines)
 XEN_ARGIFY_2(g_sum_of_sines_w, g_sum_of_sines)
 XEN_NARGIFY_1(g_sum_of_sines_p_w, g_sum_of_sines_p)
+#endif
 
 XEN_ARGIFY_4(g_make_ncos_w, g_make_ncos)
 XEN_ARGIFY_2(g_ncos_w, g_ncos)
@@ -8024,9 +8027,12 @@ XEN_VARGIFY(g_make_polywave_w, g_make_polywave)
 XEN_ARGIFY_2(g_polywave_w, g_polywave)
 XEN_NARGIFY_1(g_polywave_p_w, g_polywave_p)
 
+#ifndef CLM_DISABLE_DEPRECATED
 XEN_VARGIFY(g_make_sine_summation_w, g_make_sine_summation)
 XEN_ARGIFY_2(g_sine_summation_w, g_sine_summation)
 XEN_NARGIFY_1(g_sine_summation_p_w, g_sine_summation_p)
+#endif
+
 XEN_VARGIFY(g_make_nrxysin_w, g_make_nrxysin)
 XEN_ARGIFY_2(g_nrxysin_w, g_nrxysin)
 XEN_NARGIFY_1(g_nrxysin_p_w, g_nrxysin_p)
@@ -8228,12 +8234,14 @@ XEN_NARGIFY_1(g_mus_irandom_w, g_mus_irandom)
 #define g_all_pass_p_w g_all_pass_p
 #define g_moving_average_p_w g_moving_average_p
 
+#ifndef CLM_DISABLE_DEPRECATED
 #define g_make_sum_of_cosines_w g_make_sum_of_cosines
 #define g_sum_of_cosines_w g_sum_of_cosines
 #define g_sum_of_cosines_p_w g_sum_of_cosines_p
 #define g_make_sum_of_sines_w g_make_sum_of_sines
 #define g_sum_of_sines_w g_sum_of_sines
 #define g_sum_of_sines_p_w g_sum_of_sines_p
+#endif
 
 #define g_make_ncos_w g_make_ncos
 #define g_ncos_w g_ncos
@@ -8328,9 +8336,12 @@ XEN_NARGIFY_1(g_mus_irandom_w, g_mus_irandom)
 #define g_polywave_w g_polywave
 #define g_polywave_p_w g_polywave_p
 
+#ifndef CLM_DISABLE_DEPRECATED
 #define g_make_sine_summation_w g_make_sine_summation
 #define g_sine_summation_w g_sine_summation
 #define g_sine_summation_p_w g_sine_summation_p
+#endif
+
 #define g_make_nrxysin_w g_make_nrxysin
 #define g_nrxysin_w g_nrxysin
 #define g_nrxysin_p_w g_nrxysin_p
@@ -8699,12 +8710,14 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE_WITH_SETTER(S_mus_rand_seed, g_mus_rand_seed_w, H_mus_rand_seed,
 				   S_setB S_mus_rand_seed, g_mus_set_rand_seed_w, 0, 0, 1, 0);
 
+#ifndef CLM_DISABLE_DEPRECATED
   XEN_DEFINE_PROCEDURE(S_make_sum_of_cosines, g_make_sum_of_cosines_w, 0, 6, 0, H_make_sum_of_cosines); 
   XEN_DEFINE_PROCEDURE(S_sum_of_cosines,      g_sum_of_cosines_w,      1, 1, 0, H_sum_of_cosines);
   XEN_DEFINE_PROCEDURE(S_sum_of_cosines_p,    g_sum_of_cosines_p_w,    1, 0, 0, H_sum_of_cosines_p);
   XEN_DEFINE_PROCEDURE(S_make_sum_of_sines,   g_make_sum_of_sines_w,   0, 6, 0, H_make_sum_of_sines); 
   XEN_DEFINE_PROCEDURE(S_sum_of_sines,        g_sum_of_sines_w,        1, 1, 0, H_sum_of_sines);
   XEN_DEFINE_PROCEDURE(S_sum_of_sines_p,      g_sum_of_sines_p_w,      1, 0, 0, H_sum_of_sines_p);
+#endif
 
   XEN_DEFINE_PROCEDURE(S_make_ncos,           g_make_ncos_w,           0, 4, 0, H_make_ncos); 
   XEN_DEFINE_PROCEDURE(S_ncos,                g_ncos_w,                1, 1, 0, H_ncos);
@@ -8816,10 +8829,11 @@ void mus_xen_init(void)
   XEN_DEFINE_PROCEDURE(S_polywave,               g_polywave_w,               1, 1, 0, H_polywave);
   XEN_DEFINE_PROCEDURE(S_polywave_p,             g_polywave_p_w,             1, 0, 0, H_polywave_p);
 
-
+#ifndef CLM_DISABLE_DEPRECATED
   XEN_DEFINE_PROCEDURE(S_make_sine_summation, g_make_sine_summation_w, 0, 0, 1, H_make_sine_summation);
   XEN_DEFINE_PROCEDURE(S_sine_summation,      g_sine_summation_w,      1, 1, 0, H_sine_summation);
   XEN_DEFINE_PROCEDURE(S_sine_summation_p,    g_sine_summation_p_w,    1, 0, 0, H_sine_summation_p);
+#endif
   XEN_DEFINE_PROCEDURE(S_make_nrxysin,        g_make_nrxysin_w,        0, 0, 1, H_make_nrxysin);
   XEN_DEFINE_PROCEDURE(S_nrxysin,             g_nrxysin_w,             1, 1, 0, H_nrxysin);
   XEN_DEFINE_PROCEDURE(S_nrxysin_p,           g_nrxysin_p_w,           1, 0, 0, H_nrxysin_p);
@@ -9134,12 +9148,14 @@ void mus_xen_init(void)
 	       S_make_sample_to_file,
 	       S_make_sawtooth_wave,
 	       S_make_scalar_mixer,
+#ifndef CLM_DISABLE_DEPRECATED
 	       S_make_sine_summation,
+	       S_make_sum_of_cosines,
+	       S_make_sum_of_sines,
+#endif
 	       S_make_square_wave,
 	       S_make_src,
 	       S_make_ssb_am,
-	       S_make_sum_of_cosines,
-	       S_make_sum_of_sines,
 	       S_make_table_lookup,
 	       S_make_triangle_wave,
 	       S_make_two_pole,
@@ -9281,8 +9297,14 @@ void mus_xen_init(void)
 	       S_sawtooth_wave,
 	       S_sawtooth_wave_p,
 	       S_seconds_to_samples,
+#ifndef CLM_DISABLE_DEPRECATED
 	       S_sine_summation,
 	       S_sine_summation_p,
+	       S_sum_of_cosines,
+	       S_sum_of_cosines_p,
+	       S_sum_of_sines,
+	       S_sum_of_sines_p,
+#endif
 	       S_spectrum,
 	       S_square_wave,
 	       S_square_wave_p,
@@ -9290,10 +9312,6 @@ void mus_xen_init(void)
 	       S_src_p,
 	       S_ssb_am,
 	       S_ssb_am_p,
-	       S_sum_of_cosines,
-	       S_sum_of_cosines_p,
-	       S_sum_of_sines,
-	       S_sum_of_sines_p,
 	       S_table_lookup,
 	       S_table_lookup_p,
 	       S_tap,

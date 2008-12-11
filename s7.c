@@ -235,18 +235,20 @@
 
 #include "s7.h"
 
+#ifndef M_PI
+  #define M_PI 3.1415926535897932384626433832795029L
+#endif
 
 typedef enum {OP_READ_INTERNAL, OP_EVAL, OP_EVAL_ARGS0, OP_EVAL_ARGS1, OP_APPLY, OP_DOMACRO, OP_LAMBDA, OP_QUOTE, 
-	      OP_DEFINE0, OP_DEFINE1, OP_BEGIN, OP_IF0, OP_IF1, 
-	      OP_SET0, OP_SET1, OP_SET2, OP_DEFINE_CONSTANT0, OP_DEFINE_CONSTANT1, 
+	      OP_DEFINE0, OP_DEFINE1, OP_BEGIN, OP_IF0, OP_IF1, OP_SET0, OP_SET1, OP_SET2, 
 	      OP_LET0, OP_LET1, OP_LET2, OP_LET_STAR0, OP_LET_STAR1, OP_LET_STAR2, 
 	      OP_LETREC0, OP_LETREC1, OP_LETREC2, OP_COND0, OP_COND1, OP_MAKE_PROMISE, OP_AND0, OP_AND1, 
 	      OP_OR0, OP_OR1, OP_DEFMACRO, OP_MACRO0, OP_MACRO1, OP_DEFINE_MACRO,
 	      OP_CASE0, OP_CASE1, OP_CASE2, OP_READ_LIST, OP_READ_DOT, OP_READ_QUOTE, 
 	      OP_READ_QUASIQUOTE, OP_READ_QUASIQUOTE_VECTOR, OP_READ_UNQUOTE, OP_READ_UNQUOTE_SPLICING, 
-	      OP_READ_VECTOR, OP_FORCE, OP_READ_RETURN_EXPRESSION,
-	      OP_READ_POP_AND_RETURN_EXPRESSION, OP_LOAD_RETURN_IF_EOF, OP_LOAD_CLOSE_AND_POP_IF_EOF, 
-	      OP_EVAL_STRING, OP_EVAL_STRING_DONE, OP_QUIT, OP_CATCH, OP_DYNAMIC_WIND, OP_FOR_EACH, OP_MAP, 
+	      OP_READ_VECTOR, OP_FORCE, OP_READ_RETURN_EXPRESSION, OP_READ_POP_AND_RETURN_EXPRESSION, 
+	      OP_LOAD_RETURN_IF_EOF, OP_LOAD_CLOSE_AND_POP_IF_EOF, OP_EVAL_STRING, OP_EVAL_STRING_DONE, 
+	      OP_QUIT, OP_CATCH, OP_DYNAMIC_WIND, OP_FOR_EACH, OP_MAP, OP_DEFINE_CONSTANT0, OP_DEFINE_CONSTANT1, 
 	      OP_DO, OP_DO_END0, OP_DO_END1, OP_DO_STEP0, OP_DO_STEP1, OP_DO_STEP2, OP_DO_INIT,
 	      OP_DEFINE_STAR, OP_LAMBDA_STAR, OP_CONS_STREAM0, OP_CONS_STREAM1, 
 	      OP_MAX_DEFINED} opcode_t;
@@ -255,7 +257,6 @@ typedef enum {TOKEN_EOF, TOKEN_LEFT_PAREN, TOKEN_RIGHT_PAREN, TOKEN_DOT, TOKEN_A
 	      TOKEN_BACK_QUOTE, TOKEN_COMMA, TOKEN_AT_MARK, TOKEN_SHARP_CONST, TOKEN_VECTOR} token_t;
 
 
-/* num, for generic arithmetic */
 typedef struct num {
   char type;
   union {
@@ -392,10 +393,10 @@ struct s7_scheme {
   struct s7_cell _NIL;
   s7_pointer NIL;                     /* empty list */
   
-  struct s7_cell _HASHT;
+  struct s7_cell _T;
   s7_pointer T;                       /* #t */
   
-  struct s7_cell _HASHF;
+  struct s7_cell _F;
   s7_pointer F;                       /* #f */
   
   struct s7_cell _EOF_OBJECT;
@@ -633,27 +634,19 @@ struct s7_scheme {
 #define dynamic_wind_out(p)           (p)->object.winder->out
 #define dynamic_wind_body(p)          (p)->object.winder->body
 
-
-#define NUM_INT 0
-#define NUM_RATIO 1
-#define NUM_REAL 2
-#define NUM_REAL2 3
-#define NUM_COMPLEX 4
-
-/* so int = 0, exact < 2, ratio = 1, complex >= 4, real 2 or 3
- *   (I'm not going to support exact complex or inexact ratio etc)
- */
+#define NUM_INT      0
+#define NUM_RATIO    1
+#define NUM_REAL     2
+#define NUM_REAL2    3
+#define NUM_COMPLEX  4
 
 #define num_type(n)                   (n.type)
 #define object_number_type(p)         (p->object.number.type)
-
 #define numerator(n)                  n.value.fvalue.numerator
 #define denominator(n)                n.value.fvalue.denominator
 #define fraction(n)                   (((s7_Double)numerator(n)) / ((s7_Double)denominator(n)))
-
 #define real_part(n)                  n.value.cvalue.real
 #define imag_part(n)                  n.value.cvalue.imag
-
 #define integer(n)                    n.value.ivalue
 
 #if __cplusplus
@@ -664,7 +657,6 @@ struct s7_scheme {
 #endif
 
 #define real(n)                       n.value.rvalue
-
 
 
 #if S7_DEBUGGING
@@ -703,10 +695,9 @@ static char *describe_type(s7_pointer p)
     {fprintf(stderr, "%s[%d]: %s is not an object: %p %s\n", __FUNCTION__, __LINE__, Name, Obj, describe_type(Obj)); abort();}
 
 #else
-
-#define ASSERT_IS_OBJECT(Obj, Name)
-
+  #define ASSERT_IS_OBJECT(Obj, Name)
 #endif
+
 
 #if CASE_SENSITIVE
 
@@ -13412,15 +13403,12 @@ s7_scheme *s7_init(void)
 #endif
 
   sc->NIL = &sc->_NIL;
-  sc->T = &sc->_HASHT;
-  sc->F = &sc->_HASHF;
+  sc->T = &sc->_T;
+  sc->F = &sc->_F;
   sc->EOF_OBJECT = &sc->_EOF_OBJECT;
+  sc->UNSPECIFIED = &sc->_UNSPECIFIED;  
   sc->UNDEFINED = &sc->_UNDEFINED;
-  sc->UNSPECIFIED = &sc->_UNSPECIFIED;
-  
-  set_type(sc->UNSPECIFIED, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT | T_SIMPLE | T_DONT_COPY);
-  car(sc->UNSPECIFIED) = cdr(sc->UNSPECIFIED) = sc->UNSPECIFIED;
-  
+
   set_type(sc->NIL, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT | T_SIMPLE | T_DONT_COPY);
   car(sc->NIL) = cdr(sc->NIL) = sc->UNSPECIFIED;
   
@@ -13432,6 +13420,9 @@ s7_scheme *s7_init(void)
   
   set_type(sc->EOF_OBJECT, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT | T_SIMPLE | T_DONT_COPY);
   car(sc->EOF_OBJECT) = cdr(sc->EOF_OBJECT) = sc->UNSPECIFIED;
+  
+  set_type(sc->UNSPECIFIED, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT | T_SIMPLE | T_DONT_COPY);
+  car(sc->UNSPECIFIED) = cdr(sc->UNSPECIFIED) = sc->UNSPECIFIED;
   
   set_type(sc->UNDEFINED, T_NIL_TYPE | T_ATOM | T_GC_MARK | T_IMMUTABLE | T_CONSTANT | T_SIMPLE | T_DONT_COPY);
   car(sc->UNDEFINED) = cdr(sc->UNDEFINED) = sc->UNSPECIFIED;
@@ -13544,9 +13535,6 @@ s7_scheme *s7_init(void)
 #if WITH_CONS_STREAM
   assign_syntax(sc, "cons-stream",     OP_CONS_STREAM0); 
 #endif
-  
-
-  /* these save us the symbol table lookups later */
   
   sc->LAMBDA = s7_make_symbol(sc, "lambda");
   typeflag(sc->LAMBDA) |= (T_IMMUTABLE | T_CONSTANT | T_DONT_COPY); 
@@ -13977,8 +13965,3 @@ s7_scheme *s7_init(void)
   }
   return(sc);
 }
-
-/* I made a version with s7_Char and whatnot for unicode support, but it
- *   was too ugly.  If someone is interested, let me know.
- * Another possibility is multiprecision math.
- */

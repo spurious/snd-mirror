@@ -66,54 +66,18 @@
 
 /* -------- protect XEN vars from GC -------- */
 
+#if HAVE_S7
+
+int snd_protect(XEN obj) {return(s7_gc_protect(s7, obj));}
+void snd_unprotect_at(int loc) {s7_gc_unprotect_at(s7, loc);}
+XEN snd_protected_at(int loc) {return(s7_gc_protected_at(s7, loc));}
+
+#else
 static XEN gc_protection;
 static int gc_protection_size = 0;
 #define DEFAULT_GC_VALUE XEN_UNDEFINED
 static int gc_last_cleared = NOT_A_GC_LOC;
 static int gc_last_set = NOT_A_GC_LOC;
-
-#if MUS_DEBUGGING
-static char **snd_protect_callers = NULL; /* static char* const *callers? no thanks... */
-
-void dump_protection(FILE *Fp);
-void dump_protection(FILE *Fp)
-{
-  if (XEN_VECTOR_P(gc_protection))
-    {
-      int i;
-      fprintf(Fp, "\n\nsnd_protect (%d table size):\n", gc_protection_size);
-      for (i = 0; i < gc_protection_size; i++)
-	{
-	  XEN gcdat;
-	  gcdat = XEN_VECTOR_REF(gc_protection, i);
-	  if (!(XEN_EQ_P(gcdat, DEFAULT_GC_VALUE)))
-	    {
-#if HAVE_SCHEME
-	      char *temp = NULL;
-	      fprintf(Fp, "  %s:%d %s", snd_protect_callers[i], i, temp = XEN_AS_STRING(gcdat));
-#if HAVE_S7
-	      if (temp) free(temp);
-#endif
-#endif
-#if HAVE_GUILE
-	      if (XEN_HOOK_P(gcdat))
-		fprintf(Fp, " -> %s", XEN_AS_STRING(scm_hook_to_list(gcdat)));
-#endif
-#if HAVE_RUBY
-	      fprintf(Fp, "  %s:%d %d %s", snd_protect_callers[i], i, (int)gcdat, XEN_AS_STRING(gcdat));
-#endif
-#if HAVE_FORTH
-	      fprintf(Fp, "  %s:%d %s", snd_protect_callers[i], i, XEN_AS_STRING(gcdat));
-	      if (XEN_HOOK_P(gcdat))
-		fprintf(Fp, " -> %s", XEN_AS_STRING(XEN_HOOK_PROCEDURES(gcdat)));
-#endif
-	      fprintf(Fp, "\n");
-	    }
-	}
-    }
-}
-#endif
-
 
 #if HAVE_PTHREADS
   static mus_lock_t gc_lock = MUS_LOCK_INITIALIZER;
@@ -219,6 +183,7 @@ XEN snd_protected_at(int loc)
     return(XEN_VECTOR_REF(gc_protection, loc));
   return(DEFAULT_GC_VALUE);
 }
+#endif
 
 
 /* -------- error handling -------- */
@@ -802,7 +767,7 @@ bool procedure_arity_ok(XEN proc, int args)
     return(false);
 #endif
 
-#if HAVE_GUILE || HAVE_S7
+#if HAVE_GUILE
   {
     int oargs, restargs, loc;
     loc = snd_protect(arity);
@@ -810,6 +775,19 @@ bool procedure_arity_ok(XEN proc, int args)
     oargs = XEN_TO_C_INT(XEN_CADR(arity));
     restargs = ((XEN_TRUE_P(XEN_CADDR(arity))) ? 1 : 0);
     snd_unprotect_at(loc);
+    if (rargs > args) return(false);
+    if ((restargs == 0) && ((rargs + oargs) < args)) return(false);
+  }
+#endif
+
+#if HAVE_S7
+  {
+    int oargs, restargs;
+    s7_local_gc_protect(arity);
+    rargs = XEN_TO_C_INT(XEN_CAR(arity));
+    oargs = XEN_TO_C_INT(XEN_CADR(arity));
+    restargs = ((XEN_TRUE_P(XEN_CADDR(arity))) ? 1 : 0);
+    s7_local_gc_unprotect(arity);
     if (rargs > args) return(false);
     if ((restargs == 0) && ((rargs + oargs) < args)) return(false);
   }
@@ -864,12 +842,21 @@ char *procedure_ok(XEN proc, int args, const char *caller, const char *arg_name,
 
 #if HAVE_GUILE || HAVE_S7
       {
-	int oargs, restargs, loc;
+	int oargs, restargs;
+#if HAVE_S7
+	s7_local_gc_protect(arity);
+#else
+	int loc;
 	loc = snd_protect(arity);
+#endif
 	rargs = XEN_TO_C_INT(XEN_CAR(arity));
 	oargs = XEN_TO_C_INT(XEN_CADR(arity));
 	restargs = ((XEN_TRUE_P(XEN_CADDR(arity))) ? 1 : 0);
+#if HAVE_S7
+	s7_local_gc_unprotect(arity);
+#else
 	snd_unprotect_at(loc);
+#endif
 	if (rargs > args)
 	  return(mus_format(_("%s function (%s arg %d) should take %d argument%s, but instead requires %d"),
 			    arg_name, caller, argn, args, (args != 1) ? "s" : "", rargs));
@@ -2762,7 +2749,9 @@ void g_xen_initialize(void)
   mus_midi_init();
 #endif
 
+#if (!HAVE_S7)
   gc_protection = XEN_FALSE;
+#endif
 
   XEN_DEFINE_PROCEDURE(S_snd_print,      g_snd_print_w,     1, 0, 0, H_snd_print);
   XEN_DEFINE_PROCEDURE("little-endian?", g_little_endian_w, 0, 0, 0, "return " PROC_TRUE " if host is little endian");

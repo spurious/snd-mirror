@@ -133,16 +133,6 @@
 			      (* .1 (oscil (vector-ref arr 2)))))
 		  0))))))
 
-(define (simple-sos beg dur amp)
-  "(simple-sos beg dur amp) test instrument for sum-of-sines"
-  (let* ((os (make-sum-of-sines 10 440 0.0))
-	 (start (seconds->samples beg))
-	 (end (+ start (seconds->samples dur))))
-    (run
-     (lambda ()
-       (do ((i start (1+ i))) ((= i end))
-	 (out-any i (* amp (sum-of-sines os)) 0))))))
-
 (define (simple-nsin beg dur amp)
   "(simple-nsin beg dur amp) test instrument for nsin"
   (let* ((os (make-nsin 440 10))
@@ -1559,7 +1549,6 @@
 #|
 (with-sound (:statistics #t)
 	    (simple-ssb 0 .2 440 .1)
-	    (simple-sos .25 .2 .1)
 	    (simple-nsin .6 .2 .1)
 	    (simple-ncos 0.7 .2 440 .1)
 	    (simple-nrxysin .6 .2 .1)

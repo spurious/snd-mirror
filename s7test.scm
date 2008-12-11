@@ -3816,7 +3816,12 @@
 			 (rlstr (number->string rl base))
 			 (imstr (number->string im base))
 			 (val (make-rectangular rl im))
-			 (str (string-append rlstr (if (negative? im) "" "+") imstr "i")))
+			 (str (string-append rlstr 
+					     (if (or (negative? im)
+						     (char=? (string-ref imstr 0) #\-)) ; sigh -- -0.0 is not negative!
+						 "" "+") 
+					     imstr 
+					     "i")))
 		    (let ((nval (string->number (number->string (string->number str base) base) base)))
 		      (if (or (> (abs (- (real-part nval) (real-part val))) 1e-3)
 			      (> (abs (- (imag-part nval) (imag-part val))) 1e-3))
@@ -10091,6 +10096,9 @@
 ;;; (mod x 1.0) = sawtooth
 
 (num-test (modulo 0 1) 0)
+(num-test (modulo 3 1) 0)
+(num-test (modulo -3 1) 0)
+(num-test (modulo 3 -1) 0)
 (num-test (remainder 0 1) 0)
 (num-test (quotient 0 1) 0)
 (num-test (modulo 0 1) 0)
@@ -27998,7 +28006,17 @@
 (test (<= -1 2 3 4 4 5 6 7) #t )
 (test (< 1 3 2) #f )
 (test (>= 1 3 2) #f )
+(test (< 0 -0) #f)
+(test (< -0 0) #f)
+(test (= -0 0) #t)
+(test (< 0.0 -0.0) #f)
+(test (< -0.0 0.0) #f)
+(test (= -0.0 0.0) #t)
+(test (= 1+0i 1-0i) #t)
 (test (zero? 0) #t )
+(test (zero? -0) #t )
+(test (zero? -0.0) #t )
+(test (zero? 0.0) #t )
 (test (zero? 1) #f )
 (test (zero? -1) #f )
 (test (zero? -100) #f )
@@ -28008,6 +28026,9 @@
 (test (negative? 4) #f )
 (test (negative? -4) #t )
 (test (negative? 0) #f )
+(test (negative? -0) #f )
+(test (negative? 0.0) #f )
+(test (negative? -0.0) #f )
 (test (odd? 3) #t )
 (test (odd? 2) #f )
 (test (odd? -4) #f )
@@ -29745,6 +29766,11 @@
 (test (case 1 (#t #f) ((1) #t)) 'error)
 (test (case 1 (#t #f)) 'error)
 (test (case -1 ((-1) => abs)) 'error)
+(test ((lambda () => abs)) 'error)
+(test ((lambda () => => 3)) 'error)
+;;; actually, both Guile and Gauche accept
+;;; ((lambda () + 3)) and (begin + 3)
+;;; but surely => is an undefined variable in this context?
 
 (test (case 1 ((1 2) (let ((case 3)) (+ case 1))) ((3 4) 0)) 4)
 

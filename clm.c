@@ -1526,7 +1526,7 @@ mus_any *mus_make_ncos(Float freq, int n)
   return((mus_any *)gen);
 }
 
-
+#ifndef CLM_DISABLE_DEPRECATED
 mus_any *mus_make_sum_of_cosines(int cosines, Float freq, Float phase)
 {
   cosp *gen;
@@ -1534,7 +1534,7 @@ mus_any *mus_make_sum_of_cosines(int cosines, Float freq, Float phase)
   gen->phase = phase;
   return((mus_any *)gen);
 }
-
+#endif
 
 
 /* ---------------- nsin (previously sum-of-sines) ---------------- */
@@ -1600,7 +1600,7 @@ bool mus_nsin_p(mus_any *ptr)
 	     roots)
 	    mx))))))
   
-     (smax (make-vct n 1.0)
+     (smax (make-vct n 1.0))
   
   * but that's too much effort for an initialization function.
   */
@@ -1698,7 +1698,7 @@ mus_any *mus_make_nsin(Float freq, int n)
   return((mus_any *)gen);
 }
 
-
+#ifndef CLM_DISABLE_DEPRECATED
 mus_any *mus_make_sum_of_sines(int sines, Float freq, Float phase)
 {
   cosp *gen;
@@ -1706,7 +1706,7 @@ mus_any *mus_make_sum_of_sines(int sines, Float freq, Float phase)
   gen->phase = phase;
   return((mus_any *)gen);
 }
-
+#endif
 
 
 /* ---------------- asymmetric-fm ---------------- */
@@ -2055,7 +2055,7 @@ mus_any *mus_make_nrxysin(Float frequency, Float y_over_x, int n, Float r)
   return((mus_any *)gen);
 }
 
-
+#ifndef CLM_DISABLE_DEPRECATED
 mus_any *mus_make_sine_summation(Float frequency, Float phase, int n, Float a, Float ratio)
 {
   nrxy *gen;
@@ -2065,6 +2065,7 @@ mus_any *mus_make_sine_summation(Float frequency, Float phase, int n, Float a, F
     gen->norm = (pow(a, n) - 1.0) / (a - 1.0); /* backwards compatibility; this actually peaks slightly over 1 as often as not */
   return((mus_any *)gen);
 }
+#endif
 
 
 bool mus_nrxycos_p(mus_any *ptr) 
@@ -8777,6 +8778,10 @@ typedef struct {
   void *closure;
 } sr;
 
+
+/* I wonder if it would be more accurate and not too much slower to use
+ *   the Chebyshev expansion of sinc here
+ */
 
 #define SRC_SINC_DENSITY 1000
 #define SRC_SINC_WIDTH 10

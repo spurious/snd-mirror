@@ -2,10 +2,11 @@
 #define CLM_H
 
 #define MUS_VERSION 4
-#define MUS_REVISION 19
-#define MUS_DATE "30-Oct-08"
+#define MUS_REVISION 20
+#define MUS_DATE "11-Dec-08"
 
 /*
+ * 11-Dec:     deprecated the sine-summation, sum-of-cosines, and sum-of-sines generators.
  * 30-Oct:     mus_sample_to_file_add.
  *             mus_describe once again allocates a fresh output string.
  *             finally removed sine-bank (snd9.scm has replacement).
@@ -442,6 +443,7 @@ mus_any *mus_make_nsin(Float freq, int n);
 Float mus_nsin(mus_any *ptr, Float fm);
 bool mus_nsin_p(mus_any *ptr);
 
+#ifndef CLM_DISABLE_DEPRECATED
 /* previous forms (changed 12-Feb-08) */
 mus_any *mus_make_sum_of_cosines(int cosines, Float freq, Float phase);
 #define mus_sum_of_cosines(Gen, Fm) mus_ncos(Gen, Fm)
@@ -450,6 +452,7 @@ mus_any *mus_make_sum_of_cosines(int cosines, Float freq, Float phase);
 mus_any *mus_make_sum_of_sines(int sines, Float freq, Float phase);
 #define mus_sum_of_sines(Gen, Fm) mus_nsin(Gen, Fm)
 #define mus_sum_of_sines_p(Ptr) mus_nsin_p(Ptr)
+#endif
 
 mus_any *mus_make_nrxysin(Float frequency, Float y_over_x, int n, Float r);
 Float mus_nrxysin(mus_any *ptr, Float fm);
@@ -459,10 +462,12 @@ mus_any *mus_make_nrxycos(Float frequency, Float y_over_x, int n, Float r);
 Float mus_nrxycos(mus_any *ptr, Float fm);
 bool mus_nrxycos_p(mus_any *ptr);
 
+#ifndef CLM_DISABLE_DEPRECATED
 /* previous form (15-Feb-08) */
 mus_any *mus_make_sine_summation(Float frequency, Float phase, int n, Float a, Float ratio);
 #define mus_sine_summation(Obj, Fm) mus_nrxysin(Obj, Fm)
 #define mus_sine_summation_p(Obj) mus_nrxysin_p(Obj)
+#endif
 
 Float mus_delay(mus_any *gen, Float input, Float pm);
 Float mus_delay_unmodulated(mus_any *ptr, Float input);

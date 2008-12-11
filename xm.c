@@ -6,10 +6,11 @@
 #include <mus-config.h>
 #include <stdlib.h>
 
-#define XM_DATE "16-Oct-08"
+#define XM_DATE "11-Dec-08"
 
 /* HISTORY: 
  *
+ *   11-Dec:    removed all the stuff on the XM_DISABLE_DEPRECATED switch.
  *   16-Oct:    removed Gauche support.
  *   1-Oct:     XtAppAddInput condition arg is a mess.
  *   10-Sep:    XtAppAddInput condition arg is an int.
@@ -157,7 +158,7 @@
 #include <X11/extensions/shape.h>
 #endif
 
-/* compile-time flags are HAVE_XPM HAVE_MOTIF HAVE_XM_XP HAVE_GUILE|HAVE_RUBY XM_DISABLE_DEPRECATED MUS_WITH_EDITRES */
+/* compile-time flags are HAVE_XPM HAVE_MOTIF HAVE_XM_XP HAVE_GUILE|HAVE_RUBY MUS_WITH_EDITRES */
 
 /* if you're using g++ and it complains about XmRemoveFromPostFromList, update Motif (you need 2.1.30) */
 
@@ -630,23 +631,13 @@ XM_TYPE_PTR_NO_p(XmDataFieldCallbackStruct, XmDataFieldCallbackStruct *)
 #if HAVE_XmCreateTabStack
 XM_TYPE_PTR_NO_p(XmTabStackCallbackStruct, XmTabStackCallbackStruct *)
 #endif
-#if (!XM_DISABLE_DEPRECATED)
-  XM_TYPE(XmFontContext, XmFontContext) /* opaque */
-  XM_TYPE(XmFontList, XmFontList) /* opaque, obsolete == XmRenderTable in motif 2 */
-  XM_TYPE(XmFontListEntry, XmFontListEntry) /* opaque */
-#else
-  #define XEN_TO_C_XmFontList(Arg) XEN_TO_C_XmRenderTable(Arg)
-#endif
+#define XEN_TO_C_XmFontList(Arg) XEN_TO_C_XmRenderTable(Arg)
 XM_TYPE(XmTextSource, XmTextSource)
 XM_TYPE(XmStringContext, XmStringContext)
 
 static int XEN_XmFontList_or_XmRenderTable_P(XEN arg)
 {
-#if (!XM_DISABLE_DEPRECATED)
-  return(XEN_XmFontList_P(arg) || XEN_XmRenderTable_P(arg));
-#else
   return(XEN_XmRenderTable_P(arg));
-#endif
 }
 #endif
 
@@ -2039,12 +2030,6 @@ static Arg *XEN_TO_C_Args(XEN inargl)
 	  XEN_ASSERT_TYPE(XEN_XmTextSource_P(value), value, XEN_ONLY_ARG, name, "an XmTextSource");      
 	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_XmTextSource(value)));
 	  break;
-#if (!XM_DISABLE_DEPRECATED)
-	case XM_FONTLIST:
-	  XEN_ASSERT_TYPE(XEN_XmFontList_or_XmRenderTable_P(value), value, XEN_ONLY_ARG, name, "an XmFontList");      
-	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_XmFontList(value)));
-	  break;
-#endif
 	case XM_COLORMAP:
 	  XEN_ASSERT_TYPE(XEN_Colormap_P(value), value, XEN_ONLY_ARG, name, "a Colormap");      
 	  XtSetArg(args[i], name, (XtArgVal)(XEN_TO_C_Colormap(value)));
@@ -2367,9 +2352,6 @@ static XEN C_TO_XEN_ANY(Widget w, Arg arg)
       XtGetValues(w, a, 1);
       return(C_TO_XEN_Strings((char **)(*((char ***)(arg.value))), ilen));
       break;
-#if (!XM_DISABLE_DEPRECATED)
-    case XM_FONTLIST:	      return(C_TO_XEN_XmFontList((XmFontList)(*((XmFontList *)(arg.value)))));
-#endif
     case XM_COLORMAP:	      return(C_TO_XEN_Colormap((*((Colormap *)(arg.value)))));
     case XM_KEYSYM:	      return(C_TO_XEN_KeySym((*((KeySym *)(arg.value)))));
     case XM_KEYSYM_TABLE:     
@@ -3778,15 +3760,6 @@ non-zero-length text components"
   return(C_TO_XEN_BOOLEAN(XmStringEmpty(XEN_TO_C_XmString(arg1))));
 }
 
-#if (!XM_DISABLE_DEPRECATED)
-static XEN gxm_XmStringLength(XEN arg1)
-{
-  #define H_XmStringLength "int XmStringLength(XmString s1) obtains the length of a compound string"
-  XEN_ASSERT_TYPE(XEN_XmString_P(arg1), arg1, 1, "XmStringLength", "XmString");
-  return(C_TO_XEN_INT(XmStringLength(XEN_TO_C_XmString(arg1))));
-}
-#endif
-
 static XEN gxm_XmStringCompare(XEN arg1, XEN arg2)
 {
   #define H_XmStringCompare "Boolean XmStringCompare(XmString s1, XmString s2) compares two strings"
@@ -3795,43 +3768,12 @@ static XEN gxm_XmStringCompare(XEN arg1, XEN arg2)
   return(C_TO_XEN_BOOLEAN(XmStringCompare(XEN_TO_C_XmString(arg1), XEN_TO_C_XmString(arg2))));
 }
 
-#if (!XM_DISABLE_DEPRECATED)
-static XEN gxm_XmStringByteCompare(XEN arg1, XEN arg2)
-{
-  #define H_XmStringByteCompare "Boolean XmStringByteCompare(XmString s1, XmString s2) indicates the results of a \
-byte-by-byte comparison"
-  XEN_ASSERT_TYPE(XEN_XmString_P(arg1), arg1, 1, "XmStringByteCompare", "XmString");
-  XEN_ASSERT_TYPE(XEN_XmString_P(arg2), arg2, 2, "XmStringByteCompare", "XmString");
-  return(C_TO_XEN_BOOLEAN(XmStringByteCompare(XEN_TO_C_XmString(arg1), XEN_TO_C_XmString(arg2))));
-}
-
-static XEN gxm_XmStringNCopy(XEN arg1, XEN arg2)
-{
-  #define H_XmStringNCopy "XmString XmStringNCopy(XmString s1, int num_bytes) creates a copy of a compound string"
-  XEN_ASSERT_TYPE(XEN_XmString_P(arg1), arg1, 1, "XmStringNCopy", "XmString");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmStringNCopy", "int");
-  return(C_TO_XEN_XmString(XmStringNCopy(XEN_TO_C_XmString(arg1), XEN_TO_C_INT(arg2))));
-}
-#endif
-
 static XEN gxm_XmStringCopy(XEN arg1)
 {
   #define H_XmStringCopy "XmString XmStringCopy(XmString s1)  makes a copy of a string"
   XEN_ASSERT_TYPE(XEN_XmString_P(arg1), arg1, 1, "XmStringCopy", "XmString");
   return(C_TO_XEN_XmString(XmStringCopy(XEN_TO_C_XmString(arg1))));
 }
-
-#if (!XM_DISABLE_DEPRECATED)
-static XEN gxm_XmStringNConcat(XEN arg1, XEN arg2, XEN arg3)
-{
-  #define H_XmStringNConcat "XmString XmStringNConcat(XmString s1, XmString s2, int num_bytes) appends a specified \
-number of bytes to a compound string"
-  XEN_ASSERT_TYPE(XEN_XmString_P(arg1), arg1, 1, "XmStringNConcat", "XmString");
-  XEN_ASSERT_TYPE(XEN_XmString_P(arg2), arg2, 2, "XmStringNConcat", "XmString");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmStringNConcat", "int");
-  return(C_TO_XEN_XmString(XmStringNConcat(XEN_TO_C_XmString(arg1), XEN_TO_C_XmString(arg2), XEN_TO_C_INT(arg3))));
-}
-#endif
 
 static XEN gxm_XmStringConcatAndFree(XEN arg1, XEN arg2)
 {
@@ -3849,276 +3791,6 @@ static XEN gxm_XmStringConcat(XEN arg1, XEN arg2)
   XEN_ASSERT_TYPE(XEN_XmString_P(arg2), arg2, 2, "XmStringConcat", "XmString");
   return(C_TO_XEN_XmString(XmStringConcat(XEN_TO_C_XmString(arg1), XEN_TO_C_XmString(arg2))));
 }
-
-#if (!XM_DISABLE_DEPRECATED)
-static XEN gxm_XmFontListFreeFontContext(XEN arg1)
-{
-  #define H_XmFontListFreeFontContext "void XmFontListFreeFontContext(XmFontContext context) instructs the toolkit that \
-the font list context is no longer needed"
-  XEN_ASSERT_TYPE(XEN_XmFontContext_P(arg1), arg1, 1, "XmFontListFreeFontContext", "XmFontContext");
-  XmFontListFreeFontContext(XEN_TO_C_XmFontContext(arg1));
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XmFontListGetNextFont(XEN arg1)
-{
-  #define H_XmFontListGetNextFont "Boolean XmFontListGetNextFont(XmFontContext context) \
-allows applications to access the fonts and character sets in a font list"
-  /* DIFF: XmFontListGetNextFont omits args 2 3, returns list
-   */
-  XmStringCharSet s;
-  XFontStruct *f;
-  int b;
-  XEN_ASSERT_TYPE(XEN_XmFontContext_P(arg1), arg1, 1, "XmFontListGetNextFont", "XmFontContext");
-  b = XmFontListGetNextFont(XEN_TO_C_XmFontContext(arg1), &s, &f);
-  if (b) /* else "s" may be garbage */
-    return(XEN_LIST_3(C_TO_XEN_BOOLEAN(b),
-		      C_TO_XEN_STRING(s),
-		      C_TO_XEN_XFontStruct(f)));
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XmFontListInitFontContext(XEN arg1)
-{
-  #define H_XmFontListInitFontContext "Boolean XmFontListInitFontContext(XmFontList fontlist) \
-allows applications to access the entries in a font list"
-  /* DIFF: XmFontListInitFontContext omits arg1 and rtns it
-   */
-  XmFontContext fc;
-  Boolean b;
-  XEN_ASSERT_TYPE(XEN_XmFontList_or_XmRenderTable_P(arg1), arg1, 1, "XmFontListInitFontContext", "XmFontList");
-  b = XmFontListInitFontContext(&fc, XEN_TO_C_XmFontList(arg1));
-  if (b)
-    return(C_TO_XEN_XmFontContext(fc));
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XmFontListCopy(XEN arg1)
-{
-  #define H_XmFontListCopy "XmFontList XmFontListCopy(XmFontList fontlist) copies a font list"
-  XEN_ASSERT_TYPE(XEN_XmFontList_or_XmRenderTable_P(arg1), arg1, 1, "XmFontListCopy", "XmFontList");
-  return(C_TO_XEN_XmFontList(XmFontListCopy(XEN_TO_C_XmFontList(arg1))));
-}
-
-static XEN gxm_XmFontListAdd(XEN arg1, XEN arg2, XEN arg3)
-{
-  #define H_XmFontListAdd "XmFontList XmFontListAdd(XmFontList oldlist, XFontStruct *font, XmStringCharSet charset) \
-creates a new font list"
-  XEN_ASSERT_TYPE(XEN_XmFontList_or_XmRenderTable_P(arg1), arg1, 1, "XmFontListAdd", "XmFontList");
-  XEN_ASSERT_TYPE(XEN_XFontStruct_P(arg2), arg2, 2, "XmFontListAdd", "XFontStruct*");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg3), arg3, 3, "XmFontListAdd", "XmStringCharSet");
-  return(C_TO_XEN_XmFontList(XmFontListAdd(XEN_TO_C_XmFontList(arg1), XEN_TO_C_XFontStruct(arg2), (char *)XEN_TO_C_STRING(arg3))));
-}
-
-static XEN gxm_XmFontListFree(XEN arg1)
-{
-  #define H_XmFontListFree "void XmFontListFree(XmFontList list) recovers memory used by a font list"
-  XEN_ASSERT_TYPE(XEN_XmFontList_or_XmRenderTable_P(arg1), arg1, 1, "XmFontListFree", "XmFontList");
-  XmFontListFree(XEN_TO_C_XmFontList(arg1));
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XmFontListCreate(XEN arg1, XEN arg2)
-{
-  #define H_XmFontListCreate "XmFontList XmFontListCreate(XFontStruct *font, XmStringCharSet charset) creates a font list"
-  XEN_ASSERT_TYPE(XEN_XFontStruct_P(arg1), arg1, 1, "XmFontListCreate", "XFontStruct*");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmFontListCreate", "XmStringCharSet");
-  return(C_TO_XEN_XmFontList(XmFontListCreate(XEN_TO_C_XFontStruct(arg1), (char *)XEN_TO_C_STRING(arg2))));
-}
-
-static XEN gxm_XmFontListEntryLoad(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
-{
-  #define H_XmFontListEntryLoad "XmFontListEntry XmFontListEntryLoad(Display *display, char *font_name, XmFontType type, char *tag) \
-loads a font or creates a font set and creates an accompanying font list entry"
-
-  XmFontType type;
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XmFontListEntryLoad", "Display*");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmFontListEntryLoad", "char*");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmFontListEntryLoad", "XmFontType");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg4), arg4, 4, "XmFontListEntryLoad", "char*");
-  type = (XmFontType)XEN_TO_C_INT(arg3);
-  if (type > 1) XEN_WRONG_TYPE_ARG_ERROR("XmFontListEntryLoad", 3, arg3, "XmFontType");
-  return(C_TO_XEN_XmFontListEntry(XmFontListEntryLoad(XEN_TO_C_Display(arg1),
-						      (char *)XEN_TO_C_STRING(arg2),
-						      type,
-						      (char *)XEN_TO_C_STRING(arg4))));
-}
-
-static XEN gxm_XmFontListRemoveEntry(XEN arg1, XEN arg2)
-{
-  #define H_XmFontListRemoveEntry "XmFontList XmFontListRemoveEntry(XmFontList oldlist, XmFontListEntry entry) removes a \
-font list entry from a font list"
-  XEN_ASSERT_TYPE(XEN_XmFontList_or_XmRenderTable_P(arg1), arg1, 1, "XmFontListRemoveEntry", "XmFontList");
-  XEN_ASSERT_TYPE(XEN_XmFontListEntry_P(arg2), arg2, 2, "XmFontListRemoveEntry", "XmFontListEntry");
-  return(C_TO_XEN_XmFontList(XmFontListRemoveEntry(XEN_TO_C_XmFontList(arg1), XEN_TO_C_XmFontListEntry(arg2))));
-}
-
-static XEN gxm_XmFontListNextEntry(XEN arg1)
-{
-  #define H_XmFontListNextEntry "XmFontListEntry XmFontListNextEntry(XmFontContext context): returns the next entry in a font list"
-  XEN_ASSERT_TYPE(XEN_XmFontContext_P(arg1), arg1, 1, "XmFontListNextEntry", "XmFontContext");
-  return(C_TO_XEN_XmFontListEntry(XmFontListNextEntry(XEN_TO_C_XmFontContext(arg1))));
-}
-
-static XEN gxm_XmFontListAppendEntry(XEN arg1, XEN arg2)
-{
-  #define H_XmFontListAppendEntry "XmFontList XmFontListAppendEntry(XmFontList oldlist, XmFontListEntry entry) appends an \
-entry to a font list"
-  XEN_ASSERT_TYPE(XEN_XmFontList_or_XmRenderTable_P(arg1) || XEN_FALSE_P(arg1), arg1, 1, "XmFontListAppendEntry", "XmFontList");
-  XEN_ASSERT_TYPE(XEN_XmFontListEntry_P(arg2), arg2, 2, "XmFontListAppendEntry", "XmFontListEntry");
-  return(C_TO_XEN_XmFontList(XmFontListAppendEntry((XEN_FALSE_P(arg1)) ? NULL : XEN_TO_C_XmFontList(arg1), 
-						   XEN_TO_C_XmFontListEntry(arg2))));
-}
-
-static XEN gxm_XmFontListEntryGetTag(XEN arg1)
-{
-  char *str;
-  XEN res;
-  #define H_XmFontListEntryGetTag "char* XmFontListEntryGetTag(XmFontListEntry entry) retrieves the tag of a font list entry"
-  XEN_ASSERT_TYPE(XEN_XmFontListEntry_P(arg1), arg1, 1, "XmFontListEntryGetTag", "XmFontListEntry");
-  str = XmFontListEntryGetTag(XEN_TO_C_XmFontListEntry(arg1));
-  res = C_TO_XEN_STRING(str);
-  if (str) XtFree(str);
-  return(res);
-}
-
-static XEN gxm_XmFontListEntryGetFont(XEN arg1)
-{
-  #define H_XmFontListEntryGetFont "XtPointer XmFontListEntryGetFont(XmFontListEntry entry) \
-retrieves font information from a font list entry -> fontstruct"
-  /* DIFF: XmFontListEntryGetFont omits arg2
-   */
-  XmFontType f;
-  XtPointer ptr;
-  XEN_ASSERT_TYPE(XEN_XmFontListEntry_P(arg1), arg1, 1, "XmFontListEntryGetFont", "XmFontListEntry");
-  ptr  = XmFontListEntryGetFont(XEN_TO_C_XmFontListEntry(arg1), &f);
-  if (f == XmFONT_IS_FONTSET)
-    return(C_TO_XEN_XFontSet((XFontSet)ptr)); 
-  return(C_TO_XEN_XFontStruct((XFontStruct *)ptr));
-}
-
-static XEN gxm_XmFontListEntryFree(XEN arg1)
-{
-  #define H_XmFontListEntryFree "void XmFontListEntryFree(XmFontListEntry *entry) recovers memory used by a font list entry"
-  /* DIFF: XmFontListEntryFree takes FontListEntry (not ptr to it)
-   */
-  XmFontListEntry f;
-  XEN_ASSERT_TYPE(XEN_XmFontListEntry_P(arg1), arg1, 1, "XmFontListEntryFree", "XmFontListEntry");
-  f = XEN_TO_C_XmFontListEntry(arg1);
-  XmFontListEntryFree(&f);
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XmFontListEntryCreate(XEN arg1, XEN arg2, XEN arg3)
-{
-  #define H_XmFontListEntryCreate "XmFontListEntry XmFontListEntryCreate(char *tag, XmFontType type, XtPointer font) \
-creates a font list entry"
-  XmFontType type;
-  XtPointer gad;
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XmFontListEntryCreate", "char*");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmFontListEntryCreate", "XmFontType");
-  XEN_ASSERT_TYPE(XEN_XFontStruct_P(arg3) || XEN_XFontSet_P(arg3), arg3, 3, "XmFontListEntryCreate", "XFontSet or XFontStruct");
-  type = (XmFontType)XEN_TO_C_INT(arg2);
-  if (type > 1) XEN_WRONG_TYPE_ARG_ERROR("XmFontListEntryCreate", 2, arg2, "XmFontType");
-  if (type == XmFONT_IS_FONTSET)
-    gad = (XtPointer)XEN_TO_C_XFontSet(arg3);
-  else gad = (XtPointer)XEN_TO_C_XFontStruct(arg3);
-  return(C_TO_XEN_XmFontListEntry(XmFontListEntryCreate((char *)XEN_TO_C_STRING(arg1), 
-							type,
-							gad)));
-}
-
-static XEN gxm_XmStringGetLtoR(XEN arg1, XEN arg2)
-{
-  #define H_XmStringGetLtoR "Boolean XmStringGetLtoR(XmString string, XmStringCharSet tag) searches \
-for a text segment in the input compound string"
-  /* DIFF: XmStringGetLtoR omits and rtns last arg
-   */
-  char *str;
-  Boolean b;
-  XEN val;
-  XEN_ASSERT_TYPE(XEN_XmString_P(arg1), arg1, 1, "XmStringGetLtoR", "XmString");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmStringGetLtoR", "XmStringCharSet");
-  b = XmStringGetLtoR(XEN_TO_C_XmString(arg1), (char *)XEN_TO_C_STRING(arg2), &str);
-  val = C_TO_XEN_STRING(str);
-  free(str);
-  return(XEN_LIST_2(C_TO_XEN_BOOLEAN(b), val));
-}
-
-static XEN gxm_XmStringGetNextSegment(XEN arg1)
-{
-  #define H_XmStringGetNextSegment "Boolean XmStringGetNextSegment(XmStringContext context) fetches the bytes in the next segment of a compound string"
-  /* DIFF: XmStringGetNextSegment omits last args, returns them
-   */
-  Boolean b; /* returned boolean omitted arg 5 */
-  int val;
-  unsigned char c;
-  XmStringCharSet tag;
-  char *text;
-  XEN_ASSERT_TYPE(XEN_XmStringContext_P(arg1), arg1, 1, "XmStringGetNextSegment", "XmStringContext");
-  val = XmStringGetNextSegment(XEN_TO_C_XmStringContext(arg1), 
-			       &text, &tag, &c, &b);
-  return(XEN_LIST_5(C_TO_XEN_BOOLEAN(val),
-		    C_TO_XEN_STRING(text),
-		    C_TO_XEN_STRING(tag),
-		    C_TO_XEN_INT((int)c),
-		    C_TO_XEN_BOOLEAN(b)));
-}
-
-static XEN gxm_XmStringPeekNextComponent(XEN arg1)
-{
-  #define H_XmStringPeekNextComponent "XmStringComponentType XmStringPeekNextComponent(XmStringContext context) \
-returns the component type of the next component to be fetched"
-  XEN_ASSERT_TYPE(XEN_XmStringContext_P(arg1), arg1, 1, "XmStringPeekNextComponent", "XmStringContext");
-  return(C_TO_XEN_INT(XmStringPeekNextComponent(XEN_TO_C_XmStringContext(arg1))));
-}
-
-static XEN gxm_XmStringGetNextComponent(XEN arg1)
-{
-  #define H_XmStringGetNextComponent "XmStringComponentType XmStringGetNextComponent(XmStringContext context) \
-returns the type and value of the next component in a compound string (list val text tag direction component len value)"
-  /* DIFF: XmStringGetNextComponent omits all but 1st arg, returns list
-   */
-  XmStringDirection direction = 0;
-  unsigned short len;
-  unsigned char *value;
-  XmStringComponentType component;
-  XmStringCharSet tag;
-  char *text = NULL;
-  int val;
-  XEN xtext = XEN_FALSE, xdir = XEN_FALSE, xtag = XEN_FALSE, xvalue = XEN_FALSE;
-  XEN_ASSERT_TYPE(XEN_XmStringContext_P(arg1), arg1, 1, "XmStringGetNextComponent", "XmStringContext");
-  val = XmStringGetNextComponent(XEN_TO_C_XmStringContext(arg1), &text, &tag, &direction, &component, &len, &value);
-  if ((val == XmSTRING_COMPONENT_TEXT) || (val == XmSTRING_COMPONENT_LOCALE_TEXT))
-    {
-      xtext = C_TO_XEN_STRING(text);
-      if (text) XtFree(text);
-    }
-  else
-    {
-      if (val == XmSTRING_COMPONENT_DIRECTION)
-	xdir = C_TO_XEN_INT((int)direction);
-      else 
-	{
-	  if ((val == XmSTRING_COMPONENT_FONTLIST_ELEMENT_TAG) || (val == XmSTRING_COMPONENT_CHARSET))
-	    {
-	      xtag = C_TO_XEN_STRING(tag);
-	      if (tag) XtFree(tag);
-	    }
-	}
-    }
-  xvalue = C_TO_XEN_STRING((const char *)value);
-  if ((len > 0) && (value) && ((component == XmSTRING_COMPONENT_TEXT) || (component == XmSTRING_COMPONENT_LOCALE_TEXT)))
-    XtFree((char *)value);
-  return(XEN_LIST_7(C_TO_XEN_INT(val),
-		    xtext,
-		    xtag,
-		    xdir,
-		    C_TO_XEN_INT((int)component),
-		    C_TO_XEN_INT((int)len),
-		    xvalue));
-}
-#endif
 
 static XEN gxm_XmStringFreeContext(XEN arg1)
 {
@@ -4142,30 +3814,6 @@ a data structure for scanning an XmString component by component"
   return(XEN_LIST_2(C_TO_XEN_BOOLEAN(val), C_TO_XEN_XmStringContext(gxm_initxmsc)));
 }
 
-#if (!XM_DISABLE_DEPRECATED)
-static XEN gxm_XmStringCreateLtoR(XEN arg1, XEN arg2)
-{
-  #define H_XmStringCreateLtoR "XmString XmStringCreateLtoR(char *text, char *tag) creates a compound string"
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XmStringCreateLtoR", "char*");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmStringCreateLtoR", "XmStringCharSet");
-  return(C_TO_XEN_XmString(XmStringCreateLtoR((char *)XEN_TO_C_STRING(arg1), (char *)XEN_TO_C_STRING(arg2))));
-}
-
-static XEN gxm_XmStringSegmentCreate(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
-{
-  #define H_XmStringSegmentCreate "XmString XmStringSegmentCreate(char *text, XmStringTag tag, XmStringDirection direction, Boolean separator) \
-creates a compound string"
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XmStringSegmentCreate", "char*");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XmStringSegmentCreate", "XmStringCharSet");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmStringSegmentCreate", "int");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg4), arg4, 4, "XmStringSegmentCreate", "boolean");
-  return(C_TO_XEN_XmString(XmStringSegmentCreate((char *)XEN_TO_C_STRING(arg1), 
-						 (char *)XEN_TO_C_STRING(arg2), 
-						 XEN_TO_C_INT(arg3), 
-						 XEN_TO_C_BOOLEAN(arg4))));
-}
-#endif
-
 static XEN gxm_XmStringSeparatorCreate(void)
 {
   #define H_XmStringSeparatorCreate "XmString XmStringSeparatorCreate(void) creates a compound string"
@@ -4185,16 +3833,6 @@ static XEN gxm_XmStringCreateLocalized(XEN arg1)
   XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XmStringCreateLocalized", "String");
   return(C_TO_XEN_XmString(XmStringCreateLocalized((char *)XEN_TO_C_STRING(arg1))));
 }
-
-#if (!XM_DISABLE_DEPRECATED)
-static XEN gxm_XmStringCreateSimple(XEN arg1)
-{
-  #define H_XmStringCreateSimple "XmString XmStringCreateSimple(char *text) creates a compound string in the \
-language environment of a widget"
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XmStringCreateSimple", "char*");
-  return(C_TO_XEN_XmString(XmStringCreateSimple((char *)XEN_TO_C_STRING(arg1))));
-}
-#endif
 
 static XEN gxm_XmStringCreate(XEN arg1, XEN arg2)
 {
@@ -4258,18 +3896,6 @@ static XEN gxm_XmSetColorCalculation(XEN arg1)
     }
   return(arg1);
 }
-
-#if (!XM_DISABLE_DEPRECATED)
-static XEN gxm_XmTrackingLocate(XEN arg1, XEN arg2, XEN arg3)
-{
-  #define H_XmTrackingLocate "Widget XmTrackingLocate(Widget widget, Cursor cursor, Boolean confine_to) allows for modal \
-selection of a component (obsolete)"
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmTrackingLocate", "Widget");
-  XEN_ASSERT_TYPE(XEN_Cursor_P(arg2), arg2, 2, "XmTrackingLocate", "Cursor");
-  XEN_ASSERT_TYPE(XEN_BOOLEAN_P(arg3), arg3, 3, "XmTrackingLocate", "boolean");
-  return(C_TO_XEN_Widget(XmTrackingLocate(XEN_TO_C_Widget(arg1), XEN_TO_C_ULONG(arg2), XEN_TO_C_BOOLEAN(arg3))));
-}
-#endif
 
 static XEN gxm_XmTrackingEvent(XEN arg1, XEN arg2, XEN arg3)
 {
@@ -4533,43 +4159,6 @@ static XEN gxm_XmCreateSimpleMenuBar(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   return(gxm_new_widget("XmCreateSimpleMenuBar", XmCreateSimpleMenuBar, arg1, arg2, arg3, arg4));
 }
 
-#if (!XM_DISABLE_DEPRECATED)
-static XEN gxm_XmGetMenuCursor(XEN arg1)
-{
-  #define H_XmGetMenuCursor "Cursor XmGetMenuCursor(Display *display): returns the cursor ID for the current menu cursor"
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XmGetMenuCursor", "Display*");
-  return(C_TO_XEN_Cursor(XmGetMenuCursor(XEN_TO_C_Display(arg1))));
-}
-
-static XEN gxm_XmSetMenuCursor(XEN arg1, XEN arg2)
-{
-  #define H_XmSetMenuCursor "void XmSetMenuCursor(Display *display, Cursor cursorId) modifies the menu cursor for a client"
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XmSetMenuCursor", "Display*");
-  XEN_ASSERT_TYPE(XEN_Cursor_P(arg2), arg2, 2, "XmSetMenuCursor", "Cursor");
-  XmSetMenuCursor(XEN_TO_C_Display(arg1), XEN_TO_C_Cursor(arg2));
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XmSetFontUnit(XEN arg1, XEN arg2)
-{
-  #define H_XmSetFontUnit "void XmSetFontUnit(Display *display, int font_unit_value) sets the font unit value for a display"
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XmSetFontUnit", "Display*");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmSetFontUnit", "int");
-  XmSetFontUnit(XEN_TO_C_Display(arg1), XEN_TO_C_INT(arg2));
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XmSetFontUnits(XEN arg1, XEN arg2, XEN arg3)
-{
-  #define H_XmSetFontUnits "void XmSetFontUnits(Display *display, int h_value, int v_value) sets the font unit value for a display"
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XmSetFontUnits", "Display*");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XmSetFontUnits", "int");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg3), arg3, 3, "XmSetFontUnits", "int");
-  XmSetFontUnits(XEN_TO_C_Display(arg1), XEN_TO_C_INT(arg2), XEN_TO_C_INT(arg3));
-  return(XEN_FALSE);
-}
-#endif
-
 static XEN gxm_XmConvertUnits(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5)
 {
   #define H_XmConvertUnits "int XmConvertUnits(Widget widget, int orientation, int from_unit_type, int from_value, int to_unit_type) \
@@ -4756,50 +4345,6 @@ static XEN gxm_XmCreateMainWindow(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 The MainWindow widget creation function"
   return(gxm_new_widget("XmCreateMainWindow", XmCreateMainWindow, arg1, arg2, arg3, arg4));
 }
-
-#if (!XM_DISABLE_DEPRECATED)
-#define XEN_MainWindowWidget_P(Arg) (XEN_Widget_P(Arg) && XmIsMainWindow(XEN_TO_C_Widget(Arg)))
-
-static XEN gxm_XmMainWindowSep3(XEN arg1)
-{
-  #define H_XmMainWindowSep3 "Widget XmMainWindowSep3(Widget widget): returns the widget ID of the third Separator widget"
-  XEN_ASSERT_TYPE(XEN_MainWindowWidget_P(arg1), arg1, 1, "XmMainWindowSep3", "MainWindow Widget");
-  return(C_TO_XEN_Widget(XmMainWindowSep3(XEN_TO_C_Widget(arg1))));
-}
-
-static XEN gxm_XmMainWindowSep2(XEN arg1)
-{
-  #define H_XmMainWindowSep2 "Widget XmMainWindowSep2(Widget widget) the widget ID of the second Separator widget"
-  XEN_ASSERT_TYPE(XEN_MainWindowWidget_P(arg1), arg1, 1, "XmMainWindowSep2", "MainWindow Widget");
-  return(C_TO_XEN_Widget(XmMainWindowSep2(XEN_TO_C_Widget(arg1))));
-}
-
-static XEN gxm_XmMainWindowSep1(XEN arg1)
-{
-  #define H_XmMainWindowSep1 "Widget XmMainWindowSep1(Widget widget): returns the widget ID of the first Separator"
-  XEN_ASSERT_TYPE(XEN_MainWindowWidget_P(arg1), arg1, 1, "XmMainWindowSep1", "MainWindow Widget");
-  return(C_TO_XEN_Widget(XmMainWindowSep1(XEN_TO_C_Widget(arg1))));
-}
-
-static XEN gxm_XmMainWindowSetAreas(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
-{
-  #define H_XmMainWindowSetAreas "void XmMainWindowSetAreas(Widget widget, Widget menu_bar, Widget command_window, Widget horizontal_scrollbar, \
-Widget vertical_scrollbar, Widget work_region) identifies manageable children for each area"
-  XEN_ASSERT_TYPE(XEN_MainWindowWidget_P(arg1), arg1, 1, "XmMainWindowSetAreas", "MainWindow Widget");
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg2) || XEN_BOOLEAN_P(arg2), arg2, 2, "XmMainWindowSetAreas", "Widget or " PROC_FALSE "=null");
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg3) || XEN_BOOLEAN_P(arg3), arg3, 3, "XmMainWindowSetAreas", "Widget or " PROC_FALSE "=null");
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg4) || XEN_BOOLEAN_P(arg4), arg4, 4, "XmMainWindowSetAreas", "Widget or " PROC_FALSE "=null");
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg5) || XEN_BOOLEAN_P(arg5), arg5, 5, "XmMainWindowSetAreas", "Widget or " PROC_FALSE "=null");
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg6) || XEN_BOOLEAN_P(arg6), arg6, 6, "XmMainWindowSetAreas", "Widget or " PROC_FALSE "=null");
-  XmMainWindowSetAreas(XEN_TO_C_Widget(arg1),
-		       (XEN_Widget_P(arg2) ? XEN_TO_C_Widget(arg2) : NULL),
-		       (XEN_Widget_P(arg3) ? XEN_TO_C_Widget(arg3) : NULL),
-		       (XEN_Widget_P(arg4) ? XEN_TO_C_Widget(arg4) : NULL),
-		       (XEN_Widget_P(arg5) ? XEN_TO_C_Widget(arg5) : NULL),
-		       (XEN_Widget_P(arg6) ? XEN_TO_C_Widget(arg6) : NULL));
-  return(XEN_FALSE);
-}
-#endif
 
 static XEN gxm_XmTranslateKey(XEN arg1, XEN arg2, XEN arg3)
 {
@@ -6917,22 +6462,6 @@ The ScrolledWindow widget creation function"
   return(gxm_new_widget("XmCreateScrolledWindow", XmCreateScrolledWindow, arg1, arg2, arg3, arg4));
 }
 
-#if (!XM_DISABLE_DEPRECATED)
-static XEN gxm_XmScrolledWindowSetAreas(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
-{
-  #define H_XmScrolledWindowSetAreas "void XmScrolledWindowSetAreas(Widget widget, Widget horizontal_scrollbar, Widget vertical_scrollbar, \
-Widget work_region) adds or changes a window work region and a horizontal or vertical \
-ScrollBar widget to the ScrolledWindow widget"
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmScrolledWindowSetAreas", "Widget");
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg2), arg2, 2, "XmScrolledWindowSetAreas", "Widget");
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg3), arg3, 3, "XmScrolledWindowSetAreas", "Widget");
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg4), arg4, 4, "XmScrolledWindowSetAreas", "Widget");
-  XmScrolledWindowSetAreas(XEN_TO_C_Widget(arg1), XEN_TO_C_Widget(arg2), 
-			   XEN_TO_C_Widget(arg3), XEN_TO_C_Widget(arg4));
-  return(XEN_FALSE);
-}
-#endif
-
 static XEN gxm_XmCreateDialogShell(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
   #define H_XmCreateDialogShell "Widget XmCreateDialogShell(Widget parent, String name, ArgList arglist, Cardinal argcount) \
@@ -7433,28 +6962,6 @@ static XEN gxm_XmCreateContainer(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 The Container creation function"
   return(gxm_new_widget("XmCreateContainer", XmCreateContainer, arg1, arg2, arg3, arg4));
 }
-
-#if (!XM_DISABLE_DEPRECATED)
-static XEN gxm_XmRemoveFromPostFromList(XEN arg1, XEN arg2)
-{
-  #define H_XmRemoveFromPostFromList "void XmRemoveFromPostFromList(Widget menu, Widget post_from_widget) \
-disables a menu for a particular widget"
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmRemoveFromPostFromList", "Widget");
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg2), arg2, 2, "XmRemoveFromPostFromList", "Widget");
-  XmRemoveFromPostFromList(XEN_TO_C_Widget(arg1), XEN_TO_C_Widget(arg2));
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XmAddToPostFromList(XEN arg1, XEN arg2)
-{
-  #define H_XmAddToPostFromList "void XmAddToPostFromList(Widget menu, Widget post_from_widget) \
-makes a menu accessible from more than one widget"
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg1), arg1, 1, "XmAddToPostFromList", "Widget");
-  XEN_ASSERT_TYPE(XEN_Widget_P(arg2), arg2, 2, "XmAddToPostFromList", "Widget");
-  XmAddToPostFromList(XEN_TO_C_Widget(arg1), XEN_TO_C_Widget(arg2));
-  return(XEN_FALSE);
-}
-#endif
 
 static XEN gxm_XmGetTearOffControl(XEN arg1)
 {
@@ -8481,44 +7988,6 @@ static XEN gxm_XShrinkRegion(XEN arg1, XEN arg2, XEN arg3)
   return(C_TO_XEN_INT(XShrinkRegion(XEN_TO_C_Region(arg1), XEN_TO_C_INT(arg2), XEN_TO_C_INT(arg3))));
 }
 
-#if (!XM_DISABLE_DEPRECATED)
-static XEN gxm_XSetStandardColormap(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
-{
-  #define H_XSetStandardColormap "XSetStandardColormap(dpy, window, colormap, atom) sets the standard colormap property"
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XSetStandardColormap", "Display*");
-  XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XSetStandardColormap", "Window");
-  XEN_ASSERT_TYPE(XEN_XStandardColormap_P(arg3), arg3, 3, "XSetStandardColormap", "XStandardColormap*");
-  XEN_ASSERT_TYPE(XEN_Atom_P(arg4), arg4, 4, "XSetStandardColormap", "Atom");
-  XSetStandardColormap(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), XEN_TO_C_XStandardColormap(arg3), XEN_TO_C_Atom(arg4));
-  return(XEN_FALSE);
-}
-static XEN gxm_XSetStandardProperties(XEN dpy, XEN win, XEN win_name, XEN icon_name, XEN icon_pixmap, XEN argv, XEN argc, XEN hints)
-{
-  #define H_XSetStandardProperties "XSetStandardProperties(dpy, win, win_name, icon_name, icon_pixmap, argv, argc, hints) sets the standard properties"
-  int c_argc = 0;
-  char **c_argv = NULL;
-  XEN_ASSERT_TYPE(XEN_Display_P(dpy), dpy, XEN_ARG_1, "XSetStandardProperties", "Display*");
-  XEN_ASSERT_TYPE(XEN_Window_P(win), win, XEN_ARG_2, "XSetStandardProperties", "Window");
-  XEN_ASSERT_TYPE(XEN_STRING_P(win_name) || XEN_NULL_P(win_name) || XEN_FALSE_P(win_name), win_name, XEN_ARG_3, "XSetStandardProperties", "char*");
-  XEN_ASSERT_TYPE(XEN_STRING_P(icon_name) || XEN_NULL_P(icon_name) || XEN_FALSE_P(icon_name), icon_name, XEN_ARG_4, "XSetStandardProperties", "char*");
-  XEN_ASSERT_TYPE(XEN_Pixmap_P(icon_pixmap) || XEN_INTEGER_P(icon_pixmap), icon_pixmap, XEN_ARG_5, "XSetStandardProperties", "Pixmap or None");
-  XEN_ASSERT_TYPE(XEN_LIST_P(argv), argv, XEN_ARG_6, "XSetStandardProperties", "list of char*");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(argc), argc, XEN_ARG_7, "XSetStandardProperties", "int");
-  XEN_ASSERT_TYPE(XEN_FALSE_P(hints) || XEN_NULL_P(hints) || XEN_XSizeHints_P(hints), hints, XEN_ARG_8, "XSetStandardProperties", "XSizeHints* or false");
-  c_argc = XEN_TO_C_INT(argc);
-  if (c_argc > 0) c_argv = XEN_TO_C_Strings(argv, c_argc);
-  XSetStandardProperties(XEN_TO_C_Display(dpy),
-			 XEN_TO_C_Window(win),
-			 (XEN_STRING_P(win_name)) ? (char *)XEN_TO_C_STRING(win_name): NULL,
-			 (XEN_STRING_P(icon_name)) ? (char *)XEN_TO_C_STRING(icon_name) : NULL,
-			 (XEN_Pixmap_P(icon_pixmap)) ? XEN_TO_C_Pixmap(icon_pixmap) : None,
-			 c_argv,
-			 c_argc,
-			 (XEN_XSizeHints_P(hints)) ? XEN_TO_C_XSizeHints(hints) : NULL);
-  if (c_argv) FREE(c_argv);
-  return(xen_return_first(XEN_FALSE, argv));
-}
-#endif
 static XEN gxm_XSetWMProperties(XEN dpy, XEN win, XEN win_name, XEN icon_name, XEN argv, XEN argc, XEN normal_hints, XEN wm_hints)
 {
   /* last arg omitted -- XClassHint not supported */
@@ -8768,26 +8237,6 @@ structures that have attributes equal to the attributes specified by vinfo_templ
     }
   return(lst);
 }
-
-#if (!XM_DISABLE_DEPRECATED)
-static XEN gxm_XGetStandardColormap(XEN arg1, XEN arg2, XEN arg3)
-{
-  #define H_XGetStandardColormap "XGetStandardColormap(dpy, window, atom) gets the standard colormap property"
-  /* DIFF: XGetStandardColormap omits colormap arg and returns it or #f
-   */
-  XStandardColormap *c;
-  Status val;
-  XEN_ASSERT_TYPE(XEN_Display_P(arg1), arg1, 1, "XGetStandardColormap", "Display*");
-  XEN_ASSERT_TYPE(XEN_Window_P(arg2), arg2, 2, "XGetStandardColormap", "Window");
-  XEN_ASSERT_TYPE(XEN_Atom_P(arg3), arg3, 3, "XGetStandardColormap", "Atom");
-  c = (XStandardColormap *)CALLOC(1, sizeof(XStandardColormap));
-  val = XGetStandardColormap(XEN_TO_C_Display(arg1), XEN_TO_C_Window(arg2), c, XEN_TO_C_Atom(arg3));
-  if (val != 0)
-    return(C_TO_XEN_XStandardColormap(c));
-  FREE(c);
-  return(XEN_FALSE);
-}
-#endif
 
 static XEN gxm_XGetRGBColormaps(XEN arg1, XEN arg2, XEN arg3)
 {
@@ -14471,22 +13920,6 @@ static XEN gxm_XtGetSelectionRequest(XEN arg1, XEN arg2, XEN arg3)
   return(C_TO_XEN_XSelectionRequestEvent(XtGetSelectionRequest(XEN_TO_C_Widget(arg1), XEN_TO_C_Atom(arg2), XEN_TO_C_XtRequestId(arg3))));
 }
 
-#if (!XM_DISABLE_DEPRECATED)
-static XEN gxm_XtGetSelectionTimeout(void)
-{
-  #define H_XtGetSelectionTimeout "unsigned long XtGetSelectionTimeout() has been superseded by XtAppGetSelectionTimeout."
-  return(C_TO_XEN_ULONG(XtGetSelectionTimeout()));
-}
-
-static XEN gxm_XtSetSelectionTimeout(XEN arg1)
-{
-  #define H_XtSetSelectionTimeout "void XtSetSelectionTimeout(timeout) has been superseded by XtAppSetSelectionTimeout."
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, 1, "XtSetSelectionTimeout", "ulong");
-  XtSetSelectionTimeout(XEN_TO_C_ULONG(arg1));
-  return(XEN_FALSE);
-}
-#endif
-
 static XEN gxm_XtAppGetSelectionTimeout(XEN arg1)
 {
   #define H_XtAppGetSelectionTimeout "unsigned long XtAppGetSelectionTimeout(app_context): returns the current selection timeout value, in milliseconds."
@@ -14803,24 +14236,6 @@ application identified by app_context."
   return(C_TO_XEN_XtWorkProcId(id));
 }
 
-#if (!XM_DISABLE_DEPRECATED)
-static XEN gxm_XtAddWorkProc(XEN arg1, XEN arg2)
-{
-  #define H_XtAddWorkProc "XtWorkProcId XtAddWorkProc(proc, client_data) has been replaced by XtAppAddWorkProc."
-  XtWorkProcId id;
-  int gc_loc;
-  XEN descr;
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg1) && (XEN_REQUIRED_ARGS_OK(arg1, 1)), arg1, 1, "XtAddWorkProc", "(XtWorkProc data)");
-  descr = C_TO_XEN_XM_Background(arg1, (XEN_BOUND_P(arg2)) ? arg2 : XEN_FALSE);
-  gc_loc = xm_protect(descr);
-  id = XtAddWorkProc(gxm_XtWorkProc, 
-		     (XtPointer)descr);
-  XEN_LIST_SET(descr, 3, C_TO_XEN_INT(gc_loc));
-  XEN_LIST_SET(descr, 4, C_TO_XEN_ULONG(id));
-  return(C_TO_XEN_XtWorkProcId(id));
-}
-#endif
-
 /* the next 4 are needed where the caller allocates a block of memory, but X frees it (XCreateImage) --
  *   can't use Scheme-allocated memory here etc
  */
@@ -14855,33 +14270,6 @@ static XEN gxm_XtMalloc(XEN arg1)
   return(C_TO_XEN_ULONG(XtMalloc(XEN_TO_C_INT(arg1))));
 }
 
-#if (!XM_DISABLE_DEPRECATED)
-static XEN gxm_XtWarning(XEN arg1)
-{
-  #define H_XtWarning "void XtWarning(message)"
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XtWarning", "char*");
-  XtWarning((char *)XEN_TO_C_STRING(arg1));
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XtAppWarning(XEN arg1, XEN arg2)
-{
-  #define H_XtAppWarning "void XtAppWarning(app_context, message) calls the installed nonfatal error procedure and passes the specified message."
-  XEN_ASSERT_TYPE(XEN_XtAppContext_P(arg1), arg1, 1, "XtAppWarning", "XtAppContext");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XtAppWarning", "char*");
-  XtAppWarning(XEN_TO_C_XtAppContext(arg1), (char *)XEN_TO_C_STRING(arg2));
-  return(XEN_FALSE);
-}
-
-static XEN gxm_XtError(XEN arg1)
-{
-  #define H_XtError "void XtError(message)"
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XtError", "char*");
-  XtError((char *)XEN_TO_C_STRING(arg1));
-  return(XEN_FALSE);
-}
-#endif
-
 static XEN xm_XtErrorHandler;
 static XEN xm_XtWarningHandler;
 
@@ -14892,20 +14280,6 @@ static void gxm_XtErrorHandler(String msg)
 	       C_TO_XEN_STRING(msg), 
 	       c__FUNCTION__);
 }
-
-#if (!XM_DISABLE_DEPRECATED)
-static XEN gxm_XtSetErrorHandler(XEN arg1)
-{
-  #define H_XtSetErrorHandler "void XtSetErrorHandler(handler) has been superseded by XtAppSetErrorHandler."
-  XEN old_val;
-  old_val = xm_XtErrorHandler;
-  xm_protect(arg1);
-  xm_XtErrorHandler = arg1;
-  XtSetErrorHandler(gxm_XtErrorHandler);
-  if (XEN_PROCEDURE_P(old_val)) xm_unprotect(old_val);
-  return(old_val);
-}
-#endif
 
 static XEN gxm_XtAppSetErrorHandler(XEN arg1, XEN arg2)
 {
@@ -14928,20 +14302,6 @@ static void gxm_XtWarningHandler(String msg)
 	       C_TO_XEN_STRING(msg), 
 	       c__FUNCTION__);
 }
-
-#if (!XM_DISABLE_DEPRECATED)
-static XEN gxm_XtSetWarningHandler(XEN arg1)
-{
-  #define H_XtSetWarningHandler "void XtSetWarningHandler(handler) has been superseded by XtAppSetWarningHandler."
-  XEN old_val;
-  old_val = xm_XtWarningHandler;
-  xm_protect(arg1);
-  xm_XtWarningHandler = arg1;
-  XtSetWarningHandler(gxm_XtWarningHandler);
-  if (XEN_PROCEDURE_P(old_val)) xm_unprotect(old_val);
-  return(old_val);
-}
-#endif
 
 static XEN gxm_XtAppSetWarningHandler(XEN arg1, XEN arg2)
 {
@@ -14966,31 +14326,6 @@ static XEN gxm_XtAppError(XEN arg1, XEN arg2)
   return(XEN_FALSE);
 }
 
-
-#if (!XM_DISABLE_DEPRECATED)
-static XEN gxm_XtWarningMsg(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
-{
-  #define H_XtWarningMsg "void XtWarningMsg(name, type, class, default, params, num_params)"
-  /* DIFF: XtWarningMsg takes final int not int*, arg5 is list of strings
-   */
-  int size;
-  Cardinal csize;
-  char **pars;
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XtWarningMsg", "char*");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XtWarningMsg", "char*");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg3), arg3, 3, "XtWarningMsg", "char*");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg4), arg4, 4, "XtWarningMsg", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg5), arg5, 5, "XtWarningMsg", "list of String");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg6), arg6, 6, "XtWarningMsg", "int");
-  size = XEN_TO_C_INT(arg6);
-  if (size <= 0) return(XEN_FALSE);
-  pars = XEN_TO_C_Strings(arg5, size);
-  csize = (Cardinal)size;
-  XtWarningMsg((char *)XEN_TO_C_STRING(arg1), (char *)XEN_TO_C_STRING(arg2), (char *)XEN_TO_C_STRING(arg3), (char *)XEN_TO_C_STRING(arg4), pars, &csize);
-  FREE(pars);
-  return(xen_return_first(XEN_FALSE, arg5));
-}
-#endif
 
 static XEN gxm_XtAppWarningMsg(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
 {
@@ -15018,31 +14353,6 @@ handler and passes the specified information."
   FREE(pars);
   return(xen_return_first(XEN_FALSE, arg6));
 }
-
-#if (!XM_DISABLE_DEPRECATED)
-static XEN gxm_XtErrorMsg(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6)
-{
-  #define H_XtErrorMsg "void XtErrorMsg(name, type, class, default, params, num_params) has been superseded by XtAppErrorMsg."
-  /* DIFF: XtErrorMsg takes final int not int*, arg5 is list of strings
-   */
-  int size;
-  Cardinal csize;
-  char **pars;
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XtErrorMsg", "char*");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XtErrorMsg", "char*");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg3), arg3, 3, "XtErrorMsg", "char*");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg4), arg4, 4, "XtErrorMsg", "char*");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg5), arg5, 5, "XtErrorMsg", "list of String");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg6), arg6, 6, "XtErrorMsg", "int");
-  size = XEN_TO_C_INT(arg6);
-  if (size <= 0) return(XEN_FALSE);
-  pars = XEN_TO_C_Strings(arg5, size);
-  csize = (Cardinal)size;
-  XtErrorMsg((char *)XEN_TO_C_STRING(arg1), (char *)XEN_TO_C_STRING(arg2), (char *)XEN_TO_C_STRING(arg3), (char *)XEN_TO_C_STRING(arg4), pars, &csize);
-  FREE(pars);
-  return(xen_return_first(XEN_FALSE, arg5));
-}
-#endif
 
 static XEN gxm_XtAppErrorMsg(XEN arg1, XEN arg2, XEN arg3, XEN arg4, XEN arg5, XEN arg6, XEN arg7)
 {
@@ -15098,20 +14408,6 @@ static void gxm_XtErrorMsgHandler(String name, String type, String clas, String 
     }
 }
 
-#if (!XM_DISABLE_DEPRECATED)
-static XEN gxm_XtSetErrorMsgHandler(XEN arg1)
-{
-  #define H_XtSetErrorMsgHandler "void XtSetErrorMsgHandler(msg_handler) has been superseded by XtAppSetErrorMsgHandler."
-  XEN old_val;
-  old_val = xm_XtErrorMsgHandler;
-  xm_protect(arg1);
-  xm_XtErrorMsgHandler = arg1;
-  XtSetErrorMsgHandler(gxm_XtErrorMsgHandler);
-  if (XEN_PROCEDURE_P(old_val)) xm_unprotect(old_val);
-  return(old_val);
-}
-#endif
-
 static XEN gxm_XtAppSetErrorMsgHandler(XEN arg1, XEN arg2)
 {
   #define H_XtAppSetErrorMsgHandler "void XtAppSetErrorMsgHandler(app_context, msg_handler) registers the specified procedure, which is called \
@@ -15150,20 +14446,6 @@ static void gxm_XtWarningMsgHandler(String name, String type, String clas, Strin
       xm_unprotect_at(loc);
     }
 }
-
-#if (!XM_DISABLE_DEPRECATED)
-static XEN gxm_XtSetWarningMsgHandler(XEN arg1)
-{
-  #define H_XtSetWarningMsgHandler "void XtSetWarningMsgHandler(msg_handler) has been superseded by XtAppSetWarningMsgHandler."
-  XEN old_val;
-  old_val = xm_XtWarningMsgHandler;
-  xm_protect(arg1);
-  xm_XtWarningMsgHandler = arg1;
-  XtSetWarningMsgHandler(gxm_XtWarningMsgHandler);
-  if (XEN_PROCEDURE_P(old_val)) xm_unprotect(old_val);
-  return(old_val);
-}
-#endif
 
 static XEN gxm_XtAppSetWarningMsgHandler(XEN arg1, XEN arg2)
 {
@@ -15339,29 +14621,6 @@ calls XOpenDisplay the specified display name."
   else lst = XEN_CONS(XEN_FALSE, lst);
   return(gxm_argv_to_list(lst, argc, argv));
 }
-
-#if (!XM_DISABLE_DEPRECATED) 
-static XEN gxm_XtInitialize(XEN arg1, XEN arg2, XEN arg5, XEN arg6)
-{
-  #define H_XtInitialize "Widget XtInitialize(shell_name, application_class, argc, argv) calls XtToolkitInitialize \
-followed by XtOpenDisplay with display_string NULL and application_name NULL, and finally calls XtAppCreateShell with appcation_name NULL, \
-widget_class applicationShellWidgetClass , and the specified args and num_args and returns the created shell. "
-  /* DIFF: XtInitialize ignore arg 3 4, argc is int, argv is list of strings
-   */
-  char **argv = NULL;
-  int argc;
-  Widget w;
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XtInitialize", "char*");
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg2), arg2, 2, "XtInitialize", "char*");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg5), arg5, 3, "XtInitialize", "int");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg6), arg6, 4, "XtInitialize", "list of char*");
-  argc = XEN_TO_C_INT(arg5);
-  if (XEN_LIST_LENGTH(arg6) != argc) return(XEN_FALSE); /* error? */
-  if (argc > 0) argv = XEN_TO_C_Strings(arg6, argc);
-  w = XtInitialize((char *)XEN_TO_C_STRING(arg1), (char *)XEN_TO_C_STRING(arg2), NULL, 0, &argc, argv);
-  return(gxm_argv_to_list(XEN_CONS(C_TO_XEN_Widget(w), XEN_EMPTY_LIST), argc, argv));
-}
-#endif
 
 static XEN gxm_XtAppSetFallbackResources(XEN app, XEN specs)
 {
@@ -15767,33 +15026,6 @@ the specified application name and application class for qualifying all widget r
     }
   return(C_TO_XEN_Widget(w));
 }
-
-#if (!XM_DISABLE_DEPRECATED)
-static XEN gxm_XtCreateApplicationShell(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
-{
-  #define H_XtCreateApplicationShell "Widget XtCreateApplicationShell(name, widget_class, args, num_args) calls XtAppCreateShell with the \
-application NULL, the application class passed to XtInitialize , and the default application context created by XtInitialize. This \
-routine has been replaced by XtAppCreateShell."
-  Arg *args;
-  Widget w;
-  int arglen;
-  XEN_ASSERT_TYPE(XEN_STRING_P(arg1), arg1, 1, "XtCreateApplicationShell", "char*");
-  XEN_ASSERT_TYPE(XEN_WidgetClass_P(arg2), arg2, 2, "XtCreateApplicationShell", "WidgetClass");
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg3), arg3, 3, "XtCreateApplicationShell", "ArgList");
-  XEN_ASSERT_TYPE(XEN_INTEGER_IF_BOUND_P(arg4), arg4, 4, "XtCreateApplicationShell", "int");
-  args = XEN_TO_C_Args(arg3);
-  arglen = XEN_TO_C_INT_DEF(arg4, arg3);
-  w = XtCreateApplicationShell((char *)XEN_TO_C_STRING(arg1), 
-			       XEN_TO_C_WidgetClass(arg2), 
-			       args, arglen);
-  if (args)
-    {
-      fixup_args(w, args, arglen);
-      free_args(args, arglen);
-    }
-  return(C_TO_XEN_Widget(w));
-}
-#endif
 
 static XEN gxm_XtVaCreateManagedWidget(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
 {
@@ -16384,14 +15616,6 @@ pending, or other input sources pending. "
   return(C_TO_XEN_ULONG(XtAppPending(XEN_TO_C_XtAppContext(arg1))));
 }
 
-#if (!XM_DISABLE_DEPRECATED)
-static XEN gxm_XtPending(void)
-{
-  #define H_XtPending "XtInputMask XtPending() has been replaced by XtAppPending."
-  return(C_TO_XEN_BOOLEAN(XtPending()));
-}
-#endif
-
 static XEN gxm_XtAppNextEvent(XEN arg1)
 {
   #define H_XtAppNextEvent "void XtAppNextEvent(app_context) flushes the X output buffers of each Display in the application \
@@ -16406,18 +15630,6 @@ procedures triggered by them -> event."
   return(C_TO_XEN_XEvent_OBJ(e));
 }
 
-#if (!XM_DISABLE_DEPRECATED)
-static XEN gxm_XtNextEvent(void)
-{
-  #define H_XtNextEvent "void XtNextEvent() has been replaced by XtAppNextEvent."
-  /* DIFF: XtNextEvent [ev] -> ev
-   */
-  XEvent *e;
-  e = (XEvent *)CALLOC(1, sizeof(XEvent));
-  XtNextEvent(e);
-  return(C_TO_XEN_XEvent_OBJ(e));
-}
-#endif
 
 
 /* -------- Input callback -------- */
@@ -16488,32 +15700,6 @@ new source of events, which is usually file input but can also be file output."
   return(C_TO_XEN_XtInputId(id));
 }
 
-#if (!XM_DISABLE_DEPRECATED)
-static XEN gxm_XtAddInput(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
-{
-  #define H_XtAddInput "XtInputId XtAddInput(source, condition, proc, client_data) has been replaced by XtAppAddInput."
-  XtInputId id;
-  int gc_loc;
-  XEN descr;
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg1), arg1, 1, "XtAddInput", "int");
-  XEN_ASSERT_TYPE(XEN_INTEGER_P(arg2), arg2, 2, "XtAddInput", "int");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg3) && (XEN_REQUIRED_ARGS_OK(arg3, 3)), arg3, 3, "XtAddInput", "(XtInputCallbackProc data fileno id)");
-  descr = C_TO_XEN_XM_Input(arg3, (XEN_BOUND_P(arg4)) ? arg4 : XEN_FALSE);
-  gc_loc = xm_protect(descr);
-  id = XtAddInput(XEN_TO_C_INT(arg1), 
-#if (HAVE_S7) && (SIZEOF_OFF_T != SIZEOF_VOID_P)
-		  (XtPointer)((int)XEN_TO_C_INT(arg2)),
-#else
-		  (XtPointer)XEN_TO_C_INT(arg2),
-#endif
-		  gxm_XtInputCallbackProc, 
-		  (XtPointer)descr);
-  XEN_LIST_SET(descr, 3, C_TO_XEN_INT(gc_loc));
-  XEN_LIST_SET(descr, 4, C_TO_XEN_ULONG(id));
-  return(C_TO_XEN_XtInputId(id));
-}
-#endif
-
 /* -------- Timer Callback -------- */
 /* (79) protect the function, then unprotect after invocation */
 
@@ -16576,26 +15762,6 @@ static XEN gxm_XtAppAddTimeOut(XEN arg1, XEN arg2, XEN arg3, XEN arg4)
   return(C_TO_XEN_XtIntervalId(id));
 }
 
-#if (!XM_DISABLE_DEPRECATED)
-static XEN gxm_XtAddTimeOut(XEN arg1, XEN arg2, XEN arg3)
-{
-  #define H_XtAddTimeOut "XtIntervalId XtAddTimeOut(interval, proc, client_data) has been replaced by XtAppAddTimeOut."
-  XtIntervalId id;
-  int gc_loc;
-  XEN descr;
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, 1, "XtAddTimeOut", "ulong");
-  XEN_ASSERT_TYPE(XEN_PROCEDURE_P(arg2) && (XEN_REQUIRED_ARGS_OK(arg2, 2)), arg2, 2, "XtAddTimeOut", "(XtTimerCallbackProc data id)");
-  descr = C_TO_XEN_XM_TimeOut(arg2, (XEN_BOUND_P(arg3)) ? arg3 : XEN_FALSE);
-  gc_loc = xm_protect(descr);
-  id = XtAddTimeOut(XEN_TO_C_ULONG(arg1), 
-		    gxm_XtTimerCallbackProc, 
-		    (XtPointer)descr);
-  XEN_LIST_SET(descr, 3, C_TO_XEN_INT(gc_loc));
-  XEN_LIST_SET(descr, 4, C_TO_XEN_ULONG(id));
-  return(C_TO_XEN_XtIntervalId(id));
-}
-#endif
-
 static XEN gxm_XtLastTimestampProcessed(XEN arg1)
 {
   #define H_XtLastTimestampProcessed "Time XtLastTimestampProcessed(display): returns the timestamp of the last event"
@@ -16649,15 +15815,6 @@ the event to the appropriate registered procedure by calling XtDispatchEvent."
   return(XEN_FALSE);
 }
 
-#if (!XM_DISABLE_DEPRECATED)
-static XEN gxm_XtMainLoop(void)
-{
-  #define H_XtMainLoop "void XtMainLoop() has been replaced by XtAppMainLoop."
-  XtMainLoop();
-  return(XEN_FALSE);
-}
-#endif
-
 static XEN gxm_XtAppProcessEvent(XEN arg1, XEN arg2)
 {
   #define H_XtAppProcessEvent "void XtAppProcessEvent(app_context, mask) processes one timer, alternate input, signal source, or X event. \
@@ -16667,16 +15824,6 @@ If there is nothing of the appropriate type to process, XtAppProcessEvent blocks
   XtAppProcessEvent(XEN_TO_C_XtAppContext(arg1), XEN_TO_C_ULONG(arg2));
   return(XEN_FALSE);
 }
-
-#if (!XM_DISABLE_DEPRECATED)
-static XEN gxm_XtProcessEvent(XEN arg1)
-{
-  #define H_XtProcessEvent "void XtProcessEvent(mask) has been replaced by XtAppProcessEvent."
-  XEN_ASSERT_TYPE(XEN_ULONG_P(arg1), arg1, 1, "XtProcessEvent", "XtInputMask");
-  XtProcessEvent(XEN_TO_C_ULONG(arg1));
-  return(XEN_FALSE);
-}
-#endif
 
 static XEN gxm_XtRemoveGrab(XEN arg1)
 {
@@ -17300,27 +16447,6 @@ static XtActionsRec *make_action_rec(int len, XEN larg2)
   return(act);
 }
 
-#if (!XM_DISABLE_DEPRECATED)
-static XEN gxm_XtAddActions(XEN arg1)
-{
-  #define H_XtAddActions "void XtAddActions(actions, num_actions) has been replaced by XtAppAddActions."
-  /* DIFF: XtAddActions takes list of lists for arg1 (name proc) pairs, not XtActionList, omits arg2 (pointless)
-   *        and action proc itself takes 3 args (no need for trailing count)
-   */
-  XtActionsRec *act;
-  int i, len;
-  XEN_ASSERT_TYPE(XEN_LIST_P(arg1), arg1, 1, "XtAddActions", "list of XtActions");
-  len = XEN_LIST_LENGTH(arg1);
-  if (len <= 0) XEN_ASSERT_TYPE(0, arg1, 1, "XtAddActions", "positive integer");
-  act = make_action_rec(len, arg1);
-  XtAddActions(act, len);
-  for (i = 0; i < len; i++)
-    if (act[i].string) free(act[i].string);
-  FREE(act);
-  return(arg1);
-}
-#endif
-
 static XEN gxm_XtAppAddActions(XEN arg1, XEN arg2)
 {
   #define H_XtAppAddActions "void XtAppAddActions(app_context, actions, num_actions) adds the specified action table and registers it \
@@ -17558,20 +16684,6 @@ input is on the queue, XtAppPeekEvent flushes the output buffer and blocks until
   val = XtAppPeekEvent(XEN_TO_C_XtAppContext(arg1), e);
   return(XEN_LIST_2(C_TO_XEN_BOOLEAN(val), C_TO_XEN_XEvent_OBJ(e)));
 }
-
-#if (!XM_DISABLE_DEPRECATED)
-static XEN gxm_XtPeekEvent(void)
-{
-  #define H_XtPeekEvent "Boolean XtPeekEvent() has been replaced by XtAppPeekEvent."
-  /* DIFF: XtPeekEvent [ev] -> (list val ev)
-   */
-  XEvent *e;
-  int val;
-  e = (XEvent *)CALLOC(1, sizeof(XEvent));
-  val = XtPeekEvent(e);
-  return(XEN_LIST_2(C_TO_XEN_BOOLEAN(val), C_TO_XEN_XEvent_OBJ(e)));
-}
-#endif
 
 static XEN gxm_XtCallAcceptFocus(XEN arg1, XEN arg2)
 {
@@ -21878,30 +20990,6 @@ static XEN gxm_page_number(XEN ptr)
   XEN_NARGIFY_5(gxm_XpGetDocumentData_w, gxm_XpGetDocumentData)
 #endif
 #if HAVE_MOTIF
-#if (!XM_DISABLE_DEPRECATED)
-  XEN_NARGIFY_1(gxm_XtWarning_w, gxm_XtWarning)
-  XEN_NARGIFY_2(gxm_XtAppWarning_w, gxm_XtAppWarning)
-  XEN_NARGIFY_1(gxm_XtSetWarningMsgHandler_w, gxm_XtSetWarningMsgHandler)
-  XEN_NARGIFY_4(gxm_XtInitialize_w, gxm_XtInitialize)
-  XEN_NARGIFY_1(gxm_XtSetWarningHandler_w, gxm_XtSetWarningHandler)
-  XEN_NARGIFY_1(gxm_XtError_w, gxm_XtError)
-  XEN_NARGIFY_6(gxm_XtErrorMsg_w, gxm_XtErrorMsg)
-  XEN_NARGIFY_6(gxm_XtWarningMsg_w, gxm_XtWarningMsg)
-  XEN_NARGIFY_1(gxm_XtSetErrorMsgHandler_w, gxm_XtSetErrorMsgHandler)
-  XEN_NARGIFY_1(gxm_XtSetErrorHandler_w, gxm_XtSetErrorHandler)
-  XEN_ARGIFY_4(gxm_XtCreateApplicationShell_w, gxm_XtCreateApplicationShell)
-  XEN_NARGIFY_1(gxm_XtSetSelectionTimeout_w, gxm_XtSetSelectionTimeout)
-  XEN_NARGIFY_0(gxm_XtGetSelectionTimeout_w, gxm_XtGetSelectionTimeout)
-  XEN_NARGIFY_1(gxm_XtAddActions_w, gxm_XtAddActions)
-  XEN_ARGIFY_4(gxm_XtAddInput_w, gxm_XtAddInput)
-  XEN_ARGIFY_2(gxm_XtAddWorkProc_w, gxm_XtAddWorkProc)
-  XEN_ARGIFY_3(gxm_XtAddTimeOut_w, gxm_XtAddTimeOut)
-  XEN_NARGIFY_0(gxm_XtMainLoop_w, gxm_XtMainLoop)
-  XEN_NARGIFY_1(gxm_XtProcessEvent_w, gxm_XtProcessEvent)
-  XEN_NARGIFY_0(gxm_XtPending_w, gxm_XtPending)
-  XEN_NARGIFY_0(gxm_XtNextEvent_w, gxm_XtNextEvent)
-  XEN_NARGIFY_0(gxm_XtPeekEvent_w, gxm_XtPeekEvent)
-#endif
   XEN_NARGIFY_3(gxm_XtSetArg_w, gxm_XtSetArg)
   XEN_ARGIFY_2(gxm_XtManageChildren_w, gxm_XtManageChildren)
   XEN_NARGIFY_1(gxm_XtManageChild_w, gxm_XtManageChild)
@@ -22418,9 +21506,6 @@ static XEN gxm_page_number(XEN ptr)
   XEN_NARGIFY_3(gxm_XFindContext_w, gxm_XFindContext)
   XEN_NARGIFY_2(gxm_XGetIconSizes_w, gxm_XGetIconSizes)
   XEN_NARGIFY_3(gxm_XGetRGBColormaps_w, gxm_XGetRGBColormaps)
-#if (!XM_DISABLE_DEPRECATED)
-  XEN_NARGIFY_3(gxm_XGetStandardColormap_w, gxm_XGetStandardColormap)
-#endif
   XEN_NARGIFY_3(gxm_XGetVisualInfo_w, gxm_XGetVisualInfo)
   XEN_NARGIFY_2(gxm_XGetWMHints_w, gxm_XGetWMHints)
   XEN_NARGIFY_3(gxm_XIntersectRegion_w, gxm_XIntersectRegion)
@@ -22436,10 +21521,6 @@ static XEN gxm_page_number(XEN ptr)
   XEN_NARGIFY_5(gxm_XSetRGBColormaps_w, gxm_XSetRGBColormaps)
   XEN_NARGIFY_3(gxm_XSetWMHints_w, gxm_XSetWMHints)
   XEN_NARGIFY_3(gxm_XSetRegion_w, gxm_XSetRegion)
-#if (!XM_DISABLE_DEPRECATED)
-  XEN_NARGIFY_4(gxm_XSetStandardColormap_w, gxm_XSetStandardColormap)
-  XEN_NARGIFY_8(gxm_XSetStandardProperties_w, gxm_XSetStandardProperties)
-#endif
   XEN_NARGIFY_8(gxm_XSetWMProperties_w, gxm_XSetWMProperties)
   XEN_NARGIFY_3(gxm_XShrinkRegion_w, gxm_XShrinkRegion)
   XEN_NARGIFY_3(gxm_XSubtractRegion_w, gxm_XSubtractRegion)
@@ -22636,10 +21717,6 @@ static XEN gxm_page_number(XEN ptr)
   XEN_ARGIFY_4(gxm_XmCreatePulldownMenu_w, gxm_XmCreatePulldownMenu)
   XEN_NARGIFY_1(gxm_XmGetPostedFromWidget_w, gxm_XmGetPostedFromWidget)
   XEN_NARGIFY_1(gxm_XmGetTearOffControl_w, gxm_XmGetTearOffControl)
-#if (!XM_DISABLE_DEPRECATED)
-  XEN_NARGIFY_2(gxm_XmAddToPostFromList_w, gxm_XmAddToPostFromList)
-  XEN_NARGIFY_2(gxm_XmRemoveFromPostFromList_w, gxm_XmRemoveFromPostFromList)
-#endif
   XEN_NARGIFY_2(gxm_XmScaleSetValue_w, gxm_XmScaleSetValue)
   XEN_NARGIFY_1(gxm_XmScaleGetValue_w, gxm_XmScaleGetValue)
   XEN_ARGIFY_4(gxm_XmCreateScale_w, gxm_XmCreateScale)
@@ -23032,49 +22109,6 @@ static XEN gxm_page_number(XEN ptr)
   XEN_NARGIFY_1(gxm_XmDropDownGetArrow_w, gxm_XmDropDownGetArrow)
   XEN_NARGIFY_1(gxm_XmDropDownGetLabel_w, gxm_XmDropDownGetLabel)
   XEN_ARGIFY_4(gxm_XmCreateDropDown_w, gxm_XmCreateDropDown)
-#endif
-
-#if (!XM_DISABLE_DEPRECATED)
-  XEN_NARGIFY_1(gxm_XmStringLength_w, gxm_XmStringLength)
-  XEN_NARGIFY_2(gxm_XmStringByteCompare_w, gxm_XmStringByteCompare)
-  XEN_NARGIFY_4(gxm_XmScrolledWindowSetAreas_w, gxm_XmScrolledWindowSetAreas)
-  XEN_NARGIFY_1(gxm_XmFontListEntryFree_w, gxm_XmFontListEntryFree)
-  XEN_NARGIFY_1(gxm_XmFontListEntryGetFont_w, gxm_XmFontListEntryGetFont)
-  XEN_NARGIFY_1(gxm_XmFontListEntryGetTag_w, gxm_XmFontListEntryGetTag)
-  XEN_NARGIFY_2(gxm_XmFontListAppendEntry_w, gxm_XmFontListAppendEntry)
-  XEN_NARGIFY_1(gxm_XmFontListNextEntry_w, gxm_XmFontListNextEntry)
-  XEN_NARGIFY_2(gxm_XmFontListRemoveEntry_w, gxm_XmFontListRemoveEntry)
-  XEN_NARGIFY_4(gxm_XmFontListEntryLoad_w, gxm_XmFontListEntryLoad)
-  XEN_NARGIFY_2(gxm_XmFontListCreate_w, gxm_XmFontListCreate)
-  XEN_NARGIFY_1(gxm_XmFontListFree_w, gxm_XmFontListFree)
-  XEN_NARGIFY_3(gxm_XmFontListAdd_w, gxm_XmFontListAdd)
-  XEN_NARGIFY_1(gxm_XmFontListCopy_w, gxm_XmFontListCopy)
-  XEN_NARGIFY_1(gxm_XmFontListInitFontContext_w, gxm_XmFontListInitFontContext)
-  XEN_NARGIFY_1(gxm_XmFontListGetNextFont_w, gxm_XmFontListGetNextFont)
-  XEN_NARGIFY_1(gxm_XmFontListFreeFontContext_w, gxm_XmFontListFreeFontContext)
-  XEN_NARGIFY_1(gxm_XmStringGetNextComponent_w, gxm_XmStringGetNextComponent)
-  XEN_NARGIFY_1(gxm_XmStringPeekNextComponent_w, gxm_XmStringPeekNextComponent)
-  XEN_NARGIFY_1(gxm_XmStringGetNextSegment_w, gxm_XmStringGetNextSegment)
-  XEN_NARGIFY_2(gxm_XmStringGetLtoR_w, gxm_XmStringGetLtoR)
-  XEN_NARGIFY_3(gxm_XmFontListEntryCreate_w, gxm_XmFontListEntryCreate)
-  XEN_NARGIFY_1(gxm_XmStringCreateSimple_w, gxm_XmStringCreateSimple)
-  XEN_NARGIFY_4(gxm_XmStringSegmentCreate_w, gxm_XmStringSegmentCreate)
-  XEN_NARGIFY_2(gxm_XmStringCreateLtoR_w, gxm_XmStringCreateLtoR)
-  XEN_NARGIFY_2(gxm_XmStringNCopy_w, gxm_XmStringNCopy)
-  XEN_NARGIFY_3(gxm_XmStringNConcat_w, gxm_XmStringNConcat)
-  XEN_NARGIFY_6(gxm_XmMainWindowSetAreas_w, gxm_XmMainWindowSetAreas)
-  XEN_NARGIFY_1(gxm_XmMainWindowSep1_w, gxm_XmMainWindowSep1)
-  XEN_NARGIFY_1(gxm_XmMainWindowSep2_w, gxm_XmMainWindowSep2)
-  XEN_NARGIFY_1(gxm_XmMainWindowSep3_w, gxm_XmMainWindowSep3)
-  XEN_NARGIFY_3(gxm_XmSetFontUnits_w, gxm_XmSetFontUnits)
-  XEN_NARGIFY_2(gxm_XmSetFontUnit_w, gxm_XmSetFontUnit)
-  XEN_NARGIFY_2(gxm_XmSetMenuCursor_w, gxm_XmSetMenuCursor)
-  XEN_NARGIFY_1(gxm_XmGetMenuCursor_w, gxm_XmGetMenuCursor)
-  XEN_NARGIFY_3(gxm_XmTrackingLocate_w, gxm_XmTrackingLocate)
-
-  XEN_NARGIFY_1(XEN_XmFontList_p_w, XEN_XmFontList_p)
-  XEN_NARGIFY_1(XEN_XmFontContext_p_w, XEN_XmFontContext_p)
-  XEN_NARGIFY_1(XEN_XmFontListEntry_p_w, XEN_XmFontListEntry_p)
 #endif
 
 #endif
@@ -23635,30 +22669,6 @@ static XEN gxm_page_number(XEN ptr)
   #define gxm_XpGetDocumentData_w gxm_XpGetDocumentData
 #endif
 #if HAVE_MOTIF
-#if (!XM_DISABLE_DEPRECATED)
-  #define gxm_XtWarning_w gxm_XtWarning
-  #define gxm_XtAppWarning_w gxm_XtAppWarning
-  #define gxm_XtSetWarningMsgHandler_w gxm_XtSetWarningMsgHandler
-  #define gxm_XtInitialize_w gxm_XtInitialize
-  #define gxm_XtSetWarningHandler_w gxm_XtSetWarningHandler
-  #define gxm_XtError_w gxm_XtError
-  #define gxm_XtErrorMsg_w gxm_XtErrorMsg
-  #define gxm_XtWarningMsg_w gxm_XtWarningMsg
-  #define gxm_XtSetErrorMsgHandler_w gxm_XtSetErrorMsgHandler
-  #define gxm_XtSetErrorHandler_w gxm_XtSetErrorHandler
-  #define gxm_XtCreateApplicationShell_w gxm_XtCreateApplicationShell
-  #define gxm_XtSetSelectionTimeout_w gxm_XtSetSelectionTimeout
-  #define gxm_XtGetSelectionTimeout_w gxm_XtGetSelectionTimeout
-  #define gxm_XtAddActions_w gxm_XtAddActions
-  #define gxm_XtAddInput_w gxm_XtAddInput
-  #define gxm_XtAddWorkProc_w gxm_XtAddWorkProc
-  #define gxm_XtAddTimeOut_w gxm_XtAddTimeOut
-  #define gxm_XtMainLoop_w gxm_XtMainLoop
-  #define gxm_XtProcessEvent_w gxm_XtProcessEvent
-  #define gxm_XtPending_w gxm_XtPending
-  #define gxm_XtNextEvent_w gxm_XtNextEvent
-  #define gxm_XtPeekEvent_w gxm_XtPeekEvent
-#endif
   #define gxm_XtSetArg_w gxm_XtSetArg
   #define gxm_XtManageChildren_w gxm_XtManageChildren
   #define gxm_XtManageChild_w gxm_XtManageChild
@@ -24175,9 +23185,6 @@ static XEN gxm_page_number(XEN ptr)
   #define gxm_XFindContext_w gxm_XFindContext
   #define gxm_XGetIconSizes_w gxm_XGetIconSizes
   #define gxm_XGetRGBColormaps_w gxm_XGetRGBColormaps
-#if (!XM_DISABLE_DEPRECATED)
-  #define gxm_XGetStandardColormap_w gxm_XGetStandardColormap
-#endif
   #define gxm_XGetVisualInfo_w gxm_XGetVisualInfo
   #define gxm_XGetWMHints_w gxm_XGetWMHints
   #define gxm_XIntersectRegion_w gxm_XIntersectRegion
@@ -24193,10 +23200,6 @@ static XEN gxm_page_number(XEN ptr)
   #define gxm_XSetRGBColormaps_w gxm_XSetRGBColormaps
   #define gxm_XSetWMHints_w gxm_XSetWMHints
   #define gxm_XSetRegion_w gxm_XSetRegion
-#if (!XM_DISABLE_DEPRECATED)
-  #define gxm_XSetStandardColormap_w gxm_XSetStandardColormap
-  #define gxm_XSetStandardProperties_w gxm_XSetStandardProperties
-#endif
   #define gxm_XSetWMProperties_w gxm_XSetWMProperties
   #define gxm_XShrinkRegion_w gxm_XShrinkRegion
   #define gxm_XSubtractRegion_w gxm_XSubtractRegion
@@ -24393,10 +23396,6 @@ static XEN gxm_page_number(XEN ptr)
   #define gxm_XmCreatePulldownMenu_w gxm_XmCreatePulldownMenu
   #define gxm_XmGetPostedFromWidget_w gxm_XmGetPostedFromWidget
   #define gxm_XmGetTearOffControl_w gxm_XmGetTearOffControl
-#if (!XM_DISABLE_DEPRECATED)
-  #define gxm_XmAddToPostFromList_w gxm_XmAddToPostFromList
-  #define gxm_XmRemoveFromPostFromList_w gxm_XmRemoveFromPostFromList
-#endif
   #define gxm_XmScaleSetValue_w gxm_XmScaleSetValue
   #define gxm_XmScaleGetValue_w gxm_XmScaleGetValue
   #define gxm_XmCreateScale_w gxm_XmCreateScale
@@ -24789,49 +23788,6 @@ static XEN gxm_page_number(XEN ptr)
   #define gxm_XmDropDownGetArrow_w gxm_XmDropDownGetArrow
   #define gxm_XmDropDownGetLabel_w gxm_XmDropDownGetLabel
   #define gxm_XmCreateDropDown_w gxm_XmCreateDropDown
-#endif
-
-#if (!XM_DISABLE_DEPRECATED)
-  #define gxm_XmStringLength_w gxm_XmStringLength
-  #define gxm_XmStringByteCompare_w gxm_XmStringByteCompare
-  #define gxm_XmScrolledWindowSetAreas_w gxm_XmScrolledWindowSetAreas
-  #define gxm_XmFontListEntryFree_w gxm_XmFontListEntryFree
-  #define gxm_XmFontListEntryGetFont_w gxm_XmFontListEntryGetFont
-  #define gxm_XmFontListEntryGetTag_w gxm_XmFontListEntryGetTag
-  #define gxm_XmFontListAppendEntry_w gxm_XmFontListAppendEntry
-  #define gxm_XmFontListNextEntry_w gxm_XmFontListNextEntry
-  #define gxm_XmFontListRemoveEntry_w gxm_XmFontListRemoveEntry
-  #define gxm_XmFontListEntryLoad_w gxm_XmFontListEntryLoad
-  #define gxm_XmFontListCreate_w gxm_XmFontListCreate
-  #define gxm_XmFontListFree_w gxm_XmFontListFree
-  #define gxm_XmFontListAdd_w gxm_XmFontListAdd
-  #define gxm_XmFontListCopy_w gxm_XmFontListCopy
-  #define gxm_XmFontListInitFontContext_w gxm_XmFontListInitFontContext
-  #define gxm_XmFontListGetNextFont_w gxm_XmFontListGetNextFont
-  #define gxm_XmFontListFreeFontContext_w gxm_XmFontListFreeFontContext
-  #define gxm_XmStringGetNextComponent_w gxm_XmStringGetNextComponent
-  #define gxm_XmStringPeekNextComponent_w gxm_XmStringPeekNextComponent
-  #define gxm_XmStringGetNextSegment_w gxm_XmStringGetNextSegment
-  #define gxm_XmStringGetLtoR_w gxm_XmStringGetLtoR
-  #define gxm_XmFontListEntryCreate_w gxm_XmFontListEntryCreate
-  #define gxm_XmStringCreateSimple_w gxm_XmStringCreateSimple
-  #define gxm_XmStringSegmentCreate_w gxm_XmStringSegmentCreate
-  #define gxm_XmStringCreateLtoR_w gxm_XmStringCreateLtoR
-  #define gxm_XmStringNCopy_w gxm_XmStringNCopy
-  #define gxm_XmStringNConcat_w gxm_XmStringNConcat
-  #define gxm_XmMainWindowSetAreas_w gxm_XmMainWindowSetAreas
-  #define gxm_XmMainWindowSep1_w gxm_XmMainWindowSep1
-  #define gxm_XmMainWindowSep2_w gxm_XmMainWindowSep2
-  #define gxm_XmMainWindowSep3_w gxm_XmMainWindowSep3
-  #define gxm_XmSetFontUnits_w gxm_XmSetFontUnits
-  #define gxm_XmSetFontUnit_w gxm_XmSetFontUnit
-  #define gxm_XmSetMenuCursor_w gxm_XmSetMenuCursor
-  #define gxm_XmGetMenuCursor_w gxm_XmGetMenuCursor
-  #define gxm_XmTrackingLocate_w gxm_XmTrackingLocate
-
-  #define XEN_XmFontList_p_w XEN_XmFontList_p
-  #define XEN_XmFontContext_p_w XEN_XmFontContext_p
-  #define XEN_XmFontListEntry_p_w XEN_XmFontListEntry_p
 #endif
 
 #endif
@@ -25923,9 +24879,6 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XFindContext, gxm_XFindContext_w, 3, 0, 0, H_XFindContext);
   XM_DEFINE_PROCEDURE(XGetIconSizes, gxm_XGetIconSizes_w, 2, 0, 0, H_XGetIconSizes);
   XM_DEFINE_PROCEDURE(XGetRGBColormaps, gxm_XGetRGBColormaps_w, 3, 0, 0, H_XGetRGBColormaps);
-#if (!XM_DISABLE_DEPRECATED)
-  XM_DEFINE_PROCEDURE(XGetStandardColormap, gxm_XGetStandardColormap_w, 3, 0, 0, H_XGetStandardColormap);
-#endif
   XM_DEFINE_PROCEDURE(XGetVisualInfo, gxm_XGetVisualInfo_w, 3, 0, 0, H_XGetVisualInfo);
   XM_DEFINE_PROCEDURE(XGetWMHints, gxm_XGetWMHints_w, 2, 0, 0, H_XGetWMHints);
   XM_DEFINE_PROCEDURE(XIntersectRegion, gxm_XIntersectRegion_w, 3, 0, 0, H_XIntersectRegion);
@@ -25940,10 +24893,6 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XSetRGBColormaps, gxm_XSetRGBColormaps_w, 5, 0, 0, H_XSetRGBColormaps);
   XM_DEFINE_PROCEDURE(XSetWMHints, gxm_XSetWMHints_w, 3, 0, 0, H_XSetWMHints);
   XM_DEFINE_PROCEDURE(XSetRegion, gxm_XSetRegion_w, 3, 0, 0, H_XSetRegion);
-#if (!XM_DISABLE_DEPRECATED)
-  XM_DEFINE_PROCEDURE(XSetStandardColormap, gxm_XSetStandardColormap_w, 4, 0, 0, H_XSetStandardColormap);
-  XM_DEFINE_PROCEDURE(XSetStandardProperties, gxm_XSetStandardProperties_w, 8, 0, 0, H_XSetStandardProperties);
-#endif
   XM_DEFINE_PROCEDURE(XSetWMProperties, gxm_XSetWMProperties_w, 8, 0, 0, H_XSetWMProperties);
   XM_DEFINE_PROCEDURE(XShrinkRegion, gxm_XShrinkRegion_w, 3, 0, 0, H_XShrinkRegion);
   XM_DEFINE_PROCEDURE(XSubtractRegion, gxm_XSubtractRegion_w, 3, 0, 0, H_XSubtractRegion);
@@ -26149,10 +25098,6 @@ static void define_procedures(void)
   XM_DEFINE_PROCEDURE(XmCreatePulldownMenu, gxm_XmCreatePulldownMenu_w, 3, 1, 0, H_XmCreatePulldownMenu);
   XM_DEFINE_PROCEDURE(XmGetPostedFromWidget, gxm_XmGetPostedFromWidget_w, 1, 0, 0, H_XmGetPostedFromWidget);
   XM_DEFINE_PROCEDURE(XmGetTearOffControl, gxm_XmGetTearOffControl_w, 1, 0, 0, H_XmGetTearOffControl);
-#if (!XM_DISABLE_DEPRECATED)
-  XM_DEFINE_PROCEDURE(XmAddToPostFromList, gxm_XmAddToPostFromList_w, 2, 0, 0, H_XmAddToPostFromList);
-  XM_DEFINE_PROCEDURE(XmRemoveFromPostFromList, gxm_XmRemoveFromPostFromList_w, 2, 0, 0, H_XmRemoveFromPostFromList);
-#endif
   XM_DEFINE_PROCEDURE(XmScaleSetValue, gxm_XmScaleSetValue_w, 2, 0, 0, H_XmScaleSetValue);
   XM_DEFINE_PROCEDURE(XmScaleGetValue, gxm_XmScaleGetValue_w, 1, 0, 0, H_XmScaleGetValue);
   XM_DEFINE_PROCEDURE(XmCreateScale, gxm_XmCreateScale_w, 3, 1, 0, H_XmCreateScale);
@@ -26553,71 +25498,6 @@ static void define_procedures(void)
 #endif
 
 #if HAVE_MOTIF
-#if (!XM_DISABLE_DEPRECATED)
-  XM_DEFINE_PROCEDURE(XtWarning, gxm_XtWarning_w, 1, 0, 0, H_XtWarning);
-  XM_DEFINE_PROCEDURE(XtAppWarning, gxm_XtAppWarning_w, 2, 0, 0, H_XtAppWarning);
-  XM_DEFINE_PROCEDURE(XtSetWarningMsgHandler, gxm_XtSetWarningMsgHandler_w, 1, 0, 0, H_XtSetWarningMsgHandler);
-  XM_DEFINE_PROCEDURE(XtSetWarningHandler, gxm_XtSetWarningHandler_w, 1, 0, 0, H_XtSetWarningHandler);
-  XM_DEFINE_PROCEDURE(XtWarningMsg, gxm_XtWarningMsg_w, 6, 0, 0, H_XtWarningMsg);
-  XM_DEFINE_PROCEDURE(XtErrorMsg, gxm_XtErrorMsg_w, 6, 0, 0, H_XtErrorMsg);
-  XM_DEFINE_PROCEDURE(XtError, gxm_XtError_w, 1, 0, 0, H_XtError);
-  XM_DEFINE_PROCEDURE(XtSetErrorMsgHandler, gxm_XtSetErrorMsgHandler_w, 1, 0, 0, H_XtSetErrorMsgHandler);
-  XM_DEFINE_PROCEDURE(XtSetErrorHandler, gxm_XtSetErrorHandler_w, 1, 0, 0, H_XtSetErrorHandler);
-  XM_DEFINE_PROCEDURE(XtInitialize, gxm_XtInitialize_w, 4, 0, 0, H_XtInitialize);
-  XM_DEFINE_PROCEDURE(XtCreateApplicationShell, gxm_XtCreateApplicationShell_w, 3, 1, 0, H_XtCreateApplicationShell);
-  XM_DEFINE_PROCEDURE(XtSetSelectionTimeout, gxm_XtSetSelectionTimeout_w, 1, 0, 0, H_XtSetSelectionTimeout);
-  XM_DEFINE_PROCEDURE(XtGetSelectionTimeout, gxm_XtGetSelectionTimeout_w, 0, 0, 0, H_XtGetSelectionTimeout);
-  XM_DEFINE_PROCEDURE(XtAddActions, gxm_XtAddActions_w, 1, 0, 0, H_XtAddActions);
-  XM_DEFINE_PROCEDURE(XtAddInput, gxm_XtAddInput_w, 3, 1, 0, H_XtAddInput);
-  XM_DEFINE_PROCEDURE(XtAddWorkProc, gxm_XtAddWorkProc_w, 1, 1, 0, H_XtAddWorkProc);
-  XM_DEFINE_PROCEDURE(XtAddTimeOut, gxm_XtAddTimeOut_w, 2, 1, 0, H_XtAddTimeOut);
-  XM_DEFINE_PROCEDURE(XtMainLoop, gxm_XtMainLoop_w, 0, 0, 0, H_XtMainLoop);
-  XM_DEFINE_PROCEDURE(XtProcessEvent, gxm_XtProcessEvent_w, 1, 0, 0, H_XtProcessEvent);
-  XM_DEFINE_PROCEDURE(XtPending, gxm_XtPending_w, 0, 0, 0, H_XtPending);
-  XM_DEFINE_PROCEDURE(XtNextEvent, gxm_XtNextEvent_w, 0, 0, 0, H_XtNextEvent);
-  XM_DEFINE_PROCEDURE(XtPeekEvent, gxm_XtPeekEvent_w, 0, 0, 0, H_XtPeekEvent);
-
-  XM_DEFINE_PROCEDURE(XmFontListEntryCreate, gxm_XmFontListEntryCreate_w, 3, 0, 0, H_XmFontListEntryCreate);
-  XM_DEFINE_PROCEDURE(XmFontListEntryFree, gxm_XmFontListEntryFree_w, 1, 0, 0, H_XmFontListEntryFree);
-  XM_DEFINE_PROCEDURE(XmFontListEntryGetFont, gxm_XmFontListEntryGetFont_w, 1, 0, 0, H_XmFontListEntryGetFont);
-  XM_DEFINE_PROCEDURE(XmFontListEntryGetTag, gxm_XmFontListEntryGetTag_w, 1, 0, 0, H_XmFontListEntryGetTag);
-  XM_DEFINE_PROCEDURE(XmFontListAppendEntry, gxm_XmFontListAppendEntry_w, 2, 0, 0, H_XmFontListAppendEntry);
-  XM_DEFINE_PROCEDURE(XmFontListNextEntry, gxm_XmFontListNextEntry_w, 1, 0, 0, H_XmFontListNextEntry);
-  XM_DEFINE_PROCEDURE(XmFontListRemoveEntry, gxm_XmFontListRemoveEntry_w, 2, 0, 0, H_XmFontListRemoveEntry);
-  XM_DEFINE_PROCEDURE(XmFontListEntryLoad, gxm_XmFontListEntryLoad_w, 4, 0, 0, H_XmFontListEntryLoad);
-  XM_DEFINE_PROCEDURE(XmFontListFree, gxm_XmFontListFree_w, 1, 0, 0, H_XmFontListFree);
-  XM_DEFINE_PROCEDURE(XmFontListCopy, gxm_XmFontListCopy_w, 1, 0, 0, H_XmFontListCopy);
-  XM_DEFINE_PROCEDURE(XmFontListInitFontContext, gxm_XmFontListInitFontContext_w, 1, 0, 0, H_XmFontListInitFontContext);
-  XM_DEFINE_PROCEDURE(XmFontListFreeFontContext, gxm_XmFontListFreeFontContext_w, 1, 0, 0, H_XmFontListFreeFontContext);
-
-  XM_DEFINE_PROCEDURE(XmFontContext?, XEN_XmFontContext_p_w, 1, 0, 0, "#t if arg is a XmFontContext");
-  XM_DEFINE_PROCEDURE(XmFontListEntry?, XEN_XmFontListEntry_p_w, 1, 0, 0, "#t if arg is a XmFontListEntry");
-  XM_DEFINE_PROCEDURE(XmFontList?, XEN_XmFontList_p_w, 1, 0, 0, "#t if arg is a XmFontList");
-  XM_DEFINE_PROCEDURE(XmFontListCreate, gxm_XmFontListCreate_w, 2, 0, 0, H_XmFontListCreate);
-  XM_DEFINE_PROCEDURE(XmTrackingLocate, gxm_XmTrackingLocate_w, 3, 0, 0, H_XmTrackingLocate);
-  XM_DEFINE_PROCEDURE(XmFontListGetNextFont, gxm_XmFontListGetNextFont_w, 1, 0, 0, H_XmFontListGetNextFont);
-  XM_DEFINE_PROCEDURE(XmStringByteCompare, gxm_XmStringByteCompare_w, 2, 0, 0, H_XmStringByteCompare);
-  XM_DEFINE_PROCEDURE(XmStringCreateLtoR, gxm_XmStringCreateLtoR_w, 2, 0, 0, H_XmStringCreateLtoR);
-  XM_DEFINE_PROCEDURE(XmStringCreateSimple, gxm_XmStringCreateSimple_w, 1, 0, 0, H_XmStringCreateSimple);
-  XM_DEFINE_PROCEDURE(XmStringGetLtoR, gxm_XmStringGetLtoR_w, 2, 0, 0, H_XmStringGetLtoR);
-  XM_DEFINE_PROCEDURE(XmStringGetNextSegment, gxm_XmStringGetNextSegment_w, 1, 0, 0, H_XmStringGetNextSegment);
-  XM_DEFINE_PROCEDURE(XmStringSegmentCreate, gxm_XmStringSegmentCreate_w, 4, 0, 0, H_XmStringSegmentCreate);
-  XM_DEFINE_PROCEDURE(XmStringPeekNextComponent, gxm_XmStringPeekNextComponent_w, 1, 0, 0, H_XmStringPeekNextComponent);
-  XM_DEFINE_PROCEDURE(XmStringGetNextComponent, gxm_XmStringGetNextComponent_w, 1, 0, 0, H_XmStringGetNextComponent);
-  XM_DEFINE_PROCEDURE(XmFontListAdd, gxm_XmFontListAdd_w, 3, 0, 0, H_XmFontListAdd);
-  XM_DEFINE_PROCEDURE(XmStringLength, gxm_XmStringLength_w, 1, 0, 0, H_XmStringLength);
-  XM_DEFINE_PROCEDURE(XmStringNConcat, gxm_XmStringNConcat_w, 3, 0, 0, H_XmStringNConcat);
-  XM_DEFINE_PROCEDURE(XmStringNCopy, gxm_XmStringNCopy_w, 2, 0, 0, H_XmStringNCopy);
-  XM_DEFINE_PROCEDURE(XmScrolledWindowSetAreas, gxm_XmScrolledWindowSetAreas_w, 4, 0, 0, H_XmScrolledWindowSetAreas);
-  XM_DEFINE_PROCEDURE(XmSetFontUnits, gxm_XmSetFontUnits_w, 3, 0, 0, H_XmSetFontUnits);
-  XM_DEFINE_PROCEDURE(XmSetFontUnit, gxm_XmSetFontUnit_w, 2, 0, 0, H_XmSetFontUnit);
-  XM_DEFINE_PROCEDURE(XmGetMenuCursor, gxm_XmGetMenuCursor_w, 1, 0, 0, H_XmGetMenuCursor);
-  XM_DEFINE_PROCEDURE(XmSetMenuCursor, gxm_XmSetMenuCursor_w, 2, 0, 0, H_XmSetMenuCursor);
-  XM_DEFINE_PROCEDURE(XmMainWindowSetAreas, gxm_XmMainWindowSetAreas_w, 6, 0, 0, H_XmMainWindowSetAreas);
-  XM_DEFINE_PROCEDURE(XmMainWindowSep1, gxm_XmMainWindowSep1_w, 1, 0, 0, H_XmMainWindowSep1);
-  XM_DEFINE_PROCEDURE(XmMainWindowSep2, gxm_XmMainWindowSep2_w, 1, 0, 0, H_XmMainWindowSep2);
-  XM_DEFINE_PROCEDURE(XmMainWindowSep3, gxm_XmMainWindowSep3_w, 1, 0, 0, H_XmMainWindowSep3);
-#endif
 #endif
 
 #if HAVE_XPM
@@ -27777,17 +26657,6 @@ static void define_strings(void)
 
 #if HAVE_XM_XP
   DEFINE_STRING(XP_PRINTNAME);
-#endif
-#if (!XM_DISABLE_DEPRECATED)
-  DEFINE_RESOURCE(XmNlabelFontList, XM_FONTLIST);
-  DEFINE_RESOURCE(XmNbuttonFontList, XM_FONTLIST);
-  DEFINE_RESOURCE(XmNtextFontList, XM_FONTLIST);
-  DEFINE_RESOURCE(XmNwhichButton, XM_WIDGET);
-  DEFINE_RESOURCE(XmNchildType, XM_UCHAR);
-  DEFINE_RESOURCE(XmNstringDirection, XM_UCHAR);
-  DEFINE_RESOURCE(XmNfontList, XM_FONTLIST);
-  DEFINE_RESOURCE(XmNdefaultFontList, XM_FONTLIST);
-  DEFINE_RESOURCE(XmNshellUnitType, XM_UCHAR);
 #endif
 #if HAVE_XmCreateFontSelector
   /* presumably in a "correct" setup these would be defined in Xm/XmStrDefs.h */
@@ -29120,10 +27989,6 @@ static void define_integers(void)
   DEFINE_INTEGER(XmSTRING_COMPONENT_SEPARATOR);
   DEFINE_INTEGER(XmSTRING_COMPONENT_LOCALE_TEXT);
   DEFINE_INTEGER(XmSTRING_COMPONENT_END);
-#if (!XM_DISABLE_DEPRECATED)
-  DEFINE_INTEGER(XmSTRING_COMPONENT_CHARSET);
-  DEFINE_INTEGER(XmSTRING_COMPONENT_FONTLIST_ELEMENT_TAG);
-#endif
   DEFINE_INTEGER(XmPAGE_FOUND);
   DEFINE_INTEGER(XmPAGE_INVALID);
   DEFINE_INTEGER(XmPAGE_EMPTY);

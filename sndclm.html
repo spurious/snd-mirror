@@ -19,6 +19,8 @@
 	A.quiet:hover {text-decoration:underline}
 	A.invisible {color:white; text-decoration:none}
 	A.def {font-weight: bold; font-style: normal; text-decoration:none; text-color:black}
+	A.olddef {font-style: normal; text-decoration:none; color:gray}
+	EM.gray {color:gray; font-style: normal}
 -->
 
 <!-- the latex stuff is always embedded in:
@@ -3174,16 +3176,17 @@ for more dicussion about using these generators as FM modulators.
   <a class=def name="nsin?">nsin?</a> cs
 
 
-  <a class=def name="make-sum-of-cosines">make-sum-of-cosines</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> 
-        (cosines 1) (frequency *clm-default-frequency*) (initial-phase 0.0)
-  <a class=def name="sum-of-cosines">sum-of-cosines</a> cs :optional (fm 0.0)
-  <a class=def name="sum-of-cosines?">sum-of-cosines?</a> cs
+  <a class=olddef name="make-sum-of-cosines">make-sum-of-cosines</a> <em class=gray>:optional-key</a> 
+        (cosines 1) (frequency *clm-default-frequency*) (initial-phase 0.0)</em>
+  <a class=olddef name="sum-of-cosines">sum-of-cosines</a> <em class=gray>cs :optional (fm 0.0)</em>
+  <a class=olddef name="sum-of-cosines?">sum-of-cosines?</a> <em class=gray>cs</em>
 
-  <a class=def name="make-sum-of-sines">make-sum-of-sines</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> 
-        (sines 1) (frequency *clm-default-frequency*) (initial-phase 0.0)
-  <a class=def name="sum-of-sines">sum-of-sines</a> cs :optional (fm 0.0)
-  <a class=def name="sum-of-sines?">sum-of-sines?</a> cs
+  <a class=olddef name="make-sum-of-sines">make-sum-of-sines</a> <em class=gray>:optional-key</a> 
+        (sines 1) (frequency *clm-default-frequency*) (initial-phase 0.0)</em>
+  <a class=olddef name="sum-of-sines">sum-of-sines</a> <em class=gray>cs :optional (fm 0.0)</em>
+  <a class=olddef name="sum-of-sines?">sum-of-sines?</a> <em class=gray>cs</em>
 </pre>
+<br>
 
 <table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
 
@@ -4145,12 +4148,12 @@ reflection, please send it to me, and I'll add it to this collection.
   <a class=def name="nrxycos">nrxycos</a> s :optional (fm 0.0)
   <a class=def name="nrxycos?">nrxycos?</a> s
 
-  <a class=def name="make-sine-summation">make-sine-summation</a> <a class=quiet href="#optional-key" onmouseout="UnTip()" onmouseover="Tip(sndclm_optional_key_tip)">:optional-key</a> 
-        (frequency *clm-default-frequency*) (initial-phase 0.0) (n 1) (a .5) (ratio 1.0)
-  <a class=def name="sine-summation">sine-summation</a> s :optional (fm 0.0)
-  <a class=def name="sine-summation?">sine-summation?</a> s
+  <a class=olddef name="make-sine-summation">make-sine-summation</a> <em class=gray>:optional-key
+        (frequency *clm-default-frequency*) (initial-phase 0.0) (n 1) (a .5) (ratio 1.0)</em>
+  <a class=olddef name="sine-summation">sine-summation</a><em class=gray> s :optional (fm 0.0)</em>
+  <a class=olddef name="sine-summation?">sine-summation?</a><em class=gray> s</em>
 </pre>
-
+<br>
 
 <table border=1 bordercolor="lightgray" hspace=20 cellspacing=2 cellpadding=5>
 

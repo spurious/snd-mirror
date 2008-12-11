@@ -1479,12 +1479,7 @@ Reverb-feedback sets the scaler on the feedback.
   ;; graphics stuff (fonts etc)
   (let*  ((gv (XGCValues))
 	  (shell (list-ref (main-widgets) 1))
-	  (button-fontstruct (XLoadQueryFont (XtDisplay shell) "6x12"))
-	  (button-fontlist
-	   (let* ((e1 (XmFontListEntryCreate "smallest" XmFONT_IS_FONT button-fontstruct))
-		  (f1 (XmFontListAppendEntry #f e1)))
-	     (XmFontListEntryFree e1)
-	     f1)))
+	  (button-fontstruct (XLoadQueryFont (XtDisplay shell) (listener-font))))
     (set! (.foreground gv) (data-color))
     (set! (.background gv) (basic-color))
     (set! (.font gv) (.fid button-fontstruct))
@@ -1551,7 +1546,6 @@ Reverb-feedback sets the scaler on the feedback.
 			(append (list XmNbackground      (basic-color)
 				      XmNforeground      (data-color)
 				      XmNlabelString     str
-				      XmNfontList        button-fontlist
 				      XmNlargeIconPixmap pix
 				      XmNsmallIconPixmap pix)
 				args))))
@@ -1571,7 +1565,7 @@ Reverb-feedback sets the scaler on the feedback.
 				 XmNspatialResizeModel XmGROW_BALANCED
 				 XmNbackground         (white-pixel)
 				 XmNentryViewType      XmANY_ICON
-				 XmNlargeCellWidth     80))))
+				 XmNlargeCellWidth     120))))
 	  (XtVaSetValues parent (list XmNworkWindow container))
 	  (XtAddCallback container XmNselectionCallback 
 	    (lambda (w c i)
@@ -1585,7 +1579,7 @@ Reverb-feedback sets the scaler on the feedback.
 			      container
 			      peak-func
 			      gc
-			      64 32
+			      96 64
 			      args))
 	   sounds)
 	  container)))))

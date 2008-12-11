@@ -3,6 +3,40 @@
 ;(use-modules (ice-9 format))
 ;(if (not (defined? 'read-line)) (use-modules (ice-9 rdelim)))
 
+(if (not (defined? 'sort))
+    (begin
+      (define sort!
+	;; http://www.math.grin.edu/~stone/events/scheme-workshop/quicksort.html
+	(lambda (ls . opt)
+	  (let* ((precedes? (if (null? opt) < (car opt)))
+
+		 (partition
+		  (lambda (ls pivot)
+		    (let loop ((rest ls)
+			       (smalls '())
+			       (larges '()))
+		      (if (null? rest)
+			  (cons smalls larges)
+			  (let ((fore (car rest))
+				(aft (cdr rest)))
+			    (if (precedes? fore pivot)
+				(loop aft (cons fore smalls) larges)
+				(loop aft smalls (cons fore larges)))))))))
+
+	    (let qs ((rest ls))
+	      (if (or (null? rest)
+		      (null? (cdr rest)))
+		  rest
+		  (let* ((pivot (car rest))
+			 (parts (partition (cdr rest) pivot))
+			 (smalls (car parts))
+			 (larges (cdr parts)))
+		    (append (qs smalls)
+			    (cons pivot (qs larges)))))))))
+
+      (define (sort lst . opt) (sort! (append lst '()) (if (null? opt) < (car opt))))
+      ))
+
 (define xtva-ctr 0)
 
 (define (for-each-file func files)
