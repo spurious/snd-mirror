@@ -285,7 +285,7 @@
                     (XtAddCallback combo XmNselectionCallback
                        (lambda (w c i)
                          (let* ((selected (.item_or_text i))
-                                (size-as-string (cadr (XmStringGetLtoR selected XmFONTLIST_DEFAULT_TAG))))
+                                (size-as-string (XmStringUnparse selected #f XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL)))
                            (set! loop-between-marks-buffer-size (string->number size-as-string))))))
 
                   ;; this block creates a "radio button box"

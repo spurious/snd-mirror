@@ -263,7 +263,7 @@ XEN mus_optkey_to_procedure(XEN key, const char *caller, int n, XEN def, int req
 
 /* ---------------- clm keywords ---------------- */
 
-static XEN kw_frequency, kw_initial_phase, kw_wave, kw_cosines, kw_amplitude,
+static XEN kw_frequency, kw_initial_phase, kw_wave, kw_amplitude,
   kw_r, kw_ratio, kw_size, kw_a0, kw_a1, kw_a2, kw_b1, kw_b2, kw_max_size,
   kw_input, kw_srate, kw_file, kw_channel, kw_start,
   kw_initial_contents, kw_initial_element, kw_scaler, kw_feedforward, kw_feedback,
@@ -272,8 +272,12 @@ static XEN kw_frequency, kw_initial_phase, kw_wave, kw_cosines, kw_amplitude,
   kw_direction, kw_degree, kw_distance, kw_reverb, kw_output, kw_fft_size,
   kw_expansion, kw_length, kw_hop, kw_ramp, kw_jitter,
   kw_type, kw_channels, kw_filter, kw_revout, kw_width,
-  kw_edit, kw_synthesize, kw_analyze, kw_interp, kw_overlap, kw_pitch, kw_sines,
+  kw_edit, kw_synthesize, kw_analyze, kw_interp, kw_overlap, kw_pitch,
   kw_distribution, kw_coeffs, kw_kind;
+
+#ifndef CLM_DISABLE_DEPRECATED
+static XEN kw_sines, kw_cosines;
+#endif
 
 
 static void init_keywords(void)
@@ -282,7 +286,6 @@ static void init_keywords(void)
   kw_frequency =        XEN_MAKE_KEYWORD("frequency");
   kw_initial_phase =    XEN_MAKE_KEYWORD("initial-phase");
   kw_wave =             XEN_MAKE_KEYWORD("wave");
-  kw_cosines =          XEN_MAKE_KEYWORD("cosines");
   kw_amplitude =        XEN_MAKE_KEYWORD("amplitude");
   kw_r =                XEN_MAKE_KEYWORD("r");
   kw_ratio =            XEN_MAKE_KEYWORD("ratio");
@@ -337,10 +340,13 @@ static void init_keywords(void)
   kw_interp =           XEN_MAKE_KEYWORD("interp");
   kw_overlap =          XEN_MAKE_KEYWORD("overlap");
   kw_pitch =            XEN_MAKE_KEYWORD("pitch");
-  kw_sines =            XEN_MAKE_KEYWORD("sines");
   kw_distribution =     XEN_MAKE_KEYWORD("distribution");
   kw_coeffs =           XEN_MAKE_KEYWORD("coeffs");
   kw_kind =             XEN_MAKE_KEYWORD("kind");
+#ifndef CLM_DISABLE_DEPRECATED
+  kw_cosines =          XEN_MAKE_KEYWORD("cosines");
+  kw_sines =            XEN_MAKE_KEYWORD("sines");
+#endif
 }
 
 

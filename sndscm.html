@@ -232,7 +232,7 @@ For help with Forth and Snd/CLM, see the Forth documentation section "Snd, CLM, 
 <tr><td bgcolor="#f2f4ff"><a href="#singerdoc">singer</a></td>
     <td bgcolor="#f2f4ff" onmouseout="UnTip()" onmouseover="Tip(singer_doc_tip)">Perry Cook's vocal-tract physical model</td></tr>
 
-<tr><td><a href="#snd4doc">snd4|5|6|7|8|9.scm</a></td>
+<tr><td><a href="#snd4doc">snd4|5|6|7|8|9|10.scm</a></td>
     <td onmouseout="UnTip()" onmouseover="Tip(snd4_doc_tip)">Backwards compatibility</td></tr>
 
 <tr><td bgcolor="#f2f4ff"><a href="#snddiffdoc">snddiff</a></td>
@@ -8705,14 +8705,16 @@ A more complex example is singer's attempt to say "requiem":
 <br>
 
 
-<!-- ---------------------------------------- FILE: snd4|5|6|7|8 ---------------------------------------- -->
+<!-- ---------------------------------------- FILE: snd4|5|6|7|8|9|10 ---------------------------------------- -->
 
 <table border=0 bordercolor="lightgreen" width=100% cellpadding=2 cellspacing=0><tr><td bgcolor="lightgreen">
-<A NAME="snd4doc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>snd4|5|6|7|8</h2></td></tr></table>
+<A NAME="snd4doc"></a><table width="100%" border=0><tr><td bgcolor="beige" align="center" valign="middle"><h2>snd4|5|6|7|8|9|10</h2></td></tr></table>
 </td></tr></table>
 
 <p>These files contain a number of the procedures
-that were removed from or renamed in earlier versions of Snd (in Ruby, look in extensions.rb).  Some of them are:
+that were removed from or renamed in earlier versions of Snd (in Ruby, look in extensions.rb).  
+snd10.scm, for example, has the old generators sine-summation, make-sum-of-cosines, and make-sum-of-sines.
+Some of the other procedures are:
 </p>
 
 <table border=0 cellspacing=4 cellpadding=6 hspace=20>
@@ -9507,15 +9509,9 @@ on the partition of the associated sound.  There's a picture of it in action abo
 <!-- show-font-name -->
 <tr><td colspan=2 bgcolor="#f2f4ff">
 <em class=emdef>show-font-name</em> <code>(font)</code><br>
-<em class=emdef>show-widget-font</em> <code>(widget)</code>
 </td></tr><tr><td></td><td>
 show-font-name shows the Snd-related name and the X-related name of each font in a font list
 (it searches for the XA_FULL_NAME associated with an XFontStruct).
-show-widget-font uses show-font-name to show what fonts are associated with a widget.
-<pre>
-    :<em class=typing>(show-widget-font (list-ref (<a class=quiet href="extsnd.html#mainwidgets" onmouseout="UnTip()" onmouseover="Tip(extsnd_mainwidgets_tip)">main-widgets</a>) 4))</em>   ; 4=listener
-    <em class=listener>listener_font: Fixed</em>
-</pre>
 </td></tr><tr><td colspan=2 height=16></td></tr>
 
 
@@ -9646,7 +9642,6 @@ You can run a particular test with:
 <p>which runs test 23. 
 snd-test is primarily useful to non-developers as a source of
 a huge number of examples. 
-event.scm has functions used by snd-test.scm to exercise the user interface.
 </p>
 
 

@@ -2717,7 +2717,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 		  (XtAddCallback combo XmNselectionCallback
 				 (lambda (w c i)
 				   (let* ((selected (.item_or_text i))
-					  (size-as-string (cadr (XmStringGetLtoR selected XmFONTLIST_DEFAULT_TAG))))
+					  (size-as-string (XmStringUnparse selected #f XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL)))
 				     (set! cross-synth-fft-size (string->number size-as-string))))))
 		
 		;; this block creates a "radio button box"

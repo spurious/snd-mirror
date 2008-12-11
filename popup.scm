@@ -39,9 +39,7 @@
 (define (current-label w)
   "(current-label widget) returns widget's label"
   (let ((xmstr (cadr (XtGetValues w (list XmNlabelString 0)))))
-    (cadr (XmStringGetLtoR xmstr XmFONTLIST_DEFAULT_TAG))))
-
-
+    (XmStringUnparse xmstr #f XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL)))
 
 (define (make-popup-menu name parent top-args entries)
   "(make-popup-menu name parent top-args entries) creates a popup menu"

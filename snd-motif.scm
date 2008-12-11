@@ -175,7 +175,7 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
 	 (sound-files-in-directory (if (null? (cdr args)) "." (cadr args))))
 	matches)))
   (define (XmString->string str)
-    (cadr (XmStringGetLtoR str XmFONTLIST_DEFAULT_TAG)))
+    (XmStringUnparse str #f XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL))
   (define (XmStringTable->list st len)
     (XmStringTableUnparse st len #f XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL))
   (define (list->XmStringTable strs)
@@ -213,7 +213,7 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
 	matches)))
 
   (define (XmString->string str)
-    (cadr (XmStringGetLtoR str XmFONTLIST_DEFAULT_TAG)))
+    (XmStringUnparse str #f XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL))
 
   (let* ((dialog (open-file-dialog #f))
 	 ;; (XtGetValues dialog (XmNfileSearchProc 0)) to get the default
@@ -289,7 +289,9 @@ Box: (install-searcher (lambda (file) (= (mus-sound-srate file) 44100)))"
     (XtAddCallback dialog XmNokCallback
 		   (lambda (widget context info)
 		     ;; same as built-in "ok" callback, but does not "unmanage" the dialog
-		     (let ((filename (cadr (XmStringGetLtoR (.value info) XmFONTLIST_DEFAULT_TAG))))
+		     (let ((filename (XmStringUnparse (.value info) #f XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL)))
+		       (format #t "filename: ~A~%" filename)
+
 		       (if (file-exists? filename)
 			   (if (not (file-is-directory? filename))
 			       (let ((snd (open-sound filename)))
@@ -1360,7 +1362,7 @@ Reverb-feedback sets the scaler on the feedback.
 			   (XtAddCallback new-dialog XmNokCallback 
 					   (lambda (w c i)
 					     (let ((lst (find-dialog-widget w file-selector-dialogs)))
-					       ((list-ref lst 2) (cadr (XmStringGetLtoR (.value i) XmFONTLIST_DEFAULT_TAG)))
+					       ((list-ref lst 2) (XmStringUnparse (.value i) #f XmCHARSET_TEXT XmCHARSET_TEXT #f 0 XmOUTPUT_ALL))
 					       (list-set! lst 1 #f)
 					       (XtUnmanageChild w))))
 			   (XtAddCallback new-dialog XmNcancelCallback
@@ -2493,9 +2495,6 @@ Reverb-feedback sets the scaler on the feedback.
 	  (XmFontListFreeFontContext context))
 	"no fonts?")))
 
-(define (show-widget-font widget)
-  "(show-widget-font widget) shows what fonts are associated with a widget"
-  (show-font-name (cadr (XtVaGetValues widget (list XmNfontList 0)))))
 
 
 ;;; -------- enable C-s and C-r in listener
