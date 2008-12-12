@@ -383,3 +383,65 @@
 	(set! unhappy (> (abs xs) err))
 	(set! sum (+ sum xs)))
       (+ g (log x) sum))))
+
+
+
+(define bernoulli3
+  (let ((saved-values (let ((v (make-vector 100 #f))
+			    (vals (vector 1 -1/2 1/6 0 -1/30 0 1/42 0 -1/30 0 5/66 0 -691/2730
+					  0 7/6 0 -3617/510 0 43867/798 0 -174611/330 0
+					  854513/138 0 -236364091/2730 0 8553103/6 0
+					  -23749461029/870 0 8615841276005/14322 0)))
+			(do ((i 0 (+ i 1)))
+			    ((= i 30))
+			  (vector-set! v i (vector-ref vals i)))
+			v)))
+    (lambda (n)
+      (if (number? (vector-ref saved-values n))
+	  (vector-ref saved-values n)
+	  (let ((value (if (odd? n) 
+			   0.0
+			   (let ((sum2 0.0)
+				 (itmax 1000)
+				 (tol 5.0e-7)
+				 (close-enough #f))
+			     (do ((i 1 (+ i 1)))
+				 ((or close-enough
+				      (> i itmax)))
+			       (let ((term (/ 1.0 (expt i n))))
+				 (set! sum2 (+ sum2 term))
+				 (set! close-enough (or (< (abs term) tol)
+							(< (abs term) (* tol (abs sum2)))))))
+			     (/ (* 2.0 sum2 (factorial n)
+				   (if (= (modulo n 4) 0) -1 1))
+				(expt (* 2.0 pi) n))))))
+	    (vector-set! saved-values n value)
+	    value)))))
+
+(define (bernoulli-poly n x)
+  (let ((fact 1.0)
+	(value (bernoulli3 0)))
+    (do ((i 1 (+ i 1)))
+	((> i n) value)
+      (set! fact (* fact (/ (- (+ n 1) i) i)))
+      (set! value (+ (* value x)
+		     (* fact (bernoulli3 i)))))))
+
+#|
+(with-sound (:clipped #f :channels 2)
+  (let ((x 0.0)
+	(incr (hz->radians 100.0))
+	(N 2))
+    (do ((i 0 (+ i 1)))
+	((= i 44100))
+      (outa i (* (expt -1 (- N 1)) 
+		 (/ 0.5 (factorial N))
+		 (expt (* 2 pi) (+ (* 2 N) 1))
+		 (bernoulli-poly (+ (* 2 N) 1) (/ x (* 2 pi)))))
+      (outb i (* (expt -1 (- N 1)) 
+		 (/ 0.5 (factorial N))
+		 (expt (* 2 pi) (+ (* 2 N) 1))
+		 (bernoulli-poly (+ (* 2 N) 0) (/ x (* 2 pi)))))
+      (set! x (+ x incr))
+      (if (> x (* 2 pi)) (set! x (- x (* 2 pi)))))))
+|#

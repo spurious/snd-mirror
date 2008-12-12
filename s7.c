@@ -2219,6 +2219,9 @@ static s7_Complex casinh(s7_Complex z)
 static s7_Complex cacosh(s7_Complex z) 
 { 
   return(clog(z + csqrt(z * z - 1.0))); 
+  /* perhaps less prone to numerical troubles (untested):
+   *   2.0 * clog(csqrt(0.5 * (z + 1.0)) + csqrt(0.5 * (z - 1.0)))
+   */
 } 
 
 
@@ -10732,6 +10735,35 @@ static s7_pointer g_error(s7_scheme *sc, s7_pointer args)
 }
 
 
+static s7_pointer missing_close_paren_error(s7_scheme *sc)
+{
+  s7_pointer x;
+  int line;
+  x = sc->args;
+  while (is_pair(cdr(x))) x = cdr(x);
+  line = pair_line_number(x);
+  if (line > 0)
+    {
+      if ((remembered_line_number(line) != 0) &&
+	  (remembered_file_name(line)))
+	{
+	  s7_pointer result;
+	  char *str1;
+	  int len;
+	  len = 64 + safe_strlen(remembered_file_name(line));
+	  str1 = (char *)malloc(len * sizeof(char));
+	  len = snprintf(str1, len, "missing close paren, list started around line %d of %s: ~A", 
+			 remembered_line_number(line), remembered_file_name(line));
+	  result = s7_make_string_with_length(sc, str1, len);
+	  free(str1);
+	  return(s7_error(sc, sc->ERROR, make_list_2(sc, result, safe_reverse_in_place(sc, sc->args))));
+	}
+    }
+  return(read_error(sc, "missing close paren"));
+}
+
+
+
 
 /* -------------------------------- leftovers -------------------------------- */
 
@@ -12767,7 +12799,12 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
       
       
     case OP_READ_LIST: 
-      sc->args = s7_cons(sc, sc->value, sc->args);
+      /* if args is nil, we've started reading a list, so try to remember where we are
+       *   for a subsequent "missing close paren" error.
+       */
+      if (sc->args == sc->NIL)
+	sc->args = remember_line(sc, s7_cons(sc, sc->value, sc->NIL));
+      else sc->args = s7_cons(sc, sc->value, sc->args);
       sc->tok = token(sc, sc->input_port);
 
       switch (sc->tok)
@@ -12789,7 +12826,10 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	  break;
 
 	case TOKEN_EOF:
-	  return(read_error(sc, "missing close paren?"));   /* end of input with missing paren */
+	  /* we should be able to scan the stack for the earlist OP_READ_LIST,
+	   *  and find where the current list started
+	   */
+	  return(missing_close_paren_error(sc));
 
 	default:
 	  push_stack(sc, OP_READ_LIST, sc->args, sc->NIL);
