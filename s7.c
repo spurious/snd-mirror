@@ -1182,21 +1182,10 @@ static int gc(s7_scheme *sc)
 
 #if HAVE_PTHREADS
 static pthread_mutex_t alloc_lock = PTHREAD_MUTEX_INITIALIZER;
-#endif
 
-#if S7_DEBUGGING
-#define new_cell(Sc) new_cell_1(Sc, __FUNCTION__, __LINE__)
-#if HAVE_PTHREADS
-static s7_pointer new_cell_1(s7_scheme *nsc, const char *function, int line)
-#else
-static s7_pointer new_cell_1(s7_scheme *sc, const char *function, int line)
-#endif
-#else
-#if HAVE_PTHREADS
 static s7_pointer new_cell(s7_scheme *nsc)
 #else
 static s7_pointer new_cell(s7_scheme *sc)
-#endif
 #endif
 {
   s7_pointer p;
@@ -1395,7 +1384,6 @@ static s7_pointer symbol_table_add_by_name_at_location(s7_scheme *sc, const char
   vector_element(sc->symbol_table, location) = s7_permanent_cons(x, 
 								 vector_element(sc->symbol_table, location), 
 								 T_PAIR | T_ATOM | T_SIMPLE | T_CONSTANT | T_IMMUTABLE | T_DONT_COPY);
-
 #if HAVE_PTHREADS
   pthread_mutex_unlock(&symtab_lock);
 #endif
@@ -1533,7 +1521,6 @@ s7_pointer s7_gensym(s7_scheme *sc, const char *prefix)
       free(name);
       return(x); 
     } 
-  
   free(name);
   return(sc->NIL); 
 } 
@@ -1701,7 +1688,6 @@ s7_pointer s7_symbol_set_value(s7_scheme *sc, s7_pointer sym, s7_pointer val)
 static bool lambda_star_argument_set_value(s7_scheme *sc, s7_pointer sym, s7_pointer val)
 {
   s7_pointer x;
-
   for (x = car(sc->envir) /* presumably the arglist */; is_pair(x); x = cdr(x))
     if (caar(x) == sym)
       {
@@ -1716,7 +1702,6 @@ static bool lambda_star_argument_set_value(s7_scheme *sc, s7_pointer sym, s7_poi
 static s7_pointer lambda_star_argument_default_value(s7_scheme *sc, s7_pointer val)
 {
   s7_pointer x;
-
   if (s7_is_symbol(val))
     {
       x = s7_find_symbol_in_environment(sc, sc->envir, val, true);
@@ -4144,6 +4129,8 @@ static s7_pointer g_angle(s7_scheme *sc, s7_pointer args)
     return(s7_make_real(sc, atan2(s7_imag_part(sc->x), s7_real_part(sc->x))));
   if (num_to_real(sc->x->object.number) < 0.0)
     return(s7_make_real(sc, atan2(0.0, -1.0)));
+  if (object_number_type(sc->x) <= NUM_RATIO)
+    return(s7_make_integer(sc, 0));
   return(s7_make_real(sc, 0.0));
 }
 
@@ -4929,9 +4916,13 @@ static s7_pointer g_greater_or_equal(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_real_part(s7_scheme *sc, s7_pointer args)
 {
   #define H_real_part "(real-part num) returns the real part of num"
-  if (!s7_is_number(car(args)))
-    return(s7_wrong_type_arg_error(sc, "real-part", 1, car(args), "a number"));
-  return(s7_make_real(sc, s7_real_part(car(args))));
+  s7_pointer p;
+  p = car(args);
+  if (!s7_is_number(p))
+    return(s7_wrong_type_arg_error(sc, "real-part", 1, p, "a number"));
+  if (object_number_type(p) < NUM_COMPLEX)
+    return(p);                                      /* if num is real, real-part should return it as is (not exact->inexact) */
+  return(s7_make_real(sc, real_part(p->object.number)));
 }
 
 
@@ -5279,7 +5270,6 @@ static int charcmp(char c1, char c2, bool ci)
 {
   if (ci)
     return(charcmp(tolower(c1), tolower(c2), false));
-  
   if (c1 == c2)
     return(0);
   if (c1 < c2)
@@ -5407,7 +5397,6 @@ static s7_pointer g_chars_are_ci_leq(s7_scheme *sc, s7_pointer args)
 s7_pointer s7_make_string_with_length(s7_scheme *sc, const char *str, int len) 
 {
   s7_pointer x;
-  
   x = new_cell(sc);
   set_type(x, T_STRING | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   if (str)
@@ -6258,7 +6247,6 @@ s7_pointer s7_open_output_file(s7_scheme *sc, const char *name, const char *mode
   x = new_cell(sc);
   set_type(x, T_OUTPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   
-  /* set up the port struct */
   x->object.port = (rport *)calloc(1, sizeof(rport));
   port_type(x) = FILE_PORT;
   port_is_closed(x) = false;
@@ -6293,7 +6281,6 @@ s7_pointer s7_open_input_string(s7_scheme *sc, const char *input_string)
   x = new_cell(sc);
   set_type(x, T_INPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   
-  /* set up the port struct */
   x->object.port = (rport *)calloc(1, sizeof(rport));
   port_type(x) = STRING_PORT;
   port_is_closed(x) = false;
@@ -6326,7 +6313,6 @@ s7_pointer s7_open_output_string(s7_scheme *sc)
   x = new_cell(sc);
   set_type(x, T_OUTPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   
-  /* set up the port struct */
   x->object.port = (rport *)calloc(1, sizeof(rport));
   port_type(x) = STRING_PORT;
   port_is_closed(x) = false;
@@ -6368,7 +6354,6 @@ s7_pointer s7_open_output_function(s7_scheme *sc, void (*function)(s7_scheme *sc
   x = new_cell(sc);
   set_type(x, T_OUTPUT_PORT | T_ATOM | T_FINALIZABLE | T_SIMPLE | T_DONT_COPY);
   
-  /* set up the port struct */
   x->object.port = (rport *)calloc(1, sizeof(rport));
   port_type(x) = FUNCTION_PORT;
   port_is_closed(x) = false;
@@ -10662,7 +10647,6 @@ static s7_pointer read_error(s7_scheme *sc, const char *errmsg)
    * We try to encapsulate the bad input in a call on "error" --
    * some cases are working...
    */
-  
   char *msg;
   int len;
   s7_pointer pt, result;
@@ -10680,11 +10664,7 @@ static s7_pointer read_error(s7_scheme *sc, const char *errmsg)
       if (end > port_string_length(pt))
 	end = port_string_length(pt);
       slen = end - start;
-#if S7_DEBUGGING
-      if (slen < 0)
-	fprintf(stderr, "slen: %d, end: %d, start: %d, port loc: %d, port len: %d, str len: %d\n",
-		slen, end, start, port_string_point(pt), port_string_length(pt), safe_strlen(pt->object.port->value));
-#endif
+
       recent_input = (char *)malloc((slen + 8) * sizeof(char));
       for (i = 0; i < 3; i++) recent_input[i] = '.';
       recent_input[3] = ' ';
@@ -10867,7 +10847,6 @@ s7_pointer s7_call(s7_scheme *sc, s7_pointer func, s7_pointer args)
    *   and if we reset the stack, the previously running evaluation steps off the end
    *   of the stack == segfault. 
    */
-
   old_longjmp = sc->longjmp_ok;
   memcpy((void *)old_goto_start, (void *)(sc->goto_start), sizeof(jmp_buf));
 
@@ -11882,7 +11861,6 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	case T_CLOSURE:
 	case T_MACRO:
 	case T_PROMISE:             	          /* -------- normal function (lambda), macro, or delay -------- */
-
 	  sc->envir = new_frame_in_env(sc, s7_procedure_environment(sc->code)); 
 	  
 	  /* load up the current args into the ((args) (lambda)) layout [via the current environment] */
@@ -12034,15 +12012,13 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
 	    goto BEGIN;
 	  }
 
-	  /* for C level define*, we need to make the arg list from the current values in the
-	   *   environment, then 
+	  /* for C level define*, we need to make the arg list from the current values in the environment, then 
 	   *     sc ->value = function_call(sc->code)(sc, sc->args);
 	   *     pop_stack(sc);
 	   *     goto START;
 	   * (assuming sc->code was saved across the arg setup stuff)
 	   * the c-define* object would need to have the arg template somewhere accessible
-	   *   then somehow share the merging code.
-	   *   T_S7_FUNCTION_STAR?
+	   *   then somehow share the merging code. T_S7_FUNCTION_STAR?
 	   */
 		
 	case T_CONTINUATION:	                  /* -------- continuation ("call-with-continuation") -------- */

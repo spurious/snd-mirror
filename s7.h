@@ -4,19 +4,6 @@
 #define S7_VERSION "1.7"
 #define S7_DATE "3-Dec-08"
 
-#include <stdio.h>
-#ifndef __cplusplus
-#if HAVE_STDBOOL_H
-  #include <stdbool.h>
-#else
-#ifndef true
-  #define bool	int
-  #define true	1
-  #define false	0
-#endif
-#endif
-#endif
-
 
 typedef long long int s7_Int;
 /* This sets the size of integers in scheme and s7.c; s7_Int can be any (signed) integer type: "int" is ok */
@@ -78,10 +65,23 @@ typedef double s7_Double;
    */
 
 
+#include <stdio.h>
+#ifndef __cplusplus
+#if HAVE_STDBOOL_H
+  #include <stdbool.h>
+#else
+#ifndef true
+  #define bool	int
+  #define true	1
+  #define false	0
+#endif
+#endif
+#endif
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 typedef struct s7_scheme s7_scheme;
 typedef struct s7_cell *s7_pointer;
