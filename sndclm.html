@@ -1,4 +1,4 @@
-<html>
+d<html>
 <head>
 <title>CLM</title>
 <style type="text/css">
@@ -1029,7 +1029,7 @@ To goof around with FM from a graphical interface, see bess.scm and bess1.scm.
 
 <table border=1 hspace=100 cellpadding=8><tr><td>
 <p><small>When oscil's frequency is high relative to the sampling rate,
-the waveform you'll see may not look very sinusoidal.  Here, for example, is oscil
+the waveform it produces may not look very sinusoidal.  Here, for example, is oscil
 at 440 Hz when the srate is 1000, 4000, and 16000:
 </small></p>
 <img src="pix/srates.png" alt="effect of different srates" hspace=40>
@@ -2895,6 +2895,8 @@ long form:
 
 \tanh(x) = x-\frac{x^{3}}{3}+\frac{2x^{5}}{15}-\frac{17x^{7}}{315}+\frac{62x^{9}}{2835}-\frac{1382x^{11}}{155925}+\frac{21844x^{13}}{6081075}-\frac{929569x^{15}}{638512875}\cdots
 
+\tanh(x) = x-\frac{x^{3}}{3}+\frac{2x^{5}}{15}-\frac{17x^{7}}{315}+\frac{62x^{9}}{2835}-\frac{1382x^{11}}{155925}+\frac{21844x^{13}}{6081075}-\frac{929569x^{15}}{638512875}+\frac{6404582x^{17}}{10854718875}-\frac{443861162x^{19}}{1856156927625}\cdots
+
 -->
 <!-- LATEX: sceq12
 \tanh(\sin(x)) = \frac{140069}{172800} \sin(x) + \frac{13319}{241920} \sin(3x) + \frac{1973}{483840} \sin(5x) + \frac{799}{1451520} \sin(7x) - \frac{71}{7257600} \sin(9x) + \frac{691}{79833600} \sin(11x) + \cdots 
@@ -2927,7 +2929,8 @@ The spectrum of tanh(sin) can be obtained by expanding tanh as a power series:
 </p>
 <img src="pix/sceq11.png" alt="tanh power series" hspace=20>
 <p>
-plugging in "sin" for "x", expanding the sine powers, and collecting terms (very tedious!):
+plugging in "sin" for "x", expanding the sine powers, and collecting terms (very tedious &mdash; 
+use <a class=quiet onmouseout="UnTip()" onmouseover="Tip('<pre>(%i25) g:tanh(x);<br>(%o25)                              tanh(x)<br><br>(%i26) taylor(g, x, 0, 30);<br>               3      5       7       9         11          13           15<br>              x    2 x    17 x    62 x    1382 x     21844 x     929569 x<br>(%o26)/T/ x - -- + ---- - ----- + ----- - -------- + --------- - ----------<br>              3     15     315    2835     155925     6081075    638512875<br>            17              19                21                 23<br>   6404582 x     443861162 x     18888466084 x     113927491862 x<br> + ----------- - ------------- + --------------- - ----------------<br>   10854718875   1856156927625   194896477400625   2900518163668125<br>                   25                       27                         29<br>   58870668456604 x       8374643517010684 x       689005380505609448 x<br> + ------------------- - ---------------------- + ------------------------<br>   3698160658676859375   1298054391195577640625   263505041412702261046875<br> + . . .<br></pre>')">maxima</a>!):
 </p>
 <img src="pix/sceq12.png" alt="tanh sin power series" hspace=20>
 <p>
@@ -3562,13 +3565,13 @@ getting waveforms and results like these:
 <tr><td>
 <small>
 Compare the sound of the n=64 and n=128 cases using ncos and random phases: they sound very different
-despite having the same spectrum.  Also, this example raises the burning question: given n equal amplitude
+despite having the same spectrum.  We confront the burning question: given n equal amplitude
 harmonically related sinusoids, what is the minimum peak amplitude?  sqrt(n) is too low.  Here are (some of) the
 best minimum peaks I've found:
 <pre>
-    1 1.0, 2 1.76, 4 2.04, 8 2.875, 16 4.512, 32 6.791, 64 10.162, 128 17.283, 2048: 97.083
+    1 1.0, 2 1.76, 4 2.04, 8 2.875, 16 4.512, 32 6.791, 64 10.162, 128 16.301, 2048 97.083
 </pre>
-For the actual phases, the code used to find them, and an ever-growing list of other results, developed with
+For the actual phases, investigated with
 amiable, if sometimes incomprehensible advice from Bill Gosper, Marc LeBrun,
 and Julius Smith, 
 see <a href="sndscm.html#peakphasesdoc">peak-phases</a>.scm.
@@ -5597,7 +5600,7 @@ example that puts formant on the edge of disaster (the glitch is about to explod
 
 <table border=0 hspace=20>
 <tr>
-<td>
+<td width=500>
 <pre>
 (<a class=quiet href="sndscm.html#wsdoc" onmouseout="UnTip()" onmouseover="Tip(sndscm_wsdoc_tip)">with-sound</a> (:channels 2)
   (let* ((dur 3)

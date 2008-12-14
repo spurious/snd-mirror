@@ -469,8 +469,12 @@
 (test (char? #\() #t)
 (test (char? #e1) #f)
 (test (char? #\#) #t)
+(test (char? #\x) #t)
+(test (char? #\o) #t)
+(test (char? #\b) #t)
 (test (char? #b101) #f)
 (test (char? #o73) #f)
+(test (char? #x73) #f)
 (test (char? 'a) #f)
 (test (char? 97) #f)
 (test (char? "a") #f)
@@ -481,6 +485,7 @@
 (test (char? #\') #t)
 (test (char? #\`) #t)
 (test (char? #\@) #t)
+;(test (char? '#\xxx) 'error) ; or possibly #f??
 
 (for-each
  (lambda (arg)
@@ -4019,22 +4024,6 @@
 
 
 ;;; --------------------------------------------------------------------------------
-
-(num-test (sin (/ our-pi 12)) (* (/ (sqrt 2) 4) (- (sqrt 3) 1)))
-(num-test (cos (/ our-pi 12)) (* (/ (sqrt 2) 4) (+ (sqrt 3) 1)))
-(num-test (tan (/ our-pi 12)) (- 2 (sqrt 3)))
-
-(num-test (sin (/ our-pi 6)) 1/2)
-(num-test (cos (/ our-pi 6)) (/ (sqrt 3) 2))
-(num-test (tan (/ our-pi 6)) (/ (sqrt 3) 3))
-
-(num-test (sin (/ our-pi 4)) (/ (sqrt 2) 2))
-(num-test (cos (/ our-pi 4)) (/ (sqrt 2) 2))
-(num-test (tan (/ our-pi 4)) 1)
-
-(num-test (sin (/ our-pi 3)) (/ (sqrt 3) 2))
-(num-test (cos (/ our-pi 3)) 1/2)
-(num-test (tan (/ our-pi 3)) (sqrt 3))
 
 (num-test (sin 0) 0.0)
 (num-test (sin 1) 0.84147098480790)
@@ -9911,7 +9900,7 @@
 (num-test (real-part 1.0+1.0i) 1.0)
 (num-test (imag-part 1.0+1.0i) 1.0)
 (num-test (real-part -1.0+3.14159265358979i) -1.0)
-(num-test (imag-part -1.0+3.14159265358979i) our-pi)
+(num-test (imag-part -1.0+3.14159265358979i) 3.14159265358979)
 (num-test (real-part 1.0-2.71828182845905i) 1.0)
 (num-test (imag-part 1.0-2.71828182845905i) -2.71828182845905)
 (num-test (real-part -1.0-1234.0i) -1.0)
@@ -9920,15 +9909,15 @@
 (num-test (imag-part 1.0+1234000000.0i) 1234000000.0)
 (num-test (real-part -3.14159265358979+0.0i) -3.14159265358979)
 (num-test (imag-part -3.14159265358979+0.0i) 0.0)
-(num-test (real-part 3.14159265358979-0.00000001i) our-pi)
+(num-test (real-part 3.14159265358979-0.00000001i) 3.14159265358979)
 (num-test (imag-part 3.14159265358979-0.00000001i) -0.00000001)
 (num-test (real-part -3.14159265358979-1.0i) -3.14159265358979)
 (num-test (imag-part -3.14159265358979-1.0i) -1.0)
-(num-test (real-part 3.14159265358979+3.14159265358979i) our-pi)
-(num-test (imag-part 3.14159265358979+3.14159265358979i) our-pi)
+(num-test (real-part 3.14159265358979+3.14159265358979i) 3.14159265358979)
+(num-test (imag-part 3.14159265358979+3.14159265358979i) 3.14159265358979)
 (num-test (real-part -3.14159265358979+2.71828182845905i) -3.14159265358979)
 (num-test (imag-part -3.14159265358979+2.71828182845905i) 2.71828182845905)
-(num-test (real-part 3.14159265358979-1234.0i) our-pi)
+(num-test (real-part 3.14159265358979-1234.0i) 3.14159265358979)
 (num-test (imag-part 3.14159265358979-1234.0i) -1234.0)
 (num-test (real-part -3.14159265358979-1234000000.0i) -3.14159265358979)
 (num-test (imag-part -3.14159265358979-1234000000.0i) -1234000000.0)
@@ -9967,7 +9956,7 @@
 (num-test (real-part 1234000000.0+1.0i) 1234000000.0)
 (num-test (imag-part 1234000000.0+1.0i) 1.0)
 (num-test (real-part -1234000000.0+3.14159265358979i) -1234000000.0)
-(num-test (imag-part -1234000000.0+3.14159265358979i) our-pi)
+(num-test (imag-part -1234000000.0+3.14159265358979i) 3.14159265358979)
 (num-test (real-part 1234000000.0-2.71828182845905i) 1234000000.0)
 (num-test (imag-part 1234000000.0-2.71828182845905i) -2.71828182845905)
 (num-test (real-part -1234000000.0-1234.0i) -1234000000.0)
@@ -12234,13 +12223,13 @@
 (num-test (make-polar -0.0 1.0) -0.0)
 (num-test (make-polar 0.0 -1.0) 0.0)
 (num-test (make-polar -0.0 -1.0) 0.0)
-(num-test (magnitude 0.0+3.14159265358979i) our-pi)
+(num-test (magnitude 0.0+3.14159265358979i) 3.14159265358979)
 (num-test (angle 0.0+3.14159265358979i) 1.57079632679490)
-(num-test (magnitude -0.0+3.14159265358979i) our-pi)
+(num-test (magnitude -0.0+3.14159265358979i) 3.14159265358979)
 (num-test (angle -0.0+3.14159265358979i) 1.57079632679490)
-(num-test (magnitude 0.0-3.14159265358979i) our-pi)
+(num-test (magnitude 0.0-3.14159265358979i) 3.14159265358979)
 (num-test (angle 0.0-3.14159265358979i) -1.57079632679490)
-(num-test (magnitude -0.0-3.14159265358979i) our-pi)
+(num-test (magnitude -0.0-3.14159265358979i) 3.14159265358979)
 (num-test (angle -0.0-3.14159265358979i) -1.57079632679490)
 (num-test (make-rectangular 0.0 our-pi) 0.0+3.14159265358979i)
 (num-test (make-rectangular -0.0 our-pi) -0.0+3.14159265358979i)
@@ -27547,6 +27536,31 @@
 (num-test (expt 5.0e-01-1.00000000000000005551e-01i 5.0e-01+1.00000000000000005551e-01i) 7.1829191470060938876e-1-1.2038189555821612762e-1i)
 (num-test (expt 5.0e-01-1.00000000000000005551e-01i 5.0e-01-1.00000000000000005551e-01i) 6.9977300530987816719e-1-2.1940939105372143160e-2i)
 
+(num-test (expt 0 10) 0)
+(num-test (expt 1 10) 1)
+(num-test (expt 2 10) 1024)
+(num-test (expt 3 10) 59049)
+(num-test (expt 4 10) 1048576)
+(num-test (expt 5 10) 9765625)
+(num-test (expt 6 10) 60466176)
+(num-test (expt 7 10) 282475249)
+(num-test (expt 8 10) 1073741824)
+(num-test (expt 9 10) 3486784401)
+(num-test (expt 10 10) 10000000000)
+(num-test (expt 11 10) 25937424601)
+(num-test (expt 0 1/10) 0)
+(num-test (expt 1 1/10) 1)
+(num-test (expt 1024 1/10) 2)
+(num-test (expt 59049 1/10) 3)
+(num-test (expt 1048576 1/10) 4)
+(num-test (expt 9765625 1/10) 5)
+(num-test (expt 60466176 1/10) 6)
+(num-test (expt 282475249 1/10) 7)
+(num-test (expt 1073741824 1/10) 8)
+(num-test (expt 3486784401 1/10) 9)
+(num-test (expt 10000000000 1/10) 10)
+(num-test (expt 25937424601 1/10) 11)
+
 (num-test (sqrt -1.0e+01) 0+3.1622776601683793320e0i)
 (num-test (sqrt -2.0e+00) 0+1.4142135623730950488e0i)
 (num-test (sqrt -1.0e+00) 0+1i)
@@ -27957,6 +27971,99 @@
 (num-test (asin 2) 1.570796326794897-1.316957896924817i)
 (num-test (acos 1.00001) 0.0+0.004472132228240686i)
 (num-test (atan 1) 0.7853981633974483)
+
+
+(num-test (sin (/ our-pi 12)) (* (/ (sqrt 2) 4) (- (sqrt 3) 1)))
+(num-test (cos (/ our-pi 12)) (* (/ (sqrt 2) 4) (+ (sqrt 3) 1)))
+(num-test (tan (/ our-pi 12)) (- 2 (sqrt 3)))
+
+(num-test (sin (/ our-pi 6)) 1/2)
+(num-test (cos (/ our-pi 6)) (/ (sqrt 3) 2))
+(num-test (tan (/ our-pi 6)) (/ (sqrt 3) 3))
+
+(num-test (sin (/ our-pi 5)) (/ (sqrt (- 10 (* 2 (sqrt 5)))) 4))
+(num-test (cos (/ our-pi 5)) (/ (+ 1 (sqrt 5)) 4))
+(num-test (tan (/ our-pi 5)) (sqrt (- 5 (* 2 (sqrt 5)))))
+
+(num-test (* (sin (/ our-pi 7)) (sin (/ (* 2 our-pi) 7)) (sin (/ (* 3 our-pi) 7))) (/ (sqrt 7) 8))
+(num-test (* (cos (/ our-pi 7)) (cos (/ (* 2 our-pi) 7)) (cos (/ (* 3 our-pi) 7))) 1/8)
+
+(num-test (sin (/ our-pi 4)) (/ (sqrt 2) 2))
+(num-test (cos (/ our-pi 4)) (/ (sqrt 2) 2))
+(num-test (tan (/ our-pi 4)) 1)
+
+(num-test (sin (/ our-pi 3)) (/ (sqrt 3) 2))
+(num-test (cos (/ our-pi 3)) 1/2)
+(num-test (tan (/ our-pi 3)) (sqrt 3))
+
+(num-test (sin (/ our-pi 8)) (/ (sqrt (- 2 (sqrt 2))) 2))
+(num-test (cos (/ our-pi 8)) (/ (sqrt (+ 2 (sqrt 2))) 2))
+(num-test (tan (/ our-pi 8)) (- (sqrt 2) 1))
+
+(num-test (* (sin (/ our-pi 9)) (sin (/ (* 2 our-pi) 9)) (sin (/ (* 4 our-pi) 9))) (/ (sqrt 3) 8))
+(num-test (* (cos (/ our-pi 9)) (cos (/ (* 2 our-pi) 9)) (cos (/ (* 4 our-pi) 9))) 1/8)
+(num-test (* (tan (/ our-pi 9)) (tan (/ (* 2 our-pi) 9)) (tan (/ (* 4 our-pi) 9))) (sqrt 3))
+
+(num-test (sin (/ our-pi 10)) (/ (- (sqrt 5) 1) 4))
+(num-test (cos (/ our-pi 10)) (/ (sqrt (+ 10 (* 2 (sqrt 5)))) 4))
+(num-test (tan (/ our-pi 10)) (/ (sqrt (- 25 (* 10 (sqrt 5)))) 5))
+
+(num-test (* (sin (/ our-pi 11)) (sin (/ (* 2 our-pi) 11)) (sin (/ (* 3 our-pi) 11)) (sin (/ (* 4 our-pi) 11)) (sin (/ (* 5 our-pi) 11))) (sqrt (/ 11 1024)))
+(num-test (* (cos (/ our-pi 11)) (cos (/ (* 2 our-pi) 11)) (cos (/ (* 3 our-pi) 11)) (cos (/ (* 4 our-pi) 11)) (cos (/ (* 5 our-pi) 11))) 1/32)
+(num-test (* (tan (/ our-pi 11)) (tan (/ (* 2 our-pi) 11)) (tan (/ (* 3 our-pi) 11)) (tan (/ (* 4 our-pi) 11)) (tan (/ (* 5 our-pi) 11))) (sqrt 11))
+
+(num-test (sin (/ our-pi 12)) (/ (- (sqrt 6) (sqrt 2)) 4))
+(num-test (cos (/ our-pi 12)) (/ (+ (sqrt 6) (sqrt 2)) 4))
+(num-test (tan (/ our-pi 12)) (- 2 (sqrt 3)))
+
+(num-test (sin (/ our-pi 15)) (/ (sqrt (- 7 (sqrt 5) (sqrt (- 30 (* 6 (sqrt 5)))))) 4))
+(num-test (cos (/ our-pi 15)) (/ (+ (sqrt (+ 30 (* 6 (sqrt 5)))) (sqrt 5) -1) 8))
+;(num-test (tan (/ our-pi 15)) (sqrt (- 23 (* 10 (sqrt 5)) (* 2 (sqrt (+ 255 (* 114 (sqrt 5))))))))
+
+(num-test (sin (/ our-pi 16)) (/ (sqrt (- 2 (sqrt (+ 2 (sqrt 2))))) 2))
+(num-test (cos (/ our-pi 16)) (/ (sqrt (+ 2 (sqrt (+ 2 (sqrt 2))))) 2))
+(num-test (tan (/ our-pi 16)) (- (sqrt (+ 4 (* 2 (sqrt 2)))) (sqrt 2) 1))
+
+(num-test (sin (/ our-pi 20)) (/ (sqrt (- 8 (* 2 (sqrt (+ 10 (* 2 (sqrt 5))))))) 4))
+(num-test (cos (/ our-pi 20)) (/ (sqrt (+ 8 (* 2 (sqrt (+ 10 (* 2 (sqrt 5))))))) 4))
+(num-test (tan (/ our-pi 20)) (+ 1 (sqrt 5) (- (sqrt (+ 5 (* 2 (sqrt 5)))))))
+
+(num-test (sin (/ our-pi 24)) (/ (sqrt (- 2 (sqrt (+ 2 (sqrt 3))))) 2))
+(num-test (cos (/ our-pi 24)) (/ (sqrt (+ 2 (sqrt (+ 2 (sqrt 3))))) 2))
+(num-test (tan (/ our-pi 24)) (+ -2 (sqrt 2) (- (sqrt 3)) (sqrt 6)))
+
+(num-test (sin (/ our-pi 30)) (/ (+ -1 (- (sqrt 5)) (sqrt (- 30 (* 6 (sqrt 5))))) 8))
+(num-test (cos (/ our-pi 30)) (/ (sqrt (+ 7 (sqrt 5) (sqrt (* 6 (+ 5 (sqrt 5)))))) 4))
+(num-test (tan (/ our-pi 30)) (sqrt (- 7 (* 2 (sqrt 5)) (* 2 (sqrt (- 15 (* 6 (sqrt 5))))))))
+
+(num-test (sin (/ our-pi 32)) (/ (sqrt (- 2 (sqrt (+ 2 (sqrt (+ 2 (sqrt 2))))))) 2))
+(num-test (cos (/ our-pi 32)) (/ (sqrt (+ 2 (sqrt (+ 2 (sqrt (+ 2 (sqrt 2))))))) 2))
+
+(num-test (/ our-pi 4) (- (* 4 (atan (/ 1 5))) (atan (/ 1 239))))
+(num-test (/ our-pi 4) (+ (atan 1/2) (atan 1/3)))
+(num-test (/ our-pi 4) (- (* 2 (atan 1/2)) (atan 1/7)))
+(num-test (/ our-pi 4) (+ (* 2 (atan 1/3)) (atan 1/7)))
+(num-test (/ our-pi 4) (+ (* 5 (atan 1/7)) (* 2 (atan 3/79))))
+(num-test (/ our-pi 2) (+ (* 2 (atan (/ (sqrt 2)))) (atan (/ (sqrt 8)))))
+(num-test (* 768 (sqrt (- 2 (sqrt (+ 2 (sqrt (+ 2 (sqrt (+ 2 (sqrt (+ 2 (sqrt (+ 2 (sqrt (+ 2 (sqrt (+ 2 (sqrt (+ 2 1))))))))))))))))))) 3.1415904632368)
+
+(num-test (expt (- (expt 2 1/3) 1) 1/3) (+ (expt 1/9 1/3) (- (expt 2/9 1/3)) (expt 4/9 1/3)))
+(num-test (sqrt (- (expt 5 1/3) (expt 4 1/3))) (/ (+ (expt 2 1/3) (expt 20 1/3) (- (expt 25 1/3))) 3))
+(num-test (+ (expt (+ 1/2 (/ (sqrt 69) 18)) 1/3) (/ (expt (+ 1/2 (/ (sqrt 69) 18)) -1/3) 3)) (* (/ (* 2 (sqrt 3)) 3) (cos (/ (acos (/ (* 3 (sqrt 3)) 2)) 3))))
+
+(if with-hyperbolic-functions
+    (begin
+
+      (num-test (cosh (log (/ (+ 1 (sqrt 5)) 2))) (/ (sqrt 5) 2))
+      (num-test (log (/ (+ 1 (sqrt 5)) 2)) (acosh (/ (sqrt 5) 2)))
+      ))
+
+(num-test (log 0+i) (make-rectangular 0.0 (* 0.5 our-pi)))
+(num-test (log 0-i) (make-rectangular 0.0 (* -0.5 our-pi)))
+(num-test (exp (make-rectangular 0.0 (* 0.5 our-pi))) 0+i)
+(num-test (exp (make-rectangular 0.0 our-pi)) -1)
+
+
 
 (num-test (+ 1e100 -1e100) 0.0)
 (num-test (+ 1e200 -1e200) 0.0)
@@ -30019,6 +30126,8 @@
       (vector 0 2 4 6 8 10 12 14 16 18 20))
 
 (test (lambda) 'error)
+(test (lambda (a) ) 'error)
+;;; should this be an error: (lambda (a) (define x 1)) ?
 (test (lambda . 1) 'error)
 (test (lambda 1) 'error)
 (test (lambda (x 1) x) 'error)
@@ -30048,6 +30157,9 @@
 (test (let ((lambda 4)) (+ lambda 1)) 5)
 (test ((lambda (x) (+ x ((lambda (x) (+ x 1)) 2))) 3) 6)
 (test ((lambda (x) (define y 1) (+ x y)) 2) 3)
+(test ((lambda (a) "this is a doc string" a) 1) 1)
+;;; ideally ((lambda (a) "hiho" (define x 1) x) 1) -> 1 but I'm not sure it's r5rs-ish
+
 
 (test ((lambda lambda lambda) 'x) '(x))
 ;(test ((lambda (begin) (begin 1 2 3)) (lambda lambda lambda)) '(1 2 3))
@@ -30407,6 +30519,7 @@
 (test (letrec ((x 3)) (define x 10) x) 10)
 (test (let foo () 1) 1)
 (test (let ((f -)) (let f ((n (f 1))) n)) -1)
+(test (let () 1 2 3 4) 4)
 
 (test (let 1) 'error)
 (test (let . 1) 'error)
@@ -30505,6 +30618,9 @@
       49)
 
 (test (let ((#f 1)) #f) 'error)
+(test (let (()) #f) 'error)
+(test (let (lambda () ) #f) 'error)
+
 
 
 
@@ -32707,6 +32823,54 @@
 		      (set! happy #f)
 		      (display "tan error > 1e-6 around 2^") (display (/ (log dec) (log 2))) (newline))))))))
 
+      ;; table[(1/10^k)/(((1/10^k)^(1/10^k)) - 1), {k, 1, 30}]
+      ;;   the test came from calc_errors.txt from the web by "dave"
+      (let ((expts (list
+		    -0.48621160938616180680870317336747983548142173621715706851490974881717
+		    -0.22218561601345857583044966876729715619642038672598556073380084629504
+		    -0.14526540294689938889864991134840220307566223888497162784858064408875
+		    -0.10862362815109649171007844591526444220973735508130191198062253212652
+		    -0.08686389647659141105044978528770239308857034812798554177686261943193
+		    -0.07238291365169326382168151357331039782973682143307349669152489742891
+		    -0.06204211884333512141082278643490234288550259196615819050849846987015
+		    -0.05428681523790663196206398113420109019962541643547760927657854324749
+		    -0.04825494293369464924373092184737925979664303236414611590980578553450
+		    -0.04342944824032518278430110099994422226122739720915846151097610557365
+		    -0.03948131654165925705940460838351885560840418164027583205682137097699
+		    -0.03619120682577098563759637916147675090355043511246085981138602579761
+		    -0.03340726783876167905008686486133377017608955166698061593202699553920
+		    -0.03102103442166584483222349447696386196557178259759899539894506586562
+		    -0.02895296546021728851007526126398523685253569082526692705926181546848
+		    -0.02714340511895328922819555743231851877797306680518273360154914602559
+		    -0.02554673422960305368536052464215356633451937057629542604571806752914
+		    -0.02412747121684732425839605105092250802578858425793889081112350331353
+		    -0.02285760431069746466321731152192658331511007129540571803806313398860
+		    -0.02171472409516259138755644594583025411510361447234900258639235440074
+		    -0.02068068961444056322198232947221928963307055360980162368063530687389
+		    -0.01974065826832962852964676904166386737701808793240851850210059107980
+		    -0.01888236877840225337614103995289587314323465286757518193028428290776
+		    -0.01809560341263549281879753828819187842893320857975794377409033233328
+		    -0.01737177927613007310604520675666420329177588023219463316734886061171
+		    -0.01670363391935583952504342495833096470363065406937228989783888395986
+		    -0.01608498081123154917226403453394833638127396317791358170357400676126
+		    -0.01551051721083042241611174715416446722479989306441666312924319204483
+		    -0.01497567178976730440176306617453810628601368985529884710795141610434
+		    -0.01447648273010839425503763063105350274314656686012221887048754923492)))
+	(let ((happy #t))
+	  (do ((i 1 (+ i 1))) 
+	      ((or (= i (length expts))
+		   (not happy)))
+	    (catch #t
+		   (lambda ()
+		     (let ((val (/ (expt .1 i)
+				   (- (expt (expt .1 i) (expt .1 i)) 1))))
+		       (if (> (abs (- val (list-ref expts (- i 1)))) 1e-6)
+			   (begin
+			     (set! happy #f)
+			     (display "expt error > 1e-6 around 2^") (display (/ (log (expt .1 i)) (log 2))) (newline)))))
+		   (lambda args 
+		     (display "expt no accurate below around 2^") (display (/ (log (expt .1 i)) (log 2))) (newline))))))
+      
       (let ((sin-err 0.0)
 	    (cos-err 0.0)
 	    (log-err 0.0)
@@ -32714,6 +32878,8 @@
 	    (atan-err 0.0)
 	    (sqrt-err 0.0))
 	;; data generated by mathtool in the arprec package
+
+	;; another baddy: (tan 314159265358979323) should be -1.129792652308908544253650171110
 	
 	(let ((sins (list 
 		     0.00000000000000000000000000000000000000000000000000000000000000000000
@@ -33038,7 +33204,6 @@ angle:          5.2180482157382e-15     (angle 3.1415926535898+1i)    0.30816907
 make-polar:     5.1075947370453e-12     (make-polar 1e-08 1234.0)     -7.9855062358758e-09+6.019276547625e-09i -7.98551e-09+6.01928e-09i
 remainder:      1.1102230246252e-16     (remainder -3.1 2.5)          -0.6                                    -0.6
 modulo:         1.1102230246252e-16     (modulo -3.1 2.0)             0.9                                     0.9
-real-part:      3.702550419038e-17      (real-part 2/3)               0.66666666666667                        2/3
 expt:           5.3037918931232e-12     (expt -1234-2.718281828459i -1-1e-08i) -0.00081036881365486+1.7851555921329e-06i -0.00081036881365+1.78515559e-06i
 log:            1.9801079834368e-14     (log 8.0 1+1i)                0.97790391649038-2.2161063668189i       0.97790391649038-2.2161063668189i
 exp:            6.2082941131998e-11     (exp 2.718281828459+1234000000i) 2.4081506430049-14.961700256459i     2.4081506420759-14.961700256608i
@@ -33059,6 +33224,7 @@ string->number: 3.514766724748e-14      (string->number "12345678901234567890123
 sin error > 1e-6 after 2^38.192705173229 or thereabouts
 exp+log error > 1e-6 around 2^31.340047894875
 tan error > 1e-6 around 2^46.506993328423
+expt error > 1e-6 around 2^-46.506993328423
 )
 
 

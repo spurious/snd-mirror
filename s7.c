@@ -261,19 +261,19 @@ typedef struct num {
   char type;
   union {
     
-    s7_Int ivalue;
+    s7_Int integer_value;
     
-    s7_Double rvalue;
+    s7_Double real_value;
     
     struct {
       s7_Int numerator;
       s7_Int denominator;
-    } fvalue;
+    } fraction_value;
     
     struct {
       s7_Double real;
       s7_Double imag;
-    } cvalue;
+    } complex_value;
     
   } value;
 } num;
@@ -457,15 +457,9 @@ struct s7_scheme {
   s7_pointer key_values;
 #endif
 
-  /* the internal stack does not help the s7 user find a bug.
-   *   It is primarily controlling eval-internal loops, and has
-   *   little information for tracking call sequences.
-   * So, I think I'll try to conjure up a sort of fake stack
-   *   that tracks high-level eval/apply sequences.  The main
-   *   thing to avoid here is the clisp-style flood of useless
-   *   printout.  So the next fields are for our backtrace.
+  /* the internal stack does not help the s7 user find a bug: it is primarily controlling eval-internal loops, and has
+   *   little information for tracking call sequences. So, I'll conjure up a fake stack that tracks high-level eval/apply sequences.
    */
-
   int saved_line_number;
   int backtrace_size, backtrace_top;
   s7_pointer *backtrace_ops, *backtrace_args;
@@ -642,12 +636,12 @@ struct s7_scheme {
 
 #define num_type(n)                   (n.type)
 #define object_number_type(p)         (p->object.number.type)
-#define numerator(n)                  n.value.fvalue.numerator
-#define denominator(n)                n.value.fvalue.denominator
+#define numerator(n)                  n.value.fraction_value.numerator
+#define denominator(n)                n.value.fraction_value.denominator
 #define fraction(n)                   (((s7_Double)numerator(n)) / ((s7_Double)denominator(n)))
-#define real_part(n)                  n.value.cvalue.real
-#define imag_part(n)                  n.value.cvalue.imag
-#define integer(n)                    n.value.ivalue
+#define real_part(n)                  n.value.complex_value.real
+#define imag_part(n)                  n.value.complex_value.imag
+#define integer(n)                    n.value.integer_value
 
 #if __cplusplus
   using namespace std;
@@ -656,7 +650,7 @@ struct s7_scheme {
   static s7_Double Imag(complex<s7_Double> x) {return(imag(x));}
 #endif
 
-#define real(n)                       n.value.rvalue
+#define real(n)                       n.value.real_value
 
 
 #if S7_DEBUGGING
@@ -3620,8 +3614,7 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
 	  c =' ';
 	else 
 	  {
-	    if ((STRCMP(name + 1, "newline") == 0) ||
-		(STRCMP(name + 1, "linefeed") == 0))
+	    if ((STRCMP(name + 1, "newline") == 0) || (STRCMP(name + 1, "linefeed") == 0))
 	      c ='\n';
 	    else 
 	      {
@@ -3633,18 +3626,18 @@ static s7_pointer make_sharp_constant(s7_scheme *sc, char *name, bool at_top)
 		      c ='\t';
 		    else 
 		      {
-			if (STRCMP(name + 1, "null") == 0) 
+			if ((STRCMP(name + 1, "null") == 0) || (STRCMP(name + 1, "nul") == 0))
 			  c ='\0';
 			else 
 			  {
 			    if ((name[1] == 'x') && 
-				(name[2] != 0))          /* hunh?? -- #\x12?? */
+				(name[2] != 0))          /* #\x is just x, but apparently #\x<num> is int->char? #\x65 -> #\e */
 			      {
-				int c1= 0;
+				int c1 = 0;
 				if ((sscanf(name + 2, "%x", &c1) == 1) && 
 				    (c1 < 256))
 				  c = c1;
-				else return(sc->NIL);
+				else return(sc->NIL);    /* #\xx -> "undefined sharp expression" */
 			      }
 			    else 
 			      {
@@ -12081,7 +12074,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_LAMBDA: 
       if ((!is_pair(sc->code)) ||
 	  (!is_pair(cdr(sc->code))))                               /* (lambda) or (lambda #f) */
-	return(eval_error(sc, "lambda: no args? ~A", sc->code));
+	return(eval_error(sc, "lambda: no args or no body? ~A", sc->code));
 
       if (!s7_is_list(sc, car(sc->code)))
 	{
@@ -12104,7 +12097,7 @@ static s7_pointer eval(s7_scheme *sc, opcode_t first_op)
     case OP_LAMBDA_STAR:
       if ((!is_pair(sc->code)) ||
 	  (!is_pair(cdr(sc->code))))                                /* (lambda*) or (lambda* #f) */
-	return(eval_error(sc, "lambda*: no args? ~A", sc->code));
+	return(eval_error(sc, "lambda*: no args or no body? ~A", sc->code));
 
       if (!s7_is_list(sc, car(sc->code)))
 	{
