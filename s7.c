@@ -1529,7 +1529,7 @@ static s7_pointer g_gensym(s7_scheme *sc, s7_pointer args)
   if (is_pair(args))
     {
       if (!s7_is_string(car(args)))
-	return(s7_wrong_type_arg_error(sc, "gensym", 1, car(args), "a string"));
+	return(s7_wrong_type_arg_error(sc, "gensym", 0, car(args), "a string"));
       return(s7_gensym(sc, string_value(car(args))));
     }
   return(s7_gensym(sc, "gensym"));
@@ -1565,7 +1565,7 @@ static s7_pointer g_symbol_to_string(s7_scheme *sc, s7_pointer args)
 {
   #define H_symbol_to_string "(symbol->string sym) returns sym converted to a string"
   if (!s7_is_symbol(car(args)))
-    return(s7_wrong_type_arg_error(sc, "symbol->string", 1, car(args), "a symbol"));
+    return(s7_wrong_type_arg_error(sc, "symbol->string", 0, car(args), "a symbol"));
   return(s7_set_immutable(s7_make_string(sc, s7_symbol_name(car(args)))));
 }
 
@@ -1574,7 +1574,7 @@ static s7_pointer g_string_to_symbol(s7_scheme *sc, s7_pointer args)
 {
   #define H_string_to_symbol "(string->symbol str) returns str converted to a symbol"
   if (!s7_is_string(car(args)))
-    return(s7_wrong_type_arg_error(sc, "string->symbol", 1, car(args), "a string"));
+    return(s7_wrong_type_arg_error(sc, "string->symbol", 0, car(args), "a string"));
   return(s7_make_symbol(sc, string_value(car(args))));
 }
 
@@ -1667,7 +1667,7 @@ static s7_pointer g_symbol_to_value(s7_scheme *sc, s7_pointer args)
 {
   #define H_symbol_to_value "(symbol->value sym) returns the current binding of (value associated with) the symbol sym"
   if (!s7_is_symbol(car(args)))
-    return(s7_wrong_type_arg_error(sc, "symbol->value", 1, car(args), "a symbol"));
+    return(s7_wrong_type_arg_error(sc, "symbol->value", 0, car(args), "a symbol"));
   return(s7_symbol_value(sc, car(args)));
 }
 
@@ -1731,7 +1731,7 @@ static s7_pointer g_current_environment(s7_scheme *sc, s7_pointer args)
   if (args != sc->NIL)
     {
       if (g_is_thread(sc, args) == sc->F)
-	return(s7_wrong_type_arg_error(sc, "current-environment", 1, car(args), "a thread object"));
+	return(s7_wrong_type_arg_error(sc, "current-environment", 0, car(args), "a thread object"));
       return(thread_environment(sc, car(args)));
     }
 #endif
@@ -1781,7 +1781,7 @@ static s7_pointer g_is_defined(s7_scheme *sc, s7_pointer args)
   #define H_is_defined "(defined? obj :optional env) returns #t if obj has a binding (a value) in the environment env"
   
   if (!s7_is_symbol(car(args)))
-    return(s7_wrong_type_arg_error(sc, "defined?", 1, car(args), "a symbol"));
+    return(s7_wrong_type_arg_error(sc, "defined?", 0, car(args), "a symbol"));
   
   if (is_syntax(car(args)))
     return(sc->T);
@@ -4085,7 +4085,7 @@ static s7_pointer g_magnitude(s7_scheme *sc, s7_pointer args)
 {
   #define H_magnitude "(magnitude z) returns the magnitude of z"
   if (!s7_is_number(car(args)))
-    return(s7_wrong_type_arg_error(sc, "magnitude", 1, car(args), "a number"));
+    return(s7_wrong_type_arg_error(sc, "magnitude", 0, car(args), "a number"));
   sc->v = nvalue(car(args));
   switch (num_type(sc->v))
     {
@@ -4117,12 +4117,12 @@ static s7_pointer g_angle(s7_scheme *sc, s7_pointer args)
 {
   #define H_angle "(angle z) returns the angle of z"
   if (!s7_is_number(car(args)))
-    return(s7_wrong_type_arg_error(sc, "angle", 1, car(args), "a number"));
+    return(s7_wrong_type_arg_error(sc, "angle", 0, car(args), "a number"));
   sc->x = car(args);
   if (!s7_is_real(sc->x))
     return(s7_make_real(sc, atan2(s7_imag_part(sc->x), s7_real_part(sc->x))));
   if (num_to_real(sc->x->object.number) < 0.0)
-    return(s7_make_real(sc, atan2(0.0, -1.0)));
+    return(s7_make_real(sc, M_PI));
   if (object_number_type(sc->x) <= NUM_RATIO)
     return(s7_make_integer(sc, 0));
   return(s7_make_real(sc, 0.0));
@@ -4150,7 +4150,7 @@ static s7_pointer g_abs(s7_scheme *sc, s7_pointer args)
 {
   #define H_abs "(abs x) returns the absolute value of x"
   if (!s7_is_real(car(args)))
-    return(s7_wrong_type_arg_error(sc, "abs", 1, car(args), "a real"));
+    return(s7_wrong_type_arg_error(sc, "abs", 0, car(args), "a real"));
   sc->v = nvalue(car(args));
   if (num_type(sc->v) >= NUM_REAL)
     real(sc->v) = s7_Double_abs(real(sc->v));
@@ -4168,7 +4168,7 @@ static s7_pointer g_exp(s7_scheme *sc, s7_pointer args)
 {
   #define H_exp "(exp z) returns e^z"
   if (!s7_is_number(car(args)))
-    return(s7_wrong_type_arg_error(sc, "exp", 1, car(args), "a number"));
+    return(s7_wrong_type_arg_error(sc, "exp", 0, car(args), "a number"));
   sc->x = car(args);
   if (s7_is_real(sc->x))
     return(s7_make_real(sc, exp(num_to_real(sc->x->object.number))));
@@ -4226,7 +4226,7 @@ static s7_pointer g_sin(s7_scheme *sc, s7_pointer args)
 {
   #define H_sin "(sin z) returns sin(z)"
   if (!s7_is_number(car(args)))
-    return(s7_wrong_type_arg_error(sc, "sin", 1, car(args), "a number"));
+    return(s7_wrong_type_arg_error(sc, "sin", 0, car(args), "a number"));
   sc->x = car(args);
   if (s7_is_real(sc->x))
     return(s7_make_real(sc, sin(num_to_real(sc->x->object.number))));
@@ -4238,7 +4238,7 @@ static s7_pointer g_cos(s7_scheme *sc, s7_pointer args)
 {
   #define H_cos "(cos z) returns cos(z)"
   if (!s7_is_number(car(args)))
-    return(s7_wrong_type_arg_error(sc, "cos", 1, car(args), "a number"));
+    return(s7_wrong_type_arg_error(sc, "cos", 0, car(args), "a number"));
   sc->x = car(args);
   if (s7_is_real(sc->x))
     return(s7_make_real(sc, cos(num_to_real(sc->x->object.number))));
@@ -4250,7 +4250,7 @@ static s7_pointer g_tan(s7_scheme *sc, s7_pointer args)
 {
   #define H_tan "(tan z) returns tan(z)"
   if (!s7_is_number(car(args)))
-    return(s7_wrong_type_arg_error(sc, "tan", 1, car(args), "a number"));
+    return(s7_wrong_type_arg_error(sc, "tan", 0, car(args), "a number"));
   sc->x = car(args);
   if (s7_is_real(sc->x))
     return(s7_make_real(sc, tan(num_to_real(sc->x->object.number))));
@@ -4268,7 +4268,7 @@ static s7_pointer g_asin(s7_scheme *sc, s7_pointer args)
 {
   #define H_asin "(asin z) returns asin(z)"
   if (!s7_is_number(car(args)))
-    return(s7_wrong_type_arg_error(sc, "asin", 1, car(args), "a number"));
+    return(s7_wrong_type_arg_error(sc, "asin", 0, car(args), "a number"));
 
   sc->x = car(args);
   if (s7_is_real(sc->x))
@@ -4314,7 +4314,7 @@ static s7_pointer g_acos(s7_scheme *sc, s7_pointer args)
 {
   #define H_acos "(acos z) returns acos(z)"
   if (!s7_is_number(car(args)))
-    return(s7_wrong_type_arg_error(sc, "acos", 1, car(args), "a number"));
+    return(s7_wrong_type_arg_error(sc, "acos", 0, car(args), "a number"));
   sc->x = car(args);
   if (s7_is_real(sc->x))
     {
@@ -4382,7 +4382,7 @@ static s7_pointer g_sinh(s7_scheme *sc, s7_pointer args)
 {
   #define H_sinh "(sinh z) returns sinh(z)"
   if (!s7_is_number(car(args)))
-    return(s7_wrong_type_arg_error(sc, "sinh", 1, car(args), "a number"));
+    return(s7_wrong_type_arg_error(sc, "sinh", 0, car(args), "a number"));
   sc->x = car(args);
   if (s7_is_real(sc->x))
     return(s7_make_real(sc, sinh(num_to_real(sc->x->object.number))));
@@ -4394,7 +4394,7 @@ static s7_pointer g_cosh(s7_scheme *sc, s7_pointer args)
 {
   #define H_cosh "(cosh z) returns cosh(z)"
   if (!s7_is_number(car(args)))
-    return(s7_wrong_type_arg_error(sc, "cosh", 1, car(args), "a number"));
+    return(s7_wrong_type_arg_error(sc, "cosh", 0, car(args), "a number"));
   sc->x = car(args);
   if (s7_is_real(sc->x))
     return(s7_make_real(sc, cosh(num_to_real(sc->x->object.number))));
@@ -4406,7 +4406,7 @@ static s7_pointer g_tanh(s7_scheme *sc, s7_pointer args)
 {
   #define H_tanh "(tanh z) returns tanh(z)"
   if (!s7_is_number(car(args)))
-    return(s7_wrong_type_arg_error(sc, "tanh", 1, car(args), "a number"));
+    return(s7_wrong_type_arg_error(sc, "tanh", 0, car(args), "a number"));
   sc->x = car(args);
   if (s7_is_real(sc->x))
     return(s7_make_real(sc, tanh(num_to_real(sc->x->object.number))));
@@ -4422,7 +4422,7 @@ static s7_pointer g_asinh(s7_scheme *sc, s7_pointer args)
 {
   #define H_asinh "(asinh z) returns asinh(z)"
   if (!s7_is_number(car(args)))
-    return(s7_wrong_type_arg_error(sc, "asinh", 1, car(args), "a number"));
+    return(s7_wrong_type_arg_error(sc, "asinh", 0, car(args), "a number"));
   sc->x = car(args);
   if (s7_is_real(sc->x))
     return(s7_make_real(sc, asinh(num_to_real(sc->x->object.number))));
@@ -4434,7 +4434,7 @@ static s7_pointer g_acosh(s7_scheme *sc, s7_pointer args)
 {
   #define H_acosh "(acosh z) returns acosh(z)"
   if (!s7_is_number(car(args)))
-    return(s7_wrong_type_arg_error(sc, "acosh", 1, car(args), "a number"));
+    return(s7_wrong_type_arg_error(sc, "acosh", 0, car(args), "a number"));
   sc->x = car(args);
   if ((s7_is_real(sc->x)) &&
       (num_to_real(sc->x->object.number) >= 1.0))
@@ -4447,7 +4447,7 @@ static s7_pointer g_atanh(s7_scheme *sc, s7_pointer args)
 {
   #define H_atanh "(atanh z) returns atanh(z)"
   if (!s7_is_number(car(args)))
-    return(s7_wrong_type_arg_error(sc, "atanh", 1, car(args), "a number"));
+    return(s7_wrong_type_arg_error(sc, "atanh", 0, car(args), "a number"));
   sc->x = car(args);
   if ((s7_is_real(sc->x)) &&
       (s7_Double_abs(num_to_real(sc->x->object.number)) < 1.0))
@@ -4460,7 +4460,7 @@ static s7_pointer g_sqrt(s7_scheme *sc, s7_pointer args)
 {
   #define H_sqrt "(sqrt z) returns sqrt(z)"
   if (!s7_is_number(car(args)))
-    return(s7_wrong_type_arg_error(sc, "sqrt", 1, car(args), "a number"));
+    return(s7_wrong_type_arg_error(sc, "sqrt", 0, car(args), "a number"));
   sc->x = car(args);
   if (s7_is_real(sc->x))
     {
@@ -4580,39 +4580,70 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 static s7_pointer g_floor(s7_scheme *sc, s7_pointer args)
 {
   #define H_floor "(floor x) returns the integer closest to x toward -inf"
-  if (!s7_is_real(car(args)))
-    return(s7_wrong_type_arg_error(sc, "floor", 1, car(args), "a real"));
   sc->x = car(args);
-  return(s7_make_integer(sc, (s7_Int)floor(num_to_real(sc->x->object.number)))); /* used to be real result */
+  if (!s7_is_real(sc->x))
+    return(s7_wrong_type_arg_error(sc, "floor", 0, sc->x, "a real"));
+
+  switch (object_number_type(sc->x))
+    {
+    case NUM_INT:   return(sc->x);
+    case NUM_RATIO: return(s7_make_integer(sc, (s7_Int)((numerator(sc->x->object.number)) / denominator(sc->x->object.number))));
+    default:        return(s7_make_integer(sc, (s7_Int)floor(real(sc->x->object.number)))); 
+    }
 }
 
 
 static s7_pointer g_ceiling(s7_scheme *sc, s7_pointer args)
 {
   #define H_ceiling "(ceiling x) returns the integer closest to x toward inf"
-  if (!s7_is_real(car(args)))
-    return(s7_wrong_type_arg_error(sc, "ceiling", 1, car(args), "a real"));
   sc->x = car(args);
-  return(s7_make_integer(sc, (s7_Int)ceil(num_to_real(sc->x->object.number))));
+  if (!s7_is_real(sc->x))
+    return(s7_wrong_type_arg_error(sc, "ceiling", 0, sc->x, "a real"));
+
+  switch (object_number_type(sc->x))
+    {
+    case NUM_INT:   return(sc->x);
+    case NUM_RATIO: return(s7_make_integer(sc, 1 + (s7_Int)((numerator(sc->x->object.number)) / denominator(sc->x->object.number))));
+    default:        return(s7_make_integer(sc, (s7_Int)ceil(real(sc->x->object.number)))); 
+    }
 }
 
 
 static s7_pointer g_truncate(s7_scheme *sc, s7_pointer args)
 {
   #define H_truncate "(truncate x) returns the integer closest to x toward 0"
-  if (!s7_is_real(car(args)))
-    return(s7_wrong_type_arg_error(sc, "truncate", 1, car(args), "a real"));
-  return(s7_make_integer(sc, s7_truncate(num_to_real(car(args)->object.number))));
+  sc->x = car(args);
+  if (!s7_is_real(sc->x))
+    return(s7_wrong_type_arg_error(sc, "truncate", 0, sc->x, "a real"));
+
+  switch (object_number_type(sc->x))
+    {
+    case NUM_INT: 
+      return(sc->x);
+    case NUM_RATIO: 
+      {
+	s7_Int val;
+	val = (s7_Int)((numerator(sc->x->object.number)) / denominator(sc->x->object.number));
+	if (s7_Int_abs(val) < 0.0)
+	  return(s7_make_integer(sc, 1 + val));
+	return(s7_make_integer(sc, val));
+      }
+    default: 
+      return(s7_make_integer(sc, s7_truncate(real(sc->x->object.number)))); 
+    }
 }
 
 
 static s7_pointer g_round(s7_scheme *sc, s7_pointer args)
 {
   #define H_round "(round x) returns the integer closest to x"
-  if (!s7_is_real(car(args)))
-    return(s7_wrong_type_arg_error(sc, "round", 1, car(args), "a real"));
   sc->x = car(args);
-  return(s7_make_integer(sc, (s7_Int)round_per_R5RS(num_to_real(sc->x->object.number))));
+  if (!s7_is_real(sc->x))
+    return(s7_wrong_type_arg_error(sc, "round", 0, sc->x, "a real"));
+  if (object_number_type(sc->x) == NUM_INT)
+    return(sc->x);
+  /* ideally here we'd figure out which way to round a fraction without any conversion to real */
+  return(s7_make_integer(sc, (s7_Int)round_per_R5RS(real(sc->x->object.number)))); 
 }
 
 
@@ -4930,7 +4961,7 @@ static s7_pointer g_real_part(s7_scheme *sc, s7_pointer args)
   s7_pointer p;
   p = car(args);
   if (!s7_is_number(p))
-    return(s7_wrong_type_arg_error(sc, "real-part", 1, p, "a number"));
+    return(s7_wrong_type_arg_error(sc, "real-part", 0, p, "a number"));
   if (object_number_type(p) < NUM_COMPLEX)
     return(p);                                      /* if num is real, real-part should return it as is (not exact->inexact) */
   return(s7_make_real(sc, real_part(p->object.number)));
@@ -4941,7 +4972,7 @@ static s7_pointer g_imag_part(s7_scheme *sc, s7_pointer args)
 {
   #define H_imag_part "(imag-part num) returns the imaginary part of num"
   if (!s7_is_number(car(args)))
-    return(s7_wrong_type_arg_error(sc, "imag-part", 1, car(args), "a number"));
+    return(s7_wrong_type_arg_error(sc, "imag-part", 0, car(args), "a number"));
   return(s7_make_real(sc, s7_imag_part(car(args))));
 }
 
@@ -4950,7 +4981,7 @@ static s7_pointer g_numerator(s7_scheme *sc, s7_pointer args)
 {
   #define H_numerator "(numerator rat) returns the numerator of the rational number rat"
   if (!s7_is_rational(car(args)))
-    return(s7_wrong_type_arg_error(sc, "numerator", 1, car(args), "a rational"));
+    return(s7_wrong_type_arg_error(sc, "numerator", 0, car(args), "a rational"));
   return(s7_make_integer(sc, num_to_numerator((car(args))->object.number)));
 }
 
@@ -4959,7 +4990,7 @@ static s7_pointer g_denominator(s7_scheme *sc, s7_pointer args)
 {
   #define H_denominator "(denominator rat) returns the denominator of the rational number rat"
   if (!s7_is_rational(car(args)))
-    return(s7_wrong_type_arg_error(sc, "denominator", 1, car(args), "a rational"));
+    return(s7_wrong_type_arg_error(sc, "denominator", 0, car(args), "a rational"));
   return(s7_make_integer(sc, num_to_denominator((car(args))->object.number)));
 }
 
@@ -5003,7 +5034,7 @@ static s7_pointer g_is_even(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_even "(even? int) returns #t if the integer int is even"
   if (!s7_is_integer(car(args)))
-    return(s7_wrong_type_arg_error(sc, "even?", 1, car(args), "an integer"));
+    return(s7_wrong_type_arg_error(sc, "even?", 0, car(args), "an integer"));
   return(make_boolean(sc, (s7_integer(car(args)) & 1) == 0));
 }
 
@@ -5012,7 +5043,7 @@ static s7_pointer g_is_odd(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_odd "(odd? int) returns #t if the integer int is odd"
   if (!s7_is_integer(car(args)))
-    return(s7_wrong_type_arg_error(sc, "odd?", 1, car(args), "an integer"));
+    return(s7_wrong_type_arg_error(sc, "odd?", 0, car(args), "an integer"));
   return(make_boolean(sc, (s7_integer(car(args)) & 1) == 1));
 }
 
@@ -5021,7 +5052,7 @@ static s7_pointer g_is_zero(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_zero "(zero? num) returns #t if the number num is zero"
   if (!s7_is_number(car(args)))
-    return(s7_wrong_type_arg_error(sc, "zero?", 1, car(args), "a number"));
+    return(s7_wrong_type_arg_error(sc, "zero?", 0, car(args), "a number"));
   return(make_boolean(sc, s7_is_zero(car(args))));
 }
 
@@ -5030,7 +5061,7 @@ static s7_pointer g_is_positive(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_positive "(positive? num) returns #t if the real number num is positive"
   if (!s7_is_real(car(args)))
-    return(s7_wrong_type_arg_error(sc, "positive?", 1, car(args), "a real"));
+    return(s7_wrong_type_arg_error(sc, "positive?", 0, car(args), "a real"));
   return(make_boolean(sc, s7_is_positive(car(args))));
 }
 
@@ -5039,7 +5070,7 @@ static s7_pointer g_is_negative(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_negative "(negative? num) returns #t if the real number num is negative"
   if (!s7_is_real(car(args)))
-    return(s7_wrong_type_arg_error(sc, "negative?", 1, car(args), "a real"));
+    return(s7_wrong_type_arg_error(sc, "negative?", 0, car(args), "a real"));
   return(make_boolean(sc, s7_is_negative(car(args))));
 }
 
@@ -5048,7 +5079,7 @@ static s7_pointer g_inexact_to_exact(s7_scheme *sc, s7_pointer args)
 {
   #define H_inexact_to_exact "(inexact->exact num) converts num to an exact number"
   if (!s7_is_number(car(args)))
-    return(s7_wrong_type_arg_error(sc, "inexact->exact", 1, car(args), "a number"));
+    return(s7_wrong_type_arg_error(sc, "inexact->exact", 0, car(args), "a number"));
   return(inexact_to_exact(sc, car(args)));
 }
 
@@ -5057,7 +5088,7 @@ static s7_pointer g_exact_to_inexact(s7_scheme *sc, s7_pointer args)
 {
   #define H_exact_to_inexact "(exact->inexact num) converts num to an inexact number"
   if (!s7_is_number(car(args)))
-    return(s7_wrong_type_arg_error(sc, "exact->inexact", 1, car(args), "a number"));
+    return(s7_wrong_type_arg_error(sc, "exact->inexact", 0, car(args), "a number"));
   return(exact_to_inexact(sc, car(args)));
 }
 
@@ -5066,7 +5097,7 @@ static s7_pointer g_is_exact(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_exact "(exact? num) returns #t if num is exact"
   if (!s7_is_number(car(args)))
-    return(s7_wrong_type_arg_error(sc, "exact?", 1, car(args), "a number"));
+    return(s7_wrong_type_arg_error(sc, "exact?", 0, car(args), "a number"));
   return(make_boolean(sc, s7_is_exact(car(args))));
 }
 
@@ -5075,7 +5106,7 @@ static s7_pointer g_is_inexact(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_inexact "(inexact? num) returns #t if num is inexact"
   if (!s7_is_number(car(args)))
-    return(s7_wrong_type_arg_error(sc, "inexact?", 1, car(args), "a number"));
+    return(s7_wrong_type_arg_error(sc, "inexact?", 0, car(args), "a number"));
   return(make_boolean(sc, s7_is_inexact(car(args))));
 }
 
@@ -5170,7 +5201,7 @@ static s7_pointer g_char_to_integer(s7_scheme *sc, s7_pointer args)
 {
   #define H_char_to_integer "(char->integer c) converts the character c to an integer"
   if (!s7_is_character(car(args)))
-    return(s7_wrong_type_arg_error(sc, "char->integer", 1, car(args), "a character"));
+    return(s7_wrong_type_arg_error(sc, "char->integer", 0, car(args), "a character"));
   return(s7_make_integer(sc, (unsigned char)character(car(args))));
 }
 
@@ -5181,7 +5212,7 @@ static s7_pointer g_integer_to_char(s7_scheme *sc, s7_pointer args)
   if ((!s7_is_integer(car(args))) || 
       (s7_integer(car(args)) < 0) ||
       (s7_integer(car(args)) > 255))
-    return(s7_wrong_type_arg_error(sc, "integer->char", 1, car(args), "an integer between 0 and 255"));
+    return(s7_wrong_type_arg_error(sc, "integer->char", 0, car(args), "an integer between 0 and 255"));
   return(s7_make_character(sc, (char)s7_integer(car(args))));
 }
 
@@ -5190,7 +5221,7 @@ static s7_pointer g_char_upcase(s7_scheme *sc, s7_pointer args)
 {
   #define H_char_upcase "(char-upcase c) converts the character c to upper case"
   if (!s7_is_character(car(args)))
-    return(s7_wrong_type_arg_error(sc, "char-upcase", 1, car(args), "a character"));
+    return(s7_wrong_type_arg_error(sc, "char-upcase", 0, car(args), "a character"));
   return(s7_make_character(sc, (char)toupper((unsigned char)character(car(args)))));
 }
 
@@ -5199,7 +5230,7 @@ static s7_pointer g_char_downcase(s7_scheme *sc, s7_pointer args)
 {
   #define H_char_downcase "(char-downcase c) converts the character c to lower case"
   if (!s7_is_character(car(args)))
-    return(s7_wrong_type_arg_error(sc, "char-downcase", 1, car(args), "a character"));
+    return(s7_wrong_type_arg_error(sc, "char-downcase", 0, car(args), "a character"));
   return(s7_make_character(sc, (char)tolower((unsigned char)character(car(args)))));
 }
 
@@ -5208,7 +5239,7 @@ static s7_pointer g_is_char_alphabetic(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_char_alphabetic "(char-alphabetic? c) returns #t if the character c is alphabetic"
   if (!s7_is_character(car(args)))
-    return(s7_wrong_type_arg_error(sc, "char-alphabetic?", 1, car(args), "a character"));
+    return(s7_wrong_type_arg_error(sc, "char-alphabetic?", 0, car(args), "a character"));
   return(make_boolean(sc, isalpha(character(car(args)))));
 }
 
@@ -5217,7 +5248,7 @@ static s7_pointer g_is_char_numeric(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_char_numeric "(char-numeric? c) returns #t if the character c is a digit"
   if (!s7_is_character(car(args)))
-    return(s7_wrong_type_arg_error(sc, "char-numeric?", 1, car(args), "a character"));
+    return(s7_wrong_type_arg_error(sc, "char-numeric?", 0, car(args), "a character"));
   return(make_boolean(sc, isdigit(character(car(args)))));
 }
 
@@ -5226,7 +5257,7 @@ static s7_pointer g_is_char_whitespace(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_char_whitespace "(char-whitespace? c) returns #t if the character c is non-printing character"
   if (!s7_is_character(car(args)))
-    return(s7_wrong_type_arg_error(sc, "char-whitespace?", 1, car(args), "a character"));
+    return(s7_wrong_type_arg_error(sc, "char-whitespace?", 0, car(args), "a character"));
   return(make_boolean(sc, isspace(character(car(args)))));
 }
 
@@ -5235,7 +5266,7 @@ static s7_pointer g_is_char_upper_case(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_char_upper_case "(char-upper-case? c) returns #t if the character c is in upper case"
   if (!s7_is_character(car(args)))
-    return(s7_wrong_type_arg_error(sc, "char-upper-case?", 1, car(args), "a character"));
+    return(s7_wrong_type_arg_error(sc, "char-upper-case?", 0, car(args), "a character"));
   return(make_boolean(sc, isupper(character(car(args)))));
 }
 
@@ -5244,7 +5275,7 @@ static s7_pointer g_is_char_lower_case(s7_scheme *sc, s7_pointer args)
 {
   #define H_is_char_lower_case "(char-lower-case? c) returns #t if the character c is in lower case"
   if (!s7_is_character(car(args)))
-    return(s7_wrong_type_arg_error(sc, "char-lower-case?", 1, car(args), "a character"));
+    return(s7_wrong_type_arg_error(sc, "char-lower-case?", 0, car(args), "a character"));
   return(make_boolean(sc, islower(character(car(args)))));
 }
 
@@ -5500,7 +5531,7 @@ static s7_pointer g_string_length(s7_scheme *sc, s7_pointer args)
 {
   #define H_string_length "(string-length str) returns the length of the string str"
   if (!s7_is_string(car(args)))
-    return(s7_wrong_type_arg_error(sc, "string-length", 1, car(args), "string"));
+    return(s7_wrong_type_arg_error(sc, "string-length", 0, car(args), "string"));
   return(s7_make_integer(sc, string_length(car(args))));
 }
 
@@ -5590,7 +5621,7 @@ static s7_pointer g_string_copy(s7_scheme *sc, s7_pointer args)
 {
   #define H_string_copy "(string-copy str) returns a copy of its string argument"
   if (car(args) == sc->NIL)
-    return(s7_wrong_type_arg_error(sc, "string-copy", 1, car(args), "a string"));
+    return(s7_wrong_type_arg_error(sc, "string-copy", 0, car(args), "a string"));
   
   return(g_string_append_1(sc, args, "string-copy"));
 }
@@ -5909,7 +5940,7 @@ static s7_pointer g_list_to_string(s7_scheme *sc, s7_pointer args)
     return(s7_make_string_with_length(sc, "", 0));
   
   if (g_is_list(sc, args) == sc->F)
-    return(s7_wrong_type_arg_error(sc, "list->string", 1, car(args), "a (proper, non-circular) list of characters"));
+    return(s7_wrong_type_arg_error(sc, "list->string", 0, car(args), "a (proper, non-circular) list of characters"));
   
   return(g_string_1(sc, car(args), "list->string"));
 }
@@ -5925,7 +5956,7 @@ static s7_pointer g_string_to_list(s7_scheme *sc, s7_pointer args)
   lst = sc->NIL;
   
   if (!s7_is_string(car(args)))
-    return(s7_wrong_type_arg_error(sc, "string->list", 1, car(args), "a string"));
+    return(s7_wrong_type_arg_error(sc, "string->list", 0, car(args), "a string"));
   
   str = string_value(car(args));
   if (str) len = strlen(str);
@@ -6025,7 +6056,7 @@ static s7_pointer g_set_current_input_port(s7_scheme *sc, s7_pointer args)
   port = car(args);
   if (s7_is_input_port(sc, port))
     sc->input_port = port;
-  else return(s7_wrong_type_arg_error(sc, "set-current-input-port", 1, car(args), "an input port or nil"));
+  else return(s7_wrong_type_arg_error(sc, "set-current-input-port", 0, car(args), "an input port or nil"));
   return(old_port);
 }
 
@@ -6060,7 +6091,7 @@ static s7_pointer g_set_current_output_port(s7_scheme *sc, s7_pointer args)
   port = car(args);
   if (s7_is_output_port(sc, port))
     sc->output_port = port;
-  else return(s7_wrong_type_arg_error(sc, "set-current-output-port", 1, car(args), "an output port or nil"));
+  else return(s7_wrong_type_arg_error(sc, "set-current-output-port", 0, car(args), "an output port or nil"));
   return(old_port);
 }
 
@@ -6095,7 +6126,7 @@ static s7_pointer g_set_current_error_port(s7_scheme *sc, s7_pointer args)
   port = car(args);
   if (s7_is_output_port(sc, port))
     sc->error_port = port;
-  else return(s7_wrong_type_arg_error(sc, "set-current-error-port", 1, car(args), "an output port or nil"));
+  else return(s7_wrong_type_arg_error(sc, "set-current-error-port", 0, car(args), "an output port or nil"));
   return(old_port);
 }
 
@@ -6107,7 +6138,7 @@ static s7_pointer g_is_char_ready(s7_scheme *sc, s7_pointer args)
     {
       s7_pointer pt = car(args);
       if (!s7_is_input_port(sc, pt))
-	return(s7_wrong_type_arg_error(sc, "char-ready?", 1, car(args), "an input port"));
+	return(s7_wrong_type_arg_error(sc, "char-ready?", 0, car(args), "an input port"));
       
       return(make_boolean(sc, is_string_port(pt)));
     }
@@ -6153,7 +6184,7 @@ static s7_pointer g_close_input_port(s7_scheme *sc, s7_pointer args)
   #define H_close_input_port "(close-input-port port) closes the port"
   s7_pointer pt = car(args);
   if (!s7_is_input_port(sc, pt))
-    return(s7_wrong_type_arg_error(sc, "close-input-port", 1, pt, "an input port"));
+    return(s7_wrong_type_arg_error(sc, "close-input-port", 0, pt, "an input port"));
   s7_close_input_port(sc, pt);
   return(sc->UNSPECIFIED);
 }
@@ -6191,7 +6222,7 @@ static s7_pointer g_close_output_port(s7_scheme *sc, s7_pointer args)
   #define H_close_output_port "(close-output-port port) closes the port"
   s7_pointer pt = car(args);
   if (!s7_is_output_port(sc, pt))
-    return(s7_wrong_type_arg_error(sc, "close-output-port", 1, pt, "an output port"));
+    return(s7_wrong_type_arg_error(sc, "close-output-port", 0, pt, "an output port"));
   s7_close_output_port(sc, pt);
   return(sc->UNSPECIFIED);
 }
@@ -6238,7 +6269,7 @@ static s7_pointer g_open_input_file(s7_scheme *sc, s7_pointer args)
   if (is_pair(cdr(args)))
     {
       if (!s7_is_string(cadr(args)))
-	return(s7_wrong_type_arg_error(sc, "open-input-file", 1, cadr(args), "a string (a mode)"));
+	return(s7_wrong_type_arg_error(sc, "open-input-file", 2, cadr(args), "a string (a mode)"));
       return(s7_open_input_file(sc, s7_string(name), s7_string(cadr(args))));
     }
   return(s7_open_input_file(sc, s7_string(name), "r"));
@@ -6279,7 +6310,7 @@ static s7_pointer g_open_output_file(s7_scheme *sc, s7_pointer args)
   if (is_pair(cdr(args)))
     {
       if (!s7_is_string(cadr(args)))
-	return(s7_wrong_type_arg_error(sc, "open-output-file", 1, cadr(args), "a string (a mode)"));
+	return(s7_wrong_type_arg_error(sc, "open-output-file", 2, cadr(args), "a string (a mode)"));
       return(s7_open_output_file(sc, s7_string(name), s7_string(cadr(args))));
     }
   return(s7_open_output_file(sc, s7_string(name), "w"));
@@ -6310,7 +6341,7 @@ static s7_pointer g_open_input_string(s7_scheme *sc, s7_pointer args)
   #define H_open_input_string "(open-input-string str) opens an input port reading str"
   s7_pointer input_string = car(args);
   if (!s7_is_string(input_string))
-    return(s7_wrong_type_arg_error(sc, "open-input-string", 1, car(args), "a string"));
+    return(s7_wrong_type_arg_error(sc, "open-input-string", 0, car(args), "a string"));
   
   return(s7_open_input_string(sc, s7_string(input_string))); /* presumably the caller is protecting the input string?? */
 }
@@ -6354,7 +6385,7 @@ static s7_pointer g_get_output_string(s7_scheme *sc, s7_pointer args)
   s7_pointer p = car(args);
   if ((!is_output_port(p)) ||
       (!is_string_port(p)))
-    return(s7_wrong_type_arg_error(sc, "get-output-string", 1, car(args), "an output string port"));
+    return(s7_wrong_type_arg_error(sc, "get-output-string", 0, car(args), "an output string port"));
   return(s7_make_string(sc, s7_get_output_string(sc, p)));
 }
 
@@ -6494,7 +6525,7 @@ static s7_pointer g_read_line(s7_scheme *sc, s7_pointer args)
     {
       port = car(args);
       if (!s7_is_input_port(sc, port))
-	return(s7_wrong_type_arg_error(sc, "read-line", 1, port, "an input port"));
+	return(s7_wrong_type_arg_error(sc, "read-line", 0, port, "an input port"));
     }
   else port = sc->input_port;
 
@@ -6554,7 +6585,7 @@ s7_pointer s7_read(s7_scheme *sc, s7_pointer port)
       pop_input_port(sc);
       return(sc->value);
     }
-  return(s7_wrong_type_arg_error(sc, "read", 1, port, "an input port"));
+  return(s7_wrong_type_arg_error(sc, "read", 0, port, "an input port"));
 }
 
 
@@ -6568,7 +6599,7 @@ static s7_pointer g_read(s7_scheme *sc, s7_pointer args)
   else port = sc->input_port;
   
   if (!s7_is_input_port(sc, port))
-    return(s7_wrong_type_arg_error(sc, "read", 1, car(args), "an input port"));
+    return(s7_wrong_type_arg_error(sc, "read", 0, car(args), "an input port"));
   
   push_input_port(sc, port);
   push_stack(sc, OP_READ_POP_AND_RETURN_EXPRESSION, sc->NIL, sc->NIL); /* this stops the internal read process so we only get one form */
@@ -6783,7 +6814,7 @@ static s7_pointer g_eval_string(s7_scheme *sc, s7_pointer args)
   #define H_eval_string "(eval-string str) returns the result of evaluating the string str as Scheme code"
   s7_pointer port;
   if (!s7_is_string(car(args)))
-    return(s7_wrong_type_arg_error(sc, "eval-string", 1, car(args), "a string"));
+    return(s7_wrong_type_arg_error(sc, "eval-string", 0, car(args), "a string"));
   
   port = s7_open_input_string(sc, s7_string(car(args)));
   push_input_port(sc, port);
@@ -7333,7 +7364,7 @@ static s7_pointer g_newline(s7_scheme *sc, s7_pointer args)
     {
       port = car(args);
       if (!s7_is_output_port(sc, port))
-	return(s7_wrong_type_arg_error(sc, "newline", 1, car(args), "an output port"));
+	return(s7_wrong_type_arg_error(sc, "newline", 0, car(args), "an output port"));
     }
   else port = sc->output_port;
   
@@ -7433,7 +7464,7 @@ static s7_pointer g_read_byte(s7_scheme *sc, s7_pointer args)
       port = car(args);
       if ((!s7_is_input_port(sc, port)) ||
 	  (!is_file_port(port)))
-	return(s7_wrong_type_arg_error(sc, "read-byte", 1, car(args), "an input file port"));
+	return(s7_wrong_type_arg_error(sc, "read-byte", 0, car(args), "an input file port"));
     }
   else port = sc->input_port;
   return(s7_make_integer(sc, fgetc(port_file(port))));
@@ -7951,7 +7982,7 @@ static s7_pointer g_car(s7_scheme *sc, s7_pointer args)
   #define H_car "(car pair) returns the first element of the pair"
   
   if (!is_pair(car(args)))
-    return(s7_wrong_type_arg_error(sc, "car", 1, car(args), "a pair"));
+    return(s7_wrong_type_arg_error(sc, "car", 0, car(args), "a pair"));
   
   return(caar(args));
 }
@@ -7962,7 +7993,7 @@ static s7_pointer g_cdr(s7_scheme *sc, s7_pointer args)
   #define H_cdr "(cdr pair) returns the second element of the pair"
   
   if (!is_pair(car(args)))
-    return(s7_wrong_type_arg_error(sc, "cdr", 1, car(args), "a pair"));
+    return(s7_wrong_type_arg_error(sc, "cdr", 0, car(args), "a pair"));
   
   return(cdar(args));
 }
@@ -8012,7 +8043,7 @@ static s7_pointer g_caar(s7_scheme *sc, s7_pointer args)
   #define H_caar "(caar lst) returns (car (car lst))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(car(lst)))) return(car(car(lst)));
-  return(s7_wrong_type_arg_error(sc, "caar", 1, car(args), "a pair"));
+  return(s7_wrong_type_arg_error(sc, "caar", 0, car(args), "a pair"));
 }
 
 
@@ -8021,7 +8052,7 @@ static s7_pointer g_cadr(s7_scheme *sc, s7_pointer args)
   #define H_cadr "(cadr lst) returns (car (cdr lst))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(cdr(lst)))) return(car(cdr(lst)));
-  return(s7_wrong_type_arg_error(sc, "cadr", 1, car(args), "a pair"));
+  return(s7_wrong_type_arg_error(sc, "cadr", 0, car(args), "a pair"));
 }
 
 
@@ -8030,7 +8061,7 @@ static s7_pointer g_cdar(s7_scheme *sc, s7_pointer args)
   #define H_cdar "(cdar lst) returns (cdr (car lst))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(car(lst)))) return(cdr(car(lst)));
-  return(s7_wrong_type_arg_error(sc, "cdar", 1, car(args), "a pair"));
+  return(s7_wrong_type_arg_error(sc, "cdar", 0, car(args), "a pair"));
 }
 
 
@@ -8039,7 +8070,7 @@ static s7_pointer g_cddr(s7_scheme *sc, s7_pointer args)
   #define H_cddr "(cddr lst) returns (cdr (cdr lst))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(cdr(lst)))) return(cdr(cdr(lst)));
-  return(s7_wrong_type_arg_error(sc, "cddr", 1, car(args), "a pair"));
+  return(s7_wrong_type_arg_error(sc, "cddr", 0, car(args), "a pair"));
 }
 
 
@@ -8048,7 +8079,7 @@ static s7_pointer g_caaar(s7_scheme *sc, s7_pointer args)
   #define H_caaar "(caaar lst) returns (car (car (car lst)))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(car(lst))) && (is_pair(car(car(lst))))) return(car(car(car(lst))));
-  return(s7_wrong_type_arg_error(sc, "caaar", 1, car(args), "a pair"));
+  return(s7_wrong_type_arg_error(sc, "caaar", 0, car(args), "a pair"));
 }
 
 
@@ -8057,7 +8088,7 @@ static s7_pointer g_caadr(s7_scheme *sc, s7_pointer args)
   #define H_caadr "(caadr lst) returns (car (car (cdr lst)))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(cdr(lst))) && (is_pair(cadr(lst)))) return(car(car(cdr(lst))));
-  return(s7_wrong_type_arg_error(sc, "caadr", 1, car(args), "a pair"));
+  return(s7_wrong_type_arg_error(sc, "caadr", 0, car(args), "a pair"));
 }
 
 
@@ -8066,7 +8097,7 @@ static s7_pointer g_cadar(s7_scheme *sc, s7_pointer args)
   #define H_cadar "(cadar lst) returns (car (cdr (car lst)))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(car(lst))) && (is_pair(cdr(car(lst))))) return(car(cdr(car(lst))));
-  return(s7_wrong_type_arg_error(sc, "cadar", 1, car(args), "a pair"));
+  return(s7_wrong_type_arg_error(sc, "cadar", 0, car(args), "a pair"));
 }
 
 
@@ -8075,7 +8106,7 @@ static s7_pointer g_cdaar(s7_scheme *sc, s7_pointer args)
   #define H_cdaar "(cdaar lst) returns (cdr (car (car lst)))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(car(lst))) && (is_pair(car(car(lst))))) return(cdr(car(car(lst))));
-  return(s7_wrong_type_arg_error(sc, "cdaar", 1, car(args), "a pair"));
+  return(s7_wrong_type_arg_error(sc, "cdaar", 0, car(args), "a pair"));
 }
 
 
@@ -8084,7 +8115,7 @@ static s7_pointer g_caddr(s7_scheme *sc, s7_pointer args)
   #define H_caddr "(caddr lst) returns (car (cdr (cdr lst)))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(cdr(lst))) && (is_pair(cddr(lst)))) return(car(cdr(cdr(lst))));
-  return(s7_wrong_type_arg_error(sc, "caddr", 1, car(args), "a pair"));
+  return(s7_wrong_type_arg_error(sc, "caddr", 0, car(args), "a pair"));
 }
 
 
@@ -8093,7 +8124,7 @@ static s7_pointer g_cdddr(s7_scheme *sc, s7_pointer args)
   #define H_cdddr "(cdddr lst) returns (cdr (cdr (cdr lst)))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(cdr(lst))) && (is_pair(cddr(lst)))) return(cdr(cdr(cdr(lst))));
-  return(s7_wrong_type_arg_error(sc, "cdddr", 1, car(args), "a pair"));
+  return(s7_wrong_type_arg_error(sc, "cdddr", 0, car(args), "a pair"));
 }
 
 
@@ -8102,7 +8133,7 @@ static s7_pointer g_cdadr(s7_scheme *sc, s7_pointer args)
   #define H_cdadr "(cdadr lst) returns (cdr (car (cdr lst)))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(cdr(lst))) && (is_pair(cadr(lst)))) return(cdr(car(cdr(lst))));
-  return(s7_wrong_type_arg_error(sc, "cdadr", 1, car(args), "a pair"));
+  return(s7_wrong_type_arg_error(sc, "cdadr", 0, car(args), "a pair"));
 }
 
 
@@ -8111,7 +8142,7 @@ static s7_pointer g_cddar(s7_scheme *sc, s7_pointer args)
   #define H_cddar "(cddar lst) returns (cdr (cdr (car lst)))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(car(lst))) && (is_pair(cdar(lst)))) return(cdr(cdr(car(lst))));
-  return(s7_wrong_type_arg_error(sc, "cddar", 1, car(args), "a pair"));
+  return(s7_wrong_type_arg_error(sc, "cddar", 0, car(args), "a pair"));
 }
 
 
@@ -8120,7 +8151,7 @@ static s7_pointer g_caaaar(s7_scheme *sc, s7_pointer args)
   #define H_caaaar "(caaaar lst) returns (car (car (car (car lst))))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(car(lst))) && (is_pair(caar(lst))) && (is_pair(caaar(lst)))) return(car(car(car(car(lst)))));
-  return(s7_wrong_type_arg_error(sc, "caaaar", 1, car(args), "a pair"));
+  return(s7_wrong_type_arg_error(sc, "caaaar", 0, car(args), "a pair"));
 }
 
 
@@ -8129,7 +8160,7 @@ static s7_pointer g_caaadr(s7_scheme *sc, s7_pointer args)
   #define H_caaadr "(caaadr lst) returns (car (car (car (cdr lst))))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(cdr(lst))) && (is_pair(cadr(lst))) && (is_pair(caadr(lst)))) return(car(car(car(cdr(lst)))));
-  return(s7_wrong_type_arg_error(sc, "caaadr", 1, car(args), "a pair"));
+  return(s7_wrong_type_arg_error(sc, "caaadr", 0, car(args), "a pair"));
 }
 
 
@@ -8138,7 +8169,7 @@ static s7_pointer g_caadar(s7_scheme *sc, s7_pointer args)
   #define H_caadar "(caadar lst) returns (car (car (cdr (car lst))))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(car(lst))) && (is_pair(cdar(lst))) && (is_pair(cadar(lst)))) return(car(car(cdr(car(lst)))));
-  return(s7_wrong_type_arg_error(sc, "caadar", 1, car(args), "a pair"));
+  return(s7_wrong_type_arg_error(sc, "caadar", 0, car(args), "a pair"));
 }
 
 
@@ -8147,7 +8178,7 @@ static s7_pointer g_cadaar(s7_scheme *sc, s7_pointer args)
   #define H_cadaar "(cadaar lst) returns (car (cdr (car (car lst))))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(car(lst))) && (is_pair(caar(lst))) && (is_pair(cdaar(lst)))) return(car(cdr(car(car(lst)))));
-  return(s7_wrong_type_arg_error(sc, "cadaar", 1, car(args), "a pair"));
+  return(s7_wrong_type_arg_error(sc, "cadaar", 0, car(args), "a pair"));
 }
 
 
@@ -8156,7 +8187,7 @@ static s7_pointer g_caaddr(s7_scheme *sc, s7_pointer args)
   #define H_caaddr "(caaddr lst) returns (car (car (cdr (cdr lst))))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(cdr(lst))) && (is_pair(cddr(lst))) && (is_pair(caddr(lst)))) return(car(car(cdr(cdr(lst)))));
-  return(s7_wrong_type_arg_error(sc, "caaddr", 1, car(args), "a pair"));
+  return(s7_wrong_type_arg_error(sc, "caaddr", 0, car(args), "a pair"));
 }
 
 
@@ -8165,7 +8196,7 @@ static s7_pointer g_cadddr(s7_scheme *sc, s7_pointer args)
   #define H_cadddr "(cadddr lst) returns (car (cdr (cdr (cdr lst))))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(cdr(lst))) && (is_pair(cddr(lst))) && (is_pair(cdddr(lst)))) return(car(cdr(cdr(cdr(lst)))));
-  return(s7_wrong_type_arg_error(sc, "cadddr", 1, car(args), "a pair"));
+  return(s7_wrong_type_arg_error(sc, "cadddr", 0, car(args), "a pair"));
 }
 
 
@@ -8174,7 +8205,7 @@ static s7_pointer g_cadadr(s7_scheme *sc, s7_pointer args)
   #define H_cadadr "(cadadr lst) returns (car (cdr (car (cdr lst))))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(cdr(lst))) && (is_pair(cadr(lst))) && (is_pair(cdadr(lst)))) return(car(cdr(car(cdr(lst)))));
-  return(s7_wrong_type_arg_error(sc, "cadadr", 1, car(args), "a pair"));
+  return(s7_wrong_type_arg_error(sc, "cadadr", 0, car(args), "a pair"));
 }
 
 
@@ -8183,7 +8214,7 @@ static s7_pointer g_caddar(s7_scheme *sc, s7_pointer args)
   #define H_caddar "(caddar lst) returns (car (cdr (cdr (car lst))))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(car(lst))) && (is_pair(cdar(lst))) && (is_pair(cddar(lst)))) return(car(cdr(cdr(car(lst)))));
-  return(s7_wrong_type_arg_error(sc, "caddar", 1, car(args), "a pair"));
+  return(s7_wrong_type_arg_error(sc, "caddar", 0, car(args), "a pair"));
 }
 
 
@@ -8192,7 +8223,7 @@ static s7_pointer g_cdaaar(s7_scheme *sc, s7_pointer args)
   #define H_cdaaar "(cdaaar lst) returns (cdr (car (car (car lst))))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(car(lst))) && (is_pair(caar(lst))) && (is_pair(caaar(lst)))) return(cdr(car(car(car(lst)))));
-  return(s7_wrong_type_arg_error(sc, "cdaaar", 1, car(args), "a pair"));
+  return(s7_wrong_type_arg_error(sc, "cdaaar", 0, car(args), "a pair"));
 }
 
 
@@ -8201,7 +8232,7 @@ static s7_pointer g_cdaadr(s7_scheme *sc, s7_pointer args)
   #define H_cdaadr "(cdaadr lst) returns (cdr (car (car (cdr lst))))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(cdr(lst))) && (is_pair(cadr(lst))) && (is_pair(caadr(lst)))) return(cdr(car(car(cdr(lst)))));
-  return(s7_wrong_type_arg_error(sc, "cdaadr", 1, car(args), "a pair"));
+  return(s7_wrong_type_arg_error(sc, "cdaadr", 0, car(args), "a pair"));
 }
 
 
@@ -8210,7 +8241,7 @@ static s7_pointer g_cdadar(s7_scheme *sc, s7_pointer args)
   #define H_cdadar "(cdadar lst) returns (cdr (car (cdr (car lst))))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(car(lst))) && (is_pair(cdar(lst))) && (is_pair(cadar(lst)))) return(cdr(car(cdr(car(lst)))));
-  return(s7_wrong_type_arg_error(sc, "cdadar", 1, car(args), "a pair"));
+  return(s7_wrong_type_arg_error(sc, "cdadar", 0, car(args), "a pair"));
 }
 
 
@@ -8219,7 +8250,7 @@ static s7_pointer g_cddaar(s7_scheme *sc, s7_pointer args)
   #define H_cddaar "(cddaar lst) returns (cdr (cdr (car (car lst))))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(car(lst))) && (is_pair(caar(lst))) && (is_pair(cdaar(lst)))) return(cdr(cdr(car(car(lst)))));
-  return(s7_wrong_type_arg_error(sc, "cddaar", 1, car(args), "a pair"));
+  return(s7_wrong_type_arg_error(sc, "cddaar", 0, car(args), "a pair"));
 }
 
 
@@ -8228,7 +8259,7 @@ static s7_pointer g_cdaddr(s7_scheme *sc, s7_pointer args)
   #define H_cdaddr "(cdaddr lst) returns (cdr (car (cdr (cdr lst))))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(cdr(lst))) && (is_pair(cddr(lst))) && (is_pair(caddr(lst)))) return(cdr(car(cdr(cdr(lst)))));
-  return(s7_wrong_type_arg_error(sc, "cdaddr", 1, car(args), "a pair"));
+  return(s7_wrong_type_arg_error(sc, "cdaddr", 0, car(args), "a pair"));
 }
 
 
@@ -8237,7 +8268,7 @@ static s7_pointer g_cddddr(s7_scheme *sc, s7_pointer args)
   #define H_cddddr "(cddddr lst) returns (cdr (cdr (cdr (cdr lst))))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(cdr(lst))) && (is_pair(cddr(lst))) && (is_pair(cdddr(lst)))) return(cdr(cdr(cdr(cdr(lst)))));
-  return(s7_wrong_type_arg_error(sc, "cddddr", 1, car(args), "a pair"));
+  return(s7_wrong_type_arg_error(sc, "cddddr", 0, car(args), "a pair"));
 }
 
 
@@ -8246,7 +8277,7 @@ static s7_pointer g_cddadr(s7_scheme *sc, s7_pointer args)
   #define H_cddadr "(cddadr lst) returns (cdr (cdr (car (cdr lst))))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(cdr(lst))) && (is_pair(cadr(lst))) && (is_pair(cdadr(lst)))) return(cdr(cdr(car(cdr(lst)))));
-  return(s7_wrong_type_arg_error(sc, "cddadr", 1, car(args), "a pair"));
+  return(s7_wrong_type_arg_error(sc, "cddadr", 0, car(args), "a pair"));
 }
 
 
@@ -8255,7 +8286,7 @@ static s7_pointer g_cdddar(s7_scheme *sc, s7_pointer args)
   #define H_cdddar "(cdddar lst) returns (cdr (cdr (cdr (car lst))))"
   s7_pointer lst = car(args);
   if ((is_pair(lst)) && (is_pair(car(lst))) && (is_pair(cdar(lst))) && (is_pair(cddar(lst)))) return(cdr(cdr(cdr(car(lst)))));
-  return(s7_wrong_type_arg_error(sc, "cdddar", 1, car(args), "a pair"));
+  return(s7_wrong_type_arg_error(sc, "cdddar", 0, car(args), "a pair"));
 }
 
 
@@ -8269,11 +8300,11 @@ static s7_pointer g_reverse(s7_scheme *sc, s7_pointer args)
     return(sc->NIL);
   
   if (!is_pair(p))
-    return(s7_wrong_type_arg_error(sc, "reverse", 1, p, "a list"));
+    return(s7_wrong_type_arg_error(sc, "reverse", 0, p, "a list"));
   
   np = s7_reverse(sc, p);
   if (np == sc->NIL)
-    return(s7_wrong_type_arg_error(sc, "reverse", 1, p, "a proper list"));
+    return(s7_wrong_type_arg_error(sc, "reverse", 0, p, "a proper list"));
   
   return(np);
 }
@@ -8289,11 +8320,11 @@ static s7_pointer g_reverse_in_place(s7_scheme *sc, s7_pointer args)
     return(sc->NIL);
   
   if (!is_pair(p))
-    return(s7_wrong_type_arg_error(sc, "reverse!", 1, p, "a list"));
+    return(s7_wrong_type_arg_error(sc, "reverse!", 0, p, "a list"));
   
   np = s7_reverse_in_place(sc, sc->NIL, p);
   if (np == sc->NIL)
-    return(s7_wrong_type_arg_error(sc, "reverse!", 1, p, "a proper list"));
+    return(s7_wrong_type_arg_error(sc, "reverse!", 0, p, "a proper list"));
   
   return(np);
 }
@@ -8320,15 +8351,15 @@ static s7_pointer g_length(s7_scheme *sc, s7_pointer args)
     return(s7_make_integer(sc, 0));
   
   if (!is_pair(car(args))) 
-    return(s7_wrong_type_arg_error(sc, "length", 1, car(args), "a list"));
+    return(s7_wrong_type_arg_error(sc, "length", 0, car(args), "a list"));
   
   len = s7_list_length(sc, car(args));
   
   if (len < 0) 
-    return(s7_wrong_type_arg_error(sc, "length:", 1, car(args), "a proper (not a dotted) list"));
+    return(s7_wrong_type_arg_error(sc, "length:", 0, car(args), "a proper (not a dotted) list"));
   
   if (len == 0)
-    return(s7_wrong_type_arg_error(sc, "length:", 1, car(args), "a proper (not a circular) list"));
+    return(s7_wrong_type_arg_error(sc, "length:", 0, car(args), "a proper (not a circular) list"));
   
   return(s7_make_integer(sc, len));
 }
@@ -8545,7 +8576,7 @@ static s7_pointer g_vector_to_list(s7_scheme *sc, s7_pointer args)
 {
   #define H_vector_to_list "(vector->list v) returns the elements of the vector v as a list"
   if (!s7_is_vector(car(args)))
-    return(s7_wrong_type_arg_error(sc, "vector->list", 1, car(args), "a vector"));
+    return(s7_wrong_type_arg_error(sc, "vector->list", 0, car(args), "a vector"));
   return(s7_vector_to_list(sc, car(args)));
 }
 
@@ -8599,7 +8630,7 @@ static s7_pointer g_list_to_vector(s7_scheme *sc, s7_pointer args)
   if (car(args) == sc->NIL)
     return(s7_make_vector(sc, 0));
   if (g_is_list(sc, args) == sc->F)
-    return(s7_wrong_type_arg_error(sc, "list->vector", 1, car(args), "a proper list"));
+    return(s7_wrong_type_arg_error(sc, "list->vector", 0, car(args), "a proper list"));
   return(g_vector(sc, car(args)));
 }
 
@@ -8608,7 +8639,7 @@ static s7_pointer g_vector_length(s7_scheme *sc, s7_pointer args)
 {
   #define H_vector_length "(vector-length v) returns the length of vector v"
   if (!s7_is_vector(car(args)))
-    return(s7_wrong_type_arg_error(sc, "vector-length", 1, car(args), "a vector"));
+    return(s7_wrong_type_arg_error(sc, "vector-length", 0, car(args), "a vector"));
   return(s7_make_integer(sc, vector_length(car(args))));
 }
 
@@ -8802,7 +8833,7 @@ static s7_pointer g_procedure_source(s7_scheme *sc, s7_pointer args)
     p = s7_symbol_value(sc, car(args));
   else p = car(args);
   if (!is_procedure(p))
-    return(s7_wrong_type_arg_error(sc, "procedure-source", 1, p, "a procedure"));
+    return(s7_wrong_type_arg_error(sc, "procedure-source", 0, p, "a procedure"));
 
   if (is_closure(p) || is_closure_star(p) || is_macro(p) || is_promise(p)) 
     return(s7_append(sc, 
@@ -8861,7 +8892,7 @@ static s7_pointer g_procedure_documentation(s7_scheme *sc, s7_pointer args)
   else x = car(args);
 
   if (!is_procedure(x))
-    return(s7_wrong_type_arg_error(sc, "procedure-documentation", 1, x, "a procedure"));
+    return(s7_wrong_type_arg_error(sc, "procedure-documentation", 0, x, "a procedure"));
   return(s7_make_string(sc, s7_procedure_documentation(sc, x)));
 }
 
@@ -8932,7 +8963,7 @@ static s7_pointer g_procedure_arity(s7_scheme *sc, s7_pointer args)
   else x = car(args);
 
   if (!is_procedure(x))
-    return(s7_wrong_type_arg_error(sc, "procedure-arity", 1, x, "a procedure"));
+    return(s7_wrong_type_arg_error(sc, "procedure-arity", 0, x, "a procedure"));
   return(s7_procedure_arity(sc, x));
 }
 
@@ -9451,7 +9482,7 @@ static s7_pointer g_make_keyword(s7_scheme *sc, s7_pointer args)
 {
   #define H_make_keyword "(make-keyword str) prepends ':' to str and defines that as a keyword"
   if (!s7_is_string(car(args)))
-    return(s7_wrong_type_arg_error(sc, "make-keyword", 1, car(args), "a string"));
+    return(s7_wrong_type_arg_error(sc, "make-keyword", 0, car(args), "a string"));
   return(s7_make_keyword(sc, string_value(car(args))));
 }
 
@@ -9461,7 +9492,7 @@ static s7_pointer g_keyword_to_symbol(s7_scheme *sc, s7_pointer args)
   #define H_keyword_to_symbol "(keyword->symbol key) returns a symbol with the same name as key but no prepended colon"
   const char *name;
   if (!s7_is_keyword(car(args)))
-    return(s7_wrong_type_arg_error(sc, "keyword->symbol", 1, car(args), "a keyword"));
+    return(s7_wrong_type_arg_error(sc, "keyword->symbol", 0, car(args), "a keyword"));
   name = s7_symbol_name(car(args));
   return(s7_make_symbol(sc, (const char *)(name + 1)));
 }
@@ -9471,7 +9502,7 @@ static s7_pointer g_symbol_to_keyword(s7_scheme *sc, s7_pointer args)
 {
   #define H_symbol_to_keyword "(symbol->keyword sym) returns a keyword with the same name as sym, but with a colon prepended"
   if (!s7_is_symbol(car(args)))
-    return(s7_wrong_type_arg_error(sc, "symbol->keyword", 1, car(args), "a symbol"));
+    return(s7_wrong_type_arg_error(sc, "symbol->keyword", 0, car(args), "a symbol"));
   return(s7_make_keyword(sc, s7_symbol_name(car(args))));
 }
 
@@ -9496,7 +9527,7 @@ static s7_pointer g_hash_table_size(s7_scheme *sc, s7_pointer args)
 {
   #define H_hash_table_size "(hash-table-size obj) returnsthe size of the hash-table obj"
   if (!s7_is_hash_table(car(args)))
-    return(s7_wrong_type_arg_error(sc, "hash-table-size", 1, car(args), "a hash-table"));
+    return(s7_wrong_type_arg_error(sc, "hash-table-size", 0, car(args), "a hash-table"));
   return(s7_make_integer(sc, vector_length(car(args))));
 }
 
@@ -9521,9 +9552,9 @@ static s7_pointer g_make_hash_table(s7_scheme *sc, s7_pointer args)
 	{
 	  size = s7_integer(car(args));
 	  if (size <= 0)
-	    return(s7_out_of_range_error(sc, "make-hash-table", 1, car(args), "a positive integer"));
+	    return(s7_out_of_range_error(sc, "make-hash-table", 0, car(args), "a positive integer"));
 	}
-      else return(s7_wrong_type_arg_error(sc, "make-hash-table", 1, car(args), "an integer"));
+      else return(s7_wrong_type_arg_error(sc, "make-hash-table", 0, car(args), "an integer"));
     }
   return(s7_make_hash_table(sc, size));
 }
@@ -10357,7 +10388,7 @@ static s7_pointer g_set_backtrace_length(s7_scheme *sc, s7_pointer args)
   #define H_set_backtrace_length "(set-backtrace-length length) sets the number of entries displayed in a backtrace"
   int len;
   if (!s7_is_integer(car(args)))
-    return(s7_wrong_type_arg_error(sc, "set-backtrace-length", 1, car(args), "an integer"));
+    return(s7_wrong_type_arg_error(sc, "set-backtrace-length", 0, car(args), "an integer"));
   len = s7_integer(car(args));
   make_backtrace_buffer(sc, len);
   return(s7_make_integer(sc, sc->backtrace_size));
@@ -10371,8 +10402,13 @@ s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n,
 
   len = safe_strlen(descr) + safe_strlen(caller) + 64;
   errmsg = (char *)malloc(len * sizeof(char));
-  if (arg_n <= 0) arg_n = 1;
-  slen = snprintf(errmsg, len, "%s: argument %d (~A) has wrong type (expecting %s)", caller, arg_n, descr);
+  if (arg_n == 0)
+    slen = snprintf(errmsg, len, "%s: argument (~A) has wrong type (expecting %s)", caller, descr);
+  else
+    {
+      if (arg_n < 0) arg_n = 1;
+      slen = snprintf(errmsg, len, "%s: argument %d (~A) has wrong type (expecting %s)", caller, arg_n, descr);
+    }
   sc->x = make_list_2(sc, s7_make_string_with_length(sc, errmsg, slen), arg);
   free(errmsg);
 
@@ -13079,7 +13115,7 @@ static s7_pointer g_make_thread(s7_scheme *sc, s7_pointer args)
   s7_pointer obj, vect, frame;
 
   if (!is_procedure(car(args)))
-    return(s7_wrong_type_arg_error(sc, "make-thread", 1, car(args), "a thunk"));
+    return(s7_wrong_type_arg_error(sc, "make-thread", 0, car(args), "a thunk"));
   
   pthread_mutex_lock(&alloc_lock); /* if currently in GC in some thread, wait for it */
   pthread_mutex_unlock(&alloc_lock);
@@ -13118,7 +13154,7 @@ static s7_pointer g_join_thread(s7_scheme *sc, s7_pointer args)
   #define H_join_thread "(join-thread thread) causes the current thread to wait for the thread to finish"
   thred *f;
   if (g_is_thread(sc, args) == sc->F)
-    return(s7_wrong_type_arg_error(sc, "join-thread", 1, car(args), "a thread"));
+    return(s7_wrong_type_arg_error(sc, "join-thread", 0, car(args), "a thread"));
   
   f = (thred *)s7_object_value(car(args));
   pthread_join(*(f->thread), NULL);
@@ -13188,7 +13224,7 @@ static s7_pointer g_grab_lock(s7_scheme *sc, s7_pointer args)
 {
   #define H_grab_lock "(grab-lock lock) stops the current thread until it can grab the lock."
   if (g_is_lock(sc, args) == sc->F)
-    return(s7_wrong_type_arg_error(sc, "grab-lock", 1, car(args), "a lock (mutex)"));
+    return(s7_wrong_type_arg_error(sc, "grab-lock", 0, car(args), "a lock (mutex)"));
 
   return(s7_make_integer(sc, pthread_mutex_lock((pthread_mutex_t *)s7_object_value(car(args)))));
 }
@@ -13198,7 +13234,7 @@ static s7_pointer g_release_lock(s7_scheme *sc, s7_pointer args)
 {
   #define H_release_lock "(release-lock lock) releases the lock"
   if (g_is_lock(sc, args) == sc->F)
-    return(s7_wrong_type_arg_error(sc, "release-lock", 1, car(args), "a lock (mutex)"));
+    return(s7_wrong_type_arg_error(sc, "release-lock", 0, car(args), "a lock (mutex)"));
 
   return(s7_make_integer(sc, pthread_mutex_unlock((pthread_mutex_t *)s7_object_value(car(args)))));
 }
