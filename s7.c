@@ -163,6 +163,9 @@
 #define WITH_CONS_STREAM 0
 /* this includes the "cons-stream" form */
 
+#define WITH_R5RS_RATIONALIZE 0
+/* follow the scheme spec for rationalize (not recommended) */
+
 #define S7_DEBUGGING 0
 /* this is for a internal debugging */
 
@@ -2053,7 +2056,6 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
   #define cabs(x) abs(x)
   #define csqrt(x) sqrt(x)
   #define cpow(x, y) pow(x, y)
-  #define s7_Int_pow(x, y) (s7_Int)pow((s7_Double)(x), (s7_Double)(y))
   #define clog(x) log(x)
   #define cexp(x) exp(x)
   #define csin(x) sin(x)
@@ -2062,7 +2064,6 @@ static s7_pointer g_call_with_exit(s7_scheme *sc, s7_pointer args)
   #define ccosh(x) cosh(x)
 #else
   typedef double complex s7_Complex;
-  #define s7_Int_pow(x, y) (s7_Int)pow(x, y)
 #endif
 
 /* Trigonometric functions. FreeBSD's math library does not include the complex form of the trig funcs. */ 
@@ -2213,7 +2214,6 @@ static s7_Complex catanh(s7_Complex z)
 #else
 /* not WITH_COMPLEX */
   typedef double s7_Complex;
-  #define s7_Int_pow(x, y) (s7_Int)pow(x, y)
   #define _Complex_I 1
   #define creal(x) x
   #define cimag(x) x
@@ -2345,6 +2345,8 @@ static s7_Int c_lcm(s7_Int a, s7_Int b)
 }
 
 
+#if (!WITH_R5RS_RATIONALIZE)
+
 static bool c_rationalize(s7_Double ux, s7_Double error, s7_Int *numer, s7_Int *denom)
 {
   s7_Int a1 = 0, a2 = 1, b1 = 1, b2 = 0, tt = 1, a = 0, b = 0, ctr, int_part = 0;
@@ -2411,9 +2413,8 @@ static bool c_rationalize(s7_Double ux, s7_Double error, s7_Int *numer, s7_Int *
   return(false);
 }
 
+#else
 
-#if 0
-/* this version follows the (silly) Scheme spec, but it's ugly */
 static bool c_rationalize(s7_Double ux, s7_Double error, s7_Int *n, s7_Int *d)
 {
   s7_Int numer, denom, lim, sign = 0;
@@ -4484,6 +4485,18 @@ static s7_pointer g_sqrt(s7_scheme *sc, s7_pointer args)
 
 static s7_Double top_log = 43.0;  /* approx log(2^63) */
 
+static s7_Int int_to_int(s7_Int x, s7_Int n)
+{
+  /* from GSL */
+  s7_Int value = 1;
+  do {
+    if (n & 1) value *= x;
+    n >>= 1;
+    x *= x;
+  } while (n);
+  return(value);
+}
+
 static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
 {
   #define H_expt "(expt z1 z2) returns z1^z2"
@@ -4498,42 +4511,47 @@ static s7_pointer g_expt(s7_scheme *sc, s7_pointer args)
   
   if (object_number_type(sc->y) == NUM_INT)
     {
+      s7_Int y;
+      y = s7_integer(sc->y);
+      if (y == 0)
+	return(s7_make_integer(sc, 1));
+
       if (object_number_type(sc->x) == NUM_INT)
 	{
-	  if (s7_integer(sc->y) == 0)
-	    return(s7_make_integer(sc, 1));
+	  s7_Int x;
+	  x = s7_integer(sc->x);
+	  if ((x == 0) || (x == 1))
+	    return(sc->x);
 	  
-	  if (top_log > s7_Int_abs(s7_integer(sc->y)) * log((s7_Double)(s7_Int_abs(s7_integer(sc->x))))) /* else over/underflow; a^b < 2^63 or > 2^-63 */
+	  if (x == -1)
 	    {
-	      if ((s7_integer(sc->y) > 0) || 
-		  (s7_Int_abs(s7_integer(sc->x)) == 1))
-		return(s7_make_integer(sc, s7_Int_pow(s7_integer(sc->x), s7_integer(sc->y))));
-	      
-	      if (s7_integer(sc->x) == 0)
+	      if (s7_Int_abs(y) & 1)
 		return(sc->x);
-	      
-	      return(s7_make_ratio(sc, 1, s7_Int_pow(s7_integer(sc->x), -s7_integer(sc->y))));
+	      return(s7_make_integer(sc, 1));
+	    }
+
+	  if (top_log > s7_Int_abs(y) * log((s7_Double)(s7_Int_abs(x)))) /* else over/underflow; a^b < 2^63 or > 2^-63 */
+	    {
+	      if (y > 0)
+		return(s7_make_integer(sc, int_to_int(x, y)));
+	      return(s7_make_ratio(sc, 1, int_to_int(x, -y)));
 	    }
 	}
       else
 	{
 	  if (object_number_type(sc->x) == NUM_RATIO)
 	    {
-	      s7_Int n, d, p;
-	      p = s7_integer(sc->y);
-	      
-	      if (p == 0)
-		return(s7_make_integer(sc, 1));
+	      s7_Int n, d;
 	      
 	      n = numerator(sc->x->object.number);
 	      d = denominator(sc->x->object.number);
-	      
-	      if ((top_log > log((s7_Double)(s7_Int_abs(n))) * s7_Int_abs(p)) &&
-		  (top_log > log((s7_Double)d) * s7_Int_abs(p)))	
+
+	      if ((top_log > log((s7_Double)(s7_Int_abs(n))) * s7_Int_abs(y)) &&
+		  (top_log > log((s7_Double)d) * s7_Int_abs(y)))	
 		{
-		  if (p > 0)
-		    return(s7_make_ratio(sc, s7_Int_pow(n, p), s7_Int_pow(d, p)));
-		  return(s7_make_ratio(sc, s7_Int_pow(d, -p), s7_Int_pow(n, -p)));
+		  if (y > 0)
+		    return(s7_make_ratio(sc, int_to_int(n, y), int_to_int(d, y)));
+		  return(s7_make_ratio(sc, int_to_int(d, -y), int_to_int(n, -y)));
 		}
 	    }
 	  /* occasionally int^rat can be int but it happens so infrequently it's not worth checking */
@@ -13969,7 +13987,6 @@ s7_scheme *s7_init(void)
     if (top == 4) default_rationalize_error = 1.0e-6;
     s7_define_constant(sc, "pi", s7_make_real(sc, 3.1415926535897932384626433832795029L)); /* M_PI is not good enough for s7_Double = long double */
     top_log = floor(log(pow(2.0, (s7_Double)((top * 8) - 1))));
-
     /* for s7_Double, float gives about 9 digits, double 18, long Double claims 28 but I don't see more than about 22? */
   }
   return(sc);

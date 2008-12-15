@@ -12,6 +12,9 @@
 ;;;   Brad Lucier (who also pointed out many bugs)
 ;;;   Snd's numtst.c
 ;;;   GSL tests
+;;;   Abramowitz and Stegun, Handbook of Mathematical Functions
+;;;   Weisstein, Encyclopedia of Mathematics
+;;;   the arprec package of David Bailey et al, and the Maxima program of William Schelter et al
 
 
 (define with-continued-fraction-rationalize #t)                ; #f follows the (silly) Scheme spec
@@ -24190,8 +24193,9 @@
   (num-test (/ (factorial 100 1) (factorial 99 1)) 100)
   (num-test (/ (factorial 1000 1) (factorial 999 1)) 1000)
   (num-test (factorial 100 1) 93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000)
-  (num-test (factorial 200 1) 788657867364790503552363213932185062295135977687173263294742533244359449963403342920304284011984623904177212138919638830257642790242637105061926624952829931113462857270763317237396988943922445621451664240254033291864131227428294853277524242407573903240321257405579568660226031904170324062351700858796178922222789623703897374720000000000000000000000000000000000000000000000000))
+  (num-test (factorial 200 1) 788657867364790503552363213932185062295135977687173263294742533244359449963403342920304284011984623904177212138919638830257642790242637105061926624952829931113462857270763317237396988943922445621451664240254033291864131227428294853277524242407573903240321257405579568660226031904170324062351700858796178922222789623703897374720000000000000000000000000000000000000000000000000)
 
+  (num-test (* (factorial 3) (factorial 5) (factorial 7)) (factorial 10)))
 
 
 (num-test (modulo (+ 2 (* 3 499127 495037 490459 468803)) (* 499127 495037 490459 468803)) 2)
@@ -28051,6 +28055,145 @@
 (num-test (sqrt (- (expt 5 1/3) (expt 4 1/3))) (/ (+ (expt 2 1/3) (expt 20 1/3) (- (expt 25 1/3))) 3))
 (num-test (+ (expt (+ 1/2 (/ (sqrt 69) 18)) 1/3) (/ (expt (+ 1/2 (/ (sqrt 69) 18)) -1/3) 3)) (* (/ (* 2 (sqrt 3)) 3) (cos (/ (acos (/ (* 3 (sqrt 3)) 2)) 3))))
 
+(num-test (expt (/ (+ 1 (sqrt 5)) 2) 5) (/ (+ 11 (* 5 (sqrt 5))) 2))
+(num-test (/ (+ (atan (/ 239)) (atan (/ 70)) (- (atan (/ 99)))) 2) (+ (atan (/ 408)) (atan (/ 577))))
+(num-test (cos (log (+ our-pi 20))) -0.99999999924368)
+(num-test (expt (+ our-pi 20) 0+i) -0.99999999924368-3.8892669402222e-05i)
+(num-test (cos (* our-pi (cos (* our-pi (cos (log (+ our-pi 20))))))) -1.0) ; actually there's a 3.93216e-35 imag part
+(num-test (/ (+ (cos (/ 10)) (cosh (/ 10)) (* 2 (cos (/ (sqrt 2) 20)) (cosh (/ (sqrt 2) 20)))) 4) 1.0000000000002480)
+(num-test (/ 53453 (log 53453)) 4910.0000012208)
+(num-test (/ (* 2 3 4 5 6 7 8 9 10) (* 2 (expt (log 2) 11))) 102247563.00527)
+(num-test (exp (* our-pi (sqrt 6))) 2197.9908695437)
+(num-test (exp (* our-pi (sqrt 17))) 422150.99767568)
+(num-test (exp (* our-pi (sqrt 18))) 614551.992885619)
+(num-test (exp (* our-pi (sqrt 22))) 2508951.998257424)
+(num-test (expt (/ (log (+ (expt 640320 3) 744)) our-pi) 2) 163.0) ; rest is 2.32167e-29
+(num-test (exp (* our-pi (sqrt 719))) 3.8426143735395488914902942778058291929999e+36)
+(num-test (+ (expt 415280564497/348671682660 3) (expt 676702467503/348671682660 3)) 9)
+(num-test (expt 25 6) (+ (expt 1 6) (expt 2 6) (expt 3 6) (expt 5 6) (expt 6 6) (expt 7 6) (expt 8 6) (expt 9 6) 
+			 (expt 10 6) (expt 12 6) (expt 13 6) (expt 15 6) (expt 16 6) (expt 17 6) (expt 18 6) (expt 23 6)))
+
+(let ((top 0))
+  (let ((x-10 (lambda (n) (- (expt n 10) (* n n n n n n n n n n)))))
+    (let ((happy #t))
+      (do ((i 1 (+ i 1)))
+	  ((or (not happy) (= i 74))) ; stop around 63 bits
+	(let ((val (x-10 i)))
+	  (if (not (= val 0))
+	      (begin
+		(set! top (- i 1))
+		(set! happy #f)
+		(display "(expt ") (display i) (display " 10) = ") (display (expt i 10))
+		(display " but (* ") (display i) (display "... 10x) = ")
+		(display (* i i i i i i i i i i)) (newline)))))))
+  (if (> top 63)
+      (num-test (+ (expt 1 10) (expt 2 10) (expt 4 10) (expt 5 10) (expt 6 10) (expt 8 10) (expt 12 10) 
+		   (expt 15 10) (expt 16 10) (expt 17 10) (expt 20 10) (expt 21 10) (expt 25 10) (expt 26 10) 
+		   (expt 27 10) (expt 28 10) (expt 30 10) (expt 36 10) (expt 37 10) (expt 38 10) (expt 40 10) 
+		   (expt 51 10) (expt 62 10))
+		(expt 63 10))))
+
+(num-test (expt 3 9) (* 3 3 3 3 3 3 3 3 3))
+
+(num-test (+ (expt 510 3) (expt 580 3)) (+ (expt 300 3) (expt 670 3)))
+(num-test (+ (expt 2230 4) (expt 3196 4) (expt 5620 4) (expt 6995 4)) (expt 7703 4))
+(num-test (+ (expt 2 5) (expt 298 5) (expt 351 5) (expt 474 5) (expt 500 5)) (expt 575 5))
+
+(num-test (expt 2 9) 512)
+(num-test (expt 8 1/3) 2)
+(num-test (expt 1024 1/10) 2)
+(num-test (expt 512 1/9) 2)
+(num-test (expt (expt 20 10) 1/10) 20)
+(num-test (expt (expt 40 10) 1/10) 40)
+(num-test (expt (expt 2 30) 1/30) 2)
+(num-test (expt (expt 2 50) 1/50) 2)
+(num-test (expt (expt 2 1/10) 10) 2)
+(num-test (expt (expt 2 1/30) 30) 2)
+
+(num-test (expt 64 1/6) 2)
+(num-test (expt 64 1/3) 4)
+(num-test (expt 64 2/3) 16)
+(num-test (expt 64 1/2) 8)
+(num-test (expt 64 3/2) 512)
+
+(num-test (expt 1/2 3) 1/8)
+(num-test (expt 1/64 1/2) 1/8)
+(num-test (expt 1/64 1/3) 1/4)
+(num-test (expt 1/64 3/2) 1/512)
+(num-test (expt 1/64 2/3) 1/16)
+(num-test (expt 1/2 10) 1/1024)
+
+(num-test (expt 2/3 5) (* 2/3 2/3 2/3 2/3 2/3))
+
+(num-test (expt 2 -10) 1/1024)
+(num-test (expt 2 -9) 1/512)
+(num-test (expt 64 -1/6) 1/2)
+(num-test (expt 64 -1/3) 1/4)
+(num-test (expt 64 -2/3) 1/16)
+(num-test (expt 64 -1/2) 1/8)
+(num-test (expt 64 -3/2) 1/512)
+
+(num-test (expt 1/2 -3) 8)
+(num-test (expt 1/64 -1/2) 8)
+(num-test (expt 1/64 -1/3) 4)
+(num-test (expt 1/64 -3/2) 512)
+(num-test (expt 1/64 -2/3) 16)
+(num-test (expt 1/2 -10) 1024)
+
+(num-test (expt 2/3 -5) (/ 1 (* 2/3 2/3 2/3 2/3 2/3)))
+
+(let ((x-10 (lambda (n) (- (expt n 10) (* n n n n n n n n n n)))))
+  (let ((happy #t))
+    (do ((i 1 (+ i 2)))
+	((or (not happy) (> i 74))) ; stop around 63 bits
+      (let ((val (x-10 (/ i 2))))
+	(if (not (= val 0))
+	    (begin
+	      (set! happy #f)
+	      (display "(expt ") (display i) (display "/2 10) = ") (display (expt (/ i 2) 10))
+	      (display " but (* ") (display i) (display "/2 ... 10x) = ")
+	      (display (/ (* i i i i i i i i i i) 1024)) (newline)))))))
+
+(let ((x-10 (lambda (n) (- (expt n -10) (/ 1 (* n n n n n n n n n n))))))
+  (let ((happy #t))
+    (do ((i 1 (+ i 2)))
+	((or (not happy) (> i 74))) ; stop around 63 bits
+      (let ((val (x-10 (/ i 2))))
+	(if (not (= val 0))
+	    (begin
+	      (set! happy #f)
+	      (display "(expt ") (display i) (display "/2 -10) = ") (display (expt (/ i 2) -10))
+	      (display " but (* 1/(") (display i) (display "/2) ... 10x) = ")
+	      (display (/ 1024 (* i i i i i i i i i i))) (newline)))))))
+
+(let ((happy #t))
+  (do ((i 1 (+ i 1)))
+      ((or (not happy) (> i 19)))
+    (let* ((val1 (expt 3 i))
+	   (val2 (sqrt (* val1 val1))))
+      (if (> (magnitude (- val1 val2)) 1e-6)
+	  (begin
+	    (set! happy #f)
+	    (display "(sqrt ") (display (* val1 val1)) (display " = ") (display val2)
+	      (display " but should be ") (display val1) (newline))))))
+
+(num-test (exp (log 8)) 8.0)
+(num-test (exp (log 1000)) 1000.0)
+(num-test (exp (log 1000000)) 1000000.0)
+(num-test (exp (log 1000000000)) 1000000000.0)
+(num-test (log (exp 0.1)) 0.1)
+(num-test (log (exp 0.0001)) 0.0001)
+(num-test (log (exp 0.0000001)) 0.0000001)
+(num-test (log (exp 8)) 8.0)
+(num-test (sqrt (sqrt (sqrt 256))) 2)
+(num-test (sqrt (sqrt (sqrt 1/256))) 1/2)
+
+(num-test (gcd (- (expt 2 11) 1) (- (expt 2 19) 1)) (- (expt 2 (gcd 11 19)) 1))
+(num-test (gcd (- (expt 2 11) 1) (- (expt 2 22) 1)) (- (expt 2 (gcd 11 22)) 1))
+(num-test (gcd (- (expt 2 12) 1) (- (expt 2 18) 1)) (- (expt 2 (gcd 12 18)) 1))
+(num-test (gcd (- (expt 2 52) 1) (- (expt 2 39) 1)) (- (expt 2 (gcd 52 39)) 1))
+
+
 (if with-hyperbolic-functions
     (begin
 
@@ -28063,6 +28206,7 @@
 (num-test (exp (make-rectangular 0.0 (* 0.5 our-pi))) 0+i)
 (num-test (exp (make-rectangular 0.0 our-pi)) -1)
 
+(num-test (* 2 (asin 1)) our-pi)
 
 
 (num-test (+ 1e100 -1e100) 0.0)
