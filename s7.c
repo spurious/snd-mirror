@@ -2741,9 +2741,25 @@ static num num_max(num a, num b)
       break;
       
     case NUM_RATIO:
-      if (num_to_real(a) >= num_to_real(b))
-	ret = make_ratio(num_to_numerator(a), num_to_denominator(a));
-      else ret = make_ratio(num_to_numerator(b), num_to_denominator(b));
+      {
+	s7_Int vala, valb;
+	vala = num_to_numerator(a) / num_to_denominator(a); 
+	valb = num_to_numerator(b) / num_to_denominator(b);
+
+	if ((vala > valb) ||
+	    ((vala == valb) && (b.type == NUM_INT)))
+	  return(a);
+
+	if ((valb > vala) ||
+	    ((vala == valb) && (a.type == NUM_INT)))
+	  return(b);
+
+	/* sigh -- both are ratios and the int parts are equal */
+	if (((double)(num_to_numerator(a) % num_to_denominator(a)) / (double)num_to_denominator(a)) >
+	    ((double)(num_to_numerator(b) % num_to_denominator(b)) / (double)num_to_denominator(b)))
+	  return(a);
+	return(b);
+      }
       break;
       
     default:
@@ -2770,9 +2786,25 @@ static num num_min(num a, num b)
       break;
       
     case NUM_RATIO:
-      if (num_to_real(a) < num_to_real(b))
-	ret = make_ratio(num_to_numerator(a), num_to_denominator(a));
-      else ret = make_ratio(num_to_numerator(b), num_to_denominator(b));
+      {
+	s7_Int vala, valb;
+	vala = num_to_numerator(a) / num_to_denominator(a); 
+	valb = num_to_numerator(b) / num_to_denominator(b);
+
+	if ((vala < valb) ||
+	    ((vala == valb) && (a.type == NUM_INT)))
+	  return(a);
+
+	if ((valb < vala) ||
+	    ((vala == valb) && (b.type == NUM_INT)))
+	  return(b);
+
+	/* sigh -- both are ratios and the int parts are equal */
+	if (((double)(num_to_numerator(a) % num_to_denominator(a)) / (double)num_to_denominator(a)) <
+	    ((double)(num_to_numerator(b) % num_to_denominator(b)) / (double)num_to_denominator(b)))
+	  return(a);
+	return(b);
+      }
       break;
       
     default:
@@ -4586,9 +4618,22 @@ static s7_pointer g_floor(s7_scheme *sc, s7_pointer args)
 
   switch (object_number_type(sc->x))
     {
-    case NUM_INT:   return(sc->x);
-    case NUM_RATIO: return(s7_make_integer(sc, (s7_Int)((numerator(sc->x->object.number)) / denominator(sc->x->object.number))));
-    default:        return(s7_make_integer(sc, (s7_Int)floor(real(sc->x->object.number)))); 
+    case NUM_INT:   
+      return(sc->x);
+
+    case NUM_RATIO: 
+      {
+	s7_Int val;
+	val = numerator(sc->x->object.number) / denominator(sc->x->object.number); 
+	/* C "/" truncates? -- C spec says "truncation toward 0" */
+	/* we're avoiding "floor" here because the int->double conversion introduces inaccuracies for big numbers */
+	if (numerator(sc->x->object.number) < 0) /* not "val" because it might be truncated to 0 */
+	  return(s7_make_integer(sc, val - 1));
+	return(s7_make_integer(sc, val));
+      }
+
+    default:        
+      return(s7_make_integer(sc, (s7_Int)floor(real(sc->x->object.number)))); 
     }
 }
 
@@ -4602,9 +4647,20 @@ static s7_pointer g_ceiling(s7_scheme *sc, s7_pointer args)
 
   switch (object_number_type(sc->x))
     {
-    case NUM_INT:   return(sc->x);
-    case NUM_RATIO: return(s7_make_integer(sc, 1 + (s7_Int)((numerator(sc->x->object.number)) / denominator(sc->x->object.number))));
-    default:        return(s7_make_integer(sc, (s7_Int)ceil(real(sc->x->object.number)))); 
+    case NUM_INT:   
+      return(sc->x);
+
+    case NUM_RATIO:
+      {
+	s7_Int val;
+	val = numerator(sc->x->object.number) / denominator(sc->x->object.number);
+	if (numerator(sc->x->object.number) < 0)
+	  return(s7_make_integer(sc, val));
+	return(s7_make_integer(sc, val + 1));
+      }
+
+    default:        
+      return(s7_make_integer(sc, (s7_Int)ceil(real(sc->x->object.number)))); 
     }
 }
 
@@ -4618,16 +4674,13 @@ static s7_pointer g_truncate(s7_scheme *sc, s7_pointer args)
 
   switch (object_number_type(sc->x))
     {
+
     case NUM_INT: 
       return(sc->x);
+
     case NUM_RATIO: 
-      {
-	s7_Int val;
-	val = (s7_Int)((numerator(sc->x->object.number)) / denominator(sc->x->object.number));
-	if (s7_Int_abs(val) < 0.0)
-	  return(s7_make_integer(sc, 1 + val));
-	return(s7_make_integer(sc, val));
-      }
+      return(s7_make_integer(sc, (s7_Int)(numerator(sc->x->object.number) / denominator(sc->x->object.number)))); /* C "/" already truncates */
+
     default: 
       return(s7_make_integer(sc, s7_truncate(real(sc->x->object.number)))); 
     }
@@ -4640,10 +4693,35 @@ static s7_pointer g_round(s7_scheme *sc, s7_pointer args)
   sc->x = car(args);
   if (!s7_is_real(sc->x))
     return(s7_wrong_type_arg_error(sc, "round", 0, sc->x, "a real"));
-  if (object_number_type(sc->x) == NUM_INT)
-    return(sc->x);
-  /* ideally here we'd figure out which way to round a fraction without any conversion to real */
-  return(s7_make_integer(sc, (s7_Int)round_per_R5RS(real(sc->x->object.number)))); 
+
+  switch (object_number_type(sc->x))
+    {
+    case NUM_INT: 
+      return(sc->x);
+
+    case NUM_RATIO: 
+      {
+	s7_Int truncated, remains;
+	double frac;
+
+	truncated = numerator(sc->x->object.number) / denominator(sc->x->object.number);
+	remains = numerator(sc->x->object.number) % denominator(sc->x->object.number);
+	frac = fabs((double)remains / (double)denominator(sc->x->object.number));
+
+	if ((frac > 0.5) ||
+	    ((frac == 0.5) &&
+	     (truncated % 2 != 0)))
+	  {
+	    if (numerator(sc->x->object.number) < 0)
+	      return(s7_make_integer(sc, truncated - 1));
+	    return(s7_make_integer(sc, truncated + 1));
+	  }
+	return(s7_make_integer(sc, truncated));
+      }
+
+    default: 
+      return(s7_make_integer(sc, (s7_Int)round_per_R5RS(num_to_real(sc->x->object.number)))); 
+    }
 }
 
 
@@ -4800,6 +4878,8 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
   return(make_number(sc, sc->v));
 }
 
+
+/* should (min 1 1.5) return 1? */
 
 static s7_pointer g_max(s7_scheme *sc, s7_pointer args)
 {
