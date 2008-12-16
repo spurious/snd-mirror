@@ -12,7 +12,7 @@ typedef double s7_Double;
 /* similarly for doubles (reals in scheme) -- only "double" works in C++ */
 
 
-  /* s7 itself is based on the following types and functions, so the first place to look for examples
+  /* s7 itself is based on the types and functions in this file, so the first place to look for examples
    *   is s7.c.  There are also a few variations on a REPL at the end of this file.  s7test.scm (in the
    *   Snd tarball) or r5rstest.scm (at the ccrma ftp site) are regression tests for s7 -- they still
    *   turn up a few problems.  More tests are certainly welcome!  Extended examples of s7 usage
@@ -27,7 +27,7 @@ typedef double s7_Double;
    *     which can use sndlib -- see Snd's grfsnd.html or the cmdist archives for details
    *
    *
-   * s7 variables:
+   * s7 (scheme) variables:
    *
    *    *load-path*             a list of directory names that "load" searches for scheme input files (initially '())
    *    *vector-print-length*   how many elements of a vector are printed (initially 8)
@@ -47,21 +47,22 @@ typedef double s7_Double;
    *    provided                adds a symbol to the *features* list
    *    port-line-number        current line during loading
    *    port-filename           current file name during loading
-   *    gc                      calls the GC, if it's argument is #f, the GC is turned off
+   *    gc                      calls the GC, if its argument is #f, the GC is turned off
    *    quit                    exits s7
    *    call-with-exit          just like call/cc but no jump back into a context
-   *    continuation?           #t if it's argument is a continuation (as opposed to an ordinary procedure)
+   *    continuation?           #t if its argument is a continuation (as opposed to an ordinary procedure)
    *    backtrace               prints the "evaluation history"
    *    clear-backtrace         clears the evaluation history
    *    set-backtrace-length    sets how many entries are saved in the evaluation history
-   *    backtracing             if argument is #t, errors printout a backtrace
-   *    procedure-documentation doc string if any associated with a procedure
+   *    backtracing             if argument is #t, error messages include a backtrace printout
+   *    procedure-documentation doc string associated with a procedure
    *    procedure-arity         a list describing the arglist of a function: '(required-args optional-args rest-arg)
    *    procedure-source        returns the source (a list) of a procedure
    *    help                    tries to find a help string associated with its argument
    *
    * and various others mentioned at the start of s7.c -- nearly every Scheme implementation includes
-   * stuff like logior, sinh, read-line, format, define*, etc.
+   * stuff like logior, sinh, read-line, format, define*, etc.  See also the start of s7.c for choices
+   * such as case-sensitive symbol names, initial heap and stack size, etc.
    */
 
 
@@ -128,6 +129,7 @@ void s7_provide(s7_scheme *sc, const char *feature);                 /* add feat
 s7_pointer s7_error(s7_scheme *sc, s7_pointer type, s7_pointer info);
 s7_pointer s7_error_and_exit(s7_scheme *sc, s7_pointer type, s7_pointer info);
 s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n, s7_pointer arg, const char *descr);
+  /* set arg_n to 0 to indicate that caller takes only one argument (so the argument number need not be reported */
 s7_pointer s7_out_of_range_error(s7_scheme *sc, const char *caller, int arg_n, s7_pointer arg, const char *descr);
 s7_pointer s7_wrong_number_of_args_error(s7_scheme *sc, const char *caller, s7_pointer args);
 void s7_set_error_exiter(s7_scheme *sc, void (*error_exiter)(void));

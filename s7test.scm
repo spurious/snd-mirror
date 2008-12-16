@@ -28130,6 +28130,11 @@
 (num-test (+ (expt 2230 4) (expt 3196 4) (expt 5620 4) (expt 6995 4)) (expt 7703 4))
 (num-test (+ (expt 2 5) (expt 298 5) (expt 351 5) (expt 474 5) (expt 500 5)) (expt 575 5))
 
+(num-test (expt (- (expt 3 3/5) (expt 2 1/5)) 1/3) (/ (+ (- (* (expt 2 1/5) (expt 3 3/5))) (* (expt 2 3/5) (expt 3 2/5)) (expt 3 1/5) (expt 2 2/5)) (expt 5 2/3)))
+(num-test (sqrt (- 2 (expt 2 1/7))) (/ (* (expt 2 1/14) (+ (- (expt 2 6/7)) (expt 2 5/7) (expt 2 3/7) (* 2 (expt 2 1/7)) -1)) (sqrt 7)))
+(num-test (sqrt (- 127 (* 4 (sqrt 6) (expt 7 1/4)))) (+ (/ (* (sqrt 3) (expt 7 3/4)) (sqrt 2)) (* 2 (sqrt 7)) (/ (* 3 (sqrt 3) (expt 7 1/4)) (sqrt 2)) -6))
+
+
 (num-test (expt 2 9) 512)
 (num-test (expt 8 1/3) 2)
 (num-test (expt 1024 1/10) 2)
