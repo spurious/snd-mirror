@@ -57,7 +57,7 @@
  *        provide, provided?, defined?
  *        port-line-number, port-filename
  *        read-line, read-byte, write-byte
- *        logior, logxor, logand, lognot, ash
+ *        logior, logxor, logand, lognot, ash, integer-length
  *        sinh, cosh, tanh, asinh, acosh, atanh
  *        object->string, eval-string
  *        reverse!, list-set!
@@ -840,6 +840,9 @@ static void set_pair_line_number(s7_pointer p, int n)
   if (!is_eternal(p))
     p->object.cons.line = n;
 }
+
+
+static int s7_int_max = 0, s7_int_min = 0, s7_int_bits = 0; /* initialized later */
 
 
 
@@ -2572,20 +2575,24 @@ static num make_ratio(s7_Int numer, s7_Int denom)
 }
 
 
+static num make_real(s7_Double rl)
+{
+  num ret;
+  ret.type = NUM_REAL;
+  real(ret) = rl;
+  return(ret);
+}
+
+
 static num make_complex(s7_Double rl, s7_Double im)
 {
   num ret;
   if (im == 0.0)
-    {
-      ret.type = NUM_REAL;
-      real(ret) = rl;
-    }
-  else
-    {
-      ret.type = NUM_COMPLEX;
-      real_part(ret) = rl;
-      imag_part(ret) = im;
-    }
+    return(make_real(rl));
+
+  ret.type = NUM_COMPLEX;
+  real_part(ret) = rl;
+  imag_part(ret) = im;
   return(ret);
 }
 
@@ -2817,6 +2824,38 @@ static num num_min(num a, num b)
 }
 
 
+static int integer_length(s7_Int a) /* TODO: from CL point of view, < 0 a can be off by 1 */
+{
+  static int bits[256] =              /* (do ((i 1 (1+ i))) ((= i 256)) (format #t "~D, " (ceiling (/ (log i) (log 2))))) */
+    {0, 1, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 
+     6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 
+     7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 
+     7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 
+     8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 
+     8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 
+     8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 
+     8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8};
+
+  #define I_8 256LL
+  #define I_16 65536LL
+  #define I_24 16777216LL
+  #define I_32 4294967296LL
+  #define I_40 1099511627776LL
+  #define I_48 281474976710656LL
+  #define I_56 72057594037927936LL
+
+  if (a < 0) a = -a;
+  if (a < I_8) return(bits[a]);
+  if (a < I_16) return(8 + bits[a >> 8]);
+  if (a < I_24) return(16 + bits[a >> 16]);
+  if (a < I_32) return(24 + bits[a >> 24]);
+  if (a < I_40) return(32 + bits[a >> 32]);
+  if (a < I_48) return(40 + bits[a >> 40]);
+  if (a < I_56) return(48 + bits[a >> 48]);
+  return(56 + bits[a >> 56]);
+}
+
+
 static num num_add(num a, num b) 
 {
   num ret;
@@ -2829,8 +2868,32 @@ static num num_add(num a, num b)
       break;
       
     case NUM_RATIO:
-      ret = make_ratio((num_to_numerator(a) * num_to_denominator(b)) + (num_to_denominator(a) * num_to_numerator(b)),
-		       (num_to_denominator(a) * num_to_denominator(b)));
+      {
+	s7_Int d1, d2, n1, n2;
+	d1 = num_to_denominator(a);
+	n1 = num_to_numerator(a);
+	d2 = num_to_denominator(b);
+	n2 = num_to_numerator(b);
+	if (d1 == d2)                               /* the easy case -- if overflow here, it matches the int case */
+	  return(make_ratio(n1 + n2, d1));
+
+	if ((d1 >= s7_int_max) && (d2 >= s7_int_max))     /* this case obviously can't work as a ratio -- denominator will overflow */
+	  return(make_real(num_to_real(a) + num_to_real(b)));
+
+	if ((d1 > s7_int_max) || (d2 > s7_int_max) ||     /* before counting bits, check that overflow is possible */
+	    (n1 > s7_int_max) || (n2 > s7_int_max) ||
+	    (n1 < s7_int_min) || (n2 < s7_int_min))
+	  {
+	    int d1bits, d2bits;
+	    d1bits = integer_length(d1);
+	    d2bits = integer_length(d2);
+	    if (((d1bits + d2bits) > s7_int_bits) ||
+		((d1bits + integer_length(n2)) > (s7_int_bits - 1)) ||
+		((d2bits + integer_length(n1)) > (s7_int_bits - 1)))
+	      return(make_real(((long double)n1 / (long double)d1) + ((long double)n2 / (long double)d2)));
+	  }
+	return(make_ratio(n1 * d2 + n2 * d1, d1 * d2));
+      }
       break;
       
     case NUM_REAL2:
@@ -2860,8 +2923,33 @@ static num num_sub(num a, num b)
       break;
       
     case NUM_RATIO:
-      ret = make_ratio((num_to_numerator(a) * num_to_denominator(b)) - (num_to_denominator(a) * num_to_numerator(b)),
-		       (num_to_denominator(a) * num_to_denominator(b)));
+      {
+	s7_Int d1, d2, n1, n2;
+	d1 = num_to_denominator(a);
+	n1 = num_to_numerator(a);
+	d2 = num_to_denominator(b);
+	n2 = num_to_numerator(b);
+
+	if (d1 == d2)                               /* the easy case -- if overflow here, it matches the int case */
+	  return(make_ratio(n1 - n2, d1));
+
+	if ((d1 >= s7_int_max) && (d2 >= s7_int_max))     /* this case obviously can't work as a ratio -- denominator will overflow */
+	  return(make_real(num_to_real(a) - num_to_real(b)));
+
+	if ((d1 > s7_int_max) || (d2 > s7_int_max) ||     /* before counting bits, check that overflow is possible */
+	    (n1 > s7_int_max) || (n2 > s7_int_max) ||
+	    (n1 < s7_int_min) || (n2 < s7_int_min))
+	  {
+	    int d1bits, d2bits;
+	    d1bits = integer_length(d1);
+	    d2bits = integer_length(d2);
+	    if (((d1bits + d2bits) > s7_int_bits) ||
+		((d1bits + integer_length(n2)) > (s7_int_bits - 1)) ||
+		((d2bits + integer_length(n1)) > (s7_int_bits - 1)))
+	      return(make_real(((long double)n1 / (long double)d1) - ((long double)n2 / (long double)d2)));
+	  }
+	return(make_ratio(n1 * d2 - n2 * d1, d1 * d2));
+      }
       break;
       
     case NUM_REAL2:
@@ -2890,8 +2978,23 @@ static num num_mul(num a, num b)
       break;
       
     case NUM_RATIO:
-      ret = make_ratio((num_to_numerator(a) * num_to_numerator(b)),
-		       (num_to_denominator(a) * num_to_denominator(b)));
+      {
+	s7_Int d1, d2, n1, n2;
+	d1 = num_to_denominator(a);
+	n1 = num_to_numerator(a);
+	d2 = num_to_denominator(b);
+	n2 = num_to_numerator(b);
+
+	if ((d1 > s7_int_max) || (d2 > s7_int_max) ||     /* before counting bits, check that overflow is possible */
+	    (n1 > s7_int_max) || (n2 > s7_int_max) ||
+	    (n1 < s7_int_min) || (n2 < s7_int_min))
+	  {
+	    if ((integer_length(d1) + integer_length(d2) > s7_int_bits) ||
+		(integer_length(n1) + integer_length(n2) > s7_int_bits))
+	      return(make_real(((long double)n1 / (long double)d1) * ((long double)n2 / (long double)d2)));
+	  }
+	ret = make_ratio(n1 * n2, d1 * d2);
+      }
       break;
       
     case NUM_REAL2:
@@ -2914,6 +3017,32 @@ static num num_mul(num a, num b)
   return(ret);
 }
 
+/* TODO: s7test invert complex + bignum + bignum ratios */
+static num num_invert(num a)
+{
+  switch (num_type(a))
+    {
+    case NUM_INT:
+      return(make_ratio(1, integer(a)));
+      
+    case NUM_RATIO:
+      return(make_ratio(denominator(a), numerator(a)));
+
+    case NUM_REAL:
+    case NUM_REAL2:
+      return(make_real(1.0 / real(a)));
+
+    default:
+      {
+	s7_Double r2, i2, den;
+	r2 = num_to_real_part(a);
+	i2 = num_to_imag_part(a);
+	den = (r2 * r2 + i2 * i2);
+	return(make_complex(r2 / den, -i2 / den));
+      }
+    }
+}
+
 
 static num num_div(num a, num b) 
 {
@@ -2923,12 +3052,29 @@ static num num_div(num a, num b)
   switch (num_type(ret))
     {
     case NUM_INT: 
-      ret = make_ratio(integer(a), integer(b));
-      break;
+      return(make_ratio(integer(a), integer(b)));
       
     case NUM_RATIO:
-      ret = make_ratio((num_to_numerator(a) * num_to_denominator(b)),
-		       (num_to_denominator(a) * num_to_numerator(b)));
+      {
+	s7_Int d1, d2, n1, n2;
+	d1 = num_to_denominator(a);
+	n1 = num_to_numerator(a);
+	d2 = num_to_denominator(b);
+	n2 = num_to_numerator(b);
+
+	if (d1 == d2)
+	  return(make_ratio(n1, n2));
+
+	if ((d1 > s7_int_max) || (d2 > s7_int_max) ||     /* before counting bits, check that overflow is possible */
+	    (n1 > s7_int_max) || (n2 > s7_int_max) ||
+	    (n1 < s7_int_min) || (n2 < s7_int_min))
+	  {
+	    if ((integer_length(d1) + integer_length(n2) > s7_int_bits) ||
+		(integer_length(d2) + integer_length(n1) > s7_int_bits))
+	      return(make_real(((long double)n1 / (long double)d1) / ((long double)n2 / (long double)d2)));
+	  }
+	return(make_ratio(n1 * d2, d1 * n2));
+      }
       break;
       
     case NUM_REAL2:
@@ -2948,8 +3094,7 @@ static num num_div(num a, num b)
 	i1 = num_to_imag_part(a);
 	i2 = num_to_imag_part(b);
 	den = (r2 * r2 + i2 * i2);
-	ret = make_complex((r1 * r2 + i1 * i2) / den, 
-			   (r2 * i1 - r1 * i2) / den);
+	return(make_complex((r1 * r2 + i1 * i2) / den, (r2 * i1 - r1 * i2) / den));
       }
       break;
     }
@@ -2958,6 +3103,7 @@ static num num_div(num a, num b)
 }
 
 
+/* TODO: check for avoidable overflows in ratio truncate and friends */
 static s7_Int s7_truncate(s7_Double xf)
 {
   if (xf > 0.0)
@@ -2977,7 +3123,7 @@ static num num_quotient(num a, num b)
   return(ret);
 }
 
-
+/* TODO: check for avoidable overflows in rem quo and mod */
 static num num_rem(num a, num b) 
 {
   /* (define (rem x1 x2) (- x1 (* x2 (quo x1 x2)))) ; slib */
@@ -4857,14 +5003,14 @@ static s7_pointer g_divide(s7_scheme *sc, s7_pointer args)
   
   if (cdr(args) == sc->NIL) 
     {
-      sc->x = args;
-      sc->v = small_int_as_num(sc, 1);
-    } 
-  else 
-    {
-      sc->x = cdr(args);
-      sc->v = nvalue(car(args));
+      if (s7_is_zero(car(args)))
+	return(s7_division_by_zero_error(sc, "/", args));
+      return(make_number(sc, num_invert(nvalue(car(args)))));
     }
+
+  sc->x = cdr(args);
+  sc->v = nvalue(car(args));
+
   for (i = 2; sc->x != sc->NIL; i++, sc->x = cdr(sc->x))
     {
       
@@ -5206,6 +5352,16 @@ unsigned long s7_ulong(s7_pointer num)
 s7_pointer s7_make_ulong(s7_scheme *sc, unsigned long num)
 {
   return(s7_make_integer(sc, num));
+}
+
+
+static s7_pointer g_integer_length(s7_scheme *sc, s7_pointer args)
+{
+  #define H_integer_length "(integer-length arg) returns the number of bits required to represent the integer 'arg'"
+  if (!s7_is_integer(car(args)))
+      return(s7_wrong_type_arg_error(sc, "integer-length", 0, car(args), "an integer"));
+    
+  return(s7_make_integer(sc, integer_length(s7_integer(car(args)))));
 }
 
 
@@ -13886,6 +14042,7 @@ s7_scheme *s7_init(void)
   s7_define_function(sc, "exact->inexact",          g_exact_to_inexact,        1, 0, false, H_exact_to_inexact);
   s7_define_function(sc, "exact?",                  g_is_exact,                1, 0, false, H_is_exact);
   s7_define_function(sc, "inexact?",                g_is_inexact,              1, 0, false, H_is_inexact);
+  s7_define_function(sc, "integer-length",          g_integer_length,          1, 0, false, H_integer_length);
   s7_define_function(sc, "logior",                  g_logior,                  1, 0, true,  H_logior);
   s7_define_function(sc, "logxor",                  g_logxor,                  1, 0, true,  H_logxor);
   s7_define_function(sc, "logand",                  g_logand,                  1, 0, true,  H_logand);
@@ -14098,6 +14255,9 @@ s7_scheme *s7_init(void)
     #define LLONG_MIN (-LLONG_MAX - 1LL)
 #endif
     top = sizeof(s7_Int);
+    s7_int_max = (top == 8) ? LONG_MAX : SHRT_MAX;
+    s7_int_min = (top == 8) ? LONG_MIN : SHRT_MIN;
+    s7_int_bits = (top == 8) ? 63 : 31;
     s7_define_constant(sc, "most-positive-fixnum", s7_make_integer(sc, (top == 8) ? LLONG_MAX : ((top == 4) ? LONG_MAX : SHRT_MAX)));
     s7_define_constant(sc, "most-negative-fixnum", s7_make_integer(sc, (top == 8) ? LLONG_MIN : ((top == 4) ? LONG_MIN : SHRT_MIN)));
     if (top == 4) default_rationalize_error = 1.0e-6;

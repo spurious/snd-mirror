@@ -18,8 +18,8 @@
 
 
 (define with-continued-fraction-rationalize #t)                ; #f follows the (silly) Scheme spec
-(define with-bignums #f)                                       ; unlimited ints
-(define with-64-bit-ints #t)                                   ; int == C long long int (else 32 bits)
+(define with-bignums #f)                                       ; scheme integer has any number of bits
+(define with-64-bit-ints #t)                                   ; scheme integer has at least 64 bits
 (define with-hyperbolic-functions #t)                          ; sinh et al
 (define with-char-ops-with-more-than-2-args #t)                ; char<? et al restricted to 2 args?
 (define with-string-ops-with-more-than-2-args #t)              ; string<? et al restricted to 2 args?
@@ -163,6 +163,11 @@
 	    (display tst)
 	    (display " got ")
 	    (display result)
+	    (if (and (rational? result) (not (rational? expected)))
+		(begin
+		  (display " (")
+		  (display (exact->inexact result))
+		  (display ")" )))
 	    (display " but expected ")
 	    (display expected)
 	    (newline) (newline)))))
@@ -19609,7 +19614,9 @@
 (num-test (max 1234 1234 123.4) 1234.0)
 (num-test (+ 1234 1234 1234/11) 28382/11)
 (num-test (- 1234 1234 1234/11) -1234/11)
-(num-test (* 1234 1234 1234/11) 1879080904/11)
+(if (not with-64-bit-ints)
+    (num-test (* 1234 1234 1234/11) 170825536.727273)
+    (num-test (* 1234 1234 1234/11) 1879080904/11))
 (num-test (/ 1234 1234 1234/11) 11/1234)
 (num-test (= 1234 1234 1234/11) #f)
 (num-test (< 1234 1234 1234/11) #f)
@@ -19771,7 +19778,9 @@
 (num-test (* 1234 1234/11 0.0) 0.0)
 (num-test (+ 1234 1234/11 1234) 28382/11)
 (num-test (- 1234 1234/11 1234) -1234/11)
-(num-test (* 1234 1234/11 1234) 1879080904/11)
+(if (not with-64-bit-ints)
+    (num-test (* 1234 1234/11 1234) 170825536.727273)
+    (num-test (* 1234 1234/11 1234) 1879080904/11))
 (num-test (/ 1234 1234/11 1234) 11/1234)
 (num-test (= 1234 1234/11 1234) #f)
 (num-test (< 1234 1234/11 1234) #f)
@@ -19793,7 +19802,9 @@
 (num-test (max 1234 1234/11 123.4) 1234.0)
 (num-test (+ 1234 1234/11 1234/11) 16042/11)
 (num-test (- 1234 1234/11 1234/11) 11106/11)
-(num-test (* 1234 1234/11 1234/11) 1879080904/121)
+(if (not with-64-bit-ints)
+    (num-test (* 1234 1234/11 1234/11) 15529594.2479339)
+    (num-test (* 1234 1234/11 1234/11) 1879080904/121))
 (num-test (/ 1234 1234/11 1234/11) 121/1234)
 (num-test (= 1234 1234/11 1234/11) #f)
 (num-test (< 1234 1234/11 1234/11) #f)
@@ -21283,7 +21294,9 @@
 (num-test (* 1234/11 1234 0.0) 0.0)
 (num-test (+ 1234/11 1234 1234) 28382/11)
 (num-test (- 1234/11 1234 1234) -25914/11)
-(num-test (* 1234/11 1234 1234) 1879080904/11)
+(if (not with-64-bit-ints)
+    (num-test (* 1234/11 1234 1234) 170825536.727273)
+    (num-test (* 1234/11 1234 1234) 1879080904/11))
 (num-test (/ 1234/11 1234 1234) 1/13574)
 (num-test (= 1234/11 1234 1234) #f)
 (num-test (< 1234/11 1234 1234) #f)
@@ -21305,7 +21318,9 @@
 (num-test (max 1234/11 1234 123.4) 1234.0)
 (num-test (+ 1234/11 1234 1234/11) 16042/11)
 (num-test (- 1234/11 1234 1234/11) -1234)
-(num-test (* 1234/11 1234 1234/11) 1879080904/121)
+(if (not with-64-bit-ints)
+    (num-test (* 1234/11 1234 1234/11) 15529594.2479339)
+    (num-test (* 1234/11 1234 1234/11) 1879080904/121))
 (num-test (/ 1234/11 1234 1234/11) 1/1234)
 (num-test (= 1234/11 1234 1234/11) #f)
 (num-test (< 1234/11 1234 1234/11) #f)
@@ -21467,7 +21482,9 @@
 (num-test (* 1234/11 1234/11 0.0) 0.0)
 (num-test (+ 1234/11 1234/11 1234) 16042/11)
 (num-test (- 1234/11 1234/11 1234) -1234)
-(num-test (* 1234/11 1234/11 1234) 1879080904/121)
+(if (not with-64-bit-ints)
+    (num-test (* 1234/11 1234/11 1234) 15529594.2479339)
+    (num-test (* 1234/11 1234/11 1234) 1879080904/121))
 (num-test (/ 1234/11 1234/11 1234) 1/1234)
 (num-test (= 1234/11 1234/11 1234) #f)
 (num-test (< 1234/11 1234/11 1234) #f)
@@ -21489,7 +21506,9 @@
 (num-test (max 1234/11 1234/11 123.4) 123.4)
 (num-test (+ 1234/11 1234/11 1234/11) 3702/11)
 (num-test (- 1234/11 1234/11 1234/11) -1234/11)
-(num-test (* 1234/11 1234/11 1234/11) 1879080904/1331)
+(if (not with-64-bit-ints)
+    (num-test (* 1234/11 1234/11 1234/11) 1411781.29526672)
+    (num-test (* 1234/11 1234/11 1234/11) 1879080904/1331))
 (num-test (/ 1234/11 1234/11 1234/11) 11/1234)
 (num-test (= 1234/11 1234/11 1234/11) #t)
 (num-test (< 1234/11 1234/11 1234/11) #f)
@@ -24215,7 +24234,7 @@
   (num-test (factorial 100 1) 93326215443944152681699238856266700490715968264381621468592963895217599993229915608941463976156518286253697920827223758251185210916864000000000000000000000000)
   (num-test (factorial 200 1) 788657867364790503552363213932185062295135977687173263294742533244359449963403342920304284011984623904177212138919638830257642790242637105061926624952829931113462857270763317237396988943922445621451664240254033291864131227428294853277524242407573903240321257405579568660226031904170324062351700858796178922222789623703897374720000000000000000000000000000000000000000000000000)
 
-  (num-test (* (factorial 3) (factorial 5) (factorial 7)) (factorial 10)))
+  (num-test (* (factorial 3 1) (factorial 5 1) (factorial 7 1)) (factorial 10 1)))
 
 
 (num-test (modulo (+ 2 (* 3 499127 495037 490459 468803)) (* 499127 495037 490459 468803)) 2)
@@ -27996,7 +28015,6 @@
 (num-test (acos 1.00001) 0.0+0.004472132228240686i)
 (num-test (atan 1) 0.7853981633974483)
 
-
 (num-test (sin (/ our-pi 12)) (* (/ (sqrt 2) 4) (- (sqrt 3) 1)))
 (num-test (cos (/ our-pi 12)) (* (/ (sqrt 2) 4) (+ (sqrt 3) 1)))
 (num-test (tan (/ our-pi 12)) (- 2 (sqrt 3)))
@@ -28158,7 +28176,6 @@
 (num-test (sqrt (- 2 (expt 2 1/7))) (/ (* (expt 2 1/14) (+ (- (expt 2 6/7)) (expt 2 5/7) (expt 2 3/7) (* 2 (expt 2 1/7)) -1)) (sqrt 7)))
 (num-test (sqrt (- 127 (* 4 (sqrt 6) (expt 7 1/4)))) (+ (/ (* (sqrt 3) (expt 7 3/4)) (sqrt 2)) (* 2 (sqrt 7)) (/ (* 3 (sqrt 3) (expt 7 1/4)) (sqrt 2)) -6))
 
-
 (num-test (expt 2 9) 512)
 (num-test (expt 8 1/3) 2)
 (num-test (expt 1024 1/10) 2)
@@ -28230,7 +28247,9 @@
 	      (set! happy #f)
 	      (display "(expt ") (display i) (display "/2 -10) = ") (display (expt (/ i 2) -10))
 	      (display " but (* 1/(") (display i) (display "/2) ... 10x) = ")
-	      (display (/ 1024 (* i i i i i i i i i i))) (newline)))))))
+	      (display (/ 1024 (* i i i i i i i i i i))) 
+	      (display " [diff=") (display val) (display "]")
+	      (newline)))))))
 
 (let ((happy #t)
       (lim (if with-bignums 50
@@ -28240,7 +28259,7 @@
       ((or (not happy) (> i lim)))
     (let* ((val1 (expt 3 i))
 	   (val2 (sqrt (* val1 val1))))
-      (if (> (magnitude (- val1 val2)) 1e-6)
+      (if (not (= val1 val2))
 	  (begin
 	    (set! happy #f)
 	    (display "(sqrt ") (display (* val1 val1)) (display " = ") (display val2)
@@ -28453,7 +28472,7 @@
 
 
 ;;; check big (but not bignum) ints and fractions involving such numbers
-(define top-exp 62)
+(define top-exp 60)
 (if with-bignums 
     (set! top-exp 150)
     (if (not with-64-bit-ints)
@@ -28697,7 +28716,7 @@
 
 (let ((happy #t))
   (do ((i 2 (+ i 1)))
-      ((or (not happy) (> i 62)))
+      ((or (not happy) (> i top-exp)))
     (let* ((val1 (/ (expt 2 i) 3))
 	   (val2 (/ (+ 1 (expt 2 i)) 3)))
       (if (not (= val2 (max val1 val2)))
@@ -28709,6 +28728,149 @@
       (if (not (= val1 (min val2 val1)))
 	  (begin (set! happy #f) (display "(min ") (display val1) (display " ") (display val2) (display ") -> ") (display (min val2 val1)) (display "?") (newline)))
       )))
+
+(let ((happy #t))
+  (do ((i 2 (+ i 1)))
+      ((or (not happy) (> i top-exp)))
+    (let* ((val1 (+ 2 (expt 2 i)))
+	   (val2 (- val1 1)))
+      (if (not (> val1 val2))
+	  (begin (set! happy #f) (display "(> ") (display val1) (display " ") (display val2) (display ") -> ") (display (> val1 val2)) (display "?") (newline)))
+      (if (< val1 val2)
+	  (begin (set! happy #f) (display "(< ") (display val1) (display " ") (display val2) (display ") -> ") (display (< val1 val2)) (display "?") (newline))))))
+
+(let ((happy #t))
+  (do ((i 2 (+ i 1)))
+      ((or (not happy) (> i top-exp)))
+    (let* ((val1 (/ (expt 2 i) 3))
+	   (val2 (/ (+ 1 (expt 2 i)) 3)))
+      (if (> val1 val2)
+	  (begin (set! happy #f) (display "(> ") (display val1) (display " ") (display val2) (display ") -> ") (display (> val1 val2)) (display "?") (newline)))
+      (if (not (> val2 val1))
+	  (begin (set! happy #f) (display "(> ") (display val1) (display " ") (display val2) (display ") -> ") (display (> val2 val1)) (display "?") (newline)))
+      (if (not (< val1 val2))
+	  (begin (set! happy #f) (display "(< ") (display val1) (display " ") (display val2) (display ") -> ") (display (< val1 val2)) (display "?") (newline)))
+      (if (< val2 val1)
+	  (begin (set! happy #f) (display "(< ") (display val1) (display " ") (display val2) (display ") -> ") (display (< val2 val1)) (display "?") (newline)))
+      )))
+
+
+(num-test (+ (/ (expt 2 11) (+ (expt 2 10) 1)) (/ (+ (expt 2 11) 1) (expt 2 10))) 
+	  4197377/1049600)
+(num-test (- (/ (expt 2 11) (+ (expt 2 10) 1)) (/ (+ (expt 2 11) 1) (expt 2 10))) 
+	  -3073/1049600)
+(num-test (* (/ (expt 2 11) (+ (expt 2 10) 1)) (/ (+ (expt 2 11) 1) (expt 2 10))) 
+	  4098/1025)
+(num-test (/ (/ (expt 2 11) (+ (expt 2 10) 1)) (/ (+ (expt 2 11) 1) (expt 2 10))) 
+	  2097152/2100225)
+
+(if with-64-bit-ints 
+    (begin
+      (num-test (+ (/ (expt 2 21) (+ (expt 2 20) 1)) (/ (+ (expt 2 21) 1) (expt 2 20))) 
+		4398049656833/1099512676352)
+      (num-test (- (/ (expt 2 21) (+ (expt 2 20) 1)) (/ (+ (expt 2 21) 1) (expt 2 20))) 
+		-3145729/1099512676352)
+      (num-test (* (/ (expt 2 21) (+ (expt 2 20) 1)) (/ (+ (expt 2 21) 1) (expt 2 20))) 
+		4194306/1048577)
+      (num-test (/ (/ (expt 2 21) (+ (expt 2 20) 1)) (/ (+ (expt 2 21) 1) (expt 2 20))) 
+		2199023255552/2199026401281)
+
+      (num-test (+ (/ (expt 2 31) (+ (expt 2 20) 1)) (/ (+ (expt 2 31) 1) (expt 2 20)))
+		4503601775902721/1099512676352)
+      (num-test (- (/ (expt 2 31) (+ (expt 2 20) 1)) (/ (+ (expt 2 31) 1) (expt 2 20)))
+		-2148532225/1099512676352)
+      (num-test (* (/ (expt 2 31) (+ (expt 2 20) 1)) (/ (+ (expt 2 31) 1) (expt 2 20)))
+		4194300.0019569)
+      (num-test (/ (/ (expt 2 31) (+ (expt 2 20) 1)) (/ (+ (expt 2 31) 1) (expt 2 20)))
+		2251799813685248/2251801962217473)
+      ))
+
+(if with-bignums
+    (begin
+      (num-test (+ (/ (expt 2 61) (+ (expt 2 40) 1)) (/ (+ (expt 2 61) 1) (expt 2 40)))
+		5070602400915223450095538143233/1208925819615728686333952)
+      (num-test (- (/ (expt 2 61) (+ (expt 2 40) 1)) (/ (+ (expt 2 61) 1) (expt 2 40)))
+		-2305844108725321729/1208925819615728686333952)
+      (num-test (* (/ (expt 2 61) (+ (expt 2 40) 1)) (/ (+ (expt 2 61) 1) (expt 2 40)))
+		4835703278458516700921856/1099511627777)
+      (num-test (/ (/ (expt 2 61) (+ (expt 2 40) 1)) (/ (+ (expt 2 61) 1) (expt 2 40)))
+		2535301200456458802993406410752/2535301200458764647102131732481)
+      ))
+
+(if (and (not with-bignums) (not with-64-bit-ints))
+    (begin
+      (num-test (+ 1/98947 2/97499 3/76847) 6.9658060696377e-05)
+      (num-test (- 1/98947 2/97499 3/76847) -4.9445219478352e-05)
+      (num-test (* 1/98947 2/97499 3/76847) 8.0932236106886e-15)
+      (num-test (/ 1/98947 2/97499 3/76847) 12620.402257437)
+      )
+    (begin
+      (num-test (+ 1/98947 2/97499 3/76847) 51641766530/741360956847391)
+      (num-test (- 1/98947 2/97499 3/76847) -36656755224/741360956847391)
+      (num-test (* 1/98947 2/97499 3/76847) 6/741360956847391)
+      (num-test (/ 1/98947 2/97499 3/76847) 7492505653/593682)
+      ))
+
+(if (not with-bignums)
+    (begin
+      (num-test (+ 1/98947 2/97499 3/76847 4/61981) 0.00013419396686117)
+      (num-test (- 1/98947 2/97499 3/76847 4/61981) -0.00011398112564314)
+      (num-test (* 1/98947 2/97499 3/76847 4/61981) 5.2230351951008e-19)
+      (if with-64-bit-ints
+	  (num-test (/ 1/98947 2/97499 3/76847 4/61981) 464392992878593/2374728) ;195556288.07955 -- seems to fit
+	  (num-test (/ 1/98947 2/97499 3/76847 4/61981) 195556288.07955))
+      )
+    (begin
+      (num-test (+ 1/98947 2/97499 3/76847 4/61981) 6166252158685494/45950293466358141571)
+      (num-test (- 1/98947 2/97499 3/76847 4/61981) -5237466172928308/45950293466358141571) 
+      (num-test (* 1/98947 2/97499 3/76847 4/61981) 24/45950293466358141571)
+      (num-test (/ 1/98947 2/97499 3/76847 4/61981) 464392992878593/2374728) 
+      ))
+
+(if (not with-bignums)
+    (begin
+      (num-test (+ 1/98947 2/97499 3/76847 4/61981 5/59981) 0.00021755369744252)
+      (num-test (- 1/98947 2/97499 3/76847 4/61981 5/59981) -0.00019734085622449)
+      (num-test (* 1/98947 2/97499 3/76847 4/61981 5/59981) 4.3539080668052e-23)
+      (num-test (/ 1/98947 2/97499 3/76847 4/61981 5/59981) 2345932343059.9)
+      )
+    (begin
+      (num-test (+ 1/98947 2/97499 3/76847 4/61981 5/59981) 599609438061905323469/2756144552405627689570151)
+      (num-test (- 1/98947 2/97499 3/76847 4/61981 5/59981) -543899925850203550003/2756144552405627689570151) 
+      (num-test (* 1/98947 2/97499 3/76847 4/61981 5/59981) 120/2756144552405627689570151)
+      (num-test (/ 1/98947 2/97499 3/76847 4/61981 5/59981) 27854756105850886733/11873640)
+      ))
+
+(if (not with-bignums)
+    (begin
+      (num-test (+ 1/98947 2/97499 3/76847 4/61981 5/59981 6/66601) 0.00030764243484887)
+      (num-test (- 1/98947 2/97499 3/76847 4/61981 5/59981 6/66601) -0.00028742959363084)
+      (num-test (* 1/98947 2/97499 3/76847 4/61981 5/59981 6/66601) 3.9223808052178e-27)
+      (num-test (/ 1/98947 2/97499 3/76847 4/61981 5/59981 6/66601) 2.6040239996689e+16)
+      )
+    (begin
+      (num-test (+ 1/98947 2/97499 3/76847 4/61981 5/59981 6/66601) 56471455498794722585779775/183561983334767209753061626751) 
+      (num-test (- 1/98947 2/97499 3/76847 4/61981 5/59981 6/66601) -52761146275983172771170709/183561983334767209753061626751)
+      (num-test (* 1/98947 2/97499 3/76847 4/61981 5/59981 6/66601) 720/183561983334767209753061626751) 
+      (num-test (/ 1/98947 2/97499 3/76847 4/61981 5/59981 6/66601) 1855154611405774907304533/71241840)
+      ))
+
+(if (not with-bignums)
+    (begin
+      (num-test (+ 98947 2/97499 76847 4/61981 5/59981) 175794.00016841)
+      (num-test (- 98947 2/97499 76847 4/61981 5/59981) 22099.999831591)
+      (if with-64-bit-ints
+	  (num-test (* 98947 2/97499 76847 4/61981 5/59981) 304151204360/362470312515139) ;0.00083910652502692
+	  (num-test (* 98947 2/97499 76847 4/61981 5/59981) 0.00083910652502692))
+      (num-test (/ 98947 2/97499 76847 4/61981 5/59981) 11667778186668.0)
+      )
+    (begin
+      (num-test (+ 98947 2/97499 76847 4/61981 5/59981) 63720106179329487759/362470312515139)
+      (num-test (- 98947 2/97499 76847 4/61981 5/59981) 8010593845541429507/362470312515139)
+      (num-test (* 98947 2/97499 76847 4/61981 5/59981) 304151204360/362470312515139)
+      (num-test (/ 98947 2/97499 76847 4/61981 5/59981) 35865350012435458633/3073880)
+      ))
+
 
 (if with-hyperbolic-functions
     (begin
@@ -28789,7 +28951,8 @@
       (num-test (/ 12341234/111 123456789 12341234/111) 1/123456789)
       (num-test (abs -922337203685477580) 922337203685477580)))
 
-(num-test (+ 123456789/3 3/123456789 -123456789/3 -3/123456789) 0)
+(if (or with-bignums with-64-bit-ints)
+    (num-test (+ 123456789/3 3/123456789 -123456789/3 -3/123456789) 0))
 (num-test (abs -123456789) 123456789)
 (num-test (abs -1234567890) 1234567890)
 
@@ -33310,8 +33473,6 @@
 
 ;;; ----------------
 
-(display ";all done!") (newline)
-
 ;;; due primarily to stupidities on my part, the "expected" values are sometimes not more
 ;;;   accurate than say 1e-7 or so
 
@@ -33852,7 +34013,7 @@
 (let () (define q (let ((count 5)) (define (get-count) count) (define p (make-promise (if (<= count 0) count (begin (set! count (- count 1)) (force p) (set! count (+ count 2)) count)))) (list get-count p))) (let* ((get-count (car q)) (p (cadr q)) (a (get-count)) (b (force p)) (c (get-count))) (list a b c))) got (5 10 10) but expected (5 0 10)
 
 format #t 1 output-port: 2! (this is testing output ports)
-;all done!
+
 op              error                      test                            result                                 expected
 bes-i0:         4.728274528735e-07      (bes-i0 100.0)                1.0737511994318e+42                     1.0737517071311e+42
 *:              1.4453905801655e-16     (* 1234/11 1234/11 1+1i)      12584.760330579+12584.760330579i        12584.760330579+12584.760330579i
@@ -33887,4 +34048,5 @@ tan error > 1e-6 around 2^46.506993328423
 expt error > 1e-6 around 2^-46.506993328423
 )
 
+(display ";all done!") (newline)
 
