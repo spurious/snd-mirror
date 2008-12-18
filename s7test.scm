@@ -72,9 +72,6 @@
      (ok? ',tst result ,expected)))
 
 
-(define our-pi 3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930382)
-
-
 ;;; the error limits below are pretty expansive in some cases, so with-error-data
 ;;;   tries to keep a record of the worst case error for each operator.  error-data
 ;;;   is a list: '(#(op worst-error worst-error-case) ...). 
@@ -889,6 +886,9 @@
   (test (char-ci<? #\9 #\0) #f)
   (test (char-ci<? #\A #\A) #f)
   (test (char-ci<? #\A #\a) #f)
+  (test (char-ci<? #\Y #\_) #t)
+  (test (char-ci<? #\\ #\J) #f)
+  (test (char-ci<? #\_ #\e) #f)
 
   (if with-char-ops-with-more-than-2-args (begin
     (test (char-ci<? #\d #\D #\d #\d) #f)
@@ -901,7 +901,9 @@
     (test (char-ci<? #\b #\a "hi") 'error)
     (test (char-ci<? #\b #\a 0) 'error)
     (test (char-ci<? #\b #\c #\a) #f)
-    (test (char-ci<? #\b #\C #\e) #t)))
+    (test (char-ci<? #\b #\C #\e) #t)
+    (test (char-ci<? #\3 #\? #\Z #\[) #t)
+    ))
 
   
   (test (char-ci>? #\A #\B) #f)
@@ -911,6 +913,10 @@
   (test (char-ci>? #\9 #\0) #t)
   (test (char-ci>? #\A #\A) #f)
   (test (char-ci>? #\A #\a) #f)
+  (test (char-ci>? #\^ #\a) #t)
+  (test (char-ci>? #\_ #\e) #t)
+  (test (char-ci>? #\[ #\S) #t)
+  (test (char-ci>? #\\ #\l) #t)
 
   (if with-char-ops-with-more-than-2-args (begin
     (test (char-ci>? #\d #\D #\d #\d) #f)
@@ -934,6 +940,10 @@
   (test (char-ci<=? #\9 #\0) #f)
   (test (char-ci<=? #\A #\A) #t)
   (test (char-ci<=? #\A #\a) #t)
+  (test (char-ci<=? #\` #\H) #f)
+  (test (char-ci<=? #\[ #\m) #f)
+  (test (char-ci<=? #\j #\`) #t)
+  (test (char-ci<=? #\\ #\E) #f)
 
   (if with-char-ops-with-more-than-2-args (begin
     (test (char-ci<=? #\d #\D #\d #\d) #t)
@@ -957,6 +967,9 @@
   (test (char-ci>=? #\9 #\0) #t)
   (test (char-ci>=? #\A #\A) #t)
   (test (char-ci>=? #\A #\a) #t)
+  (test (char-ci>=? #\Y #\_) #f)
+  (test (char-ci>=? #\` #\S) #t)
+  (test (char-ci>=? #\[ #\Y) #t)
 
   (if with-char-ops-with-more-than-2-args (begin
     (test (char-ci>=? #\d #\D #\d #\d) #t)
@@ -971,7 +984,9 @@
     (test (char-ci>=? #\a #\b "hi") 'error)
     (test (char-ci>=? #\a #\b 0) 'error)
     (test (char-ci>=? #\b #\c #\a) #f)
-    (test (char-ci>=? #\d #\D #\a) #t)))
+    (test (char-ci>=? #\d #\D #\a) #t)
+    (test (char-ci>=? #\\ #\J #\+) #t)
+    ))
 
   ) ; end let with a-to-z
 
@@ -2836,6 +2851,8 @@
 ;;; NUMBERS
 ;;; --------------------------------------------------------------------------------
 
+(define our-pi 3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982148086513282306647093844609550582231725359408128481117450284102701938521105559644622948954930382)
+
 (define int-0 0)
 (define ratio-0 0/3)
 (define int-1 1)
@@ -4006,7 +4023,11 @@
  (lambda (op)
    (for-each
     (lambda (arg)
-      (test (op arg) 'error))
+      (let ((val (catch #t (lambda () (op arg)) (lambda args 'error))))
+	(if (not (eq? val 'error))
+	    (begin 
+	      (display "(") (display op) (display " ") (display arg) (display ") returned ")
+	      (display val) (display " but expected 'error") (newline)))))
     (list "hi" '() #\a (list 1) '(1 . 2) #f 'a-symbol (make-vector 3) abs #t (lambda (a) (+ a 1)))))
  (list exact? inexact? zero? positive? negative? even? odd? quotient remainder modulo truncate floor ceiling round
        abs max min gcd lcm expt exact->inexact inexact->exact rationalize numerator denominator imag-part real-part
@@ -4036,7 +4057,11 @@
  (lambda (op)
    (for-each
     (lambda (arg)
-      (test (op arg) 'error))
+      (let ((val (catch #t (lambda () (op arg)) (lambda args 'error))))
+	(if (not (eq? val 'error))
+	    (begin 
+	      (display "(") (display op) (display " ") (display arg) (display ") returned ")
+	      (display val) (display " but expected 'error") (newline)))))
     (list "hi" '() #\a (list 1) '(1 . 2) '#(0) #f 'a-symbol (make-vector 3) abs #t (lambda (a) (+ a 1)))))
  (list cosh sinh tanh acosh asinh atanh))
 
@@ -28779,8 +28804,11 @@
 		4503601775902721/1099512676352)
       (num-test (- (/ (expt 2 31) (+ (expt 2 20) 1)) (/ (+ (expt 2 31) 1) (expt 2 20)))
 		-2148532225/1099512676352)
-      (num-test (* (/ (expt 2 31) (+ (expt 2 20) 1)) (/ (+ (expt 2 31) 1) (expt 2 20)))
-		4194300.0019569)
+      (if (not with-bignums)
+	  (num-test (* (/ (expt 2 31) (+ (expt 2 20) 1)) (/ (+ (expt 2 31) 1) (expt 2 20)))
+		    4194300.0019569)
+	  (num-test (* (/ (expt 2 31) (+ (expt 2 20) 1)) (/ (+ (expt 2 31) 1) (expt 2 20)))
+		    4398046513152/1048577))
       (num-test (/ (/ (expt 2 31) (+ (expt 2 20) 1)) (/ (+ (expt 2 31) 1) (expt 2 20)))
 		2251799813685248/2251801962217473)
       ))
@@ -28810,6 +28838,30 @@
       (num-test (* 1/98947 2/97499 3/76847) 6/741360956847391)
       (num-test (/ 1/98947 2/97499 3/76847) 7492505653/593682)
       ))
+
+(if (and (not with-bignums) (not with-64-bit-ints))
+    (begin
+      (num-test (+ 500009/500029 500057/500041) 1.99999199969608)
+      (num-test (- 500009/500029 500057/500041) -7.19950563497026e-5)
+      (num-test (* 500009/500029 500057/500041) 0.99999199841626)
+      (num-test (/ 500009/500029 500057/500041) 0.999928007247229))
+    (begin
+      (num-test (+ 500009/500029 500057/500041) 500068002022/250035001189)
+      (num-test (- 500009/500029 500057/500041) -18001284/250035001189)
+      (num-test (* 500009/500029 500057/500041) 250033000513/250035001189)
+      (num-test (/ 500009/500029 500057/500041) 250025000369/250043001653)))
+
+(if (not with-bignums)
+    (begin
+      (num-test (+ 500009/500029 500057/500041 500083/500069) 3.00001999583261)
+      (num-test (- 500009/500029 500057/500041 500083/500069) -1.00009999119288)
+      (num-test (* 500009/500029 500057/500041 500083/500069) 1.00001999432878)
+      (num-test (/ 500009/500029 500057/500041 500083/500069) 0.999900013909921))
+    (begin
+      (num-test (+ 500009/500029 500057/500041 500083/500069) 375106759202738205/125034753009582041)
+      (num-test (- 500009/500029 500057/500041 500083/500069) -125047255383687283/125034753009582041)
+      (num-test (* 500009/500029 500057/500041 500083/500069) 125037252995542579/125034753009582041)
+      (num-test (/ 500009/500029 500057/500041 500083/500069) 125029751909525461/125042254395637199)))
 
 (if (not with-bignums)
     (begin
@@ -28952,7 +29004,10 @@
       (num-test (abs -922337203685477580) 922337203685477580)))
 
 (if (or with-bignums with-64-bit-ints)
-    (num-test (+ 123456789/3 3/123456789 -123456789/3 -3/123456789) 0))
+    (begin
+      (num-test (+ 123456789/3 3/123456789 -123456789/3 -3/123456789) 0)
+      (num-test (/ 123412341234) 1/123412341234)
+      (num-test (/ 1/123412341234) 123412341234)))
 (num-test (abs -123456789) 123456789)
 (num-test (abs -1234567890) 1234567890)
 
@@ -29020,7 +29075,11 @@
 (num-test (imag-part 5) 0.0)
 (num-test (imag-part 1.4+0.0i) 0.0)
 
-(num-test (expt 0 0) 1)
+;(num-test (expt 0 0.0) 0.0) ; ?? -- guile returns 1.0
+(num-test (expt 0 1.0+i) 0.0) ; ??
+;(num-test (expt 0 -1.0+i) 0.0) ; ?? guile says +inf.0+nan.0i
+(num-test (expt 0 1.0) 0.0)
+;(num-test (expt 0 -1.0) 0.0) ; ?? guile says inf
 
 (let ((dht (lambda (data) 
 	     ; the Hartley transform of 'data'
@@ -29826,6 +29885,7 @@
        (test (logior 3 3 3 3) 3)
        (test (logior 1) 1)
        (test (logior -1) -1)
+       (test (logior 12341234 10001111) 12378103)
 
 
        (test (logand 0 1) 0)
@@ -29839,6 +29899,7 @@
        (test (logand 3 3 3 3) 3)
        (test (logand 0) 0)
        (test (logand -1) -1)
+       (test (logand 12341234 10001111) 9964242)
 
 
        (test (logxor 0 1) 1)
@@ -29847,12 +29908,14 @@
        (test (logxor -6 1) -5)
        (test (logxor -6 3) -7)
        (test (logxor #b1 #b11 #b111 #b1111) #b1010)
+       (test (logxor 12341234 10001111) 2413861)
 
 
        (test (lognot 0) -1)
        (test (lognot -1) 0)
        (test (lognot #b101) -6)
        (test (lognot -6) #b101)
+       (test (lognot 12341234) -12341235)
 
 
        (test (ash 0 1) 0)
@@ -29860,6 +29923,10 @@
        (test (ash 1024 -8) 4)
        (test (ash -1 8) -256)
        (test (ash -1 30) -1073741824)
+       (test (ash 1234 6) 78976)
+       (test (ash 1234 -6) 19)
+       (test (ash 12341234 6) 789838976)
+       (test (ash 12341234 -16) 188)
 
 
        (for-each
@@ -29871,7 +29938,7 @@
 		   (begin
 		     (display op) (display " ") (display arg) (display " returned ") (display val) (newline)))))
 	   (list "hi" (integer->char 65) 'a-symbol (make-vector 3) abs #\f (lambda (a) (+ a 1)))))
-	(list logior logand lognot logxor ash))
+	(list logior logand lognot logxor ash integer-length))
 
        (for-each
 	(lambda (op)
@@ -29883,6 +29950,28 @@
 		     (display op) (display " 1 ") (display arg) (display " returned ") (display val) (newline)))))
 	   (list "hi" (integer->char 65) 'a-symbol (make-vector 3) abs #\f (lambda (a) (+ a 1)))))
 	(list logior logand logxor lognot))
+
+       (num-test (integer-length 0) 0)
+       (num-test (integer-length 1) 1)
+       (num-test (integer-length 2) 2)
+       (num-test (integer-length 3) 2)
+       (num-test (integer-length 4) 3)
+       (num-test (integer-length 7) 3)
+       (num-test (integer-length 8) 4)
+       (num-test (integer-length 21) 5)
+       (num-test (integer-length 215) 8)
+       (num-test (integer-length 12341234) 24)
+
+       (num-test (integer-length -1) 0)
+       (num-test (integer-length -2) 1)
+       (num-test (integer-length -3) 2)
+       (num-test (integer-length -4) 2)
+       (num-test (integer-length -7) 3)
+       (num-test (integer-length -8) 3)
+       (num-test (integer-length -9) 4)
+       (num-test (integer-length -21) 5)
+       (num-test (integer-length -215) 8)
+       (num-test (integer-length -12341234) 24)
 
        ))
 
