@@ -40,11 +40,13 @@
 (define with-define* #t)                                       ; this tests s7's version of define*
 (define with-procedure-arity #t)                               ; procedure-arity and other s7-specific stuff
 (define with-error-data #f)                                    ; collect numerical error info and report at end
+(define with-the-bug-finding-machine #t)                       ; run the machine (set to number of tries)
+					                       ;   the machine needs format and random
+					                       ;   the default number of tries is 10000
 
 
 ;; we're assuming call/cc is defined
 ;    (define call/cc call-with-current-continuation)
-
 
 ;;; --------------------------------------------------------------------------------
 
@@ -884,11 +886,31 @@
   (test (char-ci<? #\A #\b) #t)
   (test (char-ci<? #\a #\b) #t)
   (test (char-ci<? #\9 #\0) #f)
+  (test (char-ci<? #\0 #\9) #t)
   (test (char-ci<? #\A #\A) #f)
   (test (char-ci<? #\A #\a) #f)
   (test (char-ci<? #\Y #\_) #t)
   (test (char-ci<? #\\ #\J) #f)
   (test (char-ci<? #\_ #\e) #f)
+  (test (char-ci<? #\t #\_) #t)
+  (test (char-ci<? #\a #\]) #t)
+  (test (char-ci<? #\z #\^) #t)
+
+
+;;; this tries them all:
+;(do ((i 0 (+ i 1)))
+;    ((= i 128))
+;  (do ((k 0 (+ k 1)))
+;      ((= k 128))
+;    (let ((c1 (integer->char i))
+;	  (c2 (integer->char k)))
+;      (for-each
+;       (lambda (op1 op2)
+;	 (if (not (eq? (op1 c1 c2) (op2 (string c1) (string c2))))
+;	     (format #t "(~A|~A ~A ~A) -> ~A|~A~%" op1 op2 c1 c2 (op1 c1 c2) (op2 (string c1) (string c2)))))
+;       (list char=? char<? char<=? char>? char>=? char-ci=? char-ci<? char-ci<=? char-ci>? char-ci>=?)
+;       (list string=? string<? string<=? string>? string>=? string-ci=? string-ci<? string-ci<=? string-ci>? string-ci>=?)))))
+
 
   (if with-char-ops-with-more-than-2-args (begin
     (test (char-ci<? #\d #\D #\d #\d) #f)
@@ -917,6 +939,10 @@
   (test (char-ci>? #\_ #\e) #t)
   (test (char-ci>? #\[ #\S) #t)
   (test (char-ci>? #\\ #\l) #t)
+  (test (char-ci>? #\t #\_) #f)
+  (test (char-ci>? #\a #\]) #f)
+  (test (char-ci>? #\z #\^) #f)
+  (test (char-ci>? #\] #\X) #t)
 
   (if with-char-ops-with-more-than-2-args (begin
     (test (char-ci>? #\d #\D #\d #\d) #f)
@@ -944,6 +970,9 @@
   (test (char-ci<=? #\[ #\m) #f)
   (test (char-ci<=? #\j #\`) #t)
   (test (char-ci<=? #\\ #\E) #f)
+  (test (char-ci<=? #\t #\_) #t)
+  (test (char-ci<=? #\a #\]) #t)
+  (test (char-ci<=? #\z #\^) #t)
 
   (if with-char-ops-with-more-than-2-args (begin
     (test (char-ci<=? #\d #\D #\d #\d) #t)
@@ -970,6 +999,9 @@
   (test (char-ci>=? #\Y #\_) #f)
   (test (char-ci>=? #\` #\S) #t)
   (test (char-ci>=? #\[ #\Y) #t)
+  (test (char-ci>=? #\t #\_) #f)
+  (test (char-ci>=? #\a #\]) #f)
+  (test (char-ci>=? #\z #\^) #f)
 
   (if with-char-ops-with-more-than-2-args (begin
     (test (char-ci>=? #\d #\D #\d #\d) #t)
@@ -1256,9 +1288,16 @@
 (test (string-ci<? "A" "b") #t)
 (test (string-ci<? "a" "b") #t)
 (test (string-ci<? "9" "0") #f)
+(test (string-ci<? "0" "9") #t)
 (test (string-ci<? "A" "A") #f)
 (test (string-ci<? "A" "a") #f)
 (test (string-ci<? "" "") #f)
+
+(test (string-ci<? "t" "_") #t)
+(test (string-ci<? "a" "]") #t)
+(test (string-ci<? "z" "^") #t)
+(test (string-ci<? "]4.jVKo\\\\^:\\A9Z4" "MImKA[mNv1`") #f)
+
 (if with-string-ops-with-more-than-2-args (begin
   (test (string-ci<? "A" "B" "A") #f)
   (test (string-ci<? "A" "A" "B") #f)
@@ -1268,7 +1307,11 @@
   (test (string-ci<? "foo" "foo" "foo") #f)
   (test (string-ci<? "foo" "foo" "") #f)
   (test (string-ci<? "foo" "fo" 1.0) 'error)
-  (test (string-ci<? "foo" "foo" "fOo") #f)))
+  (test (string-ci<? "foo" "foo" "fOo") #f)
+  (test (string-ci<? "34ZsfQD<obff33FBPFl" "7o" "9l7OM" "FC?M63=" "rLM5*J") #t)
+  (test (string-ci<? "NX7" "-;h>P" "DMhk3Bg") #f)
+  (test (string-ci<? "+\\mZl" "bE7\\e(HaW5CDXbPi@U_" "B_") #t)
+  ))
 
 (for-each
  (lambda (arg)
@@ -1285,6 +1328,15 @@
 (test (string-ci>? "A" "A") #f)
 (test (string-ci>? "A" "a") #f)
 (test (string-ci>? "" "") #f)
+(test (string-ci>? "Z" "DjNTl0") #t)
+(test (string-ci>? "2399dt7BVN[,A" "^KHboHV") #f)
+
+(test (string-ci>? "t" "_") #f)
+(test (string-ci>? "a" "]") #f)
+(test (string-ci>? "z" "^") #f)
+(test (string-ci>? "R*95oG.k;?" "`2?J6LBbLG^alB[fMD") #f)
+(test (string-ci>? "]" "X") #t)
+
 (if with-string-ops-with-more-than-2-args (begin
   (test (string-ci>? "A" "B" "a") #f)
   (test (string-ci>? "C" "b" "A") #t)
@@ -1293,7 +1345,10 @@
   (test (string-ci>? "foo" "foo" "foo") #f)
   (test (string-ci>? "foo" "foo" "") #f)
   (test (string-ci>? "foo" "fooo" 1.0) 'error)
-  (test (string-ci>? "foo" "foo" "fOo") #f)))
+  (test (string-ci>? "foo" "foo" "fOo") #f)
+  (test (string-ci>? "ZNiuEa@/V" "KGbKliYMY" "9=69q3ica" ":]") #f)
+  (test (string-ci>? "^" "aN@di;iEO" "7*9q6uPmX9)PaY,6J" "15vH") #t)
+  ))
 
 (for-each
  (lambda (arg)
@@ -1309,6 +1364,13 @@
 (test (string-ci<=? "A" "A") #t)
 (test (string-ci<=? "A" "a") #t)
 (test (string-ci<=? "" "") #t)
+(test (string-ci<=? ":LPC`" ",O0>affA?(") #f)
+
+(test (string-ci<=? "t" "_") #t)
+(test (string-ci<=? "a" "]") #t)
+(test (string-ci<=? "z" "^") #t)
+(test (string-ci<=? "G888E>beF)*mwCNnagP" "`2uTd?h") #t)
+
 (if with-string-ops-with-more-than-2-args (begin
   (test (string-ci<=? "A" "b" "C") #t)
   (test (string-ci<=? "c" "B" "A") #f)
@@ -1318,7 +1380,10 @@
   (test (string-ci<=? "foo" "foo" "foo") #t)
   (test (string-ci<=? "foo" "foo" "") #f)
   (test (string-ci<=? "fOo" "fo" 1.0) 'error)
-  (test (string-ci<=? "FOO" "fOo" "fooo") #t)))
+  (test (string-ci<=? "FOO" "fOo" "fooo") #t)
+  (test (string-ci<=? "78mdL82*" "EFaCrIdm@_D+" "eMu\\@dSSY") #t)
+  (test (string-ci<=? "`5pNuFc3PM<rNs" "e\\Su_raVNk6HD" "vXnuN7?S0?S(w+M?p") #f)
+  ))
 
 (for-each
  (lambda (arg)
@@ -1334,6 +1399,13 @@
 (test (string-ci>=? "A" "A") #t)
 (test (string-ci>=? "A" "a") #t)
 (test (string-ci>=? "" "") #t)
+(test (string-ci>=? "5d7?[o[:hop=ktv;9)" "p^r9;TAXO=^") #f)
+
+(test (string-ci>=? "t" "_") #f)
+(test (string-ci>=? "a" "]") #f)
+(test (string-ci>=? "z" "^") #f)
+(test (string-ci>=? "jBS" "`<+s[[:`l") #f)
+
 (if with-string-ops-with-more-than-2-args (begin
   (test (string-ci>=? "A" "b" "C") #f)
   (test (string-ci>=? "C" "B" "A") #t)
@@ -1345,7 +1417,10 @@
   (test (string-ci>=? "foo" "foo" "foo") #t)
   (test (string-ci>=? "foo" "foo" "") #t)
   (test (string-ci>=? "fo" "foo" 1.0) 'error)
-  (test (string-ci>=? "foo" "foo" "fo") #t)))
+  (test (string-ci>=? "foo" "foo" "fo") #t)
+  (test (string-ci>=? "tF?8`Sa" "NIkMd7" "f`" "1td-Z?teE" "-ik1SK)hh)Nq].>") #t)
+  (test (string-ci>=? "Z6a8P" "^/VpmWwt):?o[a9\\_N" "8[^h)<KX?[utsc") #f)
+  ))
 
 (for-each
  (lambda (arg)
@@ -28197,9 +28272,18 @@
 (num-test (+ (expt 2 5) (expt 298 5) (expt 351 5) (expt 474 5) (expt 500 5)) (expt 575 5))
 
 ;;; some of the tests in this section are thanks to Bill Gosper
-(num-test (expt (- (expt 3 3/5) (expt 2 1/5)) 1/3) (/ (+ (- (* (expt 2 1/5) (expt 3 3/5))) (* (expt 2 3/5) (expt 3 2/5)) (expt 3 1/5) (expt 2 2/5)) (expt 5 2/3)))
-(num-test (sqrt (- 2 (expt 2 1/7))) (/ (* (expt 2 1/14) (+ (- (expt 2 6/7)) (expt 2 5/7) (expt 2 3/7) (* 2 (expt 2 1/7)) -1)) (sqrt 7)))
-(num-test (sqrt (- 127 (* 4 (sqrt 6) (expt 7 1/4)))) (+ (/ (* (sqrt 3) (expt 7 3/4)) (sqrt 2)) (* 2 (sqrt 7)) (/ (* 3 (sqrt 3) (expt 7 1/4)) (sqrt 2)) -6))
+(num-test (expt (- (expt 3 3/5) (expt 2 1/5)) 1/3)
+	  (/ (+ (- (* (expt 2 1/5) (expt 3 3/5))) (* (expt 2 3/5) (expt 3 2/5)) (expt 3 1/5) (expt 2 2/5)) (expt 5 2/3)))
+
+(num-test (sqrt (- 2 (expt 2 1/7))) 
+	  (/ (* (expt 2 1/14) (+ (- (expt 2 6/7)) (expt 2 5/7) (expt 2 3/7) (* 2 (expt 2 1/7)) -1)) (sqrt 7)))
+
+(num-test (sqrt (- 127 (* 4 (sqrt 6) (expt 7 1/4))))
+	  (+ (/ (* (sqrt 3) (expt 7 3/4)) (sqrt 2)) (* 2 (sqrt 7)) (/ (* 3 (sqrt 3) (expt 7 1/4)) (sqrt 2)) -6))
+
+(num-test (sqrt (- (expt 4 1/5) (expt 3 1/5)))
+	  (/ (+ (* (- (expt 2 3/5)) (expt 3 4/5)) (expt 3 3/5) (* 2 (expt 2 2/5) (expt 3 2/5)) (* (- (expt 2 4/5)) (expt 3 1/5)) (expt 2 1/5)) 5))
+
 
 (num-test (expt 2 9) 512)
 (num-test (expt 8 1/3) 2)
@@ -30680,6 +30764,7 @@
 (test (call/cc (lambda (exit) (do ((i 0 (+ i 1))) ((= i 10) (exit 321))))) 321)
 (test (call/cc (lambda (exit) (do ((i 0 (+ i 1))) ((= i 10) i) (if (= i -2) (exit 321))))) 10)
 (test (do ((x 0 (+ x 1)) (y 0 (call/cc (lambda (c) c)))) ((> x 5) x) #f) 6)
+(test (let ((happy #f)) (do ((i 0 (+ i 1))) (happy happy) (if (> i 3) (set! happy i)))) 4)
 
 (test (+ (do ((i 0 (+ i 1))) ((= i 3) i)) (do ((j 0 (+ j 1))) ((= j 4) j))) 7)
 (test (let ((do 1) (map 2) (for-each 3) (quote 4)) (+ do map for-each quote)) 10)
@@ -34137,5 +34222,1803 @@ tan error > 1e-6 around 2^46.506993328423
 expt error > 1e-6 around 2^-46.506993328423
 )
 
-(display ";all done!") (newline)
 
+(if with-the-bug-finding-machine
+    (let ((tries (if (integer? with-the-bug-finding-machine) with-the-bug-finding-machine 10000)))
+      (if (provided? 's7) (set! (mus-rand-seed) (current-time)))
+
+      (format #t "the bug machine is running...")
+      
+      (letrec ((distance (lambda (a b) 
+			   (magnitude (- a b))
+			   ;; (magnitude (- (exact->inexact a) (exact->inexact b)))
+			   ))
+	       
+	       (choose-number (lambda ()
+				(let ((choice (random 4))
+				      (num1 (random (expt 2 31)))
+				      (num2 (random (expt 2 31))))
+				  (if (> (random 1.0) 0.5) (set! num1 (- num1)))
+				  (if (> (random 1.0) 0.5) (set! num2 (- num2)))
+				  (list 
+				   (case choice
+				     ((0) num1)
+				     ((1) (/ num1 (if (= num2 0) 1 num2)))
+				     ((2) (if (not (= num2 0)) (exact->inexact (/ num1 num2)) (* .01 num1)))
+				     ((3) (make-rectangular (* (random 1.0) num1) (* (random 1.0) num2))))))))
+	       
+	       (choose-real (lambda ()
+			      (let ((choice (random 3))
+				    (num1 (random (expt 2 31)))
+				    (num2 (random (expt 2 31))))
+				(if (> (random 1.0) 0.5) (set! num1 (- num1)))
+				(if (> (random 1.0) 0.5) (set! num2 (- num2)))
+				(list 
+				 (case choice
+				   ((0) num1)
+				   ((1) (/ num1 (if (= num2 0) 1 num2)))
+				   ((2) (if (not (= num2 0)) (exact->inexact (/ num1 num2)) (* .01 num1))))))))
+	       
+	       (choose-rational (lambda ()
+				  (let ((choice (random 2))
+					(num1 (random (expt 2 31)))
+					(num2 (random (expt 2 31))))
+				    (if (> (random 1.0) 0.5) (set! num1 (- num1)))
+				    (if (> (random 1.0) 0.5) (set! num2 (- num2)))
+				    (list 
+				     (case choice
+				       ((0) num1)
+				       ((1) (/ num1 (if (= num2 0) 1 num2))))))))
+	       
+	       (choose-number-small-imag (lambda ()
+					   (let ((choice (random 4))
+						 (num1 (random (expt 2 31)))
+						 (num2 (random (expt 2 31))))
+					     (if (> (random 1.0) 0.5) (set! num1 (- num1)))
+					     (if (> (random 1.0) 0.5) (set! num2 (- num2)))
+					     (list 
+					      (case choice
+						((0) num1)
+						((1) (/ num1 (if (= num2 0) 1 num2)))
+						((2) (if (not (= num2 0)) (exact->inexact (/ num1 num2)) (* .01 num1)))
+						((3) (make-rectangular (* (random 1.0) num1) (- (random 10.0) 5.0))))))))
+	       
+	       (choose-number-small-real (lambda ()
+					   (let ((choice (random 4))
+						 (num1 (random 10.0))
+						 (num2 (random 1000.0)))
+					     (if (> (random 1.0) 0.5) (set! num1 (- num1)))
+					     (if (> (random 1.0) 0.5) (set! num2 (- num2)))
+					     (list 
+					      (case choice
+						((0) (floor num1))
+						((1) (/ (floor num1) (max 1 (floor num2))))
+						((2) num1)
+						((3) (make-rectangular (- (random 10.0) 5.0) (* (random 1.0) num1))))))))
+	       
+	       (choose-small-number (lambda ()
+				      (let ((choice (random 4))
+					    (num1 (random 10.0))
+					    (num2 (random 10.0)))
+					(if (> (random 1.0) 0.5) (set! num1 (- num1)))
+					(list 
+					 (case choice
+					   ((0) (floor num1))
+					   ((1) (/ (floor num1) (max 1 (floor num2))))
+					   ((2) num1)
+					   ((3) (make-rectangular (- (random 10.0) 5.0) (* (random 1.0) num1))))))))
+	       
+	       (choose-n-numbers (lambda ()
+				   (let ((n (max 1 (random 20)))
+					 (args '()))
+				     (do ((i 0 (+ i 1)))
+					 ((= i n) args)
+				       (set! args (cons (car (choose-number)) args))))))
+	       
+	       (choose-n-real-numbers (lambda ()
+					(let ((n (max 1 (random 20)))
+					      (args '()))
+					  (do ((i 0 (+ i 1)))
+					      ((= i n) args)
+					    (set! args (cons (car (choose-real)) args))))))
+	       
+	       (choose-2-or-more-real-numbers (lambda ()
+						(let ((n (max 2 (random 20)))
+						      (args '()))
+						  (do ((i 0 (+ i 1)))
+						      ((= i n) args)
+						    (set! args (cons (car (choose-real)) args))))))
+	       
+	       (choose-n-small-numbers (lambda ()
+					 (let ((n (max 1 (random 20)))
+					       (args '()))
+					   (do ((i 0 (+ i 1)))
+					       ((= i n) args)
+					     (set! args (cons (car (choose-small-number)) args))))))
+	       
+	       (ok-real-keep-type (lambda (op nlst v tst)
+				    (let ((n (car nlst)))
+				      (if (not (real? n))
+					  (if (not (eq? v 'error))
+					      (format #t "(~A ~A) -> ~A~%" op n v))
+					  (if (or (and (integer? n)
+						       (not (integer? v)))
+						  (and (rational? n)
+						       (not (rational? v)))
+						  (not (real? v))
+						  (not (tst n v)))
+					      (format #t "(~A ~A) -> ~A~%" op n v))))))
+	       
+	       (ok-number-to-real (lambda (op nlst v tst)
+				    (let ((n (car nlst)))
+				      (if (not (number? n))
+					  (if (not (eq? v 'error))
+					      (format #t "(~A ~A) -> ~A~%" op n v))
+					  (if (or (not (real? v))
+						  (not (tst n v)))
+					      (format #t "(~A ~A) -> ~A~%" op n v))))))
+	       
+	       (ok-rational (lambda (op nlst v tst)
+			      (let ((n (car nlst)))
+				(if (not (rational? n))
+				    (if (not (eq? v 'error))
+					(format #t "(~A ~A) -> ~A~%" op n v))
+				    (if (not (tst n v))
+					(format #t "(~A ~A) -> ~A~%" op n v))))))
+	       
+	       (ok-number (lambda (op nlst v tst)
+			    (let ((n (car nlst)))
+			      (if (not (number? n))
+				  (if (not (eq? v 'error))
+				      (format #t "(~A ~A) -> ~A~%" op n v))
+				  (if (not (tst n v))
+				      (format #t "(~A ~A) -> ~A~%" op n v))))))
+	       
+	       (ok-two-numbers (lambda (op nlst v tst)
+				 (let ((n1 (car nlst))
+				       (n2 (cadr nlst)))
+				   (if (or (not (number? n1))
+					   (not (number? n2)))
+				       (if (not (eq? v 'error))
+					   (format #t "(~A ~A ~A) -> ~A~%" op n1 n2 v))
+				       (if (not (tst n1 n2 v))
+					   (format #t "(~A ~A ~A) -> ~A~%" op n1 n2 v))))))
+	       
+	       (ok-number-to-bool (lambda (op nlst v tst)
+				    (let ((n (car nlst)))
+				      (if (not (number? n))
+					  (if (not (eq? v 'error))
+					      (format #t "(~A ~A) -> ~A~%" op n v))
+					  (if (or (not (boolean? v))
+						  (not (tst n v)))
+					      (format #t "(~A ~A) -> ~A~%" op n v))))))
+	       
+	       (ok-real-to-bool (lambda (op nlst v tst)
+				  (let ((n (car nlst)))
+				    (if (not (real? n))
+					(if (not (eq? v 'error))
+					    (format #t "(~A ~A) -> ~A~%" op n v))
+					(if (or (not (boolean? v))
+						(not (tst n v)))
+					    (format #t "(~A ~A) -> ~A~%" op n v))))))
+	       
+	       (ok-integer-to-bool (lambda (op nlst v tst)
+				     (let ((n (car nlst)))
+				       (if (not (integer? n))
+					   (if (not (eq? v 'error))
+					       (format #t "(~A ~A) -> ~A~%" op n v))
+					   (if (or (not (boolean? v))
+						   (not (tst n v)))
+					       (format #t "(~A ~A) -> ~A~%" op n v))))))
+	       
+	       (ok-string-to-number (lambda (op nlst v tst)
+				      (let ((n (car nlst)))
+					(if (not (number? n))
+					    (if (not (eq? v 'error))
+						(format #t "(~A ~A) -> ~A~%" op n v))
+					    (if (or (not (string? v))
+						    (not (tst n v)))
+						(format #t "(~A ~A) -> ~A~%" op n v))))))
+	       
+	       (choose-char (lambda () (list (integer->char (random 128)))))
+	       
+	       (choose-non-null-char (lambda () (list (integer->char (max 1 (random 128))))))
+	       
+	       (choose-2-or-more-chars (lambda ()
+					 (let ((n (max 2 (random 20)))
+					       (args '()))
+					   (do ((i 0 (+ i 1)))
+					       ((= i n) args)
+					     (set! args (cons (car (choose-char)) args))))))
+	       
+	       (choose-string (lambda ()
+				(let* ((strlen (random 20))
+				       (str (make-string strlen)))
+				  (do ((i 0 (+ i 1)))
+				      ((= i strlen))
+				    (string-set! str i (integer->char (+ 40 (random 80)))))  ;(max 1 (random 128)))))
+				  (list str))))
+	       
+	       (choose-2-or-more-strings (lambda ()
+					   (let ((n (max 2 (random 20)))
+						 (args '()))
+					     (do ((i 0 (+ i 1)))
+						 ((= i n) args)
+					       (set! args (cons (car (choose-string)) args))))))
+	       
+	       (choose-vector (lambda (ctr)
+				(if (> ctr 3)
+				    (list 1)
+				    (let* ((len (+ 1 (random (inexact->exact (floor (/ 10 (+ ctr 1)))))))
+					   (v (make-vector len)))
+				      (do ((i 0 (+ i 1)))
+					  ((= i len))
+					(vector-set! v i (car (choose-any (+ ctr 1)))))
+				      (list v)))))
+	       
+	       (choose-list (lambda (ctr)
+			      (if (> ctr 6)
+				  (list 1)
+				  (let ((len (random (inexact->exact (floor (/ 20 (+ ctr 1))))))
+					(lst '()))
+				    (do ((i 0 (+ i 1)))
+					((= i len))
+				      (set! lst (cons (car (choose-any (+ ctr 1))) lst)))
+				    (list lst)))))
+	       
+	       (choose-non-null-list (lambda (ctr)
+				       (let ((val (car (choose-list ctr))))
+					 (if (null? val)
+					     (list (list val))
+					     (list val)))))
+	       
+	       (choose-boolean (lambda ()
+				 (if (> (random 1.0) 0.5) (list #f) (list #t))))
+	       
+	       (choose-any (lambda (ctr)
+			     (let ((type (random (if (= ctr 0) 6 (if (= ctr 1) 5 (if (= ctr 2) 4 3))))))
+			       (case type
+				 ((0) (choose-number))
+				 ((1) (choose-char))
+				 ((2) (choose-string))
+				 ((3) (choose-list (+ ctr 1)))
+				 ((4) (choose-vector (+ ctr 1)))
+				 (else (choose-boolean))))))
+	       
+	       )
+	
+	(let ((ops 
+	       (list 
+		
+		;; -------- numbers --------------------------------
+		(list abs 
+		      (lambda (nlst v) 
+			(ok-real-keep-type 'abs nlst v 
+					   (lambda (n v)
+					     (= v (if (< n 0) (- n) n)))))
+		      choose-number)
+		
+		(list angle 
+		      (lambda (nlst v)
+			(ok-number-to-real 'angle nlst v 
+					   (lambda (n v)
+					     (let ((val (make-polar (magnitude n) v)))
+					       (< (distance val n) 1e-5)))))
+		      choose-number)
+		
+		(list magnitude 
+		      (lambda (nlst v)
+			(ok-number-to-real 'magnitude nlst v 
+					   (lambda (n v)
+					     (let ((val (make-polar v (angle n))))
+					       (< (distance val n) 1e-5)))))
+		      choose-number)
+		
+		(list real-part 
+		      (lambda (nlst v)
+			(ok-number-to-real 'real-part nlst v 
+					   (lambda (n v)
+					     (let ((val (make-rectangular v (imag-part n))))
+					       (< (distance val n) 1e-5)))))
+		      choose-number)
+		
+		(list imag-part 
+		      (lambda (nlst v)
+			(ok-number-to-real 'imag-part nlst v 
+					   (lambda (n v)
+					     (let ((val (make-rectangular (real-part n) v)))
+					       (< (distance val n) 1e-5)))))
+		      choose-number)
+		
+		(list numerator 
+		      (lambda (nlst v)
+			(ok-rational 'numerator nlst v 
+				     (lambda (n v)
+				       (if (integer? n)
+					   (= n v)
+					   (= v (* n (denominator n)))))))
+		      choose-number)
+		
+		(list denominator 
+		      (lambda (nlst v)
+			(ok-rational 'denominator nlst v 
+				     (lambda (n v)
+				       (if (integer? n)
+					   (= v 1)
+					   (= v (/ (numerator n) n))))))
+		      choose-number)
+		
+		(list zero? 
+		      (lambda (nlst v)
+			(ok-number-to-bool 'zero? nlst v 
+					   (lambda (n v)
+					     (or (and (= n 0)
+						      v)
+						 (and (not (= n 0))
+						      (not v))))))
+		      choose-number)
+		
+		(list positive? 
+		      (lambda (nlst v)
+			(ok-real-to-bool 'positive? nlst v 
+					 (lambda (n v)
+					   (or (and (> n 0)
+						    v)
+					       (and (<= n 0)
+						    (not v))))))
+		      choose-number)
+		
+		(list negative? 
+		      (lambda (nlst v)
+			(ok-real-to-bool 'negative? nlst v 
+					 (lambda (n v)
+					   (or (and (< n 0)
+						    v)
+					       (and (>= n 0)
+						    (not v))))))
+		      choose-number)
+		
+		(list even? 
+		      (lambda (nlst v)
+			(ok-integer-to-bool 'even? nlst v 
+					    (lambda (n v)
+					      (or (and (= (modulo n 2) 0)
+						       v)
+						  (and (not (= (modulo n 2) 0))
+						       (not v))))))
+		      choose-number)
+		
+		(list odd? 
+		      (lambda (nlst v)
+			(ok-integer-to-bool 'odd? nlst v 
+					    (lambda (n v)
+					      (or (and (= (modulo n 2) 1)
+						       v)
+						  (and (not (= (modulo n 2) 1))
+						       (not v))))))
+		      choose-number)
+		
+		(list exact? 
+		      (lambda (nlst v)
+			(ok-number-to-bool 'exact? nlst v 
+					   (lambda (n v)
+					     (let* ((str (number->string n))
+						    (dotted #f)
+						    (len (string-length str)))
+					       (do ((i 0 (+ i 1)))
+						   ((or dotted (= i len)))
+						 (set! dotted (char=? #\. (string-ref str i))))
+					       (if (not (provided? 's7))
+						   (eq? v (not dotted))
+						   (eq? v (and (real? n)
+							       (not dotted))))))))
+		      choose-number)
+		
+		(list inexact? 
+		      (lambda (nlst v)
+			(ok-number-to-bool 'inexact? nlst v 
+					   (lambda (n v)
+					     (let* ((str (number->string n))
+						    (dotted #f)
+						    (len (string-length str)))
+					       (do ((i 0 (+ i 1)))
+						   ((or dotted (= i len)))
+						 (set! dotted (char=? #\. (string-ref str i))))
+					       (if (not (provided? 's7))
+						   (eq? v dotted)
+						   (eq? v (or (not (real? n))
+							      dotted)))))))
+		      choose-number)
+		
+		(list sin 
+		      (lambda (nlst v)
+			(ok-number 'sin nlst v 
+				   (lambda (n v)
+				     (let ((a (cos n)))
+				       (< (min (distance v (sqrt (- 1 (* a a)))) 
+					       (distance v (- (sqrt (- 1 (* a a))))))
+					  1e-6)))))
+		      choose-number-small-imag)
+		
+		(list cos 
+		      (lambda (nlst v)
+			(ok-number 'cos nlst v 
+				   (lambda (n v)
+				     (let ((a (sin n)))
+				       (< (min (distance v (sqrt (- 1 (* a a)))) 
+					       (distance v (- (sqrt (- 1 (* a a))))))
+					  1e-6)))))
+		      choose-number-small-imag)
+		
+		(list asin 
+		      (lambda (nlst v)
+			(ok-number 'asin nlst v 
+				   (lambda (n v)
+				     (let ((a (sin v)))
+					;(format #t "[~A ~A ~A -> ~A]~%" n v a (min (magnitude (- a n)) (magnitude (+ a n))))
+				       (< (/ (min (distance a n)
+						  (distance a (- n)))
+					     (max 0.001 (magnitude n)))
+					  1e-2)))))
+		      choose-small-number)
+		
+		(list acos 
+		      (lambda (nlst v)
+			(ok-number 'acos nlst v 
+				   (lambda (n v)
+				     (let ((a (cos v)))
+					;(format #t "[~A ~A ~A -> ~A]~%" n v a (min (magnitude (- a n)) (magnitude (+ a n))))
+				       (< (/ (min (distance a n)
+						  (distance a (- n)))
+					     (max 0.001 (magnitude n)))
+					  1e-2)))))
+		      choose-small-number)
+		
+		(list integer? 
+		      (lambda (nlst v)
+			(ok-number-to-bool 'integer? nlst v 
+					   (lambda (n v)
+					     (eq? v 
+						  (and (zero? (imag-part n))
+						       (rational? n)
+						       (= n (inexact->exact n))
+						       (= (denominator n) 1))))))
+		      choose-number)
+		
+		(list rational?
+		      (lambda (nlst v)
+			(ok-number-to-bool 'rational? nlst v 
+					   (lambda (n v)
+					     (if with-generic-modulo
+						 (eq? v (exact? n))
+						 (eq? v (real? n))))))
+		      choose-number)
+		
+		(list real?
+		      (lambda (nlst v)
+			(ok-number-to-bool 'real? nlst v 
+					   (lambda (n v) (eq? v (zero? (imag-part n))))))
+		      choose-number)
+		
+		(list complex? 
+		      (lambda (nlst v)
+			(ok-number-to-bool 'complex? nlst v 
+					   (lambda (n v) (eq? v (number? n)))))
+		      choose-number)
+		
+		(list sqrt 
+		      (lambda (nlst v)
+			(ok-number 'sqrt nlst v 
+				   (lambda (n v)
+				     (let ((a (* v v)))
+				       (< (magnitude (- a n)) 1e-6)))))
+		      choose-number)
+		
+		(list exp 
+		      (lambda (nlst v)
+			(ok-number 'exp nlst v 
+				   (lambda (n v)
+				     (let ((a (log v)))
+				       (< (min (distance a n)
+					       (distance (make-rectangular (real-part a) (+ (imag-part a) (* 2 our-pi))) n)
+					       (distance (make-rectangular (real-part a) (- (imag-part a) (* 2 our-pi))) n)
+					       (distance (make-rectangular (real-part a) (+ (imag-part a) (* 4 our-pi))) n)
+					       (distance (make-rectangular (real-part a) (- (imag-part a) (* 4 our-pi))) n))
+					  1e-6)))))
+		      choose-number-small-real)
+		
+		(list log 
+		      (lambda (nlst v)
+			(ok-number 'log nlst v 
+				   (lambda (n v)
+				     (let ((a (exp v)))
+				       (< (distance a n) 1e-4)))))
+		      (lambda () (let ((val (car (choose-number)))) (list (if (zero? val) 1.0 val)))))
+		
+		(list tan 
+		      (lambda (nlst v)
+			(ok-number 'tan nlst v 
+				   (lambda (n v)
+				     (let ((a (/ (sin n) (cos n))))
+				       (< (distance a v) 1e-6)))))
+		      (lambda () (let ((val (car (choose-number-small-imag)))) (list (if (zero? (cos val)) 1.0 val)))))
+		
+		(list atan 
+		      (lambda (nlst v)
+			(ok-number 'atan nlst v 
+				   (lambda (n v)
+				     (let ((a (tan v)))
+				       (< (min (distance a n)
+					       (distance a (- n)))
+					  1e-6)))))
+		      choose-number-small-real)
+		
+		(list floor
+		      (lambda (nlst v)
+			(ok-number 'floor nlst v 
+				   (lambda (n v)
+				     (and (rational? v)
+					  (>= (- n v) 0)
+					  (< (- n v) 1.0)))))
+		      choose-real)
+		
+		(list ceiling
+		      (lambda (nlst v)
+			(ok-number 'ceiling nlst v 
+				   (lambda (n v)
+				     (and (rational? v)
+					  (<= (- n v) 0)
+					  (< (- v n) 1.0)))))
+		      choose-real)
+		
+		(list round 
+		      (lambda (nlst v)
+			(ok-number 'round nlst v 
+				   (lambda (n v)
+				     (and (rational? v)
+					  (<= (abs (- n v)) 0.5)))))
+		      choose-real)
+		
+		(list truncate
+		      (lambda (nlst v)
+			(ok-number 'truncate nlst v 
+				   (lambda (n v)
+				     (and (rational? v)
+					  (< (abs (- n v)) 1.0)))))
+		      choose-real)
+		
+		;; -------- hyperbolics --------------------------------
+		(list sinh
+		      (lambda (nlst v)
+			(ok-number 'sinh nlst v 
+				   (lambda (n v)
+				     (let ((a (- (* 0.0+1.0i (sin (* 0.0+1.0i n))))))
+				       (< (distance a v) 1e-6)))))
+		      choose-number-small-real)
+		
+		(list cosh 
+		      (lambda (nlst v)
+			(ok-number 'cosh nlst v 
+				   (lambda (n v)
+				     (let ((a (cos (* 0.0+1.0i n))))
+				       (< (distance a v) 1e-6)))))
+		      choose-number-small-real)
+		
+		(list asinh
+		      (lambda (nlst v)
+			(ok-number 'asinh nlst v 
+				   (lambda (n v)
+				     (let ((a (sinh v)))
+				       (< (distance a n) 1e-6)))))
+		      choose-small-number)
+		
+		(list acosh
+		      (lambda (nlst v)
+			(ok-number 'acosh nlst v 
+				   (lambda (n v)
+				     (let ((a (cosh v)))
+				       (< (distance a n) 1e-6)))))
+		      choose-small-number)
+		
+		(list tanh
+		      (lambda (nlst v)
+			(ok-number 'tanh nlst v 
+				   (lambda (n v)
+				     (let ((a (/ (sinh n) (cosh n))))
+				       (< (distance a v) 1e-6)))))
+		      choose-small-number)
+		
+		(list atanh
+		      (lambda (nlst v)
+			(ok-number 'atanh nlst v 
+				   (lambda (n v)
+				     (let ((a (tanh v)))
+				       (< (distance a n) 1e-6)))))
+		      choose-small-number)
+		
+		;; ------------------------------------------------
+		
+		(list make-polar 
+		      (lambda (nlst v)
+			(ok-two-numbers 'make-polar nlst v 
+					(lambda (n1 n2 v)
+					  (< (distance (* n1 (exp (* 0.0+1.0i n2))) v) 1e-6))))
+		      (lambda () (list (car (choose-real)) (car (choose-real)))))
+		
+		(list make-rectangular
+		      (lambda (nlst v)
+			(ok-two-numbers 'make-rectangular nlst v 
+					(lambda (n1 n2 v)
+					  (< (distance (+ n1 (* 0.0+1.0i n2)) v) 1e-6))))
+		      (lambda () (list (car (choose-real)) (car (choose-real)))))
+		
+		(list modulo 
+		      (lambda (nlst v)
+			(ok-two-numbers 'modulo nlst v 
+					(lambda (n1 n2 v)
+					  (let ((a (- n1 (* n2 (floor (/ n1 n2))))))
+					    (= a v)))))
+		      (lambda () (list (* (random (expt 2 30)) (if (> (random 1.0) 0.5) 1 -1))
+				       (let ((val (* (random (expt 2 30)) (if (> (random 1.0) 0.5) 1 -1))))
+					 (if (zero? val) 1 val)))))
+		
+		(list remainder 
+		      (lambda (nlst v)
+			(ok-two-numbers 'remainder nlst v 
+					(lambda (n1 n2 v)
+					  (let ((a (- n1 (* n2 (quotient n1 n2)))))
+					    (= a v)))))
+		      (lambda () (list (* (random (expt 2 30)) (if (> (random 1.0) 0.5) 1 -1))
+				       (let ((val (* (random (expt 2 30)) (if (> (random 1.0) 0.5) 1 -1))))
+					 (if (zero? val) 1 val)))))
+		
+		(list quotient
+		      (lambda (nlst v)
+			(ok-two-numbers 'quotient nlst v 
+					(lambda (n1 n2 v)
+					  (let ((a (truncate (/ n1 n2))))
+					    (= a v)))))
+		      (lambda () (list (* (random (expt 2 30)) (if (> (random 1.0) 0.5) 1 -1))
+				       (let ((val (* (random (expt 2 30)) (if (> (random 1.0) 0.5) 1 -1))))
+					 (if (zero? val) 1 val)))))
+		
+		(list rationalize
+		      (lambda (nlst v)
+			(ok-two-numbers 'rationalize nlst v 
+					(lambda (n1 n2 v)
+					  (and (rational? v)
+					       (< (abs (- v n1)) n2)))))
+		      (lambda () (list (car (choose-real)) (max 0.000001 (random .1)))))
+		
+		(list number->string 
+		      (lambda (nlst v)
+			(ok-string-to-number 'number->string nlst v 
+					     (lambda (n v)
+					       (< (distance n (string->number v)) 1e-5))))
+		      choose-number)
+		
+		(list exact->inexact 
+		      (lambda (nlst v)
+			(ok-number 'exact->inexact nlst v
+				   (lambda (n v)
+				     (and (< (abs (- n v)) 1e-12)
+					  (not (exact? v))))))
+		      choose-rational)
+		
+		(list inexact->exact 
+		      (lambda (nlst v)
+			(ok-number 'inexact->exact nlst v
+				   (lambda (n v)
+				     (and (< (abs (- n v)) 1e-12)
+					  (rational? v)))))
+		      choose-real)
+		
+		(list gcd 
+		      (lambda (nlst v)
+			(ok-two-numbers 'gcd nlst v 
+					(lambda (n1 n2 v)
+					  (and (integer? (/ n1 v))
+					       (integer? (/ n2 v))
+					       (positive? v)
+					       (= (abs (lcm n1 n2)) (abs (/ (* n1 n2) v)))))))
+		      (lambda () (list (* (random (expt 2 30)) (if (> (random 1.0) 0.5) 1 -1))
+				       (* (random (expt 2 30)) (if (> (random 1.0) 0.5) 1 -1)))))
+		
+		
+		(list lcm 
+		      (lambda (nlst v)
+			(ok-two-numbers 'lcm nlst v
+					(lambda (n1 n2 v)
+					  (or (and (or (= n1 0)
+						       (= n2 0))
+						   (= v 0))
+					      (and (integer? (/ v n1))
+						   (integer? (/ v n2))
+						   (= (abs (/ (* n1 n2) v)) (gcd n1 n2)))))))
+		      (lambda () (list (* (random (expt 2 30)) (if (> (random 1.0) 0.5) 1 -1))
+				       (* (random (expt 2 30)) (if (> (random 1.0) 0.5) 1 -1)))))
+		
+		(list expt 
+		      (lambda (nlst v)
+			(ok-two-numbers 'expt nlst v 
+					(lambda (n1 n2 v)
+					  (let ((a (if (zero? n1) 0 (exp (* n2 (log n1))))))
+					    (if (> (/ (distance a v) (magnitude v)) 1e-6)
+						(format #t "[expt ~A ~A -> ~A, ~A -> ~A]~%" n1 n2 v a (distance a v)))
+					    (< (/ (distance a v) (magnitude v)) 1e-6)))))
+		      (lambda () (list (let ((val (car (choose-small-number))))
+					 (if (zero? val) 1 (/ val 2.0)))
+				       (car (choose-small-number)))))
+		
+		(list + 
+		      (lambda (nlst v)
+			(let ((tst (lambda (nlst v)
+				     (let ((n (length nlst))
+					   (mx 0.0))
+				       (do ((i 0 (+ i 1)))
+					   ((= i n))
+					 (let ((arg (list-ref nlst i)))
+					   (set! v (- v arg))
+					   ;;(set! v (- v (exact->inexact arg)))
+					   (set! mx (max mx (magnitude arg)))))
+				       (< (magnitude (/ v (max 0.001 mx))) 1e-6)))))
+			  (if (not (tst nlst v))
+			      (format #t "(+ ~{~A~^ ~}) -> ~A~%" nlst v))))
+		      choose-n-numbers)
+		
+		(list - 
+		      (lambda (nlst v)
+			(let ((tst (lambda (nlst v)
+				     (let ((n (length nlst))
+					   (mx 0.0)
+					   (ans (car nlst)))
+				       (if (= n 1)
+					   (< (distance v (- 0.0 ans)) 1e-6)
+					   (let ()
+					     (do ((i 1 (+ i 1)))
+						 ((= i n))
+					       (let ((arg (list-ref nlst i)))
+						 (set! v (+ v arg))
+						 (set! mx (max mx (magnitude arg)))))
+					     (< (magnitude (/ (- v ans) (max 0.001 mx))) 1e-6)))))))
+			  (if (not (tst nlst v))
+			      (format #t "(- ~{~A~^ ~}) -> ~A~%" nlst v))))
+		      choose-n-numbers)
+		
+		(list * 
+		      (lambda (nlst v)
+			(let ((tst (lambda (nlst v)
+				     (let ((n (length nlst))
+					   (mx 0.0))
+				       (do ((i 0 (+ i 1)))
+					   ((= i n))
+					 (let ((arg (list-ref nlst i)))
+					   (set! v (/ v arg))
+					   (set! mx (max mx (magnitude arg)))))
+				       (< (magnitude (/ (- v 1) (max 0.001 mx))) 1e-6)))))
+			  (if (not (tst nlst v))
+			      (format #t "(* ~{~A~^ ~}) -> ~A~%" nlst v))))
+		      (lambda () (map (lambda (n) (if (zero? n) 1 n)) (choose-n-small-numbers))))
+		
+		(list / 
+		      (lambda (nlst v)
+			(let ((tst (lambda (nlst v)
+				     (let ((n (length nlst))
+					   (mx 0.0)
+					   (ans (car nlst)))
+				       (if (= n 1)
+					   (distance v (/ 1 n))
+					   (let ()
+					     (do ((i 1 (+ i 1)))
+						 ((= i n))
+					       (let ((arg (list-ref nlst i)))
+						 (set! v (* v arg))
+						 (set! mx (max mx (magnitude arg)))))
+					     (< (magnitude (/ (- v ans) (max 0.001 mx))) 1e-6)))))))
+			  (if (not (tst nlst v))
+			      (format #t "(/ ~{~A~^ ~}) -> ~A~%" nlst v))))
+		      (lambda () (map (lambda (n) (if (zero? n) 1 n)) (choose-n-small-numbers))))
+		
+		(list max 
+		      (lambda (nlst v)
+			(let ((tst (lambda (nlst v)
+				     (let ((n (length nlst))
+					   (happy #t))
+				       (do ((i 0 (+ i 1)))
+					   ((or (not happy) 
+						(= i n)) 
+					    happy)
+					 (let ((arg (list-ref nlst i)))
+					   (set! happy (> (- v arg) -1e-12))))))))
+			  (if (not (tst nlst v))
+			      (format #t "(max ~{~A~^ ~}) -> ~A~%" nlst v))))
+		      choose-n-real-numbers)
+		
+		(list min
+		      (lambda (nlst v)
+			(let ((tst (lambda (nlst v)
+				     (let ((n (length nlst))
+					   (happy #t))
+				       (do ((i 0 (+ i 1)))
+					   ((or (not happy) 
+						(= i n)) 
+					    happy)
+					 (let ((arg (list-ref nlst i)))
+					   (set! happy (> (- arg v) -1e-12))))))))
+			  (if (not (tst nlst v))
+			      (format #t "(min ~{~A~^ ~}) -> ~A~%" nlst v))))
+		      choose-n-real-numbers)
+		
+		(list <
+		      (lambda (nlst v)
+			(let ((tst (lambda (nlst v)
+				     (let ((n (length nlst))
+					   (happy #t)
+					   (last-arg (car nlst)))
+				       (do ((i 1 (+ i 1)))
+					   ((or (not happy) 
+						(= i n))
+					    (eq? v happy))
+					 (let ((arg (list-ref nlst i)))
+					   (set! happy (> (- arg last-arg) -1e-12))
+					   (set! last-arg arg)))))))
+			  (if (not (tst nlst v))
+			      (format #t "(< ~{~A~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-real-numbers)
+		
+		(list <=
+		      (lambda (nlst v)
+			(let ((tst (lambda (nlst v)
+				     (let ((n (length nlst))
+					   (happy #t)
+					   (last-arg (car nlst)))
+				       (do ((i 1 (+ i 1)))
+					   ((or (not happy) 
+						(= i n))
+					    (eq? v happy))
+					 (let ((arg (list-ref nlst i)))
+					   (set! happy (> (- arg last-arg) -1e-12))
+					   (set! last-arg arg)))))))
+			  (if (not (tst nlst v))
+			      (format #t "(<= ~{~A~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-real-numbers)
+		
+		(list >
+		      (lambda (nlst v)
+			(let ((tst (lambda (nlst v)
+				     (let ((n (length nlst))
+					   (happy #t)
+					   (last-arg (car nlst)))
+				       (do ((i 1 (+ i 1)))
+					   ((or (not happy) 
+						(= i n))
+					    (eq? v happy))
+					 (let ((arg (list-ref nlst i)))
+					   (set! happy (> (- last-arg arg) -1e-12))
+					   (set! last-arg arg)))))))
+			  (if (not (tst nlst v))
+			      (format #t "(> ~{~A~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-real-numbers)
+		
+		(list >=
+		      (lambda (nlst v)
+			(let ((tst (lambda (nlst v)
+				     (let ((n (length nlst))
+					   (happy #t)
+					   (last-arg (car nlst)))
+				       (do ((i 1 (+ i 1)))
+					   ((or (not happy) 
+						(= i n))
+					    (eq? v happy))
+					 (let ((arg (list-ref nlst i)))
+					   (set! happy (> (- last-arg arg) -1e-12))
+					   (set! last-arg arg)))))))
+			  (if (not (tst nlst v))
+			      (format #t "(>= ~{~A~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-real-numbers)
+		
+		(list =
+		      (lambda (nlst v)
+			(let ((tst (lambda (nlst v)
+				     (let ((n (length nlst))
+					   (happy #t)
+					   (last-arg (car nlst)))
+				       (do ((i 1 (+ i 1)))
+					   ((or (not happy) 
+						(= i n))
+					    (eq? v happy))
+					 (let ((arg (list-ref nlst i)))
+					   (set! happy (< (abs (- last-arg arg)) 1e-12))
+					   (set! last-arg arg)))))))
+			  (if (not (tst nlst v))
+			      (format #t "(= ~{~A~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-real-numbers)
+		
+		;; -------- characters --------------------------------
+		
+		(list char-upcase
+		      (lambda (nlst v)
+			(let ((chr (car nlst)))
+			  (if (not (char-alphabetic? chr))
+			      (if (not (char=? v chr))
+				  (format #t "(char-upcase #\\~C) -> ~A" chr v))
+			      (if (and (not (char=? chr v))
+				       (not (char=? chr (char-downcase v))))
+				  (format #t "(char-upcase #\\~C) -> ~A~%" chr v)))))
+		      choose-char)
+		
+		(list char-downcase
+		      (lambda (nlst v)
+			(let ((chr (car nlst)))
+			  (if (not (char-alphabetic? chr))
+			      (if (not (char=? v chr))
+				  (format #t "(char-downcase @\\~C) -> ~A" chr v))
+			      (if (and (not (char=? chr v))
+				       (not (char=? chr (char-upcase v))))
+				  (format #t "(char-downcase #\\~C) -> ~A~%" chr v)))))
+		      choose-char)
+		
+		(list char-alphabetic?
+		      (lambda (nlst v)
+			(let ((chr (car nlst)))
+			  (if (not (eq? v (or (char<=? #\A chr #\Z) (char<=? #\a chr #\z))))
+			      (format #t "(char-alphabetic? #\\~C) -> ~A~%" chr v))))
+		      choose-char)
+		
+		(list char-numeric?
+		      (lambda (nlst v)
+			(let ((chr (car nlst)))
+			  (if (not (eq? v (if (member chr (list #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9)) #t #f)))
+			      (format #t "(char-numeric? #\\~C) -> ~A~%" chr v))))
+		      choose-char)
+		
+		(list char-upper-case?
+		      (lambda (nlst v)
+			(let ((chr (car nlst)))
+			  (if (not (eq? v (char<=? #\A chr #\Z)))
+			      (format #t "(char-upper-case? #\\~C) -> ~A~%" chr v))))
+		      choose-char)
+		
+		(list char-lower-case?
+		      (lambda (nlst v)
+			(let ((chr (car nlst)))
+			  (if (not (eq? v (char<=? #\a chr #\z)))
+			      (format #t "(char-lower-case? #\\~C) -> ~A~%" chr v))))
+		      choose-char)
+		
+		(list char-whitespace?
+		      (lambda (nlst v)
+			(let ((chr (car nlst)))
+			  (if (not (eq? v (if (member chr (list #\space (integer->char 9) (integer->char 10) 
+								(integer->char 11) (integer->char 12) (integer->char 13)))
+					      #t #f)))
+			      (format #t "(char-whitespace? #\\~C) -> ~A (~D)~%" chr v (char->integer chr)))))
+		      choose-char)
+		
+		(list char=?
+		      (lambda (nlst v)
+			(let ((c1 (car nlst))
+			      (len (length nlst))
+			      (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (set! happy (= (char->integer c1) (char->integer (list-ref nlst i)))))
+			  (if (not (eq? happy v))
+			      (format #t "(char=? ~{#\\~C~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-chars)
+		
+		(list char-ci=?
+		      (lambda (nlst v)
+			(let ((c1 (car nlst))
+			      (len (length nlst))
+			      (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (set! happy (or (= (char->integer c1) (char->integer (list-ref nlst i)))
+					    (= (char->integer c1) (char->integer (char-upcase (list-ref nlst i))))
+					    (= (char->integer c1) (char->integer (char-downcase (list-ref nlst i)))))))
+			  (if (not (eq? happy v))
+			      (format #t "(char-ci=? ~{#\\~C~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-chars)
+		
+		(list char<?
+		      (lambda (nlst v)
+			(let ((c1 (car nlst))
+			      (len (length nlst))
+			      (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (set! happy (< (char->integer c1) (char->integer (list-ref nlst i))))
+			    (set! c1 (list-ref nlst i)))
+			  (if (not (eq? happy v))
+			      (format #t "(char<? ~{#\\~C~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-chars)
+		
+		(list char-ci<?
+		      (lambda (nlst v)
+			(let ((c1 (car nlst))
+			      (len (length nlst))
+			      (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (set! happy (< (char->integer (char-upcase c1)) (char->integer (char-upcase (list-ref nlst i)))))
+			    (set! c1 (list-ref nlst i)))
+			  (if (not (eq? happy v))
+			      (format #t "(char-ci<? ~{#\\~C~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-chars)
+		
+		(list char<=?
+		      (lambda (nlst v)
+			(let ((c1 (car nlst))
+			      (len (length nlst))
+			      (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (set! happy (<= (char->integer c1) (char->integer (list-ref nlst i))))
+			    (set! c1 (list-ref nlst i)))
+			  (if (not (eq? happy v))
+			      (format #t "(char<=? ~{#\\~C~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-chars)
+		
+		(list char-ci<=?
+		      (lambda (nlst v)
+			(let ((c1 (car nlst))
+			      (len (length nlst))
+			      (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (set! happy (<= (char->integer (char-upcase c1)) (char->integer (char-upcase (list-ref nlst i)))))
+			    (set! c1 (list-ref nlst i)))
+			  (if (not (eq? happy v))
+			      (format #t "(char-ci<=? ~{#\\~C~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-chars)
+		
+		(list char>?
+		      (lambda (nlst v)
+			(let ((c1 (car nlst))
+			      (len (length nlst))
+			      (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (set! happy (> (char->integer c1) (char->integer (list-ref nlst i))))
+			    (set! c1 (list-ref nlst i)))
+			  (if (not (eq? happy v))
+			      (format #t "(char>? ~{#\\~C~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-chars)
+		
+		(list char-ci>?
+		      (lambda (nlst v)
+			(let ((c1 (car nlst))
+			      (len (length nlst))
+			      (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (set! happy (> (char->integer (char-upcase c1)) (char->integer (char-upcase (list-ref nlst i)))))
+			    (set! c1 (list-ref nlst i)))
+			  (if (not (eq? happy v))
+			      (format #t "(char-ci>? ~{#\\~C~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-chars)
+		
+		(list char>=?
+		      (lambda (nlst v)
+			(let ((c1 (car nlst))
+			      (len (length nlst))
+			      (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (set! happy (>= (char->integer c1) (char->integer (list-ref nlst i))))
+			    (set! c1 (list-ref nlst i)))
+			  (if (not (eq? happy v))
+			      (format #t "(char>=? ~{#\\~C~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-chars)
+		
+		(list char-ci>=?
+		      (lambda (nlst v)
+			(let ((c1 (car nlst))
+			      (len (length nlst))
+			      (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (set! happy (>= (char->integer (char-upcase c1)) (char->integer (char-upcase (list-ref nlst i)))))
+			    (set! c1 (list-ref nlst i)))
+			  (if (not (eq? happy v))
+			      (format #t "(char-ci>=? ~{#\\~C~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-chars)
+		
+		(list char->integer
+		      (lambda (nlst v)
+			(let ((chr (car nlst)))
+			  (if (or (not (integer? v))
+				  (not (char=? chr (integer->char v))))
+			      (format #t "(char->integer #\\~C) -> ~A~%" chr v))))
+		      choose-char)
+		
+		(list integer->char
+		      (lambda (nlst v)
+			(let ((chr (car nlst)))
+			  (if (or (not (char? v))
+				  (not (= chr (char->integer v))))
+			      (format #t "(integer->char ~A) -> #\\~C" chr v))))
+		      (lambda () (list (random 256))))
+		
+		;; -------- strings --------------------------------
+		
+		(list string-length
+		      (lambda (nlst v)
+			(let ((chr (car nlst))
+			      (ilen -1))
+			  (if (or (not (integer? v))
+				  ;; assume for these tests that there won't be embedded nulls
+				  (let ((happy #t))
+				    (catch #t
+					   (lambda ()
+					     (do ((i 0 (+ i 1)))
+						 ((not happy))
+					       (let ((c (string-ref chr i))) ; error if we run off the end?
+						 (set! ilen i)
+						 (if (= (char->integer c) 0)
+						     (set! happy #f)))))
+					   (lambda args args))
+				    (not (= (+ ilen 1) v))))
+			      (format #t "(string-length ~S) -> ~D (~D)~%" chr v ilen))))
+		      choose-string)
+		
+		(list string-ref
+		      (lambda (nlst v)
+			(let ((str (car nlst))
+			      (pt (cadr nlst)))
+			  (if (or (not (char? v))
+				  (not (char=? (list-ref (string->list str) pt) v)))
+			      (format #t "(string-ref ~S ~D) -> #\\~C~%" str pt v))))
+		      (lambda ()
+			(let ((str (string-append "1" (car (choose-string)))))
+			  (list str (random (string-length str))))))
+		
+		(list string-set!
+		      (lambda (nlst v)
+			(let ((str (car nlst))
+			      (pt (cadr nlst))
+			      (chr (caddr nlst)))
+			  (if (not (char=? (list-ref (string->list str) pt) chr))
+			      (format #t "(string-set! ~S ~D #\\~C) -> #\\~C~%" str pt chr (list-ref (string->list str) pt)))))
+		      (lambda ()
+			(let ((str (string-append "1" (car (choose-string)))))
+			  (list str (random (string-length str)) (car (choose-non-null-char))))))
+		
+		(list make-string
+		      (lambda (nlst v)
+			(let ((len (car nlst))
+			      (c (and (not (null? (cdr nlst))) (cadr nlst))))
+			  (if (or (not (string? v))
+				  (not (= (string-length v) len))
+				  (and c
+				       (let ((happy #t))
+					 (do ((i 0 (+ i 1)))
+					     ((or (not happy) (= i len)) (not happy))
+					   (set! happy (char=? (string-ref v i) c))))))
+			      (if c
+				  (format #t "(make-string ~D #\\~C) -> ~S~%" len c v)
+				  (format #t "(make-string ~D) -> ~S~%" len v)))))
+		      (lambda ()
+			(let ((len (random 20)))
+			  (if (> (random 1.0) 0.5)
+			      (list len (car (choose-non-null-char)))
+			      (list len)))))
+		
+		(list string=?
+		      (lambda (nlst v)
+			(let* ((c1 (car nlst))
+			       (c1-len (string-length c1))
+			       (len (length nlst))
+			       (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (let ((c2 (list-ref nlst i)))
+			      (if (not (= (string-length c2) c1-len))
+				  (set! happy #f)
+				  (do ((k 0 (+ k 1)))
+				      ((or (not happy) (= k c1-len)) happy)
+				    (set! happy (char=? (string-ref c1 k) (string-ref c2 k)))))))
+			  (if (not (eq? happy v))
+			      (format #t "(string=? ~{~S~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-strings)
+		
+		(list string-ci=?
+		      (lambda (nlst v)
+			(let* ((c1 (car nlst))
+			       (c1-len (string-length c1))
+			       (len (length nlst))
+			       (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (let ((c2 (list-ref nlst i)))
+			      (if (not (= (string-length c2) c1-len))
+				  (set! happy #f)
+				  (do ((k 0 (+ k 1)))
+				      ((or (not happy) (= k c1-len)) happy)
+				    (set! happy (char-ci=? (string-ref c1 k) (string-ref c2 k)))))))
+			  (if (not (eq? happy v))
+			      (format #t "(string-ci=? ~{~S~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-strings)
+		
+		(list string<?
+		      (lambda (nlst v)
+			(let* ((c1 (car nlst))
+			       (c1-len (string-length c1))
+			       (len (length nlst))
+			       (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (let* ((c2 (list-ref nlst i))
+				   (c2-len (string-length c2))
+				   (pos -1))
+			      ;; first differing char decides -- if same length but otherwise same chars, shorter is less
+			      (do ((k 0 (+ k 1)))
+				  ((or (not happy)
+				       (not (= pos -1))
+				       (= k (min c1-len c2-len))))
+				(if (not (char=? (string-ref c1 k) (string-ref c2 k)))
+				    (begin
+				      (if (= pos -1) (set! pos k))
+				      (set! happy (char<? (string-ref c1 k) (string-ref c2 k))))))
+			      (if (and happy 
+				       (= pos -1))
+				  (set! happy (< c1-len c2-len)))
+			      (set! c1 c2)
+			      (set! c1-len c2-len)))
+			  (if (not (eq? happy v))
+			      (format #t "(string<? ~{~S~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-strings)
+		
+		(list string-ci<?
+		      (lambda (nlst v)
+			(let* ((c1 (car nlst))
+			       (c1-len (string-length c1))
+			       (len (length nlst))
+			       (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (let* ((c2 (list-ref nlst i))
+				   (c2-len (string-length c2))
+				   (pos -1))
+			      ;; first differing char decides -- if same length but otherwise same chars, shorter is less
+			      (do ((k 0 (+ k 1)))
+				  ((or (not happy)
+				       (not (= pos -1))
+				       (= k (min c1-len c2-len))))
+				(if (not (char-ci=? (string-ref c1 k) (string-ref c2 k)))
+				    (begin
+				      (if (= pos -1) (set! pos k))
+				      (set! happy (char-ci<? (string-ref c1 k) (string-ref c2 k))))))
+			      (if (and happy 
+				       (= pos -1))
+				  (set! happy (< c1-len c2-len)))
+			      (set! c1 c2)
+			      (set! c1-len c2-len)))
+			  (if (not (eq? happy v))
+			      (format #t "(string-ci<? ~{~S~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-strings)
+		
+		(list string>?
+		      (lambda (nlst v)
+			(let* ((c1 (car nlst))
+			       (c1-len (string-length c1))
+			       (len (length nlst))
+			       (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (let* ((c2 (list-ref nlst i))
+				   (c2-len (string-length c2))
+				   (pos -1))
+			      (do ((k 0 (+ k 1)))
+				  ((or (not happy)
+				       (not (= pos -1))
+				       (= k (min c1-len c2-len))))
+				(if (not (char=? (string-ref c1 k) (string-ref c2 k)))
+				    (begin
+				      (if (= pos -1) (set! pos k))
+				      (set! happy (char>? (string-ref c1 k) (string-ref c2 k))))))
+			      (if (and happy 
+				       (= pos -1))
+				  (set! happy (> c1-len c2-len)))
+			      (set! c1 c2)
+			      (set! c1-len c2-len)))
+			  (if (not (eq? happy v))
+			      (format #t "(string>? ~{~S~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-strings)
+		
+		(list string-ci>?
+		      (lambda (nlst v)
+			(let* ((c1 (car nlst))
+			       (c1-len (string-length c1))
+			       (len (length nlst))
+			       (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (let* ((c2 (list-ref nlst i))
+				   (c2-len (string-length c2))
+				   (pos -1))
+			      (do ((k 0 (+ k 1)))
+				  ((or (not happy)
+				       (not (= pos -1))
+				       (= k (min c1-len c2-len))))
+				(if (not (char-ci=? (string-ref c1 k) (string-ref c2 k)))
+				    (begin
+				      (if (= pos -1) (set! pos k))
+				      (set! happy (char-ci>? (string-ref c1 k) (string-ref c2 k))))))
+			      (if (and happy 
+				       (= pos -1))
+				  (set! happy (> c1-len c2-len)))
+			      (set! c1 c2)
+			      (set! c1-len c2-len)))
+			  (if (not (eq? happy v))
+			      (format #t "(string-ci>? ~{~S~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-strings)
+		
+		(list string<=?
+		      (lambda (nlst v)
+			(let* ((c1 (car nlst))
+			       (c1-len (string-length c1))
+			       (len (length nlst))
+			       (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (let* ((c2 (list-ref nlst i))
+				   (c2-len (string-length c2))
+				   (pos -1))
+			      (do ((k 0 (+ k 1)))
+				  ((or (not happy)
+				       (not (= pos -1))
+				       (= k (min c1-len c2-len))))
+				(if (not (char=? (string-ref c1 k) (string-ref c2 k)))
+				    (begin
+				      (if (= pos -1) (set! pos k))
+				      (set! happy (char<? (string-ref c1 k) (string-ref c2 k))))))
+			      (if (and happy 
+				       (= pos -1))
+				  (set! happy (<= c1-len c2-len)))
+			      (set! c1 c2)
+			      (set! c1-len c2-len)))
+			  (if (not (eq? happy v))
+			      (format #t "(string<=? ~{~S~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-strings)
+		
+		(list string-ci<=?
+		      (lambda (nlst v)
+			(let* ((c1 (car nlst))
+			       (c1-len (string-length c1))
+			       (len (length nlst))
+			       (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (let* ((c2 (list-ref nlst i))
+				   (c2-len (string-length c2))
+				   (pos -1))
+			      (do ((k 0 (+ k 1)))
+				  ((or (not happy)
+				       (not (= pos -1))
+				       (= k (min c1-len c2-len))))
+				(if (not (char-ci=? (string-ref c1 k) (string-ref c2 k)))
+				    (begin
+				      (if (= pos -1) (set! pos k))
+				      (set! happy (char-ci<? (string-ref c1 k) (string-ref c2 k))))))
+			      (if (and happy 
+				       (= pos -1))
+				  (set! happy (<= c1-len c2-len)))
+			      (set! c1 c2)
+			      (set! c1-len c2-len)))
+			  (if (not (eq? happy v))
+			      (format #t "(string-ci<=? ~{~S~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-strings)
+		
+		(list string>=?
+		      (lambda (nlst v)
+			(let* ((c1 (car nlst))
+			       (c1-len (string-length c1))
+			       (len (length nlst))
+			       (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (let* ((c2 (list-ref nlst i))
+				   (c2-len (string-length c2))
+				   (pos -1))
+			      (do ((k 0 (+ k 1)))
+				  ((or (not happy)
+				       (not (= pos -1))
+				       (= k (min c1-len c2-len))))
+				(if (not (char=? (string-ref c1 k) (string-ref c2 k)))
+				    (begin
+				      (if (= pos -1) (set! pos k))
+				      (set! happy (char>? (string-ref c1 k) (string-ref c2 k))))))
+			      (if (and happy 
+				       (= pos -1))
+				  (set! happy (>= c1-len c2-len)))
+			      (set! c1 c2)
+			      (set! c1-len c2-len)))
+			  (if (not (eq? happy v))
+			      (format #t "(string>=? ~{~S~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-strings)
+		
+		(list string-ci>=?
+		      (lambda (nlst v)
+			(let* ((c1 (car nlst))
+			       (c1-len (string-length c1))
+			       (len (length nlst))
+			       (happy #t))
+			  (do ((i 1 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (let* ((c2 (list-ref nlst i))
+				   (c2-len (string-length c2))
+				   (pos -1))
+			      (do ((k 0 (+ k 1)))
+				  ((or (not happy)
+				       (not (= pos -1))
+				       (= k (min c1-len c2-len))))
+				(if (not (char-ci=? (string-ref c1 k) (string-ref c2 k)))
+				    (begin
+				      (if (= pos -1) (set! pos k))
+				      (set! happy (char-ci>? (string-ref c1 k) (string-ref c2 k))))))
+			      (if (and happy 
+				       (= pos -1))
+				  (set! happy (>= c1-len c2-len)))
+			      (set! c1 c2)
+			      (set! c1-len c2-len)))
+			  (if (not (eq? happy v))
+			      (format #t "(string-ci>=? ~{~S~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-strings)
+		
+		(list string-append
+		      (lambda (nlst v)
+			(let* ((len (length nlst))
+			       (happy #t)
+			       (j 0)
+			       (vlen (string-length v)))
+			  (do ((i 0 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (let* ((c1 (list-ref nlst i))
+				   (c1-len (string-length c1)))
+			      (do ((k 0 (+ k 1)))
+				  ((or (not happy)
+				       (= k c1-len)))
+				(set! happy (char=? (string-ref c1 k) (string-ref v j)))
+				(set! j (+ j 1))
+				(if (> j vlen)
+				    (set! happy #f)))))
+			  (if (not happy)
+			      (format #t "(string-append ~{~S~^ ~}) -> ~A~%" nlst v))))
+		      choose-2-or-more-strings)
+		
+		(list string-fill!
+		      (lambda (nlst v)
+			(let ((str (car nlst))
+			      (c (cadr nlst))
+			      (happy #t))
+			  (do ((i 0 (+ i 1)))
+			      ((or (not happy) (= i (string-length str))))
+			    (set! happy (char=? c (string-ref str i))))
+			  (if (not happy)
+			      (format #t "(string-fill! ~S #\\~C) -> ~S~%" str c v))))
+		      (lambda ()
+			(let ((str (car (choose-string))))
+			  (list str (car (choose-non-null-char))))))
+		
+		(list string-copy
+		      (lambda (nlst v)
+			(let ((str (car nlst)))
+			  (if (not (string=? str v))
+			      (format #t "(string-copy ~S) -> ~S~%" str v))))
+		      choose-string)
+		
+		(list string->list
+		      (lambda (nlst v)
+			(let* ((str (car nlst))
+			       (strlen (string-length str)))
+			  (if (or (not (list? v))
+				  (not (= (length v) strlen))
+				  (let ((happy #t))
+				    (do ((i 0 (+ i 1)))
+					((or (not happy) (= i strlen)) (not happy))
+				      (set! happy (char=? (string-ref str i) (list-ref v i))))))
+			      (format #t "(string->list ~S) -> ~A~%" str v))))
+		      choose-string)
+		
+		(list list->string
+		      (lambda (nlst v)
+			(let* ((lst (car nlst))
+			       (len (length lst)))
+			  (if (or (not (string? v))
+				  (not (= (string-length v) len))
+				  (let ((happy #t))
+				    (do ((i 0 (+ i 1)))
+					((or (not happy) (= i len)) (not happy))
+				      (set! happy (char=? (string-ref v i) (list-ref lst i))))))
+			      (format #t "(list->string ~A) -> ~S~%" lst v))))
+		      (lambda ()
+			(let ((lst '())
+			      (len (random 20)))
+			  (do ((i 0 (+ i 1)))
+			      ((= i len) (list lst))
+			    (set! lst (cons (car (choose-non-null-char)) lst))))))
+		
+		(list string
+		      (lambda (nlst v)
+			(let ((len (length nlst)))
+			  (if (or (not (string? v))
+				  (not (= len (string-length v)))
+				  (let ((happy #t))
+				    (do ((i 0 (+ i 1)))
+					((or (not happy) (= i len)) (not happy))
+				      (set! happy (char=? (string-ref v i) (list-ref nlst i))))))
+			      (format #t "(string~{~^ #\\~C~}) -> ~S~%" nlst v))))
+		      (lambda ()
+			(let ((lst '())
+			      (len (random 20)))
+			  (do ((i 0 (+ i 1)))
+			      ((= i len) lst)
+			    (set! lst (cons (car (choose-non-null-char)) lst))))))
+		
+		(list substring
+		      (lambda (nlst v)
+			(let* ((str (car nlst))
+			       (start (cadr nlst))
+			       (end (if (not (null? (cddr nlst))) (caddr nlst) (string-length str)))
+			       (happy #t))
+			  (if (or (not (string? v))
+				  (not (= (string-length v) (- end start)))
+				  (do ((i start (+ i 1))
+				       (j 0 (+ j 1)))
+				      ((or (not happy) (= i end)) (not happy))
+				    (set! happy (char=? (string-ref str i) (string-ref v j)))))
+			      (if (not (null? (cddr nlst)))
+				  (format #t "(substring ~S ~D ~D) -> ~S~%" str start end v)
+				  (format #t "(substring ~S ~D) -> ~S~%" str start v)))))
+		      (lambda ()
+			(let* ((str (car (choose-string)))
+			       (strlen (string-length str))
+			       (start (if (> strlen 1) (random (- strlen 1)) 0)))
+			  (if (or (> (random 1.0) 0.5)
+				  (= start strlen))
+			      (list str start)
+			      (list str start (+ start (random (- strlen start))))))))
+		
+		
+		;; -------- generic stuff  --------------------------------
+		
+		(list not
+		      (lambda (nlst v)
+			(if (not (eq? v (if (car nlst) #f #t)))
+			    (format #t "(not ~A) -> ~A~%" (car nlst) v)))
+		      (lambda () (choose-any 0)))
+		
+		(list boolean?
+		      (lambda (nlst v)
+			(if (or (and (not (eq? v #t))
+				     (not (eq? v #f)))
+				(and (eq? v #t)
+				     (not (eq? (car nlst) #t))
+				     (not (eq? (car nlst) #f)))
+				(and (eq? v #f)
+				     (or (eq? (car nlst) #f)
+					 (eq? (car nlst) #t))))
+			    (format #t "(boolean? ~A) -> ~A~%" (car nlst) v)))
+		      (lambda () (choose-any 0)))
+		
+		(list number?
+		      (lambda (nlst v)
+			(if (or (not (boolean? v))
+				(not (eq? v (complex? (car nlst)))))
+			    (format #t "(number? ~A) -> ~A~%" (car nlst) v)))
+		      (lambda () (choose-any 0)))
+		
+		(list string?
+		      (lambda (nlst v)
+			(let ((strp (catch #t (lambda () (integer? (string-length (car nlst)))) (lambda args #f))))
+			  (if (or (not (boolean? v))
+				  (not (eq? v strp)))
+			      (format #t "(string? ~A) -> ~A~%" (car nlst) v))))
+		      (lambda () (choose-any 0)))
+		
+		(list char?
+		      (lambda (nlst v)
+			(let ((chrp (catch #t (lambda () (integer? (char->integer (car nlst)))) (lambda args #f))))
+			  (if (or (not (boolean? v))
+				  (not (eq? v chrp)))
+			      (format #t "(char? ~A) -> ~A~%" (car nlst) v))))
+		      (lambda () (choose-any 0)))
+		
+		(list vector?
+		      (lambda (nlst v)
+			(let ((chrp (catch #t (lambda () (integer? (vector-length (car nlst)))) (lambda args #f))))
+			  (if (or (not (boolean? v))
+				  (not (eq? v chrp)))
+			      (format #t "(vector? ~A) -> ~A~%" (car nlst) v))))
+		      (lambda () (choose-any 0)))
+		
+		(list list?
+		      (lambda (nlst v)
+			(let ((chrp (catch #t (lambda () (integer? (length (car nlst)))) (lambda args #f))))
+			  (if (or (not (boolean? v))
+				  (not (eq? v chrp)))
+			      (format #t "(list? ~A) -> ~A~%" (car nlst) v))))
+		      (lambda () (choose-any 0)))
+		
+		(list pair?
+		      (lambda (nlst v)
+			(let ((chrp (catch #t (lambda () (car (car nlst)) #t) (lambda args #f))))
+			  (if (or (not (boolean? v))
+				  (not (eq? v chrp)))
+			      (format #t "(pair? ~A) -> ~A~%" (car nlst) v))))
+		      (lambda () (choose-any 0)))
+		
+		
+		;; -------- vectors --------------------------------
+		
+		(list vector-fill!
+		      (lambda (nlst v)
+			(let* ((vect (car nlst))
+			       (len (vector-length vect))
+			       (val (cadr nlst))
+			       (happy #t))
+			  (do ((i 0 (+ i 1)))
+			      ((or (not happy) (= i len)))
+			    (set! happy (equal? (vector-ref vect i) val)))
+			  (if (not happy)
+			      (format #t "(vector-fill! ~A ~A)~%" vect val))))
+		      (lambda ()
+			(list (car (choose-vector 0)) (car (choose-any 0)))))
+		
+		(list vector-ref
+		      (lambda (nlst v)
+			(let* ((vect (car nlst))
+			       (pos (cadr nlst))
+			       (val (list-ref (vector->list vect) pos)))
+			  (if (not (equal? val v))
+			      (format #t "(vector-ref ~A ~A) -> ~A~%" vect pos v))))
+		      (lambda ()
+			(let ((vect (car (choose-vector 0))))
+			  (list vect (random (vector-length vect))))))
+		
+		(list vector-set!
+		      (lambda (nlst v)
+			(let* ((vect (car nlst))
+			       (pos (cadr nlst))
+			       (val (caddr nlst)))
+			  (if (not (equal? val (list-ref (vector->list vect) pos)))
+			      (format #t "(vector-set! ~A ~A ~A)~%" vect pos val))))
+		      (lambda ()
+			(let ((vect (car (choose-vector 0))))
+			  (list vect (random (vector-length vect)) (car (choose-any 0))))))
+		
+		(list vector-length
+		      (lambda (nlst v)
+			(let* ((vect (car nlst))
+			       (val (length (vector->list vect))))
+			  (if (not (= val v))
+			      (format #t "(vector-length ~A) -> ~A~%" vect v))))
+		      (lambda () (choose-vector 0)))
+		
+		(list vector->list
+		      (lambda (nlst v)
+			(let* ((vect (car nlst))
+			       (len (vector-length vect)))
+			  (if (or (not (list? v))
+				  (not (= len (length v)))
+				  (let ((happy #t))
+				    (do ((i 0 (+ i 1)))
+					((or (not happy) (= i len)) (not happy))
+				      (set! happy (equal? (vector-ref vect i) (list-ref v i))))))
+			      (format #t "(vector->list ~A) -> ~A~%" vect v))))
+		      (lambda () (choose-vector 0)))
+		
+		(list list->vector
+		      (lambda (nlst v)
+			(let* ((lst (car nlst))
+			       (len (length lst)))
+			  (if (or (not (vector? v))
+				  (not (= len (vector-length v)))
+				  (let ((happy #t))
+				    (do ((i 0 (+ i 1)))
+					((or (not happy) (= i len)) (not happy))
+				      (set! happy (equal? (vector-ref v i) (list-ref lst i))))))
+			      (format #t "(list->vector ~A) -> ~A~%" lst v))))
+		      (lambda () (choose-list 0)))
+		
+		(list vector
+		      (lambda (lst v)
+			(let* ((len (length lst)))
+			  (if (or (not (vector? v))
+				  (not (= len (vector-length v)))
+				  (let ((happy #t))
+				    (do ((i 0 (+ i 1)))
+					((or (not happy) (= i len)) (not happy))
+				      (set! happy (equal? (vector-ref v i) (list-ref lst i))))))
+			      (format #t "(vector ~{~A~^ ~}) -> ~A~%" nlst v))))
+		      (lambda () (choose-list 0)))
+		
+		(list make-vector
+		      (lambda (nlst v)
+			(let* ((len (car nlst))
+			       (val (if (not (null? (cdr nlst))) (cadr nlst) 12345)))
+			  (if (or (not (vector? v))
+				  (not (= len (vector-length v)))
+				  (and (not (equal? val 12345))
+				       (let ((happy #t))
+					 (do ((i 0 (+ i 1)))
+					     ((or (not happy) (= i len)) (not happy))
+					   (set! happy (equal? (vector-ref v i) val))))))
+			      (if (not (equal? val 12345))
+				  (format #t "(make-vector ~A ~A) -> ~A~%" len val v)
+				  (format #t "(make-vector ~A) -> ~A~%" len v)))))
+		      (lambda ()
+			(if (> (random 1.0) 0.5)
+			    (list (+ 1 (random 20)) (car (choose-any 0)))
+			    (list (+ 1 (random 20))))))
+		
+		
+		;; -------- lists --------------------------------
+		
+		(list null? 
+		      (lambda (nlst v)
+			(if (or (not (boolean? v))
+				(and (eq? v #t) (not (eq? (car nlst) '())))
+				(and (eq? v #f) (eq? (car nlst) '())))
+			    (format #t "(null? ~A) -> ~A~%" (car nlst) v)))
+		      (lambda () (choose-list 0)))
+		
+		(list car
+		      (lambda (nlst v)
+			(if (not (eq? v (list-ref (list-ref nlst 0) 0)))
+			    (format #t "(car ~A) -> ~A~%" (car nlst) v)))
+		      (lambda () (choose-non-null-list 0)))
+		
+		(list cdr
+		      (lambda (nlst v)
+			(if (not (equal? v (list-tail (car nlst) 1)))
+			    (format #t "(cdr ~A) -> ~A~%" (car nlst) v)))
+		      (lambda () (choose-non-null-list 0)))
+		
+		(list caar
+		      (lambda (nlst v)
+			(if (not (eq? v (list-ref (list-ref (list-ref nlst 0) 0) 0)))
+			    (format #t "(caar ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (not (pair? (car lst)))
+			      (list (list (list 1) lst))
+			      (list lst)))))
+		
+		(list cadr
+		      (lambda (nlst v)
+			(if (not (eq? v (list-ref (list-tail (car nlst) 1) 0)))
+			    (format #t "(cadr ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (< (length lst) 2)
+			      (list (list lst 1 2))
+			      (list lst)))))
+		
+		
+		
+		)))
+	  
+	  (define (choose-op)
+	    (let ((choice (random (length ops))))
+	      (list-ref ops choice)))
+	  
+	  (do ((i 1 (+ i 1)))
+	      ((> i tries))
+	    (if (= (modulo i 1000) 0) (format #t "."))
+	    (let* ((data (choose-op))
+		   (args ((caddr data)))
+		   (op (car data))) 
+					;	(format #t "(~A ~A)~%" op args)
+	      (let ((result (catch #t (lambda () (apply op args)) (lambda args 'error))))
+		((cadr data) args result))))))
+      ))
+      
+      
+      
+      
+(newline) (display ";all done!") (newline)
+      
+      

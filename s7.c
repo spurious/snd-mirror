@@ -342,7 +342,7 @@ typedef struct s7_cell {
     
     rport *port;
     
-    char cvalue;
+    unsigned char cvalue;
     
     opcode_t proc_num;
     
@@ -5442,7 +5442,7 @@ static s7_pointer g_char_to_integer(s7_scheme *sc, s7_pointer args)
   #define H_char_to_integer "(char->integer c) converts the character c to an integer"
   if (!s7_is_character(car(args)))
     return(s7_wrong_type_arg_error(sc, "char->integer", 0, car(args), "a character"));
-  return(s7_make_integer(sc, (unsigned char)character(car(args))));
+  return(s7_make_integer(sc, character(car(args))));
 }
 
 
@@ -5462,7 +5462,7 @@ static s7_pointer g_char_upcase(s7_scheme *sc, s7_pointer args)
   #define H_char_upcase "(char-upcase c) converts the character c to upper case"
   if (!s7_is_character(car(args)))
     return(s7_wrong_type_arg_error(sc, "char-upcase", 0, car(args), "a character"));
-  return(s7_make_character(sc, (char)toupper((unsigned char)character(car(args)))));
+  return(s7_make_character(sc, (char)toupper(character(car(args)))));
 }
 
 
@@ -5471,7 +5471,7 @@ static s7_pointer g_char_downcase(s7_scheme *sc, s7_pointer args)
   #define H_char_downcase "(char-downcase c) converts the character c to lower case"
   if (!s7_is_character(car(args)))
     return(s7_wrong_type_arg_error(sc, "char-downcase", 0, car(args), "a character"));
-  return(s7_make_character(sc, (char)tolower((unsigned char)character(car(args)))));
+  return(s7_make_character(sc, (char)tolower(character(car(args)))));
 }
 
 
@@ -5548,7 +5548,7 @@ char s7_character(s7_pointer p)
 }
 
 
-static int charcmp(char c1, char c2, bool ci)
+static int charcmp(unsigned char c1, unsigned char c2, bool ci)
 {
   if (ci)
     return(charcmp(toupper(c1), toupper(c2), false)); 
@@ -5568,7 +5568,7 @@ static s7_pointer g_char_cmp(s7_scheme *sc, s7_pointer args, int val, const char
 {
   int i;
   s7_pointer x;
-  char last_chr;
+  unsigned char last_chr;
   
   for (i = 1, x = args; x != sc->NIL; i++, x = cdr(x))  
     if (!s7_is_character(car(x)))
@@ -5589,7 +5589,7 @@ static s7_pointer g_char_cmp_not(s7_scheme *sc, s7_pointer args, int val, const 
 {
   int i;
   s7_pointer x;
-  char last_chr;
+  unsigned char last_chr;
   
   for (i = 1, x = args; x != sc->NIL; i++, x = cdr(x))  
     if (!s7_is_character(car(x)))
@@ -6020,7 +6020,7 @@ static s7_pointer g_strings_are_leq(s7_scheme *sc, s7_pointer args)
 
 static int safe_strcasecmp(const char *s1, const char *s2)
 {
-  int len1, len2;
+  int len1, len2, len;
   int i;
   if (s1 == NULL)
     {
@@ -6034,19 +6034,24 @@ static int safe_strcasecmp(const char *s1, const char *s2)
 
   len1 = strlen(s1);
   len2 = strlen(s2);
+  len = len1;
+  if (len1 > len2)
+    len = len2;
+
+  for (i = 0; i < len; i++)
+    if (toupper(s1[i]) < toupper(s2[i]))
+      return(-1);
+    else
+      {
+	if (toupper(s1[i]) > toupper(s2[i]))
+	  return(1);
+      }
+
   if (len1 < len2) 
     return(-1);
   if (len1 > len2)
     return(1);
-  /* can't use idiotic strcasecmp! 9<0?? this has to be a bug in strcasecmp */
-  for (i = 0; i < len1; i++)
-    if (tolower(s1[i]) < tolower(s2[i]))
-      return(-1);
-    else
-      {
-	if (tolower(s1[i]) > tolower(s2[i]))
-	  return(1);
-      }
+
   return(0);
 }
 
