@@ -10,7 +10,7 @@
 (define (vector-add! p1 p2)
   "(vector-add! p1 p2) adds (elementwise) the vectors p1 and p2"
   (let ((len (min (vector-length p1) (vector-length p2)))) 
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i len))
       (vector-set! p1 i (+ (vector-ref p1 i) (vector-ref p2 i))))
     p1))
@@ -18,7 +18,7 @@
 (define (vector-scale! p1 scl)
   "(vector-scale! p1 scl) scales each element of the vector p1 by scl"
   (let ((len (vector-length p1)))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i len))
       (vector-set! p1 i (* scl (vector-ref p1 i))))
     p1))
@@ -28,7 +28,7 @@
       "(vector-copy p1) returnns a copy of the vector p1"
       (let* ((len (vector-length p1))
 	     (v (make-vector len)))
-	(do ((i 0 (1+ i)))
+	(do ((i 0 (+ i 1)))
 	    ((= i len))
 	  (vector-set! v i (vector-ref p1 i)))
 	v)))
@@ -47,11 +47,11 @@
   (let ((new-len (do ((i (1- (vector-length p1)) (1- i)))
 		     ((or (= i 0)
 			  (not (= (vector-ref p1 i) 0.0)))
-		      (1+ i)))))
+		      (+ i 1)))))
     (if (= new-len (vector-length p1))
 	p1
 	(let ((np (make-vector new-len)))
-	  (do ((i 0 (1+ i)))
+	  (do ((i 0 (+ i 1)))
 	      ((= i new-len))
 	    (vector-set! np i (vector-ref p1 i)))
 	  np))))
@@ -101,9 +101,9 @@
 		 (p2len (vector-length p2))
 		 (len (+ p1len p2len))
 		 (m (make-vector len 0)))
-	    (do ((i 0 (1+ i)))
+	    (do ((i 0 (+ i 1)))
 		((= i p1len))
-	      (do ((j 0 (1+ j)))
+	      (do ((j 0 (+ 1 j)))
 		  ((= j p2len))
 		(vector-set! m (+ i j) (+ (vector-ref m (+ i j)) (* (vector-ref p1 i) (vector-ref p2 j))))))
 	    m)
@@ -136,7 +136,7 @@
 		(let* ((len (max p1len p2len))
 		       (r (make-vector len 0))
 		       (q (make-vector len 0)))
-		  (do ((i 0 (1+ i)))
+		  (do ((i 0 (+ i 1)))
 		      ((= i len))
 		    (vector-set! r i (vector-ref p1 i)))
 		  (let ((n (1- p1len))
@@ -147,7 +147,7 @@
 		      (do ((j (+ nv k -1) (1- j)))
 			  ((< j k))
 			(vector-set! r j (- (vector-ref r j) (* (vector-ref q k) (vector-ref p2 (- j k)))))))
-		    (do ((j nv (1+ j)))
+		    (do ((j nv (+ 1 j)))
 			((> j n))
 		      (vector-set! r j 0))
 		    (list q r)))))
@@ -194,14 +194,14 @@
 	 (n (vector-length p2))
 	 (mat (make-mixer (+ n m -2))))
     ;; load matrix with n-1 rows of m's coeffs then m-1 rows of n's coeffs (reversed in sense), return determinant
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i (1- n)))
-      (do ((j 0 (1+ j)))
+      (do ((j 0 (+ 1 j)))
 	  ((= j m))
 	(mixer-set! mat i (+ i j) (vector-ref p1 (- m j 1)))))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i (1- m)))
-      (do ((j 0 (1+ j)))
+      (do ((j 0 (+ 1 j)))
 	  ((= j n))
 	(mixer-set! mat (+ i n -1) (+ i j) (vector-ref p2 (- n j 1)))))
     (mixer-determinant mat)))
@@ -309,9 +309,9 @@
 	   (incr (/ (* 2 pi 0+i) 3)))
       (call-with-exit
        (lambda (return)
-	 (do ((i 0 (1+ i)))   ; brute force! this can almost certainly be optimized
+	 (do ((i 0 (+ i 1)))   ; brute force! this can almost certainly be optimized
 	     ((= i 3))
-	   (do ((j 0 (1+ j)))
+	   (do ((j 0 (+ 1 j)))
 	       ((= j 3))
 	     (let* ((s1 (* r1 (exp (* i incr))))
 		    (s2 (* r2 (exp (* j incr))))
@@ -341,7 +341,7 @@
 						   (- a2)
 						   1.0))))
 	 (if yroot
-	     (do ((i 0 (1+ i)))
+	     (do ((i 0 (+ i 1)))
 		 ((= i 3))
 	       (let* ((y1 (list-ref yroot i))
 		      (R (sqrt (+ (* 0.25 a3 a3) (- a2) y1)))
@@ -366,7 +366,7 @@
     (let* ((n (expt (/ (- b) a) (/ 1.0 deg)))
 	   (incr (/ (* 2 pi 0+i) deg))
 	   (roots '()))
-      (do ((i 0 (1+ i)))
+      (do ((i 0 (+ i 1)))
 	  ((= i deg))
 	(set! roots (cons (simplify-complex (* n (exp (* i incr)))) roots)))
       roots))
@@ -380,7 +380,7 @@
 	    (if (= deg 1)
 		(list 0.0)
 		(let ((pnew (make-vector deg)))
-		  (do ((i 1 (1+ i)))
+		  (do ((i 1 (+ i 1)))
 		      ((> i deg))
 		    (vector-set! pnew (1- i) (vector-ref p1 i)))
 		  (append (list 0.0) (poly-as-vector-roots pnew))))
@@ -400,10 +400,10 @@
 
 			;; degree>4 (or trouble above), use Newton's method unless some simple case pops up
 			(let ((ones 0))
-			      (do ((i 1 (1+ i)))
+			      (do ((i 1 (+ i 1)))
 				  ((> i deg))
 				(if (not (= (vector-ref p1 i) 0.0))
-				    (set! ones (1+ ones))))
+				    (set! ones (+ 1 ones))))
 
 			      (if (= ones 1)                  ; x^n + b -- "linear" in x^n
 				  (nth-roots (vector-ref p1 deg) (vector-ref p1 0) deg)
@@ -454,7 +454,7 @@
 					      (set! dx (/ v (poly-as-vector-eval qp x)))
 					      (if (<= (magnitude dx) poly-roots-epsilon)
 						  (set! happy #t)
-						  (do ((c 0 (1+ c))
+						  (do ((c 0 (+ 1 c))
 						       (step3 #f))
 						      ((or (>= c 20)
 							   (c-g?)
@@ -497,34 +497,34 @@
     roots))
 
 #|
-(do ((i 0 (1+ i))) ((= i 10)) 
+(do ((i 0 (+ i 1))) ((= i 10)) 
   (poly-as-vector-roots (vector (make-rectangular (mus-random 1.0) (mus-random 1.0)) 
 				(make-rectangular (mus-random 1.0) (mus-random 1.0)))))
-(do ((i 0 (1+ i))) ((= i 10)) 
+(do ((i 0 (+ i 1))) ((= i 10)) 
   (poly-as-vector-roots (vector (make-rectangular (mus-random 1.0) (mus-random 1.0)) 
 				(make-rectangular (mus-random 1.0) (mus-random 1.0))
 				(make-rectangular (mus-random 1.0) (mus-random 1.0)))))
 
-(do ((i 0 (1+ i))) ((= i 10)) 
+(do ((i 0 (+ i 1))) ((= i 10)) 
   (poly-roots (vct (mus-random 1.0) (mus-random 1.0) (mus-random 1.0) (mus-random 1.0))))
 
-(do ((i 0 (1+ i))) ((= i 10)) 
+(do ((i 0 (+ i 1))) ((= i 10)) 
   (poly-as-vector-roots (vector (make-rectangular (mus-random 1.0) (mus-random 1.0)) 
 				(make-rectangular (mus-random 1.0) (mus-random 1.0))
 				(make-rectangular (mus-random 1.0) (mus-random 1.0))
 				(make-rectangular (mus-random 1.0) (mus-random 1.0)))))
 
-(do ((i 0 (1+ i))) ((= i 10)) 
+(do ((i 0 (+ i 1))) ((= i 10)) 
   (poly-roots (vct (mus-random 1.0) (mus-random 1.0) (mus-random 1.0) (mus-random 1.0) (mus-random 1.0))))
 
-(do ((i 0 (1+ i))) ((= i 10)) 
+(do ((i 0 (+ i 1))) ((= i 10)) 
   (poly-as-vector-roots (vector (make-rectangular (mus-random 1.0) (mus-random 1.0)) 
 				(make-rectangular (mus-random 1.0) (mus-random 1.0))
 				(make-rectangular (mus-random 1.0) (mus-random 1.0))
 				(make-rectangular (mus-random 1.0) (mus-random 1.0))
 				(make-rectangular (mus-random 1.0) (mus-random 1.0)))))
 
-(do ((i 3 (1+ i))) ((= i 20)) 
+(do ((i 3 (+ i 1))) ((= i 20)) 
   (let ((v (make-vct i 0.0)))
     (vct-set! v 0 (mus-random 1.0))
     (vct-set! v (1- i) 1.0)
@@ -539,7 +539,7 @@
 
 
 ;;; these can be off by a lot!
-(do ((i 0 (1+ i))) ((= i 10)) 
+(do ((i 0 (+ i 1))) ((= i 10)) 
   (poly-roots (vct (mus-random 1.0) (mus-random 1.0) (mus-random 1.0) (mus-random 1.0) (mus-random 1.0) (mus-random 1.0))))
 
 (poly-roots (poly* (poly* (poly* (vct -1 1) (vct 1 1)) (poly* (vct -2 1) (vct 2 1))) (poly* (vct -3 1) (vct 3 1)))) -> (-3.0 3.0 -1.0 1.0 -2.0 2.0)

@@ -158,7 +158,7 @@
 	       (gtk_box_pack_start (GTK_BOX mainform) hbox #f #f 2)
 	       (gtk_widget_show hbox)
 	       (gtk_box_pack_start (GTK_BOX hbox) label #f #f 6))
-	     (gtk_table_attach (GTK_TABLE table) label 0 1 slider (1+ slider)
+	     (gtk_table_attach (GTK_TABLE table) label 0 1 slider (+ 1 slider)
 			       (logior GTK_FILL GTK_SHRINK) 
 			       (logior GTK_FILL GTK_SHRINK)
 			       0 0))
@@ -172,11 +172,11 @@
 	 (if use-hbox
 	     (gtk_box_pack_start (GTK_BOX hbox) scale #t #t 0)
 	     (begin
-	       (gtk_table_attach (GTK_TABLE table) scale 1 2 slider (1+ slider)
+	       (gtk_table_attach (GTK_TABLE table) scale 1 2 slider (+ 1 slider)
 				 (logior GTK_FILL GTK_EXPAND GTK_SHRINK) 
 				 (logior GTK_FILL GTK_EXPAND GTK_SHRINK)
 				 0 0)
-	       (set! slider (1+ slider))))
+	       (set! slider (+ 1 slider))))
 	 (gtk_widget_show scale)
 	 (if use-log
 	     (g_signal_connect adj "value_changed"

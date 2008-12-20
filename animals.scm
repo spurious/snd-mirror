@@ -347,7 +347,7 @@
 	  (lambda ()
 	    (let ((last-page-state (map (lambda (snd) 
 					  (let ((data (list snd (file-name snd))))
-					    (do ((i 0 (1+ i)))
+					    (do ((i 0 (+ i 1)))
 						((= i (chans snd)) data)
 					      (set! data (append data (list (cons i (axis-info snd i))))))))
 					(sounds))))
@@ -412,7 +412,7 @@
 	 (index (hz->radians (* fm-freq fm-index))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (pulsed-env pulse)
@@ -456,7 +456,7 @@
 	 (ampf (make-env amp-env :duration dur :scaler amp)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (pulsed-env pulse)
@@ -482,7 +482,7 @@
 	 (noise (make-rand-interp 1000 (+ .01 (random .005)))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (+ (env frqf)
@@ -490,7 +490,7 @@
 #|
 (with-sound (:play #t)
   (let ((last-beg 0.0))
-    (do ((k 0 (1+ k)))
+    (do ((k 0 (+ 1 k)))
 	((= k 12))
       (let ((beg (+ last-beg .37 (random .08))))
 	(oak-toad beg (+ .25 (random .3)))
@@ -516,7 +516,7 @@
 	 (fm (make-oscil 150)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((fm (* index (oscil fm))))
 	   (outa i (* (env ampf)
@@ -553,7 +553,7 @@
 	 (gen6 (make-oscil 170)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (if (> (pulse-train pulse (env pulf)) 0.1)
 	     (begin
@@ -614,7 +614,7 @@
 	 (pulse-stop (+ start pulse-samps)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 
 	 (if (>= i pulse-stop)
@@ -667,7 +667,7 @@
 	 (pulsef (make-pulsed-env '(0 .2 1 1 3 .7 5 .2) (/ 1.0 pitch) pitch)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let* ((md (* index (oscil mod277)))
 		(frq (env frqf)))
@@ -707,7 +707,7 @@
 	 (rnd (make-rand-interp (* 10 pitch) (hz->radians (* 3 pitch))))) ; not sure this actually helps
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 
 	 (if (<= next-pulse 0)
@@ -717,7 +717,7 @@
 		   (set! (mus-frequency gen1) (* pitch 10))
 		   (set! (mus-frequency gen1) (* pitch 11)))
 
-	       (set! pulse-ctr (1+ pulse-ctr))
+	       (set! pulse-ctr (+ 1 pulse-ctr))
 	       (if (>= pulse-ctr pulses)
 		   (begin
 		     (set! pulse-ctr 0)
@@ -770,7 +770,7 @@
 	 (indf (make-env '(0 .3 1 .5 2 .5 3 0) :duration pulse-dur)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (if (> (pulse-train pulser) .1)
 	     (begin
@@ -809,7 +809,7 @@
 	 (next-pulse (+ start (seconds->samples .4))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (if (= i next-pulse)
 	     (begin
@@ -851,7 +851,7 @@
 	 (index (hz->radians (* 0.1 2900))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let* ((frq (env frqf)))
 	   (outa i (* (env ampf)
@@ -859,7 +859,7 @@
 				     (* index
 					(+ (* 0.2 (oscil gen2 (* 0.5 frq))) 
 					   (* 1.5 (oscil gen2a frq)))))))))) ; end is not quite right (original has a catch)
-       (do ((i start2 (1+ i)))
+       (do ((i start2 (+ i 1)))
 	   ((= i stop2))
 	 (let* ((frq (env frqf2)))
 	   (outa i (* (env ampf2)
@@ -889,7 +889,7 @@
 	 (intrp (make-env '(0 1 1 0) :duration dur :scaler .2 :base 4)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let* ((frq (env frqf))
 		(wha (env intrp)))
@@ -933,7 +933,7 @@
 	 (interpf (make-env '(0 0 2 0 5 1 7 1) :duration dur)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let* ((frq (+ (env frqf)
 			(rand-interp vib)
@@ -980,7 +980,7 @@
 	 (intrpf (make-env '(0 1 .6 0 1 1) :duration dur)))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let* ((frq (+ (env frqf)
 			(rand-interp rnd1)))
@@ -1017,7 +1017,7 @@
 	   (rnd (make-rand-interp 4000 (hz->radians 200))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (if (> (pulse-train pulser) .1)
 	       (begin
@@ -1056,7 +1056,7 @@
 	 (pulse-frqf (make-env (list 0 1100 .4 1300 dur (- 1300 (* dur 8))) :duration dur :scaler (hz->radians 1.0))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (if (>= i next-pulse)
 	     (begin
@@ -1091,7 +1091,7 @@
 	 (rnd (make-rand-interp 100 (hz->radians 100))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (if (>= i next-pulse)
 	     (begin
@@ -1136,7 +1136,7 @@
 			    :duration dur :scaler amp)))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (+ (* (env ampf)
 		       (+ (polywave gen1 (+ (env frqf)
@@ -1179,7 +1179,7 @@
 				   :scaler (hz->radians (random 500.0)))))
 	(run
 	 (lambda ()
-	   (do ((i 0 (1+ i)))
+	   (do ((i 0 (+ i 1)))
 	       ((= i pulse-samps))
 	     (outa (+ cur-start i)
 		   (* (env ampf)
@@ -1215,7 +1215,7 @@
 	 (next-pulse (+ start pulse-samps)))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (if (>= i next-pulse)
 	     (begin
@@ -1268,7 +1268,7 @@
 	 (attack-gen1 (make-polywave :partials (list 1 .92 2 .05  3 .02  4 .01))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i attack-stop))
 	 (outa i (* (env attack-ampf)
 		    (polywave attack-gen1 (env attack-frqf)))))))
@@ -1289,7 +1289,7 @@
 	   (rnd (make-rand-interp 20 (hz->radians 3))))
       (run
        (lambda ()
-	 (do ((i attack-stop (1+ i)))
+	 (do ((i attack-stop (+ i 1)))
 	     ((= i stop))
 	   (let ((frq (env frqf))
 		 (frq2 (+ (env frqf2)
@@ -1335,7 +1335,7 @@
 	 (rnd (make-rand-interp 600 (hz->radians 50))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (+ (env frqf)
@@ -1364,7 +1364,7 @@
 	 (next-pulse (+ start pulse-samps)))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (if (>= i next-pulse)
 	     (begin
@@ -1392,7 +1392,7 @@
 	 (wave-len 256)
 	 (pulse (let ((v (make-vct wave-len))
 		      (pulse-ampf (make-env '(0.000 0.000 0.063 0.312 0.277 0.937 0.405 1.000 0.617 0.696 0.929 0.146 2.000 0.000) :length wave-len)))
-		  (do ((i 0 (1+ i)))
+		  (do ((i 0 (+ i 1)))
 		      ((= i wave-len))
 		    (vct-set! v i (env pulse-ampf)))
 		  v))
@@ -1403,7 +1403,7 @@
 	 (rnd1 (make-rand-interp 1000 (hz->radians 80))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((val (wave-train pulse1 (rand-interp rnd))))
 	   (outa i (* (env ampf)
@@ -1434,7 +1434,7 @@
 	 (gen1 (make-polywave :partials (list 1 .005  2 .97  3 .02  4 .01))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf))))))))
@@ -1443,7 +1443,7 @@
   (let ((begs (vct 0.085 0.118 0.141 0.162))
 	(amps (vct 1.0 1.0 .8 .6))
 	(frqs (vct 6840 6940 6890 6940)))
-    (do ((call 0 (1+ call)))
+    (do ((call 0 (+ 1 call)))
 	((= call 4))
 
       (let* ((start (seconds->samples (+ beg (vct-ref begs call))))
@@ -1456,7 +1456,7 @@
 	     (gen1 (make-polywave :partials (list 1 .005  2 .97  3 .02  4 .01))))
 	(run
 	 (lambda ()
-	   (do ((i start (1+ i)))
+	   (do ((i start (+ i 1)))
 	       ((= i stop))
 	     (outa i (* (env ampf)
 			(polywave gen1 frq))))))))))
@@ -1506,7 +1506,7 @@
 	  (set! next-pulse (+ next-pulse pulse-samps))))
     (run
      (lambda ()
-       (do ((k 0 (1+ k)))
+       (do ((k 0 (+ 1 k)))
 	   ((= k pulse-samps))
 	 (let ((frq (+ (env frqf)
 		       (rand-interp rnd))))
@@ -1545,7 +1545,7 @@
 	 (vib (make-oscil 2)))
     (run 
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let* ((frq (+ (env frqf)
 			(* (hz->radians 10) (oscil vib))))
@@ -1577,7 +1577,7 @@
 		   (list 1 1  2 .18  3 .19  4 .04  5 .03  6 .04  8 .01  9 .01 10 .005 11 .01 12 .005)))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (polywave gen1 (env frqf)))))))))
@@ -1604,7 +1604,7 @@
 			  '(0.000 0.071 0.063 0.081 0.097 0.083 0.155 0.073 0.195 0.069 0.832 0.069 1.000 0.053)
 			  '(0.000 0.120 0.132 0.128 0.218 0.126 0.272 0.120 0.326 0.120 0.513 0.120 0.730 0.118 
 			    1.000 0.096))))
-    (do ((call 0 (1+ call)))
+    (do ((call 0 (+ 1 call)))
 	((= call 5))
       (amargosa-toad-1 (+ beg1 (vct-ref begs call))
 		       (vct-ref durs call)
@@ -1640,7 +1640,7 @@
 	 (index3 (hz->radians (* freq 0.5))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let* ((amp (env ampf))
 		(frq (+ (env frqf) (rand-interp vib)))
@@ -1671,7 +1671,7 @@
 	 (gargle (make-rand-interp 360 (hz->radians (* .25 360)))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let* ((pval (oscil gen3))
 		(noise (rand-interp gargle))
@@ -1708,7 +1708,7 @@
 	 (noise (make-rand-interp 1000)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let* ((pulse (pulse-train pulser)))
 	   (if (> pulse .1)
@@ -1756,7 +1756,7 @@
 	 (pulsef (make-env (list 0 -1 slow-start -1 (+ slow-start .03) 0 dur 0) :duration dur :scaler (hz->radians 8))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let* ((frq (env pulsef))
 		(md (oscil modulator)))
@@ -1782,12 +1782,12 @@
 	 (amps (let* ((v (make-vct num))
 		      (lst (list 1.0  1.0  .25  .17  .2   .1   .1))
 		      (scl (apply + lst)))
-		 (do ((i 0 (1+ i)))
+		 (do ((i 0 (+ i 1)))
 		     ((= i num))
 		   (vct-set! v i (/ (list-ref lst i) scl)))
 		 v))
 	 (gens (let ((v (make-vector num #f)))
-		 (do ((i 0 (1+ i)))
+		 (do ((i 0 (+ i 1)))
 		     ((= i num))
 		   (vector-set! v i (make-oscil (list-ref freqs i))))
 		 v))
@@ -1799,9 +1799,9 @@
 	 (pulses 0))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
-	 (set! pulse-count (1+ pulse-count))
+	 (set! pulse-count (+ 1 pulse-count))
 	 (if (>= pulse-count pulse-length)
 	     (let ((dont-click
 		    ;; count pulses in current group -- at least 2, at most 4, if 2 or 3, possibly and if 4 definitely insert a space
@@ -1816,14 +1816,14 @@
 		     (set! pulses 0)
 		     (set! pulse-length (seconds->samples (+ .015 (random .005)))))
 		   (begin
-		     (set! pulses (1+ pulses))
+		     (set! pulses (+ 1 pulses))
 		     (set! pulse-length (seconds->samples pulse-dur))
 		     (mus-reset pulsef)
-		     (do ((k 0 (1+ k)))
+		     (do ((k 0 (+ 1 k)))
 			 ((= k num))
 		       (mus-reset (vector-ref gens k)))))))
 	 (let ((sum 0.0))
-	   (do ((k 0 (1+ k)))
+	   (do ((k 0 (+ 1 k)))
 	       ((= k num))
 	     (set! sum (+ sum (* (vct-ref amps k) (oscil (vector-ref gens k))))))
 	   (outa i (* (env ampf) 
@@ -1854,7 +1854,7 @@
 	 (ampf (make-env '(0 0 1 1 20 1 21 0) :duration dur :scaler amp)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((pulse (pulse-train pulser)))
 	   (if (> pulse .1)
@@ -1888,7 +1888,7 @@
 	 (rx (make-rxyk!cos 4000 (/ 600 4000) 8.0)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (env frqf)))
 	   (outa i (* (env ampf)
@@ -1918,7 +1918,7 @@
 	 (saw (make-sawtooth-wave 180)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let* ((frq (env frqf))
 		(md (+ frq
@@ -1961,7 +1961,7 @@
 	 (ampf (make-env '(0 0 1 1 10 1 11 0) :duration dur :scaler amp)))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let* ((pulse (pulse-train pulser)))
 	   (if (> pulse .1)
@@ -1990,7 +1990,7 @@
 	 (song-ctr (seconds->samples (+ .5 (random .2)))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (if (<= song-ctr 0)
 	     (begin
@@ -2028,7 +2028,7 @@
 	 (pulsef (make-env '(0.0 0.0  0.07 0.5  0.28 0.86  0.42 0.97  0.55 1.0  0.63 0.88  0.71 0.6  0.85 0.14  0.9 0.1 0.94 0.02 1.0 0.0) :duration .03)))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((pulse (pulse-train pulser)))
 	   (if (> pulse .1)
@@ -2062,7 +2062,7 @@
 	 (last-val 0.0))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((pulse (pulse-train pulser)))
 	   (if (> pulse .1)
@@ -2102,7 +2102,7 @@
     (set! (mus-phase spikes3) 1.4)
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let* ((noi (rand-interp rnd))
 		(frq (+ noi (env frqf)))
@@ -2138,7 +2138,7 @@
 	 (rnd (make-rand-interp (* 3 66) .04)))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((pulse (pulse-train pulser))
 	       (long-pulse (pulse-train long-pulser)))
@@ -2153,7 +2153,7 @@
 		 (mus-reset pulsef)
 		 (if (> pulse-ctr 0)
 		     (set! pulse-amp 1.0))
-		 (set! pulse-ctr (1+ pulse-ctr))))
+		 (set! pulse-ctr (+ 1 pulse-ctr))))
 	   (outa i (* (env ampf)
 		      pulse-amp
 		      (env pulsef)
@@ -2180,7 +2180,7 @@
 	 (pulser (make-pulse-train (/ 1.0 .019))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (if (> (pulse-train pulser) .1)
 	     (mus-reset pulsef))
@@ -2212,7 +2212,7 @@
 	 (song-ctr 0))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (if (= i song-ctr)
 	     (begin
@@ -2275,7 +2275,7 @@
 	 (pulser (make-pulse-train (/ 1.0 .85))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((rn (+ (rand-interp rnd)
 		      (env frqf))))
@@ -2317,7 +2317,7 @@
 	 (pulser (make-pulse-train (/ 1.0 .36))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (if (> (pulse-train pulser) .1)
 	     (mus-reset pulsef))
@@ -2351,7 +2351,7 @@
 	 (ampf (make-env '(0 0 1 1 20 1 21 0) :duration dur :scaler amp)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((pulse (pulse-train pulser))
 	       (noise (+ (env frqf)
@@ -2387,7 +2387,7 @@
 	 (ampf (make-env '(0 0 1 1 20 1 21 0) :duration dur :scaler amp)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((pulse (pulse-train pulser))
 	       (noise (rand-interp rnd)))
@@ -2420,7 +2420,7 @@
 	 (next-pulse (+ start pulse-samps)))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (if (>= i next-pulse)
 	     (begin
@@ -2450,7 +2450,7 @@
 	 (rnd (make-rand-interp 150 (hz->radians 20))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (wave-train pulser)
@@ -2481,7 +2481,7 @@
 	 (rnd (make-rand-interp 200 (hz->radians 30))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((noise (rand-interp rnd1)))
 	 (outa i (* (env ampf)
@@ -2512,7 +2512,7 @@
 	 (begs (vector 0.0   0.3  0.6   0.93  1.23  1.49 1.74  1.98  2.12  2.29))  
 	 (ends (vector 0.12  0.46 0.85  1.17  1.44  1.7  1.95  2.08  2.26  2.45))
 	 (durs (let ((v (make-vector 10 0.0)))
-		 (do ((i 0 (1+ i)))
+		 (do ((i 0 (+ i 1)))
 		     ((= i 10))
 		   (vector-set! v i (- (vector-ref ends i) (vector-ref begs i))))
 		 v))
@@ -2543,7 +2543,7 @@
 	 (next-song-start (+ start (seconds->samples (+ 8.75 (random .1)))))
 	 (next-peep (+ start (seconds->samples (vector-ref begs 1))))
 	 (rnd (make-rand-interp 100 .01)))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i 10))
       (vector-set! amp-envs i (make-env (vector-ref amps i) 
 					:scaler (/ (* amp (vector-ref scls i)) .27) 
@@ -2554,7 +2554,7 @@
 					:duration (vector-ref durs i))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (if (= i next-song-start)
 	     (begin
@@ -2563,11 +2563,11 @@
 	       (set! next-song-start (+ next-song-start (seconds->samples (+ 8.75 (random .1)))))))
 	 (if (= i next-peep)
 	     (begin
-	       (set! peep (1+ peep))
+	       (set! peep (+ 1 peep))
 	       (mus-reset (vector-ref amp-envs peep))
 	       (mus-reset (vector-ref frq-envs peep))
 	       (if (< peep 9)
-		   (set! next-peep (+ song-start (seconds->samples (vector-ref begs (1+ peep)))))
+		   (set! next-peep (+ song-start (seconds->samples (vector-ref begs (+ 1 peep)))))
 		   (set! next-peep next-song-start))))
 	 (let ((frq (+ (env (vector-ref frq-envs peep))
 		       (rand-interp rnd))))
@@ -2617,7 +2617,7 @@
 	 (rnd (make-rand-interp 30 .005)))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (+ (env frqf)
 		       (mus-random 0.001)
@@ -2660,7 +2660,7 @@
 			 :duration dur :scaler (hz->radians 1.0))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (oscil gen1 (env frqf)))))))))
@@ -2692,7 +2692,7 @@
 			 :duration dur :base .1 :scaler (hz->radians 1.0))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (env frqf)))
 	   (outa i (* (env ampf)
@@ -2721,7 +2721,7 @@
 	 (indf (make-env '(0 0 .35 0 .55 1 1 1) :duration dur)))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (env frqf))
 	       (ind (env indf)))
@@ -2781,7 +2781,7 @@
 			 :duration dur :scaler (hz->radians 1.0))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (env frqf)))
 	   (outa i (* (env ampf)
@@ -2812,7 +2812,7 @@
 	 (gen2 (make-oscil)))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (env frqf)))
 	   (outa i (* (env ampf)
@@ -2844,7 +2844,7 @@
 	   (gen3 (make-oscil 80)))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (let ((frq (env frqf)))
 	     (outa i (* (env ampf)
@@ -2866,7 +2866,7 @@
 	   (rnd (make-rand-interp 300 .03)))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf) 
 		      (oscil gen1 (+ (env frqf)
@@ -2882,7 +2882,7 @@
 	   (ampf (make-env '(0 0 1 1 2 .3 10 0) :duration dur :base 32 :scaler amp)))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf) 
 		      (oscil gen1 (rand rnd)))))))))
@@ -2904,7 +2904,7 @@
 			   :duration dur :scaler amp)))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf) 
 		      (oscil gen1 (+ (env frqf) (rand rnd))))))))))
@@ -2924,7 +2924,7 @@
 			   :duration dur :scaler amp)))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf) 
 		      (oscil gen1 (rand rnd)))))))))
@@ -2940,7 +2940,7 @@
 			   :duration dur :scaler amp)))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf) 
 		      (oscil gen1 (rand rnd)))))))))
@@ -2957,7 +2957,7 @@
 	   (gen2 (make-oscil 220)))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (let ((frq (env frqf)))
 	     (outa i (* (env ampf)
@@ -2976,7 +2976,7 @@
 			   :duration dur :scaler amp)))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf) 
 		      (oscil gen1 0.0 (* 2.0 (oscil gen2))))))))))
@@ -2991,7 +2991,7 @@
 
   (savannah-4 (+ .97 beg) (* amp .21))
 
-  (do ((i 0 (1+ i)))
+  (do ((i 0 (+ i 1)))
       ((= i 6))
     (savannah-3 (+ beg 1.02 (* i .014)) (* amp .12)))
 
@@ -3004,14 +3004,14 @@
   (let* ((beg2 0.0)
 	 (repeats 20)
 	 (af-incr (/ .6 repeats)))
-    (do ((i 0 (1+ i))
+    (do ((i 0 (+ i 1))
 	 (beg2 0.0 (+ beg2 .004))
 	 (af af-incr (+ af af-incr)))
 	((= i repeats))
       (savannah-2 (+ beg 1.58 beg2) (* amp af) 5250)))
   
   (let ((af .24))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i 40))
       (savannah-2 (+ beg 1.29 .36 (* i .0145)) (* amp af) 5600)
       (if (< i 20)
@@ -3021,7 +3021,7 @@
   (savannah-7 (+ beg 2.27) (* .4 amp))
 
   (let ((dist 0.01))
-    (do ((i 0 (1+ i))
+    (do ((i 0 (+ i 1))
 	 (beg2 (+ beg 2.36) (+ beg2 dist))
 	 (af .1 (* af .85)))
 	((= i 20))
@@ -3055,7 +3055,7 @@
 	 (rnd (make-rand-interp 100 .02)))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let* ((pulse (pulse-train pulser))
 		(frq (+ (env frqf)
@@ -3100,7 +3100,7 @@
 	 (gen22 (make-rand-interp 2000 (hz->radians 1000))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop1))
 	 (let ((frq (env frqf1)))
 	   (outa i (* (env ampf1)
@@ -3134,7 +3134,7 @@
 			 :duration dur :scaler (hz->radians 1.0) :base 32)))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (env frqf)))
 	   (outa i (* (env ampf)
@@ -3192,7 +3192,7 @@
 			 :scaler (hz->radians 8200))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (env frqf))
 	       (intrp (env intrpf)))
@@ -3228,7 +3228,7 @@
 	 (pulser (make-pulse-train (/ 6 1.6))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((pulse (pulse-train pulser)))
 	   (if (> pulse .1)
@@ -3274,12 +3274,12 @@
 	 (ampf (make-env '(0 1 1.78 1 1.79 0 1.82 0) :duration 1.82)))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop1))
 	 (outa i (* (env ampf1)
 		    (polywave gen1 (env frqf1)))
 	       ))
-       (do ((i stop1 (1+ i)))
+       (do ((i stop1 (+ i 1)))
 	   ((= i stop2))
 	 (let ((pulse (pulse-train pulser)))
 	   (if (> pulse .1)
@@ -3318,7 +3318,7 @@
 	 (buzzer-index (hz->radians 2000))   
 	 (buzzer-amp (make-triangle-wave 40 0.8)))
 
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i 4))
       (vector-set! ampfs i (make-env '(0 0 1 .8 1.5 1 2 .8 3 0) :duration (vct-ref durs i) :scaler (* amp (vct-ref amps i))))
       (vector-set! starts i (+ start (seconds->samples (vct-ref begs i))))
@@ -3328,19 +3328,19 @@
      (lambda ()
 
        ;; first the 4 tones
-       (do ((tone 0 (1+ tone)))
+       (do ((tone 0 (+ 1 tone)))
 	   ((= tone 4))
 	 (set! (mus-frequency gen1) (vct-ref frqs tone))
 	 (let ((ampf (vector-ref ampfs tone))
 	       (end (vector-ref stops tone)))
-	   (do ((i (vector-ref starts tone) (1+ i)))
+	   (do ((i (vector-ref starts tone) (+ i 1)))
 	       ((= i end))
 	     (outa i (* (env ampf)
 			(oscil gen1))))))
 
        ;; then the buzz
        (set! (mus-frequency gen1) 8000.0)
-       (do ((i buzz-start (1+ i)))
+       (do ((i buzz-start (+ i 1)))
 	   ((= i buzz-end))
 	 (outa i (* (env buzz-ampf)
 		    (+ 0.2 (abs (triangle-wave buzzer-amp)))
@@ -3411,7 +3411,7 @@
 			  0.529 0.641 0.573 0.636 0.605 0.647 0.657 0.661 0.690 0.680 0.705 0.558 0.758 0.549 
 			  0.787 0.555 0.821 0.544 0.849 0.532 0.913 0.535 0.939 0.548 1.000 0.537))))
 
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i 4))
       (vector-set! ampfs i (make-env (vector-ref amp-envs i) :duration (vct-ref durs i) :scaler (* amp (vct-ref amps i))))
       (vector-set! frqfs i (make-env (vector-ref frq-envs i) :duration (vct-ref durs i) :scaler (hz->radians 5000)))
@@ -3420,12 +3420,12 @@
 
     (run
      (lambda ()
-       (do ((tone 0 (1+ tone)))
+       (do ((tone 0 (+ 1 tone)))
 	   ((= tone 4))
 	 (let ((ampf (vector-ref ampfs tone))
 	       (frqf (vector-ref frqfs tone))
 	       (end (vector-ref stops tone)))
-	   (do ((i (vector-ref starts tone) (1+ i)))
+	   (do ((i (vector-ref starts tone) (+ i 1)))
 	       ((= i end))
 	     (outa i (* (env ampf)
 			(polywave gen1 (env frqf)))))))))))
@@ -3450,7 +3450,7 @@
 			 :duration dur :scaler (hz->radians 1000.0))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))))
@@ -3480,7 +3480,7 @@
 			 :duration dur :scaler (hz->radians 2000.0))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))))
@@ -3569,7 +3569,7 @@
 			   0.757 0.447 0.830 0.447 0.851 0.350 0.873 0.400 0.901 0.406 0.917 0.360 0.946 0.357 
 			   1.000 0.447))))
 
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i 3))
       (vector-set! ampfs i (make-env (vector-ref amp-envs i) :duration (vct-ref durs i) :scaler (* amp (vct-ref amps i))))
       (vector-set! frqf1s i (make-env (vector-ref frq1-envs i) :duration (vct-ref durs i) :scaler (hz->radians 10000)))
@@ -3579,13 +3579,13 @@
 
     (run
      (lambda ()
-       (do ((tone 0 (1+ tone)))
+       (do ((tone 0 (+ 1 tone)))
 	   ((= tone 3))
 	 (let ((ampf (vector-ref ampfs tone))
 	       (frqf1 (vector-ref frqf1s tone))
 	       (frqf2 (vector-ref frqf2s tone))
 	       (end (vector-ref stops tone)))
-	   (do ((i (vector-ref starts tone) (1+ i)))
+	   (do ((i (vector-ref starts tone) (+ i 1)))
 	       ((= i end))
 	     (outa i (* (env ampf)
 			(+ (* .55 (polywave gen1 (env frqf1)))
@@ -3620,7 +3620,7 @@
 			 :duration dur :scaler (hz->radians 3000.0))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (+ .75 (abs (rand-interp rnd)))
@@ -3651,20 +3651,20 @@
 	 (peep-amp 1.0)
 	 (peep-ctr 0))
 
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i 6))
       (vector-set! starts i (+ start (seconds->samples (vct-ref begs i)))))
-    (vector-set! starts 6 (1+ stop))
+    (vector-set! starts 6 (+ 1 stop))
 
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (if (>= i next-start)
 	     (begin
 	       (set! peep-amp (vct-ref amps peep-ctr))
 	       (set! (mus-frequency gen1) (vct-ref frqs peep-ctr))
-	       (set! peep-ctr (1+ peep-ctr))
+	       (set! peep-ctr (+ 1 peep-ctr))
 	       (set! next-start (vector-ref starts peep-ctr))
 	       (mus-reset ampf)
 	       (mus-reset frqf)))
@@ -3709,7 +3709,7 @@
 						    (list 0 buzz-high .5 buzz-mid 1 buzz-low))
 						:length buzz-size 
 						:scaler (hz->radians 1.0))))
-			   (do ((i 0 (1+ i)))
+			   (do ((i 0 (+ i 1)))
 			       ((= i buzz-size))
 			     (vct-set! v i (env bfrqf)))
 			   v))
@@ -3718,7 +3718,7 @@
 						    '(0 0 1 1 2.5 .7 3 0 3.5 0)
 						    '(0 0 .5 1 2 1 3 0 3.5 0))
 						:length buzz-size)))
-			   (do ((i 0 (1+ i)))
+			   (do ((i 0 (+ i 1)))
 			       ((= i buzz-size))
 			     (vct-set! v i (env bampf)))
 			   v))
@@ -3729,11 +3729,11 @@
     (run
      (lambda ()
 
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i initial-stop))
 	 (outa i (* (env initial-ampf) (oscil initial-gen)) ))
 
-       (do ((i initial-stop (1+ i)))
+       (do ((i initial-stop (+ i 1)))
 	   ((= i buzz-stop))
 	 (let* ((frq (env buzz-frq)))
 	   (outa i (* (env buzz-amp)
@@ -3767,7 +3767,7 @@
 			 :duration dur :scaler (hz->radians 1000.0))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (+ (* .95 (polywave gen1 (env frqf)))
@@ -3816,17 +3816,17 @@
    (run
      (lambda ()
 
-       (do ((i call1-start (1+ i)))
+       (do ((i call1-start (+ i 1)))
 	   ((= i call1-stop))
 	 (outa i (* (env call1-ampf)
 		    (oscil call1-gen (env call1-frqf)))))
 
-       (do ((i call2-start (1+ i)))
+       (do ((i call2-start (+ i 1)))
 	   ((= i call2-stop))
 	 (outa i (* (env call2-ampf)
 		    (polywave call2-gen (env call2-frqf)))))
 
-       (do ((i call3-start (1+ i)))
+       (do ((i call3-start (+ i 1)))
 	   ((= i call3-stop))
 	 (let ((f1 (env call3-f1))
 	       (f2 (env call3-f2))
@@ -3881,7 +3881,7 @@
 			 :duration dur :scaler (hz->radians 11900))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (oscil gen1 (env frqf)))))))))
@@ -3898,7 +3898,7 @@
 	 (durs (vct 0.14 0.40 0.43 0.37))
 	 (amps (vct .75 .9 .95 1.0)))
 
-    (do ((call 0 (1+ call)))
+    (do ((call 0 (+ 1 call)))
 	((= call 4))
       (let* ((start (seconds->samples (+ beg (vct-ref begs call))))
 	     (stop (+ start (seconds->samples (vct-ref durs call))))
@@ -3908,7 +3908,7 @@
 	     (frqf (make-env '(0 1.25  .5 2  4.4 1.95  5 1) :base .1 :duration (vct-ref durs call) :scaler (hz->radians (* 0.5 328)))))
 	(run
 	 (lambda ()
-	   (do ((i start (1+ i)))
+	   (do ((i start (+ i 1)))
 	       ((= i stop))
 	     (outa i (* (env ampf)
 			(polywave gen (+ (env frqf)
@@ -3968,7 +3968,7 @@
 			     0.885 0.539 0.914 0.439 0.938 0.541 0.965 0.433 1.000 0.472)
 			   :duration (vct-ref durs 3) :scaler (hz->radians 6000)))))
 
-    (do ((call 0 (1+ call)))
+    (do ((call 0 (+ 1 call)))
 	((= call 4))
       (let* ((ampf (vector-ref ampfs call))
 	     (frqf (vector-ref frqfs call))
@@ -3976,7 +3976,7 @@
 	     (stop (+ start (seconds->samples (vct-ref durs call)))))
 	(run
 	 (lambda ()
-	   (do ((i start (1+ i)))
+	   (do ((i start (+ i 1)))
 	       ((= i stop))
 	     (outa i (* (env ampf)
 			(polywave gen (env frqf)))))))))))
@@ -4003,7 +4003,7 @@
 	 (pulser (make-pulse-train (/ 1.0 pulse-space))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (if (> (pulse-train pulser) .1)
 	     (begin
@@ -4043,7 +4043,7 @@
 			 :duration dur :scaler (hz->radians 1.0))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))))
@@ -4068,7 +4068,7 @@
 	 (rnd (make-rand-interp 100 (hz->radians 3))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((fm (+ (env frqf)
 		      (rand-interp rnd))))
@@ -4102,7 +4102,7 @@
 	   (gen1 (make-polywave :partials (list 1 .95  2 .005  3 .03))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (polywave gen1 (env frqf)))))))))
@@ -4120,7 +4120,7 @@
 	   (gen1 (make-polywave :partials (list 1 .95  2 .005  3 .03))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (polywave gen1 (env frqf)))))))))
@@ -4134,7 +4134,7 @@
 	   (gen1 (make-polywave :partials (list 1 .95  2 .005  3 .03))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (polywave gen1 (env frqf)))))))))
@@ -4152,18 +4152,18 @@
 	   (gen1 (make-polywave :partials (list 1 .96  2 .03  3 .005  4 .004))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (polywave gen1 (env frqf)))))))))
 
   (let* ((amps1 (vct .2 .5 .7 .9 1.0 1.0)))
 
-    (do ((call 0 (1+ call)))
+    (do ((call 0 (+ 1 call)))
 	((= call 6))
       (nashville-warbler-1 (+ beg (* .21 call)) (+ .15 (random .02)) (* amp (vct-ref amps1 call))))
 
-    (do ((call 0 (1+ call)))
+    (do ((call 0 (+ 1 call)))
 	((= call 3))
       (nashville-warbler-2 (+ beg 1.26 (* .17 call)) (+ .13 (random .02)) amp))
 
@@ -4212,14 +4212,14 @@
 			 :duration bump-dur :offset -0.5)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((>= i stop))
 	 (let ((vol (env ampf)))
 	   (if (> (pulse-train pulser (env frqf)) .1)
 	       (let ((bump-amp (/ (* amp vol) .15))
 		     (bump-stop (+ i bump-samps)))
 		 (mus-reset bump)
-		 (do ((k i (1+ k)))
+		 (do ((k i (+ 1 k)))
 		     ((= k bump-stop))
 		   (outa k (* bump-amp (env bump))))))))))))
 	      
@@ -4254,7 +4254,7 @@
 	 (buzz (make-rand-interp 1000 (hz->radians 40))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (+ (env frqf)
 		       (rand-interp rnd))))
@@ -4304,7 +4304,7 @@
 	 (rnd (make-rand-interp 1000 (hz->radians 50))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (+ (env frqf)
 		       (rand-interp rnd))))
@@ -4339,7 +4339,7 @@
 	 (pulse-rnd (make-rand-interp 4000 .2)))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((vol (env ampf))
 	       (pit (env frqf)))
@@ -4384,7 +4384,7 @@
 	 (rnd (make-rand-interp 5000 .007)))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((inp (* (env ampf)
 		       (nrcos gen (+ (env frqf)
@@ -4410,7 +4410,7 @@
 	 (rnd (make-rand-interp 5000 .007)))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((inp (* (env ampf)
 		       (nrcos gen (+ (env frqf)
@@ -4453,7 +4453,7 @@
    (run
      (lambda ()
        ;; 30 repetitions, then 2 special end tones
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i call1-stop))
 	 (let ((vol (env ampf))
 	       (frq (env frqf)))
@@ -4465,7 +4465,7 @@
 		      (env pulse-ampf1)
 		      (oscil gen1 (+ frq (env pulse-frqf1)))))))
 
-       (do ((i call2-start (1+ i)))
+       (do ((i call2-start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env pulse-ampf2)
 		    (oscil gen1 (env pulse-frqf2)))))))))
@@ -4507,14 +4507,14 @@
    (run
      (lambda ()
        ;; special starting call, then the buzz
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i open-stop))
 	 (outa i (* (env open-ampf)
 		    (env ampf)
 		    (oscil gen1 (+ (env frqf) 
 				   (env open-frqf))))))
 
-       (do ((i open-stop (1+ i)))
+       (do ((i open-stop (+ i 1)))
 	   ((= i stop))
 	 (if (> (pulse-train pulser) .1)
 	     (begin
@@ -4558,7 +4558,7 @@
 	 (rnd (make-rand-interp 500 .02)))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (if (>= i next-pulse)
 	     (begin
@@ -4601,7 +4601,7 @@
 	 (fr2 (* 2 15 (sin (hz->radians 1700))))
 	 (fr3 (* 2 5 (sin (hz->radians 5600)))))
 
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i 3))
       (vector-set! starts i (seconds->samples (+ beg (vct-ref begs i))))
       (vector-set! stops i (+ (vector-ref starts i) (seconds->samples (vct-ref durs i)))))
@@ -4620,14 +4620,14 @@
 
    (run
      (lambda ()
-       (do ((k 0 (1+ k)))
+       (do ((k 0 (+ 1 k)))
 	   ((= k 3))
 	 (let ((start (vector-ref starts k))
 	       (stop (vector-ref stops k))
 	       (ampf (vector-ref ampfs k))
 	       (frqf (vector-ref frqfs k))
 	       (gen (vector-ref gens k)))
-	   (do ((i start (1+ i)))
+	   (do ((i start (+ i 1)))
 	       ((= i stop))
 	     (let ((val (* (env ampf)
 			   (nrxysin gen (env frqf)))))
@@ -4665,7 +4665,7 @@
 			 :duration dur :scaler (hz->radians 8000.0))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))))
@@ -4705,11 +4705,11 @@
 			       :duration call2-dur :scaler (hz->radians 10000.0))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (if (>= i next-call)
 	     (begin
-	       (set! call (1+ call))
+	       (set! call (+ 1 call))
 	       (if (= call 1)
 		   (begin
 		     (set! next-call (+ start (seconds->samples 0.63)))
@@ -4752,7 +4752,7 @@
 			 :duration dur :scaler (hz->radians 22050.0))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))))
@@ -4787,7 +4787,7 @@
 			 :duration dur :scaler (hz->radians 10000.0))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (oscil gen1 (env frqf)))))))))
@@ -4828,7 +4828,7 @@
 
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let* ((intrp (env intrpf))
 		(frq (+ (env frqf)
@@ -4867,7 +4867,7 @@
 			 :duration dur :scaler (hz->radians 10040.0))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))))
@@ -4922,7 +4922,7 @@
 			 :duration dur :scaler (hz->radians 10125.0))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))))
@@ -5002,7 +5002,7 @@
 			 :duration dur :scaler (hz->radians 10035.0))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (+ (env frqf)
@@ -5026,7 +5026,7 @@
 			 :duration dur :scaler (hz->radians 9040.0))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))))
@@ -5066,7 +5066,7 @@
 	 (rnd2 (make-rand-interp 300 (hz->radians 15))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let* ((frq (+ (env frqf)
 			(rand-interp rnd2)
@@ -5117,7 +5117,7 @@
 			 :duration dur :scaler (hz->radians 6070.0))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))))
@@ -5158,7 +5158,7 @@
 			 :duration dur)))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((noise (* (env rndf) 
 			 (sawtooth-wave rnd))))
@@ -5192,7 +5192,7 @@
 			 :duration dur :scaler (hz->radians 8040.0))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))))
@@ -5222,7 +5222,7 @@
 	 (vib (make-rand-interp 50 (hz->radians 80))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (+ (env frqf)
@@ -5285,7 +5285,7 @@
 	 (rnd (make-rand-interp 400 (hz->radians 100))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((buzzing (env buzzf))
 	       (frq (env frqf))
@@ -5333,7 +5333,7 @@
 			 :duration dur :scaler (hz->radians 9060.0))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))))
@@ -5404,7 +5404,7 @@
 			 :duration dur :scaler (hz->radians 10030.0))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (oscil gen1 (env frqf)))))))))
@@ -5453,7 +5453,7 @@
 			 :duration dur :scaler (hz->radians 8070.0))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))))
@@ -5502,7 +5502,7 @@
 	 (f3 (make-env '(0 1  .06 .5 .1 .01  .3 .01  .5 .01 .6 .3 .65 .01 .67 .01  1 .01) :duration dur)))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (env frqf)))
 	   (outa i (* (env ampf)
@@ -5544,7 +5544,7 @@
 	   (vib-index (hz->radians -100)))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (let ((inp (* (env ampf)
 			 (+ .85 (abs (rand-interp rnd1)))
@@ -5586,7 +5586,7 @@
 			 :duration dur :scaler (hz->radians 1190.0))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (+ (env frqf)
@@ -5617,7 +5617,7 @@
 	 (f4 (make-env '(0 0 1 .002 7 .003 10 0) :duration dur)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (env frqf)))
 	   (outa i (* (env ampf)
@@ -5638,7 +5638,7 @@
 	 (f1 (make-env '(0 .5  .6 1  .62 .05  .65 .5  1 .5) :duration dur)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (env frqf)))
 	   (outa i (* (env ampf)
@@ -5663,7 +5663,7 @@
 	 (rnd (make-rand-interp 3000 (hz->radians 100))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq1 (+ (env frqf1)
 			(rand-interp rnd))))
@@ -5697,7 +5697,7 @@
 	 (rnd (make-rand-interp 500 (hz->radians 15))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((intrp (env intrpf))
 	       (frq (+ (env frqf)
@@ -5764,7 +5764,7 @@
 			 :base 10 :duration dur :scaler (hz->radians 7190.0))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))))
@@ -5788,7 +5788,7 @@
 	   (rnd (make-rand-interp 1000 (hz->radians 200))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (let ((frq (+ (env frqf)
 			 (* (env rndf) 
@@ -5852,7 +5852,7 @@
 	 (frqf (make-env (list 0 600  .5 620 (max .55 (- dur .5)) 620  (max .6 dur) 570) :duration dur :scaler (hz->radians 1.0))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (if (>= i next-pulse)
 	     (begin
@@ -5888,7 +5888,7 @@
 	 (gen1 (make-polywave :partials (list 1 .95  2 .03  3 .01  4 .005))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))))
@@ -5930,7 +5930,7 @@
 	 (rnd (make-rand-interp 400 (hz->radians 10))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let* ((frq (+ (env frqf)
 			(rand-interp rnd)))
@@ -5973,7 +5973,7 @@
 	   (gen1 (make-polywave :partials (list 1 .99  2 .01))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (polywave gen1 (env frqf)))))))))
@@ -6008,7 +6008,7 @@
 	 (pulse-ampf (make-env '(0.000 0.2 0.435 0.356 0.701 0.925 0.785 0.984 0.880 0.779 0.973 0.395 1.000 0.2) :duration pulse-dur)))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (if (>= i next-pulse)
 	       (begin
@@ -6033,7 +6033,7 @@
 	 (rnd (make-rand-interp 600 (hz->radians 100))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (if (>= i next-pulse)
 	       (begin
@@ -6059,7 +6059,7 @@
 	 (rnd (make-rand-interp 600 (hz->radians 10))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (if (>= i next-pulse)
 	       (begin
@@ -6089,7 +6089,7 @@
 		:duration dur :scaler (* .9 amp))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (polywave gen1 (env frqf))))))))
@@ -6104,7 +6104,7 @@
 	 (rnd (make-rand-interp 400 (hz->radians 100))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (+ .25 (* .75 (abs (oscil buzz))))
@@ -6149,7 +6149,7 @@
 	   (frmf1 (make-env '(0 2460 .7 2400 .9 1400 1 1500) :duration dur)))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (set! (mus-frequency frm2) (env frmf))
 	   (set! (mus-frequency frm3) (env frmf3))
@@ -6168,7 +6168,7 @@
 			(* fr3 (formant frm3 val))))))))))
 
   (do ((beg beg1 (+ beg .15))
-       (i 0 (1+ i)))
+       (i 0 (+ i 1)))
       ((= i 6))
     (stellers-jay-1 beg amp1)))
 
@@ -6197,7 +6197,7 @@
 	 (buzz1 (make-oscil 240)))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (+ .8 (* .2 (oscil buzz)))
@@ -6224,7 +6224,7 @@
 	 (gen1 (make-polywave :partials (list 1 .1  2 1  3 .4  4 .1   5 .03  6 .005 7 .005  10 .005))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))))
@@ -6253,7 +6253,7 @@
 	 (rnd (make-rand-interp 1000 (hz->radians 10))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (+ (env frqf)
 		       (rand-interp rnd))))
@@ -6283,7 +6283,7 @@
 	 (gen1 (make-polywave :partials (list 1 .05  2 .9  3 .05  4 .005))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))))
@@ -6317,7 +6317,7 @@
 	 (ampf2 (make-env '(0 0 .53 0 .64 .7  .67 0  .73 .1 .9 0  .91 .07 .94 0 1 0) :duration dur)))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (env frqf)))
 	   (outa i (* (env ampf)
@@ -6354,7 +6354,7 @@
 	 (vib-amp (hz->radians 1200)))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (+ (env frqf)
@@ -6376,7 +6376,7 @@
 	 (ampf2 (make-env '(0 1 .1 0 .8 0 1 1) :duration dur :scaler .5)))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (env frqf)))
 	 (outa i (* (env ampf)
@@ -6385,7 +6385,7 @@
 			  (polywave gen2 frq)))))))))))
 
   (let ((amps (vct .5 1.0 1.0 .9)))
-    (do ((i 0 (1+ i))
+    (do ((i 0 (+ i 1))
 	 (bg beg1 (+ bg .35)))
 	((= i 4))
       (oak-titmouse-1 bg (* amp1 (vct-ref amps i)))
@@ -6429,7 +6429,7 @@
 	   (rnd (make-rand-interp 6000 .1)))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (+ .9 (rand-interp rnd))
@@ -6467,7 +6467,7 @@
 	   (rnd (make-rand-interp 6000 .1)))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (+ .9 (rand-interp rnd))
@@ -6478,13 +6478,13 @@
 					      (rand-interp rnd1))))))))))))
 
   (let ((amps (vct .4 .6 .8 .9 1.0)))
-    (do ((note 0 (1+ note))
+    (do ((note 0 (+ 1 note))
 	 (bg beg1 (+ bg 0.18)))
 	((= note 5))
       (macgillivrays-warbler-1 bg (* amp1 (vct-ref amps note)))))
 
   (let ((amps (vct 1.0 .9 .7)))
-    (do ((note 0 (1+ note))
+    (do ((note 0 (+ 1 note))
 	 (bg (+ beg1 0.93) (+ bg 0.17)))
 	((= note 3))
       (macgillivrays-warbler-2 bg (* amp1 (vct-ref amps note))))))
@@ -6539,7 +6539,7 @@
 	 (gen1 (make-polywave :partials (list 1 .95  2 .03  3 .005))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))))
@@ -6574,7 +6574,7 @@
 	   (gen1 (make-oscil)))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (oscil gen1 (env frqf)))))))))
@@ -6608,7 +6608,7 @@
 	   (gen1 (make-polywave :partials (list 1 .99  2 .01))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (polywave gen1 (env frqf)))))))))
@@ -6660,7 +6660,7 @@
 			   :duration dur :scaler .25)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((rnd (env noisef)))
 	 (outa i (* (env ampf)
@@ -6705,7 +6705,7 @@
 	 (gen1 (make-polywave :partials (list 1 .98  2 .01  3 .003  4 .007))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))))
@@ -6743,7 +6743,7 @@
 	   (rnd (make-rand-interp 4000 (hz->radians 300))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (let ((noise (rand-interp rnd)))
 	     (outa i (* (env ampf)
@@ -6770,7 +6770,7 @@
 	   (rnd (make-rand-interp 4000 (hz->radians 200))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (oscil gen1 (+ (env frqf)
@@ -6797,7 +6797,7 @@
 	   (rnd (make-rand-interp 4000 (hz->radians 200))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (oscil gen1 (+ (env frqf)
@@ -6809,11 +6809,11 @@
   (let ((durs2 (vct 0.067 0.07 0.075 0.08 0.086 0.084 0.08 0.08 0.078))
 	(frqs2 (vct 1.0   1.0  0.95  0.93 1.0   1.0   1.0  1.0  0.95))
 	(amps2 (vct .2    .4    .7   1    1      .8   1    1    1)))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i 9))
       (wilsons-warbler-2 (+ beg1 0.285 (* i .13)) (vct-ref durs2 i) (vct-ref frqs2 i) (* amp1 (vct-ref amps2 i)))))
 
-  (do ((i 0 (1+ i)))
+  (do ((i 0 (+ i 1)))
       ((= i 3))
     (wilsons-warbler-3 (+ beg1 1.45 (* i 0.12)) (* amp1 .9))))
 
@@ -6865,7 +6865,7 @@
 	 (ampf2 (make-env '(0 0 .68 0 .9 1 1 1) :duration dur :scaler .2)))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (env frqf)))
 	   (outa i (* (env ampf)
@@ -6898,7 +6898,7 @@
 	 (rndf (make-env '(0 1 .2 0 .9 0 1 1) :duration dur)))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (+ (env frqf)
 		       (* (env rndf)
@@ -6936,7 +6936,7 @@
 	 (pulse2 #f))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (if (>= i next-pulse)
 	     (begin
@@ -6978,7 +6978,7 @@
 	 (rnd (make-rand-interp 100 (hz->radians 6))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (+ (env frqf)
 		       (rand-interp rnd))))
@@ -7011,7 +7011,7 @@
 	 (vib-index (hz->radians 50)))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let* ((vb (oscil vib))
 		(frq (+ (env frqf)
@@ -7047,7 +7047,7 @@
 	 (gen1 (make-polywave :partials (list 1 .98  2 .005  3 .01))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))))
@@ -7069,7 +7069,7 @@
 	 (gen1 (make-polywave :partials (list 1 .98  2 .01  3 .005))))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))))
@@ -7101,7 +7101,7 @@
 	   (rnd (make-rand-interp 6000 (hz->radians 300))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (let ((modup (oscil mod-up))
 		 (moddown (oscil mod-down))
@@ -7135,7 +7135,7 @@
 	   (gen1 (make-polywave :partials (list 1 .98  2 .005  3 .01))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (polywave gen1 (env frqf)))))))))
@@ -7154,7 +7154,7 @@
 	   (gen1 (make-polywave :partials (list 1 .95  2 .05))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (polywave gen1 (env frqf)))))))))
@@ -7174,7 +7174,7 @@
 	   (rnd (make-rand-interp 4000 (hz->radians 500))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (polywave gen (+ (* .5 (env frqf))
@@ -7191,7 +7191,7 @@
 	   (tri (make-triangle-wave 60 0.6)))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (+ .4 (abs (triangle-wave tri)))
@@ -7213,7 +7213,7 @@
 	   (gen1 (make-polywave :partials (list 1 .95  2 .05))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (polywave gen1 (env frqf)))))))))
@@ -7229,7 +7229,7 @@
 	   (gen1 (make-polywave :partials (list 1 .98  2 .005  3 .01 4 .005))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (polywave gen1 (env frqf)))))))))
@@ -7250,7 +7250,7 @@
 	   (vib (make-blackman 320 4)))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (let ((vb (blackman vib)))
 	     (outa i (* (env ampf)
@@ -7269,7 +7269,7 @@
 	   (gen1 (make-polywave :partials (list 3 .7 4 .3  7 .01))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (polywave gen1 (env frqf)))))))))
@@ -7281,7 +7281,7 @@
   (song-sparrow-clear-tone (+ beg1 0.57) 1.0 amp1)
 
   (let ((amps (vct .14 .33 .37 .37 .30 .30 .30)))
-    (do ((i 0 (1+ i))
+    (do ((i 0 (+ i 1))
 	 (x 0.68 (+ x .1)))
 	((= i 7)) 
       (song-sparrow-sweep-tone (+ beg1 x) (* (vct-ref amps i) amp1))
@@ -7321,7 +7321,7 @@
 	 (ampf3 (make-env '(0 0  .08 0  .12 .4  .2 0  .46 0  .5 .5  .6 0  .65 0  .8 1  .9 1  1 0) :duration dur :scaler .015)))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (+ (env frqf)
 		       (rand-interp rnd))))
@@ -7363,7 +7363,7 @@
 	 (interpf (make-env '(0 .5  .2 .1  .25 .99  .6 .95  .7 .3   .75 .99  1 .99) :duration dur)))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (env frqf))
 	       (interp (env interpf)))
@@ -7406,7 +7406,7 @@
 	 (interpf (make-env '(0 .1  .2 .1  .3 .99  1 .99) :duration dur)))
    (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (env frqf))
 	       (interp (env interpf)))
@@ -7436,7 +7436,7 @@
 			 :duration dur :scaler (hz->radians (* 1/3 11500.0))))
 	 (oscs (make-vector 5))
 	 (ampfs (make-vector 5)))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i 5))
       (vector-set! oscs i (make-oscil)))
 
@@ -7457,13 +7457,13 @@
 
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (env frqf))
 	       (sum 0.0))
-	   (do ((k 0 (1+ k)))
+	   (do ((k 0 (+ 1 k)))
 	       ((= k 5))
-	     (set! sum (+ sum (* (env (vector-ref ampfs k)) (oscil (vector-ref oscs k) (* (1+ k) frq))))))
+	     (set! sum (+ sum (* (env (vector-ref ampfs k)) (oscil (vector-ref oscs k) (* (+ 1 k) frq))))))
 	   (outa i (* (env ampf) sum) ))))))
 
   ;; part 2
@@ -7482,7 +7482,7 @@
 	 (gen1 (make-polywave :partials (list 1 .95  2 .01  3 .02 4 .005))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))))
@@ -7511,7 +7511,7 @@
 	 (ampf2 (make-env '(0 1 .2 1 .22 0 1 0) :duration dur)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (env frqf)))
 	   (outa i (* (env ampf)
@@ -7542,7 +7542,7 @@
 	 (ampf3 (make-env '(0 0 .2 0 .25 1 .5 1 .6 0 1 0) :duration dur :scaler .01)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (env frqf)))
 	   (outa i (* (env ampf)
@@ -7593,7 +7593,7 @@
 			   :duration dur :offset (hz->radians 40) :scaler (hz->radians 100))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (let ((intrp (env intrpf))
 		 (noise (* (env rndf)
@@ -7621,7 +7621,7 @@
 	   (rndf (make-env '(0 0 .16 0 .25 1 1 .5) :duration dur :offset (hz->radians 100) :scaler (hz->radians 500))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (polywave gen1 (+ (env frqf)
@@ -7646,7 +7646,7 @@
 	   (rnd (make-rand-interp 2000 (hz->radians 200))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (let ((frq (+ (env frqf)
 			 (rand-interp rnd))))
@@ -7671,7 +7671,7 @@
 	   (rnd (make-rand-interp 4000 (hz->radians 100))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (let ((frq (+ (env frqf)
 			 (rand-interp rnd))))
@@ -7718,7 +7718,7 @@
 	 (buzzf (make-env '(0 0 .59 0 .6 1 .61 1 .64 0 1 0) :duration dur :scaler (hz->radians 300))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (+ (env frqf)
@@ -7755,7 +7755,7 @@
 	 (gen1 (make-polywave :partials (list 1 .98  2 .003  3 .02))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))))
@@ -7800,7 +7800,7 @@
 	 (gen1 (make-polywave :partials (list 1 .98  2 .005  3 .01))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))))
@@ -7835,7 +7835,7 @@
 	   (rndfrqf (make-env '(0 1 .45 1 .5 .2 .6 .2 1 0) :duration dur :scaler (hz->radians 200))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (let ((frq (+ (env frqf)
 			 (* (env rndf)
@@ -7866,7 +7866,7 @@
 	   (ampf2 (make-env '(0 0 .1 0 .2 1 1 1) :scaler .3 :duration dur)))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (+ (polywave gen1 (env frqf))
@@ -7904,7 +7904,7 @@
 	 (rnd (make-rand-interp 200 .3)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (+ .7 (abs (rand-interp rnd)))
@@ -7940,7 +7940,7 @@
 	 (emphf (make-env '(0 0  .3 1 .4 0 1 0) :duration dur :scaler .2)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (+ (env frqf)
 		       (* (env vibf)
@@ -7974,13 +7974,13 @@
 	   (gen1 (make-polywave :partials (list 1 .99 2 .01))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (polywave gen1 (env frqf)))))))))
 
   (let ((amps (vct .3 .5 .8 .8 .8 .8 .8 1.0 .8 .8 .4)))
-    (do ((call 0 (1+ call)))
+    (do ((call 0 (+ 1 call)))
 	((= call 11))
       (dark-eyed-junco-1 (+ beg1 (* call .122)) (* amp1 (vct-ref amps call))))))
 
@@ -8011,7 +8011,7 @@
 	 (rnd (make-rand-interp 400 (hz->radians 100))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (+ (env frqf)
 		       (rand-interp rnd))))
@@ -8042,7 +8042,7 @@
 	 (rnd (make-rand-interp 400 (hz->radians 30))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (+ (env frqf)
 		       (rand-interp rnd))))
@@ -8078,7 +8078,7 @@
 	 (vibf (make-env '(0 0  .25 0  .4 .3  .5 .1  .6 1 1 0) :duration dur :scaler (hz->radians 100))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (+ (env frqf)
@@ -8115,7 +8115,7 @@
 	 (gen1 (make-polywave :partials (list 1 .99  2 .01  3 .005))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))))
@@ -8160,7 +8160,7 @@
 	 (fr5 (* 2 (sin (hz->radians 7500)))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((val (* (env ampf)
 		       (+ .4 (abs (rand-interp trem)))
@@ -8194,7 +8194,7 @@
 	 (gen1 (make-polywave :partials (list 1 1 2 .23 3 .034 4 .008 5 .005 7 .003))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))))
@@ -8219,7 +8219,7 @@
 	   (rnd (make-rand-interp 600)))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (let ((rf (env rndf)))
 	     (outa i (* (env ampf)
@@ -8355,7 +8355,7 @@
 	 (rndf3 (make-env '(0 0  .6 0  .65 1 .7 0  .9 0 1 1) :duration dur)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq1 (env frqf1))
 	       (frq2 (env frqf2))
@@ -8411,7 +8411,7 @@
 	 (rnd (make-rand-interp 3000 (hz->radians 100))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (+ (env frqf)
@@ -8449,7 +8449,7 @@
 	 (rnd1 (make-rand-interp 2000 (hz->radians 100))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))  
 	 (let ((rn (rand-interp rnd1)))
 	   (outa i (* (env ampf)
@@ -8485,7 +8485,7 @@
 	   (rnd (make-rand-interp 4000 (hz->radians 300))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (let ((frq (rand-interp rnd)))
 	     (outa i (* (env ampf)
@@ -8509,7 +8509,7 @@
 	   (rnd (make-rand-interp 4000 (hz->radians 200))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (let ((frq (rand-interp rnd)))
 	     (outa i (* (env ampf)
@@ -8532,7 +8532,7 @@
 	   (rnd (make-rand-interp 4000 (hz->radians 300))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (let ((frq (rand-interp rnd)))
 	     (outa i (* (env ampf)
@@ -8578,7 +8578,7 @@
 	 (gen1 (make-polywave 3800.0 (list 1 .995  2 .005))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1)))))))
@@ -8611,7 +8611,7 @@
 	 (gen1 (make-polywave :partials (list 1 .99  2 .005  3 .005))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf))))))))
@@ -8625,7 +8625,7 @@
 	 (gen1 (make-polywave 3900.0 (list 1 .985  2 .005  3 .01))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1)))))))
@@ -8657,7 +8657,7 @@
 	 (gen1 (make-polywave :partials (list 1 .99  2 .01))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf))))))))
@@ -8687,7 +8687,7 @@
 	 (gen1 (make-polywave :partials (list 1 .98  2 .01  3 .006  4 .004))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf))))))))
@@ -8705,7 +8705,7 @@
 	 (gen1 (make-polywave :partials (list 1 .98  2 .005  3 .01  4 .005))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf))))))))
@@ -8747,7 +8747,7 @@
 	 (gen1 (make-polywave :partials (list 1 .99  2 .01))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))))
@@ -8777,7 +8777,7 @@
 	 (ampf2 (make-env '(0 1 .3 1 .4 0 .75 0 .8 1 1 1) :duration dur :scaler 1.0)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (env frqf)))
 	   (outa i (* (env ampf)
@@ -8810,7 +8810,7 @@
 	 (gen1 (make-polywave :partials (list 1 .98  2 .005  3 .01))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))))
@@ -8840,7 +8840,7 @@
 	 (gen1 (make-polywave :partials (list 1 .99  2 .01  3 .005))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))))
@@ -8870,7 +8870,7 @@
 	 (rnd (make-rand-interp 400 (hz->radians 100))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (+ (env frqf)
@@ -8928,15 +8928,15 @@
 	 (rnd (make-rand-interp 300 (hz->radians 50))))
     (run
      (lambda ()
-       (do ((i start1 (1+ i)))
+       (do ((i start1 (+ i 1)))
 	   ((= i stop1))
 	 (outa i (* (env ampf1) (polywave gen1 (env frqf1)))))
 
-       (do ((i start2 (1+ i)))
+       (do ((i start2 (+ i 1)))
 	   ((= i stop2))
 	 (outa i (* (env ampf2) (polywave gen1 (env frqf2)))))
 
-       (do ((i start3 (1+ i)))
+       (do ((i start3 (+ i 1)))
 	   ((= i stop3))
 	 (outa i (* (env ampf3) (polywave gen1 (+ (env frqf3) 
 						  (rand-interp rnd))))))))))
@@ -8974,7 +8974,7 @@
 	 (gen2 (make-polywave :partials (normalize-partials (list 2 .95  3 .04  4 .03)))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (env frqf)))
 	   (outa i (* (env ampf)
@@ -8999,7 +8999,7 @@
 	 (ampf2 (make-env '(0 0 .3 1 .8 1 1 0) :duration dur)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (env frqf)))
 	   (outa i (* (env ampf)
@@ -9037,7 +9037,7 @@
 	   (gen1 (make-polywave :partials (list 1 .99  2 .01))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (polywave gen1 (env frqf)))))))))
@@ -9062,7 +9062,7 @@
 	   (gen1 (make-polywave :partials (list 1 .98  2 .01 3 .005  4 .003))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (polywave gen1 (env frqf)))))))))
@@ -9086,14 +9086,14 @@
 	   (gen1 (make-polywave :partials (list 1 .98  2 .01)))) ; there are 3 to 5, but they alias at 44KHz
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (polywave gen1 (env frqf)))))))))
 
   (let ((amps (vct .1 .3 .6  .8 .9 1.0))
 	(begs (vct 0.0 0.156 .311 .454  .594 .731)))
-    (do ((call 0 (1+ call)))
+    (do ((call 0 (+ 1 call)))
 	((= call 6))
       (chestnut-sided-warbler-1 (+ beg1 (vct-ref begs call))
 				(* amp1 (vct-ref amps call)))))
@@ -9149,7 +9149,7 @@
 	 (gen1 (make-polywave :partials (list 1 .98  2 .02  3 .005))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))))
@@ -9178,7 +9178,7 @@
 	   (trem (make-oscil (* 2 speed))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (let ((vb (oscil vib))
 		 (vbf (env vibf))
@@ -9252,7 +9252,7 @@
 	 (rnd (make-rand-interp 100 .7)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (+ (* (env ampf1)
@@ -9300,7 +9300,7 @@
 	 (ampf3 (make-env '(0 .5 .15 .5 .2 .005 1 .005) :duration dur)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((rf (env rndf1))
 	       (frq (+ (env frqf)
@@ -9337,7 +9337,7 @@
 	 (ampf3 (make-env '(0 0  .18 0  .5 1  .7 1 .85 0 1 0) :duration dur :scaler .08)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (env frqf)))
 	   (outa i (* (env ampf)
@@ -9389,7 +9389,7 @@
 	   (frmf (make-env frmamp :duration dur)))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (let ((frq (+ (env frqf)
 			 (* (env vibf) 
@@ -9447,7 +9447,7 @@
 	 (rnd (make-rand-interp 240 .5)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (+ .5 (abs (rand-interp rnd)))
@@ -9481,7 +9481,7 @@
 	 (rndf (make-env '(0 1 .2 .1 .9 .1 1 1) :duration dur)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (+ (env frqf)
 		       (* (env rndf) (rand-interp rnd)))))
@@ -9505,7 +9505,7 @@
 		       (list 0.000 0.162 0.246 0.168 0.867 0.183 0.897 0.186 0.926 0.204 1.000 0.192)
 		       (list 0.000 0.189 0.039 0.168 0.246 0.168 1.000 0.192)))
 	 (gen1 (make-polywave :partials (list 1 .98  2 .015  3 .005))))
-    (do ((call 0 (1+ call)))
+    (do ((call 0 (+ 1 call)))
 	((= call 3))
       (let* ((start (seconds->samples (+ beg (vct-ref begs call))))
 	     (dur (vct-ref durs call))
@@ -9518,7 +9518,7 @@
 	     (frqf (make-env (vector-ref frqs call) :duration dur :scaler (hz->radians 22000.0))))
 	(run
 	 (lambda ()
-	   (do ((i start (1+ i)))
+	   (do ((i start (+ i 1)))
 	       ((= i stop))
 	     (outa i (* (env ampf)
 			(polywave gen1 (env frqf)))))))))))
@@ -9543,7 +9543,7 @@
 	 (gen1 (make-polywave :partials (list 1 .94  2 .02  3 .05  4 .005))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))))
@@ -9585,7 +9585,7 @@
 	 (vibf (make-env '(0 0 .15 0 .2 1 .4 0 1 0) :duration dur)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let* ((noise (* (env rndf)
 			  (rand-interp rnd)))
@@ -9631,7 +9631,7 @@
 	 (gen1 (make-polywave :partials (list 1 .985  2 .005  3 .01))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))))
@@ -9648,7 +9648,7 @@
 (definstrument (crested-caracara beg amp)
   ;; south 5 6.5
 
-  (do ((i 0 (1+ i)))
+  (do ((i 0 (+ i 1)))
       ((= i 17))
     (let* ((start (seconds->samples (+ beg (* i .04) (random .005))))
 	   (dur (+ 0.04 (random .005)))
@@ -9664,7 +9664,7 @@
 	   (rnd (make-rand-interp 4000 .425)))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (polywave gen1 (* index (+ (polywave gen2)
@@ -9695,7 +9695,7 @@
 	   (index (hz->radians 30)))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (polywave gen1 (* index (oscil vib))))))))))
@@ -9723,7 +9723,7 @@
       (set! (mus-phase gen2a) (* 0.5 pi))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (let ((frq (env frqf)))
 	     (outa i (* (env ampf)
@@ -9753,7 +9753,7 @@
       (set! (mus-phase gen2) (* 0.5 pi))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (let ((frq (env frqf))
 		 (intrp (env intrpf))) ; runtime if instead here caused a click at the juncture
@@ -9789,7 +9789,7 @@
 	   (ampf4 (make-env '(0 1 .8 1 1 0) :duration dur :scaler .5)))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (let ((frq (env frqf)))
 	     (outa i (* (env ampf)
@@ -9817,7 +9817,7 @@
 	   (index (hz->radians 40)))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (let ((vb (* index (rand-interp vib))))
 	     (outa i (* (env ampf)
@@ -9854,7 +9854,7 @@
 	   (gen1 (make-polywave :partials (list 1 .005 2 .9 3 .005 4 .01 6 .03  7 .005 8 .005))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (polywave gen1 (env frqf)))))))))
@@ -9878,7 +9878,7 @@
 	   (ampf3 (make-env '(0 0 .7 0 1 1) :duration dur :scaler .5)))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (let ((frq (env frqf)))
 	     (outa i (* (env ampf)
@@ -9900,7 +9900,7 @@
 	(frqf (make-env (list 0 1 1 (/ 3050.0 3200.0)) :length 10))
 	(call-init 1.0))
 
-    (do ((call 0 (1+ call)))
+    (do ((call 0 (+ 1 call)))
 	((= call 10))
       (let ((call-amp (env ampf))
 	    (call-frq (env frqf)))
@@ -9947,7 +9947,7 @@
 	 (gen1 (make-polywave :partials (list 1 .99  2 .005  3 .005))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))))
@@ -9974,7 +9974,7 @@
 	 (trem (make-triangle-wave 76 .8)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((vbf (env vibf)))
 	   (outa i (* (env ampf)
@@ -10005,7 +10005,7 @@
 	 (gen1 (make-polywave :partials (list 1 .99 2 .006  3 .004))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf) (polywave gen1 (env frqf)))))))))
 
@@ -10035,7 +10035,7 @@
 	   (gen1 (make-polywave :partials (list 1 .995  2 .005))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (polywave gen1 (env frqf)))))))))
@@ -10054,7 +10054,7 @@
 	   (gen1 (make-polywave :partials (list 1 .98  2 .01  3 .005 4 .005))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (polywave gen1 (env frqf)))))))))
@@ -10081,7 +10081,7 @@
 	   (gen1 (make-polywave :partials (list 1 .99  2 .004  3 .006))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (polywave gen1 (env frqf)))))))))
@@ -10106,7 +10106,7 @@
 	   (gen1 (make-polywave :partials (list 1 .99  2 .006  3 .004))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (polywave gen1 (env frqf)))))))))
@@ -10120,7 +10120,7 @@
 	   (gen1 (make-polywave :partials (list 1 .99  2 .01))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (polywave gen1 (env frqf)))))))))
@@ -10130,7 +10130,7 @@
   (townsends-solitaire-1 (+ beg1 .37) amp1)
   (townsends-solitaire-1 (+ beg1 .59) amp1)
   
-  (do ((call 0 (1+ call)))
+  (do ((call 0 (+ 1 call)))
       ((= call 5))
     (townsends-solitaire-2 (+ beg1 .85 (* call .059)) (* .3 amp1)))
   
@@ -10175,7 +10175,7 @@
 	 (ampf6 (make-env '(0 0 .4 0 .45 1 .5 0 .65 0 .7 1 .75 0 1 0) :duration dur :scaler .2)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((trmf (env tremf))
 	       (frq (+ (env frqf)
@@ -10222,7 +10222,7 @@
 	 (ampf6 (make-env '(0 0 .65 0 .7 1 .75 0 1 0) :duration dur :scaler .3)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (+ (env frqf)
 		       (* (env rndf) (rand-interp rnd)))))
@@ -10267,7 +10267,7 @@
 	 (rndf (make-env '(0 .1 .3 1 .35 .1 .4 .01 .55 .01 .6 1  .65 .01 1 .01) :duration dur :scaler (hz->radians 200))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((trmf (env tremf))
 	       (frq (+ (env frqf)
@@ -10300,7 +10300,7 @@
 
   (let ((call-ampf (make-env '(0 .05 1 .2  3 .8 5 1 10 1 16 .4) :length 16))
 	(call-frqf (make-env '(0 1.1 4 1.0 13 .98 15 1.0) :length 16)))
-    (do ((call 0 (1+ call)))
+    (do ((call 0 (+ 1 call)))
 	((= call 16))
       (let* ((start (seconds->samples (+ beg (* call .115) (random .01))))
 	     (dur (+ .105 (random .01)))
@@ -10322,7 +10322,7 @@
 	     (ampf2 (make-env '(0 0 .3 0 .4 1 1 1) :duration dur)))
 	(run
 	 (lambda ()
-	   (do ((i start (1+ i)))
+	   (do ((i start (+ i 1)))
 	       ((= i stop))
 	     (let ((frq (env frqf)))
 	       (outa i (* (env ampf)
@@ -10353,7 +10353,7 @@
 	   (gen1 (make-polywave :partials (list 1 .99  2 .007  3 .003))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (polywave gen1 (env frqf)))))))))
@@ -10375,7 +10375,7 @@
 	   (gen1 (make-polywave :partials (list 1 .99  2 .007  3 .003))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (polywave gen1 (env frqf)))))))))
@@ -10400,7 +10400,7 @@
 	   (gen1 (make-polywave :partials (list 1 .99  2 .007  3 .003))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (polywave gen1 (env frqf)))))))))
@@ -10409,11 +10409,11 @@
   (black-throated-sparrow-3 beg1 (* .4 amp1))
 
   (let ((ampf (make-env '(0 .4  5 1.0 7 .9) :length 7)))
-    (do ((call 0 (1+ call)))
+    (do ((call 0 (+ 1 call)))
 	((= call 7))
       (black-throated-sparrow-1 (+ beg1 .2 (* call .042) (random .003)) (* amp1 (env ampf)))))
 
-  (do ((call 0 (1+ call)))
+  (do ((call 0 (+ 1 call)))
       ((= call 3))
     (black-throated-sparrow-2 (+ beg1 .53 (* call .134)) (* 0.6 amp1))))
 
@@ -10442,7 +10442,7 @@
 	 (gen1 (make-oscil)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (oscil gen1 (env frqf))))))))
@@ -10458,7 +10458,7 @@
 	 (frqenv '(0.000 0.326 0.102 0.344 0.182 0.351 0.269 0.360 0.352 0.373 0.503 0.382 0.614 0.394 0.730 0.410 
 		   0.833 0.423 1.000 0.434))
 	 (gen1 (make-oscil)))
-    (do ((call 0 (1+ call)))
+    (do ((call 0 (+ 1 call)))
 	((= call 4))
       (let* ((start (seconds->samples (+ beg (vct-ref begs call))))
 	     (dur (vct-ref durs call))
@@ -10467,7 +10467,7 @@
 	     (frqf (make-env frqenv :duration dur :scaler (hz->radians 22000))))
 	(run
 	 (lambda ()
-	   (do ((i start (1+ i)))
+	   (do ((i start (+ i 1)))
 	       ((= i stop))
 	     (outa i (* (env ampf)
 			(oscil gen1 (env frqf)))))))))))
@@ -10490,7 +10490,7 @@
 	   (gen1 (make-polywave :partials (normalize-partials (list 1 1.0  2 .08  3 .1  4 .03  5 .05)))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))))
@@ -10554,7 +10554,7 @@
 			  '(0.000 0.123 0.079 0.148 0.131 0.153 0.274 0.168 0.340 0.170 0.432 0.194 0.494 0.200 
 			    0.520 0.215 0.595 0.219 0.628 0.241 0.675 0.245 0.752 0.273 0.864 0.310 0.898 0.297
 			    0.930 0.292 0.964 0.269 1.000 0.247))))
-    (do ((call 0 (1+ call)))
+    (do ((call 0 (+ 1 call)))
 	((= call 8))
       (kirtlands-warbler-1 (+ beg1 (vct-ref begs call))
 			   (vct-ref durs call)
@@ -10607,7 +10607,7 @@
 	 (attf (make-env '(0 0 .05 1 .1 0 1 0) :duration dur :scaler .125)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (+ (env frqf)
 		       (* (env rndf) (rand-interp rnd)))))
@@ -10646,7 +10646,7 @@
 	 (gen1 (make-polywave 0.0 (list 1 .99  2 .01  3 .005))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf) (polywave gen1 (env frqf))))))))
 
@@ -10667,7 +10667,7 @@
 	 (ampf3 (make-env '(0 1 .1 0 1 0) :duration dur :scaler .1)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (env frqf)))
 	   (outa i (* (env ampf)
@@ -10690,7 +10690,7 @@
 	 (rnd (make-rand-interp 4000 (hz->radians 200))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (+ (env frqf)
 		       (* vib-index (oscil vib))
@@ -10724,7 +10724,7 @@
 	 (gen1 (make-polywave :partials (list 1 .98  2 .01  3 .01  4 .005  5 .005))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf))))))))
@@ -10743,7 +10743,7 @@
 	 (rndf (make-env '(0 1  .2 0  .7 0  .8 1  1 1) :duration dur :scaler (hz->radians 200))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (+ (env frqf)
@@ -10771,7 +10771,7 @@
 	 (gen1 (make-polywave :partials (normalize-partials (list 1 .03  2 .1  3 1  4 .6  5 .5  6 .4  7 .1  8 .04  9 .01  10 .01  11 .005)))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf))))))))
@@ -10787,7 +10787,7 @@
 	 (gen1 (make-polywave :partials (normalize-partials (list 1 .07  2 1  3 .8  4 .47  5 .14  6 .04  7 .03  8 .01)))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))))
@@ -10821,7 +10821,7 @@
 	 (gen1 (make-polywave :partials (list 1 .98  2 .015  3 .005))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))))
@@ -10852,7 +10852,7 @@
 	 (rnd1 (make-rand-interp 1000 .5)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (+ (env frqf)
 		       (triangle-wave vib)
@@ -10889,7 +10889,7 @@
 			 :duration dur :scaler (hz->radians 7160))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (outa i (* (env ampf)
 		    (polywave gen1 (env frqf)))))))))
@@ -10921,7 +10921,7 @@
 	   (gen1 (make-polywave :partials (list 1 .96  2 .02  3 .02))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (polywave gen1 (env frqf)))))))))
@@ -10943,7 +10943,7 @@
 	 (gen1 (make-polywave :partials (list 1 .98  2 .01  3 .01))))
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i stop))
 	   (outa i (* (env ampf)
 		      (polywave gen1 (env frqf)))))))))
@@ -10992,7 +10992,7 @@
 	 (gen1 (make-polywave :partials (list 1 .9 2 .03 3 .05 4 .01 5 .01))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (env frqf)))
 	   (outa i (* (env ampf)
@@ -11024,7 +11024,7 @@
 	 (gen1 (make-polywave :partials (list 1 .9 2 .02 3 .005 4 .02 5 .007 6 .01))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i stop))
 	 (let ((frq (env frqf)))
 	   (outa i (* (env ampf)

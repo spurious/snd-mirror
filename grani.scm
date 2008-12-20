@@ -131,7 +131,7 @@
 		      (error 0.01))
   (make-env :envelope (db-envelope envelope cutoff error)
 	    :scaler scaler :offset offset
-	    :base base :duration duration :length (1+ end)))
+	    :base base :duration duration :length (+ 1 end)))
 
 ;;; Pitch envelopes (y units are semitone and octave intervals)
 
@@ -154,7 +154,7 @@
 			     (error 0.01))
   (make-env :envelope (semitones-envelope envelope around error)
 	    :scaler scaler :offset offset
-	    :base base :duration duration :length (1+ end)))
+	    :base base :duration duration :length (+ 1 end)))
 
 (define* (octaves-envelope envelope :optional (around 1.0) (error 0.01))
   (exp-envelope envelope
@@ -175,7 +175,7 @@
 			   (error 0.01))
   (make-env :envelope (octaves-envelope envelope around error)
 	    :scaler scaler :offset offset
-	    :base base :duration duration :length (1+ end)))
+	    :base base :duration duration :length (+ 1 end)))
 
 
 ;;; *************************
@@ -234,7 +234,7 @@
 (define* (make-gr-env env :optional (length 512))
   (let* ((env-vct (make-vct length))
 	 (length-1 (exact->inexact (1- length))))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ 1 i)))
 	((= i length) env-vct)
       (vct-set! env-vct i (envelope-interp (/ i length-1) env)))))
 
@@ -250,11 +250,11 @@
 	 (start (/ (- length active) 2))
 	 (end (/ (+ length active) 2))
 	 (s 0))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ 1 i)))
 	((= i length) v)
       (if (and (>= i start) (< i end))
 	  (let ((sine (sin (* s incr))))
-	    (set! s (1+ s))
+	    (set! s (+ 1 s))
 	    (vct-set! v i (* sine sine)))))))
 
 ;;;=============================================================================
@@ -432,7 +432,7 @@
 	 (in-start-value 0.0)
 	 (gr-duration 0.0)
 	 (gr-samples 0)
-	 (gr-offset (1+ gr-samples))
+	 (gr-offset (+ 1 gr-samples))
 	 (gr-dens 0.0)
 	 (gr-dens-spread 0.0)
 	 (gr-srate 0.0)
@@ -465,7 +465,7 @@
 			  (env amp-env)
 			  (src in-file-reader)))
 	       ;; increment pointer in grain
-	       (set! gr-offset (1+ gr-offset)))
+	       (set! gr-offset (+ 1 gr-offset)))
 	     (begin
 	       ;;
 	       ;; start of a new grain
@@ -559,18 +559,18 @@
 			(vct? where-bins)
 			(> where-bins-len 1))
 		   ;; set output scalers according to criteria
-		   (do ((chn 0 (1+ chn)))
+		   (do ((chn 0 (+ 1 chn)))
 		       ((or (= chn out-chans)
 			    (= chn where-bins-len)))
 		     (locsig-set! loc chn (if (< (vct-ref where-bins chn)
 						 where
-						 (vct-ref where-bins (1+ chn)))
+						 (vct-ref where-bins (+ 1 chn)))
 					      1.0
 					      0.0)))
 		   ;; if not "where" see if the user wants to send to all channels
 		   (if (= where-to grani-to-grain-allchans)
 		       ;; send the grain to all channels
-		       (do ((chn 0 (1+ chn)))
+		       (do ((chn 0 (+ 1 chn)))
 			   ((= chn out-chans))
 			 (locsig-set! loc chn 1.0))
 		       ;; "where" is zero or unknown: use normal n-channel locsig, 

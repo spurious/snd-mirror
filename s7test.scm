@@ -36565,6 +36565,46 @@ expt error > 1e-6 around 2^-46.506993328423
 			(let ((lst (car (choose-list 0))))
 			  (list lst (random (length lst))))))
 		
+		(list list
+		      (lambda (nlst v)
+			(if (not (equal? nlst v))
+			    (format #t "(list ~{~A~^ ~}) -> ~A~%" nlst v)))
+		      (lambda ()
+			(car (choose-list 0))))
+		
+		(list symbol?
+		      (lambda (nlst v)
+			(let ((symp (catch #t (lambda () (string? (symbol->string (car nlst)))) (lambda args #f))))
+			  (if (or (not (boolean? v))
+				  (not (eq? v symp)))
+			      (format #t "(symbol? ~A) -> ~A~%" (car nlst) v))))
+		      (lambda () (choose-any 0)))
+		
+		(list append
+		      (lambda (nlst v)
+			(let* ((len (length nlst))
+			       (mv v)
+			       (happy #t))
+			  (for-each
+			   (lambda (lst)
+			     (if happy
+				 (for-each
+				  (lambda (obj)
+				    (if happy
+					(if (not (equal? obj (car mv)))
+					    (begin
+					      (format #t "(append ~{~A~^ ~}) -> ~A~%" nslt v)
+					      (set! happy #f))
+					    (set! mv (cdr mv)))))
+				  lst)))
+			   nlst)))
+		      (lambda ()
+			(let ((len (random 10))
+			      (lsts '()))
+			  (do ((i 0 (+ i 1)))
+			      ((= i len))
+			    (set! lsts (cons (car (choose-list 0)) lsts)))
+			  lsts)))
 		
 		;; --------------------------------------------------------------------------------
 		

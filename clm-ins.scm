@@ -65,13 +65,13 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
 	 (feedb (make-one-zero c 1.0)) ;or (feedb (make-one-zero 1.0 c))
 	 (ctr 0))
       
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i dlen))
       (vct-set! tab i (- 1.0 (random 2.0))))
     (ws-interrupt?)
     (run 
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
 	   ((= i end))
 	 (let ((val (vct-ref tab ctr)))	;current output value
 	   (vct-set! tab ctr (* (- 1.0 c) 
@@ -141,7 +141,7 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
 	 (loc (make-locsig deg 1.0 pcrev))
 	 (per-vib (make-triangle-wave :frequency 6 :amplitude (* freq vibscl)))
 	 (ran-vib (make-rand-interp :frequency 20 :amplitude (* freq .5 vibscl))))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i fs))
       (let ((amp (list-ref formant-amps i))
 	    (index (list-ref formant-indices i)))
@@ -152,11 +152,11 @@ Anything other than .5 = longer decay.  Must be between 0 and less than 1.0.
 	(vector-set! frmfs i (make-env :envelope (vox-fun phonemes i) :duration dur))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (set! frq (+ (env freqf) (triangle-wave per-vib) (rand-interp ran-vib)))
 	 (set! carrier (oscil car-os (hz->radians frq)))
 	 (set! sum 0.0)
-	 (do ((k 0 (1+ k))) ((= k fs))
+	 (do ((k 0 (+ 1 k))) ((= k fs))
 	   (set! frm (env (vector-ref frmfs k)))
 	   (set! frm0 (/ frm frq))
 	   (set! frm-int (inexact->exact (floor frm0)))
@@ -203,7 +203,7 @@ synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
 	   (win-freq (/ two-pi foflen))
 	   (wt0 (make-wave-train :size foflen :frequency frq))
 	   (foftab (mus-data wt0)))
-      (do ((i 0 (1+ i)))
+      (do ((i 0 (+ i 1)))
 	  ((= i foflen))
 	(vct-set! foftab i (* (+ (* a0 (sin (* i frq0)))
 				 (* a1 (sin (* i frq1)))
@@ -212,7 +212,7 @@ synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
       (ws-interrupt?)
       (run
        (lambda ()
-	 (do ((i start (1+ i)))
+	 (do ((i start (+ i 1)))
 	     ((= i end))
 	   (outa i (* (env ampf) 
 		      (wave-train wt0 (* (env vibf) 
@@ -290,7 +290,7 @@ synthesis: (fofins 0 1 270 .2 .001 730 .6 1090 .3 2440 .1)"
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
 	   ((= i end))
 	 (let ((frq-change (hz->radians (* (+ 1.0 (rand-interp ran-vib))
 					   (+ 1.0 (* (env per-vib-f) (oscil per-vib)))
@@ -362,7 +362,7 @@ vocal sounds using phase quadrature waveshaping"
 	 (freqf (make-env :envelope freqfun :duration dur :scaler (* freqscl freq) :offset freq))
 	 (per-vib (make-triangle-wave :frequency 6.0 :amplitude (* freq .1)))
 	 (ran-vib (make-rand-interp :frequency 20.0 :amplitude (* freq .05))))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i fs))
       (let* ((amp (list-ref formant-amps i))
 	     (fshape (list-ref formant-shapes i))
@@ -378,7 +378,7 @@ vocal sounds using phase quadrature waveshaping"
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i end))
 	 (let* ((frq (+ (env freqf) (triangle-wave per-vib) (rand-interp ran-vib)))
 		(frqscl (hz->radians (* frq frq-ratio)))
@@ -389,7 +389,7 @@ vocal sounds using phase quadrature waveshaping"
 		(even-freq 0.0)
 		(odd-freq 0.0)
 		(sum 0.0))
-	   (do ((k 0 (1+ k)))
+	   (do ((k 0 (+ 1 k)))
 	       ((= k fs))
 	     (let* ((frm (env (vector-ref frmfs k)))
 		    (frm0 (/ frm frq))
@@ -478,7 +478,7 @@ is a physical model of a flute:
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
 	   ((= i end))
 	 (set! delay-sig (delay bore out-sig))
 	 (set! emb-sig (delay embouchure current-difference))
@@ -531,7 +531,7 @@ is a physical model of a flute:
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
 	   ((= i end))
 	 (let ((fmenv (env indf)))
 	   (outa i (* (env ampf)
@@ -570,7 +570,7 @@ is a physical model of a flute:
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
 	   ((= i end))
 	 (let* ((garble-in (* (env indf)
 			      (oscil fm1-osc (env modfrqf))))
@@ -635,7 +635,7 @@ is a physical model of a flute:
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
 	   ((= i end))
 	 (let ((gls (env glsf)))
 	   (locsig loc i (* (env ampf) 
@@ -693,7 +693,7 @@ is a physical model of a flute:
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
 	   ((= i end))
 	 (locsig loc i (* (env ampfun) 
 			  (oscil carrier (+ (* (env indxfun1) (oscil mod1))
@@ -713,7 +713,7 @@ is a physical model of a flute:
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i st (1+ i)))
+       (do ((i st (+ i 1)))
 	   ((= i nd))
 	 (let ((x1 (- x (* dt (+ y z)))))
 	   (set! y (+ y (* dt (+ x (* a y)))))
@@ -748,7 +748,7 @@ is a physical model of a flute:
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
 	   ((= i end))
 	 (let* ((vib (+ (triangle-wave tr) (rand-interp rn)))
 		(ax (* (min 1.0 (env ind-env)) (oscil spacing-cos vib)))
@@ -784,7 +784,7 @@ is a physical model of a flute:
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i st (1+ i)))
+       (do ((i st (+ i 1)))
 	   ((= i nd))
 	 (outa i (* (+ (* .007 (oscil ampmod)) .993)
 		    (+ (* g0 (env ampenv1) (oscil osc0 (* g1 (oscil osc1))))
@@ -810,7 +810,7 @@ is a physical model of a flute:
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i st (1+ i)))
+       (do ((i st (+ i 1)))
 	   ((= i nd))
 	 (outa i (* (env ampenv)
 		    (+ 1.0 (* .007 (oscil ampmod)))
@@ -836,7 +836,7 @@ is a physical model of a flute:
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i st (1+ i)))
+       (do ((i st (+ i 1)))
 	   ((= i nd))
 	 (outa i (+ (* g0 (env ampenv1) (oscil osc0 (* g1 (oscil osc1))))
 		    (* g2 (env ampenv2) (oscil osc2 (* (env ampenv3) g3 (oscil osc3)))))))))))
@@ -859,7 +859,7 @@ is a physical model of a flute:
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i st (1+ i)))
+       (do ((i st (+ i 1)))
 	   ((= i nd))
 	 (outa i (+ (* (env ampenv1)
 		       (+ (* g0 (oscil osc0))
@@ -887,7 +887,7 @@ is a physical model of a flute:
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i st (1+ i)))
+       (do ((i st (+ i 1)))
 	   ((= i nd))
 	 (outa i (* g0 (env ampenv0) 
 		    (oscil osc0 
@@ -914,7 +914,7 @@ is a physical model of a flute:
     (ws-interrupt?)
     (run 
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
 	   ((= i end))
 	 (locsig loc i (* (env amp-env) (table-lookup s (+ (rand ran-vib))))))))))
 
@@ -967,7 +967,7 @@ is a physical model of a flute:
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i end))
 	 (let* ((frqval (+ (env tskwfun) (* (env tranfun) (rand ranvib))))
 		(modval (oscil modgen frqval))
@@ -1001,10 +1001,10 @@ is a physical model of a flute:
   (let* ((srscale (/ (mus-srate) 25641))
 	 (val 0)
 	 (dly-len (list 1433 1601 1867 2053 2251 2399 347 113 37 59 53 43 37 29 19)))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i 15))
       (let ((val (inexact->exact (floor (* srscale (list-ref dly-len i))))))
-	(if (even? val) (set! val (1+ val)))
+	(if (even? val) (set! val (+ 1 val)))
 	(list-set! dly-len i (next-prime val))))
 
     (let* ((len (+ (mus-srate) (mus-length *reverb*)))
@@ -1028,7 +1028,7 @@ is a physical model of a flute:
       (ws-interrupt?)
       (run
        (lambda ()
-	 (do ((i 0 (1+ i)))
+	 (do ((i 0 (+ i 1)))
 	     ((= i len))
 	   (let* ((rev (* volume (ina i *reverb*)))
 		  (outrev (all-pass allpass4
@@ -1067,10 +1067,10 @@ is a physical model of a flute:
 	 (ranvib (make-rand-interp :frequency ranvibfreq
 				   :amplitude (hz->radians (* ranvibpc pitch)))))
     ;; initialize the "formant" generators
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i numformants))
       (set! totalamp (+ totalamp (list-ref (list-ref data i) 2))))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i numformants))
       (let* ((frmdat (list-ref data i))
 	     (freq (cadr frmdat))
@@ -1098,12 +1098,12 @@ is a physical model of a flute:
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
 	   ((= i end))
 	 (let* ((outsum 0.0)
 		(vib (+ (triangle-wave pervib) (rand-interp ranvib) (env frqf)))
 		(modsig (oscil modulator vib)))
-	   (do ((k 0 (1+ k)))
+	   (do ((k 0 (+ 1 k)))
 	       ((= k numformants))
 	     (set! outsum (+ outsum
 			     (* (env (vector-ref ampfs k))
@@ -1150,7 +1150,7 @@ is a physical model of a flute:
     (ws-interrupt?)
     (run 
      (lambda ()
-       (do ((i st (1+ i)))
+       (do ((i st (+ i 1)))
 	   ((= i nd))
 	 (let* ((vib (+ (* (env pvibenv) (triangle-wave pvib))
 			(* (env rvibenv) (rand-interp rvib))
@@ -1182,7 +1182,7 @@ is a physical model of a flute:
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i 0 (1+ i)))
+       (do ((i 0 (+ i 1)))
 	   ((= i len))
 	 (let ((allpass-sum (all-pass allpass3 (all-pass allpass2 (all-pass allpass1 (ina i *reverb*))))))
 	   (set! comb-sum 
@@ -1202,13 +1202,13 @@ is a physical model of a flute:
 	 (grain-size (inexact->exact (ceiling (* (max grain-dur grain-interval) (mus-srate)))))
 	 (grains (make-wave-train :size grain-size :frequency (/ 1.0 grain-interval)))
 	 (grain (mus-data grains)))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i grain-size))
       (vct-set! grain i (* (env grain-env) (oscil carrier))))
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
 	   ((= i end))
 	 (outa i (* amp (wave-train grains))))))))
 	 
@@ -1218,7 +1218,7 @@ is a physical model of a flute:
 (definstrument (touch-tone start telephone-number)
   (let ((touch-tab-1 '(0 697 697 697 770 770 770 852 852 852 941 941 941))
 	(touch-tab-2 '(0 1209 1336 1477 1209 1336 1477 1209 1336 1477 1209 1336 1477)))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i (length telephone-number)))
       (let* ((k (list-ref telephone-number i))
 	     (beg (seconds->samples (+ start (* i .4))))
@@ -1235,7 +1235,7 @@ is a physical model of a flute:
 	(ws-interrupt?)
 	(run
 	 (lambda ()
-	   (do ((j beg (1+ j)))
+	   (do ((j beg (+ 1 j)))
 	       ((= j end))
 	     (outa j (* 0.1 (+ (oscil frq1) (oscil frq2)))))))))))
 
@@ -1266,7 +1266,7 @@ is a physical model of a flute:
     (ws-interrupt?)
     (run 
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
 	   ((= i end))
 	 (locsig loc i (* (env amp-env) 
 			  (table-lookup s (+ (triangle-wave per-vib)
@@ -1307,7 +1307,7 @@ is a physical model of a flute:
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
 	   ((= i end))
 	 (let ((vib (+ (triangle-wave per-vib) 
 		       (rand-interp ran-vib)))
@@ -1775,18 +1775,18 @@ is a physical model of a flute:
 	   (sktr 0))
 
       (do ((i 0 (+ i 2))
-	   (j 0 (1+ j)))
+	   (j 0 (+ 1 j)))
 	  ((= i (vct-length partials)))
 	(vct-set! alist j (vct-ref partials (+ i 1)))
 	(vector-set! oscils j (make-oscil :frequency (* (vct-ref partials i) frequency))))
       (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
 	   ((= i end))
-	 (set! sktr (1+ sktr))
+	 (set! sktr (+ 1 sktr))
 	 (let ((sum 0.0))
-	   (do ((k 0 (1+ k)))
+	   (do ((k 0 (+ 1 k)))
 	       ((= k siz))
 	     (set! sum (+ sum (* (vct-ref alist k)
 				 (oscil (vector-ref oscils k))))))
@@ -1842,7 +1842,7 @@ is a physical model of a flute:
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
 	   ((= i end))
 	 (let ((input1 (if with-noise
 			   (* (env ampf) (rand rn))
@@ -1874,7 +1874,7 @@ is a physical model of a flute:
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
 	   ((>= turn-i turns))
 	 (let ((val (src rd 0.0
 			 (lambda (dir)
@@ -1890,7 +1890,7 @@ is a physical model of a flute:
 	       (if (or (and (<= last-val2 last-val) (>= last-val val))
 		       (and (>= last-val2 last-val) (<= last-val val)))
 		   (begin
-		     (set! turn-i (1+ turn-i))
+		     (set! turn-i (+ 1 turn-i))
 		     (if (< turn-i turns)
 			 (begin
 			   (set! turn-sample (seconds->samples (vct-ref turntable turn-i)))
@@ -1963,7 +1963,7 @@ is a physical model of a flute:
     (if (< (* dur time-scaler) file-duration)
 	(snd-print (format #f "~A is ~1,3F seconds long, but we'll need ~1,3F seconds of data for this note" 
 			   file file-duration (* dur time-scaler))))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i max-oscils))
       (vector-set! resynth-oscils i (make-oscil :frequency 0)))
     (set! trigger outhop)
@@ -1971,7 +1971,7 @@ is a physical model of a flute:
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i end))
 	 (if splice-attack
 	     (let ((ramp (/ 1.0 attack-size)))
@@ -1980,10 +1980,10 @@ is a physical model of a flute:
 	       ;; simply splices the original attack on to the rest of the note.  "attack" is the number
 	       ;; of samples to include bodily.
 	       (outa i (* amp (file->sample fil filptr)))
-	       (set! filptr (1+ filptr))
+	       (set! filptr (+ 1 filptr))
 	       (if (> filptr attack-size)
 		   (let ((mult 1.0))
-		     (do ((k 0 (1+ k)))
+		     (do ((k 0 (+ 1 k)))
 			 ((= k attack-size))
 		       (vct-set! ramped-attack k (* mult (file->sample fil (+ filptr k))))
 		       (set! mult (- mult ramp)))
@@ -1993,21 +1993,21 @@ is a physical model of a flute:
 		   (let ((peaks 0))
 		     ;; get next block of data and apply window to it
 		     (set! trigger 0)
-		     (do ((k 0 (1+ k)))
+		     (do ((k 0 (+ 1 k)))
 			 ((= k fftsize-1))
 		       (vct-set! fdr k (* (vct-ref window k) (file->sample fil filptr)))
-		       (set! filptr (1+ filptr)))
+		       (set! filptr (+ 1 filptr)))
 		     (vct-fill! fdi 0.0)
 		     (set! filptr (- filptr (- fftsize-1 hop)))
 		     ;; get the fft 
 		     (mus-fft fdr fdi fftsize-1 1)
 		     ;; change to polar coordinates (ignoring phases)
-		     (do ((k 0 (1+ k)))
+		     (do ((k 0 (+ 1 k)))
 			 ((= k highest-bin-1))	;no need to paw through the upper half (so (<= highest-bin-1 (floor fft-size 2)))
 		       (let ((x (vct-ref fdr k))
 			     (y (vct-ref fdi k)))
 			 (vct-set! fftamps k (* 2 (sqrt (+ (* x x) (* y y)))))))
-		     (do ((k 0 (1+ k)))
+		     (do ((k 0 (+ 1 k)))
 			 ((= k max-oscils))
 		       (vct-set! last-peak-freqs k (vct-ref current-peak-freqs k))
 		       (vct-set! last-peak-amps k (vct-ref current-peak-amps k))
@@ -2019,7 +2019,7 @@ is a physical model of a flute:
 		       ;; search for current peaks following Xavier Serra's recommendations in
 		       ;; "A System for Sound Analysis/Transformation/Synthesis 
 		       ;;      Based on a Deterministic Plus Stochastic Decomposition"
-		       (do ((k 0 (1+ k)))
+		       (do ((k 0 (+ 1 k)))
 			   ((= k highest-bin-1))
 			 (set! la ca)
 			 (set! ca ra)
@@ -2038,7 +2038,7 @@ is a physical model of a flute:
 				   ;; gotta either flush this peak, or find current lowest and flush him
 				   (let ((minp 0)
 					 (minpeak (vct-ref peak-amps 0)))
-				     (do ((j 1 (1+ j)))
+				     (do ((j 1 (+ 1 j)))
 					 ((= j max-peaks-1))
 				       (if (< (vct-ref peak-amps j) minpeak)
 					   (begin
@@ -2051,16 +2051,16 @@ is a physical model of a flute:
 				   (begin
 				     (vct-set! peak-freqs peaks freq)
 				     (vct-set! peak-amps peaks amp)
-				     (set! peaks (1+ peaks))))))))
+				     (set! peaks (+ 1 peaks))))))))
 		     ;; now we have the current peaks -- match them to the previous set and do something interesting with the result
 		     ;; the end results are reflected in the updated values in the rates and sweeps arrays.
 		     ;; search for fits between last and current, set rates/sweeps for those found
 		     ;;   try to go by largest amp first 
-		     (do ((k 0 (1+ k)))
+		     (do ((k 0 (+ 1 k)))
 			 ((= k peaks))
 		       (let ((maxp 0)
 			     (maxpk (vct-ref peak-amps 0)))
-			 (do ((j 1 (1+ j)))
+			 (do ((j 1 (+ 1 j)))
 			     ((= j max-peaks-1))
 			   (if (> (vct-ref peak-amps j) maxpk)
 			       (begin
@@ -2072,7 +2072,7 @@ is a physical model of a flute:
 				    (closestamp 10.0)
 				    (current-freq (vct-ref peak-freqs maxp))
 				    (icf (/ 1.0 current-freq)))
-			       (do ((j 0 (1+ j)))
+			       (do ((j 0 (+ 1 j)))
 				   ((= j max-peaks-1))
 				 (if (> (vct-ref last-peak-amps j) 0.0)
 				     (let ((closeness (* icf (abs (- (vct-ref last-peak-freqs j) current-freq)))))
@@ -2086,12 +2086,12 @@ is a physical model of a flute:
 				     (vct-set! current-peak-amps closestp (vct-ref peak-amps maxp))
 				     (vct-set! peak-amps maxp 0.0)
 				     (vct-set! current-peak-freqs closestp current-freq)))))))
-		     (do ((k 0 (1+ k)))
+		     (do ((k 0 (+ 1 k)))
 			 ((= k max-peaks-1))
 		       (if (> (vct-ref peak-amps k) 0.0)
 			   ;; find a place for a new oscil and start it up
 			   (let ((new-place -1))
-			     (do ((j 0 (1+ j)))
+			     (do ((j 0 (+ 1 j)))
 				 ((or (not (= new-place -1))
 				      (= j max-oscils)))
 			       (if (and (= (vct-ref last-peak-amps j) 0.0) 
@@ -2103,24 +2103,24 @@ is a physical model of a flute:
 			     (vct-set! last-peak-freqs new-place (vct-ref peak-freqs k))
 			     (set! (mus-frequency (vector-ref resynth-oscils new-place)) (* transposition (vct-ref peak-freqs k))))))
 		     (set! cur-oscils 0)
-		     (do ((k 0 (1+ k)))
+		     (do ((k 0 (+ 1 k)))
 			 ((= k max-oscils))
 		       (vct-set! rates k (* ifreq (- (vct-ref current-peak-amps k) (vct-ref last-peak-amps k))))
 		       (if (or (not (= (vct-ref current-peak-amps k) 0.0))
 			       (not (= (vct-ref last-peak-amps k) 0.0)))
 			   (set! cur-oscils k))
 		       (vct-set! sweeps k (* ihifreq transposition (- (vct-ref current-peak-freqs k) (vct-ref last-peak-freqs k)))))
-		     (set! cur-oscils (1+ cur-oscils))
+		     (set! cur-oscils (+ 1 cur-oscils))
 		     ))
 	       ;; run oscils, update envelopes
-	       (set! trigger (1+ trigger))
+	       (set! trigger (+ 1 trigger))
 	       (if (= ramped 0)
 		   (set! sum 0.0)
 		   (begin
 		     (set! sum (vct-ref ramped-attack ramp-ind))
-		     (set! ramp-ind (1+ ramp-ind))
+		     (set! ramp-ind (+ 1 ramp-ind))
 		     (if (= ramp-ind ramped) (set! ramped 0))))
-	       (do ((k 0 (1+ k)))
+	       (do ((k 0 (+ 1 k)))
 		   ((= k cur-oscils))
 		 (if (or (not (= (vct-ref amps k) 0.0))
 			 (not (= (vct-ref rates k) 0.0)))
@@ -2135,12 +2135,12 @@ is a physical model of a flute:
   (let* ((beg (seconds->samples time))
 	 (end (+ beg (seconds->samples dur)))
 	 (s (make-pulse-train :frequency freq))
-	 (d0 (make-comb :size length1 :max-size (1+ (max length1 length2)) :scaler feedback))
+	 (d0 (make-comb :size length1 :max-size (+ 1 (max length1 length2)) :scaler feedback))
 	 (zenv (make-env :envelope '(0 0 1 1) :scaler (- length2 length1) :duration dur)))
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
 	   ((= i end))
 	 (outa i (comb d0 (* amp (pulse-train s)) (env zenv))))))))
 
@@ -2154,12 +2154,12 @@ is a physical model of a flute:
   (let* ((beg (seconds->samples time))
 	 (end (+ beg (seconds->samples dur)))
 	 (s (make-pulse-train :frequency freq))
-	 (d0 (make-notch :size length1 :max-size (1+ (max length1 length2)) :scaler feedforward))
+	 (d0 (make-notch :size length1 :max-size (+ 1 (max length1 length2)) :scaler feedforward))
 	 (zenv (make-env :envelope '(0 0 1 1) :scaler (- length2 length1) :duration dur)))
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
 	   ((= i end))
 	 (outa i (notch d0 (* amp (pulse-train s)) (env zenv))))))))
 
@@ -2170,12 +2170,12 @@ is a physical model of a flute:
   (let* ((beg (seconds->samples time))
 	 (end (+ beg (seconds->samples dur)))
 	 (s (make-pulse-train :frequency freq))
-	 (d0 (make-all-pass feedback feedforward :size length1 :max-size (1+ (max length1 length2))))
+	 (d0 (make-all-pass feedback feedforward :size length1 :max-size (+ 1 (max length1 length2))))
 	 (zenv (make-env :envelope '(0 0 1 1) :scaler (- length2 length1) :duration dur)))
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
 	   ((= i end))
 	 (outa i (all-pass d0 (* amp (pulse-train s)) (env zenv))))))))
 
@@ -2197,7 +2197,7 @@ is a physical model of a flute:
 	 (nd (+ st (seconds->samples dur))))
     (run
      (lambda ()
-       (do ((i st (1+ i))) ((= i nd))
+       (do ((i st (+ i 1))) ((= i nd))
 	 (let ((valA               (* amp (src srcA 0.0 (lambda (dir) (granulate exA (lambda (dir) (readin fdA)))))))
 	       (valB (if two-chans (* amp (src srcB 0.0 (lambda (dir) (granulate exB (lambda (dir) (readin fdB)))))) 0.0)))
 	 (out-any i valA 0)
@@ -2259,7 +2259,7 @@ is a physical model of a flute:
 	(snd-warning (format #f "ramp argument to expsnd must always be between 0.0 and 0.5: ~A" ramp))
 	(run
 	 (lambda ()
-	   (do ((i st (1+ i)))
+	   (do ((i st (+ i 1)))
 	       ((= i nd))
 	     (if (c-g?) (set! i (1- nd)))
 	     (let* ((expa (env expenv)) ;current expansion amount
@@ -2276,13 +2276,13 @@ is a physical model of a flute:
 	       (set! (mus-frequency exA) hp)
 	       (set! (mus-increment exA) expa)
 	       (set! next-samp (+ next-samp resa))
-	       (if (> next-samp (1+ ex-samp))
+	       (if (> next-samp (+ 1 ex-samp))
 		   (let ((samps (inexact->exact (floor (- next-samp ex-samp)))))
-		     (do ((k 0 (1+ k)))
+		     (do ((k 0 (+ 1 k)))
 			 ((= k samps))
 		       (set! valA0 valA1)
 		       (set! valA1 (* vol (granulate exA (lambda (dir) (readin f0)))))
-		       (set! ex-samp (1+ ex-samp)))))
+		       (set! ex-samp (+ 1 ex-samp)))))
 	       (if (= next-samp ex-samp)
 		   (outa i valA0)
 		   (outa i (+ valA0 (* (- next-samp ex-samp) (- valA1 valA0))))))))))))
@@ -2317,31 +2317,31 @@ is a physical model of a flute:
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
 	   ((= i end))
 	 (let ((val 0.0))
 	   (if (= i out1)
 	       (let ((inval (ina (grn-loc grn1) fil1)))
-		 (set! (grn-loc grn1) (1+ (grn-loc grn1)))
+		 (set! (grn-loc grn1) (+ 1 (grn-loc grn1)))
 		 (if (= (grn-whichseg grn1) 0)	;ramp-up
 		     (begin
 		       (set! inval (* inval (grn-rampval grn1)))
 		       (set! (grn-rampval grn1) (+ (grn-rampval grn1) (grn-rampinc grn1)))
-		       (set! (grn-segctr grn1) (1+ (grn-segctr grn1)))
+		       (set! (grn-segctr grn1) (+ 1 (grn-segctr grn1)))
 		       (if (= (grn-segctr grn1) (grn-ramplen grn1))
 			   (begin
 			     (set! (grn-segctr grn1) 0)
-			     (set! (grn-whichseg grn1) (1+ (grn-whichseg grn1))))))
+			     (set! (grn-whichseg grn1) (+ 1 (grn-whichseg grn1))))))
 		     (if (= (grn-whichseg grn1) 1)		;steady-state
 			 (begin
-			   (set! (grn-segctr grn1) (1+ (grn-segctr grn1)))
+			   (set! (grn-segctr grn1) (+ 1 (grn-segctr grn1)))
 			   (if (= (grn-segctr grn1) (grn-steadylen grn1))
 			       (begin
 				 (set! (grn-segctr grn1) 0)
-				 (set! (grn-whichseg grn1) (1+ (grn-whichseg grn1))))))
+				 (set! (grn-whichseg grn1) (+ 1 (grn-whichseg grn1))))))
 			 (begin				;ramp-down
 			   (set! inval (* inval (grn-rampval grn1)))
-			   (set! (grn-segctr grn1) (1+ (grn-segctr grn1)))
+			   (set! (grn-segctr grn1) (+ 1 (grn-segctr grn1)))
 			   (set! (grn-rampval grn1) (- (grn-rampval grn1) (grn-rampinc grn1)))
 			   (if (= (grn-segctr grn1) (grn-ramplen grn1))
 			       (begin
@@ -2350,33 +2350,33 @@ is a physical model of a flute:
 				 (set! (grn-whichseg grn1) 0)
 				 (set! (grn-rampval grn1) 0.0))))))
 		 (set! val inval)
-		 (set! out1 (1+ out1))
+		 (set! out1 (+ 1 out1))
 		 (if (= (grn-trigger grn1) 1)
 		     (begin
 		       (set! (grn-trigger grn1) 0)
 		       (set! out1 (+ out1 hop))))))
 	   (if (= i out2)
 	       (let ((inval (ina (grn-loc grn2) fil2)))
-		 (set! (grn-loc grn2) (1+ (grn-loc grn2)))
+		 (set! (grn-loc grn2) (+ 1 (grn-loc grn2)))
 		 (if (= (grn-whichseg grn2) 0)	;ramp-up
 		     (begin
 		       (set! inval (* inval (grn-rampval grn2)))
 		       (set! (grn-rampval grn2) (+ (grn-rampval grn2) (grn-rampinc grn2)))
-		       (set! (grn-segctr grn2) (1+ (grn-segctr grn2)))
+		       (set! (grn-segctr grn2) (+ 1 (grn-segctr grn2)))
 		       (if (= (grn-segctr grn2) (grn-ramplen grn2))
 			   (begin
 			     (set! (grn-segctr grn2) 0)
-			     (set! (grn-whichseg grn2) (1+ (grn-whichseg grn2))))))
+			     (set! (grn-whichseg grn2) (+ 1 (grn-whichseg grn2))))))
 		     (if (= (grn-whichseg grn2) 1)		;steady-state
 			 (begin
-			   (set! (grn-segctr grn2) (1+ (grn-segctr grn2)))
+			   (set! (grn-segctr grn2) (+ 1 (grn-segctr grn2)))
 			   (if (= (grn-segctr grn2) (grn-steadylen grn2))
 			       (begin
 				 (set! (grn-segctr grn2) 0)
-				 (set! (grn-whichseg grn2) (1+ (grn-whichseg grn2))))))
+				 (set! (grn-whichseg grn2) (+ 1 (grn-whichseg grn2))))))
 			 (begin				;ramp-down
 			   (set! inval (* inval (grn-rampval grn2)))
-			   (set! (grn-segctr grn2) (1+ (grn-segctr grn2)))
+			   (set! (grn-segctr grn2) (+ 1 (grn-segctr grn2)))
 			   (set! (grn-rampval grn2) (- (grn-rampval grn2) (grn-rampinc grn2)))
 			   (if (= (grn-segctr grn2) (grn-ramplen grn2))
 			       (begin
@@ -2385,7 +2385,7 @@ is a physical model of a flute:
 				 (set! (grn-whichseg grn2) 0)
 				 (set! (grn-rampval grn2) 0.0))))))
 		 (set! val (+ val inval))
-		 (set! out2 (1+ out2))
+		 (set! out2 (+ 1 out2))
 		 (if (= (grn-trigger grn2) 1)
 		     (begin
 		       (set! (grn-trigger grn2) 0)
@@ -2463,7 +2463,7 @@ nil doesnt print anything, which will speed up a bit the process.
 	 (gains (make-vct (length freq-list) 1.0))
 	 (samp -1))
 
-    (do ((k 0 (1+ k)))
+    (do ((k 0 (+ 1 k)))
 	((= k half-list))
       (let ((gval (list-ref gain-list k))
 	    (fval (list-ref freq-list k)))
@@ -2481,18 +2481,18 @@ nil doesnt print anything, which will speed up a bit the process.
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i st (1+ i)))
+       (do ((i st (+ i 1)))
 	   ((= i nd))
 	 (if stats 
 	     (begin
-	       (set! samp (1+ samp))
+	       (set! samp (+ 1 samp))
 	       (if (= samp (mus-srate))
 		   (begin
 		     (snd-print (format #f "~% ~F" (/ i (mus-srate))))
 		     (set! samp 0)))))
 	 (let ((outval 0.0)
 	       (inval (readin RdA)))
-	   (do ((k 0 (1+ k)))
+	   (do ((k 0 (+ 1 k)))
 	       ((= k half-list))
 	     (if if-list-in-gain
 		 (vct-set! gains k (* (env (vector-ref env-size k)) (- 1.0 a1))))
@@ -2523,24 +2523,24 @@ nil doesnt print anything, which will speed up a bit the process.
 	 (bin (/ (mus-srate) fftsize))
 	 (fs (make-vector freq-inc))
 	 (samp 0))
-    (do ((ctr 0 (1+ ctr)))
+    (do ((ctr 0 (+ 1 ctr)))
 	((= ctr freq-inc))
       (vector-set! fs ctr (make-formant (* ctr bin) radius)))
     (ws-interrupt?)
     (run 
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
 	   ((= i end))
 	 (let ((inval (file->sample file samp)))
-	   (set! samp (1+ samp))
+	   (set! samp (+ 1 samp))
 	   (vct-set! fdr k inval)
-	   (set! k (1+ k))
+	   (set! k (+ 1 k))
 	   (if (< amp amp-scaler) (set! amp (+ amp incr)))
 	   (if (>= k fftsize)
 	       (begin
 		 (set! k 0)
 		 (spectrum fdr fdi win 1)
-		 (do ((ctr 0 (1+ ctr)))
+		 (do ((ctr 0 (+ 1 ctr)))
 		     ((= ctr freq-inc))
 		   (vct-set! spectr ctr (+ (* .9 (vct-ref spectr ctr)) (* .1 (vct-ref fdr ctr))))
 		   (if (>= (vct-ref spectr ctr) (vct-ref fdr ctr)) 
@@ -2552,7 +2552,7 @@ nil doesnt print anything, which will speed up a bit the process.
 				       (vct-ref scales ctr))
 				    fftsize))))))
 	   (let ((outval 0.0))
-	     (do ((ctr 1 (1+ ctr)))
+	     (do ((ctr 1 (+ 1 ctr)))
 		 ((= ctr freq-inc))
 	       (let ((cur-scale (vct-ref scales ctr)))
 		 (set! outval (+ outval (* cur-scale (formant (vector-ref fs ctr) inval))))
@@ -2599,7 +2599,7 @@ mjkoskin@sci.fi
 	 (file (if (not srate) 
 		   (make-file->frame in-file)
 		   (let ((vect (make-vector in-chans)))
-		     (do ((i 0 (1+ i)))
+		     (do ((i 0 (+ i 1)))
 			 ((= i in-chans))
 		       (vector-set! vect i (make-readin in-file i inloc)))
 		     vect)))
@@ -2609,7 +2609,7 @@ mjkoskin@sci.fi
 		 (make-scalar-mixer (max in-chans out-chans) 1.0)))
 	 (rev-mx (if (and *reverb* reverb-amount (> reverb-amount 0.0))
 		     (let ((rmx (make-mixer in-chans)))
-		       (do ((i 0 (1+ i)))
+		       (do ((i 0 (+ i 1)))
 			   ((= i in-chans))
 			 (mixer-set! rmx i 0 reverb-amount)) ; 0->assume 1 chan reverb stream, I think
 		       rmx)
@@ -2619,10 +2619,10 @@ mjkoskin@sci.fi
     (if matrix
 	(begin
 	  (if (list? matrix) ; matrix is list of scalers, envelopes (lists), or env gens
-	      (do ((inp 0 (1+ inp)))
+	      (do ((inp 0 (+ 1 inp)))
 		  ((= inp in-chans))
 		(let ((inlist (list-ref matrix inp)))
-		  (do ((outp 0 (1+ outp)))
+		  (do ((outp 0 (+ 1 outp)))
 		      ((= outp out-chans))
 		    (let ((outn (list-ref inlist outp)))
 		      (if outn
@@ -2634,14 +2634,14 @@ mjkoskin@sci.fi
 				    (if (not envs)
 					(begin
 					  (set! envs (make-vector in-chans))
-					  (do ((i 0 (1+ i)))
+					  (do ((i 0 (+ i 1)))
 					      ((= i in-chans))
 					    (vector-set! envs i (make-vector out-chans #f)))))
 				    (if (env? outn)
 					(vector-set! (vector-ref envs inp) outp outn)
 					(vector-set! (vector-ref envs inp) outp (make-env outn :duration dur))))
 				  (snd-warning (format #f "unknown element in matrix: ~A" outn)))))))))
-	      (do ((inp 0 (1+ inp))) ; matrix is a number in this case (a global scaler)
+	      (do ((inp 0 (+ 1 inp))) ; matrix is a number in this case (a global scaler)
 		  ((= inp in-chans))
 		(if (< inp out-chans)
 		    (mixer-set! mx inp inp matrix))))))
@@ -2654,23 +2654,23 @@ mjkoskin@sci.fi
 	(let* ((inframe (make-frame in-chans))
 	       (outframe (make-frame out-chans))
 	       (srcs (make-vector in-chans #f)))
-	  (do ((inp 0 (1+ inp)))
+	  (do ((inp 0 (+ 1 inp)))
 	      ((= inp in-chans))
 	    (vector-set! srcs inp (make-src :srate srate)))
 	  ;; can't use run here yet because 2-dim vect and #f elements
 	  (if envs
 	      (run 
 	       (lambda ()
-		 (do ((i st (1+ i)))
+		 (do ((i st (+ i 1)))
 		     ((= i nd))
-		   (do ((inp 0 (1+ inp)))
+		   (do ((inp 0 (+ 1 inp)))
 		       ((= inp in-chans))
-		     (do ((outp 0 (1+ outp)))
+		     (do ((outp 0 (+ 1 outp)))
 			 ((= outp out-chans))
 		       (if (and (vector-ref envs inp)
 				(env? (vector-ref (vector-ref envs inp) outp)))
 			   (mixer-set! mx inp outp (env (vector-ref (vector-ref envs inp) outp)))))))
-		 (do ((inp 0 (1+ inp)))
+		 (do ((inp 0 (+ 1 inp)))
 		     ((= inp in-chans))
 		   (frame-set! inframe inp (src (vector-ref srcs inp) 0.0 (lambda (dir) (readin (vector-ref file inp))))))
 		 (frame->file *output* i (frame->frame inframe mx outframe))
@@ -2678,9 +2678,9 @@ mjkoskin@sci.fi
 	      ;; no envs
 	      (run 
 	       (lambda ()
-		 (do ((i st (1+ i)))
+		 (do ((i st (+ i 1)))
 		     ((= i nd))
-		   (do ((inp 0 (1+ inp)))
+		   (do ((inp 0 (+ 1 inp)))
 		       ((= inp in-chans))
 		     (frame-set! inframe inp (src (vector-ref srcs inp) 0.0 (lambda (dir) (readin (vector-ref file inp))))))
 		   (frame->file *output* i (frame->frame inframe mx outframe))
@@ -2706,7 +2706,7 @@ mjkoskin@sci.fi
 	 (ampenv (make-env :envelope '(0 0 25 1 75 1 100 0) :scaler amp :duration dur)))
     (run
      (lambda ()
-       (do ((i st (1+ i)))
+       (do ((i st (+ i 1)))
 	   ((= i nd))
 	 (outa i (* (env ampenv) (bes-j1 car-ph)))
 	 (set! car-ph (+ car-ph car-incr (* index (bes-j1 mod-ph))))
@@ -2845,7 +2845,7 @@ mjkoskin@sci.fi
 	       (rev-chans (if *reverb* (mus-channels *reverb*) 0))
 	       (rev-mx (if (and *reverb* reverb (> reverb 0.0))
 			   (let ((rmx (make-mixer (max out-chans rev-chans))))
-			     (do ((i 0 (1+ i)))
+			     (do ((i 0 (+ i 1)))
 				 ((= i (max out-chans rev-chans)))
 			       (mixer-set! rmx (modulo i out-chans) (modulo i rev-chans) reverb))
 			     rmx)
@@ -2895,7 +2895,7 @@ mjkoskin@sci.fi
 						 "less than 0.5")))))
 
 	  ;; setup granulate generators
-	  (do ((i 0 (1+ i)))
+	  (do ((i 0 (+ i 1)))
 	      ((= i in-chans))
 	    (vector-set! ex-array i (make-granulate :input (make-readin fnam :start start :channel i)
 						    :expansion (if (list? expand) (cadr expand) expand)
@@ -2906,17 +2906,17 @@ mjkoskin@sci.fi
 						    :scaler segment-scaler)))
 	  (if matrix
 	      (begin
-		(do ((inp 0 (1+ inp)))
+		(do ((inp 0 (+ 1 inp)))
 		    ((= inp in-chans))
 		  (let ((inlist (list-ref matrix inp)))
-		    (do ((outp 0 (1+ outp)))
+		    (do ((outp 0 (+ 1 outp)))
 			((= outp out-chans))
 		      (let ((outn (list-ref inlist outp)))
 			(mixer-set! mx inp outp outn)))))))
 
 	  (run
 	   (lambda ()
-	     (do ((i beg (1+ i)))
+	     (do ((i beg (+ i 1)))
 		 ((= i end))
 	       (declare (ex-array clm-vector))
 	       (let ((vol (env ampenv)))
@@ -2935,7 +2935,7 @@ mjkoskin@sci.fi
 			    (sl (inexact->exact (floor (* segl (mus-srate)))))
 			    (rl (inexact->exact (floor (* rmpl sl)))))
 		       ;; declare types
-		       (do ((ix 0 (1+ ix)))
+		       (do ((ix 0 (+ 1 ix)))
 			   ((= ix in-chans))
 			 (let ((gen (vector-ref ex-array ix)))
 			   (set! (mus-length gen) sl)
@@ -2945,34 +2945,34 @@ mjkoskin@sci.fi
 
 		 (if (negative? ex-samp)
 		     (begin
-		       (do ((ix 0 (1+ ix)))
+		       (do ((ix 0 (+ 1 ix)))
 			   ((= ix in-chans))
 			 (let ((gen (vector-ref ex-array ix)))
 			   (vct-set! samples-0 ix (* vol (granulate gen)))
 			   (vct-set! samples-1 ix (* vol (granulate gen)))))
-		       (set! ex-samp (1+ ex-samp))
+		       (set! ex-samp (+ 1 ex-samp))
 		       (set! next-samp ex-samp))
 		     (begin
 		       (set! next-samp (+ next-samp resa))
-		       (if (> next-samp (1+ ex-samp))
+		       (if (> next-samp (+ 1 ex-samp))
 			   (let ((samps (inexact->exact (floor (- next-samp ex-samp)))))
-			     (do ((k 0 (1+ k)))
+			     (do ((k 0 (+ 1 k)))
 				 ((= k samps))
-			       (do ((ix 0 (1+ ix)))
+			       (do ((ix 0 (+ 1 ix)))
 				   ((= ix in-chans))
 				 (let ((gen (vector-ref ex-array ix)))
 				   (vct-set! samples-0 ix (vct-ref samples-1 ix))
 				   (vct-set! samples-1 ix (* vol (granulate gen)))))
-			       (set! ex-samp (1+ ex-samp)))))))
+			       (set! ex-samp (+ 1 ex-samp)))))))
 
 		 (if (= next-samp ex-samp)
 		     ;; output actual samples
-		     (do ((ix 0 (1+ ix)))
+		     (do ((ix 0 (+ 1 ix)))
 			 ((= ix in-chans))
 		       (let ((samp (vct-ref samples-0 ix)))
 			 (frame-set! inframe ix samp)))
 		     ;; output interpolated samples
-		     (do ((ix 0 (1+ ix)))
+		     (do ((ix 0 (+ 1 ix)))
 			 ((= ix in-chans))
 		       (let* ((v0 (vct-ref samples-0 ix))
 			      (v1 (vct-ref samples-1 ix))

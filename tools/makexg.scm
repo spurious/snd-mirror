@@ -261,12 +261,12 @@
 	(len (string-length data)))
     (call-with-exit
      (lambda (return)
-       (do ((i 0 (1+ i)))
+       (do ((i 0 (+ 1 i)))
 	   ((= i len) (substring data sp1))
 	 (if (char=? (string-ref data i) #\space)
 	     (if (= sp1 -1)
 		 (set! sp1 i)
-		 (return (substring data (1+ sp1) i)))))))))
+		 (return (substring data (+ 1 sp1) i)))))))))
 
 (define (caddr-str data)
   (let ((sp1 -1)
@@ -274,20 +274,20 @@
 	(len (string-length data)))
     (call-with-exit
      (lambda (return)
-       (do ((i 0 (1+ i)))
+       (do ((i 0 (+ 1 i)))
 	   ((= i len) (substring data sp2))
 	 (if (char=? (string-ref data i) #\space)
 	     (if (= sp1 -1)
 		 (set! sp1 i)
 		 (if (= sp2 -1)
 		     (set! sp2 i)
-		     (return (substring data (1+ sp2)))))))))))
+		     (return (substring data (+ 1 sp2)))))))))))
 
 (define (car-str data)
   (let ((len (string-length data)))
     (call-with-exit
      (lambda (return)
-       (do ((i 0 (1+ i)))
+       (do ((i 0 (+ 1 i)))
 	   ((= i len) data)
 	 (if (char=? (string-ref data i) #\space)
 	     (return (substring data 0 i))))))))
@@ -296,15 +296,15 @@
   (let ((len (string-length data)))
     (call-with-exit
      (lambda (return)
-       (do ((i 0 (1+ i)))
+       (do ((i 0 (+ 1 i)))
 	   ((= i len) data)
 	 (if (char=? (string-ref data i) #\space)
-	     (return (substring data (1+ i)))))))))
+	     (return (substring data (+ 1 i)))))))))
 
 (define (string-upcase name)
   (let* ((len (string-length name))
 	 (str (make-string len)))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ 1 i)))
 	((= i len))
       (string-set! str i (char-upcase (string-ref name i))))
     str))
@@ -330,7 +330,7 @@
     (for-each
      (lambda (arg)
        (if (ref-arg? arg)
-	   (set! ctr (1+ ctr))))
+	   (set! ctr (+ ctr 1))))
      args)
     ctr))
 
@@ -339,7 +339,7 @@
     (for-each
      (lambda (arg)
        (if (opt-arg? arg)
-	   (set! ctr (1+ ctr))))
+	   (set! ctr (+ ctr 1))))
      args)
     ctr))
 
@@ -360,7 +360,7 @@
     (call-with-exit
      (lambda (return)
        (do ((i (1- len) (1- i))
-	    (ctr 0 (1+ ctr)))
+	    (ctr 0 (+ ctr 1)))
 	   ((= i 0) #f)
 	 (if (not (char=? (string-ref type i) #\*))
 	     (return (> ctr 1))))))))
@@ -370,7 +370,7 @@
     (call-with-exit
      (lambda (return)
        (do ((i (1- len) (1- i))
-	    (ctr 0 (1+ ctr)))
+	    (ctr 0 (+ ctr 1)))
 	   ((= i 0) #f)
 	 (if (char=? (string-ref type i) #\*)
 	     (return #t)))
@@ -379,7 +379,7 @@
 (define (no-stars type)
   (let ((len (string-length type))
 	(val (string-copy type)))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ 1 i)))
 	((= i len) val)
       (if (char=? (string-ref val i) #\*)
 	  (string-set! val i #\_)))))
@@ -388,7 +388,7 @@
   (let ((len (string-length name)))
     (call-with-exit
      (lambda (return)
-       (do ((i 0 (1+ i)))
+       (do ((i 0 (+ 1 i)))
 	   ((= i len) name)
 	 (if (or (char=? (string-ref name i) #\()
 		 (char=? (string-ref name i) #\*))
@@ -401,14 +401,14 @@
 	(len (string-length args)))
     (if (string=? args "void")
 	'()
-	(do ((i 0 (1+ i)))
+	(do ((i 0 (+ 1 i)))
 	    ((= i len) (reverse data))
 	  (let ((ch (string-ref args i)))
 	    (if (or (char=? ch #\space)
 		    (= i (1- len)))
 		(begin
 		  (if type
-		      (let* ((given-name (substring args (1+ sp) (if (= i (1- len)) (1+ i) i)))
+		      (let* ((given-name (substring args (+ 1 sp) (if (= i (1- len)) (+ 1 i) i)))
 			     (reftype #f))
 			(if (char=? (string-ref given-name 0) #\@)
 			    (set! data (cons (list type 
@@ -479,8 +479,8 @@
 										      (if (not (member type types))
 											  (set! types (cons type types)))))))))))))))))))
 			(set! type #f))
-		      (if (> i (1+ sp))
-			  (set! type (substring args (1+ sp) i))))
+		      (if (> i (+ 1 sp))
+			  (set! type (substring args (+ 1 sp) i))))
 		  (set! sp i))))))))
 
 (define callbacks (list (list 'lambda2 ; unnamed gdk_window_invalidate_maybe_recurse argument
@@ -1341,7 +1341,7 @@
 	 (typed #f)
 	 (help-max 100))
     (hey initial)
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ 1 i)))
 	((= i len))
       (let ((ch (string-ref args i)))
 	(if (char=? ch #\space)
@@ -1355,13 +1355,13 @@
 			(set! line-len 0)))
 		  (set! typed #f))
 		(begin
-		  (set! line-len (1+ line-len))
+		  (set! line-len (+ 1 line-len))
 		  (heyc " ")
 		  (set! typed #t)))
 	    (if (and (not (char=? ch #\@))
 		     (not (char=? ch #\#)))
 		(begin
-		  (set! line-len (1+ line-len))
+		  (set! line-len (+ 1 line-len))
 		  (heyc ch))))))
     (hey ")\"~%")))
 
@@ -1833,7 +1833,7 @@
   (let ((len (string-length name)))
     (call-with-exit
      (lambda (return)
-       (do ((i 0 (1+ i)))
+       (do ((i 0 (+ 1 i)))
 	   ((= i len) name)
 	 (if (char=? (string-ref name i) #\()
 	     (return (substring name 0 i))))))))
@@ -2428,7 +2428,7 @@
 				   (eq? fname 'GLogFunc))
 			       (= ctr 0)))
 		      (hey "const "))
-		  (set! ctr (1+ ctr))
+		  (set! ctr (+ ctr 1))
 		  (set! previous-arg #t)
 		  (hey "~A ~A" 
 		       (if (not (string=? (car arg) "lambda_data"))
@@ -2563,7 +2563,7 @@
        (if (> line-len line-max)
 	   (begin
 	     (hey "~%")
-	     (do ((i 0 (1+ i)))
+	     (do ((i 0 (+ 1 i)))
 		 ((= i arg-start))
 	       (heyc " "))
 	     (set! line-len arg-start))))
@@ -2615,7 +2615,7 @@
 	      (lambda (arg)
 		(if (not (ref-arg? arg))
 		    (hey "  ~A = XEN_LIST_REF(arglist, ~D);~%" (cadr arg) ctr))
-		(set! ctr (1+ ctr)))
+		(set! ctr (+ ctr 1)))
 	      args))))
      (if (> (length args) 0)
 	 (let ((ctr 1)
@@ -2653,7 +2653,7 @@
 				       (deref-name arg)
 				       (no-stars (deref-element-type arg)))
 				  (hey "  }~%"))))))
-		(set! ctr (1+ ctr))))
+		(set! ctr (+ ctr 1))))
 	    args)))
      (let ((using-result #f)
 	   (using-loc #f))
@@ -2734,7 +2734,7 @@
 	       (hey "    int etc_len = 0;~%")
 	       (if (not (string=? return-type "void"))
 		   (hey "    ~A result = ~A;~%" return-type (if (has-stars return-type) "NULL" "0")))
-	       (do ((i 0 (1+ i)))
+	       (do ((i 0 (+ 1 i)))
 		   ((= i (1- cargs)))
 		 (let ((arg (list-ref args i)))
 		   (hey "    ~A p_arg~D;~%" (car arg) i)))
@@ -2747,7 +2747,7 @@
 	       (if (not (= modlen 1))
 		   (hey "    if ((etc_len % ~D) != 0) XEN_OUT_OF_RANGE_ERROR(~S, ~A, ~A, \"... list len must be multiple of ~D\");~%"
 			modlen name (1- cargs) list-name modlen))
-	       (do ((i 0 (1+ i)))
+	       (do ((i 0 (+ 1 i)))
 		   ((= i (1- cargs)))
 		 (let ((arg (list-ref args i)))
 		   (hey "    p_arg~D = XEN_TO_C_~A(~A);~%" i (no-stars (car arg)) (cadr arg))))
@@ -2758,16 +2758,16 @@
 		 (if (not (string=? return-type "void"))
 		     (hey "        case ~D: result = ~A(" i name)
 		     (hey "        case ~D: ~A(" i name))
-		 (do ((j 0 (1+ j)))
+		 (do ((j 0 (+ 1 j)))
 		     ((= j (1- cargs)))
 		   (let ((arg (list-ref args j)))
 		     (hey "p_arg~D, " j)))
 		 ;; assume ending null for now
 		 (let ((modctr 0))
-		   (do ((j 0 (1+ j)))
+		   (do ((j 0 (+ 1 j)))
 		       ((= j i))
 		     (let ((type (list-ref types modctr)))
-		       (set! modctr (1+ modctr))
+		       (set! modctr (+ 1 modctr))
 		       (if (>= modctr modlen) (set! modctr 0))
 		       (if (string=? type "int")
 			   (hey "XLI(")
@@ -3264,7 +3264,7 @@
 		     (field-type (car str)))
 		 (hey "      case ~D: result->~A = XEN_TO_C_~A(XEN_LIST_REF(arglist, ~D));~%"
 		      ctr field-name (no-stars field-type) ctr)
-		 (set! ctr (1+ ctr))))
+		 (set! ctr (+ ctr 1))))
 	     strs))
 	  (hey "      }~%")
 	  (hey "  return(XEN_LIST_3(C_STRING_TO_XEN_SYMBOL(~S), C_TO_XEN_ULONG((unsigned long)result), make_xm_obj(result)));~%" 

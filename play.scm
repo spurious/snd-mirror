@@ -74,7 +74,7 @@
 		  ((or (c-g?)                   ; C-g to stop in mid-stream
 		       (> beg len)))
 		(if (and (> outchans 1) (> filechans 1))
-		    (do ((k 0 (1+ k)))
+		    (do ((k 0 (+ 1 k)))
 			((= k (min outchans filechans)))
 		      (samples->sound-data beg pframes #f k data current-edit-position k))
 		    (samples->sound-data beg pframes #f 0 data))
@@ -89,7 +89,7 @@
 (play-sound 
  (lambda (data)
    (let ((len (sound-data-length data)))
-     (do ((i 0 (1+ i)))
+     (do ((i 0 (+ 1 i)))
 	 ((= i len))
        (sound-data-set! data 0 i (* 2.0 (sound-data-ref data 0 i)))))))
 |#
@@ -156,13 +156,13 @@
 	(do ()
 	    ((c-g?) 
 	     (mus-audio-close audio-fd))
-	  (do ((i 0 (1+ i)))
+	  (do ((i 0 (+ 1 i)))
 	      ((= i bufsize) 
 	       (begin 
 		 (set! i 0) 
 		 (mus-audio-write audio-fd audio-data bufsize)))
 	    (sound-data-set! audio-data 0 i (sound-data-ref all-data 0 beg))
-	    (set! beg (1+ beg))
+	    (set! beg (+ 1 beg))
 	    (if (= beg end)
 		(begin
 		  (set! pos1 (mark-sample m1)) ; get current mark positions (can change while looping)
@@ -218,7 +218,7 @@ read, even if not playing.  'files' is a list of files to be played."
 	  (if (< out-port 0)
 	      (snd-error "can't open audio port! ~A" out-port)
 	      (begin
-		(do ((i 0 (1+ i)))
+		(do ((i 0 (+ 1 i)))
 		    ((= i files-len))
 		  (vector-set! pframes i (mus-sound-frames (list-ref files i))))
 		(catch #t
@@ -236,11 +236,11 @@ read, even if not playing.  'files' is a list of files to be played."
 					     (ups (mus-channels next))
 					     (up (make-frame ups))
 					     (down (make-frame downs)))
-					(do ((i 0 (1+ i)))
+					(do ((i 0 (+ 1 i)))
 					    ((= i bufsize))
 					  (file->frame next (+ next-loc i) up)
 					  (file->frame current (+ current-loc i) down)
-					  (do ((j 0 (1+ j)))
+					  (do ((j 0 (+ 1 j)))
 					      ((= j chans))
 					    (sound-data-set! data j i 
 							     (+ (if (< j downs) 
@@ -251,7 +251,7 @@ read, even if not playing.  'files' is a list of files to be played."
 								    0.0))))
 					  (set! ramp-down (- ramp-down ramp)))
 					(if read-even-when-not-playing
-					    (do ((i 0 (1+ i)))
+					    (do ((i 0 (+ 1 i)))
 						((= i files-len))
 					      (vector-set! locs i (+ (vector-ref locs i) bufsize)))
 					    (begin
@@ -262,14 +262,14 @@ read, even if not playing.  'files' is a list of files to be played."
 					     (current-loc (vector-ref locs current-file))
 					     (ons (mus-channels current))
 					     (on (make-frame ons)))
-					(do ((i 0 (1+ i)))
+					(do ((i 0 (+ 1 i)))
 					    ((= i bufsize))
 					  (file->frame current (+ current-loc i) on)
-					  (do ((k 0 (1+ k)))
+					  (do ((k 0 (+ 1 k)))
 					      ((= k chans))
 					    (sound-data-set! data k i (if (< k ons) (frame-ref on k) 0.0))))
 					(if read-even-when-not-playing
-					    (do ((i 0 (1+ i)))
+					    (do ((i 0 (+ 1 i)))
 						((= i files-len))
 					      (vector-set! locs i (+ (vector-ref locs i) bufsize)))
 					    (vector-set! locs current-file (+ (vector-ref locs current-file) bufsize)))))
@@ -280,7 +280,7 @@ read, even if not playing.  'files' is a list of files to be played."
 								 (if (= f files-len)
 								     #f
 								     (or (< (vector-ref locs f) (vector-ref pframes f))
-									 (any-data-left (1+ f)))))))
+									 (any-data-left (+ 1 f)))))))
 						       (any-data-left 0)))))))
 		       (lambda args (begin (snd-print (format #f "error ~A" args)) (car args))))
 		(mus-audio-close out-port)))))))
@@ -290,11 +290,11 @@ read, even if not playing.  'files' is a list of files to be played."
 		    (lambda (files bufsize)
 		      (if (> ctr 4)
 			  (begin
-			    (set! file (1+ file))
+			    (set! file (+ 1 file))
 			    (set! ctr 0)
 			    (if (>= file files)
 				(set! file 0)))
-			  (set! ctr (1+ ctr)))
+			  (set! ctr (+ 1 ctr)))
 		      file))
 		  (list "oboe.snd" "pistol.snd") #t)
 |#
@@ -307,7 +307,7 @@ read, even if not playing.  'files' is a list of files to be played."
     "(play-with-amps snd :rest amps) plays snd with each channel scaled by the corresponding 
 amp: (play-with-amps 0 1.0 0.5) plays channel 2 of stereo sound at half amplitude"
     (let ((chans (chans sound)))
-      (do ((chan 0 (1+ chan)))
+      (do ((chan 0 (+ 1 chan)))
           ((= chan chans))
         (let ((player (make-player sound chan)))
           (set! (amp-control player) (list-ref amps chan))
@@ -334,7 +334,7 @@ amp: (play-with-amps 0 1.0 0.5) plays channel 2 of stereo sound at half amplitud
 	 (num-oscs (length freqs-and-amps))
 	 (oscs (make-vector num-oscs))
 	 (amps (make-vector num-oscs)))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ 1 i)))
 	((= i num-oscs))
       (vector-set! oscs i (make-oscil (car (list-ref freqs-and-amps i))))
       (vector-set! amps i (cadr (list-ref freqs-and-amps i))))
@@ -343,7 +343,7 @@ amp: (play-with-amps 0 1.0 0.5) plays channel 2 of stereo sound at half amplitud
 	    (if (<= len 0)
 		#f
 		(let ((sum 0.0))
-		  (do ((i 0 (1+ i)))
+		  (do ((i 0 (+ 1 i)))
 		      ((= i num-oscs))
 		    (set! sum (+ sum (* (vector-ref amps i) (oscil (vector-ref oscs i))))))
 		  sum))))))

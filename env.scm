@@ -115,7 +115,7 @@ end: (window-envelope 1.0 3.0 '(0.0 0.0 5.0 1.0)) -> '(1.0 0.2 3.0 0.6)"
 		    (newe '()))
 		(set! xs (sort! (remove-duplicates xs) <))
 		(let ((len (length xs)))
-		  (do ((i 0 (1+ i)))
+		  (do ((i 0 (+ 1 i)))
 		      ((= i len))
 		    (let ((x (list-ref xs i)))
 		      (set! newe (append newe (list x (op (envelope-interp x ee1) (envelope-interp x ee2)))))))
@@ -337,7 +337,7 @@ repetition to be in reverse."
 	 (first-y-is-last-y (= first-y (list-ref e (- (length e) 1))))
 	 (new-env (list first-y x))
 	 (len (length e)))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ 1 i)))
 	((= i times))
       (do ((j 2 (+ j 2)))
 	  ((>= j len))
@@ -373,7 +373,7 @@ repetition to be in reverse."
     (if (= (penv-current-pass pe) 0)
       (if (< (penv-current-env pe) (1- (penv-total-envs pe)))
 	  (begin
-	    (set! (penv-current-env pe) (1+ (penv-current-env pe)))
+	    (set! (penv-current-env pe) (+ 1 (penv-current-env pe)))
 	    (set! (penv-current-pass pe) (1- (mus-length (vector-ref (penv-envs pe) (penv-current-env pe))))))))
     val))
 
@@ -384,7 +384,7 @@ repetition to be in reverse."
 			:current-env 0
 			:current-pass 0))
 	 (xext (- (list-ref envelope (- (length envelope) 3)) (car envelope))))
-    (do ((i 0 (1+ i))
+    (do ((i 0 (+ 1 i))
 	 (j 0 (+ j 3)))
 	((= i len))
       (let ((x0 (list-ref envelope j))
@@ -403,7 +403,7 @@ repetition to be in reverse."
   (let ((curbeg beg)) ; sample number
     (as-one-edit
      (lambda ()
-       (do ((i 0 (1+ i)))
+       (do ((i 0 (+ 1 i)))
 	   ((= i (penv-total-envs pe)))
 	 (let* ((e (vector-ref (penv-envs pe) i))
 		(len (mus-length e)))
@@ -494,7 +494,7 @@ each segment: (powenv-channel '(0 0 .325  1 1 32.0 2 0 32.0))"
 	((>= i end) 
 	 (reverse e))
       (let ((rms-val 0.0))
-	(do ((j 0 (1+ j)))
+	(do ((j 0 (+ 1 j)))
 	    ((= j incrsamps))
 	  (let ((val (reader)))
 	    (set! rms-val (moving-average rms (* val val)))))

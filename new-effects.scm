@@ -91,7 +91,7 @@
 					      (format #f "~A ~A ~A" 
 						      (origin target (- end beg))
 						      (if (eq? target 'sound) 0 beg)
-						      (if (eq? target 'sound) #f (1+ (- end beg))))))))
+						      (if (eq? target 'sound) #f (+ 1 (- end beg))))))))
 			 
 			 (if (> snc 0) 
 			     (all-chans) 
@@ -440,7 +440,7 @@
 	(samp 0)
 	(input-samps (or input-samps-1 dur (frames snd chn))))
     (map-channel (lambda (inval)
-		   (set! samp (1+ samp))
+		   (set! samp (+ 1 samp))
 		   (+ inval
 		      (delay del
 			     (* echo-amount (+ (tap del) (if (<= samp input-samps) inval 0.0))))))
@@ -454,7 +454,7 @@
 	 (samp 0)
 	 (input-samps (or input-samps-1 dur (frames snd chn))))
     (map-channel (lambda (inval)
-		   (set! samp (1+ samp))
+		   (set! samp (+ 1 samp))
 		   (+ inval 
 		      (delay del 
 			     (fir-filter flt (* scaler (+ (tap del) (if (<= samp input-samps) inval 0.0)))))))
@@ -469,7 +469,7 @@
 	 (samp 0)
 	 (input-samps (or input-samps-1 dur (frames snd chn))))
     (map-channel (lambda (inval)
-		   (set! samp (1+ samp))
+		   (set! samp (+ 1 samp))
 		   (+ inval 
 		      (delay del 
 			     (* scaler (+ (tap del) (if (<= samp input-samps) inval 0.0)))
@@ -511,7 +511,7 @@
 			(let ((del (make-delay (inexact->exact (round (* delay-time (srate))))))
 			      (samp 0))
 			  (lambda (inval)
-			    (set! samp (1+ samp))
+			    (set! samp (+ 1 samp))
 			    (+ inval
 			       (delay del
 				      (* echo-amount (+ (tap del) (if (<= samp input-samps) inval 0.0))))))))
@@ -582,7 +582,7 @@
 	       (del (make-delay  (inexact->exact (round (* secs (srate))))))
 	       (samp 0))
 	  (lambda (inval)
-	    (set! samp (1+ samp))
+	    (set! samp (+ 1 samp))
 	    (+ inval 
 	       (delay del 
 		      (fir-filter flt (* scaler (+ (tap del) (if (<= samp input-samps) inval 0.0))))))))))
@@ -672,7 +672,7 @@
 	       (del (make-delay len :max-size (inexact->exact (round (+ len amp 1)))))
 	       (samp 0))
 	  (lambda (inval)
-	    (set! samp (1+ samp))
+	    (set! samp (+ 1 samp))
 	    (+ inval 
 	       (delay del 
 		      (* scaler (+ (tap del) (if (<= samp input-samps) inval 0.0)))
@@ -769,7 +769,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
     (lambda (x)
       (let ((result (vct-ref delay-line delay-loc)))
 	(vct-set! delay-line delay-loc (+ x (* scaler result)))
-	(set! delay-loc (1+ delay-loc))
+	(set! delay-loc (+ 1 delay-loc))
 	(if (= delay-loc size) (set! delay-loc 0))
 	result))))
 
@@ -852,7 +852,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 			       (filter-selection flt)
 			       (let* ((ms (plausible-mark-samples))
 				      (bg (car ms))
-				      (nd (1+ (- (cadr ms) (car ms)))))
+				      (nd (+ 1 (- (cadr ms) (car ms)))))
 				 (clm-channel flt bg nd #f #f #f #f 
 					      (format #f "effects-bbp ~A ~A ~A ~A" band-pass-freq band-pass-bw bg nd)))))))
 		   (lambda (w context info)
@@ -923,7 +923,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 			       (filter-selection flt)
 			       (let* ((ms (plausible-mark-samples))
 				      (bg (car ms))
-				      (nd (1+ (- (cadr ms) (car ms)))))
+				      (nd (+ 1 (- (cadr ms) (car ms)))))
 				 (clm-channel flt bg nd #f #f #f #f 
 					      (format #f "effects-bbr ~A ~A ~A ~A" notch-freq notch-bw bg nd)))))))
 		   (lambda (w context info)
@@ -992,7 +992,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 			       (filter-selection flt)
 			       (let* ((ms (plausible-mark-samples))
 				      (bg (car ms))
-				      (nd (1+ (- (cadr ms) (car ms)))))
+				      (nd (+ 1 (- (cadr ms) (car ms)))))
 				 (clm-channel flt bg nd #f #f #f #f 
 					      (format #f "effects-bhp ~A ~A ~A" high-pass-freq bg nd)))))))
 		   
@@ -1057,7 +1057,7 @@ the delay time in seconds, the modulation frequency, and the echo amplitude."))
 			       (filter-selection flt)
 			       (let* ((ms (plausible-mark-samples))
 				      (bg (car ms))
-				      (nd (1+ (- (cadr ms) (car ms)))))
+				      (nd (+ 1 (- (cadr ms) (car ms)))))
 				 (clm-channel flt bg nd #f #f #f #f 
 					      (format #f "effects-blp ~A ~A ~A" low-pass-freq bg nd)))))))
 		   
@@ -1388,7 +1388,7 @@ Move the sliders to set the filter cutoff frequency and resonance."))
 	   (lambda (val)
 	     (if (= n adsat-size)
 		 (begin
-		   (do ((i 0 (1+ i)))
+		   (do ((i 0 (+ 1 i)))
 		       ((= i adsat-size))
 		     (if (>= (vct-ref vals i) 0.0)
 			 (vct-set! vals i mx)
@@ -1401,7 +1401,7 @@ Move the sliders to set the filter cutoff frequency and resonance."))
 		   (vct-set! vals n val)
 		   (if (> val mx) (set! mx val))
 		   (if (< val mn) (set! mn val))
-		   (set! n (1+ n))
+		   (set! n (+ 1 n))
 		   #f)))))
        adsat-target 
        (lambda (target samps)
@@ -1558,7 +1558,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 			       (set! (expand-control-ramp snd) ramp-scale))))
 		       (if (eq? expsrc-target 'marks)
 			   (let ((ms (plausible-mark-samples)))
-			     (apply-controls snd 0 (car ms) (1+ (- (cadr ms) (car ms)))))
+			     (apply-controls snd 0 (car ms) (+ 1 (- (cadr ms) (car ms)))))
 			   (apply-controls snd (if (eq? expsrc-target 'sound) 0 2)))
 		       (restore-controls snd)))
 		   
@@ -2005,7 +2005,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 				   (all-pass allpass2 
 					     (all-pass allpass1 
 						       (if (< samp input-samps) inval 0.0))))))
-	(set! samp (1+ samp))
+	(set! samp (+ 1 samp))
 	(set! comb-sum-2 comb-sum-1)
 	(set! comb-sum-1 comb-sum)
 	(set! comb-sum 
@@ -2068,7 +2068,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 		       (set! (reverb-control-feedback snd) reverb-feedback)
 		       (if (eq? reverb-target 'marks)
 			   (let ((ms (plausible-mark-samples)))
-			     (apply-controls snd 0 (car ms) (1+ (- (cadr ms) (car ms)))))
+			     (apply-controls snd 0 (car ms) (+ 1 (- (cadr ms) (car ms)))))
 			   (apply-controls snd (if (eq? reverb-target 'sound) 0 2)))
 		       (restore-controls snd)))
 		   
@@ -2351,7 +2351,7 @@ Adds reverberation scaled by reverb amount, lowpass filtering, and feedback. Mov
 	 (radius (- 1.0 (/ r fftsize)))
 	 (bin (/ (srate) fftsize))
 	 (formants (make-vector freq-inc)))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ 1 i)))
 	((= i freq-inc))
       (vector-set! formants i (make-formant (* i bin) radius)))
     (lambda (inval)
@@ -2567,7 +2567,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 		       (set! (amp-control snd) peak)
 		       (if (eq? contrast-target 'marks)
 			   (let ((ms (plausible-mark-samples)))
-			     (apply-controls snd 0 (car ms) (1+ (- (cadr ms) (car ms)))))
+			     (apply-controls snd 0 (car ms) (+ 1 (- (cadr ms) (car ms)))))
 			   (apply-controls snd (if (eq? contrast-target 'sound) 0 2)))
 		       (restore-controls snd)))
 		   
@@ -3163,7 +3163,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 		       (len (frames)))
 		   (call-with-exit
 		    (lambda (return)
-		      (do ((ctr loc (1+ ctr)))
+		      (do ((ctr loc (+ 1 ctr)))
 			  ((or (c-g?) (= ctr len)) #f)
 			(set! samp0 samp1)
 			(set! samp1 samp2)

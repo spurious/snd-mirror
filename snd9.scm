@@ -103,7 +103,7 @@
 	 (den (sin a2)))
     (if (< (abs den) 1.0e-9)
 	0.0
-	(/ (* (sin (* n a2)) (sin (* (1+ n) a2))) den))))
+	(/ (* (sin (* n a2)) (sin (* (+ 1 n) a2))) den))))
 
 ;;; identical to this is the "conjugate Dirichlet kernel" from "Trigonometric Series" Zygmund p49
 ;;;  (let* ((a2 (* 0.5 angle))
@@ -133,7 +133,7 @@
 ;;; (Gradshteyn and Ryzhik 1.342)
 
 ;;; or take advantage of 1/(1-x):
-;;; (map-channel (lambda (y) (set! i (1+ i)) (/ 0.001 (- 1.0 (* .99 (cos (/ (* i 2.0 pi) 100.0)))))))
+;;; (map-channel (lambda (y) (set! i (+ 1 i)) (/ 0.001 (- 1.0 (* .99 (cos (/ (* i 2.0 pi) 100.0)))))))
 ;;;   here the .99 controls the number of cosines, like an "index", and it can be matched at
 ;;;   run time to keep the amplitude constant via the 0.001 (set above to get a maxamp of .1),
 ;;;   and the frequency can be swept without problems.
@@ -212,7 +212,7 @@ the amp (more or less), 'N'  is 1..10 or thereabouts, 'fi' is the phase incremen
   (let ((rd (make-sample-reader 0 "now.snd")) 
 	(m (make-mfilter))) 
     (run (lambda () 
-	   (do ((i 0 (1+ i))) 
+	   (do ((i 0 (+ 1 i))) 
 	       ((= i 10000))
 	     (outa i (mfilter m (* .1 (rd)))))))))
 
@@ -222,7 +222,7 @@ the amp (more or less), 'N'  is 1..10 or thereabouts, 'fi' is the phase incremen
         (m (make-mfilter :decay .99 :frequency 1000)) 
         (e (make-env '(0 100 1 2000) :length 10000))) 
     (run (lambda () 
-	   (do ((i 0 (1+ i))) 
+	   (do ((i 0 (+ 1 i))) 
 	       ((= i 10000))
 	     (outa i (mfilter m (* .1 (rd)))) 
 	     (set! (mflt-eps m) (* 2.0 (sin (/ (* pi (env e)) (mus-srate))))))))))
@@ -231,17 +231,17 @@ the amp (more or less), 'N'  is 1..10 or thereabouts, 'fi' is the phase incremen
 (with-sound (:statistics #t)
   (let* ((filters (make-vector 9))
 	 (noi (make-rand 10000)))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ 1 i)))
 	((= i 9))
       (vector-set! filters i (make-mfilter :decay .999 :frequency (* 400 (+ i 1)))))
     (run
      (lambda ()
        (declare (clm-vector filters))
-       (do ((i 0 (1+ i)))
+       (do ((i 0 (+ 1 i)))
 	   ((= i 10000))
 	 (let ((sum 0.0)
 	       (input (* .01 (rand noi))))
-	   (do ((j 0 (1+ j)))
+	   (do ((j 0 (+ 1 j)))
 	       ((= j 9))
 	     (set! sum (+ sum (* (/ 1.0 (+ j 1)) (mfilter (vector-ref filters j) input)))))
 	   (outa i sum)))))))
@@ -296,7 +296,7 @@ the amp (more or less), 'N'  is 1..10 or thereabouts, 'fi' is the phase incremen
 (define* (sine-bank amps phases :optional size)
   (let ((len (or size (vct-length amps)))
 	(sum 0.0))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ 1 i)))
 	((= i len))
       (set! sum (+ sum (* (vct-ref amps i)
 			  (sin (vct-ref phases i))))))

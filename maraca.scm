@@ -32,7 +32,7 @@
 
     (run
      (lambda ()
-       (do ((i st (1+ i)))
+       (do ((i st (+ 1 i)))
 	   ((= i nd))
 	 (if (< temp two-pi)
 	     (begin
@@ -43,7 +43,7 @@
 	     (begin
 	       (set! temp 0.0)
 	       (set! j 0)))
-	 (set! j (1+ j))
+	 (set! j (+ 1 j))
 	 (set! shake-energy (* shake-energy system-decay))
 	 ;; if collision, add energy
 	 (if (< (random 1.0) probability)
@@ -95,7 +95,7 @@
 	 (gain (/ (* (/ (log num-beans) (log 4)) 40) num-beans)))
     ;; gourd resonance filters
     (ws-interrupt?)
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ 1 i)))
 	((= i resn))
       (vct-set! coeffs (+ (* i 2) 0) (* -2.0 (list-ref shell-resos i) (cos (hz->radians (list-ref shell-freqs i)))))
       (vct-set! basesf i (vct-ref coeffs (+ (* i 2) 0)))
@@ -103,7 +103,7 @@
 
     (run
      (lambda ()
-       (do ((i st (1+ i)))
+       (do ((i st (+ 1 i)))
 	   ((= i nd))
 	 (if (< temp two-pi)
 	     (begin
@@ -114,14 +114,14 @@
 	     (begin
 	       (set! temp 0.0)
 	       (set! j 0)))
-	 (set! j (1+ j))
+	 (set! j (+ 1 j))
 	 (set! shake-energy (* shake-energy system-decay))
 	 ;; if collision, add energy
 	 (if (< (random 1.0) probability)
 	     (begin
 	       (set! snd-level (+ snd-level (* gain shake-energy)))
 	       ;; randomize res freqs a bit
-	       (do ((i 0 (1+ i)))
+	       (do ((i 0 (+ 1 i)))
 		   ((= i resn))
 		 (vct-set! coeffs (+ (* i 2) 0) (+ (vct-ref basesf i) (- (random (* 2.0 randiff)) randiff))))))
 	 ;; actual sound is random
@@ -132,7 +132,7 @@
 	 (set! temp1 input)
 	 (set! last-sum sum)
 	 (set! sum 0.0)
-	 (do ((i 0 (1+ i)))
+	 (do ((i 0 (+ 1 i)))
 	     ((= i resn))
 	   (set! input temp1)
 	   (set! input (- input 

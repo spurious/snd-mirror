@@ -87,7 +87,7 @@
 		 (lambda ()
 		   (declare (int-vector lines))
 		   (if (< start left)                ; check previous samples to get first rms value
-		       (do ((i start (1+ i)))
+		       (do ((i start (+ 1 i)))
 			   ((= i left))
 			 (moving-rms rms (reader))))
 		   (let ((first-sample (next-sample reader)))
@@ -95,14 +95,14 @@
 		     (set! y0 (grf-it first-sample ydata))
 		     (vector-set! lines 0 x0)        ; first graph point
 		     (vector-set! lines 1 y0))
-		   (do ((i (+ left 1) (1+ i)))       ; loop through all samples calling moving-rms
+		   (do ((i (+ left 1) (+ 1 i)))       ; loop through all samples calling moving-rms
 		       ((= i right))
 		     (let* ((x1 (grf-it (* i sr) xdata))
 			    (y (moving-rms rms (next-sample reader))))
 		       (if (> x1 x0)                 ; very often many samples are represented by one pixel
 			   (let ((y1 (grf-it y ydata)))
 			     (vector-set! lines line-ctr x1)
-			     (vector-set! lines (1+ line-ctr) y1)
+			     (vector-set! lines (+ 1 line-ctr) y1)
 			     (set! line-ctr (+ line-ctr 2))
 			     (set! x0 x1)
 			     (set! y0 y1)))))))      ; else should we do "max" here? or draw a vertical line from min to max?
@@ -195,7 +195,7 @@ whenever they're in the current view."
 	 (binc (/ (- 1.0 b) (+ edits 1))))
     (if (> edits 0)
 	(begin
-	  (do ((pos 0 (1+ pos))
+	  (do ((pos 0 (+ 1 pos))
 	       (re (- 1.0 rinc) (- re rinc))
 	       (ge (- 1.0 ginc) (- ge ginc))
 	       (be (- 1.0 binc) (- be binc)))
@@ -237,9 +237,9 @@ whenever they're in the current view."
 	     (y0 (y->position (vct-ref cur-data 0)))
 	     (colors (make-vector (colormap-size) #f))
 	     (len (vct-length cur-data))
-	     (incr (/ (1+ (- right left)) len)))
+	     (incr (/ (+ 1 (- right left)) len)))
 	(do ((i (+ left incr) (+ i incr))
-	     (j 1 (1+ j)))
+	     (j 1 (+ 1 j)))
 	    ((or (>= i right)
 		 (>= j len)))
 	  (let* ((x1 (x->position (/ i (srate snd))))
@@ -279,7 +279,7 @@ whenever they're in the current view."
   (define (update-current-window-location snd)
     ;; this is called before the actual update -- we need to clear the notion of edit-position to force a re-read
     (if current-window-display-is-running
-	(do ((i 0 (1+ i)))
+	(do ((i 0 (+ 1 i)))
 	    ((= i (chans snd)))
 	  (let ((vals (channel-property 'inset-envelope snd i)))
 	    (if vals
@@ -349,7 +349,7 @@ whenever they're in the current view."
 					(max-y (- data-max))
 					(min-y data-max)
 					(stepper 0.0))
-				    (do ((i 0 (1+ i)))
+				    (do ((i 0 (+ 1 i)))
 					((or (= j new-len) (= i data-len)))
 				      (if data1
 					  (begin
@@ -383,7 +383,7 @@ whenever they're in the current view."
 				(let ((xstep (/ width data-len)))
 				  (set! data0 (make-vector (* data-len 2)))
 				  (set! data1 (and (not (vct? data)) (make-vector (* data-len 2))))
-				  (do ((i 0 (1+ i))
+				  (do ((i 0 (+ 1 i))
 				       (j 0 (+ j 2))
 				       (xj x-offset (+ xj xstep)))
 				      ((= i data-len))
@@ -435,7 +435,7 @@ whenever they're in the current view."
 
   (add-hook! after-open-hook 
 	     (lambda (s)
-	       (do ((ii 0 (1+ ii)))
+	       (do ((ii 0 (+ 1 ii)))
 		   ((= ii (chans s)))
 		 (let ((i ii)) ; for s7
 		   (set! (channel-property 'save-state-ignore s i)
@@ -467,7 +467,7 @@ whenever they're in the current view."
 	       (lambda () 
 		 (set! current-window-display-is-running (not current-window-display-is-running))
 		 (for-each (lambda (snd)
-			     (do ((chan 0 (1+ chan)))
+			     (do ((chan 0 (+ 1 chan)))
 				 ((= chan (channels snd)))
 			       (update-time-graph snd chan)))
 			   (sounds)))
@@ -527,7 +527,7 @@ whenever they're in the current view."
 				  (set! pos i)
 				  (set! happy #t))))
 			  (if (not happy)           ;nothing to the left -- try to the right
-			      (do ((i (1+ pos) (1+ i)))
+			      (do ((i (+ 1 pos) (+ 1 i)))
 				  ((or happy (= i len)))
 				(if (char-alphabetic? (string-ref text i))
 				    (begin
@@ -546,7 +546,7 @@ whenever they're in the current view."
 				  (set! start (+ i 1))
 				  (set! happy #t))))
 			  (set! happy #f)
-			  (do ((i (1+ pos) (1+ i)))  ;look for end of name
+			  (do ((i (+ 1 pos) (+ 1 i)))  ;look for end of name
 			      ((or happy (and (= i len)
 					      (let () 
 						(set! end i) 

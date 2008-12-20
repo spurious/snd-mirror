@@ -34,7 +34,7 @@
     (if (or amp-env low-pass)
 	(run
 	 (lambda ()
-	   (do ((i 0 (1+ i)))
+	   (do ((i 0 (+ 1 i)))
 	       ((= i len))
 	     (let* ((inval (ina i *reverb*))
 		    (allpass-sum (all-pass allpass3 (all-pass allpass2 (all-pass allpass1 inval))))
@@ -53,7 +53,7 @@
 	       (if (> chns 1) (outb i (* amp (delay outdel2 all-sums))))))))
 	(run
 	 (lambda ()
-	   (do ((i 0 (1+ i)))
+	   (do ((i 0 (+ 1 i)))
 	       ((= i len))
 	     (let ((allpass-sum (all-pass allpass3 (all-pass allpass2 (all-pass allpass1 (ina i *reverb*))))))
 	       (set! comb-sum 

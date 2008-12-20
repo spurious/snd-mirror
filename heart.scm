@@ -14,7 +14,7 @@
 (reset-hook! update-hook)
 
 ;;; tell Snd not to try to load the data file
-(set! (script-arg) (1+ (script-arg)))
+(set! (script-arg) (+ 1 (script-arg)))
 
 ;;; search for "...[<number>am|pm <number>/<number>...", put the two readings in a stereo file
 (let* ((hpsum 0) ; for average readings
@@ -30,7 +30,7 @@
 		    (let loop ((line (read-line file 'concat)))
 		      (or (eof-object? line)
 			  (let ((len (string-length line)))
-			    (do ((i 0 (1+ i)))
+			    (do ((i 0 (+ 1 i)))
 				((>= i (- len 14)))
 			      (if (and (char=? (string-ref line i) #\[)
 				       (char=? (string-ref line (+ i 3)) #\m)
@@ -46,12 +46,12 @@
 				    (out-any samp 80 3)
 				    (out-any samp (max 90 (moving-average average (* 0.5 (+ lp hp)))) 4)
 				    (out-any samp (max 90 (moving-average average1 (* 0.5 (+ lp hp)))) 5)
-				    (set! samp (1+ samp)))))
+				    (set! samp (+ 1 samp)))))
 			    (loop (read-line file 'concat))))))))))))
 
   ;; now display the data with y-axis bounds between 50 and 150, both traces in the same graph, x-axis in "samples" (readings)
   (set! (channel-style ind) channels-superimposed)
-  (do ((chan 0 (1+ chan)))
+  (do ((chan 0 (+ 1 chan)))
       ((= chan 5))
     (set! (x-axis-style ind chan) x-axis-in-samples)
     (set! (x-axis-label ind chan) "days")

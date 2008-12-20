@@ -82,7 +82,7 @@
 		 (c (selected-channel s)))
 	    (set! (selection-member? s c) #t)
 	    (set! (selection-position s c) beg)
-	    (set! (selection-frames s c) (1+ (- end beg)))))
+	    (set! (selection-frames s c) (+ 1 (- end beg)))))
         (let ((m (find-mark response)))
 	  (if (mark? m)
 	      (define-selection (cursor) (mark-sample m))
@@ -118,7 +118,7 @@
   (if (selection?)
       (for-each
        (lambda (s)
-	 (do ((i 0 (1+ i)))
+	 (do ((i 0 (+ 1 i)))
 	     ((= i (chans s)))
 	   (let ((need-update (selection-member? s i)))
 	     (set! (selection-member? s i) #f)
@@ -142,7 +142,7 @@ to end of channel, beg defaults to 0, snd defaults to the currently selected sou
     (define (add-chan-to-selection s0 s1 s c)
       (set! (selection-member? s c) #t)
       (set! (selection-position s c) (or s0 0))
-      (set! (selection-frames s c) (- (or (and (number? s1) (1+ s1)) (frames s c)) (or s0 0))))
+      (set! (selection-frames s c) (- (or (and (number? s1) (+ 1 s1)) (frames s c)) (or s0 0))))
 
     (if (not (sound? current-sound))
 	(throw 'no-such-sound (list "make-selection" beg end snd chn)))
@@ -157,7 +157,7 @@ to end of channel, beg defaults to 0, snd defaults to the currently selected sou
 		     (= s current-sound)
 		     (and (not (= current-sync 0))
 			  (= current-sync (sync s))))
-		 (do ((i 0 (1+ i)))
+		 (do ((i 0 (+ 1 i)))
 		     ((= i (chans s)))
 		   (add-chan-to-selection beg end s i))))
 	   (sounds))))))
@@ -230,7 +230,7 @@ to end of channel, beg defaults to 0, snd defaults to the currently selected sou
 		       (if (selection-member? snd chn)
 			   (let ((new-data (make-vct len))
 				 (old-data (channel->vct beg len snd chn)))
-			     (do ((k 0 (1+ k))) ;here we're applying our function to each sample in the currently selected portion
+			     (do ((k 0 (+ 1 k))) ;here we're applying our function to each sample in the currently selected portion
 				 ((= k len) (vct->channel new-data beg len snd chn))
 			       (vct-set! new-data k (func (vct-ref old-data k)))))))
 		 (all-chans))))))
@@ -249,7 +249,7 @@ to end of channel, beg defaults to 0, snd defaults to the currently selected sou
 	    (end #f))
 	(for-each
 	 (lambda (snd)
-	   (do ((i 0 (1+ i)))
+	   (do ((i 0 (+ 1 i)))
 	       ((= i (chans snd)))
 	     (if (selection-member? snd i)
 		 (let ((pos (/ (selection-position snd i) (srate snd)))
@@ -263,7 +263,7 @@ to end of channel, beg defaults to 0, snd defaults to the currently selected sou
 	 (sounds))
 	(for-each
 	 (lambda (snd)
-	   (do ((i 0 (1+ i)))
+	   (do ((i 0 (+ 1 i)))
 	       ((= i (chans snd)))
 	     (set! (x-bounds snd i) (list beg end))))
 	 (sounds)))))
@@ -277,7 +277,7 @@ to end of channel, beg defaults to 0, snd defaults to the currently selected sou
     (let ((selsnd (open-sound temp-file)))
       (filter-sound flt selsnd)
       (let ((tmp-dur (samples->seconds (frames selsnd))))
-	(set! (sync selsnd) (1+ (sync-max))) ; make sure env-sound hits all chans
+	(set! (sync selsnd) (+ 1 (sync-max))) ; make sure env-sound hits all chans
 	(env-sound (list 0 0  ramp-dur 1  (- tmp-dur ramp-dur) 1  tmp-dur 0) 0 #f 1.0 selsnd)
 	(save-sound selsnd)
 	(close-sound selsnd)

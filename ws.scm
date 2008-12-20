@@ -125,7 +125,7 @@ returning you to the true top-level."
       (let ((len (stack-length *ws-stack*)))
 	(call-with-current-continuation
 	 (lambda (ok)
-	   (do ((i 3 (1+ i)))
+	   (do ((i 3 (+ 1 i)))
 	       ((= i len))
 	     (let ((fr (stack-ref *ws-stack* i)))
 	       (if (frame-procedure? fr) ; perhaps better here would be (procedure-property 'definstrument) or some such test
@@ -601,7 +601,7 @@ returning you to the true top-level."
 		 (reverse new-args)))))
 
 	(let ((lists '()))
-	  (do ((i 0 (1+ i)))
+	  (do ((i 0 (+ 1 i)))
 	      ((= i *clm-threads*))
 	    (set! lists (cons (split body *clm-threads* i) lists)))
 
@@ -752,7 +752,7 @@ returning you to the true top-level."
 	   (dynamic-wind
 	       (lambda ()
 		 (set! (sync outsnd) 0)
-		 (do ((chan 0 (1+ chan)))
+		 (do ((chan 0 (+ 1 chan)))
 		     ((= chan (channels outsnd)))
 		   (set! (squelch-update outsnd chan) #t)))
 
@@ -766,7 +766,7 @@ returning you to the true top-level."
 			   (mx (mix snd beg #t outsnd #f #t #t))     ; all chans mixed, current output sound, with mixes, with auto-delete
 			   (chans (mus-sound-chans snd)))
 		      (set! (mix-name mx) (format #f "(~A ~A)" (car note) (cadr note)))
-		      (do ((chan 0 (1+ chan)))
+		      (do ((chan 0 (+ 1 chan)))
 			  ((= chan chans))
 			(set! (mix-sync (+ mx chan)) mx))
 		      (set! mix-info (cons (list mx beg chans note) mix-info))))
@@ -775,7 +775,7 @@ returning you to the true top-level."
 
 	       (lambda ()
 		 (set! (sync outsnd) old-sync)
-		 (do ((chan 0 (1+ chan)))
+		 (do ((chan 0 (+ 1 chan)))
 		     ((= chan (channels outsnd)))
 		   (set! (squelch-update outsnd chan) #f)
 		   (update-time-graph outsnd chan))))))
@@ -846,7 +846,7 @@ returning you to the true top-level."
 	 (lambda ()
 	   (set! *clm-notehook* old-notehook)))))
 
-;;; (with-marked-sound () (do ((i 0 (1+ i))) ((= i 5)) (fm-violin i .1 440 .1)))
+;;; (with-marked-sound () (do ((i 0 (+ 1 i))) ((= i 5)) (fm-violin i .1 440 .1)))
 
 
 
@@ -1082,7 +1082,7 @@ finish-with-sound to complete the process."
        (do ((i (1- len) (1- i)))
 	   ((= i 0))
 	 (if (char=? (string-ref file i) #\.)
-	     (ok (substring file (1+ i) len))))
+	     (ok (substring file (+ 1 i) len))))
        default))))
 
 (defmacro with-mix-error (message)
@@ -1204,7 +1204,7 @@ finish-with-sound to complete the process."
 						   (let ((arglist '())
 							 (pa passed-args)
 							 (na ',args))
-						     (do ((k 0 (1+ k)))
+						     (do ((k 0 (+ 1 k)))
 							 ((= k arglen) arglist)
 						       (if (keyword? (car pa))
 							   (break (append arglist pa))
@@ -1375,7 +1375,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 				 (lambda (arg val)
 				   (list-set! arg ,ctr val))))))
 		    (add-clm-field sname (string-append sname "-" n) ctr type)
-		    (set! ctr (1+ ctr))
+		    (set! ctr (+ 1 ctr))
 		    val)))
 	      field-names field-types))))
 

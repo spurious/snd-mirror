@@ -196,7 +196,7 @@
       (if (< (vector-length v) 3)
 	  (object->string v)
 	  (let ((str (format #f "'#(~A" (vector-ref v 0))))
-	    (do ((i 1 (1+ i)))
+	    (do ((i 1 (+ 1 i)))
 		((= i 3))
 	      (set! str (string-append str " " (object->string (vector-ref v i)))))
 	    (string-append str " ...)"))))
@@ -360,7 +360,7 @@
 				    (display-properties (sound-properties snd)))
 			    "")
 			(let ((chan-str ""))
-			  (do ((i 0 (1+ i)))
+			  (do ((i 0 (+ 1 i)))
 			      ((= i (chans snd)))
 			    (if (not (null? (channel-properties snd i)))
 				(set! chan-str 
@@ -631,7 +631,7 @@
 (define (edhist-save-edits w c i)
   (let* ((old-val (assoc (cons edhist-snd edhist-chn) edhist-funcs))
 	 (cur-edits (edits edhist-snd edhist-chn))
-	 (new-func (edit-list->function edhist-snd edhist-chn (1+ (car cur-edits)) (apply + cur-edits))))
+	 (new-func (edit-list->function edhist-snd edhist-chn (+ 1 (car cur-edits)) (apply + cur-edits))))
     (if old-val
 	(set-cdr! old-val new-func)
 	;; perhaps this should save the previous function under the current file name?
@@ -673,7 +673,7 @@
 		 (change-label button (format #f "~A[~A]" (short-file-name (car label)) (cdr label)))
 		 (change-label button label))
 	     (XtVaSetValues button (list XmNuserData index))
-	     (set! index (1+ index))))
+	     (set! index (+ 1 index))))
 	 edhist-funcs))
     (if (not (null? wids))
 	(for-each
@@ -716,7 +716,7 @@ all saved edit lists."
     (add-hook! close-hook (lambda (snd)
 			    (let ((chns (chans snd))
 				  (name (short-file-name snd)))
-			      (do ((i 0 (1+ i)))
+			      (do ((i 0 (+ 1 i)))
 				  ((= i chns))
 				(let* ((old-val (assoc (cons snd i) edhist-funcs)))
 				  (if old-val
@@ -746,7 +746,7 @@ all saved edit lists."
 	  #f))
 
     (define (add-popup snd)
-      (do ((uchn 0 (1+ uchn)))
+      (do ((uchn 0 (+ 1 uchn)))
 	  ((= uchn (chans snd)))
 	(let ((chn uchn)) ; this is for s7
 	  (if (not (find-popup snd chn popups))
@@ -789,7 +789,7 @@ all saved edit lists."
 				(let ((ye (.y e))) ; y axis location of mouse-down
 				  (call-with-exit
 				   (lambda (break)
-				     (do ((i 0 (1+ i)))
+				     (do ((i 0 (+ 1 i)))
 					 ((= i (chans snd)))
 				       (let ((off (list-ref (axis-info snd i) 14)))
 					 (if (< ye off)
@@ -902,7 +902,7 @@ color name, an xm Pixel, a snd color, or a list of rgb values (as in Snd's make-
 	   children)
 	  (let ((current-sounds (collector (sounds))))
 	    (if (< (length children) (length current-sounds)) ; only active if len (collector (sounds)) > 1
-		(do ((i (length children) (1+ i)))
+		(do ((i (length children) (+ 1 i)))
 		    ((= i (length current-sounds)))
 		  (let ((child (XtCreateManagedWidget "" xmPushButtonWidgetClass top-two args)))
 		    (XtAddCallback child XmNactivateCallback
@@ -936,7 +936,7 @@ color name, an xm Pixel, a snd color, or a list of rgb values (as in Snd's make-
       (remove-if (lambda (n) 
 		   (call-with-exit
 		    (lambda (return)
-		      (do ((i 0 (1+ i)))
+		      (do ((i 0 (+ 1 i)))
 			  ((= i (chans n)) #t)
 			(if (not (= (car (edits n i)) 0))
 			    (return #f))))))

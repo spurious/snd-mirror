@@ -97,7 +97,7 @@
 		    (let ((indat (pvoc-in-data pv)))
 		      ;; extra loop here since I find the optimized case confusing (we could dispense with the data move)
 		      (vct-move! indat 0 D)
-		      (do ((i (- N D) (1+ i)))
+		      (do ((i (- N D) (+ 1 i)))
 			  ((= i N))
 			(vct-set! indat i (input)))))
 		(let ((buf (modulo filptr N)))
@@ -107,10 +107,10 @@
 			(vct-add! amps (pvoc-in-data pv))
 			(vct-multiply! amps (pvoc-window pv)))
 		      (begin
-			(do ((k 0 (1+ k)))
+			(do ((k 0 (+ 1 k)))
 			    ((= k N))
 			  (vct-set! amps buf (* (vct-ref (pvoc-window pv) k) (vct-ref (pvoc-in-data pv) k)))
-			  (set! buf (1+ buf))
+			  (set! buf (+ 1 buf))
 			  (if (= buf N) (set! buf 0))))))
 		(set-pvoc-filptr pv (+ filptr D))
 		(mus-fft amps freqs N 1)
@@ -120,7 +120,7 @@
 	      ((pvoc-edit pv) pv)
 	      (begin
 		;; if no editing func:
-		(do ((k 0 (1+ k))
+		(do ((k 0 (+ 1 k))
 		     (pscl (/ 1.0 D))
 		     (kscl (/ pi2 N)))
 		    ((= k (inexact->exact (floor (/ N 2)))))
@@ -137,7 +137,7 @@
 	    (vct-scale! freqs scl)
 	    )))
 
-    (set-pvoc-output pv (1+ (pvoc-output pv)))
+    (set-pvoc-output pv (+ 1 (pvoc-output pv)))
 
     (if (pvoc-synthesize pv)
 	((pvoc-synthesize pv) pv)
@@ -212,7 +212,7 @@
 				  #f ;no change to analysis
 				  (lambda (v)
 				    (let ((N (mus-length v)))
-				      (do ((i 0 (1+ i)))
+				      (do ((i 0 (+ 1 i)))
 					  ((= i N))
 					(if (< (vct-ref (phase-vocoder-amp-increments v) i) gate)
 					    (vct-set! (phase-vocoder-amp-increments v) i 0.0)))
@@ -271,13 +271,13 @@
 	   (in-data (channel->vct 0 (* N 2) snd chn))
 	   (in-data-beg 0))
       ;; setup oscillators
-      (do ((i 0 (1+ i)))
+      (do ((i 0 (+ 1 i)))
 	  ((= i N2))
 	(vector-set! resynth-oscils i (make-oscil :frequency 0)))
       (vct-scale! window (/ 2.0 (* 0.54 fftsize))) ;den = hamming window integrated
       (call-with-exit
        (lambda (break)
-	 (do ((i 0 (1+ i)))
+	 (do ((i 0 (+ 1 i)))
 	     ((>= i outlen))
 	   (if (>= output interp) ;; if all the samples have been output then do the next frame
 	       (let ((buffix (modulo filptr N)))
@@ -290,13 +290,13 @@
 		 (vct-fill! lastfreq 0.0)
 		 (vct-add! lastamp fdr)
 		 (vct-add! lastfreq fdi)
-		 (do ((k 0 (1+ k)))
+		 (do ((k 0 (+ 1 k)))
 		     ((= k N))
 		   ;; apply the window and then stuff into the input array
 		   (vct-set! fdr buffix (* (vct-ref window k) (vct-ref in-data (- filptr in-data-beg))))
-		   (set! filptr (1+ filptr))
+		   (set! filptr (+ 1 filptr))
 		   ;; increment the buffer index with wrap around
-		   (set! buffix (1+ buffix))
+		   (set! buffix (+ 1 buffix))
 		   (if (>= buffix N) (set! buffix 0)))
 		 ;; rewind the file for the next hop
 		 (set! filptr (- filptr (- N D)))
@@ -309,7 +309,7 @@
 		 ;; compute the fft
 		 (mus-fft fdr fdi N 1)
 		 ;; now convert into magnitude and interpolated frequency
-		 (do ((k 0 (1+ k)))
+		 (do ((k 0 (+ 1 k)))
 		     ((= k N2))
 		   (let* ((a (vct-ref fdr k))
 			  (b (vct-ref fdi k))
@@ -345,7 +345,7 @@
 	   (vct-add! lastamp ampinc)
 	   (vct-add! lastfreq freqinc)
 	   (vct-set! out-data i (oscil-bank lastamp resynth-oscils lastfreq))
-	   (set! output (1+ output)))
+	   (set! output (+ 1 output)))
 	 (vct->channel out-data 0 (max len outlen)))))))
 
 

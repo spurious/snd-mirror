@@ -31,13 +31,13 @@
 	 (val 0.0)
 	 (ifs (/ 1.0 fs)))
 
-    (do ((k 0 (1+ k)))
+    (do ((k 0 (+ 1 k)))
 	((= k fs))
       (vector-set! fs1 k (make-formant (* k bin) radius)))
 
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ 1 i)))
 	   ((= i end))
 
 	 (if (< i bank1-start)
@@ -53,9 +53,9 @@
 		     (let ((inval (read-sample fil1))
 			   (outval 0.0))
 		       (set! bank1 (+ bank1 bank-incr))
-		       (do ((k 0 (1+ k)))
+		       (do ((k 0 (+ 1 k)))
 			   ((= k (1- fs)))
-			 (set! outval (+ outval (formant (vector-ref fs1 (1+ k)) inval))))
+			 (set! outval (+ outval (formant (vector-ref fs1 (+ 1 k)) inval))))
 		       (set! val (+ (* bank1 outval) (* (- 1.0 bank1) inval))))
 
 		     (if (> i ramp-end)
@@ -63,9 +63,9 @@
 			 (let ((inval (read-sample fil2))
 			       (outval 0.0))
 			   (set! bank2 (- bank2 bank-incr))
-			   (do ((k 0 (1+ k)))
+			   (do ((k 0 (+ 1 k)))
 			       ((= k (1- fs)))
-			     (set! outval (+ outval (formant (vector-ref fs1 (1+ k)) inval))))
+			     (set! outval (+ outval (formant (vector-ref fs1 (+ 1 k)) inval))))
 			   (set! val (+ (* bank2 outval) (* (- 1.0 bank2) inval))))
 
 			 ;; in the fade section
@@ -78,31 +78,31 @@
 			   (if (= ramp-type 0)
 			       (let ((r2 (* 2 ramp)))
 				 ;; sweep up so low freqs go first
-				 (do ((k 0 (1+ k)))
+				 (do ((k 0 (+ 1 k)))
 				     ((= k (1- fs)))
 				   (let ((rfs (max 0.0 (min 1.0 (- r2 (* k ifs))))))
-				     (set! outval (+ outval (formant (vector-ref fs1 (1+ k)) 
+				     (set! outval (+ outval (formant (vector-ref fs1 (+ 1 k)) 
 								     (+ (* rfs inval2) (* (- 1.0 rfs) inval1)))))))
 				 (set! val outval))
 
 			       (if (= ramp-type 1)
 				   (let ((r2 (* 2 ramp)))
 				     ;; sweep up so high freqs go first
-				     (do ((k 0 (1+ k)))
+				     (do ((k 0 (+ 1 k)))
 					 ((= k (1- fs)))
 				       (let ((rfs (max 0.0 (min 1.0 (- r2 (* (- fs k) ifs))))))
-					 (set! outval (+ outval (formant (vector-ref fs1 (1+ k)) 
+					 (set! outval (+ outval (formant (vector-ref fs1 (+ 1 k)) 
 									 (+ (* rfs inval2) (* (- 1.0 rfs) inval1)))))))
 				     (set! val outval))
 
 				   ;; sweep from midpoint out
 				   (let ((r2 (* 2 ramp)))
-				     (do ((k 0 (1+ k)))
+				     (do ((k 0 (+ 1 k)))
 					 ((= k half-fs))
 				       (let ((rfs (max 0.0 (min 1.0 (- (+ r2 0.5) (* (- fs k) ifs))))))
-					 (set! outval (+ outval (formant (vector-ref fs1 (1+ k)) 
+					 (set! outval (+ outval (formant (vector-ref fs1 (+ 1 k)) 
 									 (+ (* rfs inval2) (* (- 1.0 rfs) inval1)))))))
-				     (do ((k 0 (1+ k)))
+				     (do ((k 0 (+ 1 k)))
 					 ((= k (1- half-fs)))
 				       (let ((rfs (max 0.0 (min 1.0 (- r2 (/ k half-fs))))))
 					 (set! outval (+ outval (formant (vector-ref fs1 (+ k 1 half-fs)) 
@@ -133,19 +133,19 @@
 	 (ctr 0))
 
     (if (not (number? hi)) (set! hi freq-inc))
-    (do ((k 0 (1+ k)))
+    (do ((k 0 (+ 1 k)))
 	((= k hi))
       (vector-set! fs k (make-formant (* k bin) radius)))
 
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ 1 i)))
 	   ((= i end))
 	 (let ((outval 0.0)
 	       (inval1 (read-sample fil1))
 	       (inval2 (read-sample fil2)))
 	   ;; once a ramp is set in motion, it takes care of itself -- we need only choose which to trigger
-	   (set! ctr (1+ ctr))
+	   (set! ctr (+ 1 ctr))
 	   (if (> ctr trigger)
 	       (begin
 		 ;; find next randomly chosen resonator to flip
@@ -153,7 +153,7 @@
 		   (if (not (= (vct-ref spectrum next) 1.0))
 		       (call-with-exit
 			(lambda (break)
-			  (do ((j next (1+ j))
+			  (do ((j next (+ 1 j))
 			       (k next (1- k)))
 			      (#t)
 			    (if (and (< j freq-inc) 
@@ -168,7 +168,7 @@
 				  (break)))))))
 		   (vct-set! spectrum next (- (vct-ref spectrum next) ramp-inc))
 		   (set! ctr 0))))
-	   (do ((k lo (1+ k)))
+	   (do ((k lo (+ 1 k)))
 	       ((= k hi))
 	     (let ((sp (vct-ref spectrum k)))
 	       (set! outval (+ outval (formant (vector-ref fs k) (+ (* sp inval1) (* (- 1.0 sp) inval2)))))

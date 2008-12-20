@@ -111,7 +111,7 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
       (if (or (not easy-case) ind-noi amp-noi (> noise-amount 0.0) (not modulate))
 	  (run
 	   (lambda ()
-	     (do ((i beg (1+ i)))
+	     (do ((i beg (+ 1 i)))
 		 ((= i end))
 	       (if (not (= 0.0 noise-amount))
 		   (set! fuzz (rand fm-noi)))
@@ -131,7 +131,7 @@ This version of the fm-violin assumes it is running within with-sound (where *ou
 				 (oscil carrier (+ vib (* ind-fuzz modulation))))))))
 	  (run
 	   (lambda () 
-	     (do ((i beg (1+ i)))
+	     (do ((i beg (+ 1 i)))
 		 ((= i end))
 	       (let* ((vib (+ (env frqf) (triangle-wave pervib) (rand-interp ranvib))))
 		 (locsig locs i (* (env ampf) 

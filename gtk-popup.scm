@@ -54,7 +54,7 @@
     (if (< (vector-length v) 3)
 	(object->string v)
 	(let ((str (format #f "'#(~A" (vector-ref v 0))))
-	  (do ((i 1 (1+ i)))
+	  (do ((i 1 (+ 1 i)))
 	      ((= i 3))
 	    (set! str (string-append str " " (object->string (vector-ref v i)))))
 	  (string-append str " ...)"))))
@@ -361,7 +361,7 @@
 					       (display-properties (sound-properties snd)))
 				       "")
 				   (let ((chan-str ""))
-				     (do ((i 0 (1+ i)))
+				     (do ((i 0 (+ 1 i)))
 					 ((= i (chans snd)))
 				       (if (not (null? (channel-properties snd i)))
 					   (set! chan-str 
@@ -565,7 +565,7 @@
 				    (> (chans snd) 1))
 			       (call-with-exit
 				(lambda (break)
-				  (do ((i 0 (1+ i)))
+				  (do ((i 0 (+ 1 i)))
 				      ((= i (chans snd)))
 				    (let ((off (list-ref (axis-info snd i) 14)))
 				      (if (< y off)
@@ -598,7 +598,7 @@
 				   (let ((ctr 0))
 				     (for-each (lambda (child)
 						 (gtk_widget_set_sensitive child (not (= (wavelet-type graph-popup-snd graph-popup-chn) ctr)))
-						 (set! ctr (1+ ctr)))
+						 (set! ctr (+ 1 ctr)))
 					       wavelet-types))
 				   (set! menu fft-popup-menu))
 				 (if (and lax
@@ -660,7 +660,7 @@
 (define (edhist-save-edits)
   (let* ((old-val (assoc (cons edhist-snd edhist-chn) edhist-funcs))
 	 (cur-edits (edits edhist-snd edhist-chn))
-	 (new-func (edit-list->function edhist-snd edhist-chn (1+ (car cur-edits)) (apply + cur-edits))))
+	 (new-func (edit-list->function edhist-snd edhist-chn (+ 1 (car cur-edits)) (apply + cur-edits))))
     (if old-val
 	(set-cdr! old-val new-func)
 	;; perhaps this should save the previous function under the current file name?
@@ -703,7 +703,7 @@
 		 (change-label button label))
 	     (g_object_set_data (G_OBJECT button) "popup-index" (GPOINTER index))
 	     (gtk_widget_show button)
-	     (set! index (1+ index))))
+	     (set! index (+ 1 index))))
 	 edhist-funcs))
     (if (not (null? wids))
 	(for-each
@@ -758,7 +758,7 @@ all saved edit lists."
 
 (define (add-edhist-popup snd)
   (let ((chns (chans snd)))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ 1 i)))
 	((= i chns))
       (let ((edhist (list-ref (channel-widgets snd i) 7)))
 	(if (not (member edhist edhist-channel-widgets))
@@ -787,7 +787,7 @@ all saved edit lists."
 (add-hook! close-hook (lambda (snd)
 			(let ((chns (chans snd))
 			      (name (short-file-name snd)))
-			  (do ((i 0 (1+ i)))
+			  (do ((i 0 (+ 1 i)))
 			      ((= i chns))
 			    (let* ((old-val (assoc (cons snd i) edhist-funcs)))
 			      (if old-val

@@ -80,21 +80,21 @@
 
 (definstrument (plucky beg dur freq amplitude maxa)
   (let* ((lowestfreq 100.0)
-	 (len (1+ (inexact->exact (floor (/ (mus-srate) lowestfreq)))))
+	 (len (+ 1 (inexact->exact (floor (/ (mus-srate) lowestfreq)))))
 	 (delayline (make-delaya len (- (/ (mus-srate) freq) 0.5)))
 	 (filter (make-onezero))
 	 (start (seconds->samples beg))
 	 (durlen (seconds->samples dur))
 	 (end (+ start durlen))
 	 (dout 0.0))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ 1 i)))
 	((= i len))
       (set! dout (delaya delayline (+ (* 0.99 dout)
 				      (* maxa (- 1.0 (random 2.0)))))))
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ 1 i)))
 	   ((= i end))
 	 (set! dout (delaya delayline (one-zero filter dout)))
 	 (outa i (* amplitude dout)))))))
@@ -103,7 +103,7 @@
 ;;; freq is off in this one (in prc's original also)
 (definstrument (bowstr beg dur frq amplitude maxa)
   (let* ((lowestfreq 100.0)
-	 (len (1+ (inexact->exact (floor (/ (mus-srate) lowestfreq)))))
+	 (len (+ 1 (inexact->exact (floor (/ (mus-srate) lowestfreq)))))
 	 (ratio 0.8317)
 	 (temp (- (/ (mus-srate) frq) 4.0))
 	 (neckdelay (make-delayl len (* temp ratio)))
@@ -128,7 +128,7 @@
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i st (1+ i)))
+       (do ((i st (+ 1 i)))
 	   ((= i end))
 	 (let* ((bridgerefl 0.0)
 		(nutrefl 0.0) 
@@ -162,7 +162,7 @@
 
 (definstrument (brass beg dur freq amplitude maxa)
   (let* ((lowestfreq 100.0)
-	 (len (1+ (inexact->exact (floor (/ (mus-srate) lowestfreq)))))
+	 (len (+ 1 (inexact->exact (floor (/ (mus-srate) lowestfreq)))))
 	 (delayline (make-delaya len (+ 1.0 (/ (mus-srate) freq))))
 	 (lipfilter (make-formant freq))
 	 (dcblocker (make-dc-block))
@@ -180,7 +180,7 @@
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i st (1+ i)))
+       (do ((i st (+ 1 i)))
 	   ((= i end))
 	 (if blowing
 	     (if (not (= maxpressure breathpressure))
@@ -204,7 +204,7 @@
 
 (definstrument (clarinet beg dur freq amplitude maxa)
   (let* ((lowestfreq 100.0)
-	 (len (1+ (inexact->exact (floor (/ (mus-srate) lowestfreq)))))
+	 (len (+ 1 (inexact->exact (floor (/ (mus-srate) lowestfreq)))))
 	 (delayline (make-delayl len (- (* 0.5 (/ (mus-srate) freq)) 1.0)))
 	 (rtable (make-reed :offset 0.7 :slope -0.3))
 	 (filter (make-onezero))
@@ -222,7 +222,7 @@
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i st (1+ i)))
+       (do ((i st (+ 1 i)))
 	   ((= i end))
 	 (let ((pressurediff 0.0))
 	   (if blowing
@@ -248,7 +248,7 @@
 
 (definstrument (flute beg dur freq amplitude maxa)
   (let* ((lowestfreq 100.0)
-	 (len (1+ (inexact->exact (floor (/ (mus-srate) lowestfreq)))))
+	 (len (+ 1 (inexact->exact (floor (/ (mus-srate) lowestfreq)))))
 	 (ratio 0.8)
 	 (temp (- (/ (mus-srate) freq) 5.0))
 	 (jetdelay (make-delayl (inexact->exact (floor (/ len 2))) (* temp (- 1.0 ratio))))
@@ -274,7 +274,7 @@
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i st (1+ i)))
+       (do ((i st (+ 1 i)))
 	   ((= i end))
 	 (let ((randpressure (* 0.1 breathpressure (random 1.0)))
 	       (temp 0.0) 

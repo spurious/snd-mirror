@@ -292,7 +292,7 @@
       (set! proc (XtAppAddWorkProc 
 		  app 
 		  (lambda (ignored-arg)
-		    (do ((i 0 (1+ i)))
+		    (do ((i 0 (+ 1 i)))
 			((= i bufsize))
 		      (sound-data-set! 
 		       data 0 i

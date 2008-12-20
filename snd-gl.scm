@@ -114,7 +114,7 @@
       (let ((rl-data (sound-data->vct input-data 0 (vector-ref data slice))))
 	(snd-spectrum rl-data blackman2-window bins #t 0.0 #t #f)
 	(redraw-graph))
-      (set! slice (1+ slice))
+      (set! slice (+ 1 slice))
       (if (>= slice slices)
 	  (set! slice 0))
       #f)
@@ -129,7 +129,7 @@
 	  (begin
 	    (XtRemoveWorkProc input-proc)
 	    (set! input-proc 0)))
-      (do ((i 0 (1+ i)))
+      (do ((i 0 (+ 1 i)))
 	  ((= i slices))
 	(vct-scale! (vector-ref data i) 0.0)))
     
@@ -167,7 +167,7 @@
 		   (set! scaler scl)
 		   (set! bins fft-size)
 		   (set! input-data (make-sound-data 1 (* bins 2)))
-		   (do ((i 0 (1+ i)))
+		   (do ((i 0 (+ 1 i)))
 		       ((= i slices))
 		     (vector-set! data i (make-vct bins)))
 		   (start-it))
@@ -268,7 +268,7 @@
   (display (format #f "GL_LIGHT_MODEL_TWO_SIDE: ~A~%" (glGetBooleanv GL_LIGHT_MODEL_TWO_SIDE)))
 
   (let ((nlights (car (glGetIntegerv GL_MAX_LIGHTS))))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ 1 i)))
 	((= i nlights))
       (if (car (glGetBooleanv (+ GL_LIGHT0  i)))
 	  (begin
@@ -451,7 +451,7 @@
 	  (glNewList gl-list GL_COMPILE)
 	    (glBegin GL_LINES)
 	    (apply glColor3f (color->list (data-color)))
-	    (do ((i 0 (1+ i)))
+	    (do ((i 0 (+ 1 i)))
 		((= i 256))
 	      (glVertex3f (/ i 256.0) 0.0 0.0)
 	      (glVertex3f (/ i 256.0) (vct-ref rl i) (vct-ref im i)))

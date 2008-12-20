@@ -29,7 +29,7 @@
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ 1 i)))
 	   ((= i end))
 	 (outa i (* (env amp-env)
 		    (polyshape os 1.0 (env gls-env)))))))))
@@ -45,7 +45,7 @@
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ 1 i)))
 	   ((= i end))
 	 (outa i (* (env amp-env)
 		    (oscil os (env gls-env)))))))))

@@ -138,7 +138,7 @@
   (define (make-one-pole-swept)
     (let ((y1 0.0))
       (lambda (input coef)
-	(set! y1 (- (* (1+ coef) input) (* coef y1)))
+	(set! y1 (- (* (+ 1 coef) input) (* coef y1)))
 	y1)))
   
   ;; one-pole allpass filter
@@ -193,7 +193,7 @@
 	  (c (cos wT))
 	  (s (sin wT)))
       (/ (+ (- ta) (* (signum ta)
-		      (sqrt (* (1+ (* ta ta)) (* s s)))))
+		      (sqrt (* (+ 1 (* ta ta)) (* s s)))))
 	 (- (* c ta) s))))
   
   (define (signum x) (if (= x 0.0) 0 (if (< x 0.0) -1 1)))
@@ -291,7 +291,7 @@
     
     (ws-interrupt?)
 
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ 1 i)))
 	((= i 4))
       (vector-set! hammer-one-pole i (make-one-pole (* 1.0 (- 1.0 hammerPole)) (- hammerPole))))
 
@@ -327,7 +327,7 @@
 	     ;;scale stiffness coefficients, if desired
 	     (stiffnessCoefficient (if (> stiffnessFactor 1.0)
 				       (- stiffnessCoefficient
-					  (* (1+ stiffnessCoefficient)
+					  (* (+ 1 stiffnessCoefficient)
 					     (1- stiffnessFactor)))
 		(* stiffnessCoefficient stiffnessFactor)))
 	     (stiffnessCoefficientL (if (<= keyNum longitudinal-mode-cutoff-keynum)
@@ -374,16 +374,16 @@
 	     (sampCount 0)
 	     (noi (make-noise)))
 
-	(do ((i 0 (1+ i))) ((= i 8))
+	(do ((i 0 (+ 1 i))) ((= i 8))
 	  (vector-set! string1-stiffness-ap i (make-one-pole-allpass stiffnessCoefficientL)))
-	(do ((i 0 (1+ i))) ((= i 8))
+	(do ((i 0 (+ 1 i))) ((= i 8))
 	  (vector-set! string2-stiffness-ap i (make-one-pole-allpass stiffnessCoefficient)))
-	(do ((i 0 (1+ i))) ((= i 8))
+	(do ((i 0 (+ 1 i))) ((= i 8))
 	  (vector-set! string3-stiffness-ap i (make-one-pole-allpass stiffnessCoefficient)))
 
 	(run
 	 (lambda ()
-	   (do ((i beg (1+ i)))
+	   (do ((i beg (+ 1 i)))
 	       ((= i end))
 	     (if is-release-time
 		 (set! loop-gain (loop-gain-expseg looprate))
@@ -403,14 +403,14 @@
 	     (set! totalTap (+ dryTap openStrings))
 
 	     (set! adelIn totalTap)
-	     (do ((i 0 (1+ i))) 
+	     (do ((i 0 (+ 1 i))) 
 		 ((= i 4))
 	       (set! adelIn (one-pole (vector-ref hammer-one-pole i) adelIn)))
 
 	     (set! combedExcitationSignal (* hammerGain (+ adelOut (* adelIn StrikePositionInvFac))))
 	     (set! adelOut (agraffe-tuning-ap1 (delay0 agraffe-delay1 adelIn)))
 	     (set! string1-junction-input (+ couplingFilter-output string1-junction-input))
-	     (do ((i 0 (1+ i))) 
+	     (do ((i 0 (+ 1 i))) 
 		 ((= i 8))
 	       (set! string1-junction-input ((vector-ref string1-stiffness-ap i) string1-junction-input)))
 
@@ -419,14 +419,14 @@
 						(delay0 string1-delay
 							(string1-tuning-ap string1-junction-input)))))
 	     (set! string2-junction-input (+ couplingFilter-output string2-junction-input))
-	     (do ((i 0 (1+ i))) 
+	     (do ((i 0 (+ 1 i))) 
 		 ((= i 8))
 	       (set! string2-junction-input ((vector-ref string2-stiffness-ap i) string2-junction-input)))
 	     (set! string2-junction-input (+ combedExcitationSignal
 					     (* loop-gain (delay0 string2-delay
 								  (string2-tuning-ap string2-junction-input)))))
 	     (set! string3-junction-input (+ couplingFilter-output string3-junction-input))
-	     (do ((i 0 (1+ i))) 
+	     (do ((i 0 (+ 1 i))) 
 		 ((= i 8))
 	       (set! string3-junction-input ((vector-ref string3-stiffness-ap i) string3-junction-input)))
 
@@ -436,7 +436,7 @@
 							(string3-tuning-ap string3-junction-input)))))
 	     (set! couplingFilter-input (+ string1-junction-input string2-junction-input string3-junction-input))
 	     (set! couplingFilter-output (one-pole-one-zero cou0 cou1 couplingFilter-input))
-	     (set! sampCount (1+ sampCount))
+	     (set! sampCount (+ 1 sampCount))
 	     (outa i couplingFilter-input)))))))
 
 
@@ -444,7 +444,7 @@
 #|
 
 (with-sound ()
-  (do ((i 0 (1+ i))) ((= i 8))
+  (do ((i 0 (+ 1 i))) ((= i 8))
     (p
      (* i .5)
      :duration .5
@@ -461,7 +461,7 @@
 
 
 (with-sound ()
-  (do ((i 0 (1+ i))) ((= i 8))
+  (do ((i 0 (+ 1 i))) ((= i 8))
     (p
      (* i .5)
      :duration .5
@@ -491,7 +491,7 @@
 
  
 (with-sound ()
-  (do ((i 0 (1+ i))) ((= i 8))
+  (do ((i 0 (+ 1 i))) ((= i 8))
     (p
      (* i .5)
      :duration .5

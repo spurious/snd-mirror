@@ -17,7 +17,7 @@
 		(old-facts factorials))
 	    (set! num-factorials n)
 	    (set! factorials (make-vector num-factorials 0))
-	    (do ((i 0 (1+ i)))
+	    (do ((i 0 (+ 1 i)))
 		((= i old-num))
 	      (vector-set! factorials i (vector-ref old-facts i)))))
       (if (zero? (vector-ref factorials n))
@@ -36,8 +36,8 @@
 	(if (= mn 0)
 	    1
 	    (let* ((mx (max k (- n k)))
-		   (cnk (1+ mx)))
-	      (do ((i 2 (1+ i)))
+		   (cnk (+ 1 mx)))
+	      (do ((i 2 (+ 1 i)))
 		  ((> i mn) cnk)
 		(set! cnk (/ (* cnk (+ mx i)) i))))))))
 
@@ -59,7 +59,7 @@
 	    (begin
 	      (set! somx2 (sqrt (* (- 1.0 x) (+ 1.0 x))))
 	      (set! fact 1.0)
-	      (do ((i 1 (1+ i)))
+	      (do ((i 1 (+ 1 i)))
 		  ((> i m))
 		(set! pmm (* (- pmm) fact somx2))
 		(set! fact (+ fact 2.0)))))
@@ -69,7 +69,7 @@
 	      (if (= l (+ m 1)) 
 		  pmmp1
 		  (let ((pk 0.0)) ; NR used "ll" which is unreadable
-		    (do ((k (+ m 2) (1+ k)))
+		    (do ((k (+ m 2) (+ 1 k)))
 			((> k l))
 		      (set! pk (/ (- (* x (- (* 2 k) 1) pmmp1) 
 				      (* (+ k m -1) pmm)) 
@@ -88,7 +88,7 @@
 	       (s 1.0)
 	       (h 0.0)
 	       (sum (vector-ref a 0)))
-	  (do ((k 1 (1+ k)))
+	  (do ((k 1 (+ 1 k)))
 	      ((= k n))
 	    (set! h r)
 	    (set! sum (+ sum (* r (vector-ref a k))))
@@ -97,17 +97,17 @@
 	  (+ sum (* r (vector-ref a n)))))))
 
 (define (legendre n x)
-  (legendre-polynomial (let ((v (make-vector (1+ n) 0.0)))
+  (legendre-polynomial (let ((v (make-vector (+ 1 n) 0.0)))
 			 (vector-set! v n 1.0)
 			 v)
 		       x))
 
-;;; (with-sound (:scaled-to 0.5) (do ((i 0 (1+ i)) (x 0.0 (+ x .1))) ((= i 10000)) (outa i (legendre 20 (cos x)))))
+;;; (with-sound (:scaled-to 0.5) (do ((i 0 (+ 1 i)) (x 0.0 (+ x .1))) ((= i 10000)) (outa i (legendre 20 (cos x)))))
 
 #|
 ;; if l odd, there seems to be sign confusion:
 (with-sound (:channels 2 :scaled-to 1.0)
-  (do ((i 0 (1+ i))
+  (do ((i 0 (+ 1 i))
        (theta 0.0 (+ theta 0.01)))
       ((= i 10000))
     (outa i (plgndr 1 1 (cos theta)))
@@ -116,7 +116,7 @@
 
 ;; this works:
 (with-sound (:channels 2 :scaled-to 1.0)
-  (do ((i 0 (1+ i))
+  (do ((i 0 (+ 1 i))
        (theta 0.0 (+ theta 0.01)))
       ((= i 10000))
     (let ((x (cos theta)))
@@ -141,7 +141,7 @@
 			(fn2 1.0))
 		    (if (= n 1)
 			fn1
-			(do ((k 2 (1+ k))
+			(do ((k 2 (+ 1 k))
 			     (k0 2.0 (+ k0 1.0)))
 			    ((> k n) fn)
 			  (set! fn (/ (- (* 2 x fn1 (+ k alpha -1.0))
@@ -151,11 +151,11 @@
 			  (set! fn1 fn)))))))))
 
 
-;;; (with-sound (:scaled-to 0.5) (do ((i 0 (1+ i)) (x 0.0 (+ x .1))) ((= i 10000)) (outa i (gegenbauer 15 (cos x) 1.0))))
+;;; (with-sound (:scaled-to 0.5) (do ((i 0 (+ 1 i)) (x 0.0 (+ x .1))) ((= i 10000)) (outa i (gegenbauer 15 (cos x) 1.0))))
 
 #|
 (with-sound (:scaled-to 0.5)
-  (do ((i 0 (1+ i))
+  (do ((i 0 (+ 1 i))
        (theta 0.0 (+ theta 0.05)))
       ((= i 10000))
     (let ((x (cos theta)))
@@ -171,7 +171,7 @@
 	       (s 1.0)
 	       (h 0.0)
 	       (sum (vector-ref a 0)))
-	  (do ((k 1 (1+ k)))
+	  (do ((k 1 (+ 1 k)))
 	      ((= k n))
 	    (set! h r)
 	    (set! sum (+ sum (* r (vector-ref a k))))
@@ -180,7 +180,7 @@
 	  (+ sum (* r (vector-ref a n)))))))
 
 (define* (chebyshev n x :optional (kind 1))
-  (let ((a (make-vector (1+ n) 0.0)))
+  (let ((a (make-vector (+ 1 n) 0.0)))
     (vector-set! a n 1.0)
     (chebyshev-polynomial a x kind)))
 
@@ -193,7 +193,7 @@
 	       (s 1.0)
 	       (h 0.0)
 	       (sum (vector-ref a 0)))
-	  (do ((k 1 (1+ k))
+	  (do ((k 1 (+ 1 k))
 	       (k2 2 (+ k2 2)))
 	      ((= k n))
 	    (set! h r)
@@ -203,7 +203,7 @@
 	  (+ sum (* r (vector-ref a n)))))))
 
 (define* (hermite n x)
-  (let ((a (make-vector (1+ n) 0.0)))
+  (let ((a (make-vector (+ 1 n) 0.0)))
     (vector-set! a n 1.0)
     (hermite-polynomial a x)))
 
@@ -216,7 +216,7 @@
 	       (s 1.0)
 	       (h 0.0)
 	       (sum (vector-ref a 0)))
-	  (do ((k 1 (1+ k)))
+	  (do ((k 1 (+ 1 k)))
 	      ((= k n))
 	    (set! h r)
 	    (set! sum (+ sum (* r (vector-ref a k))))
@@ -227,7 +227,7 @@
 	  (+ sum (* r (vector-ref a n)))))))
 
 (define* (laguerre n x :optional (alpha 0.0))
-  (let ((a (make-vector (1+ n) 0.0)))
+  (let ((a (make-vector (+ 1 n) 0.0)))
     (vector-set! a n 1.0)
     (laguerre-polynomial a x alpha)))
 

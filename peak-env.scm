@@ -32,7 +32,7 @@
       ;; full file name should be unique, so I think we need only fix it up to look like a flat name
       (let* ((len (string-length str))
 	     (new-str (make-string len #\.)))
-	(do ((i 0 (1+ i)))
+	(do ((i 0 (+ 1 i)))
 	    ((= i len) new-str)
 	  (let ((c (string-ref str i)))
 	    (if (or (char=? c #\\)
@@ -69,7 +69,7 @@
     (add-hook! update-hook
 	       (lambda (snd)
 		 (if save-peak-env-info?
-		     (do ((i 0 (1+ i)))
+		     (do ((i 0 (+ 1 i)))
 			 ((= i (chans snd)))
 		       (let ((peak-file (mus-expand-filename (peak-env-info-file-name snd i))))
 			 (if (file-exists? peak-file)
@@ -80,7 +80,7 @@
       (if (and save-peak-env-info?
 	       (not (null? (peak-env-info snd 0 0))))
 	  (let ((saved #f))
-	    (do ((i 0 (1+ i)))
+	    (do ((i 0 (+ 1 i)))
 		((= i (chans snd)))
 	      (let ((peak-file (mus-expand-filename (peak-env-info-file-name snd i))))
 		(if (or (not (file-exists? peak-file))

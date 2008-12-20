@@ -27,7 +27,7 @@
 
 
 (define (create-initial-envelopes snd)
-  (do ((i 0 (1+ i)))
+  (do ((i 0 (+ 1 i)))
       ((= i (channels snd)))
     (set! (dot-size snd i) 8)
     (set! (channel-envelope snd i) (list 0.0 1.0 1.0 1.0))))
@@ -180,7 +180,7 @@
 (define* (play-with-envs :optional (sound #f))
   "(play-with-envs snd) sets channel amps during playback from the associated enved envelopes"
   (let ((chans (chans sound)))
-    (do ((chan 0 (1+ chan)))
+    (do ((chan 0 (+ 1 chan)))
 	((= chan chans))
       (let ((player (make-player sound chan))
 	    (e (make-env (channel-envelope sound chan) 

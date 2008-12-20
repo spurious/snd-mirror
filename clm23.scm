@@ -39,7 +39,7 @@
   (let ((v (make-vct len (or initial-element 0.0))))
     (if initial-contents
 	(let ((clen (min len (length initial-contents))))
-	  (do ((i 0 (1+ i)))
+	  (do ((i 0 (+ i 1)))
 	      ((= i clen))
 	    (vct-set! v i (list-ref initial-contents i)))))
     v))
@@ -62,7 +62,7 @@
 	 (end (+ start (seconds->samples dur))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (oscil os)) 0))))))
 
 (definstrument (simple-fm beg dur freq amp mc-ratio index :optional amp-env index-env)
@@ -75,7 +75,7 @@
          (indf (make-env (or index-env '(0 0 .5 1 1 0)) :scaler fm-index :duration dur)))
     (run
       (lambda ()
-        (do ((i start (1+ i)))
+        (do ((i start (+ i 1)))
             ((= i end))
           (outa i (* (env ampf) (oscil cr (* (env indf) (oscil md))))))))))
 
@@ -86,7 +86,7 @@
 	 (end (+ start (seconds->samples dur))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (let ((val (oscil os)))
 	   (if (> ampa 0.0) (outa i (* ampa val)))
 	   (if (> ampb 0.0) (outb i (* ampb val)))
@@ -106,9 +106,9 @@
     (vector-set! arr 2 (make-ssb-am 660 40))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (let* ((sum 0.0))
-	   (do ((i 0 (1+ i)))
+	   (do ((i 0 (+ i 1)))
 	       ((= i (vector-length arr)))
 	     (if (ssb-am? (vector-ref arr i))
 		 (set! sum (+ sum (ssb-am (vector-ref arr i) 1.0)))))
@@ -126,7 +126,7 @@
     (vector-set! arr 2 (make-oscil (* freq 2)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) 
+       (do ((i start (+ i 1))) 
 	   ((= i end))
 	 (out-any i (* (env (vector-ref arr 1))
 		       (oscil (vector-ref arr 0)
@@ -140,7 +140,7 @@
 	 (end (+ start (seconds->samples dur))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (nsin os)) 0))))))
 
 (define (simple-ncos beg dur freq amp)
@@ -150,7 +150,7 @@
 	 (end (+ start (seconds->samples dur))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (ncos os)) 0))))))
 
 (define (simple-nrxysin beg dur amp)
@@ -160,7 +160,7 @@
 	 (end (+ start (seconds->samples dur))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (nrxysin os)) 0))))))
 
 (define (simple-nrxycos beg dur freq amp)
@@ -170,7 +170,7 @@
 	 (end (+ start (seconds->samples dur))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (nrxycos os)) 0))))))
 
 (define (simple-osc beg dur freq amp)
@@ -178,14 +178,14 @@
   (let* ((start (seconds->samples beg))
 	 (end (+ start (seconds->samples dur)))
 	 (arr (make-vector 20)))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i 20))
-      (vector-set! arr i (make-oscil (* (1+ i) 100))))
+      (vector-set! arr i (make-oscil (* (+ i 1) 100))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (let ((sum 0.0))
-	   (do ((i 0 (1+ i)))
+	   (do ((i 0 (+ i 1)))
 	       ((= i (vector-length arr)))
 	     (if (oscil? (vector-ref arr i))
 		 (set! sum (+ sum (oscil (vector-ref arr i))))))
@@ -198,7 +198,7 @@
 	 (end (+ start (seconds->samples dur))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (asymmetric-fm os 1.0)) 0))))))
 
 (define (simple-saw beg dur amp)
@@ -208,7 +208,7 @@
 	 (end (+ start (seconds->samples dur))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (sawtooth-wave os)) 0))))))
 
 (define (simple-sqr beg dur amp)
@@ -218,7 +218,7 @@
 	 (end (+ start (seconds->samples dur))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (square-wave os)) 0))))))
 
 (define (simple-tri beg dur amp)
@@ -228,7 +228,7 @@
 	 (end (+ start (seconds->samples dur))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (triangle-wave os)) 0))))))
 
 (define (simple-pul beg dur amp)
@@ -238,7 +238,7 @@
 	 (end (+ start (seconds->samples dur))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (pulse-train os)) 0))))))
 
 (define (simple-sib beg dur freq amp)
@@ -248,14 +248,14 @@
 	 (amps (make-double-array 3 :initial-element 0.0))
 	 (phases (make-double-array 3 :initial-element 0.0))
 	 (freqs (make-double-array 3 :initial-element 0.0)))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i 3))
-      (set! (vct-ref freqs i) (double (* freq (1+ i))))
+      (set! (vct-ref freqs i) (double (* freq (+ i 1))))
       (set! (vct-ref amps i) (double (/ amp (+ i 2)))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
-	 (do ((i 0 (1+ i)))
+       (do ((i start (+ i 1))) ((= i end))
+	 (do ((i 0 (+ i 1)))
 	     ((= i (vct-length phases)))
 	   (set! (vct-ref phases i) (+ (vct-ref phases i) (hz->radians (vct-ref freqs i)))))
 	 (out-any i (sine-bank amps phases) 0))))))
@@ -268,7 +268,7 @@
 	 (oz (make-one-zero 0.4 0.6)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (one-zero oz (oscil os))) 0))))))
 
 (define (simple-op beg dur freq amp)
@@ -279,7 +279,7 @@
 	 (oz (make-one-pole 0.4 -0.6)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (one-pole oz (oscil os))) 0))))))
 
 (define (simple-tz beg dur freq amp)
@@ -290,7 +290,7 @@
 	 (oz (make-two-zero 0.4 0.3 0.3)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (two-zero oz (oscil os))) 0))))))
 
 (define (simple-tp beg dur freq amp)
@@ -301,7 +301,7 @@
 	 (oz (make-two-pole 0.3 -0.6 0.1)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (two-pole oz (oscil os))) 0))))))
 
 (define (simple-frm beg dur freq amp)
@@ -312,7 +312,7 @@
 	 (oz (make-formant 1200.0 0.95)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (formant oz (oscil os))) 0))))))
 
 (define (simple-firm beg dur freq amp)
@@ -323,7 +323,7 @@
 	 (oz (make-firmant 1200.0 0.95)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (firmant oz (oscil os))) 0))))))
 
 (define (simple-firm2 beg dur freq amp)
@@ -335,12 +335,12 @@
 	 (oz (make-firmant 1200.0 0.95)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (firmant oz (oscil os) (env frqf))) 0))))))
 
 ;(define w1 (make-polyshape :frequency 100.0 
 ;			   :partials (let ((frqs '()))
-;				       (do ((i 1 (1+ i)))
+;				       (do ((i 1 (+ i 1)))
 ;					   ((= i 10) (begin (snd-display frqs) (reverse frqs)))
 ;					 (set! frqs (cons (/ 1.0 (* i i)) (cons i frqs)))))))
 
@@ -351,7 +351,7 @@
 	 (end (+ start (seconds->samples dur))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (polyshape w1 1.0)) 0))))))
 
 (define (simple-polyw beg dur freq amp)
@@ -361,7 +361,7 @@
 	 (end (+ start (seconds->samples dur))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (polywave w1)) 0))))))
 
 (define (simple-dly beg dur freq amp)
@@ -372,7 +372,7 @@
 	 (buf (make-delay 100)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (delay buf (* amp (oscil os))) 0))))))
 
 (define (simple-cmb beg dur freq amp)
@@ -383,7 +383,7 @@
 	 (buf (make-comb .1 100)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (comb buf (* amp (oscil os))) 0))))))
 
 (define (simple-filtered-cmb beg dur freq amp)
@@ -394,7 +394,7 @@
 	 (buf (make-filtered-comb .1 100 :filter (make-one-zero .5 .5))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (filtered-comb buf (* amp (oscil os))) 0))))))
 
 (define (simple-not beg dur freq amp)
@@ -405,7 +405,7 @@
 	 (buf (make-notch .1 100)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (notch buf (* amp (oscil os))) 0))))))
 
 (define (simple-alp beg dur freq amp)
@@ -416,7 +416,7 @@
 	 (buf (make-all-pass .2 .8 100)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (all-pass buf (* amp (oscil os))) 0))))))
 
 (define (simple-ave beg dur freq amp)
@@ -427,7 +427,7 @@
 	 (buf (make-moving-average 10)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (moving-average buf (* amp (oscil os))) 0))))))
 
 (define (simple-tab beg dur freq amp)
@@ -437,12 +437,12 @@
 	 (table-size 256)
 	 (buf (make-table-lookup freq 0.0 :size table-size))
 	 (table (mus-data buf)))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i table-size))
       (set! (vct-ref table i) (double (/ i table-size))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (table-lookup buf)) 0))))))
 
 (define (simple-flt beg dur freq amp)
@@ -451,13 +451,13 @@
 	 (end (+ start (seconds->samples dur)))
 	 (flt (make-filter 8 :xcoeffs (make-vct 8) :ycoeffs (make-vct 8)))
 	 (os (make-oscil freq)))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i 8))
       (set! (vct-ref (mus-xcoeffs flt) i) (double (/ i 16)))
       (set! (vct-ref (mus-ycoeffs flt) i) (- 0.5 (double (/ i 16)))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (filter flt (oscil os))) 0))))))
 
 (define (simple-fir beg dur freq amp)
@@ -466,12 +466,12 @@
 	 (end (+ start (seconds->samples dur)))
 	 (flt (make-fir-filter 8 :xcoeffs (make-vct 8)))
 	 (os (make-oscil freq)))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i 8))
       (set! (vct-ref (mus-xcoeffs flt) i) (double (/ i 16))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (fir-filter flt (oscil os))) 0))))))
 
 (define (simple-iir beg dur freq amp)
@@ -480,12 +480,12 @@
 	 (end (+ start (seconds->samples dur)))
 	 (flt (make-iir-filter 8 :ycoeffs (make-vct 8)))
 	 (os (make-oscil freq)))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i 8))
       (set! (vct-ref (mus-ycoeffs flt) i) (double (/ i 16))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (iir-filter flt (oscil os))) 0))))))
 
 (define (simple-f beg dur freq amp)
@@ -497,7 +497,7 @@
 	 (os (make-oscil freq)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (let ((val (oscil os)))
 	   (frame-set! smp 0 val)
 	   (set! (frame-ref smp 1) val)
@@ -510,7 +510,7 @@
 	 (os (make-rand freq)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (rand os)) 0))))))
 
 (define (simple-ri beg dur freq amp)
@@ -520,7 +520,7 @@
 	 (os (make-rand-interp freq)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (rand-interp os)) 0))))))
 
 (define (simple-rndist beg dur freq amp)
@@ -530,7 +530,7 @@
 	 (os (make-rand freq :distribution (inverse-integrate '(0 0 1 1)))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (rand os)) 0))))))
 
 (define (simple-ridist beg dur freq amp)
@@ -540,7 +540,7 @@
 	 (os (make-rand-interp freq :distribution (inverse-integrate '(0 1 1 0)))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (rand-interp os)) 0))))))
 
 (define (simple-env beg dur freq amp)
@@ -551,7 +551,7 @@
 	 (e (make-env '(0 0 1 1 2 1 3 0) :scaler amp :offset .1 :duration dur)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* (env e) (oscil os)) 0))))))
 
 (define* (simple-fof beg dur frq amp vib f0 a0 f1 a1 f2 a2 :optional ve ae)
@@ -568,7 +568,7 @@
          (win-freq (/ two-pi foflen))
          (wt0 (make-wave-train :size foflen :frequency frq))
          (foftab (mus-data wt0)))
-    (do ((i 0 (1+ i))) ((= i foflen))
+    (do ((i 0 (+ i 1))) ((= i foflen))
       (set! (vct-ref foftab i) (double
 				;; this is not the pulse shape used by B&R
 				(* (+ (* a0 (sin (* i frq0))) 
@@ -577,7 +577,7 @@
 				   .5 (- 1.0 (cos (* i win-freq)))))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* (env ampf) (wave-train wt0 (* (env vibenv) (oscil vibr)))) 0))))))
 
 (define (simple-amb beg dur freq amp)
@@ -587,7 +587,7 @@
 	 (end (+ start (seconds->samples dur))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (if (oscil? os) (oscil os) (rand os))) 0))))))
 
 (define (simple-rd beg dur amp file)
@@ -597,7 +597,7 @@
 	 (end (+ start (seconds->samples dur))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (readin rd)) 0))))))
 
 (define (simple-rd-start beg dur amp file channel start)
@@ -607,7 +607,7 @@
 	 (end (+ start (seconds->samples dur))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (readin rd)) 0))))))
 
 (define (simple-cnv beg dur amp file)
@@ -615,12 +615,12 @@
   (let* ((start (seconds->samples beg))
 	 (end (+ start (seconds->samples dur)))
 	 (filt (make-double-array 8)))
-    (do ((i 0 (1+ i))) ((= i 8)) (set! (vct-ref filt i) (double 0.0)))
+    (do ((i 0 (+ i 1))) ((= i 8)) (set! (vct-ref filt i) (double 0.0)))
     (set! (vct-ref filt 4) (double 1.0))
     (let ((ff (make-convolve :input (make-readin file) :filter filt)))
       (run
        (lambda ()
-	 (do ((i start (1+ i))) ((= i end))
+	 (do ((i start (+ i 1))) ((= i end))
 	   (out-any i (* amp (convolve ff)) 0)))))))
 
 (define (simple-cnf beg dur amp file)
@@ -629,12 +629,12 @@
 	 (end (+ start (seconds->samples dur)))
 	 (rd (make-readin file))
 	 (filt (make-double-array 8)))
-    (do ((i 0 (1+ i))) ((= i 8)) (set! (vct-ref filt i) (double 0.0)))
+    (do ((i 0 (+ i 1))) ((= i 8)) (set! (vct-ref filt i) (double 0.0)))
     (set! (vct-ref filt 4) (double 1.0))
     (let ((ff (make-convolve :filter filt)))
       (run
        (lambda ()
-	 (do ((i start (1+ i))) ((= i end))
+	 (do ((i start (+ i 1))) ((= i end))
 	   (out-any i (* amp (convolve ff (lambda (dir) (readin rd)))) 
 		    0)))))))
 
@@ -644,12 +644,12 @@
 	 (end (+ start (seconds->samples dur)))
 	 (rd (make-readin file))
 	 (filt (make-double-array 8)))
-    (do ((i 0 (1+ i))) ((= i 8)) (set! (vct-ref filt i) (double 0.0)))
+    (do ((i 0 (+ i 1))) ((= i 8)) (set! (vct-ref filt i) (double 0.0)))
     (set! (vct-ref filt 4) (double 1.0))
     (let ((ff (make-convolve :filter filt)))
       (run
        (lambda ()
-	 (do ((i start (1+ i))) ((= i end))
+	 (do ((i start (+ i 1))) ((= i end))
 	   (out-any i (* amp (convolve ff (lambda (dir)
 					       (if (= dir 1)
 						   (readin rd)
@@ -662,13 +662,13 @@
 	 (end (+ start (seconds->samples dur)))
 	 (rd (make-readin file))
 	 (filt (make-double-array 8)))
-    (do ((i 0 (1+ i))) ((= i 8)) (set! (vct-ref filt i) (double 0.0)))
+    (do ((i 0 (+ i 1))) ((= i 8)) (set! (vct-ref filt i) (double 0.0)))
     (set! (vct-ref filt 4) (double 1.0))
     (let ((ff (make-convolve :filter filt))
 	  (ff1 (make-convolve :filter filt :input (make-readin file))))
       (run
        (lambda ()
-	 (do ((i start (1+ i))) ((= i end))
+	 (do ((i start (+ i 1))) ((= i end))
 	   (out-any i (* amp (+ (convolve ff (lambda (dir)
 						  (if (= dir 1)
 						      (readin rd)
@@ -683,7 +683,7 @@
 	 (sr (make-src :input (make-readin file) :srate speed)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (src sr)) 0))))))
 
 (define (simple-src-f beg dur amp speed file)
@@ -693,7 +693,7 @@
 	 (sr (make-src :input (make-readin file) :srate speed)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (src sr 0.0 #f)) 0))))))
 
 (define (simple-sr2 beg dur amp speed file)
@@ -704,7 +704,7 @@
 	 (sr (make-src :srate speed)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (src sr 0.0 (lambda (dir) (if (= dir 1) (readin rd))))) 0))))))
 
 (define (simple-sr2a beg dur amp speed file)
@@ -715,7 +715,7 @@
 	 (sr (make-src :input rd :srate speed)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (src sr)) 0))))))
 
 (define (simple-sro beg dur amp speed freq)
@@ -726,7 +726,7 @@
 	 (sr (make-src :srate speed)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (src sr 0.0 (lambda (dir)
 					    (oscil os)))) 
 		  0))))))
@@ -739,7 +739,7 @@
 	 (sr (make-granulate :expansion speed)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (granulate sr (lambda (dir) (oscil os)))) 0))))))
 
 (define (simple-pvoc beg dur amp size file)
@@ -749,7 +749,7 @@
 	 (sr (make-phase-vocoder :input (make-readin file) :fft-size size)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (phase-vocoder sr)) 0))))))
 
 (define (simple-ina beg dur amp file)
@@ -760,7 +760,7 @@
 	 (ctr 0))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (in-any ctr 0 fil)) 0)
 	 (set! ctr (+ ctr 1)))))))
 
@@ -770,7 +770,7 @@
 	 (end (+ start (seconds->samples dur))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (if (> ampa 0.0) (outa i (* ampa (ina i *reverb*))))
 	 (if (> ampb 0.0) (outb i (* ampb (inb i *reverb*)))))))))
 
@@ -782,9 +782,9 @@
 	 (ctr 0))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (file->sample fil ctr 0)) 0)
-	 (set! ctr (1+ ctr)))))))
+	 (set! ctr (+ 1 ctr)))))))
 
 (define (simple-rdf beg dur amp file)
   "(simple-rdf beg dur amp file) test instrument for readin"
@@ -793,7 +793,7 @@
 	 (end (+ start (seconds->samples dur))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (readin rd)) 0))))))
 
 (define (simple-loc beg dur freq amp)
@@ -804,7 +804,7 @@
 	 (end (+ start (seconds->samples dur))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (locsig loc i (* amp (oscil os))))))))
 
 (define (simple-dloc beg dur freq amp)
@@ -818,7 +818,7 @@
 				     (vector (make-delay 32)) (vector 0 1)))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (move-sound loc i (* amp (oscil os))))))))
 
 (define (simple-dloc-4 beg dur freq amp)
@@ -839,7 +839,7 @@
 				     (vector 0 1 2 3)))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i end))
 	 (move-sound loc i (* amp (oscil os))))))))
 
@@ -853,7 +853,7 @@
 	 (end (+ start (seconds->samples dur))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (let ((amp .3)
 	       (j 4))
 	   (if (not (= j 4)) (clm-print "local j is ~D\n" j))
@@ -871,7 +871,7 @@
 	 (end (+ start (seconds->samples dur))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (if (not (= j 2199023256786)) (clm-print "local j is ~A" j))
 	 (if (not (= jj -1099511632097)) (clm-print "local jj is ~A" jj))
 	 (if (= mj -3)
@@ -886,7 +886,7 @@
 	 (end (+ start (seconds->samples dur))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (if (not printed)
 	     (begin
 	       (if (not (string=? (mus-describe os) "oscil freq: 440.000Hz, phase: 0.000"))
@@ -904,14 +904,14 @@
 	 (j 0)
 	 (buf (make-table-lookup freq 0.0 :size table-size))
 	 (table (mus-data buf)))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i table-size))
       (set! (vct-ref table i) (double (/ i table-size))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (vct-ref (mus-data buf) j) (table-lookup buf)) 0)
-	 (set! j (1+ j))
+	 (set! j (+ 1 j))
 	 (if (>= j table-size) (set! j 0)))))))
 
 (define (sample-xtab beg dur freq amp)
@@ -920,13 +920,13 @@
 	 (end (+ start (seconds->samples dur)))
 	 (flt (make-filter 8 :xcoeffs (make-vct 8) :ycoeffs (make-vct 8)))
 	 (os (make-oscil freq)))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i 8))
       (set! (vct-ref (mus-xcoeffs flt) i) (double (/ i 16)))
       (set! (vct-ref (mus-ycoeffs flt) i) (- 0.5 (double (/ i 16)))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp
 			(+ (vct-ref (mus-xcoeffs flt) 4)
 			   (vct-ref (mus-ycoeffs flt) 4))
@@ -939,13 +939,13 @@
 	 (end (+ start (seconds->samples dur)))
 	 (flt (make-filter 8 :xcoeffs (make-vct 8) :ycoeffs (make-vct 8)))
 	 (os (make-oscil freq)))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i 8))
       (set! (vct-ref (mus-xcoeffs flt) i) (double (/ i 16)))
       (set! (vct-ref (mus-ycoeffs flt) i) (- 0.5 (double (/ i 16)))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (set! (vct-ref (mus-xcoeffs flt) 0) .5)
 	 (set! (vct-ref (mus-ycoeffs flt) 0) .5)       
 	 (out-any i (* amp
@@ -964,7 +964,7 @@
 	 (sr2 (make-src :srate speed)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (+ (src sr1 0.0 (lambda (dir) (oscil os1)))
 			      (src sr2 0.0 (lambda (dir) (oscil os2))))) 
 		  0))))))
@@ -978,7 +978,7 @@
 	 (sr2 (make-src :srate speed)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (src sr1 0.0 (lambda (dir)
 					     (src sr2 0.0
 						  (lambda (dir)
@@ -996,7 +996,7 @@
 	 (sr3 (make-src :srate speed)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (+ (src sr1 0.0 (lambda (dir)
 						(src sr2 0.0
 						     (lambda (dir)
@@ -1013,7 +1013,7 @@
 	 (sr (make-granulate :expansion speed)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (granulate sr
 				       (lambda (dir) 
 					   (oscil os))
@@ -1030,7 +1030,7 @@
 	 (gr (make-granulate :expansion speed)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (granulate gr (lambda (dir)
 					      (src sr 0.0 (lambda (dir)
 							      (readin rd))))))
@@ -1043,12 +1043,12 @@
 	 (rd (make-readin file))
 	 (sr (make-src :srate speed))	 
 	 (filt (make-double-array 8)))
-    (do ((i 0 (1+ i))) ((= i 8)) (set! (vct-ref filt i) (double 0.0)))
+    (do ((i 0 (+ i 1))) ((= i 8)) (set! (vct-ref filt i) (double 0.0)))
     (set! (vct-ref filt 4) (double 1.0))
     (let ((ff (make-convolve :filter filt)))
       (run
        (lambda ()
-	 (do ((i start (1+ i))) ((= i end))
+	 (do ((i start (+ i 1))) ((= i end))
 	   (out-any i (* amp (convolve ff (lambda (dir)
 					       (src sr 0.0 (lambda (dir)
 							       (readin rd)))))) 
@@ -1061,12 +1061,12 @@
 	 (rd (make-readin file))
 	 (sr (make-src :srate speed :input rd))	 
 	 (filt (make-double-array 8)))
-    (do ((i 0 (1+ i))) ((= i 8)) (set! (vct-ref filt i) (double 0.0)))
+    (do ((i 0 (+ i 1))) ((= i 8)) (set! (vct-ref filt i) (double 0.0)))
     (set! (vct-ref filt 4) (double 1.0))
     (let ((ff (make-convolve :filter filt)))
       (run
        (lambda ()
-	 (do ((i start (1+ i))) ((= i end))
+	 (do ((i start (+ i 1))) ((= i end))
 	   (out-any i (* amp (convolve ff (lambda (dir)
 					       (src sr)))) 
 		    0)))))))
@@ -1079,7 +1079,7 @@
 	 (sr (make-phase-vocoder :fft-size size)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (phase-vocoder sr
 					   (lambda (dir)
 					       (readin fil)))) 
@@ -1093,7 +1093,7 @@
 	 (sr (make-phase-vocoder :fft-size size)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (phase-vocoder sr
 					   (lambda (dir)
 					       (readin fil))
@@ -1115,7 +1115,7 @@
 	 (sr (make-phase-vocoder :fft-size size)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i 
            (* amp (phase-vocoder sr
 	            (lambda (dir)
@@ -1135,7 +1135,7 @@
 			(set! (vct-ref (phase-vocoder-phases sr) k) 
 			      (+ (vct-ref (phase-vocoder-phases sr) k)
 				 (vct-ref (phase-vocoder-phase-increments sr) k)))
-			(set! k (1+ k)))
+			(set! k (+ 1 k)))
 		      (sine-bank (phase-vocoder-amps sr) (phase-vocoder-phases sr) N2)))) 
 	   0))))))
 
@@ -1158,7 +1158,7 @@
 	 (nmx (make-mixer 2)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (let ((val (* (oscil os) amp)))
 	   (frame-set! smp 0 val)
 	   (set! (frame-ref smp (+ int 1)) val)
@@ -1205,9 +1205,9 @@
 		   (> (abs (- (mixer-ref mx1 1 0) 0.0)) .001)
 		   (> (abs (- (mixer-ref mx1 1 1) 1.0)) .001))
 	       (clm-print ";make-scale (identity): ~A" (mus-describe mx1)))
-	   (do ((j 0 (1+ j)))
+	   (do ((j 0 (+ 1 j)))
 	       ((= j 2))
-	     (do ((k 0 (1+ k)))
+	     (do ((k 0 (+ 1 k)))
 		 ((= k 2))
 	       (mixer-set! nmx j k 0.0)
 	       (set! (mixer-ref mx1 j k) (exact->inexact (+ j k)))
@@ -1218,13 +1218,13 @@
 		   (> (abs (- (mixer-ref nmx 1 0) 0.0)) .001)
 		   (> (abs (- (mixer-ref nmx 1 1) 2.0)) .001))
 	       (clm-print ";mixer*: ~A" (mus-describe nmx)))
-	   (do ((j 0 (1+ j)))
+	   (do ((j 0 (+ 1 j)))
 	       ((= j 2))
-	     (do ((k 0 (1+ k)))
+	     (do ((k 0 (+ 1 k)))
 		 ((= k 2))
 	       (set! (mixer-ref mx1 j k) 0.0)
 	       (set! (mixer-ref nmx j k) 0.0)))
-	   (do ((j 0 (1+ j)))
+	   (do ((j 0 (+ 1 j)))
 	       ((= j 2))
 	     (mixer-set! mx1 j j 2.0))
 	   (mixer-set! mx2 0 0 .1)
@@ -1238,15 +1238,15 @@
 	 (end (+ start (seconds->samples dur)))
 	 (arr (make-vector 20))
 	 (arrfrq (make-double-array 20 :initial-element (double 0.0))))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i 20))
-      (set! (vct-ref arrfrq i) (double (* (1+ i) 100.0)))
-      (vector-set! arr i (make-oscil (* (1+ i) 100))))
+      (set! (vct-ref arrfrq i) (double (* (+ i 1) 100.0)))
+      (vector-set! arr i (make-oscil (* (+ i 1) 100))))
     (run
      (lambda ()
-       (do ((k start (1+ k))) ((= k end))
+       (do ((k start (+ 1 k))) ((= k end))
 	 (let ((sum 0.0))
-	   (do ((i 0 (1+ i)))
+	   (do ((i 0 (+ i 1)))
 	       ((= i (vector-length arr)))
 	     (if (oscil? (vector-ref arr i))
 		 (begin
@@ -1264,14 +1264,14 @@
 	 (phases (make-double-array 3 :initial-element 0.0))
 	 (freqs (make-double-array 3 :initial-element 0.0))
 	 (ints (make-vector 3 32)))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i 3))
-      (set! (vct-ref freqs i) (double (* freq (1+ i))))
+      (set! (vct-ref freqs i) (double (* freq (+ i 1))))
       (set! (vct-ref amps i) (double (/ amp (+ i 2)))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
-	 (do ((i 0 (1+ i)))
+       (do ((i start (+ i 1))) ((= i end))
+	 (do ((i 0 (+ i 1)))
 	     ((= i (vct-length phases)))
 	   (set! (vct-ref phases i) (+ (vct-ref phases i) (hz->radians (vct-ref freqs i)))))
 	 (if (not (= (vector-ref ints 0) 32)) (clm-print "int array trouble"))
@@ -1293,7 +1293,7 @@
 	 (filename "oboe.snd"))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (if (not (string=? "oscil" (mus-name os))) (clm-print "oscil name: ~A" (mus-name os)))
 	 (if (> (abs (- (mus-sound-duration filename) 2.305)) .001) (clm-print "sound-duration: ~A" (mus-sound-duration filename)))
 	 (if (and (not (string=? (mus-header-type-name (mus-sound-header-type "oboe.snd")) "Sun/Next"))
@@ -1319,13 +1319,13 @@
 	 (intdat (make-integer-array 3 :initial-element 3))
 	 (flt (make-filter 8 :xcoeffs (make-vct 8) :ycoeffs (make-vct 8)))
 	 (os (make-oscil freq)))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i 8))
       (set! (vct-ref (mus-xcoeffs flt) i) (double (/ i 16)))
       (set! (vct-ref (mus-ycoeffs flt) i) (- 0.5 (double (/ i 16)))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (let ((xs (mus-xcoeffs flt)))
 	   (if (or (> (abs (- (vct-ref xs 1) (mus-xcoeff flt 1))) .001)
 		   (> (abs (- (vct-ref xs 1) 0.0625)) .001))
@@ -1347,13 +1347,13 @@
 	 (end (+ start len))
 	 (loc 0.0)
 	 (loc-incr (/ 100.0 len)))
-    (do ((i 0 (1+ i))
+    (do ((i 0 (+ i 1))
 	 (x 0.0 (+ x .01)))
 	((= i 100))
       (set! (vct-ref arr i) (double x)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (array-interp arr loc) (oscil os)) 0)
 	 (set! loc (+ loc loc-incr)))))))
 
@@ -1367,7 +1367,7 @@
 	 (bool #t))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (if (and (= i start) (not (= k -123))) (clm-print "init k: ~A~%" k))
 	 (if (not bool) (clm-print "bool: ~A~%" bool))
 	 (set! j (if bool 1 2))
@@ -1418,7 +1418,7 @@
 	 (set! bool (if (= k 123) (> k 0) (< k 0)))
 	 (if (not bool) (clm-print "if bool expr: ~A~%" bool))
 	 (set! j 0)
-	 (set! k (do ((m 0 (1+ m)))
+	 (set! k (do ((m 0 (+ 1 m)))
 		     ((= m 3) j)
 		   (set! j (+ j 1))))
 	 (if (not (= k 3)) (clm-print "do expr: ~A~%" k))
@@ -1435,17 +1435,17 @@
 	 (arr (make-double-array 100 :initial-element (double 0.0)))
 	 (ctr 0)
 	 (dir 1))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i 100))
       (set! (vct-ref arr i) (double (* amp (+ -.5 (* i .01))))))
     (array->file "test.data" arr 100 22050 1)
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i 100))
       (set! (vct-ref arr i) (double 0.0)))
     (file->array "test.data" 0 0 100 arr)
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* (vct-ref arr ctr) (oscil os)) 0)
 	 (set! ctr (+ ctr dir))
 	 (if (>= ctr 99) (set! dir -1)
@@ -1459,7 +1459,7 @@
 	 (sr (make-granulate :expansion speed)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (granulate sr (lambda (dir) (oscil os)) #f)) 0))))))
 
 ;(with-sound () (simple-grn-f1 0 1 .1 2 440))
@@ -1472,7 +1472,7 @@
 	 (sr (make-granulate :input rd :expansion speed)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (granulate sr)) 0))))))
 
 ;(with-sound () (simple-grn-f2 0 1 1 2 "oboe.snd"))
@@ -1485,7 +1485,7 @@
 	 (sr (make-granulate :input rd :expansion speed)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (granulate sr #f #f)) 0))))))
 
 ;(with-sound () (simple-grn-f3 0 1 1 2 "oboe.snd"))
@@ -1498,7 +1498,7 @@
 	 (sr (make-granulate :input rd :expansion speed)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (granulate sr #f)) 0))))))
 
 ;(with-sound () (simple-grn-f4 0 1 1 2 "oboe.snd"))
@@ -1511,12 +1511,12 @@
 	 (sr (make-granulate :input rd :expansion speed)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (granulate sr #f
 				      (lambda (g)
 					(let ((grain (mus-data g))  ; current grain
 					      (len (mus-length g))) ; current grain length
-					  (do ((i 0 (1+ i)))
+					  (do ((i 0 (+ i 1)))
 					      ((= i len) len)       ; grain length unchanged in this case
 					    (vct-set! grain i (* 2 (vct-ref grain i)))))
 					0)))
@@ -1533,7 +1533,7 @@
 	 (os (make-oscil freq)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (phase-vocoder sr
 					   (lambda (dir)
 					       (readin fil))
@@ -1642,7 +1642,7 @@
 	 (sr (make-phase-vocoder :input (make-readin file) :fft-size size :interp (/ size 4) :overlap 4)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (phase-vocoder sr)) 0))))))
 
 (define (pvoc-b beg dur amp size file)
@@ -1653,7 +1653,7 @@
 	 (sr (make-phase-vocoder :fft-size size :interp (/ size 4) :overlap 4)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (phase-vocoder sr (lambda (dir) (readin rd)))) 0))))))
 
 #|
@@ -1671,7 +1671,7 @@
 	 (sr (make-phase-vocoder :fft-size size :interp (/ size 4) :overlap 4)))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i 
 	   (* amp
 	      (phase-vocoder sr 
@@ -1680,7 +1680,7 @@
 		#f
 		(lambda (closure)
 		  (let ((N2 (inexact->exact (/ size 2))))
-		    (do ((k 0 (1+ k)))
+		    (do ((k 0 (+ 1 k)))
 			((= k N2))
 		      (set! (vct-ref (phase-vocoder-amps sr) k) (+ (vct-ref (phase-vocoder-amps sr) k) 
 								   (vct-ref (phase-vocoder-amp-increments sr) k)))
@@ -1712,7 +1712,7 @@
     (run
      (lambda ()
        (declare (n2 integer))
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i 
 	   (* amp
 	      (phase-vocoder sr 
@@ -1722,7 +1722,7 @@
 		  (let* ((D (inexact->exact (/ size 4))) ; overlap = 4
 			 (pscl (/ 1.0 D))
 			 (kscl (/ two-pi size)))
-		    (do ((k 0 (1+ k))
+		    (do ((k 0 (+ 1 k))
 			 (ks 0.0 (+ ks kscl)))
 			((= k N2))
 		      (let* ((freq (vct-ref (phase-vocoder-freqs sr) k))
@@ -1733,7 +1733,7 @@
 			(vct-set! (phase-vocoder-freqs sr) k (+ (* diff  pscl) ks))))
 		    #f))
 		(lambda (closure)
-		  (do ((k 0 (1+ k)))
+		  (do ((k 0 (+ 1 k)))
 		      ((= k N2))
 		    (set! (vct-ref (phase-vocoder-amps sr) k) (+ (vct-ref (phase-vocoder-amps sr) k) 
 								 (vct-ref (phase-vocoder-amp-increments sr) k)))
@@ -1769,7 +1769,7 @@
     (run
      (lambda ()
        (declare (n2 integer) (D integer))
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i 
 	   (* amp
 	      (phase-vocoder sr 
@@ -1779,21 +1779,21 @@
 		  (let ((buf (modulo filptr size)))
 		    (clear-array (phase-vocoder-freqs sr))
 		    (if (= filptr 0)
-			(do ((k 0 (1+ k)))
+			(do ((k 0 (+ 1 k)))
 			    ((= k size))
 			  (vct-set! in-data k (readin rd)))
 			(begin
-			  (do ((k 0 (1+ k))
-			       (j D (1+ j)))
+			  (do ((k 0 (+ 1 k))
+			       (j D (+ 1 j)))
 			      ((= j size))
 			    (vct-set! in-data k (vct-ref in-data j)))
-			  (do ((k (- size D) (1+ k)))
+			  (do ((k (- size D) (+ 1 k)))
 			      ((= k size))
 			    (vct-set! in-data k (readin rd)))))
-		    (do ((k 0 (1+ k)))
+		    (do ((k 0 (+ 1 k)))
 			((= k size))
 		      (vct-set! (phase-vocoder-amp-increments sr) buf (* (vct-ref in-data k) (vct-ref window k)))
-		      (set! buf (1+ buf))
+		      (set! buf (+ 1 buf))
 		      (if (>= buf size) (set! buf 0)))
 		    (set! filptr (+ filptr D))
 		    (mus-fft (phase-vocoder-amp-increments sr) (phase-vocoder-freqs sr) size 1)
@@ -1803,7 +1803,7 @@
 		(lambda (closure)
 		  (let* ((pscl (/ 1.0 D))
 			 (kscl (/ two-pi size)))
-		    (do ((k 0 (1+ k))
+		    (do ((k 0 (+ 1 k))
 			 (ks 0.0 (+ ks kscl)))
 			((= k N2))
 		      (let* ((freq (vct-ref (phase-vocoder-freqs sr) k))
@@ -1815,7 +1815,7 @@
 		    #f))
 
 		(lambda (closure)
-		  (do ((k 0 (1+ k)))
+		  (do ((k 0 (+ 1 k)))
 		      ((= k N2))
 		    (set! (vct-ref (phase-vocoder-amps sr) k) (+ (vct-ref (phase-vocoder-amps sr) k) 
 								 (vct-ref (phase-vocoder-amp-increments sr) k)))
@@ -1842,7 +1842,7 @@
 	(ok1 0.0))
     (run
      (lambda ()
-       (do ((i 0 (1+ i)))
+       (do ((i 0 (+ i 1)))
 	   ((= i 1))
 	 (set! ok1 0.0)
 	 (if (or e1 e2)
@@ -1875,14 +1875,14 @@
 	(okb #f))
     (run
      (lambda ()
-       (do ((i 0 (1+ i)))
+       (do ((i 0 (+ i 1)))
 	   ((= i 1))
 	 (declare (e1 clm) (e2 clm) (e3 clm)
 		  (ok1 float)
 		  (oki int)
 		  (okb boolean))
 	 (set! ok1 0.0)
-	 (set! oki (1+ oki))
+	 (set! oki (+ 1 oki))
 	 (set! okb #t)
 	 (if (or e1 e2)
 	     (set! ok1 (+ ok1 (env e1)))
@@ -1915,7 +1915,7 @@
 	(oki 0))
     (run
      (lambda ()
-       (do ((i 0 (1+ i)))
+       (do ((i 0 (+ i 1)))
 	   ((= i 1))
 	 (cond (e1 (set! ok1 (+ ok1 (env e1))))
 	       (#t (clm-print ";or3 1~%")))
@@ -1947,12 +1947,12 @@
 	(oki 0))
     (run
      (lambda ()
-       (do ((i 0 (1+ i)))
+       (do ((i 0 (+ i 1)))
 	   ((= i 1))
 	 (if (or (and e1 e2)
 		 (and f1 f2)
 		 (and i1 i2))
-	     (set! oki (1+ oki))
+	     (set! oki (+ 1 oki))
 	     (clm-print ";or4 a~%"))
 	 (if (and (or f1 f2)
 		  (not (or i1 i2))
@@ -1962,7 +1962,7 @@
 	     (if e1
 		 (if (not e2)
 		     (clm-print ";or4 2~%")
-		     (set! oki (1+ oki)))
+		     (set! oki (+ 1 oki)))
 		 (clm-print ";or4 3~%"))
 	     (clm-print ";or4 4~%")))))))
 
@@ -1985,7 +1985,7 @@
         (modulator-phase 0.0)
         (modulator-phase-incr (hz->radians (* mc-ratio freq))))
     (run (lambda ()
-    (do ((i beg (1+ i)))
+    (do ((i beg (+ i 1)))
 	((= i end))
       (let* ((modulation (* index (sin modulator-phase)))
 	     (pm-val (* amp (sin (+ carrier-phase modulation))))) 
@@ -2004,7 +2004,7 @@
 	 (fm-index (hz->radians (* mc-ratio freq index))))
 	;; fix up fm index (it's a frequency change)
     (run (lambda ()
-    (do ((i beg (1+ i)))
+    (do ((i beg (+ i 1)))
 	((= i end))
       (let ((modulation (* fm-index (sin modulator-phase)))
 	    (fm-val (* amp (sin carrier-phase))))
@@ -2022,7 +2022,7 @@
          (indf (make-env index-env :scaler fm-index :duration dur)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i end))
 	 (outa i (* (env ampf)                  ; amplitude env
                     (oscil cr (* (env indf)     ; carrier + modulation env
@@ -2037,7 +2037,7 @@
 	 (fm-index (hz->radians (* index mc-ratio freq))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i end))
 	 (outa i (* amp (oscil cr (* fm-index (oscil md))))))))))
 
@@ -2050,7 +2050,7 @@
 	 (fm-index (hz->radians (* index mc-ratio freq))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i end))
         (outa i (* amp (oscil cr (* fm-index (oscil md (env skewf)))))))))))
 
@@ -2066,7 +2066,7 @@
 	 (fm-index (hz->radians (* index mc-ratio freq))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i end))
 	 (outa i (* amp (+ (* (oscil am0) (oscil cr0 (* fm-index (oscil md0))))
 			   (* (oscil am1) (oscil cr1 (* fm-index (oscil md1))))))))))))
@@ -2078,16 +2078,16 @@
          (n (length mc-ratios))
          (modulators (make-vector n))
          (fm-indices (make-vct n)))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i n))
       (vector-set! modulators i (make-oscil (* freq (list-ref mc-ratios i)) (list-ref mod-phases i)))
       (vct-set! fm-indices i (hz->radians (* freq (list-ref indexes i) (list-ref mc-ratios i)))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i end))
 	 (let ((sum 0.0))
-	   (do ((k 0 (1+ k)))
+	   (do ((k 0 (+ 1 k)))
 	       ((= k n))
 	     (set! sum (+ sum (* (vct-ref fm-indices k) (oscil (vector-ref modulators k))))))
 	   (outa i (* amp (oscil cr sum)))))))))
@@ -2112,7 +2112,7 @@
          (ranvib (make-rand-interp 16 :amplitude (* .005 frq-scl))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i end))
 	 (let ((vib (+ (triangle-wave pervib) (rand-interp ranvib))))
 	   (outa i (* (env ampf)
@@ -2132,7 +2132,7 @@
 	 (fm-ind1 (hz->radians (* casind (/ casrat modrat) freq))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i end))
 	 (outa i (* amp 
                     (oscil cr (* fm-ind0 
@@ -2146,7 +2146,7 @@
 	 (x-incr (hz->radians freq)))
     (run 
      (lambda ()
-       (do ((i start (1+ i))
+       (do ((i start (+ i 1))
 	    (x 0.0 (+ x x-incr)))
 	   ((= i end))
 	 (set! y (+ x (* index (sin y))))
@@ -2164,7 +2164,7 @@
          (indices (apply vct indexes))
          (per-vib (make-triangle-wave 6 :amplitude (* freq .03)))
          (ran-vib (make-rand-interp 20 :amplitude (* freq .5 .02))))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i 3))
       (vector-set! evens i (make-oscil 0))
       (vector-set! odds i (make-oscil 0)))
@@ -2175,12 +2175,12 @@
 
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i end))
 	 (let* ((frq (+ freq (triangle-wave per-vib) (rand-interp ran-vib)))
 		(car (oscil car-os (hz->radians frq)))
 		(sum 0.0))
-	   (do ((k 0 (1+ k)))
+	   (do ((k 0 (+ 1 k)))
 	       ((= k 3))
 	     (let* ((frm (env (vector-ref frmfs k)))
 		    (frm0 (/ frm frq))
@@ -2214,7 +2214,7 @@
 
 (define (sndclmdoc-simp start end freq amp)
   (let ((os (make-oscil freq)))
-    (do ((i start (1+ i))) 
+    (do ((i start (+ i 1))) 
         ((= i end))
       (outa i (* amp (oscil os))))))
 
@@ -2222,7 +2222,7 @@
   (let* ((os (make-oscil freq))
 	 (start (seconds->samples beg))
 	 (end (+ start (seconds->samples dur))))
-    (do ((i start (1+ i))) 
+    (do ((i start (+ i 1))) 
         ((= i end))
       (outa i (* amp (oscil os))))))
 
@@ -2232,7 +2232,7 @@
 	 (end (+ start (seconds->samples dur))))
     (run
       (lambda ()
-        (do ((i start (1+ i))) 
+        (do ((i start (+ i 1))) 
             ((= i end))
           (outa i (* amp (oscil os))))))))
 
@@ -2242,14 +2242,14 @@
 	 (end (+ start (seconds->samples dur))))
     (run
       (lambda ()
-        (do ((i start (1+ i))) 
+        (do ((i start (+ i 1))) 
             ((= i end))
           (outa i (* amp (oscil os))))))))
 
 (define (sndclmdoc-telephone start telephone-number)
   (let ((touch-tab-1 '(0 697 697 697 770 770 770 852 852 852 941 941 941))
 	(touch-tab-2 '(0 1209 1336 1477 1209 1336 1477 1209 1336 1477 1209 1336 1477)))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
 	((= i (length telephone-number)))
       (let* ((num (list-ref telephone-number i))
 	     (frq1 (list-ref touch-tab-1 num))
@@ -2264,7 +2264,7 @@
          (end (+ start (seconds->samples dur))))
     (run
       (lambda ()
-        (do ((i start (1+ i))) 
+        (do ((i start (+ i 1))) 
             ((= i end))
           (outa i (* (env amp-env) (oscil os))))))))
 
@@ -2281,7 +2281,7 @@
 (define (sndclmdoc-simp-5 start end freq amp frq-env)
   (let ((os (make-oscil freq)) 
         (frqe (make-env frq-env :length (- end start) :scaler (hz->radians freq))))
-    (do ((i start (1+ i))) 
+    (do ((i start (+ i 1))) 
         ((= i end))
       (outa i (* amp (oscil os (env frqe)))))))
 
@@ -2295,7 +2295,7 @@
          (indf (make-env (or index-env '(0 0  .5 1  1 0)) :scaler fm-index :duration dur)))
     (run
       (lambda ()
-        (do ((i start (1+ i)))
+        (do ((i start (+ i 1)))
             ((= i end))
           (outa i (* (env ampf) (oscil cr (* (env indf) (oscil md))))))))))
 
@@ -2303,15 +2303,15 @@
   (let* ((start (seconds->samples beg))
 	 (end (+ start (seconds->samples dur)))
 	 (arr (make-vector 20)))     ; we'll create a tone with 20 equal amplitude harmonics
-    (do ((i 0 (1+ i)))               ;   use the 'f' button to check out the spectrum
+    (do ((i 0 (+ i 1)))               ;   use the 'f' button to check out the spectrum
 	((= i 20))
-      (vector-set! arr i (make-oscil (* (1+ i) freq))))
+      (vector-set! arr i (make-oscil (* (+ i 1) freq))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) 
+       (do ((i start (+ i 1))) 
            ((= i end))
 	 (let ((sum 0.0))
-	   (do ((k 0 (1+ k)))
+	   (do ((k 0 (+ 1 k)))
 	       ((= k 20))
 	     (set! sum (+ sum (oscil (vector-ref arr k)))))
 	   (out-any i (* amp .05 sum) 0)))))))
@@ -2323,7 +2323,7 @@
 	 (zv (make-env en 1.0 dur)))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
            ((= i end))
          (let ((zval (env zv))) 
 	   (outa i 
@@ -2333,7 +2333,7 @@
 
 (definstrument (sndclmdoc-simple-table dur)
   (let ((tab (make-table-lookup :wave (partials->wave '(1 .5  2 .5)))))
-    (do ((i 0 (1+ i))) ((= i dur))
+    (do ((i 0 (+ i 1))) ((= i dur))
       (outa i (* .3 (table-lookup tab))))))
 
 (define (sndclmdoc-looper start dur sound freq amp)
@@ -2345,14 +2345,14 @@
 	(throw 'no-loop-positions)
 	(let* ((loop-start (car loop-data))
 	       (loop-end (cadr loop-data))
-	       (loop-length (1+ (- loop-end loop-start)))
+	       (loop-length (+ 1 (- loop-end loop-start)))
 	       (sound-section (file->array sound 0 loop-start loop-length (make-vct loop-length)))
 	       (original-loop-duration (/ loop-length (mus-sound-srate sound)))
 	       (tbl (make-table-lookup :frequency (/ freq original-loop-duration) :wave sound-section)))
 	       ;; "freq" here is how fast we read (transpose) the sound -- 1.0 returns the original
 	  (run
 	   (lambda ()
-	     (do ((i beg (1+ i)))
+	     (do ((i beg (+ i 1)))
 		 ((= i end))
 	       (outa i (* amp (table-lookup tbl))))))))))
 
@@ -2366,7 +2366,7 @@
 	 (index (/ (* (hz->radians modulator-freq) 2 pi index-in-samples) table-length)))
     (run
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
 	   ((= i end))
 	 (outa i (* amp (table-lookup tab (* index (oscil osc))))))))))
 
@@ -2379,7 +2379,7 @@
          (amp-env (make-env amp-env amplitude duration)))
     (run
       (lambda ()
-        (do ((i beg (1+ i)))
+        (do ((i beg (+ i 1)))
             ((= i end))
           (outa i 
             (one-pole fil   ; for distance effects
@@ -2398,7 +2398,7 @@
 	 (beg (seconds->samples start))
 	 (end (+ beg (seconds->samples dur))))
     (run (lambda ()
-     (do ((i beg (1+ i))) ((= i end))
+     (do ((i beg (+ i 1))) ((= i end))
        (let ((ax (oscil spacing-cos)))
 	 (outa i (- (* (oscil carrier-sin) 
                        (oscil spacing-sin) 
@@ -2412,7 +2412,7 @@
                    (if (< order 9) 1.7 ;   but Gibbs phenomenon pushes it to 1.851
                      1.9))))           ;   if order>25, numerical troubles -- use table-lookup
          (freqs '()))
-    (do ((i 1 (1+ i)))
+    (do ((i 1 (+ i 1)))
 	((> i order))
       (set! freqs (cons (/ 1.0 (* norm i)) (cons i freqs))))
     (let* ((ccos (make-oscil frequency (/ pi 2.0)))
@@ -2422,7 +2422,7 @@
 	   (end (+ beg (seconds->samples dur))))
       (run 
        (lambda ()
-	 (do ((i beg (1+ i))) 
+	 (do ((i beg (+ i 1))) 
 	     ((= i end))
 	   (outa i (* (oscil csin) 
                       (polynomial coeffs (oscil ccos))))))))))
@@ -2434,7 +2434,7 @@
 	 (modulator (make-triangle-wave (* mcr freq))))
     (run
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
 	   ((= i end))
 	 (outa i (* amp (triangle-wave carrier 
                           (* index (triangle-wave modulator))))))))))
@@ -2469,7 +2469,7 @@
 	 (result (if (< (abs den) 1.0e-9)
 		     0.0
 		     (/ (* (sin (* n a2)) 
-			   (sin (* (1+ n) a2)))
+			   (sin (* (+ 1 n) a2)))
 			den))))
     (vct-set! gen 0 (+ (vct-ref gen 0) (vct-ref gen 1) fm))
     result))
@@ -2481,7 +2481,7 @@
 	 (rd (make-readin file)))
     (run
      (lambda ()
-       (do ((i st (1+ i))) 
+       (do ((i st (+ i 1))) 
 	   ((= i nd))
 	 (outa i (ssb-am gen (readin rd))))))))
 
@@ -2493,7 +2493,7 @@
 	 (bands (make-vector pairs))
 	 (factor (/ (- new-freq old-freq) old-freq))
 	 (rd (make-readin sound)))
-    (do ((i 1 (1+ i)))
+    (do ((i 1 (+ i 1)))
 	((> i pairs))
       (let* ((aff (* i old-freq))
 	     (bwf (* bw (+ 1.0 (/ i (* 2 pairs))))))
@@ -2503,11 +2503,11 @@
 						 order))))
     (run
      (lambda ()
-       (do ((i start (1+ i))) 
+       (do ((i start (+ i 1))) 
            ((= i end))
 	 (let ((sum 0.0)
 	       (y (readin rd)))
-	   (do ((band 0 (1+ band)))
+	   (do ((band 0 (+ 1 band)))
 	       ((= band pairs))
 	     (set! sum (+ sum (ssb-am (vector-ref ssbs band) 
 				      (bandpass (vector-ref bands band) y)))))
@@ -2526,7 +2526,7 @@
          (win-freq (/ (* 2 pi) foflen))
          (foftab (make-vct foflen))
          (wt0 (make-wave-train :wave foftab :frequency frq)))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ i 1)))
         ((= i foflen))
       (set! (vct-ref foftab i) ;; this is not the pulse shape used by B&R
             (* (+ (* a0 (sin (* i frq0))) 
@@ -2535,7 +2535,7 @@
                .5 (- 1.0 (cos (* i win-freq))))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
            ((= i end))
          (outa i (* (env ampf) (wave-train wt0 (* (env vibenv) (oscil vibr))))))))))
 
@@ -2544,7 +2544,7 @@
 	(rd (make-sample-reader 0 file)))
     (run
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
            ((= i (+ beg dur)))
          (let ((inval (rd)))
   	   (outa i (+ inval (delay del (* scaler (+ (tap del) inval)))))))))))
@@ -2571,7 +2571,7 @@
          (aenv (make-env '(0 0 .1 1 .9 1 1 0) :scaler amp :duration dur))
          (zenv (make-env '(0 0 1 1) :scaler (- length2 length1) :base 12.0 :duration dur)))
     (run (lambda ()
-      (do ((i beg (1+ i))) ((= i end))
+      (do ((i beg (+ i 1))) ((= i end))
         (outa i (* (env aenv) (comb d0 (pulse-train s) (env zenv)))))))))
 
 (define (sndclmdoc-fir+comb beg dur freq amp size)
@@ -2582,7 +2582,7 @@
 	 (r (make-rand freq)))                                       ; feed comb with white noise
     (run 
      (lambda () 
-       (do ((i start (1+ i))) 
+       (do ((i start (+ i 1))) 
 	   ((= i end)) 
 	 (outa i (* amp (fir-filter flt (comb dly (rand r))))))))))
 
@@ -2593,7 +2593,7 @@
          (src-gen (make-src :input (make-readin filename) :srate srt)))
     (run
       (lambda ()
-        (do ((i beg (1+ i)))
+        (do ((i beg (+ i 1)))
             ((= i end))
           (outa i (* amp (src src-gen (env senv)))))))))
 
@@ -2604,7 +2604,7 @@
          (src-gen (make-src :input (make-readin filename) :srate srt)))
     (run
       (lambda ()
-        (do ((i beg (1+ i)))
+        (do ((i beg (+ i 1)))
             ((= i end))
           (outa i (* amp (src src-gen (* fmamp (oscil os))))))))))
 
@@ -2614,7 +2614,7 @@
          (ff (make-convolve :input (make-readin file) :fft-size size :filter filter)))
     (run
       (lambda ()
-        (do ((i start (1+ i)))
+        (do ((i start (+ i 1)))
             ((= i end))
           (outa i (convolve ff)))))))
 
@@ -2628,7 +2628,7 @@
 	 (nd (+ st (seconds->samples new-dur))))
     (run
      (lambda ()
-       (do ((i st (1+ i)))
+       (do ((i st (+ i 1)))
            ((= i nd))
          (outa i (granulate exA)))))))
 
@@ -2638,7 +2638,7 @@
 	 (ctr file-beg))
     (run
       (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
            ((= i (+ beg dur)))
          (outa i (granulate exA
 		   (lambda (dir)
@@ -2652,7 +2652,7 @@
 	 (sr (make-phase-vocoder (make-readin file) :fft-size size)))
     (run
       (lambda ()
-        (do ((i start (1+ i)))
+        (do ((i start (+ i 1)))
             ((= i end))
           (outa i (* amp (phase-vocoder sr))))))))
 
@@ -2660,7 +2660,7 @@
   (let* ((st (seconds->samples beg))
          (nd (+ st (seconds->samples dur)))
          (asyf (make-asymmetric-fm :r r :ratio ratio :frequency freq)))
-    (do ((i st (1+ i))) 
+    (do ((i st (+ i 1))) 
         ((= i nd))
       (outa i (* amp (asymmetric-fm asyf index 0.0))))))
 
@@ -2671,9 +2671,9 @@
 	 (ctr 0))
     (run
      (lambda ()
-       (do ((i start (1+ i))) ((= i end))
+       (do ((i start (+ i 1))) ((= i end))
 	 (out-any i (* amp (file->sample fil ctr 0)) 0)
-	 (set! ctr (1+ ctr)))))))
+	 (set! ctr (+ 1 ctr)))))))
 
 (definstrument (sndclmdoc-simple-ina beg dur amp file)
   (let* ((start (seconds->samples beg))
@@ -2681,7 +2681,7 @@
 	 (fil (make-file->sample file)))
     (run
       (lambda ()
-        (do ((i start (1+ i)))
+        (do ((i start (+ i 1)))
             ((= i end))
           (outa i 
              (* amp (in-any i 0 fil)) ; same as (ina i fil)
@@ -2696,7 +2696,7 @@
          (nd (+ st (seconds->samples dur))))
     (run
       (lambda ()
-        (do ((i st (1+ i)))
+        (do ((i st (+ i 1)))
 	    ((= i nd))
           (let ((outval (* (env ampf) (readin rdA))))
   	    (outa i outval)
@@ -2715,7 +2715,7 @@
          (dist-scaler 0.0))
     (run
       (lambda ()
-        (do ((i beg (1+ i)))
+        (do ((i beg (+ i 1)))
             ((= i end))
           (let ((rdval (* (readin rdA) (env amp-env)))
 	        (degval (env deg-env))
@@ -2746,7 +2746,7 @@
 				     (vector 0 1 2 3)))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i end))
          (move-sound loc i (* amp (oscil os))))))))
 
@@ -2765,7 +2765,7 @@
     (let ((original-grain (vct-copy grain)))
       (run
        (lambda ()
-	 (do ((i beg (1+ i)))
+	 (do ((i beg (+ i 1)))
 	     ((= i end))
 	   (let* ((gliss (env frqf)))
 	     (outa i (* (env ampf) (wave-train grains gliss)))
@@ -2776,7 +2776,7 @@
 			  (c1 (make-comb scaler comb-len))
 			  (c2 (make-comb scaler (inexact->exact (floor (* comb-len .75)))))
 			  (c3 (make-comb scaler (inexact->exact (floor (* comb-len 1.25))))))
-		     (do ((k 0 (1+ k)))
+		     (do ((k 0 (+ 1 k)))
 			 ((= k grain-size))
 		       (let ((x (vct-ref original-grain k)))
 			 (vct-set! grain k (+ (comb c1 x) (comb c2 x) (comb c3 x)))))))))))))))
@@ -2789,17 +2789,17 @@
 	 (rd (make-readin file))
 	 (menv (make-env move-env :length dur)))
     (let ((start-frq (env menv)))
-      (do ((i 0 (1+ i)))
+      (do ((i 0 (+ i 1)))
 	  ((= i num-formants))
 	(vector-set! frms i (make-formant (* (+ i 1) start-frq) radius))))
     (run
      (lambda ()
-       (do ((k beg (1+ k)))
+       (do ((k beg (+ 1 k)))
 	   ((= k end))
 	 (let ((sum 0.0)
 	       (x (readin rd))
 	       (frq (env menv)))
-	   (do ((i 0 (1+ i)))
+	   (do ((i 0 (+ i 1)))
 	       ((= i num-formants))
 	     (set! sum (+ sum (formant (vector-ref frms i) x)))
 	     (let ((curfrq (* (+ i 1) frq)))
@@ -2812,7 +2812,7 @@
 	 (samps (seconds->samples 0.5))
 	 (ramp (make-env '(0 0 1 1) :scaler (hz->radians samps) :length samps)))
     (with-sound ()
-      (do ((i 0 (1+ i)))
+      (do ((i 0 (+ i 1)))
 	  ((= i samps))
         (outa i (flt (oscil osc (env ramp))))))))
 
@@ -2826,28 +2826,28 @@
 	 (cmbs1 (make-vector num-combs1))
 	 (osc (make-oscil frequency))
 	 (rd (make-readin file)))
-    (do ((k 0 (1+ k)))
+    (do ((k 0 (+ 1 k)))
 	((= k num-combs0))
       (vector-set! cmbs0 k 
 		   (make-comb scaler 
 			      (inexact->exact (floor (* comb-len (list-ref combs0 k)))))))
-    (do ((k 0 (1+ k)))
+    (do ((k 0 (+ 1 k)))
 	((= k num-combs1))
       (vector-set! cmbs1 k 
 		   (make-comb scaler 
 			      (inexact->exact (floor (* comb-len (list-ref combs1 k)))))))
     (run
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
 	   ((= i end))
 	 (let* ((interp (oscil osc))
 		(sum0 0.0)
 		(sum1 0.0)
 		(x (readin rd)))
-	   (do ((k 0 (1+ k)))
+	   (do ((k 0 (+ 1 k)))
 	       ((= k num-combs0))
 	     (set! sum0 (+ sum0 (comb (vector-ref cmbs0 k) x))))
-	   (do ((k 0 (1+ k)))
+	   (do ((k 0 (+ 1 k)))
 	       ((= k num-combs1))
 	     (set! sum1 (+ sum1 (comb (vector-ref cmbs1 k) x))))
 	   (outa i (+ (* interp sum0) (* (- 1.0 interp) sum1)))))))))
@@ -2874,7 +2874,7 @@
 	 (index (hz->radians (* freq mc-ratio fm-index))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i end))
 	 (outa i (* amp (sndscm-osc carrier (* index (sndscm-osc modulator 0.0))))))))))
 
@@ -2903,7 +2903,7 @@
 	 (index (hz->radians (* freq mc-ratio fm-index))))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i end))
 	 (outa i (* amp (sndscm-osc1 carrier (* index (sndscm-osc1 modulator 0.0))))))))))
 
@@ -2946,7 +2946,7 @@
 	(snd-display ";mus-frequency ~A: ~A ~A" (mus-describe carrier) (mus-frequency carrier) freq))
     (run
      (lambda ()
-       (do ((i start (1+ i)))
+       (do ((i start (+ i 1)))
 	   ((= i end))
 	 (outa i (* amp (sndscm-osc2 carrier (* index (sndscm-osc2 modulator 0.0))))))))))
 
@@ -3041,14 +3041,14 @@
   (with-sound () (sndclmdoc-simp-4 0 2 440 .1 '(0 0  0.1 1.0  1.0 0.0)))
   (with-sound () 
 	      (let ((sqr (make-square-wave 100))) ; test a square-wave generator
-		(do ((i 0 (1+ i))) 
+		(do ((i 0 (+ i 1))) 
 		    ((= i 10000)) 
 		  (outa i (square-wave sqr)))))
   (with-sound () 
 	      (run 
 	       (lambda () 
 		 (let ((osc (make-my-oscil 440.0)))
-		   (do ((i 0 (1+ i))) 
+		   (do ((i 0 (+ i 1))) 
 		       ((= i 22050))
 		     (outa i (my-oscil osc 0.0)))))))
   (with-sound () (sndclmdoc-simp-5 0 10000 440 .1 '(0 0 1 1))) ; sweep up an octave
@@ -3111,13 +3111,13 @@
 		    (j 0))
 		(run  ; 360 notes one at each degree in a circle
 		 (lambda ()
-		   (do ((i 0 (1+ i)))
+		   (do ((i 0 (+ i 1)))
 		       ((= i 360))
-		     (do ((k 0 (1+ k)))
+		     (do ((k 0 (+ 1 k)))
 			 ((= k 1000))
 		       (let ((sig (* .5 (oscil osc))))
 			 (locsig loc j sig)
-			 (set! j (1+ j))))
+			 (set! j (+ 1 j))))
 		     (move-locsig loc (exact->inexact i) 1.0))))))
   (with-sound (:channels 4) (sndclmdoc-simple-dloc 0 2 440 .5))
   (with-sound () (when? 0 4 2.0 8.0 "1a.snd"))
@@ -3144,7 +3144,7 @@
 	      (let ((gen (make-dsp-asyfm :freq 2000 :ratio .1))) 
 		(run 
 		 (lambda () 
-		   (do ((i 0 (1+ i)))
+		   (do ((i 0 (+ i 1)))
 		       ((= i 1000))
 		     (outa i (dsp-asyfm-J gen 0.0)))))))
   
@@ -3152,7 +3152,7 @@
 	      (let ((gen (make-dsp-asyfm :freq 2000 :ratio .1))) 
 		(run 
 		 (lambda () 
-		   (do ((i 0 (1+ i)))
+		   (do ((i 0 (+ i 1)))
 		       ((= i 1000))
 		     (outa i (dsp-asyfm-I gen 0.0)))))))
 
@@ -3160,7 +3160,7 @@
 	      (let ((gen (make-sndclm-expcs :frequency 100 :et 1.0)))
 		(run
 		 (lambda ()
-		   (do ((i 0 (1+ i)))
+		   (do ((i 0 (+ i 1)))
 		       ((= i 10000))
 		     (outa i (sndclm-expcs gen 0.0)))))))
 
@@ -3168,7 +3168,7 @@
 	      (let ((gen (make-sndclm-expcs :frequency 100 :et 0.1))
 		    (t-env (make-env '(0 .1 1 2) :length 10000)))
 		(run (lambda ()
-		(do ((i 0 (1+ i)))
+		(do ((i 0 (+ i 1)))
 		    ((= i 10000))
 		  (let ((et (env t-env)))
 		    (set! (sndclm-expcs-sinht gen) (* 0.5 (sinh et)))

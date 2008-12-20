@@ -44,7 +44,7 @@
 	  (snd-warning (format #f "auto-saved version of ~S (~S) is newer"
 			       (short-file-name snd)
 			       temp-file)))
-      (do ((i 0 (1+ i)))
+      (do ((i 0 (+ 1 i)))
 	  ((= i (channels snd)))
 	(if (hook-empty? (edit-hook snd i))
 	    (add-hook! (edit-hook snd i) (upon-edit snd))))

@@ -40,7 +40,7 @@
   (vct-map! v (let ((i 0))
 		(lambda ()
 		  (let ((val (func i)))
-		    (set! i (1+ i))
+		    (set! i (+ 1 i))
 		    val)))))
 
 (define (vcts-map! . args)
@@ -50,7 +50,7 @@
 	 (vcts (reverse (cdr (reverse args))))
 	 (num-vcts (length vcts))
 	 (vlen (apply min (map vct-length vcts))))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ 1 i)))
 	((= i vlen))
       (for-each
        (lambda (v val) (vct-set! v i val))
@@ -64,7 +64,7 @@
 	 (vcts (reverse (cdr (reverse args))))
 	 (num-vcts (length vcts))
 	 (vlen (apply min (map vct-length vcts))))
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ 1 i)))
 	((= i vlen))
       (for-each
        (lambda (v val) (vct-set! v i val))

@@ -71,7 +71,7 @@
       (let* ((len (mix-length id))
 	     (v (make-vct len))
 	     (reader (make-mix-sample-reader id)))
-	(do ((i 0 (1+ i)))
+	(do ((i 0 (+ 1 i)))
 	    ((= i len))
 	  (vct-set! v i (read-mix-sample reader)))
 	(free-sample-reader reader)
@@ -93,7 +93,7 @@
 		 (reader (make-mix-sample-reader id)))
 	    (do ((buf 0 (+ buf buflen)))
 		((>= buf len))
-	      (do ((i 0 (1+ i)))
+	      (do ((i 0 (+ 1 i)))
 		  ((= i buflen))
 		(sound-data-set! sd 0 i (read-mix-sample reader)))
 	      (mus-sound-write fd 0 (1- buflen) 1 sd))
@@ -109,7 +109,7 @@
 	     (peak 0.0)
 	     (reader (make-mix-sample-reader id)))
 	(set! peak (abs (read-mix-sample reader)))
-	(do ((i 1 (1+ i)))
+	(do ((i 1 (+ 1 i)))
 	    ((= i len))
 	  (let ((val (abs (read-mix-sample reader))))
 	    (if (> val peak)
@@ -129,7 +129,7 @@
 	 (sr (srate snd))
 	 (beat (floor (/ (* samp bps) sr)))
 	 (lower (inexact->exact (floor (/ (* beat sr) bps))))
-	 (higher (inexact->exact (floor (/ (* (1+ beat) sr) bps)))))
+	 (higher (inexact->exact (floor (/ (* (+ 1 beat) sr) bps)))))
     (set! (mix-position id)
 	  (if (< (- samp lower) (- higher samp))
 	      (max 0 lower)
@@ -149,7 +149,7 @@
 	 (sr (srate snd))
 	 (beat (floor (/ (* samp bps) sr)))
 	 (lower (inexact->exact (floor (/ (* beat sr) bps))))
-	 (higher (inexact->exact (floor (/ (* (1+ beat) sr) bps))))
+	 (higher (inexact->exact (floor (/ (* (+ 1 beat) sr) bps))))
 	 (new-position (if (< (- samp lower) (- higher samp))
 			   (max 0 lower)
 			   higher))
@@ -241,7 +241,7 @@ All mixes sync'd to it are also moved the same number of samples. (remove-hook! 
    (lambda (return)
      (for-each
       (lambda (snd)
-	(do ((chn 0 (1+ chn)))
+	(do ((chn 0 (+ 1 chn)))
 	    ((= chn (channels snd)))
 	  (for-each
 	   (lambda (m)
@@ -368,7 +368,7 @@ may change)"
 (define (mixes-length mix-list)
   "(mixes-length mix-list) returns the number of samples between the start of the earliest mix and the \
 last end of the mixes in 'mix-list'"
-  (1+ (- (apply max (map (lambda (m) 
+  (+ 1 (- (apply max (map (lambda (m) 
 			   (+ (mix-position m) (mix-length m))) 
 			 mix-list))
 	 (apply min (map mix-position mix-list)))))
@@ -398,7 +398,7 @@ last end of the mixes in 'mix-list'"
 	 (end (apply max mix-ends))
 	 (first-x (car overall-amp-env))
 	 (last-x (envelope-last-x overall-amp-env))
-	 (x-scale (/ (- last-x first-x) (1+ (- end beg)))))
+	 (x-scale (/ (- last-x first-x) (+ 1 (- end beg)))))
     (as-one-edit
      (lambda ()
        (for-each 
@@ -455,7 +455,7 @@ last end of the mixes in 'mix-list'"
 			(= now (mix-position (car sorted-mixes))))
 	      (play-mix (car sorted-mixes))
 	      (set! sorted-mixes (cdr sorted-mixes)))
-	    (set! now (1+ now))
+	    (set! now (+ 1 now))
 	    (if (null? sorted-mixes)
 		#f
 		0.0)))))

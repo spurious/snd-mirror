@@ -37,7 +37,7 @@
    (lambda (return)
      (for-each
       (lambda (snd)
-	(do ((chn 0 (1+ chn)))
+	(do ((chn 0 (+ 1 chn)))
 	    ((= chn (channels snd)))
 	     (let ((mark (find-mark name snd chn)))
 	       (if (mark? mark) 
@@ -67,10 +67,10 @@
 			    (lambda (return)
 			      (for-each
 			       (lambda (snd)
-				 (do ((chn 0 (1+ chn)))
+				 (do ((chn 0 (+ 1 chn)))
 				     ((= chn (channels snd)))
 				   (let* ((max-edits (apply + (edits snd chn))))
-				     (do ((ed 0 (1+ ed)))
+				     (do ((ed 0 (+ 1 ed)))
 					 ((> ed max-edits))
 				       (if (member id (marks snd chn ed))
 					   (return (list snd chn)))))))
@@ -137,7 +137,7 @@
 	       (selection-samps (selection-frames))
 	       (reg-data (let ((data (make-vct selection-samps))
 			       (rd (make-sample-reader (selection-position))))
-			   (do ((i 0 (1+ i)))
+			   (do ((i 0 (+ 1 i)))
 			       ((= i selection-samps))
 			     (vct-set! data i (rd)))
 			   data))
@@ -145,7 +145,7 @@
 	  (if (= mark-samps selection-samps)
 	      (map-channel (lambda (y) 
 			     (let ((val (+ y (vct-ref reg-data inctr))))
-			       (set! inctr (1+ inctr))
+			       (set! inctr (+ 1 inctr))
 			       val))
 			   m1-samp mark-samps (car m1-home) (cadr m1-home))
 	      (let* ((gr (make-granulate :expansion (/ mark-samps selection-samps))))
@@ -188,7 +188,7 @@
 	      (channel (cadr (mark-home m)))
 	      (new-player (make-player sound channel)))
 	 (add-player new-player (mark-sample m))
-	 (set! chans (max chans (1+ channel)))
+	 (set! chans (max chans (+ 1 channel)))
 	 (set! rate (max rate (srate sound)))))
      (syncd-marks sync))
     (start-playing chans rate)))
@@ -284,7 +284,7 @@
 			   (len (- (mark-sample (cadr winl)) beg))
 			   (new-data (make-vct len))
 			   (old-data (channel->vct beg len snd chan)))
-		      (do ((k 0 (1+ k)))
+		      (do ((k 0 (+ 1 k)))
 			  ((= k len) (vct->channel new-data beg len snd chan))
 			(vct-set! new-data k (func (vct-ref old-data k))))))))))))
 
@@ -323,7 +323,7 @@
 	      (set! (selection-member? #t) #f)) ; clear entire current selection, if any
 	  (set! (selection-member? snd chn) #t)
 	  (set! (selection-position snd chn) beg)
-	  (set! (selection-frames snd chn) (1+ (- end beg)))))))
+	  (set! (selection-frames snd chn) (+ 1 (- end beg)))))))
 
 
 ;;; -------- snap-mark-to-beat
@@ -339,7 +339,7 @@
 			    (sr (srate snd))
 			    (beat (floor (/ (* samp bps) sr)))
 			    (lower (inexact->exact (floor (/ (* beat sr) bps))))
-			    (higher (inexact->exact (floor (/ (* (1+ beat) sr) bps)))))
+			    (higher (inexact->exact (floor (/ (* (+ 1 beat) sr) bps)))))
 		       (set! (mark-sample mrk)
 			     (if (< (- samp lower) (- higher samp))
 				 lower
@@ -359,14 +359,14 @@
        (let ((end (mark-sample mark)))
 	 (if (> end start)
 	     (let ((filename (format #f "mark-~D.snd" file-ctr)))
-	       (set! file-ctr (1+ file-ctr))
-	       (do ((i 0 (1+ i)))
+	       (set! file-ctr (+ 1 file-ctr))
+	       (do ((i 0 (+ 1 i)))
 		   ((= i (chans snd)))
 		 (set! (selection-member? snd i) #t)
 		 (set! (selection-position snd i) start)
 		 (set! (selection-frames snd i) (- end start)))
 	       (save-selection filename :header-type htype :data-format dformat :srate (srate snd))
-	       (do ((i 0 (1+ i)))
+	       (do ((i 0 (+ 1 i)))
 		   ((= i (chans snd)))
 		 (set! (selection-member? snd i) #f))))
 	 (set! start end)))
@@ -520,7 +520,7 @@
 					   "  (set! (mark-properties m) '~A)~%"
 					   (mark-properties m))))))
 	  chan-marks)
-       (set! chan (1+ chan)))
+       (set! chan (+ 1 chan)))
      (marks sndf))
     (string-append str (format #f "  m)~%"))))
 		   
