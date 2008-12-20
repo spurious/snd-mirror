@@ -114,7 +114,7 @@
    ;;(c-display "type" type "clean" clean)
    (cond ((string=? s "char *")
           'char*)
-         ((memq clean '(void char short int unsigned long float double void*))
+         ((memq clean '(void char short int unsigned long float double void* char*))
           clean)
          ((memq clean '(#{signed char}# #{unsigned short}# #{unsigned long}# #{long double}#))
           (string->symbol (list->string (cdr (c-butlast (string->list (symbol->string (eval-c-ctype->etype s))))))))
@@ -328,13 +328,6 @@
 (pretty-print (fix-stalin-keywords (stalin-macroexpand '(lambda* (:key (c "ai")) c))))
 (fix-stalin-keywords (stalin-macroexpand '(debug (a :c "hello"))))
 
-(<rt-stalin>
- (spawn
-   (define a (lambda* (:key (c "ai"))
-                      c))
-   (debug (a :c "hello2"))))
-
-
 !#
 
 
@@ -388,7 +381,7 @@
   `(not (= ,a ,b)))
 
 (define-stalin-macro (while test . body)
-  (define loop (rt-gensym))
+  (define loop (rt-gensym "while"))
   (if (eq? #t test)
       `(let ,loop ()
          ,@body
@@ -422,6 +415,22 @@
      (/ (* (- x x1)
 	   (- y2 y1))
 	(- x2 x1))))
+
+(define-stalin (remove! pred l)
+  (while (and (not (null? l))
+              (pred (car l)))
+    (set! l (cdr l)))
+  (if (not (null? l))
+      (let loop ((prev l)
+                 (l (cdr l)))
+        (cond ((null? l)
+               #t)
+              ((pred (car l))
+               (set-cdr! prev (cdr l))
+               (loop prev (cdr l)))
+              (else
+               (loop l (cdr l))))))
+  l)
 
 
 
@@ -867,87 +876,6 @@
 (stalin-macroexpand '(make-oscil :frequency 50 :initial-phase 4))
 (stalin-macroexpand '(make-oscil :frequency 440))
 (generate-stalin-code0 '((make-oscil :frequency 50 :initial-phase 4)))
-(<rt-stalin>
- (let loop ((freq 150.0))
-   (when (< freq 8200.0)
-     (let ((osc (make-oscil :frequency freq)))
-       (spawn-block
-         (out (* 0.01 (oscil osc)))))
-     (loop (+ freq 200.0)))))
-
-(<rt-stalin>
- (let loop ((freq 100.0))
-   (when (< freq 1600.0)
-     (spawn
-       (loop (+ freq 100.0))
-       (let ((phase 0.0))
-         (block
-           (out (* 0.02 (sin phase)))
-           (inc! phase (/ (* 3.14159 2.0 freq)
-                          44100))))))))
-
-(<rt-stalin>
- (let loop ((freq 100.0))
-   (when (< freq 1600.0)
-     (spawn
-       ;;(debug (number->string freq))
-       (let ((phase 0.0))
-         (block
-           (out (* 0.02 (sin phase)))
-           (inc! phase (/ (* 3.14159 2.0 freq)
-                          44100.0)))))
-     (loop (+ freq 100.0)))))
-
-(<rt-stalin>
- (spawn
-   (let ((phase 0.0))
-     (block
-       (out (* 0.3 (sin phase)))
-       (inc! phase (/ (* 3.14159 2.0 800)
-                      44100.0))))))
-
-
-;; Something is wrong. "hello hello3" is printed, but it should not be.
-;; Also, if runned twice, it hangs the second time.
-(<rt-stalin>
- (spawn
-   (debug "hello hello0")
-   (wait (* 3 44100))
-   (debug "hello hello")
-   (wait (* 3 44100)
-         );         (lambda ()
-  ;         (debug "hello hello2")))
-   (debug "hello hello3")))
-
-(<rt-stalin>
- (spawn
-   (debug "start0")
-   (wait (* 3 44100)
-     (debug "start1")
-     (wait (* 3 44100)
-       (debug "start2")))))
-
-(<rt-stalin>
- (spawn
-   (debug "1c")
-   (wait 3::s
-     (debug "2c")
-     )))
-
-(<rt-stalin>
- (debug "1c")
- (wait 3::s
-   (debug "2c")
-   ))
-
-(<rt-stalin>
- (spawn
-   (debug "1c")
-   (wait 3::s)
-   (debug "2c")))
-
-(<rt-out> (* 0.1 (oscil)))
-
 
 (define (quick-fib n)
   (<rt-stalin>
@@ -1240,12 +1168,9 @@
  ;;(debug (number->string (env das-env))))
 
  )
-
-
-
-
-
 !#
+
+
 
 ;;;;; Alsa midi
 
@@ -1433,346 +1358,49 @@
 !#
 
 
-#!
-;; stack grows forever. (but not anymore)
-(<rt-stalin>
- (let loop ()
-   (wait (irandom 50):-ms
-     (spawn
-       (define osc (make-oscil :frequency (+ 50 (irandom 900))))
-       (define duration (+ 0 (+ 400 (irandom 2000)):-ms))
-       (define i 0)
-       (block :duration duration :cont #f
-         (if (< i (>> duration 1))
-             (out (* (scale i 0 (>> duration 1) 0.0 0.01)
-                     (oscil osc)))
-             (out (* (scale i (>> duration 1) duration 0.01 0.0)
-                     (oscil osc))))
-         (inc! i 1)))
-     (loop))))
-
-;; stack does not grow forever.
-(<rt-stalin>
- (let loop ()
-   (wait (irandom 500):-ms)
-   (spawn
-     (define osc (make-oscil :frequency (+ 50 (irandom 900))))
-     (define duration (+ 0 (+ 400 (irandom 2000)):-ms))
-     (define i 0)
-     (block :duration duration :cont #f
-       (if (< i (>> duration 1))
-           (out (* (scale i 0 (>> duration 1) 0.0 0.01)
-                   (oscil osc)))
-           (out (* (scale i (>> duration 1) duration 0.01 0.0)
-                   (oscil osc))))
-       (inc! i 1)))
-   (loop)))
-
-(<rt-stalin>
- (let loop ()
-   (spawn :wait (irandom 50):-ms
-     (loop)
-     (let ((osc (make-oscil :frequency (+ 50 (irandom 900))))
-           (duration (+ 0 (+ 400 (irandom 2000)):-ms))
-           (i 0))
-       (block :iter duration :cont #f
-         (if (< i (>> duration 1))
-             (out (* (scale i 0 (>> duration 1) 0.0 0.01)
-                     (oscil osc)))
-             (out (* (scale i (>> duration 1) duration 0.01 0.0)
-                     (oscil osc))))
-         (inc! i 1))))))
-
-(<rt-stalin>
- (let loop ()
-   (wait (irandom 50):-ms)
-   (spawn
-     (define osc (make-oscil :frequency (+ 50 (irandom 900))))
-     (define duration (+ 0 (+ 400 (irandom 2000)):-ms))
-     (define i 0)
-     (block :iter duration :cont #f
-       (if (< i (>> duration 1))
-           (out (* (scale i 0 (>> duration 1) 0.0 0.01)
-                   (oscil osc)))
-           (out (* (scale i (>> duration 1) duration 0.01 0.0)
-                   (oscil osc))))
-       (inc! i 1)))
-   (loop)))
-
-(<rt-stalin>
- (let loop ()
-   (wait 1:-s
-     (spawn
-       (define osc (make-oscil :frequency (ibetween 50 900)))
-       (define duration (+ 0 (+ 400 (irandom 2000)):-ms))
-       (define i 0)
-       (block :iter duration :cont (lambda ())
-         (if (< i (/ duration 2))
-             (out (* (scale i 0 (/ duration 2) 0 0.1)
-                     (oscil osc)))
-             (out (* (scale i (/ duration 2) duration 0.1 0.0)
-                     (oscil osc))))
-         (inc! i 1)))
-     (loop))))
-
-(<rt-stalin>
- (let loop ()
-   (wait 1:-s)
-   (spawn
-     (define osc (make-oscil :frequency (+ 50 (irandom 900))))
-     (define duration (+ 0 (+ 400 (irandom 2000)):-ms))
-     (define i 0)
-     (block :iter duration :cont (lambda ())
-       (if (< i (/ duration 2))
-           (out (* (scale i 0 (/ duration 2) 0 0.1)
-                   (oscil osc)))
-           (out (* (scale i (/ duration 2) duration 0.1 0.0)
-                   (oscil osc))))
-       (inc! i 1)))
-   (loop)))
-
-(<rt-stalin>
- (let loop ()
-   (spawn :wait (irandom 50):-ms
-     (loop)
-     (define osc (make-oscil :frequency (between 50 1000)))
-     (block :duration (ibetween 400 2000):-ms :cont #f
-       (out (* (if (< (block-iterator)
-                      (<< (block-duration) 1))
-                   (scale (block-iterator) 0                       (<< (block-duration) 1) 0.0 0.01)
-                   (scale (block-iterator) (<< (block-duration) 1) (block-duration)        0.01 0.0))
-               (oscil osc)))))))
-
-
-(<rt-stalin>
- (let loop ()
-   (wait 2000 ;:-ms;(random 50):-ms
-     (lowlevel_debug1 "hepp %d" (inexact->exact (/ _time 44100)))
-     (spawn
-       (define osc (make-oscil :frequency (between 50 1000)))
-       (block :duration (between 200 4000):-ms :cont #f
-         (out (* (scale (block-iterator)
-                        0 (block-duration)
-                        0.0 0.01)
-                 (oscil osc))))))
-   (debug "hmm?")
-   (loop)))
-
-
-;; BUG. The while loop is not supposed to be called again since wait takes
-;; over the continuation.
-(<rt-stalin>
- (while #t
-   (wait 2000 ;:-ms;(random 50):-ms
-     (lowlevel_debug1 "hepp %d" (inexact->exact (/ _time 44100)))
-     (spawn
-       (define osc (make-oscil :frequency (between 50 1000)))
-       (block :duration (between 200 4000):-ms :cont #f
-         (out (* (scale (block-iterator)
-                        0 (block-duration)
-                        0.0 0.01)
-                 (oscil osc))))))))
-;     (block :duration (between 200 1000):-ms
-;       (out (* (scale (block-iterator)
-;                      0 (block-duration)
-;                      0.01 0.0)
-;               (oscil osc)))))))
-
-(<rt-stalin>
- (while #t
-   (wait (irandom 50):-ms)
-   (spawn
-     (define osc (make-oscil :frequency (between 50 1000)))
-     (block-out :duration (between 200 1000):-ms
-       (* (scale (block-iterator)
-                 0 (block-duration)
-                 0.0 0.01)
-          (oscil osc)))
-     (block-out :duration (between 200 1000):-ms
-       (* (scale (block-iterator)
-                 0 (block-duration)
-                 0.01 0.0)
-          (oscil osc))))))
-
-(<rt-stalin>
- (while #t
-   (wait (irandom 50):-ms)
-   (spawn
-     (define osc (make-oscil :frequency (between 50 1000)))
-     (define duration (ibetween 400 2000))
-     
-     (block-out :duration (between 200 1000):-ms
-       (* (scale (block-iterator)
-                 0 (block-duration)
-                 0.0 0.01)
-          (oscil osc)))
-     (block-out :duration (between 200 1000):-ms
-       (* (scale (block-iterator)
-                 0 (block-duration)
-                 0.01 0.0)
-          (oscil osc))))))
-
-(<rt-stalin>
- (let loop ()
-   (wait (irandom 50):-ms
-     (spawn
-       (define osc (make-oscil :frequency (ibetween 100 1000)))
-       (define duration (ibetween 400 2000):-ms)
-       (define e (make-env '(0 0 0.5 0.05 1 0) :end duration))
-       (block :duration duration :cont #f
-         (out (* (env e)
-                 (oscil osc)))))
-     (loop))))
-
-(<rt-stalin>
- (let loop ()
-   (spawn :wait (irandom 30):-ms
-     (loop)
-     (define osc (make-oscil :frequency (ibetween 50 2000)))
-     (define duration (ibetween 400 2000):-ms)
-     (define e (make-env '(0 0 0.5 0.05 1 0) :end duration))
-     (block :dur duration :cont #f
-       (out (* (env e)
-               (oscil osc)))))))
-
-
-(/ 800.0 15.0)
-
-
-(<rt-stalin>
- (oscil 2 3 4 5 6 7))
-
-(begin '(a (b c)::ms))
-(begin '(a (b c) :ms))
-
-(symbol? (caddr '(wait (irandom 50)::ms)))
-(load "/tmp/temp.scm")
-
-
-(<rt-stalin>
- (spawn
-   (define osc (make-oscil :frequency 300))
-   (block :iter 1000000 :cont (lambda ())
-     (out (* 0.4 (oscil osc)))))
- (spawn
-   (define osc (make-oscil :frequency 500))
-   (block :iter 1000000 :cont (lambda ())
-     (out (* 0.4 (oscil osc))))))
-
-
-;; crash. Changing :wait in the second spawn to 0, or very low, fixes it.
-;; seems like osc dissapears.
-(<rt-stalin>
- (let loop ()
-   (spawn :wait (between 200 1000):-ms
-     (loop)
-     (define osc (make-oscil :frequency (between 200 1000)))
-     (define duration (between 400 1000):-ms)
-     ;(spawn
-     ;  (block :dur duration :cont #f
-     ;    (out (* (scale (block-iterator) 0 (block-duration) 0.0 0.04)
-     ;            (oscil osc)))))
-     (spawn :wait duration
-       ;;(define osc (make-oscil :frequency 300))
-       (block :dur duration :cont #f
-         (out (* 0.02;(scale (block-iterator) 0 (block-duration) 0.04 0.0)
-                 (oscil osc)))))
-     (debug "hmm")
-     (neverending-scheduling))))
-
-
-(<rt-stalin>
- (wait-midi
-   (debug (number->string  _curr-midi-control))
-   (debug (number->string  _curr-midi-data1))
-   (debug (number->string  _curr-midi-data2))))
-
-(<rt-stalin>
- (let loop ()
-   (wait-midi
-     (when (midi-play?)
-       (let ((note (midi-note)))
-
-         ;; Spawn a simple oscillator
-         (define oscillator (spawn
-                              (let ((osc (make-oscil :frequency (midi-to-freq note))))
-                                (block
-                                  (out (* 0.2 (oscil osc)))))))
-         
-         ;; Spawn a job waiting for a stop message for this note.
-         (spawn
-           (wait-midi :cont #f
-             (when (and (midi-stop?)
-                        (= note
-                           (midi-note)))
-               (stop oscillator)
-               #t))) ;; Got it. Stop waiting for more midi.
-         
-         #t))))) ;; Got it.
-
-(pretty-print (get-stalin-macro 'make-oscil))
-
-
-(lambda ()
-  (lowlevel_debug "starting")
-  (call-with-current-continuation
-   (lambda (return_40)
-     (wait-do_-11
-      (* 44100 1)
-      (lambda ()
-        (return_40 #t)))))
-  (lowlevel_debug "one second later")
-  (neverending-scheduling_-3)))))
-=>
-(lambda ()
-  (lowlevel_debug "starting")
-  (let ((return_40 (lambda (_rt_gen980)
-                     (lowlevel_debug "one second later")
-                     (neverending-scheduling_-3))))
-    (wait-do_-11
-     (* 44100 1)
-     (lambda ()
-       (return_40 #t)))))
-
-
-(let ((a (call/cc (lambda (return)
-                    (return "hmm")))))
-  (debug a)
-  (nevernding-scheduling))
-=>
-... (not important)
-
-
-
-!#
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; coroutines
 
+(define-stalin-struct sound
+  :sub-sounds) ;; A list of coroutines running in sound mode
+
 (define-stalin-struct coroutine
   :time
   :stop-me
-  :continuation)
+  :continuation
+  :sound
+  :is-sound
+  )
 
+;; define-stalin-struct should be extended...
+(define-stalin-macro (make-coroutine2 :key 
+                                      (time 0)  ;; The time value is usually set in insert-coroutine-in-queue!
+                                      (stop-me #f)
+                                      (continuation 'neverending-scheduling)
+                                      (sound '(=> coroutine:_current-coroutine :sound)) ;; is there any point quoting?
+                                      (is-sound #f))
+  `(make-coroutine ,time ,stop-me ,continuation ,sound ,is-sound))
+#!
+(stalin-macroexpand '(make-coroutine2))
+!#  
 
 ;; Make sure gcc does tail call optimization.
 (define-stalin (neverending-scheduling)
   (_run-scheduler neverending-scheduling))
 
-(define-stalin _coroutine-dummy (make-coroutine 0 #f neverending-scheduling))
+(define-stalin _coroutine-dummy (make-coroutine2 :continuation neverending-scheduling :sound (make-sound '())))
 
 (define-stalin _current-coroutine
-  (make-coroutine 0 
-                  #f
+  (make-coroutine2 :continuation
                   (lambda ()
                     (let loop ()
 
-                      (when (and (= _queue-size 0)
-                                 (= _block-queue-size 0))
-                        (remove-me))
+                      (if (and (= _queue-size 1)
+                               (let ((sound (=> coroutine:_sound-coroutine :sound)))
+                                 (null? (=> sound :sub-sounds))))
+                          (remove-me))
                       
-                      ;;(debug "loop called")
                       (_block_ready)
 
                       (set! _block-time (_get_block_time))
@@ -1782,61 +1410,45 @@
                                                   (+ _block-time
                                                      (_get_endframe))
                                                   0)
-                      (_run-scheduler loop))
-                    #f)))
+                      (_run-scheduler loop)))
+                  :sound (=> coroutine:_sound-coroutine :sound)))
 
-(define-stalin _queue-size 0)
-(define-stalin _block-queue-size 0)
 
 (define-stalin _next-scheduled-time 0)
 
+(define-stalin _queue-size 0)
 (define-stalin _queue (make-vector ,*stalin-queue-max-size* _coroutine-dummy))
-(define-stalin _block-queue (make-vector ,*stalin-queue-max-size* _coroutine-dummy))
-
-;(add-stalin-bindings 'queue '(*queue-size* _coroutine-dummy)
-;                     'block_queue '(*queue-size* _coroutine-dummy))
 
 
 (define-stalin (get-first-coroutine-in-queue)
-  (define                  which_queue (or (= 0 _block-queue-size)
-                                           (and (> _queue-size 0)
-                                                (< (=> :coroutine(vref 1 _queue) :time) ;; <= ?
-                                                   (=> :coroutine(vref 1 _block-queue) :time)))))
-  (define                  queue     (if which_queue
-                                         _queue
-                                         _block-queue))
-  (define                  ret       (vref 1 queue))
-  (define                  size      (if which_queue
-                                         (1- _queue-size)
-                                         (1- _block-queue-size)))
-  (define                  last      (vref (1+ size) queue))
+  (define                  ret       (vref 1 _queue))
+  (define                  size      (1- _queue-size))
+
+  (define                  last      (vref _queue-size _queue))
   (define                  last-time (=> coroutine:last :time))
   (define                  i         1)
   (define                  child     0)
   (define                  got-it    #f)
 
-  (if which_queue
-      (inc! _queue-size -1)
-      (inc! _block-queue-size -1))
-
+  (inc! _queue-size -1)
+  
   ;; Code below is a common binary heap "delete min" operation.
   (while (and (not got-it)
               (<= (<< i 1) size))
     (set! child (<< i 1))
     (if (and (!= child size)
-	     (< (=> :coroutine(vref (1+ child) queue) :time)
-                (=> :coroutine(vref child      queue) :time)))
+	     (< (=> :coroutine(vref (1+ child) _queue) :time)
+                (=> :coroutine(vref child      _queue) :time)))
         (inc! child 1))
-    (if (> last-time (=> :coroutine(vref child queue) :time))
+    (if (> last-time (=> :coroutine(vref child _queue) :time))
 	(begin
-	  (vset! i queue (vref child queue))
+	  (vset! i _queue (vref child _queue))
 	  (set! i child))
         (set! got-it #t)))
 
-  (vset! i queue last)
+  (vset! i _queue last)
 
-  (if which_queue
-      (set! _next-scheduled-time (>> (=> :coroutine(vref 1 queue) :time) 2)))
+  (set! _next-scheduled-time (>> (=> :coroutine(vref 1 _queue) :time) 2))
 
   (set! (=> coroutine:ret :time)
         (>> (=> coroutine:ret :time)
@@ -1844,9 +1456,6 @@
 
   ret)
 
-
-;;(add-stalin-bindings 'get-first-coroutine-in-queue
-;;                     '(block-queue-size queue-size queue block-queue next-scheduled-time))
 
 
 ;; insert_coroutine_in_queue  (O(log n) efficiency)
@@ -1890,34 +1499,6 @@
 
 
 
-(define-stalin (insert-coroutine-in-block-queue! coroutine time priority)
-
-  (define queue _block-queue)
-
-  (if (>= _block-queue-size
-          (- ,*stalin-queue-max-size* 2))
-      (error "block coroutine queue full."))
-
-  (inc! _block-queue-size 1)
-
-  ;; Add priority info to the time attribute. ("priority" is a 2 bit integer)
-  (set! time (<< time 2))
-  (set! time (+ time priority))
-
-  (set! (=> coroutine :time) time)
-
-  ;; Code below is a common binary heap "insert" operation.
-  (let* ((i    _block-queue-size)
-	 (newi (>> i 1)))
-    (while (> (=> :coroutine(vref newi queue) :time)
-              time)
-      (vset! i queue (vref newi queue))
-      (set! i newi)
-      (set! newi (>> newi 1)))
-
-    (vset! i queue coroutine)))
-
-
 ;; How about (get-time) / (set-time! n) ?
 (define-stalin (time)
   _time)
@@ -1944,7 +1525,7 @@
 (define-stalin (yield-do _continuation)
   (insert-coroutine-in-queue! _current-coroutine 
                               _time
-                              2) ;; lower priority than wait, but higher than block.
+                              2) ;; lower priority than wait, but higher than sound.
   (_run-scheduler _continuation))
 
 (define-stalin-macro (yield . code)
@@ -1966,7 +1547,7 @@
       (begin
         (insert-coroutine-in-queue! _current-coroutine
                                     _time
-                                    1) ;; higher priority than block, but less than main.
+                                    1) ;; higher priority than yielded coroutines, but less than main.
         (_run-scheduler _continuation))
       (_continuation)))
 
@@ -1989,12 +1570,11 @@
 
 
 (define-stalin (spawn-do time thunk)
-  (let ((coroutine (make-coroutine 0 ;; The time value is set in insert-coroutine-in-queue!
-                                   #f
-                                   thunk)))
+  (let ((coroutine (make-coroutine2 :continuation thunk)))
     (insert-coroutine-in-queue! coroutine
                                 time
-                                1)
+                                1
+                                )
     coroutine))
   
 (define-stalin-macro (spawn :key (wait 0) :rest code)
@@ -2020,110 +1600,152 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;; Block (inner loop)
+;;;;; Sound (efficient inner loop)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-stalin-macro (block-iterator)
-  '_rt-block-iterator)
-(define-stalin-macro (block-duration)
-  '_rt-block-duration)
+#!
+;; wonder if these are better made manually when needed...
+(define-stalin-macro (sound-iterator)
+  '_rt-sound-iterator)
+(define-stalin-macro (sound-duration)
+  '_rt-sound-duration)
+!#
 
-;; block
+;; sound
 ;; *****
-(define-stalin-macro (block :key
+
+(define-stalin-macro (sound-internal_-cps :rest code)
+  `(_add-sound (lambda ()
+                 (while (< _time
+                           _next-scheduled-time)
+                   ,@code
+                   (inc! _time 1))
+                 ((=> coroutine :sound-return)))))
+
+(define-stalin (_sound-runner-cps coroutine sounds cont)
+  (cond ((null? sounds)
+         (set! (=> sound :sub-sounds)
+               (remove! (lambda (sound)
+                          (=> coroutine:sound :stop-me))
+                        (=> sound :sub-sounds)))
+         (_sound-runner coroutine (=> sound :sub-sounds)
+                        (lambda ()
+                          (cond ((eq? coroutine _sound-runner)
+                                 (cont))
+                                (else
+                                 (set! _current-coroutine coroutine)
+                                 ;; run current sound.
+                                 (set! _time (=> coroutine :time))
+                                 (set! (=> coroutine :sound-return (lambda ()
+                                                                     (set! (=> coroutine :time) _time)
+                                                                     (cont))))
+                                 ((=> coroutine :continuation)))))))
+        (else
+         (if (not (=> coroutine:sound :stop-me)) ;; Must check because a sound can be stopped by other sounds.
+             (_sound-runner (car sounds) '()
+                            (lambda ()
+                              (_sound-runner (cadr sounds) '() cont)))
+             (cont)))))
+
+(define-stalin (_first-sound-continuation-cps)
+  (define coroutine _current-coroutine)
+  (_sound-runner coroutine '()
+                 (lambda ()
+                   (insert-coroutine-in-queue! coroutine
+                                               _next-scheduled-time
+                                               3) ;; sound priority. (lowest)
+                   (run-scheduler _first-sound-continuation))))
+
+(define-stalin (_sound-runner level coroutine)  
+  (define sound (=> coroutine :sound))
+
+;  (debug "length _time/level/sub-sound:")
+;  (debug (number->string _next-scheduled-time))
+;  (debug (number->string level))
+;  (debug (number->string (length (=> sound :sub-sounds))))
+
+
+  ;; remove stopped sub-sounds
+  (set! (=> sound :sub-sounds)
+        (remove! (lambda (sound)
+                   (=> coroutine:sound :stop-me))
+                 (=> sound :sub-sounds)))
+
+  ;; run sub-sounds
+  (for-each (lambda (sound)
+              (if (not (=> coroutine:sound :stop-me)) ;; Must check because a sound can be stopped by other sounds.
+                  (_sound-runner (1+ level) sound)))
+            (=> sound :sub-sounds))
+
+  (set! _current-coroutine coroutine)
+
+  ;; run current sound.
+  (when (> level 0)
+    (set! _time (=> coroutine :time))
+    ((=> coroutine :continuation))
+    (set! (=> coroutine :time) _time)))
+
+
+(define-stalin (_first-sound-continuation)
+  (define coroutine _current-coroutine)
+;  (if (eq? coroutine _sound-coroutine)
+;      (debug "the same")
+;      (debug "not the same"))
+  (_sound-runner 0 coroutine)
+
+  ;;(debug "sound continuation exiting now")
+  ;;(debug (number->string _next-scheduled-time))
+
+  (insert-coroutine-in-queue! coroutine
+                              _next-scheduled-time
+                              3) ;; sound priority. (lowest)
+  (_run-scheduler _first-sound-continuation)
+  )
+
+;; A hybrid sound/nonsound coroutine.
+(define-stalin _sound-coroutine
+  (make-coroutine2 :continuation _first-sound-continuation
+                   :sound (make-sound '())))
+
+(define-stalin (_add-sound thunk)
+  (define coroutine _current-coroutine)
+  (define sound (=> coroutine :sound))
+  (define sound-coroutine (make-coroutine2 :time _time :continuation thunk
+                                           :sound (make-sound '()) :is-sound #t))
+  (set! (=> sound :sub-sounds)
+        (cons sound-coroutine (=> sound :sub-sounds)))
+
+  sound-coroutine)
+
+
+(define-stalin-macro (sound-internal_ :rest code)
+  `(_add-sound (lambda ()
+                 (while (< _time
+                           _next-scheduled-time)
+                   ,@code
+                   (inc! _time 1)))))
+
+(define-stalin-macro (sound :key
                             dur
                             duration
-                            :rest rest)
-  (define the-end (rt-gensym))
-  (define next (rt-gensym))
-  (define diff (rt-gensym))
-  (define loop (rt-gensym))
-  (define das-duration #f)
-  (define code rest)
-  (define cont #f)
-
-  (when (or duration dur)
-    (set! das-duration `(inexact->exact (floor ,(or dur duration)))))
-
-  (when (equal? (car code) :cont)
-    (set! cont (cadr code))
-    (if (not cont)
-        (set! cont '(lambda ())))
-    (set! code (cddr code)))
-
-  (when (keyword? (car code))
-    (c-display "Unknown keyword" (car code) "to block.")
-    (throw 'compilation-error))
-
-  (cond ((and das-duration cont)
-         `(let* ((_rt-block-duration ,das-duration)
-                 (,the-end (+ _time _rt-block-duration))
-                 (_rt-block-iterator 0))
-            (let ,loop ()
-                 (if (< _rt-block-iterator
-                        _rt-block-duration)
-                     (let* ((,next (min  _next-scheduled-time
-                                         ,the-end))
-                            (,diff (- ,next _time)))
-                       (while (< _time
-                                 ,next)
-                         ,@code
-                         (inc! _rt-block-iterator 1)
-                         (inc! _time 1))
-                       
-                       ;;(inc! _rt-block-iterator ,diff)
-                       
-                       ;; Now do an extra-low-priority yield:
-                       (insert-coroutine-in-block-queue! _current-coroutine
-                                                         _time
-                                                         3)
-                       (_run-scheduler ,loop))
-                     (begin
-                       (,cont)
-                       (neverending-scheduling)
-                       )))))
-        
-        (das-duration
-         `(let* ((_rt-block-duration ,das-duration)
-                 (,the-end (+ _time _rt-block-duration))
-                 (_rt-block-iterator 0))
-            (call/cc (lambda (return)
-                       (let ,loop ()
-                            (if (< _rt-block-iterator
-                                   _rt-block-duration)
-                                (let* ((,next (min  _next-scheduled-time
-                                                    ,the-end))
-                                       (,diff (- ,next _time)))
-                                  (while (< _time
-                                            ,next)
-                                    ,@code
-                                    (inc! _rt-block-iterator 1)
-                                    (inc! _time 1))
-                                  
-                                  ;;(inc! _rt-block-iterator ,diff)
-                                  
-                                  ;; Now do an extra-low-priority yield:
-                                  (insert-coroutine-in-block-queue! _current-coroutine
-                                                                    _time
-                                                                    3)
-                                  (_run-scheduler ,loop))
-                                (return #t)))))))
-        (else
-         `(let ,loop ()
-               (while (< _time
-                         _next-scheduled-time)
-                 ,@code
-                 (inc! _time 1))
-               
-               ;;(debug "im here though")
-               ;; Now do an extra-low-priority yield:
-               (insert-coroutine-in-block-queue! _current-coroutine
-                                                 _time
-                                                 3)
-               (_run-scheduler ,loop)))))
+                            :rest code)
+  (define loop (rt-gensym "loop"))
+  (define sound (rt-gensym "sound"))
+  
+  (if (or duration dur)
+      `(let ((,sound (sound-internal_
+                      ,@code)))
+         (spawn
+           (wait (inexact->exact (floor ,(or dur duration))))
+           (stop ,sound))
+         ,sound
+         )
+      `(sound-internal_
+        ,@code)))
 
 
-(define-stalin-macro (spawn-block :allow-other-keys :rest rest)
+#!
+(define-stalin-macro (spawn-sound :allow-other-keys :rest rest)
   (define startname (rt-gensym))
   (define start 0)
   (define duration #f)
@@ -2134,8 +1756,9 @@
     (set! code (nth-cdr 3 rest)))
   `(let ((,startname ,start))
      (spawn :wait ,startname
-       (block :duration ,duration
+       (sound :duration ,duration
          ,@code))))
+!#
 
 
 #!
@@ -2143,7 +1766,7 @@
 (<rt-stalin>
  (spawn
    (define phase 0.0)
-   (block
+   (sound
      (out (* 0.2 (sin phase)))
      (inc! phase 0.062)))
  (let loop ((i 1))
@@ -2151,7 +1774,7 @@
      (spawn
        (define phase 0.0)
        (define phaseinc (+ 0.020 (/ i 40)))
-       (block
+       (sound
          (out (* 0.002 (sin phase)))
          (inc! phase phaseinc)))
      (loop (1+ i)))))
@@ -2170,7 +1793,7 @@
                                         (debug "hello"))
                                       (yield)
                                       (let loop ()
-                                        (_block_ready)
+                                        (_sound_ready)
                                         (loop)))))
 
 (pretty-print (generate-stalin-code0
@@ -2214,88 +1837,6 @@
    (debug "b1")
    (yield)
    (debug "b2")))
-
-(<rt-stalin>
- (define phase 0.0)
- (spawn
-   (debug "hello1"))
- (spawn
-   (debug "hello2")) 
- (spawn
-   (block :iter (* 2 44100)
-     (out (sin phase))
-     (inc! phase 0.062))
-   (block :iter (* 2 44100)
-     (out (sin phase))
-     (inc! phase 0.042))))
-
-(if a
-    (begin
-      (block ...)
-      (hello))
-    (begin
-      ...))
-->
-(if a
-    (begin
-      (block :cont (lambda ()
-                     (hello))
-        ...))
-    (begin
-      ...))
-
-(let loop ()
-  (block ...)
-  (loop))
-->
-(let loop ()
-  (block :cont (lambda ()
-                 (loop))
-    ...))
-
-(begin
-  (let loop ()
-    (block ...)
-    (hello2))
-  (hello))
-->
-(begin
-  (let loop ()
-    (block :cont (lambda ()
-                   (hello2))
-      ...))
-  (hello)) ;; will not be called.
-
-(begin a b)
-->
-(a (lambda () b))
-
-(begin a b c)
-->
-(a (lambda ()
-     (b (lambda ()
-          c))))
-(if a b c)
-->
-(a (lambda (x) (if x b c)))
-
-
-(block :code (s 2) (s 4) (lambda ()
-                           (oscil* 200))
-  (block :code (s 2) (s 4) (lambda ()
-                               (oscil* 300))
-    (block :code (s 2) (s 4) (lambda ()
-                               (oscil* 400))
-      (debug "finished"))))
-                                 
-
-; (spawn-block :dur (* 3 44100) (* 10 44100)
-;   (if (> _framenum 1024)
-;       (set! _framenum 0))
-;   (out (sin phase))
-;   (inc! _framenum 1)
-;   (inc! phase 0.032)))
-
 
 
 (stalin-macroexpand '(set! (=> coroutine:_current-coroutine :time) new-time))
@@ -2751,7 +2292,7 @@
            (define osc (make-oscil :frequency (+ 50 (irandom 900))))
            (define duration (+ 0 (+ 400 (irandom 2000)):-ms))
            (define i 0)
-           (block :duration duration :cont #f
+           (sound :duration duration
              (if (< i (>> duration 1))
                  (out (* (scale i 0 (>> duration 1) 0.0 0.01)
                          (oscil osc)))
@@ -3243,7 +2784,7 @@ The reason for doing this is that call/cc takes _a lot_ of time to compile with 
  (debug "one second later"))
 
 (<rt-stalin>
- (spawn (block :dur 500 (out 0))))
+ (spawn (sound :dur 500 (out 0))))
 
 
 ;; icmc code
@@ -3253,7 +2794,7 @@ The reason for doing this is that call/cc takes _a lot_ of time to compile with 
    (define osc (make-oscil :freq (between 50 2000)))
    (define dur (between 400 2000):-ms)
    (define e (make-env '((0 0)(.5 .05)(1 0)) :dur dur))
-   (spawn (block :dur dur
+   (spawn (sound :dur dur
             (out (* (env e) (oscil osc)))))))
 
 (<rt-stalin>
@@ -3264,7 +2805,7 @@ The reason for doing this is that call/cc takes _a lot_ of time to compile with 
        (make-oscil :freq (midi-to-freq (midi-note))))
      (spawn
        (spawn 
-         (block
+         (sound
            (cond ((adsr)
                   => (lambda (vol)
                        (out (* 0.2 vol (midi-vol) (oscil osc)))))
@@ -3273,20 +2814,19 @@ The reason for doing this is that call/cc takes _a lot_ of time to compile with 
        (wait-midi :command note-off :note (midi-note)
          (-> adsr stop-it))))))
 
-(<rt-stalin>
+(<rt-stalin>  :runtime-checks #f
  (while #t
    (wait-midi :command note-on
      (define adsr (make-adsr :a 20:-ms :d 20:-ms :s 0.2 :r 50:-ms))
      (define osc
        (make-oscil :freq (midi-to-freq (midi-note))))
      (spawn
-       (block
+       (sound
          (cond ((adsr)
                 => (lambda (vol)
                      (out (* 0.2 vol (midi-vol) (oscil osc)))))
                (else
-                (stop)))))
-     (spawn
+                (stop))))
        (wait-midi :command note-off :note (midi-note)
          (-> adsr stop-it))))))
 
@@ -3298,7 +2838,7 @@ The reason for doing this is that call/cc takes _a lot_ of time to compile with 
      (define osc
        (make-oscil :freq (midi-to-freq (midi-note))))
      (spawn
-       (block
+       (sound
          (define vol (adsr))
          (if vol
              (out (* 0.2 vol (midi-vol) (oscil osc)))
@@ -3316,7 +2856,7 @@ The reason for doing this is that call/cc takes _a lot_ of time to compile with 
        (define osc
          (make-oscil :freq (midi-to-freq (midi-note))))
        (spawn 
-         (block
+         (sound
            (-> adsr run
                (lambda (vol)
                  (out (* 0.2 vol (midi-vol) (oscil osc))))
@@ -3336,7 +2876,7 @@ The reason for doing this is that call/cc takes _a lot_ of time to compile with 
        (spawn 
          (call/cc 
           (lambda (break)
-            (block
+            (sound
               (cond ((adsr)
                      => (lambda (vol)
                           (out (* vol 0.2 (midi-vol) (oscil osc)))))
@@ -3358,14 +2898,14 @@ The reason for doing this is that call/cc takes _a lot_ of time to compile with 
        (define player
          (spawn
            (define e (make-env '((0 0)(1 2)(5 1)) :end 50:-ms))
-           (block :dur 50:-ms 
+           (sound :dur 50:-ms 
              (set! vol (* 0.1 (midi-vol) (env e)))
              (out (* vol (oscil osc))))
-           (block (out (* vol (oscil osc))))))
+           (sound (out (* vol (oscil osc))))))
        (wait-midi :command note-off :note (midi-note))
        (stop player)
        (define e (make-env '((0 1)(1 0)) :end 50:-ms))
-       (block :dur 50:-ms 
+       (sound :dur 50:-ms 
          (out (* vol (env e) (oscil osc))))))))
 
 
@@ -3379,12 +2919,12 @@ The reason for doing this is that call/cc takes _a lot_ of time to compile with 
        (make-oscil :freq (midi-to-freq (midi-note))))
      (spawn
        (define player
-         (spawn (block (out (* (midi-vol) (oscil osc))))))
+         (spawn (sound (out (* (midi-vol) (oscil osc))))))
        (let ((a (midi-note)))
          (wait-midi :command note-off :note a
            (stop player))
          (define env (make-env (list 0.0 (midi-vol) 1.0 0.0) :dur decay))
-         (block :dur decay
+         (sound :dur decay
            (out (* (env env) (oscil osc)))))))))
 
 
@@ -3729,8 +3269,8 @@ had to be put into macroexpand instead.
                     (set! first (append first (list (car term))))
                     (loop (cdr term)))))))))
 #!
-(fix-stalin-infix '(block :duration (between 200 1000):-:ms aiai more and more))
-(fix-stalin-infix '(block :duration (between 200 1000):-m))
+(fix-stalin-infix '(sound :duration (between 200 1000):-:ms aiai more and more))
+(fix-stalin-infix '(sound :duration (between 200 1000):-m))
 !#
 ;; fixes keywords and the :- infix operator when used in symbols (ie. "asdf:-ms")
 (define (fix-stalin-various code)
@@ -4370,6 +3910,9 @@ had to be put into macroexpand instead.
             (define generated (generate-stalin-code
                                `( (spawn
                                     ,@code)
+                                  (insert-coroutine-in-queue! _sound-coroutine
+                                                              _next-scheduled-time
+                                                              3) ;; block priority. (lowest)
                                   ((=> coroutine:_current-coroutine :continuation)))))
             
             ;;(c-display "generated" generated)
@@ -4388,7 +3931,7 @@ had to be put into macroexpand instead.
            #f)))
 
 
-;; what about (<rt-stalin> (block (out ...))) ?
+
 (define-macro <rt-stalin> 
   (labamba (:key (stack-checks #t)
                  (cpu-checks #t)
@@ -4408,35 +3951,6 @@ had to be put into macroexpand instead.
 
 
 #!
-(define-stalin-macro (block . code)
-  `(begin ,@code))
-(begin schemecodeparser-varlist)
-
-(define obj (<rt-stalin>
-             (display (>> 15 1))
-             (newline)
-             (define phase 0.0)
-             (let toploop ()
-               (_block_ready)
-               (let loop ((i 0))
-                 (out (* 0.04 (sin phase)))
-                 (set! phase (+ phase 0.062))
-                 (if (< i 1024)
-                     (loop (+ i 1))))
-               (toploop))))
-
-(<rt-stalin>
- (define-structure astruct b c)
- (make-astruct 2 3)
-; (display (astruct-b))
-; (display (astruct-c))
- (newline))
-
-(-> obj dir)
-(-> obj play)
-(-> obj stop)
-(rte-info)
-
 (pretty-print (generate-stalin-code0 '((+ 2 3 (add 50 (add 90))))))
 !#
 

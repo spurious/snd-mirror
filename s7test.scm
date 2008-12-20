@@ -40,10 +40,9 @@
 (define with-define* #t)                                       ; this tests s7's version of define*
 (define with-procedure-arity #t)                               ; procedure-arity and other s7-specific stuff
 (define with-error-data #f)                                    ; collect numerical error info and report at end
-(define with-the-bug-finding-machine #t)                       ; run the machine (set to number of tries)
-					                       ;   the machine needs format and random
+(define with-the-bug-finding-machine #t)                       ; run the machine (this variable can be set to the number of tries)
 					                       ;   the default number of tries is 10000
-
+					                       ;   the machine needs format and random
 
 ;; we're assuming call/cc is defined
 ;    (define call/cc call-with-current-continuation)
@@ -1764,6 +1763,9 @@
 (test (list (cons 1 2) (cons 3 4)) '((1 . 2) (3 . 4)))
 (test (cons (cons 1 (cons 2 3)) 4) '((1 . (2 . 3)) . 4))
 (test (cons (cons 1 (cons 2 '())) (cons 1 2)) '((1 2) . (1 . 2)))
+(test (let ((lst (list 1 2))) (list (apply cons lst) lst)) '((1 . 2) (1 2)))
+(test (let ((lst (list 1 2))) (list lst (apply cons lst))) '((1 2) (1 . 2)))
+(test (cdadr (let ((lst (list 1 2))) (list (apply cons lst) lst))) '(2))
 
 (test (car (list 1 2 3)) 1)
 (test (car (cons 1 2)) 1)
@@ -28284,6 +28286,13 @@
 (num-test (sqrt (- (expt 4 1/5) (expt 3 1/5)))
 	  (/ (+ (* (- (expt 2 3/5)) (expt 3 4/5)) (expt 3 3/5) (* 2 (expt 2 2/5) (expt 3 2/5)) (* (- (expt 2 4/5)) (expt 3 1/5)) (expt 2 1/5)) 5))
 
+(num-test (sqrt (- 161 (* 12 (expt 5 1/4)))) (+ (* 2 (expt 5 3/4)) (- (* 3 (sqrt 5))) (* 4 (sqrt (sqrt 5))) 6))
+
+(num-test (* (sqrt 2) (sqrt (- 31 (* 4 (sqrt (sqrt 3)) (sqrt (sqrt 5))))))
+	  (+ (* (expt 3 1/4) (expt 5 3/4)) (- (* 2 (sqrt 5))) (* (expt 3 3/4) (expt 5 1/4)) (* 2 (sqrt 3))))
+
+(num-test (/ (sqrt (* 7 (- 2 (expt 2 1/7)))) (expt 2 1/14))
+	  (+ -1 (* 2 (expt 2 1/7)) (expt 2 3/7) (expt 2 5/7) (- (expt 2 6/7))))
 
 (num-test (expt 2 9) 512)
 (num-test (expt 8 1/3) 2)
@@ -29170,9 +29179,9 @@
 	     (let* ((len (vector-length data)) 
 		    (arr (make-vector len 0.0))
 		    (w (/ (* 2.0 our-pi) len)))
-	       (do ((i 0 (1+ i)))
+	       (do ((i 0 (+ 1 i)))
 		   ((= i len))
-		 (do ((j 0 (1+ j)))
+		 (do ((j 0 (+ 1 j)))
 		     ((= j len))
 		   (vector-set! arr i (+ (vector-ref arr i) 
 				      (* (vector-ref data j) 
@@ -29209,7 +29218,7 @@
 (test (expt 0 0) 1 )
 (test (expt 0 1) 0 )
 (test (expt 0 256) 0 )
-(test (expt 0 -255) 0 )
+;(test (expt 0 -255) 0 )
 (test (expt -1 256) 1 )
 (test (expt -1 255) -1 )
 (test (expt -1 -256) 1 )
@@ -30788,7 +30797,7 @@
 
 (test (call/cc (lambda (r) (do () (#f) (r 1)))) 1)
 (test (let ((hi (lambda (x) (+ x 1)))) (do ((i 0 (hi i))) ((= i 3) i))) 3)
-
+(test (do ((i 0 (+ i 1))) (list 1) ((= i 3) #t)) 1) ; a typo originally -- Guile and Gauche are happy with it
 
 
 
@@ -33501,7 +33510,7 @@
 	    (test (let ((ctr 0)
 			(lock (make-lock)))
 		    (let ((threads '()))
-		      (do ((i 0 (1+ i)))
+		      (do ((i 0 (+ 1 i)))
 			  ((= i 8))
 			(let ((t1 (make-thread (lambda () (grab-lock lock) (set! ctr (+ ctr 1)) (release-lock lock)))))
 			  (set! threads (cons t1 threads))))
@@ -34458,7 +34467,7 @@ expt error > 1e-6 around 2^-46.506993328423
 	       
 	       (choose-list (lambda (ctr)
 			      (if (> ctr 6)
-				  (list 1)
+				  (list (list 1))
 				  (let ((len (random (inexact->exact (floor (/ 20 (+ ctr 1))))))
 					(lst '()))
 				    (do ((i 0 (+ i 1)))
@@ -34472,8 +34481,50 @@ expt error > 1e-6 around 2^-46.506993328423
 					     (list (list val))
 					     (list val)))))
 	       
+	       (choose-alist (lambda (type)
+			       (let ((dotted (> (random 1.0) 0.5))
+				     (len (+ 1 (random 10)))
+				     (key (car (if (eq? type 'eq?)
+						   (choose-boolean)
+						   (if (eq? type 'eqv?)
+						       (choose-any 3)
+						       (choose-any 6))))))
+				 (let ((lst '())
+				       (keyset #f))
+				   (do ((i 0 (+ i 1)))
+				       ((= i len))
+				     (if (and (not keyset)
+					      (> (random 1.0) 0.75))
+					 (begin
+					   (set! keyset #t)
+					   (set! lst (cons ((if dotted cons list) key key) lst)))
+					 (set! lst (cons ((if dotted cons list) (car (choose-any 3)) (car (choose-any 3))) lst))))
+				   (list key (reverse lst))))))
+	       
+	       (choose-mlist (lambda (type)
+			       (let ((len (+ 1 (random 10)))
+				     (key (car (if (eq? type 'eq?)
+						   (choose-boolean)
+						   (if (eq? type 'eqv?)
+						       (choose-any 3)
+						       (choose-any 6))))))
+				 (let ((lst '())
+				       (keyset #f))
+				   (do ((i 0 (+ i 1)))
+				       ((= i len))
+				     (if (and (not keyset)
+					      (> (random 1.0) 0.75))
+					 (begin
+					   (set! keyset #t)
+					   (set! lst (cons key lst)))
+					 (set! lst (cons (car (choose-any 3)) lst))))
+				   (list key (reverse lst))))))
+	       
 	       (choose-boolean (lambda ()
-				 (if (> (random 1.0) 0.5) (list #f) (list #t))))
+				 (list (case (random 4)
+					 ((0) #f)
+					 ((1) #t)
+					 (else 'hi)))))
 	       
 	       (choose-any (lambda (ctr)
 			     (let ((type (random (if (= ctr 0) 6 (if (= ctr 1) 5 (if (= ctr 2) 4 3))))))
@@ -34484,6 +34535,7 @@ expt error > 1e-6 around 2^-46.506993328423
 				 ((3) (choose-list (+ ctr 1)))
 				 ((4) (choose-vector (+ ctr 1)))
 				 (else (choose-boolean))))))
+       
 	       
 	       )
 	
@@ -35850,6 +35902,53 @@ expt error > 1e-6 around 2^-46.506993328423
 			      (format #t "(pair? ~A) -> ~A~%" (car nlst) v))))
 		      (lambda () (choose-any 0)))
 		
+		(list eqv?
+		      (lambda (nlst v)
+			(let* ((a1 (car nlst))
+			       (a2 (cadr nlst)))
+			  ;; eq? + numbers chars 
+			  (define (eqv-1 x y) ; from Dybvig
+			    (cond
+			     ((eq? x y))
+			     ((number? x)
+			      (and (number? y)
+				   (if (exact? x)
+				       (and (exact? y) (= x y))
+				       (and (inexact? y) (= x y)))))
+			     ((char? x) (and (char? y) (char=? x y)))
+			     (else #f)))
+			  (if (or (not (boolean? v))
+				  (not (eq? v (eqv-1 a1 a2))))
+			      (format #t "(eqv? ~A ~A) -> ~A~%" a1 a2 v))))
+		      (lambda () (list (car (choose-any 0)) (car (choose-any 0)))))
+		
+		(list equal?
+		      (lambda (nlst v)
+			(let* ((a1 (car nlst))
+			       (a2 (cadr nlst)))
+			  (define (equal-1 x y) ; also Dybvig
+			    (cond
+			     ((eqv? x y))
+			     ((pair? x)
+			      (and (pair? y)
+				   (equal? (car x) (car y))
+				   (equal? (cdr x) (cdr y))))
+			     ((string? x) (and (string? y) (string=? x y)))
+			     ((vector? x)
+			      (and (vector? y)
+				   (let ((n (vector-length x)))
+				     (and (= n (vector-length y))
+					  (let loop ((i 0))
+					    (or (= i n)
+						(and (equal? (vector-ref x i) (vector-ref y i))
+						     (loop (+ i 1)))))))))
+			     (else #f)))
+			  (if (or (not (boolean? v))
+				  (not (eq? v (equal-1 a1 a2))))
+			      (format #t "(equal? ~A ~A) -> ~A~%" a1 a2 v))))
+		      (lambda () (list (car (choose-any 0)) (car (choose-any 0)))))
+		
+		
 		
 		;; -------- vectors --------------------------------
 		
@@ -35976,6 +36075,59 @@ expt error > 1e-6 around 2^-46.506993328423
 			(if (not (equal? v (list-tail (car nlst) 1)))
 			    (format #t "(cdr ~A) -> ~A~%" (car nlst) v)))
 		      (lambda () (choose-non-null-list 0)))
+
+		(list length
+		      (lambda (nlst v)
+			(let* ((lst (car nlst)))
+			  (if (or (not (integer? v))
+				  (not (= v (vector-length (list->vector lst)))))
+			      (format #t "(length ~A) -> ~A~%" lst v))))
+		      (lambda () (choose-list 0)))
+		
+		(list null?
+		      (lambda (nlst v)
+			(let* ((lst (car nlst))
+			       (len (length lst)))
+			  (if (or (and v
+				       (not (= len 0)))
+				  (and (not v)
+				       (= len 0)))
+			      (format #t "(null? ~A) -> ~A~%" lst v))))
+		      (lambda () (choose-list 0)))
+		
+		(list list-ref
+		      (lambda (nlst v)
+			(let* ((lst (car nlst))
+			       (pos (cadr nlst)))
+			  (if (not (equal? v (vector-ref (list->vector lst) pos)))
+			      (format #t "(list-ref ~A ~D) -> ~A~%" lst pos v))))
+		      (lambda () 
+			(let ((lst (car (choose-non-null-list 0))))
+			  (list lst (random (length lst))))))
+		
+		(list reverse
+		      (lambda (nlst v)
+			(let* ((lst (car nlst))
+			       (len (length lst)))
+			  (if (or (not (list? v))
+				  (not (= len (length v)))
+				  (let ((happy #t))
+				    (do ((i 0 (+ i 1))
+					 (j (- len 1) (- j 1)))
+					((or (not happy) (= i len)) (not happy))
+				      (set! happy (equal? (list-ref lst i) (list-ref v j))))))
+			      (format #t "(reverse ~A) -> ~A~%" lst v))))
+		      (lambda () (choose-list 0)))
+		
+		(list cons
+		      (lambda (nlst v)
+			(let* ((cr (car nlst))
+			       (cd (cadr nlst)))
+			  (if (or (not (pair? v))
+				  (not (equal? (car v) cr))
+				  (not (equal? (cdr v) cd)))
+			      (format #t "(cons ~A ~A) -> ~A~%" cr cd v))))
+		      (lambda () (list (car (choose-any 0)) (car (choose-any 0)))))
 		
 		(list caar
 		      (lambda (nlst v)
@@ -35984,7 +36136,7 @@ expt error > 1e-6 around 2^-46.506993328423
 		      (lambda ()
 			(let ((lst (car (choose-non-null-list 0))))
 			  (if (not (pair? (car lst)))
-			      (list (list (list 1) lst))
+			      (list (list (choose-list 0) lst))
 			      (list lst)))))
 		
 		(list cadr
@@ -35994,9 +36146,427 @@ expt error > 1e-6 around 2^-46.506993328423
 		      (lambda ()
 			(let ((lst (car (choose-non-null-list 0))))
 			  (if (< (length lst) 2)
-			      (list (list lst 1 2))
+			      (list (list lst (choose-non-null-list 0)))
 			      (list lst)))))
 		
+		(list cdar
+		      (lambda (nlst v)
+			(if (not (eq? v (list-tail (list-ref (list-ref nlst 0) 0) 1)))
+			    (format #t "(cdar ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (not (pair? (car lst)))
+			      (list (list (choose-list 0) lst))
+			      (list lst)))))
+		
+		(list cddr
+		      (lambda (nlst v)
+			(if (not (eq? v (list-tail (list-tail (list-ref nlst 0) 1) 1)))
+			    (format #t "(cddr ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (not (pair? (cdr lst)))
+			      (list (list lst (choose-list 0)))
+			      (list lst)))))
+		
+		(list caaar
+		      (lambda (nlst v)
+			(if (not (eq? v (list-ref (list-ref (list-ref (list-ref nlst 0) 0) 0) 0)))
+			    (format #t "(caaar ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (car lst)))
+				  (not (pair? (caar lst))))
+			      (list (list (list lst (choose-list 0))))
+			      (list lst)))))
+		
+		(list caadr
+		      (lambda (nlst v)
+			(if (not (eq? v (list-ref (list-ref (list-tail (car nlst) 1) 0) 0)))
+			    (format #t "(caadr ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (cdr lst)))
+				  (not (pair? (cadr lst))))
+			      (list (list lst (list (choose-non-null-list 0))))
+			      (list lst)))))
+		
+		(list cadar
+		      (lambda (nlst v)
+			(if (not (eq? v (list-ref (list-tail (list-ref (list-ref nlst 0) 0) 1) 0)))
+			    (format #t "(cadar ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (car lst)))
+				  (not (pair? (cdar lst))))
+			      (list (list (list (choose-non-null-list 0) (list 1 lst))))
+			      (list lst)))))
+		
+		(list cdaar
+		      (lambda (nlst v)
+			(if (not (eq? v (list-tail (list-ref (list-ref (list-ref nlst 0) 0) 0) 1)))
+			    (format #t "(cdaar ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (car lst)))
+				  (not (pair? (caar lst))))
+			      (list (list (list (choose-list 0) lst)))
+			      (list lst)))))
+		
+		(list caddr
+		      (lambda (nlst v)
+			(if (not (eq? v (list-ref (list-tail (list-tail (list-ref nlst 0) 1) 1) 0)))
+			    (format #t "(caddr ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (cdr lst)))
+				  (not (pair? (cddr lst))))
+			      (list (list 1 lst (list (choose-list 0))))
+			      (list lst)))))
+		
+		(list cdddr
+		      (lambda (nlst v)
+			(if (not (eq? v (list-tail (list-tail (list-tail (list-ref nlst 0) 1) 1) 1)))
+			    (format #t "(cdddr ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (cdr lst)))
+				  (not (pair? (cddr lst))))
+			      (list (list 1 lst (list (choose-list 0))))
+			      (list lst)))))
+		
+		(list cdadr
+		      (lambda (nlst v)
+			(if (not (eq? v (list-tail (list-ref (list-tail (car nlst) 1) 0) 1)))
+			    (format #t "(cdadr ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (cdr lst)))
+				  (not (pair? (cadr lst))))
+			      (list (list 1 (list lst (list (choose-list 0)))))
+			      (list lst)))))
+		
+		(list cddar
+		      (lambda (nlst v)
+			(if (not (eq? v (list-tail (list-tail (list-ref (list-ref nlst 0) 0) 1) 1)))
+			    (format #t "(cddar ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (car lst)))
+				  (not (pair? (cdar lst))))
+			      (list (list (list lst (list (choose-list 0)))))
+			      (list lst)))))
+		
+		(list caaaar
+		      (lambda (nlst v)
+			(if (not (eq? v (list-ref (list-ref (list-ref (list-ref (list-ref nlst 0) 0) 0) 0) 0)))
+			    (format #t "(caaaar ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (car lst)))
+				  (not (pair? (caar lst))))
+			      (list (list (list (list lst (choose-list 0)))))
+			      (list lst)))))
+		
+		(list cdaaar
+		      (lambda (nlst v)
+			(if (not (eq? v (list-tail (list-ref (list-ref (list-ref (list-ref nlst 0) 0) 0) 0) 1)))
+			    (format #t "(caaaar ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (car lst)))
+				  (not (pair? (caar lst))))
+			      (list (list (list (list lst (choose-list 0)))))
+			      (list lst)))))
+		
+		(list caaadr
+		      (lambda (nlst v)
+			(if (not (eq? v (list-ref (list-ref (list-ref (list-tail (car nlst) 1) 0) 0) 0)))
+			    (format #t "(caaadr ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (cdr lst)))
+				  (not (pair? (cadr lst)))
+				  (not (pair? (caadr lst))))
+			      (list (list lst (list (list (choose-non-null-list 0)))))
+			      (list lst)))))
+		
+		(list cdaadr
+		      (lambda (nlst v)
+			(if (not (eq? v (list-tail (list-ref (list-ref (list-tail (car nlst) 1) 0) 0) 1)))
+			    (format #t "(cdaadr ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (cdr lst)))
+				  (not (pair? (cadr lst)))
+				  (not (pair? (caadr lst))))
+			      (list (list lst (list (list (choose-non-null-list 0)))))
+			      (list lst)))))
+		
+		(list caadar
+		      (lambda (nlst v)
+			(if (not (eq? v (list-ref (list-ref (list-tail (list-ref (list-ref nlst 0) 0) 1) 0) 0)))
+			    (format #t "(caadar ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (car lst)))
+				  (not (pair? (cdar lst)))
+				  (not (pair? (cadar lst))))
+			      (list (list (list (choose-non-null-list 0) (list (list 1 lst)))))
+			      (list lst)))))
+		
+		(list cdadar
+		      (lambda (nlst v)
+			(if (not (eq? v (list-tail (list-ref (list-tail (list-ref (list-ref nlst 0) 0) 1) 0) 1)))
+			    (format #t "(cdadar ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (car lst)))
+				  (not (pair? (cdar lst)))
+				  (not (pair? (cadar lst))))
+			      (list (list (list (choose-non-null-list 0) (list (list 1 lst)))))
+			      (list lst)))))
+		
+		(list cadaar
+		      (lambda (nlst v)
+			(if (not (eq? v (list-ref (list-tail (list-ref (list-ref (list-ref nlst 0) 0) 0) 1) 0)))
+			    (format #t "(cadaar ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (car lst)))
+				  (not (pair? (caar lst)))
+				  (not (pair? (cdaar lst))))
+			      (list (list (list (list (choose-list 0) (list lst)))))
+			      (list lst)))))
+		
+		(list cddaar
+		      (lambda (nlst v)
+			(if (not (eq? v (list-tail (list-tail (list-ref (list-ref (list-ref nlst 0) 0) 0) 1) 1)))
+			    (format #t "(cddaar ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (car lst)))
+				  (not (pair? (caar lst)))
+				  (not (pair? (cdaar lst))))
+			      (list (list (list (list (choose-list 0) (list lst)))))
+			      (list lst)))))
+		
+		(list caaddr
+		      (lambda (nlst v)
+			(if (not (eq? v (list-ref (list-ref (list-tail (list-tail (list-ref nlst 0) 1) 1) 0) 0)))
+			    (format #t "(caaddr ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (cdr lst)))
+				  (not (pair? (cddr lst)))
+				  (not (pair? (caddr lst))))
+			      (list (list 1 lst (list (list (choose-list 0)))))
+			      (list lst)))))
+		
+		(list cdaddr
+		      (lambda (nlst v)
+			(if (not (eq? v (list-tail (list-ref (list-tail (list-tail (list-ref nlst 0) 1) 1) 0) 1)))
+			    (format #t "(cdaddr ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (cdr lst)))
+				  (not (pair? (cddr lst)))
+				  (not (pair? (caddr lst))))
+			      (list (list 1 lst (list (list (choose-list 0)))))
+			      (list lst)))))
+		
+		(list cadddr
+		      (lambda (nlst v)
+			(if (not (eq? v (list-ref (list-tail (list-tail (list-tail (list-ref nlst 0) 1) 1) 1) 0)))
+			    (format #t "(cadddr ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (cdr lst)))
+				  (not (pair? (cddr lst)))
+				  (not (pair? (cdddr lst))))
+			      (list (list 1 lst 1 (list (choose-list 0))))
+			      (list lst)))))
+		
+		(list cddddr
+		      (lambda (nlst v)
+			(if (not (eq? v (list-tail (list-tail (list-tail (list-tail (list-ref nlst 0) 1) 1) 1) 1)))
+			    (format #t "(cddddr ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (cdr lst)))
+				  (not (pair? (cddr lst)))
+				  (not (pair? (cdddr lst))))
+			      (list (list 1 lst 1 (list (choose-list 0))))
+			      (list lst)))))
+		
+		(list cadadr
+		      (lambda (nlst v)
+			(if (not (eq? v (list-ref (list-tail (list-ref (list-tail (car nlst) 1) 0) 1) 0)))
+			    (format #t "(cadadr ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (cdr lst)))
+				  (not (pair? (cadr lst)))
+				  (not (pair? (cdadr lst))))
+			      (list (list 1 (list lst (list (choose-list 0)))))
+			      (list lst)))))
+		
+		(list cddadr
+		      (lambda (nlst v)
+			(if (not (eq? v (list-tail (list-tail (list-ref (list-tail (car nlst) 1) 0) 1) 1)))
+			    (format #t "(cddadr ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (cdr lst)))
+				  (not (pair? (cadr lst)))
+				  (not (pair? (cdadr lst))))
+			      (list (list 1 (list lst (list (choose-list 0)))))
+			      (list lst)))))
+		
+		(list caddar
+		      (lambda (nlst v)
+			(if (not (eq? v (list-ref (list-tail (list-tail (list-ref (list-ref nlst 0) 0) 1) 1) 0)))
+			    (format #t "(caddar ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (car lst)))
+				  (not (pair? (cdar lst)))
+				  (not (pair? (cddar lst))))
+			      (list (list (list lst 1 (list (choose-list 0)))))
+			      (list lst)))))
+		
+		(list cdddar
+		      (lambda (nlst v)
+			(if (not (eq? v (list-tail (list-tail (list-tail (list-ref (list-ref nlst 0) 0) 1) 1) 1)))
+			    (format #t "(cdddar ~A) -> ~A~%" (car nlst) v)))
+		      (lambda ()
+			(let ((lst (car (choose-non-null-list 0))))
+			  (if (or (not (pair? (car lst)))
+				  (not (pair? (cdar lst)))
+				  (not (pair? (cddar lst))))
+			      (list (list (list lst 1 (list (choose-list 0)))))
+			      (list lst)))))
+		
+		(list set-car!
+		      (lambda (nlst v)
+			(let* ((lst (car nlst))
+			       (val (cadr nlst)))
+			  (if (not (equal? (car lst) val))
+			      (format #t "(set-car! ~A ~A)~%" lst val))))
+		      (lambda () (list (choose-non-null-list 0) (choose-any 0))))
+		
+		(list set-cdr!
+		      (lambda (nlst v)
+			(let* ((lst (car nlst))
+			       (val (cadr nlst)))
+			  (if (not (equal? (cdr lst) val))
+			      (format #t "(set-cdr! ~A ~A)~%" lst val))))
+		      (lambda () (list (choose-non-null-list 0) (choose-any 0))))
+		
+		(list assoc
+		      (lambda (nlst v)
+			(let* ((alst (cadr nlst))
+			       (obj (car nlst))
+			       (val #f))
+			  (for-each
+			   (lambda (kv)
+			     (if (and (not val)
+				      (equal? obj (car kv)))
+				 (set! val kv)))
+			   alst)
+			  (if (not (equal? v val))
+			      (format #t "(assoc ~A ~A) -> ~A~%" obj alst v))))
+		      (lambda () (choose-alist 'equal?)))
+		
+		(list assq
+		      (lambda (nlst v)
+			(let* ((alst (cadr nlst))
+			       (obj (car nlst))
+			       (val #f))
+			  (for-each
+			   (lambda (kv)
+			     (if (and (not val)
+				      (equal? obj (car kv)))
+				 (set! val kv)))
+			   alst)
+			  (if (not (eq? v val))
+			      (format #t "(assq ~A ~A) -> ~A~%" obj alst v))))
+		      (lambda () (choose-alist 'eq?)))
+		
+		(list assv
+		      (lambda (nlst v)
+			(let* ((alst (cadr nlst))
+			       (obj (car nlst))
+			       (val #f))
+			  (for-each
+			   (lambda (kv)
+			     (if (and (not val)
+				      (eqv? obj (car kv)))
+				 (set! val kv)))
+			   alst)
+			  (if (not (equal? v val))
+			      (format #t "(assv ~A ~A) -> ~A~%" obj alst v))))
+		      (lambda () (choose-alist 'eqv?)))
+		
+		(list memq
+		      (lambda (nlst v)
+			(let* ((lst (cadr nlst))
+			       (len (length lst))
+			       (obj (car nlst))
+			       (val #f))
+			  (do ((i 0 (+ i 1))
+			       (mlst lst (cdr mlst)))
+			      ((or val (= i len)))
+			    (if (eq? obj (car mlst))
+				(set! val mlst)))
+			  (if (not (equal? v val))
+			      (format #t "(memq ~A ~A) -> ~A~%" obj lst v))))
+		      (lambda () (choose-mlist 'eq?))) 
+		
+		(list memv
+		      (lambda (nlst v)
+			(let* ((lst (cadr nlst))
+			       (len (length lst))
+			       (obj (car nlst))
+			       (val #f))
+			  (do ((i 0 (+ i 1))
+			       (mlst lst (cdr mlst)))
+			      ((or val (= i len)))
+			    (if (eqv? obj (car mlst))
+				(set! val mlst)))
+			  (if (not (equal? v val))
+			      (format #t "(memv ~A ~A) -> ~A~%" obj lst v))))
+		      (lambda () (choose-mlist 'eqv?))) 
+		
+		(list member
+		      (lambda (nlst v)
+			(let* ((lst (cadr nlst))
+			       (len (length lst))
+			       (obj (car nlst))
+			       (val #f))
+			  (do ((i 0 (+ i 1))
+			       (mlst lst (cdr mlst)))
+			      ((or val (= i len)))
+			    (if (equal? obj (car mlst))
+				(set! val mlst)))
+			  (if (not (equal? v val))
+			      (format #t "(member ~A ~A) -> ~A~%" obj lst v))))
+		      (lambda () (choose-mlist 'equal?))) 
+		
+		(list list-tail
+		      (lambda (nlst v)
+			(let* ((lst (car nlst))
+			       (pos (cadr nlst)))
+			  (if (not (equal? v (do ((i 0 (+ i 1))
+						  (mlst lst (cdr mlst)))
+						 ((= i pos) mlst))))
+			      (format #t "(list-tail ~A ~A) -> ~A~%" lst pos v))))
+		      (lambda ()
+			(let ((lst (car (choose-list 0))))
+			  (list lst (random (length lst))))))
+		
+		
+		;; --------------------------------------------------------------------------------
 		
 		
 		)))
@@ -36015,10 +36585,9 @@ expt error > 1e-6 around 2^-46.506993328423
 	      (let ((result (catch #t (lambda () (apply op args)) (lambda args 'error))))
 		((cadr data) args result))))))
       ))
-      
-      
-      
-      
+
+
+
+
 (newline) (display ";all done!") (newline)
-      
-      
+

@@ -8252,8 +8252,11 @@ static s7_pointer g_cons(s7_scheme *sc, s7_pointer args)
 {
   #define H_cons "(cons a b) returns a pair containing a and b"
   
-  cdr(args) = cadr(args);
-  return(args);
+  /* cdr(args) = cadr(args);
+   * this is not safe -- it changes a variable's value directly:
+   *   (let ((lst (list 1 2))) (list (apply cons lst) lst)) -> '((1 . 2) (1 . 2))
+   */
+  return(s7_cons(sc, car(args), cadr(args)));
 }
 
 
@@ -10652,11 +10655,11 @@ s7_pointer s7_wrong_type_arg_error(s7_scheme *sc, const char *caller, int arg_n,
   len = safe_strlen(descr) + safe_strlen(caller) + 64;
   errmsg = (char *)malloc(len * sizeof(char));
   if (arg_n == 0)
-    slen = snprintf(errmsg, len, "%s: argument (~A) has wrong type (expecting %s)", caller, descr);
+    slen = snprintf(errmsg, len, "%s: argument ~A has wrong type (expecting %s)", caller, descr);
   else
     {
       if (arg_n < 0) arg_n = 1;
-      slen = snprintf(errmsg, len, "%s: argument %d (~A) has wrong type (expecting %s)", caller, arg_n, descr);
+      slen = snprintf(errmsg, len, "%s: argument %d, ~A, has wrong type (expecting %s)", caller, arg_n, descr);
     }
   sc->x = make_list_2(sc, s7_make_string_with_length(sc, errmsg, slen), arg);
   free(errmsg);
@@ -10673,7 +10676,7 @@ s7_pointer s7_out_of_range_error(s7_scheme *sc, const char *caller, int arg_n, s
   len = safe_strlen(descr) + safe_strlen(caller) + 64;
   errmsg = (char *)malloc(len * sizeof(char));
   if (arg_n <= 0) arg_n = 1;
-  slen = snprintf(errmsg, len, "%s: argument %d (~A) is out of range (expecting %s)", caller, arg_n, descr);
+  slen = snprintf(errmsg, len, "%s: argument %d, ~A, is out of range (expecting %s)", caller, arg_n, descr);
   sc->x = make_list_2(sc, s7_make_string_with_length(sc, errmsg, slen), arg);
   free(errmsg);
 
