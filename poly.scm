@@ -36,7 +36,7 @@
 (define (poly-as-vector-eval v x)
   "(poly-as-vector-eval v x) treats 'v' as a vector of polynomial coefficients, returning the value of the polynomial at x"
   (let ((sum (vector-ref v (1- (vector-length v)))))
-    (do ((i (- (vector-length v) 2) (1- i)))
+    (do ((i (- (vector-length v) 2) (- i 1)))
 	((< i 0) sum)
       (set! sum (+ (* sum x) (vector-ref v i))))))
 
@@ -44,7 +44,7 @@
 (define (poly-as-vector-reduce p1)
   "(poly-as-vector-reduce p1) removes trailing (high-degree) zeros from the vector p1"
   ;; always return at least a 0 coeff (rather than return #f=0 polynomial)
-  (let ((new-len (do ((i (1- (vector-length p1)) (1- i)))
+  (let ((new-len (do ((i (1- (vector-length p1)) (- i 1)))
 		     ((or (= i 0)
 			  (not (= (vector-ref p1 i) 0.0)))
 		      (+ i 1)))))
@@ -171,7 +171,7 @@
   "(poly-as-vector-derivative p1) returns the derivative or polynomial p1 (as a vector)"
   (let* ((len (1- (vector-length p1)))
 	 (v (make-vector len)))
-    (do ((i (1- len) (1- i))
+    (do ((i (1- len) (- i 1))
 	 (j len (1- j)))
 	((< i 0) v)
       (vector-set! v i (* j (vector-ref p1 j))))))
@@ -382,7 +382,7 @@
 		(let ((pnew (make-vector deg)))
 		  (do ((i 1 (+ i 1)))
 		      ((> i deg))
-		    (vector-set! pnew (1- i) (vector-ref p1 i)))
+		    (vector-set! pnew (- i 1) (vector-ref p1 i)))
 		  (append (list 0.0) (poly-as-vector-roots pnew))))
 
 	    (if (= deg 1)                             ; ax + b -> -b/a
@@ -527,14 +527,14 @@
 (do ((i 3 (+ i 1))) ((= i 20)) 
   (let ((v (make-vct i 0.0)))
     (vct-set! v 0 (mus-random 1.0))
-    (vct-set! v (1- i) 1.0)
+    (vct-set! v (- i 1) 1.0)
     (poly-roots v)))
 
 (do ((i 3 (+ i 2))) ((= i 21)) 
   (let ((v (make-vct i 0.0)))
     (vct-set! v 0 (mus-random 1.0))
-    (vct-set! v (1- i) 1.0)
-    (vct-set! v (/ (1- i) 2) 1.0)
+    (vct-set! v (- i 1) 1.0)
+    (vct-set! v (/ (- i 1) 2) 1.0)
     (poly-roots v)))
 
 

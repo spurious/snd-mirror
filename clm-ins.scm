@@ -1767,7 +1767,7 @@ is a physical model of a flute:
 			      :scaler  amplitude
 			      :duration env1dur
 			      :base 10000.0))
-	   (releaseamp (list-ref ampfun1 (1- (length ampfun1))))
+	   (releaseamp (list-ref ampfun1 (- (length ampfun1) 1)))
 	   (ampenv2 (make-env :envelope '(0 1 100 0)
 			      :scaler (* amplitude releaseamp)
 			      :duration env1dur
@@ -2261,7 +2261,7 @@ is a physical model of a flute:
 	 (lambda ()
 	   (do ((i st (+ i 1)))
 	       ((= i nd))
-	     (if (c-g?) (set! i (1- nd)))
+	     (if (c-g?) (set! i (- nd 1)))
 	     (let* ((expa (env expenv)) ;current expansion amount
 		    (segl (env lenenv)) ;current segment length
 		    (resa (env srenv)) ;current resampling increment

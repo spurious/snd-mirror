@@ -344,7 +344,7 @@ repetition to be in reverse."
 	(set! x (+ x (- (list-ref e j) (list-ref e (- j 2)))))
 	(set! new-env (cons x new-env))
 	(set! new-env (cons (list-ref e (+ j 1)) new-env)))
-      (if (and (< i (1- times)) (not first-y-is-last-y))
+      (if (and (< i (- times 1)) (not first-y-is-last-y))
 	  (begin
 	    (set! x (+ x (/ x-max 100.0)))
 	    (set! new-env (cons x new-env))
@@ -369,16 +369,16 @@ repetition to be in reverse."
 
 (define (power-env pe)
   (let* ((val (env (vector-ref (penv-envs pe) (penv-current-env pe)))))
-    (set! (penv-current-pass pe) (1- (penv-current-pass pe)))
+    (set! (penv-current-pass pe) (- (penv-current-pass pe) 1))
     (if (= (penv-current-pass pe) 0)
-      (if (< (penv-current-env pe) (1- (penv-total-envs pe)))
+      (if (< (penv-current-env pe) (- (penv-total-envs pe) 1))
 	  (begin
 	    (set! (penv-current-env pe) (+ 1 (penv-current-env pe)))
-	    (set! (penv-current-pass pe) (1- (mus-length (vector-ref (penv-envs pe) (penv-current-env pe))))))))
+	    (set! (penv-current-pass pe) (- (mus-length (vector-ref (penv-envs pe) (penv-current-env pe))) 1)))))
     val))
 
 (define* (make-power-env envelope :key (scaler 1.0) (offset 0.0) duration)
-  (let* ((len (1- (inexact->exact (floor (/ (length envelope) 3)))))
+  (let* ((len (- (inexact->exact (floor (/ (length envelope) 3))) 1))
 	 (pe (make-penv :envs (make-vector len)
 			:total-envs len
 			:current-env 0
@@ -395,7 +395,7 @@ repetition to be in reverse."
 	(vector-set! (penv-envs pe) i (make-env (list 0.0 y0 1.0 y1) 
 						:base base :scaler scaler :offset offset 
 						:duration (* duration (/ (- x1 x0) xext))))))
-    (set! (penv-current-pass pe) (1- (mus-length (vector-ref (penv-envs pe) 0))))
+    (set! (penv-current-pass pe) (- (mus-length (vector-ref (penv-envs pe) 0)) 1))
     pe))
 
 (define* (power-env-channel pe :optional (beg 0) dur snd chn edpos (edname "power-env-channel"))

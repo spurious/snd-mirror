@@ -146,7 +146,7 @@
   (let ((len (string-length type)))
     (call-with-exit
      (lambda (return)
-       (do ((i (1- len) (1- i))
+       (do ((i (1- len) (- i 1))
 	    (ctr 0 (+ 1 ctr)))
 	   ((= i 0) #f)
 	 (if (not (char=? (string-ref type i) #\*))
@@ -156,7 +156,7 @@
   (let ((len (string-length type)))
     (call-with-exit
      (lambda (return)
-       (do ((i (1- len) (1- i))
+       (do ((i (1- len) (- i 1))
 	    (ctr 0 (+ 1 ctr)))
 	   ((= i 0) #f)
 	 (if (char=? (string-ref type i) #\*)

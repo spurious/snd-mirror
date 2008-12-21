@@ -180,7 +180,7 @@
   (if (null? a)
       #f
       (if (not n)
-	  (list (list-ref a (1- (length a))))
+	  (list (list-ref a (- (length a) 1)))
 	  (let ((res '()))
 	    (do ((i 0 (+ 1 i)))
 		((= i n))
@@ -1387,7 +1387,7 @@
 	  (vector-set! (vector-ref cr 0) j (+ (* u1 (vector-ref (vector-ref c 0) j)) (* u (vector-ref (vector-ref c 0) (+ j 1)))))
 	  (vector-set! (vector-ref cr 1) j (+ (* u1 (vector-ref (vector-ref c 1) j)) (* u (vector-ref (vector-ref c 1) (+ j 1)))))
 	  (vector-set! (vector-ref cr 2) j (+ (* u1 (vector-ref (vector-ref c 2) j)) (* u (vector-ref (vector-ref c 2) (+ j 1))))))
-	(do ((i 1 (1- i)))
+	(do ((i 1 (- i 1)))
 	    ((< i 0))
 	  (do ((j 0 (+ 1 j)))
 	      ((> j i))
@@ -1431,7 +1431,7 @@
 	(if (not (car (v path)))
 	    (begin
 	      (list-set! (v path) 0 1)
-	      (list-set! (v path) (1- (length (v path))) 1))))
+	      (list-set! (v path) (- (length (v path)) 1) 1))))
 
     ;; only one point means no movement, static source
     (if (= (length (x path)) 1)
@@ -1453,11 +1453,11 @@
 		   (vi-bz (list-ref (v path) i))
 		   (vf-bz (list-ref (v path) (+ i 1)))
 		   (xi-bz (car x-bz))
-		   (xf-bz (list-ref x-bz (1- (length x-bz))))
+		   (xf-bz (list-ref x-bz (- (length x-bz) 1)))
 		   (yi-bz (car y-bz))
-		   (yf-bz (list-ref y-bz (1- (length y-bz))))
+		   (yf-bz (list-ref y-bz (- (length y-bz) 1)))
 		   (zi-bz (car z-bz))
-		   (zf-bz (list-ref z-bz (1- (length z-bz)))))
+		   (zf-bz (list-ref z-bz (- (length z-bz) 1))))
 	      (let* ((vals (berny xi-bz yi-bz zi-bz xf-bz yf-bz zf-bz 0.0 0.5 1.0 
 				  (vector (list->vector x-bz)
 					  (list->vector y-bz)
@@ -1474,7 +1474,7 @@
 
 		;; accumulate intermediate unknown velocities as nils
 		(set! xrv (append xrv (list vi-bz) (make-list (length xs) #f)))
-		(if (= i (1- len))
+		(if (= i (- len 1))
 		    (begin
 		      ;; add the last point
 		      (set! xrx (append xrx (list xf-bz)))
@@ -1484,7 +1484,7 @@
 		      ))))))
 
 	  ;; calculate times for each velocity segment
-	  (let ((len (1- (length xrx)))
+	  (let ((len (- (length xrx) 1))
 		(ti 0)
 		(times (list 0))
 		(xseg (list (list-ref xrx 0)))
@@ -1506,7 +1506,7 @@
 		(if v
 		    (let* ((dseg (list))
 			   (sum 0.0)
-			   (len (1- (length xseg))))
+			   (len (- (length xseg) 1)))
 
 		      (do ((i 0 (+ 1 i)))
 			  ((= i len))
@@ -1548,7 +1548,7 @@
 	  (set! (ry path) xry)
 	  (set! (rz path) xrz)
 	  (set! (rt path) 
-		(let* ((tf (list-ref times (1- (length times))))
+		(let* ((tf (list-ref times (- (length times) 1)))
 		       (val '()))
 		  (for-each
 		   (lambda (ti)
@@ -1603,7 +1603,7 @@
     (if (not (car (rv path)))
 	(begin
 	  (list-set! (rv path) 0 1)
-	  (list-set! (rv path) (1- (length (rv path))) 1)))
+	  (list-set! (rv path) (- (length (rv path)) 1) 1)))
 
     ;; only one point means no movement, static source
     (if (= (length (rx path)) 1)
@@ -1636,7 +1636,7 @@
 	      (if (number? v) ; when v
 		  (let* ((sofar 0.0)
 			 (dseg '())
-			 (len (1- (length xseg))))
+			 (len (- (length xseg) 1)))
 		    (do ((i 0 (+ 1 i)))
 			((= i len))
 		      (let* ((xsi (list-ref xseg i))
@@ -1669,7 +1669,7 @@
 			(set! vi v)))))))
 
 	  (set! (rt path) (let ((val '())
-				(tf (list-ref times (1- (length times)))))
+				(tf (list-ref times (- (length times) 1))))
 			    (for-each
 			     (lambda (ti)
 			       (set! val (cons (/ ti tf) val)))
@@ -1743,7 +1743,7 @@
       (set! z (reverse z))
 
       (let* ((dp '())
-	     (len (1- (length x)))
+	     (len (- (length x) 1))
 	     (sofar 0.0))
 	(do ((i 0 (+ 1 i)))
 	    ((>= i len))
@@ -1759,7 +1759,7 @@
 	  (set! dp (reverse dp))
 	  (let* ((tp '())
 		 (td 0)
-		 (len (1- (length dp))))
+		 (len (- (length dp) 1)))
 	    (do ((i 0 (+ 1 i)))
 		((>= i len))
 	      (let* ((di (list-ref dp i))
@@ -1998,7 +1998,7 @@
 		(set! sum (+ sum (distance (- x2 x1) (- y2 y1) (- z2 z1))))))
 	    sum))
 	 (start-time (car tcoords))
-	 (end-time (list-ref tcoords (1- (length tcoords))))
+	 (end-time (list-ref tcoords (- (length tcoords) 1)))
 	 (total-time (- end-time start-time))
 	 (velocity (/ total-distance total-time)))
     (let ((len (length xcoords))
@@ -2780,7 +2780,7 @@
 	(walk-all-rooms (car xpoints) (car ypoints) (car zpoints) (car tpoints) 3)
 
 	;; moving source
-	(let ((len (1- (min (length xpoints) (length ypoints) (length zpoints) (length tpoints)))))
+	(let ((len (- (min (length xpoints) (length ypoints) (length zpoints) (length tpoints)) 1)))
 	  (do ((i 0 (+ 1 i)))
 	      ((>= i len))
 	    (let* ((xa (list-ref xpoints i))

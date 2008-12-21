@@ -2497,8 +2497,8 @@
 	((> i pairs))
       (let* ((aff (* i old-freq))
 	     (bwf (* bw (+ 1.0 (/ i (* 2 pairs))))))
-	(vector-set! ssbs (1- i) (make-ssb-am (* i factor old-freq)))
-	(vector-set! bands (1- i) (make-bandpass (hz->radians (- aff bwf)) 
+	(vector-set! ssbs (- i 1) (make-ssb-am (* i factor old-freq)))
+	(vector-set! bands (- i 1) (make-bandpass (hz->radians (- aff bwf)) 
 						 (hz->radians (+ aff bwf)) 
 						 order))))
     (run
@@ -2643,7 +2643,7 @@
          (outa i (granulate exA
 		   (lambda (dir)
 		     (let ((inval (file->sample fil ctr 0)))
-		       (if (> ctr 0) (set! ctr (1- ctr)))
+		       (if (> ctr 0) (set! ctr (- ctr 1)))
 		       inval)))))))))
 
 (definstrument (sndclmdoc-simple-pvoc beg dur amp size file)

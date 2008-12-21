@@ -121,8 +121,8 @@
       (vct-set! rl2 0 (vct-ref rl1 0))
       (vct-set! im2 0 (vct-ref im1 0))
       (do ((i 1 (+ i 1)) ; lower half
-	   (k (1- fftlen) (1- k))
-	   (j (1- (* n fftlen)) (1- j)))
+	   (k (- fftlen 1) (- k 1))
+	   (j (- (* n fftlen) 1) (- j 1)))
 	  ((= i (/ fftlen 2)))
 	(vct-set! rl2 i (vct-ref rl1 i))
 	(vct-set! rl2 j (vct-ref rl1 k))
@@ -409,7 +409,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 	  (vct-scale! rl fftscale)
 	  (vct-set! im 0 0.0)
 	  (do ((i 1 (+ i 1))
-	       (j (1- fftlen) (1- j)))
+	       (j (- fftlen 1) (- j 1)))
 	      ((= i fftlen2))
 	    ;; rotate the fft vector by func, keeping imaginary part complex conjgate of real
 	    (vct-set! im i (func (vct-ref im i)))
@@ -468,7 +468,7 @@ squeezing in the frequency domain, then using the inverse DFT to get the time do
 	 (am (* 0.5 (+ n 1)))
 	 (q (/ (* pi 2.0) n)))
     (do ((j 0 (+ 1 j))
-	 (jj (- n 1) (1- jj)))
+	 (jj (- n 1) (- jj 1)))
 	((= j m) coeffs)
       (let ((xt (* 0.5 (vct-ref spectr 0))))
 	(do ((i 1 (+ i 1)))
@@ -1408,8 +1408,8 @@ shift the given channel in pitch without changing its length.  The higher 'order
 	((> i pairs))
       (let* ((aff (* i old-freq))
 	     (bwf (* bw (+ 1.0 (/ i (* 2 pairs))))))
-	(vector-set! ssbs (1- i) (make-ssb-am (* i factor old-freq)))
-	(vector-set! bands (1- i) (make-bandpass (hz->2pi (- aff bwf)) 
+	(vector-set! ssbs (- i 1) (make-ssb-am (* i factor old-freq)))
+	(vector-set! bands (- i 1) (make-bandpass (hz->2pi (- aff bwf)) 
 						 (hz->2pi (+ aff bwf)) 
 						 order))))
     (as-one-edit
@@ -1441,11 +1441,11 @@ shift the given channel in pitch without changing its length.  The higher 'order
 	((> i pairs))
       (let* ((aff (* i old-freq))
 	     (bwf (* bw (+ 1.0 (/ i (* 2 pairs))))))
-	(vector-set! ssbs (1- i) (make-ssb-am (* i factor old-freq)))
-	(vector-set! bands (1- i) (make-bandpass (hz->2pi (- aff bwf)) 
+	(vector-set! ssbs (- i 1) (make-ssb-am (* i factor old-freq)))
+	(vector-set! bands (- i 1) (make-bandpass (hz->2pi (- aff bwf)) 
 						 (hz->2pi (+ aff bwf)) 
 						 order))
-	(vector-set! frenvs (1- i) (make-env freq-env 
+	(vector-set! frenvs (- i 1) (make-env freq-env 
 					     :scaler (hz->radians (exact->inexact i)) 
 					     :length (frames)))))
     (as-one-edit
@@ -1487,8 +1487,8 @@ shift the given channel in pitch without changing its length.  The higher 'order
 	((> i pairs))
       (let* ((aff (* i old-freq))
 	     (bwf (* bw (+ 1.0 (/ i (* 2 pairs))))))
-	(vector-set! ssbs (1- i) (make-ssb-am (* i factor old-freq)))
-	(vector-set! bands (1- i) (make-bandpass (hz->radians (- aff bwf)) 
+	(vector-set! ssbs (- i 1) (make-ssb-am (* i factor old-freq)))
+	(vector-set! bands (- i 1) (make-bandpass (hz->radians (- aff bwf)) 
 						 (hz->radians (+ aff bwf)) 
 						 order))))
     (list ssbs bands)))
@@ -1546,8 +1546,8 @@ shift the given channel in pitch without changing its length.  The higher 'order
   ;; Horner's rule applied to entire vct
   (let* ((v-len (vct-length v))
 	 (num-coeffs (vct-length coeffs))
-	 (new-v (make-vct v-len (vct-ref coeffs (1- num-coeffs)))))
-    (do ((i (- num-coeffs 2) (1- i)))
+	 (new-v (make-vct v-len (vct-ref coeffs (- num-coeffs 1)))))
+    (do ((i (- num-coeffs 2) (- i 1)))
 	((< i 0))
       (vct-offset! (vct-multiply! new-v v) (vct-ref coeffs i)))
     new-v))
@@ -1571,7 +1571,7 @@ shift the given channel in pitch without changing its length.  The higher 'order
 	 (num-coeffs (vct-length coeffs))
 	 (fft-len (if (< num-coeffs 2) 
 		      len 
-		      (expt 2 (inexact->exact (ceiling (/ (log (* (1- num-coeffs) len)) (log 2)))))))
+		      (expt 2 (inexact->exact (ceiling (/ (log (* (- num-coeffs 1) len)) (log 2)))))))
 	 (rl1 (make-vct fft-len 0.0))
 	 (rl2 (make-vct fft-len 0.0))
 	 (new-sound (make-vct fft-len)))
@@ -1593,7 +1593,7 @@ shift the given channel in pitch without changing its length.  The higher 'order
 		    (vct-add! new-sound (vct-scale! (vct-copy rl1) (/ (* (vct-ref coeffs i) peak) pk)))))
 		(let ((pk (vct-peak new-sound)))
 		  (vct-scale! new-sound (/ peak pk)))))))
-    (vct->channel new-sound 0 (max len (* len (1- num-coeffs))) snd chn #f (format #f "spectral-polynomial ~A" (vct->string coeffs)))))
+    (vct->channel new-sound 0 (max len (* len (- num-coeffs 1))) snd chn #f (format #f "spectral-polynomial ~A" (vct->string coeffs)))))
 
 
 ;;; ----------------
@@ -1693,7 +1693,7 @@ the rendering frequency, the number of measurements per second; 'db-floor' is th
 	  ((= i order))
 	(let ((sum 0.0))
 	  (do ((j 0 (+ 1 j))
-	       (k i (1- k)))
+	       (k i (- k 1)))
 	      ((= j i))
 	    (set! sum (+ sum (* (vct-ref nfilt j) (vct-ref coeffs k)))))
 	  (vct-set! nfilt i (/ sum (- (vct-ref coeffs 0))))))
@@ -1758,9 +1758,9 @@ and replaces it with the spectrum given in coeffs"
 	((> i pairs))
       (let* ((aff (* i freq))
 	     (bwf (* bw (+ 1.0 (/ i (* 2 pairs))))))
-	(vector-set! peaks (1- i) (make-moving-max 128))
-	(vector-set! avgs (1- i) (make-moving-average 128))
-	(vector-set! bands (1- i) (make-bandpass (hz->2pi (- aff bwf)) 
+	(vector-set! peaks (- i 1) (make-moving-max 128))
+	(vector-set! avgs (- i 1) (make-moving-average 128))
+	(vector-set! bands (- i 1) (make-bandpass (hz->2pi (- aff bwf)) 
 						 (hz->2pi (+ aff bwf)) 
 						 order))))
     (as-one-edit
@@ -1780,7 +1780,7 @@ and replaces it with the spectrum given in coeffs"
 	      (if (= ctr 0) ; flush filter initial junk
 		  val
 		  (begin
-		    (set! ctr (1- ctr))
+		    (set! ctr (- ctr 1))
 		    0.0)))))
 	beg dur snd chn edpos)
        (if (> new-mx 0.0)
@@ -1815,7 +1815,7 @@ and replaces it with the spectrum given in coeffs"
 				(+ last (* pos (- next last))))
 			      0))))))
 	 (len (mus-sound-frames tempfile)))
-    (set-samples 0 (1- len) tempfile snd chn #t "linear-src" 0 #f #t)
+    (set-samples 0 (- len 1) tempfile snd chn #t "linear-src" 0 #f #t)
     ;; first #t=truncate to new length, #f=at current edpos, #t=auto delete temp file
     ))
 
@@ -2051,11 +2051,11 @@ and replaces it with the spectrum given in coeffs"
 	  (wk2 (make-vector n 0.0))
 	  (wkm (make-vector n 0.0)))
       (vector-set! wk1 0 (vct-ref data 0))
-      (vector-set! wk2 (- n 2) (vct-ref data (1- n)))
+      (vector-set! wk2 (- n 2) (vct-ref data (- n 1)))
       (do ((j 1 (+ 1 j)))
-	  ((= j (1- n)))
+	  ((= j (- n 1)))
 	(vector-set! wk1 j (vct-ref data j))
-	(vector-set! wk2 (1- j) (vct-ref data j)))
+	(vector-set! wk2 (- j 1) (vct-ref data j)))
       (do ((k 0 (+ 1 k)))
 	  ((= k m) d)
 	(let ((num 0.0)
@@ -2069,7 +2069,7 @@ and replaces it with the spectrum given in coeffs"
 	  (do ((i 0 (+ i 1)))
 	      ((= i k)) ; 1st time is skipped presumably
 	    (vector-set! d i (- (vector-ref wkm i) (* (vector-ref d k) (vector-ref wkm (- k i 1))))))
-	  (if (< k (1- m))
+	  (if (< k (- m 1))
 	      (begin
 		(do ((i 0 (+ i 1)))
 		    ((= i (+ 1 k)))
@@ -2091,7 +2091,7 @@ is assumed to be outside -1.0 to 1.0."
   (let ((future (make-vct nf 0.0))
 	(reg (make-vct m 0.0)))
     (do ((i 0 (+ i 1))
-	 (j (1- n) (1- j)))
+	 (j (- n 1) (- j 1)))
 	((= i m))
 	(vct-set! reg i (vct-ref data j)))
     (do ((j 0 (+ 1 j)))
@@ -2100,9 +2100,9 @@ is assumed to be outside -1.0 to 1.0."
 	(do ((k 0 (+ 1 k)))
 	    ((= k m))
 	  (set! sum (+ sum (* (vector-ref coeffs k) (vct-ref reg k)))))
-	(do ((k (1- m) (1- k)))
+	(do ((k (- m 1) (- k 1)))
 	    ((= k 0))
-	  (vct-set! reg k (vct-ref reg (1- k))))
+	  (vct-set! reg k (vct-ref reg (- k 1))))
 
 	;; added this block
 	(if clipped
@@ -2161,7 +2161,7 @@ is assumed to be outside -1.0 to 1.0."
 			 (begin                      ;   save the bounds in clip-data
 			   (set! in-clip #f)
 			   (vector-set! clip-data cur-clip clip-beg)
-			   (vector-set! clip-data (+ 1 cur-clip) (1- samp))
+			   (vector-set! clip-data (+ 1 cur-clip) (- samp 1))
 			   (set! cur-clip (+ cur-clip 2))))))
 	       (set! samp (+ 1 samp))
 	       #f)))
@@ -2185,7 +2185,7 @@ is assumed to be outside -1.0 to 1.0."
 		   
 		   (let ((forward-data-len data-len)
 			 (backward-data-len data-len)
-			 (previous-end (if (= clip 0) 0 (vector-ref clip-data (1- clip))))
+			 (previous-end (if (= clip 0) 0 (vector-ref clip-data (- clip 1))))
 			 (next-beg (if (< clip (- clips 3)) (vector-ref clip-data (+ clip 2)) (frames snd chn))))
 		     
 		     (if (< (- clip-beg data-len) previous-end)  ; current beg - data collides with previous
@@ -2221,9 +2221,9 @@ is assumed to be outside -1.0 to 1.0."
 			 
 			 (if (> clip-len 1)
 			     (do ((i 0 (+ i 1))
-				  (j (1- clip-len) (1- j)))
+				  (j (- clip-len 1) (- j 1)))
 				 ((= i clip-len))
-			       (let* ((sn (* 0.5 (+ 1.0 (cos (* pi (/ i (1- clip-len))))))))
+			       (let* ((sn (* 0.5 (+ 1.0 (cos (* pi (/ i (- clip-len 1))))))))
 				 (vct-set! new-data i (+ (* sn 
 							    (vct-ref future i))
 							 (* (- 1.0 sn) 
@@ -2307,7 +2307,7 @@ is assumed to be outside -1.0 to 1.0."
 (define* (make-savitzky-golay-filter size :optional (order 2)) ;assuming symmetric filter (left = right)
   (if (even? size) 
       (set! size (+ 1 size)))
-  (let* ((n (/ (1- size) 2))
+  (let* ((n (/ (- size 1) 2))
 	 (a (make-mixer (+ 1 order))))
     (do ((i 0 (+ i 1)))
 	((> i (* order 2)))
@@ -2364,7 +2364,7 @@ is assumed to be outside -1.0 to 1.0."
 	((= i n))
       (let ((n2 (- (* 0.5 (- n 1)) i))) 
 	(mixer-set! mat i i (* cw n2 n2))
-	(if (< i (1- n))
+	(if (< i (- n 1))
 	    (mixer-set! mat i (+ i 1) (* 0.5 (+ i 1) (- n 1 i))))
 	(if (> i 0)
 	    (mixer-set! mat i (- i 1) (* 0.5 i (- n i))))))
@@ -2553,11 +2553,11 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 				  ((>= i len) v)
 				(let ((hnum (vct-ref partials i)))
 				  (if (not (= hnum 0))
-				      (vct-set! v (1- hnum) (vct-ref partials (+ i 1))))))))
+				      (vct-set! v (- hnum 1) (vct-ref partials (+ i 1))))))))
 	 (min-partials (vct-copy original-partials)))
 
     (if (<= topk (/ (log tries) (log 2)))
-	(set! tries (inexact->exact (floor (expt 2 (1- topk))))))
+	(set! tries (inexact->exact (floor (expt 2 (- topk 1))))))
 
     (do ((try 0 (+ 1 try)))
 	((= try tries))
@@ -2580,7 +2580,7 @@ the multi-modulator FM case described by the list of modulator frequencies and i
 	(let ((hnum (vct-ref new-partials i)))
 	  (if (= hnum 0)
 	      (vct-set! new-partials (+ i 1) DC)
-	      (vct-set! new-partials (+ i 1) (vct-ref new-amps (1- hnum))))))
+	      (vct-set! new-partials (+ i 1) (vct-ref new-amps (- hnum 1))))))
       new-partials)))
 
       

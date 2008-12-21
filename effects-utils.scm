@@ -48,7 +48,7 @@
   (let ((sndlist '())
 	(chnlist '()))
     (for-each (lambda (snd)
-		(do ((i (1- (channels snd)) (1- i)))
+		(do ((i (- (channels snd) 1) (- i 1)))
 		    ((< i 0))
 		  (set! sndlist (cons snd sndlist))
 		  (set! chnlist (cons i chnlist))))

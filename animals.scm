@@ -741,7 +741,7 @@
 		      (+ (* .9 (oscil gen1 (* .1 noise)))
 			 (* .08 (oscil gen3 (* .18 noise)))
 			 (* .02 (oscil gen4 (* .28 noise)))))))
-	 (set! next-pulse (1- next-pulse)))))))
+	 (set! next-pulse (- next-pulse 1)))))))
 
 ;(with-sound (:play #t) (pinewoods-tree-frog 0 1 .5))
 
@@ -2006,8 +2006,8 @@
 		    (env pulsef)
 		    (oscil gen1 (+ (* .01 (oscil gen2))
 				   (rand-interp rnd)))))
-	 (set! song-ctr (1- song-ctr))
-	 (set! pulse-ctr (1- pulse-ctr)))))))
+	 (set! song-ctr (- song-ctr 1))
+	 (set! pulse-ctr (- pulse-ctr 1)))))))
 
 ;(with-sound (:play #t) (confused-ground-cricket 0 3 .3))
 
@@ -2226,7 +2226,7 @@
 		   (set! pulse-ctr (seconds->samples (+ pulse-dur .005 (random .01))))
 		   (set! pulse-ctr (seconds->samples pulse-dur)))
 	       (mus-reset pulsef)
-	       (set! pulses (1- pulses))
+	       (set! pulses (- pulses 1))
 	       (if (<= pulses 0)
 		   (begin
 		     (set! pulse-amp 0.0)
@@ -2239,7 +2239,7 @@
 		      (+ (* .8 (oscil gen1 0.0 rn))
 			 (* .1 (oscil gen2 0.0 (* 2 rn)))
 			 (* .1 (oscil gen3 0.0 (* 3 rn)))))))
-	 (set! pulse-ctr (1- pulse-ctr)))))))
+	 (set! pulse-ctr (- pulse-ctr 1)))))))
 
 
 ;(with-sound (:play #t) (southeastern-field-cricket 0 5 .3))

@@ -359,7 +359,7 @@
   (let ((len (string-length type)))
     (call-with-exit
      (lambda (return)
-       (do ((i (1- len) (1- i))
+       (do ((i (1- len) (- i 1))
 	    (ctr 0 (+ ctr 1)))
 	   ((= i 0) #f)
 	 (if (not (char=? (string-ref type i) #\*))
@@ -369,7 +369,7 @@
   (let ((len (string-length type)))
     (call-with-exit
      (lambda (return)
-       (do ((i (1- len) (1- i))
+       (do ((i (1- len) (- i 1))
 	    (ctr 0 (+ ctr 1)))
 	   ((= i 0) #f)
 	 (if (char=? (string-ref type i) #\*)
@@ -2779,7 +2779,7 @@
 				       (hey "XLG(")
 				       (display (format #f "unknown etc element type: ~A~%" type)))))))
 		     (hey "~A, ~D)" list-name j)
-		     (if (or with-null with-minus-one (< j (1- i)))
+		     (if (or with-null with-minus-one (< j (- i 1)))
 			 (hey ", "))))
 		 (if with-null
 		     (if (and (= i 0)

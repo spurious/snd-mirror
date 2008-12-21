@@ -424,7 +424,7 @@ whenever they're in the current view."
 			(> samp rs))
 		    (let ((rsamp (min (max 0 
 					   (- samp (inexact->exact (round (* .5 (- ls rs))))))
-				      (1- (frames snd chn)))))
+				      (- (frames snd chn) 1))))
 		      (set! (right-sample snd chn) rsamp)))
 		(update-time-graph)
 		#t)
@@ -514,13 +514,13 @@ whenever they're in the current view."
 	    (let* ((text (widget-text (list-ref (main-widgets) 4)))
 		   (len (and (string? text) (string-length text)))
 		   (happy #f))
-	      (if (and len (>= pos len)) (set! pos (1- len))) ;click at very bottom of listener is beyond current string end
+	      (if (and len (>= pos len)) (set! pos (- len 1))) ;click at very bottom of listener is beyond current string end
 	      (if (and len (>= pos 1))                        ;not click in empty listener, etc
 		  (begin
 		    (if (char-quit? (string-ref text pos))
 			(begin                      ;not currently in a name
 			  ;; go looking for plausible name (look left first)
-			  (do ((i (1- pos) (1- i)))
+			  (do ((i (- pos 1) (- i 1)))
 			      ((or happy (= i 0)))
 			    (if (char-alphabetic? (string-ref text i))
 				(begin
@@ -539,7 +539,7 @@ whenever they're in the current view."
 			(let ((start pos)
 			      (end pos))
 			  (set! happy #f)
-			  (do ((i (1- pos) (1- i)))  ;look for start of name
+			  (do ((i (- pos 1) (- i 1)))  ;look for start of name
 			      ((or happy (= i 0)))
 			    (if (char-quit? (string-ref text i))
 				(begin

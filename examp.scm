@@ -68,7 +68,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
       (let ((sndlist '())
 	    (chnlist '()))
 	(for-each (lambda (snd)
-		    (do ((i (1- (channels snd)) (1- i)))
+		    (do ((i (- (channels snd) 1) (- i 1)))
 			((< i 0))
 		      (set! sndlist (cons snd sndlist))
 		      (set! chnlist (cons i chnlist))))
@@ -109,7 +109,7 @@ two sounds open (indices 0 and 1 for example), and the second has two channels, 
 	    (if (= leng 0)
 		(sqrt (/ sum len))
 		(let ((val (next-sample reader)))
-		  (rsum (1- leng) (+ sum (* val val)))))))
+		  (rsum (- leng 1) (+ sum (* val val)))))))
 	(let ((val (rsum len 0.0)))
 	  (free-sample-reader reader)
 	  val))
@@ -770,7 +770,7 @@ then inverse ffts."
 	  (vct-set! rdata 0 0.0)
 	  (vct-set! idata 0 0.0)
 	  (do ((i 1 (+ i 1))
-	       (j (- fsize 1) (1- j)))
+	       (j (- fsize 1) (- j 1)))
 	      ((= i lo))
 	    (vct-set! rdata i 0.0)
 	    (vct-set! rdata j 0.0)
@@ -778,7 +778,7 @@ then inverse ffts."
 	    (vct-set! idata j 0.0))))
     (if (< hi (/ fsize 2))
 	(do ((i hi (+ i 1))
-	     (j (- fsize hi) (1- j)))
+	     (j (- fsize hi) (- j 1)))
 	    ((= i (/ fsize 2)))
 	  (vct-set! rdata i 0.0)
 	  (vct-set! rdata j 0.0)
@@ -786,7 +786,7 @@ then inverse ffts."
 	  (vct-set! idata j 0.0)))
     (fft rdata idata -1)
     (vct-scale! rdata (/ 1.0 fsize))
-    (vct->channel rdata 0 (1- len) snd chn #f (format #f "fft-edit ~A ~A" bottom top))))
+    (vct->channel rdata 0 (- len 1) snd chn #f (format #f "fft-edit ~A ~A" bottom top))))
 
 
 (define* (fft-squelch squelch :optional snd chn)
@@ -808,7 +808,7 @@ then inverse ffts."
 	    (vct-set! rdata 0 0.0)
 	    (vct-set! idata 0 0.0)))
       (do ((i 1 (+ i 1))
-	   (j (- fsize 1) (1- j)))
+	   (j (- fsize 1) (- j 1)))
 	  ((= i fsize2))
 	(let ((magnitude (sqrt (+ (* (vct-ref rdata i) (vct-ref rdata i)) (* (vct-ref idata i) (vct-ref idata i))))))
 	  (if (< magnitude scl-squelch)
@@ -819,7 +819,7 @@ then inverse ffts."
 		(vct-set! idata j 0.0)))))
       (fft rdata idata -1)
       (vct-scale! rdata (/ 1.0 fsize)))
-    (vct->channel rdata 0 (1- len) snd chn #f (format #f "fft-squelch ~A" squelch))
+    (vct->channel rdata 0 (- len 1) snd chn #f (format #f "fft-squelch ~A" squelch))
     scaler))
 
 
@@ -835,7 +835,7 @@ then inverse ffts."
 	   (lo-bin (inexact->exact (round (/ lo-freq hz-bin))))
 	   (hi-bin (inexact->exact (round (/ hi-freq hz-bin)))))
       (do ((i lo-bin (+ i 1))
-	   (j (- fsize lo-bin) (1- j)))
+	   (j (- fsize lo-bin) (- j 1)))
 	  ((> i hi-bin))
 	(vct-set! rdata i 0.0) ; ignoring window side lobes for now
 	(vct-set! idata i 0.0)
@@ -843,7 +843,7 @@ then inverse ffts."
 	(vct-set! idata j 0.0)))
     (fft rdata idata -1)
     (vct-scale! rdata (/ 1.0 fsize))
-    (vct->channel rdata 0 (1- len) snd chn #f (format #f "fft-cancel ~A ~A" lo-freq hi-freq))))
+    (vct->channel rdata 0 (- len 1) snd chn #f (format #f "fft-cancel ~A ~A" lo-freq hi-freq))))
     
 
 ;;; same idea but used to distinguish vowels (steady-state) from consonants
@@ -879,9 +879,9 @@ then inverse ffts."
 	 (ctr 0)
 	 (in-vowel #f))
     (do ((i 0 (+ i 1)))
-	((= i (1- fft-size)))
+	((= i (- fft-size 1)))
       (vct-set! rl i (read-ahead)))
-    (set! ctr (1- fft-size))
+    (set! ctr (- fft-size 1))
     (map-channel (lambda (y)
 		   (vct-set! rl ctr (read-ahead))
 		   (set! ctr (+ 1 ctr))
@@ -918,7 +918,7 @@ then inverse ffts."
       (vct-set! rdata 0 (* val (vct-ref rdata 0)))
       (vct-set! idata 0 (* val (vct-ref idata 0))))
     (do ((i 1 (+ i 1))
-	 (j (1- fsize) (1- j)))
+	 (j (- fsize 1) (- j 1)))
 	((= i fsize2))
       (let ((val (env e)))
 	(vct-set! rdata i (* val (vct-ref rdata i)))
@@ -931,7 +931,7 @@ then inverse ffts."
 
 (define* (fft-env-edit fft-env :optional snd chn)
   "(fft-env-edit fft-env) edits (filters) current chan using fft-env"
-  (vct->channel (fft-env-data fft-env snd chn) 0 (1- (frames)) snd chn #f (format #f "fft-env-edit '~A" fft-env)))
+  (vct->channel (fft-env-data fft-env snd chn) 0 (- (frames) 1) snd chn #f (format #f "fft-env-edit '~A" fft-env)))
 
 
 (define* (fft-env-interp env1 env2 interp :optional snd chn)
@@ -948,7 +948,7 @@ spectral envelopes) following interp (an env between 0 and 1)"
 	(vct-set! new-data i 
 		  (+ (* (- 1.0 pan) (vct-ref data1 i))
 		     (* pan (vct-ref data2 i))))))
-    (vct->channel new-data 0 (1- len) snd chn #f (format #f "fft-env-interp '~A '~A '~A" env1 env2 interp))))
+    (vct->channel new-data 0 (- len 1) snd chn #f (format #f "fft-env-interp '~A '~A '~A" env1 env2 interp))))
 
 
 (define* (filter-fft flt :optional (normalize #t) snd chn)
@@ -965,7 +965,7 @@ current spectrum value.  (filter-fft (lambda (y) (if (< y .01) 0.0 else y))) is 
     (fft rdata idata 1)
     (flt (vct-ref spect 0))
     (do ((i 1 (+ i 1))
-	 (j (- fsize 1) (1- j)))
+	 (j (- fsize 1) (- j 1)))
 	((= i fsize2))
       (let* ((orig (vct-ref spect i))
 	     (cur (flt orig)))
@@ -984,8 +984,8 @@ current spectrum value.  (filter-fft (lambda (y) (if (< y .01) 0.0 else y))) is 
     (fft rdata idata -1)
     (if (not (= mx 0.0))
 	(let ((pk (vct-peak rdata)))
-	  (vct->channel (vct-scale! rdata (/ mx pk)) 0 (1- len) snd chn #f (format #f "filter-fft ~A" flt)))
-	(vct->channel rdata 0 (1- len) snd chn #f (format #f "filter-fft ~A" flt)))))
+	  (vct->channel (vct-scale! rdata (/ mx pk)) 0 (- len 1) snd chn #f (format #f "filter-fft ~A" flt)))
+	(vct->channel rdata 0 (- len 1) snd chn #f (format #f "filter-fft ~A" flt)))))
 
 ;; (let ((op (make-one-zero .5 .5))) (filter-fft op))
 ;; (let ((op (make-one-pole .05 .95))) (filter-fft op))
@@ -1032,7 +1032,7 @@ section: (vct->channel (fft-smoother .1 (cursor) 400) (cursor) 400)"
 	 (im (make-vct fftpts))
 	 (top (inexact->exact (floor (* fftpts cutoff)))))
     (let* ((old0 (vct-ref rl 0))
-	   (old1 (vct-ref rl (1- samps)))
+	   (old1 (vct-ref rl (- samps 1)))
 	   (oldmax (vct-peak rl)))
       (fft rl im 1)
       (do ((i top (+ i 1)))
@@ -1048,7 +1048,7 @@ section: (vct->channel (fft-smoother .1 (cursor) 400) (cursor) 400)"
 	      (if (> (/ oldmax newmax) 1.5)
 		  (vct-scale! rl (/ oldmax newmax)))
 	      (let* ((new0 (vct-ref rl 0))
-		     (new1 (vct-ref rl (1- samps)))
+		     (new1 (vct-ref rl (- samps 1)))
 		     (offset0 (- old0 new0))
 		     (offset1 (- old1 new1))
 		     (incr (if (= offset1 offset0) 0.0 (/ (- offset1 offset0) samps))))
@@ -1570,7 +1570,7 @@ selected sound: (map-channel (cross-synthesis 1 .5 128 6.0))"
     ;; use a sine wave to lookup the current sound
     (let ((osc (make-oscil :frequency freq :initial-phase (+ pi (/ pi 2))))
 	  (reader (make-sound-interp 0 0 0)) 
-	  (len (1- (frames 0 0))))
+	  (len (- (frames 0 0) 1)))
       (map-channel (lambda (val) 
 		     (sound-interp reader (* len (+ 0.5 (* 0.5 (oscil osc))))))))))
 
@@ -1580,7 +1580,7 @@ selected sound: (map-channel (cross-synthesis 1 .5 128 6.0))"
 
 (define (sound-via-sound snd1 snd2) ; "sound composition"??
   (let* ((intrp (make-sound-interp 0 snd1 0))
-	 (len (1- (frames snd1 0)))
+	 (len (- (frames snd1 0) 1))
 	 (rd (make-sample-reader 0 snd2 0))
 	 (mx (maxamp snd2 0)))
       (map-channel (lambda (val) 
@@ -1617,10 +1617,10 @@ selected sound: (map-channel (cross-synthesis 1 .5 128 6.0))"
       (set! data-ctr (+ 1 data-ctr))
       (if (= bufsize data-ctr)
 	  (begin
-	    (mus-sound-write fil 0 (1- bufsize) 1 data)
+	    (mus-sound-write fil 0 (- bufsize 1) 1 data)
 	    (set! data-ctr 0))))
     (if (> data-ctr 0)
-	(mus-sound-write fil 0 (1- data-ctr) 1 data))
+	(mus-sound-write fil 0 (- data-ctr 1) 1 data))
     (mus-sound-close-output fil (* (mus-bytes-per-sample mus-out-format) newlen))
     ;; #t trunc arg to set samples shortens the sound as needed
     (set-samples 0 newlen tempfilename snd chn #t
@@ -1679,11 +1679,11 @@ the given channel following 'envelope' (as in env-sound-interp), using grains to
 	(set! data-ctr (+ 1 data-ctr))
 	(if (= bufsize data-ctr)
 	    (begin
-	      (mus-sound-write fil 0 (1- bufsize) 1 data)
+	      (mus-sound-write fil 0 (- bufsize 1) 1 data)
 	      (set! data-ctr 0)))))
 
     (if (> data-ctr 0)
-	(mus-sound-write fil 0 (1- data-ctr) 1 data))
+	(mus-sound-write fil 0 (- data-ctr 1) 1 data))
     (mus-sound-close-output fil (* (mus-bytes-per-sample mus-out-format) newlen))
     ;; #t trunc arg to set samples shortens the sound as needed
     (set-samples 0 newlen tempfilename snd chn #t
@@ -1919,7 +1919,7 @@ as env moves to 0.0, low-pass gets more intense; amplitude and low-pass amount m
 	   (if (and (> (abs (- samp0 samp1)) local-max)
 		    (> (abs (- samp1 samp2)) local-max)
 		    (< (abs (- samp0 samp2)) (/ local-max 2)))
-	       (return (1- ctr)))))))))
+	       (return (- ctr 1)))))))))
 
 
 (define (remove-clicks)
@@ -2014,7 +2014,7 @@ In most cases, this will be slightly offset from the true beginning of the note"
 			       ((= i (/ (transform-size) 2)) 
 				(/ (* (+ pkloc
 					 (if (> pkloc 0)
-					     (interpolated-peak-offset (vct-ref spectr (1- pkloc))
+					     (interpolated-peak-offset (vct-ref spectr (- pkloc 1))
 								       (vct-ref spectr pkloc)
 								       (vct-ref spectr (+ 1 pkloc)))
 					     0.0))
@@ -2303,7 +2303,7 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 (define* (smooth-channel-via-ptree :optional (beg 0) dur snd chn edpos)
   "(smooth-channel-via-ptree :optional (beg 0) dur snd chn edpos) is smooth-channel implemented as a virtual edit"
   (let* ((y0 (sample beg snd chn edpos))
-	 (y1 (sample (+ beg (or dur (1- (frames)))) snd chn edpos))
+	 (y1 (sample (+ beg (or dur (- (frames) 1))) snd chn edpos))
 	 (init-angle (if (> y1 y0) pi 0.0)) 
 	 (off (* .5 (+ y0 y1))) 
 	 (scale (* 0.5 (abs (- y1 y0))))
@@ -2436,7 +2436,7 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 			(set! reg (vector-ref pieces j))
 			(if reg (vector-set! pieces j #f)))
 		      (if (not reg)
-			  (do ((j (1- this) (1- j)))
+			  (do ((j (- this 1) (- j 1)))
 			      ((or (< j 0)
 				   reg))
 			    (set! reg (vector-ref pieces j))
@@ -2598,7 +2598,7 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
       (let ((old-fam (with-file-monitor))) 
 	(set! (with-file-monitor) #f) ; no need to monitor these guys
 	(format fd ";;; sound data from ~S" main-dir)
-	(if (not (char=? (string-ref main-dir (1- (string-length main-dir))) #\/))
+	(if (not (char=? (string-ref main-dir (- (string-length main-dir) 1)) #\/))
 	    (set! main-dir (string-append main-dir "/")))
 	(for-each
 	 (lambda (dir)
@@ -2650,7 +2650,7 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 		 (set! last-y (abs y))
 		 (if (and clipping (not marked))
 		     (begin
-		       (add-mark (1- samp) snd chn)
+		       (add-mark (- samp 1) snd chn)
 		       (set! marked #t))
 		     (if marked
 			 (set! marked (or (> (abs y) 0.9999)
@@ -2696,7 +2696,7 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 	       (begin
 		 (if forward
 		     (begin
-		       (do ((i (- order 1) (1- i)))
+		       (do ((i (- order 1) (- i 1)))
 			   ((= i 0))
 			 (vct-set! data (+ i state-0) (vct-ref data (+ i -1 state-0))))
 		       (vct-set! data state-0 y)
@@ -2707,10 +2707,10 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 			   (set! y 0.0)
 			   (set! y (sample pos snd chn edpos)))
 		       (do ((i 0 (+ i 1)))
-			   ((= i (1- order)))
+			   ((= i (- order 1)))
 			 (vct-set! data (+ i state-0) (vct-ref data (+ i 1 state-0))))
 		       (vct-set! data (+ state-0 order -1) y)
-		       (set! cur-loc (1- cur-loc))))))
+		       (set! cur-loc (- cur-loc 1))))))
 	   )
        
        (do ((i 0 (+ i 1)))
@@ -2739,19 +2739,19 @@ a sort of play list: (region-play-list (list (list 0.0 0) (list 0.5 1) (list 1.0
 	 (vct-set! d (+ i coeffs-0) (vct-ref coeffs i)))
        
        (let ((start (- (+ 1 frag-beg beg) order))
-	     (i (1- order)))
+	     (i (- order 1)))
 	 (if (< start 0)
 	     (do ()
 		 ((= start 0))
 	       (vct-set! d (+ i state-0) 0)
-	       (set! i (1- i))
+	       (set! i (- i 1))
 	       (set! start (+ 1 start))))
 	 (if (>= i 0)
 	     (let ((rd (make-sample-reader start snd chn 1 edpos)))
 	       (do ()
 		   ((= i -1))
 		 (vct-set! d (+ i state-0) (rd))
-		 (set! i (1- i)))
+		 (set! i (- i 1)))
 	       (free-sample-reader rd)))
 	 (vct-set! d 1 (+ frag-beg beg))
 	   
