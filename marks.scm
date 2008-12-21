@@ -82,7 +82,7 @@
                (max-edits (apply + (edits snd chn)))
                (descr '())
                (header (list 'mark id 'sound snd (short-file-name snd) 'channel chn)))
-          (do ((i max-edits (1- i)))
+          (do ((i max-edits (- i 1)))
               ((< i 0) descr)
             (if (member id (marks snd chn i))
                 (set! descr (cons (mark-sample id i) descr))

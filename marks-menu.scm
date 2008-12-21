@@ -511,7 +511,7 @@ using the granulate generator to fix up the selection duration (this still is no
               (chn (cadr m1sc)))
           (set! (selection-member? snd chn) #t)
           (set! (selection-position snd chn) beg)
-          (set! (selection-frames snd chn) (1+ (- end beg)))))))
+          (set! (selection-frames snd chn) (+ 1 (- end beg)))))))
 
 (define (cp-define-by-marks)
  (define-selection-via-marks define-by-mark-one define-by-mark-two))

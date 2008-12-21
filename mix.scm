@@ -85,7 +85,7 @@
       (if (< (mix-length id) 1000000)
 	  (let ((v (mix->vct id))
 		(fd (mus-sound-open-output filename (srate) 1 #f #f "")))
-	    (mus-sound-write fd 0 (1- (vct-length v)) 1 (vct->sound-data v))
+	    (mus-sound-write fd 0 (- (vct-length v) 1) 1 (vct->sound-data v))
 	    (mus-sound-close-output fd (* (mus-bytes-per-sample mus-out-format) (vct-length v))))
 	  (let* ((buflen 10000)
 		 (sd (make-sound-data 1 buflen))
@@ -96,7 +96,7 @@
 	      (do ((i 0 (+ 1 i)))
 		  ((= i buflen))
 		(sound-data-set! sd 0 i (read-mix-sample reader)))
-	      (mus-sound-write fd 0 (1- buflen) 1 sd))
+	      (mus-sound-write fd 0 (- buflen 1) 1 sd))
 	    (free-sample-reader reader)
 	    (mus-sound-close-output fd (* (mus-bytes-per-sample mus-out-format) len))))
       (throw 'no-such-mix (list "save-mix" id))))
@@ -384,7 +384,7 @@ last end of the mixes in 'mix-list'"
        (vct-add! data (mix->vct m) (- (mix-position m) beg)))
      mix-list)
     (let ((fd (mus-sound-open-output filename (srate) 1 #f #f "")))
-      (mus-sound-write fd 0 (1- len) 1 (vct->sound-data data))
+      (mus-sound-write fd 0 (- len 1) 1 (vct->sound-data data))
       (mus-sound-close-output fd (* (mus-bytes-per-sample mus-out-format) (vct-length data))))))
 
 
@@ -572,7 +572,7 @@ starting at 'start' (in samples) using 'pan-env' to pan (0: all chan 0, 1: all c
 
   (let* ((temp-file (snd-tempnam))
 	 (fd (mus-sound-open-output temp-file (srate snd) 1 #f #f "")))
-    (mus-sound-write fd 0 (1- (vct-length v)) 1 (vct->sound-data v))
+    (mus-sound-write fd 0 (- (vct-length v) 1) 1 (vct->sound-data v))
     (mus-sound-close-output fd (* (mus-bytes-per-sample mus-out-format) (vct-length v)))
     (pan-mix temp-file beg pan snd chn #t)))
 

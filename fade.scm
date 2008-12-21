@@ -54,7 +54,7 @@
 			   (outval 0.0))
 		       (set! bank1 (+ bank1 bank-incr))
 		       (do ((k 0 (+ 1 k)))
-			   ((= k (1- fs)))
+			   ((= k (- fs 1)))
 			 (set! outval (+ outval (formant (vector-ref fs1 (+ 1 k)) inval))))
 		       (set! val (+ (* bank1 outval) (* (- 1.0 bank1) inval))))
 
@@ -64,7 +64,7 @@
 			       (outval 0.0))
 			   (set! bank2 (- bank2 bank-incr))
 			   (do ((k 0 (+ 1 k)))
-			       ((= k (1- fs)))
+			       ((= k (- fs 1)))
 			     (set! outval (+ outval (formant (vector-ref fs1 (+ 1 k)) inval))))
 			   (set! val (+ (* bank2 outval) (* (- 1.0 bank2) inval))))
 
@@ -79,7 +79,7 @@
 			       (let ((r2 (* 2 ramp)))
 				 ;; sweep up so low freqs go first
 				 (do ((k 0 (+ 1 k)))
-				     ((= k (1- fs)))
+				     ((= k (- fs 1)))
 				   (let ((rfs (max 0.0 (min 1.0 (- r2 (* k ifs))))))
 				     (set! outval (+ outval (formant (vector-ref fs1 (+ 1 k)) 
 								     (+ (* rfs inval2) (* (- 1.0 rfs) inval1)))))))
@@ -89,7 +89,7 @@
 				   (let ((r2 (* 2 ramp)))
 				     ;; sweep up so high freqs go first
 				     (do ((k 0 (+ 1 k)))
-					 ((= k (1- fs)))
+					 ((= k (- fs 1)))
 				       (let ((rfs (max 0.0 (min 1.0 (- r2 (* (- fs k) ifs))))))
 					 (set! outval (+ outval (formant (vector-ref fs1 (+ 1 k)) 
 									 (+ (* rfs inval2) (* (- 1.0 rfs) inval1)))))))
@@ -103,7 +103,7 @@
 					 (set! outval (+ outval (formant (vector-ref fs1 (+ 1 k)) 
 									 (+ (* rfs inval2) (* (- 1.0 rfs) inval1)))))))
 				     (do ((k 0 (+ 1 k)))
-					 ((= k (1- half-fs)))
+					 ((= k (- half-fs 1)))
 				       (let ((rfs (max 0.0 (min 1.0 (- r2 (/ k half-fs))))))
 					 (set! outval (+ outval (formant (vector-ref fs1 (+ k 1 half-fs)) 
 									 (+ (* rfs inval2) (* (- 1.0 rfs) inval1)))))))
@@ -154,7 +154,7 @@
 		       (call-with-exit
 			(lambda (break)
 			  (do ((j next (+ 1 j))
-			       (k next (1- k)))
+			       (k next (- k 1)))
 			      (#t)
 			    (if (and (< j freq-inc) 
 				     (= (vct-ref spectrum j) 1.0))

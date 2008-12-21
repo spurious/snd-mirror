@@ -46,7 +46,7 @@
 (define (vcts-map! . args)
   "(vcts-map! . args) is obsolete and pointless"
   (let* ((arglen (length args))
-	 (func (list-ref args (1- arglen)))
+	 (func (list-ref args (- arglen 1)))
 	 (vcts (reverse (cdr (reverse args))))
 	 (num-vcts (length vcts))
 	 (vlen (apply min (map vct-length vcts))))
@@ -60,7 +60,7 @@
 (define (vcts-do! . args)
   "(vcts-do! . args) is obsolete and pointless"
   (let* ((arglen (length args))
-	 (func (list-ref args (1- arglen)))
+	 (func (list-ref args (- arglen 1)))
 	 (vcts (reverse (cdr (reverse args))))
 	 (num-vcts (length vcts))
 	 (vlen (apply min (map vct-length vcts))))

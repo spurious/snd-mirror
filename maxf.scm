@@ -309,11 +309,11 @@ the desired phase.
 	   (set! numf 1)))
     (run
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ 1 i)))
 	   ((= i end))
 	 (let ((outvalA (* att (readin rdA)))
 	       (add-fl 0))
-	   (do ((j 0 (1+ j)))
+	   (do ((j 0 (+ 1 j)))
 	       ((= j numf))
 	     (cond ((= numf 1)
 		    (set-coeffs formfil (array-ref state-0 j 0)
@@ -346,7 +346,7 @@ the desired phase.
 ;;   (with-sound (:play 1 :statistics #t :channels 4 :output ofile :reverb jc-reverb
 ;; 			   :comment
 ;; 			   (format #f "maxfilter test, filters ~S, source ~A" number-ary ifile))
-;; 	      (do ((i 0 (1+ i))
+;; 	      (do ((i 0 (+ 1 i))
 ;; 		   (nary number-ary (cdr nary)))
 ;; 		  ((null? nary))
 ;; 		(maxfilter ifile i :numf (car nary) :degree (random 3454)))))

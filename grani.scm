@@ -233,7 +233,7 @@
 
 (define* (make-gr-env env :optional (length 512))
   (let* ((env-vct (make-vct length))
-	 (length-1 (exact->inexact (1- length))))
+	 (length-1 (exact->inexact (- length 1))))
     (do ((i 0 (+ 1 i)))
 	((= i length) env-vct)
       (vct-set! env-vct i (envelope-interp (/ i length-1) env)))))
@@ -246,7 +246,7 @@
 			(length 128))
   (let* ((v (make-vct length))
 	 (active (* length duty-cycle 0.01))
-	 (incr (/ pi (1- active)))
+	 (incr (/ pi (- active 1)))
 	 (start (/ (- length active) 2))
 	 (end (/ (+ length active) 2))
 	 (s 0))
@@ -354,7 +354,7 @@
 	 ;; ratio between input and output sampling rates
 	 (srate-ratio (/ in-file-sr (mus-srate)))
 	 ;; sample rate converter for input samples
-	 (rd (make-readin :file file :channel (min input-channel (1- in-file-channels))))
+	 (rd (make-readin :file file :channel (min input-channel (- in-file-channels 1))))
 	 (in-file-reader (make-src :input (lambda (dir) readin(rd)) :srate 1.0))
 	 ;; sample rate conversion envelope
 	 (sr-env (make-env :envelope (if srate-linear

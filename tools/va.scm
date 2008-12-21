@@ -123,7 +123,7 @@
 					    (set! count 0)))))))))))
 	       (if (and ok
 			(not (= precount count 0))
-			(not (= count (1- precount))))
+			(not (= count (- precount 1))))
 		   (display (format #f "calloc ~D->~D: ~A~%" precount count line)))
 	       (loop (read-line file 'concat))))))))
  (list "CALLOC" "MALLOC" "REALLOC" "calloc" "malloc" "realloc"))
@@ -234,7 +234,7 @@
 				      (not (string=? "_setB" (substring line i (+ i 5)))))
 				 (if (not (string=? func-name (substring line (+ 1 i) (+ i 1 func-name-len))))
 				     (let ((start (+ 1 i))
-					   (end (min (1- len) (+ i 1 func-name-len))))
+					   (end (min (- len 1) (+ i 1 func-name-len))))
 				       (do ((k end (+ k 1)))
 					   ((or (>= k len)
 						(let ((ch3 (string-ref line k)))

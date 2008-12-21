@@ -345,7 +345,7 @@
 
 (define (deref-type arg)
   (let ((type (car arg)))
-    (substring type 0 (1- (string-length type)))))
+    (substring type 0 (- (string-length type) 1))))
 
 (define (deref-element-type arg)
   (let ((type (car arg)))
@@ -359,7 +359,7 @@
   (let ((len (string-length type)))
     (call-with-exit
      (lambda (return)
-       (do ((i (1- len) (- i 1))
+       (do ((i (- len 1) (- i 1))
 	    (ctr 0 (+ ctr 1)))
 	   ((= i 0) #f)
 	 (if (not (char=? (string-ref type i) #\*))
@@ -369,7 +369,7 @@
   (let ((len (string-length type)))
     (call-with-exit
      (lambda (return)
-       (do ((i (1- len) (- i 1))
+       (do ((i (- len 1) (- i 1))
 	    (ctr 0 (+ ctr 1)))
 	   ((= i 0) #f)
 	 (if (char=? (string-ref type i) #\*)
@@ -405,10 +405,10 @@
 	    ((= i len) (reverse data))
 	  (let ((ch (string-ref args i)))
 	    (if (or (char=? ch #\space)
-		    (= i (1- len)))
+		    (= i (- len 1)))
 		(begin
 		  (if type
-		      (let* ((given-name (substring args (+ 1 sp) (if (= i (1- len)) (+ 1 i) i)))
+		      (let* ((given-name (substring args (+ 1 sp) (if (= i (- len 1)) (+ 1 i) i)))
 			     (reftype #f))
 			(if (char=? (string-ref given-name 0) #\@)
 			    (set! data (cons (list type 
@@ -1846,12 +1846,12 @@
 (for-each
  (lambda (type)
    (let* ((len (string-length type))
-	  (dereftype (if (and (char=? (string-ref type (1- len)) #\*)
+	  (dereftype (if (and (char=? (string-ref type (- len 1)) #\*)
 			      (not (string=? type "char*")) ; these are surely strings (and set would need XEN_TO_C_gchar etc)
 			      (not (string=? type "GError*"))
 			      (not (string=? type "GError**"))
 			      (not (string=? type "gchar*")))
-			 (substring type 0 (1- len)) 
+			 (substring type 0 (- len 1)) 
 			 #f)))
      (if (and dereftype
 	      (assoc dereftype direct-types))
@@ -2720,7 +2720,7 @@
 	   (begin
 	     ;; goes to end
 	     ;; need to check ... list, set up locals, send out switch, return result
-	     (let* ((list-name (cadr (list-ref args (1- cargs))))
+	     (let* ((list-name (cadr (list-ref args (- cargs 1))))
 		    (min-len (car spec-data))
 		    (max-len (cadr spec-data))
 		    (types (caddr spec-data))
@@ -2735,20 +2735,20 @@
 	       (if (not (string=? return-type "void"))
 		   (hey "    ~A result = ~A;~%" return-type (if (has-stars return-type) "NULL" "0")))
 	       (do ((i 0 (+ 1 i)))
-		   ((= i (1- cargs)))
+		   ((= i (- cargs 1)))
 		 (let ((arg (list-ref args i)))
 		   (hey "    ~A p_arg~D;~%" (car arg) i)))
 	       (hey "    if (XEN_LIST_P(~A)) etc_len = XEN_LIST_LENGTH(~A);~%" list-name list-name)
 	       (if (> min-len 0)
 		   (hey "    if (etc_len < ~D) XEN_OUT_OF_RANGE_ERROR(~S, ~A, ~A, \"... list must have at least ~D entr~A\");~%"
-			min-len name (1- cargs) list-name min-len (if (= min-len 1) "y" "ies")))
+			min-len name (- cargs 1) list-name min-len (if (= min-len 1) "y" "ies")))
 	       (hey "    if (etc_len > ~D) XEN_OUT_OF_RANGE_ERROR(~S, ~A, ~A, \"... list too long (max len: ~D)\");~%"
-		    max-len name (1- cargs) list-name max-len)
+		    max-len name (- cargs 1) list-name max-len)
 	       (if (not (= modlen 1))
 		   (hey "    if ((etc_len % ~D) != 0) XEN_OUT_OF_RANGE_ERROR(~S, ~A, ~A, \"... list len must be multiple of ~D\");~%"
-			modlen name (1- cargs) list-name modlen))
+			modlen name (- cargs 1) list-name modlen))
 	       (do ((i 0 (+ 1 i)))
-		   ((= i (1- cargs)))
+		   ((= i (- cargs 1)))
 		 (let ((arg (list-ref args i)))
 		   (hey "    p_arg~D = XEN_TO_C_~A(~A);~%" i (no-stars (car arg)) (cadr arg))))
 	       (hey "    switch (etc_len)~%")
@@ -2759,7 +2759,7 @@
 		     (hey "        case ~D: result = ~A(" i name)
 		     (hey "        case ~D: ~A(" i name))
 		 (do ((j 0 (+ 1 j)))
-		     ((= j (1- cargs)))
+		     ((= j (- cargs 1)))
 		   (let ((arg (list-ref args j)))
 		     (hey "p_arg~D, " j)))
 		 ;; assume ending null for now

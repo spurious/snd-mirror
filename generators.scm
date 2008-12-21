@@ -233,7 +233,7 @@
 				      (lambda (g) 
 					,sname)
 				      (lambda (g new-name)
-					(set-car! (cdr (assoc 'mus-name (list-ref g (1- (length g)))))
+					(set-car! (cdr (assoc 'mus-name (list-ref g (- (length g) 1))))
 						  (lambda (g) 
 						    new-name))))) ; depend on closures?
 			       (list)))))
@@ -928,7 +928,7 @@
 			       g)
 	       :methods (list
 			 (list 'mus-order
-			       (lambda (g) (1- (nrcos-n g)))
+			       (lambda (g) (- (nrcos-n g) 1))
 			       (lambda (g val) (set! (nrcos-n g) (+ 1 val)) val))
 			 (list 'mus-scaler
 			       (lambda (g) (nrcos-r g))
@@ -1194,7 +1194,7 @@
 			       g)
 	       :methods (list
 			 (list 'mus-order
-			       (lambda (g) (1- (nkssb-n g)))
+			       (lambda (g) (- (nkssb-n g) 1))
 			       (lambda (g val) (set! (nkssb-n g) (+ 1 val)) val))))
   (frequency *clm-default-frequency*) (ratio 1.0) (n 1 :type int) (angle 0.0))
 
@@ -5173,7 +5173,7 @@ index 10 (so 10/2 is the bes-jn arg):
 	 (max-angle (* pi 0.5 n))
 	 (new-angle (+ x fm (sinc-train-frequency gen)))
 	 (DC (/ 1.0 n))
-	 (norm (/ n (1- n))))
+	 (norm (/ n (- n 1))))
     
     (if (> new-angle max-angle)
 	(set! new-angle (- new-angle (* pi n))))
@@ -5800,7 +5800,7 @@ index 10 (so 10/2 is the bes-jn arg):
 		    (vct-set! amps (+ j 1) (/ 1.0 n))
 
 		    (if (vct? phases)
-			(vct-set! amps (+ j 2) (vct-ref phases (1- i)))
+			(vct-set! amps (+ j 2) (vct-ref phases (- i 1)))
 			(if (not phases)
 			    (vct-set! amps (+ j 2) (random (* 2 pi)))
 			    (if (eq? phases 'max-peak)
@@ -5849,7 +5849,7 @@ index 10 (so 10/2 is the bes-jn arg):
 				     (j 0 (+ j 3)))
 				    ((> i n))
 				  (vct-set! amps (+ j 1) (/ 0.999 norm)) ; I'm truncating when saving the peak
-				  (vct-set! amps (+ j 2) (* pi (vector-ref rats (1- i))))))))))
+				  (vct-set! amps (+ j 2) (* pi (vector-ref rats (- i 1))))))))))
 			      
 		  amps)))
 
@@ -5929,7 +5929,7 @@ index 10 (so 10/2 is the bes-jn arg):
   (let* ((samps 44100)
 	 (n 10)
 	 (gen (make-noid 1.0 n 'min-peak))
-	 (gen2 (make-oscil n (vct-ref (polyoid-partial-amps-and-phases gen) (1- (vct-length (polyoid-partial-amps-and-phases gen)))))))
+	 (gen2 (make-oscil n (vct-ref (polyoid-partial-amps-and-phases gen) (- (vct-length (polyoid-partial-amps-and-phases gen)) 1)))))
     (do ((i 0 (+ i 1)))
 	((= i samps))
       (outa i (noid gen))
@@ -6009,7 +6009,7 @@ index 10 (so 10/2 is the bes-jn arg):
 		    (vct-set! amps (+ j 1) rn)
 		    (set! rn (* rn r))
 		    (if (vct? phases)
-			(vct-set! amps (+ j 2) (vct-ref phases (1- i)))
+			(vct-set! amps (+ j 2) (vct-ref phases (- i 1)))
 			(if (not phases)
 			    (vct-set! amps (+ j 2) (random (* 2 pi)))
 			    (if (eq? phases 'max-peak)
@@ -6056,7 +6056,7 @@ index 10 (so 10/2 is the bes-jn arg):
 				    ((> i n))
 				  (vct-set! amps (+ j 1) rn)
 				  (set! rn (* rn r))
-				  (vct-set! amps (+ j 2) (* pi (vector-ref rats (1- i))))))))))
+				  (vct-set! amps (+ j 2) (* pi (vector-ref rats (- i 1))))))))))
 			      
 		  amps)))
 

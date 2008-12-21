@@ -1166,7 +1166,7 @@
 	  (list icon-back-one-sample
 		(lambda (w c i) 
 		  (if (not (null? (sounds))) 
-		      (set! (cursor) (max 0 (1- (cursor))))))
+		      (set! (cursor) (max 0 (- (cursor) 1)))))
 		"Move back one sample")
 	  
 	  (list icon-mid-window
@@ -1178,7 +1178,7 @@
 	  (list icon-forward-one-sample
 		(lambda (w c i) 
 		  (if (not (null? (sounds))) 
-		      (set! (cursor) (min (1- (frames)) (1+ (cursor))))))
+		      (set! (cursor) (min (- (frames) 1) (+ 1 (cursor))))))
 		"Move forward one sample")
 	  
 	  (list icon-forward-one-window
@@ -1196,7 +1196,7 @@
 	  (list icon-end-of-file
 		(lambda (w c i) 
 		  (if (not (null? (sounds))) 
-		      (set! (cursor) (1- (frames)))))
+		      (set! (cursor) (- (frames) 1))))
 		"Move to end of file")
 	  
 	  (list icon-last-mix-point
@@ -1296,7 +1296,7 @@
       (let ((sof-button (gtk_tool_button_new_from_stock GTK_STOCK_GOTO_LAST)))
 	(gtk_toolbar_insert (GTK_TOOLBAR toolbar) sof-button -1)
 	(gtk_widget_show (GTK_WIDGET sof-button))
-	(g_signal_connect sof-button "clicked" (lambda (w data) (if (not (null? (sounds))) (set! (cursor) (1- (frames)))))))
+	(g_signal_connect sof-button "clicked" (lambda (w data) (if (not (null? (sounds))) (set! (cursor) (- (frames) 1))))))
 
       (let ((sof-button (gtk_tool_button_new_from_stock GTK_STOCK_ZOOM_IN)))
 	(gtk_toolbar_insert (GTK_TOOLBAR toolbar) sof-button -1)

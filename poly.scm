@@ -35,7 +35,7 @@
 
 (define (poly-as-vector-eval v x)
   "(poly-as-vector-eval v x) treats 'v' as a vector of polynomial coefficients, returning the value of the polynomial at x"
-  (let ((sum (vector-ref v (1- (vector-length v)))))
+  (let ((sum (vector-ref v (- (vector-length v) 1))))
     (do ((i (- (vector-length v) 2) (- i 1)))
 	((< i 0) sum)
       (set! sum (+ (* sum x) (vector-ref v i))))))
@@ -44,7 +44,7 @@
 (define (poly-as-vector-reduce p1)
   "(poly-as-vector-reduce p1) removes trailing (high-degree) zeros from the vector p1"
   ;; always return at least a 0 coeff (rather than return #f=0 polynomial)
-  (let ((new-len (do ((i (1- (vector-length p1)) (- i 1)))
+  (let ((new-len (do ((i (- (vector-length p1) 1) (- i 1)))
 		     ((or (= i 0)
 			  (not (= (vector-ref p1 i) 0.0)))
 		      (+ i 1)))))
@@ -58,7 +58,7 @@
 
 (define (poly-reduce p1)
   "(poly-reduce p1) removes trailing (high-degree) zeros from the vector or vct p1"
-  (if (= (vct-ref p1 (1- (vct-length p1))) 0.0)
+  (if (= (vct-ref p1 (- (vct-length p1) 1)) 0.0)
       (vector->vct (poly-as-vector-reduce (vct->vector p1)))
       p1))
 
@@ -139,12 +139,12 @@
 		  (do ((i 0 (+ i 1)))
 		      ((= i len))
 		    (vector-set! r i (vector-ref p1 i)))
-		  (let ((n (1- p1len))
-			(nv (1- p2len)))
-		    (do ((k (- n nv) (1- k)))
+		  (let ((n (- p1len 1))
+			(nv (- p2len 1)))
+		    (do ((k (- n nv) (- k 1)))
 			((< k 0))
 		      (vector-set! q k (/ (vector-ref r (+ nv k)) (vector-ref p2 nv)))
-		      (do ((j (+ nv k -1) (1- j)))
+		      (do ((j (+ nv k -1) (- j 1)))
 			  ((< j k))
 			(vector-set! r j (- (vector-ref r j) (* (vector-ref q k) (vector-ref p2 (- j k)))))))
 		    (do ((j nv (+ 1 j)))
@@ -169,10 +169,10 @@
 
 (define (poly-as-vector-derivative p1)
   "(poly-as-vector-derivative p1) returns the derivative or polynomial p1 (as a vector)"
-  (let* ((len (1- (vector-length p1)))
+  (let* ((len (- (vector-length p1) 1))
 	 (v (make-vector len)))
-    (do ((i (1- len) (- i 1))
-	 (j len (1- j)))
+    (do ((i (- len 1) (- i 1))
+	 (j len (- j 1)))
 	((< i 0) v)
       (vector-set! v i (* j (vector-ref p1 j))))))
 
@@ -195,12 +195,12 @@
 	 (mat (make-mixer (+ n m -2))))
     ;; load matrix with n-1 rows of m's coeffs then m-1 rows of n's coeffs (reversed in sense), return determinant
     (do ((i 0 (+ i 1)))
-	((= i (1- n)))
+	((= i (- n 1)))
       (do ((j 0 (+ 1 j)))
 	  ((= j m))
 	(mixer-set! mat i (+ i j) (vector-ref p1 (- m j 1)))))
     (do ((i 0 (+ i 1)))
-	((= i (1- m)))
+	((= i (- m 1)))
       (do ((j 0 (+ 1 j)))
 	  ((= j n))
 	(mixer-set! mat (+ i n -1) (+ i j) (vector-ref p2 (- n j 1)))))
@@ -371,7 +371,7 @@
 	(set! roots (cons (simplify-complex (* n (exp (* i incr)))) roots)))
       roots))
 
-  (let ((deg (1- (vector-length p1))))
+  (let ((deg (- (vector-length p1) 1)))
 
     (if (= deg 0)                                     ; just constant
 	'()
@@ -476,7 +476,7 @@
 						(begin
 						  (set! x (real-part x))
 						  (set! q (poly-as-vector/ q (vector (- x) 1.0)))
-						  (set! n (1- n)))
+						  (set! n (- n 1)))
 						(begin
 						  (set! q (poly-as-vector/ q (vector (magnitude x) 0.0 1.0)))
 						  (set! n (- n 2))))

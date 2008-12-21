@@ -122,7 +122,7 @@
        (run
 	(lambda ()
 	  (do ((i 0 (+ 1 i)))
-	      ((= i (1- crosses)))
+	      ((= i (- crosses 1)))
 	    (let* ((start (inexact->exact (vct-ref cross-samples i)))
 		   (autolen 0))
 	      (let* ((s0 start)
@@ -174,7 +174,7 @@
 			(set! current-min 0.0)
 			(set! current-min (/ diffsum ampsum))))
 		  (set! min-samps (inexact->exact (round (* 0.5 current-min))))
-		  (let ((top (min (1- crosses) current-mark (+ i zeros-checked))))
+		  (let ((top (min (- crosses 1) current-mark (+ i zeros-checked))))
 		    (do ((k (+ i 1) (+ 1 k)))
 			((= k top))
 		      (let ((wgt 0.0))
@@ -276,7 +276,7 @@
 			 (if (>= beg (frames))
 			     (snd-print (format #f "trouble at ~D: ~D of ~D~%" i beg (frames))))
 			 (if show-details
-			     (add-named-mark (1- beg) (format #f "~D:~D" i (inexact->exact (floor (/ len extension))))))
+			     (add-named-mark (- beg 1) (format #f "~D:~D" i (inexact->exact (floor (/ len extension))))))
 			 (delete-samples beg len)
 			 (set! changed-len (+ changed-len len))
 			 (let ((end (+ beg len)))

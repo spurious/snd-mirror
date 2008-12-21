@@ -28,7 +28,7 @@
    (snd-hooks))
   (for-each 
    (lambda (snd)
-     (do ((chn 0 (1+ chn)))
+     (do ((chn 0 (+ chn 1)))
 	 ((= chn (channels snd)))
        (reset-hook! (edit-hook snd chn))
        (reset-hook! (after-edit-hook snd chn))

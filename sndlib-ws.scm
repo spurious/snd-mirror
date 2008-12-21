@@ -503,7 +503,7 @@ finish-with-sound to complete the process."
 						   (let ((arglist '())
 							 (pa passed-args)
 							 (na ',args))
-						     (do ((k 0 (1+ k)))
+						     (do ((k 0 (+ k 1)))
 							 ((= k arglen) arglist)
 						       (if (keyword? (car pa))
 							   (break (append arglist pa))
@@ -672,7 +672,7 @@ symbol: 'e4 for example.  If 'pythagorean', the frequency calculation uses small
 				 (lambda (arg val)
 				   (list-set! arg ,ctr val))))))
 		    (add-clm-field sname (string-append sname "-" n) ctr type)
-		    (set! ctr (1+ ctr))
+		    (set! ctr (+ ctr 1))
 		    val)))
 	      field-names field-types))))
 

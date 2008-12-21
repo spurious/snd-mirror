@@ -162,7 +162,7 @@
 				    (delete-samples (+ len 1) (- (frames snd chn) len) snd chn))))))
 			 (let ((sndlist '()))
 			   (for-each (lambda (snd)
-				       (do ((i (1- (channels snd)) (1- i)))
+				       (do ((i (- (channels snd) 1) (- i 1)))
 					   ((< i 0))
 					 (if (selection-member? snd i)
 					     (set! sndlist (cons (list snd i) sndlist)))))
@@ -264,7 +264,7 @@
 		      (lambda (w data)
 			(set! stopping #t)
 			(change-label stop-widget "Stop")
-			(play 0 graph-popup-snd graph-popup-chn #f #f (1- (edit-position)))))  ; play version before most-recent edit
+			(play 0 graph-popup-snd graph-popup-chn #f #f (- (edit-position) 1))))  ; play version before most-recent edit
 		(list "Play original"
 		      (lambda (w) (set! play-original-popup-menu w))
 		      (lambda (w data)
@@ -679,7 +679,7 @@
     (let ((index (cadr (g_object_get_data (G_OBJECT w) "popup-index"))))
       (if (and (> index 0)
 	       (<= index (length edhist-funcs)))
-	  ((cdr (list-ref edhist-funcs (1- index))) edhist-snd edhist-chn))))
+	  ((cdr (list-ref edhist-funcs (- index 1))) edhist-snd edhist-chn))))
 	  
   (let ((wids (cdr edhist-widgets))
 	(funcs edhist-funcs)

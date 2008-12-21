@@ -77,7 +77,7 @@
 ;;; now some "func"s for in-out above
 (define (amplify amp)
   (lambda (data)
-    (do ((i 0 (1+ i)))
+    (do ((i 0 (+ 1 i)))
 	((= i our-dac-buffer-size-in-shorts))
       (sound-data-set! data our-chan i (* (sound-data-ref data our-chan i) amp)))))
 
@@ -86,7 +86,7 @@
 (define (lp)
   (let ((val 0.0))
     (lambda (data)
-      (do ((i 0 (1+ i)))
+      (do ((i 0 (+ 1 i)))
 	  ((= i our-dac-buffer-size-in-shorts))
 	(let ((curval (sound-data-ref data our-chan i)))
 	  (sound-data-set! data our-chan i (* .5 (+ curval val)))
@@ -98,7 +98,7 @@
   (let ((flt (make-formant frq .99))
 	(vobj (make-vct our-dac-buffer-size-in-shorts)))
     (lambda (data)
-      (do ((i 0 (1+ i)))
+      (do ((i 0 (+ 1 i)))
 	  ((= i our-dac-buffer-size-in-shorts))
 	(let ((curval (sound-data-ref data our-chan i)))
 	  (sound-data-set! data our-chan i (formant flt curval))))

@@ -82,7 +82,7 @@
 			 (lambda (snd chn)
 			   (let ((end (if (or (eq? target 'sound)
 					      (eq? target 'cursor))
-					  (1- (frames snd chn))
+					  (- (frames snd chn) 1)
 					  (if (eq? target 'selection)
 					      (+ (selection-position) (selection-frames))
 					      (cadr ms)))))
@@ -155,7 +155,7 @@
 
 (define (effect-frames target)
   (if (eq? target 'sound)
-      (1- (frames))
+      (- (frames) 1)
       (if (eq? target 'selection)
           (selection-frames)
           (+ 1 (abs (apply - (plausible-mark-samples)))))))
@@ -261,7 +261,7 @@
 						  XmNleftAttachment      XmATTACH_FORM
 						  XmNrightAttachment     XmATTACH_FORM
 						  XmNtopAttachment       XmATTACH_WIDGET
-						  XmNtopWidget           (list-ref sliders (1- (length sliders)))
+						  XmNtopWidget           (list-ref sliders (- (length sliders) 1))
 						  XmNshadowThickness     4
 						  XmNshadowType          XmSHADOW_ETCHED_OUT)))
 	    
@@ -1687,7 +1687,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 						  XmNleftAttachment      XmATTACH_FORM
 						  XmNrightAttachment     XmATTACH_FORM
 						  XmNtopAttachment       XmATTACH_WIDGET
-						  XmNtopWidget           (list-ref sliders (1- (length sliders)))
+						  XmNtopWidget           (list-ref sliders (- (length sliders) 1))
 						  XmNshadowThickness     4
 						  XmNshadowType          XmSHADOW_ETCHED_OUT)))
 	    
@@ -1826,7 +1826,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 						  XmNleftAttachment      XmATTACH_FORM
 						  XmNrightAttachment     XmATTACH_FORM
 						  XmNtopAttachment       XmATTACH_WIDGET
-						  XmNtopWidget           (list-ref sliders (1- (length sliders)))
+						  XmNtopWidget           (list-ref sliders (- (length sliders) 1))
 						  XmNshadowThickness     4
 						  XmNshadowType          XmSHADOW_ETCHED_OUT)))
 	    (let ((target-row (add-target (XtParent (XtParent (car sliders))) 
@@ -1933,7 +1933,7 @@ Values greater than 1.0 speed up file play, negative values reverse it."))
 						  XmNleftAttachment      XmATTACH_FORM
 						  XmNrightAttachment     XmATTACH_FORM
 						  XmNtopAttachment       XmATTACH_WIDGET
-						  XmNtopWidget           (list-ref sliders (1- (length sliders)))
+						  XmNtopWidget           (list-ref sliders (- (length sliders) 1))
 						  XmNshadowThickness     4
 						  XmNshadowType          XmSHADOW_ETCHED_OUT)))
 	    (let ((target-row (add-target (XtParent (XtParent (car sliders))) 
@@ -2460,7 +2460,7 @@ a number, the sound is split such that 0 is all in channel 0 and 90 is all in ch
 						  XmNrightAttachment     XmATTACH_FORM
 						  XmNtopAttachment       XmATTACH_WIDGET
 						  XmNbottomAttachment    XmATTACH_FORM
-						  XmNtopWidget           (list-ref sliders (1- (length sliders)))
+						  XmNtopWidget           (list-ref sliders (- (length sliders) 1))
 						  XmNshadowThickness     4
 						  XmNshadowType          XmSHADOW_ETCHED_OUT)))
 	    
@@ -3176,7 +3176,7 @@ the synthesis amplitude, the FFT size, and the radius value."))
 			  (if (and (> (abs (- samp0 samp1)) local-max)
 				   (> (abs (- samp1 samp2)) local-max)
 				   (< (abs (- samp0 samp2)) (/ local-max 2)))
-			      (return (1- ctr)))))))))
+			      (return (- ctr 1)))))))))
 	       
 	       (define (remove-click loc)
 		 (let ((click (find-click loc)))

@@ -203,12 +203,12 @@
 	   (len-frac (- len len-int)))
       (if (< len-frac golden-mean)
 	  (begin
-	    (set! len-int (1- len-int))
+	    (set! len-int (- len-int 1))
 	    (set! len-frac (+ len-frac 1.0))))
       (if (and (< len-frac golden-mean)
 	       (> len-int 0))
 	  (begin
-	    (set! len-int (1- len-int))
+	    (set! len-int (- len-int 1))
 	    (set! len-frac (+ len-frac 1.0))))
       (list len-int (get-allpass-coef len-frac wT))))
   
@@ -328,7 +328,7 @@
 	     (stiffnessCoefficient (if (> stiffnessFactor 1.0)
 				       (- stiffnessCoefficient
 					  (* (+ 1 stiffnessCoefficient)
-					     (1- stiffnessFactor)))
+					     (- stiffnessFactor 1)))
 		(* stiffnessCoefficient stiffnessFactor)))
 	     (stiffnessCoefficientL (if (<= keyNum longitudinal-mode-cutoff-keynum)
 					longitudinal-mode-stiffness-coefficient
@@ -345,13 +345,13 @@
 	     (delayLength3 (car vals3))
 	     (tuningCoefficient3 (cadr vals3))
 
-	     (string1-delay (make-delay0 (1- delayLength1)))
+	     (string1-delay (make-delay0 (- delayLength1 1)))
 	     (string1-tuning-ap (make-one-pole-allpass tuningCoefficient1))
 	     (string1-stiffness-ap (make-vector 8))
-	     (string2-delay (make-delay0 (1- delayLength2)))
+	     (string2-delay (make-delay0 (- delayLength2 1)))
 	     (string2-tuning-ap (make-one-pole-allpass tuningCoefficient2))
 	     (string2-stiffness-ap (make-vector 8))
-	     (string3-delay (make-delay0 (1- delayLength3)))
+	     (string3-delay (make-delay0 (- delayLength3 1)))
 	     (string3-tuning-ap (make-one-pole-allpass tuningCoefficient3))
 	     (string3-stiffness-ap (make-vector 8))
 

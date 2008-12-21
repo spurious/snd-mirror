@@ -47,7 +47,7 @@
 (define close-sound-file mus-sound-close-output)
 
 (define (vct->sound-file fd v samps)
-  (mus-sound-write fd 0 (1- samps) 1 (vct->sound-data v)))
+  (mus-sound-write fd 0 (- samps 1) 1 (vct->sound-data v)))
 
 
 (define recorder-autoload        (make-procedure-with-setter (lambda () #f) (lambda (val) #f)))

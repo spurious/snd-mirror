@@ -27,7 +27,7 @@
   "(ws-prompt) returns the current with-sound debugger prompt, set partially by the variable *ws-top-level-prompt*"
   (let ((stack-len (length *ws-stacks*)))
     (if (> stack-len 1)
-	(format #f "ws(~D)~A" (1- stack-len) *ws-top-level-prompt*)
+	(format #f "ws(~D)~A" (- stack-len 1) *ws-top-level-prompt*)
 	(if (> stack-len 0)
 	    (format #f "ws~A" *ws-top-level-prompt*)
 	    *ws-top-level-prompt*))))
@@ -1079,7 +1079,7 @@ finish-with-sound to complete the process."
   (let ((len (string-length file)))
     (call-with-exit
      (lambda (ok)
-       (do ((i (1- len) (1- i)))
+       (do ((i (- len 1) (- i 1)))
 	   ((= i 0))
 	 (if (char=? (string-ref file i) #\.)
 	     (ok (substring file (+ 1 i) len))))

@@ -98,7 +98,7 @@
   ;"(moog-filter m sig) is the generator associated with make-moog-filter"
   (let ((A (* 0.25 (- sig (moog-y m))))
 	(st 0.0))
-    (do ((cell 0 (1+ cell)))
+    (do ((cell 0 (+ 1 cell)))
 	((= cell 4))
       (set! st (vct-ref (moog-s m) cell))
       (set! A (min (max -0.95 (+ A (* (moog-fc m) (- A st)))) 0.95))

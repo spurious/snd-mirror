@@ -23,7 +23,7 @@
 	  (if (vector? (car vects))
 	      (let* ((vect (car vects))
 		     (len (vector-length vect)))
-		(do ((i 0 (1+ i)))
+		(do ((i 0 (+ 1 i)))
 		    ((= i len))
 		  (vector-set! vals (+ start i) (vector-ref vect i)))
 		(set-vals (cdr vects) (+ start len) vals))
@@ -47,7 +47,7 @@
 	 (pts (make-vector (* 2 (+ n 1)))))
     (vector-set! pts 0 x0)
     (vector-set! pts 1 y0)
-    (do ((i 0 (1+ i))
+    (do ((i 0 (+ 1 i))
 	 (val incr (+ val incr)))
 	((> i n) pts)
       (vector-set! pts (* i 2) (inexact->exact (floor (+ x0 (* val (+ cx (* val (+ bx (* val ax)))))))))
@@ -230,7 +230,7 @@
 
 
 (define (draw-staff x0 y0 width line-sep)
-  (do ((line 0 (1+ line))
+  (do ((line 0 (+ 1 line))
        (x x0) 
        (y y0 (+ y line-sep)))
       ((= line 5))

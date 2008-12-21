@@ -152,7 +152,7 @@
     (ws-interrupt?)
     (run
      (lambda ()
-       (do ((i beg (1+ i)))
+       (do ((i beg (+ i 1)))
 	   ((= i end))
 	 (set! indexl (modulo (inexact->exact (- (+ i posl bufsize) samp_lperiod)) bufsize))
 	 (set! indexr (modulo (inexact->exact (- (+ i posr bufsize) samp_rperiod)) bufsize))

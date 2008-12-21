@@ -136,7 +136,7 @@
 
 (define (deref-type arg)
   (let ((type (car arg)))
-    (substring type 0 (1- (string-length type)))))
+    (substring type 0 (- (string-length type) 1))))
 
 (define (deref-name arg)
   (let* ((name (cadr arg)))
@@ -146,7 +146,7 @@
   (let ((len (string-length type)))
     (call-with-exit
      (lambda (return)
-       (do ((i (1- len) (- i 1))
+       (do ((i (- len 1) (- i 1))
 	    (ctr 0 (+ 1 ctr)))
 	   ((= i 0) #f)
 	 (if (not (char=? (string-ref type i) #\*))
@@ -156,7 +156,7 @@
   (let ((len (string-length type)))
     (call-with-exit
      (lambda (return)
-       (do ((i (1- len) (- i 1))
+       (do ((i (- len 1) (- i 1))
 	    (ctr 0 (+ 1 ctr)))
 	   ((= i 0) #f)
 	 (if (char=? (string-ref type i) #\*)
@@ -196,10 +196,10 @@
 	    ((= i len) (reverse data))
 	  (let ((ch (string-ref args i)))
 	    (if (or (char=? ch #\space)
-		    (= i (1- len)))
+		    (= i (- len 1)))
 		(begin
 		  (if type
-		      (let* ((given-name (substring args (+ 1 sp) (if (= i (1- len)) (+ 1 i) i)))
+		      (let* ((given-name (substring args (+ 1 sp) (if (= i (- len 1)) (+ 1 i) i)))
 			     (reftype #f))
 			(if (char=? (string-ref given-name 0) #\@)
 			    (set! data (cons (list type 

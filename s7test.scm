@@ -35314,29 +35314,30 @@ expt error > 1e-6 around 2^-46.506993328423
 		(list char-alphabetic?
 		      (lambda (nlst v)
 			(let ((chr (car nlst)))
-			  (if (not (eq? v (or (char<=? #\A chr #\Z) (char<=? #\a chr #\z))))
-			      (format #t "(char-alphabetic? #\\~C) -> ~A~%" chr v))))
+			  (if (not (eq? v (or (and (char<=? #\A chr) (char<=? chr #\Z))
+					      (and (char<=? #\a chr) (char<=? chr #\z)))))
+			      (format #t "(char-alphabetic? #\\~A) -> ~A~%" chr v))))
 		      choose-char)
 		
 		(list char-numeric?
 		      (lambda (nlst v)
 			(let ((chr (car nlst)))
 			  (if (not (eq? v (if (member chr (list #\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9)) #t #f)))
-			      (format #t "(char-numeric? #\\~C) -> ~A~%" chr v))))
+			      (format #t "(char-numeric? #\\~A) -> ~A~%" chr v))))
 		      choose-char)
 		
 		(list char-upper-case?
 		      (lambda (nlst v)
 			(let ((chr (car nlst)))
-			  (if (not (eq? v (char<=? #\A chr #\Z)))
-			      (format #t "(char-upper-case? #\\~C) -> ~A~%" chr v))))
+			  (if (not (eq? v (and (char<=? #\A chr) (char<=? chr #\Z))))
+			      (format #t "(char-upper-case? #\\~A) -> ~A~%" chr v))))
 		      choose-char)
 		
 		(list char-lower-case?
 		      (lambda (nlst v)
 			(let ((chr (car nlst)))
-			  (if (not (eq? v (char<=? #\a chr #\z)))
-			      (format #t "(char-lower-case? #\\~C) -> ~A~%" chr v))))
+			  (if (not (eq? v (and (char<=? #\a chr) (char<=? chr #\z))))
+			      (format #t "(char-lower-case? #\\~A) -> ~A~%" chr v))))
 		      choose-char)
 		
 		(list char-whitespace?

@@ -102,7 +102,7 @@
   (let ((sndlist '()))
     (if (selection?)
 	(map (lambda (snd)
-	       (do ((i (1- (channels snd)) (1- i)))
+	       (do ((i (- (channels snd) 1) (- i 1)))
 		   ((< i 0))
 		 (if (selection-member? snd i)
 		     (set! sndlist (cons (list snd i) sndlist)))))

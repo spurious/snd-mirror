@@ -31,7 +31,7 @@
       (throw 'wrong-type-arg (list "frame-reverse" fr))
       (let ((len (mus-length fr)))
 	(do ((i 0 (+ i 1))
-	     (j (1- len) (1- j)))
+	     (j (- len 1) (- j 1)))
 	    ((>= i (/ len 2)))
 	  (let ((temp (frame-ref fr i)))
 	    (frame-set! fr i (frame-ref fr j))
@@ -384,7 +384,7 @@
   "(vct->file v file :optional srate comment) writes the data in vct v to the specified sound file"
   (if (vct? v)
       (let ((fd (mus-sound-open-output file srate 1 #f mus-riff comment)))
-	(mus-sound-write fd 0 (1- (vct-length v)) 1 (vct->sound-data v))
+	(mus-sound-write fd 0 (- (vct-length v) 1) 1 (vct->sound-data v))
 	(mus-sound-close-output fd (* (mus-bytes-per-sample mus-out-format) (vct-length v)))
 	file)
       (throw 'wrong-type-arg (list "file->vct" v))))
@@ -406,7 +406,7 @@
   "(sound-data->file sd file :optional srate comment) writes the contents of sound-data sd to file"
   (if (sound-data? sd)
       (let ((fd (mus-sound-open-output file srate (sound-data-chans sd) #f mus-riff comment)))
-	(mus-sound-write fd 0 (1- (sound-data-length sd)) (sound-data-chans sd) sd)
+	(mus-sound-write fd 0 (- (sound-data-length sd) 1) (sound-data-chans sd) sd)
 	(mus-sound-close-output fd (* (mus-bytes-per-sample mus-out-format) (sound-data-length sd) (sound-data-chans sd)))
 	file)
       (throw 'wrong-type-arg (list "sound-data->file" sd))))
@@ -519,7 +519,7 @@
 	  (do ((i beg (+ i 1)))
 	      ((or result (= i end))
 	       (and result
-		    (list result (1- i))))
+		    (list result (- i 1))))
 	    (set! result (func (read-frame reader)))))
 	(throw 'no-such-sound (list "scan-sound" snd)))))
 

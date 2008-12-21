@@ -21,7 +21,7 @@
 		((= i old-num))
 	      (vector-set! factorials i (vector-ref old-facts i)))))
       (if (zero? (vector-ref factorials n))
-	  (vector-set! factorials n (* n (factorial (1- n)))))
+	  (vector-set! factorials n (* n (factorial (- n 1)))))
       (vector-ref factorials n))))
 
 (define (binomial-direct n m) ; "n-choose-m" might be a better name (there are much better ways to compute this -- see below)
@@ -81,7 +81,7 @@
 
 ;;; A&S (bessel.lisp)
 (define (legendre-polynomial a x) ; sum of weighted polynomials (m=0)
-  (let ((n (1- (vector-length a))))
+  (let ((n (- (vector-length a) 1)))
     (if (= n 0) 
 	(vector-ref a 0)
 	(let* ((r x)
@@ -164,7 +164,7 @@
 
 
 (define* (chebyshev-polynomial a x :optional (kind 1))
-  (let ((n (1- (vector-length a))))
+  (let ((n (- (vector-length a) 1)))
     (if (= n 0) 
 	(vector-ref a 0)
 	(let* ((r (* kind x))
@@ -186,7 +186,7 @@
 
 
 (define (hermite-polynomial a x)
-  (let ((n (1- (vector-length a))))
+  (let ((n (- (vector-length a) 1)))
     (if (= n 0) 
 	(vector-ref a 0)
 	(let* ((r (* 2 x))
@@ -209,7 +209,7 @@
 
 
 (define* (laguerre-polynomial a x :optional (alpha 0.0))
-  (let ((n (1- (vector-length a))))
+  (let ((n (- (vector-length a) 1)))
     (if (= n 0) 
 	(vector-ref a 0)
 	(let* ((r (- (+ alpha 1.0) x))
@@ -261,7 +261,7 @@
       (vct-set! rl 0 rval)
       (vct-set! im 0 ival))
     (do ((i 1 (+ i 1))
-	 (k (1- fftlen) (1- k)))
+	 (k (- fftlen 1) (- k 1)))
 	((= i (/ fftlen 2)))
       (let* ((c1 (make-rectangular (vct-ref rl i) (vct-ref im i)))
 	     (val (/ (+ (* a c1) b)      ; (az + b) / (cz + d)
@@ -317,7 +317,7 @@
 		     (bi 1.0)
 		     (m (* 2 (+ n (inexact->exact (truncate (sqrt (* iacc n)))))))
 		     (bim 0.0))
-		(do ((j m (1- j)))
+		(do ((j m (- j 1)))
 		    ((= j 0))
 		  (set! bim (+ bip (* j tox bi)))
 		  (set! bip bi)
