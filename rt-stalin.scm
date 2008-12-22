@@ -6,7 +6,7 @@
 
 (define *stalin-stack-size* (* 32 1024)) ;; total stack size (for safety)
 (define *stalin-stack-limit* (* 4 1024))  ;; If using more than this, instrument is stopped. (checked every block)
-(define *stalin-queue-max-size* 1024) ;; max number of coroutines.
+(define *stalin-queue-max-size* 1024) ;; max number of non-sound coroutines.
 (define *stalin-add-health-checks* #t)
 (define *stalin-backtrace-length* 20)
 
@@ -38,6 +38,8 @@
       (cont output ret))))
 
 
+(define (get-all-unique-symbols l)
+  (delete-duplicates (flatten l) eq?))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;; Stalin functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -170,7 +172,7 @@
       ;;                                                        ,(symbol->string name))))
       ))
   ;;(c-display "adding something" name (get-stalin-ec-function name))
-  (let ((dependents (rt-find-all-funcs body))
+  (let ((dependents (get-all-unique-symbols body))
 	(old (get-stalin-ec-function name)))
     (if old
 	(set-cdr! (assq name stalin-ec-functions) (list dependents
@@ -218,8 +220,8 @@
                   (for-each add-func (nth 1 func))                         ;; Add functions used by the function
                   (push! (nth 2 func) functions))))))     ;; Add function-body to be included.
     
-    ;;(c-display "all-funcs:" (rt-find-all-funcs (cdr term)))
-    (for-each add-func (rt-find-all-funcs program))
+    ;;(c-display "all-funcs:" (get-all-unique-symbols program))
+    (for-each add-func (get-all-unique-symbols program))
     (reverse! functions)))
 
 #!
@@ -294,7 +296,7 @@
                      ))))))
 
 
-(define (stalin-macroexpand expr)
+(define* (stalin-macroexpand expr :key (include-make-coroutine #f))
   (schemecodeparser expr
 		    :elsefunc (lambda (expr)
                                 ;;(when (and (eq? 'set! (car expr))
@@ -303,18 +305,40 @@
                                 ;;  (c-display "Bindings defined using define-stalin can not be set!:"
                                 ;;             expr)
                                 ;;  (throw 'compilation-error))
-                                (if (and (eq? 'set! (car expr))
-                                         (pair? (cadr expr)))
-                                    (stalin-macroexpand
-                                     `( ,(<_> 'setter!- (car (cadr expr))) ,@(cdr (cadr expr)) 
-                                        ,(caddr expr)))
-                                    (let ((topexpand (stalin-macroexpand-1 expr)))
-                                      ;;(c-display "expr/topexpand" expr topexpand)
-                                      (if (eq? expr topexpand)
-                                          `(,(car expr) ,@(map stalin-macroexpand (cdr expr)))
-                                          (stalin-macroexpand topexpand)))))))
+                                (cond ((and (eq? 'set! (car expr))
+                                            (pair? (cadr expr)))
+                                       (stalin-macroexpand
+                                        `( ,(<_> 'setter!- (car (cadr expr))) ,@(cdr (cadr expr)) 
+                                           ,(caddr expr))))
+                                      ((and (not include-make-coroutine)
+                                            (eq? 'make-coroutine (car expr))) ;; make-coroutine is redefined after macroexpand.
+                                       `(make-coroutine ,@(map (lambda (entry)
+                                                                 (if (keyword? entry)
+                                                                     `(keyword ,(keyword->symbol entry))
+                                                                     (stalin-macroexpand entry)))
+                                                               (cdr expr))))
+                                      (else
+                                       (let ((topexpand (stalin-macroexpand-1 expr)))
+                                         ;;(c-display "expr/topexpand" expr topexpand)
+                                         (if (eq? expr topexpand)
+                                             `(,(car expr) ,@(map stalin-macroexpand (cdr expr)))
+                                             (stalin-macroexpand topexpand))))))))
 
-
+(define (stalin-macroexpand-make-coroutine code)
+  (c-display "stalin-macroexpand-make-coroutine entry")
+  (if #f
+      (stalin-macroexpand code :include-make-coroutine #t)
+      (schemecodeparser code
+                        :symbolhandler
+                        (list 'make-coroutine
+                              (lambda (expr)
+                                (stalin-macroexpand (stalin-macroexpand-1
+                                                     `(make-coroutine ,@(map (lambda (entry)
+                                                                               (if (and (pair? entry)
+                                                                                        (eq? 'keyword (car entry)))
+                                                                                   (symbol->keyword (cadr entry))
+                                                                                   entry))
+                                                                             (cdr expr))))))))))
 
 #!
 (stalin-macroexpand '(quasiquote ((unqoute a) 0)))
@@ -391,6 +415,25 @@
                 (begin
                   ,@body
                   (,loop))))))
+
+
+;; continuation-safe loop. Should probably be made default.
+(define-stalin-macro (while-cc test . body)
+  (define return (rt-gensym "return"))
+  (define loop (rt-gensym "while"))
+  (if (eq? #t test)
+      `(let ,loop ()
+            ,@body
+            (,loop))
+      `(call/cc
+        (lambda (,return)
+          (let ,loop ()
+               (if ,test
+                   (begin
+                     ,@body
+                     (,loop))
+                   (,return #f)))))))
+
 
 (define-stalin-macro (when cond . rest)
   `(cond (,cond ,@rest)
@@ -574,7 +617,7 @@
            slots)
         ))))
 
-(define-macro (define-stalin-struct name . das-slots)
+(define-macro (define-stalin-struct_internal name . das-slots)
   (define name-name (rt-gensym))
   (define val-name (rt-gensym))
   (define slots '())
@@ -617,6 +660,30 @@
                    (quasiquote (,(<_> ',name ',(string->symbol "-") ',slot) ,,name-name))))
               slot-names)
        )))
+
+(define-macro (define-stalin-struct name . das-slots)
+  (define name-name (rt-gensym))
+  (define val-name (rt-gensym))
+  (define make-name (<_> 'make- name))
+  (define internal-make-name (<_> 'make- name '-internal))
+  (define slots '())
+  
+  (for-each (lambda (slot)
+	      (if (keyword? slot)
+		  (push-back! (list (append-various slot) #f) slots)
+		  (set-cdr! (last slots) (list `(quote ,slot)))))
+	    das-slots)
+
+  `(begin
+     (define-stalin-struct_internal ,name ,@(map symbol->keyword (map car slots)))
+     (define-stalin ,internal-make-name ,make-name)
+     (define-stalin-macro (,make-name :optkey ,@slots)
+       (cons ',internal-make-name (list ,@(map car slots))))))
+
+#!
+(pretty-print (macroexpand-1 '(define-stalin-struct teststruct :hello 50 :gakk wef :ai)))
+(stalin-macroexpand '(make-coroutine))
+!#
 
 (define-stalin-macro setter!-=> (lambda (object das-method . rest)
   (cond ((keyword? object)
@@ -725,10 +792,12 @@
     (let* ((pos <int> (+ (* ch ,*rt-block-size*)
                          (- time
                             block_time))))
-      (+= sounddata[pos] val))))
+      (set! sounddata[pos] val))))
 
 (add-stalin-ec-binding 'rt_write_out_bus 'outbus)
 
+#!
+old bus.
 (define-stalin-macro (out . rest)
   (define val (rt-gensym))
   (if (= 2 (length rest))
@@ -736,6 +805,7 @@
       `(let ((,val ,(car rest)))
          (rt_write_out_bus 0 _time ,val)
          (rt_write_out_bus 1 _time ,val))))
+!#
 
 
 
@@ -1362,56 +1432,81 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; coroutines
 
-(define-stalin-struct sound
-  :sub-sounds) ;; A list of coroutines running in sound mode
-
-(define-stalin-struct coroutine
-  :time
-  :stop-me
-  :continuation
-  :sound
-  :is-sound
+(define-stalin-struct soundholder
+  :sub-sounds '()  ;; A list of coroutines running in sound mode
   )
 
-;; define-stalin-struct should be extended...
-(define-stalin-macro (make-coroutine2 :key 
-                                      (time 0)  ;; The time value is usually set in insert-coroutine-in-queue!
-                                      (stop-me #f)
-                                      (continuation 'neverending-scheduling)
-                                      (sound '(=> coroutine:_current-coroutine :sound)) ;; is there any point quoting?
-                                      (is-sound #f))
-  `(make-coroutine ,time ,stop-me ,continuation ,sound ,is-sound))
-#!
-(stalin-macroexpand '(make-coroutine2))
-!#  
+(define coroutine-slots 
+  (let ((ret '(
+  :time 0
+  :stop-me #f
+  :continuation neverending-scheduling
+  :soundholder (=> coroutine:_current-coroutine :soundholder)
+  :parent _sound-coroutine ;; Only used when traversing the sound graph. Allways points to a sound coroutine.
+  :sounds '() ;; Temporary variable only used when traversing sound graph
+  :soundfunc (lambda ()) ;; Not a continuation.
+  :bus (=> coroutine:_current-coroutine :bus)
+  :is-sound #f
+  )))
+    (primitive-eval `(define-stalin-struct coroutine ,@ret))
+    ret))
 
+(define extra-coroutine-slots '())
+
+(define (reset-coroutine-struct!)
+  (c-display "reset-coroutine-struct!")
+  (set! extra-coroutine-slots '())
+  (primitive-eval `(define-stalin-struct coroutine ,@coroutine-slots)))
+
+(define (redefine-coroutine-struct!)
+  (c-display "coroutine struct redefined" extra-coroutine-slots)
+  (primitive-eval `(define-stalin-struct coroutine ,@coroutine-slots ,@extra-coroutine-slots))
+  #t)
+
+(define (add-coroutine-slot name default)
+  (c-display "add-coroutine-slot" name default)
+  (push! default extra-coroutine-slots)
+  (push! name extra-coroutine-slots))
+
+#!
+(define-stalin-macro (hepp)
+  (add-coroutine-slot :testing 50)
+  `(sound (out (random 0.5))))
+(<rt-stalin>
+ (hepp))
+!#
+
+                               
 ;; Make sure gcc does tail call optimization.
 (define-stalin (neverending-scheduling)
   (_run-scheduler neverending-scheduling))
 
-(define-stalin _coroutine-dummy (make-coroutine2 :continuation neverending-scheduling :sound (make-sound '())))
+(define-stalin _coroutine-dummy (make-coroutine :soundholder _main-soundholder :bus _main-bus :parent #f))
 
 (define-stalin _current-coroutine
-  (make-coroutine2 :continuation
-                  (lambda ()
-                    (let loop ()
+  (make-coroutine :continuation
+                   (lambda ()
+                     (let loop ()
+                       
+                       (if (and (= _queue-size 1)
+                                (let ((soundholder (=> coroutine:_sound-coroutine :soundholder)))
+                                  (null? (=> soundholder :sub-sounds))))
+                           (remove-me))
+                       
+                       (_block_ready)
+                       
+                       (set! _block-time (_get_block_time))
+                       (set! _time (+ _block-time
+                                      (_get_startframe)))
+                       (insert-coroutine-in-queue! _current-coroutine
+                                                   (+ _block-time
+                                                      (_get_endframe))
+                                                   0)
+                       (for-each clear-bus _all-buses)
 
-                      (if (and (= _queue-size 1)
-                               (let ((sound (=> coroutine:_sound-coroutine :sound)))
-                                 (null? (=> sound :sub-sounds))))
-                          (remove-me))
-                      
-                      (_block_ready)
-
-                      (set! _block-time (_get_block_time))
-                      (set! _time (+ _block-time
-                                     (_get_startframe)))
-                      (insert-coroutine-in-queue! _current-coroutine
-                                                  (+ _block-time
-                                                     (_get_endframe))
-                                                  0)
-                      (_run-scheduler loop)))
-                  :sound (=> coroutine:_sound-coroutine :sound)))
+                       (_run-scheduler loop)))
+                   :soundholder (=> coroutine:_sound-coroutine :soundholder)
+                   :bus _main-bus))
 
 
 (define-stalin _next-scheduled-time 0)
@@ -1570,7 +1665,7 @@
 
 
 (define-stalin (spawn-do time thunk)
-  (let ((coroutine (make-coroutine2 :continuation thunk)))
+  (let ((coroutine (make-coroutine :continuation thunk)))
     (insert-coroutine-in-queue! coroutine
                                 time
                                 1
@@ -1614,109 +1709,53 @@
 ;; sound
 ;; *****
 
-(define-stalin-macro (sound-internal_-cps :rest code)
-  `(_add-sound (lambda ()
-                 (while (< _time
-                           _next-scheduled-time)
-                   ,@code
-                   (inc! _time 1))
-                 ((=> coroutine :sound-return)))))
-
-(define-stalin (_sound-runner-cps coroutine sounds cont)
-  (cond ((null? sounds)
-         (set! (=> sound :sub-sounds)
-               (remove! (lambda (sound)
-                          (=> coroutine:sound :stop-me))
-                        (=> sound :sub-sounds)))
-         (_sound-runner coroutine (=> sound :sub-sounds)
-                        (lambda ()
-                          (cond ((eq? coroutine _sound-runner)
-                                 (cont))
-                                (else
-                                 (set! _current-coroutine coroutine)
-                                 ;; run current sound.
-                                 (set! _time (=> coroutine :time))
-                                 (set! (=> coroutine :sound-return (lambda ()
-                                                                     (set! (=> coroutine :time) _time)
-                                                                     (cont))))
-                                 ((=> coroutine :continuation)))))))
-        (else
-         (if (not (=> coroutine:sound :stop-me)) ;; Must check because a sound can be stopped by other sounds.
-             (_sound-runner (car sounds) '()
-                            (lambda ()
-                              (_sound-runner (cadr sounds) '() cont)))
-             (cont)))))
-
-(define-stalin (_first-sound-continuation-cps)
-  (define coroutine _current-coroutine)
-  (_sound-runner coroutine '()
-                 (lambda ()
-                   (insert-coroutine-in-queue! coroutine
-                                               _next-scheduled-time
-                                               3) ;; sound priority. (lowest)
-                   (run-scheduler _first-sound-continuation))))
-
-(define-stalin (_sound-runner level coroutine)  
-  (define sound (=> coroutine :sound))
-
-;  (debug "length _time/level/sub-sound:")
-;  (debug (number->string _next-scheduled-time))
-;  (debug (number->string level))
-;  (debug (number->string (length (=> sound :sub-sounds))))
-
-
-  ;; remove stopped sub-sounds
-  (set! (=> sound :sub-sounds)
+(define-stalin (_remove-stopped-sounds! soundholder)
+  (set! (=> soundholder :sub-sounds)
         (remove! (lambda (sound)
                    (=> coroutine:sound :stop-me))
-                 (=> sound :sub-sounds)))
+                 (=> soundholder :sub-sounds))))
 
-  ;; run sub-sounds
-  (for-each (lambda (sound)
-              (if (not (=> coroutine:sound :stop-me)) ;; Must check because a sound can be stopped by other sounds.
-                  (_sound-runner (1+ level) sound)))
-            (=> sound :sub-sounds))
 
+(define-stalin (_sound-runner)
+  (define coroutine _current-coroutine)
+  (define soundholder (=> coroutine :soundholder))
+  (define time _time)
+
+  (_remove-stopped-sounds! soundholder)
+  
+  (set! (=> coroutine :sounds) (=> soundholder :sub-sounds))
   (set! _current-coroutine coroutine)
 
-  ;; run current sound.
-  (when (> level 0)
-    (set! _time (=> coroutine :time))
-    ((=> coroutine :continuation))
-    (set! (=> coroutine :time) _time)))
+  ;;(debug (number->string (length (=> soundholder :sub-sounds))))
 
+  (for-each (lambda (coroutine)
+              (when (not (=> coroutine :stop-me))
+                (set! _current-coroutine coroutine)
+                (set! _time (=> coroutine :time))
+                ((=> coroutine :soundfunc))
+                (set! (=> coroutine :time) _time)))
+            (=> soundholder :sub-sounds))
 
-(define-stalin (_first-sound-continuation)
-  (define coroutine _current-coroutine)
-;  (if (eq? coroutine _sound-coroutine)
-;      (debug "the same")
-;      (debug "not the same"))
-  (_sound-runner 0 coroutine)
+  (set! _current-coroutine coroutine)
+  (set! _time time)
 
-  ;;(debug "sound continuation exiting now")
-  ;;(debug (number->string _next-scheduled-time))
+  (when (eq? coroutine _sound-coroutine)
+    (bus_to_soundcard_ _main-bus)
+    (insert-coroutine-in-queue! coroutine
+                                _next-scheduled-time
+                                3) ;; sound priority. (lowest)
+    (_run-scheduler _sound-runner)))
 
-  (insert-coroutine-in-queue! coroutine
-                              _next-scheduled-time
-                              3) ;; sound priority. (lowest)
-  (_run-scheduler _first-sound-continuation)
-  )
+  
+(define-stalin _main-soundholder (make-soundholder))
 
-;; A hybrid sound/nonsound coroutine.
+;; The root sound coroutine. Both a sound and a nonsound coroutine.
+;; Also the only coroutine running with priority 3.
+;; Note 2: It can't contain data from _current-coroutine.
 (define-stalin _sound-coroutine
-  (make-coroutine2 :continuation _first-sound-continuation
-                   :sound (make-sound '())))
-
-(define-stalin (_add-sound thunk)
-  (define coroutine _current-coroutine)
-  (define sound (=> coroutine :sound))
-  (define sound-coroutine (make-coroutine2 :time _time :continuation thunk
-                                           :sound (make-sound '()) :is-sound #t))
-  (set! (=> sound :sub-sounds)
-        (cons sound-coroutine (=> sound :sub-sounds)))
-
-  sound-coroutine)
-
+  (make-coroutine :continuation _sound-runner
+                  :soundholder _main-soundholder
+                  :bus _main-bus))
 
 (define-stalin-macro (sound-internal_ :rest code)
   `(_add-sound (lambda ()
@@ -1724,6 +1763,48 @@
                            _next-scheduled-time)
                    ,@code
                    (inc! _time 1)))))
+
+(define-stalin (_add-sound thunk)
+  (define coroutine _current-coroutine)
+  (define soundholder (=> coroutine :soundholder))
+  (define sound (make-coroutine :time _time ;;:continuation thunk
+                                :soundholder (make-soundholder)
+                                :parent (if (=> coroutine :is-sound)
+                                            coroutine
+                                            (=> coroutine :parent))
+                                :soundfunc thunk
+                                :bus (=> coroutine :bus)
+                                :is-sound #t))
+  (set! (=> soundholder :sub-sounds)
+        (cons sound (=> soundholder :sub-sounds)))
+
+  sound)
+
+
+#!
+;; (sound-coroutines couldn't be made into continuations because it became
+;; too hard to avoid call/cc then.)
+
+;; break out of a "sound" block.
+(define-stalin (break-sound)
+  (define coroutine _current-coroutine)
+  (if ,*stalin-add-health-checks*
+      (if (not (=> coroutine :is-sound))
+          (error "break-sound: Trying to break out of a non-sound block.")))
+  (inc! _time 1)
+  (set! (=> coroutine :time) _time)
+  (set! _current-coroutine (=> coroutine :parent))
+  (_sound-runner))
+
+;; Jump to start of a "sound" block.
+(define-stalin (continue-sound)
+  (define coroutine _current-coroutine)
+  (if ,*stalin-add-health-checks*
+      (if (not (=> coroutine :is-sound))
+          (error "continue-sound: Trying to continue a non-sound block.")))
+  ((=> coroutine :continuation)))
+!#
+
 
 (define-stalin-macro (sound :key
                             dur
@@ -1742,23 +1823,6 @@
          )
       `(sound-internal_
         ,@code)))
-
-
-#!
-(define-stalin-macro (spawn-sound :allow-other-keys :rest rest)
-  (define startname (rt-gensym))
-  (define start 0)
-  (define duration #f)
-  (define code rest)
-  (when (equal? :dur (car rest))
-    (set! start (nth 1 rest))
-    (set! duration `(- ,(nth 2 rest) ,startname))
-    (set! code (nth-cdr 3 rest)))
-  `(let ((,startname ,start))
-     (spawn :wait ,startname
-       (sound :duration ,duration
-         ,@code))))
-!#
 
 
 #!
@@ -1848,6 +1912,151 @@
 (stalin-macroexpand (fix-stalin-set! '(set! (=> coroutine :time) new-time)))
 (stalin-macroexpand (fix-stalin-set! '(set! (=> :coroutine(vref 1 queue) :time) 100)))
 !#     
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;; in / out and sound buses ;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; buses
+
+(define-stalin _all-buses '())
+
+(define-stalin-ec <void> clear_bus_
+  (lambda ((<void*> bus))
+    (memset bus 0 (* (sizeof <float>) ,*rt-block-size*))))
+
+(define-stalin clear-bus clear_bus_)
+
+(define-stalin-ec <void*> make_bus_
+  (lambda ()
+    (<void*> bus (tar_alloc_atomic heap (* (sizeof <float>) ,*rt-block-size*)))
+    (clear_bus_ bus)
+    (return bus)))
+
+(define-stalin (make-bus)
+  (define bus (make_bus_))
+  (push! bus _all-buses))
+    
+(define-stalin-ec <float> read_bus_
+  (lambda ((<void*> bus)
+           (<int> time))
+    (return "((float*)bus)[time-block_time]")))
+(define-stalin (read-bus bus)
+  (read_bus_ bus _time))
+
+(define-stalin-ec <void> write_bus_
+  (lambda ((<void*> bus)
+           (<int> time)
+           (<float> val))
+    (+= "((float*)bus)[time-block_time]" val)))
+
+(define-stalin (write-bus bus val)
+  (write_bus_ bus _time val))
+
+
+;; out
+
+(define-stalin (out val)
+  (define coroutine _current-coroutine)
+  (write-bus (=> coroutine :bus) val))
+
+(define-stalin _main-bus (make-bus))
+
+(define-stalin-ec <void> bus_to_soundcard_
+  (lambda ((<void*> bus))
+    (<float*> sd2 (+ sounddata ,*rt-block-size*))
+    (for-each 0 ,*rt-block-size*
+              (lambda (i)
+                (set! sounddata[i] "((float*)bus)[i]")))
+    (for-each 0 ,*rt-block-size*
+              (lambda (i)
+                (set! sd2[i] "((float*)bus)[i]")))))
+
+
+;; in
+
+(define-stalin-macro (in :rest code)
+  (define this-busk (symbol->keyword (rt-gensym "bus")))
+  (add-coroutine-slot this-busk #f)
+  `(let ((coroutine _current-coroutine))
+     (when (= _time (=> coroutine :time)) ;; must check if this-busk exist as well. Here.
+
+       (when (not (=> coroutine ,this-busk))
+         (set! (=> coroutine ,this-busk) (make-bus))
+         (let ((outer-bus (=> coroutine :bus)))
+           (set! (=> coroutine :bus) (=> coroutine ,this-busk))
+           (spawn
+             ,@code)
+           (set! (=> coroutine :bus) outer-bus)))
+
+       (_sound-runner))
+     
+     (read-bus (=> coroutine ,this-busk))
+     ))
+
+
+#!
+
+;;example:
+(<rt-stalin>
+ (define (osc)
+   (define osc (make-osc :freq 440))
+   (sound
+     (out (oscil osc))))
+ (define (set-volume vol dasin)
+   (sound
+     (out (* vol (in (dasin)))))
+ (sound
+   (out (set-volume 0.5 (lambda ()
+                          (osc))))
+   )))
+
+
+(define-stalin (midi-synth)
+  (while #t
+    (wait-midi :command note-on
+      (define adsr (make-adsr :a 20:-ms :d 20:-ms :s 0.2 :r 50:-ms))
+      (define osc  (make-oscil :freq (midi-to-freq (midi-note))))
+      (sound
+        (define vol (adsr))
+        (if vol
+            (out (* 0.2 vol (midi-vol) (oscil osc)))
+            (stop)))
+      (spawn
+        (wait-midi :command note-off :note (midi-note)
+          (-> adsr stop))))))
+
+(define-stalin (freeverb get-sound)
+  (<faust> :in (vct (get-sound))
+           (url "http://faudiostream.cvs.sourceforge.net/viewvc/*checkout*/faudiostream/faust/examples/freeverb.dsp")))
+
+(<rt-stalin>
+ (sound
+   (out (freeverb (lambda ()
+                    (in (midi-synth)))))))
+
+
+(define-stalin-macro (freeverb . code)
+  `(<faust> :in (vct ,@code)
+            (url "http://faudiostream.cvs.sourceforge.net/viewvc/*checkout*/faudiostream/faust/examples/freeverb.dsp")))
+
+(<rt-stalin>
+ (sound
+   (out (freeverb (in (midi-synth))))))
+
+
+(<rt-stalin>
+ (wait 10:-s))
+
+(<rt-stalin>
+ (sound (out (random 0.5))))
+
+(rte-silence!)
+
+!#
+
 
 
 
@@ -2153,6 +2362,7 @@
 (define stalin-noreturn-funcs '())
 
 (define (find-stalin-expr-outcomes expr)
+  ;;(c-display "find" expr)
   (cond ((symbol? expr)
          (list expr))
         ((not (pair? expr))
@@ -2236,6 +2446,7 @@
                                  (push! (list (nth 1 expr) 
                                               (find-stalin-code-outcomes body))
                                         ret)))
+
                               ((and (eq? 'let (car expr))
                                     (not (pair? (cadr expr))))
                                (for-each loop (map cdr (nth 2 expr))) ;; arguments.
@@ -2243,6 +2454,7 @@
                                (push! (list (nth 1 expr)
                                             (find-stalin-code-outcomes (nth-cdr 3 expr)))
                                       ret))
+
                               ;;let, let* and letrec
                               (else
                                (for-each loop (map cdr (nth 1 expr))) ;; arguments.
@@ -2260,6 +2472,18 @@
 
 
 #!
+(find-stalin-func-returns '((let loop ()
+                              (define ret (lambda ()
+                                            (lowlevel_remove_me)))
+                              (let ((ret2 (lambda ()
+                                            (lowlevel_remove_me))))
+                                (let loop2 ()
+                                  (if (loop)
+                                      (loop)
+                                      (loop2)))
+                                ;;(set! loop2 loop5)
+                                (loop2)))))
+
 (find-stalin-func-returns '((let loop () (lambda ()))))
 (find-stalin-func-returns '((let loop () (loop) (lowlevel_remove_me))))
 (find-stalin-func-returns '((let loop ()
@@ -2377,7 +2601,22 @@
 
   
   noreturns)
-  
+
+#!
+(find-stalin-func-returns
+ (stalin-cond->if
+  '((let loop ()
+      (define ret (lambda ()
+                    (lowlevel_remove_me)))
+      (let ((ret2 (lambda ()
+                    (lowlevel_remove_me))))
+        (let loop2 ()
+          (if (loop)
+              (loop)
+              (loop2)))
+        ;;(set! loop2 loop5)
+        (loop2))))))
+!#
 
   
 
@@ -2443,8 +2682,11 @@
       (if (eq? #t res)
           (begin
             ;;(c-display "NORETURNS" noreturns)
+            ;;(c-display "RETURNS" known-returns)
             noreturns)
-          (find-stalin-noreturn-funcs code (cons res known-returns))))))
+          (begin
+            ;;(c-display "found non-return" res)
+            (find-stalin-noreturn-funcs code (cons res known-returns)))))))
         
 #!
 (find-stalin-noreturn-funcs '((define ai (lambda ()
@@ -2459,12 +2701,65 @@
 
 ;; cool.
 (find-stalin-noreturn-funcs '((let loop ()
-                                (let loop2 ()
-                                  (if (loop)
-                                      (loop)
-                                      (loop2)))
-                                ;;(set! loop2 loop5)
-                                (loop2))))
+                                (let ((ret (lambda ()
+                                             (lowlevel_remove_me))))
+                                  (let loop2 ()
+                                    (if (loop)
+                                        (loop)
+                                        (loop2)))
+                                  ;;(set! loop2 loop5)
+                                  (loop2)))))
+
+(find-stalin-noreturn-funcs
+ '((let ((return_67
+          (lambda (rt_gen_call/cc-return100147)
+           (lowlevel_remove_me))))
+   (let loop_68 ()
+     (if (< _time _next-scheduled-time)
+       (begin
+         (let ((rt_gen_monad-do100120 (lambda () (loop_68))))
+           (let ((coroutine_69 _current-coroutine))
+             (let ((rt_gen_monad-do100122
+                     (lambda ()
+                       (read-bus_-2
+                         (getter-coroutine:rt_gen_bus97482 coroutine_69))
+                       (rt_gen_monad-do100120))))
+               (if (= _time (coroutine-time_-6 coroutine_69))
+                 (begin
+                   (begin
+                     (if (not (getter-coroutine:rt_gen_bus97482 coroutine_69))
+                       (begin
+                         (setter!-coroutine:rt_gen_bus97482
+                           coroutine_69
+                           (make-bus_-5))
+                         (let ((outer-bus_70
+                                 (getter-coroutine:bus coroutine_69)))
+                           (setter!-coroutine:bus
+                             coroutine_69
+                             (getter-coroutine:rt_gen_bus97482 coroutine_69))
+                           <code>
+                           (setter!-coroutine:bus coroutine_69 outer-bus_70)))
+                       #f)
+                     (clear-bus_-4
+                       (getter-coroutine:rt_gen_bus97482 coroutine_69)
+                       _time
+                       _next-scheduled-time)
+                     (SET-coroutine-sounds! coroutine_69 (quote ()))
+                     (let ((old-entry_71
+                             (coroutine-continuation_-3 coroutine_69)))
+                       (call-with-current-continuation
+                         (lambda (return_72)
+                           (SET-coroutine-continuation!
+                             coroutine_69
+                             (lambda () (return_72 #f)))
+                           (lowlevel_remove_me)))
+                       (SET-coroutine-continuation!
+                         coroutine_69
+                         old-entry_71)))
+                   (rt_gen_monad-do100122))
+                 (begin #f (rt_gen_monad-do100122)))))))
+       (return_67 #f)))
+   (return_67 #f))))
 
 
 (define lotsofcode (generate-stalin-code last-stalin))
@@ -2570,6 +2865,7 @@
 ;; Basically, remove-dead-code does this:
 ;; (begin (remove-me) (+ 2 3)) -> (begin (remove-me))
 (define (stalin-remove-dead-code-recursively code)
+  (c-display "remove-dead-code entry")
   (stalin-remove-dead-code code
                            (find-stalin-noreturn-funcs code)
                            (lambda (code removed?)
@@ -2596,13 +2892,13 @@
   (cond ((eq? 'cond (car code))
          (stalin-append-continuation (stalin-cond->if code) continuation))
         ((and (eq? 'if (car code))
-              (= 2 (length code)))
+              (= 3 (length code)))
          `(if ,(nth 1 code)
               (begin
                 ,(nth 2 code)
                 ,continuation)))
         ((and (eq? 'if (car code))
-              (= 3 (length code)))
+              (= 4 (length code)))
          `(if ,(nth 1 code)
               (begin
                 ,(nth 2 code)
@@ -2691,39 +2987,54 @@ Removes some unecessary call/cc-s by recognizing when the code continuing after 
 The reason for doing this is that call/cc takes _a lot_ of time to compile with stalin.
 !#
 
-(define (stalin-remove-call/cc das-code)
+(define (stalin-remove-call/cc das-code kont)
   ;;(pretty-print das-code)
   ;;(c-display "noreturns:" (find-stalin-noreturn-funcs das-code))
-  (let das-loop ((code das-code))
-    (schemecodeparser code
-                      :blockhandler
-                      (lambda (expr)
-                        (let loop ((expr expr))
-                          (define expr0 (and (pair? expr) (car expr)))
-                          (cond  ((null? expr)
-                                  '())
-                                 ((and (pair? expr0)
-                                       (eq? 'call-with-current-continuation (car expr0)) ;; Check if call-wi. is called inisde expr0.
-                                       (stalin-is-expr-noreturn? `(begin
-                                                                    ,@(cdr expr))
-                                                                 (find-stalin-noreturn-funcs das-code)))
-                                  (let ()
-                                    (define return (car (cadr (nth 1 expr0))))
-                                    ;;(pretty-print `(begin ,@(cdr expr)))
-                                    ;;(pretty-print expr)
-                                    ;;(c-display "found one" (stalin-is-expr-noreturn? `(begin
-                                    ;;                                                    ,@(cdr expr))
-                                    ;;                                                 (find-stalin-noreturn-funcs das-code)))
-                                    (das-loop
-                                     `((let ((,return (lambda (,(rt-gensym "call/cc-return"))
-                                                        ,@(cdr expr)
-                                                        )))
-                                         ,@(cddr (nth 1 expr0))
-                                         (,return #f) ;;Line recently added. Weird that it worked before...
-                                         )))))
-                                 (else
-                                  (cons (das-loop expr0)
-                                        (loop (cdr expr))))))))))
+  (define changed #f)
+
+  (let ((ret
+     (let das-loop ((code das-code))
+       (schemecodeparser code
+                         :blockhandler
+                         (lambda (expr)
+                           (let loop ((expr expr))
+                             (define expr0 (and (pair? expr) (car expr)))
+                             (cond  ((null? expr)
+                                     '())
+                                    ((and (pair? expr0)
+                                          (eq? 'call-with-current-continuation (car expr0)) ;; Check if call-wi. is called inisde expr0.
+                                          (stalin-is-expr-noreturn? `(begin
+                                                                       ,@(cdr expr))
+                                                                    (find-stalin-noreturn-funcs das-code)))
+                                     (let ()
+                                       (define return (car (cadr (nth 1 expr0))))
+                                       ;;(pretty-print `(begin ,@(cdr expr)))
+                                       ;;(pretty-print expr)
+                                       ;;(c-display "found one" (stalin-is-expr-noreturn? `(begin
+                                       ;;                                                    ,@(cdr expr))
+                                       ;;                                                 (find-stalin-noreturn-funcs das-code)))
+                                       (set! changed #t)
+                                       (das-loop
+                                        `((let ((,return (lambda (,(rt-gensym "call/cc-return"))
+                                                           ,@(cdr expr)
+                                                           )))
+                                            ,@(cddr (nth 1 expr0))
+                                            (,return #f) ;;Line recently added. Weird that it worked before...
+                                            )))))
+                                    (else
+                                     (cons (das-loop expr0)
+                                           (loop (cdr expr)))))))))))
+    (kont ret changed)))
+
+(define (stalin-remove-call/cc-recursively code)
+  (c-display "stalin-remove-recursively entry")
+  (stalin-remove-call/cc
+   (stalin-monad-do-ify-call/cc code)
+   (lambda (ret changed)
+     (if changed
+         (stalin-remove-call/cc-recursively ret)
+         code))))
+
 #!
 (pretty-print (stalin-remove-call/cc
                '(lambda ()
@@ -3203,6 +3514,7 @@ The reason for doing this is that call/cc takes _a lot_ of time to compile with 
 
 ;; (define (a) (+ a b) (define c 2) c) -> (define (a) (+ a b) (letrec ((c 2)) c))
 (define (stalin-fix-internal-defines code)
+  (c-display "fix-internal-defines entry")
   (map (lambda (code)
          (let das-loop ((code code)
                         (level 0))
@@ -3378,12 +3690,13 @@ had to be put into macroexpand instead.
 !#
 
 
-(define (stalin-super-generate code)
+(define* (stalin-super-generate code :key (include-make-coroutine #f))
   (stalin-fix-defines 
    (fix-stalin-various
     (stalin-macroexpand
-     (fix-stalin-infix code)))))
-
+     (fix-stalin-infix
+      code)
+     :include-make-coroutine include-make-coroutine))))
 
 ;; Expands macros and include functions and variables which the code depends on,
 ;; all recursively. (careful with macros since its applied to all included code!)
@@ -3394,16 +3707,17 @@ had to be put into macroexpand instead.
     (let ((expanded '()))
       (lambda (funcname)
         (let ((expanded (assq funcname expanded)))
-        (if expanded
-            (cadr expanded)
-            (let ((ret (stalin-super-generate (get-stalin-func funcname))))
-              (push! (list funcname ret)
-                     expanded)
-              ret))))))
-
+          (if expanded
+              (cadr expanded)
+              (let ((ret (stalin-super-generate (get-stalin-func funcname) :include-make-coroutine #t)))
+                (push! (list funcname ret)
+                       expanded)
+                ret))))))
+  
   (define (find-dependencies trace code)
     (define funcs (find-stalin-funcs code))
     ;;(c-display "find" code)
+    ;;(c-display "funcs" funcs)
     (if (null? funcs)
         '(#f)
         (flatten (map (lambda (func)
@@ -3414,7 +3728,14 @@ had to be put into macroexpand instead.
                                   func)))
                       funcs))))
 
+  (reset-coroutine-struct!) ;; coroutine-suff!
+  
   (let* ((expanded (stalin-super-generate code))
+         (no-use (begin  ;; coroutine-suff!
+                   (redefine-coroutine-struct!)                  
+                   (set! expanded (stalin-macroexpand expanded :include-make-coroutine #t))
+                   ;;(pretty-print expanded)
+                   ))
          (dependencies
           (delete-duplicates (delete #f (find-dependencies '() expanded) eq?)
                              eq?)))
@@ -3438,10 +3759,9 @@ had to be put into macroexpand instead.
                        (generate-stalin-code0 code))))
   (stalin-add-health-checks
    (stalin-remove-dead-code-recursively ;; Second call. stalin-remove-call/cc might have added dead code
-    (stalin-remove-call/cc
-     (stalin-monad-do-ify-call/cc
-      (stalin-remove-dead-code-recursively
-       lotsofcode))))))
+    (stalin-remove-call/cc-recursively
+     (stalin-remove-dead-code-recursively
+      lotsofcode)))))
 
    
 
@@ -3621,7 +3941,7 @@ had to be put into macroexpand instead.
            (<struct-rt_bus*> outbus (cast <struct-rt_bus*> ,(<-> (number->string (cadr (SCM_SMOB_DATA *out-bus*)))
                                                                  "UL")))
            (<struct-rt_bus*> inbus (cast <struct-rt_bus*> ,(<-> (number->string (cadr (SCM_SMOB_DATA *in-bus*)))
-                                                                "UL")))
+                                                               "UL")))
 
            (<float*> sounddata)
            
@@ -3786,12 +4106,13 @@ had to be put into macroexpand instead.
                                   (when (== 0 (% block_time (* ,*rt-block-size* 
                                                                (/ (* 2 (cast <int> ,(rte-samplerate)))
                                                                   ,*rt-block-size*))))
-                                    (rt_debug (string "data: %d, stack: %d %p %p, num_allocs: %d")
+                                    (rt_debug (string "data: %d, stack: %d %p %p, num_allocs: %d, mem_used: %d")
                                               (abs (- end_dyn start_dyn))
                                               (abs (- stack_top stack_bot))
                                               stack_bot
                                               stack_top
                                               heap->num_allocs
+                                              -1
                                               ))
 
                                   (if (tar_leave_audio_thread heap want_full_copy)
@@ -3872,7 +4193,8 @@ had to be put into macroexpand instead.
                                          (fprintf stderr (string "Hepp, freeing stalin\\n"))
                                          (co_delete dsp_coroutine)
                                          (tar_delete heap)
-                                         (free sounddata))))
+                                         (free sounddata)
+                                         )))
            
            (public
             (<void-*> make-globals-func (lambda ((<struct-RT_Engine-*> engine))
