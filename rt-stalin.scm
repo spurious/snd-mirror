@@ -1443,7 +1443,6 @@ old bus.
   :continuation neverending-scheduling
   :soundholder (=> coroutine:_current-coroutine :soundholder)
   :parent _sound-coroutine ;; Only used when traversing the sound graph. Allways points to a sound coroutine.
-  :sounds '() ;; Temporary variable only used when traversing sound graph
   :soundfunc (lambda ()) ;; Not a continuation.
   :bus (=> coroutine:_current-coroutine :bus)
   :is-sound #f
@@ -1716,18 +1715,12 @@ old bus.
                  (=> soundholder :sub-sounds))))
 
 
-(define-stalin (_sound-runner)
+(define-stalin (_sound-runner soundholder)
   (define coroutine _current-coroutine)
-  (define soundholder (=> coroutine :soundholder))
   (define time _time)
 
   (_remove-stopped-sounds! soundholder)
   
-  (set! (=> coroutine :sounds) (=> soundholder :sub-sounds))
-  (set! _current-coroutine coroutine)
-
-  ;;(debug (number->string (length (=> soundholder :sub-sounds))))
-
   (for-each (lambda (coroutine)
               (when (not (=> coroutine :stop-me))
                 (set! _current-coroutine coroutine)
@@ -1737,23 +1730,23 @@ old bus.
             (=> soundholder :sub-sounds))
 
   (set! _current-coroutine coroutine)
-  (set! _time time)
+  (set! _time time))
 
-  (when (eq? coroutine _sound-coroutine)
-    (bus_to_soundcard_ _main-bus)
-    (insert-coroutine-in-queue! coroutine
-                                _next-scheduled-time
-                                3) ;; sound priority. (lowest)
-    (_run-scheduler _sound-runner)))
-
-  
 (define-stalin _main-soundholder (make-soundholder))
 
-;; The root sound coroutine. Both a sound and a nonsound coroutine.
-;; Also the only coroutine running with priority 3.
-;; Note 2: It can't contain data from _current-coroutine.
+(define-stalin (_main-sound-runner)
+  (_sound-runner _main-soundholder)
+  (bus_to_soundcard_ _main-bus)
+  (insert-coroutine-in-queue! _current-coroutine
+                              _next-scheduled-time
+                              3) ;; sound priority. (lowest)
+  (_run-scheduler _main-sound-runner))
+
+;; The root sound coroutine.
+;; The only coroutine running with priority 3.
+;; That that it can not contain data from _current-coroutine because of circular dependency.
 (define-stalin _sound-coroutine
-  (make-coroutine :continuation _sound-runner
+  (make-coroutine :continuation _main-sound-runner
                   :soundholder _main-soundholder
                   :bus _main-bus))
 
@@ -1979,19 +1972,27 @@ old bus.
 
 (define-stalin-macro (in :rest code)
   (define this-busk (symbol->keyword (rt-gensym "bus")))
+  (define this-soundholderk (symbol->keyword (rt-gensym "soundholder")))
   (add-coroutine-slot this-busk #f)
+  (add-coroutine-slot this-soundholderk #f)
+
   `(let ((coroutine _current-coroutine))
      (when (= _time (=> coroutine :time)) ;; must check if this-busk exist as well. Here.
 
        (when (not (=> coroutine ,this-busk))
          (set! (=> coroutine ,this-busk) (make-bus))
-         (let ((outer-bus (=> coroutine :bus)))
+         (set! (=> coroutine ,this-soundholderk) (make-soundholder))
+         (let ((outer-bus (=> coroutine :bus))
+               (outer-soundholder (=> coroutine :soundholder)))
            (set! (=> coroutine :bus) (=> coroutine ,this-busk))
+           (set! (=> coroutine :soundholder) (=> coroutine ,this-soundholderk))
            (spawn
              ,@code)
-           (set! (=> coroutine :bus) outer-bus)))
+           (set! (=> coroutine :bus) outer-bus)
+           (set! (=> coroutine :soundholder) outer-soundholder)
+           ))
 
-       (_sound-runner))
+       (_sound-runner (=> coroutine ,this-soundholderk)))
      
      (read-bus (=> coroutine ,this-busk))
      ))
@@ -2028,14 +2029,13 @@ old bus.
         (wait-midi :command note-off :note (midi-note)
           (-> adsr stop))))))
 
-(define-stalin (freeverb get-sound)
-  (<faust> :in (vct (get-sound))
+(define-stalin (freeverb sound)
+  (<faust> :in (vct sound)
            (url "http://faudiostream.cvs.sourceforge.net/viewvc/*checkout*/faudiostream/faust/examples/freeverb.dsp")))
 
 (<rt-stalin>
  (sound
-   (out (freeverb (lambda ()
-                    (in (midi-synth)))))))
+   (out (freeverb (in (midi-synth))))))
 
 
 (define-stalin-macro (freeverb . code)

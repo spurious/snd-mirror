@@ -27225,6 +27225,7 @@
 (num-test (sin (/ our-pi 12)) (* (/ (sqrt 2) 4) (- (sqrt 3) 1)))
 (num-test (cos (/ our-pi 12)) (* (/ (sqrt 2) 4) (+ (sqrt 3) 1)))
 (num-test (tan (/ our-pi 12)) (- 2 (sqrt 3)))
+(num-test (tan (* 1/4 (atan 4))) (* 2 (+ (cos (/ (* 6 our-pi) 17)) (cos (/ (* 10 our-pi) 17)))))
 
 (num-test (sin (/ our-pi 6)) 1/2)
 (num-test (cos (/ our-pi 6)) (/ (sqrt 3) 2))
@@ -27286,7 +27287,9 @@
 (num-test (tan (/ our-pi 30)) (sqrt (- 7 (* 2 (sqrt 5)) (* 2 (sqrt (- 15 (* 6 (sqrt 5))))))))
 
 (num-test (sin (/ our-pi 32)) (/ (sqrt (- 2 (sqrt (+ 2 (sqrt (+ 2 (sqrt 2))))))) 2))
-(num-test (cos (/ our-pi 32)) (/ (sqrt (+ 2 (sqrt (+ 2 (sqrt (+ 2 (sqrt 2))))))) 2))
+(num-test (cos (/ our-pi 32))      (/ (sqrt (+ 2 (sqrt (+ 2 (sqrt (+ 2 (sqrt 2))))))) 2))
+(num-test (cos (/ our-pi 64))  (* 1/2 (sqrt (+ 2 (sqrt (+ 2 (sqrt (+ 2 (sqrt (+ 2 (sqrt 2)))))))))))
+(num-test (cos (/ our-pi 128)) (* 1/2 (sqrt (+ 2 (sqrt (+ 2 (sqrt (+ 2 (sqrt (+ 2 (sqrt (+ 2 (sqrt 2)))))))))))))
 
 (num-test (/ our-pi 4) (+ (* 12 (atan (/ 18))) (* 8 (atan (/ 57))) (* -5 (atan (/ 239)))))
 (num-test (sin (- (/ our-pi 2) (* 0+i (log (/ (+ 1 (sqrt 5)) 2))))) (/ (sqrt 5) 2))
@@ -37266,6 +37269,8 @@ expt error > 1e-6 around 2^-46.506993328423
 		(set! result (catch #t (lambda () (test-eval (cons op (quotify args))))  (lambda args (display args) (newline) 'error)))
 		((cadr data) args result))))))
       ))
+;;; I made a fancier version that created nested expressions, but it didn't hit any new
+;;;   bugs, and it was too complicated.  
 
 
 (newline) (display ";all done!") (newline)
