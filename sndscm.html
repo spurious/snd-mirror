@@ -7532,11 +7532,26 @@ so far haven't panned out.
 <em class=emdef>laguerre</em> <code>(n x :optional (alpha 0.0))</code><br>
 <em class=emdef>Si</em> <code>x</code><br>
 <em class=emdef>Ci</em> <code>x</code><br>
+<em class=emdef>sin-m*pi/n</em> <code>m n</code><br>
 </td></tr></table>
 
 <p>In this case, "the code is the documentation" &mdash; these functions
 are informal, experimental, etc.
+One amusing function is sin-m*pi/n.  It
+returns an expression giving the exact value of sin(m*pi/n), m and n integer,
+if we can handle n.  Currently n can be anything of the form 2^a 3^b [5 | 7 | 17 | 35 | 85 | 119],
+so (sin-m*pi/n 1 60) returns an exact expression for sin(pi/60).  The expression is not reduced
+much.
 </p>
+<pre>
+    :(sin-m*pi/n 1 9)
+    (/ (- (expt (+ (sqrt 1/4) (* 0+1i (sqrt 3/4))) 1/3) (expt (- (sqrt 1/4) (* 0+1i (sqrt 3/4))) 1/3)) 0+2i)
+    :(eval (sin-m*pi/n 1 9))
+    0.34202014332567
+    :(sin (/ pi 9))
+    0.34202014332567
+</pre>
+
 
 <br>
 

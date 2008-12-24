@@ -11601,6 +11601,7 @@ static s7_pointer read_expression(s7_scheme *sc)
 	  
 	case TOKEN_LEFT_PAREN:
 	  sc->tok = token(sc, sc->input_port);
+
 	  if (sc->tok == TOKEN_RIGHT_PAREN)
 	    return(sc->NIL);
 
@@ -11610,6 +11611,10 @@ static s7_pointer read_expression(s7_scheme *sc)
 	      do {c = inchar(sc, sc->input_port);} while ((c != ')') && (c != EOF));
 	      return(read_error(sc, "stray dot after '('?"));         /* (car '( . )) */
 	    }
+
+	  if (sc->tok == TOKEN_EOF)
+	    return(missing_close_paren_error(sc));
+
 	  push_stack(sc, OP_READ_LIST, sc->NIL, sc->NIL);
 	  break;
 	  
@@ -14284,3 +14289,4 @@ s7_scheme *s7_init(void)
   }
   return(sc);
 }
+
