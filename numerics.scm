@@ -449,10 +449,10 @@
 
 ;;; --------------------------------------------------------------------------------
 
-(define (sin-m*pi/n m1 n1)
+ (define (sin-m*pi/n m1 n1)
 
   ;; this returns an expression giving the exact value of sin(m*pi/n), m and n integer
-  ;;   if we can handle n -- currently it can be anything of the form 2^a 3^b 5^c 7^d 17^e
+  ;;   if we can handle n -- currently it can be anything of the form 2^a 3^b 5^c 7^d 13^e 17^f
   ;;   so (sin-m*pi/n 1 60) returns an exact expression for sin(pi/60)
 
   (let ((m (numerator (/ m1 n1)))
@@ -465,20 +465,15 @@
 
 	  ((zero? n) (error "divide by zero (sin-m*pi/n n = 0)"))
 
-	  ((negative? n) 
-	   (let ((val (sin-m*pi/n m (- n))))
-	     (if (number? val)
-		 (- val)
-		 `(- ,val))))
-
 	  ((= n 1) 0)
+
+	  ((negative? n)
+	   (let ((val (sin-m*pi/n m (- n))))
+	     (and val `(- ,val))))
 
 	  ((> m n) 
 	   (let ((val (sin-m*pi/n (- m n) n)))
-	     (and val
-		  (if (number? val)
-		      (- val)
-		      `(- ,val)))))
+	     (and val `(- ,val))))
 
 	  ((= n 2) (if (= m 0) 0 1))
 
@@ -489,43 +484,60 @@
 		 (n1 (sin-m*pi/n 1 n))
 		 (m2 (sin-m*pi/n (- m 2) n)))
 	     (and m1 m2 n1
-		  (if (number? n1)
-		      `(- (* 2 ,m1 (sqrt ,(- 1 (* n1 n1)))) ,m2)
-		      (if (eq? (car n1) 'sqrt)
-			  (if (number? (cadr n1))
-			      `(- (* 2 ,m1 (sqrt ,(- 1 (cadr n1)))) ,m2)
-			      `(- (* 2 ,m1 (sqrt (- 1 ,(cadr n1)))) ,m2))
-			  `(- (* 2 ,m1 (sqrt (- 1 (* ,n1 ,n1)))) ,m2))))))
-
+		  `(- (* 2 ,m1 (sqrt (- 1 (* ,n1 ,n1)))) ,m2))))
 
 	  ((= n 5) `(/ (sqrt (- 10 (* 2 (sqrt 5)))) 4))
 
-	  ((= n 7) `(sqrt (+ 7/12 
-			     (* -1/2 (+ (expt (+ -7/3456 (sqrt -49/442368)) 1/3) 
-					(expt (- -7/3456 (sqrt -49/442368)) 1/3))) 
-			     (* 1/2 0+i (sqrt 3) 
-				(-  (expt (+ -7/3456 (sqrt -49/442368)) 1/3) 
-				    (expt (- -7/3456 (sqrt -49/442368)) 1/3))))))
+	  ((= n 7) `(let ((A1 (expt (+ -7/3456 (sqrt -49/442368)) 1/3))
+			  (A2 (expt (- -7/3456 (sqrt -49/442368)) 1/3)))
+		      (sqrt (+ 7/12 
+			     (* -1/2 (+ A1 A2))
+			     (* 1/2 0+i (sqrt 3) (- A1 A2))))))
 
-	  ((= n 17) `(* 1/8 (sqrt 2) 
-			(sqrt (- 17 (sqrt 17)
-				 (* (sqrt 2)
-				    (+ (sqrt (- 17 (sqrt 17))) 
-				       (sqrt (+ 34 
-						(* 6 (sqrt 17)) 
-						(* (sqrt 2) (- (sqrt 17) 1) (sqrt (- 17 (sqrt 17)))) 
-						(* -8 (sqrt 2) (sqrt (+ 17 (sqrt 17))))))))))))
+	  ((= n 17) `(let ((A1 (sqrt (- 17 (sqrt 17))))
+			   (A2 (sqrt (+ 17 (sqrt 17)))))
+		       (* 1/8 (sqrt 2) 
+			  (sqrt (- 17 (sqrt 17)
+				   (* (sqrt 2) (+ A1 (sqrt (+ 34 
+							      (* 6 (sqrt 17)) 
+							      (* (sqrt 2) (- (sqrt 17) 1) A1)
+							      (* -8 (sqrt 2) A2))))))))))
+	  ((= n 13)
+	   `(let* ((A1 (/ (- -1 (sqrt 13)) 2))
+		   (A2 (/ (+ -1 (sqrt 13)) 2))
+		   (A3 (/ (+ -1 (* 0+i (sqrt 3))) 2))
+		   (A4 (+ -1 (* 0+i (sqrt 3))))
+		   (A5 (* 0+i (sqrt (+ 7 (sqrt 13) A2))))
+		   (A6 (* 0+i (sqrt (+ 7 (- (sqrt 13)) A1))))
+		   (A7 (/ (+ 1 (sqrt 13)) 2))
+		   (A8 (- A2 A6))
+		   (A9 (+ A1 A5))
+		   (A10 (+ A7 A5))
+		   (A11 (+ A2 A6))
+		   (A12 (- A1 A5))
+		   (A13 (* 3 A4 A8))
+		   (A14 (* 3 A4 A11))
+		   (A15 (* 3 A4 A4 A11))
+		   (A16 (* 3 A4 A4 A8)))
+	      (* -1/2 0+i
+		 (+ (/ (+ (/ A9 2)
+			  (/ (* A4 (+ (/ A8 2) (/ (* (+ A3 (/ (* A4 A4) 4)) A12) 2)))
+			     (* 2 (expt (+ 6 (/ A13 4) (/ A15 8) (/ A9 2)) 1/3)))
+			  (/ (* A4 A4 (expt (+ 6 (/ A13 4) (/ A15 8) (/ A9 2)) 1/3)) 4)) 3)
+		    (/ (- (/ A10 2) 
+			  (/ (* A4 A4 (expt (+ 6 (/ A16 8) (/ A14 4) (/ A12 2)) 1/3)) 4)
+			  (/ (* A4 (+ (/ A11 2) (/ (* (+ A3 (/ (* A4 A4) 4)) A9) 2)))
+			     (* 2 (expt (+ 6 (/ A16 8) (/ A14 4) (/ A12 2)) 1/3)))) 3)))))
 
-	  ((or (= (modulo n 2) 0)
-	       (= (modulo n 3) 0)
-	       (= (modulo n 5) 0)
-	       (= (modulo n 7) 0)
-	       (= (modulo n 17) 0))
+
+	  ((or (= (modulo n 2) 0) (= (modulo n 3) 0) (= (modulo n 5) 0) (= (modulo n 7) 0) 
+	       (= (modulo n 17) 0) (= (modulo n 13) 0))
 	   (let ((divisor (if (= (modulo n 2) 0) 2
 			      (if (= (modulo n 3) 0) 3
 				  (if (= (modulo n 5) 0) 5
 				      (if (= (modulo n 7) 0) 7
-					  17))))))
+					  (if (= (modulo n 17) 0) 17
+					      13)))))))
 	     (let ((val (sin-m*pi/n 1 (/ n divisor))))
 	       (and val
 		    `(/ (- (expt (+ (sqrt (- 1 (* ,val ,val))) (* 0+i ,val)) (/ 1 ,divisor))
@@ -533,3 +545,13 @@
 			0+2i)))))
 	   
 	  (else #f))))
+
+#|
+(do ((i 1 (+ i 1)))
+    ((= i 100))
+  (let ((val (sin (/ (* 1 pi) i)))
+	(expr (sin-m*pi/n 1 i)))
+    (if expr 
+	(if (> (magnitude (- val (eval expr))) 1e-6)
+	    (format #t "1/~A -> ~A ~A~%" i val (eval expr))))))
+|#
