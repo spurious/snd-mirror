@@ -452,7 +452,7 @@
  (define (sin-m*pi/n m1 n1)
 
   ;; this returns an expression giving the exact value of sin(m*pi/n), m and n integer
-  ;;   if we can handle n -- currently it can be anything of the form 2^a 3^b 5^c 7^d 13^e 17^f
+  ;;   if we can handle n -- currently it can be anything of the form 2^a 3^b 5^c 7^d 13^e 17^f 257^g
   ;;   so (sin-m*pi/n 1 60) returns an exact expression for sin(pi/60)
 
   (let ((m (numerator (/ m1 n1)))
@@ -529,22 +529,103 @@
 			  (/ (* A4 (+ (/ A11 2) (/ (* (+ A3 (/ (* A4 A4) 4)) A9) 2)))
 			     (* 2 (expt (+ 6 (/ A16 8) (/ A14 4) (/ A12 2)) 1/3)))) 3)))))
 
-
+	  ((= n 257)
+	   `(let* ((A1 (sqrt (- 514 (* 2 (sqrt 257)))))
+		   (A2 (- 257 (* 15 (sqrt 257))))
+		   (A3 (+ 257 (* 15 (sqrt 257))))
+		   (A4 (- 257 (sqrt 257)))
+		   (A5 (+ (sqrt 257) 257))
+		   (A6 (- 257 (* 9 (sqrt 257))))
+		   (A7 (+ 257 (* 9 (sqrt 257))))
+		   (A8 (- 514 (* 18 (sqrt 257))))
+		   (AA (sqrt (* 2 A5)))
+		   (A9 (+ A2 (* 8 A1) (* -7 AA)))
+		   (A10 (+ A2 (* -8 A1) (* 7 AA)))
+		   (A11 (+ A3 (* 7 A1) (* 8 AA)))
+		   (A12 (+ A3 (* -7 A1) (* -8 AA)))
+		   (A13 (sqrt (+ A8 (* 6 A1) (* 8 (sqrt A9)) (* -24 (sqrt A10)) (* 12 (sqrt A11)))))
+		   (A14 (sqrt (+ A8 (* 6 A1) (* -8 (sqrt A9)) (* 24 (sqrt A10)) (* -12 (sqrt A11)))))
+		   (A15 (sqrt (+ A8 (* -6 A1) (* -12 (sqrt A12)) (* 24 (sqrt A9)) (* 8 (sqrt A10)))))
+		   (A16 (sqrt (* 2 (+ A6 (* -3 A1) (* 6 (sqrt A12)) (* -12 (sqrt A9)) (* -4 (sqrt A10))))))
+		   (A17 (sqrt (* 2 (+ A7 (* -3 AA) (* -4 (sqrt A12)) (* 6 (sqrt A9)) (* 12 (sqrt A11))))))
+		   (A18 (sqrt (* 2 (+ A7 (* 3 AA) (* 12 (sqrt A12)) (* -6 (sqrt A10)) (* 4 (sqrt A11))))))
+		   (A19 (sqrt (* 2 (+ A7 (* 3 AA) (* -12 (sqrt A12)) (* 6 (sqrt A10)) (* -4 (sqrt A11))))))
+		   (A20 (sqrt (* 2 (+ A7 (* -3 AA) (* 4 (sqrt A12)) (* -6 (sqrt A9)) (* -12 (sqrt A11))))))
+		   (A21 (+ 257 (* 7 (sqrt 257)))))
+	      (* 1/16 
+		 (sqrt (* 1/2 
+			  (+ A4 (- A1) (* -2 (sqrt A11)) (* -2 A13)
+			     (* -4 (sqrt (+ A4 (* 3 A1) (* -4 AA) (* -4 (sqrt A12))
+					    (* 4 (sqrt A9)) (* -4 (sqrt A10)) (* 2 (sqrt A11)) 
+					    (* -4 A16) (* -4 A19) (* 4 A17) (* -6 A13))))
+			     (* -4 (sqrt (* 2 (+ A21 (* 3 A1) (* -4 (sqrt A9)) (* 4 (sqrt A10)) 
+						 (* 6 (sqrt A11)) (* -4 A18) (* -4 A17) (* -2 A13)
+						 (* -8 (sqrt (+ A5 (* -4 A1) (* -3 AA) (* -4 (sqrt A12))
+								(* 2 (sqrt A9)) (* 4 (sqrt A10)) (* 4 (sqrt A11))
+								(* 4 A15) (* 4 A14) (* 4 A18) (* -6 A17))))
+						 (* -4 (sqrt (+ A4 (* 3 A1) (* -4 AA) (* -4 (sqrt A12)) 
+								(* 4 (sqrt A9)) (* -4 (sqrt A10)) (* 2 (sqrt A11))
+								(* -4 A16) (* -4 A19) (* 4 A17) (* -6 A13))))
+						 (* -8 (sqrt (+ A5 (* 4 A1) (* 3 AA) (* 4 (sqrt A12)) (* 4 (sqrt A9))
+								(* -2 (sqrt A10)) (* 4 (sqrt A11)) (* 4 A15) 
+								(* -4 A20) (* -6 A18) (* -4 A13))))
+						 (* 8 (sqrt (+ A4 (* 3 A1) (* -4 AA) (* -4 (sqrt A12))
+							       (* 4 (sqrt A9)) (* -4 (sqrt A10)) (* 2 (sqrt A11))
+							       (* 4 A16) (* 4 A19) (* -4 A17) (* 6 A13))))))))
+			     (* -8 (sqrt (+ A4 (- A1) (* -2 (sqrt A11)) (* 6 A13) 
+					    (* -4 (sqrt (+ A4 (* 3 A1) (* -4 AA) (* -4 (sqrt A12)) (* 4 (sqrt A9))
+							   (* -4 (sqrt A10)) (* 2 (sqrt A11)) (* -4 A16) (* -4 A19)
+							   (* 4 A17) (* -6 A13))))
+					    (* -8 (sqrt (+ A4 (* 3 A1) (* -4 AA) (* -4 (sqrt A12)) (* 4 (sqrt A9))
+							   (* -4 (sqrt A10)) (* 2 (sqrt A11)) (* 4 A16)
+							   (* 4 A19) (* -4 A17) (* 6 A13))))
+					    (* 4 (sqrt (* 2 (+ A21 (* 3 A1) (* -4 (sqrt A9)) (* 4 (sqrt A10))
+							       (* 6 (sqrt A11)) (* -4 A18) (* -4 A17) (* -2 A13)
+							       (* 8 (sqrt (+ A5 (* -4 A1) (* -3 AA) (* -4 (sqrt A12))
+									     (* 2 (sqrt A9)) (* 4 (sqrt A10)) (* 4 (sqrt A11))
+									     (* 4 A15) (* 4 A14) (* 4 A18) (* -6 A17))))
+							       (* 4 (sqrt (+ A4 (* 3 A1) (* -4 AA) (* -4 (sqrt A12))
+									     (* 4 (sqrt A9)) (* -4 (sqrt A10)) (* 2 (sqrt A11))
+									     (* -4 A16) (* -4 A19) (* 4 A17) (* -6 A13))))
+							       (* 8 (sqrt (+ A5 (* 4 A1) (* 3 AA) (* 4 (sqrt A12)) (* 4 (sqrt A9))
+									     (* -2 (sqrt A10)) (* 4 (sqrt A11)) (* 4 A15)
+									     (* -4 A20) (* -6 A18) (* -4 A13))))
+							       (* -8 (sqrt (+ A4 (* 3 A1) (* -4 AA) (* -4 (sqrt A12)) (* 4 (sqrt A9))
+									      (* -4 (sqrt A10)) (* 2 (sqrt A11)) (* 4 A16) (* 4 A19) 
+									      (* -4 A17) (* 6 A13))))))))
+					    (* -8 (sqrt (* 2 (+ A21 (* 3 A1) (* -4 (sqrt A9)) (* 4 (sqrt A10)) (* 6 (sqrt A11))
+								(* 4 A18) (* 4 A17) (* 2 A13)
+								(* -8 (sqrt (+ A5 (* -4 A1) (* -3 AA) (* -4 (sqrt A12)) (* 2 (sqrt A9))
+									       (* 4 (sqrt A10)) (* 4 (sqrt A11)) (* -4 A15) (* -4 A14)
+									       (* -4 A18) (* 6 A17))))
+								(* -8 (sqrt (+ A4 (* 3 A1) (* -4 AA) (* -4 (sqrt A12)) (* 4 (sqrt A9))
+									       (* -4 (sqrt A10)) (* 2 (sqrt A11)) (* -4 A16) (* -4 A19) 
+									       (* 4 A17) (* -6 A13))))
+								(* -8 (sqrt (+ A5 (* 4 A1) (* 3 AA) (* 4 (sqrt A12)) (* 4 (sqrt A9))
+									       (* -2 (sqrt A10)) (* 4 (sqrt A11)) (* -4 A15) (* 4 A20)
+									       (* 6 A18) (* 4 A13))))
+								(* -4 (sqrt (+ A4 (* 3 A1) (* -4 AA) (* -4 (sqrt A12)) (* 4 (sqrt A9))
+									       (* -4 (sqrt A10)) (* 2 (sqrt A11)) (* 4 A16) (* 4 A19)
+									       (* -4 A17) (* 6 A13)))))))))))))))))
+	   
 	  ((or (= (modulo n 2) 0) (= (modulo n 3) 0) (= (modulo n 5) 0) (= (modulo n 7) 0) 
-	       (= (modulo n 17) 0) (= (modulo n 13) 0))
+	       (= (modulo n 17) 0) (= (modulo n 13) 0) (= (modulo n 257) 0))
 	   (let ((divisor (if (= (modulo n 2) 0) 2
 			      (if (= (modulo n 3) 0) 3
 				  (if (= (modulo n 5) 0) 5
 				      (if (= (modulo n 7) 0) 7
 					  (if (= (modulo n 17) 0) 17
-					      13)))))))
+					      (if (= (modulo n 13) 0) 13
+						  257))))))))
 	     (let ((val (sin-m*pi/n 1 (/ n divisor))))
 	       (and val
-		    `(/ (- (expt (+ (sqrt (- 1 (* ,val ,val))) (* 0+i ,val)) (/ 1 ,divisor))
-			   (expt (- (sqrt (- 1 (* ,val ,val))) (* 0+i ,val)) (/ 1 ,divisor)))
-			0+2i)))))
+		    `(let ((ex ,val))
+		       (/ (- (expt (+ (sqrt (- 1 (* ex ex))) (* 0+i ex)) (/ 1 ,divisor))
+			     (expt (- (sqrt (- 1 (* ex ex))) (* 0+i ex)) (/ 1 ,divisor)))
+			  0+2i))))))
 	   
 	  (else #f))))
+
 
 #|
 (do ((i 1 (+ i 1)))
